@@ -63,7 +63,6 @@ const App: () => Node = () => {
       <ScrollView
         contentInsetAdjustmentBehavior="automatic"
         style={backgroundStyle}>
-        <Header />
         <View
           style={{
             backgroundColor: isDarkMode ? Colors.black : Colors.white,
