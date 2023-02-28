@@ -2,7 +2,9 @@
   "name": "venus",
   "version": "0.0.1",
   "private": true,
+  "main": "node_modules/expo/AppEntry.js",
   "scripts": {
+    "pod:install": "command -v pod && (cd ios/ && pod install && cd ..) || echo \"Skipping pod install\"",
     "clean:android": "rm -rf android/app/build",
     "clean:ios": "rm -rf ios/build",
     "clean:node": "rm -rf node_modules && yarn --frozen-lockfile",
@@ -15,9 +17,15 @@
     "format": "prettier --write \"app/**/*.{js,jsx,json,md,ts,tsx}\"",
     "patch": "npx patch-package",
     "bundle:ios": "react-native bundle --entry-file index.js --platform ios --dev false --bundle-output ios/main.jsbundle --assets-dest ios",
-    "bundle:android": "react-native bundle --platform android --dev false --entry-file index.js --bundle-output android/app/src/main/assets/index.android.bundle --assets-dest android/app/src/main/res"
+    "bundle:android": "react-native bundle --platform android --dev false --entry-file index.js --bundle-output android/app/src/main/assets/index.android.bundle --assets-dest android/app/src/main/res",
+    "expo:start": "expo start",
+    "expo:android": "expo start --android",
+    "expo:ios": "expo start --ios",
+    "expo:web": "expo start --web"
   },
   "dependencies": {
+    "expo": "^48.0.4",
+    "expo-status-bar": "^1.4.4",
     "react": "18.0.0",
     "react-native": "0.69.2"
   },
