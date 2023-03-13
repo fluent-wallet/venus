@@ -2,6 +2,23 @@ PODS:
   - boost (1.76.0)
   - CocoaAsyncSocket (7.6.5)
   - DoubleConversion (1.1.6)
+  - EXApplication (4.2.2):
+    - ExpoModulesCore
+  - EXConstants (13.2.4):
+    - ExpoModulesCore
+  - EXErrorRecovery (3.2.0):
+    - ExpoModulesCore
+  - EXFileSystem (14.1.0):
+    - ExpoModulesCore
+  - EXFont (10.2.1):
+    - ExpoModulesCore
+  - Expo (46.0.20):
+    - ExpoModulesCore
+  - ExpoKeepAwake (10.2.1):
+    - ExpoModulesCore
+  - ExpoModulesCore (0.11.10):
+    - React-Core
+    - ReactCommon/turbomodule/core
   - FBLazyVector (0.69.2)
   - FBReactNativeSpec (0.69.2):
     - RCT-Folly (= 2021.06.28.00-v2)
@@ -358,6 +375,14 @@ PODS:
 DEPENDENCIES:
   - boost (from `../node_modules/react-native/third-party-podspecs/boost.podspec`)
   - DoubleConversion (from `../node_modules/react-native/third-party-podspecs/DoubleConversion.podspec`)
+  - EXApplication (from `../node_modules/expo-application/ios`)
+  - EXConstants (from `../node_modules/expo-constants/ios`)
+  - EXErrorRecovery (from `../node_modules/expo-error-recovery/ios`)
+  - EXFileSystem (from `../node_modules/expo-file-system/ios`)
+  - EXFont (from `../node_modules/expo-font/ios`)
+  - Expo (from `../node_modules/expo`)
+  - ExpoKeepAwake (from `../node_modules/expo-keep-awake/ios`)
+  - ExpoModulesCore (from `../node_modules/expo-modules-core/ios`)
   - FBLazyVector (from `../node_modules/react-native/Libraries/FBLazyVector`)
   - FBReactNativeSpec (from `../node_modules/react-native/React/FBReactNativeSpec`)
   - Flipper (= 0.125.0)
@@ -436,6 +461,22 @@ EXTERNAL SOURCES:
     :podspec: "../node_modules/react-native/third-party-podspecs/boost.podspec"
   DoubleConversion:
     :podspec: "../node_modules/react-native/third-party-podspecs/DoubleConversion.podspec"
+  EXApplication:
+    :path: "../node_modules/expo-application/ios"
+  EXConstants:
+    :path: "../node_modules/expo-constants/ios"
+  EXErrorRecovery:
+    :path: "../node_modules/expo-error-recovery/ios"
+  EXFileSystem:
+    :path: "../node_modules/expo-file-system/ios"
+  EXFont:
+    :path: "../node_modules/expo-font/ios"
+  Expo:
+    :path: "../node_modules/expo"
+  ExpoKeepAwake:
+    :path: "../node_modules/expo-keep-awake/ios"
+  ExpoModulesCore:
+    :path: "../node_modules/expo-modules-core/ios"
   FBLazyVector:
     :path: "../node_modules/react-native/Libraries/FBLazyVector"
   FBReactNativeSpec:
@@ -501,6 +542,14 @@ SPEC CHECKSUMS:
   boost: a7c83b31436843459a1961bfd74b96033dc77234
   CocoaAsyncSocket: 065fd1e645c7abab64f7a6a2007a48038fdc6a99
   DoubleConversion: 5189b271737e1565bdce30deb4a08d647e3f5f54
+  EXApplication: e418d737a036e788510f2c4ad6c10a7d54d18586
+  EXConstants: 7c44785d41d8e959d527d23d29444277a4d1ee73
+  EXErrorRecovery: 74d71ee59f6814315457b09d68e86aa95cc7d05d
+  EXFileSystem: 927e0a8885aa9c49e50fc38eaba2c2389f2f1019
+  EXFont: 06df627203afcb8a3b3152ec06eb2f11f46f0cff
+  Expo: c2afed3f226befffaed962e9bacb5e0296acd254
+  ExpoKeepAwake: 8b47e5358d54ea4922b630a74f2acb026ab7a28b
+  ExpoModulesCore: 1b2f5f91eff132671f6d0642aad2ba7915c6ff41
   FBLazyVector: e3c1479be506060131807f2f2435af5107c58410
   FBReactNativeSpec: 1381e8c4230895b6c2d20cea6b216ac7096a95f0
   Flipper: 26fc4b7382499f1281eb8cb921e5c3ad6de91fe0
@@ -522,7 +571,7 @@ SPEC CHECKSUMS:
   React: 242d4ffb093ed57c4761307a69b23b2479930ae9
   React-bridging: 66938204bc9d703b9c357201a40bf498aeb14412
   React-callinvoker: bf0a87845bc3158eec32be848bd9546e79d6dd25
-  React-Codegen: 66206c236633198ef1e85550664e636754947a44
+  React-Codegen: e5c04fc987e909433915f247699402ece1955aa0
   React-Core: 5acd5715010b56d23846859b3a68c316dad09d5b
   React-CoreModules: 73db18e3aaf5e29f73e4b7c9ddf6ead823795d06
   React-cxxreact: 0fc57a199d2d69c0e0401c9eab944be9b972bf1b
@@ -546,6 +595,6 @@ SPEC CHECKSUMS:
   Yoga: 236056dd74cda4d9d76c20306fd8c20bb087614d
   YogaKit: f782866e155069a2cca2517aafea43200b01fd5a
 
-PODFILE CHECKSUM: 4d077e4479aa9fd4267bbc87530397f447d7ed31
+PODFILE CHECKSUM: 187e1fb81e92b5254103118cbf5f2b15e6f98f3a
 
 COCOAPODS: 1.11.3
