@@ -61,3 +61,10 @@ buck-out/
 # Ruby / CocoaPods
 /ios/Pods/
 /vendor/bundle/
+
+# editor
+.vscode/
+
+# expo
+.expo/devices.json
+.expo/README.md
