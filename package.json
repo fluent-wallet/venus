@@ -24,6 +24,8 @@
     "expo:web": "expo start --web"
   },
   "dependencies": {
+    "@nozbe/watermelondb": "^0.25.5",
+    "@nozbe/with-observables": "^1.4.1",
     "expo": "^46.0.0",
     "expo-status-bar": "^1.4.4",
     "react": "18.0.0",

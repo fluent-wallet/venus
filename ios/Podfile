@@ -2,6 +2,10 @@ require File.join(File.dirname(`node --print "require.resolve('expo/package.json
 require_relative '../node_modules/react-native/scripts/react_native_pods'
 require_relative '../node_modules/@react-native-community/cli-platform-ios/native_modules'
 
+pod 'WatermelonDB', :path => '../node_modules/@nozbe/watermelondb'
+pod 'React-jsi', :path => '../node_modules/react-native/ReactCommon/jsi', :modular_headers => true
+pod 'simdjson', path: '../node_modules/@nozbe/simdjson'
+
 platform :ios, '13.0'
 install! 'cocoapods', :deterministic_uuids => false
 
