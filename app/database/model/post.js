@@ -12,9 +12,9 @@ import {
 class Post extends Model {
   static table = 'posts';
 
-  static associations = {
-    comments: {type: 'has_many', foreignKey: 'post_id'},
-  };
+  // static associations = {
+  //   comments: {type: 'has_many', foreignKey: 'post_id'},
+  // };
 
   @text('title') title;
 
@@ -26,7 +26,7 @@ class Post extends Model {
 
   @readonly @date('updated_at') updatedAt;
 
-  @children('comments') comments;
+  @relation('comments', 'comment_id') comments;
 
   @writer async changePostTitle() {
     this.update(post => {
@@ -38,7 +38,7 @@ class Post extends Model {
 class Comment extends Model {
   static table = 'comments';
 
-  static associations = {posts: {type: 'belongs_to', key: 'post_id'}};
+  // static associations = {posts: {type: 'belongs_to', key: 'post_id'}};
 
   @text('body') body;
 

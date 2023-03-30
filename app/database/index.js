@@ -31,16 +31,18 @@ const database = new Database({
 //     // database.batch
 //     // table.prepareCreate
 //     // record.prepareUpdate ...
+//     let _p;
 //     const post = await database.get('posts').create(p => {
 //       p.title = '帖子';
 //       p.body = '我是一个帖子';
+//       _p = p;
 //     });
-//     // console.log('post', post);
-//     // const comment = await database.get('comments').create(c => {
-//     //   c.post.set(post);
-//     //   c.body = '我是一条评论';
-//     // });
-//     // console.log('comment', comment);
+//     const comment = await database.get('comments').create(c => {
+//       c.post.set(post);
+//       _p.comment.set(c.id);
+//       c.body = '我是一条评论';
+//     });
+//     console.log('comment', comment);
 //     return post;
 //   })
 //   .then(res => {

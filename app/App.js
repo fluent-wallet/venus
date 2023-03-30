@@ -19,10 +19,10 @@ import {
 } from 'react-native';
 import database from './database';
 
-const usePosts = () => {
+const usePosts = (tableName = 'posts') => {
   // const database = useDatabase()
   const {value} = useAsync(async () => {
-    const res = await database.get('posts').query().fetch();
+    const res = await database.get(tableName).query().fetch();
     // const res2 = await database
     // .get("posts")
     // .query(Q.where("id", "jl34xbkm800tbhvs"));
@@ -54,8 +54,11 @@ const styles = StyleSheet.create({
 
 const App: () => Node = () => {
   const posts = usePosts() || [];
+  const comments = usePosts('comments') || [];
+
   const [password, setPassword] = useState('');
   console.log('posts', posts);
+  console.log('comments', comments);
 
   return (
     <SafeAreaView>
