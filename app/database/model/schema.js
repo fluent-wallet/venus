@@ -40,7 +40,6 @@ const DBTABLESCHEMAS = [
       {name: 'value', type: 'string'},
     ],
   },
-
   {
     name: 'network',
     columns: [
@@ -48,9 +47,9 @@ const DBTABLESCHEMAS = [
       {name: 'icon', type: 'string', isOptional: true},
       {name: 'endpoint', type: 'string'},
       {name: 'hd_path_id', type: 'string', isIndexed: true},
-      {name: 'netId', type: 'number'},
-      //TODO: 可以再建一个表 不用@json 这种方式
-      {name: 'ticker', type: 'string', isOptional: true},
+      // netId
+      {name: 'net_identification', type: 'number'},
+      {name: 'ticker_id', type: 'string', isIndexed: true},
       {name: 'builtin', type: 'string'},
       {name: 'scan_url', type: 'string', isOptional: true},
       {name: 'selected', type: 'boolean', isOptional: true},
@@ -60,6 +59,16 @@ const DBTABLESCHEMAS = [
       {name: 'is_mainnet', type: 'boolean'},
       {name: 'is_testnet', type: 'boolean'},
       {name: 'is_custom', type: 'boolean'},
+    ],
+  },
+  {
+    name: 'ticker',
+    columns: [
+      {name: 'name', type: 'string'},
+      {name: 'symbol', type: 'string'},
+      {name: 'decimals', type: 'number'},
+      // iconUrls could be array should use @json
+      {name: 'icon_urls', type: 'string', isOptional: true},
     ],
   },
   {
@@ -74,10 +83,11 @@ const DBTABLESCHEMAS = [
     name: 'token',
     columns: [
       // one to many ref to token_list
-      {name: 'token_list_id', type: 'string'},
+      {name: 'token_list_id', type: 'string', isIndexed: true},
       {name: 'network_id', type: 'string', isIndexed: true},
+      {name: 'address_id', type: 'string', isIndexed: true},
       {name: 'name', type: 'string'},
-      {name: 'address', type: 'string'},
+      {name: 'token_address', type: 'string'},
       {name: 'symbol', type: 'string', isOptional: true},
       {name: 'decimals', type: 'number', isOptional: true},
       {name: 'logo_uri', type: 'string', isOptional: true},
@@ -91,15 +101,15 @@ const DBTABLESCHEMAS = [
     columns: [
       // hex value of token balance
       {name: 'value', type: 'string'},
-      {name: 'token_id', type: 'string'},
-      {name: 'address_id', type: 'string'},
+      {name: 'token_id', type: 'string', isIndexed: true},
+      {name: 'address_id', type: 'string', isIndexed: true},
     ],
   },
   {
     name: 'tx',
     columns: [
-      {name: 'token_id', type: 'string'},
-      {name: 'address_id', type: 'string'},
+      {name: 'token_id', type: 'string', isIndexed: true, isOptional: true},
+      {name: 'address_id', type: 'string', isIndexed: true},
       {name: 'raw', type: 'string'},
       {name: 'hash', type: 'string'},
       // int, tx status, -2 skipped, -1 failed, 0 unsent, 1 sending, 2 pending, 3 packaged, 4 executed, 5 confirmed
@@ -119,23 +129,23 @@ const DBTABLESCHEMAS = [
   {
     name: 'tx_extra',
     columns: [
-      {name: 'tx_id', type: 'string'},
-      {name: 'ok', type: 'boolean'},
-      {name: 'contract_creation', type: 'string'},
+      {name: 'tx_id', type: 'string', isIndexed: true},
+      {name: 'ok', type: 'boolean', isOptional: true},
+      {name: 'contract_creation', type: 'boolean', isOptional: true},
       {name: 'simple', type: 'boolean'},
       {name: 'send_action', type: 'string'},
-      {name: 'contract_interaction', type: 'string'},
-      {name: 'token20', type: 'string'},
-      {name: 'token_nft', type: 'string'},
-      {name: 'contract_interaction', type: 'string'},
+      {name: 'contract_interaction', type: 'boolean', isOptional: true},
+      {name: 'token20', type: 'boolean', isOptional: true},
+      {name: 'token_nft', type: 'boolean'},
       {name: 'address', type: 'string'},
-      {name: 'method', type: 'string'},
+      {name: 'method', type: 'string', isOptional: true},
     ],
   },
   {
     name: 'tx_payload',
     columns: [
-      {name: 'tx_id', type: 'string'},
+      {name: 'tx_id', type: 'string', isIndexed: true},
+      // For Berlin hardFork.
       {name: 'access_list', type: 'string'},
       {name: 'max_fee_per_gas', type: 'string'},
       {name: 'max_priority_fee_per_gas', type: 'string'},
@@ -144,13 +154,68 @@ const DBTABLESCHEMAS = [
       {name: 'gas_price', type: 'string'},
       {name: 'gas', type: 'string'},
       {name: 'storage_limit', type: 'string'},
-      {name: 'data', type: 'string'},
+      {name: 'data', type: 'string', isOptional: true},
       {name: 'value', type: 'string'},
       {name: 'nonce', type: 'string'},
+      // chainId
       {name: 'chain_identification', type: 'string'},
       {name: 'epoch_height', type: 'string'},
     ],
   },
+  {
+    name: 'vault',
+    columns: [
+      // Type of vault: pub, pk, hd, hw
+      {name: 'type', type: 'string'},
+      // Encrypted vault data
+      {name: 'data', type: 'string'},
+      {name: 'device', type: 'string'},
+      // If type is pub/hw, means this vault is only for cfx type network, if type is hd, means only generate 0x1 prefix account.
+      {name: 'cfx_only', type: 'boolean', isOptional: true},
+      {name: 'account_group_id', type: 'string', isIndexed: true},
+    ],
+  },
+  {
+    name: 'account_group',
+    columns: [
+      // Type of vault: pub, pk, hd, hw
+      {name: 'nickname', type: 'string'},
+      {name: 'hidden', type: 'boolean'},
+    ],
+  },
+  {
+    name: 'account',
+    columns: [
+      {name: 'account_group_id', type: 'string', isIndexed: true},
+      {name: 'index', type: 'number'},
+      {name: 'nickname', type: 'string'},
+      {name: 'hidden', type: 'boolean'},
+      {name: 'selected', type: 'boolean'},
+    ],
+  },
+  {
+    name: 'address',
+    columns: [
+      {name: 'account_id', type: 'string', isIndexed: true},
+      {name: 'network_id', type: 'string', isIndexed: true},
+      {name: 'value', type: 'string'},
+      {name: 'hex', type: 'string'},
+      {name: 'native_balance', type: 'string'},
+      {name: 'native_balance', type: 'string'},
+      {name: 'native_balance', type: 'string'},
+      {name: 'native_balance', type: 'string'},
+    ],
+  },
+  // contact name and address
+  {
+    name: 'memo',
+    columns: [
+      {name: 'name', type: 'string'},
+      {name: 'address', type: 'string'},
+      {name: 'network_id', type: 'string', isIndexed: true},
+    ],
+  },
+  //TODO: dapp interaction
 ];
 const schema2 = appSchema({
   version: 1,
