@@ -2,15 +2,12 @@
 import {Database} from '@nozbe/watermelondb';
 import SQLiteAdapter from '@nozbe/watermelondb/adapters/sqlite';
 
-import schema from './model/schema';
-import migrations from './model/migrations';
-import {Post, Comment} from './model/post';
-
-console.log('Post', Post);
-console.log('Comment', Comment);
+import schema from './schema';
+import migrations from './migrations';
+import * as models from './model';
 
 const adapter = new SQLiteAdapter({
-  dbName: 'myapp1',
+  dbName: 'venus_database',
   schema,
   migrations,
   // RN not support synchronous mode yet(ps: jsi === true means enable synchronous mode).see below:
@@ -23,44 +20,7 @@ const adapter = new SQLiteAdapter({
 
 const database = new Database({
   adapter,
-  modelClasses: [Post, Comment],
+  modelClasses: [...Object.values(models)],
 });
-
-// database
-//   .write(async () => {
-//     // database.batch
-//     // table.prepareCreate
-//     // record.prepareUpdate ...
-//     let _p;
-//     const post = await database.get('posts').create(p => {
-//       p.title = '帖子';
-//       p.body = '我是一个帖子';
-//       _p = p;
-//     });
-//     const comment = await database.get('comments').create(c => {
-//       c.post.set(post);
-//       _p.comment.set(c.id);
-//       c.body = '我是一条评论';
-//     });
-//     console.log('comment', comment);
-//     return post;
-//   })
-//   .then(res => {
-//     console.log('res', res);
-//   })
-//   .catch(err => {
-//     console.log('err', err);
-//   });
-
-// const query = table.query();
-
-// console.log('table', table);
-// console.log('query', query);
-// query
-//   .fetch()
-//   .then(res => {
-//     console.log('res', res);
-//   })
-//   .catch(console.log);
 
 export default database;

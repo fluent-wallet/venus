@@ -1,32 +1,5 @@
 import {appSchema, tableSchema} from '@nozbe/watermelondb';
 
-const schema = appSchema({
-  version: 1,
-  tables: [
-    tableSchema({
-      name: 'posts',
-      columns: [
-        {name: 'title', type: 'string'},
-        {name: 'subtitle', type: 'string', isOptional: true},
-        {name: 'comment_id', type: 'string', isIndexed: true},
-        {name: 'body', type: 'string'},
-        {name: 'is_pinned', type: 'boolean'},
-        {name: 'created_at', type: 'number'},
-        {name: 'updated_at', type: 'number'},
-      ],
-    }),
-    tableSchema({
-      name: 'comments',
-      columns: [
-        {name: 'body', type: 'string'},
-        {name: 'post_id', type: 'string', isIndexed: true},
-        {name: 'created_at', type: 'number'},
-        {name: 'updated_at', type: 'number'},
-      ],
-    }),
-  ],
-});
-
 // WatermelonDB can not define a unique column.
 // We will should do some prevent duplicates manually.
 // see: https://github.com/Nozbe/WatermelonDB/issues/198. https://github.com/Nozbe/WatermelonDB/issues/36
@@ -50,7 +23,7 @@ const DBTABLESCHEMAS = [
       // netId
       {name: 'net_identification', type: 'number'},
       {name: 'ticker_id', type: 'string', isIndexed: true},
-      {name: 'builtin', type: 'string'},
+      {name: 'builtin', type: 'boolean', isOptional: true},
       {name: 'scan_url', type: 'string', isOptional: true},
       {name: 'selected', type: 'boolean', isOptional: true},
       {name: 'cache_time', type: 'number', isOptional: true},
@@ -82,7 +55,6 @@ const DBTABLESCHEMAS = [
   {
     name: 'token',
     columns: [
-      // one to many ref to token_list
       {name: 'token_list_id', type: 'string', isIndexed: true},
       {name: 'network_id', type: 'string', isIndexed: true},
       {name: 'address_id', type: 'string', isIndexed: true},
@@ -113,7 +85,8 @@ const DBTABLESCHEMAS = [
       {name: 'raw', type: 'string'},
       {name: 'hash', type: 'string'},
       // int, tx status, -2 skipped, -1 failed, 0 unsent, 1 sending, 2 pending, 3 packaged, 4 executed, 5 confirmed
-      {name: 'status', type: 'string'},
+      {name: 'status', type: 'number'},
+      // @json
       {name: 'receipt', type: 'string', isOptional: true},
       {name: 'block_number', type: 'number', isOptional: true},
       {name: 'block_hash', type: 'string', isOptional: true},
@@ -124,12 +97,13 @@ const DBTABLESCHEMAS = [
       {name: 'from_fluent', type: 'boolean', isOptional: true},
       {name: 'from_scan', type: 'boolean', isOptional: true},
       {name: 'resend_at', type: 'number', isOptional: true},
+      {name: 'tx_extra_id', type: 'string', isIndexed: true},
+      {name: 'tx_payload_id', type: 'string', isIndexed: true},
     ],
   },
   {
     name: 'tx_extra',
     columns: [
-      {name: 'tx_id', type: 'string', isIndexed: true},
       {name: 'ok', type: 'boolean', isOptional: true},
       {name: 'contract_creation', type: 'boolean', isOptional: true},
       {name: 'simple', type: 'boolean'},
@@ -144,7 +118,6 @@ const DBTABLESCHEMAS = [
   {
     name: 'tx_payload',
     columns: [
-      {name: 'tx_id', type: 'string', isIndexed: true},
       // For Berlin hardFork.
       {name: 'access_list', type: 'string'},
       {name: 'max_fee_per_gas', type: 'string'},
@@ -163,6 +136,15 @@ const DBTABLESCHEMAS = [
     ],
   },
   {
+    name: 'account_group',
+    columns: [
+      // Type of vault: pub, pk, hd, hw
+      {name: 'nickname', type: 'string'},
+      {name: 'hidden', type: 'boolean'},
+      {name: 'vault_id', type: 'string', isIndexed: true},
+    ],
+  },
+  {
     name: 'vault',
     columns: [
       // Type of vault: pub, pk, hd, hw
@@ -172,15 +154,6 @@ const DBTABLESCHEMAS = [
       {name: 'device', type: 'string'},
       // If type is pub/hw, means this vault is only for cfx type network, if type is hd, means only generate 0x1 prefix account.
       {name: 'cfx_only', type: 'boolean', isOptional: true},
-      {name: 'account_group_id', type: 'string', isIndexed: true},
-    ],
-  },
-  {
-    name: 'account_group',
-    columns: [
-      // Type of vault: pub, pk, hd, hw
-      {name: 'nickname', type: 'string'},
-      {name: 'hidden', type: 'boolean'},
     ],
   },
   {
@@ -201,9 +174,6 @@ const DBTABLESCHEMAS = [
       {name: 'value', type: 'string'},
       {name: 'hex', type: 'string'},
       {name: 'native_balance', type: 'string'},
-      {name: 'native_balance', type: 'string'},
-      {name: 'native_balance', type: 'string'},
-      {name: 'native_balance', type: 'string'},
     ],
   },
   // contact name and address
@@ -215,9 +185,9 @@ const DBTABLESCHEMAS = [
       {name: 'network_id', type: 'string', isIndexed: true},
     ],
   },
-  //TODO: dapp interaction
+  //TODO: dapp
 ];
-const schema2 = appSchema({
+const schema = appSchema({
   version: 1,
   tables: DBTABLESCHEMAS.map(item => tableSchema(item)),
 });
