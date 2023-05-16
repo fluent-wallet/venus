@@ -7,7 +7,17 @@
 import {useAsync} from 'react-use';
 import React, {useState} from 'react';
 import type {Node} from 'react';
+import * as Keychain from 'react-native-keychain';
 
+const defaultOptions = {
+  service: 'com.test123',
+  authenticationPromptTitle: 'authentication.auth_prompt_title',
+  authenticationPrompt: {title: 'authentication.auth_prompt_desc'},
+  authenticationPromptDesc: 'authentication.auth_prompt_desc',
+  fingerprintPromptTitle: 'authentication.fingerprint_prompt_title',
+  fingerprintPromptDesc: 'authentication.fingerprint_prompt_desc',
+  fingerprintPromptCancel: 'authentication.fingerprint_prompt_cancel',
+};
 import {
   SafeAreaView,
   ScrollView,
@@ -17,7 +27,7 @@ import {
   Pressable,
   StyleSheet,
 } from 'react-native';
-import database from './database';
+import database from './Database';
 
 const usePosts = (tableName = 'posts') => {
   // const database = useDatabase()
@@ -53,12 +63,38 @@ const styles = StyleSheet.create({
 });
 
 const App: () => Node = () => {
-  const posts = usePosts() || [];
-  const comments = usePosts('comments') || [];
+  // const posts = usePosts() || [];
+  // const comments = usePosts('comments') || [];
 
   const [password, setPassword] = useState('');
-  console.log('posts', posts);
-  console.log('comments', comments);
+  // console.log('posts', posts);
+  // console.log('comments', comments);
+  //  const type = await Keychain.getSupportedBiometryType();
+
+  const setGenPassword = async () => {
+    const type = await Keychain.getSupportedBiometryType();
+    const authOptions = {
+      accessible: Keychain.ACCESSIBLE.WHEN_UNLOCKED_THIS_DEVICE_ONLY,
+    };
+    if (type) {
+      authOptions.accessControl = Keychain.ACCESS_CONTROL.BIOMETRY_CURRENT_SET;
+    }
+    console.log('authOptions', authOptions);
+    const res = await Keychain.setGenericPassword('test-user', '11211aaa', {
+      ...defaultOptions,
+      ...authOptions,
+    });
+    console.log('res', res);
+  };
+
+  const getPassword = async () => {
+    const pwt = await Keychain.getGenericPassword(defaultOptions);
+    console.log('pwt', pwt);
+  };
+
+  const resetGenericPassword = async () => {
+    return Keychain.resetGenericPassword({service: defaultOptions.service});
+  };
 
   return (
     <SafeAreaView>
@@ -75,6 +111,15 @@ const App: () => Node = () => {
               console.log('password is', password);
             }}>
             <Text style={styles.button}>Confirm</Text>
+          </Pressable>
+          <Pressable onPress={setGenPassword}>
+            <Text style={styles.button}>set password</Text>
+          </Pressable>
+          <Pressable onPress={getPassword}>
+            <Text style={styles.button}>get password</Text>
+          </Pressable>
+          <Pressable onPress={resetGenericPassword}>
+            <Text style={styles.button}>reset password</Text>
           </Pressable>
         </View>
       </ScrollView>
