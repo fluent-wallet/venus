@@ -102,7 +102,7 @@ class Authentication {
   }
 
   /**
-   * Attempts to use biometric/pin code/remember me to login
+   * attempts to use biometric/pin code/remember me to login
    * @param selectedAddress - current address pulled from persisted state
    */
   appTriggeredAuth = async selectedAddress => {

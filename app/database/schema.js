@@ -20,8 +20,10 @@ const DBTABLESCHEMAS = [
       {name: 'icon', type: 'string', isOptional: true},
       {name: 'endpoint', type: 'string'},
       {name: 'hd_path_id', type: 'string', isIndexed: true},
-      // netId
       {name: 'net_identification', type: 'number'},
+      {name: 'gas_buffer', type: 'number'},
+      {name: 'chain_identification', type: 'string'},
+      {name: 'network_type', type: 'string'},
       {name: 'ticker_id', type: 'string', isIndexed: true},
       {name: 'builtin', type: 'boolean', isOptional: true},
       {name: 'scan_url', type: 'string', isOptional: true},
@@ -49,7 +51,7 @@ const DBTABLESCHEMAS = [
     columns: [
       {name: 'url', type: 'string'},
       {name: 'name', type: 'string'},
-      {name: 'value', type: 'string'},
+      {name: 'value', type: 'string', isOptional: true},
     ],
   },
   {

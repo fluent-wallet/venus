@@ -11,32 +11,48 @@ import {
 
 export class HdPath extends Model {
   static table = 'hd_path';
+  static associations = {
+    network: {type: 'has_many', foreignKey: 'hd_path_id'},
+  };
+
   @text('name') name;
   @text('value') value;
 }
 
 export class Network extends Model {
   static table = 'network';
+  static associations = {
+    hdPath: {type: 'belongs_to', key: 'hd_path_id'},
+    ticker: {type: 'belongs_to', key: 'ticker_id'},
+    tokenList: {type: 'belongs_to', key: 'token_list_id'},
+  };
 
   @text('name') name;
   @text('icon') icon;
   @text('endpoint') endpoint;
-  @immutableRelation('hd_path', 'hd_path_id') hdPath;
   @field('net_identification') netId;
-  @immutableRelation('ticker', 'ticker_id') ticker;
+  @field('gas_buffer') gasBuffer;
+  @text('chain_identification') chainId;
+  @text('network_type') networkType;
   @field('builtin') builtin;
   @text('scan_url') scanUrl;
   @field('selected') selected;
   @field('cache_time') cacheTime;
-  @immutableRelation('token_list', 'token_list_id') tokenList;
   @text('balance_checker') balanceChecker;
   @field('is_mainnet') isMainnet;
   @field('is_testnet') isTestnet;
   @field('is_custom') isCustom;
+  @relation('hd_path', 'hd_path_id') hdPath;
+  @immutableRelation('ticker', 'ticker_id') ticker;
+  @immutableRelation('token_list', 'token_list_id') tokenList;
 }
 
 export class Ticker extends Model {
   static table = 'ticker';
+  static associations = {
+    network: {type: 'has_many', key: 'ticker_id'},
+  };
+
   @text('name') name;
   @text('symbol') symbol;
   @field('decimals') decimals;
@@ -46,7 +62,7 @@ export class Ticker extends Model {
 export class TokenList extends Model {
   static table = 'token_list';
   static associations = {
-    comments: {type: 'has_many', foreignKey: 'token_list_id'},
+    network: {type: 'has_many', foreignKey: 'token_list_id'},
   };
   @children('token') token;
   @text('url') url;
