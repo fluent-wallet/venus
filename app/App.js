@@ -28,6 +28,7 @@ import {
   StyleSheet,
 } from 'react-native';
 import database from './Database';
+import initDatabase from './Controller/initDatabase';
 
 const usePosts = (tableName = 'posts') => {
   // const database = useDatabase()
@@ -65,12 +66,17 @@ const styles = StyleSheet.create({
 const App: () => Node = () => {
   // const posts = usePosts() || [];
   // const comments = usePosts('comments') || [];
+  // const networks = usePosts('network') || [];
 
+  // console.log('networks', networks);
   const [password, setPassword] = useState('');
   // console.log('posts', posts);
   // console.log('comments', comments);
   //  const type = await Keychain.getSupportedBiometryType();
 
+  useAsync(async () => {
+    initDatabase();
+  });
   const setGenPassword = async () => {
     const type = await Keychain.getSupportedBiometryType();
     const authOptions = {
