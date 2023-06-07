@@ -1,6 +1,6 @@
 import {Platform} from 'react-native';
 import * as KeyChain from 'react-native-keychain';
-import Encrypt from './Encrypt';
+import Encrypt from '../utils/encrypt';
 
 const encrypt = new Encrypt();
 
@@ -24,21 +24,24 @@ const AUTHENTICATION_TYPE = {
 
 const ENCRYPT_CODE = 'FLUENT_CODE';
 class Authentication {
-  TYPES: {
-    BIOMETRICS: 'BIOMETRICS',
-    PASSCODE: 'PASSCODE',
-    REMEMBER_ME: 'REMEMBER_ME',
-  };
-  encryptPassword(password) {
+  constructor() {
+    this.TYPES = {
+      BIOMETRICS: 'BIOMETRICS',
+      PASSCODE: 'PASSCODE',
+      REMEMBER_ME: 'REMEMBER_ME',
+    };
+  }
+  async encryptPassword(password) {
     return encrypt.encrypt(ENCRYPT_CODE, {password});
   }
 
-  decryptPassword(str) {
+  async decryptPassword(str) {
     return encrypt.decrypt(ENCRYPT_CODE, str);
   }
 
   async getGenericPassword() {
     const keyChainObject = await KeyChain.getGenericPassword(defaultOptions);
+    console.log('keyChainObject', keyChainObject);
     if (keyChainObject.password) {
       const encryptedPassword = keyChainObject.password;
       const decrypted = await this.decryptPassword(encryptedPassword);
@@ -60,6 +63,8 @@ class Authentication {
     }
 
     const encryptedPassword = await this.encryptPassword(password);
+
+    console.log('encryptedPassword', encryptedPassword);
     await KeyChain.setGenericPassword('fluent-user', encryptedPassword, {
       ...defaultOptions,
       ...authOptions,

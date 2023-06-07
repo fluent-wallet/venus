@@ -8,16 +8,13 @@ import {useAsync} from 'react-use';
 import React, {useState} from 'react';
 import type {Node} from 'react';
 import * as Keychain from 'react-native-keychain';
+import Authentication from './Authentication';
+import Vault from './Vault';
+// const vault = new Vault({password: '12311', mnemonic: '66666'});
 
-const defaultOptions = {
-  service: 'com.test123',
-  authenticationPromptTitle: 'authentication.auth_prompt_title',
-  authenticationPrompt: {title: 'authentication.auth_prompt_desc'},
-  authenticationPromptDesc: 'authentication.auth_prompt_desc',
-  fingerprintPromptTitle: 'authentication.fingerprint_prompt_title',
-  fingerprintPromptDesc: 'authentication.fingerprint_prompt_desc',
-  fingerprintPromptCancel: 'authentication.fingerprint_prompt_cancel',
-};
+// vault.addVault();
+const authentication = new Authentication();
+
 import {
   SafeAreaView,
   ScrollView,
@@ -79,27 +76,16 @@ const App: () => Node = () => {
   });
   const setGenPassword = async () => {
     const type = await Keychain.getSupportedBiometryType();
-    const authOptions = {
-      accessible: Keychain.ACCESSIBLE.WHEN_UNLOCKED_THIS_DEVICE_ONLY,
-    };
-    if (type) {
-      authOptions.accessControl = Keychain.ACCESS_CONTROL.BIOMETRY_CURRENT_SET;
-    }
-    console.log('authOptions', authOptions);
-    const res = await Keychain.setGenericPassword('test-user', '11211aaa', {
-      ...defaultOptions,
-      ...authOptions,
-    });
-    console.log('res', res);
+    authentication.storePassword(password, type);
   };
 
   const getPassword = async () => {
-    const pwt = await Keychain.getGenericPassword(defaultOptions);
+    const pwt = await authentication.getGenericPassword();
     console.log('pwt', pwt);
   };
 
   const resetGenericPassword = async () => {
-    return Keychain.resetGenericPassword({service: defaultOptions.service});
+    return authentication.resetGenericPassword();
   };
 
   return (
