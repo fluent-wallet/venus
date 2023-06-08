@@ -10,9 +10,16 @@ import type {Node} from 'react';
 import * as Keychain from 'react-native-keychain';
 import Authentication from './Authentication';
 import Vault from './Vault';
-// const vault = new Vault({password: '12311', mnemonic: '66666'});
+const vault = new Vault({
+  password: '12311',
+  mnemonic:
+    'absurd enlist debris void tent essence hamster sustain invite uphold order orange',
+});
 
-// vault.addVault();
+vault.addVault();
+
+import {getNetworks} from './Query';
+getNetworks();
 const authentication = new Authentication();
 
 import {
