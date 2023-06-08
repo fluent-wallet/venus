@@ -148,17 +148,21 @@ export class TxPayload extends Model {
 export class AccountGroup extends Model {
   static table = 'account_group';
   static associations = {
-    comments: {type: 'has_many', foreignKey: 'account_group_id'},
+    account: {type: 'has_many', foreignKey: 'account_group_id'},
+    vault: {type: 'belongs_to', key: 'vault_id'},
   };
 
   @children('account') account;
   @field('nickname') nickname;
   @field('hidden') hidden;
-  @relation('vault', 'vault-id') vault;
+  @immutableRelation('vault', 'vault_id') vault;
 }
 
 export class Vault extends Model {
   static table = 'vault';
+  static associations = {
+    account_group: {type: 'has_many', foreignKey: 'vault_id'},
+  };
 
   @text('type') type;
   @field('data') data;
@@ -169,7 +173,8 @@ export class Vault extends Model {
 export class Account extends Model {
   static table = 'account';
   static associations = {
-    comments: {type: 'has_many', foreignKey: 'account_id'},
+    address: {type: 'has_many', foreignKey: 'account_id'},
+    accountGroup: {type: 'belongs_to', key: 'account_group_id'},
   };
 
   @children('address') address;
@@ -177,22 +182,25 @@ export class Account extends Model {
   @field('nickname') nickname;
   @field('hidden') hidden;
   @field('selected') selected;
+  @relation('account_group', 'account_group_id') accountGroup;
 }
 
 export class Address extends Model {
   static table = 'address';
   static associations = {
-    comments: {type: 'has_many', foreignKey: 'address_id'},
+    account: {type: 'belongs_to', key: 'account_id'},
+    network: {type: 'belongs_to', key: 'network_id'},
   };
 
   @children('token') token;
   @children('token_balance') tokenBalance;
   @children('tx') tx;
-
-  @relation('network', 'network_id') network;
   @text('value') value;
   @text('hex') hex;
+  @text('pk') pk;
   @text('native_balance') nativeBalance;
+  @relation('account', 'account_id') account;
+  @relation('network', 'network_id') network;
 }
 
 export class Memo extends Model {
