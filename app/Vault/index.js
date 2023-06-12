@@ -1,8 +1,9 @@
 import {getNthAccountOfHDKey} from '@fluent-wallet/hdkey';
-
+import {toAccountAddress, fromPrivate} from '@fluent-wallet/account';
+import {encode} from '@fluent-wallet/base32-address';
 import database from '../Database';
-import {getDuplicatesByContent} from '../utils/validateDuplicateRecords';
 import {getNetworks, getAccountGroups} from '../Query';
+import {validateDuplicateVault} from '../utils';
 import Encrypt from '../utils/encrypt';
 const encrypt = new Encrypt();
 
@@ -14,18 +15,30 @@ class Vault {
     this.device = device;
   }
 
-  _generateAccountsByMnemonic(networksArr, nth = 0) {
+  _generateAddressesByMnemonic(networksArr, nth = 0) {
     return networksArr.map(async ({hdPath}) => {
       const hdPathValue = await hdPath.fetch().value;
-      const ret = getNthAccountOfHDKey({
+      const ret = await getNthAccountOfHDKey({
         mnemonic: this.mnemonic,
         hdPath: hdPathValue,
         nth,
       });
+      ret.encryptPk = await encrypt.encrypt(this.password, {
+        pk: ret.privateKey,
+      });
       return ret;
     });
   }
-
+  _generateAddressesByPk(networksArr, encryptData) {
+    const address = fromPrivate(encryptData).address;
+    if (!this.pk) {
+      return;
+    }
+    return networksArr.map(() => ({
+      address,
+      encryptPk: encryptData,
+    }));
+  }
   _preCreateVault(encryptData) {
     return database.get('vault').prepareCreate(r => {
       r.type = this.mnemonic ? 'hd' : 'pk';
@@ -57,38 +70,47 @@ class Vault {
     });
   }
 
-  _preCreateAddress({account, network, value, hex, pk, nativeBalance = '0x0'}) {
+  _preCreateAddress({account, network, hex, pk, nativeBalance = '0x0'}) {
     return database.get('address').prepareCreate(r => {
       r.account.set(account);
       r.network.set(network);
-      r.value = value;
+      r.value =
+        network.networkType === 'cfx'
+          ? encode(toAccountAddress(hex), network.netId)
+          : hex;
       r.hex = hex;
       r.pk = pk;
       r.native_balance = nativeBalance;
     });
   }
   async addVault() {
-    // TODO: not support pub hw and cfxOnly for now
+    // not support pub hw and cfxOnly for now
+    const isDuplicate = await validateDuplicateVault(
+      this.password,
+      this.mnemonic || this.pk,
+    );
+
+    if (isDuplicate) {
+      throw new Error('duplicate mnemonic or pk!');
+    }
+
     const encryptData = await encrypt.encrypt(this.password, {
       data: this.mnemonic || this.pk,
     });
-    const duplicates = await getDuplicatesByContent(
-      'vault',
-      'data',
-      encryptData,
-    );
 
-    if (duplicates.length) {
-      throw new Error('duplicate mnemonic or pk!');
-    }
     const networksArr = await getNetworks();
-    const hdRets = await Promise.all(
-      this._generateAccountsByMnemonic(networksArr),
-    );
+    let hdRets = [];
 
-    console.log('hdRets', hdRets);
+    if (this.mnemonic) {
+      hdRets = await Promise.all(
+        this._generateAddressesByMnemonic(networksArr),
+      );
+    } else if (this.pk) {
+      hdRets = this._generateAddressesByPk(networksArr, encryptData);
+    }
 
-    console.log('networksArr', networksArr);
+    // console.log('hdRets', hdRets);
+    // console.log('networksArr', networksArr);
     const groups = await getAccountGroups();
 
     const vaultTableInstance = this._preCreateVault(encryptData);
@@ -102,15 +124,21 @@ class Vault {
       groups,
       accountIndex: 0,
     });
-    // TODO 根据networkType ===cfx 判断 生成value 地址.加密私钥
-    const addressTableInstance = hdRets.map((r, index) => {
+    const addressTableInstance = hdRets.map(({address, encryptPk}, index) => {
       return this._preCreateAddress({
         account: accountTableInstance,
         network: networksArr[index],
+        hex: address,
+        pk: encryptPk,
       });
     });
     await database.write(async () => {
-      await database.batch(vaultTableInstance);
+      await database.batch(
+        vaultTableInstance,
+        accountGroupTableInstance,
+        accountTableInstance,
+        ...addressTableInstance,
+      );
     });
   }
 }

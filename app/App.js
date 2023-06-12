@@ -9,15 +9,13 @@ import React, {useState} from 'react';
 import type {Node} from 'react';
 import * as Keychain from 'react-native-keychain';
 import Authentication from './Authentication';
-import Vault from './Vault';
-const vault = new Vault({
-  password: '12311',
-  mnemonic:
-    'absurd enlist debris void tent essence hamster sustain invite uphold order orange',
-});
+// import Vault from './Vault';
+// const vault = new Vault({
+//   password: '12311',
+//   mnemonic: '',
+// });
 
-vault.addVault();
-
+// vault.addVault();
 import {getNetworks} from './Query';
 getNetworks();
 const authentication = new Authentication();
@@ -34,7 +32,7 @@ import {
 import database from './Database';
 import initDatabase from './Controller/initDatabase';
 
-const usePosts = (tableName = 'posts') => {
+const useTableRecord = (tableName = 'posts') => {
   // const database = useDatabase()
   const {value} = useAsync(async () => {
     const res = await database.get(tableName).query().fetch();
@@ -68,11 +66,9 @@ const styles = StyleSheet.create({
 });
 
 const App: () => Node = () => {
-  // const posts = usePosts() || [];
-  // const comments = usePosts('comments') || [];
-  // const networks = usePosts('network') || [];
+  const addresses = useTableRecord('address') || [];
 
-  // console.log('networks', networks);
+  console.log('addresses', addresses);
   const [password, setPassword] = useState('');
   // console.log('posts', posts);
   // console.log('comments', comments);

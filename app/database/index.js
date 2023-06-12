@@ -7,7 +7,7 @@ import migrations from './migrations';
 import * as models from './model';
 
 const adapter = new SQLiteAdapter({
-  dbName: 'venus_database3',
+  dbName: 'venus_database5',
   schema,
   migrations,
   // RN not support synchronous mode yet(ps: jsi === true means enable synchronous mode).see below:
