@@ -2,17 +2,26 @@ import {getNthAccountOfHDKey} from '@fluent-wallet/hdkey';
 import {toAccountAddress, fromPrivate} from '@fluent-wallet/account';
 import {encode} from '@fluent-wallet/base32-address';
 import database from '../Database';
-import {getNetworks, getAccountGroups} from '../Query';
 import {validateDuplicateVault} from '../utils';
 import Encrypt from '../utils/encrypt';
+
 const encrypt = new Encrypt();
 
 class Vault {
-  constructor({password, mnemonic, pk, device = 'VenusMobile'}) {
+  constructor({
+    password,
+    mnemonic,
+    pk,
+    device = 'VenusMobile',
+    networks,
+    accountGroups,
+  }) {
     this.password = password;
     this.mnemonic = mnemonic;
     this.pk = pk;
     this.device = device;
+    this.networks = networks;
+    this.accountGroups = accountGroups;
   }
 
   _generateAddressesByMnemonic(networksArr, nth = 0) {
@@ -94,40 +103,40 @@ class Vault {
       throw new Error('duplicate mnemonic or pk!');
     }
 
+    if (!this.mnemonic && !this.pk) {
+      throw new Error('need mnemonic or pk!');
+    }
+
     const encryptData = await encrypt.encrypt(this.password, {
       data: this.mnemonic || this.pk,
     });
 
-    const networksArr = await getNetworks();
+    // const networksArr = await getNetworks();
     let hdRets = [];
 
     if (this.mnemonic) {
       hdRets = await Promise.all(
-        this._generateAddressesByMnemonic(networksArr),
+        this._generateAddressesByMnemonic(this.networks),
       );
-    } else if (this.pk) {
-      hdRets = this._generateAddressesByPk(networksArr, encryptData);
+    } else {
+      hdRets = this._generateAddressesByPk(this.networks, encryptData);
     }
-
-    // console.log('hdRets', hdRets);
-    // console.log('networksArr', networksArr);
-    const groups = await getAccountGroups();
 
     const vaultTableInstance = this._preCreateVault(encryptData);
     const accountGroupTableInstance = this._preCreateAccountGroup(
       vaultTableInstance,
-      groups,
+      this.accountGroups,
     );
 
     const accountTableInstance = this._preCreateAccount({
       accountGroup: accountGroupTableInstance,
-      groups,
+      groups: this.accountGroups,
       accountIndex: 0,
     });
     const addressTableInstance = hdRets.map(({address, encryptPk}, index) => {
       return this._preCreateAddress({
         account: accountTableInstance,
-        network: networksArr[index],
+        network: this.networks[index],
         hex: address,
         pk: encryptPk,
       });
