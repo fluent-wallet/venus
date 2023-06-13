@@ -9,15 +9,8 @@ import React, {useState} from 'react';
 import type {Node} from 'react';
 import * as Keychain from 'react-native-keychain';
 import Authentication from './Authentication';
-// import Vault from './Vault';
-// const vault = new Vault({
-//   password: '12311',
-//   mnemonic: '',
-// });
+import './demo';
 
-// vault.addVault();
-import {getNetworks} from './Query';
-getNetworks();
 const authentication = new Authentication();
 
 import {
@@ -30,17 +23,12 @@ import {
   StyleSheet,
 } from 'react-native';
 import database from './Database';
-import initDatabase from './Controller/initDatabase';
 
 const useTableRecord = (tableName = 'posts') => {
   // const database = useDatabase()
   const {value} = useAsync(async () => {
     const res = await database.get(tableName).query().fetch();
-    // const res2 = await database
-    // .get("posts")
-    // .query(Q.where("id", "jl34xbkm800tbhvs"));
 
-    // console.log("res2", res2);
     return res;
   }, []);
   return value;
@@ -66,17 +54,13 @@ const styles = StyleSheet.create({
 });
 
 const App: () => Node = () => {
-  const addresses = useTableRecord('address') || [];
-
-  console.log('addresses', addresses);
+  const tokens = useTableRecord('token') || [];
+  console.log('tokens', tokens);
   const [password, setPassword] = useState('');
-  // console.log('posts', posts);
-  // console.log('comments', comments);
-  //  const type = await Keychain.getSupportedBiometryType();
 
-  useAsync(async () => {
-    initDatabase();
-  });
+  // useAsync(async () => {
+  //   initDatabase();
+  // });
   const setGenPassword = async () => {
     const type = await Keychain.getSupportedBiometryType();
     authentication.storePassword(password, type);

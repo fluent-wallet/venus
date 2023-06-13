@@ -25,8 +25,10 @@ export class Network extends Model {
     hdPath: {type: 'belongs_to', key: 'hd_path_id'},
     ticker: {type: 'belongs_to', key: 'ticker_id'},
     tokenList: {type: 'belongs_to', key: 'token_list_id'},
+    token: {type: 'has_many', foreignKey: 'network_id'},
   };
 
+  @children('token') token;
   @text('name') name;
   @text('icon') icon;
   @text('endpoint') endpoint;
@@ -73,8 +75,10 @@ export class TokenList extends Model {
 export class Token extends Model {
   static table = 'token';
   static associations = {
-    comments: {type: 'has_many', foreignKey: 'token_id'},
+    network: {type: 'belongs_to', key: 'network_id'},
+    address: {type: 'belongs_to', key: 'address_id'},
   };
+
   @children('token_balance') tokenBalance;
   @children('tx') tx;
 
@@ -83,7 +87,7 @@ export class Token extends Model {
   @text('token_address') tokenAddress;
   @text('symbol') symbol;
   @field('decimals') decimals;
-  @text('logo_uri') logoUri;
+  @text('logo_uri') logoURI;
   @field('from_list') fromList;
   @field('from_app') fromApp;
   @field('from_user') fromUser;
@@ -190,6 +194,7 @@ export class Address extends Model {
   static associations = {
     account: {type: 'belongs_to', key: 'account_id'},
     network: {type: 'belongs_to', key: 'network_id'},
+    token: {type: 'has_many', key: 'address_id'},
   };
 
   @children('token') token;
