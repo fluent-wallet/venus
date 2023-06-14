@@ -54,8 +54,13 @@ const styles = StyleSheet.create({
 });
 
 const App: () => Node = () => {
-  const tokens = useTableRecord('token') || [];
-  console.log('tokens', tokens);
+  // const tokens = useTableRecord('token') || [];
+  // const address = useTableRecord('address') || [];
+  // const network = useTableRecord('network') || [];
+
+  // console.log('address', address);
+  // console.log('network', network);
+  // console.log('tokens', tokens);
   const [password, setPassword] = useState('');
 
   // useAsync(async () => {
