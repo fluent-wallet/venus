@@ -3,7 +3,7 @@ import Token20 from './Token20';
 import initDatabase from './Controller/initDatabase';
 import {getNetworks, getAccountGroups} from './Query';
 import Balance from './Balance';
-import {CFX_TESTNET_RPC_ENDPOINT} from './Consts/network';
+import {CFX_TESTNET_RPC_ENDPOINT, CFX_TESTNET_NETID} from './Consts/network';
 // 初始化数据库
 initDatabase();
 /* *************************************************************** */
@@ -21,12 +21,17 @@ const importAccount = async () => {
 };
 
 // importAccount();
-/* *************************************************************** */
 // 把tokenList 的token 添加到数据库里
-const token20 = new Token20();
+// const token20 = new Token20();
 // token20.initTokenToCurrentNetwork();
 /* *************************************************************** */
 
 // get native balance
-// const balance = new Balance(CFX_TESTNET_RPC_ENDPOINT, 'cfx');
-// balance.getBalance('cfxtest:aamx6vj8avtza17s92tsd5sr77mvtw7rparkba6px2');
+// const balance = new Balance({
+//   endpoint: CFX_TESTNET_RPC_ENDPOINT,
+//   networkId: CFX_TESTNET_NETID,
+//   networkType: 'cfx',
+// });
+// balance.getNativeBalance('cfxtest:aamx6vj8avtza17s92tsd5sr77mvtw7rparkba6px2');
+
+/* *************************************************************** */
