@@ -1117,6 +1117,21 @@
     minimatch "^3.0.4"
     strip-json-comments "^3.1.1"
 
+"@ethersproject/abi@5.6.1":
+  version "5.6.1"
+  resolved "https://registry.npmjs.org/@ethersproject/abi/-/abi-5.6.1.tgz#f7de888edeb56b0a657b672bdd1b3a1135cd14f7"
+  integrity sha512-0cqssYh6FXjlwKWBmLm3+zH2BNARoS5u/hxbz+LpQmcDB3w0W553h2btWui1/uZp2GBM/SI3KniTuMcYyHpA5w==
+  dependencies:
+    "@ethersproject/address" "^5.6.0"
+    "@ethersproject/bignumber" "^5.6.0"
+    "@ethersproject/bytes" "^5.6.0"
+    "@ethersproject/constants" "^5.6.0"
+    "@ethersproject/hash" "^5.6.0"
+    "@ethersproject/keccak256" "^5.6.0"
+    "@ethersproject/logger" "^5.6.0"
+    "@ethersproject/properties" "^5.6.0"
+    "@ethersproject/strings" "^5.6.0"
+
 "@ethersproject/abstract-provider@^5.6.0", "@ethersproject/abstract-provider@^5.7.0":
   version "5.7.0"
   resolved "https://registry.npmjs.org/@ethersproject/abstract-provider/-/abstract-provider-5.7.0.tgz#b0a8550f88b6bf9d51f90e4795d48294630cb9ef"
@@ -1801,6 +1816,14 @@
   version "0.0.16"
   resolved "https://registry.npmjs.org/@fluent-wallet/consts/-/consts-0.0.16.tgz#0de641d5a32fc41b21663019ca43f6b36945d6f0"
   integrity sha512-cieLS2XUTvf/8cggkBxG7X+OK3MbvgwQ4NHb6MI9DY0JwDc+PfdFgRKymLH6LqWUROXqkPYBVtS08vihlrBPTA==
+
+"@fluent-wallet/contract-abis@^0.0.3":
+  version "0.0.3"
+  resolved "https://registry.npmjs.org/@fluent-wallet/contract-abis/-/contract-abis-0.0.3.tgz#9a729588a57fba1bd2dfaef33f55733c72118d08"
+  integrity sha512-PQjevtofoo/Y/VpKHzEvnaEbfEvb1aDBoawG7djSD5+vWmlx1EmhIkd+XoYchAqk4rhjVp52WltLVMmxBTOzIg==
+  dependencies:
+    "@ethersproject/abi" "5.6.1"
+    "@fluent-wallet/compose" "0.0.4"
 
 "@fluent-wallet/hdkey@^0.1.1":
   version "0.1.1"
