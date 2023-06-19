@@ -9,7 +9,7 @@ import React, {useState} from 'react';
 import type {Node} from 'react';
 import * as Keychain from 'react-native-keychain';
 import Authentication from './Authentication';
-import './demo';
+import './demo.js';
 
 const authentication = new Authentication();
 
