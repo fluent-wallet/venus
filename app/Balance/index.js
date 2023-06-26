@@ -70,7 +70,7 @@ class Balance {
     console.log('ret', ret);
     return ret;
   }
-  async callTokenBalance({userAddress, tokenAddress}) {
+  async getTokenBalance({userAddress, tokenAddress}) {
     userAddress = this.isCfx ? decode(userAddress).hexAddress : userAddress;
     const data = tokenContractIface.encodeFunctionData('balanceOf', [
       userAddress,
