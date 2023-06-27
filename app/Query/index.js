@@ -31,3 +31,11 @@ export const getAddressByValueAndNetworkId = async (value, network_id) => {
       Q.and(Q.where('address', value), Q.where('network_id', Q.eq(network_id))),
     );
 };
+
+export const getTxByAddrAndHash = async (hash, address_id) => {
+  return database
+    .get('tx')
+    .query(
+      Q.and(Q.where('hash', hash), Q.where('address_id', Q.eq(address_id))),
+    );
+};

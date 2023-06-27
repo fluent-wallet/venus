@@ -62,8 +62,6 @@ export const DB_TABLE_SCHEMAS_OBJ = {
     {name: 'address_id', type: 'string', isIndexed: true},
   ],
   tx: [
-    {name: 'token_id', type: 'string', isIndexed: true, isOptional: true},
-    {name: 'address_id', type: 'string', isIndexed: true},
     {name: 'raw', type: 'string'},
     {name: 'hash', type: 'string'},
     // int, tx status, -2 skipped, -1 failed, 0 unsent, 1 sending, 2 pending, 3 packaged, 4 executed, 5 confirmed
@@ -79,6 +77,8 @@ export const DB_TABLE_SCHEMAS_OBJ = {
     {name: 'from_fluent', type: 'boolean', isOptional: true},
     {name: 'from_scan', type: 'boolean', isOptional: true},
     {name: 'resend_at', type: 'number', isOptional: true},
+    {name: 'token_id', type: 'string', isIndexed: true, isOptional: true},
+    {name: 'address_id', type: 'string', isIndexed: true},
     {name: 'tx_extra_id', type: 'string', isIndexed: true},
     {name: 'tx_payload_id', type: 'string', isIndexed: true},
   ],

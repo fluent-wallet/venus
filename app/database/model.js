@@ -101,6 +101,12 @@ export class TokenBalance extends Model {
 
 export class Tx extends Model {
   static table = 'tx';
+  static associations = {
+    token: {type: 'belongs_to', key: 'token_id'},
+    address: {type: 'belongs_to', key: 'address_id'},
+    txExtra: {type: 'belongs_to', key: 'tx_extra_id'},
+    txPayload: {type: 'belongs_to', key: 'tx_payload_id'},
+  };
 
   @text('raw') raw;
   @text('hash') hash;
@@ -115,12 +121,15 @@ export class Tx extends Model {
   @field('from_fluent') fromFluent;
   @field('from_scan') fromScan;
   @date('resend_at') resendAt;
+  @relation('token', 'token_id') token;
+  @relation('address', 'address_id') address;
   @relation('tx_extra', 'tx_extra_id') txExtra;
   @relation('tx_payload', 'tx_payload_id') txPayload;
 }
 
 export class TxExtra extends Model {
   static table = 'tx_extra';
+
   @field('ok') ok;
   @field('contract_creation') contractCreation;
   @field('simple') simple;
