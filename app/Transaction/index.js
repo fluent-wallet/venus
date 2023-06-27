@@ -1,9 +1,10 @@
-import {cfxSignTransaction} from '@fluent-wallet/signature';
+import {cfxSignTransaction, getTxHashFromRawTx} from '@fluent-wallet/signature';
 import {
   detectCfxAddressType,
   detectEthAddressType,
 } from '@fluent-wallet/detect-address-type';
-import {getAddressByValueAndNetworkId} from '../Query';
+import {getAddressByValueAndNetworkId, getTxByAddrAndHash} from '../Query';
+import database from '../Database';
 import initSend from '../utils/send';
 import Encrypt from '../utils/encrypt';
 
@@ -27,6 +28,39 @@ class Transaction {
       });
     }
   }
+
+  _preCreateTxExtra(params) {
+    return database.get('tx_extra').prepareCreate(r => {
+      for (const [key, value] of Object.entries(params)) {
+        r[key] = value;
+      }
+    });
+  }
+  _preCreateTxPayload(params) {
+    return database.get('tx_payload').prepareCreate(r => {
+      for (const [key, value] of Object.entries(params)) {
+        r[key] = value;
+      }
+    });
+  }
+  _preCreateTx(params) {
+    const {token, address, txExtra, txPayload, ...rest} = params;
+
+    return database.get('tx').prepareCreate(r => {
+      for (const [key, value] of Object.entries(rest)) {
+        r[key] = value;
+      }
+      token && r.token.set(token);
+      address && r.address.set(address);
+      txExtra && r.txExtra.set(txExtra);
+      txPayload && r.txPayload.set(txPayload);
+    });
+  }
+  async createTx() {
+    return await database.write(async () => {
+      await database.batch();
+    });
+  }
   getCfxEpochNumber(...args) {
     return this.send('cfx_epochNumber', ...args);
   }
@@ -36,9 +70,18 @@ class Transaction {
   getCfxEstimateGasAndCollateral(...args) {
     return this.send('cfx_estimateGasAndCollateral', ...args);
   }
+  getEthBlockNumber() {
+    return this.send('eth_blockNumber', []);
+  }
   async getDecryptPk(encryptedDataPk) {
     const {pk} = await encrypt.decrypt(this.password, encryptedDataPk);
     return pk;
+  }
+  async sendRawTransaction(raw) {
+    return this.send(
+      this.isCfx ? 'cfx_sendRawTransaction' : 'eth_sendRawTransaction',
+      [raw],
+    );
   }
   async getCfxNextNonce(...args) {
     try {
@@ -47,7 +90,7 @@ class Transaction {
       return await this.send('cfx_getNextNonce', ...args);
     }
   }
-  async signCfxTransaction(tx) {
+  async signCfxTransaction(tx, addressRecord) {
     if (tx.chainId && tx.chainId !== this.network.chainId) {
       throw Error(`Invalid chainId ${tx.chainId}`);
     }
@@ -58,15 +101,6 @@ class Transaction {
       tx.to = tx.to.toLowerCase('address');
     }
     const newTx = {...tx};
-
-    const fromAddr = await getAddressByValueAndNetworkId(
-      newTx.from,
-      this.network.id,
-    )?.[0];
-
-    if (!fromAddr) {
-      throw Error(`Invalid from address ${newTx.from}`);
-    }
 
     // tx without to must have data (deploy contract)
     if (!newTx.to && !newTx.data) {
@@ -126,13 +160,47 @@ class Transaction {
       }
     }
 
-    const pk = await this.getDecryptPk(fromAddr.pk);
+    const pk = await this.getDecryptPk(addressRecord.pk);
 
     const raw = cfxSignTransaction(newTx, pk, this.network.netId);
 
-    return raw;
+    return {raw, payload: newTx};
   }
-  sendCfxTransaction() {}
+  async signEthTransaction() {}
+  async sendCfxTransaction({tx, sendAction, token}) {
+    const addressRecord = await getAddressByValueAndNetworkId(
+      tx.from,
+      this.network.id,
+    )?.[0];
+
+    if (!addressRecord) {
+      throw Error(`Invalid from address ${tx.from}`);
+    }
+    const signTxFn = this.isCfx
+      ? this.signCfxTransaction
+      : this.signEthTransaction;
+    let signed;
+    try {
+      signed = await signTxFn(tx, addressRecord);
+    } catch (err) {
+      throw err;
+    }
+
+    if (!signed) {
+      throw Error('Server error while signing tx');
+    }
+    const {raw, payload} = signed;
+    const txhash = getTxHashFromRawTx(raw);
+    const dupTx = await getTxByAddrAndHash(txhash, addressRecord.id);
+    if (dupTx) {
+      throw Error('duplicate tx');
+    }
+    const blockNumber = !this.isCfx && (await this.getEthBlockNumber());
+    await this.sendRawTransaction(raw);
+    database.write(async () => {
+      await database.batch(this._preCreateTxExtra({hash: txhash}));
+    });
+  }
 }
 
 export default Transaction;
