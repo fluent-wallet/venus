@@ -22,7 +22,7 @@ class Token20 {
       return;
     }
 
-    console.log('currentNetwork', currentNetwork);
+    // console.log('currentNetwork', currentNetwork);
     const tokenList = await currentNetwork[0].tokenList;
     const token = await fetch(tokenList.url).then(r => r.json());
     const tokenTableInstance = token.tokens.map(
