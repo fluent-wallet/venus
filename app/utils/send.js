@@ -31,7 +31,9 @@ const initSend = endpoint => {
       body: JSON.stringify({
         ...bodyParams,
       }),
-    }).then(r => r.json());
+    })
+      .then(r => r.json())
+      .then(r => r.result);
   };
 
   return send;

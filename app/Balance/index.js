@@ -82,7 +82,8 @@ class Balance {
     console.log('ret', ret);
     return ret;
   }
-  async checkTokenBalance({userAddress, tokenAddress, checkerAddress}) {
+  // get token balance by balance checker
+  async getTokenBalances({userAddress, tokenAddress, checkerAddress}) {
     userAddress = Array.isArray(userAddress) ? userAddress : [userAddress];
     tokenAddress = Array.isArray(tokenAddress) ? tokenAddress : [tokenAddress];
     const data = checkerContractIface.encodeFunctionData('balances', [

@@ -1,4 +1,9 @@
 {
   "name": "venus",
-  "displayName": "venus"
+  "displayName": "venus",
+  "expo": {
+    "packagerOpts": {
+      "sourceExts": ["cjs"]
+    }
+  }
 }

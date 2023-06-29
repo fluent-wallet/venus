@@ -25,11 +25,13 @@ export const getAddressByValue = async value => {
 };
 
 export const getAddressByValueAndNetworkId = async (value, network_id) => {
-  return database
+  const ret = await database
     .get('address')
     .query(
-      Q.and(Q.where('address', value), Q.where('network_id', Q.eq(network_id))),
-    );
+      Q.and(Q.where('value', value), Q.where('network_id', Q.eq(network_id))),
+    )
+    .fetch();
+  return ret[0];
 };
 
 export const getTxByAddrAndHash = async (hash, address_id) => {

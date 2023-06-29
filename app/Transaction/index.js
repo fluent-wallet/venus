@@ -125,12 +125,8 @@ class Transaction {
     if (!newTx.nonce) {
       newTx.nonce = await this.getCfxNextNonce([newTx.from]);
     }
-
     if (newTx.to && (!newTx.gas || !newTx.storageLimit)) {
-      const {type} = await this.detectAddressType(
-        {errorFallThrough: true},
-        {address: newTx.to},
-      );
+      const {type} = await this.detectAddressType(newTx.to);
       if (type !== 'contract' && !newTx.data) {
         if (!newTx.gas) {
           newTx.gas = '0x5208';
@@ -144,11 +140,11 @@ class Transaction {
     if (!newTx.gasPrice) {
       newTx.gasPrice = await this.getCfxGasPrice();
     }
-
     if (!newTx.gas || !newTx.storageLimit) {
       try {
         const {gasLimit, storageCollateralized} =
           await this.getCfxEstimateGasAndCollateral([newTx]);
+
         if (!newTx.gas) {
           newTx.gas = gasLimit;
         }
@@ -161,7 +157,6 @@ class Transaction {
     }
 
     const pk = await this.getDecryptPk(addressRecord.pk);
-
     const raw = cfxSignTransaction(newTx, pk, this.network.netId);
 
     return {raw, payload: newTx};
@@ -171,28 +166,27 @@ class Transaction {
     const addressRecord = await getAddressByValueAndNetworkId(
       tx.from,
       this.network.id,
-    )?.[0];
+    );
 
     if (!addressRecord) {
       throw Error(`Invalid from address ${tx.from}`);
     }
     const signTxFn = this.isCfx
-      ? this.signCfxTransaction
-      : this.signEthTransaction;
+      ? this.signCfxTransaction.bind(this)
+      : this.signEthTransaction.bind(this);
     let signed;
     try {
       signed = await signTxFn(tx, addressRecord);
     } catch (err) {
       throw err;
     }
-
     if (!signed) {
       throw Error('Server error while signing tx');
     }
     const {raw, payload} = signed;
     const txhash = getTxHashFromRawTx(raw);
     const dupTx = await getTxByAddrAndHash(txhash, addressRecord.id);
-    if (dupTx) {
+    if (dupTx?.length) {
       throw Error('duplicate tx');
     }
     const blockNumber = !this.isCfx && (await this.getEthBlockNumber());
