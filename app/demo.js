@@ -54,7 +54,7 @@ const tran = new Transaction({
   },
 });
 
-// tran.sendCfxTransaction({
+// tran.sendTransaction({
 //   tx: {
 //     from: 'cfxtest:aamx6vj8avtza17s92tsd5sr77mvtw7rparkba6px2',
 //     to: 'cfxtest:aamx6vj8avtza17s92tsd5sr77mvtw7rparkba6px2',
