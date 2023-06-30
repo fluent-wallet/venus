@@ -1,13 +1,26 @@
-import {cfxSignTransaction, getTxHashFromRawTx} from '@fluent-wallet/signature';
+import BN from 'bn.js';
+import {parseUnits} from '@ethersproject/units';
+import {
+  cfxSignTransaction,
+  ethSignTransaction,
+  getTxHashFromRawTx,
+} from '@fluent-wallet/signature';
 import {
   detectCfxAddressType,
   detectEthAddressType,
 } from '@fluent-wallet/detect-address-type';
+import {ETH_TX_TYPES} from '../Consts/network';
 import {getAddressByValueAndNetworkId, getTxByAddrAndHash} from '../Query';
 import database from '../Database';
 import initSend from '../utils/send';
 import Encrypt from '../utils/encrypt';
-
+import {
+  toEthersTx,
+  FEE_HISTORY_BLOCKS,
+  FEE_HISTORY_PERCENTILES,
+  getGasFeeByGasStation,
+  calculateGasFeeEstimatesForPriorityLevels,
+} from './utils';
 const encrypt = new Encrypt();
 
 class Transaction {
@@ -73,6 +86,53 @@ class Transaction {
   getEthBlockNumber() {
     return this.send('eth_blockNumber', []);
   }
+  getEthBlockByNumber(...args) {
+    return this.send('eth_getBlockByNumber', ...args);
+  }
+  getEthTransactionCount(...args) {
+    return this.send('eth_getTransactionCount', ...args);
+  }
+  getEthGasPrice(...args) {
+    return this.send('eth_gasPrice', ...args);
+  }
+  getEthFeeHistory(...args) {
+    return this.send('eth_feeHistory', ...args);
+  }
+  getEthEstimateGas(...args) {
+    let [tx, block] = args;
+    block = block || 'latest';
+    if (tx.type === '0x0' || !tx.type) {
+      const {type, ...rest} = tx;
+      tx = rest;
+    }
+    return this.send('eth_estimateGas', [tx, block]);
+  }
+  async getEip1559Compatible() {
+    const block = await this.getEthBlockByNumber(['latest', false]);
+    if (block && block.baseFeePerGas) {
+      return true;
+    }
+    return false;
+  }
+  async estimateEth1559Fee() {
+    let gasInfo = {};
+    const latestBlock = await this.getEthBlockByNumber(['latest', false]);
+    try {
+      gasInfo = await getGasFeeByGasStation(Number(this.network.chainId));
+    } catch (error) {
+      const baseFeePerGas = new BN(Number(latestBlock?.baseFeePerGas));
+      const feeData = await this.getEthFeeHistory([
+        FEE_HISTORY_BLOCKS,
+        'latest',
+        FEE_HISTORY_PERCENTILES,
+      ]);
+      gasInfo = calculateGasFeeEstimatesForPriorityLevels(
+        feeData,
+        baseFeePerGas,
+      );
+    }
+    return gasInfo;
+  }
   async getDecryptPk(encryptedDataPk) {
     const {pk} = await encrypt.decrypt(this.password, encryptedDataPk);
     return pk;
@@ -91,15 +151,6 @@ class Transaction {
     }
   }
   async signCfxTransaction(tx, addressRecord) {
-    if (tx.chainId && tx.chainId !== this.network.chainId) {
-      throw Error(`Invalid chainId ${tx.chainId}`);
-    }
-
-    // const {epoch, returnTxMeta, dryRun} = opts;
-    tx.from = tx.from.toLowerCase();
-    if (tx.to) {
-      tx.to = tx.to.toLowerCase('address');
-    }
     const newTx = {...tx};
 
     // tx without to must have data (deploy contract)
@@ -161,8 +212,90 @@ class Transaction {
 
     return {raw, payload: newTx};
   }
-  async signEthTransaction() {}
-  async sendCfxTransaction({tx, sendAction, token}) {
+  async signEthTransaction(tx, addressRecord, block) {
+    const newTx = {...tx};
+    const network1559Compatible = await this.getEip1559Compatible();
+    if (!newTx.type) {
+      if (network1559Compatible) {
+        newTx.type = ETH_TX_TYPES.EIP1559;
+      } else {
+        newTx.type = ETH_TX_TYPES.LEGACY;
+      }
+    }
+
+    // tx without to must have data (deploy contract)
+    if (!newTx.to && !newTx.data) {
+      throw Error("Invalid tx, [to] and [data] can't be omit at the same time");
+    }
+
+    if (newTx.data === '0x') {
+      newTx.data = undefined;
+    }
+    if (!newTx.value) {
+      newTx.value = '0x0';
+    }
+
+    if (!newTx.nonce) {
+      newTx.nonce = await this.getEthTransactionCount([newTx.from, 'pending']);
+    }
+    // EIP-1559
+    const is1559Tx = newTx.type === ETH_TX_TYPES.EIP1559;
+    if (is1559Tx && !network1559Compatible) {
+      throw Error(
+        `Network ${this.network.name} don't support 1559 transaction`,
+      );
+    }
+
+    if (!is1559Tx && !newTx.gasPrice) {
+      newTx.gasPrice = await this.getEthGasPrice([]);
+    }
+
+    if (newTx.to && !newTx.gas) {
+      const {contract: typeContract} = await this.detectAddressType(newTx.to);
+      if (!typeContract && !newTx.data) {
+        if (!newTx.gas) {
+          newTx.gas = '0x5208';
+        }
+      }
+    }
+    if (!newTx.gas) {
+      newTx.gas = await this.getEthEstimateGas([newTx, block || 'latest']);
+    }
+
+    if (!newTx.chainId) {
+      newTx.chainId = this.network.chainId;
+    }
+    if (is1559Tx && network1559Compatible) {
+      const gasInfoEip1559 = await this.estimateEth1559Fee();
+      const {suggestedMaxPriorityFeePerGas, suggestedMaxFeePerGas} =
+        gasInfoEip1559?.medium || {};
+      if (!newTx.maxPriorityFeePerGas) {
+        newTx.maxPriorityFeePerGas = parseUnits(
+          suggestedMaxPriorityFeePerGas,
+          'gwei',
+        ).toHexString();
+      }
+      if (!newTx.maxFeePerGas) {
+        newTx.maxFeePerGas = parseUnits(
+          suggestedMaxFeePerGas,
+          'gwei',
+        ).toHexString();
+      }
+    }
+    let raw;
+
+    const pk = await this.getDecryptPk(addressRecord.pk);
+
+    raw = ethSignTransaction(toEthersTx(newTx), pk);
+
+    return {txMeta: newTx, raw};
+  }
+  async sendTransaction({tx, sendAction, token}) {
+    if (tx.chainId && tx.chainId !== this.network.chainId) {
+      throw Error(`Invalid chainId ${tx.chainId}`);
+    }
+    tx.from = tx.from.toLowerCase();
+    tx.to = tx?.to?.toLowerCase();
     const addressRecord = await getAddressByValueAndNetworkId(
       tx.from,
       this.network.id,
