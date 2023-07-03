@@ -317,15 +317,18 @@ class Transaction {
       throw Error('Server error while signing tx');
     }
     const {raw, payload} = signed;
+    // console.log('signed', signed);
     const txhash = getTxHashFromRawTx(raw);
+    // console.log('txhash', txhash);
     const dupTx = await getTxByAddrAndHash(txhash, addressRecord.id);
     if (dupTx?.length) {
       throw Error('duplicate tx');
     }
     const blockNumber = !this.isCfx && (await this.getEthBlockNumber());
+    console.log('blockNumber', blockNumber);
     await this.sendRawTransaction(raw);
     database.write(async () => {
-      await database.batch(this._preCreateTxExtra({hash: txhash}));
+      await database.batch(this._preCreateTx({hash: txhash}));
     });
   }
 }

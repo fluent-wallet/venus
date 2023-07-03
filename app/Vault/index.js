@@ -26,15 +26,16 @@ class Vault {
 
   _generateAddressesByMnemonic(networksArr, nth = 0) {
     return networksArr.map(async ({hdPath}) => {
-      const hdPathValue = await hdPath.fetch().value;
+      const hdPathRecord = await hdPath.fetch();
       const ret = await getNthAccountOfHDKey({
         mnemonic: this.mnemonic,
-        hdPath: hdPathValue,
+        hdPath: hdPathRecord.value,
         nth,
       });
       ret.encryptPk = await encrypt.encrypt(this.password, {
         pk: ret.privateKey,
       });
+      // console.log('ret', ret);
       return ret;
     });
   }
@@ -111,7 +112,6 @@ class Vault {
       data: this.mnemonic || this.pk,
     });
 
-    // const networksArr = await getNetworks();
     let hdRets = [];
 
     if (this.mnemonic) {
@@ -121,7 +121,6 @@ class Vault {
     } else {
       hdRets = this._generateAddressesByPk(this.networks, encryptData);
     }
-
     const vaultTableInstance = this._preCreateVault(encryptData);
     const accountGroupTableInstance = this._preCreateAccountGroup(
       vaultTableInstance,
