@@ -26,3 +26,5 @@ export const validateDuplicateVault = async (password, data) => {
   }
   return ret;
 };
+
+export const isHexAddress = address => /^0x[0-9a-fA-F]{40}$/.test(address);
