@@ -4,7 +4,9 @@ import {
   validateBase32Address,
 } from '@fluent-wallet/base32-address';
 import {hexValue} from '@ethersproject/bytes';
-import {Interface, iface as tokenContractIface} from './777';
+import {Interface} from '@ethersproject/abi';
+import iface777 from '../utils';
+
 import initSend from '../utils/send';
 
 const checkerContractIface = new Interface([
@@ -72,13 +74,11 @@ class Balance {
   }
   async getTokenBalance({userAddress, tokenAddress}) {
     userAddress = this.isCfx ? decode(userAddress).hexAddress : userAddress;
-    const data = tokenContractIface.encodeFunctionData('balanceOf', [
-      userAddress,
-    ]);
+    const data = iface777.encodeFunctionData('balanceOf', [userAddress]);
     const ret = await this.send(this.callMethod, [
       {from: userAddress, to: tokenAddress, data},
       this.params,
-    ]).then(r => tokenContractIface.decodeFunctionResult(this.callMethod, r));
+    ]).then(r => iface777.decodeFunctionResult(this.callMethod, r));
     console.log('ret', ret);
     return ret;
   }
@@ -98,7 +98,7 @@ class Balance {
     const res = await this.send(this.callMethod, [
       {from: userAddress, to: checkerAddress, data},
       this.params,
-    ]).then(r => tokenContractIface.decodeFunctionResult(this.callMethod, r));
+    ]).then(r => iface777.decodeFunctionResult(this.callMethod, r));
     const tl = tokenAddress.length;
     const rst = {};
     userAddress.forEach((u, uIndex) => {
