@@ -287,3 +287,14 @@ export const ABI_1155 = [
     type: 'function',
   },
 ];
+
+// 721  interfaceID is  0xffffffff and 11155 is 0xd9b67a26. if correct function true
+export const ABI_165 = [
+  {
+    inputs: [{internalType: 'bytes4', name: 'interfaceId', type: 'bytes4'}],
+    name: 'supportsInterface',
+    outputs: [{internalType: 'bool', name: '', type: 'bool'}],
+    stateMutability: 'view',
+    type: 'function',
+  },
+];
