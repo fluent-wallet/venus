@@ -68,3 +68,4 @@ buck-out/
 # expo
 .expo/devices.json
 .expo/README.md
+ios/Podfile.lock
