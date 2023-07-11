@@ -3,6 +3,7 @@ import {enrichFetch} from '../utils';
 import {
   CFX_ESPACE_MAINNET_CHAINID,
   CFX_ESPACE_TESTNET_CHAINID,
+  CFX_SCAN_API_HOSTS,
 } from '../Consts/network';
 
 const getQueryString = params => {
@@ -17,11 +18,11 @@ const getQueryString = params => {
   return str;
 };
 
-class Token721 {
+class NFT {
   constructor({network}) {
     this.network = network;
     this.isCfx = network.networkType === 'cfx';
-    this.endpoint = network.endpoint;
+    this.scanHost = CFX_SCAN_API_HOSTS[network.netId] || '';
   }
 
   async getCfxNftDetails({contract, tokenId, withMetadata = false}) {
@@ -31,7 +32,7 @@ class Token721 {
       withMetadata,
     });
     const res = await enrichFetch({
-      url: `${this.endpoint}/nft/preview${query}`,
+      url: `${this.scanHost}/nft/preview${query}`,
       method: 'GET',
     });
     return res;
@@ -54,7 +55,7 @@ class Token721 {
       sortField,
     });
     const res = await enrichFetch({
-      url: `${this.endpoint}/nft/tokens${query}`,
+      url: `${this.scanHost}/nft/tokens${query}`,
       method: 'GET',
     });
     return res;
@@ -64,7 +65,7 @@ class Token721 {
   async getCfxNftBalances({owner, skip = 0, limit = 10}) {
     const query = getQueryString({owner, skip, limit});
     const res = await enrichFetch({
-      url: `${this.endpoint}/nft/balances${query}`,
+      url: `${this.scanHost}/nft/balances${query}`,
       method: 'GET',
     });
     return res;
@@ -81,4 +82,4 @@ class Token721 {
   }
 }
 
-export default Token721;
+export default NFT;

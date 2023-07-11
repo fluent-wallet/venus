@@ -1,5 +1,6 @@
 import Vault from './Vault';
 import Token20 from './Token20';
+import NFT from './NFT';
 import initDatabase from './Controller/initDatabase';
 import {getNetworks, getAccountGroups} from './Query';
 import Transaction from './Transaction';
@@ -12,6 +13,9 @@ import {
   ETH_GOERLI_RPC_ENDPOINT,
   ETH_GOERLI_NETID,
   ETH_GOERLI_CHAINID,
+  CFX_ESPACE_TESTNET_RPC_ENDPOINT,
+  CFX_ESPACE_TESTNET_CHAINID,
+  CFX_ESPACE_TESTNET_NETID,
 } from './Consts/network';
 // // 初始化数据库
 // initDatabase();
@@ -66,7 +70,7 @@ const importAccount = async () => {
 //   },
 // });
 
-// 发送eth 交易
+// 发送eth交易
 // const tran = new Transaction({
 //   endpoint: ETH_GOERLI_RPC_ENDPOINT,
 //   password: '2222aaa',
@@ -86,3 +90,37 @@ const importAccount = async () => {
 //     chainId: ETH_GOERLI_CHAINID,
 //   },
 // });
+
+//获取当前网络指定地址下的nft
+// const nft = new NFT({
+//   network: {
+//     networkType: 'eth',
+//     chainId: CFX_ESPACE_TESTNET_CHAINID,
+//     netId: CFX_ESPACE_TESTNET_NETID,
+//     endpoint: CFX_ESPACE_TESTNET_RPC_ENDPOINT,
+//   },
+// });
+// nft
+//   .getCfxNftBalances({owner: '0x72CF63232D3b55e4Cd7B209067679b8f90d6B0EA'})
+//   .then(res => {
+//     nft
+//       .getCfxNftTokenIds({
+//         owner: '0x72CF63232D3b55e4Cd7B209067679b8f90d6B0EA',
+//         contract: res?.list?.[0].contract,
+//       })
+//       .then(res => {
+//         nft
+//           .getCfxNftDetails({
+//             contract: res?.list?.[0].contract,
+//             tokenId: res?.list?.[0].tokenId,
+//           })
+//           .then(res => {
+//             console.log('res3', res);
+//           });
+//         console.log('res2', res);
+//       });
+//     console.log('res1', res);
+//   })
+//   .catch(err => {
+//     console.log('err', err);
+//   });

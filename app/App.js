@@ -57,12 +57,12 @@ const App: () => Node = () => {
   // const tokens = useTableRecord('token') || [];
   // const address = useTableRecord('address') || [];
   // const network = useTableRecord('network') || [];
-  const tx = useTableRecord('tx') || [];
+  // const tx = useTableRecord('tx') || [];
 
   // console.log('address', address);
   // console.log('network', network);
   // console.log('tokens', tokens);
-  console.log('tx', tx);
+  // console.log('tx', tx);
 
   const [password, setPassword] = useState('');
 
