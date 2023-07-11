@@ -1,3 +1,4 @@
+import {enrichFetch} from './';
 const createRandomId = () => {
   const MAX = Number.MAX_SAFE_INTEGER;
   let idCounter = Math.round(Math.random() * MAX);
@@ -21,19 +22,7 @@ const initSend = endpoint => {
       bodyParams.params = params;
     }
 
-    return fetch(endpoint, {
-      method: 'POST',
-      timeout: 6000,
-      headers: {
-        Accept: 'application/json',
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        ...bodyParams,
-      }),
-    })
-      .then(r => r.json())
-      .then(r => r.result);
+    return enrichFetch({url: endpoint, params: bodyParams});
   };
 
   return send;
