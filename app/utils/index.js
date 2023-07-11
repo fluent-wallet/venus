@@ -33,3 +33,22 @@ export const validateDuplicateVault = async (password, data) => {
 };
 
 export const isHexAddress = address => /^0x[0-9a-fA-F]{40}$/.test(address);
+
+export const enrichFetch = ({url, params, method = 'POST'}) => {
+  const options = {
+    method,
+    timeout: 6000,
+    headers: {
+      Accept: 'application/json',
+      'Content-Type': 'application/json',
+    },
+  };
+  if (params) {
+    options.body = JSON.stringify({
+      ...params,
+    });
+  }
+  return fetch(url, {...options})
+    .then(r => r.json())
+    .then(r => r.result);
+};
