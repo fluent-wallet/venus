@@ -140,6 +140,13 @@ export const CFX_SCAN_API_ENDPOINTS = {
   [CFX_ESPACE_TESTNET_NETID]: 'https://evmapi-testnet.confluxscan.net/api',
 };
 
+export const CFX_SCAN_API_HOSTS = {
+  [CFX_MAINNET_NETID]: 'https://api.confluxscan.net/',
+  [CFX_TESTNET_NETID]: 'https://api-testnet.confluxscan.net/',
+  [CFX_ESPACE_MAINNET_NETID]: 'https://evmapi.confluxscan.net/',
+  [CFX_ESPACE_TESTNET_NETID]: 'https://evmapi-testnet.confluxscan.net/',
+};
+
 export const ETH_TX_TYPES = {
   LEGACY: '0x0',
   EIP2930: '0x1',

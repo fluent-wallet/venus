@@ -22,6 +22,7 @@ const AUTHENTICATION_TYPE = {
   UNKNOWN: 'unknown',
 };
 
+// replace code in build config
 const ENCRYPT_CODE = 'FLUENT_CODE';
 class Authentication {
   constructor() {
@@ -112,12 +113,11 @@ class Authentication {
    */
   appTriggeredAuth = async selectedAddress => {
     try {
-      const credentials: any = await this.getGenericPassword();
+      const credentials = await this.getGenericPassword();
       const password = credentials?.password;
       if (!password) {
         throw new Error('wrong password');
       }
-      // await this.loginVaultCreation(password, selectedAddress);
     } catch (e) {
       throw e;
     }
