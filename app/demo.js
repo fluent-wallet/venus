@@ -57,7 +57,7 @@ const importAccount = async () => {
 //     networkType: 'cfx',
 //     chainId: CFX_TESTNET_CHAINID,
 //     netId: CFX_TESTNET_NETID,
-//     id: 'bkk3avxofb7iusrc',
+//     id: 'o0jc3amn1bpawuxy',
 //   },
 // });
 

@@ -1,10 +1,9 @@
-// import initSend from '../utils/send';
 import {enrichFetch} from '../utils';
-import {
-  CFX_ESPACE_MAINNET_CHAINID,
-  CFX_ESPACE_TESTNET_CHAINID,
-  CFX_SCAN_API_HOSTS,
-} from '../Consts/network';
+import {CFX_SCAN_API_HOSTS} from '../Consts/network';
+
+// request api key
+// https://docs.opensea.io/reference/api-keys
+const openseaApiKey = '';
 
 const getQueryString = params => {
   let str = '';
@@ -23,6 +22,7 @@ class NFT {
     this.network = network;
     this.isCfx = network.networkType === 'cfx';
     this.scanHost = CFX_SCAN_API_HOSTS[network.netId] || '';
+    this.isTestnet = !!network.isTestnet;
   }
 
   async getCfxNftDetails({contract, tokenId, withMetadata = false}) {
@@ -70,15 +70,39 @@ class NFT {
     });
     return res;
   }
+  // https://docs.opensea.io/v1.0/reference/getting-assets
+  async getEthNftBalances({owner}) {
+    const api = this.isTestnet
+      ? 'https://testnets-api.opensea.io/api/v1/assets'
+      : 'https://api.opensea.io/api/v1/assets';
 
-  getNfts(owner) {
-    if (
-      this.isCfx ||
-      this.network.chainId === CFX_ESPACE_MAINNET_CHAINID ||
-      this.network.chainId === CFX_ESPACE_TESTNET_CHAINID
-    ) {
-      return;
-    }
+    const headers = this.isTestnet
+      ? {}
+      : {
+          'X-API-KEY': openseaApiKey,
+        };
+    return enrichFetch({
+      url: `${api}owner=${owner}`,
+      method: 'GET',
+      headers,
+    });
+  }
+  // https://docs.opensea.io/v1.0/reference/retrieving-a-single-asset-testnets
+  async getETHhNftDetail({contract, tokenId}) {
+    const api = this.isTestnet
+      ? 'https://testnets-api.opensea.io/api/v1/asset'
+      : 'https://api.opensea.io/api/v1/asset';
+
+    const headers = this.isTestnet
+      ? {}
+      : {
+          'X-API-KEY': openseaApiKey,
+        };
+    return enrichFetch({
+      url: `${api}/${contract}/${tokenId}`,
+      method: 'GET',
+      headers,
+    });
   }
 }
 
