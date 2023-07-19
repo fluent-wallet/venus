@@ -98,6 +98,7 @@ const importAccount = async () => {
 //     chainId: CFX_ESPACE_TESTNET_CHAINID,
 //     netId: CFX_ESPACE_TESTNET_NETID,
 //     endpoint: CFX_ESPACE_TESTNET_RPC_ENDPOINT,
+//  isTestnet: true,
 //   },
 // });
 // nft
@@ -123,4 +124,32 @@ const importAccount = async () => {
 //   })
 //   .catch(err => {
 //     console.log('err', err);
+//   });
+
+// const nft = new NFT({
+//   network: {
+//     networkType: 'eth',
+//     chainId: ETH_GOERLI_CHAINID,
+//     netId: ETH_GOERLI_NETID,
+//     endpoint: ETH_GOERLI_RPC_ENDPOINT,
+//     isTestnet: true,
+//   },
+// });
+// nft
+//   .getEthNftBalances({owner: '0x72CF63232D3b55e4Cd7B209067679b8f90d6B0EA'})
+//   .then(r => {
+//     const item = r.assets[0];
+//     console.log('item', item);
+//     nft
+//       .getETHhNftDetail({
+//         contract: item.asset_contract.address,
+//         tokenId: item.token_id,
+//       })
+//       .then(r => {
+//         console.log('r2', r);
+//       });
+//     console.log('r', r);
+//   })
+//   .catch(e => {
+//     console.log('e', e);
 //   });

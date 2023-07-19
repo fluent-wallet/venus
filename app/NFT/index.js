@@ -82,7 +82,7 @@ class NFT {
           'X-API-KEY': openseaApiKey,
         };
     return enrichFetch({
-      url: `${api}owner=${owner}`,
+      url: `${api}?owner=${owner}`,
       method: 'GET',
       headers,
     });
