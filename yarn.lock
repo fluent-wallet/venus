@@ -1881,6 +1881,15 @@
   resolved "https://registry.npmjs.org/@fluent-wallet/consts/-/consts-0.0.16.tgz#0de641d5a32fc41b21663019ca43f6b36945d6f0"
   integrity sha512-cieLS2XUTvf/8cggkBxG7X+OK3MbvgwQ4NHb6MI9DY0JwDc+PfdFgRKymLH6LqWUROXqkPYBVtS08vihlrBPTA==
 
+"@fluent-wallet/data-format@^0.1.12":
+  version "0.1.12"
+  resolved "https://registry.npmjs.org/@fluent-wallet/data-format/-/data-format-0.1.12.tgz#c594dad8125be7d17b14aa1eb2e09dfba6a7f599"
+  integrity sha512-iHCetJEAeItrstrb5u231XzmGSJdMxxL4fRVj1LJLL0axPNL6HtGcfhOLcSP5VJ7gdwbCRWOgp7JBzkqFdnZEw==
+  dependencies:
+    "@fluent-wallet/utils" "0.0.3"
+    big.js "^6.1.1"
+    bn.js "5.2.0"
+
 "@fluent-wallet/detect-address-type@^0.0.2":
   version "0.0.2"
   resolved "https://registry.npmjs.org/@fluent-wallet/detect-address-type/-/detect-address-type-0.0.2.tgz#c60c9340f2505c083e9843a5b30bc36d7c85ac21"
@@ -3424,6 +3433,11 @@ big.js@^5.2.2:
   version "5.2.2"
   resolved "https://registry.npmjs.org/big.js/-/big.js-5.2.2.tgz#65f0af382f578bcdc742bd9c281e9cb2d7768328"
   integrity sha512-vyL2OymJxmarO8gxMr0mhChsO9QGwhynfuu4+MHTAW6czfq9humCB7rKpUjDd9YUiDPU4mzpyupFSvOClAwbmQ==
+
+big.js@^6.1.1:
+  version "6.2.1"
+  resolved "https://registry.npmjs.org/big.js/-/big.js-6.2.1.tgz#7205ce763efb17c2e41f26f121c420c6a7c2744f"
+  integrity sha512-bCtHMwL9LeDIozFn+oNhhFoq+yQ3BNdnsLSASUxLciOb1vgvpHsIO1dsENiGMgbb4SkP5TrzWzRiLddn8ahVOQ==
 
 bindings@^1.5.0:
   version "1.5.0"
