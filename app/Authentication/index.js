@@ -81,10 +81,13 @@ class Authentication {
   }
 
   // stores a user password in the secure keyChain with a specific auth type
-  storePassword = async (password, authType) => {
+  storePassword = async ({password, authType}) => {
     switch (authType) {
       case AUTHENTICATION_TYPE.BIOMETRIC:
-        await this.setGenericPassword(password, this.TYPES.BIOMETRICS);
+        await this.setGenericPassword(
+          `${encrypt.generateRandomStr()}${new Date().getTime()}`,
+          this.TYPES.BIOMETRICS,
+        );
         break;
       case AUTHENTICATION_TYPE.PASSCODE:
         await this.setGenericPassword(password, this.TYPES.PASSCODE);

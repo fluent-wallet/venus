@@ -1,9 +1,11 @@
+import {convertValueToData} from '@fluent-wallet/data-format';
 import Vault from './Vault';
 import Token20 from './Token20';
 import NFT from './NFT';
 import initDatabase from './Controller/initDatabase';
 import {getNetworks, getAccountGroups} from './Query';
 import Transaction from './Transaction';
+import {iface721} from './utils';
 
 import Balance from './Balance';
 import {
@@ -91,6 +93,35 @@ const importAccount = async () => {
 //   },
 // });
 
+// 发送erc721 nft
+
+const tran = new Transaction({
+  endpoint: ETH_GOERLI_RPC_ENDPOINT,
+  password: '2222aaa',
+  network: {
+    networkType: 'eth',
+    chainId: ETH_GOERLI_CHAINID,
+    netId: ETH_GOERLI_NETID,
+    id: 'hn0k83c016yei6jm',
+  },
+});
+
+const data = iface721.encodeFunctionData('safeTransferFrom', [
+  '0x72CF63232D3b55e4Cd7B209067679b8f90d6B0EA',
+  '0x89c40eDe78315D654aB7B4c53496c51F9A9f7641',
+  convertValueToData('66218'),
+]);
+
+// tran.sendTransaction({
+//   tx: {
+//     from: '0x72CF63232D3b55e4Cd7B209067679b8f90d6B0EA',
+//     to: '0xc36442b4a4522e871399cd717abdd847ab11fe88',
+//     value: 0,
+//     chainId: ETH_GOERLI_CHAINID,
+//     data,
+//   },
+// });
+
 //获取当前网络指定地址下的nft
 // const nft = new NFT({
 //   network: {
@@ -98,6 +129,7 @@ const importAccount = async () => {
 //     chainId: CFX_ESPACE_TESTNET_CHAINID,
 //     netId: CFX_ESPACE_TESTNET_NETID,
 //     endpoint: CFX_ESPACE_TESTNET_RPC_ENDPOINT,
+//  isTestnet: true,
 //   },
 // });
 // nft
@@ -123,4 +155,32 @@ const importAccount = async () => {
 //   })
 //   .catch(err => {
 //     console.log('err', err);
+//   });
+
+// const nft = new NFT({
+//   network: {
+//     networkType: 'eth',
+//     chainId: ETH_GOERLI_CHAINID,
+//     netId: ETH_GOERLI_NETID,
+//     endpoint: ETH_GOERLI_RPC_ENDPOINT,
+//     isTestnet: true,
+//   },
+// });
+// nft
+//   .getEthNftBalances({owner: '0x72CF63232D3b55e4Cd7B209067679b8f90d6B0EA'})
+//   .then(r => {
+//     const item = r.assets[0];
+//     console.log('item', item);
+//     nft
+//       .getETHhNftDetail({
+//         contract: item.asset_contract.address,
+//         tokenId: item.token_id,
+//       })
+//       .then(r => {
+//         console.log('r2', r);
+//       });
+//     console.log('r', r);
+//   })
+//   .catch(e => {
+//     console.log('e', e);
 //   });

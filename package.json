@@ -29,6 +29,7 @@
     "@ethersproject/units": "^5.7.0",
     "@fluent-wallet/account": "^1.0.1",
     "@fluent-wallet/base32-address": "^0.1.3",
+    "@fluent-wallet/data-format": "^0.1.12",
     "@fluent-wallet/detect-address-type": "^0.0.2",
     "@fluent-wallet/hdkey": "^0.1.1",
     "@fluent-wallet/signature": "^0.0.16",

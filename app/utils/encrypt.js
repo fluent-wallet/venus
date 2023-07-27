@@ -10,8 +10,9 @@ const AesForked = NativeModules.AesForked;
 export default class Encryptor {
   key = null;
 
-  _generateSalt(byteCount = 32) {
+  generateRandomStr(byteCount = 32) {
     const view = new Uint8Array(byteCount);
+    // https://developer.mozilla.org/zh-CN/docs/Web/API/Crypto/getRandomValues
     global.crypto.getRandomValues(view);
     // eslint-disable-next-line no-undef
     const b64encoded = btoa(String.fromCharCode.apply(null, view));
@@ -44,7 +45,7 @@ export default class Encryptor {
    * @returns - Promise resolving to stringified data
    */
   encrypt = async (password, object) => {
-    const salt = this._generateSalt(16);
+    const salt = this.generateRandomStr(16);
     const key = await this._keyFromPassword(password, salt, 'original');
     const result = await this._encryptWithKey(JSON.stringify(object), key);
     result.salt = salt;

@@ -51,5 +51,7 @@ export const enrichFetch = ({url, params, method = 'POST', headers = {}}) => {
   }
   return fetch(url, {...options})
     .then(r => r.json())
-    .then(r => r.result);
+    .then(r => {
+      return r?.result || r;
+    });
 };
