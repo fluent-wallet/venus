@@ -68,7 +68,7 @@ const App: () => Node = () => {
 
   const setGenPassword = async () => {
     const type = await Keychain.getSupportedBiometryType();
-    authentication.storePassword(password, type);
+    authentication.storePassword({password, authType: type});
   };
 
   const getPassword = async () => {
