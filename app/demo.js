@@ -3,7 +3,7 @@ import Vault from './Vault';
 import Token20 from './Token20';
 import NFT from './NFT';
 import initDatabase from './Controller/initDatabase';
-import {getNetworks, getAccountGroups} from './Query';
+import {getNetworks, getAccountGroups, getAccountGroupVault} from './Query';
 import Transaction from './Transaction';
 import {iface721} from './utils';
 
