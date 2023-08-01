@@ -41,3 +41,9 @@ export const getTxByAddrAndHash = async (hash, address_id) => {
       Q.and(Q.where('hash', hash), Q.where('address_id', Q.eq(address_id))),
     );
 };
+
+export const getAccountGroupVault = async accountGroupId => {
+  const ag = await database.get('account_group').find(accountGroupId);
+  const ret = await ag.vault.fetch();
+  return ret;
+};

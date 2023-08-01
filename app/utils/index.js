@@ -2,6 +2,9 @@ import database from '../Database';
 import Encrypt from './encrypt';
 import {ABI_777, ABI_721, ABI_1155} from '../Consts/tokenAbi';
 import {Interface} from '@ethersproject/abi';
+import {getNthAccountOfHDKey} from '@fluent-wallet/hdkey';
+import {encode} from '@fluent-wallet/base32-address';
+import {toAccountAddress} from '@fluent-wallet/account';
 
 const encrypt = new Encrypt();
 
@@ -54,4 +57,61 @@ export const enrichFetch = ({url, params, method = 'POST', headers = {}}) => {
     .then(r => {
       return r?.result || r;
     });
+};
+
+export const generateAddressesByMnemonic = ({
+  networksArr,
+  nth = 0,
+  mnemonic,
+  password,
+}) => {
+  return networksArr.map(async ({hdPath}) => {
+    const hdPathRecord = await hdPath.fetch();
+    const ret = await getNthAccountOfHDKey({
+      mnemonic,
+      hdPath: hdPathRecord.value,
+      nth,
+    });
+    ret.encryptPk = await encrypt.encrypt(password, {
+      pk: ret.privateKey,
+    });
+    // console.log('ret', ret);
+    return ret;
+  });
+};
+
+export const preCreateAccount = ({
+  accountGroup,
+  groups,
+  accountIndex,
+  hidden = false,
+  selected = false,
+}) => {
+  return database.get('account').prepareCreate(r => {
+    r.accountGroup.set(accountGroup);
+    r.index = accountIndex;
+    r.nickname = `group-${groups.length + 1}-${accountIndex}`;
+    r.hidden = hidden;
+    r.selected = selected;
+  });
+};
+
+export const preCreateAddress = ({
+  account,
+  network,
+  hex,
+  pk,
+  nativeBalance = '0x0',
+}) => {
+  return database.get('address').prepareCreate(r => {
+    r.account.set(account);
+    r.network.set(network);
+    r.value =
+      network.networkType === 'cfx'
+        ? encode(toAccountAddress(hex), network.netId)
+        : hex;
+    r.hex = hex;
+    r.pk = pk;
+    r.native_balance = nativeBalance;
+  });
 };
