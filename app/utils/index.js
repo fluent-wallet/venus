@@ -82,7 +82,7 @@ export const generateAddressesByMnemonic = ({
 
 export const preCreateAccount = ({
   accountGroup,
-  groups,
+  groupName,
   accountIndex,
   hidden = false,
   selected = false,
@@ -90,7 +90,7 @@ export const preCreateAccount = ({
   return database.get('account').prepareCreate(r => {
     r.accountGroup.set(accountGroup);
     r.index = accountIndex;
-    r.nickname = `group-${groups.length + 1}-${accountIndex}`;
+    r.nickname = `${groupName}-${accountIndex}`;
     r.hidden = hidden;
     r.selected = selected;
   });

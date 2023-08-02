@@ -5,7 +5,7 @@ import {
   preCreateAccount,
   preCreateAddress,
 } from '../utils';
-import {getAccountGroupVault, getNetworks, getAccountGroups} from '../Query';
+import {getAccountGroupVault, getNetworks} from '../Query';
 const encrypt = new Encrypt();
 
 class Account {
@@ -30,14 +30,21 @@ class Account {
   async getMnemonic({accountGroupId, password}) {
     const vault = await getAccountGroupVault(accountGroupId);
     const {data: mnemonic} = await encrypt.decrypt(password, vault.data);
+    // console.log('mnemonic', mnemonic);
     return {mnemonic, vault};
   }
+  async getPrivateKey({addressId, password}) {
+    const addressRecord = await database.get('address').find(addressId);
+    const {pk} = await encrypt.decrypt(password, addressRecord.pk);
+    // console.log('pk', pk);
+    return pk;
+  }
+
   async addAccount({accountGroupId, password}) {
     const accountGroupRecord = await database
       .get('account_group')
       .find(accountGroupId);
     const network = await getNetworks();
-    const groups = await getAccountGroups();
     const {mnemonic} = await this.getMnemonic({
       accountGroupId,
       password,
@@ -54,7 +61,7 @@ class Account {
     );
     const accountTableInstance = preCreateAccount({
       accountGroup: accountGroupRecord,
-      groups,
+      groupName: accountGroupRecord.nickname,
       accountIndex: nth,
     });
 
@@ -70,7 +77,22 @@ class Account {
       await database.batch(accountTableInstance, ...addressTableInstance);
     });
   }
-  async deleteAccount() {}
+  async deleteAccount({accountGroupId, accountId}) {
+    const accountGroupRecord = await database
+      .get('account_group')
+      .find(accountGroupId);
+    const account = await accountGroupRecord.account.fetch();
+    const showAccount = account.filter(a => !a.hidden);
+    if (showAccount.length <= 1) {
+      throw Error('Keep at least one account');
+    }
+    return database.write(async () => {
+      const accountTableRecord = await database.get('account').find(accountId);
+      await accountTableRecord.update(() => {
+        accountTableRecord.hidden = true;
+      });
+    });
+  }
 }
 
 export default Account;
