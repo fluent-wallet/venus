@@ -77,19 +77,19 @@ class Account {
       await database.batch(accountTableInstance, ...addressTableInstance);
     });
   }
-  async deleteAccount({accountGroupId, accountId}) {
+  async switchAccountHideStatus({accountGroupId, accountId, hidden = true}) {
     const accountGroupRecord = await database
       .get('account_group')
       .find(accountGroupId);
     const account = await accountGroupRecord.account.fetch();
     const showAccount = account.filter(a => !a.hidden);
-    if (showAccount.length <= 1) {
+    if (showAccount.length <= 1 && hidden) {
       throw Error('Keep at least one account');
     }
     return database.write(async () => {
       const accountTableRecord = await database.get('account').find(accountId);
       await accountTableRecord.update(() => {
-        accountTableRecord.hidden = true;
+        accountTableRecord.hidden = hidden;
       });
     });
   }
