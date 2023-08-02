@@ -136,7 +136,7 @@ class Vault {
 
     const accountTableInstance = preCreateAccount({
       accountGroup: accountGroupTableInstance,
-      groups: this.accountGroups,
+      groupName: `group-${this.accountGroups.length + 1}`,
       accountIndex: 0,
     });
     const addressTableInstance = hdRets.map(({address, encryptPk}, index) => {

@@ -38,7 +38,7 @@ const formatCfxAddress = ({address, networkId, addressType = 'user'}) => {
 
   if (address.includes(':')) {
     if (addressType && !validateBase32Address(address, addressType)) {
-      throw new Error('Invalid base32 address, address type is invalid');
+      throw Error('Invalid base32 address, address type is invalid');
     }
     return encode(decode(address).hexAddress, networkId);
   }
