@@ -131,7 +131,7 @@ const TICKER_ARR = [
   },
 ];
 
-const NETWORK_ARR = [
+export const NETWORK_ARR = [
   {
     name: CFX_MAINNET_NAME,
     endpoint: CFX_MAINNET_RPC_ENDPOINT,

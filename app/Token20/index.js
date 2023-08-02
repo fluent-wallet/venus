@@ -18,11 +18,10 @@ class Token20 {
     const isTokenInit = await database.localStorage.get(
       `is_${currentNetwork[0].chainId}_${currentNetwork[0].networkType}_token_init`,
     );
-    if (isTokenInit) {
+    if (isTokenInit || !currentNetwork) {
       return;
     }
 
-    // console.log('currentNetwork', currentNetwork);
     const tokenList = await currentNetwork[0].tokenList;
     const token = await fetch(tokenList.url).then(r => r.json());
     const tokenTableInstance = token.tokens.map(

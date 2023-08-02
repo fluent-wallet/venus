@@ -4,10 +4,10 @@ const AesForked = NativeModules.AesForked;
 
 /**
  * Class that exposes two public methods: Encrypt and Decrypt
- * This is used by the KeyringController to encrypt / decrypt the state
+ * This is to encrypt / decrypt the state
  * which contains sensitive seed words and addresses
  */
-export default class Encryptor {
+export default class Encrypt {
   key = null;
 
   generateRandomStr(byteCount = 32) {

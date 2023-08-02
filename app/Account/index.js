@@ -1,11 +1,14 @@
 import database from '../Database';
+import {DB_TABLE_SCHEMAS_OBJ} from '../Database/schema';
+import initDatabase, {NETWORK_ARR} from '../Controller/initDatabase';
 import Encrypt from '../utils/encrypt';
+import Token20 from '../Token20';
 import {
   generateAddressesByMnemonic,
   preCreateAccount,
   preCreateAddress,
 } from '../utils';
-import {getAccountGroupVault, getNetworks} from '../Query';
+import {getAccountGroupVault, getNetworks, fetchAllRecord} from '../Query';
 const encrypt = new Encrypt();
 
 class Account {
@@ -77,21 +80,49 @@ class Account {
       await database.batch(accountTableInstance, ...addressTableInstance);
     });
   }
-  async deleteAccount({accountGroupId, accountId}) {
+  async switchAccountHideStatus({accountGroupId, accountId, hidden = true}) {
     const accountGroupRecord = await database
       .get('account_group')
       .find(accountGroupId);
     const account = await accountGroupRecord.account.fetch();
     const showAccount = account.filter(a => !a.hidden);
-    if (showAccount.length <= 1) {
+    if (showAccount.length <= 1 && hidden) {
       throw Error('Keep at least one account');
     }
     return database.write(async () => {
       const accountTableRecord = await database.get('account').find(accountId);
       await accountTableRecord.update(() => {
-        accountTableRecord.hidden = true;
+        accountTableRecord.hidden = hidden;
       });
     });
+  }
+  async eraseAllAccounts() {
+    const allRecords = await Promise.all(
+      Object.keys(DB_TABLE_SCHEMAS_OBJ).map(tableName =>
+        fetchAllRecord(tableName),
+      ),
+    );
+    const deleteRecordsArr = allRecords.flat();
+    if (!deleteRecordsArr.length) {
+      return;
+    }
+    await database.write(async () => {
+      await database.batch(
+        ...deleteRecordsArr.map(r => r.prepareDestroyPermanently()),
+      );
+    });
+
+    await Promise.all(
+      [
+        'is_database_init',
+        ...NETWORK_ARR.map(
+          net => `is_${net.chainId}_${net.networkType}_token_init`,
+        ),
+      ].map(i => database.localStorage.remove(i)),
+    );
+
+    await initDatabase();
+    await new Token20().initTokenToCurrentNetwork();
   }
 }
 
