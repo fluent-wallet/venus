@@ -20,7 +20,7 @@ import {
   CFX_ESPACE_TESTNET_NETID,
 } from './Consts/network';
 // // 初始化数据库 app 一启动就要调用这个方法。把我们预设的数据的信息写入进来
-initDatabase();
+// initDatabase();
 /* *************************************************************** */
 // 导入助记词/私
 // const importAccount = async () => {
@@ -37,7 +37,9 @@ initDatabase();
 // };
 
 // importAccount();
-// 把tokenList 的token 添加到数据库里
+
+// 1.把tokenList 的token 添加到数据库里。这个方法和initDatabase 一样 只要app 启动就要调用一下
+// 2.他必须在initDatabase 成功之后 才能调用。在写业务代码的时候注意下。
 // const token20 = new Token20();
 // token20.initTokenToCurrentNetwork();
 /* *************************************************************** */
@@ -93,6 +95,7 @@ initDatabase();
 //     chainId: ETH_GOERLI_CHAINID,
 //   },
 // });
+/* *************************************************************** */
 
 // 发送erc721 nft
 
@@ -122,6 +125,7 @@ initDatabase();
 //     data,
 //   },
 // });
+/* *************************************************************** */
 
 //获取当前网络指定地址下的nft
 // const nft = new NFT({
@@ -185,6 +189,7 @@ initDatabase();
 //   .catch(e => {
 //     console.log('e', e);
 //   });
+/* *************************************************************** */
 
 //账户 账户组
 // const account = new Account();
@@ -210,3 +215,5 @@ initDatabase();
 //   accountGroupId: 'u708oyxd0ly7qq7m',
 //   accountId: 'r8bw1ppp5207dfqz',
 // });
+// 删除所有账户相关的数据
+// account.eraseAllAccounts();

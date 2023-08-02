@@ -1,11 +1,14 @@
 import database from '../Database';
+import {DB_TABLE_SCHEMAS_OBJ} from '../Database/schema';
+import initDatabase, {NETWORK_ARR} from '../Controller/initDatabase';
 import Encrypt from '../utils/encrypt';
+import Token20 from '../Token20';
 import {
   generateAddressesByMnemonic,
   preCreateAccount,
   preCreateAddress,
 } from '../utils';
-import {getAccountGroupVault, getNetworks} from '../Query';
+import {getAccountGroupVault, getNetworks, fetchAllRecord} from '../Query';
 const encrypt = new Encrypt();
 
 class Account {
@@ -92,6 +95,34 @@ class Account {
         accountTableRecord.hidden = hidden;
       });
     });
+  }
+  async eraseAllAccounts() {
+    const allRecords = await Promise.all(
+      Object.keys(DB_TABLE_SCHEMAS_OBJ).map(tableName =>
+        fetchAllRecord(tableName),
+      ),
+    );
+    const deleteRecordsArr = allRecords.flat();
+    if (!deleteRecordsArr.length) {
+      return;
+    }
+    await database.write(async () => {
+      await database.batch(
+        ...deleteRecordsArr.map(r => r.prepareDestroyPermanently()),
+      );
+    });
+
+    await Promise.all(
+      [
+        'is_database_init',
+        ...NETWORK_ARR.map(
+          net => `is_${net.chainId}_${net.networkType}_token_init`,
+        ),
+      ].map(i => database.localStorage.remove(i)),
+    );
+
+    await initDatabase();
+    await new Token20().initTokenToCurrentNetwork();
   }
 }
 
