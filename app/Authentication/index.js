@@ -56,10 +56,9 @@ class Authentication {
     const authOptions = {
       accessible: KeyChain.ACCESSIBLE.WHEN_UNLOCKED_THIS_DEVICE_ONLY,
     };
-    // TODO: add other type
     if (type === this.TYPES.BIOMETRICS) {
       authOptions.accessControl = KeyChain.ACCESS_CONTROL.BIOMETRY_CURRENT_SET;
-    } else if (type === this.TYPES.PASSCODE) {
+    } else {
       authOptions.accessControl = KeyChain.ACCESS_CONTROL.DEVICE_PASSCODE;
     }
 
@@ -109,22 +108,28 @@ class Authentication {
     const options = {service: defaultOptions.service};
     return KeyChain.resetGenericPassword(options);
   }
-
   /**
-   * attempts to use biometric/pin code/remember me to login
-   * @param selectedAddress - current address pulled from persisted state
+   * @description:validate password
+   * @param {*} inputPassword user input password when authType is not biometrics
+   * @param {*} authType phone supported biometry type
+   * @return {*}
    */
-  appTriggeredAuth = async selectedAddress => {
+  async validatePassword({inputPassword, authType}) {
     try {
       const credentials = await this.getGenericPassword();
       const password = credentials?.password;
-      if (!password) {
-        throw new Error('wrong password');
+      if (password === null) {
+        return false;
+      }
+      if (authType === AUTHENTICATION_TYPE.BIOMETRIC) {
+        return !!password;
+      } else {
+        return inputPassword === password;
       }
     } catch (e) {
       throw e;
     }
-  };
+  }
 }
 
 export default Authentication;
