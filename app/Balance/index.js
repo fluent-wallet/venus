@@ -4,25 +4,9 @@ import {
   validateBase32Address,
 } from '@fluent-wallet/base32-address';
 import {hexValue} from '@ethersproject/bytes';
-import {Interface} from '@ethersproject/abi';
-import iface777 from '../utils';
+import {iface777, ifaceChecker} from '../utils';
 
 import initSend from '../utils/send';
-
-const checkerContractIface = new Interface([
-  {
-    constant: true,
-    inputs: [
-      {name: 'users', type: 'address[]'},
-      {name: 'tokens', type: 'address[]'},
-    ],
-    name: 'balances',
-    outputs: [{name: '', type: 'uint256[]'}],
-    payable: false,
-    stateMutability: 'view',
-    type: 'function',
-  },
-]);
 
 const ADDR_TYPE_TO_PREFIX = {
   user: '0x1',
@@ -62,43 +46,47 @@ class Balance {
     this.callMethod = this.isCfx ? 'cfx_call' : 'eth_call';
     this.getBalanceMethod = this.isCfx ? 'cfx_getBalance' : 'eth_getBalance';
   }
-  async getNativeBalance(hex) {
+  async getNativeBalance(address) {
     const ret = await this.send(this.getBalanceMethod, [
       this.isCfx
-        ? formatCfxAddress({address: hex, networkId: this.networkId})
-        : hex,
+        ? formatCfxAddress({address, networkId: this.networkId})
+        : address,
       this.params,
     ]);
-    console.log('ret', ret);
+    // console.log('ret', ret);
     return ret;
   }
   async getTokenBalance({userAddress, tokenAddress}) {
-    userAddress = this.isCfx ? decode(userAddress).hexAddress : userAddress;
-    const data = iface777.encodeFunctionData('balanceOf', [userAddress]);
+    const user = this.isCfx ? decode(userAddress).hexAddress : userAddress;
+    const data = iface777.encodeFunctionData('balanceOf', [user]);
     const ret = await this.send(this.callMethod, [
       {from: userAddress, to: tokenAddress, data},
       this.params,
-    ]).then(r => iface777.decodeFunctionResult(this.callMethod, r));
-    console.log('ret', ret);
+    ]).then(r => iface777.decodeFunctionResult('balanceOf', r));
+    // console.log('ret', ret);
     return ret;
   }
   // get token balance by balance checker
   async getTokenBalances({userAddress, tokenAddress, checkerAddress}) {
     userAddress = Array.isArray(userAddress) ? userAddress : [userAddress];
     tokenAddress = Array.isArray(tokenAddress) ? tokenAddress : [tokenAddress];
-    const data = checkerContractIface.encodeFunctionData('balances', [
-      userAddress.map(u => (this.isCfx ? decode(u).hexAddress : u)),
-      tokenAddress.map(t => {
-        if (t === '0x0') {
-          return '0x0000000000000000000000000000000000000000';
-        }
-        return this.isCfx ? decode(t).hexAddress : t;
-      }),
-    ]);
+    const users = userAddress.map(u => (this.isCfx ? decode(u).hexAddress : u));
+    const tokens = tokenAddress.map(t => {
+      if (t === '0x0') {
+        return '0x0000000000000000000000000000000000000000';
+      }
+      return this.isCfx ? decode(t).hexAddress : t;
+    });
+
+    const data = ifaceChecker.encodeFunctionData('balances', [users, tokens]);
     const res = await this.send(this.callMethod, [
-      {from: userAddress, to: checkerAddress, data},
+      {
+        from: userAddress[0],
+        to: checkerAddress,
+        data,
+      },
       this.params,
-    ]).then(r => iface777.decodeFunctionResult(this.callMethod, r));
+    ]).then(r => ifaceChecker.decodeFunctionResult('balances', r));
     const tl = tokenAddress.length;
     const rst = {};
     userAddress.forEach((u, uIndex) => {
@@ -106,10 +94,26 @@ class Balance {
       rst[u] = {};
       tokenAddress.forEach((t, tIndex) => {
         t = t.toLowerCase();
-        rst[u][t] = hexValue(res[uIndex * tl + tIndex].toHexString());
+        rst[u][t] = hexValue(res[0][uIndex * tl + tIndex].toHexString());
       });
     });
+    // console.log('rst', rst);
     return rst;
+  }
+
+  async hasBalance({userAddress, tokenAddress, checkerAddress}) {
+    const [r1, r2] = await Promise.all([
+      this.getNativeBalance(userAddress),
+      this.getTokenBalances({userAddress, tokenAddress, checkerAddress}),
+    ]);
+    const hasNativeBalance = r1 && r1 !== '0x0';
+    const hasToken20Balance =
+      r2[userAddress] &&
+      Object.values(r2[userAddress]).some(v => v && v !== '0x0');
+
+    const ret = hasNativeBalance || hasToken20Balance;
+    console.log('ret', ret);
+    return ret;
   }
 }
 

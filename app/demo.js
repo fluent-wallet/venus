@@ -28,8 +28,7 @@ import {
 //   const accountGroups = await getAccountGroups();
 //   const vault = new Vault({
 //     password: '2222aaa',
-//     mnemonic:
-//       '',
+//     mnemonic: '',
 //     networks,
 //     accountGroups,
 //   });
@@ -44,13 +43,39 @@ import {
 // token20.initTokenToCurrentNetwork();
 /* *************************************************************** */
 
+const balance = new Balance({
+  endpoint: CFX_TESTNET_RPC_ENDPOINT,
+  networkId: CFX_TESTNET_NETID,
+  networkType: 'cfx',
+});
 // get native balance
-// const balance = new Balance({
-//   endpoint: CFX_TESTNET_RPC_ENDPOINT,
-//   networkId: CFX_TESTNET_NETID,
-//   networkType: 'cfx',
-// });
 // balance.getNativeBalance('cfxtest:aamx6vj8avtza17s92tsd5sr77mvtw7rparkba6px2');
+// get 20 token balance
+// balance.getTokenBalances({
+//   userAddress: 'cfxtest:aamx6vj8avtza17s92tsd5sr77mvtw7rparkba6px2',
+//   tokenAddress: [
+//     'cfxtest:acepe88unk7fvs18436178up33hb4zkuf62a9dk1gv',
+//     'cfxtest:achkx35n7vngfxgrm7akemk3ftzy47t61yk5nn270s',
+//     'cfxtest:achde4ppjn11tntcd1dcynhze9puwfc73en8mnvzvg',
+//     'cfxtest:acceftennya582450e1g227dthfvp8zz1p370pvb6r',
+//   ],
+//   checkerAddress: 'cfxtest:achxne2gfh8snrstkxn0f32ua2cf19zwkyw9tpbc6k',
+// });
+// balance.getTokenBalance({
+//   userAddress: 'cfxtest:aamx6vj8avtza17s92tsd5sr77mvtw7rparkba6px2',
+//   tokenAddress: 'cfxtest:acepe88unk7fvs18436178up33hb4zkuf62a9dk1gv',
+// });
+// 当前地址是否有余额
+balance.hasBalance({
+  userAddress: 'cfxtest:aamx6vj8avtza17s92tsd5sr77mvtw7rparkba6px2',
+  tokenAddress: [
+    'cfxtest:acepe88unk7fvs18436178up33hb4zkuf62a9dk1gv',
+    'cfxtest:achkx35n7vngfxgrm7akemk3ftzy47t61yk5nn270s',
+    'cfxtest:achde4ppjn11tntcd1dcynhze9puwfc73en8mnvzvg',
+    'cfxtest:acceftennya582450e1g227dthfvp8zz1p370pvb6r',
+  ],
+  checkerAddress: 'cfxtest:achxne2gfh8snrstkxn0f32ua2cf19zwkyw9tpbc6k',
+});
 
 /* *************************************************************** */
 

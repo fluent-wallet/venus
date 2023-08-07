@@ -298,3 +298,18 @@ export const ABI_165 = [
     type: 'function',
   },
 ];
+
+export const CHECK_ABI = [
+  {
+    constant: true,
+    inputs: [
+      {name: 'users', type: 'address[]'},
+      {name: 'tokens', type: 'address[]'},
+    ],
+    name: 'balances',
+    outputs: [{name: '', type: 'uint256[]'}],
+    payable: false,
+    stateMutability: 'view',
+    type: 'function',
+  },
+];

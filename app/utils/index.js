@@ -1,6 +1,6 @@
 import database from '../Database';
 import Encrypt from './encrypt';
-import {ABI_777, ABI_721, ABI_1155} from '../Consts/tokenAbi';
+import {ABI_777, ABI_721, ABI_1155, CHECK_ABI} from '../Consts/tokenAbi';
 import {Interface} from '@ethersproject/abi';
 import {getNthAccountOfHDKey} from '@fluent-wallet/hdkey';
 import {encode} from '@fluent-wallet/base32-address';
@@ -11,6 +11,7 @@ const encrypt = new Encrypt();
 export const iface777 = new Interface(ABI_777);
 export const iface721 = new Interface(ABI_721);
 export const iface1155 = new Interface(ABI_1155);
+export const ifaceChecker = new Interface(CHECK_ABI);
 export const camelCase = str => {
   return str.replace(/_([a-z])/g, function (match, group1) {
     return group1.toUpperCase();

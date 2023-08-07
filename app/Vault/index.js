@@ -96,8 +96,7 @@ class Vault {
   //     r.native_balance = nativeBalance;
   //   });
   // }
-  async addVault() {
-    // not support pub hw and cfxOnly for now
+  async addVault(nth = 0) {
     const isDuplicate = await validateDuplicateVault(
       this.password,
       this.mnemonic || this.pk,
@@ -137,7 +136,7 @@ class Vault {
     const accountTableInstance = preCreateAccount({
       accountGroup: accountGroupTableInstance,
       groupName: `group-${this.accountGroups.length + 1}`,
-      accountIndex: 0,
+      accountIndex: nth,
     });
     const addressTableInstance = hdRets.map(({address, encryptPk}, index) => {
       return preCreateAddress({
