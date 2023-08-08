@@ -25,7 +25,7 @@ export class Network extends Model {
     hdPath: {type: 'belongs_to', key: 'hd_path_id'},
     ticker: {type: 'belongs_to', key: 'ticker_id'},
     tokenList: {type: 'belongs_to', key: 'token_list_id'},
-    token: {type: 'has_many', foreignKey: 'network_id'},
+    token: {type: 'has_many', foreignKey: 'token_id'},
   };
 
   @children('token') token;

@@ -38,9 +38,9 @@ const formatCfxAddress = ({address, networkId, addressType = 'user'}) => {
 };
 
 class Balance {
-  constructor({endpoint, networkType, networkId}) {
+  constructor({endpoint, networkType, netId}) {
     this.isCfx = networkType === 'cfx';
-    this.networkId = networkId;
+    this.networkId = netId;
     this.send = initSend(endpoint);
     this.params = this.isCfx ? 'latest_state' : 'latest';
     this.callMethod = this.isCfx ? 'cfx_call' : 'eth_call';
@@ -112,7 +112,7 @@ class Balance {
       Object.values(r2[userAddress]).some(v => v && v !== '0x0');
 
     const ret = hasNativeBalance || hasToken20Balance;
-    console.log('ret', ret);
+    // console.log('ret', ret);
     return ret;
   }
 }

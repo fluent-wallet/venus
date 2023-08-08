@@ -1,4 +1,5 @@
-import {fromPrivate} from '@fluent-wallet/account';
+import {fromPrivate, toAccountAddress} from '@fluent-wallet/account';
+import {encode} from '@fluent-wallet/base32-address';
 import {generateAddressesByMnemonic} from '../utils';
 import database from '../Database';
 import {
@@ -7,7 +8,8 @@ import {
   preCreateAddress,
 } from '../utils';
 import Encrypt from '../utils/encrypt';
-
+import {getCurrentNetwork, getNetworkTokens} from '../Query';
+import Balance from '../Balance';
 const encrypt = new Encrypt();
 
 class Vault {
@@ -27,29 +29,16 @@ class Vault {
     this.accountGroups = accountGroups;
   }
 
-  // _generateAddressesByMnemonic(networksArr, nth = 0) {
-  //   return networksArr.map(async ({hdPath}) => {
-  //     const hdPathRecord = await hdPath.fetch();
-  //     const ret = await getNthAccountOfHDKey({
-  //       mnemonic: this.mnemonic,
-  //       hdPath: hdPathRecord.value,
-  //       nth,
-  //     });
-  //     ret.encryptPk = await encrypt.encrypt(this.password, {
-  //       pk: ret.privateKey,
-  //     });
-  //     // console.log('ret', ret);
-  //     return ret;
-  //   });
-  // }
   _generateAddressesByPk(networksArr, encryptData) {
-    const address = fromPrivate(encryptData).address;
     if (!this.pk) {
       return;
     }
-    return networksArr.map(() => ({
+    const address = fromPrivate(this.pk).address;
+
+    return networksArr.map((net, index) => ({
       address,
       encryptPk: encryptData,
+      networkIndex: index,
     }));
   }
   _preCreateVault(encryptData) {
@@ -67,36 +56,7 @@ class Vault {
     });
   }
 
-  // _preCreateAccount({
-  //   accountGroup,
-  //   groups,
-  //   accountIndex,
-  //   hidden = false,
-  //   selected = false,
-  // }) {
-  //   return database.get('account').prepareCreate(r => {
-  //     r.accountGroup.set(accountGroup);
-  //     r.index = accountIndex;
-  //     r.nickname = `group-${groups.length + 1}-${accountIndex}`;
-  //     r.hidden = hidden;
-  //     r.selected = selected;
-  //   });
-  // }
-
-  // _preCreateAddress({account, network, hex, pk, nativeBalance = '0x0'}) {
-  //   return database.get('address').prepareCreate(r => {
-  //     r.account.set(account);
-  //     r.network.set(network);
-  //     r.value =
-  //       network.networkType === 'cfx'
-  //         ? encode(toAccountAddress(hex), network.netId)
-  //         : hex;
-  //     r.hex = hex;
-  //     r.pk = pk;
-  //     r.native_balance = nativeBalance;
-  //   });
-  // }
-  async addVault(nth = 0) {
+  async addVault() {
     const isDuplicate = await validateDuplicateVault(
       this.password,
       this.mnemonic || this.pk,
@@ -109,6 +69,10 @@ class Vault {
     if (!this.mnemonic && !this.pk) {
       throw new Error('need mnemonic or pk!');
     }
+    const currentNetwork = await getCurrentNetwork();
+    const currentTokens = await getNetworkTokens(currentNetwork[0].id);
+
+    const balance = new Balance(currentNetwork[0]);
 
     const encryptData = await encrypt.encrypt(this.password, {
       data: this.mnemonic || this.pk,
@@ -117,13 +81,37 @@ class Vault {
     let hdRets = [];
 
     if (this.mnemonic) {
-      hdRets = await Promise.all(
-        generateAddressesByMnemonic({
+      for (let i = 0; i < 5; i++) {
+        const addrRets = await generateAddressesByMnemonic({
           networksArr: this.networks,
           mnemonic: this.mnemonic,
           password: this.password,
-        }),
-      );
+          nth: i,
+        });
+        const curAddrRet = addrRets.filter(
+          ({isCurrentNet}) => !!isCurrentNet,
+        )[0];
+        const hasBalance = await balance.hasBalance({
+          userAddress:
+            currentNetwork[0].networkType === 'cfx'
+              ? encode(
+                  toAccountAddress(curAddrRet.address),
+                  currentNetwork[0].netId,
+                )
+              : curAddrRet.address,
+          tokenAddress: currentTokens.map(({tokenAddress}) => tokenAddress),
+          checkerAddress: currentNetwork[0].balanceChecker,
+        });
+
+        if (hasBalance) {
+          hdRets = [...hdRets, ...addrRets];
+        } else {
+          if (hdRets.length === 0) {
+            hdRets = [...addrRets];
+          }
+          break;
+        }
+      }
     } else {
       hdRets = this._generateAddressesByPk(this.networks, encryptData);
     }
@@ -133,24 +121,35 @@ class Vault {
       this.accountGroups,
     );
 
-    const accountTableInstance = preCreateAccount({
-      accountGroup: accountGroupTableInstance,
-      groupName: `group-${this.accountGroups.length + 1}`,
-      accountIndex: nth,
-    });
-    const addressTableInstance = hdRets.map(({address, encryptPk}, index) => {
-      return preCreateAddress({
-        account: accountTableInstance,
-        network: this.networks[index],
-        hex: address,
-        pk: encryptPk,
-      });
-    });
+    const accountTableInstance = [];
+    const addressTableInstance = [];
+
+    const groupName = `group-${this.accountGroups.length + 1}`;
+    for (let i = 0; i < hdRets.length; i++) {
+      const {address, encryptPk, networkIndex, index} = hdRets[i];
+      if (i === 0 || hdRets[i].index !== hdRets[i - 1].index) {
+        accountTableInstance.push(
+          preCreateAccount({
+            accountGroup: accountGroupTableInstance,
+            groupName,
+            accountIndex: this.pk ? 1 : index + 1,
+          }),
+        );
+      }
+      addressTableInstance.push(
+        preCreateAddress({
+          account: accountTableInstance[index],
+          network: this.networks[networkIndex],
+          hex: address,
+          pk: encryptPk,
+        }),
+      );
+    }
     await database.write(async () => {
       await database.batch(
         vaultTableInstance,
         accountGroupTableInstance,
-        accountTableInstance,
+        ...accountTableInstance,
         ...addressTableInstance,
       );
     });

@@ -19,6 +19,7 @@ import {
   CFX_ESPACE_TESTNET_CHAINID,
   CFX_ESPACE_TESTNET_NETID,
 } from './Consts/network';
+import Network from './Network';
 // // 初始化数据库 app 一启动就要调用这个方法。把我们预设的数据的信息写入进来
 // initDatabase();
 /* *************************************************************** */
@@ -29,6 +30,7 @@ import {
 //   const vault = new Vault({
 //     password: '2222aaa',
 //     mnemonic: '',
+//     // pk: '',
 //     networks,
 //     accountGroups,
 //   });
@@ -43,11 +45,11 @@ import {
 // token20.initTokenToCurrentNetwork();
 /* *************************************************************** */
 
-const balance = new Balance({
-  endpoint: CFX_TESTNET_RPC_ENDPOINT,
-  networkId: CFX_TESTNET_NETID,
-  networkType: 'cfx',
-});
+// const balance = new Balance({
+//   endpoint: CFX_TESTNET_RPC_ENDPOINT,
+//   netId: CFX_TESTNET_NETID,
+//   networkType: 'cfx',
+// });
 // get native balance
 // balance.getNativeBalance('cfxtest:aamx6vj8avtza17s92tsd5sr77mvtw7rparkba6px2');
 // get 20 token balance
@@ -66,16 +68,16 @@ const balance = new Balance({
 //   tokenAddress: 'cfxtest:acepe88unk7fvs18436178up33hb4zkuf62a9dk1gv',
 // });
 // 当前地址是否有余额
-balance.hasBalance({
-  userAddress: 'cfxtest:aamx6vj8avtza17s92tsd5sr77mvtw7rparkba6px2',
-  tokenAddress: [
-    'cfxtest:acepe88unk7fvs18436178up33hb4zkuf62a9dk1gv',
-    'cfxtest:achkx35n7vngfxgrm7akemk3ftzy47t61yk5nn270s',
-    'cfxtest:achde4ppjn11tntcd1dcynhze9puwfc73en8mnvzvg',
-    'cfxtest:acceftennya582450e1g227dthfvp8zz1p370pvb6r',
-  ],
-  checkerAddress: 'cfxtest:achxne2gfh8snrstkxn0f32ua2cf19zwkyw9tpbc6k',
-});
+// balance.hasBalance({
+//   userAddress: 'cfxtest:aamx6vj8avtza17s92tsd5sr77mvtw7rparkba6px2',
+//   tokenAddress: [
+//     'cfxtest:acepe88unk7fvs18436178up33hb4zkuf62a9dk1gv',
+//     'cfxtest:achkx35n7vngfxgrm7akemk3ftzy47t61yk5nn270s',
+//     'cfxtest:achde4ppjn11tntcd1dcynhze9puwfc73en8mnvzvg',
+//     'cfxtest:acceftennya582450e1g227dthfvp8zz1p370pvb6r',
+//   ],
+//   checkerAddress: 'cfxtest:achxne2gfh8snrstkxn0f32ua2cf19zwkyw9tpbc6k',
+// });
 
 /* *************************************************************** */
 
@@ -87,7 +89,7 @@ balance.hasBalance({
 //     networkType: 'cfx',
 //     chainId: CFX_TESTNET_CHAINID,
 //     netId: CFX_TESTNET_NETID,
-//     id: 'o0jc3amn1bpawuxy',
+//     id: 'aalbcq7qnms1pg4a',
 //   },
 // });
 
@@ -242,3 +244,9 @@ balance.hasBalance({
 // });
 // 删除所有账户相关的数据
 // account.eraseAllAccounts();
+
+/* *************************************************************** */
+
+// 网络相关
+// const network = new Network();
+// network.setCurrentNetwork('0uk9j83awl6j1z9o', '3rq1hngwwpf6rbsu');

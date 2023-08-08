@@ -60,25 +60,43 @@ export const enrichFetch = ({url, params, method = 'POST', headers = {}}) => {
     });
 };
 
-export const generateAddressesByMnemonic = ({
+export const generateAddressesByMnemonic = async ({
   networksArr,
   nth = 0,
   mnemonic,
   password,
 }) => {
-  return networksArr.map(async ({hdPath}) => {
-    const hdPathRecord = await hdPath.fetch();
-    const ret = await getNthAccountOfHDKey({
-      mnemonic,
-      hdPath: hdPathRecord.value,
-      nth,
-    });
-    ret.encryptPk = await encrypt.encrypt(password, {
-      pk: ret.privateKey,
-    });
-    // console.log('ret', ret);
-    return ret;
-  });
+  const cache = {};
+  const result = [];
+
+  for (let i = 0; i < networksArr.length; i++) {
+    const {hdPath} = networksArr[i];
+    if (cache[hdPath.id]) {
+      result.push({
+        ...cache[hdPath.id],
+        networkIndex: i,
+        isCurrentNet: networksArr[i].selected,
+      });
+    } else {
+      const hdPathRecord = await hdPath.fetch();
+      const ret = await getNthAccountOfHDKey({
+        mnemonic,
+        hdPath: hdPathRecord.value,
+        nth,
+      });
+      ret.encryptPk = await encrypt.encrypt(password, {
+        pk: ret.privateKey,
+      });
+
+      cache[hdPathRecord.id] = ret;
+      result.push({
+        ...ret,
+        networkIndex: i,
+        isCurrentNet: networksArr[i].selected,
+      });
+    }
+  }
+  return result;
 };
 
 export const preCreateAccount = ({

@@ -47,3 +47,10 @@ export const getAccountGroupVault = async accountGroupId => {
   const ret = await ag.vault.fetch();
   return ret;
 };
+
+export const getNetworkTokens = async network_id => {
+  const ret = await database
+    .get('token')
+    .query(Q.where('network_id', Q.eq(network_id)));
+  return ret;
+};
