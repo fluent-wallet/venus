@@ -1,9 +1,4 @@
 {
-  "name": "venus",
-  "displayName": "venus",
-  "expo": {
-    "packagerOpts": {
-      "sourceExts": ["cjs"]
-    }
-  }
+  "name": "wallet",
+  "displayName": "wallet"
 }

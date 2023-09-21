@@ -1,0 +1,37 @@
+{
+  "extends": "@tsconfig/react-native/tsconfig.json",
+  "compilerOptions": {
+    "experimentalDecorators": true,
+    "target": "ES2020",
+    "useDefineForClassFields": true,
+    "lib": ["ES2020", "DOM", "DOM.Iterable"],
+    "module": "ESNext",
+    "skipLibCheck": true,
+
+    /* Bundler mode */
+    "moduleResolution": "bundler",
+    "allowImportingTsExtensions": true,
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "noEmit": true,
+    "jsx": "react-jsx",
+
+    /* Linting */
+    "strict": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noFallthroughCasesInSwitch": true,
+    "baseUrl": ".",
+    "paths": {
+      "@assets/*": ["./packages/ui/assets/*"],
+      "@utils/*": ["./packages/ui/utils/*"],
+      "@modules/*": ["./packages/ui/modules/*"],
+      "@hooks/*": ["./packages/ui/hooks/*"],
+      "@pages/*": ["./packages/ui/pages/*"],
+      "@router/*": ["./packages/ui/router/*"],
+      "@components/*": ["./packages/ui/components/*"],
+      "@service/*": ["./packages/ui/service/*"]
+    }
+  },
+  "include": ["packages"]
+}
