@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { NativeModules } from 'react-native'
 import { onPasswordChange as _onPasswordChange } from './password';
 const Aes = NativeModules.Aes;
@@ -12,8 +11,8 @@ interface EncryptedData {
 }
 
 /**
- * Class that exposes two public methods: Encrypt and Decrypt
- * This is to encrypt / decrypt the string
+ * CryptoTool exposes two public methods: encrypt and decrypt
+ * This is to encrypt / decrypt the data
  * which contains sensitive seed words and addresses
  */
 class CryptoTool {
@@ -35,12 +34,13 @@ class CryptoTool {
     return Aes.encrypt(text, keyBase64, iv).then((cipher: string) => ({ cipher, iv }));
   };
 
-  private decryptWithKey = (encryptedData: EncryptedData, key: string, lib: 'original') =>
+  private decryptWithKey = (encryptedData: EncryptedData, key: string, lib: 'original'): Promise<string> =>
     lib === 'original' ? Aes.decrypt(encryptedData.cipher, key, encryptedData.iv) : AesForked.decrypt(encryptedData.cipher, key, encryptedData.iv);
 
   public generateRandomString = (byteCount = 32) => {
     const view = new Uint8Array(byteCount);
     globalThis.crypto.getRandomValues(view);
+    console.log(crypto.getRandomValues)
     const b64encoded = btoa(String.fromCharCode.apply(null, view as unknown as Array<number>));
     return b64encoded;
   };
@@ -50,7 +50,7 @@ class CryptoTool {
    * @param {object} object - Data object to encrypt
    * @returns - Promise resolving to stringified data
    */
-  encrypt = async (object: any) => {
+  public encrypt = async (object: unknown) => {
     const salt = this.generateRandomString(16);
     const key = await this.generateKey(salt, 'original');
     const result = (await this.encryptWithKey(JSON.stringify(object), key)) as EncryptedData;
@@ -66,7 +66,7 @@ class CryptoTool {
    * @param {string} encryptedString - String to decrypt
    * @returns - Promise resolving to decrypted data object
    */
-  decrypt = async <T = any>(encryptedDataString: string): Promise<{ data: T }> => {
+  public decrypt = async <T = unknown>(encryptedDataString: string): Promise<T> => {
     const encryptedData = JSON.parse(encryptedDataString) as EncryptedData;
     const key = await this.generateKey(encryptedData.salt, encryptedData.lib);
     const data = await this.decryptWithKey(encryptedData, key, encryptedData.lib);

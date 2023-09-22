@@ -4,7 +4,7 @@ type Events = {
   passwordChange: string | null;
 };
 
-const emitter = mitt<Events>(); // inferred as Emitter<Events>
+const emitter = mitt<Events>();
 
 let password: null | string = null;
 

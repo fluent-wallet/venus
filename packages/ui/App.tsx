@@ -9,12 +9,12 @@ import React from 'react';
 import type { PropsWithChildren } from 'react';
 import { SafeAreaView, ScrollView, StatusBar, StyleSheet, Text, useColorScheme, View } from 'react-native';
 import { Colors, DebugInstructions, Header, LearnMoreLinks, ReloadInstructions } from 'react-native/Libraries/NewAppScreen';
-import { cryptoTool, setPassword } from 'packages/core/DB/utils';
+import { cryptoTool, setPassword } from 'packages/core/DB/helper';
 
 (async function () {
   setPassword('1111qqqq');
-  const abc = await cryptoTool.encrypt({ test: '123'});
-  console.log(await cryptoTool.decrypt(abc));
+  const abc = await cryptoTool.encrypt({ qwe: 123});
+  const qwe = await cryptoTool.decrypt(abc)
 })();
 
 type SectionProps = PropsWithChildren<{

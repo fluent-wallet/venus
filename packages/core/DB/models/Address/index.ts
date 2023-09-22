@@ -1,11 +1,12 @@
 import { Model, type Query, type Relation } from '@nozbe/watermelondb';
-import { text, children, relation } from '@nozbe/watermelondb/decorators';
+import { text, children, relation, reader } from '@nozbe/watermelondb/decorators';
 import { type Tx } from '../Tx';
 import { type Account } from '../Account';
 import { type Network } from '../Network';
 import { type Token } from '../Token';
 import { type TokenBalance } from '../TokenBalance';
 import { TableName } from '../../index';
+import { cryptoTool } from '../../helper';
 
 export class Address extends Model {
   static table = TableName.Address;
@@ -26,4 +27,8 @@ export class Address extends Model {
   @children(TableName.Tx) tx!: Query<Tx>;
   @relation(TableName.Account, 'account_id') account!: Relation<Account>;
   @relation(TableName.Network, 'network_id') network!: Relation<Network>;
+
+  @reader async getPrivateKey() {
+    return cryptoTool.decrypt<string>(this.pk);
+  }
 }

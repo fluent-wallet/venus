@@ -2,7 +2,7 @@ import { Model, type Query } from '@nozbe/watermelondb';
 import { text, field, children, reader } from '@nozbe/watermelondb/decorators';
 import { type AccountGroup } from '../AccountGroup';
 import { TableName } from '../../index';
-import { cryptoTool } from '../../utils';
+import { cryptoTool } from '../../helper';
 
 export class Vault extends Model {
   static table = TableName.Vault;
