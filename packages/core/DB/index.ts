@@ -46,24 +46,26 @@ const adapter = new SQLiteAdapter({
   jsi: false, // jsi: Platform.OS === 'ios',
 });
 
+export const modelClasses = [
+  AccountModel,
+  AccountGroupModel,
+  AddressModel,
+  HdPathModel,
+  MemoModel,
+  NetworkModel,
+  TickerModel,
+  TokenModel,
+  TokenBalanceModel,
+  TokenListModel,
+  TxModel,
+  TxExtraModel,
+  TxPayloadModel,
+  VaultModel,
+];
+
 const database = new Database({
   adapter,
-  modelClasses: [
-    AccountModel,
-    AccountGroupModel,
-    AddressModel,
-    HdPathModel,
-    MemoModel,
-    NetworkModel,
-    TickerModel,
-    TokenModel,
-    TokenBalanceModel,
-    TokenListModel,
-    TxModel,
-    TxExtraModel,
-    TxPayloadModel,
-    VaultModel,
-  ],
+  modelClasses,
 });
 
 export default database;

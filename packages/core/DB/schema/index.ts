@@ -1,5 +1,5 @@
 import { appSchema, tableSchema } from '@nozbe/watermelondb';
-import { TableName } from './index';
+import { TableName } from '../index';
 
 // WatermelonDB can not define a unique column.
 // We will should do some prevent duplicates manually.
