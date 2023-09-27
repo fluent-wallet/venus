@@ -7,10 +7,11 @@
 
 import React from 'react';
 import type { PropsWithChildren } from 'react';
-import { SafeAreaView, ScrollView, StatusBar, StyleSheet, Text, useColorScheme, View } from 'react-native';
+import { SafeAreaView, ScrollView, StatusBar, StyleSheet, useColorScheme, View } from 'react-native';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { Colors, DebugInstructions, Header, LearnMoreLinks, ReloadInstructions } from 'react-native/Libraries/NewAppScreen';
 import { cryptoTool, setPassword } from 'packages/core/DB/helper';
-
+import { Text } from '@rneui/themed';
 (async function () {
   setPassword('1111qqqq');
   const abc = await cryptoTool.encrypt({ qwe: 123});
@@ -57,6 +58,7 @@ function App(): JSX.Element {
   };
 
   return (
+    <SafeAreaProvider>
     <SafeAreaView style={backgroundStyle}>
       <StatusBar barStyle={isDarkMode ? 'light-content' : 'dark-content'} backgroundColor={backgroundStyle.backgroundColor} />
       <ScrollView contentInsetAdjustmentBehavior="automatic" style={backgroundStyle}>
@@ -80,6 +82,7 @@ function App(): JSX.Element {
         </View>
       </ScrollView>
     </SafeAreaView>
+    </SafeAreaProvider>
   );
 }
 
