@@ -1,2 +1,2 @@
+export * from './authentication';
 export * from './cryptoTool';
-export * from './password';

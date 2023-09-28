@@ -1,6 +1,6 @@
 import { Platform } from 'react-native';
 import * as KeyChain from 'react-native-keychain';
-import encrypt from '../utils/encrypt';
+import encrypt from '@core/DB';
 
 const defaultOptions = {
   service: 'com.fluent',

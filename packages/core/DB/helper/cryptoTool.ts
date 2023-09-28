@@ -1,5 +1,4 @@
-import { NativeModules } from 'react-native'
-import { onPasswordChange as _onPasswordChange } from './password';
+import { NativeModules } from 'react-native';
 const Aes = NativeModules.Aes;
 const AesForked = NativeModules.AesForked;
 
@@ -15,19 +14,19 @@ interface EncryptedData {
  * This is to encrypt / decrypt the data
  * which contains sensitive seed words and addresses
  */
-class CryptoTool {
-  private password: string | null = null;
-  constructor(onPasswordChange: typeof _onPasswordChange) {
-    onPasswordChange((newPassword) => (this.password = newPassword));
-  }
+export class CryptoTool {
+  private getPasswordMethod: (() => string | null) | (() => Promise<string | null>) | null = null;
+  public setGetPasswordMethod = (getPasswordMethod: (() => string | null) | (() => Promise<string | null>)) => (this.getPasswordMethod = getPasswordMethod);
 
-  private getPassword = () => {
-    if (!this.password) throw Error('CryptoTool: Password is not set.');
-    return this.password;
+  private getPassword = async () => {
+    if (!this.getPasswordMethod) throw Error('CryptoTool: getPasswordMethod is not set.');
+    const password = await this.getPasswordMethod();
+    if (!password) throw Error('CryptoTool: password is not set.');
+    return password;
   };
 
-  private generateKey = (salt: string, lib: 'original'): string =>
-    lib === 'original' ? Aes.pbkdf2(this.getPassword(), salt, 5000, 256) : AesForked.pbkdf2(this.getPassword(), salt);
+  private generateKey = async (salt: string, lib: 'original'): Promise<string> =>
+    lib === 'original' ? Aes.pbkdf2(await this.getPassword(), salt, 5000, 256) : AesForked.pbkdf2(await this.getPassword(), salt);
 
   private encryptWithKey = async (text: string, keyBase64: string): Promise<Pick<EncryptedData, 'cipher' | 'iv'>> => {
     const iv = await Aes.randomKey(16);
@@ -40,7 +39,6 @@ class CryptoTool {
   public generateRandomString = (byteCount = 32) => {
     const view = new Uint8Array(byteCount);
     globalThis.crypto.getRandomValues(view);
-    console.log(crypto.getRandomValues)
     const b64encoded = btoa(String.fromCharCode.apply(null, view as unknown as Array<number>));
     return b64encoded;
   };
@@ -74,4 +72,4 @@ class CryptoTool {
   };
 }
 
-export const cryptoTool = new CryptoTool(_onPasswordChange);
+export const cryptoTool = new CryptoTool();
