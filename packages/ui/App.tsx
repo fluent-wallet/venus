@@ -5,16 +5,18 @@
  * @format
  */
 
-import React from 'react';
 import type { PropsWithChildren } from 'react';
-import { SafeAreaView, ScrollView, StatusBar, StyleSheet, Text, useColorScheme, View } from 'react-native';
-import { Colors, DebugInstructions, Header, LearnMoreLinks, ReloadInstructions } from 'react-native/Libraries/NewAppScreen';
+import { SafeAreaView, ScrollView, StatusBar, useColorScheme, View, Text } from 'react-native';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { NavigationContainer } from '@react-navigation/native';
+import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import { DebugInstructions, Header, LearnMoreLinks, ReloadInstructions } from 'react-native/Libraries/NewAppScreen';
 import { cryptoTool, setPassword } from 'packages/core/DB/helper';
 
 (async function () {
   setPassword('1111qqqq');
-  const abc = await cryptoTool.encrypt({ qwe: 123});
-  const qwe = await cryptoTool.decrypt(abc)
+  const abc = await cryptoTool.encrypt({ qwe: 123 });
+  const qwe = await cryptoTool.decrypt(abc);
 })();
 
 type SectionProps = PropsWithChildren<{
@@ -22,52 +24,25 @@ type SectionProps = PropsWithChildren<{
 }>;
 
 function Section({ children, title }: SectionProps): JSX.Element {
-  const isDarkMode = useColorScheme() === 'dark';
   return (
-    <View style={styles.sectionContainer}>
-      <Text
-        style={[
-          styles.sectionTitle,
-          {
-            color: isDarkMode ? Colors.white : Colors.black,
-          },
-        ]}
-      >
-        {title}
-      </Text>
-      <Text
-        style={[
-          styles.sectionDescription,
-          {
-            color: isDarkMode ? Colors.light : Colors.dark,
-          },
-        ]}
-      >
-        {children}
-      </Text>
+    <View className="mt-8 px-2">
+      <Text className="text-2xl text-black dark:text-white">{title}</Text>
+      <Text className="mt-2 text-lg text-black dark:text-white">{children}</Text>
     </View>
   );
 }
 
-function App(): JSX.Element {
+function Home() {
+  const backgroundStyle = 'bg-neutral-300 dark:bg-slate-900';
   const isDarkMode = useColorScheme() === 'dark';
-
-  const backgroundStyle = {
-    backgroundColor: isDarkMode ? Colors.darker : Colors.lighter,
-  };
-
   return (
-    <SafeAreaView style={backgroundStyle}>
-      <StatusBar barStyle={isDarkMode ? 'light-content' : 'dark-content'} backgroundColor={backgroundStyle.backgroundColor} />
-      <ScrollView contentInsetAdjustmentBehavior="automatic" style={backgroundStyle}>
+    <View style={{ flex: 1 }}>
+      <StatusBar barStyle={isDarkMode ? 'light-content' : 'dark-content'} />
+      <ScrollView contentInsetAdjustmentBehavior="automatic" className={backgroundStyle}>
         <Header />
-        <View
-          style={{
-            backgroundColor: isDarkMode ? Colors.black : Colors.white,
-          }}
-        >
+        <View className="bg-white dark:bg-black">
           <Section title="Step One">
-            1 Edit <Text style={styles.highlight}>App.tsx</Text> to change this screen and then come back to see your edits.
+            1 Edit <Text className="font-bold">App.tsx</Text> to change this screen and then come back to see your edits.
           </Section>
           <Section title="See Your Changes">
             <ReloadInstructions />
@@ -79,27 +54,21 @@ function App(): JSX.Element {
           <LearnMoreLinks />
         </View>
       </ScrollView>
-    </SafeAreaView>
+    </View>
   );
 }
 
-const styles = StyleSheet.create({
-  sectionContainer: {
-    marginTop: 32,
-    paddingHorizontal: 24,
-  },
-  sectionTitle: {
-    fontSize: 24,
-    fontWeight: '600',
-  },
-  sectionDescription: {
-    marginTop: 8,
-    fontSize: 18,
-    fontWeight: '400',
-  },
-  highlight: {
-    fontWeight: '700',
-  },
-});
+function App(): JSX.Element {
+  const Stack = createNativeStackNavigator();
+  return (
+    <SafeAreaProvider>
+      <NavigationContainer>
+        <Stack.Navigator initialRouteName="Home">
+          <Stack.Screen name="Home" component={Home} />
+        </Stack.Navigator>
+      </NavigationContainer>
+    </SafeAreaProvider>
+  );
+}
 
 export default App;
