@@ -7,7 +7,7 @@ const defaultOptions: KeyChain.Options = {
   authenticationPrompt: { title: 'authentication.auth_prompt_title', description: 'auth_prompt_desc' },
 };
 
-enum AuthenticationType {
+export enum AuthenticationType {
   Biometrics = 'Biometrics',
   Passcode = 'Passcode',
   RememberMe = 'Remember_me',
@@ -32,7 +32,10 @@ class Authentication {
   };
 
   // stores a user password in the secure keyChain with a specific auth type
-  public setPassword = async ({ password, authType }: { password: string; authType: AuthenticationType }) => {
+  public setPassword: {
+    (params: { authType: AuthenticationType.Biometrics }): Promise<void>;
+    (params: { password: string; authType: AuthenticationType }): Promise<void>;
+  } = async ({ password, authType }: { password?: string; authType: AuthenticationType }) => {
     const authOptions = {
       accessible: KeyChain.ACCESSIBLE.WHEN_UNLOCKED_THIS_DEVICE_ONLY,
       accessControl: authType === AuthenticationType.Biometrics ? KeyChain.ACCESS_CONTROL.BIOMETRY_CURRENT_SET : KeyChain.ACCESS_CONTROL.DEVICE_PASSCODE,
@@ -80,6 +83,5 @@ class Authentication {
   };
 }
 
-const authentication = new Authentication();
+export const authentication = new Authentication();
 cryptoTool.setGetPasswordMethod(authentication.getPassword);
-export default authentication;

@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-var-requires */
+// eslint-disable-next-line no-undef
 const {getDefaultConfig, mergeConfig} = require('@react-native/metro-config');
 
 /**
@@ -8,4 +10,5 @@ const {getDefaultConfig, mergeConfig} = require('@react-native/metro-config');
  */
 const config = {};
 
+// eslint-disable-next-line no-undef
 module.exports = mergeConfig(getDefaultConfig(__dirname), config);
