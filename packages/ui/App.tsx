@@ -14,9 +14,13 @@ import { DebugInstructions, Header, LearnMoreLinks, ReloadInstructions } from 'r
 import { cryptoTool, setPassword } from 'packages/core/DB/helper';
 
 (async function () {
-  setPassword('1111qqqq');
-  const abc = await cryptoTool.encrypt({ qwe: 123 });
-  const qwe = await cryptoTool.decrypt(abc);
+  cryptoTool.setGetPasswordMethod(() => '23423');
+  try {
+    const abc = await cryptoTool.encrypt({ qwe: 123 });
+    const qwe = await cryptoTool.decrypt(abc);
+  } catch (e) {
+    console.log(e);
+  }
 })();
 
 type SectionProps = PropsWithChildren<{
