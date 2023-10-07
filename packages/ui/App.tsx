@@ -1,9 +1,10 @@
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { NavigationContainer } from '@react-navigation/native';
-import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import Welcome from '@pages/Welcome';
+import { createNativeStackNavigator } from '@react-navigation/native-stack';import Welcome from '@pages/Welcome';
 import SetPassword from '@pages/SetPassword';
 import Home from '@pages/Home';
+
+
 
 function App(): JSX.Element {
   const Stack = createNativeStackNavigator();
