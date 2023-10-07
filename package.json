@@ -27,6 +27,7 @@
     "@react-navigation/native-stack": "^6.9.14",
     "@rneui/base": "^4.0.0-rc.8",
     "@rneui/themed": "^4.0.0-rc.8",
+    "ethers": "^6.7.1",
     "lodash-es": "^4.17.21",
     "mitt": "^3.0.1",
     "nativewind": "2.0.11",
