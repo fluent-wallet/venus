@@ -3,7 +3,7 @@ module.exports = {
   presets: ['module:metro-react-native-babel-preset'],
   plugins: [
     ['@babel/plugin-proposal-decorators', { version: 'legacy' }],
-    ["@babel/plugin-transform-private-methods", { "loose": true }], // for ethers
+    ['@babel/plugin-transform-private-methods', { loose: true }], // for ethers
     [
       'module-resolver',
       {
@@ -15,12 +15,12 @@ module.exports = {
           '@components': './packages/ui/components',
           '@pages': './packages/ui/pages',
           //see: https://github.com/margelo/react-native-quick-crypto#replace-crypto-browserify
-          'crypto': './node_modules/react-native-quick-crypto',
-          'stream': './node_modules/stream-browserify',
-          'buffer': './node_modules/@craftzdog/react-native-buffer',
+          crypto: './node_modules/react-native-quick-crypto',
+          stream: './node_modules/stream-browserify',
+          buffer: './node_modules/@craftzdog/react-native-buffer',
         },
       },
     ],
-    ["nativewind/babel"]
+    ['nativewind/babel', { allowModuleTransform: ['@rneui/themed'] }],
   ],
 };
