@@ -1,10 +1,8 @@
 import crypto from 'react-native-quick-crypto';
-
 interface EncryptedData {
   cipher: string;
-  iv: string;
+  iv: string; // hex
   salt: string;
-  lib: 'original';
 }
 
 /**
@@ -23,23 +21,36 @@ export class CryptoTool {
     return password;
   };
 
-  private generateKey = async (salt: string): Promise<string> => {
-    const result = crypto.pbkdf2Sync(await this.getPassword(), salt, 5000, 256);
-    return result.toString('hex');
+  private generateKey = async (salt: string, keyLen = 32): Promise<string> => {
+    // Aes.pbkdf2(await this.getPassword(), salt, 5000, 256)
+    const password = await this.getPassword();
+    const result = crypto.pbkdf2Sync(password, salt, 5000, keyLen, 'sha512');
+    return result.toString('base64');
   };
 
-  private encryptWithKey = (text: string, key: string) => {
-    const aes = crypto.createCipher('aes-256-cbc', key);
-    let str = aes.update(text);
-    str += aes.final('hex');
-    return str.toString();
+  private encryptWithKey = async (text: string, keyBase64: string): Promise<Pick<EncryptedData, 'cipher' | 'iv'>> => {
+    // const iv = await Aes.randomKey(16);
+    // return Aes.encrypt(text, keyBase64, iv).then((cipher: string) => ({ cipher, iv }));
+
+    const iv = crypto.randomBytes(16);
+    const cipher = crypto.createCipheriv('aes-256-cbc', Buffer.from(keyBase64, 'base64'), iv);
+    let encrypted = cipher.update(text, 'utf8', 'hex');
+    encrypted += cipher.final('hex');
+
+    return {
+      iv: Buffer.from(iv).toString('hex'),
+      cipher: encrypted.toString(),
+    };
   };
 
-  private decryptWithKey = (encryptedData: string, key: string) => {
-    const aes = crypto.createCipher('aes-256-cbc', key);
-    let str = aes.update(encryptedData);
-    str += aes.final('utf8');
-    return str.toString();
+  private decryptWithKey = (encryptedData: EncryptedData, keyBase64: string): string => {
+    // Aes.decrypt(encryptedData.cipher, key, encryptedData.iv)
+    
+    const decipher = crypto.createDecipheriv('aes-256-cbc', Buffer.from(keyBase64, 'base64'), Buffer.from(encryptedData.iv, 'hex'));
+    let decrypted = decipher.update(encryptedData.cipher, 'hex', 'utf8');
+    decrypted += decipher.final('utf8');
+
+    return decrypted.toString();
   };
 
   public generateRandomString = (byteCount = 32) => {
@@ -56,18 +67,11 @@ export class CryptoTool {
    */
   public encrypt = async (object: unknown) => {
     const salt = this.generateRandomString(16);
-    console.log('encrypt salt', salt);
-    try {
-      const key = await this.generateKey(salt);
-    } catch (error) {
-      console.log('encrypt error', error);
-    }
-    // const result = this.encryptWithKey(JSON.stringify(object), key);
-    // return JSON.stringify({
-    //   cipher: result,
-    //   iv: salt,
-    //   salt,
-    // });
+    const key = await this.generateKey(salt);
+    const result = (await this.encryptWithKey(JSON.stringify(object), key)) as EncryptedData;
+    result.salt = salt;
+
+    return JSON.stringify(result);
   };
 
   /**
@@ -78,9 +82,9 @@ export class CryptoTool {
    * @returns - Promise resolving to decrypted data object
    */
   public decrypt = async <T = unknown>(encryptedDataString: string): Promise<T> => {
-    const encryptedData = JSON.parse(encryptedDataString);
+    const encryptedData = JSON.parse(encryptedDataString) as EncryptedData;
     const key = await this.generateKey(encryptedData.salt);
-    const data = this.decryptWithKey(encryptedData, key);
+    const data = await this.decryptWithKey(encryptedData, key);
     return JSON.parse(data);
   };
 }
