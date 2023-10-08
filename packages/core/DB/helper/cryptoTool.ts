@@ -1,6 +1,4 @@
-import { NativeModules } from 'react-native';
-const Aes = NativeModules.Aes;
-const AesForked = NativeModules.AesForked;
+import crypto from 'react-native-quick-crypto';
 
 interface EncryptedData {
   cipher: string;
@@ -25,16 +23,24 @@ export class CryptoTool {
     return password;
   };
 
-  private generateKey = async (salt: string, lib: 'original'): Promise<string> =>
-    lib === 'original' ? Aes.pbkdf2(await this.getPassword(), salt, 5000, 256) : AesForked.pbkdf2(await this.getPassword(), salt);
-
-  private encryptWithKey = async (text: string, keyBase64: string): Promise<Pick<EncryptedData, 'cipher' | 'iv'>> => {
-    const iv = await Aes.randomKey(16);
-    return Aes.encrypt(text, keyBase64, iv).then((cipher: string) => ({ cipher, iv }));
+  private generateKey = async (salt: string): Promise<string> => {
+    const resut = crypto.pbkdf2Sync(await this.getPassword(), salt, 5000, 256);
+    return resut.toString('hex');
   };
 
-  private decryptWithKey = (encryptedData: EncryptedData, key: string, lib: 'original'): Promise<string> =>
-    lib === 'original' ? Aes.decrypt(encryptedData.cipher, key, encryptedData.iv) : AesForked.decrypt(encryptedData.cipher, key, encryptedData.iv);
+  private encryptWithKey = async (text: string, key: string): Promise<string> => {
+    const aes = crypto.createCipher('aes-256-cbc', key);
+    let str = aes.update(text);
+    str += aes.final('hex');
+    return str.toString();
+  };
+
+  private decryptWithKey = (encryptedData: string, key: string): string => {
+    const aes = crypto.createCipher('aes-256-cbc', key);
+    let str = aes.update(encryptedData);
+    str += aes.final('utf8');
+    return str.toString();
+  };
 
   public generateRandomString = (byteCount = 32) => {
     const view = new Uint8Array(byteCount);
@@ -50,11 +56,13 @@ export class CryptoTool {
    */
   public encrypt = async (object: unknown) => {
     const salt = this.generateRandomString(16);
-    const key = await this.generateKey(salt, 'original');
-    const result = (await this.encryptWithKey(JSON.stringify(object), key)) as EncryptedData;
-    result.salt = salt;
-    result.lib = 'original';
-    return JSON.stringify(result);
+    const key = await this.generateKey(salt);
+    const result = await this.encryptWithKey(JSON.stringify(object), key);
+    return JSON.stringify({
+      cipher: result,
+      iv: salt,
+      salt,
+    });
   };
 
   /**
@@ -65,9 +73,9 @@ export class CryptoTool {
    * @returns - Promise resolving to decrypted data object
    */
   public decrypt = async <T = unknown>(encryptedDataString: string): Promise<T> => {
-    const encryptedData = JSON.parse(encryptedDataString) as EncryptedData;
-    const key = await this.generateKey(encryptedData.salt, encryptedData.lib);
-    const data = await this.decryptWithKey(encryptedData, key, encryptedData.lib);
+    const encryptedData = JSON.parse(encryptedDataString);
+    const key = await this.generateKey(encryptedData.salt);
+    const data = this.decryptWithKey(encryptedData, key);
     return JSON.parse(data);
   };
 }
