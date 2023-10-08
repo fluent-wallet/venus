@@ -4,19 +4,7 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import Welcome from '@pages/Welcome';
 import SetPassword from '@pages/SetPassword';
 import Home from '@pages/Home';
-import { authentication, AuthenticationType, cryptoTool } from '@DB/helper';
-authentication.setPassword({ password: '123456', authType: AuthenticationType.Password });
-(async function() {
-  console.log('start')
-  try {
-    const encryptedData = await cryptoTool.encrypt({ test: '12345 ' });
-    // console.log('encrypt', encryptedData)
-  } catch (err) {
-    console.log('err', err);
-    // console.log(await cryptoTool.decrypt(d));  
 
-  }
-}());
 
 function App(): JSX.Element {
   const Stack = createNativeStackNavigator();
