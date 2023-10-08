@@ -24,18 +24,18 @@ export class CryptoTool {
   };
 
   private generateKey = async (salt: string): Promise<string> => {
-    const resut = crypto.pbkdf2Sync(await this.getPassword(), salt, 5000, 256);
-    return resut.toString('hex');
+    const result = crypto.pbkdf2Sync(await this.getPassword(), salt, 5000, 256);
+    return result.toString('hex');
   };
 
-  private encryptWithKey = async (text: string, key: string): Promise<string> => {
+  private encryptWithKey = (text: string, key: string) => {
     const aes = crypto.createCipher('aes-256-cbc', key);
     let str = aes.update(text);
     str += aes.final('hex');
     return str.toString();
   };
 
-  private decryptWithKey = (encryptedData: string, key: string): string => {
+  private decryptWithKey = (encryptedData: string, key: string) => {
     const aes = crypto.createCipher('aes-256-cbc', key);
     let str = aes.update(encryptedData);
     str += aes.final('utf8');
@@ -56,13 +56,18 @@ export class CryptoTool {
    */
   public encrypt = async (object: unknown) => {
     const salt = this.generateRandomString(16);
-    const key = await this.generateKey(salt);
-    const result = await this.encryptWithKey(JSON.stringify(object), key);
-    return JSON.stringify({
-      cipher: result,
-      iv: salt,
-      salt,
-    });
+    console.log('encrypt salt', salt);
+    try {
+      const key = await this.generateKey(salt);
+    } catch (error) {
+      console.log('encrypt error', error);
+    }
+    // const result = this.encryptWithKey(JSON.stringify(object), key);
+    // return JSON.stringify({
+    //   cipher: result,
+    //   iv: salt,
+    //   salt,
+    // });
   };
 
   /**

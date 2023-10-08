@@ -11,9 +11,15 @@ module.exports = {
         root: ['.'],
         alias: {
           '@core': './packages/core',
+          '@DB': './packages/core/DB',
           '@assets': './packages/ui/assets',
           '@components': './packages/ui/components',
           '@pages': './packages/ui/pages',
+          '@modules': './packages/ui/modules',
+          '@hooks': './packages/ui/hooks',
+          '@router': './packages/ui/router',
+          '@service': './packages/ui/service',
+          '@utils': './packages/ui/utils',
           //see: https://github.com/margelo/react-native-quick-crypto#replace-crypto-browserify
           crypto: './node_modules/react-native-quick-crypto',
           stream: './node_modules/stream-browserify',

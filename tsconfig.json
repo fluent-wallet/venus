@@ -23,6 +23,8 @@
     "noFallthroughCasesInSwitch": true,
     "baseUrl": ".",
     "paths": {
+      "@core/*": ["./packages/core/*"],
+      "@DB/*": ["./packages/core/DB/*"],
       "@assets/*": ["./packages/ui/assets/*"],
       "@utils/*": ["./packages/ui/utils/*"],
       "@modules/*": ["./packages/ui/modules/*"],
