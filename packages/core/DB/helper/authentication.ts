@@ -21,7 +21,7 @@ export enum AuthenticationType {
  */
 const authCryptoTool = new CryptoTool();
 authCryptoTool.setGetPasswordMethod(() => 'PASSWORD_CRYPTO_KEY');
-
+  
 class Authentication {
   public getPassword = async () => {
     const keyChainObject = await KeyChain.getGenericPassword(defaultOptions);
