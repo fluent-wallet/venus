@@ -1,12 +1,18 @@
+import { useColorScheme } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import { ThemeProvider } from '@rneui/themed';
+import { theme } from './theme';
+
 import Welcome from '@pages/Welcome';
 import SetPassword from '@pages/SetPassword';
 import Home from '@pages/Home';
 
 import { authentication, AuthenticationType, cryptoTool } from '@DB/helper';
+
 authentication.setPassword({ password: '123456', authType: AuthenticationType.Password });
+
 (async function () {
   console.log('start');
   try {
@@ -20,14 +26,19 @@ authentication.setPassword({ password: '123456', authType: AuthenticationType.Pa
 
 function App(): JSX.Element {
   const Stack = createNativeStackNavigator();
+  const mode = useColorScheme();
+  // fix type error
+  theme.mode = mode === 'dark' ? 'dark' : 'light';
   return (
     <SafeAreaProvider>
       <NavigationContainer>
-        <Stack.Navigator initialRouteName="Welcome">
-          <Stack.Screen name="Welcome" component={Welcome} options={{ headerShown: false }} />
-          <Stack.Screen name="SetPassword" component={SetPassword} />
-          <Stack.Screen name="Home" component={Home} />
-        </Stack.Navigator>
+        <ThemeProvider theme={theme}>
+          <Stack.Navigator initialRouteName="Welcome" screenOptions={{ headerShown: false }}>
+            <Stack.Screen name="Welcome" component={Welcome} />
+            <Stack.Screen name="SetPassword" component={SetPassword} />
+            <Stack.Screen name="Home" component={Home} />
+          </Stack.Navigator>
+        </ThemeProvider>
       </NavigationContainer>
     </SafeAreaProvider>
   );
