@@ -2,11 +2,11 @@ import '@rneui/themed';
 
 declare module '@rneui/themed' {
   export interface Colors {
-    textColorPrimary: string;
-    textColorSecondary: string;
-    textColorBrand: string;
-    textColorInvert: string;
-    borderColorPrimary: string;
+    textPrimary: string;
+    textSecondary: string;
+    textBrand: string;
+    textInvert: string;
+    borderPrimary: string;
     surfacePrimary: string;
     surfaceSecondary: string;
     surfaceBrand: string;

@@ -1,14 +1,14 @@
 import { createTheme } from '@rneui/themed';
 const colors = {
-  gray0: '#F7F7F7',
-  gray1: '#A3A3A3',
+  gray0: '#FAFAFA',
+  gray1: '#E5E5E5',
   gray2: '#A3A3A3',
   gray3: '#737373',
-  gray4: '#242424',
+  gray4: '#404040',
   gray5: '#171717',
 
   blue0: '#F2F5FF',
-  blue1: '#D9E3FF',
+  blue1: '#C0D1FF',
   blue2: '#537FF6',
   blue3: '#4572EC',
   blue4: '#234296',
@@ -34,11 +34,11 @@ const colors = {
 
 const theme = createTheme({
   lightColors: {
-    textColorPrimary: colors.gray5,
-    textColorSecondary: colors.gray2,
-    textColorBrand: colors.blue3,
-    textColorInvert: colors.gray0,
-    borderColorPrimary: colors.gray1,
+    textPrimary: colors.gray5,
+    textSecondary: colors.gray2,
+    textBrand: colors.blue3,
+    textInvert: colors.gray0,
+    borderPrimary: colors.gray1,
     surfacePrimary: colors.gray0,
     surfaceSecondary: colors.blue1,
     surfaceBrand: colors.blue3,
@@ -48,11 +48,11 @@ const theme = createTheme({
     linearGradientBackground: ['#DFE6FF', colors.white],
   },
   darkColors: {
-    textColorPrimary: colors.gray1,
-    textColorSecondary: colors.gray3,
-    textColorBrand: colors.blue2,
-    textColorInvert: colors.gray5,
-    borderColorPrimary: colors.gray4,
+    textPrimary: colors.gray1,
+    textSecondary: colors.gray3,
+    textBrand: colors.blue2,
+    textInvert: colors.gray5,
+    borderPrimary: colors.gray4,
     surfacePrimary: colors.gray5,
     surfaceSecondary: colors.blue4,
     surfaceBrand: colors.blue2,
@@ -64,8 +64,13 @@ const theme = createTheme({
   components: {
     Button: (props, theme) => ({
       buttonStyle: {
-        backgroundColor: theme.colors.textColorBrand,
+        backgroundColor: theme.colors.textBrand,
         borderRadius: 40,
+        height: 40,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        fontWeight: 500,
       },
     }),
   },
