@@ -3,16 +3,15 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { ThemeProvider } from '@rneui/themed';
-import './assets/i18n'
+import './assets/i18n';
 import { theme } from './theme';
 
 import Welcome from '@pages/Welcome';
 import SetPassword from '@pages/SetPassword';
+import Biometrics from '@pages/SetPassword/Biometrics';
 import Home from '@pages/Home';
 
 import { authentication, AuthenticationType, cryptoTool } from '@DB/helper';
-
-
 
 (async function () {
   console.log('start');
@@ -38,6 +37,7 @@ function App(): JSX.Element {
           <Stack.Navigator initialRouteName="Welcome" screenOptions={{ headerShown: false }}>
             <Stack.Screen name="Welcome" component={Welcome} />
             <Stack.Screen name="SetPassword" component={SetPassword} />
+            <Stack.Screen name="Biometrics" component={Biometrics} />
             <Stack.Screen name="Home" component={Home} />
           </Stack.Navigator>
         </ThemeProvider>

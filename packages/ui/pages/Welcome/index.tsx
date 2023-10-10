@@ -1,14 +1,13 @@
 import React from 'react';
 import LinearGradient from 'react-native-linear-gradient';
-import { Platform, StatusBar, View, Text, Image, SafeAreaView } from 'react-native';
+import { StatusBar, View, Text, Image, SafeAreaView } from 'react-native';
+import { NavigationProp } from '@react-navigation/native';
 import { useTheme, useThemeMode, Button } from '@rneui/themed';
+import { statusBarHeight } from '@utils/deviceInfo';
 import Tip from '@assets/icons/tip.svg';
 import WelcomeBg from '@assets/images/welcome-bg.png';
 
-// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-const statusBarHeight = Platform.OS === 'android' ? StatusBar.currentHeight! : 0;
-
-const Welcome: React.FC = () => {
+const Welcome: React.FC<{ navigation: NavigationProp<any> }> = ({ navigation }) => {
   const { theme } = useTheme();
   const { mode, setMode } = useThemeMode();
 
@@ -44,9 +43,15 @@ const Welcome: React.FC = () => {
           </Text>
         </View>
 
-        <Button containerStyle={{ marginTop: 40, marginHorizontal: 16 }}>Connect BSIM Wallet</Button>
-        <Button containerStyle={{ marginTop: 16, marginHorizontal: 16 }}>Create new Wallet</Button>
-        <Button containerStyle={{ marginTop: 16, marginHorizontal: 16 }}>Import existing Wallet </Button>
+        <Button containerStyle={{ marginTop: 40, marginHorizontal: 16 }} onPress={() => navigation.navigate('Biometrics')}>
+          Connect BSIM Wallet
+        </Button>
+        <Button containerStyle={{ marginTop: 16, marginHorizontal: 16 }} onPress={() => navigation.navigate('Biometrics')}>
+          Create new Wallet
+        </Button>
+        <Button containerStyle={{ marginTop: 16, marginHorizontal: 16 }} onPress={() => navigation.navigate('Biometrics')}>
+          Import existing Wallet
+        </Button>
         <Button containerStyle={{ marginTop: 16, marginHorizontal: 16 }} onPress={() => setMode(mode === 'dark' ? 'light' : 'dark')}>
           Toggle Mode
         </Button>
