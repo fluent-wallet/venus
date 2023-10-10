@@ -12,11 +12,12 @@ import Home from '@pages/Home';
 
 import { authentication, AuthenticationType, cryptoTool } from '@DB/helper';
 
-authentication.setPassword({ password: '123456', authType: AuthenticationType.Password });
+
 
 (async function () {
   console.log('start');
   try {
+    await authentication.setPassword({ password: '123456', authType: AuthenticationType.Password });
     const encryptedData = await cryptoTool.encrypt({ test: '12345 ' });
     // console.log('encrypt', encryptedData)
   } catch (err) {

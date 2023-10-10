@@ -8,7 +8,8 @@
     "lint": "eslint .",
     "start": "react-native start",
     "test": "jest",
-    "postinstall": "patch-package"
+    "postinstall": "patch-package",
+    "pod:install": "command -v pod && (cd ios/ && pod install && cd ..) || echo \"Skipping pod install\""
   },
   "dependencies": {
     "@craftzdog/react-native-buffer": "^6.0.5",
