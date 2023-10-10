@@ -8,7 +8,7 @@
     "lint": "eslint .",
     "start": "react-native start",
     "test": "jest",
-    "postinstall": "patch-package",
+    "postinstall": "yarn pod:install && patch-package",
     "pod:install": "command -v pod && (cd ios/ && pod install && cd ..) || echo \"Skipping pod install\""
   },
   "dependencies": {
