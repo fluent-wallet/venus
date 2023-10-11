@@ -28,5 +28,6 @@ module.exports = {
       },
     ],
     ['nativewind/babel', { allowModuleTransform: ['@rneui/themed', 'react-native-linear-gradient'] }],
+    'react-native-reanimated/plugin',
   ],
 };

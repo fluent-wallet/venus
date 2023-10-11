@@ -1,6 +1,6 @@
 import React from 'react';
 import LinearGradient from 'react-native-linear-gradient';
-import { StatusBar, View, Text, Image, SafeAreaView } from 'react-native';
+import { View, Text, Image, SafeAreaView } from 'react-native';
 import { NavigationProp } from '@react-navigation/native';
 import { useTheme, useThemeMode, Button } from '@rneui/themed';
 import { statusBarHeight } from '@utils/deviceInfo';
@@ -13,7 +13,6 @@ const Welcome: React.FC<{ navigation: NavigationProp<any> }> = ({ navigation }) 
 
   return (
     <LinearGradient colors={theme.colors.linearGradientBackground} className="flex-1">
-      <StatusBar translucent backgroundColor="transparent" barStyle={theme.mode === 'dark' ? 'light-content' : 'dark-content'} />
       <SafeAreaView className="flex-1 flex flex-col justify-start pt-[8px]">
         <View
           className="flex flex-row w-[330px] mx-auto p-[12px] rounded-[8px]"

@@ -1,8 +1,40 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import LinearGradient from 'react-native-linear-gradient';
-import { StatusBar, View, Text, Image, SafeAreaView } from 'react-native';
+import { View, Text, Image, SafeAreaView } from 'react-native';
 import { useTheme, useThemeMode, Button } from '@rneui/themed';
-import FaceId from '@assets/images/face-id.png';
+import { statusBarHeight } from '@utils/deviceInfo';
+import Animated, { useSharedValue, useAnimatedStyle, withTiming, withRepeat } from 'react-native-reanimated';
+import FaceIdSource from '@assets/images/face-id.png';
+
+const getFaceIdLinearColor = (themeMode: 'dark' | 'light') =>
+  themeMode === 'dark' ? ['rgba(174, 207, 250, 0.2)', 'rgba(171, 194, 255, 0)'] : ['#AECFFA', 'rgba(171, 194, 255, 0)'];
+const FaceId: React.FC = () => {
+  const { theme } = useTheme();
+  const height = useSharedValue(-210);
+  const animatedStyles = useAnimatedStyle(() => ({
+    transform: [{ translateY: -height.value }],
+  }));
+
+  useEffect(() => {
+    height.value = withRepeat(
+      withTiming(-88, {
+        duration: 1500,
+      }),
+      -1,
+      true
+    );
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  return (
+    <View className="relative mx-auto w-[193px] h-[210px] rounded-[20px] overflow-hidden">
+      <Animated.View className="absolute w-[193px] h-[210px] bottom-0" style={animatedStyles}>
+        <LinearGradient colors={getFaceIdLinearColor(theme.mode)} className="flex-1" />
+      </Animated.View>
+      <Image source={FaceIdSource} />
+    </View>
+  );
+};
 
 const Biometrics: React.FC = () => {
   const { theme } = useTheme();
@@ -10,10 +42,8 @@ const Biometrics: React.FC = () => {
 
   return (
     <LinearGradient colors={theme.colors.linearGradientBackground} className="flex-1">
-      <StatusBar translucent backgroundColor="transparent" barStyle={theme.mode === 'dark' ? 'light-content' : 'dark-content'} />
-      <SafeAreaView className="flex-1 flex flex-col justify-start pt-[8px]">
-        <Image className="mt-[44px] mx-auto w-[193px] h-[210px]" source={FaceId} />
-
+      <SafeAreaView className="flex-1 flex flex-col justify-start" style={{ paddingTop: statusBarHeight + 48 }}>
+        <FaceId />
         <View className="mt-[90px]">
           <Text className="text-[36px] leading-[46px] font-bold text-center" style={{ color: theme.colors.textBrand }}>
             Enable FaceId
