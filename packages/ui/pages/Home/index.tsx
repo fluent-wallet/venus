@@ -1,6 +1,7 @@
 import type { PropsWithChildren } from 'react';
-import { ScrollView, useColorScheme, View, Text } from 'react-native';
+import { ScrollView, View, useColorScheme } from 'react-native';
 import { DebugInstructions, Header, LearnMoreLinks, ReloadInstructions } from 'react-native/Libraries/NewAppScreen';
+import { Text } from '@rneui/themed';
 
 type SectionProps = PropsWithChildren<{
   title: string;

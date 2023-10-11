@@ -1,8 +1,8 @@
 import React from 'react';
 import LinearGradient from 'react-native-linear-gradient';
-import { View, Text, Image, SafeAreaView } from 'react-native';
+import { View, Image, SafeAreaView } from 'react-native';
 import { NavigationProp } from '@react-navigation/native';
-import { useTheme, useThemeMode, Button } from '@rneui/themed';
+import { useTheme, useThemeMode, Button, Text } from '@rneui/themed';
 import { statusBarHeight } from '@utils/deviceInfo';
 import Tip from '@assets/icons/tip.svg';
 import WelcomeBg from '@assets/images/welcome-bg.png';
@@ -34,10 +34,10 @@ const Welcome: React.FC<{ navigation: NavigationProp<any> }> = ({ navigation }) 
         <Image className="mt-[10px] mx-auto w-[208px] h-[208px]" source={WelcomeBg} />
 
         <View className="mt-[90px]">
-          <Text className="text-[36px] leading-[46px] font-bold text-center" style={{ color: theme.colors.textBrand }}>
+          <Text className="text-[36px] leading-[46px] font-bold text-center font-sfp" style={{ color: theme.colors.textBrand }}>
             Enter Web3
           </Text>
-          <Text className="mt-[8px] text-[16px] leading-[24px] text-center " style={{ color: theme.colors.textPrimary }}>
+          <Text className="mt-[8px] text-[16px] leading-[24px] text-center font-sfp" style={{ color: theme.colors.textPrimary }}>
             First, let's add a wallet
           </Text>
         </View>

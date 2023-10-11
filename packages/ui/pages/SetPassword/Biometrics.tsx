@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react';
 import LinearGradient from 'react-native-linear-gradient';
-import { View, Text, Image, SafeAreaView } from 'react-native';
-import { useTheme, useThemeMode, Button } from '@rneui/themed';
+import { View, Image, SafeAreaView } from 'react-native';
+import { useTheme, useThemeMode, Button, Text } from '@rneui/themed';
 import { statusBarHeight } from '@utils/deviceInfo';
 import Animated, { useSharedValue, useAnimatedStyle, withTiming, withRepeat } from 'react-native-reanimated';
 import FaceIdSource from '@assets/images/face-id.png';
