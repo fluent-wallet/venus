@@ -783,7 +783,7 @@ SPEC CHECKSUMS:
   React-jsiexecutor: ff70a72027dea5cc7d71cfcc6fad7f599f63987a
   React-jsinspector: aef73cbd43b70675f572214d10fa438c89bf11ba
   React-logger: 2e4aee3e11b3ec4fa6cfd8004610bbb3b8d6cca4
-  react-native-bignumber: 9850896db4534ea31e89dfd88182e7412eace199
+  react-native-bignumber: c357a72b07d92e0adc2612c38928d8d4235437a7
   react-native-quick-base64: a5dbe4528f1453e662fcf7351029500b8b63e7bb
   react-native-quick-crypto: 455c1b411db006dba1026a30681ececb19180187
   react-native-safe-area-context: 7aa8e6d9d0f3100a820efb1a98af68aa747f9284
@@ -817,4 +817,4 @@ SPEC CHECKSUMS:
 
 PODFILE CHECKSUM: bdbfd3c5adf407e8c72d05292de04ba2798cdefc
 
-COCOAPODS: 1.12.1
+COCOAPODS: 1.13.0
