@@ -17,7 +17,7 @@ export class Vault extends Model {
   @children(TableName.AccountGroup) accountGroup!: Query<AccountGroup>;
 
   @reader async getMnemonic() {
-    const { data: mnemonic } = await cryptoTool.decrypt<string>(this.data);
+    const mnemonic = await cryptoTool.decrypt<string>(this.data);
     return mnemonic;
   }
 }

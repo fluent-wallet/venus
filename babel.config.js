@@ -21,6 +21,7 @@ module.exports = {
           '@service': './packages/ui/service',
           '@utils': './packages/ui/utils',
           //see: https://github.com/margelo/react-native-quick-crypto#replace-crypto-browserify
+          'bn.js': './node_modules/react-native-bignumber',
           crypto: './node_modules/react-native-quick-crypto',
           stream: './node_modules/stream-browserify',
           buffer: './node_modules/@craftzdog/react-native-buffer',
@@ -28,5 +29,6 @@ module.exports = {
       },
     ],
     ['nativewind/babel', { allowModuleTransform: ['@rneui/themed', 'react-native-linear-gradient'] }],
+    'react-native-reanimated/plugin',
   ],
 };
