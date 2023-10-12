@@ -4,7 +4,7 @@ import { type TokenList } from '../TokenList';
 import { type Ticker } from '../Ticker';
 import { type Token } from '../Token';
 import { type HdPath } from '../HdPath';
-import { TableName } from '../../index';
+import TableName from '../../TableName';
 
 export class Network extends Model {
   static table = TableName.Network;

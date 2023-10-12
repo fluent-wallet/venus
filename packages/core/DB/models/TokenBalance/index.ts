@@ -2,7 +2,7 @@ import { Model, type Relation } from '@nozbe/watermelondb';
 import { text, immutableRelation } from '@nozbe/watermelondb/decorators';
 import { type Address } from '../Address';
 import { type Token } from '../Token';
-import { TableName } from '../../index';
+import TableName from '../../TableName';
 
 export class TokenBalance extends Model {
   static table = TableName.TokenBalance;

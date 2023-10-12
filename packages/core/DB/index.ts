@@ -18,23 +18,6 @@ import { TxExtra as TxExtraModel } from './models/TxExtra';
 import { TxPayload as TxPayloadModel } from './models/TxPayload';
 import { Vault as VaultModel } from './models/Vault';
 
-export enum TableName {
-  HdPath = 'hd_path',
-  Network = 'network',
-  Token = 'token',
-  Ticker = 'ticker',
-  TokenList = 'token_list',
-  Address = 'address',
-  TokenBalance = 'token_balance',
-  Tx = 'tx',
-  TxExtra = 'tx_extra',
-  TxPayload = 'tx_payload',
-  AccountGroup = 'account_group',
-  Vault = 'vault',
-  Account = 'account',
-  Memo = 'memo',
-}
-
 const adapter = new SQLiteAdapter({
   dbName: 'venus_database2',
   schema,

@@ -4,7 +4,7 @@ import { type Address } from '../Address';
 import { type Token } from '../Token';
 import { type TxExtra } from '../TxExtra';
 import { type TxPayload } from '../TxPayload';
-import { TableName } from '../../index';
+import TableName from '../../TableName';
 
 export class Tx extends Model {
   static table = TableName.Tx;

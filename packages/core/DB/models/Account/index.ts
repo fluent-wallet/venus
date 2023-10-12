@@ -3,7 +3,7 @@ import { field, text, children, relation, date, readonly, writer } from '@nozbe/
 import { type Address } from '../Address';
 import { type AccountGroup } from '../AccountGroup';
 import { type Network } from '../Network';
-import { TableName } from '../../index';
+import TableName from '../../TableName';
 import { encode } from '../../../utils/address';
 import { toAccountAddress } from '../../../utils/account';
 

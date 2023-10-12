@@ -5,7 +5,7 @@ import { type Account } from '../Account';
 import { type Network } from '../Network';
 import { type Token } from '../Token';
 import { type TokenBalance } from '../TokenBalance';
-import { TableName } from '../../index';
+import TableName from '../../TableName';
 import { cryptoTool } from '../../helper';
 
 export class Address extends Model {

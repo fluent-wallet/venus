@@ -1,7 +1,7 @@
 import { Model, type Query } from '@nozbe/watermelondb';
 import { text, children } from '@nozbe/watermelondb/decorators';
 import { type Token } from '../Token';
-import { TableName } from '../../index';
+import TableName from '../../TableName';
 
 export class TokenList extends Model {
   static table = TableName.TokenList;

@@ -1,7 +1,7 @@
 import { Model, type Query } from '@nozbe/watermelondb';
 import { field, text, children } from '@nozbe/watermelondb/decorators';
 import { type Network } from '../Network';
-import { TableName } from '../../index';
+import TableName from '../../TableName';
 
 export class Ticker extends Model {
   static table = TableName.Ticker;

@@ -3,9 +3,8 @@ import { field, text, children, immutableRelation, writer, lazy } from '@nozbe/w
 import { type Vault } from '../Vault';
 import { type Account } from '../Account';
 import { type Network } from '../Network';
-import { TableName } from '../../index';
+import TableName from '../../TableName';
 import { getNthAccountOfHDKey } from '../../../utils/hdkey';
-import database from '../../index';
 import { cryptoTool } from '../../helper';
 
 export class AccountGroup extends Model {
@@ -63,6 +62,4 @@ export class AccountGroup extends Model {
     await this.batch(newAccount, ...addresses);
     return newAccount;
   }
-
-  static findById = (id: string) => database.collections.get(TableName.AccountGroup).find(id);
 }

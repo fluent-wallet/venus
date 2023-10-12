@@ -1,5 +1,5 @@
 import { appSchema, tableSchema } from '@nozbe/watermelondb';
-import { TableName } from '../index';
+import TableName from '../TableName';
 
 // WatermelonDB can not define a unique column.
 // We will should do some prevent duplicates manually.
@@ -140,7 +140,7 @@ const schema = appSchema({
       ],
     }),
     tableSchema({
-      name: TableName.Account,
+      name: TableName.AccountGroup,
       columns: [
         // Type of vault: pub, pk, hd, hw
         { name: 'nickname', type: 'string' },

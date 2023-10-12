@@ -1,7 +1,7 @@
 import { Model, type Relation } from '@nozbe/watermelondb';
 import { text, relation } from '@nozbe/watermelondb/decorators';
 import { type Network } from '../Network';
-import { TableName } from '../../index';
+import TableName from '../../TableName';
 
 export class Memo extends Model {
   static table = TableName.Memo;
