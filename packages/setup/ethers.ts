@@ -1,6 +1,5 @@
-import crypto from 'react-native-quick-crypto';
-global.getRandomValues = crypto.getRandomValues;
 import * as ethers from 'ethers';
+import RNQC from 'react-native-quick-crypto';
 
 ethers.pbkdf2.register(
   (
@@ -11,6 +10,8 @@ ethers.pbkdf2.register(
     algo: 'sha256' | 'sha512'
     // eslint-disable-next-line max-params
   ) => {
-    return ethers.hexlify(crypto.pbkdf2Sync(password, salt, iterations, keylen, algo));
+    return ethers.hexlify(RNQC.pbkdf2Sync(password, salt, iterations, keylen, algo));
   }
 );
+
+export * from 'ethers';

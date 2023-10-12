@@ -1,11 +1,7 @@
-/**
- * @format
- */
-
 import { AppRegistry } from 'react-native';
-import './ethers-setup';
-import 'react-native-get-random-values';
+import './packages/setup/getRandomValues';
 import '@ethersproject/shims';
+import './packages/setup/ethers';
 import App from './packages/ui/App';
 import { name as appName } from './app.json';
 
