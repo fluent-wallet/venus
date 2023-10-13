@@ -1,5 +1,5 @@
 {
-  "name": "wallet",
+  "name": "venus",
   "version": "0.0.1",
   "private": true,
   "scripts": {
@@ -38,7 +38,6 @@
     "react-i18next": "^13.2.2",
     "react-native": "0.72.5",
     "react-native-bignumber": "^0.2.1",
-    "react-native-get-random-values": "^1.9.0",
     "react-native-keychain": "^8.1.1",
     "react-native-linear-gradient": "^2.8.3",
     "react-native-quick-base64": "^2.0.7",

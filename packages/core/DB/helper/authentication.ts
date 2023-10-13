@@ -44,7 +44,7 @@ class Authentication {
     const _password = authType === AuthenticationType.Biometrics ? `${authCryptoTool.generateRandomString()}${new Date().getTime()}` : password;
     const encryptedPassword = await authCryptoTool.encrypt(_password);
 
-    await KeyChain.setGenericPassword('fluent-user', encryptedPassword, {
+    await KeyChain.setGenericPassword('ePayWallet-user', encryptedPassword, {
       ...defaultOptions,
       ...authOptions,
     });

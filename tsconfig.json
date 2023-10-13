@@ -27,6 +27,7 @@
     "paths": {
       "@core/*": ["./packages/core/*"],
       "@DB/*": ["./packages/core/DB/*"],
+      "@setup/*": ["./packages/setup/*"],
       "@assets/*": ["./packages/ui/assets/*"],
       "@utils/*": ["./packages/ui/utils/*"],
       "@modules/*": ["./packages/ui/modules/*"],
@@ -37,5 +38,5 @@
       "@service/*": ["./packages/ui/service/*"]
     }
   },
-  "include": ["packages", "./packages/ui/declarations.d.ts"]
+  "include": ["packages"]
 }

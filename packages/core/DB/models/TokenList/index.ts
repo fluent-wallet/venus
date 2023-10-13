@@ -1,7 +1,8 @@
 import { Model, type Query } from '@nozbe/watermelondb';
 import { text, children } from '@nozbe/watermelondb/decorators';
 import { type Token } from '../Token';
-import { TableName } from '../../index';
+import TableName from '../../TableName';
+import { createModel } from '../../helper/modelHelper';
 
 export class TokenList extends Model {
   static table = TableName.TokenList;
@@ -13,4 +14,11 @@ export class TokenList extends Model {
   @text('name') name!: string;
   @text('value') value!: string | null;
   @children(TableName.Token) token!: Query<Token>;
+}
+
+type Params = Pick<TokenList, 'url' | 'name'> & Partial<Pick<TokenList, 'value'>>;
+export function createTokenList(params: Params, prepareCreate: true): TokenList;
+export function createTokenList(params: Params): Promise<TokenList>;
+export function createTokenList(params: Params, prepareCreate?: true) {
+  return createModel({ name: TableName.TokenList, params, prepareCreate });
 }

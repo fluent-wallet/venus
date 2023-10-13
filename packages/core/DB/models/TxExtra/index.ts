@@ -1,6 +1,6 @@
 import { Model } from '@nozbe/watermelondb';
 import { field, text } from '@nozbe/watermelondb/decorators';
-import { TableName } from '../../index';
+import TableName from '../../TableName';
 
 export class TxExtra extends Model {
   static table = TableName.TxExtra;

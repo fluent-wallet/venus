@@ -4,7 +4,8 @@ import { type TokenList } from '../TokenList';
 import { type Ticker } from '../Ticker';
 import { type Token } from '../Token';
 import { type HdPath } from '../HdPath';
-import { TableName } from '../../index';
+import TableName from '../../TableName';
+import { createModel } from '../../helper/modelHelper';
 
 export class Network extends Model {
   static table = TableName.Network;
@@ -34,4 +35,12 @@ export class Network extends Model {
   @relation(TableName.HdPath, 'hd_path_id') hdPath!: Relation<HdPath>;
   @immutableRelation(TableName.Ticker, 'ticker_id') ticker!: Relation<Ticker>;
   @immutableRelation(TableName.TokenList, 'token_list_id') tokenList!: Relation<TokenList> | null;
+}
+
+type Params = Pick<Network, 'name' | 'endpoint' | 'netId' | 'gasBuffer' | 'chainId' | 'networkType' | 'isMainnet' | 'isTestnet' | 'isCustom'> &
+  Partial<Pick<Network, 'icon' | 'builtin' | 'scanUrl' | 'selected' | 'cacheTime' | 'balanceChecker'>>;
+export function createNetwork(params: Params, prepareCreate: true): Network;
+export function createNetwork(params: Params): Promise<Network>;
+export function createNetwork(params: Params, prepareCreate?: true) {
+  return createModel<Network>({ name: TableName.Network, params, prepareCreate });
 }

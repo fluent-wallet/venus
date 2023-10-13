@@ -1,7 +1,6 @@
-
 // run npx react-native-asset to link assets
 module.exports = {
-      project: {
+  project: {
     ios: {},
     android: {}, // grouped into "project"
   },

@@ -5,7 +5,7 @@ import { type TokenList } from '../TokenList';
 import { type Network } from '../Network';
 import { type Address } from '../Address';
 import { type Tx } from '../Tx';
-import { TableName } from '../../index';
+import TableName from '../../TableName';
 
 export class Token extends Model {
   static table = TableName.Token;

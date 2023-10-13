@@ -11,21 +11,6 @@ import SetPassword from '@pages/SetPassword';
 import Biometrics from '@pages/SetPassword/Biometrics';
 import Home from '@pages/Home';
 import ArrowLeft from '@assets/icons/arrow-left.svg';
-import { generateMnemonic } from '@core/utils/mnemonic';
-import { Wallet } from 'ethers';
-
-(function () {
-  const now = performance.now()
-  for (let i = 0; i < 1; i++) {
-    // generateMnemonic();
-    console.log(Wallet.createRandom());
-  }
-
-  const end = performance.now()
-  console.log(
-    `💰 New wallet created! Took ${end - now}ms`,
-  )
-})();
 
 const Stack = createNativeStackNavigator();
 const StackNavigator = ({ children }: PropsWithChildren) => {
