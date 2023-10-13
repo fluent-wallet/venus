@@ -1,12 +1,14 @@
 package com.wallet.bsimsdk
 
-import com.example.bsimsdk.MockSdk
+import com.example.bsimlib.MockSdk
+import com.example.bsimlib.CoinType
+import com.example.bsimlib.Message
+
 import com.facebook.react.bridge.Promise
 import com.facebook.react.bridge.ReactApplicationContext
 import com.facebook.react.bridge.ReactContextBaseJavaModule
 import com.facebook.react.bridge.ReactMethod
-import com.example.bsimsdk.CoinType
-import com.example.bsimsdk.Message
+
 import android.util.Log
 import com.facebook.react.bridge.ReadableArray
 import com.facebook.react.bridge.WritableNativeArray
@@ -17,7 +19,7 @@ class MockSDKModule(private val reactContext: ReactApplicationContext) :
     ReactContextBaseJavaModule(reactContext) {
 
     override fun getName(): String {
-        return "BSIMMockSDK"
+        return "BSIMSDK"
     }
 
 
@@ -27,7 +29,7 @@ class MockSDKModule(private val reactContext: ReactApplicationContext) :
         mapOf("400" to "BSIMSDK is not create, Please call createMockSDK function first")
 
     @ReactMethod
-    fun createMockSDK(appId: String) {
+    fun create(appId: String) {
 
         if (BSIMSDKInstance == null) {
             BSIMSDKInstance = MockSdk(appId, reactContext.applicationContext);
@@ -58,6 +60,7 @@ class MockSDKModule(private val reactContext: ReactApplicationContext) :
             promise.resolve(result)
 
         } else {
+            Log.v("wallet", "nothing")
             promise.reject("400", error["400"])
         }
 
@@ -89,14 +92,14 @@ class MockSDKModule(private val reactContext: ReactApplicationContext) :
     @ReactMethod
     fun batchSignMessage(messages: ReadableArray, promise: Promise) {
 
-        var result  = WritableNativeArray()
+        var result = WritableNativeArray()
         if (messages.size() == 0) {
             promise.resolve(result)
         }
 
         val messageList = mutableListOf<Message>()
 
-        for (i in 0 ..< messages.size()) {
+        for (i in 0..<messages.size()) {
             val msgReadableMap = messages.getMap(i)
 
             val coinTypeStr = msgReadableMap.getString("coinType")
@@ -118,12 +121,13 @@ class MockSDKModule(private val reactContext: ReactApplicationContext) :
                 return
             }
 
-            if (index == null) {
-                promise.reject("400", "index cannot be empty")
-                return
-            }
-
-            messageList.add(Message(msg=msg.toByteArray(), coinType = coinType, index = index.toUInt()))
+            messageList.add(
+                Message(
+                    msg = msg.toByteArray(),
+                    coinType = coinType,
+                    index = index.toUInt()
+                )
+            )
 
         }
 
@@ -145,6 +149,10 @@ class MockSDKModule(private val reactContext: ReactApplicationContext) :
 
     @ReactMethod
     fun getPubkeyList(promise: Promise) {
+        if (BSIMSDKInstance == null) {
+            promise.reject("400", error["400"])
+            return
+        }
         val pubKeyList = BSIMSDKInstance?.getPubkeyList()
 
         if (pubKeyList != null) {
@@ -154,7 +162,7 @@ class MockSDKModule(private val reactContext: ReactApplicationContext) :
             }
             promise.resolve(resultList)
         } else {
-            promise.reject("400", error["400"])
+            promise.resolve(WritableNativeArray())
         }
     }
 
