@@ -1,6 +1,4 @@
-import type { PropsWithChildren } from 'react';
-import { ScrollView, StatusBar, useColorScheme, View, Text } from 'react-native';
-import { DebugInstructions, Header, LearnMoreLinks, ReloadInstructions } from 'react-native/Libraries/NewAppScreen';
+import { StatusBar, useColorScheme, View, Text } from 'react-native';
 
 function SetPassword() {
   const isDarkMode = useColorScheme() === 'dark';
