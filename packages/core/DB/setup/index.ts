@@ -1,1 +1,2 @@
-export * from './initDatabase';
+import { initDatabase } from './initDatabase'
+initDatabase();
