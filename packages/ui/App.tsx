@@ -45,9 +45,7 @@ const StackNavigator = ({ children }: PropsWithChildren) => {
 
 function App(): JSX.Element {
   const mode = useColorScheme();
-  useEffect(() => {
-    theme.mode = mode === 'dark' ? 'dark' : 'light';
-  }, [mode]);
+  theme.mode = mode === 'dark' ? 'dark' : 'light';
 
   return (
     <SafeAreaProvider>
