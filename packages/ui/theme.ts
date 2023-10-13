@@ -62,7 +62,7 @@ const theme = createTheme({
     linearGradientBackground: ['#001C69', colors.black],
   },
   components: {
-    Button: (props, theme) => ({
+    Button: (_, theme) => ({
       buttonStyle: {
         backgroundColor: theme.colors.textBrand,
         borderRadius: 40,
@@ -73,6 +73,12 @@ const theme = createTheme({
         fontWeight: 500,
       },
     }),
+    Text: (_, theme) => ({
+      style: {
+        fontFamily: "SF Pro Display",
+        color: theme.colors.textPrimary
+      }
+    })
   },
 });
 

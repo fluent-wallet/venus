@@ -48,7 +48,7 @@ const Biometrics: React.FC = () => {
           <Text className="text-[36px] leading-[46px] font-bold text-center" style={{ color: theme.colors.textBrand }}>
             Enable FaceId
           </Text>
-          <Text className="mt-[8px] text-[16px] leading-[24px] text-center" style={{ color: theme.colors.textPrimary }}>
+          <Text className="mt-[8px] text-[16px] leading-[24px] text-center">
             Enable FaceID to access wallet.
             {'\n'}
             {'\n'}

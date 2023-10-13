@@ -22,10 +22,10 @@ const Welcome: React.FC<{ navigation: NavigationProp<any> }> = ({ navigation }) 
             <Tip />
           </View>
           <View>
-            <Text className="relative text-[16px] leading-[24px] font-medium font-sfp" style={{ color: theme.colors.textPrimary }}>
+            <Text className="relative text-[16px] leading-[24px] ">
               Coming Soon！
             </Text>
-            <Text className="mt-[4px] text-[14px] leading-[20px] font-sfp" style={{ color: theme.colors.textPrimary }}>
+            <Text className="mt-[4px] text-[14px] leading-[20px]">
               We are working hard to prepare, so stay tuned,Please stay tuned！
             </Text>
           </View>
@@ -34,10 +34,10 @@ const Welcome: React.FC<{ navigation: NavigationProp<any> }> = ({ navigation }) 
         <Image className="mt-[10px] mx-auto w-[208px] h-[208px]" source={WelcomeBg} />
 
         <View className="mt-[90px]">
-          <Text className="text-[36px] leading-[46px] font-bold text-center font-sfp" style={{ color: theme.colors.textBrand }}>
+          <Text className="text-[36px] leading-[46px] font-bold text-center" style={{ color: theme.colors.textBrand }}>
             Enter Web3
           </Text>
-          <Text className="mt-[8px] text-[16px] leading-[24px] text-center font-sfp" style={{ color: theme.colors.textPrimary }}>
+          <Text className="mt-[8px] text-[16px] leading-[24px] text-center">
             First, let's add a wallet
           </Text>
         </View>
