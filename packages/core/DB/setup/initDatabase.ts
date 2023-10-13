@@ -1,5 +1,8 @@
+
+import { Model } from '@nozbe/watermelondb';
 import database from '../';
 import TableName from '../TableName';
+import { createHdPath } from '../models/HdPath';
 
 import {
   CFX_MAINNET_RPC_ENDPOINT,
@@ -249,23 +252,21 @@ const createTableInstance = (paramArr, table) =>
       }
     })
   );
+const createMultiTable = (tableName: TableName, recordArr: Array<Model>) => {
 
-const isDBInit = 'is_database_init';
+}
+
 export const initDatabase = async () => {
   try {
-    const start = performance.now();
-    const hdPathTable = database.get('hd_path');
-    const isDatabaseInit = await database.localStorage.get<string | undefined>(isDBInit);
-    const qwe = await database.localStorage.get<string | undefined>('abc');
-    const cqwe = await database.localStorage.get<string | undefined>('qwe');
+    // Should skip if the DB has already been initialized.
+    if ((await database.get(TableName.HdPath).query().fetchCount()) !== 0) {
+      return;
+    }
 
-    const end = performance.now();
-    console.log(`isDatabaseInit took ${end - start} ms.`);
-    console.log(hdPathTable)
-    // console.log(isDatabaseInit)
-    // if (isDatabaseInit) {
-    //   return;
-    // }
+    // await database.write(async => {
+    //   database.get(TableName.HdPath).prepareCreate()
+    //   return 
+    // });
 
     // await database.write(async () => {
     //   const hdPathTable = database.get('hd_path');

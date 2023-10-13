@@ -6,6 +6,7 @@ import { type Network } from '../Network';
 import TableName from '../../TableName';
 import { getNthAccountOfHDKey } from '../../../utils/hdkey';
 import { cryptoTool } from '../../helper';
+import database from '@core/DB';
 
 export class AccountGroup extends Model {
   static table = TableName.AccountGroup;
@@ -63,3 +64,5 @@ export class AccountGroup extends Model {
     return newAccount;
   }
 }
+
+export const findAccountGroupById = (id: string) => database.collections.get(TableName.AccountGroup).find(id);

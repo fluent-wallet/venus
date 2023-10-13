@@ -2,6 +2,7 @@ import { Model, type Query } from '@nozbe/watermelondb';
 import { field, text, children } from '@nozbe/watermelondb/decorators';
 import { type Network } from '../Network';
 import TableName from '../../TableName';
+import { createModel } from '../../helper/modelHelper';
 
 export class Ticker extends Model {
   static table = TableName.Ticker;
@@ -14,4 +15,11 @@ export class Ticker extends Model {
   @field('decimals') decimals!: number;
   @text('icon_urls') iconUrls!: string | null;
   @children(TableName.Network) network!: Query<Network>;
+}
+
+type Params = Pick<Ticker, 'name' | 'symbol' | 'decimals'> & Partial<Pick<Ticker, 'iconUrls'>>;
+export function createHdPath(params: Params, prepareCreate: true): Ticker;
+export function createHdPath(params: Params): Promise<Ticker>;
+export function createHdPath(params: Params, prepareCreate?: true) {
+  return createModel<Ticker>({ name: TableName.Ticker, params, prepareCreate });
 }
