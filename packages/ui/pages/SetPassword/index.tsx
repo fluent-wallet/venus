@@ -2,19 +2,52 @@ import { View, SafeAreaView } from 'react-native';
 import { statusBarHeight } from '@utils/deviceInfo';
 import { Button, Text, useTheme, CheckBox } from '@rneui/themed';
 import Password from './components/Password';
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 import CreatePasswordAlert from './components/Alert';
+import { debounce } from 'lodash-es';
+import { NavigationProp } from '@react-navigation/native';
+import { AuthenticationType, authentication } from '@core/DB/helper';
 
-function SetPassword() {
+const SetPassword: React.FC<{ navigation: NavigationProp<any> }> = (props) => {
+  const { navigation } = props;
   const { theme } = useTheme();
   const [checked, setChecked] = useState(false);
-  const [password, setPassword] = useState('');
+  const [password, setPassword] = useState({ pwd: '', error: '' });
   const [confirmPwd, setConfirmPwd] = useState('');
+  const [loading, setLoading] = useState(false);
   const [alert, setAlert] = useState({
     show: false,
     type: 'success',
     message: 'You’ve successfully protected wallet. Remember to keep your Password, it’s your responsibility!',
   });
+
+  const handleSetPassword = useCallback(
+    debounce((value: string) => {
+      {
+        setPassword({ pwd: value, error: value.length < 8 && value !== '' ? 'Password must be at least 8 characters' : '' });
+      }
+    }, 200),
+    []
+  );
+  const handleConfirmPassword = useCallback(
+    debounce((value: string) => {
+      {
+        setConfirmPwd(value);
+      }
+    }, 200),
+    []
+  );
+
+  const handleCreatePassword = async () => {
+    setLoading(true);
+
+    try {
+      await authentication.setPassword({ password: confirmPwd, authType: AuthenticationType.Password });
+      setAlert({ show: true, type: 'success', message: 'You’ve successfully protected wallet. Remember to keep your Password, it’s your responsibility!' });
+    } catch (e) {
+      setAlert({ show: false, type: 'error', message: `${e}` });
+    }
+  };
 
   return (
     <View className="flex flex-1 relative" style={{ backgroundColor: theme.colors.normalBackground }}>
@@ -29,18 +62,18 @@ function SetPassword() {
 
           <View>
             <Password
-              errorMessage="Must be at least 6 characters!"
               helperText="Must be at least 8 characters"
-              value={password}
-              onChangeText={setPassword}
+              errorMessage={password.error}
+              value={password.pwd}
+              onChangeText={handleSetPassword}
               title="New Password"
             />
 
             <Password
-              successMessage="Password match!"
               helperText="Password must be match"
+              errorMessage={confirmPwd !== password.pwd && confirmPwd !== '' ? 'Passwords do not match' : ''}
               value={confirmPwd}
-              onChangeText={setConfirmPwd}
+              onChangeText={handleConfirmPassword}
               title="Confirm New Password"
             />
           </View>
@@ -61,13 +94,25 @@ function SetPassword() {
                 <Text className="text-base">ePay Wallet does not store your password. Please remember your password.</Text>
               </View>
             </View>
-            <Button>Create Password</Button>
+            <Button
+              loading={loading}
+              onPress={handleCreatePassword}
+              disabled={!(checked && password.pwd !== '' && password.pwd === confirmPwd && password.error === '')}
+            >
+              Create Password
+            </Button>
           </View>
         </SafeAreaView>
-        <CreatePasswordAlert {...alert} />
+        <CreatePasswordAlert
+          {...alert}
+          onOk={() => {
+            setAlert({ show: false, type: '', message: '' });
+            navigation.navigate('createAccount');
+          }}
+        />
       </View>
     </View>
   );
-}
+};
 
 export default SetPassword;
