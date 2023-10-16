@@ -5,6 +5,7 @@ import { useTheme, useThemeMode, Button, Text } from '@rneui/themed';
 import { statusBarHeight } from '@utils/deviceInfo';
 import Animated, { useSharedValue, useAnimatedStyle, withTiming, withRepeat } from 'react-native-reanimated';
 import FaceIdSource from '@assets/images/face-id.png';
+import { NavigationProp } from '@react-navigation/native'
 
 const getFaceIdLinearColor = (themeMode: 'dark' | 'light') =>
   themeMode === 'dark' ? ['rgba(174, 207, 250, 0.2)', 'rgba(171, 194, 255, 0)'] : ['#AECFFA', 'rgba(171, 194, 255, 0)'];
@@ -36,9 +37,10 @@ const FaceId: React.FC = () => {
   );
 };
 
-const Biometrics: React.FC = () => {
+const Biometrics: React.FC<{ navigation: NavigationProp<any> }> = (props) => {
   const { theme } = useTheme();
   const { mode, setMode } = useThemeMode();
+  const { navigation } = props
 
   return (
     <LinearGradient colors={theme.colors.linearGradientBackground} className="flex-1">
@@ -59,7 +61,7 @@ const Biometrics: React.FC = () => {
         </View>
 
         <Button containerStyle={{ marginTop: 32, marginHorizontal: 16 }}>Enable</Button>
-        <Button containerStyle={{ marginTop: 16, marginHorizontal: 16 }}>Set Password</Button>
+        <Button containerStyle={{ marginTop: 16, marginHorizontal: 16 }} onPress={() => navigation.navigate("SetPassword")}>Set Password</Button>
         <Button containerStyle={{ marginTop: 16, marginHorizontal: 16 }} onPress={() => setMode(mode === 'dark' ? 'light' : 'dark')}>
           Toggle Mode
         </Button>

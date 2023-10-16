@@ -6,7 +6,6 @@ import { type Network } from '../Network';
 import TableName from '../../TableName';
 import { getNthAccountOfHDKey } from '../../../utils/hdkey';
 import { cryptoTool } from '../../helper';
-import database from '@core/DB';
 
 export class AccountGroup extends Model {
   static table = TableName.AccountGroup;
@@ -58,11 +57,9 @@ export class AccountGroup extends Model {
       _newAccount = newAccount;
     }) as Account;
     const addresses = hdRets.map(({ address, encryptedPk }, index) =>
-      newAccount.createAddress({ prepareCreate: true, network: networks[index], hex: address, pk: encryptedPk })
+      newAccount.createAddress({ network: networks[index], hex: address, pk: encryptedPk }, true)
     );
     await this.batch(newAccount, ...addresses);
     return newAccount;
   }
 }
-
-export const findAccountGroupById = (id: string) => database.collections.get(TableName.AccountGroup).find(id);

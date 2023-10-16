@@ -46,6 +46,9 @@ const theme = createTheme({
     warnSuccessPrimary: colors.green4,
     warnErrorPrimary: colors.red4,
     linearGradientBackground: ['#DFE6FF', colors.white],
+    normalBackground: '#F7F7F7',
+    passwordInputBackground: colors.white,
+    buttonDisabledBackground: '#D9E3FF',
   },
   darkColors: {
     textPrimary: colors.gray1,
@@ -60,6 +63,9 @@ const theme = createTheme({
     warnSuccessPrimary: colors.green3,
     warnErrorPrimary: colors.red3,
     linearGradientBackground: ['#001C69', colors.black],
+    normalBackground: colors.gray5,
+    passwordInputBackground: '#242424',
+    buttonDisabledBackground: colors.blue4,
   },
   components: {
     Button: (_, theme) => ({
@@ -72,13 +78,16 @@ const theme = createTheme({
         justifyContent: 'center',
         fontWeight: 500,
       },
+      disabledStyle: {
+        backgroundColor: theme.colors.buttonDisabledBackground,
+      },
     }),
     Text: (_, theme) => ({
       style: {
-        fontFamily: "SF Pro Display",
-        color: theme.colors.textPrimary
-      }
-    })
+        fontFamily: 'SF Pro Display',
+        color: theme.colors.textPrimary,
+      },
+    }),
   },
 });
 

@@ -5,7 +5,7 @@ import { type Ticker } from '../Ticker';
 import { type Token } from '../Token';
 import { type HdPath } from '../HdPath';
 import TableName from '../../TableName';
-import { createModel } from '../../helper/modelHelper';
+import { createModel, type ModelFields } from '../../helper/modelHelper';
 
 export class Network extends Model {
   static table = TableName.Network;
@@ -28,19 +28,16 @@ export class Network extends Model {
   @field('selected') selected!: boolean | null;
   @field('cache_time') cacheTime!: number | null;
   @text('balance_checker') balanceChecker!: string | null;
-  @field('is_mainnet') isMainnet!: boolean;
-  @field('is_testnet') isTestnet!: boolean;
-  @field('is_custom') isCustom!: boolean;
+  @text('chain_type') chainType!: 'mainnet' | 'testnet' | 'custom';
   @children(TableName.Token) token!: Query<Token>;
   @relation(TableName.HdPath, 'hd_path_id') hdPath!: Relation<HdPath>;
   @immutableRelation(TableName.Ticker, 'ticker_id') ticker!: Relation<Ticker>;
-  @immutableRelation(TableName.TokenList, 'token_list_id') tokenList!: Relation<TokenList> | null;
+  @immutableRelation(TableName.TokenList, 'token_list_id') tokenList!: Relation<TokenList>;
 }
 
-type Params = Pick<Network, 'name' | 'endpoint' | 'netId' | 'gasBuffer' | 'chainId' | 'networkType' | 'isMainnet' | 'isTestnet' | 'isCustom'> &
-  Partial<Pick<Network, 'icon' | 'builtin' | 'scanUrl' | 'selected' | 'cacheTime' | 'balanceChecker'>>;
-export function createNetwork(params: Params, prepareCreate: true): Network;
-export function createNetwork(params: Params): Promise<Network>;
-export function createNetwork(params: Params, prepareCreate?: true) {
+export type NetworkParams = ModelFields<Network>;
+export function createNetwork(params: NetworkParams, prepareCreate: true): Network;
+export function createNetwork(params: NetworkParams): Promise<Network>;
+export function createNetwork(params: NetworkParams, prepareCreate?: true) {
   return createModel<Network>({ name: TableName.Network, params, prepareCreate });
 }

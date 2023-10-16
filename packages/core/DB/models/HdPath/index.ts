@@ -2,7 +2,7 @@ import { Model, type Query } from '@nozbe/watermelondb';
 import { text, children } from '@nozbe/watermelondb/decorators';
 import { type Network } from '../Network';
 import TableName from '../../TableName';
-import { createModel } from '../../helper/modelHelper';
+import { createModel, type ModelFields } from '../../helper/modelHelper';
 
 export class HdPath extends Model {
   static table = TableName.HdPath;
@@ -15,7 +15,7 @@ export class HdPath extends Model {
   @children(TableName.Network) networks!: Query<Network>;
 }
 
-type Params = Pick<HdPath, 'name' | 'value'>;
+type Params = ModelFields<HdPath>;
 export function createHdPath(params: Params, prepareCreate: true): HdPath;
 export function createHdPath(params: Params): Promise<HdPath>;
 export function createHdPath(params: Params, prepareCreate?: true) {

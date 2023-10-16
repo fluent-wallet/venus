@@ -1,2 +1,1 @@
-import { initDatabase } from './initDatabase'
-initDatabase();
+import './initDatabase';
