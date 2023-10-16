@@ -53,21 +53,22 @@ export class Account extends Model {
     });
   }
 
-  createAddress(params: { network: Network; hex: string; pk: string; nativeBalance?: string; prepareCreate: true }): Address;
-  createAddress(params: { network: Network; hex: string; pk: string; nativeBalance?: string;}): Promise<Address>;
-  @writer createAddress({
-    network,
-    hex,
-    pk,
-    nativeBalance = '0x0',
-    prepareCreate,
-  }: {
-    network: Network;
-    hex: string;
-    pk: string;
-    nativeBalance?: string;
-    prepareCreate?: boolean;
-  }) {
+  createAddress(params: { network: Network; hex: string; pk: string; nativeBalance?: string }, prepareCreate: true): Address;
+  createAddress(params: { network: Network; hex: string; pk: string; nativeBalance?: string }): Promise<Address>;
+  @writer createAddress(
+    {
+      network,
+      hex,
+      pk,
+      nativeBalance = '0x0',
+    }: {
+      network: Network;
+      hex: string;
+      pk: string;
+      nativeBalance?: string;
+    },
+    prepareCreate?: true
+  ) {
     const newAddress = this.collections.get(TableName.Address)[prepareCreate ? 'prepareCreate' : 'create']((_newAddress) => {
       const newAddress = _newAddress as Address;
       newAddress.account.set(this);

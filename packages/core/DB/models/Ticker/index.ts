@@ -18,8 +18,8 @@ export class Ticker extends Model {
 }
 
 type Params = Pick<Ticker, 'name' | 'symbol' | 'decimals'> & Partial<Pick<Ticker, 'iconUrls'>>;
-export function createHdPath(params: Params, prepareCreate: true): Ticker;
-export function createHdPath(params: Params): Promise<Ticker>;
-export function createHdPath(params: Params, prepareCreate?: true) {
+export function createTicker(params: Params, prepareCreate: true): Ticker;
+export function createTicker(params: Params): Promise<Ticker>;
+export function createTicker(params: Params, prepareCreate?: true) {
   return createModel<Ticker>({ name: TableName.Ticker, params, prepareCreate });
 }

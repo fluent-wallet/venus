@@ -1,8 +1,9 @@
-
-import { Model } from '@nozbe/watermelondb';
 import database from '../';
 import TableName from '../TableName';
 import { createHdPath } from '../models/HdPath';
+import { createTokenList } from '../models/TokenList';
+import { createTicker } from '../models/Ticker';
+import { createNetwork, NetworkParams } from '../models/Network';
 
 import {
   CFX_MAINNET_RPC_ENDPOINT,
@@ -128,7 +129,7 @@ const TICKER_ARR = [
   },
 ];
 
-export const NETWORK_ARR = [
+export const NETWORK_ARR: Array<NetworkParams & { tokenListIndex?: number; hdPathIndex?: number }> = [
   {
     name: CFX_MAINNET_NAME,
     endpoint: CFX_MAINNET_RPC_ENDPOINT,
@@ -139,11 +140,12 @@ export const NETWORK_ARR = [
     cacheTime: 1000,
     icon: 'https://cdn.jsdelivr.net/gh/Conflux-Chain/helios@dev/packages/built-in-network-icons/Conflux.svg',
     scanUrl: CFX_MAINNET_EXPLORER_URL,
-    hdPathIndex: 0,
     builtin: true,
     balanceChecker: 'cfx:achxne2gfh8snrstkxn0f32ua2cf19zwky2y66hj2d',
+    chainType: 'mainnet',
+    gasBuffer: 1,
     tokenListIndex: 0,
-    isMainnet: true,
+    hdPathIndex: 0,
   },
   {
     name: CFX_ESPACE_MAINNET_NAME,
@@ -153,13 +155,13 @@ export const NETWORK_ARR = [
     netId: CFX_ESPACE_MAINNET_NETID,
     cacheTime: 4000,
     icon: 'https://cdn.jsdelivr.net/gh/Conflux-Chain/helios@dev/packages/built-in-network-icons/Conflux.svg',
-
     scanUrl: CFX_ESPACE_MAINNET_EXPLORER_URL,
-    hdPathIndex: 1,
     builtin: true,
     balanceChecker: '0x74191f6b288dff3db43b34d3637842c8146e2103',
+    chainType: 'mainnet',
+    gasBuffer: 1,
+    hdPathIndex: 1,
     tokenListIndex: 3,
-    isMainnet: true,
   },
   {
     name: ETH_MAINNET_NAME,
@@ -169,14 +171,13 @@ export const NETWORK_ARR = [
     netId: ETH_MAINNET_NETID,
     icon: 'https://cdn.jsdelivr.net/gh/Conflux-Chain/helios@dev/packages/built-in-network-icons/Ethereum.svg',
     cacheTime: 15000,
-
     scanUrl: ETH_MAINNET_EXPLORER_URL,
-    hdPathIndex: 1,
     builtin: true,
     balanceChecker: '0xb1f8e55c7f64d203c1400b9d8555d050f94adf39',
-    tokenListIndex: 1,
-    isMainnet: true,
+    chainType: 'mainnet',
     gasBuffer: 1.5,
+    hdPathIndex: 1,
+    tokenListIndex: 1,
   },
   {
     name: CFX_TESTNET_NAME,
@@ -186,13 +187,13 @@ export const NETWORK_ARR = [
     netId: CFX_TESTNET_NETID,
     icon: 'https://cdn.jsdelivr.net/gh/Conflux-Chain/helios@dev/packages/built-in-network-icons/Conflux.svg',
     cacheTime: 1000,
-
-    hdPathIndex: 0,
     scanUrl: CFX_TESTNET_EXPLORER_URL,
     balanceChecker: 'cfxtest:achxne2gfh8snrstkxn0f32ua2cf19zwkyw9tpbc6k',
     builtin: true,
+    chainType: 'testnet',
+    gasBuffer: 1,
+    hdPathIndex: 0,
     tokenListIndex: 2,
-    isTestnet: true,
   },
   {
     name: CFX_ESPACE_TESTNET_NAME,
@@ -202,12 +203,12 @@ export const NETWORK_ARR = [
     netId: CFX_ESPACE_TESTNET_NETID,
     icon: 'https://cdn.jsdelivr.net/gh/Conflux-Chain/helios@dev/packages/built-in-network-icons/Conflux.svg',
     cacheTime: 4000,
-
-    hdPathIndex: 1,
     scanUrl: CFX_ESPACE_TESTNET_EXPLORER_URL,
     balanceChecker: '0x74191f6b288dff3db43b34d3637842c8146e2103',
     builtin: true,
-    isTestnet: true,
+    chainType: 'testnet',
+    gasBuffer: 1,
+    hdPathIndex: 1,
   },
   {
     name: ETH_GOERLI_NAME,
@@ -217,13 +218,12 @@ export const NETWORK_ARR = [
     netId: ETH_GOERLI_NETID,
     icon: 'https://cdn.jsdelivr.net/gh/Conflux-Chain/helios@dev/packages/built-in-network-icons/Ethereum.svg',
     cacheTime: 15000,
-
     scanUrl: ETH_GOERLI_EXPLORER_URL,
-    hdPathIndex: 1,
     builtin: true,
-    isTestnet: true,
     balanceChecker: '0x9788c4e93f9002a7ad8e72633b11e8d1ecd51f9b',
+    chainType: 'testnet',
     gasBuffer: 1.5,
+    hdPathIndex: 1,
   },
   {
     name: ETH_SEPOLIA_NAME,
@@ -233,72 +233,43 @@ export const NETWORK_ARR = [
     netId: ETH_SEPOLIA_NETID,
     icon: 'https://cdn.jsdelivr.net/gh/Conflux-Chain/helios@dev/packages/built-in-network-icons/Ethereum.svg',
     cacheTime: 15000,
-
     scanUrl: ETH_SEPOLIA_EXPLORER_URL,
-    hdPathIndex: 1,
     builtin: true,
-    isTestnet: true,
     // TODO(SEPOLIA) There is currently no balance call address for Sepolia
     balanceChecker: '',
+    chainType: 'testnet',
     gasBuffer: 1.5,
+    hdPathIndex: 1,
   },
 ];
 
-const createTableInstance = (paramArr, table) =>
-  paramArr.map((p) =>
-    table.prepareCreate((r) => {
-      for (let [key, value] of Object.entries(p)) {
-        r[key] = value;
-      }
-    })
-  );
-const createMultiTable = (tableName: TableName, recordArr: Array<Model>) => {
-
-}
-
-export const initDatabase = async () => {
+const initDatabase = async () => {
   try {
     // Should skip if the DB has already been initialized.
     if ((await database.get(TableName.HdPath).query().fetchCount()) !== 0) {
       return;
     }
 
-    // await database.write(async => {
-    //   database.get(TableName.HdPath).prepareCreate()
-    //   return 
-    // });
-
-    // await database.write(async () => {
-    //   const hdPathTable = database.get('hd_path');
-    //   const tokenListTable = database.get('token_list');
-    //   const networkTable = database.get('network');
-    //   const tickerTable = database.get('ticker');
-
-    //   const tokenListTableInstances = createTableInstance(TOKEN_LIST_ARR, tokenListTable);
-
-    //   const hdTableInstances = createTableInstance(HD_PATH_ARR, hdPathTable);
-
-    //   const tickerTableInstances = createTableInstance(TICKER_ARR, tickerTable);
-
-    //   const networkTableInstances = NETWORK_ARR.map((netParams, index) => {
-    //     let { hdPathIndex, tokenListIndex, ...restParams } = netParams;
-    //     return networkTable.prepareCreate((record) => {
-    //       if (hdPathIndex !== undefined) {
-    //         record.hdPath.set(hdTableInstances[hdPathIndex]);
-    //       }
-    //       if (tokenListIndex !== undefined) {
-    //         record.tokenList.set(tokenListTableInstances[tokenListIndex]);
-    //       }
-    //       record.ticker.set(tickerTableInstances[index]);
-    //       for (let [key, value] of Object.entries(restParams)) {
-    //         record[key] = value;
-    //       }
-    //     });
-    //   });
-    //   await database.batch(...tokenListTableInstances, ...hdTableInstances, ...tickerTableInstances, ...networkTableInstances);
-    //   await database.localStorage.set(isDBInit, 'yes');
-    // });
+    await database.write(async () => {
+      const hdPaths = HD_PATH_ARR.map((params) => createHdPath(params, true));
+      const tokenLists = TOKEN_LIST_ARR.map((params) => createTokenList(params, true));
+      const tickers = TICKER_ARR.map((params) => createTicker(params, true));
+      const networks = NETWORK_ARR.map(({ hdPathIndex, tokenListIndex, ...params }) => {
+        const network = createNetwork(params, true);
+        const networkUpdate = network.setRelation(
+          {
+            ...(typeof hdPathIndex === 'number' ? { hdPath: hdPaths[hdPathIndex] } : null),
+            ...(typeof tokenListIndex === 'number' ? { tokenList: tokenLists[tokenListIndex] } : null),
+          },
+          true
+        );
+        return [network, networkUpdate];
+      });
+      await database.batch(...hdPaths, ...tokenLists, ...tickers, ...networks.flat());
+    });
   } catch (error) {
     console.error('Init Database error', error);
   }
 };
+
+initDatabase();

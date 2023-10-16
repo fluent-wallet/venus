@@ -65,6 +65,7 @@ yarn-error.log
 # testing
 /coverage
 
+.vscode
 
 yarn.lock
 package-lock.json

@@ -33,9 +33,7 @@ const schema = appSchema({
         { name: 'hd_path_id', type: 'string', isIndexed: true },
         { name: 'ticker_id', type: 'string', isIndexed: true },
         { name: 'token_list_id', type: 'string', isOptional: true },
-        { name: 'is_mainnet', type: 'boolean' },
-        { name: 'is_testnet', type: 'boolean' },
-        { name: 'is_custom', type: 'boolean' },
+        { name: 'chain_type', type: 'string' },
       ],
     }),
     tableSchema({
