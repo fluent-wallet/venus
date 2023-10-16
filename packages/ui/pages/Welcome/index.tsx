@@ -42,17 +42,14 @@ const Welcome: React.FC<{ navigation: NavigationProp<any> }> = ({ navigation }) 
           </Text>
         </View>
 
-        <Button containerStyle={{ marginTop: 40, marginHorizontal: 16 }} onPress={() => navigation.navigate('Biometrics')}>
+        <Button containerStyle={{ marginTop: 40, marginHorizontal: 16 }} onPress={() => navigation.navigate('Biometrics')} disabled>
           Connect BSIM Wallet
         </Button>
-        <Button containerStyle={{ marginTop: 16, marginHorizontal: 16 }} onPress={() => navigation.navigate('Biometrics')}>
+        <Button containerStyle={{ marginTop: 16, marginHorizontal: 16 }} onPress={() => navigation.navigate('Biometrics')} disabled>
           Create new Wallet
         </Button>
         <Button containerStyle={{ marginTop: 16, marginHorizontal: 16 }} onPress={() => navigation.navigate('Biometrics')}>
           Import existing Wallet
-        </Button>
-        <Button containerStyle={{ marginTop: 16, marginHorizontal: 16 }} onPress={() => setMode(mode === 'dark' ? 'light' : 'dark')}>
-          Toggle Mode
         </Button>
       </SafeAreaView>
     </LinearGradient>
