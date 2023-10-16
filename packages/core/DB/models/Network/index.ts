@@ -1,11 +1,11 @@
 import { Model, type Query, type Relation } from '@nozbe/watermelondb';
-import { field, text, children, relation, immutableRelation, writer } from '@nozbe/watermelondb/decorators';
+import { field, text, children, relation, immutableRelation } from '@nozbe/watermelondb/decorators';
 import { type TokenList } from '../TokenList';
 import { type Ticker } from '../Ticker';
 import { type Token } from '../Token';
 import { type HdPath } from '../HdPath';
 import TableName from '../../TableName';
-import { createModel } from '../../helper/modelHelper';
+import { createModel, type ModelFields } from '../../helper/modelHelper';
 
 export class Network extends Model {
   static table = TableName.Network;
@@ -33,26 +33,9 @@ export class Network extends Model {
   @relation(TableName.HdPath, 'hd_path_id') hdPath!: Relation<HdPath>;
   @immutableRelation(TableName.Ticker, 'ticker_id') ticker!: Relation<Ticker>;
   @immutableRelation(TableName.TokenList, 'token_list_id') tokenList!: Relation<TokenList>;
-
-  setRelation(params: { hdPath?: HdPath; ticker?: Ticker; tokenList?: TokenList }, prepareUpdate: true): Network;
-  setRelation(params: { hdPath?: HdPath; ticker?: Ticker; tokenList?: TokenList }): Promise<Network>;
-  @writer setRelation({ hdPath, ticker, tokenList }: { hdPath?: HdPath; ticker?: Ticker; tokenList?: TokenList }, prepareUpdate?: true) {
-    return this[prepareUpdate ? 'prepareUpdate' : 'update']((network) => {
-      if (hdPath) {
-        network.hdPath.set(hdPath);
-      }
-      if (ticker) {
-        network.ticker.set(ticker);
-      }
-      if (tokenList) {
-        network.tokenList.set(tokenList);
-      }
-    }) as Network | Promise<Network>;
-  }
 }
 
-export type NetworkParams = Pick<Network, 'name' | 'endpoint' | 'netId' | 'gasBuffer' | 'chainId' | 'networkType' | 'chainType'> &
-  Partial<Pick<Network, 'icon' | 'builtin' | 'scanUrl' | 'selected' | 'cacheTime' | 'balanceChecker'>>;
+export type NetworkParams = ModelFields<Network>;
 export function createNetwork(params: NetworkParams, prepareCreate: true): Network;
 export function createNetwork(params: NetworkParams): Promise<Network>;
 export function createNetwork(params: NetworkParams, prepareCreate?: true) {

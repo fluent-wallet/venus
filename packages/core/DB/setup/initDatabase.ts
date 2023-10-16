@@ -245,6 +245,13 @@ export const NETWORK_ARR: Array<NetworkParams & { tokenListIndex?: number; hdPat
 
 const initDatabase = async () => {
   try {
+    await database.write(async () => {
+      await database.unsafeResetDatabase();
+    });
+  } catch (error) {
+    console.error('Init test error', error);
+  }
+  try {
     // Should skip if the DB has already been initialized.
     if ((await database.get(TableName.HdPath).query().fetchCount()) !== 0) {
       return;
@@ -255,15 +262,15 @@ const initDatabase = async () => {
       const tokenLists = TOKEN_LIST_ARR.map((params) => createTokenList(params, true));
       const tickers = TICKER_ARR.map((params) => createTicker(params, true));
       const networks = NETWORK_ARR.map(({ hdPathIndex, tokenListIndex, ...params }) => {
-        const network = createNetwork(params, true);
-        const networkUpdate = network.setRelation(
+        return createNetwork(
           {
+            ...params,
+            hdPath: hdPaths[0],
             ...(typeof hdPathIndex === 'number' ? { hdPath: hdPaths[hdPathIndex] } : null),
             ...(typeof tokenListIndex === 'number' ? { tokenList: tokenLists[tokenListIndex] } : null),
           },
           true
         );
-        return [network, networkUpdate];
       });
       await database.batch(...hdPaths, ...tokenLists, ...tickers, ...networks.flat());
     });
