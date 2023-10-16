@@ -249,7 +249,7 @@ const initDatabase = async () => {
       await database.unsafeResetDatabase();
     });
   } catch (error) {
-    console.error('Init test error', error);
+    console.error('Reset database error', error);
   }
   try {
     // Should skip if the DB has already been initialized.
@@ -265,7 +265,6 @@ const initDatabase = async () => {
         return createNetwork(
           {
             ...params,
-            hdPath: hdPaths[0],
             ...(typeof hdPathIndex === 'number' ? { hdPath: hdPaths[hdPathIndex] } : null),
             ...(typeof tokenListIndex === 'number' ? { tokenList: tokenLists[tokenListIndex] } : null),
           },
