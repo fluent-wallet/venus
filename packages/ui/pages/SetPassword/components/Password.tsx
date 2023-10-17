@@ -22,7 +22,7 @@ function Password(props: Props) {
     theme: { colors },
   } = useTheme();
   const { title, value, onChangeText, helperText, errorMessage = '', successMessage = '' } = props;
-  const [visible, setVisible] = useState(false);
+  const [visible, setVisible] = useState(true);
   return (
     <View>
       <Text className="text-[20px] font-bold leading-tight my-[15px]">{title}</Text>

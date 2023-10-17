@@ -21,7 +21,7 @@ export enum AuthenticationType {
  */
 const authCryptoTool = new CryptoTool();
 authCryptoTool.setGetPasswordMethod(() => 'PASSWORD_CRYPTO_KEY');
-  
+
 class Authentication {
   public getPassword = async () => {
     const keyChainObject = await KeyChain.getGenericPassword(defaultOptions);
@@ -80,6 +80,14 @@ class Authentication {
     } else {
       return inputPassword === storedPassword;
     }
+  };
+
+  /**
+   * get driver supported biometry type.
+   * @returns BIOMETRY_TYPE types
+   */
+  getSupportedBiometryType = () => {
+    return KeyChain.getSupportedBiometryType();
   };
 }
 
