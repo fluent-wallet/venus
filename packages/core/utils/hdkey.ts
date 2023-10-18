@@ -1,6 +1,6 @@
 import { randomInt } from './base';
 import { HDNode, entropyToMnemonic } from '@ethersproject/hdnode';
-import { randomBytes } from '@ethersproject/random';
+import { randomBytes } from 'ethers';
 
 const DEFAULT_HD_PATH = `m/44'/503'/0'/0`;
 

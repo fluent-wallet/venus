@@ -22,7 +22,7 @@ export class Network extends Model {
   @field('net_identification') netId!: number;
   @field('gas_buffer') gasBuffer!: number;
   @text('chain_identification') chainId!: string;
-  @text('network_type') networkType!: string;
+  @text('network_type') networkType!: 'cfx' | 'eth';
   @field('builtin') builtin!: boolean | null;
   @text('scan_url') scanUrl!: string | null;
   @field('selected') selected!: boolean | null;

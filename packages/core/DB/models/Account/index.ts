@@ -4,8 +4,11 @@ import { type Address } from '../Address';
 import { type AccountGroup } from '../AccountGroup';
 import { type Network } from '../Network';
 import TableName from '../../TableName';
-import { encode } from '../../../utils/address';
-import { toAccountAddress } from '../../../utils/account';
+import { getNthAccountOfHDKey } from '../../../utils/hdkey';
+import { createModel } from '../../helper/modelHelper';
+import { createAddress } from '../Address';
+import { fromPrivate } from '../../../utils/account';
+import database from '@core/DB';
 
 export class Account extends Model {
   static table = TableName.Account;
@@ -52,32 +55,63 @@ export class Account extends Model {
       account.selected = !account.selected;
     });
   }
+}
 
-  createAddress(params: { network: Network; hex: string; pk: string; nativeBalance?: string }, prepareCreate: true): Address;
-  createAddress(params: { network: Network; hex: string; pk: string; nativeBalance?: string }): Promise<Address>;
-  @writer createAddress(
-    {
-      network,
-      hex,
-      pk,
-      nativeBalance = '0x0',
-    }: {
-      network: Network;
-      hex: string;
-      pk: string;
-      nativeBalance?: string;
+export async function createAccount({
+  accountGroup,
+  nickname,
+  hidden,
+  selected,
+}: {
+  accountGroup: AccountGroup;
+  nickname?: string;
+  hidden?: boolean;
+  selected?: boolean;
+}) {
+  if (!accountGroup) throw new Error('AccountGroup is required in createAccount.');
+  const vault = await (await accountGroup).vault;
+
+  const [networks, newAccountIndex, mnemonic] = await Promise.all([
+    database.get<Network>(TableName.Network).query().fetch(),
+    accountGroup.account.count,
+    vault.getData(),
+  ]);
+
+  const networksWithHexAddress = await Promise.all(
+    networks.map(async (network) => {
+      if (vault.type === 'public_address' || vault.type === 'hardware') {
+        return vault.getData();
+      } else {
+        let privateKey: string;
+        if (vault.type === 'private_key') {
+          privateKey = await vault.getData();
+        } else {
+          const hdPath = await network.hdPath;
+          const ret = await getNthAccountOfHDKey({
+            mnemonic,
+            hdPath: hdPath.value,
+            nth: newAccountIndex,
+          });
+          privateKey = ret.privateKey;
+        }
+        return fromPrivate(privateKey).address;
+      }
+    })
+  );
+
+  const newAccount = createModel({
+    name: TableName.Account,
+    params: {
+      nickname: nickname ?? `${accountGroup.nickname}-${newAccountIndex}`,
+      index: newAccountIndex,
+      hidden: hidden ?? false,
+      selected: selected ?? false,
+      accountGroup,
     },
-    prepareCreate?: true
-  ) {
-    const newAddress = this.collections.get(TableName.Address)[prepareCreate ? 'prepareCreate' : 'create']((_newAddress) => {
-      const newAddress = _newAddress as Address;
-      newAddress.account.set(this);
-      newAddress.network.set(network);
-      newAddress.value = network.networkType === 'cfx' ? encode(toAccountAddress(hex), network.netId) : hex;
-      newAddress.hex = hex;
-      newAddress.pk = pk;
-      newAddress.nativeBalance = nativeBalance;
-    });
-    return newAddress;
-  }
+    prepareCreate: true,
+  }) as Account;
+
+  const addresses = networksWithHexAddress.map((hexAddress, index) => createAddress({ network: networks[index], hex: hexAddress, account: newAccount }, true));
+  await database.batch(newAccount, ...addresses);
+  return newAccount;
 }

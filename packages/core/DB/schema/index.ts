@@ -174,9 +174,8 @@ const schema = appSchema({
       columns: [
         { name: 'account_id', type: 'string', isIndexed: true },
         { name: 'network_id', type: 'string', isIndexed: true },
-        { name: 'value', type: 'string' },
+        { name: 'base32', type: 'string' },
         { name: 'hex', type: 'string' },
-        { name: 'pk', type: 'string' },
         { name: 'native_balance', type: 'string' },
       ],
     }),
