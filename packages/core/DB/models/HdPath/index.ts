@@ -10,9 +10,9 @@ export class HdPath extends Model {
     [TableName.Network]: { type: 'has_many', foreignKey: 'hd_path_id' },
   } as const;
 
-  @text('name') name!: string;
+  @text('name') name!: 'cfx-default' | 'eth-default';
   @text('value') value!: string;
-  @children(TableName.Network) networks!: Query<Network>;
+  @children(TableName.Network) network!: Query<Network>;
 }
 
 type Params = ModelFields<HdPath>;

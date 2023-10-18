@@ -12,6 +12,7 @@ import Biometrics from '@pages/SetPassword/Biometrics';
 import Home from '@pages/Home';
 import ArrowLeft from '@assets/icons/arrow-left.svg';
 import CreateAccount from '@pages/CreateAccount';
+import AccountManage from '@pages/AccountManage';
 
 const Stack = createNativeStackNavigator();
 const StackNavigator = ({ children }: PropsWithChildren) => {
@@ -57,7 +58,7 @@ function App(): JSX.Element {
             <Stack.Screen name="SetPassword" component={SetPassword} />
             <Stack.Screen name="Biometrics" component={Biometrics} />
             <Stack.Screen name="Home" component={Home} />
-
+            <Stack.Screen name="AccountManage" component={AccountManage} options={{ title: 'Manage Wallets' }} />
             <Stack.Screen name='createAccount' component={CreateAccount} />
           </StackNavigator>
         </ThemeProvider>

@@ -2,7 +2,7 @@ import { Button, Text, useTheme } from '@rneui/themed';
 import { View, SafeAreaView } from 'react-native';
 import { statusBarHeight } from '@utils/deviceInfo';
 
-function CreateAccount() {
+const CreateAccount: React.FC = () => {
   const { theme } = useTheme();
   return (
     <View className="flex flex-1 relative" style={{ backgroundColor: theme.colors.normalBackground }}>
@@ -13,6 +13,6 @@ function CreateAccount() {
       </View>
     </View>
   );
-}
+};
 
 export default CreateAccount;
