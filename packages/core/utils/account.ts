@@ -18,9 +18,9 @@ export const isChecksummed = flow(addHexPrefix, (addr: string) => {
   }
 });
 
-export const fromPrivate = (pk: string) => ({
-  address: flow(addHexPrefix, computeAddress)(pk),
-  privateKey: addHexPrefix(pk),
+export const fromPrivate = (privateKey: string) => ({
+  address: flow(addHexPrefix, computeAddress)(privateKey),
+  privateKey: addHexPrefix(privateKey),
 });
 
 export const toAccountAddress = (address: string) => {

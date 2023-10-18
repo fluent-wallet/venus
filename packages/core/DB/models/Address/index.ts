@@ -1,4 +1,4 @@
-import { Model, Q, type Query, type Relation } from '@nozbe/watermelondb';
+import { Model, type Query, type Relation } from '@nozbe/watermelondb';
 import { text, children, relation, reader } from '@nozbe/watermelondb/decorators';
 import { type Tx } from '../Tx';
 import { type Account } from '../Account';
@@ -30,7 +30,7 @@ export class Address extends Model {
   @relation(TableName.Account, 'account_id') account!: Relation<Account>;
   @relation(TableName.Network, 'network_id') network!: Relation<Network>;
 
-  @reader async value() {
+  @reader async getValue() {
     const network = await this.network;
     if (!network) return this.hex;
     return network.networkType === 'cfx' ? this.base32 : this.hex;
