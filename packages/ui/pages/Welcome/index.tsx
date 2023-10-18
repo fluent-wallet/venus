@@ -2,14 +2,13 @@ import React from 'react';
 import LinearGradient from 'react-native-linear-gradient';
 import { View, Image, SafeAreaView } from 'react-native';
 import { NavigationProp } from '@react-navigation/native';
-import { useTheme, useThemeMode, Button, Text } from '@rneui/themed';
+import { useTheme, Button, Text } from '@rneui/themed';
 import { statusBarHeight } from '@utils/deviceInfo';
 import Tip from '@assets/icons/tip.svg';
 import WelcomeBg from '@assets/images/welcome-bg.png';
 
 const Welcome: React.FC<{ navigation: NavigationProp<any> }> = ({ navigation }) => {
   const { theme } = useTheme();
-  const { mode, setMode } = useThemeMode();
 
   return (
     <LinearGradient colors={theme.colors.linearGradientBackground} className="flex-1">
@@ -45,7 +44,7 @@ const Welcome: React.FC<{ navigation: NavigationProp<any> }> = ({ navigation }) 
         <Button containerStyle={{ marginTop: 40, marginHorizontal: 16 }} onPress={() => navigation.navigate('Biometrics')} disabled>
           Connect BSIM Wallet
         </Button>
-        <Button containerStyle={{ marginTop: 16, marginHorizontal: 16 }} onPress={() => navigation.navigate('Biometrics')} disabled>
+        <Button containerStyle={{ marginTop: 16, marginHorizontal: 16 }} onPress={() => navigation.navigate('Biometrics')}>
           Create new Wallet
         </Button>
         <Button containerStyle={{ marginTop: 16, marginHorizontal: 16 }} onPress={() => navigation.navigate('Biometrics')}>

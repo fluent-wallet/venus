@@ -1,6 +1,4 @@
-import { getAddress as toChecksumAddress } from '@ethersproject/address';
-import { computeAddress } from '@ethersproject/transactions';
-import { Wallet } from '@ethersproject/wallet';
+import { computeAddress, Wallet, getAddress as toChecksumAddress } from 'ethers';
 import { randomInt, addHexPrefix } from './base';
 import { flow } from 'lodash-es';
 import { NULL_HEX_ADDRESS, INTERNAL_CONTRACTS_HEX_ADDRESS, ADDRESS_TYPES } from './consts';

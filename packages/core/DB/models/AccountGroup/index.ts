@@ -1,11 +1,9 @@
 import { Model, Q, type Query, type Relation } from '@nozbe/watermelondb';
-import { field, text, children, immutableRelation, writer, lazy } from '@nozbe/watermelondb/decorators';
+import { field, text, children, immutableRelation, writer, reader, lazy } from '@nozbe/watermelondb/decorators';
 import { type Vault } from '../Vault';
 import { type Account } from '../Account';
-import { type Network } from '../Network';
 import TableName from '../../TableName';
-import { getNthAccountOfHDKey } from '../../../utils/hdkey';
-import { cryptoTool } from '../../helper';
+import { createAccount } from '../Account';
 
 export class AccountGroup extends Model {
   static table = TableName.AccountGroup;
@@ -15,11 +13,12 @@ export class AccountGroup extends Model {
   } as const;
 
   @text('nickname') nickname!: string;
+  /** Whether to hide this accountGroup on the UI */
   @field('hidden') hidden!: boolean;
-  @children(TableName.Account) accounts!: Query<Account>;
+  @children(TableName.Account) account!: Query<Account>;
   @immutableRelation(TableName.Vault, 'vault_id') vault!: Relation<Vault>;
 
-  @lazy hiddenAccounts = this.accounts.extend(Q.where('hidden', true));
+  @lazy hiddenAccounts = this.account.extend(Q.where('hidden', true));
 
   @writer async updateName(newNickName: string) {
     await this.update((accountGroup) => {
@@ -27,39 +26,15 @@ export class AccountGroup extends Model {
     });
   }
 
-  @writer async addAccount({ nickname, hidden, selected }: { nickname?: string; hidden?: boolean; selected?: boolean } = { hidden: false, selected: false }) {
-    const [networks, newAccountIndex, mnemonic] = await Promise.all([
-      this.collections.get<Network>(TableName.Network).query().fetch(),
-      this.accounts.count,
-      (await this.vault).getMnemonic(),
-    ]);
+  async addAccount(params: { nickname?: string; hidden?: boolean; selected?: boolean } = { hidden: false, selected: false }) {
+    return createAccount({ ...params, accountGroup: this });
+  }
 
-    const hdRets = await Promise.all(
-      networks.map(async ({ hdPath }) => {
-        const hdPathRecord = await hdPath.fetch();
-        const ret = (await getNthAccountOfHDKey({
-          mnemonic,
-          hdPath: hdPathRecord.value,
-          nth: newAccountIndex,
-        })) as Awaited<ReturnType<typeof getNthAccountOfHDKey>> & { encryptedPk: string };
-        ret.encryptedPk = await cryptoTool.encrypt(ret.privateKey);
-        return ret;
-      })
-    );
-
-    const newAccount = this.collections.get(TableName.Account).prepareCreate((_newAccount) => {
-      const newAccount = _newAccount as Account;
-      newAccount.accountGroup.set(this);
-      newAccount.index = newAccountIndex;
-      newAccount.nickname = nickname ?? `${this.nickname}-${newAccountIndex}`;
-      newAccount.hidden = hidden ?? false;
-      newAccount.selected = selected ?? false;
-      _newAccount = newAccount;
-    }) as Account;
-    const addresses = hdRets.map(({ address, encryptedPk }, index) =>
-      newAccount.createAddress({ network: networks[index], hex: address, pk: encryptedPk }, true)
-    );
-    await this.batch(newAccount, ...addresses);
-    return newAccount;
+  @reader async getAccountIndex(account: Account) {
+    if ((await account.accountGroup) !== this) throw new Error('Account does not belong to this accountGroup');
+    return this.collections
+      .get(TableName.Account)
+      .query(Q.where('created_at', Q.lt(Number(account.createdAt))))
+      .fetchCount();
   }
 }

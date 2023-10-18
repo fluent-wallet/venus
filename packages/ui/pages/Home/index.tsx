@@ -16,7 +16,7 @@ function Section({ children, title }: SectionProps): JSX.Element {
   );
 }
 
-function Home() {
+const Home: React.FC = () => {
   const backgroundStyle = 'bg-neutral-300 dark:bg-slate-900';
   const isDarkMode = useColorScheme() === 'dark';
   return (
