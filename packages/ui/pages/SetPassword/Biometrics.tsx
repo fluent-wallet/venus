@@ -1,11 +1,13 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import LinearGradient from 'react-native-linear-gradient';
 import { View, Image, SafeAreaView } from 'react-native';
 import { useTheme, useThemeMode, Button, Text } from '@rneui/themed';
 import { statusBarHeight } from '@utils/deviceInfo';
 import Animated, { useSharedValue, useAnimatedStyle, withTiming, withRepeat } from 'react-native-reanimated';
 import FaceIdSource from '@assets/images/face-id.png';
-import { NavigationProp } from '@react-navigation/native'
+import { NavigationProp } from '@react-navigation/native';
+import { authentication } from '@core/DB/helper';
+import { BIOMETRY_TYPE } from 'react-native-keychain';
 
 const getFaceIdLinearColor = (themeMode: 'dark' | 'light') =>
   themeMode === 'dark' ? ['rgba(174, 207, 250, 0.2)', 'rgba(171, 194, 255, 0)'] : ['#AECFFA', 'rgba(171, 194, 255, 0)'];
