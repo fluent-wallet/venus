@@ -13,7 +13,7 @@ export class Vault extends Model {
 
   /** Type of vault: pub, pk, hd, hw */
   @text('type') type!: 'public_address' | 'private_key' | 'hierarchical_deterministic' | 'hardware';
-  /** Encrypted vault data */
+  /** data is encrypted when the type is pk or hd. */
   @text('data') data!: string;
   /** Vault device, default is FluentWebExt */
   @text('device') device!: 'ePayWallet' | 'FluentWebExt';
@@ -22,7 +22,9 @@ export class Vault extends Model {
   /** A Vault has only one account group. */
   @children(TableName.AccountGroup) accountGroup!: Query<AccountGroup>;
 
-  @reader getData() {
+  /** getDecrypted vault data */
+  @reader async getData() {
+    if (this.type === 'public_address' || this.type === 'hardware') return this.data;
     return cryptoTool.decrypt<string>(this.data);
   }
 }
@@ -31,5 +33,9 @@ type Params = ModelFields<Vault>;
 export function createVault(params: Params, prepareCreate: true): Vault;
 export function createVault(params: Params): Promise<Vault>;
 export function createVault(params: Params, prepareCreate?: true) {
-  return createModel<Vault>({ name: TableName.Vault, params: { ...params, data: cryptoTool.encrypt(params.data) }, prepareCreate });
+  return createModel<Vault>({
+    name: TableName.Vault,
+    params: { ...params, data: params.type === 'public_address' || params.type === 'hardware' ? params.data : cryptoTool.encrypt(params.data) },
+    prepareCreate,
+  });
 }

@@ -7,6 +7,7 @@ import TableName from '../../TableName';
 import { getNthAccountOfHDKey } from '../../../utils/hdkey';
 import { createModel } from '../../helper/modelHelper';
 import { createAddress } from '../Address';
+import { fromPrivate } from '../../../utils/account';
 import database from '@core/DB';
 
 export class Account extends Model {
@@ -54,7 +55,6 @@ export class Account extends Model {
       account.selected = !account.selected;
     });
   }
-
 }
 
 export async function createAccount({
@@ -77,14 +77,25 @@ export async function createAccount({
     vault.getData(),
   ]);
 
-  const hdRets = await Promise.all(
+  const networksWithHexAddress = await Promise.all(
     networks.map(async (network) => {
-      const hdPath = await network.hdPath;
-      return await getNthAccountOfHDKey({
-        mnemonic,
-        hdPath: hdPath.value,
-        nth: newAccountIndex,
-      });
+      if (vault.type === 'public_address' || vault.type === 'hardware') {
+        return vault.getData();
+      } else {
+        let privateKey: string;
+        if (vault.type === 'private_key') {
+          privateKey = await vault.getData();
+        } else {
+          const hdPath = await network.hdPath;
+          const ret = await getNthAccountOfHDKey({
+            mnemonic,
+            hdPath: hdPath.value,
+            nth: newAccountIndex,
+          });
+          privateKey = ret.privateKey;
+        }
+        return fromPrivate(privateKey).address;
+      }
     })
   );
 
@@ -100,7 +111,7 @@ export async function createAccount({
     prepareCreate: true,
   }) as Account;
 
-  const addresses = hdRets.map(({ address }, index) => createAddress({ network: networks[index], hex: address, account: newAccount }, true));
+  const addresses = networksWithHexAddress.map((hexAddress, index) => createAddress({ network: networks[index], hex: hexAddress, account: newAccount }, true));
   await database.batch(newAccount, ...addresses);
   return newAccount;
 }
