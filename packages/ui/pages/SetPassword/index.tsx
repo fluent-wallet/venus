@@ -13,7 +13,7 @@ const SetPassword: React.FC<{ navigation: NavigationProp<any> }> = (props) => {
   const { theme } = useTheme();
   const [checked, setChecked] = useState(false);
   const [password, setPassword] = useState({ pwd: '', error: '' });
-  const [confirmPwd, setConfirmPwd] = useState('');
+  const [confirmPwd, setConfirmPwd] = useState('12345678');
   const [loading, setLoading] = useState(false);
   const [alert, setAlert] = useState({
     show: false,
@@ -107,7 +107,7 @@ const SetPassword: React.FC<{ navigation: NavigationProp<any> }> = (props) => {
           {...alert}
           onOk={() => {
             setAlert({ show: false, type: '', message: '' });
-            navigation.navigate('createAccount');
+            navigation.navigate('CreateAccount');
           }}
         />
       </View>

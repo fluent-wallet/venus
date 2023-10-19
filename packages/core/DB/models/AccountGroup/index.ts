@@ -3,8 +3,7 @@ import { field, text, children, immutableRelation, writer, reader, lazy } from '
 import { type Vault } from '../Vault';
 import { type Account } from '../Account';
 import TableName from '../../TableName';
-import { createAccount } from '@core/DB/service/Account';
-import { ModelFields, createModel } from '@core/DB/helper/modelHelper';
+import { createAccount } from '../Account/service';
 
 export class AccountGroup extends Model {
   static table = TableName.AccountGroup;
@@ -38,14 +37,4 @@ export class AccountGroup extends Model {
       .query(Q.where('created_at', Q.lt(Number(account.createdAt))))
       .fetchCount();
   }
-}
-type Params = ModelFields<AccountGroup>;
-export async function createAccountGroup(params: Params, prepareCreate?: true) {
-  return createModel<AccountGroup>({
-    name: TableName.AccountGroup,
-    params: {
-      ...params,
-    },
-    prepareCreate,
-  });
 }
