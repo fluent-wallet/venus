@@ -21,7 +21,9 @@ export class Address extends Model {
     [TableName.Tx]: { type: 'has_many', foreignKey: 'address_id' },
   } as const;
 
+  /** cfx base32 address */
   @text('base32') base32!: string;
+  /** ethereum hex address */
   @text('hex') hex!: string;
   @text('native_balance') nativeBalance!: string;
   @children(TableName.Token) token!: Query<Token>;
@@ -30,18 +32,20 @@ export class Address extends Model {
   @relation(TableName.Account, 'account_id') account!: Relation<Account>;
   @relation(TableName.Network, 'network_id') network!: Relation<Network>;
 
+  /** Automatically returns the hex or base32 address depending on the type of network it belongs to */
   @reader async getValue() {
     const network = await this.network;
     if (!network) return this.hex;
     return network.networkType === 'cfx' ? this.base32 : this.hex;
   }
 
+  /** Get the private key for the address */
   @reader async getPrivateKey() {
     const vault = await (await (await this.account).accountGroup).vault;
     if (vault.type === 'public_address') throw new Error('Cannot get private key from public_address wallet');
     if (vault.type === 'hardware') throw new Error('Cannot get private key from hardware wallet');
 
-    const data = await vault.getData();
+    const data = await this.callReader(vault.getData);
     if (vault.type === 'private_key') return data;
 
     const mnemonic = data;
@@ -51,7 +55,7 @@ export class Address extends Model {
     const { privateKey } = await getNthAccountOfHDKey({
       mnemonic,
       hdPath: hdPath.value,
-      nth: await accountGroup.getAccountIndex(thisAccount),
+      nth: await this.callReader(() => accountGroup.getAccountIndex(thisAccount)),
     });
     return privateKey;
   }
@@ -63,7 +67,7 @@ export function createAddress(params: Params): Promise<Address>;
 export function createAddress({ hex, nativeBalance, network, account }: Params, prepareCreate?: true) {
   if (!network) throw new Error('Network is required in createAddress.');
   if (!account) throw new Error('Account is required in createAddress.');
-  
+
   return createModel<Address>({
     name: TableName.Address,
     params: { hex, nativeBalance: nativeBalance ?? '0x0', base32: network ? encode(toAccountAddress(hex), network.netId) : '', account },

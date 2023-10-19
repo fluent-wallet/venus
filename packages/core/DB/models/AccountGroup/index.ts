@@ -26,8 +26,8 @@ export class AccountGroup extends Model {
     });
   }
 
-  async addAccount(params: { nickname?: string; hidden?: boolean; selected?: boolean } = { hidden: false, selected: false }) {
-    return createAccount({ ...params, accountGroup: this });
+  @writer async addAccount(params: { nickname?: string; hidden?: boolean; selected?: boolean } = { hidden: false, selected: false }) {
+    return await this.callWriter(() => createAccount({ ...params, accountGroup: this }));
   }
 
   @reader async getAccountIndex(account: Account) {

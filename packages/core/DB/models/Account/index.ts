@@ -71,24 +71,28 @@ export async function createAccount({
   if (!accountGroup) throw new Error('AccountGroup is required in createAccount.');
   const vault = await (await accountGroup).vault;
 
-  const [networks, newAccountIndex, mnemonic] = await Promise.all([
+  const [networks, newAccountIndex, vaultData] = await Promise.all([
     database.get<Network>(TableName.Network).query().fetch(),
-    accountGroup.account.count,
+    vault.type === 'hierarchical_deterministic' ? accountGroup.account.count : 0,
     vault.getData(),
   ]);
 
+  // For each network, an Account has its corresponding Address.
+  // For vaults of type 'public_address' and 'hardware', the Address is the vault's data.
+  // For vaults of type 'private_key', the needs to be generated from the privateKey.
+  // For vaults of type 'hierarchical_deterministic', it's' necessary to first generate the privateKey from the mnemonic based on the index of the Account.
   const networksWithHexAddress = await Promise.all(
     networks.map(async (network) => {
       if (vault.type === 'public_address' || vault.type === 'hardware') {
-        return vault.getData();
+        return vaultData;
       } else {
         let privateKey: string;
         if (vault.type === 'private_key') {
-          privateKey = await vault.getData();
+          privateKey = vaultData;
         } else {
           const hdPath = await network.hdPath;
           const ret = await getNthAccountOfHDKey({
-            mnemonic,
+            mnemonic: vaultData,
             hdPath: hdPath.value,
             nth: newAccountIndex,
           });
