@@ -49,13 +49,11 @@ type OptionalNullable<T> = {
   [K in keyof PickNotNullable<T>]: T[K];
 };
 
-
 type NonFunctionPropertyNames<T> = {
   // eslint-disable-next-line @typescript-eslint/ban-types
   [K in keyof T]: T[K] extends Function ? never : K;
 }[keyof T];
 
 type NonFunctionProperties<T> = Pick<T, NonFunctionPropertyNames<T>>;
-
 
 export type ModelFields<T extends Model> = OptionalNullable<NonFunctionProperties<OmitProperties<ExtractOwnProperties<T>>>> & ExtractProperties<T>;

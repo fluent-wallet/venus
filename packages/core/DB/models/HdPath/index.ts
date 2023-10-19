@@ -4,6 +4,7 @@ import { type Network } from '../Network';
 import TableName from '../../TableName';
 import { createModel, type ModelFields } from '../../helper/modelHelper';
 
+/** Paths for mnemonic generation */
 export class HdPath extends Model {
   static table = TableName.HdPath;
   static associations = {
