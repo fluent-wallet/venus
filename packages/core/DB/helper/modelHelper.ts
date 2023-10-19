@@ -4,21 +4,29 @@ import database from '@core/DB';
 import TableName from '@core/DB/TableName';
 
 export function createModel<T extends Model>({ name, params, prepareCreate }: { name: TableName; params: object; prepareCreate?: true }) {
-  const newModel = database.collections.get(name)[prepareCreate ? 'prepareCreate' : 'create']((model) => {
-    const entries = Object.entries(params);
-    for (const [key, value] of entries) {
-      if (value !== undefined) {
-        if (typeof model[key as '_raw'] === 'object') {
-          if (typeof (model[key as '_raw'] as any)?.set === 'function') {
-            (model[key as '_raw'] as any).set(value);
+  const create = () => {
+    const newModel = database.collections.get(name)[prepareCreate ? 'prepareCreate' : 'create']((model) => {
+      const entries = Object.entries(params);
+      for (const [key, value] of entries) {
+        if (value !== undefined) {
+          if (typeof model[key as '_raw'] === 'object') {
+            if (typeof (model[key as '_raw'] as any)?.set === 'function') {
+              (model[key as '_raw'] as any).set(value);
+            }
+          } else {
+            model[key as '_raw'] = value;
           }
-        } else {
-          model[key as '_raw'] = value;
         }
       }
-    }
-  }) as T | Promise<T>;
-  return newModel;
+    }) as T | Promise<T>;
+    return newModel;
+  };
+
+  if (prepareCreate) {
+    return create();
+  } else {
+    return database.write(async () => await (create() as Promise<T>));
+  }
 }
 
 type ExtractOwnProperties<B> = Pick<B, Exclude<keyof B, keyof Model>>;
