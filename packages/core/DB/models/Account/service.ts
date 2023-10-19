@@ -1,12 +1,12 @@
-import { type Network } from '@core/DB/models/Network';
-import TableName from '@core/DB/TableName';
+import { type Network } from '../Network';
+import { type AccountGroup } from '../AccountGroup';
+import { type Account } from './';
+import { createAddress } from '../Address/service';
 import { getNthAccountOfHDKey } from '@core/utils/hdkey';
-import { createModel } from '@core/DB/helper/modelHelper';
-import { createAddress } from '@core/DB/models/Address';
-import { fromPrivate } from '@core/utils/account';
-import { type AccountGroup } from '@core/DB/models/AccountGroup';
-import { Account } from '@core/DB/models/Account';
-import database from '@core/DB';
+import { createModel } from '../../helper/modelHelper';
+import { fromPrivate } from '../../../utils/account';
+import TableName from '../../TableName';
+import database from '../../';
 
 export async function createAccount({
   accountGroup,
@@ -54,19 +54,23 @@ export async function createAccount({
     })
   );
 
-  const newAccount = createModel({
-    name: TableName.Account,
-    params: {
-      nickname: nickname ?? `${accountGroup.nickname}-${newAccountIndex}`,
-      index: newAccountIndex,
-      hidden: hidden ?? false,
-      selected: selected ?? false,
-      accountGroup,
-    },
-    prepareCreate: true,
-  }) as Account;
+  return database.write(async () => {
+    const newAccount = createModel({
+      name: TableName.Account,
+      params: {
+        nickname: nickname ?? `${accountGroup.nickname}-${newAccountIndex}`,
+        index: newAccountIndex,
+        hidden: hidden ?? false,
+        selected: selected ?? false,
+        accountGroup,
+      },
+      prepareCreate: true,
+    }) as Account;
 
-  const addresses = networksWithHexAddress.map((hexAddress, index) => createAddress({ network: networks[index], hex: hexAddress, account: newAccount }, true));
-  await database.batch(newAccount, ...addresses);
-  return newAccount;
+    const addresses = networksWithHexAddress.map((hexAddress, index) =>
+      createAddress({ network: networks[index], hex: hexAddress, account: newAccount }, true)
+    );
+    await database.batch(newAccount, ...addresses);
+    return newAccount;
+  });
 }

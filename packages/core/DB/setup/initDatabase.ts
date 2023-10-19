@@ -3,7 +3,7 @@ import TableName from '../TableName';
 import { createHdPath } from '../models/HdPath';
 import { createTokenList } from '../models/TokenList';
 import { createTicker } from '../models/Ticker';
-import { createNetwork, NetworkParams } from '../models/Network';
+import { createNetwork, NetworkParams } from '../models/Network/service';
 
 import {
   CFX_MAINNET_RPC_ENDPOINT,
@@ -63,7 +63,7 @@ import {
 const HD_PATH_ARR = [
   { name: 'cfx-default', value: DEFAULT_CFX_HDPATH },
   { name: 'eth-default', value: DEFAULT_ETH_HDPATH },
-];
+] as const;
 
 const TOKEN_LIST_ARR = [
   {
