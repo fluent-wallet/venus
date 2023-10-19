@@ -1,15 +1,16 @@
 import { randomInt } from './base';
 import { HDNode, entropyToMnemonic } from '@ethersproject/hdnode';
 import { randomBytes } from 'ethers';
+import { memoize } from 'lodash-es';
 
 const DEFAULT_HD_PATH = `m/44'/503'/0'/0`;
 
 export const generateMnemonic = () => entropyToMnemonic(randomBytes(16));
 
-export const defHDKey = (mnemonic: string) => {
+export const defHDKey = memoize((mnemonic: string) => {
   const hdnode = HDNode.fromMnemonic(mnemonic);
   return hdnode;
-};
+});
 
 function randomHDPathIndex() {
   return randomInt(0x80000000);
