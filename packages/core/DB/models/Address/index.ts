@@ -38,7 +38,7 @@ export class Address extends Model {
 
   @reader async getPrivateKey() {
     const vault = await (await (await this.account).accountGroup).vault;
-    if (vault.type === 'public_address') throw new Error('Cannot get private key from public address');
+    if (vault.type === 'public_address') throw new Error('Cannot get private key from public_address wallet');
     if (vault.type === 'hardware') throw new Error('Cannot get private key from hardware wallet');
 
     const data = await vault.getData();
@@ -62,6 +62,8 @@ export function createAddress(params: Params, prepareCreate: true): Address;
 export function createAddress(params: Params): Promise<Address>;
 export function createAddress({ hex, nativeBalance, network, account }: Params, prepareCreate?: true) {
   if (!network) throw new Error('Network is required in createAddress.');
+  if (!account) throw new Error('Account is required in createAddress.');
+  
   return createModel<Address>({
     name: TableName.Address,
     params: { hex, nativeBalance: nativeBalance ?? '0x0', base32: network ? encode(toAccountAddress(hex), network.netId) : '', account },
