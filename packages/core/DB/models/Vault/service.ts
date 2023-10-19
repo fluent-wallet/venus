@@ -19,10 +19,14 @@ export function createVault(params: Params, prepareCreate?: true) {
 
 export const createHDVault = async () => {
   try {
+    const start = performance.now();
+    console.log('createHDVault start');
     const mnemonic = await generateMnemonic();
     const vault = await createVault({ data: await cryptoTool.encrypt(mnemonic), type: 'hierarchical_deterministic', device: 'ePayWallet' });
     const accountGroup = await createAccountGroup({ nickname: 'someAccountGroup', hidden: false, vault });
     await createAccount({ nickname: 'default', hidden: false, selected: false, accountGroup });
+    const end = performance.now();
+    console.log(`createHDVault a Wallet took ${end - start} ms.`);
   } catch (error) {
     console.error('createHDVault error: ', error);
   }
