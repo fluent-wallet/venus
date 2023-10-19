@@ -3,7 +3,7 @@ import { field, text, children, immutableRelation, writer, reader, lazy } from '
 import { type Vault } from '../Vault';
 import { type Account } from '../Account';
 import TableName from '../../TableName';
-import { createAccount } from '../Account';
+import { createAccount } from '../Account/service';
 
 export class AccountGroup extends Model {
   static table = TableName.AccountGroup;
@@ -26,8 +26,8 @@ export class AccountGroup extends Model {
     });
   }
 
-  async addAccount(params: { nickname?: string; hidden?: boolean; selected?: boolean } = { hidden: false, selected: false }) {
-    return createAccount({ ...params, accountGroup: this });
+  @writer async addAccount(params: { nickname?: string; hidden?: boolean; selected?: boolean } = { hidden: false, selected: false }) {
+    return await this.callWriter(() => createAccount({ ...params, accountGroup: this }));
   }
 
   @reader async getAccountIndex(account: Account) {

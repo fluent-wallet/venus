@@ -12,8 +12,8 @@ const SetPassword: React.FC<{ navigation: NavigationProp<any> }> = (props) => {
   const { navigation } = props;
   const { theme } = useTheme();
   const [checked, setChecked] = useState(false);
-  const [password, setPassword] = useState({ pwd: '', error: '' });
-  const [confirmPwd, setConfirmPwd] = useState('');
+  const [password, setPassword] = useState({ pwd: '12345678', error: '' });
+  const [confirmPwd, setConfirmPwd] = useState('12345678');
   const [loading, setLoading] = useState(false);
   const [alert, setAlert] = useState({
     show: false,
@@ -21,22 +21,13 @@ const SetPassword: React.FC<{ navigation: NavigationProp<any> }> = (props) => {
     message: 'You’ve successfully protected wallet. Remember to keep your Password, it’s your responsibility!',
   });
 
-  const handleSetPassword = useCallback(
-    debounce((value: string) => {
-      {
-        setPassword({ pwd: value, error: value.length < 8 && value !== '' ? 'Password must be at least 8 characters' : '' });
-      }
-    }, 200),
-    []
-  );
-  const handleConfirmPassword = useCallback(
-    debounce((value: string) => {
-      {
-        setConfirmPwd(value);
-      }
-    }, 200),
-    []
-  );
+  const handleSetPassword = (value: string) => {
+    setPassword({ pwd: value, error: value.length < 8 && value !== '' ? 'Password must be at least 8 characters' : '' });
+  };
+
+  const handleConfirmPassword = (value: string) => {
+    setConfirmPwd(value);
+  };
 
   const handleCreatePassword = async () => {
     setLoading(true);
@@ -107,7 +98,7 @@ const SetPassword: React.FC<{ navigation: NavigationProp<any> }> = (props) => {
           {...alert}
           onOk={() => {
             setAlert({ show: false, type: '', message: '' });
-            navigation.navigate('createAccount');
+            navigation.navigate('CreateAccount');
           }}
         />
       </View>

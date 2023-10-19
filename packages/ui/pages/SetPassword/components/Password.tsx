@@ -28,6 +28,7 @@ function Password(props: Props) {
       <Text className="text-[20px] font-bold leading-tight my-[15px]">{title}</Text>
       <View className="rounded-[7px]" style={{ backgroundColor: colors.passwordInputBackground }}>
         <Input
+          value={value}
           inputContainerStyle={{ borderBottomWidth: 0 }}
           placeholderTextColor={colors.textSecondary}
           ErrorComponent={() => null}

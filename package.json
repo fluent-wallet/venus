@@ -9,7 +9,7 @@
     "start": "react-native start",
     "test": "jest",
     "pod:install": "command -v pod && (cd ios/ && pod install --verbose && cd ..) || echo \"Skipping pod install\"",
-    "postinstall": "yarn pod:install && patch-package"
+    "postinstall": "patch-package && yarn pod:install"
   },
   "dependencies": {
     "@craftzdog/react-native-buffer": "^6.0.5",

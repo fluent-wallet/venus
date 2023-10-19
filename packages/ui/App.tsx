@@ -59,7 +59,7 @@ function App(): JSX.Element {
             <Stack.Screen name="Biometrics" component={Biometrics} />
             <Stack.Screen name="Home" component={Home} />
             <Stack.Screen name="AccountManage" component={AccountManage} options={{ title: 'Manage Wallets' }} />
-            <Stack.Screen name='createAccount' component={CreateAccount} />
+            <Stack.Screen name='CreateAccount' component={CreateAccount} />
           </StackNavigator>
         </ThemeProvider>
       </NavigationContainer>

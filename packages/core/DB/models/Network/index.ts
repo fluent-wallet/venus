@@ -5,7 +5,6 @@ import { type Ticker } from '../Ticker';
 import { type Token } from '../Token';
 import { type HdPath } from '../HdPath';
 import TableName from '../../TableName';
-import { createModel, type ModelFields } from '../../helper/modelHelper';
 
 export class Network extends Model {
   static table = TableName.Network;
@@ -33,11 +32,4 @@ export class Network extends Model {
   @relation(TableName.HdPath, 'hd_path_id') hdPath!: Relation<HdPath>;
   @immutableRelation(TableName.Ticker, 'ticker_id') ticker!: Relation<Ticker>;
   @immutableRelation(TableName.TokenList, 'token_list_id') tokenList!: Relation<TokenList>;
-}
-
-export type NetworkParams = ModelFields<Network>;
-export function createNetwork(params: NetworkParams, prepareCreate: true): Network;
-export function createNetwork(params: NetworkParams): Promise<Network>;
-export function createNetwork(params: NetworkParams, prepareCreate?: true) {
-  return createModel<Network>({ name: TableName.Network, params, prepareCreate });
 }
