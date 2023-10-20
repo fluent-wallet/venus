@@ -107,7 +107,7 @@ interface BSIMSDKInterface {
   /**
    * Get all Pubkey from BSIM SDK
    */
-  getPubkeyList(): Promise<string>;
+  getPubkeyList(): Promise<BSIMPubKey[]>;
 }
 
 export default BSIMSDK as BSIMSDKInterface;
