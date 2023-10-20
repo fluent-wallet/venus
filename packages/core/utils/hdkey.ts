@@ -9,6 +9,7 @@ export const generateMnemonic = () => entropyToMnemonic(randomBytes(16));
 
 export const defHDKey = memoize((mnemonic: string) => {
   const hdnode = HDNode.fromMnemonic(mnemonic);
+  hdnode.derivePath = memoize(hdnode.derivePath);
   return hdnode;
 });
 
@@ -25,7 +26,7 @@ export const validateHDPath = (hdPath: string) => {
   try {
     const paths = hdPath.split('/');
     valid = valid && paths.length === 5 && paths[0] === 'm' && paths[1] === "44'" && paths[2].endsWith("'") && paths[3].endsWith("'");
-    valid = valid && Boolean(HDNode.fromMnemonic(generateMnemonic()).derivePath(paths.join('/')));
+    valid = valid && Boolean(defHDKey(generateMnemonic()).derivePath(paths.join('/')));
   } catch (err) {
     valid = false;
   }
@@ -44,22 +45,28 @@ export const getNthAccountOfHDKey = async ({
   nth: number;
   only0x1Prefixed?: boolean | undefined;
 }) => {
-  const k = defHDKey(mnemonic);
   const paths = hdPath.split('/');
   const result = {} as { address: string; privateKey: string; index: number };
-  let count = 0,
-    idx = 0;
+  const k = defHDKey(mnemonic);
 
-  while (count <= nth) {
-    await new Promise((resolve) => setTimeout(resolve, 1));
-    paths[5] = `${idx++}`;
+  if (only0x1Prefixed) {
+    let count = 0,
+    idx = 0;
+    while (count <= nth) {
+      paths[5] = `${idx++}`;
+      const newNode = k.derivePath(paths.join('/'));
+      result.address = newNode.address.toLowerCase();
+      result.privateKey = newNode.privateKey;
+      if (result.address.startsWith('0x1')) count++;
+    }
+    result.index = idx - 1;
+  } else {
+    paths[5] = String(nth);
     const newNode = k.derivePath(paths.join('/'));
     result.address = newNode.address.toLowerCase();
     result.privateKey = newNode.privateKey;
-    if (only0x1Prefixed && result.address.startsWith('0x1')) count++;
-    if (!only0x1Prefixed) count++;
+    result.index = nth;
   }
-  result.index = idx - 1;
 
   return result;
 };
