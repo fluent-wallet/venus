@@ -8,6 +8,9 @@ import FaceIdSource from '@assets/images/face-id.png';
 import { NavigationProp } from '@react-navigation/native';
 import { authentication, AuthenticationType } from '@core/DB/helper';
 
+
+export const BiometricsStackName = 'Biometrics';
+
 const getFaceIdLinearColor = (themeMode: 'dark' | 'light') =>
   themeMode === 'dark' ? ['rgba(174, 207, 250, 0.2)', 'rgba(171, 194, 255, 0)'] : ['#AECFFA', 'rgba(171, 194, 255, 0)'];
 const FaceId: React.FC = () => {

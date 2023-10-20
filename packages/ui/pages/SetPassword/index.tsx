@@ -8,6 +8,8 @@ import { debounce } from 'lodash-es';
 import { NavigationProp } from '@react-navigation/native';
 import { AuthenticationType, authentication } from '@core/DB/helper';
 
+export const SetPasswordStackName = 'SetPassword';
+
 const SetPassword: React.FC<{ navigation: NavigationProp<any> }> = (props) => {
   const { navigation } = props;
   const { theme } = useTheme();
