@@ -3,6 +3,8 @@ import { ScrollView, View, useColorScheme } from 'react-native';
 import { DebugInstructions, Header, LearnMoreLinks, ReloadInstructions } from 'react-native/Libraries/NewAppScreen';
 import { Text } from '@rneui/themed';
 
+export const HomeStackName = 'Home';
+
 type SectionProps = PropsWithChildren<{
   title: string;
 }>;
@@ -39,6 +41,6 @@ const Home: React.FC = () => {
       </ScrollView>
     </View>
   );
-}
+};
 
 export default Home;

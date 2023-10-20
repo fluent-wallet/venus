@@ -6,15 +6,16 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { ThemeProvider, useTheme } from '@rneui/themed';
 import './assets/i18n';
 import { theme } from './theme';
-import Welcome from '@pages/Welcome';
-import SetPassword from '@pages/SetPassword';
-import Biometrics from '@pages/SetPassword/Biometrics';
-import Home from '@pages/Home';
+import Welcome, { WelcomeStackName } from '@pages/Welcome';
+import SetPassword, { SetPasswordStackName } from '@pages/SetPassword';
+import Biometrics, { BiometricsStackName } from '@pages/SetPassword/Biometrics';
+import Home, { HomeStackName } from '@pages/Home';
 import ArrowLeft from '@assets/icons/arrow-left.svg';
-import CreateAccount from '@pages/CreateAccount';
-import AccountManage from '@pages/AccountManage';
+import CreateAccount, { CreateAccountStackName } from '@pages/CreateAccount';
+import AccountManage, { AccountManageStackName } from '@pages/AccountManage';
+import { RootStackList } from 'packages/@types/natigation';
 
-const Stack = createNativeStackNavigator();
+const Stack = createNativeStackNavigator<RootStackList>();
 const StackNavigator = ({ children }: PropsWithChildren) => {
   const navigation = useNavigation();
   const { theme } = useTheme();
@@ -54,12 +55,12 @@ function App(): JSX.Element {
       <NavigationContainer>
         <ThemeProvider theme={theme}>
           <StackNavigator>
-            <Stack.Screen name="Welcome" component={Welcome} options={{ headerShown: false }} />
-            <Stack.Screen name="SetPassword" component={SetPassword} />
-            <Stack.Screen name="Biometrics" component={Biometrics} />
-            <Stack.Screen name="Home" component={Home} />
-            <Stack.Screen name="AccountManage" component={AccountManage} options={{ title: 'Manage Wallets' }} />
-            <Stack.Screen name='CreateAccount' component={CreateAccount} />
+            <Stack.Screen name={WelcomeStackName} component={Welcome} options={{ headerShown: false }} />
+            <Stack.Screen name={SetPasswordStackName} component={SetPassword} />
+            <Stack.Screen name={BiometricsStackName} component={Biometrics} />
+            <Stack.Screen name={HomeStackName} component={Home} />
+            <Stack.Screen name={AccountManageStackName} component={AccountManage} options={{ title: 'Manage Wallets' }} />
+            <Stack.Screen name={CreateAccountStackName} component={CreateAccount} />
           </StackNavigator>
         </ThemeProvider>
       </NavigationContainer>

@@ -7,6 +7,8 @@ import { statusBarHeight } from '@utils/deviceInfo';
 import Tip from '@assets/icons/tip.svg';
 import WelcomeBg from '@assets/images/welcome-bg.png';
 
+export const WelcomeStackName = 'Welcome';
+
 const Welcome: React.FC<{ navigation: NavigationProp<any> }> = ({ navigation }) => {
   const { theme } = useTheme();
 
@@ -21,12 +23,8 @@ const Welcome: React.FC<{ navigation: NavigationProp<any> }> = ({ navigation }) 
             <Tip />
           </View>
           <View>
-            <Text className="relative text-[16px] leading-[24px] ">
-              Coming Soon！
-            </Text>
-            <Text className="mt-[4px] text-[14px] leading-[20px]">
-              We are working hard to prepare, so stay tuned,Please stay tuned！
-            </Text>
+            <Text className="relative text-[16px] leading-[24px] ">Coming Soon！</Text>
+            <Text className="mt-[4px] text-[14px] leading-[20px]">We are working hard to prepare, so stay tuned,Please stay tuned！</Text>
           </View>
         </View>
 
@@ -36,9 +34,7 @@ const Welcome: React.FC<{ navigation: NavigationProp<any> }> = ({ navigation }) 
           <Text className="text-[36px] leading-[46px] font-bold text-center" style={{ color: theme.colors.textBrand }}>
             Enter Web3
           </Text>
-          <Text className="mt-[8px] text-[16px] leading-[24px] text-center">
-            First, let's add a wallet
-          </Text>
+          <Text className="mt-[8px] text-[16px] leading-[24px] text-center">First, let's add a wallet</Text>
         </View>
 
         <Button containerStyle={{ marginTop: 40, marginHorizontal: 16 }} onPress={() => navigation.navigate('Biometrics')} disabled>
