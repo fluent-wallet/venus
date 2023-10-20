@@ -1,8 +1,8 @@
 import database from '../';
 import TableName from '../TableName';
-import { createHdPath } from '../models/HdPath';
-import { createTokenList } from '../models/TokenList';
-import { createTicker } from '../models/Ticker';
+import { createHdPath } from '../models/HdPath/service';
+import { createTokenList } from '../models/TokenList/service';
+import { createTicker } from '../models/Ticker/service';
 import { createNetwork, NetworkParams } from '../models/Network/service';
 
 import {
