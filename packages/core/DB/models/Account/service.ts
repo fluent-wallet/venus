@@ -28,6 +28,7 @@ export async function createAccount({
     vault.getData(),
   ]);
 
+  const start = performance.now();
   // For each network, an Account has its corresponding Address.
   // For vaults of type 'public_address' and 'hardware', the Address is the vault's data.
   // For vaults of type 'private_key', the needs to be generated from the privateKey.
@@ -53,6 +54,8 @@ export async function createAccount({
       }
     })
   );
+  const end = performance.now();
+  console.log(`networksWithHexAddress took ${end - start} ms.`);
 
   return database.write(async () => {
     const newAccount = createModel({

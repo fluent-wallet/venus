@@ -1,0 +1,15 @@
+diff --git a/node_modules/@ethersproject/pbkdf2/lib/index.js b/node_modules/@ethersproject/pbkdf2/lib/index.js
+index f18cc5c..c9a0e07 100644
+--- a/node_modules/@ethersproject/pbkdf2/lib/index.js
++++ b/node_modules/@ethersproject/pbkdf2/lib/index.js
+@@ -1,6 +1,7 @@
+ "use strict";
+ Object.defineProperty(exports, "__esModule", { value: true });
+ exports.pbkdf2 = void 0;
+-var pbkdf2_1 = require("./pbkdf2");
+-Object.defineProperty(exports, "pbkdf2", { enumerable: true, get: function () { return pbkdf2_1.pbkdf2; } });
++var crypto = require("react-native-quick-crypto")
++var pbkdf2_1 = crypto.pbkdf2Sync
++Object.defineProperty(exports, "pbkdf2", { enumerable: true, get: function () { return pbkdf2_1; } });
+ //# sourceMappingURL=index.js.map
+\ No newline at end of file

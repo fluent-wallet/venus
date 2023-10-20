@@ -158,7 +158,12 @@ class MockSDKModule(private val reactContext: ReactApplicationContext) :
         if (pubKeyList != null) {
             var resultList = WritableNativeArray()
             for (key in pubKeyList) {
-                resultList.pushString(key)
+
+                val temp = WritableNativeMap()
+                temp.putString("coinType", key.coinType.name)
+                temp.putString("key", key.key)
+                temp.putInt("index", key.index)
+                resultList.pushMap(temp)
             }
             promise.resolve(resultList)
         } else {
