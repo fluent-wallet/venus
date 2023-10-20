@@ -29,6 +29,13 @@ export class Address extends Model {
   @relation(TableName.Account, 'account_id') account!: Relation<Account>;
   @relation(TableName.Network, 'network_id') network!: Relation<Network>;
 
+  @reader async getVaultType() {
+    const account = await this.account;
+    const accountGroup = await account.accountGroup;
+    const vault = await accountGroup.vault;
+    return vault.type;
+  }
+
   /** Automatically returns the hex or base32 address depending on the type of network it belongs to */
   @reader async getValue() {
     const network = await this.network;
@@ -57,4 +64,3 @@ export class Address extends Model {
     return privateKey;
   }
 }
-

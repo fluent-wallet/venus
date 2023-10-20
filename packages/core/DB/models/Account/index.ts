@@ -1,5 +1,5 @@
 import { Model, type Query, type Relation } from '@nozbe/watermelondb';
-import { field, text, children, relation, date, readonly, writer } from '@nozbe/watermelondb/decorators';
+import { field, text, children, relation, date, readonly, writer, reader } from '@nozbe/watermelondb/decorators';
 import { type Address } from '../Address';
 import { type AccountGroup } from '../AccountGroup';
 import TableName from '../../TableName';
@@ -18,6 +18,12 @@ export class Account extends Model {
   @readonly @date('created_at') createdAt!: Date;
   @children(TableName.Address) address!: Query<Address>;
   @relation(TableName.AccountGroup, 'account_group_id') accountGroup!: Relation<AccountGroup>;
+
+  @reader async getVaultType() {
+    const accountGroup = await this.accountGroup;
+    const vault = await accountGroup.vault;
+    return vault.type;
+  }
 
   @writer async updateName(newNickName: string) {
     await this.update((account) => {
