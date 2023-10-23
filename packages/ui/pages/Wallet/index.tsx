@@ -75,7 +75,7 @@ const Wallet: React.FC<{ navigation: StackNavigation }> = (props) => {
                 </Text>
               </View>
               <View className="flex items-center flex-1">
-                <View className="flex justify-center items-center w-[60px] h-[60px] bg-[#537FF6] rounded-full">
+                <View className="flex justify-center items-center w-[60px] h-[60px]  rounded-full" style={{ backgroundColor: theme.colors.surfaceBrand }}>
                   <ReceiveIcon color={'#fff'} width={32} height={32} />
                 </View>
                 <Text className="mt-[7px] text-base" style={{ color: theme.colors.textPrimary }}>
@@ -83,7 +83,7 @@ const Wallet: React.FC<{ navigation: StackNavigation }> = (props) => {
                 </Text>
               </View>
               <View className="flex items-center flex-1">
-                <View className="flex justify-center items-center w-[60px] h-[60px] bg-[#537FF6] rounded-full">
+                <View className="flex justify-center items-center w-[60px] h-[60px]  rounded-full" style={{ backgroundColor: theme.colors.surfaceBrand }}>
                   <BuyIcon color={'#fff'} width={32} height={32} />
                 </View>
                 <Text className="mt-[7px] text-base" style={{ color: theme.colors.textPrimary }}>
@@ -91,7 +91,7 @@ const Wallet: React.FC<{ navigation: StackNavigation }> = (props) => {
                 </Text>
               </View>
               <View className="flex items-center flex-1">
-                <View className="flex justify-center items-center w-[60px] h-[60px] bg-[#537FF6] rounded-full">
+                <View className="flex justify-center items-center w-[60px] h-[60px]  rounded-full" style={{ backgroundColor: theme.colors.surfaceBrand }}>
                   <MoreIcon color={'#fff'} width={32} height={32} />
                 </View>
                 <Text className="mt-[7px] text-base" style={{ color: theme.colors.textPrimary }}>
@@ -102,7 +102,7 @@ const Wallet: React.FC<{ navigation: StackNavigation }> = (props) => {
           </View>
 
           <View className="px-[25px]">
-            <Tab value={tabIndex} onChange={setTabIndex} indicatorStyle={{ backgroundColor: '#537FF6' }}>
+            <Tab value={tabIndex} onChange={setTabIndex} indicatorStyle={{ backgroundColor: theme.colors.surfaceBrand }}>
               <Tab.Item title="Tokens" titleStyle={(active) => ({ color: active ? '#4572EC' : theme.colors.textSecondary })} />
               <Tab.Item title="Receive" titleStyle={(active) => ({ color: active ? '#4572EC' : theme.colors.textSecondary })} />
               <Tab.Item title="Activity" titleStyle={(active) => ({ color: active ? '#4572EC' : theme.colors.textSecondary })} />
