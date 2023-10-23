@@ -5,9 +5,9 @@ import { useTheme, Button, Text } from '@rneui/themed';
 import { statusBarHeight } from '@utils/deviceInfo';
 import Animated, { useSharedValue, useAnimatedStyle, withTiming, withRepeat } from 'react-native-reanimated';
 import FaceIdSource from '@assets/images/face-id.png';
-import { NavigationProp } from '@react-navigation/native';
 import { authentication, AuthenticationType } from '@core/DB/helper';
-
+import { RootStackList, StackNavigationType } from 'packages/@types/natigation';
+import { RouteProp, useNavigation, useRoute } from '@react-navigation/native';
 
 export const BiometricsStackName = 'Biometrics';
 
@@ -32,23 +32,23 @@ const FaceId: React.FC = () => {
   }, []);
 
   return (
-    <View className="relative mx-auto w-[193px] h-[210px] rounded-[20px] overflow-hidden">
-      <Animated.View className="absolute w-[193px] h-[210px] bottom-0" style={animatedStyles}>
+    <View className="relative mx-auto w-[189px] h-[189px] rounded-[20px] overflow-hidden">
+      <Animated.View className="absolute w-[189px] h-[189px] bottom-0" style={animatedStyles}>
         <LinearGradient colors={getFaceIdLinearColor(theme.mode)} className="flex-1" />
       </Animated.View>
-      <Image source={FaceIdSource} />
+      <Image source={FaceIdSource} className="w-full h-full" />
     </View>
   );
 };
 
-const Biometrics: React.FC<{ navigation: NavigationProp<any> }> = (props) => {
+const Biometrics = () => {
   const { theme } = useTheme();
-  const { navigation } = props;
+  const navigation = useNavigation<StackNavigationType>();
+  const route = useRoute<RouteProp<RootStackList, 'Biometrics'>>();
 
   const handleEnableBiometrics = useCallback(async () => {
     try {
       await authentication.setPassword({ authType: AuthenticationType.Biometrics });
-      
     } catch (err) {
       console.log('Enable Biometrics error: ', err);
     }
@@ -75,7 +75,10 @@ const Biometrics: React.FC<{ navigation: NavigationProp<any> }> = (props) => {
         <Button containerStyle={{ marginTop: 32, marginHorizontal: 16 }} onPress={handleEnableBiometrics}>
           Enable
         </Button>
-        <Button containerStyle={{ marginTop: 16, marginHorizontal: 16 }} onPress={() => navigation.navigate('SetPassword')}>
+        <Button
+          containerStyle={{ marginTop: 16, marginHorizontal: 16 }}
+          onPress={() => navigation.navigate('SetPassword', { accountType: route.params.accountType })}
+        >
           Set Password
         </Button>
       </SafeAreaView>
