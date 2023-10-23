@@ -1,5 +1,5 @@
 import { createTheme } from '@rneui/themed';
-const colors = {
+export const colors = {
   gray0: '#FAFAFA',
   gray1: '#E5E5E5',
   gray2: '#A3A3A3',
@@ -50,6 +50,8 @@ const theme = createTheme({
     normalBackground: '#F7F7F7',
     passwordInputBackground: colors.white,
     buttonDisabledBackground: '#D9E3FF',
+    homeHeaderAddressBackgroundColor: colors.blue0,
+    pureBlackAndWight: colors.white,
   },
   darkColors: {
     textPrimary: colors.gray1,
@@ -68,6 +70,8 @@ const theme = createTheme({
     normalBackground: colors.gray5,
     passwordInputBackground: '#242424',
     buttonDisabledBackground: colors.blue4,
+    homeHeaderAddressBackgroundColor: colors.blue5,
+    pureBlackAndWight: colors.black,
   },
   components: {
     Button: (_, theme) => ({

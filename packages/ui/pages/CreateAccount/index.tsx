@@ -4,7 +4,7 @@ import { statusBarHeight } from '@utils/deviceInfo';
 import { createHDVault } from '@core/DB/models/Vault/service';
 import { useNavigation } from '@react-navigation/native';
 import { StackNavigation } from 'packages/@types/natigation';
-import { HomeStackName } from '@pages/Home';
+import { WalletStackName } from '@pages/Wallet';
 
 export const CreateAccountStackName = 'CreateAccount';
 
@@ -13,7 +13,7 @@ const CreateAccount: React.FC = () => {
   const navigation = useNavigation<StackNavigation>();
   const handleCreateHDVault = async () => {
     await createHDVault();
-    navigation.navigate(HomeStackName);
+    navigation.navigate('Home', { screen: WalletStackName });
   };
   return (
     <View className="flex flex-1 relative" style={{ backgroundColor: theme.colors.normalBackground }}>
