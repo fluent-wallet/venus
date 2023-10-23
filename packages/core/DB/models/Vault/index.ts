@@ -11,7 +11,7 @@ export class Vault extends Model {
   } as const;
 
   /** Type of vault: pub, pk, hd, hw */
-  @text('type') type!: 'public_address' | 'private_key' | 'hierarchical_deterministic' | 'hardware' | 'bsim';
+  @text('type') type!: 'public_address' | 'private_key' | 'hierarchical_deterministic' | 'hardware' | 'BSIM';
   /** data is encrypted when the type is pk or hd. */
   @text('data') data!: string;
   /** Vault device, default is FluentWebExt */
@@ -23,7 +23,7 @@ export class Vault extends Model {
 
   /** get decrypted vault data. */
   @reader async getData() {
-    if (this.type === 'public_address' || this.type === 'hardware' || this.type === 'bsim') return this.data;
+    if (this.type === 'public_address' || this.type === 'hardware' || this.type === 'BSIM') return this.data;
     return cryptoTool.decrypt<string>(this.data);
   }
 }

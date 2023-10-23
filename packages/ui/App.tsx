@@ -1,4 +1,4 @@
-import { useEffect, type PropsWithChildren } from 'react';
+import React, { type PropsWithChildren } from 'react';
 import { Platform, useColorScheme, Text, TouchableOpacity } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { NavigationContainer, useNavigation } from '@react-navigation/native';
@@ -10,13 +10,16 @@ import { theme } from './theme';
 import Welcome, { WelcomeStackName } from '@pages/Welcome';
 import SetPassword, { SetPasswordStackName } from '@pages/SetPassword';
 import Biometrics, { BiometricsStackName } from '@pages/SetPassword/Biometrics';
-import Wallet, { WalletStackName } from '@pages/Wallet';
+import Wallet, { WalletStackName, getWalletHeaderOptions } from '@pages/Wallet';
+import Settings, { SettingsStackName } from '@pages/Settings';
 import ArrowLeft from '@assets/icons/arrow-left.svg';
 import CreateAccount, { CreateAccountStackName } from '@pages/CreateAccount';
 import AccountManage, { AccountManageStackName } from '@pages/AccountManage';
-import { RootStackList } from 'packages/@types/natigation';
-
+import { type RootStackList } from 'packages/@types/natigation';
 import WalletIcon from '@assets/icons/wallet.svg';
+import SettingsIcon from '@assets/icons/settings.svg';
+import { withObservables } from '@nozbe/watermelondb/react';
+import TableName from '@DB/TableName';
 
 const Stack = createNativeStackNavigator<RootStackList>();
 
@@ -35,10 +38,16 @@ const HomeScreenNavigator = () => {
         tabBarInactiveTintColor: '#999',
       }}
     >
-      <BottomTabStack.Screen name={WalletStackName} component={Wallet} options={{ tabBarIcon: ({ color }) => <WalletIcon color={color} /> }} />
+      <BottomTabStack.Screen
+        name={WalletStackName}
+        component={Wallet}
+        options={{ tabBarIcon: ({ color }) => <WalletIcon color={color} />, ...getWalletHeaderOptions(theme.colors.homeHeaderAddressBackgroundColor) }}
+      />
+      <BottomTabStack.Screen name={SettingsStackName} component={Settings} options={{ tabBarIcon: ({ color }) => <SettingsIcon color={color} /> }} />
     </BottomTabStack.Navigator>
   );
 };
+
 const StackNavigator = ({ children }: PropsWithChildren) => {
   const navigation = useNavigation();
   const { theme } = useTheme();
@@ -70,10 +79,9 @@ const StackNavigator = ({ children }: PropsWithChildren) => {
   );
 };
 
-function App(): JSX.Element {
+const App: React.FC = () => {
   const mode = useColorScheme();
   theme.mode = mode === 'dark' ? 'dark' : 'light';
-
   return (
     <SafeAreaProvider>
       <NavigationContainer>
@@ -90,6 +98,6 @@ function App(): JSX.Element {
       </NavigationContainer>
     </SafeAreaProvider>
   );
-}
+};
 
 export default App;

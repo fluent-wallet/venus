@@ -1,13 +1,10 @@
-import { ScrollView, View, useColorScheme, SafeAreaView } from 'react-native';
-
+import { View, SafeAreaView } from 'react-native';
 import { statusBarHeight } from '@utils/deviceInfo';
-
 import { Text, useTheme, Tab, TabView } from '@rneui/themed';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { StackNavigation } from 'packages/@types/natigation';
 import CopyAll from '@assets/icons/copy_all.svg';
 import Flip from '@assets/icons/flip.svg';
-import Settings from '@assets/icons/settings.svg';
 import Menu from '@assets/icons/menu.svg';
 import SendIcon from '@assets/icons/send.svg';
 import ReceiveIcon from '@assets/icons/receive.svg';
@@ -17,34 +14,32 @@ import WalletTokens from './Components/Tokens';
 
 export const WalletStackName = 'Wallet';
 
-const Wallet: React.FC<{ navigation: StackNavigation }> = (props) => {
+export const getWalletHeaderOptions = (backgroundColor: string) => ({
+  headerLeft: () => (
+    <View className="ml-[17px]">
+      <Menu className="w-[24] h-[24]" />
+    </View>
+  ),
+  headerTitle: () => (
+    <View className="bg-white flex flex-row px-[12px] py-[8px] rounded-full" style={{ backgroundColor }}>
+      <Text className="text-[10px]">0x63...c6e9</Text>
+      <View className="pl-[4px]">
+        <CopyAll />
+      </View>
+    </View>
+  ),
+  headerRight: () => (
+    <View className="flex flex-row mr-[17px]">
+      <Flip style={{ marginRight: 17 }} />
+    </View>
+  ),
+  headerTitleAlign: 'center',
+} as const);
+
+const Wallet: React.FC<{ navigation: StackNavigation }> = () => {
   const { theme } = useTheme();
   const [tabIndex, setTabIndex] = useState(0);
-  const { navigation } = props;
-  useEffect(() => {
-    navigation.setOptions({
-      headerLeft: () => (
-        <View className="ml-[17px]">
-          <Menu className="w-[24] h-[24]" />
-        </View>
-      ),
-      headerTitle: () => (
-        <View className="bg-white flex flex-row px-[12px] py-[8px] rounded-full" style={{ backgroundColor: theme.colors.homeHeaderAddressBackgroundColor }}>
-          <Text className="text-[10px]">0x63...c6e9</Text>
-          <View className="pl-[4px]">
-            <CopyAll />
-          </View>
-        </View>
-      ),
-      headerRight: () => (
-        <View className="flex flex-row mr-[17px]">
-          <Flip style={{ marginRight: 17 }} />
-          <Settings />
-        </View>
-      ),
-      headerTitleAlign: 'center',
-    });
-  }, [navigation, theme.colors.homeHeaderAddressBackgroundColor]);
+
   return (
     <View className="flex flex-1 relative" style={{ backgroundColor: theme.colors.normalBackground }}>
       <SafeAreaView className="flex-1 flex flex-col justify-start" style={{ paddingTop: statusBarHeight + 48 }}>

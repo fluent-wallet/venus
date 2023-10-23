@@ -13,11 +13,13 @@ export async function createAccount({
   nickname,
   hidden,
   selected,
+  hexAddress
 }: {
   accountGroup: AccountGroup;
   nickname?: string;
   hidden?: boolean;
   selected?: boolean;
+  hexAddress?: string;
 }) {
   if (!accountGroup) throw new Error('AccountGroup is required in createAccount.');
   const vault = await (await accountGroup).vault;
@@ -34,8 +36,8 @@ export async function createAccount({
   // For vaults of type 'hierarchical_deterministic', it's' necessary to first generate the privateKey from the mnemonic based on the index of the Account.
   const networksWithHexAddress = await Promise.all(
     networks.map(async (network) => {
-      if (vault.type === 'public_address' || vault.type === 'hardware') {
-        return vaultData;
+      if (vault.type === 'public_address' || vault.type === 'hardware' || vault.type === 'BSIM') {
+        return hexAddress ?? vaultData;
       } else {
         let privateKey: string;
         if (vault.type === 'private_key') {

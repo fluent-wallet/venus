@@ -2,19 +2,18 @@ import { Button, useTheme } from '@rneui/themed';
 import { View, SafeAreaView } from 'react-native';
 import { statusBarHeight } from '@utils/deviceInfo';
 import { createHDVault } from '@core/DB/models/Vault/service';
-import { useNavigation } from '@react-navigation/native';
-import { StackNavigation } from 'packages/@types/natigation';
+import { NavigationProp } from '@react-navigation/native';
 import { WalletStackName } from '@pages/Wallet';
 
 export const CreateAccountStackName = 'CreateAccount';
 
-const CreateAccount: React.FC = () => {
+const CreateAccount: React.FC<{ navigation: NavigationProp<any> }> = ({ navigation }) => {
   const { theme } = useTheme();
-  const navigation = useNavigation<StackNavigation>();
   const handleCreateHDVault = async () => {
     await createHDVault();
     navigation.navigate('Home', { screen: WalletStackName });
   };
+
   return (
     <View className="flex flex-1 relative" style={{ backgroundColor: theme.colors.normalBackground }}>
       <View className="flex-1 px-[25px]">
