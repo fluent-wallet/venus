@@ -7,6 +7,8 @@ import { createAccountGroup } from '../AccountGroup/service';
 import { createAccount } from '../Account/service';
 import { generateMnemonic } from '../../../utils/hdkey';
 import { cryptoTool } from '../../helper/cryptoTool';
+import BSIMSDK, { CoinTypes } from '@core/BSIMSDK';
+import { fromPrivate } from '@core/utils/account';
 
 type Params = ModelFields<Vault>;
 function createVault(params: Params, prepareCreate: true): Vault;
@@ -81,10 +83,13 @@ export const createHDVault = async (importMnemonic?: string) => {
 
 export const createBSIMVault = async () => {
   try {
+    // todo
     const start = performance.now();
     console.log('create BSIM vault start');
-    const { hexAddress, index } = { hexAddress: '', index: '0' };
-    await createVaultOfType({ type: 'BSIM', hexAddress, index });
+    BSIMSDK.create('71');
+    const pubkey = await BSIMSDK.genNewKey(CoinTypes.CONFLUX);
+    const result = fromPrivate(pubkey.key);
+    await createVaultOfType({ type: 'BSIM', hexAddress: result.address, index: pubkey.toString() });
     const end = performance.now();
     console.log(`create BSIM vault a Wallet took ${end - start} ms.`);
   } catch (error) {

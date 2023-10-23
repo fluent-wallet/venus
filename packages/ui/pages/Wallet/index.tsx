@@ -2,7 +2,7 @@ import { View, SafeAreaView } from 'react-native';
 import { statusBarHeight } from '@utils/deviceInfo';
 import { Text, useTheme, Tab, TabView } from '@rneui/themed';
 import { useState } from 'react';
-import { StackNavigation } from 'packages/@types/natigation';
+import { StackNavigationType } from 'packages/@types/natigation';
 import CopyAll from '@assets/icons/copy_all.svg';
 import Flip from '@assets/icons/flip.svg';
 import Menu from '@assets/icons/menu.svg';
@@ -14,29 +14,30 @@ import WalletTokens from './Components/Tokens';
 
 export const WalletStackName = 'Wallet';
 
-export const getWalletHeaderOptions = (backgroundColor: string) => ({
-  headerLeft: () => (
-    <View className="ml-[17px]">
-      <Menu className="w-[24] h-[24]" />
-    </View>
-  ),
-  headerTitle: () => (
-    <View className="bg-white flex flex-row px-[12px] py-[8px] rounded-full" style={{ backgroundColor }}>
-      <Text className="text-[10px]">0x63...c6e9</Text>
-      <View className="pl-[4px]">
-        <CopyAll />
+export const getWalletHeaderOptions = (backgroundColor: string) =>
+  ({
+    headerLeft: () => (
+      <View className="ml-[17px]">
+        <Menu className="w-[24] h-[24]" />
       </View>
-    </View>
-  ),
-  headerRight: () => (
-    <View className="flex flex-row mr-[17px]">
-      <Flip style={{ marginRight: 17 }} />
-    </View>
-  ),
-  headerTitleAlign: 'center',
-} as const);
+    ),
+    headerTitle: () => (
+      <View className="bg-white flex flex-row px-[12px] py-[8px] rounded-full" style={{ backgroundColor }}>
+        <Text className="text-[10px]">0x63...c6e9</Text>
+        <View className="pl-[4px]">
+          <CopyAll />
+        </View>
+      </View>
+    ),
+    headerRight: () => (
+      <View className="flex flex-row mr-[17px]">
+        <Flip style={{ marginRight: 17 }} />
+      </View>
+    ),
+    headerTitleAlign: 'center',
+  } as const);
 
-const Wallet: React.FC<{ navigation: StackNavigation }> = () => {
+const Wallet: React.FC<{ navigation: StackNavigationType }> = (props) => {
   const { theme } = useTheme();
   const [tabIndex, setTabIndex] = useState(0);
 
