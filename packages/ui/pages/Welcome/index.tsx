@@ -6,12 +6,13 @@ import { useTheme, Button, Text } from '@rneui/themed';
 import { statusBarHeight } from '@utils/deviceInfo';
 import Tip from '@assets/icons/tip.svg';
 import WelcomeBg from '@assets/images/welcome-bg.png';
+import { withObservables } from '@nozbe/watermelondb/react';
 
 export const WelcomeStackName = 'Welcome';
 
-const Welcome: React.FC<{ navigation: NavigationProp<any> }> = ({ navigation }) => {
+const Welcome: React.FC<{ navigation: NavigationProp<any> }> = ({ navigation, vault }) => {
   const { theme } = useTheme();
-
+  console.log(vault);
   return (
     <LinearGradient colors={theme.colors.linearGradientBackground} className="flex-1">
       <SafeAreaView className="flex-1 flex flex-col justify-start pt-[8px]">
@@ -51,4 +52,8 @@ const Welcome: React.FC<{ navigation: NavigationProp<any> }> = ({ navigation }) 
   );
 };
 
-export default Welcome;
+const enhance = withObservables(['vault'], ({ vault }) => ({
+  vault,
+}));
+
+export default enhance(Welcome);

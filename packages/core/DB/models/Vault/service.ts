@@ -86,7 +86,7 @@ export const createBSIMVault = async () => {
     const { hexAddress, index } = { hexAddress: '', index: '0' };
     await createVaultOfType({ type: 'BSIM', hexAddress, index });
     const end = performance.now();
-    console.log(`create BSIM vault a Wallet took ${end - start} ms.`);
+    console.log(`create BSIM vault took ${end - start} ms.`);
   } catch (error) {
     console.error('create BSIM vault error: ', error);
   }
@@ -98,7 +98,7 @@ export const createPrivateKeyVault = async (privateKey: string) => {
     console.log('create privateKey vault start');
     await createVaultOfType({ type: 'private_key', privateKey });
     const end = performance.now();
-    console.log(`create privateKey vault a Wallet took ${end - start} ms.`);
+    console.log(`create privateKey vault took ${end - start} ms.`);
   } catch (error) {
     console.error('create privateKey vault error: ', error);
   }

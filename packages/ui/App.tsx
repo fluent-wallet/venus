@@ -4,6 +4,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { NavigationContainer, useNavigation } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import { DatabaseProvider } from '@nozbe/watermelondb/react';
 import { ThemeProvider, useTheme } from '@rneui/themed';
 import './assets/i18n';
 import { theme } from './theme';
@@ -18,8 +19,7 @@ import AccountManage, { AccountManageStackName } from '@pages/AccountManage';
 import { type RootStackList } from 'packages/@types/natigation';
 import WalletIcon from '@assets/icons/wallet.svg';
 import SettingsIcon from '@assets/icons/settings.svg';
-import { withObservables } from '@nozbe/watermelondb/react';
-import TableName from '@DB/TableName';
+import database from '@DB/index';
 
 const Stack = createNativeStackNavigator<RootStackList>();
 
@@ -100,4 +100,12 @@ const App: React.FC = () => {
   );
 };
 
-export default App;
+const Root: React.FC = () => {
+  return (
+    <DatabaseProvider database={database}>
+      <App />
+    </DatabaseProvider>
+  );
+};
+
+export default Root;
