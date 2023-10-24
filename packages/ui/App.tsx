@@ -1,4 +1,4 @@
-import React, { type PropsWithChildren } from 'react';
+import React, { useState, type PropsWithChildren, useEffect } from 'react';
 import { Platform, useColorScheme, Text, TouchableOpacity } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { NavigationContainer, useNavigation } from '@react-navigation/native';
@@ -20,6 +20,7 @@ import WalletIcon from '@assets/icons/wallet.svg';
 import SettingsIcon from '@assets/icons/settings.svg';
 import { withObservables } from '@nozbe/watermelondb/react';
 import TableName from '@DB/TableName';
+import database from '@core/DB';
 
 const Stack = createNativeStackNavigator<RootStackList>();
 
@@ -51,10 +52,18 @@ const HomeScreenNavigator = () => {
 const StackNavigator = ({ children }: PropsWithChildren) => {
   const navigation = useNavigation();
   const { theme } = useTheme();
+  const [initRoute, setInitRoute] = useState<undefined | keyof RootStackList>();
 
-  return (
+  useEffect(() => {
+    async function checkUserIsExist() {
+      const vaultCount = await database.get(TableName.Vault).query().fetchCount();
+      setInitRoute(vaultCount > 0 ? 'Home' : WalletStackName);
+    }
+    checkUserIsExist();
+  }, []);
+  return initRoute ? (
     <Stack.Navigator
-      initialRouteName={WelcomeStackName}
+      initialRouteName={initRoute}
       screenOptions={{
         headerTitleAlign: 'left',
         headerTransparent: true,
@@ -76,7 +85,7 @@ const StackNavigator = ({ children }: PropsWithChildren) => {
     >
       {children}
     </Stack.Navigator>
-  );
+  ) : null;
 };
 
 const App: React.FC = () => {

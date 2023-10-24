@@ -13,8 +13,8 @@ const SetPassword: React.FC<{ navigation: NavigationProp<any> }> = (props) => {
   const { navigation } = props;
   const { theme } = useTheme();
   const [checked, setChecked] = useState(false);
-  const [password, setPassword] = useState({ pwd: '12345678', error: '' });
-  const [confirmPwd, setConfirmPwd] = useState('12345678');
+  const [password, setPassword] = useState({ pwd: '', error: '' });
+  const [confirmPwd, setConfirmPwd] = useState('');
   const [loading, setLoading] = useState(false);
   const [alert, setAlert] = useState({
     show: false,
