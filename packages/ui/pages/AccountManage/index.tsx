@@ -1,9 +1,7 @@
 import React from 'react';
-import { View, Image, SafeAreaView } from 'react-native';
+import { View, SafeAreaView } from 'react-native';
 import { NavigationProp } from '@react-navigation/native';
-import { useTheme, Button, Text } from '@rneui/themed';
-
-import { withObservables } from '@nozbe/watermelondb/react';
+import { useTheme } from '@rneui/themed';
 
 export const AccountManageStackName = 'AccountManage';
 const AccountManage: React.FC<{ navigation: NavigationProp<any> }> = ({ navigation }) => {

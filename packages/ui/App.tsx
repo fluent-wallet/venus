@@ -1,4 +1,4 @@
-import React, { useState, type PropsWithChildren, useEffect } from 'react';
+import React, { type PropsWithChildren } from 'react';
 import { Platform, useColorScheme, Text, TouchableOpacity } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { NavigationContainer, useNavigation } from '@react-navigation/native';
@@ -18,9 +18,10 @@ import AccountManage, { AccountManageStackName } from '@pages/AccountManage';
 import { StackNavigationType, type RootStackList } from 'packages/@types/natigation';
 import WalletIcon from '@assets/icons/wallet.svg';
 import SettingsIcon from '@assets/icons/settings.svg';
-import { DatabaseProvider, withDatabase, withObservables } from '@nozbe/watermelondb/react';
+import { DatabaseProvider } from '@nozbe/watermelondb/react';
 import TableName from '@DB/TableName';
-import database, { WithDatabaseArgs } from '@core/DB';
+import database from '@core/DB';
+import { withObservablesFromDB } from '@core/DB/react';
 import { Vault } from '@core/DB/models/Vault';
 
 const Stack = createNativeStackNavigator<RootStackList>();
@@ -50,13 +51,7 @@ const HomeScreenNavigator = () => {
   );
 };
 
-const StackNavigator = withDatabase(
-  withObservables([], ({ database }: WithDatabaseArgs) => {
-    const vault = database.get<Vault>(TableName.Vault).query();
-    return {
-      vault,
-    };
-  })(({ children, vault }: PropsWithChildren & { vault: Vault[] }) => {
+const StackNavigator = withObservablesFromDB([TableName.Vault])((({ children, vault }: PropsWithChildren & { vault: Vault[] }) => {
     const navigation = useNavigation<StackNavigationType>();
     const { theme } = useTheme();
     return (
