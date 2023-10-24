@@ -8,13 +8,13 @@ import { NavigationProp } from '@react-navigation/native';
 
 export type RootStackList = {
   [WelcomeStackName]: undefined;
-  [SetPasswordStackName]: undefined;
-  [BiometricsStackName]: undefined;
+  [SetPasswordStackName]: { accountType: 'privateKey' | 'mnemonic' | 'bsim' };
+  [BiometricsStackName]: { accountType: 'privateKey' | 'mnemonic' | 'bsim' };
   [CreateAccountStackName]: undefined;
   [AccountManageStackName]: undefined;
   [WalletStackName]: undefined;
 
-  'Home': {screen: typeof WalletStackName}
+  Home: { screen: typeof WalletStackName };
 };
 
-export type StackNavigation = NavigationProp<RootStackList>;
+export type StackNavigationType = NavigationProp<RootStackList>;
