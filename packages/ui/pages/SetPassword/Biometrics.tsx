@@ -1,4 +1,4 @@
-import React, { useEffect, useCallback } from 'react';
+import React, { useEffect, useCallback, useState } from 'react';
 import LinearGradient from 'react-native-linear-gradient';
 import { View, Image, SafeAreaView } from 'react-native';
 import { useTheme, Button, Text } from '@rneui/themed';
@@ -8,6 +8,9 @@ import FaceIdSource from '@assets/images/face-id.png';
 import { authentication, AuthenticationType } from '@core/DB/helper';
 import { RootStackList, StackNavigationType } from 'packages/@types/natigation';
 import { RouteProp, useNavigation, useRoute } from '@react-navigation/native';
+import { createHDVault } from '@core/DB/models/Vault/service';
+import { WalletStackName } from '@pages/Wallet';
+import useInAsync from '@hooks/useInTransaction';
 
 export const BiometricsStackName = 'Biometrics';
 
@@ -41,18 +44,28 @@ const FaceId: React.FC = () => {
   );
 };
 
+const createAccountWithBiometrics = async () => {
+  await authentication.setPassword({ authType: AuthenticationType.Biometrics });
+  await createHDVault();
+};
+
 const Biometrics = () => {
   const { theme } = useTheme();
+  const [disableSetPassword, setDisableSetPassword] = useState(false);
+
   const navigation = useNavigation<StackNavigationType>();
   const route = useRoute<RouteProp<RootStackList, 'Biometrics'>>();
-
+  const { inAsync: loading, execAsync: createAccount } = useInAsync(createAccountWithBiometrics);
   const handleEnableBiometrics = useCallback(async () => {
     try {
-      await authentication.setPassword({ authType: AuthenticationType.Biometrics });
+      setDisableSetPassword(true);
+      await createAccount();
+      navigation.navigate('Home', { screen: WalletStackName });
     } catch (err) {
       console.log('Enable Biometrics error: ', err);
+      setDisableSetPassword(false);
     }
-  }, []);
+  }, [createAccount, navigation]);
 
   return (
     <LinearGradient colors={theme.colors.linearGradientBackground} className="flex-1">
@@ -72,10 +85,11 @@ const Biometrics = () => {
           </Text>
         </View>
 
-        <Button containerStyle={{ marginTop: 32, marginHorizontal: 16 }} onPress={handleEnableBiometrics}>
+        <Button loading={loading} containerStyle={{ marginTop: 32, marginHorizontal: 16 }} onPress={handleEnableBiometrics}>
           Enable
         </Button>
         <Button
+          disabled={disableSetPassword}
           containerStyle={{ marginTop: 16, marginHorizontal: 16 }}
           onPress={() => navigation.navigate('SetPassword', { accountType: route.params.accountType })}
         >

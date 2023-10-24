@@ -51,9 +51,7 @@ class Authentication {
 
     if (authType === AuthenticationType.Biometrics) {
       // If the user enables biometrics, we're trying to read the password immediately so we get the permission prompt.
-      if (Platform.OS === 'ios') {
         await this.getPassword();
-      }
     }
   };
 
