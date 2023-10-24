@@ -1,4 +1,4 @@
-import React, { type PropsWithChildren } from 'react';
+import React, { useState, type PropsWithChildren, useEffect } from 'react';
 import { Platform, useColorScheme, Text, TouchableOpacity } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { NavigationContainer, useNavigation } from '@react-navigation/native';
@@ -15,11 +15,13 @@ import Settings, { SettingsStackName } from '@pages/Settings';
 import ArrowLeft from '@assets/icons/arrow-left.svg';
 import CreateAccount, { CreateAccountStackName } from '@pages/CreateAccount';
 import AccountManage, { AccountManageStackName } from '@pages/AccountManage';
-import { type RootStackList } from 'packages/@types/natigation';
+import { StackNavigationType, type RootStackList } from 'packages/@types/natigation';
 import WalletIcon from '@assets/icons/wallet.svg';
 import SettingsIcon from '@assets/icons/settings.svg';
-import { withObservables } from '@nozbe/watermelondb/react';
+import { DatabaseProvider, withDatabase, withObservables } from '@nozbe/watermelondb/react';
 import TableName from '@DB/TableName';
+import database, { WithDatabaseArgs } from '@core/DB';
+import { Vault } from '@core/DB/models/Vault';
 
 const Stack = createNativeStackNavigator<RootStackList>();
 
@@ -48,36 +50,42 @@ const HomeScreenNavigator = () => {
   );
 };
 
-const StackNavigator = ({ children }: PropsWithChildren) => {
-  const navigation = useNavigation();
-  const { theme } = useTheme();
-
-  return (
-    <Stack.Navigator
-      initialRouteName={WelcomeStackName}
-      screenOptions={{
-        headerTitleAlign: 'left',
-        headerTransparent: true,
-        headerBackVisible: false,
-        headerLeft: ({ canGoBack }) =>
-          canGoBack ? (
-            <TouchableOpacity className="flex flex-row items-center gap-[4px]" onPress={() => navigation.goBack()}>
-              <ArrowLeft />
-              <Text className="text-[16px] font-medium" style={{ color: theme.colors.textBrand }}>
-                Wallet
-              </Text>
-            </TouchableOpacity>
-          ) : null,
-        title: '',
-        statusBarTranslucent: true,
-        statusBarColor: 'transparent',
-        ...(Platform.OS === 'android' ? { statusBarStyle: theme.mode } : null),
-      }}
-    >
-      {children}
-    </Stack.Navigator>
-  );
-};
+const StackNavigator = withDatabase(
+  withObservables([], ({ database }: WithDatabaseArgs) => {
+    const vault = database.get<Vault>(TableName.Vault).query();
+    return {
+      vault,
+    };
+  })(({ children, vault }: PropsWithChildren & { vault: Vault[] }) => {
+    const navigation = useNavigation<StackNavigationType>();
+    const { theme } = useTheme();
+    return (
+      <Stack.Navigator
+        initialRouteName={vault.length > 0 ? 'Home' : WelcomeStackName}
+        screenOptions={{
+          headerTitleAlign: 'left',
+          headerTransparent: true,
+          headerBackVisible: false,
+          headerLeft: ({ canGoBack }) =>
+            canGoBack ? (
+              <TouchableOpacity className="flex flex-row items-center gap-[4px]" onPress={() => navigation.goBack()}>
+                <ArrowLeft />
+                <Text className="text-[16px] font-medium" style={{ color: theme.colors.textBrand }}>
+                  Wallet
+                </Text>
+              </TouchableOpacity>
+            ) : null,
+          title: '',
+          statusBarTranslucent: true,
+          statusBarColor: 'transparent',
+          ...(Platform.OS === 'android' ? { statusBarStyle: theme.mode } : null),
+        }}
+      >
+        {children}
+      </Stack.Navigator>
+    );
+  })
+);
 
 const App: React.FC = () => {
   const mode = useColorScheme();
@@ -100,4 +108,12 @@ const App: React.FC = () => {
   );
 };
 
-export default App;
+const Root: React.FC = () => {
+  return (
+    <DatabaseProvider database={database}>
+      <App />
+    </DatabaseProvider>
+  );
+};
+
+export default Root;
