@@ -1,18 +1,20 @@
 import React from 'react';
 import LinearGradient from 'react-native-linear-gradient';
 import { View, Image, SafeAreaView } from 'react-native';
-import { NavigationProp } from '@react-navigation/native';
 import { useTheme, Button, Text } from '@rneui/themed';
 import { statusBarHeight } from '@utils/deviceInfo';
 import Tip from '@assets/icons/tip.svg';
 import WelcomeBg from '@assets/images/welcome-bg.png';
 import { withObservables } from '@nozbe/watermelondb/react';
+import database from '@core/DB';
+import { Vault } from '@core/DB/models/Vault';
+import TableName from '@core/DB/TableName';
+import { StackNavigation } from 'packages/@types/natigation';
 
 export const WelcomeStackName = 'Welcome';
 
-const Welcome: React.FC<{ navigation: NavigationProp<any> }> = ({ navigation, vault }) => {
+const Welcome: React.FC<{ navigation: StackNavigation; vault: Vault[] }> = ({ navigation, vault }) => {
   const { theme } = useTheme();
-  console.log(vault);
   return (
     <LinearGradient colors={theme.colors.linearGradientBackground} className="flex-1">
       <SafeAreaView className="flex-1 flex flex-col justify-start pt-[8px]">
@@ -56,4 +58,9 @@ const enhance = withObservables(['vault'], ({ vault }) => ({
   vault,
 }));
 
-export default enhance(Welcome);
+const EnhanceWelcome = enhance(Welcome);
+
+export default ({navigation}) => {
+  const vault = database.get<Vault>(TableName.Vault).query();
+  return <EnhanceWelcome vault={vault} navigation={navigation} />;
+};
