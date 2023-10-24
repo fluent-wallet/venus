@@ -5,8 +5,8 @@ import { useTheme, Button, Text } from '@rneui/themed';
 import { statusBarHeight } from '@utils/deviceInfo';
 import Tip from '@assets/icons/tip.svg';
 import WelcomeBg from '@assets/images/welcome-bg.png';
-import { withObservables } from '@nozbe/watermelondb/react';
-import database from '@core/DB';
+import { withDatabase, withObservables } from '@nozbe/watermelondb/react';
+import { WithDatabaseArgs } from '@core/DB';
 import { Vault } from '@core/DB/models/Vault';
 import TableName from '@core/DB/TableName';
 import { StackNavigation } from 'packages/@types/natigation';
@@ -54,13 +54,11 @@ const Welcome: React.FC<{ navigation: StackNavigation; vault: Vault[] }> = ({ na
   );
 };
 
-const enhance = withObservables(['vault'], ({ vault }) => ({
-  vault,
-}));
-
-const EnhanceWelcome = enhance(Welcome);
-
-export default ({navigation}) => {
+const enhance = withObservables([], ({ database }: WithDatabaseArgs) => {
   const vault = database.get<Vault>(TableName.Vault).query();
-  return <EnhanceWelcome vault={vault} navigation={navigation} />;
-};
+  return {
+    vault,
+  };
+});
+
+export default withDatabase(enhance(Welcome));

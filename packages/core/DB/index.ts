@@ -49,5 +49,6 @@ const database = new Database({
   adapter,
   modelClasses,
 });
+export type WithDatabaseArgs = {database: typeof database};
 
 export default database;
