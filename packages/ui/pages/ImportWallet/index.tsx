@@ -2,22 +2,18 @@ import { Button, Text, useTheme } from '@rneui/themed';
 import { View, SafeAreaView, TextInput } from 'react-native';
 import { statusBarHeight } from '@utils/deviceInfo';
 import { createHDVault, createPrivateKeyVault } from '@core/DB/models/Vault/service';
-
 import { RouteProp, useNavigation, useRoute } from '@react-navigation/native';
-import { RootStackList, StackNavigationType } from 'packages/@types/natigation';
-
-import { WalletStackName } from '@pages/Wallet';
+import { type RootStackList, StackNavigation, BiometricsStackName } from '@router/configs';
 import { useState } from 'react';
 import { Mnemonic } from 'ethers';
 import { validatePrivateKey } from '@core/utils/account';
 import { addHexPrefix } from '@core/utils/base';
-import { BiometricsStackName } from '@pages/SetPassword/Biometrics';
 
 export const ImportWalletStackName = 'ImportSeed';
 
 const ImportWallet = () => {
   const { theme } = useTheme();
-  const navigation = useNavigation<StackNavigationType>();
+  const navigation = useNavigation<StackNavigation>();
   const [value, setValue] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
 

@@ -4,8 +4,8 @@ import { NavigationProp } from '@react-navigation/native';
 import { useTheme, ListItem, Dialog } from '@rneui/themed';
 import { statusBarHeight } from '@utils/deviceInfo';
 import { resetDatabase } from '@core/DB/setup';
-import { WelcomeStackName } from '@pages/Welcome';
-import { showMessage, hideMessage } from 'react-native-flash-message';
+import { WelcomeStackName, AccountManageStackName } from '@router/configs';
+import { showMessage } from 'react-native-flash-message';
 
 export const SettingsStackName = 'Settings';
 const Settings: React.FC<{ navigation: NavigationProp<any> }> = ({ navigation }) => {
@@ -15,14 +15,17 @@ const Settings: React.FC<{ navigation: NavigationProp<any> }> = ({ navigation })
   return (
     <View className="flex-1" style={{ backgroundColor: theme.colors.surfacePrimary }}>
       <SafeAreaView className="flex-1 flex flex-col gap-[12px]" style={{ paddingTop: statusBarHeight + 16 }}>
-        <ListItem>
-          <ListItem.Content>
-            <ListItem.Title style={{ color: theme.colors.textPrimary }} className="font-bold">
-              Account Manage
-            </ListItem.Title>
-          </ListItem.Content>
-          <ListItem.Chevron color={theme.colors.textPrimary} />
-        </ListItem>
+        <TouchableHighlight onPress={() => navigation.navigate(AccountManageStackName)}>
+          <ListItem>
+            <ListItem.Content>
+              <ListItem.Title style={{ color: theme.colors.textPrimary }} className="font-bold">
+                Account Manage
+              </ListItem.Title>
+            </ListItem.Content>
+            <ListItem.Chevron color={theme.colors.textPrimary} />
+          </ListItem>
+        </TouchableHighlight>
+
         <TouchableHighlight onPress={() => setVisible(true)}>
           <ListItem>
             <ListItem.Content>

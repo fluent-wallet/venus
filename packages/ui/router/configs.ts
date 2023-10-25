@@ -1,10 +1,18 @@
+
+import { type NavigationProp } from '@react-navigation/native';
 import { WelcomeStackName } from '@pages/Welcome';
 import { SetPasswordStackName } from '@pages/SetPassword';
 import { BiometricsStackName } from '@pages/SetPassword/Biometrics';
 import { WalletStackName } from '@pages/Wallet';
 import { ImportWalletStackName } from '@pages/ImportWallet';
 import { AccountManageStackName } from '@pages/AccountManage';
-import { NavigationProp } from '@react-navigation/native';
+export { AccountManageStackName  } from '@pages/AccountManage';
+export { ImportWalletStackName  } from '@pages/ImportWallet';
+export { SetPasswordStackName  } from '@pages/SetPassword';
+export { BiometricsStackName  } from '@pages/SetPassword/Biometrics';
+export { SettingsStackName  } from '@pages/Settings';
+export { WalletStackName  } from '@pages/Wallet';
+export { WelcomeStackName  } from '@pages/Welcome';
 
 export type RootStackList = {
   [WelcomeStackName]: undefined;
@@ -17,4 +25,4 @@ export type RootStackList = {
   Home: { screen: typeof WalletStackName };
 };
 
-export type StackNavigationType = NavigationProp<RootStackList>;
+export type StackNavigation = NavigationProp<RootStackList>;

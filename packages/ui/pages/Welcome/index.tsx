@@ -5,13 +5,11 @@ import { useTheme, Button, Text } from '@rneui/themed';
 import { statusBarHeight } from '@utils/deviceInfo';
 import Tip from '@assets/icons/tip.svg';
 import WelcomeBg from '@assets/images/welcome-bg.png';
-import { StackNavigationType } from 'packages/@types/natigation';
-import { ImportWalletStackName } from '@pages/ImportWallet';
-import { BiometricsStackName } from '@pages/SetPassword/Biometrics';
+import { type StackNavigation, BiometricsStackName, ImportWalletStackName } from '@router/configs';
 
 export const WelcomeStackName = 'Welcome';
 
-const Welcome: React.FC<{ navigation: StackNavigationType }> = ({ navigation }) => {
+const Welcome: React.FC<{ navigation: StackNavigation }> = ({ navigation }) => {
   const { theme } = useTheme();
 
   return (

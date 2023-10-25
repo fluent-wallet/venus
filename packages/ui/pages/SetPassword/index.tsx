@@ -6,8 +6,7 @@ import { useState } from 'react';
 import CreatePasswordAlert from './components/Alert';
 import { NavigationProp, RouteProp, useRoute } from '@react-navigation/native';
 import { AuthenticationType, authentication } from '@core/DB/helper';
-import { RootStackList } from 'packages/@types/natigation';
-import { WalletStackName } from '@pages/Wallet';
+import { type RootStackList, WalletStackName } from '@router/configs';
 import { createVaultWithType } from '@core/DB/models/Vault/service';
 import useInAsync from '@hooks/useInAsync';
 

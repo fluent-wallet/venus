@@ -1,8 +1,8 @@
+import React, { useState } from 'react';
 import { View, SafeAreaView } from 'react-native';
 import { statusBarHeight } from '@utils/deviceInfo';
 import { Text, useTheme, Tab, TabView } from '@rneui/themed';
-import { useEffect, useState } from 'react';
-import { StackNavigationType } from 'packages/@types/natigation';
+import { type StackNavigation } from '@router/configs';
 import CopyAll from '@assets/icons/copy_all.svg';
 import Flip from '@assets/icons/flip.svg';
 import Menu from '@assets/icons/menu.svg';
@@ -37,7 +37,7 @@ export const getWalletHeaderOptions = (backgroundColor: string) =>
     headerTitleAlign: 'center',
   } as const);
 
-const Wallet: React.FC<{ navigation: StackNavigationType }> = () => {
+const Wallet: React.FC<{ navigation: StackNavigation }> = () => {
   const { theme } = useTheme();
   const [tabIndex, setTabIndex] = useState(0);
 

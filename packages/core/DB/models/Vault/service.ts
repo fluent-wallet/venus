@@ -7,7 +7,7 @@ import { createAccountGroup } from '../AccountGroup/service';
 import { createAccount } from '../Account/service';
 import { generateMnemonic } from '../../../utils/hdkey';
 import { cryptoTool } from '../../helper/cryptoTool';
-import { RootStackList } from 'packages/@types/natigation';
+import { RootStackList } from '@types/natigation';
 
 type Params = ModelFields<Vault>;
 function createVault(params: Params, prepareCreate: true): Vault;
