@@ -6,6 +6,8 @@ import { statusBarHeight } from '@utils/deviceInfo';
 import Tip from '@assets/icons/tip.svg';
 import WelcomeBg from '@assets/images/welcome-bg.png';
 import { StackNavigationType } from 'packages/@types/natigation';
+import { ImportWalletStackName } from '@pages/ImportWallet';
+import { BiometricsStackName } from '@pages/SetPassword/Biometrics';
 
 export const WelcomeStackName = 'Welcome';
 
@@ -37,13 +39,13 @@ const Welcome: React.FC<{ navigation: StackNavigationType }> = ({ navigation }) 
           <Text className="mt-[8px] text-[16px] leading-[24px] text-center">First, let's add a wallet</Text>
         </View>
 
-        <Button containerStyle={{ marginTop: 40, marginHorizontal: 16 }} onPress={() => navigation.navigate('Biometrics', { accountType: 'bsim' })} disabled>
+        <Button containerStyle={{ marginTop: 40, marginHorizontal: 16 }} onPress={() => navigation.navigate(BiometricsStackName)} disabled>
           Connect BSIM Wallet
         </Button>
-        <Button containerStyle={{ marginTop: 16, marginHorizontal: 16 }} onPress={() => navigation.navigate('Biometrics', { accountType: 'mnemonic' })}>
+        <Button containerStyle={{ marginTop: 16, marginHorizontal: 16 }} onPress={() => navigation.navigate(BiometricsStackName)}>
           Create new Wallet
         </Button>
-        <Button containerStyle={{ marginTop: 16, marginHorizontal: 16 }} onPress={() => navigation.navigate('Biometrics', { accountType: 'privateKey' })}>
+        <Button containerStyle={{ marginTop: 16, marginHorizontal: 16 }} onPress={() => navigation.navigate(ImportWalletStackName)}>
           Import existing Wallet
         </Button>
       </SafeAreaView>

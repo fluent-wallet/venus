@@ -13,7 +13,7 @@ import Biometrics, { BiometricsStackName } from '@pages/SetPassword/Biometrics';
 import Wallet, { WalletStackName, getWalletHeaderOptions } from '@pages/Wallet';
 import Settings, { SettingsStackName } from '@pages/Settings';
 import ArrowLeft from '@assets/icons/arrow-left.svg';
-import CreateAccount, { CreateAccountStackName } from '@pages/CreateAccount';
+import ImportWallet, { ImportWalletStackName } from '@pages/ImportWallet';
 import AccountManage, { AccountManageStackName } from '@pages/AccountManage';
 import { StackNavigationType, type RootStackList } from 'packages/@types/natigation';
 import WalletIcon from '@assets/icons/wallet.svg';
@@ -95,7 +95,7 @@ const App: React.FC = () => {
             <Stack.Screen name={BiometricsStackName} component={Biometrics} />
             <Stack.Screen name="Home" component={HomeScreenNavigator} options={{ headerShown: false }} />
             <Stack.Screen name={AccountManageStackName} component={AccountManage} options={{ title: 'Manage Wallets' }} />
-            <Stack.Screen name={CreateAccountStackName} component={CreateAccount} />
+            <Stack.Screen name={ImportWalletStackName} component={ImportWallet} />
           </StackNavigator>
         </ThemeProvider>
       </NavigationContainer>

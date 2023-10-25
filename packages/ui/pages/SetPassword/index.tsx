@@ -4,18 +4,23 @@ import { Button, Text, useTheme, CheckBox } from '@rneui/themed';
 import Password from './components/Password';
 import { useState } from 'react';
 import CreatePasswordAlert from './components/Alert';
-import { NavigationProp } from '@react-navigation/native';
+import { NavigationProp, RouteProp, useRoute } from '@react-navigation/native';
 import { AuthenticationType, authentication } from '@core/DB/helper';
+import { RootStackList } from 'packages/@types/natigation';
+import { WalletStackName } from '@pages/Wallet';
+import { createVaultWithType } from '@core/DB/models/Vault/service';
+import useInAsync from '@hooks/useInTransaction';
 
 export const SetPasswordStackName = 'SetPassword';
 
-const SetPassword: React.FC<{ navigation: NavigationProp<any> }> = (props) => {
+const SetPassword: React.FC<{ navigation: NavigationProp<RootStackList> }> = (props) => {
   const { navigation } = props;
+  const route = useRoute<RouteProp<RootStackList, typeof SetPasswordStackName>>();
   const { theme } = useTheme();
   const [checked, setChecked] = useState(false);
   const [password, setPassword] = useState({ pwd: '', error: '' });
   const [confirmPwd, setConfirmPwd] = useState('');
-  const [loading, setLoading] = useState(false);
+  const { inAsync: loading, execAsync: createVault } = useInAsync(createVaultWithType);
   const [alert, setAlert] = useState({
     show: false,
     type: 'success',
@@ -31,10 +36,9 @@ const SetPassword: React.FC<{ navigation: NavigationProp<any> }> = (props) => {
   };
 
   const handleCreatePassword = async () => {
-    setLoading(true);
-
     try {
       await authentication.setPassword({ password: confirmPwd, authType: AuthenticationType.Password });
+      await createVault(route.params);
       setAlert({ show: true, type: 'success', message: 'You’ve successfully protected wallet. Remember to keep your Password, it’s your responsibility!' });
     } catch (e) {
       setAlert({ show: false, type: 'error', message: `${e}` });
@@ -99,7 +103,7 @@ const SetPassword: React.FC<{ navigation: NavigationProp<any> }> = (props) => {
           {...alert}
           onOk={() => {
             setAlert({ show: false, type: '', message: '' });
-            navigation.navigate('CreateAccount');
+            navigation.navigate('Home', { screen: WalletStackName });
           }}
         />
       </View>
