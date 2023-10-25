@@ -8,8 +8,9 @@ import FaceIdSource from '@assets/images/face-id.png';
 import { authentication, AuthenticationType } from '@DB/helper';
 import { WalletStackName, type RootStackList, type StackNavigation } from '@router/configs';
 import { RouteProp, useNavigation, useRoute } from '@react-navigation/native';
+import createVaultWithRouterParams from './createVaultWithRouterParams';
 import useInAsync from '@hooks/useInAsync';
-import { SetPasswordStackName, createVaultWithType } from './index';
+import { SetPasswordStackName } from './index';
 
 export const BiometricsStackName = 'Biometrics';
 
@@ -49,7 +50,7 @@ const Biometrics = () => {
 
   const navigation = useNavigation<StackNavigation>();
   const route = useRoute<RouteProp<RootStackList, typeof BiometricsStackName>>();
-  const { inAsync: loading, execAsync: createVault } = useInAsync(createVaultWithType);
+  const { inAsync: loading, execAsync: createVault } = useInAsync(createVaultWithRouterParams);
   const handleEnableBiometrics = useCallback(async () => {
     try {
       setDisableSetPassword(true);

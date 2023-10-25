@@ -37,7 +37,7 @@ function CreatePasswordAlert(props: Props) {
       <Dialog isVisible={show} overlayStyle={{ backgroundColor: colors.normalBackground, borderRadius: 8 }}>
         <View className="flex">
           <View className="items-center">
-            <View className="flex  items-center mb-7">
+            <View className="flex items-center mb-[28px]">
               {type === 'error' ? <Warning width={24} height={24} /> : <SuccessIcon width={24} height={24} />}
               <Text className="text-xl font-bold leading-tight  mt-4">{type === 'error' ? 'Error !' : 'Success !'}</Text>
             </View>

@@ -10,7 +10,7 @@ import Biometrics, { BiometricsStackName } from '@pages/SetPassword/Biometrics';
 import Wallet, { WalletStackName, getWalletHeaderOptions } from '@pages/Wallet';
 import Settings, { SettingsStackName } from '@pages/Settings';
 import ImportWallet, { ImportWalletStackName } from '@pages/ImportWallet';
-import AccountManage, { AccountManageStackName } from '@pages/AccountManage';
+import AccountManage, { AccountManageStackName } from '@pages/Account/AccountManage';
 import { withDatabase, withObservables, compose, type Database } from '@DB/react';
 import TableName from '@DB/TableName';
 import { HomeStackName, type StackNavigation, type RootStackList } from './configs';

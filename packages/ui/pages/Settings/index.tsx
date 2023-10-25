@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, SafeAreaView, TouchableHighlight, Text } from 'react-native';
+import { SafeAreaView, TouchableHighlight, Text } from 'react-native';
 import { showMessage } from 'react-native-flash-message';
 import { type NavigationProp } from '@react-navigation/native';
 import { useTheme, ListItem, Dialog } from '@rneui/themed';
@@ -51,7 +51,7 @@ const Settings: React.FC<{ navigation: NavigationProp<any> }> = ({ navigation })
               showMessage({
                 message: 'Clear all data successfully',
                 type: 'success',
-                duration: 2500,
+                duration: 1850,
                 statusBarHeight,
               });
               navigation.navigate(WelcomeStackName);

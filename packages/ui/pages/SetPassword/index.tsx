@@ -7,20 +7,10 @@ import CreatePasswordAlert from './components/Alert';
 import { type NavigationProp, type RouteProp, useRoute } from '@react-navigation/native';
 import { AuthenticationType, authentication } from '@DB/helper';
 import { type RootStackList, WalletStackName } from '@router/configs';
+import createVaultWithRouterParams from './createVaultWithRouterParams';
 import useInAsync from '@hooks/useInAsync';
-import { createHDVault, createPrivateKeyVault } from '@DB/models/Vault/service';
 
 export const SetPasswordStackName = 'SetPassword';
-
-export const createVaultWithType = async (args?: RootStackList['Biometrics']) => {
-  if (args?.type === 'importPrivateKey' && args.value) {
-    return await createPrivateKeyVault(args.value);
-  }
-  if (args?.type === 'importSeedPhrase' && args.type) {
-    return await createHDVault(args.value);
-  }
-  return await createHDVault();
-};
 
 const SetPassword: React.FC<{ navigation: NavigationProp<RootStackList> }> = (props) => {
   const { navigation } = props;
@@ -29,7 +19,7 @@ const SetPassword: React.FC<{ navigation: NavigationProp<RootStackList> }> = (pr
   const [checked, setChecked] = useState(false);
   const [password, setPassword] = useState({ pwd: '', error: '' });
   const [confirmPwd, setConfirmPwd] = useState('');
-  const { inAsync: loading, execAsync: createVault } = useInAsync(createVaultWithType);
+  const { inAsync: loading, execAsync: createVault } = useInAsync(createVaultWithRouterParams);
   const [alert, setAlert] = useState({
     show: false,
     type: 'success',

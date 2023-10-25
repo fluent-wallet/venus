@@ -7,7 +7,6 @@ import { createAccountGroup } from '../AccountGroup/service';
 import { createAccount } from '../Account/service';
 import { generateMnemonic } from '../../../utils/hdkey';
 import { cryptoTool } from '../../helper/cryptoTool';
-import { RootStackList } from '@types/natigation';
 
 type Params = ModelFields<Vault>;
 function createVault(params: Params, prepareCreate: true): Vault;
@@ -26,6 +25,13 @@ const isFirstVault = async () => {
 };
 
 const getVaultTypeCount = (type: Vault['type']) => database.get(TableName.Vault).query(Q.where('type', type)).fetchCount();
+const defaultGroupNameMap = {
+  hierarchical_deterministic: 'Seed Phrase',
+  private_key: 'Private Key',
+  BSIM: 'BSIM',
+  hardware: 'Hardware',
+  public_address: 'Public Address',
+} as const;
 
 async function createVaultOfType(params: { type: 'hierarchical_deterministic'; mnemonic: string }): Promise<void>;
 async function createVaultOfType(params: { type: 'private_key'; privateKey: string }): Promise<void>;
@@ -60,7 +66,7 @@ async function createVaultOfType({
 
     const count = await getVaultTypeCount(type);
     const vault = await createVault({ data, type, device: 'ePayWallet' });
-    const accountGroup = await createAccountGroup({ nickname: `${type} AccountGroup - ${count + 1}`, hidden: false, vault });
+    const accountGroup = await createAccountGroup({ nickname: `${defaultGroupNameMap[type]} - ${count + 1}`, hidden: false, vault });
     await createAccount({ nickname: 'default', hidden: false, selected: await isFirstVault(), accountGroup, ...(hexAddress ? { hexAddress } : null) });
   } catch (error) {
     console.error('create vault error: ', error);

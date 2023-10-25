@@ -94,6 +94,23 @@ const theme = createTheme({
         color: theme.colors.textPrimary,
       },
     }),
+    Card: (_, theme) => ({
+      containerStyle: {
+        margin: 0,
+        padding: 0,
+        borderRadius: 8,
+        borderWidth: 0,
+        elevation: 0,
+        borderColor: 'transparent'
+      },
+      wrapperStyle: {
+        backgroundColor: theme.colors.surfaceCard,
+        padding: 16,        
+      },
+    }),
+    CardDivider: (_, theme) => ({
+      color: theme.colors.borderPrimary,
+    }),
   },
 });
 
