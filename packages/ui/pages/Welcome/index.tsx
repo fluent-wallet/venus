@@ -23,7 +23,7 @@ const Welcome: React.FC<{ navigation: StackNavigation }> = ({ navigation }) => {
             <Tip />
           </View>
           <View>
-            <Text className="relative text-[16px] leading-[24px] ">Coming Soon！</Text>
+            <Text className="text-[16px] leading-[24px] ">Coming Soon！</Text>
             <Text className="mt-[4px] text-[14px] leading-[20px]">We are working hard to prepare, so stay tuned,Please stay tuned！</Text>
           </View>
         </View>

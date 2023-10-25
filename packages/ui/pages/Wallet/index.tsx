@@ -10,7 +10,7 @@ import SendIcon from '@assets/icons/send.svg';
 import ReceiveIcon from '@assets/icons/receive.svg';
 import BuyIcon from '@assets/icons/buy.svg';
 import MoreIcon from '@assets/icons/more.svg';
-import WalletTokens from './Components/Tokens';
+import WalletTokens from './TabViews/Tokens';
 
 export const WalletStackName = 'Wallet';
 
@@ -42,82 +42,74 @@ const Wallet: React.FC<{ navigation: StackNavigation }> = () => {
   const [tabIndex, setTabIndex] = useState(0);
 
   return (
-    <View className="flex flex-1 relative" style={{ backgroundColor: theme.colors.normalBackground }}>
-      <SafeAreaView className="flex-1 flex flex-col justify-start" style={{ paddingTop: statusBarHeight + 48 }}>
-        <View className="flex flex-1 ">
-          <View
-            className="px-[25px]
-          "
-          >
-            <View className="flex justify-center items-center mt-[15px]">
-              <Text className="text-[16px] leading-tight font-normal" style={{ color: theme.colors.textSecondary }}>
-                ePay Wallet
-              </Text>
-            </View>
+    <SafeAreaView
+      className="flex-1 flex flex-col justify-start px-[24px]"
+      style={{ backgroundColor: theme.colors.normalBackground, paddingTop: statusBarHeight + 48 }}
+    >
+      <Text className="mt-[16px] leading-tight text-[16px] text-center" style={{ color: theme.colors.textSecondary }}>
+        ePay Wallet
+      </Text>
 
-            <View className="flex justify-center items-center mb-[17px]">
-              <Text className="text-[48px] leading-tight font-bold" style={{ color: theme.colors.textPrimary }}>
-                $9.41
-              </Text>
-            </View>
+      <Text className="mb-[16px] leading-tight text-[48px] text-center font-bold" style={{ color: theme.colors.textPrimary }}>
+        $9.41
+      </Text>
 
-            <View className="flex flex-row">
-              <View className="flex items-center flex-1">
-                <View className="flex justify-center items-center w-[60px] h-[60px] bg-[#537FF6] rounded-full">
-                  <SendIcon color={'#fff'} width={32} height={32} />
-                </View>
-                <Text className="mt-[7px] text-base" style={{ color: theme.colors.textPrimary }}>
-                  Send
-                </Text>
-              </View>
-              <View className="flex items-center flex-1">
-                <View className="flex justify-center items-center w-[60px] h-[60px]  rounded-full" style={{ backgroundColor: theme.colors.surfaceBrand }}>
-                  <ReceiveIcon color={'#fff'} width={32} height={32} />
-                </View>
-                <Text className="mt-[7px] text-base" style={{ color: theme.colors.textPrimary }}>
-                  Receive
-                </Text>
-              </View>
-              <View className="flex items-center flex-1">
-                <View className="flex justify-center items-center w-[60px] h-[60px]  rounded-full" style={{ backgroundColor: theme.colors.surfaceBrand }}>
-                  <BuyIcon color={'#fff'} width={32} height={32} />
-                </View>
-                <Text className="mt-[7px] text-base" style={{ color: theme.colors.textPrimary }}>
-                  Buy
-                </Text>
-              </View>
-              <View className="flex items-center flex-1">
-                <View className="flex justify-center items-center w-[60px] h-[60px]  rounded-full" style={{ backgroundColor: theme.colors.surfaceBrand }}>
-                  <MoreIcon color={'#fff'} width={32} height={32} />
-                </View>
-                <Text className="mt-[7px] text-base" style={{ color: theme.colors.textPrimary }}>
-                  More
-                </Text>
-              </View>
-            </View>
+      <View className="flex flex-row">
+        <View className="flex items-center flex-1">
+          <View className="flex justify-center items-center w-[60px] h-[60px] rounded-full" style={{ backgroundColor: theme.colors.surfaceBrand }}>
+            <SendIcon color="#fff" width={32} height={32} />
           </View>
-
-          <View className="px-[25px]">
-            <Tab value={tabIndex} onChange={setTabIndex} indicatorStyle={{ backgroundColor: theme.colors.surfaceBrand }}>
-              <Tab.Item title="Tokens" titleStyle={(active) => ({ color: active ? '#4572EC' : theme.colors.textSecondary })} />
-              <Tab.Item title="Receive" titleStyle={(active) => ({ color: active ? '#4572EC' : theme.colors.textSecondary })} />
-              <Tab.Item title="Activity" titleStyle={(active) => ({ color: active ? '#4572EC' : theme.colors.textSecondary })} />
-            </Tab>
-          </View>
-          <TabView value={tabIndex} onChange={setTabIndex} animationType="spring">
-            <TabView.Item className="px-[25px] pt-[15px]">
-              <WalletTokens />
-            </TabView.Item>
-            <TabView.Item className="px-[25px] pt-[15px]">
-              <Text h1>Receive</Text>
-            </TabView.Item>
-            <TabView.Item className="px-[25px] pt-[15px]">
-              <Text h1>Activity</Text>
-            </TabView.Item>
-          </TabView>
+          <Text className="mt-[8px] text-base" style={{ color: theme.colors.textPrimary }}>
+            Send
+          </Text>
         </View>
-      </SafeAreaView>
-    </View>
+
+        <View className="flex items-center flex-1">
+          <View className="flex justify-center items-center w-[60px] h-[60px] rounded-full" style={{ backgroundColor: theme.colors.surfaceBrand }}>
+            <ReceiveIcon color="#fff" width={32} height={32} />
+          </View>
+          <Text className="mt-[8px] text-base" style={{ color: theme.colors.textPrimary }}>
+            Receive
+          </Text>
+        </View>
+
+        <View className="flex items-center flex-1">
+          <View className="flex justify-center items-center w-[60px] h-[60px] rounded-full" style={{ backgroundColor: theme.colors.surfaceBrand }}>
+            <BuyIcon color="#fff" width={32} height={32} />
+          </View>
+          <Text className="mt-[8px] text-base" style={{ color: theme.colors.textPrimary }}>
+            Buy
+          </Text>
+        </View>
+
+        <View className="flex items-center flex-1">
+          <View className="flex justify-center items-center w-[60px] h-[60px] rounded-full" style={{ backgroundColor: theme.colors.surfaceBrand }}>
+            <MoreIcon color="#fff" width={32} height={32} />
+          </View>
+          <Text className="mt-[8px] text-base" style={{ color: theme.colors.textPrimary }}>
+            More
+          </Text>
+        </View>
+      </View>
+
+      <Tab value={tabIndex} onChange={setTabIndex} indicatorStyle={{ backgroundColor: theme.colors.surfaceBrand }}>
+        <Tab.Item title="Tokens" titleStyle={(active) => ({ color: active ? '#4572EC' : theme.colors.textSecondary })} />
+        <Tab.Item title="Receive" titleStyle={(active) => ({ color: active ? '#4572EC' : theme.colors.textSecondary })} />
+        <Tab.Item title="Activity" titleStyle={(active) => ({ color: active ? '#4572EC' : theme.colors.textSecondary })} />
+      </Tab>
+
+      <TabView value={tabIndex} onChange={setTabIndex} animationType="spring" tabItemContainerStyle={{ paddingHorizontal: 24, paddingVertical: 16 }}>
+        <TabView.Item>
+          <WalletTokens />
+        </TabView.Item>
+        <TabView.Item>
+          <Text h1>Receive1</Text>
+        </TabView.Item>
+        <TabView.Item>
+          <Text h1>Activity</Text>
+        </TabView.Item>
+      </TabView>
+    </SafeAreaView>
   );
 };
 

@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { Model, type Relation, type Query } from '@nozbe/watermelondb';
-import database from '@core/DB';
-import TableName from '@core/DB/TableName';
+import database from '@DB';
+import TableName from '@DB/TableName';
 
 export function createModel<T extends Model>({ name, params, prepareCreate }: { name: TableName; params: object; prepareCreate?: true }) {
   const create = () => {

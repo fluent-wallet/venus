@@ -4,7 +4,7 @@ import FlashMessage from 'react-native-flash-message';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { ThemeProvider } from '@rneui/themed';
 import { DatabaseProvider } from '@nozbe/watermelondb/react';
-import database from '@core/DB';
+import database from '@DB';
 import Router from './router';
 import { theme } from './theme';
 import './assets/i18n';

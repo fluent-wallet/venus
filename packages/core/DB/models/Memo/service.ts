@@ -1,5 +1,5 @@
 import { type Memo } from './';
-import { ModelFields, createModel } from '@core/DB/helper/modelHelper';
+import { ModelFields, createModel } from '@DB/helper/modelHelper';
 import TableName from '../../TableName';
 
 type Params = ModelFields<Memo>;

@@ -13,6 +13,7 @@ export { BiometricsStackName  } from '@pages/SetPassword/Biometrics';
 export { SettingsStackName  } from '@pages/Settings';
 export { WalletStackName  } from '@pages/Wallet';
 export { WelcomeStackName  } from '@pages/Welcome';
+export const HomeStackName = 'Home';
 
 export type RootStackList = {
   [WelcomeStackName]: undefined;

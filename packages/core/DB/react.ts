@@ -11,7 +11,11 @@ export function withObservablesFromDB(observeModels: Array<TableName>) {
   return compose(
     withDatabase,
     _withObservables([], ({ database }: { database: Database }) =>
-      Object.fromEntries(observeModels.map((model) => [model, database.collections.get(model).query().observe()]))
+      Object.fromEntries(observeModels.map((model) => [convertToCamelCase(model), database.collections.get(model).query().observe()]))
     )
   ) as ReturnType<typeof _withObservables>;
+}
+
+function convertToCamelCase(str: string) {
+  return str.replace(/_([a-zA-Z])/g, (_, letter) => letter.toUpperCase());
 }

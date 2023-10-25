@@ -13,7 +13,7 @@ import ImportWallet, { ImportWalletStackName } from '@pages/ImportWallet';
 import AccountManage, { AccountManageStackName } from '@pages/AccountManage';
 import { withDatabase, withObservables, compose, type Database } from '@DB/react';
 import TableName from '@DB/TableName';
-import { type StackNavigation, type RootStackList } from './configs';
+import { HomeStackName, type StackNavigation, type RootStackList } from './configs';
 import WalletIcon from '@assets/icons/wallet.svg';
 import SettingsIcon from '@assets/icons/settings.svg';
 import ArrowLeft from '@assets/icons/arrow-left.svg';
@@ -46,7 +46,7 @@ const HomeScreenNavigator = () => {
       <BottomTabStack.Screen
         name={SettingsStackName}
         component={Settings}
-        options={{ headerTitle: '', tabBarIcon: ({ color }) => <SettingsIcon color={color} /> }}
+        options={{ headerShown: false, tabBarIcon: ({ color }) => <SettingsIcon color={color} /> }}
       />
     </BottomTabStack.Navigator>
   );
@@ -61,7 +61,7 @@ const StackNavigator = compose(
 
   return (
     <Stack.Navigator
-      initialRouteName={vaultCount > 0 ? 'Home' : WelcomeStackName}
+      initialRouteName={vaultCount > 0 ? HomeStackName : WelcomeStackName}
       screenOptions={{
         headerTitleAlign: 'left',
         headerTransparent: true,
@@ -76,6 +76,7 @@ const StackNavigator = compose(
             </TouchableOpacity>
           ) : null,
         title: '',
+        headerTitleStyle: { fontSize: 16, fontWeight: '500', color: theme.colors.textPrimary },
         statusBarTranslucent: true,
         statusBarColor: 'transparent',
         ...(Platform.OS === 'android' ? { statusBarStyle: theme.mode } : null),
@@ -93,8 +94,8 @@ const Router: React.FC = () => {
         <Stack.Screen name={WelcomeStackName} component={Welcome} options={{ headerShown: false }} />
         <Stack.Screen name={SetPasswordStackName} component={SetPassword} />
         <Stack.Screen name={BiometricsStackName} component={Biometrics} />
-        <Stack.Screen name="Home" component={HomeScreenNavigator} options={{ headerShown: false }} />
-        <Stack.Screen name={AccountManageStackName} component={AccountManage} options={{ title: 'Manage Wallets' }} />
+        <Stack.Screen name={HomeStackName} component={HomeScreenNavigator} options={{ headerShown: false }} />
+        <Stack.Screen name={AccountManageStackName} component={AccountManage} options={{ title: 'Manage Wallets', headerTitleAlign: 'center' }} />
         <Stack.Screen name={ImportWalletStackName} component={ImportWallet} />
       </StackNavigator>
     </NavigationContainer>
