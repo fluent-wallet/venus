@@ -8,9 +8,10 @@ import FaceIdSource from '@assets/images/face-id.png';
 import { authentication, AuthenticationType } from '@core/DB/helper';
 import { RootStackList, StackNavigationType } from 'packages/@types/natigation';
 import { RouteProp, useNavigation, useRoute } from '@react-navigation/native';
-import { createHDVault } from '@core/DB/models/Vault/service';
+import { createVaultWithType, createHDVault, createPrivateKeyVault } from '@core/DB/models/Vault/service';
 import { WalletStackName } from '@pages/Wallet';
 import useInAsync from '@hooks/useInTransaction';
+import { SetPasswordStackName } from './index';
 
 export const BiometricsStackName = 'Biometrics';
 
@@ -44,28 +45,24 @@ const FaceId: React.FC = () => {
   );
 };
 
-const createAccountWithBiometrics = async () => {
-  await authentication.setPassword({ authType: AuthenticationType.Biometrics });
-  await createHDVault();
-};
-
 const Biometrics = () => {
   const { theme } = useTheme();
   const [disableSetPassword, setDisableSetPassword] = useState(false);
 
   const navigation = useNavigation<StackNavigationType>();
-  const route = useRoute<RouteProp<RootStackList, 'Biometrics'>>();
-  const { inAsync: loading, execAsync: createAccount } = useInAsync(createAccountWithBiometrics);
+  const route = useRoute<RouteProp<RootStackList, typeof BiometricsStackName>>();
+  const { inAsync: loading, execAsync: createVault } = useInAsync(createVaultWithType);
   const handleEnableBiometrics = useCallback(async () => {
     try {
       setDisableSetPassword(true);
-      await createAccount();
+      await authentication.setPassword({ authType: AuthenticationType.Biometrics });
+      await createVault(route.params);
       navigation.navigate('Home', { screen: WalletStackName });
     } catch (err) {
       console.log('Enable Biometrics error: ', err);
       setDisableSetPassword(false);
     }
-  }, [createAccount, navigation]);
+  }, [createVault, navigation, route.params]);
 
   return (
     <LinearGradient colors={theme.colors.linearGradientBackground} className="flex-1">
@@ -91,7 +88,7 @@ const Biometrics = () => {
         <Button
           disabled={disableSetPassword}
           containerStyle={{ marginTop: 16, marginHorizontal: 16 }}
-          onPress={() => navigation.navigate('SetPassword', { accountType: route.params.accountType })}
+          onPress={() => navigation.navigate(SetPasswordStackName, route.params)}
         >
           Set Password
         </Button>
