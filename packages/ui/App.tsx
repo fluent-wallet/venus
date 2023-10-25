@@ -39,6 +39,10 @@ const HomeScreenNavigator = () => {
         tabBarActiveBackgroundColor: theme.colors.pureBlackAndWight,
         tabBarActiveTintColor: '#007AFF',
         tabBarInactiveTintColor: '#999',
+        tabBarInactiveBackgroundColor: theme.colors.pureBlackAndWight,
+        tabBarStyle: {
+          borderTopWidth: 0,
+        },
       }}
     >
       <BottomTabStack.Screen
@@ -51,36 +55,35 @@ const HomeScreenNavigator = () => {
   );
 };
 
-const StackNavigator = withObservablesFromDB([TableName.Vault])((({ children, vault }: PropsWithChildren & { vault: Vault[] }) => {
-    const navigation = useNavigation<StackNavigationType>();
-    const { theme } = useTheme();
-    return (
-      <Stack.Navigator
-        initialRouteName={vault.length > 0 ? 'Home' : WelcomeStackName}
-        screenOptions={{
-          headerTitleAlign: 'left',
-          headerTransparent: true,
-          headerBackVisible: false,
-          headerLeft: ({ canGoBack }) =>
-            canGoBack ? (
-              <TouchableOpacity className="flex flex-row items-center gap-[4px]" onPress={() => navigation.goBack()}>
-                <ArrowLeft />
-                <Text className="text-[16px] font-medium" style={{ color: theme.colors.textBrand }}>
-                  Wallet
-                </Text>
-              </TouchableOpacity>
-            ) : null,
-          title: '',
-          statusBarTranslucent: true,
-          statusBarColor: 'transparent',
-          ...(Platform.OS === 'android' ? { statusBarStyle: theme.mode } : null),
-        }}
-      >
-        {children}
-      </Stack.Navigator>
-    );
-  })
-);
+const StackNavigator = withObservablesFromDB([TableName.Vault])(({ children, vault }: PropsWithChildren & { vault: Vault[] }) => {
+  const navigation = useNavigation<StackNavigationType>();
+  const { theme } = useTheme();
+  return (
+    <Stack.Navigator
+      initialRouteName={vault.length > 0 ? 'Home' : WelcomeStackName}
+      screenOptions={{
+        headerTitleAlign: 'left',
+        headerTransparent: true,
+        headerBackVisible: false,
+        headerLeft: ({ canGoBack }) =>
+          canGoBack ? (
+            <TouchableOpacity className="flex flex-row items-center gap-[4px]" onPress={() => navigation.goBack()}>
+              <ArrowLeft />
+              <Text className="text-[16px] font-medium" style={{ color: theme.colors.textBrand }}>
+                Wallet
+              </Text>
+            </TouchableOpacity>
+          ) : null,
+        title: '',
+        statusBarTranslucent: true,
+        statusBarColor: 'transparent',
+        ...(Platform.OS === 'android' ? { statusBarStyle: theme.mode } : null),
+      }}
+    >
+      {children}
+    </Stack.Navigator>
+  );
+});
 
 const App: React.FC = () => {
   const mode = useColorScheme();
