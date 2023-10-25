@@ -10,7 +10,7 @@ import { RootStackList, StackNavigationType } from 'packages/@types/natigation';
 import { RouteProp, useNavigation, useRoute } from '@react-navigation/native';
 import { createVaultWithType, createHDVault, createPrivateKeyVault } from '@core/DB/models/Vault/service';
 import { WalletStackName } from '@pages/Wallet';
-import useInAsync from '@hooks/useInTransaction';
+import useInAsync from '@hooks/useInAsync';
 import { SetPasswordStackName } from './index';
 
 export const BiometricsStackName = 'Biometrics';

@@ -23,6 +23,7 @@ import TableName from '@DB/TableName';
 import database from '@core/DB';
 import { withObservablesFromDB } from '@core/DB/react';
 import { Vault } from '@core/DB/models/Vault';
+import FlashMessage from "react-native-flash-message";
 
 const Stack = createNativeStackNavigator<RootStackList>();
 
@@ -50,7 +51,7 @@ const HomeScreenNavigator = () => {
         component={Wallet}
         options={{ tabBarIcon: ({ color }) => <WalletIcon color={color} />, ...getWalletHeaderOptions(theme.colors.homeHeaderAddressBackgroundColor) }}
       />
-      <BottomTabStack.Screen name={SettingsStackName} component={Settings} options={{ tabBarIcon: ({ color }) => <SettingsIcon color={color} /> }} />
+      <BottomTabStack.Screen name={SettingsStackName} component={Settings} options={{ headerTitle: '', tabBarIcon: ({ color }) => <SettingsIcon color={color} /> }} />
     </BottomTabStack.Navigator>
   );
 };
@@ -100,6 +101,7 @@ const App: React.FC = () => {
             <Stack.Screen name={AccountManageStackName} component={AccountManage} options={{ title: 'Manage Wallets' }} />
             <Stack.Screen name={ImportWalletStackName} component={ImportWallet} />
           </StackNavigator>
+          <FlashMessage position="top" />
         </ThemeProvider>
       </NavigationContainer>
     </SafeAreaProvider>

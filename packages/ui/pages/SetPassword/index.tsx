@@ -9,7 +9,7 @@ import { AuthenticationType, authentication } from '@core/DB/helper';
 import { RootStackList } from 'packages/@types/natigation';
 import { WalletStackName } from '@pages/Wallet';
 import { createVaultWithType } from '@core/DB/models/Vault/service';
-import useInAsync from '@hooks/useInTransaction';
+import useInAsync from '@hooks/useInAsync';
 
 export const SetPasswordStackName = 'SetPassword';
 
