@@ -7,10 +7,20 @@ import CreatePasswordAlert from './components/Alert';
 import { type NavigationProp, type RouteProp, useRoute } from '@react-navigation/native';
 import { AuthenticationType, authentication } from '@DB/helper';
 import { type RootStackList, WalletStackName } from '@router/configs';
-import { createVaultWithType } from '@DB/models/Vault/service';
 import useInAsync from '@hooks/useInAsync';
+import { createHDVault, createPrivateKeyVault } from '@DB/models/Vault/service';
 
 export const SetPasswordStackName = 'SetPassword';
+
+export const createVaultWithType = async (args?: RootStackList['Biometrics']) => {
+  if (args?.type === 'importPrivateKey' && args.value) {
+    return await createPrivateKeyVault(args.value);
+  }
+  if (args?.type === 'importSeedPhrase' && args.type) {
+    return await createHDVault(args.value);
+  }
+  return await createHDVault();
+};
 
 const SetPassword: React.FC<{ navigation: NavigationProp<RootStackList> }> = (props) => {
   const { navigation } = props;

@@ -8,9 +8,8 @@ import FaceIdSource from '@assets/images/face-id.png';
 import { authentication, AuthenticationType } from '@DB/helper';
 import { WalletStackName, type RootStackList, type StackNavigation } from '@router/configs';
 import { RouteProp, useNavigation, useRoute } from '@react-navigation/native';
-import { createVaultWithType, createHDVault, createPrivateKeyVault } from '@DB/models/Vault/service';
 import useInAsync from '@hooks/useInAsync';
-import { SetPasswordStackName } from './index';
+import { SetPasswordStackName, createVaultWithType } from './index';
 
 export const BiometricsStackName = 'Biometrics';
 

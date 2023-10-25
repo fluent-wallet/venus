@@ -116,13 +116,3 @@ export const createPublicAddressVault = async (hexAddress: string) => {
     console.error('create publicAddress vault error: ', error);
   }
 };
-
-export const createVaultWithType = async (args?: RootStackList['Biometrics']) => {
-  if (args?.type === 'importPrivateKey' && args.value) {
-    return await createPrivateKeyVault(args.value);
-  }
-  if (args?.type === 'importSeedPhrase' && args.type) {
-    return await createHDVault(args.value);
-  }
-  return await createHDVault();
-};
