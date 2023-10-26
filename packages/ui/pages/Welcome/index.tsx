@@ -1,11 +1,12 @@
 import React from 'react';
 import LinearGradient from 'react-native-linear-gradient';
 import { View, Image, SafeAreaView } from 'react-native';
-import { useTheme, Button, Text } from '@rneui/themed';
+import { useTheme, Text } from '@rneui/themed';
 import { statusBarHeight } from '@utils/deviceInfo';
 import Tip from '@assets/icons/tip.svg';
 import WelcomeBg from '@assets/images/welcome-bg.png';
 import { type StackNavigation, BiometricsStackName, ImportWalletStackName } from '@router/configs';
+import { BaseButton } from '@components/Button';
 
 export const WelcomeStackName = 'Welcome';
 
@@ -37,15 +38,15 @@ const Welcome: React.FC<{ navigation: StackNavigation }> = ({ navigation }) => {
           <Text className="mt-[8px] text-[16px] leading-[24px] text-center">First, let's add a wallet</Text>
         </View>
 
-        <Button containerStyle={{ marginTop: 40, marginHorizontal: 16 }} onPress={() => navigation.navigate(BiometricsStackName)} disabled>
+        <BaseButton containerStyle={{ marginTop: 40, marginHorizontal: 16 }} onPress={() => navigation.navigate(BiometricsStackName)} disabled>
           Connect BSIM Wallet
-        </Button>
-        <Button containerStyle={{ marginTop: 16, marginHorizontal: 16 }} onPress={() => navigation.navigate(BiometricsStackName)}>
+        </BaseButton>
+        <BaseButton containerStyle={{ marginTop: 16, marginHorizontal: 16 }} onPress={() => navigation.navigate(BiometricsStackName)}>
           Create new Wallet
-        </Button>
-        <Button containerStyle={{ marginTop: 16, marginHorizontal: 16 }} onPress={() => navigation.navigate(ImportWalletStackName)}>
+        </BaseButton>
+        <BaseButton containerStyle={{ marginTop: 16, marginHorizontal: 16 }} onPress={() => navigation.navigate(ImportWalletStackName)}>
           Import existing Wallet
-        </Button>
+        </BaseButton>
       </SafeAreaView>
     </LinearGradient>
   );

@@ -1,7 +1,7 @@
 import React, { useEffect, useCallback, useState } from 'react';
 import LinearGradient from 'react-native-linear-gradient';
 import { View, Image, SafeAreaView } from 'react-native';
-import { useTheme, Button, Text } from '@rneui/themed';
+import { useTheme, Text } from '@rneui/themed';
 import { statusBarHeight } from '@utils/deviceInfo';
 import Animated, { useSharedValue, useAnimatedStyle, withTiming, withRepeat } from 'react-native-reanimated';
 import FaceIdSource from '@assets/images/face-id.png';
@@ -11,6 +11,7 @@ import { RouteProp, useNavigation, useRoute } from '@react-navigation/native';
 import createVaultWithRouterParams from './createVaultWithRouterParams';
 import useInAsync from '@hooks/useInAsync';
 import { SetPasswordStackName } from './index';
+import { BaseButton } from '@components/Button';
 
 export const BiometricsStackName = 'Biometrics';
 
@@ -81,16 +82,16 @@ const Biometrics = () => {
           </Text>
         </View>
 
-        <Button loading={loading} containerStyle={{ marginTop: 32, marginHorizontal: 16 }} onPress={handleEnableBiometrics}>
+        <BaseButton loading={loading} containerStyle={{ marginTop: 32, marginHorizontal: 16 }} onPress={handleEnableBiometrics}>
           Enable
-        </Button>
-        <Button
+        </BaseButton>
+        <BaseButton
           disabled={disableSetPassword}
           containerStyle={{ marginTop: 16, marginHorizontal: 16 }}
           onPress={() => navigation.navigate(SetPasswordStackName, route.params)}
         >
           Set Password
-        </Button>
+        </BaseButton>
       </SafeAreaView>
     </LinearGradient>
   );
