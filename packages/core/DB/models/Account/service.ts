@@ -29,7 +29,7 @@ export async function createAccount({
     vault.type === 'hierarchical_deterministic' ? accountGroup.account.count : 0,
     vault.getData(),
   ]);
-  
+
   // For each network, an Account has its corresponding Address.
   // For vaults of type 'public_address' and 'hardware', the Address is the vault's data.
   // For vaults of type 'private_key', the needs to be generated from the privateKey.

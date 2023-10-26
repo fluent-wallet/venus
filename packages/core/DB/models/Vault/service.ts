@@ -65,7 +65,6 @@ async function createVaultOfType({
     if (!data) throw new Error('Vault data is empty');
 
     const count = await getVaultTypeCount(type);
-    console.log(await database.get(TableName.Network).query().fetchIds())
     const vault = await createVault({ data, type, device: 'ePayWallet' });
     const accountGroup = await createAccountGroup({ nickname: `${defaultGroupNameMap[type]} - ${count + 1}`, hidden: false, vault });
     await createAccount({ nickname: 'default', hidden: false, selected: await isFirstVault(), accountGroup, ...(hexAddress ? { hexAddress } : null) });

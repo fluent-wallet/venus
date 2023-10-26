@@ -80,6 +80,24 @@ const theme = createTheme({
         color: theme.colors.textPrimary,
       },
     }),
+    ListItem: (_, theme) => ({
+      containerStyle: {
+        margin: 0,
+        padding: 16,
+        borderRadius: 8,
+        borderWidth: 0,
+        elevation: 0,
+        borderColor: 'transparent',
+        overflow: 'hidden',
+        backgroundColor: theme.colors.surfaceCard,
+      },
+    }),
+    ListItemContent: (_, theme) => ({
+      style: {
+        margin: 0,
+        padding: 0,
+      },
+    }),
     Card: (_, theme) => ({
       containerStyle: {
         margin: 0,
@@ -96,6 +114,7 @@ const theme = createTheme({
       },
     }),
     CardDivider: (_, theme) => ({
+      width: 1.5,
       color: theme.colors.borderPrimary,
     }),
   },

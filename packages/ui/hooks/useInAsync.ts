@@ -1,22 +1,24 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef, useEffect } from 'react';
 
 const useInAsync = <T extends (params: any) => void | Promise<any> | null | undefined>(asyncFunc: T) => {
+  const refAsyncFunc = useRef(asyncFunc);
+  useEffect(() => {
+    refAsyncFunc.current = asyncFunc;
+  }, [asyncFunc]);
+
   const [inAsync, setInAsync] = useState(false);
-  const execAsync = useCallback(
-    async (params: any) => {
-      try {
-        setInAsync(true);
-        const res = await asyncFunc(params);
-        setInAsync(false);
-        return res;
-      } catch (err) {
-        setInAsync(false);
-        throw err;
-      }
-    },
-    [asyncFunc]
-  ) as T;
+  const execAsync = useCallback(async (params: any) => {
+    try {
+      setInAsync(true);
+      const res = await refAsyncFunc.current(params);
+      setInAsync(false);
+      return res;
+    } catch (err) {
+      setInAsync(false);
+      throw err;
+    }
+  }, []) as T;
   return { inAsync, execAsync };
 };
 
