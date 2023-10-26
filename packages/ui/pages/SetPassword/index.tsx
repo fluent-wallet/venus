@@ -1,7 +1,7 @@
 import { View, SafeAreaView } from 'react-native';
 import { statusBarHeight } from '@utils/deviceInfo';
 import { Button, Text, useTheme, CheckBox } from '@rneui/themed';
-import Password from './components/Password';
+import Password from '@components/PasswordInput';
 import { useState } from 'react';
 import CreatePasswordAlert from './components/Alert';
 import { type NavigationProp, type RouteProp, useRoute } from '@react-navigation/native';

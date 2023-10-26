@@ -11,6 +11,8 @@ import Wallet, { WalletStackName, getWalletHeaderOptions } from '@pages/Wallet';
 import Settings, { SettingsStackName } from '@pages/Settings';
 import ImportWallet, { ImportWalletStackName } from '@pages/ImportWallet';
 import AccountManage, { AccountManageStackName } from '@pages/Account/AccountManage';
+import Login, { LoginStackName } from '@pages/Login';
+import Lock, { LockStackName } from '@pages/Lock';
 import { withDatabase, withObservables, compose, type Database } from '@DB/react';
 import TableName from '@DB/TableName';
 import { HomeStackName, type StackNavigation, type RootStackList } from './configs';
@@ -55,13 +57,14 @@ const HomeScreenNavigator = () => {
 const StackNavigator = compose(
   withDatabase,
   withObservables([], ({ database }: { database: Database }) => ({ vaultCount: database.collections.get(TableName.Vault).query().observeCount() }))
-)(({ children, vaultCount }: PropsWithChildren & { vaultCount: number }) => {
+)(({ vaultCount }: PropsWithChildren & { vaultCount: number }) => {
   const navigation = useNavigation<StackNavigation>();
   const { theme } = useTheme();
 
+  const hasVault = vaultCount > 0;
   return (
     <Stack.Navigator
-      initialRouteName={vaultCount > 0 ? HomeStackName : WelcomeStackName}
+      initialRouteName={hasVault ? HomeStackName : WelcomeStackName}
       screenOptions={{
         headerTitleAlign: 'left',
         headerTransparent: true,
@@ -82,7 +85,14 @@ const StackNavigator = compose(
         ...(Platform.OS === 'android' ? { statusBarStyle: theme.mode } : null),
       }}
     >
-      {children}
+      <Stack.Screen name={WelcomeStackName} component={Welcome} options={{ headerShown: false }} />
+      <Stack.Screen name={SetPasswordStackName} component={SetPassword} />
+      <Stack.Screen name={BiometricsStackName} component={Biometrics} />
+      <Stack.Screen name={HomeStackName} component={HomeScreenNavigator} options={{ headerShown: false }} />
+      <Stack.Screen name={AccountManageStackName} component={AccountManage} options={{ title: 'Manage Wallets', headerTitleAlign: 'center' }} />
+      <Stack.Screen name={ImportWalletStackName} component={ImportWallet} />
+      <Stack.Screen name={LoginStackName} component={Login} options={{ headerShown: false }} />
+      <Stack.Screen name={LockStackName} component={Lock} options={{ headerShown: false }} />
     </Stack.Navigator>
   );
 });
@@ -90,14 +100,7 @@ const StackNavigator = compose(
 const Router: React.FC = () => {
   return (
     <NavigationContainer>
-      <StackNavigator>
-        <Stack.Screen name={WelcomeStackName} component={Welcome} options={{ headerShown: false }} />
-        <Stack.Screen name={SetPasswordStackName} component={SetPassword} />
-        <Stack.Screen name={BiometricsStackName} component={Biometrics} />
-        <Stack.Screen name={HomeStackName} component={HomeScreenNavigator} options={{ headerShown: false }} />
-        <Stack.Screen name={AccountManageStackName} component={AccountManage} options={{ title: 'Manage Wallets', headerTitleAlign: 'center' }} />
-        <Stack.Screen name={ImportWalletStackName} component={ImportWallet} />
-      </StackNavigator>
+      <StackNavigator />
     </NavigationContainer>
   );
 };
