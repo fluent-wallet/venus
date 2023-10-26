@@ -1,6 +1,6 @@
 import { View, SafeAreaView } from 'react-native';
 import { statusBarHeight } from '@utils/deviceInfo';
-import { Button, Text, useTheme, CheckBox } from '@rneui/themed';
+import { Text, useTheme, CheckBox } from '@rneui/themed';
 import Password from '@components/PasswordInput';
 import { useState } from 'react';
 import CreatePasswordAlert from './components/Alert';
@@ -9,6 +9,7 @@ import { AuthenticationType, authentication } from '@DB/helper';
 import { type RootStackList, WalletStackName } from '@router/configs';
 import createVaultWithRouterParams from './createVaultWithRouterParams';
 import useInAsync from '@hooks/useInAsync';
+import { BaseButton } from '@components/Button';
 
 export const SetPasswordStackName = 'SetPassword';
 
@@ -87,13 +88,13 @@ const SetPassword: React.FC<{ navigation: NavigationProp<RootStackList> }> = (pr
         />
         <Text className="text-base">ePay Wallet does not store your password. Please remember your password.</Text>
       </View>
-      <Button
+      <BaseButton
         loading={loading}
         onPress={handleCreatePassword}
         disabled={!(checked && password.pwd !== '' && password.pwd === confirmPwd && password.error === '')}
       >
         Create Password
-      </Button>
+      </BaseButton>
 
       <CreatePasswordAlert
         {...alert}

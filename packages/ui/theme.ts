@@ -74,20 +74,6 @@ const theme = createTheme({
     pureBlackAndWight: colors.black,
   },
   components: {
-    Button: (_, theme) => ({
-      buttonStyle: {
-        backgroundColor: theme.colors.textBrand,
-        borderRadius: 40,
-        height: 40,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        fontWeight: 500,
-      },
-      disabledStyle: {
-        backgroundColor: theme.colors.buttonDisabledBackground,
-      },
-    }),
     Text: (_, theme) => ({
       style: {
         fontFamily: 'SF Pro Display',
@@ -102,7 +88,7 @@ const theme = createTheme({
         borderWidth: 0,
         elevation: 0,
         borderColor: 'transparent',
-        overflow: 'hidden'
+        overflow: 'hidden',
       },
       wrapperStyle: {
         backgroundColor: theme.colors.surfaceCard,
