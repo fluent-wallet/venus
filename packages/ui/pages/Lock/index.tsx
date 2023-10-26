@@ -1,0 +1,35 @@
+import { authentication } from '@core/DB/helper';
+import { useNavigation } from '@react-navigation/native';
+import { useTheme, Button, Text } from '@rneui/themed';
+import { HomeStackName, StackNavigation, WalletStackName } from '@router/configs';
+import { useEffect } from 'react';
+import { SafeAreaView, View } from 'react-native';
+
+export const LockStackName = 'Lock';
+
+function Lock() {
+  const { theme } = useTheme();
+  const navigation = useNavigation<StackNavigation>();
+
+  const unLockWallet = async () => {
+    try {
+      await authentication.getPassword();
+      navigation.navigate(HomeStackName, { screen: WalletStackName });
+    } catch (error) {
+     // user cancel unlock
+    }
+  };
+  useEffect(() => {
+    unLockWallet();
+  }, []);
+  return (
+    <SafeAreaView className="flex-1 flex flex-col justify-start px-[24px]" style={{ backgroundColor: theme.colors.normalBackground }}>
+      <View className="flex flex-1 items-center justify-center">
+        <Text className="text-4xl mb-4">Wallet is locked</Text>
+        <Button onPress={unLockWallet}>UNLOCK WALLET</Button>
+      </View>
+    </SafeAreaView>
+  );
+}
+
+export default Lock;
