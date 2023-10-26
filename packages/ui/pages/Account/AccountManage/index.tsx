@@ -1,28 +1,13 @@
 import React from 'react';
-import { SafeAreaView, Text } from 'react-native';
+import { SafeAreaView } from 'react-native';
 import { type NavigationProp } from '@react-navigation/native';
 import { useHeaderHeight } from '@react-navigation/elements';
-import { useTheme, Card } from '@rneui/themed';
+import { useTheme } from '@rneui/themed';
 import { withObservablesFromDB } from '@DB/react';
-import TableName from '@DB/TableName';
 import { type AccountGroup } from '@DB/models/AccountGroup';
+import AccountGroupItem from '../AccountGroupItem';
 
 export const AccountManageStackName = 'AccountManage';
-
-// const AccountItem: React.FC = () => {
-//   return (
-
-//     );
-// }
-
-const AccountGroupItem: React.FC<{ nickname: string }> = ({ nickname }) => {
-  const { theme } = useTheme();
-  return (
-    <Card>
-      <Text style={{ color: theme.colors.textPrimary }}>{nickname}</Text>
-    </Card>
-  );
-};
 
 const AccountManage: React.FC<{ navigation: NavigationProp<any>; accountGroup: Array<AccountGroup> }> = ({ accountGroup }) => {
   const { theme } = useTheme();
@@ -33,11 +18,11 @@ const AccountManage: React.FC<{ navigation: NavigationProp<any>; accountGroup: A
       className="flex-1 flex flex-col justify-start px-[24px]"
       style={{ backgroundColor: theme.colors.surfacePrimary, paddingTop: headerHeight + 8 }}
     >
-      {accountGroup?.map((group) => (
-        <AccountGroupItem key={group.id} nickname={group.nickname} />
+      {accountGroup?.map((_accountGroup) => (
+        <AccountGroupItem key={_accountGroup.id} accountGroup={_accountGroup} />
       ))}
     </SafeAreaView>
   );
 };
 
-export default withObservablesFromDB([TableName.AccountGroup])(AccountManage);
+export default withObservablesFromDB(['accountGroup'])(AccountManage);

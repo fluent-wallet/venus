@@ -101,11 +101,12 @@ const theme = createTheme({
         borderRadius: 8,
         borderWidth: 0,
         elevation: 0,
-        borderColor: 'transparent'
+        borderColor: 'transparent',
+        overflow: 'hidden'
       },
       wrapperStyle: {
         backgroundColor: theme.colors.surfaceCard,
-        padding: 16,        
+        padding: 16,
       },
     }),
     CardDivider: (_, theme) => ({

@@ -1,4 +1,3 @@
-import { Platform } from 'react-native';
 import * as KeyChain from 'react-native-keychain';
 import { CryptoTool, cryptoTool } from './cryptoTool';
 
