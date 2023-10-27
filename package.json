@@ -22,7 +22,7 @@
     "@fluent-wallet/detect-address-type": "^0.0.2",
     "@fluent-wallet/hdkey": "^0.1.1",
     "@fluent-wallet/signature": "^0.0.16",
-    "@nozbe/watermelondb": "^0.27.0",
+    "@nozbe/watermelondb": "^0.27.1",
     "@nozbe/with-observables": "^1.4.1",
     "@react-navigation/bottom-tabs": "^6.5.10",
     "@react-navigation/native": "^6.1.8",
