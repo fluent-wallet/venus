@@ -27,7 +27,7 @@ const schema = appSchema({
         { name: 'network_type', type: 'string' },
         { name: 'builtin', type: 'boolean', isOptional: true },
         { name: 'scan_url', type: 'string', isOptional: true },
-        { name: 'selected', type: 'boolean', isOptional: true },
+        { name: 'selected', type: 'boolean' },
         { name: 'cache_time', type: 'number', isOptional: true },
         { name: 'balance_checker', type: 'string', isOptional: true },
         { name: 'hd_path_id', type: 'string', isIndexed: true },

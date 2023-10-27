@@ -1,13 +1,14 @@
-import React, { useState } from 'react';
-import { View, SafeAreaView } from 'react-native';
+import React, { useState, useMemo } from 'react';
+import { View, SafeAreaView, TouchableHighlight } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
 import { statusBarHeight } from '@utils/deviceInfo';
+import { shortenAddress } from '@cfx-kit/dapp-utils/dist/address';
 import { Text, useTheme, Tab, TabView } from '@rneui/themed';
-import { switchMap } from 'rxjs/operators';
+import { map } from 'rxjs';
 import { compose, withDatabase, withObservables, type Database } from '@DB/react';
-import { type Account } from '@core/DB/models/Account';
 import { type Address } from '@core/DB/models/Address';
-import { querySelectedAccount } from '@core/DB/models/Account/service';
-import { type StackNavigation } from '@router/configs';
+import { querySelectedAddress } from '@core/DB/models/Address/service';
+import { AccountSelectStackName, type StackNavigation } from '@router/configs';
 import CopyAll from '@assets/icons/copy_all.svg';
 import Flip from '@assets/icons/flip.svg';
 import Menu from '@assets/icons/menu.svg';
@@ -37,25 +38,25 @@ export const getWalletHeaderOptions = (backgroundColor: string) =>
 
 const CurrentAccount: React.FC<{ backgroundColor: string }> = compose(
   withDatabase,
-  withObservables([], ({ database }: { database: Database }) => {
-    const SelectAccountObserve = querySelectedAccount(database).observe();
-    return {
-      account: SelectAccountObserve,
-      // address: SelectAccountObserve.pipe(switchMap((account) => account?.[0].address.observe())),
-    };
-  })
-)(({ account, address, backgroundColor }: { account: Account[]; address: Address[]; backgroundColor: string }) => {
-  const currentAccount = account?.[0];
-  // const currentAddress = address?.[0];
-  console.log(account)
-  if (!currentAccount) return null;
+  withObservables([], ({ database }: { database: Database }) => ({
+    address: querySelectedAddress(database)
+      .observe()
+      .pipe(map((account) => account?.[0])),
+  }))
+)(({ address, backgroundColor }: { address: Address; backgroundColor: string }) => {
+  const navigation = useNavigation<StackNavigation>();
+  const shortAddress = useMemo(() => shortenAddress(address?.hex), [address]);
+
+  if (!address) return null;
   return (
-    <View className="bg-white flex flex-row px-[12px] py-[8px] rounded-full" style={{ backgroundColor }}>
-      <Text className="text-[10px]">abcsdsa</Text>
-      <View className="pl-[4px]">
-        <CopyAll />
+    <TouchableHighlight onPress={() => navigation.navigate(AccountSelectStackName)} className="rounded-full overflow-hidden">
+      <View className="bg-white flex flex-row px-[12px] py-[8px] rounded-full" style={{ backgroundColor }}>
+        <Text className="text-[10px]">{shortAddress}</Text>
+        <View className="pl-[4px]">
+          <CopyAll />
+        </View>
       </View>
-    </View>
+    </TouchableHighlight>
   );
 });
 

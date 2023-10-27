@@ -19,7 +19,7 @@ function createVault(params: Params, prepareCreate?: true) {
   });
 }
 
-const isFirstVault = async () => {
+const checkIsFirstVault = async () => {
   const count = await database.get(TableName.Vault).query().fetchCount();
   return count === 0;
 };
@@ -52,7 +52,6 @@ async function createVaultOfType({
   hexAddress?: string;
 }) {
   try {
-    console.log(cryptoTool)
     const data =
       type === 'private_key'
         ? await cryptoTool.encrypt(privateKey)
@@ -64,11 +63,17 @@ async function createVaultOfType({
         ? hexAddress
         : index;
     if (!data) throw new Error('Vault data is empty');
-
+    const isFirstVault = await checkIsFirstVault();
     const count = await getVaultTypeCount(type);
     const vault = await createVault({ data, type, device: 'ePayWallet' });
     const accountGroup = await createAccountGroup({ nickname: `${defaultGroupNameMap[type]} - ${count + 1}`, hidden: false, vault });
-    await createAccount({ nickname: 'Account - 1', hidden: false, selected: await isFirstVault(), accountGroup, ...(hexAddress ? { hexAddress } : null) });
+    await createAccount({
+      nickname: 'Account - 1',
+      hidden: false,
+      selected: isFirstVault ? true : false,
+      accountGroup,
+      ...(hexAddress ? { hexAddress } : null),
+    });
   } catch (error) {
     console.error('create vault error: ', error);
   }
