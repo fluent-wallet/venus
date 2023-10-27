@@ -3,6 +3,7 @@ package com.wallet.bsimsdk
 import com.example.bsimlib.MockSdk
 import com.example.bsimlib.CoinType
 import com.example.bsimlib.Message
+import com.example.bsimlib.Utils
 
 import com.facebook.react.bridge.Promise
 import com.facebook.react.bridge.ReactApplicationContext
@@ -170,5 +171,21 @@ class MockSDKModule(private val reactContext: ReactApplicationContext) :
             promise.resolve(WritableNativeArray())
         }
     }
+
+    @ReactMethod
+    fun  pubkeyToECPubkey(hexPubkey: String, promise: Promise) {
+
+        val key = Utils.pubkeyToECPubkey(hexPubkey)
+
+        promise.resolve(key)
+
+    }
+
+    @ReactMethod
+    fun pubkeyToEthAddr(hexPubkey: String, promise: Promise) {
+        val address = Utils.pubkeyToEthAddr(hexPubkey)
+        promise.resolve(address)
+    }
+
 
 }
