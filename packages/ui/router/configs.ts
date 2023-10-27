@@ -5,10 +5,12 @@ import { BiometricsStackName } from '@pages/SetPassword/Biometrics';
 import { WalletStackName } from '@pages/Wallet';
 import { ImportWalletStackName } from '@pages/ImportWallet';
 import { AccountManageStackName } from '@pages/Account/AccountManage';
+import { AccountSelectStackName } from '@pages/Account/AccountSelect';
 import { AddAccountStackName } from '@pages/Account/AddAccount';
 import { LoginStackName } from '@pages/Login';
 import { LockStackName } from './configs';
 export { AccountManageStackName } from '@pages/Account/AccountManage';
+export { AccountSelectStackName } from '@pages/Account/AccountSelect';
 export { AddAccountStackName } from '@pages/Account/AddAccount';
 export { ImportWalletStackName } from '@pages/ImportWallet';
 export { SetPasswordStackName } from '@pages/SetPassword';
@@ -25,10 +27,11 @@ export type RootStackList = {
   [SetPasswordStackName]?: { type?: 'importPrivateKey' | 'importSeedPhrase' | 'create'; value?: string };
   [BiometricsStackName]?: { type?: 'importPrivateKey' | 'importSeedPhrase' | 'create'; value?: string };
   [ImportWalletStackName]: undefined;
-  [AccountManageStackName]: undefined;
   [WalletStackName]: undefined;
   [LoginStackName]: undefined;
   [LockStackName]: undefined;
+  [AccountSelectStackName]: undefined;
+  [AccountManageStackName]: undefined;
   [AddAccountStackName]: undefined;
 
   Home: { screen: typeof WalletStackName };

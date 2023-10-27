@@ -1,3 +1,4 @@
+import { Q, type Query } from '@nozbe/watermelondb';
 import { type Network } from '../Network';
 import { type AccountGroup } from '../AccountGroup';
 import { type Account } from './';
@@ -76,3 +77,6 @@ export async function createAccount({
     return newAccount;
   });
 }
+
+export const querySelectedAccount = (_database: typeof database) =>
+  _database.get(TableName.Account).query(Q.where('selected', true)) as unknown as Query<Account>;

@@ -164,7 +164,7 @@ const schema = appSchema({
         { name: 'index', type: 'number' },
         { name: 'nickname', type: 'string' },
         { name: 'hidden', type: 'boolean' },
-        { name: 'selected', type: 'boolean' },
+        { name: 'selected', type: 'boolean', isIndexed: true },
         { name: 'created_at', type: 'number' },
         { name: 'account_group_id', type: 'string', isIndexed: true },
       ],

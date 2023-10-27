@@ -11,6 +11,7 @@ import Wallet, { WalletStackName, getWalletHeaderOptions } from '@pages/Wallet';
 import Settings, { SettingsStackName } from '@pages/Settings';
 import ImportWallet, { ImportWalletStackName } from '@pages/ImportWallet';
 import AccountManage, { AccountManageStackName } from '@pages/Account/AccountManage';
+import AccountSelect, { AccountSelectStackName } from '@pages/Account/AccountSelect';
 import AddAccount, { AddAccountStackName } from '@pages/Account/AddAccount';
 import Login, { LoginStackName } from '@pages/Login';
 import Lock, { LockStackName } from '@pages/Lock';
@@ -91,6 +92,7 @@ const StackNavigator = compose(
       <Stack.Screen name={BiometricsStackName} component={Biometrics} />
       <Stack.Screen name={HomeStackName} component={HomeScreenNavigator} options={{ headerShown: false }} />
       <Stack.Screen name={AccountManageStackName} component={AccountManage} options={{ title: 'Manage Wallets', headerTitleAlign: 'center' }} />
+      <Stack.Screen name={AccountSelectStackName} component={AccountSelect} options={{ title: 'Account', headerTitleAlign: 'center' }} />
       <Stack.Screen name={AddAccountStackName} component={AddAccount} options={{ title: 'Add Account', headerTitleAlign: 'center' }} />
       <Stack.Screen name={ImportWalletStackName} component={ImportWallet} />
       <Stack.Screen name={LoginStackName} component={Login} options={{ headerShown: false }} />
