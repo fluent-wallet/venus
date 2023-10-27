@@ -542,7 +542,7 @@ PODS:
     - React-Core
   - simdjson (3.1.0-wmelon1)
   - SocketRocket (0.6.1)
-  - WatermelonDB (0.27.0):
+  - WatermelonDB (0.27.1):
     - React
     - simdjson
   - Yoga (1.14.0)
@@ -811,7 +811,7 @@ SPEC CHECKSUMS:
   RNVectorIcons: 8b5bb0fa61d54cd2020af4f24a51841ce365c7e9
   simdjson: e6bfae9ce4bcdc80452d388d593816f1ca2106f3
   SocketRocket: f32cd54efbe0f095c4d7594881e52619cfe80b17
-  WatermelonDB: 0372787937ef6eaaa8062badda7fb013ab415334
+  WatermelonDB: 842d22ba555425aa9f3ce551239a001200c539bc
   Yoga: 86fed2e4d425ee4c6eab3813ba1791101ee153c6
   YogaKit: f782866e155069a2cca2517aafea43200b01fd5a
 

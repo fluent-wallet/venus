@@ -243,14 +243,7 @@ export const NETWORK_ARR: Array<NetworkParams & { tokenListIndex?: number; hdPat
   },
 ];
 
-const initDatabase = async () => {
-  try {
-    await database.write(async () => {
-      await database.unsafeResetDatabase();
-    });
-  } catch (error) {
-    console.error('Reset database error', error);
-  }
+export const initDatabase = async () => {
   try {
     // Should skip if the DB has already been initialized.
     if ((await database.get(TableName.HdPath).query().fetchCount()) !== 0) {
@@ -275,6 +268,7 @@ const initDatabase = async () => {
     });
   } catch (error) {
     console.error('Init Database error', error);
+    throw error;
   }
 };
 

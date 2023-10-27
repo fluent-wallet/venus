@@ -1,10 +1,10 @@
-import { Platform } from 'react-native';
 import * as KeyChain from 'react-native-keychain';
 import { CryptoTool, cryptoTool } from './cryptoTool';
 
 const defaultOptions: KeyChain.Options = {
   service: 'com.fluent',
-  authenticationPrompt: { title: 'authentication.auth_prompt_title', description: 'auth_prompt_desc' },
+  authenticationPrompt: { title: 'Please authenticate in order to use', description: '' },
+  accessControl: KeyChain.ACCESS_CONTROL.BIOMETRY_CURRENT_SET_OR_DEVICE_PASSCODE,
 };
 
 export enum AuthenticationType {
@@ -23,8 +23,8 @@ const authCryptoTool = new CryptoTool();
 authCryptoTool.setGetPasswordMethod(() => 'PASSWORD_CRYPTO_KEY');
 
 class Authentication {
-  public getPassword = async () => {
-    const keyChainObject = await KeyChain.getGenericPassword(defaultOptions);
+  public getPassword = async (options: KeyChain.Options = {}) => {
+    const keyChainObject = await KeyChain.getGenericPassword({ ...defaultOptions, ...options });
     if (keyChainObject && keyChainObject.password) {
       return await authCryptoTool.decrypt<string>(keyChainObject.password);
     }
@@ -38,7 +38,10 @@ class Authentication {
   } = async ({ password, authType }: { password?: string; authType: AuthenticationType }) => {
     const authOptions = {
       accessible: KeyChain.ACCESSIBLE.WHEN_UNLOCKED_THIS_DEVICE_ONLY,
-      accessControl: authType === AuthenticationType.Biometrics ? KeyChain.ACCESS_CONTROL.BIOMETRY_CURRENT_SET : KeyChain.ACCESS_CONTROL.DEVICE_PASSCODE,
+      accessControl:
+        authType === AuthenticationType.Biometrics
+          ? KeyChain.ACCESS_CONTROL.BIOMETRY_CURRENT_SET
+          : KeyChain.ACCESS_CONTROL.BIOMETRY_CURRENT_SET_OR_DEVICE_PASSCODE,
     } as const;
 
     const _password = authType === AuthenticationType.Biometrics ? `${authCryptoTool.generateRandomString()}${new Date().getTime()}` : password;
@@ -51,9 +54,7 @@ class Authentication {
 
     if (authType === AuthenticationType.Biometrics) {
       // If the user enables biometrics, we're trying to read the password immediately so we get the permission prompt.
-      if (Platform.OS === 'ios') {
-        await this.getPassword();
-      }
+      await this.getPassword();
     }
   };
 

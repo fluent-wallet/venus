@@ -1,71 +1,27 @@
-import { useEffect, type PropsWithChildren } from 'react';
-import { Platform, useColorScheme, Text, TouchableOpacity } from 'react-native';
+import React from 'react';
+import { useColorScheme } from 'react-native';
+import FlashMessage from 'react-native-flash-message';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
-import { NavigationContainer, useNavigation } from '@react-navigation/native';
-import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import { ThemeProvider, useTheme } from '@rneui/themed';
-import './assets/i18n';
+import { ThemeProvider } from '@rneui/themed';
+import { DatabaseProvider } from '@nozbe/watermelondb/react';
+import database from '@DB/index';
+import Router from './router';
 import { theme } from './theme';
-import Welcome, { WelcomeStackName } from '@pages/Welcome';
-import SetPassword, { SetPasswordStackName } from '@pages/SetPassword';
-import Biometrics, { BiometricsStackName } from '@pages/SetPassword/Biometrics';
-import Home, { HomeStackName } from '@pages/Home';
-import ArrowLeft from '@assets/icons/arrow-left.svg';
-import CreateAccount, { CreateAccountStackName } from '@pages/CreateAccount';
-import AccountManage, { AccountManageStackName } from '@pages/AccountManage';
-import { RootStackList } from 'packages/@types/natigation';
+import './assets/i18n';
 
-const Stack = createNativeStackNavigator<RootStackList>();
-const StackNavigator = ({ children }: PropsWithChildren) => {
-  const navigation = useNavigation();
-  const { theme } = useTheme();
-
-  return (
-    <Stack.Navigator
-      initialRouteName="Welcome"
-      screenOptions={{
-        headerTitleAlign: 'left',
-        headerTransparent: true,
-        headerLeft: ({ canGoBack }) =>
-          canGoBack ? (
-            <TouchableOpacity className="flex flex-row items-center gap-[4px]" onPress={() => navigation.goBack()}>
-              <ArrowLeft />
-              <Text className="text-[16px] font-medium" style={{ color: theme.colors.textBrand }}>
-                Wallet
-              </Text>
-            </TouchableOpacity>
-          ) : null,
-        title: '',
-        statusBarTranslucent: true,
-        statusBarColor: 'transparent',
-        ...(Platform.OS === 'android' ? { statusBarStyle: theme.mode } : null),
-      }}
-    >
-      {children}
-    </Stack.Navigator>
-  );
-};
-
-function App(): JSX.Element {
+const App: React.FC = () => {
   const mode = useColorScheme();
   theme.mode = mode === 'dark' ? 'dark' : 'light';
-
   return (
-    <SafeAreaProvider>
-      <NavigationContainer>
-        <ThemeProvider theme={theme}>
-          <StackNavigator>
-            <Stack.Screen name={WelcomeStackName} component={Welcome} options={{ headerShown: false }} />
-            <Stack.Screen name={SetPasswordStackName} component={SetPassword} />
-            <Stack.Screen name={BiometricsStackName} component={Biometrics} />
-            <Stack.Screen name={HomeStackName} component={Home} />
-            <Stack.Screen name={AccountManageStackName} component={AccountManage} options={{ title: 'Manage Wallets' }} />
-            <Stack.Screen name={CreateAccountStackName} component={CreateAccount} />
-          </StackNavigator>
-        </ThemeProvider>
-      </NavigationContainer>
-    </SafeAreaProvider>
+    <DatabaseProvider database={database}>
+      <ThemeProvider theme={theme}>
+        <SafeAreaProvider>
+          <Router />
+          <FlashMessage position="top" />
+        </SafeAreaProvider>
+      </ThemeProvider>
+    </DatabaseProvider>
   );
-}
+};
 
 export default App;

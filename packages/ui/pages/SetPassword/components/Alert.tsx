@@ -3,6 +3,7 @@ import { Button, Text, useTheme } from '@rneui/themed';
 import { View } from 'react-native';
 import SuccessIcon from '@assets/icons/check_circle.svg';
 import Warning from '@assets/icons/warning_2.svg';
+import { BaseButton } from '@components/Button';
 
 interface Props {
   show: boolean;
@@ -37,7 +38,7 @@ function CreatePasswordAlert(props: Props) {
       <Dialog isVisible={show} overlayStyle={{ backgroundColor: colors.normalBackground, borderRadius: 8 }}>
         <View className="flex">
           <View className="items-center">
-            <View className="flex  items-center mb-7">
+            <View className="flex items-center mb-[28px]">
               {type === 'error' ? <Warning width={24} height={24} /> : <SuccessIcon width={24} height={24} />}
               <Text className="text-xl font-bold leading-tight  mt-4">{type === 'error' ? 'Error !' : 'Success !'}</Text>
             </View>
@@ -45,7 +46,7 @@ function CreatePasswordAlert(props: Props) {
         </View>
         <Text className="text-sm leading-normal text-center mb-8">{message}</Text>
 
-        <Button onPress={type === 'error' ? onCancel : onOk}>OK</Button>
+        <BaseButton onPress={type === 'error' ? onCancel : onOk}>OK</BaseButton>
       </Dialog>
     </View>
   );

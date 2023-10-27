@@ -1,17 +1,22 @@
 import * as ethers from 'ethers';
-import RNQC from 'react-native-quick-crypto';
+import crypto  from 'react-native-quick-crypto';
 
-ethers.pbkdf2.register(
-  (
-    password: Uint8Array,
-    salt: Uint8Array,
-    iterations: number,
-    keylen: number,
-    algo: 'sha256' | 'sha512'
-    // eslint-disable-next-line max-params
-  ) => {
-    return ethers.hexlify(RNQC.pbkdf2Sync(password, salt, iterations, keylen, algo));
-  }
-);
+ethers.randomBytes.register((length) => {
+  return new Uint8Array(crypto.randomBytes(length));
+});
 
-export * from 'ethers';
+ethers.computeHmac.register((algo, key, data) => {
+  return crypto.createHmac(algo, key).update(data).digest();
+});
+
+ethers.pbkdf2.register((passwd, salt, iter, keylen, algo) => {
+  return crypto.pbkdf2Sync(passwd, salt, iter, keylen, algo);
+});
+
+ethers.sha256.register((data) => {
+  return crypto.createHash('sha256').update(data).digest();
+});
+
+ethers.sha512.register((data) => {
+  return crypto.createHash('sha512').update(data).digest();
+});

@@ -18,5 +18,7 @@ declare module '@rneui/themed' {
     normalBackground: string;
     passwordInputBackground: string;
     buttonDisabledBackground:string
+    homeHeaderAddressBackgroundColor:string
+    pureBlackAndWight:string
   }
 }

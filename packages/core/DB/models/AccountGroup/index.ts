@@ -26,8 +26,11 @@ export class AccountGroup extends Model {
     });
   }
 
-  @writer async addAccount(params: { nickname?: string; hidden?: boolean; selected?: boolean } = { hidden: false, selected: false }) {
-    return await this.callWriter(() => createAccount({ ...params, accountGroup: this }));
+  async addAccount(params: { nickname?: string; hidden?: boolean; selected?: boolean } = { hidden: false, selected: false }) {
+    if ((await this.vault).type !== 'hierarchical_deterministic') {
+      throw new Error('Only HD type vault can add account.');
+    }
+    return await createAccount({ ...params, accountGroup: this });
   }
 
   @reader async getAccountIndex(account: Account) {

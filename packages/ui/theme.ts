@@ -1,5 +1,5 @@
 import { createTheme } from '@rneui/themed';
-const colors = {
+export const colors = {
   gray0: '#FAFAFA',
   gray1: '#E5E5E5',
   gray2: '#A3A3A3',
@@ -43,13 +43,15 @@ const theme = createTheme({
     surfaceSecondary: colors.blue1,
     surfaceBrand: colors.blue3,
     surfaceInvert: colors.white,
-    surfaceCard: '#242424',
+    surfaceCard: colors.white,
     warnSuccessPrimary: colors.green4,
     warnErrorPrimary: colors.red4,
     linearGradientBackground: ['#DFE6FF', colors.white],
     normalBackground: '#F7F7F7',
     passwordInputBackground: colors.white,
     buttonDisabledBackground: '#D9E3FF',
+    homeHeaderAddressBackgroundColor: colors.blue0,
+    pureBlackAndWight: colors.white,
   },
   darkColors: {
     textPrimary: colors.gray1,
@@ -61,34 +63,59 @@ const theme = createTheme({
     surfaceSecondary: colors.blue4,
     surfaceBrand: colors.blue2,
     surfaceInvert: colors.white,
-    surfaceCard: colors.white,
+    surfaceCard: '#242424',
     warnSuccessPrimary: colors.green3,
     warnErrorPrimary: colors.red3,
     linearGradientBackground: ['#001C69', colors.black],
     normalBackground: colors.gray5,
     passwordInputBackground: '#242424',
     buttonDisabledBackground: colors.blue4,
+    homeHeaderAddressBackgroundColor: colors.blue5,
+    pureBlackAndWight: colors.black,
   },
   components: {
-    Button: (_, theme) => ({
-      buttonStyle: {
-        backgroundColor: theme.colors.textBrand,
-        borderRadius: 40,
-        height: 40,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        fontWeight: 500,
-      },
-      disabledStyle: {
-        backgroundColor: theme.colors.buttonDisabledBackground,
-      },
-    }),
     Text: (_, theme) => ({
       style: {
         fontFamily: 'SF Pro Display',
         color: theme.colors.textPrimary,
       },
+    }),
+    ListItem: (_, theme) => ({
+      containerStyle: {
+        margin: 0,
+        padding: 16,
+        borderRadius: 8,
+        borderWidth: 0,
+        elevation: 0,
+        borderColor: 'transparent',
+        overflow: 'hidden',
+        backgroundColor: theme.colors.surfaceCard,
+      },
+    }),
+    ListItemContent: (_, theme) => ({
+      style: {
+        margin: 0,
+        padding: 0,
+      },
+    }),
+    Card: (_, theme) => ({
+      containerStyle: {
+        margin: 0,
+        padding: 0,
+        borderRadius: 8,
+        borderWidth: 0,
+        elevation: 0,
+        borderColor: 'transparent',
+        overflow: 'hidden',
+      },
+      wrapperStyle: {
+        backgroundColor: theme.colors.surfaceCard,
+        padding: 16,
+      },
+    }),
+    CardDivider: (_, theme) => ({
+      width: 1.5,
+      color: theme.colors.borderPrimary,
     }),
   },
 });

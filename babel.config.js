@@ -3,7 +3,6 @@ module.exports = {
   presets: ['module:metro-react-native-babel-preset'],
   plugins: [
     ['@babel/plugin-proposal-decorators', { version: 'legacy' }],
-    ['@babel/plugin-transform-private-methods', { loose: true }], // for ethers
     [
       'module-resolver',
       {
@@ -31,5 +30,11 @@ module.exports = {
     ],
     ['nativewind/babel', { allowModuleTransform: ['@rneui/themed', 'react-native-linear-gradient'] }],
     'react-native-reanimated/plugin',
+  ],
+  overrides: [
+    {
+      test: './node_modules/ethers', // only for ethers not for all the modules, see: https://github.com/ethers-io/ethers.js/issues/3996
+      plugins: [['@babel/plugin-transform-private-methods', { loose: true }]],
+    },
   ],
 };

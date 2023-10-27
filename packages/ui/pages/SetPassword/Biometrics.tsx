@@ -1,13 +1,17 @@
-import React, { useEffect, useCallback } from 'react';
+import React, { useEffect, useCallback, useState } from 'react';
 import LinearGradient from 'react-native-linear-gradient';
 import { View, Image, SafeAreaView } from 'react-native';
-import { useTheme, Button, Text } from '@rneui/themed';
+import { useTheme, Text } from '@rneui/themed';
 import { statusBarHeight } from '@utils/deviceInfo';
 import Animated, { useSharedValue, useAnimatedStyle, withTiming, withRepeat } from 'react-native-reanimated';
 import FaceIdSource from '@assets/images/face-id.png';
-import { NavigationProp } from '@react-navigation/native';
-import { authentication, AuthenticationType } from '@core/DB/helper';
-
+import { authentication, AuthenticationType } from '@DB/helper';
+import { WalletStackName, type RootStackList, type StackNavigation } from '@router/configs';
+import { RouteProp, useNavigation, useRoute } from '@react-navigation/native';
+import createVaultWithRouterParams from './createVaultWithRouterParams';
+import useInAsync from '@hooks/useInAsync';
+import { SetPasswordStackName } from './index';
+import { BaseButton } from '@components/Button';
 
 export const BiometricsStackName = 'Biometrics';
 
@@ -32,27 +36,33 @@ const FaceId: React.FC = () => {
   }, []);
 
   return (
-    <View className="relative mx-auto w-[193px] h-[210px] rounded-[20px] overflow-hidden">
-      <Animated.View className="absolute w-[193px] h-[210px] bottom-0" style={animatedStyles}>
+    <View className="relative mx-auto w-[189px] h-[189px] rounded-[20px] overflow-hidden">
+      <Animated.View className="absolute w-[189px] h-[189px] bottom-0" style={animatedStyles}>
         <LinearGradient colors={getFaceIdLinearColor(theme.mode)} className="flex-1" />
       </Animated.View>
-      <Image source={FaceIdSource} />
+      <Image source={FaceIdSource} className="w-full h-full" />
     </View>
   );
 };
 
-const Biometrics: React.FC<{ navigation: NavigationProp<any> }> = (props) => {
+const Biometrics = () => {
   const { theme } = useTheme();
-  const { navigation } = props;
+  const [disableSetPassword, setDisableSetPassword] = useState(false);
 
+  const navigation = useNavigation<StackNavigation>();
+  const route = useRoute<RouteProp<RootStackList, typeof BiometricsStackName>>();
+  const { inAsync: loading, execAsync: createVault } = useInAsync(createVaultWithRouterParams);
   const handleEnableBiometrics = useCallback(async () => {
     try {
+      setDisableSetPassword(true);
       await authentication.setPassword({ authType: AuthenticationType.Biometrics });
-      
+      await createVault(route.params);
+      navigation.navigate('Home', { screen: WalletStackName });
     } catch (err) {
       console.log('Enable Biometrics error: ', err);
+      setDisableSetPassword(false);
     }
-  }, []);
+  }, [createVault, navigation, route.params]);
 
   return (
     <LinearGradient colors={theme.colors.linearGradientBackground} className="flex-1">
@@ -72,12 +82,16 @@ const Biometrics: React.FC<{ navigation: NavigationProp<any> }> = (props) => {
           </Text>
         </View>
 
-        <Button containerStyle={{ marginTop: 32, marginHorizontal: 16 }} onPress={handleEnableBiometrics}>
+        <BaseButton loading={loading} containerStyle={{ marginTop: 32, marginHorizontal: 16 }} onPress={handleEnableBiometrics}>
           Enable
-        </Button>
-        <Button containerStyle={{ marginTop: 16, marginHorizontal: 16 }} onPress={() => navigation.navigate('SetPassword')}>
+        </BaseButton>
+        <BaseButton
+          disabled={disableSetPassword}
+          containerStyle={{ marginTop: 16, marginHorizontal: 16 }}
+          onPress={() => navigation.navigate(SetPasswordStackName, route.params)}
+        >
           Set Password
-        </Button>
+        </BaseButton>
       </SafeAreaView>
     </LinearGradient>
   );
