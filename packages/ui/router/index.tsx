@@ -1,5 +1,5 @@
 import React, { type PropsWithChildren } from 'react';
-import { Platform, Text, TouchableOpacity } from 'react-native';
+import { Platform, TouchableOpacity } from 'react-native';
 import { NavigationContainer, useNavigation } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
@@ -11,6 +11,7 @@ import Wallet, { WalletStackName, getWalletHeaderOptions } from '@pages/Wallet';
 import Settings, { SettingsStackName } from '@pages/Settings';
 import ImportWallet, { ImportWalletStackName } from '@pages/ImportWallet';
 import AccountManage, { AccountManageStackName } from '@pages/Account/AccountManage';
+import AddAccount, { AddAccountStackName } from '@pages/Account/AddAccount';
 import Login, { LoginStackName } from '@pages/Login';
 import Lock, { LockStackName } from '@pages/Lock';
 import { withDatabase, withObservables, compose, type Database } from '@DB/react';
@@ -73,9 +74,9 @@ const StackNavigator = compose(
           canGoBack ? (
             <TouchableOpacity className="flex flex-row items-center gap-[4px]" onPress={() => navigation.goBack()}>
               <ArrowLeft />
-              <Text className="text-[16px] font-medium" style={{ color: theme.colors.textBrand }}>
+              {/* <Text className="text-[16px] font-medium" style={{ color: theme.colors.textBrand }}>
                 Wallet
-              </Text>
+              </Text> */}
             </TouchableOpacity>
           ) : null,
         title: '',
@@ -90,6 +91,7 @@ const StackNavigator = compose(
       <Stack.Screen name={BiometricsStackName} component={Biometrics} />
       <Stack.Screen name={HomeStackName} component={HomeScreenNavigator} options={{ headerShown: false }} />
       <Stack.Screen name={AccountManageStackName} component={AccountManage} options={{ title: 'Manage Wallets', headerTitleAlign: 'center' }} />
+      <Stack.Screen name={AddAccountStackName} component={AddAccount} options={{ title: 'Add Account', headerTitleAlign: 'center' }} />
       <Stack.Screen name={ImportWalletStackName} component={ImportWallet} />
       <Stack.Screen name={LoginStackName} component={Login} options={{ headerShown: false }} />
       <Stack.Screen name={LockStackName} component={Lock} options={{ headerShown: false }} />

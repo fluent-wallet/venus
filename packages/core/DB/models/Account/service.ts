@@ -60,7 +60,7 @@ export async function createAccount({
     const newAccount = createModel({
       name: TableName.Account,
       params: {
-        nickname: nickname ?? `${accountGroup.nickname}-${newAccountIndex}`,
+        nickname: nickname ?? `Account - ${newAccountIndex + 1}`,
         index: newAccountIndex,
         hidden: hidden ?? false,
         selected: selected ?? false,

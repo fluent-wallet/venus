@@ -1,9 +1,8 @@
 import { Button, Text, useTheme } from '@rneui/themed';
 import { View, SafeAreaView, TextInput } from 'react-native';
-import { statusBarHeight } from '@utils/deviceInfo';
-import { createHDVault, createPrivateKeyVault } from '@core/DB/models/Vault/service';
-import { RouteProp, useNavigation, useRoute } from '@react-navigation/native';
-import { type RootStackList, StackNavigation, BiometricsStackName } from '@router/configs';
+import { useHeaderHeight } from '@react-navigation/elements';
+import { useNavigation } from '@react-navigation/native';
+import { StackNavigation, BiometricsStackName } from '@router/configs';
 import { useState } from 'react';
 import { Mnemonic } from 'ethers';
 import { validatePrivateKey } from '@core/utils/account';
@@ -13,11 +12,12 @@ export const ImportWalletStackName = 'ImportSeed';
 
 const ImportWallet = () => {
   const { theme } = useTheme();
+  const headerHeight = useHeaderHeight();
   const navigation = useNavigation<StackNavigation>();
   const [value, setValue] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
 
-  const handleCreateHDVault = async () => {
+  const handleConfirmInput = async () => {
     if (value === '') return;
     if (validatePrivateKey(addHexPrefix(value))) {
       navigation.navigate(BiometricsStackName, { type: 'importPrivateKey', value });
@@ -34,7 +34,7 @@ const ImportWallet = () => {
   return (
     <SafeAreaView
       className="flex flex-1 flex-col justify-start px-[24px]"
-      style={{ paddingTop: statusBarHeight + 48, backgroundColor: theme.colors.normalBackground }}
+      style={{ paddingTop: headerHeight + 16, backgroundColor: theme.colors.normalBackground }}
     >
       <View style={{ backgroundColor: theme.colors.surfacePrimary }} className="border border-blue-200 rounded-md p-1 mb-2">
         <TextInput
@@ -53,7 +53,7 @@ const ImportWallet = () => {
           {errorMessage}
         </Text>
       )}
-      <Button onPress={handleCreateHDVault}>Confirm</Button>
+      <Button onPress={handleConfirmInput}>Confirm</Button>
     </SafeAreaView>
   );
 };

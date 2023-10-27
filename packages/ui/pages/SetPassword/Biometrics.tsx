@@ -70,15 +70,15 @@ const Biometrics = () => {
         <FaceId />
         <View className="mt-[90px]">
           <Text className="text-[36px] leading-[46px] font-bold text-center" style={{ color: theme.colors.textBrand }}>
-            Enable FaceId
+            Enable Biometrics
           </Text>
           <Text className="mt-[8px] text-[16px] leading-[24px] text-center">
-            Enable FaceID to access wallet.
+            Enable Biometrics to access wallet.
             {'\n'}
             {'\n'}
             After enabled, you can unlock wallets or
             {'\n'}
-            make transactions by verifying your Face ID...
+            make transactions by verifying your Biometrics...
           </Text>
         </View>
 

@@ -5,9 +5,11 @@ import { BiometricsStackName } from '@pages/SetPassword/Biometrics';
 import { WalletStackName } from '@pages/Wallet';
 import { ImportWalletStackName } from '@pages/ImportWallet';
 import { AccountManageStackName } from '@pages/Account/AccountManage';
+import { AddAccountStackName } from '@pages/Account/AddAccount';
 import { LoginStackName } from '@pages/Login';
 import { LockStackName } from './configs';
 export { AccountManageStackName } from '@pages/Account/AccountManage';
+export { AddAccountStackName } from '@pages/Account/AddAccount';
 export { ImportWalletStackName } from '@pages/ImportWallet';
 export { SetPasswordStackName } from '@pages/SetPassword';
 export { BiometricsStackName } from '@pages/SetPassword/Biometrics';
@@ -27,6 +29,7 @@ export type RootStackList = {
   [WalletStackName]: undefined;
   [LoginStackName]: undefined;
   [LockStackName]: undefined;
+  [AddAccountStackName]: undefined;
 
   Home: { screen: typeof WalletStackName };
 };

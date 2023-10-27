@@ -52,6 +52,7 @@ async function createVaultOfType({
   hexAddress?: string;
 }) {
   try {
+    console.log(cryptoTool)
     const data =
       type === 'private_key'
         ? await cryptoTool.encrypt(privateKey)
@@ -67,7 +68,7 @@ async function createVaultOfType({
     const count = await getVaultTypeCount(type);
     const vault = await createVault({ data, type, device: 'ePayWallet' });
     const accountGroup = await createAccountGroup({ nickname: `${defaultGroupNameMap[type]} - ${count + 1}`, hidden: false, vault });
-    await createAccount({ nickname: 'default', hidden: false, selected: await isFirstVault(), accountGroup, ...(hexAddress ? { hexAddress } : null) });
+    await createAccount({ nickname: 'Account - 1', hidden: false, selected: await isFirstVault(), accountGroup, ...(hexAddress ? { hexAddress } : null) });
   } catch (error) {
     console.error('create vault error: ', error);
   }

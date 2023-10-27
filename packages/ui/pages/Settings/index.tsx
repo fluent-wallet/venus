@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { SafeAreaView, View, Text, TouchableOpacity, TouchableHighlight } from 'react-native';
+import { SafeAreaView, Text, TouchableOpacity, TouchableHighlight } from 'react-native';
 import { showMessage } from 'react-native-flash-message';
 import { type NavigationProp } from '@react-navigation/native';
 import { useTheme, ListItem, Dialog } from '@rneui/themed';
