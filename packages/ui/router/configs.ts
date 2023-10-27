@@ -26,13 +26,13 @@ export type RootStackList = {
   [WelcomeStackName]: undefined;
   [SetPasswordStackName]?: { type?: 'importPrivateKey' | 'importSeedPhrase' | 'create'; value?: string };
   [BiometricsStackName]?: { type?: 'importPrivateKey' | 'importSeedPhrase' | 'create'; value?: string };
-  [ImportWalletStackName]: undefined;
+  [ImportWalletStackName]: { type?: 'add' | 'create' };
+  [AccountManageStackName]: undefined;
   [WalletStackName]: undefined;
   [LoginStackName]: undefined;
   [LockStackName]: undefined;
+  [AddAccountStackName]: { type?: 'add' | 'create' };
   [AccountSelectStackName]: undefined;
-  [AccountManageStackName]: undefined;
-  [AddAccountStackName]: undefined;
 
   Home: { screen: typeof WalletStackName };
 };

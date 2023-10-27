@@ -7,14 +7,16 @@ import { Button } from '@rneui/base';
 import { useTheme, Dialog, ListItem } from '@rneui/themed';
 import { withObservablesFromDB } from '@DB/react';
 import { type AccountGroup } from '@DB/models/AccountGroup';
+
 import { clearAccountData } from '@DB/setup';
 import { statusBarHeight } from '@utils/deviceInfo';
-import { AddAccountStackName, WelcomeStackName } from '@router/configs';
+import { AddAccountStackName, WelcomeStackName, type StackNavigation } from '@router/configs';
+
 import AccountGroupItem from '../AccountGroupItem';
 
 export const AccountManageStackName = 'AccountManage';
 
-const AccountManage: React.FC<{ navigation: NavigationProp<any>; accountGroup: Array<AccountGroup> }> = ({ navigation, accountGroup }) => {
+const AccountManage: React.FC<{ navigation: StackNavigation; accountGroup: Array<AccountGroup> }> = ({ navigation, accountGroup }) => {
   const { theme } = useTheme();
   const headerHeight = useHeaderHeight();
   const [visibleClearAccount, setVisibleClearAccount] = useState(false);
@@ -34,7 +36,7 @@ const AccountManage: React.FC<{ navigation: NavigationProp<any>; accountGroup: A
           size="sm"
           type="clear"
           title="Add another wallet"
-          onPress={() => navigation.navigate(AddAccountStackName)}
+          onPress={() => navigation.navigate(AddAccountStackName, { type: 'add' })}
         />
       </View>
 

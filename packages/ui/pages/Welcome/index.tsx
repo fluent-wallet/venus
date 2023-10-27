@@ -44,7 +44,7 @@ const Welcome: React.FC<{ navigation: StackNavigation }> = ({ navigation }) => {
         <BaseButton containerStyle={{ marginTop: 16, marginHorizontal: 16 }} onPress={() => navigation.navigate(BiometricsStackName)}>
           Create new Wallet
         </BaseButton>
-        <BaseButton containerStyle={{ marginTop: 16, marginHorizontal: 16 }} onPress={() => navigation.navigate(ImportWalletStackName)}>
+        <BaseButton containerStyle={{ marginTop: 16, marginHorizontal: 16 }} onPress={() => navigation.navigate(ImportWalletStackName, { type: 'create' })}>
           Import existing Wallet
         </BaseButton>
       </SafeAreaView>
