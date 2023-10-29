@@ -1,0 +1,48 @@
+name: Android build
+on:
+  push:
+    tags:
+      - '*'
+
+jobs:
+  android-build:
+    name: Android Build
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out Git repository
+        uses: actions/checkout@v2
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node_version: 'lts/-n'
+          cache: 'yarn'
+      - name: install dependencies
+        run: yarn
+
+      - name: Set up JDK envronment
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'zulu'
+          java-version: '11'
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+      - uses: actions/cache@v3
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-
+      - name: Make Gradlew Executable
+        run: cd android && chmod +x ./gradlew
+      - name: Build Android Release
+        run: |
+          cd android && ./gradlew clean && ./gradlew app:assembleRelease
+
+      - name: Release
+        uses: softprops/action-gh-release@v1
+        with:
+            files: ./android/app/build/outputs/apk/release/app-release.apk
