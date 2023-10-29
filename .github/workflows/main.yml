@@ -1,4 +1,8 @@
 name: Android build
+
+permissions:
+  contents: write
+
 on:
   push:
     tags:
