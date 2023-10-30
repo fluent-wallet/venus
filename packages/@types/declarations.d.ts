@@ -21,5 +21,6 @@ declare module '@rneui/themed' {
     homeHeaderAddressBackgroundColor: string;
     pureBlackAndWight: string;
     underlayColor: string;
+    contrastWhiteAndBlack: string;
   }
 }

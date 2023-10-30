@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { View, SafeAreaView, TouchableHighlight } from 'react-native';
+import { View, SafeAreaView, TouchableHighlight, Pressable } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { statusBarHeight } from '@utils/deviceInfo';
 import { shortenAddress } from '@cfx-kit/dapp-utils/dist/address';
@@ -8,7 +8,7 @@ import { map } from 'rxjs';
 import { compose, withDatabase, withObservables, type Database } from '@DB/react';
 import { type Address } from '@core/DB/models/Address';
 import { querySelectedAddress } from '@core/DB/models/Address/service';
-import { AccountSelectStackName, type StackNavigation } from '@router/configs';
+import { AccountSelectStackName, SendStackName, type StackNavigation } from '@router/configs';
 import CopyAll from '@assets/icons/copy_all.svg';
 import Flip from '@assets/icons/flip.svg';
 import Menu from '@assets/icons/menu.svg';
@@ -50,9 +50,9 @@ const CurrentAccount: React.FC<{ backgroundColor: string }> = compose(
   if (!address) return null;
   return (
     <TouchableHighlight onPress={() => navigation.navigate(AccountSelectStackName)} className="rounded-full overflow-hidden">
-        <View className="bg-white flex flex-row px-[12px] py-[8px] rounded-full" style={{ backgroundColor }}>
-          <Text className="text-[10px]">{shortAddress}</Text>
-          <View className="pl-[4px]">
+      <View className="bg-white flex flex-row px-[12px] py-[8px] rounded-full" style={{ backgroundColor }}>
+        <Text className="text-[10px]">{shortAddress}</Text>
+        <View className="pl-[4px]">
           <CopyAll />
         </View>
       </View>
@@ -62,6 +62,7 @@ const CurrentAccount: React.FC<{ backgroundColor: string }> = compose(
 
 const Wallet: React.FC<{ navigation: StackNavigation }> = () => {
   const { theme } = useTheme();
+  const navigation = useNavigation<StackNavigation>();
   const [tabIndex, setTabIndex] = useState(0);
 
   return (
@@ -78,14 +79,14 @@ const Wallet: React.FC<{ navigation: StackNavigation }> = () => {
       </Text>
 
       <View className="flex flex-row">
-        <View className="flex items-center flex-1">
+        <Pressable className="flex items-center flex-1" onPress={() => navigation.navigate(SendStackName)}>
           <View className="flex justify-center items-center w-[60px] h-[60px] rounded-full" style={{ backgroundColor: theme.colors.surfaceBrand }}>
             <SendIcon color="#fff" width={32} height={32} />
           </View>
           <Text className="mt-[8px] text-base" style={{ color: theme.colors.textPrimary }}>
             Send
           </Text>
-        </View>
+        </Pressable>
 
         <View className="flex items-center flex-1">
           <View className="flex justify-center items-center w-[60px] h-[60px] rounded-full" style={{ backgroundColor: theme.colors.surfaceBrand }}>
