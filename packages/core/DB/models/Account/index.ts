@@ -1,5 +1,5 @@
-import { Model, type Query, type Relation } from '@nozbe/watermelondb';
-import { field, text, children, relation, date, readonly, writer, reader } from '@nozbe/watermelondb/decorators';
+import { Q, Model, type Query, type Relation } from '@nozbe/watermelondb';
+import { field, text, children, relation, date, readonly, writer, reader, lazy } from '@nozbe/watermelondb/decorators';
 import { type Address } from '../Address';
 import { type AccountGroup } from '../AccountGroup';
 import TableName from '../../TableName';
@@ -55,4 +55,8 @@ export class Account extends Model {
       account.selected = !account.selected;
     });
   }
+
+  @lazy currentNetworkAddress = this.address.extend(
+    Q.on(TableName.Network, Q.where('selected', true))
+  )
 }

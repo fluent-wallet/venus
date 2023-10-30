@@ -27,8 +27,5 @@ export const querySelectedAddress = (_database: typeof database) =>
     .get(TableName.Address)
     .query(
       Q.experimentalJoinTables([TableName.Account, TableName.Network]),
-      Q.and(
-        Q.on(TableName.Account, Q.where('selected', true)), 
-        Q.on(TableName.Network, Q.where('selected', true))
-      )
+      Q.and(Q.on(TableName.Account, Q.where('selected', true)), Q.on(TableName.Network, Q.where('selected', true)))
     ) as unknown as Query<Address>;

@@ -30,6 +30,8 @@ export const colors = {
 
   white: '#FFFFFF',
   black: '#000000',
+  underlayLight: '#dddddd',
+  underlayDark: '#dddddd',
 };
 
 const theme = createTheme({
@@ -52,6 +54,7 @@ const theme = createTheme({
     buttonDisabledBackground: '#D9E3FF',
     homeHeaderAddressBackgroundColor: colors.blue0,
     pureBlackAndWight: colors.white,
+    underlayColor: colors.underlayLight,
   },
   darkColors: {
     textPrimary: colors.gray1,
@@ -72,6 +75,7 @@ const theme = createTheme({
     buttonDisabledBackground: colors.blue4,
     homeHeaderAddressBackgroundColor: colors.blue5,
     pureBlackAndWight: colors.black,
+    underlayColor: colors.underlayDark,
   },
   components: {
     Text: (_, theme) => ({

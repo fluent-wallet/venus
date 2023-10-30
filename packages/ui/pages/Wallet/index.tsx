@@ -41,7 +41,7 @@ const CurrentAccount: React.FC<{ backgroundColor: string }> = compose(
   withObservables([], ({ database }: { database: Database }) => ({
     address: querySelectedAddress(database)
       .observe()
-      .pipe(map((account) => account?.[0])),
+      .pipe(map((address) => address?.[0])),
   }))
 )(({ address, backgroundColor }: { address: Address; backgroundColor: string }) => {
   const navigation = useNavigation<StackNavigation>();
@@ -50,9 +50,9 @@ const CurrentAccount: React.FC<{ backgroundColor: string }> = compose(
   if (!address) return null;
   return (
     <TouchableHighlight onPress={() => navigation.navigate(AccountSelectStackName)} className="rounded-full overflow-hidden">
-      <View className="bg-white flex flex-row px-[12px] py-[8px] rounded-full" style={{ backgroundColor }}>
-        <Text className="text-[10px]">{shortAddress}</Text>
-        <View className="pl-[4px]">
+        <View className="bg-white flex flex-row px-[12px] py-[8px] rounded-full" style={{ backgroundColor }}>
+          <Text className="text-[10px]">{shortAddress}</Text>
+          <View className="pl-[4px]">
           <CopyAll />
         </View>
       </View>

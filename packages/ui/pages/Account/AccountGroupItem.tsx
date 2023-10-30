@@ -1,34 +1,45 @@
+/* eslint-disable @typescript-eslint/no-non-null-asserted-optional-chain */
 import { useState } from 'react';
-import { Text, type StyleProp, type ViewStyle } from 'react-native';
+import { Text, TouchableHighlight, type StyleProp, type ViewStyle } from 'react-native';
+import { map } from 'rxjs';
 import { useTheme, Card, Icon, ListItem } from '@rneui/themed';
 import { Button } from '@rneui/base';
 import { type Vault } from '@DB/models/Vault';
 import { type AccountGroup } from '@DB/models/AccountGroup';
 import { type Account } from '@DB/models/Account';
+import { selectAccount } from '@DB/models/Account/service';
 import { withObservables } from '@DB/react';
 import useInAsync from '@hooks/useInAsync';
 import AccountAddress from './AccountAddress';
 
-const AccountGroupItem: React.FC<{ accountGroup: AccountGroup; style?: StyleProp<ViewStyle>; enableExpanded?: boolean; enableAddNew?: boolean }> =
-  withObservables(['accountGroup'], ({ accountGroup }: { accountGroup: AccountGroup }) => ({
-    accountGroup: accountGroup.observe(),
-    accounts: accountGroup.account.observe(),
-    vault: accountGroup.vault.observe(),
-  }))(
+
+const AccountGroupItem: React.FC<{ accountGroup: AccountGroup; style?: StyleProp<ViewStyle>; enableExpanded?: boolean; enableAddNew?: boolean; enableSelect?: boolean; }> =
+  withObservables(['accountGroup'], ({ accountGroup }: { accountGroup: AccountGroup }) => {
+    const accounts = accountGroup.account.observe();
+    return {
+      accountGroup: accountGroup.observe(),
+      accounts,
+      vault: accountGroup.vault.observe(),
+    };
+  })(
     ({
       style,
       vault,
       accountGroup,
       accounts,
+      selectedAccount,
       enableExpanded,
       enableAddNew,
+      enableSelect
     }: {
       vault: Vault;
       accountGroup: AccountGroup;
       accounts: Account[];
+      selectedAccount: Account;
       style?: StyleProp<ViewStyle>;
       enableExpanded?: boolean;
       enableAddNew?: boolean;
+      enableSelect?: boolean
     }) => {
       const { theme } = useTheme();
       const { inAsync, execAsync: addAccount } = useInAsync(accountGroup.addAccount.bind(accountGroup));
@@ -53,7 +64,15 @@ const AccountGroupItem: React.FC<{ accountGroup: AccountGroup; style?: StyleProp
             >
               <Card.Divider className="my-[16px]" />
               {accounts.map((account, index) => (
-                <AccountAddress style={{ marginTop: index === 0 ? 0 : 24 }} key={account.id} account={account} />
+                <TouchableHighlight
+                  style={{ marginTop: index === 0 ? 0 : 24 }}
+                  key={account.id}
+                  underlayColor={theme.colors.underlayColor}
+                  disabled={!enableSelect}
+                  onPress={() => selectAccount(account)}
+                >
+                  <AccountAddress account={account} showSelected />
+                </TouchableHighlight>
               ))}
               {vault.type === 'hierarchical_deterministic' && enableAddNew && (
                 <>
