@@ -92,11 +92,11 @@ export const createHDVault = async (importMnemonic?: string) => {
   }
 };
 
-export const createBSIMVault = async () => {
+export const createBSIMVault = async (args: { hexAddress: string; index: string }) => {
   try {
     const start = performance.now();
     console.log('create BSIM vault start');
-    const { hexAddress, index } = { hexAddress: '', index: '0' };
+    const { hexAddress, index } = args;
     await createVaultOfType({ type: 'BSIM', hexAddress, index });
     const end = performance.now();
     console.log(`create BSIM vault a Wallet took ${end - start} ms.`);

@@ -24,8 +24,8 @@ export const HomeStackName = 'Home';
 
 export type RootStackList = {
   [WelcomeStackName]: undefined;
-  [SetPasswordStackName]?: { type?: 'importPrivateKey' | 'importSeedPhrase' | 'create'; value?: string };
-  [BiometricsStackName]?: { type?: 'importPrivateKey' | 'importSeedPhrase' | 'create'; value?: string };
+  [SetPasswordStackName]?: { type?: 'importPrivateKey' | 'importSeedPhrase' | 'create' | 'BSIM'; value?: string };
+  [BiometricsStackName]?: { type?: 'importPrivateKey' | 'importSeedPhrase' | 'create' | 'BSIM'; value?: string };
   [ImportWalletStackName]: { type?: 'add' | 'create' };
   [AccountManageStackName]: undefined;
   [WalletStackName]: undefined;
