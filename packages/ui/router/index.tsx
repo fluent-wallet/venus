@@ -17,12 +17,13 @@ import Login, { LoginStackName } from '@pages/Login';
 import Lock, { LockStackName } from '@pages/Lock';
 import { withDatabase, withObservables, compose, type Database } from '@DB/react';
 import TableName from '@DB/TableName';
-import { HomeStackName, type StackNavigation, type RootStackList, TransactionConfirmStackName } from './configs';
+import { HomeStackName, type StackNavigation, type RootStackList, TransactionConfirmStackName, SendStackName } from './configs';
 import WalletIcon from '@assets/icons/wallet.svg';
 import SettingsIcon from '@assets/icons/settings.svg';
 import ArrowLeft from '@assets/icons/arrow-left.svg';
-import Send, { SendPageHeaderOptions, SendStackName } from '@pages/Send';
+import SendReceiver, { SendPageHeaderOptions, SendReceiverStackName } from '@pages/Send';
 import { TransactionConfirm } from '@pages/Send/TransactionConfirm';
+import SendTo from '@pages/Send/SendTo';
 
 const Stack = createNativeStackNavigator<RootStackList>();
 const BottomTabStack = createBottomTabNavigator();
@@ -99,9 +100,10 @@ const StackNavigator = compose(
       <Stack.Screen name={ImportWalletStackName} component={ImportWallet} />
       <Stack.Screen name={LoginStackName} component={Login} options={{ headerShown: false }} />
       <Stack.Screen name={LockStackName} component={Lock} options={{ headerShown: false }} />
+      <Stack.Screen name={SendReceiverStackName} component={SendReceiver} options={{ title: 'receiving address', headerTitleAlign: 'center' }} />
       <Stack.Screen
         name={SendStackName}
-        component={Send}
+        component={SendTo}
         options={{ ...SendPageHeaderOptions({ titleColor: theme.colors.contrastWhiteAndBlack, borderColor: theme.colors.surfaceSecondary }) }}
       />
       <Stack.Screen

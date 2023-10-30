@@ -9,7 +9,8 @@ import { AccountSelectStackName } from '@pages/Account/AccountSelect';
 import { AddAccountStackName } from '@pages/Account/AddAccount';
 import { LoginStackName } from '@pages/Login';
 import { LockStackName } from '@pages/Lock';
-import { SendStackName } from '@pages/Send';
+import { SendReceiverStackName } from '@pages/Send';
+import { SendToStackName } from '@pages/Send/SendTo';
 import { TransactionConfirmStackName } from '@pages/Send/TransactionConfirm';
 
 export {
@@ -23,7 +24,8 @@ export {
   AddAccountStackName,
   LoginStackName,
   LockStackName,
-  SendStackName,
+  SendToStackName as SendStackName,
+  SendReceiverStackName,
   TransactionConfirmStackName,
 };
 
@@ -40,8 +42,9 @@ export type RootStackList = {
   [LockStackName]: undefined;
   [AddAccountStackName]: { type?: 'add' | 'create' };
   [AccountSelectStackName]: undefined;
-  [SendStackName]: undefined;
+  [SendToStackName]: undefined;
   [TransactionConfirmStackName]: undefined;
+  [SendReceiverStackName]: undefined;
 
   Home: { screen: typeof WalletStackName };
 };
