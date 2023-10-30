@@ -3,7 +3,7 @@ import { Platform, TouchableOpacity } from 'react-native';
 import { NavigationContainer, useNavigation } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { useTheme } from '@rneui/themed';
+import { Text, useTheme } from '@rneui/themed';
 import Welcome, { WelcomeStackName } from '@pages/Welcome';
 import SetPassword, { SetPasswordStackName } from '@pages/SetPassword';
 import Biometrics, { BiometricsStackName } from '@pages/SetPassword/Biometrics';
@@ -17,10 +17,12 @@ import Login, { LoginStackName } from '@pages/Login';
 import Lock, { LockStackName } from '@pages/Lock';
 import { withDatabase, withObservables, compose, type Database } from '@DB/react';
 import TableName from '@DB/TableName';
-import { HomeStackName, type StackNavigation, type RootStackList } from './configs';
+import { HomeStackName, type StackNavigation, type RootStackList, TransactionConfirmStackName } from './configs';
 import WalletIcon from '@assets/icons/wallet.svg';
 import SettingsIcon from '@assets/icons/settings.svg';
 import ArrowLeft from '@assets/icons/arrow-left.svg';
+import Send, { SendPageHeaderOptions, SendStackName } from '@pages/Send';
+import { TransactionConfirm } from '@pages/Send/TransactionConfirm';
 
 const Stack = createNativeStackNavigator<RootStackList>();
 const BottomTabStack = createBottomTabNavigator();
@@ -97,6 +99,22 @@ const StackNavigator = compose(
       <Stack.Screen name={ImportWalletStackName} component={ImportWallet} />
       <Stack.Screen name={LoginStackName} component={Login} options={{ headerShown: false }} />
       <Stack.Screen name={LockStackName} component={Lock} options={{ headerShown: false }} />
+      <Stack.Screen
+        name={SendStackName}
+        component={Send}
+        options={{ ...SendPageHeaderOptions({ titleColor: theme.colors.contrastWhiteAndBlack, borderColor: theme.colors.surfaceSecondary }) }}
+      />
+      <Stack.Screen
+        name={TransactionConfirmStackName}
+        component={TransactionConfirm}
+        options={{
+          ...SendPageHeaderOptions({
+            titleColor: theme.colors.contrastWhiteAndBlack,
+            borderColor: theme.colors.surfaceSecondary,
+            title: 'Transaction Confirm',
+          }),
+        }}
+      />
     </Stack.Navigator>
   );
 });

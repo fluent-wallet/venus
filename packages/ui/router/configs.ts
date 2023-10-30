@@ -8,18 +8,25 @@ import { AccountManageStackName } from '@pages/Account/AccountManage';
 import { AccountSelectStackName } from '@pages/Account/AccountSelect';
 import { AddAccountStackName } from '@pages/Account/AddAccount';
 import { LoginStackName } from '@pages/Login';
-import { LockStackName } from './configs';
-export { AccountManageStackName } from '@pages/Account/AccountManage';
-export { AccountSelectStackName } from '@pages/Account/AccountSelect';
-export { AddAccountStackName } from '@pages/Account/AddAccount';
-export { ImportWalletStackName } from '@pages/ImportWallet';
-export { SetPasswordStackName } from '@pages/SetPassword';
-export { BiometricsStackName } from '@pages/SetPassword/Biometrics';
-export { SettingsStackName } from '@pages/Settings';
-export { WalletStackName } from '@pages/Wallet';
-export { WelcomeStackName } from '@pages/Welcome';
-export { LoginStackName } from '@pages/Login';
-export { LockStackName } from '@pages/Lock';
+import { LockStackName } from '@pages/Lock';
+import { SendStackName } from '@pages/Send';
+import { TransactionConfirmStackName } from '@pages/Send/TransactionConfirm';
+
+export {
+  WelcomeStackName,
+  SetPasswordStackName,
+  BiometricsStackName,
+  WalletStackName,
+  ImportWalletStackName,
+  AccountManageStackName,
+  AccountSelectStackName,
+  AddAccountStackName,
+  LoginStackName,
+  LockStackName,
+  SendStackName,
+  TransactionConfirmStackName,
+};
+
 export const HomeStackName = 'Home';
 
 export type RootStackList = {
@@ -33,6 +40,8 @@ export type RootStackList = {
   [LockStackName]: undefined;
   [AddAccountStackName]: { type?: 'add' | 'create' };
   [AccountSelectStackName]: undefined;
+  [SendStackName]: undefined;
+  [TransactionConfirmStackName]: undefined;
 
   Home: { screen: typeof WalletStackName };
 };

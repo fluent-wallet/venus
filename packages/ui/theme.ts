@@ -55,6 +55,7 @@ const theme = createTheme({
     homeHeaderAddressBackgroundColor: colors.blue0,
     pureBlackAndWight: colors.white,
     underlayColor: colors.underlayLight,
+    contrastWhiteAndBlack: colors.black,
   },
   darkColors: {
     textPrimary: colors.gray1,
@@ -76,6 +77,7 @@ const theme = createTheme({
     homeHeaderAddressBackgroundColor: colors.blue5,
     pureBlackAndWight: colors.black,
     underlayColor: colors.underlayDark,
+    contrastWhiteAndBlack: colors.white,
   },
   components: {
     Text: (_, theme) => ({
