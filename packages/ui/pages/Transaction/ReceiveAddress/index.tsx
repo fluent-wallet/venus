@@ -4,10 +4,10 @@ import { statusBarHeight } from '@utils/deviceInfo';
 import { SafeAreaView, View, KeyboardAvoidingView } from 'react-native';
 import { TextInput } from 'react-native';
 import { BaseButton } from '@components/Button';
-import { type StackNavigation, SendStackName } from '@router/configs';
+import { type StackNavigation, TokenListStackName } from '@router/configs';
 import Flip from '@assets/icons/flip.svg';
 
-export const SendReceiverStackName = 'SendReceiver';
+export const ReceiveAddressStackName = 'ReceiveAddress';
 
 export const SendPageHeaderOptions = ({ title = 'Send To', titleColor, borderColor }: { title?: string; titleColor: string; borderColor: string }) =>
   ({
@@ -45,7 +45,7 @@ const SendReceiver: React.FC<{ navigation: StackNavigation }> = ({ navigation })
           </View>
         </View>
         <View className="mt-auto mb-6">
-          <BaseButton onPress={() => navigation.navigate(SendStackName)}>Next</BaseButton>
+          <BaseButton onPress={() => navigation.navigate(TokenListStackName)}>Next</BaseButton>
         </View>
       </KeyboardAvoidingView>
     </SafeAreaView>

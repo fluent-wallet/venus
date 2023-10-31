@@ -8,7 +8,7 @@ import { map } from 'rxjs';
 import { compose, withDatabase, withObservables, type Database } from '@DB/react';
 import { type Address } from '@core/DB/models/Address';
 import { querySelectedAddress } from '@core/DB/models/Address/service';
-import { AccountSelectStackName, SendReceiverStackName, type StackNavigation } from '@router/configs';
+import { AccountSelectStackName, ReceiveAddressStackName, type StackNavigation } from '@router/configs';
 import CopyAll from '@assets/icons/copy_all.svg';
 import Flip from '@assets/icons/flip.svg';
 import Menu from '@assets/icons/menu.svg';
@@ -79,7 +79,7 @@ const Wallet: React.FC<{ navigation: StackNavigation }> = () => {
       </Text>
 
       <View className="flex flex-row">
-        <Pressable className="flex items-center flex-1" onPress={() => navigation.navigate(SendReceiverStackName)}>
+        <Pressable className="flex items-center flex-1" onPress={() => navigation.navigate(ReceiveAddressStackName)}>
           <View className="flex justify-center items-center w-[60px] h-[60px] rounded-full" style={{ backgroundColor: theme.colors.surfaceBrand }}>
             <SendIcon color="#fff" width={32} height={32} />
           </View>
@@ -117,9 +117,9 @@ const Wallet: React.FC<{ navigation: StackNavigation }> = () => {
       </View>
 
       <Tab value={tabIndex} onChange={setTabIndex} indicatorStyle={{ backgroundColor: theme.colors.surfaceBrand }}>
-        <Tab.Item title="Tokens" titleStyle={(active) => ({ color: active ? '#4572EC' : theme.colors.textSecondary })} />
-        <Tab.Item title="Receive" titleStyle={(active) => ({ color: active ? '#4572EC' : theme.colors.textSecondary })} />
-        <Tab.Item title="Activity" titleStyle={(active) => ({ color: active ? '#4572EC' : theme.colors.textSecondary })} />
+        <Tab.Item title="Tokens" titleStyle={(active) => ({ color: active ? theme.colors.textBrand : theme.colors.textSecondary })} />
+        <Tab.Item title="Receive" titleStyle={(active) => ({ color: active ? theme.colors.textBrand : theme.colors.textSecondary })} />
+        <Tab.Item title="Activity" titleStyle={(active) => ({ color: active ? theme.colors.textBrand : theme.colors.textSecondary })} />
       </Tab>
 
       <TabView value={tabIndex} onChange={setTabIndex} animationType="spring" tabItemContainerStyle={{ paddingHorizontal: 24, paddingVertical: 16 }}>

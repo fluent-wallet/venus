@@ -9,9 +9,10 @@ import { AccountSelectStackName } from '@pages/Account/AccountSelect';
 import { AddAccountStackName } from '@pages/Account/AddAccount';
 import { LoginStackName } from '@pages/Login';
 import { LockStackName } from '@pages/Lock';
-import { SendReceiverStackName } from '@pages/Send';
-import { SendToStackName } from '@pages/Send/SendTo';
-import { TransactionConfirmStackName } from '@pages/Send/TransactionConfirm';
+import { ReceiveAddressStackName } from '@pages/Transaction/ReceiveAddress';
+import { SendToStackName } from '@pages/Transaction/SendTo';
+import { TransactionConfirmStackName } from '@pages/Transaction/TransactionConfirm';
+import { TokenListStackName } from '@pages/Transaction/TokenList';
 
 export {
   WelcomeStackName,
@@ -24,9 +25,10 @@ export {
   AddAccountStackName,
   LoginStackName,
   LockStackName,
-  SendToStackName as SendStackName,
-  SendReceiverStackName,
+  SendToStackName,
+  ReceiveAddressStackName,
   TransactionConfirmStackName,
+  TokenListStackName,
 };
 
 export const HomeStackName = 'Home';
@@ -44,7 +46,8 @@ export type RootStackList = {
   [AccountSelectStackName]: undefined;
   [SendToStackName]: undefined;
   [TransactionConfirmStackName]: undefined;
-  [SendReceiverStackName]: undefined;
+  [ReceiveAddressStackName]: undefined;
+  [TokenListStackName]: undefined;
 
   Home: { screen: typeof WalletStackName };
 };

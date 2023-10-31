@@ -12,7 +12,7 @@ import { BaseButton } from '@components/Button';
 
 export const TransactionConfirmStackName = 'TransactionConfirm';
 
-export const TransactionConfirm: React.FC<{ navigation: StackNavigation }> = ({ navigation }) => {
+const TransactionConfirm: React.FC<{ navigation: StackNavigation }> = ({ navigation }) => {
   const { theme } = useTheme();
   return (
     <SafeAreaView
@@ -111,3 +111,5 @@ export const TransactionConfirm: React.FC<{ navigation: StackNavigation }> = ({ 
     </SafeAreaView>
   );
 };
+
+export default TransactionConfirm;

@@ -3,7 +3,7 @@ import { Platform, TouchableOpacity } from 'react-native';
 import { NavigationContainer, useNavigation } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { Text, useTheme } from '@rneui/themed';
+import { useTheme } from '@rneui/themed';
 import Welcome, { WelcomeStackName } from '@pages/Welcome';
 import SetPassword, { SetPasswordStackName } from '@pages/SetPassword';
 import Biometrics, { BiometricsStackName } from '@pages/SetPassword/Biometrics';
@@ -17,13 +17,15 @@ import Login, { LoginStackName } from '@pages/Login';
 import Lock, { LockStackName } from '@pages/Lock';
 import { withDatabase, withObservables, compose, type Database } from '@DB/react';
 import TableName from '@DB/TableName';
-import { HomeStackName, type StackNavigation, type RootStackList, TransactionConfirmStackName, SendStackName } from './configs';
+import { HomeStackName, type StackNavigation, type RootStackList } from './configs';
+import SendReceiver, { SendPageHeaderOptions, ReceiveAddressStackName } from '@pages/Transaction/ReceiveAddress';
+import TransactionConfirm, { TransactionConfirmStackName } from '@pages/Transaction/TransactionConfirm';
+import SendTo, { SendToStackName } from '@pages/Transaction/SendTo';
+import TokenList, { TokenListStackName } from '@pages/Transaction/TokenList';
+
 import WalletIcon from '@assets/icons/wallet.svg';
 import SettingsIcon from '@assets/icons/settings.svg';
 import ArrowLeft from '@assets/icons/arrow-left.svg';
-import SendReceiver, { SendPageHeaderOptions, SendReceiverStackName } from '@pages/Send';
-import { TransactionConfirm } from '@pages/Send/TransactionConfirm';
-import SendTo from '@pages/Send/SendTo';
 
 const Stack = createNativeStackNavigator<RootStackList>();
 const BottomTabStack = createBottomTabNavigator();
@@ -100,9 +102,9 @@ const StackNavigator = compose(
       <Stack.Screen name={ImportWalletStackName} component={ImportWallet} />
       <Stack.Screen name={LoginStackName} component={Login} options={{ headerShown: false }} />
       <Stack.Screen name={LockStackName} component={Lock} options={{ headerShown: false }} />
-      <Stack.Screen name={SendReceiverStackName} component={SendReceiver} options={{ title: 'receiving address', headerTitleAlign: 'center' }} />
+      <Stack.Screen name={ReceiveAddressStackName} component={SendReceiver} options={{ title: 'receiving address', headerTitleAlign: 'center' }} />
       <Stack.Screen
-        name={SendStackName}
+        name={SendToStackName}
         component={SendTo}
         options={{ ...SendPageHeaderOptions({ titleColor: theme.colors.contrastWhiteAndBlack, borderColor: theme.colors.surfaceSecondary }) }}
       />
@@ -114,6 +116,17 @@ const StackNavigator = compose(
             titleColor: theme.colors.contrastWhiteAndBlack,
             borderColor: theme.colors.surfaceSecondary,
             title: 'Transaction Confirm',
+          }),
+        }}
+      />
+      <Stack.Screen
+        name={TokenListStackName}
+        component={TokenList}
+        options={{
+          ...SendPageHeaderOptions({
+            titleColor: theme.colors.contrastWhiteAndBlack,
+            borderColor: theme.colors.surfaceSecondary,
+            title: 'Tokens',
           }),
         }}
       />
