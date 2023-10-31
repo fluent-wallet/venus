@@ -96,5 +96,5 @@ export const selectAccount = async (targetAccount: Account) =>
           _account.selected = true;
         })
       );
-    database.batch(...updates);
+    return database.batch(...updates);
   });
