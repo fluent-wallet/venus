@@ -20,7 +20,7 @@ const AccountSelect: React.FC<{ navigation: NavigationProp<any>; accountGroup: A
     >
       <ScrollView className="flex-1 px-[24px]">
         {accountGroup?.map((_accountGroup, index) => (
-          <AccountGroupItem style={{ marginTop: index === 0 ? 0 : 16 }} key={_accountGroup.id} accountGroup={_accountGroup} enableExpanded enableSelect/>
+          <AccountGroupItem style={{ marginTop: index === 0 ? 0 : 16 }} key={_accountGroup.id} accountGroup={_accountGroup} enableExpanded enableSelect />
         ))}
       </ScrollView>
     </SafeAreaView>
