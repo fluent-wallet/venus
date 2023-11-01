@@ -7,7 +7,7 @@ import { type Account } from '@DB/models/Account';
 import { type Address } from '@DB/models/Address';
 import { withObservables } from '@DB/react';
 
-const AccountAddress: React.FC<{ account: Account; className?: string; style?: StyleProp<ViewStyle>; showSelected?: boolean }> = withObservables(
+const AccountAddress: React.FC<{ account: Account; className?: string; style?: { opacity: number }; showSelected?: boolean }> = withObservables(
   ['account'],
   ({ account }: { account: Account }) => ({
     account: account.observe(),
@@ -24,7 +24,7 @@ const AccountAddress: React.FC<{ account: Account; className?: string; style?: S
     account: Account;
     currentNetworkAddress: Address;
     className?: string;
-    style?: StyleProp<ViewStyle>;
+    style?: { opacity: number };
     showSelected?: boolean;
   }) => {
     const { theme } = useTheme();
@@ -32,7 +32,7 @@ const AccountAddress: React.FC<{ account: Account; className?: string; style?: S
 
     if (!currentNetworkAddress) return;
     return (
-      <View className={cx('relative text-[16px] leading-tight pointer-events-none', className)} style={style}>
+      <View className={cx('relative text-[16px] leading-tight pointer-events-none', className)}>
         <Text style={{ color: theme.colors.textPrimary }}>{account.nickname}</Text>
         <Text className="mt-[8px]" style={{ color: theme.colors.textSecondary }}>
           {shortAddress}

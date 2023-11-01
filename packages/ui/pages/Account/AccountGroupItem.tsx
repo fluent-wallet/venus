@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-non-null-asserted-optional-chain */
 import { useEffect, useState } from 'react';
-import { Text, TouchableHighlight, type StyleProp, type ViewStyle } from 'react-native';
+import { Text, TouchableHighlight, type StyleProp, type ViewStyle, Pressable } from 'react-native';
 import { useTheme, Card, Icon, ListItem } from '@rneui/themed';
 import { Button } from '@rneui/base';
 import { type Vault } from '@DB/models/Vault';
@@ -13,7 +13,7 @@ import AccountAddress from './AccountAddress';
 
 const AccountGroupItem: React.FC<{
   accountGroup: AccountGroup;
-  style?: StyleProp<ViewStyle>;
+  style?: { opacity: number };
   enableExpanded?: boolean;
   enableAddNew?: boolean;
   enableSelect?: boolean;
@@ -36,7 +36,7 @@ const AccountGroupItem: React.FC<{
     vault: Vault;
     accountGroup: AccountGroup;
     accounts: Account[];
-    style?: StyleProp<ViewStyle>;
+    style?: { opacity: number };
     enableExpanded?: boolean;
     enableAddNew?: boolean;
     enableSelect?: boolean;
@@ -51,11 +51,10 @@ const AccountGroupItem: React.FC<{
         setSelectAccountId((await querySelectedAccount(database))?.[0]?.id);
       };
       searchSelectAccount();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+      // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
-
     return (
-      <Card containerStyle={style}>
+      <Card containerStyle={{ opacity: style?.opacity || 0.9 }}>
         {(vault.type === 'hierarchical_deterministic' || vault.type === 'BSIM') && (
           <ListItem.Accordion
             noIcon={!enableExpanded}
@@ -64,7 +63,7 @@ const AccountGroupItem: React.FC<{
             onPress={() => {
               setExpanded(!expanded);
             }}
-            containerStyle={{ padding: 0, margin: 0, height: 24 }}
+            containerStyle={{ padding: 0, margin: 0, height: 24, backgroundColor: theme.colors.surfaceCard }}
             content={
               <Text className="flex-1 text-[20px] leading-[24px] font-bold" style={{ color: theme.colors.textPrimary }}>
                 {accountGroup.nickname}

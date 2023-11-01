@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, SafeAreaView, ScrollView, Text, TouchableHighlight } from 'react-native';
+import { View, SafeAreaView, ScrollView, Text, TouchableHighlight, Pressable } from 'react-native';
 import { showMessage } from 'react-native-flash-message';
 import { useHeaderHeight } from '@react-navigation/elements';
 import { Button } from '@rneui/base';
@@ -42,7 +42,7 @@ const AccountManage: React.FC<{ navigation: StackNavigation; accountGroup: Array
         {accountGroups?.map((accountGroup, index) => (
           <TouchableHighlight
             underlayColor={theme.colors.underlayColor}
-            style={{ marginTop: index === 0 ? 0 : 16 }}
+            style={{ marginTop: index === 0 ? 0 : 16, borderRadius: 8, overflow: 'hidden' }}
             key={accountGroup.id}
             onPress={() => navigation.navigate(GroupSettingStackName, { accountGroupId: accountGroup.id })}
           >
