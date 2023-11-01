@@ -28,7 +28,6 @@ import WalletIcon from '@assets/icons/wallet.svg';
 import SettingsIcon from '@assets/icons/settings.svg';
 import ArrowLeft from '@assets/icons/arrow-left.svg';
 
-
 const Stack = createNativeStackNavigator<RootStackList>();
 const BottomTabStack = createBottomTabNavigator();
 
@@ -73,7 +72,7 @@ const StackNavigator = compose(
   const hasVault = vaultCount > 0;
   return (
     <Stack.Navigator
-      initialRouteName={hasVault ? BackUpStackName : WelcomeStackName}
+      initialRouteName={hasVault ? HomeStackName : WelcomeStackName}
       screenOptions={{
         headerTitleAlign: 'left',
         headerTransparent: true,
