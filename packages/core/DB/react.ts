@@ -1,5 +1,5 @@
 import { withDatabase, withObservables as _withObservables, compose as _compose } from '@nozbe/watermelondb/react';
-export { withDatabase, withObservables, type ExtractedObservables } from '@nozbe/watermelondb/react';
+export { withDatabase, withObservables, useDatabase, type ExtractedObservables } from '@nozbe/watermelondb/react';
 import { type flow } from 'lodash-es';
 import _database from '.';
 

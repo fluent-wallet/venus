@@ -1,3 +1,5 @@
+import { Q, type Query } from '@nozbe/watermelondb';
+import { type Observable } from '@nozbe/watermelondb/utils/rx';
 import { type Network } from '../Network';
 import { type AccountGroup } from '../AccountGroup';
 import { type Account } from './';
@@ -60,7 +62,7 @@ export async function createAccount({
     const newAccount = createModel({
       name: TableName.Account,
       params: {
-        nickname: nickname ?? `${accountGroup.nickname}-${newAccountIndex}`,
+        nickname: nickname ?? `Account - ${newAccountIndex + 1}`,
         index: newAccountIndex,
         hidden: hidden ?? false,
         selected: selected ?? false,
@@ -76,3 +78,26 @@ export async function createAccount({
     return newAccount;
   });
 }
+
+export const querySelectedAccount = (_database: typeof database) =>
+  _database.get(TableName.Account).query(Q.where('selected', true)) as unknown as Query<Account>;
+
+export const observeAccountById = (_database: typeof database, id: string) => _database.get(TableName.Account).findAndObserve(id) as Observable<Account>;
+
+export const selectAccount = async (targetAccount: Account) =>
+  database.write(async () => {
+    if (targetAccount.selected) return;
+    const selectedAccount = await querySelectedAccount(database);
+    const updates = selectedAccount
+      .map((account) =>
+        account.prepareUpdate((_account) => {
+          _account.selected = false;
+        })
+      )
+      .concat(
+        targetAccount.prepareUpdate((_account) => {
+          _account.selected = true;
+        })
+      );
+    return database.batch(...updates);
+  });

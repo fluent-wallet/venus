@@ -11,14 +11,17 @@ declare module '@rneui/themed' {
     surfaceSecondary: string;
     surfaceBrand: string;
     surfaceInvert: string;
+    surfaceThird: string;
     surfaceCard: string;
     warnSuccessPrimary: string;
     warnErrorPrimary: string;
     linearGradientBackground: string[];
     normalBackground: string;
     passwordInputBackground: string;
-    buttonDisabledBackground:string
-    homeHeaderAddressBackgroundColor:string
-    pureBlackAndWight:string
+    buttonDisabledBackground: string;
+    homeHeaderAddressBackgroundColor: string;
+    pureBlackAndWight: string;
+    underlayColor: string;
+    contrastWhiteAndBlack: string;
   }
 }

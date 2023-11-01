@@ -12,17 +12,21 @@ function Lock() {
   const { theme } = useTheme();
   const navigation = useNavigation<StackNavigation>();
 
-  const unLockWallet = async () => {
-    try {
-      await authentication.getPassword();
-      navigation.navigate(HomeStackName, { screen: WalletStackName });
-    } catch (error) {
-     // user cancel unlock
-    }
-  };
+
   useEffect(() => {
+    const unLockWallet = async () => {
+      try {
+        await authentication.getPassword();
+        navigation.navigate(HomeStackName, { screen: WalletStackName });
+      } catch (error) {
+        // user cancel unlock
+      }
+    };
+    
     unLockWallet();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
   return (
     <SafeAreaView className="flex-1 flex flex-col justify-start px-[24px]" style={{ backgroundColor: theme.colors.normalBackground }}>
       <View className="flex flex-1 items-center justify-center">

@@ -1,6 +1,8 @@
 import { ModelFields, createModel } from '@DB/helper/modelHelper';
+import { type Observable } from '@nozbe/watermelondb/utils/rx';
 import { AccountGroup } from './';
 import TableName from '../../TableName';
+import database from '../../';
 
 type Params = ModelFields<AccountGroup>;
 export async function createAccountGroup(params: Params, prepareCreate?: true) {
@@ -12,3 +14,6 @@ export async function createAccountGroup(params: Params, prepareCreate?: true) {
     prepareCreate,
   });
 }
+
+export const observeAccountGroupById = (_database: typeof database, id: string) =>
+  _database.get(TableName.AccountGroup).findAndObserve(id) as Observable<AccountGroup>;

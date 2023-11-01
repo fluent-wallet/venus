@@ -1,5 +1,5 @@
 import React, { type PropsWithChildren } from 'react';
-import { Platform, Text, TouchableOpacity } from 'react-native';
+import { Platform, TouchableOpacity } from 'react-native';
 import { NavigationContainer, useNavigation } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
@@ -11,11 +11,21 @@ import Wallet, { WalletStackName, getWalletHeaderOptions } from '@pages/Wallet';
 import Settings, { SettingsStackName } from '@pages/Settings';
 import ImportWallet, { ImportWalletStackName } from '@pages/ImportWallet';
 import AccountManage, { AccountManageStackName } from '@pages/Account/AccountManage';
+import AccountSelect, { AccountSelectStackName } from '@pages/Account/AccountSelect';
+import AddAccount, { AddAccountStackName } from '@pages/Account/AddAccount';
 import Login, { LoginStackName } from '@pages/Login';
 import Lock, { LockStackName } from '@pages/Lock';
 import { withDatabase, withObservables, compose, type Database } from '@DB/react';
 import TableName from '@DB/TableName';
 import { HomeStackName, type StackNavigation, type RootStackList } from './configs';
+import SendReceiver, { SendPageHeaderOptions, ReceiveAddressStackName } from '@pages/Transaction/ReceiveAddress';
+import TransactionConfirm, { TransactionConfirmStackName } from '@pages/Transaction/TransactionConfirm';
+import SendTo, { SendToStackName } from '@pages/Transaction/SendTo';
+import TokenList, { TokenListStackName } from '@pages/Transaction/TokenList';
+import BackUp, { BackUpStackName } from '@pages/Account/BackUp';
+import AccountSetting, { AccountSettingStackName } from '@pages/Account/AccountSetting';
+import GroupSetting, { GroupSettingStackName } from '@pages/Account/GroupSetting';
+
 import WalletIcon from '@assets/icons/wallet.svg';
 import SettingsIcon from '@assets/icons/settings.svg';
 import ArrowLeft from '@assets/icons/arrow-left.svg';
@@ -73,9 +83,9 @@ const StackNavigator = compose(
           canGoBack ? (
             <TouchableOpacity className="flex flex-row items-center gap-[4px]" onPress={() => navigation.goBack()}>
               <ArrowLeft />
-              <Text className="text-[16px] font-medium" style={{ color: theme.colors.textBrand }}>
+              {/* <Text className="text-[16px] font-medium" style={{ color: theme.colors.textBrand }}>
                 Wallet
-              </Text>
+              </Text> */}
             </TouchableOpacity>
           ) : null,
         title: '',
@@ -90,9 +100,42 @@ const StackNavigator = compose(
       <Stack.Screen name={BiometricsStackName} component={Biometrics} />
       <Stack.Screen name={HomeStackName} component={HomeScreenNavigator} options={{ headerShown: false }} />
       <Stack.Screen name={AccountManageStackName} component={AccountManage} options={{ title: 'Manage Wallets', headerTitleAlign: 'center' }} />
+      <Stack.Screen name={AccountSelectStackName} component={AccountSelect} options={{ title: 'Account', headerTitleAlign: 'center' }} />
+      <Stack.Screen name={AddAccountStackName} component={AddAccount} options={{ title: 'Add Account', headerTitleAlign: 'center' }} />
+      <Stack.Screen name={AccountSettingStackName} component={AccountSetting} options={{ title: 'Account', headerTitleAlign: 'center' }} />
+      <Stack.Screen name={GroupSettingStackName} component={GroupSetting} options={{ title: 'Seed Group', headerTitleAlign: 'center' }} />
       <Stack.Screen name={ImportWalletStackName} component={ImportWallet} />
       <Stack.Screen name={LoginStackName} component={Login} options={{ headerShown: false }} />
       <Stack.Screen name={LockStackName} component={Lock} options={{ headerShown: false }} />
+      <Stack.Screen name={ReceiveAddressStackName} component={SendReceiver} options={{ title: 'receiving address', headerTitleAlign: 'center' }} />
+      <Stack.Screen
+        name={SendToStackName}
+        component={SendTo}
+        options={{ ...SendPageHeaderOptions({ titleColor: theme.colors.contrastWhiteAndBlack, borderColor: theme.colors.surfaceSecondary }) }}
+      />
+      <Stack.Screen
+        name={TransactionConfirmStackName}
+        component={TransactionConfirm}
+        options={{
+          ...SendPageHeaderOptions({
+            titleColor: theme.colors.contrastWhiteAndBlack,
+            borderColor: theme.colors.surfaceSecondary,
+            title: 'Transaction Confirm',
+          }),
+        }}
+      />
+      <Stack.Screen
+        name={TokenListStackName}
+        component={TokenList}
+        options={{
+          ...SendPageHeaderOptions({
+            titleColor: theme.colors.contrastWhiteAndBlack,
+            borderColor: theme.colors.surfaceSecondary,
+            title: 'Tokens',
+          }),
+        }}
+      />
+      <Stack.Screen name={BackUpStackName} component={BackUp} options={{ headerTitleAlign: 'center' }} />
     </Stack.Navigator>
   );
 });

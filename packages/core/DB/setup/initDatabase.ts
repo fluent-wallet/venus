@@ -4,6 +4,7 @@ import { createHdPath } from '../models/HdPath/service';
 import { createTokenList } from '../models/TokenList/service';
 import { createTicker } from '../models/Ticker/service';
 import { createNetwork, NetworkParams } from '../models/Network/service';
+import '../helper/authentication';
 
 import {
   CFX_MAINNET_RPC_ENDPOINT,
@@ -136,7 +137,7 @@ export const NETWORK_ARR: Array<NetworkParams & { tokenListIndex?: number; hdPat
     networkType: 'cfx',
     chainId: CFX_MAINNET_CHAINID,
     netId: CFX_MAINNET_NETID,
-    selected: true,
+    selected: false,
     cacheTime: 1000,
     icon: 'https://cdn.jsdelivr.net/gh/Conflux-Chain/helios@dev/packages/built-in-network-icons/Conflux.svg',
     scanUrl: CFX_MAINNET_EXPLORER_URL,
@@ -153,6 +154,7 @@ export const NETWORK_ARR: Array<NetworkParams & { tokenListIndex?: number; hdPat
     networkType: 'eth',
     chainId: CFX_ESPACE_MAINNET_CHAINID,
     netId: CFX_ESPACE_MAINNET_NETID,
+    selected: true,
     cacheTime: 4000,
     icon: 'https://cdn.jsdelivr.net/gh/Conflux-Chain/helios@dev/packages/built-in-network-icons/Conflux.svg',
     scanUrl: CFX_ESPACE_MAINNET_EXPLORER_URL,
@@ -169,6 +171,7 @@ export const NETWORK_ARR: Array<NetworkParams & { tokenListIndex?: number; hdPat
     networkType: 'eth',
     chainId: ETH_MAINNET_CHAINID,
     netId: ETH_MAINNET_NETID,
+    selected: false,
     icon: 'https://cdn.jsdelivr.net/gh/Conflux-Chain/helios@dev/packages/built-in-network-icons/Ethereum.svg',
     cacheTime: 15000,
     scanUrl: ETH_MAINNET_EXPLORER_URL,
@@ -185,6 +188,7 @@ export const NETWORK_ARR: Array<NetworkParams & { tokenListIndex?: number; hdPat
     networkType: 'cfx',
     chainId: CFX_TESTNET_CHAINID,
     netId: CFX_TESTNET_NETID,
+    selected: false,
     icon: 'https://cdn.jsdelivr.net/gh/Conflux-Chain/helios@dev/packages/built-in-network-icons/Conflux.svg',
     cacheTime: 1000,
     scanUrl: CFX_TESTNET_EXPLORER_URL,
@@ -201,6 +205,7 @@ export const NETWORK_ARR: Array<NetworkParams & { tokenListIndex?: number; hdPat
     networkType: 'eth',
     chainId: CFX_ESPACE_TESTNET_CHAINID,
     netId: CFX_ESPACE_TESTNET_NETID,
+    selected: false,
     icon: 'https://cdn.jsdelivr.net/gh/Conflux-Chain/helios@dev/packages/built-in-network-icons/Conflux.svg',
     cacheTime: 4000,
     scanUrl: CFX_ESPACE_TESTNET_EXPLORER_URL,
@@ -216,6 +221,7 @@ export const NETWORK_ARR: Array<NetworkParams & { tokenListIndex?: number; hdPat
     networkType: 'eth',
     chainId: ETH_GOERLI_CHAINID,
     netId: ETH_GOERLI_NETID,
+    selected: false,
     icon: 'https://cdn.jsdelivr.net/gh/Conflux-Chain/helios@dev/packages/built-in-network-icons/Ethereum.svg',
     cacheTime: 15000,
     scanUrl: ETH_GOERLI_EXPLORER_URL,
@@ -231,6 +237,7 @@ export const NETWORK_ARR: Array<NetworkParams & { tokenListIndex?: number; hdPat
     networkType: 'eth',
     chainId: ETH_SEPOLIA_CHAINID,
     netId: ETH_SEPOLIA_NETID,
+    selected: false,
     icon: 'https://cdn.jsdelivr.net/gh/Conflux-Chain/helios@dev/packages/built-in-network-icons/Ethereum.svg',
     cacheTime: 15000,
     scanUrl: ETH_SEPOLIA_EXPLORER_URL,

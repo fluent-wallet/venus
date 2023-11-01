@@ -1,3 +1,4 @@
+import { Q, type Query } from '@nozbe/watermelondb';
 import { type Account } from '../Account';
 import { type Network } from '../Network';
 import { type Address } from './';
@@ -5,6 +6,7 @@ import TableName from '../../TableName';
 import { createModel } from '../../helper/modelHelper';
 import { encode } from '../../../utils/address';
 import { toAccountAddress } from '../../../utils/account';
+import database from '../../';
 
 type Params = { hex: string; nativeBalance?: string; account: Account; network: Network };
 export function createAddress(params: Params, prepareCreate: true): Address;
@@ -15,7 +17,15 @@ export function createAddress({ hex, nativeBalance, network, account }: Params, 
 
   return createModel<Address>({
     name: TableName.Address,
-    params: { hex, nativeBalance: nativeBalance ?? '0x0', base32: network ? encode(toAccountAddress(hex), network.netId) : '', account },
+    params: { hex, nativeBalance: nativeBalance ?? '0x0', base32: network ? encode(toAccountAddress(hex), network.netId) : '', account, network },
     prepareCreate,
   });
 }
+
+export const querySelectedAddress = (_database: typeof database) =>
+  _database
+    .get(TableName.Address)
+    .query(
+      Q.experimentalJoinTables([TableName.Account, TableName.Network]),
+      Q.and(Q.on(TableName.Account, Q.where('selected', true)), Q.on(TableName.Network, Q.where('selected', true)))
+    ) as unknown as Query<Address>;

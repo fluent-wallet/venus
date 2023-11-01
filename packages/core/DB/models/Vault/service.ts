@@ -19,7 +19,7 @@ function createVault(params: Params, prepareCreate?: true) {
   });
 }
 
-const isFirstVault = async () => {
+const checkIsFirstVault = async () => {
   const count = await database.get(TableName.Vault).query().fetchCount();
   return count === 0;
 };
@@ -63,11 +63,17 @@ async function createVaultOfType({
         ? hexAddress
         : index;
     if (!data) throw new Error('Vault data is empty');
-
+    const isFirstVault = await checkIsFirstVault();
     const count = await getVaultTypeCount(type);
     const vault = await createVault({ data, type, device: 'ePayWallet' });
     const accountGroup = await createAccountGroup({ nickname: `${defaultGroupNameMap[type]} - ${count + 1}`, hidden: false, vault });
-    await createAccount({ nickname: 'default', hidden: false, selected: await isFirstVault(), accountGroup, ...(hexAddress ? { hexAddress } : null) });
+    await createAccount({
+      nickname: 'Account - 1',
+      hidden: false,
+      selected: isFirstVault ? true : false,
+      accountGroup,
+      ...(hexAddress ? { hexAddress } : null),
+    });
   } catch (error) {
     console.error('create vault error: ', error);
   }
@@ -86,11 +92,11 @@ export const createHDVault = async (importMnemonic?: string) => {
   }
 };
 
-export const createBSIMVault = async () => {
+export const createBSIMVault = async (args: { hexAddress: string; index: string }) => {
   try {
     const start = performance.now();
     console.log('create BSIM vault start');
-    const { hexAddress, index } = { hexAddress: '', index: '0' };
+    const { hexAddress, index } = args;
     await createVaultOfType({ type: 'BSIM', hexAddress, index });
     const end = performance.now();
     console.log(`create BSIM vault a Wallet took ${end - start} ms.`);

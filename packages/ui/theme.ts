@@ -30,6 +30,8 @@ export const colors = {
 
   white: '#FFFFFF',
   black: '#000000',
+  underlayLight: '#dddddd',
+  underlayDark: '#dddddd',
 };
 
 const theme = createTheme({
@@ -43,6 +45,7 @@ const theme = createTheme({
     surfaceSecondary: colors.blue1,
     surfaceBrand: colors.blue3,
     surfaceInvert: colors.white,
+    surfaceThird: colors.blue0,
     surfaceCard: colors.white,
     warnSuccessPrimary: colors.green4,
     warnErrorPrimary: colors.red4,
@@ -52,6 +55,8 @@ const theme = createTheme({
     buttonDisabledBackground: '#D9E3FF',
     homeHeaderAddressBackgroundColor: colors.blue0,
     pureBlackAndWight: colors.white,
+    underlayColor: colors.underlayLight,
+    contrastWhiteAndBlack: colors.black,
   },
   darkColors: {
     textPrimary: colors.gray1,
@@ -63,6 +68,7 @@ const theme = createTheme({
     surfaceSecondary: colors.blue4,
     surfaceBrand: colors.blue2,
     surfaceInvert: colors.white,
+    surfaceThird: colors.blue5,
     surfaceCard: '#242424',
     warnSuccessPrimary: colors.green3,
     warnErrorPrimary: colors.red3,
@@ -72,6 +78,8 @@ const theme = createTheme({
     buttonDisabledBackground: colors.blue4,
     homeHeaderAddressBackgroundColor: colors.blue5,
     pureBlackAndWight: colors.black,
+    underlayColor: colors.underlayDark,
+    contrastWhiteAndBlack: colors.white,
   },
   components: {
     Text: (_, theme) => ({

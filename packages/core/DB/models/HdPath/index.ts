@@ -14,4 +14,3 @@ export class HdPath extends Model {
   @text('value') value!: string;
   @children(TableName.Network) network!: Query<Network>;
 }
-

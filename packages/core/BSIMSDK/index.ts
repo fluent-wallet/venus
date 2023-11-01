@@ -5,61 +5,60 @@ const { BSIMSDK } = NativeModules;
  * all coin types for BSIM support
  */
 export enum CoinTypes {
+  CONFLUX = 'CONFLUX',
 
-  CONFLUX = "CONFLUX",
-
-  ETHEREUM = "ETHEREUM",
-  CALLISTO = "CALLISTO",
-  GOCHAIN = "GOCHAIN",
-  ETHEREUM_CLASSIC = "ETHEREUM_CLASSIC",
-  POA = "POA",
-  VECHAIN = "VECHAIN",
-  WANCHAIN = "WANCHAIN",
-  TRON = "TRON",
-  ICON = "ICON",
-  TOMO = "TOMO",
-  BITCOIN = "BITCOIN",
-  LITECOIN = "LITECOIN",
-  BITCOINCASH = "BITCOINCASH",
-  DASH = "DASH",
-  ZCOIN = "ZCOIN",
-  ZCASH = "ZCASH",
-  BINANCE = "BINANCE",
-  RIPPLE = "RIPPLE",
-  TEZOS = "TEZOS",
-  STELLAR = "STELLAR",
-  KIN = "KIN",
-  AION = "AION",
-  NIMIQ = "NIMIQ",
-  THUNDERTOKEN = "THUNDERTOKEN",
-  ATOM = "ATOM",
-  KAVA = "KAVA",
-  DOGECOIN = "DOGECOIN",
-  THETA = "THETA",
-  ONTOLOGY = "ONTOLOGY",
-  GROESTL = "GROESTL",
-  VIACOIN = "VIACOIN",
-  QTUM = "QTUM",
-  ZELCASH = "ZELCASH",
-  ZILLIQA = "ZILLIQA",
-  IOTEX = "IOTEX",
-  RAVEN = "RAVEN",
-  WAVES = "WAVES",
-  AETERNITY = "AETERNITY",
-  NEBULAS = "NEBULAS",
-  FIO = "FIO",
-  DECRED = "DECRED",
-  ALGORAND = "ALGORAND",
-  NANO = "NANO",
-  DIGIBYTE = "DIGIBYTE",
-  HARMONY = "HARMONY",
-  NEAR = "NEAR",
-  SOLANA = "SOLANA",
-  ELROND = "ELROND",
-  POLKADOT = "POLKADOT",
-  SMARTCHAIN = "SMARTCHAIN",
-  SMARTCHAINLEGACY = "SMARTCHAINLEGACY",
-  FILECOIN = "FILECOIN",
+  ETHEREUM = 'ETHEREUM',
+  CALLISTO = 'CALLISTO',
+  GOCHAIN = 'GOCHAIN',
+  ETHEREUM_CLASSIC = 'ETHEREUM_CLASSIC',
+  POA = 'POA',
+  VECHAIN = 'VECHAIN',
+  WANCHAIN = 'WANCHAIN',
+  TRON = 'TRON',
+  ICON = 'ICON',
+  TOMO = 'TOMO',
+  BITCOIN = 'BITCOIN',
+  LITECOIN = 'LITECOIN',
+  BITCOINCASH = 'BITCOINCASH',
+  DASH = 'DASH',
+  ZCOIN = 'ZCOIN',
+  ZCASH = 'ZCASH',
+  BINANCE = 'BINANCE',
+  RIPPLE = 'RIPPLE',
+  TEZOS = 'TEZOS',
+  STELLAR = 'STELLAR',
+  KIN = 'KIN',
+  AION = 'AION',
+  NIMIQ = 'NIMIQ',
+  THUNDERTOKEN = 'THUNDERTOKEN',
+  ATOM = 'ATOM',
+  KAVA = 'KAVA',
+  DOGECOIN = 'DOGECOIN',
+  THETA = 'THETA',
+  ONTOLOGY = 'ONTOLOGY',
+  GROESTL = 'GROESTL',
+  VIACOIN = 'VIACOIN',
+  QTUM = 'QTUM',
+  ZELCASH = 'ZELCASH',
+  ZILLIQA = 'ZILLIQA',
+  IOTEX = 'IOTEX',
+  RAVEN = 'RAVEN',
+  WAVES = 'WAVES',
+  AETERNITY = 'AETERNITY',
+  NEBULAS = 'NEBULAS',
+  FIO = 'FIO',
+  DECRED = 'DECRED',
+  ALGORAND = 'ALGORAND',
+  NANO = 'NANO',
+  DIGIBYTE = 'DIGIBYTE',
+  HARMONY = 'HARMONY',
+  NEAR = 'NEAR',
+  SOLANA = 'SOLANA',
+  ELROND = 'ELROND',
+  POLKADOT = 'POLKADOT',
+  SMARTCHAIN = 'SMARTCHAIN',
+  SMARTCHAINLEGACY = 'SMARTCHAINLEGACY',
+  FILECOIN = 'FILECOIN',
 }
 
 export interface BSIMPubKey {
@@ -72,7 +71,7 @@ export interface BSIMMessage {
   // /**
   //  * The coin type set conflux by default
   //  */
-  coinType?: string
+  coinType?: string;
   index: number;
   msg: string;
 }
@@ -108,6 +107,17 @@ interface BSIMSDKInterface {
    * Get all Pubkey from BSIM SDK
    */
   getPubkeyList(): Promise<BSIMPubKey[]>;
+  /**
+   * bsim pubkey to eth pubkey
+   * @param hexPubkey
+   */
+  pubkeyToECPubkey(hexPubkey: string): Promise<string>;
+
+  /**
+   * bsim pubkey to eth address
+   * @param hexPubkey 
+   */
+  pubkeyToEthAddr(hexPubkey: string): Promise<string>;
 }
 
 export default BSIMSDK as BSIMSDKInterface;
