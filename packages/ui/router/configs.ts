@@ -13,7 +13,7 @@ import { ReceiveAddressStackName } from '@pages/Transaction/ReceiveAddress';
 import { SendToStackName } from '@pages/Transaction/SendTo';
 import { TransactionConfirmStackName } from '@pages/Transaction/TransactionConfirm';
 import { TokenListStackName } from '@pages/Transaction/TokenList';
-
+import { BackUpStackName } from '@pages/Account/BackUp';
 export {
   WelcomeStackName,
   SetPasswordStackName,
@@ -29,6 +29,7 @@ export {
   ReceiveAddressStackName,
   TransactionConfirmStackName,
   TokenListStackName,
+  BackUpStackName,
 };
 
 export const HomeStackName = 'Home';
@@ -48,6 +49,7 @@ export type RootStackList = {
   [TransactionConfirmStackName]: undefined;
   [ReceiveAddressStackName]: undefined;
   [TokenListStackName]: undefined;
+  [BackUpStackName]: { vaultId: string };
 
   Home: { screen: typeof WalletStackName };
 };

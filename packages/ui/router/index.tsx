@@ -22,6 +22,7 @@ import SendReceiver, { SendPageHeaderOptions, ReceiveAddressStackName } from '@p
 import TransactionConfirm, { TransactionConfirmStackName } from '@pages/Transaction/TransactionConfirm';
 import SendTo, { SendToStackName } from '@pages/Transaction/SendTo';
 import TokenList, { TokenListStackName } from '@pages/Transaction/TokenList';
+import BackUp, { BackUpStackName } from '@pages/Account/BackUp';
 
 import WalletIcon from '@assets/icons/wallet.svg';
 import SettingsIcon from '@assets/icons/settings.svg';
@@ -130,6 +131,7 @@ const StackNavigator = compose(
           }),
         }}
       />
+      <Stack.Screen name={BackUpStackName} component={BackUp} options={{ headerTitleAlign: 'center' }} />
     </Stack.Navigator>
   );
 });
