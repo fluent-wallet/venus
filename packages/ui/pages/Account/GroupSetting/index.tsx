@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-non-null-asserted-optional-chain */
 import { useEffect } from 'react';
 import { SafeAreaView, View, ScrollView } from 'react-native';
-import { map } from 'rxjs';
+import { switchMap } from 'rxjs';
 import { useTheme, Text } from '@rneui/themed';
 import { useHeaderHeight } from '@react-navigation/elements';
 import { Button } from '@rneui/base';
@@ -21,13 +21,12 @@ const GroupSetting: React.FC<{
     const accountGroup = observeAccountGroupById(database, route.params.accountGroupId);
     return {
       accountGroup,
-      vault: accountGroup.pipe(map((accountGroup) => accountGroup.vault.observe())),
+      vault: accountGroup.pipe(switchMap((accountGroup) => accountGroup.vault.observe())),
     };
   })
 )(({ navigation, vault, accountGroup }: { navigation: StackNavigation; accountGroup: AccountGroup; vault: Vault }) => {
   const { theme } = useTheme();
   const headerHeight = useHeaderHeight();
-  console.log(accountGroup.nickname, vault.id);
   useEffect(() => {
     navigation.setOptions({ headerTitle: vault.type === 'hierarchical_deterministic' ? 'Seed Group' : 'BSIM Group' });
     // eslint-disable-next-line react-hooks/exhaustive-deps

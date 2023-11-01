@@ -1,7 +1,9 @@
 /* eslint-disable @typescript-eslint/no-non-null-asserted-optional-chain */
 import { useEffect, useState } from 'react';
-import { Text, TouchableHighlight, type StyleProp, type ViewStyle, Pressable } from 'react-native';
+import { Text, TouchableHighlight, View, type StyleProp, type ViewStyle } from 'react-native';
+import { atom, useAtom } from 'jotai';
 import { useTheme, Card, Icon, ListItem } from '@rneui/themed';
+import { useNavigation } from '@react-navigation/native';
 import { Button } from '@rneui/base';
 import { type Vault } from '@DB/models/Vault';
 import { type AccountGroup } from '@DB/models/AccountGroup';
@@ -9,14 +11,29 @@ import { type Account } from '@DB/models/Account';
 import { selectAccount, querySelectedAccount } from '@DB/models/Account/service';
 import { withObservables, useDatabase } from '@DB/react';
 import useInAsync from '@hooks/useInAsync';
+import { AccountSettingStackName, GroupSettingStackName, type StackNavigation } from '@router/configs';
 import AccountAddress from './AccountAddress';
+
+const selectedAccountIdAtom = atom<string | null>(null);
+export const useInitSelectedAccount = () => {
+  const database = useDatabase();
+  const [_, setSelectAccountId] = useAtom(selectedAccountIdAtom);
+  useEffect(() => {
+    const searchSelectAccount = async () => {
+      setSelectAccountId((await querySelectedAccount(database))?.[0]?.id);
+    };
+    searchSelectAccount();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+};
 
 const AccountGroupItem: React.FC<{
   accountGroup: AccountGroup;
-  style?: { opacity: number };
+  style?: StyleProp<ViewStyle>;
   enableExpanded?: boolean;
   enableAddNew?: boolean;
   enableSelect?: boolean;
+  enableLinkToSetting?: boolean;
 }> = withObservables(['accountGroup'], ({ accountGroup }: { accountGroup: AccountGroup }) => {
   return {
     accountGroup: accountGroup.observe(),
@@ -32,77 +49,100 @@ const AccountGroupItem: React.FC<{
     enableExpanded,
     enableAddNew,
     enableSelect,
+    enableLinkToSetting,
   }: {
     vault: Vault;
     accountGroup: AccountGroup;
     accounts: Account[];
-    style?: { opacity: number };
+    style?: { opacity: number; backgroundColor?: string };
     enableExpanded?: boolean;
     enableAddNew?: boolean;
     enableSelect?: boolean;
+    enableLinkToSetting?: boolean;
   }) => {
     const { theme } = useTheme();
     const { inAsync, execAsync: addAccount } = useInAsync(accountGroup.addAccount.bind(accountGroup));
     const [expanded, setExpanded] = useState(true);
-    const [selectedAccountId, setSelectAccountId] = useState<string | null>(null);
-    const database = useDatabase();
-    useEffect(() => {
-      const searchSelectAccount = async () => {
-        setSelectAccountId((await querySelectedAccount(database))?.[0]?.id);
-      };
-      searchSelectAccount();
-      // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, []);
+    const [selectedAccountId, setSelectAccountId] = useAtom(selectedAccountIdAtom);
+    const navigation = useNavigation<StackNavigation>();
+
     return (
-      <Card containerStyle={{ opacity: style?.opacity || 0.9 }}>
-        {(vault.type === 'hierarchical_deterministic' || vault.type === 'BSIM') && (
-          <ListItem.Accordion
-            noIcon={!enableExpanded}
-            disabled={!enableExpanded}
-            isExpanded={expanded}
-            onPress={() => {
-              setExpanded(!expanded);
-            }}
-            containerStyle={{ padding: 0, margin: 0, height: 24, backgroundColor: theme.colors.surfaceCard }}
-            content={
-              <Text className="flex-1 text-[20px] leading-[24px] font-bold" style={{ color: theme.colors.textPrimary }}>
-                {accountGroup.nickname}
-              </Text>
+      <TouchableHighlight
+        className="rounded-[8px] overflow-hidden"
+        style={style}
+        underlayColor={theme.colors.underlayColor}
+        disabled={enableSelect && (vault.type === 'hierarchical_deterministic' || vault.type === 'BSIM')}
+        onPress={async () => {
+          if (vault.type === 'BSIM' || vault.type === 'hierarchical_deterministic') {
+            if (enableLinkToSetting) {
+              navigation.navigate(GroupSettingStackName, { accountGroupId: accountGroup.id });
             }
-          >
-            <Card.Divider className="my-[16px]" />
-            {accounts.map((account, index) => (
-              <TouchableHighlight
-                style={{ marginTop: index === 0 ? 0 : 24 }}
-                key={account.id}
-                underlayColor={theme.colors.underlayColor}
-                disabled={!enableSelect || selectedAccountId === account.id}
-                onPress={() => {
-                  selectAccount(account);
-                  setSelectAccountId(account.id);
-                }}
-              >
-                <AccountAddress account={account} showSelected />
-              </TouchableHighlight>
-            ))}
-            {vault.type === 'hierarchical_deterministic' && enableAddNew && (
-              <>
-                <Card.Divider className="mt-[16px] mb-[12px]" />
-                <Button
-                  titleStyle={{ fontSize: 16, fontWeight: '500', color: theme.colors.textPrimary }}
-                  size="sm"
-                  type="clear"
-                  onPress={() => addAccount()}
-                  loading={inAsync}
+          } else {
+            if (enableSelect) {
+              selectAccount(accounts?.[0]);
+              setSelectAccountId(accounts?.[0].id);
+            } else if (enableLinkToSetting) {
+              navigation.navigate(AccountSettingStackName, { accountId: accounts?.[0].id });
+            }
+          }
+        }}
+      >
+        <View className="w-[100%] p-[16px]" style={{ backgroundColor: theme.colors.surfaceCard }}>
+          {(vault.type === 'hierarchical_deterministic' || vault.type === 'BSIM') && (
+            <ListItem.Accordion
+              noIcon={!enableExpanded}
+              disabled={!enableExpanded}
+              isExpanded={expanded}
+              onPress={() => {
+                setExpanded(!expanded);
+              }}
+              containerStyle={{ padding: 0, margin: 0, height: 24, backgroundColor: 'transparent' }}
+              content={
+                <Text className="flex-1 text-[20px] leading-[24px] font-bold" style={{ color: theme.colors.textPrimary }}>
+                  {accountGroup.nickname}
+                </Text>
+              }
+            >
+              <Card.Divider className="my-[16px]" />
+              {accounts.map((account, index) => (
+                <TouchableHighlight
+                  style={{ marginTop: index === 0 ? 0 : 24 }}
+                  key={account.id}
+                  underlayColor={theme.colors.underlayColor}
+                  disabled={enableSelect && selectedAccountId === account.id}
+                  onPress={() => {
+                    if (enableSelect) {
+                      selectAccount(account);
+                      setSelectAccountId(account.id);
+                    } else if (enableLinkToSetting) {
+                      navigation.navigate(AccountSettingStackName, { accountId: account.id });
+                    }
+                  }}
                 >
-                  <Icon name="add" color={theme.colors.textPrimary} size={16} className="mr-[5px]" />
-                  <Text>Add Account</Text>
-                </Button>
-              </>
-            )}
-          </ListItem.Accordion>
-        )}
-      </Card>
+                  <AccountAddress account={account} showSelected />
+                </TouchableHighlight>
+              ))}
+              {vault.type === 'hierarchical_deterministic' && enableAddNew && (
+                <>
+                  <Card.Divider className="mt-[16px] mb-[12px]" />
+                  <Button
+                    titleStyle={{ fontSize: 16, fontWeight: '500', color: theme.colors.textPrimary }}
+                    size="sm"
+                    type="clear"
+                    onPress={() => addAccount()}
+                    loading={inAsync}
+                  >
+                    <Icon name="add" color={theme.colors.textPrimary} size={16} className="mr-[5px]" />
+                    <Text>Add Account</Text>
+                  </Button>
+                </>
+              )}
+            </ListItem.Accordion>
+          )}
+
+          {vault.type !== 'hierarchical_deterministic' && vault.type !== 'BSIM' && <AccountAddress account={accounts?.[0]} showSelected />}
+        </View>
+      </TouchableHighlight>
     );
   }
 );

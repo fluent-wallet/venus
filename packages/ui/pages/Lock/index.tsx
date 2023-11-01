@@ -2,7 +2,7 @@ import { BaseButton } from '@components/Button';
 import { authentication } from '@core/DB/helper';
 import { useNavigation } from '@react-navigation/native';
 import { useTheme, Text } from '@rneui/themed';
-import { HomeStackName, StackNavigation, WalletStackName } from '@router/configs';
+import { HomeStackName, WalletStackName, type StackNavigation } from '@router/configs';
 import { useEffect } from 'react';
 import { SafeAreaView, View } from 'react-native';
 
@@ -11,7 +11,6 @@ export const LockStackName = 'Lock';
 function Lock() {
   const { theme } = useTheme();
   const navigation = useNavigation<StackNavigation>();
-
 
   useEffect(() => {
     const unLockWallet = async () => {
@@ -22,9 +21,9 @@ function Lock() {
         // user cancel unlock
       }
     };
-    
+
     unLockWallet();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (

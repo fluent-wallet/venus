@@ -1,20 +1,24 @@
 import React, { useState } from 'react';
-import { View, SafeAreaView, ScrollView, Text, TouchableHighlight, Pressable } from 'react-native';
+import { View, SafeAreaView, ScrollView, Text, TouchableHighlight } from 'react-native';
 import { showMessage } from 'react-native-flash-message';
 import { useHeaderHeight } from '@react-navigation/elements';
 import { Button } from '@rneui/base';
 import { useTheme, Dialog, ListItem } from '@rneui/themed';
-import { withObservablesFromDB } from '@DB/react';
+import { compose, withDatabase, withObservables, type Database, type Observable } from '@DB/react';
 import { type AccountGroup } from '@DB/models/AccountGroup';
 import { clearAccountData } from '@DB/setup';
 import { statusBarHeight } from '@utils/deviceInfo';
-import { AddAccountStackName, WelcomeStackName, GroupSettingStackName, type StackNavigation } from '@router/configs';
-
+import { AddAccountStackName, WelcomeStackName, type StackNavigation } from '@router/configs';
 import AccountGroupItem from '../AccountGroupItem';
 
 export const AccountManageStackName = 'AccountManage';
 
-const AccountManage: React.FC<{ navigation: StackNavigation; accountGroup: Array<AccountGroup> }> = ({ navigation, accountGroup: accountGroups }) => {
+const AccountManage: React.FC<{ navigation: StackNavigation }> = compose(
+  withDatabase,
+  withObservables([], ({ database }: { database: Database }) => ({
+    accountGroups: database.collections.get('account_group').query().observe() as Observable<Array<AccountGroup>>,
+  }))
+)(({ navigation, accountGroups }: { navigation: StackNavigation; accountGroups: Array<AccountGroup> }) => {
   const { theme } = useTheme();
   const headerHeight = useHeaderHeight();
   const [visibleClearAccount, setVisibleClearAccount] = useState(false);
@@ -40,14 +44,7 @@ const AccountManage: React.FC<{ navigation: StackNavigation; accountGroup: Array
 
       <ScrollView className="flex-1 px-[24px]">
         {accountGroups?.map((accountGroup, index) => (
-          <TouchableHighlight
-            underlayColor={theme.colors.underlayColor}
-            style={{ marginTop: index === 0 ? 0 : 16, borderRadius: 8, overflow: 'hidden' }}
-            key={accountGroup.id}
-            onPress={() => navigation.navigate(GroupSettingStackName, { accountGroupId: accountGroup.id })}
-          >
-            <AccountGroupItem accountGroup={accountGroup} enableAddNew />
-          </TouchableHighlight>
+          <AccountGroupItem style={{ marginTop: index === 0 ? 0 : 16 }} key={accountGroup.id} accountGroup={accountGroup} enableAddNew enableLinkToSetting />
         ))}
       </ScrollView>
 
@@ -99,6 +96,6 @@ const AccountManage: React.FC<{ navigation: StackNavigation; accountGroup: Array
       </Dialog>
     </SafeAreaView>
   );
-};
+});
 
-export default withObservablesFromDB(['accountGroup'])(AccountManage);
+export default AccountManage;
