@@ -51,6 +51,7 @@ const AccountGroupItem: React.FC<{
         setSelectAccountId((await querySelectedAccount(database))?.[0]?.id);
       };
       searchSelectAccount();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
     return (

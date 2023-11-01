@@ -7,6 +7,8 @@ import { ImportWalletStackName } from '@pages/ImportWallet';
 import { AccountManageStackName } from '@pages/Account/AccountManage';
 import { AccountSelectStackName } from '@pages/Account/AccountSelect';
 import { AddAccountStackName } from '@pages/Account/AddAccount';
+import { GroupSettingStackName } from '@pages/Account/GroupSetting';
+import { AccountSettingStackName } from '@pages/Account/AccountSetting';
 import { LoginStackName } from '@pages/Login';
 import { LockStackName } from '@pages/Lock';
 import { ReceiveAddressStackName } from '@pages/Transaction/ReceiveAddress';
@@ -30,6 +32,8 @@ export {
   TransactionConfirmStackName,
   TokenListStackName,
   BackUpStackName,
+  AccountSettingStackName,
+  GroupSettingStackName,
 };
 
 export const HomeStackName = 'Home';
@@ -40,6 +44,8 @@ export type RootStackList = {
   [BiometricsStackName]?: { type?: 'importPrivateKey' | 'importSeedPhrase' | 'create' | 'BSIM'; value?: string };
   [ImportWalletStackName]: { type?: 'add' | 'create' };
   [AccountManageStackName]: undefined;
+  [AccountSettingStackName]: { accountId: string };
+  [GroupSettingStackName]: { accountGroupId: string };
   [WalletStackName]: undefined;
   [LoginStackName]: undefined;
   [LockStackName]: undefined;

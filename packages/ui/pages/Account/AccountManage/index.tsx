@@ -1,22 +1,20 @@
 import React, { useState } from 'react';
 import { View, SafeAreaView, ScrollView, Text, TouchableHighlight } from 'react-native';
 import { showMessage } from 'react-native-flash-message';
-import { type NavigationProp } from '@react-navigation/native';
 import { useHeaderHeight } from '@react-navigation/elements';
 import { Button } from '@rneui/base';
 import { useTheme, Dialog, ListItem } from '@rneui/themed';
 import { withObservablesFromDB } from '@DB/react';
 import { type AccountGroup } from '@DB/models/AccountGroup';
-
 import { clearAccountData } from '@DB/setup';
 import { statusBarHeight } from '@utils/deviceInfo';
-import { AddAccountStackName, WelcomeStackName, type StackNavigation } from '@router/configs';
+import { AddAccountStackName, WelcomeStackName, GroupSettingStackName, type StackNavigation } from '@router/configs';
 
 import AccountGroupItem from '../AccountGroupItem';
 
 export const AccountManageStackName = 'AccountManage';
 
-const AccountManage: React.FC<{ navigation: StackNavigation; accountGroup: Array<AccountGroup> }> = ({ navigation, accountGroup }) => {
+const AccountManage: React.FC<{ navigation: StackNavigation; accountGroup: Array<AccountGroup> }> = ({ navigation, accountGroup: accountGroups }) => {
   const { theme } = useTheme();
   const headerHeight = useHeaderHeight();
   const [visibleClearAccount, setVisibleClearAccount] = useState(false);
@@ -41,8 +39,15 @@ const AccountManage: React.FC<{ navigation: StackNavigation; accountGroup: Array
       </View>
 
       <ScrollView className="flex-1 px-[24px]">
-        {accountGroup?.map((_accountGroup, index) => (
-          <AccountGroupItem style={{ marginTop: index === 0 ? 0 : 16 }} key={_accountGroup.id} accountGroup={_accountGroup} enableAddNew />
+        {accountGroups?.map((accountGroup, index) => (
+          <TouchableHighlight
+            underlayColor={theme.colors.underlayColor}
+            style={{ marginTop: index === 0 ? 0 : 16 }}
+            key={accountGroup.id}
+            onPress={() => navigation.navigate(GroupSettingStackName, { accountGroupId: accountGroup.id })}
+          >
+            <AccountGroupItem accountGroup={accountGroup} enableAddNew />
+          </TouchableHighlight>
         ))}
       </ScrollView>
 

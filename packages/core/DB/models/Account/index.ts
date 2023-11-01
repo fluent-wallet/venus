@@ -1,5 +1,6 @@
 import { Q, Model, type Query, type Relation } from '@nozbe/watermelondb';
 import { field, text, children, relation, date, readonly, writer, reader, lazy } from '@nozbe/watermelondb/decorators';
+import { map } from 'rxjs';
 import { type Address } from '../Address';
 import { type AccountGroup } from '../AccountGroup';
 import TableName from '../../TableName';
@@ -58,5 +59,5 @@ export class Account extends Model {
 
   @lazy currentNetworkAddress = this.address.extend(
     Q.on(TableName.Network, Q.where('selected', true))
-  )
+  ).observe().pipe(map((addresses) => addresses[0]));
 }

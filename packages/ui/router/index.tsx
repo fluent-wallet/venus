@@ -23,6 +23,8 @@ import TransactionConfirm, { TransactionConfirmStackName } from '@pages/Transact
 import SendTo, { SendToStackName } from '@pages/Transaction/SendTo';
 import TokenList, { TokenListStackName } from '@pages/Transaction/TokenList';
 import BackUp, { BackUpStackName } from '@pages/Account/BackUp';
+import AccountSetting, { AccountSettingStackName } from '@pages/Account/AccountSetting';
+import GroupSetting, { GroupSettingStackName } from '@pages/Account/GroupSetting';
 
 import WalletIcon from '@assets/icons/wallet.svg';
 import SettingsIcon from '@assets/icons/settings.svg';
@@ -100,6 +102,8 @@ const StackNavigator = compose(
       <Stack.Screen name={AccountManageStackName} component={AccountManage} options={{ title: 'Manage Wallets', headerTitleAlign: 'center' }} />
       <Stack.Screen name={AccountSelectStackName} component={AccountSelect} options={{ title: 'Account', headerTitleAlign: 'center' }} />
       <Stack.Screen name={AddAccountStackName} component={AddAccount} options={{ title: 'Add Account', headerTitleAlign: 'center' }} />
+      <Stack.Screen name={AccountSettingStackName} component={AccountSetting} options={{ title: 'Account', headerTitleAlign: 'center' }} />
+      <Stack.Screen name={GroupSettingStackName} component={GroupSetting} options={{ title: 'Seed Group', headerTitleAlign: 'center' }} />
       <Stack.Screen name={ImportWalletStackName} component={ImportWallet} />
       <Stack.Screen name={LoginStackName} component={Login} options={{ headerShown: false }} />
       <Stack.Screen name={LockStackName} component={Lock} options={{ headerShown: false }} />

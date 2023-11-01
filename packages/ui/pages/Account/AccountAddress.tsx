@@ -1,6 +1,5 @@
 import { useMemo } from 'react';
 import { View, Text, type StyleProp, type ViewStyle } from 'react-native';
-import { map } from 'rxjs';
 import { useTheme, Icon } from '@rneui/themed';
 import cx from 'clsx';
 import { shortenAddress } from '@cfx-kit/dapp-utils/dist/address';
@@ -12,7 +11,7 @@ const AccountAddress: React.FC<{ account: Account; className?: string; style?: S
   ['account'],
   ({ account }: { account: Account }) => ({
     account: account.observe(),
-    currentNetworkAddress: account.currentNetworkAddress.observe().pipe(map((address) => address?.[0])),
+    currentNetworkAddress: account.currentNetworkAddress,
   })
 )(
   ({

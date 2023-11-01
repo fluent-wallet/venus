@@ -1,4 +1,5 @@
 import { Q, type Query } from '@nozbe/watermelondb';
+import { type Observable } from '@nozbe/watermelondb/utils/rx';
 import { type Network } from '../Network';
 import { type AccountGroup } from '../AccountGroup';
 import { type Account } from './';
@@ -80,6 +81,8 @@ export async function createAccount({
 
 export const querySelectedAccount = (_database: typeof database) =>
   _database.get(TableName.Account).query(Q.where('selected', true)) as unknown as Query<Account>;
+
+export const observeAccountById = (_database: typeof database, id: string) => _database.get(TableName.Account).findAndObserve(id) as Observable<Account>;
 
 export const selectAccount = async (targetAccount: Account) =>
   database.write(async () => {
