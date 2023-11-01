@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-non-null-asserted-optional-chain */
 import { useEffect, useState } from 'react';
 import { Text, TouchableHighlight, View, type StyleProp, type ViewStyle } from 'react-native';
+import clsx from 'clsx';
 import { atom, useAtom } from 'jotai';
 import { useTheme, Card, Icon, ListItem } from '@rneui/themed';
 import { useNavigation } from '@react-navigation/native';
@@ -66,14 +67,15 @@ const AccountGroupItem: React.FC<{
     const [selectedAccountId, setSelectAccountId] = useAtom(selectedAccountIdAtom);
     const navigation = useNavigation<StackNavigation>();
 
+    const needGroup = vault.type === 'hierarchical_deterministic' || vault.type === 'BSIM';
     return (
       <TouchableHighlight
         className="rounded-[8px] overflow-hidden"
         style={style}
         underlayColor={theme.colors.underlayColor}
-        disabled={enableSelect && (vault.type === 'hierarchical_deterministic' || vault.type === 'BSIM')}
+        disabled={enableSelect && needGroup}
         onPress={async () => {
-          if (vault.type === 'BSIM' || vault.type === 'hierarchical_deterministic') {
+          if (needGroup) {
             if (enableLinkToSetting) {
               navigation.navigate(GroupSettingStackName, { accountGroupId: accountGroup.id });
             }
@@ -87,8 +89,8 @@ const AccountGroupItem: React.FC<{
           }
         }}
       >
-        <View className="w-[100%] p-[16px]" style={{ backgroundColor: theme.colors.surfaceCard }}>
-          {(vault.type === 'hierarchical_deterministic' || vault.type === 'BSIM') && (
+        <View className={clsx('w-[100%]', needGroup ? 'pt-[16px] pb-[8px]' : 'p-[16px]')} style={{ backgroundColor: theme.colors.surfaceCard }}>
+          {needGroup && (
             <ListItem.Accordion
               noIcon={!enableExpanded}
               disabled={!enableExpanded}
@@ -97,16 +99,18 @@ const AccountGroupItem: React.FC<{
                 setExpanded(!expanded);
               }}
               containerStyle={{ padding: 0, margin: 0, height: 24, backgroundColor: 'transparent' }}
+              style={{ paddingHorizontal: 16 }}
               content={
                 <Text className="flex-1 text-[20px] leading-[24px] font-bold" style={{ color: theme.colors.textPrimary }}>
                   {accountGroup.nickname}
                 </Text>
               }
             >
-              <Card.Divider className="my-[16px]" />
+              <Card.Divider className="mx-[16px] mt-[16px] mb-[8px]" />
               {accounts.map((account, index) => (
                 <TouchableHighlight
-                  style={{ marginTop: index === 0 ? 0 : 24 }}
+                  className="px-[16px] py-[8px] rounded-[4px] overflow-hidden"
+                  style={{ marginTop: index === 0 ? 0 : 8 }}
                   key={account.id}
                   underlayColor={theme.colors.underlayColor}
                   disabled={enableSelect && selectedAccountId === account.id}
@@ -119,7 +123,9 @@ const AccountGroupItem: React.FC<{
                     }
                   }}
                 >
-                  <AccountAddress account={account} showSelected />
+                  <View>
+                    <AccountAddress account={account} showSelected />
+                  </View>
                 </TouchableHighlight>
               ))}
               {vault.type === 'hierarchical_deterministic' && enableAddNew && (
@@ -140,7 +146,7 @@ const AccountGroupItem: React.FC<{
             </ListItem.Accordion>
           )}
 
-          {vault.type !== 'hierarchical_deterministic' && vault.type !== 'BSIM' && <AccountAddress account={accounts?.[0]} showSelected />}
+          {!needGroup && <AccountAddress account={accounts?.[0]} showSelected />}
         </View>
       </TouchableHighlight>
     );
