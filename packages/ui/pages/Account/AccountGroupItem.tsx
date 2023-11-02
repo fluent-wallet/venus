@@ -83,6 +83,7 @@ const AccountGroupItem: React.FC<{
             if (enableSelect) {
               selectAccount(accounts?.[0]);
               setSelectAccountId(accounts?.[0].id);
+              navigation.goBack();
             } else if (enableLinkToSetting) {
               navigation.navigate(AccountSettingStackName, { accountId: accounts?.[0].id });
             }
@@ -118,6 +119,7 @@ const AccountGroupItem: React.FC<{
                     if (enableSelect) {
                       selectAccount(account);
                       setSelectAccountId(account.id);
+                      navigation.goBack();
                     } else if (enableLinkToSetting) {
                       navigation.navigate(AccountSettingStackName, { accountId: account.id });
                     }
@@ -130,7 +132,7 @@ const AccountGroupItem: React.FC<{
               ))}
               {vault.type === 'hierarchical_deterministic' && enableAddNew && (
                 <>
-                  <Card.Divider className="mt-[16px] mb-[12px]" />
+                  <Card.Divider className="mx-[16px] mt-[16px] mb-[12px]" />
                   <Button
                     titleStyle={{ fontSize: 16, fontWeight: '500', color: theme.colors.textPrimary }}
                     size="sm"

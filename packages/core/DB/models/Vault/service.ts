@@ -7,6 +7,7 @@ import { createAccountGroup } from '../AccountGroup/service';
 import { createAccount } from '../Account/service';
 import { generateMnemonic } from '../../../utils/hdkey';
 import { cryptoTool } from '../../helper/cryptoTool';
+import { ConvertToSnake } from '../../react';
 
 type Params = ModelFields<Vault>;
 function createVault(params: Params, prepareCreate: true): Vault;
@@ -68,7 +69,7 @@ async function createVaultOfType({
     const vault = await createVault({ data, type, device: 'ePayWallet' });
     const accountGroup = await createAccountGroup({ nickname: `${defaultGroupNameMap[type]} - ${count + 1}`, hidden: false, vault });
     await createAccount({
-      nickname: `${type === 'hierarchical_deterministic' || type === 'BSIM' ? '' : `${type} `}Account - ${count + 1}`,
+      nickname: `${type === 'hierarchical_deterministic' || type === 'BSIM' ? '' : `${ConvertToSnake(type)} `}Account - ${count + 1}`,
       hidden: false,
       selected: isFirstVault ? true : false,
       accountGroup,

@@ -26,11 +26,12 @@ export async function createAccount({
   if (!accountGroup) throw new Error('AccountGroup is required in createAccount.');
   const vault = await (await accountGroup).vault;
 
-  const [networks, newAccountIndex, vaultData] = await Promise.all([
+  const [networks, lastAccountIndex, vaultData] = await Promise.all([
     database.get<Network>(TableName.Network).query().fetch(),
-    vault.type === 'hierarchical_deterministic' ? accountGroup.account.count : 0,
+    vault.type === 'hierarchical_deterministic' ? accountGroup.getLastIndex() : -1,
     vault.getData(),
   ]);
+  const newAccountIndex = lastAccountIndex + 1;
 
   // For each network, an Account has its corresponding Address.
   // For vaults of type 'public_address' and 'hardware', the Address is the vault's data.

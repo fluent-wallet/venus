@@ -10,8 +10,8 @@ import { withObservables } from '@DB/react';
 const AccountAddress: React.FC<{ account: Account; className?: string; style?: { opacity: number }; showSelected?: boolean }> = withObservables(
   ['account'],
   ({ account }: { account: Account }) => ({
-    account: account.observe(),
-    currentNetworkAddress: account.currentNetworkAddress,
+    account: account?.observe(),
+    currentNetworkAddress: account?.currentNetworkAddress,
   })
 )(
   ({

@@ -1,4 +1,3 @@
-import { Vault } from '@core/DB/models/Vault';
 import { Text, useTheme } from '@rneui/themed';
 import { View } from 'react-native';
 import CheckIcon from '@assets/icons/check.svg';
@@ -10,9 +9,9 @@ const privateKeyGuidelines = [
   'Or scan the QR code directly from the trusted app you wish to import to',
 ];
 
-const SafetyGuidelines = ({ type }: { type: Vault['type'] }) => {
+const SafetyGuidelines = ({ backupType }: { backupType: 'Seed Phrase' | 'Private Key' }) => {
   const { theme } = useTheme();
-  const guidelines = type === 'hierarchical_deterministic' ? hierarchicalDeterministicGuidelines : privateKeyGuidelines;
+  const guidelines = backupType === 'Seed Phrase' ? hierarchicalDeterministicGuidelines : privateKeyGuidelines;
 
   return (
     <View>

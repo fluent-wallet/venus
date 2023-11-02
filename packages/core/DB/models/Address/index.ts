@@ -49,17 +49,16 @@ export class Address extends Model {
     if (vault.type === 'public_address') throw new Error('Cannot get private key from public_address wallet');
     if (vault.type === 'hardware') throw new Error('Cannot get private key from hardware wallet');
 
-    const data = await this.callReader(vault.getData);
+    const data = await this.callReader(() => vault.getData());
     if (vault.type === 'private_key') return data;
 
     const mnemonic = data;
     const hdPath = await (await this.network).hdPath;
     const thisAccount = await this.account;
-    const accountGroup = await thisAccount.accountGroup;
     const { privateKey } = await getNthAccountOfHDKey({
       mnemonic,
       hdPath: hdPath.value,
-      nth: await this.callReader(() => accountGroup.getAccountIndex(thisAccount)),
+      nth: thisAccount.index,
     });
     return privateKey;
   }

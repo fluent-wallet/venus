@@ -1,5 +1,4 @@
 import { BaseButton } from '@components/Button';
-import { Vault } from '@core/DB/models/Vault';
 import { Icon, Text, useTheme, Tooltip } from '@rneui/themed';
 import clsx from 'clsx';
 import { useState } from 'react';
@@ -9,7 +8,7 @@ import Clipboard from '@react-native-clipboard/clipboard';
 
 const emptyString = '           ';
 
-const Secret = ({ type, getSecretData }: { type: Vault['type']; getSecretData: () => Promise<string> }) => {
+const Secret = ({ backupType, getSecretData }: { backupType: 'Seed Phrase' | 'Private Key'; getSecretData: () => Promise<string> }) => {
   const { theme } = useTheme();
   const colorScheme = useColorScheme();
   const [secret, setSecret] = useState(emptyString);
@@ -41,7 +40,7 @@ const Secret = ({ type, getSecretData }: { type: Vault['type']; getSecretData: (
   return (
     <View>
       <View className="flex flex-wrap content-between px-4 py-4 rounded-lg h-[314px] relative last:mb-0" style={{ backgroundColor: theme.colors.surfaceCard }}>
-        {type === 'hierarchical_deterministic' ? (
+        {backupType === 'Seed Phrase' ? (
           secret.split(' ').map((value, index) => (
             <View
               key={index}
@@ -64,8 +63,8 @@ const Secret = ({ type, getSecretData }: { type: Vault['type']; getSecretData: (
             className="absolute top-0 right-0 bottom-0 left-0 flex justify-center items-center"
             style={{ backgroundColor: colorScheme === 'dark' ? 'rgba(23, 23, 23, 1)' : 'rgba(255, 255, 255,1)' }}
           >
-            <Text className="text-xl font-bold leading-tight">Tap to view the {type === 'hierarchical_deterministic' ? 'seed phrase' : 'private key'}</Text>
-            <Text className="leading-6">Make sure your environment is safe</Text>
+            <Text className="text-xl font-bold leading-tight">Tap to view the {backupType === 'Seed Phrase' ? 'seed phrase' : 'private key'}</Text>
+            <Text className="text-base font-normal leading-6">Make sure your environment is safe</Text>
             <View className="mt-4">
               <BaseButton loading={loading} buttonStyle={{ paddingHorizontal: 20, paddingVertical: 10 }} onPress={handleGetSecretData}>
                 <Icon name="remove-red-eye" className="pr-1" />
@@ -75,7 +74,7 @@ const Secret = ({ type, getSecretData }: { type: Vault['type']; getSecretData: (
           </View>
         )}
       </View>
-      {type === 'private_key' && isShow && (
+      {backupType === 'Private Key' && isShow && (
         <View className="flex flex-row items-center mt-4 p-2" style={{ backgroundColor: theme.colors.surfaceCard }}>
           <Text className="shrink text-sm leading-5" style={{ color: theme.colors.textSecondary }}>
             {secret}

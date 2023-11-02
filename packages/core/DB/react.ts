@@ -16,11 +16,11 @@ export function withObservablesFromDB(observeModels: Array<string>) {
   ) as ReturnType<typeof _withObservables>;
 }
 
-function convertToCamelCase(str: string) {
+export function convertToCamelCase(str: string) {
   return str.replace(/_([a-zA-Z])/g, (_, letter) => letter.toUpperCase());
 }
 
-function ConvertToSnake(camelCaseString: string): string {
+export function ConvertToSnake(camelCaseString: string): string {
   return camelCaseString.replace(/(?!^)([A-Z])/g, '_$1').toLowerCase();
 }
 // // eslint-disable-next-line @typescript-eslint/ban-types

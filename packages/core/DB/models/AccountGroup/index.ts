@@ -33,6 +33,16 @@ export class AccountGroup extends Model {
     return await createAccount({ ...params, accountGroup: this });
   }
 
+  @reader async getLastIndex() {
+    const account = (await this.collections.get(TableName.Account).query(Q.sortBy('index', Q.desc)).fetch()) as Array<Account>;
+    return account[0].index ?? 0;
+  }
+
+  @reader async getAccountByIndex(index: number) {
+    const accounts = (await this.collections.get(TableName.Account).query(Q.where('index', index)).fetch()) as Array<Account>;
+    return accounts?.[0];
+  }
+
   @reader async getAccountIndex(account: Account) {
     if ((await account.accountGroup) !== this) throw new Error('Account does not belong to this accountGroup');
     return this.collections

@@ -59,7 +59,7 @@ export type RootStackList = {
   [TransactionConfirmStackName]: undefined;
   [ReceiveAddressStackName]: undefined;
   [TokenListStackName]: undefined;
-  [BackUpStackName]: { vaultId: string };
+  [BackUpStackName]: { vaultId: string; accountIndex?: number; };
   [ReceiveStackName]: undefined;
   [SetAmountStackName]: undefined;
 
