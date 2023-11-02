@@ -56,15 +56,14 @@ const BackUp: React.FC<NativeStackScreenProps<RootStackList, 'BackUp'> & { vault
         </Text>
         <SafetyGuidelines backupType={backupType} />
         <Secret backupType={backupType} getSecretData={handleGetSecretData} />
-
-        <View className="mt-auto">
-          <BaseButton>
-            <Text className="text-base font-medium leading-6" onPress={() => navigation.goBack()}>
-              Close
-            </Text>
-          </BaseButton>
-        </View>
       </ScrollView>
+      <View>
+        <BaseButton>
+          <Text className="text-base font-medium leading-6" onPress={() => navigation.goBack()}>
+            Close
+          </Text>
+        </BaseButton>
+      </View>
     </SafeAreaView>
   );
 };
