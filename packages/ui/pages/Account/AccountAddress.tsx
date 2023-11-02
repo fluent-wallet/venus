@@ -32,9 +32,9 @@ const AccountAddress: React.FC<{ account: Account; className?: string; style?: {
 
     if (!currentNetworkAddress) return;
     return (
-      <View className={clsx('relative text-[16px] leading-tight', className)} style={style}>
+      <View className={clsx('relative flex flex-col gap-[8px] text-[16px] leading-tight', className)} style={style}>
         <Text style={{ color: theme.colors.textPrimary }}>{account.nickname}</Text>
-        <Text className="mt-[8px]" style={{ color: theme.colors.textSecondary }}>
+        <Text style={{ color: theme.colors.textSecondary }}>
           {shortAddress}
         </Text>
         {showSelected && account.selected && (

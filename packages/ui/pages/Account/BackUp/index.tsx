@@ -21,7 +21,7 @@ const BackUp: React.FC<NativeStackScreenProps<RootStackList, 'BackUp'> & { vault
   useEffect(() => {
     const updateHeader = async () => {
       if (vaultType === 'hierarchical_deterministic') {
-        navigation.setOptions({ headerTitle: 'Select HD Wallets' });
+        navigation.setOptions({ headerTitle: 'Backup Seed Phrase' });
       } else if (vaultType === 'private_key') {
         navigation.setOptions({ headerTitle: 'Backup Private Key' });
       } else {
