@@ -18,7 +18,7 @@ const SendTo: React.FC<{ navigation: StackNavigation }> = ({ navigation }) => {
     >
       <KeyboardAvoidingView behavior="padding" className="flex-1">
         <View style={{ backgroundColor: theme.colors.surfaceCard }} className="p-[15px] rounded-md">
-          <Text className="text-base leading-6 font-normal" style={{ color: theme.colors.textSecondary }}>
+          <Text className="leading-6" style={{ color: theme.colors.textSecondary }}>
             To
           </Text>
           <View className="flex flex-row items-center">
@@ -33,11 +33,11 @@ const SendTo: React.FC<{ navigation: StackNavigation }> = ({ navigation }) => {
         </View>
 
         <View className="mt-[13px]">
-          <Text className="text-base leading-6 ml-4 my-2 font-normal">Amount</Text>
+          <Text className="leading-6 ml-4 my-2">Amount</Text>
           <View style={{ backgroundColor: theme.colors.surfaceCard }} className="rounded-md px-4 py-2">
             <TextInput keyboardType={'numeric'} />
           </View>
-          <Text className="text-base text-right leading-6 font-normal">Balance: 100,000 CFX</Text>
+          <Text className="text-right leading-6">Balance: 100,000 CFX</Text>
         </View>
 
         <View className="mt-auto mb-6">

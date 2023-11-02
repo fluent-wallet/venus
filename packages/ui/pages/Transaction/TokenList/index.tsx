@@ -44,14 +44,14 @@ const TokenList: React.FC<{ navigation: StackNavigation }> = ({ navigation }) =>
                 <View className="flex flex-row w-full justify-between p-4 mb-4">
                   <View className="flex flex-row items-center">
                     <TokenIcon width={48} height={48} />
-                    <Text className="ml-4 text-base font-normal leading-6">{tokenName}</Text>
+                    <Text className="ml-4 leading-6">{tokenName}</Text>
                   </View>
                   <View className="flex items-end">
-                    <Text className="text-base font-normal leading-6">
+                    <Text className="leading-6">
                       {tokenBalance}
                       {tokenSymbol}
                     </Text>
-                    <Text style={{ color: theme.colors.textSecondary }} className="text-base font-normal leading-6">
+                    <Text style={{ color: theme.colors.textSecondary }} className="leading-6">
                       ${tokenValue}
                     </Text>
                   </View>
@@ -88,10 +88,10 @@ const TokenList: React.FC<{ navigation: StackNavigation }> = ({ navigation }) =>
                       <View className="w-36 h-36">
                         <Text>Image</Text>
                       </View>
-                      <Text style={{ color: theme.colors.textSecondary }} className="text-sm font-normal leading-6">
+                      <Text style={{ color: theme.colors.textSecondary }} className="text-sm leading-6">
                         Nakamigos
                       </Text>
-                      <Text style={{ color: theme.colors.contrastWhiteAndBlack }} className="text-sm font-normal leading-6">
+                      <Text style={{ color: theme.colors.contrastWhiteAndBlack }} className="text-sm leading-6">
                         Nakamigos #7733
                       </Text>
                     </View>
@@ -101,10 +101,10 @@ const TokenList: React.FC<{ navigation: StackNavigation }> = ({ navigation }) =>
                       <View className="w-36 h-36">
                         <Text>Image</Text>
                       </View>
-                      <Text style={{ color: theme.colors.textSecondary }} className="text-sm font-normal leading-6">
+                      <Text style={{ color: theme.colors.textSecondary }} className="text-sm leading-6">
                         Nakamigos
                       </Text>
-                      <Text style={{ color: theme.colors.contrastWhiteAndBlack }} className="text-sm font-normal leading-6">
+                      <Text style={{ color: theme.colors.contrastWhiteAndBlack }} className="text-sm leading-6">
                         Nakamigos #7733
                       </Text>
                     </View>

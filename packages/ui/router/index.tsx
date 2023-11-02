@@ -25,6 +25,8 @@ import TokenList, { TokenListStackName } from '@pages/Transaction/TokenList';
 import BackUp, { BackUpStackName } from '@pages/Account/BackUp';
 import AccountSetting, { AccountSettingStackName } from '@pages/Account/AccountSetting';
 import GroupSetting, { GroupSettingStackName } from '@pages/Account/GroupSetting';
+import Receive, { ReceiveStackName } from '@pages/Receive';
+import SetAmount, { SetAmountStackName } from '@pages/Receive/SetAmount';
 import { useInitSelectedAccount } from '@pages/Account/AccountGroupItem';
 
 import WalletIcon from '@assets/icons/wallet.svg';
@@ -137,6 +139,8 @@ const StackNavigator = compose(
         }}
       />
       <Stack.Screen name={BackUpStackName} component={BackUp} options={{ headerTitleAlign: 'center' }} />
+      <Stack.Screen name={ReceiveStackName} component={Receive} />
+      <Stack.Screen name={SetAmountStackName} component={SetAmount} />
     </Stack.Navigator>
   );
 });

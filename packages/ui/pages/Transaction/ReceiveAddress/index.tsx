@@ -33,10 +33,10 @@ const SendReceiver: React.FC<{ navigation: StackNavigation }> = ({ navigation })
     >
       <KeyboardAvoidingView behavior="padding" className="flex-1">
         <View className="mt-[13px]">
-          <Text className="text-base leading-6 ml-4 my-2 font-normal">Receiver</Text>
+          <Text className="leading-6 ml-4 my-2">Receiver</Text>
           <View style={{ backgroundColor: theme.colors.surfaceCard }} className="flex flex-row items-center rounded-md px-4 py-2">
             <TextInput
-              className="flex-1 text-base font-normal leading-6"
+              className="flex-1 leading-6"
               keyboardType={'numeric'}
               placeholder="Enter an address or domain name"
               placeholderTextColor={theme.colors.textSecondary}

@@ -8,7 +8,7 @@ const BaseButton: FC<PropsWithChildren<ButtonProps>> = ({ children, containerSty
 
   return (
     <Button
-      buttonStyle={Object.assign(
+      buttonStyle={[
         {
           backgroundColor: colors.textBrand,
           borderRadius: 40,
@@ -17,8 +17,8 @@ const BaseButton: FC<PropsWithChildren<ButtonProps>> = ({ children, containerSty
           alignItems: 'center',
           justifyContent: 'center',
         },
-        buttonStyle
-      )}
+        buttonStyle,
+      ]}
       containerStyle={containerStyle}
       disabledStyle={{
         backgroundColor: colors.buttonDisabledBackground,
