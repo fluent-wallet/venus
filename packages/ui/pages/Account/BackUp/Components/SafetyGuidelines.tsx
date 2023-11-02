@@ -19,7 +19,7 @@ const SafetyGuidelines = ({ type }: { type: Vault['type'] }) => {
       {guidelines.map((value) => (
         <View key={value} className="flex flex-row items-start mb-2">
           <CheckIcon color={theme.colors.surfaceBrand} width={26} height={24} />
-          <Text className="text-base font-normal leading-6 ml-2">{value}</Text>
+          <Text className="leading-6 ml-2">{value}</Text>
         </View>
       ))}
     </View>

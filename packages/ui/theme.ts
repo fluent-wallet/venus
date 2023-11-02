@@ -86,6 +86,8 @@ const theme = createTheme({
       style: {
         fontFamily: 'SF Pro Display',
         color: theme.colors.textPrimary,
+        fontSize: 16,
+        fontWeight: '400',
       },
     }),
     ListItem: (_, theme) => ({

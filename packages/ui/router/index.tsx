@@ -25,6 +25,7 @@ import TokenList, { TokenListStackName } from '@pages/Transaction/TokenList';
 import BackUp, { BackUpStackName } from '@pages/Account/BackUp';
 import AccountSetting, { AccountSettingStackName } from '@pages/Account/AccountSetting';
 import GroupSetting, { GroupSettingStackName } from '@pages/Account/GroupSetting';
+import Receive, { ReceiveStackName } from '@pages/Receive';
 
 import WalletIcon from '@assets/icons/wallet.svg';
 import SettingsIcon from '@assets/icons/settings.svg';
@@ -74,7 +75,7 @@ const StackNavigator = compose(
   const hasVault = vaultCount > 0;
   return (
     <Stack.Navigator
-      initialRouteName={hasVault ? HomeStackName : WelcomeStackName}
+      initialRouteName={hasVault ? ReceiveStackName : WelcomeStackName}
       screenOptions={{
         headerTitleAlign: 'left',
         headerTransparent: true,
@@ -136,6 +137,7 @@ const StackNavigator = compose(
         }}
       />
       <Stack.Screen name={BackUpStackName} component={BackUp} options={{ headerTitleAlign: 'center' }} />
+      <Stack.Screen name={ReceiveStackName} component={Receive} />
     </Stack.Navigator>
   );
 });

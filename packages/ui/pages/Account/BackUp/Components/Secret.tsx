@@ -48,7 +48,7 @@ const Secret = ({ type, getSecretData }: { type: Vault['type']; getSecretData: (
               style={{ backgroundColor: theme.colors.surfaceThird, width: '48%' }}
               className={clsx('px-4 py-2 rounded-full', { 'mb-2': (index + 1) % 6 !== 0 })}
             >
-              <Text className="text-center text-base font-normal leading-6">
+              <Text className="text-center leading-6">
                 {index + 1}. {value}
               </Text>
             </View>
@@ -65,11 +65,11 @@ const Secret = ({ type, getSecretData }: { type: Vault['type']; getSecretData: (
             style={{ backgroundColor: colorScheme === 'dark' ? 'rgba(23, 23, 23, 1)' : 'rgba(255, 255, 255,1)' }}
           >
             <Text className="text-xl font-bold leading-tight">Tap to view the {type === 'hierarchical_deterministic' ? 'seed phrase' : 'private key'}</Text>
-            <Text className="text-base font-normal leading-6">Make sure your environment is safe</Text>
+            <Text className="leading-6">Make sure your environment is safe</Text>
             <View className="mt-4">
               <BaseButton loading={loading} buttonStyle={{ paddingHorizontal: 20, paddingVertical: 10 }} onPress={handleGetSecretData}>
                 <Icon name="remove-red-eye" className="pr-1" />
-                <Text className="text-sm font-normal leading-6">View</Text>
+                <Text className="text-sm leading-6">View</Text>
               </BaseButton>
             </View>
           </View>
@@ -77,14 +77,14 @@ const Secret = ({ type, getSecretData }: { type: Vault['type']; getSecretData: (
       </View>
       {type === 'private_key' && isShow && (
         <View className="flex flex-row items-center mt-4 p-2" style={{ backgroundColor: theme.colors.surfaceCard }}>
-          <Text className="shrink text-sm leading-5 font-normal" style={{ color: theme.colors.textSecondary }}>
+          <Text className="shrink text-sm leading-5" style={{ color: theme.colors.textSecondary }}>
             {secret}
           </Text>
           <Tooltip
             backgroundColor={theme.colors.surfaceCard}
             visible={tooltipShow}
             popover={
-              <Text className="text-xs font-normal" style={{ color: theme.colors.textSecondary }}>
+              <Text className="text-xs" style={{ color: theme.colors.textSecondary }}>
                 Successfully Copied！
               </Text>
             }

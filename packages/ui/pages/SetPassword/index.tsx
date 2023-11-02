@@ -54,7 +54,7 @@ const SetPassword: React.FC<{ navigation: NavigationProp<RootStackList> }> = (pr
         <Text className="text-center text-[36px] font-bold leading-tight" style={{ color: theme.colors.textBrand }}>
           Set Password
         </Text>
-        <Text className="text-center text-[16px] font-normal">Add security verification to ensure the safety of your funds.</Text>
+        <Text className="text-center text-[16px]">Add security verification to ensure the safety of your funds.</Text>
       </View>
 
       <View>
