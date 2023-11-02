@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { SafeAreaView, Text, TouchableOpacity, TouchableHighlight } from 'react-native';
+import { SafeAreaView, Text, TouchableHighlight } from 'react-native';
 import { showMessage } from 'react-native-flash-message';
 import { type NavigationProp } from '@react-navigation/native';
 import { useTheme, ListItem, Dialog } from '@rneui/themed';
@@ -29,7 +29,7 @@ const Settings: React.FC<{ navigation: NavigationProp<any> }> = ({ navigation })
         </ListItem>
       </TouchableHighlight>
 
-      <TouchableOpacity className="rounded-[8px] overflow-hidden" onPress={() => setVisibleResetWallet(true)}>
+      <TouchableHighlight className="rounded-[8px] overflow-hidden" onPress={() => setVisibleResetWallet(true)}>
         <ListItem>
           <ListItem.Content>
             <ListItem.Title style={{ color: theme.colors.error }} className="font-bold">
@@ -38,7 +38,7 @@ const Settings: React.FC<{ navigation: NavigationProp<any> }> = ({ navigation })
           </ListItem.Content>
           <ListItem.Chevron color={theme.colors.error} />
         </ListItem>
-      </TouchableOpacity>
+      </TouchableHighlight>
       <Dialog isVisible={visibleResetWallet} onBackdropPress={() => setVisibleResetWallet(false)}>
         <Dialog.Title title="Confirm reset wallet Data?" titleStyle={{ color: theme.colors.textPrimary, fontSize: 22, fontWeight: 'bold' }} />
         <Text style={{ color: theme.colors.textSecondary }} className="text-[16px]">
