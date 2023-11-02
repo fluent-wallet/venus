@@ -1,5 +1,5 @@
-import { Divider, Icon, Text, useTheme } from '@rneui/themed';
-import { map } from 'rxjs';
+import { Divider, Text, useTheme } from '@rneui/themed';
+import { switchMap } from 'rxjs';
 import { statusBarHeight } from '@utils/deviceInfo';
 import { SafeAreaView, View } from 'react-native';
 import QRCode from 'react-native-qrcode-svg';
@@ -7,17 +7,23 @@ import AvatarIcon from '@assets/icons/avatar.svg';
 import ShareIcon from '@assets/icons/share.svg';
 import SetAmountIcon from '@assets/icons/setAmount.svg';
 import { useState } from 'react';
-import { Database, compose, withDatabase, withObservables, withObservablesFromDB } from '@core/DB/react';
+import { Database, compose, withDatabase, withObservables } from '@core/DB/react';
 import { Address } from '@core/DB/models/Address';
 import { querySelectedAccount } from '@core/DB/models/Account/service';
 
+import { RootStackList, SetAmountStackName } from '@router/configs';
+import { NativeStackScreenProps } from '@react-navigation/native-stack';
+import { Button } from '@rneui/base';
+
 export const ReceiveStackName = 'Receive';
 
-const Receive = ({ currentNetworkAddress }: { currentNetworkAddress: Address }) => {
+const Receive: React.FC<NativeStackScreenProps<RootStackList, 'Receive'> & { currentNetworkAddress: Address }> = ({ currentNetworkAddress, navigation }) => {
   const { theme } = useTheme();
   const [shareDisabled, setShareDisabled] = useState(true);
   const [setAmountDisabled, setSetAmountDisabled] = useState(false);
-  console.log(currentNetworkAddress.hex);
+  const handleSetAmount = () => {
+    navigation.navigate(SetAmountStackName);
+  };
   return (
     <SafeAreaView
       className="flex flex-1  flex-col justify-start px-[24px] pb-7"
@@ -29,7 +35,7 @@ const Receive = ({ currentNetworkAddress }: { currentNetworkAddress: Address }) 
       <Divider className="my-4" />
 
       <View className="flex w-full items-center">
-        <QRCode value="placeholder placeholder placeholder placeholder placeholder placeholder placeholder placeholder" size={223} />
+        <QRCode value={currentNetworkAddress.hex} size={223} />
       </View>
 
       <View className="mt-auto">
@@ -48,13 +54,17 @@ const Receive = ({ currentNetworkAddress }: { currentNetworkAddress: Address }) 
         <Text className="leading-6 px-9">Only send Conflux eSpace network assets to this address.</Text>
 
         <View className="flex flex-row justify-center mt-9">
-          <View className="mr-9 flex items-center">
-            <ShareIcon width={60} height={60} color={shareDisabled ? theme.colors.surfaceSecondary : theme.colors.surfaceBrand} />
-            <Text style={{ color: shareDisabled ? theme.colors.textSecondary : theme.colors.textPrimary }}>Share</Text>
+          <View className="mr-9">
+            <Button type="clear" buttonStyle={{ display: 'flex', flexDirection: 'column' }}>
+              <ShareIcon width={60} height={60} color={shareDisabled ? theme.colors.surfaceSecondary : theme.colors.surfaceBrand} />
+              <Text style={{ color: shareDisabled ? theme.colors.textSecondary : theme.colors.textPrimary }}>Share</Text>
+            </Button>
           </View>
-          <View className="ml-9 flex items-center">
-            <SetAmountIcon width={60} height={60} color={setAmountDisabled ? theme.colors.surfaceThird : theme.colors.surfaceBrand} />
-            <Text style={{ color: setAmountDisabled ? theme.colors.textSecondary : theme.colors.textPrimary }}>Set Amount</Text>
+          <View className="ml-9">
+            <Button type="clear" buttonStyle={{ display: 'flex', flexDirection: 'column' }} onPress={handleSetAmount}>
+              <SetAmountIcon width={60} height={60} color={setAmountDisabled ? theme.colors.surfaceThird : theme.colors.surfaceBrand} />
+              <Text style={{ color: setAmountDisabled ? theme.colors.textSecondary : theme.colors.textPrimary }}>Set Amount</Text>
+            </Button>
           </View>
         </View>
       </View>
@@ -67,7 +77,7 @@ export default compose(
   withObservables([], ({ database }: { database: Database }) => {
     const account = querySelectedAccount(database).observe();
     return {
-      currentNetworkAddress: account.pipe(map((account) => account[0].currentNetworkAddress)),
+      currentNetworkAddress: account.pipe(switchMap((account) => account[0].currentNetworkAddress)),
     };
   })
 )(Receive);

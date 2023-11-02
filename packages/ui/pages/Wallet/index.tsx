@@ -8,7 +8,7 @@ import { map } from 'rxjs';
 import { compose, withDatabase, withObservables, type Database } from '@DB/react';
 import { type Address } from '@core/DB/models/Address';
 import { querySelectedAddress } from '@core/DB/models/Address/service';
-import { AccountSelectStackName, ReceiveAddressStackName, type StackNavigation } from '@router/configs';
+import { AccountSelectStackName, ReceiveAddressStackName, ReceiveStackName, type StackNavigation } from '@router/configs';
 import CopyAll from '@assets/icons/copy_all.svg';
 import Flip from '@assets/icons/flip.svg';
 import Menu from '@assets/icons/menu.svg';
@@ -88,14 +88,14 @@ const Wallet: React.FC<{ navigation: StackNavigation }> = () => {
           </Text>
         </Pressable>
 
-        <View className="flex items-center flex-1">
+        <Pressable className="flex items-center flex-1" onPress={() => navigation.navigate(ReceiveStackName)}>
           <View className="flex justify-center items-center w-[60px] h-[60px] rounded-full" style={{ backgroundColor: theme.colors.surfaceBrand }}>
             <ReceiveIcon color="#fff" width={32} height={32} />
           </View>
           <Text className="mt-[8px] text-base" style={{ color: theme.colors.textPrimary }}>
             Receive
           </Text>
-        </View>
+        </Pressable>
 
         <View className="flex items-center flex-1">
           <View className="flex justify-center items-center w-[60px] h-[60px] rounded-full" style={{ backgroundColor: theme.colors.surfaceBrand }}>

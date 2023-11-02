@@ -26,6 +26,7 @@ import BackUp, { BackUpStackName } from '@pages/Account/BackUp';
 import AccountSetting, { AccountSettingStackName } from '@pages/Account/AccountSetting';
 import GroupSetting, { GroupSettingStackName } from '@pages/Account/GroupSetting';
 import Receive, { ReceiveStackName } from '@pages/Receive';
+import SetAmount, { SetAmountStackName } from '@pages/Receive/SetAmount';
 
 import WalletIcon from '@assets/icons/wallet.svg';
 import SettingsIcon from '@assets/icons/settings.svg';
@@ -75,7 +76,7 @@ const StackNavigator = compose(
   const hasVault = vaultCount > 0;
   return (
     <Stack.Navigator
-      initialRouteName={hasVault ? ReceiveStackName : WelcomeStackName}
+      initialRouteName={hasVault ? HomeStackName : WelcomeStackName}
       screenOptions={{
         headerTitleAlign: 'left',
         headerTransparent: true,
@@ -138,6 +139,7 @@ const StackNavigator = compose(
       />
       <Stack.Screen name={BackUpStackName} component={BackUp} options={{ headerTitleAlign: 'center' }} />
       <Stack.Screen name={ReceiveStackName} component={Receive} />
+      <Stack.Screen name={SetAmountStackName} component={SetAmount} />
     </Stack.Navigator>
   );
 });
