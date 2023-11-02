@@ -68,7 +68,7 @@ async function createVaultOfType({
     const vault = await createVault({ data, type, device: 'ePayWallet' });
     const accountGroup = await createAccountGroup({ nickname: `${defaultGroupNameMap[type]} - ${count + 1}`, hidden: false, vault });
     await createAccount({
-      nickname: 'Account - 1',
+      nickname: `${type === 'hierarchical_deterministic' || type === 'BSIM' ? '' : `${type} `}Account - ${count + 1}`,
       hidden: false,
       selected: isFirstVault ? true : false,
       accountGroup,

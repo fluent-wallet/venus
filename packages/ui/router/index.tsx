@@ -27,6 +27,7 @@ import AccountSetting, { AccountSettingStackName } from '@pages/Account/AccountS
 import GroupSetting, { GroupSettingStackName } from '@pages/Account/GroupSetting';
 import Receive, { ReceiveStackName } from '@pages/Receive';
 import SetAmount, { SetAmountStackName } from '@pages/Receive/SetAmount';
+import { useInitSelectedAccount } from '@pages/Account/AccountGroupItem';
 
 import WalletIcon from '@assets/icons/wallet.svg';
 import SettingsIcon from '@assets/icons/settings.svg';
@@ -105,7 +106,7 @@ const StackNavigator = compose(
       <Stack.Screen name={AccountSelectStackName} component={AccountSelect} options={{ title: 'Account', headerTitleAlign: 'center' }} />
       <Stack.Screen name={AddAccountStackName} component={AddAccount} options={{ title: 'Add Account', headerTitleAlign: 'center' }} />
       <Stack.Screen name={AccountSettingStackName} component={AccountSetting} options={{ title: 'Account', headerTitleAlign: 'center' }} />
-      <Stack.Screen name={GroupSettingStackName} component={GroupSetting} options={{ title: 'Seed Group', headerTitleAlign: 'center' }} />
+      <Stack.Screen name={GroupSettingStackName} component={GroupSetting} options={{ title: 'Group', headerTitleAlign: 'center' }} />
       <Stack.Screen name={ImportWalletStackName} component={ImportWallet} />
       <Stack.Screen name={LoginStackName} component={Login} options={{ headerShown: false }} />
       <Stack.Screen name={LockStackName} component={Lock} options={{ headerShown: false }} />
@@ -145,6 +146,7 @@ const StackNavigator = compose(
 });
 
 const Router: React.FC = () => {
+  useInitSelectedAccount();
   return (
     <NavigationContainer>
       <StackNavigator />

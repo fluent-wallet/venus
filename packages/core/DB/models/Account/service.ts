@@ -79,7 +79,7 @@ export async function createAccount({
   });
 }
 
-export const querySelectedAccount = (_database: typeof database) =>
+export const querySelectedAccount = (_database: typeof database = database) =>
   _database.get(TableName.Account).query(Q.where('selected', true)) as unknown as Query<Account>;
 
 export const observeAccountById = (_database: typeof database, id: string) => _database.get(TableName.Account).findAndObserve(id) as Observable<Account>;

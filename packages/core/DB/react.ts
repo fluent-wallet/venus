@@ -2,6 +2,7 @@ import { withDatabase, withObservables as _withObservables, compose as _compose 
 export { withDatabase, withObservables, useDatabase, type ExtractedObservables } from '@nozbe/watermelondb/react';
 import { type flow } from 'lodash-es';
 import _database from '.';
+export { type Observable } from 'rxjs';
 
 export const compose = _compose as typeof flow;
 export type Database = typeof _database;
