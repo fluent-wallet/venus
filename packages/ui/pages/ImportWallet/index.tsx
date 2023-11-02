@@ -1,9 +1,9 @@
+import { useRef, useState, useCallback } from 'react';
 import { Button, Text, useTheme } from '@rneui/themed';
 import { View, SafeAreaView, TextInput } from 'react-native';
 import { useHeaderHeight } from '@react-navigation/elements';
 import { RouteProp, useNavigation, useRoute } from '@react-navigation/native';
 import { StackNavigation, BiometricsStackName, RootStackList, AccountManageStackName } from '@router/configs';
-import { useState } from 'react';
 import { Mnemonic } from 'ethers';
 import { validatePrivateKey } from '@core/utils/account';
 import { addHexPrefix } from '@core/utils/base';
@@ -17,18 +17,18 @@ const ImportWallet = () => {
   const headerHeight = useHeaderHeight();
   const navigation = useNavigation<StackNavigation>();
   const route = useRoute<RouteProp<RootStackList, typeof ImportWalletStackName>>();
-  const { inAsync, execAsync: _createVault } = useInAsync(createVaultWithRouterParams);
-  const [value, setValue] = useState('');
+  const currentValue = useRef('');
   const [errorMessage, setErrorMessage] = useState('');
 
-  const handleConfirmInput = async () => {
+  const _handleConfirmInput = useCallback(async () => {
     const { type = 'create' } = route.params;
+    const value = currentValue.current;
 
     if (value === '') return;
 
     if (validatePrivateKey(addHexPrefix(value))) {
       if (type === 'add') {
-        await _createVault({ type: 'importPrivateKey', value });
+        await createVaultWithRouterParams({ type: 'importPrivateKey', value });
         navigation.navigate(AccountManageStackName);
         return;
       }
@@ -38,7 +38,7 @@ const ImportWallet = () => {
     }
     if (Mnemonic.isValidMnemonic(value)) {
       if (type === 'add') {
-        await _createVault({ type: 'importSeedPhrase', value });
+        await createVaultWithRouterParams({ type: 'importSeedPhrase', value });
         navigation.navigate(AccountManageStackName);
         return;
       }
@@ -48,7 +48,9 @@ const ImportWallet = () => {
     }
 
     setErrorMessage('Invalid seed phrase or private key');
-  };
+  }, []);
+
+  const { inAsync, execAsync: handleConfirmInput } = useInAsync(_handleConfirmInput);
 
   return (
     <SafeAreaView
@@ -63,8 +65,7 @@ const ImportWallet = () => {
           numberOfLines={10}
           placeholder="Enter your seed phrase which words separated by space or private key"
           style={{ color: theme.colors.textPrimary, justifyContent: 'flex-start' }}
-          value={value}
-          onChangeText={setValue}
+          onChangeText={(val) => (currentValue.current = val)}
         />
       </View>
       {errorMessage && (

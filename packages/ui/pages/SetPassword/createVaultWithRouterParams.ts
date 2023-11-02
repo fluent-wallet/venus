@@ -21,4 +21,5 @@ const createVaultWithRouterParams = async (args?: RootStackList['Biometrics']) =
 
   return await createHDVault();
 };
+
 export default createVaultWithRouterParams;

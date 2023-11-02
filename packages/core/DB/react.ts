@@ -11,7 +11,7 @@ export function withObservablesFromDB(observeModels: Array<string>) {
   return compose(
     withDatabase,
     _withObservables([], ({ database }: { database: Database }) =>
-      Object.fromEntries(observeModels.map((model) => [convertToCamelCase(model), database.collections.get(ConvertToSnake(model)).query().observe()]))
+      Object.fromEntries(observeModels.map((model) => [convertToCamelCase(model), database.collections.get(convertToSnake(model)).query().observe()]))
     )
   ) as ReturnType<typeof _withObservables>;
 }
@@ -20,7 +20,7 @@ export function convertToCamelCase(str: string) {
   return str.replace(/_([a-zA-Z])/g, (_, letter) => letter.toUpperCase());
 }
 
-export function ConvertToSnake(camelCaseString: string): string {
+export function convertToSnake(camelCaseString: string): string {
   return camelCaseString.replace(/(?!^)([A-Z])/g, '_$1').toLowerCase();
 }
 // // eslint-disable-next-line @typescript-eslint/ban-types

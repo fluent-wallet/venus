@@ -108,7 +108,7 @@ const AccountGroupItem: React.FC<{
               }
             >
               <Card.Divider className="mx-[16px] mt-[16px] mb-[8px]" />
-              {accounts.map((account, index) => (
+              {accounts?.map((account, index) => (
                 <TouchableHighlight
                   className="px-[16px] py-[8px] rounded-[4px] overflow-hidden"
                   style={{ marginTop: index === 0 ? 0 : 8 }}
@@ -125,9 +125,7 @@ const AccountGroupItem: React.FC<{
                     }
                   }}
                 >
-                  <View>
-                    <AccountAddress account={account} showSelected />
-                  </View>
+                  <AccountAddress account={account} showSelected />
                 </TouchableHighlight>
               ))}
               {vault.type === 'hierarchical_deterministic' && enableAddNew && (
@@ -148,7 +146,7 @@ const AccountGroupItem: React.FC<{
             </ListItem.Accordion>
           )}
 
-          {!needGroup && <AccountAddress account={accounts?.[0]} showSelected />}
+          {!needGroup && accounts?.[0] && <AccountAddress account={accounts?.[0]} showSelected />}
         </View>
       </TouchableHighlight>
     );

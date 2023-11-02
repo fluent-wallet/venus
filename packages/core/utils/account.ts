@@ -1,8 +1,10 @@
-import { computeAddress, Wallet, getAddress as toChecksumAddress } from 'ethers';
+import { computeAddress as _computeAddress, Wallet, getAddress as toChecksumAddress } from 'ethers';
 import { randomInt, addHexPrefix } from './base';
-import { flow } from 'lodash-es';
+import { flow, memoize } from 'lodash-es';
 import { NULL_HEX_ADDRESS, INTERNAL_CONTRACTS_HEX_ADDRESS, ADDRESS_TYPES } from './consts';
 const ADDRESS_TYPES_ARR = Object.values(ADDRESS_TYPES);
+
+export const computeAddress = memoize(_computeAddress);
 
 export const create = (pk?: string) => {
   const kp = pk ? new Wallet(pk) : Wallet.createRandom();
