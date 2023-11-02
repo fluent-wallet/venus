@@ -9,6 +9,7 @@ import { validatePrivateKey } from '@core/utils/account';
 import { addHexPrefix } from '@core/utils/base';
 import createVaultWithRouterParams from '@pages/SetPassword/createVaultWithRouterParams';
 import useInAsync from '@hooks/useInAsync';
+import { checkVaultHasWallet } from '@core/DB/models/Vault/service';
 
 export const ImportWalletStackName = 'ImportSeed';
 
@@ -25,9 +26,14 @@ const ImportWallet = () => {
     const value = currentValue.current;
 
     if (value === '') return;
-
     if (validatePrivateKey(addHexPrefix(value))) {
       if (type === 'add') {
+        const hasVault = await checkVaultHasWallet('privatekey', value);
+        if (hasVault) {
+          setErrorMessage('This private key has been added');
+          return;
+        }
+
         await createVaultWithRouterParams({ type: 'importPrivateKey', value });
         navigation.navigate(AccountManageStackName);
         return;
@@ -38,6 +44,11 @@ const ImportWallet = () => {
     }
     if (Mnemonic.isValidMnemonic(value)) {
       if (type === 'add') {
+        const hasVault = await checkVaultHasWallet('seedPhrase', value);
+        if (hasVault) {
+          setErrorMessage('This private key has been added');
+          return;
+        }
         await createVaultWithRouterParams({ type: 'importSeedPhrase', value });
         navigation.navigate(AccountManageStackName);
         return;

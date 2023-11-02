@@ -1,4 +1,5 @@
 import { Q } from '@nozbe/watermelondb';
+import { map, mergeMap } from 'rxjs';
 import { type Vault } from './';
 import database from '../../';
 import TableName from '../../TableName';
@@ -128,5 +129,17 @@ export const createPublicAddressVault = async (hexAddress: string) => {
     console.log(`create publicAddress vault a Wallet took ${end - start} ms.`);
   } catch (error) {
     console.error('create publicAddress vault error: ', error);
+  }
+};
+
+export const checkVaultHasWallet = async (type: 'privatekey' | 'seedPhrase', secret: string) => {
+  const vault = await database
+    .get<Vault>(TableName.Vault)
+    .query(Q.where('type', type === 'seedPhrase' ? 'hierarchical_deterministic' : 'private_key'))
+    .fetch();
+
+  for (let i = 0; i < vault.length; i++) {
+    const vaultSecret = await vault[i].getData();
+    if (secret === vaultSecret) return true;
   }
 };
