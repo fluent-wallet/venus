@@ -2,7 +2,8 @@
 import { useState } from 'react';
 import { SafeAreaView, TouchableHighlight } from 'react-native';
 import { switchMap } from 'rxjs';
-import { useTheme, Text, ListItem, Input } from '@rneui/themed';
+import { useTheme, Text, ListItem, Input, Dialog } from '@rneui/themed';
+import { showMessage } from 'react-native-flash-message';
 import { BaseButton } from '@components/Button';
 import { useHeaderHeight } from '@react-navigation/elements';
 import { observeAccountById } from '@DB/models/Account/service';
@@ -11,6 +12,7 @@ import { type Address } from '@core/DB/models/Address';
 import { type Vault } from '@core/DB/models/Vault';
 import { withDatabase, withObservables, compose, type Database } from '@DB/react';
 import { BackUpStackName, type StackNavigation, type RootStackList } from '@router/configs';
+import { statusBarHeight } from '@utils/deviceInfo';
 
 export const AccountSettingStackName = 'AccountSetting';
 
@@ -24,15 +26,16 @@ const AccountSetting: React.FC<{
       account,
       vault: account.pipe(
         switchMap((account) => account.accountGroup.observe()),
-        switchMap((accountGroup) => accountGroup.vault.observe())
+        switchMap((accountGroup) => accountGroup.vault.observe()),
       ),
       currentNetworkAddress: account.pipe(switchMap((account) => account.currentNetworkAddress)),
     };
-  })
+  }),
 )(({ navigation, account, vault, currentNetworkAddress }: { navigation: StackNavigation; account: Account; currentNetworkAddress: Address; vault: Vault }) => {
   const { theme } = useTheme();
   const headerHeight = useHeaderHeight();
   const [accountName, setAccountName] = useState(() => account.nickname);
+  const [visibleRemoveAccount, setVisibleRemoveAccount] = useState(false);
 
   return (
     <SafeAreaView
@@ -92,17 +95,56 @@ const AccountSetting: React.FC<{
         </>
       )}
 
-      <BaseButton
-        containerStyle={{ marginTop: 16 }}
-        buttonStyle={{ backgroundColor: theme.colors.surfaceCard }}
-        onPress={async () => {
-          // navigation.goBack();
-        }}
-      >
+      <BaseButton containerStyle={{ marginTop: 16 }} buttonStyle={{ backgroundColor: theme.colors.surfaceCard }} onPress={() => setVisibleRemoveAccount(true)}>
         <Text className="text-[16px] font-medium" style={{ color: theme.colors.error }}>
           Remove Account
         </Text>
       </BaseButton>
+      <Dialog isVisible={visibleRemoveAccount} onBackdropPress={() => setVisibleRemoveAccount(false)}>
+        <Dialog.Title
+          title="Confirm to delete this account?"
+          titleStyle={{ textAlign: 'center', color: theme.colors.textPrimary, fontSize: 20, lineHeight: 24, fontWeight: 'bold' }}
+        />
+        <Text style={{ color: theme.colors.textPrimary }} className="mt-[12px] mb-[24px] text-[14px] leading-tight">
+          This Action will remove this wallet form the app.
+          {'\n\n'}
+          App can not restore your wallet, you can restore with its seed phrase / private key.
+          {'\n\n'}
+          Be sure to back up your wallet, otherwise you will permanently lose it and all assets.
+        </Text>
+        <Dialog.Actions>
+          <Dialog.Button
+            title="Confirm"
+            onPress={async () => {
+              try {
+                if (vault.isGroup) {
+                  await account.hide();
+                } else {
+                  await vault.delete();
+                }
+                showMessage({
+                  message: 'Remove account successfully',
+                  type: 'success',
+                  duration: 2000,
+                  statusBarHeight,
+                });
+                navigation.goBack();
+              } catch (err) {
+                showMessage({
+                  message: 'Delete account failed',
+                  description: String(err ?? ''),
+                  type: 'warning',
+                  duration: 1500,
+                  statusBarHeight,
+                });
+              } finally {
+                setVisibleRemoveAccount(false);
+              }
+            }}
+          />
+          <Dialog.Button title="Cancel" onPress={() => setVisibleRemoveAccount(false)} />
+        </Dialog.Actions>
+      </Dialog>
 
       <BaseButton
         containerStyle={{ marginTop: 'auto' }}

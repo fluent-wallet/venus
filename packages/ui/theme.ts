@@ -127,6 +127,13 @@ const theme = createTheme({
       width: 1.5,
       color: theme.colors.borderPrimary,
     }),
+    Dialog: (_, theme) => ({
+      overlayStyle: {
+        backgroundColor: theme.colors.surfaceCard,
+        padding: 20,
+        borderRadius: 8
+      }
+    }),
   },
 });
 

@@ -19,6 +19,7 @@ export class AccountGroup extends Model {
   @immutableRelation(TableName.Vault, 'vault_id') vault!: Relation<Vault>;
 
   @lazy hiddenAccounts = this.account.extend(Q.where('hidden', true));
+  @lazy visibleAccounts = this.account.extend(Q.where('hidden', false));
 
   @writer async updateName(newNickName: string) {
     await this.update((accountGroup) => {
@@ -34,8 +35,8 @@ export class AccountGroup extends Model {
   }
 
   @reader async getLastIndex() {
-    const account = (await this.collections.get(TableName.Account).query(Q.sortBy('index', Q.desc)).fetch()) as Array<Account>;
-    return account[0].index ?? 0;
+    const accounts = (await this.collections.get(TableName.Account).query(Q.sortBy('index', Q.desc)).fetch()) as Array<Account>;
+    return accounts?.[0]?.index ?? -1;
   }
 
   @reader async getAccountByIndex(index: number) {

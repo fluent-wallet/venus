@@ -39,7 +39,7 @@ const AccountGroupItem: React.FC<{
   return {
     accountGroup: accountGroup.observe(),
     vault: accountGroup.vault.observe(),
-    accounts: accountGroup.account.observe(),
+    accounts: accountGroup.visibleAccounts.observe(),
   };
 })(
   ({
@@ -67,15 +67,14 @@ const AccountGroupItem: React.FC<{
     const [selectedAccountId, setSelectAccountId] = useAtom(selectedAccountIdAtom);
     const navigation = useNavigation<StackNavigation>();
 
-    const needGroup = vault.type === 'hierarchical_deterministic' || vault.type === 'BSIM';
     return (
       <TouchableHighlight
         className="rounded-[8px] overflow-hidden"
         style={style}
         underlayColor={theme.colors.underlayColor}
-        disabled={enableSelect && needGroup}
+        disabled={enableSelect && vault.isGroup}
         onPress={async () => {
-          if (needGroup) {
+          if (vault.isGroup) {
             if (enableLinkToSetting) {
               navigation.navigate(GroupSettingStackName, { accountGroupId: accountGroup.id });
             }
@@ -90,8 +89,8 @@ const AccountGroupItem: React.FC<{
           }
         }}
       >
-        <View className={clsx('w-[100%]', needGroup ? 'pt-[16px] pb-[8px]' : 'p-[16px]')} style={{ backgroundColor: theme.colors.surfaceCard }}>
-          {needGroup && (
+        <View className={clsx('w-[100%]', vault.isGroup ? 'pt-[16px] pb-[8px]' : 'p-[16px]')} style={{ backgroundColor: theme.colors.surfaceCard }}>
+          {vault.isGroup && (
             <ListItem.Accordion
               noIcon={!enableExpanded}
               disabled={!enableExpanded}
@@ -146,7 +145,7 @@ const AccountGroupItem: React.FC<{
             </ListItem.Accordion>
           )}
 
-          {!needGroup && accounts?.[0] && <AccountAddress account={accounts?.[0]} showSelected />}
+          {!vault.isGroup && accounts?.[0] && <AccountAddress account={accounts?.[0]} showSelected />}
         </View>
       </TouchableHighlight>
     );

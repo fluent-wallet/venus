@@ -40,10 +40,14 @@ export class Account extends Model {
 
   @writer async hide() {
     if (this.hidden === true) return;
+    const vault = await (await this.accountGroup).vault;
+    if (vault.type !== 'hierarchical_deterministic' && vault.type !== 'BSIM') {
+      throw Error('Accounts that are not part of a Group cannot be hidden.');
+    }
 
-    const hiddenCountOfAccountGroup = await (await this.accountGroup).hiddenAccounts.count;
-    if (hiddenCountOfAccountGroup <= 1) {
-      throw Error('Keep at least one account');
+    const visibleCountsOfAccountGroup = await (await this.accountGroup).visibleAccounts.count;
+    if (visibleCountsOfAccountGroup <= 1) {
+      throw Error('Keep at least one account.');
     }
 
     await this.update((account) => {

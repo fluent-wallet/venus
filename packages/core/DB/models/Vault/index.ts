@@ -1,5 +1,5 @@
 import { Model, type Query } from '@nozbe/watermelondb';
-import { text, field, children, reader } from '@nozbe/watermelondb/decorators';
+import { text, field, children, reader, writer, lazy } from '@nozbe/watermelondb/decorators';
 import { type AccountGroup } from '../AccountGroup';
 import TableName from '../../TableName';
 import { cryptoTool } from '../../helper';
@@ -26,4 +26,20 @@ export class Vault extends Model {
     if (this.type === 'public_address' || this.type === 'hardware' || this.type === 'BSIM') return this.data;
     return cryptoTool.decrypt<string>(this.data);
   }
+
+  @writer async delete() {
+    const accountGroup = (await this.accountGroup)?.[0];
+    const accounts = await accountGroup.account;
+    const addresses = (await Promise.all(accounts.map(async (account) => await account.address))).flat();
+    this.batch(
+      ...addresses.map((address) => address.prepareDestroyPermanently()),
+      ...accounts.map((account) => account.prepareDestroyPermanently()),
+      accountGroup.prepareDestroyPermanently(),
+      this.prepareDestroyPermanently()
+    );
+  }
+
+  get isGroup () {
+    return this.type === 'hierarchical_deterministic' || this.type === 'BSIM'
+  } 
 }
