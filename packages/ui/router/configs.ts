@@ -7,8 +7,9 @@ import { ImportWalletStackName } from '@pages/ImportWallet';
 import { AccountManageStackName } from '@pages/Account/AccountManage';
 import { AccountSelectStackName } from '@pages/Account/AccountSelect';
 import { AddAccountStackName } from '@pages/Account/AddAccount';
-import { GroupSettingStackName } from '@pages/Account/GroupSetting';
-import { AccountSettingStackName } from '@pages/Account/AccountSetting';
+import { GroupSettingStackName } from '@pages/Account/Setting/GroupSetting';
+import { AccountSettingStackName } from '@pages/Account/Setting/AccountSetting';
+import { HDManageStackName } from '@pages/Account/Setting/HDManage';
 import { LoginStackName } from '@pages/Login';
 import { LockStackName } from '@pages/Lock';
 import { ReceiveAddressStackName } from '@pages/Transaction/ReceiveAddress';
@@ -38,6 +39,7 @@ export {
   GroupSettingStackName,
   ReceiveStackName,
   SetAmountStackName,
+  HDManageStackName
 };
 
 export const HomeStackName = 'Home';
@@ -50,6 +52,7 @@ export type RootStackList = {
   [AccountManageStackName]: undefined;
   [AccountSettingStackName]: { accountId: string };
   [GroupSettingStackName]: { accountGroupId: string };
+  [HDManageStackName]: { accountGroupId: string };
   [WalletStackName]: undefined;
   [LoginStackName]: undefined;
   [LockStackName]: undefined;

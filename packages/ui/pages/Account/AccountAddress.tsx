@@ -1,8 +1,7 @@
-import { useMemo } from 'react';
 import { View, Text, type StyleProp, type ViewStyle } from 'react-native';
 import { useTheme, Icon } from '@rneui/themed';
 import clsx from 'clsx';
-import { shortenAddress } from '@cfx-kit/dapp-utils/dist/address';
+import { shortenAddress } from '@core/utils/address';
 import { type Account } from '@DB/models/Account';
 import { type Address } from '@DB/models/Address';
 import { withObservables } from '@DB/react';
@@ -28,14 +27,13 @@ const AccountAddress: React.FC<{ account: Account; className?: string; style?: {
     showSelected?: boolean;
   }) => {
     const { theme } = useTheme();
-    const shortAddress = useMemo(() => shortenAddress(currentNetworkAddress?.hex), [currentNetworkAddress]);
 
     if (!currentNetworkAddress) return;
     return (
       <View className={clsx('relative flex flex-col gap-[8px] text-[16px] leading-tight', className)} style={style}>
         <Text style={{ color: theme.colors.textPrimary }}>{account.nickname}</Text>
         <Text style={{ color: theme.colors.textSecondary }}>
-          {shortAddress}
+          {shortenAddress(currentNetworkAddress?.hex)}
         </Text>
         {showSelected && account.selected && (
           <View

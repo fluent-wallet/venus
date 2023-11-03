@@ -23,8 +23,9 @@ import TransactionConfirm, { TransactionConfirmStackName } from '@pages/Transact
 import SendTo, { SendToStackName } from '@pages/Transaction/SendTo';
 import TokenList, { TokenListStackName } from '@pages/Transaction/TokenList';
 import BackUp, { BackUpStackName } from '@pages/Account/BackUp';
-import AccountSetting, { AccountSettingStackName } from '@pages/Account/AccountSetting';
-import GroupSetting, { GroupSettingStackName } from '@pages/Account/GroupSetting';
+import AccountSetting, { AccountSettingStackName } from '@pages/Account/Setting/AccountSetting';
+import GroupSetting, { GroupSettingStackName } from '@pages/Account/Setting/GroupSetting';
+import HDManage, { HDManageStackName } from '@pages/Account/Setting/HDManage';
 import Receive, { ReceiveStackName } from '@pages/Receive';
 import SetAmount, { SetAmountStackName } from '@pages/Receive/SetAmount';
 import { useInitSelectedAccount } from '@pages/Account/AccountGroupItem';
@@ -107,6 +108,7 @@ const StackNavigator = compose(
       <Stack.Screen name={AddAccountStackName} component={AddAccount} options={{ title: 'Add Account', headerTitleAlign: 'center' }} />
       <Stack.Screen name={AccountSettingStackName} component={AccountSetting} options={{ title: 'Account', headerTitleAlign: 'center' }} />
       <Stack.Screen name={GroupSettingStackName} component={GroupSetting} options={{ title: 'Group', headerTitleAlign: 'center' }} />
+      <Stack.Screen name={HDManageStackName} component={HDManage} options={{ title: 'Select HD Wallets', headerTitleAlign: 'center' }} />
       <Stack.Screen name={ImportWalletStackName} component={ImportWallet} />
       <Stack.Screen name={LoginStackName} component={Login} options={{ headerShown: false }} />
       <Stack.Screen name={LockStackName} component={Lock} options={{ headerShown: false }} />

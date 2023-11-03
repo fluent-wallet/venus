@@ -1,11 +1,10 @@
-import { Q, Model, type Query, type Relation } from '@nozbe/watermelondb';
+import { Model, type Query, type Relation } from '@nozbe/watermelondb';
 import { field, text, children, relation, immutableRelation } from '@nozbe/watermelondb/decorators';
 import { type TokenList } from '../TokenList';
 import { type Ticker } from '../Ticker';
 import { type Token } from '../Token';
 import { type HdPath } from '../HdPath';
 import TableName from '../../TableName';
-import type database from '../../';
 
 export class Network extends Model {
   static table = TableName.Network;
@@ -34,6 +33,3 @@ export class Network extends Model {
   @immutableRelation(TableName.Ticker, 'ticker_id') ticker!: Relation<Ticker>;
   @immutableRelation(TableName.TokenList, 'token_list_id') tokenList!: Relation<TokenList>;
 }
-
-export const querySelectedNetwork = (_database: typeof database) =>
-  _database.get(TableName.Network).query(Q.where('selected', true)) as unknown as Query<Network>;

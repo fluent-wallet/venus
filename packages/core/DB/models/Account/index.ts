@@ -38,6 +38,12 @@ export class Account extends Model {
     });
   }
 
+  @writer prepareShow() {
+    return this.prepareUpdate((account) => {
+      account.hidden = false;
+    });
+  }
+
   @writer async hide() {
     if (this.hidden === true) return;
     const vault = await (await this.accountGroup).vault;
@@ -61,7 +67,8 @@ export class Account extends Model {
     });
   }
 
-  @lazy currentNetworkAddress = this.address.extend(
-    Q.on(TableName.Network, Q.where('selected', true))
-  ).observe().pipe(map((addresses) => addresses[0]));
+  @lazy currentNetworkAddress = this.address
+    .extend(Q.on(TableName.Network, Q.where('selected', true)))
+    .observe()
+    .pipe(map((addresses) => addresses[0]));
 }

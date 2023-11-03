@@ -12,11 +12,11 @@ import { type Vault } from '@DB/models/Vault';
 import { type Account } from '@DB/models/Account';
 import { observeAccountGroupById } from '@DB/models/AccountGroup/service';
 import { withDatabase, withObservables, compose, type Database } from '@DB/react';
-import { BackUpStackName, type StackNavigation, type RootStackList } from '@router/configs';
+import { BackUpStackName, HDManageStackName, type StackNavigation, type RootStackList } from '@router/configs';
 import AccountAddress from '@pages/Account/AccountAddress';
 import { statusBarHeight } from '@utils/deviceInfo';
 
-export const GroupSettingStackName = 'GroupSettingStackName';
+export const GroupSettingStackName = 'GroupSetting';
 
 const GroupSetting: React.FC<{
   navigation: StackNavigation;
@@ -90,10 +90,10 @@ const GroupSetting: React.FC<{
           size="sm"
           type="clear"
           title="Manage HD Wallets"
-          onPress={() => navigation.navigate('123', { type: 'add' })}
+          onPress={() => navigation.navigate(HDManageStackName, { accountGroupId: accountGroup.id })}
         />
       </View>
-      <ScrollView className="flex-1 mb-[20px] rounded-[8px] overflow-hidden">
+      <ScrollView className="flex-1 mb-[20px] rounded-[8px]">
         <ListItem containerStyle={{ paddingVertical: 8 }}>
           <ListItem.Content>
             {accounts?.map((account, index) => (

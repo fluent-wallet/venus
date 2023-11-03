@@ -1,11 +1,11 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState } from 'react';
 import { View, SafeAreaView, TouchableHighlight, Pressable } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { statusBarHeight } from '@utils/deviceInfo';
-import { shortenAddress } from '@cfx-kit/dapp-utils/dist/address';
 import { Text, useTheme, Tab, TabView } from '@rneui/themed';
 import { map } from 'rxjs';
 import { compose, withDatabase, withObservables, type Database } from '@DB/react';
+import { shortenAddress } from '@core/utils/address';
 import { type Address } from '@core/DB/models/Address';
 import { querySelectedAddress } from '@core/DB/models/Address/service';
 import { AccountSelectStackName, ReceiveAddressStackName, ReceiveStackName, type StackNavigation } from '@router/configs';
@@ -45,13 +45,12 @@ const CurrentAccount: React.FC<{ backgroundColor: string }> = compose(
   }))
 )(({ address, backgroundColor }: { address: Address; backgroundColor: string }) => {
   const navigation = useNavigation<StackNavigation>();
-  const shortAddress = useMemo(() => shortenAddress(address?.hex), [address]);
 
   if (!address) return null;
   return (
     <TouchableHighlight onPress={() => navigation.navigate(AccountSelectStackName)} className="rounded-full overflow-hidden">
       <View className="bg-white flex flex-row px-[12px] py-[8px] rounded-full" style={{ backgroundColor }}>
-        <Text className="text-[10px]">{shortAddress}</Text>
+        <Text className="text-[10px]">{shortenAddress(address?.hex)}</Text>
         <View className="pl-[4px]">
           <CopyAll />
         </View>
