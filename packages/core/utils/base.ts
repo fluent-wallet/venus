@@ -10,7 +10,7 @@ const isHexPrefixed = (str: string) => {
   return str.slice(0, 2) === '0x';
 };
 
-const stripHexPrefix = (str: string) => {
+export const stripHexPrefix = (str: string) => {
   if (typeof str !== 'string') {
     return str;
   }

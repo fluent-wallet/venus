@@ -23,6 +23,7 @@
     "@fluent-wallet/hdkey": "^0.1.1",
     "@fluent-wallet/signature": "^0.0.16",
     "@gorhom/bottom-sheet": "^4.5.1",
+    "@noble/secp256k1": "^2.0.0",
     "@nozbe/watermelondb": "^0.27.1",
     "@nozbe/with-observables": "^1.4.1",
     "@react-native-clipboard/clipboard": "^1.12.1",

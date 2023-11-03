@@ -5,11 +5,11 @@ import { useHeaderHeight } from '@react-navigation/elements';
 import { RouteProp, useNavigation, useRoute } from '@react-navigation/native';
 import { StackNavigation, BiometricsStackName, RootStackList, AccountManageStackName } from '@router/configs';
 import { Mnemonic } from 'ethers';
-import { validatePrivateKey } from '@core/utils/account';
-import { addHexPrefix } from '@core/utils/base';
+import { stripHexPrefix } from '@core/utils/base';
 import createVaultWithRouterParams from '@pages/SetPassword/createVaultWithRouterParams';
 import useInAsync from '@hooks/useInAsync';
 import { checkVaultHasWallet } from '@core/DB/models/Vault/service';
+import * as secp from '@noble/secp256k1';
 
 export const ImportWalletStackName = 'ImportSeed';
 
@@ -26,7 +26,7 @@ const ImportWallet = () => {
     const value = currentValue.current;
 
     if (value === '') return;
-    if (validatePrivateKey(addHexPrefix(value))) {
+    if (secp.utils.isValidPrivateKey(stripHexPrefix(value))) {
       if (type === 'add') {
         const hasVault = await checkVaultHasWallet('privatekey', value);
         if (hasVault) {
@@ -34,7 +34,7 @@ const ImportWallet = () => {
           return;
         }
 
-        await createVaultWithRouterParams({ type: 'importPrivateKey', value });
+        await createVaultWithRouterParams({ type: 'importPrivateKey', value: stripHexPrefix(value) });
         navigation.navigate(AccountManageStackName);
         return;
       }
@@ -46,7 +46,7 @@ const ImportWallet = () => {
       if (type === 'add') {
         const hasVault = await checkVaultHasWallet('seedPhrase', value);
         if (hasVault) {
-          setErrorMessage('This private key has been added');
+          setErrorMessage('This seed phrase has been added');
           return;
         }
         await createVaultWithRouterParams({ type: 'importSeedPhrase', value });
