@@ -2,7 +2,8 @@
 import { useEffect, useState, Fragment } from 'react';
 import { SafeAreaView, View, ScrollView, TouchableHighlight } from 'react-native';
 import { switchMap } from 'rxjs';
-import { useTheme, Text, ListItem, Input } from '@rneui/themed';
+import { useTheme, Text, ListItem, Input, Dialog } from '@rneui/themed';
+import { showMessage } from 'react-native-flash-message';
 import { useHeaderHeight } from '@react-navigation/elements';
 import { Button } from '@rneui/base';
 import { BaseButton } from '@components/Button';
@@ -13,6 +14,7 @@ import { observeAccountGroupById } from '@DB/models/AccountGroup/service';
 import { withDatabase, withObservables, compose, type Database } from '@DB/react';
 import { BackUpStackName, type StackNavigation, type RootStackList } from '@router/configs';
 import AccountAddress from '@pages/Account/AccountAddress';
+import { statusBarHeight } from '@utils/deviceInfo';
 
 export const GroupSettingStackName = 'GroupSettingStackName';
 
@@ -31,6 +33,7 @@ const GroupSetting: React.FC<{
 )(({ navigation, vault, accountGroup, accounts }: { navigation: StackNavigation; accountGroup: AccountGroup; vault: Vault; accounts: Array<Account> }) => {
   const { theme } = useTheme();
   const headerHeight = useHeaderHeight();
+  const [visibleRemoveGroup, setVisibleRemoveGroup] = useState(false);
 
   const GroupTitle = vault.type === 'hierarchical_deterministic' ? 'Seed Group' : 'BSIM Group';
   useEffect(() => {
@@ -104,7 +107,69 @@ const GroupSetting: React.FC<{
       </ScrollView>
 
       <BaseButton
-        className="mx-[16px]"
+        containerStyle={{ marginBottom: 16 }}
+        buttonStyle={{ backgroundColor: theme.colors.surfaceCard }}
+        onPress={() => {
+          const hasAccountSelected = accounts.some((account) => account.selected);
+          if (hasAccountSelected) {
+            showMessage({
+              message: "Selected group can't remove.",
+              type: 'warning',
+              duration: 1500,
+              statusBarHeight,
+            });
+            return;
+          }
+          setVisibleRemoveGroup(true);
+        }}
+      >
+        <Text className="text-[16px] font-medium" style={{ color: theme.colors.error }}>
+          Remove Group
+        </Text>
+      </BaseButton>
+      <Dialog isVisible={visibleRemoveGroup} onBackdropPress={() => setVisibleRemoveGroup(false)}>
+        <Dialog.Title
+          title="Confirm to delete this group?"
+          titleStyle={{ textAlign: 'center', color: theme.colors.textPrimary, fontSize: 20, lineHeight: 24, fontWeight: 'bold' }}
+        />
+        <Text style={{ color: theme.colors.textPrimary }} className="mt-[12px] mb-[24px] text-[14px] leading-tight">
+          This Action will remove this wallet form the app.
+          {'\n\n'}
+          App can not restore your wallet, you can restore with its seed phrase.
+          {'\n\n'}
+          Be sure to back up your wallet, otherwise you will permanently lose it and all assets.
+        </Text>
+        <Dialog.Actions>
+          <Dialog.Button
+            title="Confirm"
+            onPress={async () => {
+              try {
+                await vault.delete();
+                showMessage({
+                  message: 'Remove Group successfully',
+                  type: 'success',
+                  duration: 2000,
+                  statusBarHeight,
+                });
+                navigation.goBack();
+              } catch (err) {
+                showMessage({
+                  message: 'Remove Group failed',
+                  description: String(err ?? ''),
+                  type: 'warning',
+                  duration: 1500,
+                  statusBarHeight,
+                });
+              } finally {
+                setVisibleRemoveGroup(false);
+              }
+            }}
+          />
+          <Dialog.Button title="Cancel" onPress={() => setVisibleRemoveGroup(false)} />
+        </Dialog.Actions>
+      </Dialog>
+
+      <BaseButton
         disabled={groupName === accountGroup.nickname}
         onPress={async () => {
           await accountGroup.updateName(groupName);

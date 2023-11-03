@@ -26,11 +26,11 @@ const AccountSetting: React.FC<{
       account,
       vault: account.pipe(
         switchMap((account) => account.accountGroup.observe()),
-        switchMap((accountGroup) => accountGroup.vault.observe()),
+        switchMap((accountGroup) => accountGroup.vault.observe())
       ),
       currentNetworkAddress: account.pipe(switchMap((account) => account.currentNetworkAddress)),
     };
-  }),
+  })
 )(({ navigation, account, vault, currentNetworkAddress }: { navigation: StackNavigation; account: Account; currentNetworkAddress: Address; vault: Vault }) => {
   const { theme } = useTheme();
   const headerHeight = useHeaderHeight();
@@ -95,7 +95,22 @@ const AccountSetting: React.FC<{
         </>
       )}
 
-      <BaseButton containerStyle={{ marginTop: 16 }} buttonStyle={{ backgroundColor: theme.colors.surfaceCard }} onPress={() => setVisibleRemoveAccount(true)}>
+      <BaseButton
+        containerStyle={{ marginTop: 16 }}
+        buttonStyle={{ backgroundColor: theme.colors.surfaceCard }}
+        onPress={() => {
+          if (account.selected) {
+            showMessage({
+              message: "Selected account can't remove.",
+              type: 'warning',
+              duration: 1500,
+              statusBarHeight,
+            });
+            return;
+          }
+          setVisibleRemoveAccount(true);
+        }}
+      >
         <Text className="text-[16px] font-medium" style={{ color: theme.colors.error }}>
           Remove Account
         </Text>
@@ -131,7 +146,7 @@ const AccountSetting: React.FC<{
                 navigation.goBack();
               } catch (err) {
                 showMessage({
-                  message: 'Delete account failed',
+                  message: 'Remove account failed',
                   description: String(err ?? ''),
                   type: 'warning',
                   duration: 1500,
