@@ -91,7 +91,7 @@ interface BSIMSDKInterface {
 
   /**
    * Use BSIM SDK to sign message
-   * @param msg string
+   * @param msg string - sha3 hash message
    * @param index string
    */
   signMessage(msg: string, coinType: CoinTypes, index: number): Promise<string>;
