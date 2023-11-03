@@ -14,9 +14,6 @@ import com.wallet.bsimsdk.BSIMSDKPackage;
 import com.nozbe.watermelondb.jsi.WatermelonDBJSIPackage;
 import com.facebook.react.bridge.JSIModulePackage;
 
-import java.security.Security;
-import java.security.Provider;
-import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import java.util.List;
 
 public class MainApplication extends Application implements ReactApplication {
@@ -59,23 +56,7 @@ public class MainApplication extends Application implements ReactApplication {
                 }
             };
     // bsim
-    private void setupBouncyCastle() {
-        final Provider provider = Security.getProvider(BouncyCastleProvider.PROVIDER_NAME);
-        if (provider == null) {
-            // Web3j will set up the provider lazily when it's first used.
-            return;
-        }
-        if (provider.getClass().equals(BouncyCastleProvider.class)) {
-            // BC with same package name, shouldn't happen in real life.
-            return;
-        }
-        // Android registers its own BC provider. As it might be outdated and might not include
-        // all needed ciphers, we substitute it with a known BC bundled in the app.
-        // Android's BC has its package rewritten to "com.android.org.bouncycastle" and because
-        // of that it's possible to have another BC implementation loaded in VM.
-        Security.removeProvider(BouncyCastleProvider.PROVIDER_NAME);
-        Security.insertProviderAt(new BouncyCastleProvider(), 1);
-    }
+
     @Override
     public ReactNativeHost getReactNativeHost() {
         return mReactNativeHost;
@@ -84,8 +65,7 @@ public class MainApplication extends Application implements ReactApplication {
     @Override
     public void onCreate() {
         super.onCreate();
-        // bsim
-        setupBouncyCastle();
+
         ReactFontManager.getInstance().addCustomFont(this, "SF Pro Display", R.font.sfp);
         SoLoader.init(this, /* native exopackage */ false);
         if (BuildConfig.IS_NEW_ARCHITECTURE_ENABLED) {

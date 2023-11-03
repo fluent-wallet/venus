@@ -15,6 +15,10 @@ import com.facebook.react.bridge.ReadableArray
 import com.facebook.react.bridge.WritableNativeArray
 import com.facebook.react.bridge.WritableNativeMap
 
+//for bsim
+import java.security.Security;
+import java.security.Provider;
+import org.bouncycastle.jce.provider.BouncyCastleProvider;
 
 class MockSDKModule(private val reactContext: ReactApplicationContext) :
     ReactContextBaseJavaModule(reactContext) {
@@ -28,6 +32,28 @@ class MockSDKModule(private val reactContext: ReactApplicationContext) :
 
     private val error =
         mapOf("400" to "BSIMSDK is not create, Please call createMockSDK function first")
+
+    private fun setupBouncyCastle() {
+        val provider = Security.getProvider(BouncyCastleProvider.PROVIDER_NAME)
+        if (provider == null) {
+            // Web3j will set up the provider lazily when it's first used.
+            return
+        }
+        if (provider.javaClass == BouncyCastleProvider::class.java) {
+            // BC with same package name, shouldn't happen in real life.
+            return
+        }
+        // Android registers its own BC provider. As it might be outdated and might not include
+        // all needed ciphers, we substitute it with a known BC bundled in the app.
+        // Android's BC has its package rewritten to "com.android.org.bouncycastle" and because
+        // of that it's possible to have another BC implementation loaded in VM.
+        Security.removeProvider(BouncyCastleProvider.PROVIDER_NAME)
+        Security.insertProviderAt(BouncyCastleProvider(), 1)
+    }
+
+    private fun removeBouncyCastle() {
+        Security.removeProvider(BouncyCastleProvider.PROVIDER_NAME)
+    }
 
     @ReactMethod
     fun create(appId: String) {
@@ -49,9 +75,9 @@ class MockSDKModule(private val reactContext: ReactApplicationContext) :
         } catch (e: IllegalArgumentException) {
             // do nothing
         }
-
+        setupBouncyCastle()
         val newKey = BSIMSDKInstance?.genNewKey(coinType)
-
+        removeBouncyCastle()
         if (newKey != null) {
 
             val result = WritableNativeMap()
