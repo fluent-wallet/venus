@@ -67,15 +67,17 @@ const Secret = ({ backupType, getSecretData }: { backupType: 'Seed Phrase' | 'Pr
             <Text className="text-base font-normal leading-6">Make sure your environment is safe</Text>
             <View className="mt-4">
               <BaseButton loading={loading} buttonStyle={{ paddingHorizontal: 20, paddingVertical: 10 }} onPress={handleGetSecretData}>
-                <Icon name="remove-red-eye" className="pr-1" />
-                <Text className="text-sm leading-6">View</Text>
+                <Icon name="remove-red-eye" className="pr-1" color={theme.colors.textInvert} />
+                <Text className="text-sm leading-6" style={{ color: theme.colors.textInvert }}>
+                  View
+                </Text>
               </BaseButton>
             </View>
           </View>
         )}
       </View>
       {backupType === 'Private Key' && isShow && (
-        <View className="flex flex-row items-center mt-4 p-2" style={{ backgroundColor: theme.colors.surfaceCard }}>
+        <View className="flex flex-row items-center my-4 p-2" style={{ backgroundColor: theme.colors.surfaceCard }}>
           <Text className="shrink text-sm leading-5" style={{ color: theme.colors.textSecondary }}>
             {secret}
           </Text>

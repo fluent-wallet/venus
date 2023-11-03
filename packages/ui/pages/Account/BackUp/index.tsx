@@ -59,7 +59,7 @@ const BackUp: React.FC<NativeStackScreenProps<RootStackList, 'BackUp'> & { vault
       </ScrollView>
       <View>
         <BaseButton>
-          <Text className="text-base font-medium leading-6" onPress={() => navigation.goBack()}>
+          <Text className="text-base font-medium leading-6" onPress={() => navigation.goBack()} style={{ color: theme.colors.textInvert }}>
             Close
           </Text>
         </BaseButton>
