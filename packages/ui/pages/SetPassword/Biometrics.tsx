@@ -12,6 +12,7 @@ import createVaultWithRouterParams from './createVaultWithRouterParams';
 import useInAsync from '@hooks/useInAsync';
 import { SetPasswordStackName } from './index';
 import { BaseButton } from '@components/Button';
+import { CommonActions } from '@react-navigation/native';
 
 export const BiometricsStackName = 'Biometrics';
 
@@ -57,7 +58,8 @@ const Biometrics = () => {
       setDisableSetPassword(true);
       await authentication.setPassword({ authType: AuthenticationType.Biometrics });
       await createVault(route.params);
-      navigation.navigate('Home', { screen: WalletStackName });
+      navigation.navigate(WalletStackName);
+      navigation.dispatch(CommonActions.reset({ index: 0, routes: [{ name: WalletStackName }] }));
     } catch (err) {
       console.log('Enable Biometrics error: ', err);
       setDisableSetPassword(false);
