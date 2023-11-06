@@ -26,7 +26,7 @@ const GroupSetting: React.FC<{
     const accountGroup = observeAccountGroupById(database, route.params.accountGroupId);
     return {
       accountGroup,
-      accounts: accountGroup.pipe(switchMap((accountGroup) => accountGroup.account.observe())),
+      accounts: accountGroup.pipe(switchMap((accountGroup) => accountGroup.visibleAccounts.observe())),
       vault: accountGroup.pipe(switchMap((accountGroup) => accountGroup.vault.observe())),
     };
   })

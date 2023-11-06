@@ -1,5 +1,6 @@
 import { Model, Q, type Query, type Relation } from '@nozbe/watermelondb';
 import { field, text, children, immutableRelation, writer, reader, lazy } from '@nozbe/watermelondb/decorators';
+import { map } from 'rxjs';
 import { type Vault } from '../Vault';
 import { type Account } from '../Account';
 import TableName from '../../TableName';
@@ -18,7 +19,11 @@ export class AccountGroup extends Model {
   @immutableRelation(TableName.Vault, 'vault_id') vault!: Relation<Vault>;
 
   @lazy hiddenAccounts = this.account.extend(Q.where('hidden', true));
-  @lazy visibleAccounts = this.account.extend(Q.where('hidden', false));
+  @lazy visibleAccounts = this.account.extend(Q.where('hidden', false), Q.sortBy('index', Q.asc));
+  @lazy selectedAccount = this.account
+    .extend(Q.where('selected', true))
+    .observe()
+    .pipe(map((accounts) => accounts?.[0]));
 
   @writer async updateName(newNickName: string) {
     await this.update((accountGroup) => {
