@@ -6,7 +6,7 @@ import { useState } from 'react';
 import CreatePasswordAlert from './components/Alert';
 import { type NavigationProp, type RouteProp, useRoute } from '@react-navigation/native';
 import { AuthenticationType, authentication } from '@DB/helper';
-import { type RootStackList, WalletStackName } from '@router/configs';
+import { type RootStackList, WalletStackName, HomeStackName } from '@router/configs';
 import createVaultWithRouterParams from './createVaultWithRouterParams';
 import useInAsync from '@hooks/useInAsync';
 import { CommonActions } from '@react-navigation/native';
@@ -102,7 +102,7 @@ const SetPassword: React.FC<{ navigation: NavigationProp<RootStackList> }> = (pr
         onOk={() => {
           setAlert({ show: false, type: '', message: '' });
           navigation.navigate(WalletStackName);
-          navigation.dispatch(CommonActions.reset({ index: 0, routes: [{ name: WalletStackName }] }));
+          navigation.dispatch(CommonActions.reset({ index: 0, routes: [{ name: HomeStackName }] }));
         }}
       />
     </SafeAreaView>
