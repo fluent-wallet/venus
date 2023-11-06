@@ -41,6 +41,21 @@ export const createNewBSIMAccount = async () => {
   return { hexAddress, index: BSIMKey.index };
 };
 
+export const createBSIMAccountToIndex = async (targetIndex: number) => {
+  if (!hasInit) {
+    BSIMSDK.create('BSIM');
+    hasInit = true;
+  }
+  const list = await getBIMList();
+  const maxIndex = list.at(-1)?.index ?? -1;
+  if (maxIndex >= targetIndex) return;
+
+  let index = maxIndex;
+  do {
+    index = (await createNewBSIMAccount()).index;
+  } while (index < targetIndex);
+};
+
 export const connectBSIM = async () => {
   if (!hasInit) {
     BSIMSDK.create('BSIM');
@@ -50,7 +65,7 @@ export const connectBSIM = async () => {
   try {
     const list = await getBIMList();
     if (list?.length > 0) {
-      return list;
+      return list.slice(0, 1);
     }
   } catch (error) {
     return [await createNewBSIMAccount()];

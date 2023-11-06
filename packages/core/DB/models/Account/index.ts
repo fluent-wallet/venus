@@ -38,11 +38,18 @@ export class Account extends Model {
     });
   }
 
-  @writer prepareShow() {
+  prepareHide() {
+    return this.prepareUpdate((account) => {
+      account.hidden = true;
+    });
+  }
+
+  prepareShow() {
     return this.prepareUpdate((account) => {
       account.hidden = false;
     });
   }
+
 
   @writer async hide() {
     if (this.hidden === true) return;

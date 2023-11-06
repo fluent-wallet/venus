@@ -46,7 +46,7 @@ export const getNthAccountOfHDKey = async ({
   only0x1Prefixed?: boolean | undefined;
 }) => {
   const paths = hdPath.split('/');
-  const result = {} as { address: string; privateKey: string; index: number };
+  const result = {} as { hexAddress: string; privateKey: string; index: number };
   const k = defHDKey(mnemonic);
 
   if (only0x1Prefixed) {
@@ -55,15 +55,15 @@ export const getNthAccountOfHDKey = async ({
     while (count <= nth) {
       paths[5] = `${idx++}`;
       const newNode = k.derivePath(paths.join('/'));
-      result.address = newNode.address.toLowerCase();
+      result.hexAddress = newNode.address.toLowerCase();
       result.privateKey = newNode.privateKey;
-      if (result.address.startsWith('0x1')) count++;
+      if (result.hexAddress.startsWith('0x1')) count++;
     }
     result.index = idx - 1;
   } else {
     paths[5] = String(nth);
     const newNode = k.derivePath(paths.join('/'));
-    result.address = newNode.address.toLowerCase();
+    result.hexAddress = newNode.address.toLowerCase();
     result.privateKey = newNode.privateKey;
     result.index = nth;
   }

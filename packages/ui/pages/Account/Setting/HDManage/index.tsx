@@ -12,6 +12,7 @@ import { type Account } from '@DB/models/Account';
 import { type HdPath } from '@DB/models/HdPath';
 import { querySelectedNetwork } from '@DB/models/Network/service';
 import { observeAccountGroupById } from '@DB/models/AccountGroup/service';
+import { createNewBSIMAccount, createBSIMAccountToIndex, getBIMList } from '@core/BSIMSDK/service';
 import { shortenAddress } from '@core/utils/address';
 import { withDatabase, withObservables, compose, useDatabase, type Database } from '@DB/react';
 import { getNthAccountOfHDKey } from '@core/utils/hdkey';
@@ -29,11 +30,13 @@ const HDManage: React.FC<{
     const vault = accountGroup.pipe(switchMap((accountGroup) => accountGroup.vault.observe()));
     return {
       accountGroup,
+      accounts: accountGroup.pipe(switchMap((accountGroup) => accountGroup.account.observe())),
       visibleAccounts: accountGroup.pipe(switchMap((accountGroup) => accountGroup.visibleAccounts.observe())),
-      hideAccounts: accountGroup.pipe(switchMap((accountGroup) => accountGroup.hiddenAccounts.observe())),
+      selectedAccount: accountGroup.pipe(switchMap((accountGroup) => accountGroup.selectedAccount)),
       hdPath: querySelectedNetwork(database)
         .observe()
         .pipe(switchMap((network) => network?.[0].hdPath.observe())),
+      vault,
       mnemonic: vault.pipe(switchMap((vault) => vault.getData())),
     };
   })
@@ -42,15 +45,18 @@ const HDManage: React.FC<{
     navigation,
     accountGroup,
     visibleAccounts,
-    hideAccounts,
+    accounts,
+    selectedAccount,
     hdPath,
     mnemonic,
+    vault,
   }: {
     navigation: StackNavigation;
     accountGroup: AccountGroup;
     vault: Vault;
     visibleAccounts: Array<Account>;
-    hideAccounts: Array<Account>;
+    accounts: Array<Account>;
+    selectedAccount: Account | null;
     hdPath: HdPath;
     mnemonic: string;
   }) => {
@@ -61,46 +67,83 @@ const HDManage: React.FC<{
     const [pageIndex, setPageIndex] = useState(0);
     const [inCalc, setInCalc] = useState(false);
     const [inNext, setInNext] = useState(false);
-    const [pageAccounts, setPageAccounts] = useState<Array<{ address: string; index: number; isSelected: boolean }>>([]);
-    const [selectedAccounts, setSelectedAccounts] = useState<Array<{ address: string; index: number; isSelected: boolean }>>([]);
+    const [pageAccounts, setPageAccounts] = useState<Array<{ hexAddress: string; index: number }>>([]);
+    const [chooseAccounts, setChooseAccounts] = useState<Array<{ index: number }>>([]);
+    useEffect(() => {
+      const initChooseAccounts = async () => {
+        setChooseAccounts(
+          (await Promise.all(visibleAccounts.map(async (account) => ({ index: account.index, hexAddress: (await account.address)?.[0]?.hex })))) ?? []
+        );
+      };
+
+      initChooseAccounts();
+    }, []);
 
     useEffect(() => {
       const calcAccounts = async () => {
         setInCalc(true);
         await new Promise((resolve) => setTimeout(resolve, 10));
+
+        let accountsList: Awaited<ReturnType<typeof getBIMList>> = [];
+        if (vault.type === 'BSIM') {
+          await createBSIMAccountToIndex((pageIndex + 1) * 5);
+          accountsList = await getBIMList();
+        }
+
         const newPageAccounts = await Promise.all(
-          Array.from({ length: 5 }).map((_, index) => getNthAccountOfHDKey({ mnemonic, hdPath: hdPath.value, nth: pageIndex * 5 + index }))
+          Array.from({ length: 5 }).map(async (_, index) => {
+            const targetAlreadyInAccounts = accounts?.find((account) => account.index === pageIndex * 5 + index);
+            if (targetAlreadyInAccounts) return { hexAddress: (await targetAlreadyInAccounts.address)?.[0]?.hex, index: targetAlreadyInAccounts.index };
+            if (vault.type === 'BSIM') {
+              const targetAlreadyInList = accountsList?.find((account) => account.index === pageIndex * 5 + index);
+              if (targetAlreadyInList) return { hexAddress: targetAlreadyInList.hexAddress, index: targetAlreadyInList.index };
+
+              // The code shouldn't have been able to get here.
+              const { hexAddress, index: newIndex } = await createNewBSIMAccount();
+              if (newIndex === pageIndex * 5 + index) {
+                return { hexAddress, index: newIndex };
+              }
+              throw new Error('????');
+            } else {
+              return getNthAccountOfHDKey({ mnemonic, hdPath: hdPath.value, nth: pageIndex * 5 + index });
+            }
+          })
         );
         setPageAccounts(
           newPageAccounts.map((item) => ({
-            address: item.address,
+            hexAddress: item.hexAddress,
             index: item.index,
-            isSelected: !!visibleAccounts.find((account) => account.index === item.index),
           }))
         );
         setInCalc(false);
       };
 
       calcAccounts();
+      // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [pageIndex]);
 
     const handleClickNext = async () => {
       setInNext(true);
-      const hideAccountsInSelected = hideAccounts.filter((account) => !!selectedAccounts.find((_account) => _account.index === account.index));
-      const newAccountsInSelected = selectedAccounts
-        .filter((account) => !hideAccountsInSelected.find((_account) => _account.index === account.index))
+      const newAccountsInChoose = chooseAccounts
+        .filter((account) => !accounts.find((_account) => _account.index === account.index))
         .sort((a, b) => a.index - b.index);
+      const oldAccountsNeedHidden = accounts.filter((account) => !chooseAccounts.find((_account) => _account.index === account.index));
+      const oldAccountsNeedShow = accounts.filter((account) => !!chooseAccounts.find((_account) => _account.index === account.index));
       await database.write(async () => {
-        await database.batch(...hideAccountsInSelected.map((account) => account.prepareShow()));
+        await database.batch(...oldAccountsNeedHidden.map((account) => account.prepareHide()), ...oldAccountsNeedShow.map((account) => account.prepareShow()));
       });
-      await Promise.all(
-        newAccountsInSelected.map((account) =>
-          createAccount({
+
+      newAccountsInChoose.forEach(async (account) => {
+        try {
+          await createAccount({
             accountGroup,
-            index: account.index,
-          })
-        )
-      );
+            ...account,
+          });
+        } catch (err) {
+          console.error(err);
+        }
+      });
+
       setInNext(false);
       navigation.goBack();
     };
@@ -128,18 +171,19 @@ const HDManage: React.FC<{
             </View>
           )}
           {pageAccounts.map((account, index) => {
-            const isInSelected = selectedAccounts.find((_account) => _account === account);
+            const isSelected = !!selectedAccount && selectedAccount.index === account.index;
+            const isInChoose = !!chooseAccounts?.find((_account) => _account.index === account.index);
             return (
               <Fragment key={account.index}>
                 {index !== 0 && <View className="mx-[16px] my-[8px] w-full h-[1px]" style={{ backgroundColor: theme.colors.borderPrimary }} />}
                 <TouchableHighlight
                   underlayColor={theme.colors.underlayColor}
-                  disabled={account.isSelected}
+                  disabled={isSelected}
                   onPress={() => {
-                    if (selectedAccounts.find((_account) => _account === account)) {
-                      setSelectedAccounts(selectedAccounts.filter((_account) => _account !== account));
+                    if (chooseAccounts.find((_account) => _account.index === account.index)) {
+                      setChooseAccounts(chooseAccounts.filter((_account) => _account.index !== account.index));
                     } else {
-                      setSelectedAccounts([...selectedAccounts, account]);
+                      setChooseAccounts([...chooseAccounts, account]);
                     }
                   }}
                 >
@@ -147,13 +191,13 @@ const HDManage: React.FC<{
                     <View
                       className="w-[24px] h-[24px] rounded-full border-solid border-[1px] overflow-hidden flex justify-center items-center"
                       style={{
-                        backgroundColor: account.isSelected ? 'transparent' : isInSelected ? theme.colors.surfaceBrand : theme.colors.surfaceCard,
-                        borderColor: account.isSelected ? 'transparent' : isInSelected ? theme.colors.surfaceCard : theme.colors.surfaceBrand,
+                        backgroundColor: isSelected ? 'transparent' : isInChoose ? theme.colors.surfaceBrand : theme.colors.surfaceCard,
+                        borderColor: isSelected ? 'transparent' : isInChoose ? theme.colors.surfaceCard : theme.colors.surfaceBrand,
                       }}
                     >
                       <CheckIcon
                         className="flex-shrink-0 flex-grow-0"
-                        color={account.isSelected ? theme.colors.surfaceBrand : isInSelected ? theme.colors.surfaceCard : 'transparent'}
+                        color={isSelected ? theme.colors.surfaceBrand : isInChoose ? theme.colors.surfaceCard : 'transparent'}
                         width={18}
                         height={16}
                       />
@@ -162,7 +206,7 @@ const HDManage: React.FC<{
                       {account.index + 1}
                     </Text>
                     <Text className="text-[16px] leading-tight" style={{ color: theme.colors.textPrimary }}>
-                      {shortenAddress(account.address)}
+                      {shortenAddress(account.hexAddress)}
                     </Text>
                     <Text className="ml-auto text-[16px] leading-tight" style={{ color: theme.colors.textSecondary }}>
                       {hdPath.value.slice(0, -1)}
@@ -180,13 +224,13 @@ const HDManage: React.FC<{
             Pre
           </BaseButton>
           <Text className="text-[16px] leading-tight" style={{ color: theme.colors.surfaceBrand }}>
-            {selectedAccounts.length} address(es) selected
+            {chooseAccounts.length} address{chooseAccounts.length > 0 ? `(es)` : ''} selected
           </Text>
           <BaseButton containerStyle={{ marginTop: 'auto' }} onPress={() => setPageIndex((pre) => pre + 1)} disabled={inNext}>
             Next
           </BaseButton>
         </View>
-        <BaseButton containerStyle={{ marginTop: 'auto' }} disabled={selectedAccounts.length === 0} onPress={handleClickNext} loading={inNext}>
+        <BaseButton containerStyle={{ marginTop: 'auto' }} disabled={chooseAccounts.length === 0} onPress={handleClickNext} loading={inNext}>
           Next
         </BaseButton>
       </SafeAreaView>

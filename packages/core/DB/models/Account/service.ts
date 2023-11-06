@@ -49,6 +49,7 @@ export async function createAccount({
         let privateKey: string;
         if (vault.type === 'private_key') {
           privateKey = vaultData;
+          return fromPrivate(privateKey).address
         } else {
           const hdPath = await network.hdPath;
           const ret = await getNthAccountOfHDKey({
@@ -56,9 +57,8 @@ export async function createAccount({
             hdPath: hdPath.value,
             nth: newAccountIndex,
           });
-          privateKey = ret.privateKey;
+          return ret.hexAddress
         }
-        return fromPrivate(privateKey).address;
       }
     })
   );
