@@ -3,13 +3,19 @@ import { SafeAreaView, TouchableOpacity, TouchableHighlight, ActivityIndicator }
 import { useHeaderHeight } from '@react-navigation/elements';
 import { useRoute, RouteProp } from '@react-navigation/native';
 import { useTheme, ListItem } from '@rneui/themed';
-import { ImportWalletStackName, type RootStackList, type StackNavigation } from '@router/configs';
+import { createHDVault as _createHDVault, hasBSIMCreated } from '@core/DB/models/Vault/service';
+import { withDatabase, withObservables, compose, type Database } from '@DB/react';
 import useInAsync from '@hooks/useInAsync';
-import { createHDVault as _createHDVault } from '@core/DB/models/Vault/service';
+import { ImportWalletStackName, type RootStackList, type StackNavigation } from '@router/configs';
 
 export const AddAccountStackName = 'AddNewAccount';
 
-const AddAccount: React.FC<{ navigation: StackNavigation }> = ({ navigation }) => {
+const AddAccount: React.FC<{ navigation: StackNavigation }> = compose(
+  withDatabase,
+  withObservables([], ({ database }: { database: Database }) => ({
+    hasBSIMCreated: hasBSIMCreated(database),
+  }))
+)(({ navigation, hasBSIMCreated }: { navigation: StackNavigation; hasBSIMCreated: boolean }) => {
   const { theme } = useTheme();
   const headerHeight = useHeaderHeight();
   const route = useRoute<RouteProp<RootStackList, typeof AddAccountStackName>>();
@@ -17,6 +23,26 @@ const AddAccount: React.FC<{ navigation: StackNavigation }> = ({ navigation }) =
 
   return (
     <SafeAreaView className="flex-1 flex flex-col gap-[12px] px-[24px]" style={{ backgroundColor: theme.colors.surfacePrimary, paddingTop: headerHeight + 16 }}>
+      {!hasBSIMCreated && 
+        <TouchableHighlight
+          className="rounded-[8px] overflow-hidden"
+          onPress={async () => {
+            await createHDVault();
+            navigation.goBack();
+          }}
+          disabled={inCreateHDVault}
+        >
+          <ListItem>
+            <ListItem.Content>
+              <ListItem.Title style={{ color: theme.colors.textPrimary }} className="font-bold">
+                BSIM Wallet
+              </ListItem.Title>
+            </ListItem.Content>
+            {inCreateHDVault && <ActivityIndicator color={theme.colors.surfaceBrand} />}
+          </ListItem>
+        </TouchableHighlight>
+      }
+
       <TouchableHighlight
         className="rounded-[8px] overflow-hidden"
         onPress={async () => {
@@ -56,6 +82,6 @@ const AddAccount: React.FC<{ navigation: StackNavigation }> = ({ navigation }) =
       </TouchableOpacity>
     </SafeAreaView>
   );
-};
+});
 
 export default AddAccount;

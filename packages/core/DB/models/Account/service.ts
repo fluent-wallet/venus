@@ -41,8 +41,10 @@ export async function createAccount({
   // For vaults of type 'hierarchical_deterministic', it's' necessary to first generate the privateKey from the mnemonic based on the index of the Account.
   const networksWithHexAddress = await Promise.all(
     networks.map(async (network) => {
-      if (vault.type === 'public_address' || vault.type === 'hardware' || vault.type === 'BSIM') {
-        return hexAddress ?? vaultData;
+      if (vault.type === 'hardware' || vault.type === 'BSIM') {
+        return hexAddress!;
+      } else if (vault.type === 'public_address') {
+        return vaultData;
       } else {
         let privateKey: string;
         if (vault.type === 'private_key') {

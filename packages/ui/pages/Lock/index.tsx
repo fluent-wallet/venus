@@ -11,17 +11,16 @@ export const LockStackName = 'Lock';
 function Lock() {
   const { theme } = useTheme();
   const navigation = useNavigation<StackNavigation>();
+  const unLockWallet = async () => {
+    try {
+      await authentication.getPassword();
+      navigation.navigate(HomeStackName, { screen: WalletStackName });
+    } catch (error) {
+      // user cancel unlock
+    }
+  };
 
   useEffect(() => {
-    const unLockWallet = async () => {
-      try {
-        await authentication.getPassword();
-        navigation.navigate(HomeStackName, { screen: WalletStackName });
-      } catch (error) {
-        // user cancel unlock
-      }
-    };
-
     unLockWallet();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);

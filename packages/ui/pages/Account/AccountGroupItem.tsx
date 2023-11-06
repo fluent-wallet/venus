@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-non-null-asserted-optional-chain */
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Text, TouchableHighlight, View, type StyleProp, type ViewStyle } from 'react-native';
 import clsx from 'clsx';
 import { atom, useAtom } from 'jotai';
@@ -9,7 +9,8 @@ import { Button } from '@rneui/base';
 import { type Vault } from '@DB/models/Vault';
 import { type AccountGroup } from '@DB/models/AccountGroup';
 import { type Account } from '@DB/models/Account';
-import { selectAccount, querySelectedAccount } from '@DB/models/Account/service';
+import { selectAccount, createAccount, querySelectedAccount } from '@DB/models/Account/service';
+import { createNewBSIMAccount } from '@core/BSIMSDK/service';
 import { withObservables, useDatabase } from '@DB/react';
 import useInAsync from '@hooks/useInAsync';
 import { AccountSettingStackName, GroupSettingStackName, type StackNavigation } from '@router/configs';
@@ -62,7 +63,21 @@ const AccountGroupItem: React.FC<{
     enableLinkToSetting?: boolean;
   }) => {
     const { theme } = useTheme();
-    const { inAsync, execAsync: addAccount } = useInAsync(accountGroup.addAccount.bind(accountGroup));
+
+    const _addAccount = useCallback(async () => {
+      try {
+        if (vault.type === 'hierarchical_deterministic') {
+          return await createAccount({ accountGroup });
+        } else if (vault.type === 'BSIM') {
+          return await createAccount({ accountGroup, ...(await createNewBSIMAccount()) });
+        }
+      } catch (err) {
+        console.log('Add account error', err);
+      }
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+
+    const { inAsync, execAsync: addAccount } = useInAsync(_addAccount);
     const [expanded, setExpanded] = useState(true);
     const [selectedAccountId, setSelectAccountId] = useAtom(selectedAccountIdAtom);
     const navigation = useNavigation<StackNavigation>();
@@ -127,7 +142,7 @@ const AccountGroupItem: React.FC<{
                   <AccountAddress account={account} showSelected />
                 </TouchableHighlight>
               ))}
-              {vault.type === 'hierarchical_deterministic' && enableAddNew && (
+              {(vault.type === 'hierarchical_deterministic' || vault.type === 'BSIM' || vault.type === 'hardware') && enableAddNew && (
                 <>
                   <Card.Divider className="mx-[16px] mt-[16px] mb-[12px]" />
                   <Button
