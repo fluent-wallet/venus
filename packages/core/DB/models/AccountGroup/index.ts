@@ -26,14 +26,6 @@ export class AccountGroup extends Model {
       accountGroup.nickname = newNickName;
     });
   }
-
-  async addAccount(params: { nickname?: string; hidden?: boolean; selected?: boolean } = { hidden: false, selected: false }) {
-    if ((await this.vault).type !== 'hierarchical_deterministic') {
-      throw new Error('Only HD type vault can add account.');
-    }
-    return await createAccount({ ...params, accountGroup: this });
-  }
-
   @reader async getLastIndex() {
     const accounts = (await this.collections.get(TableName.Account).query(Q.sortBy('index', Q.desc)).fetch()) as Array<Account>;
     return accounts?.[0]?.index ?? -1;

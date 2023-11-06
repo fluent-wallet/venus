@@ -1,5 +1,5 @@
-import { Q } from '@nozbe/watermelondb';
-import { map, mergeMap } from 'rxjs';
+import { Q, type Query } from '@nozbe/watermelondb';
+import { map } from 'rxjs';
 import { type Vault } from './';
 import database from '../../';
 import TableName from '../../TableName';
@@ -37,20 +37,20 @@ const defaultGroupNameMap = {
 
 async function createVaultOfType(params: { type: 'hierarchical_deterministic'; mnemonic: string }): Promise<void>;
 async function createVaultOfType(params: { type: 'private_key'; privateKey: string }): Promise<void>;
-async function createVaultOfType(params: { type: 'BSIM'; index: string; hexAddress: string }): Promise<void>;
-async function createVaultOfType(params: { type: 'hardware'; index: string; hexAddress: string }): Promise<void>;
+async function createVaultOfType(params: { type: 'BSIM'; accounts: Array<{ index: number; hexAddress: string }> }): Promise<void>;
+async function createVaultOfType(params: { type: 'hardware'; accounts: Array<{ index: number; hexAddress: string }> }): Promise<void>;
 async function createVaultOfType(params: { type: 'public_address'; hexAddress: string }): Promise<void>;
 async function createVaultOfType({
   type,
   mnemonic,
   privateKey,
-  index,
+  accounts,
   hexAddress,
 }: {
   type: Vault['type'];
   mnemonic?: string;
   privateKey?: string;
-  index?: string;
+  accounts?: Array<{ index: number; hexAddress: string }>;
   hexAddress?: string;
 }) {
   try {
@@ -59,24 +59,39 @@ async function createVaultOfType({
         ? await cryptoTool.encrypt(privateKey)
         : type === 'hierarchical_deterministic'
         ? await cryptoTool.encrypt(mnemonic)
-        : type === 'BSIM'
-        ? index
+        : type === 'BSIM' || type === 'hardware'
+        ? accounts
         : type === 'public_address'
         ? hexAddress
-        : index;
+        : null;
     if (!data) throw new Error('Vault data is empty');
     const isFirstVault = await checkIsFirstVault();
     const count = await getVaultTypeCount(type);
-    const vault = await createVault({ data, type, device: 'ePayWallet' });
+    const vault = await createVault({ data: Array.isArray(data) ? '' : data, type, device: 'ePayWallet' });
     const accountGroup = await createAccountGroup({ nickname: `${defaultGroupNameMap[type]} - ${count + 1}`, hidden: false, vault });
-
-    await createAccount({
-      nickname: `${type === 'hierarchical_deterministic' || type === 'BSIM' ? '' : `${convertToCamelCase(type)} `}Account - 1`,
-      hidden: false,
-      selected: isFirstVault ? true : false,
-      accountGroup,
-      ...(hexAddress ? { hexAddress } : null),
-    });
+    if (type === 'BSIM' || type === 'hardware') {
+      if (!Array.isArray(accounts)) throw new Error('accounts is not array');
+      await Promise.all(
+        accounts.map(({ index, hexAddress }, i) =>
+          createAccount({
+            nickname: `${convertToCamelCase(type)} Account - ${index + 1}`,
+            selected: isFirstVault && i === 0 ? true : false,
+            hidden: false,
+            accountGroup,
+            hexAddress,
+            index,
+          })
+        )
+      );
+    } else {
+      await createAccount({
+        nickname: `${type === 'hierarchical_deterministic' ? '' : `${convertToCamelCase(type)} `}Account - 1`,
+        hidden: false,
+        selected: isFirstVault ? true : false,
+        accountGroup,
+        ...(hexAddress ? { hexAddress } : null),
+      });
+    }
   } catch (error) {
     console.error('create vault error: ', error);
   }
@@ -95,12 +110,11 @@ export const createHDVault = async (importMnemonic?: string) => {
   }
 };
 
-export const createBSIMVault = async (args: { hexAddress: string; index: string }) => {
+export const createBSIMVault = async (accounts: Array<{ index: number; hexAddress: string }>) => {
   try {
     const start = performance.now();
     console.log('create BSIM vault start');
-    const { hexAddress, index } = args;
-    await createVaultOfType({ type: 'BSIM', hexAddress, index });
+    await createVaultOfType({ type: 'BSIM', accounts });
     const end = performance.now();
     console.log(`create BSIM vault a Wallet took ${end - start} ms.`);
   } catch (error) {
@@ -143,3 +157,6 @@ export const checkVaultHasWallet = async (type: 'privatekey' | 'seedPhrase', sec
     if (secret === vaultSecret) return true;
   }
 };
+
+export const hasBSIMCreated = (_database: typeof database = database) =>
+  (_database.get(TableName.Vault).query(Q.where('type', 'BSIM')) as unknown as Query<Vault>).observeCount().pipe(map((count) => count > 0));

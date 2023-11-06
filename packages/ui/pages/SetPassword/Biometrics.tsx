@@ -6,7 +6,7 @@ import { statusBarHeight } from '@utils/deviceInfo';
 import Animated, { useSharedValue, useAnimatedStyle, withTiming, withRepeat } from 'react-native-reanimated';
 import FaceIdSource from '@assets/images/face-id.png';
 import { authentication, AuthenticationType } from '@DB/helper';
-import { WalletStackName, type RootStackList, type StackNavigation, HomeStackName } from '@router/configs';
+import { HomeStackName, WalletStackName, type RootStackList, type StackNavigation } from '@router/configs';
 import { RouteProp, useNavigation, useRoute } from '@react-navigation/native';
 import createVaultWithRouterParams from './createVaultWithRouterParams';
 import useInAsync from '@hooks/useInAsync';
@@ -58,8 +58,8 @@ const Biometrics = () => {
       setDisableSetPassword(true);
       await authentication.setPassword({ authType: AuthenticationType.Biometrics });
       await createVault(route.params);
-      navigation.navigate(WalletStackName);
-      navigation.dispatch(CommonActions.reset({ index: 0, routes: [{ name: HomeStackName }] }));
+      navigation.navigate(HomeStackName, { screen: WalletStackName });
+      // navigation.dispatch(CommonActions.reset({ index: 0, routes: [{ name: WalletStackName }] }));
     } catch (err) {
       console.log('Enable Biometrics error: ', err);
       setDisableSetPassword(false);
