@@ -10,7 +10,7 @@ import { type Vault } from '@DB/models/Vault';
 import { type AccountGroup } from '@DB/models/AccountGroup';
 import { type Account } from '@DB/models/Account';
 import { selectAccount, createAccount, querySelectedAccount } from '@DB/models/Account/service';
-import { createNewBSIMAccount } from '@core/BSIMSDK/service';
+import { createNewBSIMAccount, getBIMList } from '@core/BSIMSDK/service';
 import { withObservables, useDatabase } from '@DB/react';
 import useInAsync from '@hooks/useInAsync';
 import { AccountSettingStackName, GroupSettingStackName, type StackNavigation } from '@router/configs';
@@ -69,6 +69,12 @@ const AccountGroupItem: React.FC<{
         if (vault.type === 'hierarchical_deterministic') {
           return await createAccount({ accountGroup });
         } else if (vault.type === 'BSIM') {
+          const list = await getBIMList();
+          const newIndex = (await accountGroup.getLastIndex()) + 1;
+          const alreadyCreateAccount = list?.find(item => item.index === newIndex);
+          if (alreadyCreateAccount) {
+            return await createAccount({ accountGroup, ...alreadyCreateAccount });
+          }
           return await createAccount({ accountGroup, ...(await createNewBSIMAccount()) });
         }
       } catch (err) {

@@ -74,7 +74,6 @@ async function createVaultOfType({
       await Promise.all(
         accounts.map(({ index, hexAddress }, i) =>
           createAccount({
-            nickname: `${convertToCamelCase(type)} Account - ${index + 1}`,
             selected: isFirstVault && i === 0 ? true : false,
             hidden: false,
             accountGroup,
