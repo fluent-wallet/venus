@@ -4,7 +4,7 @@ import { AccountGroup } from './';
 import TableName from '../../TableName';
 import database from '../../';
 
-type Params = ModelFields<AccountGroup>;
+type Params = Omit<ModelFields<AccountGroup>, 'selectedAccount' | 'hiddenAccounts' | 'visibleAccounts'>;
 export async function createAccountGroup(params: Params, prepareCreate?: true) {
   return createModel<AccountGroup>({
     name: TableName.AccountGroup,

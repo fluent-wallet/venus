@@ -90,7 +90,14 @@ const GroupSetting: React.FC<{
           size="sm"
           type="clear"
           title="Manage HD Wallets"
-          onPress={() => navigation.navigate(HDManageStackName, { accountGroupId: accountGroup.id })}
+          onPress={async () => {
+            try {
+              await vault.getData();
+              navigation.navigate(HDManageStackName, { accountGroupId: accountGroup.id });
+            } catch (err) {
+              console.error('Your reject biometrics.')
+            }
+          }}
         />
       </View>
       <ScrollView className="flex-1 mb-[20px] rounded-[8px]">
