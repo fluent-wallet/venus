@@ -1,4 +1,4 @@
-import { enrichFetch } from '.';
+import { enrichFetch } from './index';
 const createRandomId = () => {
   const MAX = Number.MAX_SAFE_INTEGER;
   let idCounter = Math.round(Math.random() * MAX);

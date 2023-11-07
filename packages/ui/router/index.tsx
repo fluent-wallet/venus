@@ -113,19 +113,14 @@ const StackNavigator = compose(
       <Stack.Screen name={LoginStackName} component={Login} options={{ headerShown: false }} />
       <Stack.Screen name={LockStackName} component={Lock} options={{ headerShown: false }} />
       <Stack.Screen name={ReceiveAddressStackName} component={SendReceiver} options={{ title: 'receiving address', headerTitleAlign: 'center' }} />
-      <Stack.Screen
-        name={SendToStackName}
-        component={SendTo}
-        options={{ ...SendPageHeaderOptions({ titleColor: theme.colors.contrastWhiteAndBlack, borderColor: theme.colors.surfaceSecondary }) }}
-      />
+      <Stack.Screen name={SendToStackName} component={SendTo} options={{ ...SendPageHeaderOptions({ title: 'Send To' }) }} />
       <Stack.Screen
         name={TransactionConfirmStackName}
         component={TransactionConfirm}
         options={{
           ...SendPageHeaderOptions({
-            titleColor: theme.colors.contrastWhiteAndBlack,
-            borderColor: theme.colors.surfaceSecondary,
             title: 'Transaction Confirm',
+            
           }),
         }}
       />
@@ -134,8 +129,6 @@ const StackNavigator = compose(
         component={TokenList}
         options={{
           ...SendPageHeaderOptions({
-            titleColor: theme.colors.contrastWhiteAndBlack,
-            borderColor: theme.colors.surfaceSecondary,
             title: 'Tokens',
           }),
         }}

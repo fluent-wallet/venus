@@ -101,7 +101,7 @@ const SetPassword: React.FC<{ navigation: NavigationProp<RootStackList> }> = (pr
         {...alert}
         onOk={() => {
           setAlert({ show: false, type: '', message: '' });
-          navigation.navigate(WalletStackName);
+          navigation.navigate(HomeStackName, { screen: WalletStackName });
           navigation.dispatch(CommonActions.reset({ index: 0, routes: [{ name: HomeStackName }] }));
         }}
       />

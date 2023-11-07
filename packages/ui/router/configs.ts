@@ -39,7 +39,7 @@ export {
   GroupSettingStackName,
   ReceiveStackName,
   SetAmountStackName,
-  HDManageStackName
+  HDManageStackName,
 };
 
 export const HomeStackName = 'Home';
@@ -58,11 +58,12 @@ export type RootStackList = {
   [LockStackName]: undefined;
   [AddAccountStackName]: { type?: 'add' | 'create' };
   [AccountSelectStackName]: undefined;
-  [SendToStackName]: undefined;
-  [TransactionConfirmStackName]: undefined;
+  [TokenListStackName]: { address: string };
+  [SendToStackName]: { address: string };
+  [TransactionConfirmStackName]: { address: string; value: string };
   [ReceiveAddressStackName]: undefined;
-  [TokenListStackName]: undefined;
-  [BackUpStackName]: { vaultId: string; accountIndex?: number; };
+
+  [BackUpStackName]: { vaultId: string; accountIndex?: number };
   [ReceiveStackName]: undefined;
   [SetAmountStackName]: undefined;
 
