@@ -18,6 +18,8 @@ import { withDatabase, withObservables, compose, useDatabase, type Database } fr
 import { getNthAccountOfHDKey } from '@core/utils/hdkey';
 import { type StackNavigation, type RootStackList } from '@router/configs';
 import CheckIcon from '@assets/icons/check.svg';
+import ArrowLeft from '@assets/icons/arrow-left.svg';
+import { colors } from 'packages/ui/theme';
 
 export const HDManageStackName = 'HDManage';
 
@@ -219,10 +221,14 @@ const HDManage: React.FC<{
           })}
         </View>
 
-        <View className="mt-[16px] flex flex-row justify-between items-center">
-          <BaseButton containerStyle={{ marginTop: 'auto' }} disabled={pageIndex === 0 || inNext} onPress={() => setPageIndex((pre) => pre - 1)}>
-            Pre
-          </BaseButton>
+        <View className="mt-[16px] px-[12px] flex flex-row justify-between items-center">
+          <ArrowLeft 
+            className="flex-shrink-0 flex-grow-0" 
+            color={pageIndex === 0 || inNext ? theme.colors.surfaceFourth : theme.colors.surfaceBrand} 
+            width={12} 
+            height={12} 
+            onPress={() => setPageIndex((pre) => pre - 1)} 
+          />
           <Text className="text-[16px] leading-tight" style={{ color: theme.colors.surfaceBrand }}>
             {chooseAccounts.length} address{chooseAccounts.length > 0 ? `(es)` : ''} selected
           </Text>

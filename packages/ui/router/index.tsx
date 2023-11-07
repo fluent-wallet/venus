@@ -86,7 +86,7 @@ const StackNavigator = compose(
         headerLeft: ({ canGoBack }) =>
           canGoBack ? (
             <TouchableOpacity className="flex flex-row items-center gap-[4px]" onPress={() => navigation.goBack()}>
-              <ArrowLeft />
+              <ArrowLeft color={theme.colors.surfaceBrand} />
               {/* <Text className="text-[16px] font-medium" style={{ color: theme.colors.textBrand }}>
                 Wallet
               </Text> */}
