@@ -7,6 +7,7 @@ import { createHDVault as _createHDVault, hasBSIMCreated } from '@core/DB/models
 import { withDatabase, withObservables, compose, type Database } from '@DB/react';
 import useInAsync from '@hooks/useInAsync';
 import { ImportWalletStackName, type RootStackList, type StackNavigation } from '@router/configs';
+import createVaultWithRouterParams from '@pages/SetPassword/createVaultWithRouterParams';
 
 export const AddAccountStackName = 'AddNewAccount';
 
@@ -19,18 +20,18 @@ const AddAccount: React.FC<{ navigation: StackNavigation }> = compose(
   const { theme } = useTheme();
   const headerHeight = useHeaderHeight();
   const route = useRoute<RouteProp<RootStackList, typeof AddAccountStackName>>();
-  const { inAsync: inCreateHDVault, execAsync: createHDVault } = useInAsync(_createHDVault);
+  const { inAsync: inCreateVault, execAsync: createVault } = useInAsync(createVaultWithRouterParams);
 
   return (
     <SafeAreaView className="flex-1 flex flex-col gap-[12px] px-[24px]" style={{ backgroundColor: theme.colors.surfacePrimary, paddingTop: headerHeight + 16 }}>
-      {!hasBSIMCreated && 
+      {!hasBSIMCreated && (
         <TouchableHighlight
           className="rounded-[8px] overflow-hidden"
           onPress={async () => {
-            await createHDVault();
+            await createVault({ type: 'BSIM' });
             navigation.goBack();
           }}
-          disabled={inCreateHDVault}
+          disabled={inCreateVault}
         >
           <ListItem>
             <ListItem.Content>
@@ -38,18 +39,18 @@ const AddAccount: React.FC<{ navigation: StackNavigation }> = compose(
                 BSIM Wallet
               </ListItem.Title>
             </ListItem.Content>
-            {inCreateHDVault && <ActivityIndicator color={theme.colors.surfaceBrand} />}
+            {inCreateVault && <ActivityIndicator color={theme.colors.surfaceBrand} />}
           </ListItem>
         </TouchableHighlight>
-      }
+      )}
 
       <TouchableHighlight
         className="rounded-[8px] overflow-hidden"
         onPress={async () => {
-          await createHDVault();
+          await createVault();
           navigation.goBack();
         }}
-        disabled={inCreateHDVault}
+        disabled={inCreateVault}
       >
         <ListItem>
           <ListItem.Content>
@@ -57,7 +58,7 @@ const AddAccount: React.FC<{ navigation: StackNavigation }> = compose(
               New Seed Phrase
             </ListItem.Title>
           </ListItem.Content>
-          {inCreateHDVault && <ActivityIndicator color={theme.colors.surfaceBrand} />}
+          {inCreateVault && <ActivityIndicator color={theme.colors.surfaceBrand} />}
         </ListItem>
       </TouchableHighlight>
 
