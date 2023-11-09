@@ -120,7 +120,6 @@ const StackNavigator = compose(
         options={{
           ...SendPageHeaderOptions({
             title: 'Transaction Confirm',
-            
           }),
         }}
       />

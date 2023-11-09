@@ -17,22 +17,19 @@ import ReceiveIcon from '@assets/icons/receive.svg';
 import BuyIcon from '@assets/icons/buy.svg';
 import MoreIcon from '@assets/icons/more.svg';
 import WalletTokens from './TabViews/Tokens';
+import SwitchCurrentNetwork from '@components/SwitchCurrentNetwork';
 
 export const WalletStackName = 'Wallet';
-
 export const getWalletHeaderOptions = (backgroundColor: string) =>
   ({
     headerLeft: () => (
-      <View className="ml-[17px]">
+      <View className="flex flex-row ml-[17px]">
         <Menu className="w-[24] h-[24]" />
+        <Flip className="w-[24] h-[24]" style={{ marginLeft: 18 }} />
       </View>
     ),
     headerTitle: () => <CurrentAccount backgroundColor={backgroundColor} />,
-    headerRight: () => (
-      <View className="flex flex-row mr-[17px]">
-        <Flip style={{ marginRight: 17 }} />
-      </View>
-    ),
+    headerRight: () => <>{__DEV__ && <SwitchCurrentNetwork />}</>,
     headerTitleAlign: 'center',
   } as const);
 

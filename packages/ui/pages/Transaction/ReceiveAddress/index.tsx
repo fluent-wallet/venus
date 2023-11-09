@@ -1,4 +1,3 @@
-import { Button } from '@rneui/base';
 import { Text, useTheme } from '@rneui/themed';
 import { statusBarHeight } from '@utils/deviceInfo';
 import { SafeAreaView, View, KeyboardAvoidingView } from 'react-native';
@@ -9,19 +8,10 @@ import Flip from '@assets/icons/flip.svg';
 
 export const ReceiveAddressStackName = 'ReceiveAddress';
 
-export const SendPageHeaderOptions = ({ title = 'Send To', titleColor, borderColor }: { title?: string; titleColor: string; borderColor: string }) =>
+export const SendPageHeaderOptions = ({ title = 'Send To' }: { title?: string }) =>
   ({
     headerTitle: title,
     headerTitleAlign: 'center',
-    headerRight: () => (
-      <Button
-        type="outline"
-        titleStyle={{ color: titleColor, fontSize: 10, fontFamily: 'SF Pro Display' }}
-        buttonStyle={{ borderRadius: 40, borderColor: borderColor }}
-      >
-        Mainnet
-      </Button>
-    ),
   } as const);
 
 const SendReceiver: React.FC<{ navigation: StackNavigation }> = ({ navigation }) => {
