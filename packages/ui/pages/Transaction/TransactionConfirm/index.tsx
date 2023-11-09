@@ -1,32 +1,53 @@
 import { Button, Divider, Text, useTheme } from '@rneui/themed';
 import { statusBarHeight } from '@utils/deviceInfo';
-import { SafeAreaView, View } from 'react-native';
+import { Pressable, SafeAreaView, View } from 'react-native';
 import AvatarIcon from '@assets/icons/avatar.svg';
 import CopyAllIcon from '@assets/icons/copy_all.svg';
 import Warning from '@assets/icons/warning_2.svg';
-import { type StackNavigation } from '@router/configs';
+import { RootStackList, type StackNavigation } from '@router/configs';
 
 import CloseIcon from '@assets/icons/close.svg';
 import SendIcon from '@assets/icons/send.svg';
 import { BaseButton } from '@components/Button';
+import { withDatabase, withObservables } from '@nozbe/watermelondb/react';
+import { Database } from '@nozbe/watermelondb';
+import { querySelectedAddress } from '@core/DB/models/Address/service';
+import { Address } from '@core/DB/models/Address';
+import { map } from 'rxjs';
+import { RouteProp } from '@react-navigation/native';
+import { shortenAddress } from '@core/utils/address';
+import { querySelectedNetwork } from '@core/DB/models/Network/service';
+import { Network } from '@core/DB/models/Network';
+import { useState } from 'react';
 
 export const TransactionConfirmStackName = 'TransactionConfirm';
 
-const TransactionConfirm: React.FC<{ navigation: StackNavigation }> = ({ navigation }) => {
+const TransactionConfirm: React.FC<{
+  navigation: StackNavigation;
+  address: Address;
+  route: RouteProp<RootStackList, typeof TransactionConfirmStackName>;
+  currentNetwork: Network;
+}> = ({ navigation, address, route, currentNetwork }) => {
   const { theme } = useTheme();
+  const [error, setError] = useState('');
+  const handleSend = async () => {};
   return (
     <SafeAreaView
       className="flex-1 flex flex-col justify-start px-[24px] pb-7"
       style={{ backgroundColor: theme.colors.normalBackground, paddingTop: statusBarHeight + 48 }}
     >
-      <View className="flex flex-row p-3 items-center border rounded-lg mb-4" style={{ borderColor: theme.colors.warnErrorPrimary }}>
-        <Warning width={16} height={16} />
-        <View className="flex-1 ml-2">
-          <Text className="text-sm leading-6" style={{ color: theme.colors.warnErrorPrimary }}>
-            The available balance is not enough to pay the Gas Cost
-          </Text>
-        </View>
-      </View>
+      {error && (
+        <Pressable onPress={() => setError('')}>
+          <View className="flex flex-row p-3 items-center border rounded-lg mb-4" style={{ borderColor: theme.colors.warnErrorPrimary }}>
+            <Warning width={16} height={16} />
+            <View className="flex-1 ml-2">
+              <Text className="text-sm leading-6" style={{ color: theme.colors.warnErrorPrimary }}>
+                {error}
+              </Text>
+            </View>
+          </View>
+        </Pressable>
+      )}
       <View style={{ backgroundColor: theme.colors.surfaceCard }} className="p-[15px] rounded-md">
         <Text className="leading-6" style={{ color: theme.colors.textSecondary }}>
           From
@@ -35,7 +56,7 @@ const TransactionConfirm: React.FC<{ navigation: StackNavigation }> = ({ navigat
           <View className="mr-2">
             <AvatarIcon width={24} height={24} />
           </View>
-          <Text>0x3172...0974</Text>
+          <Text>{shortenAddress(address.hex)}</Text>
           <View className="m-1">
             <CopyAllIcon width={16} height={16} />
           </View>
@@ -53,7 +74,7 @@ const TransactionConfirm: React.FC<{ navigation: StackNavigation }> = ({ navigat
           <View className="mr-2">
             <AvatarIcon width={24} height={24} />
           </View>
-          <Text>0x3172...0974</Text>
+          <Text>{shortenAddress(route.params.address)}</Text>
           <View className="m-1">
             <CopyAllIcon width={16} height={16} />
           </View>
@@ -93,7 +114,7 @@ const TransactionConfirm: React.FC<{ navigation: StackNavigation }> = ({ navigat
           <Text className="leading-6" style={{ color: theme.colors.textSecondary }}>
             Network
           </Text>
-          <Text className="leading-6">Conflux eSpace</Text>
+          <Text className="leading-6">{currentNetwork.name}</Text>
         </View>
       </View>
 
@@ -102,7 +123,7 @@ const TransactionConfirm: React.FC<{ navigation: StackNavigation }> = ({ navigat
           <CloseIcon />
         </Button>
         <View className="flex-1">
-          <BaseButton>
+          <BaseButton onPress={handleSend}>
             <SendIcon color="#fff" width={24} height={24} />
             Send
           </BaseButton>
@@ -112,4 +133,15 @@ const TransactionConfirm: React.FC<{ navigation: StackNavigation }> = ({ navigat
   );
 };
 
-export default TransactionConfirm;
+export default withDatabase(
+  withObservables([], ({ database }: { database: Database }) => {
+    return {
+      address: querySelectedAddress(database)
+        .observe()
+        .pipe(map((address) => address?.[0])),
+      currentNetwork: querySelectedNetwork(database)
+        .observe()
+        .pipe(map((network) => network?.[0])),
+    };
+  })(TransactionConfirm)
+);

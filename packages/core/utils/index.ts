@@ -1,11 +1,16 @@
-import database, { Vault, Network, Account, AccountGroup, Address, TableName } from '../Database';
+import database from '@core/DB/index';
 import { cryptoTool } from '../DB/helper/cryptoTool';
 import { ABI_777, ABI_721, ABI_1155 } from '../Consts/tokenAbi';
 import { Interface } from '@ethersproject/abi';
 import { getNthAccountOfHDKey } from '@fluent-wallet/hdkey';
 import { encode } from '@fluent-wallet/base32-address';
 import { toAccountAddress } from '@fluent-wallet/account';
-
+import TableName from '@core/DB/TableName';
+import { Vault } from '@core/DB/models/Vault';
+import { Network } from '@core/DB/models/Network';
+import { AccountGroup } from '@core/DB/models/AccountGroup';
+import { Account } from '@core/DB/models/Account';
+import { Address } from '@core/DB/models/Address';
 export const iface777 = new Interface(ABI_777);
 export const iface721 = new Interface(ABI_721);
 export const iface1155 = new Interface(ABI_1155);

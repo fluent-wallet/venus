@@ -1,14 +1,16 @@
 import { useTheme, Tab, TabView, Text, ListItem, Icon } from '@rneui/themed';
-import { SendToStackName, StackNavigation } from '@router/configs';
+import { RootStackList, SendToStackName, StackNavigation } from '@router/configs';
 import { statusBarHeight } from '@utils/deviceInfo';
 import { useState } from 'react';
 import { FlatList, Pressable, SafeAreaView, View } from 'react-native';
 import TokenIconBTC from '@assets/icons/tokenBTC.svg';
+import { RouteProp, useRoute } from '@react-navigation/native';
 
 export const TokenListStackName = 'TokenList';
 
-const TokenList: React.FC<{ navigation: StackNavigation }> = ({ navigation }) => {
+const TokenList: React.FC<{ navigation: StackNavigation; route: RouteProp<RootStackList, typeof TokenListStackName> }> = ({ navigation, route }) => {
   const { theme } = useTheme();
+
   const [tabIndex, setTabIndex] = useState(0);
   const [isExpanded, setIsExpanded] = useState(false);
   const handleTabChange = (index: number) => {
@@ -40,7 +42,7 @@ const TokenList: React.FC<{ navigation: StackNavigation }> = ({ navigation }) =>
               },
             ]}
             renderItem={({ item: { tokenIcon: TokenIcon, tokenName, tokenBalance, tokenValue, tokenSymbol } }) => (
-              <Pressable onPress={() => navigation.navigate(SendToStackName)}>
+              <Pressable onPress={() => navigation.navigate(SendToStackName, { address: route.params.address })}>
                 <View className="flex flex-row w-full justify-between p-4 mb-4">
                   <View className="flex flex-row items-center">
                     <TokenIcon width={48} height={48} />
