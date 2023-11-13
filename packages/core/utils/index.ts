@@ -1,4 +1,4 @@
-import database, { Vault, Network, Account, AccountGroup, Address, TableName } from '../Database';
+import database, { Vault, Network, Account, AccountGroup, Address, TableName } from '../database';
 import { cryptoTool } from '../DB/helper/cryptoTool';
 import { ABI_777, ABI_721, ABI_1155 } from '../Consts/tokenAbi';
 import { Interface } from '@ethersproject/abi';

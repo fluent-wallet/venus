@@ -36,6 +36,7 @@
     "ethers": "^6.7.1",
     "i18next": "^23.5.1",
     "intl-pluralrules": "^2.0.1",
+    "inversify": "^6.0.2",
     "jotai": "^2.5.0",
     "lodash-es": "^4.17.21",
     "mitt": "^3.0.1",
@@ -56,6 +57,7 @@
     "react-native-screens": "^3.26.0",
     "react-native-svg": "^13.14.0",
     "react-native-vector-icons": "^10.0.0",
+    "reflect-metadata": "^0.1.13",
     "stream-browserify": "^3.0.0"
   },
   "devDependencies": {
