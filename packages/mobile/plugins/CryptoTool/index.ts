@@ -1,4 +1,4 @@
-import { CryptoToolPlugin } from '../../../core/plugins/Plugin';
+import { type CryptoToolPlugin } from '../../../core/plugins/Plugin';
 import crypto from 'react-native-quick-crypto';
 
 interface EncryptedData {
@@ -12,12 +12,12 @@ interface EncryptedData {
  * This is to encrypt / decrypt the data
  * which contains sensitive seed words and addresses
  */
-export class CryptoTool implements CryptoToolPlugin {
+export class CryptoToolPluginClass implements CryptoToolPlugin {
   name = 'CryptoTool' as const;
   private getPasswordMethod: (() => string | null) | (() => Promise<string | null>) | null = null;
   public setGetPasswordMethod = (getPasswordMethod: (() => string | null) | (() => Promise<string | null>)) => (this.getPasswordMethod = getPasswordMethod);
 
-  private getPassword = async () => {
+  public getPassword = async () => {
     if (!this.getPasswordMethod) throw Error('CryptoTool: getPasswordMethod is not set.');
     const password = await this.getPasswordMethod();
     if (!password) throw Error('CryptoTool: password is not set.');
@@ -92,4 +92,4 @@ export class CryptoTool implements CryptoToolPlugin {
   };
 }
 
-export const cryptoTool = new CryptoTool();
+export const CryptoTool = new CryptoToolPluginClass();

@@ -1,6 +1,7 @@
 import { Q, type Query } from '@nozbe/watermelondb';
 import { map } from 'rxjs';
-import { type Vault, VaultType } from '.';
+import { type Vault } from '.';
+import VaultType from './VaultType';
 import database from '../..';
 import TableName from '../../TableName';
 import { createModel, type ModelFields } from '../../helper/modelHelper';

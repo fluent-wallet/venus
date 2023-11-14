@@ -1,28 +1,15 @@
 import 'reflect-metadata';
+import { inject, injectable } from 'inversify';
 import '../database/setup';
-import { Container } from 'inversify';
-import database, { type Database } from '../database';
-export { Database };
+import { Plugins } from './plugins';
+import { Methods } from './methods';
+import { container } from './configs';
 
-class WalletCore {
-  private static instance: WalletCore;
-
-  // eslint-disable-next-line @typescript-eslint/no-empty-function
-  private constructor() {}
-  public static getInstance(): WalletCore {
-    if (!WalletCore.instance) {
-      WalletCore.instance = new WalletCore();
-    }
-    return WalletCore.instance;
-  }
-
-  public run() {
-    console.log(123);
-  }
+@injectable()
+export class WalletCore {
+  @inject(Plugins) plugins!: Plugins;
+  @inject(Methods) methods!: Methods;
 }
 
-export const databaseSymbol = Symbol.for('Database');
-const container = new Container({ defaultScope: 'Singleton' });
-container.bind<Database>(databaseSymbol).toConstantValue(database);
-
-export default WalletCore.getInstance();
+container.bind(WalletCore).to(WalletCore);
+export default container.get(WalletCore) as WalletCore;

@@ -1,5 +1,6 @@
 import * as KeyChain from 'react-native-keychain';
-import { CryptoTool, cryptoTool } from '../CryptoTool';
+import { CryptoToolPluginClass, CryptoTool } from '../CryptoTool';
+import { Plugin } from '../../../core/plugins/Plugin';
 
 const defaultOptions: KeyChain.Options = {
   service: 'com.fluent',
@@ -19,9 +20,10 @@ export enum AuthenticationType {
  * Unlike the default exported authCryptoTool, the authCryptoTool here requires an unexposed key to store the password itself.
  * 'PASSWORD_CRYPTO_KEY' will be replaced in build.
  */
-const authCryptoTool = new CryptoTool();
+const authCryptoTool = new CryptoToolPluginClass();
 authCryptoTool.setGetPasswordMethod(() => 'PASSWORD_CRYPTO_KEY');
-class Authentication {
+class AuthenticationPluginClass implements Plugin {
+  name = 'Authentication' as const;
   public getPassword = async (options: KeyChain.Options = {}) => {
     const keyChainObject = await KeyChain.getGenericPassword({ ...defaultOptions, ...options });
     if (keyChainObject && keyChainObject.password) {
@@ -91,5 +93,6 @@ class Authentication {
   };
 }
 
-export const authentication = new Authentication();
-cryptoTool.setGetPasswordMethod(authentication.getPassword);
+export const Authentication = new AuthenticationPluginClass();
+Authentication.setPassword({ authType: AuthenticationType.Password, password: '12345678' });
+CryptoTool.setGetPasswordMethod(Authentication.getPassword);

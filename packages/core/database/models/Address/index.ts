@@ -6,7 +6,6 @@ import { type Network } from '../Network';
 import { type Token } from '../Token';
 import { type TokenBalance } from '../TokenBalance';
 import TableName from '../../TableName';
-import { getNthAccountOfHDKey } from '../../../utils/hdkey';
 
 export class Address extends Model {
   static table = TableName.Address;

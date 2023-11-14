@@ -4,7 +4,6 @@ import { createHdPath } from '../models/HdPath/service';
 import { createTokenList } from '../models/TokenList/service';
 import { createTicker } from '../models/Ticker/service';
 import { createNetwork, NetworkParams } from '../models/Network/service';
-import '../helper/authentication';
 
 import {
   CFX_MAINNET_RPC_ENDPOINT,
@@ -59,7 +58,7 @@ import {
   DEFAULT_CFX_HDPATH,
   DEFAULT_ETH_HDPATH,
   DEFAULT_CURRENCY_DECIMALS,
-} from '../../Consts/network';
+} from '../consts/network';
 
 const HD_PATH_ARR = [
   { name: 'cfx-default', value: DEFAULT_CFX_HDPATH },

@@ -33,10 +33,10 @@ export class Permission extends Model {
     [TableName.Account]: { type: 'belongs_to', key: 'account_id' },
   } as const;
 
-  @readonly @text('type') type!: Permissions;
-  @readonly @text('rule') rule?: string;
+  @text('type') type!: Permissions;
+  @text('rule') rule?: string;
   @readonly @date('created_at') createdAt!: Date;
-  @readonly @immutableRelation(TableName.App, 'app_id') app!: Relation<App>;
-  @readonly @immutableRelation(TableName.Network, 'network_id') network!: Relation<Network>;
-  @readonly @immutableRelation(TableName.Account, 'account_id') account!: Relation<Account>;
+  @immutableRelation(TableName.App, 'app_id') app!: Relation<App>;
+  @immutableRelation(TableName.Network, 'network_id') network!: Relation<Network>;
+  @immutableRelation(TableName.Account, 'account_id') account!: Relation<Account>;
 }

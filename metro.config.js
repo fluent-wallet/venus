@@ -12,8 +12,14 @@ const { assetExts, sourceExts } = defaultConfig.resolver;
  *
  * @type {import('metro-config').MetroConfig}
  */
-const config = {
+const config1 = {
   transformer: {
+    getTransformOptions: async () => ({
+      transform: {
+        experimentalImportSupport: false,
+        inlineRequires: false,
+      },
+    }),
     babelTransformerPath: require.resolve('react-native-svg-transformer'),
   },
   resolver: {
@@ -23,4 +29,4 @@ const config = {
 };
 
 // eslint-disable-next-line no-undef
-module.exports = mergeConfig(defaultConfig, config);
+module.exports = mergeConfig(defaultConfig, config1);

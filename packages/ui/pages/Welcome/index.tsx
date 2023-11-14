@@ -2,16 +2,19 @@ import React from 'react';
 import LinearGradient from 'react-native-linear-gradient';
 import { View, Image, SafeAreaView } from 'react-native';
 import { useTheme, Text } from '@rneui/themed';
+import { BaseButton } from '@components/Button';
 import { statusBarHeight } from '@utils/deviceInfo';
 import Tip from '@assets/icons/tip.svg';
 import WelcomeBg from '@assets/images/welcome-bg.png';
-import { type StackNavigation, BiometricsStackName, ImportWalletStackName } from '@router/configs';
-import { BaseButton } from '@components/Button';
+import { useAccountGroups } from '@core/plugins/ReactInject/data/useAccountGroups';
+import WalletCore from '@core/WalletCore';
 
 export const WelcomeStackName = 'Welcome';
 
-const Welcome: React.FC<{ navigation: StackNavigation }> = ({ navigation }) => {
+const Welcome: React.FC = () => {
   const { theme } = useTheme();
+  const accountGroups = useAccountGroups();
+  console.log('accountGroups', accountGroups);
 
   return (
     <LinearGradient colors={theme.colors.linearGradientBackground} className="flex-1">
@@ -38,14 +41,8 @@ const Welcome: React.FC<{ navigation: StackNavigation }> = ({ navigation }) => {
           <Text className="mt-[8px] text-[16px] leading-[24px] text-center">First, let's add a wallet</Text>
         </View>
 
-        <BaseButton containerStyle={{ marginTop: 40, marginHorizontal: 16 }} onPress={() => navigation.navigate(BiometricsStackName, { type: 'BSIM' })}>
-          Connect BSIM Wallet
-        </BaseButton>
-        <BaseButton containerStyle={{ marginTop: 16, marginHorizontal: 16 }} onPress={() => navigation.navigate(BiometricsStackName)}>
+        <BaseButton containerStyle={{ marginTop: 40, marginHorizontal: 16 }} onPress={() => WalletCore.methods.createHDVault()}>
           Create new Wallet
-        </BaseButton>
-        <BaseButton containerStyle={{ marginTop: 16, marginHorizontal: 16 }} onPress={() => navigation.navigate(ImportWalletStackName, { type: 'create' })}>
-          Import existing Wallet
         </BaseButton>
       </SafeAreaView>
     </LinearGradient>

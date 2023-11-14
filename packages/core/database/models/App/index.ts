@@ -14,6 +14,6 @@ export class App extends Model {
   @text('name') name!: string;
   @text('icon') icon?: string;
   @readonly @date('updated_at') updatedAt!: Date;
-  @readonly @immutableRelation(TableName.Site, 'site_id') site!: Relation<Site>;
+  @immutableRelation(TableName.Site, 'site_id') site!: Relation<Site>;
   @children(TableName.Permission) permissions!: Query<Permission>;
 }

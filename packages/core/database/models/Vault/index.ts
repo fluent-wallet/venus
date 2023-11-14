@@ -1,16 +1,9 @@
 import { Model, type Query } from '@nozbe/watermelondb';
-import { text, field, children, writer, lazy, readonly, reader } from '@nozbe/watermelondb/decorators';
+import { text, field, children, writer, lazy, reader } from '@nozbe/watermelondb/decorators';
 import { map, firstValueFrom } from 'rxjs';
 import { type AccountGroup } from '../AccountGroup';
 import TableName from '../../TableName';
-
-export enum VaultType {
-  PublicAddress = 'public_address',
-  PrivateKey = 'private_key',
-  HierarchicalDeterministic = 'hierarchical_deterministic',
-  Hardware = 'hardware',
-  BSIM = 'BSIM',
-}
+import VaultType from './VaultType';
 
 export class Vault extends Model {
   static table = TableName.Vault;
@@ -23,7 +16,7 @@ export class Vault extends Model {
   /** data need to be encrypted when the type is pk or hd. */
   @text('data') data!: string | null;
   /** Vault device, default is FluentWebExt */
-  @readonly @text('device') device!: 'ePayWallet' | 'FluentWebExt';
+  @text('device') device!: 'ePayWallet' | 'FluentWebExt';
   /** The accounts for conflux core and ethereum's ledger hardware wallet maybe separate. */
   @field('cfx_only') cfxOnly!: boolean | null;
   /**

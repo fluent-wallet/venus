@@ -9,8 +9,8 @@ export class Request extends Model {
     [TableName.App]: { type: 'belongs_to', key: 'app_id' },
   } as const;
 
-  @readonly @text('type') type!: string;
+  @text('type') type!: string;
   @field('processed') processed!: boolean;
   @readonly @date('created_at') createdAt!: Date;
-  @readonly @immutableRelation(TableName.App, 'app_id') app!: Relation<App>;
+  @immutableRelation(TableName.App, 'app_id') app!: Relation<App>;
 }

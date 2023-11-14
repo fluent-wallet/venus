@@ -5,8 +5,9 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { ThemeProvider } from '@rneui/themed';
 import { DatabaseProvider } from '@nozbe/watermelondb/react';
-import database from '@DB/index';
-import Router from './router';
+import { JotaiNexus } from '@core/plugins/ReactInject';
+import database from '@core/database';
+import Router from './router/test';
 import { theme } from './theme';
 import './assets/i18n';
 
@@ -16,6 +17,7 @@ const App: React.FC = () => {
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <DatabaseProvider database={database}>
+        <JotaiNexus />
         <ThemeProvider theme={theme}>
           <SafeAreaProvider>
             <Router />

@@ -15,8 +15,8 @@ import AccountSelect, { AccountSelectStackName } from '@pages/Account/AccountSel
 import AddAccount, { AddAccountStackName } from '@pages/Account/AddAccount';
 import Login, { LoginStackName } from '@pages/Login';
 import Lock, { LockStackName } from '@pages/Lock';
-import { withDatabase, withObservables, compose, type Database } from '@DB/react';
-import TableName from '@DB/TableName';
+import { withDatabase, withObservables, compose, type Database } from '@core/database/react';
+import TableName from '@core/database/TableName';
 import { HomeStackName, type StackNavigation, type RootStackList } from './configs';
 import SendReceiver, { SendPageHeaderOptions, ReceiveAddressStackName } from '@pages/Transaction/ReceiveAddress';
 import TransactionConfirm, { TransactionConfirmStackName } from '@pages/Transaction/TransactionConfirm';
