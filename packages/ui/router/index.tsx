@@ -21,7 +21,7 @@ import { HomeStackName, type StackNavigation, type RootStackList } from './confi
 import SendReceiver, { SendPageHeaderOptions, ReceiveAddressStackName } from '@pages/Transaction/ReceiveAddress';
 import TransactionConfirm, { TransactionConfirmStackName } from '@pages/Transaction/TransactionConfirm';
 import SendTo, { SendToStackName } from '@pages/Transaction/SendTo';
-import TokenList, { TokenListStackName } from '@pages/Transaction/TokenList';
+import Tokens, { TokensStackName } from '@pages/Transaction/Tokens';
 import BackUp, { BackUpStackName } from '@pages/Account/BackUp';
 import AccountSetting, { AccountSettingStackName } from '@pages/Account/Setting/AccountSetting';
 import GroupSetting, { GroupSettingStackName } from '@pages/Account/Setting/GroupSetting';
@@ -124,8 +124,8 @@ const StackNavigator = compose(
         }}
       />
       <Stack.Screen
-        name={TokenListStackName}
-        component={TokenList}
+        name={TokensStackName}
+        component={Tokens}
         options={{
           ...SendPageHeaderOptions({
             title: 'Tokens',

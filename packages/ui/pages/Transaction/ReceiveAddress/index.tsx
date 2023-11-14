@@ -4,12 +4,13 @@ import { statusBarHeight } from '@utils/deviceInfo';
 import { SafeAreaView, View, KeyboardAvoidingView } from 'react-native';
 import { TextInput } from 'react-native';
 import { BaseButton } from '@components/Button';
-import { type StackNavigation, TokenListStackName } from '@router/configs';
+import { type StackNavigation, TokensStackName } from '@router/configs';
 import Flip from '@assets/icons/flip.svg';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { isHexAddress } from '@core/utils/account';
 import WarningIcon from '@assets/icons/warning_2.svg';
 import CheckCircleIcon from '@assets/icons/check_circle.svg';
+import { isAddress } from 'ethers';
 
 export const ReceiveAddressStackName = 'ReceiveAddress';
 
@@ -25,12 +26,17 @@ const SendReceiver: React.FC<{ navigation: StackNavigation }> = ({ navigation })
   const [errorMsg, setErrorMsg] = useState('');
 
   const handleChange = (v: string) => {
-    if (!isHexAddress(v)) {
-      setErrorMsg('Please enter valid hex address or ens');
+    setAddress(v);
+    setErrorMsg('');
+  };
+
+  const handleNext = () => {
+    if (!isAddress(address)) {
+      return setErrorMsg('Please enter valid hex address');
     } else {
       setErrorMsg('');
     }
-    setAddress(v);
+    navigation.navigate(TokensStackName, { address });
   };
   return (
     <SafeAreaView
@@ -45,7 +51,8 @@ const SendReceiver: React.FC<{ navigation: StackNavigation }> = ({ navigation })
               value={address}
               onChangeText={handleChange}
               className="flex-1 leading-6"
-              placeholder="Enter an address or domain name"
+              placeholder="Enter an address"
+              maxLength={42}
               placeholderTextColor={theme.colors.textSecondary}
             />
             <Flip width={20} height={20} />
@@ -60,18 +67,10 @@ const SendReceiver: React.FC<{ navigation: StackNavigation }> = ({ navigation })
                 </Text>
               </>
             )}
-            {!!address && !errorMsg && (
-              <>
-                <CheckCircleIcon width={16} height={16} style={{ marginRight: 8 }} />
-                <Text className="text-sm" style={{ color: theme.colors.success }}>
-                  Valid Address
-                </Text>
-              </>
-            )}
           </View>
         </View>
         <View className="mt-auto mb-6">
-          <BaseButton disabled={!address || !!errorMsg} onPress={() => navigation.navigate(TokenListStackName, { address })}>
+          <BaseButton disabled={!address || !!errorMsg} onPress={handleNext}>
             Next
           </BaseButton>
         </View>

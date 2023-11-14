@@ -2,15 +2,15 @@ import { useTheme, Tab, TabView, Text, ListItem, Icon } from '@rneui/themed';
 import { RootStackList, SendToStackName, StackNavigation } from '@router/configs';
 import { statusBarHeight } from '@utils/deviceInfo';
 import { useState } from 'react';
-import { FlatList, Pressable, SafeAreaView, View } from 'react-native';
-import TokenIconBTC from '@assets/icons/tokenBTC.svg';
-import { RouteProp, useRoute } from '@react-navigation/native';
+import { Pressable, SafeAreaView, View } from 'react-native';
+import TokenIconUSDT from '@assets/icons/tokenUSDT.svg';
+import { RouteProp } from '@react-navigation/native';
+import TokenList from '@components/TokenList';
 
-export const TokenListStackName = 'TokenList';
+export const TokensStackName = 'Tokens';
 
-const TokenList: React.FC<{ navigation: StackNavigation; route: RouteProp<RootStackList, typeof TokenListStackName> }> = ({ navigation, route }) => {
+const Tokens: React.FC<{ navigation: StackNavigation; route: RouteProp<RootStackList, typeof TokensStackName> }> = ({ navigation, route }) => {
   const { theme } = useTheme();
-
   const [tabIndex, setTabIndex] = useState(0);
   const [isExpanded, setIsExpanded] = useState(false);
   const handleTabChange = (index: number) => {
@@ -29,38 +29,9 @@ const TokenList: React.FC<{ navigation: StackNavigation; route: RouteProp<RootSt
         </Tab>
       </View>
 
-      <TabView value={tabIndex} onChange={handleTabChange} animationType="spring" tabItemContainerStyle={{ paddingHorizontal: 25, paddingVertical: 15 }}>
+      <TabView value={tabIndex} onChange={handleTabChange} animationType="spring">
         <TabView.Item className="w-full">
-          <FlatList
-            data={[
-              {
-                tokenName: 'Bitcoin',
-                tokenSymbol: 'BTC',
-                tokenIcon: TokenIconBTC,
-                tokenValue: '1900',
-                tokenBalance: '2000.00',
-              },
-            ]}
-            renderItem={({ item: { tokenIcon: TokenIcon, tokenName, tokenBalance, tokenValue, tokenSymbol } }) => (
-              <Pressable onPress={() => navigation.navigate(SendToStackName, { address: route.params.address })}>
-                <View className="flex flex-row w-full justify-between p-4 mb-4">
-                  <View className="flex flex-row items-center">
-                    <TokenIcon width={48} height={48} />
-                    <Text className="ml-4 leading-6">{tokenName}</Text>
-                  </View>
-                  <View className="flex items-end">
-                    <Text className="leading-6">
-                      {tokenBalance}
-                      {tokenSymbol}
-                    </Text>
-                    <Text style={{ color: theme.colors.textSecondary }} className="leading-6">
-                      ${tokenValue}
-                    </Text>
-                  </View>
-                </View>
-              </Pressable>
-            )}
-          />
+          <TokenList />
         </TabView.Item>
         <TabView.Item className="w-full">
           <View className="flex flex-1 w-full">
@@ -76,7 +47,7 @@ const TokenList: React.FC<{ navigation: StackNavigation; route: RouteProp<RootSt
               expandIcon={<Icon name="keyboard-arrow-up" color={theme.colors.contrastWhiteAndBlack} />}
               content={
                 <View className="flex flex-row items-center">
-                  <TokenIconBTC width={32} height={32} />
+                  <TokenIconUSDT width={32} height={32} />
                   <Text style={{ color: theme.colors.contrastWhiteAndBlack }} className="text-base font-medium leading-6 ml-2">
                     Test NFTs
                   </Text>
@@ -121,4 +92,4 @@ const TokenList: React.FC<{ navigation: StackNavigation; route: RouteProp<RootSt
   );
 };
 
-export default TokenList;
+export default Tokens;

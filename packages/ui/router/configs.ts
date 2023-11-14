@@ -15,7 +15,7 @@ import { LockStackName } from '@pages/Lock';
 import { ReceiveAddressStackName } from '@pages/Transaction/ReceiveAddress';
 import { SendToStackName } from '@pages/Transaction/SendTo';
 import { TransactionConfirmStackName } from '@pages/Transaction/TransactionConfirm';
-import { TokenListStackName } from '@pages/Transaction/TokenList';
+import { TokensStackName } from '@pages/Transaction/Tokens';
 import { BackUpStackName } from '@pages/Account/BackUp';
 import { ReceiveStackName } from '@pages/Receive';
 import { SetAmountStackName } from '@pages/Receive/SetAmount';
@@ -33,7 +33,7 @@ export {
   SendToStackName,
   ReceiveAddressStackName,
   TransactionConfirmStackName,
-  TokenListStackName,
+  TokensStackName,
   BackUpStackName,
   AccountSettingStackName,
   GroupSettingStackName,
@@ -58,7 +58,7 @@ export type RootStackList = {
   [LockStackName]: undefined;
   [AddAccountStackName]: { type?: 'add' | 'create' };
   [AccountSelectStackName]: undefined;
-  [TokenListStackName]: { address: string };
+  [TokensStackName]: { address: string };
   [SendToStackName]: { address: string };
   [TransactionConfirmStackName]: { address: string; value: string };
   [ReceiveAddressStackName]: undefined;
