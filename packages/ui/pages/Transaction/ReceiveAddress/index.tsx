@@ -11,6 +11,8 @@ import { isHexAddress } from '@core/utils/account';
 import WarningIcon from '@assets/icons/warning_2.svg';
 import CheckCircleIcon from '@assets/icons/check_circle.svg';
 import { isAddress } from 'ethers';
+import { useAtom } from 'jotai';
+import { setTransactionTo, transactionAtom } from '@hooks/useTransaction';
 
 export const ReceiveAddressStackName = 'ReceiveAddress';
 
@@ -24,6 +26,7 @@ const SendReceiver: React.FC<{ navigation: StackNavigation }> = ({ navigation })
   const { theme } = useTheme();
   const [address, setAddress] = useState('');
   const [errorMsg, setErrorMsg] = useState('');
+  const [, setFromAddress] = useAtom(setTransactionTo);
 
   const handleChange = (v: string) => {
     setAddress(v);
@@ -36,7 +39,8 @@ const SendReceiver: React.FC<{ navigation: StackNavigation }> = ({ navigation })
     } else {
       setErrorMsg('');
     }
-    navigation.navigate(TokensStackName, { address });
+    setFromAddress(address);
+    navigation.navigate(TokensStackName);
   };
   return (
     <SafeAreaView

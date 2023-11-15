@@ -3,9 +3,12 @@ import { RootStackList, SendToStackName, StackNavigation } from '@router/configs
 import { statusBarHeight } from '@utils/deviceInfo';
 import { useState } from 'react';
 import { Pressable, SafeAreaView, View } from 'react-native';
-import TokenIconUSDT from '@assets/icons/tokenUSDT.svg';
+import TokenIconDefault from '@assets/icons/tokenDefault.svg';
 import { RouteProp } from '@react-navigation/native';
 import TokenList from '@components/TokenList';
+import { AccountTokenListItem } from '@hooks/useTokenList';
+import { useAtom } from 'jotai';
+import { transactionAtom } from '@hooks/useTransaction';
 
 export const TokensStackName = 'Tokens';
 
@@ -13,10 +16,26 @@ const Tokens: React.FC<{ navigation: StackNavigation; route: RouteProp<RootStack
   const { theme } = useTheme();
   const [tabIndex, setTabIndex] = useState(0);
   const [isExpanded, setIsExpanded] = useState(false);
+  const [, setTransaction] = useAtom(transactionAtom);
   const handleTabChange = (index: number) => {
     navigation.setOptions({ headerTitle: index === 0 ? 'Tokens' : 'NFTs' });
     setTabIndex(index);
   };
+
+  const handleSelectToken = (token: AccountTokenListItem) => {
+    setTransaction((v) => ({
+      ...v,
+      tokenType: token.type,
+      balance: token.amount,
+      symbol: token.symbol,
+      decimals: token.decimals,
+      contract: token.contract,
+      iconUrl: token.iconUrl,
+      priceInUSDT: token.priceInUSDT,
+    }));
+    navigation.navigate(SendToStackName);
+  };
+
   return (
     <SafeAreaView
       className="flex flex-1 flex-col justify-start pb-7"
@@ -30,10 +49,10 @@ const Tokens: React.FC<{ navigation: StackNavigation; route: RouteProp<RootStack
       </View>
 
       <TabView value={tabIndex} onChange={handleTabChange} animationType="spring">
-        <TabView.Item className="w-full">
-          <TokenList />
+        <TabView.Item className="flex flex-1">
+          <TokenList onPress={handleSelectToken} />
         </TabView.Item>
-        <TabView.Item className="w-full">
+        <TabView.Item className="flex flex-1">
           <View className="flex flex-1 w-full">
             <ListItem.Accordion
               isExpanded={isExpanded}
@@ -47,7 +66,7 @@ const Tokens: React.FC<{ navigation: StackNavigation; route: RouteProp<RootStack
               expandIcon={<Icon name="keyboard-arrow-up" color={theme.colors.contrastWhiteAndBlack} />}
               content={
                 <View className="flex flex-row items-center">
-                  <TokenIconUSDT width={32} height={32} />
+                  <TokenIconDefault width={32} height={32} />
                   <Text style={{ color: theme.colors.contrastWhiteAndBlack }} className="text-base font-medium leading-6 ml-2">
                     Test NFTs
                   </Text>

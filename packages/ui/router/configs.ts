@@ -58,9 +58,9 @@ export type RootStackList = {
   [LockStackName]: undefined;
   [AddAccountStackName]: { type?: 'add' | 'create' };
   [AccountSelectStackName]: undefined;
-  [TokensStackName]: { address: string };
-  [SendToStackName]: { address: string };
-  [TransactionConfirmStackName]: { address: string; value: string };
+  [TokensStackName]: undefined;
+  [SendToStackName]: undefined;
+  [TransactionConfirmStackName]: undefined;
   [ReceiveAddressStackName]: undefined;
 
   [BackUpStackName]: { vaultId: string; accountIndex?: number };

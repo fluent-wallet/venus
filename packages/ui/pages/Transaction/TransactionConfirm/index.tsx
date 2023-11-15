@@ -4,7 +4,7 @@ import { Pressable, SafeAreaView, View } from 'react-native';
 import AvatarIcon from '@assets/icons/avatar.svg';
 import CopyAllIcon from '@assets/icons/copy_all.svg';
 import Warning from '@assets/icons/warning_2.svg';
-import { RootStackList, type StackNavigation } from '@router/configs';
+import { HomeStackName, RootStackList, WalletStackName, type StackNavigation } from '@router/configs';
 
 import CloseIcon from '@assets/icons/close.svg';
 import SendIcon from '@assets/icons/send.svg';
@@ -13,12 +13,21 @@ import { withDatabase, withObservables } from '@nozbe/watermelondb/react';
 import { Database } from '@nozbe/watermelondb';
 import { querySelectedAddress } from '@core/DB/models/Address/service';
 import { Address } from '@core/DB/models/Address';
-import { map } from 'rxjs';
+import { map, switchMap } from 'rxjs';
 import { RouteProp } from '@react-navigation/native';
 import { shortenAddress } from '@core/utils/address';
 import { querySelectedNetwork } from '@core/DB/models/Network/service';
 import { Network } from '@core/DB/models/Network';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { useAtom } from 'jotai';
+import { TokenType, transactionAtom } from '@hooks/useTransaction';
+import { JsonRpcProvider, Transaction, formatUnits, parseUnits } from 'ethers';
+
+import { firstValueFrom } from 'rxjs';
+import { RPCResponse, RPCSend, RPCSendFactory } from '@core/utils/send';
+import { iface777 } from '@core/utils';
+
+import { Wallet } from 'ethers';
 
 export const TransactionConfirmStackName = 'TransactionConfirm';
 
@@ -30,7 +39,64 @@ const TransactionConfirm: React.FC<{
 }> = ({ navigation, address, route, currentNetwork }) => {
   const { theme } = useTheme();
   const [error, setError] = useState('');
-  const handleSend = async () => {};
+  const [tx] = useAtom(transactionAtom);
+  const [gas, setGas] = useState<{ gasLimit: string; gasPrice: string } | null>(null);
+
+  const handleSend = async () => {
+    if (gas && tx.contract) {
+      const transaction = new Transaction();
+
+      transaction.chainId = currentNetwork.chainId;
+      transaction.to = tx.contract;
+      transaction.gasLimit = gas.gasLimit;
+      transaction.gasPrice = gas.gasPrice;
+
+      const nonce = await firstValueFrom(
+        RPCSend<RPCResponse<string>>(currentNetwork.endpoint, { method: 'eth_getTransactionCount', params: [address.hex, 'pending'] })
+      );
+      transaction.nonce = nonce.result;
+      if (gas && tx.tokenType === TokenType.ERC20) {
+        transaction.data = iface777.encodeFunctionData('transfer', [tx.to, parseUnits(tx.amount.toString())]);
+      }
+      const pk = await address.getPrivateKey();
+      const wallet = new Wallet(pk, new JsonRpcProvider(currentNetwork.endpoint));
+
+      wallet.sendTransaction(transaction).then(() => {
+        navigation.navigate(HomeStackName, { screen: WalletStackName });
+      });
+    }
+  };
+
+  useEffect(() => {
+    if (tx.tokenType === TokenType.ERC20 && tx.contract) {
+      const encodeData = iface777.encodeFunctionData('transfer', [tx.to, parseUnits(tx.amount.toString())]);
+      firstValueFrom(
+        RPCSend<RPCResponse<string>>(currentNetwork.endpoint, { method: 'eth_getTransactionCount', params: [address.hex, 'pending'] }).pipe(
+          map((res) => res.result),
+          switchMap((nonce) =>
+            RPCSend<RPCResponse<string>[]>(currentNetwork.endpoint, [
+              {
+                method: 'eth_estimateGas',
+                params: [
+                  {
+                    from: address.hex,
+                    nonce,
+                    to: tx.contract,
+                    data: encodeData,
+                  },
+                ],
+              },
+              { method: 'eth_gasPrice' },
+            ])
+          ),
+          map(([gas, gasPrice]) => ({ gasLimit: gas.result, gasPrice: gasPrice.result }))
+        )
+      ).then((res) => setGas(res));
+    }
+
+    // firstValueFrom(RPCSend<RPCResponse<string>>(currentNetwork.endpoint, { method: 'eth_gasPrice' })).then((data) => console.log(data));
+  }, [currentNetwork.endpoint, tx.tokenType, tx.contract, tx.to, tx.amount, address.hex]);
+  const gasCost = gas ? BigInt(gas.gasLimit) * BigInt(gas.gasPrice) : 0n;
   return (
     <SafeAreaView
       className="flex-1 flex flex-col justify-start px-[24px] pb-7"
@@ -62,7 +128,7 @@ const TransactionConfirm: React.FC<{
           </View>
         </View>
         <Text className="ml-8 leading-6" style={{ color: theme.colors.textSecondary }}>
-          Balance: 100,000 CFX
+          Balance: {formatUnits(tx.balance, tx.decimals)} {tx.symbol}
         </Text>
 
         <Divider className="my-4" />
@@ -74,7 +140,7 @@ const TransactionConfirm: React.FC<{
           <View className="mr-2">
             <AvatarIcon width={24} height={24} />
           </View>
-          <Text>{shortenAddress(route.params.address)}</Text>
+          <Text>{shortenAddress(tx.to)}</Text>
           <View className="m-1">
             <CopyAllIcon width={16} height={16} />
           </View>
@@ -88,10 +154,10 @@ const TransactionConfirm: React.FC<{
           </Text>
           <View className="flex">
             <Text style={{ color: theme.colors.textPrimary }} className="text-xl font-bold leading-6">
-              100,000 HKDC
+              {tx.amount} {tx.symbol}
             </Text>
             <Text style={{ color: theme.colors.textSecondary }} className="text-right text-sm leading-6">
-              ≈$99.00
+              {tx.priceInUSDT ? `≈$${Number(tx.priceInUSDT) * tx.amount}` : ''}
             </Text>
           </View>
         </View>
@@ -102,10 +168,10 @@ const TransactionConfirm: React.FC<{
           </Text>
           <View className="flex">
             <Text style={{ color: theme.colors.textPrimary }} className="text-xl font-bold leading-6">
-              0.12 CFX
+              {formatUnits(gasCost)} CFX
             </Text>
             <Text style={{ color: theme.colors.textSecondary }} className="text-right text-sm leading-6">
-              ≈$0.18
+              {/* todo */}
             </Text>
           </View>
         </View>
@@ -123,7 +189,7 @@ const TransactionConfirm: React.FC<{
           <CloseIcon />
         </Button>
         <View className="flex-1">
-          <BaseButton onPress={handleSend}>
+          <BaseButton disabled={!gas} onPress={handleSend}>
             <SendIcon color="#fff" width={24} height={24} />
             Send
           </BaseButton>
