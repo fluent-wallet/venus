@@ -3,7 +3,7 @@ import TableName from '../TableName';
 import { createHdPath } from '../models/HdPath/service';
 import { createTokenList } from '../models/TokenList/service';
 import { createTicker } from '../models/Ticker/service';
-import { createNetwork, NetworkParams } from '../models/Network/service';
+import { createNetwork, NetworkParams } from '../models/Network/query';
 
 import {
   CFX_MAINNET_RPC_ENDPOINT,

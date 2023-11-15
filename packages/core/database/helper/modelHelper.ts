@@ -9,7 +9,7 @@ export function createModel<T extends Model>({ name, params, prepareCreate }: { 
       const entries = Object.entries(params);
       for (const [key, value] of entries) {
         if (value !== undefined) {
-          if (typeof model[key as '_raw'] === 'object') {
+          if (typeof model[key as '_raw'] === 'object' && model[key as '_raw'] !== null) {
             if (typeof (model[key as '_raw'] as any)?.set === 'function') {
               (model[key as '_raw'] as any).set(value);
             }

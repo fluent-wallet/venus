@@ -1,21 +1,34 @@
 import { useCallback, useEffect } from 'react';
-import { Getter, Setter } from 'jotai';
+import { type Getter, type Setter } from 'jotai';
 import { useAtomCallback } from 'jotai/utils';
 
-export let getAtom!: Getter;
-export let setAtom!: Setter;
+const delayQueue: Array<Parameters<Setter>> = [];
+export let getAtom = ((atom: any) => {
+  const atomInDelayQueue = delayQueue.find((args) => args[0] === atom);
+  if (atomInDelayQueue) {
+    return atomInDelayQueue[1];
+  } else {
+    return undefined;
+  }
+}) as Getter;
+export let setAtom = ((...args: any) => delayQueue.push(args)) as Setter;
 
 export const JotaiNexus = () => {
   const init = useAtomCallback(
     useCallback((get, set) => {
       getAtom = get;
       setAtom = set;
+      if (delayQueue.length > 0) {
+        delayQueue.forEach((args) => setAtom(...args));
+        delayQueue.length = 0;
+      }
     }, [])
   );
 
   useEffect(() => {
     init();
-  }, [init]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return null;
 };

@@ -6,41 +6,31 @@ import { BaseButton } from '@components/Button';
 import { statusBarHeight } from '@utils/deviceInfo';
 import Tip from '@assets/icons/tip.svg';
 import WelcomeBg from '@assets/images/welcome-bg.png';
-import { useAccountGroups } from '@core/plugins/ReactInject/data/useAccountGroups';
+import { useStructureGroupData } from '@core/plugins/ReactInject';
 import WalletCore from '@core/WalletCore';
 
 export const WelcomeStackName = 'Welcome';
 
 const Welcome: React.FC = () => {
   const { theme } = useTheme();
-  const accountGroups = useAccountGroups();
-  console.log('accountGroups', accountGroups);
+  const accountGroups = useStructureGroupData();
+  // console.log('accountGroups', accountGroups[0].id, accountGroups[0]);
 
   return (
     <LinearGradient colors={theme.colors.linearGradientBackground} className="flex-1">
       <SafeAreaView className="flex-1 flex flex-col justify-start pt-[8px]">
-        <View
-          className="flex flex-row w-[330px] mx-auto p-[12px] rounded-[8px]"
-          style={{ marginTop: (statusBarHeight ?? 0) + 8, backgroundColor: theme.colors.surfaceSecondary }}
-        >
-          <View className="mt-[5px] mr-[8px]">
-            <Tip />
+        {accountGroups?.map((accountGroup) => (
+          <View key={accountGroup.id}>
+            <Text className="text-[36px] leading-[46px] font-bold text-center" style={{ color: theme.colors.textBrand }}>
+              {accountGroup.nickname}
+            </Text>
+            {accountGroup.accounts.map((account) => (
+              <Text key={account.id}>
+                {account.nickname} {account.currentNetworkAddressValue}
+              </Text>
+            ))}
           </View>
-          <View>
-            <Text className="text-[16px] leading-[24px] ">Coming Soon！</Text>
-            <Text className="mt-[4px] text-[14px] leading-[20px]">We are working hard to prepare, so stay tuned,Please stay tuned！</Text>
-          </View>
-        </View>
-
-        <Image className="mt-[10px] mx-auto w-[208px] h-[208px]" source={WelcomeBg} />
-
-        <View className="mt-[90px]">
-          <Text className="text-[36px] leading-[46px] font-bold text-center" style={{ color: theme.colors.textBrand }}>
-            Enter Web3
-          </Text>
-          <Text className="mt-[8px] text-[16px] leading-[24px] text-center">First, let's add a wallet</Text>
-        </View>
-
+        ))}
         <BaseButton containerStyle={{ marginTop: 40, marginHorizontal: 16 }} onPress={() => WalletCore.methods.createHDVault()}>
           Create new Wallet
         </BaseButton>

@@ -53,14 +53,14 @@ export class CreateVaultMethod {
           ? hexAddress!
           : null;
 
-          if ((type === VaultType.HierarchicalDeterministic || type === VaultType.PrivateKey || type === VaultType.PublicAddress) && !data) {
+      if ((type === VaultType.HierarchicalDeterministic || type === VaultType.PrivateKey || type === VaultType.PublicAddress) && !data) {
         throw new Error(`Create vault Error: vault type-${type} data can't be empty`);
       }
       const isFirstVault = await checkIsFirstVault();
       const count = await getVaultTypeCount(type);
       const vault = await createVault({ type, device: 'ePayWallet', ...(data ? { data } : null) });
-
       const accountGroup = await createAccountGroup({ nickname: `${defaultGroupNameMap[type]} - ${count + 1}`, hidden: false, vault });
+      
       if (type === 'BSIM' || type === 'hardware') {
         if (!Array.isArray(accounts)) throw new Error(`Create vault Error: vault type-${type} accounts is not an array`);
         await Promise.all(

@@ -5,6 +5,7 @@ import { type AccountGroup } from '../../database/models/AccountGroup';
 import { type Account } from '../../database/models/Account';
 import { createAddress } from '../../database/models/Address/query';
 import { createModel } from '../../database/helper/modelHelper';
+import VaultType from '../../database/models/Vault/VaultType';
 import database from '../../database';
 import TableName from '../../database/TableName';
 import { getNthAccountOfHDKey } from '../../utils/hdkey';
@@ -31,11 +32,13 @@ export class CreateAccountMethod {
   }) {
     if (!accountGroup) throw new Error('AccountGroup is required in createAccount.');
     const vault = await (await accountGroup).vault;
-
+    
     const [networks, lastAccountIndex, vaultData] = await Promise.all([
       database.get<Network>(TableName.Network).query().fetch(),
-      vault.type === 'hierarchical_deterministic' ? index ?? accountGroup.getLastAccountIndex() : -1,
-      vault.type === 'private_key' || vault.type === 'hierarchical_deterministic' ? this.plugins.CryptoTool.decrypt<string>(vault.data!) : vault.data,
+      vault.type === VaultType.HierarchicalDeterministic ? index ?? accountGroup.getLastAccountIndex() : -1,
+      vault.type === VaultType.PrivateKey || vault.type === VaultType.HierarchicalDeterministic
+        ? this.plugins.CryptoTool.decrypt<string>(vault.data!)
+        : vault.data,
     ]);
     const newAccountIndex = index ?? lastAccountIndex + 1;
 
@@ -45,12 +48,12 @@ export class CreateAccountMethod {
     // For vaults of type 'hierarchical_deterministic', it's' necessary to first generate the privateKey from the mnemonic based on the index of the Account.
     const hexAddressesInNetwork = await Promise.all(
       networks.map(async (network) => {
-        if (vault.type === 'hardware' || vault.type === 'BSIM') {
+        if (vault.type === VaultType.Hardware || vault.type === VaultType.BSIM) {
           return hexAddress!;
-        } else if (vault.type === 'public_address') {
+        } else if (vault.type === VaultType.PublicAddress) {
           return vaultData!;
         } else {
-          if (vault.type === 'private_key') {
+          if (vault.type === VaultType.PrivateKey) {
             return fromPrivate(vaultData!).address;
           } else {
             const hdPath = await network.hdPath;

@@ -20,12 +20,11 @@ export class Account extends Model {
   @children(TableName.Address) addresses!: Query<Address>;
   @relation(TableName.AccountGroup, 'account_group_id') accountGroup!: Relation<AccountGroup>;
 
-
   @lazy currentNetworkAddress = this.addresses
     .extend(Q.on(TableName.Network, Q.where('selected', true)))
     .observe()
     .pipe(map((addresses) => addresses[0]));
-    
+
   @reader async getVaultType() {
     const accountGroup = await this.accountGroup;
     const vault = await accountGroup.vault;
