@@ -10,8 +10,6 @@ module.exports = {
         root: ['.'],
         alias: {
           '@core': './packages/core',
-          '@DB': './packages/core/DB',
-          '@setup': './packages/setup',
           '@assets': './packages/ui/assets',
           '@components': './packages/ui/components',
           '@pages': './packages/ui/pages',

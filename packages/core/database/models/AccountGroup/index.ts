@@ -31,6 +31,19 @@ export class AccountGroup extends Model {
     });
   }
 
+  @writer async changeHidden(hidden: boolean) {
+    if (this.hidden === hidden) return;
+    await this.update((account) => {
+      account.hidden = hidden;
+    });
+  }
+
+  prepareChangeHidden(hidden: boolean) {
+    return this.prepareUpdate((account) => {
+      account.hidden = hidden;
+    });
+  }
+
   @reader async getLastAccountIndex() {
     return firstValueFrom(
       this.accounts

@@ -5,7 +5,9 @@ import TableName from '../../TableName';
 import database from '../..';
 
 type Params = Omit<ModelFields<AccountGroup>, 'hiddenAccounts' | 'visibleAccounts' | 'observeSelectedAccount'>;
-export async function createAccountGroup(params: Params, prepareCreate?: true) {
+export function createAccountGroup(params: Params, prepareCreate: true): AccountGroup;
+export function createAccountGroup(params: Params): Promise<AccountGroup>;
+export function createAccountGroup(params: Params, prepareCreate?: true) {
   return createModel<AccountGroup>({
     name: TableName.AccountGroup,
     params: {
@@ -15,4 +17,5 @@ export async function createAccountGroup(params: Params, prepareCreate?: true) {
   });
 }
 
-export const observeAccountGroupById = (id: string) => database.get(TableName.AccountGroup).findAndObserve(id) as Observable<AccountGroup>;
+export const observeAccountGroupById = (accountGroupId: string) =>
+  database.get(TableName.AccountGroup).findAndObserve(accountGroupId) as Observable<AccountGroup>;

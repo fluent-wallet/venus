@@ -1,12 +1,14 @@
 import { injectable, inject } from 'inversify';
 import { Plugins } from '../plugins';
 import { type Vault } from '../../database/models/Vault';
+import { type Account } from '../../database/models/Account';
+import { type Address } from '../../database/models/Address';
 import VaultType from '../../database/models/Vault/VaultType';
 import { createVault, checkIsFirstVault, getVaultTypeCount } from '../../database/models/Vault/query';
 import { createAccountGroup } from '../../database/models/AccountGroup/query';
 import { generateMnemonic } from '../../utils/hdkey';
-import { convertToCamelCase } from '../../database/react';
-import { CreateAccountMethod } from './createAccount';
+import { AddAccountMethod, type Params as AddAccountParams } from './addAccount';
+import database from '../../database';
 
 const defaultGroupNameMap = {
   hierarchical_deterministic: 'Seed Phrase',
@@ -20,9 +22,11 @@ const defaultGroupNameMap = {
 export class CreateVaultMethod {
   @inject(Plugins) plugins!: Plugins;
 
-  @inject(CreateAccountMethod) private CreateAccountMethod!: CreateAccountMethod;
-  private createAccount(...args: Parameters<CreateAccountMethod['createAccount']>) {
-    return this.CreateAccountMethod.createAccount(...args);
+  @inject(AddAccountMethod) private AddAccountMethod!: AddAccountMethod;
+  private addAccount(params: AddAccountParams & { vault: Vault }, prepareCreate: true): Promise<(Account | Address)[]>;
+  private addAccount(params: AddAccountParams): Promise<Account>;
+  private addAccount(...args: Parameters<AddAccountMethod['addAccount']>) {
+    return this.AddAccountMethod.addAccount(...args) as any;
   }
 
   private async createVaultOfType(params: { type: VaultType.HierarchicalDeterministic; mnemonic: string }): Promise<void>;
@@ -58,31 +62,45 @@ export class CreateVaultMethod {
       }
       const isFirstVault = await checkIsFirstVault();
       const count = await getVaultTypeCount(type);
-      const vault = await createVault({ type, device: 'ePayWallet', ...(data ? { data } : null) });
-      const accountGroup = await createAccountGroup({ nickname: `${defaultGroupNameMap[type]} - ${count + 1}`, hidden: false, vault });
-      
+      const vault = createVault({ type, device: 'ePayWallet', ...(data ? { data } : null) }, true);
+      const accountGroup = createAccountGroup({ nickname: `${defaultGroupNameMap[type]} - ${count + 1}`, hidden: false, vault }, true);
+
+      let batchs: Array<Array<Account | Address>>;
       if (type === 'BSIM' || type === 'hardware') {
         if (!Array.isArray(accounts)) throw new Error(`Create vault Error: vault type-${type} accounts is not an array`);
-        await Promise.all(
+        batchs = await Promise.all(
           accounts.map(({ index, hexAddress }, i) =>
-            this.createAccount({
-              selected: isFirstVault && i === 0 ? true : false,
-              hidden: false,
-              accountGroup,
-              hexAddress,
-              index,
-            })
+            this.addAccount(
+              {
+                vault,
+                accountGroup,
+                selected: isFirstVault && i === 0 ? true : false,
+                hidden: false,
+                hexAddress,
+                index,
+              },
+              true
+            )
           )
         );
       } else {
-        await this.createAccount({
-          nickname: `${type === VaultType.HierarchicalDeterministic ? '' : `${convertToCamelCase(type)} `}Account - 1`,
-          hidden: false,
-          selected: isFirstVault ? true : false,
-          accountGroup,
-          ...(hexAddress ? { hexAddress } : null),
-        });
+        batchs = [
+          await this.addAccount(
+            {
+              vault,
+              accountGroup,
+              nickname: `${type === VaultType.HierarchicalDeterministic ? '' : `${convertToCamelCase(type)} `}Account - 1`,
+              hidden: false,
+              selected: isFirstVault ? true : false,
+              ...(hexAddress ? { hexAddress } : null),
+            },
+            true
+          ),
+        ];
       }
+      await database.write(async () => {
+        await database.batch(vault, accountGroup, ...batchs.flat().flat());
+      });
     } catch (error) {
       console.error('Create vault error: ', error);
     }
@@ -136,4 +154,8 @@ export class CreateVaultMethod {
       console.error('create publicAddress vault error: ', error);
     }
   };
+}
+
+function convertToCamelCase(str: string) {
+  return str.replace(/_([a-zA-Z])/g, (_, letter) => letter.toUpperCase());
 }

@@ -1,8 +1,8 @@
 import 'reflect-metadata';
 import { inject, injectable } from 'inversify';
 import '../database/setup';
-import { Plugins } from './plugins';
-import { Methods } from './methods';
+import { Plugins } from './Plugins';
+import { Methods } from './Methods';
 import { container } from './configs';
 
 @injectable()

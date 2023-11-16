@@ -37,44 +37,33 @@ export class Account extends Model {
     });
   }
 
-  @writer async switchHidden() {
-    await this.update((account) => {
-      account.hidden = !account.hidden;
-    });
-  }
+  @writer async changeHidden(hidden: boolean) {
+    if (this.hidden === hidden) return;
+    if (hidden === true) {
+      const vault = await (await this.accountGroup).vault;
+      if (vault.type !== 'hierarchical_deterministic' && vault.type !== 'BSIM') {
+        throw Error('Accounts that are not part of a Group cannot be hidden.');
+      }
 
-  prepareHide() {
-    return this.prepareUpdate((account) => {
-      account.hidden = true;
-    });
-  }
-
-  prepareShow() {
-    return this.prepareUpdate((account) => {
-      account.hidden = false;
-    });
-  }
-
-  @writer async hide() {
-    if (this.hidden === true) return;
-    const vault = await (await this.accountGroup).vault;
-    if (vault.type !== 'hierarchical_deterministic' && vault.type !== 'BSIM') {
-      throw Error('Accounts that are not part of a Group cannot be hidden.');
+      const visibleCountsOfAccountGroup = await (await this.accountGroup).visibleAccounts.count;
+      if (visibleCountsOfAccountGroup <= 1) {
+        throw Error('Keep at least one account.');
+      }
     }
-
-    const visibleCountsOfAccountGroup = await (await this.accountGroup).visibleAccounts.count;
-    if (visibleCountsOfAccountGroup <= 1) {
-      throw Error('Keep at least one account.');
-    }
-
     await this.update((account) => {
-      account.hidden = true;
+      account.hidden = hidden;
     });
   }
 
-  @writer async switchSelected() {
+  prepareChangeHidden(hidden: boolean) {
+    return this.prepareUpdate((account) => {
+      account.hidden = hidden;
+    });
+  }
+
+  @writer async changeSelected(selected: boolean) {
     await this.update((account) => {
-      account.selected = !account.selected;
+      account.selected = selected;
     });
   }
 }

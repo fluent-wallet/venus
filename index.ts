@@ -1,15 +1,16 @@
 import 'react-native-gesture-handler';
 import { AppRegistry } from 'react-native';
-import './packages/mobile/setup/getRandomValues';
+import './packages/setup/getRandomValues';
 import '@ethersproject/shims';
-import './packages/mobile/setup/ethers';
+import './packages/setup/ethers';
 import './packages/core/database/setup';
 import WalletCore from './packages/core/WalletCore';
-import { CryptoTool } from './packages/mobile/plugins/CryptoTool';
-import { Authentication } from './packages/mobile/plugins/Authentication';
-
+import ReactInjectPlugin from './packages/core/WalletCore/plugins/ReactInject';
+import CryptoToolPlugin from './packages/WalletCoreExtends/plugins/CryptoTool';
+import AuthenticationPlugin from './packages/WalletCoreExtends/plugins/Authentication';
+import BSIMPlugin from './packages/WalletCoreExtends/plugins/BSIM';
 import App from './packages/ui/App';
 import { name as appName } from './app.json';
 
-WalletCore.plugins.use([CryptoTool, Authentication]);
+WalletCore.plugins.use([CryptoToolPlugin, AuthenticationPlugin, BSIMPlugin, ReactInjectPlugin]);
 AppRegistry.registerComponent(appName, () => App);
