@@ -1,28 +1,29 @@
-import { enrichFetch } from './index';
-const createRandomId = () => {
-  const MAX = Number.MAX_SAFE_INTEGER;
-  let idCounter = Math.round(Math.random() * MAX);
-  idCounter = idCounter % MAX;
-  return idCounter++;
+// import { enrichFetch } from './index';
+import { fromFetch } from 'rxjs/fetch';
+
+export interface RPCResponse<T> {
+  id: number;
+  jsonrpc: string;
+  result: T;
+}
+
+let rpcId = 0;
+export const RPCSend = <T>(endpoint: string, args: { method: string; params?: any } | { method: string; params?: any }[]) => {
+  const bodyParams = () => ({
+    jsonrpc: '2.0',
+    id: rpcId++,
+  });
+
+  return fromFetch<T>(endpoint, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(Array.isArray(args) ? args.map((v) => ({ ...bodyParams(), ...v })) : { ...bodyParams(), ...args }),
+    selector: (response) => response.json(),
+  });
 };
 
-const initSend = (endpoint: string) => {
-  const send = (method: string, params: any) => {
-    if (!method) {
-      return;
-    }
-
-    const bodyParams = {
-      jsonrpc: '2.0',
-      id: createRandomId(),
-      method,
-      ...(params ? { params } : {}),
-    };
-
-    return enrichFetch({ url: endpoint, params: bodyParams });
-  };
-
-  return send;
+export const RPCSendFactory = (endpoint: string) => {
+  return RPCSend.bind(null, endpoint);
 };
-
-export default initSend;

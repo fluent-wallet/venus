@@ -1,19 +1,21 @@
-import { switchMap, of, catchError, firstValueFrom } from 'rxjs';
-import { atom, useAtom } from 'jotai';
+import { of } from 'rxjs';
+import { atom } from 'jotai';
 import { map } from 'rxjs';
 import { fromFetch } from 'rxjs/fetch';
 import { formatUnits } from 'ethers';
+import { TokenType } from './useTransaction';
+
 let host = 'https://evmapi.confluxscan.io';
 
 if (__DEV__) {
   host = 'https://evmapi-testnet.confluxscan.io';
 }
 
-export interface TokenListItem {
+export interface AccountTokenListItem {
   name: string;
   decimals: number;
   symbol: string;
-  type: string;
+  type: TokenType;
   amount: string;
   contract: string;
   priceInUSDT?: string;
@@ -24,18 +26,11 @@ interface TokenListResponse {
   status: string;
   message: string;
   result: {
-    list: TokenListItem[];
+    list: AccountTokenListItem[];
   };
 }
 
-export enum FetchTokenListType {
-  ERC20 = 'ERC20',
-  ERC721 = 'ERC721',
-  ERC1155 = 'ERC1155',
-  ALL = 'ERC20,ERC721,ERC1155',
-}
-
-export const requestTokenList = (hexAddress: string, tokenType = FetchTokenListType.ERC20) =>
+export const requestTokenList = (hexAddress: string, tokenType = TokenType.ERC20) =>
   fromFetch<TokenListResponse>(`${host}/account/tokens?account=${hexAddress}&tokenType=${tokenType}`, {
     selector: (response) => {
       if (response.ok) {
@@ -60,4 +55,4 @@ export const requestTokenList = (hexAddress: string, tokenType = FetchTokenListT
     )
   );
 
-export const ERC20tokenListAtom = atom<TokenListItem[]>([]);
+export const ERC20tokenListAtom = atom<AccountTokenListItem[]>([]);

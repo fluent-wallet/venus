@@ -3,7 +3,7 @@ import { statusBarHeight } from '@utils/deviceInfo';
 import { Pressable, SafeAreaView, View, KeyboardAvoidingView, Platform, TextInput } from 'react-native';
 import BottomSheet, { BottomSheetFlatList } from '@gorhom/bottom-sheet';
 import { useMemo, useRef, useState } from 'react';
-import TokenIconUSDT from '@assets/icons/tokenUSDT.svg';
+import TokenIconDefault from '@assets/icons/tokenDefault.svg';
 import { Button, Icon } from '@rneui/base';
 import { BaseButton } from '@components/Button';
 export const SetAmountStackName = 'SetAmount';
@@ -59,7 +59,7 @@ const SetAmount = () => {
             >
               <View className="flex flex-1 flex-row justify-between items-center">
                 <View className="flex flex-row items-center">
-                  <TokenIconUSDT />
+                  <TokenIconDefault />
                   <View>
                     <Text>Bitcoin</Text>
                     <Text style={{ color: theme.colors.textSecondary }}>BTC</Text>
@@ -114,7 +114,7 @@ const SetAmount = () => {
             data={[
               {
                 tokenName: 'Bitcoin',
-                tokenIcon: TokenIconUSDT,
+                tokenIcon: TokenIconDefault,
                 tokenValue: '20000000',
                 tokenBalance: 0,
               },
