@@ -14,7 +14,7 @@ export enum ADDRESS_TYPES {
   user = 'user',
   contract = 'contract',
   builtin = 'builtin',
-  null = 'null'
+  null = 'null',
 }
 
 // * network setting
@@ -37,6 +37,8 @@ export const CFX_ESPACE_MAINNET_NETID = 1030;
 export const CFX_ESPACE_MAINNET_CURRENCY_SYMBOL = 'CFX';
 export const CFX_ESPACE_MAINNET_CURRENCY_NAME = 'Conflux';
 export const CFX_ESPACE_MAINNET_EXPLORER_URL = 'https://evm.confluxscan.net';
+export const CFX_ESPACE_MAINNET_SCAN_OPENAPI = 'https://evmapi.confluxscan.io';
+export const CFX_ESPACE_MAINNET_SCAN = 'https://evmtestnet.confluxscan.io';
 
 export const CFX_TESTNET_RPC_ENDPOINT = `https://test.confluxrpc.com/${CONFLUX_API_LIMIT_KEY}`;
 export const CFX_TESTNET_NAME = 'Conflux Testnet';
@@ -53,6 +55,8 @@ export const CFX_ESPACE_TESTNET_NETID = 71;
 export const CFX_ESPACE_TESTNET_CURRENCY_SYMBOL = 'CFX';
 export const CFX_ESPACE_TESTNET_CURRENCY_NAME = 'Conflux';
 export const CFX_ESPACE_TESTNET_EXPLORER_URL = 'https://evmtestnet.confluxscan.net';
+export const CFX_ESPACE_TESTNET_SCAN_OPENAPI = 'https://evmapi-testnet.confluxscan.io';
+export const CFX_ESPACE_TESTNET_SCAN = 'https://evmtestnet.confluxscan.io';
 
 export const ETH_MAINNET_RPC_ENDPOINT = `https://mainnet.infura.io/v3/${ETH_API_LIMIT_KEY}`;
 export const ETH_MAINNET_NAME = 'Ethereum Mainnet';

@@ -21,6 +21,7 @@ import { ERC20tokenListAtom } from '../../hooks/useTokenList';
 import { useAtom } from 'jotai';
 import { formatUnits } from 'ethers';
 import TokenList from '@components/TokenList';
+import NFTList from '@components/NFTList';
 
 export const WalletStackName = 'Wallet';
 export const getWalletHeaderOptions = (backgroundColor: string) =>
@@ -123,13 +124,13 @@ const Wallet: React.FC<{ navigation: StackNavigation; address: Address }> = ({ n
       </View>
 
       <TabView value={tabIndex} onChange={setTabIndex} animationType="spring">
-        <TabView.Item>
+        <TabView.Item className="w-full">
           <TokenList />
         </TabView.Item>
-        <TabView.Item>
-          <Text h1>Receive1</Text>
+        <TabView.Item className="w-full">
+          <NFTList />
         </TabView.Item>
-        <TabView.Item>
+        <TabView.Item className="w-full">
           <Text h1>Activity</Text>
         </TabView.Item>
       </TabView>

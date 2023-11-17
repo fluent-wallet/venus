@@ -8,14 +8,16 @@ import { RouteProp } from '@react-navigation/native';
 import TokenList from '@components/TokenList';
 import { AccountTokenListItem } from '@hooks/useTokenList';
 import { useAtom } from 'jotai';
-import { transactionAtom } from '@hooks/useTransaction';
+import { TokenType, transactionAtom } from '@hooks/useTransaction';
+import NFTList from '@components/NFTList';
+import { NFTItemDetail } from '@components/NFTList/NFTItem';
+import { TransactionConfirmStackName } from '../TransactionConfirm';
 
 export const TokensStackName = 'Tokens';
 
 const Tokens: React.FC<{ navigation: StackNavigation; route: RouteProp<RootStackList, typeof TokensStackName> }> = ({ navigation, route }) => {
   const { theme } = useTheme();
   const [tabIndex, setTabIndex] = useState(0);
-  const [isExpanded, setIsExpanded] = useState(false);
   const [, setTransaction] = useAtom(transactionAtom);
   const handleTabChange = (index: number) => {
     navigation.setOptions({ headerTitle: index === 0 ? 'Tokens' : 'NFTs' });
@@ -36,6 +38,20 @@ const Tokens: React.FC<{ navigation: StackNavigation; route: RouteProp<RootStack
     navigation.navigate(SendToStackName);
   };
 
+  const handleSelectNFT = (token: AccountTokenListItem & NFTItemDetail & { contractName: string; nftName: string }) => {
+    setTransaction((v) => ({
+      ...v,
+      tokenType: token.type,
+      contract: token.contract,
+      tokenId: token.tokenId,
+      tokenImage: token.image,
+      contractName: token.contractName,
+      nftName: token.nftName,
+      iconUrl: token.iconUrl,
+    }));
+    navigation.navigate(TransactionConfirmStackName);
+  };
+
   return (
     <SafeAreaView
       className="flex flex-1 flex-col justify-start pb-7"
@@ -49,62 +65,11 @@ const Tokens: React.FC<{ navigation: StackNavigation; route: RouteProp<RootStack
       </View>
 
       <TabView value={tabIndex} onChange={handleTabChange} animationType="spring">
-        <TabView.Item className="flex flex-1">
+        <TabView.Item className="w-full">
           <TokenList onPress={handleSelectToken} />
         </TabView.Item>
-        <TabView.Item className="flex flex-1">
-          <View className="flex flex-1 w-full">
-            <ListItem.Accordion
-              isExpanded={isExpanded}
-              onPress={() => setIsExpanded(!isExpanded)}
-              containerStyle={{
-                backgroundColor: theme.colors.normalBackground,
-                display: 'flex',
-                justifyContent: 'space-between',
-              }}
-              icon={<Icon name="keyboard-arrow-right" color={theme.colors.contrastWhiteAndBlack} />}
-              expandIcon={<Icon name="keyboard-arrow-up" color={theme.colors.contrastWhiteAndBlack} />}
-              content={
-                <View className="flex flex-row items-center">
-                  <TokenIconDefault width={32} height={32} />
-                  <Text style={{ color: theme.colors.contrastWhiteAndBlack }} className="text-base font-medium leading-6 ml-2">
-                    Test NFTs
-                  </Text>
-                </View>
-              }
-            >
-              <ListItem containerStyle={{ backgroundColor: 'transparent' }}>
-                <View className="flex flex-row flex-wrap justify-between">
-                  <Pressable onPress={() => navigation.navigate(SendToStackName)} style={{ width: '48%' }}>
-                    <View style={{ backgroundColor: theme.colors.surfaceCard }} className="p-3 mb-3 rounded-md">
-                      <View className="w-36 h-36">
-                        <Text>Image</Text>
-                      </View>
-                      <Text style={{ color: theme.colors.textSecondary }} className="text-sm leading-6">
-                        Nakamigos
-                      </Text>
-                      <Text style={{ color: theme.colors.contrastWhiteAndBlack }} className="text-sm leading-6">
-                        Nakamigos #7733
-                      </Text>
-                    </View>
-                  </Pressable>
-                  <Pressable onPress={() => navigation.navigate(SendToStackName)} style={{ width: '48%' }}>
-                    <View style={{ backgroundColor: theme.colors.surfaceCard }} className="p-3 mb-3 rounded-md">
-                      <View className="w-36 h-36">
-                        <Text>Image</Text>
-                      </View>
-                      <Text style={{ color: theme.colors.textSecondary }} className="text-sm leading-6">
-                        Nakamigos
-                      </Text>
-                      <Text style={{ color: theme.colors.contrastWhiteAndBlack }} className="text-sm leading-6">
-                        Nakamigos #7733
-                      </Text>
-                    </View>
-                  </Pressable>
-                </View>
-              </ListItem>
-            </ListItem.Accordion>
-          </View>
+        <TabView.Item className="w-full">
+          <NFTList onPress={handleSelectNFT} />
         </TabView.Item>
       </TabView>
     </SafeAreaView>

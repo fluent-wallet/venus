@@ -19,6 +19,10 @@ export const transactionAtom = atom<{
   iconUrl?: string;
   amount: number;
   priceInUSDT?: string;
+  tokenId?: string; // 721
+  tokenImage?: string; // 721
+  contractName?: string; // 721
+  nftName?: string; // 721
 }>({
   from: '',
   to: '',
