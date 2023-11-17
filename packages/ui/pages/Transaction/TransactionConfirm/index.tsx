@@ -1,6 +1,6 @@
 import { Button, Divider, Text, useTheme } from '@rneui/themed';
 import { statusBarHeight } from '@utils/deviceInfo';
-import { Pressable, SafeAreaView, View } from 'react-native';
+import { Pressable, SafeAreaView, View, Image } from 'react-native';
 import AvatarIcon from '@assets/icons/avatar.svg';
 import CopyAllIcon from '@assets/icons/copy_all.svg';
 import Warning from '@assets/icons/warning_2.svg';
@@ -25,7 +25,7 @@ import { JsonRpcProvider, Transaction, formatUnits, parseUnits } from 'ethers';
 
 import { firstValueFrom } from 'rxjs';
 import { RPCResponse, RPCSend, RPCSendFactory } from '@core/utils/send';
-import { iface777 } from '@core/utils';
+import { iface721, iface777 } from '@core/utils';
 
 import { Wallet } from 'ethers';
 
@@ -58,6 +58,10 @@ const TransactionConfirm: React.FC<{
       if (gas && tx.tokenType === TokenType.ERC20) {
         transaction.data = iface777.encodeFunctionData('transfer', [tx.to, parseUnits(tx.amount.toString())]);
       }
+      if (gas && tx.tokenType === TokenType.ERC721 && tx.tokenId) {
+        transaction.data = iface721.encodeFunctionData('transferFrom', [address.hex, tx.to, tx.tokenId]);
+      }
+
       const pk = await address.getPrivateKey();
       const wallet = new Wallet(pk, new JsonRpcProvider(currentNetwork.endpoint));
 
@@ -94,14 +98,62 @@ const TransactionConfirm: React.FC<{
       ).then((res) => setGas(res));
     }
 
-    // firstValueFrom(RPCSend<RPCResponse<string>>(currentNetwork.endpoint, { method: 'eth_gasPrice' })).then((data) => console.log(data));
-  }, [currentNetwork.endpoint, tx.tokenType, tx.contract, tx.to, tx.amount, address.hex]);
+    if (tx.tokenType === TokenType.ERC721 && tx.contract && tx.tokenId) {
+      const encodeData = iface721.encodeFunctionData('transferFrom', [address.hex, tx.to, tx.tokenId]);
+      firstValueFrom(
+        RPCSend<RPCResponse<string>>(currentNetwork.endpoint, { method: 'eth_getTransactionCount', params: [address.hex, 'pending'] }).pipe(
+          map((res) => res.result),
+          switchMap((nonce) =>
+            RPCSend<RPCResponse<string>[]>(currentNetwork.endpoint, [
+              {
+                method: 'eth_estimateGas',
+                params: [
+                  {
+                    from: address.hex,
+                    nonce,
+                    to: tx.contract,
+                    data: encodeData,
+                  },
+                ],
+              },
+              { method: 'eth_gasPrice' },
+            ])
+          ),
+          map(([gas, gasPrice]) => ({ gasLimit: gas.result, gasPrice: gasPrice.result }))
+        )
+      ).then((res) => setGas(res));
+    }
+  }, [currentNetwork.endpoint, tx.tokenType, tx.contract, tx.to, tx.amount, address.hex, tx.tokenId]);
+
+  const renderAmount = () => {
+    if (tx.tokenType === TokenType.ERC20) {
+      return `${tx.amount} ${tx.symbol}`;
+    }
+    if (tx.tokenType === TokenType.ERC721) {
+      return `1 ${tx.contractName}`;
+    }
+  };
+
   const gasCost = gas ? BigInt(gas.gasLimit) * BigInt(gas.gasPrice) : 0n;
   return (
     <SafeAreaView
       className="flex-1 flex flex-col justify-start px-[24px] pb-7"
       style={{ backgroundColor: theme.colors.normalBackground, paddingTop: statusBarHeight + 48 }}
     >
+      {tx.tokenType === TokenType.ERC721 && (
+        <View className="flex flex-row p-4 rounded-lg w-full" style={{ backgroundColor: theme.colors.surfaceCard }}>
+          {tx.tokenImage && <Image source={{ uri: tx.tokenImage }} width={63} height={63} className="mr-4" />}
+          <View className="flex justify-center">
+            {tx.iconUrl && <Image source={{ uri: tx.iconUrl }} width={24} height={24} />}
+            <Text style={{ color: theme.colors.textSecondary }} className="leading-6">
+              {tx.contractName}
+            </Text>
+            <Text style={{ color: theme.colors.textPrimary }} className="leading-6 font-medium">
+              {tx.nftName}
+            </Text>
+          </View>
+        </View>
+      )}
       {error && (
         <Pressable onPress={() => setError('')}>
           <View className="flex flex-row p-3 items-center border rounded-lg mb-4" style={{ borderColor: theme.colors.warnErrorPrimary }}>
@@ -154,7 +206,7 @@ const TransactionConfirm: React.FC<{
           </Text>
           <View className="flex">
             <Text style={{ color: theme.colors.textPrimary }} className="text-xl font-bold leading-6">
-              {tx.amount} {tx.symbol}
+              {renderAmount()}
             </Text>
             <Text style={{ color: theme.colors.textSecondary }} className="text-right text-sm leading-6">
               {tx.priceInUSDT ? `≈$${Number(tx.priceInUSDT) * tx.amount}` : ''}

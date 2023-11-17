@@ -1,15 +1,12 @@
 import { of } from 'rxjs';
 import { atom } from 'jotai';
-import { map } from 'rxjs';
+import { map, switchMap } from 'rxjs';
 import { fromFetch } from 'rxjs/fetch';
 import { formatUnits } from 'ethers';
 import { TokenType } from './useTransaction';
-
-let host = 'https://evmapi.confluxscan.io';
-
-if (__DEV__) {
-  host = 'https://evmapi-testnet.confluxscan.io';
-}
+import { querySelectedNetwork } from '@core/DB/models/Network/service';
+import database from '@core/DB';
+import { scanOpenAPISend } from '@core/utils/send';
 
 export interface AccountTokenListItem {
   name: string;
@@ -30,16 +27,8 @@ interface TokenListResponse {
   };
 }
 
-export const requestTokenList = (hexAddress: string, tokenType = TokenType.ERC20) =>
-  fromFetch<TokenListResponse>(`${host}/account/tokens?account=${hexAddress}&tokenType=${tokenType}`, {
-    selector: (response) => {
-      if (response.ok) {
-        return response.json();
-      } else {
-        return of({ status: '0', message: '', result: { list: [] } });
-      }
-    },
-  }).pipe(
+export const requestTokenList = (hexAddress: string, tokenType: TokenType | string = TokenType.ERC20) =>
+  scanOpenAPISend<TokenListResponse>(`/account/tokens?account=${hexAddress}&tokenType=${tokenType}`).pipe(
     map((res) => res.result.list),
     map((list) =>
       list.sort((a, b) => {
@@ -56,3 +45,5 @@ export const requestTokenList = (hexAddress: string, tokenType = TokenType.ERC20
   );
 
 export const ERC20tokenListAtom = atom<AccountTokenListItem[]>([]);
+
+export const ERC721And1155TokenListAtom = atom<AccountTokenListItem[]>([]);
