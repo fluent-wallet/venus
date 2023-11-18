@@ -62,47 +62,32 @@ export enum CoinTypes {
 }
 
 export interface BSIMPubKey {
-  coinType: string;
+  coinType: number;
   key: string;
   index: number;
 }
 
-export interface BSIMMessage {
-  // /**
-  //  * The coin type set conflux by default
-  //  */
-  coinType?: string;
-  index: number;
-  msg: string;
-}
 
 interface BSIMSDKInterface {
   /**
    * Create BSIM SDK instance first then you can call other BSIM methods
    * @param appId string
    */
-  create(appId: string): void;
+  create(): void;
 
   /**
    * Create new pubkey from BSIM SDK
    * @param coinType CoinTypes
    */
-  genNewKey(coinType: CoinTypes): Promise<BSIMPubKey>;
+  genNewKey(coinType: CoinTypes): Promise<string>;
 
   /**
    * Use BSIM SDK to sign message
    * @param msg string - sha3 hash message
    * @param index string
    */
-  signMessage(msg: string, coinType: CoinTypes, index: number): Promise<string>;
+  signMessage(msg: string, coinType: CoinTypes, index: number): Promise<{code: string, message:string, r:string, s:string}>;
 
-  /**
-   * Use the BSIM SDK to batch sign message
-   * @param messageList string message list json string
-   * @example
-   * batchSignMessage([{ msg, coinType: CoinTypes.CONFLUX, index }])
-   */
-  batchSignMessage(messageList: BSIMMessage[]): Promise<string[]>;
   /**
    * Get all Pubkey from BSIM SDK
    */
@@ -113,11 +98,13 @@ interface BSIMSDKInterface {
    */
   pubkeyToECPubkey(hexPubkey: string): Promise<string>;
 
-  /**
-   * bsim pubkey to eth address
-   * @param hexPubkey 
-   */
-  pubkeyToEthAddr(hexPubkey: string): Promise<string>;
+  
+
+  closeChannel():void
+  getBSIMVersion(): Promise<string>;
+  getVersion():Promise<string>;
+  verifyBPIN():Promise<string>;
+  
 }
 
 export default BSIMSDK as BSIMSDKInterface;

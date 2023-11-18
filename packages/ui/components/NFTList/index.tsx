@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { FlatList, ScrollView } from 'react-native';
-import { firstValueFrom, map, switchMap } from 'rxjs';
+import { firstValueFrom, map, switchMap, of } from 'rxjs';
 import { Address } from '@core/DB/models/Address';
 import { querySelectedAddress } from '@core/DB/models/Address/service';
 import { AccountTokenListItem, ERC721And1155TokenListAtom, requestTokenList } from '@hooks/useTokenList';
@@ -40,28 +40,32 @@ const NFTList: React.FC<{ address: Address; onPress?: (v: AccountTokenListItem &
   useEffect(() => {
     firstValueFrom(
       requestTokenList(address.hex, [TokenType.ERC721, TokenType.ERC1155].join(',')).pipe(
-        switchMap((tokenList) =>
-          scanAPISend<{ code: number; message: string; total: number; result: { list: TokenDetail[] } }>(
-            `v1/token?${tokenList.reduce((acc, cur) => (acc ? `${acc}&addressArray=${cur.contract}` : `addressArray=${cur.contract}`), '')}`
-          ).pipe(
-            map((res) => {
-              // request NFT contract icon
-              const hash = tokenList.reduce((acc, cur) => {
-                acc[cur.contract] = cur;
-                return acc;
-              }, {} as Record<string, AccountTokenListItem>);
-              res.result.list.forEach((item) => {
-                const hex = decode(item.address);
-                const address = addHexPrefix(hex.hexAddress.toString('hex'));
-                if (hash[address]) {
-                  hash[address].iconUrl = item.iconUrl;
-                }
-              });
+        switchMap((tokenList) => {
+          if (tokenList.length > 0) {
+            return scanAPISend<{ code: number; message: string; total: number; result: { list: TokenDetail[] } }>(
+              `v1/token?${tokenList.reduce((acc, cur) => (acc ? `${acc}&addressArray=${cur.contract}` : `addressArray=${cur.contract}`), '')}`
+            ).pipe(
+              map((res) => {
+                // request NFT contract icon
+                const hash = tokenList.reduce((acc, cur) => {
+                  acc[cur.contract] = cur;
+                  return acc;
+                }, {} as Record<string, AccountTokenListItem>);
+                res.result.list.forEach((item) => {
+                  const hex = decode(item.address);
+                  const address = addHexPrefix(hex.hexAddress.toString('hex'));
+                  if (hash[address]) {
+                    hash[address].iconUrl = item.iconUrl;
+                  }
+                });
 
-              return tokenList;
-            })
-          )
-        )
+                return tokenList;
+              })
+            );
+          } else {
+            return of([]);
+          }
+        })
       )
     ).then((list) => {
       setTokenList(list);

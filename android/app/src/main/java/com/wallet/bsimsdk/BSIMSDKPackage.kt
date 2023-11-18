@@ -15,5 +15,5 @@ class BSIMSDKPackage : ReactPackage {
 
     override fun createNativeModules(
             reactContext: ReactApplicationContext
-    ): MutableList<NativeModule> = listOf(MockSDKModule(reactContext)).toMutableList()
+    ): MutableList<NativeModule> = listOf(SDKModule(reactContext)).toMutableList()
 }
