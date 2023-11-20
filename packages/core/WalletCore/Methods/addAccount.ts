@@ -1,5 +1,5 @@
 import { injectable, inject } from 'inversify';
-import { Plugins } from '../plugins';
+import { Plugins } from '../Plugins';
 import { type Network } from '../../database/models/Network';
 import { type AccountGroup } from '../../database/models/AccountGroup';
 import { type Account } from '../../database/models/Account';

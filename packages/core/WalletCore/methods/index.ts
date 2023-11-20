@@ -8,6 +8,8 @@ import { AddAccountMethod, type Params as AddAccountParams } from './addAccount'
 import { CreateVaultMethod } from './createVault';
 import { AccountMethod } from './accountMethod';
 import { AccountGroupMethod } from './accountGroupMethod';
+import { VaultMethod } from './vaultMethod';
+import { NetworkMethod } from './networkMethod';
 
 @injectable()
 export class Methods {
@@ -70,6 +72,19 @@ export class Methods {
   public getAccountGroupLastAccountIndex(...args: Parameters<AccountGroupMethod['getAccountGroupLastAccountIndex']>) {
     return this.AccountGroupMethod.getAccountGroupLastAccountIndex(...args);
   }
+
+  @inject(VaultMethod) private VaultMethod!: VaultMethod;
+  public deleteVault(...args: Parameters<VaultMethod['deleteVault']>) {
+    return this.VaultMethod.deleteVault(...args);
+  }
+
+  @inject(NetworkMethod) private NetworkMethod!: NetworkMethod;
+  public createNetwork(...args: Parameters<NetworkMethod['createNetwork']>) {
+    return this.NetworkMethod.createNetwork(...args);
+  }
+  public switchToNetwork(...args: Parameters<NetworkMethod['switchToNetwork']>) {
+    return this.NetworkMethod.switchToNetwork(...args);
+  }
 }
 
 container.bind(Methods).to(Methods);
@@ -78,3 +93,7 @@ container.bind(AddAccountMethod).to(AddAccountMethod).inSingletonScope();
 container.bind(CreateVaultMethod).to(CreateVaultMethod).inSingletonScope();
 container.bind(AccountMethod).to(AccountMethod).inSingletonScope();
 container.bind(AccountGroupMethod).to(AccountGroupMethod).inSingletonScope();
+container.bind(VaultMethod).to(VaultMethod).inSingletonScope();
+container.bind(NetworkMethod).to(NetworkMethod).inSingletonScope();
+
+export default container.get(Methods) as Methods;

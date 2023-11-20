@@ -1,6 +1,6 @@
 import { Q, Model, type Query, type Relation } from '@nozbe/watermelondb';
 import { field, text, children, relation, date, readonly, writer, reader, lazy } from '@nozbe/watermelondb/decorators';
-import { map } from 'rxjs';
+import { map, firstValueFrom } from 'rxjs';
 import { type Address } from '../Address';
 import { type AccountGroup } from '../AccountGroup';
 import TableName from '../../TableName';
@@ -20,10 +20,12 @@ export class Account extends Model {
   @children(TableName.Address) addresses!: Query<Address>;
   @relation(TableName.AccountGroup, 'account_group_id') accountGroup!: Relation<AccountGroup>;
 
-  @lazy currentNetworkAddress = this.addresses
+  @lazy currentNetworkAddressObservable = this.addresses
     .extend(Q.on(TableName.Network, Q.where('selected', true)))
     .observe()
     .pipe(map((addresses) => addresses[0]));
+
+  @lazy currentNetworkAddress = firstValueFrom(this.currentNetworkAddressObservable);
 
   @reader async getVaultType() {
     const accountGroup = await this.accountGroup;

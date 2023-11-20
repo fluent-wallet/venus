@@ -1,5 +1,6 @@
+import { type Observable } from 'rxjs';
+import { memoize } from 'lodash-es';
 import { ModelFields, createModel } from '../../helper/modelHelper';
-import { type Observable } from '@nozbe/watermelondb/utils/rx';
 import { AccountGroup } from '.';
 import TableName from '../../TableName';
 import database from '../..';
@@ -17,5 +18,6 @@ export function createAccountGroup(params: Params, prepareCreate?: true) {
   });
 }
 
-export const observeAccountGroupById = (accountGroupId: string) =>
-  database.get(TableName.AccountGroup).findAndObserve(accountGroupId) as Observable<AccountGroup>;
+export const observeAccountGroupById = memoize(
+  (accountGroupId: string) => database.get(TableName.AccountGroup).findAndObserve(accountGroupId) as Observable<AccountGroup>
+);

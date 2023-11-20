@@ -41,25 +41,4 @@ export class Address extends Model {
     if (!network) return this.hex;
     return network.networkType === 'cfx' ? this.base32 : this.hex;
   }
-
-  // /** Get the private key for the address */
-  // @reader async getPrivateKey() {
-  //   const vault = await (await (await this.account).accountGroup).vault;
-  //   if (vault.type === 'public_address') throw new Error('Cannot get private key from public_address wallet');
-  //   if (vault.type === 'hardware') throw new Error('Cannot get private key from hardware wallet');
-  //   if (vault.type === 'BSIM') throw new Error('Cannot get private key from BSIM wallet');
-
-  //   const data = vault.data
-  //   if (vault.type === 'private_key') return data;
-
-  //   const mnemonic = data!;
-  //   const hdPath = await (await this.network).hdPath;
-  //   const thisAccount = await this.account;
-  //   const { privateKey } = await getNthAccountOfHDKey({
-  //     mnemonic,
-  //     hdPath: hdPath.value,
-  //     nth: thisAccount.index,
-  //   });
-  //   return privateKey;
-  // }
 }

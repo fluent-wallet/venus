@@ -2,45 +2,50 @@ import React from 'react';
 import LinearGradient from 'react-native-linear-gradient';
 import { View, Image, SafeAreaView } from 'react-native';
 import { useTheme, Text } from '@rneui/themed';
-import { BaseButton } from '@components/Button';
 import { statusBarHeight } from '@utils/deviceInfo';
 import Tip from '@assets/icons/tip.svg';
 import WelcomeBg from '@assets/images/welcome-bg.png';
-import clearAccountData from '@core/database/setup/clearAccountData';
-import { useStructureGroupData, useAccountGroups } from '@core/WalletCore/Plugins/ReactInject';
-import Plugins from '@core/WalletCore/Plugins';
+import { type StackNavigation, BiometricsStackName, ImportWalletStackName } from '@router/configs';
+import { BaseButton } from '@components/Button';
 
 export const WelcomeStackName = 'Welcome';
 
-Plugins.BSIM.getBIMList
-const Welcome: React.FC = () => {
+const Welcome: React.FC<{ navigation: StackNavigation }> = ({ navigation }) => {
   const { theme } = useTheme();
-  const structureGroupDataoups = useStructureGroupData();
-  const accountGroups = useAccountGroups();
 
   return (
     <LinearGradient colors={theme.colors.linearGradientBackground} className="flex-1">
       <SafeAreaView className="flex-1 flex flex-col justify-start pt-[8px]">
-        {structureGroupDataoups?.map((accountGroup) => (
-          <View key={accountGroup.id}>
-            <Text className="text-[36px] leading-[46px] font-bold text-center" style={{ color: theme.colors.textBrand }}>
-              {accountGroup.nickname}
-            </Text>
-            {accountGroup.accounts.map((account) => (
-              <Text key={account.id}>
-                {account.nickname} {account.currentNetworkAddressValue}
-              </Text>
-            ))}
+        <View
+          className="flex flex-row w-[330px] mx-auto p-[12px] rounded-[8px]"
+          style={{ marginTop: (statusBarHeight ?? 0) + 8, backgroundColor: theme.colors.surfaceSecondary }}
+        >
+          <View className="mt-[5px] mr-[8px]">
+            <Tip />
           </View>
-        ))}
-        {accountGroups.map((accountGroup) => (
-          <Text key={accountGroup.id}>{accountGroup.nickname}</Text>
-        ))}
-        <BaseButton containerStyle={{ marginTop: 40, marginHorizontal: 16 }} onPress={() => WalletCore.methods.createHDVault()}>
+          <View>
+            <Text className="text-[16px] leading-[24px] ">Coming Soon！</Text>
+            <Text className="mt-[4px] text-[14px] leading-[20px]">We are working hard to prepare, so stay tuned,Please stay tuned！</Text>
+          </View>
+        </View>
+
+        <Image className="mt-[10px] mx-auto w-[208px] h-[208px]" source={WelcomeBg} />
+
+        <View className="mt-[90px]">
+          <Text className="text-[36px] leading-[46px] font-bold text-center" style={{ color: theme.colors.textBrand }}>
+            Enter Web3
+          </Text>
+          <Text className="mt-[8px] text-[16px] leading-[24px] text-center">First, let's add a wallet</Text>
+        </View>
+
+        <BaseButton containerStyle={{ marginTop: 40, marginHorizontal: 16 }} onPress={() => navigation.navigate(BiometricsStackName, { type: 'BSIM' })}>
+          Connect BSIM Wallet
+        </BaseButton>
+        <BaseButton containerStyle={{ marginTop: 16, marginHorizontal: 16 }} onPress={() => navigation.navigate(BiometricsStackName)}>
           Create new Wallet
         </BaseButton>
-        <BaseButton containerStyle={{ marginTop: 40, marginHorizontal: 16 }} onPress={() => clearAccountData()}>
-          clear
+        <BaseButton containerStyle={{ marginTop: 16, marginHorizontal: 16 }} onPress={() => navigation.navigate(ImportWalletStackName, { type: 'create' })}>
+          Import existing Wallet
         </BaseButton>
       </SafeAreaView>
     </LinearGradient>

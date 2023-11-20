@@ -15,13 +15,13 @@ import AccountSelect, { AccountSelectStackName } from '@pages/Account/AccountSel
 import AddAccount, { AddAccountStackName } from '@pages/Account/AddAccount';
 import Login, { LoginStackName } from '@pages/Login';
 import Lock, { LockStackName } from '@pages/Lock';
-import { withDatabase, withObservables, compose, type Database } from '@core/database/react';
-import TableName from '@core/database/TableName';
+import { withDatabase, withObservables, compose, type Database } from '@DB/react';
+import TableName from '@DB/TableName';
 import { HomeStackName, type StackNavigation, type RootStackList } from './configs';
 import SendReceiver, { SendPageHeaderOptions, ReceiveAddressStackName } from '@pages/Transaction/ReceiveAddress';
 import TransactionConfirm, { TransactionConfirmStackName } from '@pages/Transaction/TransactionConfirm';
 import SendTo, { SendToStackName } from '@pages/Transaction/SendTo';
-import TokenList, { TokenListStackName } from '@pages/Transaction/TokenList';
+import Tokens, { TokensStackName } from '@pages/Transaction/Tokens';
 import BackUp, { BackUpStackName } from '@pages/Account/BackUp';
 import AccountSetting, { AccountSettingStackName } from '@pages/Account/Setting/AccountSetting';
 import GroupSetting, { GroupSettingStackName } from '@pages/Account/Setting/GroupSetting';
@@ -86,7 +86,7 @@ const StackNavigator = compose(
         headerLeft: ({ canGoBack }) =>
           canGoBack ? (
             <TouchableOpacity className="flex flex-row items-center gap-[4px]" onPress={() => navigation.goBack()}>
-              <ArrowLeft />
+              <ArrowLeft color={theme.colors.surfaceBrand} />
               {/* <Text className="text-[16px] font-medium" style={{ color: theme.colors.textBrand }}>
                 Wallet
               </Text> */}
@@ -113,29 +113,21 @@ const StackNavigator = compose(
       <Stack.Screen name={LoginStackName} component={Login} options={{ headerShown: false }} />
       <Stack.Screen name={LockStackName} component={Lock} options={{ headerShown: false }} />
       <Stack.Screen name={ReceiveAddressStackName} component={SendReceiver} options={{ title: 'receiving address', headerTitleAlign: 'center' }} />
-      <Stack.Screen
-        name={SendToStackName}
-        component={SendTo}
-        options={{ ...SendPageHeaderOptions({ titleColor: theme.colors.contrastWhiteAndBlack, borderColor: theme.colors.surfaceSecondary }) }}
-      />
+      <Stack.Screen name={SendToStackName} component={SendTo} options={{ ...SendPageHeaderOptions({ title: 'Send To' }) }} />
       <Stack.Screen
         name={TransactionConfirmStackName}
         component={TransactionConfirm}
         options={{
           ...SendPageHeaderOptions({
-            titleColor: theme.colors.contrastWhiteAndBlack,
-            borderColor: theme.colors.surfaceSecondary,
             title: 'Transaction Confirm',
           }),
         }}
       />
       <Stack.Screen
-        name={TokenListStackName}
-        component={TokenList}
+        name={TokensStackName}
+        component={Tokens}
         options={{
           ...SendPageHeaderOptions({
-            titleColor: theme.colors.contrastWhiteAndBlack,
-            borderColor: theme.colors.surfaceSecondary,
             title: 'Tokens',
           }),
         }}

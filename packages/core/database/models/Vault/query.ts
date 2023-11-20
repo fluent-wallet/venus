@@ -1,5 +1,6 @@
 import { Q, type Query } from '@nozbe/watermelondb';
-import { map } from 'rxjs';
+import { map, type Observable } from 'rxjs';
+import { memoize } from 'lodash-es';
 import { type Vault } from '.';
 import VaultType from './VaultType';
 import database from '../..';
@@ -24,7 +25,6 @@ export const checkIsFirstVault = async () => {
 
 export const getVaultTypeCount = (type: Vault['type']) => database.get(TableName.Vault).query(Q.where('type', type)).fetchCount();
 
-
 export const checkNoSameVault = async (data: string) => {
   return (
     (await database
@@ -36,3 +36,5 @@ export const checkNoSameVault = async (data: string) => {
 
 export const observeBSIMCreated = () =>
   (database.get(TableName.Vault).query(Q.where('type', 'BSIM')) as unknown as Query<Vault>).observeCount().pipe(map((count) => count > 0));
+
+export const observeVaultById = memoize((vaultId: string) => database.get(TableName.Vault).findAndObserve(vaultId) as Observable<Vault>);
