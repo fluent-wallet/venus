@@ -4,6 +4,10 @@ const { BSIMSDK } = NativeModules;
 /**
  * all coin types for BSIM support
  */
+export enum CFXCoinTypes {
+  NAME = 'CONFLUX',
+}
+
 export enum CoinTypes {
   CONFLUX = 'CONFLUX',
 
@@ -67,13 +71,12 @@ export interface BSIMPubKey {
   index: number;
 }
 
-
 interface BSIMSDKInterface {
   /**
    * Create BSIM SDK instance first then you can call other BSIM methods
    * @param appId string
    */
-  create(): void;
+  create(): Promise<void>;
 
   /**
    * Create new pubkey from BSIM SDK
@@ -86,25 +89,29 @@ interface BSIMSDKInterface {
    * @param msg string - sha3 hash message
    * @param index string
    */
-  signMessage(msg: string, coinType: CoinTypes, index: number): Promise<{code: string, message:string, r:string, s:string}>;
+  signMessage(msg: string, coinType: CoinTypes, index: number): Promise<{ code: string; message: string; r: string; s: string; v: string }>;
 
   /**
    * Get all Pubkey from BSIM SDK
+   * @param cfxOnly boolean - only get cfx pubkey default true
    */
-  getPubkeyList(): Promise<BSIMPubKey[]>;
+  getPubkeyList(cfxOnly: boolean): Promise<BSIMPubKey[]>;
   /**
    * bsim pubkey to eth pubkey
    * @param hexPubkey
    */
   pubkeyToECPubkey(hexPubkey: string): Promise<string>;
 
-  
-
-  closeChannel():void
+  closeChannel(): void;
+  /**
+   * get BSIM card version
+   */
   getBSIMVersion(): Promise<string>;
-  getVersion():Promise<string>;
-  verifyBPIN():Promise<string>;
-  
+  /**
+   * get SDK version
+   */
+  getVersion(): Promise<string>;
+  verifyBPIN(): Promise<string>;
 }
 
 export default BSIMSDK as BSIMSDKInterface;

@@ -17,10 +17,10 @@ const formatBSIMPubkey = (key: string) => {
 export const getBIMList = async () => {
   try {
     if (!hasInit) {
-      BSIMSDK.create('BSIM');
+      await BSIMSDK.create();
       hasInit = true;
     }
-    const list = (await BSIMSDK.getPubkeyList()).filter((item) => item.coinType === CoinTypes.CONFLUX);
+    const list = await BSIMSDK.getPubkeyList(true);
     return list
       .map((item) => ({ hexAddress: computeAddress(addHexPrefix(formatBSIMPubkey(item.key))), index: item.index }))
       .sort((itemA, itemB) => itemA.index - itemB.index);
@@ -31,19 +31,25 @@ export const getBIMList = async () => {
 
 export const createNewBSIMAccount = async () => {
   if (!hasInit) {
-    BSIMSDK.create('BSIM');
+    await BSIMSDK.create();
     hasInit = true;
   }
 
-  const BSIMKey = await BSIMSDK.genNewKey(CoinTypes.CONFLUX);
-  const pubkey = addHexPrefix(formatBSIMPubkey(BSIMKey.key));
+  await BSIMSDK.genNewKey(CoinTypes.CONFLUX);
+
+  const list = await getBIMList();
+
+  const BSIMKey = list.pop();
+  if (!BSIMKey) throw new Error('create new BSIM account failed');
+
+  const pubkey = addHexPrefix(formatBSIMPubkey(BSIMKey.hexAddress));
   const hexAddress = computeAddress(pubkey);
   return { hexAddress, index: BSIMKey.index };
 };
 
 export const createBSIMAccountToIndex = async (targetIndex: number) => {
   if (!hasInit) {
-    BSIMSDK.create('BSIM');
+    await BSIMSDK.create();
     hasInit = true;
   }
   const list = await getBIMList();
@@ -58,7 +64,7 @@ export const createBSIMAccountToIndex = async (targetIndex: number) => {
 
 export const connectBSIM = async () => {
   if (!hasInit) {
-    BSIMSDK.create('BSIM');
+    await BSIMSDK.create();
     hasInit = true;
   }
 

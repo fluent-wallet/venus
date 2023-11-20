@@ -28,6 +28,7 @@ import { RPCResponse, RPCSend, RPCSendFactory } from '@core/utils/send';
 import { iface721, iface777 } from '@core/utils';
 
 import { Wallet } from 'ethers';
+import BSIMSDK, { CoinTypes } from '@core/BSIMSDK';
 
 export const TransactionConfirmStackName = 'TransactionConfirm';
 
@@ -51,6 +52,7 @@ const TransactionConfirm: React.FC<{
       transaction.gasLimit = gas.gasLimit;
       transaction.gasPrice = gas.gasPrice;
 
+
       const nonce = await firstValueFrom(
         RPCSend<RPCResponse<string>>(currentNetwork.endpoint, { method: 'eth_getTransactionCount', params: [address.hex, 'pending'] })
       );
@@ -62,12 +64,23 @@ const TransactionConfirm: React.FC<{
         transaction.data = iface721.encodeFunctionData('transferFrom', [address.hex, tx.to, tx.tokenId]);
       }
 
-      const pk = await address.getPrivateKey();
-      const wallet = new Wallet(pk, new JsonRpcProvider(currentNetwork.endpoint));
+      const vaultType = await address.getVaultType();
 
-      wallet.sendTransaction(transaction).then(() => {
-        navigation.navigate(HomeStackName, { screen: WalletStackName });
-      });
+      if (vaultType === 'BSIM') {
+        const hash = transaction.unsignedHash;
+        const index = (await address.account).index;
+        await BSIMSDK.create();
+        await BSIMSDK.verifyBPIN();
+        const res = await BSIMSDK.signMessage(hash, CoinTypes.CONFLUX, index);
+        // TODO: send transaction
+      } else if (vaultType === 'hierarchical_deterministic' || vaultType === 'private_key') {
+        const pk = await address.getPrivateKey();
+        const wallet = new Wallet(pk, new JsonRpcProvider(currentNetwork.endpoint));
+
+        wallet.sendTransaction(transaction).then(() => {
+          navigation.navigate(HomeStackName, { screen: WalletStackName });
+        });
+      }
     }
   };
 
