@@ -6,7 +6,6 @@ import { useTheme } from '@rneui/themed';
 import { useAccountGroups } from '@core/WalletCore/Plugins/ReactInject';
 import AccountGroupItem from '../AccountGroupItem';
 
-export const AccountSelectStackName = 'AccountSelect';
 
 const AccountSelect: React.FC<{ navigation: NavigationProp<any> }> = () => {
   const { theme } = useTheme();

@@ -5,28 +5,52 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { useTheme } from '@rneui/themed';
 import { useVaults } from '@core/WalletCore/Plugins/ReactInject';
-import Welcome, { WelcomeStackName } from '@pages/Welcome';
-import SetPassword, { SetPasswordStackName } from '@pages/SetPassword';
-import Biometrics, { BiometricsStackName } from '@pages/SetPassword/Biometrics';
-import Wallet, { WalletStackName, getWalletHeaderOptions } from '@pages/Wallet';
+import Welcome from '@pages/Welcome';
+import SetPassword from '@pages/SetPassword';
+import Biometrics from '@pages/SetPassword/Biometrics';
+import Wallet, { getWalletHeaderOptions } from '@pages/Wallet';
 import Settings, { SettingsStackName } from '@pages/Settings';
-import ImportWallet, { ImportWalletStackName } from '@pages/ImportWallet';
-import AccountManage, { AccountManageStackName } from '@pages/Account/AccountManage';
-import AccountSelect, { AccountSelectStackName } from '@pages/Account/AccountSelect';
-import AddAccount, { AddAccountStackName } from '@pages/Account/AddAccount';
-import Login, { LoginStackName } from '@pages/Login';
-import Lock, { LockStackName } from '@pages/Lock';
-import { type StackNavigation, type RootStackList } from './configs';
-import SendReceiver, { SendPageHeaderOptions, ReceiveAddressStackName } from '@pages/Transaction/ReceiveAddress';
-import TransactionConfirm, { TransactionConfirmStackName } from '@pages/Transaction/TransactionConfirm';
-import SendTo, { SendToStackName } from '@pages/Transaction/SendTo';
-import Tokens, { TokensStackName } from '@pages/Transaction/Tokens';
-import BackUp, { BackUpStackName } from '@pages/Account/BackUp';
-import AccountSetting, { AccountSettingStackName } from '@pages/Account/Setting/AccountSetting';
-import GroupSetting, { GroupSettingStackName } from '@pages/Account/Setting/GroupSetting';
-import HDManage, { HDManageStackName } from '@pages/Account/Setting/HDManage';
-import Receive, { ReceiveStackName } from '@pages/Receive';
-import SetAmount, { SetAmountStackName } from '@pages/Receive/SetAmount';
+import ImportWallet from '@pages/ImportWallet';
+import AccountManage from '@pages/Account/AccountManage';
+import AccountSelect from '@pages/Account/AccountSelect';
+import AddAccount from '@pages/Account/AddAccount';
+import Login from '@pages/Login';
+import Lock from '@pages/Lock';
+import {
+  type StackNavigation,
+  type RootStackList,
+  AccountManageStackName,
+  AccountSelectStackName,
+  LockStackName,
+  LoginStackName,
+  AddAccountStackName,
+  ImportWalletStackName,
+  WelcomeStackName,
+  SetPasswordStackName,
+  BiometricsStackName,
+  WalletStackName,
+  HomeStackName,
+  ReceiveAddressStackName,
+  TransactionConfirmStackName,
+  SendToStackName,
+  TokensStackName,
+  BackUpStackName,
+  AccountSettingStackName,
+  GroupSettingStackName,
+  HDManageStackName,
+  ReceiveStackName,
+  SetAmountStackName,
+} from './configs';
+import SendReceiver, { SendPageHeaderOptions } from '@pages/Transaction/ReceiveAddress';
+import TransactionConfirm from '@pages/Transaction/TransactionConfirm';
+import SendTo from '@pages/Transaction/SendTo';
+import Tokens from '@pages/Transaction/Tokens';
+import BackUp from '@pages/Account/BackUp';
+import AccountSetting from '@pages/Account/Setting/AccountSetting';
+import GroupSetting from '@pages/Account/Setting/GroupSetting';
+import HDManage from '@pages/Account/Setting/HDManage';
+import Receive from '@pages/Receive';
+import SetAmount from '@pages/Receive/SetAmount';
 
 import WalletIcon from '@assets/icons/wallet.svg';
 import SettingsIcon from '@assets/icons/settings.svg';
@@ -34,8 +58,6 @@ import ArrowLeft from '@assets/icons/arrow-left.svg';
 
 const Stack = createNativeStackNavigator<RootStackList>();
 const BottomTabStack = createBottomTabNavigator();
-
-export const HomeStackName = 'Home';
 
 const HomeScreenNavigator = () => {
   const { theme } = useTheme();

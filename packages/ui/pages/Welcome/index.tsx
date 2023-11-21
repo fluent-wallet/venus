@@ -5,10 +5,9 @@ import { useTheme, Text } from '@rneui/themed';
 import { statusBarHeight } from '@utils/deviceInfo';
 import Tip from '@assets/icons/tip.svg';
 import WelcomeBg from '@assets/images/welcome-bg.png';
-import { type StackNavigation, BiometricsStackName, ImportWalletStackName } from '@router/configs';
+import { type StackNavigation, ImportWalletStackName ,BiometricsStackName} from '@router/configs';
 import { BaseButton } from '@components/Button';
 
-export const WelcomeStackName = 'Welcome';
 
 const Welcome: React.FC<{ navigation: StackNavigation }> = ({ navigation }) => {
   const { theme } = useTheme();

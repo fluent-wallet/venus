@@ -1,26 +1,28 @@
 import { type NavigationProp } from '@react-navigation/native';
-import { WelcomeStackName } from '@pages/Welcome';
-import { SetPasswordStackName } from '@pages/SetPassword';
-import { BiometricsStackName } from '@pages/SetPassword/Biometrics';
-import { WalletStackName } from '@pages/Wallet';
-import { ImportWalletStackName } from '@pages/ImportWallet';
-import { AccountManageStackName } from '@pages/Account/AccountManage';
-import { AccountSelectStackName } from '@pages/Account/AccountSelect';
-import { AddAccountStackName } from '@pages/Account/AddAccount';
-import { GroupSettingStackName } from '@pages/Account/Setting/GroupSetting';
-import { AccountSettingStackName } from '@pages/Account/Setting/AccountSetting';
-import { HDManageStackName } from '@pages/Account/Setting/HDManage';
-import { LoginStackName } from '@pages/Login';
-import { LockStackName } from '@pages/Lock';
-import { ReceiveAddressStackName } from '@pages/Transaction/ReceiveAddress';
-import { SendToStackName } from '@pages/Transaction/SendTo';
-import { TransactionConfirmStackName } from '@pages/Transaction/TransactionConfirm';
-import { TokensStackName } from '@pages/Transaction/Tokens';
-import { BackUpStackName } from '@pages/Account/BackUp';
-import { ReceiveStackName } from '@pages/Receive';
-import { SetAmountStackName } from '@pages/Receive/SetAmount';
 
-const HomeStackName = 'Home'
+const HomeStackName = 'Home';
+
+const WelcomeStackName = 'Welcome';
+const SetPasswordStackName = 'SetPassword';
+const BiometricsStackName = 'Biometrics';
+const WalletStackName = 'Wallet';
+const ImportWalletStackName = 'ImportSeed';
+const AccountManageStackName = 'AccountManage';
+const AccountSelectStackName = 'AccountSelect';
+const AddAccountStackName = 'AddNewAccount';
+const LoginStackName = 'Login';
+const LockStackName = 'Lock';
+const SendToStackName = 'SendTo';
+const ReceiveAddressStackName = 'ReceiveAddress';
+const TransactionConfirmStackName = 'TransactionConfirm';
+const TokensStackName = 'Tokens';
+const BackUpStackName = 'BackUp';
+const AccountSettingStackName = 'AccountSetting';
+const GroupSettingStackName = 'GroupSetting';
+const ReceiveStackName = 'Receive';
+const SetAmountStackName = 'SetAmount';
+const HDManageStackName = 'HDManage';
+
 export {
   WelcomeStackName,
   SetPasswordStackName,

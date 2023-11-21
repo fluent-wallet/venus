@@ -8,12 +8,9 @@ import plugins from '@core/WalletCore/Plugins';
 import { statusBarHeight } from '@utils/deviceInfo';
 import useInAsync from '@hooks/useInAsync';
 import { BaseButton } from '@components/Button';
-import { HomeStackName, WalletStackName, type RootStackList, type StackNavigation } from '@router/configs';
+import { type RootStackList, type StackNavigation, WalletStackName, HomeStackName, SetPasswordStackName } from '@router/configs';
 import createVaultWithRouterParams from './createVaultWithRouterParams';
-import { SetPasswordStackName } from './index';
 import FaceIdSource from '@assets/images/face-id.png';
-
-export const BiometricsStackName = 'Biometrics';
 
 const getFaceIdLinearColor = (themeMode: 'dark' | 'light') =>
   themeMode === 'dark' ? ['rgba(174, 207, 250, 0.2)', 'rgba(171, 194, 255, 0)'] : ['#AECFFA', 'rgba(171, 194, 255, 0)'];

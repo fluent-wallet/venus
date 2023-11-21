@@ -10,7 +10,7 @@ import { type AccountGroup } from '@core/database/models/AccountGroup';
 import methods from '@core/WalletCore/Methods';
 import plugins from '@core/WalletCore/Plugins';
 import useInAsync from '@hooks/useInAsync';
-import { AccountSettingStackName, GroupSettingStackName, type StackNavigation } from '@router/configs';
+import { type StackNavigation, GroupSettingStackName, AccountSettingStackName } from '@router/configs';
 import AccountAddress from './AccountAddress';
 
 const AccountGroupItem: React.FC<{

@@ -3,11 +3,10 @@ import { SafeAreaView, View } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { useTheme } from '@rneui/themed';
 import plugins from '@core/WalletCore/Plugins';
-import { HomeStackName, StackNavigation, WalletStackName } from '@router/configs';
+import { StackNavigation, HomeStackName, WalletStackName } from '@router/configs';
 import { BaseButton } from '@components/Button';
 import Password from '@components/PasswordInput';
 
-export const LoginStackName = 'Login';
 
 function Login() {
   const { theme } = useTheme();

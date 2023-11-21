@@ -1,15 +1,16 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { View, SafeAreaView, TouchableHighlight, Pressable } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
+import { firstValueFrom } from 'rxjs';
 import { useAtom } from 'jotai';
 import { formatUnits } from 'ethers';
-import { Text, useTheme, Tab, TabView } from '@rneui/themed';
+import { Text, useTheme, Tab, TabView, Skeleton } from '@rneui/themed';
 import { statusBarHeight } from '@utils/deviceInfo';
 import { shortenAddress } from '@core/utils/address';
-import { useCurrentAddressValue } from '@core/WalletCore/Plugins/ReactInject';
-import { AccountSelectStackName, ReceiveAddressStackName, ReceiveStackName, type StackNavigation } from '@router/configs';
+import { useCurrentAddressValue, useCurrentNetwork } from '@core/WalletCore/Plugins/ReactInject';
+import { type StackNavigation, AccountSelectStackName, ReceiveAddressStackName, ReceiveStackName } from '@router/configs';
 import SwitchCurrentNetwork from '@components/SwitchCurrentNetwork';
-import { ERC20tokenListAtom } from '@hooks/useTokenList';
+import { nativeAndERC20tokenListAtom, requestTokenList, writeTokenListAtom } from '@hooks/useTokenList';
 import TokenList from '@components/TokenList';
 import NFTList from '@components/NFTList';
 import CopyAll from '@assets/icons/copy_all.svg';
@@ -19,8 +20,8 @@ import SendIcon from '@assets/icons/send.svg';
 import ReceiveIcon from '@assets/icons/receive.svg';
 import BuyIcon from '@assets/icons/buy.svg';
 import MoreIcon from '@assets/icons/more.svg';
+import { TokenType } from '@hooks/useTransaction';
 
-export const WalletStackName = 'Wallet';
 export const getWalletHeaderOptions = (backgroundColor: string) =>
   ({
     headerLeft: () => (
@@ -54,7 +55,21 @@ const HeaderTitle: React.FC<{ backgroundColor: string }> = ({ backgroundColor }:
 const Wallet: React.FC<{ navigation: StackNavigation }> = ({ navigation }) => {
   const { theme } = useTheme();
   const [tabIndex, setTabIndex] = useState(0);
-  const [tokenList] = useAtom(ERC20tokenListAtom);
+  const [tokenList] = useAtom(nativeAndERC20tokenListAtom);
+  const [_, writeTokenList] = useAtom(writeTokenListAtom);
+  const currentNetwork = useCurrentNetwork();
+  const currentAddress = useCurrentAddressValue();
+  useEffect(() => {
+    if (currentAddress) {
+      firstValueFrom(requestTokenList(currentAddress, [TokenType.NATIVE, TokenType.ERC20, TokenType.ERC721, TokenType.ERC1155].join(','))).then((res) => {
+        writeTokenList(res);
+      });
+    }
+  }, [currentAddress, currentNetwork?.chainId]);
+
+  const value = tokenList
+    ? tokenList.reduce((acc, cur) => (cur.priceInUSDT ? acc + Number(cur.priceInUSDT) * Number(formatUnits(cur.amount, cur.decimals)) : acc), 0).toFixed(2)
+    : null;
 
   return (
     <SafeAreaView className="flex-1 flex flex-col justify-start" style={{ backgroundColor: theme.colors.normalBackground, paddingTop: statusBarHeight + 48 }}>
@@ -63,8 +78,11 @@ const Wallet: React.FC<{ navigation: StackNavigation }> = ({ navigation }) => {
           ePay Wallet
         </Text>
 
-        <Text className="mb-[16px] leading-tight text-[48px] text-center font-bold" style={{ color: theme.colors.textPrimary }}>
-          ${tokenList.reduce((acc, cur) => (cur.priceInUSDT ? acc + Number(cur.priceInUSDT) * Number(formatUnits(cur.amount, cur.decimals)) : acc), 0)}
+        <Text
+          className="mb-[16px] leading-tight text-[48px] text-center font-bold"
+          style={{ color: Number(value) === 0 ? theme.colors.textSecondary : theme.colors.textPrimary }}
+        >
+          {value === null ? <Skeleton width={100} height={60} /> : `$${value}`}
         </Text>
 
         <View className="flex flex-row">

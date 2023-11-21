@@ -16,7 +16,6 @@ import { BaseButton } from '@components/Button';
 import CheckIcon from '@assets/icons/check.svg';
 import ArrowLeft from '@assets/icons/arrow-left.svg';
 
-export const HDManageStackName = 'HDManage';
 
 const HDManage: React.FC<NativeStackScreenProps<RootStackList, 'HDManage'>> = ({ navigation, route }) => {
   const { theme } = useTheme();

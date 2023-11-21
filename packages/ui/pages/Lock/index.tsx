@@ -3,10 +3,9 @@ import { SafeAreaView, View } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { useTheme, Text } from '@rneui/themed';
 import plugins from '@core/WalletCore/Plugins';
-import { HomeStackName, WalletStackName, type StackNavigation } from '@router/configs';
+import { type StackNavigation, WalletStackName , HomeStackName} from '@router/configs';
 import { BaseButton } from '@components/Button';
 
-export const LockStackName = 'Lock';
 
 function Lock() {
   const { theme } = useTheme();

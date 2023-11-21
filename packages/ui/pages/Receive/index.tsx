@@ -6,13 +6,12 @@ import { Button } from '@rneui/base';
 import { Divider, Text, useTheme } from '@rneui/themed';
 import { useCurrentAddressValue } from '@core/WalletCore/Plugins/ReactInject';
 import { statusBarHeight } from '@utils/deviceInfo';
-import { type RootStackList } from '@router/configs';
-import { SetAmountStackName } from './SetAmount';
+import { type RootStackList , SetAmountStackName} from '@router/configs';
+
 import AvatarIcon from '@assets/icons/avatar.svg';
 import ShareIcon from '@assets/icons/share.svg';
 import SetAmountIcon from '@assets/icons/setAmount.svg';
 
-export const ReceiveStackName = 'Receive';
 
 const Receive: React.FC<NativeStackScreenProps<RootStackList, 'Receive'>> = ({ navigation }) => {
   const { theme } = useTheme();

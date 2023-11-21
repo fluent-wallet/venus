@@ -5,10 +5,8 @@ import { useRoute, RouteProp } from '@react-navigation/native';
 import { useTheme, ListItem } from '@rneui/themed';
 import { useHasBSIMVaultCreated } from '@core/WalletCore/Plugins/ReactInject';
 import useInAsync from '@hooks/useInAsync';
-import { ImportWalletStackName, type RootStackList, type StackNavigation } from '@router/configs';
+import { type RootStackList, type StackNavigation, ImportWalletStackName, AddAccountStackName } from '@router/configs';
 import createVaultWithRouterParams from '@pages/SetPassword/createVaultWithRouterParams';
-
-export const AddAccountStackName = 'AddNewAccount';
 
 const AddAccount: React.FC<{ navigation: StackNavigation }> = ({ navigation }: { navigation: StackNavigation }) => {
   const route = useRoute<RouteProp<RootStackList, typeof AddAccountStackName>>();

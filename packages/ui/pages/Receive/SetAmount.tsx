@@ -7,7 +7,6 @@ import { statusBarHeight } from '@utils/deviceInfo';
 import { BaseButton } from '@components/Button';
 import TokenIconDefault from '@assets/icons/tokenDefault.svg';
 
-export const SetAmountStackName = 'SetAmount';
 
 const SetAmount = () => {
   const { theme } = useTheme();

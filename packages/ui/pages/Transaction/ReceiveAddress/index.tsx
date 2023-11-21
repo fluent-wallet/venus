@@ -10,7 +10,6 @@ import { setTransactionTo } from '@hooks/useTransaction';
 import WarningIcon from '@assets/icons/warning_2.svg';
 import Flip from '@assets/icons/flip.svg';
 
-export const ReceiveAddressStackName = 'ReceiveAddress';
 
 export const SendPageHeaderOptions = ({ title = 'Send To' }: { title?: string }) =>
   ({

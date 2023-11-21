@@ -7,10 +7,9 @@ import { useTheme, Dialog, ListItem } from '@rneui/themed';
 import { clearAccountData } from '@core/database/func';
 import { useAccountGroups } from '@core/WalletCore/Plugins/ReactInject';
 import { statusBarHeight } from '@utils/deviceInfo';
-import { AddAccountStackName, WelcomeStackName, type StackNavigation } from '@router/configs';
+import { type StackNavigation, WelcomeStackName , AddAccountStackName} from '@router/configs';
 import AccountGroupItem from '../AccountGroupItem';
 
-export const AccountManageStackName = 'AccountManage';
 
 const AccountManage: React.FC<{ navigation: StackNavigation }> = ({ navigation }: { navigation: StackNavigation }) => {
   const { theme } = useTheme();

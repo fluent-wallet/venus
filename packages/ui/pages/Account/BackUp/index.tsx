@@ -11,7 +11,6 @@ import { BaseButton } from '@components/Button';
 import SafetyGuidelines from './Components/SafetyGuidelines';
 import Secret from './Components/Secret';
 
-export const BackUpStackName = 'BackUp';
 
 const BackUp: React.FC<NativeStackScreenProps<RootStackList, 'BackUp'>> = ({ navigation, route }) => {
   const { theme } = useTheme();

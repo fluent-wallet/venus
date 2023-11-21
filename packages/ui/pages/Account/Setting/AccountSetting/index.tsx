@@ -8,11 +8,11 @@ import { useTheme, Text, ListItem, Input, Dialog } from '@rneui/themed';
 import VaultType from '@core/database/models/Vault/VaultType';
 import { useAccountFromId, useGroupOfAccount, useVaultOfAccount, useCurrentAddressValueOfAccount } from '@core/WalletCore/Plugins/ReactInject';
 import methods from '@core/WalletCore/Methods';
-import { BackUpStackName, type RootStackList } from '@router/configs';
+import { type RootStackList, BackUpStackName } from '@router/configs';
 import { BaseButton } from '@components/Button';
 import { statusBarHeight } from '@utils/deviceInfo';
 
-export const AccountSettingStackName = 'AccountSetting';
+
 
 const AccountSetting: React.FC<NativeStackScreenProps<RootStackList, 'AccountSetting'>> = ({ navigation, route }) => {
   const { theme } = useTheme();

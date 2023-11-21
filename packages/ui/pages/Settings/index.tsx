@@ -4,8 +4,8 @@ import { type NavigationProp } from '@react-navigation/native';
 import { showMessage } from 'react-native-flash-message';
 import { useTheme, ListItem, Dialog } from '@rneui/themed';
 import { resetDatabase } from '@core/database/func';
-import { WelcomeStackName, AccountManageStackName } from '@router/configs';
 import { statusBarHeight } from '@utils/deviceInfo';
+import { WelcomeStackName , AccountManageStackName} from '@router/configs';
 
 export const SettingsStackName = 'Settings';
 

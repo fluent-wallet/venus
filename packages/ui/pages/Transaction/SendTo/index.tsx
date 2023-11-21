@@ -6,14 +6,13 @@ import { formatUnits } from 'ethers';
 import { shortenAddress } from '@core/utils/address';
 import { Text, useTheme } from '@rneui/themed';
 import { statusBarHeight } from '@utils/deviceInfo';
-import { TransactionConfirmStackName, type StackNavigation, RootStackList } from '@router/configs';
+import { type StackNavigation, RootStackList, TransactionConfirmStackName ,SendToStackName} from '@router/configs';
 import { BaseButton } from '@components/Button';
 import { transactionAtom } from '@hooks/useTransaction';
 import TokenIconDefault from '@assets/icons/tokenDefault.svg';
 import AvatarIcon from '@assets/icons/avatar.svg';
 import CopyAllIcon from '@assets/icons/copy_all.svg';
 
-export const SendToStackName = 'SendTo';
 
 const SendTo: React.FC<{ navigation: StackNavigation; route: RouteProp<RootStackList, typeof SendToStackName> }> = ({ navigation, route }) => {
   const { theme } = useTheme();

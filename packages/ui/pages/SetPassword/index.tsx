@@ -7,11 +7,9 @@ import { statusBarHeight } from '@utils/deviceInfo';
 import Password from '@components/PasswordInput';
 import { BaseButton } from '@components/Button';
 import useInAsync from '@hooks/useInAsync';
-import { WalletStackName, HomeStackName, type RootStackList } from '@router/configs';
+import { type RootStackList, WalletStackName, HomeStackName, SetPasswordStackName } from '@router/configs';
 import createVaultWithRouterParams from './createVaultWithRouterParams';
 import CreatePasswordAlert from './components/Alert';
-
-export const SetPasswordStackName = 'SetPassword';
 
 const SetPassword: React.FC<{ navigation: NavigationProp<RootStackList> }> = (props) => {
   const { navigation } = props;

@@ -10,9 +10,7 @@ import { Wallet } from 'ethers';
 import WalletCore from '@core/WalletCore';
 import { useCurrentAddress, useCurrentNetwork } from '@core/WalletCore/Plugins/ReactInject';
 import { shortenAddress } from '@core/utils/address';
-import { type RootStackList, type StackNavigation } from '@router/configs';
-import { HomeStackName } from '@router/index';
-import { WalletStackName } from '@pages/Wallet';
+import { type RootStackList, type StackNavigation, WalletStackName,HomeStackName,TransactionConfirmStackName} from '@router/configs';
 import { RPCResponse, RPCSend, RPCSendFactory } from '@core/utils/send';
 import { BaseButton } from '@components/Button';
 import { TokenType, transactionAtom } from '@hooks/useTransaction';
@@ -23,7 +21,6 @@ import AvatarIcon from '@assets/icons/avatar.svg';
 import CopyAllIcon from '@assets/icons/copy_all.svg';
 import Warning from '@assets/icons/warning_2.svg';
 
-export const TransactionConfirmStackName = 'TransactionConfirm';
 
 const TransactionConfirm: React.FC<{
   navigation: StackNavigation;

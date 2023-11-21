@@ -8,11 +8,9 @@ import { Button, Text, useTheme } from '@rneui/themed';
 import plugins from '@core/WalletCore/Plugins';
 import { checkNoSameVault } from '@core/database/models/Vault/query';
 import { stripHexPrefix } from '@core/utils/base';
-import { StackNavigation, BiometricsStackName, RootStackList, AccountManageStackName } from '@router/configs';
+import { StackNavigation, RootStackList, AccountManageStackName, BiometricsStackName, ImportWalletStackName } from '@router/configs';
 import createVaultWithRouterParams from '@pages/SetPassword/createVaultWithRouterParams';
 import useInAsync from '@hooks/useInAsync';
-
-export const ImportWalletStackName = 'ImportSeed';
 
 const ImportWallet = () => {
   const { theme } = useTheme();
