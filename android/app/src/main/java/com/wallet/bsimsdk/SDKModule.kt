@@ -15,6 +15,7 @@ import com.facebook.react.bridge.ReactMethod
 import com.facebook.react.bridge.WritableNativeArray
 import com.facebook.react.bridge.WritableNativeMap
 import com.facebook.common.logging.FLog;
+
 //for bsim
 
 class SDKModule(private val reactContext: ReactApplicationContext) :
@@ -34,6 +35,7 @@ class SDKModule(private val reactContext: ReactApplicationContext) :
 
     @ReactMethod
     fun create(promise: Promise) {
+        FLog.setMinimumLoggingLevel(FLog.DEBUG)
         if (BSIMSDKInstance == null) {
             BSIMSDKInstance = Sdk(reactContext.applicationContext, object : SdkCallBack() {
                 override fun success() {
@@ -140,7 +142,7 @@ class SDKModule(private val reactContext: ReactApplicationContext) :
                     promise.resolve(result)
 
                 } else {
-                    promise.reject(BSIM_ERRPR,"signature data from hex error")
+                    promise.reject(BSIM_ERRPR, "signature data from hex error")
                 }
 
             } else {

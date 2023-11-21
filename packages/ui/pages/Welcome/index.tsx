@@ -10,7 +10,6 @@ import { type StackNavigation, ImportWalletStackName, BiometricsStackName } from
 
 const Welcome: React.FC<{ navigation: StackNavigation }> = ({ navigation }) => {
   const { theme } = useTheme();
-
   return (
     <LinearGradient colors={theme.colors.linearGradientBackground} className="flex-1">
       <SafeAreaView className="flex-1 flex flex-col justify-start pt-[8px]">

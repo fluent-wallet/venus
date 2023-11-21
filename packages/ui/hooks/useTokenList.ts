@@ -43,11 +43,14 @@ interface TokenDetail {
   transferType: string;
 }
 
-export const requestTokenList = (hexAddress: string, tokenType: TokenType | string = TokenType.ERC20) =>
-  scanOpenAPISend<TokenListResponse>(`/account/tokens?account=${hexAddress}&tokenType=${tokenType}`).pipe(
+export const requestTokenList = (chainId: string, hexAddress: string, tokenType: TokenType | string = TokenType.ERC20) =>
+  scanOpenAPISend<TokenListResponse>(chainId, `/account/tokens?account=${hexAddress}&tokenType=${tokenType}`).pipe(
     map((res) => (res.status === '1' ? res.result.list : [])),
     map((list) =>
       list.sort((a, b) => {
+        if (a.type === TokenType.NATIVE) return -1;
+        if (b.type === TokenType.NATIVE) return 1;
+
         if (a.priceInUSDT && b.priceInUSDT) {
           return Number(formatUnits(a.amount, a.decimals)) * Number(a.priceInUSDT) < Number(formatUnits(b.amount, b.decimals)) * Number(b.priceInUSDT) ? 1 : -1;
         } else if (a.priceInUSDT) {

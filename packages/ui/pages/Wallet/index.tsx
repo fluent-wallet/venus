@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { View, SafeAreaView, TouchableHighlight, Pressable } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-import { firstValueFrom } from 'rxjs';
+import { firstValueFrom, delay, repeat } from 'rxjs';
 import { useAtom } from 'jotai';
 import { formatUnits } from 'ethers';
 import { Text, useTheme, Tab, TabView, Skeleton } from '@rneui/themed';
@@ -60,12 +60,20 @@ const Wallet: React.FC<{ navigation: StackNavigation }> = ({ navigation }) => {
   const currentNetwork = useCurrentNetwork();
   const currentAddress = useCurrentAddressValue();
   useEffect(() => {
-    if (currentAddress) {
-      firstValueFrom(requestTokenList(currentAddress, [TokenType.NATIVE, TokenType.ERC20, TokenType.ERC721, TokenType.ERC1155].join(','))).then((res) => {
+    if (currentAddress && currentNetwork?.chainId) {
+      // start with a random interval of one to five seconds. then repeat every five seconds.
+      const observable = requestTokenList(
+        currentNetwork?.chainId,
+        currentAddress,
+        [TokenType.NATIVE, TokenType.ERC20, TokenType.ERC721, TokenType.ERC1155].join(',')
+      ).pipe(delay(Math.floor(Math.random() * (5 - 1 + 1) + 1) * 1000), repeat({ delay: 5 * 1000 }));
+
+      const subscribe = observable.subscribe((res) => {
         writeTokenList(res);
       });
+      return subscribe.unsubscribe;
     }
-  }, [currentAddress, currentNetwork?.chainId]);
+  }, [currentAddress, currentNetwork?.chainId, writeTokenList]);
 
   const value = tokenList
     ? tokenList.reduce((acc, cur) => (cur.priceInUSDT ? acc + Number(cur.priceInUSDT) * Number(formatUnits(cur.amount, cur.decimals)) : acc), 0).toFixed(2)

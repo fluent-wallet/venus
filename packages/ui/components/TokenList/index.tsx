@@ -1,8 +1,6 @@
-import { useEffect } from 'react';
 import { FlatList } from 'react-native';
-import { firstValueFrom } from 'rxjs';
 import { useAtom } from 'jotai';
-import { useCurrentAddress } from '@core/WalletCore/Plugins/ReactInject';
+import { useCurrentAddress, useCurrentNetwork } from '@core/WalletCore/Plugins/ReactInject';
 import { nativeAndERC20tokenListAtom, AccountTokenListItem, requestTokenList } from '@hooks/useTokenList';
 import { TokenType } from '@hooks/useTransaction';
 import TokenIconDefault from '@assets/icons/tokenDefault.svg';
@@ -10,15 +8,7 @@ import TokenIconDefault from '@assets/icons/tokenDefault.svg';
 import TokenItem from './TokenItem';
 
 const TokenList: React.FC<{ onPress?: (v: AccountTokenListItem) => void }> = ({ onPress }) => {
-  const [tokenList, setTokenList] = useAtom(nativeAndERC20tokenListAtom);
-  const currentAddress = useCurrentAddress();
-
-  useEffect(() => {
-    if (!currentAddress) return;
-    firstValueFrom(requestTokenList(currentAddress.hex, TokenType.ERC20)).then((list) => {
-      setTokenList(list);
-    });
-  }, [setTokenList, currentAddress]);
+  const [tokenList] = useAtom(nativeAndERC20tokenListAtom);
 
   return tokenList === null ? (
     <TokenItem placeholder={true} />

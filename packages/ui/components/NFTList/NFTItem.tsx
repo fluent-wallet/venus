@@ -7,8 +7,9 @@ import { AccountTokenListItem } from '@hooks/useTokenList';
 import { TokenType } from '@hooks/useTransaction';
 import { scanOpenAPISend } from '@core/utils/send';
 import TokenIconDefault from '@assets/icons/tokenDefault.svg';
+import { useCurrentNetwork } from '@core/WalletCore/Plugins/ReactInject';
 
-const pageSize = 20;
+const pageSize = 24;
 
 export interface NFTItemDetail {
   amount: string;
@@ -22,6 +23,7 @@ export interface NFTItemDetail {
 }
 
 export const NFTItem: React.FC<{
+  loadMore: boolean;
   nftInfo: AccountTokenListItem;
   ownerAddress: string;
   onPress?: (item: AccountTokenListItem & NFTItemDetail & { contractName: string; nftName: string }) => void;
@@ -30,11 +32,13 @@ export const NFTItem: React.FC<{
   const [isExpanded, setIsExpanded] = useState(false);
   const [page, setPage] = useState({ page: 0, total: 0 });
   const [list, setList] = useState<NFTItemDetail[]>([]);
-
+  const currentNetwork = useCurrentNetwork();
+  // TODO loadMore
   useEffect(() => {
-    if (isExpanded) {
+    if (isExpanded && currentNetwork?.chainId) {
       firstValueFrom(
         scanOpenAPISend<{ message: string; result: { list: NFTItemDetail[]; next: number; total: number }; status: string }>(
+          currentNetwork?.chainId,
           `/nft/tokens?contract=${nftInfo.contract}&owner=${ownerAddress}&sort=ASC&sortField=latest_update_time&cursor=0&skip=${page.page}&limit=${pageSize}&withBrief=true&withMetadata=false&suppressMetadataError=false`
         )
       ).then((res) => {
@@ -53,7 +57,7 @@ export const NFTItem: React.FC<{
         }
       });
     }
-  }, [isExpanded, nftInfo.contract, ownerAddress, page.page]);
+  }, [isExpanded, nftInfo.contract, ownerAddress, page.page, currentNetwork?.chainId]);
 
   return (
     <View className="flex flex-1 w-full">
