@@ -16,7 +16,6 @@ import { BaseButton } from '@components/Button';
 import CheckIcon from '@assets/icons/check.svg';
 import ArrowLeft from '@assets/icons/arrow-left.svg';
 
-
 const HDManage: React.FC<NativeStackScreenProps<RootStackList, 'HDManage'>> = ({ navigation, route }) => {
   const { theme } = useTheme();
   const headerHeight = useHeaderHeight();
@@ -29,10 +28,12 @@ const HDManage: React.FC<NativeStackScreenProps<RootStackList, 'HDManage'>> = ({
   const currentHdPath = useCurrentHdPath();
 
   const [pageIndex, setPageIndex] = useState(0);
-  const [inCalc, setInCalc] = useState(false);
+  const [mnemonic, setMnemonic] = useState('');
+  const [inCalc, setInCalc] = useState(true);
   const [inNext, setInNext] = useState(false);
   const [pageAccounts, setPageAccounts] = useState<Array<{ hexAddress: string; index: number }>>([]);
   const [chooseAccounts, setChooseAccounts] = useState<Array<{ index: number }>>([]);
+
   useEffect(() => {
     const initChooseAccounts = async () => {
       setChooseAccounts(
@@ -48,6 +49,10 @@ const HDManage: React.FC<NativeStackScreenProps<RootStackList, 'HDManage'>> = ({
       if (!currentHdPath?.value) return;
       setInCalc(true);
       await new Promise((resolve) => setTimeout(resolve, 10));
+      if (vault.type === VaultType.HierarchicalDeterministic && !mnemonic) {
+        setMnemonic(await methods.getMnemonicOfVault(vault));
+        return;
+      }
 
       let accountsList: Awaited<ReturnType<typeof plugins.BSIM.getBIMList>> = [];
       if (vault.type === 'BSIM') {
@@ -70,7 +75,7 @@ const HDManage: React.FC<NativeStackScreenProps<RootStackList, 'HDManage'>> = ({
             }
             throw new Error('????');
           } else {
-            return getNthAccountOfHDKey({ mnemonic: await methods.getMnemonicOfVault(vault), hdPath: currentHdPath.value, nth: pageIndex * 5 + index });
+            return getNthAccountOfHDKey({ mnemonic, hdPath: currentHdPath.value, nth: pageIndex * 5 + index });
           }
         })
       );
@@ -86,7 +91,7 @@ const HDManage: React.FC<NativeStackScreenProps<RootStackList, 'HDManage'>> = ({
 
     calcAccounts();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [pageIndex]);
+  }, [pageIndex, mnemonic, currentHdPath?.value]);
 
   const handleClickNext = async () => {
     setInNext(true);

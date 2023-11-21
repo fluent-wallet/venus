@@ -9,7 +9,6 @@ import { useTheme, Text, ListItem, Input, Dialog } from '@rneui/themed';
 import VaultType from '@core/database/models/Vault/VaultType';
 import { useAccountGroupFromId, useAccountsOfGroup, useVaultOfGroup } from '@core/WalletCore/Plugins/ReactInject';
 import methods from '@core/WalletCore/Methods';
-import plugins from '@core/WalletCore/Plugins';
 import {  type RootStackList, BackUpStackName, HDManageStackName } from '@router/configs';
 import { BaseButton } from '@components/Button';
 import AccountAddress from '@pages/Account/AccountAddress';
@@ -84,7 +83,6 @@ const GroupSetting: React.FC<NativeStackScreenProps<RootStackList, 'GroupSetting
           title="Manage HD Wallets"
           onPress={async () => {
             try {
-              await plugins.Authentication.getPassword();
               navigation.navigate(HDManageStackName, { accountGroupId: accountGroup.id });
             } catch (err) {
               console.error('Your reject biometrics.');
