@@ -1,4 +1,4 @@
-import { type Plugin } from '../Plugin';
+import { type Plugin } from '../../Plugins';
 
 class RPCPlugin implements Plugin {
   public name = 'RPC';

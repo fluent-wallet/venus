@@ -7,19 +7,18 @@ import database from '../../database';
 export class NetworkMethod {
   createNetwork = createNetwork;
 
-  async switchToNetwork(targetNetworkOrIdOrChainIdorNetId: Network | string | number) {
+  async switchToNetwork(targetNetworkOrIdOrChainIdOrNetId: Network | string | number) {
     let targetNetwork: Network | undefined;
-    if (typeof targetNetworkOrIdOrChainIdorNetId === 'string') {
-      targetNetwork = await queryNetworkById(targetNetworkOrIdOrChainIdorNetId);
-      if (!targetNetwork) targetNetwork = await queryNetworkByChainId(targetNetworkOrIdOrChainIdorNetId);
-    } else if (typeof targetNetworkOrIdOrChainIdorNetId === 'number') {
-      targetNetwork = await queryNetworkByNetId(targetNetworkOrIdOrChainIdorNetId);
+    if (typeof targetNetworkOrIdOrChainIdOrNetId === 'string') {
+      targetNetwork = await queryNetworkById(targetNetworkOrIdOrChainIdOrNetId);
+      if (!targetNetwork) targetNetwork = await queryNetworkByChainId(targetNetworkOrIdOrChainIdOrNetId);
+    } else if (typeof targetNetworkOrIdOrChainIdOrNetId === 'number') {
+      targetNetwork = await queryNetworkByNetId(targetNetworkOrIdOrChainIdOrNetId);
     } else {
-      targetNetwork = targetNetworkOrIdOrChainIdorNetId;
+      targetNetwork = targetNetworkOrIdOrChainIdOrNetId;
     }
-
+    
     if (!targetNetwork) throw new Error('Network not found.');
-
     return database.write(async () => {
       if (targetNetwork!.selected) return;
       const selectedNetwork = await querySelectedNetwork();
@@ -34,7 +33,7 @@ export class NetworkMethod {
             _network.selected = true;
           })
         );
-      return database.batch(...updates);
+      return await database.batch(...updates);
     });
   }
 }

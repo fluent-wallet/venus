@@ -1,4 +1,4 @@
-import { type Plugin } from '../Plugin';
+import { type Plugin } from '../../Plugins';
 
 class ProviderPlugin implements Plugin {
   public name = 'Provider';

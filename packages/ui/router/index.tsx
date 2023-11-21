@@ -96,6 +96,7 @@ const StackNavigator = () => {
   const vaults = useVaults();
 
   const hasVault = vaults?.length && vaults.length > 0;
+
   return (
     <Stack.Navigator
       initialRouteName={hasVault ? HomeStackName : WelcomeStackName}

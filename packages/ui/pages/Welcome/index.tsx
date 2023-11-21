@@ -3,11 +3,10 @@ import LinearGradient from 'react-native-linear-gradient';
 import { View, Image, SafeAreaView } from 'react-native';
 import { useTheme, Text } from '@rneui/themed';
 import { statusBarHeight } from '@utils/deviceInfo';
+import { BaseButton } from '@components/Button';
 import Tip from '@assets/icons/tip.svg';
 import WelcomeBg from '@assets/images/welcome-bg.png';
-import { type StackNavigation, ImportWalletStackName ,BiometricsStackName} from '@router/configs';
-import { BaseButton } from '@components/Button';
-
+import { type StackNavigation, ImportWalletStackName, BiometricsStackName } from '@router/configs';
 
 const Welcome: React.FC<{ navigation: StackNavigation }> = ({ navigation }) => {
   const { theme } = useTheme();

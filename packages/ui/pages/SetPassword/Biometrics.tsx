@@ -8,7 +8,7 @@ import plugins from '@core/WalletCore/Plugins';
 import { statusBarHeight } from '@utils/deviceInfo';
 import useInAsync from '@hooks/useInAsync';
 import { BaseButton } from '@components/Button';
-import { type RootStackList, type StackNavigation, WalletStackName, HomeStackName, SetPasswordStackName } from '@router/configs';
+import { type RootStackList, type StackNavigation, WalletStackName, BiometricsStackName, HomeStackName, SetPasswordStackName } from '@router/configs';
 import createVaultWithRouterParams from './createVaultWithRouterParams';
 import FaceIdSource from '@assets/images/face-id.png';
 
