@@ -34,7 +34,7 @@ export class GetDecryptedVaultDataMethod {
     const accountGroup = await account.accountGroup;
     const vault = await accountGroup.vault;
     if (vault.type === VaultType.PrivateKey) {
-      return this.getMnemonicOfVault(vault);
+      return this.getPrivateKeyOfVault(vault);
     } else if (vault.type === VaultType.HierarchicalDeterministic) {
       const [mnemonic, hdPath] = await Promise.all([this.getMnemonicOfVault(vault), network.hdPath]);
       const { privateKey } = await getNthAccountOfHDKey({

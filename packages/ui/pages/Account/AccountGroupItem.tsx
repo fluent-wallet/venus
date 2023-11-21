@@ -128,7 +128,7 @@ const AccountGroupItem: React.FC<{
           </ListItem.Accordion>
         )}
 
-        {!vault.isGroup && accounts?.[0] && <AccountAddress account={accounts?.[0]} showSelected />}
+        {!vault.isGroup && accounts?.[0] && <AccountAddress account={accounts[0]} showSelected />}
       </View>
     </TouchableHighlight>
   );

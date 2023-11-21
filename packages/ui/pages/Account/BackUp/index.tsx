@@ -11,7 +11,6 @@ import { BaseButton } from '@components/Button';
 import SafetyGuidelines from './Components/SafetyGuidelines';
 import Secret from './Components/Secret';
 
-
 const BackUp: React.FC<NativeStackScreenProps<RootStackList, 'BackUp'>> = ({ navigation, route }) => {
   const { theme } = useTheme();
   const { accountGroupId, accountIndex } = route.params;
@@ -37,9 +36,13 @@ const BackUp: React.FC<NativeStackScreenProps<RootStackList, 'BackUp'>> = ({ nav
   }, [backupType]);
 
   const handleGetSecretData = useCallback(async () => {
-    if (!targetAddress) return '';
-    return methods.getPrivateKeyOfAddress(targetAddress.id);
-
+    if (!targetAddress) {
+      if (vault.type === VaultType.HierarchicalDeterministic) {
+        return methods.getMnemonicOfVault(vault);
+      }
+    } else {
+      return methods.getPrivateKeyOfAddress(targetAddress);
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [targetAddress?.id]);
 

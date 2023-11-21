@@ -4,7 +4,7 @@ import { NavigationContainer, useNavigation } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { useTheme } from '@rneui/themed';
-import { useVaults } from '@core/WalletCore/Plugins/ReactInject';
+import { useHasVault } from '@core/WalletCore/Plugins/ReactInject';
 import Welcome from '@pages/Welcome';
 import SetPassword from '@pages/SetPassword';
 import Biometrics from '@pages/SetPassword/Biometrics';
@@ -93,9 +93,7 @@ const HomeScreenNavigator = () => {
 const StackNavigator = () => {
   const navigation = useNavigation<StackNavigation>();
   const { theme } = useTheme();
-  const vaults = useVaults();
-
-  const hasVault = vaults?.length && vaults.length > 0;
+  const hasVault = useHasVault();
 
   return (
     <Stack.Navigator

@@ -87,7 +87,9 @@ export class CryptoToolPluginClass implements CryptoToolPlugin {
   public decrypt = async <T = unknown>(encryptedDataString: string): Promise<T> => {
     const encryptedData = JSON.parse(encryptedDataString) as EncryptedData;
     const key = await this.generateKey(encryptedData.salt);
+    console.log('key', key);
     const data = await this.decryptWithKey(encryptedData, key);
+    console.log('data', data);
     return JSON.parse(data);
   };
 }
