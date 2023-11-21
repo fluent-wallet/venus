@@ -41,6 +41,7 @@ const SetPassword: React.FC<{ navigation: NavigationProp<RootStackList> }> = (pr
       await createVault(route.params);
       setAlert({ show: true, type: 'success', message: 'You’ve successfully protected wallet. Remember to keep your Password, it’s your responsibility!' });
     } catch (e) {
+      console.log('handleCreatePassword error: ', e);
       setAlert({ show: false, type: 'error', message: `${e}` });
     }
   };

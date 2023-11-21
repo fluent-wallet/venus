@@ -1,15 +1,12 @@
-import { Button, Icon } from '@rneui/base';
-import { ListItem, Text, useTheme } from '@rneui/themed';
 import { useEffect, useState } from 'react';
 import { Image, Pressable, View } from 'react-native';
-import TokenIconDefault from '@assets/icons/tokenDefault.svg';
-import { useNavigation } from '@react-navigation/native';
-import { SendToStackName, StackNavigation } from '@router/configs';
-import { AccountTokenListItem } from '@hooks/useTokenList';
 import { firstValueFrom } from 'rxjs';
-import { Skeleton } from '@rneui/themed';
-import { scanOpenAPISend } from '@core/utils/send';
+import { Button, Icon } from '@rneui/base';
+import { ListItem, Text, useTheme, Skeleton } from '@rneui/themed';
+import { AccountTokenListItem } from '@hooks/useTokenList';
 import { TokenType } from '@hooks/useTransaction';
+import { scanOpenAPISend } from '@core/utils/send';
+import TokenIconDefault from '@assets/icons/tokenDefault.svg';
 
 const pageSize = 20;
 

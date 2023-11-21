@@ -19,6 +19,8 @@ import { TokensStackName } from '@pages/Transaction/Tokens';
 import { BackUpStackName } from '@pages/Account/BackUp';
 import { ReceiveStackName } from '@pages/Receive';
 import { SetAmountStackName } from '@pages/Receive/SetAmount';
+
+const HomeStackName = 'Home'
 export {
   WelcomeStackName,
   SetPasswordStackName,
@@ -40,9 +42,8 @@ export {
   ReceiveStackName,
   SetAmountStackName,
   HDManageStackName,
+  HomeStackName,
 };
-
-export const HomeStackName = 'Home';
 
 export type RootStackList = {
   [WelcomeStackName]: undefined;

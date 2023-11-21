@@ -1,17 +1,14 @@
 import { useEffect } from 'react';
-import { FlatList, ScrollView } from 'react-native';
-import { firstValueFrom, map, switchMap } from 'rxjs';
-import { Address } from '@core/DB/models/Address';
-import { querySelectedAddress } from '@core/DB/models/Address/service';
-import { AccountTokenListItem, ERC721And1155TokenListAtom, requestTokenList } from '@hooks/useTokenList';
-import { TokenType } from '@hooks/useTransaction';
-import { Database } from '@nozbe/watermelondb';
-import { withDatabase, withObservables } from '@nozbe/watermelondb/react';
+import { ScrollView } from 'react-native';
+import { firstValueFrom, map, switchMap, of } from 'rxjs';
 import { useAtom } from 'jotai';
-import { NFTItemDetail, NFTItem } from './NFTItem';
+import { useCurrentAddress } from '@core/WalletCore/Plugins/ReactInject';
 import { scanAPISend } from '@core/utils/send';
 import { decode } from '@core/utils/address';
 import { addHexPrefix } from '@core/utils/base';
+import { AccountTokenListItem, ERC721And1155TokenListAtom, requestTokenList } from '@hooks/useTokenList';
+import { TokenType } from '@hooks/useTransaction';
+import { NFTItemDetail, NFTItem } from './NFTItem';
 
 interface TokenDetail {
   address: string;
@@ -31,42 +28,45 @@ interface TokenDetail {
   transferType: string;
 }
 
-const NFTList: React.FC<{ address: Address; onPress?: (v: AccountTokenListItem & NFTItemDetail & { contractName: string; nftName: string }) => void }> = ({
-  address,
-  onPress,
-}) => {
+const NFTList: React.FC<{ onPress?: (v: AccountTokenListItem & NFTItemDetail & { contractName: string; nftName: string }) => void }> = ({ onPress }) => {
+  const currentAddress = useCurrentAddress();
   const [tokenList, setTokenList] = useAtom(ERC721And1155TokenListAtom);
 
   useEffect(() => {
+    if (!currentAddress) return;
     firstValueFrom(
-      requestTokenList(address.hex, [TokenType.ERC721, TokenType.ERC1155].join(',')).pipe(
-        switchMap((tokenList) =>
-          scanAPISend<{ code: number; message: string; total: number; result: { list: TokenDetail[] } }>(
-            `v1/token?${tokenList.reduce((acc, cur) => (acc ? `${acc}&addressArray=${cur.contract}` : `addressArray=${cur.contract}`), '')}`
-          ).pipe(
-            map((res) => {
-              // request NFT contract icon
-              const hash = tokenList.reduce((acc, cur) => {
-                acc[cur.contract] = cur;
-                return acc;
-              }, {} as Record<string, AccountTokenListItem>);
-              res.result.list.forEach((item) => {
-                const hex = decode(item.address);
-                const address = addHexPrefix(hex.hexAddress.toString('hex'));
-                if (hash[address]) {
-                  hash[address].iconUrl = item.iconUrl;
-                }
-              });
+      requestTokenList(currentAddress.hex, [TokenType.ERC721, TokenType.ERC1155].join(',')).pipe(
+        switchMap((tokenList) => {
+          if (tokenList.length > 0) {
+            return scanAPISend<{ code: number; message: string; total: number; result: { list: TokenDetail[] } }>(
+              `v1/token?${tokenList.reduce((acc, cur) => (acc ? `${acc}&addressArray=${cur.contract}` : `addressArray=${cur.contract}`), '')}`
+            ).pipe(
+              map((res) => {
+                // request NFT contract icon
+                const hash = tokenList.reduce((acc, cur) => {
+                  acc[cur.contract] = cur;
+                  return acc;
+                }, {} as Record<string, AccountTokenListItem>);
+                res.result.list.forEach((item) => {
+                  const hex = decode(item.address);
+                  const address = addHexPrefix(hex.hexAddress.toString('hex'));
+                  if (hash[address]) {
+                    hash[address].iconUrl = item.iconUrl;
+                  }
+                });
 
-              return tokenList;
-            })
-          )
-        )
+                return tokenList;
+              })
+            );
+          } else {
+            return of([]);
+          }
+        })
       )
     ).then((list) => {
       setTokenList(list);
     });
-  }, [setTokenList, address]);
+  }, [setTokenList, currentAddress]);
 
   const handleSelectNFT = (token: NFTItemDetail & AccountTokenListItem & { contractName: string; nftName: string }) => {
     if (onPress) {
@@ -77,17 +77,10 @@ const NFTList: React.FC<{ address: Address; onPress?: (v: AccountTokenListItem &
   return (
     <ScrollView>
       {tokenList.map((item) => (
-        <NFTItem key={item.contract} nftInfo={item} ownerAddress={address.hex} onPress={handleSelectNFT} />
+        <NFTItem key={item.contract} nftInfo={item} ownerAddress={currentAddress?.hex ?? ''} onPress={handleSelectNFT} />
       ))}
     </ScrollView>
   );
 };
 
-export default withDatabase(
-  withObservables([], ({ database }: { database: Database }) => {
-    const address = querySelectedAddress(database).observe();
-    return {
-      address: address.pipe(map((address) => address[0])),
-    };
-  })(NFTList)
-);
+export default NFTList;

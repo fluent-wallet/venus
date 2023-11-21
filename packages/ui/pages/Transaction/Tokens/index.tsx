@@ -3,7 +3,7 @@ import { Pressable, SafeAreaView, View } from 'react-native';
 import { RouteProp } from '@react-navigation/native';
 import { useAtom } from 'jotai';
 import { useTheme, Tab, TabView, Text, ListItem, Icon } from '@rneui/themed';
-import { RootStackList, SendToStackName, StackNavigation } from '@router/configs';
+import { type RootStackList, type StackNavigation } from '@router/configs';
 import { statusBarHeight } from '@utils/deviceInfo';
 import { AccountTokenListItem } from '@hooks/useTokenList';
 import { TokenType, transactionAtom } from '@hooks/useTransaction';
@@ -12,6 +12,7 @@ import TokenList from '@components/TokenList';
 import { NFTItemDetail } from '@components/NFTList/NFTItem';
 import { TransactionConfirmStackName } from '../TransactionConfirm';
 import TokenIconDefault from '@assets/icons/tokenDefault.svg';
+import { SendToStackName } from '../SendTo';
 
 export const TokensStackName = 'Tokens';
 

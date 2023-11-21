@@ -5,7 +5,8 @@ import { type NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useHeaderHeight } from '@react-navigation/elements';
 import { useTheme, Text, Card } from '@rneui/themed';
 import VaultType from '@core/database/models/Vault/VaultType';
-import { useAccountGroupFromId, useAccountsOfGroup, useVaultOfGroup } from '@core/WalletCore/Plugins/ReactInject';
+import database from '@core/database';
+import { useAccountGroupFromId, useAccountsOfGroup, useVaultOfGroup, useCurrentAccount, useCurrentHdPath } from '@core/WalletCore/Plugins/ReactInject';
 import methods from '@core/WalletCore/Methods';
 import plugins from '@core/WalletCore/Plugins';
 import { shortenAddress } from '@core/utils/address';
@@ -25,6 +26,8 @@ const HDManage: React.FC<NativeStackScreenProps<RootStackList, 'HDManage'>> = ({
   const vault = useVaultOfGroup(route.params.accountGroupId);
   const accounts = useAccountsOfGroup(route.params.accountGroupId);
   const visibleAccounts = useMemo(() => accounts.filter((account) => !account.hidden), [accounts]);
+  const currentAccount = useCurrentAccount();
+  const currentHdPath = useCurrentHdPath();
 
   const [pageIndex, setPageIndex] = useState(0);
   const [inCalc, setInCalc] = useState(false);
@@ -43,34 +46,36 @@ const HDManage: React.FC<NativeStackScreenProps<RootStackList, 'HDManage'>> = ({
 
   useEffect(() => {
     const calcAccounts = async () => {
+      if (!currentHdPath?.value) return;
       setInCalc(true);
       await new Promise((resolve) => setTimeout(resolve, 10));
 
-      let accountsList: Awaited<ReturnType<typeof getBIMList>> = [];
+      let accountsList: Awaited<ReturnType<typeof plugins.BSIM.getBIMList>> = [];
       if (vault.type === 'BSIM') {
-        await createBSIMAccountToIndex((pageIndex + 1) * 5);
-        accountsList = await getBIMList();
+        await plugins.BSIM.createBSIMAccountToIndex((pageIndex + 1) * 5);
+        accountsList = await plugins.BSIM.getBIMList();
       }
 
       const newPageAccounts = await Promise.all(
         Array.from({ length: 5 }).map(async (_, index) => {
           const targetAlreadyInAccounts = accounts?.find((account) => account.index === pageIndex * 5 + index);
-          if (targetAlreadyInAccounts) return { hexAddress: (await targetAlreadyInAccounts.address)?.[0]?.hex, index: targetAlreadyInAccounts.index };
-          if (vault.type === 'BSIM') {
+          if (targetAlreadyInAccounts) return { hexAddress: (await targetAlreadyInAccounts.currentNetworkAddress).hex, index: targetAlreadyInAccounts.index };
+          if (vault.type === VaultType.BSIM) {
             const targetAlreadyInList = accountsList?.find((account) => account.index === pageIndex * 5 + index);
             if (targetAlreadyInList) return { hexAddress: targetAlreadyInList.hexAddress, index: targetAlreadyInList.index };
 
             // The code shouldn't have been able to get here.
-            const { hexAddress, index: newIndex } = await createNewBSIMAccount();
+            const { hexAddress, index: newIndex } = await plugins.BSIM.createNewBSIMAccount();
             if (newIndex === pageIndex * 5 + index) {
               return { hexAddress, index: newIndex };
             }
             throw new Error('????');
           } else {
-            return getNthAccountOfHDKey({ mnemonic, hdPath: hdPath.value, nth: pageIndex * 5 + index });
+            return getNthAccountOfHDKey({ mnemonic: await methods.getMnemonicOfVault(vault), hdPath: currentHdPath.value, nth: pageIndex * 5 + index });
           }
         })
       );
+
       setPageAccounts(
         newPageAccounts.map((item) => ({
           hexAddress: item.hexAddress,
@@ -92,12 +97,15 @@ const HDManage: React.FC<NativeStackScreenProps<RootStackList, 'HDManage'>> = ({
     const oldAccountsNeedHidden = accounts.filter((account) => !chooseAccounts.find((_account) => _account.index === account.index));
     const oldAccountsNeedShow = accounts.filter((account) => !!chooseAccounts.find((_account) => _account.index === account.index));
     await database.write(async () => {
-      await database.batch(...oldAccountsNeedHidden.map((account) => account.prepareHide()), ...oldAccountsNeedShow.map((account) => account.prepareShow()));
+      await database.batch(
+        ...oldAccountsNeedHidden.map((account) => methods.prepareChangeAccountHidden({ account, hidden: true })),
+        ...oldAccountsNeedShow.map((account) => methods.prepareChangeAccountHidden({ account, hidden: false }))
+      );
     });
 
     newAccountsInChoose.forEach(async (account) => {
       try {
-        await createAccount({
+        methods.addAccount({
           accountGroup,
           ...account,
         });
@@ -123,7 +131,7 @@ const HDManage: React.FC<NativeStackScreenProps<RootStackList, 'HDManage'>> = ({
         <Card.Divider className="my-[4px]" />
         <View className="flex flex-row justify-between items-center h-[40px]">
           <Text style={{ color: theme.colors.textPrimary }}>Index</Text>
-          <Text style={{ color: theme.colors.textSecondary }}>{hdPath.value}</Text>
+          <Text style={{ color: theme.colors.textSecondary }}>{currentHdPath?.value}</Text>
         </View>
       </View>
       <View className="mt-[16px] relative py-[8px] min-h-[284px] rounded-[8px]" style={{ backgroundColor: theme.colors.surfaceCard }}>
@@ -133,7 +141,7 @@ const HDManage: React.FC<NativeStackScreenProps<RootStackList, 'HDManage'>> = ({
           </View>
         )}
         {pageAccounts.map((account, index) => {
-          const isSelected = !!selectedAccount && selectedAccount.index === account.index;
+          const isSelected = !!currentAccount && currentAccount.index === account.index;
           const isInChoose = !!chooseAccounts?.find((_account) => _account.index === account.index);
           return (
             <Fragment key={account.index}>
@@ -171,7 +179,7 @@ const HDManage: React.FC<NativeStackScreenProps<RootStackList, 'HDManage'>> = ({
                     {shortenAddress(account.hexAddress)}
                   </Text>
                   <Text className="ml-auto text-[16px] leading-tight" style={{ color: theme.colors.textSecondary }}>
-                    {hdPath.value.slice(0, -1)}
+                    {currentHdPath?.value.slice(0, -1)}
                     {account.index}
                   </Text>
                 </View>

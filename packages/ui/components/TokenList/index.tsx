@@ -1,28 +1,25 @@
-import { FlatList, View, Image, Pressable } from 'react-native';
-import { Text, useTheme } from '@rneui/themed';
-import { firstValueFrom, map } from 'rxjs';
-import PriceGainIcon from '@assets/icons/priceGain.svg';
-import PriceDeclineIcon from '@assets/icons/priceDecline.svg';
-import TokenIconDefault from '@assets/icons/tokenDefault.svg';
-import { useAtom } from 'jotai';
-import { ERC20tokenListAtom, AccountTokenListItem, requestTokenList } from '../../hooks/useTokenList';
-import { formatUnits } from 'ethers';
-import { withDatabase, withObservables } from '@nozbe/watermelondb/react';
-import { Database } from '@nozbe/watermelondb';
-import { querySelectedAddress } from '@core/DB/models/Address/service';
-import { Address } from '@core/DB/models/Address';
 import { useEffect } from 'react';
+import { FlatList, View, Image, Pressable } from 'react-native';
+import { firstValueFrom } from 'rxjs';
+import { useAtom } from 'jotai';
+import { formatUnits } from 'ethers';
+import { Text, useTheme } from '@rneui/themed';
+import { useCurrentAddress } from '@core/WalletCore/Plugins/ReactInject';
+import { ERC20tokenListAtom, AccountTokenListItem, requestTokenList } from '@hooks/useTokenList';
 import { TokenType } from '@hooks/useTransaction';
+import TokenIconDefault from '@assets/icons/tokenDefault.svg';
 
-const TokenList: React.FC<{ address: Address; onPress?: (v: AccountTokenListItem) => void }> = ({ address, onPress }) => {
+const TokenList: React.FC<{ onPress?: (v: AccountTokenListItem) => void }> = ({ onPress }) => {
   const { theme } = useTheme();
   const [tokenList, setTokenList] = useAtom(ERC20tokenListAtom);
+  const currentAddress = useCurrentAddress();
   useEffect(() => {
-    firstValueFrom(requestTokenList(address.hex, TokenType.ERC20)).then((list) => {
+    if (!currentAddress) return;
+    firstValueFrom(requestTokenList(currentAddress.hex, TokenType.ERC20)).then((list) => {
       setTokenList(list);
     });
-  }, [setTokenList, address]);
-  
+  }, [setTokenList, currentAddress]);
+
   return (
     <FlatList
       className="flex flex-1 px-6 py-4"
@@ -51,11 +48,4 @@ const TokenList: React.FC<{ address: Address; onPress?: (v: AccountTokenListItem
   );
 };
 
-export default withDatabase(
-  withObservables([], ({ database }: { database: Database }) => {
-    const address = querySelectedAddress(database).observe();
-    return {
-      address: address.pipe(map((address) => address[0])),
-    };
-  })(TokenList)
-);
+export default TokenList;

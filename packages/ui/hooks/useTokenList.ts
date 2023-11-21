@@ -1,8 +1,8 @@
 import { atom } from 'jotai';
 import { map } from 'rxjs';
 import { formatUnits } from 'ethers';
-import { TokenType } from './useTransaction';
 import { scanOpenAPISend } from '@core/utils/send';
+import { TokenType } from './useTransaction';
 
 export interface AccountTokenListItem {
   name: string;
@@ -25,7 +25,7 @@ interface TokenListResponse {
 
 export const requestTokenList = (hexAddress: string, tokenType: TokenType | string = TokenType.ERC20) =>
   scanOpenAPISend<TokenListResponse>(`/account/tokens?account=${hexAddress}&tokenType=${tokenType}`).pipe(
-    map((res) => res.result.list),
+    map((res) => (res.status === '1' ? res.result.list : [])),
     map((list) =>
       list.sort((a, b) => {
         if (a.priceInUSDT && b.priceInUSDT) {

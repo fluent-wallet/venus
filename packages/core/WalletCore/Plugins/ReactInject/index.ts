@@ -13,6 +13,8 @@ export { useAccountGroupFromId } from './data/useAccountGroupFromId';
 export { useAccountFromId } from './data/useAccountFromId';
 export { useGroupOfAccount } from './data/useGroupOfAccount';
 export { useVaultOfAccount } from './data/useVaultOfAccount';
+export { useVaults } from './data/useVaults';
+export { useCurrentHdPath } from './data/useCurrentHdPath';
 
 class ReactInjectPluginClass implements Plugin {
   public name = 'ReactInject';

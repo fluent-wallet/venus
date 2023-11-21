@@ -4,6 +4,10 @@ const { BSIMSDK } = NativeModules;
 /**
  * all coin types for BSIM support
  */
+export enum CFXCoinTypes {
+  NAME = 'CONFLUX',
+}
+
 export enum CoinTypes {
   CONFLUX = 'CONFLUX',
 
@@ -62,18 +66,9 @@ export enum CoinTypes {
 }
 
 export interface BSIMPubKey {
-  coinType: string;
+  coinType: number;
   key: string;
   index: number;
-}
-
-export interface BSIMMessage {
-  // /**
-  //  * The coin type set conflux by default
-  //  */
-  coinType?: string;
-  index: number;
-  msg: string;
 }
 
 interface BSIMSDKInterface {
@@ -81,43 +76,42 @@ interface BSIMSDKInterface {
    * Create BSIM SDK instance first then you can call other BSIM methods
    * @param appId string
    */
-  create(appId: string): void;
+  create(): Promise<void>;
 
   /**
    * Create new pubkey from BSIM SDK
    * @param coinType CoinTypes
    */
-  genNewKey(coinType: CoinTypes): Promise<BSIMPubKey>;
+  genNewKey(coinType: CoinTypes): Promise<string>;
 
   /**
    * Use BSIM SDK to sign message
    * @param msg string - sha3 hash message
    * @param index string
    */
-  signMessage(msg: string, coinType: CoinTypes, index: number): Promise<string>;
+  signMessage(msg: string, coinType: CoinTypes, index: number): Promise<{ code: string; message: string; r: string; s: string; v: string }>;
 
   /**
-   * Use the BSIM SDK to batch sign message
-   * @param messageList string message list json string
-   * @example
-   * batchSignMessage([{ msg, coinType: CoinTypes.CONFLUX, index }])
-   */
-  batchSignMessage(messageList: BSIMMessage[]): Promise<string[]>;
-  /**
    * Get all Pubkey from BSIM SDK
+   * @param cfxOnly boolean - only get cfx pubkey default true
    */
-  getPubkeyList(): Promise<BSIMPubKey[]>;
+  getPubkeyList(cfxOnly: boolean): Promise<BSIMPubKey[]>;
   /**
    * bsim pubkey to eth pubkey
    * @param hexPubkey
    */
   pubkeyToECPubkey(hexPubkey: string): Promise<string>;
 
+  closeChannel(): void;
   /**
-   * bsim pubkey to eth address
-   * @param hexPubkey 
+   * get BSIM card version
    */
-  pubkeyToEthAddr(hexPubkey: string): Promise<string>;
+  getBSIMVersion(): Promise<string>;
+  /**
+   * get SDK version
+   */
+  getVersion(): Promise<string>;
+  verifyBPIN(): Promise<string>;
 }
 
 export default BSIMSDK as BSIMSDKInterface;

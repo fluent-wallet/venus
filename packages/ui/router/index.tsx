@@ -1,9 +1,10 @@
-import React, { type PropsWithChildren } from 'react';
+import React from 'react';
 import { Platform, TouchableOpacity } from 'react-native';
 import { NavigationContainer, useNavigation } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { useTheme } from '@rneui/themed';
+import { useVaults } from '@core/WalletCore/Plugins/ReactInject';
 import Welcome, { WelcomeStackName } from '@pages/Welcome';
 import SetPassword, { SetPasswordStackName } from '@pages/SetPassword';
 import Biometrics, { BiometricsStackName } from '@pages/SetPassword/Biometrics';
@@ -15,9 +16,7 @@ import AccountSelect, { AccountSelectStackName } from '@pages/Account/AccountSel
 import AddAccount, { AddAccountStackName } from '@pages/Account/AddAccount';
 import Login, { LoginStackName } from '@pages/Login';
 import Lock, { LockStackName } from '@pages/Lock';
-import { withDatabase, withObservables, compose, type Database } from '@DB/react';
-import TableName from '@DB/TableName';
-import { HomeStackName, type StackNavigation, type RootStackList } from './configs';
+import { type StackNavigation, type RootStackList } from './configs';
 import SendReceiver, { SendPageHeaderOptions, ReceiveAddressStackName } from '@pages/Transaction/ReceiveAddress';
 import TransactionConfirm, { TransactionConfirmStackName } from '@pages/Transaction/TransactionConfirm';
 import SendTo, { SendToStackName } from '@pages/Transaction/SendTo';
@@ -28,7 +27,6 @@ import GroupSetting, { GroupSettingStackName } from '@pages/Account/Setting/Grou
 import HDManage, { HDManageStackName } from '@pages/Account/Setting/HDManage';
 import Receive, { ReceiveStackName } from '@pages/Receive';
 import SetAmount, { SetAmountStackName } from '@pages/Receive/SetAmount';
-import { useInitSelectedAccount } from '@pages/Account/AccountGroupItem';
 
 import WalletIcon from '@assets/icons/wallet.svg';
 import SettingsIcon from '@assets/icons/settings.svg';
@@ -36,6 +34,8 @@ import ArrowLeft from '@assets/icons/arrow-left.svg';
 
 const Stack = createNativeStackNavigator<RootStackList>();
 const BottomTabStack = createBottomTabNavigator();
+
+export const HomeStackName = 'Home';
 
 const HomeScreenNavigator = () => {
   const { theme } = useTheme();
@@ -68,14 +68,12 @@ const HomeScreenNavigator = () => {
   );
 };
 
-const StackNavigator = compose(
-  withDatabase,
-  withObservables([], ({ database }: { database: Database }) => ({ vaultCount: database.collections.get(TableName.Vault).query().observeCount() }))
-)(({ vaultCount }: PropsWithChildren & { vaultCount: number }) => {
+const StackNavigator = () => {
   const navigation = useNavigation<StackNavigation>();
   const { theme } = useTheme();
+  const vaults = useVaults();
 
-  const hasVault = vaultCount > 0;
+  const hasVault = vaults?.length && vaults.length > 0;
   return (
     <Stack.Navigator
       initialRouteName={hasVault ? HomeStackName : WelcomeStackName}
@@ -137,15 +135,12 @@ const StackNavigator = compose(
       <Stack.Screen name={SetAmountStackName} component={SetAmount} />
     </Stack.Navigator>
   );
-});
-
-const Router: React.FC = () => {
-  useInitSelectedAccount();
-  return (
-    <NavigationContainer>
-      <StackNavigator />
-    </NavigationContainer>
-  );
 };
+
+const Router: React.FC = () => (
+  <NavigationContainer>
+    <StackNavigator />
+  </NavigationContainer>
+);
 
 export default Router;

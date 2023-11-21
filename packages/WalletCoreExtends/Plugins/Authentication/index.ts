@@ -103,7 +103,6 @@ class AuthenticationPluginClass implements Plugin {
 }
 
 const AuthenticationPlugin = new AuthenticationPluginClass();
-AuthenticationPlugin.setPassword({ authType: AuthenticationType.Password, password: '12345678' });
 CryptoToolPlugin.setGetPasswordMethod(AuthenticationPlugin.getPassword);
 
 export default AuthenticationPlugin;

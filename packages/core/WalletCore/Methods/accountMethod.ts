@@ -14,7 +14,7 @@ export class AccountMethod {
     return account.changeHidden(hidden);
   }
 
-  async prepareChangeAccountHidden({ account, hidden }: { account: Account; hidden: boolean }) {
+  prepareChangeAccountHidden({ account, hidden }: { account: Account; hidden: boolean }) {
     return account.prepareChangeHidden(hidden);
   }
 

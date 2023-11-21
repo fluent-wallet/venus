@@ -12,6 +12,7 @@ declare module '@rneui/themed' {
     surfaceBrand: string;
     surfaceInvert: string;
     surfaceThird: string;
+    surfaceFourth: string;
     surfaceCard: string;
     warnSuccessPrimary: string;
     warnErrorPrimary: string;

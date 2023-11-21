@@ -51,7 +51,7 @@ const HeaderTitle: React.FC<{ backgroundColor: string }> = ({ backgroundColor }:
   );
 };
 
-export const Wallet: React.FC<{ navigation: StackNavigation }> = ({ navigation }) => {
+const Wallet: React.FC<{ navigation: StackNavigation }> = ({ navigation }) => {
   const { theme } = useTheme();
   const [tabIndex, setTabIndex] = useState(0);
   const [tokenList] = useAtom(ERC20tokenListAtom);
@@ -128,3 +128,5 @@ export const Wallet: React.FC<{ navigation: StackNavigation }> = ({ navigation }
     </SafeAreaView>
   );
 };
+
+export default Wallet;

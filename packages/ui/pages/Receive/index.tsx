@@ -6,7 +6,8 @@ import { Button } from '@rneui/base';
 import { Divider, Text, useTheme } from '@rneui/themed';
 import { useCurrentAddressValue } from '@core/WalletCore/Plugins/ReactInject';
 import { statusBarHeight } from '@utils/deviceInfo';
-import { RootStackList, SetAmountStackName } from '@router/configs';
+import { type RootStackList } from '@router/configs';
+import { SetAmountStackName } from './SetAmount';
 import AvatarIcon from '@assets/icons/avatar.svg';
 import ShareIcon from '@assets/icons/share.svg';
 import SetAmountIcon from '@assets/icons/setAmount.svg';
@@ -70,3 +71,5 @@ const Receive: React.FC<NativeStackScreenProps<RootStackList, 'Receive'>> = ({ n
     </SafeAreaView>
   );
 };
+
+export default Receive;
