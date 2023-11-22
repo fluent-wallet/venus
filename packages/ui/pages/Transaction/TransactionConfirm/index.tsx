@@ -21,6 +21,7 @@ import AvatarIcon from '@assets/icons/avatar.svg';
 import CopyAllIcon from '@assets/icons/copy_all.svg';
 import Warning from '@assets/icons/warning_2.svg';
 import BSIMSDK, { CoinTypes } from 'packages/WalletCoreExtends/Plugins/BSIM/BSIMSDK';
+import { addHexPrefix } from '@core/utils/base';
 
 const TransactionConfirm: React.FC<{
   navigation: StackNavigation;
@@ -36,11 +37,11 @@ const TransactionConfirm: React.FC<{
   const [gas, setGas] = useState<{ gasLimit: string; gasPrice: string } | null>(null);
 
   const handleSend = async () => {
-    if (gas && tx.contract) {
+    if (gas) {
       const transaction = new Transaction();
 
       transaction.chainId = currentNetwork.chainId;
-      transaction.to = tx.contract;
+
       transaction.gasLimit = gas.gasLimit;
       transaction.gasPrice = gas.gasPrice;
       transaction.type = 0;
@@ -51,10 +52,17 @@ const TransactionConfirm: React.FC<{
       transaction.nonce = nonce.result;
       const vaultType = await currentAddress.getVaultType();
 
-      if (gas && tx.tokenType === TokenType.ERC20) {
+      if (tx.tokenType === TokenType.NATIVE) {
+        transaction.to = tx.to;
+        transaction.value = parseUnits(tx.amount.toString());
+      }
+
+      if (tx.tokenType === TokenType.ERC20 && tx.contract) {
+        transaction.to = tx.contract;
         transaction.data = iface777.encodeFunctionData('transfer', [tx.to, parseUnits(tx.amount.toString())]);
       }
-      if (gas && tx.tokenType === TokenType.ERC721 && tx.tokenId) {
+      if (tx.tokenType === TokenType.ERC721 && tx.tokenId && tx.contract) {
+        transaction.to = tx.contract;
         transaction.data = iface721.encodeFunctionData('transferFrom', [currentAddress.hex, tx.to, tx.tokenId]);
       }
 
@@ -73,8 +81,7 @@ const TransactionConfirm: React.FC<{
         transaction.signature = Signature.from({ r: res.r, s: res.s, v: res.v });
         // get the transaction encoded
         const encodeTx = transaction.serialized;
-        const result = await firstValueFrom(RPCSend(currentNetwork.endpoint, { method: 'eth_sendRawTransaction', params: [encodeTx] }));
-        console.log(result);
+        await firstValueFrom(RPCSend(currentNetwork.endpoint, { method: 'eth_sendRawTransaction', params: [encodeTx] }));
       } else {
         const pk = await WalletCore.methods.getPrivateKeyOfAddress(currentAddress);
         const wallet = new Wallet(pk, new JsonRpcProvider(currentNetwork.endpoint));
@@ -85,63 +92,49 @@ const TransactionConfirm: React.FC<{
       }
     }
   };
-
+  console.log(tx);
   useEffect(() => {
-    if (tx.tokenType === TokenType.ERC20 && tx.contract) {
-      const encodeData = iface777.encodeFunctionData('transfer', [tx.to, parseUnits(tx.amount.toString())]);
-      firstValueFrom(
-        RPCSend<RPCResponse<string>>(currentNetwork.endpoint, { method: 'eth_getTransactionCount', params: [currentAddress.hex, 'pending'] }).pipe(
-          map((res) => res.result),
-          switchMap((nonce) =>
-            RPCSend<RPCResponse<string>[]>(currentNetwork.endpoint, [
-              {
-                method: 'eth_estimateGas',
-                params: [
-                  {
-                    from: currentAddress.hex,
-                    nonce,
-                    to: tx.contract,
-                    data: encodeData,
-                  },
-                ],
-              },
-              { method: 'eth_gasPrice' },
-            ])
-          ),
-          map(([gas, gasPrice]) => ({ gasLimit: gas.result, gasPrice: gasPrice.result }))
-        )
-      ).then((res) => setGas(res));
+    const estimateGasParams: { from: string; nonce: null | string | null; to: string | null; data?: string; value?: string } = {
+      from: currentAddress.hex,
+      nonce: null,
+      to: null,
+    };
+    if (tx.tokenType === TokenType.NATIVE) {
+      estimateGasParams.to = tx.to;
+      estimateGasParams.data = '0x';
+      estimateGasParams.value = addHexPrefix(parseUnits(tx.amount.toString()).toString(16));
     }
 
-    if (tx.tokenType === TokenType.ERC721 && tx.contract && tx.tokenId) {
-      const encodeData = iface721.encodeFunctionData('transferFrom', [currentAddress.hex, tx.to, tx.tokenId]);
-      firstValueFrom(
-        RPCSend<RPCResponse<string>>(currentNetwork.endpoint, { method: 'eth_getTransactionCount', params: [currentAddress.hex, 'pending'] }).pipe(
-          map((res) => res.result),
-          switchMap((nonce) =>
-            RPCSend<RPCResponse<string>[]>(currentNetwork.endpoint, [
-              {
-                method: 'eth_estimateGas',
-                params: [
-                  {
-                    from: currentAddress.hex,
-                    nonce,
-                    to: tx.contract,
-                    data: encodeData,
-                  },
-                ],
-              },
-              { method: 'eth_gasPrice' },
-            ])
-          ),
-          map(([gas, gasPrice]) => ({ gasLimit: gas.result, gasPrice: gasPrice.result }))
-        )
-      ).then((res) => setGas(res));
+    if (tx.tokenType === TokenType.ERC20 && tx.contract) {
+      estimateGasParams.to = tx.contract;
+      estimateGasParams.data = iface777.encodeFunctionData('transfer', [tx.to, parseUnits(tx.amount.toString())]);
     }
+    if (tx.tokenType === TokenType.ERC721 && tx.contract && tx.tokenId) {
+      estimateGasParams.to = tx.contract;
+      estimateGasParams.data = iface721.encodeFunctionData('transferFrom', [currentAddress.hex, tx.to, tx.tokenId]);
+    }
+
+    firstValueFrom(
+      RPCSend<RPCResponse<string>>(currentNetwork.endpoint, { method: 'eth_getTransactionCount', params: [currentAddress.hex, 'pending'] }).pipe(
+        map((res) => res.result),
+        switchMap((nonce) => {
+          estimateGasParams.nonce = nonce;
+
+          return RPCSend<RPCResponse<string>[]>(currentNetwork.endpoint, [
+            {
+              method: 'eth_estimateGas',
+              params: [estimateGasParams],
+            },
+            { method: 'eth_gasPrice' },
+          ]);
+        }),
+        map(([gas, gasPrice]) => ({ gasLimit: gas.result, gasPrice: gasPrice.result }))
+      )
+    ).then((res) => setGas(res));
   }, [currentNetwork.endpoint, tx.tokenType, tx.contract, tx.to, tx.amount, currentAddress.hex, tx.tokenId]);
 
   const renderAmount = () => {
-    if (tx.tokenType === TokenType.ERC20) {
+    if (tx.tokenType === TokenType.ERC20 || tx.tokenType === TokenType.NATIVE) {
       return `${tx.amount} ${tx.symbol}`;
     }
     if (tx.tokenType === TokenType.ERC721) {
