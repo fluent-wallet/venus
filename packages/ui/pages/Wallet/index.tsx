@@ -90,7 +90,7 @@ const Wallet: React.FC<{ navigation: StackNavigation }> = ({ navigation }) => {
           className="mb-[16px] leading-tight text-[48px] text-center font-bold"
           style={{ color: Number(value) === 0 ? theme.colors.textSecondary : theme.colors.textPrimary }}
         >
-          {value === null ? <Skeleton width={100} height={60} /> : `$${value}`}
+          {value === null ? "--": `$${value}`}
         </Text>
 
         <View className="flex flex-row">

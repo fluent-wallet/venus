@@ -12,15 +12,13 @@ import { RPCResponse, RPCSend } from '@core/utils/send';
 import { useCurrentAddress, useCurrentNetwork } from '@core/WalletCore/Plugins/ReactInject';
 
 const TokenItem: React.FC<{
-  placeholder?: boolean;
-  data?: AccountTokenListItem;
+  data: AccountTokenListItem;
   onPress?: (v: AccountTokenListItem) => void;
-}> = ({ onPress, data, placeholder = false }) => {
+}> = ({ onPress, data }) => {
   const { theme } = useTheme();
   const [_, setNativeAndERC20TokenList] = useAtom(nativeAndERC20tokenListAtom);
   const currentNetwork = useCurrentNetwork()!;
   const address = useCurrentAddress()!;
-  const isRenderData = data && !placeholder;
 
   useEffect(() => {
     if (data?.type && data.type === TokenType.NATIVE) {
@@ -48,35 +46,19 @@ const TokenItem: React.FC<{
     <Pressable onPress={onPress && data ? () => onPress(data) : undefined}>
       <View className={'flex flex-row w-full justify-between p-3'}>
         <View className="flex flex-row items-center">
-          {isRenderData ? (
-            data.iconUrl ? (
-              <Image source={{ uri: data.iconUrl }} width={48} height={48} />
-            ) : (
-              <TokenIconDefault width={48} height={48} />
-            )
-          ) : (
-            <Skeleton width={48} height={48} circle />
-          )}
+          {data.iconUrl ? <Image source={{ uri: data.iconUrl }} width={48} height={48} /> : <TokenIconDefault width={48} height={48} />}
 
           <View className="ml-[15px]">
-            <Text className="text-base leading-5">{isRenderData ? data.name : <Skeleton width={100} height={24} />}</Text>
+            <Text className="text-base leading-5">{data.name}</Text>
             <Text style={{ color: theme.colors.textSecondary }}>
-              {isRenderData ? formatUnits(data.amount, data.decimals) : <Skeleton width={100} height={24} />}
-              {isRenderData ? data.symbol : ''}
+              {formatUnits(data.amount, data.decimals)}
+              {data.symbol}
             </Text>
           </View>
         </View>
         <View className="flex items-end ">
           <Text className="text-base">
-            {isRenderData ? (
-              data.priceInUSDT ? (
-                `$${(Number(formatUnits(data.amount, data.decimals)) * Number(data.priceInUSDT)).toFixed(2)}`
-              ) : (
-                '--'
-              )
-            ) : (
-              <Skeleton width={100} height={24} />
-            )}
+            {data.priceInUSDT ? `$${(Number(formatUnits(data.amount, data.decimals)) * Number(data.priceInUSDT)).toFixed(2)}` : '--'}
           </Text>
         </View>
       </View>
