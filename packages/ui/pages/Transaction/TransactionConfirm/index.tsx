@@ -2,8 +2,8 @@ import { useEffect, useState } from 'react';
 import { Pressable, SafeAreaView, View, Image } from 'react-native';
 import { RouteProp } from '@react-navigation/native';
 import { useAtom } from 'jotai';
-import { map, switchMap, firstValueFrom } from 'rxjs';
-import { JsonRpcProvider, Transaction, formatUnits, parseUnits } from 'ethers';
+import { map, switchMap, firstValueFrom, from, retry, tap, defer, timeout } from 'rxjs';
+import { JsonRpcProvider, Transaction, formatUnits, parseUnits, Signature } from 'ethers';
 import { Button, Divider, Text, useTheme } from '@rneui/themed';
 import { statusBarHeight } from '@utils/deviceInfo';
 import { Wallet } from 'ethers';
@@ -43,6 +43,7 @@ const TransactionConfirm: React.FC<{
       transaction.to = tx.contract;
       transaction.gasLimit = gas.gasLimit;
       transaction.gasPrice = gas.gasPrice;
+      transaction.type = 0;
 
       const nonce = await firstValueFrom(
         RPCSend<RPCResponse<string>>(currentNetwork.endpoint, { method: 'eth_getTransactionCount', params: [currentAddress.hex, 'pending'] })
@@ -50,26 +51,34 @@ const TransactionConfirm: React.FC<{
       transaction.nonce = nonce.result;
       const vaultType = await currentAddress.getVaultType();
 
+      if (gas && tx.tokenType === TokenType.ERC20) {
+        transaction.data = iface777.encodeFunctionData('transfer', [tx.to, parseUnits(tx.amount.toString())]);
+      }
+      if (gas && tx.tokenType === TokenType.ERC721 && tx.tokenId) {
+        transaction.data = iface721.encodeFunctionData('transferFrom', [currentAddress.hex, tx.to, tx.tokenId]);
+      }
+
       if (vaultType === 'BSIM') {
         const hash = transaction.unsignedHash;
         const index = (await currentAddress.account).index;
         await BSIMSDK.create();
-        await BSIMSDK.verifyBPIN();
-        // todo 
-        const res = await BSIMSDK.signMessage(hash, CoinTypes.CONFLUX, index);
-        // TODO: send transaction
-        console.log(res);
-      } else {
-        if (gas && tx.tokenType === TokenType.ERC20) {
-          transaction.data = iface777.encodeFunctionData('transfer', [tx.to, parseUnits(tx.amount.toString())]);
-        }
-        if (gas && tx.tokenType === TokenType.ERC721 && tx.tokenId) {
-          transaction.data = iface721.encodeFunctionData('transferFrom', [currentAddress.hex, tx.to, tx.tokenId]);
-        }
 
+        // verify BIN
+        await BSIMSDK.verifyBPIN();
+        // retrieve the R S V of the transaction through a polling mechanism
+        const res = await firstValueFrom(
+          defer(() => from(BSIMSDK.signMessage(hash, CoinTypes.CONFLUX, index))).pipe(retry({ delay: 1000 }), timeout(30 * 1000))
+        );
+        //  add the R S V to the transaction
+        transaction.signature = Signature.from({ r: res.r, s: res.s, v: res.v });
+        // get the transaction encoded
+        const encodeTx = transaction.serialized;
+        const result = await firstValueFrom(RPCSend(currentNetwork.endpoint, { method: 'eth_sendRawTransaction', params: [encodeTx] }));
+        console.log(result);
+      } else {
         const pk = await WalletCore.methods.getPrivateKeyOfAddress(currentAddress);
         const wallet = new Wallet(pk, new JsonRpcProvider(currentNetwork.endpoint));
-
+        wallet.signTransaction(transaction);
         wallet.sendTransaction(transaction).then(() => {
           navigation.navigate(HomeStackName, { screen: WalletStackName });
         });

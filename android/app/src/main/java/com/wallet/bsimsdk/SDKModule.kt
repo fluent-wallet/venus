@@ -16,7 +16,7 @@ import com.facebook.react.bridge.WritableNativeArray
 import com.facebook.react.bridge.WritableNativeMap
 import com.facebook.common.logging.FLog;
 
-//for bsim
+import org.web3j.utils.Numeric
 
 class SDKModule(private val reactContext: ReactApplicationContext) :
     ReactContextBaseJavaModule(reactContext) {
@@ -122,23 +122,21 @@ class SDKModule(private val reactContext: ReactApplicationContext) :
             CoinType.CONFLUX
         }
 
-        val message = Message(msg = msg.toByteArray(), coinType = coinType, index = index.toUInt())
-
+        val message = Message(msg = Numeric.hexStringToByteArray(msg), coinType = coinType, index = index.toUInt())
         val singMsg = BSIMSDKInstance?.signMessage(message)
 
         if (singMsg != null) {
             if (singMsg.Code == CODE_SUCCESS) {
                 val result = WritableNativeMap()
-
                 val hexSigned = singMsg.R + singMsg.S
                 val signature = Utils.signatureDataFromHex(hexSigned)
 
                 if (signature != null) {
                     result.putString("code", singMsg.Code)
                     result.putString("message", singMsg.Message)
-                    result.putString("r", signature.r.toString())
-                    result.putString("s", signature.s.toString())
-                    result.putString("v", signature.v.toString())
+                    result.putString("r", Numeric.toHexString(signature.r))
+                    result.putString("s", Numeric.toHexString(signature.s))
+                    result.putString("v", Numeric.toHexString(signature.v))
                     promise.resolve(result)
 
                 } else {
