@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/ban-types */
 import { injectable, inject } from 'inversify';
 import { type Account } from '../../database/models/Account';
 import { type Vault } from '../../database/models/Vault';
@@ -10,6 +11,7 @@ import { AccountMethod } from './accountMethod';
 import { AccountGroupMethod } from './accountGroupMethod';
 import { VaultMethod } from './vaultMethod';
 import { NetworkMethod } from './networkMethod';
+import { DatabaseMethod } from './databaseMethod';
 
 @injectable()
 export class Methods {
@@ -85,6 +87,22 @@ export class Methods {
   public switchToNetwork(...args: Parameters<NetworkMethod['switchToNetwork']>) {
     return this.NetworkMethod.switchToNetwork(...args);
   }
+
+  @inject(DatabaseMethod) private DatabaseMethod!: DatabaseMethod;
+  public initDatabaseDefault(...args: Parameters<DatabaseMethod['initDatabaseDefault']>) {
+    return this.DatabaseMethod.initDatabaseDefault(...args);
+  }
+  public resetDatabase(...args: Parameters<DatabaseMethod['resetDatabase']>) {
+    return this.DatabaseMethod.resetDatabase(...args);
+  }
+  public clearAccountData(...args: Parameters<DatabaseMethod['clearAccountData']>) {
+    return this.DatabaseMethod.clearAccountData(...args);
+  }
+
+  [methodName: string]: any;
+  public register(methodName: string, method: Function) {
+    this[methodName] = method;
+  }
 }
 
 container.bind(Methods).to(Methods);
@@ -95,5 +113,6 @@ container.bind(AccountMethod).to(AccountMethod).inSingletonScope();
 container.bind(AccountGroupMethod).to(AccountGroupMethod).inSingletonScope();
 container.bind(VaultMethod).to(VaultMethod).inSingletonScope();
 container.bind(NetworkMethod).to(NetworkMethod).inSingletonScope();
+container.bind(DatabaseMethod).to(DatabaseMethod).inSingletonScope();
 
 export default container.get(Methods) as Methods;

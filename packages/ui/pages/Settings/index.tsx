@@ -3,7 +3,7 @@ import { SafeAreaView, Text, TouchableHighlight } from 'react-native';
 import { type NavigationProp } from '@react-navigation/native';
 import { showMessage } from 'react-native-flash-message';
 import { useTheme, ListItem, Dialog } from '@rneui/themed';
-import { resetDatabase } from '@core/database/func';
+import methods from '@core/WalletCore/Methods';
 import { statusBarHeight } from '@utils/deviceInfo';
 import { WelcomeStackName , AccountManageStackName} from '@router/configs';
 
@@ -49,7 +49,7 @@ const Settings: React.FC<{ navigation: NavigationProp<any> }> = ({ navigation })
             title="Confirm"
             onPress={async () => {
               try {
-                await resetDatabase();
+                await methods.resetDatabase();
                 showMessage({
                   message: 'Reset wallet data successfully',
                   type: 'success',

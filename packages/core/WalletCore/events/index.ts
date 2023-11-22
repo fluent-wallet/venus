@@ -1,9 +1,9 @@
 import { injectable } from 'inversify';
 import { container } from '../configs';
 import { lifecycleChangedSubject } from './lifecycleChanged';
-import { accountChangedSubject } from './accountChanged';
-import { addressChangedSubject } from './addressChanged';
-import { networkChangedSubject } from './networkChanged';
+import { currentAccountChangedSubject } from './currentAccountChanged';
+import { currentAddressChangedSubject } from './currentAddressChanged';
+import { currentNetworkChangedSubject } from './currentNetworkChanged';
 
 export interface Event {
   name: string;
@@ -12,9 +12,9 @@ export interface Event {
 @injectable()
 export class Events {
   public lifecycleChangedSubject = lifecycleChangedSubject;
-  public accountChangedSubject = accountChangedSubject;
-  public addressChangedSubject = addressChangedSubject;
-  public networkChangedSubject = networkChangedSubject;
+  public currentAccountChangedSubject = currentAccountChangedSubject;
+  public currentAddressChangedSubject = currentAddressChangedSubject;
+  public currentNetworkChangedSubject = currentNetworkChangedSubject;
 }
 
 container.bind(Events).to(Events);

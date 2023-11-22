@@ -4,7 +4,6 @@ import { Plugins } from './Plugins';
 import { Methods } from './Methods';
 import { Events } from './Events';
 import { container } from './configs';
-import { initDatabase } from '../database/func';
 import { LifeCycle } from './Events/lifecycleChanged';
 
 @injectable()
@@ -16,7 +15,7 @@ export class WalletCore {
 
   async setup() {
     try {
-      await initDatabase();
+      await (this.methods.initDatabase ?? this.methods.initDatabaseDefault)();
       await this.events.lifecycleChangedSubject.next(LifeCycle.Ready);
     } catch (error) {
       console.log('WalletCore setup error: ', error);

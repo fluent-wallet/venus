@@ -65,10 +65,10 @@ export class CreateVaultMethod {
       const vault = createVault({ type, device: 'ePayWallet', ...(data ? { data } : null) }, true);
       const accountGroup = createAccountGroup({ nickname: `${defaultGroupNameMap[type]} - ${count + 1}`, hidden: false, vault }, true);
 
-      let batchs: Array<Array<Account | Address>>;
+      let batches: Array<Array<Account | Address>>;
       if (type === 'BSIM' || type === 'hardware') {
         if (!Array.isArray(accounts)) throw new Error(`Create vault Error: vault type-${type} accounts is not an array`);
-        batchs = await Promise.all(
+        batches = await Promise.all(
           accounts.map(({ index, hexAddress }, i) =>
             this.addAccount(
               {
@@ -84,7 +84,7 @@ export class CreateVaultMethod {
           )
         );
       } else {
-        batchs = [
+        batches = [
           await this.addAccount(
             {
               vault,
@@ -99,7 +99,7 @@ export class CreateVaultMethod {
         ];
       }
       await database.write(async () => {
-        await database.batch(vault, accountGroup, ...batchs.flat().flat());
+        await database.batch(vault, accountGroup, ...batches.flat().flat());
       });
     } catch (error) {
       console.error('Create vault error: ', error);

@@ -4,12 +4,11 @@ import { showMessage } from 'react-native-flash-message';
 import { useHeaderHeight } from '@react-navigation/elements';
 import { Button } from '@rneui/base';
 import { useTheme, Dialog, ListItem } from '@rneui/themed';
-import { clearAccountData } from '@core/database/func';
+import methods from '@core/WalletCore/Methods';
 import { useAccountGroups } from '@core/WalletCore/Plugins/ReactInject';
 import { statusBarHeight } from '@utils/deviceInfo';
-import { type StackNavigation, WelcomeStackName , AddAccountStackName} from '@router/configs';
+import { type StackNavigation, WelcomeStackName, AddAccountStackName } from '@router/configs';
 import AccountGroupItem from '../AccountGroupItem';
-
 
 const AccountManage: React.FC<{ navigation: StackNavigation }> = ({ navigation }: { navigation: StackNavigation }) => {
   const { theme } = useTheme();
@@ -64,7 +63,7 @@ const AccountManage: React.FC<{ navigation: StackNavigation }> = ({ navigation }
             title="Confirm"
             onPress={async () => {
               try {
-                await clearAccountData();
+                await methods.clearAccountData();
                 showMessage({
                   message: 'Clear account data successfully',
                   type: 'success',
@@ -73,7 +72,7 @@ const AccountManage: React.FC<{ navigation: StackNavigation }> = ({ navigation }
                 });
                 navigation.navigate(WelcomeStackName);
               } catch (err) {
-                await clearAccountData();
+                await methods.clearAccountData();
                 showMessage({
                   message: 'Clear account data failed',
                   description: String(err ?? ''),

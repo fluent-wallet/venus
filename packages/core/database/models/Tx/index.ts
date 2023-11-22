@@ -1,7 +1,7 @@
 import { Model, type Relation } from '@nozbe/watermelondb';
 import { field, text, readonly, date, immutableRelation } from '@nozbe/watermelondb/decorators';
 import { type Address } from '../Address';
-import { type Token } from '../Token';
+import { type Asset } from '../Asset';
 import { type TxExtra } from '../TxExtra';
 import { type TxPayload } from '../TxPayload';
 import TableName from '../../TableName';
@@ -9,7 +9,7 @@ import TableName from '../../TableName';
 export class Tx extends Model {
   static table = TableName.Tx;
   static associations = {
-    [TableName.Token]: { type: 'belongs_to', key: 'token_id' },
+    [TableName.Asset]: { type: 'belongs_to', key: 'asset_id' },
     [TableName.Address]: { type: 'belongs_to', key: 'address_id' },
     [TableName.TxExtra]: { type: 'belongs_to', key: 'tx_extra_id' },
     [TableName.TxPayload]: { type: 'belongs_to', key: 'tx_payload_id' },
@@ -28,7 +28,7 @@ export class Tx extends Model {
   @field('from_fluent') fromFluent!: boolean | null;
   @field('from_scan') fromScan!: boolean | null;
   @date('resend_at') resendAt!: number | null;
-  @immutableRelation(TableName.Token, 'token_id') token!: Relation<Token> | null;
+  @immutableRelation(TableName.Asset, 'asset_id') token!: Relation<Asset> | null;
   @immutableRelation(TableName.Address, 'address_id') address!: Relation<Address>;
   @immutableRelation(TableName.TxExtra, 'tx_extra_id') txExtra!: Relation<TxExtra>;
   @immutableRelation(TableName.TxPayload, 'tx_payload_id') txPayload!: Relation<TxPayload>;

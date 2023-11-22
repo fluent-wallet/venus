@@ -23,7 +23,7 @@ export class Account extends Model {
   @lazy currentNetworkAddressObservable = this.addresses
     .extend(Q.on(TableName.Network, Q.where('selected', true)))
     .observe()
-    .pipe(map((addresses) => addresses[0]));
+    .pipe(map((addresses) => addresses?.[0]));
 
   @lazy currentNetworkAddress = firstValueFrom(this.currentNetworkAddressObservable);
 

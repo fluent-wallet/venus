@@ -6,12 +6,8 @@ import { Account as AccountModel } from './models/Account';
 import { AccountGroup as AccountGroupModel } from './models/AccountGroup';
 import { Address as AddressModel } from './models/Address';
 import { HdPath as HdPathModel } from './models/HdPath';
-import { Memo as MemoModel } from './models/Memo';
 import { Network as NetworkModel } from './models/Network';
-import { Ticker as TickerModel } from './models/Ticker';
-import { Token as TokenModel } from './models/Token';
-import { TokenBalance as TokenBalanceModel } from './models/TokenBalance';
-import { TokenList as TokenListModel } from './models/TokenList';
+import { Asset as AssetModel } from './models/Asset';
 import { Tx as TxModel } from './models/Tx';
 import { TxExtra as TxExtraModel } from './models/TxExtra';
 import { TxPayload as TxPayloadModel } from './models/TxPayload';
@@ -39,11 +35,7 @@ const modelClasses = [
   AddressModel,
   HdPathModel,
   NetworkModel,
-  MemoModel,
-  TickerModel,
-  TokenModel,
-  TokenBalanceModel,
-  TokenListModel,
+  AssetModel,
   TxModel,
   TxExtraModel,
   TxPayloadModel,
