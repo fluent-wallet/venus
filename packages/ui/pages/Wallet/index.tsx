@@ -71,7 +71,10 @@ const Wallet: React.FC<{ navigation: StackNavigation }> = ({ navigation }) => {
       const subscribe = observable.subscribe((res) => {
         writeTokenList(res);
       });
-      return subscribe.unsubscribe;
+
+      return () => {
+        subscribe.unsubscribe();
+      };
     }
   }, [currentAddress, currentNetwork?.chainId, writeTokenList]);
 

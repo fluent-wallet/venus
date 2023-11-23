@@ -4,6 +4,7 @@ import { lifecycleChangedSubject } from './lifecycleChanged';
 import { currentAccountChangedSubject } from './currentAccountChanged';
 import { currentAddressChangedSubject } from './currentAddressChanged';
 import { currentNetworkChangedSubject } from './currentNetworkChanged';
+import { networksChangedSubject } from './networksChanged';
 
 export interface Event {
   name: string;
@@ -15,6 +16,7 @@ export class Events {
   public currentAccountChangedSubject = currentAccountChangedSubject;
   public currentAddressChangedSubject = currentAddressChangedSubject;
   public currentNetworkChangedSubject = currentNetworkChangedSubject;
+  public networksChangedSubject = networksChangedSubject;
 }
 
 container.bind(Events).to(Events).inSingletonScope();
