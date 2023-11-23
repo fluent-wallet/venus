@@ -20,7 +20,7 @@ export class Network extends Model {
   static table = TableName.Network;
   static associations = {
     [TableName.HdPath]: { type: 'belongs_to', key: 'hd_path_id' },
-    [TableName.Asset]: { type: 'has_many', foreignKey: 'asset_id' },
+    [TableName.Asset]: { type: 'has_many', foreignKey: 'network_id' },
   } as const;
 
   @text('name') name!: string;

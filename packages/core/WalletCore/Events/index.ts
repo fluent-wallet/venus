@@ -17,5 +17,5 @@ export class Events {
   public currentNetworkChangedSubject = currentNetworkChangedSubject;
 }
 
-container.bind(Events).to(Events);
+container.bind(Events).to(Events).inSingletonScope();
 export default container.get(Events) as Events;

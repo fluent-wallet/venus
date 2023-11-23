@@ -8,8 +8,8 @@ import TableName from '../../TableName';
 export class Account extends Model {
   static table = TableName.Account;
   static associations = {
-    [TableName.Address]: { type: 'has_many', foreignKey: 'account_id' },
     [TableName.AccountGroup]: { type: 'belongs_to', key: 'account_group_id' },
+    [TableName.Address]: { type: 'has_many', foreignKey: 'account_id' },
   } as const;
 
   @field('index') index!: number;

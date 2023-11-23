@@ -27,5 +27,5 @@ export class Plugins {
   }
 }
 
-container.bind(Plugins).to(Plugins);
+container.bind(Plugins).to(Plugins).inSingletonScope();
 export default container.get(Plugins) as Plugins;

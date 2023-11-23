@@ -12,7 +12,7 @@ export class Address extends Model {
     [TableName.Account]: { type: 'belongs_to', key: 'account_id' },
     [TableName.Network]: { type: 'belongs_to', key: 'network_id' },
     [TableName.AssetRule]: { type: 'belongs_to', key: 'asset_rule_id' },
-    [TableName.Tx]: { type: 'has_many', foreignKey: 'tx_id' },
+    [TableName.Tx]: { type: 'has_many', foreignKey: 'address_id' },
   } as const;
 
   /** cfx base32 address */

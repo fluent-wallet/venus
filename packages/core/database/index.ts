@@ -8,6 +8,7 @@ import { Address as AddressModel } from './models/Address';
 import { HdPath as HdPathModel } from './models/HdPath';
 import { Network as NetworkModel } from './models/Network';
 import { Asset as AssetModel } from './models/Asset';
+import { AssetRule as AssetRuleModel } from './models/AssetRule';
 import { Tx as TxModel } from './models/Tx';
 import { TxExtra as TxExtraModel } from './models/TxExtra';
 import { TxPayload as TxPayloadModel } from './models/TxPayload';
@@ -36,6 +37,7 @@ const modelClasses = [
   HdPathModel,
   NetworkModel,
   AssetModel,
+  AssetRuleModel,
   TxModel,
   TxExtraModel,
   TxPayloadModel,

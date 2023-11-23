@@ -105,7 +105,6 @@ export class Methods {
   }
 }
 
-container.bind(Methods).to(Methods);
 container.bind(GetDecryptedVaultDataMethod).to(GetDecryptedVaultDataMethod).inSingletonScope();
 container.bind(AddAccountMethod).to(AddAccountMethod).inSingletonScope();
 container.bind(CreateVaultMethod).to(CreateVaultMethod).inSingletonScope();
@@ -114,5 +113,6 @@ container.bind(AccountGroupMethod).to(AccountGroupMethod).inSingletonScope();
 container.bind(VaultMethod).to(VaultMethod).inSingletonScope();
 container.bind(NetworkMethod).to(NetworkMethod).inSingletonScope();
 container.bind(DatabaseMethod).to(DatabaseMethod).inSingletonScope();
+container.bind(Methods).to(Methods).inSingletonScope();
 
 export default container.get(Methods) as Methods;

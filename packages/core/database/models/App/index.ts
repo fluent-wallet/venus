@@ -8,7 +8,7 @@ export class App extends Model {
   static table = TableName.App;
   static associations = {
     [TableName.Site]: { type: 'belongs_to', key: 'site_id' },
-    [TableName.Permission]: { type: 'has_many', foreignKey: 'permission_id' },
+    [TableName.Permission]: { type: 'has_many', foreignKey: 'app_id' },
   } as const;
 
   @text('name') name!: string;

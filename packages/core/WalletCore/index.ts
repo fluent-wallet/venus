@@ -15,7 +15,11 @@ export class WalletCore {
 
   async setup() {
     try {
-      await (this.methods.initDatabase ?? this.methods.initDatabaseDefault)();
+      if (this.methods.initDatabase) {
+        await this.methods.initDatabase();
+      } else {
+        await this.methods.initDatabaseDefault();
+      }
       await this.events.lifecycleChangedSubject.next(LifeCycle.Ready);
     } catch (error) {
       console.log('WalletCore setup error: ', error);

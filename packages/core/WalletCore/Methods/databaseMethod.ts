@@ -64,7 +64,7 @@ const HD_PATH_ARR = [
   { name: 'eth-default', value: DEFAULT_ETH_HDPATH },
 ] as const;
 
-export const NETWORK_ARR: Array<NetworkParams & { hdPathIndex?: number; nativeAsset: { name: string; symbol: string; decimals: number; icon: string } }> = [
+export const NETWORK_ARR: Array<NetworkParams & { hdPathIndex: number; nativeAsset: { name: string; symbol: string; decimals: number; icon: string } }> = [
   {
     name: CFX_MAINNET_NAME,
     endpoint: CFX_MAINNET_RPC_ENDPOINT,
@@ -157,6 +157,7 @@ export const NETWORK_ARR: Array<NetworkParams & { hdPathIndex?: number; nativeAs
     builtin: true,
     chainType: ChainType.Testnet,
     gasBuffer: 1,
+    hdPathIndex: 1,
     nativeAsset: {
       name: CFX_ESPACE_TESTNET_CURRENCY_NAME,
       symbol: CFX_ESPACE_TESTNET_CURRENCY_SYMBOL,
@@ -262,7 +263,7 @@ export class DatabaseMethod {
         TableName.TxExtra,
         TableName.TxPayload,
         TableName.Asset,
-        TableName.AssetBalance,
+        TableName.AssetRule,
         TableName.App,
         TableName.Site,
         TableName.Permission,

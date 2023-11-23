@@ -17,7 +17,7 @@ export class Asset extends Model {
   static associations = {
     [TableName.Network]: { type: 'belongs_to', key: 'network_id' },
     [TableName.AssetRule]: { type: 'belongs_to', key: 'asset_rule_id' },
-    [TableName.Tx]: { type: 'has_many', foreignKey: 'tx_id' },
+    [TableName.Tx]: { type: 'has_many', foreignKey: 'asset_id' },
   } as const;
 
   @text('asset_address') assetAddress!: string;
