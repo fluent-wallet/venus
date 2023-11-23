@@ -31,7 +31,7 @@ export const getWalletHeaderOptions = (backgroundColor: string) =>
       </View>
     ),
     headerTitle: () => <HeaderTitle backgroundColor={backgroundColor} />,
-    headerRight: () => <>{__DEV__ && <SwitchCurrentNetwork />}</>,
+    headerRight: () => <SwitchCurrentNetwork />,
     headerTitleAlign: 'center',
   } as const);
 
@@ -90,7 +90,7 @@ const Wallet: React.FC<{ navigation: StackNavigation }> = ({ navigation }) => {
           className="mb-[16px] leading-tight text-[48px] text-center font-bold"
           style={{ color: Number(value) === 0 ? theme.colors.textSecondary : theme.colors.textPrimary }}
         >
-          {value === null ? "--": `$${value}`}
+          {value === null ? '--' : `$${value}`}
         </Text>
 
         <View className="flex flex-row">
