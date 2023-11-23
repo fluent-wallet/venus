@@ -53,9 +53,7 @@ export class BSIMPluginClass implements Plugin {
     const BSIMKey = list.pop();
     if (!BSIMKey) throw new Error('create new BSIM account failed');
 
-    const pubkey = addHexPrefix(formatBSIMPubkey(BSIMKey.hexAddress));
-    const hexAddress = computeAddress(pubkey);
-    return { hexAddress, index: BSIMKey.index };
+    return { hexAddress: BSIMKey.hexAddress, index: BSIMKey.index };
   };
 
   public createBSIMAccountToIndex = async (targetIndex: number) => {

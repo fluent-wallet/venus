@@ -15,7 +15,7 @@ const SwitchCurrentNetwork = () => {
       buttonStyle={{ borderRadius: 40, borderColor: theme.colors.surfaceSecondary }}
       onPress={() => methods.switchToNetwork(currentNetwork.netId === 1030 ? 71 : 1030)}
     >
-      <Text>{currentNetwork.name}</Text>
+      <Text className='whitespace-nowrap'>{currentNetwork.name}</Text>
     </Button>
   );
 };
