@@ -57,6 +57,7 @@
     "react-native-screens": "^3.26.0",
     "react-native-svg": "^13.14.0",
     "react-native-vector-icons": "^10.0.0",
+    "react-native-vision-camera": "^3.6.10",
     "reflect-metadata": "^0.1.13",
     "stream-browserify": "^3.0.0"
   },

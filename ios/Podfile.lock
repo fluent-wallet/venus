@@ -547,6 +547,10 @@ PODS:
     - React-Core
   - simdjson (3.1.0-wmelon1)
   - SocketRocket (0.6.1)
+  - VisionCamera (3.6.10):
+    - React
+    - React-callinvoker
+    - React-Core
   - WatermelonDB (0.27.1):
     - React
     - simdjson
@@ -630,6 +634,7 @@ DEPENDENCIES:
   - RNSVG (from `../node_modules/react-native-svg`)
   - RNVectorIcons (from `../node_modules/react-native-vector-icons`)
   - "simdjson (from `../node_modules/@nozbe/simdjson`)"
+  - VisionCamera (from `../node_modules/react-native-vision-camera`)
   - "WatermelonDB (from `../node_modules/@nozbe/watermelondb`)"
   - Yoga (from `../node_modules/react-native/ReactCommon/yoga`)
 
@@ -754,6 +759,8 @@ EXTERNAL SOURCES:
     :path: "../node_modules/react-native-vector-icons"
   simdjson:
     :path: "../node_modules/@nozbe/simdjson"
+  VisionCamera:
+    :path: "../node_modules/react-native-vision-camera"
   WatermelonDB:
     :path: "../node_modules/@nozbe/watermelondb"
   Yoga:
@@ -824,6 +831,7 @@ SPEC CHECKSUMS:
   RNVectorIcons: 8b5bb0fa61d54cd2020af4f24a51841ce365c7e9
   simdjson: e6bfae9ce4bcdc80452d388d593816f1ca2106f3
   SocketRocket: f32cd54efbe0f095c4d7594881e52619cfe80b17
+  VisionCamera: 68c2909157ab030cf851fb28c77ef2dbef029487
   WatermelonDB: 842d22ba555425aa9f3ce551239a001200c539bc
   Yoga: 86fed2e4d425ee4c6eab3813ba1791101ee153c6
   YogaKit: f782866e155069a2cca2517aafea43200b01fd5a

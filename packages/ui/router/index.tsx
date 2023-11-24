@@ -8,7 +8,8 @@ import { useHasVault } from '@core/WalletCore/Plugins/ReactInject';
 import Welcome from '@pages/Welcome';
 import SetPassword from '@pages/SetPassword';
 import Biometrics from '@pages/SetPassword/Biometrics';
-import Wallet, { getWalletHeaderOptions } from '@pages/Wallet';
+import Wallet from '@pages/Wallet';
+import { getWalletHeaderOptions } from '@pages/Wallet/WalletHeader';
 import Settings, { SettingsStackName } from '@pages/Settings';
 import ImportWallet from '@pages/ImportWallet';
 import AccountManage from '@pages/Account/AccountManage';
@@ -40,6 +41,7 @@ import {
   HDManageStackName,
   ReceiveStackName,
   SetAmountStackName,
+  ScanQRCodeStackName,
 } from './configs';
 import SendReceiver, { SendPageHeaderOptions } from '@pages/Transaction/ReceiveAddress';
 import TransactionConfirm from '@pages/Transaction/TransactionConfirm';
@@ -55,6 +57,7 @@ import SetAmount from '@pages/Receive/SetAmount';
 import WalletIcon from '@assets/icons/wallet.svg';
 import SettingsIcon from '@assets/icons/settings.svg';
 import ArrowLeft from '@assets/icons/arrow-left.svg';
+import ScanQRCode from '@pages/ScanQRCode';
 
 const Stack = createNativeStackNavigator<RootStackList>();
 const BottomTabStack = createBottomTabNavigator();
@@ -131,8 +134,8 @@ const StackNavigator = () => {
       <Stack.Screen name={ImportWalletStackName} component={ImportWallet} />
       <Stack.Screen name={LoginStackName} component={Login} options={{ headerShown: false }} />
       <Stack.Screen name={LockStackName} component={Lock} options={{ headerShown: false }} />
-      <Stack.Screen name={ReceiveAddressStackName} component={SendReceiver} options={{ title: 'receiving address', headerTitleAlign: 'center' }} />
-      <Stack.Screen name={SendToStackName} component={SendTo} options={{ ...SendPageHeaderOptions({ title: 'Send To' }) }} />
+      <Stack.Screen name={ReceiveAddressStackName} component={SendReceiver} options={SendPageHeaderOptions({ title: 'Send To' })} />
+      <Stack.Screen name={SendToStackName} component={SendTo} options={SendPageHeaderOptions({ title: 'Send To' })} />
       <Stack.Screen
         name={TransactionConfirmStackName}
         component={TransactionConfirm}
@@ -154,6 +157,7 @@ const StackNavigator = () => {
       <Stack.Screen name={BackUpStackName} component={BackUp} options={{ headerTitleAlign: 'center' }} />
       <Stack.Screen name={ReceiveStackName} component={Receive} />
       <Stack.Screen name={SetAmountStackName} component={SetAmount} />
+      <Stack.Screen name={ScanQRCodeStackName} component={ScanQRCode} options={{ headerShown: false }} />
     </Stack.Navigator>
   );
 };

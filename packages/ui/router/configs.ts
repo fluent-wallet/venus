@@ -23,6 +23,8 @@ const ReceiveStackName = 'Receive';
 const SetAmountStackName = 'SetAmount';
 const HDManageStackName = 'HDManage';
 
+const ScanQRCodeStackName = 'ScanQRCode';
+
 export {
   WelcomeStackName,
   SetPasswordStackName,
@@ -45,6 +47,7 @@ export {
   SetAmountStackName,
   HDManageStackName,
   HomeStackName,
+  ScanQRCodeStackName,
 };
 
 export type RootStackList = {
@@ -64,11 +67,12 @@ export type RootStackList = {
   [TokensStackName]: undefined;
   [SendToStackName]: undefined;
   [TransactionConfirmStackName]: undefined;
-  [ReceiveAddressStackName]: undefined;
+  [ReceiveAddressStackName]: { address?: string };
 
   [BackUpStackName]: { accountGroupId: string; accountIndex?: number };
   [ReceiveStackName]: undefined;
   [SetAmountStackName]: undefined;
+  [ScanQRCodeStackName]: { path: keyof RootStackList };
 
   Home: { screen: typeof WalletStackName };
 };

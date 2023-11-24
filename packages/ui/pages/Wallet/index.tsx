@@ -1,56 +1,21 @@
 import React, { useEffect, useState } from 'react';
-import { View, SafeAreaView, TouchableHighlight, Pressable } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
-import { firstValueFrom, delay, repeat } from 'rxjs';
+import { View, SafeAreaView, Pressable } from 'react-native';
+import { delay, repeat } from 'rxjs';
 import { useAtom } from 'jotai';
 import { formatUnits } from 'ethers';
-import { Text, useTheme, Tab, TabView, Skeleton } from '@rneui/themed';
+import { Text, useTheme, Tab, TabView } from '@rneui/themed';
 import { statusBarHeight } from '@utils/deviceInfo';
-import { shortenAddress } from '@core/utils/address';
 import { useCurrentAddressValue, useCurrentNetwork } from '@core/WalletCore/Plugins/ReactInject';
-import { type StackNavigation, AccountSelectStackName, ReceiveAddressStackName, ReceiveStackName } from '@router/configs';
-import SwitchCurrentNetwork from '@components/SwitchCurrentNetwork';
+import { type StackNavigation, ReceiveAddressStackName, ReceiveStackName } from '@router/configs';
+
 import { nativeAndERC20tokenListAtom, requestTokenList, writeTokenListAtom } from '@hooks/useTokenList';
 import TokenList from '@components/TokenList';
 import NFTList from '@components/NFTList';
-import CopyAll from '@assets/icons/copy_all.svg';
-import Flip from '@assets/icons/flip.svg';
-import Menu from '@assets/icons/menu.svg';
 import SendIcon from '@assets/icons/send.svg';
 import ReceiveIcon from '@assets/icons/receive.svg';
 import BuyIcon from '@assets/icons/buy.svg';
 import MoreIcon from '@assets/icons/more.svg';
 import { TokenType } from '@hooks/useTransaction';
-
-export const getWalletHeaderOptions = (backgroundColor: string) =>
-  ({
-    headerLeft: () => (
-      <View className="flex flex-row ml-[17px]">
-        <Menu className="w-[24] h-[24]" />
-        <Flip className="w-[24] h-[24]" style={{ marginLeft: 18 }} />
-      </View>
-    ),
-    headerTitle: () => <HeaderTitle backgroundColor={backgroundColor} />,
-    headerRight: () => <SwitchCurrentNetwork />,
-    headerTitleAlign: 'center',
-  } as const);
-
-const HeaderTitle: React.FC<{ backgroundColor: string }> = ({ backgroundColor }: { backgroundColor: string }) => {
-  const currentAddressValue = useCurrentAddressValue();
-  const navigation = useNavigation<StackNavigation>();
-
-  if (!currentAddressValue) return null;
-  return (
-    <TouchableHighlight onPress={() => navigation.navigate(AccountSelectStackName)} className="rounded-full overflow-hidden">
-      <View className="bg-white flex flex-row px-[12px] py-[8px] rounded-full" style={{ backgroundColor }}>
-        <Text className="text-[10px]">{shortenAddress(currentAddressValue)}</Text>
-        <View className="pl-[4px]">
-          <CopyAll />
-        </View>
-      </View>
-    </TouchableHighlight>
-  );
-};
 
 const Wallet: React.FC<{ navigation: StackNavigation }> = ({ navigation }) => {
   const { theme } = useTheme();

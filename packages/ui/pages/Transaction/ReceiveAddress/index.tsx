@@ -1,15 +1,15 @@
 import { useState } from 'react';
-import { SafeAreaView, View, KeyboardAvoidingView, TextInput } from 'react-native';
+import { SafeAreaView, View, KeyboardAvoidingView, TextInput, Pressable } from 'react-native';
 import { isAddress } from 'ethers';
 import { useAtom } from 'jotai';
 import { Text, useTheme, Divider } from '@rneui/themed';
-import { type StackNavigation, TokensStackName } from '@router/configs';
+import { type StackNavigation, TokensStackName, RootStackList, ReceiveAddressStackName, ScanQRCodeStackName } from '@router/configs';
 import { statusBarHeight } from '@utils/deviceInfo';
 import { BaseButton } from '@components/Button';
 import { setTransactionTo } from '@hooks/useTransaction';
 import WarningIcon from '@assets/icons/warning_2.svg';
 import Flip from '@assets/icons/flip.svg';
-
+import { RouteProp } from '@react-navigation/native';
 
 export const SendPageHeaderOptions = ({ title = 'Send To' }: { title?: string }) =>
   ({
@@ -17,9 +17,9 @@ export const SendPageHeaderOptions = ({ title = 'Send To' }: { title?: string })
     headerTitleAlign: 'center',
   } as const);
 
-const SendReceiver: React.FC<{ navigation: StackNavigation }> = ({ navigation }) => {
+const SendReceiver: React.FC<{ navigation: StackNavigation; route: RouteProp<RootStackList, typeof ReceiveAddressStackName> }> = ({ navigation, route }) => {
   const { theme } = useTheme();
-  const [address, setAddress] = useState('');
+  const [address, setAddress] = useState(route.params?.address || '');
   const [errorMsg, setErrorMsg] = useState('');
   const [, setFromAddress] = useAtom(setTransactionTo);
 
@@ -54,7 +54,9 @@ const SendReceiver: React.FC<{ navigation: StackNavigation }> = ({ navigation })
               maxLength={42}
               placeholderTextColor={theme.colors.textSecondary}
             />
-            <Flip width={20} height={20} />
+            <Pressable onPress={() => navigation.navigate(ScanQRCodeStackName, { path: ReceiveAddressStackName })}>
+              <Flip width={20} height={20} />
+            </Pressable>
           </View>
           <Divider className="my-4" />
           <View className="flex flex-row items-center p-3">
