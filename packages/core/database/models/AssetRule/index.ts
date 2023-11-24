@@ -14,7 +14,7 @@ export class AssetRule extends Model {
   } as const;
 
   @text('name') name!: string;
-  /** Display order in the assetRule list. -1 means do not show. */
+  /** Display order in the assetRule list. 0 means that this Rule is the default Rule for only one Native Asset and cannot be deleted. */
   @field('index') index!: number;
   @children(TableName.Asset) assets!: Query<Asset>;
   @children(TableName.Address) addresses!: Query<Address>;

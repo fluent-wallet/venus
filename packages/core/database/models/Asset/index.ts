@@ -28,5 +28,5 @@ export class Asset extends Model {
   @text('icon') icon!: string | null;
   @children(TableName.Tx) tx!: Query<Tx>;
   @immutableRelation(TableName.Network, 'network_id') network!: Relation<Network>;
-  @immutableRelation(TableName.AssetRule, 'asset_rule_id') address!: Relation<AssetRule> | null;
+  @immutableRelation(TableName.AssetRule, 'asset_rule_id') assetRule!: Relation<AssetRule>;
 }

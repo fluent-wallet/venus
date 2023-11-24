@@ -31,7 +31,6 @@ export class AddAccountMethod {
   async addAccount({ accountGroup, nickname, hidden, selected, hexAddress, index, vault }: Params & { vault?: Vault }, prepareCreate?: true) {
     if (!accountGroup) throw new Error('AccountGroup is required in createAccount.');
     const _vault = vault ?? (await (await accountGroup).vault);
-
     const [networks, lastAccountIndex, vaultData] = await Promise.all([
       database.get<Network>(TableName.Network).query().fetch(),
       _vault.type === VaultType.HierarchicalDeterministic ? index ?? accountGroup.getLastAccountIndex() : -1,
@@ -79,7 +78,10 @@ export class AddAccountMethod {
       prepareCreate: true,
     }) as Account;
 
-    const addresses = hexAddressesInNetwork.map((hexAddress, index) => createAddress({ network: networks[index], hex: hexAddress, account: newAccount }, true));
+    const defaultAssetRules = await Promise.all(networks.map((network) => network.defaultAssetRule));
+    const addresses = hexAddressesInNetwork.map((hexAddress, index) =>
+      createAddress({ network: networks[index], assetRule: defaultAssetRules[index], account: newAccount, hex: hexAddress }, true)
+    );
 
     if (prepareCreate) {
       return [newAccount, ...addresses];

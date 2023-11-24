@@ -1,6 +1,6 @@
 import { injectable, inject } from 'inversify';
 import { Plugins } from '../Plugins';
-import { type Vault } from '../../database/models/Vault';
+import { Vault } from '../../database/models/Vault';
 import { type Account } from '../../database/models/Account';
 import { type Address } from '../../database/models/Address';
 import VaultType from '../../database/models/Vault/VaultType';
@@ -11,11 +11,11 @@ import { AddAccountMethod, type Params as AddAccountParams } from './addAccount'
 import database from '../../database';
 
 const defaultGroupNameMap = {
-  hierarchical_deterministic: 'Seed Phrase',
-  private_key: 'Private Key',
-  BSIM: 'BSIM',
-  hardware: 'Hardware',
-  public_address: 'Public Address',
+  [VaultType.HierarchicalDeterministic]: 'Seed Phrase',
+  [VaultType.PrivateKey]: 'Private Key',
+  [VaultType.BSIM]: 'BSIM',
+  [VaultType.Hardware]: 'Hardware',
+  [VaultType.PublicAddress]: 'Public Address',
 } as const;
 
 @injectable()
@@ -64,7 +64,7 @@ export class CreateVaultMethod {
       const count = await getVaultTypeCount(type);
       const vault = createVault({ type, device: 'ePayWallet', ...(data ? { data } : null) }, true);
       const accountGroup = createAccountGroup({ nickname: `${defaultGroupNameMap[type]} - ${count + 1}`, hidden: false, vault }, true);
-
+      
       let batches: Array<Array<Account | Address>>;
       if (type === 'BSIM' || type === 'hardware') {
         if (!Array.isArray(accounts)) throw new Error(`Create vault Error: vault type-${type} accounts is not an array`);

@@ -15,8 +15,3 @@ const networksChangedObservable = networksObservable.pipe(
   })
 );
 networksChangedObservable.subscribe(networksChangedSubject);
-
-networksChangedSubject.subscribe(({ added, removed }) => {
-  console.log('removed \n', removed);
-  console.log('added \n', added?.length);
-});

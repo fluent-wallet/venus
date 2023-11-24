@@ -1,5 +1,5 @@
 import { Model, type Query, type Relation } from '@nozbe/watermelondb';
-import { text, children, relation, reader } from '@nozbe/watermelondb/decorators';
+import { text, children, relation, immutableRelation, reader } from '@nozbe/watermelondb/decorators';
 import { type Tx } from '../Tx';
 import { type Account } from '../Account';
 import { type Network, NetworkType } from '../Network';
@@ -19,11 +19,10 @@ export class Address extends Model {
   @text('base32') base32!: string;
   /** ethereum hex address */
   @text('hex') hex!: string;
-  @text('native_balance') nativeBalance!: string;
   @children(TableName.Tx) txs!: Query<Tx>;
-  @relation(TableName.Account, 'account_id') account!: Relation<Account>;
-  @relation(TableName.Network, 'network_id') network!: Relation<Network>;
-  @relation(TableName.AssetRule, 'network_id') assetRule!: Relation<AssetRule>;
+  @immutableRelation(TableName.Account, 'account_id') account!: Relation<Account>;
+  @immutableRelation(TableName.Network, 'network_id') network!: Relation<Network>;
+  @relation(TableName.AssetRule, 'asset_rule_id') assetRule!: Relation<AssetRule>;
 
   @reader async getVaultType() {
     const account = await this.account;

@@ -42,8 +42,7 @@ const schema = appSchema({
         { name: 'decimals', type: 'number', isOptional: true },
         { name: 'icon', type: 'string', isOptional: true },
         { name: 'network_id', type: 'string', isIndexed: true },
-        { name: 'address_id', type: 'string', isIndexed: true },
-        { name: 'asset_rule_id', type: 'string', isIndexed: true, isOptional: true },
+        { name: 'asset_rule_id', type: 'string', isIndexed: true },
       ],
     }),
     tableSchema({
@@ -149,9 +148,9 @@ const schema = appSchema({
       columns: [
         { name: 'account_id', type: 'string', isIndexed: true },
         { name: 'network_id', type: 'string', isIndexed: true },
+        { name: 'asset_rule_id', type: 'string', isIndexed: true },
         { name: 'base32', type: 'string' },
         { name: 'hex', type: 'string' },
-        { name: 'native_balance', type: 'string' },
       ],
     }),
     tableSchema({

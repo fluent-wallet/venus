@@ -4,7 +4,7 @@ import TableName from '../../TableName';
 import { createModel, type ModelFields } from '../../helper/modelHelper';
 import database from '../..';
 
-export type NetworkParams = Omit<ModelFields<Network>, 'nativeAsset' | 'nativeAssetQuery'>;
+export type NetworkParams = Omit<ModelFields<Network>, 'nativeAsset' | 'nativeAssetQuery' | 'defaultAssetRuleQuery' | 'defaultAssetRule'>;
 export function createNetwork(params: NetworkParams, prepareCreate: true): Network;
 export function createNetwork(params: NetworkParams): Promise<Network>;
 export function createNetwork(params: NetworkParams, prepareCreate?: true) {

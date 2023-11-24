@@ -1,9 +1,10 @@
-import { injectable } from 'inversify';
+import { injectable, inject } from 'inversify';
 import database from '../../database';
 import TableName from '../../database/TableName';
 import { createHdPath } from '../../database/models/HdPath/query';
 import { ChainType, NetworkType } from '../../database/models/Network';
-import { createNetwork, NetworkParams } from '../../database/models/Network/query';
+import { NetworkParams } from '../../database/models/Network/query';
+import { NetworkMethod } from './networkMethod';
 import {
   CFX_MAINNET_RPC_ENDPOINT,
   CFX_MAINNET_NAME,
@@ -224,25 +225,29 @@ async function clearTables(tableNames: Array<TableName>) {
 
 @injectable()
 export class DatabaseMethod {
+  @inject(NetworkMethod) private NetworkMethod!: NetworkMethod;
+
   async initDatabaseDefault() {
     try {
       // Should skip if the DB has already been initialized.
       if ((await database.get(TableName.HdPath).query().fetchCount()) !== 0) {
         return true;
       }
-
+      
       await database.write(async () => {
         const hdPaths = HD_PATH_ARR.map((params) => createHdPath(params, true));
-        const networks = NETWORK_ARR.map(({ hdPathIndex, ...params }) => {
-          return createNetwork(
-            {
-              ...params,
-              ...(typeof hdPathIndex === 'number' ? { hdPath: hdPaths[hdPathIndex] } : null),
-            },
-            true
-          );
-        });
-        await database.batch(...hdPaths, ...networks.flat());
+        const networks = await Promise.all(
+          NETWORK_ARR.map(async ({ hdPathIndex, ...params }) => {
+            return await this.NetworkMethod.createNetwork(
+              {
+                ...params,
+                ...(typeof hdPathIndex === 'number' ? { hdPath: hdPaths[hdPathIndex] } : null),
+              },
+              true
+            );
+          })
+        );
+        await database.batch(...hdPaths, ...(Array.isArray(networks) ? networks.flat() : []));
       });
 
       return true;
@@ -262,8 +267,6 @@ export class DatabaseMethod {
         TableName.Tx,
         TableName.TxExtra,
         TableName.TxPayload,
-        TableName.Asset,
-        TableName.AssetRule,
         TableName.App,
         TableName.Site,
         TableName.Permission,
@@ -281,7 +284,11 @@ export class DatabaseMethod {
       await database.write(async () => {
         await database.unsafeResetDatabase();
       });
-      await (typeof this.initDatabase === 'function' ? this.initDatabase : this.initDatabaseDefault)();
+      if (this.initDatabase) {
+        await this.initDatabase();
+      } else {
+        await this.initDatabaseDefault();
+      }
     } catch (error) {
       console.error('Reset database error', error);
     }

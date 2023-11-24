@@ -6,10 +6,6 @@ import { currentAddressChangedSubject } from './currentAddressChanged';
 import { currentNetworkChangedSubject } from './currentNetworkChanged';
 import { networksChangedSubject } from './networksChanged';
 
-export interface Event {
-  name: string;
-}
-
 @injectable()
 export class Events {
   public lifecycleChangedSubject = lifecycleChangedSubject;

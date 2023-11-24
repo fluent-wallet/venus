@@ -2,6 +2,7 @@ import { Model, Q, type Query, type Relation } from '@nozbe/watermelondb';
 import { field, text, children, relation, lazy } from '@nozbe/watermelondb/decorators';
 import { firstValueFrom, map } from 'rxjs';
 import { type Asset, AssetType } from '../Asset';
+import { type AssetRule } from '../AssetRule';
 import { type HdPath } from '../HdPath';
 import TableName from '../../TableName';
 
@@ -21,6 +22,7 @@ export class Network extends Model {
   static associations = {
     [TableName.HdPath]: { type: 'belongs_to', key: 'hd_path_id' },
     [TableName.Asset]: { type: 'has_many', foreignKey: 'network_id' },
+    [TableName.AssetRule]: { type: 'has_many', foreignKey: 'network_id' },
   } as const;
 
   @text('name') name!: string;
@@ -35,8 +37,11 @@ export class Network extends Model {
   @field('selected') selected!: boolean;
   @field('builtin') builtin!: boolean | null;
   @children(TableName.Asset) assets!: Query<Asset>;
+  @children(TableName.AssetRule) assetRules!: Query<AssetRule>;
   @relation(TableName.HdPath, 'hd_path_id') hdPath!: Relation<HdPath>;
 
   @lazy nativeAssetQuery = this.assets.extend(Q.where('type', AssetType.Native));
   @lazy nativeAsset = firstValueFrom(this.nativeAssetQuery.observe().pipe(map((assets) => assets?.[0])));
+  @lazy defaultAssetRuleQuery = this.assetRules.extend(Q.where('index', 0));
+  @lazy defaultAssetRule = firstValueFrom(this.defaultAssetRuleQuery.observe().pipe(map((assetRules) => assetRules?.[0])));
 }
