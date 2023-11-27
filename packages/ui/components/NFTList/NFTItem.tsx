@@ -21,6 +21,7 @@ export interface NFTItemDetail {
   owner: string;
   tokenId: string;
   type: TokenType;
+  error?: string;
 }
 
 export const NFTItem: React.FC<{
@@ -40,7 +41,7 @@ export const NFTItem: React.FC<{
       firstValueFrom(
         scanOpenAPISend<{ message: string; result: { list: NFTItemDetail[]; next: number; total: number }; status: string }>(
           currentNetwork?.chainId,
-          `/nft/tokens?contract=${nftInfo.contract}&owner=${ownerAddress}&sort=ASC&sortField=latest_update_time&cursor=0&skip=${page.page}&limit=${pageSize}&withBrief=true&withMetadata=false&suppressMetadataError=false`
+          `/nft/tokens?contract=${nftInfo.contract}&owner=${ownerAddress}&sort=ASC&sortField=latest_update_time&cursor=0&skip=${page.page}&limit=${pageSize}&withBrief=true&withMetadata=false&suppressMetadataError=true`
         )
       ).then((res) => {
         if (page.page === 0) {
@@ -105,6 +106,11 @@ export const NFTItem: React.FC<{
                 style={{ width: '48%' }}
               >
                 <View style={{ backgroundColor: theme.colors.surfaceCard }} className="p-3 mb-3 rounded-md w-full">
+                  {v.amount && v.type === TokenType.ERC1155 && (
+                    <View className="absolute top-4 right-4 z-10 px-2 rounded-full" style={{ backgroundColor: theme.colors.surfaceCard }}>
+                      <Text style={{ color: theme.colors.textPrimary }}>x{v.amount}</Text>
+                    </View>
+                  )}
                   <View className="flex items-center w-full h-36 overflow-hidden">
                     {v.image && <MixinImage source={{ uri: v.image }} className="w-full h-full" />}
                   </View>

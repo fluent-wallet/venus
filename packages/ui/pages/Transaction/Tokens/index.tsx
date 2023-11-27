@@ -3,7 +3,7 @@ import { Pressable, SafeAreaView, View } from 'react-native';
 import { RouteProp } from '@react-navigation/native';
 import { useAtom } from 'jotai';
 import { useTheme, Tab, TabView, Text, ListItem, Icon } from '@rneui/themed';
-import { type RootStackList, type StackNavigation , TransactionConfirmStackName, SendToStackName, TokensStackName} from '@router/configs';
+import { type RootStackList, type StackNavigation, TransactionConfirmStackName, SendToStackName, TokensStackName } from '@router/configs';
 import { statusBarHeight } from '@utils/deviceInfo';
 import { AccountTokenListItem } from '@hooks/useTokenList';
 import { TokenType, transactionAtom } from '@hooks/useTransaction';
@@ -11,7 +11,6 @@ import NFTList from '@components/NFTList';
 import TokenList from '@components/TokenList';
 import { NFTItemDetail } from '@components/NFTList/NFTItem';
 import TokenIconDefault from '@assets/icons/tokenDefault.svg';
-
 
 const Tokens: React.FC<{ navigation: StackNavigation; route: RouteProp<RootStackList, typeof TokensStackName> }> = ({ navigation, route }) => {
   const { theme } = useTheme();
@@ -40,6 +39,8 @@ const Tokens: React.FC<{ navigation: StackNavigation; route: RouteProp<RootStack
     setTransaction((v) => ({
       ...v,
       tokenType: token.type,
+      symbol: token.symbol,
+      balance: token.amount,
       contract: token.contract,
       tokenId: token.tokenId,
       tokenImage: token.image,
@@ -47,7 +48,12 @@ const Tokens: React.FC<{ navigation: StackNavigation; route: RouteProp<RootStack
       nftName: token.nftName,
       iconUrl: token.iconUrl,
     }));
-    navigation.navigate(TransactionConfirmStackName);
+
+    if (token.type === TokenType.ERC1155 && Number(token.amount || 0) > 1) {
+      navigation.navigate(SendToStackName);
+    } else {
+      navigation.navigate(TransactionConfirmStackName);
+    }
   };
 
   return (

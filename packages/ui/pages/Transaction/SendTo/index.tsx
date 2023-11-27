@@ -6,13 +6,12 @@ import { formatUnits } from 'ethers';
 import { shortenAddress } from '@core/utils/address';
 import { Text, useTheme } from '@rneui/themed';
 import { statusBarHeight } from '@utils/deviceInfo';
-import { type StackNavigation, RootStackList, TransactionConfirmStackName ,SendToStackName} from '@router/configs';
+import { type StackNavigation, RootStackList, TransactionConfirmStackName, SendToStackName } from '@router/configs';
 import { BaseButton } from '@components/Button';
-import { transactionAtom } from '@hooks/useTransaction';
+import { TokenType, transactionAtom } from '@hooks/useTransaction';
 import TokenIconDefault from '@assets/icons/tokenDefault.svg';
 import AvatarIcon from '@assets/icons/avatar.svg';
 import CopyAllIcon from '@assets/icons/copy_all.svg';
-
 
 const SendTo: React.FC<{ navigation: StackNavigation; route: RouteProp<RootStackList, typeof SendToStackName> }> = ({ navigation, route }) => {
   const { theme } = useTheme();
@@ -21,7 +20,10 @@ const SendTo: React.FC<{ navigation: StackNavigation; route: RouteProp<RootStack
 
   const [tx, setTx] = useAtom(transactionAtom);
 
-  const accountBalance = useMemo(() => formatUnits(tx.balance, tx.decimals), [tx.balance, tx.decimals]);
+  const accountBalance = useMemo(
+    () => (tx.tokenType === TokenType.ERC20 ? formatUnits(tx.balance, tx.decimals) : tx.balance),
+    [tx.tokenType, tx.balance, tx.decimals]
+  );
 
   const handleChange = (v: string) => {
     setError(false);
@@ -70,7 +72,7 @@ const SendTo: React.FC<{ navigation: StackNavigation; route: RouteProp<RootStack
           </View>
           <View className="flex flex-row justify-end items-center mt-2">
             <Text className="leading-6">
-              Balance: {formatUnits(tx.balance, tx.decimals)} {tx.symbol}
+              Balance: {accountBalance} {tx.symbol}
             </Text>
             <Pressable onPress={() => setValue(accountBalance)} style={{ backgroundColor: theme.colors.surfaceBrand }} className="rounded-lg px-2 py-1 ml-2">
               <Text style={{ color: theme.colors.textPrimary }}>MAX</Text>

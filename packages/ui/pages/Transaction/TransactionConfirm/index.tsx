@@ -14,7 +14,7 @@ import { type RootStackList, type StackNavigation, WalletStackName, HomeStackNam
 import { RPCResponse, RPCSend, RPCSendFactory } from '@core/utils/send';
 import { BaseButton } from '@components/Button';
 import { TokenType, transactionAtom } from '@hooks/useTransaction';
-import { iface721, iface777 } from '@core/contracts';
+import { iface1155, iface721, iface777 } from '@core/contracts';
 import CloseIcon from '@assets/icons/close.svg';
 import SendIcon from '@assets/icons/send.svg';
 import AvatarIcon from '@assets/icons/avatar.svg';
@@ -65,6 +65,10 @@ const TransactionConfirm: React.FC<{
         transaction.to = tx.contract;
         transaction.data = iface721.encodeFunctionData('transferFrom', [currentAddress.hex, tx.to, tx.tokenId]);
       }
+      if (tx.tokenType === TokenType.ERC1155 && tx.contract && tx.tokenId) {
+        transaction.to = tx.contract;
+        transaction.data = iface1155.encodeFunctionData('safeTransferFrom', [currentAddress.hex, tx.to, tx.tokenId, tx.amount, '0x']);
+      }
 
       if (vaultType === 'BSIM') {
         const hash = transaction.unsignedHash;
@@ -92,7 +96,7 @@ const TransactionConfirm: React.FC<{
       }
     }
   };
-  console.log(tx);
+
   useEffect(() => {
     const estimateGasParams: { from: string; nonce: null | string | null; to: string | null; data?: string; value?: string } = {
       from: currentAddress.hex,
@@ -112,6 +116,11 @@ const TransactionConfirm: React.FC<{
     if (tx.tokenType === TokenType.ERC721 && tx.contract && tx.tokenId) {
       estimateGasParams.to = tx.contract;
       estimateGasParams.data = iface721.encodeFunctionData('transferFrom', [currentAddress.hex, tx.to, tx.tokenId]);
+    }
+
+    if (tx.tokenType === TokenType.ERC1155 && tx.contract && tx.tokenId) {
+      estimateGasParams.to = tx.contract;
+      estimateGasParams.data = iface1155.encodeFunctionData('safeTransferFrom', [currentAddress.hex, tx.to, tx.tokenId, tx.amount, '0x']);
     }
 
     firstValueFrom(
@@ -148,20 +157,21 @@ const TransactionConfirm: React.FC<{
       className="flex-1 flex flex-col justify-start px-[24px] pb-7"
       style={{ backgroundColor: theme.colors.normalBackground, paddingTop: statusBarHeight + 48 }}
     >
-      {tx.tokenType === TokenType.ERC721 && (
-        <View className="flex flex-row p-4 rounded-lg w-full" style={{ backgroundColor: theme.colors.surfaceCard }}>
-          {tx.tokenImage && <Image source={{ uri: tx.tokenImage }} width={63} height={63} className="mr-4" />}
-          <View className="flex justify-center">
-            {tx.iconUrl && <Image source={{ uri: tx.iconUrl }} width={24} height={24} />}
-            <Text style={{ color: theme.colors.textSecondary }} className="leading-6">
-              {tx.contractName}
-            </Text>
-            <Text style={{ color: theme.colors.textPrimary }} className="leading-6 font-medium">
-              {tx.nftName}
-            </Text>
+      {tx.tokenType === TokenType.ERC721 ||
+        (tx.tokenType === TokenType.ERC1155 && (
+          <View className="flex flex-row p-4 rounded-lg w-full mb-4" style={{ backgroundColor: theme.colors.surfaceCard }}>
+            {tx.tokenImage && <Image source={{ uri: tx.tokenImage }} width={63} height={63} className="mr-4" />}
+            <View className="flex justify-center">
+              {tx.iconUrl && <Image source={{ uri: tx.iconUrl }} width={24} height={24} />}
+              <Text style={{ color: theme.colors.textSecondary }} className="leading-6">
+                {tx.contractName}
+              </Text>
+              <Text style={{ color: theme.colors.textPrimary }} className="leading-6 font-medium">
+                {tx.nftName}
+              </Text>
+            </View>
           </View>
-        </View>
-      )}
+        ))}
       {error && (
         <Pressable onPress={() => setError('')}>
           <View className="flex flex-row p-3 items-center border rounded-lg mb-4" style={{ borderColor: theme.colors.warnErrorPrimary }}>
@@ -188,7 +198,7 @@ const TransactionConfirm: React.FC<{
           </View>
         </View>
         <Text className="ml-8 leading-6" style={{ color: theme.colors.textSecondary }}>
-          Balance: {formatUnits(tx.balance, tx.decimals)} {tx.symbol}
+          Balance: {tx.tokenType === TokenType.ERC20 ? formatUnits(tx.balance, tx.decimals) : tx.balance} {tx.symbol}
         </Text>
 
         <Divider className="my-4" />
@@ -231,7 +241,7 @@ const TransactionConfirm: React.FC<{
               {formatUnits(gasCost)} CFX
             </Text>
             <Text style={{ color: theme.colors.textSecondary }} className="text-right text-sm leading-6">
-              {/* todo */}
+              {/*  price todo */}
             </Text>
           </View>
         </View>
