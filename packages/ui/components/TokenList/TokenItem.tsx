@@ -10,6 +10,7 @@ import { useEffect } from 'react';
 import { TokenType } from '@hooks/useTransaction';
 import { RPCResponse, RPCSend } from '@core/utils/send';
 import { useCurrentAddress, useCurrentNetwork } from '@core/WalletCore/Plugins/ReactInject';
+import MixinImage from '@components/MixinImage';
 
 const TokenItem: React.FC<{
   data: AccountTokenListItem;
@@ -44,22 +45,33 @@ const TokenItem: React.FC<{
 
   return (
     <Pressable onPress={onPress && data ? () => onPress(data) : undefined}>
-      <View className={'flex flex-row w-full justify-between p-3'}>
-        <View className="flex flex-row items-center">
-          {data.iconUrl ? <Image source={{ uri: data.iconUrl }} width={48} height={48} /> : <TokenIconDefault width={48} height={48} />}
-
-          <View className="ml-[15px]">
-            <Text className="text-base leading-5">{data.name}</Text>
-            <Text style={{ color: theme.colors.textSecondary }}>
+      <View className={'flex flex-row  w-full p-3'}>
+        <View className="w-12 h-12 mr-4">
+          {data.iconUrl ? (
+            <MixinImage source={{ uri: data.iconUrl, width: 48, height: 48 }} width={48} height={48} resizeMode="center" />
+          ) : (
+            <TokenIconDefault width={48} height={48} />
+          )}
+        </View>
+        <View className="flex-1">
+          <View className="flex flex-row flex-1 items-center justify-between">
+            <View className="flex-1">
+              <Text className="text-base leading-5 " numberOfLines={1}>
+                {data.name}
+              </Text>
+            </View>
+            <View className=" ml-2">
+              <Text className="text-base">
+                {data.priceInUSDT ? `$${(Number(formatUnits(data.amount, data.decimals)) * Number(data.priceInUSDT)).toFixed(2)}` : '--'}
+              </Text>
+            </View>
+          </View>
+          <View className="flex-1">
+            <Text style={{ color: theme.colors.textSecondary }} numberOfLines={1}>
               {formatUnits(data.amount, data.decimals)}
               {data.symbol}
             </Text>
           </View>
-        </View>
-        <View className="flex items-end ">
-          <Text className="text-base">
-            {data.priceInUSDT ? `$${(Number(formatUnits(data.amount, data.decimals)) * Number(data.priceInUSDT)).toFixed(2)}` : '--'}
-          </Text>
         </View>
       </View>
     </Pressable>
