@@ -28,7 +28,7 @@ const TransactionConfirm: React.FC<{
   route: RouteProp<RootStackList, typeof TransactionConfirmStackName>;
 }> = ({ navigation, route }) => {
   const { theme } = useTheme();
-
+  const [loading, setLoading] = useState(false);
   const currentNetwork = useCurrentNetwork()!;
   const currentAddress = useCurrentAddress()!;
 
@@ -38,61 +38,68 @@ const TransactionConfirm: React.FC<{
 
   const handleSend = async () => {
     if (gas) {
-      const transaction = new Transaction();
+      setLoading(true);
+      try {
+        const transaction = new Transaction();
 
-      transaction.chainId = currentNetwork.chainId;
+        transaction.chainId = currentNetwork.chainId;
 
-      transaction.gasLimit = gas.gasLimit;
-      transaction.gasPrice = gas.gasPrice;
-      transaction.type = 0;
+        transaction.gasLimit = gas.gasLimit;
+        transaction.gasPrice = gas.gasPrice;
+        transaction.type = 0;
 
-      const nonce = await firstValueFrom(
-        RPCSend<RPCResponse<string>>(currentNetwork.endpoint, { method: 'eth_getTransactionCount', params: [currentAddress.hex, 'pending'] })
-      );
-      transaction.nonce = nonce.result;
-      const vaultType = await currentAddress.getVaultType();
-
-      if (tx.tokenType === TokenType.NATIVE) {
-        transaction.to = tx.to;
-        transaction.value = parseUnits(tx.amount.toString());
-      }
-
-      if (tx.tokenType === TokenType.ERC20 && tx.contract) {
-        transaction.to = tx.contract;
-        transaction.data = iface777.encodeFunctionData('transfer', [tx.to, parseUnits(tx.amount.toString())]);
-      }
-      if (tx.tokenType === TokenType.ERC721 && tx.tokenId && tx.contract) {
-        transaction.to = tx.contract;
-        transaction.data = iface721.encodeFunctionData('transferFrom', [currentAddress.hex, tx.to, tx.tokenId]);
-      }
-      if (tx.tokenType === TokenType.ERC1155 && tx.contract && tx.tokenId) {
-        transaction.to = tx.contract;
-        transaction.data = iface1155.encodeFunctionData('safeTransferFrom', [currentAddress.hex, tx.to, tx.tokenId, tx.amount, '0x']);
-      }
-
-      if (vaultType === 'BSIM') {
-        const hash = transaction.unsignedHash;
-        const index = (await currentAddress.account).index;
-        await BSIMSDK.create();
-
-        // verify BIN
-        await BSIMSDK.verifyBPIN();
-        // retrieve the R S V of the transaction through a polling mechanism
-        const res = await firstValueFrom(
-          defer(() => from(BSIMSDK.signMessage(hash, CoinTypes.CONFLUX, index))).pipe(retry({ delay: 1000 }), timeout(30 * 1000))
+        const nonce = await firstValueFrom(
+          RPCSend<RPCResponse<string>>(currentNetwork.endpoint, { method: 'eth_getTransactionCount', params: [currentAddress.hex, 'pending'] })
         );
-        //  add the R S V to the transaction
-        transaction.signature = Signature.from({ r: res.r, s: res.s, v: res.v });
-        // get the transaction encoded
-        const encodeTx = transaction.serialized;
-        await firstValueFrom(RPCSend(currentNetwork.endpoint, { method: 'eth_sendRawTransaction', params: [encodeTx] }));
-      } else {
-        const pk = await WalletCore.methods.getPrivateKeyOfAddress(currentAddress);
-        const wallet = new Wallet(pk, new JsonRpcProvider(currentNetwork.endpoint));
-        wallet.signTransaction(transaction);
-        wallet.sendTransaction(transaction).then(() => {
+        transaction.nonce = nonce.result;
+        const vaultType = await currentAddress.getVaultType();
+
+        if (tx.tokenType === TokenType.NATIVE) {
+          transaction.to = tx.to;
+          transaction.value = parseUnits(tx.amount.toString());
+        }
+
+        if (tx.tokenType === TokenType.ERC20 && tx.contract) {
+          transaction.to = tx.contract;
+          transaction.data = iface777.encodeFunctionData('transfer', [tx.to, parseUnits(tx.amount.toString())]);
+        }
+        if (tx.tokenType === TokenType.ERC721 && tx.tokenId && tx.contract) {
+          transaction.to = tx.contract;
+          transaction.data = iface721.encodeFunctionData('transferFrom', [currentAddress.hex, tx.to, tx.tokenId]);
+        }
+        if (tx.tokenType === TokenType.ERC1155 && tx.contract && tx.tokenId) {
+          transaction.to = tx.contract;
+          transaction.data = iface1155.encodeFunctionData('safeTransferFrom', [currentAddress.hex, tx.to, tx.tokenId, tx.amount, '0x']);
+        }
+
+        if (vaultType === 'BSIM') {
+          const hash = transaction.unsignedHash;
+          const index = (await currentAddress.account).index;
+          await BSIMSDK.create();
+          // verify BIN
+          await BSIMSDK.verifyBPIN();
+          // retrieve the R S V of the transaction through a polling mechanism
+          const res = await firstValueFrom(
+            defer(() => from(BSIMSDK.signMessage(hash, CoinTypes.CONFLUX, index))).pipe(retry({ delay: 1000 }), timeout(30 * 1000))
+          );
+          //  add the R S V to the transaction
+          transaction.signature = Signature.from({ r: res.r, s: res.s, v: res.v });
+          // get the transaction encoded
+          const encodeTx = transaction.serialized;
+          await firstValueFrom(RPCSend(currentNetwork.endpoint, { method: 'eth_sendRawTransaction', params: [encodeTx] }));
           navigation.navigate(HomeStackName, { screen: WalletStackName });
-        });
+        } else {
+          const pk = await WalletCore.methods.getPrivateKeyOfAddress(currentAddress);
+          const wallet = new Wallet(pk, new JsonRpcProvider(currentNetwork.endpoint));
+          wallet.signTransaction(transaction);
+          wallet.sendTransaction(transaction).then(() => {
+            navigation.navigate(HomeStackName, { screen: WalletStackName });
+          });
+        }
+        setLoading(false);
+      } catch (error) {
+        console.log(error);
+        setLoading(false);
       }
     }
   };
@@ -259,7 +266,7 @@ const TransactionConfirm: React.FC<{
           <CloseIcon />
         </Button>
         <View className="flex-1">
-          <BaseButton disabled={!gas} onPress={handleSend}>
+          <BaseButton loading={loading} disabled={!gas} onPress={handleSend}>
             <SendIcon color="#fff" width={24} height={24} />
             Send
           </BaseButton>

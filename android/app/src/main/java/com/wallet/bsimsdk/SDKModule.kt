@@ -39,14 +39,18 @@ class SDKModule(private val reactContext: ReactApplicationContext) :
         if (BSIMSDKInstance == null) {
             BSIMSDKInstance = Sdk(reactContext.applicationContext, object : SdkCallBack() {
                 override fun success() {
+                    FLog.d("Debug", "create success")
                     promise.resolve(null);
                 }
 
                 override fun failed(e: Exception) {
+                    FLog.d("Debug", "create failed")
                     val failed = "init failed: $e"
                     promise.reject(BSIM_ERRPR, failed)
                 }
             })
+        } else {
+            promise.resolve("");
         }
     }
 
@@ -110,7 +114,7 @@ class SDKModule(private val reactContext: ReactApplicationContext) :
 
 
     @ReactMethod
-    fun signMessage(msg: String, coinTypeString: String, index: Double, promise: Promise) {
+    fun signMessage(msg: String, coinTypeString: String, index: Int, promise: Promise) {
         // 校验BPIN
         // !! 签名前必须先校验BPIN，verifyBPIN调用或立刻返回，BSIM卡拉起输入界面，
         // !! 输入结果BSIM卡自动校验，提示用户，APP拿不到校验结果，app不参与BPIN相关流程
@@ -122,30 +126,40 @@ class SDKModule(private val reactContext: ReactApplicationContext) :
             CoinType.CONFLUX
         }
 
+        var keyList = BSIMSDKInstance?.getPubkeyList()
+
+
         val message = Message(msg = Numeric.hexStringToByteArray(msg), coinType = coinType, index = index.toUInt())
-        val singMsg = BSIMSDKInstance?.signMessage(message)
+        val signMsg = BSIMSDKInstance?.signMessage(message)
 
-        if (singMsg != null) {
-            if (singMsg.Code == CODE_SUCCESS) {
-                val result = WritableNativeMap()
-                val hexSigned = singMsg.R + singMsg.S
-                val signature = Utils.signatureDataFromHex(hexSigned)
+        if (signMsg != null && keyList != null) {
+            var pubkey = keyList.PubkeyList.find { it.index == index }
 
-                if (signature != null) {
-                    result.putString("code", singMsg.Code)
-                    result.putString("message", singMsg.Message)
-                    result.putString("r", Numeric.toHexString(signature.r))
-                    result.putString("s", Numeric.toHexString(signature.s))
-                    result.putString("v", Numeric.toHexString(signature.v))
-                    promise.resolve(result)
+            if (pubkey != null) {
+                if (signMsg.Code == CODE_SUCCESS) {
+                    val result = WritableNativeMap()
+                    FLog.d("debug", "sign msg R ${signMsg.R}")
+                    FLog.d("debug", "sign msg S ${signMsg.S}")
+                    val ecSgn = Utils.Companion.hexRSToECDSASignature(signMsg.R,signMsg.S)
+                    FLog.d("debug", "ecSgn R ${Numeric.toHexStringWithPrefix(ecSgn.r)}")
+                    FLog.d("debug", "ecSgn S ${Numeric.toHexStringWithPrefix(ecSgn.s)}")
+                    val signature = Utils.createSignatureData(ecSgn, Utils.getECKeyFromString(pubkey.key), Numeric.hexStringToByteArray(msg))
+                    if (signature != null) {
+                        result.putString("code", signMsg.Code)
+                        result.putString("message", signMsg.Message)
+                        result.putString("r", Numeric.toHexString(signature.r))
+                        result.putString("s", Numeric.toHexString(signature.s))
+                        result.putString("v", Numeric.toHexString(signature.v))
+                        promise.resolve(result)
+
+                    } else {
+                        promise.reject(BSIM_ERRPR, "signature data from hex error")
+                    }
 
                 } else {
-                    promise.reject(BSIM_ERRPR, "signature data from hex error")
+                    promise.reject(BSIM_ERRPR, signMsg.Message)
+
                 }
-
-            } else {
-                promise.reject(BSIM_ERRPR, singMsg.Message)
-
             }
         }
     }
