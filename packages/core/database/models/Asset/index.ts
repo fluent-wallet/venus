@@ -26,7 +26,8 @@ export class Asset extends Model {
   @text('symbol') symbol!: string | null;
   @field('decimals') decimals!: number | null;
   @text('icon') icon!: string | null;
-  @children(TableName.Tx) tx!: Query<Tx>;
+  @text('asset_id') assetId!: string | null;
+  @children(TableName.Tx) txs!: Query<Tx>;
   @immutableRelation(TableName.Network, 'network_id') network!: Relation<Network>;
   @immutableRelation(TableName.AssetRule, 'asset_rule_id') assetRule!: Relation<AssetRule>;
 }

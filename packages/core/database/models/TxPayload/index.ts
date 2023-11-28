@@ -1,5 +1,6 @@
-import { Model } from '@nozbe/watermelondb';
-import { text } from '@nozbe/watermelondb/decorators';
+import { Model, type Query } from '@nozbe/watermelondb';
+import { text, children } from '@nozbe/watermelondb/decorators';
+import { type Tx } from '../Tx';
 import TableName from '../../TableName';
 
 export class TxPayload extends Model {
@@ -18,4 +19,5 @@ export class TxPayload extends Model {
   @text('nonce') nonce!: string;
   @text('chain_identification') chainId!: string;
   @text('epoch_height') epochHeight!: string;
+  @children(TableName.Tx) txs!: Query<Tx>;
 }
