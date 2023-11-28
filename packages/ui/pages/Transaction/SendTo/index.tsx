@@ -21,7 +21,7 @@ const SendTo: React.FC<{ navigation: StackNavigation; route: RouteProp<RootStack
   const [tx, setTx] = useAtom(transactionAtom);
 
   const accountBalance = useMemo(
-    () => (tx.tokenType === TokenType.ERC20 ? formatUnits(tx.balance, tx.decimals) : tx.balance),
+    () => (tx.tokenType === TokenType.ERC20 || tx.tokenType === TokenType.NATIVE ? formatUnits(tx.balance, tx.decimals) : tx.balance),
     [tx.tokenType, tx.balance, tx.decimals]
   );
 

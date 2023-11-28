@@ -57,16 +57,18 @@ const ScanQRCode: React.FC<{ navigation: StackNavigation; route: RouteProp<RootS
                 ))}
               </View>
             )} */}
-            <Camera
-              isActive={isActive}
-              device={device}
-              codeScanner={{
-                codeTypes: ['qr', 'ean-13'],
-                onCodeScanned: handleCodeScanned,
-              }}
-              style={{ flex: 1 }}
-              fps={30}
-            />
+            {device && (
+              <Camera
+                isActive={isActive}
+                device={device}
+                codeScanner={{
+                  codeTypes: ['qr', 'ean-13'],
+                  onCodeScanned: handleCodeScanned,
+                }}
+                style={{ flex: 1 }}
+                fps={30}
+              />
+            )}
           </View>
         )}
       </View>
