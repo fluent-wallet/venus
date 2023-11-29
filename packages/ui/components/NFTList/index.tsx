@@ -11,6 +11,7 @@ const NFTList: React.FC<{ onPress?: (v: AccountTokenListItem & NFTItemDetail & {
   const [tokenList] = useAtom(ERC721And1155TokenListAtom);
   const address = useCurrentAddress()!;
   const [loadMore, setLoadMore] = useState(false);
+  const [currentOpen, setCurrentOpen] = useState<string | null>(null);
 
   const handleSelectNFT = (token: NFTItemDetail & AccountTokenListItem & { contractName: string; nftName: string }) => {
     if (onPress) {
@@ -18,13 +19,28 @@ const NFTList: React.FC<{ onPress?: (v: AccountTokenListItem & NFTItemDetail & {
     }
   };
   const handleOnscroll = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
-    setLoadMore(event.nativeEvent.contentSize.height - event.nativeEvent.layoutMeasurement.height - event.nativeEvent.contentOffset.x < 500 ? true : false);
+    const needMore = event.nativeEvent.contentSize.height - event.nativeEvent.layoutMeasurement.height - event.nativeEvent.contentOffset.y < 500;
+    if (!loadMore && needMore) {
+      setLoadMore(true);
+    } else if (loadMore && !needMore) {
+      setLoadMore(false);
+    }
   };
 
   return (
     <ScrollView onScroll={handleOnscroll}>
       {tokenList ? (
-        tokenList.map((item) => <NFTItem loadMore={loadMore} key={item.contract} nftInfo={item} ownerAddress={address.hex} onPress={handleSelectNFT} />)
+        tokenList.map((item) => (
+          <NFTItem
+            currentOpen={currentOpen}
+            setCurrentOpen={setCurrentOpen}
+            loadMore={loadMore}
+            key={item.contract}
+            nftInfo={item}
+            ownerAddress={address.hex}
+            onPress={handleSelectNFT}
+          />
+        ))
       ) : (
         <ActivityIndicator size={'large'} color={theme.colors.contrastWhiteAndBlack} />
       )}

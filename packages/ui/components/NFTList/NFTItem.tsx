@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Image, Pressable, View } from 'react-native';
 import { firstValueFrom, err } from 'rxjs';
 import { Button, Icon } from '@rneui/base';
@@ -25,47 +25,72 @@ export interface NFTItemDetail {
 }
 
 export const NFTItem: React.FC<{
+  currentOpen: string | null;
+  setCurrentOpen: (v: string | null) => void;
   loadMore: boolean;
   nftInfo: AccountTokenListItem;
   ownerAddress: string;
   onPress?: (item: AccountTokenListItem & NFTItemDetail & { contractName: string; nftName: string }) => void;
-}> = ({ nftInfo, ownerAddress, onPress }) => {
+}> = ({ nftInfo, ownerAddress, onPress, currentOpen, setCurrentOpen, loadMore }) => {
   const { theme } = useTheme();
-  const [isExpanded, setIsExpanded] = useState(false);
   const [page, setPage] = useState({ page: 0, total: 0 });
   const [list, setList] = useState<NFTItemDetail[]>([]);
   const currentNetwork = useCurrentNetwork();
-  // TODO loadMore
-  useEffect(() => {
-    if (isExpanded && currentNetwork?.chainId) {
+  const firstRequest = useRef(true);
+  const inRequest = useRef(false);
+
+  const requestNFT = useCallback(async () => {
+    if (currentOpen === nftInfo.contract && currentNetwork?.chainId) {
+      let skip = 0;
+      console.log(loadMore, page.total, page.page * pageSize);
+      if (loadMore && page.total > page.page * pageSize) {
+        skip = page.page * pageSize;
+      }
+      inRequest.current = true;
       firstValueFrom(
         scanOpenAPISend<{ message: string; result: { list: NFTItemDetail[]; next: number; total: number }; status: string }>(
           currentNetwork?.chainId,
-          `/nft/tokens?contract=${nftInfo.contract}&owner=${ownerAddress}&sort=ASC&sortField=latest_update_time&cursor=0&skip=${page.page}&limit=${pageSize}&withBrief=true&withMetadata=false&suppressMetadataError=true`
+          `/nft/tokens?contract=${nftInfo.contract}&owner=${ownerAddress}&sort=ASC&sortField=latest_update_time&cursor=0&skip=${skip}&limit=${pageSize}&withBrief=true&withMetadata=false&suppressMetadataError=true`
         )
-      ).then((res) => {
-        if (page.page === 0) {
-          // setList(res);
-          setPage({ page: 0, total: res.result.total });
-          setList(res.result.list);
-        } else {
-          setList((v) => {
-            const hash = v.reduce((acc, cur) => {
-              acc[cur.tokenId] = true;
-              return acc;
-            }, {} as Record<string, boolean>);
-            return [...v, ...res.result.list.filter((v) => !hash[v.tokenId])];
-          });
-        }
-      });
+      )
+        .then((res) => {
+          if (page.page === 0) {
+            setPage({ page: 1, total: res.result.total });
+            setList(res.result.list);
+          } else {
+            setList((v) => {
+              const hash = v.reduce((acc, cur) => {
+                acc[cur.tokenId] = true;
+                return acc;
+              }, {} as Record<string, boolean>);
+              return [...v, ...res.result.list.filter((v) => !hash[v.tokenId])];
+            });
+          }
+        })
+        .finally(() => {
+          inRequest.current = false;
+        });
     }
-  }, [isExpanded, nftInfo.contract, ownerAddress, page.page, currentNetwork?.chainId]);
+  }, [currentOpen, nftInfo.contract, ownerAddress, page.page, currentNetwork?.chainId, page.total, loadMore]);
 
+  // TODO loadMore
+  useEffect(() => {
+    if (currentOpen === nftInfo.contract && firstRequest.current) {
+      firstRequest.current = false;
+      requestNFT();
+    }
+  }, [requestNFT, currentOpen, nftInfo.contract]);
+
+  useEffect(() => {
+    if (currentOpen === nftInfo.contract && loadMore && !firstRequest.current && !inRequest.current && list.length < page.total) {
+      requestNFT();
+    }
+  }, [loadMore, requestNFT, currentOpen, nftInfo.contract, list.length, page.total]);
   return (
     <View className="flex flex-1 w-full">
       <ListItem.Accordion
-        isExpanded={isExpanded}
-        onPress={() => setIsExpanded(!isExpanded)}
+        isExpanded={currentOpen === nftInfo.contract}
+        onPress={() => setCurrentOpen(currentOpen === nftInfo.contract ? null : nftInfo.contract)}
         containerStyle={{
           backgroundColor: theme.colors.normalBackground,
           display: 'flex',
@@ -85,7 +110,7 @@ export const NFTItem: React.FC<{
       >
         <ListItem containerStyle={{ backgroundColor: 'transparent' }}>
           <View className="flex flex-row flex-wrap justify-between w-full">
-            {isExpanded && list.length === 0 && (
+            {currentOpen && list.length === 0 && (
               <View style={{ backgroundColor: theme.colors.surfaceCard }} className="p-3 mb-3 rounded-md">
                 <View className="w-36 h-36">
                   <Skeleton width={144} height={144} />
@@ -123,7 +148,6 @@ export const NFTItem: React.FC<{
                 </View>
               </Pressable>
             ))}
-            {list.length < page.total && <Button onPress={() => setPage({ page: page.page + 1, total: page.total })}>Load More</Button>}
           </View>
         </ListItem>
       </ListItem.Accordion>
