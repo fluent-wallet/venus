@@ -5,6 +5,9 @@ import TableName from '../../TableName';
 
 export class TxPayload extends Model {
   static table = TableName.TxPayload;
+  static associations = {
+    [TableName.Tx]: { type: 'has_many', foreignKey: 'asset_id' },
+  } as const;
 
   @text('access_list') accessList!: string;
   @text('max_fee_per_gas') maxFeePerGas!: string;
