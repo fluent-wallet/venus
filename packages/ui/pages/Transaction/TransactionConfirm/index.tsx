@@ -22,6 +22,7 @@ import CopyAllIcon from '@assets/icons/copy_all.svg';
 import Warning from '@assets/icons/warning_2.svg';
 import BSIMSDK, { CoinTypes } from 'packages/WalletCoreExtends/Plugins/BSIM/BSIMSDK';
 import { addHexPrefix } from '@core/utils/base';
+import MixinImage from '@components/MixinImage';
 
 const TransactionConfirm: React.FC<{
   navigation: StackNavigation;
@@ -164,21 +165,26 @@ const TransactionConfirm: React.FC<{
       className="flex-1 flex flex-col justify-start px-[24px] pb-7"
       style={{ backgroundColor: theme.colors.normalBackground, paddingTop: statusBarHeight + 48 }}
     >
-      {tx.tokenType === TokenType.ERC721 ||
-        (tx.tokenType === TokenType.ERC1155 && (
-          <View className="flex flex-row p-4 rounded-lg w-full mb-4" style={{ backgroundColor: theme.colors.surfaceCard }}>
-            {tx.tokenImage && <Image source={{ uri: tx.tokenImage }} width={63} height={63} className="mr-4" />}
-            <View className="flex justify-center">
-              {tx.iconUrl && <Image source={{ uri: tx.iconUrl }} width={24} height={24} />}
-              <Text style={{ color: theme.colors.textSecondary }} className="leading-6">
+      {(tx.tokenType === TokenType.ERC721 || tx.tokenType === TokenType.ERC1155) && (
+        <View className="flex flex-row p-4 rounded-lg w-full mb-4" style={{ backgroundColor: theme.colors.surfaceCard }}>
+          {tx.tokenImage && <Image source={{ uri: tx.tokenImage }} width={63} height={63} className="mr-4" />}
+          <View className="flex justify-center">
+            <View className="flex flex-row mb-1">
+              {tx.iconUrl && (
+                <View className="w-6 h-6 overflow-hidden rounded-full mr-2">
+                  <MixinImage source={{ uri: tx.iconUrl }} width={24} height={24} />
+                </View>
+              )}
+              <Text style={{ color: theme.colors.textSecondary }} className="leading-normal">
                 {tx.contractName}
               </Text>
-              <Text style={{ color: theme.colors.textPrimary }} className="leading-6 font-medium">
-                {tx.nftName}
-              </Text>
             </View>
+            <Text style={{ color: theme.colors.textPrimary }} className="leading-normal font-medium">
+              {tx.nftName}
+            </Text>
           </View>
-        ))}
+        </View>
+      )}
       {error && (
         <Pressable onPress={() => setError('')}>
           <View className="flex flex-row p-3 items-center border rounded-lg mb-4" style={{ borderColor: theme.colors.warnErrorPrimary }}>
