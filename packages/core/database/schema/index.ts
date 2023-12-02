@@ -41,6 +41,7 @@ const schema = appSchema({
         { name: 'symbol', type: 'string', isOptional: true },
         { name: 'decimals', type: 'number', isOptional: true },
         { name: 'icon', type: 'string', isOptional: true },
+        { name: 'asset_id', type: 'string', isOptional: true },
         { name: 'network_id', type: 'string', isIndexed: true },
         { name: 'asset_rule_id', type: 'string', isIndexed: true },
       ],
@@ -71,6 +72,7 @@ const schema = appSchema({
         { name: 'from_fluent', type: 'boolean', isOptional: true },
         { name: 'from_scan', type: 'boolean', isOptional: true },
         { name: 'resend_at', type: 'number', isOptional: true },
+        { name: 'app_id', type: 'string', isIndexed: true, isOptional: true },
         { name: 'asset_id', type: 'string', isIndexed: true, isOptional: true },
         { name: 'address_id', type: 'string', isIndexed: true },
         { name: 'tx_extra_id', type: 'string', isIndexed: true },
@@ -184,6 +186,7 @@ const schema = appSchema({
       name: TableName.Request,
       columns: [
         { name: 'type', type: 'string' },
+        { name: 'value', type: 'string', isOptional: true },
         { name: 'processed', type: 'boolean' },
         { name: 'created_at', type: 'number' },
         { name: 'app_id', type: 'string', isIndexed: true },

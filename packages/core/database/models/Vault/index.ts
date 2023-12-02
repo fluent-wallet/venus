@@ -15,7 +15,7 @@ export class Vault extends Model {
   @text('type') type!: VaultType;
   /** data need to be encrypted when the type is pk or hd. */
   @text('data') data!: string | null;
-  /** Vault device, default is FluentWebExt */
+  /** Vault device, default is ePayWallet */
   @text('device') device!: 'ePayWallet' | 'FluentWebExt';
   /** The accounts for conflux core and ethereum's ledger hardware wallet maybe separate. */
   @field('cfx_only') cfxOnly!: boolean | null;

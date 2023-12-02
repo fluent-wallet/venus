@@ -10,6 +10,7 @@ export class Request extends Model {
   } as const;
 
   @text('type') type!: string;
+  @text('value') value!: string | null;
   @field('processed') processed!: boolean;
   @readonly @date('created_at') createdAt!: Date;
   @immutableRelation(TableName.App, 'app_id') app!: Relation<App>;
