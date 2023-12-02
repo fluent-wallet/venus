@@ -57,6 +57,7 @@ export const CFX_ESPACE_TESTNET_CURRENCY_NAME = 'Conflux';
 export const CFX_ESPACE_TESTNET_EXPLORER_URL = 'https://evmtestnet.confluxscan.net';
 export const CFX_ESPACE_TESTNET_SCAN_OPENAPI = 'https://evmapi-testnet.confluxscan.io';
 export const CFX_ESPACE_TESTNET_SCAN = 'https://evmtestnet.confluxscan.io';
+export const CFX_ESPACE_TESTNET_WALLET_CONTRACT_ADDRESS = '0xce2104aa7233b27b0ba2e98ede59b6f78c06ae05';
 
 export const ETH_MAINNET_RPC_ENDPOINT = `https://mainnet.infura.io/v3/${ETH_API_LIMIT_KEY}`;
 export const ETH_MAINNET_NAME = 'Ethereum Mainnet';

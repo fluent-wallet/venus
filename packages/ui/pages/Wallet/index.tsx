@@ -1,50 +1,26 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { View, SafeAreaView, Pressable } from 'react-native';
-import { delay, repeat } from 'rxjs';
 import { useAtom } from 'jotai';
 import { formatUnits } from 'ethers';
 import { Text, useTheme, Tab, TabView } from '@rneui/themed';
 import { statusBarHeight } from '@utils/deviceInfo';
-import { useCurrentAddressValue, useCurrentNetwork } from '@core/WalletCore/Plugins/ReactInject';
 import { type StackNavigation, ReceiveAddressStackName, ReceiveStackName } from '@router/configs';
-
-import { nativeAndERC20tokenListAtom, requestTokenList, writeTokenListAtom } from '@hooks/useTokenList';
+import { nativeTokenAtom, readScanAndFailBackTokenListAtom } from '@hooks/useTokenList';
 import TokenList from '@components/TokenList';
 import NFTList from '@components/NFTList';
 import SendIcon from '@assets/icons/send.svg';
 import ReceiveIcon from '@assets/icons/receive.svg';
 import BuyIcon from '@assets/icons/buy.svg';
 import MoreIcon from '@assets/icons/more.svg';
-import { TokenType } from '@hooks/useTransaction';
-
 const Wallet: React.FC<{ navigation: StackNavigation }> = ({ navigation }) => {
   const { theme } = useTheme();
   const [tabIndex, setTabIndex] = useState(0);
-  const [tokenList] = useAtom(nativeAndERC20tokenListAtom);
-  const [_, writeTokenList] = useAtom(writeTokenListAtom);
-  const currentNetwork = useCurrentNetwork();
-  const currentAddress = useCurrentAddressValue();
-  useEffect(() => {
-    if (currentAddress && currentNetwork?.chainId) {
-      // start with a random interval of one to five seconds. then repeat every five seconds.
-      const observable = requestTokenList(
-        currentNetwork?.chainId,
-        currentAddress,
-        [TokenType.NATIVE, TokenType.ERC20, TokenType.ERC721, TokenType.ERC1155].join(',')
-      ).pipe(delay(Math.floor(Math.random() * (5 - 1 + 1) + 1) * 1000), repeat({ delay: 5 * 1000 }));
-
-      const subscribe = observable.subscribe((res) => {
-        writeTokenList(res);
-      });
-
-      return () => {
-        subscribe.unsubscribe();
-      };
-    }
-  }, [currentAddress, currentNetwork?.chainId, writeTokenList]);
+  const [ERC20TokenList] = useAtom(readScanAndFailBackTokenListAtom);
+  const [nativeToken] = useAtom(nativeTokenAtom);
+  const tokenList = nativeToken && ERC20TokenList ? [nativeToken, ...ERC20TokenList] : ERC20TokenList;
 
   const value = tokenList
-    ? tokenList.reduce((acc, cur) => (cur.priceInUSDT ? acc + Number(cur.priceInUSDT) * Number(formatUnits(cur.amount, cur.decimals)) : acc), 0).toFixed(2)
+    ? tokenList.reduce((acc, cur) => (cur.priceInUSDT ? acc + Number(cur.priceInUSDT) * Number(formatUnits(cur.balance, cur.decimals)) : acc), 0).toFixed(2)
     : null;
 
   return (
@@ -62,7 +38,7 @@ const Wallet: React.FC<{ navigation: StackNavigation }> = ({ navigation }) => {
         </Text>
 
         <View className="flex flex-row">
-          <Pressable className="flex items-center flex-1" onPress={() => navigation.navigate(ReceiveAddressStackName)}>
+          <Pressable className="flex items-center flex-1" onPress={() => navigation.navigate(ReceiveAddressStackName, {})}>
             <View className="flex justify-center items-center w-[60px] h-[60px] rounded-full" style={{ backgroundColor: theme.colors.surfaceBrand }}>
               <SendIcon color="#fff" width={32} height={32} />
             </View>

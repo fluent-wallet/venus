@@ -1,6 +1,6 @@
 import { ScrollView, NativeSyntheticEvent, NativeScrollEvent, ActivityIndicator } from 'react-native';
 import { useTheme } from '@rneui/themed';
-import { AccountTokenListItem, ERC721And1155TokenListAtom } from '@hooks/useTokenList';
+import { ERC721And1155TokenListAtom, AccountTokenListItem } from '@hooks/useTokenList';
 import { useAtom } from 'jotai';
 import { NFTItemDetail, NFTItem } from './NFTItem';
 import { useCurrentAddress } from '@core/WalletCore/Plugins/ReactInject';

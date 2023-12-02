@@ -3,7 +3,7 @@ import { formatUnits } from 'ethers';
 import { Image, Pressable } from 'react-native';
 import { View } from 'react-native';
 import TokenIconDefault from '@assets/icons/tokenDefault.svg';
-import { nativeAndERC20tokenListAtom, AccountTokenListItem } from '../../hooks/useTokenList';
+import { ERC20tokenListAtom, AccountTokenListItem } from '../../hooks/useTokenList';
 import { useAtom } from 'jotai';
 
 import { useEffect } from 'react';
@@ -17,7 +17,7 @@ const TokenItem: React.FC<{
   onPress?: (v: AccountTokenListItem) => void;
 }> = ({ onPress, data }) => {
   const { theme } = useTheme();
-  const [_, setNativeAndERC20TokenList] = useAtom(nativeAndERC20tokenListAtom);
+  const [_, setNativeAndERC20TokenList] = useAtom(ERC20tokenListAtom);
   const currentNetwork = useCurrentNetwork()!;
   const address = useCurrentAddress()!;
 
@@ -62,13 +62,13 @@ const TokenItem: React.FC<{
             </View>
             <View className=" ml-2">
               <Text className="text-base">
-                {data.priceInUSDT ? `$${(Number(formatUnits(data.amount, data.decimals)) * Number(data.priceInUSDT)).toFixed(2)}` : '--'}
+                {data.priceInUSDT ? `$${(Number(formatUnits(data.balance, data.decimals)) * Number(data.priceInUSDT)).toFixed(2)}` : '--'}
               </Text>
             </View>
           </View>
           <View className="flex-1">
             <Text style={{ color: theme.colors.textSecondary }} numberOfLines={1}>
-              {formatUnits(data.amount, data.decimals)}
+              {formatUnits(data.balance, data.decimals)}
               {data.symbol}
             </Text>
           </View>
