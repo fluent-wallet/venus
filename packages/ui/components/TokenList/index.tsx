@@ -63,21 +63,18 @@ const TokenList: React.FC<{ onPress?: (v: AccountTokenListItem) => void }> = ({ 
           if (res === null) {
             setTokenListState({ type: 'fallback' }); // set type to fallback
             // then start loop check every 30 seconds
-            console.log('loop is next', 30);
             scanERC20ListSubject.next({ delay: 30 * 1000 });
           } else {
             setTokenListState({ type: 'scan' });
             setERC20TokenList(res);
             // if ok loop  every 5 seconds
-            console.log('loop is next', 5);
             scanERC20ListSubject.next({ delay: 5 * 1000 });
           }
-        }
+        },
       });
       // first request is immediately
       scanERC20ListSubject.next({ delay: 0 });
       return () => {
-
         subscribe.unsubscribe();
       };
     }, [setERC20TokenList, setTokenListState])
