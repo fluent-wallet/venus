@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Image, Pressable, View } from 'react-native';
-import { firstValueFrom, err } from 'rxjs';
+import { firstValueFrom } from 'rxjs';
 import { Button, Icon } from '@rneui/base';
 import { ListItem, Text, useTheme, Skeleton } from '@rneui/themed';
 import { AccountTokenListItem } from '@hooks/useTokenList';
@@ -55,7 +55,6 @@ export const NFTItem: React.FC<{
       )
         .then((res) => {
           if (page.page === 0) {
-            setPage({ page: 1, total: res.result.total });
             setList(res.result.list);
           } else {
             setList((v) => {
@@ -66,6 +65,7 @@ export const NFTItem: React.FC<{
               return [...v, ...res.result.list.filter((v) => !hash[v.tokenId])];
             });
           }
+          setPage({ page: page.page + 1, total: res.result.total });
         })
         .finally(() => {
           inRequest.current = false;

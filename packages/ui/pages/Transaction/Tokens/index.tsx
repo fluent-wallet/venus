@@ -25,7 +25,7 @@ const Tokens: React.FC<{ navigation: StackNavigation; route: RouteProp<RootStack
     setTransaction((v) => ({
       ...v,
       tokenType: token.type,
-      balance: token.amount,
+      balance: token.balance,
       symbol: token.symbol,
       decimals: token.decimals,
       contract: token.contract,
