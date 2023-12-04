@@ -12,6 +12,7 @@ import { AccountGroupMethod } from './accountGroupMethod';
 import { VaultMethod } from './vaultMethod';
 import { NetworkMethod } from './networkMethod';
 import { DatabaseMethod } from './databaseMethod';
+import { TransactionMethod } from './transactionMethod';
 
 @injectable()
 export class Methods {
@@ -99,6 +100,14 @@ export class Methods {
     return this.DatabaseMethod.clearAccountData(...args);
   }
 
+  @inject(TransactionMethod) private TransactionMethod!: TransactionMethod;
+  public getTransactionGasAndGasLimit(...args: Parameters<TransactionMethod['getGasPriceAndLimit']>) {
+    return this.TransactionMethod.getGasPriceAndLimit(...args);
+  }
+  public sendTransaction(...args: Parameters<TransactionMethod['sendTransaction']>) {
+    return this.TransactionMethod.sendTransaction(...args);
+  }
+
   [methodName: string]: any;
   public register(methodName: string, method: Function) {
     this[methodName] = method;
@@ -113,6 +122,7 @@ container.bind(AccountGroupMethod).to(AccountGroupMethod).inSingletonScope();
 container.bind(VaultMethod).to(VaultMethod).inSingletonScope();
 container.bind(NetworkMethod).to(NetworkMethod).inSingletonScope();
 container.bind(DatabaseMethod).to(DatabaseMethod).inSingletonScope();
+container.bind(TransactionMethod).to(TransactionMethod).inSingletonScope();
 container.bind(Methods).to(Methods).inSingletonScope();
 
 export default container.get(Methods) as Methods;

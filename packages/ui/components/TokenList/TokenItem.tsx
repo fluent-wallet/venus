@@ -7,10 +7,10 @@ import { ERC20tokenListAtom, AccountTokenListItem } from '../../hooks/useTokenLi
 import { useAtom } from 'jotai';
 
 import { useEffect } from 'react';
-import { TokenType } from '@hooks/useTransaction';
 import { RPCResponse, RPCSend } from '@core/utils/send';
 import { useCurrentAddress, useCurrentNetwork } from '@core/WalletCore/Plugins/ReactInject';
 import MixinImage from '@components/MixinImage';
+import { AssetType } from '@core/database/models/Asset';
 
 const TokenItem: React.FC<{
   data: AccountTokenListItem;
@@ -22,15 +22,16 @@ const TokenItem: React.FC<{
   const address = useCurrentAddress()!;
 
   useEffect(() => {
-    if (data?.type && data.type === TokenType.NATIVE) {
+    if (data?.type && data.type === AssetType.Native) {
       RPCSend<RPCResponse<string>>(currentNetwork.endpoint, { method: 'eth_getBalance', params: [address.hex, 'latest'] }).subscribe((res) => {
         if (res.result) {
           setNativeAndERC20TokenList((prev) => {
             if (prev === null) return prev;
             const newList = prev.map((item) => {
-              if (item.type === TokenType.NATIVE) {
+              if (item.type === AssetType.Native) {
                 return {
                   ...item,
+                  type: AssetType.Native,
                   amount: res.result,
                 };
               }

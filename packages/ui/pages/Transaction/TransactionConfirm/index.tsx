@@ -2,27 +2,23 @@ import { useEffect, useState } from 'react';
 import { Pressable, SafeAreaView, View, Image } from 'react-native';
 import { RouteProp } from '@react-navigation/native';
 import { useAtom } from 'jotai';
-import { map, switchMap, firstValueFrom, from, retry, tap, defer, timeout } from 'rxjs';
-import { JsonRpcProvider, Transaction, formatUnits, parseUnits, Signature } from 'ethers';
+import {  formatUnits, } from 'ethers';
 import { Button, Divider, Text, useTheme } from '@rneui/themed';
 import { statusBarHeight } from '@utils/deviceInfo';
-import { Wallet } from 'ethers';
-import WalletCore from '@core/WalletCore';
 import { useCurrentAddress, useCurrentNetwork } from '@core/WalletCore/Plugins/ReactInject';
 import { shortenAddress } from '@core/utils/address';
 import { type RootStackList, type StackNavigation, WalletStackName, HomeStackName, TransactionConfirmStackName } from '@router/configs';
-import { RPCResponse, RPCSend, RPCSendFactory } from '@core/utils/send';
 import { BaseButton } from '@components/Button';
-import { TokenType, transactionAtom } from '@hooks/useTransaction';
-import { iface1155, iface721, iface777 } from '@core/contracts';
 import CloseIcon from '@assets/icons/close.svg';
 import SendIcon from '@assets/icons/send.svg';
 import AvatarIcon from '@assets/icons/avatar.svg';
 import CopyAllIcon from '@assets/icons/copy_all.svg';
 import Warning from '@assets/icons/warning_2.svg';
-import BSIMSDK, { CoinTypes } from 'packages/WalletCoreExtends/Plugins/BSIM/BSIMSDK';
-import { addHexPrefix } from '@core/utils/base';
+import { transactionAtom } from '@core/WalletCore/Plugins/ReactInject/data/useTransaction';
 import MixinImage from '@components/MixinImage';
+import { AssetType } from '@core/database/models/Asset';
+import Methods from '@core/WalletCore/Methods';
+import Events from '@core/WalletCore/Events';
 
 const TransactionConfirm: React.FC<{
   navigation: StackNavigation;
@@ -41,62 +37,14 @@ const TransactionConfirm: React.FC<{
     if (gas) {
       setLoading(true);
       try {
-        const transaction = new Transaction();
+        const hash = await Methods.sendTransaction(tx, gas);
 
-        transaction.chainId = currentNetwork.chainId;
-
-        transaction.gasLimit = gas.gasLimit;
-        transaction.gasPrice = gas.gasPrice;
-        transaction.type = 0;
-
-        const nonce = await firstValueFrom(
-          RPCSend<RPCResponse<string>>(currentNetwork.endpoint, { method: 'eth_getTransactionCount', params: [currentAddress.hex, 'pending'] })
-        );
-        transaction.nonce = nonce.result;
-        const vaultType = await currentAddress.getVaultType();
-
-        if (tx.tokenType === TokenType.NATIVE) {
-          transaction.to = tx.to;
-          transaction.value = parseUnits(tx.amount.toString());
-        }
-
-        if (tx.tokenType === TokenType.ERC20 && tx.contract) {
-          transaction.to = tx.contract;
-          transaction.data = iface777.encodeFunctionData('transfer', [tx.to, parseUnits(tx.amount.toString())]);
-        }
-        if (tx.tokenType === TokenType.ERC721 && tx.tokenId && tx.contract) {
-          transaction.to = tx.contract;
-          transaction.data = iface721.encodeFunctionData('transferFrom', [currentAddress.hex, tx.to, tx.tokenId]);
-        }
-        if (tx.tokenType === TokenType.ERC1155 && tx.contract && tx.tokenId) {
-          transaction.to = tx.contract;
-          transaction.data = iface1155.encodeFunctionData('safeTransferFrom', [currentAddress.hex, tx.to, tx.tokenId, tx.amount, '0x']);
-        }
-
-        if (vaultType === 'BSIM') {
-          const hash = transaction.unsignedHash;
-          const index = (await currentAddress.account).index;
-          await BSIMSDK.create();
-          // verify BIN
-          await BSIMSDK.verifyBPIN();
-          // retrieve the R S V of the transaction through a polling mechanism
-          const res = await firstValueFrom(
-            defer(() => from(BSIMSDK.signMessage(hash, CoinTypes.CONFLUX, index))).pipe(retry({ delay: 1000 }), timeout(30 * 1000))
-          );
-          //  add the R S V to the transaction
-          transaction.signature = Signature.from({ r: res.r, s: res.s, v: res.v });
-          // get the transaction encoded
-          const encodeTx = transaction.serialized;
-          await firstValueFrom(RPCSend(currentNetwork.endpoint, { method: 'eth_sendRawTransaction', params: [encodeTx] }));
-          navigation.navigate(HomeStackName, { screen: WalletStackName });
-        } else {
-          const pk = await WalletCore.methods.getPrivateKeyOfAddress(currentAddress);
-          const wallet = new Wallet(pk, new JsonRpcProvider(currentNetwork.endpoint));
-          wallet.signTransaction(transaction);
-          wallet.sendTransaction(transaction).then(() => {
-            navigation.navigate(HomeStackName, { screen: WalletStackName });
-          });
-        }
+        Events.broadcastTransactionSubjectPush.next({
+          ...tx,
+          ...gas,
+          hash,
+        });
+        navigation.navigate(HomeStackName, { screen: WalletStackName });
         setLoading(false);
       } catch (error) {
         console.log(error);
@@ -106,55 +54,19 @@ const TransactionConfirm: React.FC<{
   };
 
   useEffect(() => {
-    const estimateGasParams: { from: string; nonce: null | string | null; to: string | null; data?: string; value?: string } = {
-      from: currentAddress.hex,
-      nonce: null,
-      to: null,
-    };
-    if (tx.tokenType === TokenType.NATIVE) {
-      estimateGasParams.to = tx.to;
-      estimateGasParams.data = '0x';
-      estimateGasParams.value = addHexPrefix(parseUnits(tx.amount.toString()).toString(16));
-    }
-
-    if (tx.tokenType === TokenType.ERC20 && tx.contract) {
-      estimateGasParams.to = tx.contract;
-      estimateGasParams.data = iface777.encodeFunctionData('transfer', [tx.to, parseUnits(tx.amount.toString())]);
-    }
-    if (tx.tokenType === TokenType.ERC721 && tx.contract && tx.tokenId) {
-      estimateGasParams.to = tx.contract;
-      estimateGasParams.data = iface721.encodeFunctionData('transferFrom', [currentAddress.hex, tx.to, tx.tokenId]);
-    }
-
-    if (tx.tokenType === TokenType.ERC1155 && tx.contract && tx.tokenId) {
-      estimateGasParams.to = tx.contract;
-      estimateGasParams.data = iface1155.encodeFunctionData('safeTransferFrom', [currentAddress.hex, tx.to, tx.tokenId, tx.amount, '0x']);
-    }
-
-    firstValueFrom(
-      RPCSend<RPCResponse<string>>(currentNetwork.endpoint, { method: 'eth_getTransactionCount', params: [currentAddress.hex, 'pending'] }).pipe(
-        map((res) => res.result),
-        switchMap((nonce) => {
-          estimateGasParams.nonce = nonce;
-
-          return RPCSend<RPCResponse<string>[]>(currentNetwork.endpoint, [
-            {
-              method: 'eth_estimateGas',
-              params: [estimateGasParams],
-            },
-            { method: 'eth_gasPrice' },
-          ]);
-        }),
-        map(([gas, gasPrice]) => ({ gasLimit: gas.result, gasPrice: gasPrice.result }))
-      )
-    ).then((res) => setGas(res));
-  }, [currentNetwork.endpoint, tx.tokenType, tx.contract, tx.to, tx.amount, currentAddress.hex, tx.tokenId]);
+    Methods.getTransactionGasAndGasLimit({ to: tx.to, amount: tx.amount, assetType: tx.assetType, contract: tx.contract, tokenId: tx.tokenId })
+      .then((res) => setGas(res))
+      .catch((err) => {
+        console.log('getTransactionGasAndGasLimit error', err);
+        // TODO maybe we need show the error to user
+      });
+  }, [currentNetwork.endpoint, tx.assetType, tx.contract, tx.to, tx.amount, currentAddress.hex, tx.tokenId]);
 
   const renderAmount = () => {
-    if (tx.tokenType === TokenType.ERC20 || tx.tokenType === TokenType.NATIVE) {
+    if (tx.assetType === AssetType.ERC20 || tx.assetType === AssetType.Native) {
       return `${tx.amount} ${tx.symbol}`;
     }
-    if (tx.tokenType === TokenType.ERC721) {
+    if (tx.assetType === AssetType.ERC721) {
       return `1 ${tx.contractName}`;
     }
   };
@@ -165,7 +77,7 @@ const TransactionConfirm: React.FC<{
       className="flex-1 flex flex-col justify-start px-[24px] pb-7"
       style={{ backgroundColor: theme.colors.normalBackground, paddingTop: statusBarHeight + 48 }}
     >
-      {(tx.tokenType === TokenType.ERC721 || tx.tokenType === TokenType.ERC1155) && (
+      {(tx.assetType === AssetType.ERC721 || tx.assetType === AssetType.ERC1155) && (
         <View className="flex flex-row p-4 rounded-lg w-full mb-4" style={{ backgroundColor: theme.colors.surfaceCard }}>
           {tx.tokenImage && <Image source={{ uri: tx.tokenImage }} width={63} height={63} className="mr-4" />}
           <View className="flex justify-center">
@@ -211,7 +123,7 @@ const TransactionConfirm: React.FC<{
           </View>
         </View>
         <Text className="ml-8 leading-6" style={{ color: theme.colors.textSecondary }}>
-          Balance: {tx.tokenType === TokenType.ERC20 ? formatUnits(tx.balance, tx.decimals) : tx.balance} {tx.symbol}
+          Balance: {tx.assetType === AssetType.ERC20 ? formatUnits(tx.balance, tx.decimals) : tx.balance} {tx.symbol}
         </Text>
 
         <Divider className="my-4" />

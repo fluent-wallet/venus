@@ -5,6 +5,7 @@ import { currentAccountChangedSubject, currentAccountObservable } from './curren
 import { currentAddressChangedSubject, currentAddressObservable } from './currentAddressChanged';
 import { currentNetworkChangedSubject, currentNetworkObservable } from './currentNetworkChanged';
 import { networksChangedSubject } from './networksChanged';
+import { broadcastTransactionSubjectPush, broadcastTransactionSubject } from './broadcastTransactionSubject';
 
 @injectable()
 export class Events {
@@ -16,6 +17,8 @@ export class Events {
   public currentNetworkChangedSubject = currentNetworkChangedSubject;
   public currentNetworkObservable = currentNetworkObservable;
   public networksChangedSubject = networksChangedSubject;
+  public broadcastTransactionSubjectPush = broadcastTransactionSubjectPush;
+  public broadcastTransactionSubject = broadcastTransactionSubject;
 }
 
 container.bind(Events).to(Events).inSingletonScope();

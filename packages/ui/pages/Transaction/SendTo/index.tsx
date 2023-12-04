@@ -8,10 +8,11 @@ import { Text, useTheme } from '@rneui/themed';
 import { statusBarHeight } from '@utils/deviceInfo';
 import { type StackNavigation, RootStackList, TransactionConfirmStackName, SendToStackName } from '@router/configs';
 import { BaseButton } from '@components/Button';
-import { TokenType, transactionAtom } from '@hooks/useTransaction';
 import TokenIconDefault from '@assets/icons/tokenDefault.svg';
 import AvatarIcon from '@assets/icons/avatar.svg';
 import CopyAllIcon from '@assets/icons/copy_all.svg';
+import { AssetType } from '@core/database/models/Asset';
+import { transactionAtom } from '@core/WalletCore/Plugins/ReactInject/data/useTransaction';
 
 const SendTo: React.FC<{ navigation: StackNavigation; route: RouteProp<RootStackList, typeof SendToStackName> }> = ({ navigation, route }) => {
   const { theme } = useTheme();
@@ -21,8 +22,8 @@ const SendTo: React.FC<{ navigation: StackNavigation; route: RouteProp<RootStack
   const [tx, setTx] = useAtom(transactionAtom);
 
   const accountBalance = useMemo(
-    () => (tx.tokenType === TokenType.ERC20 || tx.tokenType === TokenType.NATIVE ? formatUnits(tx.balance, tx.decimals) : tx.balance),
-    [tx.tokenType, tx.balance, tx.decimals]
+    () => (tx.assetType === AssetType.ERC20 || tx.assetType === AssetType.Native ? formatUnits(tx.balance, tx.decimals) : tx.balance),
+    [tx.assetType, tx.balance, tx.decimals]
   );
 
   const handleChange = (v: string) => {
