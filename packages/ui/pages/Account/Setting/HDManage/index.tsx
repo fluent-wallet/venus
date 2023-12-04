@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-non-null-asserted-optional-chain */
 import { Fragment, useEffect, useState, useMemo } from 'react';
-import { SafeAreaView, View, ActivityIndicator, TouchableHighlight } from 'react-native';
+import { SafeAreaView, View, ActivityIndicator, TouchableHighlight, Pressable } from 'react-native';
 import { type NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useHeaderHeight } from '@react-navigation/elements';
 import { useTheme, Text, Card } from '@rneui/themed';
@@ -61,7 +61,8 @@ const HDManage: React.FC<NativeStackScreenProps<RootStackList, 'HDManage'>> = ({
       }
 
       const newPageAccounts = await Promise.all(
-        Array.from({ length: 5 }).map(async (_, index) => {
+        Array.from({ length: 5 }, (_, i) => (vault.type === VaultType.BSIM ? i + 1 : i)).map(async (index) => {
+          // BSIM index is  start from 1 other start from 0
           const targetAlreadyInAccounts = accounts?.find((account) => account.index === pageIndex * 5 + index);
           if (targetAlreadyInAccounts) return { hexAddress: (await targetAlreadyInAccounts.currentNetworkAddress).hex, index: targetAlreadyInAccounts.index };
           if (vault.type === VaultType.BSIM) {
@@ -194,25 +195,19 @@ const HDManage: React.FC<NativeStackScreenProps<RootStackList, 'HDManage'>> = ({
       </View>
 
       <View className="mt-[16px] px-[12px] flex flex-row justify-between items-center">
-        <ArrowLeft
-          className="flex-shrink-0 flex-grow-0"
-          color={pageIndex === 0 || inNext ? theme.colors.surfaceFourth : theme.colors.surfaceBrand}
-          width={12}
-          height={12}
-          onPress={() => setPageIndex((pre) => pre - 1)}
-        />
+        <Pressable onPress={() => pageIndex > 0 && setPageIndex((pre) => pre - 1)}>
+          <View className="flex justify-center items-center w-6 h-6 flex-shrink-0 flex-grow-0">
+            {pageIndex > 0 && <ArrowLeft color={pageIndex === 0 || inNext ? theme.colors.surfaceFourth : theme.colors.surfaceBrand} width={12} height={12} />}
+          </View>
+        </Pressable>
         <Text className="text-[16px] leading-tight" style={{ color: theme.colors.surfaceBrand }}>
           {chooseAccounts.length} address{chooseAccounts.length > 0 ? `(es)` : ''} selected
         </Text>
-        <View className="transform rotate-[180deg]">
-          <ArrowLeft
-            className="flex-shrink-0 flex-grow-0"
-            color={inNext ? theme.colors.surfaceFourth : theme.colors.surfaceBrand}
-            width={12}
-            height={12}
-            onPress={() => setPageIndex((pre) => pre + 1)}
-          />
-        </View>
+        <Pressable onPress={() => setPageIndex((pre) => pre + 1)}>
+          <View className="flex justify-center items-center  w-6 h-6 flex-shrink-0 flex-grow-0 transform rotate-[180deg]">
+            <ArrowLeft color={inNext ? theme.colors.surfaceFourth : theme.colors.surfaceBrand} width={12} height={12} />
+          </View>
+        </Pressable>
       </View>
       <BaseButton containerStyle={{ marginTop: 'auto' }} disabled={chooseAccounts.length === 0} onPress={handleClickNext} loading={inNext}>
         Next
