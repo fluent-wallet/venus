@@ -5,7 +5,7 @@ import { formatUnits } from 'ethers';
 import { Text, useTheme, Tab, TabView } from '@rneui/themed';
 import { statusBarHeight } from '@utils/deviceInfo';
 import { type StackNavigation, ReceiveAddressStackName, ReceiveStackName } from '@router/configs';
-import { nativeTokenAtom, readScanAndFailBackTokenListAtom } from '@hooks/useTokenList';
+import { nativeTokenAtom, readScanAndFallbackTokenListAtom } from '@hooks/useTokenList';
 import TokenList from '@components/TokenList';
 import NFTList from '@components/NFTList';
 import SendIcon from '@assets/icons/send.svg';
@@ -15,7 +15,7 @@ import MoreIcon from '@assets/icons/more.svg';
 const Wallet: React.FC<{ navigation: StackNavigation }> = ({ navigation }) => {
   const { theme } = useTheme();
   const [tabIndex, setTabIndex] = useState(0);
-  const [ERC20TokenList] = useAtom(readScanAndFailBackTokenListAtom);
+  const [ERC20TokenList] = useAtom(readScanAndFallbackTokenListAtom);
   const [nativeToken] = useAtom(nativeTokenAtom);
   const tokenList = nativeToken && ERC20TokenList ? [nativeToken, ...ERC20TokenList] : ERC20TokenList;
 

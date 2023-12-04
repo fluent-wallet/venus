@@ -191,9 +191,9 @@ export const writeNativeAndNFTTokenListAtom = atom(null, async (get, set, tokenL
 });
 
 // default page size is 8
-const DEFAULT_FAIL_BACK_PAGE_SIZE = 8;
+const DEFAULT_FAlLBACK_PAGE_SIZE = 8;
 
-export const getERC20ByWalletContract = (page: number, pageSize = DEFAULT_FAIL_BACK_PAGE_SIZE, tokenType: 20 | 721 | 1155 = 20) =>
+export const getERC20ByWalletContract = (page: number, pageSize = DEFAULT_FAlLBACK_PAGE_SIZE, tokenType: 20 | 721 | 1155 = 20) =>
   firstValueFrom(
     combineLatest([
       Events.currentAddressObservable.pipe(filter((v) => v !== null)),
@@ -231,44 +231,44 @@ export const getERC20ByWalletContract = (page: number, pageSize = DEFAULT_FAIL_B
 
 // ERC20 token list
 export const ERC20tokenListAtom = atom<AccountTokenListItem[] | null>(null);
-export const tokenListStateAtom = atom<{ type: 'scan' | 'failBack' }>({ type: 'scan' });
+export const tokenListStateAtom = atom<{ type: 'scan' | 'fallback' }>({ type: 'scan' });
 
-type ERC20TokenListFailBackListType = { page: number; pageSize: number; total: number; list: AccountTokenListItem[] };
-const ERC20TokenListFailBackListAtom = atom<ERC20TokenListFailBackListType>({
+type ERC20TokenListFallbackListType = { page: number; pageSize: number; total: number; list: AccountTokenListItem[] };
+const ERC20TokenListFallbackListAtom = atom<ERC20TokenListFallbackListType>({
   page: 1,
-  pageSize: DEFAULT_FAIL_BACK_PAGE_SIZE,
+  pageSize: DEFAULT_FAlLBACK_PAGE_SIZE,
   total: 0,
   list: [],
 });
-export const readScanAndFailBackTokenListAtom = atom((get) => {
+export const readScanAndFallbackTokenListAtom = atom((get) => {
   const state = get(tokenListStateAtom);
 
   if (state.type === 'scan') {
     const scanList = get(ERC20tokenListAtom);
     return scanList;
   } else {
-    const failBackList = get(ERC20TokenListFailBackListAtom);
-    return failBackList.list;
+    const fallbackList = get(ERC20TokenListFallbackListAtom);
+    return fallbackList.list;
   }
 });
 
 // for out side read the list
-let failBackList: AccountTokenListItem[] = [];
+let fallbackList: AccountTokenListItem[] = [];
 
-export const readAndWriteERC20TokenListFailBackListAtom = atom(
-  (get) => get(ERC20TokenListFailBackListAtom),
-  (get, set, fn: (args: ERC20TokenListFailBackListType) => ERC20TokenListFailBackListType) => {
-    const oldValue = get(ERC20TokenListFailBackListAtom);
+export const readAndWriteERC20TokenListFallbackListAtom = atom(
+  (get) => get(ERC20TokenListFallbackListAtom),
+  (get, set, fn: (args: ERC20TokenListFallbackListType) => ERC20TokenListFallbackListType) => {
+    const oldValue = get(ERC20TokenListFallbackListAtom);
     const newValue = fn(oldValue);
 
-    failBackList = newValue.list || [];
-    set(ERC20TokenListFailBackListAtom, newValue);
+    fallbackList = newValue.list || [];
+    set(ERC20TokenListFallbackListAtom, newValue);
   }
 );
 
-export const failBackListSubject = new Subject<{ delay: number }>();
+export const fallBackListSubject = new Subject<{ delay: number }>();
 
-export const loopFailBackListTask = failBackListSubject.pipe(
+export const loopFallbackListTask = fallBackListSubject.pipe(
   switchMap((n) => timer(n.delay).pipe(map(() => n))),
   switchMap(() =>
     combineLatest([
@@ -280,7 +280,7 @@ export const loopFailBackListTask = failBackListSubject.pipe(
     const { hex } = address!;
     const { chainId, endpoint } = network!;
     // read list form the outside list
-    const tokens = failBackList.map((item) => item.contract);
+    const tokens = fallbackList.map((item) => item.contract);
     if (tokens.length === 0) return of([]);
     return getTokenInfoByTokenContractAddresses(endpoint, hex, chainId, tokens).pipe(
       map((contractRes) => {
