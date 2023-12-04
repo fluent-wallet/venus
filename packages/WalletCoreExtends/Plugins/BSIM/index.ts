@@ -3,6 +3,8 @@ import { addHexPrefix } from '@core/utils/base';
 import { computeAddress } from 'ethers';
 import { type Plugin } from '@core/WalletCore/Plugins';
 
+export { CoinTypes, CFXCoinTypes } from './BSIMSDK';
+
 declare module '@core/WalletCore/Plugins' {
   interface Plugins {
     BSIM: BSIMPluginClass;
@@ -22,14 +24,18 @@ const formatBSIMPubkey = (key: string) => {
 let hasInit = false;
 
 export class BSIMPluginClass implements Plugin {
+  checkIsInit = async () => {
+    if (!hasInit) {
+      await BSIMSDK.create();
+      hasInit = true;
+    }
+  };
+
   name = 'BSIM' as const;
 
   public getBIMList = async () => {
     try {
-      if (!hasInit) {
-        await BSIMSDK.create();
-        hasInit = true;
-      }
+      await this.checkIsInit();
       const list = await BSIMSDK.getPubkeyList(true);
 
       return list
@@ -41,10 +47,7 @@ export class BSIMPluginClass implements Plugin {
   };
 
   public createNewBSIMAccount = async () => {
-    if (!hasInit) {
-      await BSIMSDK.create();
-      hasInit = true;
-    }
+    await this.checkIsInit();
 
     await BSIMSDK.genNewKey(CoinTypes.CONFLUX);
 
@@ -57,10 +60,7 @@ export class BSIMPluginClass implements Plugin {
   };
 
   public createBSIMAccountToIndex = async (targetIndex: number) => {
-    if (!hasInit) {
-      await BSIMSDK.create();
-      hasInit = true;
-    }
+    await this.checkIsInit();
     const list = await this.getBIMList();
     const maxIndex = list.at(-1)?.index ?? -1;
     if (maxIndex >= targetIndex) return;
@@ -72,10 +72,7 @@ export class BSIMPluginClass implements Plugin {
   };
 
   public connectBSIM = async () => {
-    if (!hasInit) {
-      await BSIMSDK.create();
-      hasInit = true;
-    }
+    await this.checkIsInit();
 
     try {
       const list = await this.getBIMList();
@@ -86,6 +83,18 @@ export class BSIMPluginClass implements Plugin {
       return [await this.createNewBSIMAccount()];
     }
     return [await this.createNewBSIMAccount()];
+  };
+
+  public verifyBPIN = async () => {
+    await this.checkIsInit();
+
+    return BSIMSDK.verifyBPIN();
+  };
+
+  public signMessage = async (message: string, coinType: CoinTypes, index: number) => {
+    await this.checkIsInit();
+
+    return BSIMSDK.signMessage(message, coinType, index);
   };
 }
 

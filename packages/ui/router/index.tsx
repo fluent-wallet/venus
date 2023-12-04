@@ -4,7 +4,7 @@ import { NavigationContainer, useNavigation } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { useTheme } from '@rneui/themed';
-import { useHasVault } from '@core/WalletCore/Plugins/ReactInject';
+import { JotaiNexus, useHasVault } from '@core/WalletCore/Plugins/ReactInject';
 import Welcome from '@pages/Welcome';
 import SetPassword from '@pages/SetPassword';
 import Biometrics from '@pages/SetPassword/Biometrics';
@@ -164,6 +164,7 @@ const StackNavigator = () => {
 
 const Router: React.FC = () => (
   <NavigationContainer>
+    <JotaiNexus />
     <StackNavigator />
   </NavigationContainer>
 );

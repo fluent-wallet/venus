@@ -4,11 +4,12 @@ import { firstValueFrom } from 'rxjs';
 import { Button, Icon } from '@rneui/base';
 import { ListItem, Text, useTheme, Skeleton } from '@rneui/themed';
 import { AccountTokenListItem } from '@hooks/useTokenList';
-import { TokenType } from '@hooks/useTransaction';
+
 import { scanOpenAPISend } from '@core/utils/send';
 import TokenIconDefault from '@assets/icons/tokenDefault.svg';
 import { useCurrentNetwork } from '@core/WalletCore/Plugins/ReactInject';
 import MixinImage from '@components/MixinImage';
+import { AssetType } from '@core/database/models/Asset';
 
 const pageSize = 24;
 
@@ -20,7 +21,7 @@ export interface NFTItemDetail {
   name: string;
   owner: string;
   tokenId: string;
-  type: TokenType;
+  type: AssetType;
   error?: string;
 }
 
@@ -131,7 +132,7 @@ export const NFTItem: React.FC<{
                 style={{ width: '48%' }}
               >
                 <View style={{ backgroundColor: theme.colors.surfaceCard }} className="p-3 mb-3 rounded-md w-full">
-                  {v.amount && v.type === TokenType.ERC1155 && (
+                  {v.amount && v.type === AssetType.ERC1155 && (
                     <View className="absolute top-4 right-4 z-10 px-2 rounded-full" style={{ backgroundColor: theme.colors.surfaceCard }}>
                       <Text style={{ color: theme.colors.textPrimary }}>x{v.amount}</Text>
                     </View>

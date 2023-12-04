@@ -6,10 +6,11 @@ import { Text, useTheme, Divider } from '@rneui/themed';
 import { type StackNavigation, TokensStackName, RootStackList, ReceiveAddressStackName, ScanQRCodeStackName } from '@router/configs';
 import { statusBarHeight } from '@utils/deviceInfo';
 import { BaseButton } from '@components/Button';
-import { setTransactionTo } from '@hooks/useTransaction';
+
 import WarningIcon from '@assets/icons/warning_2.svg';
 import Flip from '@assets/icons/flip.svg';
 import { RouteProp } from '@react-navigation/native';
+import { setTransactionTo } from '@core/WalletCore/Plugins/ReactInject/data/useTransaction';
 
 export const SendPageHeaderOptions = ({ title = 'Send To' }: { title?: string }) =>
   ({

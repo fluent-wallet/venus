@@ -1,17 +1,10 @@
+import { AssetType } from '@core/database/models/Asset';
 import { atom } from 'jotai';
-import { get } from 'react-native/Libraries/TurboModule/TurboModuleRegistry';
 
-export enum TokenType {
-  ERC20 = 'ERC20',
-  ERC721 = 'ERC721',
-  ERC1155 = 'ERC1155',
-  NATIVE = 'native',
-}
-
-export const transactionAtom = atom<{
+export interface WalletTransactionType {
   from: string;
   to: string;
-  tokenType: TokenType;
+  assetType: AssetType;
   balance: string;
   decimals: number;
   symbol: string;
@@ -23,10 +16,12 @@ export const transactionAtom = atom<{
   tokenImage?: string; // 721
   contractName?: string; // 721
   nftName?: string; // 721
-}>({
+}
+
+export const transactionAtom = atom<WalletTransactionType>({
   from: '',
   to: '',
-  tokenType: TokenType.NATIVE,
+  assetType: AssetType.Native,
   balance: '0',
   decimals: 18,
   symbol: 'CFX',

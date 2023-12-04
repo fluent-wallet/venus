@@ -1,7 +1,6 @@
 import { atom } from 'jotai';
 import { map, switchMap, firstValueFrom, filter, repeat, combineLatest, throwError, catchError, of, Subject, timer } from 'rxjs';
 import { formatUnits } from 'ethers';
-import { TokenType } from './useTransaction';
 import { RPCResponse, RPCSend, scanAPISend, scanOpenAPISend } from '@core/utils/send';
 import { decode } from '@core/utils/address';
 import { addHexPrefix } from '@core/utils/base';
@@ -9,12 +8,13 @@ import Events from '@core/WalletCore/Events';
 import { CFX_ESPACE_TESTNET_CHAINID } from '@core/utils/consts';
 import { CFX_ESPACE_TESTNET_WALLET_CONTRACT_ADDRESS } from '@core/consts/network';
 import { WalletInterface } from '@core/contracts/ABI/Wallet';
+import { AssetType } from '@core/database/models/Asset';
 
 interface _ResponseAccountTokenListItem {
   name: string;
   decimals: number;
   symbol: string;
-  type: TokenType;
+  type: AssetType;
   amount: string;
   contract: string;
   priceInUSDT?: string;
@@ -50,8 +50,8 @@ interface TokenDetail {
   transferType: string;
 }
 
-export const requestTokenList = (chainId: string, hexAddress: string, tokenType: TokenType | string = TokenType.ERC20) =>
-  scanOpenAPISend<TokenListResponse>(chainId, `/account/tokens?account=${hexAddress}&tokenType=${tokenType}`).pipe(
+export const requestTokenList = (chainId: string, hexAddress: string, assetType: AssetType | string = AssetType.ERC20) =>
+  scanOpenAPISend<TokenListResponse>(chainId, `/account/tokens?account=${hexAddress}&tokenType=${assetType}`).pipe(
     switchMap((res) => {
       if (res.status === '1') return of(res.result.list);
       return throwError(() => new Error(res.message));
@@ -59,14 +59,14 @@ export const requestTokenList = (chainId: string, hexAddress: string, tokenType:
     map((list) =>
       list.map((item) => {
         const { amount, ...res } = item;
-        const result: AccountTokenListItem = { ...res, balance: amount };
+        const result: AccountTokenListItem = { ...res, balance: amount, type: item.type === AssetType.Native.toLowerCase() ? AssetType.Native : item.type };
         return result;
       })
     ),
     map((list) =>
       list.sort((a, b) => {
-        if (a.type === TokenType.NATIVE) return -1;
-        if (b.type === TokenType.NATIVE) return 1;
+        if (a.type === AssetType.Native) return -1;
+        if (b.type === AssetType.Native) return 1;
 
         if (a.priceInUSDT && b.priceInUSDT) {
           return Number(formatUnits(a.balance, a.decimals)) * Number(a.priceInUSDT) < Number(formatUnits(b.balance, b.decimals)) * Number(b.priceInUSDT)
@@ -87,7 +87,10 @@ export const loopNative721And1155List = combineLatest([
   Events.currentNetworkObservable.pipe(filter((v) => v !== null && !!v.chainId)),
 ]).pipe(
   switchMap(([address, network]) =>
-    requestTokenList(network!.chainId, address!.hex, [TokenType.NATIVE, TokenType.ERC721, TokenType.ERC1155].join(',')).pipe(repeat({ delay: 5 * 1000 }))
+    requestTokenList(network!.chainId, address!.hex, [AssetType.Native.toLowerCase(), AssetType.ERC721, AssetType.ERC1155].join(',')).pipe(
+      map((list) => list.map((v) => ({ ...v, type: v.type === AssetType.Native.toLowerCase() ? AssetType.Native : v.type }))), // TODO
+      repeat({ delay: 5 * 1000 })
+    )
   )
 );
 
@@ -113,7 +116,7 @@ export const loopERC20ListTask = scanERC20ListSubject.pipe(
     ])
   ),
   switchMap(([address, network]) =>
-    requestTokenList(network!.chainId, address!.hex, TokenType.ERC20).pipe(
+    requestTokenList(network!.chainId, address!.hex, AssetType.ERC20).pipe(
       switchMap((scanRes) => {
         const { chainId, endpoint } = network!;
         const { hex } = address!;
@@ -127,7 +130,7 @@ export const loopERC20ListTask = scanERC20ListSubject.pipe(
               item.forEach((tokenInfo: [[string, string, string, bigint], bigint]) => {
                 const [other, balance] = tokenInfo;
                 const [token, name, symbol, decimals] = other;
-                hash[token.toLowerCase()] = { name, symbol, decimals: Number(decimals), balance: balance.toString(), contract: token, type: TokenType.ERC20 };
+                hash[token.toLowerCase()] = { name, symbol, decimals: Number(decimals), balance: balance.toString(), contract: token, type: AssetType.ERC20 };
               });
             });
             // loop scan api result get token price and icon
@@ -142,6 +145,7 @@ export const loopERC20ListTask = scanERC20ListSubject.pipe(
         );
       }),
       catchError((err) => {
+        console.log(err);
         console.log('catch error so return null');
         return of(null);
       })
@@ -156,9 +160,9 @@ export const nativeTokenAtom = atom<AccountTokenListItem | null>(null);
 export const ERC721And1155TokenListAtom = atom<AccountTokenListItem[] | null>(null);
 
 export const writeNativeAndNFTTokenListAtom = atom(null, async (get, set, tokenList: AccountTokenListItem[]) => {
-  const nativeToken = tokenList.find((item) => item.type === TokenType.NATIVE);
+  const nativeToken = tokenList.find((item) => item.type === AssetType.Native);
 
-  const erc721And1155TokenList = tokenList.filter((item) => [TokenType.ERC721, TokenType.ERC1155].includes(item.type));
+  const erc721And1155TokenList = tokenList.filter((item) => [AssetType.ERC721, AssetType.ERC1155].includes(item.type));
 
   if (nativeToken) set(nativeTokenAtom, nativeToken);
 
@@ -214,7 +218,7 @@ export const getERC20ByWalletContract = (page: number, pageSize = DEFAULT_FAlLBA
                 const [contract, name, symbol, decimals] = info;
 
                 return {
-                  type: TokenType.ERC20,
+                  type: AssetType.ERC20,
                   contract: contract,
                   name,
                   symbol,
@@ -290,7 +294,7 @@ export const loopFallbackListTask = fallBackListSubject.pipe(
           item.forEach((tokenInfo: [[string, string, string, bigint], bigint]) => {
             const [other, balance] = tokenInfo;
             const [token, name, symbol, decimals] = other;
-            result.push({ name, symbol, decimals: Number(decimals), balance: balance.toString(), contract: token, type: TokenType.ERC20 });
+            result.push({ name, symbol, decimals: Number(decimals), balance: balance.toString(), contract: token, type: AssetType.ERC20 });
           });
         });
         return result;
