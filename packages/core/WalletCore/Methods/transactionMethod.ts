@@ -39,7 +39,7 @@ export class TransactionMethod {
       throw new Error("Get contract transaction data but don't have contract address");
     }
 
-    switch (args.AssetType) {
+    switch (args.assetType) {
       case AssetType.ERC20: {
         return iface777.encodeFunctionData('transfer', [args.to, parseUnits(args.amount.toString())]);
       }
