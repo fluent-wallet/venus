@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { View, SafeAreaView, Pressable } from 'react-native';
+import { useNetInfo } from '@react-native-community/netinfo';
 import { useAtom } from 'jotai';
 import { formatUnits } from 'ethers';
 import { Text, useTheme, Tab, TabView } from '@rneui/themed';
@@ -12,11 +13,14 @@ import SendIcon from '@assets/icons/send.svg';
 import ReceiveIcon from '@assets/icons/receive.svg';
 import BuyIcon from '@assets/icons/buy.svg';
 import MoreIcon from '@assets/icons/more.svg';
+import WifiOffIcon from '@assets/icons/wifi_off.svg';
 const Wallet: React.FC<{ navigation: StackNavigation }> = ({ navigation }) => {
   const { theme } = useTheme();
+  const { _, isConnected } = useNetInfo();
   const [tabIndex, setTabIndex] = useState(0);
   const [ERC20TokenList] = useAtom(readScanAndFallbackTokenListAtom);
   const [nativeToken] = useAtom(nativeTokenAtom);
+
   const tokenList = nativeToken && ERC20TokenList ? [nativeToken, ...ERC20TokenList] : ERC20TokenList;
 
   const value = tokenList
@@ -25,6 +29,16 @@ const Wallet: React.FC<{ navigation: StackNavigation }> = ({ navigation }) => {
 
   return (
     <SafeAreaView className="flex-1 flex flex-col justify-start" style={{ backgroundColor: theme.colors.normalBackground, paddingTop: statusBarHeight + 48 }}>
+      <View className="absolute left-0 right-0 flex justify-center items-center z-50" style={{ top: statusBarHeight + 48 }}>
+        {!isConnected && (
+          <View style={{ backgroundColor: theme.colors.textSecondary }} className="rounded-lg p-3 flex flex-row items-center">
+            <WifiOffIcon color={theme.colors.textInvert} width={20} height={20} />
+            <Text className="ml-1" style={{ color: theme.colors.textInvert }}>
+              No Internet Connection
+            </Text>
+          </View>
+        )}
+      </View>
       <View className="px-[24px]">
         <Text className="mt-[16px] leading-tight text-[16px] text-center" style={{ color: theme.colors.textSecondary }}>
           ePay Wallet
