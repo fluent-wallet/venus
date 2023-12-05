@@ -23,7 +23,7 @@ const TokenItem: React.FC<{
 
   useEffect(() => {
     if (data?.type && data.type === AssetType.Native) {
-      RPCSend<RPCResponse<string>>(currentNetwork.endpoint, { method: 'eth_getBalance', params: [address.hex, 'latest'] }).subscribe((res) => {
+      RPCSend<RPCResponse<string>>(currentNetwork.endpoint, { method: 'eth_getBalance', params: [address?.hex, 'latest'] }).subscribe((res) => {
         if (res.result) {
           setNativeAndERC20TokenList((prev) => {
             if (prev === null) return prev;

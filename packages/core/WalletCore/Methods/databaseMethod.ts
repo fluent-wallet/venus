@@ -1,5 +1,5 @@
 import { injectable, inject } from 'inversify';
-import database from '../../database';
+import database, { dbRefresh$ } from '../../database';
 import TableName from '../../database/TableName';
 import { createHdPath } from '../../database/models/HdPath/query';
 import { ChainType, NetworkType } from '../../database/models/Network';
@@ -59,6 +59,7 @@ import {
   DEFAULT_ETH_HDPATH,
   DEFAULT_CURRENCY_DECIMALS,
 } from '../../consts/network';
+
 
 const HD_PATH_ARR = [
   { name: 'cfx-default', value: DEFAULT_CFX_HDPATH },
@@ -272,6 +273,7 @@ export class DatabaseMethod {
         TableName.Permission,
         TableName.Request,
       ]);
+      dbRefresh$.next(null);
     } catch (error) {
       console.error('Clear account data error', error);
       throw error;
@@ -289,6 +291,7 @@ export class DatabaseMethod {
       } else {
         await this.initDatabaseDefault();
       }
+      dbRefresh$.next(null);
     } catch (error) {
       console.error('Reset database error', error);
     }

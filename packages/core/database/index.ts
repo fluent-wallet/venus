@@ -1,5 +1,6 @@
 import { Database as _Database } from '@nozbe/watermelondb';
 import SQLiteAdapter from '@nozbe/watermelondb/adapters/sqlite';
+import { Subject } from 'rxjs';
 import schema from './schema';
 import migrations from './migrations';
 import { Account as AccountModel } from './models/Account';
@@ -17,6 +18,7 @@ import { App as AppModel } from './models/App';
 import { Site as SiteModel } from './models/Site';
 import { Permission as PermissionModel } from './models/Permission';
 import { Request as RequestModel } from './models/Request';
+export const dbRefresh$ = new Subject();
 
 const adapter = new SQLiteAdapter({
   dbName: 'venus_database2',

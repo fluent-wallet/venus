@@ -14,6 +14,7 @@ import ReceiveIcon from '@assets/icons/receive.svg';
 import BuyIcon from '@assets/icons/buy.svg';
 import MoreIcon from '@assets/icons/more.svg';
 import WifiOffIcon from '@assets/icons/wifi_off.svg';
+
 const Wallet: React.FC<{ navigation: StackNavigation }> = ({ navigation }) => {
   const { theme } = useTheme();
   const { _, isConnected } = useNetInfo();

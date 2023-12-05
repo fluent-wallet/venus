@@ -1,13 +1,17 @@
 import { useAtomValue } from 'jotai';
 import { atomWithObservable } from 'jotai/utils';
-import { map } from 'rxjs';
-import { type Network } from '../../../../database/models/Network';
+import { switchMap, of, startWith } from 'rxjs';
+import { dbRefresh$ } from '../../../../database';
 import { querySelectedNetwork } from '../../../../database/models/Network/query';
 import { getAtom } from '../nexus';
 
-export const currentNetworkObservable = querySelectedNetwork()
-  .observe()
-  .pipe(map((networks) => (networks?.[0] as Network | undefined) ?? null));
+export const currentNetworkObservable = dbRefresh$.pipe(
+  startWith(null),
+  switchMap(() => querySelectedNetwork().observe()),
+  switchMap((selectedNetworks) => {
+    return selectedNetworks?.[0] ? of(selectedNetworks[0]) : of(null);
+  })
+);
 
 export const currentNetworkAtom = atomWithObservable(() => currentNetworkObservable, { initialValue: null });
 export const useCurrentNetwork = () => useAtomValue(currentNetworkAtom);

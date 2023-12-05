@@ -37,7 +37,7 @@ const NFTList: React.FC<{ onPress?: (v: AccountTokenListItem & NFTItemDetail & {
             loadMore={loadMore}
             key={item.contract}
             nftInfo={item}
-            ownerAddress={address.hex}
+            ownerAddress={address?.hex}
             onPress={handleSelectNFT}
           />
         ))

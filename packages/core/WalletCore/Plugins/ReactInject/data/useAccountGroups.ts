@@ -1,13 +1,14 @@
 import { useAtomValue } from 'jotai';
 import { atomWithObservable } from 'jotai/utils';
-import { type Observable } from 'rxjs';
-import database from '../../../../database';
+import { switchMap, startWith, type Observable } from 'rxjs';
+import database, { dbRefresh$ } from '../../../../database';
 import TableName from '../../../../database/TableName';
 import { type AccountGroup } from '../../../../database/models/AccountGroup';
 
-export const accountGroupsObservable = database.collections.get(TableName.AccountGroup).query().observeWithColumns(['nickname', 'hidden']) as Observable<
-  Array<AccountGroup>
->;
+export const accountGroupsObservable = dbRefresh$.pipe(
+  startWith(null),
+  switchMap(() => database.collections.get(TableName.AccountGroup).query().observeWithColumns(['nickname', 'hidden']) as Observable<Array<AccountGroup>>)
+);
 
 const accountGroupsAtom = atomWithObservable(() => accountGroupsObservable, {
   initialValue: [],
