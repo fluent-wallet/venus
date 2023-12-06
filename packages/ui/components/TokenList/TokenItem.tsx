@@ -6,11 +6,12 @@ import TokenIconDefault from '@assets/icons/tokenDefault.svg';
 import { ERC20tokenListAtom, AccountTokenListItem } from '../../hooks/useTokenList';
 import { useAtom } from 'jotai';
 
-import { useEffect } from 'react';
+import { useEffect, useMemo } from 'react';
 import { RPCResponse, RPCSend } from '@core/utils/send';
 import { useCurrentAddress, useCurrentNetwork } from '@core/WalletCore/Plugins/ReactInject';
 import MixinImage from '@components/MixinImage';
 import { AssetType } from '@core/database/models/Asset';
+import { formatValue } from '@utils/formatValue';
 
 const TokenItem: React.FC<{
   data: AccountTokenListItem;
@@ -20,6 +21,8 @@ const TokenItem: React.FC<{
   const [_, setNativeAndERC20TokenList] = useAtom(ERC20tokenListAtom);
   const currentNetwork = useCurrentNetwork()!;
   const address = useCurrentAddress()!;
+
+  const viewValue = useMemo(() => formatValue(data.balance, data.decimals), [data.balance, data.decimals]);
 
   useEffect(() => {
     if (data?.type && data.type === AssetType.Native) {
@@ -69,8 +72,7 @@ const TokenItem: React.FC<{
           </View>
           <View className="flex-1">
             <Text style={{ color: theme.colors.textSecondary }} numberOfLines={1}>
-              {formatUnits(data.balance, data.decimals)}
-              {data.symbol}
+              {viewValue} {data.symbol}
             </Text>
           </View>
         </View>
