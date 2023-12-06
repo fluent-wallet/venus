@@ -1,11 +1,45 @@
 import { Model, type Relation } from '@nozbe/watermelondb';
-import { field, text, readonly, date, immutableRelation } from '@nozbe/watermelondb/decorators';
+import { field, text, readonly, date, immutableRelation, json } from '@nozbe/watermelondb/decorators';
 import { type Address } from '../Address';
 import { type Asset } from '../Asset';
 import { type App } from '../App';
 import { type TxExtra } from '../TxExtra';
 import { type TxPayload } from '../TxPayload';
 import TableName from '../../TableName';
+
+export enum TxStatus {
+  SKIPPED = -2,
+  FAILED,
+  UNSENT,
+  SENDING,
+  PENDING,
+  PACKAGED,
+  EXECUTED,
+  CONFIRMED,
+}
+
+interface Receipt {
+  blockHash?: string;
+  gasUsed?: string;
+  contractCreated?: string;
+  // ↓↓↓↓↓↓↓↓↓↓↓ for espace ↓↓↓↓↓↓↓↓↓↓↓
+  cumulativeGasUsed?: string;
+  effectiveGasPrice?: string;
+  type?: string;
+  blockNumber?: string;
+  transactionIndex?: string;
+  // ↓↓↓↓↓↓↓↓↓↓↓ for core space ↓↓↓↓↓↓↓↓↓↓↓
+  index?: string;
+  epochNumber?: string;
+  gasFee?: string;
+  storageCollateralized?: string;
+  gasCoveredBySponsor?: boolean;
+  storageCoveredBySponsor?: boolean;
+  storageReleased?: {
+    address: string;
+    collaterals: string;
+  }[];
+}
 
 export class Tx extends Model {
   static table = TableName.Tx;
@@ -17,19 +51,18 @@ export class Tx extends Model {
     [TableName.TxPayload]: { type: 'belongs_to', key: 'tx_payload_id' },
   } as const;
 
-  @text('raw') raw!: string;
-  @text('hash') hash!: string;
-  @field('status') status!: number;
-  @text('receipt') receipt!: string | null;
+  @text('raw') raw!: string; // raw tx hash
+  @text('hash') hash!: string; // tx hash
+  @field('status') status!: TxStatus;
+  @json('receipt', (json) => json) receipt!: Receipt | null; // receipt as an object
   @field('block_number') blockNumber!: number | null;
   @text('block_hash') blockHash!: string | null;
-  @field('chain_switched') chainSwitched!: boolean | null;
+  @field('is_chain_switched') chainSwitched!: boolean | null; // chain switched
   @readonly @date('created_at') createdAt!: Date;
-  @date('pending_at') pendingAt!: number | null;
-  @text('err') err!: string | null;
-  @field('from_fluent') fromFluent!: boolean | null;
-  @field('from_scan') fromScan!: boolean | null;
-  @date('resend_at') resendAt!: number | null;
+  @date('pending_at') pendingAt!: number | null; // first time pending timestamp
+  @text('err') err!: string | null; // basic error type/info
+  @field('is_local') isLocal!: boolean | null;
+  @field('resend_at') resendAt!: number | null; // epoch/block where wallet resend tx
   @immutableRelation(TableName.App, 'app_id') app!: Relation<App> | null;
   @immutableRelation(TableName.Asset, 'asset_id') asset!: Relation<Asset> | null;
   @immutableRelation(TableName.Address, 'address_id') address!: Relation<Address>;
