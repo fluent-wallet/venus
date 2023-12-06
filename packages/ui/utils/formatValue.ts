@@ -31,6 +31,5 @@ export const formatValue = (value: string | number | bigint, decimals = 18) => {
   if (v >= m) {
     return `${fixed(formatUnits(value, decimals + 7))}M`;
   }
-  console.log(value, value, formatUnits(value, decimals));
   return fixed(formatUnits(value, decimals));
 };
