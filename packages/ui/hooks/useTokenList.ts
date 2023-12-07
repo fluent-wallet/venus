@@ -157,7 +157,22 @@ export const loopERC20ListTask = scanERC20ListSubject.pipe(
 export const nativeTokenAtom = atom<AccountTokenListItem | null>(null);
 
 // ERC721 and ERC1155 token list
-export const ERC721And1155TokenListAtom = atom<AccountTokenListItem[] | null>(null);
+
+export interface NFTItemDetail {
+  amount: string;
+  contract: string;
+  description: string;
+  image: string;
+  name: string;
+  owner: string;
+  tokenId: string;
+  type: AssetType;
+  error?: string;
+}
+
+export type ERC721And1155TokenListType = (AccountTokenListItem & { page: number; total: number; NFTList: NFTItemDetail[] })[];
+
+export const ERC721And1155TokenListAtom = atom<ERC721And1155TokenListType | null>(null);
 
 export const writeNativeAndNFTTokenListAtom = atom(null, async (get, set, tokenList: AccountTokenListItem[]) => {
   const nativeToken = tokenList.find((item) => item.type === AssetType.Native);
@@ -165,6 +180,11 @@ export const writeNativeAndNFTTokenListAtom = atom(null, async (get, set, tokenL
   const erc721And1155TokenList = tokenList.filter((item) => [AssetType.ERC721, AssetType.ERC1155].includes(item.type));
 
   if (nativeToken) set(nativeTokenAtom, nativeToken);
+
+  const oldERC721And1155TokenList = get(ERC721And1155TokenListAtom)?.reduce((acc, cur) => {
+    acc[cur.contract] = cur;
+    return acc;
+  }, {} as Record<string, ERC721And1155TokenListType[number]>);
 
   if (erc721And1155TokenList.length > 0) {
     const newERC721And1155TokenList = await firstValueFrom(
@@ -188,9 +208,37 @@ export const writeNativeAndNFTTokenListAtom = atom(null, async (get, set, tokenL
         })
       )
     );
-    set(ERC721And1155TokenListAtom, newERC721And1155TokenList);
+    set(
+      ERC721And1155TokenListAtom,
+      newERC721And1155TokenList.map((v) => {
+        if (oldERC721And1155TokenList && oldERC721And1155TokenList[v.contract]) {
+          return {
+            ...v,
+            page: oldERC721And1155TokenList[v.contract].page,
+            total: oldERC721And1155TokenList[v.contract].total,
+            NFTList: oldERC721And1155TokenList[v.contract].NFTList,
+          };
+        } else {
+          return { ...v, page: 0, total: 0, NFTList: [] };
+        }
+      })
+    );
   } else {
-    set(ERC721And1155TokenListAtom, erc721And1155TokenList);
+    set(
+      ERC721And1155TokenListAtom,
+      erc721And1155TokenList.map((v) => {
+        if (oldERC721And1155TokenList && oldERC721And1155TokenList[v.contract]) {
+          return {
+            ...v,
+            page: oldERC721And1155TokenList[v.contract].page,
+            total: oldERC721And1155TokenList[v.contract].total,
+            NFTList: oldERC721And1155TokenList[v.contract].NFTList,
+          };
+        } else {
+          return { ...v, page: 0, total: 0, NFTList: [] };
+        }
+      })
+    );
   }
 });
 

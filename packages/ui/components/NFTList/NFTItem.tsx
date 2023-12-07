@@ -1,94 +1,36 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
-import { Image, Pressable, View } from 'react-native';
-import { firstValueFrom } from 'rxjs';
-import { Button, Icon } from '@rneui/base';
-import { ListItem, Text, useTheme, Skeleton } from '@rneui/themed';
-import { AccountTokenListItem } from '@hooks/useTokenList';
+import { Pressable, View } from 'react-native';
+import { Icon } from '@rneui/base';
+import { ListItem, Text, useTheme } from '@rneui/themed';
+import { AccountTokenListItem, NFTItemDetail } from '@hooks/useTokenList';
 
-import { scanOpenAPISend } from '@core/utils/send';
 import TokenIconDefault from '@assets/icons/tokenDefault.svg';
-import { useCurrentNetwork } from '@core/WalletCore/Plugins/ReactInject';
 import MixinImage from '@components/MixinImage';
 import { AssetType } from '@core/database/models/Asset';
+import Skeleton from '@components/Skeleton';
+import DefaultNFTImage from '@assets/images/NFT.svg';
 
-const pageSize = 24;
-
-export interface NFTItemDetail {
-  amount: string;
-  contract: string;
-  description: string;
-  image: string;
-  name: string;
-  owner: string;
-  tokenId: string;
-  type: AssetType;
-  error?: string;
+export interface NFTItemPressArgs {
+  assetType: AccountTokenListItem['type'];
+  symbol: AccountTokenListItem['symbol'];
+  balance: AccountTokenListItem['balance'];
+  contract: AccountTokenListItem['contract'];
+  tokenId: NFTItemDetail['tokenId'];
+  tokenImage: NFTItemDetail['image'];
+  contractName: AccountTokenListItem['name'];
+  nftName: NFTItemDetail['name'];
+  iconUrl: AccountTokenListItem['iconUrl'];
 }
 
-export const NFTItem: React.FC<{
+const NFTItem: React.FC<{
   currentOpen: string | null;
   setCurrentOpen: (v: string | null) => void;
-  loadMore: boolean;
-  nftInfo: AccountTokenListItem;
+  nftInfo: AccountTokenListItem & { page: number; total: number; NFTList: NFTItemDetail[] };
   ownerAddress: string;
-  onPress?: (item: AccountTokenListItem & NFTItemDetail & { contractName: string; nftName: string }) => void;
-}> = ({ nftInfo, ownerAddress, onPress, currentOpen, setCurrentOpen, loadMore }) => {
+  onPress?: (item: NFTItemPressArgs) => void;
+}> = ({ nftInfo, onPress, currentOpen, setCurrentOpen }) => {
   const { theme } = useTheme();
-  const [page, setPage] = useState({ page: 0, total: 0 });
-  const [list, setList] = useState<NFTItemDetail[]>([]);
-  const currentNetwork = useCurrentNetwork();
-  const firstRequest = useRef(true);
-  const inRequest = useRef(false);
-
-  const requestNFT = useCallback(async () => {
-    if (currentOpen === nftInfo.contract && currentNetwork?.chainId) {
-      let skip = 0;
-      console.log(loadMore, page.total, page.page * pageSize);
-      if (loadMore && page.total > page.page * pageSize) {
-        skip = page.page * pageSize;
-      }
-      inRequest.current = true;
-      firstValueFrom(
-        scanOpenAPISend<{ message: string; result: { list: NFTItemDetail[]; next: number; total: number }; status: string }>(
-          currentNetwork?.chainId,
-          `/nft/tokens?contract=${nftInfo.contract}&owner=${ownerAddress}&sort=ASC&sortField=latest_update_time&cursor=0&skip=${skip}&limit=${pageSize}&withBrief=true&withMetadata=false&suppressMetadataError=true`
-        )
-      )
-        .then((res) => {
-          if (page.page === 0) {
-            setList(res.result.list);
-          } else {
-            setList((v) => {
-              const hash = v.reduce((acc, cur) => {
-                acc[cur.tokenId] = true;
-                return acc;
-              }, {} as Record<string, boolean>);
-              return [...v, ...res.result.list.filter((v) => !hash[v.tokenId])];
-            });
-          }
-          setPage({ page: page.page + 1, total: res.result.total });
-        })
-        .finally(() => {
-          inRequest.current = false;
-        });
-    }
-  }, [currentOpen, nftInfo.contract, ownerAddress, page.page, currentNetwork?.chainId, page.total, loadMore]);
-
-  // TODO loadMore
-  useEffect(() => {
-    if (currentOpen === nftInfo.contract && firstRequest.current) {
-      firstRequest.current = false;
-      requestNFT();
-    }
-  }, [requestNFT, currentOpen, nftInfo.contract]);
-
-  useEffect(() => {
-    if (currentOpen === nftInfo.contract && loadMore && !firstRequest.current && !inRequest.current && list.length < page.total) {
-      requestNFT();
-    }
-  }, [loadMore, requestNFT, currentOpen, nftInfo.contract, list.length, page.total]);
   return (
-    <View className="flex flex-1 w-full">
+    <View className="flex flex-1 w-full px-2">
       <ListItem.Accordion
         isExpanded={currentOpen === nftInfo.contract}
         onPress={() => setCurrentOpen(currentOpen === nftInfo.contract ? null : nftInfo.contract)}
@@ -111,24 +53,43 @@ export const NFTItem: React.FC<{
       >
         <ListItem containerStyle={{ backgroundColor: 'transparent' }}>
           <View className="flex flex-row flex-wrap justify-between w-full">
-            {currentOpen && list.length === 0 && (
-              <View style={{ backgroundColor: theme.colors.surfaceCard }} className="p-3 mb-3 rounded-md">
-                <View className="w-36 h-36">
-                  <Skeleton width={144} height={144} />
-                </View>
-                <Text style={{ color: theme.colors.textSecondary }} className="text-sm leading-6">
-                  <Skeleton width={74} height={21} />
-                </Text>
-                <Text style={{ color: theme.colors.contrastWhiteAndBlack }} className="text-sm leading-6">
-                  <Skeleton width={141} height={21} />
-                </Text>
+            {currentOpen && nftInfo.NFTList.length === 0 && (
+              <View className="flex-1 flex flex-row justify-between">
+                {Array.from({ length: 2 }).map((_, i) => (
+                  <View key={i} style={{ backgroundColor: theme.colors.surfaceCard }} className="p-3 mb-3 rounded-md">
+                    <View className="w-36 h-36 mb-2">
+                      <Skeleton width={142} height={142} />
+                    </View>
+                    <View className="mb-1">
+                      <Skeleton width={70} height={16} />
+                    </View>
+                    <View>
+                      <Skeleton width={141} height={16} />
+                    </View>
+                  </View>
+                ))}
               </View>
             )}
 
-            {list.map((v) => (
+            {nftInfo.NFTList.map((v) => (
               <Pressable
                 key={v.tokenId}
-                onPress={onPress ? () => onPress({ ...nftInfo, ...v, contractName: nftInfo.name, nftName: v.name }) : undefined}
+                onPress={
+                  onPress
+                    ? () =>
+                        onPress({
+                          assetType: v.type,
+                          tokenId: v.tokenId,
+                          tokenImage: v.image,
+                          nftName: v.name,
+                          iconUrl: nftInfo.iconUrl,
+                          symbol: nftInfo.symbol,
+                          balance: v.amount,
+                          contract: nftInfo.contract,
+                          contractName: nftInfo.name,
+                        })
+                    : undefined
+                }
                 style={{ width: '48%' }}
               >
                 <View style={{ backgroundColor: theme.colors.surfaceCard }} className="p-3 mb-3 rounded-md w-full">
@@ -138,7 +99,7 @@ export const NFTItem: React.FC<{
                     </View>
                   )}
                   <View className="flex items-center w-full h-36 overflow-hidden">
-                    {v.image && <MixinImage source={{ uri: v.image }} className="w-full h-full" />}
+                    {v.image ? <MixinImage source={{ uri: v.image }} className="w-full h-full" /> : <DefaultNFTImage />}
                   </View>
                   <Text style={{ color: theme.colors.textSecondary }} className="text-sm leading-6">
                     {nftInfo.name}
@@ -155,3 +116,5 @@ export const NFTItem: React.FC<{
     </View>
   );
 };
+
+export default NFTItem;
