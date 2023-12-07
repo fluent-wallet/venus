@@ -13,6 +13,7 @@ import { VaultMethod } from './vaultMethod';
 import { NetworkMethod } from './networkMethod';
 import { DatabaseMethod } from './databaseMethod';
 import { TransactionMethod } from './transactionMethod';
+import { TxMethod } from './txMethod';
 
 @injectable()
 export class Methods {
@@ -108,6 +109,11 @@ export class Methods {
     return this.TransactionMethod.sendTransaction(...args);
   }
 
+  @inject(TxMethod) private TxMethod!: TxMethod;
+  public createTx(...args: Parameters<TxMethod['createTx']>) {
+    return this.TxMethod.createTx(...args);
+  }
+
   [methodName: string]: any;
   public register(methodName: string, method: Function) {
     this[methodName] = method;
@@ -123,6 +129,7 @@ container.bind(VaultMethod).to(VaultMethod).inSingletonScope();
 container.bind(NetworkMethod).to(NetworkMethod).inSingletonScope();
 container.bind(DatabaseMethod).to(DatabaseMethod).inSingletonScope();
 container.bind(TransactionMethod).to(TransactionMethod).inSingletonScope();
+container.bind(TxMethod).to(TxMethod).inSingletonScope();
 container.bind(Methods).to(Methods).inSingletonScope();
 
 export default container.get(Methods) as Methods;
