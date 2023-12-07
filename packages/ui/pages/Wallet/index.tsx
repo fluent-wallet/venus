@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { View, SafeAreaView, Pressable } from 'react-native';
 import { useNetInfo } from '@react-native-community/netinfo';
 import { useAtom } from 'jotai';
@@ -14,6 +14,8 @@ import ReceiveIcon from '@assets/icons/receive.svg';
 import BuyIcon from '@assets/icons/buy.svg';
 import MoreIcon from '@assets/icons/more.svg';
 import WifiOffIcon from '@assets/icons/wifi_off.svg';
+import Skeleton from '@components/Skeleton';
+import { useCurrentAccount } from '@core/WalletCore/Plugins/ReactInject';
 
 const Wallet: React.FC<{ navigation: StackNavigation }> = ({ navigation }) => {
   const { theme } = useTheme();
@@ -21,7 +23,7 @@ const Wallet: React.FC<{ navigation: StackNavigation }> = ({ navigation }) => {
   const [tabIndex, setTabIndex] = useState(0);
   const [ERC20TokenList] = useAtom(readScanAndFallbackTokenListAtom);
   const [nativeToken] = useAtom(nativeTokenAtom);
-
+  const currentAccount = useCurrentAccount();
   const tokenList = nativeToken && ERC20TokenList ? [nativeToken, ...ERC20TokenList] : ERC20TokenList;
 
   const value = tokenList
@@ -42,15 +44,21 @@ const Wallet: React.FC<{ navigation: StackNavigation }> = ({ navigation }) => {
       </View>
       <View className="px-[24px]">
         <Text className="mt-[16px] leading-tight text-[16px] text-center" style={{ color: theme.colors.textSecondary }}>
-          ePay Wallet
+          {currentAccount?.nickname}
         </Text>
 
-        <Text
-          className="mb-[16px] leading-tight text-[48px] text-center font-bold"
-          style={{ color: Number(value) === 0 ? theme.colors.textSecondary : theme.colors.textPrimary }}
-        >
-          {value === null ? '--' : `$${value}`}
-        </Text>
+        <View className="flex items-center justify-center h-[60px] mb-[16px]">
+          {value === null ? (
+            <Skeleton width={156} height={30} />
+          ) : (
+            <Text
+              className=" leading-tight text-[48px] text-center font-bold"
+              style={{ color: Number(value) === 0 ? theme.colors.textSecondary : theme.colors.textPrimary }}
+            >
+              {value}
+            </Text>
+          )}
+        </View>
 
         <View className="flex flex-row">
           <Pressable className="flex items-center flex-1" onPress={() => navigation.navigate(ReceiveAddressStackName, {})}>
@@ -100,13 +108,11 @@ const Wallet: React.FC<{ navigation: StackNavigation }> = ({ navigation }) => {
       </View>
 
       <TabView value={tabIndex} onChange={setTabIndex} animationType="spring">
-        <TabView.Item className="w-full">
-          <TokenList />
+        <TokenList />
+        <TabView.Item style={{ width: '100%' }}>
+          <NFTList pageSize={16} />
         </TabView.Item>
-        <TabView.Item className="w-full">
-          <NFTList />
-        </TabView.Item>
-        <TabView.Item className="w-full">
+        <TabView.Item style={{ width: '100%' }}>
           <Text h1>Activity</Text>
         </TabView.Item>
       </TabView>

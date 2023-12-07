@@ -19,6 +19,7 @@ import MixinImage from '@components/MixinImage';
 import { AssetType } from '@core/database/models/Asset';
 import Methods from '@core/WalletCore/Methods';
 import Events from '@core/WalletCore/Events';
+import DefaultNFTImage from '@assets/images/NFT.svg';
 
 const TransactionConfirm: React.FC<{
   navigation: StackNavigation;
@@ -38,7 +39,7 @@ const TransactionConfirm: React.FC<{
       setLoading(true);
       try {
         const { txHash, txRaw, transaction } = await Methods.sendTransaction(tx, gas);
-        
+
         Events.broadcastTransactionSubjectPush.next({
           txHash,
           txRaw,
@@ -63,7 +64,7 @@ const TransactionConfirm: React.FC<{
   }, [currentNetwork.endpoint, tx.assetType, tx.contract, tx.to, tx.amount, currentAddress.hex, tx.tokenId]);
 
   const renderAmount = () => {
-    if (tx.assetType === AssetType.ERC20 || tx.assetType === AssetType.Native) {
+    if (tx.assetType === AssetType.ERC20 || tx.assetType === AssetType.Native || tx.assetType === AssetType.ERC1155) {
       return `${tx.amount} ${tx.symbol}`;
     }
     if (tx.assetType === AssetType.ERC721) {
@@ -82,11 +83,9 @@ const TransactionConfirm: React.FC<{
           {tx.tokenImage && <Image source={{ uri: tx.tokenImage }} width={63} height={63} className="mr-4" />}
           <View className="flex justify-center">
             <View className="flex flex-row mb-1">
-              {tx.iconUrl && (
-                <View className="w-6 h-6 overflow-hidden rounded-full mr-2">
-                  <MixinImage source={{ uri: tx.iconUrl }} width={24} height={24} />
-                </View>
-              )}
+              <View className="w-6 h-6 overflow-hidden rounded-full mr-2">
+                {tx.iconUrl ? <MixinImage source={{ uri: tx.iconUrl }} width={24} height={24} /> : <DefaultNFTImage width={24} height={24} />}
+              </View>
               <Text style={{ color: theme.colors.textSecondary }} className="leading-normal">
                 {tx.contractName}
               </Text>

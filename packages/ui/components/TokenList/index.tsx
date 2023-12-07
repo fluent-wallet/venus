@@ -19,9 +19,10 @@ import TokenItem from './TokenItem';
 import { useTheme } from '@rneui/themed';
 import { useFocusEffect } from '@react-navigation/native';
 import { useCallback, useRef } from 'react';
+import { View } from 'react-native';
+import SkeletonList from './SkeletonList';
 
-const TokenList: React.FC<{ onPress?: (v: AccountTokenListItem) => void }> = ({ onPress }) => {
-  const { theme } = useTheme();
+const TokenList: React.FC<{ onPress?: (v: AccountTokenListItem) => void; skeleton?: number }> = ({ onPress, skeleton = 4 }) => {
   const [tokenListState, setTokenListState] = useAtom(tokenListStateAtom);
 
   const [fallBackList, setFallBakList] = useAtom(readAndWriteERC20TokenListFallbackListAtom);
@@ -151,11 +152,13 @@ const TokenList: React.FC<{ onPress?: (v: AccountTokenListItem) => void }> = ({ 
   const list = combineListData();
 
   return list.length === 0 ? (
-    <ActivityIndicator color={theme.colors.contrastWhiteAndBlack} size={'large'} />
+    <View className="flex-1 px-6 py-4">
+      <SkeletonList length={skeleton} />
+    </View>
   ) : (
     <FlatList
       onEndReached={handleLoadMore}
-      onEndReachedThreshold={0.5}
+      // onEndReachedThreshold={0.5}
       // onViewableItemsChanged={onViewCallBack}
       className="flex flex-1 px-6 py-4"
       data={combineListData()}
