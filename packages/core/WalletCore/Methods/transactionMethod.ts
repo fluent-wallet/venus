@@ -77,13 +77,14 @@ export class TransactionMethod {
       transaction.signature = Signature.from({ r: res.r, s: res.s, v: res.v });
       // get the transaction encoded
       const encodeTx = transaction.serialized;
-      return firstValueFrom(RPCSend<string>(endpoint, { method: 'eth_sendRawTransaction', params: [encodeTx] }));
+      const txRes = await firstValueFrom(RPCSend<RPCResponse<string>>(endpoint, { method: 'eth_sendRawTransaction', params: [encodeTx] }));
+      return { txHash: txRes.result, txRaw: encodeTx };
     } else {
       const pk = await this.GetDecryptedVaultDataMethod.getPrivateKeyOfAddress(currentAddress);
       const wallet = new Wallet(pk, new JsonRpcProvider(endpoint));
-      wallet.signTransaction(transaction);
-      const res = await wallet.sendTransaction(transaction);
-      return res.hash;
+      const txRaw = await wallet.signTransaction(transaction);
+      const txRes = await wallet.sendTransaction(transaction);
+      return { txHash: txRes.hash, txRaw };
     }
   };
 
@@ -167,7 +168,8 @@ export class TransactionMethod {
       transaction.to = walletTx.contract;
       transaction.data = this.getContractTransactionData(currentAddress.hex, walletTx);
     }
+    const { txHash, txRaw } = await this.signAndSendTransaction(currentNetwork.endpoint, currentAddress, transaction);
 
-    return this.signAndSendTransaction(currentNetwork.endpoint, currentAddress, transaction);
+    return { txHash, txRaw, transaction };
   };
 }

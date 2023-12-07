@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { Pressable, SafeAreaView, View, Image } from 'react-native';
 import { RouteProp } from '@react-navigation/native';
 import { useAtom } from 'jotai';
-import {  formatUnits, } from 'ethers';
+import { formatUnits } from 'ethers';
 import { Button, Divider, Text, useTheme } from '@rneui/themed';
 import { statusBarHeight } from '@utils/deviceInfo';
 import { useCurrentAddress, useCurrentNetwork } from '@core/WalletCore/Plugins/ReactInject';
@@ -37,12 +37,12 @@ const TransactionConfirm: React.FC<{
     if (gas) {
       setLoading(true);
       try {
-        const hash = await Methods.sendTransaction(tx, gas);
-
+        const { txHash, txRaw, transaction } = await Methods.sendTransaction(tx, gas);
+        
         Events.broadcastTransactionSubjectPush.next({
-          ...tx,
-          ...gas,
-          hash,
+          txHash,
+          txRaw,
+          transaction,
         });
         navigation.navigate(HomeStackName, { screen: WalletStackName });
         setLoading(false);
