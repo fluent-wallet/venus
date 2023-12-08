@@ -65,6 +65,40 @@ export enum CoinTypes {
   FILECOIN = 'FILECOIN',
 }
 
+export const BSIM_ERRORS: Record<string, string> = {
+  default: 'Execution failed, unknown error.',
+  A000: 'Execution failed, unknown error.',
+  '6E00': 'CAL error',
+  '6D00': 'INS error',
+  '6700': 'length error',
+  '6A80': 'data error',
+  '6A84': 'Keystore space is full.',
+  '6A86': 'P1 or P2 error.',
+  '6A88': 'Authentication key not found / Decryption key not found / BPIN does not exist.',
+  '6982': 'Insufficient permissions / Card activation authentication not performed / BPIN not verified.',
+  '6983': 'Authentication method locked (Key locked).',
+  '6984': 'Invalid random number / Random number not obtained.',
+  '6985': 'Instruction invalid (already executed) / Insufficient execution conditions / Key value already exists.',
+  '6300': 'Authentication failed.',
+  '63C1': 'Authentication failed, 1 attempt remaining.',
+  '63C2': 'Authentication failed, 2 attempt remaining.',
+  '63C3': 'Authentication failed, 3 attempt remaining.',
+  '63C4': 'Authentication failed, 4 attempt remaining.',
+  '63C5': 'Authentication failed, 5 attempt remaining.',
+  '63C6': 'Authentication failed, 6 attempt remaining.',
+  '63C7': 'Authentication failed, 7 attempt remaining.',
+  '63C8': 'Authentication failed, 8 attempt remaining.',
+  '63C9': 'Authentication failed, 9 attempt remaining.',
+  '63CA': 'Authentication failed, 10 attempt remaining.',
+};
+
+export class BSIMTimeoutError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'TimeoutError';
+  }
+}
+
 export interface BSIMPubKey {
   coinType: number;
   key: string;

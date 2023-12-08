@@ -4,7 +4,7 @@ import { getCurrentNetwork } from '../Plugins/ReactInject/data/useCurrentNetwork
 import { AssetType } from '@core/database/models/Asset';
 import { WalletTransactionType } from '../Plugins/ReactInject/data/useTransaction';
 import { iface1155, iface721, iface777 } from '@core/contracts';
-import { firstValueFrom, map, switchMap, defer, from, retry, timeout } from 'rxjs';
+import { firstValueFrom, map, switchMap, defer, from, retry, timeout, Subject, tap, catchError, throwError } from 'rxjs';
 import { getCurrentAddress } from '../Plugins/ReactInject/data/useCurrentAddress';
 import { addHexPrefix } from '@core/utils/base';
 import { parseUnits } from 'ethers';
@@ -16,6 +16,7 @@ import { Signature } from 'ethers';
 import { Wallet } from 'ethers';
 import { JsonRpcProvider } from 'ethers';
 import { GetDecryptedVaultDataMethod } from './getDecryptedVaultData';
+import { BSIMTimeoutError } from 'packages/WalletCoreExtends/Plugins/BSIM/BSIMSDK';
 
 @injectable()
 export class TransactionMethod {
@@ -34,14 +35,17 @@ export class TransactionMethod {
     return firstValueFrom(RPCSend<RPCResponse<string>>(endpoint, { method: 'eth_getTransactionCount', params: [currentAddress, 'pending'] }));
   };
 
-  private getContractTransactionData = (currentAddress: string, args: Pick<WalletTransactionType, 'assetType' | 'tokenId' | 'contract' | 'to' | 'amount'>) => {
+  private getContractTransactionData = (
+    currentAddress: string,
+    args: Pick<WalletTransactionType, 'assetType' | 'tokenId' | 'contract' | 'to' | 'amount' | 'decimals'>
+  ) => {
     if (!args.contract) {
       throw new Error("Get contract transaction data but don't have contract address");
     }
 
     switch (args.assetType) {
       case AssetType.ERC20: {
-        return iface777.encodeFunctionData('transfer', [args.to, parseUnits(args.amount.toString())]);
+        return iface777.encodeFunctionData('transfer', [args.to, parseUnits(args.amount.toString(), args.decimals)]);
       }
       case AssetType.ERC721: {
         if (typeof args.tokenId === 'undefined') {
@@ -63,21 +67,41 @@ export class TransactionMethod {
     }
   };
 
-  signAndSendTransaction = async (endpoint: string, currentAddress: Address, transaction: Transaction) => {
+  signAndSendTransaction = async (endpoint: string, currentAddress: Address, transaction: Transaction, BSIMChannel?: Subject<void>) => {
     const vaultType = await currentAddress.getVaultType();
 
     if (vaultType === 'BSIM') {
       const hash = transaction.unsignedHash;
       const index = (await currentAddress.account).index;
+
+      if (BSIMChannel) {
+        BSIMChannel.next();
+      }
+
       await BSIM.verifyBPIN();
 
+      let errorMsg = '';
       // retrieve the R S V of the transaction through a polling mechanism
-      const res = await firstValueFrom(defer(() => from(BSIM.signMessage(hash, CoinTypes.CONFLUX, index))).pipe(retry({ delay: 1000 }), timeout(30 * 1000)));
+      const res = await firstValueFrom(
+        defer(() => from(BSIM.signMessage(hash, CoinTypes.CONFLUX, index))).pipe(
+          catchError((err: Error) => {
+            errorMsg = err.message;
+            return throwError(() => err);
+          }),
+          retry({ delay: 1000 }),
+          timeout({ each: 30 * 1000, with: () => throwError(() => new BSIMTimeoutError(errorMsg)) })
+        )
+      );
       //  add the R S V to the transaction
       transaction.signature = Signature.from({ r: res.r, s: res.s, v: res.v });
       // get the transaction encoded
       const encodeTx = transaction.serialized;
       const txRes = await firstValueFrom(RPCSend<RPCResponse<string>>(endpoint, { method: 'eth_sendRawTransaction', params: [encodeTx] }));
+
+      if (BSIMChannel) {
+        BSIMChannel.next();
+      }
+
       return { txHash: txRes.result, txRaw: encodeTx };
     } else {
       const pk = await this.GetDecryptedVaultDataMethod.getPrivateKeyOfAddress(currentAddress);
@@ -88,7 +112,7 @@ export class TransactionMethod {
     }
   };
 
-  getGasPriceAndLimit = async (args: Pick<WalletTransactionType, 'to' | 'assetType' | 'amount' | 'contract' | 'tokenId'>) => {
+  getGasPriceAndLimit = async (args: Pick<WalletTransactionType, 'to' | 'assetType' | 'amount' | 'contract' | 'tokenId' | 'decimals'>) => {
     const currentNetwork = getCurrentNetwork();
     const currentAddress = getCurrentAddress();
     if (!currentAddress) {
@@ -110,7 +134,7 @@ export class TransactionMethod {
     if (args.assetType === AssetType.Native) {
       estimateGasParams.to = args.to;
       estimateGasParams.data = '0x';
-      estimateGasParams.value = addHexPrefix(parseUnits(args.amount.toString()).toString(16));
+      estimateGasParams.value = addHexPrefix(parseUnits(args.amount.toString(), args.decimals).toString(16));
     } else {
       if (typeof args.contract === 'undefined') {
         throw new Error("Get gas price and limit but don't have contract address");
@@ -137,7 +161,7 @@ export class TransactionMethod {
     );
   };
 
-  sendTransaction = async (walletTx: WalletTransactionType, gas: { gasLimit: string; gasPrice: string }) => {
+  sendTransaction = async (walletTx: WalletTransactionType, gas: { gasLimit: string; gasPrice: string }, BSIMChannel?: Subject<void>) => {
     const currentNetwork = getCurrentNetwork();
     const currentAddress = getCurrentAddress();
     if (!currentAddress) {
@@ -160,7 +184,7 @@ export class TransactionMethod {
 
     if (walletTx.assetType === AssetType.Native) {
       transaction.to = walletTx.to;
-      transaction.value = parseUnits(walletTx.amount.toString());
+      transaction.value = parseUnits(walletTx.amount.toString(), walletTx.decimals);
     } else {
       if (typeof walletTx.contract === 'undefined') {
         throw new Error("Send contract transaction but don't have contract address");
@@ -168,7 +192,7 @@ export class TransactionMethod {
       transaction.to = walletTx.contract;
       transaction.data = this.getContractTransactionData(currentAddress.hex, walletTx);
     }
-    const { txHash, txRaw } = await this.signAndSendTransaction(currentNetwork.endpoint, currentAddress, transaction);
+    const { txHash, txRaw } = await this.signAndSendTransaction(currentNetwork.endpoint, currentAddress, transaction, BSIMChannel);
 
     return { txHash, txRaw, transaction };
   };

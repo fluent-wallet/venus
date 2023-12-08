@@ -91,6 +91,10 @@ export class BSIMPluginClass implements Plugin {
     return BSIMSDK.verifyBPIN();
   };
 
+  public getBSIMVersion = async () => {
+    await this.checkIsInit();
+    return BSIMSDK.getBSIMVersion();
+  };
   public signMessage = async (message: string, coinType: CoinTypes, index: number) => {
     await this.checkIsInit();
 
