@@ -1,11 +1,12 @@
-import { useEffect, useState } from 'react';
-import { Pressable, SafeAreaView, View, Image } from 'react-native';
-import { RouteProp } from '@react-navigation/native';
+import { useCallback, useEffect, useState } from 'react';
+import { Pressable, SafeAreaView, View, Image, useColorScheme } from 'react-native';
+import { RouteProp, useFocusEffect } from '@react-navigation/native';
+import { Subject, scan } from 'rxjs';
 import { useAtom } from 'jotai';
 import { formatUnits } from 'ethers';
 import { Button, Divider, Text, useTheme } from '@rneui/themed';
 import { statusBarHeight } from '@utils/deviceInfo';
-import { useCurrentAddress, useCurrentNetwork } from '@core/WalletCore/Plugins/ReactInject';
+import { useCurrentAccount, useCurrentAddress, useCurrentNetwork, useVaultOfAccount } from '@core/WalletCore/Plugins/ReactInject';
 import { shortenAddress } from '@core/utils/address';
 import { type RootStackList, type StackNavigation, WalletStackName, HomeStackName, TransactionConfirmStackName } from '@router/configs';
 import { BaseButton } from '@components/Button';
@@ -20,6 +21,11 @@ import { AssetType } from '@core/database/models/Asset';
 import Methods from '@core/WalletCore/Methods';
 import Events from '@core/WalletCore/Events';
 import DefaultNFTImage from '@assets/images/NFT.svg';
+import VaultType from '@core/database/models/Vault/VaultType';
+import { formatValue } from '@utils/formatValue';
+import BSIMSendTX, { BSIM_SIGN_STATUS } from './SendTX';
+import BSIM from 'packages/WalletCoreExtends/Plugins/BSIM';
+import { BSIMTimeoutError, BSIM_ERRORS } from 'packages/WalletCoreExtends/Plugins/BSIM/BSIMSDK';
 
 const TransactionConfirm: React.FC<{
   navigation: StackNavigation;
@@ -29,6 +35,10 @@ const TransactionConfirm: React.FC<{
   const [loading, setLoading] = useState(false);
   const currentNetwork = useCurrentNetwork()!;
   const currentAddress = useCurrentAddress()!;
+  const currentAccount = useCurrentAccount()!;
+  const currentVault = useVaultOfAccount(currentAccount?.id);
+  const [BSIMTXState, setBSIMTXState] = useState(BSIM_SIGN_STATUS.INIT);
+  const [BSIMTxError, setBSIMTxError] = useState('');
 
   const [error, setError] = useState('');
   const [tx] = useAtom(transactionAtom);
@@ -38,18 +48,46 @@ const TransactionConfirm: React.FC<{
     if (gas) {
       setLoading(true);
       try {
-        const { txHash, txRaw, transaction } = await Methods.sendTransaction(tx, gas);
+        let channel;
+        if (currentVault.type === VaultType.BSIM) {
+          channel = new Subject<void>();
+          channel.pipe(scan((acc) => acc + 1, 0)).subscribe({
+            next: (v) => {
+              console.log('next state', v);
+              const states = [BSIM_SIGN_STATUS.SIGNING, BSIM_SIGN_STATUS.COMPLETE];
+              setBSIMTXState(states[v - 1]);
+            },
+          });
+        }
 
-        Events.broadcastTransactionSubjectPush.next({
-          txHash,
-          txRaw,
-          transaction,
-          walletTx: {
-            assetType: tx.assetType,
-            contract: tx.contract,
-            to: tx.to,
-          },
-        });
+        try {
+          const { txHash, txRaw, transaction } = await Methods.sendTransaction(tx, gas, channel);
+
+          Events.broadcastTransactionSubjectPush.next({
+            txHash,
+            txRaw,
+            transaction,
+            walletTx: {
+              assetType: tx.assetType,
+              contract: tx.contract,
+              to: tx.to,
+            },
+          });
+          navigation.navigate(HomeStackName, { screen: WalletStackName });
+        } catch (error) {
+          // error
+          if (channel) {
+            if (error instanceof BSIMTimeoutError) {
+              const errorMsg = BSIM_ERRORS[(error as Error).message];
+              setBSIMTxError(errorMsg);
+            } else {
+              // not BSIM error
+              setBSIMTxError(BSIM_ERRORS.default);
+            }
+            setBSIMTXState(BSIM_SIGN_STATUS.ERROR);
+          }
+        }
+
         navigation.navigate(HomeStackName, { screen: WalletStackName });
         setLoading(false);
       } catch (error) {
@@ -60,13 +98,31 @@ const TransactionConfirm: React.FC<{
   };
 
   useEffect(() => {
-    Methods.getTransactionGasAndGasLimit({ to: tx.to, amount: tx.amount, assetType: tx.assetType, contract: tx.contract, tokenId: tx.tokenId })
+    Methods.getTransactionGasAndGasLimit({
+      to: tx.to,
+      amount: tx.amount,
+      assetType: tx.assetType,
+      contract: tx.contract,
+      tokenId: tx.tokenId,
+      decimals: tx.decimals,
+    })
       .then((res) => setGas(res))
       .catch((err) => {
         console.log('getTransactionGasAndGasLimit error', err);
         // TODO maybe we need show the error to user
       });
-  }, [currentNetwork.endpoint, tx.assetType, tx.contract, tx.to, tx.amount, currentAddress.hex, tx.tokenId]);
+  }, [currentNetwork.endpoint, tx.assetType, tx.contract, tx.to, tx.amount, currentAddress.hex, tx.tokenId, tx.decimals]);
+
+  useFocusEffect(
+    useCallback(() => {
+      console.log("check if there's BSIM card ");
+      if (currentVault?.type === VaultType.BSIM) {
+        BSIM.getBSIMVersion().catch((e) => {
+          setBSIMTXState(BSIM_SIGN_STATUS.NOT_HAVE_BSIM);
+        });
+      }
+    }, [currentVault?.type])
+  );
 
   const renderAmount = () => {
     if (tx.assetType === AssetType.ERC20 || tx.assetType === AssetType.Native || tx.assetType === AssetType.ERC1155) {
@@ -78,122 +134,128 @@ const TransactionConfirm: React.FC<{
   };
 
   const gasCost = gas ? BigInt(gas.gasLimit) * BigInt(gas.gasPrice) : 0n;
+
   return (
     <SafeAreaView
-      className="flex-1 flex flex-col justify-start px-[24px] pb-7"
+      className="flex-1 flex flex-col justify-startpb-7"
       style={{ backgroundColor: theme.colors.normalBackground, paddingTop: statusBarHeight + 48 }}
     >
-      {(tx.assetType === AssetType.ERC721 || tx.assetType === AssetType.ERC1155) && (
-        <View className="flex flex-row p-4 rounded-lg w-full mb-4" style={{ backgroundColor: theme.colors.surfaceCard }}>
-          {tx.tokenImage && <Image source={{ uri: tx.tokenImage }} width={63} height={63} className="mr-4" />}
-          <View className="flex justify-center">
-            <View className="flex flex-row mb-1">
-              <View className="w-6 h-6 overflow-hidden rounded-full mr-2">
-                {tx.iconUrl ? <MixinImage source={{ uri: tx.iconUrl }} width={24} height={24} /> : <DefaultNFTImage width={24} height={24} />}
+      <View className="px-6">
+        {(tx.assetType === AssetType.ERC721 || tx.assetType === AssetType.ERC1155) && (
+          <View className="flex flex-row p-4 rounded-lg w-full mb-4" style={{ backgroundColor: theme.colors.surfaceCard }}>
+            {tx.tokenImage && <Image source={{ uri: tx.tokenImage }} width={63} height={63} className="mr-4" />}
+            <View className="flex justify-center">
+              <View className="flex flex-row mb-1">
+                <View className="w-6 h-6 overflow-hidden rounded-full mr-2">
+                  {tx.iconUrl ? <MixinImage source={{ uri: tx.iconUrl }} width={24} height={24} /> : <DefaultNFTImage width={24} height={24} />}
+                </View>
+                <Text style={{ color: theme.colors.textSecondary }} className="leading-normal">
+                  {tx.contractName}
+                </Text>
               </View>
-              <Text style={{ color: theme.colors.textSecondary }} className="leading-normal">
-                {tx.contractName}
-              </Text>
-            </View>
-            <Text style={{ color: theme.colors.textPrimary }} className="leading-normal font-medium">
-              {tx.nftName}
-            </Text>
-          </View>
-        </View>
-      )}
-      {error && (
-        <Pressable onPress={() => setError('')}>
-          <View className="flex flex-row p-3 items-center border rounded-lg mb-4" style={{ borderColor: theme.colors.warnErrorPrimary }}>
-            <Warning width={16} height={16} />
-            <View className="flex-1 ml-2">
-              <Text className="text-sm leading-6" style={{ color: theme.colors.warnErrorPrimary }}>
-                {error}
+              <Text style={{ color: theme.colors.textPrimary }} className="leading-normal font-medium">
+                {tx.nftName}
               </Text>
             </View>
           </View>
-        </Pressable>
-      )}
-      <View style={{ backgroundColor: theme.colors.surfaceCard }} className="p-[15px] rounded-md">
-        <Text className="leading-6" style={{ color: theme.colors.textSecondary }}>
-          From
-        </Text>
-        <View className="flex flex-row items-center my-2">
-          <View className="mr-2">
-            <AvatarIcon width={24} height={24} />
-          </View>
-          <Text>{shortenAddress(currentAddress.hex)}</Text>
-          <View className="m-1">
-            <CopyAllIcon width={16} height={16} />
-          </View>
-        </View>
-        <Text className="ml-8 leading-6" style={{ color: theme.colors.textSecondary }}>
-          Balance: {tx.assetType === AssetType.ERC20 ? formatUnits(tx.balance, tx.decimals) : tx.balance} {tx.symbol}
-        </Text>
-
-        <Divider className="my-4" />
-
-        <Text className="leading-6" style={{ color: theme.colors.textSecondary }}>
-          To
-        </Text>
-        <View className="flex flex-row items-center my-2">
-          <View className="mr-2">
-            <AvatarIcon width={24} height={24} />
-          </View>
-          <Text>{shortenAddress(tx.to)}</Text>
-          <View className="m-1">
-            <CopyAllIcon width={16} height={16} />
-          </View>
-        </View>
-      </View>
-
-      <View style={{ backgroundColor: theme.colors.surfaceCard }} className="p-[15px] rounded-md">
-        <View className="flex flex-row justify-between">
-          <Text className=" leading-6" style={{ color: theme.colors.textSecondary }}>
-            Amount
-          </Text>
-          <View className="flex">
-            <Text style={{ color: theme.colors.textPrimary }} className="text-xl font-bold leading-6">
-              {renderAmount()}
-            </Text>
-            <Text style={{ color: theme.colors.textSecondary }} className="text-right text-sm leading-6">
-              {tx.priceInUSDT ? `≈$${Number(tx.priceInUSDT) * tx.amount}` : ''}
-            </Text>
-          </View>
-        </View>
-
-        <View className="flex flex-row justify-between">
-          <Text className=" eading-6" style={{ color: theme.colors.textSecondary }}>
-            Estimate Gas Cost
-          </Text>
-          <View className="flex">
-            <Text style={{ color: theme.colors.textPrimary }} className="text-xl font-bold leading-6">
-              {formatUnits(gasCost)} CFX
-            </Text>
-            <Text style={{ color: theme.colors.textSecondary }} className="text-right text-sm leading-6">
-              {/*  price todo */}
-            </Text>
-          </View>
-        </View>
-
-        <View className="flex flex-row justify-between">
+        )}
+        {error && (
+          <Pressable onPress={() => setError('')}>
+            <View className="flex flex-row p-3 items-center border rounded-lg mb-4" style={{ borderColor: theme.colors.warnErrorPrimary }}>
+              <Warning width={16} height={16} />
+              <View className="flex-1 ml-2">
+                <Text className="text-sm leading-6" style={{ color: theme.colors.warnErrorPrimary }}>
+                  {error}
+                </Text>
+              </View>
+            </View>
+          </Pressable>
+        )}
+        <View style={{ backgroundColor: theme.colors.surfaceCard }} className="p-[15px] rounded-md">
           <Text className="leading-6" style={{ color: theme.colors.textSecondary }}>
-            Network
+            From
           </Text>
-          <Text className="leading-6">{currentNetwork.name}</Text>
-        </View>
-      </View>
+          <View className="flex flex-row items-center my-2">
+            <View className="mr-2">
+              <AvatarIcon width={24} height={24} />
+            </View>
+            <Text>{shortenAddress(currentAddress.hex)}</Text>
+            <View className="m-1">
+              <CopyAllIcon width={16} height={16} />
+            </View>
+          </View>
+          <Text className="ml-8 leading-6" style={{ color: theme.colors.textSecondary }}>
+            Balance: {tx.assetType === AssetType.ERC20 || tx.assetType === AssetType.Native ? formatValue(tx.balance, tx.decimals) : tx.balance} {tx.symbol}
+          </Text>
 
-      <View className="flex flex-row items-center mt-auto">
-        <Button type="outline" buttonStyle={{ width: 48, height: 48, borderRadius: 40, marginRight: 15 }} onPress={() => navigation.goBack()}>
-          <CloseIcon />
-        </Button>
-        <View className="flex-1">
-          <BaseButton loading={loading} disabled={!gas} onPress={handleSend}>
-            <SendIcon color="#fff" width={24} height={24} />
-            Send
-          </BaseButton>
+          <Divider className="my-4" />
+
+          <Text className="leading-6" style={{ color: theme.colors.textSecondary }}>
+            To
+          </Text>
+          <View className="flex flex-row items-center my-2">
+            <View className="mr-2">
+              <AvatarIcon width={24} height={24} />
+            </View>
+            <Text>{shortenAddress(tx.to)}</Text>
+            <View className="m-1">
+              <CopyAllIcon width={16} height={16} />
+            </View>
+          </View>
+        </View>
+
+        <View style={{ backgroundColor: theme.colors.surfaceCard }} className="p-[15px] rounded-md mt-4">
+          <View className="flex flex-row justify-between">
+            <Text className=" leading-6" style={{ color: theme.colors.textSecondary }}>
+              Amount
+            </Text>
+            <View className="flex">
+              <Text style={{ color: theme.colors.textPrimary }} className="text-xl font-bold leading-6">
+                {renderAmount()}
+              </Text>
+              <Text style={{ color: theme.colors.textSecondary }} className="text-right text-sm leading-6">
+                {tx.priceInUSDT ? `≈$${Number(tx.priceInUSDT) * tx.amount}` : ''}
+              </Text>
+            </View>
+          </View>
+
+          <View className="flex flex-row justify-between">
+            <Text className=" eading-6" style={{ color: theme.colors.textSecondary }}>
+              Estimate Gas Cost
+            </Text>
+            <View className="flex">
+              <Text style={{ color: theme.colors.textPrimary }} className="text-xl font-bold leading-6">
+                {formatUnits(gasCost)} CFX
+              </Text>
+              <Text style={{ color: theme.colors.textSecondary }} className="text-right text-sm leading-6">
+                {/*  price todo */}
+              </Text>
+            </View>
+          </View>
+
+          <View className="flex flex-row justify-between">
+            <Text className="leading-6" style={{ color: theme.colors.textSecondary }}>
+              Network
+            </Text>
+            <Text className="leading-6">{currentNetwork.name}</Text>
+          </View>
         </View>
       </View>
+      {currentVault?.type === VaultType.BSIM ? (
+        <BSIMSendTX onSend={handleSend} state={BSIMTXState} errorMessage={BSIMTxError} />
+      ) : (
+        <View className="flex flex-row items-center mt-auto">
+          <Button type="outline" buttonStyle={{ width: 48, height: 48, borderRadius: 40, marginRight: 15 }} onPress={() => navigation.goBack()}>
+            <CloseIcon />
+          </Button>
+          <View className="flex-1">
+            <BaseButton loading={loading} disabled={!gas} onPress={handleSend}>
+              <SendIcon color="#fff" width={24} height={24} />
+              Send
+            </BaseButton>
+          </View>
+        </View>
+      )}
     </SafeAreaView>
   );
 };

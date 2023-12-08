@@ -157,7 +157,7 @@ class SDKModule(private val reactContext: ReactApplicationContext) :
                     }
 
                 } else {
-                    promise.reject(BSIM_ERRPR, signMsg.Message)
+                    promise.reject(BSIM_ERRPR, signMsg.Code)
 
                 }
             }
