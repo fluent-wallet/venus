@@ -44,6 +44,11 @@ const TransactionConfirm: React.FC<{
           txHash,
           txRaw,
           transaction,
+          walletTx: {
+            assetType: tx.assetType,
+            contract: tx.contract,
+            to: tx.to,
+          },
         });
         navigation.navigate(HomeStackName, { screen: WalletStackName });
         setLoading(false);

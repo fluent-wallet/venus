@@ -2,7 +2,7 @@ import { type TxPayload } from '.';
 import { ModelFields, createModel } from '../../helper/modelHelper';
 import TableName from '../../TableName';
 
-type Params = ModelFields<TxPayload>;
+type Params = Omit<ModelFields<TxPayload>, 'createdAt'>;
 export function createTxPayload(params: Params, prepareCreate: true): TxPayload;
 export function createTxPayload(params: Params): Promise<TxPayload>;
 export function createTxPayload(params: Params, prepareCreate?: true) {

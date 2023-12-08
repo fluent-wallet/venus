@@ -8,14 +8,14 @@ import { type TxPayload } from '../TxPayload';
 import TableName from '../../TableName';
 
 export enum TxStatus {
-  SKIPPED = -2,
-  FAILED,
-  UNSENT,
-  SENDING,
-  PENDING,
-  PACKAGED,
-  EXECUTED,
-  CONFIRMED,
+  SKIPPED = '-2',
+  FAILED = '-1',
+  UNSENT = '0',
+  SENDING = '1',
+  PENDING = '2',
+  PACKAGED = '3',
+  EXECUTED = '4',
+  CONFIRMED = '5',
 }
 
 interface Receipt {

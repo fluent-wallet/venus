@@ -1,8 +1,15 @@
 import { BehaviorSubject, filter } from 'rxjs';
-import { WalletTransactionType } from '../Plugins/ReactInject/data/useTransaction';
 import { Transaction } from 'ethers';
+import { WalletTransactionType } from '../Plugins/ReactInject/data/useTransaction';
 
-export const broadcastTransactionSubjectPush = new BehaviorSubject<{ txHash: string; txRaw: string; transaction: Transaction } | null>(null);
+export interface TransactionSubjectValue {
+  txHash: string;
+  txRaw: string;
+  transaction: Transaction;
+  walletTx: Pick<WalletTransactionType, 'assetType' | 'contract' | 'to'>;
+}
+
+export const broadcastTransactionSubjectPush = new BehaviorSubject<TransactionSubjectValue | null>(null);
 
 const notNull = <T>(value: T | null): value is T => value !== null;
 
