@@ -71,18 +71,18 @@ export class TxMethod {
     const from = transaction.from ?? (await address?.getValue());
     const txPayload = _createTxPayload(
       {
-        type: transaction.type !== null ? String(transaction.type) : undefined,
+        type: transaction.type?.toString(),
         from,
         to: transaction.to,
-        gasPrice: String(transaction.gasPrice),
-        gas: String(transaction.gasLimit),
-        value: String(transaction.value),
-        nonce: String(transaction.nonce),
-        chainId: String(transaction.chainId),
+        gasPrice: transaction.gasPrice?.toString(),
+        gas: transaction.gasLimit.toString(),
+        value: transaction.value.toString(),
+        nonce: transaction.nonce.toString(),
+        chainId: transaction.chainId.toString(),
         data: transaction.data,
         accessList: transaction.accessList,
-        maxFeePerGas: String(transaction.maxFeePerGas),
-        maxPriorityFeePerGas: String(transaction.maxPriorityFeePerGas),
+        maxFeePerGas: transaction.maxFeePerGas?.toString(),
+        maxPriorityFeePerGas: transaction.maxPriorityFeePerGas?.toString(),
       },
       true
     );
