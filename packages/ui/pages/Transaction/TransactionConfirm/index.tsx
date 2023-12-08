@@ -67,6 +67,11 @@ const TransactionConfirm: React.FC<{
             txHash,
             txRaw,
             transaction,
+            walletTx: {
+              assetType: tx.assetType,
+              contract: tx.contract,
+              to: tx.to,
+            },
           });
           navigation.navigate(HomeStackName, { screen: WalletStackName });
         } catch (error) {
@@ -83,6 +88,7 @@ const TransactionConfirm: React.FC<{
           }
         }
 
+        navigation.navigate(HomeStackName, { screen: WalletStackName });
         setLoading(false);
       } catch (error) {
         console.log(error);

@@ -41,7 +41,6 @@ const schema = appSchema({
         { name: 'symbol', type: 'string', isOptional: true },
         { name: 'decimals', type: 'number', isOptional: true },
         { name: 'icon', type: 'string', isOptional: true },
-        { name: 'asset_id', type: 'string', isOptional: true },
         { name: 'network_id', type: 'string', isIndexed: true },
         { name: 'asset_rule_id', type: 'string', isIndexed: true },
       ],
@@ -60,7 +59,7 @@ const schema = appSchema({
         { name: 'raw', type: 'string' },
         { name: 'hash', type: 'string' },
         // int, tx status, -2 skipped, -1 failed, 0 unsent, 1 sending, 2 pending, 3 packaged, 4 executed, 5 confirmed
-        { name: 'status', type: 'number' },
+        { name: 'status', type: 'string' },
         // @json
         { name: 'receipt', type: 'string', isOptional: true },
         { name: 'block_number', type: 'number', isOptional: true },
@@ -83,33 +82,35 @@ const schema = appSchema({
       columns: [
         { name: 'ok', type: 'boolean', isOptional: true },
         { name: 'contract_creation', type: 'boolean', isOptional: true },
-        { name: 'simple', type: 'boolean' },
-        { name: 'send_action', type: 'string' },
+        { name: 'simple', type: 'boolean', isOptional: true },
+        { name: 'send_action', type: 'string', isOptional: true },
         { name: 'contract_interaction', type: 'boolean', isOptional: true },
         { name: 'token20', type: 'boolean', isOptional: true },
-        { name: 'token_nft', type: 'boolean' },
-        { name: 'address', type: 'string' },
+        { name: 'token_nft', type: 'boolean', isOptional: true },
+        { name: 'address', type: 'string', isOptional: true },
         { name: 'method', type: 'string', isOptional: true },
       ],
     }),
     tableSchema({
       name: TableName.TxPayload,
       columns: [
+        { name: 'type', type: 'string', isOptional: true },
         // For Berlin hardFork.
-        { name: 'access_list', type: 'string' },
-        { name: 'max_fee_per_gas', type: 'string' },
-        { name: 'max_priority_fee_per_gas', type: 'string' },
-        { name: 'from', type: 'string' },
-        { name: 'to', type: 'string' },
+        // @json
+        { name: 'access_list', type: 'string', isOptional: true },
+        { name: 'max_fee_per_gas', type: 'string', isOptional: true },
+        { name: 'max_priority_fee_per_gas', type: 'string', isOptional: true },
+        { name: 'from', type: 'string', isOptional: true },
+        { name: 'to', type: 'string', isOptional: true },
         { name: 'gas_price', type: 'string' },
         { name: 'gas', type: 'string' },
-        { name: 'storage_limit', type: 'string' },
+        { name: 'storage_limit', type: 'string', isOptional: true },
         { name: 'data', type: 'string', isOptional: true },
         { name: 'value', type: 'string' },
         { name: 'nonce', type: 'string' },
         // chainId
         { name: 'chain_identification', type: 'string' },
-        { name: 'epoch_height', type: 'string' },
+        { name: 'epoch_height', type: 'string', isOptional: true },
       ],
     }),
     tableSchema({
