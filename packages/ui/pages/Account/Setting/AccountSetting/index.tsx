@@ -12,8 +12,6 @@ import { type RootStackList, BackUpStackName } from '@router/configs';
 import { BaseButton } from '@components/Button';
 import { statusBarHeight } from '@utils/deviceInfo';
 
-
-
 const AccountSetting: React.FC<NativeStackScreenProps<RootStackList, 'AccountSetting'>> = ({ navigation, route }) => {
   const { theme } = useTheme();
   const headerHeight = useHeaderHeight();
@@ -64,11 +62,7 @@ const AccountSetting: React.FC<NativeStackScreenProps<RootStackList, 'AccountSet
             onPress={async () =>
               navigation.navigate(BackUpStackName, {
                 accountGroupId: accountGroup.id,
-                ...(vault.type === VaultType.HierarchicalDeterministic
-                  ? {
-                      accountIndex: account.index,
-                    }
-                  : undefined),
+                type: VaultType.PrivateKey,
               })
             }
           >

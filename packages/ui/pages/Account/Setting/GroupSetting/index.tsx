@@ -9,7 +9,7 @@ import { useTheme, Text, ListItem, Input, Dialog } from '@rneui/themed';
 import VaultType from '@core/database/models/Vault/VaultType';
 import { useAccountGroupFromId, useAccountsOfGroup, useVaultOfGroup } from '@core/WalletCore/Plugins/ReactInject';
 import methods from '@core/WalletCore/Methods';
-import {  type RootStackList, BackUpStackName, HDManageStackName } from '@router/configs';
+import { type RootStackList, BackUpStackName, HDManageStackName } from '@router/configs';
 import { BaseButton } from '@components/Button';
 import AccountAddress from '@pages/Account/AccountAddress';
 import { statusBarHeight } from '@utils/deviceInfo';
@@ -59,7 +59,7 @@ const GroupSetting: React.FC<NativeStackScreenProps<RootStackList, 'GroupSetting
           </Text>
           <TouchableHighlight
             className="rounded-[8px] overflow-hidden"
-            onPress={() => navigation.navigate(BackUpStackName, { accountGroupId: route.params.accountGroupId })}
+            onPress={() => navigation.navigate(BackUpStackName, { accountGroupId: route.params.accountGroupId, type: VaultType.HierarchicalDeterministic })}
           >
             <ListItem containerStyle={{ height: 52, paddingVertical: 0 }}>
               <ListItem.Content>

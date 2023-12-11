@@ -1,3 +1,4 @@
+import VaultType from '@core/database/models/Vault/VaultType';
 import { type NavigationProp } from '@react-navigation/native';
 
 const HomeStackName = 'Home';
@@ -69,7 +70,7 @@ export type RootStackList = {
   [TransactionConfirmStackName]: undefined;
   [ReceiveAddressStackName]: { address?: string };
 
-  [BackUpStackName]: { accountGroupId: string; accountIndex?: number };
+  [BackUpStackName]: { accountGroupId: string; type: VaultType; accountIndex?: number };
   [ReceiveStackName]: undefined;
   [SetAmountStackName]: undefined;
   [ScanQRCodeStackName]: { path: keyof RootStackList };

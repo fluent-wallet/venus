@@ -39,14 +39,13 @@ const Secret = ({ backupType, getSecretData }: { backupType: 'Seed Phrase' | 'Pr
 
   return (
     <View>
-      <View className="flex flex-wrap content-between px-4 py-4 rounded-lg h-[314px] relative last:mb-0" style={{ backgroundColor: theme.colors.surfaceCard }}>
+      <View
+        className="flex flex-wrap flex-row content-between px-4 py-4 rounded-lg  gap-x-[15px] gap-y-2"
+        style={{ backgroundColor: theme.colors.surfaceCard }}
+      >
         {backupType === 'Seed Phrase' ? (
           secret.split(' ').map((value, index) => (
-            <View
-              key={index}
-              style={{ backgroundColor: theme.colors.surfaceThird, width: '48%' }}
-              className={clsx('px-4 py-2 rounded-full', { 'mb-2': (index + 1) % 6 !== 0 })}
-            >
+            <View key={index} style={{ backgroundColor: theme.colors.surfaceThird }} className={clsx('px-4 py-2 rounded-full basis-[156px]')}>
               <Text className="text-center leading-6">
                 {index + 1}. {value}
               </Text>
@@ -76,6 +75,27 @@ const Secret = ({ backupType, getSecretData }: { backupType: 'Seed Phrase' | 'Pr
           </View>
         )}
       </View>
+
+      {backupType === 'Seed Phrase' && isShow && (
+        <View className="flex items-end mt-4">
+          <View className="p-3 rounded-full" style={{ backgroundColor: theme.colors.surfaceCard }}>
+            <Tooltip
+              backgroundColor={theme.colors.surfaceCard}
+              visible={tooltipShow}
+              popover={
+                <Text className="text-xs" style={{ color: theme.colors.textSecondary }}>
+                  Successfully Copied！
+                </Text>
+              }
+              onOpen={handleCopyToClipboard}
+              onClose={() => setTooltipShow(false)}
+            >
+              <Icon name="copy-all" color={'#537FF6'} />
+            </Tooltip>
+          </View>
+        </View>
+      )}
+
       {backupType === 'Private Key' && isShow && (
         <View className="flex flex-row items-center my-4 p-2" style={{ backgroundColor: theme.colors.surfaceCard }}>
           <Text className="shrink text-sm leading-5" style={{ color: theme.colors.textSecondary }}>

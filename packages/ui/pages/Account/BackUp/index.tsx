@@ -10,17 +10,18 @@ import { statusBarHeight } from '@utils/deviceInfo';
 import { BaseButton } from '@components/Button';
 import SafetyGuidelines from './Components/SafetyGuidelines';
 import Secret from './Components/Secret';
+import { useFocusEffect } from '@react-navigation/native';
+import RNScreenshotPrevent, { addListener } from 'react-native-screenshot-prevent';
 
 const BackUp: React.FC<NativeStackScreenProps<RootStackList, 'BackUp'>> = ({ navigation, route }) => {
   const { theme } = useTheme();
-  const { accountGroupId, accountIndex } = route.params;
+  const { accountGroupId, accountIndex = 0, type } = route.params;
   const accounts = useAccountsOfGroup(accountGroupId);
   const vault = useVaultOfGroup(accountGroupId);
-  const targetAccount = useMemo(() => (accountIndex ? accounts?.[accountIndex] : undefined), [accounts, accountIndex]);
+  const targetAccount = useMemo(() => accounts[accountIndex], [accounts, accountIndex]);
   const targetAddress = useCurrentAddressOfAccount(targetAccount?.id);
-
   const backupType =
-    vault.type === VaultType.HierarchicalDeterministic && !targetAddress
+    vault.type === VaultType.HierarchicalDeterministic && type === VaultType.HierarchicalDeterministic
       ? 'Seed Phrase'
       : vault.type === VaultType.PrivateKey || (vault.type === VaultType.HierarchicalDeterministic && targetAddress)
       ? 'Private Key'
@@ -35,12 +36,23 @@ const BackUp: React.FC<NativeStackScreenProps<RootStackList, 'BackUp'>> = ({ nav
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [backupType]);
 
+  useFocusEffect(
+    useCallback(() => {
+      RNScreenshotPrevent.enabled(true);
+      RNScreenshotPrevent.enableSecureView();
+      return () => {
+        RNScreenshotPrevent.enabled(false);
+        RNScreenshotPrevent.disableSecureView();
+      };
+    }, [])
+  );
+
   const handleGetSecretData = useCallback(async () => {
-    if (!targetAddress) {
+    if (type === VaultType.HierarchicalDeterministic) {
       if (vault.type === VaultType.HierarchicalDeterministic) {
         return methods.getMnemonicOfVault(vault);
       }
-    } else {
+    } else if (targetAddress) {
       return methods.getPrivateKeyOfAddress(targetAddress);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
