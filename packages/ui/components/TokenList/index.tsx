@@ -16,14 +16,15 @@ import {
 } from '@hooks/useTokenList';
 
 import TokenItem from './TokenItem';
-import { useTheme } from '@rneui/themed';
 import { useFocusEffect } from '@react-navigation/native';
 import { useCallback, useRef } from 'react';
 import { View } from 'react-native';
 import SkeletonList from './SkeletonList';
+import { useNetInfo } from '@react-native-community/netinfo';
 
 const TokenList: React.FC<{ onPress?: (v: AccountTokenListItem) => void; skeleton?: number }> = ({ onPress, skeleton = 4 }) => {
   const [tokenListState, setTokenListState] = useAtom(tokenListStateAtom);
+  const { __, isConnected } = useNetInfo();
 
   const [fallBackList, setFallBakList] = useAtom(readAndWriteERC20TokenListFallbackListAtom);
   const loadingMore = useRef(false);
@@ -72,6 +73,9 @@ const TokenList: React.FC<{ onPress?: (v: AccountTokenListItem) => void; skeleto
             scanERC20ListSubject.next({ delay: 5 * 1000 });
           }
         },
+        error: (err) => {
+          console.log(err);
+        },
       });
       // first request is immediately
       scanERC20ListSubject.next({ delay: 0 });
@@ -84,8 +88,13 @@ const TokenList: React.FC<{ onPress?: (v: AccountTokenListItem) => void; skeleto
   useFocusEffect(
     useCallback(() => {
       // loop scan api get NFT token list
-      const subscribe = loopNative721And1155List.subscribe((res) => {
-        writeNFTTokenList(res);
+      const subscribe = loopNative721And1155List.subscribe({
+        next: (res) => {
+          writeNFTTokenList(res);
+        },
+        error: (error) => {
+          console.log(error);
+        },
       });
       return () => {
         subscribe.unsubscribe();
@@ -114,6 +123,9 @@ const TokenList: React.FC<{ onPress?: (v: AccountTokenListItem) => void; skeleto
           setFallBakList((v) => ({ ...v, list: newList }));
           //if state is fallback loop list  every 5 seconds
           fallBackListSubject.next({ delay: 5 * 1000 });
+        },
+        error: (err) => {
+          console.log(err);
         },
       });
 
