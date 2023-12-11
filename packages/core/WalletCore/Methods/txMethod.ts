@@ -8,10 +8,11 @@ import { createTxPayload as _createTxPayload } from '../../database/models/TxPay
 import { createTxExtra as _createTxExtra } from '../../database/models/TxExtra/query';
 import { TransactionSubjectValue } from '../Events/broadcastTransactionSubject';
 import database from '../../database';
-import { Tx, TxStatus } from '@core/database/models/Tx';
+import { Tx } from '@core/database/models/Tx';
 import { Address } from '@core/database/models/Address';
 import { TxPayload } from '@core/database/models/TxPayload';
 import { TxExtra } from '@core/database/models/TxExtra';
+import { TxStatus } from '@core/database/models/Tx/type';
 
 @injectable()
 export class TxMethod {
@@ -48,7 +49,7 @@ export class TxMethod {
           address,
           raw: params.txRaw,
           hash: params.txHash,
-          status: TxStatus.SENDING,
+          status: TxStatus.PENDING,
           isLocal: true,
           txPayload,
           txExtra,

@@ -62,9 +62,10 @@ const schema = appSchema({
         { name: 'status', type: 'string' },
         // @json
         { name: 'receipt', type: 'string', isOptional: true },
-        { name: 'block_number', type: 'number', isOptional: true },
+        { name: 'block_number', type: 'string', isOptional: true },
         { name: 'block_hash', type: 'string', isOptional: true },
         { name: 'is_chain_switched', type: 'boolean', isOptional: true },
+        { name: 'skipped_checked', type: 'boolean', isOptional: true },
         { name: 'created_at', type: 'number' },
         { name: 'pending_at', type: 'number', isOptional: true },
         { name: 'err', type: 'string', isOptional: true },

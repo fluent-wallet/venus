@@ -1,0 +1,1 @@
+export const DETAULT_TX_TRACK_INTERVAL = 1000;

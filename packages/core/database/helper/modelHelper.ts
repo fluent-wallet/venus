@@ -32,7 +32,7 @@ export function createModel<T extends Model>({ name, params, prepareCreate }: { 
 type ExtractOwnProperties<B> = Pick<B, Exclude<keyof B, keyof Model>>;
 
 type ExtractProperties<T> = {
-  [K in keyof T as Exclude<T[K], null> extends Relation<any> ? K : T[K] extends Query<any> ? K : never]?: Exclude<T[K], null> extends Relation<infer U>
+  [K in keyof T as Exclude<T[K], null | undefined> extends Relation<any> ? K : T[K] extends Query<any> ? K : never]?: Exclude<T[K], null | undefined> extends Relation<infer U>
     ? U
     : T[K] extends Query<infer U>
     ? U
@@ -40,7 +40,7 @@ type ExtractProperties<T> = {
 };
 
 type OmitProperties<T> = {
-  [K in keyof T as Exclude<T[K], null> extends Relation<any> | Query<any> ? never : K]: T[K];
+  [K in keyof T as Exclude<T[K], null | undefined> extends Relation<any> | Query<any> ? never : K]: T[K];
 };
 
 type PickNullable<T> = {
