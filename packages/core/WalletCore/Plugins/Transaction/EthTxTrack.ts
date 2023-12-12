@@ -1,4 +1,4 @@
-import { observeUnfinishedTx } from '@core/database/models/Tx/query';
+import { observeUnfinishedTx, queryDuplicateTx } from '@core/database/models/Tx/query';
 import { Tx } from '@core/database/models/Tx';
 import { Receipt, TxStatus } from '@core/database/models/Tx/type';
 import { RPCResponse, RPCSendFactory } from '@core/utils/send';
@@ -20,6 +20,7 @@ export class EthTxTrack {
     observeUnfinishedTx().subscribe((txs) => {
       txs.forEach(async (tx) => {
         if (!this._txMap.has(tx.hash)) {
+          console.log('start track:', tx.hash);
           this._txMap.set(tx.hash, tx);
           try {
             const address = await tx.address;
@@ -34,13 +35,14 @@ export class EthTxTrack {
     });
   }
 
-  private async _updateTx(tx: Tx, updater: (_: Tx) => void) {
-    if (!this._txMap.has(tx.hash)) {
-      console.warn('tx already finished:', tx.hash);
+  private async _updateTx(tx: Tx, updater: (_: Tx) => void, force = false) {
+    const inTrack = this._txMap.has(tx.hash);
+    if (!inTrack && !force) {
+      console.log('tx already finished:', tx.hash);
       return;
     }
     const newTx = await tx.updateSelf(updater);
-    this._txMap.set(newTx.hash, newTx);
+    inTrack && this._txMap.set(newTx.hash, newTx);
     return newTx;
   }
 
@@ -94,12 +96,17 @@ export class EthTxTrack {
     const address = await tx.address;
     const { result: nonce } = await firstValueFrom(RPCSend<RPCResponse<string>>({ method: 'eth_getTransactionCount', params: [address.hex, blockNumber] }));
     const txNonce = (await tx.txPayload).nonce;
-    if (BigInt(nonce) > BigInt(txNonce!) + 1n) {
+    if (nonce && txNonce && BigInt(nonce) > BigInt(txNonce) + 1n) {
       if (tx.skippedChecked) {
-        await this._updateTx(tx, (tx) => {
-          tx.status = TxStatus.SKIPPED;
-        });
         this._txMap.delete(tx.hash);
+        this._updateTx(
+          tx,
+          (tx) => {
+            tx.status = TxStatus.SKIPPED;
+            tx.skippedChecked = null;
+          },
+          true
+        );
       } else {
         await this._updateTx(tx, (tx) => {
           tx.skippedChecked = true;
@@ -120,6 +127,7 @@ export class EthTxTrack {
       await this._updateTx(tx, (tx) => {
         tx.status = TxStatus.PACKAGED;
         tx.blockHash = transaction.blockHash;
+        tx.skippedChecked = null;
       });
       const skippedChecked = await this._handleCheckNonce(tx, transaction.blockNumber, keepTrack, RPCSend);
       !skippedChecked && keepTrack(0);
@@ -160,6 +168,7 @@ export class EthTxTrack {
             tx.blockHash = transaction.blockHash;
             tx.status = TxStatus.PACKAGED;
             tx.chainSwitched = true;
+            tx.skippedChecked = null;
           });
         }
         keepTrack();
@@ -198,11 +207,15 @@ export class EthTxTrack {
       keepTrack(0);
     } else {
       // Failed
-      await this._updateTx(tx, (tx) => {
-        tx.status = TxStatus.FAILED;
-        tx.err = (result as any).txExecErrorMsg ?? 'tx failed';
-      });
       this._txMap.delete(tx.hash);
+      this._updateTx(
+        tx,
+        (tx) => {
+          tx.status = TxStatus.FAILED;
+          tx.err = (result as any).txExecErrorMsg ?? 'tx failed';
+        },
+        true
+      );
     }
   }
 
@@ -216,6 +229,7 @@ export class EthTxTrack {
           tx.receipt = null;
           tx.status = TxStatus.PACKAGED;
           tx.chainSwitched = true;
+          tx.skippedChecked = null;
         });
       } else if (
         result.blockHash !== tx.receipt?.blockHash ||
@@ -227,6 +241,7 @@ export class EthTxTrack {
           tx.status = TxStatus.PACKAGED;
           tx.blockHash = result.blockHash;
           tx.chainSwitched = true;
+          tx.skippedChecked = null;
         });
         keepTrack();
       }
@@ -239,20 +254,45 @@ export class EthTxTrack {
     const { result: currentBlockNumber } = await firstValueFrom(RPCSend<RPCResponse<string>>({ method: 'eth_blockNumber' }));
     if (currentBlockNumber && BigInt(currentBlockNumber) >= BigInt(tx.receipt!.blockNumber!)) {
       // CONFIRMED
-      await this._updateTx(tx, (tx) => {
-        tx.status = TxStatus.CONFIRMED;
-      });
       this._txMap.delete(tx.hash);
-      // TODO: set other tx to failed
+      await this._updateTx(
+        tx,
+        (tx) => {
+          tx.status = TxStatus.CONFIRMED;
+          tx.skippedChecked = null;
+        },
+        true
+      );
+      this._handleDuplicateTx(tx);
     } else {
       keepTrack();
+    }
+  }
+
+  private async _handleDuplicateTx(tx: Tx) {
+    try {
+      const nonce = (await tx.txPayload).nonce;
+      const txs = await queryDuplicateTx(tx, nonce!).fetch();
+      txs.forEach(async (_tx) => {
+        this._txMap.delete(_tx.hash);
+        this._updateTx(
+          _tx,
+          (t) => {
+            t.status = TxStatus.FAILED;
+            t.err = 'replacedByAnotherTx';
+          },
+          true
+        );
+      });
+    } catch (error) {
+      console.log(error);
     }
   }
 
   async trackTx(hash: string, RPCSend: ReturnType<typeof RPCSendFactory>) {
     const tx = this._txMap.get(hash);
     if (!tx) {
-      console.warn('tx already finished:', hash);
+      console.log('tx already finished:', hash);
       return;
     }
     const keepTrack = (n = DETAULT_TX_TRACK_INTERVAL) => delay(() => this.trackTx(hash, RPCSend), n);
@@ -271,6 +311,7 @@ export class EthTxTrack {
         this._handleExecutedTx(tx, keepTrack, RPCSend);
       }
     } catch (error) {
+      console.log(error);
       keepTrack();
     }
   }
