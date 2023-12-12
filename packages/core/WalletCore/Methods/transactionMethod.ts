@@ -150,6 +150,7 @@ export class TransactionMethod {
     }
     return firstValueFrom(
       RPCSend<RPCResponse<string>>(currentNetwork.endpoint, { method: 'eth_getTransactionCount', params: [currentAddress.hex, 'pending'] }).pipe(
+        timeout(30 * 1000),
         map((res) => res.result),
         switchMap((nonce) => {
           estimateGasParams.nonce = nonce;
@@ -161,7 +162,7 @@ export class TransactionMethod {
             { method: 'eth_gasPrice' },
           ]);
         }),
-        map(([gas, gasPrice]) => ({ gasLimit: gas.result, gasPrice: gasPrice.result }))
+        map(([gas, gasPrice]) => ({ gasLimit: gas, gasPrice: gasPrice }))
       )
     );
   };

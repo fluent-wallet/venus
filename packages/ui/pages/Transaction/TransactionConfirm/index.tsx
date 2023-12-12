@@ -26,6 +26,7 @@ import { formatValue } from '@utils/formatValue';
 import BSIMSendTX, { BSIM_SIGN_STATUS } from './SendTX';
 import BSIM from 'packages/WalletCoreExtends/Plugins/BSIM';
 import { BSIMTimeoutError, BSIM_ERRORS } from 'packages/WalletCoreExtends/Plugins/BSIM/BSIMSDK';
+import EstimateGas from './EstimateGas';
 
 const TransactionConfirm: React.FC<{
   navigation: StackNavigation;
@@ -42,10 +43,10 @@ const TransactionConfirm: React.FC<{
 
   const [error, setError] = useState('');
   const [tx] = useAtom(transactionAtom);
-  const [gas, setGas] = useState<{ gasLimit: string; gasPrice: string } | null>(null);
+  const [gas, setGas] = useState<{ gasLimit?: string; gasPrice?: string; loading: boolean; error: boolean }>({ loading: true, error: false });
 
   const handleSend = async () => {
-    if (gas) {
+    if (gas?.gasLimit && gas.gasPrice) {
       setLoading(true);
       try {
         let channel;
@@ -61,7 +62,7 @@ const TransactionConfirm: React.FC<{
         }
 
         try {
-          const { txHash, txRaw, transaction } = await Methods.sendTransaction(tx, gas, channel);
+          const { txHash, txRaw, transaction } = await Methods.sendTransaction(tx, { gasLimit: gas.gasLimit, gasPrice: gas.gasPrice }, channel);
 
           Events.broadcastTransactionSubjectPush.next({
             txHash,
@@ -96,8 +97,8 @@ const TransactionConfirm: React.FC<{
       }
     }
   };
-
-  useEffect(() => {
+  const getGas = useCallback(() => {
+    setGas({ loading: true, error: false });
     Methods.getTransactionGasAndGasLimit({
       to: tx.to,
       amount: tx.amount,
@@ -106,12 +107,24 @@ const TransactionConfirm: React.FC<{
       tokenId: tx.tokenId,
       decimals: tx.decimals,
     })
-      .then((res) => setGas(res))
+      .then((res) => {
+        if (!res.gasLimit.error && !res.gasPrice.error) {
+          setGas({ gasLimit: res.gasLimit.result, gasPrice: res.gasPrice.result, loading: false, error: false });
+        } else {
+          // TODO how error message to user
+          setGas({ loading: false, error: true });
+        }
+      })
       .catch((err) => {
         console.log('getTransactionGasAndGasLimit error', err);
+        setGas({ loading: false, error: true });
         // TODO maybe we need show the error to user
       });
-  }, [currentNetwork.endpoint, tx.assetType, tx.contract, tx.to, tx.amount, currentAddress.hex, tx.tokenId, tx.decimals]);
+  }, [tx.assetType, tx.contract, tx.to, tx.amount, tx.tokenId, tx.decimals]);
+
+  useEffect(() => {
+    getGas();
+  }, [currentNetwork.endpoint, currentAddress.hex, getGas]);
 
   useFocusEffect(
     useCallback(() => {
@@ -132,7 +145,7 @@ const TransactionConfirm: React.FC<{
       return `1 ${tx.contractName}`;
     }
   };
-  const gasCost = gas ? BigInt(gas.gasLimit) * BigInt(gas.gasPrice) : 0n;
+
 
   return (
     <SafeAreaView
@@ -226,14 +239,7 @@ const TransactionConfirm: React.FC<{
             <Text className=" eading-6" style={{ color: theme.colors.textSecondary }}>
               Estimate Gas Cost
             </Text>
-            <View className="flex">
-              <Text style={{ color: theme.colors.textPrimary }} className="text-xl font-bold leading-6">
-                {formatUnits(gasCost)} CFX
-              </Text>
-              <Text style={{ color: theme.colors.textSecondary }} className="text-right text-sm leading-6">
-                {/*  price todo */}
-              </Text>
-            </View>
+            <EstimateGas {...gas} retry={getGas} />
           </View>
 
           <View className="flex flex-row justify-between">

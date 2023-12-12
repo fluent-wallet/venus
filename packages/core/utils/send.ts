@@ -16,6 +16,11 @@ export interface RPCResponse<T> {
   id: number;
   jsonrpc: string;
   result: T;
+  error?: {
+    code: number;
+    data: string;
+    message: string;
+  };
 }
 
 let rpcId = 0;
