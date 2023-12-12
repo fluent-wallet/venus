@@ -5,10 +5,10 @@ import database from '../..';
 import { Q, Query } from '@nozbe/watermelondb';
 import { TxStatus } from './type';
 
-type Params = Omit<ModelFields<Tx>, 'createdAt'>;
-export function createTx(params: Params, prepareCreate: true): Tx;
-export function createTx(params: Params): Promise<Tx>;
-export function createTx(params: Params, prepareCreate?: true) {
+export type TxParams = Omit<ModelFields<Tx>, 'createdAt'>;
+export function createTx(params: TxParams, prepareCreate: true): Tx;
+export function createTx(params: TxParams): Promise<Tx>;
+export function createTx(params: TxParams, prepareCreate?: true) {
   return createModel<Tx>({ name: TableName.Tx, params, prepareCreate });
 }
 

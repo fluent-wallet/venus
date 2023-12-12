@@ -70,7 +70,7 @@ const schema = appSchema({
         { name: 'pending_at', type: 'number', isOptional: true },
         { name: 'err', type: 'string', isOptional: true },
         { name: 'is_local', type: 'boolean', isOptional: true },
-        { name: 'resend_at', type: 'number', isOptional: true },
+        { name: 'resend_at', type: 'string', isOptional: true },
         { name: 'app_id', type: 'string', isIndexed: true, isOptional: true },
         { name: 'asset_id', type: 'string', isIndexed: true, isOptional: true },
         { name: 'address_id', type: 'string', isIndexed: true },

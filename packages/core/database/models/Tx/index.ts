@@ -30,7 +30,7 @@ export class Tx extends Model {
   @date('pending_at') pendingAt?: number | null; // first time pending timestamp
   @text('err') err?: string | null; // basic error type/info
   @field('is_local') isLocal?: boolean | null;
-  @field('resend_at') resendAt?: number | null; // epoch/block where wallet resend tx
+  @field('resend_at') resendAt?: string | null; // epoch/block where wallet resend tx
   @immutableRelation(TableName.App, 'app_id') app?: Relation<App> | null;
   @immutableRelation(TableName.Asset, 'asset_id') asset?: Relation<Asset> | null;
   @immutableRelation(TableName.Address, 'address_id') address!: Relation<Address>;
