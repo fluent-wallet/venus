@@ -52,7 +52,13 @@ const TokenItem: React.FC<{
       <View className={'flex flex-row  w-full p-3'}>
         <View className="w-12 h-12 mr-4">
           {data.iconUrl ? (
-            <MixinImage source={{ uri: data.iconUrl, width: 48, height: 48 }} width={48} height={48} resizeMode="center" />
+            <MixinImage
+              source={{ uri: data.iconUrl, width: 48, height: 48 }}
+              fallback={<TokenIconDefault width={48} height={48} />}
+              width={48}
+              height={48}
+              resizeMode="center"
+            />
           ) : (
             <TokenIconDefault width={48} height={48} />
           )}

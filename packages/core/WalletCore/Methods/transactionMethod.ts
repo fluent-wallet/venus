@@ -58,7 +58,13 @@ export class TransactionMethod {
           throw new Error("Get ERC1155 transaction data but don't have tokenId");
         }
 
-        return iface1155.encodeFunctionData('safeTransferFrom', [currentAddress, args.to, args.tokenId, args.amount, '0x']);
+        return iface1155.encodeFunctionData('safeTransferFrom', [
+          currentAddress,
+          args.to,
+          args.tokenId,
+          parseUnits(args.amount.toString(), args.decimals),
+          '0x',
+        ]);
       }
 
       default: {
@@ -142,7 +148,6 @@ export class TransactionMethod {
       estimateGasParams.to = args.contract;
       estimateGasParams.data = this.getContractTransactionData(currentAddress.hex, args);
     }
-
     return firstValueFrom(
       RPCSend<RPCResponse<string>>(currentNetwork.endpoint, { method: 'eth_getTransactionCount', params: [currentAddress.hex, 'pending'] }).pipe(
         map((res) => res.result),

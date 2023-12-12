@@ -44,7 +44,11 @@ const NFTItem: React.FC<{
         expandIcon={<Icon name="keyboard-arrow-up" color={theme.colors.contrastWhiteAndBlack} />}
         content={
           <View className="flex flex-row items-center">
-            {nftInfo.iconUrl ? <MixinImage source={{ uri: nftInfo.iconUrl }} width={32} height={32} /> : <TokenIconDefault width={32} height={32} />}
+            {nftInfo.iconUrl ? (
+              <MixinImage source={{ uri: nftInfo.iconUrl }} width={32} height={32} fallback={<TokenIconDefault width={32} height={32} />} />
+            ) : (
+              <TokenIconDefault width={32} height={32} />
+            )}
             <Text style={{ color: theme.colors.contrastWhiteAndBlack }} className="text-base font-medium leading-6 ml-2">
               {nftInfo.name}
             </Text>
@@ -99,7 +103,7 @@ const NFTItem: React.FC<{
                     </View>
                   )}
                   <View className="flex items-center w-full h-36 overflow-hidden">
-                    {v.image ? <MixinImage source={{ uri: v.image }} className="w-full h-full" /> : <DefaultNFTImage />}
+                    {v.image ? <MixinImage source={{ uri: v.image }} fallback={ <DefaultNFTImage />} className="w-full h-full" /> : <DefaultNFTImage />}
                   </View>
                   <Text style={{ color: theme.colors.textSecondary }} className="text-sm leading-6">
                     {nftInfo.name}

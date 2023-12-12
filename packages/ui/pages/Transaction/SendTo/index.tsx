@@ -13,6 +13,7 @@ import AvatarIcon from '@assets/icons/avatar.svg';
 import CopyAllIcon from '@assets/icons/copy_all.svg';
 import { AssetType } from '@core/database/models/Asset';
 import { transactionAtom } from '@core/WalletCore/Plugins/ReactInject/data/useTransaction';
+import MixinImage from '@components/MixinImage';
 
 const SendTo: React.FC<{ navigation: StackNavigation; route: RouteProp<RootStackList, typeof SendToStackName> }> = ({ navigation, route }) => {
   const { theme } = useTheme();
@@ -69,7 +70,11 @@ const SendTo: React.FC<{ navigation: StackNavigation; route: RouteProp<RootStack
             className="flex flex-row items-center rounded-md px-4 py-2"
           >
             <TextInput keyboardType={'numeric'} value={value.toString()} onChangeText={handleChange} className="flex-1" />
-            {tx.iconUrl ? <Image source={{ uri: tx.iconUrl }} width={24} height={24} /> : <TokenIconDefault width={24} height={24} />}
+            {tx.iconUrl ? (
+              <MixinImage source={{ uri: tx.iconUrl }} width={24} height={24} fallback={<TokenIconDefault width={24} height={24} />} />
+            ) : (
+              <TokenIconDefault width={24} height={24} />
+            )}
           </View>
           <View className="flex flex-row justify-end items-center mt-2">
             <Text className="leading-6">

@@ -62,7 +62,8 @@
     "react-native-vector-icons": "^10.0.0",
     "react-native-vision-camera": "^3.6.10",
     "reflect-metadata": "^0.1.13",
-    "stream-browserify": "^3.0.0"
+    "stream-browserify": "^3.0.0",
+    "validator": "^13.11.0"
   },
   "devDependencies": {
     "@babel/core": "^7.20.0",
@@ -78,6 +79,7 @@
     "@types/randombytes": "^2.0.0",
     "@types/react": "^18.0.24",
     "@types/react-test-renderer": "^18.0.0",
+    "@types/validator": "^13.11.7",
     "babel-jest": "^29.2.1",
     "babel-plugin-module-resolver": "^5.0.0",
     "eslint": "^8.19.0",

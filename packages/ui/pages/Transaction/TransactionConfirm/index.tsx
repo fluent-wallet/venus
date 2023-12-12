@@ -132,7 +132,6 @@ const TransactionConfirm: React.FC<{
       return `1 ${tx.contractName}`;
     }
   };
-
   const gasCost = gas ? BigInt(gas.gasLimit) * BigInt(gas.gasPrice) : 0n;
 
   return (
@@ -143,11 +142,15 @@ const TransactionConfirm: React.FC<{
       <View className="px-6">
         {(tx.assetType === AssetType.ERC721 || tx.assetType === AssetType.ERC1155) && (
           <View className="flex flex-row p-4 rounded-lg w-full mb-4" style={{ backgroundColor: theme.colors.surfaceCard }}>
-            {tx.tokenImage && <Image source={{ uri: tx.tokenImage }} width={63} height={63} className="mr-4" />}
+            {tx.tokenImage && <MixinImage source={{ uri: tx.tokenImage }} width={63} height={63} className="mr-4" />}
             <View className="flex justify-center">
               <View className="flex flex-row mb-1">
                 <View className="w-6 h-6 overflow-hidden rounded-full mr-2">
-                  {tx.iconUrl ? <MixinImage source={{ uri: tx.iconUrl }} width={24} height={24} /> : <DefaultNFTImage width={24} height={24} />}
+                  {tx.iconUrl ? (
+                    <MixinImage source={{ uri: tx.iconUrl }} width={24} height={24} fallback={<DefaultNFTImage width={24} height={24} />} />
+                  ) : (
+                    <DefaultNFTImage width={24} height={24} />
+                  )}
                 </View>
                 <Text style={{ color: theme.colors.textSecondary }} className="leading-normal">
                   {tx.contractName}
