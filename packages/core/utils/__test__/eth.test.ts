@@ -252,4 +252,19 @@ describe('contract errors', () => {
     const parseError = processError(res.error);
     expect(parseError.errorType).toBe(ProcessErrorType.executeFailed);
   });
+
+  test('notEnoughCash', () => {
+    const res = {
+      jsonrpc: '2.0',
+      id: 9,
+      error: {
+        code: -32015,
+        message:
+          'Can not estimate: transaction execution failed, all gas will be charged (execution error: NotEnoughCash { required: 166020696663385964535000000, got: 100000000000000000000, actual_gas_cost: 100000000000000000000, max_storage_limit_cost: 0 })',
+        data: 'NotEnoughCash { required: 166020696663385964535000000, got: 100000000000000000000, actual_gas_cost: 100000000000000000000, max_storage_limit_cost: 0 }',
+      },
+    };
+    const parseError = processError(res.error);
+    expect(parseError.errorType).toBe(ProcessErrorType.notEnoughCash);
+  });
 });

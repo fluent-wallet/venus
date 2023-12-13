@@ -34,6 +34,7 @@ export enum ProcessErrorType {
   nodeInCatchUp = 'nodeInCatchUp',
   internalError = 'internalError',
   executeFailed = 'executeFailed',
+  notEnoughCash = 'notEnoughCash',
 }
 
 export const processError = (err: unknown): { errorType: ProcessErrorType; shouldDiscard: boolean } => {
@@ -87,6 +88,8 @@ export const processError = (err: unknown): { errorType: ProcessErrorType; shoul
     if (/Failed to read account_cache from storage: {}/i.test(errStr)) return { errorType: ProcessErrorType.internalError, shouldDiscard: true };
 
     if (/Vm reverted./i.test(errStr)) return { errorType: ProcessErrorType.executeFailed, shouldDiscard: true };
+
+    if (/NotEnoughCash/i.test(errStr)) return { errorType: ProcessErrorType.notEnoughCash, shouldDiscard: true };
   }
 
   return { errorType: ProcessErrorType.unknownError, shouldDiscard: true };
