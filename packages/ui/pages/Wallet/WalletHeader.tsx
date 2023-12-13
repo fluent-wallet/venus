@@ -29,7 +29,7 @@ const HeaderTitle: React.FC<{ backgroundColor: string }> = ({ backgroundColor }:
           backgroundColor: theme.colors.warnSuccessPrimary,
           color: theme.colors.textInvert,
           textStyle: { fontSize: 12, fontFamily: 'SF Pro Display' },
-          style: { display: 'flex', alignItems: 'center', alignSelf: 'center', width: 110, },
+          style: { display: 'flex', alignItems: 'center', alignSelf: 'center', width: 115, },
           duration: 1.5 * 1000, // 1.5s
         });
       }}
