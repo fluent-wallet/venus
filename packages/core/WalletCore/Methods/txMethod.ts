@@ -32,14 +32,14 @@ export class TxMethod {
           },
           true
         ),
-        this.createTxExtra(params.walletTx, true),
+        this.createTxExtra(params.extraParams, true),
       ]);
       let asset: Asset | undefined;
-      if (params.walletTx.assetType === AssetType.Native) {
+      if (params.extraParams.assetType === AssetType.Native) {
         const networks = await querySelectedNetwork();
         asset = (await networks[0].assets).find((i) => i.type === AssetType.Native);
-      } else if (params.walletTx.contract) {
-        const assets = await queryAssetByAddress(params.walletTx.contract);
+      } else if (params.extraParams.contract) {
+        const assets = await queryAssetByAddress(params.extraParams.contract);
         asset = assets?.[0];
       }
 
@@ -92,9 +92,9 @@ export class TxMethod {
     });
   }
 
-  createTxExtra(tx: TransactionSubjectValue['walletTx'], prepareCreate: true): Promise<TxExtra>;
-  createTxExtra(tx: TransactionSubjectValue['walletTx']): Promise<void>;
-  async createTxExtra(tx: TransactionSubjectValue['walletTx'], prepareCreate?: true) {
+  createTxExtra(tx: TransactionSubjectValue['extraParams'], prepareCreate: true): Promise<TxExtra>;
+  createTxExtra(tx: TransactionSubjectValue['extraParams']): Promise<void>;
+  async createTxExtra(tx: TransactionSubjectValue['extraParams'], prepareCreate?: true) {
     const txExtra = _createTxExtra(
       {
         ok: true,

@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Pressable, SafeAreaView, View, Image, useColorScheme } from 'react-native';
 import { RouteProp, useFocusEffect } from '@react-navigation/native';
-import { Subject, scan } from 'rxjs';
+import { Subject, firstValueFrom, scan } from 'rxjs';
 import { useAtom } from 'jotai';
 import { formatUnits } from 'ethers';
 import { Button, Divider, Text, useTheme } from '@rneui/themed';
@@ -27,6 +27,7 @@ import BSIMSendTX, { BSIM_SIGN_STATUS } from './SendTX';
 import BSIM from 'packages/WalletCoreExtends/Plugins/BSIM';
 import { BSIMTimeoutError, BSIM_ERRORS } from 'packages/WalletCoreExtends/Plugins/BSIM/BSIMSDK';
 import EstimateGas from './EstimateGas';
+import { RPCResponse, RPCSend } from '@core/utils/send';
 
 const TransactionConfirm: React.FC<{
   navigation: StackNavigation;
@@ -62,16 +63,18 @@ const TransactionConfirm: React.FC<{
         }
 
         try {
+          const blockNumber = await firstValueFrom(RPCSend<RPCResponse<string>>(currentNetwork.endpoint, { method: 'eth_blockNumber' }));
           const { txHash, txRaw, transaction } = await Methods.sendTransaction(tx, { gasLimit: gas.gasLimit, gasPrice: gas.gasPrice }, channel);
 
           Events.broadcastTransactionSubjectPush.next({
             txHash,
             txRaw,
             transaction,
-            walletTx: {
+            extraParams: {
               assetType: tx.assetType,
               contract: tx.contract,
               to: tx.to,
+              blockNumber: blockNumber.result,
             },
           });
           navigation.navigate(HomeStackName, { screen: WalletStackName });
@@ -145,7 +148,6 @@ const TransactionConfirm: React.FC<{
       return `1 ${tx.contractName}`;
     }
   };
-
 
   return (
     <SafeAreaView
@@ -253,7 +255,7 @@ const TransactionConfirm: React.FC<{
       {currentVault?.type === VaultType.BSIM ? (
         <BSIMSendTX onSend={handleSend} state={BSIMTXState} errorMessage={BSIMTxError} />
       ) : (
-        <View className="flex flex-row items-center mt-auto">
+        <View className="flex flex-row items-center mt-auto px-6 mb-6">
           <Button type="outline" buttonStyle={{ width: 48, height: 48, borderRadius: 40, marginRight: 15 }} onPress={() => navigation.goBack()}>
             <CloseIcon />
           </Button>

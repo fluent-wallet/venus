@@ -6,7 +6,9 @@ export interface TransactionSubjectValue {
   txHash: string;
   txRaw: string;
   transaction: Transaction;
-  walletTx: Pick<WalletTransactionType, 'assetType' | 'contract' | 'to'>;
+  extraParams: Pick<WalletTransactionType, 'assetType' | 'contract' | 'to'> & {
+    blockNumber: string, // hex string
+  };
 }
 
 export const broadcastTransactionSubjectPush = new BehaviorSubject<TransactionSubjectValue | null>(null);
