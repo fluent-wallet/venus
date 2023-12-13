@@ -41,7 +41,7 @@ export const RPCSend = <T>(endpoint: string, args: { method: string; params?: an
 };
 
 export const RPCSendFactory = (endpoint: string) => {
-  return RPCSend.bind(null, endpoint);
+  return RPCSend.bind(null, endpoint) as <T>(args: Parameters<typeof RPCSend>[1]) => ReturnType<typeof RPCSend<T>>;
 };
 
 // host is scan open api

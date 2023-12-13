@@ -1,45 +1,12 @@
 import { Model, type Relation } from '@nozbe/watermelondb';
-import { field, text, readonly, date, immutableRelation, json } from '@nozbe/watermelondb/decorators';
+import { field, text, readonly, date, immutableRelation, json, writer } from '@nozbe/watermelondb/decorators';
 import { type Address } from '../Address';
 import { type Asset } from '../Asset';
 import { type App } from '../App';
 import { type TxExtra } from '../TxExtra';
 import { type TxPayload } from '../TxPayload';
 import TableName from '../../TableName';
-
-export enum TxStatus {
-  SKIPPED = '-2',
-  FAILED = '-1',
-  UNSENT = '0',
-  SENDING = '1',
-  PENDING = '2',
-  PACKAGED = '3',
-  EXECUTED = '4',
-  CONFIRMED = '5',
-}
-
-interface Receipt {
-  blockHash?: string;
-  gasUsed?: string;
-  contractCreated?: string;
-  // ↓↓↓↓↓↓↓↓↓↓↓ for espace ↓↓↓↓↓↓↓↓↓↓↓
-  cumulativeGasUsed?: string;
-  effectiveGasPrice?: string;
-  type?: string;
-  blockNumber?: string;
-  transactionIndex?: string;
-  // ↓↓↓↓↓↓↓↓↓↓↓ for core space ↓↓↓↓↓↓↓↓↓↓↓
-  index?: string;
-  epochNumber?: string;
-  gasFee?: string;
-  storageCollateralized?: string;
-  gasCoveredBySponsor?: boolean;
-  storageCoveredBySponsor?: boolean;
-  storageReleased?: {
-    address: string;
-    collaterals: string;
-  }[];
-}
+import { Receipt, TxStatus } from './type';
 
 export class Tx extends Model {
   static table = TableName.Tx;
@@ -54,18 +21,23 @@ export class Tx extends Model {
   @text('raw') raw!: string; // raw tx hash
   @text('hash') hash!: string; // tx hash
   @field('status') status!: TxStatus;
-  @json('receipt', (json) => json) receipt!: Receipt | null; // receipt as an object
-  @field('block_number') blockNumber!: number | null;
-  @text('block_hash') blockHash!: string | null;
-  @field('is_chain_switched') chainSwitched!: boolean | null; // chain switched
+  @json('receipt', (json) => json) receipt?: Receipt | null; // receipt as an object
+  @field('block_number') blockNumber?: string | null;
+  @text('block_hash') blockHash?: string | null;
+  @field('is_chain_switched') chainSwitched?: boolean | null; // chain switched
+  @field('skipped_checked') skippedChecked?: boolean | null; // for skipped check
   @readonly @date('created_at') createdAt!: Date;
-  @date('pending_at') pendingAt!: number | null; // first time pending timestamp
-  @text('err') err!: string | null; // basic error type/info
-  @field('is_local') isLocal!: boolean | null;
-  @field('resend_at') resendAt!: number | null; // epoch/block where wallet resend tx
-  @immutableRelation(TableName.App, 'app_id') app!: Relation<App> | null;
-  @immutableRelation(TableName.Asset, 'asset_id') asset!: Relation<Asset> | null;
+  @date('pending_at') pendingAt?: number | null; // first time pending timestamp
+  @text('err') err?: string | null; // basic error type/info
+  @field('is_local') isLocal?: boolean | null;
+  @field('resend_at') resendAt?: string | null; // epoch/block where wallet resend tx
+  @immutableRelation(TableName.App, 'app_id') app?: Relation<App> | null;
+  @immutableRelation(TableName.Asset, 'asset_id') asset?: Relation<Asset> | null;
   @immutableRelation(TableName.Address, 'address_id') address!: Relation<Address>;
   @immutableRelation(TableName.TxExtra, 'tx_extra_id') txExtra!: Relation<TxExtra>;
   @immutableRelation(TableName.TxPayload, 'tx_payload_id') txPayload!: Relation<TxPayload>;
+
+  @writer updateSelf(recordUpdater: (_: this) => void) {
+    return this.update(recordUpdater)
+  }
 }
