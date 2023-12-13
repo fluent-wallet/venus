@@ -54,6 +54,7 @@ export class TxMethod {
           txPayload,
           txExtra,
           asset,
+          blockNumber: params.extraParams.blockNumber,
         },
         true
       );

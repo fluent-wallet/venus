@@ -5,7 +5,7 @@ import { RPCResponse, RPCSendFactory } from '@core/utils/send';
 import { firstValueFrom } from 'rxjs';
 import { delay } from 'lodash-es';
 import { DETAULT_TX_TRACK_INTERVAL } from '@core/consts/transaction';
-import { processError } from '@core/utils/eth';
+import { ProcessErrorType, processError } from '@core/utils/eth';
 
 type KeepTrackFunction = (delay?: number) => void;
 
@@ -63,12 +63,10 @@ export class EthTxTrack {
       await this._updateTx(tx, (tx) => {
         tx.status = TxStatus.UNSENT;
       });
-      const { errorType: _errorType, shouldDiscard } = processError(err);
-      let errorType = _errorType;
-      const isDuplicateTx = errorType === 'duplicateTx';
-      const resendNonceTooStale = tx.resendAt && errorType === 'tooStaleNonce';
-      const resendPriceTooLow = tx.resendAt && errorType === 'replaceUnderpriced';
-      if (resendPriceTooLow) errorType = 'replacedByAnotherTx';
+      const { errorType, shouldDiscard } = processError(err);
+      const isDuplicateTx = errorType === ProcessErrorType.duplicateTx;
+      const resendNonceTooStale = tx.resendAt && errorType === ProcessErrorType.tooStaleNonce;
+      const resendPriceTooLow = tx.resendAt && errorType === ProcessErrorType.replaceUnderpriced;
 
       const sameAsSuccess = isDuplicateTx || resendNonceTooStale;
       const failed = !sameAsSuccess && (shouldDiscard || resendPriceTooLow);
@@ -87,6 +85,7 @@ export class EthTxTrack {
         await this._updateTx(tx, (tx) => {
           tx.status = TxStatus.FAILED;
           tx.err = errorType;
+          tx.raw = null;
         });
       }
     }
@@ -104,6 +103,7 @@ export class EthTxTrack {
           (tx) => {
             tx.status = TxStatus.SKIPPED;
             tx.skippedChecked = null;
+            tx.raw = null;
           },
           true
         );
@@ -138,13 +138,11 @@ export class EthTxTrack {
           tx.status = TxStatus.SENDING;
           tx.resendAt = blockNumber;
         });
-        keepTrack();
       } else if (BigInt(blockNumber) >= BigInt(tx.resendAt || tx.blockNumber!) + 1n) {
         await this._updateTx(tx, (tx) => {
           tx.status = TxStatus.UNSENT;
           tx.resendAt = blockNumber;
         });
-        keepTrack();
       }
       keepTrack();
     }
@@ -161,7 +159,6 @@ export class EthTxTrack {
           tx.status = TxStatus.PENDING;
           tx.chainSwitched = true;
         });
-        keepTrack();
       } else {
         if (transaction.blockHash !== tx.blockHash) {
           await this._updateTx(tx, (tx) => {
@@ -171,8 +168,8 @@ export class EthTxTrack {
             tx.skippedChecked = null;
           });
         }
-        keepTrack();
       }
+      keepTrack();
     } catch (error) {
       //
     }
@@ -213,6 +210,7 @@ export class EthTxTrack {
         (tx) => {
           tx.status = TxStatus.FAILED;
           tx.err = (result as any).txExecErrorMsg ?? 'tx failed';
+          tx.raw = null;
         },
         true
       );
@@ -260,6 +258,7 @@ export class EthTxTrack {
         (tx) => {
           tx.status = TxStatus.CONFIRMED;
           tx.skippedChecked = null;
+          tx.raw = null;
         },
         true
       );
@@ -280,6 +279,7 @@ export class EthTxTrack {
           (t) => {
             t.status = TxStatus.FAILED;
             t.err = 'replacedByAnotherTx';
+            tx.raw = null;
           },
           true
         );

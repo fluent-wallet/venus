@@ -1,5 +1,5 @@
 import { Model, type Relation } from '@nozbe/watermelondb';
-import { field, text, readonly, date, immutableRelation, json, writer } from '@nozbe/watermelondb/decorators';
+import { field, text, readonly, date, immutableRelation, json, writer, lazy } from '@nozbe/watermelondb/decorators';
 import { type Address } from '../Address';
 import { type Asset } from '../Asset';
 import { type App } from '../App';
@@ -18,7 +18,7 @@ export class Tx extends Model {
     [TableName.TxPayload]: { type: 'belongs_to', key: 'tx_payload_id' },
   } as const;
 
-  @text('raw') raw!: string; // raw tx hash
+  @text('raw') raw!: string | null; // raw tx hash
   @text('hash') hash!: string; // tx hash
   @field('status') status!: TxStatus;
   @json('receipt', (json) => json) receipt?: Receipt | null; // receipt as an object
@@ -31,8 +31,8 @@ export class Tx extends Model {
   @text('err') err?: string | null; // basic error type/info
   @field('is_local') isLocal?: boolean | null;
   @field('resend_at') resendAt?: string | null; // epoch/block where wallet resend tx
-  @immutableRelation(TableName.App, 'app_id') app?: Relation<App> | null;
-  @immutableRelation(TableName.Asset, 'asset_id') asset?: Relation<Asset> | null;
+  @immutableRelation(TableName.App, 'app_id') app!: Relation<App>;
+  @immutableRelation(TableName.Asset, 'asset_id') asset!: Relation<Asset>;
   @immutableRelation(TableName.Address, 'address_id') address!: Relation<Address>;
   @immutableRelation(TableName.TxExtra, 'tx_extra_id') txExtra!: Relation<TxExtra>;
   @immutableRelation(TableName.TxPayload, 'tx_payload_id') txPayload!: Relation<TxPayload>;

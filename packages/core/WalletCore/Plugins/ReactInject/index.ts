@@ -16,6 +16,7 @@ export { useVaultOfAccount } from './data/useVaultOfAccount';
 export { useVaults } from './data/useVaults';
 export { useHasVault } from './data/useHasVault';
 export { useCurrentHdPath } from './data/useCurrentHdPath';
+export { useFinishedTxs, usePayloadOfTx, useUnfinishedTxs, useAssetOfTx } from './data/useTxs';
 
 class ReactInjectPluginClass implements Plugin {
   public name = 'ReactInject';

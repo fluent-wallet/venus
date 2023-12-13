@@ -57,7 +57,7 @@ const schema = appSchema({
     tableSchema({
       name: TableName.Tx,
       columns: [
-        { name: 'raw', type: 'string' },
+        { name: 'raw', type: 'string', isOptional: true },
         { name: 'hash', type: 'string' },
         // int, tx status, -2 skipped, -1 failed, 0 unsent, 1 sending, 2 pending, 3 packaged, 4 executed, 5 confirmed
         { name: 'status', type: 'string' },
