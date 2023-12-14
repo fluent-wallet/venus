@@ -20,7 +20,7 @@ export class Asset extends Model {
     [TableName.Tx]: { type: 'has_many', foreignKey: 'asset_id' },
   } as const;
 
-  @text('contract_address') contractAddress!: string;
+  @text('contract_address') contractAddress!: string | null;
   @text('type') type!: AssetType;
   @text('name') name!: string | null;
   @text('symbol') symbol!: string | null;
