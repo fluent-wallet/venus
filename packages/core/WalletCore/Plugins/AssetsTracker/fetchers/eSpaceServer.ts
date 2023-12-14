@@ -67,7 +67,7 @@ export const fetchESpaceServer = async ({
                 ...(asset?.contract ? { contractAddress: contractAddress } : null),
               });
             });
-
+            console.log(scanRes?.result?.list)
             return from(
               fetchChainBatch<[string, string]>({
                 key: `${network.name}|${network.chainId}|${hexAddress}`,
@@ -178,7 +178,7 @@ export const fetchESpaceServer = async ({
             methods.createAsset(
               {
                 network,
-                type: AssetType.ERC20,
+                type: tokensHash[contractAddress]?.type || AssetType.ERC20,
                 contractAddress,
                 name: assetsInfo[index].token.name,
                 symbol: assetsInfo[index].token.symbol,

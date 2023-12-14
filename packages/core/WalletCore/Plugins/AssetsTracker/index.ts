@@ -67,7 +67,7 @@ class AssetsTrackerPlugin implements Plugin {
       networkType: NetworkType.Conflux,
       fetcher: {
         fetchAssetsBalance: (params: Parameters<FetchAssetBalance>[0]) => fetchAssetsBalance({ ...params, networkType: NetworkType.Conflux }),
-        fetchAssetsBalanceBatch: (params: Parameters<FetchAssetBalance>[0]) => fetchAssetsBalanceBatch({ ...params, networkType: NetworkType.Ethereum }),
+        fetchAssetsBalanceBatch: (params: Parameters<FetchAssetBalance>[0]) => fetchAssetsBalanceBatch({ ...params, networkType: NetworkType.Conflux }),
       },
     });
     this.register({
@@ -122,7 +122,9 @@ class AssetsTrackerPlugin implements Plugin {
 
             const currentAssetRule = await address.assetRule;
             const assetsInRule = await currentAssetRule.assets;
-            const assetsNeedFetch = assetsInRule.filter((asset) => !assetsHash[asset.contractAddress || AssetType.Native]);
+            const assetsNeedFetch = assetsInRule
+              .filter((asset) => !assetsHash[asset.contractAddress || AssetType.Native])
+              .filter((asset) => asset.type !== AssetType.ERC721 && asset.type !== AssetType.ERC1155);
             if (assetsNeedFetch.length) {
               const fetchers: Array<FetchAssetBalance> = [];
               for (const name of priorityFetcher) {
