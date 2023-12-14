@@ -8,6 +8,7 @@ import { useNavigation } from '@react-navigation/native';
 import { BaseButton } from '@components/Button';
 import WaringIcon from '@assets/icons/warning_2.svg';
 import CheckCircleIcon from '@assets/icons/check_circle.svg';
+import { HomeStackName, StackNavigation, WalletStackName } from '@router/configs';
 
 export enum BSIM_SIGN_STATUS {
   NOT_HAVE_BSIM = 'NOT_HAVE_BSIM',
@@ -74,7 +75,7 @@ interface Props {
 }
 
 const BSIMSendTX: React.FC<Props> = ({ onSend, state, errorMessage }) => {
-  const navigation = useNavigation();
+  const navigation = useNavigation<StackNavigation>();
   const model = useColorScheme();
   const { title, titleIcon: TitleIcon, context, showButton, buttonContext, showCloseIcon } = STATUS_VALUES[state];
   return (
@@ -91,7 +92,11 @@ const BSIMSendTX: React.FC<Props> = ({ onSend, state, errorMessage }) => {
         <Text className="text-sm leading-normal py-5">{context || errorMessage}</Text>
         <View className="flex flex-row mt-auto">
           {showCloseIcon && (
-            <Button type="outline" buttonStyle={{ width: 48, height: 48, borderRadius: 40, marginRight: 15 }} onPress={() => navigation.goBack()}>
+            <Button
+              type="outline"
+              buttonStyle={{ width: 48, height: 48, borderRadius: 40, marginRight: 15 }}
+              onPress={() => navigation.navigate(HomeStackName, { screen: WalletStackName })}
+            >
               <CloseIcon />
             </Button>
           )}

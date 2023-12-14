@@ -21,6 +21,7 @@ import { useCurrentAddress, useCurrentNetwork } from '@core/WalletCore/Plugins/R
 import { RPCResponse, RPCSend } from '@core/utils/send';
 import { firstValueFrom } from 'rxjs';
 import { Button } from '@rneui/base';
+import matchRPCErrorMessage from '@utils/matchRPCErrorMssage';
 
 const SendTo: React.FC<{ navigation: StackNavigation; route: RouteProp<RootStackList, typeof SendToStackName> }> = ({ navigation, route }) => {
   const { theme } = useTheme();
@@ -76,8 +77,13 @@ const SendTo: React.FC<{ navigation: StackNavigation; route: RouteProp<RootStack
       tokenId: tx.tokenId,
       decimals: tx.decimals,
     });
+
     if (gas.gasLimit.error || gas.gasPrice.error) {
-      return setRpcError({ err: true, msg: gas.gasLimit.error?.message || gas.gasPrice.error?.message || '' });
+      const errorMsg = matchRPCErrorMessage({
+        message: gas.gasLimit.error?.message || gas.gasPrice.error?.message || '',
+        data: gas.gasLimit.error?.data || gas.gasPrice.error?.data || '',
+      });
+      return setRpcError({ err: true, msg: errorMsg });
     }
 
     const balance = nativeBalance.result;

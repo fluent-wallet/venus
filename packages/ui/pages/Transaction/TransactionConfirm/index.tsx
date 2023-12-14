@@ -28,6 +28,7 @@ import BSIM from 'packages/WalletCoreExtends/Plugins/BSIM';
 import { BSIMTimeoutError, BSIM_ERRORS } from 'packages/WalletCoreExtends/Plugins/BSIM/BSIMSDK';
 import EstimateGas from './EstimateGas';
 import { RPCResponse, RPCSend } from '@core/utils/send';
+import matchRPCErrorMessage from '@utils/matchRPCErrorMssage';
 
 const TransactionConfirm: React.FC<{
   navigation: StackNavigation;
@@ -44,7 +45,10 @@ const TransactionConfirm: React.FC<{
 
   const [error, setError] = useState('');
   const [tx] = useAtom(transactionAtom);
-  const [gas, setGas] = useState<{ gasLimit?: string; gasPrice?: string; loading: boolean; error: boolean }>({ loading: true, error: false });
+  const [gas, setGas] = useState<{ gasLimit?: string; gasPrice?: string; loading: boolean; error: boolean; errorMsg?: string }>({
+    loading: true,
+    error: false,
+  });
 
   const handleSend = async () => {
     if (gas?.gasLimit && gas.gasPrice) {
@@ -64,7 +68,12 @@ const TransactionConfirm: React.FC<{
 
         try {
           const blockNumber = await firstValueFrom(RPCSend<RPCResponse<string>>(currentNetwork.endpoint, { method: 'eth_blockNumber' }));
-          const { txHash, txRaw, transaction } = await Methods.sendTransaction(tx, { gasLimit: gas.gasLimit, gasPrice: gas.gasPrice }, channel);
+          const { txHash, txRaw, transaction, error } = await Methods.sendTransaction(tx, { gasLimit: gas.gasLimit, gasPrice: gas.gasPrice }, channel);
+
+          if (error && error.message && error.data) {
+            const errorMsg = matchRPCErrorMessage({ message: error.message, data: error.data });
+            return setError(errorMsg);
+          }
 
           Events.broadcastTransactionSubjectPush.next({
             txHash,
@@ -112,10 +121,22 @@ const TransactionConfirm: React.FC<{
     })
       .then((res) => {
         if (!res.gasLimit.error && !res.gasPrice.error) {
-          setGas({ gasLimit: res.gasLimit.result, gasPrice: res.gasPrice.result, loading: false, error: false });
+          setGas({
+            gasLimit: res.gasLimit.result,
+            gasPrice: res.gasPrice.result,
+            loading: false,
+            error: false,
+          });
         } else {
           // TODO how error message to user
-          setGas({ loading: false, error: true });
+          setGas({
+            loading: false,
+            error: true,
+            errorMsg: matchRPCErrorMessage({
+              message: res.gasLimit?.error?.message || res.gasPrice?.error?.message || '',
+              data: res.gasLimit?.error?.data || res.gasPrice?.error?.data || '',
+            }),
+          });
         }
       })
       .catch((err) => {
@@ -154,6 +175,20 @@ const TransactionConfirm: React.FC<{
       className="flex-1 flex flex-col justify-startpb-7"
       style={{ backgroundColor: theme.colors.normalBackground, paddingTop: statusBarHeight + 48 }}
     >
+      {(error || gas.error) && (
+        <View className="px-6">
+          <Pressable onPress={() => setError('')}>
+            <View className="flex flex-row p-3 items-start border rounded-lg mb-4" style={{ borderColor: theme.colors.warnErrorPrimary }}>
+              <Warning width={16} height={16} />
+              <View className="flex-1 ml-2">
+                <Text className="text-sm " style={{ color: theme.colors.warnErrorPrimary }}>
+                  {error || gas.errorMsg}
+                </Text>
+              </View>
+            </View>
+          </Pressable>
+        </View>
+      )}
       <View className="px-6">
         {(tx.assetType === AssetType.ERC721 || tx.assetType === AssetType.ERC1155) && (
           <View className="flex flex-row p-4 rounded-lg w-full mb-4" style={{ backgroundColor: theme.colors.surfaceCard }}>
@@ -177,18 +212,7 @@ const TransactionConfirm: React.FC<{
             </View>
           </View>
         )}
-        {error && (
-          <Pressable onPress={() => setError('')}>
-            <View className="flex flex-row p-3 items-center border rounded-lg mb-4" style={{ borderColor: theme.colors.warnErrorPrimary }}>
-              <Warning width={16} height={16} />
-              <View className="flex-1 ml-2">
-                <Text className="text-sm leading-6" style={{ color: theme.colors.warnErrorPrimary }}>
-                  {error}
-                </Text>
-              </View>
-            </View>
-          </Pressable>
-        )}
+
         <View style={{ backgroundColor: theme.colors.surfaceCard }} className="p-[15px] rounded-md">
           <Text className="leading-6" style={{ color: theme.colors.textSecondary }}>
             From
@@ -256,11 +280,15 @@ const TransactionConfirm: React.FC<{
         <BSIMSendTX onSend={handleSend} state={BSIMTXState} errorMessage={BSIMTxError} />
       ) : (
         <View className="flex flex-row items-center mt-auto px-6 mb-6">
-          <Button type="outline" buttonStyle={{ width: 48, height: 48, borderRadius: 40, marginRight: 15 }} onPress={() => navigation.goBack()}>
+          <Button
+            type="outline"
+            buttonStyle={{ width: 48, height: 48, borderRadius: 40, marginRight: 15 }}
+            onPress={() => navigation.navigate(HomeStackName, { screen: WalletStackName })}
+          >
             <CloseIcon />
           </Button>
           <View className="flex-1">
-            <BaseButton loading={loading} disabled={!gas} onPress={handleSend}>
+            <BaseButton loading={loading} disabled={!gas || !!error || !!gas.error} onPress={handleSend}>
               <SendIcon color="#fff" width={24} height={24} />
               Send
             </BaseButton>

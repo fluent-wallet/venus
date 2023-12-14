@@ -47,6 +47,7 @@ const Tokens: React.FC<{ navigation: StackNavigation; route: RouteProp<RootStack
       contractName: NFT.contractName,
       nftName: NFT.nftName,
       iconUrl: NFT.iconUrl,
+      decimals: NFT.decimals || 0,
     }));
     if (NFT.assetType === AssetType.ERC1155 && Number(NFT.balance || 0) > 1) {
       navigation.navigate(SendToStackName);

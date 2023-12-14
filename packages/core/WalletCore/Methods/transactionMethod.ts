@@ -108,13 +108,13 @@ export class TransactionMethod {
         BSIMChannel.next();
       }
 
-      return { txHash: txRes.result, txRaw: encodeTx };
+      return { txHash: txRes.result, error: txRes.error, txRaw: encodeTx };
     } else {
       const pk = await this.GetDecryptedVaultDataMethod.getPrivateKeyOfAddress(currentAddress);
       const wallet = new Wallet(pk, new JsonRpcProvider(endpoint));
-      const txRaw = await wallet.signTransaction(transaction);
-      const txRes = await wallet.sendTransaction(transaction);
-      return { txHash: txRes.hash, txRaw };
+      const encodeTx = await wallet.signTransaction(transaction);
+      const txRes = await firstValueFrom(RPCSend<RPCResponse<string>>(endpoint, { method: 'eth_sendRawTransaction', params: [encodeTx] }));
+      return { txHash: txRes.result, error: txRes.error, txRaw: encodeTx };
     }
   };
 
@@ -198,8 +198,8 @@ export class TransactionMethod {
       transaction.to = walletTx.contract;
       transaction.data = this.getContractTransactionData(currentAddress.hex, walletTx);
     }
-    const { txHash, txRaw } = await this.signAndSendTransaction(currentNetwork.endpoint, currentAddress, transaction, BSIMChannel);
+    const { txHash, txRaw, error } = await this.signAndSendTransaction(currentNetwork.endpoint, currentAddress, transaction, BSIMChannel);
 
-    return { txHash, txRaw, transaction };
+    return { txHash, txRaw, transaction, error };
   };
 }

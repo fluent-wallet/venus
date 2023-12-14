@@ -40,12 +40,12 @@ const Secret = ({ backupType, getSecretData }: { backupType: 'Seed Phrase' | 'Pr
   return (
     <View>
       <View
-        className="flex flex-wrap flex-row content-between px-4 py-4 rounded-lg  gap-x-[15px] gap-y-2"
+        className="flex flex-wrap flex-row justify-between px-4 pb-4 pt-2 rounded-lg  gap-y-2"
         style={{ backgroundColor: theme.colors.surfaceCard }}
       >
         {backupType === 'Seed Phrase' ? (
           secret.split(' ').map((value, index) => (
-            <View key={index} style={{ backgroundColor: theme.colors.surfaceThird }} className={clsx('px-4 py-2 rounded-full basis-[156px]')}>
+            <View key={index} style={{ backgroundColor: theme.colors.surfaceThird }} className={clsx('px-4 py-2 rounded-full basis-[150px]')}>
               <Text className="text-center leading-6">
                 {index + 1}. {value}
               </Text>
@@ -76,7 +76,7 @@ const Secret = ({ backupType, getSecretData }: { backupType: 'Seed Phrase' | 'Pr
         )}
       </View>
 
-      {backupType === 'Seed Phrase' && isShow && (
+      {/* {backupType === 'Seed Phrase' && isShow && (
         <View className="flex items-end mt-4">
           <View className="p-3 rounded-full" style={{ backgroundColor: theme.colors.surfaceCard }}>
             <Tooltip
@@ -115,7 +115,7 @@ const Secret = ({ backupType, getSecretData }: { backupType: 'Seed Phrase' | 'Pr
             <Icon name="copy-all" className="mx-4" color={'#537FF6'} />
           </Tooltip>
         </View>
-      )}
+      )} */}
     </View>
   );
 };

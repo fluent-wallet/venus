@@ -29,7 +29,6 @@ export const RPCSend = <T>(endpoint: string, args: { method: string; params?: an
     jsonrpc: '2.0',
     id: rpcId++,
   });
-
   return fromFetch<T>(endpoint, {
     method: 'POST',
     headers: {

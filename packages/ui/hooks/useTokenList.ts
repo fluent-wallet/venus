@@ -88,7 +88,9 @@ export const loopNative721And1155List = combineLatest([
 ]).pipe(
   switchMap(([address, network]) =>
     requestTokenList(network!.chainId, address!.hex, [AssetType.Native.toLowerCase(), AssetType.ERC721, AssetType.ERC1155].join(',')).pipe(
-      map((list) => list.map((v) => ({ ...v, type: v.type === AssetType.Native.toLowerCase() ? AssetType.Native : v.type }))), // TODO
+      map((list) =>
+        list.map((v) => ({ ...v, decimals: v.decimals === null ? 0 : v.decimals, type: v.type === AssetType.Native.toLowerCase() ? AssetType.Native : v.type }))
+      ), // TODO
       repeat({ delay: 5 * 1000 })
     )
   )

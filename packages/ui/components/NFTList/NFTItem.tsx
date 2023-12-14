@@ -19,6 +19,7 @@ export interface NFTItemPressArgs {
   contractName: AccountTokenListItem['name'];
   nftName: NFTItemDetail['name'];
   iconUrl: AccountTokenListItem['iconUrl'];
+  decimals: AccountTokenListItem['decimals'];
 }
 
 const NFTItem: React.FC<{
@@ -91,6 +92,7 @@ const NFTItem: React.FC<{
                           balance: v.amount,
                           contract: nftInfo.contract,
                           contractName: nftInfo.name,
+                          decimals: nftInfo.decimals,
                         })
                     : undefined
                 }
@@ -103,7 +105,7 @@ const NFTItem: React.FC<{
                     </View>
                   )}
                   <View className="flex items-center w-full h-36 overflow-hidden">
-                    {v.image ? <MixinImage source={{ uri: v.image }} fallback={ <DefaultNFTImage />} className="w-full h-full" /> : <DefaultNFTImage />}
+                    {v.image ? <MixinImage source={{ uri: v.image }} fallback={<DefaultNFTImage />} className="w-full h-full" /> : <DefaultNFTImage />}
                   </View>
                   <Text style={{ color: theme.colors.textSecondary }} className="text-sm leading-6">
                     {nftInfo.name}
