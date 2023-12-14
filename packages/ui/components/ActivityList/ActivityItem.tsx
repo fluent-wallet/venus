@@ -13,71 +13,39 @@ import { formatValue } from '@utils/formatValue';
 import { TxPayload } from '@core/database/models/TxPayload';
 import { iface1155, iface721, iface777 } from '@core/contracts';
 
-// getContractTransactionData = (
-//   currentAddress: string,
-//   args: Pick<WalletTransactionType, 'assetType' | 'tokenId' | 'contract' | 'to' | 'amount' | 'decimals'>
-// ) => {
-//   if (!args.contract) {
-//     throw new Error("Get contract transaction data but don't have contract address");
-//   }
-
-//   switch (args.assetType) {
-//     case AssetType.ERC20: {
-//       return iface777.encodeFunctionData('transfer', [args.to, parseUnits(args.amount.toString(), args.decimals)]);
-//     }
-//     case AssetType.ERC721: {
-//       if (typeof args.tokenId === 'undefined') {
-//         throw new Error("Get ERC721 transaction data but don't have tokenId");
-//       }
-//       return iface721.encodeFunctionData('transferFrom', [currentAddress, args.to, args.tokenId]);
-//     }
-//     case AssetType.ERC1155: {
-//       if (typeof args.tokenId === 'undefined') {
-//         throw new Error("Get ERC1155 transaction data but don't have tokenId");
-//       }
-
-//       return iface1155.encodeFunctionData('safeTransferFrom', [
-//         currentAddress,
-//         args.to,
-//         args.tokenId,
-//         parseUnits(args.amount.toString(), args.decimals),
-//         '0x',
-//       ]);
-//     }
-
-//     default: {
-//       throw new Error(`Get contract transaction data , only support ERC20, ERC721, ERC1155, but get assetType: ${args.assetType}`);
-//     }
-//   }
-// };
-
 const formatTxData = (payload: TxPayload | null, asset: Asset | null) => {
   let value = payload?.value;
   let to = payload?.to;
+  let from = payload?.from;
+  let tokenId = '';
   const decimals = asset?.decimals || 18;
   switch (asset?.type) {
     case AssetType.ERC20: {
       if (payload?.data) {
-        [to, value] = iface777.decodeFunctionData('transfer', payload.data);
+        const params = iface777.decodeFunctionData('transfer', payload.data);
+        to = params[0];
+        value = params[1].toString();
       }
       break;
     }
     case AssetType.ERC721: {
       if (payload?.data) {
-        [to, value] = iface721.decodeFunctionData('transferFrom', payload.data);
+        [from, to, tokenId] = iface721.decodeFunctionData('transferFrom', payload.data);
       }
       break;
     }
     case AssetType.ERC1155: {
       if (payload?.data) {
-        [to, value] = iface1155.decodeFunctionData('safeTransferFrom', payload.data);
+        [from, to, tokenId, value] = iface1155.decodeFunctionData('safeTransferFrom', payload.data);
       }
       break;
     }
   }
   return {
     to,
+    from,
     value,
+    tokenId,
     decimals,
   };
 };
