@@ -33,3 +33,4 @@ export const querySelectedAddress = () =>
     ) as unknown as Query<Address>;
 
 export const observeSelectedAddress = () => querySelectedAddress().observe();
+export const queryAddressById = async (id: string) => database.get(TableName.Address).find(id) as Promise<Address>;

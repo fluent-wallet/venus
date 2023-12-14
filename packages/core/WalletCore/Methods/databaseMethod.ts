@@ -272,6 +272,8 @@ export class DatabaseMethod {
         TableName.Site,
         TableName.Permission,
         TableName.Request,
+        TableName.Asset,
+        TableName.AssetRule,
       ]);
       dbRefresh$.next(null);
     } catch (error) {

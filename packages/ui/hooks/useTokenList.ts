@@ -54,6 +54,7 @@ export const requestTokenList = (chainId: string, hexAddress: string, assetType:
   scanOpenAPISend<TokenListResponse>(chainId, `/account/tokens?account=${hexAddress}&tokenType=${assetType}`).pipe(
     switchMap((res) => {
       if (res.status === '1') return of(res.result.list);
+      return of([]);
       return throwError(() => new Error(res.message));
     }),
     map((list) =>

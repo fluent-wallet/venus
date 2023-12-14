@@ -4,4 +4,4 @@ class RPCPlugin implements Plugin {
   public name = 'RPC';
 }
 
-export default RPCPlugin;
+export default new RPCPlugin();

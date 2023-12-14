@@ -40,6 +40,14 @@ export class Network extends Model {
   @children(TableName.AssetRule) assetRules!: Query<AssetRule>;
   @relation(TableName.HdPath, 'hd_path_id') hdPath!: Relation<HdPath>;
 
+  queryAssetByAddress = (address: string) =>
+    firstValueFrom(
+      this.assets
+        .extend(Q.where('contract_address', address))
+        .observe()
+        .pipe(map((accounts) => accounts?.[0] as Asset | undefined))
+    );
+
   @lazy nativeAssetQuery = this.assets.extend(Q.where('type', AssetType.Native));
   @lazy nativeAsset = firstValueFrom(this.nativeAssetQuery.observe().pipe(map((assets) => assets?.[0])));
   @lazy defaultAssetRuleQuery = this.assetRules.extend(Q.where('index', 0));

@@ -4,7 +4,10 @@ import TableName from '../../TableName';
 import { createModel, type ModelFields } from '../../helper/modelHelper';
 import database from '../..';
 
-export type NetworkParams = Omit<ModelFields<Network>, 'nativeAsset' | 'nativeAssetQuery' | 'defaultAssetRuleQuery' | 'defaultAssetRule'>;
+export type NetworkParams = Omit<
+  ModelFields<Network>,
+  'nativeAsset' | 'nativeAssetQuery' | 'defaultAssetRuleQuery' | 'defaultAssetRule' | 'queryAssetByAddress'
+>;
 export function createNetwork(params: NetworkParams, prepareCreate: true): Network;
 export function createNetwork(params: NetworkParams): Promise<Network>;
 export function createNetwork(params: NetworkParams, prepareCreate?: true) {
@@ -12,7 +15,7 @@ export function createNetwork(params: NetworkParams, prepareCreate?: true) {
 }
 
 export const querySelectedNetwork = () => database.get(TableName.Network).query(Q.where('selected', true)) as unknown as Query<Network>;
-export const queryNetworkById = async (networkId: string) => database.get(TableName.Network).find(networkId) as Promise<Network>;
+export const queryNetworkById = async (id: string) => database.get(TableName.Network).find(id) as Promise<Network>;
 export const queryNetworkByChainId = async (chainId: string) => {
   const networks = await database.get(TableName.Network).query(Q.where('chain_identification', chainId));
   return networks?.[0] as Network;
@@ -21,3 +24,4 @@ export const queryNetworkByNetId = async (netId: number) => {
   const networks = await database.get(TableName.Network).query(Q.where('net_identification', netId));
   return networks?.[0] as Network;
 };
+

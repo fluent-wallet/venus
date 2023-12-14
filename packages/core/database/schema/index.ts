@@ -35,14 +35,15 @@ const schema = appSchema({
     tableSchema({
       name: TableName.Asset,
       columns: [
-        { name: 'asset_address', type: 'string', isIndexed: true },
+        { name: 'asset_rule_id', type: 'string', isIndexed: true },
+        { name: 'contract_address', type: 'string', isIndexed: true },
         { name: 'type', type: 'string', isIndexed: true },
+        { name: 'network_id', type: 'string', isIndexed: true },
         { name: 'name', type: 'string', isOptional: true },
         { name: 'symbol', type: 'string', isOptional: true },
         { name: 'decimals', type: 'number', isOptional: true },
         { name: 'icon', type: 'string', isOptional: true },
-        { name: 'network_id', type: 'string', isIndexed: true },
-        { name: 'asset_rule_id', type: 'string', isIndexed: true },
+        { name: 'price_in_usdt', type: 'string', isOptional: true },
       ],
     }),
     tableSchema({

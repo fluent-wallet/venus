@@ -36,7 +36,7 @@ export class NetworkMethod {
         network,
         assetRule: defaultAssetRule,
         type: AssetType.Native,
-        assetAddress: '',
+        contractAddress: '',
         name: params.nativeAsset?.name || network.name.split(' ')?.[0] || 'Ether',
         symbol: params.nativeAsset?.symbol || network.name.split(' ')?.[0] || 'ETH',
         decimals: params.nativeAsset?.decimals || 18,

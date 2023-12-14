@@ -4,4 +4,4 @@ class ProviderPlugin implements Plugin {
   public name = 'Provider';
 }
 
-export default ProviderPlugin;
+export default new ProviderPlugin();

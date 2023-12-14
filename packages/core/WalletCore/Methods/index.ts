@@ -3,6 +3,7 @@ import { injectable, inject } from 'inversify';
 import { type Account } from '../../database/models/Account';
 import { type Vault } from '../../database/models/Vault';
 import { type Address } from '../../database/models/Address';
+import { type Asset } from '../../database/models/Asset';
 import { container } from '../configs';
 import { GetDecryptedVaultDataMethod } from './getDecryptedVaultData';
 import { AddAccountMethod, type Params as AddAccountParams } from './addAccount';
@@ -14,6 +15,7 @@ import { NetworkMethod } from './networkMethod';
 import { DatabaseMethod } from './databaseMethod';
 import { TransactionMethod } from './transactionMethod';
 import { TxMethod } from './txMethod';
+import { AssetMethod, type AssetParams } from './assetMethod';
 
 @injectable()
 export class Methods {
@@ -101,6 +103,20 @@ export class Methods {
     return this.DatabaseMethod.clearAccountData(...args);
   }
 
+  @inject(AssetMethod) private AssetMethod!: AssetMethod;
+  public createAsset(params: AssetParams, prepareCreate: true): Asset;
+  public createAsset(params: AssetParams): Promise<Asset>;
+  public createAsset(params: AssetParams, prepareCreate?: true) {
+    return this.AssetMethod.createAsset(params, prepareCreate as true) as any;
+  }
+  public updateAsset(...args: Parameters<AssetMethod['updateAsset']>) {
+    return this.AssetMethod.updateAsset(...args);
+  }
+  public prepareUpdateAsset(...args: Parameters<AssetMethod['prepareUpdateAsset']>) {
+    return this.AssetMethod.prepareUpdateAsset(...args);
+  }
+
+
   @inject(TransactionMethod) private TransactionMethod!: TransactionMethod;
   public getTransactionGasAndGasLimit(...args: Parameters<TransactionMethod['getGasPriceAndLimit']>) {
     return this.TransactionMethod.getGasPriceAndLimit(...args);
@@ -130,6 +146,7 @@ container.bind(NetworkMethod).to(NetworkMethod).inSingletonScope();
 container.bind(DatabaseMethod).to(DatabaseMethod).inSingletonScope();
 container.bind(TransactionMethod).to(TransactionMethod).inSingletonScope();
 container.bind(TxMethod).to(TxMethod).inSingletonScope();
+container.bind(AssetMethod).to(AssetMethod).inSingletonScope();
 container.bind(Methods).to(Methods).inSingletonScope();
 
 export default container.get(Methods) as Methods;
