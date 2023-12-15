@@ -12,12 +12,12 @@ export const unfinishedTxsObservable = dbRefresh$.pipe(
 const unfinishedTxsAtom = atomWithObservable(() => unfinishedTxsObservable, { initialValue: [] });
 export const useUnfinishedTxs = () => useAtomValue(unfinishedTxsAtom);
 
-export const txsObservable = dbRefresh$.pipe(
+export const finishedTxsObservable = dbRefresh$.pipe(
   startWith([]),
   switchMap(() => observeFinishedTxs())
 );
 
-const finishedTxsAtom = atomWithObservable(() => txsObservable, { initialValue: [] });
+const finishedTxsAtom = atomWithObservable(() => finishedTxsObservable, { initialValue: [] });
 export const useFinishedTxs = () => useAtomValue(finishedTxsAtom);
 
 const payloadsAtomFamilyOfTx = atomFamily((txId: string) =>

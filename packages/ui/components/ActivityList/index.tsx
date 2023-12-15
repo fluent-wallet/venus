@@ -2,7 +2,6 @@ import { ScrollView, View } from 'react-native';
 import ActivityItem from './ActivityItem';
 import { useUnfinishedTxs, useFinishedTxs } from '@core/WalletCore/Plugins/ReactInject';
 import { useMemo } from 'react';
-import Skeleton from '@components/Skeleton';
 import { Tx } from '@core/database/models/Tx';
 import { useTheme, Card, Text } from '@rneui/themed';
 

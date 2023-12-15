@@ -1,5 +1,5 @@
 import { Model, type Relation } from '@nozbe/watermelondb';
-import { field, text, readonly, date, immutableRelation, json, writer, lazy } from '@nozbe/watermelondb/decorators';
+import { field, text, readonly, date, immutableRelation, json, writer } from '@nozbe/watermelondb/decorators';
 import { type Address } from '../Address';
 import { type Asset } from '../Asset';
 import { type App } from '../App';
