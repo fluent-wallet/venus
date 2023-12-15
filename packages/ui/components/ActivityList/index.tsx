@@ -1,7 +1,7 @@
 import { ScrollView, View } from 'react-native';
 import ActivityItem from './ActivityItem';
 import { useUnfinishedTxs, useFinishedTxs } from '@core/WalletCore/Plugins/ReactInject';
-import { useMemo } from 'react';
+import { memo, useCallback, useMemo } from 'react';
 import { Tx } from '@core/database/models/Tx';
 import { useTheme, Card, Text } from '@rneui/themed';
 
@@ -21,7 +21,7 @@ const formatDate = (time: number) => {
   };
 };
 
-const ActivityList: React.FC<{ onPress?: (v: Tx) => void }> = ({ onPress }) => {
+const ActivityList: React.FC<{ onPress?: (v: Tx) => void }> = memo(({ onPress }) => {
   const { theme } = useTheme();
   const finishedTxs = useFinishedTxs();
   const unfinishedTxs = useUnfinishedTxs();
@@ -40,11 +40,14 @@ const ActivityList: React.FC<{ onPress?: (v: Tx) => void }> = ({ onPress }) => {
     };
   }, [finishedTxs]);
 
-  const handleSelect = (tx: Tx) => {
-    if (onPress) {
-      onPress(tx);
-    }
-  };
+  const handleSelect = useCallback(
+    (tx: Tx) => {
+      if (onPress) {
+        onPress(tx);
+      }
+    },
+    [onPress]
+  );
 
   return (
     <ScrollView>
@@ -83,6 +86,6 @@ const ActivityList: React.FC<{ onPress?: (v: Tx) => void }> = ({ onPress }) => {
       </View>
     </ScrollView>
   );
-};
+});
 
 export default ActivityList;
