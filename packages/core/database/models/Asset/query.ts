@@ -4,7 +4,7 @@ import { ModelFields, createModel } from '../../helper/modelHelper';
 import TableName from '../../TableName';
 import database from '../..';
 
-export type AssetParams = ModelFields<Asset>;
+export type AssetParams = Omit<ModelFields<Asset>, 'hashKey'>;
 export function createAsset(params: AssetParams, prepareCreate: true): Asset;
 export function createAsset(params: AssetParams): Promise<Asset>;
 export function createAsset(params: AssetParams, prepareCreate?: true) {

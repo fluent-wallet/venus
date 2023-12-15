@@ -1,8 +1,8 @@
 /* eslint-disable @typescript-eslint/ban-types */
-import { combineLatest, filter, debounceTime, distinctUntilChanged, of, catchError, mergeMap, from, Observable } from 'rxjs';
+import { combineLatest, filter, debounceTime, distinctUntilChanged, interval, switchMap, takeUntil, Subject, of, startWith, type Subscription } from 'rxjs';
+import { isEqual } from 'lodash-es';
 import { type Plugin } from '../../Plugins';
 import { NetworkType, ChainType } from './../../../database/models/Network';
-import { AssetType, type Asset } from './../../../database/models/Asset';
 import { type Address } from './../../../database/models/Address';
 import { type Network } from './../../../database/models/Network';
 import { fetchAssetsBalance, fetchAssetsBalanceBatch, fetchAssetsBalanceMulticall } from './fetchers/basic';
@@ -17,12 +17,12 @@ import {
   CFX_TESTNET_CHAINID,
 } from '../../../consts/network';
 import events from '../../Events';
-import { setAssets } from '../ReactInject/data/useAssets';
 import { fetchESpaceServer } from './fetchers/eSpaceServer';
 import { queryNetworkById } from '../../../database/models/Network/query';
 import { queryAddressById } from '../../../database/models/Address/query';
-import database from '../../../database';
-import methods from '../../Methods';
+import trackAssets from './trackAssets';
+import { type FetchAssetBalance, type AssetInfo, type Fetcher } from './types';
+import { getAssetsHash, setAssetsHash, getAssetsSortedKeys, setAssetsSortedKeys, getAssetsAtomKey } from '../ReactInject/data/useAssets';
 
 const compareNetworkAndAddress = ([prevNetwork, prevAddress]: [Network, Address], [currentNetwork, currentAddress]: [Network, Address]) => {
   return prevNetwork.id === currentNetwork.id && prevAddress.id === currentAddress.id;
@@ -32,37 +32,12 @@ export const getFetcherKey = ({ networkType, chainId }: { networkType: NetworkTy
   return typeof chainId === 'undefined' ? networkType : `${networkType}-${chainId}`;
 };
 
-type FetchAssetBalance = (params: {
-  endpoint: string;
-  account: string;
-  assets: Array<{
-    contractAddress?: string | null;
-    assetType?: Omit<AssetType, AssetType.ERC1155 | AssetType.ERC721>;
-  }>;
-}) => Promise<Array<string>>;
-
-export interface AssetInfo {
-  type: AssetType;
-  contractAddress?: string;
-  name: string;
-  symbol: string;
-  decimals: number;
-  balance: string;
-  priceInUSDT?: string;
-  icon?: string;
-}
-
-interface Fetcher {
-  fetchAssetsBalance?: FetchAssetBalance;
-  fetchAssetsBalanceBatch?: FetchAssetBalance;
-  fetchAssetsBalanceMulticall?: FetchAssetBalance;
-  fetchFromServer?: (params: { address: Address; network: Network }) => Promise<Array<AssetInfo>>;
-}
-const priorityFetcher = ['fetchAssetsBalanceMulticall', 'fetchAssetsBalanceBatch', 'fetchAssetsBalance'] as const;
-
 class AssetsTrackerPlugin implements Plugin {
   public name = 'AssetsTracker';
   fetcherMap = new Map<string, Fetcher>();
+  private cancel$ = new Subject<void>();
+  private currentSubscription?: Subscription; // 用于存储当前订阅
+
   constructor() {
     this.register({
       networkType: NetworkType.Ethereum,
@@ -115,7 +90,9 @@ class AssetsTrackerPlugin implements Plugin {
         distinctUntilChanged(compareNetworkAndAddress)
       )
       .subscribe(([network, address]) => {
-        const assetsHash: Record<string, AssetInfo> = {};
+        this.disposeCurrentSubscription();
+        this.cancel$ = new Subject<void>();
+
         setTimeout(async () => {
           try {
             /** This subscribe may be triggered after resetData. */
@@ -125,129 +102,48 @@ class AssetsTrackerPlugin implements Plugin {
 
             const chainFetcher = this.fetcherMap.get(getFetcherKey({ networkType: network.networkType, chainId: network.chainId }));
             const networkFetcher = this.fetcherMap.get(getFetcherKey({ networkType: network.networkType }));
+            if (!networkFetcher && !chainFetcher) return;
 
-            /** Prioritize the use of data from fetchFromServer. */
-            if (chainFetcher && typeof chainFetcher.fetchFromServer === 'function') {
-              const assets = await chainFetcher.fetchFromServer({ address, network });
-              assets?.forEach((asset) => (assetsHash[asset.contractAddress || AssetType.Native] = asset));
+            const nativeAsset = (await network.nativeAssetQuery.fetch())?.[0];
+            const assetsHash: Record<string, AssetInfo> = {};
+            const assetsSortedKeys: Array<string> = [];
+            const assetsAtomKey = getAssetsAtomKey({ network, address });
 
-              /**
-               * It is important to note that the data fromServer should itself contain information about the token, which may not be recorded locally.
-               * The token information from the AssetRule itself is already recorded locally.
-               * So if there is an asset fromServer that has not been written to the DB, should write it here.
-               */
-              const nativeAsset = await network.nativeAsset;
-              Promise.all(assets.map((asset) => (!asset.contractAddress ? nativeAsset : network.queryAssetByAddress(asset.contractAddress)))).then(
-                (isAssetsInDB) => {
-                  const preChanges: Array<Asset> = [];
+            this.currentSubscription = interval(5000)
+              .pipe(
+                startWith(0),
+                switchMap(() => trackAssets({ chainFetcher, networkFetcher, nativeAsset, assetsHash, network, address, assetsSortedKeys })),
+                takeUntil(this.cancel$)
+              )
+              .subscribe({
+                next: () => {
+                  const assetsHashInAtom = getAssetsHash(assetsAtomKey);
+                  const assetsSortedKeysInAtom = getAssetsSortedKeys(assetsAtomKey);
 
-                  isAssetsInDB.forEach((inDB, index) => {
-                    const contractAddress = assets[index].contractAddress;
-                    if (inDB === undefined && contractAddress) {
-                      preChanges.push(
-                        methods.createAsset(
-                          {
-                            network,
-                            ...assets[index],
-                          },
-                          true
-                        )
-                      );
-                    }
-                    if (typeof inDB === 'object') {
-                      const assetInDB = inDB;
-                      if (assets[index].priceInUSDT && assetInDB.priceInUSDT !== assets[index].priceInUSDT) {
-                        preChanges.push(methods.prepareUpdateAsset({ asset: assetInDB, priceInUSDT: assets[index].priceInUSDT }));
-                      }
-                      if (assets[index].icon && assetInDB.icon !== assets[index].icon) {
-                        preChanges.push(methods.prepareUpdateAsset({ asset: assetInDB, icon: assets[index].icon }));
-                      }
-                    }
-                  });
-
-                  if (preChanges.length) {
-                    database.write(async () => {
-                      await database.batch(...preChanges);
-                      preChanges.length = 0;
-                    });
+                  if (!isEqual(assetsSortedKeys, assetsSortedKeysInAtom)) {
+                    setAssetsSortedKeys(assetsAtomKey, [...assetsSortedKeys]);
                   }
-                }
-              );
-            }
-
-            /**
-             * If there are tokens in the AssetRule that need to be prioritized for display that are not included in the fromServer's data
-             * Then should use the chain's own method to get the balacne level by level.
-             * */
-            const currentAssetRule = await address.assetRule;
-            const assetsInRule = await currentAssetRule.assets;
-            const assetsNeedFetch = assetsInRule
-              .filter((asset) => !assetsHash[asset.contractAddress || AssetType.Native])
-              .filter((asset) => asset.type !== AssetType.ERC721 && asset.type !== AssetType.ERC1155);
-            if (assetsNeedFetch.length) {
-              const fetchers: Array<FetchAssetBalance> = [];
-              for (const name of priorityFetcher) {
-                if (chainFetcher && chainFetcher?.[name] && !fetchers.some((m) => m.name === name)) {
-                  fetchers.push(chainFetcher[name]!);
-                }
-
-                if (networkFetcher && networkFetcher?.[name] && !fetchers.some((m) => m.name === name)) {
-                  fetchers.push(networkFetcher[name]!);
-                }
-              }
-              const fallbackFetch = (_fetchers: Array<FetchAssetBalance>) => {
-                if (_fetchers.length === 0) {
-                  throw new Error('No fallback');
-                }
-
-                const fetchAssetBalances = _fetchers[0];
-
-                return new Observable((observer) => {
-                  of(
-                    fetchAssetBalances({
-                      endpoint: network.endpoint,
-                      account: address.hex,
-                      assets: assetsNeedFetch.map((asset) => ({ assetType: asset.type, contractAddress: asset.contractAddress })),
-                    })
-                  )
-                    .pipe(
-                      mergeMap((result) => from(result)),
-                      catchError(() => fallbackFetch(_fetchers.slice(1)))
-                    )
-                    .subscribe({
-                      next: (res) => observer.next(res),
-                      error: (err) => observer.error(err),
-                    });
-                });
-              };
-
-              fallbackFetch(fetchers).subscribe({
-                next: (result) => {
-                  const balancesResult = result as Array<string>;
-                  const assets: Array<AssetInfo> = balancesResult.map((balance, index) => {
-                    const asset = assetsNeedFetch[index];
-                    return {
-                      type: asset.type!,
-                      contractAddress: asset.contractAddress!,
-                      name: asset.name!,
-                      symbol: asset.symbol!,
-                      decimals: asset.decimals!,
-                      balance,
-                    };
-                  });
-                  assets?.forEach((asset) => (assetsHash[asset.contractAddress || AssetType.Native] = asset));
-
-                  console.log('fallbackFetch success', assetsHash);
+                  if (!isEqual(assetsHashInAtom, assetsHash)) {
+                    setAssetsHash(assetsAtomKey, { ...assetsHash });
+                  }
                 },
-                error: (err) => {
-                  console.log('fallbackFetch err', err);
-                },
+                error: (error) => console.error(`Error in trackAssets(network-${network.name} address-${address.hex}):`, error),
+                complete: () => console.log(`trackAssets(network-${network.name} address-${address.hex}) completed or canceled`),
               });
-            }
           } catch (_) {}
         }, 32);
       });
   }
+
+  private disposeCurrentSubscription = () => {
+    this.currentSubscription?.unsubscribe();
+    this.currentSubscription = undefined;
+  };
+
+  cancelCurrentTracker = () => {
+    this.cancel$.next();
+    this.disposeCurrentSubscription();
+  };
 }
 
 const assetsTracker = new AssetsTrackerPlugin();

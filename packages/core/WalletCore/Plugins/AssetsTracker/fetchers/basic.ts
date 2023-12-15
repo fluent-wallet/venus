@@ -80,7 +80,7 @@ export const fetchAssetsBalance = async ({
   endpoint: string;
   account: string;
   assets: Array<{
-    contractAddress?: string;
+    contractAddress?: string | null;
     assetType?: Omit<AssetType, AssetType.ERC1155 | AssetType.ERC721>;
   }>;
 }) =>
@@ -100,7 +100,7 @@ export const fetchAssetsBalanceBatch = ({
 }: {
   endpoint: string;
   account: string;
-  assets: Array<{ assetType?: Omit<AssetType, AssetType.ERC1155 | AssetType.ERC721>; contractAddress?: string }>;
+  assets: Array<{ assetType?: Omit<AssetType, AssetType.ERC1155 | AssetType.ERC721>; contractAddress?: string | null }>;
   networkType: NetworkType;
 }) => {
   if (assets.some(({ assetType, contractAddress }) => !assetType && !contractAddress)) {
@@ -133,7 +133,7 @@ export const fetchAssetsBalanceMulticall = ({
 }: {
   endpoint: string;
   account: string;
-  assets: Array<{ assetType?: Omit<AssetType, AssetType.ERC1155 | AssetType.ERC721>; contractAddress?: string }>;
+  assets: Array<{ assetType?: Omit<AssetType, AssetType.ERC1155 | AssetType.ERC721>; contractAddress?: string | null }>;
   networkType: NetworkType;
   multicallContractAddress: string;
 }) => {

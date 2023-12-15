@@ -1,4 +1,4 @@
-import { lastValueFrom, from, concatMap, map, catchError, EMPTY } from 'rxjs';
+import { lastValueFrom, from, concatMap, map, catchError, EMPTY, tap } from 'rxjs';
 import { createFetchServer, fetchChainBatch } from '@cfx-kit/dapp-utils/dist/fetch';
 import { createContract } from '@cfx-kit/dapp-utils/dist/contract';
 import { getAddress as toChecksumAddress } from 'ethers';
@@ -101,7 +101,7 @@ export const fetchESpaceServer = async ({
                     balance: cfxBalance,
                     ...scanInfoMap[AssetType.Native],
                   },
-                  ...assets,
+                  ...assets.filter(asset => asset.contractAddress !== "0x0000000000000000000000000000000000000000"),
                 ];
                 return assetsWithCFX;
               })
@@ -171,6 +171,7 @@ export const fetchESpaceServer = async ({
     fetchFromScan()
       .pipe(catchError(() => fetchFromChain()))
       .pipe(
+        // tap(res => console.log(res)),
         catchError((err) => {
           console.log(network.name, err);
           return EMPTY;

@@ -21,8 +21,11 @@ import { useCallback, useRef } from 'react';
 import { View } from 'react-native';
 import SkeletonList from './SkeletonList';
 import { useNetInfo } from '@react-native-community/netinfo';
+import { useAssetsTokenList, useAssetsNFTList, useAssetsAllList } from '@core/WalletCore/Plugins/ReactInject/data/useAssets';
 
 const TokenList: React.FC<{ onPress?: (v: AccountTokenListItem) => void; skeleton?: number }> = ({ onPress, skeleton = 4 }) => {
+  const tokens = useAssetsTokenList();
+  console.log(tokens);
   const [tokenListState, setTokenListState] = useAtom(tokenListStateAtom);
   const { __, isConnected } = useNetInfo();
 

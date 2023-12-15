@@ -34,6 +34,7 @@
     "@rneui/base": "^4.0.0-rc.8",
     "@rneui/themed": "^4.0.0-rc.8",
     "clsx": "^2.0.0",
+    "decimal.js": "^10.4.3",
     "ethers": "^6.7.1",
     "i18next": "^23.5.1",
     "intl-pluralrules": "^2.0.1",

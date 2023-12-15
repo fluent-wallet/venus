@@ -53,4 +53,8 @@ export class Asset extends Model {
       }
     });
   }
+
+  get hashKey() {
+    return this.contractAddress || this.type;
+  }
 }

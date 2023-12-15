@@ -64,7 +64,7 @@ export class CreateVaultMethod {
       const count = await getVaultTypeCount(type);
       const vault = createVault({ type, device: 'ePayWallet', ...(data ? { data } : null) }, true);
       const accountGroup = createAccountGroup({ nickname: `${defaultGroupNameMap[type]} - ${count + 1}`, hidden: false, vault }, true);
-      
+
       let batches: Array<Array<Account | Address>>;
       if (type === 'BSIM' || type === 'hardware') {
         if (!Array.isArray(accounts)) throw new Error(`Create vault Error: vault type-${type} accounts is not an array`);
@@ -89,7 +89,7 @@ export class CreateVaultMethod {
             {
               vault,
               accountGroup,
-              nickname: `${type === VaultType.HierarchicalDeterministic ? '' : `${convertToCamelCase(type)} `}Account - 1`,
+              nickname: `${type === VaultType.HierarchicalDeterministic ? '' : `${convertToCamelCase(type)} `}Account${` - ${count + 1}`}`,
               hidden: false,
               selected: isFirstVault ? true : false,
               ...(hexAddress ? { hexAddress } : null),
