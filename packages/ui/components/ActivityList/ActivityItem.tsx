@@ -8,13 +8,14 @@ import DoneIcon from '@assets/icons/done.svg';
 import { formatStatus, formatTxData } from '@utils/tx';
 import { StyleProp } from 'react-native';
 import { formatValue } from '@utils/formatValue';
+import { memo } from 'react';
 
 const ActivityItem: React.FC<{
   onPress?: (item: Tx) => void;
   tx: Tx;
   className?: string;
   style?: StyleProp<ViewStyle>;
-}> = ({ onPress, tx, className, style }) => {
+}> = memo(({ onPress, tx, className, style }) => {
   const { theme } = useTheme();
   const payload = usePayloadOfTx(tx.id);
   const asset = useAssetOfTx(tx.id);
@@ -46,6 +47,6 @@ const ActivityItem: React.FC<{
       </View>
     </Pressable>
   );
-};
+});
 
 export default ActivityItem;
