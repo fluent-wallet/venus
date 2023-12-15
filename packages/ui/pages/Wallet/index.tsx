@@ -16,10 +16,11 @@ import MoreIcon from '@assets/icons/more.svg';
 import WifiOffIcon from '@assets/icons/wifi_off.svg';
 import Skeleton from '@components/Skeleton';
 import { useCurrentAccount } from '@core/WalletCore/Plugins/ReactInject';
+import ActivityList from '@components/ActivityList';
 
 const Wallet: React.FC<{ navigation: StackNavigation }> = ({ navigation }) => {
   const { theme } = useTheme();
-  const { _, isConnected } = useNetInfo();
+  const { isConnected } = useNetInfo();
   const [tabIndex, setTabIndex] = useState(0);
   const [ERC20TokenList] = useAtom(readScanAndFallbackTokenListAtom);
   const [nativeToken] = useAtom(nativeTokenAtom);
@@ -113,7 +114,7 @@ const Wallet: React.FC<{ navigation: StackNavigation }> = ({ navigation }) => {
           <NFTList pageSize={16} />
         </TabView.Item>
         <TabView.Item style={{ width: '100%' }}>
-          <Text h1>Activity</Text>
+          <ActivityList />
         </TabView.Item>
       </TabView>
     </SafeAreaView>

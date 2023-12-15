@@ -13,6 +13,7 @@ import { Address } from '@core/database/models/Address';
 import { TxPayload } from '@core/database/models/TxPayload';
 import { TxExtra } from '@core/database/models/TxExtra';
 import { TxStatus } from '@core/database/models/Tx/type';
+import { getAddress as toChecksumAddress } from 'ethers';
 
 @injectable()
 export class TxMethod {
@@ -40,7 +41,7 @@ export class TxMethod {
         const networks = await querySelectedNetwork();
         asset = (await networks[0].assets).find((i) => i.type === AssetType.Native);
       } else if (params.extraParams.contract) {
-        const assets = await queryAssetByAddress(params.extraParams.contract);
+        const assets = await queryAssetByAddress(toChecksumAddress(params.extraParams.contract));
         asset = assets?.[0];
       }
 
@@ -54,6 +55,7 @@ export class TxMethod {
           txPayload,
           txExtra,
           asset,
+          blockNumber: params.extraParams.blockNumber,
         },
         true
       );
