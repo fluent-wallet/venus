@@ -11,6 +11,7 @@ import TokenList from '@components/TokenList';
 import { AssetType } from '@core/database/models/Asset';
 import { transactionAtom } from '@core/WalletCore/Plugins/ReactInject/data/useTransaction';
 import { NFTItemPressArgs } from '@components/NFTList/NFTItem';
+import { AssetInfo } from '@core/WalletCore/Plugins/AssetsTracker/types';
 
 const Tokens: React.FC<{ navigation: StackNavigation; route: RouteProp<RootStackList, typeof TokensStackName> }> = ({ navigation, route }) => {
   const { theme } = useTheme();
@@ -21,15 +22,15 @@ const Tokens: React.FC<{ navigation: StackNavigation; route: RouteProp<RootStack
     setTabIndex(index);
   };
 
-  const handleSelectToken = (token: AccountTokenListItem) => {
+  const handleSelectToken = (token: AssetInfo) => {
     setTransaction((v) => ({
       ...v,
       assetType: token.type,
       balance: token.balance,
       symbol: token.symbol,
       decimals: token.decimals,
-      contract: token.contract,
-      iconUrl: token.iconUrl,
+      contract: token.contractAddress,
+      iconUrl: token.icon,
       priceInUSDT: token.priceInUSDT,
     }));
     navigation.navigate(SendToStackName);

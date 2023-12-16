@@ -3,7 +3,7 @@ import { Icon } from '@rneui/base';
 import { ListItem, Text, useTheme } from '@rneui/themed';
 import { AccountTokenListItem, NFTItemDetail } from '@hooks/useTokenList';
 
-import TokenIconDefault from '@assets/icons/tokenDefault.svg';
+import TokenIconDefault from '@assets/icons/defaultToken.svg';
 import MixinImage from '@components/MixinImage';
 import { AssetType } from '@core/database/models/Asset';
 import Skeleton from '@components/Skeleton';

@@ -8,7 +8,7 @@ import { Text, useTheme } from '@rneui/themed';
 import { statusBarHeight } from '@utils/deviceInfo';
 import { type StackNavigation, RootStackList, TransactionConfirmStackName, SendToStackName } from '@router/configs';
 import { BaseButton } from '@components/Button';
-import TokenIconDefault from '@assets/icons/tokenDefault.svg';
+import TokenIconDefault from '@assets/icons/defaultToken.svg';
 import AvatarIcon from '@assets/icons/avatar.svg';
 import CopyAllIcon from '@assets/icons/copy_all.svg';
 import { AssetType } from '@core/database/models/Asset';

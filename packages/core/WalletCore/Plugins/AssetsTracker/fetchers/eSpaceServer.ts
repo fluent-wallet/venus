@@ -7,6 +7,7 @@ import { ChainType, type Network } from './../../../../database/models/Network/i
 import { AssetType } from '../../../../database/models/Asset';
 import { type AssetInfo } from '../types';
 
+
 const eSpaceWalletContract = createContract({ address: '0xce2104aa7233b27b0ba2e98ede59b6f78c06ae05', ABI: ESpaceWalletABI });
 const eSpaceTestnetWalletContract = createContract({ address: '0xce2104aa7233b27b0ba2e98ede59b6f78c06ae05', ABI: ESpaceWalletABI });
 const eSpaceTestnetServerFetcher = createFetchServer({ prefixUrl: 'https://evmapi-testnet.confluxscan.io' });
