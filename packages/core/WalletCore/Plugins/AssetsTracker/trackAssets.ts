@@ -8,6 +8,7 @@ import { AssetType, type Asset } from './../../../database/models/Asset';
 import { type Address } from './../../../database/models/Address';
 import { type Network } from './../../../database/models/Network';
 import { priorityFetcher, type Fetcher, type FetchAssetBalance, type AssetInfo } from './types';
+import { formatUnits } from 'ethers';
 
 const trackAssets = async ({
   chainFetcher,
@@ -148,7 +149,26 @@ const trackAssets = async ({
     .sort((a, b) => {
       const assetA = assetsHash[a];
       const assetB = assetsHash[b];
-      return (typeof assetB.priceValue === 'string' ? Number(assetB.priceValue) : 0) - (typeof assetA.priceValue === 'string' ? Number(assetA.priceValue) : 0);
+      if (assetA.type === AssetType.Native) return -1;
+      if (assetB.type === AssetType.Native) return 1;
+
+      if (typeof assetA.priceValue === 'string' && typeof assetB.priceValue === 'string') {
+        return Number(formatUnits(assetA.balance, assetA.decimals)) * Number(assetA.priceInUSDT) <
+          Number(formatUnits(assetB.balance, assetB.decimals)) * Number(assetB.priceInUSDT)
+          ? 1
+          : -1;
+      } else if (assetA.priceInUSDT) {
+        return -1;
+      } else if (assetB.priceInUSDT) {
+        return 1;
+      }
+      const varA = assetA.symbol[0].toLocaleUpperCase();
+      const varB = assetB.symbol[0].toLocaleUpperCase();
+      if (varA === varB) {
+        return 0
+
+      } 
+      return varA < varB ? -1 : 1;
     })
     .forEach((hashKey) => assetsSortedKeys.push(hashKey));
 };

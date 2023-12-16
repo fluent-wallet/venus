@@ -17,6 +17,7 @@ import WifiOffIcon from '@assets/icons/wifi_off.svg';
 import Skeleton from '@components/Skeleton';
 import { useCurrentAccount } from '@core/WalletCore/Plugins/ReactInject';
 import ActivityList from '@components/ActivityList';
+import { useAssetsTokenList } from '@core/WalletCore/Plugins/ReactInject/data/useAssets';
 
 const Wallet: React.FC<{ navigation: StackNavigation }> = ({ navigation }) => {
   const { theme } = useTheme();
@@ -25,7 +26,7 @@ const Wallet: React.FC<{ navigation: StackNavigation }> = ({ navigation }) => {
   const [ERC20TokenList] = useAtom(readScanAndFallbackTokenListAtom);
   const [nativeToken] = useAtom(nativeTokenAtom);
   const currentAccount = useCurrentAccount();
-  const tokenList = nativeToken && ERC20TokenList ? [nativeToken, ...ERC20TokenList] : ERC20TokenList;
+  const tokenList = useAssetsTokenList();
 
   const value = tokenList
     ? tokenList.reduce((acc, cur) => (cur.priceInUSDT ? acc + Number(cur.priceInUSDT) * Number(formatUnits(cur.balance, cur.decimals)) : acc), 0).toFixed(2)

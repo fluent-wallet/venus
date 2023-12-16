@@ -21,7 +21,7 @@ const assetsListAtom = atomFamily((key: string) =>
   atom((get) => {
     const assetsHash = get(assetsHashAtom(key));
     const assetsSortedKeys = get(assetsSortedKeysAtom(key));
-    return !assetsHash ? null : assetsSortedKeys?.map((hashKey) => assetsHash[hashKey]);
+    return !assetsHash ? null : assetsSortedKeys?.map((hashKey) => assetsHash[hashKey]).filter(Boolean);
   })
 );
 const assetsTokenListAtom = atomFamily((key: string) =>
