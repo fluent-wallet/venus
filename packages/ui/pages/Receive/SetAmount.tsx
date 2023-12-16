@@ -5,15 +5,24 @@ import { Text, useTheme } from '@rneui/themed';
 import BottomSheet, { BottomSheetFlatList } from '@gorhom/bottom-sheet';
 import { statusBarHeight } from '@utils/deviceInfo';
 import { BaseButton } from '@components/Button';
-import TokenIconDefault from '@assets/icons/tokenDefault.svg';
-
-
-const SetAmount = () => {
+import TokenList from '@components/TokenList';
+import { useAtom } from 'jotai';
+import setTokenQRInfoAtom from '@hooks/useSetAmount';
+import { AssetInfo } from '@core/WalletCore/Plugins/AssetsTracker/types';
+import TokenIcon from '@components/TokenIcon';
+import { AssetType } from '@core/database/models/Asset';
+import { NativeStackScreenProps } from '@react-navigation/native-stack';
+import { RootStackList } from '@router/configs';
+const SetAmount: React.FC<NativeStackScreenProps<RootStackList, 'SetAmount'>> = ({ navigation }) => {
   const { theme } = useTheme();
   const bottomSheetRef = useRef<BottomSheet>(null);
   const [sheetOpen, setSheetOpen] = useState(false);
   const [value, setValue] = useState('0');
   const [inputTextSize, setInputTextSize] = useState(60);
+  const [currentToken, setCurrentToken] = useAtom(setTokenQRInfoAtom);
+  const [inputError, setInputError] = useState(false);
+
+  const inputRef = useRef<TextInput>(null);
 
   const snapPoints = useMemo(() => ['25%', '50%'], []);
 
@@ -23,6 +32,10 @@ const SetAmount = () => {
     }
   };
   const handleSelectToken = () => {
+    if (inputRef.current) {
+      inputRef.current.blur();
+    }
+
     if (bottomSheetRef.current) {
       if (sheetOpen) {
         bottomSheetRef.current.close();
@@ -41,6 +54,30 @@ const SetAmount = () => {
       setInputTextSize(60);
     }
     setValue(v);
+    if (isNaN(Number(v))) {
+      setInputError(true);
+    } else {
+      setInputError(false);
+    }
+  };
+
+  const handleChangeSelectedToken = (v: AssetInfo) => {
+    setCurrentToken(v);
+  };
+
+  const handleContinue = () => {
+    if (isNaN(Number(value))) {
+      return setInputError(true);
+    }
+
+    if (currentToken) {
+      if (currentToken.type === AssetType.Native) {
+        setCurrentToken({ ...currentToken, parameters: { value: BigInt(value) } });
+      } else {
+        setCurrentToken({ ...currentToken, parameters: { uint256: BigInt(value) } });
+      }
+    }
+    navigation.goBack();
   };
 
   return (
@@ -51,43 +88,50 @@ const SetAmount = () => {
       >
         <Text className="text-xl text-center font-bold">Select a token</Text>
 
-        <View className="flex items-center">
-          <View className="w-56 mt-3">
-            <Button
-              buttonStyle={{ backgroundColor: theme.colors.surfaceThird, borderRadius: 40, paddingHorizontal: 12, paddingVertical: 8 }}
-              onPress={handleSelectToken}
-            >
-              <View className="flex flex-1 flex-row justify-between items-center">
-                <View className="flex flex-row items-center">
-                  <TokenIconDefault />
-                  <View>
-                    <Text>Bitcoin</Text>
-                    <Text style={{ color: theme.colors.textSecondary }}>BTC</Text>
-                  </View>
-                </View>
-                <Icon name="keyboard-arrow-down" color={'#A3A3A3'} size={24} />
+        <View className="flex">
+          <Pressable
+            className="flex flex-row items-center mx-auto px-3 py-2 min-w-[196px]  rounded-[40px] mt-2"
+            style={{ backgroundColor: theme.colors.surfaceThird }}
+            onPress={handleSelectToken}
+          >
+            <View className="flex flex-row items-center">
+              <View className="mr-2">{currentToken && <TokenIcon type={currentToken.type} url={currentToken.icon} width={48} height={48} />}</View>
+              <View>
+                <Text>{currentToken?.name}</Text>
+                <Text style={{ color: theme.colors.textSecondary }}>{currentToken?.symbol}</Text>
               </View>
-            </Button>
-          </View>
+            </View>
+            <View className="ml-auto">
+              <Icon name="keyboard-arrow-down" color={theme.colors.surfaceFourth} size={24} />
+            </View>
+          </Pressable>
         </View>
 
         <TextInput
+          ref={inputRef}
           value={value}
           onChangeText={handleChange}
-          inputMode="decimal"
-          className="text-center text-6xl  font-bold leading-tight"
-          style={{ color: theme.colors.textBrand, fontSize: inputTextSize }}
+          inputMode="numeric"
+          className="text-center text-6xl  font-bold leading-tight mt-[60px]"
+          style={{
+            color: theme.colors.textBrand,
+            fontSize: inputTextSize,
+            borderBottomWidth: 1,
+            borderBottomColor: inputError ? theme.colors.warnErrorPrimary : 'transparent',
+          }}
         />
 
         <Text style={{ color: theme.colors.textSecondary }} className="text-center">
-          HKDC
+          {currentToken?.symbol}
         </Text>
-        <Text style={{ color: theme.colors.textSecondary }} className="text-center">
-          ≈$9.41
-        </Text>
+        {currentToken?.priceInUSDT && (
+          <Text style={{ color: theme.colors.textSecondary }} className="text-center">
+            {!inputError && `≈${(Number(value) * Number(currentToken.priceInUSDT)).toFixed(2)}`}
+          </Text>
+        )}
 
-        <BaseButton containerStyle={{ marginTop: 'auto' }}>
-          <Text>Continue</Text>
+        <BaseButton containerStyle={{ marginTop: 'auto' }} disabled={inputError} onPress={handleContinue}>
+          <Text style={{ color: theme.colors.textInvert }}>Continue</Text>
         </BaseButton>
 
         <BottomSheet
@@ -109,29 +153,7 @@ const SetAmount = () => {
             </View>
           )}
         >
-          <BottomSheetFlatList
-            style={{ paddingHorizontal: 25 }}
-            data={[
-              {
-                tokenName: 'Bitcoin',
-                tokenIcon: TokenIconDefault,
-                tokenValue: '20000000',
-                tokenBalance: 0,
-              },
-            ]}
-            renderItem={({ item: { tokenName, tokenIcon: TokenIcon, tokenValue, tokenBalance } }) => (
-              <View className="flex flex-row justify-between items-center p-3 mb-4">
-                <View className="flex flex-row items-center">
-                  <TokenIcon width={48} height={48} className="mr-4" />
-                  <Text>{tokenName}</Text>
-                </View>
-                <View>
-                  <Text className="text-base leading-5 self-end">{tokenBalance}</Text>
-                  <Text style={{ color: theme.colors.textSecondary }}>${tokenValue}</Text>
-                </View>
-              </View>
-            )}
-          />
+          <TokenList skeleton={6} RenderList={BottomSheetFlatList} onPress={handleChangeSelectedToken} />
         </BottomSheet>
       </SafeAreaView>
     </KeyboardAvoidingView>

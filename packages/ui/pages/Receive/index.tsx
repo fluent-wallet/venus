@@ -1,27 +1,58 @@
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 import { SafeAreaView, View } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import QRCode from 'react-native-qrcode-svg';
 import { Button } from '@rneui/base';
 import { Divider, Text, useTheme } from '@rneui/themed';
-import { useCurrentAddressValue } from '@core/WalletCore/Plugins/ReactInject';
+import { useCurrentAddress, useCurrentAddressValue, useCurrentNetwork } from '@core/WalletCore/Plugins/ReactInject';
 import { statusBarHeight } from '@utils/deviceInfo';
-import { type RootStackList , SetAmountStackName} from '@router/configs';
+import { type RootStackList, SetAmountStackName } from '@router/configs';
 
 import AvatarIcon from '@assets/icons/avatar.svg';
 import ShareIcon from '@assets/icons/share.svg';
 import SetAmountIcon from '@assets/icons/setAmount.svg';
-
+import { useAtom } from 'jotai';
+import setTokenQRInfoAtom from '@hooks/useSetAmount';
+import { AssetType } from '@core/database/models/Asset';
+import CFXTokenIcon from '@assets/icons/cfxToken.svg';
+import MixinImage from '@components/MixinImage';
+import DefaultTokenIcon from '@assets/icons/defaultToken.svg';
+import { ETHURL, encodeETHURL } from '@utils/ETHURL';
+import { useFocusEffect } from '@react-navigation/native';
 
 const Receive: React.FC<NativeStackScreenProps<RootStackList, 'Receive'>> = ({ navigation }) => {
   const { theme } = useTheme();
 
   const currentAddressValue = useCurrentAddressValue()!;
+
   const [shareDisabled, setShareDisabled] = useState(true);
   const [setAmountDisabled, setSetAmountDisabled] = useState(false);
+
+  const [currentToken, setCurrentToken] = useAtom(setTokenQRInfoAtom);
   const handleSetAmount = () => {
     navigation.navigate(SetAmountStackName);
   };
+
+  const getQRValue = () => {
+    const encodeValues: ETHURL = {
+      schema_prefix: 'ethereum',
+      target_address: currentToken.type === AssetType.Native ? currentAddressValue : currentToken.contractAddress || '',
+      parameters: currentToken.parameters,
+    };
+
+    if (currentToken.type !== AssetType.Native) {
+      encodeValues.function_name = 'transfer'
+    }
+    return encodeETHURL(encodeValues);
+  };
+
+  useFocusEffect(
+    useCallback(() => {
+      return () => {
+        setCurrentToken(null);
+      };
+    }, [setCurrentToken])
+  );
 
   return (
     <SafeAreaView
@@ -29,12 +60,27 @@ const Receive: React.FC<NativeStackScreenProps<RootStackList, 'Receive'>> = ({ n
       style={{ backgroundColor: theme.colors.normalBackground, paddingTop: statusBarHeight + 48 }}
     >
       <View className="flex w-full items-center">
-        <View className="w-20 h-20 rounded-full bg-slate-300"></View>
+        <View className="w-20 h-20 rounded-full bg-slate-300">
+          {currentToken &&
+            (currentToken.type === AssetType.Native ? (
+              <CFXTokenIcon width={80} height={80} />
+            ) : currentToken.icon ? (
+              <MixinImage
+                source={{ uri: currentToken.icon }}
+                fallback={<DefaultTokenIcon width={80} height={80} />}
+                width={80}
+                height={80}
+                resizeMode="center"
+              />
+            ) : (
+              <DefaultTokenIcon width={80} height={80} />
+            ))}
+        </View>
       </View>
       <Divider className="my-4" />
 
       <View className="flex w-full items-center">
-        <QRCode value={currentAddressValue} size={223} />
+        <QRCode value={getQRValue()} size={223} />
       </View>
 
       <View className="mt-auto">
@@ -52,16 +98,20 @@ const Receive: React.FC<NativeStackScreenProps<RootStackList, 'Receive'>> = ({ n
         <Divider className="my-4" />
         <Text className="leading-6 px-9">Only send Conflux eSpace network assets to this address.</Text>
 
-        <View className="flex flex-row justify-center mt-9">
+        <View className="flex flex-row justify-center mt-auto">
           <View className="mr-9">
             <Button type="clear" buttonStyle={{ display: 'flex', flexDirection: 'column' }}>
-              <ShareIcon width={60} height={60} color={shareDisabled ? theme.colors.surfaceSecondary : theme.colors.surfaceBrand} />
+              <View className="w-[60px] h-[60px] rounded-full" style={{ backgroundColor: theme.colors.surfaceThird }}>
+                <ShareIcon width={60} height={60} color={shareDisabled ? theme.colors.surfaceSecondary : theme.colors.surfaceBrand} />
+              </View>
               <Text style={{ color: shareDisabled ? theme.colors.textSecondary : theme.colors.textPrimary }}>Share</Text>
             </Button>
           </View>
           <View className="ml-9">
             <Button type="clear" buttonStyle={{ display: 'flex', flexDirection: 'column' }} onPress={handleSetAmount}>
-              <SetAmountIcon width={60} height={60} color={setAmountDisabled ? theme.colors.surfaceThird : theme.colors.surfaceBrand} />
+              <View className="w-[60px] h-[60px] rounded-full" style={{ backgroundColor: theme.colors.surfaceThird }}>
+                <SetAmountIcon width={60} height={60} color={setAmountDisabled ? theme.colors.surfaceThird : theme.colors.surfaceBrand} />
+              </View>
               <Text style={{ color: setAmountDisabled ? theme.colors.textSecondary : theme.colors.textPrimary }}>Set Amount</Text>
             </Button>
           </View>
