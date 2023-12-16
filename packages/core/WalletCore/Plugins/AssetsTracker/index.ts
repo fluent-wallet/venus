@@ -36,7 +36,7 @@ class AssetsTrackerPlugin implements Plugin {
   public name = 'AssetsTracker';
   fetcherMap = new Map<string, Fetcher>();
   private cancel$ = new Subject<void>();
-  private currentSubscription?: Subscription; // 用于存储当前订阅
+  private currentSubscription?: Subscription;
 
   constructor() {
     this.register({
@@ -109,10 +109,10 @@ class AssetsTrackerPlugin implements Plugin {
             const assetsSortedKeys: Array<string> = [];
             const assetsAtomKey = getAssetsAtomKey({ network, address });
 
-            this.currentSubscription = interval(5000)
+            this.currentSubscription = interval(8888)
               .pipe(
                 startWith(0),
-                switchMap(() => trackAssets({ chainFetcher, networkFetcher, nativeAsset, assetsHash, network, address, assetsSortedKeys })),
+                switchMap(() => trackAssets({ chainFetcher, networkFetcher, nativeAsset, network, address, assetsHash, assetsSortedKeys })),
                 takeUntil(this.cancel$)
               )
               .subscribe({
