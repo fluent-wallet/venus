@@ -81,7 +81,7 @@ const TransactionConfirm: React.FC<{
             transaction,
             extraParams: {
               assetType: tx.assetType,
-              contract: tx.contract,
+              contractAddress: tx.contractAddress,
               to: tx.to,
               blockNumber: blockNumber.result,
             },
@@ -115,7 +115,7 @@ const TransactionConfirm: React.FC<{
       to: tx.to,
       amount: tx.amount,
       assetType: tx.assetType,
-      contract: tx.contract,
+      contractAddress: tx.contractAddress,
       tokenId: tx.tokenId,
       decimals: tx.decimals,
     })
@@ -144,7 +144,7 @@ const TransactionConfirm: React.FC<{
         setGas({ loading: false, error: true });
         // TODO maybe we need show the error to user
       });
-  }, [tx.assetType, tx.contract, tx.to, tx.amount, tx.tokenId, tx.decimals]);
+  }, [tx.assetType, tx.contractAddress, tx.to, tx.amount, tx.tokenId, tx.decimals]);
 
   useEffect(() => {
     getGas();

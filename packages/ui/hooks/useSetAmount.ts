@@ -8,6 +8,7 @@ import { getCurrentAddress } from '@core/WalletCore/Plugins/ReactInject/data/use
 
 interface TokenQRInfo extends AssetInfo {
   parameters?: {
+    address?: string;
     value?: bigint;
     uint256?: bigint;
     gas?: string;

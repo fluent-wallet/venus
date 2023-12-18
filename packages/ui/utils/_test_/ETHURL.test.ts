@@ -1,4 +1,4 @@
-import { encodeETHURL, parseETHURL, toPlainString } from '@utils/ETHURL';
+import { bigIntToExponential, encodeETHURL, parseETHURL, toPlainString } from '@utils/ETHURL';
 
 describe('ETHURL', () => {
   test('parse address without', () => {
@@ -12,13 +12,13 @@ describe('ETHURL', () => {
   });
 
   test('parse address with zzz- prefix ', () => {
-    const result = parseETHURL('ethereum:zzz-0x0000000000000000000000000000000000000000');
-    expect(result).toMatchObject({ error: 'address is invalid' });
+    const resultFn = () => parseETHURL('ethereum:zzz-0x0000000000000000000000000000000000000000');
+    expect(resultFn).toThrow('address is invalid');
   });
 
   test('parse address with ', () => {
     const result = parseETHURL(
-      'ethereum:0x0000000000000000000000000000000000000000@0x405/transfer?address=0x0000000000000000000000000000000000000000&uint256=1'
+      'ethereum:0x0000000000000000000000000000000000000000@0x405/transfer?address=0x0000000000000000000000000000000000000000&uint256=1e0'
     );
     expect(result).toMatchObject({
       schema_prefix: 'ethereum',
@@ -63,7 +63,7 @@ describe('ETHURL', () => {
       },
     });
 
-    expect(result).toBe('ethereum:0x0000000000000000000000000000000000000000@0x405/transfer?address=0x0000000000000000000000000000000000000000&uint256=1');
+    expect(result).toBe('ethereum:0x0000000000000000000000000000000000000000@0x405/transfer?address=0x0000000000000000000000000000000000000000&uint256=1e0');
   });
 });
 
@@ -96,7 +96,16 @@ describe('toPlainString', () => {
     expect(toPlainString(0)).toEqual('0');
     expect(toPlainString(0.0012)).toEqual('0.0012');
     expect(toPlainString(123)).toEqual('123');
-    expect(toPlainString(123e14)).toEqual('12300000000000000'); 
+    expect(toPlainString(123e14)).toEqual('12300000000000000');
     expect(toPlainString(0.123e-4)).toEqual('0.0000123');
+  });
+});
+
+describe('bigIntToExponential', () => {
+  test('bigint to exponential', () => {
+    expect(bigIntToExponential(BigInt(123))).toEqual('1.23e2');
+    expect(bigIntToExponential(BigInt(100))).toEqual('1e2');
+    expect(bigIntToExponential(BigInt(1000000000))).toEqual('1e9');
+    expect(bigIntToExponential(BigInt(1000000001))).toEqual('1.000000001e9');
   });
 });

@@ -36,12 +36,12 @@ const Receive: React.FC<NativeStackScreenProps<RootStackList, 'Receive'>> = ({ n
   const getQRValue = () => {
     const encodeValues: ETHURL = {
       schema_prefix: 'ethereum',
-      target_address: currentToken.type === AssetType.Native ? currentAddressValue : currentToken.contractAddress || '',
+      target_address: currentAddressValue,
       parameters: currentToken.parameters,
     };
 
     if (currentToken.type !== AssetType.Native) {
-      encodeValues.function_name = 'transfer'
+      encodeValues.function_name = 'transfer';
     }
     return encodeETHURL(encodeValues);
   };

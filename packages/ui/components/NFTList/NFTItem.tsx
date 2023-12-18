@@ -13,7 +13,7 @@ export interface NFTItemPressArgs {
   assetType: AccountTokenListItem['type'];
   symbol: AccountTokenListItem['symbol'];
   balance: AccountTokenListItem['balance'];
-  contract: AccountTokenListItem['contract'];
+  contractAddress: AccountTokenListItem['contract'];
   tokenId: NFTItemDetail['tokenId'];
   tokenImage: NFTItemDetail['image'];
   contractName: AccountTokenListItem['name'];
@@ -90,7 +90,7 @@ const NFTItem: React.FC<{
                           iconUrl: nftInfo.iconUrl,
                           symbol: nftInfo.symbol,
                           balance: v.amount,
-                          contract: nftInfo.contract,
+                          contractAddress: nftInfo.contract,
                           contractName: nftInfo.name,
                           decimals: nftInfo.decimals,
                         })

@@ -1,6 +1,6 @@
 import { RouteProp } from '@react-navigation/native';
 import { Icon, Text, useTheme, Overlay, Button } from '@rneui/themed';
-import { RootStackList, ScanQRCodeStackName, StackNavigation } from '@router/configs';
+import { ReceiveAddressStackName, RootStackList, ScanQRCodeStackName, SendToStackName, StackNavigation } from '@router/configs';
 import { statusBarHeight } from '@utils/deviceInfo';
 import { useCallback, useEffect, useState } from 'react';
 import { Pressable, SafeAreaView, View } from 'react-native';
@@ -8,6 +8,12 @@ import { useCameraPermission, useCameraDevice, Camera, type Code, CodeScannerFra
 import { StackActions } from '@react-navigation/native';
 import { BaseButton } from '@components/Button';
 import { Linking } from 'react-native';
+import { ETHURL, parseETHURL } from '@utils/ETHURL';
+import { useAssetsTokenList } from '@core/WalletCore/Plugins/ReactInject/data/useAssets';
+import { useAtom } from 'jotai';
+import { setTokenTransaction, setTransactionAmount, setTransactionTo } from '@core/WalletCore/Plugins/ReactInject/data/useTransaction';
+import { formatEther, formatUnits, parseUnits } from 'ethers';
+import { AssetType } from '@core/database/models/Asset';
 
 const ScanQRCode: React.FC<{ navigation: StackNavigation; route: RouteProp<RootStackList, typeof ScanQRCodeStackName> }> = ({ navigation, route }) => {
   const { theme } = useTheme();
@@ -17,12 +23,84 @@ const ScanQRCode: React.FC<{ navigation: StackNavigation; route: RouteProp<RootS
   const [showPermissionModel, setShowPermissionModel] = useState(!hasPermission);
   const [showRejectPermissionModel, setShowRejectPermissionModel] = useState(false);
 
+  const [, setTXTo] = useAtom(setTransactionTo);
+  const [, setTokenTX] = useAtom(setTokenTransaction);
+  const [, setTXAmount] = useAtom(setTransactionAmount);
+  const tokens = useAssetsTokenList();
+
   const [codes, setCodes] = useState<Code[]>([]);
 
   const handleCodeScanned = (codes: Code[], frame: CodeScannerFrame) => {
     // there is multiple codes we need set user to select one
     const code = codes[0];
-    navigation.dispatch(StackActions.replace(route.params.path, { address: code.value }));
+    console.log('value', code.value);
+    if (code && code.value) {
+      try {
+        const res = parseETHURL(code.value);
+        console.log('res', res);
+        const { target_address, chain_id, function_name, parameters } = res;
+        // check is send 20 token
+        if (function_name && function_name === 'transfer') {
+          // check is has uint256
+          if (parameters && parameters.uint256 && parameters.address) {
+            //  is send 20 token and have value
+            if (tokens && tokens.length > 0) {
+              const token = tokens.find((t) => t.contractAddress?.toLowerCase() === parameters.address?.toLowerCase());
+              console.log(token, 'token ');
+              console.log(tokens, 'tokens');
+              if (token) {
+                setTXTo(target_address);
+                setTXAmount(Number(formatUnits(parameters.uint256, token.decimals)));
+                setTokenTX({
+                  assetType: token.type,
+                  balance: token.balance,
+                  symbol: token.symbol,
+                  decimals: token.decimals,
+                  contractAddress: token.contractAddress,
+                  iconUrl: token.icon,
+                  priceInUSDT: token.priceInUSDT,
+                });
+
+                return navigation.dispatch(StackActions.replace(SendToStackName));
+              }
+
+              setTXTo(target_address);
+              return navigation.dispatch(StackActions.replace(ReceiveAddressStackName, { address: code.value }));
+            }
+          }
+        } else {
+          // send native token
+          if (parameters && parameters.value) {
+            // is send native token and have value
+            if (tokens) {
+              const token = tokens.find((t) => t.type === AssetType.Native);
+              if (token) {
+                setTXTo(target_address);
+                setTXAmount(Number(formatEther(parameters.value)));
+                setTokenTX({
+                  assetType: token.type,
+                  balance: token.balance,
+                  symbol: token.symbol,
+                  decimals: token.decimals,
+                  contractAddress: token.contractAddress,
+                  iconUrl: token.icon,
+                  priceInUSDT: token.priceInUSDT,
+                });
+
+                return navigation.dispatch(StackActions.replace(SendToStackName));
+              }
+            }
+            setTXTo(target_address);
+            return navigation.dispatch(StackActions.replace(ReceiveAddressStackName, { address: code.value }));
+          }
+        }
+      } catch (error) {
+        // todo add error message
+        console.log(code.value);
+        console.log(error);
+        console.log('????');
+      }
+    }
   };
 
   const handlePermission = useCallback(async () => {

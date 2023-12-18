@@ -37,9 +37,9 @@ export class TransactionMethod {
 
   private getContractTransactionData = (
     currentAddress: string,
-    args: Pick<WalletTransactionType, 'assetType' | 'tokenId' | 'contract' | 'to' | 'amount' | 'decimals'>
+    args: Pick<WalletTransactionType, 'assetType' | 'tokenId' | 'contractAddress' | 'to' | 'amount' | 'decimals'>
   ) => {
-    if (!args.contract) {
+    if (!args.contractAddress) {
       throw new Error("Get contract transaction data but don't have contract address");
     }
 
@@ -118,7 +118,7 @@ export class TransactionMethod {
     }
   };
 
-  getGasPriceAndLimit = async (args: Pick<WalletTransactionType, 'to' | 'assetType' | 'amount' | 'contract' | 'tokenId' | 'decimals'>) => {
+  getGasPriceAndLimit = async (args: Pick<WalletTransactionType, 'to' | 'assetType' | 'amount' | 'contractAddress' | 'tokenId' | 'decimals'>) => {
     const currentNetwork = getCurrentNetwork();
     const currentAddress = getCurrentAddress();
     if (!currentAddress) {
@@ -142,10 +142,10 @@ export class TransactionMethod {
       estimateGasParams.data = '0x';
       estimateGasParams.value = addHexPrefix(parseUnits(args.amount.toString(), args.decimals).toString(16));
     } else {
-      if (typeof args.contract === 'undefined') {
+      if (typeof args.contractAddress === 'undefined') {
         throw new Error("Get gas price and limit but don't have contract address");
       }
-      estimateGasParams.to = args.contract;
+      estimateGasParams.to = args.contractAddress;
       estimateGasParams.data = this.getContractTransactionData(currentAddress.hex, args);
     }
     return firstValueFrom(
@@ -192,10 +192,10 @@ export class TransactionMethod {
       transaction.to = walletTx.to;
       transaction.value = parseUnits(walletTx.amount.toString(), walletTx.decimals);
     } else {
-      if (typeof walletTx.contract === 'undefined') {
+      if (typeof walletTx.contractAddress === 'undefined') {
         throw new Error("Send contract transaction but don't have contract address");
       }
-      transaction.to = walletTx.contract;
+      transaction.to = walletTx.contractAddress;
       transaction.data = this.getContractTransactionData(currentAddress.hex, walletTx);
     }
     const { txHash, txRaw, error } = await this.signAndSendTransaction(currentNetwork.endpoint, currentAddress, transaction, BSIMChannel);

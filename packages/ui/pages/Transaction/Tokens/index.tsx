@@ -9,47 +9,48 @@ import { AccountTokenListItem, NFTItemDetail } from '@hooks/useTokenList';
 import NFTList from '@components/NFTList';
 import TokenList from '@components/TokenList';
 import { AssetType } from '@core/database/models/Asset';
-import { transactionAtom } from '@core/WalletCore/Plugins/ReactInject/data/useTransaction';
+import { setNFTTransaction, setTokenTransaction, transactionAtom } from '@core/WalletCore/Plugins/ReactInject/data/useTransaction';
 import { NFTItemPressArgs } from '@components/NFTList/NFTItem';
 import { AssetInfo } from '@core/WalletCore/Plugins/AssetsTracker/types';
 
 const Tokens: React.FC<{ navigation: StackNavigation; route: RouteProp<RootStackList, typeof TokensStackName> }> = ({ navigation, route }) => {
   const { theme } = useTheme();
   const [tabIndex, setTabIndex] = useState(0);
-  const [, setTransaction] = useAtom(transactionAtom);
+  const [, set20TokenTransaction] = useAtom(setTokenTransaction);
+  const [, setSendNFTTransaction] = useAtom(setNFTTransaction);
   const handleTabChange = (index: number) => {
     navigation.setOptions({ headerTitle: index === 0 ? 'Tokens' : 'NFTs' });
     setTabIndex(index);
   };
 
   const handleSelectToken = (token: AssetInfo) => {
-    setTransaction((v) => ({
-      ...v,
+    set20TokenTransaction({
       assetType: token.type,
       balance: token.balance,
       symbol: token.symbol,
       decimals: token.decimals,
-      contract: token.contractAddress,
+      contractAddress: token.contractAddress,
       iconUrl: token.icon,
       priceInUSDT: token.priceInUSDT,
-    }));
+    });
+
     navigation.navigate(SendToStackName);
   };
 
   const handleSelectNFT = (NFT: NFTItemPressArgs) => {
-    setTransaction((v) => ({
-      ...v,
+    setSendNFTTransaction({
       assetType: NFT.assetType,
       symbol: NFT.symbol,
       balance: NFT.balance,
-      contract: NFT.contract,
+      contractAddress: NFT.contractAddress,
       tokenId: NFT.tokenId,
       tokenImage: NFT.tokenImage,
       contractName: NFT.contractName,
       nftName: NFT.nftName,
       iconUrl: NFT.iconUrl,
       decimals: NFT.decimals || 0,
-    }));
+    });
+
     if (NFT.assetType === AssetType.ERC1155 && Number(NFT.balance || 0) > 1) {
       navigation.navigate(SendToStackName);
     } else {
