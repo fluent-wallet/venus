@@ -46,7 +46,7 @@ const NFTItem: React.FC<{
     const fetchKey = `nftDetail-${data.contractAddress}-${currentAddress?.hex}-${currentNetwork?.chainId}`;
     return fetchESpaceScan
       .fetchServer<Array<NFTItemDetail>>({
-        url: `nft/tokens?contract=${data.contractAddress}&owner=${currentAddress.hex}&cursor=0&sort=ASC&sortField=latest_update_time&withBrief=true&withMetadata=false&suppressMetadataError=true`,
+        url: `nft/tokens?contract=${data.contractAddress}&owner=${currentAddress.hex}&cursor=0&limit=100&sort=ASC&sortField=latest_update_time&withBrief=true&withMetadata=false&suppressMetadataError=true`,
         key: fetchKey,
       })
       .then((res) => res && setDetails(res));
