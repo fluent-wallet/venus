@@ -1,5 +1,4 @@
 import { atom } from 'jotai';
-import { AccountTokenListItem, nativeTokenAtom } from './useTokenList';
 import { getAssetsAtomKey, getAssetsHash } from '@core/WalletCore/Plugins/ReactInject/data/useAssets';
 import { AssetType } from '@core/database/models/Asset';
 import { AssetInfo } from '@core/WalletCore/Plugins/AssetsTracker/types';

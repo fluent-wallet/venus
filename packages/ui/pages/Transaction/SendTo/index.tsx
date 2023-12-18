@@ -16,7 +16,6 @@ import { transactionAtom } from '@core/WalletCore/Plugins/ReactInject/data/useTr
 import MixinImage from '@components/MixinImage';
 import Methods from '@core/WalletCore/Methods';
 import WarningIcon from '@assets/icons/warning_2.svg';
-import { nativeTokenAtom } from '@hooks/useTokenList';
 import { useCurrentAddress, useCurrentNetwork } from '@core/WalletCore/Plugins/ReactInject';
 import { RPCResponse, RPCSend } from '@core/utils/send';
 import { firstValueFrom } from 'rxjs';

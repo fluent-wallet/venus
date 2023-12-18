@@ -15,9 +15,15 @@ import TokenIconDefault from '@assets/icons/defaultToken.svg';
 import DefaultNFTImage from '@assets/images/NFT.svg';
 import { type NFTItemDetail, type NFTWithDetail } from '.';
 
-const responseHandler = (res: { status: '0' | '1'; message: string; result?: { list: Array<NFTItemDetail> } }) => {
+const responseHandler = (res: {
+  status: '0' | '1';
+  message: string;
+  result?: { list: Array<{ amount: string; description: string; image: string; name: string; tokenId: string }> };
+}) => {
   if (res?.result?.list) {
-    return res?.result?.list;
+    return res.result.list.map(
+      (item) => ({ amount: item.amount, description: item.description, icon: item.image, name: item.name, tokenId: item.tokenId } as NFTItemDetail)
+    );
   }
   return null;
 };
