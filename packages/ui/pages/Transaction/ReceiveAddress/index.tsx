@@ -10,7 +10,7 @@ import { BaseButton } from '@components/Button';
 import WarningIcon from '@assets/icons/warning_2.svg';
 import Flip from '@assets/icons/flip.svg';
 import { RouteProp } from '@react-navigation/native';
-import { setTransactionTo } from '@core/WalletCore/Plugins/ReactInject/data/useTransaction';
+import { setTransactionTo, transactionAtom } from '@core/WalletCore/Plugins/ReactInject/data/useTransaction';
 
 export const SendPageHeaderOptions = ({ title = 'Send To' }: { title?: string }) =>
   ({
@@ -20,9 +20,10 @@ export const SendPageHeaderOptions = ({ title = 'Send To' }: { title?: string })
 
 const SendReceiver: React.FC<{ navigation: StackNavigation; route: RouteProp<RootStackList, typeof ReceiveAddressStackName> }> = ({ navigation, route }) => {
   const { theme } = useTheme();
-  const [address, setAddress] = useState(route.params?.address || '');
+  const [tx] = useAtom(transactionAtom);
+  const [address, setAddress] = useState(tx?.to || '');
   const [errorMsg, setErrorMsg] = useState('');
-  const [, setFromAddress] = useAtom(setTransactionTo);
+  const [, setToAddress] = useAtom(setTransactionTo);
 
   const handleChange = (v: string) => {
     setAddress(v);
@@ -35,7 +36,7 @@ const SendReceiver: React.FC<{ navigation: StackNavigation; route: RouteProp<Roo
     } else {
       setErrorMsg('');
     }
-    setFromAddress(address);
+    setToAddress(address);
     navigation.navigate(TokensStackName);
   };
   return (

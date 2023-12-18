@@ -8,7 +8,7 @@ export interface WalletTransactionType {
   balance: string;
   decimals: number;
   symbol: string;
-  contract?: string;
+  contractAddress?: string;
   iconUrl?: string;
   amount: number;
   priceInUSDT?: string;
@@ -34,4 +34,15 @@ export const setTransactionTo = atom(null, (get, set, to: string) => {
 
 export const setTransactionAmount = atom(null, (get, set, amount: number) => {
   set(transactionAtom, { ...get(transactionAtom), amount });
+});
+
+export const setTokenTransaction = atom(
+  null,
+  (get, set, token: Pick<WalletTransactionType, 'assetType' | 'balance' | 'symbol' | 'decimals' | 'contractAddress' | 'priceInUSDT' | 'iconUrl'>) => {
+    set(transactionAtom, { ...get(transactionAtom), ...token });
+  }
+);
+
+export const setNFTTransaction = atom(null, (get, set, token: Omit<WalletTransactionType, 'from' | 'to' | 'amount'>) => {
+  set(transactionAtom, { ...get(transactionAtom), ...token });
 });

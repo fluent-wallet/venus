@@ -27,12 +27,11 @@ const SendTo: React.FC<{ navigation: StackNavigation; route: RouteProp<RootStack
   const { theme } = useTheme();
   const currentNetwork = useCurrentNetwork()!;
   const currentAddress = useCurrentAddress();
-  const [value, setValue] = useState('0');
+  const [tx, setTx] = useAtom(transactionAtom);
+  const [value, setValue] = useState(tx.amount ? tx.amount.toString() : '0');
   const [invalidInputErr, setInvalidInputErr] = useState({ err: false, msg: '' });
   const [rpcError, setRpcError] = useState({ err: false, msg: '' });
   const [maxBtnLoading, setMaxBtnLoading] = useState(false);
-
-  const [tx, setTx] = useAtom(transactionAtom);
 
   const accountBalance = useMemo(
     () => (tx.assetType === AssetType.ERC20 || tx.assetType === AssetType.Native ? formatUnits(tx.balance, tx.decimals) : tx.balance),
@@ -73,7 +72,7 @@ const SendTo: React.FC<{ navigation: StackNavigation; route: RouteProp<RootStack
       to: tx.to,
       amount: tx.amount,
       assetType: tx.assetType,
-      contract: tx.contract,
+      contractAddress: tx.contractAddress,
       tokenId: tx.tokenId,
       decimals: tx.decimals,
     });

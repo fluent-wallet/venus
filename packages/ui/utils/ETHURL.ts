@@ -1,6 +1,6 @@
 import { isAddress } from 'ethers';
 
-export function toPlainString(num: string) {
+export function toPlainString(num: string | number) {
   return ('' + +num).replace(/(-?)(\d*)\.?(\d*)e([+-]\d+)/, function (a, b, c, d, e) {
     return e < 0 ? b + '0.' + Array(1 - e - c.length).join(0) + c + d : b + c + d + Array(e - d.length + 1).join(0);
   });
@@ -11,16 +11,41 @@ export interface ETHURL {
   target_address: string;
   chain_id?: string;
   function_name?: string;
-  parameters?: Record<string, string | number | bigint> & { value?: bigint; uint256?: bigint };
+  parameters?: { address?: string; value?: bigint; uint256?: bigint; gas?: string; gasLimit?: string; gasPrice?: string };
 }
-export const parseETHURL = (ETHURL: string): ETHURL | { error: string } => {
+
+export function bigIntToExponential(value: bigint): string {
+  if (typeof value !== 'bigint') throw new Error('Argument must be a bigint, but a ' + typeof value + ' was supplied.');
+
+  //
+
+  const isNegative = value < 0;
+  if (isNegative) value = -value; // Using the absolute value for the digits.
+
+  const str = value.toString();
+
+  const exp = str.length - 1;
+  if (exp == 0) return (isNegative ? '-' : '') + str + 'e0';
+
+  const mantissaDigits = str.replace(/(0+)$/, ''); // Remove any mathematically insignificant zeroes.
+
+  // Use the single first digit for the integral part of the mantissa, and all following digits for the fractional part (if any).
+  let mantissa = mantissaDigits.charAt(0);
+  if (mantissaDigits.length > 1) {
+    mantissa += '.' + mantissaDigits.substring(1);
+  }
+
+  return (isNegative ? '-' : '') + mantissa + 'e' + exp.toString();
+}
+
+export const parseETHURL = (ETHURL: string) => {
   if (typeof ETHURL !== 'string') {
-    return { error: 'URL must be a string' };
+    throw new Error('URL must be a string');
   }
 
   // url must start with ethereum:
   if (!ETHURL.startsWith('ethereum:')) {
-    return { error: 'URL is not a valid ethereum URL' };
+    throw new Error('URL is not a valid ethereum URL');
   }
 
   const addressHexPrefix = ETHURL.substring(9, 11);
@@ -32,7 +57,7 @@ export const parseETHURL = (ETHURL: string): ETHURL | { error: string } => {
   if (addressPayPrefix.toLowerCase() === 'pay-') {
     regexPrefix = addressPayPrefix;
   } else if (addressHexPrefix.toLowerCase() !== '0x') {
-    return { error: 'address is invalid' };
+    throw new Error('address is invalid');
   }
   const full_regex = '^ethereum:(' + regexPrefix + ')?' + addressRegex + '\\@?([\\w]*)*\\/?([\\w]*)*';
   const exp = new RegExp(full_regex, 'i');
@@ -40,7 +65,7 @@ export const parseETHURL = (ETHURL: string): ETHURL | { error: string } => {
   const data = ETHURL.match(exp);
 
   if (!data) {
-    return { error: 'can not parse the ethereum URL' };
+    throw new Error('can not parse the ethereum URL');
   }
 
   const parameters = ETHURL.split('?').length > 1 ? ETHURL.split('?')[1] : '';
@@ -48,7 +73,7 @@ export const parseETHURL = (ETHURL: string): ETHURL | { error: string } => {
   const target_address = data[2];
 
   if (!isAddress(target_address)) {
-    return { error: 'get target address is error' };
+    throw new Error('get target address is error');
   }
 
   const chain_id = data[3];
@@ -65,9 +90,13 @@ export const parseETHURL = (ETHURL: string): ETHURL | { error: string } => {
   if (function_name) {
     result.function_name = function_name;
   }
-  const params = new URLSearchParams(parameters);
+  const params = parameters.split('&').reduce((acc, cur) => {
+    const [key, value] = cur.split('=');
+    acc[key] = value;
+    return acc;
+  }, {} as Record<string, string>);
 
-  params.forEach((value, key) => {
+  Object.entries(params).forEach(([key, value]) => {
     if (!result.parameters) {
       result.parameters = {};
     }
@@ -90,19 +119,22 @@ export const encodeETHURL = (params: ETHURL) => {
   const queryString: Record<string, string> = {};
 
   if (parameters) {
-    Object.keys(parameters).forEach((key) => {
-      if (key === 'uint256' && function_name && function_name === 'transfer' && parameters.uint256) {
-        queryString.uint256 = parameters.uint256.toString();
-      } else if (key === 'value' && parameters.value) {
-        queryString.value = parameters.value.toString();
-      } else {
-        queryString[key] = `${parameters[key]}`;
-      }
-    });
+    Object.keys(parameters)
+      .sort()
+      .forEach((key) => {
+        if (key === 'uint256' && function_name && function_name === 'transfer' && parameters.uint256) {
+          queryString.uint256 = bigIntToExponential(parameters.uint256);
+        } else if (key === 'value' && parameters.value) {
+          queryString.value = bigIntToExponential(parameters.value);
+        } else {
+          queryString[key] = `${parameters[key]}`;
+        }
+      });
 
-    const qs = new URLSearchParams(queryString);
-    qs.sort();
-    query = qs.toString();
+    query = Object.entries(queryString)
+      .map(([key, value]) => `${key}=${value}`)
+      .join('&');
   }
+
   return `ethereum:${target_address}${chain_id ? `@${chain_id}` : ''}${function_name ? `/${function_name}` : ''}${query ? `?${query}` : ''}`;
 };

@@ -40,8 +40,8 @@ export class TxMethod {
       if (params.extraParams.assetType === AssetType.Native) {
         const networks = await querySelectedNetwork();
         asset = (await networks[0].assets).find((i) => i.type === AssetType.Native);
-      } else if (params.extraParams.contract) {
-        const assets = await queryAssetByAddress(toChecksumAddress(params.extraParams.contract));
+      } else if (params.extraParams.contractAddress) {
+        const assets = await queryAssetByAddress(toChecksumAddress(params.extraParams.contractAddress));
         asset = assets?.[0];
       }
 

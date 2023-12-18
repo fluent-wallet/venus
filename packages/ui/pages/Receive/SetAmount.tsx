@@ -13,6 +13,7 @@ import TokenIcon from '@components/TokenIcon';
 import { AssetType } from '@core/database/models/Asset';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { RootStackList } from '@router/configs';
+import { parseUnits } from 'ethers';
 const SetAmount: React.FC<NativeStackScreenProps<RootStackList, 'SetAmount'>> = ({ navigation }) => {
   const { theme } = useTheme();
   const bottomSheetRef = useRef<BottomSheet>(null);
@@ -72,9 +73,12 @@ const SetAmount: React.FC<NativeStackScreenProps<RootStackList, 'SetAmount'>> = 
 
     if (currentToken) {
       if (currentToken.type === AssetType.Native) {
-        setCurrentToken({ ...currentToken, parameters: { value: BigInt(value) } });
+        setCurrentToken({ ...currentToken, parameters: { value: currentToken.decimals ? parseUnits(value, currentToken.decimals) : BigInt(value) } });
       } else {
-        setCurrentToken({ ...currentToken, parameters: { uint256: BigInt(value) } });
+        setCurrentToken({
+          ...currentToken,
+          parameters: { address: currentToken.contractAddress, uint256: currentToken.decimals ? parseUnits(value, currentToken.decimals) : BigInt(value) },
+        });
       }
     }
     navigation.goBack();

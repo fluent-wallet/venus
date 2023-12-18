@@ -6,7 +6,7 @@ export interface TransactionSubjectValue {
   txHash: string;
   txRaw: string;
   transaction: Transaction;
-  extraParams: Pick<WalletTransactionType, 'assetType' | 'contract' | 'to'> & {
+  extraParams: Pick<WalletTransactionType, 'assetType' | 'contractAddress' | 'to'> & {
     blockNumber: string, // hex string
   };
 }
