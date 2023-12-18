@@ -5,15 +5,14 @@ import { useAtom } from 'jotai';
 import { useTheme, Tab, TabView } from '@rneui/themed';
 import { type RootStackList, type StackNavigation, TransactionConfirmStackName, SendToStackName, TokensStackName } from '@router/configs';
 import { statusBarHeight } from '@utils/deviceInfo';
-import { AccountTokenListItem, NFTItemDetail } from '@hooks/useTokenList';
-import NFTList from '@components/NFTList';
-import TokenList from '@components/TokenList';
+import ESpaceNFTList from '@modules/AssetList/ESpaceNFTList';
+import TokenList from '@modules/AssetList/TokenList';
 import { AssetType } from '@core/database/models/Asset';
 import { setNFTTransaction, setTokenTransaction, transactionAtom } from '@core/WalletCore/Plugins/ReactInject/data/useTransaction';
-import { NFTItemPressArgs } from '@components/NFTList/NFTItem';
-import { AssetInfo } from '@core/WalletCore/Plugins/AssetsTracker/types';
+import { type NFTWithDetail } from '@modules/AssetList/ESpaceNFTList';
+import { type AssetInfo } from '@core/WalletCore/Plugins/AssetsTracker/types';
 
-const Tokens: React.FC<{ navigation: StackNavigation; route: RouteProp<RootStackList, typeof TokensStackName> }> = ({ navigation, route }) => {
+const Assets: React.FC<{ navigation: StackNavigation; route: RouteProp<RootStackList, typeof TokensStackName> }> = ({ navigation, route }) => {
   const { theme } = useTheme();
   const [tabIndex, setTabIndex] = useState(0);
   const [, set20TokenTransaction] = useAtom(setTokenTransaction);
@@ -37,21 +36,21 @@ const Tokens: React.FC<{ navigation: StackNavigation; route: RouteProp<RootStack
     navigation.navigate(SendToStackName);
   };
 
-  const handleSelectNFT = (NFT: NFTItemPressArgs) => {
+  const handleSelectNFTItem = (nft: NFTWithDetail) => {
     setSendNFTTransaction({
-      assetType: NFT.assetType,
-      symbol: NFT.symbol,
-      balance: NFT.balance,
-      contractAddress: NFT.contractAddress,
-      tokenId: NFT.tokenId,
-      tokenImage: NFT.tokenImage,
-      contractName: NFT.contractName,
-      nftName: NFT.nftName,
-      iconUrl: NFT.iconUrl,
-      decimals: NFT.decimals || 0,
+      assetType: nft.type,
+      symbol: nft.symbol,
+      balance: nft.balance,
+      contractAddress: nft.contractAddress,
+      tokenId: nft.detail.tokenId,
+      tokenImage: nft.detail.icon ?? undefined,
+      contractName: nft.detail.name,
+      nftName: nft.name,
+      iconUrl: nft.icon,
+      decimals: nft.decimals || 0,
     });
 
-    if (NFT.assetType === AssetType.ERC1155 && Number(NFT.balance || 0) > 1) {
+    if (nft.type === AssetType.ERC1155 && Number(nft.balance || 0) > 1) {
       navigation.navigate(SendToStackName);
     } else {
       navigation.navigate(TransactionConfirmStackName);
@@ -75,11 +74,11 @@ const Tokens: React.FC<{ navigation: StackNavigation; route: RouteProp<RootStack
           <TokenList onPress={handleSelectToken} skeleton={7} />
         </TabView.Item>
         <TabView.Item className="w-full">
-          <NFTList onPress={handleSelectNFT} />
+          <ESpaceNFTList onSelectNftItem={handleSelectNFTItem} />
         </TabView.Item>
       </TabView>
     </SafeAreaView>
   );
 };
 
-export default Tokens;
+export default Assets;

@@ -97,11 +97,13 @@ export const fetchAssetsBalanceBatch = ({
   account,
   assets,
   networkType,
+  key
 }: {
   endpoint: string;
   account: string;
   assets: Array<{ assetType?: Omit<AssetType, AssetType.ERC1155 | AssetType.ERC721>; contractAddress?: string | null }>;
   networkType: NetworkType;
+  key?: string;
 }) => {
   if (assets.some(({ assetType, contractAddress }) => !assetType && !contractAddress)) {
     throw new Error('assetType or contractAsset is required');
@@ -109,6 +111,7 @@ export const fetchAssetsBalanceBatch = ({
   const rpcPrefix = networkRpcPrefixMap[networkType];
 
   return fetchChainBatch<Array<string>>({
+    key,
     url: endpoint,
     rpcs: assets.map(({ assetType, contractAddress }) => ({
       method: assetType === AssetType.Native ? `${rpcPrefix}_getBalance` : `${rpcPrefix}_call`,
@@ -130,12 +133,14 @@ export const fetchAssetsBalanceMulticall = ({
   assets,
   networkType,
   multicallContractAddress,
+  key,
 }: {
   endpoint: string;
   account: string;
   assets: Array<{ assetType?: Omit<AssetType, AssetType.ERC1155 | AssetType.ERC721>; contractAddress?: string | null }>;
   networkType: NetworkType;
   multicallContractAddress: string;
+  key?: string;
 }) => {
   if (assets.some(({ assetType, contractAddress }) => !assetType && !contractAddress)) {
     throw new Error('assetType or contractAsset is required');
@@ -154,6 +159,7 @@ export const fetchAssetsBalanceMulticall = ({
   let promiseContracts: Promise<Array<string>> | undefined;
   if (contractAssets.length !== 0) {
     promiseContracts = fetchChainMulticall({
+      key,
       url: endpoint,
       method: `${rpcPrefix}_call`,
       multicallContractAddress,

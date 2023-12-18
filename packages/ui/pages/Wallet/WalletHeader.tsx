@@ -1,6 +1,6 @@
 import { Pressable, TouchableHighlight, View } from 'react-native';
 import Clipboard from '@react-native-clipboard/clipboard';
-import SwitchCurrentNetwork from '@components/SwitchCurrentNetwork';
+import SwitchCurrentNetwork from '@modules/SwitchCurrentNetwork';
 import { useCurrentAddressValue } from '@core/WalletCore/Plugins/ReactInject';
 import { useNavigation } from '@react-navigation/native';
 import { AccountSelectStackName, ReceiveAddressStackName, ScanQRCodeStackName, StackNavigation } from '@router/configs';

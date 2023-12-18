@@ -130,7 +130,9 @@ class AssetsTrackerPlugin implements Plugin {
                 error: (error) => console.error(`Error in trackAssets(network-${network.name} address-${address.hex}):`, error),
                 complete: () => console.log(`trackAssets(network-${network.name} address-${address.hex}) completed or canceled`),
               });
-          } catch (_) {}
+          } catch (_) {
+            // console.log()
+          }
         }, 32);
       });
   }

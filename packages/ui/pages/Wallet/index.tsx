@@ -1,36 +1,28 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { View, SafeAreaView, Pressable } from 'react-native';
 import { useNetInfo } from '@react-native-community/netinfo';
-import { useAtom } from 'jotai';
-import { formatUnits } from 'ethers';
 import { Text, useTheme, Tab, TabView } from '@rneui/themed';
 import { statusBarHeight } from '@utils/deviceInfo';
 import { type StackNavigation, ReceiveAddressStackName, ReceiveStackName } from '@router/configs';
-import { nativeTokenAtom, readScanAndFallbackTokenListAtom } from '@hooks/useTokenList';
-import TokenList from '@components/TokenList';
-import NFTList from '@components/NFTList';
+import TokenList from '@modules/AssetList/TokenList';
+import ESpaceNFTList from '@modules/AssetList/ESpaceNFTList';
+import ActivityList from '@modules/ActivityList';
+import Skeleton from '@components/Skeleton';
+import { useCurrentAccount, useCurrentNetwork, useAssetsTotalPriceValue } from '@core/WalletCore/Plugins/ReactInject';
+import { CFX_ESPACE_MAINNET_CHAINID, CFX_ESPACE_TESTNET_CHAINID } from '@core/consts/network';
 import SendIcon from '@assets/icons/send.svg';
 import ReceiveIcon from '@assets/icons/receive.svg';
 import BuyIcon from '@assets/icons/buy.svg';
 import MoreIcon from '@assets/icons/more.svg';
 import WifiOffIcon from '@assets/icons/wifi_off.svg';
-import Skeleton from '@components/Skeleton';
-import { useCurrentAccount } from '@core/WalletCore/Plugins/ReactInject';
-import ActivityList from '@components/ActivityList';
-import { useAssetsTokenList } from '@core/WalletCore/Plugins/ReactInject/data/useAssets';
 
 const Wallet: React.FC<{ navigation: StackNavigation }> = ({ navigation }) => {
   const { theme } = useTheme();
   const { isConnected } = useNetInfo();
   const [tabIndex, setTabIndex] = useState(0);
-  const [ERC20TokenList] = useAtom(readScanAndFallbackTokenListAtom);
-  const [nativeToken] = useAtom(nativeTokenAtom);
   const currentAccount = useCurrentAccount();
-  const tokenList = useAssetsTokenList();
-
-  const value = tokenList
-    ? tokenList.reduce((acc, cur) => (cur.priceInUSDT ? acc + Number(cur.priceInUSDT) * Number(formatUnits(cur.balance, cur.decimals)) : acc), 0).toFixed(2)
-    : null;
+  const currentNetwork = useCurrentNetwork();
+  const totalPriceValue = useAssetsTotalPriceValue();
 
   return (
     <SafeAreaView className="flex-1 flex flex-col justify-start" style={{ backgroundColor: theme.colors.normalBackground, paddingTop: statusBarHeight + 48 }}>
@@ -50,14 +42,14 @@ const Wallet: React.FC<{ navigation: StackNavigation }> = ({ navigation }) => {
         </Text>
 
         <View className="flex items-center justify-center h-[60px] mb-[16px]">
-          {value === null ? (
+          {totalPriceValue === null ? (
             <Skeleton width={156} height={30} />
           ) : (
             <Text
               className=" leading-tight text-[48px] text-center font-bold"
-              style={{ color: Number(value) === 0 ? theme.colors.textSecondary : theme.colors.textPrimary }}
+              style={{ color: Number(totalPriceValue) === 0 ? theme.colors.textSecondary : theme.colors.textPrimary }}
             >
-              {value}
+              ${totalPriceValue}
             </Text>
           )}
         </View>
@@ -104,15 +96,19 @@ const Wallet: React.FC<{ navigation: StackNavigation }> = ({ navigation }) => {
       <View className="px-[24px]">
         <Tab value={tabIndex} onChange={setTabIndex} indicatorStyle={{ backgroundColor: theme.colors.surfaceBrand }}>
           <Tab.Item title="Tokens" titleStyle={(active) => ({ color: active ? theme.colors.textBrand : theme.colors.textSecondary })} />
-          <Tab.Item title="NFTs" titleStyle={(active) => ({ color: active ? theme.colors.textBrand : theme.colors.textSecondary })} />
+          {currentNetwork && (currentNetwork.chainId === CFX_ESPACE_MAINNET_CHAINID || currentNetwork.chainId === CFX_ESPACE_TESTNET_CHAINID) && (
+            <Tab.Item title="NFTs" titleStyle={(active) => ({ color: active ? theme.colors.textBrand : theme.colors.textSecondary })} />
+          )}
           <Tab.Item title="Activity" titleStyle={(active) => ({ color: active ? theme.colors.textBrand : theme.colors.textSecondary })} />
         </Tab>
       </View>
 
       <TabView value={tabIndex} onChange={setTabIndex} animationType="spring">
-        <TokenList />
         <TabView.Item style={{ width: '100%' }}>
-          <NFTList pageSize={16} />
+          <TokenList />
+        </TabView.Item>
+        <TabView.Item style={{ width: '100%' }}>
+          <ESpaceNFTList pageSize={16} />
         </TabView.Item>
         <TabView.Item style={{ width: '100%' }}>
           <ActivityList />

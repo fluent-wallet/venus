@@ -5,7 +5,7 @@ import { Text, useTheme } from '@rneui/themed';
 import BottomSheet, { BottomSheetFlatList } from '@gorhom/bottom-sheet';
 import { statusBarHeight } from '@utils/deviceInfo';
 import { BaseButton } from '@components/Button';
-import TokenList from '@components/TokenList';
+import TokenList from '@modules/AssetList/TokenList';
 import { useAtom } from 'jotai';
 import setTokenQRInfoAtom from '@hooks/useSetAmount';
 import { AssetInfo } from '@core/WalletCore/Plugins/AssetsTracker/types';

@@ -29,9 +29,13 @@ const trackAssets = async ({
 }) => {
   /** Prioritize the use of data from fetchFromServer. */
   if (chainFetcher && typeof chainFetcher.fetchFromServer === 'function') {
-    // const assets: AssetInfo[] = [];
-    const assets = await chainFetcher.fetchFromServer({ address, network });
-    assets?.forEach((asset) => (assetsHash[asset.contractAddress || AssetType.Native] = asset));
+    let assets: AssetInfo[];
+    try {
+      assets = await chainFetcher.fetchFromServer({ address, network });
+      assets?.forEach((asset) => (assetsHash[asset.contractAddress || AssetType.Native] = asset));
+    } catch (err) {
+      assets = [];
+    }
 
     /**
      * It is important to note that the data fromServer should itself contain information about the token, which may not be recorded locally.
@@ -104,6 +108,7 @@ const trackAssets = async ({
           ...fetchers.map((fetchAssetBalances) =>
             from(
               fetchAssetBalances({
+                key: `assetsBalanceInRules-${address.hex}-${network.chainId}`,
                 endpoint: network.endpoint,
                 account: address.hex,
                 assets: assetsNeedFetch.map((asset) => ({ assetType: asset.type, contractAddress: asset.contractAddress })),
@@ -165,9 +170,8 @@ const trackAssets = async ({
       const varA = assetA.symbol[0].toLocaleUpperCase();
       const varB = assetB.symbol[0].toLocaleUpperCase();
       if (varA === varB) {
-        return 0
-
-      } 
+        return 0;
+      }
       return varA < varB ? -1 : 1;
     })
     .forEach((hashKey) => assetsSortedKeys.push(hashKey));

@@ -46,7 +46,7 @@ import {
 import SendReceiver, { SendPageHeaderOptions } from '@pages/Transaction/ReceiveAddress';
 import TransactionConfirm from '@pages/Transaction/TransactionConfirm';
 import SendTo from '@pages/Transaction/SendTo';
-import Tokens from '@pages/Transaction/Tokens';
+import Assets from '@pages/Transaction/Assets';
 import BackUp from '@pages/Account/BackUp';
 import AccountSetting from '@pages/Account/Setting/AccountSetting';
 import GroupSetting from '@pages/Account/Setting/GroupSetting';
@@ -147,7 +147,7 @@ const StackNavigator = () => {
       />
       <Stack.Screen
         name={TokensStackName}
-        component={Tokens}
+        component={Assets}
         options={{
           ...SendPageHeaderOptions({
             title: 'Tokens',

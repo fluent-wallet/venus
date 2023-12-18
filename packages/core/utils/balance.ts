@@ -59,7 +59,10 @@ export const addZeroToDay = (x: number | string | undefined) => {
 };
 
 export function numAbbreviation(num: number | string): string {
-  const abbreviations = ['', 'K', 'M', 'B']; // 单位缩写
+  // const carry = 3;
+  // const abbreviations = ['', 'K', 'M', 'B']; // 单位缩写
+  const carry = 7;
+  const abbreviations = ['', 'M']; // 单位缩写
   const numString = typeof num === 'number' ? num.toString() : num;
 
   const floatValue = parseFloat(numString);
@@ -70,10 +73,21 @@ export function numAbbreviation(num: number | string): string {
   const absoluteValue = Math.abs(floatValue);
   const sign = floatValue >= 0 ? '' : '-';
 
-  let abbreviationIndex = Math.floor(Math.log10(absoluteValue) / 3);
+  let abbreviationIndex = Math.floor(Math.log10(absoluteValue) / carry);
   abbreviationIndex = Math.max(0, Math.min(abbreviationIndex, abbreviations.length - 1));
 
-  const formattedNumber = absoluteValue / Math.pow(10, abbreviationIndex * 3);
+  const formattedNumber = absoluteValue / Math.pow(10, abbreviationIndex * carry);
 
-  return `${sign}${numberFormat(formattedNumber)}${abbreviations[abbreviationIndex]}`;
+  return `${sign}${formattedNumber}${abbreviations[abbreviationIndex]}`;
+}
+
+const ten = new Decimal(10);
+const decimalsArray = Array.from({ length: 25 }, (_, index) => ten.pow(new Decimal(index)));
+export const convertBalanceToDecimal = (balance: string | number | null | undefined, decimals = 18) => {
+  if (!balance) return '0';
+  return new Decimal(balance).div(decimals <= 24 ? decimalsArray[decimals] : ten.pow(new Decimal(decimals))).toString();
+};
+
+export const balanceFormat = (balance: string | number | null | undefined, decimals = 18) => {
+  return numAbbreviation(trimDecimalZeros(truncate(convertBalanceToDecimal(balance, decimals), 4)));
 }

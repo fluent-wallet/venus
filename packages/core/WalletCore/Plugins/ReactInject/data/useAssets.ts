@@ -39,7 +39,11 @@ const assetsNFTListAtom = atomFamily((key: string) =>
 const assetsTotalPriceValueAtom = atomFamily((key: string) =>
   atom((get) => {
     const assets = get(assetsListAtom(key));
-    return !assets ? '0.00' : truncate(assets.reduce((total, item) => total.add(new Decimal(item?.priceValue ?? 0)), new Decimal(0)).toString(), 2);
+    return assets === null
+      ? null
+      : !assets?.length
+      ? '0.00'
+      : truncate(assets.reduce((total, item) => total.add(new Decimal(item?.priceValue ?? 0)), new Decimal(0)).toString(), 2);
   })
 );
 

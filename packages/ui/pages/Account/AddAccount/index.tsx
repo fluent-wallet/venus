@@ -56,23 +56,33 @@ const AddAccount: React.FC<{ navigation: StackNavigation }> = ({ navigation }: {
         </ListItem>
       </TouchableHighlight>
 
-      <TouchableHighlight className="rounded-[8px] overflow-hidden" onPress={() => navigation.navigate(ImportWalletStackName, route.params)}>
+      <TouchableHighlight
+        className="rounded-[8px] overflow-hidden"
+        onPress={() => navigation.navigate(ImportWalletStackName, route.params)}
+        disabled={inCreateVault}
+      >
         <ListItem>
           <ListItem.Content>
             <ListItem.Title style={{ color: theme.colors.textPrimary }} className="font-bold">
               Import Seed Phrase
             </ListItem.Title>
           </ListItem.Content>
+          {inCreateVault && <ActivityIndicator color={theme.colors.surfaceBrand} />}
         </ListItem>
       </TouchableHighlight>
 
-      <TouchableOpacity className="rounded-[8px] overflow-hidden" onPress={() => navigation.navigate(ImportWalletStackName, route.params)}>
+      <TouchableOpacity
+        className="rounded-[8px] overflow-hidden"
+        onPress={() => navigation.navigate(ImportWalletStackName, route.params)}
+        disabled={inCreateVault}
+      >
         <ListItem>
           <ListItem.Content>
             <ListItem.Title style={{ color: theme.colors.textPrimary }} className="font-bold">
               Import Private Key
             </ListItem.Title>
           </ListItem.Content>
+          {inCreateVault && <ActivityIndicator color={theme.colors.surfaceBrand} />}
         </ListItem>
       </TouchableOpacity>
     </SafeAreaView>

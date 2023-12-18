@@ -1,19 +1,17 @@
-import { Text, useTheme, Skeleton } from '@rneui/themed';
-import { formatUnits } from 'ethers';
-import { Image, Pressable } from 'react-native';
-import { View } from 'react-native';
 import { useMemo } from 'react';
-import { formatValue } from '@utils/formatValue';
-import { AssetInfo } from '@core/WalletCore/Plugins/AssetsTracker/types';
+import { Pressable, View } from 'react-native';
+import { Text, useTheme } from '@rneui/themed';
 import TokenIcon from '@components/TokenIcon';
+import { type AssetInfo } from '@core/WalletCore/Plugins/AssetsTracker/types';
+import { balanceFormat } from '@core/utils/balance';
 
 const TokenItem: React.FC<{
   data: AssetInfo;
   onPress?: (v: AssetInfo) => void;
 }> = ({ onPress, data }) => {
   const { theme } = useTheme();
-
-  const viewValue = useMemo(() => formatValue(data.balance, data.decimals), [data.balance, data.decimals]);
+  const balance = useMemo(() => balanceFormat(data.balance), [data.balance]);
+  
   return (
     <Pressable onPress={onPress && data ? () => onPress(data) : undefined}>
       <View className={'flex flex-row  w-full p-3'}>
@@ -29,13 +27,13 @@ const TokenItem: React.FC<{
             </View>
             <View className=" ml-2">
               <Text className="text-base">
-                {data.priceInUSDT ? `$${(Number(formatUnits(data.balance, data.decimals)) * Number(data.priceInUSDT)).toFixed(2)}` : '--'}
+                {data.priceInUSDT ? `$${data.priceInUSDT}`: '--'}
               </Text>
             </View>
           </View>
           <View className="flex-1">
             <Text style={{ color: theme.colors.textSecondary }} numberOfLines={1}>
-              {viewValue} {data.symbol}
+              {balance} {data.symbol}
             </Text>
           </View>
         </View>

@@ -38,6 +38,7 @@ export const fetchESpaceServer = async ({
     const scanInfoMap: Record<string, { type: AssetType; priceInUSDT?: string; icon?: string }> = Object.create(null);
     return from(
       serverFetcher.fetchServer<{ message: string; status: '0' | '1'; result?: { list: Array<AssetInfoFromScan> } }>({
+        key: `eSpaceAssetsFromScan-${hexAddress}-${network.chainId}`,
         url: `account/tokens?account=${hexAddress}${assetType ? `&tokenType=${assetType}` : ''}`,
         options: {
           retry: 2,
@@ -119,7 +120,7 @@ export const fetchESpaceServer = async ({
   const fetchFromChain = () => {
     return from(
       fetchChainBatch<[string, string]>({
-        key: `${network.name}|${network.chainId}|${hexAddress}`,
+        key: `eSpaceAssetsFromChain-${hexAddress}-${network.chainId}`,
         url: network.endpoint,
         rpcs: [
           {
@@ -172,7 +173,6 @@ export const fetchESpaceServer = async ({
     fetchFromScan()
       .pipe(catchError(() => fetchFromChain()))
       .pipe(
-        // tap(res => console.log(res)),
         catchError((err) => {
           console.log(network.name, err);
           return EMPTY;
