@@ -84,6 +84,10 @@ export class Methods {
     return this.VaultMethod.deleteVault(...args);
   }
 
+  public checkHasSameVault(...args: Parameters<VaultMethod['checkHasSameVault']>) {
+    return this.VaultMethod.checkHasSameVault(...args);
+  }
+
   @inject(NetworkMethod) private NetworkMethod!: NetworkMethod;
   public createNetwork(...args: Parameters<NetworkMethod['createNetwork']>) {
     return this.NetworkMethod.createNetwork(...args);
@@ -115,7 +119,6 @@ export class Methods {
   public prepareUpdateAsset(...args: Parameters<AssetMethod['prepareUpdateAsset']>) {
     return this.AssetMethod.prepareUpdateAsset(...args);
   }
-
 
   @inject(TransactionMethod) private TransactionMethod!: TransactionMethod;
   public getTransactionGasAndGasLimit(...args: Parameters<TransactionMethod['getGasPriceAndLimit']>) {

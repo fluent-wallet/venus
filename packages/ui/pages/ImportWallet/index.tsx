@@ -6,7 +6,7 @@ import { Mnemonic } from 'ethers';
 import * as secp from '@noble/secp256k1';
 import { Button, Text, useTheme } from '@rneui/themed';
 import plugins from '@core/WalletCore/Plugins';
-import { checkNoSameVault } from '@core/database/models/Vault/query';
+import methods from '@core/WalletCore/Methods';
 import { stripHexPrefix } from '@core/utils/base';
 import { StackNavigation, RootStackList, AccountManageStackName, BiometricsStackName, ImportWalletStackName } from '@router/configs';
 import createVaultWithRouterParams from '@pages/SetPassword/createVaultWithRouterParams';
@@ -27,7 +27,7 @@ const ImportWallet = () => {
     if (value === '') return;
     if (secp.utils.isValidPrivateKey(stripHexPrefix(value))) {
       if (type === 'add') {
-        const hasSame = !(await checkNoSameVault(await plugins.CryptoTool.encrypt(value)));
+        const hasSame = await methods.checkHasSameVault(value);
         if (hasSame) {
           setErrorMessage('This private key has been added');
           return;

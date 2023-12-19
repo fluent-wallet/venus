@@ -51,8 +51,8 @@ const NFTItem: React.FC<{
         url: `nft/tokens?contract=${data.contractAddress}&owner=${currentAddress.hex}&cursor=0&limit=100&sort=ASC&sortField=latest_update_time&withBrief=true&withMetadata=false&suppressMetadataError=true`,
         key: fetchKey,
         options: {
-          retry: 2
-        }
+          retry: 4,
+        },
       })
       .then((res) => res && setDetails(res))
       .catch((err) => {

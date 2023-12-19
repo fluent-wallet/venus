@@ -1,9 +1,16 @@
-import { injectable } from 'inversify';
+import { Q } from '@nozbe/watermelondb';
+import { injectable, inject } from 'inversify';
+import { Plugins } from '../Plugins';
+
 import { type Vault } from '../../database/models/Vault';
+import VaultType from '../../database/models/Vault/VaultType';
 import database from '../../database';
+import TableName from '../../database/TableName';
 
 @injectable()
 export class VaultMethod {
+  @inject(Plugins) plugins!: Plugins;
+
   async deleteVault(vault: Vault) {
     const accountGroup = await vault.getAccountGroup();
     const accounts = await accountGroup.accounts;
@@ -17,4 +24,14 @@ export class VaultMethod {
       );
     });
   }
+
+  checkHasSameVault = async (data: string) => {
+    const vaults = await database
+      .get<Vault>(TableName.Vault)
+      .query(Q.where('type', Q.oneOf([VaultType.PrivateKey, VaultType.HierarchicalDeterministic])))
+      .fetch();
+    const decryptDatas = await Promise.all(vaults.map((vault) => this.plugins.CryptoTool.decrypt<string>(vault.data!)));
+
+    return decryptDatas?.includes(data);
+  };
 }
