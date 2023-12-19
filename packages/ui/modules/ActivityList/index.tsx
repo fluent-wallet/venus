@@ -29,7 +29,7 @@ const ActivityList: React.FC<{ onPress?: (v: Tx) => void }> = memo(({ onPress })
   const { dayMap: finishedTxsByDay, days } = useMemo(() => {
     const dayMap = new Map<number, Tx[]>();
     finishedTxs.forEach((tx) => {
-      const time = Math.floor(tx.createdAt.valueOf() / DAY_MILLISECONDS) * DAY_MILLISECONDS;
+      const time = Math.floor((tx.executedAt || tx.createdAt).valueOf() / DAY_MILLISECONDS) * DAY_MILLISECONDS;
       const txs = dayMap.get(time) || [];
       txs.push(tx);
       dayMap.set(time, txs);

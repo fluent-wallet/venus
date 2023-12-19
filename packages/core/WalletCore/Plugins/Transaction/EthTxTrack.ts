@@ -55,7 +55,7 @@ export class EthTxTrack {
       await this._updateTx(tx, (tx) => {
         tx.status = TxStatus.PENDING;
         if (!tx.pendingAt) {
-          tx.pendingAt = new Date().valueOf();
+          tx.pendingAt = new Date();
         }
       });
       keepTrack();
@@ -75,7 +75,7 @@ export class EthTxTrack {
         await this._updateTx(tx, (tx) => {
           tx.status = TxStatus.PENDING;
           if (!tx.pendingAt) {
-            tx.pendingAt = new Date().valueOf();
+            tx.pendingAt = new Date();
           }
         });
         keepTrack();
@@ -196,10 +196,16 @@ export class EthTxTrack {
         gasUsed,
         contractCreated: contractAddress,
       };
+      const { result: block } = await firstValueFrom(
+        RPCSend<RPCResponse<ETH.eth_getBlockByHashResponse>>({ method: 'eth_getBlockByHash', params: [blockHash, false] })
+      );
       await this._updateTx(tx, (tx) => {
         tx.status = TxStatus.EXECUTED;
         tx.receipt = receipt;
         tx.skippedChecked = null;
+        if (block.timestamp) {
+          tx.executedAt = new Date(Number(BigInt(block.timestamp)) * 1000);
+        }
       });
       keepTrack(0);
     } else {

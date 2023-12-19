@@ -27,7 +27,8 @@ export class Tx extends Model {
   @field('is_chain_switched') chainSwitched?: boolean | null; // chain switched
   @field('skipped_checked') skippedChecked?: boolean | null; // for skipped check
   @readonly @date('created_at') createdAt!: Date;
-  @date('pending_at') pendingAt?: number | null; // first time pending timestamp
+  @date('pending_at') pendingAt?: Date | null; // first time pending timestamp
+  @date('executed_at') executedAt?: Date | null; // tx execute timestamp
   @text('err') err?: string | null; // basic error type/info
   @field('is_local') isLocal?: boolean | null;
   @field('resend_at') resendAt?: string | null; // epoch/block where wallet resend tx
