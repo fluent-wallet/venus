@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo, useCallback } from 'react';
+import { useEffect, useState, useMemo, useCallback, useRef, type Dispatch, type SetStateAction } from 'react';
 import { ScrollView, View, type NativeSyntheticEvent, type NativeScrollEvent } from 'react-native';
 import { Icon } from '@rneui/base';
 import { useTheme, Text, ListItem } from '@rneui/themed';
@@ -19,9 +19,12 @@ export interface NFTItemDetail {
 
 export type NFTWithDetail = AssetInfo & { detail: NFTItemDetail };
 
+const NftItemHeight = 62.5;
+
 const ESpaceNFTList: React.FC<{ onSelectNftItem?: (nft: NFTWithDetail) => void }> = ({ onSelectNftItem }) => {
   const { theme } = useTheme();
 
+  const scrollY = useRef(0);
   const nfts = useAssetsNFTList();
   const currentAddress = useCurrentAddress()!;
   const currentNetwork = useCurrentNetwork()!;
@@ -31,30 +34,56 @@ const ESpaceNFTList: React.FC<{ onSelectNftItem?: (nft: NFTWithDetail) => void }
   const currentOpenNftPosition = useMemo(() => {
     const index = nfts?.findIndex((nft) => nft.contractAddress === currentOpenNftContract);
     if (typeof index !== 'number') return null;
-    return (index + 1) * 48;
+    return index * NftItemHeight;
   }, [currentOpenNftContract]);
 
   const [isCurrentOpenHeaderInView, setCurrentOpenHeaderInView] = useState(true);
-  const setCurrentOpenNftContract = useCallback((nft: string | null) => {
-    _setCurrentOpenNftContract(nft);
-    if (nft === null) {
-      setCurrentOpenHeaderInView(true);
-    }
-  }, []);
+  const setCurrentOpenNftContract = useCallback(
+    (nftContract: string | null) => {
+      let resultNftContract: string | null = null;
+      _setCurrentOpenNftContract((pre) => {
+        if (nftContract === null) {
+          resultNftContract = null;
+        } else {
+          if (pre === nftContract) {
+            resultNftContract = null;
+          } else {
+            resultNftContract = nftContract;
+          }
+        }
+        return resultNftContract;
+      });
+
+      if (resultNftContract === null) {
+        setCurrentOpenHeaderInView(true);
+      } else {
+        const index = nfts?.findIndex((nft) => nft.contractAddress === resultNftContract) ?? 0;
+        if (scrollY.current > index * NftItemHeight) {
+          setCurrentOpenHeaderInView(false);
+        } else {
+          setCurrentOpenHeaderInView(true);
+        }
+      }
+    },
+    [nfts]
+  );
 
   useEffect(() => {
     setCurrentOpenNftContract(null);
   }, [currentNetwork?.chainId, currentAddress?.hex]);
 
-
-  const handleScroll = useCallback((evt: NativeSyntheticEvent<NativeScrollEvent>) => {
-    if (currentOpenNftPosition === null) return;
-    if (evt.nativeEvent.contentOffset.y > (currentOpenNftPosition)) {
-      setCurrentOpenHeaderInView(false);
-    } else {
-      setCurrentOpenHeaderInView(true);
-    }
-  }, [currentOpenNftPosition]);
+  const handleScroll = useCallback(
+    (evt: NativeSyntheticEvent<NativeScrollEvent>) => {
+      scrollY.current = evt.nativeEvent.contentOffset.y;
+      if (currentOpenNftPosition === null) return;
+      if (scrollY.current > currentOpenNftPosition) {
+        setCurrentOpenHeaderInView(false);
+      } else {
+        setCurrentOpenHeaderInView(true);
+      }
+    },
+    [currentOpenNftPosition]
+  );
 
   if (!currentAddress || !currentNetwork) {
     return null;
@@ -104,7 +133,8 @@ const ESpaceNFTList: React.FC<{ onSelectNftItem?: (nft: NFTWithDetail) => void }
               data={nft}
               key={nft.contractAddress}
               isExpanded={currentOpenNftContract === nft.contractAddress}
-              onPress={() => setCurrentOpenNftContract((pre) => (pre === nft.contractAddress! ? null : nft.contractAddress!))}
+              isCurrentOpenHeaderInView={currentOpenNftContract === nft.contractAddress && isCurrentOpenHeaderInView}
+              onPress={() => setCurrentOpenNftContract(nft.contractAddress!)}
               onSelectNftItem={onSelectNftItem}
               currentNetwork={currentNetwork}
               currentAddress={currentAddress}
