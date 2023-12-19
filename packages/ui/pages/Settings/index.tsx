@@ -5,7 +5,7 @@ import { showMessage } from 'react-native-flash-message';
 import { useTheme, ListItem, Dialog } from '@rneui/themed';
 import methods from '@core/WalletCore/Methods';
 import { statusBarHeight } from '@utils/deviceInfo';
-import { WelcomeStackName , AccountManageStackName} from '@router/configs';
+import { WelcomeStackName, AccountManageStackName } from '@router/configs';
 
 export const SettingsStackName = 'Settings';
 
@@ -29,16 +29,18 @@ const Settings: React.FC<{ navigation: NavigationProp<any> }> = ({ navigation })
         </ListItem>
       </TouchableHighlight>
 
-      <TouchableHighlight className="rounded-[8px] overflow-hidden" onPress={() => setVisibleResetWallet(true)}>
-        <ListItem>
-          <ListItem.Content>
-            <ListItem.Title style={{ color: theme.colors.error }} className="font-bold">
-              Reset Wallet Data
-            </ListItem.Title>
-          </ListItem.Content>
-          <ListItem.Chevron color={theme.colors.error} />
-        </ListItem>
-      </TouchableHighlight>
+      {__DEV__ && (
+        <TouchableHighlight className="rounded-[8px] overflow-hidden" onPress={() => setVisibleResetWallet(true)}>
+          <ListItem>
+            <ListItem.Content>
+              <ListItem.Title style={{ color: theme.colors.error }} className="font-bold">
+                Reset Wallet Data
+              </ListItem.Title>
+            </ListItem.Content>
+            <ListItem.Chevron color={theme.colors.error} />
+          </ListItem>
+        </TouchableHighlight>
+      )}
       <Dialog isVisible={visibleResetWallet} onBackdropPress={() => setVisibleResetWallet(false)}>
         <Dialog.Title title="Confirm reset wallet Data?" titleStyle={{ color: theme.colors.textPrimary, fontSize: 22, fontWeight: 'bold' }} />
         <Text style={{ color: theme.colors.textSecondary }} className="text-[16px]">
