@@ -28,9 +28,8 @@ const Wallet: React.FC<{ navigation: StackNavigation }> = ({ navigation }) => {
   return (
     <SafeAreaView className="flex-1 flex flex-col justify-start" style={{ backgroundColor: theme.colors.normalBackground, paddingTop: statusBarHeight + 48 }}>
       <PullRefresh
-        onRefresh={function (f) {
-          console.log(f)
-          setTimeout(() => f(), 1000);
+        onRefresh={(f) => {
+          setTimeout(f, 1000);
         }}
       >
         <View className="absolute left-0 right-0 flex justify-center items-center z-50" style={{ top: statusBarHeight + 48 }}>
