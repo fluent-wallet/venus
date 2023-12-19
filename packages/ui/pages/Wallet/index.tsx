@@ -15,6 +15,7 @@ import ReceiveIcon from '@assets/icons/receive.svg';
 import BuyIcon from '@assets/icons/buy.svg';
 import MoreIcon from '@assets/icons/more.svg';
 import WifiOffIcon from '@assets/icons/wifi_off.svg';
+import PullRefresh from '@components/PullRefresh';
 
 const Wallet: React.FC<{ navigation: StackNavigation }> = ({ navigation }) => {
   const { theme } = useTheme();
@@ -26,83 +27,88 @@ const Wallet: React.FC<{ navigation: StackNavigation }> = ({ navigation }) => {
 
   return (
     <SafeAreaView className="flex-1 flex flex-col justify-start" style={{ backgroundColor: theme.colors.normalBackground, paddingTop: statusBarHeight + 48 }}>
-      <View className="absolute left-0 right-0 flex justify-center items-center z-50" style={{ top: statusBarHeight + 48 }}>
-        {!isConnected && (
-          <View style={{ backgroundColor: theme.colors.textSecondary }} className="rounded-lg p-3 flex flex-row items-center">
-            <WifiOffIcon color={theme.colors.textInvert} width={20} height={20} />
-            <Text className="ml-1" style={{ color: theme.colors.textInvert }}>
-              No Internet Connection
-            </Text>
-          </View>
-        )}
-      </View>
-      <View className="px-[24px]">
-        <Text className="mt-[16px] leading-tight text-[16px] text-center" style={{ color: theme.colors.textSecondary }}>
-          {currentAccount?.nickname}
-        </Text>
-
-        <View className="flex items-center justify-center h-[60px] mb-[16px]">
-          {totalPriceValue === null ? (
-            <Skeleton width={156} height={30} />
-          ) : (
-            <Text
-              className=" leading-tight text-[48px] text-center font-bold"
-              style={{ color: Number(totalPriceValue) === 0 ? theme.colors.textSecondary : theme.colors.textPrimary }}
-            >
-              ${totalPriceValue}
-            </Text>
+      <PullRefresh
+        onRefresh={(f) => {
+          setTimeout(f, 1000);
+        }}
+      >
+        <View className="absolute left-0 right-0 flex justify-center items-center z-50" style={{ top: statusBarHeight + 48 }}>
+          {!isConnected && (
+            <View style={{ backgroundColor: theme.colors.textSecondary }} className="rounded-lg p-3 flex flex-row items-center">
+              <WifiOffIcon color={theme.colors.textInvert} width={20} height={20} />
+              <Text className="ml-1" style={{ color: theme.colors.textInvert }}>
+                No Internet Connection
+              </Text>
+            </View>
           )}
         </View>
+        <View className="px-[24px]">
+          <Text className="mt-[16px] leading-tight text-[16px] text-center" style={{ color: theme.colors.textSecondary }}>
+            {currentAccount?.nickname}
+          </Text>
 
-        <View className="flex flex-row">
-          <Pressable className="flex items-center flex-1" onPress={() => navigation.navigate(ReceiveAddressStackName, {})}>
-            <View className="flex justify-center items-center w-[60px] h-[60px] rounded-full" style={{ backgroundColor: theme.colors.surfaceBrand }}>
-              <SendIcon color="#fff" width={32} height={32} />
-            </View>
-            <Text className="mt-[8px] text-base" style={{ color: theme.colors.textPrimary }}>
-              Send
-            </Text>
-          </Pressable>
-
-          <Pressable className="flex items-center flex-1" onPress={() => navigation.navigate(ReceiveStackName)}>
-            <View className="flex justify-center items-center w-[60px] h-[60px] rounded-full" style={{ backgroundColor: theme.colors.surfaceBrand }}>
-              <ReceiveIcon color="#fff" width={32} height={32} />
-            </View>
-            <Text className="mt-[8px] text-base" style={{ color: theme.colors.textPrimary }}>
-              Receive
-            </Text>
-          </Pressable>
-
-          <View className="flex items-center flex-1">
-            <View className="flex justify-center items-center w-[60px] h-[60px] rounded-full" style={{ backgroundColor: theme.colors.surfaceBrand }}>
-              <BuyIcon color="#fff" width={32} height={32} />
-            </View>
-            <Text className="mt-[8px] text-base" style={{ color: theme.colors.textPrimary }}>
-              Buy
-            </Text>
+          <View className="flex items-center justify-center h-[60px] mb-[16px]">
+            {totalPriceValue === null ? (
+              <Skeleton width={156} height={30} />
+            ) : (
+              <Text
+                className=" leading-tight text-[48px] text-center font-bold"
+                style={{ color: Number(totalPriceValue) === 0 ? theme.colors.textSecondary : theme.colors.textPrimary }}
+              >
+                ${totalPriceValue}
+              </Text>
+            )}
           </View>
 
-          <View className="flex items-center flex-1">
-            <View className="flex justify-center items-center w-[60px] h-[60px] rounded-full" style={{ backgroundColor: theme.colors.surfaceBrand }}>
-              <MoreIcon color="#fff" width={32} height={32} />
+          <View className="flex flex-row">
+            <Pressable className="flex items-center flex-1" onPress={() => navigation.navigate(ReceiveAddressStackName, {})}>
+              <View className="flex justify-center items-center w-[60px] h-[60px] rounded-full" style={{ backgroundColor: theme.colors.surfaceBrand }}>
+                <SendIcon color="#fff" width={32} height={32} />
+              </View>
+              <Text className="mt-[8px] text-base" style={{ color: theme.colors.textPrimary }}>
+                Send
+              </Text>
+            </Pressable>
+
+            <Pressable className="flex items-center flex-1" onPress={() => navigation.navigate(ReceiveStackName)}>
+              <View className="flex justify-center items-center w-[60px] h-[60px] rounded-full" style={{ backgroundColor: theme.colors.surfaceBrand }}>
+                <ReceiveIcon color="#fff" width={32} height={32} />
+              </View>
+              <Text className="mt-[8px] text-base" style={{ color: theme.colors.textPrimary }}>
+                Receive
+              </Text>
+            </Pressable>
+
+            <View className="flex items-center flex-1">
+              <View className="flex justify-center items-center w-[60px] h-[60px] rounded-full" style={{ backgroundColor: theme.colors.surfaceBrand }}>
+                <BuyIcon color="#fff" width={32} height={32} />
+              </View>
+              <Text className="mt-[8px] text-base" style={{ color: theme.colors.textPrimary }}>
+                Buy
+              </Text>
             </View>
-            <Text className="mt-[8px] text-base" style={{ color: theme.colors.textPrimary }}>
-              More
-            </Text>
+
+            <View className="flex items-center flex-1">
+              <View className="flex justify-center items-center w-[60px] h-[60px] rounded-full" style={{ backgroundColor: theme.colors.surfaceBrand }}>
+                <MoreIcon color="#fff" width={32} height={32} />
+              </View>
+              <Text className="mt-[8px] text-base" style={{ color: theme.colors.textPrimary }}>
+                More
+              </Text>
+            </View>
           </View>
         </View>
-      </View>
 
-      <View className="px-[24px]">
-        <Tab value={tabIndex} onChange={setTabIndex} indicatorStyle={{ backgroundColor: theme.colors.surfaceBrand }}>
-          <Tab.Item title="Tokens" titleStyle={(active) => ({ color: active ? theme.colors.textBrand : theme.colors.textSecondary })} />
-          {currentNetwork && (currentNetwork.chainId === CFX_ESPACE_MAINNET_CHAINID || currentNetwork.chainId === CFX_ESPACE_TESTNET_CHAINID) && (
-            <Tab.Item title="NFTs" titleStyle={(active) => ({ color: active ? theme.colors.textBrand : theme.colors.textSecondary })} />
-          )}
-          <Tab.Item title="Activity" titleStyle={(active) => ({ color: active ? theme.colors.textBrand : theme.colors.textSecondary })} />
-        </Tab>
-      </View>
-
+        <View className="px-[24px]">
+          <Tab value={tabIndex} onChange={setTabIndex} indicatorStyle={{ backgroundColor: theme.colors.surfaceBrand }}>
+            <Tab.Item title="Tokens" titleStyle={(active) => ({ color: active ? theme.colors.textBrand : theme.colors.textSecondary })} />
+            {currentNetwork && (currentNetwork.chainId === CFX_ESPACE_MAINNET_CHAINID || currentNetwork.chainId === CFX_ESPACE_TESTNET_CHAINID) && (
+              <Tab.Item title="NFTs" titleStyle={(active) => ({ color: active ? theme.colors.textBrand : theme.colors.textSecondary })} />
+            )}
+            <Tab.Item title="Activity" titleStyle={(active) => ({ color: active ? theme.colors.textBrand : theme.colors.textSecondary })} />
+          </Tab>
+        </View>
+      </PullRefresh>
       <TabView value={tabIndex} onChange={setTabIndex} animationType="spring">
         <TabView.Item style={{ width: '100%' }}>
           <TokenList />
