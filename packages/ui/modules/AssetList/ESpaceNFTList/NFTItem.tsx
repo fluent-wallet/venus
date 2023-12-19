@@ -33,11 +33,12 @@ const fetchESpaceScanMainnet = createFetchServer({ prefixUrl: CFX_ESPACE_MAINNET
 const NFTItem: React.FC<{
   data: AssetInfo;
   isExpanded: boolean;
+  isCurrentOpenHeaderInView: boolean;
   onPress?: () => void;
   onSelectNftItem?: (nft: NFTWithDetail) => void;
   currentNetwork: Network;
   currentAddress: Address;
-}> = ({ onPress, onSelectNftItem, data, isExpanded, currentNetwork, currentAddress }) => {
+}> = ({ onPress, onSelectNftItem, data, isExpanded, isCurrentOpenHeaderInView, currentNetwork, currentAddress }) => {
   const { theme } = useTheme();
 
   const [details, setDetails] = useState<Array<NFTItemDetail> | null>(null);
@@ -49,8 +50,14 @@ const NFTItem: React.FC<{
       .fetchServer<Array<NFTItemDetail>>({
         url: `nft/tokens?contract=${data.contractAddress}&owner=${currentAddress.hex}&cursor=0&limit=100&sort=ASC&sortField=latest_update_time&withBrief=true&withMetadata=false&suppressMetadataError=true`,
         key: fetchKey,
+        options: {
+          retry: 4,
+        },
       })
-      .then((res) => res && setDetails(res));
+      .then((res) => res && setDetails(res))
+      .catch((err) => {
+        console.error('fetch Nft detail err: ', err);
+      });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -64,30 +71,33 @@ const NFTItem: React.FC<{
   }, [isExpanded]);
 
   return (
-    <ListItem.Accordion
-      isExpanded={isExpanded}
-      onPress={onPress}
-      containerStyle={{
-        backgroundColor: theme.colors.normalBackground,
-        display: 'flex',
-        flex: 1,
-        justifyContent: 'space-between',
-      }}
-      style={{ paddingHorizontal: 8 }}
-      icon={<Icon name="keyboard-arrow-down" color={theme.colors.contrastWhiteAndBlack} />}
-      content={
-        <View className="flex flex-row items-center">
-          {data.icon ? (
-            <MixinImage source={{ uri: data.icon }} width={32} height={32} fallback={<TokenIconDefault width={32} height={32} />} />
-          ) : (
-            <TokenIconDefault width={32} height={32} />
-          )}
-          <Text style={{ color: theme.colors.contrastWhiteAndBlack }} className="text-base font-medium leading-6 ml-2">
-            {data.name}
-          </Text>
-        </View>
-      }
-    >
+    <>
+      {(!isExpanded || (isExpanded && isCurrentOpenHeaderInView)) && (
+        <ListItem.Accordion
+          isExpanded={isExpanded}
+          onPress={onPress}
+          containerStyle={{
+            backgroundColor: theme.colors.normalBackground,
+            display: 'flex',
+            flex: 1,
+            justifyContent: 'space-between',
+          }}
+          style={{ paddingHorizontal: 8 }}
+          icon={<Icon name="keyboard-arrow-down" color={theme.colors.contrastWhiteAndBlack} />}
+          content={
+            <View className="flex flex-row items-center">
+              {data.icon ? (
+                <MixinImage source={{ uri: data.icon }} width={32} height={32} fallback={<TokenIconDefault width={32} height={32} />} />
+              ) : (
+                <TokenIconDefault width={32} height={32} />
+              )}
+              <Text style={{ color: theme.colors.contrastWhiteAndBlack }} className="text-base font-medium leading-6 ml-2">
+                {data.name}
+              </Text>
+            </View>
+          }
+        />
+      )}
       {isExpanded && (
         <ListItem containerStyle={{ backgroundColor: 'transparent' }}>
           <View className="flex flex-row flex-wrap justify-between w-full">
@@ -137,7 +147,7 @@ const NFTItem: React.FC<{
           </View>
         </ListItem>
       )}
-    </ListItem.Accordion>
+    </>
   );
 };
 

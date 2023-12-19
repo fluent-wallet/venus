@@ -265,15 +265,13 @@ export class DatabaseMethod {
         TableName.Account,
         TableName.AccountGroup,
         TableName.Vault,
-        TableName.Tx,
         TableName.TxExtra,
         TableName.TxPayload,
+        TableName.Tx,
         TableName.App,
         TableName.Site,
         TableName.Permission,
         TableName.Request,
-        TableName.Asset,
-        TableName.AssetRule,
       ]);
       dbRefresh$.next(null);
     } catch (error) {

@@ -114,7 +114,7 @@ const Wallet: React.FC<{ navigation: StackNavigation }> = ({ navigation }) => {
           <TokenList />
         </TabView.Item>
         <TabView.Item style={{ width: '100%' }}>
-          <ESpaceNFTList pageSize={16} />
+          <ESpaceNFTList />
         </TabView.Item>
         <TabView.Item style={{ width: '100%' }}>
           <ActivityList />

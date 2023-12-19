@@ -21,11 +21,11 @@ const TokenItem: React.FC<{
         <View className="flex-1">
           <View className="flex flex-row flex-1 items-center justify-between">
             <View className="flex-1">
-              <Text className="text-base leading-5 " numberOfLines={1}>
+              <Text className="text-base leading-5" numberOfLines={1}>
                 {data.name}
               </Text>
             </View>
-            <View className=" ml-2">
+            <View className="ml-2">
               <Text className="text-base">
                 {data.priceInUSDT ? `$${data.priceInUSDT}`: '--'}
               </Text>

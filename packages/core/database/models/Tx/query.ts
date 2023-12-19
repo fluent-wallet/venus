@@ -16,7 +16,13 @@ export function createTx(params: TxParams, prepareCreate?: true) {
 export const observeTxById = memoize((txId: string) => database.get<Tx>(TableName.Tx).findAndObserve(txId));
 
 export const queryFinishedTxs = () =>
-  database.get<Tx>(TableName.Tx).query(Q.where('status', Q.oneOf([TxStatus.FAILED, TxStatus.SKIPPED, TxStatus.CONFIRMED])), Q.sortBy('created_at', Q.desc));
+  database
+    .get<Tx>(TableName.Tx)
+    .query(
+      Q.where('status', Q.oneOf([TxStatus.FAILED, TxStatus.SKIPPED, TxStatus.CONFIRMED])),
+      Q.sortBy('executed_at', Q.desc),
+      Q.sortBy('created_at', Q.desc)
+    );
 
 export const observeFinishedTxs = () => queryFinishedTxs().observe();
 

@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-non-null-asserted-optional-chain */
-import { useEffect, useState, Fragment } from 'react';
+import { useEffect, useState, useMemo, Fragment } from 'react';
 import { SafeAreaView, View, ScrollView, TouchableHighlight } from 'react-native';
 import { type NativeStackScreenProps } from '@react-navigation/native-stack';
 import { showMessage } from 'react-native-flash-message';
@@ -20,7 +20,8 @@ const GroupSetting: React.FC<NativeStackScreenProps<RootStackList, 'GroupSetting
 
   const accountGroup = useAccountGroupFromId(route.params.accountGroupId);
   const vault = useVaultOfGroup(route.params.accountGroupId);
-  const accounts = useAccountsOfGroup(route.params.accountGroupId);
+  const allAccounts = useAccountsOfGroup(route.params.accountGroupId);
+  const accounts = useMemo(() => allAccounts.filter((account) => !account.hidden), [allAccounts]);
 
   const GroupTitle = vault.type === 'hierarchical_deterministic' ? 'Seed Group' : 'BSIM Group';
   useEffect(() => {

@@ -133,7 +133,7 @@ class AssetsTrackerPlugin implements Plugin {
           } catch (_) {
             // console.log()
           }
-        }, 32);
+        }, 55);
       });
   }
 
