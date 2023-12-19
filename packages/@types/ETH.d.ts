@@ -29,7 +29,30 @@ declare namespace ETH {
     transactionHash?: string | null;
     transactionIndex?: string | null;
     type?: string | null;
-    logs: unknown[];
+    logs?: unknown[];
     logsBloom?: string | null;
+  }
+
+  export interface eth_getBlockByHashResponse {
+    difficulty?: string | null;
+    extraData?: string | null;
+    gasLimit?: string | null;
+    gasUsed?: string | null;
+    hash?: string | null;
+    logsBloom?: string | null;
+    miner?: string | null;
+    mixHash?: string | null;
+    nonce?: string | null;
+    number?: string | null;
+    parentHash?: string | null;
+    receiptsRoot?: string | null;
+    sha3Uncles?: string | null;
+    size?: string | null;
+    stateRoot?: string | null;
+    timestamp?: string | null;
+    totalDifficulty?: string | null;
+    transactions?: unknown[];
+    transactionsRoot?: string | null;
+    uncles?: unknown[];
   }
 }
