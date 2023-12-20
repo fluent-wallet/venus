@@ -67,6 +67,7 @@ class AuthenticationPluginClass implements Plugin {
         ...defaultOptions,
       });
 
+      this.settleAuthenticationType = AuthenticationType.Biometrics;
       await database.localStorage.set('SettleAuthentication', AuthenticationType.Biometrics);
 
       // If the user enables biometrics, we're trying to read the password immediately so we get the permission prompt.
@@ -79,35 +80,6 @@ class AuthenticationPluginClass implements Plugin {
     }
   };
 
-  // remove the username/password combination from the secure storage.
-  // public resetPassword = async () => {
-  //   const options = { service: defaultOptions.service };
-  //   return KeyChain.resetGenericPassword(options);
-  // };
-
-  // /**
-  //  * @description:validate password
-  //  * @param {*} inputPassword user input password when authType is not biometrics
-  //  * @param {*} authType phone supported biometry type
-  //  * @return {*}
-  //  */
-  // public validatePassword = async ({ inputPassword, authType }: { inputPassword: string; authType: AuthenticationType }) => {
-  //   const storedPassword = await this.getPassword();
-  //   if (!storedPassword) {
-  //     return false;
-  //   }
-
-  //   if (authType === AuthenticationType.Biometrics) {
-  //     return !!storedPassword;
-  //   } else {
-  //     return inputPassword === storedPassword;
-  //   }
-  // };
-
-  /**
-   * get driver supported biometry type.
-   * @returns BIOMETRY_TYPE types
-   */
   public getSupportedBiometryType = async () => KeyChain.getSupportedBiometryType();
 }
 
