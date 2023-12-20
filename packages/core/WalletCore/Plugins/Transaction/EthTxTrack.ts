@@ -2,11 +2,12 @@ import { observeUnfinishedTxWithAddress, queryDuplicateTx } from '@core/database
 import { Tx } from '@core/database/models/Tx';
 import { Receipt, TxStatus } from '@core/database/models/Tx/type';
 import { RPCResponse, RPCSendFactory } from '@core/utils/send';
-import { of, switchMap, firstValueFrom } from 'rxjs';
+import { of, switchMap, firstValueFrom, startWith } from 'rxjs';
 import { delay } from 'lodash-es';
 import { DETAULT_TX_TRACK_INTERVAL } from '@core/consts/transaction';
 import { ProcessErrorType, processError } from '@core/utils/eth';
 import { observeSelectedAddress } from '@core/database/models/Address/query';
+import { dbRefresh$ } from '@core/database';
 
 type KeepTrackFunction = (delay?: number) => void;
 
@@ -18,8 +19,12 @@ export class EthTxTrack {
   }
 
   private _setup() {
-    observeSelectedAddress()
-      .pipe(switchMap((selectedAddress) => (selectedAddress?.[0] ? observeUnfinishedTxWithAddress(selectedAddress[0].id) : of(null))))
+    dbRefresh$
+      .pipe(
+        startWith([]),
+        switchMap(() => observeSelectedAddress()),
+        switchMap((selectedAddress) => (selectedAddress?.[0] ? observeUnfinishedTxWithAddress(selectedAddress[0].id) : of(null)))
+      )
       .subscribe((txs) => {
         txs?.forEach(async (tx) => {
           if (!this._txMap.has(tx.hash)) {
