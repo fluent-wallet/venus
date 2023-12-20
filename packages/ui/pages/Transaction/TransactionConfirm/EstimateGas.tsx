@@ -16,18 +16,20 @@ const EstimateGas: React.FC<EstimateGasProps> = ({ gasLimit, gasPrice, loading, 
   const { theme } = useTheme();
   return (
     <View className="flex justify-center">
-      <Text style={{ color: theme.colors.textPrimary }} className="text-xl font-bold leading-6">
-        {error ? (
-          <Pressable className="flex flex-row items-center" onPress={retry}>
-            <Text style={{ color: theme.colors.warnErrorPrimary }}>Unable to load</Text>
-            <LoadingIcon width={24} height={24} />
-          </Pressable>
-        ) : loading || !gasLimit || !gasPrice ? (
-          <ActivityIndicator size={24} color={theme.colors.surfaceBrand} />
-        ) : (
-          `${formatUnits(BigInt(gasLimit) * BigInt(gasPrice), DEFAULT_CURRENCY_DECIMALS)} cfx`
-        )}
-      </Text>
+      <Pressable onPress={error ? retry : undefined}>
+        <Text style={{ color: theme.colors.textPrimary }} className="text-xl font-bold leading-6">
+          {error ? (
+            <View className="flex flex-row items-center">
+              <Text style={{ color: theme.colors.warnErrorPrimary }}>Unable to load</Text>
+              <LoadingIcon width={24} height={24} />
+            </View>
+          ) : loading || !gasLimit || !gasPrice ? (
+            <ActivityIndicator size={24} color={theme.colors.surfaceBrand} />
+          ) : (
+            `${formatUnits(BigInt(gasLimit) * BigInt(gasPrice), DEFAULT_CURRENCY_DECIMALS)} cfx`
+          )}
+        </Text>
+      </Pressable>
       <Text style={{ color: theme.colors.textSecondary }} className="text-right text-sm leading-6">
         {/*  price todo */}
       </Text>

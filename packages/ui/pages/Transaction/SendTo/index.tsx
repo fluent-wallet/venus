@@ -27,7 +27,7 @@ const SendTo: React.FC<{ navigation: StackNavigation; route: RouteProp<RootStack
   const currentNetwork = useCurrentNetwork()!;
   const currentAddress = useCurrentAddress();
   const [tx, setTx] = useAtom(transactionAtom);
-  const [value, setValue] = useState(tx.amount ? tx.amount.toString() : '0');
+  const [value, setValue] = useState(tx.amount ? tx.amount.toString() : '1');
   const [invalidInputErr, setInvalidInputErr] = useState({ err: false, msg: '' });
   const [rpcError, setRpcError] = useState({ err: false, msg: '' });
   const [maxBtnLoading, setMaxBtnLoading] = useState(false);
@@ -39,10 +39,24 @@ const SendTo: React.FC<{ navigation: StackNavigation; route: RouteProp<RootStack
 
   const handleChange = (v: string) => {
     setInvalidInputErr({ err: false, msg: '' });
+
+    if (tx.assetType === AssetType.ERC721 || tx.assetType === AssetType.ERC1155) {
+      if (Number(v) < 1) {
+        return setValue('1');
+      } else {
+        return setValue(v.replace(/[^0-9]/g, ''));
+      }
+    }
     setValue(v);
   };
 
   const handleNext = () => {
+    if (tx.assetType === AssetType.ERC721 || tx.assetType === AssetType.ERC1155) {
+      if (Number(value) < 1) {
+        return setInvalidInputErr({ err: true, msg: 'Invalid amount' });
+      }
+    }
+
     const val = Number(value);
     if (Number.isNaN(val) || val === 0) {
       return setInvalidInputErr({ err: true, msg: 'Invalid amount' });
@@ -145,7 +159,7 @@ const SendTo: React.FC<{ navigation: StackNavigation; route: RouteProp<RootStack
             }}
             className="flex flex-row items-center rounded-md px-4 py-2"
           >
-            <TextInput keyboardType={'numeric'} value={value.toString()} onChangeText={handleChange} className="flex-1" />
+            <TextInput keyboardType={'numeric'} value={value} onChangeText={handleChange} className="flex-1" />
             {tx.iconUrl ? (
               <MixinImage resizeMode="center" source={{ uri: tx.iconUrl }} width={24} height={24} fallback={<TokenIconDefault width={24} height={24} />} />
             ) : (

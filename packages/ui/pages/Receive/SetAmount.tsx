@@ -1,6 +1,6 @@
 import { useMemo, useRef, useState } from 'react';
 import { Pressable, SafeAreaView, View, KeyboardAvoidingView, TextInput } from 'react-native';
-import {  Icon } from '@rneui/base';
+import { Icon } from '@rneui/base';
 import { Text, useTheme } from '@rneui/themed';
 import BottomSheet, { BottomSheetFlatList } from '@gorhom/bottom-sheet';
 import { statusBarHeight } from '@utils/deviceInfo';
@@ -30,6 +30,7 @@ const SetAmount: React.FC<NativeStackScreenProps<RootStackList, 'SetAmount'>> = 
   const handleClose = () => {
     if (bottomSheetRef.current) {
       bottomSheetRef.current.close();
+      setSheetOpen((bl) => !bl);
     }
   };
   const handleSelectToken = () => {
@@ -64,6 +65,8 @@ const SetAmount: React.FC<NativeStackScreenProps<RootStackList, 'SetAmount'>> = 
 
   const handleChangeSelectedToken = (v: AssetInfo) => {
     setCurrentToken(v);
+    bottomSheetRef.current?.close();
+    setSheetOpen(false);
   };
 
   const handleContinue = () => {
@@ -140,9 +143,6 @@ const SetAmount: React.FC<NativeStackScreenProps<RootStackList, 'SetAmount'>> = 
 
         <BottomSheet
           index={-1}
-          onChange={(index) => {
-            index === -1 && handleSelectToken();
-          }}
           enablePanDownToClose
           ref={bottomSheetRef}
           snapPoints={snapPoints}

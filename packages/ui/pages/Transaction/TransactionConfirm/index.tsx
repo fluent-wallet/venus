@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { Pressable, SafeAreaView, View, Image, useColorScheme } from 'react-native';
+import { Pressable, SafeAreaView, View, Image, useColorScheme, ScrollView } from 'react-native';
 import { RouteProp, useFocusEffect } from '@react-navigation/native';
 import { Subject, firstValueFrom, scan } from 'rxjs';
 import { useAtom } from 'jotai';
@@ -72,6 +72,7 @@ const TransactionConfirm: React.FC<{
 
           if (error && error.message && error.data) {
             const errorMsg = matchRPCErrorMessage({ message: error.message, data: error.data });
+            setLoading(false);
             return setError(errorMsg);
           }
 
@@ -88,6 +89,7 @@ const TransactionConfirm: React.FC<{
           });
           navigation.navigate(HomeStackName, { screen: WalletStackName });
         } catch (error) {
+          setLoading(false);
           // error
           if (channel) {
             if (error instanceof BSIMTimeoutError) {
@@ -128,7 +130,6 @@ const TransactionConfirm: React.FC<{
             error: false,
           });
         } else {
-          // TODO how error message to user
           setGas({
             loading: false,
             error: true,
@@ -142,7 +143,6 @@ const TransactionConfirm: React.FC<{
       .catch((err) => {
         console.log('getTransactionGasAndGasLimit error', err);
         setGas({ loading: false, error: true });
-        // TODO maybe we need show the error to user
       });
   }, [tx.assetType, tx.contractAddress, tx.to, tx.amount, tx.tokenId, tx.decimals]);
 
@@ -175,107 +175,109 @@ const TransactionConfirm: React.FC<{
       className="flex-1 flex flex-col justify-startpb-7"
       style={{ backgroundColor: theme.colors.normalBackground, paddingTop: statusBarHeight + 48 }}
     >
-      {(error || gas.error) && (
-        <View className="px-6">
-          <Pressable onPress={() => setError('')}>
-            <View className="flex flex-row p-3 items-start border rounded-lg mb-4" style={{ borderColor: theme.colors.warnErrorPrimary }}>
-              <Warning width={16} height={16} />
-              <View className="flex-1 ml-2">
-                <Text className="text-sm " style={{ color: theme.colors.warnErrorPrimary }}>
-                  {error || gas.errorMsg}
-                </Text>
-              </View>
-            </View>
-          </Pressable>
-        </View>
-      )}
-      <View className="px-6">
-        {(tx.assetType === AssetType.ERC721 || tx.assetType === AssetType.ERC1155) && (
-          <View className="flex flex-row p-4 rounded-lg w-full mb-4" style={{ backgroundColor: theme.colors.surfaceCard }}>
-            {tx.tokenImage && <MixinImage source={{ uri: tx.tokenImage }} width={63} height={63} className="mr-4" />}
-            <View className="flex justify-center">
-              <View className="flex flex-row mb-1">
-                <View className="w-6 h-6 overflow-hidden rounded-full mr-2">
-                  {tx.iconUrl ? (
-                    <MixinImage source={{ uri: tx.iconUrl }} width={24} height={24} fallback={<DefaultNFTImage width={24} height={24} />} />
-                  ) : (
-                    <DefaultNFTImage width={24} height={24} />
-                  )}
+      <ScrollView className="flex-1">
+        {(error || gas.error) && (
+          <View className="px-6">
+            <Pressable onPress={() => setError('')}>
+              <View className="flex flex-row p-3 items-start border rounded-lg mb-4" style={{ borderColor: theme.colors.warnErrorPrimary }}>
+                <Warning width={16} height={16} />
+                <View className="flex-1 ml-2">
+                  <Text className="text-sm " style={{ color: theme.colors.warnErrorPrimary }}>
+                    {error || gas.errorMsg}
+                  </Text>
                 </View>
-                <Text style={{ color: theme.colors.textSecondary }} className="leading-normal">
-                  {tx.contractName}
-                </Text>
               </View>
-              <Text style={{ color: theme.colors.textPrimary }} className="leading-normal font-medium">
-                {tx.nftName}
-              </Text>
-            </View>
+            </Pressable>
           </View>
         )}
-
-        <View style={{ backgroundColor: theme.colors.surfaceCard }} className="p-[15px] rounded-md">
-          <Text className="leading-6" style={{ color: theme.colors.textSecondary }}>
-            From
-          </Text>
-          <View className="flex flex-row items-center my-2">
-            <View className="mr-2">
-              <AvatarIcon width={24} height={24} />
+        <View className="px-6">
+          {(tx.assetType === AssetType.ERC721 || tx.assetType === AssetType.ERC1155) && (
+            <View className="flex flex-row p-4 rounded-lg w-full mb-4" style={{ backgroundColor: theme.colors.surfaceCard }}>
+              {tx.tokenImage && <MixinImage source={{ uri: tx.tokenImage }} width={63} height={63} className="mr-4" />}
+              <View className="flex justify-center">
+                <View className="flex flex-row mb-1">
+                  <View className="w-6 h-6 overflow-hidden rounded-full mr-2">
+                    {tx.iconUrl ? (
+                      <MixinImage source={{ uri: tx.iconUrl }} width={24} height={24} fallback={<DefaultNFTImage width={24} height={24} />} />
+                    ) : (
+                      <DefaultNFTImage width={24} height={24} />
+                    )}
+                  </View>
+                  <Text style={{ color: theme.colors.textSecondary }} className="leading-normal">
+                    {tx.contractName}
+                  </Text>
+                </View>
+                <Text style={{ color: theme.colors.textPrimary }} className="leading-normal font-medium">
+                  {tx.nftName}
+                </Text>
+              </View>
             </View>
-            <Text>{shortenAddress(currentAddress.hex)}</Text>
-            <View className="m-1">
-              <CopyAllIcon width={16} height={16} />
-            </View>
-          </View>
-          <Text className="ml-8 leading-6" style={{ color: theme.colors.textSecondary }}>
-            Balance: {tx.assetType === AssetType.ERC20 || tx.assetType === AssetType.Native ? formatValue(tx.balance, tx.decimals) : tx.balance} {tx.symbol}
-          </Text>
+          )}
 
-          <Divider className="my-4" />
-
-          <Text className="leading-6" style={{ color: theme.colors.textSecondary }}>
-            To
-          </Text>
-          <View className="flex flex-row items-center my-2">
-            <View className="mr-2">
-              <AvatarIcon width={24} height={24} />
-            </View>
-            <Text>{shortenAddress(tx.to)}</Text>
-            <View className="m-1">
-              <CopyAllIcon width={16} height={16} />
-            </View>
-          </View>
-        </View>
-
-        <View style={{ backgroundColor: theme.colors.surfaceCard }} className="p-[15px] rounded-md mt-4">
-          <View className="flex flex-row justify-between">
-            <Text className=" leading-6" style={{ color: theme.colors.textSecondary }}>
-              Amount
-            </Text>
-            <View className="flex">
-              <Text style={{ color: theme.colors.textPrimary }} className="text-xl font-bold leading-6">
-                {renderAmount()}
-              </Text>
-              <Text style={{ color: theme.colors.textSecondary }} className="text-right text-sm leading-6">
-                {tx.priceInUSDT ? `≈$${Number(tx.priceInUSDT) * tx.amount}` : ''}
-              </Text>
-            </View>
-          </View>
-
-          <View className="flex flex-row justify-between">
-            <Text className=" eading-6" style={{ color: theme.colors.textSecondary }}>
-              Estimate Gas Cost
-            </Text>
-            <EstimateGas {...gas} retry={getGas} />
-          </View>
-
-          <View className="flex flex-row justify-between">
+          <View style={{ backgroundColor: theme.colors.surfaceCard }} className="p-[15px] rounded-md">
             <Text className="leading-6" style={{ color: theme.colors.textSecondary }}>
-              Network
+              From
             </Text>
-            <Text className="leading-6">{currentNetwork.name}</Text>
+            <View className="flex flex-row items-center my-2">
+              <View className="mr-2">
+                <AvatarIcon width={24} height={24} />
+              </View>
+              <Text>{shortenAddress(currentAddress.hex)}</Text>
+              <View className="m-1">
+                <CopyAllIcon width={16} height={16} />
+              </View>
+            </View>
+            <Text className="ml-8 leading-6" style={{ color: theme.colors.textSecondary }}>
+              Balance: {tx.assetType === AssetType.ERC20 || tx.assetType === AssetType.Native ? formatValue(tx.balance, tx.decimals) : tx.balance} {tx.symbol}
+            </Text>
+
+            <Divider className="my-4" />
+
+            <Text className="leading-6" style={{ color: theme.colors.textSecondary }}>
+              To
+            </Text>
+            <View className="flex flex-row items-center my-2">
+              <View className="mr-2">
+                <AvatarIcon width={24} height={24} />
+              </View>
+              <Text>{shortenAddress(tx.to)}</Text>
+              <View className="m-1">
+                <CopyAllIcon width={16} height={16} />
+              </View>
+            </View>
+          </View>
+
+          <View style={{ backgroundColor: theme.colors.surfaceCard }} className="p-[15px] rounded-md mt-4">
+            <View className="flex flex-row justify-between">
+              <Text className=" leading-6" style={{ color: theme.colors.textSecondary }}>
+                Amount
+              </Text>
+              <View className="flex">
+                <Text style={{ color: theme.colors.textPrimary }} className="text-xl font-bold leading-6">
+                  {renderAmount()}
+                </Text>
+                <Text style={{ color: theme.colors.textSecondary }} className="text-right text-sm leading-6">
+                  {tx.priceInUSDT ? `≈$${(Number(tx.priceInUSDT) * tx.amount).toFixed(4)}` : ''}
+                </Text>
+              </View>
+            </View>
+
+            <View className="flex flex-row justify-between">
+              <Text className=" eading-6" style={{ color: theme.colors.textSecondary }}>
+                Estimate Gas Cost
+              </Text>
+              <EstimateGas {...gas} retry={getGas} />
+            </View>
+
+            <View className="flex flex-row justify-between">
+              <Text className="leading-6" style={{ color: theme.colors.textSecondary }}>
+                Network
+              </Text>
+              <Text className="leading-6">{currentNetwork.name}</Text>
+            </View>
           </View>
         </View>
-      </View>
+      </ScrollView>
       {currentVault?.type === VaultType.BSIM ? (
         <BSIMSendTX onSend={handleSend} state={BSIMTXState} errorMessage={BSIMTxError} />
       ) : (

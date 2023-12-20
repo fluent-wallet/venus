@@ -18,7 +18,7 @@ export interface WalletTransactionType {
   nftName?: string; // 721
 }
 
-export const transactionAtom = atom<WalletTransactionType>({
+const initTransaction: WalletTransactionType = {
   from: '',
   to: '',
   assetType: AssetType.Native,
@@ -26,10 +26,12 @@ export const transactionAtom = atom<WalletTransactionType>({
   decimals: 18,
   symbol: 'CFX',
   amount: 0,
-});
+};
+
+export const transactionAtom = atom<WalletTransactionType>(initTransaction);
 
 export const setTransactionTo = atom(null, (get, set, to: string) => {
-  set(transactionAtom, { ...get(transactionAtom), to });
+  set(transactionAtom, { ...get(transactionAtom), to, amount: 0 });
 });
 
 export const setTransactionAmount = atom(null, (get, set, amount: number) => {

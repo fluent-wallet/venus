@@ -4,7 +4,7 @@ import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import QRCode from 'react-native-qrcode-svg';
 import { Button } from '@rneui/base';
 import { Divider, Text, useTheme } from '@rneui/themed';
-import { useCurrentAddress, useCurrentAddressValue, useCurrentNetwork } from '@core/WalletCore/Plugins/ReactInject';
+import { useCurrentAccount, useCurrentAddress, useCurrentAddressValue, useCurrentNetwork } from '@core/WalletCore/Plugins/ReactInject';
 import { statusBarHeight } from '@utils/deviceInfo';
 import { type RootStackList, SetAmountStackName } from '@router/configs';
 
@@ -24,7 +24,7 @@ const Receive: React.FC<NativeStackScreenProps<RootStackList, 'Receive'>> = ({ n
   const { theme } = useTheme();
 
   const currentAddressValue = useCurrentAddressValue()!;
-
+  const currentAccount = useCurrentAccount();
   const [shareDisabled, setShareDisabled] = useState(true);
   const [setAmountDisabled, setSetAmountDisabled] = useState(false);
 
@@ -87,7 +87,7 @@ const Receive: React.FC<NativeStackScreenProps<RootStackList, 'Receive'>> = ({ n
         <View className="flex">
           <View className="flex flex-row items-center">
             <AvatarIcon width={24} height={24} />
-            <Text className="ml-2 leading-6">Account 1</Text>
+            <Text className="ml-2 leading-6">{currentAccount?.nickname}</Text>
           </View>
           <View className="ml-8 shrink">
             <Text style={{ color: theme.colors.textSecondary }} className="leading-6">
