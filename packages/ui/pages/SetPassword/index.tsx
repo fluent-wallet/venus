@@ -16,8 +16,8 @@ const SetPassword: React.FC<{ navigation: NavigationProp<RootStackList> }> = (pr
   const route = useRoute<RouteProp<RootStackList, typeof SetPasswordStackName>>();
   const { theme } = useTheme();
   const [checked, setChecked] = useState(false);
-  const [password, setPassword] = useState({ pwd: '', error: '' });
-  const [confirmPwd, setConfirmPwd] = useState('');
+  const [password, setPassword] = useState({ pwd: '1111qqqq', error: '' });
+  const [confirmPwd, setConfirmPwd] = useState('1111qqqq');
   const { inAsync: loading, execAsync: createVault } = useInAsync(createVaultWithRouterParams);
   const [alert, setAlert] = useState({
     show: false,
@@ -35,8 +35,8 @@ const SetPassword: React.FC<{ navigation: NavigationProp<RootStackList> }> = (pr
 
   const handleCreatePassword = async () => {
     try {
-      await plugins.Authentication.setPassword({ password: confirmPwd, authType: plugins.Authentication.AuthenticationType.Password });
-      await createVault(route.params);
+      await plugins.Authentication.setPassword({ password: confirmPwd });
+      await createVault(route.params, confirmPwd);
       setAlert({ show: true, type: 'success', message: 'You’ve successfully protected wallet. Remember to keep your Password, it’s your responsibility!' });
     } catch (e) {
       console.log('handleCreatePassword error: ', e);

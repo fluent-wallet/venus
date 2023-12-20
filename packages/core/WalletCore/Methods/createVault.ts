@@ -29,8 +29,8 @@ export class CreateVaultMethod {
     return this.AddAccountMethod.addAccount(...args) as any;
   }
 
-  private async createVaultOfType(params: { type: VaultType.HierarchicalDeterministic; mnemonic: string }): Promise<void>;
-  private async createVaultOfType(params: { type: VaultType.PrivateKey; privateKey: string }): Promise<void>;
+  private async createVaultOfType(params: { type: VaultType.HierarchicalDeterministic; mnemonic: string; password?: string }): Promise<void>;
+  private async createVaultOfType(params: { type: VaultType.PrivateKey; privateKey: string; password?: string }): Promise<void>;
   private async createVaultOfType(params: { type: VaultType.BSIM; accounts: Array<{ index: number; hexAddress: string }> }): Promise<void>;
   private async createVaultOfType(params: { type: VaultType.Hardware; accounts: Array<{ index: number; hexAddress: string }> }): Promise<void>;
   private async createVaultOfType(params: { type: VaultType.PublicAddress; hexAddress: string }): Promise<void>;
@@ -40,19 +40,21 @@ export class CreateVaultMethod {
     privateKey,
     accounts,
     hexAddress,
+    password,
   }: {
     type: Vault['type'];
     mnemonic?: string;
     privateKey?: string;
     accounts?: Array<{ index: number; hexAddress: string }>;
     hexAddress?: string;
+    password?: string;
   }) {
     try {
       const data =
         type === VaultType.HierarchicalDeterministic
-          ? await this.plugins.CryptoTool.encrypt(mnemonic!)
+          ? await this.plugins.CryptoTool.encrypt(mnemonic!, password)
           : type === VaultType.PrivateKey
-          ? await this.plugins.CryptoTool.encrypt(privateKey!)
+          ? await this.plugins.CryptoTool.encrypt(privateKey!, password)
           : type === VaultType.PublicAddress
           ? hexAddress!
           : null;
@@ -93,6 +95,7 @@ export class CreateVaultMethod {
               hidden: false,
               selected: isFirstVault ? true : false,
               ...(hexAddress ? { hexAddress } : null),
+              password,
             },
             true
           ),
@@ -103,56 +106,41 @@ export class CreateVaultMethod {
       });
     } catch (error) {
       console.error('Create vault error: ', error);
+      throw error;
     }
   }
 
-  createHDVault = async (importMnemonic?: string) => {
-    try {
-      const start = performance.now();
-      console.log('create hd vault start');
-      const mnemonic = importMnemonic ?? (await generateMnemonic());
-      await this.createVaultOfType({ type: VaultType.HierarchicalDeterministic, mnemonic });
-      const end = performance.now();
-      console.log(`create hd vault took ${end - start} ms.`);
-    } catch (error) {
-      console.error('create hd vault error: ', error);
-    }
+  createHDVault = async (importMnemonic?: string, password?: string) => {
+    const start = performance.now();
+    console.log('create hd vault start');
+    const mnemonic = importMnemonic ?? (await generateMnemonic());
+    await this.createVaultOfType({ type: VaultType.HierarchicalDeterministic, mnemonic, password });
+    const end = performance.now();
+    console.log(`create hd vault took ${end - start} ms.`);
   };
 
   createBSIMVault = async (accounts: Array<{ index: number; hexAddress: string }>) => {
-    try {
-      const start = performance.now();
-      console.log('create BSIM vault start');
-      await this.createVaultOfType({ type: VaultType.BSIM, accounts });
-      const end = performance.now();
-      console.log(`create BSIM vault a Wallet took ${end - start} ms.`);
-    } catch (error) {
-      console.error('create BSIM vault error: ', error);
-    }
+    const start = performance.now();
+    console.log('create BSIM vault start');
+    await this.createVaultOfType({ type: VaultType.BSIM, accounts });
+    const end = performance.now();
+    console.log(`create BSIM vault a Wallet took ${end - start} ms.`);
   };
 
-  createPrivateKeyVault = async (privateKey: string) => {
-    try {
-      const start = performance.now();
-      console.log('create privateKey vault start');
-      await this.createVaultOfType({ type: VaultType.PrivateKey, privateKey });
-      const end = performance.now();
-      console.log(`create privateKey vault a Wallet took ${end - start} ms.`);
-    } catch (error) {
-      console.error('create privateKey vault error: ', error);
-    }
+  createPrivateKeyVault = async (privateKey: string, password?: string) => {
+    const start = performance.now();
+    console.log('create privateKey vault start');
+    await this.createVaultOfType({ type: VaultType.PrivateKey, privateKey, password });
+    const end = performance.now();
+    console.log(`create privateKey vault a Wallet took ${end - start} ms.`);
   };
 
   createPublicAddressVault = async (hexAddress: string) => {
-    try {
-      const start = performance.now();
-      console.log('create publicAddress vault start');
-      await this.createVaultOfType({ type: VaultType.PublicAddress, hexAddress });
-      const end = performance.now();
-      console.log(`create publicAddress vault a Wallet took ${end - start} ms.`);
-    } catch (error) {
-      console.error('create publicAddress vault error: ', error);
-    }
+    const start = performance.now();
+    console.log('create publicAddress vault start');
+    await this.createVaultOfType({ type: VaultType.PublicAddress, hexAddress });
+    const end = performance.now();
+    console.log(`create publicAddress vault a Wallet took ${end - start} ms.`);
   };
 }
 

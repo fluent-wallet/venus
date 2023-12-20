@@ -8,10 +8,10 @@ const useInAsync = <T extends (params: any) => void | Promise<any> | null | unde
   }, [asyncFunc]);
 
   const [inAsync, setInAsync] = useState(false);
-  const execAsync = useCallback(async (params: any) => {
+  const execAsync = useCallback(async (...params: any) => {
     try {
       setInAsync(true);
-      const res = await refAsyncFunc.current(params);
+      const res = await refAsyncFunc.current(...params);
       setInAsync(false);
       return res;
     } catch (err) {

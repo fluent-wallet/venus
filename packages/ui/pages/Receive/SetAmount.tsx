@@ -1,6 +1,6 @@
 import { useMemo, useRef, useState } from 'react';
 import { Pressable, SafeAreaView, View, KeyboardAvoidingView, TextInput } from 'react-native';
-import { Button, Icon } from '@rneui/base';
+import {  Icon } from '@rneui/base';
 import { Text, useTheme } from '@rneui/themed';
 import BottomSheet, { BottomSheetFlatList } from '@gorhom/bottom-sheet';
 import { statusBarHeight } from '@utils/deviceInfo';

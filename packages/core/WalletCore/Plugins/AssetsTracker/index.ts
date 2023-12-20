@@ -86,7 +86,7 @@ class AssetsTrackerPlugin implements Plugin {
     combineLatest([events.currentNetworkObservable, events.currentAddressObservable])
       .pipe(
         filter((tuple): tuple is [Network, Address] => tuple.every((ele) => !!ele)),
-        debounceTime(200),
+        debounceTime(88),
         distinctUntilChanged(compareNetworkAndAddress)
       )
       .subscribe(([network, address]) => {
@@ -133,7 +133,7 @@ class AssetsTrackerPlugin implements Plugin {
           } catch (_) {
             // console.log()
           }
-        }, 55);
+        }, 60);
       });
   }
 

@@ -1,6 +1,7 @@
 import React, { useEffect, useCallback, useState } from 'react';
 import { View, Image, SafeAreaView } from 'react-native';
 import { RouteProp, useNavigation, useRoute } from '@react-navigation/native';
+import { showMessage, hideMessage } from 'react-native-flash-message';
 import LinearGradient from 'react-native-linear-gradient';
 import Animated, { useSharedValue, useAnimatedStyle, withTiming, withRepeat } from 'react-native-reanimated';
 import { useTheme, Text } from '@rneui/themed';
@@ -48,9 +49,23 @@ const Biometrics = () => {
 
   const navigation = useNavigation<StackNavigation>();
   const route = useRoute<RouteProp<RootStackList, typeof BiometricsStackName>>();
+  
   const { inAsync: loading, execAsync: createVault } = useInAsync(createVaultWithRouterParams);
+
   const handleEnableBiometrics = useCallback(async () => {
     try {
+      const supportedBiometryType = await plugins.Authentication.getSupportedBiometryType();
+      if (supportedBiometryType === null) {
+        showMessage({
+          message: 'Device passcode not enabled',
+          description: 'Please enable your passcode in device settings.',
+          type: 'warning',
+          duration: 3500,
+          statusBarHeight,
+        });
+        return;
+      }
+
       setDisableSetPassword(true);
       await plugins.Authentication.setPassword({ authType: plugins.Authentication.AuthenticationType.Biometrics });
       await createVault(route.params);
@@ -86,7 +101,10 @@ const Biometrics = () => {
         <BaseButton
           disabled={disableSetPassword}
           containerStyle={{ marginTop: 16, marginHorizontal: 16 }}
-          onPress={() => navigation.navigate(SetPasswordStackName, route.params)}
+          onPress={() => {
+            hideMessage();
+            navigation.navigate(SetPasswordStackName, route.params);
+          }}
         >
           Set Password
         </BaseButton>

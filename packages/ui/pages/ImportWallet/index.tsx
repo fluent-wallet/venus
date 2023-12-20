@@ -5,7 +5,6 @@ import { useHeaderHeight } from '@react-navigation/elements';
 import { Mnemonic } from 'ethers';
 import * as secp from '@noble/secp256k1';
 import { Button, Text, useTheme } from '@rneui/themed';
-import plugins from '@core/WalletCore/Plugins';
 import methods from '@core/WalletCore/Methods';
 import { stripHexPrefix } from '@core/utils/base';
 import { StackNavigation, RootStackList, AccountManageStackName, BiometricsStackName, ImportWalletStackName } from '@router/configs';
@@ -24,40 +23,34 @@ const ImportWallet = () => {
     const { type = 'create' } = route.params;
     const value = currentValue.current;
 
-    if (value === '') return;
+    if (!value) return;
     if (secp.utils.isValidPrivateKey(stripHexPrefix(value))) {
       if (type === 'add') {
         const hasSame = await methods.checkHasSameVault(value);
         if (hasSame) {
           setErrorMessage('This private key has been added');
-          return;
+        } else {
+          await createVaultWithRouterParams({ type: 'importPrivateKey', value: stripHexPrefix(value) });
+          navigation.navigate(AccountManageStackName);
         }
-
-        await createVaultWithRouterParams({ type: 'importPrivateKey', value: stripHexPrefix(value) });
-        navigation.navigate(AccountManageStackName);
-        return;
+      } else {
+        navigation.navigate(BiometricsStackName, { type: 'importPrivateKey', value });
       }
-
-      navigation.navigate(BiometricsStackName, { type: 'importPrivateKey', value });
-      return;
-    }
-    if (Mnemonic.isValidMnemonic(value)) {
+    } else if (Mnemonic.isValidMnemonic(value)) {
       if (type === 'add') {
-        const hasSame = !(await checkNoSameVault(await plugins.CryptoTool.encrypt(value)));
+        const hasSame = await methods.checkHasSameVault(value);
         if (hasSame) {
           setErrorMessage('This seed phrase has been added');
-          return;
+        } else {
+          await createVaultWithRouterParams({ type: 'importSeedPhrase', value });
+          navigation.navigate(AccountManageStackName);
         }
-        await createVaultWithRouterParams({ type: 'importSeedPhrase', value });
-        navigation.navigate(AccountManageStackName);
-        return;
+      } else {
+        navigation.navigate(BiometricsStackName, { type: 'importSeedPhrase', value });
       }
-
-      navigation.navigate(BiometricsStackName, { type: 'importSeedPhrase', value });
-      return;
+    } else {
+      setErrorMessage('Invalid seed phrase or private key');
     }
-
-    setErrorMessage('Invalid seed phrase or private key');
   }, []);
 
   const { inAsync, execAsync: handleConfirmInput } = useInAsync(_handleConfirmInput);

@@ -24,17 +24,13 @@ export class CryptoToolPluginClass implements CryptoToolPlugin {
     return password;
   };
 
-  private generateKey = async (salt: string, keyLen = 32): Promise<string> => {
-    // Aes.pbkdf2(await this.getPassword(), salt, 5000, 256)
-    const password = await this.getPassword();
-    const result = crypto.pbkdf2Sync(password, salt, 5000, keyLen, 'sha512');
+  private generateKey = async (salt: string, keyLen = 32, password?: string): Promise<string> => {
+    console.log('generateKey', password)
+    const result = crypto.pbkdf2Sync(password ?? (await this.getPassword()), salt, 5000, keyLen, 'sha512');
     return result.toString('base64');
   };
 
   private encryptWithKey = async (text: string, keyBase64: string): Promise<Pick<EncryptedData, 'cipher' | 'iv'>> => {
-    // const iv = await Aes.randomKey(16);
-    // return Aes.encrypt(text, keyBase64, iv).then((cipher: string) => ({ cipher, iv }));
-
     const iv = crypto.randomBytes(16);
     const cipher = crypto.createCipheriv('aes-256-cbc', Buffer.from(keyBase64, 'base64'), iv);
     let encrypted = cipher.update(text, 'utf8', 'hex');
@@ -47,8 +43,6 @@ export class CryptoToolPluginClass implements CryptoToolPlugin {
   };
 
   private decryptWithKey = (encryptedData: EncryptedData, keyBase64: string): string => {
-    // Aes.decrypt(encryptedData.cipher, key, encryptedData.iv)
-
     const decipher = crypto.createDecipheriv('aes-256-cbc', Buffer.from(keyBase64, 'base64'), Buffer.from(encryptedData.iv, 'hex'));
     let decrypted = decipher.update(encryptedData.cipher, 'hex', 'utf8');
     decrypted += decipher.final('utf8');
@@ -68,9 +62,9 @@ export class CryptoToolPluginClass implements CryptoToolPlugin {
    * @param {object} object - Data object to encrypt
    * @returns - Promise resolving to stringified data
    */
-  public encrypt = async (object: unknown) => {
+  public encrypt = async (object: unknown, password?: string) => {
     const salt = this.generateRandomString(16);
-    const key = await this.generateKey(salt);
+    const key = await this.generateKey(salt, 32, password);
     const result = (await this.encryptWithKey(JSON.stringify(object), key)) as EncryptedData;
     result.salt = salt;
 
@@ -84,9 +78,9 @@ export class CryptoToolPluginClass implements CryptoToolPlugin {
    * @param {string} encryptedString - String to decrypt
    * @returns - Promise resolving to decrypted data object
    */
-  public decrypt = async <T = unknown>(encryptedDataString: string): Promise<T> => {
+  public decrypt = async <T = unknown>(encryptedDataString: string, password?: string): Promise<T> => {
     const encryptedData = JSON.parse(encryptedDataString) as EncryptedData;
-    const key = await this.generateKey(encryptedData.salt);
+    const key = await this.generateKey(encryptedData.salt, 32, password);
     const data = await this.decryptWithKey(encryptedData, key);
     return JSON.parse(data);
   };

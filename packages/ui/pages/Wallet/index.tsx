@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import { View, SafeAreaView, Pressable } from 'react-native';
 import { useNetInfo } from '@react-native-community/netinfo';
 import { Text, useTheme, Tab, TabView } from '@rneui/themed';

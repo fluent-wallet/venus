@@ -7,8 +7,8 @@ export interface Plugin {
 
 export interface CryptoToolPlugin extends Plugin {
   name: 'CryptoTool';
-  encrypt(object: unknown): Promise<string>;
-  decrypt<T = unknown>(encryptedDataString: string): Promise<T>;
+  encrypt(data: unknown, password?: string): Promise<string>;
+  decrypt<T = unknown>(encryptedDataString: string, password?: string): Promise<T>;
 }
 
 @injectable()
