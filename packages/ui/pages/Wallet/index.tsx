@@ -19,29 +19,51 @@ import PullRefresh from '@components/PullRefresh';
 
 const Wallet: React.FC<{ navigation: StackNavigation }> = ({ navigation }) => {
   const { theme } = useTheme();
-  const { isConnected } = useNetInfo();
+  const { isConnected } = useNetInfo(); // init state is null
   const [tabIndex, setTabIndex] = useState(0);
   const currentAccount = useCurrentAccount();
   const currentNetwork = useCurrentNetwork();
   const totalPriceValue = useAssetsTotalPriceValue();
 
+  const renderTabTitle = () => {
+    if (currentNetwork && (currentNetwork.chainId === CFX_ESPACE_MAINNET_CHAINID || currentNetwork.chainId === CFX_ESPACE_TESTNET_CHAINID)) {
+      return (
+        <View className="px-[24px]">
+          <Tab value={tabIndex} onChange={setTabIndex} indicatorStyle={{ backgroundColor: theme.colors.surfaceBrand }}>
+            <Tab.Item title="Tokens" titleStyle={(active) => ({ color: active ? theme.colors.textBrand : theme.colors.textSecondary })} />
+            <Tab.Item title="NFTs" titleStyle={(active) => ({ color: active ? theme.colors.textBrand : theme.colors.textSecondary })} />
+            <Tab.Item title="Activity" titleStyle={(active) => ({ color: active ? theme.colors.textBrand : theme.colors.textSecondary })} />
+          </Tab>
+        </View>
+      );
+    }
+    return (
+      <View className="px-[24px]">
+        <Tab value={tabIndex} onChange={setTabIndex} indicatorStyle={{ backgroundColor: theme.colors.surfaceBrand }}>
+          <Tab.Item title="Tokens" titleStyle={(active) => ({ color: active ? theme.colors.textBrand : theme.colors.textSecondary })} />
+          <Tab.Item title="Activity" titleStyle={(active) => ({ color: active ? theme.colors.textBrand : theme.colors.textSecondary })} />
+        </Tab>
+      </View>
+    );
+  };
+
   return (
     <SafeAreaView className="flex-1 flex flex-col justify-start" style={{ backgroundColor: theme.colors.normalBackground, paddingTop: statusBarHeight + 48 }}>
+      <View className="absolute left-0 right-0 flex justify-center items-center z-50" style={{ top: statusBarHeight + 48 }}>
+        {isConnected !== null && !isConnected && (
+          <View style={{ backgroundColor: theme.colors.textSecondary }} className="rounded-lg p-3 flex flex-row items-center">
+            <WifiOffIcon color={theme.colors.textInvert} width={20} height={20} />
+            <Text className="ml-1" style={{ color: theme.colors.textInvert }}>
+              No Internet Connection
+            </Text>
+          </View>
+        )}
+      </View>
       <PullRefresh
         onRefresh={(f) => {
           setTimeout(f, 1000);
         }}
       >
-        <View className="absolute left-0 right-0 flex justify-center items-center z-50" style={{ top: statusBarHeight + 48 }}>
-          {!isConnected && (
-            <View style={{ backgroundColor: theme.colors.textSecondary }} className="rounded-lg p-3 flex flex-row items-center">
-              <WifiOffIcon color={theme.colors.textInvert} width={20} height={20} />
-              <Text className="ml-1" style={{ color: theme.colors.textInvert }}>
-                No Internet Connection
-              </Text>
-            </View>
-          )}
-        </View>
         <View className="px-[24px]">
           <Text className="mt-[16px] leading-tight text-[16px] text-center" style={{ color: theme.colors.textSecondary }}>
             {currentAccount?.nickname}
@@ -98,17 +120,8 @@ const Wallet: React.FC<{ navigation: StackNavigation }> = ({ navigation }) => {
             </View>
           </View>
         </View>
-
-        <View className="px-[24px]">
-          <Tab value={tabIndex} onChange={setTabIndex} indicatorStyle={{ backgroundColor: theme.colors.surfaceBrand }}>
-            <Tab.Item title="Tokens" titleStyle={(active) => ({ color: active ? theme.colors.textBrand : theme.colors.textSecondary })} />
-            {currentNetwork && (currentNetwork.chainId === CFX_ESPACE_MAINNET_CHAINID || currentNetwork.chainId === CFX_ESPACE_TESTNET_CHAINID) && (
-              <Tab.Item title="NFTs" titleStyle={(active) => ({ color: active ? theme.colors.textBrand : theme.colors.textSecondary })} />
-            )}
-            <Tab.Item title="Activity" titleStyle={(active) => ({ color: active ? theme.colors.textBrand : theme.colors.textSecondary })} />
-          </Tab>
-        </View>
       </PullRefresh>
+      {renderTabTitle()}
       <TabView value={tabIndex} onChange={setTabIndex} animationType="spring">
         <TabView.Item style={{ width: '100%' }}>
           <TokenList />
