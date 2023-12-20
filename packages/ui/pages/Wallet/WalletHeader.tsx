@@ -46,15 +46,16 @@ const HeaderTitle: React.FC<{ backgroundColor: string }> = ({ backgroundColor }:
 };
 
 const SwitchCurrentAddress: React.FC = () => {
+  const { theme } = useTheme();
   const navigation = useNavigation<StackNavigation>();
 
   return (
     <View className="flex flex-row ml-[17px]">
       <Pressable onPress={() => navigation.navigate(AccountSelectStackName)}>
-        <Menu className="w-[24] h-[24]" style={{ marginRight: 18 }} />
+        <Menu color={theme.colors.surfaceBrand} className="w-[24] h-[24]" style={{ marginRight: 18 }} />
       </Pressable>
       <Pressable onPress={() => navigation.navigate(ScanQRCodeStackName, { path: ReceiveAddressStackName })}>
-        <Flip className="w-[24] h-[24]" />
+        <Flip color={theme.colors.surfaceBrand} className="w-[24] h-[24]" />
       </Pressable>
     </View>
   );
