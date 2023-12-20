@@ -504,7 +504,7 @@ PODS:
     - React-jsi (= 0.72.5)
     - React-logger (= 0.72.5)
     - React-perflogger (= 0.72.5)
-  - RNCClipboard (1.13.1):
+  - RNCClipboard (1.13.0):
     - React-Core
   - RNGestureHandler (2.14.0):
     - RCT-Folly (= 2021.07.22.00)
@@ -522,12 +522,12 @@ PODS:
     - React
   - RNSVG (13.14.0):
     - React-Core
-  - RNVectorIcons (10.0.3):
+  - RNVectorIcons (10.0.2):
     - RCT-Folly (= 2021.07.22.00)
     - React-Core
   - simdjson (3.1.0-wmelon1)
   - SocketRocket (0.6.1)
-  - VisionCamera (3.6.17):
+  - VisionCamera (3.6.16):
     - React
     - React-callinvoker
     - React-Core
@@ -809,17 +809,17 @@ SPEC CHECKSUMS:
   React-runtimescheduler: cc32add98c45c5df18436a6a52a7e1f6edec102c
   React-utils: 7a9918a1ffdd39aba67835d42386f592ea3f8e76
   ReactCommon: 91ece8350ebb3dd2be9cef662abd78b6948233c0
-  RNCClipboard: 90e241893de33a2f5962fc34d76ada4576033e49
+  RNCClipboard: 204b94473a99932e314b730a81363e0bf795a60d
   RNGestureHandler: 32a01c29ecc9bb0b5bf7bc0a33547f61b4dc2741
   RNKeychain: a65256b6ca6ba6976132cc4124b238a5b13b3d9c
   RNReanimated: fdbaa9c964bbab7fac50c90862b6cc5f041679b9
   RNScreens: 3c5b9f4a9dcde752466854b6109b79c0e205dad3
   RNScreenshotPrevent: cdfbe213203774c7486c6a2f198af8a4ebe10c47
   RNSVG: d00c8f91c3cbf6d476451313a18f04d220d4f396
-  RNVectorIcons: 64e6a523ac30a3241efa9baf1ffbcc5e76ff747a
+  RNVectorIcons: 23b6e11af4aaf104d169b1b0afa7e5cf96c676ce
   simdjson: e6bfae9ce4bcdc80452d388d593816f1ca2106f3
   SocketRocket: f32cd54efbe0f095c4d7594881e52619cfe80b17
-  VisionCamera: 3cb14dbbf94962e123f56b3f6afe6c6fe5dac955
+  VisionCamera: b236f548d6507923857dade542c7e0a148ed3492
   WatermelonDB: 842d22ba555425aa9f3ce551239a001200c539bc
   Yoga: 86fed2e4d425ee4c6eab3813ba1791101ee153c6
   YogaKit: f782866e155069a2cca2517aafea43200b01fd5a

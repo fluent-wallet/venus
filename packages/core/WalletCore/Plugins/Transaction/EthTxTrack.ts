@@ -50,8 +50,8 @@ export class EthTxTrack {
     await this._updateTx(tx, (tx) => {
       tx.status = TxStatus.SENDING;
     });
-    try {
-      await firstValueFrom(RPCSend({ method: 'eth_sendRawTransaction', params: [tx.raw] }));
+    const { error } = await firstValueFrom(RPCSend<RPCResponse<string>>({ method: 'eth_sendRawTransaction', params: [tx.raw] }));
+    if (!error) {
       await this._updateTx(tx, (tx) => {
         tx.status = TxStatus.PENDING;
         if (!tx.pendingAt) {
@@ -59,11 +59,11 @@ export class EthTxTrack {
         }
       });
       keepTrack();
-    } catch (err) {
+    } else {
       await this._updateTx(tx, (tx) => {
         tx.status = TxStatus.UNSENT;
       });
-      const { errorType, shouldDiscard } = processError(err);
+      const { errorType, shouldDiscard } = processError(error);
       const isDuplicateTx = errorType === ProcessErrorType.duplicateTx;
       const resendNonceTooStale = tx.resendAt && errorType === ProcessErrorType.tooStaleNonce;
       const resendPriceTooLow = tx.resendAt && errorType === ProcessErrorType.replaceUnderpriced;
@@ -93,7 +93,10 @@ export class EthTxTrack {
 
   private async _handleCheckNonce(tx: Tx, blockNumber: string | null | undefined, keepTrack: KeepTrackFunction, RPCSend: ReturnType<typeof RPCSendFactory>) {
     const address = await tx.address;
-    const { result: nonce } = await firstValueFrom(RPCSend<RPCResponse<string>>({ method: 'eth_getTransactionCount', params: [address.hex, blockNumber] }));
+    const { result: nonce, error } = await firstValueFrom(
+      RPCSend<RPCResponse<string>>({ method: 'eth_getTransactionCount', params: [address.hex, blockNumber] })
+    );
+    if (error) throw error;
     const txNonce = (await tx.txPayload).nonce;
     if (nonce && txNonce && BigInt(nonce) > BigInt(txNonce) + 1n) {
       if (tx.skippedChecked) {
@@ -119,9 +122,10 @@ export class EthTxTrack {
   }
 
   private async _handlePendingTx(tx: Tx, keepTrack: KeepTrackFunction, RPCSend: ReturnType<typeof RPCSendFactory>) {
-    const { result: transaction } = await firstValueFrom(
+    const { result: transaction, error } = await firstValueFrom(
       RPCSend<RPCResponse<ETH.eth_getTransactionByHashResponse>>({ method: 'eth_getTransactionByHash', params: [tx.hash] })
     );
+    if (error) throw error;
     if (transaction && transaction.blockHash) {
       // Packaged
       await this._updateTx(tx, (tx) => {
@@ -132,7 +136,8 @@ export class EthTxTrack {
       const skippedChecked = await this._handleCheckNonce(tx, transaction.blockNumber, keepTrack, RPCSend);
       !skippedChecked && keepTrack(0);
     } else {
-      const { result: blockNumber } = await firstValueFrom(RPCSend<RPCResponse<string>>({ method: 'eth_blockNumber' }));
+      const { result: blockNumber, error } = await firstValueFrom(RPCSend<RPCResponse<string>>({ method: 'eth_blockNumber' }));
+      if (error) throw error;
       if (!tx.resendAt && !tx.blockNumber) {
         await this._updateTx(tx, (tx) => {
           tx.status = TxStatus.SENDING;
@@ -149,36 +154,34 @@ export class EthTxTrack {
   }
 
   private async _handlePackagedTxSwitchChain(tx: Tx, keepTrack: KeepTrackFunction, RPCSend: ReturnType<typeof RPCSendFactory>) {
-    try {
-      const { result: transaction } = await firstValueFrom(
-        RPCSend<RPCResponse<ETH.eth_getTransactionByHashResponse>>({ method: 'eth_getTransactionByHash', params: [tx.hash] })
-      );
-      if (!transaction) {
+    const { result: transaction, error } = await firstValueFrom(
+      RPCSend<RPCResponse<ETH.eth_getTransactionByHashResponse>>({ method: 'eth_getTransactionByHash', params: [tx.hash] })
+    );
+    if (error) return;
+    if (!transaction) {
+      await this._updateTx(tx, (tx) => {
+        tx.blockHash = null;
+        tx.status = TxStatus.PENDING;
+        tx.chainSwitched = true;
+      });
+    } else {
+      if (transaction.blockHash !== tx.blockHash) {
         await this._updateTx(tx, (tx) => {
-          tx.blockHash = null;
-          tx.status = TxStatus.PENDING;
+          tx.blockHash = transaction.blockHash;
+          tx.status = TxStatus.PACKAGED;
           tx.chainSwitched = true;
+          tx.skippedChecked = null;
         });
-      } else {
-        if (transaction.blockHash !== tx.blockHash) {
-          await this._updateTx(tx, (tx) => {
-            tx.blockHash = transaction.blockHash;
-            tx.status = TxStatus.PACKAGED;
-            tx.chainSwitched = true;
-            tx.skippedChecked = null;
-          });
-        }
       }
-      keepTrack();
-    } catch (error) {
-      //
     }
+    keepTrack();
   }
 
   private async _handlePackagedTx(tx: Tx, keepTrack: KeepTrackFunction, RPCSend: ReturnType<typeof RPCSendFactory>) {
-    const { result } = await firstValueFrom(
+    const { result, error } = await firstValueFrom(
       RPCSend<RPCResponse<ETH.eth_getTransactionReceiptResponse>>({ method: 'eth_getTransactionReceipt', params: [tx.hash] })
     );
+    if (error) throw error;
     if (!result) {
       keepTrack();
       return;
@@ -196,9 +199,10 @@ export class EthTxTrack {
         gasUsed,
         contractCreated: contractAddress,
       };
-      const { result: block } = await firstValueFrom(
+      const { result: block, error } = await firstValueFrom(
         RPCSend<RPCResponse<ETH.eth_getBlockByHashResponse>>({ method: 'eth_getBlockByHash', params: [blockHash, false] })
       );
+      if (error) throw error;
       await this._updateTx(tx, (tx) => {
         tx.status = TxStatus.EXECUTED;
         tx.receipt = receipt;
@@ -224,38 +228,36 @@ export class EthTxTrack {
   }
 
   private async _handleExecutedTxSwitchChain(tx: Tx, keepTrack: KeepTrackFunction, RPCSend: ReturnType<typeof RPCSendFactory>) {
-    try {
-      const { result } = await firstValueFrom(
-        RPCSend<RPCResponse<ETH.eth_getTransactionReceiptResponse>>({ method: 'eth_getTransactionReceipt', params: [tx.hash] })
-      );
-      if (!result) {
-        await this._updateTx(tx, (tx) => {
-          tx.receipt = null;
-          tx.status = TxStatus.PACKAGED;
-          tx.chainSwitched = true;
-          tx.skippedChecked = null;
-        });
-      } else if (
-        result.blockHash !== tx.receipt?.blockHash ||
-        result.transactionIndex !== tx.receipt?.transactionIndex ||
-        result.blockNumber !== tx.receipt?.blockNumber
-      ) {
-        await this._updateTx(tx, (tx) => {
-          tx.receipt = null;
-          tx.status = TxStatus.PACKAGED;
-          tx.blockHash = result.blockHash;
-          tx.chainSwitched = true;
-          tx.skippedChecked = null;
-        });
-        keepTrack();
-      }
-    } catch (error) {
-      //
+    const { result, error } = await firstValueFrom(
+      RPCSend<RPCResponse<ETH.eth_getTransactionReceiptResponse>>({ method: 'eth_getTransactionReceipt', params: [tx.hash] })
+    );
+    if (error) return;
+    if (!result) {
+      await this._updateTx(tx, (tx) => {
+        tx.receipt = null;
+        tx.status = TxStatus.PACKAGED;
+        tx.chainSwitched = true;
+        tx.skippedChecked = null;
+      });
+    } else if (
+      result.blockHash !== tx.receipt?.blockHash ||
+      result.transactionIndex !== tx.receipt?.transactionIndex ||
+      result.blockNumber !== tx.receipt?.blockNumber
+    ) {
+      await this._updateTx(tx, (tx) => {
+        tx.receipt = null;
+        tx.status = TxStatus.PACKAGED;
+        tx.blockHash = result.blockHash;
+        tx.chainSwitched = true;
+        tx.skippedChecked = null;
+      });
+      keepTrack();
     }
   }
 
   private async _handleExecutedTx(tx: Tx, keepTrack: KeepTrackFunction, RPCSend: ReturnType<typeof RPCSendFactory>) {
-    const { result: currentBlockNumber } = await firstValueFrom(RPCSend<RPCResponse<string>>({ method: 'eth_blockNumber' }));
+    const { result: currentBlockNumber, error } = await firstValueFrom(RPCSend<RPCResponse<string>>({ method: 'eth_blockNumber' }));
+    if (error) throw error;
     if (currentBlockNumber && BigInt(currentBlockNumber) >= BigInt(tx.receipt!.blockNumber!)) {
       // CONFIRMED
       this._txMap.delete(tx.hash);
