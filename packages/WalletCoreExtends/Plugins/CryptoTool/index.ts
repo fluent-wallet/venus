@@ -20,13 +20,15 @@ export class CryptoToolPluginClass implements CryptoToolPlugin {
   public getPassword = async () => {
     if (!this.getPasswordMethod) throw Error('CryptoTool: getPasswordMethod is not set.');
     const password = await this.getPasswordMethod();
-    if (!password) throw Error('CryptoTool: password is not set.');
     return password;
   };
 
   private generateKey = async (salt: string, keyLen = 32, password?: string): Promise<string> => {
-    console.log('generateKey', password)
-    const result = crypto.pbkdf2Sync(password ?? (await this.getPassword()), salt, 5000, keyLen, 'sha512');
+    const pwd = password ?? (await this.getPassword());
+    if (!pwd) {
+      throw new Error('CryptoTool need password from settedMethod or params');
+    }
+    const result = crypto.pbkdf2Sync(pwd, salt, 5000, keyLen, 'sha512');
     return result.toString('base64');
   };
 

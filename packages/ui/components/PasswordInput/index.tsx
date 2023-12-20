@@ -12,17 +12,20 @@ interface Props {
   title: string;
   value: string;
   onChangeText: (v: string) => void;
+  visible?: boolean;
   errorMessage?: string;
+  errorMessagePlaceholder?: boolean;
   successMessage?: string;
-  helperText: string;
+  helperText?: string;
 }
 
 function Password(props: Props) {
   const {
     theme: { colors },
   } = useTheme();
-  const { title, value, onChangeText, helperText, errorMessage = '', successMessage = '' } = props;
-  const [visible, setVisible] = useState(true);
+  const { title, value, onChangeText, helperText, errorMessage = '', successMessage = '', errorMessagePlaceholder = false } = props;
+  const [visible, setVisible] = useState(props?.visible ?? true);
+
   return (
     <View>
       <Text className="text-[20px] font-bold leading-tight my-[15px]">{title}</Text>
@@ -40,27 +43,22 @@ function Password(props: Props) {
         />
       </View>
       <View className="mt-[7px] ">
-        {!errorMessage && !successMessage && (
+        {helperText && !errorMessage && !successMessage && (
           <Text className="leading-tight text-base" style={{ color: colors.textSecondary }}>
             {helperText}
           </Text>
         )}
-        {errorMessage && (
-          <View className="flex flex-row items-center ">
-            <View className="mx-[10px]">
-              <WaringIcon />
-            </View>
-            <Text className="text-base" style={{ color: colors.warnErrorPrimary }}>
-              {errorMessage}
+        {(errorMessage || errorMessagePlaceholder) && (
+          <View className="flex flex-row items-center" style={{ opacity: errorMessage ? 100 : 0 }}>
+            <WaringIcon />
+            <Text className="ml-[10px] text-base" style={{ color: colors.warnErrorPrimary }}>
+              {errorMessage || 'transparent'}
             </Text>
           </View>
         )}
         {successMessage && (
           <View className="flex flex-row items-center">
-            <View className="mx-[10px]">
-              <CheckCircleIcon />
-            </View>
-            <Text className="text-base" style={{ color: colors.warnSuccessPrimary }}>
+            <Text className="ml-[10px] text-base" style={{ color: colors.warnSuccessPrimary }}>
               {successMessage}
             </Text>
           </View>

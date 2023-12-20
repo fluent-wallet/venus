@@ -10,6 +10,7 @@ module.exports = {
         root: ['.'],
         alias: {
           '@core': './packages/core',
+          "@WalletCoreExtends": './packages/WalletCoreExtends',
           '@assets': './packages/ui/assets',
           '@components': './packages/ui/components',
           '@pages': './packages/ui/pages',

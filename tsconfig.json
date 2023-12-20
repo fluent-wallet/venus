@@ -28,6 +28,7 @@
     "baseUrl": ".",
     "paths": {
       "@core/*": ["./packages/core/*"],
+      "@WalletCoreExtends/*": ["./packages/WalletCoreExtends/*"],
       "@assets/*": ["./packages/ui/assets/*"],
       "@utils/*": ["./packages/ui/utils/*"],
       "@modules/*": ["./packages/ui/modules/*"],
