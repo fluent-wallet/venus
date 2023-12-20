@@ -15,26 +15,28 @@ export function createTx(params: TxParams, prepareCreate?: true) {
 
 export const observeTxById = memoize((txId: string) => database.get<Tx>(TableName.Tx).findAndObserve(txId));
 
-export const queryFinishedTxs = () =>
+export const queryFinishedTxsWithAddress = (addressId: string) =>
   database
     .get<Tx>(TableName.Tx)
     .query(
+      Q.where('address_id', addressId),
       Q.where('status', Q.oneOf([TxStatus.FAILED, TxStatus.SKIPPED, TxStatus.CONFIRMED])),
       Q.sortBy('executed_at', Q.desc),
       Q.sortBy('created_at', Q.desc)
     );
 
-export const observeFinishedTxs = () => queryFinishedTxs().observe();
+export const observeFinishedTxWithAddress = (addressId: string) => queryFinishedTxsWithAddress(addressId).observe();
 
-export const queryUnfinishedTx = () =>
+export const queryUnfinishedTxWithAddress = (addressId: string) =>
   database
     .get<Tx>(TableName.Tx)
     .query(
+      Q.where('address_id', addressId),
       Q.where('status', Q.oneOf([TxStatus.UNSENT, TxStatus.SENDING, TxStatus.PENDING, TxStatus.PACKAGED, TxStatus.EXECUTED])),
       Q.sortBy('created_at', Q.desc)
     );
 
-export const observeUnfinishedTx = () => queryUnfinishedTx().observe();
+export const observeUnfinishedTxWithAddress = (addressId: string) => queryUnfinishedTxWithAddress(addressId).observe();
 
 // find tx with
 // 1. same addr
