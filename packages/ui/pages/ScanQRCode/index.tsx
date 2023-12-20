@@ -33,7 +33,6 @@ const ScanQRCode: React.FC<{ navigation: StackNavigation; route: RouteProp<RootS
   const handleCodeScanned = (codes: Code[], frame: CodeScannerFrame) => {
     // there is multiple codes we need set user to select one
     const code = codes[0];
-    console.log('value', code.value);
     if (code && code.value) {
       try {
         const res = parseETHURL(code.value);
@@ -46,8 +45,6 @@ const ScanQRCode: React.FC<{ navigation: StackNavigation; route: RouteProp<RootS
             //  is send 20 token and have value
             if (tokens && tokens.length > 0) {
               const token = tokens.find((t) => t.contractAddress?.toLowerCase() === parameters.address?.toLowerCase());
-              console.log(token, 'token ');
-              console.log(tokens, 'tokens');
               if (token) {
                 setTXTo(target_address);
                 setTXAmount(Number(formatUnits(parameters.uint256, token.decimals)));
@@ -98,7 +95,6 @@ const ScanQRCode: React.FC<{ navigation: StackNavigation; route: RouteProp<RootS
         // todo add error message
         console.log(code.value);
         console.log(error);
-        console.log('????');
       }
     }
   };
@@ -121,16 +117,6 @@ const ScanQRCode: React.FC<{ navigation: StackNavigation; route: RouteProp<RootS
       setShowPermissionModel(true);
     }
   }, [hasPermission]);
-
-  useEffect(() => {
-    // async function checkPermission() {
-    //   if (!hasPermission) {
-    //     const isOk = await requestPermission();
-    //     // Todo show permission dialog in get permission failed
-    //   }
-    // }
-    // checkPermission();
-  }, []);
 
   return (
     <SafeAreaView className="flex-1 flex flex-col justify-start" style={{ backgroundColor: theme.colors.normalBackground, paddingTop: statusBarHeight }}>
