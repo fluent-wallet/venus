@@ -63,11 +63,8 @@ const Wallet: React.FC<{ navigation: StackNavigation }> = ({ navigation }) => {
       <PullRefresh
         onRefresh={(close) => {
           plugins.AssetsTracker.updateCurrentTracker()
-            .then((res) => console.log('update', res))
-            .finally(() => {
-              console.log('close');
-              close();
-            });
+            .catch((err) => console.log(err))
+            .finally(() => close());
         }}
       >
         <View className="px-[24px]">

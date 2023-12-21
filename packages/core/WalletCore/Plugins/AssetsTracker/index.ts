@@ -101,7 +101,7 @@ class AssetsTrackerPluginClass implements Plugin {
         this.currentNetwork = network;
         this.currentAddress = address;
 
-        this.startPolling({ network, address });
+        this.startPolling({ network, address }).catch((err) => console.log(err));
       });
   }
 
