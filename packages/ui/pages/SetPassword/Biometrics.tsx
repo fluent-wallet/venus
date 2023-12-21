@@ -99,9 +99,9 @@ const Biometrics = () => {
           Enable
         </BaseButton>
         <BaseButton
-          disabled={disableSetPassword}
           containerStyle={{ marginTop: 16, marginHorizontal: 16 }}
           onPress={() => {
+            if(disableSetPassword) return;
             hideMessage();
             navigation.navigate(SetPasswordStackName, route.params);
           }}

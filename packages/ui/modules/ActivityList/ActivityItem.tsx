@@ -30,11 +30,11 @@ const ActivityItem: React.FC<{
             <Text style={{ color: status === 'failed' ? theme.colors.textSecondary : theme.colors.textPrimary }}>Send</Text>
             {status === 'pending' && (
               <View className="p-[5px]">
-                <ActivityIndicator color="#4572EC" size={14} />
+                <ActivityIndicator color={theme.colors.textSecondary} size={14} />
               </View>
             )}
-            {status === 'failed' && <AttentionIcon width={24} height={24} />}
-            {status === 'confirmed' && <DoneIcon width={24} height={24} />}
+            {status === 'failed' && <AttentionIcon color={theme.colors.surfaceBrand} width={24} height={24} />}
+            {status === 'confirmed' && <DoneIcon color={theme.colors.surfaceBrand} width={24} height={24} />}
           </View>
           <Text style={{ color: theme.colors.textSecondary }}>To: {shortenAddress(to)}</Text>
         </View>
