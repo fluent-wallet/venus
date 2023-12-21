@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState } from 'react';
 import { View, SafeAreaView, Pressable } from 'react-native';
 import { useNetInfo } from '@react-native-community/netinfo';
 import { Text, useTheme, Tab, TabView } from '@rneui/themed';
@@ -10,6 +10,7 @@ import ActivityList from '@modules/ActivityList';
 import Skeleton from '@components/Skeleton';
 import { useCurrentAccount, useCurrentNetwork, useAssetsTotalPriceValue } from '@core/WalletCore/Plugins/ReactInject';
 import { CFX_ESPACE_MAINNET_CHAINID, CFX_ESPACE_TESTNET_CHAINID } from '@core/consts/network';
+import plugins from '@core/WalletCore/Plugins';
 import SendIcon from '@assets/icons/send.svg';
 import ReceiveIcon from '@assets/icons/receive.svg';
 import BuyIcon from '@assets/icons/buy.svg';
@@ -60,8 +61,13 @@ const Wallet: React.FC<{ navigation: StackNavigation }> = ({ navigation }) => {
         )}
       </View>
       <PullRefresh
-        onRefresh={(f) => {
-          setTimeout(f, 1000);
+        onRefresh={(close) => {
+          plugins.AssetsTracker.updateCurrentTracker()
+            .then((res) => console.log('update', res))
+            .finally(() => {
+              console.log('close');
+              close();
+            });
         }}
       >
         <View className="px-[24px]">

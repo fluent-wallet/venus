@@ -40,8 +40,8 @@ const PullRefresh: React.FC<{ children: React.ReactNode } & PullRefreshProps> = 
         }
       }
     });
-  console.log(height);
-  return (
+
+    return (
     <GestureDetector gesture={panGesture}>
       <View style={containerStyle}>
         <Animated.View style={{ height }}>
