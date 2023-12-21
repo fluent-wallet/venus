@@ -36,37 +36,49 @@ export const truncate = (number: string | number, decimals = 6) => {
   }
 
   const endIndex = dotIndex + decimals + 1;
-  const truncatedString = numberString.substring(0, endIndex);
-
+  let truncatedString = numberString.substring(0, endIndex);
   if (endIndex === numberString.length) {
     return truncatedString;
   }
 
-  if (truncatedString.endsWith('0')) {
-    return truncatedString.slice(0, -1);
+  while (truncatedString.endsWith('0')) {
+    truncatedString = truncatedString.slice(0, -1);
   }
-
-  if (truncatedString.endsWith('.')) {
-    return truncatedString.slice(0, -1);
+  while (truncatedString.endsWith('.')) {
+    truncatedString = truncatedString.slice(0, -1);
   }
-
   return truncatedString;
 };
 
-
-export function numAbbreviation(num: number | string): string {
-  // const carry = 3;
-  // const abbreviations = ['', 'K', 'M', 'B']; // 单位缩写
-  const carry = 7;
-  const abbreviations = ['', 'M']; // 单位缩写
+export function numAbbreviation(num: number | string, options: { truncateLength?: number } = {}): string {
+  const { truncateLength } = options;
+  const carry = 3;
+  const abbreviations = ['', '', 'M', 'B']; // 单位缩写
+  // const carry = 6;
+  // const abbreviations = ['', 'M', 'B']; // 单位缩写
   const numString = typeof num === 'number' ? num.toString() : num;
 
   const floatValue = parseFloat(numString);
   if (Number.isNaN(floatValue)) {
     return '';
   }
-
   const absoluteValue = Math.abs(floatValue);
+  if (absoluteValue === 0) {
+    return '0';
+  }
+  if (truncateLength) {
+    // check is less minimum value
+    const miniValue = 1 / Math.pow(10, truncateLength);
+    if (absoluteValue < miniValue) {
+      return `<${miniValue}`;
+    }
+  }
+
+  if (absoluteValue < Math.pow(10, carry + 2)) {
+    // less than 1_000_000 (1M)
+    return options.truncateLength ? truncate(numString, truncateLength) : numString;
+  }
+
   const sign = floatValue >= 0 ? '' : '-';
 
   let abbreviationIndex = Math.floor(Math.log10(absoluteValue) / carry);
@@ -74,7 +86,7 @@ export function numAbbreviation(num: number | string): string {
 
   const formattedNumber = absoluteValue / Math.pow(10, abbreviationIndex * carry);
 
-  return `${sign}${formattedNumber}${abbreviations[abbreviationIndex]}`;
+  return `${sign}${truncateLength ? truncate(formattedNumber, options.truncateLength) : formattedNumber}${abbreviations[abbreviationIndex]}`;
 }
 
 const ten = new Decimal(10);
@@ -84,6 +96,11 @@ export const convertBalanceToDecimal = (balance: string | number | null | undefi
   return new Decimal(balance).div(decimals <= 24 ? decimalsArray[decimals] : ten.pow(new Decimal(decimals))).toString();
 };
 
-export const balanceFormat = (balance: string | number | null | undefined, decimals = 18) => {
-  return numAbbreviation(trimDecimalZeros(truncate(convertBalanceToDecimal(balance, decimals), 4)));
+interface balanceFormatOptions {
+  decimals?: number; // default 18
+  truncateLength?: number; // default 4
 }
+
+export const balanceFormat = (balance: string | number | null | undefined, { decimals = 18, truncateLength = 4 }: balanceFormatOptions = {}) => {
+  return numAbbreviation(trimDecimalZeros(convertBalanceToDecimal(balance, decimals)), { truncateLength });
+};

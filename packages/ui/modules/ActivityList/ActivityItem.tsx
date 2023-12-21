@@ -7,8 +7,8 @@ import AttentionIcon from '@assets/icons/attention.svg';
 import DoneIcon from '@assets/icons/done.svg';
 import { formatStatus, formatTxData } from '@utils/tx';
 import { StyleProp } from 'react-native';
-import { formatValue } from '@utils/formatValue';
 import { memo } from 'react';
+import { balanceFormat } from '@core/utils/balance';
 
 const ActivityItem: React.FC<{
   onPress?: (item: Tx) => void;
@@ -40,7 +40,7 @@ const ActivityItem: React.FC<{
         </View>
         <View>
           <Text style={{ color: status === 'failed' ? theme.colors.textSecondary : theme.colors.textPrimary }}>
-            - {formatValue(value || '0', decimals)} {asset?.symbol}
+            - {balanceFormat(value || '0', { decimals })} {asset?.symbol}
             {tokenId && <>&nbsp;#{tokenId}</>}
           </Text>
         </View>
