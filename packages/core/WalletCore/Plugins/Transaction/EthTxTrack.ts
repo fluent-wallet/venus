@@ -288,7 +288,7 @@ export class EthTxTrack {
     try {
       const nonce = (await tx.txPayload).nonce;
       const txs = await queryDuplicateTx(tx, nonce!).fetch();
-      txs.forEach(async (_tx) => {
+      txs.forEach((_tx) => {
         this._txMap.delete(_tx.hash);
         this._updateTx(
           _tx,
@@ -315,17 +315,21 @@ export class EthTxTrack {
     const keepTrack = (n = DETAULT_TX_TRACK_INTERVAL) => delay(() => this.trackTx(hash, RPCSend), n);
     try {
       if (tx.status === TxStatus.UNSENT) {
-        this._handleUnsentTx(tx, keepTrack, RPCSend);
+        await this._handleUnsentTx(tx, keepTrack, RPCSend);
       } else if (tx.status === TxStatus.SENDING) {
         // SENDING
       } else if (tx.status === TxStatus.PENDING) {
-        this._handlePendingTx(tx, keepTrack, RPCSend);
+        await this._handlePendingTx(tx, keepTrack, RPCSend);
       } else if (tx.status === TxStatus.PACKAGED) {
-        this._handlePackagedTxSwitchChain(tx, keepTrack, RPCSend);
-        this._handlePackagedTx(tx, keepTrack, RPCSend);
+        await Promise.all([
+          this._handlePackagedTxSwitchChain(tx, keepTrack, RPCSend),
+          this._handlePackagedTx(tx, keepTrack, RPCSend)
+        ]);
       } else if (tx.status === TxStatus.EXECUTED) {
-        this._handleExecutedTxSwitchChain(tx, keepTrack, RPCSend);
-        this._handleExecutedTx(tx, keepTrack, RPCSend);
+        await Promise.all([
+          this._handleExecutedTxSwitchChain(tx, keepTrack, RPCSend),
+          this._handleExecutedTx(tx, keepTrack, RPCSend)
+        ]);
       }
     } catch (error) {
       console.log('rpc error:', error);
