@@ -31,17 +31,16 @@ const PullRefresh: React.FC<{ children: React.ReactNode } & PullRefreshProps> = 
       }
     })
     .onEnd((e) => {
-      if (e.y > MAX_HEIGHT) {
+      if (e.y > MAX_HEIGHT && !isPull.value) {
         height.value = withTiming(HEIGHT);
         isPull.value = true;
+        runOnJS(setSpin)(true);
         if (onFresh) {
-          runOnJS(setSpin)(true);
           runOnJS(onFresh)(refreshCallback);
         }
       }
     });
-
-    return (
+  return (
     <GestureDetector gesture={panGesture}>
       <View style={containerStyle}>
         <Animated.View style={{ height }}>

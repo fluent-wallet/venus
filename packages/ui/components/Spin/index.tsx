@@ -25,23 +25,26 @@ const Spin: React.FC<SpinProps> = ({ color, backgroundColor, spin = true, width 
         },
       ],
     };
-  }, [rotation.value]);
+  }, [rotation.value, spin]);
 
   useEffect(() => {
-    rotation.value = withRepeat(
-      withTiming(360, {
-        duration: 1000,
-        easing: Easing.linear,
-      }),
-      200
-    );
-    return () => cancelAnimation(rotation);
-  }, []);
-
+    if (!spin) {
+      rotation.value = 0;
+    } else {
+      rotation.value = withRepeat(
+        withTiming(360, {
+          duration: 1000,
+          easing: Easing.linear,
+        }),
+        200
+      );
+      return () => cancelAnimation(rotation);
+    }
+  }, [spin, rotation]);
   return (
     <View>
-      <Animated.View style={spin ? animatedStyles : {}}>
-        <Svg width={24} height={24} viewBox="0 0 24 24" fill={backgroundColor || theme.colors.surfaceBrand}>
+      <Animated.View style={animatedStyles}>
+        <Svg width={width} height={height} viewBox="0 0 24 24" fill={backgroundColor || theme.colors.surfaceBrand}>
           <Path
             opacity="0.3"
             d="M24 12C24 18.6274 18.6274 24 12 24C5.37258 24 0 18.6274 0 12C0 5.37258 5.37258 0 12 0C18.6274 0 24 5.37258 24 12ZM3.7418 12C3.7418 16.5609 7.43912 20.2582 12 20.2582C16.5609 20.2582 20.2582 16.5609 20.2582 12C20.2582 7.43912 16.5609 3.7418 12 3.7418C7.43912 3.7418 3.7418 7.43912 3.7418 12Z"
