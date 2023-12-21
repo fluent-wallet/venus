@@ -54,6 +54,10 @@ describe('balance', () => {
   });
 
   test('balanceFormat', () => {
+    expect(balanceFormat('0')).toBe('0');
+    expect(balanceFormat('110_000_000_000_00')).toBe('<0.0001');
+    expect(balanceFormat('10_000_000_000_000_000', { truncateLength: 2 })).toBe('0.01');
+    expect(balanceFormat('10_000_000_000_000_00', { truncateLength: 2 })).toBe('<0.01');
     expect(balanceFormat('110_000_000_000_000')).toBe('0.0001');
     expect(balanceFormat('1_000_000_000_000_000')).toBe('0.001');
     expect(balanceFormat('10_000_000_000_000_000')).toBe('0.01');

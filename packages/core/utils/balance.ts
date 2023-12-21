@@ -52,8 +52,8 @@ export const truncate = (number: string | number, decimals = 6) => {
   return truncatedString;
 };
 
-
 export function numAbbreviation(num: number | string, options: { truncateLength?: number } = {}): string {
+  const { truncateLength } = options;
   const carry = 3;
   const abbreviations = ['', '', 'M', 'B']; // 单位缩写
   // const carry = 6;
@@ -64,11 +64,21 @@ export function numAbbreviation(num: number | string, options: { truncateLength?
   if (Number.isNaN(floatValue)) {
     return '';
   }
-
   const absoluteValue = Math.abs(floatValue);
+  if (absoluteValue === 0) {
+    return '0';
+  }
+  if (truncateLength) {
+    // check is less minimum value
+    const miniValue = 1 / Math.pow(10, truncateLength);
+    if (absoluteValue < miniValue) {
+      return `<${miniValue}`;
+    }
+  }
+
   if (absoluteValue < Math.pow(10, carry + 2)) {
     // less than 1_000_000 (1M)
-    return options.truncateLength ? truncate(numString, options.truncateLength) : numString;
+    return options.truncateLength ? truncate(numString, truncateLength) : numString;
   }
 
   const sign = floatValue >= 0 ? '' : '-';
@@ -78,7 +88,7 @@ export function numAbbreviation(num: number | string, options: { truncateLength?
 
   const formattedNumber = absoluteValue / Math.pow(10, abbreviationIndex * carry);
 
-  return `${sign}${options.truncateLength ? truncate(formattedNumber, options.truncateLength) : formattedNumber}${abbreviations[abbreviationIndex]}`;
+  return `${sign}${truncateLength ? truncate(formattedNumber, options.truncateLength) : formattedNumber}${abbreviations[abbreviationIndex]}`;
 }
 
 const ten = new Decimal(10);
