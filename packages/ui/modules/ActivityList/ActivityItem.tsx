@@ -27,7 +27,9 @@ const ActivityItem: React.FC<{
       <View className={'flex flex-row justify-between w-full'}>
         <View>
           <View className="flex flex-row">
-            <Text style={{ color: status === 'failed' ? theme.colors.textSecondary : theme.colors.textPrimary }}>Send</Text>
+            <Text className="font-medium" style={{ color: status === 'failed' ? theme.colors.textSecondary : theme.colors.textPrimary }}>
+              Send
+            </Text>
             {status === 'pending' && (
               <View className="p-[5px]">
                 <ActivityIndicator color={theme.colors.textSecondary} size={14} />
@@ -39,7 +41,7 @@ const ActivityItem: React.FC<{
           <Text style={{ color: theme.colors.textSecondary }}>To: {shortenAddress(to)}</Text>
         </View>
         <View>
-          <Text style={{ color: status === 'failed' ? theme.colors.textSecondary : theme.colors.textPrimary }}>
+          <Text className="font-medium" style={{ color: status === 'failed' ? theme.colors.textSecondary : theme.colors.textPrimary }}>
             - {balanceFormat(value || '0', { decimals })} {asset?.symbol}
             {tokenId && <>&nbsp;#{tokenId}</>}
           </Text>
