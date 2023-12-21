@@ -42,6 +42,7 @@ class AuthenticationPluginClass implements Plugin {
   public AuthenticationType = AuthenticationType;
   public passwordRequestSubject = new Subject<PasswordRequest>();
   private pwdCache: { password: string; cacheTime: number } | null = null;
+  private getPasswordPromise: Promise<string | null> | null = null;
 
   constructor() {
     const getSettleAuthentication = async () => {
@@ -58,7 +59,8 @@ class AuthenticationPluginClass implements Plugin {
       }
       return null;
     } else if (this.settleAuthenticationType === AuthenticationType.Password) {
-      return await new Promise<string>((_resolve, _reject) => {
+      if (this.getPasswordPromise) return this.getPasswordPromise;
+      this.getPasswordPromise = new Promise<string>((_resolve, _reject) => {
         if (!this.pwdCache || Date.now() - this.pwdCache.cacheTime > 2.5 * 1000) {
           this.passwordRequestSubject.next({
             resolve: (pwd: string) => {
@@ -78,7 +80,10 @@ class AuthenticationPluginClass implements Plugin {
           _resolve(this.pwdCache.password);
           this.pwdCache.cacheTime = Date.now();
         }
+      }).finally(() => {
+        this.getPasswordPromise = null;
       });
+      return this.getPasswordPromise;
     } else {
       throw new Error('Authentication  not set');
     }

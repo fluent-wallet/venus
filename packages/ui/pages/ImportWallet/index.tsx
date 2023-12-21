@@ -20,36 +20,38 @@ const ImportWallet = () => {
   const [errorMessage, setErrorMessage] = useState('');
 
   const _handleConfirmInput = useCallback(async () => {
-    const { type = 'create' } = route.params;
-    const value = currentValue.current;
-
-    if (!value) return;
-    if (secp.utils.isValidPrivateKey(stripHexPrefix(value))) {
-      if (type === 'add') {
-        const hasSame = await methods.checkHasSameVault(value);
-        if (hasSame) {
-          setErrorMessage('This private key has been added');
+    try {
+      const { type = 'create' } = route.params;
+      const value = currentValue.current;
+      if (!value) return;
+      if (secp.utils.isValidPrivateKey(stripHexPrefix(value))) {
+        if (type === 'add') {
+          const hasSame = await methods.checkHasSameVault(value);
+          if (hasSame) {
+            setErrorMessage('This private key has been added');
+          } else {
+            await createVaultWithRouterParams({ type: 'importPrivateKey', value: stripHexPrefix(value) });
+            navigation.navigate(AccountManageStackName);
+          }
         } else {
-          await createVaultWithRouterParams({ type: 'importPrivateKey', value: stripHexPrefix(value) });
-          navigation.navigate(AccountManageStackName);
+          navigation.navigate(BiometricsStackName, { type: 'importPrivateKey', value });
+        }
+      } else if (Mnemonic.isValidMnemonic(value)) {
+        if (type === 'add') {
+          const hasSame = await methods.checkHasSameVault(value);
+          if (hasSame) {
+            setErrorMessage('This seed phrase has been added');
+          } else {
+            await createVaultWithRouterParams({ type: 'importSeedPhrase', value });
+            navigation.navigate(AccountManageStackName);
+          }
+        } else {
+          navigation.navigate(BiometricsStackName, { type: 'importSeedPhrase', value });
         }
       } else {
-        navigation.navigate(BiometricsStackName, { type: 'importPrivateKey', value });
+        setErrorMessage('Invalid seed phrase or private key');
       }
-    } else if (Mnemonic.isValidMnemonic(value)) {
-      if (type === 'add') {
-        const hasSame = await methods.checkHasSameVault(value);
-        if (hasSame) {
-          setErrorMessage('This seed phrase has been added');
-        } else {
-          await createVaultWithRouterParams({ type: 'importSeedPhrase', value });
-          navigation.navigate(AccountManageStackName);
-        }
-      } else {
-        navigation.navigate(BiometricsStackName, { type: 'importSeedPhrase', value });
-      }
-    } else {
-      setErrorMessage('Invalid seed phrase or private key');
+    } catch (_) {
     }
   }, []);
 

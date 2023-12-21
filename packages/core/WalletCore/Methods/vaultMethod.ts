@@ -25,7 +25,6 @@ export class VaultMethod {
   checkHasSameVault = async (data: string) => {
     const vaults = await getEncryptedVault();
     const decryptDatas = await Promise.all(vaults.map((vault) => this.plugins.CryptoTool.decrypt<string>(vault.data!)));
-
     return decryptDatas?.includes(data);
   };
 }
