@@ -280,7 +280,7 @@ const TransactionConfirm: React.FC<{
           </View>
         </View>
       </ScrollView>
-      {currentVault?.type !== VaultType.BSIM ? (
+      {currentVault?.type === VaultType.BSIM ? (
         <BSIMSendTX onSend={handleSend} state={BSIMTXState} errorMessage={BSIMTxError} />
       ) : (
         <View className="flex flex-row items-center mt-auto px-6 mb-6">
