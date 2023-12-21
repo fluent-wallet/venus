@@ -36,19 +36,17 @@ export const truncate = (number: string | number, decimals = 6) => {
   }
 
   const endIndex = dotIndex + decimals + 1;
-  const truncatedString = numberString.substring(0, endIndex);
+  let truncatedString = numberString.substring(0, endIndex);
   if (endIndex === numberString.length) {
     return truncatedString;
   }
 
-  if (truncatedString.endsWith('0')) {
-    return truncatedString.slice(0, -1);
+  while (truncatedString.endsWith('0')) {
+    truncatedString = truncatedString.slice(0, -1);
   }
-
-  if (truncatedString.endsWith('.')) {
-    return truncatedString.slice(0, -1);
+  while (truncatedString.endsWith('.')) {
+    truncatedString = truncatedString.slice(0, -1);
   }
-
   return truncatedString;
 };
 

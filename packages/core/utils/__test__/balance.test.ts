@@ -17,7 +17,9 @@ describe('balance', () => {
   });
 
   test('truncate', () => {
-    expect(truncate('0.0001002', 6)).toBe('0.00010');
+    expect(truncate('0.00010021', 7)).toBe('0.0001002');
+    expect(truncate('0.000100210000', 7)).toBe('0.0001002');
+    expect(truncate('0.0001002', 6)).toBe('0.0001');
     expect(truncate('0.0001002', 4)).toBe('0.0001');
     expect(truncate('0.0001002', 2)).toBe('0');
     expect(truncate('0.0001002', 1)).toBe('0');
