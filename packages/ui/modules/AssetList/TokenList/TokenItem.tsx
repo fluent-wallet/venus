@@ -3,15 +3,15 @@ import { Pressable, View } from 'react-native';
 import { Text, useTheme } from '@rneui/themed';
 import TokenIcon from '@components/TokenIcon';
 import { type AssetInfo } from '@core/WalletCore/Plugins/AssetsTracker/types';
-import { balanceFormat } from '@core/utils/balance';
+import { balanceFormat, numberWithCommas } from '@core/utils/balance';
 
 const TokenItem: React.FC<{
   data: AssetInfo;
   onPress?: (v: AssetInfo) => void;
 }> = ({ onPress, data }) => {
   const { theme } = useTheme();
-  const balance = useMemo(() => balanceFormat(data.balance), [data.balance]);
-  
+  const balance = useMemo(() => numberWithCommas(balanceFormat(data.balance, { decimals: data.decimals })), [data.balance, data.decimals]);
+
   return (
     <Pressable onPress={onPress && data ? () => onPress(data) : undefined}>
       <View className={'flex flex-row  w-full p-3'}>
@@ -26,9 +26,7 @@ const TokenItem: React.FC<{
               </Text>
             </View>
             <View className="ml-2">
-              <Text className="text-base">
-                {data.priceInUSDT ? `$${data.priceInUSDT}`: '--'}
-              </Text>
+              <Text className="text-base">{data.priceInUSDT ? `$${data.priceInUSDT}` : '--'}</Text>
             </View>
           </View>
           <View className="flex-1">

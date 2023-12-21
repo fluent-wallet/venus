@@ -21,6 +21,7 @@ import { RPCResponse, RPCSend } from '@core/utils/send';
 import { firstValueFrom } from 'rxjs';
 import { Button } from '@rneui/base';
 import matchRPCErrorMessage from '@utils/matchRPCErrorMssage';
+import { numberWithCommas } from '@core/utils/balance';
 
 const SendTo: React.FC<{ navigation: StackNavigation; route: RouteProp<RootStackList, typeof SendToStackName> }> = ({ navigation, route }) => {
   const { theme } = useTheme();
@@ -33,7 +34,7 @@ const SendTo: React.FC<{ navigation: StackNavigation; route: RouteProp<RootStack
   const [maxBtnLoading, setMaxBtnLoading] = useState(false);
 
   const accountBalance = useMemo(
-    () => (tx.assetType === AssetType.ERC20 || tx.assetType === AssetType.Native ? formatUnits(tx.balance, tx.decimals) : tx.balance),
+    () => numberWithCommas(tx.assetType === AssetType.ERC20 || tx.assetType === AssetType.Native ? formatUnits(tx.balance, tx.decimals) : tx.balance),
     [tx.assetType, tx.balance, tx.decimals]
   );
 

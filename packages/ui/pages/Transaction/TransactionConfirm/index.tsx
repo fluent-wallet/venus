@@ -22,13 +22,13 @@ import Methods from '@core/WalletCore/Methods';
 import Events from '@core/WalletCore/Events';
 import DefaultNFTImage from '@assets/images/NFT.svg';
 import VaultType from '@core/database/models/Vault/VaultType';
-import { formatValue } from '@utils/formatValue';
 import BSIMSendTX, { BSIM_SIGN_STATUS } from './SendTX';
 import BSIM from 'packages/WalletCoreExtends/Plugins/BSIM';
 import { BSIMTimeoutError, BSIM_ERRORS } from 'packages/WalletCoreExtends/Plugins/BSIM/BSIMSDK';
 import EstimateGas from './EstimateGas';
 import { RPCResponse, RPCSend } from '@core/utils/send';
 import matchRPCErrorMessage from '@utils/matchRPCErrorMssage';
+import { balanceFormat, numberWithCommas } from '@core/utils/balance';
 
 const TransactionConfirm: React.FC<{
   navigation: StackNavigation;
@@ -228,7 +228,9 @@ const TransactionConfirm: React.FC<{
               </View>
             </View>
             <Text className="ml-8 leading-6" style={{ color: theme.colors.textSecondary }}>
-              Balance: {tx.assetType === AssetType.ERC20 || tx.assetType === AssetType.Native ? formatValue(tx.balance, tx.decimals) : tx.balance} {tx.symbol}
+              Balance:{' '}
+              {tx.assetType === AssetType.ERC20 || tx.assetType === AssetType.Native ? balanceFormat(tx.balance, { decimals: tx.decimals }) : tx.balance}{' '}
+              {tx.symbol}
             </Text>
 
             <Divider className="my-4" />

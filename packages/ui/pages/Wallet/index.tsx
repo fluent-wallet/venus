@@ -16,6 +16,7 @@ import BuyIcon from '@assets/icons/buy.svg';
 import MoreIcon from '@assets/icons/more.svg';
 import WifiOffIcon from '@assets/icons/wifi_off.svg';
 import PullRefresh from '@components/PullRefresh';
+import { numberWithCommas } from '@core/utils/balance';
 
 const Wallet: React.FC<{ navigation: StackNavigation }> = ({ navigation }) => {
   const { theme } = useTheme();
@@ -77,7 +78,7 @@ const Wallet: React.FC<{ navigation: StackNavigation }> = ({ navigation }) => {
                 className=" leading-tight text-[48px] text-center font-bold"
                 style={{ color: Number(totalPriceValue) === 0 ? theme.colors.textSecondary : theme.colors.textPrimary }}
               >
-                ${totalPriceValue}
+                ${numberWithCommas(totalPriceValue)}
               </Text>
             )}
           </View>
