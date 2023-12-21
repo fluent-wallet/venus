@@ -16,8 +16,8 @@ const SetPassword: React.FC<{ navigation: NavigationProp<RootStackList> }> = (pr
   const route = useRoute<RouteProp<RootStackList, typeof SetPasswordStackName>>();
   const { theme } = useTheme();
   const [checked, setChecked] = useState(false);
-  const [password, setPassword] = useState({ pwd: '1111qqqq', error: '' });
-  const [confirmPwd, setConfirmPwd] = useState('1111qqqq');
+  const [password, setPassword] = useState({ pwd: '', error: '' });
+  const [confirmPwd, setConfirmPwd] = useState('');
   const { inAsync: loading, execAsync: createVault } = useInAsync(createVaultWithRouterParams);
   const [alert, setAlert] = useState({
     show: false,

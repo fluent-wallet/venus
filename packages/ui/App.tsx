@@ -5,7 +5,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { ThemeProvider } from '@rneui/themed';
 import { useHasVault } from '@core/WalletCore/Plugins/ReactInject';
-import PasswordValidate from '@modules/PasswordValidate';
+import PasswordVerify from '@modules/PasswordVerify';
 import Router from './router';
 import { theme } from './theme';
 import './assets/i18n';
@@ -20,7 +20,7 @@ const App: React.FC = () => {
       <ThemeProvider theme={theme}>
         <SafeAreaProvider>
           {typeof hasVault === 'boolean' && <Router />}
-          {/* <PasswordValidate /> */}
+          <PasswordVerify />
           <FlashMessage position="top" />
         </SafeAreaProvider>
       </ThemeProvider>

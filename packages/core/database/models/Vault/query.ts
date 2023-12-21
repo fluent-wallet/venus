@@ -5,6 +5,7 @@ import { type Vault } from '.';
 import database from '../..';
 import TableName from '../../TableName';
 import { createModel, type ModelFields } from '../../helper/modelHelper';
+import VaultType from './VaultType';
 
 export type Params = Omit<ModelFields<Vault>, 'isGroup' | 'observeAccountGroup'>;
 export function createVault(params: Params, prepareCreate: true): Vault;
@@ -28,3 +29,9 @@ export const observeBSIMCreated = () =>
   (database.get(TableName.Vault).query(Q.where('type', 'BSIM')) as unknown as Query<Vault>).observeCount().pipe(map((count) => count > 0));
 
 export const observeVaultById = memoize((vaultId: string) => database.get(TableName.Vault).findAndObserve(vaultId) as Observable<Vault>);
+
+export const getEncryptedVault = () =>
+  database
+    .get<Vault>(TableName.Vault)
+    .query(Q.where('type', Q.oneOf([VaultType.PrivateKey, VaultType.HierarchicalDeterministic])))
+    .fetch();

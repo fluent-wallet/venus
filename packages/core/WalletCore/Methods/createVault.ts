@@ -95,7 +95,9 @@ export class CreateVaultMethod {
               hidden: false,
               selected: isFirstVault ? true : false,
               ...(hexAddress ? { hexAddress } : null),
-              password,
+              ...(type === VaultType.HierarchicalDeterministic || type === VaultType.PrivateKey
+                ? { vaultData: type === VaultType.HierarchicalDeterministic ? mnemonic : privateKey }
+                : null),
             },
             true
           ),
@@ -105,7 +107,7 @@ export class CreateVaultMethod {
         await database.batch(vault, accountGroup, ...batches.flat().flat());
       });
     } catch (error) {
-      console.error('Create vault error: ', error);
+      console.log('Create vault error: ', error);
       throw error;
     }
   }

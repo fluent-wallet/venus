@@ -1,11 +1,13 @@
-import { observeUnfinishedTx, queryDuplicateTx } from '@core/database/models/Tx/query';
+import { observeUnfinishedTxWithAddress, queryDuplicateTx } from '@core/database/models/Tx/query';
 import { Tx } from '@core/database/models/Tx';
 import { Receipt, TxStatus } from '@core/database/models/Tx/type';
 import { RPCResponse, RPCSendFactory } from '@core/utils/send';
-import { firstValueFrom } from 'rxjs';
+import { of, switchMap, firstValueFrom, startWith } from 'rxjs';
 import { delay } from 'lodash-es';
 import { DETAULT_TX_TRACK_INTERVAL } from '@core/consts/transaction';
 import { ProcessErrorType, processError } from '@core/utils/eth';
+import { observeSelectedAddress } from '@core/database/models/Address/query';
+import { dbRefresh$ } from '@core/database';
 
 type KeepTrackFunction = (delay?: number) => void;
 
@@ -17,22 +19,28 @@ export class EthTxTrack {
   }
 
   private _setup() {
-    observeUnfinishedTx().subscribe((txs) => {
-      txs.forEach(async (tx) => {
-        if (!this._txMap.has(tx.hash)) {
-          console.log('start track:', tx.hash);
-          this._txMap.set(tx.hash, tx);
-          try {
-            const address = await tx.address;
-            const network = await address.network;
-            const RPCSend = RPCSendFactory(network.endpoint);
-            this.trackTx(tx.hash, RPCSend);
-          } catch (error) {
-            console.error('track tx error:', error);
+    dbRefresh$
+      .pipe(
+        startWith([]),
+        switchMap(() => observeSelectedAddress()),
+        switchMap((selectedAddress) => (selectedAddress?.[0] ? observeUnfinishedTxWithAddress(selectedAddress[0].id) : of(null)))
+      )
+      .subscribe((txs) => {
+        txs?.forEach(async (tx) => {
+          if (!this._txMap.has(tx.hash)) {
+            console.log('start track:', tx.hash);
+            this._txMap.set(tx.hash, tx);
+            try {
+              const address = await tx.address;
+              const network = await address.network;
+              const RPCSend = RPCSendFactory(network.endpoint);
+              this.trackTx(tx.hash, RPCSend);
+            } catch (error) {
+              console.error('track tx error:', error);
+            }
           }
-        }
+        });
       });
-    });
   }
 
   private async _updateTx(tx: Tx, updater: (_: Tx) => void, force = false) {
@@ -299,6 +307,7 @@ export class EthTxTrack {
 
   async trackTx(hash: string, RPCSend: ReturnType<typeof RPCSendFactory>) {
     const tx = this._txMap.get(hash);
+    console.log('tx status', tx?.status);
     if (!tx) {
       console.log('tx already finished:', hash);
       return;
@@ -319,7 +328,7 @@ export class EthTxTrack {
         this._handleExecutedTx(tx, keepTrack, RPCSend);
       }
     } catch (error) {
-      console.log(error);
+      console.log('rpc error:', error);
       keepTrack();
     }
   }

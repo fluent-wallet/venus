@@ -52,10 +52,6 @@ export const truncate = (number: string | number, decimals = 6) => {
   return truncatedString;
 };
 
-export const addZeroToDay = (x: number | string | undefined) => {
-  if (String(x).length == 1) return '0' + x;
-  return x + '';
-};
 
 export function numAbbreviation(num: number | string, options: { truncateLength?: number } = {}): string {
   const carry = 3;

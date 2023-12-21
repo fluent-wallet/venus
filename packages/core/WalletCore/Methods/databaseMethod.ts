@@ -60,7 +60,6 @@ import {
   DEFAULT_CURRENCY_DECIMALS,
 } from '../../consts/network';
 
-
 const HD_PATH_ARR = [
   { name: 'cfx-default', value: DEFAULT_CFX_HDPATH },
   { name: 'eth-default', value: DEFAULT_ETH_HDPATH },
@@ -234,7 +233,7 @@ export class DatabaseMethod {
       if ((await database.get(TableName.HdPath).query().fetchCount()) !== 0) {
         return true;
       }
-      
+
       await database.write(async () => {
         const hdPaths = HD_PATH_ARR.map((params) => createHdPath(params, true));
         const networks = await Promise.all(
@@ -273,6 +272,7 @@ export class DatabaseMethod {
         TableName.Permission,
         TableName.Request,
       ]);
+      await database.localStorage.remove('SettleAuthentication');
       dbRefresh$.next(null);
     } catch (error) {
       console.error('Clear account data error', error);
@@ -285,6 +285,7 @@ export class DatabaseMethod {
     try {
       await database.write(async () => {
         await database.unsafeResetDatabase();
+        await database.localStorage.remove('SettleAuthentication');
       });
       if (this.initDatabase) {
         await this.initDatabase();

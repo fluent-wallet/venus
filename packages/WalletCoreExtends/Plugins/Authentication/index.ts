@@ -1,8 +1,9 @@
 import * as KeyChain from 'react-native-keychain';
-import { atom } from 'jotai';
+import { Subject } from 'rxjs';
 import CryptoToolPlugin, { CryptoToolPluginClass } from '../CryptoTool';
-import { type Plugin } from '@core/WalletCore/Plugins';
+import plugins, { type Plugin } from '@core/WalletCore/Plugins';
 import database from '@core/database';
+import { getEncryptedVault } from '@core/database/models/Vault/query';
 
 declare module '@core/WalletCore/Plugins' {
   interface Plugins {
@@ -21,6 +22,11 @@ export enum AuthenticationType {
   Biometrics = 'Biometrics',
   Password = 'Password',
 }
+export interface PasswordRequest {
+  resolve: (value: string) => void;
+  reject: (reason?: any) => void;
+  verify: (password: string) => Promise<boolean>;
+}
 
 /**
  * Unlike the default exported authCryptoTool, the authCryptoTool here requires an unexposed key to store the password itself.
@@ -28,11 +34,14 @@ export enum AuthenticationType {
  */
 const authCryptoTool = new CryptoToolPluginClass();
 authCryptoTool.setGetPasswordMethod(() => 'PASSWORD_CRYPTO_KEY');
+
 class AuthenticationPluginClass implements Plugin {
   name = 'Authentication' as const;
 
   private settleAuthenticationType: AuthenticationType | null = null;
   public AuthenticationType = AuthenticationType;
+  public passwordRequestSubject = new Subject<PasswordRequest>();
+  private pwdCache: { password: string; cacheTime: number } | null = null;
 
   constructor() {
     const getSettleAuthentication = async () => {
@@ -49,7 +58,27 @@ class AuthenticationPluginClass implements Plugin {
       }
       return null;
     } else if (this.settleAuthenticationType === AuthenticationType.Password) {
-      return '';
+      return await new Promise<string>((_resolve, _reject) => {
+        if (!this.pwdCache || Date.now() - this.pwdCache.cacheTime > 2.5 * 1000) {
+          this.passwordRequestSubject.next({
+            resolve: (pwd: string) => {
+              this.pwdCache = {
+                cacheTime: Date.now(),
+                password: pwd,
+              };
+              _resolve(pwd);
+            },
+            reject: () => {
+              this.pwdCache = null;
+              _reject();
+            },
+            verify: this.verifyPassword,
+          });
+        } else {
+          _resolve(this.pwdCache.password);
+          this.pwdCache.cacheTime = Date.now();
+        }
+      });
     } else {
       throw new Error('Authentication  not set');
     }
@@ -81,6 +110,21 @@ class AuthenticationPluginClass implements Plugin {
   };
 
   public getSupportedBiometryType = async () => KeyChain.getSupportedBiometryType();
+
+  public verifyPassword = async (password: string) => {
+    const vaults = await getEncryptedVault();
+    if (!vaults?.length) {
+      throw new Error('Wallet must have at least one pk or hd vault in Password AuthenticationType');
+    }
+    try {
+      const vaultData = vaults[0].data!;
+      const res = await plugins.CryptoTool.decrypt(vaultData, password);
+      if (!res) return false;
+      return true;
+    } catch (err) {
+      return false;
+    }
+  };
 }
 
 const AuthenticationPlugin = new AuthenticationPluginClass();

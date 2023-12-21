@@ -1,11 +1,8 @@
-import { Q } from '@nozbe/watermelondb';
 import { injectable, inject } from 'inversify';
 import { Plugins } from '../Plugins';
-
 import { type Vault } from '../../database/models/Vault';
-import VaultType from '../../database/models/Vault/VaultType';
+import { getEncryptedVault } from '../../database/models/Vault/query';
 import database from '../../database';
-import TableName from '../../database/TableName';
 
 @injectable()
 export class VaultMethod {
@@ -26,10 +23,7 @@ export class VaultMethod {
   }
 
   checkHasSameVault = async (data: string) => {
-    const vaults = await database
-      .get<Vault>(TableName.Vault)
-      .query(Q.where('type', Q.oneOf([VaultType.PrivateKey, VaultType.HierarchicalDeterministic])))
-      .fetch();
+    const vaults = await getEncryptedVault();
     const decryptDatas = await Promise.all(vaults.map((vault) => this.plugins.CryptoTool.decrypt<string>(vault.data!)));
 
     return decryptDatas?.includes(data);
