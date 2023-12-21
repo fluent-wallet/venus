@@ -57,7 +57,7 @@ const SendReceiver: React.FC<{ navigation: StackNavigation; route: RouteProp<Roo
               placeholderTextColor={theme.colors.textSecondary}
             />
             <Pressable onPress={() => navigation.navigate(ScanQRCodeStackName, { path: ReceiveAddressStackName })}>
-              <Flip width={20} height={20} />
+              <Flip color={theme.colors.surfaceBrand} width={20} height={20} />
             </Pressable>
           </View>
           <Divider className="my-4" />
