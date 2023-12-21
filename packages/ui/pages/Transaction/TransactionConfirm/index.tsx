@@ -193,7 +193,7 @@ const TransactionConfirm: React.FC<{
         <View className="px-6">
           {(tx.assetType === AssetType.ERC721 || tx.assetType === AssetType.ERC1155) && (
             <View className="flex flex-row p-4 rounded-lg w-full mb-4" style={{ backgroundColor: theme.colors.surfaceCard }}>
-              {tx.tokenImage && <MixinImage source={{ uri: tx.tokenImage }} width={63} height={63} className="mr-4" />}
+              {tx.tokenImage && <MixinImage source={{ uri: tx.tokenImage }} width={63} height={63} className="mr-4 rounded" />}
               <View className="flex justify-center">
                 <View className="flex flex-row mb-1">
                   <View className="w-6 h-6 overflow-hidden rounded-full mr-2">
@@ -249,7 +249,7 @@ const TransactionConfirm: React.FC<{
             </View>
           </View>
 
-          <View style={{ backgroundColor: theme.colors.surfaceCard }} className="p-[15px] rounded-md mt-4">
+          <View style={{ backgroundColor: theme.colors.surfaceCard }} className="p-[15px] rounded-md mt-4 mb-7">
             <View className="flex flex-row justify-between">
               <Text className=" leading-6" style={{ color: theme.colors.textSecondary }}>
                 Amount
@@ -280,7 +280,7 @@ const TransactionConfirm: React.FC<{
           </View>
         </View>
       </ScrollView>
-      {currentVault?.type === VaultType.BSIM ? (
+      {currentVault?.type !== VaultType.BSIM ? (
         <BSIMSendTX onSend={handleSend} state={BSIMTXState} errorMessage={BSIMTxError} />
       ) : (
         <View className="flex flex-row items-center mt-auto px-6 mb-6">

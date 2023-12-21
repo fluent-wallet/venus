@@ -39,16 +39,17 @@ const Assets: React.FC<{ navigation: StackNavigation; route: RouteProp<RootStack
   const handleSelectNFTItem = (nft: NFTWithDetail) => {
     const { type, symbol, decimals, contractAddress, icon, name } = nft;
     const { amount: nftBalance, name: nftName, tokenId: nftTokenId, icon: nftIcon } = nft.detail;
+    console.log(nft)
     setSendNFTTransaction({
       assetType: type,
       symbol: symbol,
       balance: nftBalance,
       contractAddress: contractAddress,
       tokenId: nftTokenId,
-      tokenImage: icon ?? undefined,
+      tokenImage: nftIcon ?? undefined,
       contractName: name,
       nftName: nftName,
-      iconUrl: nftIcon ?? undefined,
+      iconUrl: icon ?? undefined,
       decimals: decimals || 0,
     });
     if (nft.type === AssetType.ERC1155 && Number(nftBalance || 0) > 1) {

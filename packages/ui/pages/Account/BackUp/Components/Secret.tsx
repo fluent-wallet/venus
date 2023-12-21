@@ -1,12 +1,16 @@
 import { useState } from 'react';
-import { View, useColorScheme } from 'react-native';
+import { View, useColorScheme, ImageBackground, Image } from 'react-native';
 import QRCode from 'react-native-qrcode-svg';
 import Clipboard from '@react-native-clipboard/clipboard';
 import clsx from 'clsx';
 import { Icon, Text, useTheme, Tooltip } from '@rneui/themed';
 import { BaseButton } from '@components/Button';
+import PKMask from '@assets/images/privateKeyMask.webp';
+import SeedMask from '@assets/images/seedPhraseMask.webp';
 
 const emptyString = '           ';
+const PrivateKeyMask = Image.resolveAssetSource(PKMask).uri;
+const SeedPhraseMask = Image.resolveAssetSource(SeedMask).uri;
 
 const Secret = ({ backupType, getSecretData }: { backupType: 'Seed Phrase' | 'Private Key'; getSecretData: () => Promise<string> }) => {
   const { theme } = useTheme();
@@ -55,7 +59,8 @@ const Secret = ({ backupType, getSecretData }: { backupType: 'Seed Phrase' | 'Pr
         )}
 
         {!isShow && (
-          <View
+          <ImageBackground
+            source={{ uri: backupType === 'Private Key' ? PrivateKeyMask : SeedPhraseMask }}
             className="absolute top-0 right-0 bottom-0 left-0 flex justify-center items-center"
             style={{ backgroundColor: colorScheme === 'dark' ? 'rgba(23, 23, 23, 1)' : 'rgba(255, 255, 255,1)' }}
           >
@@ -69,7 +74,7 @@ const Secret = ({ backupType, getSecretData }: { backupType: 'Seed Phrase' | 'Pr
                 </Text>
               </BaseButton>
             </View>
-          </View>
+          </ImageBackground>
         )}
       </View>
 

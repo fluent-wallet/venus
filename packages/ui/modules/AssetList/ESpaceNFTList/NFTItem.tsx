@@ -125,12 +125,12 @@ const NFTItem: React.FC<{
                   <View style={{ backgroundColor: theme.colors.surfaceCard }} className="p-3 mb-3 rounded-md w-full">
                     {detail.amount && data.type === AssetType.ERC1155 && (
                       <View className="absolute top-4 right-4 z-10 px-2 rounded-full" style={{ backgroundColor: theme.colors.surfaceCard }}>
-                        <Text style={{ color: theme.colors.textPrimary }}>x{detail.amount}</Text>
+                        <Text className='text-[10px]' style={{ color: theme.colors.textPrimary }}>x{detail.amount}</Text>
                       </View>
                     )}
                     <View className="flex items-center w-full h-36 overflow-hidden">
                       {detail.icon ? (
-                        <MixinImage source={{ uri: detail.icon }} fallback={<DefaultNFTImage />} className="w-full h-full" />
+                        <MixinImage source={{ uri: detail.icon }} fallback={<DefaultNFTImage />} className="w-full h-full rounded-lg" />
                       ) : (
                         <DefaultNFTImage />
                       )}

@@ -28,7 +28,7 @@ const SendTo: React.FC<{ navigation: StackNavigation; route: RouteProp<RootStack
   const currentNetwork = useCurrentNetwork()!;
   const currentAddress = useCurrentAddress();
   const [tx, setTx] = useAtom(transactionAtom);
-  const [value, setValue] = useState(tx.amount ? tx.amount.toString() : '1');
+  const [value, setValue] = useState(tx.amount ? tx.amount.toString() : '');
   const [invalidInputErr, setInvalidInputErr] = useState({ err: false, msg: '' });
   const [rpcError, setRpcError] = useState({ err: false, msg: '' });
   const [maxBtnLoading, setMaxBtnLoading] = useState(false);
@@ -42,11 +42,7 @@ const SendTo: React.FC<{ navigation: StackNavigation; route: RouteProp<RootStack
     setInvalidInputErr({ err: false, msg: '' });
 
     if (tx.assetType === AssetType.ERC721 || tx.assetType === AssetType.ERC1155) {
-      if (Number(v) < 1) {
-        return setValue('1');
-      } else {
-        return setValue(v.replace(/[^0-9]/g, ''));
-      }
+      return setValue(v.replace(/[^0-9]/g, ''));
     }
     setValue(v);
   };
@@ -118,6 +114,8 @@ const SendTo: React.FC<{ navigation: StackNavigation; route: RouteProp<RootStack
     setMaxBtnLoading(false);
   };
 
+  const isNFT = tx.assetType === AssetType.ERC721 || tx.assetType === AssetType.ERC1155;
+
   return (
     <SafeAreaView
       className="flex-1 flex flex-col justify-start px-[24px] pb-7"
@@ -160,9 +158,15 @@ const SendTo: React.FC<{ navigation: StackNavigation; route: RouteProp<RootStack
             }}
             className="flex flex-row items-center rounded-md px-4 py-2"
           >
-            <TextInput keyboardType={'numeric'} value={value} onChangeText={handleChange} className="flex-1" />
+            <TextInput keyboardType={'numeric'} value={value} onChangeText={handleChange} className="flex-1" autoFocus />
             {tx.iconUrl ? (
-              <MixinImage resizeMode="center" source={{ uri: tx.iconUrl }} width={24} height={24} fallback={<TokenIconDefault width={24} height={24} />} />
+              <MixinImage
+                resizeMode="center"
+                source={{ uri: isNFT ? tx.tokenImage : tx.iconUrl }}
+                width={24}
+                height={24}
+                fallback={<TokenIconDefault width={24} height={24} />}
+              />
             ) : (
               <TokenIconDefault width={24} height={24} />
             )}
