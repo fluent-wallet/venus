@@ -32,10 +32,10 @@ const ActivityItem: React.FC<{
             </Text>
             {status === 'pending' && (
               <View className="p-[5px]">
-                <ActivityIndicator color={theme.colors.textSecondary} size={14} />
+                <ActivityIndicator color={theme.colors.surfaceBrand} size={14} />
               </View>
             )}
-            {status === 'failed' && <AttentionIcon color={theme.colors.surfaceBrand} width={24} height={24} />}
+            {status === 'failed' && <AttentionIcon color={theme.colors.textSecondary} width={24} height={24} />}
             {status === 'confirmed' && <DoneIcon color={theme.colors.surfaceBrand} width={24} height={24} />}
           </View>
           <Text style={{ color: theme.colors.textSecondary }}>To: {shortenAddress(to)}</Text>
