@@ -122,7 +122,7 @@ const theme = createTheme({
       },
       wrapperStyle: {
         backgroundColor: theme.colors.surfaceCard,
-        padding: 16,
+        padding: 11,
       },
     }),
     CardDivider: (_, theme) => ({

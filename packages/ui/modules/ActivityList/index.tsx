@@ -51,39 +51,42 @@ const ActivityList: React.FC<{ onPress?: (v: Tx) => void }> = memo(({ onPress })
 
   return (
     <ScrollView>
-      <View className="pt-[15px] pb-[25px] px-[25px]">
+      <View className="pt-[15px] pb-[25px] px-[25px] flex gap-y-[15px]">
         {!unfinishedTxs?.length && !finishedTxsByDay.size && <Text>No Data</Text>}
         {!!unfinishedTxs?.length && (
-          <View className="mb-[15px]">
-            <Card>
-              <View className="flex flex-col items-start gap-y-[25px]">
-                {unfinishedTxs.map((item) => (
-                  <ActivityItem key={item.id} tx={item} onPress={handleSelect} />
-                ))}
-              </View>
+          <View>
+            <Card wrapperStyle={{paddingLeft: 0, paddingRight: 0}}>
+              {unfinishedTxs.map((item, index) => (
+                <View key={item.id}>
+                  {index !== 0 && <Card.Divider className="my-[15px] opacity-[0.3]" />}
+                  <ActivityItem className='mx-[11px]' tx={item} onPress={handleSelect} />
+                </View>
+              ))}
             </Card>
           </View>
         )}
-        {!!finishedTxsByDay.size && (
-          <Card>
-            {days.map((day, index) => {
-              const date = formatDate(day);
-              return (
-                <View key={day}>
-                  {index !== 0 && <Card.Divider className="my-[15px]" />}
-                  <Text className="mb-[7px]" style={{ color: theme.colors.textSecondary }}>
-                    {MONTH_TXT[date.month]} {date.day}, {date.year}
-                  </Text>
-                  <View className="flex flex-col items-start gap-y-[25px]">
-                    {finishedTxsByDay.get(day)!.map((item) => (
-                      <ActivityItem key={item.id} tx={item} onPress={handleSelect} />
-                    ))}
+        {days.map((day) => {
+          const date = formatDate(day);
+          return (
+            <View key={day}>
+              <Card wrapperStyle={{paddingLeft: 0, paddingRight: 0}}>
+                <View className='mb-[7px] flex items-start mt-[-11px]'>
+                  <View className="rounded-br-[5px] px-[11px] py-[3px]" style={{ backgroundColor: theme.colors.surfaceThird }}>
+                    <Text className='text-[14px]' style={{ color: theme.colors.textBrand }}>
+                      {MONTH_TXT[date.month]} {date.day}, {date.year}
+                    </Text>
                   </View>
                 </View>
-              );
-            })}
-          </Card>
-        )}
+                {finishedTxsByDay.get(day)!.map((item, index) => (
+                  <View key={item.id}>
+                    {index !== 0 && <Card.Divider className="my-[15px] opacity-[0.3]" />}
+                    <ActivityItem className='mx-[11px]' tx={item} onPress={handleSelect} />
+                  </View>
+                ))}
+              </Card>
+            </View>
+          );
+        })}
       </View>
     </ScrollView>
   );
