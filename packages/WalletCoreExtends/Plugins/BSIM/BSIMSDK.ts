@@ -66,7 +66,7 @@ export enum CoinTypes {
 }
 
 export const BSIM_ERRORS: Record<string, string> = {
-  default: "Execution failed, unknown error.",
+  default: 'Execution failed, unknown error.',
   A000: 'Execution failed, unknown error. Code: A000',
   '6E00': 'Failed to call BSIM. Error code: 6E00',
   '6D00': 'Failed to call BSIM. Error code: 6D00',
@@ -92,10 +92,22 @@ export const BSIM_ERRORS: Record<string, string> = {
   '63CA': 'Authentication failed, 10 attempt remaining.',
 };
 
-export class BSIMTimeoutError extends Error {
-  constructor(message: string) {
+export const BSIM_SUPPORT_ACCOUNT_LIMIT = 127; // by now bism only support 127 accounts;
+
+export class BSIMError extends Error {
+  code: string;
+  constructor(code: string, message: string) {
     super(message);
+    this.name = 'BSIMError';
+    this.code = code;
+  }
+}
+
+export class BSIMErrorEndTimeout extends BSIMError {
+  constructor(code: string, message: string) {
+    super(code, message);
     this.name = 'TimeoutError';
+    this.code = code;
   }
 }
 

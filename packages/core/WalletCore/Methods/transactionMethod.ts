@@ -16,7 +16,7 @@ import { Signature } from 'ethers';
 import { Wallet } from 'ethers';
 import { JsonRpcProvider } from 'ethers';
 import { GetDecryptedVaultDataMethod } from './getDecryptedVaultData';
-import { BSIMTimeoutError } from 'packages/WalletCoreExtends/Plugins/BSIM/BSIMSDK';
+import { BSIMErrorEndTimeout } from 'packages/WalletCoreExtends/Plugins/BSIM/BSIMSDK';
 
 @injectable()
 export class TransactionMethod {
@@ -81,15 +81,17 @@ export class TransactionMethod {
       await BSIM.verifyBPIN();
 
       let errorMsg = '';
+      let errorCode = '';
       // retrieve the R S V of the transaction through a polling mechanism
       const res = await firstValueFrom(
         defer(() => from(BSIM.signMessage(hash, CoinTypes.CONFLUX, index))).pipe(
-          catchError((err: Error) => {
+          catchError((err: { code: string; message: string }) => {
             errorMsg = err.message;
+            errorCode = err.code;
             return throwError(() => err);
           }),
           retry({ delay: 1000 }),
-          timeout({ each: 30 * 1000, with: () => throwError(() => new BSIMTimeoutError(errorMsg)) })
+          timeout({ each: 30 * 1000, with: () => throwError(() => new BSIMErrorEndTimeout(errorCode, errorMsg)) })
         )
       );
       //  add the R S V to the transaction

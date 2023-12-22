@@ -24,7 +24,7 @@ import DefaultNFTImage from '@assets/images/NFT.svg';
 import VaultType from '@core/database/models/Vault/VaultType';
 import BSIMSendTX, { BSIM_SIGN_STATUS } from './SendTX';
 import BSIM from 'packages/WalletCoreExtends/Plugins/BSIM';
-import { BSIMTimeoutError, BSIM_ERRORS } from 'packages/WalletCoreExtends/Plugins/BSIM/BSIMSDK';
+import { BSIMErrorEndTimeout, BSIM_ERRORS } from 'packages/WalletCoreExtends/Plugins/BSIM/BSIMSDK';
 import EstimateGas from './EstimateGas';
 import { RPCResponse, RPCSend } from '@core/utils/send';
 import matchRPCErrorMessage from '@utils/matchRPCErrorMssage';
@@ -94,10 +94,11 @@ const TransactionConfirm: React.FC<{
           });
           navigation.navigate(HomeStackName, { screen: WalletStackName });
         } catch (error) {
+
           setLoading(false);
           // error
           if (channel) {
-            if (error instanceof BSIMTimeoutError) {
+            if (error instanceof BSIMErrorEndTimeout) {
               const errorMsg = BSIM_ERRORS[(error as Error).message];
               setBSIMTxError(errorMsg);
             } else {

@@ -36,7 +36,6 @@ const ScanQRCode: React.FC<{ navigation: StackNavigation; route: RouteProp<RootS
     if (code && code.value) {
       try {
         const res = parseETHURL(code.value);
-        console.log('res', res);
         const { target_address, chain_id, function_name, parameters } = res;
         // check is send 20 token
         if (function_name && function_name === 'transfer') {
@@ -47,7 +46,7 @@ const ScanQRCode: React.FC<{ navigation: StackNavigation; route: RouteProp<RootS
               const token = tokens.find((t) => t.contractAddress?.toLowerCase() === parameters.address?.toLowerCase());
               if (token) {
                 setTXTo(target_address);
-                setTXAmount(Number(formatUnits(parameters.uint256, token.decimals)));
+                setTXAmount(parameters.uint256);
                 setTokenTX({
                   assetType: token.type,
                   balance: token.balance,

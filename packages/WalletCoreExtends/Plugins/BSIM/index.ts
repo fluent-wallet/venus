@@ -1,4 +1,4 @@
-import BSIMSDK, { CoinTypes } from './BSIMSDK';
+import BSIMSDK, { BSIM_SUPPORT_ACCOUNT_LIMIT, CoinTypes } from './BSIMSDK';
 import { addHexPrefix } from '@core/utils/base';
 import { computeAddress } from 'ethers';
 import { type Plugin } from '@core/WalletCore/Plugins';
@@ -37,9 +37,9 @@ export class BSIMPluginClass implements Plugin {
     try {
       await this.checkIsInit();
       const list = await BSIMSDK.getPubkeyList(true);
-
       return list
         .map((item) => ({ hexAddress: computeAddress(addHexPrefix(formatBSIMPubkey(item.key))), index: item.index }))
+        .filter((item) => item.index > 0)
         .sort((itemA, itemB) => itemA.index - itemB.index);
     } catch (err) {
       return [];
@@ -49,7 +49,11 @@ export class BSIMPluginClass implements Plugin {
   public createNewBSIMAccount = async () => {
     await this.checkIsInit();
 
-    await BSIMSDK.genNewKey(CoinTypes.CONFLUX);
+    try {
+      await BSIMSDK.genNewKey(CoinTypes.CONFLUX);
+    } catch (error) {
+      console.log('create new BSIM account failed', error)
+    }
 
     const list = await this.getBIMList();
 
@@ -61,9 +65,10 @@ export class BSIMPluginClass implements Plugin {
 
   public createBSIMAccountToIndex = async (targetIndex: number) => {
     await this.checkIsInit();
+
     const list = await this.getBIMList();
     const maxIndex = list.at(-1)?.index ?? -1;
-    if (maxIndex >= targetIndex) return;
+    if (maxIndex >= targetIndex || maxIndex >= BSIM_SUPPORT_ACCOUNT_LIMIT) return;
 
     let index = maxIndex;
     do {

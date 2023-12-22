@@ -70,7 +70,7 @@ class SDKModule(private val reactContext: ReactApplicationContext) :
             if (result.Code == CODE_SUCCESS) {
                 promise.resolve("ok")
             } else {
-                promise.reject(BSIM_ERRPR, result.Message)
+                promise.reject(result.Code, result.Message)
             }
         } else {
             promise.reject("400", error["400"])
@@ -105,7 +105,7 @@ class SDKModule(private val reactContext: ReactApplicationContext) :
                 }
                 promise.resolve(resultList)
             } else {
-                promise.reject(BSIM_ERRPR, pubkeyListResult.Message)
+                promise.reject(pubkeyListResult.Code, pubkeyListResult.Message)
             }
         } else {
             promise.reject("400", error["400"]);
@@ -157,8 +157,7 @@ class SDKModule(private val reactContext: ReactApplicationContext) :
                     }
 
                 } else {
-                    promise.reject(BSIM_ERRPR, signMsg.Code)
-
+                    promise.reject(signMsg.Code, signMsg.Message)
                 }
             }
         }
@@ -183,7 +182,7 @@ class SDKModule(private val reactContext: ReactApplicationContext) :
             if (result.Code == CODE_SUCCESS) {
                 promise.resolve(result.Message)
             } else {
-                promise.reject(BSIM_ERRPR, result.Message)
+                promise.reject(result.Code,  result.Message)
             }
         } else {
             promise.reject("400", error["400"])
@@ -217,7 +216,7 @@ class SDKModule(private val reactContext: ReactApplicationContext) :
             if (result.Code == CODE_SUCCESS) {
                 promise.resolve(result.Message)
             } else {
-                promise.reject("BSIM verifyBPIN error", result.Message)
+                promise.reject(result.Code, result.Message)
             }
         } else {
             promise.reject("BSIM getVersion error", "")

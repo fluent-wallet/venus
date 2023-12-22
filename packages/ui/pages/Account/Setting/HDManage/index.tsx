@@ -15,6 +15,7 @@ import { type RootStackList } from '@router/configs';
 import { BaseButton } from '@components/Button';
 import CheckIcon from '@assets/icons/check.svg';
 import ArrowLeft from '@assets/icons/arrow-left.svg';
+import { BSIM_SUPPORT_ACCOUNT_LIMIT } from 'packages/WalletCoreExtends/Plugins/BSIM/BSIMSDK';
 
 const HDManage: React.FC<NativeStackScreenProps<RootStackList, 'HDManage'>> = ({ navigation, route }) => {
   const { theme } = useTheme();
@@ -70,11 +71,12 @@ const HDManage: React.FC<NativeStackScreenProps<RootStackList, 'HDManage'>> = ({
             if (targetAlreadyInList) return { hexAddress: targetAlreadyInList.hexAddress, index: targetAlreadyInList.index };
 
             // The code shouldn't have been able to get here.
-            const { hexAddress, index: newIndex } = await plugins.BSIM.createNewBSIMAccount();
-            if (newIndex === pageIndex * 5 + index) {
-              return { hexAddress, index: newIndex };
+            if (pageIndex * 5 + index <= BSIM_SUPPORT_ACCOUNT_LIMIT) {
+              const { hexAddress, index: newIndex } = await plugins.BSIM.createNewBSIMAccount();
+              if (newIndex === pageIndex * 5 + index) {
+                return { hexAddress, index: newIndex };
+              }
             }
-            throw new Error('????');
           } else {
             return getNthAccountOfHDKey({ mnemonic, hdPath: currentHdPath.value, nth: pageIndex * 5 + index });
           }
@@ -82,10 +84,14 @@ const HDManage: React.FC<NativeStackScreenProps<RootStackList, 'HDManage'>> = ({
       );
 
       setPageAccounts(
-        newPageAccounts.map((item) => ({
-          hexAddress: item.hexAddress,
-          index: item.index,
-        }))
+        newPageAccounts
+          .filter(function isDefined<T>(argument: T | undefined): argument is T {
+            return typeof argument !== 'undefined';
+          })
+          .map((item) => ({
+            hexAddress: item.hexAddress,
+            index: item.index,
+          }))
       );
       setInCalc(false);
     };
@@ -178,7 +184,7 @@ const HDManage: React.FC<NativeStackScreenProps<RootStackList, 'HDManage'>> = ({
                     />
                   </View>
                   <Text className="ml-[4px] mr-[6px] text-[16px] leading-tight" style={{ color: theme.colors.textPrimary }}>
-                    {account.index + 1}
+                    {vault.type === VaultType.BSIM ? account.index : account.index + 1}
                   </Text>
                   <Text className="text-[16px] leading-tight" style={{ color: theme.colors.textPrimary }}>
                     {shortenAddress(account.hexAddress)}
@@ -195,19 +201,27 @@ const HDManage: React.FC<NativeStackScreenProps<RootStackList, 'HDManage'>> = ({
       </View>
 
       <View className="mt-[16px] px-[12px] flex flex-row justify-between items-center">
-        <Pressable onPress={() => pageIndex > 0 && setPageIndex((pre) => pre - 1)}>
-          <View className="flex justify-center items-center w-6 h-6 flex-shrink-0 flex-grow-0">
-            {pageIndex > 0 && <ArrowLeft color={pageIndex === 0 || inNext ? theme.colors.surfaceFourth : theme.colors.surfaceBrand} width={12} height={12} />}
-          </View>
-        </Pressable>
+        <View>
+          {pageIndex > 0 && (
+            <Pressable onPress={() => setPageIndex((pre) => pre - 1)}>
+              <View className="flex justify-center items-center w-6 h-6 flex-shrink-0 flex-grow-0">
+                <ArrowLeft color={pageIndex === 0 || inNext ? theme.colors.surfaceFourth : theme.colors.surfaceBrand} width={12} height={12} />
+              </View>
+            </Pressable>
+          )}
+        </View>
         <Text className="text-[16px] leading-tight" style={{ color: theme.colors.surfaceBrand }}>
           {chooseAccounts.length} address{chooseAccounts.length > 0 ? `(es)` : ''} selected
         </Text>
-        <Pressable onPress={() => setPageIndex((pre) => pre + 1)}>
-          <View className="flex justify-center items-center  w-6 h-6 flex-shrink-0 flex-grow-0 transform rotate-[180deg]">
-            <ArrowLeft color={inNext ? theme.colors.surfaceFourth : theme.colors.surfaceBrand} width={12} height={12} />
-          </View>
-        </Pressable>
+        <View>
+          {vault.type === VaultType.BSIM && pageAccounts.length >= BSIM_SUPPORT_ACCOUNT_LIMIT ? null : (
+            <Pressable onPress={() => setPageIndex((pre) => pre + 1)}>
+              <View className="flex justify-center items-center  w-6 h-6 flex-shrink-0 flex-grow-0 transform rotate-[180deg]">
+                <ArrowLeft color={inNext ? theme.colors.surfaceFourth : theme.colors.surfaceBrand} width={12} height={12} />
+              </View>
+            </Pressable>
+          )}
+        </View>
       </View>
       <BaseButton containerStyle={{ marginTop: 'auto' }} disabled={chooseAccounts.length === 0} onPress={handleClickNext} loading={inNext}>
         Next
