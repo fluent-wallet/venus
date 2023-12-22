@@ -33,6 +33,10 @@ const fetchESpaceScanMainnet = createFetchServer({ prefixUrl: CFX_ESPACE_MAINNET
 
 const abortController = new AbortController();
 
+export const updateNFTDetail = (nftContractAddress?: string) => {
+  fetchNFTDetailSubject.next(nftContractAddress);
+};
+
 export const fetchNFTDetail = async ({ currentNetwork, currentAddress, nft }: { currentNetwork: Network; currentAddress: Address; nft: AssetInfo }) => {
   abortController.abort();
   const fetchESpaceScan = currentNetwork?.chainId === CFX_ESPACE_MAINNET_CHAINID ? fetchESpaceScanMainnet : fetchESpaceScanTestnet;
@@ -46,7 +50,3 @@ export const fetchNFTDetail = async ({ currentNetwork, currentAddress, nft }: { 
     },
   });
 };
-
-export const updateNFTDetail = (nftContractAddress?: string) => {
-  fetchNFTDetailSubject.next(nftContractAddress);
-}

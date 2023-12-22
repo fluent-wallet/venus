@@ -14,7 +14,7 @@ import { truncate } from '../../../../utils/balance';
 export const getAssetsAtomKey = ({ network, address }: { network: Network | null; address: Address | null }) =>
   network && address ? `${network.networkType}-${network.chainId}-${address.hex}` : 'null';
 
-/** null means loading... */
+const assetsInFetchAtom = atomFamily((_: string) => atom<boolean>(false));
 const assetsSortedKeysAtom = atomFamily((_: string) => atom<Array<string> | []>([]));
 const assetsHashAtom = atomFamily((_: string) => atom<Record<string, AssetInfo> | null>(null));
 const assetsListAtom = atomFamily((key: string) =>
@@ -56,6 +56,14 @@ export const useAssetsHash = () => {
   const address = useCurrentAddress();
   const key = useMemo(() => getAssetsAtomKey({ network, address }), [network, address]);
   return useAtomValue(assetsHashAtom(key));
+};
+
+export const setAssetsInFetch = (key: string, inFetch: boolean) => setAtom(assetsInFetchAtom(key), inFetch);
+export const useAssetsInFetch = () => {
+  const network = useCurrentNetwork();
+  const address = useCurrentAddress();
+  const key = useMemo(() => getAssetsAtomKey({ network, address }), [network, address]);
+  return useAtomValue(assetsInFetchAtom(key));
 };
 
 export const useAssetsAllList = () => {
