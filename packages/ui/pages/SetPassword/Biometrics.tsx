@@ -13,6 +13,16 @@ import { type RootStackList, type StackNavigation, WalletStackName, BiometricsSt
 import createVaultWithRouterParams from './createVaultWithRouterParams';
 import FaceIdSource from '@assets/images/face-id.png';
 
+export const showBiometricsDisabledMessage = () => {
+  showMessage({
+    message: 'Device biometrics not enabled',
+    description: 'Please enable your biometrics in device settings.',
+    type: 'warning',
+    duration: 3500,
+    statusBarHeight,
+  });
+};
+
 const getFaceIdLinearColor = (themeMode: 'dark' | 'light') =>
   themeMode === 'dark' ? ['rgba(174, 207, 250, 0.2)', 'rgba(171, 194, 255, 0)'] : ['#AECFFA', 'rgba(171, 194, 255, 0)'];
 const FaceId: React.FC = () => {
@@ -49,20 +59,14 @@ const Biometrics = () => {
 
   const navigation = useNavigation<StackNavigation>();
   const route = useRoute<RouteProp<RootStackList, typeof BiometricsStackName>>();
-  
+
   const { inAsync: loading, execAsync: createVault } = useInAsync(createVaultWithRouterParams);
 
   const handleEnableBiometrics = useCallback(async () => {
     try {
       const supportedBiometryType = await plugins.Authentication.getSupportedBiometryType();
       if (supportedBiometryType === null) {
-        showMessage({
-          message: 'Device passcode not enabled',
-          description: 'Please enable your passcode in device settings.',
-          type: 'warning',
-          duration: 3500,
-          statusBarHeight,
-        });
+        showBiometricsDisabledMessage();
         return;
       }
 
@@ -101,7 +105,7 @@ const Biometrics = () => {
         <BaseButton
           containerStyle={{ marginTop: 16, marginHorizontal: 16 }}
           onPress={() => {
-            if(disableSetPassword) return;
+            if (disableSetPassword) return;
             hideMessage();
             navigation.navigate(SetPasswordStackName, route.params);
           }}

@@ -10,7 +10,7 @@ export interface WalletTransactionType {
   symbol: string;
   contractAddress?: string;
   iconUrl?: string;
-  amount: number;
+  amount: bigint;
   priceInUSDT?: string;
   tokenId?: string; // 721
   tokenImage?: string; // 721
@@ -25,16 +25,16 @@ const initTransaction: WalletTransactionType = {
   balance: '0',
   decimals: 18,
   symbol: 'CFX',
-  amount: 0,
+  amount: 0n,
 };
 
 export const transactionAtom = atom<WalletTransactionType>(initTransaction);
 
 export const setTransactionTo = atom(null, (get, set, to: string) => {
-  set(transactionAtom, { ...get(transactionAtom), to, amount: 0 });
+  set(transactionAtom, { ...get(transactionAtom), to, amount: 0n });
 });
 
-export const setTransactionAmount = atom(null, (get, set, amount: number) => {
+export const setTransactionAmount = atom(null, (get, set, amount: bigint) => {
   set(transactionAtom, { ...get(transactionAtom), amount });
 });
 

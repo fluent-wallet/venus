@@ -26,12 +26,14 @@ const PasswordVerify: React.FC = () => {
 
     return () => {
       setVisible(false);
+      setInVerify(false);
       subscription.unsubscribe();
     };
   }, []);
 
   const handleCancel = useCallback(() => {
     setVisible(false);
+    setInVerify(false);
     setPassword('');
     setError('');
     currentRequest.current?.reject?.();
@@ -65,6 +67,7 @@ const PasswordVerify: React.FC = () => {
             setError('');
           }}
           title="Verify Password"
+          onBlur={handleConfirm}
         />
         <BaseButton loading={inVerify} onPress={handleConfirm} disabled={!password}>
           Confirm

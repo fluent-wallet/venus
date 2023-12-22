@@ -1,5 +1,5 @@
 import { Input, Text, useTheme } from '@rneui/themed';
-import { View } from 'react-native';
+import { View, type NativeSyntheticEvent, type TextInputFocusEventData } from 'react-native';
 import LockIcon from '@assets/icons/lock.svg';
 import VisibilityOffIcon from '@assets/icons/visibility_off.svg';
 import VisibilityIcon from '@assets/icons/visibility.svg';
@@ -17,13 +17,14 @@ interface Props {
   errorMessagePlaceholder?: boolean;
   successMessage?: string;
   helperText?: string;
+  onBlur?: ((e: NativeSyntheticEvent<TextInputFocusEventData>) => void) | undefined;
 }
 
 function Password(props: Props) {
   const {
     theme: { colors },
   } = useTheme();
-  const { title, value, onChangeText, helperText, errorMessage = '', successMessage = '', errorMessagePlaceholder = false } = props;
+  const { onBlur, title, value, onChangeText, helperText, errorMessage = '', successMessage = '', errorMessagePlaceholder = false } = props;
   const [visible, setVisible] = useState(props?.visible ?? true);
 
   return (
@@ -40,6 +41,7 @@ function Password(props: Props) {
           onChangeText={onChangeText}
           leftIcon={<Icon name="123" Component={LockIcon} />}
           rightIcon={<Icon name="123" Component={visible ? VisibilityIcon : VisibilityOffIcon} onPress={() => setVisible(!visible)} />}
+          onBlur={onBlur}
         />
       </View>
       <View className="mt-[7px] ">

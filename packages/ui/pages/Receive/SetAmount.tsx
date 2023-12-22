@@ -18,7 +18,7 @@ const SetAmount: React.FC<NativeStackScreenProps<RootStackList, 'SetAmount'>> = 
   const { theme } = useTheme();
   const bottomSheetRef = useRef<BottomSheet>(null);
   const [sheetOpen, setSheetOpen] = useState(false);
-  const [value, setValue] = useState('0');
+  const [value, setValue] = useState('');
   const [inputTextSize, setInputTextSize] = useState(60);
   const [currentToken, setCurrentToken] = useAtom(setTokenQRInfoAtom);
   const [inputError, setInputError] = useState(false);
@@ -70,7 +70,7 @@ const SetAmount: React.FC<NativeStackScreenProps<RootStackList, 'SetAmount'>> = 
   };
 
   const handleContinue = () => {
-    if (isNaN(Number(value))) {
+    if (!value || isNaN(Number(value))) {
       return setInputError(true);
     }
 
@@ -115,6 +115,7 @@ const SetAmount: React.FC<NativeStackScreenProps<RootStackList, 'SetAmount'>> = 
         </View>
 
         <TextInput
+          autoFocus
           ref={inputRef}
           value={value}
           onChangeText={handleChange}

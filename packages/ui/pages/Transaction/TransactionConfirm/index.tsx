@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Pressable, SafeAreaView, View, Image, useColorScheme, ScrollView } from 'react-native';
 import { RouteProp, useFocusEffect } from '@react-navigation/native';
 import { Subject, firstValueFrom, scan } from 'rxjs';
@@ -49,6 +49,11 @@ const TransactionConfirm: React.FC<{
     loading: true,
     error: false,
   });
+
+  const price = useMemo(
+    () => (tx.priceInUSDT ? `$${balanceFormat(Number(tx.amount) * Number(tx.priceInUSDT), { truncateLength: 2 })}` : ''),
+    [tx.priceInUSDT, tx.amount]
+  );
 
   const handleSend = async () => {
     if (gas?.gasLimit && gas.gasPrice) {
@@ -163,7 +168,7 @@ const TransactionConfirm: React.FC<{
 
   const renderAmount = () => {
     if (tx.assetType === AssetType.ERC20 || tx.assetType === AssetType.Native || tx.assetType === AssetType.ERC1155) {
-      return `${tx.amount} ${tx.symbol}`;
+      return `${formatUnits(tx.amount, tx.decimals)} ${tx.symbol}`;
     }
     if (tx.assetType === AssetType.ERC721) {
       return `1 ${tx.contractName}`;
@@ -193,7 +198,7 @@ const TransactionConfirm: React.FC<{
         <View className="px-6">
           {(tx.assetType === AssetType.ERC721 || tx.assetType === AssetType.ERC1155) && (
             <View className="flex flex-row p-4 rounded-lg w-full mb-4" style={{ backgroundColor: theme.colors.surfaceCard }}>
-              {tx.tokenImage && <MixinImage source={{ uri: tx.tokenImage }} width={63} height={63} className="mr-4" />}
+              {tx.tokenImage && <MixinImage source={{ uri: tx.tokenImage }} width={63} height={63} className="mr-4 rounded" />}
               <View className="flex justify-center">
                 <View className="flex flex-row mb-1">
                   <View className="w-6 h-6 overflow-hidden rounded-full mr-2">
@@ -249,7 +254,7 @@ const TransactionConfirm: React.FC<{
             </View>
           </View>
 
-          <View style={{ backgroundColor: theme.colors.surfaceCard }} className="p-[15px] rounded-md mt-4">
+          <View style={{ backgroundColor: theme.colors.surfaceCard }} className="p-[15px] rounded-md mt-4 mb-7">
             <View className="flex flex-row justify-between">
               <Text className=" leading-6" style={{ color: theme.colors.textSecondary }}>
                 Amount
@@ -259,7 +264,7 @@ const TransactionConfirm: React.FC<{
                   {renderAmount()}
                 </Text>
                 <Text style={{ color: theme.colors.textSecondary }} className="text-right text-sm leading-6">
-                  {tx.priceInUSDT ? `≈$${(Number(tx.priceInUSDT) * tx.amount).toFixed(4)}` : ''}
+                  {price}
                 </Text>
               </View>
             </View>

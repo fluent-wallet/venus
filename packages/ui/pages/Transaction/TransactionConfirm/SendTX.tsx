@@ -79,7 +79,7 @@ const BSIMSendTX: React.FC<Props> = ({ onSend, state, errorMessage }) => {
   const model = useColorScheme();
   const { title, titleIcon: TitleIcon, context, showButton, buttonContext, showCloseIcon } = STATUS_VALUES[state];
   return (
-    <View className="flex-1 mt-7 rounded-t-lg overflow-hidden">
+    <View className="flex-1 rounded-t-lg overflow-hidden shadow-2xl">
       <ImageBackground resizeMode="stretch" className="flex-1 p-6 " source={model === 'dark' ? BSIMSendBGDarkImage : BSIMSendBGLightImage}>
         <View className="flex flex-row items-center mt-4 ">
           <Text className="text-xl font-bold leading-tight">{title}</Text>

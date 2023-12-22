@@ -73,7 +73,7 @@ const ScanQRCode: React.FC<{ navigation: StackNavigation; route: RouteProp<RootS
               const token = tokens.find((t) => t.type === AssetType.Native);
               if (token) {
                 setTXTo(target_address);
-                setTXAmount(Number(formatEther(parameters.value)));
+                setTXAmount(parseUnits(parameters.value.toString(), token.decimals));
                 setTokenTX({
                   assetType: token.type,
                   balance: token.balance,
