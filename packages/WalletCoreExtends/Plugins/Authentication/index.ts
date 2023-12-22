@@ -1,11 +1,9 @@
 import * as KeyChain from 'react-native-keychain';
 import { Subject } from 'rxjs';
-import { showMessage } from 'react-native-flash-message';
 import CryptoToolPlugin, { CryptoToolPluginClass } from '../CryptoTool';
 import plugins, { type Plugin } from '@core/WalletCore/Plugins';
 import database from '@core/database';
 import { getEncryptedVault } from '@core/database/models/Vault/query';
-import { statusBarHeight } from '@utils/deviceInfo';
 import { showBiometricsDisabledMessage } from '@pages/SetPassword/Biometrics';
 
 declare module '@core/WalletCore/Plugins' {
@@ -73,7 +71,7 @@ class AuthenticationPluginClass implements Plugin {
     } else if (this.settleAuthenticationType === AuthenticationType.Password) {
       if (this.getPasswordPromise) return this.getPasswordPromise;
       this.getPasswordPromise = new Promise<string>((_resolve, _reject) => {
-        if (!this.pwdCache || Date.now() - this.pwdCache.cacheTime > 2.5 * 1000) {
+        if (!this.pwdCache || Date.now() - this.pwdCache.cacheTime > 0.75 * 1000) {
           this.passwordRequestSubject.next({
             resolve: (pwd: string) => {
               this.pwdCache = {
@@ -136,8 +134,7 @@ class AuthenticationPluginClass implements Plugin {
     try {
       const vaultData = vaults[0].data!;
       const res = await plugins.CryptoTool.decrypt(vaultData, password);
-      if (!res) return false;
-      return true;
+      return !!res;
     } catch (err) {
       return false;
     }
