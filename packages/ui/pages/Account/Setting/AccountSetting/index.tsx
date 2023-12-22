@@ -8,6 +8,7 @@ import { useTheme, Text, ListItem, Input, Dialog } from '@rneui/themed';
 import VaultType from '@core/database/models/Vault/VaultType';
 import { useAccountFromId, useGroupOfAccount, useVaultOfAccount, useCurrentAddressValueOfAccount } from '@core/WalletCore/Plugins/ReactInject';
 import methods from '@core/WalletCore/Methods';
+import plugins from '@core/WalletCore/Plugins';
 import { type RootStackList, BackUpStackName } from '@router/configs';
 import { BaseButton } from '@components/Button';
 import { statusBarHeight } from '@utils/deviceInfo';
@@ -118,6 +119,7 @@ const AccountSetting: React.FC<NativeStackScreenProps<RootStackList, 'AccountSet
                 if (vault.isGroup) {
                   await methods.changeAccountHidden({ account, hidden: true });
                 } else {
+                  await plugins.Authentication.getPassword();
                   await methods.deleteVault(vault);
                 }
                 showMessage({

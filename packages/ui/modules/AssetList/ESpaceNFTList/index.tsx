@@ -131,7 +131,7 @@ const ESpaceNFTList: React.FC<{ onSelectNftItem?: (nft: NFTWithDetail) => void }
           nfts.map((nft) => (
             <NFTItem
               data={nft}
-              key={nft.contractAddress}
+              key={`${nft.contractAddress}-${currentAddress?.hex}-${currentNetwork?.chainId}`}
               isExpanded={currentOpenNftContract === nft.contractAddress}
               isCurrentOpenHeaderInView={currentOpenNftContract === nft.contractAddress && isCurrentOpenHeaderInView}
               onPress={() => setCurrentOpenNftContract(nft.contractAddress!)}

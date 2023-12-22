@@ -40,7 +40,6 @@ const NFTItem: React.FC<{
   currentAddress: Address;
 }> = ({ onPress, onSelectNftItem, data, isExpanded, isCurrentOpenHeaderInView, currentNetwork, currentAddress }) => {
   const { theme } = useTheme();
-
   const [details, setDetails] = useState<Array<NFTItemDetail> | null>(null);
 
   const fetchCurrentNFTDetail = useCallback(async () => {
@@ -59,7 +58,7 @@ const NFTItem: React.FC<{
         console.error('fetch Nft detail err: ', err);
       });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [data?.contractAddress, currentAddress?.hex, currentNetwork?.chainId]);
 
   const { inAsync: inFetch, execAsync: execFetch } = useInAsync(fetchCurrentNFTDetail);
 
