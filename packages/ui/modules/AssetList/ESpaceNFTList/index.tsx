@@ -3,12 +3,13 @@ import { ScrollView, View, TouchableHighlight, ActivityIndicator, type NativeSyn
 import clsx from 'clsx';
 import { Icon } from '@rneui/base';
 import { useTheme, Text } from '@rneui/themed';
-import { useCurrentAddress, useCurrentNetwork, useAssetsNFTList } from '@core/WalletCore/Plugins/ReactInject';
+import { useCurrentAddress, useCurrentNetwork, useAssetsNFTList, useAssetsInFetch } from '@core/WalletCore/Plugins/ReactInject';
 import Skeleton from '@components/Skeleton';
 import MixinImage from '@components/MixinImage';
 import TokenIconDefault from '@assets/icons/defaultToken.svg';
 import NFTItem from './NFTItem';
 import { fetchNFTDetail, fetchNFTDetailSubject, type NFTItemDetail, type NFTWithDetail } from './fetch';
+import SkeletonList from '../TokenList/SkeletonList';
 
 const NftItemHeight = 63;
 
@@ -17,6 +18,7 @@ const ESpaceNFTList: React.FC<{ onSelectNftItem?: (nft: NFTWithDetail) => void }
 
   const scrollY = useRef(0);
   const nfts = useAssetsNFTList();
+  const inFetch = useAssetsInFetch();
   const currentAddress = useCurrentAddress()!;
   const currentNetwork = useCurrentNetwork()!;
   const [currentOpenNftContract, _setCurrentOpenNftContract] = useState<string | null>(null);
@@ -117,59 +119,74 @@ const ESpaceNFTList: React.FC<{ onSelectNftItem?: (nft: NFTWithDetail) => void }
     return null;
   }
 
+  if (nfts === null) {
+    return (
+      <View className="flex-1 px-6 py-4">
+        <SkeletonList length={6} />
+      </View>
+    );
+  }
+
   return (
-    <View className="relative flex-1">
-      {currentOpenNft && !isCurrentOpenHeaderInView && (
-        <TouchableHighlight onPress={() => setCurrentOpenNftContract(null)} underlayColor={theme.colors.underlayColor}>
-          <View className={'flex flex-row h-[64px] px-[24px] items-center'}>
-            {currentOpenNft.icon ? (
-              <MixinImage source={{ uri: currentOpenNft.icon }} width={32} height={32} fallback={<TokenIconDefault width={32} height={32} />} />
-            ) : (
-              <TokenIconDefault width={32} height={32} />
-            )}
-            <Text
-              style={{ color: theme.colors.contrastWhiteAndBlack }}
-              className={clsx('text-base font-medium ml-[8px]', isCurrentOpenNftInFetch && details ? 'mr-[16px]' : 'mr-auto')}
-            >
-              {currentOpenNft.name}
-            </Text>
-            {isCurrentOpenNftInFetch && details && <ActivityIndicator color={theme.colors.textBrand} size={16} className="mr-auto" />}
-
-            <View className="rotate-[-180deg]">
-              <Icon name="keyboard-arrow-down" color={theme.colors.contrastWhiteAndBlack} />
-            </View>
-          </View>
-        </TouchableHighlight>
+    <>
+      {inFetch && (
+        <View className="absolute left-[232px] -top-[33.5px]">
+          <ActivityIndicator color={theme.colors.textBrand} size={16} className="mr-auto" />
+        </View>
       )}
+      <View className="relative flex-1">
+        {currentOpenNft && !isCurrentOpenHeaderInView && (
+          <TouchableHighlight onPress={() => setCurrentOpenNftContract(null)} underlayColor={theme.colors.underlayColor}>
+            <View className={'flex flex-row h-[64px] px-[24px] items-center'}>
+              {currentOpenNft.icon ? (
+                <MixinImage source={{ uri: currentOpenNft.icon }} width={32} height={32} fallback={<TokenIconDefault width={32} height={32} />} />
+              ) : (
+                <TokenIconDefault width={32} height={32} />
+              )}
+              <Text
+                style={{ color: theme.colors.contrastWhiteAndBlack }}
+                className={clsx('text-base font-medium ml-[8px]', isCurrentOpenNftInFetch && details ? 'mr-[16px]' : 'mr-auto')}
+              >
+                {currentOpenNft.name}
+              </Text>
+              {isCurrentOpenNftInFetch && details && <ActivityIndicator color={theme.colors.textBrand} size={16} className="mr-auto" />}
 
-      <ScrollView className="flex-1" onScroll={handleScroll}>
-        {nfts === null ? (
-          <View className="flex-1 ">
-            <View className="flex flex-row items-center p-6">
-              <Skeleton circle width={32} height={32} style={{ marginRight: 8 }} />
-              <Skeleton width={70} height={16} />
+              <View className="rotate-[-180deg]">
+                <Icon name="keyboard-arrow-down" color={theme.colors.contrastWhiteAndBlack} />
+              </View>
             </View>
-            <View className="flex flex-row items-center p-6">
-              <Skeleton circle width={32} height={32} style={{ marginRight: 8 }} />
-              <Skeleton width={70} height={16} />
-            </View>
-          </View>
-        ) : (
-          nfts.map((nft) => (
-            <NFTItem
-              data={nft}
-              key={`${nft.contractAddress}-${currentAddress?.hex}-${currentNetwork?.chainId}`}
-              isExpanded={currentOpenNftContract === nft.contractAddress}
-              details={currentOpenNftContract === nft.contractAddress ? details : null}
-              isCurrentOpenHeaderInView={currentOpenNftContract === nft.contractAddress && isCurrentOpenHeaderInView}
-              isCurrentOpenNftInFetch={isCurrentOpenNftInFetch}
-              onPress={() => setCurrentOpenNftContract(nft.contractAddress!)}
-              onSelectNftItem={onSelectNftItem}
-            />
-          ))
+          </TouchableHighlight>
         )}
-      </ScrollView>
-    </View>
+
+        <ScrollView className="flex-1" onScroll={handleScroll}>
+          {nfts === null ? (
+            <View className="flex-1 ">
+              <View className="flex flex-row items-center p-6">
+                <Skeleton circle width={32} height={32} style={{ marginRight: 8 }} />
+                <Skeleton width={70} height={16} />
+              </View>
+              <View className="flex flex-row items-center p-6">
+                <Skeleton circle width={32} height={32} style={{ marginRight: 8 }} />
+                <Skeleton width={70} height={16} />
+              </View>
+            </View>
+          ) : (
+            nfts.map((nft) => (
+              <NFTItem
+                data={nft}
+                key={`${nft.contractAddress}-${currentAddress?.hex}-${currentNetwork?.chainId}`}
+                isExpanded={currentOpenNftContract === nft.contractAddress}
+                details={currentOpenNftContract === nft.contractAddress ? details : null}
+                isCurrentOpenHeaderInView={currentOpenNftContract === nft.contractAddress && isCurrentOpenHeaderInView}
+                isCurrentOpenNftInFetch={isCurrentOpenNftInFetch}
+                onPress={() => setCurrentOpenNftContract(nft.contractAddress!)}
+                onSelectNftItem={onSelectNftItem}
+              />
+            ))
+          )}
+        </ScrollView>
+      </View>
+    </>
   );
 };
 

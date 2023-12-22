@@ -11,6 +11,7 @@ import Skeleton from '@components/Skeleton';
 import { useCurrentAccount, useCurrentNetwork, useAssetsTotalPriceValue } from '@core/WalletCore/Plugins/ReactInject';
 import { CFX_ESPACE_MAINNET_CHAINID, CFX_ESPACE_TESTNET_CHAINID } from '@core/consts/network';
 import plugins from '@core/WalletCore/Plugins';
+import { updateNFTDetail } from '@modules/AssetList/ESpaceNFTList/fetch';
 import SendIcon from '@assets/icons/send.svg';
 import ReceiveIcon from '@assets/icons/receive.svg';
 import BuyIcon from '@assets/icons/buy.svg';
@@ -63,6 +64,7 @@ const Wallet: React.FC<{ navigation: StackNavigation }> = ({ navigation }) => {
       </View>
       <PullRefresh
         onRefresh={(close) => {
+          updateNFTDetail();
           plugins.AssetsTracker.updateCurrentTracker()
             .catch((err) => console.log(err))
             .finally(() => close());

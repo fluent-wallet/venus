@@ -12,7 +12,7 @@ const TokenList: React.FC<{
   skeleton?: number;
   RenderList?: typeof FlatList | typeof BottomSheetFlatList;
   enableEmpty?: boolean;
-}> = ({ onPress, skeleton = 8, RenderList = FlatList, enableEmpty = false }) => {
+}> = ({ onPress, skeleton = 6, RenderList = FlatList, enableEmpty = false }) => {
   const { theme } = useTheme();
 
   const tokens = useAssetsTokenList();
