@@ -45,7 +45,7 @@ export class TransactionMethod {
 
     switch (args.assetType) {
       case AssetType.ERC20: {
-        return iface777.encodeFunctionData('transfer', [args.to, parseUnits(args.amount.toString(), args.decimals)]);
+        return iface777.encodeFunctionData('transfer', [args.to, args.amount]);
       }
       case AssetType.ERC721: {
         if (typeof args.tokenId === 'undefined') {
@@ -58,13 +58,7 @@ export class TransactionMethod {
           throw new Error("Get ERC1155 transaction data but don't have tokenId");
         }
 
-        return iface1155.encodeFunctionData('safeTransferFrom', [
-          currentAddress,
-          args.to,
-          args.tokenId,
-          parseUnits(args.amount.toString(), args.decimals),
-          '0x',
-        ]);
+        return iface1155.encodeFunctionData('safeTransferFrom', [currentAddress, args.to, args.tokenId, args.amount, '0x']);
       }
 
       default: {
@@ -140,7 +134,7 @@ export class TransactionMethod {
     if (args.assetType === AssetType.Native) {
       estimateGasParams.to = args.to;
       estimateGasParams.data = '0x';
-      estimateGasParams.value = addHexPrefix(parseUnits(args.amount.toString(), args.decimals).toString(16));
+      estimateGasParams.value = addHexPrefix(args.amount.toString(16));
     } else {
       if (typeof args.contractAddress === 'undefined') {
         throw new Error("Get gas price and limit but don't have contract address");
@@ -190,7 +184,7 @@ export class TransactionMethod {
 
     if (walletTx.assetType === AssetType.Native) {
       transaction.to = walletTx.to;
-      transaction.value = parseUnits(walletTx.amount.toString(), walletTx.decimals);
+      transaction.value = walletTx.amount;
     } else {
       if (typeof walletTx.contractAddress === 'undefined') {
         throw new Error("Send contract transaction but don't have contract address");
