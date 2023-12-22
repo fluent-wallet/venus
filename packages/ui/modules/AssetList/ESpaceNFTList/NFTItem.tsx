@@ -1,34 +1,14 @@
-import { useCallback, useEffect, useState } from 'react';
 import { Pressable, View, ActivityIndicator, TouchableHighlight } from 'react-native';
 import clsx from 'clsx';
 import { Icon } from '@rneui/base';
 import { Text, useTheme } from '@rneui/themed';
-import { createFetchServer } from '@cfx-kit/dapp-utils/dist/fetch';
-import { CFX_ESPACE_MAINNET_CHAINID, CFX_ESPACE_MAINNET_SCAN_OPENAPI, CFX_ESPACE_TESTNET_SCAN_OPENAPI } from '@core/consts/network';
 import { type AssetInfo } from '@core/WalletCore/Plugins/AssetsTracker/types';
-import { type Network } from '@core/database/models/Network';
-import { type Address } from '@core/database/models/Address';
 import { AssetType } from '@core/database/models/Asset';
 import Skeleton from '@components/Skeleton';
 import MixinImage from '@components/MixinImage';
 import TokenIconDefault from '@assets/icons/defaultToken.svg';
 import DefaultNFTImage from '@assets/images/NFT.svg';
-import { type NFTItemDetail, type NFTWithDetail } from '.';
-
-const responseHandler = (res: {
-  status: '0' | '1';
-  message: string;
-  result?: { list: Array<{ amount: string; description: string; image: string; name: string; tokenId: string }> };
-}) => {
-  if (res?.result?.list) {
-    return res.result.list.map(
-      (item) => ({ amount: item.amount, description: item.description, icon: item.image, name: item.name, tokenId: item.tokenId } as NFTItemDetail)
-    );
-  }
-  return null;
-};
-const fetchESpaceScanTestnet = createFetchServer({ prefixUrl: CFX_ESPACE_TESTNET_SCAN_OPENAPI, responseHandler });
-const fetchESpaceScanMainnet = createFetchServer({ prefixUrl: CFX_ESPACE_MAINNET_SCAN_OPENAPI, responseHandler });
+import { type NFTWithDetail, type NFTItemDetail } from './fetch';
 
 const NFTItem: React.FC<{
   data: AssetInfo;
@@ -36,51 +16,10 @@ const NFTItem: React.FC<{
   isCurrentOpenHeaderInView: boolean;
   onPress?: () => void;
   onSelectNftItem?: (nft: NFTWithDetail) => void;
-  currentNetwork: Network;
-  currentAddress: Address;
   isCurrentOpenNftInFetch: boolean;
-  setCurrentOpenNftInFetch: (inFetch: boolean) => void;
-}> = ({
-  onPress,
-  onSelectNftItem,
-  data,
-  isExpanded,
-  isCurrentOpenHeaderInView,
-  currentNetwork,
-  currentAddress,
-  isCurrentOpenNftInFetch,
-  setCurrentOpenNftInFetch,
-}) => {
+  details: Array<NFTItemDetail> | null;
+}> = ({ onPress, onSelectNftItem, data, isExpanded, isCurrentOpenHeaderInView, isCurrentOpenNftInFetch, details }) => {
   const { theme } = useTheme();
-  const [details, setDetails] = useState<Array<NFTItemDetail> | null>(null);
-
-  const fetchCurrentNFTDetail = useCallback(async () => {
-    const fetchESpaceScan = currentNetwork?.chainId === CFX_ESPACE_MAINNET_CHAINID ? fetchESpaceScanMainnet : fetchESpaceScanTestnet;
-    const fetchKey = `nftDetail-${data.contractAddress}-${currentAddress?.hex}-${currentNetwork?.chainId}`;
-    setCurrentOpenNftInFetch(true);
-    return fetchESpaceScan
-      .fetchServer<Array<NFTItemDetail>>({
-        url: `nft/tokens?contract=${data.contractAddress}&owner=${currentAddress.hex}&cursor=0&limit=100&sort=ASC&sortField=latest_update_time&withBrief=true&withMetadata=false&suppressMetadataError=true`,
-        key: fetchKey,
-        options: {
-          retry: 4,
-        },
-      })
-      .then((res) => res && setDetails(res))
-      .catch((err) => {
-        console.log('fetch Nft detail err: ', err);
-      })
-      .finally(() => setCurrentOpenNftInFetch(false));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  useEffect(() => {
-    if (isExpanded) {
-      fetchCurrentNFTDetail();
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isExpanded]);
-
   return (
     <>
       {(!isExpanded || (isExpanded && isCurrentOpenHeaderInView)) && (

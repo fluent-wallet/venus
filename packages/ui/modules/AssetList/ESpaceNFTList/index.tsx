@@ -2,23 +2,13 @@ import { useEffect, useState, useMemo, useCallback, useRef } from 'react';
 import { ScrollView, View, TouchableHighlight, ActivityIndicator, type NativeSyntheticEvent, type NativeScrollEvent } from 'react-native';
 import clsx from 'clsx';
 import { Icon } from '@rneui/base';
-import { useTheme, Text, ListItem } from '@rneui/themed';
+import { useTheme, Text } from '@rneui/themed';
 import { useCurrentAddress, useCurrentNetwork, useAssetsNFTList } from '@core/WalletCore/Plugins/ReactInject';
-import { type AssetInfo } from '@core/WalletCore/Plugins/AssetsTracker/types';
 import Skeleton from '@components/Skeleton';
 import MixinImage from '@components/MixinImage';
 import TokenIconDefault from '@assets/icons/defaultToken.svg';
 import NFTItem from './NFTItem';
-
-export interface NFTItemDetail {
-  name: string;
-  description?: string | null;
-  icon?: string | null;
-  amount: string;
-  tokenId: string;
-}
-
-export type NFTWithDetail = AssetInfo & { detail: NFTItemDetail };
+import { fetchNFTDetail, fetchNFTDetailSubject, type NFTItemDetail, type NFTWithDetail } from './fetch';
 
 const NftItemHeight = 63;
 
@@ -38,7 +28,43 @@ const ESpaceNFTList: React.FC<{ onSelectNftItem?: (nft: NFTWithDetail) => void }
     return index * NftItemHeight;
   }, [currentOpenNftContract, nfts]);
 
+  const [details, setDetails] = useState<Array<NFTItemDetail> | null>(null);
   const [isCurrentOpenNftInFetch, setCurrentOpenNftInFetch] = useState(true);
+  // eslint-disable-next-line @typescript-eslint/ban-types
+  const fetchCurrentNFTDetail = useRef<Function | null>(null);
+
+  useEffect(() => {
+    if (!currentOpenNft) return;
+    fetchCurrentNFTDetail.current = () => {
+      setCurrentOpenNftInFetch(true);
+      return fetchNFTDetail({ currentAddress, currentNetwork, nft: currentOpenNft! })
+        .then((res) => setDetails(res))
+        .finally(() => setCurrentOpenNftInFetch(false));
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentAddress?.hex, currentNetwork?.id, currentOpenNft]);
+
+  useEffect(() => {
+    setDetails(null);
+    if (currentOpenNft && fetchCurrentNFTDetail.current) {
+      fetchCurrentNFTDetail.current();
+    }
+  }, [currentOpenNft?.contractAddress, currentAddress?.hex, currentNetwork?.id]);
+  useEffect(() => {
+    const subscrition = fetchNFTDetailSubject.subscribe((nftContractAddress) => {
+      if (
+        currentOpenNft &&
+        fetchCurrentNFTDetail.current &&
+        (!nftContractAddress || (typeof nftContractAddress === 'string' && nftContractAddress === currentOpenNft.contractAddress))
+      ) {
+        fetchCurrentNFTDetail.current();
+      }
+    });
+    return () => {
+      subscrition.unsubscribe();
+    };
+  }, []);
+
   const [isCurrentOpenHeaderInView, setCurrentOpenHeaderInView] = useState(true);
   const setCurrentOpenNftContract = useCallback(
     (nftContract: string | null) => {
@@ -134,13 +160,11 @@ const ESpaceNFTList: React.FC<{ onSelectNftItem?: (nft: NFTWithDetail) => void }
               data={nft}
               key={`${nft.contractAddress}-${currentAddress?.hex}-${currentNetwork?.chainId}`}
               isExpanded={currentOpenNftContract === nft.contractAddress}
+              details={currentOpenNftContract === nft.contractAddress ? details : null}
               isCurrentOpenHeaderInView={currentOpenNftContract === nft.contractAddress && isCurrentOpenHeaderInView}
               isCurrentOpenNftInFetch={isCurrentOpenNftInFetch}
-              setCurrentOpenNftInFetch={setCurrentOpenNftInFetch}
               onPress={() => setCurrentOpenNftContract(nft.contractAddress!)}
               onSelectNftItem={onSelectNftItem}
-              currentNetwork={currentNetwork}
-              currentAddress={currentAddress}
             />
           ))
         )}
