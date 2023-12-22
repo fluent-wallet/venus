@@ -4,7 +4,7 @@ export const colors = {
   gray1: '#E5E5E5',
   gray2: '#A3A3A3',
   gray3: '#737373',
-  gray4: '#404040',
+  gray4: '#242424',
   gray5: '#171717',
 
   blue0: '#F2F5FF',
@@ -76,7 +76,7 @@ const theme = createTheme({
     warnErrorPrimary: colors.red3,
     linearGradientBackground: ['#001C69', colors.black],
     normalBackground: colors.gray5,
-    passwordInputBackground: '#242424',
+    passwordInputBackground: colors.gray4,
     buttonDisabledBackground: colors.blue4,
     homeHeaderAddressBackgroundColor: colors.blue5,
     pureBlackAndWight: colors.black,

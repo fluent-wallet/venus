@@ -1,10 +1,9 @@
 import { Input, Text, useTheme } from '@rneui/themed';
-import { View, type NativeSyntheticEvent, type TextInputFocusEventData } from 'react-native';
+import { View, type NativeSyntheticEvent, type TextInputFocusEventData, useColorScheme } from 'react-native';
 import LockIcon from '@assets/icons/lock.svg';
 import VisibilityOffIcon from '@assets/icons/visibility_off.svg';
 import VisibilityIcon from '@assets/icons/visibility.svg';
 import WaringIcon from '@assets/icons/warning_1.svg';
-import CheckCircleIcon from '@assets/icons/check_circle.svg';
 import { useState } from 'react';
 import { Icon } from '@rneui/base';
 
@@ -24,6 +23,7 @@ function Password(props: Props) {
   const {
     theme: { colors },
   } = useTheme();
+  const isDark = useColorScheme() === 'dark';
   const { onBlur, title, value, onChangeText, helperText, errorMessage = '', successMessage = '', errorMessagePlaceholder = false } = props;
   const [visible, setVisible] = useState(props?.visible ?? true);
 
@@ -39,9 +39,16 @@ function Password(props: Props) {
           placeholder="Password"
           secureTextEntry={visible}
           onChangeText={onChangeText}
-          leftIcon={<Icon name="123" Component={LockIcon} />}
-          rightIcon={<Icon name="123" Component={visible ? VisibilityIcon : VisibilityOffIcon} onPress={() => setVisible(!visible)} />}
           onBlur={onBlur}
+          leftIcon={<Icon name="123" Component={LockIcon} style={{ color: isDark ? colors.surfaceFourth : colors.textPrimary }} />}
+          rightIcon={
+            <Icon
+              name="123"
+              style={{ color: isDark ? colors.surfaceFourth : colors.textPrimary }}
+              Component={visible ? VisibilityOffIcon : VisibilityIcon}
+              onPress={() => setVisible(!visible)}
+            />
+          }
         />
       </View>
       <View className="mt-[7px] ">
