@@ -35,3 +35,9 @@ export const getEncryptedVault = () =>
     .get<Vault>(TableName.Vault)
     .query(Q.where('type', Q.oneOf([VaultType.PrivateKey, VaultType.HierarchicalDeterministic])))
     .fetch();
+
+export const getEncryptedVaultWithBSIM = () =>
+  database
+    .get<Vault>(TableName.Vault)
+    .query(Q.where('type', Q.oneOf([VaultType.PrivateKey, VaultType.HierarchicalDeterministic, VaultType.BSIM])))
+    .fetch();

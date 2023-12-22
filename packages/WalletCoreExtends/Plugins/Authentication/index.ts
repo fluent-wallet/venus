@@ -3,7 +3,7 @@ import { Subject } from 'rxjs';
 import CryptoToolPlugin, { CryptoToolPluginClass } from '../CryptoTool';
 import plugins, { type Plugin } from '@core/WalletCore/Plugins';
 import database from '@core/database';
-import { getEncryptedVault } from '@core/database/models/Vault/query';
+import { getEncryptedVaultWithBSIM } from '@core/database/models/Vault/query';
 import { showBiometricsDisabledMessage } from '@pages/SetPassword/Biometrics';
 
 declare module '@core/WalletCore/Plugins' {
@@ -127,9 +127,9 @@ class AuthenticationPluginClass implements Plugin {
   public getSupportedBiometryType = async () => KeyChain.getSupportedBiometryType();
 
   public verifyPassword = async (password: string) => {
-    const vaults = await getEncryptedVault();
+    const vaults = await getEncryptedVaultWithBSIM();
     if (!vaults?.length) {
-      throw new Error('Wallet must have at least one pk or hd vault in Password AuthenticationType');
+      throw new Error('Wallet must have at least one pk or hd or BSIM vault in Password AuthenticationType');
     }
     try {
       const vaultData = vaults[0].data!;

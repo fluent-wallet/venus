@@ -31,7 +31,7 @@ export class CreateVaultMethod {
 
   private async createVaultOfType(params: { type: VaultType.HierarchicalDeterministic; mnemonic: string; password?: string }): Promise<void>;
   private async createVaultOfType(params: { type: VaultType.PrivateKey; privateKey: string; password?: string }): Promise<void>;
-  private async createVaultOfType(params: { type: VaultType.BSIM; accounts: Array<{ index: number; hexAddress: string }> }): Promise<void>;
+  private async createVaultOfType(params: { type: VaultType.BSIM; accounts: Array<{ index: number; hexAddress: string }>; password?: string }): Promise<void>;
   private async createVaultOfType(params: { type: VaultType.Hardware; accounts: Array<{ index: number; hexAddress: string }> }): Promise<void>;
   private async createVaultOfType(params: { type: VaultType.PublicAddress; hexAddress: string }): Promise<void>;
   private async createVaultOfType({
@@ -57,6 +57,8 @@ export class CreateVaultMethod {
           ? await this.plugins.CryptoTool.encrypt(privateKey!, password)
           : type === VaultType.PublicAddress
           ? hexAddress!
+          : type === VaultType.BSIM
+          ? await this.plugins.CryptoTool.encrypt('BSIM Wallet', password)
           : null;
 
       if ((type === VaultType.HierarchicalDeterministic || type === VaultType.PrivateKey || type === VaultType.PublicAddress) && !data) {
@@ -121,10 +123,10 @@ export class CreateVaultMethod {
     console.log(`create hd vault took ${end - start} ms.`);
   };
 
-  createBSIMVault = async (accounts: Array<{ index: number; hexAddress: string }>) => {
+  createBSIMVault = async (accounts: Array<{ index: number; hexAddress: string }>, password?: string) => {
     const start = performance.now();
     console.log('create BSIM vault start');
-    await this.createVaultOfType({ type: VaultType.BSIM, accounts });
+    await this.createVaultOfType({ type: VaultType.BSIM, accounts, password });
     const end = performance.now();
     console.log(`create BSIM vault a Wallet took ${end - start} ms.`);
   };
