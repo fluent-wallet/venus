@@ -12,7 +12,7 @@ import TokenIconDefault from '@assets/icons/defaultToken.svg';
 import AvatarIcon from '@assets/icons/avatar.svg';
 import CopyAllIcon from '@assets/icons/copy_all.svg';
 import { AssetType } from '@core/database/models/Asset';
-import { transactionAtom } from '@core/WalletCore/Plugins/ReactInject/data/useTransaction';
+import { setTransactionAmount, useReadOnlyTransaction } from '@core/WalletCore/Plugins/ReactInject/data/useTransaction';
 import MixinImage from '@components/MixinImage';
 import Methods from '@core/WalletCore/Methods';
 import WarningIcon from '@assets/icons/warning_2.svg';
@@ -28,7 +28,8 @@ const SendTo: React.FC<{ navigation: StackNavigation; route: RouteProp<RootStack
   const { theme } = useTheme();
   const currentNetwork = useCurrentNetwork()!;
   const currentAddress = useCurrentAddress();
-  const [tx, setTx] = useAtom(transactionAtom);
+  const [, setTXAmount] = useAtom(setTransactionAmount);
+  const tx = useReadOnlyTransaction();
   const [value, setValue] = useState(tx.amount ? formatUnits(tx.amount, tx.decimals) : '');
   const [invalidInputErr, setInvalidInputErr] = useState({ err: false, msg: '' });
   const [rpcError, setRpcError] = useState({ err: false, msg: '' });
@@ -63,8 +64,7 @@ const SendTo: React.FC<{ navigation: StackNavigation; route: RouteProp<RootStack
     if (val > Number(accountBalance)) {
       return setInvalidInputErr({ err: true, msg: 'Insufficient balance' });
     }
-
-    setTx((v) => ({ ...v, amount: parseUnits(value, tx.decimals) }));
+    setTXAmount(parseUnits(value, tx.decimals));
     navigation.navigate(TransactionConfirmStackName);
   };
 

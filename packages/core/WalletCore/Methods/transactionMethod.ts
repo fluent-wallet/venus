@@ -2,7 +2,7 @@ import { Network, NetworkType } from '@core/database/models/Network';
 import { inject, injectable } from 'inversify';
 import { getCurrentNetwork } from '../Plugins/ReactInject/data/useCurrentNetwork';
 import { AssetType } from '@core/database/models/Asset';
-import { WalletTransactionType } from '../Plugins/ReactInject/data/useTransaction';
+import { TxEventTypesName, WalletTransactionType } from '../Plugins/ReactInject/data/useTransaction';
 import { iface1155, iface721, iface777 } from '@core/contracts';
 import { firstValueFrom, map, switchMap, defer, from, retry, timeout, Subject, tap, catchError, throwError } from 'rxjs';
 import { getCurrentAddress } from '../Plugins/ReactInject/data/useCurrentAddress';
@@ -67,22 +67,21 @@ export class TransactionMethod {
     }
   };
 
-  signAndSendTransaction = async (endpoint: string, currentAddress: Address, transaction: Transaction, BSIMChannel?: Subject<void>) => {
+  signAndSendTransaction = async (endpoint: string, currentAddress: Address, transaction: Transaction, walletTx: WalletTransactionType) => {
     const vaultType = await currentAddress.getVaultType();
 
     if (vaultType === 'BSIM') {
       const hash = transaction.unsignedHash;
       const index = (await currentAddress.account).index;
 
-      if (BSIMChannel) {
-        BSIMChannel.next();
-      }
-
       await BSIM.verifyBPIN();
+
+      walletTx.event.next({ type: TxEventTypesName.BSIM_VERIFY_START });
 
       let errorMsg = '';
       let errorCode = '';
       // retrieve the R S V of the transaction through a polling mechanism
+
       const res = await firstValueFrom(
         defer(() => from(BSIM.signMessage(hash, CoinTypes.CONFLUX, index))).pipe(
           catchError((err: { code: string; message: string }) => {
@@ -94,15 +93,14 @@ export class TransactionMethod {
           timeout({ each: 30 * 1000, with: () => throwError(() => new BSIMErrorEndTimeout(errorCode, errorMsg)) })
         )
       );
+      walletTx.event.next({ type: TxEventTypesName.BSIM_SIGN_START });
       //  add the R S V to the transaction
       transaction.signature = Signature.from({ r: res.r, s: res.s, v: res.v });
       // get the transaction encoded
       const encodeTx = transaction.serialized;
       const txRes = await firstValueFrom(RPCSend<RPCResponse<string>>(endpoint, { method: 'eth_sendRawTransaction', params: [encodeTx] }));
 
-      if (BSIMChannel) {
-        BSIMChannel.next();
-      }
+      walletTx.event.next({ type: TxEventTypesName.BSIM_TX_SEND });
 
       return { txHash: txRes.result, error: txRes.error, txRaw: encodeTx };
     } else {
@@ -163,7 +161,7 @@ export class TransactionMethod {
     );
   };
 
-  sendTransaction = async (walletTx: WalletTransactionType, gas: { gasLimit: string; gasPrice: string }, BSIMChannel?: Subject<void>) => {
+  sendTransaction = async (walletTx: WalletTransactionType, gas: { gasLimit: string; gasPrice: string }) => {
     const currentNetwork = getCurrentNetwork();
     const currentAddress = getCurrentAddress();
     if (!currentAddress) {
@@ -183,6 +181,7 @@ export class TransactionMethod {
 
     const nonce = await this.getNonce(currentNetwork.endpoint, currentAddress.hex);
     transaction.nonce = nonce.result;
+    walletTx.event.next({ type: TxEventTypesName.GET_NONCE, nonce: nonce.result });
 
     if (walletTx.assetType === AssetType.Native) {
       transaction.to = walletTx.to;
@@ -194,7 +193,7 @@ export class TransactionMethod {
       transaction.to = walletTx.contractAddress;
       transaction.data = this.getContractTransactionData(currentAddress.hex, walletTx);
     }
-    const { txHash, txRaw, error } = await this.signAndSendTransaction(currentNetwork.endpoint, currentAddress, transaction, BSIMChannel);
+    const { txHash, txRaw, error } = await this.signAndSendTransaction(currentNetwork.endpoint, currentAddress, transaction, walletTx);
 
     return { txHash, txRaw, transaction, error };
   };

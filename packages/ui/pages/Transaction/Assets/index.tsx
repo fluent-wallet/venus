@@ -8,9 +8,9 @@ import { statusBarHeight } from '@utils/deviceInfo';
 import ESpaceNFTList from '@modules/AssetList/ESpaceNFTList';
 import TokenList from '@modules/AssetList/TokenList';
 import { AssetType } from '@core/database/models/Asset';
-import { setNFTTransaction, setTokenTransaction, transactionAtom } from '@core/WalletCore/Plugins/ReactInject/data/useTransaction';
-import { type NFTWithDetail } from '@modules/AssetList/ESpaceNFTList';
+import { setNFTTransaction, setTokenTransaction } from '@core/WalletCore/Plugins/ReactInject/data/useTransaction';
 import { type AssetInfo } from '@core/WalletCore/Plugins/AssetsTracker/types';
+import { NFTWithDetail } from '@modules/AssetList/ESpaceNFTList/fetch';
 
 const Assets: React.FC<{ navigation: StackNavigation; route: RouteProp<RootStackList, typeof TokensStackName> }> = ({ navigation, route }) => {
   const { theme } = useTheme();

@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Pressable, SafeAreaView, View, Image, useColorScheme, ScrollView } from 'react-native';
-import { RouteProp, useFocusEffect } from '@react-navigation/native';
-import { Subject, firstValueFrom, scan } from 'rxjs';
-import { useAtom } from 'jotai';
+import { Pressable, SafeAreaView, View, ScrollView } from 'react-native';
+import { RouteProp } from '@react-navigation/native';
+import { firstValueFrom } from 'rxjs';
+
 import { formatUnits } from 'ethers';
 import { Button, Divider, Text, useTheme } from '@rneui/themed';
 import { statusBarHeight } from '@utils/deviceInfo';
@@ -15,20 +15,19 @@ import SendIcon from '@assets/icons/send.svg';
 import AvatarIcon from '@assets/icons/avatar.svg';
 import CopyAllIcon from '@assets/icons/copy_all.svg';
 import Warning from '@assets/icons/warning_2.svg';
-import { transactionAtom } from '@core/WalletCore/Plugins/ReactInject/data/useTransaction';
+import { TxEventTypesName, useReadOnlyTransaction } from '@core/WalletCore/Plugins/ReactInject/data/useTransaction';
 import MixinImage from '@components/MixinImage';
 import { AssetType } from '@core/database/models/Asset';
 import Methods from '@core/WalletCore/Methods';
 import Events from '@core/WalletCore/Events';
 import DefaultNFTImage from '@assets/images/NFT.svg';
 import VaultType from '@core/database/models/Vault/VaultType';
-import BSIMSendTX, { BSIM_SIGN_STATUS } from './SendTX';
-import BSIM from 'packages/WalletCoreExtends/Plugins/BSIM';
+import BSIMSendTX from './SendTX';
 import { BSIMErrorEndTimeout, BSIM_ERRORS } from 'packages/WalletCoreExtends/Plugins/BSIM/BSIMSDK';
 import EstimateGas from './EstimateGas';
 import { RPCResponse, RPCSend } from '@core/utils/send';
 import matchRPCErrorMessage from '@utils/matchRPCErrorMssage';
-import { balanceFormat, numberWithCommas } from '@core/utils/balance';
+import { balanceFormat } from '@core/utils/balance';
 
 const TransactionConfirm: React.FC<{
   navigation: StackNavigation;
@@ -40,11 +39,9 @@ const TransactionConfirm: React.FC<{
   const currentAddress = useCurrentAddress()!;
   const currentAccount = useCurrentAccount()!;
   const currentVault = useVaultOfAccount(currentAccount?.id);
-  const [BSIMTXState, setBSIMTXState] = useState(BSIM_SIGN_STATUS.INIT);
-  const [BSIMTxError, setBSIMTxError] = useState('');
 
   const [error, setError] = useState('');
-  const [tx] = useAtom(transactionAtom);
+  const tx = useReadOnlyTransaction();
   const [gas, setGas] = useState<{ gasLimit?: string; gasPrice?: string; loading: boolean; error: boolean; errorMsg?: string }>({
     loading: true,
     error: false,
@@ -59,24 +56,13 @@ const TransactionConfirm: React.FC<{
     if (gas?.gasLimit && gas.gasPrice) {
       setLoading(true);
       try {
-        let channel;
-        if (currentVault.type === VaultType.BSIM) {
-          channel = new Subject<void>();
-          channel.pipe(scan((acc) => acc + 1, 0)).subscribe({
-            next: (v) => {
-              console.log('next state', v);
-              const states = [BSIM_SIGN_STATUS.SIGNING, BSIM_SIGN_STATUS.COMPLETE];
-              setBSIMTXState(states[v - 1]);
-            },
-          });
-        }
-
         try {
           const blockNumber = await firstValueFrom(RPCSend<RPCResponse<string>>(currentNetwork.endpoint, { method: 'eth_blockNumber' }));
-          const { txHash, txRaw, transaction, error } = await Methods.sendTransaction(tx, { gasLimit: gas.gasLimit, gasPrice: gas.gasPrice }, channel);
+          const { txHash, txRaw, transaction, error } = await Methods.sendTransaction(tx, { gasLimit: gas.gasLimit, gasPrice: gas.gasPrice });
 
           if (error && error.message && error.data) {
             const errorMsg = matchRPCErrorMessage({ message: error.message, data: error.data });
+            tx.event.next({ type: TxEventTypesName.ERROR, message: errorMsg });
             setLoading(false);
             return setError(errorMsg);
           }
@@ -94,22 +80,18 @@ const TransactionConfirm: React.FC<{
           });
           navigation.navigate(HomeStackName, { screen: WalletStackName });
         } catch (error) {
-
           setLoading(false);
           // error
-          if (channel) {
-            if (error instanceof BSIMErrorEndTimeout) {
-              const errorMsg = BSIM_ERRORS[(error as Error).message];
-              setBSIMTxError(errorMsg);
-            } else {
-              // not BSIM error
-              setBSIMTxError(BSIM_ERRORS.default);
-            }
-            setBSIMTXState(BSIM_SIGN_STATUS.ERROR);
+          if (error instanceof BSIMErrorEndTimeout) {
+            console.log(error.code, 'sign Error code');
+            console.log(error.message, 'sign Error message');
+            const errorMsg = BSIM_ERRORS[error.code?.toUpperCase()];
+            tx.event.next({ type: TxEventTypesName.ERROR, message: errorMsg });
+          } else {
+            // not BSIM error
+            tx.event.next({ type: TxEventTypesName.ERROR, message: BSIM_ERRORS.default });
           }
         }
-
-        navigation.navigate(HomeStackName, { screen: WalletStackName });
         setLoading(false);
       } catch (error) {
         console.log(error);
@@ -155,17 +137,6 @@ const TransactionConfirm: React.FC<{
   useEffect(() => {
     getGas();
   }, [currentNetwork.endpoint, currentAddress.hex, getGas]);
-
-  useFocusEffect(
-    useCallback(() => {
-      console.log("check if there's BSIM card ");
-      if (currentVault?.type === VaultType.BSIM) {
-        BSIM.getBSIMVersion().catch((e) => {
-          setBSIMTXState(BSIM_SIGN_STATUS.NOT_HAVE_BSIM);
-        });
-      }
-    }, [currentVault?.type])
-  );
 
   const renderAmount = () => {
     if (tx.assetType === AssetType.ERC20 || tx.assetType === AssetType.Native || tx.assetType === AssetType.ERC1155) {
@@ -287,7 +258,7 @@ const TransactionConfirm: React.FC<{
         </View>
       </ScrollView>
       {currentVault?.type === VaultType.BSIM ? (
-        <BSIMSendTX onSend={handleSend} state={BSIMTXState} errorMessage={BSIMTxError} />
+        <BSIMSendTX onSend={handleSend} txEvent={tx.event} />
       ) : (
         <View className="flex flex-row items-center mt-auto px-6 mb-6">
           <Button

@@ -4,11 +4,14 @@ import BSIMSendBGDarkImage from '@assets/images/BSIMSendDark.webp';
 import BSIMSendBGLightImage from '@assets/images/BSIMSendLight.webp';
 import CloseIcon from '@assets/icons/close.svg';
 
-import { useNavigation } from '@react-navigation/native';
+import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { BaseButton } from '@components/Button';
 import WaringIcon from '@assets/icons/warning_2.svg';
 import CheckCircleIcon from '@assets/icons/check_circle.svg';
 import { HomeStackName, StackNavigation, WalletStackName } from '@router/configs';
+import { TxEventTypesName, WalletTransactionType } from '@core/WalletCore/Plugins/ReactInject/data/useTransaction';
+import { useCallback, useEffect, useState } from 'react';
+import BSIM from '@WalletCoreExtends/Plugins/BSIM';
 
 export enum BSIM_SIGN_STATUS {
   NOT_HAVE_BSIM = 'NOT_HAVE_BSIM',
@@ -70,14 +73,49 @@ export const STATUS_VALUES: Record<
 };
 interface Props {
   onSend: () => void;
-  state: BSIM_SIGN_STATUS;
-  errorMessage?: string;
+  txEvent: WalletTransactionType['event'];
 }
 
-const BSIMSendTX: React.FC<Props> = ({ onSend, state, errorMessage }) => {
+const BSIMSendTX: React.FC<Props> = ({ onSend, txEvent }) => {
   const navigation = useNavigation<StackNavigation>();
   const model = useColorScheme();
+  const [state, setState] = useState(BSIM_SIGN_STATUS.INIT);
+  const [error, setError] = useState('');
   const { title, titleIcon: TitleIcon, context, showButton, buttonContext, showCloseIcon } = STATUS_VALUES[state];
+  useFocusEffect(
+    useCallback(() => {
+      BSIM.getBSIMVersion().catch((e) => {
+        setState(BSIM_SIGN_STATUS.NOT_HAVE_BSIM);
+      });
+    }, [])
+  );
+
+  useFocusEffect(
+    useCallback(() => {
+      const subscription = txEvent.subscribe((event) => {
+        switch (event.type) {
+          case TxEventTypesName.BSIM_VERIFY_START:
+            setState(BSIM_SIGN_STATUS.SIGNING);
+            break;
+          case TxEventTypesName.BSIM_TX_SEND:
+            setState(BSIM_SIGN_STATUS.COMPLETE);
+            break;
+          case TxEventTypesName.ERROR:
+            setState(BSIM_SIGN_STATUS.ERROR);
+            if (event.message) {
+              setError(event.message);
+            }
+            break;
+          default:
+            break;
+        }
+      });
+      return () => {
+        subscription.unsubscribe();
+      };
+    }, [txEvent])
+  );
+
   return (
     <View className="flex-1 rounded-t-lg overflow-hidden shadow-2xl">
       <ImageBackground resizeMode="stretch" className="flex-1 p-6 " source={model === 'dark' ? BSIMSendBGDarkImage : BSIMSendBGLightImage}>
@@ -89,7 +127,7 @@ const BSIMSendTX: React.FC<Props> = ({ onSend, state, errorMessage }) => {
             </View>
           )}
         </View>
-        <Text className="text-sm leading-normal py-5">{context || errorMessage}</Text>
+        <Text className="text-sm leading-normal py-5">{context || error}</Text>
         <View className="flex flex-row mt-auto">
           {showCloseIcon && (
             <Button
