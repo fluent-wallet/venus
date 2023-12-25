@@ -39,6 +39,7 @@ const Assets: React.FC<{ navigation: StackNavigation; route: RouteProp<RootStack
   const handleSelectNFTItem = (nft: NFTWithDetail) => {
     const { type, symbol, decimals, contractAddress, icon, name } = nft;
     const { amount: nftBalance, name: nftName, tokenId: nftTokenId, icon: nftIcon } = nft.detail;
+    console.log(nft);
     setSendNFTTransaction({
       assetType: type,
       symbol: symbol,
