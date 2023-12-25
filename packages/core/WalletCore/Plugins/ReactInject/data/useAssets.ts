@@ -59,6 +59,7 @@ export const useAssetsHash = () => {
 };
 
 export const setAssetsInFetch = (key: string, inFetch: boolean) => setAtom(assetsInFetchAtom(key), inFetch);
+export const getAssetsInFetch = (key: string) => getAtom(assetsInFetchAtom(key));
 export const useAssetsInFetch = () => {
   const network = useCurrentNetwork();
   const address = useCurrentAddress();

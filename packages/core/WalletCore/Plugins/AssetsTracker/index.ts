@@ -22,7 +22,15 @@ import { queryNetworkById } from '../../../database/models/Network/query';
 import { queryAddressById } from '../../../database/models/Address/query';
 import trackAssets from './trackAssets';
 import { type FetchAssetBalance, type AssetInfo, type Fetcher } from './types';
-import { getAssetsHash, setAssetsHash, getAssetsSortedKeys, setAssetsSortedKeys, getAssetsAtomKey, setAssetsInFetch } from '../ReactInject/data/useAssets';
+import {
+  getAssetsHash,
+  setAssetsHash,
+  getAssetsSortedKeys,
+  setAssetsSortedKeys,
+  getAssetsAtomKey,
+  setAssetsInFetch,
+  getAssetsInFetch,
+} from '../ReactInject/data/useAssets';
 
 declare module '../../../WalletCore/Plugins' {
   interface Plugins {
@@ -140,7 +148,9 @@ class AssetsTrackerPluginClass implements Plugin {
             .pipe(
               startWith(0),
               switchMap(() => {
-                setAssetsInFetch(assetsAtomKey, true);
+                if (forceUpdate) {
+                  setAssetsInFetch(assetsAtomKey, true);
+                }
                 return trackAssets({ chainFetcher, networkFetcher, nativeAsset, network, address, assetsHash, assetsSortedKeys });
               }),
               takeUntil(this.cancel$!)
@@ -157,17 +167,23 @@ class AssetsTrackerPluginClass implements Plugin {
                   setAssetsHash(assetsAtomKey, { ...assetsHash });
                 }
                 resolve(true);
-                setAssetsInFetch(assetsAtomKey, false);
+                if (getAssetsInFetch(assetsAtomKey)) {
+                  setAssetsInFetch(assetsAtomKey, false);
+                }
               },
               error: (error) => {
                 console.log(`Error in trackAssets(network-${network.name} address-${address.hex}):`, error);
                 reject(false);
-                setAssetsInFetch(assetsAtomKey, false);
+                if (getAssetsInFetch(assetsAtomKey)) {
+                  setAssetsInFetch(assetsAtomKey, false);
+                }
               },
               complete: () => {
                 // console.log(`trackAssets(network-${network.name} address-${address.hex}) completed or canceled`);
                 reject(false);
-                setAssetsInFetch(assetsAtomKey, false);
+                if (getAssetsInFetch(assetsAtomKey)) {
+                  setAssetsInFetch(assetsAtomKey, false);
+                }
               },
             });
         } catch (_) {

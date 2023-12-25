@@ -36,26 +36,32 @@ const ESpaceNFTList: React.FC<{ onSelectNftItem?: (nft: NFTWithDetail) => void }
   const fetchCurrentNFTDetail = useRef<Function | null>(null);
 
   useEffect(() => {
-    if (!currentOpenNft) return;
-    fetchCurrentNFTDetail.current = () => {
-      setCurrentOpenNftInFetch(true);
-      return fetchNFTDetail({ currentAddress, currentNetwork, nft: currentOpenNft! })
-        .then((res) => setDetails(res))
-        .finally(() => setCurrentOpenNftInFetch(false));
-    };
+    if (!currentOpenNft) {
+      fetchCurrentNFTDetail.current = null;
+    } else {
+      fetchCurrentNFTDetail.current = () => {
+        setCurrentOpenNftInFetch(true);
+        return fetchNFTDetail({ currentAddress, currentNetwork, nft: currentOpenNft! })
+          .then((res) => setDetails(res))
+          .finally(() => setCurrentOpenNftInFetch(false));
+      };
+    }
+
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentAddress?.hex, currentNetwork?.id, currentOpenNft]);
 
   useEffect(() => {
+    console.log(currentOpenNftContract, currentOpenNft?.contractAddress, currentAddress?.hex, currentNetwork?.id);
     setDetails(null);
     if (currentOpenNft && fetchCurrentNFTDetail.current) {
       fetchCurrentNFTDetail.current();
     }
   }, [currentOpenNft?.contractAddress, currentAddress?.hex, currentNetwork?.id]);
+
   useEffect(() => {
     const subscrition = fetchNFTDetailSubject.subscribe((nftContractAddress) => {
       if (
-        currentOpenNft &&
+        currentOpenNft && 
         fetchCurrentNFTDetail.current &&
         (!nftContractAddress || (typeof nftContractAddress === 'string' && nftContractAddress === currentOpenNft.contractAddress))
       ) {
@@ -65,7 +71,7 @@ const ESpaceNFTList: React.FC<{ onSelectNftItem?: (nft: NFTWithDetail) => void }
     return () => {
       subscrition.unsubscribe();
     };
-  }, []);
+  }, [currentOpenNft]);
 
   const [isCurrentOpenHeaderInView, setCurrentOpenHeaderInView] = useState(true);
   const setCurrentOpenNftContract = useCallback(
@@ -100,7 +106,8 @@ const ESpaceNFTList: React.FC<{ onSelectNftItem?: (nft: NFTWithDetail) => void }
 
   useEffect(() => {
     setCurrentOpenNftContract(null);
-  }, [currentNetwork?.chainId, currentAddress?.hex, setCurrentOpenNftContract]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentNetwork?.chainId, currentAddress?.hex]);
 
   const handleScroll = useCallback(
     (evt: NativeSyntheticEvent<NativeScrollEvent>) => {
