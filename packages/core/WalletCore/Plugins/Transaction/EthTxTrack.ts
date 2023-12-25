@@ -8,6 +8,9 @@ import { DETAULT_TX_TRACK_INTERVAL } from '@core/consts/transaction';
 import { ProcessErrorType, processError } from '@core/utils/eth';
 import { observeSelectedAddress } from '@core/database/models/Address/query';
 import { dbRefresh$ } from '@core/database';
+import { updateNFTDetail } from '@modules/AssetList/ESpaceNFTList/fetch';
+import Plugins from '@core/WalletCore/Plugins';
+import { AssetType } from '@core/database/models/Asset';
 
 type KeepTrackFunction = (delay?: number) => void;
 
@@ -278,9 +281,25 @@ export class EthTxTrack {
         },
         true
       );
+      this._updateTokenBalance(tx)
       this._handleDuplicateTx(tx);
     } else {
       keepTrack();
+    }
+  }
+
+  private async _updateTokenBalance(tx: Tx) {
+    try {
+      const asset = await tx.asset;
+      if (!asset || asset.type === AssetType.ERC20 || asset.type === AssetType.Native) {
+        Plugins.AssetsTracker.updateCurrentTracker()
+          .catch((err) => console.log(err))
+      }
+      if (!asset || asset.type === AssetType.ERC721 || asset.type === AssetType.ERC1155) {
+        updateNFTDetail(asset.contractAddress || undefined);
+      }
+    } catch (error) {
+      console.log(error)
     }
   }
 
