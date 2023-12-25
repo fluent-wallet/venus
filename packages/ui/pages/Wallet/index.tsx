@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { View, SafeAreaView, Pressable } from 'react-native';
 import { useNetInfo } from '@react-native-community/netinfo';
-import { Text, useTheme, Tab, TabView } from '@rneui/themed';
+import { Text, useTheme, Tab, TabView, Card } from '@rneui/themed';
 import { statusBarHeight } from '@utils/deviceInfo';
 import { type StackNavigation, ReceiveAddressStackName, ReceiveStackName } from '@router/configs';
 import TokenList from '@modules/AssetList/TokenList';
@@ -20,6 +20,29 @@ import WifiOffIcon from '@assets/icons/wifi_off.svg';
 import PullRefresh from '@components/PullRefresh';
 import { numberWithCommas } from '@core/utils/balance';
 
+const MainButton: React.FC<{ onPress?: VoidFunction; disabled?: boolean; label?: string; icon?: React.ReactElement; _testID?: string }> = ({
+  onPress,
+  disabled,
+  label,
+  icon,
+  _testID,
+}) => {
+  const { theme } = useTheme();
+  return (
+    <Pressable testID={_testID} className="flex items-center" onPress={!disabled ? onPress : undefined}>
+      <View
+        className="flex justify-center items-center w-[48px] h-[48px] rounded-full"
+        style={{ backgroundColor: disabled ? theme.colors.surfaceSecondary : theme.colors.surfaceBrand }}
+      >
+        {icon}
+      </View>
+      <Text className="mt-[8px] text-base font-medium" style={{ color: disabled ? theme.colors.textSecondary : theme.colors.textPrimary }}>
+        {label}
+      </Text>
+    </Pressable>
+  );
+};
+
 const Wallet: React.FC<{ navigation: StackNavigation }> = ({ navigation }) => {
   const { theme } = useTheme();
   const { isConnected } = useNetInfo(); // init state is null
@@ -32,19 +55,59 @@ const Wallet: React.FC<{ navigation: StackNavigation }> = ({ navigation }) => {
     if (currentNetwork && (currentNetwork.chainId === CFX_ESPACE_MAINNET_CHAINID || currentNetwork.chainId === CFX_ESPACE_TESTNET_CHAINID)) {
       return (
         <View className="px-[24px]">
-          <Tab value={tabIndex} onChange={setTabIndex} indicatorStyle={{ backgroundColor: theme.colors.surfaceBrand }}>
-            <Tab.Item testID='tokenTab' title="Tokens" titleStyle={(active) => ({ color: active ? theme.colors.textBrand : theme.colors.textSecondary })} />
-            <Tab.Item testID='NFTTab' title="NFTs" titleStyle={(active) => ({ color: active ? theme.colors.textBrand : theme.colors.textSecondary })} />
-            <Tab.Item testID='activityTab' title="Activity" titleStyle={(active) => ({ color: active ? theme.colors.textBrand : theme.colors.textSecondary })} />
+          <Tab
+            value={tabIndex}
+            onChange={setTabIndex}
+            style={{ gap: 11 }}
+            indicatorStyle={{ backgroundColor: theme.colors.surfaceBrand, width: 60, marginLeft: tabIndex * 11 }}
+          >
+            <Tab.Item
+              containerStyle={{ flex: 0, width: 60 }}
+              buttonStyle={{ paddingHorizontal: 0 }}
+              testID="tokenTab"
+              title="Tokens"
+              titleStyle={(active) => ({ color: active ? theme.colors.textBrand : theme.colors.textSecondary, paddingHorizontal: 0 })}
+            />
+            <Tab.Item
+              containerStyle={{ flex: 0, width: 60 }}
+              buttonStyle={{ paddingHorizontal: 0 }}
+              testID="NFTTab"
+              title="NFTs"
+              titleStyle={(active) => ({ color: active ? theme.colors.textBrand : theme.colors.textSecondary, paddingHorizontal: 0 })}
+            />
+            <Tab.Item
+              containerStyle={{ flex: 0, width: 60 }}
+              buttonStyle={{ paddingHorizontal: 0 }}
+              title="Activity"
+              testID="activityTab"
+              titleStyle={(active) => ({ color: active ? theme.colors.textBrand : theme.colors.textSecondary, paddingHorizontal: 0 })}
+            />
           </Tab>
         </View>
       );
     }
     return (
       <View className="px-[24px]">
-        <Tab value={tabIndex} onChange={setTabIndex} indicatorStyle={{ backgroundColor: theme.colors.surfaceBrand }}>
-          <Tab.Item testID='tokenTab' title="Tokens" titleStyle={(active) => ({ color: active ? theme.colors.textBrand : theme.colors.textSecondary })} />
-          <Tab.Item testID='activityTab' title="Activity" titleStyle={(active) => ({ color: active ? theme.colors.textBrand : theme.colors.textSecondary })} />
+        <Tab
+          value={tabIndex}
+          onChange={setTabIndex}
+          style={{ gap: 11 }}
+          indicatorStyle={{ backgroundColor: theme.colors.surfaceBrand, width: 60, marginLeft: tabIndex * 11 }}
+        >
+          <Tab.Item
+            containerStyle={{ flex: 0, width: 60 }}
+            buttonStyle={{ paddingHorizontal: 0 }}
+            title="Tokens"
+            testID="tokenTab"
+            titleStyle={(active) => ({ color: active ? theme.colors.textBrand : theme.colors.textSecondary, paddingHorizontal: 0 })}
+          />
+          <Tab.Item
+            containerStyle={{ flex: 0, width: 60 }}
+            buttonStyle={{ paddingHorizontal: 0 }}
+            title="Activity"
+            testID="activityTab"
+            titleStyle={(active) => ({ color: active ? theme.colors.textBrand : theme.colors.textSecondary, paddingHorizontal: 0 })}
+          />
         </Tab>
       </View>
     );
@@ -88,47 +151,27 @@ const Wallet: React.FC<{ navigation: StackNavigation }> = ({ navigation }) => {
             )}
           </View>
 
-          <View className="flex flex-row">
-            <Pressable testID='send' className="flex items-center flex-1" onPress={() => navigation.navigate(ReceiveAddressStackName, {})}>
-              <View className="flex justify-center items-center w-[60px] h-[60px] rounded-full" style={{ backgroundColor: theme.colors.surfaceBrand }}>
-                <SendIcon color="#fff" width={32} height={32} />
-              </View>
-              <Text className="mt-[8px] text-base" style={{ color: theme.colors.textPrimary }}>
-                Send
-              </Text>
-            </Pressable>
-
-            <Pressable testID='receive' className="flex items-center flex-1" onPress={() => navigation.navigate(ReceiveStackName)}>
-              <View className="flex justify-center items-center w-[60px] h-[60px] rounded-full" style={{ backgroundColor: theme.colors.surfaceBrand }}>
-                <ReceiveIcon color="#fff" width={32} height={32} />
-              </View>
-              <Text className="mt-[8px] text-base" style={{ color: theme.colors.textPrimary }}>
-                Receive
-              </Text>
-            </Pressable>
-
-            <View testID='buy' className="flex items-center flex-1">
-              <View className="flex justify-center items-center w-[60px] h-[60px] rounded-full" style={{ backgroundColor: theme.colors.surfaceBrand }}>
-                <BuyIcon color="#fff" width={32} height={32} />
-              </View>
-              <Text className="mt-[8px] text-base" style={{ color: theme.colors.textPrimary }}>
-                Buy
-              </Text>
-            </View>
-
-            <View testID='more' className="flex items-center flex-1">
-              <View className="flex justify-center items-center w-[60px] h-[60px] rounded-full" style={{ backgroundColor: theme.colors.surfaceBrand }}>
-                <MoreIcon color="#fff" width={32} height={32} />
-              </View>
-              <Text className="mt-[8px] text-base" style={{ color: theme.colors.textPrimary }}>
-                More
-              </Text>
-            </View>
+          <View className="flex flex-row justify-between">
+            <MainButton
+              _testID="send"
+              onPress={() => navigation.navigate(ReceiveAddressStackName, {})}
+              icon={<SendIcon color="#fff" width={24} height={24} />}
+              label="Send"
+            />
+            <MainButton
+              _testID="receive"
+              onPress={() => navigation.navigate(ReceiveStackName)}
+              icon={<ReceiveIcon color="#fff" width={24} height={24} />}
+              label="Receive"
+            />
+            <MainButton _testID="buy" icon={<BuyIcon color="#fff" width={24} height={24} />} label="Buy" disabled />
+            <MainButton _testID="more" icon={<MoreIcon color="#fff" width={24} height={24} />} label="More" disabled />
           </View>
         </View>
       </PullRefresh>
       {renderTabTitle()}
-      <TabView value={tabIndex} onChange={setTabIndex} animationType="spring">
+      <Card.Divider className="mb-[0px]" />
+      <TabView tabItemContainerStyle={{ padding: 0 }} value={tabIndex} onChange={setTabIndex} animationType="spring">
         <TabView.Item style={{ width: '100%' }}>
           <TokenList enableEmpty />
         </TabView.Item>
