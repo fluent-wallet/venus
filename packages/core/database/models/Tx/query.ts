@@ -5,8 +5,9 @@ import database from '../..';
 import { Q } from '@nozbe/watermelondb';
 import { TxStatus } from './type';
 import { memoize } from 'lodash-es';
+import { Asset } from '../Asset';
 
-export type TxParams = Omit<ModelFields<Tx>, 'createdAt'>;
+export type TxParams = Omit<ModelFields<Tx>, 'createdAt'> & { asset?: Asset };
 export function createTx(params: TxParams, prepareCreate: true): Tx;
 export function createTx(params: TxParams): Promise<Tx>;
 export function createTx(params: TxParams, prepareCreate?: true) {
