@@ -198,7 +198,7 @@ const SendTo: React.FC<{ navigation: StackNavigation; route: RouteProp<RootStack
               }}
               className="flex flex-row items-center rounded-md px-4 py-2"
             >
-              <TextInput keyboardType={'numeric'} value={value} onChangeText={handleChange} className="flex-1" autoFocus />
+              <TextInput testID="amountInput" keyboardType={'numeric'} value={value} onChangeText={handleChange} className="flex-1" autoFocus />
               {tx.iconUrl ? (
                 <MixinImage
                   resizeMode="center"
@@ -216,7 +216,12 @@ const SendTo: React.FC<{ navigation: StackNavigation; route: RouteProp<RootStack
                 Balance: {accountBalance} {tx.symbol}
               </Text>
               <View className="rounded-lg px-2 py-1 ml-2">
-                <Button onPress={handleChangeMax} buttonStyle={{ backgroundColor: theme.colors.surfaceBrand, borderRadius: 7 }} loading={maxBtnLoading}>
+                <Button
+                  testID="maxAmount"
+                  onPress={handleChangeMax}
+                  buttonStyle={{ backgroundColor: theme.colors.surfaceBrand, borderRadius: 7 }}
+                  loading={maxBtnLoading}
+                >
                   <Text style={{ color: theme.colors.textPrimary }}>MAX</Text>
                 </Button>
               </View>
@@ -224,7 +229,7 @@ const SendTo: React.FC<{ navigation: StackNavigation; route: RouteProp<RootStack
           </View>
 
           <View className="mt-auto mb-6">
-            <BaseButton disabled={value === '0' || invalidInputErr.err || rpcError.err} onPress={handleNext}>
+            <BaseButton testID="next" disabled={value === '0' || invalidInputErr.err || rpcError.err} onPress={handleNext}>
               Next
             </BaseButton>
           </View>

@@ -20,6 +20,7 @@ const AddAccount: React.FC<{ navigation: StackNavigation }> = ({ navigation }: {
     <SafeAreaView className="flex-1 flex flex-col gap-[12px] px-[24px]" style={{ backgroundColor: theme.colors.surfacePrimary, paddingTop: headerHeight + 16 }}>
       {!hasBSIMVaultCreated && (
         <TouchableHighlight
+          testID="createBSIMWallet"
           className="rounded-[8px] overflow-hidden"
           onPress={async () => {
             await createVault({ type: 'BSIM' });
@@ -39,6 +40,7 @@ const AddAccount: React.FC<{ navigation: StackNavigation }> = ({ navigation }: {
       )}
 
       <TouchableHighlight
+        testID="createHDWallet"
         className="rounded-[8px] overflow-hidden"
         onPress={async () => {
           await createVault();
@@ -57,6 +59,7 @@ const AddAccount: React.FC<{ navigation: StackNavigation }> = ({ navigation }: {
       </TouchableHighlight>
 
       <TouchableHighlight
+        testID="importSeedPhrase"
         className="rounded-[8px] overflow-hidden"
         onPress={() => navigation.navigate(ImportWalletStackName, route.params)}
         disabled={inCreateVault}
@@ -72,6 +75,7 @@ const AddAccount: React.FC<{ navigation: StackNavigation }> = ({ navigation }: {
       </TouchableHighlight>
 
       <TouchableOpacity
+        testID="importPrivateKey"
         className="rounded-[8px] overflow-hidden"
         onPress={() => navigation.navigate(ImportWalletStackName, route.params)}
         disabled={inCreateVault}

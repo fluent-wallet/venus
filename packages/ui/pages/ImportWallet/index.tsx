@@ -51,8 +51,7 @@ const ImportWallet = () => {
       } else {
         setErrorMessage('Invalid seed phrase or private key');
       }
-    } catch (_) {
-    }
+    } catch (_) {}
   }, []);
 
   const { inAsync, execAsync: handleConfirmInput } = useInAsync(_handleConfirmInput);
@@ -64,6 +63,7 @@ const ImportWallet = () => {
     >
       <View style={{ backgroundColor: theme.colors.surfacePrimary }} className="border border-blue-200 rounded-md p-1 mb-2">
         <TextInput
+          testID="seedPhraseInput"
           underlineColorAndroid="transparent"
           editable
           multiline
@@ -78,7 +78,7 @@ const ImportWallet = () => {
           {errorMessage}
         </Text>
       )}
-      <Button loading={inAsync} onPress={handleConfirmInput}>
+      <Button testID='confirm' loading={inAsync} onPress={handleConfirmInput}>
         Confirm
       </Button>
     </SafeAreaView>

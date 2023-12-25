@@ -44,6 +44,7 @@ const GroupSetting: React.FC<NativeStackScreenProps<RootStackList, 'GroupSetting
       <ListItem containerStyle={{ height: 52, paddingVertical: 0 }}>
         <ListItem.Content>
           <Input
+            testID="groupName"
             className="text-[16px]"
             containerStyle={{ width: '100%', height: '100%', position: 'relative', paddingHorizontal: 0 }}
             inputContainerStyle={{ width: '100%', height: '100%', borderWidth: 0, borderColor: 'transparent' }}
@@ -60,6 +61,7 @@ const GroupSetting: React.FC<NativeStackScreenProps<RootStackList, 'GroupSetting
             Backup
           </Text>
           <TouchableHighlight
+            testID="backup"
             className="rounded-[8px] overflow-hidden"
             onPress={() => navigation.navigate(BackUpStackName, { accountGroupId: route.params.accountGroupId, type: VaultType.HierarchicalDeterministic })}
           >
@@ -79,6 +81,7 @@ const GroupSetting: React.FC<NativeStackScreenProps<RootStackList, 'GroupSetting
         <Text style={{ color: theme.colors.textPrimary }}>HD Wallets</Text>
 
         <Button
+          testID="manageHDWallets"
           titleStyle={{ fontSize: 16, color: theme.colors.surfaceBrand }}
           size="sm"
           type="clear"
@@ -106,6 +109,7 @@ const GroupSetting: React.FC<NativeStackScreenProps<RootStackList, 'GroupSetting
       </ScrollView>
 
       <BaseButton
+        testID="removeGroup"
         containerStyle={{ marginBottom: 16 }}
         buttonStyle={{ backgroundColor: theme.colors.surfaceCard }}
         onPress={() => {
@@ -140,6 +144,7 @@ const GroupSetting: React.FC<NativeStackScreenProps<RootStackList, 'GroupSetting
         </Text>
         <Dialog.Actions>
           <Dialog.Button
+            testID="confirm"
             title="Confirm"
             onPress={async () => {
               try {
@@ -165,11 +170,12 @@ const GroupSetting: React.FC<NativeStackScreenProps<RootStackList, 'GroupSetting
               }
             }}
           />
-          <Dialog.Button title="Cancel" onPress={() => setVisibleRemoveGroup(false)} />
+          <Dialog.Button testID="cancel" title="Cancel" onPress={() => setVisibleRemoveGroup(false)} />
         </Dialog.Actions>
       </Dialog>
 
       <BaseButton
+        testID="done"
         disabled={groupName === accountGroup.nickname}
         onPress={async () => {
           await methods.updateAccountGroupNickName({ accountGroup, nickname: groupName });

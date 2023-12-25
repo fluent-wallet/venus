@@ -269,7 +269,7 @@ const TransactionConfirm: React.FC<{
             <CloseIcon />
           </Button>
           <View className="flex-1">
-            <BaseButton loading={loading} disabled={!gas || !!error || !!gas.error} onPress={handleSend}>
+            <BaseButton testID="send" loading={loading} disabled={!gas || !!error || !!gas.error} onPress={handleSend}>
               <SendIcon color="#fff" width={24} height={24} />
               Send
             </BaseButton>

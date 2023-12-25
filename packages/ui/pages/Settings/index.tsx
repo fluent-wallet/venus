@@ -18,7 +18,7 @@ const Settings: React.FC<{ navigation: NavigationProp<any> }> = ({ navigation })
       className="flex-1 flex flex-col gap-[12px] px-[24px]"
       style={{ backgroundColor: theme.colors.surfacePrimary, paddingTop: statusBarHeight + 16 }}
     >
-      <TouchableHighlight className="rounded-[8px] overflow-hidden" onPress={() => navigation.navigate(AccountManageStackName)}>
+      <TouchableHighlight testID='accountManage' className="rounded-[8px] overflow-hidden" onPress={() => navigation.navigate(AccountManageStackName)}>
         <ListItem>
           <ListItem.Content>
             <ListItem.Title style={{ color: theme.colors.textPrimary }} className="font-bold">

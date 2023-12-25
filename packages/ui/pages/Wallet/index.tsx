@@ -33,9 +33,9 @@ const Wallet: React.FC<{ navigation: StackNavigation }> = ({ navigation }) => {
       return (
         <View className="px-[24px]">
           <Tab value={tabIndex} onChange={setTabIndex} indicatorStyle={{ backgroundColor: theme.colors.surfaceBrand }}>
-            <Tab.Item title="Tokens" titleStyle={(active) => ({ color: active ? theme.colors.textBrand : theme.colors.textSecondary })} />
-            <Tab.Item title="NFTs" titleStyle={(active) => ({ color: active ? theme.colors.textBrand : theme.colors.textSecondary })} />
-            <Tab.Item title="Activity" titleStyle={(active) => ({ color: active ? theme.colors.textBrand : theme.colors.textSecondary })} />
+            <Tab.Item testID='tokenTab' title="Tokens" titleStyle={(active) => ({ color: active ? theme.colors.textBrand : theme.colors.textSecondary })} />
+            <Tab.Item testID='NFTTab' title="NFTs" titleStyle={(active) => ({ color: active ? theme.colors.textBrand : theme.colors.textSecondary })} />
+            <Tab.Item testID='activityTab' title="Activity" titleStyle={(active) => ({ color: active ? theme.colors.textBrand : theme.colors.textSecondary })} />
           </Tab>
         </View>
       );
@@ -43,8 +43,8 @@ const Wallet: React.FC<{ navigation: StackNavigation }> = ({ navigation }) => {
     return (
       <View className="px-[24px]">
         <Tab value={tabIndex} onChange={setTabIndex} indicatorStyle={{ backgroundColor: theme.colors.surfaceBrand }}>
-          <Tab.Item title="Tokens" titleStyle={(active) => ({ color: active ? theme.colors.textBrand : theme.colors.textSecondary })} />
-          <Tab.Item title="Activity" titleStyle={(active) => ({ color: active ? theme.colors.textBrand : theme.colors.textSecondary })} />
+          <Tab.Item testID='tokenTab' title="Tokens" titleStyle={(active) => ({ color: active ? theme.colors.textBrand : theme.colors.textSecondary })} />
+          <Tab.Item testID='activityTab' title="Activity" titleStyle={(active) => ({ color: active ? theme.colors.textBrand : theme.colors.textSecondary })} />
         </Tab>
       </View>
     );
@@ -89,7 +89,7 @@ const Wallet: React.FC<{ navigation: StackNavigation }> = ({ navigation }) => {
           </View>
 
           <View className="flex flex-row">
-            <Pressable className="flex items-center flex-1" onPress={() => navigation.navigate(ReceiveAddressStackName, {})}>
+            <Pressable testID='send' className="flex items-center flex-1" onPress={() => navigation.navigate(ReceiveAddressStackName, {})}>
               <View className="flex justify-center items-center w-[60px] h-[60px] rounded-full" style={{ backgroundColor: theme.colors.surfaceBrand }}>
                 <SendIcon color="#fff" width={32} height={32} />
               </View>
@@ -98,7 +98,7 @@ const Wallet: React.FC<{ navigation: StackNavigation }> = ({ navigation }) => {
               </Text>
             </Pressable>
 
-            <Pressable className="flex items-center flex-1" onPress={() => navigation.navigate(ReceiveStackName)}>
+            <Pressable testID='receive' className="flex items-center flex-1" onPress={() => navigation.navigate(ReceiveStackName)}>
               <View className="flex justify-center items-center w-[60px] h-[60px] rounded-full" style={{ backgroundColor: theme.colors.surfaceBrand }}>
                 <ReceiveIcon color="#fff" width={32} height={32} />
               </View>
@@ -107,7 +107,7 @@ const Wallet: React.FC<{ navigation: StackNavigation }> = ({ navigation }) => {
               </Text>
             </Pressable>
 
-            <View className="flex items-center flex-1">
+            <View testID='buy' className="flex items-center flex-1">
               <View className="flex justify-center items-center w-[60px] h-[60px] rounded-full" style={{ backgroundColor: theme.colors.surfaceBrand }}>
                 <BuyIcon color="#fff" width={32} height={32} />
               </View>
@@ -116,7 +116,7 @@ const Wallet: React.FC<{ navigation: StackNavigation }> = ({ navigation }) => {
               </Text>
             </View>
 
-            <View className="flex items-center flex-1">
+            <View testID='more' className="flex items-center flex-1">
               <View className="flex justify-center items-center w-[60px] h-[60px] rounded-full" style={{ backgroundColor: theme.colors.surfaceBrand }}>
                 <MoreIcon color="#fff" width={32} height={32} />
               </View>

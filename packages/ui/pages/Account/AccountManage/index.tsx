@@ -28,6 +28,7 @@ const AccountManage: React.FC<{ navigation: StackNavigation }> = ({ navigation }
         </Text>
 
         <Button
+          testID='addAccountButton'
           titleStyle={{ fontSize: 16, fontWeight: '500', color: theme.colors.surfaceBrand }}
           size="sm"
           type="clear"
@@ -36,7 +37,7 @@ const AccountManage: React.FC<{ navigation: StackNavigation }> = ({ navigation }
         />
       </View>
 
-      <ScrollView className="flex-1 px-[24px]">
+      <ScrollView className="flex-1 px-[24px]" testID='accountList'>
         {accountGroups?.map((accountGroup, index) => (
           <AccountGroupItem style={{ marginTop: index === 0 ? 0 : 16 }} key={accountGroup.id} accountGroup={accountGroup} enableAddNew enableLinkToSetting />
         ))}

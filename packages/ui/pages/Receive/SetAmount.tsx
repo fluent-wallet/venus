@@ -97,6 +97,7 @@ const SetAmount: React.FC<NativeStackScreenProps<RootStackList, 'SetAmount'>> = 
 
         <View className="flex">
           <Pressable
+            testID="selectToken"
             className="flex flex-row items-center mx-auto px-3 py-2 min-w-[196px]  rounded-[40px] mt-2"
             style={{ backgroundColor: theme.colors.surfaceThird }}
             onPress={handleSelectToken}
@@ -115,6 +116,7 @@ const SetAmount: React.FC<NativeStackScreenProps<RootStackList, 'SetAmount'>> = 
         </View>
 
         <TextInput
+          testID="amountInput"
           autoFocus
           ref={inputRef}
           value={value}
@@ -138,7 +140,7 @@ const SetAmount: React.FC<NativeStackScreenProps<RootStackList, 'SetAmount'>> = 
           </Text>
         )}
 
-        <BaseButton containerStyle={{ marginTop: 'auto' }} disabled={inputError} onPress={handleContinue}>
+        <BaseButton testID="continue" containerStyle={{ marginTop: 'auto' }} disabled={inputError} onPress={handleContinue}>
           <Text style={{ color: theme.colors.textInvert }}>Continue</Text>
         </BaseButton>
 

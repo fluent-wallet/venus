@@ -49,6 +49,7 @@ const SendReceiver: React.FC<{ navigation: StackNavigation; route: RouteProp<Roo
           <Text className="leading-6 ml-4 my-2">Receiver</Text>
           <View style={{ backgroundColor: theme.colors.surfaceCard }} className="flex flex-row items-center rounded-md px-4 py-2">
             <TextInput
+              testID="receiverInput"
               value={address}
               onChangeText={handleChange}
               className="flex-1 leading-6"
@@ -56,7 +57,7 @@ const SendReceiver: React.FC<{ navigation: StackNavigation; route: RouteProp<Roo
               maxLength={42}
               placeholderTextColor={theme.colors.textSecondary}
             />
-            <Pressable onPress={() => navigation.navigate(ScanQRCodeStackName, { path: ReceiveAddressStackName })}>
+            <Pressable testID="scanQRCode" onPress={() => navigation.navigate(ScanQRCodeStackName, { path: ReceiveAddressStackName })}>
               <Flip color={theme.colors.surfaceBrand} width={20} height={20} />
             </Pressable>
           </View>
@@ -73,7 +74,7 @@ const SendReceiver: React.FC<{ navigation: StackNavigation; route: RouteProp<Roo
           </View>
         </View>
         <View className="mt-auto mb-6">
-          <BaseButton disabled={!address || !!errorMsg} onPress={handleNext}>
+          <BaseButton testID="next" disabled={!address || !!errorMsg} onPress={handleNext}>
             Next
           </BaseButton>
         </View>

@@ -131,6 +131,7 @@ const BSIMSendTX: React.FC<Props> = ({ onSend, txEvent }) => {
         <View className="flex flex-row mt-auto">
           {showCloseIcon && (
             <Button
+              testID="closeButton"
               type="outline"
               buttonStyle={{ width: 48, height: 48, borderRadius: 40, marginRight: 15 }}
               onPress={() => navigation.navigate(HomeStackName, { screen: WalletStackName })}
@@ -140,7 +141,7 @@ const BSIMSendTX: React.FC<Props> = ({ onSend, txEvent }) => {
           )}
           {showButton && (
             <View className="flex-1">
-              <BaseButton disabled={state === BSIM_SIGN_STATUS.NOT_HAVE_BSIM} onPress={onSend}>
+              <BaseButton testID="next" disabled={state === BSIM_SIGN_STATUS.NOT_HAVE_BSIM} onPress={onSend}>
                 {buttonContext}
               </BaseButton>
             </View>
