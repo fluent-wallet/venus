@@ -10,7 +10,6 @@ import { observeSelectedAddress } from '@core/database/models/Address/query';
 import { dbRefresh$ } from '@core/database';
 import { updateNFTDetail } from '@modules/AssetList/ESpaceNFTList/fetch';
 import Plugins from '@core/WalletCore/Plugins';
-import { AssetType } from '@core/database/models/Asset';
 
 type KeepTrackFunction = (delay?: number) => void;
 
@@ -281,7 +280,7 @@ export class EthTxTrack {
         },
         true
       );
-      this._updateTokenBalance(tx)
+      this._updateTokenBalance(tx);
       this._handleDuplicateTx(tx);
     } else {
       keepTrack();
@@ -290,16 +289,15 @@ export class EthTxTrack {
 
   private async _updateTokenBalance(tx: Tx) {
     try {
-      const asset = await tx.asset;
-      if (!asset || asset.type === AssetType.ERC20 || asset.type === AssetType.Native) {
-        Plugins.AssetsTracker.updateCurrentTracker()
-          .catch((err) => console.log(err))
+      const [txExtra, txPayload] = await Promise.all([tx.txExtra, tx.txPayload]);
+      if (txExtra.tokenNft) {
+        updateNFTDetail(txPayload.to || undefined);
       }
-      if (!asset || asset.type === AssetType.ERC721 || asset.type === AssetType.ERC1155) {
-        updateNFTDetail(asset.contractAddress || undefined);
+      if (txExtra.simple || txExtra.token20) {
+        Plugins.AssetsTracker.updateCurrentTracker().catch((err) => console.log(err));
       }
     } catch (error) {
-      console.log(error)
+      console.log(error);
     }
   }
 
@@ -340,15 +338,9 @@ export class EthTxTrack {
       } else if (tx.status === TxStatus.PENDING) {
         await this._handlePendingTx(tx, keepTrack, RPCSend);
       } else if (tx.status === TxStatus.PACKAGED) {
-        await Promise.all([
-          this._handlePackagedTxSwitchChain(tx, keepTrack, RPCSend),
-          this._handlePackagedTx(tx, keepTrack, RPCSend)
-        ]);
+        await Promise.all([this._handlePackagedTxSwitchChain(tx, keepTrack, RPCSend), this._handlePackagedTx(tx, keepTrack, RPCSend)]);
       } else if (tx.status === TxStatus.EXECUTED) {
-        await Promise.all([
-          this._handleExecutedTxSwitchChain(tx, keepTrack, RPCSend),
-          this._handleExecutedTx(tx, keepTrack, RPCSend)
-        ]);
+        await Promise.all([this._handleExecutedTxSwitchChain(tx, keepTrack, RPCSend), this._handleExecutedTx(tx, keepTrack, RPCSend)]);
       }
     } catch (error) {
       console.log('rpc error:', error);
