@@ -11,7 +11,7 @@ import VaultType from '../../database/models/Vault/VaultType';
 import database from '../../database';
 import TableName from '../../database/TableName';
 import { getNthAccountOfHDKey } from '../../utils/hdkey';
-import { fromPrivate } from '../../utils/account';
+import { fromPrivate, toChecksum } from '../../utils/account';
 
 export interface Params {
   accountGroup: AccountGroup;
@@ -70,7 +70,7 @@ export class AddAccountMethod {
     const newAccount = createModel({
       name: TableName.Account,
       params: {
-        nickname: nickname ?? `Account - ${newAccountIndex + 1}`,
+        nickname: nickname ?? `Account - ${newAccountIndex + (_vault.type === VaultType.BSIM ? 0 : 1)}`,
         index: newAccountIndex,
         hidden: hidden ?? false,
         selected: selected ?? false,
@@ -81,7 +81,7 @@ export class AddAccountMethod {
 
     const defaultAssetRules = await Promise.all(networks.map((network) => network.defaultAssetRule));
     const addresses = hexAddressesInNetwork.map((hexAddress, index) =>
-      createAddress({ network: networks[index], assetRule: defaultAssetRules[index], account: newAccount, hex: hexAddress }, true)
+      createAddress({ network: networks[index], assetRule: defaultAssetRules[index], account: newAccount, hex: toChecksum(hexAddress) }, true)
     );
 
     if (prepareCreate) {

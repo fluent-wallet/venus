@@ -112,22 +112,24 @@ const AccountGroupItem: React.FC<{
                 <AccountAddress account={account} showSelected />
               </TouchableHighlight>
             ))}
-            {(vault.type === 'hierarchical_deterministic' || vault.type === 'BSIM' || vault.type === 'hardware') && enableAddNew && (
-              <>
-                <Card.Divider className="mx-[16px] mt-[16px] mb-[12px]" />
-                <Button
-                  testID="addAccount"
-                  titleStyle={{ fontSize: 16, fontWeight: '500', color: theme.colors.textPrimary }}
-                  size="sm"
-                  type="clear"
-                  onPress={() => addAccount()}
-                  loading={inAsync}
-                >
-                  <Icon name="add" color={theme.colors.textPrimary} size={16} className="mr-[5px]" />
-                  <Text>Add Account</Text>
-                </Button>
-              </>
-            )}
+            {((vault.type === 'hierarchical_deterministic' && accounts?.length < 256) ||
+              (vault.type === 'BSIM' && accounts?.length < plugins.BSIM.chainLimtCount) ||
+              vault.type === 'hardware') &&
+              enableAddNew && (
+                <>
+                  <Card.Divider className="mx-[16px] mt-[16px] mb-[12px]" />
+                  <Button
+                    titleStyle={{ fontSize: 16, fontWeight: '500', color: theme.colors.textPrimary }}
+                    size="sm"
+                    type="clear"
+                    onPress={() => addAccount()}
+                    loading={inAsync}
+                  >
+                    <Icon name="add" color={theme.colors.textPrimary} size={16} className="mr-[5px]" />
+                    <Text>Add Account</Text>
+                  </Button>
+                </>
+              )}
           </ListItem.Accordion>
         )}
 

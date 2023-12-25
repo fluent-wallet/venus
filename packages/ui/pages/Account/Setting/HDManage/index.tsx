@@ -6,7 +6,7 @@ import { useHeaderHeight } from '@react-navigation/elements';
 import { useTheme, Text, Card } from '@rneui/themed';
 import VaultType from '@core/database/models/Vault/VaultType';
 import database from '@core/database';
-import { useAccountGroupFromId, useAccountsOfGroup, useVaultOfGroup, useCurrentAccount, useCurrentHdPath } from '@core/WalletCore/Plugins/ReactInject';
+import { useAccountGroupFromId, useAccountsOfGroup, useVaultOfGroup, useCurrentAddress, useCurrentHdPath } from '@core/WalletCore/Plugins/ReactInject';
 import methods from '@core/WalletCore/Methods';
 import plugins from '@core/WalletCore/Plugins';
 import { shortenAddress } from '@core/utils/address';
@@ -15,17 +15,18 @@ import { type RootStackList } from '@router/configs';
 import { BaseButton } from '@components/Button';
 import CheckIcon from '@assets/icons/check.svg';
 import ArrowLeft from '@assets/icons/arrow-left.svg';
-import { BSIM_SUPPORT_ACCOUNT_LIMIT } from 'packages/WalletCoreExtends/Plugins/BSIM/BSIMSDK';
 
+const countPerPage = 5;
 const HDManage: React.FC<NativeStackScreenProps<RootStackList, 'HDManage'>> = ({ navigation, route }) => {
   const { theme } = useTheme();
   const headerHeight = useHeaderHeight();
 
   const accountGroup = useAccountGroupFromId(route.params.accountGroupId);
   const vault = useVaultOfGroup(route.params.accountGroupId);
+  const maxCountLimit = useMemo(() => (vault?.type === VaultType.BSIM ? plugins.BSIM.chainLimtCount : 255), [vault?.type]);
   const accounts = useAccountsOfGroup(route.params.accountGroupId);
   const visibleAccounts = useMemo(() => accounts.filter((account) => !account.hidden), [accounts]);
-  const currentAccount = useCurrentAccount();
+  const currentAddress = useCurrentAddress();
   const currentHdPath = useCurrentHdPath();
 
   const [pageIndex, setPageIndex] = useState(0);
@@ -57,28 +58,27 @@ const HDManage: React.FC<NativeStackScreenProps<RootStackList, 'HDManage'>> = ({
 
       let accountsList: Awaited<ReturnType<typeof plugins.BSIM.getBIMList>> = [];
       if (vault.type === 'BSIM') {
-        await plugins.BSIM.createBSIMAccountToIndex((pageIndex + 1) * 5);
+        await plugins.BSIM.createBSIMAccountToIndex((pageIndex + 1) * countPerPage);
         accountsList = await plugins.BSIM.getBIMList();
       }
 
       const newPageAccounts = await Promise.all(
-        Array.from({ length: 5 }, (_, i) => (vault.type === VaultType.BSIM ? i + 1 : i)).map(async (index) => {
+        Array.from({ length: countPerPage }, (_, i) => (vault.type === VaultType.BSIM ? i + 1 : i)).map(async (index) => {
           // BSIM index is  start from 1 other start from 0
-          const targetAlreadyInAccounts = accounts?.find((account) => account.index === pageIndex * 5 + index);
+          const targetAlreadyInAccounts = accounts?.find((account) => account.index === pageIndex * countPerPage + index);
           if (targetAlreadyInAccounts) return { hexAddress: (await targetAlreadyInAccounts.currentNetworkAddress).hex, index: targetAlreadyInAccounts.index };
           if (vault.type === VaultType.BSIM) {
-            const targetAlreadyInList = accountsList?.find((account) => account.index === pageIndex * 5 + index);
+            const targetAlreadyInList = accountsList?.find((account) => account.index === pageIndex * countPerPage + index);
             if (targetAlreadyInList) return { hexAddress: targetAlreadyInList.hexAddress, index: targetAlreadyInList.index };
 
             // The code shouldn't have been able to get here.
-            if (pageIndex * 5 + index <= BSIM_SUPPORT_ACCOUNT_LIMIT) {
-              const { hexAddress, index: newIndex } = await plugins.BSIM.createNewBSIMAccount();
-              if (newIndex === pageIndex * 5 + index) {
-                return { hexAddress, index: newIndex };
-              }
-            }
+            // const { hexAddress, index: newIndex } = await plugins.BSIM.createNewBSIMAccount();
+            // if (newIndex === pageIndex * countPerPage + index) {
+            //   return { hexAddress, index: newIndex };
+            // }
+            throw new Error('????');
           } else {
-            return getNthAccountOfHDKey({ mnemonic, hdPath: currentHdPath.value, nth: pageIndex * 5 + index });
+            return getNthAccountOfHDKey({ mnemonic, hdPath: currentHdPath.value, nth: pageIndex * countPerPage + index });
           }
         })
       );
@@ -152,7 +152,7 @@ const HDManage: React.FC<NativeStackScreenProps<RootStackList, 'HDManage'>> = ({
           </View>
         )}
         {pageAccounts.map((account, index) => {
-          const isSelected = !!currentAccount && currentAccount.index === account.index;
+          const isSelected = !!currentAddress && currentAddress.hex === account.hexAddress;
           const isInChoose = !!chooseAccounts?.find((_account) => _account.index === account.index);
           return (
             <Fragment key={account.index}>
@@ -215,7 +215,7 @@ const HDManage: React.FC<NativeStackScreenProps<RootStackList, 'HDManage'>> = ({
           {chooseAccounts.length} address{chooseAccounts.length > 0 ? `(es)` : ''} selected
         </Text>
         <View>
-          {vault.type === VaultType.BSIM && pageAccounts.length >= BSIM_SUPPORT_ACCOUNT_LIMIT ? null : (
+          {(pageIndex + 1) * countPerPage < maxCountLimit && (
             <Pressable onPress={() => setPageIndex((pre) => pre + 1)}>
               <View className="flex justify-center items-center  w-6 h-6 flex-shrink-0 flex-grow-0 transform rotate-[180deg]">
                 <ArrowLeft color={inNext ? theme.colors.surfaceFourth : theme.colors.surfaceBrand} width={12} height={12} />

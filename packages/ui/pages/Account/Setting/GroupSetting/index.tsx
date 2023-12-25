@@ -158,6 +158,9 @@ const GroupSetting: React.FC<NativeStackScreenProps<RootStackList, 'GroupSetting
                 });
                 navigation.goBack();
               } catch (err) {
+                if (String(err)?.includes('cancel')) {
+                  return;
+                }
                 showMessage({
                   message: 'Remove Group failed',
                   description: String(err ?? ''),

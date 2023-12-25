@@ -30,13 +30,10 @@ const NFTItem: React.FC<{
             ) : (
               <TokenIconDefault width={32} height={32} />
             )}
-            <Text
-              style={{ color: theme.colors.contrastWhiteAndBlack }}
-              className={clsx('text-base font-medium ml-[8px]', isExpanded && isCurrentOpenNftInFetch && details? 'mr-[16px]' : 'mr-auto')}
-            >
+            <Text style={{ color: theme.colors.contrastWhiteAndBlack }} className={clsx('text-base font-medium ml-[8px]', false ? 'mr-[16px]' : 'mr-auto')}>
               {data.name}
             </Text>
-            {isExpanded && isCurrentOpenNftInFetch && details && <ActivityIndicator color={theme.colors.textBrand} size={16} className="mr-auto" />}
+            {/* {isExpanded && isCurrentOpenNftInFetch && details && <ActivityIndicator color={theme.colors.textBrand} size={16} className="mr-auto" />} */}
 
             <View className={clsx(isExpanded && 'rotate-[-180deg]')}>
               <Icon name="keyboard-arrow-down" color={theme.colors.contrastWhiteAndBlack} />

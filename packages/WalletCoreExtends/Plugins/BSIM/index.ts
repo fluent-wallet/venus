@@ -24,14 +24,16 @@ const formatBSIMPubkey = (key: string) => {
 let hasInit = false;
 
 export class BSIMPluginClass implements Plugin {
+  name = 'BSIM' as const;
+
+  chainLimtCount = 25 as const;
+
   checkIsInit = async () => {
     if (!hasInit) {
       await BSIMSDK.create();
       hasInit = true;
     }
   };
-
-  name = 'BSIM' as const;
 
   public getBIMList = async () => {
     try {

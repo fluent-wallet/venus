@@ -16,7 +16,7 @@ const TokenList: React.FC<{
   const { theme } = useTheme();
 
   const tokens = useAssetsTokenList();
-  const inFetch = useAssetsInFetch();
+  // const inFetch = useAssetsInFetch();
   const empty = !tokens || tokens.every((v) => BigInt(v.balance) <= 0);
 
   if (tokens === null) {
@@ -36,11 +36,11 @@ const TokenList: React.FC<{
   }
   return (
     <>
-      {inFetch && (
+      {/* {inFetch && (
         <View className='absolute left-[118px] -top-[33.5px]'>
           <ActivityIndicator color={theme.colors.textBrand} size={16} className="mr-auto" />
         </View>
-      )}
+      )} */}
       <RenderList
         className="flex flex-1 px-6 py-4"
         data={tokens}

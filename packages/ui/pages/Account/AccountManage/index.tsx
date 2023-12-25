@@ -5,6 +5,7 @@ import { useHeaderHeight } from '@react-navigation/elements';
 import { Button } from '@rneui/base';
 import { useTheme, Dialog, ListItem } from '@rneui/themed';
 import methods from '@core/WalletCore/Methods';
+import plugins from '@core/WalletCore/Plugins';
 import { useAccountGroups } from '@core/WalletCore/Plugins/ReactInject';
 import { statusBarHeight } from '@utils/deviceInfo';
 import { type StackNavigation, WelcomeStackName, AddAccountStackName } from '@router/configs';
@@ -64,6 +65,7 @@ const AccountManage: React.FC<{ navigation: StackNavigation }> = ({ navigation }
             title="Confirm"
             onPress={async () => {
               try {
+                await plugins.Authentication.getPassword();
                 await methods.clearAccountData();
                 showMessage({
                   message: 'Clear account data successfully',
@@ -73,7 +75,9 @@ const AccountManage: React.FC<{ navigation: StackNavigation }> = ({ navigation }
                 });
                 navigation.navigate(WelcomeStackName);
               } catch (err) {
-                await methods.clearAccountData();
+                if (String(err)?.includes('cancel')) {
+                  return;
+                }
                 showMessage({
                   message: 'Clear account data failed',
                   description: String(err ?? ''),

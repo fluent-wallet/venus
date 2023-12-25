@@ -18,7 +18,7 @@ const ESpaceNFTList: React.FC<{ onSelectNftItem?: (nft: NFTWithDetail) => void }
 
   const scrollY = useRef(0);
   const nfts = useAssetsNFTList();
-  const inFetch = useAssetsInFetch();
+  // const inFetch = useAssetsInFetch();
   const currentAddress = useCurrentAddress()!;
   const currentNetwork = useCurrentNetwork()!;
   const [currentOpenNftContract, _setCurrentOpenNftContract] = useState<string | null>(null);
@@ -51,7 +51,6 @@ const ESpaceNFTList: React.FC<{ onSelectNftItem?: (nft: NFTWithDetail) => void }
   }, [currentAddress?.hex, currentNetwork?.id, currentOpenNft]);
 
   useEffect(() => {
-    console.log(currentOpenNftContract, currentOpenNft?.contractAddress, currentAddress?.hex, currentNetwork?.id);
     setDetails(null);
     if (currentOpenNft && fetchCurrentNFTDetail.current) {
       fetchCurrentNFTDetail.current();
@@ -136,11 +135,11 @@ const ESpaceNFTList: React.FC<{ onSelectNftItem?: (nft: NFTWithDetail) => void }
 
   return (
     <>
-      {inFetch && (
+      {/* {inFetch && (
         <View className="absolute left-[232px] -top-[33.5px]">
           <ActivityIndicator color={theme.colors.textBrand} size={16} className="mr-auto" />
         </View>
-      )}
+      )} */}
       <View className="relative flex-1">
         {currentOpenNft && !isCurrentOpenHeaderInView && (
           <TouchableHighlight testID='currentOpenNFT' onPress={() => setCurrentOpenNftContract(null)} underlayColor={theme.colors.underlayColor}>
@@ -152,11 +151,11 @@ const ESpaceNFTList: React.FC<{ onSelectNftItem?: (nft: NFTWithDetail) => void }
               )}
               <Text
                 style={{ color: theme.colors.contrastWhiteAndBlack }}
-                className={clsx('text-base font-medium ml-[8px]', isCurrentOpenNftInFetch && details ? 'mr-[16px]' : 'mr-auto')}
+                className={clsx('text-base font-medium ml-[8px]', false ? 'mr-[16px]' : 'mr-auto')}
               >
                 {currentOpenNft.name}
               </Text>
-              {isCurrentOpenNftInFetch && details && <ActivityIndicator color={theme.colors.textBrand} size={16} className="mr-auto" />}
+              {/* {isCurrentOpenNftInFetch && details && <ActivityIndicator color={theme.colors.textBrand} size={16} className="mr-auto" />} */}
 
               <View className="rotate-[-180deg]">
                 <Icon name="keyboard-arrow-down" color={theme.colors.contrastWhiteAndBlack} />

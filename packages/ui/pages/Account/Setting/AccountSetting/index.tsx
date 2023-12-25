@@ -134,6 +134,9 @@ const AccountSetting: React.FC<NativeStackScreenProps<RootStackList, 'AccountSet
                 });
                 navigation.goBack();
               } catch (err) {
+                if (String(err)?.includes('cancel')) {
+                  return;
+                }
                 showMessage({
                   message: 'Remove account failed',
                   description: String(err ?? ''),
