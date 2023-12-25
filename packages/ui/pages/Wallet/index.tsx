@@ -36,7 +36,7 @@ const MainButton: React.FC<{ onPress?: VoidFunction; disabled?: boolean; label?:
       >
         {icon}
       </View>
-      <Text className="mt-[8px] text-base font-medium" style={{ color: disabled ? theme.colors.textSecondary : theme.colors.textPrimary }}>
+      <Text className="text-base font-medium" style={{ color: disabled ? theme.colors.textSecondary : theme.colors.textPrimary }}>
         {label}
       </Text>
     </Pressable>
@@ -63,24 +63,24 @@ const Wallet: React.FC<{ navigation: StackNavigation }> = ({ navigation }) => {
           >
             <Tab.Item
               containerStyle={{ flex: 0, width: 60 }}
-              buttonStyle={{ paddingHorizontal: 0 }}
+              buttonStyle={{ paddingHorizontal: 0, paddingTop: 15, paddingBottom: 7 }}
               testID="tokenTab"
               title="Tokens"
-              titleStyle={(active) => ({ color: active ? theme.colors.textBrand : theme.colors.textSecondary, paddingHorizontal: 0 })}
+              titleStyle={(active) => ({ color: active ? theme.colors.textBrand : theme.colors.textSecondary, paddingHorizontal: 0, paddingVertical: 0 })}
             />
             <Tab.Item
               containerStyle={{ flex: 0, width: 60 }}
-              buttonStyle={{ paddingHorizontal: 0 }}
+              buttonStyle={{ paddingHorizontal: 0, paddingTop: 15, paddingBottom: 7 }}
               testID="NFTTab"
               title="NFTs"
-              titleStyle={(active) => ({ color: active ? theme.colors.textBrand : theme.colors.textSecondary, paddingHorizontal: 0 })}
+              titleStyle={(active) => ({ color: active ? theme.colors.textBrand : theme.colors.textSecondary, paddingHorizontal: 0, paddingVertical: 0 })}
             />
             <Tab.Item
               containerStyle={{ flex: 0, width: 60 }}
-              buttonStyle={{ paddingHorizontal: 0 }}
+              buttonStyle={{ paddingHorizontal: 0, paddingTop: 15, paddingBottom: 7 }}
               title="Activity"
               testID="activityTab"
-              titleStyle={(active) => ({ color: active ? theme.colors.textBrand : theme.colors.textSecondary, paddingHorizontal: 0 })}
+              titleStyle={(active) => ({ color: active ? theme.colors.textBrand : theme.colors.textSecondary, paddingHorizontal: 0, paddingVertical: 0 })}
             />
           </Tab>
         </View>
@@ -96,17 +96,17 @@ const Wallet: React.FC<{ navigation: StackNavigation }> = ({ navigation }) => {
         >
           <Tab.Item
             containerStyle={{ flex: 0, width: 60 }}
-            buttonStyle={{ paddingHorizontal: 0 }}
+            buttonStyle={{ paddingHorizontal: 0, paddingTop: 15, paddingBottom: 7 }}
             title="Tokens"
             testID="tokenTab"
-            titleStyle={(active) => ({ color: active ? theme.colors.textBrand : theme.colors.textSecondary, paddingHorizontal: 0 })}
+            titleStyle={(active) => ({ color: active ? theme.colors.textBrand : theme.colors.textSecondary, paddingHorizontal: 0, paddingVertical: 0 })}
           />
           <Tab.Item
             containerStyle={{ flex: 0, width: 60 }}
-            buttonStyle={{ paddingHorizontal: 0 }}
+            buttonStyle={{ paddingHorizontal: 0, paddingTop: 15, paddingBottom: 7 }}
             title="Activity"
             testID="activityTab"
-            titleStyle={(active) => ({ color: active ? theme.colors.textBrand : theme.colors.textSecondary, paddingHorizontal: 0 })}
+            titleStyle={(active) => ({ color: active ? theme.colors.textBrand : theme.colors.textSecondary, paddingHorizontal: 0, paddingVertical: 0 })}
           />
         </Tab>
       </View>
