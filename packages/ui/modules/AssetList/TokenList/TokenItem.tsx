@@ -17,7 +17,7 @@ const TokenItem: React.FC<{
     [data.priceInUSDT, data.balance]
   );
   return (
-    <Pressable onPress={onPress && data ? () => onPress(data) : undefined}>
+    <Pressable testID='tokenItem' onPress={onPress && data ? () => onPress(data) : undefined}>
       <View className={'flex flex-row  w-full p-3'}>
         <View className="w-12 h-12 mr-4">
           <TokenIcon type={data.type} url={data.icon} width={48} height={48} />

@@ -158,6 +158,7 @@ const HDManage: React.FC<NativeStackScreenProps<RootStackList, 'HDManage'>> = ({
             <Fragment key={account.index}>
               {index !== 0 && <View className="mx-[16px] my-[8px] w-full h-[1px]" style={{ backgroundColor: theme.colors.borderPrimary }} />}
               <TouchableHighlight
+                testID="addressItem"
                 underlayColor={theme.colors.underlayColor}
                 disabled={isSelected}
                 onPress={() => {

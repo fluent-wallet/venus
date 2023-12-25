@@ -100,7 +100,7 @@ const Receive: React.FC<NativeStackScreenProps<RootStackList, 'Receive'>> = ({ n
 
         <View className="flex flex-row justify-center mt-auto">
           <View className="mr-9">
-            <Button type="clear" buttonStyle={{ display: 'flex', flexDirection: 'column' }}>
+            <Button testID='share' type="clear" buttonStyle={{ display: 'flex', flexDirection: 'column' }}>
               <View className="w-[60px] h-[60px] rounded-full" style={{ backgroundColor: theme.colors.surfaceThird }}>
                 <ShareIcon width={60} height={60} color={shareDisabled ? theme.colors.surfaceSecondary : theme.colors.surfaceBrand} />
               </View>
@@ -108,7 +108,7 @@ const Receive: React.FC<NativeStackScreenProps<RootStackList, 'Receive'>> = ({ n
             </Button>
           </View>
           <View className="ml-9">
-            <Button type="clear" buttonStyle={{ display: 'flex', flexDirection: 'column' }} onPress={handleSetAmount}>
+            <Button testID='setAmount' type="clear" buttonStyle={{ display: 'flex', flexDirection: 'column' }} onPress={handleSetAmount}>
               <View className="w-[60px] h-[60px] rounded-full" style={{ backgroundColor: theme.colors.surfaceThird }}>
                 <SetAmountIcon width={60} height={60} color={setAmountDisabled ? theme.colors.surfaceThird : theme.colors.surfaceBrand} />
               </View>

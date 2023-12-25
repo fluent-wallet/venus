@@ -54,6 +54,7 @@ const AccountGroupItem: React.FC<{
 
   return (
     <TouchableHighlight
+      testID="accountGroupItemTab"
       className="rounded-[8px] overflow-hidden"
       style={style}
       underlayColor={theme.colors.underlayColor}
@@ -93,6 +94,7 @@ const AccountGroupItem: React.FC<{
             <Card.Divider className="mx-[16px] mt-[16px] mb-[8px]" />
             {accounts?.map((account, index) => (
               <TouchableHighlight
+                testID="accountItem"
                 className="px-[16px] py-[8px] rounded-[4px] overflow-hidden"
                 style={{ marginTop: index === 0 ? 0 : 8 }}
                 key={account.id}
@@ -114,6 +116,7 @@ const AccountGroupItem: React.FC<{
               <>
                 <Card.Divider className="mx-[16px] mt-[16px] mb-[12px]" />
                 <Button
+                  testID="addAccount"
                   titleStyle={{ fontSize: 16, fontWeight: '500', color: theme.colors.textPrimary }}
                   size="sm"
                   type="clear"

@@ -10,6 +10,7 @@ const SwitchCurrentNetwork = () => {
   if (!currentNetwork) return null;
   return (
     <Button
+      testID="switchNetwork"
       type="outline"
       titleStyle={{ color: theme.colors.contrastWhiteAndBlack, fontSize: 10, fontFamily: 'SF Pro Display' }}
       buttonStyle={{ borderRadius: 40, borderColor: theme.colors.surfaceSecondary }}

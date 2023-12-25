@@ -18,6 +18,7 @@ const HeaderTitle: React.FC<{ backgroundColor: string }> = ({ backgroundColor }:
   if (!currentAddressValue) return null;
   return (
     <TouchableHighlight
+      testID="copyAddress"
       onPress={() => {
         Clipboard.setString(currentAddressValue);
         showMessage({
@@ -29,7 +30,7 @@ const HeaderTitle: React.FC<{ backgroundColor: string }> = ({ backgroundColor }:
           backgroundColor: theme.colors.warnSuccessPrimary,
           color: theme.colors.textInvert,
           textStyle: { fontSize: 12, fontFamily: 'SF Pro Display' },
-          style: { display: 'flex', alignItems: 'center', alignSelf: 'center', width: 115, },
+          style: { display: 'flex', alignItems: 'center', alignSelf: 'center', width: 115 },
           duration: 1.5 * 1000, // 1.5s
         });
       }}
@@ -51,10 +52,10 @@ const SwitchCurrentAddress: React.FC = () => {
 
   return (
     <View className="flex flex-row ml-[17px]">
-      <Pressable onPress={() => navigation.navigate(AccountSelectStackName)}>
+      <Pressable testID="menu" onPress={() => navigation.navigate(AccountSelectStackName)}>
         <Menu color={theme.colors.surfaceBrand} className="w-[24] h-[24]" style={{ marginRight: 18 }} />
       </Pressable>
-      <Pressable onPress={() => navigation.navigate(ScanQRCodeStackName, { path: ReceiveAddressStackName })}>
+      <Pressable testID="scanQRCode" onPress={() => navigation.navigate(ScanQRCodeStackName, { path: ReceiveAddressStackName })}>
         <Flip color={theme.colors.surfaceBrand} className="w-[24] h-[24]" />
       </Pressable>
     </View>

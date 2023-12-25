@@ -8,7 +8,7 @@ const ReceiveFunds: React.FC = () => {
   const { theme } = useTheme();
   const navigation = useNavigation<StackNavigation>();
   return (
-    <Pressable onPress={() => navigation.navigate(ReceiveStackName)}>
+    <Pressable testID='receiveFunds' onPress={() => navigation.navigate(ReceiveStackName)}>
       <Card>
         <View className="flex items-center flex-row">
           <View className="mr-[7px] my-[12px]">

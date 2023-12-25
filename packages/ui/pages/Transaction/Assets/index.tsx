@@ -39,7 +39,6 @@ const Assets: React.FC<{ navigation: StackNavigation; route: RouteProp<RootStack
   const handleSelectNFTItem = (nft: NFTWithDetail) => {
     const { type, symbol, decimals, contractAddress, icon, name } = nft;
     const { amount: nftBalance, name: nftName, tokenId: nftTokenId, icon: nftIcon } = nft.detail;
-    console.log(nft)
     setSendNFTTransaction({
       assetType: type,
       symbol: symbol,
@@ -50,7 +49,7 @@ const Assets: React.FC<{ navigation: StackNavigation; route: RouteProp<RootStack
       contractName: name,
       nftName: nftName,
       iconUrl: icon ?? undefined,
-      decimals: decimals || 0,
+      decimals: 0,
     });
     if (nft.type === AssetType.ERC1155 && Number(nftBalance || 0) > 1) {
       navigation.navigate(SendToStackName);
@@ -66,8 +65,8 @@ const Assets: React.FC<{ navigation: StackNavigation; route: RouteProp<RootStack
     >
       <View className="px-6">
         <Tab value={tabIndex} onChange={handleTabChange} indicatorStyle={{ backgroundColor: theme.colors.surfaceBrand }}>
-          <Tab.Item title="Tokens" titleStyle={(active) => ({ color: active ? theme.colors.textBrand : theme.colors.textSecondary })} />
-          <Tab.Item title="NFTs" titleStyle={(active) => ({ color: active ? theme.colors.textBrand : theme.colors.textSecondary })} />
+          <Tab.Item testID='tokenTab' title="Tokens" titleStyle={(active) => ({ color: active ? theme.colors.textBrand : theme.colors.textSecondary })} />
+          <Tab.Item testID='NFTTab' title="NFTs" titleStyle={(active) => ({ color: active ? theme.colors.textBrand : theme.colors.textSecondary })} />
         </Tab>
       </View>
 

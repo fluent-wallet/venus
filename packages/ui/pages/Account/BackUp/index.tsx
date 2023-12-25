@@ -72,7 +72,7 @@ const BackUp: React.FC<NativeStackScreenProps<RootStackList, 'BackUp'>> = ({ nav
         <Secret backupType={backupType} getSecretData={handleGetSecretData} />
       </ScrollView>
       <View>
-        <BaseButton onPress={() => navigation.goBack()}>
+        <BaseButton testID='close' onPress={() => navigation.goBack()}>
           <Text className="text-base font-medium leading-6" style={{ color: theme.colors.textInvert }}>
             Close
           </Text>

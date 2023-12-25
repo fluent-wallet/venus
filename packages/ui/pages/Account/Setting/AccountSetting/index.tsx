@@ -43,6 +43,7 @@ const AccountSetting: React.FC<NativeStackScreenProps<RootStackList, 'AccountSet
       <ListItem containerStyle={{ height: 52, paddingVertical: 0 }}>
         <ListItem.Content>
           <Input
+            testID="accountName"
             className="text-[16px]"
             containerStyle={{ width: '100%', height: '100%', position: 'relative', paddingHorizontal: 0 }}
             inputContainerStyle={{ width: '100%', height: '100%', borderWidth: 0, borderColor: 'transparent' }}
@@ -59,6 +60,7 @@ const AccountSetting: React.FC<NativeStackScreenProps<RootStackList, 'AccountSet
             Backup
           </Text>
           <TouchableHighlight
+            testID="backup"
             className="rounded-[8px] overflow-hidden"
             onPress={async () =>
               navigation.navigate(BackUpStackName, {
@@ -80,6 +82,7 @@ const AccountSetting: React.FC<NativeStackScreenProps<RootStackList, 'AccountSet
       )}
 
       <BaseButton
+        testID="removeAccount"
         containerStyle={{ marginTop: 16 }}
         buttonStyle={{ backgroundColor: theme.colors.surfaceCard }}
         onPress={() => {
@@ -113,6 +116,7 @@ const AccountSetting: React.FC<NativeStackScreenProps<RootStackList, 'AccountSet
         </Text>
         <Dialog.Actions>
           <Dialog.Button
+            testID="confirm"
             title="Confirm"
             onPress={async () => {
               try {
@@ -142,11 +146,12 @@ const AccountSetting: React.FC<NativeStackScreenProps<RootStackList, 'AccountSet
               }
             }}
           />
-          <Dialog.Button title="Cancel" onPress={() => setVisibleRemoveAccount(false)} />
+          <Dialog.Button testID="cancel" title="Cancel" onPress={() => setVisibleRemoveAccount(false)} />
         </Dialog.Actions>
       </Dialog>
 
       <BaseButton
+        testID="done"
         containerStyle={{ marginTop: 'auto' }}
         disabled={accountName === account.nickname}
         onPress={async () => {

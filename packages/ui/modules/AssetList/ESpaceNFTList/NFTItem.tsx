@@ -23,7 +23,7 @@ const NFTItem: React.FC<{
   return (
     <>
       {(!isExpanded || (isExpanded && isCurrentOpenHeaderInView)) && (
-        <TouchableHighlight onPress={onPress} underlayColor={theme.colors.underlayColor}>
+        <TouchableHighlight testID='NFTTitle' onPress={onPress} underlayColor={theme.colors.underlayColor}>
           <View className="flex flex-row h-[64px] px-[24px] items-center">
             {data.icon ? (
               <MixinImage source={{ uri: data.icon }} width={32} height={32} fallback={<TokenIconDefault width={32} height={32} />} />
@@ -67,7 +67,7 @@ const NFTItem: React.FC<{
 
           {details &&
             details.map((detail) => (
-              <Pressable key={detail.tokenId} style={{ width: '48%' }} onPress={() => onSelectNftItem?.({ ...data, detail })}>
+              <Pressable testID='NFTItem' key={detail.tokenId} style={{ width: '48%' }} onPress={() => onSelectNftItem?.({ ...data, detail })}>
                 <View style={{ backgroundColor: theme.colors.surfaceCard }} className="p-3 mb-3 rounded-md w-full ">
                   {detail.amount && data.type === AssetType.ERC1155 && (
                     <View className="absolute top-4 right-4 z-10 px-2 rounded-full" style={{ backgroundColor: theme.colors.surfaceCard }}>

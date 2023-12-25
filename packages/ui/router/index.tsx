@@ -82,12 +82,16 @@ const HomeScreenNavigator = () => {
       <BottomTabStack.Screen
         name={WalletStackName}
         component={Wallet}
-        options={{ tabBarIcon: ({ color }) => <WalletIcon color={color} />, ...getWalletHeaderOptions(theme.colors.homeHeaderAddressBackgroundColor) }}
+        options={{
+          tabBarIcon: ({ color }) => <WalletIcon color={color} />,
+          ...getWalletHeaderOptions(theme.colors.homeHeaderAddressBackgroundColor),
+          tabBarTestID: 'walletTab',
+        }}
       />
       <BottomTabStack.Screen
         name={SettingsStackName}
         component={Settings}
-        options={{ headerShown: false, tabBarIcon: ({ color }) => <SettingsIcon color={color} /> }}
+        options={{ headerShown: false, tabBarIcon: ({ color }) => <SettingsIcon color={color} />, tabBarTestID: 'settingsTab' }}
       />
     </BottomTabStack.Navigator>
   );

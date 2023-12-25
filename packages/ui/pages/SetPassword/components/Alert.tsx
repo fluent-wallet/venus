@@ -46,7 +46,7 @@ function CreatePasswordAlert(props: Props) {
         </View>
         <Text className="text-sm leading-normal text-center mb-8">{message}</Text>
 
-        <BaseButton onPress={type === 'error' ? onCancel : onOk}>OK</BaseButton>
+        <BaseButton testID='alertButton' onPress={type === 'error' ? onCancel : onOk}>OK</BaseButton>
       </Dialog>
     </View>
   );

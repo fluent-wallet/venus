@@ -69,7 +69,7 @@ const PasswordVerify: React.FC = () => {
           title="Verify Password"
           onBlur={handleConfirm}
         />
-        <BaseButton loading={inVerify} onPress={handleConfirm} disabled={!password}>
+        <BaseButton testID="confirm" loading={inVerify} onPress={handleConfirm} disabled={!password}>
           Confirm
         </BaseButton>
       </View>

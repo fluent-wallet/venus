@@ -16,7 +16,7 @@ const EstimateGas: React.FC<EstimateGasProps> = ({ gasLimit, gasPrice, loading, 
   const { theme } = useTheme();
   return (
     <View className="flex justify-center">
-      <Pressable onPress={error ? retry : undefined}>
+      <Pressable testID='reloadEstimateGas' onPress={error ? retry : undefined}>
         <Text style={{ color: theme.colors.textPrimary }} className="text-xl font-bold leading-6">
           {error ? (
             <View className="flex flex-row items-center">

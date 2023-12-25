@@ -58,6 +58,7 @@ const SetPassword: React.FC<{ navigation: NavigationProp<RootStackList> }> = (pr
 
       <View>
         <Password
+          testId="passwordInput"
           helperText="Must be at least 8 characters"
           errorMessage={password.error}
           value={password.pwd}
@@ -66,6 +67,7 @@ const SetPassword: React.FC<{ navigation: NavigationProp<RootStackList> }> = (pr
         />
 
         <Password
+          testId="confirmPasswordInput"
           helperText="Password must be match"
           errorMessage={confirmPwd !== password.pwd && confirmPwd !== '' ? 'Passwords do not match' : ''}
           value={confirmPwd}
@@ -76,6 +78,7 @@ const SetPassword: React.FC<{ navigation: NavigationProp<RootStackList> }> = (pr
 
       <View className="mt-auto flex flex-row items-center mb-[15px]">
         <CheckBox
+          testID="checkbox"
           containerStyle={{ backgroundColor: 'transparent', padding: 0 }}
           checked={checked}
           onPress={() => setChecked(!checked)}
@@ -88,6 +91,7 @@ const SetPassword: React.FC<{ navigation: NavigationProp<RootStackList> }> = (pr
         <Text className="text-base">ePay Wallet does not store your password. Please remember your password.</Text>
       </View>
       <BaseButton
+        testID="createPasswordButton"
         loading={loading}
         onPress={handleCreatePassword}
         disabled={!(checked && password.pwd !== '' && password.pwd === confirmPwd && password.error === '')}

@@ -99,10 +99,11 @@ const Biometrics = () => {
           </Text>
         </View>
 
-        <BaseButton loading={loading} containerStyle={{ marginTop: 32, marginHorizontal: 16 }} onPress={handleEnableBiometrics}>
+        <BaseButton testID="enable" loading={loading} containerStyle={{ marginTop: 32, marginHorizontal: 16 }} onPress={handleEnableBiometrics}>
           Enable
         </BaseButton>
         <BaseButton
+          testID="setPassword"
           containerStyle={{ marginTop: 16, marginHorizontal: 16 }}
           onPress={() => {
             if (disableSetPassword) return;

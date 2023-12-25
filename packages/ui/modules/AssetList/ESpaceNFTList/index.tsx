@@ -143,7 +143,7 @@ const ESpaceNFTList: React.FC<{ onSelectNftItem?: (nft: NFTWithDetail) => void }
       )}
       <View className="relative flex-1">
         {currentOpenNft && !isCurrentOpenHeaderInView && (
-          <TouchableHighlight onPress={() => setCurrentOpenNftContract(null)} underlayColor={theme.colors.underlayColor}>
+          <TouchableHighlight testID='currentOpenNFT' onPress={() => setCurrentOpenNftContract(null)} underlayColor={theme.colors.underlayColor}>
             <View className={'flex flex-row h-[64px] px-[24px] items-center'}>
               {currentOpenNft.icon ? (
                 <MixinImage source={{ uri: currentOpenNft.icon }} width={32} height={32} fallback={<TokenIconDefault width={32} height={32} />} />

@@ -17,6 +17,7 @@ interface Props {
   successMessage?: string;
   helperText?: string;
   onBlur?: ((e: NativeSyntheticEvent<TextInputFocusEventData>) => void) | undefined;
+  testId?:string
 }
 
 function Password(props: Props) {
@@ -28,10 +29,11 @@ function Password(props: Props) {
   const [visible, setVisible] = useState(props?.visible ?? true);
 
   return (
-    <View>
+    <View testID={props.testId}>
       <Text className="text-[20px] font-bold leading-tight my-[15px]">{title}</Text>
       <View className="rounded-[7px]" style={{ backgroundColor: colors.passwordInputBackground }}>
         <Input
+          testID='passwordInput'
           value={value}
           inputContainerStyle={{ borderBottomWidth: 0 }}
           placeholderTextColor={colors.textSecondary}
@@ -43,6 +45,7 @@ function Password(props: Props) {
           leftIcon={<Icon name="123" Component={LockIcon} style={{ color: isDark ? colors.surfaceFourth : colors.textPrimary }} />}
           rightIcon={
             <Icon
+              testID='passwordInputRightIcon'
               name="123"
               style={{ color: isDark ? colors.surfaceFourth : colors.textPrimary }}
               Component={visible ? VisibilityOffIcon : VisibilityIcon}
