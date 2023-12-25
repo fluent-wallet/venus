@@ -12,8 +12,8 @@ const TokenList: React.FC<{
   onPress?: (v: AssetInfo) => void;
   skeleton?: number;
   RenderList?: typeof FlatList | typeof BottomSheetFlatList;
-  enableEmpty?: boolean;
-}> = ({ onPress, skeleton = 6, RenderList = FlatList, enableEmpty = false }) => {
+  from: 'home' | 'receive' | 'transaction';
+}> = ({ onPress, skeleton = 6, RenderList = FlatList, from }) => {
   const { theme } = useTheme();
 
   const tokens = useAssetsTokenList();
@@ -22,15 +22,15 @@ const TokenList: React.FC<{
 
   if (tokens === null) {
     return (
-      <View className="flex-1 px-6 py-4">
+      <View className="flex-1 p-[15px]">
         <SkeletonList length={skeleton} />
       </View>
     );
   }
 
-  if (empty && enableEmpty) {
+  if (empty && from === 'home') {
     return (
-      <View className="flex-1 px-6 py-4">
+      <View className="flex-1 p-[15px]">
         <ReceiveFunds />
       </View>
     );
@@ -45,9 +45,16 @@ const TokenList: React.FC<{
         </View>
       )} */}
       <RenderList
-        className="flex flex-1 px-6 py-4"
+        className="flex flex-1 p-[15px]"
         data={tokens}
         renderItem={({ item, index }) => {
+          if (from !== 'home') {
+            return (
+              <View className="p-3">
+                <TokenItem data={item} onPress={onPress ? onPress : undefined} />
+              </View>
+            );
+          }
           const containerStyle: StyleProp<ViewStyle> = {
             borderBottomLeftRadius: 0,
             borderBottomRightRadius: 0,
@@ -66,7 +73,7 @@ const TokenList: React.FC<{
           }
           return (
             <>
-              {index !== 0 && <Card.Divider className="mb-[0px]" />}
+              {index !== 0 && <Card.Divider className="mb-[0px] opacity-[0.3]" />}
               <Card containerStyle={containerStyle}>
                 <TokenItem data={item} onPress={onPress ? onPress : undefined} />
               </Card>

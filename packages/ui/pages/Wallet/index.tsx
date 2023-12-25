@@ -173,7 +173,7 @@ const Wallet: React.FC<{ navigation: StackNavigation }> = ({ navigation }) => {
       <Card.Divider className="mb-[0px]" />
       <TabView tabItemContainerStyle={{ padding: 0 }} value={tabIndex} onChange={setTabIndex} animationType="spring">
         <TabView.Item style={{ width: '100%' }}>
-          <TokenList enableEmpty />
+          <TokenList from="home" />
         </TabView.Item>
         <TabView.Item style={{ width: '100%' }}>
           <ESpaceNFTList />

@@ -39,6 +39,7 @@ const Assets: React.FC<{ navigation: StackNavigation; route: RouteProp<RootStack
   const handleSelectNFTItem = (nft: NFTWithDetail) => {
     const { type, symbol, decimals, contractAddress, icon, name } = nft;
     const { amount: nftBalance, name: nftName, tokenId: nftTokenId, icon: nftIcon } = nft.detail;
+    console.log(nft);
     setSendNFTTransaction({
       assetType: type,
       symbol: symbol,
@@ -72,7 +73,7 @@ const Assets: React.FC<{ navigation: StackNavigation; route: RouteProp<RootStack
 
       <TabView value={tabIndex} onChange={handleTabChange} animationType="spring">
         <TabView.Item className="w-full">
-          <TokenList onPress={handleSelectToken} skeleton={7} />
+          <TokenList onPress={handleSelectToken} skeleton={7} from="transaction" />
         </TabView.Item>
         <TabView.Item className="w-full">
           <ESpaceNFTList onSelectNftItem={handleSelectNFTItem} />
