@@ -160,7 +160,7 @@ const SetAmount: React.FC<NativeStackScreenProps<RootStackList, 'SetAmount'>> = 
             </View>
           )}
         >
-          <TokenList skeleton={6} RenderList={BottomSheetFlatList} onPress={handleChangeSelectedToken} />
+          <TokenList skeleton={6} RenderList={BottomSheetFlatList} onPress={handleChangeSelectedToken} from="receive" />
         </BottomSheet>
       </SafeAreaView>
     </KeyboardAvoidingView>

@@ -201,7 +201,7 @@ const TransactionConfirm: React.FC<{
               </View>
               <Text>{shortenAddress(currentAddress.hex)}</Text>
               <View className="m-1">
-                <CopyAllIcon width={16} height={16} />
+                <CopyAllIcon color={theme.colors.textPrimary} width={16} height={16} />
               </View>
             </View>
             <Text className="ml-8 leading-6" style={{ color: theme.colors.textSecondary }}>
@@ -221,7 +221,7 @@ const TransactionConfirm: React.FC<{
               </View>
               <Text>{shortenAddress(tx.to)}</Text>
               <View className="m-1">
-                <CopyAllIcon width={16} height={16} />
+                <CopyAllIcon color={theme.colors.textPrimary} width={16} height={16} />
               </View>
             </View>
           </View>

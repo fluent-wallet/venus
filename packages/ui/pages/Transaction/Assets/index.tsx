@@ -72,7 +72,7 @@ const Assets: React.FC<{ navigation: StackNavigation; route: RouteProp<RootStack
 
       <TabView value={tabIndex} onChange={handleTabChange} animationType="spring">
         <TabView.Item className="w-full">
-          <TokenList onPress={handleSelectToken} skeleton={7} />
+          <TokenList onPress={handleSelectToken} skeleton={7} from="transaction" />
         </TabView.Item>
         <TabView.Item className="w-full">
           <ESpaceNFTList onSelectNftItem={handleSelectNFTItem} />

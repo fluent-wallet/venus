@@ -17,20 +17,20 @@ const TokenItem: React.FC<{
     [data.priceInUSDT, data.balance]
   );
   return (
-    <Pressable testID='tokenItem' onPress={onPress && data ? () => onPress(data) : undefined}>
-      <View className={'flex flex-row  w-full p-3'}>
+    <Pressable testID="tokenItem" onPress={onPress && data ? () => onPress(data) : undefined}>
+      <View className={'flex flex-row  w-full'}>
         <View className="w-12 h-12 mr-4">
           <TokenIcon type={data.type} url={data.icon} width={48} height={48} />
         </View>
         <View className="flex-1">
           <View className="flex flex-row flex-1 items-center justify-between">
             <View className="flex-1">
-              <Text className="text-base leading-5" numberOfLines={1}>
+              <Text className="text-base leading-5 font-medium" numberOfLines={1}>
                 {data.name}
               </Text>
             </View>
             <View className="ml-2">
-              <Text className="text-base">{price}</Text>
+              <Text className="text-base font-medium">{price}</Text>
             </View>
           </View>
           <View className="flex-1">

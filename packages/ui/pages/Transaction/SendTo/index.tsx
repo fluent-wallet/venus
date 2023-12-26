@@ -183,7 +183,7 @@ const SendTo: React.FC<{ navigation: StackNavigation; route: RouteProp<RootStack
               </View>
               <Text>{shortenAddress(tx.to)}</Text>
               <View className="m-1">
-                <CopyAllIcon width={16} height={16} />
+                <CopyAllIcon color={theme.colors.textPrimary} width={16} height={16} />
               </View>
             </View>
           </View>
