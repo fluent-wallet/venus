@@ -37,59 +37,59 @@ const ScanQRCode: React.FC<{ navigation: StackNavigation; route: RouteProp<RootS
       try {
         const res = parseETHURL(code.value);
         const { target_address, chain_id, function_name, parameters } = res;
+
+        if (!target_address) return;
+        setTXTo(target_address);
+        if (!tokens || tokens.length === 0) {
+          // if tokens is not ready, go to receive address
+          return navigation.dispatch(StackActions.replace(ReceiveAddressStackName));
+        }
+
         // check is send 20 token
         if (function_name && function_name === 'transfer') {
           // check is has uint256
-          if (parameters && parameters.uint256 && parameters.address) {
+          if (parameters && parameters.address) {
             //  is send 20 token and have value
-            if (tokens && tokens.length > 0) {
-              const token = tokens.find((t) => t.contractAddress?.toLowerCase() === parameters.address?.toLowerCase());
-              if (token) {
-                setTXTo(target_address);
-                setTXAmount(parameters.uint256);
-                setTokenTX({
-                  assetType: token.type,
-                  balance: token.balance,
-                  symbol: token.symbol,
-                  decimals: token.decimals,
-                  contractAddress: token.contractAddress,
-                  iconUrl: token.icon,
-                  priceInUSDT: token.priceInUSDT,
-                });
+            const token = tokens.find((t) => t.contractAddress?.toLowerCase() === parameters.address?.toLowerCase());
+            if (token) {
+              setTokenTX({
+                assetType: token.type,
+                balance: token.balance,
+                symbol: token.symbol,
+                decimals: token.decimals,
+                contractAddress: token.contractAddress,
+                iconUrl: token.icon,
+                priceInUSDT: token.priceInUSDT,
+              });
 
+              if (parameters.uint256) {
+                setTXAmount(parameters.uint256);
                 return navigation.dispatch(StackActions.replace(SendToStackName));
               }
-
-              setTXTo(target_address);
-              return navigation.dispatch(StackActions.replace(ReceiveAddressStackName, { address: code.value }));
             }
           }
         } else {
-          // send native token
-          if (parameters && parameters.value) {
-            // is send native token and have value
-            if (tokens) {
-              const token = tokens.find((t) => t.type === AssetType.Native);
-              if (token) {
-                setTXTo(target_address);
-                setTXAmount(parseUnits(parameters.value.toString(), token.decimals));
-                setTokenTX({
-                  assetType: token.type,
-                  balance: token.balance,
-                  symbol: token.symbol,
-                  decimals: token.decimals,
-                  contractAddress: token.contractAddress,
-                  iconUrl: token.icon,
-                  priceInUSDT: token.priceInUSDT,
-                });
+          // is send native token and have value
+          const token = tokens.find((t) => t.type === AssetType.Native);
+          if (token) {
+            setTokenTX({
+              assetType: token.type,
+              balance: token.balance,
+              symbol: token.symbol,
+              decimals: token.decimals,
+              contractAddress: token.contractAddress,
+              iconUrl: token.icon,
+              priceInUSDT: token.priceInUSDT,
+            });
 
-                return navigation.dispatch(StackActions.replace(SendToStackName));
-              }
+            if (parameters && parameters.value) {
+              setTXAmount(parameters.value);
+              return navigation.dispatch(StackActions.replace(SendToStackName));
             }
-            setTXTo(target_address);
-            return navigation.dispatch(StackActions.replace(ReceiveAddressStackName, { address: code.value }));
           }
         }
+        // default go to receive address
+        return navigation.dispatch(StackActions.replace(ReceiveAddressStackName));
       } catch (error) {
         // todo add error message
         console.log(code.value);
