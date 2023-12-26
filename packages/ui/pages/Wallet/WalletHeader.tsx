@@ -8,7 +8,7 @@ import { Icon, Text, useTheme } from '@rneui/themed';
 import { shortenAddress } from '@core/utils/address';
 import CopyAll from '@assets/icons/copy_all.svg';
 import Flip from '@assets/icons/flip.svg';
-import Menu from '@assets/icons/menu.svg';
+import AccountWallet from '@assets/icons/account-wallet.svg';
 import { statusBarHeight } from '@utils/deviceInfo';
 import { showMessage, hideMessage } from 'react-native-flash-message';
 
@@ -56,7 +56,7 @@ const SwitchCurrentAddress: React.FC = () => {
   return (
     <View className="flex flex-row ml-[17px]">
       <Pressable testID="menu" onPress={() => navigation.navigate(AccountSelectStackName)}>
-        <Menu color={theme.colors.surfaceBrand} className="w-[24] h-[24]" style={{ marginRight: 18 }} />
+        <AccountWallet color={theme.colors.surfaceBrand} className="w-[24] h-[24]" style={{ marginRight: 18 }} />
       </Pressable>
       <Pressable testID="scanQRCode" onPress={() => navigation.navigate(ScanQRCodeStackName, { path: ReceiveAddressStackName })}>
         <Flip color={theme.colors.surfaceBrand} className="w-[24] h-[24]" />
