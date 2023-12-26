@@ -10,17 +10,21 @@ import { stripHexPrefix } from '@core/utils/base';
 import { StackNavigation, RootStackList, AccountManageStackName, BiometricsStackName, ImportWalletStackName } from '@router/configs';
 import createVaultWithRouterParams from '@pages/SetPassword/createVaultWithRouterParams';
 import useInAsync from '@hooks/useInAsync';
+import useIsMountedRef from '@hooks/useIsMountedRef';
 
 const ImportWallet = () => {
   const { theme } = useTheme();
   const headerHeight = useHeaderHeight();
   const navigation = useNavigation<StackNavigation>();
   const route = useRoute<RouteProp<RootStackList, typeof ImportWalletStackName>>();
+  const isMountedRef = useIsMountedRef();
+
   const currentValue = useRef('');
   const [errorMessage, setErrorMessage] = useState('');
 
   const _handleConfirmInput = useCallback(async () => {
     try {
+      navigation.setOptions({ gestureEnabled: false });
       const { type = 'create' } = route.params;
       const value = currentValue.current;
       if (!value) return;
@@ -31,7 +35,9 @@ const ImportWallet = () => {
             setErrorMessage('This private key has been added');
           } else {
             await createVaultWithRouterParams({ type: 'importPrivateKey', value: stripHexPrefix(value) });
-            navigation.navigate(AccountManageStackName);
+            if (isMountedRef.current) {
+              navigation.navigate(AccountManageStackName);
+            }
           }
         } else {
           navigation.navigate(BiometricsStackName, { type: 'importPrivateKey', value });
@@ -43,7 +49,9 @@ const ImportWallet = () => {
             setErrorMessage('This seed phrase has been added');
           } else {
             await createVaultWithRouterParams({ type: 'importSeedPhrase', value });
-            navigation.navigate(AccountManageStackName);
+            if (isMountedRef.current) {
+              navigation.navigate(AccountManageStackName);
+            }
           }
         } else {
           navigation.navigate(BiometricsStackName, { type: 'importSeedPhrase', value });
@@ -51,7 +59,11 @@ const ImportWallet = () => {
       } else {
         setErrorMessage('Invalid seed phrase or private key');
       }
-    } catch (_) {}
+    } catch (_) {
+      //
+    } finally {
+      navigation.setOptions({ gestureEnabled: true });
+    }
   }, []);
 
   const { inAsync, execAsync: handleConfirmInput } = useInAsync(_handleConfirmInput);
@@ -78,7 +90,7 @@ const ImportWallet = () => {
           {errorMessage}
         </Text>
       )}
-      <Button testID='confirm' loading={inAsync} onPress={handleConfirmInput}>
+      <Button testID="confirm" loading={inAsync} onPress={handleConfirmInput}>
         Confirm
       </Button>
     </SafeAreaView>

@@ -5,14 +5,16 @@ import { useRoute, RouteProp } from '@react-navigation/native';
 import { useTheme, ListItem } from '@rneui/themed';
 import { useHasBSIMVaultCreated } from '@core/WalletCore/Plugins/ReactInject';
 import useInAsync from '@hooks/useInAsync';
+import useIsMountedRef from '@hooks/useIsMountedRef';
 import { type RootStackList, type StackNavigation, ImportWalletStackName, AddAccountStackName } from '@router/configs';
 import createVaultWithRouterParams from '@pages/SetPassword/createVaultWithRouterParams';
 
 const AddAccount: React.FC<{ navigation: StackNavigation }> = ({ navigation }: { navigation: StackNavigation }) => {
-  const route = useRoute<RouteProp<RootStackList, typeof AddAccountStackName>>();
   const { theme } = useTheme();
+  const route = useRoute<RouteProp<RootStackList, typeof AddAccountStackName>>();
   const headerHeight = useHeaderHeight();
-
+  const isMountedRef = useIsMountedRef();
+  
   const hasBSIMVaultCreated = useHasBSIMVaultCreated();
   const [createType, setCreateType] = useState<'BSIM' | 'NewHD' | null>(null);
   const { inAsync: inCreateVault, execAsync: createVault } = useInAsync(createVaultWithRouterParams);
@@ -24,9 +26,13 @@ const AddAccount: React.FC<{ navigation: StackNavigation }> = ({ navigation }: {
           testID="createBSIMWallet"
           className="rounded-[8px] overflow-hidden"
           onPress={async () => {
+            navigation.setOptions({ gestureEnabled: false });
             setCreateType('BSIM');
             await createVault({ type: 'BSIM' });
-            navigation.goBack();
+            if (isMountedRef.current) {
+              navigation.goBack();
+            }
+            navigation.setOptions({ gestureEnabled: true });
           }}
           disabled={inCreateVault}
         >
@@ -45,9 +51,13 @@ const AddAccount: React.FC<{ navigation: StackNavigation }> = ({ navigation }: {
         testID="createHDWallet"
         className="rounded-[8px] overflow-hidden"
         onPress={async () => {
+          navigation.setOptions({ gestureEnabled: false });
           setCreateType('NewHD');
           await createVault();
-          navigation.goBack();
+          if (isMountedRef.current) {
+            navigation.goBack();
+          }
+          navigation.setOptions({ gestureEnabled: true });
         }}
         disabled={inCreateVault}
       >

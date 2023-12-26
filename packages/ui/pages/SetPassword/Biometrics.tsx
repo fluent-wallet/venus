@@ -64,6 +64,7 @@ const Biometrics = () => {
 
   const handleEnableBiometrics = useCallback(async () => {
     try {
+      navigation.setOptions({ gestureEnabled: false });
       const supportedBiometryType = await plugins.Authentication.getSupportedBiometryType();
       if (supportedBiometryType === null) {
         showBiometricsDisabledMessage();
@@ -80,6 +81,8 @@ const Biometrics = () => {
     } catch (err) {
       // console.log('Enable Biometrics error: ', err);
       setDisableSetPassword(false);
+    } finally {
+      navigation.setOptions({ gestureEnabled: true });
     }
   }, [createVault, navigation, route.params]);
 

@@ -5,6 +5,7 @@ import { showMessage } from 'react-native-flash-message';
 import { statusBarHeight } from '@utils/deviceInfo';
 
 const createVaultWithRouterParams = async (args?: RootStackList['Biometrics'], password?: string) => {
+  const type = args?.type === 'importPrivateKey' ? 'PrivateKey' : args?.type === 'BSIM' ? 'BSIM' : 'SeedPhrase';
   try {
     if (args?.type === 'importPrivateKey' && args.value) {
       await methods.createPrivateKeyVault(args.value, password);
@@ -18,10 +19,10 @@ const createVaultWithRouterParams = async (args?: RootStackList['Biometrics'], p
       await methods.createHDVault(undefined, password);
     }
 
-    return true
+    return true;
   } catch (err) {
     showMessage({
-      message: `Add new ${args?.type} account failed`,
+      message: `Add new ${type} account failed`,
       description: String(err ?? ''),
       type: 'warning',
       duration: 4000,

@@ -35,6 +35,7 @@ const SetPassword: React.FC<{ navigation: NavigationProp<RootStackList> }> = (pr
 
   const handleCreatePassword = async () => {
     try {
+      navigation.setOptions({ gestureEnabled: false });
       await plugins.Authentication.setPassword({ password: confirmPwd });
       if (await createVault(route.params, confirmPwd)) {
         setAlert({ show: true, type: 'success', message: 'You’ve successfully protected wallet. Remember to keep your Password, it’s your responsibility!' });
@@ -42,6 +43,8 @@ const SetPassword: React.FC<{ navigation: NavigationProp<RootStackList> }> = (pr
     } catch (e) {
       console.log('handleCreatePassword error: ', e);
       setAlert({ show: false, type: 'error', message: `${e}` });
+    } finally {
+      navigation.setOptions({ gestureEnabled: true });
     }
   };
 
