@@ -17,8 +17,14 @@ import ReceiveIcon from '@assets/icons/receive.svg';
 import BuyIcon from '@assets/icons/buy.svg';
 import MoreIcon from '@assets/icons/more.svg';
 import WifiOffIcon from '@assets/icons/wifi_off.svg';
+import SIMCardIcon from '@assets/icons/sim-card.svg';
 import PullRefresh from '@components/PullRefresh';
 import { numberWithCommas } from '@core/utils/balance';
+import VisibilityIcon from '@assets/icons/visibility.svg';
+import VisibilityOffIcon from '@assets/icons/visibility_off.svg';
+import { useAtom } from 'jotai';
+import TotalPriceVisibleAtom from '@hooks/useTotalPriceVisible';
+import { UserAddress } from './WalletHeader';
 
 const MainButton: React.FC<{ onPress?: VoidFunction; disabled?: boolean; label?: string; icon?: React.ReactElement; _testID?: string }> = ({
   onPress,
@@ -47,6 +53,7 @@ const Wallet: React.FC<{ navigation: StackNavigation }> = ({ navigation }) => {
   const { theme } = useTheme();
   const { isConnected } = useNetInfo(); // init state is null
   const [tabIndex, setTabIndex] = useState(0);
+  const [totalPriceVisible, setTotalPriceVisible] = useAtom(TotalPriceVisibleAtom);
   const currentAccount = useCurrentAccount();
   const currentNetwork = useCurrentNetwork();
   const totalPriceValue = useAssetsTotalPriceValue();
@@ -134,21 +141,34 @@ const Wallet: React.FC<{ navigation: StackNavigation }> = ({ navigation }) => {
         }}
       >
         <View className="px-[24px]">
-          <Text className="mt-[16px] leading-tight text-[16px] text-center" style={{ color: theme.colors.textSecondary }}>
-            {currentAccount?.nickname}
-          </Text>
+          <View className="flex flex-row items-center justify-center mb-[3px]">
+            <SIMCardIcon color={theme.colors.surfaceBrand} width={24} height={24} />
+            <Text className="leading-normal" style={{ color: theme.colors.textBrand }}>
+              {currentAccount?.nickname}
+            </Text>
+          </View> 
 
-          <View className="flex items-center justify-center h-[60px] mb-[16px]">
+          <View className="flex items-center justify-center h-[60px] mb-[2px]">
             {totalPriceValue === null ? (
               <Skeleton width={156} height={30} />
             ) : (
-              <Text
-                className=" leading-tight text-[48px] text-center font-bold"
-                style={{ color: Number(totalPriceValue) === 0 ? theme.colors.textSecondary : theme.colors.textPrimary }}
-              >
-                ${numberWithCommas(totalPriceValue)}
-              </Text>
+              <Pressable className="flex flex-row" testID="toggleTotalPriceVisible" onPress={() => setTotalPriceVisible(!totalPriceVisible)}>
+                <Text
+                  className=" leading-tight text-[36px] text-center font-bold"
+                  style={{ color: Number(totalPriceValue) === 0 ? theme.colors.textSecondary : theme.colors.textPrimary }}
+                >
+                  ${totalPriceVisible ? numberWithCommas(totalPriceValue) : '******'}
+                </Text>
+                {totalPriceVisible ? (
+                  <VisibilityIcon color={theme.colors.textSecondary} width={16} height={16} />
+                ) : (
+                  <VisibilityOffIcon color={theme.colors.textSecondary} width={16} height={16} />
+                )}
+              </Pressable>
             )}
+          </View>
+          <View className="flex items-center justify-center mb-[23px]">
+            <UserAddress />
           </View>
 
           <View className="flex flex-row justify-between">

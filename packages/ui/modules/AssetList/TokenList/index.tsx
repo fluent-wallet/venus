@@ -66,10 +66,12 @@ const TokenList: React.FC<{
           if (index === 0) {
             delete containerStyle.borderTopLeftRadius;
             delete containerStyle.borderTopRightRadius;
+            delete containerStyle.paddingTop;
           }
           if (index === total - 1) {
             delete containerStyle.borderBottomLeftRadius;
             delete containerStyle.borderBottomRightRadius;
+            delete containerStyle.paddingBottom;
           }
           return (
             <>

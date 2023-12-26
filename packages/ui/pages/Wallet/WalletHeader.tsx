@@ -12,7 +12,7 @@ import Menu from '@assets/icons/menu.svg';
 import { statusBarHeight } from '@utils/deviceInfo';
 import { showMessage, hideMessage } from 'react-native-flash-message';
 
-const HeaderTitle: React.FC<{ backgroundColor: string }> = ({ backgroundColor }: { backgroundColor: string }) => {
+export const UserAddress: React.FC = () => {
   const { theme } = useTheme();
   const currentAddressValue = useCurrentAddressValue();
   if (!currentAddressValue) return null;
@@ -34,12 +34,15 @@ const HeaderTitle: React.FC<{ backgroundColor: string }> = ({ backgroundColor }:
           duration: 1.5 * 1000, // 1.5s
         });
       }}
-      className="rounded-full overflow-hidden"
+      className="rounded-full overflow-hidden px-3"
+      underlayColor={theme.colors.underlayColor}
     >
-      <View className="bg-white flex flex-row px-3 py-2 rounded-full items-center" style={{ backgroundColor }}>
-        <Text className="text-[10px]">{shortenAddress(currentAddressValue)}</Text>
-        <View className="ml-1 p-[3px] rounded-full" style={{ backgroundColor: theme.colors.surfaceBrand }}>
-          <CopyAll color={theme.colors.surfaceSecondary} />
+      <View className="flex flex-row rounded-full items-center">
+        <Text className="text-[14px]" style={{ color: theme.colors.textSecondary }}>
+          {shortenAddress(currentAddressValue)}
+        </Text>
+        <View className="ml-[3px]">
+          <CopyAll color={theme.colors.textSecondary} width={16} height={16} />
         </View>
       </View>
     </TouchableHighlight>
@@ -65,7 +68,7 @@ const SwitchCurrentAddress: React.FC = () => {
 export const getWalletHeaderOptions = (backgroundColor: string) =>
   ({
     headerLeft: () => <SwitchCurrentAddress />,
-    headerTitle: () => <HeaderTitle backgroundColor={backgroundColor} />,
+    headerTitle: () => null,
     headerRight: () => <SwitchCurrentNetwork />,
     headerTitleAlign: 'center',
   } as const);
