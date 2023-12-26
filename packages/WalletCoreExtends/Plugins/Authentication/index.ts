@@ -62,7 +62,7 @@ class AuthenticationPluginClass implements Plugin {
         throw new Error('Biometrics getPassword failed.');
       } catch (err) {
         const errString = JSON.stringify((err as any)?.message ?? err);
-        if (!errString?.includes('canceled')) {
+        if (!errString?.includes('canceled') && !errString?.includes('取消')) {
           showBiometricsDisabledMessage();
           throw new Error('Biometrics not enable.');
         }

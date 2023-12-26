@@ -50,7 +50,7 @@ const PasswordVerify: React.FC = () => {
       setError('');
       currentRequest.current = null;
     } else {
-      setError('Wrong assword.');
+      setError('Wrong password.');
     }
     setInVerify(false);
   }, [password]);

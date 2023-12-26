@@ -20,7 +20,8 @@ const AccountGroupItem: React.FC<{
   enableAddNew?: boolean;
   enableSelect?: boolean;
   enableLinkToSetting?: boolean;
-}> = ({ style, accountGroup, enableExpanded, enableAddNew, enableSelect, enableLinkToSetting }) => {
+  showSelected?: boolean;
+}> = ({ style, accountGroup, enableExpanded, enableAddNew, enableSelect, enableLinkToSetting, showSelected = true }) => {
   const { theme } = useTheme();
 
   const currentAccount = useCurrentAccount();
@@ -109,7 +110,7 @@ const AccountGroupItem: React.FC<{
                   }
                 }}
               >
-                <AccountAddress account={account} showSelected />
+                <AccountAddress account={account} showSelected={showSelected} />
               </TouchableHighlight>
             ))}
             {((vault.type === 'hierarchical_deterministic' && accounts?.length < 256) ||

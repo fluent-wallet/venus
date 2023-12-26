@@ -129,7 +129,7 @@ const StackNavigator = () => {
       <Stack.Screen name={SetPasswordStackName} component={SetPassword} />
       <Stack.Screen name={BiometricsStackName} component={Biometrics} />
       <Stack.Screen name={HomeStackName} component={HomeScreenNavigator} options={{ headerShown: false }} />
-      <Stack.Screen name={AccountManageStackName} component={AccountManage} options={{ title: 'Manage Wallets', headerTitleAlign: 'center' }} />
+      <Stack.Screen name={AccountManageStackName} component={AccountManage} options={{ title: 'Account Management', headerTitleAlign: 'center' }} />
       <Stack.Screen name={AccountSelectStackName} component={AccountSelect} options={{ title: 'Account', headerTitleAlign: 'center' }} />
       <Stack.Screen name={AddAccountStackName} component={AddAccount} options={{ title: 'Add Account', headerTitleAlign: 'center' }} />
       <Stack.Screen name={AccountSettingStackName} component={AccountSetting} options={{ title: 'Account', headerTitleAlign: 'center' }} />

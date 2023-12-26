@@ -1,6 +1,6 @@
 import React, { useEffect, useCallback, useState } from 'react';
 import { View, Image, SafeAreaView } from 'react-native';
-import { RouteProp, useNavigation, useRoute } from '@react-navigation/native';
+import { RouteProp, CommonActions, useNavigation, useRoute } from '@react-navigation/native';
 import { showMessage, hideMessage } from 'react-native-flash-message';
 import LinearGradient from 'react-native-linear-gradient';
 import Animated, { useSharedValue, useAnimatedStyle, withTiming, withRepeat } from 'react-native-reanimated';
@@ -72,11 +72,13 @@ const Biometrics = () => {
 
       setDisableSetPassword(true);
       await plugins.Authentication.setPassword({ authType: plugins.Authentication.AuthenticationType.Biometrics });
-      await createVault(route.params);
-      navigation.navigate(HomeStackName, { screen: WalletStackName });
-      // navigation.dispatch(CommonActions.reset({ index: 0, routes: [{ name: WalletStackName }] }));
+
+      if (await createVault(route.params)) {
+        navigation.navigate(HomeStackName, { screen: WalletStackName });
+        navigation.dispatch(CommonActions.reset({ index: 0, routes: [{ name: HomeStackName }] }));
+      }
     } catch (err) {
-      console.log('Enable Biometrics error: ', err);
+      // console.log('Enable Biometrics error: ', err);
       setDisableSetPassword(false);
     }
   }, [createVault, navigation, route.params]);

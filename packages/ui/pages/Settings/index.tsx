@@ -22,7 +22,7 @@ const Settings: React.FC<{ navigation: NavigationProp<any> }> = ({ navigation })
         <ListItem>
           <ListItem.Content>
             <ListItem.Title style={{ color: theme.colors.textPrimary }} className="font-bold">
-              Account Manage
+              Account Management
             </ListItem.Title>
           </ListItem.Content>
           <ListItem.Chevron color={theme.colors.textPrimary} />

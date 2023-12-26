@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { SafeAreaView, TouchableOpacity, TouchableHighlight, ActivityIndicator } from 'react-native';
 import { useHeaderHeight } from '@react-navigation/elements';
 import { useRoute, RouteProp } from '@react-navigation/native';
@@ -14,6 +14,7 @@ const AddAccount: React.FC<{ navigation: StackNavigation }> = ({ navigation }: {
   const headerHeight = useHeaderHeight();
 
   const hasBSIMVaultCreated = useHasBSIMVaultCreated();
+  const [createType, setCreateType] = useState<'BSIM' | 'NewHD' | null>(null);
   const { inAsync: inCreateVault, execAsync: createVault } = useInAsync(createVaultWithRouterParams);
 
   return (
@@ -23,6 +24,7 @@ const AddAccount: React.FC<{ navigation: StackNavigation }> = ({ navigation }: {
           testID="createBSIMWallet"
           className="rounded-[8px] overflow-hidden"
           onPress={async () => {
+            setCreateType('BSIM');
             await createVault({ type: 'BSIM' });
             navigation.goBack();
           }}
@@ -34,7 +36,7 @@ const AddAccount: React.FC<{ navigation: StackNavigation }> = ({ navigation }: {
                 BSIM Wallet
               </ListItem.Title>
             </ListItem.Content>
-            {inCreateVault && <ActivityIndicator color={theme.colors.surfaceBrand} />}
+            {inCreateVault && createType === 'BSIM' && <ActivityIndicator color={theme.colors.surfaceBrand} />}
           </ListItem>
         </TouchableHighlight>
       )}
@@ -43,6 +45,7 @@ const AddAccount: React.FC<{ navigation: StackNavigation }> = ({ navigation }: {
         testID="createHDWallet"
         className="rounded-[8px] overflow-hidden"
         onPress={async () => {
+          setCreateType('NewHD');
           await createVault();
           navigation.goBack();
         }}
@@ -54,7 +57,7 @@ const AddAccount: React.FC<{ navigation: StackNavigation }> = ({ navigation }: {
               New Seed Phrase
             </ListItem.Title>
           </ListItem.Content>
-          {inCreateVault && <ActivityIndicator color={theme.colors.surfaceBrand} />}
+          {inCreateVault && createType === 'NewHD' && <ActivityIndicator color={theme.colors.surfaceBrand} />}
         </ListItem>
       </TouchableHighlight>
 
@@ -70,7 +73,6 @@ const AddAccount: React.FC<{ navigation: StackNavigation }> = ({ navigation }: {
               Import Seed Phrase
             </ListItem.Title>
           </ListItem.Content>
-          {inCreateVault && <ActivityIndicator color={theme.colors.surfaceBrand} />}
         </ListItem>
       </TouchableHighlight>
 
@@ -86,7 +88,6 @@ const AddAccount: React.FC<{ navigation: StackNavigation }> = ({ navigation }: {
               Import Private Key
             </ListItem.Title>
           </ListItem.Content>
-          {inCreateVault && <ActivityIndicator color={theme.colors.surfaceBrand} />}
         </ListItem>
       </TouchableOpacity>
     </SafeAreaView>
