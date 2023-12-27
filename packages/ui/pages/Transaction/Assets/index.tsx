@@ -31,6 +31,11 @@ const Assets: React.FC<{ navigation: StackNavigation; route: RouteProp<RootStack
       setTabIndex(index);
     }
   };
+  const handlePageSelected = (index: number) => {
+    if (index !== tabIndex) {
+      setTabIndex(index);
+    }
+  };
 
   const handleSelectToken = (token: AssetInfo) => {
     set20TokenTransaction({
@@ -67,7 +72,6 @@ const Assets: React.FC<{ navigation: StackNavigation; route: RouteProp<RootStack
       navigation.navigate(TransactionConfirmStackName);
     }
   };
-
   return (
     <SafeAreaView
       className="flex flex-1 flex-col justify-start pb-7"
@@ -103,7 +107,7 @@ const Assets: React.FC<{ navigation: StackNavigation; route: RouteProp<RootStack
         )}
       </View>
 
-      <PagerView initialPage={tabIndex} ref={tabRef}>
+      <PagerView initialPage={tabIndex} ref={tabRef} onPageSelected={(e) => handlePageSelected(e.nativeEvent.position)}>
         <View className="w-full h-full" key="0">
           <TokenList onPress={handleSelectToken} skeleton={7} />
         </View>

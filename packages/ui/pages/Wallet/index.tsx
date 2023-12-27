@@ -68,6 +68,12 @@ const Wallet: React.FC<{ navigation: StackNavigation }> = ({ navigation }) => {
       tabRef.current.setPage(index);
     }
   };
+
+  const handlePageSelected = (index: number) => {
+    if (index !== tabIndex) {
+      setTabIndex(index);
+    }
+  };
   return (
     <SafeAreaView
       className="flex-1 flex flex-col justify-start"
@@ -179,7 +185,7 @@ const Wallet: React.FC<{ navigation: StackNavigation }> = ({ navigation }) => {
           ))}
         </View>
         <Card.Divider className="mb-[0px]" />
-        <PagerView initialPage={tabIndex} ref={tabRef}>
+        <PagerView initialPage={tabIndex} ref={tabRef} onPageSelected={(e) => handlePageSelected(e.nativeEvent.position)}>
           <View className="w-full h-full" key="0">
             <TokenList showReceive />
           </View>

@@ -12,10 +12,6 @@ const TokenItem: React.FC<{
 }> = ({ onPress, data }) => {
   const { theme } = useTheme();
   const balance = useMemo(() => numberWithCommas(balanceFormat(data.balance, { decimals: data.decimals })), [data.balance, data.decimals]);
-  const price = useMemo(
-    () => (data.priceInUSDT ? `$${balanceFormat(Number(data.balance) * Number(data.priceInUSDT), { truncateLength: 2 })}` : '--'),
-    [data.priceInUSDT, data.balance]
-  );
   return (
     <Pressable testID="tokenItem" onPress={onPress && data ? () => onPress(data) : undefined}>
       <View className={'flex flex-row  w-full'}>
@@ -30,7 +26,7 @@ const TokenItem: React.FC<{
               </Text>
             </View>
             <View className="ml-2">
-              <Text className="text-base font-medium">{price}</Text>
+              <Text className="text-base font-medium">{data.priceValue || '--'}</Text>
             </View>
           </View>
           <View className="flex-1">

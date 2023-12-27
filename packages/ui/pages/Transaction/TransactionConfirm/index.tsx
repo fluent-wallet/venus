@@ -27,7 +27,7 @@ import { BSIMErrorEndTimeout, BSIM_ERRORS } from 'packages/WalletCoreExtends/Plu
 import EstimateGas from './EstimateGas';
 import { RPCResponse, RPCSend } from '@core/utils/send';
 import matchRPCErrorMessage from '@utils/matchRPCErrorMssage';
-import { balanceFormat } from '@core/utils/balance';
+import Decimal from 'decimal.js';
 
 const TransactionConfirm: React.FC<{
   navigation: StackNavigation;
@@ -48,8 +48,8 @@ const TransactionConfirm: React.FC<{
   });
 
   const price = useMemo(
-    () => (tx.priceInUSDT ? `$${balanceFormat(Number(tx.amount) * Number(tx.priceInUSDT), { truncateLength: 2 })}` : ''),
-    [tx.priceInUSDT, tx.amount]
+    () => (tx.priceInUSDT ? `$${new Decimal(formatUnits(tx.amount, tx.decimals)).mul(new Decimal(tx.priceInUSDT)).toString()}` : ''),
+    [tx.priceInUSDT, tx.amount, tx.decimals]
   );
 
   const handleSend = async () => {
@@ -140,7 +140,7 @@ const TransactionConfirm: React.FC<{
 
   const renderAmount = () => {
     if (tx.assetType === AssetType.ERC20 || tx.assetType === AssetType.Native || tx.assetType === AssetType.ERC1155) {
-      return `${formatUnits(tx.amount, tx.decimals)} ${tx.symbol}`;
+      return `${formatUnits(tx.amount, tx.decimals)}${tx.symbol}`;
     }
     if (tx.assetType === AssetType.ERC721) {
       return `1 ${tx.contractName}`;
@@ -205,9 +205,7 @@ const TransactionConfirm: React.FC<{
               </View>
             </View>
             <Text className="ml-8 leading-6" style={{ color: theme.colors.textSecondary }}>
-              Balance:{' '}
-              {tx.assetType === AssetType.ERC20 || tx.assetType === AssetType.Native ? balanceFormat(tx.balance, { decimals: tx.decimals }) : tx.balance}{' '}
-              {tx.symbol}
+              Balance: {tx.assetType === AssetType.ERC20 || tx.assetType === AssetType.Native ? formatUnits(tx.balance, tx.decimals) : tx.balance} {tx.symbol}
             </Text>
 
             <Divider className="my-4" />
@@ -228,11 +226,13 @@ const TransactionConfirm: React.FC<{
 
           <View style={{ backgroundColor: theme.colors.surfaceCard }} className="p-[15px] rounded-md mt-4 mb-7">
             <View className="flex flex-row justify-between">
-              <Text className=" leading-6" style={{ color: theme.colors.textSecondary }}>
-                Amount
-              </Text>
-              <View className="flex">
-                <Text style={{ color: theme.colors.textPrimary }} className="text-xl font-bold leading-6">
+              <View className="shrink-0">
+                <Text className=" w-20 leading-6" style={{ color: theme.colors.textSecondary }}>
+                  Amount
+                </Text>
+              </View>
+              <View className="flex-1">
+                <Text style={{ color: theme.colors.textPrimary }} className="text-right text-xl font-bold leading-6">
                   {renderAmount()}
                 </Text>
                 <Text style={{ color: theme.colors.textSecondary }} className="text-right text-sm leading-6">

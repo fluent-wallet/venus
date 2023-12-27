@@ -7,7 +7,6 @@ import { ChainType, type Network } from './../../../../database/models/Network/i
 import { AssetType } from '../../../../database/models/Asset';
 import { type AssetInfo } from '../types';
 
-
 const eSpaceWalletContract = createContract({ address: '0xce2104aa7233b27b0ba2e98ede59b6f78c06ae05', ABI: ESpaceWalletABI });
 const eSpaceTestnetWalletContract = createContract({ address: '0xce2104aa7233b27b0ba2e98ede59b6f78c06ae05', ABI: ESpaceWalletABI });
 const eSpaceTestnetServerFetcher = createFetchServer({ prefixUrl: 'https://evmapi-testnet.confluxscan.io' });
@@ -100,10 +99,10 @@ export const fetchESpaceServer = async ({
                     name: 'CFX',
                     symbol: 'CFX',
                     decimals: 18,
-                    balance: cfxBalance,
+                    balance: BigInt(cfxBalance).toString(),
                     ...scanInfoMap[AssetType.Native],
                   },
-                  ...assets.filter(asset => asset.contractAddress !== "0x0000000000000000000000000000000000000000"),
+                  ...assets.filter((asset) => asset.contractAddress !== '0x0000000000000000000000000000000000000000'),
                 ];
                 return assetsWithCFX;
               })
@@ -160,7 +159,7 @@ export const fetchESpaceServer = async ({
             name: 'CFX',
             symbol: 'CFX',
             decimals: 18,
-            balance: cfxBalance,
+            balance: BigInt(cfxBalance).toString(),
           },
           ...assets,
         ];
