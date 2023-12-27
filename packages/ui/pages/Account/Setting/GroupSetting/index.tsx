@@ -158,7 +158,7 @@ const GroupSetting: React.FC<NativeStackScreenProps<RootStackList, 'GroupSetting
                 });
                 navigation.goBack();
               } catch (err) {
-                if (String(err)?.includes('cancel')) {
+                if (String(err)?.includes('cancel') || String(err)?.includes('取消')) {
                   return;
                 }
                 showMessage({

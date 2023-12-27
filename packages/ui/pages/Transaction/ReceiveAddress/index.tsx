@@ -50,7 +50,6 @@ const SendReceiver: React.FC<{ navigation: StackNavigation; route: RouteProp<Roo
           <View style={{ backgroundColor: theme.colors.surfaceCard }} className="flex flex-row items-center rounded-md px-4 py-2">
             <TextInput
               testID="receiverInput"
-              secureTextEntry={true}
               value={address}
               onChangeText={handleChange}
               className="flex-1 leading-6"

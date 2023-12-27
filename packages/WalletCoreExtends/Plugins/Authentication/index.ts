@@ -80,9 +80,9 @@ class AuthenticationPluginClass implements Plugin {
               };
               _resolve(pwd);
             },
-            reject: () => {
+            reject: (err: any) => {
               this.pwdCache = null;
-              _reject();
+              _reject(err);
             },
             verify: this.verifyPassword,
           });

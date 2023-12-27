@@ -200,7 +200,6 @@ const SendTo: React.FC<{ navigation: StackNavigation; route: RouteProp<RootStack
             >
               <TextInput
                 testID="amountInput"
-                secureTextEntry={true}
                 keyboardType={'numeric'}
                 value={value}
                 onChangeText={handleChange}

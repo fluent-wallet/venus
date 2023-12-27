@@ -9,11 +9,9 @@ const createVaultWithRouterParams = async (args?: RootStackList['Biometrics'], p
   try {
     if (args?.type === 'importPrivateKey' && args.value) {
       await methods.createPrivateKeyVault(args.value, password);
-    }
-    if (args?.type === 'importSeedPhrase' && args.value) {
+    } else if (args?.type === 'importSeedPhrase' && args.value) {
       await methods.createHDVault(args.value, password);
-    }
-    if (args?.type === 'BSIM') {
+    } else if (args?.type === 'BSIM') {
       await methods.createBSIMVault(await plugins.BSIM.connectBSIM(), password);
     } else {
       await methods.createHDVault(undefined, password);

@@ -134,7 +134,7 @@ const AccountSetting: React.FC<NativeStackScreenProps<RootStackList, 'AccountSet
                 });
                 navigation.goBack();
               } catch (err) {
-                if (String(err)?.includes('cancel')) {
+                if (String(err)?.includes('cancel') || String(err)?.includes('取消')) {
                   return;
                 }
                 showMessage({

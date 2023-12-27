@@ -1,5 +1,5 @@
 import React, { useCallback, useRef, useEffect, useState } from 'react';
-import { View, KeyboardAvoidingView } from 'react-native';
+import { View } from 'react-native';
 import { BottomSheet, useTheme } from '@rneui/themed';
 import { BaseButton } from '@components/Button';
 import plugins from '@core/WalletCore/Plugins';
@@ -36,7 +36,7 @@ const PasswordVerify: React.FC = () => {
     setInVerify(false);
     setPassword('');
     setError('');
-    currentRequest.current?.reject?.();
+    currentRequest.current?.reject?.('cancel');
   }, []);
 
   const handleConfirm = useCallback(async () => {
