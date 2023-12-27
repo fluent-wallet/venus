@@ -28,8 +28,7 @@ const AddAccount: React.FC<{ navigation: StackNavigation }> = ({ navigation }: {
           onPress={async () => {
             navigation.setOptions({ gestureEnabled: false });
             setCreateType('BSIM');
-            await createVault({ type: 'BSIM' });
-            if (isMountedRef.current) {
+            if (await createVault({ type: 'BSIM' }) && isMountedRef.current) {
               navigation.goBack();
             }
             navigation.setOptions({ gestureEnabled: true });
@@ -53,8 +52,7 @@ const AddAccount: React.FC<{ navigation: StackNavigation }> = ({ navigation }: {
         onPress={async () => {
           navigation.setOptions({ gestureEnabled: false });
           setCreateType('NewHD');
-          await createVault();
-          if (isMountedRef.current) {
+          if (await createVault() && isMountedRef.current) {
             navigation.goBack();
           }
           navigation.setOptions({ gestureEnabled: true });

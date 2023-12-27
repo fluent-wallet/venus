@@ -5,6 +5,7 @@ import { useHeaderHeight } from '@react-navigation/elements';
 import { Mnemonic } from 'ethers';
 import * as secp from '@noble/secp256k1';
 import { Button, Text, useTheme } from '@rneui/themed';
+import { trim } from 'lodash-es';
 import methods from '@core/WalletCore/Methods';
 import { stripHexPrefix } from '@core/utils/base';
 import { StackNavigation, RootStackList, AccountManageStackName, BiometricsStackName, ImportWalletStackName } from '@router/configs';
@@ -26,16 +27,19 @@ const ImportWallet = () => {
     try {
       navigation.setOptions({ gestureEnabled: false });
       const { type = 'create' } = route.params;
-      const value = currentValue.current;
-      if (!value) return;
+      const value = trim(currentValue.current ?? '');
+      console.log(value, !value)
+      if (!value) {
+        setErrorMessage('Input cannot be empty');
+        return;
+      }
       if (secp.utils.isValidPrivateKey(stripHexPrefix(value))) {
         if (type === 'add') {
           const hasSame = await methods.checkHasSameVault(value);
           if (hasSame) {
             setErrorMessage('This private key has been added');
           } else {
-            await createVaultWithRouterParams({ type: 'importPrivateKey', value: stripHexPrefix(value) });
-            if (isMountedRef.current) {
+            if ((await createVaultWithRouterParams({ type: 'importPrivateKey', value: stripHexPrefix(value) })) && isMountedRef.current) {
               navigation.navigate(AccountManageStackName);
             }
           }
@@ -48,8 +52,7 @@ const ImportWallet = () => {
           if (hasSame) {
             setErrorMessage('This seed phrase has been added');
           } else {
-            await createVaultWithRouterParams({ type: 'importSeedPhrase', value });
-            if (isMountedRef.current) {
+            if ((await createVaultWithRouterParams({ type: 'importSeedPhrase', value })) && isMountedRef.current) {
               navigation.navigate(AccountManageStackName);
             }
           }
@@ -82,7 +85,10 @@ const ImportWallet = () => {
           numberOfLines={10}
           placeholder="Enter your seed phrase which words separated by space or private key"
           style={{ color: theme.colors.textPrimary, justifyContent: 'flex-start' }}
-          onChangeText={(val) => (currentValue.current = val)}
+          onChangeText={(val) => {
+            currentValue.current = val;
+            setErrorMessage('');
+          }}
         />
       </View>
       {errorMessage && (
