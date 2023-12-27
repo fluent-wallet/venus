@@ -20,6 +20,7 @@ const NFTItem: React.FC<{
   details: Array<NFTItemDetail> | null;
 }> = ({ onPress, onSelectNftItem, data, isExpanded, isCurrentOpenHeaderInView, isCurrentOpenNftInFetch, details }) => {
   const { theme } = useTheme();
+
   return (
     <>
       {(!isExpanded || (isExpanded && isCurrentOpenHeaderInView)) && (

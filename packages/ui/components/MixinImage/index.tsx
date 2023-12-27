@@ -28,8 +28,8 @@ const MixinImage: React.FC<ImageProps & { source: ImageURISource } & { fallback?
   if (uri && extension && extension === 'svg') {
     return <SvgUri uri={uri} width={props.width} height={props.height} style={props.style} />;
   }
-
-  if (props.source.uri && !isURL(`${props.source.uri}`) && !isBase64(`${props.source.uri}`)) {
+  
+  if (props.source.uri && !isURL(`${props.source.uri}`) && !isBase64(`${props.source.uri}`, {urlSafe: false})) {
     // if the uri is not a valid url, we will use the fallback
     return getFailBack();
   }

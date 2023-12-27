@@ -52,7 +52,6 @@ const AccountGroupItem: React.FC<{
   const [expanded, setExpanded] = useState(true);
 
   const navigation = useNavigation<StackNavigation>();
-
   return (
     <TouchableHighlight
       testID="accountGroupItemTab"
@@ -87,7 +86,7 @@ const AccountGroupItem: React.FC<{
             containerStyle={{ padding: 0, margin: 0, height: 24, backgroundColor: 'transparent' }}
             style={{ paddingHorizontal: 16 }}
             content={
-              <Text className="flex-1 text-[20px] leading-[24px] font-bold" style={{ color: theme.colors.textPrimary }}>
+              <Text numberOfLines={1} className="flex-1 text-[20px] leading-[24px] font-bold" style={{ color: theme.colors.textPrimary }}>
                 {accountGroup.nickname}
               </Text>
             }

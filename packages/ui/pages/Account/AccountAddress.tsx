@@ -22,7 +22,7 @@ const AccountAddress: React.FC<{ account: Account; className?: string; style?: {
   if (!currentAddressValue) return;
   return (
     <View className={clsx('relative flex flex-col gap-[8px] text-[16px] leading-tight', className)} style={style}>
-      <Text style={{ color: theme.colors.textPrimary }}>{account.nickname}</Text>
+      <Text numberOfLines={1} style={{ color: theme.colors.textPrimary }}>{account.nickname}</Text>
       <Text style={{ color: theme.colors.textSecondary }}>{shortenAddress(currentAddressValue)}</Text>
       {showSelected && account.selected && (
         <View
