@@ -117,6 +117,7 @@ const SetAmount: React.FC<NativeStackScreenProps<RootStackList, 'SetAmount'>> = 
 
         <TextInput
           testID="amountInput"
+          secureTextEntry={true}
           autoFocus
           ref={inputRef}
           value={value}

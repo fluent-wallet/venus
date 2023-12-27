@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { View, SafeAreaView } from 'react-native';
+import { View, SafeAreaView, KeyboardAvoidingView } from 'react-native';
 import { useRoute, CommonActions, type NavigationProp, type RouteProp } from '@react-navigation/native';
 import { Text, useTheme, CheckBox } from '@rneui/themed';
 import plugins from '@core/WalletCore/Plugins';
@@ -53,64 +53,66 @@ const SetPassword: React.FC<{ navigation: NavigationProp<RootStackList> }> = (pr
       className="flex flex-1 flex-col justify-start px-[24px] pb-[56px]"
       style={{ backgroundColor: theme.colors.surfacePrimaryWithOpacity7, paddingTop: statusBarHeight + 48 }}
     >
-      <View>
-        <Text className="text-center text-[36px] font-bold leading-tight" style={{ color: theme.colors.textBrand }}>
-          Set Password
-        </Text>
-        <Text className="text-center text-[16px]">Add security verification to ensure the safety of your funds.</Text>
-      </View>
+      <KeyboardAvoidingView behavior="padding" className="flex-1">
+        <View>
+          <Text className="text-center text-[36px] font-bold leading-tight" style={{ color: theme.colors.textBrand }}>
+            Set Password
+          </Text>
+          <Text className="text-center text-[16px]">Add security verification to ensure the safety of your funds.</Text>
+        </View>
 
-      <View>
-        <Password
-          testId="passwordInput"
-          helperText="Must be at least 8 characters"
-          errorMessage={password.error}
-          value={password.pwd}
-          onChangeText={handleSetPassword}
-          title="New Password"
+        <View>
+          <Password
+            testId="passwordInput"
+            helperText="Must be at least 8 characters"
+            errorMessage={password.error}
+            value={password.pwd}
+            onChangeText={handleSetPassword}
+            title="New Password"
+          />
+
+          <Password
+            testId="confirmPasswordInput"
+            helperText="Password must be match"
+            errorMessage={confirmPwd !== password.pwd && confirmPwd !== '' ? 'Passwords do not match' : ''}
+            value={confirmPwd}
+            onChangeText={handleConfirmPassword}
+            title="Confirm New Password"
+          />
+        </View>
+
+        <View className="mt-auto flex flex-row items-center mb-[15px]">
+          <CheckBox
+            testID="checkbox"
+            containerStyle={{ backgroundColor: 'transparent', padding: 0 }}
+            checked={checked}
+            onPress={() => setChecked(!checked)}
+            iconType="material-community"
+            checkedIcon="checkbox-marked"
+            uncheckedIcon="checkbox-blank-outline"
+            checkedColor={theme.colors.textBrand}
+            uncheckedColor={theme.colors.textBrand}
+          />
+          <Text className="text-base">ePay Wallet does not store your password. Please remember your password.</Text>
+        </View>
+        <BaseButton
+          testID="createPasswordButton"
+          loading={loading}
+          onPress={handleCreatePassword}
+          disabled={!(checked && password.pwd !== '' && password.pwd === confirmPwd && password.error === '')}
+        >
+          Create Password
+        </BaseButton>
+
+        <CreatePasswordAlert
+          {...alert}
+          onOk={() => {
+            setAlert({ show: false, type: '', message: '' });
+            navigation.navigate(HomeStackName, { screen: WalletStackName });
+            navigation.dispatch(CommonActions.reset({ index: 0, routes: [{ name: HomeStackName }] }));
+          }}
         />
-
-        <Password
-          testId="confirmPasswordInput"
-          helperText="Password must be match"
-          errorMessage={confirmPwd !== password.pwd && confirmPwd !== '' ? 'Passwords do not match' : ''}
-          value={confirmPwd}
-          onChangeText={handleConfirmPassword}
-          title="Confirm New Password"
-        />
-      </View>
-
-      <View className="mt-auto flex flex-row items-center mb-[15px]">
-        <CheckBox
-          testID="checkbox"
-          containerStyle={{ backgroundColor: 'transparent', padding: 0 }}
-          checked={checked}
-          onPress={() => setChecked(!checked)}
-          iconType="material-community"
-          checkedIcon="checkbox-marked"
-          uncheckedIcon="checkbox-blank-outline"
-          checkedColor={theme.colors.textBrand}
-          uncheckedColor={theme.colors.textBrand}
-        />
-        <Text className="text-base">ePay Wallet does not store your password. Please remember your password.</Text>
-      </View>
-      <BaseButton
-        testID="createPasswordButton"
-        loading={loading}
-        onPress={handleCreatePassword}
-        disabled={!(checked && password.pwd !== '' && password.pwd === confirmPwd && password.error === '')}
-      >
-        Create Password
-      </BaseButton>
-
-      <CreatePasswordAlert
-        {...alert}
-        onOk={() => {
-          setAlert({ show: false, type: '', message: '' });
-          navigation.navigate(HomeStackName, { screen: WalletStackName });
-          navigation.dispatch(CommonActions.reset({ index: 0, routes: [{ name: HomeStackName }] }));
-        }}
-      />
+      </KeyboardAvoidingView>
     </SafeAreaView>
   );
 };

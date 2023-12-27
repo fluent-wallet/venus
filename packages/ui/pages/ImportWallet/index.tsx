@@ -28,7 +28,6 @@ const ImportWallet = () => {
       navigation.setOptions({ gestureEnabled: false });
       const { type = 'create' } = route.params;
       const value = trim(currentValue.current ?? '');
-      console.log(value, !value)
       if (!value) {
         setErrorMessage('Input cannot be empty');
         return;
@@ -80,6 +79,7 @@ const ImportWallet = () => {
         <TextInput
           testID="seedPhraseInput"
           underlineColorAndroid="transparent"
+          secureTextEntry={true}
           editable
           multiline
           numberOfLines={10}

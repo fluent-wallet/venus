@@ -1,8 +1,9 @@
 import { useRef, useState } from 'react';
 import { Pressable, SafeAreaView, View } from 'react-native';
+import PagerView from 'react-native-pager-view';
 import { RouteProp } from '@react-navigation/native';
 import { useAtom } from 'jotai';
-import { useTheme, Tab, TabView, Text } from '@rneui/themed';
+import { useTheme, Text } from '@rneui/themed';
 import { type RootStackList, type StackNavigation, TransactionConfirmStackName, SendToStackName, TokensStackName } from '@router/configs';
 import { statusBarHeight } from '@utils/deviceInfo';
 import ESpaceNFTList from '@modules/AssetList/ESpaceNFTList';
@@ -12,7 +13,6 @@ import { setNFTTransaction, setTokenTransaction } from '@core/WalletCore/Plugins
 import { type AssetInfo } from '@core/WalletCore/Plugins/AssetsTracker/types';
 import { NFTWithDetail } from '@modules/AssetList/ESpaceNFTList/fetch';
 import { useCurrentNetwork } from '@core/WalletCore/Plugins/ReactInject';
-import PagerView from 'react-native-pager-view';
 import { CFX_ESPACE_MAINNET_CHAINID, CFX_ESPACE_TESTNET_CHAINID } from '@core/consts/network';
 
 const Assets: React.FC<{ navigation: StackNavigation; route: RouteProp<RootStackList, typeof TokensStackName> }> = ({ navigation, route }) => {

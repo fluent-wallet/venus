@@ -1,5 +1,5 @@
 import React, { useCallback, useRef, useEffect, useState } from 'react';
-import { View } from 'react-native';
+import { View, KeyboardAvoidingView } from 'react-native';
 import { BottomSheet, useTheme } from '@rneui/themed';
 import { BaseButton } from '@components/Button';
 import plugins from '@core/WalletCore/Plugins';

@@ -139,7 +139,7 @@ const SendTo: React.FC<{ navigation: StackNavigation; route: RouteProp<RootStack
       style={{ backgroundColor: theme.colors.surfacePrimaryWithOpacity7, paddingTop: statusBarHeight + 48 }}
     >
       <KeyboardAvoidingView behavior="padding" className="flex-1 mt-1">
-        <ScrollView className="flex-1" contentContainerStyle={{ flexGrow: 1 }}>
+        <ScrollView className="flex-1" contentContainerStyle={{ flexGrow: 1 }} keyboardShouldPersistTaps='handled'>
           {(rpcError.err || invalidInputErr.err) && (
             <View
               style={{ borderColor: theme.colors.warnErrorPrimary, borderWidth: 1, backgroundColor: theme.colors.surfaceCard }}
@@ -198,7 +198,16 @@ const SendTo: React.FC<{ navigation: StackNavigation; route: RouteProp<RootStack
               }}
               className="flex flex-row items-center rounded-md px-4 py-2"
             >
-              <TextInput testID="amountInput" keyboardType={'numeric'} value={value} onChangeText={handleChange} className="flex-1" autoFocus />
+              <TextInput
+                testID="amountInput"
+                secureTextEntry={true}
+                keyboardType={'numeric'}
+                value={value}
+                onChangeText={handleChange}
+                onSubmitEditing={handleNext}
+                className="flex-1"
+                autoFocus
+              />
               {tx.iconUrl ? (
                 <MixinImage
                   resizeMode="center"

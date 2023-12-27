@@ -50,6 +50,7 @@ const SendReceiver: React.FC<{ navigation: StackNavigation; route: RouteProp<Roo
           <View style={{ backgroundColor: theme.colors.surfaceCard }} className="flex flex-row items-center rounded-md px-4 py-2">
             <TextInput
               testID="receiverInput"
+              secureTextEntry={true}
               value={address}
               onChangeText={handleChange}
               className="flex-1 leading-6"
@@ -75,7 +76,7 @@ const SendReceiver: React.FC<{ navigation: StackNavigation; route: RouteProp<Roo
             )}
           </View>
         </View>
-        <View className="mt-auto mb-6">
+        <View className="mt-auto mb-8">
           <BaseButton testID="next" disabled={!address || !!errorMsg} onPress={handleNext}>
             Next
           </BaseButton>
