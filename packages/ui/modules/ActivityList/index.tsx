@@ -51,7 +51,7 @@ const ActivityList: React.FC<{ onPress?: (v: Tx) => void }> = memo(({ onPress })
 
   return (
     <ScrollView>
-      <View className="pt-[15px] pb-[25px] px-[25px] flex gap-y-[15px]">
+      <View className="pt-[15px] pb-[25px] px-[15px] flex gap-y-[15px]">
         {!unfinishedTxs?.length && !finishedTxsByDay.size && <Text>No Data</Text>}
         {!!unfinishedTxs?.length && (
           <View>
