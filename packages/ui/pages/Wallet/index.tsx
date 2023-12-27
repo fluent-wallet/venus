@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { View, SafeAreaView, Pressable } from 'react-native';
+import React, { useRef, useState } from 'react';
+import { View, SafeAreaView, Pressable, RefreshControl, ScrollView } from 'react-native';
 import { useNetInfo } from '@react-native-community/netinfo';
 import { Text, useTheme, Tab, TabView, Card } from '@rneui/themed';
 import { statusBarHeight } from '@utils/deviceInfo';
@@ -25,6 +25,8 @@ import VisibilityOffIcon from '@assets/icons/visibility_off.svg';
 import { useAtom } from 'jotai';
 import TotalPriceVisibleAtom from '@hooks/useTotalPriceVisible';
 import { UserAddress } from './WalletHeader';
+import PagerView from 'react-native-pager-view';
+import AsteriskIcon from '@assets/icons/asterisk.svg';
 
 const MainButton: React.FC<{ onPress?: VoidFunction; disabled?: boolean; label?: string; icon?: React.ReactElement; _testID?: string }> = ({
   onPress,
@@ -52,76 +54,25 @@ const MainButton: React.FC<{ onPress?: VoidFunction; disabled?: boolean; label?:
 const Wallet: React.FC<{ navigation: StackNavigation }> = ({ navigation }) => {
   const { theme } = useTheme();
   const { isConnected } = useNetInfo(); // init state is null
-  const [tabIndex, setTabIndex] = useState(0);
   const [totalPriceVisible, setTotalPriceVisible] = useAtom(TotalPriceVisibleAtom);
   const currentAccount = useCurrentAccount();
   const currentNetwork = useCurrentNetwork();
   const totalPriceValue = useAssetsTotalPriceValue();
+  const [refreshing, setRefreshing] = React.useState(false);
+  const [tabIndex, setTabIndex] = React.useState(0);
+  const tabRef = useRef<PagerView>(null);
 
-  const renderTabTitle = () => {
-    if (currentNetwork && (currentNetwork.chainId === CFX_ESPACE_MAINNET_CHAINID || currentNetwork.chainId === CFX_ESPACE_TESTNET_CHAINID)) {
-      return (
-        <View className="px-[24px]">
-          <Tab
-            value={tabIndex}
-            onChange={setTabIndex}
-            style={{ gap: 11 }}
-            indicatorStyle={{ backgroundColor: theme.colors.surfaceBrand, width: 60, marginLeft: tabIndex * 11 }}
-          >
-            <Tab.Item
-              containerStyle={{ flex: 0, width: 60 }}
-              buttonStyle={{ paddingHorizontal: 0, paddingTop: 15, paddingBottom: 7 }}
-              testID="tokenTab"
-              title="Tokens"
-              titleStyle={(active) => ({ color: active ? theme.colors.textBrand : theme.colors.textSecondary, paddingHorizontal: 0, paddingVertical: 0 })}
-            />
-            <Tab.Item
-              containerStyle={{ flex: 0, width: 60 }}
-              buttonStyle={{ paddingHorizontal: 0, paddingTop: 15, paddingBottom: 7 }}
-              testID="NFTTab"
-              title="NFTs"
-              titleStyle={(active) => ({ color: active ? theme.colors.textBrand : theme.colors.textSecondary, paddingHorizontal: 0, paddingVertical: 0 })}
-            />
-            <Tab.Item
-              containerStyle={{ flex: 0, width: 60 }}
-              buttonStyle={{ paddingHorizontal: 0, paddingTop: 15, paddingBottom: 7 }}
-              title="Activity"
-              testID="activityTab"
-              titleStyle={(active) => ({ color: active ? theme.colors.textBrand : theme.colors.textSecondary, paddingHorizontal: 0, paddingVertical: 0 })}
-            />
-          </Tab>
-        </View>
-      );
+  const handleTabChange = (index: number) => {
+    if (tabRef.current) {
+      setTabIndex(index);
+      tabRef.current.setPage(index);
     }
-    return (
-      <View className="px-[24px]">
-        <Tab
-          value={tabIndex}
-          onChange={setTabIndex}
-          style={{ gap: 11 }}
-          indicatorStyle={{ backgroundColor: theme.colors.surfaceBrand, width: 60, marginLeft: tabIndex * 11 }}
-        >
-          <Tab.Item
-            containerStyle={{ flex: 0, width: 60 }}
-            buttonStyle={{ paddingHorizontal: 0, paddingTop: 15, paddingBottom: 7 }}
-            title="Tokens"
-            testID="tokenTab"
-            titleStyle={(active) => ({ color: active ? theme.colors.textBrand : theme.colors.textSecondary, paddingHorizontal: 0, paddingVertical: 0 })}
-          />
-          <Tab.Item
-            containerStyle={{ flex: 0, width: 60 }}
-            buttonStyle={{ paddingHorizontal: 0, paddingTop: 15, paddingBottom: 7 }}
-            title="Activity"
-            testID="activityTab"
-            titleStyle={(active) => ({ color: active ? theme.colors.textBrand : theme.colors.textSecondary, paddingHorizontal: 0, paddingVertical: 0 })}
-          />
-        </Tab>
-      </View>
-    );
   };
-
   return (
-    <SafeAreaView className="flex-1 flex flex-col justify-start" style={{ backgroundColor: theme.colors.normalBackground, paddingTop: statusBarHeight + 48 }}>
+    <SafeAreaView
+      className="flex-1 flex flex-col justify-start"
+      style={{ backgroundColor: theme.colors.surfacePrimaryWithOpacity7, paddingTop: statusBarHeight + 48 }}
+    >
       <View className="absolute left-0 right-0 flex justify-center items-center z-50" style={{ top: statusBarHeight + 48 }}>
         {isConnected !== null && !isConnected && (
           <View style={{ backgroundColor: theme.colors.textSecondary }} className="rounded-lg p-3 flex flex-row items-center">
@@ -132,13 +83,22 @@ const Wallet: React.FC<{ navigation: StackNavigation }> = ({ navigation }) => {
           </View>
         )}
       </View>
-      <PullRefresh
-        onRefresh={(close) => {
-          updateNFTDetail();
-          plugins.AssetsTracker.updateCurrentTracker()
-            .catch((err) => console.log(err))
-            .finally(() => close());
-        }}
+      <ScrollView
+        stickyHeaderIndices={[1]}
+        contentContainerStyle={{ flexGrow: 1 }}
+        refreshControl={
+          <RefreshControl
+            colors={['#4572EC']}
+            refreshing={refreshing}
+            onRefresh={() => {
+              setRefreshing(true);
+              updateNFTDetail();
+              plugins.AssetsTracker.updateCurrentTracker()
+                .catch((err) => console.log(err))
+                .finally(() => setRefreshing(false));
+            }}
+          />
+        }
       >
         <View className="px-[24px]">
           <View className="flex flex-row items-center justify-center mb-[3px]">
@@ -146,24 +106,32 @@ const Wallet: React.FC<{ navigation: StackNavigation }> = ({ navigation }) => {
             <Text className="leading-normal" style={{ color: theme.colors.textBrand }}>
               {currentAccount?.nickname}
             </Text>
-          </View> 
+          </View>
 
           <View className="flex items-center justify-center h-[60px] mb-[2px]">
             {totalPriceValue === null ? (
               <Skeleton width={156} height={30} />
             ) : (
-              <Pressable className="flex flex-row" testID="toggleTotalPriceVisible" onPress={() => setTotalPriceVisible(!totalPriceVisible)}>
-                <Text
-                  className=" leading-tight text-[36px] text-center font-bold"
-                  style={{ color: Number(totalPriceValue) === 0 ? theme.colors.textSecondary : theme.colors.textPrimary }}
-                >
-                  ${totalPriceVisible ? numberWithCommas(totalPriceValue) : '******'}
-                </Text>
+              <Pressable className="flex flex-row items-center" testID="toggleTotalPriceVisible" onPress={() => setTotalPriceVisible(!totalPriceVisible)}>
+                <Text className="text-4xl font-bold">$</Text>
                 {totalPriceVisible ? (
-                  <VisibilityIcon color={theme.colors.textSecondary} width={16} height={16} />
+                  <Text className="text-4xl font-bold" numberOfLines={1}>
+                    {numberWithCommas(totalPriceValue)}
+                  </Text>
                 ) : (
-                  <VisibilityOffIcon color={theme.colors.textSecondary} width={16} height={16} />
+                  <View className="flex flex-row gap-1">
+                    {Array.from({ length: 6 }).map((_, index) => (
+                      <AsteriskIcon key={index} color={theme.colors.textPrimary} width={12} height={12} />
+                    ))}
+                  </View>
                 )}
+                <View className=" self-start">
+                  {totalPriceVisible ? (
+                    <VisibilityIcon color={theme.colors.textSecondary} width={16} height={16} />
+                  ) : (
+                    <VisibilityOffIcon color={theme.colors.textSecondary} width={16} height={16} />
+                  )}
+                </View>
               </Pressable>
             )}
           </View>
@@ -171,7 +139,7 @@ const Wallet: React.FC<{ navigation: StackNavigation }> = ({ navigation }) => {
             <UserAddress />
           </View>
 
-          <View className="flex flex-row justify-between">
+          <View className="flex flex-row justify-between mb-4">
             <MainButton
               _testID="send"
               onPress={() => navigation.navigate(ReceiveAddressStackName, {})}
@@ -188,20 +156,41 @@ const Wallet: React.FC<{ navigation: StackNavigation }> = ({ navigation }) => {
             <MainButton _testID="more" icon={<MoreIcon color="#fff" width={24} height={24} />} label="More" disabled />
           </View>
         </View>
-      </PullRefresh>
-      {renderTabTitle()}
-      <Card.Divider className="mb-[0px]" />
-      <TabView tabItemContainerStyle={{ padding: 0 }} value={tabIndex} onChange={setTabIndex} animationType="spring">
-        <TabView.Item style={{ width: '100%' }}>
-          <TokenList from="home" />
-        </TabView.Item>
-        <TabView.Item style={{ width: '100%' }}>
-          <ESpaceNFTList />
-        </TabView.Item>
-        <TabView.Item style={{ width: '100%' }}>
-          <ActivityList />
-        </TabView.Item>
-      </TabView>
+
+        {/* {renderTabTitle()} */}
+        <View className="flex flex-row px-6 gap-4" style={{ backgroundColor: theme.colors.surfacePrimaryWithOpacity7 }}>
+          {Array.from(
+            currentNetwork && (currentNetwork.chainId === CFX_ESPACE_MAINNET_CHAINID || currentNetwork.chainId === CFX_ESPACE_TESTNET_CHAINID)
+              ? ['Tokens', 'NFTs', 'Activity']
+              : ['Tokens', 'Activity']
+          ).map((item, index) => (
+            <Pressable testID={item} key={index} onPress={() => handleTabChange(index)}>
+              <Text
+                className="leading-snug p-2"
+                style={{
+                  color: index === tabIndex ? theme.colors.surfaceBrand : theme.colors.textSecondary,
+                  borderBottomWidth: 1,
+                  borderBottomColor: index === tabIndex ? theme.colors.surfaceBrand : 'transparent',
+                }}
+              >
+                {item}
+              </Text>
+            </Pressable>
+          ))}
+        </View>
+        <Card.Divider className="mb-[0px]" />
+        <PagerView initialPage={tabIndex} ref={tabRef}>
+          <View className="w-full h-full" key="0">
+            <TokenList showReceive />
+          </View>
+          <View className="w-full h-full pb-2" key="1">
+            <ESpaceNFTList />
+          </View>
+          <View className="w-full h-full pb-2" key="2">
+            <ActivityList />
+          </View>
+        </PagerView>
+      </ScrollView>
     </SafeAreaView>
   );
 };

@@ -51,7 +51,7 @@ const SetPassword: React.FC<{ navigation: NavigationProp<RootStackList> }> = (pr
   return (
     <SafeAreaView
       className="flex flex-1 flex-col justify-start px-[24px] pb-[56px]"
-      style={{ backgroundColor: theme.colors.normalBackground, paddingTop: statusBarHeight + 48 }}
+      style={{ backgroundColor: theme.colors.surfacePrimaryWithOpacity7, paddingTop: statusBarHeight + 48 }}
     >
       <View>
         <Text className="text-center text-[36px] font-bold leading-tight" style={{ color: theme.colors.textBrand }}>

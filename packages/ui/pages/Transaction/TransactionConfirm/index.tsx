@@ -150,7 +150,7 @@ const TransactionConfirm: React.FC<{
   return (
     <SafeAreaView
       className="flex-1 flex flex-col justify-startpb-7"
-      style={{ backgroundColor: theme.colors.normalBackground, paddingTop: statusBarHeight + 48 }}
+      style={{ backgroundColor: theme.colors.surfacePrimaryWithOpacity7, paddingTop: statusBarHeight + 48 }}
     >
       <ScrollView className="flex-1">
         {(error || gas.error) && (

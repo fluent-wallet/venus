@@ -91,7 +91,7 @@ const SetAmount: React.FC<NativeStackScreenProps<RootStackList, 'SetAmount'>> = 
     <KeyboardAvoidingView behavior={'padding'} className="flex-1">
       <SafeAreaView
         className="flex flex-1  flex-col justify-start px-[24px] pb-6"
-        style={{ backgroundColor: theme.colors.normalBackground, paddingTop: statusBarHeight + 48 }}
+        style={{ backgroundColor: theme.colors.surfacePrimaryWithOpacity7, paddingTop: statusBarHeight + 48 }}
       >
         <Text className="text-xl text-center font-bold">Select a token</Text>
 

@@ -57,7 +57,7 @@ const Receive: React.FC<NativeStackScreenProps<RootStackList, 'Receive'>> = ({ n
   return (
     <SafeAreaView
       className="flex flex-1  flex-col justify-start px-[24px] pb-7"
-      style={{ backgroundColor: theme.colors.normalBackground, paddingTop: statusBarHeight + 48 }}
+      style={{ backgroundColor: theme.colors.surfacePrimaryWithOpacity7, paddingTop: statusBarHeight + 48 }}
     >
       <View className="flex w-full items-center">
         <View className="w-20 h-20 rounded-full bg-slate-300">

@@ -71,7 +71,7 @@ const ImportWallet = () => {
   return (
     <SafeAreaView
       className="flex flex-1 flex-col justify-start px-[24px]"
-      style={{ paddingTop: headerHeight + 16, backgroundColor: theme.colors.normalBackground }}
+      style={{ paddingTop: headerHeight + 16, backgroundColor: theme.colors.surfacePrimaryWithOpacity7 }}
     >
       <View style={{ backgroundColor: theme.colors.surfacePrimary }} className="border border-blue-200 rounded-md p-1 mb-2">
         <TextInput

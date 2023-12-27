@@ -35,7 +35,7 @@ function CreatePasswordAlert(props: Props) {
 
   return (
     <View>
-      <Dialog isVisible={show} overlayStyle={{ backgroundColor: colors.normalBackground, borderRadius: 8 }}>
+      <Dialog isVisible={show} overlayStyle={{ backgroundColor: colors.surfacePrimaryWithOpacity7, borderRadius: 8 }}>
         <View className="flex">
           <View className="items-center">
             <View className="flex items-center mb-[28px]">

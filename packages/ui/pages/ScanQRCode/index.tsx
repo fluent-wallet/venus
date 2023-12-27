@@ -118,7 +118,7 @@ const ScanQRCode: React.FC<{ navigation: StackNavigation; route: RouteProp<RootS
   }, [hasPermission]);
 
   return (
-    <SafeAreaView className="flex-1 flex flex-col justify-start" style={{ backgroundColor: theme.colors.normalBackground, paddingTop: statusBarHeight }}>
+    <SafeAreaView className="flex-1 flex flex-col justify-start" style={{ backgroundColor: theme.colors.surfacePrimaryWithOpacity7, paddingTop: statusBarHeight }}>
       <View className="flex-1" style={{ backgroundColor: theme.colors.pureBlackAndWight }}>
         {hasPermission && device && device !== null && (
           <View className="flex-1">

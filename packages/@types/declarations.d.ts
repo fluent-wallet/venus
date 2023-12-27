@@ -17,7 +17,7 @@ declare module '@rneui/themed' {
     warnSuccessPrimary: string;
     warnErrorPrimary: string;
     linearGradientBackground: string[];
-    normalBackground: string;
+    surfacePrimaryWithOpacity7: string
     passwordInputBackground: string;
     buttonDisabledBackground: string;
     homeHeaderAddressBackgroundColor: string;

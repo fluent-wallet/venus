@@ -42,7 +42,7 @@ const SendReceiver: React.FC<{ navigation: StackNavigation; route: RouteProp<Roo
   return (
     <SafeAreaView
       className="flex-1 flex flex-col justify-start px-[24px] pb-7"
-      style={{ backgroundColor: theme.colors.normalBackground, paddingTop: statusBarHeight + 48 }}
+      style={{ backgroundColor: theme.colors.surfacePrimaryWithOpacity7, paddingTop: statusBarHeight + 48 }}
     >
       <KeyboardAvoidingView behavior="padding" className="flex-1">
         <View className="mt-[13px]">

@@ -51,7 +51,7 @@ const theme = createTheme({
     warnSuccessPrimary: colors.green4,
     warnErrorPrimary: colors.red4,
     linearGradientBackground: ['#DFE6FF', colors.white],
-    normalBackground: '#F7F7F7',
+    surfacePrimaryWithOpacity7: '#F7F7F7',
     passwordInputBackground: colors.white,
     buttonDisabledBackground: '#D9E3FF',
     homeHeaderAddressBackgroundColor: colors.blue0,
@@ -75,7 +75,7 @@ const theme = createTheme({
     warnSuccessPrimary: colors.green3,
     warnErrorPrimary: colors.red3,
     linearGradientBackground: ['#001C69', colors.black],
-    normalBackground: colors.gray5,
+    surfacePrimaryWithOpacity7: colors.gray5,
     passwordInputBackground: colors.gray4,
     buttonDisabledBackground: colors.blue4,
     homeHeaderAddressBackgroundColor: colors.blue5,
@@ -133,8 +133,8 @@ const theme = createTheme({
       overlayStyle: {
         backgroundColor: theme.colors.surfaceCard,
         padding: 20,
-        borderRadius: 8
-      }
+        borderRadius: 8,
+      },
     }),
   },
 });

@@ -31,7 +31,7 @@ function Login() {
     }
   };
   return (
-    <SafeAreaView className="flex-1 flex flex-col justify-start px-[24px]" style={{ backgroundColor: theme.colors.normalBackground }}>
+    <SafeAreaView className="flex-1 flex flex-col justify-start px-[24px]" style={{ backgroundColor: theme.colors.surfacePrimaryWithOpacity7 }}>
       <View className="flex flex-1 items-center justify-center">
         <View className="w-full">
           <Password value={password} onChangeText={setPassword} helperText="" title="Password" errorMessage={error} />

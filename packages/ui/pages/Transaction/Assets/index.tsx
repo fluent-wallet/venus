@@ -1,8 +1,8 @@
-import { useState } from 'react';
-import { SafeAreaView, View } from 'react-native';
+import { useRef, useState } from 'react';
+import { Pressable, SafeAreaView, View } from 'react-native';
 import { RouteProp } from '@react-navigation/native';
 import { useAtom } from 'jotai';
-import { useTheme, Tab, TabView } from '@rneui/themed';
+import { useTheme, Tab, TabView, Text } from '@rneui/themed';
 import { type RootStackList, type StackNavigation, TransactionConfirmStackName, SendToStackName, TokensStackName } from '@router/configs';
 import { statusBarHeight } from '@utils/deviceInfo';
 import ESpaceNFTList from '@modules/AssetList/ESpaceNFTList';
@@ -11,15 +11,25 @@ import { AssetType } from '@core/database/models/Asset';
 import { setNFTTransaction, setTokenTransaction } from '@core/WalletCore/Plugins/ReactInject/data/useTransaction';
 import { type AssetInfo } from '@core/WalletCore/Plugins/AssetsTracker/types';
 import { NFTWithDetail } from '@modules/AssetList/ESpaceNFTList/fetch';
+import { useCurrentNetwork } from '@core/WalletCore/Plugins/ReactInject';
+import PagerView from 'react-native-pager-view';
+import { CFX_ESPACE_MAINNET_CHAINID, CFX_ESPACE_TESTNET_CHAINID } from '@core/consts/network';
 
 const Assets: React.FC<{ navigation: StackNavigation; route: RouteProp<RootStackList, typeof TokensStackName> }> = ({ navigation, route }) => {
   const { theme } = useTheme();
-  const [tabIndex, setTabIndex] = useState(0);
+  const currentNetwork = useCurrentNetwork();
+
   const [, set20TokenTransaction] = useAtom(setTokenTransaction);
   const [, setSendNFTTransaction] = useAtom(setNFTTransaction);
+  const [tabIndex, setTabIndex] = useState(0);
+  const tabRef = useRef<PagerView>(null);
+
   const handleTabChange = (index: number) => {
     navigation.setOptions({ headerTitle: index === 0 ? 'Tokens' : 'NFTs' });
-    setTabIndex(index);
+    if (tabRef.current) {
+      tabRef.current.setPage(index);
+      setTabIndex(index);
+    }
   };
 
   const handleSelectToken = (token: AssetInfo) => {
@@ -61,23 +71,46 @@ const Assets: React.FC<{ navigation: StackNavigation; route: RouteProp<RootStack
   return (
     <SafeAreaView
       className="flex flex-1 flex-col justify-start pb-7"
-      style={{ backgroundColor: theme.colors.normalBackground, paddingTop: statusBarHeight + 48 }}
+      style={{ backgroundColor: theme.colors.surfacePrimaryWithOpacity7, paddingTop: statusBarHeight + 48 }}
     >
-      <View className="px-6">
-        <Tab value={tabIndex} onChange={handleTabChange} indicatorStyle={{ backgroundColor: theme.colors.surfaceBrand }}>
-          <Tab.Item testID='tokenTab' title="Tokens" titleStyle={(active) => ({ color: active ? theme.colors.textBrand : theme.colors.textSecondary })} />
-          <Tab.Item testID='NFTTab' title="NFTs" titleStyle={(active) => ({ color: active ? theme.colors.textBrand : theme.colors.textSecondary })} />
-        </Tab>
+      <View className="flex flex-row px-6 gap-4" style={{ backgroundColor: theme.colors.surfacePrimaryWithOpacity7 }}>
+        <Pressable testID="tokens" onPress={() => handleTabChange(0)}>
+          <Text
+            className="leading-snug p-2"
+            style={{
+              color: tabIndex === 0 ? theme.colors.surfaceBrand : theme.colors.textSecondary,
+              borderBottomWidth: 1,
+              borderBottomColor: tabIndex === 0 ? theme.colors.surfaceBrand : 'transparent',
+            }}
+          >
+            Tokens
+          </Text>
+        </Pressable>
+
+        {currentNetwork && (currentNetwork.chainId === CFX_ESPACE_MAINNET_CHAINID || currentNetwork.chainId === CFX_ESPACE_TESTNET_CHAINID) && (
+          <Pressable testID="NFTs" onPress={() => handleTabChange(1)}>
+            <Text
+              className="leading-snug p-2"
+              style={{
+                color: tabIndex === 1 ? theme.colors.surfaceBrand : theme.colors.textSecondary,
+                borderBottomWidth: 1,
+                borderBottomColor: tabIndex === 1 ? theme.colors.surfaceBrand : 'transparent',
+              }}
+            >
+              NFTs
+            </Text>
+          </Pressable>
+        )}
       </View>
 
-      <TabView value={tabIndex} onChange={handleTabChange} animationType="spring">
-        <TabView.Item className="w-full">
-          <TokenList onPress={handleSelectToken} skeleton={7} from="transaction" />
-        </TabView.Item>
-        <TabView.Item className="w-full">
+      <PagerView initialPage={tabIndex} ref={tabRef}>
+        <View className="w-full h-full" key="0">
+          <TokenList onPress={handleSelectToken} skeleton={7} />
+        </View>
+        <View className="w-full h-full pb-2" key="1">
           <ESpaceNFTList onSelectNftItem={handleSelectNFTItem} />
-        </TabView.Item>
-      </TabView>
+        </View>
+      </PagerView>
     </SafeAreaView>
   );
 };

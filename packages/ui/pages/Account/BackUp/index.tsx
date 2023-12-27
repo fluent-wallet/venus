@@ -62,7 +62,7 @@ const BackUp: React.FC<NativeStackScreenProps<RootStackList, 'BackUp'>> = ({ nav
   return (
     <SafeAreaView
       className="flex-1 flex flex-col px-[24px] pb-[24px]"
-      style={{ backgroundColor: theme.colors.normalBackground, paddingTop: statusBarHeight + 48 }}
+      style={{ backgroundColor: theme.colors.surfacePrimaryWithOpacity7, paddingTop: statusBarHeight + 48 }}
     >
       <ScrollView className="flex-1 flex flex-col">
         <Text style={{ color: theme.colors.textBrand }} className="text-4xl font-bold leading-tight text-center mb-2">
