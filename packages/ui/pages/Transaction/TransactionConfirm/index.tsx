@@ -28,6 +28,7 @@ import EstimateGas from './EstimateGas';
 import { RPCResponse, RPCSend } from '@core/utils/send';
 import matchRPCErrorMessage from '@utils/matchRPCErrorMssage';
 import Decimal from 'decimal.js';
+import Clipboard from '@react-native-clipboard/clipboard';
 
 const TransactionConfirm: React.FC<{
   navigation: StackNavigation;
@@ -170,8 +171,18 @@ const TransactionConfirm: React.FC<{
         <View className="px-6">
           {(tx.assetType === AssetType.ERC721 || tx.assetType === AssetType.ERC1155) && (
             <View className="flex flex-row p-4 rounded-lg w-full mb-4" style={{ backgroundColor: theme.colors.surfaceCard }}>
-              {tx.tokenImage && <MixinImage source={{ uri: tx.tokenImage }} width={63} height={63} className="mr-4 rounded" />}
-              <View className="flex justify-center">
+              {tx.tokenImage ? (
+                <MixinImage
+                  source={{ uri: tx.tokenImage }}
+                  width={63}
+                  height={63}
+                  className="mr-4 rounded"
+                  fallback={<DefaultNFTImage width={63} height={63} />}
+                />
+              ) : (
+                <DefaultNFTImage width={63} height={63} />
+              )}
+              <View className="flex justify-center ml-4">
                 <View className="flex flex-row mb-1">
                   <View className="w-6 h-6 overflow-hidden rounded-full mr-2">
                     {tx.iconUrl ? (
@@ -180,11 +191,11 @@ const TransactionConfirm: React.FC<{
                       <DefaultNFTImage width={24} height={24} />
                     )}
                   </View>
-                  <Text style={{ color: theme.colors.textSecondary }} className="leading-normal">
+                  <Text numberOfLines={1} style={{ color: theme.colors.textSecondary, maxWidth: 204 }} className="leading-normal">
                     {tx.contractName}
                   </Text>
                 </View>
-                <Text style={{ color: theme.colors.textPrimary }} className="leading-normal font-medium">
+                <Text numberOfLines={1} style={{ color: theme.colors.textPrimary, maxWidth: 235 }} className="leading-normal font-medium">
                   {tx.nftName}
                 </Text>
               </View>
@@ -200,9 +211,11 @@ const TransactionConfirm: React.FC<{
                 <AvatarIcon width={24} height={24} />
               </View>
               <Text>{shortenAddress(currentAddress.hex)}</Text>
-              <View className="m-1">
-                <CopyAllIcon color={theme.colors.textPrimary} width={16} height={16} />
-              </View>
+              <Pressable onPress={() => Clipboard.setString(currentAddress.hex)}>
+                <View className="m-1">
+                  <CopyAllIcon color={theme.colors.textPrimary} width={16} height={16} />
+                </View>
+              </Pressable>
             </View>
             <Text className="ml-8 leading-6" style={{ color: theme.colors.textSecondary }}>
               Balance: {tx.assetType === AssetType.ERC20 || tx.assetType === AssetType.Native ? formatUnits(tx.balance, tx.decimals) : tx.balance} {tx.symbol}
@@ -218,9 +231,11 @@ const TransactionConfirm: React.FC<{
                 <AvatarIcon width={24} height={24} />
               </View>
               <Text>{shortenAddress(tx.to)}</Text>
-              <View className="m-1">
-                <CopyAllIcon color={theme.colors.textPrimary} width={16} height={16} />
-              </View>
+              <Pressable onPress={() => Clipboard.setString(tx.to)}>
+                <View className="m-1">
+                  <CopyAllIcon color={theme.colors.textPrimary} width={16} height={16} />
+                </View>
+              </Pressable>
             </View>
           </View>
 

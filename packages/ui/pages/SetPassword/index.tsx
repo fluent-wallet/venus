@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { View, SafeAreaView, KeyboardAvoidingView } from 'react-native';
+import { View, SafeAreaView, KeyboardAvoidingView, ScrollView } from 'react-native';
 import { useRoute, CommonActions, type NavigationProp, type RouteProp } from '@react-navigation/native';
 import { Text, useTheme, CheckBox } from '@rneui/themed';
 import plugins from '@core/WalletCore/Plugins';
@@ -17,7 +17,7 @@ const SetPassword: React.FC<{ navigation: NavigationProp<RootStackList> }> = (pr
   const { theme } = useTheme();
   const [checked, setChecked] = useState(false);
   const [password, setPassword] = useState({ pwd: '', error: '' });
-  const [confirmPwd, setConfirmPwd] = useState('');
+  const [confirmPwd, setConfirmPwd] = useState({ pwd: '', error: '' });
   const { inAsync: loading, execAsync: createVault } = useInAsync(createVaultWithRouterParams);
   const [alert, setAlert] = useState({
     show: false,
@@ -26,18 +26,31 @@ const SetPassword: React.FC<{ navigation: NavigationProp<RootStackList> }> = (pr
   });
 
   const handleSetPassword = (value: string) => {
-    setPassword({ pwd: value, error: value.length < 8 && value !== '' ? 'Password must be at least 8 characters' : '' });
+    setPassword({ pwd: value, error: '' });
+    setConfirmPwd({ pwd: confirmPwd.pwd, error: '' });
   };
 
   const handleConfirmPassword = (value: string) => {
-    setConfirmPwd(value);
+    setConfirmPwd({ pwd: value, error: '' });
+    setPassword({ pwd: password.pwd, error: '' });
   };
 
   const handleCreatePassword = async () => {
+    if (password.pwd.length < 8) {
+      setPassword({ pwd: password.pwd, error: 'Must be at least 8 characters' });
+      return
+    }
+
+    if (password.pwd !== confirmPwd.pwd) {
+      setPassword({ pwd: password.pwd, error: 'Passwords do not match' });
+      setConfirmPwd({ pwd: confirmPwd.pwd, error: 'Passwords do not match' });
+      return;
+    }
+
     try {
       navigation.setOptions({ gestureEnabled: false });
-      await plugins.Authentication.setPassword({ password: confirmPwd });
-      if (await createVault(route.params, confirmPwd)) {
+      await plugins.Authentication.setPassword({ password: confirmPwd.pwd });
+      if (await createVault(route.params, confirmPwd.pwd)) {
         setAlert({ show: true, type: 'success', message: 'You’ve successfully protected wallet. Remember to keep your Password, it’s your responsibility!' });
       }
     } catch (e) {
@@ -54,33 +67,35 @@ const SetPassword: React.FC<{ navigation: NavigationProp<RootStackList> }> = (pr
       style={{ backgroundColor: theme.colors.surfacePrimaryWithOpacity7, paddingTop: statusBarHeight + 48 }}
     >
       <KeyboardAvoidingView behavior="padding" className="flex-1">
-        <View>
-          <Text className="text-center text-[36px] font-bold leading-tight" style={{ color: theme.colors.textBrand }}>
-            Set Password
-          </Text>
-          <Text className="text-center text-[16px]">Add security verification to ensure the safety of your funds.</Text>
-        </View>
+        <ScrollView className="flex-1">
+          <View>
+            <Text className="text-center text-[36px] font-bold leading-tight" style={{ color: theme.colors.textBrand }}>
+              Set Password
+            </Text>
+            <Text className="text-center text-[16px]">Add security verification to ensure the safety of your funds.</Text>
+          </View>
 
-        <View>
-          <Password
-            testId="passwordInput"
-            helperText="Must be at least 8 characters"
-            errorMessage={password.error}
-            value={password.pwd}
-            onChangeText={handleSetPassword}
-            title="New Password"
-          />
+          <View>
+            <Password
+              testId="passwordInput"
+              helperText="Must be at least 8 characters"
+              errorMessage={password.error}
+              value={password.pwd}
+              onChangeText={handleSetPassword}
+              title="New Password"
+            />
 
-          <Password
-            testId="confirmPasswordInput"
-            helperText="Password must be match"
-            errorMessage={confirmPwd !== password.pwd && confirmPwd !== '' ? 'Passwords do not match' : ''}
-            value={confirmPwd}
-            onChangeText={handleConfirmPassword}
-            title="Confirm New Password"
-          />
-        </View>
-
+            <Password
+              testId="confirmPasswordInput"
+              helperText="Password must be match"
+              // errorMessage={confirmPwd !== password.pwd && confirmPwd !== '' ? 'Passwords do not match' : ''}
+              errorMessage={confirmPwd.error}
+              value={confirmPwd.pwd}
+              onChangeText={handleConfirmPassword}
+              title="Confirm New Password"
+            />
+          </View>
+        </ScrollView>
         <View className="mt-auto flex flex-row items-center mb-[15px]">
           <CheckBox
             testID="checkbox"
@@ -93,13 +108,13 @@ const SetPassword: React.FC<{ navigation: NavigationProp<RootStackList> }> = (pr
             checkedColor={theme.colors.textBrand}
             uncheckedColor={theme.colors.textBrand}
           />
-          <Text className="text-base">ePay Wallet does not store your password. Please remember your password.</Text>
+          <Text className="text-base flex-1">ePay Wallet does not store your password. Please remember your password.</Text>
         </View>
         <BaseButton
           testID="createPasswordButton"
           loading={loading}
           onPress={handleCreatePassword}
-          disabled={!(checked && password.pwd !== '' && password.pwd === confirmPwd && password.error === '')}
+          disabled={!(checked && password.pwd !== '' && confirmPwd.pwd !== '' && password.error === '' && confirmPwd.error === '')}
         >
           Create Password
         </BaseButton>

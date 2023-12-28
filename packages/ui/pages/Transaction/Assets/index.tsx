@@ -66,7 +66,7 @@ const Assets: React.FC<{ navigation: StackNavigation; route: RouteProp<RootStack
       iconUrl: icon ?? undefined,
       decimals: 0,
     });
-    if (nft.type === AssetType.ERC1155 && Number(nftBalance || 0) > 1) {
+    if (nft.type === AssetType.ERC1155 && Number(nftBalance || 0) > 0) {
       navigation.navigate(SendToStackName);
     } else {
       navigation.navigate(TransactionConfirmStackName);

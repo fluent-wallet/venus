@@ -67,7 +67,7 @@ const PasswordVerify: React.FC = () => {
             setError('');
           }}
           title="Verify Password"
-          onBlur={handleConfirm}
+          onSubmitEditing={handleConfirm}
         />
         <BaseButton testID="confirm" loading={inVerify} onPress={handleConfirm} disabled={!password}>
           Confirm

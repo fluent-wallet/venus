@@ -106,6 +106,7 @@ const StackNavigator = () => {
     <Stack.Navigator
       initialRouteName={hasVault ? HomeStackName : WelcomeStackName}
       screenOptions={{
+        orientation: 'portrait',
         headerTitleAlign: 'left',
         headerTransparent: true,
         headerBackVisible: false,

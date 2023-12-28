@@ -12,9 +12,10 @@ const TokenList: React.FC<{
   skeleton?: number;
   showReceive?: boolean;
   RenderList?: typeof FlashList;
-}> = ({ onPress, skeleton = 6, RenderList = FlashList, showReceive = false }) => {
+  hidePrice?: boolean;
+}> = ({ onPress, skeleton = 6, RenderList = FlashList, showReceive = false, hidePrice = false }) => {
   const { theme } = useTheme();
-
+  
   const tokens = useAssetsTokenList();
   // const inFetch = useAssetsInFetch();
   const empty = !tokens || tokens.every((v) => BigInt(v?.balance || 0) <= 0);
@@ -48,7 +49,7 @@ const TokenList: React.FC<{
               }}`}
               style={{ backgroundColor: theme.colors.pureBlackAndWight, marginBottom: 1 }}
             >
-              <TokenItem data={item} onPress={onPress ? onPress : undefined} />
+              <TokenItem hidePrice={hidePrice} data={item} onPress={onPress ? onPress : undefined} />
             </View>
           );
         }}

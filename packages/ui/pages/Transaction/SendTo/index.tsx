@@ -23,6 +23,8 @@ import { Button } from '@rneui/base';
 import matchRPCErrorMessage from '@utils/matchRPCErrorMssage';
 import { numberWithCommas } from '@core/utils/balance';
 import DefaultNFTImage from '@assets/images/NFT.svg';
+import Clipboard from '@react-native-clipboard/clipboard';
+import CFXTokenIcon from '@assets/icons/cfxToken.svg';
 
 const SendTo: React.FC<{ navigation: StackNavigation; route: RouteProp<RootStackList, typeof SendToStackName> }> = ({ navigation, route }) => {
   const { theme } = useTheme();
@@ -139,7 +141,7 @@ const SendTo: React.FC<{ navigation: StackNavigation; route: RouteProp<RootStack
       style={{ backgroundColor: theme.colors.surfacePrimaryWithOpacity7, paddingTop: statusBarHeight + 48 }}
     >
       <KeyboardAvoidingView behavior="padding" className="flex-1 mt-1">
-        <ScrollView className="flex-1" contentContainerStyle={{ flexGrow: 1 }} keyboardShouldPersistTaps='handled'>
+        <ScrollView className="flex-1" contentContainerStyle={{ flexGrow: 1 }} keyboardShouldPersistTaps="handled">
           {(rpcError.err || invalidInputErr.err) && (
             <View
               style={{ borderColor: theme.colors.warnErrorPrimary, borderWidth: 1, backgroundColor: theme.colors.surfaceCard }}
@@ -182,9 +184,11 @@ const SendTo: React.FC<{ navigation: StackNavigation; route: RouteProp<RootStack
                 <AvatarIcon width={24} height={24} />
               </View>
               <Text>{shortenAddress(tx.to)}</Text>
-              <View className="m-1">
-                <CopyAllIcon color={theme.colors.textPrimary} width={16} height={16} />
-              </View>
+              <Pressable onPress={() => Clipboard.setString(tx.to)}>
+                <View className="m-1">
+                  <CopyAllIcon color={theme.colors.textPrimary} width={16} height={16} />
+                </View>
+              </Pressable>
             </View>
           </View>
 
@@ -207,7 +211,9 @@ const SendTo: React.FC<{ navigation: StackNavigation; route: RouteProp<RootStack
                 className="flex-1"
                 autoFocus
               />
-              {tx.iconUrl ? (
+              {tx.assetType === AssetType.Native ? (
+                <CFXTokenIcon width={24} height={24} />
+              ) : tx.iconUrl ? (
                 <MixinImage
                   resizeMode="center"
                   source={{ uri: isNFT ? tx.tokenImage : tx.iconUrl }}
@@ -220,7 +226,7 @@ const SendTo: React.FC<{ navigation: StackNavigation; route: RouteProp<RootStack
               )}
             </View>
             <View className="flex flex-row justify-end items-center mt-2">
-              <Text className="flex-1 leading-6">
+              <Text className="flex-1 leading-6" style={{maxWidth: 274}}>
                 Balance: {accountBalance} {tx.symbol}
               </Text>
               <View className="rounded-lg px-2 py-1 ml-2">

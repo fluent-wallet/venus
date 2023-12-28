@@ -9,7 +9,8 @@ import Decimal from 'decimal.js';
 const TokenItem: React.FC<{
   data: AssetInfo;
   onPress?: (v: AssetInfo) => void;
-}> = ({ onPress, data }) => {
+  hidePrice?: boolean;
+}> = ({ onPress, data, hidePrice = false }) => {
   const { theme } = useTheme();
   const balance = useMemo(() => numberWithCommas(balanceFormat(data.balance, { decimals: data.decimals })), [data.balance, data.decimals]);
   return (
@@ -21,16 +22,21 @@ const TokenItem: React.FC<{
         <View className="flex-1">
           <View className="flex flex-row flex-1 items-center justify-between">
             <View className="flex-1">
-              <Text className="text-base leading-5 font-medium" numberOfLines={1}>
+              <Text className="text-base leading-5 font-medium" numberOfLines={1} style={{ maxWidth: 147 }}>
                 {data.name}
               </Text>
             </View>
-            <View className="ml-2">
-              <Text className="text-base font-medium">{data.priceValue || '--'}</Text>
-            </View>
+            {!hidePrice && (
+              <View className="ml-2">
+                <Text className="text-base font-medium" numberOfLines={1} style={{ maxWidth: 128 }}>
+                  {data.priceValue ? `$${data.priceValue}` : '--'}
+                </Text>
+              </View>
+            )}
           </View>
+
           <View className="flex-1">
-            <Text style={{ color: theme.colors.textSecondary }} numberOfLines={1}>
+            <Text style={{ color: theme.colors.textSecondary, maxWidth: 147 }} numberOfLines={1}>
               {balance} {data.symbol}
             </Text>
           </View>

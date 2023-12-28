@@ -14,6 +14,8 @@ import { AssetType } from '@core/database/models/Asset';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { RootStackList } from '@router/configs';
 import { parseUnits } from 'ethers';
+
+
 const SetAmount: React.FC<NativeStackScreenProps<RootStackList, 'SetAmount'>> = ({ navigation }) => {
   const { theme } = useTheme();
   const bottomSheetRef = useRef<BottomSheet>(null);
@@ -160,7 +162,7 @@ const SetAmount: React.FC<NativeStackScreenProps<RootStackList, 'SetAmount'>> = 
             </View>
           )}
         >
-          <TokenList skeleton={6} RenderList={BottomSheetFlatList} onPress={handleChangeSelectedToken} from="receive" />
+          <TokenList hidePrice skeleton={6} RenderList={BottomSheetFlatList} onPress={handleChangeSelectedToken} from="receive" />
         </BottomSheet>
       </SafeAreaView>
     </KeyboardAvoidingView>

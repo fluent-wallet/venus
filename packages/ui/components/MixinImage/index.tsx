@@ -1,9 +1,10 @@
 import { Image, ImageProps, ImageURISource } from 'react-native';
-import { SvgUri } from 'react-native-svg';
+import { SvgUri, Image as SvgImg, SvgXml } from 'react-native-svg';
 import { styled } from 'nativewind';
 import { useState } from 'react';
 import isURL from 'validator/es/lib/isURL';
 import isBase64 from 'validator/es/lib/isBase64';
+import isDataURI from 'validator/es/lib/isDataURI';
 
 // the Image component in react-native does not support svg, so we need to use SvgUri to support svg
 
@@ -29,7 +30,7 @@ const MixinImage: React.FC<ImageProps & { source: ImageURISource } & { fallback?
     return <SvgUri uri={uri} width={props.width} height={props.height} style={props.style} />;
   }
   
-  if (props.source.uri && !isURL(`${props.source.uri}`) && !isBase64(`${props.source.uri}`, {urlSafe: false})) {
+  if (props.source.uri && !isURL(`${props.source.uri}`) && !isDataURI(`${props.source.uri}`)) {
     // if the uri is not a valid url, we will use the fallback
     return getFailBack();
   }
@@ -37,7 +38,6 @@ const MixinImage: React.FC<ImageProps & { source: ImageURISource } & { fallback?
   if (e) {
     return getFailBack();
   }
-
   return <Image {...props} onError={() => setE(true)} />;
 };
 

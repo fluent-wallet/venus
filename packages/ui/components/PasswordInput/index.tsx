@@ -5,7 +5,7 @@ import VisibilityOffIcon from '@assets/icons/visibility_off.svg';
 import VisibilityIcon from '@assets/icons/visibility.svg';
 import WaringIcon from '@assets/icons/warning_1.svg';
 import { useState } from 'react';
-import { Icon } from '@rneui/base';
+import { Icon, InputProps } from '@rneui/base';
 
 interface Props {
   title: string;
@@ -16,16 +16,15 @@ interface Props {
   errorMessagePlaceholder?: boolean;
   successMessage?: string;
   helperText?: string;
-  onBlur?: ((e: NativeSyntheticEvent<TextInputFocusEventData>) => void) | undefined;
-  testId?:string
+  testId?: string;
 }
 
-function Password(props: Props) {
+function Password(props: Props & InputProps) {
   const {
     theme: { colors },
   } = useTheme();
   const isDark = useColorScheme() === 'dark';
-  const { onBlur, title, value, onChangeText, helperText, errorMessage = '', successMessage = '', errorMessagePlaceholder = false } = props;
+  const {  title, value, onChangeText, helperText, errorMessage = '', successMessage = '', errorMessagePlaceholder = false, ...res } = props;
   const [visible, setVisible] = useState(props?.visible ?? true);
 
   return (
@@ -33,7 +32,8 @@ function Password(props: Props) {
       <Text className="text-[20px] font-bold leading-tight my-[15px]">{title}</Text>
       <View className="rounded-[7px]" style={{ backgroundColor: colors.passwordInputBackground }}>
         <Input
-          testID='passwordInput'
+          {...res}
+          testID="passwordInput"
           value={value}
           inputContainerStyle={{ borderBottomWidth: 0 }}
           placeholderTextColor={colors.textSecondary}
@@ -41,11 +41,10 @@ function Password(props: Props) {
           placeholder="Password"
           secureTextEntry={visible}
           onChangeText={onChangeText}
-          onBlur={onBlur}
           leftIcon={<Icon name="123" Component={LockIcon} style={{ color: isDark ? colors.surfaceFourth : colors.textPrimary }} />}
           rightIcon={
             <Icon
-              testID='passwordInputRightIcon'
+              testID="passwordInputRightIcon"
               name="123"
               style={{ color: isDark ? colors.surfaceFourth : colors.textPrimary }}
               Component={visible ? VisibilityOffIcon : VisibilityIcon}

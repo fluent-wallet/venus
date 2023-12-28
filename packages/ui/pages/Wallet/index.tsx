@@ -120,7 +120,7 @@ const Wallet: React.FC<{ navigation: StackNavigation }> = ({ navigation }) => {
         <View className="px-[24px]">
           <View className="flex flex-row items-center justify-center mb-[3px]">
             <SIMCardIcon color={theme.colors.surfaceBrand} width={24} height={24} />
-            <Text className="leading-normal max-w-[75%]" style={{ color: theme.colors.textBrand }} numberOfLines={1}>
+            <Text numberOfLines={1} className="leading-normal" style={{ color: theme.colors.textBrand, maxWidth: 170 }}>
               {currentAccount?.nickname}
             </Text>
           </View>
@@ -132,7 +132,7 @@ const Wallet: React.FC<{ navigation: StackNavigation }> = ({ navigation }) => {
               <Pressable className="flex flex-row items-center" testID="toggleTotalPriceVisible" onPress={() => setTotalPriceVisible(!totalPriceVisible)}>
                 <Text className="text-4xl font-bold">$</Text>
                 {totalPriceVisible ? (
-                  <Text className="text-4xl font-bold" numberOfLines={1}>
+                  <Text  className="text-4xl font-bold" numberOfLines={1} style={{maxWidth: 326}}>
                     {numberWithCommas(totalPriceValue)}
                   </Text>
                 ) : (
