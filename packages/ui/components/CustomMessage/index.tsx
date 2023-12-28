@@ -1,20 +1,21 @@
 import React from 'react';
-import { View, Text, ActivityIndicator } from 'react-native';
+import { View, Text, ActivityIndicator, type StyleProp, type ViewStyle } from 'react-native';
 import { type Message } from 'react-native-flash-message';
 import clsx from 'clsx';
 import { useTheme } from '@rneui/themed';
 import CheckCircle from '@assets/icons/check_circle.svg';
 import WarningAlert from '@assets/icons/warning_alert.svg';
 
-const CustomMessage: React.FC<{ message: Message; icon?: { icon: any }; className?: string }> = ({
+const CustomMessage: React.FC<{ message: Message; icon?: { icon: any }; className?: string; style?: StyleProp<ViewStyle> }> = ({
   className,
+  style,
   message: { type, message, description },
   icon,
 }) => {
   const { theme } = useTheme();
 
   return (
-    <View className={clsx(className, className === undefined && 'pb-[100px]')}>
+    <View className={clsx(className, className === undefined && 'pb-[100px]')} style={style}>
       <View className="relative mx-auto w-[364px] p-[12px] rounded-[6px] overflow-hidden">
         <View
           className="absolute left-[0px] top-[0px] w-[125%] h-[200%] pointer-events-none opacity-90"

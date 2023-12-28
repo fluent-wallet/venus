@@ -1,7 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { View, SafeAreaView, Pressable, RefreshControl, ScrollView } from 'react-native';
 import PagerView from 'react-native-pager-view';
-import { useNetInfo } from '@react-native-community/netinfo';
 import { Text, useTheme, Card } from '@rneui/themed';
 import { useAtom } from 'jotai';
 import { statusBarHeight } from '@utils/deviceInfo';
@@ -9,7 +8,7 @@ import { ReceiveAddressStackName, ReceiveStackName, type StackNavigation } from 
 import TokenList from '@modules/AssetList/TokenList';
 import ESpaceNFTList from '@modules/AssetList/ESpaceNFTList';
 import ActivityList from '@modules/ActivityList';
-import CustomMessage from '@components/CustomMessage';
+import NoNetwork from '@modules/NoNetwork';
 import Skeleton from '@components/Skeleton';
 import { useCurrentAccount, useCurrentNetwork, useAssetsTotalPriceValue } from '@core/WalletCore/Plugins/ReactInject';
 import { CFX_ESPACE_MAINNET_CHAINID, CFX_ESPACE_TESTNET_CHAINID } from '@core/consts/network';
@@ -19,7 +18,6 @@ import SendIcon from '@assets/icons/send.svg';
 import ReceiveIcon from '@assets/icons/receive.svg';
 import BuyIcon from '@assets/icons/buy.svg';
 import MoreIcon from '@assets/icons/more.svg';
-import WifiOffIcon from '@assets/icons/wifi_off.svg';
 import SIMCardIcon from '@assets/icons/sim-card.svg';
 import { numberWithCommas } from '@core/utils/balance';
 import VisibilityIcon from '@assets/icons/visibility.svg';
@@ -53,7 +51,6 @@ const MainButton: React.FC<{ onPress?: VoidFunction; disabled?: boolean; label?:
 
 const Wallet: React.FC<{ navigation: StackNavigation }> = ({ navigation }) => {
   const { theme } = useTheme();
-  const { isConnected } = useNetInfo(); // init state is null
   const [totalPriceVisible, setTotalPriceVisible] = useAtom(TotalPriceVisibleAtom);
   const currentAccount = useCurrentAccount();
   const currentNetwork = useCurrentNetwork();
@@ -91,15 +88,7 @@ const Wallet: React.FC<{ navigation: StackNavigation }> = ({ navigation }) => {
       className="flex-1 flex flex-col justify-start"
       style={{ backgroundColor: theme.colors.surfacePrimaryWithOpacity7, paddingTop: statusBarHeight + 48 }}
     >
-      <View className="absolute left-0 right-0 flex justify-center items-center z-50" style={{ top: statusBarHeight + 48 }}>
-        {isConnected !== null && !isConnected && (
-          <CustomMessage
-            className="absolute top-[24px]"
-            message={{ type: 'warning', message: 'No Internet Connection' }}
-            icon={{ icon: <WifiOffIcon width={24} height={24} color={theme.colors.textInvert} /> }}
-          />
-        )}
-      </View>
+      <NoNetwork />
       <ScrollView
         stickyHeaderIndices={[1]}
         contentContainerStyle={{ flexGrow: 1 }}

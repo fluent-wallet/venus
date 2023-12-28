@@ -1,5 +1,5 @@
 import { AssetType } from '@core/database/models/Asset';
-import { atom, useAtom, useAtomValue } from 'jotai';
+import { atom, useAtomValue } from 'jotai';
 import { Subject } from 'rxjs';
 
 export enum TxEventTypesName {

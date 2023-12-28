@@ -2,7 +2,6 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Pressable, SafeAreaView, View, ScrollView } from 'react-native';
 import { RouteProp } from '@react-navigation/native';
 import { firstValueFrom } from 'rxjs';
-
 import { formatUnits } from 'ethers';
 import { Button, Divider, Text, useTheme } from '@rneui/themed';
 import { statusBarHeight } from '@utils/deviceInfo';
@@ -11,6 +10,7 @@ import { shortenAddress } from '@core/utils/address';
 import { type RootStackList, type StackNavigation, WalletStackName, HomeStackName, TransactionConfirmStackName } from '@router/configs';
 import { BaseButton } from '@components/Button';
 import CloseIcon from '@assets/icons/close.svg';
+import NoNetwork from '@modules/NoNetwork';
 import SendIcon from '@assets/icons/send.svg';
 import AvatarIcon from '@assets/icons/avatar.svg';
 import CopyAllIcon from '@assets/icons/copy_all.svg';
@@ -153,6 +153,7 @@ const TransactionConfirm: React.FC<{
       className="flex-1 flex flex-col justify-startpb-7"
       style={{ backgroundColor: theme.colors.surfacePrimaryWithOpacity7, paddingTop: statusBarHeight + 48 }}
     >
+      <NoNetwork />
       <ScrollView className="flex-1">
         {(error || gas.error) && (
           <View className="px-6">
