@@ -4,13 +4,12 @@ import SwitchCurrentNetwork from '@modules/SwitchCurrentNetwork';
 import { useCurrentAddressValue } from '@core/WalletCore/Plugins/ReactInject';
 import { useNavigation } from '@react-navigation/native';
 import { AccountSelectStackName, ReceiveAddressStackName, ScanQRCodeStackName, StackNavigation } from '@router/configs';
-import { Icon, Text, useTheme } from '@rneui/themed';
+import { Text, useTheme } from '@rneui/themed';
 import { shortenAddress } from '@core/utils/address';
 import CopyAll from '@assets/icons/copy_all.svg';
 import Flip from '@assets/icons/flip.svg';
 import AccountWallet from '@assets/icons/account-wallet.svg';
-import { statusBarHeight } from '@utils/deviceInfo';
-import { showMessage, hideMessage } from 'react-native-flash-message';
+import { showMessage } from 'react-native-flash-message';
 
 export const UserAddress: React.FC = () => {
   const { theme } = useTheme();
@@ -23,15 +22,7 @@ export const UserAddress: React.FC = () => {
         Clipboard.setString(currentAddressValue);
         showMessage({
           type: 'success',
-          floating: true,
-          statusBarHeight: statusBarHeight + 48,
           message: 'Copied',
-          icon: () => <Icon name="done" color={theme.colors.textInvert} />,
-          backgroundColor: theme.colors.warnSuccessPrimary,
-          color: theme.colors.textInvert,
-          textStyle: { fontSize: 12, fontFamily: 'SF Pro Display' },
-          style: { display: 'flex', alignItems: 'center', alignSelf: 'center', width: 115 },
-          duration: 1.5 * 1000, // 1.5s
         });
       }}
       className="rounded-full overflow-hidden px-3"
@@ -65,7 +56,7 @@ const SwitchCurrentAddress: React.FC = () => {
   );
 };
 
-export const getWalletHeaderOptions = (backgroundColor: string) =>
+export const getWalletHeaderOptions = () =>
   ({
     headerLeft: () => <SwitchCurrentAddress />,
     headerTitle: () => null,

@@ -18,8 +18,7 @@ export const showBiometricsDisabledMessage = () => {
     message: 'Device biometrics not enabled',
     description: 'Please enable your biometrics in device settings.',
     type: 'warning',
-    duration: 3500,
-    statusBarHeight,
+    duration: 3000,
   });
 };
 

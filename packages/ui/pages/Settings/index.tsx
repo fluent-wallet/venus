@@ -55,8 +55,6 @@ const Settings: React.FC<{ navigation: NavigationProp<any> }> = ({ navigation })
                 showMessage({
                   message: 'Reset wallet data successfully',
                   type: 'success',
-                  duration: 2000,
-                  statusBarHeight,
                 });
                 navigation.navigate(WelcomeStackName);
               } catch (err) {
@@ -64,8 +62,6 @@ const Settings: React.FC<{ navigation: NavigationProp<any> }> = ({ navigation })
                   message: 'Reset wallet data failed',
                   description: String(err ?? ''),
                   type: 'warning',
-                  duration: 1500,
-                  statusBarHeight,
                 });
               } finally {
                 setVisibleResetWallet(false);

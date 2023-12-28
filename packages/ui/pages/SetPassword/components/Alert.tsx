@@ -39,7 +39,7 @@ function CreatePasswordAlert(props: Props) {
         <View className="flex">
           <View className="items-center">
             <View className="flex items-center mb-[28px]">
-              {type === 'error' ? <Warning width={24} height={24} /> : <SuccessIcon width={24} height={24} />}
+              {type === 'error' ? <Warning width={24} height={24} color=""/> : <SuccessIcon width={24} height={24} />}
               <Text className="text-xl font-bold leading-tight  mt-4">{type === 'error' ? 'Error !' : 'Success !'}</Text>
             </View>
           </View>

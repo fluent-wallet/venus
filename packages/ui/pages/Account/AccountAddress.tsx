@@ -5,16 +5,12 @@ import { type Account } from '@core/database/models/Account';
 import { useCurrentAddressValueOfAccount } from '@core/WalletCore/Plugins/ReactInject';
 import { shortenAddress } from '@core/utils/address';
 
-const AccountAddress: React.FC<{ account: Account; className?: string; style?: { opacity: number }; showSelected?: boolean }> = ({
+const AccountAddress: React.FC<{ account: Account; className?: string; nickNameClassName: string; style?: { opacity: number }; showSelected?: boolean }> = ({
   account,
   className,
   style,
   showSelected,
-}: {
-  account: Account;
-  className?: string;
-  style?: StyleProp<ViewStyle>;
-  showSelected?: boolean;
+  nickNameClassName,
 }) => {
   const { theme } = useTheme();
   const currentAddressValue = useCurrentAddressValueOfAccount(account.id);
@@ -22,7 +18,9 @@ const AccountAddress: React.FC<{ account: Account; className?: string; style?: {
   if (!currentAddressValue) return;
   return (
     <View className={clsx('relative flex flex-col gap-[8px] text-[16px] leading-tight', className)} style={style}>
-      <Text numberOfLines={1} style={{ color: theme.colors.textPrimary }}>{account.nickname}</Text>
+      <Text className={nickNameClassName} numberOfLines={1} style={{ color: theme.colors.textPrimary }}>
+        {account.nickname}
+      </Text>
       <Text style={{ color: theme.colors.textSecondary }}>{shortenAddress(currentAddressValue)}</Text>
       {showSelected && account.selected && (
         <View

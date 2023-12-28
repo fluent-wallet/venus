@@ -62,7 +62,7 @@ function Password(props: Props) {
         )}
         {(errorMessage || errorMessagePlaceholder) && (
           <View className="flex flex-row items-center" style={{ opacity: errorMessage ? 100 : 0 }}>
-            <WaringIcon />
+            <WaringIcon color='#EF4444' />
             <Text className="ml-[10px] text-base" style={{ color: colors.warnErrorPrimary }}>
               {errorMessage || 'transparent'}
             </Text>

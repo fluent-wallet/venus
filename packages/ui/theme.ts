@@ -58,6 +58,7 @@ const theme = createTheme({
     pureBlackAndWight: colors.white,
     underlayColor: colors.underlayLight,
     contrastWhiteAndBlack: colors.black,
+    alertWarning: colors.gray5,
   },
   darkColors: {
     textPrimary: colors.gray1,
@@ -82,6 +83,7 @@ const theme = createTheme({
     pureBlackAndWight: colors.black,
     underlayColor: colors.underlayDark,
     contrastWhiteAndBlack: colors.white,
+    alertWarning: colors.gray5,
   },
   components: {
     Text: (_, theme) => ({

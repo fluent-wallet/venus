@@ -7,7 +7,6 @@ import { useTheme, Dialog, ListItem } from '@rneui/themed';
 import methods from '@core/WalletCore/Methods';
 import plugins from '@core/WalletCore/Plugins';
 import { useAccountGroups } from '@core/WalletCore/Plugins/ReactInject';
-import { statusBarHeight } from '@utils/deviceInfo';
 import { type StackNavigation, WelcomeStackName, AddAccountStackName } from '@router/configs';
 import AccountGroupItem from '../AccountGroupItem';
 
@@ -77,8 +76,6 @@ const AccountManage: React.FC<{ navigation: StackNavigation }> = ({ navigation }
                 showMessage({
                   message: 'Clear account data successfully',
                   type: 'success',
-                  duration: 1500,
-                  statusBarHeight,
                 });
                 navigation.navigate(WelcomeStackName);
               } catch (err) {
@@ -89,8 +86,6 @@ const AccountManage: React.FC<{ navigation: StackNavigation }> = ({ navigation }
                   message: 'Clear account data failed',
                   description: String(err ?? ''),
                   type: 'warning',
-                  duration: 2000,
-                  statusBarHeight,
                 });
               } finally {
                 setVisibleClearAccount(false);

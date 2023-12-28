@@ -1,12 +1,15 @@
-import React, { useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { View, SafeAreaView, Pressable, RefreshControl, ScrollView } from 'react-native';
+import PagerView from 'react-native-pager-view';
 import { useNetInfo } from '@react-native-community/netinfo';
-import { Text, useTheme, Tab, TabView, Card } from '@rneui/themed';
+import { Text, useTheme, Card } from '@rneui/themed';
+import { useAtom } from 'jotai';
 import { statusBarHeight } from '@utils/deviceInfo';
-import { type StackNavigation, ReceiveAddressStackName, ReceiveStackName } from '@router/configs';
+import { ReceiveAddressStackName, ReceiveStackName, type StackNavigation } from '@router/configs';
 import TokenList from '@modules/AssetList/TokenList';
 import ESpaceNFTList from '@modules/AssetList/ESpaceNFTList';
 import ActivityList from '@modules/ActivityList';
+import CustomMessage from '@components/CustomMessage';
 import Skeleton from '@components/Skeleton';
 import { useCurrentAccount, useCurrentNetwork, useAssetsTotalPriceValue } from '@core/WalletCore/Plugins/ReactInject';
 import { CFX_ESPACE_MAINNET_CHAINID, CFX_ESPACE_TESTNET_CHAINID } from '@core/consts/network';
@@ -18,14 +21,11 @@ import BuyIcon from '@assets/icons/buy.svg';
 import MoreIcon from '@assets/icons/more.svg';
 import WifiOffIcon from '@assets/icons/wifi_off.svg';
 import SIMCardIcon from '@assets/icons/sim-card.svg';
-import PullRefresh from '@components/PullRefresh';
 import { numberWithCommas } from '@core/utils/balance';
 import VisibilityIcon from '@assets/icons/visibility.svg';
 import VisibilityOffIcon from '@assets/icons/visibility_off.svg';
-import { useAtom } from 'jotai';
 import TotalPriceVisibleAtom from '@hooks/useTotalPriceVisible';
 import { UserAddress } from './WalletHeader';
-import PagerView from 'react-native-pager-view';
 import AsteriskIcon from '@assets/icons/asterisk.svg';
 
 const MainButton: React.FC<{ onPress?: VoidFunction; disabled?: boolean; label?: string; icon?: React.ReactElement; _testID?: string }> = ({
@@ -58,8 +58,8 @@ const Wallet: React.FC<{ navigation: StackNavigation }> = ({ navigation }) => {
   const currentAccount = useCurrentAccount();
   const currentNetwork = useCurrentNetwork();
   const totalPriceValue = useAssetsTotalPriceValue();
-  const [refreshing, setRefreshing] = React.useState(false);
-  const [tabIndex, setTabIndex] = React.useState(0);
+  const [refreshing, setRefreshing] = useState(false);
+  const [tabIndex, setTabIndex] = useState(0);
   const tabRef = useRef<PagerView>(null);
 
   const handleTabChange = (index: number) => {
@@ -74,6 +74,18 @@ const Wallet: React.FC<{ navigation: StackNavigation }> = ({ navigation }) => {
       setTabIndex(index);
     }
   };
+
+  const [_, forceUpdate] = useState(0);
+  useEffect(() => {
+    const unsubscribe = navigation.addListener('focus', () => {
+      forceUpdate((pre) => pre + 1);
+    });
+
+    return () => {
+      unsubscribe();
+    };
+  }, [navigation]);
+
   return (
     <SafeAreaView
       className="flex-1 flex flex-col justify-start"
@@ -81,12 +93,11 @@ const Wallet: React.FC<{ navigation: StackNavigation }> = ({ navigation }) => {
     >
       <View className="absolute left-0 right-0 flex justify-center items-center z-50" style={{ top: statusBarHeight + 48 }}>
         {isConnected !== null && !isConnected && (
-          <View style={{ backgroundColor: theme.colors.textSecondary }} className="rounded-lg p-3 flex flex-row items-center">
-            <WifiOffIcon color={theme.colors.textInvert} width={20} height={20} />
-            <Text className="ml-1" style={{ color: theme.colors.textInvert }}>
-              No Internet Connection
-            </Text>
-          </View>
+          <CustomMessage
+            className="absolute top-[24px]"
+            message={{ type: 'warning', message: 'No Internet Connection' }}
+            icon={{ icon: <WifiOffIcon width={24} height={24} color={theme.colors.textInvert} /> }}
+          />
         )}
       </View>
       <ScrollView
@@ -109,7 +120,7 @@ const Wallet: React.FC<{ navigation: StackNavigation }> = ({ navigation }) => {
         <View className="px-[24px]">
           <View className="flex flex-row items-center justify-center mb-[3px]">
             <SIMCardIcon color={theme.colors.surfaceBrand} width={24} height={24} />
-            <Text className="leading-normal" style={{ color: theme.colors.textBrand }}>
+            <Text className="leading-normal max-w-[75%]" style={{ color: theme.colors.textBrand }} numberOfLines={1}>
               {currentAccount?.nickname}
             </Text>
           </View>

@@ -90,8 +90,6 @@ const AccountSetting: React.FC<NativeStackScreenProps<RootStackList, 'AccountSet
             showMessage({
               message: "Selected account can't remove.",
               type: 'warning',
-              duration: 1500,
-              statusBarHeight,
             });
             return;
           }
@@ -129,8 +127,6 @@ const AccountSetting: React.FC<NativeStackScreenProps<RootStackList, 'AccountSet
                 showMessage({
                   message: 'Remove account successfully',
                   type: 'success',
-                  duration: 2000,
-                  statusBarHeight,
                 });
                 navigation.goBack();
               } catch (err) {
@@ -141,8 +137,6 @@ const AccountSetting: React.FC<NativeStackScreenProps<RootStackList, 'AccountSet
                   message: 'Remove account failed',
                   description: String(err ?? ''),
                   type: 'warning',
-                  duration: 1500,
-                  statusBarHeight,
                 });
               } finally {
                 setVisibleRemoveAccount(false);

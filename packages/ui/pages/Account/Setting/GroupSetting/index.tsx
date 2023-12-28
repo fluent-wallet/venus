@@ -13,9 +13,10 @@ import plugins from '@core/WalletCore/Plugins';
 import { type RootStackList, BackUpStackName, HDManageStackName } from '@router/configs';
 import { BaseButton } from '@components/Button';
 import AccountAddress from '@pages/Account/AccountAddress';
-import { statusBarHeight } from '@utils/deviceInfo';
+import useIsMountedRef from '@hooks/useIsMountedRef';
 
 const GroupSetting: React.FC<NativeStackScreenProps<RootStackList, 'GroupSetting'>> = ({ navigation, route }) => {
+  const isMounted = useIsMountedRef();
   const { theme } = useTheme();
   const headerHeight = useHeaderHeight();
 
@@ -101,7 +102,11 @@ const GroupSetting: React.FC<NativeStackScreenProps<RootStackList, 'GroupSetting
             {accounts?.map((account, index) => (
               <Fragment key={account.id}>
                 {index !== 0 && <View className="w-full h-[1px] my-[8px]" style={{ backgroundColor: theme.colors.borderPrimary }} />}
-                <AccountAddress className="w-full flex flex-row gap-[0px] justify-between items-center h-[40px] leading-[40px]" account={account} />
+                <AccountAddress
+                  className="w-full flex flex-row gap-[0px] justify-between items-center h-[40px] leading-[40px]"
+                  nickNameClassName="max-w-[75%]"
+                  account={account}
+                />
               </Fragment>
             ))}
           </ListItem.Content>
@@ -118,8 +123,6 @@ const GroupSetting: React.FC<NativeStackScreenProps<RootStackList, 'GroupSetting
             showMessage({
               message: "Selected group can't remove.",
               type: 'warning',
-              duration: 1500,
-              statusBarHeight,
             });
             return;
           }
@@ -153,10 +156,10 @@ const GroupSetting: React.FC<NativeStackScreenProps<RootStackList, 'GroupSetting
                 showMessage({
                   message: 'Remove Group successfully',
                   type: 'success',
-                  duration: 2000,
-                  statusBarHeight,
                 });
-                navigation.goBack();
+                if (isMounted.current) {
+                  navigation.goBack();
+                }
               } catch (err) {
                 if (String(err)?.includes('cancel') || String(err)?.includes('取消')) {
                   return;
@@ -165,8 +168,6 @@ const GroupSetting: React.FC<NativeStackScreenProps<RootStackList, 'GroupSetting
                   message: 'Remove Group failed',
                   description: String(err ?? ''),
                   type: 'warning',
-                  duration: 1500,
-                  statusBarHeight,
                 });
               } finally {
                 setVisibleRemoveGroup(false);

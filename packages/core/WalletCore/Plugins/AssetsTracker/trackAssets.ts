@@ -134,6 +134,7 @@ const trackAssets = async ({
 
   for (const hashKey in assetsHash) {
     if (!!assetsHash[hashKey].priceInUSDT && !!assetsHash[hashKey].balance) {
+      assetsHash[hashKey].balance = BigInt(assetsHash[hashKey].balance || 0).toString();
       assetsHash[hashKey].priceValue = truncate(
         new Decimal(assetsHash[hashKey].priceInUSDT!)
           .mul(new Decimal(assetsHash[hashKey].balance).div(Decimal.pow(new Decimal(10), new Decimal(assetsHash[hashKey].decimals ?? 0))))

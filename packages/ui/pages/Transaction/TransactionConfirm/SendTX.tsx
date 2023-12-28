@@ -10,7 +10,7 @@ import WaringIcon from '@assets/icons/warning_2.svg';
 import CheckCircleIcon from '@assets/icons/check_circle.svg';
 import { HomeStackName, StackNavigation, WalletStackName } from '@router/configs';
 import { TxEventTypesName, WalletTransactionType } from '@core/WalletCore/Plugins/ReactInject/data/useTransaction';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useState } from 'react';
 import BSIM from '@WalletCoreExtends/Plugins/BSIM';
 
 export enum BSIM_SIGN_STATUS {
@@ -56,7 +56,7 @@ export const STATUS_VALUES: Record<
   },
   [BSIM_SIGN_STATUS.COMPLETE]: {
     title: 'Transaction Submitted',
-    titleIcon: () => <CheckCircleIcon width={24} height={24} />,
+    titleIcon: () => <CheckCircleIcon width={24} height={24} color="#22C55E" />,
     context: 'BSIM Card is signing',
     showButton: true,
     buttonContext: 'OK',

@@ -6,11 +6,12 @@ import clsx from 'clsx';
 import { Button } from '@rneui/base';
 import { useTheme, Card, Icon, ListItem } from '@rneui/themed';
 import { useVaultOfGroup, useAccountsOfGroup, useCurrentAccount } from '@core/WalletCore/Plugins/ReactInject';
+import VaultType from '@core/database/models/Vault/VaultType';
 import { type AccountGroup } from '@core/database/models/AccountGroup';
 import methods from '@core/WalletCore/Methods';
 import plugins from '@core/WalletCore/Plugins';
 import useInAsync from '@hooks/useInAsync';
-import { type StackNavigation, GroupSettingStackName, AccountSettingStackName } from '@router/configs';
+import { type StackNavigation, GroupSettingStackName, AccountSettingStackName, HDManageStackName } from '@router/configs';
 import AccountAddress from './AccountAddress';
 
 const AccountGroupItem: React.FC<{
@@ -31,9 +32,14 @@ const AccountGroupItem: React.FC<{
 
   const _addAccount = useCallback(async () => {
     try {
-      if (vault.type === 'hierarchical_deterministic') {
+      const lastIndex = await methods.getAccountGroupLastAccountIndex(accountGroup);
+      if (lastIndex >= (vault.type === VaultType.BSIM ? plugins.BSIM.chainLimtCount : 255)) {
+        navigation.navigate(HDManageStackName, { accountGroupId: accountGroup.id });
+        return;
+      }
+      if (vault.type === VaultType.HierarchicalDeterministic) {
         return await methods.addAccount({ accountGroup });
-      } else if (vault.type === 'BSIM') {
+      } else if (vault.type === VaultType.BSIM) {
         const list = await plugins.BSIM.getBIMList();
         const newIndex = (await methods.getAccountGroupLastAccountIndex(accountGroup)) + 1;
         const alreadyCreateAccount = list?.find((item) => item.index === newIndex);

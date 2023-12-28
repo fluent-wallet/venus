@@ -6,6 +6,7 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { ThemeProvider } from '@rneui/themed';
 import { useHasVault } from '@core/WalletCore/Plugins/ReactInject';
 import PasswordVerify from '@modules/PasswordVerify';
+import CustomMessage from '@components/CustomMessage';
 import Router from './router';
 import { theme } from './theme';
 import './assets/i18n';
@@ -21,7 +22,7 @@ const App: React.FC = () => {
         <SafeAreaProvider>
           {typeof hasVault === 'boolean' && <Router />}
           <PasswordVerify />
-          <FlashMessage position="top" />
+          <FlashMessage position="bottom" MessageComponent={CustomMessage} duration={1500} animated={false} />
         </SafeAreaProvider>
       </ThemeProvider>
     </GestureHandlerRootView>

@@ -99,7 +99,7 @@ export const fetchESpaceServer = async ({
                     name: 'CFX',
                     symbol: 'CFX',
                     decimals: 18,
-                    balance: BigInt(cfxBalance).toString(),
+                    balance: cfxBalance,
                     ...scanInfoMap[AssetType.Native],
                   },
                   ...assets.filter((asset) => asset.contractAddress !== '0x0000000000000000000000000000000000000000'),
@@ -159,7 +159,7 @@ export const fetchESpaceServer = async ({
             name: 'CFX',
             symbol: 'CFX',
             decimals: 18,
-            balance: BigInt(cfxBalance).toString(),
+            balance: cfxBalance,
           },
           ...assets,
         ];

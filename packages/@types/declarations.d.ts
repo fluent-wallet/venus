@@ -24,5 +24,6 @@ declare module '@rneui/themed' {
     pureBlackAndWight: string;
     underlayColor: string;
     contrastWhiteAndBlack: string;
+    alertWarning: string;
   }
 }
