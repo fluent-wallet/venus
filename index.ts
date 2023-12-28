@@ -13,7 +13,7 @@ import BSIMPlugin from './packages/WalletCoreExtends/Plugins/BSIM';
 import App from './packages/ui/App';
 import { name as appName } from './app.json';
 
-WalletCore.plugins.use([CryptoToolPlugin, AuthenticationPlugin, BSIMPlugin, ReactInjectPlugin, TransactionPlugin, AssetsTracker]);
+WalletCore.plugins.use([CryptoToolPlugin, AuthenticationPlugin, BSIMPlugin, ReactInjectPlugin, AssetsTracker]);
 WalletCore.setup();
 
 AppRegistry.registerComponent(appName, () => App);
