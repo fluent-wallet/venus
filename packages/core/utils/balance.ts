@@ -74,7 +74,7 @@ export function numAbbreviation(num: number | string, options: { truncateLength?
     }
   }
 
-  if (absoluteValue < Math.pow(10, carry + 2)) {
+  if (absoluteValue < Math.pow(10, carry + 3)) {
     // less than 1_000_000 (1M)
     return options.truncateLength ? truncate(numString, truncateLength) : numString;
   }

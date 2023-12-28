@@ -67,8 +67,11 @@ describe('balance', () => {
     expect(balanceFormat('1_000_000_000_000_000_000')).toBe('1');
     expect(balanceFormat('1_234_500_000_000_000_000')).toBe('1.2345');
     expect(balanceFormat('1_234_567_000_000_000_000')).toBe('1.2345');
+    expect(balanceFormat('1_0_000_000_000_000_000_000')).toBe('10');
+    expect(balanceFormat('1_00_000_000_000_000_000_000')).toBe('100');
     expect(balanceFormat('1_000_000_000_000_000_000_000')).toBe('1000');
     expect(balanceFormat('10_000_000_000_000_000_000_000')).toBe('10000');
+    expect(balanceFormat('100_000_000_000_000_000_000_000')).toBe('100000');
     expect(balanceFormat('1000_000_000_000_000_000_000_000')).toBe('1M');
     expect(balanceFormat('1234_000_000_000_000_000_000_000')).toBe('1.234M');
     expect(balanceFormat('1234_500_000_000_000_000_000_000')).toBe('1.2345M');
