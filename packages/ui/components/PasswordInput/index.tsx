@@ -17,6 +17,7 @@ interface Props {
   successMessage?: string;
   helperText?: string;
   testId?: string;
+  disableRightIcon?: boolean;
 }
 
 function Password(props: Props & InputProps) {
@@ -24,7 +25,17 @@ function Password(props: Props & InputProps) {
     theme: { colors },
   } = useTheme();
   const isDark = useColorScheme() === 'dark';
-  const {  title, value, onChangeText, helperText, errorMessage = '', successMessage = '', errorMessagePlaceholder = false, ...res } = props;
+  const {
+    title,
+    value,
+    onChangeText,
+    helperText,
+    errorMessage = '',
+    successMessage = '',
+    errorMessagePlaceholder = false,
+    disableRightIcon: disableLiftIcon = false,
+    ...res
+  } = props;
   const [visible, setVisible] = useState(props?.visible ?? true);
 
   return (
@@ -43,13 +54,15 @@ function Password(props: Props & InputProps) {
           onChangeText={onChangeText}
           leftIcon={<Icon name="123" Component={LockIcon} style={{ color: isDark ? colors.surfaceFourth : colors.textPrimary }} />}
           rightIcon={
-            <Icon
-              testID="passwordInputRightIcon"
-              name="123"
-              style={{ color: isDark ? colors.surfaceFourth : colors.textPrimary }}
-              Component={visible ? VisibilityOffIcon : VisibilityIcon}
-              onPress={() => setVisible(!visible)}
-            />
+            !disableLiftIcon ?? (
+              <Icon
+                testID="passwordInputRightIcon"
+                name="123"
+                style={{ color: isDark ? colors.surfaceFourth : colors.textPrimary }}
+                Component={visible ? VisibilityOffIcon : VisibilityIcon}
+                onPress={() => setVisible(!visible)}
+              />
+            )
           }
         />
       </View>
@@ -61,7 +74,7 @@ function Password(props: Props & InputProps) {
         )}
         {(errorMessage || errorMessagePlaceholder) && (
           <View className="flex flex-row items-center" style={{ opacity: errorMessage ? 100 : 0 }}>
-            <WaringIcon color='#EF4444' />
+            <WaringIcon color="#EF4444" />
             <Text className="ml-[10px] text-base" style={{ color: colors.warnErrorPrimary }}>
               {errorMessage || 'transparent'}
             </Text>

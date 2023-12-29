@@ -67,6 +67,7 @@ const PasswordVerify: React.FC = () => {
             setError('');
           }}
           title="Verify Password"
+          disableRightIcon
           onSubmitEditing={handleConfirm}
         />
         <BaseButton testID="confirm" loading={inVerify} onPress={handleConfirm} disabled={!password}>

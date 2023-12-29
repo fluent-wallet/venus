@@ -78,7 +78,6 @@ const SetPassword: React.FC<{ navigation: NavigationProp<RootStackList> }> = (pr
           <View>
             <Password
               testId="passwordInput"
-              helperText="Must be at least 8 characters"
               errorMessage={password.error}
               value={password.pwd}
               onChangeText={handleSetPassword}
@@ -87,7 +86,6 @@ const SetPassword: React.FC<{ navigation: NavigationProp<RootStackList> }> = (pr
 
             <Password
               testId="confirmPasswordInput"
-              helperText="Password must be match"
               // errorMessage={confirmPwd !== password.pwd && confirmPwd !== '' ? 'Passwords do not match' : ''}
               errorMessage={confirmPwd.error}
               value={confirmPwd.pwd}
