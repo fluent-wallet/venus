@@ -12,6 +12,7 @@ import { HomeStackName, StackNavigation, WalletStackName } from '@router/configs
 import { TxEventTypesName, WalletTransactionType } from '@core/WalletCore/Plugins/ReactInject/data/useTransaction';
 import { useCallback, useState } from 'react';
 import BSIM from '@WalletCoreExtends/Plugins/BSIM';
+import { useNetInfo } from '@react-native-community/netinfo';
 
 export enum BSIM_SIGN_STATUS {
   NOT_HAVE_BSIM = 'NOT_HAVE_BSIM',
@@ -78,6 +79,7 @@ interface Props {
 
 const BSIMSendTX: React.FC<Props> = ({ onSend, txEvent }) => {
   const navigation = useNavigation<StackNavigation>();
+  const { isConnected } = useNetInfo();
   const model = useColorScheme();
   const [state, setState] = useState(BSIM_SIGN_STATUS.INIT);
   const [error, setError] = useState('');
@@ -141,7 +143,7 @@ const BSIMSendTX: React.FC<Props> = ({ onSend, txEvent }) => {
           )}
           {showButton && (
             <View className="flex-1">
-              <BaseButton testID="next" disabled={state === BSIM_SIGN_STATUS.NOT_HAVE_BSIM} onPress={onSend}>
+              <BaseButton testID="next" disabled={!isConnected || state === BSIM_SIGN_STATUS.NOT_HAVE_BSIM} onPress={onSend}>
                 {buttonContext}
               </BaseButton>
             </View>

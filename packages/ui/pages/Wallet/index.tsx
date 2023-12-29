@@ -88,7 +88,7 @@ const Wallet: React.FC<{ navigation: StackNavigation }> = ({ navigation }) => {
       className="flex-1 flex flex-col justify-start"
       style={{ backgroundColor: theme.colors.surfacePrimaryWithOpacity7, paddingTop: statusBarHeight + 48 }}
     >
-      <NoNetwork />
+        <NoNetwork />
       <ScrollView
         stickyHeaderIndices={[1]}
         contentContainerStyle={{ flexGrow: 1 }}
@@ -121,7 +121,7 @@ const Wallet: React.FC<{ navigation: StackNavigation }> = ({ navigation }) => {
               <Pressable className="flex flex-row items-center" testID="toggleTotalPriceVisible" onPress={() => setTotalPriceVisible(!totalPriceVisible)}>
                 <Text className="text-4xl font-bold">$</Text>
                 {totalPriceVisible ? (
-                  <Text  className="text-4xl font-bold" numberOfLines={1} style={{maxWidth: 326}}>
+                  <Text className="text-4xl font-bold" numberOfLines={1} style={{ maxWidth: 326 }}>
                     {numberWithCommas(totalPriceValue)}
                   </Text>
                 ) : (

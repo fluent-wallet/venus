@@ -29,12 +29,14 @@ import { RPCResponse, RPCSend } from '@core/utils/send';
 import matchRPCErrorMessage from '@utils/matchRPCErrorMssage';
 import Decimal from 'decimal.js';
 import Clipboard from '@react-native-clipboard/clipboard';
+import { useNetInfo } from '@react-native-community/netinfo';
 
 const TransactionConfirm: React.FC<{
   navigation: StackNavigation;
   route: RouteProp<RootStackList, typeof TransactionConfirmStackName>;
 }> = ({ navigation, route }) => {
   const { theme } = useTheme();
+  const { isConnected } = useNetInfo();
   const [loading, setLoading] = useState(false);
   const currentNetwork = useCurrentNetwork()!;
   const currentAddress = useCurrentAddress()!;
@@ -136,8 +138,9 @@ const TransactionConfirm: React.FC<{
   }, [tx.assetType, tx.contractAddress, tx.to, tx.amount, tx.tokenId, tx.decimals]);
 
   useEffect(() => {
+    if (!isConnected) return;
     getGas();
-  }, [currentNetwork.endpoint, currentAddress.hex, getGas]);
+  }, [currentNetwork.endpoint, currentAddress.hex, getGas, isConnected]);
 
   const renderAmount = () => {
     if (tx.assetType === AssetType.ERC20 || tx.assetType === AssetType.Native || tx.assetType === AssetType.ERC1155) {
@@ -285,7 +288,7 @@ const TransactionConfirm: React.FC<{
             <CloseIcon />
           </Button>
           <View className="flex-1">
-            <BaseButton testID="send" loading={loading} disabled={!gas || !!error || !!gas.error} onPress={handleSend}>
+            <BaseButton testID="send" loading={loading} disabled={!isConnected || !gas || !!error || !!gas.error} onPress={handleSend}>
               <SendIcon color="#fff" width={24} height={24} />
               Send
             </BaseButton>

@@ -25,9 +25,13 @@ import { numberWithCommas } from '@core/utils/balance';
 import DefaultNFTImage from '@assets/images/NFT.svg';
 import Clipboard from '@react-native-clipboard/clipboard';
 import CFXTokenIcon from '@assets/icons/cfxToken.svg';
+import { useNetInfo } from '@react-native-community/netinfo';
+import NoNetwork from '@modules/NoNetwork';
+import Decimal from 'decimal.js';
 
 const SendTo: React.FC<{ navigation: StackNavigation; route: RouteProp<RootStackList, typeof SendToStackName> }> = ({ navigation, route }) => {
   const { theme } = useTheme();
+  const { isConnected } = useNetInfo();
   const currentNetwork = useCurrentNetwork()!;
   const currentAddress = useCurrentAddress();
   const [, setTXAmount] = useAtom(setTransactionAmount);
@@ -52,22 +56,28 @@ const SendTo: React.FC<{ navigation: StackNavigation; route: RouteProp<RootStack
   };
 
   const handleNext = () => {
-    if (tx.assetType === AssetType.ERC721 || tx.assetType === AssetType.ERC1155) {
-      if (Number(value) < 1) {
-        return setInvalidInputErr({ err: true, msg: 'Invalid amount' });
-      }
-    }
+    try {
 
-    const val = Number(value);
-    if (Number.isNaN(val) || val === 0) {
+      const DValue = new Decimal(value);
+      if (tx.assetType === AssetType.ERC721 || tx.assetType === AssetType.ERC1155) {
+        if (DValue.lessThan(1)) {
+          return setInvalidInputErr({ err: true, msg: 'Invalid amount' });
+        }
+      }
+
+      if (
+        DValue.greaterThan(
+          new Decimal(tx.assetType === AssetType.ERC20 || tx.assetType === AssetType.Native ? formatUnits(tx.balance, tx.decimals) : tx.balance)
+        )
+      ) {
+        return setInvalidInputErr({ err: true, msg: 'Insufficient balance' });
+      }
+
+      setTXAmount(parseUnits(value, tx.decimals));
+      navigation.navigate(TransactionConfirmStackName);
+    } catch (error) {
       return setInvalidInputErr({ err: true, msg: 'Invalid amount' });
     }
-
-    if (val > Number(accountBalance)) {
-      return setInvalidInputErr({ err: true, msg: 'Insufficient balance' });
-    }
-    setTXAmount(parseUnits(value, tx.decimals));
-    navigation.navigate(TransactionConfirmStackName);
   };
 
   const getNativeBalance = async () => {
@@ -97,15 +107,14 @@ const SendTo: React.FC<{ navigation: StackNavigation; route: RouteProp<RootStack
 
   const handleChangeMax = async () => {
     setMaxBtnLoading(true);
-    try {
-      const nativeBalance = await getNativeBalance();
-      if (nativeBalance.error) {
-        return setRpcError({ err: true, msg: nativeBalance.error.message || '' });
-      }
-
-      const balance = nativeBalance.result;
-
-      if (tx.assetType === AssetType.Native) {
+    if (tx.assetType === AssetType.Native && isConnected) {
+      try {
+        // there need to be a network connection to get the native balance
+        const nativeBalance = await getNativeBalance();
+        if (nativeBalance.error) {
+          return setRpcError({ err: true, msg: nativeBalance.error.message || '' });
+        }
+        const balance = nativeBalance.result;
         const gas = await getGas(BigInt(balance));
         if (!gas) {
           return setMaxBtnLoading(false);
@@ -113,142 +122,134 @@ const SendTo: React.FC<{ navigation: StackNavigation; route: RouteProp<RootStack
         // if there is native asset, the max value should be the balance - gas fee
         const max = formatUnits(BigInt(balance) - BigInt(gas.gasLimit.result) * BigInt(gas.gasPrice.result), tx.decimals);
         setValue(max);
-      } else {
-        const gas = await getGas(BigInt(tx.balance));
-        if (!gas) {
-          return setMaxBtnLoading(false);
-        }
-        // else is the erc20 token, the max value should be the balance, and the native asset should be enough for gas fee
-        const gasValue = BigInt(gas.gasLimit.result) * BigInt(gas.gasPrice.result);
-        if (BigInt(balance) < gasValue) {
-          setRpcError({ err: true, msg: `Don't have enough CFX to pay for transaction fees.` });
-        } else {
-          setValue(formatUnits(tx.balance, tx.decimals));
-        }
+      } catch (error) {
+        console.log(error);
+        setMaxBtnLoading(false);
       }
-    } catch (error) {
-      console.log(error);
-      setMaxBtnLoading(false);
     }
+
+    if (tx.assetType === AssetType.ERC20 || tx.assetType === AssetType.ERC721 || tx.assetType === AssetType.ERC1155) {
+      setValue(formatUnits(tx.balance, tx.decimals));
+    }
+
     setMaxBtnLoading(false);
   };
 
   const isNFT = tx.assetType === AssetType.ERC721 || tx.assetType === AssetType.ERC1155;
-
   return (
-    <SafeAreaView
-      className="flex-1 flex flex-col justify-start px-[24px] pb-7"
-      style={{ backgroundColor: theme.colors.surfacePrimaryWithOpacity7, paddingTop: statusBarHeight + 48 }}
-    >
-      <KeyboardAvoidingView behavior="padding" className="flex-1 mt-1">
-        <ScrollView className="flex-1" contentContainerStyle={{ flexGrow: 1 }} keyboardShouldPersistTaps="handled">
-          {(rpcError.err || invalidInputErr.err) && (
-            <View
-              style={{ borderColor: theme.colors.warnErrorPrimary, borderWidth: 1, backgroundColor: theme.colors.surfaceCard }}
-              className="flex flex-row p-3 rounded-lg"
-            >
-              <WarningIcon width={16} height={16} />
-              <Text style={{ color: theme.colors.warnErrorPrimary }} className="flex-1 ml-2 text-sm">
-                {rpcError.msg || invalidInputErr.msg}
-              </Text>
-            </View>
-          )}
-          {(tx.assetType === AssetType.ERC721 || tx.assetType === AssetType.ERC1155) && (
-            <View className="flex flex-row p-4 rounded-lg w-full mb-4" style={{ backgroundColor: theme.colors.surfaceCard }}>
-              {tx.tokenImage && <MixinImage source={{ uri: tx.tokenImage }} width={63} height={63} className="mr-4 rounded" />}
-              <View className="flex justify-center">
-                <View className="flex flex-row mb-1">
-                  <View className="w-6 h-6 overflow-hidden rounded-full mr-2">
-                    {tx.iconUrl ? (
-                      <MixinImage source={{ uri: tx.iconUrl }} width={24} height={24} fallback={<DefaultNFTImage width={24} height={24} />} />
-                    ) : (
-                      <DefaultNFTImage width={24} height={24} />
-                    )}
-                  </View>
-                  <Text style={{ color: theme.colors.textSecondary }} className="leading-normal">
-                    {tx.contractName}
-                  </Text>
-                </View>
-                <Text style={{ color: theme.colors.textPrimary }} className="leading-normal font-medium">
-                  {tx.nftName}
+    <SafeAreaView className="flex-1 " style={{ backgroundColor: theme.colors.surfacePrimaryWithOpacity7, paddingTop: statusBarHeight + 48 }}>
+      <NoNetwork />
+      <View className="flex-1 px-[24px] pb-7">
+        <KeyboardAvoidingView behavior="padding" className="flex-1 mt-1">
+          <ScrollView className="flex-1" contentContainerStyle={{ flexGrow: 1 }} keyboardShouldPersistTaps="handled">
+            {(rpcError.err || invalidInputErr.err) && (
+              <View
+                style={{ borderColor: theme.colors.warnErrorPrimary, borderWidth: 1, backgroundColor: theme.colors.surfaceCard }}
+                className="flex flex-row p-3 rounded-lg"
+              >
+                <WarningIcon width={16} height={16} />
+                <Text style={{ color: theme.colors.warnErrorPrimary }} className="flex-1 ml-2 text-sm">
+                  {rpcError.msg || invalidInputErr.msg}
                 </Text>
               </View>
-            </View>
-          )}
-          <View style={{ backgroundColor: theme.colors.surfaceCard }} className="p-[15px] rounded-md">
-            <Text className="leading-6" style={{ color: theme.colors.textSecondary }}>
-              To
-            </Text>
-            <View className="flex flex-row items-center">
-              <View className="m-2">
-                <AvatarIcon width={24} height={24} />
-              </View>
-              <Text>{shortenAddress(tx.to)}</Text>
-              <Pressable onPress={() => Clipboard.setString(tx.to)}>
-                <View className="m-1">
-                  <CopyAllIcon color={theme.colors.textPrimary} width={16} height={16} />
+            )}
+            {(tx.assetType === AssetType.ERC721 || tx.assetType === AssetType.ERC1155) && (
+              <View className="flex flex-row p-4 rounded-lg w-full mb-4" style={{ backgroundColor: theme.colors.surfaceCard }}>
+                {tx.tokenImage && <MixinImage source={{ uri: tx.tokenImage }} width={63} height={63} className="mr-4 rounded" />}
+                <View className="flex justify-center">
+                  <View className="flex flex-row mb-1">
+                    <View className="w-6 h-6 overflow-hidden rounded-full mr-2">
+                      {tx.iconUrl ? (
+                        <MixinImage source={{ uri: tx.iconUrl }} width={24} height={24} fallback={<DefaultNFTImage width={24} height={24} />} />
+                      ) : (
+                        <DefaultNFTImage width={24} height={24} />
+                      )}
+                    </View>
+                    <Text style={{ color: theme.colors.textSecondary }} className="leading-normal">
+                      {tx.contractName}
+                    </Text>
+                  </View>
+                  <Text style={{ color: theme.colors.textPrimary }} className="leading-normal font-medium">
+                    {tx.nftName}
+                  </Text>
                 </View>
-              </Pressable>
-            </View>
-          </View>
-
-          <View className="mt-[13px]">
-            <Text className="leading-6 ml-4 my-2">Amount</Text>
-            <View
-              style={{
-                backgroundColor: theme.colors.surfaceCard,
-                borderColor: invalidInputErr.err ? theme.colors.warnErrorPrimary : theme.colors.surfaceCard,
-                borderWidth: 1,
-              }}
-              className="flex flex-row items-center rounded-md px-4 py-2"
-            >
-              <TextInput
-                testID="amountInput"
-                keyboardType={'numeric'}
-                value={value}
-                onChangeText={handleChange}
-                onSubmitEditing={handleNext}
-                className="flex-1"
-                autoFocus
-              />
-              {tx.assetType === AssetType.Native ? (
-                <CFXTokenIcon width={24} height={24} />
-              ) : tx.iconUrl ? (
-                <MixinImage
-                  resizeMode="center"
-                  source={{ uri: isNFT ? tx.tokenImage : tx.iconUrl }}
-                  width={24}
-                  height={24}
-                  fallback={<TokenIconDefault width={24} height={24} />}
-                />
-              ) : (
-                <TokenIconDefault width={24} height={24} />
-              )}
-            </View>
-            <View className="flex flex-row justify-end items-center mt-2">
-              <Text className="flex-1 leading-6" style={{maxWidth: 274}}>
-                Balance: {accountBalance} {tx.symbol}
+              </View>
+            )}
+            <View style={{ backgroundColor: theme.colors.surfaceCard }} className="p-[15px] rounded-md">
+              <Text className="leading-6" style={{ color: theme.colors.textSecondary }}>
+                To
               </Text>
-              <View className="rounded-lg px-2 py-1 ml-2">
-                <Button
-                  testID="maxAmount"
-                  onPress={handleChangeMax}
-                  buttonStyle={{ backgroundColor: theme.colors.surfaceBrand, borderRadius: 7 }}
-                  loading={maxBtnLoading}
-                >
-                  <Text style={{ color: theme.colors.textPrimary }}>MAX</Text>
-                </Button>
+              <View className="flex flex-row items-center">
+                <View className="m-2">
+                  <AvatarIcon width={24} height={24} />
+                </View>
+                <Text>{shortenAddress(tx.to)}</Text>
+                <Pressable onPress={() => Clipboard.setString(tx.to)}>
+                  <View className="m-1">
+                    <CopyAllIcon color={theme.colors.textPrimary} width={16} height={16} />
+                  </View>
+                </Pressable>
               </View>
             </View>
-          </View>
 
-          <View className="mt-auto mb-6">
-            <BaseButton testID="next" disabled={value === '0' || invalidInputErr.err || rpcError.err} onPress={handleNext}>
-              Next
-            </BaseButton>
-          </View>
-        </ScrollView>
-      </KeyboardAvoidingView>
+            <View className="mt-[13px]">
+              <Text className="leading-6 ml-4 my-2">Amount</Text>
+              <View
+                style={{
+                  backgroundColor: theme.colors.surfaceCard,
+                  borderColor: invalidInputErr.err ? theme.colors.warnErrorPrimary : theme.colors.surfaceCard,
+                  borderWidth: 1,
+                }}
+                className="flex flex-row items-center rounded-md px-4 py-2"
+              >
+                <TextInput
+                  testID="amountInput"
+                  keyboardType={'numeric'}
+                  value={value}
+                  onChangeText={handleChange}
+                  onSubmitEditing={handleNext}
+                  className="flex-1"
+                  autoFocus
+                />
+                {tx.assetType === AssetType.Native ? (
+                  <CFXTokenIcon width={24} height={24} />
+                ) : tx.iconUrl ? (
+                  <MixinImage
+                    resizeMode="center"
+                    source={{ uri: isNFT ? tx.tokenImage : tx.iconUrl }}
+                    width={24}
+                    height={24}
+                    fallback={<TokenIconDefault width={24} height={24} />}
+                  />
+                ) : (
+                  <TokenIconDefault width={24} height={24} />
+                )}
+              </View>
+              <View className="flex flex-row justify-end items-center mt-2">
+                <Text className="flex-1 leading-6" style={{ maxWidth: 274 }}>
+                  Balance: {accountBalance} {tx.symbol}
+                </Text>
+                <View className="rounded-lg px-2 py-1 ml-2">
+                  <Button
+                    testID="maxAmount"
+                    onPress={handleChangeMax}
+                    buttonStyle={{ backgroundColor: theme.colors.surfaceBrand, borderRadius: 7 }}
+                    loading={maxBtnLoading}
+                  >
+                    <Text style={{ color: theme.colors.textPrimary }}>MAX</Text>
+                  </Button>
+                </View>
+              </View>
+            </View>
+
+            <View className="mt-auto mb-6">
+              <BaseButton testID="next" disabled={invalidInputErr.err || rpcError.err} onPress={handleNext}>
+                Next
+              </BaseButton>
+            </View>
+          </ScrollView>
+        </KeyboardAvoidingView>
+      </View>
     </SafeAreaView>
   );
 };
