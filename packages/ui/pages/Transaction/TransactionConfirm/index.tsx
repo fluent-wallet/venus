@@ -30,6 +30,9 @@ import matchRPCErrorMessage from '@utils/matchRPCErrorMssage';
 import Decimal from 'decimal.js';
 import Clipboard from '@react-native-clipboard/clipboard';
 import { useNetInfo } from '@react-native-community/netinfo';
+import { showMessage } from 'react-native-flash-message';
+import { updateNFTDetail } from '@modules/AssetList/ESpaceNFTList/fetch';
+import assetsTracker from '@core/WalletCore/Plugins/AssetsTracker';
 
 const TransactionConfirm: React.FC<{
   navigation: StackNavigation;
@@ -80,6 +83,19 @@ const TransactionConfirm: React.FC<{
               to: tx.to,
               blockNumber: blockNumber.result,
             },
+          });
+
+          if (tx.assetType === AssetType.ERC1155 || tx.assetType === AssetType.ERC721) {
+            updateNFTDetail(tx.contractAddress);
+            assetsTracker.updateCurrentTracker();
+          } else {
+            assetsTracker.updateCurrentTracker();
+          }
+          showMessage({
+            type: 'success',
+            message: 'Transaction Submitted',
+            description: 'Waiting for execution',
+            icon: 'loading' as unknown as undefined,
           });
           navigation.navigate(HomeStackName, { screen: WalletStackName });
         } catch (error) {

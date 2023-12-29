@@ -58,6 +58,10 @@ const SendTo: React.FC<{ navigation: StackNavigation; route: RouteProp<RootStack
   const handleNext = () => {
     try {
       const DValue = new Decimal(value);
+      if (DValue.lessThan(0)) {
+        return setInvalidInputErr({ err: true, msg: 'Invalid amount' });
+      }
+
       if (tx.assetType === AssetType.ERC721 || tx.assetType === AssetType.ERC1155) {
         if (DValue.lessThan(1)) {
           return setInvalidInputErr({ err: true, msg: 'Invalid amount' });
@@ -156,8 +160,18 @@ const SendTo: React.FC<{ navigation: StackNavigation; route: RouteProp<RootStack
             )}
             {(tx.assetType === AssetType.ERC721 || tx.assetType === AssetType.ERC1155) && (
               <View className="flex flex-row p-4 rounded-lg w-full mb-4" style={{ backgroundColor: theme.colors.surfaceCard }}>
-                {tx.tokenImage && <MixinImage source={{ uri: tx.tokenImage }} width={63} height={63} className="mr-4 rounded" />}
-                <View className="flex justify-center">
+                {tx.tokenImage ? (
+                  <MixinImage
+                    source={{ uri: tx.tokenImage }}
+                    width={63}
+                    height={63}
+                    className="mr-4 rounded"
+                    fallback={<DefaultNFTImage width={63} height={63} />}
+                  />
+                ) : (
+                  <DefaultNFTImage width={63} height={63} />
+                )}
+                <View className="flex justify-center ml-4">
                   <View className="flex flex-row mb-1">
                     <View className="w-6 h-6 overflow-hidden rounded-full mr-2">
                       {tx.iconUrl ? (
@@ -166,11 +180,11 @@ const SendTo: React.FC<{ navigation: StackNavigation; route: RouteProp<RootStack
                         <DefaultNFTImage width={24} height={24} />
                       )}
                     </View>
-                    <Text style={{ color: theme.colors.textSecondary }} className="leading-normal">
+                    <Text numberOfLines={1} style={{ color: theme.colors.textSecondary, maxWidth: 204 }} className="leading-normal">
                       {tx.contractName}
                     </Text>
                   </View>
-                  <Text style={{ color: theme.colors.textPrimary }} className="leading-normal font-medium">
+                  <Text numberOfLines={1} style={{ color: theme.colors.textPrimary, maxWidth: 235 }} className="leading-normal font-medium">
                     {tx.nftName}
                   </Text>
                 </View>

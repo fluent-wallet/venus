@@ -29,7 +29,7 @@ const TokenItem: React.FC<{
             {!hidePrice && (
               <View className="ml-2">
                 <Text className="text-base font-medium" numberOfLines={1} style={{ maxWidth: 128 }}>
-                  {data.priceValue ? `$${data.priceValue}` : '--'}
+                  {data.priceValue ? `$${numberWithCommas(data.priceValue)}` : '--'}
                 </Text>
               </View>
             )}
