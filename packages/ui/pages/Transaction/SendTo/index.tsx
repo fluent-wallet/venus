@@ -57,7 +57,6 @@ const SendTo: React.FC<{ navigation: StackNavigation; route: RouteProp<RootStack
 
   const handleNext = () => {
     try {
-
       const DValue = new Decimal(value);
       if (tx.assetType === AssetType.ERC721 || tx.assetType === AssetType.ERC1155) {
         if (DValue.lessThan(1)) {
@@ -122,6 +121,7 @@ const SendTo: React.FC<{ navigation: StackNavigation; route: RouteProp<RootStack
         // if there is native asset, the max value should be the balance - gas fee
         const max = formatUnits(BigInt(balance) - BigInt(gas.gasLimit.result) * BigInt(gas.gasPrice.result), tx.decimals);
         setValue(max);
+        setInvalidInputErr({ err: false, msg: '' });
       } catch (error) {
         console.log(error);
         setMaxBtnLoading(false);
@@ -129,6 +129,7 @@ const SendTo: React.FC<{ navigation: StackNavigation; route: RouteProp<RootStack
     }
 
     if (tx.assetType === AssetType.ERC20 || tx.assetType === AssetType.ERC721 || tx.assetType === AssetType.ERC1155) {
+      setInvalidInputErr({ err: false, msg: '' });
       setValue(formatUnits(tx.balance, tx.decimals));
     }
 
