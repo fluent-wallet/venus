@@ -5,7 +5,7 @@ import { type Account } from '@core/database/models/Account';
 import { useCurrentAddressValueOfAccount } from '@core/WalletCore/Plugins/ReactInject';
 import { shortenAddress } from '@core/utils/address';
 
-const AccountAddress: React.FC<{ account: Account; className?: string; nickNameClassName: string; style?: { opacity: number }; showSelected?: boolean }> = ({
+const AccountAddress: React.FC<{ account: Account; className?: string; nickNameClassName?: string; style?: { opacity: number }; showSelected?: boolean }> = ({
   account,
   className,
   style,

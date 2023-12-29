@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { View, SafeAreaView, Pressable, RefreshControl, ScrollView } from 'react-native';
 import PagerView from 'react-native-pager-view';
 import { Text, useTheme, Card } from '@rneui/themed';
@@ -163,7 +163,6 @@ const Wallet: React.FC<{ navigation: StackNavigation }> = ({ navigation }) => {
           </View>
         </View>
 
-        {/* {renderTabTitle()} */}
         <View className="flex flex-row px-6 gap-4" style={{ backgroundColor: theme.colors.surfacePrimaryWithOpacity7 }}>
           {Array.from(
             currentNetwork && (currentNetwork.chainId === CFX_ESPACE_MAINNET_CHAINID || currentNetwork.chainId === CFX_ESPACE_TESTNET_CHAINID)

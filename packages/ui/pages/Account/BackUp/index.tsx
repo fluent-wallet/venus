@@ -11,7 +11,7 @@ import { BaseButton } from '@components/Button';
 import SafetyGuidelines from './Components/SafetyGuidelines';
 import Secret from './Components/Secret';
 import { useFocusEffect } from '@react-navigation/native';
-import RNScreenshotPrevent, { addListener } from 'react-native-screenshot-prevent';
+import RNPreventScreenshot, { addListener } from 'react-native-screenshot-prevent';
 
 const BackUp: React.FC<NativeStackScreenProps<RootStackList, 'BackUp'>> = ({ navigation, route }) => {
   const { theme } = useTheme();
@@ -36,16 +36,35 @@ const BackUp: React.FC<NativeStackScreenProps<RootStackList, 'BackUp'>> = ({ nav
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [backupType]);
 
-  useFocusEffect(
-    useCallback(() => {
-      RNScreenshotPrevent.enabled(true);
-      RNScreenshotPrevent.enableSecureView();
-      return () => {
-        RNScreenshotPrevent.enabled(false);
-        RNScreenshotPrevent.disableSecureView();
-      };
-    }, [])
-  );
+  const disabledScreenShoot = useCallback(() => {
+    RNPreventScreenshot.enabled(true);
+    RNPreventScreenshot.enableSecureView();
+    const subscription = addListener(() => {
+      console.log('Screenshot taken');
+    });
+    return () => {
+      RNPreventScreenshot.enabled(false);
+      RNPreventScreenshot.disableSecureView();
+      console.log('subscription: ', typeof subscription, subscription);
+      (subscription as any)?.remove?.();
+    };
+  }, []);
+
+  useFocusEffect(disabledScreenShoot);
+  // useEffect(() => {
+  //   RNPreventScreenshot.enabled(true);
+  //   RNPreventScreenshot.enableSecureView();
+  //   const subscription = RNPreventScreenshot.addListener(() => {
+  //     console.log('Screenshot taken');
+  //   });
+
+  //   return () => {
+  //     RNPreventScreenshot.enabled(false);
+  //     RNPreventScreenshot.disableSecureView();
+  //     subscription?.remove?.();
+  //     console.log('subscription: ', tsubscription);
+  //   };
+  // }, []);
 
   const handleGetSecretData = useCallback(async () => {
     if (type === VaultType.HierarchicalDeterministic) {
@@ -55,6 +74,7 @@ const BackUp: React.FC<NativeStackScreenProps<RootStackList, 'BackUp'>> = ({ nav
     } else if (targetAddress) {
       return methods.getPrivateKeyOfAddress(targetAddress);
     }
+    return '';
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [targetAddress?.id]);
 
@@ -72,7 +92,7 @@ const BackUp: React.FC<NativeStackScreenProps<RootStackList, 'BackUp'>> = ({ nav
         <Secret backupType={backupType} getSecretData={handleGetSecretData} />
       </ScrollView>
       <View>
-        <BaseButton testID='close' onPress={() => navigation.goBack()}>
+        <BaseButton testID="close" onPress={() => navigation.goBack()}>
           <Text className="text-base font-medium leading-6" style={{ color: theme.colors.textInvert }}>
             Close
           </Text>

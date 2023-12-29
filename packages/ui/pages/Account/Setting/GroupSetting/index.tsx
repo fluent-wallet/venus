@@ -104,7 +104,7 @@ const GroupSetting: React.FC<NativeStackScreenProps<RootStackList, 'GroupSetting
                 {index !== 0 && <View className="w-full h-[1px] my-[8px]" style={{ backgroundColor: theme.colors.borderPrimary }} />}
                 <AccountAddress
                   className="w-full flex flex-row gap-[0px] justify-between items-center h-[40px] leading-[40px]"
-                  nickNameClassName="max-w-[75%]"
+                  nickNameClassName="max-w-[62.5%]"
                   account={account}
                 />
               </Fragment>
