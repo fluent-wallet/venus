@@ -7,11 +7,11 @@
 #define TIMEOUT_SECONDS 600
 #define TEXT_TO_LOOK_FOR @"Welcome to React"
 
-@interface walletTests : XCTestCase
+@interface SwiftShieldTests : XCTestCase
 
 @end
 
-@implementation walletTests
+@implementation SwiftShieldTests
 
 - (BOOL)findSubviewInView:(UIView *)view matching:(BOOL (^)(UIView *view))test
 {

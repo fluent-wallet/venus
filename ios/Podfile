@@ -35,7 +35,7 @@ if linkage != nil
   use_frameworks! :linkage => linkage.to_sym
 end
 
-target 'wallet' do
+target 'SwiftShield' do
   config = use_native_modules!
 
   # Flags change depending on the env values.
@@ -55,7 +55,7 @@ target 'wallet' do
     :app_path => "#{Pod::Config.instance.installation_root}/.."
   )
 
-  target 'walletTests' do
+  target 'SwiftShieldTests' do
     inherit! :complete
     # Pods for testing
   end

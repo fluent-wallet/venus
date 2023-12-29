@@ -15,9 +15,9 @@
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "13B07F861A680F5B00A75B9A"
-               BuildableName = "wallet.app"
-               BlueprintName = "wallet"
-               ReferencedContainer = "container:wallet.xcodeproj">
+               BuildableName = "SwiftShield.app"
+               BlueprintName = "SwiftShield"
+               ReferencedContainer = "container:SwiftShield.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
       </BuildActionEntries>
@@ -33,9 +33,9 @@
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "00E356ED1AD99517003FC87E"
-               BuildableName = "walletTests.xctest"
-               BlueprintName = "walletTests"
-               ReferencedContainer = "container:wallet.xcodeproj">
+               BuildableName = "SwiftShieldTests.xctest"
+               BlueprintName = "SwiftShieldTests"
+               ReferencedContainer = "container:SwiftShield.xcodeproj">
             </BuildableReference>
          </TestableReference>
       </Testables>
@@ -55,9 +55,9 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "13B07F861A680F5B00A75B9A"
-            BuildableName = "wallet.app"
-            BlueprintName = "wallet"
-            ReferencedContainer = "container:wallet.xcodeproj">
+            BuildableName = "SwiftShield.app"
+            BlueprintName = "SwiftShield"
+            ReferencedContainer = "container:SwiftShield.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
    </LaunchAction>
@@ -72,9 +72,9 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "13B07F861A680F5B00A75B9A"
-            BuildableName = "wallet.app"
-            BlueprintName = "wallet"
-            ReferencedContainer = "container:wallet.xcodeproj">
+            BuildableName = "SwiftShield.app"
+            BlueprintName = "SwiftShield"
+            ReferencedContainer = "container:SwiftShield.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
    </ProfileAction>
