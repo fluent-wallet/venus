@@ -62,21 +62,28 @@ export function numAbbreviation(num: number | string, options: { truncateLength?
   if (Number.isNaN(floatValue)) {
     return '';
   }
+
   const absoluteValue = Math.abs(floatValue);
+  // console.log(absoluteValue);
   if (absoluteValue === 0) {
     return '0';
   }
-  if (truncateLength) {
-    // check is less minimum value
-    const miniValue = 1 / Math.pow(10, truncateLength);
-    if (absoluteValue < miniValue) {
-      return `<${miniValue}`;
-    }
-  }
+
+  // if (truncateLength) {
+  //   // check is less minimum value
+  //   const miniValue = 1 / Math.pow(10, truncateLength);
+  //   if (absoluteValue < miniValue) {
+  //     return `<${miniValue}`;
+  //   }
+  // }
 
   if (absoluteValue < Math.pow(10, carry + 3)) {
     // less than 1_000_000 (1M)
-    return options.truncateLength ? truncate(numString, truncateLength) : numString;
+    if (truncateLength && new Decimal(numString).greaterThan(new Decimal(10).pow(-truncateLength))) {
+      return truncate(numString, truncateLength);
+    } else {
+      return numString;
+    }
   }
 
   const sign = floatValue >= 0 ? '' : '-';

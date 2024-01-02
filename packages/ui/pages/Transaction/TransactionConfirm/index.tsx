@@ -34,6 +34,7 @@ import { showMessage } from 'react-native-flash-message';
 import { updateNFTDetail } from '@modules/AssetList/ESpaceNFTList/fetch';
 import assetsTracker from '@core/WalletCore/Plugins/AssetsTracker';
 import ConfluxNetworkIcon from '@assets/icons/confluxNet.svg';
+import { balanceFormat } from '@core/utils/balance';
 
 const TransactionConfirm: React.FC<{
   navigation: StackNavigation;
@@ -54,10 +55,16 @@ const TransactionConfirm: React.FC<{
     error: false,
   });
 
-  const price = useMemo(
-    () => (tx.priceInUSDT ? `$${new Decimal(formatUnits(tx.amount, tx.decimals)).mul(new Decimal(tx.priceInUSDT)).toString()}` : ''),
-    [tx.priceInUSDT, tx.amount, tx.decimals]
-  );
+  const price = useMemo(() => {
+    if (tx.priceInUSDT) {
+      const n = new Decimal(formatUnits(tx.amount, tx.decimals)).mul(new Decimal(tx.priceInUSDT));
+      if (n.lessThan(new Decimal(10).pow(-2))) {
+        return '<$0.01';
+      }
+      return `$${balanceFormat(n.toString(), { decimals: 0, truncateLength: 2 })}`;
+    }
+    return '';
+  }, [tx.priceInUSDT, tx.amount, tx.decimals]);
 
   const handleSend = async () => {
     if (gas?.gasLimit && gas.gasPrice) {
@@ -288,7 +295,7 @@ const TransactionConfirm: React.FC<{
               <Text className="leading-6" style={{ color: theme.colors.textSecondary }}>
                 Network
               </Text>
-              <View className='flex flex-row items-center'>
+              <View className="flex flex-row items-center">
                 <ConfluxNetworkIcon width={24} height={24} />
                 <Text className="leading-6 ml-1">{currentNetwork.name}</Text>
               </View>
