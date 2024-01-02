@@ -7,9 +7,9 @@ import { ChainType, type Network } from './../../../../database/models/Network/i
 import { AssetType } from '../../../../database/models/Asset';
 import { type AssetInfo } from '../types';
 
-const eSpaceWalletContract = createContract({ address: '0xce2104aa7233b27b0ba2e98ede59b6f78c06ae05', ABI: ESpaceWalletABI });
 const eSpaceTestnetWalletContract = createContract({ address: '0xce2104aa7233b27b0ba2e98ede59b6f78c06ae05', ABI: ESpaceWalletABI });
 const eSpaceTestnetServerFetcher = createFetchServer({ prefixUrl: 'https://evmapi-testnet.confluxscan.io' });
+const eSpaceWalletContract = createContract({ address: '0x2c7e015328f37f00f9b16e4adc9cedb1f8742069', ABI: ESpaceWalletABI });
 const eSpaceServerFetcher = createFetchServer({ prefixUrl: 'https://evmapi.confluxscan.io' });
 
 interface AssetInfoFromScan {

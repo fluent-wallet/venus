@@ -140,8 +140,6 @@ class AssetsTrackerPluginClass implements Plugin {
           if (!networkFetcher && !chainFetcher) return;
 
           const nativeAsset = (await network.nativeAssetQuery.fetch())?.[0];
-          const assetsHash: Record<string, AssetInfo> = {};
-          const assetsSortedKeys: Array<string> = [];
           const assetsAtomKey = getAssetsAtomKey({ network, address });
 
           this.currentSubscription = interval(8888)
@@ -151,12 +149,13 @@ class AssetsTrackerPluginClass implements Plugin {
                 if (forceUpdate) {
                   setAssetsInFetch(assetsAtomKey, true);
                 }
-                return trackAssets({ chainFetcher, networkFetcher, nativeAsset, network, address, assetsHash, assetsSortedKeys });
+                return trackAssets({ chainFetcher, networkFetcher, nativeAsset, network, address });
               }),
               takeUntil(this.cancel$!)
             )
             .subscribe({
-              next: () => {
+              next: (trackRes) => {
+                const { assetsHash, assetsSortedKeys } = trackRes;
                 const assetsHashInAtom = getAssetsHash(assetsAtomKey);
                 const assetsSortedKeysInAtom = getAssetsSortedKeys(assetsAtomKey);
 
@@ -221,6 +220,14 @@ assetsTracker.register({
   chainId: CFX_ESPACE_TESTNET_CHAINID,
   fetcher: {
     fetchFromServer: ({ address, network }) => fetchESpaceServer({ hexAddress: address.hex, chainType: ChainType.Testnet, network }),
+  },
+});
+
+assetsTracker.register({
+  networkType: NetworkType.Ethereum,
+  chainId: CFX_ESPACE_MAINNET_CHAINID,
+  fetcher: {
+    fetchFromServer: ({ address, network }) => fetchESpaceServer({ hexAddress: address.hex, chainType: ChainType.Mainnet, network }),
   },
 });
 

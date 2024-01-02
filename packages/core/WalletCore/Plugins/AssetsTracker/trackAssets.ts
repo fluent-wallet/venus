@@ -16,17 +16,16 @@ const trackAssets = async ({
   nativeAsset,
   network,
   address,
-  assetsHash,
-  assetsSortedKeys,
 }: {
   chainFetcher?: Fetcher;
   networkFetcher?: Fetcher;
   nativeAsset: Asset;
   network: Network;
   address: Address;
-  assetsHash: { [hashKey: string]: AssetInfo };
-  assetsSortedKeys: Array<string>;
 }) => {
+  const assetsHash: Record<string, AssetInfo> = {};
+  const assetsSortedKeys: Array<string> = [];
+  
   /** Prioritize the use of data from fetchFromServer. */
   if (chainFetcher && typeof chainFetcher.fetchFromServer === 'function') {
     let assets: AssetInfo[];
@@ -42,7 +41,6 @@ const trackAssets = async ({
      * The token information from the AssetRule itself is already recorded locally.
      * So if there is an asset fromServer that has not been written to the DB, should write it here.
      */
-
     Promise.all(assets.map((asset) => (!asset.contractAddress ? nativeAsset : network.queryAssetByAddress(asset.contractAddress)))).then((isAssetsInDB) => {
       const preChanges: Array<Asset> = [];
 
@@ -62,11 +60,16 @@ const trackAssets = async ({
 
         if (typeof inDB === 'object') {
           const assetInDB = inDB;
-          if (assets[index].priceInUSDT && assetInDB.priceInUSDT !== assets[index].priceInUSDT) {
-            preChanges.push(methods.prepareUpdateAsset({ asset: assetInDB, priceInUSDT: assets[index].priceInUSDT }));
-          }
-          if (assets[index].icon && assetInDB.icon !== assets[index].icon) {
-            preChanges.push(methods.prepareUpdateAsset({ asset: assetInDB, icon: assets[index].icon }));
+          const priceChanged = assets[index].priceInUSDT && assetInDB.priceInUSDT !== assets[index].priceInUSDT;
+          const iconChanged = assets[index].icon && assetInDB.icon !== assets[index].icon;
+          if (priceChanged || iconChanged) {
+            preChanges.push(
+              methods.prepareUpdateAsset({
+                asset: assetInDB,
+                ...(priceChanged ? { priceInUSDT: assets[index].priceInUSDT } : null),
+                ...(iconChanged ? { icon: assets[index].icon } : null),
+              })
+            );
           }
         }
       });
@@ -176,6 +179,8 @@ const trackAssets = async ({
       return varA < varB ? -1 : 1;
     })
     .forEach((hashKey) => assetsSortedKeys.push(hashKey));
+  
+  return { assetsHash, assetsSortedKeys } as const;
 };
 
 export default trackAssets;
