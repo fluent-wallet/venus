@@ -58,6 +58,7 @@ const SendReceiver: React.FC<{ navigation: StackNavigation; route: RouteProp<Roo
               placeholderTextColor={theme.colors.textSecondary}
               multiline
               numberOfLines={2}
+              selectionColor={theme.colors.surfaceBrand}
             />
             <Pressable testID="scanQRCode" onPress={() => navigation.navigate(ScanQRCodeStackName, { path: ReceiveAddressStackName })}>
               <Flip color={theme.colors.surfaceBrand} width={20} height={20} />
