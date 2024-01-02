@@ -33,6 +33,7 @@ import { useNetInfo } from '@react-native-community/netinfo';
 import { showMessage } from 'react-native-flash-message';
 import { updateNFTDetail } from '@modules/AssetList/ESpaceNFTList/fetch';
 import assetsTracker from '@core/WalletCore/Plugins/AssetsTracker';
+import ConfluxNetworkIcon from '@assets/icons/confluxNet.svg';
 
 const TransactionConfirm: React.FC<{
   navigation: StackNavigation;
@@ -160,7 +161,7 @@ const TransactionConfirm: React.FC<{
 
   const renderAmount = () => {
     if (tx.assetType === AssetType.ERC20 || tx.assetType === AssetType.Native || tx.assetType === AssetType.ERC1155) {
-      return `${formatUnits(tx.amount, tx.decimals)}${tx.symbol}`;
+      return `${formatUnits(tx.amount, tx.decimals)} ${tx.symbol}`;
     }
     if (tx.assetType === AssetType.ERC721) {
       return `1 ${tx.contractName}`;
@@ -280,14 +281,17 @@ const TransactionConfirm: React.FC<{
               <Text className=" eading-6" style={{ color: theme.colors.textSecondary }}>
                 Estimate Gas Cost
               </Text>
-              <EstimateGas {...gas} retry={getGas} />
+              <EstimateGas {...gas} retry={getGas} priceInUSDT={tx.priceInUSDT} />
             </View>
 
             <View className="flex flex-row justify-between">
               <Text className="leading-6" style={{ color: theme.colors.textSecondary }}>
                 Network
               </Text>
-              <Text className="leading-6">{currentNetwork.name}</Text>
+              <View className='flex flex-row items-center'>
+                <ConfluxNetworkIcon width={24} height={24} />
+                <Text className="leading-6 ml-1">{currentNetwork.name}</Text>
+              </View>
             </View>
           </View>
         </View>

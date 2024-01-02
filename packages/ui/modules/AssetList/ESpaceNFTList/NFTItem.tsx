@@ -47,9 +47,9 @@ const NFTItem: React.FC<{
           {isCurrentOpenNftInFetch && !details && (
             <View className="flex-1 flex flex-row justify-between">
               {Array.from({ length: 2 }).map((_, i) => (
-                <View key={i} style={{ backgroundColor: theme.colors.surfaceCard }} className="p-3 mb-3 rounded-md">
-                  <View className="w-36 h-36 mb-2">
-                    <Skeleton width={142} height={142} />
+                <View key={i} style={{ backgroundColor: theme.colors.surfaceCard, width: '48%' }} className="p-3 mb-3 rounded-md">
+                  <View className="w-full h-36 mb-2">
+                    <Skeleton width={'100%'} height={142} />
                   </View>
                   <View className="mb-1">
                     <Skeleton width={70} height={16} />
