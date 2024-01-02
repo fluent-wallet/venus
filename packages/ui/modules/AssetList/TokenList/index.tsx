@@ -1,4 +1,4 @@
-import { StyleProp, View, ViewStyle } from 'react-native';
+import { View } from 'react-native';
 import { useTheme } from '@rneui/themed';
 import { useAssetsTokenList } from '@core/WalletCore/Plugins/ReactInject';
 import { type AssetInfo } from '@core/WalletCore/Plugins/AssetsTracker/types';
@@ -15,7 +15,7 @@ const TokenList: React.FC<{
   hidePrice?: boolean;
 }> = ({ onPress, skeleton = 6, RenderList = FlashList, showReceive = false, hidePrice = false }) => {
   const { theme } = useTheme();
-  
+
   const tokens = useAssetsTokenList();
   // const inFetch = useAssetsInFetch();
   const empty = !tokens || tokens.every((v) => BigInt(v?.balance || 0) <= 0);

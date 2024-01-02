@@ -4,6 +4,7 @@ import { useUnfinishedTxs, useFinishedTxs } from '@core/WalletCore/Plugins/React
 import { memo, useCallback, useMemo } from 'react';
 import { Tx } from '@core/database/models/Tx';
 import { useTheme, Card, Text } from '@rneui/themed';
+import NoDataIcon from '@assets/icons/no_data.svg';
 
 const DAY_MILLISECONDS = 1000 * 60 * 60 * 24;
 
@@ -52,14 +53,21 @@ const ActivityList: React.FC<{ onPress?: (v: Tx) => void }> = memo(({ onPress })
   return (
     <ScrollView>
       <View className="pt-[15px] pb-[25px] px-[15px] flex gap-y-[15px]">
-        {!unfinishedTxs?.length && !finishedTxsByDay.size && <Text>No Data</Text>}
+        {!unfinishedTxs?.length && !finishedTxsByDay.size && (
+          <>
+            <NoDataIcon />
+            <Text className="mt-[2px] text-[14px] leading-[22px] opacity-40" style={{ color: theme.colors.textBrand }}>
+              No Activity
+            </Text>
+          </>
+        )}
         {!!unfinishedTxs?.length && (
           <View>
-            <Card wrapperStyle={{paddingLeft: 0, paddingRight: 0}}>
+            <Card wrapperStyle={{ paddingLeft: 0, paddingRight: 0 }}>
               {unfinishedTxs.map((item, index) => (
                 <View key={item.id}>
                   {index !== 0 && <Card.Divider className="my-[15px] opacity-[0.3]" />}
-                  <ActivityItem className='mx-[11px]' tx={item} onPress={handleSelect} />
+                  <ActivityItem className="mx-[11px]" tx={item} onPress={handleSelect} />
                 </View>
               ))}
             </Card>
@@ -69,10 +77,10 @@ const ActivityList: React.FC<{ onPress?: (v: Tx) => void }> = memo(({ onPress })
           const date = formatDate(day);
           return (
             <View key={day}>
-              <Card wrapperStyle={{paddingLeft: 0, paddingRight: 0}}>
-                <View className='mb-[7px] flex items-start mt-[-11px]'>
+              <Card wrapperStyle={{ paddingLeft: 0, paddingRight: 0 }}>
+                <View className="mb-[7px] flex items-start mt-[-11px]">
                   <View className="rounded-br-[5px] px-[11px] py-[3px]" style={{ backgroundColor: theme.colors.surfaceThird }}>
-                    <Text className='text-[14px]' style={{ color: theme.colors.textBrand }}>
+                    <Text className="text-[14px]" style={{ color: theme.colors.textBrand }}>
                       {MONTH_TXT[date.month]} {date.day}, {date.year}
                     </Text>
                   </View>
@@ -80,7 +88,7 @@ const ActivityList: React.FC<{ onPress?: (v: Tx) => void }> = memo(({ onPress })
                 {finishedTxsByDay.get(day)!.map((item, index) => (
                   <View key={item.id}>
                     {index !== 0 && <Card.Divider className="my-[15px] opacity-[0.3]" />}
-                    <ActivityItem className='mx-[11px]' tx={item} onPress={handleSelect} />
+                    <ActivityItem className="mx-[11px]" tx={item} onPress={handleSelect} />
                   </View>
                 ))}
               </Card>

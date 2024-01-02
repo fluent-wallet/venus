@@ -1,4 +1,4 @@
-import { lastValueFrom, from, concatMap, map, catchError, EMPTY, tap } from 'rxjs';
+import { lastValueFrom, from, concatMap, map, catchError, EMPTY } from 'rxjs';
 import { createFetchServer, fetchChainBatch } from '@cfx-kit/dapp-utils/dist/fetch';
 import { createContract } from '@cfx-kit/dapp-utils/dist/contract';
 import { getAddress as toChecksumAddress } from 'ethers';
@@ -173,7 +173,6 @@ export const fetchESpaceServer = async ({
       .pipe(catchError(() => fetchFromChain()))
       .pipe(
         catchError((err) => {
-          console.log(network.name, err);
           return EMPTY;
         })
       )

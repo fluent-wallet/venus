@@ -1,5 +1,5 @@
-import React, { useEffect, useRef, useState, useCallback } from 'react';
-import { View, SafeAreaView, Pressable, RefreshControl, ScrollView } from 'react-native';
+import React, { useEffect, useRef, useState } from 'react';
+import { View, SafeAreaView, ImageBackground, Pressable, RefreshControl, ScrollView, useColorScheme } from 'react-native';
 import PagerView from 'react-native-pager-view';
 import { Text, useTheme, Card } from '@rneui/themed';
 import { useAtom } from 'jotai';
@@ -25,6 +25,8 @@ import VisibilityOffIcon from '@assets/icons/visibility_off.svg';
 import TotalPriceVisibleAtom from '@hooks/useTotalPriceVisible';
 import { UserAddress } from './WalletHeader';
 import AsteriskIcon from '@assets/icons/asterisk.svg';
+import BgLight from '@assets/images/wallet-bg-light.webp';
+import BgDark from '@assets/images/wallet-bg-dark.webp';
 
 const MainButton: React.FC<{ onPress?: VoidFunction; disabled?: boolean; label?: string; icon?: React.ReactElement; _testID?: string }> = ({
   onPress,
@@ -51,6 +53,8 @@ const MainButton: React.FC<{ onPress?: VoidFunction; disabled?: boolean; label?:
 
 const Wallet: React.FC<{ navigation: StackNavigation }> = ({ navigation }) => {
   const { theme } = useTheme();
+  const model = useColorScheme();
+
   const [totalPriceVisible, setTotalPriceVisible] = useAtom(TotalPriceVisibleAtom);
   const currentAccount = useCurrentAccount();
   const currentNetwork = useCurrentNetwork();
@@ -84,11 +88,8 @@ const Wallet: React.FC<{ navigation: StackNavigation }> = ({ navigation }) => {
   }, [navigation]);
 
   return (
-    <SafeAreaView
-      className="flex-1 flex flex-col justify-start"
-      style={{ backgroundColor: theme.colors.surfacePrimaryWithOpacity7, paddingTop: statusBarHeight + 48 }}
-    >
-        <NoNetwork />
+    <SafeAreaView className="flex-1" style={{ backgroundColor: theme.colors.surfacePrimaryWithOpacity7 }}>
+      <NoNetwork />
       <ScrollView
         stickyHeaderIndices={[1]}
         contentContainerStyle={{ flexGrow: 1 }}
@@ -106,62 +107,64 @@ const Wallet: React.FC<{ navigation: StackNavigation }> = ({ navigation }) => {
           />
         }
       >
-        <View className="px-[24px]">
-          <View className="flex flex-row items-center justify-center mb-[3px]">
-            <SIMCardIcon color={theme.colors.surfaceBrand} width={24} height={24} />
-            <Text numberOfLines={1} className="leading-normal" style={{ color: theme.colors.textBrand, maxWidth: 170 }}>
-              {currentAccount?.nickname}
-            </Text>
-          </View>
+        <ImageBackground resizeMode="stretch" source={model === 'dark' ? BgDark : BgLight} style={{ paddingTop: statusBarHeight + 48 }}>
+          <View className="px-[24px]">
+            <View className="flex flex-row items-center justify-center mb-[3px]">
+              <SIMCardIcon color={theme.colors.surfaceBrand} width={24} height={24} />
+              <Text numberOfLines={1} className="leading-normal" style={{ color: theme.colors.textBrand, maxWidth: 170 }}>
+                {currentAccount?.nickname}
+              </Text>
+            </View>
 
-          <View className="flex items-center justify-center h-[60px] mb-[2px]">
-            {totalPriceValue === null ? (
-              <Skeleton width={156} height={30} />
-            ) : (
-              <Pressable className="flex flex-row items-center" testID="toggleTotalPriceVisible" onPress={() => setTotalPriceVisible(!totalPriceVisible)}>
-                <Text className="text-4xl font-bold">$</Text>
-                {totalPriceVisible ? (
-                  <Text className="text-4xl font-bold" numberOfLines={1} style={{ maxWidth: 326 }}>
-                    {numberWithCommas(totalPriceValue)}
-                  </Text>
-                ) : (
-                  <View className="flex flex-row gap-1">
-                    {Array.from({ length: 6 }).map((_, index) => (
-                      <AsteriskIcon key={index} color={theme.colors.textPrimary} width={12} height={12} />
-                    ))}
-                  </View>
-                )}
-                <View className=" self-start">
+            <View className="flex items-center justify-center h-[60px] mb-[2px]">
+              {totalPriceValue === null ? (
+                <Skeleton width={156} height={30} />
+              ) : (
+                <Pressable className="flex flex-row items-center" testID="toggleTotalPriceVisible" onPress={() => setTotalPriceVisible(!totalPriceVisible)}>
+                  <Text className="text-4xl font-bold">$</Text>
                   {totalPriceVisible ? (
-                    <VisibilityIcon color={theme.colors.textSecondary} width={16} height={16} />
+                    <Text className="text-4xl font-bold" numberOfLines={1} style={{ maxWidth: 326 }}>
+                      {numberWithCommas(totalPriceValue)}
+                    </Text>
                   ) : (
-                    <VisibilityOffIcon color={theme.colors.textSecondary} width={16} height={16} />
+                    <View className="flex flex-row gap-1">
+                      {Array.from({ length: 6 }).map((_, index) => (
+                        <AsteriskIcon key={index} color={theme.colors.textPrimary} width={12} height={12} />
+                      ))}
+                    </View>
                   )}
-                </View>
-              </Pressable>
-            )}
-          </View>
-          <View className="flex items-center justify-center mb-[23px]">
-            <UserAddress />
-          </View>
+                  <View className=" self-start">
+                    {totalPriceVisible ? (
+                      <VisibilityIcon color={theme.colors.textSecondary} width={16} height={16} />
+                    ) : (
+                      <VisibilityOffIcon color={theme.colors.textSecondary} width={16} height={16} />
+                    )}
+                  </View>
+                </Pressable>
+              )}
+            </View>
+            <View className="flex items-center justify-center mb-[23px]">
+              <UserAddress />
+            </View>
 
-          <View className="flex flex-row justify-between mb-4">
-            <MainButton
-              _testID="send"
-              onPress={() => navigation.navigate(ReceiveAddressStackName, {})}
-              icon={<SendIcon color="#fff" width={24} height={24} />}
-              label="Send"
-            />
-            <MainButton
-              _testID="receive"
-              onPress={() => navigation.navigate(ReceiveStackName)}
-              icon={<ReceiveIcon color="#fff" width={24} height={24} />}
-              label="Receive"
-            />
-            <MainButton _testID="buy" icon={<BuyIcon color="#fff" width={24} height={24} />} label="Buy" disabled />
-            <MainButton _testID="more" icon={<MoreIcon color="#fff" width={24} height={24} />} label="More" disabled />
+            <View className="flex flex-row justify-between mb-4">
+              <MainButton
+                _testID="send"
+                onPress={() => navigation.navigate(ReceiveAddressStackName, {})}
+                icon={<SendIcon color="#fff" width={24} height={24} />}
+                label="Send"
+              />
+              <MainButton
+                _testID="receive"
+                onPress={() => navigation.navigate(ReceiveStackName)}
+                icon={<ReceiveIcon color="#fff" width={24} height={24} />}
+                label="Receive"
+              />
+              <MainButton _testID="buy" icon={<BuyIcon color="#fff" width={24} height={24} />} label="Buy" disabled />
+              <MainButton _testID="more" icon={<MoreIcon color="#fff" width={24} height={24} />} label="More" disabled />
+            </View>
           </View>
-        </View>
+        </ImageBackground>
 
         <View className="flex flex-row px-6 gap-4" style={{ backgroundColor: theme.colors.surfacePrimaryWithOpacity7 }}>
           {Array.from(

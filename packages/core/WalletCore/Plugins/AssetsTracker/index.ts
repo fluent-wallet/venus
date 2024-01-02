@@ -109,7 +109,7 @@ class AssetsTrackerPluginClass implements Plugin {
         this.currentNetwork = network;
         this.currentAddress = address;
 
-        this.startPolling({ network, address }).catch((err) => console.log(err));
+        this.startPolling({ network, address });
       });
   }
 
@@ -171,7 +171,7 @@ class AssetsTrackerPluginClass implements Plugin {
                 }
               },
               error: (error) => {
-                console.log(`Error in trackAssets(network-${network.name} address-${address.hex}):`, error);
+                // console.log(`Error in trackAssets(network-${network.name} address-${address.hex}):`, error);
                 reject(false);
                 if (getAssetsInFetch(assetsAtomKey)) {
                   setAssetsInFetch(assetsAtomKey, false);
