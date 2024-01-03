@@ -1,5 +1,5 @@
 import React, { type ComponentProps } from 'react';
-import { useColorScheme, View, ImageBackground, type StyleProp, type ViewStyle } from 'react-native';
+import { useColorScheme, View, ImageBackground, Image, type StyleProp, type ViewStyle } from 'react-native';
 import BgLight from '@assets/images/wallet-bg-light.webp';
 import BgDark from '@assets/images/wallet-bg-dark.webp';
 
@@ -18,6 +18,12 @@ const Background: React.FC<Omit<Props, 'source'>> = ({ children, contentStyle, c
       </View>
     </ImageBackground>
   );
+};
+
+export const BackgroundImage: React.FC<Omit<ComponentProps<typeof Image>, 'source'>> = (props) => {
+  const model = useColorScheme();
+
+  return <Image source={model === 'dark' ? BgDark : BgLight} {...props} />;
 };
 
 export default Background;

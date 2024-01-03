@@ -1,6 +1,6 @@
 import { createTheme } from '@rneui/themed';
 export const colors = {
-  gray0: '#FAFAFA',
+  gray0: '#F7F7F7',
   gray1: '#E5E5E5',
   gray2: '#A3A3A3',
   gray3: '#737373',
@@ -41,6 +41,7 @@ const theme = createTheme({
     textBrand: colors.blue3,
     textInvert: colors.gray0,
     borderPrimary: colors.gray1,
+    borderSecondary: colors.gray0,
     surfacePrimary: colors.gray0,
     surfaceSecondary: colors.blue1,
     surfaceBrand: colors.blue3,
@@ -66,6 +67,7 @@ const theme = createTheme({
     textBrand: colors.blue2,
     textInvert: colors.gray1,
     borderPrimary: colors.gray3,
+    borderSecondary: colors.gray0,
     surfacePrimary: colors.gray5,
     surfaceSecondary: colors.blue4,
     surfaceBrand: colors.blue2,

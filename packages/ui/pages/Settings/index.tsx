@@ -16,7 +16,7 @@ const Settings: React.FC<{ navigation: NavigationProp<any> }> = ({ navigation })
   return (
     <SafeAreaView
       className="flex-1 flex flex-col gap-[12px] px-[24px]"
-      style={{ backgroundColor: theme.colors.surfacePrimary, paddingTop: statusBarHeight + 60 }}
+      style={{ backgroundColor: theme.colors.surfacePrimary, paddingTop: statusBarHeight + 44 }}
     >
       <Text className="mb-[4px] text-[30px] leading-[38px] font-bold" style={{ color: theme.colors.textBrand }}>
         Settings

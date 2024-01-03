@@ -12,6 +12,7 @@ const TokenItem: React.FC<{
   hidePrice?: boolean;
 }> = ({ onPress, data, hidePrice = false }) => {
   const { theme } = useTheme();
+
   const balance = useMemo(() => {
     const n = new Decimal(convertBalanceToDecimal(data.balance, data.decimals));
     if (n.lessThan(new Decimal(10).pow(-4))) {
@@ -19,10 +20,11 @@ const TokenItem: React.FC<{
     }
     return numberWithCommas(balanceFormat(data.balance, { decimals: data.decimals }));
   }, [data.balance, data.decimals]);
+
   return (
     <Pressable testID="tokenItem" onPress={onPress && data ? () => onPress(data) : undefined}>
-      <View className={'flex flex-row  w-full'}>
-        <View className="w-12 h-12 mr-4">
+      <View className={'flex flex-row w-full h-[48px]'}>
+        <View className="w-[48px] h-[48px] mr-4">
           <TokenIcon type={data.type} url={data.icon} width={48} height={48} />
         </View>
         <View className="flex-1">

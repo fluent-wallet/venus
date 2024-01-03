@@ -7,6 +7,7 @@ declare module '@rneui/themed' {
     textBrand: string;
     textInvert: string;
     borderPrimary: string;
+    borderSecondary: string;
     surfacePrimary: string;
     surfaceSecondary: string;
     surfaceBrand: string;
@@ -17,7 +18,7 @@ declare module '@rneui/themed' {
     warnSuccessPrimary: string;
     warnErrorPrimary: string;
     linearGradientBackground: string[];
-    surfacePrimaryWithOpacity7: string
+    surfacePrimaryWithOpacity7: string;
     passwordInputBackground: string;
     buttonDisabledBackground: string;
     homeHeaderAddressBackgroundColor: string;

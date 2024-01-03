@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { View, SafeAreaView, Pressable, RefreshControl, ScrollView, type NativeSyntheticEvent, type NativeScrollEvent } from 'react-native';
+import { View, SafeAreaView, Pressable, RefreshControl, ScrollView, Image, type NativeSyntheticEvent, type NativeScrollEvent } from 'react-native';
 import PagerView from 'react-native-pager-view';
 import { Text, useTheme, Card } from '@rneui/themed';
 import { useAtom } from 'jotai';
@@ -23,9 +23,9 @@ import { numberWithCommas } from '@core/utils/balance';
 import VisibilityIcon from '@assets/icons/visibility.svg';
 import VisibilityOffIcon from '@assets/icons/visibility_off.svg';
 import TotalPriceVisibleAtom from '@hooks/useTotalPriceVisible';
-import { UserAddress } from './WalletHeader';
 import AsteriskIcon from '@assets/icons/asterisk.svg';
-import Background from '@modules/Background';
+import Background, { BackgroundImage } from '@modules/Background';
+import { UserAddress } from './WalletHeader';
 
 const MainButton: React.FC<{ onPress?: VoidFunction; disabled?: boolean; label?: string; icon?: React.ReactElement; _testID?: string }> = ({
   onPress,
@@ -92,8 +92,11 @@ const Wallet: React.FC<{ navigation: StackNavigation }> = ({ navigation }) => {
   }, []);
 
   return (
-    <SafeAreaView className="flex-1" style={{ backgroundColor: theme.colors.surfacePrimaryWithOpacity7 }}>
+    <SafeAreaView className="flex-1" style={{ backgroundColor: theme.colors.pureBlackAndWight }}>
       <NoNetwork />
+      <View className="absolute left-0 top-0 w-full h-[330px]  z-0 pointer-events-none">
+        <Background contentClassName="w-full h-full" />
+      </View>
       <ScrollView
         stickyHeaderIndices={[1]}
         contentContainerStyle={{ flexGrow: 1 }}
@@ -112,7 +115,7 @@ const Wallet: React.FC<{ navigation: StackNavigation }> = ({ navigation }) => {
           />
         }
       >
-        <Background style={{ paddingTop: statusBarHeight + 48, paddingHorizontal: 24 }}>
+        <View style={{ paddingTop: statusBarHeight + 48, paddingHorizontal: 24 }}>
           <View className="flex flex-row items-center justify-center mb-[3px]">
             <SIMCardIcon color={theme.colors.surfaceBrand} width={24} height={24} />
             <Text numberOfLines={1} className="leading-normal" style={{ color: theme.colors.textBrand, maxWidth: 170 }}>
@@ -137,11 +140,11 @@ const Wallet: React.FC<{ navigation: StackNavigation }> = ({ navigation }) => {
                     ))}
                   </View>
                 )}
-                <View className=" self-start">
+                <View className="ml-[4px]">
                   {totalPriceVisible ? (
-                    <VisibilityIcon color={theme.colors.textSecondary} width={16} height={16} />
+                    <VisibilityIcon color={theme.colors.textSecondary} width={24} height={24} />
                   ) : (
-                    <VisibilityOffIcon color={theme.colors.textSecondary} width={16} height={16} />
+                    <VisibilityOffIcon color={theme.colors.textSecondary} width={24} height={24} />
                   )}
                 </View>
               </Pressable>
@@ -167,11 +170,11 @@ const Wallet: React.FC<{ navigation: StackNavigation }> = ({ navigation }) => {
             <MainButton _testID="buy" icon={<BuyIcon color="#fff" width={24} height={24} />} label="Buy" disabled />
             <MainButton _testID="more" icon={<MoreIcon color="#fff" width={24} height={24} />} label="More" disabled />
           </View>
-        </Background>
+        </View>
 
         <View
           className="flex flex-row px-6 gap-4"
-          style={{ backgroundColor: theme.colors.surfacePrimaryWithOpacity7, paddingTop: inSticky ? statusBarHeight + 48 : 0 }}
+          style={{ backgroundColor: inSticky ? theme.colors.pureBlackAndWight : 'transparent', paddingTop: inSticky ? statusBarHeight + 48 : 0 }}
         >
           {Array.from(
             currentNetwork && (currentNetwork.chainId === CFX_ESPACE_MAINNET_CHAINID || currentNetwork.chainId === CFX_ESPACE_TESTNET_CHAINID)
