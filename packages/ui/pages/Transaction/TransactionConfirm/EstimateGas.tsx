@@ -36,11 +36,6 @@ const EstimateGas: React.FC<EstimateGasProps> = ({ gasLimit, gasPrice, loading, 
     }
   }, [priceInUSDT, gasLimit, gasPrice]);
 
-  console.log(price);
-  if (gasLimit && gasPrice) {
-    console.log(formatUnits(BigInt(gasLimit) * BigInt(gasPrice), DEFAULT_CURRENCY_DECIMALS));
-  }
-
   return (
     <View className="flex justify-center">
       <Pressable testID="reloadEstimateGas" onPress={error ? retry : undefined}>

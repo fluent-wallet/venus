@@ -1,10 +1,9 @@
 import { ProcessErrorType, processError } from '@core/utils/eth';
 
 const matchRPCErrorMessage = (error: { message?: string; data?: string }) => {
-  const msg = error.message || error.data;
+  const msg = error.data || error.message;
 
-  const parseError = processError(msg);
-
+  const parseError = processError(error);
   switch (parseError.errorType) {
     case ProcessErrorType.balanceNotEnough:
       return 'Insufficient CFX for gas fee';
