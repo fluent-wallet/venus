@@ -9,6 +9,7 @@ import plugins from '@core/WalletCore/Plugins';
 import { statusBarHeight } from '@utils/deviceInfo';
 import useInAsync from '@hooks/useInAsync';
 import { BaseButton } from '@components/Button';
+import Background from '@modules/Background';
 import { type RootStackList, type StackNavigation, WalletStackName, BiometricsStackName, HomeStackName, SetPasswordStackName } from '@router/configs';
 import createVaultWithRouterParams from './createVaultWithRouterParams';
 import FaceIdSource from '@assets/images/face-id.png';
@@ -86,8 +87,8 @@ const Biometrics = () => {
   }, [createVault, navigation, route.params]);
 
   return (
-    <LinearGradient colors={theme.colors.linearGradientBackground} className="flex-1">
-      <SafeAreaView className="flex-1 flex flex-col justify-start" style={{ paddingTop: statusBarHeight + 48 }}>
+    <SafeAreaView className="flex-1 flex flex-col justify-start">
+      <Background style={{ paddingTop: statusBarHeight + 48 }}>
         <FaceId />
         <View className="mt-[90px]">
           <Text className="text-[36px] leading-[46px] font-bold text-center" style={{ color: theme.colors.textBrand }}>
@@ -117,8 +118,8 @@ const Biometrics = () => {
         >
           Set Password
         </BaseButton>
-      </SafeAreaView>
-    </LinearGradient>
+      </Background>
+    </SafeAreaView>
   );
 };
 

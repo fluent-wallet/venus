@@ -1,18 +1,18 @@
 import React from 'react';
-import LinearGradient from 'react-native-linear-gradient';
 import { View, Image, SafeAreaView } from 'react-native';
 import { useTheme, Text } from '@rneui/themed';
 import { statusBarHeight } from '@utils/deviceInfo';
 import { BaseButton } from '@components/Button';
+import Background from '@modules/Background';
+import { type StackNavigation, ImportWalletStackName, BiometricsStackName } from '@router/configs';
 import Tip from '@assets/icons/tip.svg';
 import WelcomeBg from '@assets/images/welcome-bg.png';
-import { type StackNavigation, ImportWalletStackName, BiometricsStackName } from '@router/configs';
 
 const Welcome: React.FC<{ navigation: StackNavigation }> = ({ navigation }) => {
   const { theme } = useTheme();
   return (
-    <LinearGradient colors={theme.colors.linearGradientBackground} className="flex-1">
-      <SafeAreaView className="flex-1 flex flex-col justify-start pt-[8px]">
+    <SafeAreaView className="flex-1 flex flex-col justify-start pt-[8px]">
+      <Background className="flex-1">
         <View
           className="flex flex-row w-[330px] mx-auto p-[12px] rounded-[8px]"
           style={{ marginTop: (statusBarHeight ?? 0) + 8, backgroundColor: theme.colors.surfaceSecondary }}
@@ -35,17 +35,25 @@ const Welcome: React.FC<{ navigation: StackNavigation }> = ({ navigation }) => {
           <Text className="mt-[8px] text-[16px] leading-[24px] text-center">First, let's add a wallet</Text>
         </View>
 
-        <BaseButton testID='connectBSIMWallet' containerStyle={{ marginTop: 40, marginHorizontal: 16 }} onPress={() => navigation.navigate(BiometricsStackName, { type: 'BSIM' })}>
+        <BaseButton
+          testID="connectBSIMWallet"
+          containerStyle={{ marginTop: 40, marginHorizontal: 16 }}
+          onPress={() => navigation.navigate(BiometricsStackName, { type: 'BSIM' })}
+        >
           Connect BSIM Wallet
         </BaseButton>
-        <BaseButton testID='createNewWallet' containerStyle={{ marginTop: 16, marginHorizontal: 16 }} onPress={() => navigation.navigate(BiometricsStackName)}>
+        <BaseButton testID="createNewWallet" containerStyle={{ marginTop: 16, marginHorizontal: 16 }} onPress={() => navigation.navigate(BiometricsStackName)}>
           Create new Wallet
         </BaseButton>
-        <BaseButton testID='importExistingWallet' containerStyle={{ marginTop: 16, marginHorizontal: 16 }} onPress={() => navigation.navigate(ImportWalletStackName, { type: 'create' })}>
+        <BaseButton
+          testID="importExistingWallet"
+          containerStyle={{ marginTop: 16, marginHorizontal: 16 }}
+          onPress={() => navigation.navigate(ImportWalletStackName, { type: 'create' })}
+        >
           Import existing Wallet
         </BaseButton>
-      </SafeAreaView>
-    </LinearGradient>
+      </Background>
+    </SafeAreaView>
   );
 };
 

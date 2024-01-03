@@ -16,14 +16,15 @@ const Settings: React.FC<{ navigation: NavigationProp<any> }> = ({ navigation })
   return (
     <SafeAreaView
       className="flex-1 flex flex-col gap-[12px] px-[24px]"
-      style={{ backgroundColor: theme.colors.surfacePrimary, paddingTop: statusBarHeight + 16 }}
+      style={{ backgroundColor: theme.colors.surfacePrimary, paddingTop: statusBarHeight + 60 }}
     >
-      <TouchableHighlight testID='accountManage' className="rounded-[8px] overflow-hidden" onPress={() => navigation.navigate(AccountManageStackName)}>
+      <Text className="mb-[4px] text-[30px] leading-[38px] font-bold" style={{ color: theme.colors.textBrand }}>
+        Settings
+      </Text>
+      <TouchableHighlight testID="accountManage" className="rounded-[8px] overflow-hidden" onPress={() => navigation.navigate(AccountManageStackName)}>
         <ListItem>
           <ListItem.Content>
-            <ListItem.Title style={{ color: theme.colors.textPrimary }} className="font-bold">
-              Account Management
-            </ListItem.Title>
+            <ListItem.Title style={{ color: theme.colors.textPrimary }}>Account Management</ListItem.Title>
           </ListItem.Content>
           <ListItem.Chevron color={theme.colors.textPrimary} />
         </ListItem>
@@ -33,9 +34,7 @@ const Settings: React.FC<{ navigation: NavigationProp<any> }> = ({ navigation })
         <TouchableHighlight className="rounded-[8px] overflow-hidden" onPress={() => setVisibleResetWallet(true)}>
           <ListItem>
             <ListItem.Content>
-              <ListItem.Title style={{ color: theme.colors.error }} className="font-bold">
-                Reset Wallet Data
-              </ListItem.Title>
+              <ListItem.Title style={{ color: theme.colors.error }}>Reset Wallet Data</ListItem.Title>
             </ListItem.Content>
             <ListItem.Chevron color={theme.colors.error} />
           </ListItem>

@@ -53,7 +53,6 @@ import GroupSetting from '@pages/Account/Setting/GroupSetting';
 import HDManage from '@pages/Account/Setting/HDManage';
 import Receive from '@pages/Receive';
 import SetAmount from '@pages/Receive/SetAmount';
-
 import WalletIcon from '@assets/icons/wallet.svg';
 import SettingsIcon from '@assets/icons/settings.svg';
 import ArrowLeft from '@assets/icons/arrow-left.svg';
@@ -84,7 +83,7 @@ const HomeScreenNavigator = () => {
         component={Wallet}
         options={{
           tabBarIcon: ({ color }) => <WalletIcon color={color} />,
-          ...getWalletHeaderOptions(theme.colors.homeHeaderAddressBackgroundColor),
+          ...getWalletHeaderOptions(),
           tabBarTestID: 'walletTab',
         }}
       />
