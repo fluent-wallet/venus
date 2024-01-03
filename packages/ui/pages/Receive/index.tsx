@@ -73,8 +73,8 @@ const Receive: React.FC<NativeStackScreenProps<RootStackList, 'Receive'>> = ({ n
 
   return (
     <SafeAreaView className="flex-1">
-      <LinearGradientBackground style={{ paddingTop: statusBarHeight + 48, paddingHorizontal: 24, paddingBottom: 28 }}>
-        <ScrollView className="min-h-[100vh] flex flex-col">
+      <ScrollView contentContainerStyle={{ minHeight: '100%'}}>
+        <LinearGradientBackground style={{ paddingTop: statusBarHeight + 48, paddingHorizontal: 24, paddingBottom: 28, minHeight: '100%' }}>
           <View className="flex items-center">
             <View className="w-20 h-20 rounded-full bg-slate-300">
               {currentToken &&
@@ -102,7 +102,7 @@ const Receive: React.FC<NativeStackScreenProps<RootStackList, 'Receive'>> = ({ n
             {getAmount()}
           </Text>
 
-          <View className="mt-[400px]">
+          <View className="mt-auto">
             <View className="flex">
               <View className="flex flex-row items-center">
                 <AvatarIcon width={24} height={24} />
@@ -136,8 +136,8 @@ const Receive: React.FC<NativeStackScreenProps<RootStackList, 'Receive'>> = ({ n
               </View>
             </View>
           </View>
-        </ScrollView>
-      </LinearGradientBackground>
+        </LinearGradientBackground>
+      </ScrollView>
     </SafeAreaView>
   );
 };
