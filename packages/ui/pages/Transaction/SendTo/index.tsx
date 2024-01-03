@@ -37,7 +37,7 @@ const SendTo: React.FC<{ navigation: StackNavigation; route: RouteProp<RootStack
   const [, setTXAmount] = useAtom(setTransactionAmount);
   const [, resetTXAmount] = useAtom(resetTransactionAmount);
   const tx = useReadOnlyTransaction();
-  const [value, setValue] = useState(tx.amount ? formatUnits(tx.amount, tx.decimals) : '');
+  const [value, setValue] = useState(tx.amount ? new Decimal(formatUnits(tx.amount, tx.decimals)).toString() : '');
   const [invalidInputErr, setInvalidInputErr] = useState({ err: false, msg: '' });
   const [rpcError, setRpcError] = useState({ err: false, msg: '' });
   const [maxBtnLoading, setMaxBtnLoading] = useState(false);

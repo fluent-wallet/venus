@@ -26,7 +26,7 @@ const setTokenQRInfoAtom = atom(
       const address = getCurrentAddress();
       const hashKey = getAssetsAtomKey({ network, address });
       const assetsHash = getAssetsHash(hashKey);
-      if (assetsHash && assetsHash[AssetType.Native]) return assetsHash[AssetType.Native] as TokenQRInfo;
+      if (assetsHash && assetsHash[AssetType.Native]) return { ...assetsHash[AssetType.Native], type: AssetType.Native } as TokenQRInfo;
     }
     return setAmount as TokenQRInfo;
   },
