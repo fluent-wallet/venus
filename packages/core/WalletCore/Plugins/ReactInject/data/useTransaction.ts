@@ -53,9 +53,16 @@ export const useReadOnlyTransaction = () => useAtomValue(transactionAtom);
 export const setTransactionTo = atom(null, (get, set, to: string) => {
   set(transactionAtom, { ...get(transactionAtom), to, amount: 0n });
 });
+export const resetTransactionTo = atom(null, (get, set) => {
+  set(transactionAtom, { ...get(transactionAtom), to: '', amount: 0n });
+});
 
 export const setTransactionAmount = atom(null, (get, set, amount: bigint) => {
   set(transactionAtom, { ...get(transactionAtom), amount });
+});
+
+export const resetTransactionAmount = atom(null, (get, set) => {
+  set(transactionAtom, { ...get(transactionAtom), amount: 0n });
 });
 
 export const setTokenTransaction = atom(
@@ -67,4 +74,8 @@ export const setTokenTransaction = atom(
 
 export const setNFTTransaction = atom(null, (get, set, token: Omit<WalletTransactionType, 'event' | 'from' | 'to' | 'amount'>) => {
   set(transactionAtom, { ...get(transactionAtom), ...token });
+});
+
+export const resetTransaction = atom(null, (get, set) => {
+  set(transactionAtom, initTransaction);
 });

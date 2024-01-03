@@ -15,7 +15,7 @@ import SendIcon from '@assets/icons/send.svg';
 import AvatarIcon from '@assets/icons/avatar.svg';
 import CopyAllIcon from '@assets/icons/copy_all.svg';
 import Warning from '@assets/icons/warning_2.svg';
-import { TxEventTypesName, useReadOnlyTransaction } from '@core/WalletCore/Plugins/ReactInject/data/useTransaction';
+import { TxEventTypesName, resetTransaction, useReadOnlyTransaction } from '@core/WalletCore/Plugins/ReactInject/data/useTransaction';
 import MixinImage from '@components/MixinImage';
 import { AssetType } from '@core/database/models/Asset';
 import Methods from '@core/WalletCore/Methods';
@@ -35,6 +35,7 @@ import { updateNFTDetail } from '@modules/AssetList/ESpaceNFTList/fetch';
 import assetsTracker from '@core/WalletCore/Plugins/AssetsTracker';
 import ConfluxNetworkIcon from '@assets/icons/confluxNet.svg';
 import { balanceFormat } from '@core/utils/balance';
+import { useAtom } from 'jotai';
 
 const TransactionConfirm: React.FC<{
   navigation: StackNavigation;
@@ -50,6 +51,7 @@ const TransactionConfirm: React.FC<{
 
   const [error, setError] = useState('');
   const tx = useReadOnlyTransaction();
+  const [, resetTX] = useAtom(resetTransaction);
   const [gas, setGas] = useState<{ gasLimit?: string; gasPrice?: string; loading: boolean; error: boolean; errorMsg?: string }>({
     loading: true,
     error: false,
@@ -105,6 +107,9 @@ const TransactionConfirm: React.FC<{
             description: 'Waiting for execution',
             icon: 'loading' as unknown as undefined,
           });
+          // tx send success then reset tx atom
+          resetTX();
+
           navigation.navigate(HomeStackName, { screen: WalletStackName });
         } catch (error) {
           setLoading(false);

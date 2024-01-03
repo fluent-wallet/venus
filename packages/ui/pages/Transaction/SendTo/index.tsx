@@ -1,6 +1,6 @@
-import { useMemo, useState } from 'react';
-import { SafeAreaView, View, KeyboardAvoidingView, Image, TextInput, Pressable, ScrollView } from 'react-native';
-import { RouteProp } from '@react-navigation/native';
+import { useCallback, useMemo, useState } from 'react';
+import { SafeAreaView, View, KeyboardAvoidingView, Image, TextInput, Pressable, ScrollView, BackHandler } from 'react-native';
+import { RouteProp, useFocusEffect } from '@react-navigation/native';
 import { useAtom } from 'jotai';
 import { formatUnits, parseUnits } from 'ethers';
 import { shortenAddress } from '@core/utils/address';
@@ -12,7 +12,7 @@ import TokenIconDefault from '@assets/icons/defaultToken.svg';
 import AvatarIcon from '@assets/icons/avatar.svg';
 import CopyAllIcon from '@assets/icons/copy_all.svg';
 import { AssetType } from '@core/database/models/Asset';
-import { setTransactionAmount, useReadOnlyTransaction } from '@core/WalletCore/Plugins/ReactInject/data/useTransaction';
+import { resetTransactionAmount, setTransactionAmount, useReadOnlyTransaction } from '@core/WalletCore/Plugins/ReactInject/data/useTransaction';
 import MixinImage from '@components/MixinImage';
 import Methods from '@core/WalletCore/Methods';
 import WarningIcon from '@assets/icons/warning_2.svg';
@@ -35,6 +35,7 @@ const SendTo: React.FC<{ navigation: StackNavigation; route: RouteProp<RootStack
   const currentNetwork = useCurrentNetwork()!;
   const currentAddress = useCurrentAddress();
   const [, setTXAmount] = useAtom(setTransactionAmount);
+  const [, resetTXAmount] = useAtom(resetTransactionAmount);
   const tx = useReadOnlyTransaction();
   const [value, setValue] = useState(tx.amount ? formatUnits(tx.amount, tx.decimals) : '');
   const [invalidInputErr, setInvalidInputErr] = useState({ err: false, msg: '' });
@@ -139,6 +140,14 @@ const SendTo: React.FC<{ navigation: StackNavigation; route: RouteProp<RootStack
 
     setMaxBtnLoading(false);
   };
+
+  useFocusEffect(
+    useCallback(() => {
+      navigation.addListener('beforeRemove', () => {
+        resetTXAmount();
+      });
+    }, [navigation, resetTXAmount])
+  );
 
   const isNFT = tx.assetType === AssetType.ERC721 || tx.assetType === AssetType.ERC1155;
   return (
