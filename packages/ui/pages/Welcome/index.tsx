@@ -7,13 +7,14 @@ import Background from '@modules/Background';
 import { type StackNavigation, ImportWalletStackName, BiometricsStackName } from '@router/configs';
 import Tip from '@assets/icons/tip.svg';
 import WelcomeBg from '@assets/images/welcome-bg.png';
+import SIMCardIcon from '@assets/icons/sim-card.svg';
 
 const Welcome: React.FC<{ navigation: StackNavigation }> = ({ navigation }) => {
   const { theme } = useTheme();
   return (
     <SafeAreaView className="flex-1 flex flex-col justify-start pt-[8px]">
       <Background className="flex-1">
-        <View
+        {/* <View
           className="flex flex-row w-[330px] mx-auto p-[12px] rounded-[8px]"
           style={{ marginTop: (statusBarHeight ?? 0) + 8, backgroundColor: theme.colors.surfaceSecondary }}
         >
@@ -24,11 +25,11 @@ const Welcome: React.FC<{ navigation: StackNavigation }> = ({ navigation }) => {
             <Text className="text-[16px] leading-[24px] ">Coming Soon！</Text>
             <Text className="mt-[4px] text-[14px] leading-[20px]">We are working hard to prepare, so stay tuned,Please stay tuned！</Text>
           </View>
-        </View>
+        </View> */}
 
-        <Image className="mt-[10px] mx-auto w-[208px] h-[208px]" source={WelcomeBg} />
+        <Image className="mt-[58px] mx-auto w-[208px] h-[208px]" source={WelcomeBg} />
 
-        <View className="mt-[90px]">
+        <View className="mt-[56px]">
           <Text className="text-[36px] leading-[46px] font-bold text-center" style={{ color: theme.colors.textBrand }}>
             Enter Web3
           </Text>
@@ -40,12 +41,25 @@ const Welcome: React.FC<{ navigation: StackNavigation }> = ({ navigation }) => {
           containerStyle={{ marginTop: 40, marginHorizontal: 16 }}
           onPress={() => navigation.navigate(BiometricsStackName, { type: 'BSIM' })}
         >
-          Connect BSIM Wallet
+          <SIMCardIcon color={theme.colors.surfaceCard} width={24} height={24} /> Connect BSIM Wallet
         </BaseButton>
-        <BaseButton testID="createNewWallet" containerStyle={{ marginTop: 16, marginHorizontal: 16 }} onPress={() => navigation.navigate(BiometricsStackName)}>
+
+        <View className="flex flex-row justify-center my-7">
+          <Text style={{ color: theme.colors.textBrand }} className="text-sm">
+            or connect with
+          </Text>
+        </View>
+
+        <BaseButton
+          disabled
+          testID="createNewWallet"
+          containerStyle={{ marginTop: 16, marginHorizontal: 16 }}
+          onPress={() => navigation.navigate(BiometricsStackName)}
+        >
           Create new Wallet
         </BaseButton>
         <BaseButton
+          disabled
           testID="importExistingWallet"
           containerStyle={{ marginTop: 16, marginHorizontal: 16 }}
           onPress={() => navigation.navigate(ImportWalletStackName, { type: 'create' })}

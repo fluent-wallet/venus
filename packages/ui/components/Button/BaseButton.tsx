@@ -8,11 +8,12 @@ const BaseButton: FC<PropsWithChildren<ButtonProps>> = ({ children, containerSty
 
   return (
     <Button
+      className=" bg"
       buttonStyle={[
         {
           backgroundColor: colors.textBrand,
-          borderRadius: 40,
-          minHeight: 40,
+          borderRadius: 7,
+          minHeight: 48,
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
@@ -21,7 +22,9 @@ const BaseButton: FC<PropsWithChildren<ButtonProps>> = ({ children, containerSty
       ]}
       containerStyle={containerStyle}
       disabledStyle={{
-        backgroundColor: colors.buttonDisabledBackground,
+        backgroundColor: 'transparent',
+        borderColor: colors.textSecondary,
+        borderWidth: 1,
       }}
       {...rest}
     >
