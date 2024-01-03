@@ -145,7 +145,7 @@ const HDManage: React.FC<NativeStackScreenProps<RootStackList, 'HDManage'>> = ({
           <Text style={{ color: theme.colors.textSecondary }}>{currentHdPath?.value}</Text>
         </View>
       </View>
-      <View className="mt-[16px] relative py-[8px] min-h-[284px] rounded-[8px]" style={{ backgroundColor: theme.colors.surfaceCard }}>
+      <View className="mt-[16px] relative py-[8px] min-h-[284px] rounded-[8px] overflow-hidden" style={{ backgroundColor: theme.colors.surfaceCard }}>
         {inCalc && (
           <View className="absolute left-0 top-0 w-full h-full bg-transparent flex justify-center items-center">
             <ActivityIndicator size={40} color={theme.colors.surfaceBrand} />
@@ -156,7 +156,7 @@ const HDManage: React.FC<NativeStackScreenProps<RootStackList, 'HDManage'>> = ({
           const isInChoose = !!chooseAccounts?.find((_account) => _account.index === account.index);
           return (
             <Fragment key={account.index}>
-              {index !== 0 && <View className="mx-[16px] my-[8px] w-full h-[1px]" style={{ backgroundColor: theme.colors.borderPrimary }} />}
+              {index !== 0 && <View className="mx-[16px] my-[8px] h-[1px]" style={{ backgroundColor: theme.colors.borderPrimary }} />}
               <TouchableHighlight
                 testID="addressItem"
                 underlayColor={theme.colors.underlayColor}

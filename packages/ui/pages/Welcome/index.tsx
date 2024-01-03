@@ -44,14 +44,16 @@ const Welcome: React.FC<{ navigation: StackNavigation }> = ({ navigation }) => {
           <SIMCardIcon color={theme.colors.surfaceCard} width={24} height={24} /> Connect BSIM Wallet
         </BaseButton>
 
-        <View className="flex flex-row justify-center my-7">
-          <Text style={{ color: theme.colors.textBrand }} className="text-sm">
+        <View className="flex flex-row justify-center items-center my-[28px]">
+          <View className="w-1/4 h-[1px] pointer-events-none" style={{ backgroundColor: theme.colors.textBrand }} />
+          <Text style={{ color: theme.colors.textBrand }} className="mx-[10px] text-sm">
             or connect with
           </Text>
+          <View className="w-1/4 h-[1px] pointer-events-none" style={{ backgroundColor: theme.colors.textBrand }} />
         </View>
 
         <BaseButton
-          disabled
+          disabled={!__DEV__}
           testID="createNewWallet"
           containerStyle={{ marginTop: 16, marginHorizontal: 16 }}
           onPress={() => navigation.navigate(BiometricsStackName)}
@@ -59,7 +61,7 @@ const Welcome: React.FC<{ navigation: StackNavigation }> = ({ navigation }) => {
           Create new Wallet
         </BaseButton>
         <BaseButton
-          disabled
+          disabled={!__DEV__}
           testID="importExistingWallet"
           containerStyle={{ marginTop: 16, marginHorizontal: 16 }}
           onPress={() => navigation.navigate(ImportWalletStackName, { type: 'create' })}

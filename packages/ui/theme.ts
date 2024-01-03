@@ -131,7 +131,7 @@ const theme = createTheme({
     }),
     CardDivider: (_, theme) => ({
       width: 1.5,
-      color: theme.colors.borderPrimary,
+      color: theme.colors.borderSecondary,
     }),
     Dialog: (_, theme) => ({
       overlayStyle: {

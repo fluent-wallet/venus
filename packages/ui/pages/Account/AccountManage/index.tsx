@@ -27,14 +27,16 @@ const AccountManage: React.FC<{ navigation: StackNavigation }> = ({ navigation }
           Wallets
         </Text>
 
-        <Button
-          testID="addAccountButton"
-          titleStyle={{ fontSize: 16, fontWeight: '500', color: theme.colors.surfaceBrand }}
-          size="sm"
-          type="clear"
-          title="Add another wallet"
-          onPress={() => navigation.navigate(AddAccountStackName, { type: 'add' })}
-        />
+        {__DEV__ && (
+          <Button
+            testID="addAccountButton"
+            titleStyle={{ fontSize: 16, fontWeight: '500', color: theme.colors.surfaceBrand }}
+            size="sm"
+            type="clear"
+            title="Add another wallet"
+            onPress={() => navigation.navigate(AddAccountStackName, { type: 'add' })}
+          />
+        )}
       </View>
 
       <ScrollView className="flex-1 px-[24px]" testID="accountList">
