@@ -5,17 +5,18 @@ import { useCurrentNetwork } from '@core/WalletCore/Plugins/ReactInject';
 import methods from '@core/WalletCore/Methods';
 import NetWorkIcon from '@assets/icons/network.svg';
 import { View } from 'react-native';
+import { qaOnly } from '@utils/getEnv';
 
 const SwitchCurrentNetwork: React.FC<ComponentProps<typeof View>> = (props) => {
   const { theme } = useTheme();
   const currentNetwork = useCurrentNetwork();
-
+  const isQA = qaOnly();
   if (!currentNetwork) return null;
   return (
     <TouchableHighlight
       testID="switchNetwork"
       underlayColor={theme.colors.underlayColor}
-      onPress={() => methods.switchToNetwork(currentNetwork.netId === 1030 ? 71 : 1030)}
+      onPress={() => isQA ?? methods.switchToNetwork(currentNetwork.netId === 1030 ? 71 : 1030)}
       className="mr-[24px] rounded-[40px] overflow-hidden"
     >
       <View
@@ -29,7 +30,7 @@ const SwitchCurrentNetwork: React.FC<ComponentProps<typeof View>> = (props) => {
           <NetWorkIcon width={16} height={16} />
         </View>
         <Text className="whitespace-nowrap" style={{ color: theme.colors.contrastWhiteAndBlack, fontSize: 14, fontFamily: 'SF Pro Display' }}>
-          {currentNetwork.name}
+          {isQA ? currentNetwork.name : 'Conflux eSpace'}
         </Text>
       </View>
     </TouchableHighlight>

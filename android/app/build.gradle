@@ -2,11 +2,11 @@ plugins {
     id 'org.jetbrains.kotlin.plugin.serialization' version '1.9.10'
 }
 
-
 apply plugin: "com.android.application"
 apply plugin: "com.facebook.react"
 
 apply plugin: "kotlin-android"
+apply from: project(':react-native-config').projectDir.getPath() + "/dotenv.gradle"
 
 apply from: file("../../node_modules/react-native-vector-icons/fonts.gradle")
 /**
@@ -88,6 +88,7 @@ android {
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 1
         versionName "1.0"
+        resValue "string", "build_config_package", "com.wallet"
     }
     signingConfigs {
         debug {
@@ -109,6 +110,21 @@ android {
             proguardFiles getDefaultProguardFile("proguard-android.txt"), "proguard-rules.pro"
         }
     }
+    flavorDimensions "version"
+   		productFlavors {
+          qa {
+            dimension "version"
+            applicationIdSuffix ".qa"
+            applicationId defaultConfig.applicationId
+            signingConfig signingConfigs.debug
+          }
+          prod {
+            dimension "version"
+            applicationId defaultConfig.applicationId
+            signingConfig signingConfigs.debug
+          }
+    	  }
+
     //see:https://github.com/margelo/react-native-quick-crypto/issues/90
     packagingOptions {
         pickFirst 'lib/x86/libcrypto.so'

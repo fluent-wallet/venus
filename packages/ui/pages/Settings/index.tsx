@@ -1,12 +1,13 @@
 import React, { useState } from 'react';
-import { SafeAreaView, Text, TouchableHighlight } from 'react-native';
+import { SafeAreaView, Text, TouchableHighlight, View } from 'react-native';
 import { type NavigationProp } from '@react-navigation/native';
 import { showMessage } from 'react-native-flash-message';
 import { useTheme, ListItem, Dialog } from '@rneui/themed';
 import methods from '@core/WalletCore/Methods';
 import { statusBarHeight } from '@utils/deviceInfo';
 import { WelcomeStackName, AccountManageStackName } from '@router/configs';
-
+import pkg from '../../../../package.json';
+import { devOnly, getAppEnv, qaOnly } from '@utils/getEnv';
 export const SettingsStackName = 'Settings';
 
 const Settings: React.FC<{ navigation: NavigationProp<any> }> = ({ navigation }) => {
@@ -14,32 +15,35 @@ const Settings: React.FC<{ navigation: NavigationProp<any> }> = ({ navigation })
   const [visibleResetWallet, setVisibleResetWallet] = useState(false);
 
   return (
-    <SafeAreaView
-      className="flex-1 flex flex-col gap-[12px] px-[24px]"
-      style={{ backgroundColor: theme.colors.surfacePrimary, paddingTop: statusBarHeight + 44 }}
-    >
-      <Text className="mb-[4px] text-[30px] leading-[38px] font-bold" style={{ color: theme.colors.textBrand }}>
-        Settings
-      </Text>
-      <TouchableHighlight testID="accountManage" className="rounded-[8px] overflow-hidden" onPress={() => navigation.navigate(AccountManageStackName)}>
-        <ListItem>
-          <ListItem.Content>
-            <ListItem.Title style={{ color: theme.colors.textPrimary }}>Account Management</ListItem.Title>
-          </ListItem.Content>
-          <ListItem.Chevron color={theme.colors.textPrimary} />
-        </ListItem>
-      </TouchableHighlight>
-
-      {__DEV__ && (
-        <TouchableHighlight className="rounded-[8px] overflow-hidden" onPress={() => setVisibleResetWallet(true)}>
+    <SafeAreaView className="flex-1 " style={{ backgroundColor: theme.colors.surfacePrimary, paddingTop: statusBarHeight + 44 }}>
+      <View className="flex-1 flex flex-col gap-[12px] px-[24px]">
+        <Text className="mb-[4px] text-[30px] leading-[38px] font-bold" style={{ color: theme.colors.textBrand }}>
+          Settings
+        </Text>
+        <TouchableHighlight testID="accountManage" className="rounded-[8px] overflow-hidden" onPress={() => navigation.navigate(AccountManageStackName)}>
           <ListItem>
             <ListItem.Content>
-              <ListItem.Title style={{ color: theme.colors.error }}>Reset Wallet Data</ListItem.Title>
+              <ListItem.Title style={{ color: theme.colors.textPrimary }}>Account Management</ListItem.Title>
             </ListItem.Content>
-            <ListItem.Chevron color={theme.colors.error} />
+            <ListItem.Chevron color={theme.colors.textPrimary} />
           </ListItem>
         </TouchableHighlight>
-      )}
+
+        {devOnly() && (
+          <TouchableHighlight className="rounded-[8px] overflow-hidden" onPress={() => setVisibleResetWallet(true)}>
+            <ListItem>
+              <ListItem.Content>
+                <ListItem.Title style={{ color: theme.colors.error }}>Reset Wallet Data</ListItem.Title>
+              </ListItem.Content>
+              <ListItem.Chevron color={theme.colors.error} />
+            </ListItem>
+          </TouchableHighlight>
+        )}
+      </View>
+      <Text style={{ color: theme.colors.textSecondary }} className="text-base mt-auto text-center">
+        v{pkg.version}
+        {qaOnly() && getAppEnv()}
+      </Text>
       <Dialog isVisible={visibleResetWallet} onBackdropPress={() => setVisibleResetWallet(false)}>
         <Dialog.Title title="Confirm reset wallet Data?" titleStyle={{ color: theme.colors.textPrimary, fontSize: 22, fontWeight: 'bold' }} />
         <Text style={{ color: theme.colors.textSecondary }} className="text-[16px]">

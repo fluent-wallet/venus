@@ -9,6 +9,7 @@ import plugins from '@core/WalletCore/Plugins';
 import { useAccountGroups } from '@core/WalletCore/Plugins/ReactInject';
 import { type StackNavigation, WelcomeStackName, AddAccountStackName } from '@router/configs';
 import AccountGroupItem from '../AccountGroupItem';
+import { qaOnly } from '@utils/getEnv';
 
 const AccountManage: React.FC<{ navigation: StackNavigation }> = ({ navigation }: { navigation: StackNavigation }) => {
   const { theme } = useTheme();
@@ -27,7 +28,7 @@ const AccountManage: React.FC<{ navigation: StackNavigation }> = ({ navigation }
           Wallets
         </Text>
 
-        {__DEV__ && (
+        {qaOnly() && (
           <Button
             testID="addAccountButton"
             titleStyle={{ fontSize: 16, fontWeight: '500', color: theme.colors.surfaceBrand }}

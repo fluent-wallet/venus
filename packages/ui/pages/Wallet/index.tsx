@@ -26,6 +26,8 @@ import TotalPriceVisibleAtom from '@hooks/useTotalPriceVisible';
 import AsteriskIcon from '@assets/icons/asterisk.svg';
 import Background, { BackgroundImage } from '@modules/Background';
 import { UserAddress } from './WalletHeader';
+import Config from "react-native-config";
+console.log(Config.APP_ENV)
 
 const MainButton: React.FC<{ onPress?: VoidFunction; disabled?: boolean; label?: string; icon?: React.ReactElement; _testID?: string }> = ({
   onPress,
