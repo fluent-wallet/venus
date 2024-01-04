@@ -80,7 +80,7 @@ export class TxMethod {
         gasPrice: transaction.gasPrice?.toString(),
         gas: transaction.gasLimit.toString(),
         value: transaction.value.toString(),
-        nonce: transaction.nonce.toString(),
+        nonce: transaction.nonce,
         chainId: transaction.chainId.toString(),
         data: transaction.data,
         accessList: transaction.accessList,

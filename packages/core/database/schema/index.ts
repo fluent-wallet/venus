@@ -112,7 +112,7 @@ const schema = appSchema({
         { name: 'storage_limit', type: 'string', isOptional: true },
         { name: 'data', type: 'string', isOptional: true },
         { name: 'value', type: 'string' },
-        { name: 'nonce', type: 'string' },
+        { name: 'nonce', type: 'number' },
         // chainId
         { name: 'chain_identification', type: 'string' },
         { name: 'epoch_height', type: 'string', isOptional: true },
