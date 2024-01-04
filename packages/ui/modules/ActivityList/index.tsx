@@ -64,7 +64,7 @@ const ActivityList: React.FC<{ onPress?: (v: Tx) => void }> = memo(({ onPress })
       )}
       {finishedTxs && (
         <FlashList
-          estimatedItemSize={20}
+          estimatedItemSize={50}
           data={finishedTxsByDay}
           renderItem={({ item, index }) => {
             if (typeof item === 'number') {

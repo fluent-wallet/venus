@@ -103,8 +103,8 @@ const Wallet: React.FC<{ navigation: StackNavigation }> = ({ navigation }) => {
   const tabs = useMemo(
     () =>
       currentNetwork && (currentNetwork.chainId === CFX_ESPACE_MAINNET_CHAINID || currentNetwork.chainId === CFX_ESPACE_TESTNET_CHAINID)
-        ? (['Tokens', 'NFTs'] as const)
-        : (['Tokens'] as const),
+        ? (['Tokens', 'NFTs', 'Activity'] as const)
+        : (['Tokens', 'Activity'] as const),
     [currentNetwork]
   );
 
@@ -226,6 +226,11 @@ const Wallet: React.FC<{ navigation: StackNavigation }> = ({ navigation }) => {
               {tab === 'NFTs' && index === tabIndex && (
                 <View className={clsx('w-full h-full flex-1 pb-[8px] pt-[16px] px-[16px]', index !== tabIndex && 'display-none')}>
                   <ESpaceNFTList />
+                </View>
+              )}
+              {tab === 'Activity' && index === tabIndex && (
+                <View className={clsx('w-full h-full flex-1 pb-[8px] pt-[16px] px-[16px]', index !== tabIndex && 'display-none')}>
+                  <ActivityList />
                 </View>
               )}
             </View>

@@ -58,7 +58,7 @@ export const observeUnfinishedTxWithAddress = (addressId: string) =>
 // 1. same addr
 // 2. same nonce
 // 3. not in end state
-export const queryDuplicateTx = (tx: Tx, nonce: string, statuses = ALL_TX_STATUSES) =>
+export const queryDuplicateTx = (tx: Tx, nonce: number, statuses = ALL_TX_STATUSES) =>
   database
     .get<Tx>(TableName.Tx)
     .query(

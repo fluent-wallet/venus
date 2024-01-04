@@ -1,12 +1,12 @@
 import { queryDuplicateTx, queryTxsWithAddress } from '@core/database/models/Tx/query';
-import { Tx } from '@core/database/models/Tx';
+import type { Tx } from '@core/database/models/Tx';
+import type { Address } from '@core/database/models/Address';
 import { EXECUTED_NOT_FINALIZED_TX_STATUSES, ExecutedStatus, NOT_FINALIZED_TX_STATUSES, TxStatus } from '@core/database/models/Tx/type';
 import { RPCResponse, RPCSend, RPCSendFactory } from '@core/utils/send';
 import { firstValueFrom, debounceTime, Subscription } from 'rxjs';
 import { updateNFTDetail } from '@modules/AssetList/ESpaceNFTList/fetch';
 import Plugins from '@core/WalletCore/Plugins';
 import events from '@core/WalletCore/Events';
-import { Address } from '@core/database/models/Address';
 import { DETAULT_CONFIRMED_INTERVAL, DETAULT_EXECUTED_INTERVAL, DETAULT_FINALIZED_INTERVAL, TX_RESEND_LIMIT } from '@core/consts/transaction';
 
 const getMinNonceTx = async (txs: Tx[]) => {
