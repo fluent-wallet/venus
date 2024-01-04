@@ -75,7 +75,6 @@ const TransactionConfirm: React.FC<{
       setLoading(true);
       try {
         try {
-          const blockNumber = await firstValueFrom(RPCSend<RPCResponse<string>>(currentNetwork.endpoint, { method: 'eth_blockNumber' }));
           const { txHash, txRaw, transaction, error } = await Methods.sendTransaction(tx, { gasLimit: gas.gasLimit, gasPrice: gas.gasPrice });
 
           if (error && error.message && error.data) {
@@ -93,7 +92,7 @@ const TransactionConfirm: React.FC<{
               assetType: tx.assetType,
               contractAddress: tx.contractAddress,
               to: tx.to,
-              blockNumber: blockNumber.result,
+              sendAt: new Date(),
             },
           });
 
