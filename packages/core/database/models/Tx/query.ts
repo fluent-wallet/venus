@@ -42,21 +42,17 @@ export const queryTxsWithAddress = (
 
 export const observeTxById = memoize((txId: string) => database.get<Tx>(TableName.Tx).findAndObserve(txId));
 
-export const queryFinishedTxsWithAddress = (addressId: string) =>
-  database
-    .get<Tx>(TableName.Tx)
-    .query(Q.where('address_id', addressId), Q.where('status', Q.notIn(PENDING_TX_STATUSES)), Q.sortBy('executed_at', Q.desc), Q.sortBy('created_at', Q.desc));
-
 export const observeFinishedTxWithAddress = (addressId: string) =>
   queryTxsWithAddress(addressId, {
     notInStatuses: PENDING_TX_STATUSES,
     sortBy: ['executed_at', 'created_at'],
-  }).observeWithColumns(['status' /* , 'polling_count', 'resend_count', 'confirmed_number' */]);
+  }).observeWithColumns(['status', 'polling_count', 'resend_count', 'confirmed_number']);
 
-export const queryUnfinishedTxWithAddress = (addressId: string) =>
-  database.get<Tx>(TableName.Tx).query(Q.where('address_id', addressId), Q.where('status', Q.oneOf(PENDING_TX_STATUSES)), Q.sortBy('created_at', Q.desc));
-
-export const observeUnfinishedTxWithAddress = (addressId: string) => queryUnfinishedTxWithAddress(addressId).observe();
+export const observeUnfinishedTxWithAddress = (addressId: string) =>
+  queryTxsWithAddress(addressId, {
+    inStatuses: PENDING_TX_STATUSES,
+    sortBy: 'created_at',
+  }).observeWithColumns(['status', 'polling_count', 'resend_count', 'confirmed_number']);
 
 // find tx with
 // 1. same addr

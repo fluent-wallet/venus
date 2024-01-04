@@ -7,7 +7,6 @@ import AttentionIcon from '@assets/icons/attention.svg';
 import DoneIcon from '@assets/icons/done.svg';
 import { formatStatus, formatTxData } from '@utils/tx';
 import { StyleProp } from 'react-native';
-import { memo } from 'react';
 import { balanceFormat } from '@core/utils/balance';
 
 const ActivityItem: React.FC<{
@@ -15,7 +14,7 @@ const ActivityItem: React.FC<{
   tx: Tx;
   className?: string;
   style?: StyleProp<ViewStyle>;
-}> = memo(({ onPress, tx, className, style }) => {
+}> = ({ onPress, tx, className, style }) => {
   const { theme } = useTheme();
   const payload = usePayloadOfTx(tx.id);
   const asset = useAssetOfTx(tx.id);
@@ -23,12 +22,17 @@ const ActivityItem: React.FC<{
 
   const { value, to, decimals, tokenId } = formatTxData(payload, asset);
   return (
-    <Pressable style={style} className={className} onPress={onPress ? () => onPress(tx) : undefined}>
+    <Pressable style={style} className={className} onPress={() => onPress?.(tx)}>
       <View className={'flex flex-row justify-between w-full'}>
         <View>
           <View className="flex flex-row">
             <Text className="font-medium" style={{ color: status === 'failed' ? theme.colors.textSecondary : theme.colors.textPrimary }}>
               Send
+              {__DEV__ && (
+                <Text>
+                  --{tx.status}--{tx.id[0]}
+                </Text>
+              )}
             </Text>
             {status === 'pending' && (
               <View className="p-[5px]">
@@ -49,6 +53,6 @@ const ActivityItem: React.FC<{
       </View>
     </Pressable>
   );
-});
+};
 
 export default ActivityItem;

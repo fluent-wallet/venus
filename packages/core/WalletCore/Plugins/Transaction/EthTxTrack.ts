@@ -68,10 +68,13 @@ export class EthTxTrack {
   private _cleanup() {
     this._cleanupExecutedTimer();
     this._unexecutedSubscription?.unsubscribe();
+    this._unexecutedSubscription = null;
     this._cleanupConfirmedTimer();
     this._unconfirmedSubscription?.unsubscribe();
+    this._unconfirmedSubscription = null;
     this._cleanupFinalizedTimer();
     this._unfinalizedSubscription?.unsubscribe();
+    this._unfinalizedSubscription = null;
   }
 
   /**
