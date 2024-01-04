@@ -52,10 +52,10 @@ export class TxMethod {
           hash: params.txHash,
           status: TxStatus.PENDING,
           isLocal: true,
+          sendAt: params.extraParams.sendAt,
           txPayload,
           txExtra,
           asset,
-          blockNumber: params.extraParams.blockNumber,
         },
         true
       );

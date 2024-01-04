@@ -21,7 +21,7 @@ export class TxPayload extends Model {
   @text('storage_limit') storageLimit!: string | null; // for core space
   @text('data') data!: string | null;
   @text('value') value!: string | null;
-  @text('nonce') nonce!: string | null;
+  @text('nonce') nonce!: string;
   @text('chain_identification') chainId!: string | null;
   @text('epoch_height') epochHeight!: string | null; // for core space
   @children(TableName.Tx) txs!: Query<Tx>;

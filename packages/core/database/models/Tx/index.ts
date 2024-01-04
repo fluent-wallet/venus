@@ -7,7 +7,7 @@ import { type App } from '../App';
 import { type TxExtra } from '../TxExtra';
 import { type TxPayload } from '../TxPayload';
 import TableName from '../../TableName';
-import { Receipt, TxStatus } from './type';
+import { ExecutedStatus, Receipt, TxStatus } from './type';
 
 export class Tx extends Model {
   static table = TableName.Tx;
@@ -24,24 +24,21 @@ export class Tx extends Model {
   /** tx hash */
   @text('hash') hash!: string;
   @field('status') status!: TxStatus;
+  @field('executed_status') executedStatus?: ExecutedStatus | null;
   /** receipt as an object */
   @json('receipt', (json) => json) receipt?: Receipt | null;
-  @field('block_number') blockNumber?: string | null;
-  @text('block_hash') blockHash?: string | null;
-  /** chain switched */
-  @field('is_chain_switched') chainSwitched?: boolean | null;
-  /** for skipped check */
-  @field('skipped_checked') skippedChecked?: boolean | null;
   @readonly @date('created_at') createdAt!: Date;
-  /** first time pending timestamp */
-  @date('pending_at') pendingAt?: Date | null;
   /** tx execute timestamp */
   @date('executed_at') executedAt?: Date | null;
   /** basic error type/info */
   @text('err') err?: string | null;
   @field('is_local') isLocal?: boolean | null;
-  /** epoch/block where wallet resend tx */
-  @field('resend_at') resendAt?: string | null;
+  @date('send_at') sendAt!: Date;
+  @date('resend_at') resendAt?: Date | null;
+  @field('resend_count') resendCount?: number | null;
+  @field('polling_count') pollingCount?: number | null;
+  @field('confirmed_number') confirmedNumber?: number | null;
+  @field('is_temp_replaced') isTempReplaced?: boolean | null;
   /** optional, Relation<App | null> */
   @immutableRelation(TableName.App, 'app_id') app!: Relation<App>;
   /** optional, Relation<Asset | null> */
