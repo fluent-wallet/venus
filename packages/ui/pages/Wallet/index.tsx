@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { View, SafeAreaView, Pressable, RefreshControl, ScrollView, Image, type NativeSyntheticEvent, type NativeScrollEvent } from 'react-native';
+import { View, SafeAreaView, Pressable, RefreshControl, ScrollView, type NativeSyntheticEvent, type NativeScrollEvent } from 'react-native';
 import PagerView from 'react-native-pager-view';
 import { Text, useTheme, Card } from '@rneui/themed';
 import { useAtom } from 'jotai';
@@ -24,10 +24,8 @@ import VisibilityIcon from '@assets/icons/visibility.svg';
 import VisibilityOffIcon from '@assets/icons/visibility_off.svg';
 import TotalPriceVisibleAtom from '@hooks/useTotalPriceVisible';
 import AsteriskIcon from '@assets/icons/asterisk.svg';
-import Background, { BackgroundImage } from '@modules/Background';
-import { UserAddress } from './WalletHeader';
-import Config from "react-native-config";
-console.log(Config.APP_ENV)
+import Background from '@modules/Background';
+import WalletHeader, { UserAddress } from './WalletHeader';
 
 const MainButton: React.FC<{ onPress?: VoidFunction; disabled?: boolean; label?: string; icon?: React.ReactElement; _testID?: string }> = ({
   onPress,
@@ -52,6 +50,7 @@ const MainButton: React.FC<{ onPress?: VoidFunction; disabled?: boolean; label?:
   );
 };
 
+const h = statusBarHeight + 190;
 const Wallet: React.FC<{ navigation: StackNavigation }> = ({ navigation }) => {
   const { theme } = useTheme();
 
@@ -89,14 +88,17 @@ const Wallet: React.FC<{ navigation: StackNavigation }> = ({ navigation }) => {
 
   const [inSticky, setInSticky] = useState(false);
   const handleScroll = useCallback((evt: NativeSyntheticEvent<NativeScrollEvent>) => {
-    const yOffset = evt.nativeEvent.contentOffset.y;
-    setInSticky(yOffset >= statusBarHeight + 248);
+    setInSticky(evt.nativeEvent.contentOffset.y >= h);
   }, []);
 
   return (
-    <SafeAreaView className="flex-1" style={{ backgroundColor: theme.colors.pureBlackAndWight }}>
+    <SafeAreaView className="flex-1" style={{ paddingTop: statusBarHeight + 48 }}>
+      <WalletHeader
+        className="absolute top-0 left-0 z-[10] transition-colors"
+        style={{ backgroundColor: inSticky ? theme.colors.pureBlackAndWight : 'transparent' }}
+      />
       <NoNetwork />
-      <View className="absolute left-0 top-0 w-full h-[330px]  z-0 pointer-events-none">
+      <View className="absolute left-0  w-full z-0 pointer-events-none" style={{ top: -statusBarHeight, height: 348 + statusBarHeight }}>
         <Background contentClassName="w-full h-full" />
       </View>
       <ScrollView
@@ -117,7 +119,7 @@ const Wallet: React.FC<{ navigation: StackNavigation }> = ({ navigation }) => {
           />
         }
       >
-        <View style={{ paddingTop: statusBarHeight + 48, paddingHorizontal: 24 }}>
+        <View style={{ paddingHorizontal: 24 }}>
           <View className="flex flex-row items-center justify-center mb-[3px]">
             <SIMCardIcon color={theme.colors.surfaceBrand} width={24} height={24} />
             <Text numberOfLines={1} className="leading-normal" style={{ color: theme.colors.textBrand, maxWidth: 170 }}>
@@ -174,10 +176,7 @@ const Wallet: React.FC<{ navigation: StackNavigation }> = ({ navigation }) => {
           </View>
         </View>
 
-        <View
-          className="flex flex-row px-6 gap-4"
-          style={{ backgroundColor: inSticky ? theme.colors.pureBlackAndWight : 'transparent', paddingTop: inSticky ? statusBarHeight + 48 : 0 }}
-        >
+        <View className="flex flex-row px-6 gap-4" style={{ backgroundColor: inSticky ? theme.colors.pureBlackAndWight : 'transparent' }}>
           {Array.from(
             currentNetwork && (currentNetwork.chainId === CFX_ESPACE_MAINNET_CHAINID || currentNetwork.chainId === CFX_ESPACE_TESTNET_CHAINID)
               ? ['Tokens', 'NFTs']
@@ -197,12 +196,12 @@ const Wallet: React.FC<{ navigation: StackNavigation }> = ({ navigation }) => {
             </Pressable>
           ))}
         </View>
-        <Card.Divider className="mb-[0px]" />
+        <Card.Divider className="mb-[0px]" color={theme.colors.borderPrimary} />
         <PagerView initialPage={tabIndex} ref={tabRef} onPageSelected={(e) => handlePageSelected(e.nativeEvent.position)}>
-          <View className="w-full h-full" key="0">
+          <View className="w-full h-full flex-1 pb-2 pt-4 px-[16px]" style={{ backgroundColor: theme.colors.surfacePrimary }} key="0">
             <TokenList showReceive />
           </View>
-          <View className="w-full h-full pb-2" key="1">
+          <View className="w-full h-full flex-1 pb-2 pt-4 px-[16px]" style={{ backgroundColor: theme.colors.surfacePrimary }} key="1">
             <ESpaceNFTList />
           </View>
         </PagerView>

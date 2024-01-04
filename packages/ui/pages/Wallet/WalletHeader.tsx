@@ -1,4 +1,6 @@
+import React, { type ComponentProps } from 'react';
 import { Pressable, TouchableHighlight, View } from 'react-native';
+import clsx from 'clsx';
 import Clipboard from '@react-native-clipboard/clipboard';
 import SwitchCurrentNetwork from '@modules/SwitchCurrentNetwork';
 import { useCurrentAddressValue } from '@core/WalletCore/Plugins/ReactInject';
@@ -55,6 +57,15 @@ const SwitchCurrentAddress: React.FC = () => {
     </View>
   );
 };
+
+const WalletHeader: React.FC<ComponentProps<typeof View>> = ({ className, ...props}) => (
+  <View className={clsx("flex flex-row items-center justify-between h-[80px] w-full", className)} {...props}>
+    <SwitchCurrentAddress />
+    <SwitchCurrentNetwork />
+  </View>
+);
+
+export default WalletHeader;
 
 export const getWalletHeaderOptions = () =>
   ({

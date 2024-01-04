@@ -1,9 +1,8 @@
 /* eslint-disable @typescript-eslint/no-non-null-asserted-optional-chain */
 import { useCallback, useState, useMemo } from 'react';
-import { Text, TouchableHighlight, View, type StyleProp, type ViewStyle } from 'react-native';
+import { Text, TouchableHighlight, View, Pressable, ActivityIndicator, type StyleProp, type ViewStyle } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import clsx from 'clsx';
-import { Button } from '@rneui/base';
 import { useTheme, Card, Icon, ListItem } from '@rneui/themed';
 import { useVaultOfGroup, useAccountsOfGroup, useCurrentAccount } from '@core/WalletCore/Plugins/ReactInject';
 import VaultType from '@core/database/models/Vault/VaultType';
@@ -92,9 +91,14 @@ const AccountGroupItem: React.FC<{
             containerStyle={{ padding: 0, margin: 0, height: 24, backgroundColor: 'transparent' }}
             style={{ paddingHorizontal: 16 }}
             content={
-              <Text numberOfLines={1} className="flex-1 text-[20px] leading-[24px] font-bold" style={{ color: theme.colors.textPrimary }}>
-                {accountGroup.nickname}
-              </Text>
+              <View className="flex-1 flex flex-row ">
+                <Text numberOfLines={1} className="leading-[24px] text-[20px] font-bold" style={{ color: theme.colors.textPrimary }}>
+                  {accountGroup.nickname}
+                </Text>
+                <View className="ml-auto rotate-[-90deg]">
+                  <Icon name="keyboard-arrow-down" color={theme.colors.textPrimary} />
+                </View>
+              </View>
             }
           >
             <Card.Divider className="mx-[16px] mt-[16px] mb-[8px]" />
@@ -123,17 +127,18 @@ const AccountGroupItem: React.FC<{
               vault.type === 'hardware') &&
               enableAddNew && (
                 <>
-                  <Card.Divider className="mx-[16px] mt-[16px] mb-[12px]" />
-                  <Button
-                    titleStyle={{ fontSize: 16, fontWeight: '500', color: theme.colors.textPrimary }}
-                    size="sm"
-                    type="clear"
-                    onPress={() => addAccount()}
-                    loading={inAsync}
-                  >
-                    <Icon name="add" color={theme.colors.textPrimary} size={16} className="mr-[5px]" />
-                    <Text>Add Account</Text>
-                  </Button>
+                  <Card.Divider className="mx-[16px] mt-[16px] mb-[0px]" />
+                  <Pressable onPress={() => addAccount()} disabled={inAsync}>
+                    <View className="flex flex-row items-center justify-center h-[36px] pt-[8px] w-full rounded-[4px] overflow-hidden">
+                      {inAsync && <ActivityIndicator size={22} color={theme.colors.surfaceBrand} />}
+                      {!inAsync && (
+                        <>
+                          <Icon name="add" color={theme.colors.textPrimary} size={16} className="mr-[5px]" />
+                          <Text style={{ fontSize: 14, color: theme.colors.textPrimary }}>Add Account</Text>
+                        </>
+                      )}
+                    </View>
+                  </Pressable>
                 </>
               )}
           </ListItem.Accordion>

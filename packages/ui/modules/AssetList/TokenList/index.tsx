@@ -23,7 +23,7 @@ const TokenList: React.FC<{
 
   if (tokens === null) {
     return (
-      <View className="flex-1 p-[15px]">
+      <View className="flex-1">
         <SkeletonList length={skeleton} />
       </View>
     );
@@ -31,34 +31,32 @@ const TokenList: React.FC<{
 
   if (empty && showReceive) {
     return (
-      <View className="flex-1 p-[15px]">
+      <View className="flex-1">
         <ReceiveFunds />
       </View>
     );
   }
 
   return (
-    <View className="flex-1 pb-2 pt-4" style={{ backgroundColor: theme.colors.pureBlackAndWight }}>
-      <RenderList
-        estimatedItemSize={70}
-        data={tokens}
-        renderItem={({ item, index }) => {
-          return (
-            <View
-              className={clsx(
-                'relative flex flex-col justify-center items-center h-[78px] mx-[16px] px-[10px] border-l-[1px] border-r-[1px] overflow-hidden',
-                index === 0 && 'rounded-t-[10px] border-t-[1px]',
-                index === tokens.length - 1 && 'rounded-b-[10px] border-b-[1px]'
-              )}
-              style={{ backgroundColor: theme.colors.pureBlackAndWight, borderColor: theme.colors.borderSecondary }}
-            >
-              <TokenItem hidePrice={hidePrice} data={item} onPress={onPress ? onPress : undefined} />
-              {index !== 0 && <View className="absolute top-0 left-0 w-[120%] h-[1px]" style={{ backgroundColor: theme.colors.borderSecondary }} />}
-            </View>
-          );
-        }}
-      />
-    </View>
+    <RenderList
+      estimatedItemSize={70}
+      data={tokens}
+      renderItem={({ item, index }) => {
+        return (
+          <View
+            className={clsx(
+              'relative flex flex-col justify-center items-center h-[72px] px-[10px] border-l-[1px] border-r-[1px] overflow-hidden',
+              index === 0 && 'rounded-t-[10px] border-t-[1px]',
+              index === tokens.length - 1 && 'rounded-b-[10px] border-b-[1px]'
+            )}
+            style={{ backgroundColor: theme.colors.pureBlackAndWight, borderColor: theme.colors.borderSecondary }}
+          >
+            <TokenItem hidePrice={hidePrice} data={item} onPress={onPress ? onPress : undefined} />
+            {index !== 0 && <View className="absolute top-0 left-0 w-[120%] h-[1px]" style={{ backgroundColor: theme.colors.borderSecondary }} />}
+          </View>
+        );
+      }}
+    />
   );
 };
 

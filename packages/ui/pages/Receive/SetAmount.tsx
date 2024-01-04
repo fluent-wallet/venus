@@ -100,8 +100,8 @@ const SetAmount: React.FC<NativeStackScreenProps<RootStackList, 'SetAmount'>> = 
         <View className="flex">
           <Pressable
             testID="selectToken"
-            className="flex flex-row items-center mx-auto px-3 py-2 min-w-[196px]  rounded-[40px] mt-2"
-            style={{ backgroundColor: theme.colors.surfaceThird }}
+            className="flex flex-row items-center mx-auto px-3 py-2 min-w-[196px] rounded-[40px] border-[1px] mt-2"
+            style={{ backgroundColor: theme.colors.pureBlackAndWight, borderColor: theme.colors.textBrand,  }}
             onPress={handleSelectToken}
           >
             <View className="flex flex-row items-center">

@@ -14,7 +14,7 @@ const SafetyGuidelines = ({ backupType }: { backupType: 'Seed Phrase' | 'Private
   const guidelines = backupType === 'Seed Phrase' ? hierarchicalDeterministicGuidelines : privateKeyGuidelines;
 
   return (
-    <View>
+    <View className='mb-[16px]'>
       {guidelines.map((value) => (
         <View key={value} className="flex flex-row items-start mb-2">
           <CheckIcon color={theme.colors.surfaceBrand} width={26} height={24} />
