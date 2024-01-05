@@ -56,7 +56,7 @@ import WalletIcon from '@assets/icons/wallet.svg';
 import SettingsIcon from '@assets/icons/settings.svg';
 import ArrowLeft from '@assets/icons/arrow-left.svg';
 import ScanQRCode from '@pages/ScanQRCode';
-
+import BootSplash from "react-native-bootsplash";
 const Stack = createNativeStackNavigator<RootStackList>();
 const BottomTabStack = createBottomTabNavigator();
 
@@ -167,7 +167,7 @@ const StackNavigator = () => {
 const Router: React.FC = () => {
   const { theme } = useTheme();
   return (
-    <NavigationContainer theme={{ ...DefaultTheme, colors: { ...DefaultTheme.colors, background: theme.colors.surfacePrimary } }}>
+    <NavigationContainer onReady={BootSplash.hide} theme={{ ...DefaultTheme, colors: { ...DefaultTheme.colors, background: theme.colors.surfacePrimary } }}>
       <JotaiNexus />
       <StackNavigator />
     </NavigationContainer>
