@@ -91,10 +91,11 @@ const BSIMSendTX: React.FC<Props> = ({ onSend, txEvent }) => {
       });
     }, [])
   );
-
   useFocusEffect(
     useCallback(() => {
       const subscription = txEvent.subscribe((event) => {
+        console.log(event, "get env")
+        
         switch (event.type) {
           case TxEventTypesName.BSIM_VERIFY_START:
             setState(BSIM_SIGN_STATUS.SIGNING);

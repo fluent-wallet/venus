@@ -118,7 +118,13 @@ const SendTo: React.FC<{ navigation: StackNavigation; route: RouteProp<RootStack
         if (nativeBalance.error) {
           return setRpcError({ err: true, msg: nativeBalance.error.message || '' });
         }
-        const balance = nativeBalance.result;
+        const balance = BigInt(nativeBalance.result);
+        
+        if (balance === BigInt(0)) {
+          setMaxBtnLoading(false);
+          return setValue('0');
+        }
+
         const gas = await getGas(BigInt(balance));
         if (!gas) {
           return setMaxBtnLoading(false);

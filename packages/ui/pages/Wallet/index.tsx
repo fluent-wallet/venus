@@ -27,6 +27,8 @@ import TotalPriceVisibleAtom from '@hooks/useTotalPriceVisible';
 import AsteriskIcon from '@assets/icons/asterisk.svg';
 import Background from '@modules/Background';
 import WalletHeader, { UserAddress } from './WalletHeader';
+import { resetTransaction } from '@core/WalletCore/Plugins/ReactInject/data/useTransaction';
+import { useFocusEffect } from '@react-navigation/native';
 
 const MainButton: React.FC<{ onPress?: VoidFunction; disabled?: boolean; label?: string; icon?: React.ReactElement; _testID?: string }> = ({
   onPress,
@@ -62,6 +64,7 @@ const Wallet: React.FC<{ navigation: StackNavigation }> = ({ navigation }) => {
   const [refreshing, setRefreshing] = useState(false);
   const [tabIndex, setTabIndex] = useState(0);
   const tabRef = useRef<PagerView>(null);
+  const [, resetTX] = useAtom(resetTransaction);
 
   const handleTabChange = (index: number) => {
     if (tabRef.current) {
@@ -91,6 +94,11 @@ const Wallet: React.FC<{ navigation: StackNavigation }> = ({ navigation }) => {
   const handleScroll = useCallback((evt: NativeSyntheticEvent<NativeScrollEvent>) => {
     setInSticky(evt.nativeEvent.contentOffset.y >= h);
   }, []);
+  useFocusEffect(
+    useCallback(() => {
+      resetTX();
+    }, [resetTX])
+  );
 
   const tabs = useMemo(
     () =>
@@ -99,7 +107,6 @@ const Wallet: React.FC<{ navigation: StackNavigation }> = ({ navigation }) => {
         : (['Tokens'] as const),
     [currentNetwork]
   );
-
   return (
     <SafeAreaView className="flex-1" style={{ paddingTop: statusBarHeight + 48 }}>
       <WalletHeader
