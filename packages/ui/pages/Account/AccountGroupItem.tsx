@@ -89,15 +89,17 @@ const AccountGroupItem: React.FC<{
               setExpanded(!expanded);
             }}
             containerStyle={{ padding: 0, margin: 0, height: 24, backgroundColor: 'transparent' }}
-            style={{ paddingHorizontal: 16 }}
+            style={{ paddingLeft: 16, paddingRight: !enableExpanded ? 0 : 16 }}
             content={
               <View className="flex-1 flex flex-row ">
                 <Text numberOfLines={1} className="leading-[24px] text-[20px] font-bold" style={{ color: theme.colors.textPrimary }}>
                   {accountGroup.nickname}
                 </Text>
-                <View className="ml-auto rotate-[-90deg]">
-                  <Icon name="keyboard-arrow-down" color={theme.colors.textPrimary} />
-                </View>
+                {!enableExpanded && (
+                  <View className="ml-auto rotate-[-90deg]">
+                    <Icon name="keyboard-arrow-down" color={theme.colors.textPrimary} />
+                  </View>
+                )}
               </View>
             }
           >
