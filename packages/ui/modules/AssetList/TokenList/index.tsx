@@ -20,7 +20,7 @@ const TokenList: React.FC<{
   const tokens = useAssetsTokenList();
   // const inFetch = useAssetsInFetch();
   const empty = !tokens || tokens.every((v) => BigInt(v?.balance || 0) <= 0);
-
+  
   if (tokens === null) {
     return (
       <View className="flex-1">

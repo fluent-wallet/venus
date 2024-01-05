@@ -136,7 +136,7 @@ const ESpaceNFTList = forwardRef<ESpaceNFTListMethods, { onSelectNftItem?: (nft:
 
     if (nfts === null) {
       return (
-        <View className="flex-1 px-6 py-4">
+        <View className="flex-1">
           <SkeletonList length={6} />
         </View>
       );
@@ -144,7 +144,7 @@ const ESpaceNFTList = forwardRef<ESpaceNFTListMethods, { onSelectNftItem?: (nft:
 
     if (nfts.length === 0) {
       return (
-        <View className="flex-1 flex flex-col items-center pt-[44px]">
+        <View className="flex-1 flex flex-col items-center pt-[34px]">
           <NoDataIcon />
           <Text className="mt-[2px] text-[14px] leading-[22px] opacity-40" style={{ color: theme.colors.textBrand }}>
             No NFT

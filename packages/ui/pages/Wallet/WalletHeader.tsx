@@ -16,23 +16,24 @@ import { showMessage } from 'react-native-flash-message';
 export const UserAddress: React.FC = () => {
   const { theme } = useTheme();
   const currentAddressValue = useCurrentAddressValue();
-  if (!currentAddressValue) return null;
+
   return (
     <TouchableHighlight
       testID="copyAddress"
       onPress={() => {
-        Clipboard.setString(currentAddressValue);
+        Clipboard.setString(currentAddressValue ?? '');
         showMessage({
           type: 'success',
           message: 'Copied',
         });
       }}
-      className="rounded-full overflow-hidden px-3"
+      disabled={!currentAddressValue}
+      className={clsx('rounded-full overflow-hidden px-3', !currentAddressValue && 'opacity-0')}
       underlayColor={theme.colors.underlayColor}
     >
       <View className="flex flex-row rounded-full items-center">
         <Text className="text-[14px]" style={{ color: theme.colors.textSecondary }}>
-          {shortenAddress(currentAddressValue)}
+          {shortenAddress(currentAddressValue) ?? '0x'}
         </Text>
         <View className="ml-[3px]">
           <CopyAll color={theme.colors.textSecondary} width={16} height={16} />
@@ -58,8 +59,8 @@ const SwitchCurrentAddress: React.FC = () => {
   );
 };
 
-const WalletHeader: React.FC<ComponentProps<typeof View>> = ({ className, ...props}) => (
-  <View className={clsx("flex flex-row items-center justify-between h-[80px] w-full", className)} {...props}>
+const WalletHeader: React.FC<ComponentProps<typeof View>> = ({ className, ...props }) => (
+  <View className={clsx('flex flex-row items-center justify-between h-[80px] w-full', className)} {...props}>
     <SwitchCurrentAddress />
     <SwitchCurrentNetwork />
   </View>
