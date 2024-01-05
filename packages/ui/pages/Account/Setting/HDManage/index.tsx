@@ -30,8 +30,9 @@ const HDManage: React.FC<NativeStackScreenProps<RootStackList, 'HDManage'>> = ({
   const currentHdPath = useCurrentHdPath();
 
   const [pageIndex, setPageIndex] = useState(0);
+  const [_, forceAuth] = useState(false);
   const [mnemonic, setMnemonic] = useState('');
-  const [inCalc, setInCalc] = useState(true);
+  const [inCalc, setInCalc] = useState<string | boolean>(true);
   const [inNext, setInNext] = useState(false);
   const [pageAccounts, setPageAccounts] = useState<Array<{ hexAddress: string; index: number }>>([]);
   const [chooseAccounts, setChooseAccounts] = useState<Array<{ index: number }>>([]);
@@ -48,57 +49,63 @@ const HDManage: React.FC<NativeStackScreenProps<RootStackList, 'HDManage'>> = ({
 
   useEffect(() => {
     const calcAccounts = async () => {
-      if (!currentHdPath?.value) return;
-      setInCalc(true);
-      await new Promise((resolve) => setTimeout(resolve, 10));
-      if (vault.type === VaultType.HierarchicalDeterministic && !mnemonic) {
-        setMnemonic(await methods.getMnemonicOfVault(vault));
-        return;
-      }
+      try {
+        if (!currentHdPath?.value) return;
+        setInCalc(true);
+        await new Promise((resolve) => setTimeout(resolve, 10));
+        console.log(1);
+        if (vault.type === VaultType.HierarchicalDeterministic && !mnemonic) {
+          setMnemonic(await methods.getMnemonicOfVault(vault));
+          return;
+        }
+        console.log(2);
+        let accountsList: Awaited<ReturnType<typeof plugins.BSIM.getBIMList>> = [];
+        if (vault.type === 'BSIM') {
+          await plugins.BSIM.createBSIMAccountToIndex((pageIndex + 1) * countPerPage);
+          accountsList = await plugins.BSIM.getBIMList();
+        }
 
-      let accountsList: Awaited<ReturnType<typeof plugins.BSIM.getBIMList>> = [];
-      if (vault.type === 'BSIM') {
-        await plugins.BSIM.createBSIMAccountToIndex((pageIndex + 1) * countPerPage);
-        accountsList = await plugins.BSIM.getBIMList();
-      }
+        const newPageAccounts = await Promise.all(
+          Array.from({ length: countPerPage }, (_, i) => (vault.type === VaultType.BSIM ? i + 1 : i)).map(async (index) => {
+            // BSIM index is  start from 1 other start from 0
+            const targetAlreadyInAccounts = accounts?.find((account) => account.index === pageIndex * countPerPage + index);
+            if (targetAlreadyInAccounts) return { hexAddress: (await targetAlreadyInAccounts.currentNetworkAddress).hex, index: targetAlreadyInAccounts.index };
+            if (vault.type === VaultType.BSIM) {
+              const targetAlreadyInList = accountsList?.find((account) => account.index === pageIndex * countPerPage + index);
+              if (targetAlreadyInList) return { hexAddress: targetAlreadyInList.hexAddress, index: targetAlreadyInList.index };
 
-      const newPageAccounts = await Promise.all(
-        Array.from({ length: countPerPage }, (_, i) => (vault.type === VaultType.BSIM ? i + 1 : i)).map(async (index) => {
-          // BSIM index is  start from 1 other start from 0
-          const targetAlreadyInAccounts = accounts?.find((account) => account.index === pageIndex * countPerPage + index);
-          if (targetAlreadyInAccounts) return { hexAddress: (await targetAlreadyInAccounts.currentNetworkAddress).hex, index: targetAlreadyInAccounts.index };
-          if (vault.type === VaultType.BSIM) {
-            const targetAlreadyInList = accountsList?.find((account) => account.index === pageIndex * countPerPage + index);
-            if (targetAlreadyInList) return { hexAddress: targetAlreadyInList.hexAddress, index: targetAlreadyInList.index };
-
-            // The code shouldn't have been able to get here.
-            // const { hexAddress, index: newIndex } = await plugins.BSIM.createNewBSIMAccount();
-            // if (newIndex === pageIndex * countPerPage + index) {
-            //   return { hexAddress, index: newIndex };
-            // }
-            throw new Error('????');
-          } else {
-            return getNthAccountOfHDKey({ mnemonic, hdPath: currentHdPath.value, nth: pageIndex * countPerPage + index });
-          }
-        })
-      );
-
-      setPageAccounts(
-        newPageAccounts
-          .filter(function isDefined<T>(argument: T | undefined): argument is T {
-            return typeof argument !== 'undefined';
+              // The code shouldn't have been able to get here.
+              // const { hexAddress, index: newIndex } = await plugins.BSIM.createNewBSIMAccount();
+              // if (newIndex === pageIndex * countPerPage + index) {
+              //   return { hexAddress, index: newIndex };
+              // }
+              throw new Error('????');
+            } else {
+              return getNthAccountOfHDKey({ mnemonic, hdPath: currentHdPath.value, nth: pageIndex * countPerPage + index });
+            }
           })
-          .map((item) => ({
-            hexAddress: item.hexAddress,
-            index: item.index,
-          }))
-      );
-      setInCalc(false);
+        );
+
+        setPageAccounts(
+          newPageAccounts
+            .filter(function isDefined<T>(argument: T | undefined): argument is T {
+              return typeof argument !== 'undefined';
+            })
+            .map((item) => ({
+              hexAddress: item.hexAddress,
+              index: item.index,
+            }))
+        );
+        setInCalc(false);
+      } catch (err) {
+        console.log('errr');
+        setInCalc(String(err));
+      }
     };
 
     calcAccounts();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [pageIndex, mnemonic, currentHdPath?.value]);
+  }, [pageIndex, mnemonic, currentHdPath?.value, _]);
 
   const handleClickNext = async () => {
     setInNext(true);
@@ -147,8 +154,24 @@ const HDManage: React.FC<NativeStackScreenProps<RootStackList, 'HDManage'>> = ({
       </View>
       <View className="mt-[16px] relative py-[8px] min-h-[284px] rounded-[8px] overflow-hidden" style={{ backgroundColor: theme.colors.surfaceCard }}>
         {inCalc && (
-          <View className="absolute left-0 top-0 w-full h-full bg-transparent flex justify-center items-center">
-            <ActivityIndicator size={40} color={theme.colors.surfaceBrand} />
+          <View className="absolute left-0 top-0 w-full h-full px-[16px] bg-transparent flex justify-center items-center">
+            {inCalc === true && <ActivityIndicator size={40} color={theme.colors.surfaceBrand} />}
+            {typeof inCalc === 'string' && (
+              <>
+                {plugins.Authentication.containsCancel(String(inCalc)) ? (
+                  <Pressable onPress={() => forceAuth((pre) => !pre)}>
+                    <Text className="text-center text-[16px]" style={{ color: theme.colors.textPrimary }}>
+                      You have not completed the security verification,{'\n'}
+                      <Text className="underline">try again</Text>.
+                    </Text>
+                  </Pressable>
+                ) : (
+                  <Text className="text-[16px]" style={{ color: theme.colors.error }}>
+                    {inCalc}
+                  </Text>
+                )}
+              </>
+            )}
           </View>
         )}
         {pageAccounts.map((account, index) => {

@@ -60,7 +60,7 @@ const SwitchCurrentAddress: React.FC = () => {
 };
 
 const WalletHeader: React.FC<ComponentProps<typeof View>> = ({ className, ...props }) => (
-  <View className={clsx('flex flex-row items-center justify-between h-[80px] w-full', className)} {...props}>
+  <View className={clsx('flex flex-row items-center justify-between h-[44px] w-full', className)} {...props}>
     <SwitchCurrentAddress />
     <SwitchCurrentNetwork />
   </View>

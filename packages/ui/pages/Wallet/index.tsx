@@ -1,5 +1,5 @@
-import React, { useCallback, useEffect, useRef, useState, useMemo, memo } from 'react';
-import { View, SafeAreaView, Pressable, RefreshControl, ScrollView, type NativeSyntheticEvent, type NativeScrollEvent } from 'react-native';
+import React, { useCallback, useEffect, useRef, useState, useMemo } from 'react';
+import { View, SafeAreaView, Pressable, RefreshControl, ScrollView, StatusBar, type NativeSyntheticEvent, type NativeScrollEvent } from 'react-native';
 import PagerView from 'react-native-pager-view';
 import { Text, useTheme, Card } from '@rneui/themed';
 import clsx from 'clsx';
@@ -53,7 +53,7 @@ const MainButton: React.FC<{ onPress?: VoidFunction; disabled?: boolean; label?:
   );
 };
 
-const h = statusBarHeight + 190;
+const h = statusBarHeight + 192;
 const Wallet: React.FC<{ navigation: StackNavigation }> = ({ navigation }) => {
   const { theme } = useTheme();
 
@@ -108,13 +108,14 @@ const Wallet: React.FC<{ navigation: StackNavigation }> = ({ navigation }) => {
     [currentNetwork]
   );
   return (
-    <SafeAreaView className="flex-1" style={{ paddingTop: statusBarHeight + 48 }}>
+    <SafeAreaView className="flex-1" style={{ paddingTop: statusBarHeight + 44 }}>
+      <StatusBar backgroundColor={inSticky ? theme.colors.pureBlackAndWight : 'transparent'} />
       <WalletHeader
         className="absolute top-0 left-0 z-[10] transition-colors"
-        style={{ backgroundColor: inSticky ? theme.colors.pureBlackAndWight : 'transparent' }}
+        style={{ backgroundColor: inSticky ? theme.colors.pureBlackAndWight : 'transparent', top: statusBarHeight }}
       />
       <NoNetwork />
-      <View className="absolute left-0  w-full z-0 pointer-events-none" style={{ top: -statusBarHeight, height: 348 + statusBarHeight }}>
+      <View className="absolute left-0  w-full z-0 pointer-events-none" style={{ top: -statusBarHeight, height: 330 + statusBarHeight }}>
         <Background contentClassName="w-full h-full" />
       </View>
       <ScrollView
