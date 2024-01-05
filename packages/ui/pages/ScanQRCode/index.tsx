@@ -167,7 +167,7 @@ const ScanQRCode: React.FC<{ navigation: StackNavigation; route: RouteProp<RootS
       >
         <View className="p-5 w-[270px]">
           <Text className="text-xl font-bold leading-tight mb-5">Wallet Requires Access</Text>
-          <Text>Please allow BSIM wallet to use camera permissions to scan the QR code.</Text>
+          <Text>Please allow SwiftShield wallet to use camera permissions to scan the QR code.</Text>
           <View className="flex flex-row py-4">
             <View className="flex-1 mr-2">
               <Button
