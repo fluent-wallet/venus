@@ -7,6 +7,8 @@ on:
   push:
     branches:
       - qa
+    tags:
+      - "vqa*"
 jobs:
   android-build:
     name: Android Build

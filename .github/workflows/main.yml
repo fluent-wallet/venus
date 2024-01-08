@@ -7,6 +7,9 @@ on:
   push:
     branches:
       - main
+    tags:
+      - 'v*'
+
 jobs:
   android-build:
     name: Android Build
@@ -15,7 +18,7 @@ jobs:
     steps:
       - name: Check out Git repository
         uses: actions/checkout@v4
-        with: 
+        with:
           ref: main
 
       - name: Set up Node.js
@@ -51,5 +54,5 @@ jobs:
       - name: Release
         uses: softprops/action-gh-release@v1
         with:
-            files: |
-             ./android/app/build/outputs/apk/prod/release/app-prod-release.apk
+          files: |
+            ./android/app/build/outputs/apk/prod/release/app-prod-release.apk
