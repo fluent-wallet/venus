@@ -5,10 +5,8 @@ permissions:
 
 on:
   push:
-    branches:
-      - qa
     tags:
-      - "vqa*"
+      - "v*-qa"
 jobs:
   android-build:
     name: Android Build
