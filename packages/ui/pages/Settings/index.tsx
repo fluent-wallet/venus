@@ -15,7 +15,7 @@ const Settings: React.FC<{ navigation: NavigationProp<any> }> = ({ navigation })
   const [visibleResetWallet, setVisibleResetWallet] = useState(false);
 
   return (
-    <SafeAreaView className="flex-1 " style={{ backgroundColor: theme.colors.surfacePrimary, paddingTop: statusBarHeight + 44 }}>
+    <SafeAreaView className="flex-1 " style={{ paddingTop: statusBarHeight + 44 }}>
       <View className="flex-1 flex flex-col gap-[12px] px-[24px]">
         <Text className="mb-[4px] text-[30px] leading-[38px] font-bold" style={{ color: theme.colors.textBrand }}>
           Settings

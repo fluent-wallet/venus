@@ -6,10 +6,7 @@ permissions:
 on:
   push:
     tags:
-      - 'v*'
-    tags-ignore:
-      - 'v*-qa*'
-
+      - "v*-qa"
 jobs:
   android-build:
     name: Android Build
@@ -18,8 +15,8 @@ jobs:
     steps:
       - name: Check out Git repository
         uses: actions/checkout@v4
-        with:
-          ref: main
+        with: 
+          ref: qa
 
       - name: Set up Node.js
         uses: actions/setup-node@v4
@@ -46,13 +43,13 @@ jobs:
             ${{ runner.os }}-gradle-
       - name: Make Gradlew Executable
         run: cd android && chmod +x ./gradlew
-      - name: Build Android Release
+      - name: Build Android qa Release
         run: |
-          echo APP_ENV=prod > .env
-          cd android && ./gradlew app:assembleProdRelease && cd ..
+          echo APP_ENV=qa > .env
+          cd android && ./gradlew app:assembleQaRelease && cd ..
 
       - name: Release
         uses: softprops/action-gh-release@v1
         with:
-          files: |
-            ./android/app/build/outputs/apk/prod/release/app-prod-release.apk
+            files: |
+             ./android/app/build/outputs/apk/qa/release/app-qa-release.apk

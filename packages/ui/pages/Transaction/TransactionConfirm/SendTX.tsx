@@ -35,14 +35,14 @@ export const STATUS_VALUES: Record<
 > = {
   [BSIM_SIGN_STATUS.NOT_HAVE_BSIM]: {
     title: 'Sign using BSIM card',
-    context: 'The BSIM page will be call up, enter your BPIN code to continue.',
+    context: 'The BSIM will call up the SIM Toolkit page, enter your BPIN code to continue.',
     showButton: true,
     buttonContext: 'Please insert BSIM card',
     showCloseIcon: true,
   },
   [BSIM_SIGN_STATUS.INIT]: {
     title: 'Sign using BSIM card',
-    context: 'The BSIM page will be call up, enter your BPIN code to continue.',
+    context: 'The BSIM will call up the SIM Toolkit page, enter your BPIN code to continue.',
     showButton: true,
     buttonContext: 'Begin signing process',
     showCloseIcon: true,
@@ -91,10 +91,11 @@ const BSIMSendTX: React.FC<Props> = ({ onSend, txEvent }) => {
       });
     }, [])
   );
-
   useFocusEffect(
     useCallback(() => {
       const subscription = txEvent.subscribe((event) => {
+        console.log(event, "get env")
+        
         switch (event.type) {
           case TxEventTypesName.BSIM_VERIFY_START:
             setState(BSIM_SIGN_STATUS.SIGNING);

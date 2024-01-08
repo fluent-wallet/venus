@@ -1,19 +1,22 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { View, SafeAreaView, Pressable, RefreshControl, ScrollView, Image, type NativeSyntheticEvent, type NativeScrollEvent } from 'react-native';
+import React, { useCallback, useEffect, useRef, useState, useMemo } from 'react';
+import { View, SafeAreaView, Pressable, RefreshControl, ScrollView, StatusBar, type NativeSyntheticEvent, type NativeScrollEvent } from 'react-native';
 import PagerView from 'react-native-pager-view';
 import { Text, useTheme, Card } from '@rneui/themed';
+import { useFocusEffect } from '@react-navigation/native';
+import clsx from 'clsx';
 import { useAtom } from 'jotai';
 import { statusBarHeight } from '@utils/deviceInfo';
+import { useCurrentAccount, useCurrentNetwork, useAssetsTotalPriceValue } from '@core/WalletCore/Plugins/ReactInject';
+import { CFX_ESPACE_MAINNET_CHAINID, CFX_ESPACE_TESTNET_CHAINID } from '@core/consts/network';
+import plugins from '@core/WalletCore/Plugins';
+import { resetTransaction } from '@core/WalletCore/Plugins/ReactInject/data/useTransaction';
 import { ReceiveAddressStackName, ReceiveStackName, type StackNavigation } from '@router/configs';
-import TokenList from '@modules/AssetList/TokenList';
+import { updateNFTDetail } from '@modules/AssetList/ESpaceNFTList/fetch';
+import TokenList, { TempInitSkeleton } from '@modules/AssetList/TokenList';
 import ESpaceNFTList from '@modules/AssetList/ESpaceNFTList';
 import ActivityList from '@modules/ActivityList';
 import NoNetwork from '@modules/NoNetwork';
 import Skeleton from '@components/Skeleton';
-import { useCurrentAccount, useCurrentNetwork, useAssetsTotalPriceValue } from '@core/WalletCore/Plugins/ReactInject';
-import { CFX_ESPACE_MAINNET_CHAINID, CFX_ESPACE_TESTNET_CHAINID } from '@core/consts/network';
-import plugins from '@core/WalletCore/Plugins';
-import { updateNFTDetail } from '@modules/AssetList/ESpaceNFTList/fetch';
 import SendIcon from '@assets/icons/send.svg';
 import ReceiveIcon from '@assets/icons/receive.svg';
 import BuyIcon from '@assets/icons/buy.svg';
@@ -24,10 +27,8 @@ import VisibilityIcon from '@assets/icons/visibility.svg';
 import VisibilityOffIcon from '@assets/icons/visibility_off.svg';
 import TotalPriceVisibleAtom from '@hooks/useTotalPriceVisible';
 import AsteriskIcon from '@assets/icons/asterisk.svg';
-import Background, { BackgroundImage } from '@modules/Background';
-import { UserAddress } from './WalletHeader';
-import Config from "react-native-config";
-console.log(Config.APP_ENV)
+import Background from '@modules/Background';
+import WalletHeader, { UserAddress } from './WalletHeader';
 
 const MainButton: React.FC<{ onPress?: VoidFunction; disabled?: boolean; label?: string; icon?: React.ReactElement; _testID?: string }> = ({
   onPress,
@@ -52,6 +53,7 @@ const MainButton: React.FC<{ onPress?: VoidFunction; disabled?: boolean; label?:
   );
 };
 
+const h = statusBarHeight + 192;
 const Wallet: React.FC<{ navigation: StackNavigation }> = ({ navigation }) => {
   const { theme } = useTheme();
 
@@ -62,6 +64,7 @@ const Wallet: React.FC<{ navigation: StackNavigation }> = ({ navigation }) => {
   const [refreshing, setRefreshing] = useState(false);
   const [tabIndex, setTabIndex] = useState(0);
   const tabRef = useRef<PagerView>(null);
+  const [, resetTX] = useAtom(resetTransaction);
 
   const handleTabChange = (index: number) => {
     if (tabRef.current) {
@@ -89,14 +92,31 @@ const Wallet: React.FC<{ navigation: StackNavigation }> = ({ navigation }) => {
 
   const [inSticky, setInSticky] = useState(false);
   const handleScroll = useCallback((evt: NativeSyntheticEvent<NativeScrollEvent>) => {
-    const yOffset = evt.nativeEvent.contentOffset.y;
-    setInSticky(yOffset >= statusBarHeight + 248);
+    setInSticky(evt.nativeEvent.contentOffset.y >= h);
   }, []);
+  useFocusEffect(
+    useCallback(() => {
+      resetTX();
+    }, [resetTX])
+  );
+
+  const tabs = useMemo(
+    () =>
+      currentNetwork && (currentNetwork.chainId === CFX_ESPACE_MAINNET_CHAINID || currentNetwork.chainId === CFX_ESPACE_TESTNET_CHAINID)
+        ? (['Tokens', 'NFTs'] as const)
+        : (['Tokens'] as const),
+    [currentNetwork]
+  );
 
   return (
-    <SafeAreaView className="flex-1" style={{ backgroundColor: theme.colors.pureBlackAndWight }}>
+    <SafeAreaView className="flex-1" style={{ paddingTop: statusBarHeight + 44 }}>
+      <StatusBar backgroundColor={inSticky ? theme.colors.pureBlackAndWight : 'transparent'} />
+      <WalletHeader
+        className="absolute top-0 left-0 z-[10] transition-colors"
+        style={{ backgroundColor: inSticky ? theme.colors.pureBlackAndWight : 'transparent', top: statusBarHeight }}
+      />
       <NoNetwork />
-      <View className="absolute left-0 top-0 w-full h-[330px]  z-0 pointer-events-none">
+      <View className="absolute left-0  w-full z-0 pointer-events-none" style={{ top: -statusBarHeight, height: 360 + statusBarHeight }}>
         <Background contentClassName="w-full h-full" />
       </View>
       <ScrollView
@@ -117,11 +137,15 @@ const Wallet: React.FC<{ navigation: StackNavigation }> = ({ navigation }) => {
           />
         }
       >
-        <View style={{ paddingTop: statusBarHeight + 48, paddingHorizontal: 24 }}>
+        <View style={{ paddingHorizontal: 24 }}>
           <View className="flex flex-row items-center justify-center mb-[3px]">
             <SIMCardIcon color={theme.colors.surfaceBrand} width={24} height={24} />
-            <Text numberOfLines={1} className="leading-normal" style={{ color: theme.colors.textBrand, maxWidth: 170 }}>
-              {currentAccount?.nickname}
+            <Text
+              numberOfLines={1}
+              className="leading-normal"
+              style={{ color: theme.colors.textBrand, maxWidth: 170, opacity: currentAccount?.nickname ? 100 : 0 }}
+            >
+              {currentAccount?.nickname ?? 'placeholder'}
             </Text>
           </View>
 
@@ -152,11 +176,11 @@ const Wallet: React.FC<{ navigation: StackNavigation }> = ({ navigation }) => {
               </Pressable>
             )}
           </View>
-          <View className="flex items-center justify-center mb-[23px]">
+          <View className="flex items-center justify-center mb-[24px]">
             <UserAddress />
           </View>
 
-          <View className="flex flex-row justify-between mb-4">
+          <View className="flex flex-row justify-between mb-[12px]">
             <MainButton
               _testID="send"
               onPress={() => navigation.navigate(ReceiveAddressStackName, {})}
@@ -174,15 +198,8 @@ const Wallet: React.FC<{ navigation: StackNavigation }> = ({ navigation }) => {
           </View>
         </View>
 
-        <View
-          className="flex flex-row px-6 gap-4"
-          style={{ backgroundColor: inSticky ? theme.colors.pureBlackAndWight : 'transparent', paddingTop: inSticky ? statusBarHeight + 48 : 0 }}
-        >
-          {Array.from(
-            currentNetwork && (currentNetwork.chainId === CFX_ESPACE_MAINNET_CHAINID || currentNetwork.chainId === CFX_ESPACE_TESTNET_CHAINID)
-              ? ['Tokens', 'NFTs']
-              : ['Tokens']
-          ).map((item, index) => (
+        <View className="flex flex-row px-6 gap-4" style={{ backgroundColor: inSticky ? theme.colors.pureBlackAndWight : 'transparent' }}>
+          {tabs.map((item, index) => (
             <Pressable testID={item} key={index} onPress={() => handleTabChange(index)}>
               <Text
                 className="leading-snug p-2"
@@ -197,14 +214,22 @@ const Wallet: React.FC<{ navigation: StackNavigation }> = ({ navigation }) => {
             </Pressable>
           ))}
         </View>
-        <Card.Divider className="mb-[0px]" />
-        <PagerView initialPage={tabIndex} ref={tabRef} onPageSelected={(e) => handlePageSelected(e.nativeEvent.position)}>
-          <View className="w-full h-full" key="0">
-            <TokenList showReceive />
-          </View>
-          <View className="w-full h-full pb-2" key="1">
-            <ESpaceNFTList />
-          </View>
+        <Card.Divider className="mb-[0px]" color={theme.colors.borderPrimary} />
+        <PagerView style={{ flex: 1 }} initialPage={tabIndex} ref={tabRef} onPageSelected={(e) => handlePageSelected(+e.nativeEvent.position)}>
+          {tabs?.map((tab, index) => (
+            <View className="w-full h-full flex-1 min-h-[500px]" style={{ backgroundColor: theme.colors.surfacePrimary }} key={index}>
+              {tab === 'Tokens' && index === tabIndex && (
+                <View className={clsx('w-full h-full flex-1 pb-[8px] pt-[16px] px-[16px]', index !== tabIndex && 'display-none')}>
+                  <TokenList showReceive />
+                </View>
+              )}
+              {tab === 'NFTs' && index === tabIndex && (
+                <View className={clsx('w-full h-full flex-1 pb-[8px] pt-[16px] px-[16px]', index !== tabIndex && 'display-none')}>
+                  <ESpaceNFTList />
+                </View>
+              )}
+            </View>
+          ))}
         </PagerView>
       </ScrollView>
     </SafeAreaView>

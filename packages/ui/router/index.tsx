@@ -1,6 +1,6 @@
 import React from 'react';
 import { Platform, TouchableOpacity } from 'react-native';
-import { NavigationContainer, useNavigation } from '@react-navigation/native';
+import { NavigationContainer, useNavigation, DefaultTheme } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { useTheme } from '@rneui/themed';
@@ -9,7 +9,6 @@ import Welcome from '@pages/Welcome';
 import SetPassword from '@pages/SetPassword';
 import Biometrics from '@pages/SetPassword/Biometrics';
 import Wallet from '@pages/Wallet';
-import { getWalletHeaderOptions } from '@pages/Wallet/WalletHeader';
 import Settings, { SettingsStackName } from '@pages/Settings';
 import ImportWallet from '@pages/ImportWallet';
 import AccountManage from '@pages/Account/AccountManage';
@@ -57,7 +56,7 @@ import WalletIcon from '@assets/icons/wallet.svg';
 import SettingsIcon from '@assets/icons/settings.svg';
 import ArrowLeft from '@assets/icons/arrow-left.svg';
 import ScanQRCode from '@pages/ScanQRCode';
-
+import BootSplash from "react-native-bootsplash";
 const Stack = createNativeStackNavigator<RootStackList>();
 const BottomTabStack = createBottomTabNavigator();
 
@@ -67,8 +66,8 @@ const HomeScreenNavigator = () => {
     <BottomTabStack.Navigator
       initialRouteName={WalletStackName}
       screenOptions={{
-        headerTitleAlign: 'left',
-        headerTransparent: true,
+        headerShown: false,
+        headerTintColor: 'transparent',
         tabBarActiveBackgroundColor: theme.colors.pureBlackAndWight,
         tabBarActiveTintColor: '#007AFF',
         tabBarInactiveTintColor: '#999',
@@ -83,7 +82,6 @@ const HomeScreenNavigator = () => {
         component={Wallet}
         options={{
           tabBarIcon: ({ color }) => <WalletIcon color={color} />,
-          ...getWalletHeaderOptions(),
           tabBarTestID: 'walletTab',
         }}
       />
@@ -166,11 +164,13 @@ const StackNavigator = () => {
   );
 };
 
-const Router: React.FC = () => (
-  <NavigationContainer>
-    <JotaiNexus />
-    <StackNavigator />
-  </NavigationContainer>
-);
-
+const Router: React.FC = () => {
+  const { theme } = useTheme();
+  return (
+    <NavigationContainer onReady={BootSplash.hide} theme={{ ...DefaultTheme, colors: { ...DefaultTheme.colors, background: theme.colors.surfacePrimary } }}>
+      <JotaiNexus />
+      <StackNavigator />
+    </NavigationContainer>
+  );
+};
 export default Router;

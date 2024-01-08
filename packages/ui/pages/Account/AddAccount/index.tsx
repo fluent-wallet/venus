@@ -4,20 +4,18 @@ import { useHeaderHeight } from '@react-navigation/elements';
 import { useRoute, RouteProp } from '@react-navigation/native';
 import { useTheme, ListItem } from '@rneui/themed';
 import { useHasBSIMVaultCreated } from '@core/WalletCore/Plugins/ReactInject';
-import useInAsync from '@hooks/useInAsync';
 import useIsMountedRef from '@hooks/useIsMountedRef';
 import { type RootStackList, type StackNavigation, ImportWalletStackName, AddAccountStackName } from '@router/configs';
-import createVaultWithRouterParams from '@pages/SetPassword/createVaultWithRouterParams';
+import createVault from '@pages/SetPassword/createVaultWithRouterParams';
 
 const AddAccount: React.FC<{ navigation: StackNavigation }> = ({ navigation }: { navigation: StackNavigation }) => {
   const { theme } = useTheme();
   const route = useRoute<RouteProp<RootStackList, typeof AddAccountStackName>>();
   const headerHeight = useHeaderHeight();
   const isMountedRef = useIsMountedRef();
-  
+
   const hasBSIMVaultCreated = useHasBSIMVaultCreated();
   const [createType, setCreateType] = useState<'BSIM' | 'NewHD' | null>(null);
-  const { inAsync: inCreateVault, execAsync: createVault } = useInAsync(createVaultWithRouterParams);
 
   return (
     <SafeAreaView className="flex-1 flex flex-col gap-[12px] px-[24px]" style={{ backgroundColor: theme.colors.surfacePrimary, paddingTop: headerHeight + 16 }}>
@@ -28,12 +26,14 @@ const AddAccount: React.FC<{ navigation: StackNavigation }> = ({ navigation }: {
           onPress={async () => {
             navigation.setOptions({ gestureEnabled: false });
             setCreateType('BSIM');
-            if (await createVault({ type: 'BSIM' }) && isMountedRef.current) {
+            await new Promise((resolve) => setTimeout(() => resolve(null)));
+            if ((await createVault({ type: 'BSIM' })) && isMountedRef.current) {
               navigation.goBack();
             }
+            setCreateType(null);
             navigation.setOptions({ gestureEnabled: true });
           }}
-          disabled={inCreateVault}
+          disabled={createType !== null}
         >
           <ListItem>
             <ListItem.Content>
@@ -41,7 +41,7 @@ const AddAccount: React.FC<{ navigation: StackNavigation }> = ({ navigation }: {
                 BSIM Wallet
               </ListItem.Title>
             </ListItem.Content>
-            {inCreateVault && createType === 'BSIM' && <ActivityIndicator color={theme.colors.surfaceBrand} />}
+            {createType === 'BSIM' && <ActivityIndicator color={theme.colors.surfaceBrand} />}
           </ListItem>
         </TouchableHighlight>
       )}
@@ -52,12 +52,14 @@ const AddAccount: React.FC<{ navigation: StackNavigation }> = ({ navigation }: {
         onPress={async () => {
           navigation.setOptions({ gestureEnabled: false });
           setCreateType('NewHD');
-          if (await createVault() && isMountedRef.current) {
+          await new Promise((resolve) => setTimeout(() => resolve(null)));
+          if ((await createVault()) && isMountedRef.current) {
             navigation.goBack();
           }
+          setCreateType(null);
           navigation.setOptions({ gestureEnabled: true });
         }}
-        disabled={inCreateVault}
+        disabled={createType !== null}
       >
         <ListItem>
           <ListItem.Content>
@@ -65,7 +67,7 @@ const AddAccount: React.FC<{ navigation: StackNavigation }> = ({ navigation }: {
               New Seed Phrase
             </ListItem.Title>
           </ListItem.Content>
-          {inCreateVault && createType === 'NewHD' && <ActivityIndicator color={theme.colors.surfaceBrand} />}
+          {createType === 'NewHD' && <ActivityIndicator color={theme.colors.surfaceBrand} />}
         </ListItem>
       </TouchableHighlight>
 
@@ -73,7 +75,7 @@ const AddAccount: React.FC<{ navigation: StackNavigation }> = ({ navigation }: {
         testID="importSeedPhrase"
         className="rounded-[8px] overflow-hidden"
         onPress={() => navigation.navigate(ImportWalletStackName, route.params)}
-        disabled={inCreateVault}
+        disabled={createType !== null}
       >
         <ListItem>
           <ListItem.Content>
@@ -88,7 +90,7 @@ const AddAccount: React.FC<{ navigation: StackNavigation }> = ({ navigation }: {
         testID="importPrivateKey"
         className="rounded-[8px] overflow-hidden"
         onPress={() => navigation.navigate(ImportWalletStackName, route.params)}
-        disabled={inCreateVault}
+        disabled={createType !== null}
       >
         <ListItem>
           <ListItem.Content>

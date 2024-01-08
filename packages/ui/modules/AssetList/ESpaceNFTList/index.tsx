@@ -5,13 +5,13 @@ import { useTheme, Text } from '@rneui/themed';
 import { useCurrentAddress, useCurrentNetwork, useAssetsNFTList } from '@core/WalletCore/Plugins/ReactInject';
 import Skeleton from '@components/Skeleton';
 import MixinImage from '@components/MixinImage';
-import TokenIconDefault from '@assets/icons/defaultToken.svg';
+import NoDataIcon from '@assets/icons/no_data.svg';
+import DefaultNFTAvatar from '@assets/icons/defaultNFT.svg';
 import NFTItem from './NFTItem';
 import { fetchNFTDetail, fetchNFTDetailSubject, type NFTItemDetail, type NFTWithDetail } from './fetch';
 import SkeletonList from '../TokenList/SkeletonList';
-import NoDataIcon from '@assets/icons/no_data.svg';
 
-const NftItemHeight = 63;
+const NftItemHeight = 71;
 
 export interface ESpaceNFTListMethods {
   handleScroll: (evt: NativeSyntheticEvent<NativeScrollEvent>) => void;
@@ -136,7 +136,7 @@ const ESpaceNFTList = forwardRef<ESpaceNFTListMethods, { onSelectNftItem?: (nft:
 
     if (nfts === null) {
       return (
-        <View className="flex-1 px-6 py-4">
+        <View className="flex-1">
           <SkeletonList length={6} />
         </View>
       );
@@ -144,7 +144,7 @@ const ESpaceNFTList = forwardRef<ESpaceNFTListMethods, { onSelectNftItem?: (nft:
 
     if (nfts.length === 0) {
       return (
-        <View className="flex-1 flex flex-col items-center pt-[44px]">
+        <View className="flex-1 flex flex-col items-center pt-[34px]">
           <NoDataIcon />
           <Text className="mt-[2px] text-[14px] leading-[22px] opacity-40" style={{ color: theme.colors.textBrand }}>
             No NFT
@@ -156,20 +156,33 @@ const ESpaceNFTList = forwardRef<ESpaceNFTListMethods, { onSelectNftItem?: (nft:
     return (
       <>
         {currentOpenNft && !isCurrentOpenHeaderInView && (
-          <TouchableHighlight testID="currentOpenNFT" onPress={() => setCurrentOpenNftContract(null)} underlayColor={theme.colors.underlayColor}>
-            <View className={'flex flex-row h-[64px] px-[24px] items-center'}>
+          <TouchableHighlight
+            testID="currentOpenNFT"
+            onPress={() => setCurrentOpenNftContract(null)}
+            underlayColor={theme.colors.underlayColor}
+            className="rounded-b-[10px] border-b-[1px]"
+            style={{ backgroundColor: theme.colors.pureBlackAndWight, borderColor: theme.colors.borderSecondary }}
+          >
+            <View className={'relative flex flex-row items-center w-full h-[72px] px-[24px]'}>
               {currentOpenNft.icon ? (
-                <MixinImage source={{ uri: currentOpenNft.icon }} width={32} height={32} fallback={<TokenIconDefault width={32} height={32} />} />
+                <MixinImage
+                  source={{ uri: currentOpenNft.icon }}
+                  width={32}
+                  height={32}
+                  className="rounded-full"
+                  fallback={<DefaultNFTAvatar className="rounded-full" width={32} height={32} />}
+                />
               ) : (
-                <TokenIconDefault width={32} height={32} />
+                <DefaultNFTAvatar className="rounded-full" width={32} height={32} />
               )}
               <Text style={{ color: theme.colors.contrastWhiteAndBlack }} className="text-base font-medium ml-[8px] mr-auto">
                 {currentOpenNft.name}
               </Text>
 
               <View className="rotate-[-180deg]">
-                <Icon name="keyboard-arrow-down" color={theme.colors.contrastWhiteAndBlack} />
+                <Icon name="keyboard-arrow-down" color={theme.colors.surfaceFourth} />
               </View>
+              <View className="absolute top-0 left-0 w-[120%] h-[1px]" style={{ backgroundColor: theme.colors.borderSecondary }} />
             </View>
           </TouchableHighlight>
         )}
@@ -186,7 +199,7 @@ const ESpaceNFTList = forwardRef<ESpaceNFTListMethods, { onSelectNftItem?: (nft:
               </View>
             </View>
           ) : (
-            nfts.map((nft) => (
+            nfts.map((nft, index) => (
               <NFTItem
                 data={nft}
                 key={`${nft.contractAddress}-${currentAddress?.hex}-${currentNetwork?.chainId}`}
@@ -196,6 +209,8 @@ const ESpaceNFTList = forwardRef<ESpaceNFTListMethods, { onSelectNftItem?: (nft:
                 isCurrentOpenNftInFetch={isCurrentOpenNftInFetch}
                 onPress={() => setCurrentOpenNftContract(nft.contractAddress!)}
                 onSelectNftItem={onSelectNftItem}
+                index={index}
+                nftLength={nfts.length}
               />
             ))
           )}

@@ -72,7 +72,7 @@ const SetPassword: React.FC<{ navigation: NavigationProp<RootStackList> }> = (pr
             <Text className="text-center text-[36px] font-bold leading-tight" style={{ color: theme.colors.textBrand }}>
               Set Password
             </Text>
-            <Text className="text-center text-[16px]">Add security verification to ensure the safety of your funds.</Text>
+            <Text className="text-center text-[16px]">Add wallet password to keep your funds safe.</Text>
           </View>
 
           <View>
@@ -106,7 +106,7 @@ const SetPassword: React.FC<{ navigation: NavigationProp<RootStackList> }> = (pr
             checkedColor={theme.colors.textBrand}
             uncheckedColor={theme.colors.textBrand}
           />
-          <Text className="text-base flex-1">ePay Wallet does not store your password. Please remember your password.</Text>
+          <Text className="text-base flex-1">SwiftShield does not store your password. Please remember your password.</Text>
         </View>
         <BaseButton
           testID="createPasswordButton"

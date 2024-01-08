@@ -11,7 +11,6 @@ import methods from '@core/WalletCore/Methods';
 import plugins from '@core/WalletCore/Plugins';
 import { type RootStackList, BackUpStackName } from '@router/configs';
 import { BaseButton } from '@components/Button';
-import { statusBarHeight } from '@utils/deviceInfo';
 
 const AccountSetting: React.FC<NativeStackScreenProps<RootStackList, 'AccountSetting'>> = ({ navigation, route }) => {
   const { theme } = useTheme();
@@ -130,7 +129,7 @@ const AccountSetting: React.FC<NativeStackScreenProps<RootStackList, 'AccountSet
                 });
                 navigation.goBack();
               } catch (err) {
-                if (String(err)?.includes('cancel') || String(err)?.includes('取消')) {
+                if (plugins.Authentication.containsCancel(String(err))) {
                   return;
                 }
                 showMessage({
