@@ -28,7 +28,7 @@ const Receive: React.FC<NativeStackScreenProps<RootStackList, 'Receive'>> = ({ n
   const currentAddressValue = useCurrentAddressValue()!;
   const currentAccount = useCurrentAccount();
   const [shareDisabled, setShareDisabled] = useState(true);
-  const [setAmountDisabled, setSetAmountDisabled] = useState(false);
+  const [setAmountDisabled, setSetAmountDisabled] = useState(true);
 
   const [currentToken, setCurrentToken] = useAtom(setTokenQRInfoAtom);
   const handleSetAmount = () => {
@@ -98,9 +98,9 @@ const Receive: React.FC<NativeStackScreenProps<RootStackList, 'Receive'>> = ({ n
           <View className="flex w-full items-center">
             <QRCode value={getQRValue()} size={223} />
           </View>
-          <Text className="font-bold text-3xl text-center py-4" style={{ color: theme.colors.textBrand }}>
+          {/* <Text className="font-bold text-3xl text-center py-4" style={{ color: theme.colors.textBrand }}>
             {getAmount()}
-          </Text>
+          </Text> */}
 
           <View className="mt-auto">
             <View className="flex">
@@ -119,7 +119,7 @@ const Receive: React.FC<NativeStackScreenProps<RootStackList, 'Receive'>> = ({ n
 
             <View className="flex flex-row justify-center mt-auto">
               <View className="mr-9">
-                <Button testID="share" type="clear" buttonStyle={{ display: 'flex', flexDirection: 'column' }}>
+                <Button disabled={shareDisabled} testID="share" type="clear" buttonStyle={{ display: 'flex', flexDirection: 'column' }}>
                   <View className="w-[60px] h-[60px] rounded-full" style={{ backgroundColor: theme.colors.surfaceThird }}>
                     <ShareIcon width={60} height={60} color={shareDisabled ? theme.colors.surfaceSecondary : theme.colors.surfaceBrand} />
                   </View>
@@ -127,9 +127,9 @@ const Receive: React.FC<NativeStackScreenProps<RootStackList, 'Receive'>> = ({ n
                 </Button>
               </View>
               <View className="ml-9">
-                <Button testID="setAmount" type="clear" buttonStyle={{ display: 'flex', flexDirection: 'column' }} onPress={handleSetAmount}>
+                <Button disabled={setAmountDisabled} testID="setAmount" type="clear" buttonStyle={{ display: 'flex', flexDirection: 'column' }} onPress={handleSetAmount}>
                   <View className="w-[60px] h-[60px] rounded-full" style={{ backgroundColor: theme.colors.surfaceThird }}>
-                    <SetAmountIcon width={60} height={60} color={setAmountDisabled ? theme.colors.surfaceThird : theme.colors.surfaceBrand} />
+                    <SetAmountIcon width={60} height={60} color={setAmountDisabled ? theme.colors.surfaceSecondary : theme.colors.surfaceBrand} />
                   </View>
                   <Text style={{ color: setAmountDisabled ? theme.colors.textSecondary : theme.colors.textPrimary }}>Set Amount</Text>
                 </Button>

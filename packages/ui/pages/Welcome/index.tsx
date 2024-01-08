@@ -42,13 +42,13 @@ const Welcome: React.FC<{ navigation: StackNavigation }> = ({ navigation }) => {
           containerStyle={{ marginTop: 40, marginHorizontal: 16 }}
           onPress={() => navigation.navigate(BiometricsStackName, { type: 'BSIM' })}
         >
-          <SIMCardIcon color={theme.colors.surfaceCard} width={24} height={24} /> Connect BSIM Wallet
+          <SIMCardIcon color={theme.colors.surfaceCard} width={24} height={24} /> Connect BSIM Card
         </BaseButton>
 
         <View className="flex flex-row justify-center items-center my-[28px]">
           <View className="w-1/4 h-[1px] pointer-events-none" style={{ backgroundColor: theme.colors.textBrand }} />
           <Text style={{ color: theme.colors.textBrand }} className="mx-[10px] text-sm">
-            or connect with
+            or add with
           </Text>
           <View className="w-1/4 h-[1px] pointer-events-none" style={{ backgroundColor: theme.colors.textBrand }} />
         </View>

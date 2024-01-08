@@ -1,4 +1,6 @@
+import React, { type ComponentProps } from 'react';
 import { Pressable, TouchableHighlight, View } from 'react-native';
+import clsx from 'clsx';
 import Clipboard from '@react-native-clipboard/clipboard';
 import SwitchCurrentNetwork from '@modules/SwitchCurrentNetwork';
 import { useCurrentAddressValue } from '@core/WalletCore/Plugins/ReactInject';
@@ -14,23 +16,24 @@ import { showMessage } from 'react-native-flash-message';
 export const UserAddress: React.FC = () => {
   const { theme } = useTheme();
   const currentAddressValue = useCurrentAddressValue();
-  if (!currentAddressValue) return null;
+
   return (
     <TouchableHighlight
       testID="copyAddress"
       onPress={() => {
-        Clipboard.setString(currentAddressValue);
+        Clipboard.setString(currentAddressValue ?? '');
         showMessage({
           type: 'success',
           message: 'Copied',
         });
       }}
-      className="rounded-full overflow-hidden px-3"
+      disabled={!currentAddressValue}
+      className={clsx('rounded-full overflow-hidden px-3', !currentAddressValue && 'opacity-0')}
       underlayColor={theme.colors.underlayColor}
     >
       <View className="flex flex-row rounded-full items-center">
         <Text className="text-[14px]" style={{ color: theme.colors.textSecondary }}>
-          {shortenAddress(currentAddressValue)}
+          {shortenAddress(currentAddressValue) ?? '0x'}
         </Text>
         <View className="ml-[3px]">
           <CopyAll color={theme.colors.textSecondary} width={16} height={16} />
@@ -55,6 +58,15 @@ const SwitchCurrentAddress: React.FC = () => {
     </View>
   );
 };
+
+const WalletHeader: React.FC<ComponentProps<typeof View>> = ({ className, ...props }) => (
+  <View className={clsx('flex flex-row items-center justify-between h-[44px] w-full', className)} {...props}>
+    <SwitchCurrentAddress />
+    <SwitchCurrentNetwork />
+  </View>
+);
+
+export default WalletHeader;
 
 export const getWalletHeaderOptions = () =>
   ({

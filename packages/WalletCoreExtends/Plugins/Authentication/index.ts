@@ -62,11 +62,12 @@ class AuthenticationPluginClass implements Plugin {
         throw new Error('Biometrics getPassword failed.');
       } catch (err) {
         const errString = JSON.stringify((err as any)?.message ?? err);
-        if (!errString?.includes('canceled') && !errString?.includes('取消')) {
+        if (containsCancel(errString)) {
+          throw new Error('User canceled biometrics.');
+        } else {
           showBiometricsDisabledMessage();
           throw new Error('Biometrics not enable.');
         }
-        throw new Error('User canceled biometrics.');
       }
     } else if (this.settleAuthenticationType === AuthenticationType.Password) {
       if (this.getPasswordPromise) return this.getPasswordPromise;
@@ -139,9 +140,17 @@ class AuthenticationPluginClass implements Plugin {
       return false;
     }
   };
+
+  public containsCancel = containsCancel;
 }
 
 const AuthenticationPlugin = new AuthenticationPluginClass();
 CryptoToolPlugin.setGetPasswordMethod(AuthenticationPlugin.getPassword);
 
 export default AuthenticationPlugin;
+
+
+const pattern = /cancel|\u53d6\u6d88/i; 
+export function containsCancel(str: string): boolean {
+  return pattern.test(str);
+}

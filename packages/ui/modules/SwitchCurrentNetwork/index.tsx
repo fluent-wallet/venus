@@ -16,7 +16,8 @@ const SwitchCurrentNetwork: React.FC<ComponentProps<typeof View>> = (props) => {
     <TouchableHighlight
       testID="switchNetwork"
       underlayColor={theme.colors.underlayColor}
-      onPress={() => isQA ?? methods.switchToNetwork(currentNetwork.netId === 1030 ? 71 : 1030)}
+      onPress={() => (isQA ? methods.switchToNetwork(currentNetwork.netId === 1030 ? 71 : 1030) : undefined)}
+      disabled={!isQA}
       className="mr-[24px] rounded-[40px] overflow-hidden"
     >
       <View

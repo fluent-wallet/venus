@@ -11,7 +11,7 @@ import useInAsync from '@hooks/useInAsync';
 import { BaseButton } from '@components/Button';
 import Background from '@modules/Background';
 import { type RootStackList, type StackNavigation, WalletStackName, BiometricsStackName, HomeStackName, SetPasswordStackName } from '@router/configs';
-import createVaultWithRouterParams from './createVaultWithRouterParams';
+import createVault from './createVaultWithRouterParams';
 import FaceIdSource from '@assets/images/face-id.png';
 
 export const showBiometricsDisabledMessage = () => {
@@ -60,9 +60,7 @@ const Biometrics = () => {
   const navigation = useNavigation<StackNavigation>();
   const route = useRoute<RouteProp<RootStackList, typeof BiometricsStackName>>();
 
-  const { inAsync: loading, execAsync: createVault } = useInAsync(createVaultWithRouterParams);
-
-  const handleEnableBiometrics = useCallback(async () => {
+  const _handleEnableBiometrics = useCallback(async () => {
     try {
       navigation.setOptions({ gestureEnabled: false });
       const supportedBiometryType = await plugins.Authentication.getSupportedBiometryType();
@@ -70,10 +68,8 @@ const Biometrics = () => {
         showBiometricsDisabledMessage();
         return;
       }
-
       setDisableSetPassword(true);
       await plugins.Authentication.setPassword({ authType: plugins.Authentication.AuthenticationType.Biometrics });
-
       if (await createVault(route.params)) {
         navigation.navigate(HomeStackName, { screen: WalletStackName });
         navigation.dispatch(CommonActions.reset({ index: 0, routes: [{ name: HomeStackName }] }));
@@ -84,7 +80,10 @@ const Biometrics = () => {
     } finally {
       navigation.setOptions({ gestureEnabled: true });
     }
-  }, [createVault, navigation, route.params]);
+  }, [navigation, route.params]);
+
+  const { inAsync: loading, execAsync: handleEnableBiometrics } = useInAsync(_handleEnableBiometrics);
+
 
   return (
     <SafeAreaView className="flex-1 flex flex-col justify-start">

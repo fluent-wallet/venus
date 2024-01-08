@@ -36,6 +36,7 @@ import assetsTracker from '@core/WalletCore/Plugins/AssetsTracker';
 import ConfluxNetworkIcon from '@assets/icons/confluxNet.svg';
 import { balanceFormat } from '@core/utils/balance';
 import { useAtom } from 'jotai';
+import { useAssetsHash } from '@core/WalletCore/Plugins/ReactInject/data/useAssets';
 
 const TransactionConfirm: React.FC<{
   navigation: StackNavigation;
@@ -48,6 +49,7 @@ const TransactionConfirm: React.FC<{
   const currentAddress = useCurrentAddress()!;
   const currentAccount = useCurrentAccount()!;
   const currentVault = useVaultOfAccount(currentAccount?.id);
+  const assetsHash = useAssetsHash();
 
   const [error, setError] = useState('');
   const tx = useReadOnlyTransaction();
@@ -112,6 +114,7 @@ const TransactionConfirm: React.FC<{
 
           navigation.navigate(HomeStackName, { screen: WalletStackName });
         } catch (error) {
+          console.log("get error", error)
           setLoading(false);
           // error
           if (error instanceof BSIMErrorEndTimeout) {
@@ -293,7 +296,7 @@ const TransactionConfirm: React.FC<{
               <Text className=" eading-6" style={{ color: theme.colors.textSecondary }}>
                 Estimate Gas Cost
               </Text>
-              <EstimateGas {...gas} retry={getGas} priceInUSDT={tx.priceInUSDT} />
+              <EstimateGas {...gas} retry={getGas} priceInUSDT={assetsHash && assetsHash[AssetType.Native] ? assetsHash[AssetType.Native].priceInUSDT : ''} />
             </View>
 
             <View className="flex flex-row justify-between">

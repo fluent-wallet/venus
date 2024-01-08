@@ -18,6 +18,9 @@ const createVaultWithRouterParams = async (args?: RootStackList['Biometrics'], p
 
     return true;
   } catch (err) {
+    if (plugins.Authentication.containsCancel(String(err))) {
+      return;
+    }
     showMessage({
       message: `Add new ${type} account failed`,
       description: String(err ?? ''),
