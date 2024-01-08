@@ -2,19 +2,21 @@ import React, { useCallback, useEffect, useRef, useState, useMemo } from 'react'
 import { View, SafeAreaView, Pressable, RefreshControl, ScrollView, StatusBar, type NativeSyntheticEvent, type NativeScrollEvent } from 'react-native';
 import PagerView from 'react-native-pager-view';
 import { Text, useTheme, Card } from '@rneui/themed';
+import { useFocusEffect } from '@react-navigation/native';
 import clsx from 'clsx';
 import { useAtom } from 'jotai';
 import { statusBarHeight } from '@utils/deviceInfo';
+import { useCurrentAccount, useCurrentNetwork, useAssetsTotalPriceValue } from '@core/WalletCore/Plugins/ReactInject';
+import { CFX_ESPACE_MAINNET_CHAINID, CFX_ESPACE_TESTNET_CHAINID } from '@core/consts/network';
+import plugins from '@core/WalletCore/Plugins';
+import { resetTransaction } from '@core/WalletCore/Plugins/ReactInject/data/useTransaction';
 import { ReceiveAddressStackName, ReceiveStackName, type StackNavigation } from '@router/configs';
-import TokenList from '@modules/AssetList/TokenList';
+import { updateNFTDetail } from '@modules/AssetList/ESpaceNFTList/fetch';
+import TokenList, { TempInitSkeleton } from '@modules/AssetList/TokenList';
 import ESpaceNFTList from '@modules/AssetList/ESpaceNFTList';
 import ActivityList from '@modules/ActivityList';
 import NoNetwork from '@modules/NoNetwork';
 import Skeleton from '@components/Skeleton';
-import { useCurrentAccount, useCurrentNetwork, useAssetsTotalPriceValue } from '@core/WalletCore/Plugins/ReactInject';
-import { CFX_ESPACE_MAINNET_CHAINID, CFX_ESPACE_TESTNET_CHAINID } from '@core/consts/network';
-import plugins from '@core/WalletCore/Plugins';
-import { updateNFTDetail } from '@modules/AssetList/ESpaceNFTList/fetch';
 import SendIcon from '@assets/icons/send.svg';
 import ReceiveIcon from '@assets/icons/receive.svg';
 import BuyIcon from '@assets/icons/buy.svg';
@@ -27,8 +29,6 @@ import TotalPriceVisibleAtom from '@hooks/useTotalPriceVisible';
 import AsteriskIcon from '@assets/icons/asterisk.svg';
 import Background from '@modules/Background';
 import WalletHeader, { UserAddress } from './WalletHeader';
-import { resetTransaction } from '@core/WalletCore/Plugins/ReactInject/data/useTransaction';
-import { useFocusEffect } from '@react-navigation/native';
 
 const MainButton: React.FC<{ onPress?: VoidFunction; disabled?: boolean; label?: string; icon?: React.ReactElement; _testID?: string }> = ({
   onPress,
@@ -107,6 +107,7 @@ const Wallet: React.FC<{ navigation: StackNavigation }> = ({ navigation }) => {
         : (['Tokens'] as const),
     [currentNetwork]
   );
+
   return (
     <SafeAreaView className="flex-1" style={{ paddingTop: statusBarHeight + 44 }}>
       <StatusBar backgroundColor={inSticky ? theme.colors.pureBlackAndWight : 'transparent'} />
@@ -115,7 +116,7 @@ const Wallet: React.FC<{ navigation: StackNavigation }> = ({ navigation }) => {
         style={{ backgroundColor: inSticky ? theme.colors.pureBlackAndWight : 'transparent', top: statusBarHeight }}
       />
       <NoNetwork />
-      <View className="absolute left-0  w-full z-0 pointer-events-none" style={{ top: -statusBarHeight, height: 330 + statusBarHeight }}>
+      <View className="absolute left-0  w-full z-0 pointer-events-none" style={{ top: -statusBarHeight, height: 360 + statusBarHeight }}>
         <Background contentClassName="w-full h-full" />
       </View>
       <ScrollView
@@ -214,7 +215,7 @@ const Wallet: React.FC<{ navigation: StackNavigation }> = ({ navigation }) => {
           ))}
         </View>
         <Card.Divider className="mb-[0px]" color={theme.colors.borderPrimary} />
-        <PagerView initialPage={0} ref={tabRef} onPageSelected={(e) => handlePageSelected(+e.nativeEvent.position)}>
+        <PagerView style={{ flex: 1 }} initialPage={tabIndex} ref={tabRef} onPageSelected={(e) => handlePageSelected(+e.nativeEvent.position)}>
           {tabs?.map((tab, index) => (
             <View className="w-full h-full flex-1 min-h-[500px]" style={{ backgroundColor: theme.colors.surfacePrimary }} key={index}>
               {tab === 'Tokens' && index === tabIndex && (
