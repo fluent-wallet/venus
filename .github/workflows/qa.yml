@@ -8,7 +8,7 @@ on:
     branches:
       - qa
     tags:
-      - "vqa*"
+      - "v*"
 jobs:
   android-build:
     name: Android Build
