@@ -47,7 +47,8 @@ jobs:
         run: cd android && chmod +x ./gradlew
       - name: Build Android Release
         run: |
-          cat >>~/.env <<END
+          echo "" > .env
+          cat >>.env <<END
           APP_ENV=prod
           PASSWORD_CRYPTO_KEY=$PASSWORD_CRYPTO_KEY
           END
