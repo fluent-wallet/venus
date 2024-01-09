@@ -12,7 +12,7 @@ import plugins from '@core/WalletCore/Plugins';
 import { resetTransaction } from '@core/WalletCore/Plugins/ReactInject/data/useTransaction';
 import { ReceiveAddressStackName, ReceiveStackName, type StackNavigation } from '@router/configs';
 import { updateNFTDetail } from '@modules/AssetList/ESpaceNFTList/fetch';
-import TokenList, { TempInitSkeleton } from '@modules/AssetList/TokenList';
+import TokenList from '@modules/AssetList/TokenList';
 import ESpaceNFTList from '@modules/AssetList/ESpaceNFTList';
 import ActivityList from '@modules/ActivityList';
 import NoNetwork from '@modules/NoNetwork';

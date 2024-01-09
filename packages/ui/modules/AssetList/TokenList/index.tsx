@@ -20,7 +20,6 @@ const TokenList: React.FC<{
   const tokens = useAssetsTokenList();
   // const inFetch = useAssetsInFetch();
   const empty = !tokens || tokens.every((v) => BigInt(v?.balance || 0) <= 0);
-  console.log('TokenList render', Date.now());
 
   if (tokens === null) {
     return (
