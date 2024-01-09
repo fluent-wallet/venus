@@ -113,15 +113,16 @@ const TransactionConfirm: React.FC<{
           resetTX();
 
           navigation.navigate(HomeStackName, { screen: WalletStackName });
-        } catch (error) {
-          console.log("get error", error)
+        } catch (error: any) {
           setLoading(false);
           // error
-          if (error instanceof BSIMErrorEndTimeout) {
-            console.log(error.code, 'sign Error code');
-            console.log(error.message, 'sign Error message');
+          if (error.code) {
             const errorMsg = BSIM_ERRORS[error.code?.toUpperCase()];
-            tx.event.next({ type: TxEventTypesName.ERROR, message: errorMsg });
+            if (errorMsg) {
+              tx.event.next({ type: TxEventTypesName.ERROR, message: errorMsg });
+            } else {
+              tx.event.next({ type: TxEventTypesName.ERROR, message: BSIM_ERRORS.default });
+            }
           } else {
             // not BSIM error
             tx.event.next({ type: TxEventTypesName.ERROR, message: BSIM_ERRORS.default });
