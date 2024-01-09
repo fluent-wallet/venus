@@ -49,7 +49,7 @@ jobs:
         run: |
           cat >>~/.env <<END
           APP_ENV=prod
-          PASSWORD_CRYPTO_KRY=$PASSWORD_CRYPTO_KRY
+          PASSWORD_CRYPTO_KEY=$PASSWORD_CRYPTO_KEY
           END
           cd android && ./gradlew app:assembleProdRelease && cd ..
 
