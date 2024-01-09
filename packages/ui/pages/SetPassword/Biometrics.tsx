@@ -1,5 +1,5 @@
 import React, { useEffect, useCallback, useState } from 'react';
-import { View, Image, SafeAreaView } from 'react-native';
+import { View, Image, SafeAreaView, Platform } from 'react-native';
 import { RouteProp, CommonActions, useNavigation, useRoute } from '@react-navigation/native';
 import { showMessage, hideMessage } from 'react-native-flash-message';
 import LinearGradient from 'react-native-linear-gradient';
@@ -13,6 +13,7 @@ import Background from '@modules/Background';
 import { type RootStackList, type StackNavigation, WalletStackName, BiometricsStackName, HomeStackName, SetPasswordStackName } from '@router/configs';
 import createVault from './createVaultWithRouterParams';
 import FaceIdSource from '@assets/images/face-id.webp';
+import FingerprintImage from '@assets/images/fingerprint.svg';
 
 export const showBiometricsDisabledMessage = () => {
   showMessage({
@@ -34,7 +35,7 @@ const FaceId: React.FC = () => {
 
   useEffect(() => {
     height.value = withRepeat(
-      withTiming(-120, {
+      withTiming(-186, {
         duration: 1500,
       }),
       -1,
@@ -52,6 +53,12 @@ const FaceId: React.FC = () => {
     </View>
   );
 };
+
+const Fingerprint: React.FC = () => (
+  <View className="relative mx-auto w-[189px] h-[189px] rounded-[20px] overflow-hidden">
+    <FingerprintImage width='100%' height='100%' />
+  </View>
+);
 
 const Biometrics = () => {
   const { theme } = useTheme();
@@ -84,11 +91,10 @@ const Biometrics = () => {
 
   const { inAsync: loading, execAsync: handleEnableBiometrics } = useInAsync(_handleEnableBiometrics);
 
-
   return (
     <SafeAreaView className="flex-1 flex flex-col justify-start">
       <Background style={{ paddingTop: statusBarHeight + 48 }}>
-        <FaceId />
+        {Platform.OS === 'ios' ? <FaceId /> : <Fingerprint />}
         <View className="mt-[90px]">
           <Text className="text-[36px] leading-[46px] font-bold text-center" style={{ color: theme.colors.textBrand }}>
             Enable Biometrics
