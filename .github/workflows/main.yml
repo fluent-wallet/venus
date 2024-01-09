@@ -46,6 +46,8 @@ jobs:
       - name: Make Gradlew Executable
         run: cd android && chmod +x ./gradlew
       - name: Build Android Release
+        env:
+          PASSWORD_CRYPTO_KEY: ${{ secrets.PASSWORD_CRYPTO_KEY }}
         run: |
           echo "" > .env
           cat >>.env <<END
@@ -64,6 +66,8 @@ jobs:
         run: |
           sudo -v ; curl https://gosspublic.alicdn.com/ossutil/install.sh | sudo bash
       - name: Configure OSS
+        env:
+          OSS_KEY: ${{ secrets.OSS_KEY }}
         run: |
           touch ~/.ossutilconfig
           chmod 644 ~/.ossutilconfig
