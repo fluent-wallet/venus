@@ -48,6 +48,7 @@ jobs:
       - name: Build Android Release
         run: |
           echo APP_ENV=prod > .env
+          'echo "$PASSWORD_CRYPTO_KRY" >> .env'
           cd android && ./gradlew app:assembleProdRelease && cd ..
 
       - name: Release
@@ -55,3 +56,20 @@ jobs:
         with:
           files: |
             ./android/app/build/outputs/apk/prod/release/app-prod-release.apk
+
+      - name: install OSSUTIL
+        run: |
+          sudo -v ; curl https://gosspublic.alicdn.com/ossutil/install.sh | sudo bash
+      - name: Configure OSS
+        run: |
+          touch ~/.ossutilconfig
+          chmod 644 ~/.ossutilconfig
+          cat >>~/.ossutilconfig <<END
+          [Credentials]
+          language=EN
+          endpoint=oss-cn-hongkong.aliyuncs.com
+          accessKeyID=LTAI5t7DymqoLptHF5Jvng3M
+          accessKeySecret=$OSS_KEY
+          END
+      - name: Upload to OSS
+        run: ossutil64 cp ./android/app/build/outputs/apk/prod/release/app-prod-release.apk oss://blockvenus/apks/SwiftShield.apk
