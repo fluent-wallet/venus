@@ -44,9 +44,14 @@ jobs:
       - name: Make Gradlew Executable
         run: cd android && chmod +x ./gradlew
       - name: Build Android qa Release
+        env:
+          PASSWORD_CRYPTO_KEY: ${{ secrets.PASSWORD_CRYPTO_KEY }}
         run: |
-          echo APP_ENV=qa > .env
-          'echo "$PASSWORD_CRYPTO_KRY" >> .env'
+          echo "" > .env
+          cat >>.env <<END
+          APP_ENV=qa
+          PASSWORD_CRYPTO_KEY=$PASSWORD_CRYPTO_KEY
+          END
           cd android && ./gradlew app:assembleQaRelease && cd ..
 
       - name: Release

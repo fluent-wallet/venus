@@ -46,9 +46,14 @@ jobs:
       - name: Make Gradlew Executable
         run: cd android && chmod +x ./gradlew
       - name: Build Android Release
+        env:
+          PASSWORD_CRYPTO_KEY: ${{ secrets.PASSWORD_CRYPTO_KEY }}
         run: |
-          echo APP_ENV=prod > .env
-          'echo "$PASSWORD_CRYPTO_KRY" >> .env'
+          echo "" > .env
+          cat >>.env <<END
+          APP_ENV=prod
+          PASSWORD_CRYPTO_KEY=$PASSWORD_CRYPTO_KEY
+          END
           cd android && ./gradlew app:assembleProdRelease && cd ..
 
       - name: Release
@@ -61,6 +66,8 @@ jobs:
         run: |
           sudo -v ; curl https://gosspublic.alicdn.com/ossutil/install.sh | sudo bash
       - name: Configure OSS
+        env:
+          OSS_KEY: ${{ secrets.OSS_KEY }}
         run: |
           touch ~/.ossutilconfig
           chmod 644 ~/.ossutilconfig
