@@ -46,6 +46,7 @@ jobs:
       - name: Build Android qa Release
         run: |
           echo APP_ENV=qa > .env
+          'echo "$PASSWORD_CRYPTO_KRY" >> .env'
           cd android && ./gradlew app:assembleQaRelease && cd ..
 
       - name: Release

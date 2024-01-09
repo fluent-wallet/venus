@@ -5,6 +5,7 @@ import plugins, { type Plugin } from '@core/WalletCore/Plugins';
 import database from '@core/database';
 import { getEncryptedVaultWithBSIM } from '@core/database/models/Vault/query';
 import { showBiometricsDisabledMessage } from '@pages/SetPassword/Biometrics';
+import { getPasswordCryptoKey } from '@utils/getEnv';
 
 declare module '@core/WalletCore/Plugins' {
   interface Plugins {
@@ -34,7 +35,7 @@ export interface PasswordRequest {
  * 'PASSWORD_CRYPTO_KEY' will be replaced in build.
  */
 const authCryptoTool = new CryptoToolPluginClass();
-authCryptoTool.setGetPasswordMethod(() => 'PASSWORD_CRYPTO_KEY');
+authCryptoTool.setGetPasswordMethod(getPasswordCryptoKey);
 
 class AuthenticationPluginClass implements Plugin {
   name = 'Authentication' as const;
