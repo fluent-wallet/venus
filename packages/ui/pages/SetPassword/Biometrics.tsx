@@ -12,7 +12,7 @@ import { BaseButton } from '@components/Button';
 import Background from '@modules/Background';
 import { type RootStackList, type StackNavigation, WalletStackName, BiometricsStackName, HomeStackName, SetPasswordStackName } from '@router/configs';
 import createVault from './createVaultWithRouterParams';
-import FaceIdSource from '@assets/images/face-id.png';
+import FaceIdSource from '@assets/images/face-id.webp';
 
 export const showBiometricsDisabledMessage = () => {
   showMessage({
@@ -27,14 +27,14 @@ const getFaceIdLinearColor = (themeMode: 'dark' | 'light') =>
   themeMode === 'dark' ? ['rgba(174, 207, 250, 0.2)', 'rgba(171, 194, 255, 0)'] : ['#AECFFA', 'rgba(171, 194, 255, 0)'];
 const FaceId: React.FC = () => {
   const { theme } = useTheme();
-  const height = useSharedValue(-210);
+  const height = useSharedValue(0);
   const animatedStyles = useAnimatedStyle(() => ({
     transform: [{ translateY: -height.value }],
   }));
 
   useEffect(() => {
     height.value = withRepeat(
-      withTiming(-88, {
+      withTiming(-120, {
         duration: 1500,
       }),
       -1,
