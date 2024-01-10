@@ -8,6 +8,7 @@ import DoneIcon from '@assets/icons/done.svg';
 import { formatStatus, formatTxData } from '@utils/tx';
 import { StyleProp } from 'react-native';
 import { balanceFormat } from '@core/utils/balance';
+import { qaOnly } from '@utils/getEnv';
 
 const ActivityItem: React.FC<{
   onPress?: (item: Tx) => void;
@@ -28,11 +29,7 @@ const ActivityItem: React.FC<{
           <View className="flex flex-row">
             <Text className="font-medium" style={{ color: status === 'failed' ? theme.colors.textSecondary : theme.colors.textPrimary }}>
               Send
-              {__DEV__ && (
-                <Text>
-                  --{tx.status}--{tx.id[0]}
-                </Text>
-              )}
+              {qaOnly() && <Text>--{tx.status}</Text>}
             </Text>
             {status === 'pending' && (
               <View className="p-[5px]">
