@@ -13,7 +13,8 @@ import './assets/i18n';
 
 const App: React.FC = () => {
   const mode = useColorScheme();
-  theme.mode = mode === 'dark' ? 'dark' : 'light';
+  // theme.mode = mode === 'dark' ? 'dark' : 'light';
+  theme.mode = 'light'
   const hasVault = useHasVault();
 
   return (
