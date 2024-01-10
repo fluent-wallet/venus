@@ -70,7 +70,7 @@ export class AddAccountMethod {
     const newAccount = createModel({
       name: TableName.Account,
       params: {
-        nickname: nickname ?? `Account - ${newAccountIndex + (_vault.type === VaultType.BSIM ? 0 : 1)}`,
+        nickname: nickname || `Account - ${newAccountIndex + (_vault.type === VaultType.BSIM ? 0 : 1)}`,
         index: newAccountIndex,
         hidden: hidden ?? false,
         selected: selected ?? false,

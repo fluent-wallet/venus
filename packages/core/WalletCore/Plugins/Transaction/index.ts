@@ -3,6 +3,12 @@ import { type Plugin } from '../';
 import Methods from '@core/WalletCore/Methods';
 import { EthTxTrack } from './EthTxTrack';
 
+declare module '../../../WalletCore/Plugins' {
+  interface Plugins {
+    Transaction: TransactionPluginClass;
+  }
+}
+
 class TransactionPluginClass implements Plugin {
   public name = 'Transaction';
   private _ethTracker = new EthTxTrack();

@@ -7,7 +7,7 @@ import { type Vault } from '../../../../database/models/Vault';
 
 export const vaultsObservable = dbRefresh$.pipe(
   startWith(null),
-  switchMap(() => database.collections.get(TableName.Vault).query().observe() as Observable<Array<Vault>>)
+  switchMap(() => database.collections.get(TableName.Vault).query().observe() as Observable<Array<Vault>>),
 );
 
 const vaultsAtom = atomWithObservable(() => vaultsObservable, {

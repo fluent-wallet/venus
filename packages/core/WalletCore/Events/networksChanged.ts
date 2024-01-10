@@ -11,7 +11,7 @@ const networksChangedObservable = networksObservable.pipe(
     const added = differenceWith(newResult, oldResult, isEqual);
     const removed = differenceWith(oldResult, newResult, isEqual);
 
-    return { added, removed };
-  })
+    return { added, removed, now: newResult };
+  }),
 );
 networksChangedObservable.subscribe(networksChangedSubject);

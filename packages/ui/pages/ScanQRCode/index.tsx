@@ -1,110 +1,145 @@
-import { RouteProp } from '@react-navigation/native';
+import React, { useCallback, useEffect, useState, useRef } from 'react';
+import { Pressable, SafeAreaView, View, Linking, Dimensions, StatusBar } from 'react-native';
+import { launchImageLibrary } from 'react-native-image-picker';
+import { RouteProp, StackActions } from '@react-navigation/native';
+import {
+  useCameraPermission,
+  useCameraDevice,
+  useCodeScanner,
+  useCameraFormat,
+  Camera,
+  CodeScannerFrame,
+  type Point,
+  type Code,
+} from 'react-native-vision-camera';
+import { Gesture, GestureDetector } from 'react-native-gesture-handler';
+import { runOnJS } from 'react-native-reanimated';
 import { Icon, Text, useTheme, Overlay, Button } from '@rneui/themed';
-import { ReceiveAddressStackName, RootStackList, ScanQRCodeStackName, SendToStackName, StackNavigation } from '@router/configs';
-import { statusBarHeight } from '@utils/deviceInfo';
-import { useCallback, useEffect, useState } from 'react';
-import { Pressable, SafeAreaView, View } from 'react-native';
-import { useCameraPermission, useCameraDevice, Camera, type Code, CodeScannerFrame, useCameraFormat } from 'react-native-vision-camera';
-import { StackActions } from '@react-navigation/native';
-import { BaseButton } from '@components/Button';
-import { Linking } from 'react-native';
-import { ETHURL, parseETHURL } from '@utils/ETHURL';
-import { useAssetsTokenList } from '@core/WalletCore/Plugins/ReactInject/data/useAssets';
-import { useAtom } from 'jotai';
+import { setAtom } from '@core/WalletCore/Plugins/ReactInject';
+import { ReceiveAddressStackName, RootStackList, ScanQRCodeStackName, SendToStackName, HomeStackName, WalletStackName, StackNavigation } from '@router/configs';
+import { getAssetsTokenList } from '@core/WalletCore/Plugins/ReactInject/data/useAssets';
 import { setTokenTransaction, setTransactionAmount, setTransactionTo } from '@core/WalletCore/Plugins/ReactInject/data/useTransaction';
-import { formatEther, formatUnits, parseUnits } from 'ethers';
 import { AssetType } from '@core/database/models/Asset';
+import plugins from '@core/WalletCore/Plugins';
+import { type AssetInfo } from '@core/WalletCore/Plugins/AssetsTracker/types';
+import { BaseButton } from '@components/Button';
+import { parseETHURL, type ETHURL } from '@utils/ETHURL';
+import { isHexAddress } from '@core/utils/account';
+import { statusBarHeight } from '@utils/deviceInfo';
+import { showMessage } from 'react-native-flash-message';
+
+
+const screenWidth = Dimensions.get('window').width;
+const screenHeight = Dimensions.get('window').height;
+const scanAreaWidth = 250;
 
 const ScanQRCode: React.FC<{ navigation: StackNavigation; route: RouteProp<RootStackList, typeof ScanQRCodeStackName> }> = ({ navigation, route }) => {
   const { theme } = useTheme();
+
+  const camera = useRef<Camera>(null);
   const { hasPermission, requestPermission } = useCameraPermission();
   const device = useCameraDevice('back');
-  const format = useCameraFormat(device, [
-    { fps: 30 }
-  ])
+  const format = useCameraFormat(device, [{ fps: 30 }]);
 
   const [showPermissionModel, setShowPermissionModel] = useState(!hasPermission);
   const [showRejectPermissionModel, setShowRejectPermissionModel] = useState(false);
 
-  const [, setTXTo] = useAtom(setTransactionTo);
-  const [, setTokenTX] = useAtom(setTokenTransaction);
-  const [, setTXAmount] = useAtom(setTransactionAmount);
-  const tokens = useAssetsTokenList();
+  const handleSelectImage = useCallback(async () => {
+    try {
+      const result = await launchImageLibrary({ mediaType: 'photo' });
+    } catch (err) {
+      console.log('handleSelectImage error: ', err);
+    }
+  }, []);
 
-  const [codes, setCodes] = useState<Code[]>([]);
-
-  const handleCodeScanned = (codes: Code[], frame: CodeScannerFrame) => {
+  const inHandleScanResult = useRef(false);
+  const handleCodeScanned = useCallback(async (codes: Code[], frame: CodeScannerFrame) => {
     // there is multiple codes we need set user to select one
     const code = codes[0];
-    if (code && code.value) {
+    if (!code || !code.value || inHandleScanResult.current) return;
+    inHandleScanResult.current = true;
+
+    if (code.value.startsWith('wc:')) {
+      inHandleScanResult.current = false;
       try {
-        const res = parseETHURL(code.value);
-        const { target_address, chain_id, function_name, parameters } = res;
-
-        if (!target_address) return;
-        setTXTo(target_address);
-        if (!tokens || tokens.length === 0) {
-          // if tokens is not ready, go to receive address
-          return navigation.dispatch(StackActions.replace(ReceiveAddressStackName));
+        await plugins.WalletConnect.pair(code.value);
+        navigation.dispatch(StackActions.replace(HomeStackName, { screen: WalletStackName }));
+      } catch (err) {
+        showMessage({
+          message: 'Connect to wallet-connect failed',
+          description: String(err ?? ''),
+          type: 'warning',
+        });
+      }
+      return;
+    } else {
+      const ethUrl = { target_address: undefined, chain_id: undefined, function_name: undefined, parameters: undefined } as unknown as ETHURL;
+      if (isHexAddress(code.value)) {
+        ethUrl.target_address = code.value;
+      } else {
+        try {
+          Object.assign(ethUrl, parseETHURL(code.value));
+        } catch (_) {
+          // console.log();
         }
+      }
 
-        // check is send 20 token
-        if (function_name && function_name === 'transfer') {
-          // check is has uint256
-          if (parameters && parameters.address) {
-            //  is send 20 token and have value
-            const token = tokens.find((t) => t.contractAddress?.toLowerCase() === parameters.address?.toLowerCase());
-            if (token) {
-              setTokenTX({
-                assetType: token.type,
-                balance: token.balance,
-                symbol: token.symbol,
-                decimals: token.decimals,
-                contractAddress: token.contractAddress,
-                iconUrl: token.icon,
-                priceInUSDT: token.priceInUSDT,
-              });
+      if (!ethUrl.target_address) {
+        inHandleScanResult.current = false;
+        return;
+      }
+      setAtom(setTransactionTo, ethUrl.target_address);
 
-              if (parameters.uint256) {
-                setTXAmount(parameters.uint256);
-                return navigation.dispatch(StackActions.replace(SendToStackName));
-              }
-            }
-          }
-        } else {
-          // is send native token and have value
-          const token = tokens.find((t) => t.type === AssetType.Native);
-          if (token) {
-            setTokenTX({
-              assetType: token.type,
-              balance: token.balance,
-              symbol: token.symbol,
-              decimals: token.decimals,
-              contractAddress: token.contractAddress,
-              iconUrl: token.icon,
-              priceInUSDT: token.priceInUSDT,
-            });
+      const tokens = getAssetsTokenList();
+      if (!tokens || tokens.length === 0) {
+        // if tokens is not ready, go to receive address
+        inHandleScanResult.current = false;
+        navigation.dispatch(StackActions.replace(ReceiveAddressStackName));
+        return;
+      }
 
-            if (parameters && parameters.value) {
-              setTXAmount(parameters.value);
-              return navigation.dispatch(StackActions.replace(SendToStackName));
-            }
-          }
+      let token: AssetInfo | undefined = undefined;
+      let amount: bigint | undefined = undefined;
+      if (ethUrl.function_name === 'transfer' && ethUrl.parameters?.address) {
+        token = tokens.find((t) => t.contractAddress?.toLowerCase() === ethUrl.parameters?.address?.toLowerCase());
+        if (token && ethUrl.parameters.uint256) {
+          amount = ethUrl.parameters.uint256;
         }
-        // default go to receive address
-        return navigation.dispatch(StackActions.replace(ReceiveAddressStackName));
-      } catch (error) {
-        // todo add error message
-        console.log(code.value);
-        console.log(error);
+      } else {
+        token = tokens.find((t) => t.type === AssetType.Native);
+        if (token && ethUrl.parameters?.value) {
+          amount = ethUrl.parameters.value;
+        }
+      }
+
+      if (token && amount) {
+        setAtom(setTokenTransaction, {
+          assetType: token.type,
+          balance: token.balance,
+          symbol: token.symbol,
+          decimals: token.decimals,
+          contractAddress: token.contractAddress,
+          iconUrl: token.icon,
+          priceInUSDT: token.priceInUSDT,
+        });
+        setAtom(setTransactionAmount, amount);
+        inHandleScanResult.current = false;
+        navigation.dispatch(StackActions.replace(SendToStackName));
+      } else {
+        inHandleScanResult.current = false;
+        navigation.dispatch(StackActions.replace(ReceiveAddressStackName));
       }
     }
-  };
+  }, []);
+
+  const codeScanner = useCodeScanner({
+    codeTypes: ['qr', 'ean-13'],
+    onCodeScanned: handleCodeScanned,
+  });
 
   const handlePermission = useCallback(async () => {
     if (!hasPermission) {
       const isOk = await requestPermission();
-      console.log('get permission', isOk);
       setShowPermissionModel(false);
       if (!isOk) {
         setShowRejectPermissionModel(true);
@@ -120,49 +155,72 @@ const ScanQRCode: React.FC<{ navigation: StackNavigation; route: RouteProp<RootS
     }
   }, [hasPermission]);
 
+  const focus = useCallback((point: Point) => {
+    if (camera.current === null) return;
+    camera.current.focus(point);
+  }, []);
+
+  const gesture = Gesture.Tap().onEnd(() => {
+    runOnJS(() => focus({ x: screenWidth / 2, y: 250 }));
+  });
+
   return (
-    <SafeAreaView className="flex-1 flex flex-col justify-start" style={{ backgroundColor: theme.colors.surfacePrimaryWithOpacity7, paddingTop: statusBarHeight }}>
-      <View className="flex-1" style={{ backgroundColor: theme.colors.pureBlackAndWight }}>
+    <SafeAreaView className="flex-1 flex flex-col justify-start" style={{ paddingTop: statusBarHeight }}>
+      <StatusBar backgroundColor={theme.colors.pureBlackAndWight} />
+      <>
         {hasPermission && device && device !== null && (
           <View className="flex-1">
-            <Pressable
-              onPress={() => navigation.goBack()}
-              style={{ backgroundColor: theme.colors.contrastWhiteAndBlack }}
-              className="flex items-center justify-center absolute top-4 left-2 w-12 h-12 rounded-full z-10"
-            >
-              <Icon name="arrow-back" color={theme.colors.pureBlackAndWight} size={40} />
-            </Pressable>
-            {/* {codes.length > 0 && (
-              <View className=" absolute top-0 right-0 bottom-0 left-0 z-10" style={{ backgroundColor: 'rgba(0,0,0,0.6)' }}>
-                {codes.map((code, index) => (
-                  <Pressable
-                    key={index}
-                    className="absolute z-10"
-                    style={{
-                      left: code?.frame?.x && code?.frame.y ? (Platform.OS === 'android' ? code?.frame?.x : code.frame.x) : undefined,
-                      top: code?.frame?.x && code?.frame.y ? (Platform.OS === 'android' ? code?.frame?.y : code.frame.y) : undefined,
-                    }}
-                  >
-                    <Icon name="keyboard-double-arrow-right" color={theme.colors.white} size={40} />
-                  </Pressable>
-                ))}
-              </View>
-            )} */}
             {device && (
-              <Camera
-                isActive={true}
-                device={device}
-                codeScanner={{
-                  codeTypes: ['qr', 'ean-13'],
-                  onCodeScanned: handleCodeScanned,
-                }}
-                style={{ flex: 1 }}
-                format={format}
-              />
+              <GestureDetector gesture={gesture}>
+                <Camera ref={camera} isActive={true} device={device} codeScanner={codeScanner} style={{ flex: 1 }} format={format} enableZoomGesture />
+              </GestureDetector>
             )}
+
+            <View className="absolute w-full h-full left-0 top-0">
+              <View
+                className="absolute w-full h-[125px] left-0 top-0 opacity-95"
+                pointerEvents="box-none"
+                style={{ backgroundColor: theme.colors.pureBlackAndWight }}
+              />
+              <View
+                className="absolute w-full left-0 top-0 opacity-95"
+                pointerEvents="box-none"
+                style={{ backgroundColor: theme.colors.pureBlackAndWight, top: 125 + scanAreaWidth, height: '100%' }}
+              />
+              <View
+                className="absolute left-0 opacity-95"
+                pointerEvents="box-none"
+                style={{
+                  backgroundColor: theme.colors.pureBlackAndWight,
+                  top: 125,
+                  width: (screenWidth - scanAreaWidth) / 2,
+                  height: scanAreaWidth,
+                }}
+              />
+              <View
+                className="absolute right-0 opacity-95"
+                pointerEvents="box-none"
+                style={{
+                  backgroundColor: theme.colors.pureBlackAndWight,
+                  top: 125,
+                  width: (screenWidth - scanAreaWidth) / 2,
+                  height: scanAreaWidth,
+                }}
+              />
+              <Pressable
+                onPress={() => navigation.goBack()}
+                style={{ backgroundColor: theme.colors.contrastWhiteAndBlack }}
+                className="flex items-center justify-center absolute top-4 left-2 w-12 h-12 rounded-full z-10"
+              >
+                <Icon name="arrow-back" color={theme.colors.pureBlackAndWight} size={40} />
+              </Pressable>
+              <BaseButton testID="Photos" containerStyle={{ marginTop: screenHeight - 200, marginHorizontal: 24 }} onPress={handleSelectImage}>
+                Photos
+              </BaseButton>
+            </View>
           </View>
         )}
-      </View>
+      </>
       <Overlay
         backdropStyle={{ backgroundColor: undefined }}
         overlayStyle={{ borderRadius: 10, backgroundColor: theme.colors.surfaceCard }}

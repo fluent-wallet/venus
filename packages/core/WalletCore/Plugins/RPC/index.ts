@@ -1,7 +1,13 @@
 import { type Plugin } from '../../Plugins';
 
-class RPCPlugin implements Plugin {
+declare module '../../../WalletCore/Plugins' {
+  interface Plugins {
+    RPC: RPCPluginClass;
+  }
+}
+
+class RPCPluginClass implements Plugin {
   public name = 'RPC';
 }
 
-export default new RPCPlugin();
+export default new RPCPluginClass();

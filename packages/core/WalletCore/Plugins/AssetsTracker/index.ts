@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/ban-types */
-import { combineLatest, filter, debounceTime, distinctUntilChanged, interval, switchMap, takeUntil, Subject, of, startWith, type Subscription } from 'rxjs';
+import { interval, switchMap, takeUntil, Subject, startWith, type Subscription } from 'rxjs';
 import { isEqual } from 'lodash-es';
 import { type Plugin } from '../../Plugins';
 import { NetworkType, ChainType } from './../../../database/models/Network';
@@ -37,10 +37,6 @@ declare module '../../../WalletCore/Plugins' {
     AssetsTracker: AssetsTrackerPluginClass;
   }
 }
-
-const compareNetworkAndAddress = ([prevNetwork, prevAddress]: [Network, Address], [currentNetwork, currentAddress]: [Network, Address]) => {
-  return prevNetwork.id === currentNetwork.id && prevAddress.id === currentAddress.id;
-};
 
 export const getFetcherKey = ({ networkType, chainId }: { networkType: NetworkType; chainId?: string }) => {
   return typeof chainId === 'undefined' ? networkType : `${networkType}-${chainId}`;
@@ -99,18 +95,12 @@ class AssetsTrackerPluginClass implements Plugin {
   }
 
   private setup() {
-    combineLatest([events.currentNetworkObservable, events.currentAddressObservable])
-      .pipe(
-        filter((tuple): tuple is [Network, Address] => tuple.every((ele) => !!ele)),
-        debounceTime(40),
-        distinctUntilChanged(compareNetworkAndAddress)
-      )
-      .subscribe(([network, address]) => {
-        this.currentNetwork = network;
-        this.currentAddress = address;
+    events.combineNetworkAndAddressChangedSubject.subscribe(([network, address]) => {
+      this.currentNetwork = network;
+      this.currentAddress = address;
 
-        this.startPolling({ network, address });
-      });
+      this.startPolling({ network, address });
+    });
   }
 
   /** This function immediately start a tracker for the current network assets and returns a Promise that resolves when first fetchAssets success. */
@@ -151,7 +141,7 @@ class AssetsTrackerPluginClass implements Plugin {
                 }
                 return trackAssets({ chainFetcher, networkFetcher, nativeAsset, network, address });
               }),
-              takeUntil(this.cancel$!)
+              takeUntil(this.cancel$!),
             )
             .subscribe({
               next: (trackRes) => {
@@ -190,7 +180,7 @@ class AssetsTrackerPluginClass implements Plugin {
           reject(false);
         }
       },
-      forceUpdate ? 0 : 40
+      forceUpdate ? 0 : 40,
     );
 
     return firstFetchPromise;

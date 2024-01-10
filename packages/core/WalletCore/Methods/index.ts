@@ -16,6 +16,8 @@ import { DatabaseMethod } from './databaseMethod';
 import { TransactionMethod } from './transactionMethod';
 import { TxMethod } from './txMethod';
 import { AssetMethod, type AssetParams } from './assetMethod';
+import { AppMethod } from './appMethod';
+import { RequestMethod } from './requestMethod';
 
 @injectable()
 export class Methods {
@@ -133,6 +135,22 @@ export class Methods {
     return this.TxMethod.createTx(...args);
   }
 
+  @inject(AppMethod) private AppMethod!: AppMethod;
+  public createApp(...args: Parameters<AppMethod['createApp']>) {
+    return this.AppMethod.createApp(...args);
+  }
+  public isAppExist(...args: Parameters<AppMethod['isAppExist']>) {
+    return this.AppMethod.isAppExist(...args);
+  }
+
+  @inject(RequestMethod) private RequestMethod!: RequestMethod;
+  public createRequest(...args: Parameters<RequestMethod['createRequest']>) {
+    return this.RequestMethod.createRequest(...args);
+  }
+  public rejectAllPendingRequests(...args: Parameters<RequestMethod['rejectAllPendingRequests']>) {
+    return this.RequestMethod.rejectAllPendingRequests(...args);
+  }
+
   [methodName: string]: any;
   public register(methodName: string, method: Function) {
     this[methodName] = method;
@@ -151,5 +169,7 @@ container.bind(TransactionMethod).to(TransactionMethod).inSingletonScope();
 container.bind(TxMethod).to(TxMethod).inSingletonScope();
 container.bind(AssetMethod).to(AssetMethod).inSingletonScope();
 container.bind(Methods).to(Methods).inSingletonScope();
+container.bind(AppMethod).to(AppMethod).inSingletonScope();
+container.bind(RequestMethod).to(RequestMethod).inSingletonScope();
 
 export default container.get(Methods) as Methods;

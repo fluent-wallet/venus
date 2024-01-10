@@ -176,16 +176,9 @@ const schema = appSchema({
     tableSchema({
       name: TableName.App,
       columns: [
+        { name: 'identity', type: 'string', isIndexed: true },
+        { name: 'origin', type: 'string', isIndexed: true },
         { name: 'name', type: 'string' },
-        { name: 'icon', type: 'string', isOptional: true },
-        { name: 'site_id', type: 'string', isIndexed: true },
-      ],
-    }),
-    tableSchema({
-      name: TableName.Site,
-      columns: [
-        { name: 'origin', type: 'string' },
-        { name: 'name', type: 'string', isOptional: true },
         { name: 'icon', type: 'string', isOptional: true },
       ],
     }),
@@ -194,7 +187,7 @@ const schema = appSchema({
       columns: [
         { name: 'type', type: 'string' },
         { name: 'value', type: 'string', isOptional: true },
-        { name: 'processed', type: 'boolean' },
+        { name: 'status', type: 'string' },
         { name: 'created_at', type: 'number' },
         { name: 'app_id', type: 'string', isIndexed: true },
       ],

@@ -1,0 +1,63 @@
+import { injectable } from 'inversify';
+import { RequestStatus } from '../../database/models/Request/RequestType';
+import { createRequest as _createRequest, queryPendingRequests, type RequestParams } from '../../database/models/Request/query';
+import database from '../../database';
+import { newestRequestSubject, requestSubjectsMap, type RequestSubject } from '../Events/requestSubject';
+
+const requestConfig: {
+  rejectPrevRequest: boolean;
+} = {
+  rejectPrevRequest: true,
+} as const;
+
+let newestRequestSubjectObj: RequestSubject | null = null;
+
+@injectable()
+export class RequestMethod {
+  createRequest = async (params: Omit<RequestParams, 'status'>) => {
+    let resolve!: RequestSubject['resolve'];
+    let reject!: RequestSubject['reject'];
+    const promise = new Promise<boolean>((_resolve, _reject) => {
+      resolve = _resolve;
+      reject = _reject;
+    });
+    console.log('createRequest', params)
+    if (requestConfig.rejectPrevRequest && newestRequestSubjectObj) {
+      newestRequestSubjectObj.reject('User reject request.');
+    }
+    const request = await _createRequest({ ...params, status: RequestStatus.Pending });
+    const requestSubjectObj: RequestSubject = {
+      promise,
+      resolve,
+      reject,
+      request: {
+        type: request.type,
+        value: request.value,
+        app: params.app!,
+      },
+    };
+    requestSubjectsMap.set(request.id, requestSubjectObj);
+    newestRequestSubject.next(requestSubjectObj);
+    newestRequestSubjectObj = requestSubjectObj;
+    promise.finally(() => {
+      requestSubjectsMap.delete(request.id);
+      if (newestRequestSubjectObj === requestSubjectObj) {
+        newestRequestSubjectObj = null;
+      }
+    });
+    return promise;
+  };
+
+  rejectAllPendingRequests = async () => {
+    const pendingRequests = await queryPendingRequests();
+    pendingRequests.forEach((request) => {
+      if (requestSubjectsMap.has(request.id)) {
+        requestSubjectsMap.get(request.id)?.reject('Request rejected');
+        requestSubjectsMap.delete(request.id);
+      }
+    });
+    await database.write(async () => {
+      await database.batch(pendingRequests.map((request) => request.prepareUpdateStatus(RequestStatus.Rejected)));
+    });
+  };
+}
