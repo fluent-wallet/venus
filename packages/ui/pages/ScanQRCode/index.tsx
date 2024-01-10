@@ -172,7 +172,7 @@ const ScanQRCode: React.FC<{ navigation: StackNavigation; route: RouteProp<RootS
             <View className="flex-1 mr-2">
               <Button
                 type="outline"
-                buttonStyle={{ borderRadius: 40, borderWidth: 1, borderColor: theme.colors.textBrand, minHeight: 48 }}
+                buttonStyle={{ borderRadius: 7, borderWidth: 1, borderColor: theme.colors.textBrand, minHeight: 48 }}
                 titleStyle={{ color: theme.colors.textBrand }}
                 onPress={() => {
                   setShowPermissionModel(false);
