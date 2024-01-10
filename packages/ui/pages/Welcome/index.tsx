@@ -13,8 +13,8 @@ import { qaOnly } from '@utils/getEnv';
 const Welcome: React.FC<{ navigation: StackNavigation }> = ({ navigation }) => {
   const { theme } = useTheme();
   return (
-    <SafeAreaView className="flex-1 flex flex-col justify-start pt-[8px]">
-      <Background className="flex-1">
+    <SafeAreaView className="flex-1 flex flex-col justify-start">
+      <Background className="flex-1 pt-[8px]">
         {/* <View
           className="flex flex-row w-[330px] mx-auto p-[12px] rounded-[8px]"
           style={{ marginTop: (statusBarHeight ?? 0) + 8, backgroundColor: theme.colors.surfaceSecondary }}
