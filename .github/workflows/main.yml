@@ -48,7 +48,11 @@ jobs:
       - name: Build Android Release
         env:
           PASSWORD_CRYPTO_KEY: ${{ secrets.PASSWORD_CRYPTO_KEY }}
+          UPLOAD_KEYSTORE: ${{secrets.UPLOAD_KEYSTORE}}
+          SIGN_ALIAS: ${{secrets.SIGN_ALIAS}}
+          SIGN_KEY: ${{secrets.SIGN_KEY}}
         run: |
+          echo $PASSWORD_CRYPTO_KEY | base64 --decode > ./android/app/release.keystore.jks
           echo "" > .env
           cat >>.env <<END
           APP_ENV=prod

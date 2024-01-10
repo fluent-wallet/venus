@@ -41,7 +41,7 @@ const Settings: React.FC<{ navigation: NavigationProp<any> }> = ({ navigation })
         )}
       </View>
       <Text style={{ color: theme.colors.textSecondary }} className="text-base mt-auto text-center">
-        v{pkg.version}
+        v{pkg.version} Beta
         {qaOnly() && getAppEnv()}
       </Text>
       <Dialog isVisible={visibleResetWallet} onBackdropPress={() => setVisibleResetWallet(false)}>
