@@ -30,3 +30,8 @@ export const WELCOME_IMPORT_WALLET_FEATURE = {
   describe: 'welcome import wallet button',
   allow: isQA || isDev,
 };
+
+export const ACTIVITY_DB_STATUS_FEATURE = {
+  describe: 'show activity db status after action',
+  allow: isQA || isDev,
+};
