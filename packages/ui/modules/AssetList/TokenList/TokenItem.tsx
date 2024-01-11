@@ -24,8 +24,8 @@ const TokenItem: React.FC<{
   return (
     <Pressable testID="tokenItem" onPress={onPress && data ? () => onPress(data) : undefined}>
       <View className={'flex flex-row w-full h-[48px]'}>
-        <View className="w-[48px] h-[48px] mr-[16px]">
-          <TokenIcon type={data.type} url={data.icon} width={48} height={48} />
+        <View className="w-[48px] h-[48px] mr-[16px] flex justify-center items-center">
+          <TokenIcon type={data.type} url={data.icon} width={42} height={42} />
         </View>
         <View className="flex-1">
           <View className="flex flex-row flex-1 items-center justify-between">
