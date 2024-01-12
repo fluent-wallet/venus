@@ -46,6 +46,7 @@ jobs:
       - name: Build Android qa Release
         env:
           PASSWORD_CRYPTO_KEY: ${{ secrets.PASSWORD_CRYPTO_KEY }}
+          STAGING_ANDROID: ${{ secrets.STAGING_ANDROID }}
         run: |
           echo "" > .env
           cat >>.env <<END
@@ -62,7 +63,6 @@ jobs:
 
       - name: code push
         env:
-          STAGING_ANDROID: ${{ secrets.STAGING_ANDROID }}
           APP_API_TOKEN: ${{ secrets.APP_API_TOKEN }}
         run: |
           npm install -g appcenter-cli
