@@ -14,6 +14,8 @@ import com.wallet.bsimsdk.BSIMSDKPackage;
 import com.nozbe.watermelondb.jsi.WatermelonDBJSIPackage;
 import com.facebook.react.bridge.JSIModulePackage;
 
+import com.microsoft.codepush.react.CodePush;
+
 import java.util.List;
 
 public class MainApplication extends Application implements ReactApplication {
@@ -53,6 +55,10 @@ public class MainApplication extends Application implements ReactApplication {
                 @Override
                 protected JSIModulePackage getJSIModulePackage() {
                     return new WatermelonDBJSIPackage(); // ⬅️ This!
+                }
+                @Override
+                protected String getJSBundleFile() {
+                    return CodePush.getJSBundleFile();
                 }
             };
     // bsim

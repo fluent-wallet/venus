@@ -59,3 +59,12 @@ jobs:
         with:
             files: |
              ./android/app/build/outputs/apk/qa/release/app-qa-release.apk
+
+      - name: code push
+        env:
+          STAGING_ANDROID: ${{ secrets.STAGING_ANDROID }}
+          APP_API_TOKEN: ${{ secrets.APP_API_TOKEN }}
+        run: |
+          npm install -g appcenter-cli
+          appcenter login --token $APP_API_TOKEN
+          appcenter codepush release-react -a yuqi.wang-confluxnetwork.org/SwiftShield-1 -d Staging --entry-file ./index.ts
