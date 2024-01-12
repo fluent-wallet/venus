@@ -11,6 +11,9 @@
     "pod:install": "command -v pod && (cd ios/ && pod install --verbose && cd ..) || echo \"Skipping pod install\"",
     "postinstall": "patch-package && yarn pod:install"
   },
+  "android": {
+    "versionCode": 1
+  },
   "dependencies": {
     "@cfx-kit/dapp-utils": "^0.0.23",
     "@craftzdog/react-native-buffer": "^6.0.5",

@@ -77,23 +77,30 @@ def enableProguardInReleaseBuilds = false
  */
 def jscFlavor = 'org.webkit:android-jsc:+'
 
+import groovy.json.JsonSlurper
+def getAppVersionCode() {
+    def pkgFile = new File("$rootDir/../package.json")
+    def pkgJson = new JsonSlurper().parseText(pkgFile.text)
+    return pkgJson["android"]["versionCode"]
+}
+def getAppVersion() {
+    def pkgFile = new File("$rootDir/../package.json")
+    def pkgJson = new JsonSlurper().parseText(pkgFile.text)
+    return pkgJson["version"]
+}
+
 android {
     ndkVersion rootProject.ext.ndkVersion
 
     compileSdkVersion rootProject.ext.compileSdkVersion
 
     namespace "com.wallet"
-    def getAppVersion() {
-        def pkgFile = new FIle("../../package.json")
-        def pkgJson = new JsonSlurper().parseText(pkgFile.text)
-        return pkgJson.version
-    }
     defaultConfig {
         applicationId "com.wallet"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 1
-        versionName "1.0"
+        versionCode getAppVersionCode()
+        versionName getAppVersion()
         resValue "string", "build_config_package", "com.wallet"
     }
     signingConfigs {
