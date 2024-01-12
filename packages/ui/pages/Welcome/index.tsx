@@ -9,9 +9,25 @@ import Tip from '@assets/icons/tip.svg';
 import WelcomeBg from '@assets/images/welcome-bg.png';
 import SIMCardIcon from '@assets/icons/sim-card.svg';
 import { WELCOME_CREATE_WALLET_FEATURE, WELCOME_IMPORT_WALLET_FEATURE } from '@utils/features';
+import BSIM from '@WalletCoreExtends/Plugins/BSIM';
+import { showMessage } from 'react-native-flash-message';
 
 const Welcome: React.FC<{ navigation: StackNavigation }> = ({ navigation }) => {
   const { theme } = useTheme();
+  const connectBSIMCard = async () => {
+    try {
+      await BSIM.getBSIMVersion();
+      navigation.navigate(BiometricsStackName, { type: 'BSIM' });
+    } catch (error) {
+      showMessage({
+        message: `Can't find the BSIM Card`,
+        description: "Please make sure you've inserted the BSIM Card and try again.",
+        type: 'warning',
+        duration: 3000,
+      });
+    }
+  };
+
   return (
     <SafeAreaView className="flex-1 flex flex-col justify-start">
       <Background className="flex-1 pt-[8px]">
@@ -37,11 +53,7 @@ const Welcome: React.FC<{ navigation: StackNavigation }> = ({ navigation }) => {
           <Text className="mt-[8px] text-[16px] leading-[24px] text-center">First, let's add a wallet</Text>
         </View>
 
-        <BaseButton
-          testID="connectBSIMWallet"
-          containerStyle={{ marginTop: 40, marginHorizontal: 16 }}
-          onPress={() => navigation.navigate(BiometricsStackName, { type: 'BSIM' })}
-        >
+        <BaseButton testID="connectBSIMWallet" containerStyle={{ marginTop: 40, marginHorizontal: 16 }} onPress={connectBSIMCard}>
           <SIMCardIcon color={theme.colors.surfaceCard} width={24} height={24} /> Connect BSIM Card
         </BaseButton>
 
