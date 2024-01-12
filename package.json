@@ -11,6 +11,9 @@
     "pod:install": "command -v pod && (cd ios/ && pod install --verbose && cd ..) || echo \"Skipping pod install\"",
     "postinstall": "patch-package && yarn pod:install"
   },
+  "android": {
+    "versionCode": 1
+  },
   "dependencies": {
     "@cfx-kit/dapp-utils": "^0.0.23",
     "@craftzdog/react-native-buffer": "^6.0.5",
@@ -50,6 +53,7 @@
     "react-native": "0.72.5",
     "react-native-bignumber": "^0.2.1",
     "react-native-bootsplash": "^5.2.1",
+    "react-native-code-push": "^8.1.1",
     "react-native-config": "^1.5.1",
     "react-native-flash-message": "^0.4.2",
     "react-native-gesture-handler": "^2.13.4",

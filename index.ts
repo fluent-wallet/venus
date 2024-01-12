@@ -1,5 +1,5 @@
 import 'react-native-gesture-handler';
-import { AppRegistry } from 'react-native';
+import { AppRegistry, Platform } from 'react-native';
 import './packages/setup/getRandomValues';
 import '@ethersproject/shims';
 import './packages/setup/ethers';
@@ -12,8 +12,15 @@ import AuthenticationPlugin from './packages/WalletCoreExtends/Plugins/Authentic
 import BSIMPlugin from './packages/WalletCoreExtends/Plugins/BSIM';
 import App from './packages/ui/App';
 import { name as appName } from './app.json';
+import codePush from 'react-native-code-push';
 
 WalletCore.plugins.use([CryptoToolPlugin, AuthenticationPlugin, BSIMPlugin, ReactInjectPlugin, AssetsTracker]);
 WalletCore.setup();
 
-AppRegistry.registerComponent(appName, () => App);
+// by now the code push only works on android, if you want to run on ios, need to apply the code push config on ios see: https://github.com/microsoft/react-native-code-push/blob/master/docs/setup-ios.md
+
+if (__DEV__ || Platform.OS === 'ios') {
+  AppRegistry.registerComponent(appName, () => App);
+} else {
+  AppRegistry.registerComponent(appName, () => codePush(App));
+}

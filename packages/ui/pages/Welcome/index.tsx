@@ -8,7 +8,7 @@ import { type StackNavigation, ImportWalletStackName, BiometricsStackName } from
 import Tip from '@assets/icons/tip.svg';
 import WelcomeBg from '@assets/images/welcome-bg.png';
 import SIMCardIcon from '@assets/icons/sim-card.svg';
-import { qaOnly } from '@utils/getEnv';
+import { WELCOME_CREATE_WALLET_FEATURE, WELCOME_IMPORT_WALLET_FEATURE } from '@utils/features';
 
 const Welcome: React.FC<{ navigation: StackNavigation }> = ({ navigation }) => {
   const { theme } = useTheme();
@@ -54,7 +54,7 @@ const Welcome: React.FC<{ navigation: StackNavigation }> = ({ navigation }) => {
         </View>
 
         <BaseButton
-          disabled={!qaOnly()}
+          disabled={!WELCOME_CREATE_WALLET_FEATURE.allow}
           testID="createNewWallet"
           containerStyle={{ marginTop: 16, marginHorizontal: 16 }}
           onPress={() => navigation.navigate(BiometricsStackName)}
@@ -62,7 +62,7 @@ const Welcome: React.FC<{ navigation: StackNavigation }> = ({ navigation }) => {
           Create new Wallet
         </BaseButton>
         <BaseButton
-          disabled={!qaOnly()}
+          disabled={!WELCOME_IMPORT_WALLET_FEATURE.allow}
           testID="importExistingWallet"
           containerStyle={{ marginTop: 16, marginHorizontal: 16 }}
           onPress={() => navigation.navigate(ImportWalletStackName, { type: 'create' })}
