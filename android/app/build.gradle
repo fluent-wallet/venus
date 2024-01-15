@@ -52,11 +52,11 @@ react {
     // extraPackagerArgs = []
 
     /* Hermes Commands */
-    //   The hermes compiler command to run. By default it is 'hermesc'
-    // hermesCommand = "$rootDir/my-custom-hermesc/bin/hermesc"
-    //
-    //   The list of flags to pass to the Hermes compiler. By default is "-O", "-output-source-map"
-    // hermesFlags = ["-O", "-output-source-map"]
+//   The hermes compiler command to run. By default it is 'hermesc'
+// hermesCommand = "$rootDir/my-custom-hermesc/bin/hermesc"
+//
+//   The list of flags to pass to the Hermes compiler. By default is "-O", "-output-source-map"
+// hermesFlags = ["-O", "-output-source-map"]
 }
 
 /**
@@ -118,21 +118,23 @@ android {
         }
     }
     flavorDimensions "version"
-   		productFlavors {
+           productFlavors {
           qa {
             dimension "version"
             applicationIdSuffix ".qa"
             applicationId defaultConfig.applicationId
             signingConfig signingConfigs.debug
-            resValue "string", "CodePushDeploymentKey",System.getenv("STAGING_ANDROID")?:""
+            resValue "string", "CodePushDeploymentKey",System.getenv("STAGING_ANDROID")?: ''
+            resValue "string", "CodePushPublicKey", "-----BEGIN PUBLIC KEY-----\nMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAoDXy370b6d5TixRteLkq\nX57Wnao9xgjW6ZEr0xKsSi4khedELJ1w7aHQ4fhRZAnEiEoJTZpF+w5ir8sPLjcS\ncXA+556LRuFSzpAjTD8xE4LXN2SNyXMH3awM+EniAqjbF4KREbnANVK2Vj0B99ey\nqYKmbumu5Ne9HeRf+7LwcrApdd2JXF6MHo1argoUVkPAKeg89QASQUgButJbYqSb\n/cm1WDr+t2wez7RjEyHMb+mKiqIK/6w0P3S2JQfZd+7F+bRL5XNYrKckOUyXinaK\nwWw/OYELFFEyLKNTlY7VK9Gh+Ryoyn+Z0Of73CS7P6KjU2GxpdnqY+VE7wnOMG6W\nuwIDAQAB\n-----END PUBLIC KEY-----"
           }
           prod {
             dimension "version"
             applicationId defaultConfig.applicationId
             signingConfig signingConfigs.release
-            resValue "string", "CodePushDeploymentKey", System.getenv("PRODUCTION_ANDROID")?: ""
+            resValue "string", "CodePushDeploymentKey", System.getenv("PRODUCTION_ANDROID")?: ''
+            resValue "string", "CodePushPublicKey", "-----BEGIN PUBLIC KEY-----\nMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAmPCJ7nNWfj137zbh+ohU\nE1T89HcMwL94DdvqEh/Jwg09dEg/0yao5nDyuyrwWsQlDZVdNVUHfw4TNaBY47Yt\n2/QUIQ09Qb/Uiqdc4DfG239758u7B/cmIIwE/GWlh1lqipQnQIKo8AdDjFoV8Baf\noKu3vkpmwq9tVa7Ilar+puXhBrRhBvDNCfmSfmfeNm2coZdBrFNJoH3dk47x6Fxl\n+dg+vXhM/Vgx22ys+i4GNqYAV0jvNCm4PWrUeEAGxeZj6zL+wJe0qhjvy9auKq7Q\naliSAOAmHQB5htciFOqmfxNF/wU4Mg7m7cigqdEQoEXqmcO1YRJbXRMPQ1CBSS2K\niwIDAQAB\n-----END PUBLIC KEY-----"
           }
-    	}
+           }
 
     //see:https://github.com/margelo/react-native-quick-crypto/issues/90
     packagingOptions {
@@ -174,12 +176,12 @@ dependencies {
     // QRCode
     implementation 'com.google.mlkit:barcode-scanning:17.2.0'
     // BSIM
-//    implementation 'com.madgag.spongycastle:prov:1.58.0.0'
+    //    implementation 'com.madgag.spongycastle:prov:1.58.0.0'
     implementation 'com.google.code.gson:gson:2.10.1'
     implementation 'org.bouncycastle:bcprov-jdk15on:1.70'
     implementation "com.madgag.spongycastle:prov:1.58.0.0"
     implementation "org.web3j:core:5.0.0"
-    // implementation "io.github.conflux-chain:conflux.web3j:1.2.10"
+// implementation "io.github.conflux-chain:conflux.web3j:1.2.10"
 //    implementation "com.google.guava:guava:32.1.3-jre"
 }
 

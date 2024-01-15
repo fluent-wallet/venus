@@ -1,0 +1,56 @@
+name: Android build
+
+permissions:
+  contents: write
+
+on:
+  push:
+    branches:
+      - 'qa'
+jobs:
+  android-build:
+    name: Build Code Push
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out Git repository
+        uses: actions/checkout@v4
+        with:
+          ref: qa
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: install dependencies
+        run: yarn
+
+      - name: Set up JDK envronment
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'zulu'
+          java-version: '17'
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: set ENV
+        env:
+          PASSWORD_CRYPTO_KEY: ${{ secrets.PASSWORD_CRYPTO_KEY }}
+          STAGING_ANDROID: ${{ secrets.STAGING_ANDROID }}
+        run: |
+          echo "" > .env
+          cat >>.env <<END
+          APP_ENV=qa
+          PASSWORD_CRYPTO_KEY=$PASSWORD_CRYPTO_KEY
+          END
+
+      - name: code push
+        env:
+          APP_API_TOKEN: ${{ secrets.APP_API_TOKEN }}
+          CODE_PUSH_PRIVATE_KEY_QA: ${{ secrets.CODE_PUSH_PRIVATE_KEY_QA }}
+        run: |
+          echo $CODE_PUSH_PRIVATE_KEY | base64 --decode > ./codepush.pem
+          npm install -g appcenter-cli
+          appcenter login --token $APP_API_TOKEN
+          appcenter codepush release-react -a yuqi.wang-confluxnetwork.org/SwiftShield-1 -d Staging --entry-file ./index.ts --private-key-path ./codepush.pem
