@@ -53,9 +53,7 @@ jobs:
       - name: code push
         env:
           APP_API_TOKEN: ${{ secrets.APP_API_TOKEN }}
-          CODE_PUSH_PRIVATE_KEY: ${{ secrets.CODE_PUSH_PRIVATE_KEY }}
         run: |
-          echo $CODE_PUSH_PRIVATE_KEY | base64 --decode > ./codepush.pem
           npm install -g appcenter-cli
           appcenter login --token $APP_API_TOKEN
-          appcenter codepush release-react -a yuqi.wang-confluxnetwork.org/SwiftShield-1 -d Production --entry-file ./index.ts --private-key-path ./codepush.pem
+          appcenter codepush release-react -a yuqi.wang-confluxnetwork.org/SwiftShield-1 -d Production --entry-file ./index.ts --private-key-path
