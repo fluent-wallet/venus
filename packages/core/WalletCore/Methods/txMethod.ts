@@ -52,10 +52,10 @@ export class TxMethod {
           hash: params.txHash,
           status: TxStatus.PENDING,
           isLocal: true,
+          sendAt: params.extraParams.sendAt,
           txPayload,
           txExtra,
           asset,
-          blockNumber: params.extraParams.blockNumber,
         },
         true
       );
@@ -80,7 +80,7 @@ export class TxMethod {
         gasPrice: transaction.gasPrice?.toString(),
         gas: transaction.gasLimit.toString(),
         value: transaction.value.toString(),
-        nonce: transaction.nonce.toString(),
+        nonce: transaction.nonce,
         chainId: transaction.chainId.toString(),
         data: transaction.data,
         accessList: transaction.accessList,
