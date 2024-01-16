@@ -1,1 +1,7 @@
-export const DETAULT_TX_TRACK_INTERVAL = 1000;
+// TODO
+export const TX_RESEND_LIMIT = Infinity;
+
+export const DETAULT_EXECUTED_INTERVAL = 3 * 1000;
+// TODO: 5s
+export const DETAULT_CONFIRMED_INTERVAL = 10 * 1000;
+export const DETAULT_FINALIZED_INTERVAL = 30 * 1000;

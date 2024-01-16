@@ -14,7 +14,7 @@ import App from './packages/ui/App';
 import { name as appName } from './app.json';
 import codePush from 'react-native-code-push';
 
-WalletCore.plugins.use([CryptoToolPlugin, AuthenticationPlugin, BSIMPlugin, ReactInjectPlugin, AssetsTracker]);
+WalletCore.plugins.use([CryptoToolPlugin, AuthenticationPlugin, BSIMPlugin, ReactInjectPlugin, AssetsTracker, TransactionPlugin]);
 WalletCore.setup();
 
 // by now the code push only works on android, if you want to run on ios, need to apply the code push config on ios see: https://github.com/microsoft/react-native-code-push/blob/master/docs/setup-ios.md

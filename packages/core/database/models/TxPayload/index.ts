@@ -1,5 +1,5 @@
 import { Model, type Query } from '@nozbe/watermelondb';
-import { text, children, json } from '@nozbe/watermelondb/decorators';
+import { text, children, json, field } from '@nozbe/watermelondb/decorators';
 import { type Tx } from '../Tx';
 import TableName from '../../TableName';
 import { type AccessList } from 'ethers';
@@ -21,7 +21,7 @@ export class TxPayload extends Model {
   @text('storage_limit') storageLimit!: string | null; // for core space
   @text('data') data!: string | null;
   @text('value') value!: string | null;
-  @text('nonce') nonce!: string | null;
+  @field('nonce') nonce!: number;
   @text('chain_identification') chainId!: string | null;
   @text('epoch_height') epochHeight!: string | null; // for core space
   @children(TableName.Tx) txs!: Query<Tx>;
