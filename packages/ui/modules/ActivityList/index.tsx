@@ -43,7 +43,7 @@ const ActivityList: React.FC<{ onPress?: (v: Tx) => void }> = memo(({ onPress })
   }, [finishedTxs]);
 
   return (
-    <View className="pt-[15px] pb-[25px] px-[15px] flex-1">
+    <View className="flex-1">
       {!unfinishedTxs?.length && !finishedTxsByDay.length && (
         <View className="flex flex-col items-center pt-[44px]">
           <NoDataIcon />
