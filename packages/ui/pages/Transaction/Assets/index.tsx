@@ -107,7 +107,7 @@ const Assets: React.FC<{ navigation: StackNavigation; route: RouteProp<RootStack
         )}
       </View>
 
-      <PagerView initialPage={tabIndex} ref={tabRef} onPageSelected={(e) => handlePageSelected(e.nativeEvent.position)}>
+      <PagerView style={{ flex: 1 }} initialPage={tabIndex} ref={tabRef} onPageSelected={(e) => handlePageSelected(e.nativeEvent.position)}>
         <View className="w-full h-full" key="0">
           <TokenList onPress={handleSelectToken} skeleton={7} />
         </View>
