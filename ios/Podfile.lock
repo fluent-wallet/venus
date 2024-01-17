@@ -966,7 +966,7 @@ PODS:
     - React-Core
   - react-native-netinfo (11.2.1):
     - React-Core
-  - react-native-pager-view (6.1.0-rc.2):
+  - react-native-pager-view (7.0.0-rc.0):
     - React-Core
   - react-native-quick-base64 (2.0.8):
     - React-Core
@@ -1491,7 +1491,7 @@ SPEC CHECKSUMS:
   react-native-bignumber: 986c34989c5b5adc9ba5c3a849ed33e60416a79b
   react-native-config: 86038147314e2e6d10ea9972022aa171e6b1d4d8
   react-native-netinfo: 8a7fd3f7130ef4ad2fb4276d5c9f8d3f28d2df3d
-  react-native-pager-view: 037b3949788e38cb5ddfb44b854012804e803655
+  react-native-pager-view: 563a43b511eea680f803ab4fb20bd7525fbde2cc
   react-native-quick-base64: 777057ea4286f806b00259ede65dc79c7c706320
   react-native-quick-crypto: 455c1b411db006dba1026a30681ececb19180187
   react-native-safe-area-context: 0ee144a6170530ccc37a0fd9388e28d06f516a89
