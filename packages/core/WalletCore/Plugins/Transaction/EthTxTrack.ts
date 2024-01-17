@@ -311,7 +311,7 @@ export class EthTxTrack {
       const getTransactionReceiptParams = txsInPool.map((tx) => ({ method: 'eth_getTransactionReceipt', params: [tx.hash] }));
       const getTransactionReceiptResponses = await firstValueFrom(RPCSend<RPCResponse<ETH.eth_getTransactionReceiptResponse>[]>(getTransactionReceiptParams));
       const receiptMap = new Map<string, ETH.eth_getTransactionReceiptResponse>();
-      const executedTxs = txsInPool.filter(async (tx, index) => {
+      const executedTxs = txsInPool.filter((tx, index) => {
         const { result: receipt, error } = getTransactionReceiptResponses[index];
         if (error) {
           console.log('EthTxTrack: getTransactionReceipt error:', {
@@ -322,15 +322,16 @@ export class EthTxTrack {
         }
         if (!receipt || !receipt.status) {
           returnStatus && (status = TxStatus.PENDING);
-          await tx.updateSelf((tx) => {
+          tx.updateSelf((tx) => {
             tx.status = TxStatus.PENDING;
             tx.executedStatus = null;
             tx.receipt = null;
             tx.pollingCount = (tx.pollingCount ?? 0) + 1;
+          }).then(() => {
+            if (EXECUTED_NOT_FINALIZED_TX_STATUSES.includes(tx.status)) {
+              this._handleDuplicateTx(tx, false, false);
+            }
           });
-          if (EXECUTED_NOT_FINALIZED_TX_STATUSES.includes(tx.status)) {
-            this._handleDuplicateTx(tx, false, false);
-          }
           return false;
         }
         returnStatus && (status = TxStatus.EXECUTED);
@@ -359,7 +360,7 @@ export class EthTxTrack {
         if (finalizedBlock.result?.number) {
           finalizedBlockNumber = BigInt(finalizedBlock.result.number);
         }
-        executedTxs.forEach(async (tx, index) => {
+        await Promise.all(executedTxs.map(async (tx, index) => {
           const { result: block, error } = getBlockByHashParamsResponses[index];
           if (error) {
             console.log('EthTxTrack: eth_getBlockByHash error:', {
@@ -414,7 +415,7 @@ export class EthTxTrack {
               this._updateTokenBalance(tx);
             }
           }
-        });
+        }));
       }
     }
     return status;
