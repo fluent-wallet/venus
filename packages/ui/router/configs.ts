@@ -26,6 +26,10 @@ const HDManageStackName = 'HDManage';
 
 const ScanQRCodeStackName = 'ScanQRCode';
 
+const BackUpNoticeStackName = 'BackUpNotice';
+
+const BackUpVerifyStackName = 'BackUpVerify';
+
 export {
   WelcomeStackName,
   SetPasswordStackName,
@@ -49,6 +53,8 @@ export {
   HDManageStackName,
   HomeStackName,
   ScanQRCodeStackName,
+  BackUpNoticeStackName,
+  BackUpVerifyStackName,
 };
 
 export type RootStackList = {
@@ -74,6 +80,8 @@ export type RootStackList = {
   [ReceiveStackName]: undefined;
   [SetAmountStackName]: undefined;
   [ScanQRCodeStackName]: { path: keyof RootStackList };
+  [BackUpNoticeStackName]: undefined;
+  [BackUpVerifyStackName]: { seedPhrase: { index: number; word: string }[] , accountGroupId: string};
 
   Home: { screen: typeof WalletStackName };
 };

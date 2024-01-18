@@ -35,3 +35,8 @@ export const ACTIVITY_DB_STATUS_FEATURE = {
   describe: 'show activity db status after action',
   allow: isQA || isDev,
 };
+
+export const USER_MNEMONIC_PHRASE_BACKUP_FEATURE = {
+  describe: 'user mnemonic phrase backup',
+  allow: isQA || isDev,
+};

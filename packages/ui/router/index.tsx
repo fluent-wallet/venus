@@ -41,6 +41,8 @@ import {
   ReceiveStackName,
   SetAmountStackName,
   ScanQRCodeStackName,
+  BackUpNoticeStackName,
+  BackUpVerifyStackName,
 } from './configs';
 import SendReceiver, { SendPageHeaderOptions } from '@pages/Transaction/ReceiveAddress';
 import TransactionConfirm from '@pages/Transaction/TransactionConfirm';
@@ -56,7 +58,9 @@ import WalletIcon from '@assets/icons/wallet.svg';
 import SettingsIcon from '@assets/icons/settings.svg';
 import ArrowLeft from '@assets/icons/arrow-left.svg';
 import ScanQRCode from '@pages/ScanQRCode';
-import BootSplash from "react-native-bootsplash";
+import BootSplash from 'react-native-bootsplash';
+import BackUpNotice from '@pages/Account/BackupNotice';
+import VerifySeedPhrase from '@pages/Account/VerifySeedPhrase';
 const Stack = createNativeStackNavigator<RootStackList>();
 const BottomTabStack = createBottomTabNavigator();
 
@@ -156,6 +160,8 @@ const StackNavigator = () => {
           }),
         }}
       />
+      <Stack.Screen name={BackUpNoticeStackName} component={BackUpNotice} options={{ headerTitleAlign: 'center' }} />
+      <Stack.Screen name={BackUpVerifyStackName} component={VerifySeedPhrase} />
       <Stack.Screen name={BackUpStackName} component={BackUp} options={{ headerTitleAlign: 'center' }} />
       <Stack.Screen name={ReceiveStackName} component={Receive} />
       <Stack.Screen name={SetAmountStackName} component={SetAmount} />
