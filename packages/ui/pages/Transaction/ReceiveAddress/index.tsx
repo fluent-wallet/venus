@@ -14,6 +14,7 @@ import { RouteProp } from '@react-navigation/native';
 import { useReadOnlyTransaction, setTransactionTo } from '@core/WalletCore/Plugins/ReactInject/data/useTransaction';
 import { fetchChain } from '@cfx-kit/dapp-utils/dist/fetch';
 import { getCurrentNetwork } from '@core/WalletCore/Plugins/ReactInject/data/useCurrentNetwork';
+import { CHECK_ADDRESS_FEATURE } from '@utils/features';
 
 export const SendPageHeaderOptions = ({ title = 'Send To' }: { title?: string }) =>
   ({
@@ -39,7 +40,16 @@ const SendReceiver: React.FC<{ navigation: StackNavigation; route: RouteProp<Roo
     setIsKnowRisk(false);
   };
 
-  const handleNext = async () => {
+  const handleNext = () => {
+    if (!isAddress(address)) {
+      return setErrorMsg('Please enter valid hex address');
+    } else {
+      setErrorMsg('');
+    }
+    setToAddress(address);
+    navigation.navigate(TokensStackName);
+  };
+  const handleNextWithCheck = async () => {
     setLoading(true);
     if (isAddress(address)) {
       setErrorMsg('');
@@ -142,7 +152,12 @@ const SendReceiver: React.FC<{ navigation: StackNavigation; route: RouteProp<Roo
           </View>
 
           <View className="mt-auto mb-8">
-            <BaseButton loading={loading} testID="next" disabled={nextButtonDisabled()} onPress={handleNext}>
+            <BaseButton
+              loading={loading}
+              testID="next"
+              disabled={nextButtonDisabled()}
+              onPress={CHECK_ADDRESS_FEATURE.allow ? handleNextWithCheck : handleNext}
+            >
               Next
             </BaseButton>
           </View>
