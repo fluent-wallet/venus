@@ -293,10 +293,10 @@ const TransactionConfirm: React.FC<{
             </View>
 
             <View className="flex flex-row justify-between">
-              <Text className=" eading-6" style={{ color: theme.colors.textSecondary }}>
+              <Text className="leading-6" style={{ color: theme.colors.textSecondary }}>
                 Estimate Gas Cost
               </Text>
-              <EstimateGas {...gas} retry={getGas} priceInUSDT={assetsHash && assetsHash[AssetType.Native] ? assetsHash[AssetType.Native].priceInUSDT : ''} />
+             <View className='flex-1'><EstimateGas {...gas} retry={getGas} priceInUSDT={assetsHash && assetsHash[AssetType.Native] ? assetsHash[AssetType.Native].priceInUSDT : ''} /></View>
             </View>
 
             <View className="flex flex-row justify-between">
