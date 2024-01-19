@@ -1,4 +1,4 @@
-import { createTable, schemaMigrations } from '@nozbe/watermelondb/Schema/migrations';
+import { createTable, schemaMigrations, addColumns } from '@nozbe/watermelondb/Schema/migrations';
 import TableName from '../TableName';
 
 const migrations = schemaMigrations({
@@ -64,6 +64,24 @@ const migrations = schemaMigrations({
             { name: 'nonce', type: 'number' },
             { name: 'chain_identification', type: 'string' },
             { name: 'epoch_height', type: 'string', isOptional: true },
+          ],
+        }),
+      ],
+    },
+    {
+      toVersion: 3,
+      steps: [
+        addColumns({
+          table: TableName.Vault,
+          columns: [
+            {
+              name: 'is_backup',
+              type: 'boolean',
+            },
+            {
+              name: 'source',
+              type: 'string',
+            },
           ],
         }),
       ],

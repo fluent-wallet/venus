@@ -7,7 +7,7 @@ import { firstValueFrom, debounceTime, Subscription } from 'rxjs';
 import { updateNFTDetail } from '@modules/AssetList/ESpaceNFTList/fetch';
 import Plugins from '@core/WalletCore/Plugins';
 import events from '@core/WalletCore/Events';
-import { DETAULT_CONFIRMED_INTERVAL, DETAULT_EXECUTED_INTERVAL, DETAULT_FINALIZED_INTERVAL, TX_RESEND_LIMIT } from '@core/consts/transaction';
+import { CHECK_REPLACED_BEFORE_RESEND_COUNT, DETAULT_CONFIRMED_INTERVAL, DETAULT_EXECUTED_INTERVAL, DETAULT_FINALIZED_INTERVAL, TX_RESEND_LIMIT } from '@core/consts/transaction';
 
 const getMinNonceTx = async (txs: Tx[]) => {
   if (!txs.length) {
@@ -27,6 +27,7 @@ const getMinNonceTx = async (txs: Tx[]) => {
 };
 
 export class EthTxTrack {
+  private _latestNonceMap = new Map<string, string>();
   private _currentAddress: Address | null = null;
   private _checkExecutedTimer: NodeJS.Timeout | false | null = null;
   private _unexecutedSubscription: Subscription | null = null;
@@ -326,10 +327,11 @@ export class EthTxTrack {
             tx.executedStatus = null;
             tx.receipt = null;
             tx.pollingCount = (tx.pollingCount ?? 0) + 1;
+          }).then(() => {
+            if (EXECUTED_NOT_FINALIZED_TX_STATUSES.includes(tx.status)) {
+              this._handleDuplicateTx(tx, false, false);
+            }
           });
-          if (EXECUTED_NOT_FINALIZED_TX_STATUSES.includes(tx.status)) {
-            this._handleDuplicateTx(tx, false, false);
-          }
           return false;
         }
         returnStatus && (status = TxStatus.EXECUTED);
@@ -358,7 +360,7 @@ export class EthTxTrack {
         if (finalizedBlock.result?.number) {
           finalizedBlockNumber = BigInt(finalizedBlock.result.number);
         }
-        executedTxs.forEach((tx, index) => {
+        await Promise.all(executedTxs.map(async (tx, index) => {
           const { result: block, error } = getBlockByHashParamsResponses[index];
           if (error) {
             console.log('EthTxTrack: eth_getBlockByHash error:', {
@@ -382,7 +384,7 @@ export class EthTxTrack {
           if (latestBlockNumber) {
             confirmedNumber = Math.max(0, Number(latestBlockNumber - txBlockNumber));
           }
-          tx.updateSelf((tx) => {
+          await tx.updateSelf((tx) => {
             if (txStatus === TxStatus.FINALIZED) {
               tx.raw = null;
             }
@@ -413,7 +415,7 @@ export class EthTxTrack {
               this._updateTokenBalance(tx);
             }
           }
-        });
+        }));
       }
     }
     return status;
@@ -459,39 +461,66 @@ export class EthTxTrack {
   }
 
   private async _handleUnsent(tx: Tx, endpoint: string) {
-    let skip = false;
+    let resend = false;
+    let replaced = false;
     try {
       await tx.updateSelf((tx) => {
         tx.status = TxStatus.UNSENT;
       });
+      const nonce = (await tx.txPayload).nonce;
+      if (tx.resendCount && tx.resendCount >= CHECK_REPLACED_BEFORE_RESEND_COUNT) {
+        replaced = await this._handleCheckReplaced(tx, nonce, endpoint);
+        if (replaced) return;
+      }
       if (tx.resendCount && tx.resendCount >= TX_RESEND_LIMIT) {
-        skip = true;
         console.log('EthTxTrack: tx resend limit reached:', tx.hash);
         return;
       }
-      const nonce = (await tx.txPayload).nonce;
       const duplicateTxs = await queryDuplicateTx(tx, nonce);
       const latestDuplicateTx = duplicateTxs?.[0];
       if (latestDuplicateTx && latestDuplicateTx.createdAt > tx.createdAt) {
         console.log('EthTxTrack: tx has speedup or canceled:', tx.hash);
-        skip = true;
         return;
       }
+      resend = true;
       const { error } = await firstValueFrom(RPCSend<RPCResponse<string>>(endpoint, { method: 'eth_sendRawTransaction', params: [tx.raw] }));
       console.log('EthTxTrack: sendRawTransaction error', error);
     } catch (error) {
-      console.log('EthTxTrack: sendRawTransaction error', error);
+      console.log('EthTxTrack:', error);
     } finally {
       tx.updateSelf((tx) => {
-        tx.status = TxStatus.PENDING;
-        if (!skip) {
+        tx.status = replaced ? TxStatus.REPLACED : TxStatus.PENDING;
+        if (resend) {
           tx.resendCount = (tx.resendCount ?? 0) + 1;
           tx.resendAt = new Date();
+        }
+        if (replaced) {
+          tx.raw = null;
+          tx.err = 'replacedByAnotherTx';
         }
         tx.executedStatus = null;
         tx.receipt = null;
         tx.pollingCount = (tx.pollingCount ?? 0) + 1;
       });
+    }
+  }
+
+  private async _handleCheckReplaced(tx: Tx, nonce: number, endpoint: string) {
+    try {
+      const prevLatestNonce = this._latestNonceMap.get(tx.address.id);
+      if (prevLatestNonce && Number(prevLatestNonce) > nonce) {
+        return true;
+      }
+      const address = await (await tx.address).getValue();
+      const { result: latestNonce } = await firstValueFrom(RPCSend<RPCResponse<string>>(endpoint, { method: 'eth_getTransactionCount', params: [address, 'latest'] }));
+      latestNonce && this._latestNonceMap.set(tx.address.id, latestNonce);
+      if (Number(latestNonce) > nonce) {
+        return true;
+      }
+      return false;
+    } catch (error) {
+      console.log('EthTxTrack:', error);
+      return false;
     }
   }
 }

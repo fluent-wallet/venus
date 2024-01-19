@@ -19,6 +19,9 @@ export class Vault extends Model {
   @text('device') device!: 'ePayWallet' | 'FluentWebExt';
   /** The accounts for conflux core and ethereum's ledger hardware wallet maybe separate. */
   @field('cfx_only') cfxOnly!: boolean | null;
+  /** is backup to indicate whether the user's mnemonic phrase has been backed up */
+  @field('is_backup') isBackup!: boolean;
+  @text("source") source!: string;
   /**
    * A Vault has only one account group.
    * */
@@ -29,6 +32,12 @@ export class Vault extends Model {
     return this.type === VaultType.HierarchicalDeterministic || this.type === VaultType.BSIM;
   }
 
+  @writer async finishBackup() {
+    await this.update((vault) => {
+      vault.isBackup = true;
+    });
+
+  }
   @reader async getAccountGroup() {
     return (await firstValueFrom(this.observeAccountGroup))!;
   }

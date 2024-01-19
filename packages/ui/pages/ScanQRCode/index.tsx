@@ -4,7 +4,7 @@ import { ReceiveAddressStackName, RootStackList, ScanQRCodeStackName, SendToStac
 import { statusBarHeight } from '@utils/deviceInfo';
 import { useCallback, useEffect, useState } from 'react';
 import { Pressable, SafeAreaView, View } from 'react-native';
-import { useCameraPermission, useCameraDevice, Camera, type Code, CodeScannerFrame } from 'react-native-vision-camera';
+import { useCameraPermission, useCameraDevice, Camera, type Code, CodeScannerFrame, useCameraFormat } from 'react-native-vision-camera';
 import { StackActions } from '@react-navigation/native';
 import { BaseButton } from '@components/Button';
 import { Linking } from 'react-native';
@@ -19,6 +19,9 @@ const ScanQRCode: React.FC<{ navigation: StackNavigation; route: RouteProp<RootS
   const { theme } = useTheme();
   const { hasPermission, requestPermission } = useCameraPermission();
   const device = useCameraDevice('back');
+  const format = useCameraFormat(device, [
+    { fps: 30 }
+  ])
 
   const [showPermissionModel, setShowPermissionModel] = useState(!hasPermission);
   const [showRejectPermissionModel, setShowRejectPermissionModel] = useState(false);
@@ -154,7 +157,7 @@ const ScanQRCode: React.FC<{ navigation: StackNavigation; route: RouteProp<RootS
                   onCodeScanned: handleCodeScanned,
                 }}
                 style={{ flex: 1 }}
-                fps={30}
+                format={format}
               />
             )}
           </View>

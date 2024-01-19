@@ -35,3 +35,13 @@ export const ACTIVITY_DB_STATUS_FEATURE = {
   describe: 'show activity db status after action',
   allow: isQA || isDev,
 };
+
+export const USER_MNEMONIC_PHRASE_BACKUP_FEATURE = {
+  describe: 'user mnemonic phrase backup',
+  allow: isQA || isDev,
+};
+
+export const CHECK_ADDRESS_FEATURE = {
+  describe: 'check address is a valid address and check address is a contract address',
+  allow: isQA || isDev,
+};
