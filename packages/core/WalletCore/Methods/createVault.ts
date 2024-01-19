@@ -110,7 +110,7 @@ export class CreateVaultMethod {
             {
               vault,
               accountGroup,
-              nickname: `${type === VaultType.HierarchicalDeterministic ? '' : `${convertToCamelCase(type)} `}Account - 1`,
+              nickname: type === VaultType.HierarchicalDeterministic ? undefined : `${convertToCamelCase(type)} Account - ${count + 1}`,
               hidden: false,
               selected: isFirstVault ? true : false,
               ...(hexAddress ? { hexAddress } : null),
