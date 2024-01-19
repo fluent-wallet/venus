@@ -150,18 +150,12 @@ const SendReceiver: React.FC<{ navigation: StackNavigation; route: RouteProp<Roo
               </View>
             )}
           </View>
-
-          <View className="mt-auto mb-8">
-            <BaseButton
-              loading={loading}
-              testID="next"
-              disabled={nextButtonDisabled()}
-              onPress={CHECK_ADDRESS_FEATURE.allow ? handleNextWithCheck : handleNext}
-            >
-              Next
-            </BaseButton>
-          </View>
         </ScrollView>
+        <View className="mt-auto mb-8">
+          <BaseButton loading={loading} testID="next" disabled={nextButtonDisabled()} onPress={CHECK_ADDRESS_FEATURE.allow ? handleNextWithCheck : handleNext}>
+            Next
+          </BaseButton>
+        </View>
       </KeyboardAvoidingView>
     </SafeAreaView>
   );
