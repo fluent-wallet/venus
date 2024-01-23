@@ -4,7 +4,7 @@ import CryptoToolPlugin, { CryptoToolPluginClass } from '../CryptoTool';
 import plugins, { type Plugin } from '@core/WalletCore/Plugins';
 import database from '@core/database';
 import { getEncryptedVaultWithBSIM } from '@core/database/models/Vault/query';
-import { showBiometricsDisabledMessage } from '@pages/SetPassword/Biometrics';
+// import { showBiometricsDisabledMessage } from '@pages/SetPassword/Biometrics';
 import { getPasswordCryptoKey } from '@utils/getEnv';
 
 declare module '@core/WalletCore/Plugins' {
@@ -66,7 +66,7 @@ class AuthenticationPluginClass implements Plugin {
         if (containsCancel(errString)) {
           throw new Error('User canceled biometrics.');
         } else {
-          showBiometricsDisabledMessage();
+          // showBiometricsDisabledMessage();
           throw new Error('Biometrics not enable.');
         }
       }
