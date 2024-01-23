@@ -4,7 +4,7 @@ import type { Address } from '@core/database/models/Address';
 import { EXECUTED_NOT_FINALIZED_TX_STATUSES, ExecutedStatus, NOT_FINALIZED_TX_STATUSES, TxStatus } from '@core/database/models/Tx/type';
 import { RPCResponse, RPCSend, RPCSendFactory } from '@core/utils/send';
 import { firstValueFrom, debounceTime, Subscription } from 'rxjs';
-import { updateNFTDetail } from '@modules/AssetList/ESpaceNFTList/fetch';
+// import { updateNFTDetail } from '@modules/AssetList/ESpaceNFTList/fetch';
 import Plugins from '@core/WalletCore/Plugins';
 import events from '@core/WalletCore/Events';
 import { CHECK_REPLACED_BEFORE_RESEND_COUNT, DETAULT_CONFIRMED_INTERVAL, DETAULT_EXECUTED_INTERVAL, DETAULT_FINALIZED_INTERVAL, TX_RESEND_LIMIT } from '@core/consts/transaction';
@@ -450,7 +450,7 @@ export class EthTxTrack {
     try {
       const [txExtra, txPayload] = await Promise.all([tx.txExtra, tx.txPayload]);
       if (txExtra.tokenNft) {
-        updateNFTDetail(txPayload.to || undefined);
+        // updateNFTDetail(txPayload.to || undefined);
       }
       if (txExtra.simple || txExtra.token20) {
         Plugins.AssetsTracker.updateCurrentTracker().catch((err) => console.log('EthTxTrack: ', err));
