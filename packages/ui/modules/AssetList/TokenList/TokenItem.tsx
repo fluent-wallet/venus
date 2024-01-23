@@ -10,7 +10,8 @@ const TokenItem: React.FC<{
   data: AssetInfo;
   onPress?: (v: AssetInfo) => void;
   hidePrice?: boolean;
-}> = ({ onPress, data, hidePrice = false }) => {
+  hideBalance?: boolean;
+}> = ({ onPress, data, hidePrice = false, hideBalance = false }) => {
   const { theme } = useTheme();
 
   const balance = useMemo(() => {
@@ -43,11 +44,13 @@ const TokenItem: React.FC<{
             )}
           </View>
 
-          <View className="flex-1">
-            <Text style={{ color: theme.colors.textSecondary, maxWidth: 147 }} numberOfLines={1}>
-              {balance} {data.symbol}
-            </Text>
-          </View>
+          {!hideBalance && (
+            <View className="flex-1">
+              <Text style={{ color: theme.colors.textSecondary, maxWidth: 147 }} numberOfLines={1}>
+                {balance} {data.symbol}
+              </Text>
+            </View>
+          )}
         </View>
       </View>
     </Pressable>
