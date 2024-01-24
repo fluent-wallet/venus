@@ -72,7 +72,6 @@
     "react-native-screenshot-prevent": "^1.1.9",
     "react-native-shadow-2": "^7.0.8",
     "react-native-svg": "^14.1.0",
-    "react-native-vector-icons": "^10.0.3",
     "react-native-vision-camera": "^3.8.0",
     "reflect-metadata": "^0.2.1",
     "stream-browserify": "^3.0.0",
