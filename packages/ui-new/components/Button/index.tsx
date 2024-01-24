@@ -1,5 +1,5 @@
-import { type PropsWithChildren, useMemo, useCallback } from 'react';
-import { StyleSheet, Pressable, useColorScheme, type PressableProps, type PressableStateCallbackType } from 'react-native';
+import { useMemo, useCallback, type Component, type PropsWithChildren } from 'react';
+import { StyleSheet, Pressable, useColorScheme, type PressableProps, type PressableStateCallbackType, type SvgProps } from 'react-native';
 import Text from '@components/Text';
 import Hourglass from './Hourglass';
 import { palette } from '../../theme';
@@ -10,11 +10,15 @@ interface Props extends PropsWithChildren<PressableProps> {
   textAlign?: 'left' | 'center' | 'right';
   loading?: boolean;
   square?: boolean;
+  Icon?: typeof Component<SvgProps>;
 }
 
-const Button = ({ children, loading, size = 'medium', disabled, mode: _mode = 'dark', textAlign = 'center', square, ...props }: Props) => {
+const Button = ({ children, loading, size = 'medium', disabled: _disabled, mode: _mode = 'dark', textAlign = 'center', square, Icon, ...props }: Props) => {
   const systemMode = useColorScheme();
+
   const mode = useMemo(() => (_mode === 'auto' ? (systemMode === 'dark' ? 'dark' : 'light') : _mode), [systemMode, _mode]);
+  const disabled = loading ? false : _disabled;
+
   const containerStyle = useCallback(
     ({ pressed }: PressableStateCallbackType) => [
       styles.button,
@@ -29,7 +33,7 @@ const Button = ({ children, loading, size = 'medium', disabled, mode: _mode = 'd
     [mode, size, disabled, square, textAlign],
   );
   const textStyle = useMemo(() => [styles.text, styles[`text-${mode}`], disabled && styles[`text-${mode}-disabled`]], [mode, disabled]);
-  const hourglassStyle = useMemo(
+  const iconStyle = useMemo(
     () => ({
       marginLeft: textAlign === 'center' ? 10 : ('auto' as const),
     }),
@@ -39,7 +43,8 @@ const Button = ({ children, loading, size = 'medium', disabled, mode: _mode = 'd
   return (
     <Pressable style={containerStyle} disabled={disabled || loading} {...props}>
       {typeof children === 'string' ? <Text style={textStyle}>{children}</Text> : children}
-      {loading && <Hourglass color={styles[`text-${mode}`].color} style={hourglassStyle} />}
+      {Icon && !loading && <Icon style={[textStyle, iconStyle]} />}
+      {loading && <Hourglass color={styles[`text-${mode}`].color} style={iconStyle} />}
     </Pressable>
   );
 };
