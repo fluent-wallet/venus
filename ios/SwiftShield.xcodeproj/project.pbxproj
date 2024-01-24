@@ -18,10 +18,12 @@
 		5803DC58A377497AA57A2093 /* sora_bold.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 142B83618A474F3EB717F0CA /* sora_bold.ttf */; };
 		5DD098FA99624C32ACACBA61 /* stalinistone_regular.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 246FB80A270348A39410A29F /* stalinistone_regular.ttf */; };
 		7699B88040F8A987B510C191 /* libPods-SwiftShield-SwiftShieldTests.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 19F6CBCC0A4E27FBF8BF4A61 /* libPods-SwiftShield-SwiftShieldTests.a */; };
+		8165C5EF34BFC587CF2EE958 /* ExpoModulesProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = A34A62E4EB3A57DC2BE80935 /* ExpoModulesProvider.swift */; };
 		81AB9BB82411601600AC10FF /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 81AB9BB72411601600AC10FF /* LaunchScreen.storyboard */; };
 		8F529245C54644D49B8B5BCA /* sora_light.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 245BB9D680364174BE9382B1 /* sora_light.ttf */; };
 		A051BA76C05841ADB62808E7 /* sora_medium.ttf in Resources */ = {isa = PBXBuildFile; fileRef = C63F15BF6ED442D9AD72D1D9 /* sora_medium.ttf */; };
 		B840C704E5854C3699731891 /* sora_semibold.ttf in Resources */ = {isa = PBXBuildFile; fileRef = E5C7787FADAF43D28028E06D /* sora_semibold.ttf */; };
+		D420C3640F9E761865A36E9A /* ExpoModulesProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 15839C861ED2C69156BA28E5 /* ExpoModulesProvider.swift */; };
 		FEACE452805347CEB671211E /* sora_extralight.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 35CBCAFC86404C689128B636 /* sora_extralight.ttf */; };
 /* End PBXBuildFile section */
 
@@ -45,23 +47,25 @@
 		13B07FB51A68108700A75B9A /* Images.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; name = Images.xcassets; path = SwiftShield/Images.xcassets; sourceTree = "<group>"; };
 		13B07FB61A68108700A75B9A /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = Info.plist; path = SwiftShield/Info.plist; sourceTree = "<group>"; };
 		13B07FB71A68108700A75B9A /* main.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = main.m; path = SwiftShield/main.m; sourceTree = "<group>"; };
-		142B83618A474F3EB717F0CA /* sora_bold.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = undefined; includeInIndex = 0; lastKnownFileType = unknown; name = sora_bold.ttf; path = ../packages/ui/assets/fonts/sora_bold.ttf; sourceTree = "<group>"; };
+		142B83618A474F3EB717F0CA /* sora_bold.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = sora_bold.ttf; path = ../packages/ui/assets/fonts/sora_bold.ttf; sourceTree = "<group>"; };
+		15839C861ED2C69156BA28E5 /* ExpoModulesProvider.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = ExpoModulesProvider.swift; path = "Pods/Target Support Files/Pods-SwiftShield/ExpoModulesProvider.swift"; sourceTree = "<group>"; };
 		19F6CBCC0A4E27FBF8BF4A61 /* libPods-SwiftShield-SwiftShieldTests.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-SwiftShield-SwiftShieldTests.a"; sourceTree = BUILT_PRODUCTS_DIR; };
-		245BB9D680364174BE9382B1 /* sora_light.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = undefined; includeInIndex = 0; lastKnownFileType = unknown; name = sora_light.ttf; path = ../packages/ui/assets/fonts/sora_light.ttf; sourceTree = "<group>"; };
-		246FB80A270348A39410A29F /* stalinistone_regular.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = undefined; includeInIndex = 0; lastKnownFileType = unknown; name = stalinistone_regular.ttf; path = ../packages/ui/assets/fonts/stalinistone_regular.ttf; sourceTree = "<group>"; };
-		35CBCAFC86404C689128B636 /* sora_extralight.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = undefined; includeInIndex = 0; lastKnownFileType = unknown; name = sora_extralight.ttf; path = ../packages/ui/assets/fonts/sora_extralight.ttf; sourceTree = "<group>"; };
+		245BB9D680364174BE9382B1 /* sora_light.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = sora_light.ttf; path = ../packages/ui/assets/fonts/sora_light.ttf; sourceTree = "<group>"; };
+		246FB80A270348A39410A29F /* stalinistone_regular.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = stalinistone_regular.ttf; path = ../packages/ui/assets/fonts/stalinistone_regular.ttf; sourceTree = "<group>"; };
+		35CBCAFC86404C689128B636 /* sora_extralight.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = sora_extralight.ttf; path = ../packages/ui/assets/fonts/sora_extralight.ttf; sourceTree = "<group>"; };
 		3B4392A12AC88292D35C810B /* Pods-SwiftShield.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-SwiftShield.debug.xcconfig"; path = "Target Support Files/Pods-SwiftShield/Pods-SwiftShield.debug.xcconfig"; sourceTree = "<group>"; };
 		5709B34CF0A7D63546082F79 /* Pods-SwiftShield.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-SwiftShield.release.xcconfig"; path = "Target Support Files/Pods-SwiftShield/Pods-SwiftShield.release.xcconfig"; sourceTree = "<group>"; };
 		5B7EB9410499542E8C5724F5 /* Pods-SwiftShield-SwiftShieldTests.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-SwiftShield-SwiftShieldTests.debug.xcconfig"; path = "Target Support Files/Pods-SwiftShield-SwiftShieldTests/Pods-SwiftShield-SwiftShieldTests.debug.xcconfig"; sourceTree = "<group>"; };
 		5DCACB8F33CDC322A6C60F78 /* libPods-SwiftShield.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-SwiftShield.a"; sourceTree = BUILT_PRODUCTS_DIR; };
-		7D0DCD0589F34C8C8C04DF40 /* sora_extrabold.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = undefined; includeInIndex = 0; lastKnownFileType = unknown; name = sora_extrabold.ttf; path = ../packages/ui/assets/fonts/sora_extrabold.ttf; sourceTree = "<group>"; };
+		7D0DCD0589F34C8C8C04DF40 /* sora_extrabold.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = sora_extrabold.ttf; path = ../packages/ui/assets/fonts/sora_extrabold.ttf; sourceTree = "<group>"; };
 		81AB9BB72411601600AC10FF /* LaunchScreen.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; name = LaunchScreen.storyboard; path = SwiftShield/LaunchScreen.storyboard; sourceTree = "<group>"; };
 		89C6BE57DB24E9ADA2F236DE /* Pods-SwiftShield-SwiftShieldTests.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-SwiftShield-SwiftShieldTests.release.xcconfig"; path = "Target Support Files/Pods-SwiftShield-SwiftShieldTests/Pods-SwiftShield-SwiftShieldTests.release.xcconfig"; sourceTree = "<group>"; };
-		C63F15BF6ED442D9AD72D1D9 /* sora_medium.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = undefined; includeInIndex = 0; lastKnownFileType = unknown; name = sora_medium.ttf; path = ../packages/ui/assets/fonts/sora_medium.ttf; sourceTree = "<group>"; };
-		E5C7787FADAF43D28028E06D /* sora_semibold.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = undefined; includeInIndex = 0; lastKnownFileType = unknown; name = sora_semibold.ttf; path = ../packages/ui/assets/fonts/sora_semibold.ttf; sourceTree = "<group>"; };
-		EB79533BDFC743949E879C68 /* sora_thin.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = undefined; includeInIndex = 0; lastKnownFileType = unknown; name = sora_thin.ttf; path = ../packages/ui/assets/fonts/sora_thin.ttf; sourceTree = "<group>"; };
+		A34A62E4EB3A57DC2BE80935 /* ExpoModulesProvider.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = ExpoModulesProvider.swift; path = "Pods/Target Support Files/Pods-SwiftShield-SwiftShieldTests/ExpoModulesProvider.swift"; sourceTree = "<group>"; };
+		C63F15BF6ED442D9AD72D1D9 /* sora_medium.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = sora_medium.ttf; path = ../packages/ui/assets/fonts/sora_medium.ttf; sourceTree = "<group>"; };
+		E5C7787FADAF43D28028E06D /* sora_semibold.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = sora_semibold.ttf; path = ../packages/ui/assets/fonts/sora_semibold.ttf; sourceTree = "<group>"; };
+		EB79533BDFC743949E879C68 /* sora_thin.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = sora_thin.ttf; path = ../packages/ui/assets/fonts/sora_thin.ttf; sourceTree = "<group>"; };
 		ED297162215061F000B7C4FE /* JavaScriptCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = JavaScriptCore.framework; path = System/Library/Frameworks/JavaScriptCore.framework; sourceTree = SDKROOT; };
-		EF5385B36E8A4F409E26E80D /* sora_regular.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = undefined; includeInIndex = 0; lastKnownFileType = unknown; name = sora_regular.ttf; path = ../packages/ui/assets/fonts/sora_regular.ttf; sourceTree = "<group>"; };
+		EF5385B36E8A4F409E26E80D /* sora_regular.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = sora_regular.ttf; path = ../packages/ui/assets/fonts/sora_regular.ttf; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -124,6 +128,14 @@
 			name = Frameworks;
 			sourceTree = "<group>";
 		};
+		6E37D5AF9F0669F80133F74B /* SwiftShield */ = {
+			isa = PBXGroup;
+			children = (
+				15839C861ED2C69156BA28E5 /* ExpoModulesProvider.swift */,
+			);
+			name = SwiftShield;
+			sourceTree = "<group>";
+		};
 		832341AE1AAA6A7D00B99B32 /* Libraries */ = {
 			isa = PBXGroup;
 			children = (
@@ -141,6 +153,7 @@
 				2D16E6871FA4F8E400B85C8A /* Frameworks */,
 				BBD78D7AC51CEA395F1C20DB /* Pods */,
 				86520ED5FFDC4761AF1DCF5A /* Resources */,
+				EB8B5252A42152C62A547B57 /* ExpoModulesProviders */,
 			);
 			indentWidth = 2;
 			sourceTree = "<group>";
@@ -170,7 +183,6 @@
 				246FB80A270348A39410A29F /* stalinistone_regular.ttf */,
 			);
 			name = Resources;
-			path = "";
 			sourceTree = "<group>";
 		};
 		BBD78D7AC51CEA395F1C20DB /* Pods */ = {
@@ -184,6 +196,23 @@
 			path = Pods;
 			sourceTree = "<group>";
 		};
+		C40C929C19FC0FD01D5EE4BA /* SwiftShieldTests */ = {
+			isa = PBXGroup;
+			children = (
+				A34A62E4EB3A57DC2BE80935 /* ExpoModulesProvider.swift */,
+			);
+			name = SwiftShieldTests;
+			sourceTree = "<group>";
+		};
+		EB8B5252A42152C62A547B57 /* ExpoModulesProviders */ = {
+			isa = PBXGroup;
+			children = (
+				6E37D5AF9F0669F80133F74B /* SwiftShield */,
+				C40C929C19FC0FD01D5EE4BA /* SwiftShieldTests */,
+			);
+			name = ExpoModulesProviders;
+			sourceTree = "<group>";
+		};
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
@@ -192,6 +221,7 @@
 			buildConfigurationList = 00E357021AD99517003FC87E /* Build configuration list for PBXNativeTarget "SwiftShieldTests" */;
 			buildPhases = (
 				A55EABD7B0C7F3A422A6CC61 /* [CP] Check Pods Manifest.lock */,
+				9219BF88F0E4E1EEC803782F /* [Expo] Configure project */,
 				00E356EA1AD99517003FC87E /* Sources */,
 				00E356EB1AD99517003FC87E /* Frameworks */,
 				00E356EC1AD99517003FC87E /* Resources */,
@@ -204,6 +234,7 @@
 				00E356F51AD99517003FC87E /* PBXTargetDependency */,
 			);
 			name = SwiftShieldTests;
+			productName = SwiftShieldTests;
 			productReference = 00E356EE1AD99517003FC87E /* SwiftShieldTests.xctest */;
 			productType = "com.apple.product-type.bundle.unit-test";
 		};
@@ -212,6 +243,7 @@
 			buildConfigurationList = 13B07F931A680F5B00A75B9A /* Build configuration list for PBXNativeTarget "SwiftShield" */;
 			buildPhases = (
 				C38B50BA6285516D6DCD4F65 /* [CP] Check Pods Manifest.lock */,
+				C049C21CD27938056F5F39D6 /* [Expo] Configure project */,
 				13B07F871A680F5B00A75B9A /* Sources */,
 				13B07F8C1A680F5B00A75B9A /* Frameworks */,
 				13B07F8E1A680F5B00A75B9A /* Resources */,
@@ -307,7 +339,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "set -e\n\nWITH_ENVIRONMENT=\"../node_modules/react-native/scripts/xcode/with-environment.sh\"\nREACT_NATIVE_XCODE=\"../node_modules/react-native/scripts/react-native-xcode.sh\"\n\n/bin/sh -c \"$WITH_ENVIRONMENT $REACT_NATIVE_XCODE\"\n";
+			shellScript = "if [[ -f \"$PODS_ROOT/../.xcode.env\" ]]; then\n  source \"$PODS_ROOT/../.xcode.env\"\nfi\nif [[ -f \"$PODS_ROOT/../.xcode.env.local\" ]]; then\n  source \"$PODS_ROOT/../.xcode.env.local\"\nfi\n\n# The project root by default is one level up from the ios directory\nexport PROJECT_ROOT=\"$PROJECT_DIR\"/..\n\nif [[ \"$CONFIGURATION\" = *Debug* ]]; then\n  export SKIP_BUNDLING=1\nfi\nif [[ -z \"$ENTRY_FILE\" ]]; then\n  # Set the entry JS file using the bundler's entry resolution.\n  export ENTRY_FILE=\"$(\"$NODE_BINARY\" -e \"require('expo/scripts/resolveAppEntry')\" \"$PROJECT_ROOT\" ios relative | tail -n 1)\"\nfi\n\nif [[ -z \"$CLI_PATH\" ]]; then\n  # Use Expo CLI\n  export CLI_PATH=\"$(\"$NODE_BINARY\" --print \"require.resolve('@expo/cli')\")\"\nfi\nif [[ -z \"$BUNDLE_COMMAND\" ]]; then\n  # Default Expo CLI command for bundling\n  export BUNDLE_COMMAND=\"export:embed\"\nfi\n\n`\"$NODE_BINARY\" --print \"require('path').dirname(require.resolve('react-native/package.json')) + '/scripts/react-native-xcode.sh'\"`\n";
 		};
 		00EEFC60759A1932668264C0 /* [CP] Embed Pods Frameworks */ = {
 			isa = PBXShellScriptBuildPhase;
@@ -325,6 +357,25 @@
 			shellPath = /bin/sh;
 			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-SwiftShield/Pods-SwiftShield-frameworks.sh\"\n";
 			showEnvVarsInLog = 0;
+		};
+		9219BF88F0E4E1EEC803782F /* [Expo] Configure project */ = {
+			isa = PBXShellScriptBuildPhase;
+			alwaysOutOfDate = 1;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+			);
+			name = "[Expo] Configure project";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "# This script configures Expo modules and generates the modules provider file.\nbash -l -c \"./Pods/Target\\ Support\\ Files/Pods-SwiftShield-SwiftShieldTests/expo-configure-project.sh\"\n";
 		};
 		A55EABD7B0C7F3A422A6CC61 /* [CP] Check Pods Manifest.lock */ = {
 			isa = PBXShellScriptBuildPhase;
@@ -347,6 +398,25 @@
 			shellPath = /bin/sh;
 			shellScript = "diff \"${PODS_PODFILE_DIR_PATH}/Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n# This output is used by Xcode 'outputs' to avoid re-running this script phase.\necho \"SUCCESS\" > \"${SCRIPT_OUTPUT_FILE_0}\"\n";
 			showEnvVarsInLog = 0;
+		};
+		C049C21CD27938056F5F39D6 /* [Expo] Configure project */ = {
+			isa = PBXShellScriptBuildPhase;
+			alwaysOutOfDate = 1;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+			);
+			name = "[Expo] Configure project";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "# This script configures Expo modules and generates the modules provider file.\nbash -l -c \"./Pods/Target\\ Support\\ Files/Pods-SwiftShield/expo-configure-project.sh\"\n";
 		};
 		C38B50BA6285516D6DCD4F65 /* [CP] Check Pods Manifest.lock */ = {
 			isa = PBXShellScriptBuildPhase;
@@ -429,6 +499,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				00E356F31AD99517003FC87E /* SwiftShieldTests.m in Sources */,
+				8165C5EF34BFC587CF2EE958 /* ExpoModulesProvider.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -438,6 +509,7 @@
 			files = (
 				13B07FBC1A68108700A75B9A /* AppDelegate.mm in Sources */,
 				13B07FC11A68108700A75B9A /* main.m in Sources */,
+				D420C3640F9E761865A36E9A /* ExpoModulesProvider.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -473,6 +545,7 @@
 					"-lc++",
 					"$(inherited)",
 				);
+				OTHER_SWIFT_FLAGS = "$(inherited) -D EXPO_CONFIGURATION_DEBUG";
 				PRODUCT_BUNDLE_IDENTIFIER = "org.reactjs.native.example.$(PRODUCT_NAME:rfc1034identifier)";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/SwiftShield.app/SwiftShield";
@@ -497,6 +570,7 @@
 					"-lc++",
 					"$(inherited)",
 				);
+				OTHER_SWIFT_FLAGS = "$(inherited) -D EXPO_CONFIGURATION_RELEASE";
 				PRODUCT_BUNDLE_IDENTIFIER = "org.reactjs.native.example.$(PRODUCT_NAME:rfc1034identifier)";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/SwiftShield.app/SwiftShield";
@@ -523,10 +597,12 @@
 					"-ObjC",
 					"-lc++",
 				);
+				OTHER_SWIFT_FLAGS = "$(inherited) -D EXPO_CONFIGURATION_DEBUG";
 				PRODUCT_BUNDLE_IDENTIFIER = "org.reactjs.native.example.$(PRODUCT_NAME:rfc1034identifier)";
 				PRODUCT_NAME = SwiftShield;
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 1;
 				VERSIONING_SYSTEM = "apple-generic";
 			};
 			name = Debug;
@@ -550,9 +626,11 @@
 					"-ObjC",
 					"-lc++",
 				);
+				OTHER_SWIFT_FLAGS = "$(inherited) -D EXPO_CONFIGURATION_RELEASE";
 				PRODUCT_BUNDLE_IDENTIFIER = "org.reactjs.native.example.$(PRODUCT_NAME:rfc1034identifier)";
 				PRODUCT_NAME = SwiftShield;
 				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 1;
 				VERSIONING_SYSTEM = "apple-generic";
 			};
 			name = Release;
@@ -607,7 +685,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 13.4;
+				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					/usr/lib/swift,
 					"$(inherited)",
@@ -629,8 +707,8 @@
 				);
 				OTHER_LDFLAGS = (
 					"$(inherited)",
-					" ",
-					"-Wl -ld_classic ",
+					"-Wl",
+					"-ld_classic",
 				);
 				REACT_NATIVE_PATH = "${PODS_ROOT}/../../node_modules/react-native";
 				SDKROOT = iphoneos;
@@ -684,7 +762,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 13.4;
+				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					/usr/lib/swift,
 					"$(inherited)",
@@ -705,8 +783,8 @@
 				);
 				OTHER_LDFLAGS = (
 					"$(inherited)",
-					" ",
-					"-Wl -ld_classic ",
+					"-Wl",
+					"-ld_classic",
 				);
 				REACT_NATIVE_PATH = "${PODS_ROOT}/../../node_modules/react-native";
 				SDKROOT = iphoneos;

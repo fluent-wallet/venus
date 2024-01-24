@@ -41,6 +41,7 @@
     "decimal.js": "^10.4.3",
     "ethers": "^6.10.0",
     "fast-text-encoding": "^1.0.6",
+    "expo": "^50.0.0",
     "i18next": "^23.7.16",
     "intl-pluralrules": "^2.0.1",
     "inversify": "^6.0.2",

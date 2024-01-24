@@ -1,5 +1,4 @@
 import React from 'react';
-import { Platform, TouchableOpacity } from 'react-native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { useHasVault } from '@core/WalletCore/Plugins/ReactInject';
 import Welcome from '@pages/Welcome';
