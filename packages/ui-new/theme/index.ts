@@ -1,3 +1,5 @@
+import { Platform } from 'react-native';
+
 export const palette = {
   blue0: '#DEE6FB',
   blue1: '#C2D2FB',
@@ -78,6 +80,35 @@ export const darkColors: typeof lightColors = {
   iconSecondary: palette.gray6,
   iconThird: palette.gray5,
   iconFourth: palette.gray8,
+};
+
+const defaultFont = {
+  regular: {
+    fontFamily: 'Sora',
+    fontWeight: '400',
+  },
+  medium: {
+    fontFamily: 'Sora',
+    fontWeight: '500',
+  },
+  bold: {
+    fontFamily: 'Sora',
+    fontWeight: '600',
+  },
+  heavy: {
+    fontFamily: 'Sora',
+    fontWeight: '700',
+  },
+};
+export const fonts = {
+  ...defaultFont,
+  sora: defaultFont,
+  stalinistOne: {
+    regular: {
+      fontFamily: 'Stalinist One',
+      fontWeight: '400',
+    },
+  },
 };
 
 export interface CustomTheme {
