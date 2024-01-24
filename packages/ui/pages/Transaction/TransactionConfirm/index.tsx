@@ -75,7 +75,6 @@ const TransactionConfirm: React.FC<{
       setLoading(true);
       try {
         try {
-          const blockNumber = await firstValueFrom(RPCSend<RPCResponse<string>>(currentNetwork.endpoint, { method: 'eth_blockNumber' }));
           const { txHash, txRaw, transaction, error } = await Methods.sendTransaction(tx, { gasLimit: gas.gasLimit, gasPrice: gas.gasPrice });
 
           if (error && error.message && error.data) {
@@ -93,7 +92,7 @@ const TransactionConfirm: React.FC<{
               assetType: tx.assetType,
               contractAddress: tx.contractAddress,
               to: tx.to,
-              blockNumber: blockNumber.result,
+              sendAt: new Date(),
             },
           });
 
@@ -294,10 +293,10 @@ const TransactionConfirm: React.FC<{
             </View>
 
             <View className="flex flex-row justify-between">
-              <Text className=" eading-6" style={{ color: theme.colors.textSecondary }}>
+              <Text className="leading-6" style={{ color: theme.colors.textSecondary }}>
                 Estimate Gas Cost
               </Text>
-              <EstimateGas {...gas} retry={getGas} priceInUSDT={assetsHash && assetsHash[AssetType.Native] ? assetsHash[AssetType.Native].priceInUSDT : ''} />
+             <View className='flex-1'><EstimateGas {...gas} retry={getGas} priceInUSDT={assetsHash && assetsHash[AssetType.Native] ? assetsHash[AssetType.Native].priceInUSDT : ''} /></View>
             </View>
 
             <View className="flex flex-row justify-between">

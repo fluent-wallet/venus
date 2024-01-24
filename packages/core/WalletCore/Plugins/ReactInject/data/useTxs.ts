@@ -4,7 +4,6 @@ import { switchMap, startWith, of } from 'rxjs';
 import { dbRefresh$ } from '../../../../database';
 import { observeTxById, observeFinishedTxWithAddress, observeUnfinishedTxWithAddress } from '@core/database/models/Tx/query';
 import { observeSelectedAddress } from '@core/database/models/Address/query';
-import { Tx } from '@core/database/models/Tx';
 import { TxPayload } from '@core/database/models/TxPayload';
 
 export const unfinishedTxsObservable = dbRefresh$.pipe(
@@ -28,15 +27,15 @@ const finishedTxsAtom = atomWithObservable(
       switchMap(async (txs) => {
         if (!txs) return [];
         const payloads = await Promise.all(txs.map((tx) => tx.txPayload.fetch()));
-        const txMap = new Map<Tx, TxPayload>();
+        const txMap = new Map<string, TxPayload>();
         txs.forEach((tx, i) => {
-          txMap.set(tx, payloads[i]);
+          txMap.set(tx.id, payloads[i]);
         });
         // sort by nonce
         txs.sort((a, b) => {
-          const aPayload = txMap.get(a)!;
-          const bPayload = txMap.get(b)!;
-          return Number(BigInt(bPayload.nonce!) - BigInt(aPayload.nonce!));
+          const aPayload = txMap.get(a.id)!;
+          const bPayload = txMap.get(b.id)!;
+          return Number(BigInt(bPayload.nonce) - BigInt(aPayload.nonce));
         });
         return txs;
       })

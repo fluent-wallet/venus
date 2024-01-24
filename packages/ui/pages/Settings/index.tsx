@@ -7,7 +7,7 @@ import methods from '@core/WalletCore/Methods';
 import { statusBarHeight } from '@utils/deviceInfo';
 import { WelcomeStackName, AccountManageStackName } from '@router/configs';
 import pkg from '../../../../package.json';
-import { devOnly, getAppEnv, qaOnly } from '@utils/getEnv';
+import { APP_VERSION_FLAG_FEATURE, RESET_WALLET_DATA_FEATURE } from '@utils/features';
 export const SettingsStackName = 'Settings';
 
 const Settings: React.FC<{ navigation: NavigationProp<any> }> = ({ navigation }) => {
@@ -29,7 +29,7 @@ const Settings: React.FC<{ navigation: NavigationProp<any> }> = ({ navigation })
           </ListItem>
         </TouchableHighlight>
 
-        {devOnly() && (
+        {RESET_WALLET_DATA_FEATURE.allow && (
           <TouchableHighlight className="rounded-[8px] overflow-hidden" onPress={() => setVisibleResetWallet(true)}>
             <ListItem>
               <ListItem.Content>
@@ -42,7 +42,7 @@ const Settings: React.FC<{ navigation: NavigationProp<any> }> = ({ navigation })
       </View>
       <Text style={{ color: theme.colors.textSecondary }} className="text-base mt-auto text-center">
         v{pkg.version} Beta
-        {qaOnly() && getAppEnv()}
+        {APP_VERSION_FLAG_FEATURE.allow && APP_VERSION_FLAG_FEATURE.value}
       </Text>
       <Dialog isVisible={visibleResetWallet} onBackdropPress={() => setVisibleResetWallet(false)}>
         <Dialog.Title title="Confirm reset wallet Data?" titleStyle={{ color: theme.colors.textPrimary, fontSize: 22, fontWeight: 'bold' }} />

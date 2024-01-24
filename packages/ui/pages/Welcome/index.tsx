@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Image, SafeAreaView } from 'react-native';
+import { View, Image, SafeAreaView, ScrollView } from 'react-native';
 import { useTheme, Text } from '@rneui/themed';
 import { statusBarHeight } from '@utils/deviceInfo';
 import { BaseButton } from '@components/Button';
@@ -8,13 +8,29 @@ import { type StackNavigation, ImportWalletStackName, BiometricsStackName } from
 import Tip from '@assets/icons/tip.svg';
 import WelcomeBg from '@assets/images/welcome-bg.png';
 import SIMCardIcon from '@assets/icons/sim-card.svg';
-import { qaOnly } from '@utils/getEnv';
+import { WELCOME_CREATE_WALLET_FEATURE, WELCOME_IMPORT_WALLET_FEATURE } from '@utils/features';
+import BSIM from '@WalletCoreExtends/Plugins/BSIM';
+import { showMessage } from 'react-native-flash-message';
 
 const Welcome: React.FC<{ navigation: StackNavigation }> = ({ navigation }) => {
   const { theme } = useTheme();
+  const connectBSIMCard = async () => {
+    try {
+      await BSIM.getBSIMVersion();
+      navigation.navigate(BiometricsStackName, { type: 'BSIM' });
+    } catch (error) {
+      showMessage({
+        message: `Can't find the BSIM Card`,
+        description: "Please make sure you've inserted the BSIM Card and try again.",
+        type: 'warning',
+        duration: 3000,
+      });
+    }
+  };
+
   return (
-    <SafeAreaView className="flex-1 flex flex-col justify-start pt-[8px]">
-      <Background className="flex-1">
+    <SafeAreaView className="flex-1 flex flex-col justify-start">
+      <Background className="flex-1 pt-[8px]">
         {/* <View
           className="flex flex-row w-[330px] mx-auto p-[12px] rounded-[8px]"
           style={{ marginTop: (statusBarHeight ?? 0) + 8, backgroundColor: theme.colors.surfaceSecondary }}
@@ -37,11 +53,7 @@ const Welcome: React.FC<{ navigation: StackNavigation }> = ({ navigation }) => {
           <Text className="mt-[8px] text-[16px] leading-[24px] text-center">First, let's add a wallet</Text>
         </View>
 
-        <BaseButton
-          testID="connectBSIMWallet"
-          containerStyle={{ marginTop: 40, marginHorizontal: 16 }}
-          onPress={() => navigation.navigate(BiometricsStackName, { type: 'BSIM' })}
-        >
+        <BaseButton testID="connectBSIMWallet" containerStyle={{ marginTop: 40, marginHorizontal: 16 }} onPress={connectBSIMCard}>
           <SIMCardIcon color={theme.colors.surfaceCard} width={24} height={24} /> Connect BSIM Card
         </BaseButton>
 
@@ -54,7 +66,7 @@ const Welcome: React.FC<{ navigation: StackNavigation }> = ({ navigation }) => {
         </View>
 
         <BaseButton
-          disabled={!qaOnly()}
+          disabled={!WELCOME_CREATE_WALLET_FEATURE.allow}
           testID="createNewWallet"
           containerStyle={{ marginTop: 16, marginHorizontal: 16 }}
           onPress={() => navigation.navigate(BiometricsStackName)}
@@ -62,7 +74,7 @@ const Welcome: React.FC<{ navigation: StackNavigation }> = ({ navigation }) => {
           Create new Wallet
         </BaseButton>
         <BaseButton
-          disabled={!qaOnly()}
+          disabled={!WELCOME_IMPORT_WALLET_FEATURE.allow}
           testID="importExistingWallet"
           containerStyle={{ marginTop: 16, marginHorizontal: 16 }}
           onPress={() => navigation.navigate(ImportWalletStackName, { type: 'create' })}

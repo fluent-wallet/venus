@@ -9,6 +9,7 @@ import { createAccountGroup } from '../../database/models/AccountGroup/query';
 import { generateMnemonic } from '../../utils/hdkey';
 import { AddAccountMethod, type Params as AddAccountParams } from './addAccount';
 import database from '../../database';
+import VaultSourceType from '@core/database/models/Vault/VaultSourceType';
 
 const defaultGroupNameMap = {
   [VaultType.HierarchicalDeterministic]: 'Seed Phrase',
@@ -29,8 +30,13 @@ export class CreateVaultMethod {
     return this.AddAccountMethod.addAccount(...args) as any;
   }
 
-  private async createVaultOfType(params: { type: VaultType.HierarchicalDeterministic; mnemonic: string; password?: string }): Promise<void>;
-  private async createVaultOfType(params: { type: VaultType.PrivateKey; privateKey: string; password?: string }): Promise<void>;
+  private async createVaultOfType(params: {
+    type: VaultType.HierarchicalDeterministic;
+    mnemonic: string;
+    password?: string;
+    isImportByUser?: boolean;
+  }): Promise<void>;
+  private async createVaultOfType(params: { type: VaultType.PrivateKey; privateKey: string; password?: string; isImportByUser?: boolean }): Promise<void>;
   private async createVaultOfType(params: { type: VaultType.BSIM; accounts: Array<{ index: number; hexAddress: string }>; password?: string }): Promise<void>;
   private async createVaultOfType(params: { type: VaultType.Hardware; accounts: Array<{ index: number; hexAddress: string }> }): Promise<void>;
   private async createVaultOfType(params: { type: VaultType.PublicAddress; hexAddress: string }): Promise<void>;
@@ -41,6 +47,7 @@ export class CreateVaultMethod {
     accounts,
     hexAddress,
     password,
+    isImportByUser = false,
   }: {
     type: Vault['type'];
     mnemonic?: string;
@@ -48,25 +55,35 @@ export class CreateVaultMethod {
     accounts?: Array<{ index: number; hexAddress: string }>;
     hexAddress?: string;
     password?: string;
+    isImportByUser?: boolean;
   }) {
     try {
       const data =
         type === VaultType.HierarchicalDeterministic
           ? await this.plugins.CryptoTool.encrypt(mnemonic!, password)
           : type === VaultType.PrivateKey
-          ? await this.plugins.CryptoTool.encrypt(privateKey!, password)
-          : type === VaultType.PublicAddress
-          ? hexAddress!
-          : type === VaultType.BSIM
-          ? await this.plugins.CryptoTool.encrypt('BSIM Wallet', password)
-          : null;
+            ? await this.plugins.CryptoTool.encrypt(privateKey!, password)
+            : type === VaultType.PublicAddress
+              ? hexAddress!
+              : type === VaultType.BSIM
+                ? await this.plugins.CryptoTool.encrypt('BSIM Wallet', password)
+                : null;
 
       if ((type === VaultType.HierarchicalDeterministic || type === VaultType.PrivateKey || type === VaultType.PublicAddress) && !data) {
         throw new Error(`Create vault Error: vault type-${type} data can't be empty`);
       }
       const isFirstVault = await checkIsFirstVault();
       const count = await getVaultTypeCount(type);
-      const vault = createVault({ type, device: 'ePayWallet', ...(data ? { data } : null) }, true);
+      const vault = createVault(
+        {
+          type,
+          device: 'ePayWallet',
+          ...(data ? { data } : null),
+          source: isImportByUser ? VaultSourceType.IMPORT_BY_USER : VaultSourceType.CREATE_BY_WALLET,
+          isBackup: false,
+        },
+        true,
+      );
       const accountGroup = createAccountGroup({ nickname: `${defaultGroupNameMap[type]} - ${count + 1}`, hidden: false, vault }, true);
 
       let batches: Array<Array<Account | Address>>;
@@ -83,9 +100,9 @@ export class CreateVaultMethod {
                 hexAddress,
                 index,
               },
-              true
-            )
-          )
+              true,
+            ),
+          ),
         );
       } else {
         batches = [
@@ -93,7 +110,7 @@ export class CreateVaultMethod {
             {
               vault,
               accountGroup,
-              nickname: `${type === VaultType.HierarchicalDeterministic ? '' : `${convertToCamelCase(type)} `}Account${` - ${count + 1}`}`,
+              nickname: type === VaultType.HierarchicalDeterministic ? undefined : `${convertToCamelCase(type)} Account - ${count + 1}`,
               hidden: false,
               selected: isFirstVault ? true : false,
               ...(hexAddress ? { hexAddress } : null),
@@ -101,7 +118,7 @@ export class CreateVaultMethod {
                 ? { vaultData: type === VaultType.HierarchicalDeterministic ? mnemonic : privateKey }
                 : null),
             },
-            true
+            true,
           ),
         ];
       }
@@ -118,7 +135,7 @@ export class CreateVaultMethod {
     const start = performance.now();
     console.log('create hd vault start');
     const mnemonic = importMnemonic ?? (await generateMnemonic());
-    await this.createVaultOfType({ type: VaultType.HierarchicalDeterministic, mnemonic, password });
+    await this.createVaultOfType({ type: VaultType.HierarchicalDeterministic, mnemonic, password, isImportByUser: !!importMnemonic });
     const end = performance.now();
     console.log(`create hd vault took ${end - start} ms.`);
   };
@@ -134,7 +151,7 @@ export class CreateVaultMethod {
   createPrivateKeyVault = async (privateKey: string, password?: string) => {
     const start = performance.now();
     console.log('create privateKey vault start');
-    await this.createVaultOfType({ type: VaultType.PrivateKey, privateKey, password });
+    await this.createVaultOfType({ type: VaultType.PrivateKey, privateKey, password, isImportByUser: true });
     const end = performance.now();
     console.log(`create privateKey vault a Wallet took ${end - start} ms.`);
   };

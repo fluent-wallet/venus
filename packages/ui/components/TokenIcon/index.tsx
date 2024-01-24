@@ -14,7 +14,7 @@ const TokenIcon: React.FC<{ type: AssetType; url?: string; width: number; height
       fallback={<DefaultTokenIcon width={width} height={height} />}
       width={width}
       height={height}
-      resizeMode="center"
+      resizeMode="cover"
     />
   ) : (
     <DefaultTokenIcon width={width} height={height} />

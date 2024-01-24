@@ -1,4 +1,4 @@
-name: Android build
+name: Android build prod by release
 
 permissions:
   contents: write
@@ -8,6 +8,7 @@ on:
     tags:
       - 'v*'
       - '!v*-qa*'
+      - '!v*-hotfix'
 
 jobs:
   android-build:
@@ -51,6 +52,7 @@ jobs:
           UPLOAD_KEYSTORE: ${{secrets.UPLOAD_KEYSTORE}}
           SIGN_ALIAS: ${{secrets.SIGN_ALIAS}}
           SIGN_KEY: ${{secrets.SIGN_KEY}}
+          PRODUCTION_ANDROID: ${{ secrets.PRODUCTION_ANDROID }}
         run: |
           echo $UPLOAD_KEYSTORE | base64 --decode > ./android/app/release.keystore.jks
           echo "" > .env

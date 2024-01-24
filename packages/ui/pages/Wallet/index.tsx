@@ -6,11 +6,11 @@ import { useFocusEffect } from '@react-navigation/native';
 import clsx from 'clsx';
 import { useAtom } from 'jotai';
 import { statusBarHeight } from '@utils/deviceInfo';
-import { useCurrentAccount, useCurrentNetwork, useAssetsTotalPriceValue } from '@core/WalletCore/Plugins/ReactInject';
+import { useCurrentAccount, useCurrentNetwork, useAssetsTotalPriceValue, useVaultOfAccount } from '@core/WalletCore/Plugins/ReactInject';
 import { CFX_ESPACE_MAINNET_CHAINID, CFX_ESPACE_TESTNET_CHAINID } from '@core/consts/network';
 import plugins from '@core/WalletCore/Plugins';
 import { resetTransaction } from '@core/WalletCore/Plugins/ReactInject/data/useTransaction';
-import { ReceiveAddressStackName, ReceiveStackName, type StackNavigation } from '@router/configs';
+import { BackUpNoticeStackName, ReceiveAddressStackName, ReceiveStackName, type StackNavigation } from '@router/configs';
 import { updateNFTDetail } from '@modules/AssetList/ESpaceNFTList/fetch';
 import TokenList from '@modules/AssetList/TokenList';
 import ESpaceNFTList from '@modules/AssetList/ESpaceNFTList';
@@ -29,6 +29,10 @@ import TotalPriceVisibleAtom from '@hooks/useTotalPriceVisible';
 import AsteriskIcon from '@assets/icons/asterisk.svg';
 import Background from '@modules/Background';
 import WalletHeader, { UserAddress } from './WalletHeader';
+import { USER_MNEMONIC_PHRASE_BACKUP_FEATURE } from '@utils/features';
+import { Button } from '@rneui/base';
+import VaultType from '@core/database/models/Vault/VaultType';
+import VaultSourceType from '@core/database/models/Vault/VaultSourceType';
 
 const MainButton: React.FC<{ onPress?: VoidFunction; disabled?: boolean; label?: string; icon?: React.ReactElement; _testID?: string }> = ({
   onPress,
@@ -60,12 +64,12 @@ const Wallet: React.FC<{ navigation: StackNavigation }> = ({ navigation }) => {
   const [totalPriceVisible, setTotalPriceVisible] = useAtom(TotalPriceVisibleAtom);
   const currentAccount = useCurrentAccount();
   const currentNetwork = useCurrentNetwork();
+  const vault = useVaultOfAccount(currentAccount?.id || '');
   const totalPriceValue = useAssetsTotalPriceValue();
   const [refreshing, setRefreshing] = useState(false);
   const [tabIndex, setTabIndex] = useState(0);
   const tabRef = useRef<PagerView>(null);
   const [, resetTX] = useAtom(resetTransaction);
-
   const handleTabChange = (index: number) => {
     if (tabRef.current) {
       setTabIndex(index);
@@ -97,15 +101,15 @@ const Wallet: React.FC<{ navigation: StackNavigation }> = ({ navigation }) => {
   useFocusEffect(
     useCallback(() => {
       resetTX();
-    }, [resetTX])
+    }, [resetTX]),
   );
 
   const tabs = useMemo(
     () =>
       currentNetwork && (currentNetwork.chainId === CFX_ESPACE_MAINNET_CHAINID || currentNetwork.chainId === CFX_ESPACE_TESTNET_CHAINID)
-        ? (['Tokens', 'NFTs'] as const)
-        : (['Tokens'] as const),
-    [currentNetwork]
+        ? (['Tokens', 'NFTs', 'Activity'] as const)
+        : (['Tokens', 'Activity'] as const),
+    [currentNetwork],
   );
 
   return (
@@ -198,6 +202,19 @@ const Wallet: React.FC<{ navigation: StackNavigation }> = ({ navigation }) => {
           </View>
         </View>
 
+        {USER_MNEMONIC_PHRASE_BACKUP_FEATURE.allow &&
+          vault &&
+          vault.type === VaultType.HierarchicalDeterministic &&
+          !vault.isBackup &&
+          vault.source === VaultSourceType.CREATE_BY_WALLET && (
+            <View className="flex items-start  px-6 py-3">
+              <Text className="">Protect your wallet by backing it up</Text>
+              <Button testID="backUp" type="clear" buttonStyle={{ paddingLeft: 0 }} onPress={() => navigation.navigate(BackUpNoticeStackName)}>
+                <Text>Back up {'>'}</Text>
+              </Button>
+            </View>
+          )}
+
         <View className="flex flex-row px-6 gap-4" style={{ backgroundColor: inSticky ? theme.colors.pureBlackAndWight : 'transparent' }}>
           {tabs.map((item, index) => (
             <Pressable testID={item} key={index} onPress={() => handleTabChange(index)}>
@@ -226,6 +243,11 @@ const Wallet: React.FC<{ navigation: StackNavigation }> = ({ navigation }) => {
               {tab === 'NFTs' && index === tabIndex && (
                 <View className={clsx('w-full h-full flex-1 pb-[8px] pt-[16px] px-[16px]', index !== tabIndex && 'display-none')}>
                   <ESpaceNFTList />
+                </View>
+              )}
+              {tab === 'Activity' && index === tabIndex && (
+                <View className={clsx('w-full h-full flex-1 pb-[8px] pt-[16px] px-[16px]', index !== tabIndex && 'display-none')}>
+                  <ActivityList />
                 </View>
               )}
             </View>

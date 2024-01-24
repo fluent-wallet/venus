@@ -1,24 +1,16 @@
 import { Asset, AssetType } from '@core/database/models/Asset';
-import { TxStatus } from '@core/database/models/Tx/type';
+import { FAILED_TX_STATUSES, PENDING_TX_STATUSES, TxStatus } from '@core/database/models/Tx/type';
 import { TxPayload } from '@core/database/models/TxPayload';
 import { iface1155, iface721, iface777 } from '@core/contracts';
 
 export const formatStatus = (status: TxStatus): 'failed' | 'pending' | 'confirmed' => {
-  switch (status) {
-    case '-2':
-    case '-1':
-      return 'failed';
-    case '0':
-    case '1':
-    case '2':
-    case '3':
-    case '4':
-      return 'pending';
-    case '5':
-      return 'confirmed';
-    default:
-      return ''  as never;
+  if (PENDING_TX_STATUSES.includes(status)) {
+    return 'pending';
   }
+  if (FAILED_TX_STATUSES.includes(status)) {
+    return 'failed';
+  }
+  return 'confirmed';
 };
 
 export const formatTxData = (payload: TxPayload | null, asset: Asset | null) => {

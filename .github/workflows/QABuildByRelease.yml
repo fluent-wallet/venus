@@ -46,6 +46,7 @@ jobs:
       - name: Build Android qa Release
         env:
           PASSWORD_CRYPTO_KEY: ${{ secrets.PASSWORD_CRYPTO_KEY }}
+          STAGING_ANDROID: ${{ secrets.STAGING_ANDROID }}
         run: |
           echo "" > .env
           cat >>.env <<END

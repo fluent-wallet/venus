@@ -31,6 +31,8 @@ declare namespace ETH {
     type?: string | null;
     logs?: unknown[];
     logsBloom?: string | null;
+    // ↓↓↓↓↓↓↓↓↓↓↓ only for espace ↓↓↓↓↓↓↓↓↓↓↓
+    txExecErrorMsg?: string | null;
   }
 
   export interface eth_getBlockByHashResponse {

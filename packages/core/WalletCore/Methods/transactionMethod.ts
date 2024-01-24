@@ -16,7 +16,7 @@ import { Signature } from 'ethers';
 import { Wallet } from 'ethers';
 import { JsonRpcProvider } from 'ethers';
 import { GetDecryptedVaultDataMethod } from './getDecryptedVaultData';
-import { BSIMErrorEndTimeout } from 'packages/WalletCoreExtends/Plugins/BSIM/BSIMSDK';
+import { BSIMError, BSIMErrorEndTimeout } from 'packages/WalletCoreExtends/Plugins/BSIM/BSIMSDK';
 
 @injectable()
 export class TransactionMethod {
@@ -37,7 +37,7 @@ export class TransactionMethod {
 
   private getContractTransactionData = (
     currentAddress: string,
-    args: Pick<WalletTransactionType, 'assetType' | 'tokenId' | 'contractAddress' | 'to' | 'amount' | 'decimals'>
+    args: Pick<WalletTransactionType, 'assetType' | 'tokenId' | 'contractAddress' | 'to' | 'amount' | 'decimals'>,
   ) => {
     if (!args.contractAddress) {
       throw new Error("Get contract transaction data but don't have contract address");
@@ -74,7 +74,16 @@ export class TransactionMethod {
       const hash = transaction.unsignedHash;
       const index = (await currentAddress.account).index;
 
-      await BSIM.verifyBPIN();
+      try {
+        await BSIM.verifyBPIN();
+      } catch (error: any) {
+        if (error?.code && error.code === 'A000') {
+          console.log("get error code A000, it's ok")
+          // ignore A000 error by verifyBPIN function
+        } else {
+          throw new BSIMError(error.code, error.message);
+        }
+      }
 
       walletTx.event.next({ type: TxEventTypesName.BSIM_VERIFY_START });
 
@@ -90,8 +99,8 @@ export class TransactionMethod {
             return throwError(() => err);
           }),
           retry({ delay: 1000 }),
-          timeout({ each: 30 * 1000, with: () => throwError(() => new BSIMErrorEndTimeout(errorCode, errorMsg)) })
-        )
+          timeout({ each: 30 * 1000, with: () => throwError(() => new BSIMErrorEndTimeout(errorCode, errorMsg)) }),
+        ),
       );
       walletTx.event.next({ type: TxEventTypesName.BSIM_SIGN_START });
       //  add the R S V to the transaction
@@ -156,8 +165,8 @@ export class TransactionMethod {
             { method: 'eth_gasPrice' },
           ]);
         }),
-        map(([gas, gasPrice]) => ({ gasLimit: gas, gasPrice: gasPrice }))
-      )
+        map(([gas, gasPrice]) => ({ gasLimit: gas, gasPrice: gasPrice })),
+      ),
     );
   };
 
