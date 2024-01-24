@@ -1,13 +1,14 @@
-import React, { useMemo } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import { useColorScheme } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import BootSplash from 'react-native-bootsplash';
 import { NavigationContainer, type Theme } from '@react-navigation/native';
 import { JotaiNexus, useHasVault } from '@core/WalletCore/Plugins/ReactInject';
-import { palette, lightColors, darkColors } from './theme';
+import { palette, lightColors, darkColors, fonts } from './theme';
 import Router from './router';
-import './assets/i18n';
+import '@assets/i18n';
 
+let hasInit = false;
 const App: React.FC = () => {
   const mode = useColorScheme();
   const hasVault = useHasVault();
@@ -15,17 +16,23 @@ const App: React.FC = () => {
     () => ({
       mode: mode === 'dark' ? 'dark' : 'light',
       palette,
+      fonts,
       colors: mode === 'dark' ? darkColors : lightColors,
     }),
     [mode],
   );
 
+  useEffect(() => {
+    if (!hasInit && typeof hasVault === 'boolean') {
+      hasInit = true;
+      BootSplash.hide();
+    }
+  }, [hasVault]);
+
   return (
     <>
       <GestureHandlerRootView style={{ flex: 1 }}>
-        <NavigationContainer onReady={BootSplash.hide} theme={theme as unknown as Theme}>
-          {typeof hasVault === 'boolean' && <Router />}
-        </NavigationContainer>
+        <NavigationContainer theme={theme as unknown as Theme}>{typeof hasVault === 'boolean' && <Router />}</NavigationContainer>
       </GestureHandlerRootView>
       <JotaiNexus />
     </>
