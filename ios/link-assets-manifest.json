@@ -2,40 +2,36 @@
   "migIndex": 1,
   "data": [
     {
-      "path": "packages/ui/assets/fonts/sora_bold.ttf",
+      "path": "packages/ui-new/assets/fonts/sora_bold.ttf",
       "sha1": "a90703d8b7152c8635b15caade8cd3b987850092"
     },
     {
-      "path": "packages/ui/assets/fonts/sora_extrabold.ttf",
+      "path": "packages/ui-new/assets/fonts/sora_extrabold.ttf",
       "sha1": "5f63f44b7e797cae1247acf22010e7e4e05ef87f"
     },
     {
-      "path": "packages/ui/assets/fonts/sora_extralight.ttf",
+      "path": "packages/ui-new/assets/fonts/sora_extralight.ttf",
       "sha1": "e3a46cbb5914ee8d2376d4c15e3e3d679bb94ead"
     },
     {
-      "path": "packages/ui/assets/fonts/sora_light.ttf",
+      "path": "packages/ui-new/assets/fonts/sora_light.ttf",
       "sha1": "14c294c81c53cecc5122aa97f48d95c193643479"
     },
     {
-      "path": "packages/ui/assets/fonts/sora_medium.ttf",
+      "path": "packages/ui-new/assets/fonts/sora_medium.ttf",
       "sha1": "faa8a98d604ca71c41aa4ffbbd2bd74bf645abe6"
     },
     {
-      "path": "packages/ui/assets/fonts/sora_regular.ttf",
+      "path": "packages/ui-new/assets/fonts/sora_regular.ttf",
       "sha1": "3b4ed53d52716224736d762d55e9a74d34a980c9"
     },
     {
-      "path": "packages/ui/assets/fonts/sora_semibold.ttf",
+      "path": "packages/ui-new/assets/fonts/sora_semibold.ttf",
       "sha1": "ed7c3980e8ec4a284ddd71276ae50177b54ee0f6"
     },
     {
-      "path": "packages/ui/assets/fonts/sora_thin.ttf",
+      "path": "packages/ui-new/assets/fonts/sora_thin.ttf",
       "sha1": "30f93d8cf40119c65358699b62ebed569aee1d93"
-    },
-    {
-      "path": "packages/ui/assets/fonts/stalinistone_regular.ttf",
-      "sha1": "29d4d403405aafb90852f35da5d7fd6007c187a5"
     }
   ]
 }

@@ -51,7 +51,6 @@ class MainApplication : Application(), ReactApplication {
         super.onCreate()
         SoLoader.init(this, false)
         ReactFontManager.getInstance().addCustomFont(this, "Sora", R.font.sora)
-        ReactFontManager.getInstance().addCustomFont(this, "Stalinist One", R.font.stalinistone)
         if (BuildConfig.IS_NEW_ARCHITECTURE_ENABLED) {
             // If you opted-in for the New Architecture, we load the native entry point for this app.
             load()
