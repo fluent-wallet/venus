@@ -1,5 +1,6 @@
 import { useMemo, useCallback, type Component, type PropsWithChildren } from 'react';
-import { StyleSheet, Pressable, useColorScheme, type PressableProps, type PressableStateCallbackType, type SvgProps } from 'react-native';
+import { StyleSheet, Pressable, useColorScheme, Platform, type PressableProps, type PressableStateCallbackType } from 'react-native';
+import { type SvgProps } from 'react-native-svg';
 import Text from '@components/Text';
 import Hourglass from './Hourglass';
 import { palette } from '../../theme';
@@ -13,7 +14,18 @@ interface Props extends PropsWithChildren<PressableProps> {
   Icon?: typeof Component<SvgProps>;
 }
 
-const Button = ({ children, loading, size = 'medium', disabled: _disabled, mode: _mode = 'dark', textAlign = 'center', square, Icon, ...props }: Props) => {
+const Button = ({
+  children,
+  loading,
+  size = 'medium',
+  disabled: _disabled,
+  mode: _mode = 'dark',
+  textAlign = 'center',
+  square,
+  Icon,
+  style,
+  ...props
+}: Props) => {
   const systemMode = useColorScheme();
 
   const mode = useMemo(() => (_mode === 'auto' ? (systemMode === 'dark' ? 'dark' : 'light') : _mode), [systemMode, _mode]);
@@ -29,24 +41,27 @@ const Button = ({ children, loading, size = 'medium', disabled: _disabled, mode:
       styles[`button-${textAlign}`],
       pressed && styles[`button-${mode}-pressed`],
       disabled && styles[`button-${mode}-disabled`],
+      typeof style !== 'function' && style,
     ],
-    [mode, size, disabled, square, textAlign],
+    [mode, size, disabled, square, textAlign, style],
   );
-  const textStyle = useMemo(() => [styles.text, styles[`text-${mode}`], disabled && styles[`text-${mode}-disabled`]], [mode, disabled]);
-  const iconStyle = useMemo(
+
+  const textStyle = useMemo(() => ({ ...styles.text, ...styles[`text-${mode}`], ...(disabled ? styles[`text-${mode}-disabled`] : null) }), [mode, disabled]);
+  const iconPositionStyle = useMemo(
     () => ({
       marginLeft: textAlign === 'center' ? 10 : ('auto' as const),
       width: 24,
-      height: 24
+      height: 24,
     }),
     [textAlign],
   );
+  const iconStyle = useMemo(() => ({ ...textStyle, ...iconPositionStyle }), [textStyle, iconPositionStyle]);
 
   return (
     <Pressable style={containerStyle} disabled={disabled || loading} {...props}>
       {typeof children === 'string' ? <Text style={textStyle}>{children}</Text> : children}
-      {Icon && !loading && <Icon style={[textStyle, iconStyle]} />}
-      {loading && <Hourglass color={styles[`text-${mode}`].color} style={iconStyle} />}
+      {Icon && !loading && <Icon style={iconStyle} />}
+      {loading && <Hourglass color={styles[`text-${mode}`].color} style={iconPositionStyle} />}
     </Pressable>
   );
 };
@@ -80,22 +95,64 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
   },
   ['button-small']: {
-    height: 48,
+    ...Platform.select({
+      android: {
+        height: 48,
+      },
+      ios: {
+        height: 45,
+      },
+    }),
   },
   ['button-small-square']: {
-    width: 48,
+    ...Platform.select({
+      android: {
+        height: 48,
+      },
+      ios: {
+        height: 45,
+      },
+    }),
   },
   ['button-medium']: {
-    height: 56,
+    ...Platform.select({
+      android: {
+        height: 56,
+      },
+      ios: {
+        height: 53,
+      },
+    }),
   },
   ['button-medium-square']: {
-    width: 56,
+    ...Platform.select({
+      android: {
+        height: 56,
+      },
+      ios: {
+        height: 53,
+      },
+    }),
   },
   ['button-large']: {
-    height: 64,
+    ...Platform.select({
+      android: {
+        height: 64,
+      },
+      ios: {
+        height: 61,
+      },
+    }),
   },
   ['button-large-square']: {
-    width: 64,
+    ...Platform.select({
+      android: {
+        height: 64,
+      },
+      ios: {
+        height: 61,
+      },
+    }),
   },
   ['button-light']: {
     borderColor: palette.gray1,

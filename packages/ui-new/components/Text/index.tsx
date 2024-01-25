@@ -14,6 +14,7 @@ const CustomText = ({ children, style, ...props }: PropsWithChildren<TextProps>)
 const styles = StyleSheet.create({
   defaultStyle: {
     fontFamily: 'Sora',
+    letterSpacing: undefined
   },
 });
 
