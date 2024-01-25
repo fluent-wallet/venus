@@ -99,6 +99,12 @@ PODS:
   - JWT (3.0.0-beta.14):
     - Base64 (~> 1.1.2)
   - libevent (2.1.12)
+  - lottie-ios (4.3.4)
+  - lottie-react-native (6.5.1):
+    - glog
+    - lottie-ios (~> 4.3.3)
+    - RCT-Folly (= 2022.05.16.00)
+    - React-Core
   - OpenSSL-Universal (1.1.1100)
   - RCT-Folly (2022.05.16.00):
     - boost
@@ -1199,7 +1205,7 @@ PODS:
   - simdjson (3.1.0-wmelon1)
   - SocketRocket (0.6.1)
   - SSZipArchive (2.2.3)
-  - VisionCamera (3.8.0):
+  - VisionCamera (3.8.2):
     - React
     - React-callinvoker
     - React-Core
@@ -1244,6 +1250,7 @@ DEPENDENCIES:
   - glog (from `../node_modules/react-native/third-party-podspecs/glog.podspec`)
   - hermes-engine (from `../node_modules/react-native/sdks/hermes-engine/hermes-engine.podspec`)
   - libevent (~> 2.1.12)
+  - lottie-react-native (from `../node_modules/lottie-react-native`)
   - OpenSSL-Universal (= 1.1.1100)
   - RCT-Folly (from `../node_modules/react-native/third-party-podspecs/RCT-Folly.podspec`)
   - RCT-Folly/Fabric (from `../node_modules/react-native/third-party-podspecs/RCT-Folly.podspec`)
@@ -1329,6 +1336,7 @@ SPEC REPOS:
     - fmt
     - JWT
     - libevent
+    - lottie-ios
     - OpenSSL-Universal
     - SocketRocket
     - SSZipArchive
@@ -1363,6 +1371,8 @@ EXTERNAL SOURCES:
   hermes-engine:
     :podspec: "../node_modules/react-native/sdks/hermes-engine/hermes-engine.podspec"
     :tag: hermes-2023-11-17-RNv0.73.0-21043a3fc062be445e56a2c10ecd8be028dd9cc5
+  lottie-react-native:
+    :path: "../node_modules/lottie-react-native"
   RCT-Folly:
     :podspec: "../node_modules/react-native/third-party-podspecs/RCT-Folly.podspec"
   RCTRequired:
@@ -1522,6 +1532,8 @@ SPEC CHECKSUMS:
   hermes-engine: b361c9ef5ef3cda53f66e195599b47e1f84ffa35
   JWT: ef71dfb03e1f842081e64dc42eef0e164f35d251
   libevent: 4049cae6c81cdb3654a443be001fb9bdceff7913
+  lottie-ios: 3d98679b41fa6fd6aff2352b3953dbd3df8a397e
+  lottie-react-native: c1c6a1fd86e1942d69c2bc2e14212be72b55f3be
   OpenSSL-Universal: ebc357f1e6bc71fa463ccb2fe676756aff50e88c
   RCT-Folly: 7169b2b1c44399c76a47b5deaaba715eeeb476c0
   RCTRequired: 9b1e7e262745fb671e33c51c1078d093bd30e322
@@ -1587,9 +1599,9 @@ SPEC CHECKSUMS:
   simdjson: e6bfae9ce4bcdc80452d388d593816f1ca2106f3
   SocketRocket: f32cd54efbe0f095c4d7594881e52619cfe80b17
   SSZipArchive: 62d4947b08730e4cda640473b0066d209ff033c9
-  VisionCamera: 065622e7baa1a03ef61fdc950607453152a77a97
+  VisionCamera: 4b98b273902ac18491bb68481b6601f1f0da0f2d
   WatermelonDB: 842d22ba555425aa9f3ce551239a001200c539bc
-  Yoga: e64aa65de36c0832d04e8c7bd614396c77a80047
+  Yoga: 13c8ef87792450193e117976337b8527b49e8c03
 
 PODFILE CHECKSUM: b1be883fbf850e57cf1434018595f1151c7898e2
 

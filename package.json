@@ -48,6 +48,7 @@
     "jotai": "^2.6.2",
     "ky": "^1.2.0",
     "lodash-es": "^4.17.21",
+    "lottie-react-native": "^6.5.1",
     "mitt": "^3.0.1",
     "nativewind": "2.0.11",
     "react": "18.2.0",
