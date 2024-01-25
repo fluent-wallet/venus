@@ -55,7 +55,6 @@
     "react-i18next": "^14.0.0",
     "react-native": "^0.73.2",
     "react-native-bignumber": "^0.2.2",
-    "react-native-bootsplash": "^5.2.2",
     "react-native-code-push": "8.1.1",
     "react-native-config": "^1.5.1",
     "react-native-flash-message": "^0.4.2",
@@ -110,5 +109,14 @@
   },
   "engines": {
     "node": ">=18"
+  },
+  "expo": {
+    "autolinking": {
+      "exclude": [
+        "expo-keep-awake",
+        "expo-application",
+        "expo-font"
+      ]
+    }
   }
 }

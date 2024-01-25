@@ -6,13 +6,9 @@ import com.facebook.react.ReactActivity
 import com.facebook.react.ReactActivityDelegate
 import com.facebook.react.defaults.DefaultNewArchitectureEntryPoint.fabricEnabled
 import com.facebook.react.defaults.DefaultReactActivityDelegate
-import com.zoontek.rnbootsplash.RNBootSplash
 
-// react-native-bootsplash
 class MainActivity : ReactActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
-        // react-native-bootsplash
-        RNBootSplash.init(this, R.style.BootTheme)
         super.onCreate(null)
     }
 
