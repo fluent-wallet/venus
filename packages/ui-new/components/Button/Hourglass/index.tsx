@@ -1,6 +1,5 @@
 import React, { memo } from 'react';
 import { type StyleProp, type ViewStyle, View } from 'react-native';
-import Svg, { Path } from 'react-native-svg';
 import LottieView from 'lottie-react-native';
 
 const Hourglass: React.FC<{ color: string; style: StyleProp<ViewStyle> }> = memo(({ color, style }) => {

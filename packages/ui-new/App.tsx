@@ -1,8 +1,10 @@
-import React, { useEffect, useMemo } from 'react';
+import React, { useMemo } from 'react';
 import { useColorScheme } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import FlashMessage from 'react-native-flash-message';
 import { NavigationContainer, type Theme } from '@react-navigation/native';
 import { JotaiNexus, useHasVault } from '@core/WalletCore/Plugins/ReactInject';
+import CustomMessage from '@modules/CustomMessage';
 import { palette, lightColors, darkColors, fonts } from './theme';
 import Router from './router';
 import '@assets/i18n';
@@ -23,7 +25,10 @@ const App: React.FC = () => {
   return (
     <>
       <GestureHandlerRootView style={{ flex: 1 }}>
-        <NavigationContainer theme={theme as unknown as Theme}>{typeof hasVault === 'boolean' && <Router />}</NavigationContainer>
+        <NavigationContainer theme={theme as unknown as Theme}>
+          {typeof hasVault === 'boolean' && <Router />}
+          <FlashMessage position="bottom" MessageComponent={CustomMessage} duration={1500} animated={false} />
+        </NavigationContainer>
       </GestureHandlerRootView>
       <JotaiNexus />
     </>
