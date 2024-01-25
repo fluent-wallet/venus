@@ -43,6 +43,7 @@
     "fast-text-encoding": "^1.0.6",
     "expo": "^50.0.0",
     "expo-image": "~1.10.5",
+    "expo-splash-screen": "~0.26.4",
     "i18next": "^23.7.16",
     "intl-pluralrules": "^2.0.1",
     "inversify": "^6.0.2",

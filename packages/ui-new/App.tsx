@@ -8,6 +8,8 @@ import CustomMessage from '@modules/CustomMessage';
 import { palette, lightColors, darkColors, fonts } from './theme';
 import Router from './router';
 import '@assets/i18n';
+import * as SplashScreen from 'expo-splash-screen';
+
 
 const App: React.FC = () => {
   const mode = useColorScheme();
@@ -21,6 +23,9 @@ const App: React.FC = () => {
     }),
     [mode],
   );
+  useEffect(() => {
+    SplashScreen.hideAsync();
+  }, []);
 
   return (
     <>
