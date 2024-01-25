@@ -36,6 +36,8 @@ const Button = ({ children, loading, size = 'medium', disabled: _disabled, mode:
   const iconStyle = useMemo(
     () => ({
       marginLeft: textAlign === 'center' ? 10 : ('auto' as const),
+      width: 24,
+      height: 24
     }),
     [textAlign],
   );
