@@ -108,13 +108,13 @@ class SDKModule(private val reactContext: ReactApplicationContext) :
 
 
     @ReactMethod
-    fun signMessage(msg: String, coinType: Int, index: Int, promise: Promise) {
+    fun signMessage(msg: String, coinTypeIndex: Int, index: Int, promise: Promise) {
         // 校验BPIN
         // !! 签名前必须先校验BPIN，verifyBPIN调用或立刻返回，BSIM卡拉起输入界面，
         // !! 输入结果BSIM卡自动校验，提示用户，APP拿不到校验结果，app不参与BPIN相关流程
         // !! 校验失败后sign时会有提示
 
-        var coinType = CoinType.values().find {it.index === coinType}
+        var coinType = CoinType.values().find {it.index === coinTypeIndex}
 
         if (coinType === null) {
             return promise.reject(BSIM_ERRPR, "coin type not find")

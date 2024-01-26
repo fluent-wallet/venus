@@ -102,10 +102,10 @@ export class BSIMPluginClass implements Plugin {
     await this.checkIsInit();
     return BSIMSDK.getBSIMVersion();
   };
-  public signMessage = async (message: string, coinType: number, index: number) => {
+  public signMessage = async (message: string, coinTypeIndex: number, index: number) => {
     await this.checkIsInit();
 
-    return BSIMSDK.signMessage(message, coinType, index);
+    return BSIMSDK.signMessage(message, coinTypeIndex, index);
   };
 }
 
