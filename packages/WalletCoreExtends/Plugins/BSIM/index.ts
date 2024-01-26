@@ -22,11 +22,16 @@ const formatBSIMPubkey = (key: string) => {
 };
 
 let hasInit = false;
+const eSpaceCoinType = 60;
 
 export class BSIMPluginClass implements Plugin {
+  constructor() {
+    this.getBSIMList();
+  }
   name = 'BSIM' as const;
 
   chainLimtCount = 25 as const;
+  indexMap: Record<number, { index: number; coinType: number }> = {};
 
   checkIsInit = async () => {
     if (!hasInit) {
@@ -35,14 +40,21 @@ export class BSIMPluginClass implements Plugin {
     }
   };
 
-  public getBIMList = async () => {
+  public getBSIMList = async () => {
     try {
       await this.checkIsInit();
-      const list = await BSIMSDK.getPubkeyList(true);
-      return list
-        .map((item) => ({ hexAddress: computeAddress(addHexPrefix(formatBSIMPubkey(item.key))), index: item.index }))
+      const list = await BSIMSDK.getPubkeyList();
+      const temp = list
+        .map((item) => ({ hexAddress: computeAddress(addHexPrefix(formatBSIMPubkey(item.key))), index: item.index, coinType: item.coinType }))
         .filter((item) => item.index > 0)
+        .filter((item) => item.coinType === eSpaceCoinType)
         .sort((itemA, itemB) => itemA.index - itemB.index);
+
+      const result = temp.map((item, index) => {
+        this.indexMap[index] = { coinType: item.coinType, index: item.index };
+        return { ...item, index };
+      });
+      return result;
     } catch (err) {
       return [];
     }
@@ -52,23 +64,29 @@ export class BSIMPluginClass implements Plugin {
     await this.checkIsInit();
 
     try {
-      await BSIMSDK.genNewKey(CoinTypes.CONFLUX);
+      await BSIMSDK.genNewKey(CoinTypes.ETHEREUM);
+
+      const list = await this.getBSIMList();
+
+      const BSIMKey = list.at(-1);
+      if (!BSIMKey) throw new Error('create new BSIM account failed');
+
+      return { hexAddress: BSIMKey.hexAddress, index: BSIMKey.index };
     } catch (error) {
-      console.log('create new BSIM account failed', error)
+      console.log('create new BSIM account failed', error);
+      if (String(error).includes('密钥存储空间已满')) {
+        throw new Error('Your BSIM card is full.');
+      } else {
+        throw error;
+      }
     }
 
-    const list = await this.getBIMList();
-
-    const BSIMKey = list.pop();
-    if (!BSIMKey) throw new Error('create new BSIM account failed');
-
-    return { hexAddress: BSIMKey.hexAddress, index: BSIMKey.index };
   };
 
   public createBSIMAccountToIndex = async (targetIndex: number) => {
     await this.checkIsInit();
 
-    const list = await this.getBIMList();
+    const list = await this.getBSIMList();
     const maxIndex = list.at(-1)?.index ?? -1;
     if (maxIndex >= targetIndex || maxIndex >= BSIM_SUPPORT_ACCOUNT_LIMIT) return;
 
@@ -81,15 +99,12 @@ export class BSIMPluginClass implements Plugin {
   public connectBSIM = async () => {
     await this.checkIsInit();
 
-    try {
-      const list = await this.getBIMList();
-      if (list?.length > 0) {
-        return list.slice(0, 1);
-      }
-    } catch (error) {
+    const list = await this.getBSIMList();
+    if (list?.length > 0) {
+      return list.slice(0, 1);
+    } else {
       return [await this.createNewBSIMAccount()];
     }
-    return [await this.createNewBSIMAccount()];
   };
 
   public verifyBPIN = async () => {
@@ -102,10 +117,10 @@ export class BSIMPluginClass implements Plugin {
     await this.checkIsInit();
     return BSIMSDK.getBSIMVersion();
   };
-  public signMessage = async (message: string, coinType: CoinTypes, index: number) => {
+  public signMessage = async (message: string, coinTypeIndex: number, index: number) => {
     await this.checkIsInit();
 
-    return BSIMSDK.signMessage(message, coinType, index);
+    return BSIMSDK.signMessage(message, coinTypeIndex, index);
   };
 }
 

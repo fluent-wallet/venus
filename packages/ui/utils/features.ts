@@ -45,3 +45,9 @@ export const CHECK_ADDRESS_FEATURE = {
   describe: 'check address is a valid address and check address is a contract address',
   allow: isQA || isDev,
 };
+
+
+export const SHOW_SET_AMOUNT_FEATURE = {
+  describe: 'allow set amount button to use',
+  allow: isDev,
+}

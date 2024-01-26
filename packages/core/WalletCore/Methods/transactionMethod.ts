@@ -16,7 +16,8 @@ import { Signature } from 'ethers';
 import { Wallet } from 'ethers';
 import { JsonRpcProvider } from 'ethers';
 import { GetDecryptedVaultDataMethod } from './getDecryptedVaultData';
-import { BSIMError, BSIMErrorEndTimeout } from 'packages/WalletCoreExtends/Plugins/BSIM/BSIMSDK';
+import BSIMSDK, { BSIMError, BSIMErrorEndTimeout, BSIM_ERRORS } from 'packages/WalletCoreExtends/Plugins/BSIM/BSIMSDK';
+import plugins from '@core/WalletCore/Plugins';
 
 @injectable()
 export class TransactionMethod {
@@ -72,7 +73,7 @@ export class TransactionMethod {
 
     if (vaultType === 'BSIM') {
       const hash = transaction.unsignedHash;
-      const index = (await currentAddress.account).index;
+      const accountIndex = (await currentAddress.account).index;
 
       try {
         await BSIM.verifyBPIN();
@@ -90,9 +91,14 @@ export class TransactionMethod {
       let errorMsg = '';
       let errorCode = '';
       // retrieve the R S V of the transaction through a polling mechanism
+      const BSIMInfo = plugins.BSIM.indexMap[accountIndex]
+
+      if (!BSIMInfo) {
+        throw new Error("can't get coin type and index")
+      }
 
       const res = await firstValueFrom(
-        defer(() => from(BSIM.signMessage(hash, CoinTypes.CONFLUX, index))).pipe(
+        defer(() => from(BSIM.signMessage(hash, BSIMInfo.coinType, BSIMInfo.index))).pipe(
           catchError((err: { code: string; message: string }) => {
             errorMsg = err.message;
             errorCode = err.code;

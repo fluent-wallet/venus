@@ -39,7 +39,7 @@ const AccountGroupItem: React.FC<{
       if (vault.type === VaultType.HierarchicalDeterministic) {
         return await methods.addAccount({ accountGroup });
       } else if (vault.type === VaultType.BSIM) {
-        const list = await plugins.BSIM.getBIMList();
+        const list = await plugins.BSIM.getBSIMList();
         const newIndex = (await methods.getAccountGroupLastAccountIndex(accountGroup)) + 1;
         const alreadyCreateAccount = list?.find((item) => item.index === newIndex);
         if (alreadyCreateAccount) {

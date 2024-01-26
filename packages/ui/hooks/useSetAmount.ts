@@ -32,7 +32,7 @@ const setTokenQRInfoAtom = atom(
   },
   (get, set, update: TokenQRInfo | null) => {
     set(_TokenQRInfoAtom, update);
-  }
+  },
 );
 
 export default setTokenQRInfoAtom;

@@ -21,6 +21,7 @@ import ShareIcon from '@assets/icons/share.svg';
 import SetAmountIcon from '@assets/icons/setAmount.svg';
 import CFXTokenIcon from '@assets/icons/cfxToken.svg';
 import DefaultTokenIcon from '@assets/icons/defaultToken.svg';
+import { SHOW_SET_AMOUNT_FEATURE } from '@utils/features';
 
 const Receive: React.FC<NativeStackScreenProps<RootStackList, 'Receive'>> = ({ navigation }) => {
   const { theme } = useTheme();
@@ -28,7 +29,7 @@ const Receive: React.FC<NativeStackScreenProps<RootStackList, 'Receive'>> = ({ n
   const currentAddressValue = useCurrentAddressValue()!;
   const currentAccount = useCurrentAccount();
   const [shareDisabled, setShareDisabled] = useState(true);
-  const [setAmountDisabled, setSetAmountDisabled] = useState(true);
+  const [setAmountDisabled, setSetAmountDisabled] = useState(!SHOW_SET_AMOUNT_FEATURE.allow);
 
   const [currentToken, setCurrentToken] = useAtom(setTokenQRInfoAtom);
   const handleSetAmount = () => {

@@ -53,21 +53,18 @@ const HDManage: React.FC<NativeStackScreenProps<RootStackList, 'HDManage'>> = ({
         if (!currentHdPath?.value) return;
         setInCalc(true);
         await new Promise((resolve) => setTimeout(resolve, 10));
-        console.log(1);
         if (vault.type === VaultType.HierarchicalDeterministic && !mnemonic) {
           setMnemonic(await methods.getMnemonicOfVault(vault));
           return;
         }
-        console.log(2);
-        let accountsList: Awaited<ReturnType<typeof plugins.BSIM.getBIMList>> = [];
+        let accountsList: Awaited<ReturnType<typeof plugins.BSIM.getBSIMList>> = [];
         if (vault.type === 'BSIM') {
           await plugins.BSIM.createBSIMAccountToIndex((pageIndex + 1) * countPerPage);
-          accountsList = await plugins.BSIM.getBIMList();
+          accountsList = await plugins.BSIM.getBSIMList();
         }
 
         const newPageAccounts = await Promise.all(
-          Array.from({ length: countPerPage }, (_, i) => (vault.type === VaultType.BSIM ? i + 1 : i)).map(async (index) => {
-            // BSIM index is  start from 1 other start from 0
+          Array.from({ length: countPerPage }).map(async (_, index) => {
             const targetAlreadyInAccounts = accounts?.find((account) => account.index === pageIndex * countPerPage + index);
             if (targetAlreadyInAccounts) return { hexAddress: (await targetAlreadyInAccounts.currentNetworkAddress).hex, index: targetAlreadyInAccounts.index };
             if (vault.type === VaultType.BSIM) {
@@ -208,7 +205,7 @@ const HDManage: React.FC<NativeStackScreenProps<RootStackList, 'HDManage'>> = ({
                     />
                   </View>
                   <Text className="ml-[4px] mr-[6px] text-[16px] leading-tight" style={{ color: theme.colors.textPrimary }}>
-                    {vault.type === VaultType.BSIM ? account.index : account.index + 1}
+                    {account.index + 1}
                   </Text>
                   <Text className="text-[16px] leading-tight" style={{ color: theme.colors.textPrimary }}>
                     {shortenAddress(account.hexAddress)}

@@ -135,13 +135,12 @@ interface BSIMSDKInterface {
    * @param msg string - sha3 hash message
    * @param index string
    */
-  signMessage(msg: string, coinType: CoinTypes, index: number): Promise<{ code: string; message: string; r: string; s: string; v: string }>;
+  signMessage(msg: string, coinTypeIndex: number, index: number): Promise<{ code: string; message: string; r: string; s: string; v: string }>;
 
   /**
    * Get all Pubkey from BSIM SDK
-   * @param cfxOnly boolean - only get cfx pubkey default true
    */
-  getPubkeyList(cfxOnly: boolean): Promise<BSIMPubKey[]>;
+  getPubkeyList(): Promise<BSIMPubKey[]>;
   /**
    * bsim pubkey to eth pubkey
    * @param hexPubkey
