@@ -6,25 +6,15 @@ import { Image } from 'expo-image';
 import Text from '@components/Text';
 import Button from '@components/Button';
 import { WelcomeStackName, WayToInitWalletStackName, type StackScreenProps } from '@router/configs';
-
 import Img from '@assets/images/welcome-img.webp';
 
-const Welcome: React.FC<{ navigation: StackScreenProps<typeof WelcomeStackName> }> = ({ navigation }) => {
+const PasswordWay: React.FC<{ navigation: StackScreenProps<typeof WelcomeStackName> }> = ({ navigation }) => {
   const { mode, colors } = useTheme();
 
   return (
-      <SafeAreaView style={styles.container}>
-        <Text style={[styles.first, { color: colors.textFifth, backgroundColor: colors.bgThird }]}>First, let's add a wallet</Text>
-
-        <Button
-          testID="Get Started"
-          textAlign="left"
-          style={styles.btn}
-          onPress={() => navigation.dispatch(StackActions.replace(WayToInitWalletStackName))}
-        >
-          Get Started
-        </Button>
-      </SafeAreaView>
+    <SafeAreaView style={styles.container}>
+      <Text style={[styles.first, { color: colors.textFifth, backgroundColor: colors.bgThird }]}>Password Way</Text>
+    </SafeAreaView>
   );
 };
 
@@ -62,4 +52,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default Welcome;
+export default PasswordWay;

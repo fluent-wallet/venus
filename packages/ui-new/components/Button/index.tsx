@@ -2,7 +2,7 @@ import { useMemo, useCallback, type Component, type PropsWithChildren } from 're
 import { StyleSheet, Pressable, useColorScheme, Platform, type PressableProps, type PressableStateCallbackType } from 'react-native';
 import { type SvgProps } from 'react-native-svg';
 import Text from '@components/Text';
-import Hourglass from './Hourglass';
+import HourglassLoading from '@components/Loading/Hourglass';
 import { palette } from '../../theme';
 
 interface Props extends PropsWithChildren<PressableProps> {
@@ -61,7 +61,7 @@ const Button = ({
     <Pressable style={containerStyle} disabled={disabled || loading} {...props}>
       {typeof children === 'string' ? <Text style={textStyle}>{children}</Text> : children}
       {Icon && !loading && <Icon style={iconStyle} />}
-      {loading && <Hourglass color={styles[`text-${mode}`].color} style={iconPositionStyle} />}
+      {loading && <HourglassLoading color={styles[`text-${mode}`].color} style={iconPositionStyle} />}
     </Pressable>
   );
 };

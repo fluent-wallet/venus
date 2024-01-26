@@ -14,7 +14,7 @@ const CustomMessage: React.FC<{ message: Message; icon?: { icon: any }; style?: 
 
   return (
     <View style={[styles.wrapper, style]}>
-      <View style={[styles.container, { backgroundColor: colors.bgPrimary }]}>
+      <View style={[styles.container, { backgroundColor: colors.bgSecondary }]}>
         <View
           className="absolute left-[0px] top-[0px] w-[125%] h-[200%] pointer-events-none opacity-90"
           style={{ backgroundColor: type === 'success' ? colors.bgPrimary : colors.bgThird }}
@@ -58,8 +58,8 @@ const styles = StyleSheet.create({
   container: {
     position: 'relative',
     marginHorizontal: 'auto',
-    width: 360,
-    padding: 12,
+    width: '100%',
+    padding: 16,
     borderRadius: 6,
     overflow: 'hidden',
   }

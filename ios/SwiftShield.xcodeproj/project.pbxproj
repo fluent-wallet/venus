@@ -8,22 +8,22 @@
 
 /* Begin PBXBuildFile section */
 		00E356F31AD99517003FC87E /* SwiftShieldTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 00E356F21AD99517003FC87E /* SwiftShieldTests.m */; };
+		01914D9A98DF4F80B0B1D07A /* sora_bold.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 048A7B2BE3E44341B8A0853E /* sora_bold.ttf */; };
+		098B4310205D428D8A821F53 /* sora_extrabold.ttf in Resources */ = {isa = PBXBuildFile; fileRef = A32E2BBAD30B4F259AA50314 /* sora_extrabold.ttf */; };
 		0C80B921A6F3F58F76C31292 /* libPods-SwiftShield.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 5DCACB8F33CDC322A6C60F78 /* libPods-SwiftShield.a */; };
 		13B07FBC1A68108700A75B9A /* AppDelegate.mm in Sources */ = {isa = PBXBuildFile; fileRef = 13B07FB01A68108700A75B9A /* AppDelegate.mm */; };
 		13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 13B07FB51A68108700A75B9A /* Images.xcassets */; };
 		13B07FC11A68108700A75B9A /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 13B07FB71A68108700A75B9A /* main.m */; };
+		198B2BA7EDD7401195243359 /* sora_medium.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 055DA28FFE37457EB79D4372 /* sora_medium.ttf */; };
+		3888170ED47F4FC9A1787042 /* sora_extralight.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 6C7F38D1D04C48598A458CE8 /* sora_extralight.ttf */; };
+		4EF6DE06DF68432B9964EE10 /* sora_regular.ttf in Resources */ = {isa = PBXBuildFile; fileRef = D3DB6B345CD84D139B020F34 /* sora_regular.ttf */; };
 		7699B88040F8A987B510C191 /* libPods-SwiftShield-SwiftShieldTests.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 19F6CBCC0A4E27FBF8BF4A61 /* libPods-SwiftShield-SwiftShieldTests.a */; };
 		8165C5EF34BFC587CF2EE958 /* ExpoModulesProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = A34A62E4EB3A57DC2BE80935 /* ExpoModulesProvider.swift */; };
 		81AB9BB82411601600AC10FF /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 81AB9BB72411601600AC10FF /* LaunchScreen.storyboard */; };
-		D420C3640F9E761865A36E9A /* ExpoModulesProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 15839C861ED2C69156BA28E5 /* ExpoModulesProvider.swift */; };
-		01914D9A98DF4F80B0B1D07A /* sora_bold.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 048A7B2BE3E44341B8A0853E /* sora_bold.ttf */; };
-		098B4310205D428D8A821F53 /* sora_extrabold.ttf in Resources */ = {isa = PBXBuildFile; fileRef = A32E2BBAD30B4F259AA50314 /* sora_extrabold.ttf */; };
-		3888170ED47F4FC9A1787042 /* sora_extralight.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 6C7F38D1D04C48598A458CE8 /* sora_extralight.ttf */; };
 		9170F0E27166414EA1B1AE7E /* sora_light.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 5BF10BE33E6345A490E5EDB8 /* sora_light.ttf */; };
-		198B2BA7EDD7401195243359 /* sora_medium.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 055DA28FFE37457EB79D4372 /* sora_medium.ttf */; };
-		4EF6DE06DF68432B9964EE10 /* sora_regular.ttf in Resources */ = {isa = PBXBuildFile; fileRef = D3DB6B345CD84D139B020F34 /* sora_regular.ttf */; };
 		9E991DD99192420588F330DC /* sora_semibold.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 015C89CC8D4949F8B00AB939 /* sora_semibold.ttf */; };
 		B433EC097F2548F99E84A4DC /* sora_thin.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 9EACEA7913C64F0BAF3D6288 /* sora_thin.ttf */; };
+		D420C3640F9E761865A36E9A /* ExpoModulesProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 15839C861ED2C69156BA28E5 /* ExpoModulesProvider.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -40,6 +40,9 @@
 		00E356EE1AD99517003FC87E /* SwiftShieldTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = SwiftShieldTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		00E356F11AD99517003FC87E /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		00E356F21AD99517003FC87E /* SwiftShieldTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = SwiftShieldTests.m; sourceTree = "<group>"; };
+		015C89CC8D4949F8B00AB939 /* sora_semibold.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = undefined; includeInIndex = 0; lastKnownFileType = unknown; name = sora_semibold.ttf; path = "../packages/ui-new/assets/fonts/sora_semibold.ttf"; sourceTree = "<group>"; };
+		048A7B2BE3E44341B8A0853E /* sora_bold.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = undefined; includeInIndex = 0; lastKnownFileType = unknown; name = sora_bold.ttf; path = "../packages/ui-new/assets/fonts/sora_bold.ttf"; sourceTree = "<group>"; };
+		055DA28FFE37457EB79D4372 /* sora_medium.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = undefined; includeInIndex = 0; lastKnownFileType = unknown; name = sora_medium.ttf; path = "../packages/ui-new/assets/fonts/sora_medium.ttf"; sourceTree = "<group>"; };
 		13B07F961A680F5B00A75B9A /* SwiftShield.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = SwiftShield.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		13B07FAF1A68108700A75B9A /* AppDelegate.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = AppDelegate.h; path = SwiftShield/AppDelegate.h; sourceTree = "<group>"; };
 		13B07FB01A68108700A75B9A /* AppDelegate.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; name = AppDelegate.mm; path = SwiftShield/AppDelegate.mm; sourceTree = "<group>"; };
@@ -51,19 +54,16 @@
 		3B4392A12AC88292D35C810B /* Pods-SwiftShield.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-SwiftShield.debug.xcconfig"; path = "Target Support Files/Pods-SwiftShield/Pods-SwiftShield.debug.xcconfig"; sourceTree = "<group>"; };
 		5709B34CF0A7D63546082F79 /* Pods-SwiftShield.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-SwiftShield.release.xcconfig"; path = "Target Support Files/Pods-SwiftShield/Pods-SwiftShield.release.xcconfig"; sourceTree = "<group>"; };
 		5B7EB9410499542E8C5724F5 /* Pods-SwiftShield-SwiftShieldTests.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-SwiftShield-SwiftShieldTests.debug.xcconfig"; path = "Target Support Files/Pods-SwiftShield-SwiftShieldTests/Pods-SwiftShield-SwiftShieldTests.debug.xcconfig"; sourceTree = "<group>"; };
+		5BF10BE33E6345A490E5EDB8 /* sora_light.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = undefined; includeInIndex = 0; lastKnownFileType = unknown; name = sora_light.ttf; path = "../packages/ui-new/assets/fonts/sora_light.ttf"; sourceTree = "<group>"; };
 		5DCACB8F33CDC322A6C60F78 /* libPods-SwiftShield.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-SwiftShield.a"; sourceTree = BUILT_PRODUCTS_DIR; };
+		6C7F38D1D04C48598A458CE8 /* sora_extralight.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = undefined; includeInIndex = 0; lastKnownFileType = unknown; name = sora_extralight.ttf; path = "../packages/ui-new/assets/fonts/sora_extralight.ttf"; sourceTree = "<group>"; };
 		81AB9BB72411601600AC10FF /* LaunchScreen.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; name = LaunchScreen.storyboard; path = SwiftShield/LaunchScreen.storyboard; sourceTree = "<group>"; };
 		89C6BE57DB24E9ADA2F236DE /* Pods-SwiftShield-SwiftShieldTests.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-SwiftShield-SwiftShieldTests.release.xcconfig"; path = "Target Support Files/Pods-SwiftShield-SwiftShieldTests/Pods-SwiftShield-SwiftShieldTests.release.xcconfig"; sourceTree = "<group>"; };
+		9EACEA7913C64F0BAF3D6288 /* sora_thin.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = undefined; includeInIndex = 0; lastKnownFileType = unknown; name = sora_thin.ttf; path = "../packages/ui-new/assets/fonts/sora_thin.ttf"; sourceTree = "<group>"; };
+		A32E2BBAD30B4F259AA50314 /* sora_extrabold.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = undefined; includeInIndex = 0; lastKnownFileType = unknown; name = sora_extrabold.ttf; path = "../packages/ui-new/assets/fonts/sora_extrabold.ttf"; sourceTree = "<group>"; };
 		A34A62E4EB3A57DC2BE80935 /* ExpoModulesProvider.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = ExpoModulesProvider.swift; path = "Pods/Target Support Files/Pods-SwiftShield-SwiftShieldTests/ExpoModulesProvider.swift"; sourceTree = "<group>"; };
+		D3DB6B345CD84D139B020F34 /* sora_regular.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = undefined; includeInIndex = 0; lastKnownFileType = unknown; name = sora_regular.ttf; path = "../packages/ui-new/assets/fonts/sora_regular.ttf"; sourceTree = "<group>"; };
 		ED297162215061F000B7C4FE /* JavaScriptCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = JavaScriptCore.framework; path = System/Library/Frameworks/JavaScriptCore.framework; sourceTree = SDKROOT; };
-		048A7B2BE3E44341B8A0853E /* sora_bold.ttf */ = {isa = PBXFileReference; name = "sora_bold.ttf"; path = "../packages/ui-new/assets/fonts/sora_bold.ttf"; sourceTree = "<group>"; fileEncoding = undefined; lastKnownFileType = unknown; explicitFileType = undefined; includeInIndex = 0; };
-		A32E2BBAD30B4F259AA50314 /* sora_extrabold.ttf */ = {isa = PBXFileReference; name = "sora_extrabold.ttf"; path = "../packages/ui-new/assets/fonts/sora_extrabold.ttf"; sourceTree = "<group>"; fileEncoding = undefined; lastKnownFileType = unknown; explicitFileType = undefined; includeInIndex = 0; };
-		6C7F38D1D04C48598A458CE8 /* sora_extralight.ttf */ = {isa = PBXFileReference; name = "sora_extralight.ttf"; path = "../packages/ui-new/assets/fonts/sora_extralight.ttf"; sourceTree = "<group>"; fileEncoding = undefined; lastKnownFileType = unknown; explicitFileType = undefined; includeInIndex = 0; };
-		5BF10BE33E6345A490E5EDB8 /* sora_light.ttf */ = {isa = PBXFileReference; name = "sora_light.ttf"; path = "../packages/ui-new/assets/fonts/sora_light.ttf"; sourceTree = "<group>"; fileEncoding = undefined; lastKnownFileType = unknown; explicitFileType = undefined; includeInIndex = 0; };
-		055DA28FFE37457EB79D4372 /* sora_medium.ttf */ = {isa = PBXFileReference; name = "sora_medium.ttf"; path = "../packages/ui-new/assets/fonts/sora_medium.ttf"; sourceTree = "<group>"; fileEncoding = undefined; lastKnownFileType = unknown; explicitFileType = undefined; includeInIndex = 0; };
-		D3DB6B345CD84D139B020F34 /* sora_regular.ttf */ = {isa = PBXFileReference; name = "sora_regular.ttf"; path = "../packages/ui-new/assets/fonts/sora_regular.ttf"; sourceTree = "<group>"; fileEncoding = undefined; lastKnownFileType = unknown; explicitFileType = undefined; includeInIndex = 0; };
-		015C89CC8D4949F8B00AB939 /* sora_semibold.ttf */ = {isa = PBXFileReference; name = "sora_semibold.ttf"; path = "../packages/ui-new/assets/fonts/sora_semibold.ttf"; sourceTree = "<group>"; fileEncoding = undefined; lastKnownFileType = unknown; explicitFileType = undefined; includeInIndex = 0; };
-		9EACEA7913C64F0BAF3D6288 /* sora_thin.ttf */ = {isa = PBXFileReference; name = "sora_thin.ttf"; path = "../packages/ui-new/assets/fonts/sora_thin.ttf"; sourceTree = "<group>"; fileEncoding = undefined; lastKnownFileType = unknown; explicitFileType = undefined; includeInIndex = 0; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */

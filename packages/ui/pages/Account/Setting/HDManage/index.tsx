@@ -57,7 +57,12 @@ const HDManage: React.FC<NativeStackScreenProps<RootStackList, 'HDManage'>> = ({
           setMnemonic(await methods.getMnemonicOfVault(vault));
           return;
         }
+<<<<<<< HEAD
         let accountsList: Awaited<ReturnType<typeof plugins.BSIM.getBSIMList>> = [];
+=======
+
+        let accountsList: Awaited<ReturnType<typeof plugins.BSIM.getBIMList>> = [];
+>>>>>>> 9f734b8 (temp)
         if (vault.type === 'BSIM') {
           await plugins.BSIM.createBSIMAccountToIndex((pageIndex + 1) * countPerPage);
           accountsList = await plugins.BSIM.getBSIMList();
