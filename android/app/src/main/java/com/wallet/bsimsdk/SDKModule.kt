@@ -79,7 +79,7 @@ class SDKModule(private val reactContext: ReactApplicationContext) :
     }
 
     @ReactMethod
-    fun getPubkeyList(cfxOnly: Boolean, promise: Promise) {
+    fun getPubkeyList(promise: Promise) {
         if (BSIMSDKInstance == null) {
             promise.reject("400", error["400"])
             return
@@ -95,13 +95,7 @@ class SDKModule(private val reactContext: ReactApplicationContext) :
                     temp.putInt("coinType", key.coinType)
                     temp.putString("key", key.key)
                     temp.putInt("index", key.index)
-                    if (cfxOnly) {
-                        if (key.coinType == CoinType.CONFLUX.index) {
-                            resultList.pushMap(temp)
-                        }
-                    } else {
-                        resultList.pushMap(temp)
-                    }
+                    resultList.pushMap(temp)
                 }
                 promise.resolve(resultList)
             } else {
@@ -114,22 +108,26 @@ class SDKModule(private val reactContext: ReactApplicationContext) :
 
 
     @ReactMethod
-    fun signMessage(msg: String, coinTypeString: String, index: Int, promise: Promise) {
+    fun signMessage(msg: String, coinType: Int, index: Int, promise: Promise) {
         // 校验BPIN
         // !! 签名前必须先校验BPIN，verifyBPIN调用或立刻返回，BSIM卡拉起输入界面，
         // !! 输入结果BSIM卡自动校验，提示用户，APP拿不到校验结果，app不参与BPIN相关流程
         // !! 校验失败后sign时会有提示
 
-        var coinType: CoinType = try {
-            CoinType.valueOf(coinTypeString)
-        } catch (e: IllegalArgumentException) {
-            CoinType.CONFLUX
+        var coinType = CoinType.values().find {it.index === coinType}
+
+        if (coinType === null) {
+            return promise.reject(BSIM_ERRPR, "coin type not find")
         }
 
         var keyList = BSIMSDKInstance?.getPubkeyList()
 
+        val message = Message(
+            msg = Numeric.hexStringToByteArray(msg),
+            coinType = coinType,
+            index = index.toUInt()
+        )
 
-        val message = Message(msg = Numeric.hexStringToByteArray(msg), coinType = coinType, index = index.toUInt())
         val signMsg = BSIMSDKInstance?.signMessage(message)
 
         if (signMsg != null && keyList != null) {
@@ -138,12 +136,12 @@ class SDKModule(private val reactContext: ReactApplicationContext) :
             if (pubkey != null) {
                 if (signMsg.Code == CODE_SUCCESS) {
                     val result = WritableNativeMap()
-                    FLog.d("debug", "sign msg R ${signMsg.R}")
-                    FLog.d("debug", "sign msg S ${signMsg.S}")
-                    val ecSgn = Utils.Companion.hexRSToECDSASignature(signMsg.R,signMsg.S)
-                    FLog.d("debug", "ecSgn R ${Numeric.toHexStringWithPrefix(ecSgn.r)}")
-                    FLog.d("debug", "ecSgn S ${Numeric.toHexStringWithPrefix(ecSgn.s)}")
-                    val signature = Utils.createSignatureData(ecSgn, Utils.getECKeyFromString(pubkey.key), Numeric.hexStringToByteArray(msg))
+                    val ecSgn = Utils.Companion.hexRSToECDSASignature(signMsg.R, signMsg.S)
+                    val signature = Utils.createSignatureData(
+                        ecSgn,
+                        Utils.getECKeyFromString(pubkey.key),
+                        Numeric.hexStringToByteArray(msg)
+                    )
                     if (signature != null) {
                         result.putString("code", signMsg.Code)
                         result.putString("message", signMsg.Message)
@@ -182,7 +180,7 @@ class SDKModule(private val reactContext: ReactApplicationContext) :
             if (result.Code == CODE_SUCCESS) {
                 promise.resolve(result.Message)
             } else {
-                promise.reject(result.Code,  result.Message)
+                promise.reject(result.Code, result.Message)
             }
         } else {
             promise.reject("400", error["400"])

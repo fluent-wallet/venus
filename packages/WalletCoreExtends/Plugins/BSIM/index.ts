@@ -38,7 +38,7 @@ export class BSIMPluginClass implements Plugin {
   public getBIMList = async () => {
     try {
       await this.checkIsInit();
-      const list = await BSIMSDK.getPubkeyList(true);
+      const list = await BSIMSDK.getPubkeyList();
       return list
         .map((item) => ({ hexAddress: computeAddress(addHexPrefix(formatBSIMPubkey(item.key))), index: item.index }))
         .filter((item) => item.index > 0)
@@ -52,7 +52,7 @@ export class BSIMPluginClass implements Plugin {
     await this.checkIsInit();
 
     try {
-      await BSIMSDK.genNewKey(CoinTypes.CONFLUX);
+      await BSIMSDK.genNewKey(CoinTypes.ETHEREUM);
     } catch (error) {
       console.log('create new BSIM account failed', error)
     }
@@ -102,7 +102,7 @@ export class BSIMPluginClass implements Plugin {
     await this.checkIsInit();
     return BSIMSDK.getBSIMVersion();
   };
-  public signMessage = async (message: string, coinType: CoinTypes, index: number) => {
+  public signMessage = async (message: string, coinType: number, index: number) => {
     await this.checkIsInit();
 
     return BSIMSDK.signMessage(message, coinType, index);

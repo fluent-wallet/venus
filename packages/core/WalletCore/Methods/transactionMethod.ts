@@ -16,7 +16,7 @@ import { Signature } from 'ethers';
 import { Wallet } from 'ethers';
 import { JsonRpcProvider } from 'ethers';
 import { GetDecryptedVaultDataMethod } from './getDecryptedVaultData';
-import { BSIMError, BSIMErrorEndTimeout } from 'packages/WalletCoreExtends/Plugins/BSIM/BSIMSDK';
+import BSIMSDK, { BSIMError, BSIMErrorEndTimeout, BSIM_ERRORS } from 'packages/WalletCoreExtends/Plugins/BSIM/BSIMSDK';
 
 @injectable()
 export class TransactionMethod {
@@ -91,8 +91,16 @@ export class TransactionMethod {
       let errorCode = '';
       // retrieve the R S V of the transaction through a polling mechanism
 
+      const BSIMList = await BSIMSDK.getPubkeyList()
+
+      const BSIMPubkey = BSIMList.find(v => v.index === index)
+
+      if (!BSIMPubkey) {
+        throw new Error("can't find the key")
+      }
+
       const res = await firstValueFrom(
-        defer(() => from(BSIM.signMessage(hash, CoinTypes.CONFLUX, index))).pipe(
+        defer(() => from(BSIM.signMessage(hash, BSIMPubkey.coinType, index))).pipe(
           catchError((err: { code: string; message: string }) => {
             errorMsg = err.message;
             errorCode = err.code;
