@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState, useCallback, useRef, useEffect } from 'react';
 
-const useInAsync = <T extends (params: any) => void | Promise<any> | null | undefined>(asyncFunc: T) => {
+const useInAsync = <T extends (params: any) => void | Promise<any> | null | undefined | any>(asyncFunc: T) => {
   const refAsyncFunc = useRef(asyncFunc);
   useEffect(() => {
     refAsyncFunc.current = asyncFunc;

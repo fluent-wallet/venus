@@ -1244,7 +1244,7 @@ PODS:
   - simdjson (3.1.0-wmelon1)
   - SocketRocket (0.6.1)
   - SSZipArchive (2.2.3)
-  - VisionCamera (3.8.2):
+  - VisionCamera (3.8.0):
     - React
     - React-callinvoker
     - React-Core
@@ -1657,9 +1657,9 @@ SPEC CHECKSUMS:
   simdjson: e6bfae9ce4bcdc80452d388d593816f1ca2106f3
   SocketRocket: f32cd54efbe0f095c4d7594881e52619cfe80b17
   SSZipArchive: 62d4947b08730e4cda640473b0066d209ff033c9
-  VisionCamera: 4b98b273902ac18491bb68481b6601f1f0da0f2d
+  VisionCamera: 065622e7baa1a03ef61fdc950607453152a77a97
   WatermelonDB: 842d22ba555425aa9f3ce551239a001200c539bc
-  Yoga: 13c8ef87792450193e117976337b8527b49e8c03
+  Yoga: e64aa65de36c0832d04e8c7bd614396c77a80047
 
 PODFILE CHECKSUM: b1be883fbf850e57cf1434018595f1151c7898e2
 

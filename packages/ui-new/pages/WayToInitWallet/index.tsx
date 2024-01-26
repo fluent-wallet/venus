@@ -1,4 +1,4 @@
-import React, { useCallback } from 'react';
+import React, { useCallback, useRef } from 'react';
 import { ImageBackground, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTheme } from '@react-navigation/native';
@@ -7,13 +7,14 @@ import { Image } from 'expo-image';
 import Text from '@components/Text';
 import Button from '@components/Button';
 import plugins from '@core/WalletCore/Plugins';
-import { WayToInitWalletStackName, HomeStackName, type StackScreenProps } from '@router/configs';
+import { WayToInitWalletStackName, BiometricsWayStackName, type StackScreenProps } from '@router/configs';
 import ArrowRight from '@assets/icons/arrow-right.svg';
 import welcomeSwiftShieldDark from '@assets/images/welcome-SwiftShield-dark.webp';
 import welcomeSwiftShieldLight from '@assets/images/welcome-SwiftShield-light.webp';
 import welcomeBgLight from '@assets/images/welcome-bg-light.webp';
 import welcomeBgDark from '@assets/images/welcome-bg-dark.webp';
 import Img from '@assets/images/welcome-img.webp';
+import ImportExistingWallet, { type BottomSheet } from './ImportExistingWallet';
 
 const WayToInitWallet: React.FC<{ navigation: StackScreenProps<typeof WayToInitWalletStackName> }> = ({ navigation }) => {
   const { mode, colors } = useTheme();
@@ -21,7 +22,7 @@ const WayToInitWallet: React.FC<{ navigation: StackScreenProps<typeof WayToInitW
   const handleConnectBSIMCard = useCallback(async () => {
     try {
       await plugins.BSIM.getBSIMVersion();
-      // navigation.navigate(BiometricsStackName, { type: 'BSIM' });
+      navigation.navigate(BiometricsWayStackName, { type: 'connectBSIM' });
     } catch (error) {
       showMessage({
         message: `Can't find the BSIM Card`,
@@ -31,6 +32,8 @@ const WayToInitWallet: React.FC<{ navigation: StackScreenProps<typeof WayToInitW
       });
     }
   }, []);
+
+  const bottomSheetRef = useRef<BottomSheet>(null!);
 
   return (
     <ImageBackground source={mode === 'dark' ? welcomeBgDark : welcomeBgLight} style={styles.bg} resizeMode="cover">
@@ -44,13 +47,22 @@ const WayToInitWallet: React.FC<{ navigation: StackScreenProps<typeof WayToInitW
 
         <Text style={[styles.orAddWith, { color: colors.textThird }]}>or add with:</Text>
 
-        <Button testID="createNewWallet" textAlign="left" style={styles.btn}>
+        <Button
+          testID="createNewWallet"
+          textAlign="left"
+          style={styles.btn}
+          onPress={() => navigation.navigate(BiometricsWayStackName, { type: 'createNewWallet' })}
+        >
           Create new wallet
         </Button>
 
-        <Button testID="importExistingWallet" textAlign="left" style={styles.btn}>
+        <Button testID="importExistingWallet" textAlign="left" style={styles.btn} onPress={() => bottomSheetRef.current?.expand()}>
           Import existing wallet
         </Button>
+        <ImportExistingWallet
+          bottomSheetRef={bottomSheetRef}
+          onSuccessConfirm={(value) => navigation.navigate(BiometricsWayStackName, { type: 'importExistWallet', value })}
+        />
       </SafeAreaView>
     </ImageBackground>
   );
@@ -65,26 +77,27 @@ const styles = StyleSheet.create({
     flexDirection: 'column',
     alignItems: 'center',
     paddingTop: 40,
+    paddingHorizontal: 16
   },
   img: {
     width: 240,
-    height: 240,
+    aspectRatio: 1,
     marginBottom: 68,
   },
   welcomeSwiftShield: {
-    width: 336,
-    height: 100,
+    width: '100%',
+    aspectRatio: 3.36,
     marginBottom: 24,
   },
   orAddWith: {
     marginBottom: 16,
-    width: 360,
+    width: '100%',
     fontSize: 12,
     lineHeight: 16,
     textAlign: 'left',
   },
   btn: {
-    width: 360,
+    width: '100%',
     marginBottom: 16,
   },
 });

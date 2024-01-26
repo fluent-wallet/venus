@@ -1,5 +1,5 @@
 import React from 'react';
-import { ImageBackground, StatusBar, StyleSheet } from 'react-native';
+import { ImageBackground, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTheme, StackActions } from '@react-navigation/native';
 import { Image } from 'expo-image';
@@ -46,6 +46,7 @@ const styles = StyleSheet.create({
     flexDirection: 'column',
     alignItems: 'center',
     paddingTop: 48,
+    paddingHorizontal: 16
   },
   enterWeb3: {
     width: 232,
@@ -66,7 +67,7 @@ const styles = StyleSheet.create({
     marginTop: 24,
   },
   btn: {
-    width: 360,
+    width: '100%',
     marginTop: 44,
   },
 });

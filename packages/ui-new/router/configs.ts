@@ -2,11 +2,11 @@ import { type NavigationProp } from '@react-navigation/native';
 
 const WelcomeStackName = 'Welcome';
 const WayToInitWalletStackName = 'WayToInitWallet';
-const PasswordWayStackName = 'PasswordWay';
 const BiometricsWayStackName = 'Biometrics';
+const PasswordWayStackName = 'PasswordWay';
 const HomeStackName = 'Home';
 
-export { WelcomeStackName, WayToInitWalletStackName, HomeStackName };
+export { WelcomeStackName, WayToInitWalletStackName, HomeStackName, BiometricsWayStackName, PasswordWayStackName };
 
 export type RootStackParamList = {
   [WelcomeStackName]: undefined;
