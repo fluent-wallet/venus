@@ -75,7 +75,7 @@ export class BSIMPluginClass implements Plugin {
     } catch (error) {
       console.log('create new BSIM account failed', error);
       if (String(error).includes('密钥存储空间已满')) {
-        throw new Error('密钥存储空间已满');
+        throw new Error('Your BSIM card is full.');
       } else {
         throw error;
       }
