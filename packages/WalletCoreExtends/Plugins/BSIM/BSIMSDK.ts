@@ -139,7 +139,6 @@ interface BSIMSDKInterface {
 
   /**
    * Get all Pubkey from BSIM SDK
-   * @param cfxOnly boolean - only get cfx pubkey default true
    */
   getPubkeyList(): Promise<BSIMPubKey[]>;
   /**

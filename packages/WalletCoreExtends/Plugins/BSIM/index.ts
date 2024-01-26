@@ -26,7 +26,7 @@ const eSpaceCoinType = 60;
 
 export class BSIMPluginClass implements Plugin {
   constructor() {
-    this.getBIMList();
+    this.getBSIMList();
   }
   name = 'BSIM' as const;
 
@@ -40,7 +40,7 @@ export class BSIMPluginClass implements Plugin {
     }
   };
 
-  public getBIMList = async () => {
+  public getBSIMList = async () => {
     try {
       await this.checkIsInit();
       const list = await BSIMSDK.getPubkeyList();
@@ -66,7 +66,7 @@ export class BSIMPluginClass implements Plugin {
     try {
       await BSIMSDK.genNewKey(CoinTypes.ETHEREUM);
 
-      const list = await this.getBIMList();
+      const list = await this.getBSIMList();
 
       const BSIMKey = list.at(-1);
       if (!BSIMKey) throw new Error('create new BSIM account failed');
@@ -86,7 +86,7 @@ export class BSIMPluginClass implements Plugin {
   public createBSIMAccountToIndex = async (targetIndex: number) => {
     await this.checkIsInit();
 
-    const list = await this.getBIMList();
+    const list = await this.getBSIMList();
     const maxIndex = list.at(-1)?.index ?? -1;
     if (maxIndex >= targetIndex || maxIndex >= BSIM_SUPPORT_ACCOUNT_LIMIT) return;
 
@@ -99,7 +99,7 @@ export class BSIMPluginClass implements Plugin {
   public connectBSIM = async () => {
     await this.checkIsInit();
 
-    const list = await this.getBIMList();
+    const list = await this.getBSIMList();
     if (list?.length > 0) {
       return list.slice(0, 1);
     } else {
