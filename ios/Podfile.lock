@@ -1144,7 +1144,7 @@ PODS:
     - React-jsi (= 0.73.2)
     - React-logger (= 0.73.2)
     - React-perflogger (= 0.73.2)
-  - RNBootSplash (5.2.2):
+  - RNBootSplash (5.3.0):
     - React-Core
   - RNCClipboard (1.13.2):
     - React-Core
@@ -1176,7 +1176,7 @@ PODS:
   - simdjson (3.1.0-wmelon1)
   - SocketRocket (0.6.1)
   - SSZipArchive (2.2.3)
-  - VisionCamera (3.8.0):
+  - VisionCamera (3.8.2):
     - React
     - React-callinvoker
     - React-Core
@@ -1515,7 +1515,7 @@ SPEC CHECKSUMS:
   React-runtimescheduler: df8945a656356ff10f58f65a70820478bfcf33ad
   React-utils: f5bc61e7ea3325c0732ae2d755f4441940163b85
   ReactCommon: 45b5d4f784e869c44a6f5a8fad5b114ca8f78c53
-  RNBootSplash: 6890a69d909d76076aaba018bd74bb526f82fe68
+  RNBootSplash: 73c2a97d761db234125638c24ad6da6d781d049d
   RNCClipboard: 60fed4b71560d7bfe40e9d35dea9762b024da86d
   RNFlashList: 4b4b6b093afc0df60ae08f9cbf6ccd4c836c667a
   RNGestureHandler: 25b969a1ffc806b9f9ad2e170d4a3b049c6af85e
@@ -1528,9 +1528,9 @@ SPEC CHECKSUMS:
   simdjson: e6bfae9ce4bcdc80452d388d593816f1ca2106f3
   SocketRocket: f32cd54efbe0f095c4d7594881e52619cfe80b17
   SSZipArchive: 62d4947b08730e4cda640473b0066d209ff033c9
-  VisionCamera: 065622e7baa1a03ef61fdc950607453152a77a97
+  VisionCamera: 4b98b273902ac18491bb68481b6601f1f0da0f2d
   WatermelonDB: 842d22ba555425aa9f3ce551239a001200c539bc
-  Yoga: 13c8ef87792450193e117976337b8527b49e8c03
+  Yoga: e64aa65de36c0832d04e8c7bd614396c77a80047
 
 PODFILE CHECKSUM: f772e94b47fc64780bf65900be42f438fa92fe17
 

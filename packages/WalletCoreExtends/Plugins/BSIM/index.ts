@@ -22,11 +22,13 @@ const formatBSIMPubkey = (key: string) => {
 };
 
 let hasInit = false;
+const eSpaceCoinType = 60;
 
 export class BSIMPluginClass implements Plugin {
   name = 'BSIM' as const;
 
   chainLimtCount = 25 as const;
+  indexMap: Record<number, number> = {};
 
   checkIsInit = async () => {
     if (!hasInit) {
@@ -39,10 +41,17 @@ export class BSIMPluginClass implements Plugin {
     try {
       await this.checkIsInit();
       const list = await BSIMSDK.getPubkeyList();
-      return list
-        .map((item) => ({ hexAddress: computeAddress(addHexPrefix(formatBSIMPubkey(item.key))), index: item.index }))
+      const temp = list
+        .map((item) => ({ hexAddress: computeAddress(addHexPrefix(formatBSIMPubkey(item.key))), index: item.index, coinType: item.coinType }))
         .filter((item) => item.index > 0)
+        .filter((item) => item.coinType === eSpaceCoinType)
         .sort((itemA, itemB) => itemA.index - itemB.index);
+
+      const result = temp.map((item, index) => {
+        this.indexMap[index] = item.index;
+        return ({ ...item, index });
+      });
+      return result;
     } catch (err) {
       return [];
     }
@@ -54,7 +63,7 @@ export class BSIMPluginClass implements Plugin {
     try {
       await BSIMSDK.genNewKey(CoinTypes.ETHEREUM);
     } catch (error) {
-      console.log('create new BSIM account failed', error)
+      console.log('create new BSIM account failed', error);
     }
 
     const list = await this.getBIMList();
