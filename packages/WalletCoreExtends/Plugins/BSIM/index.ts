@@ -25,10 +25,13 @@ let hasInit = false;
 const eSpaceCoinType = 60;
 
 export class BSIMPluginClass implements Plugin {
+  constructor() {
+    this.getBIMList();
+  }
   name = 'BSIM' as const;
 
   chainLimtCount = 25 as const;
-  indexMap: Record<number, number> = {};
+  indexMap: Record<number, { index: number; coinType: number }> = {};
 
   checkIsInit = async () => {
     if (!hasInit) {
@@ -48,8 +51,8 @@ export class BSIMPluginClass implements Plugin {
         .sort((itemA, itemB) => itemA.index - itemB.index);
 
       const result = temp.map((item, index) => {
-        this.indexMap[index] = item.index;
-        return ({ ...item, index });
+        this.indexMap[index] = { coinType: item.coinType, index: item.index };
+        return { ...item, index };
       });
       return result;
     } catch (err) {
@@ -67,7 +70,6 @@ export class BSIMPluginClass implements Plugin {
     }
 
     const list = await this.getBIMList();
-
     const BSIMKey = list.pop();
     if (!BSIMKey) throw new Error('create new BSIM account failed');
 
