@@ -64,8 +64,7 @@ const HDManage: React.FC<NativeStackScreenProps<RootStackList, 'HDManage'>> = ({
         }
 
         const newPageAccounts = await Promise.all(
-          Array.from({ length: countPerPage }, (_, i) => (vault.type === VaultType.BSIM ? i + 1 : i)).map(async (index) => {
-            // BSIM index is  start from 1 other start from 0
+          Array.from({ length: countPerPage }).map(async (_, index) => {
             const targetAlreadyInAccounts = accounts?.find((account) => account.index === pageIndex * countPerPage + index);
             if (targetAlreadyInAccounts) return { hexAddress: (await targetAlreadyInAccounts.currentNetworkAddress).hex, index: targetAlreadyInAccounts.index };
             if (vault.type === VaultType.BSIM) {
@@ -206,7 +205,7 @@ const HDManage: React.FC<NativeStackScreenProps<RootStackList, 'HDManage'>> = ({
                     />
                   </View>
                   <Text className="ml-[4px] mr-[6px] text-[16px] leading-tight" style={{ color: theme.colors.textPrimary }}>
-                    {vault.type === VaultType.BSIM ? account.index : account.index + 1}
+                    {account.index + 1}
                   </Text>
                   <Text className="text-[16px] leading-tight" style={{ color: theme.colors.textPrimary }}>
                     {shortenAddress(account.hexAddress)}

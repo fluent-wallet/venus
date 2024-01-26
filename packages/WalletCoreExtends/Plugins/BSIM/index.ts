@@ -65,15 +65,22 @@ export class BSIMPluginClass implements Plugin {
 
     try {
       await BSIMSDK.genNewKey(CoinTypes.ETHEREUM);
+
+      const list = await this.getBIMList();
+
+      const BSIMKey = list.at(-1);
+      if (!BSIMKey) throw new Error('create new BSIM account failed');
+
+      return { hexAddress: BSIMKey.hexAddress, index: BSIMKey.index };
     } catch (error) {
       console.log('create new BSIM account failed', error);
+      if (String(error).includes('密钥存储空间已满')) {
+        throw new Error('密钥存储空间已满');
+      } else {
+        throw error;
+      }
     }
 
-    const list = await this.getBIMList();
-    const BSIMKey = list.pop();
-    if (!BSIMKey) throw new Error('create new BSIM account failed');
-
-    return { hexAddress: BSIMKey.hexAddress, index: BSIMKey.index };
   };
 
   public createBSIMAccountToIndex = async (targetIndex: number) => {
@@ -92,15 +99,12 @@ export class BSIMPluginClass implements Plugin {
   public connectBSIM = async () => {
     await this.checkIsInit();
 
-    try {
-      const list = await this.getBIMList();
-      if (list?.length > 0) {
-        return list.slice(0, 1);
-      }
-    } catch (error) {
+    const list = await this.getBIMList();
+    if (list?.length > 0) {
+      return list.slice(0, 1);
+    } else {
       return [await this.createNewBSIMAccount()];
     }
-    return [await this.createNewBSIMAccount()];
   };
 
   public verifyBPIN = async () => {
