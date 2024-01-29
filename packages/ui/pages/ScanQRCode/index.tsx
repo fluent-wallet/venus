@@ -2,7 +2,7 @@ import { RouteProp } from '@react-navigation/native';
 import { Icon, Text, useTheme, Overlay, Button } from '@rneui/themed';
 import { ReceiveAddressStackName, RootStackList, ScanQRCodeStackName, SendToStackName, StackNavigation } from '@router/configs';
 import { statusBarHeight } from '@utils/deviceInfo';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Pressable, SafeAreaView, View } from 'react-native';
 import { useCameraPermission, useCameraDevice, Camera, type Code, CodeScannerFrame, useCameraFormat } from 'react-native-vision-camera';
 import { StackActions } from '@react-navigation/native';
@@ -12,16 +12,16 @@ import { ETHURL, parseETHURL } from '@utils/ETHURL';
 import { useAssetsTokenList } from '@core/WalletCore/Plugins/ReactInject/data/useAssets';
 import { useAtom } from 'jotai';
 import { setTokenTransaction, setTransactionAmount, setTransactionTo } from '@core/WalletCore/Plugins/ReactInject/data/useTransaction';
-import { formatEther, formatUnits, parseUnits } from 'ethers';
 import { AssetType } from '@core/database/models/Asset';
+import { showMessage } from 'react-native-flash-message';
+import { isAddress } from 'ethers';
 
 const ScanQRCode: React.FC<{ navigation: StackNavigation; route: RouteProp<RootStackList, typeof ScanQRCodeStackName> }> = ({ navigation, route }) => {
   const { theme } = useTheme();
   const { hasPermission, requestPermission } = useCameraPermission();
   const device = useCameraDevice('back');
-  const format = useCameraFormat(device, [
-    { fps: 30 }
-  ])
+  const format = useCameraFormat(device, [{ fps: 30 }]);
+  const isScanningInProgress = useRef(false);
 
   const [showPermissionModel, setShowPermissionModel] = useState(!hasPermission);
   const [showRejectPermissionModel, setShowRejectPermissionModel] = useState(false);
@@ -31,80 +31,126 @@ const ScanQRCode: React.FC<{ navigation: StackNavigation; route: RouteProp<RootS
   const [, setTXAmount] = useAtom(setTransactionAmount);
   const tokens = useAssetsTokenList();
 
-  const [codes, setCodes] = useState<Code[]>([]);
-
-  const handleCodeScanned = (codes: Code[], frame: CodeScannerFrame) => {
-    // there is multiple codes we need set user to select one
-    const code = codes[0];
-    if (code && code.value) {
+  const handleScanETHURL = useCallback(
+    (url: string) => {
+      let ethURL: ETHURL;
       try {
-        const res = parseETHURL(code.value);
-        const { target_address, chain_id, function_name, parameters } = res;
-
-        if (!target_address) return;
-        setTXTo(target_address);
-        if (!tokens || tokens.length === 0) {
-          // if tokens is not ready, go to receive address
-          return navigation.dispatch(StackActions.replace(ReceiveAddressStackName));
-        }
-
-        // check is send 20 token
-        if (function_name && function_name === 'transfer') {
-          // check is has uint256
-          if (parameters && parameters.address) {
-            //  is send 20 token and have value
-            const token = tokens.find((t) => t.contractAddress?.toLowerCase() === parameters.address?.toLowerCase());
-            if (token) {
-              setTokenTX({
-                assetType: token.type,
-                balance: token.balance,
-                symbol: token.symbol,
-                decimals: token.decimals,
-                contractAddress: token.contractAddress,
-                iconUrl: token.icon,
-                priceInUSDT: token.priceInUSDT,
-              });
-
-              if (parameters.uint256) {
-                setTXAmount(parameters.uint256);
-                return navigation.dispatch(StackActions.replace(SendToStackName));
-              }
-            }
-          }
-        } else {
-          // is send native token and have value
-          const token = tokens.find((t) => t.type === AssetType.Native);
-          if (token) {
-            setTokenTX({
-              assetType: token.type,
-              balance: token.balance,
-              symbol: token.symbol,
-              decimals: token.decimals,
-              contractAddress: token.contractAddress,
-              iconUrl: token.icon,
-              priceInUSDT: token.priceInUSDT,
-            });
-
-            if (parameters && parameters.value) {
-              setTXAmount(parameters.value);
-              return navigation.dispatch(StackActions.replace(SendToStackName));
-            }
-          }
-        }
-        // default go to receive address
-        return navigation.dispatch(StackActions.replace(ReceiveAddressStackName));
+        ethURL = parseETHURL(url);
       } catch (error) {
-        // todo add error message
-        console.log(code.value);
-        console.log(error);
+        return showMessage({
+          message: 'Invalid QR code',
+          type: 'danger',
+          duration: 1000,
+        });
       }
+
+      const { target_address, chain_id, function_name, parameters } = ethURL;
+
+      setTXTo(target_address);
+      if (!tokens || tokens.length === 0) {
+        return showMessage({
+          message: 'Oops!',
+          description: `Looks like you don't have that asset in your wallet.`
+        });
+      }
+
+      if (!function_name) {
+        // if don't have function then  send native token
+        // is send native token and have value
+        const token = tokens.find((t) => t.type === AssetType.Native);
+        if (!token) {
+          return showMessage({
+            message: 'Oops!',
+            description: `Looks like you don't have that asset in your wallet.`,
+          });
+        }
+
+        setTokenTX({
+          assetType: token.type,
+          balance: token.balance,
+          symbol: token.symbol,
+          decimals: token.decimals,
+          contractAddress: token.contractAddress,
+          iconUrl: token.icon,
+          priceInUSDT: token.priceInUSDT,
+        });
+
+        if (parameters && typeof parameters.value !== 'undefined') {
+          setTXAmount(parameters.value);
+          return navigation.dispatch(StackActions.replace(SendToStackName));
+        }
+      } else if (function_name === 'transfer') {
+        // send 20 token
+        // check is has uint256
+        if (!parameters || !parameters.address) {
+          return showMessage({
+            message: 'Invalid QR code',
+            type: 'danger',
+          });
+        }
+        
+        //  is send 20 token and have value
+        const token = tokens.find((t) => t.contractAddress?.toLowerCase() === parameters.address?.toLowerCase());
+        if (!token) {
+          return showMessage({
+            message: 'Oops!',
+            description: `Looks like you don't have that asset in your wallet.`,
+          });
+        }
+
+        setTokenTX({
+          assetType: token.type,
+          balance: token.balance,
+          symbol: token.symbol,
+          decimals: token.decimals,
+          contractAddress: token.contractAddress,
+          iconUrl: token.icon,
+          priceInUSDT: token.priceInUSDT,
+        });
+
+        if (parameters.uint256) {
+          setTXAmount(parameters.uint256);
+        }
+        return navigation.dispatch(StackActions.replace(SendToStackName));
+      } else {
+        return showMessage({
+          message: 'Oops!',
+          description: 'This action is currently not supported :(.',
+          duration: 1000,
+        });
+      }
+
+      // default go to receive address
+      return navigation.dispatch(StackActions.replace(ReceiveAddressStackName));
+    },
+    [navigation, setTXAmount, setTXTo, setTokenTX, tokens],
+  );
+
+  const handleCodeScan = (code: Code) => {
+    if (!code || !isScanningInProgress) return;
+    if (!code.value) return;
+    isScanningInProgress.current = true;
+    const ethAddress = code.value;
+    if (isAddress(ethAddress)) {
+      isScanningInProgress.current = false;
+      setTXTo(ethAddress);
+      return navigation.dispatch(StackActions.replace(ReceiveAddressStackName));
     }
+
+    // check is EIP 681
+    // maybe we also need support EIP 831
+
+    if (code.value.startsWith('ethereum:')) {
+      isScanningInProgress.current = false;
+      return handleScanETHURL(code.value);
+    }
+
+    isScanningInProgress.current = false;
   };
 
   const handlePermission = useCallback(async () => {
     if (!hasPermission) {
       const isOk = await requestPermission();
-      console.log('get permission', isOk);
       setShowPermissionModel(false);
       if (!isOk) {
         setShowRejectPermissionModel(true);
@@ -121,7 +167,10 @@ const ScanQRCode: React.FC<{ navigation: StackNavigation; route: RouteProp<RootS
   }, [hasPermission]);
 
   return (
-    <SafeAreaView className="flex-1 flex flex-col justify-start" style={{ backgroundColor: theme.colors.surfacePrimaryWithOpacity7, paddingTop: statusBarHeight }}>
+    <SafeAreaView
+      className="flex-1 flex flex-col justify-start"
+      style={{ backgroundColor: theme.colors.surfacePrimaryWithOpacity7, paddingTop: statusBarHeight }}
+    >
       <View className="flex-1" style={{ backgroundColor: theme.colors.pureBlackAndWight }}>
         {hasPermission && device && device !== null && (
           <View className="flex-1">
@@ -132,29 +181,17 @@ const ScanQRCode: React.FC<{ navigation: StackNavigation; route: RouteProp<RootS
             >
               <Icon name="arrow-back" color={theme.colors.pureBlackAndWight} size={40} />
             </Pressable>
-            {/* {codes.length > 0 && (
-              <View className=" absolute top-0 right-0 bottom-0 left-0 z-10" style={{ backgroundColor: 'rgba(0,0,0,0.6)' }}>
-                {codes.map((code, index) => (
-                  <Pressable
-                    key={index}
-                    className="absolute z-10"
-                    style={{
-                      left: code?.frame?.x && code?.frame.y ? (Platform.OS === 'android' ? code?.frame?.x : code.frame.x) : undefined,
-                      top: code?.frame?.x && code?.frame.y ? (Platform.OS === 'android' ? code?.frame?.y : code.frame.y) : undefined,
-                    }}
-                  >
-                    <Icon name="keyboard-double-arrow-right" color={theme.colors.white} size={40} />
-                  </Pressable>
-                ))}
-              </View>
-            )} */}
             {device && (
               <Camera
                 isActive={true}
                 device={device}
                 codeScanner={{
                   codeTypes: ['qr', 'ean-13'],
-                  onCodeScanned: handleCodeScanned,
+                  onCodeScanned: (code) => {
+                    if (code[0].value) {
+                      handleCodeScan(code[0]);
+                    }
+                  },
                 }}
                 style={{ flex: 1 }}
                 format={format}
