@@ -1,11 +1,10 @@
-import { useMemo, useRef, useState } from 'react';
-import { Pressable, SafeAreaView, View, KeyboardAvoidingView, TextInput } from 'react-native';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { Pressable, SafeAreaView, View, KeyboardAvoidingView, TextInput, TouchableWithoutFeedback } from 'react-native';
 import { Icon } from '@rneui/base';
 import { Text, useTheme } from '@rneui/themed';
 import BottomSheet, { BottomSheetFlatList } from '@gorhom/bottom-sheet';
 import { statusBarHeight } from '@utils/deviceInfo';
 import { BaseButton } from '@components/Button';
-import TokenList from '@modules/AssetList/TokenList';
 import { useAtom } from 'jotai';
 import setTokenQRInfoAtom from '@hooks/useSetAmount';
 import { AssetInfo } from '@core/WalletCore/Plugins/AssetsTracker/types';
@@ -13,8 +12,22 @@ import TokenIcon from '@components/TokenIcon';
 import { AssetType } from '@core/database/models/Asset';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { RootStackList } from '@router/configs';
-import { parseUnits } from 'ethers';
-
+import { Contract, parseUnits } from 'ethers';
+import { firstValueFrom, from, switchMap, map, tap } from 'rxjs';
+import { createFetchServer, fetchChain } from '@cfx-kit/dapp-utils/dist/fetch';
+import { useCurrentNetwork } from '@core/WalletCore/Plugins/ReactInject';
+import { ChainType } from '@core/database/models/Network';
+import { CFX_ESPACE_MAINNET_CHAINID, CFX_ESPACE_TESTNET_CHAINID } from '@core/utils/consts';
+import {
+  CFX_ESPACE_MAINNET_SCAN_OPENAPI,
+  CFX_ESPACE_MAINNET_TOKEN_LIST_CONTRACT_ADDRESS,
+  CFX_ESPACE_TESTNET_SCAN_OPENAPI,
+  CFX_ESPACE_TESTNET_TOKEN_LIST_CONTRACT_ADDRESS,
+} from '@core/consts/network';
+import ESpaceTokenList from '@core/contracts/ABI/ESpaceTokenList';
+import { useAssetsHash } from '@core/WalletCore/Plugins/ReactInject/data/useAssets';
+import clsx from 'clsx';
+import TokenItem from '@modules/AssetList/TokenList/TokenItem';
 
 const SetAmount: React.FC<NativeStackScreenProps<RootStackList, 'SetAmount'>> = ({ navigation }) => {
   const { theme } = useTheme();
@@ -24,7 +37,9 @@ const SetAmount: React.FC<NativeStackScreenProps<RootStackList, 'SetAmount'>> = 
   const [inputTextSize, setInputTextSize] = useState(60);
   const [currentToken, setCurrentToken] = useAtom(setTokenQRInfoAtom);
   const [inputError, setInputError] = useState(false);
-
+  const currentNetwork = useCurrentNetwork()!;
+  const assetsHash = useAssetsHash();
+  const [list, setList] = useState<Omit<AssetInfo, 'balance'>[]>([]);
   const inputRef = useRef<TextInput>(null);
 
   const snapPoints = useMemo(() => ['25%', '50%'], []);
@@ -57,7 +72,14 @@ const SetAmount: React.FC<NativeStackScreenProps<RootStackList, 'SetAmount'>> = 
     } else {
       setInputTextSize(60);
     }
-    setValue(v);
+
+    if (/^\d*(\.\d*)?$/.test(v)) {
+      const [integer, decimal] = v.split('.');
+      if (integer.length > 24) return;
+      if (decimal && decimal.length > 6) return;
+      setValue(v);
+    }
+
     if (isNaN(Number(v))) {
       setInputError(true);
     } else {
@@ -75,11 +97,12 @@ const SetAmount: React.FC<NativeStackScreenProps<RootStackList, 'SetAmount'>> = 
     if (!value || isNaN(Number(value))) {
       return setInputError(true);
     }
-
     if (currentToken) {
+      console.log(currentToken);
       if (currentToken.type === AssetType.Native) {
         setCurrentToken({ ...currentToken, parameters: { value: currentToken.decimals ? parseUnits(value, currentToken.decimals) : BigInt(value) } });
       } else {
+        console.log(currentToken);
         setCurrentToken({
           ...currentToken,
           parameters: { address: currentToken.contractAddress, uint256: currentToken.decimals ? parseUnits(value, currentToken.decimals) : BigInt(value) },
@@ -89,6 +112,66 @@ const SetAmount: React.FC<NativeStackScreenProps<RootStackList, 'SetAmount'>> = 
     navigation.goBack();
   };
 
+  const getTokenList = useCallback(
+    async (page = 0, pageSize = 200) => {
+      if (currentNetwork.chainId !== CFX_ESPACE_MAINNET_CHAINID && currentNetwork.chainId !== CFX_ESPACE_TESTNET_CHAINID) {
+        console.warn('token list contract not support chain');
+        return [];
+      }
+
+      const tokenListContractAddress =
+        currentNetwork.chainType === ChainType.Mainnet ? CFX_ESPACE_MAINNET_TOKEN_LIST_CONTRACT_ADDRESS : CFX_ESPACE_TESTNET_TOKEN_LIST_CONTRACT_ADDRESS;
+      const tokenListContract = new Contract(tokenListContractAddress, ESpaceTokenList);
+
+      const eSpaceTestnetServerFetcher = createFetchServer({ prefixUrl: CFX_ESPACE_TESTNET_SCAN_OPENAPI });
+      const eSpaceServerFetcher = createFetchServer({ prefixUrl: CFX_ESPACE_MAINNET_SCAN_OPENAPI });
+
+      const fetcher = currentNetwork.chainType === ChainType.Mainnet ? eSpaceServerFetcher : eSpaceTestnetServerFetcher;
+      return firstValueFrom(
+        from(
+          fetchChain<string>({
+            method: 'eth_call',
+            url: currentNetwork.endpoint,
+            params: [
+              {
+                to: tokenListContractAddress,
+                data: tokenListContract.interface.encodeFunctionData('listTokens', [20n, BigInt(page * pageSize), BigInt(pageSize)]),
+              },
+            ],
+          }),
+        ).pipe(
+          switchMap((encodeStr) => {
+            const [_, list] = tokenListContract.interface.decodeFunctionResult('listTokens', encodeStr);
+            return from(
+              fetcher.fetchServer<{
+                status: string;
+                message: string;
+                result: {
+                  type: AssetType.ERC20;
+                  contract: string;
+                  name: string;
+                  symbol: string;
+                  decimals: number;
+                  iconUrl: string;
+                }[];
+              }>({
+                url: `token/tokeninfos?contracts=${list.join(',')}`,
+              }),
+            );
+          }),
+          map((res) => {
+            if (res.status !== '1') return [];
+            return res.result.map((item) => ({ ...item, icon: item.iconUrl, contractAddress: item.contract }));
+          }),
+        ),
+      );
+    },
+    [currentNetwork.endpoint, currentNetwork.chainType, currentNetwork.chainId],
+  );
+  useEffect(() => {
+    getTokenList().then((res) => setList(res));
+  }, []);
+  const tokenList = assetsHash && assetsHash[AssetType.Native] ? [assetsHash[AssetType.Native], ...list] : list;
   return (
     <KeyboardAvoidingView behavior={'padding'} className="flex-1">
       <SafeAreaView
@@ -101,7 +184,7 @@ const SetAmount: React.FC<NativeStackScreenProps<RootStackList, 'SetAmount'>> = 
           <Pressable
             testID="selectToken"
             className="flex flex-row items-center mx-auto px-3 py-2 min-w-[196px] rounded-[40px] border-[1px] mt-2"
-            style={{ backgroundColor: theme.colors.pureBlackAndWight, borderColor: theme.colors.textBrand,  }}
+            style={{ backgroundColor: theme.colors.pureBlackAndWight, borderColor: theme.colors.textBrand }}
             onPress={handleSelectToken}
           >
             <View className="flex flex-row items-center">
@@ -162,7 +245,26 @@ const SetAmount: React.FC<NativeStackScreenProps<RootStackList, 'SetAmount'>> = 
             </View>
           )}
         >
-          <TokenList hidePrice skeleton={6} RenderList={BottomSheetFlatList} onPress={handleChangeSelectedToken} from="receive" />
+          {list && (
+            <BottomSheetFlatList
+              data={tokenList}
+              renderItem={({ item, index }) => (
+                <Pressable>
+                  <View
+                    className={clsx(
+                      'relative flex flex-col justify-center items-center h-[72px] px-[10px] border-l-[1px] border-r-[1px] overflow-hidden',
+                      index === 0 && 'rounded-t-[10px] border-t-[1px]',
+                      index === list.length - 1 && 'rounded-b-[10px] border-b-[1px]',
+                    )}
+                    style={{ backgroundColor: theme.colors.pureBlackAndWight, borderColor: theme.colors.borderSecondary }}
+                  >
+                    <TokenItem hidePrice hideBalance data={{ ...item, balance: '0' }} onPress={handleChangeSelectedToken} />
+                    {index !== 0 && <View className="absolute top-0 left-0 w-[120%] h-[1px]" style={{ backgroundColor: theme.colors.borderSecondary }} />}
+                  </View>
+                </Pressable>
+              )}
+            />
+          )}
         </BottomSheet>
       </SafeAreaView>
     </KeyboardAvoidingView>

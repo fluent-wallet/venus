@@ -6,11 +6,17 @@ import ESpaceWalletABI from '../../../../contracts/ABI/ESpaceWallet';
 import { ChainType, type Network } from './../../../../database/models/Network/index';
 import { AssetType } from '../../../../database/models/Asset';
 import { type AssetInfo } from '../types';
+import {
+  CFX_ESPACE_MAINNET_SCAN_OPENAPI,
+  CFX_ESPACE_MAINNET_WALLET_CONTRACT_ADDRESS,
+  CFX_ESPACE_TESTNET_SCAN_OPENAPI,
+  CFX_ESPACE_TESTNET_WALLET_CONTRACT_ADDRESS,
+} from '@core/consts/network';
 
-const eSpaceTestnetWalletContract = createContract({ address: '0xce2104aa7233b27b0ba2e98ede59b6f78c06ae05', ABI: ESpaceWalletABI });
-const eSpaceTestnetServerFetcher = createFetchServer({ prefixUrl: 'https://evmapi-testnet.confluxscan.io' });
-const eSpaceWalletContract = createContract({ address: '0x2c7e015328f37f00f9b16e4adc9cedb1f8742069', ABI: ESpaceWalletABI });
-const eSpaceServerFetcher = createFetchServer({ prefixUrl: 'https://evmapi.confluxscan.io' });
+const eSpaceTestnetWalletContract = createContract({ address: CFX_ESPACE_TESTNET_WALLET_CONTRACT_ADDRESS, ABI: ESpaceWalletABI });
+const eSpaceTestnetServerFetcher = createFetchServer({ prefixUrl: CFX_ESPACE_TESTNET_SCAN_OPENAPI });
+const eSpaceWalletContract = createContract({ address: CFX_ESPACE_MAINNET_WALLET_CONTRACT_ADDRESS, ABI: ESpaceWalletABI });
+const eSpaceServerFetcher = createFetchServer({ prefixUrl: CFX_ESPACE_MAINNET_SCAN_OPENAPI });
 
 interface AssetInfoFromScan {
   type: Omit<AssetType, AssetType.Native> & 'native';
@@ -42,7 +48,7 @@ export const fetchESpaceServer = async ({
         options: {
           retry: 2,
         },
-      })
+      }),
     ).pipe(
       concatMap((scanRes) => {
         if (typeof scanRes?.status === 'string') {
@@ -77,7 +83,7 @@ export const fetchESpaceServer = async ({
                     ],
                   },
                 ],
-              })
+              }),
             ).pipe(
               map(([cfxBalance, assetsData]) => {
                 const assets = walletContract.decodeFunctionResult('assetsOf', assetsData)?.[0]?.map((asset) => {
@@ -105,14 +111,14 @@ export const fetchESpaceServer = async ({
                   ...assets.filter((asset) => asset.contractAddress !== '0x0000000000000000000000000000000000000000'),
                 ];
                 return assetsWithCFX;
-              })
+              }),
             );
           } else {
             return [];
           }
         }
         return [];
-      })
+      }),
     );
   };
 
@@ -137,7 +143,7 @@ export const fetchESpaceServer = async ({
             ],
           },
         ],
-      })
+      }),
     ).pipe(
       map(([cfxBalance, assetsData]) => {
         const assets = walletContract.decodeFunctionResult('assets', assetsData)?.[1]?.map((asset) => {
@@ -164,7 +170,7 @@ export const fetchESpaceServer = async ({
           ...assets,
         ];
         return assetsWithCFX;
-      })
+      }),
     );
   };
 
@@ -174,7 +180,7 @@ export const fetchESpaceServer = async ({
       .pipe(
         catchError((err) => {
           return EMPTY;
-        })
-      )
+        }),
+      ),
   );
 };

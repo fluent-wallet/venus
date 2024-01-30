@@ -1,6 +1,5 @@
 import React, { useCallback, useEffect, useState, useRef } from 'react';
 import { Pressable, SafeAreaView, View, Linking, Dimensions, StatusBar } from 'react-native';
-import { launchImageLibrary } from 'react-native-image-picker';
 import { RouteProp, StackActions } from '@react-navigation/native';
 import {
   useCameraPermission,
@@ -15,9 +14,9 @@ import {
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import { runOnJS } from 'react-native-reanimated';
 import { Icon, Text, useTheme, Overlay, Button } from '@rneui/themed';
-import { setAtom } from '@core/WalletCore/Plugins/ReactInject';
-import { ReceiveAddressStackName, RootStackList, ScanQRCodeStackName, SendToStackName, HomeStackName, WalletStackName, StackNavigation } from '@router/configs';
-import { getAssetsTokenList } from '@core/WalletCore/Plugins/ReactInject/data/useAssets';
+import { HomeStackName, ReceiveAddressStackName, RootStackList, ScanQRCodeStackName, SendToStackName, StackNavigation, WalletStackName } from '@router/configs';
+import { useAssetsTokenList } from '@core/WalletCore/Plugins/ReactInject/data/useAssets';
+import { useAtom } from 'jotai';
 import { setTokenTransaction, setTransactionAmount, setTransactionTo } from '@core/WalletCore/Plugins/ReactInject/data/useTransaction';
 import { AssetType } from '@core/database/models/Asset';
 import plugins from '@core/WalletCore/Plugins';
@@ -27,7 +26,7 @@ import { parseETHURL, type ETHURL } from '@utils/ETHURL';
 import { isHexAddress } from '@core/utils/account';
 import { statusBarHeight } from '@utils/deviceInfo';
 import { showMessage } from 'react-native-flash-message';
-
+import { isAddress } from 'ethers';
 
 const screenWidth = Dimensions.get('window').width;
 const screenHeight = Dimensions.get('window').height;
@@ -40,27 +39,132 @@ const ScanQRCode: React.FC<{ navigation: StackNavigation; route: RouteProp<RootS
   const { hasPermission, requestPermission } = useCameraPermission();
   const device = useCameraDevice('back');
   const format = useCameraFormat(device, [{ fps: 30 }]);
+  const isScanningInProgress = useRef(false);
 
   const [showPermissionModel, setShowPermissionModel] = useState(!hasPermission);
   const [showRejectPermissionModel, setShowRejectPermissionModel] = useState(false);
 
-  const handleSelectImage = useCallback(async () => {
-    try {
-      const result = await launchImageLibrary({ mediaType: 'photo' });
-    } catch (err) {
-      console.log('handleSelectImage error: ', err);
-    }
-  }, []);
+  const [, setTXTo] = useAtom(setTransactionTo);
+  const [, setTokenTX] = useAtom(setTokenTransaction);
+  const [, setTXAmount] = useAtom(setTransactionAmount);
+  const tokens = useAssetsTokenList();
 
-  const inHandleScanResult = useRef(false);
-  const handleCodeScanned = useCallback(async (codes: Code[], frame: CodeScannerFrame) => {
-    // there is multiple codes we need set user to select one
-    const code = codes[0];
-    if (!code || !code.value || inHandleScanResult.current) return;
-    inHandleScanResult.current = true;
+  const handleScanETHURL = useCallback(
+    (url: string) => {
+      let ethURL: ETHURL;
+      try {
+        ethURL = parseETHURL(url);
+      } catch (error) {
+        return showMessage({
+          message: 'Invalid QR code',
+          type: 'danger',
+          duration: 1000,
+        });
+      }
+
+      const { target_address, chain_id, function_name, parameters } = ethURL;
+
+      setTXTo(target_address);
+      if (!tokens || tokens.length === 0) {
+        return showMessage({
+          message: 'Oops!',
+          description: `Looks like you don't have that asset in your wallet.`,
+        });
+      }
+
+      if (!function_name) {
+        // if don't have function then  send native token
+        // is send native token and have value
+        const token = tokens.find((t) => t.type === AssetType.Native);
+        if (!token) {
+          return showMessage({
+            message: 'Oops!',
+            description: `Looks like you don't have that asset in your wallet.`,
+          });
+        }
+
+        setTokenTX({
+          assetType: token.type,
+          balance: token.balance,
+          symbol: token.symbol,
+          decimals: token.decimals,
+          contractAddress: token.contractAddress,
+          iconUrl: token.icon,
+          priceInUSDT: token.priceInUSDT,
+        });
+
+        if (parameters && typeof parameters.value !== 'undefined') {
+          setTXAmount(parameters.value);
+          return navigation.dispatch(StackActions.replace(SendToStackName));
+        }
+      } else if (function_name === 'transfer') {
+        // send 20 token
+        // check is has uint256
+        if (!parameters || !parameters.address) {
+          return showMessage({
+            message: 'Invalid QR code',
+            type: 'danger',
+          });
+        }
+
+        //  is send 20 token and have value
+        const token = tokens.find((t) => t.contractAddress?.toLowerCase() === parameters.address?.toLowerCase());
+        if (!token) {
+          return showMessage({
+            message: 'Oops!',
+            description: `Looks like you don't have that asset in your wallet.`,
+          });
+        }
+
+        setTokenTX({
+          assetType: token.type,
+          balance: token.balance,
+          symbol: token.symbol,
+          decimals: token.decimals,
+          contractAddress: token.contractAddress,
+          iconUrl: token.icon,
+          priceInUSDT: token.priceInUSDT,
+        });
+
+        if (parameters.uint256) {
+          setTXAmount(parameters.uint256);
+        }
+        return navigation.dispatch(StackActions.replace(SendToStackName));
+      } else {
+        return showMessage({
+          message: 'Oops!',
+          description: 'This action is currently not supported :(.',
+          duration: 1000,
+        });
+      }
+
+      // default go to receive address
+      return navigation.dispatch(StackActions.replace(ReceiveAddressStackName));
+    },
+    [navigation, setTXAmount, setTXTo, setTokenTX, tokens],
+  );
+
+  const handleCodeScan = async (code: Code) => {
+    if (!code || !isScanningInProgress) return;
+    if (!code.value) return;
+    isScanningInProgress.current = true;
+    const ethAddress = code.value;
+    if (isAddress(ethAddress)) {
+      isScanningInProgress.current = false;
+      setTXTo(ethAddress);
+      return navigation.dispatch(StackActions.replace(ReceiveAddressStackName));
+    }
+
+    // check is EIP 681
+    // maybe we also need support EIP 831
+
+    if (code.value.startsWith('ethereum:')) {
+      isScanningInProgress.current = false;
+      return handleScanETHURL(code.value);
+    }
 
     if (code.value.startsWith('wc:')) {
-      inHandleScanResult.current = false;
+      isScanningInProgress.current = false;
       try {
         await plugins.WalletConnect.pair(code.value);
         navigation.dispatch(StackActions.replace(HomeStackName, { screen: WalletStackName }));
@@ -72,70 +176,10 @@ const ScanQRCode: React.FC<{ navigation: StackNavigation; route: RouteProp<RootS
         });
       }
       return;
-    } else {
-      const ethUrl = { target_address: undefined, chain_id: undefined, function_name: undefined, parameters: undefined } as unknown as ETHURL;
-      if (isHexAddress(code.value)) {
-        ethUrl.target_address = code.value;
-      } else {
-        try {
-          Object.assign(ethUrl, parseETHURL(code.value));
-        } catch (_) {
-          // console.log();
-        }
-      }
-
-      if (!ethUrl.target_address) {
-        inHandleScanResult.current = false;
-        return;
-      }
-      setAtom(setTransactionTo, ethUrl.target_address);
-
-      const tokens = getAssetsTokenList();
-      if (!tokens || tokens.length === 0) {
-        // if tokens is not ready, go to receive address
-        inHandleScanResult.current = false;
-        navigation.dispatch(StackActions.replace(ReceiveAddressStackName));
-        return;
-      }
-
-      let token: AssetInfo | undefined = undefined;
-      let amount: bigint | undefined = undefined;
-      if (ethUrl.function_name === 'transfer' && ethUrl.parameters?.address) {
-        token = tokens.find((t) => t.contractAddress?.toLowerCase() === ethUrl.parameters?.address?.toLowerCase());
-        if (token && ethUrl.parameters.uint256) {
-          amount = ethUrl.parameters.uint256;
-        }
-      } else {
-        token = tokens.find((t) => t.type === AssetType.Native);
-        if (token && ethUrl.parameters?.value) {
-          amount = ethUrl.parameters.value;
-        }
-      }
-
-      if (token && amount) {
-        setAtom(setTokenTransaction, {
-          assetType: token.type,
-          balance: token.balance,
-          symbol: token.symbol,
-          decimals: token.decimals,
-          contractAddress: token.contractAddress,
-          iconUrl: token.icon,
-          priceInUSDT: token.priceInUSDT,
-        });
-        setAtom(setTransactionAmount, amount);
-        inHandleScanResult.current = false;
-        navigation.dispatch(StackActions.replace(SendToStackName));
-      } else {
-        inHandleScanResult.current = false;
-        navigation.dispatch(StackActions.replace(ReceiveAddressStackName));
-      }
     }
-  }, []);
 
-  const codeScanner = useCodeScanner({
-    codeTypes: ['qr', 'ean-13'],
-    onCodeScanned: handleCodeScanned,
-  });
+    isScanningInProgress.current = false;
+  };
 
   const handlePermission = useCallback(async () => {
     if (!hasPermission) {
@@ -172,7 +216,22 @@ const ScanQRCode: React.FC<{ navigation: StackNavigation; route: RouteProp<RootS
           <View className="flex-1">
             {device && (
               <GestureDetector gesture={gesture}>
-                <Camera ref={camera} isActive={true} device={device} codeScanner={codeScanner} style={{ flex: 1 }} format={format} enableZoomGesture />
+                <Camera
+                  ref={camera}
+                  isActive={true}
+                  device={device}
+                  codeScanner={{
+                    codeTypes: ['qr', 'ean-13'],
+                    onCodeScanned: (code) => {
+                      if (code[0].value) {
+                        handleCodeScan(code[0]);
+                      }
+                    },
+                  }}
+                  style={{ flex: 1 }}
+                  format={format}
+                  enableZoomGesture
+                />
               </GestureDetector>
             )}
 
@@ -214,9 +273,9 @@ const ScanQRCode: React.FC<{ navigation: StackNavigation; route: RouteProp<RootS
               >
                 <Icon name="arrow-back" color={theme.colors.pureBlackAndWight} size={40} />
               </Pressable>
-              <BaseButton testID="Photos" containerStyle={{ marginTop: screenHeight - 200, marginHorizontal: 24 }} onPress={handleSelectImage}>
+              {/* <BaseButton testID="Photos" containerStyle={{ marginTop: screenHeight - 200, marginHorizontal: 24 }} onPress={handleSelectImage}>
                 Photos
-              </BaseButton>
+              </BaseButton> */}
             </View>
           </View>
         )}
