@@ -1,23 +1,41 @@
-import { RouteProp } from '@react-navigation/native';
+import React, { useCallback, useEffect, useState, useRef } from 'react';
+import { Pressable, SafeAreaView, View, Linking, Dimensions, StatusBar } from 'react-native';
+import { RouteProp, StackActions } from '@react-navigation/native';
+import {
+  useCameraPermission,
+  useCameraDevice,
+  useCodeScanner,
+  useCameraFormat,
+  Camera,
+  CodeScannerFrame,
+  type Point,
+  type Code,
+} from 'react-native-vision-camera';
+import { Gesture, GestureDetector } from 'react-native-gesture-handler';
+import { runOnJS } from 'react-native-reanimated';
 import { Icon, Text, useTheme, Overlay, Button } from '@rneui/themed';
-import { ReceiveAddressStackName, RootStackList, ScanQRCodeStackName, SendToStackName, StackNavigation } from '@router/configs';
-import { statusBarHeight } from '@utils/deviceInfo';
-import { useCallback, useEffect, useRef, useState } from 'react';
-import { Pressable, SafeAreaView, View } from 'react-native';
-import { useCameraPermission, useCameraDevice, Camera, type Code, CodeScannerFrame, useCameraFormat } from 'react-native-vision-camera';
-import { StackActions } from '@react-navigation/native';
-import { BaseButton } from '@components/Button';
-import { Linking } from 'react-native';
-import { ETHURL, parseETHURL } from '@utils/ETHURL';
+import { HomeStackName, ReceiveAddressStackName, RootStackList, ScanQRCodeStackName, SendToStackName, StackNavigation, WalletStackName } from '@router/configs';
 import { useAssetsTokenList } from '@core/WalletCore/Plugins/ReactInject/data/useAssets';
 import { useAtom } from 'jotai';
 import { setTokenTransaction, setTransactionAmount, setTransactionTo } from '@core/WalletCore/Plugins/ReactInject/data/useTransaction';
 import { AssetType } from '@core/database/models/Asset';
+import plugins from '@core/WalletCore/Plugins';
+import { type AssetInfo } from '@core/WalletCore/Plugins/AssetsTracker/types';
+import { BaseButton } from '@components/Button';
+import { parseETHURL, type ETHURL } from '@utils/ETHURL';
+import { isHexAddress } from '@core/utils/account';
+import { statusBarHeight } from '@utils/deviceInfo';
 import { showMessage } from 'react-native-flash-message';
 import { isAddress } from 'ethers';
 
+const screenWidth = Dimensions.get('window').width;
+const screenHeight = Dimensions.get('window').height;
+const scanAreaWidth = 250;
+
 const ScanQRCode: React.FC<{ navigation: StackNavigation; route: RouteProp<RootStackList, typeof ScanQRCodeStackName> }> = ({ navigation, route }) => {
   const { theme } = useTheme();
+
+  const camera = useRef<Camera>(null);
   const { hasPermission, requestPermission } = useCameraPermission();
   const device = useCameraDevice('back');
   const format = useCameraFormat(device, [{ fps: 30 }]);
@@ -50,7 +68,7 @@ const ScanQRCode: React.FC<{ navigation: StackNavigation; route: RouteProp<RootS
       if (!tokens || tokens.length === 0) {
         return showMessage({
           message: 'Oops!',
-          description: `Looks like you don't have that asset in your wallet.`
+          description: `Looks like you don't have that asset in your wallet.`,
         });
       }
 
@@ -88,7 +106,7 @@ const ScanQRCode: React.FC<{ navigation: StackNavigation; route: RouteProp<RootS
             type: 'danger',
           });
         }
-        
+
         //  is send 20 token and have value
         const token = tokens.find((t) => t.contractAddress?.toLowerCase() === parameters.address?.toLowerCase());
         if (!token) {
@@ -126,7 +144,7 @@ const ScanQRCode: React.FC<{ navigation: StackNavigation; route: RouteProp<RootS
     [navigation, setTXAmount, setTXTo, setTokenTX, tokens],
   );
 
-  const handleCodeScan = (code: Code) => {
+  const handleCodeScan = async (code: Code) => {
     if (!code || !isScanningInProgress) return;
     if (!code.value) return;
     isScanningInProgress.current = true;
@@ -143,6 +161,21 @@ const ScanQRCode: React.FC<{ navigation: StackNavigation; route: RouteProp<RootS
     if (code.value.startsWith('ethereum:')) {
       isScanningInProgress.current = false;
       return handleScanETHURL(code.value);
+    }
+
+    if (code.value.startsWith('wc:')) {
+      isScanningInProgress.current = false;
+      try {
+        await plugins.WalletConnect.pair(code.value);
+        navigation.dispatch(StackActions.replace(HomeStackName, { screen: WalletStackName }));
+      } catch (err) {
+        showMessage({
+          message: 'Connect to wallet-connect failed',
+          description: String(err ?? ''),
+          type: 'warning',
+        });
+      }
+      return;
     }
 
     isScanningInProgress.current = false;
@@ -166,40 +199,87 @@ const ScanQRCode: React.FC<{ navigation: StackNavigation; route: RouteProp<RootS
     }
   }, [hasPermission]);
 
+  const focus = useCallback((point: Point) => {
+    if (camera.current === null) return;
+    camera.current.focus(point);
+  }, []);
+
+  const gesture = Gesture.Tap().onEnd(() => {
+    runOnJS(() => focus({ x: screenWidth / 2, y: 250 }));
+  });
+
   return (
-    <SafeAreaView
-      className="flex-1 flex flex-col justify-start"
-      style={{ backgroundColor: theme.colors.surfacePrimaryWithOpacity7, paddingTop: statusBarHeight }}
-    >
-      <View className="flex-1" style={{ backgroundColor: theme.colors.pureBlackAndWight }}>
+    <SafeAreaView className="flex-1 flex flex-col justify-start" style={{ paddingTop: statusBarHeight }}>
+      <StatusBar backgroundColor={theme.colors.pureBlackAndWight} />
+      <>
         {hasPermission && device && device !== null && (
           <View className="flex-1">
-            <Pressable
-              onPress={() => navigation.goBack()}
-              style={{ backgroundColor: theme.colors.contrastWhiteAndBlack }}
-              className="flex items-center justify-center absolute top-4 left-2 w-12 h-12 rounded-full z-10"
-            >
-              <Icon name="arrow-back" color={theme.colors.pureBlackAndWight} size={40} />
-            </Pressable>
             {device && (
-              <Camera
-                isActive={true}
-                device={device}
-                codeScanner={{
-                  codeTypes: ['qr', 'ean-13'],
-                  onCodeScanned: (code) => {
-                    if (code[0].value) {
-                      handleCodeScan(code[0]);
-                    }
-                  },
-                }}
-                style={{ flex: 1 }}
-                format={format}
-              />
+              <GestureDetector gesture={gesture}>
+                <Camera
+                  ref={camera}
+                  isActive={true}
+                  device={device}
+                  codeScanner={{
+                    codeTypes: ['qr', 'ean-13'],
+                    onCodeScanned: (code) => {
+                      if (code[0].value) {
+                        handleCodeScan(code[0]);
+                      }
+                    },
+                  }}
+                  style={{ flex: 1 }}
+                  format={format}
+                  enableZoomGesture
+                />
+              </GestureDetector>
             )}
+
+            <View className="absolute w-full h-full left-0 top-0">
+              <View
+                className="absolute w-full h-[125px] left-0 top-0 opacity-95"
+                pointerEvents="box-none"
+                style={{ backgroundColor: theme.colors.pureBlackAndWight }}
+              />
+              <View
+                className="absolute w-full left-0 top-0 opacity-95"
+                pointerEvents="box-none"
+                style={{ backgroundColor: theme.colors.pureBlackAndWight, top: 125 + scanAreaWidth, height: '100%' }}
+              />
+              <View
+                className="absolute left-0 opacity-95"
+                pointerEvents="box-none"
+                style={{
+                  backgroundColor: theme.colors.pureBlackAndWight,
+                  top: 125,
+                  width: (screenWidth - scanAreaWidth) / 2,
+                  height: scanAreaWidth,
+                }}
+              />
+              <View
+                className="absolute right-0 opacity-95"
+                pointerEvents="box-none"
+                style={{
+                  backgroundColor: theme.colors.pureBlackAndWight,
+                  top: 125,
+                  width: (screenWidth - scanAreaWidth) / 2,
+                  height: scanAreaWidth,
+                }}
+              />
+              <Pressable
+                onPress={() => navigation.goBack()}
+                style={{ backgroundColor: theme.colors.contrastWhiteAndBlack }}
+                className="flex items-center justify-center absolute top-4 left-2 w-12 h-12 rounded-full z-10"
+              >
+                <Icon name="arrow-back" color={theme.colors.pureBlackAndWight} size={40} />
+              </Pressable>
+              {/* <BaseButton testID="Photos" containerStyle={{ marginTop: screenHeight - 200, marginHorizontal: 24 }} onPress={handleSelectImage}>
+                Photos
+              </BaseButton> */}
+            </View>
           </View>
         )}
-      </View>
+      </>
       <Overlay
         backdropStyle={{ backgroundColor: undefined }}
         overlayStyle={{ borderRadius: 10, backgroundColor: theme.colors.surfaceCard }}

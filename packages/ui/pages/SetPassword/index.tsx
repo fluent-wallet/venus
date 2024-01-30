@@ -7,6 +7,7 @@ import { statusBarHeight } from '@utils/deviceInfo';
 import Password from '@components/PasswordInput';
 import { BaseButton } from '@components/Button';
 import useInAsync from '@hooks/useInAsync';
+import { isDev } from '@utils/getEnv';
 import { type RootStackList, WalletStackName, HomeStackName, SetPasswordStackName } from '@router/configs';
 import createVaultWithRouterParams from './createVaultWithRouterParams';
 import CreatePasswordAlert from './components/Alert';
@@ -15,9 +16,9 @@ const SetPassword: React.FC<{ navigation: NavigationProp<RootStackList> }> = (pr
   const { navigation } = props;
   const route = useRoute<RouteProp<RootStackList, typeof SetPasswordStackName>>();
   const { theme } = useTheme();
-  const [checked, setChecked] = useState(false);
-  const [password, setPassword] = useState({ pwd: '', error: '' });
-  const [confirmPwd, setConfirmPwd] = useState({ pwd: '', error: '' });
+  const [checked, setChecked] = useState(isDev ? true : false);
+  const [password, setPassword] = useState({ pwd: isDev ? '12345678' : '', error: '' });
+  const [confirmPwd, setConfirmPwd] = useState({ pwd: isDev ? '12345678' : '', error: '' });
   const { inAsync: loading, execAsync: createVault } = useInAsync(createVaultWithRouterParams);
   const [alert, setAlert] = useState({
     show: false,
@@ -38,7 +39,7 @@ const SetPassword: React.FC<{ navigation: NavigationProp<RootStackList> }> = (pr
   const handleCreatePassword = async () => {
     if (password.pwd.length < 8) {
       setPassword({ pwd: password.pwd, error: 'Must be at least 8 characters' });
-      return
+      return;
     }
 
     if (password.pwd !== confirmPwd.pwd) {
@@ -76,13 +77,7 @@ const SetPassword: React.FC<{ navigation: NavigationProp<RootStackList> }> = (pr
           </View>
 
           <View>
-            <Password
-              testId="passwordInput"
-              errorMessage={password.error}
-              value={password.pwd}
-              onChangeText={handleSetPassword}
-              title="New Password"
-            />
+            <Password testId="passwordInput" errorMessage={password.error} value={password.pwd} onChangeText={handleSetPassword} title="New Password" />
 
             <Password
               testId="confirmPasswordInput"

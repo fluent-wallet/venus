@@ -15,7 +15,6 @@ import { TxExtra as TxExtraModel } from './models/TxExtra';
 import { TxPayload as TxPayloadModel } from './models/TxPayload';
 import { Vault as VaultModel } from './models/Vault';
 import { App as AppModel } from './models/App';
-import { Site as SiteModel } from './models/Site';
 import { Permission as PermissionModel } from './models/Permission';
 import { Request as RequestModel } from './models/Request';
 export const dbRefresh$ = new Subject();
@@ -44,7 +43,6 @@ const modelClasses = [
   TxExtraModel,
   TxPayloadModel,
   AppModel,
-  SiteModel,
   PermissionModel,
   RequestModel,
 ];
