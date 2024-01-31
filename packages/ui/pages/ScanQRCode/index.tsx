@@ -157,7 +157,10 @@ const ScanQRCode: React.FC<{ navigation: StackNavigation; route: RouteProp<RootS
       return handleScanETHURL(code.value);
     }
 
-    if (!ENABLE_WALLET_CONNECT_FEATURE.allow) return;
+    if (!ENABLE_WALLET_CONNECT_FEATURE.allow) {
+      isScanningInProgress.current = false;
+      return;
+    }
 
     if (code.value.startsWith('wc:')) {
       isScanningInProgress.current = false;
