@@ -113,6 +113,7 @@ const TransactionConfirm: React.FC<{
 
           navigation.navigate(HomeStackName, { screen: WalletStackName });
         } catch (error: any) {
+          console.log(error);
           setLoading(false);
           // error
           if (error.code) {
@@ -120,11 +121,11 @@ const TransactionConfirm: React.FC<{
             if (errorMsg) {
               tx.event.next({ type: TxEventTypesName.ERROR, message: errorMsg });
             } else {
-              tx.event.next({ type: TxEventTypesName.ERROR, message: BSIM_ERRORS.default });
+              tx.event.next({ type: TxEventTypesName.ERROR, message: error?.message || BSIM_ERRORS.default });
             }
           } else {
             // not BSIM error
-            tx.event.next({ type: TxEventTypesName.ERROR, message: BSIM_ERRORS.default });
+            tx.event.next({ type: TxEventTypesName.ERROR, message: error?.message || BSIM_ERRORS.default });
           }
         }
         setLoading(false);

@@ -18,6 +18,13 @@ export { useHasVault } from './data/useHasVault';
 export { useCurrentHdPath } from './data/useCurrentHdPath';
 export { useFinishedTxs, usePayloadOfTx, useUnfinishedTxs, useAssetOfTx } from './data/useTxs';
 export { useAssetsAllList, useAssetsNFTList, useAssetsTokenList, useAssetsTotalPriceValue, useAssetsInFetch } from './data/useAssets';
+export { usePendingRequests, useAllRequests } from './data/useRequests';
+
+declare module '../../../WalletCore/Plugins' {
+  interface Plugins {
+    ReactInject: ReactInjectPluginClass;
+  }
+}
 
 class ReactInjectPluginClass implements Plugin {
   public name = 'ReactInject';

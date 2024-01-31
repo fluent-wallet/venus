@@ -86,6 +86,22 @@ const migrations = schemaMigrations({
         }),
       ],
     },
+    {
+      toVersion: 4,
+      steps: [
+        addColumns({
+          table: TableName.App,
+          columns: [
+            { name: 'identity', type: 'string', isIndexed: true },
+            { name: 'origin', type: 'string', isIndexed: true },
+          ],
+        }),
+        addColumns({
+          table: TableName.Request,
+          columns: [{ name: 'status', type: 'string' }],
+        }),
+      ],
+    },
   ],
 });
 

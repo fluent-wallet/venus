@@ -46,8 +46,12 @@ export const CHECK_ADDRESS_FEATURE = {
   allow: isQA || isDev,
 };
 
-
 export const SHOW_SET_AMOUNT_FEATURE = {
   describe: 'allow set amount button to use',
   allow: isDev,
-}
+};
+
+export const ENABLE_WALLET_CONNECT_FEATURE = {
+  describe: 'wallet connect feature',
+  allow: false,
+};

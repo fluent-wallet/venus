@@ -29,8 +29,9 @@ export const querySelectedAddress = () =>
     .get(TableName.Address)
     .query(
       Q.experimentalJoinTables([TableName.Account, TableName.Network]),
-      Q.and(Q.on(TableName.Account, Q.where('selected', true)), Q.on(TableName.Network, Q.where('selected', true)))
+      Q.and(Q.on(TableName.Account, Q.where('selected', true)), Q.on(TableName.Network, Q.where('selected', true))),
     ) as unknown as Query<Address>;
 
 export const observeSelectedAddress = () => querySelectedAddress().observe();
 export const queryAddressById = async (id: string) => database.get(TableName.Address).find(id) as Promise<Address>;
+export const queryAllAddresses = () => database.get(TableName.Address).query() as unknown as Query<Address>;

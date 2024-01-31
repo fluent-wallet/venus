@@ -268,7 +268,6 @@ export class DatabaseMethod {
         TableName.TxPayload,
         TableName.Tx,
         TableName.App,
-        TableName.Site,
         TableName.Permission,
         TableName.Request,
       ]);
