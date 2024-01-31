@@ -142,4 +142,4 @@ class WalletConnectPluginClass implements Plugin {
   };
 }
 
-export default new WalletConnectPluginClass();
+export default  WalletConnectPluginClass;

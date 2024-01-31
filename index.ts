@@ -14,8 +14,15 @@ import BSIMPlugin from './packages/WalletCoreExtends/Plugins/BSIM';
 import App from './packages/ui/App';
 import { name as appName } from './app.json';
 import codePush from 'react-native-code-push';
+import { ENABLE_WALLET_CONNECT_FEATURE } from './packages/ui/utils/features';
 
-WalletCore.plugins.use([CryptoToolPlugin, AuthenticationPlugin, BSIMPlugin, ReactInjectPlugin, AssetsTracker, TransactionPlugin, WalletConnectPlugin]);
+const plugins = [CryptoToolPlugin, AuthenticationPlugin, BSIMPlugin, ReactInjectPlugin, AssetsTracker, TransactionPlugin];
+
+if (ENABLE_WALLET_CONNECT_FEATURE.allow) {
+  plugins.push(new WalletConnectPlugin());
+}
+
+WalletCore.plugins.use(plugins);
 WalletCore.setup();
 
 // by now the code push only works on android, if you want to run on ios, need to apply the code push config on ios see: https://github.com/microsoft/react-native-code-push/blob/master/docs/setup-ios.md

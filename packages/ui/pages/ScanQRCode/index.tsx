@@ -27,6 +27,8 @@ import { isHexAddress } from '@core/utils/account';
 import { statusBarHeight } from '@utils/deviceInfo';
 import { showMessage } from 'react-native-flash-message';
 import { isAddress } from 'ethers';
+import { parseUri } from '@walletconnect/utils';
+import { ENABLE_WALLET_CONNECT_FEATURE } from '@utils/features';
 
 const screenWidth = Dimensions.get('window').width;
 const screenHeight = Dimensions.get('window').height;
@@ -57,8 +59,6 @@ const ScanQRCode: React.FC<{ navigation: StackNavigation; route: RouteProp<RootS
       } catch (error) {
         return showMessage({
           message: 'Invalid QR code',
-          type: 'danger',
-          duration: 1000,
         });
       }
 
@@ -67,8 +67,7 @@ const ScanQRCode: React.FC<{ navigation: StackNavigation; route: RouteProp<RootS
       setTXTo(target_address);
       if (!tokens || tokens.length === 0) {
         return showMessage({
-          message: 'Oops!',
-          description: `Looks like you don't have that asset in your wallet.`,
+          message: `Looks like you don't have that asset in your wallet.`,
         });
       }
 
@@ -78,8 +77,7 @@ const ScanQRCode: React.FC<{ navigation: StackNavigation; route: RouteProp<RootS
         const token = tokens.find((t) => t.type === AssetType.Native);
         if (!token) {
           return showMessage({
-            message: 'Oops!',
-            description: `Looks like you don't have that asset in your wallet.`,
+            message: `Looks like you don't have that asset in your wallet.`,
           });
         }
 
@@ -103,7 +101,6 @@ const ScanQRCode: React.FC<{ navigation: StackNavigation; route: RouteProp<RootS
         if (!parameters || !parameters.address) {
           return showMessage({
             message: 'Invalid QR code',
-            type: 'danger',
           });
         }
 
@@ -111,8 +108,7 @@ const ScanQRCode: React.FC<{ navigation: StackNavigation; route: RouteProp<RootS
         const token = tokens.find((t) => t.contractAddress?.toLowerCase() === parameters.address?.toLowerCase());
         if (!token) {
           return showMessage({
-            message: 'Oops!',
-            description: `Looks like you don't have that asset in your wallet.`,
+            message: `Looks like you don't have that asset in your wallet.`,
           });
         }
 
@@ -132,9 +128,7 @@ const ScanQRCode: React.FC<{ navigation: StackNavigation; route: RouteProp<RootS
         return navigation.dispatch(StackActions.replace(SendToStackName));
       } else {
         return showMessage({
-          message: 'Oops!',
-          description: 'This action is currently not supported :(.',
-          duration: 1000,
+          message: `This action is currently not supported`,
         });
       }
 
@@ -149,7 +143,7 @@ const ScanQRCode: React.FC<{ navigation: StackNavigation; route: RouteProp<RootS
     if (!code.value) return;
     isScanningInProgress.current = true;
     const ethAddress = code.value;
-    if (isAddress(ethAddress)) {
+    if (ethAddress.startsWith('0x') && isAddress(ethAddress)) {
       isScanningInProgress.current = false;
       setTXTo(ethAddress);
       return navigation.dispatch(StackActions.replace(ReceiveAddressStackName));
@@ -163,22 +157,32 @@ const ScanQRCode: React.FC<{ navigation: StackNavigation; route: RouteProp<RootS
       return handleScanETHURL(code.value);
     }
 
+    if (!ENABLE_WALLET_CONNECT_FEATURE.allow) return;
+
     if (code.value.startsWith('wc:')) {
       isScanningInProgress.current = false;
       try {
+        const { version } = parseUri(code.value);
+        if (version === 1)
+          return showMessage({
+            message: 'Sorry, The OR code version is to low',
+          });
         await plugins.WalletConnect.pair(code.value);
         navigation.dispatch(StackActions.replace(HomeStackName, { screen: WalletStackName }));
       } catch (err) {
         showMessage({
           message: 'Connect to wallet-connect failed',
           description: String(err ?? ''),
-          type: 'warning',
         });
       }
       return;
     }
 
     isScanningInProgress.current = false;
+
+    return showMessage({
+      message: 'Sorry, this QR code could not be recognized.',
+    });
   };
 
   const handlePermission = useCallback(async () => {
