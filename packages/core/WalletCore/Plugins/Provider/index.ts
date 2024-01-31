@@ -1,7 +1,13 @@
 import { type Plugin } from '../../Plugins';
 
-class ProviderPlugin implements Plugin {
+declare module '../../../WalletCore/Plugins' {
+  interface Plugins {
+    Provider: ProviderPluginClass;
+  }
+}
+
+class ProviderPluginClass implements Plugin {
   public name = 'Provider';
 }
 
-export default new ProviderPlugin();
+export default new ProviderPluginClass();

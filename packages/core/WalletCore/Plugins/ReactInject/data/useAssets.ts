@@ -6,8 +6,8 @@ import { getAtom, setAtom } from '../nexus';
 import { type Network } from '../../../../database/models/Network';
 import { type Address } from '../../../../database/models/Address';
 import { AssetType } from '../../../../database/models/Asset';
-import { useCurrentNetwork } from './useCurrentNetwork';
-import { useCurrentAddress } from './useCurrentAddress';
+import { getCurrentNetwork, useCurrentNetwork } from './useCurrentNetwork';
+import { getCurrentAddress, useCurrentAddress } from './useCurrentAddress';
 import { type AssetInfo } from '../../AssetsTracker/types';
 import { truncate } from '../../../../utils/balance';
 
@@ -79,6 +79,13 @@ export const useAssetsTokenList = () => {
   const address = useCurrentAddress();
   const key = useMemo(() => getAssetsAtomKey({ network, address }), [network, address]);
   return useAtomValue(assetsTokenListAtom(key));
+};
+
+export const getAssetsTokenList = () => {
+  const network = getCurrentNetwork();
+  const address = getCurrentAddress();
+  const key = getAssetsAtomKey({ network, address });
+  return getAtom(assetsTokenListAtom(key));
 };
 
 export const useAssetsNFTList = () => {

@@ -4,14 +4,16 @@ import { BottomSheet, useTheme } from '@rneui/themed';
 import { BaseButton } from '@components/Button';
 import plugins from '@core/WalletCore/Plugins';
 import Password from '@components/PasswordInput';
+import { isDev } from '@utils/getEnv';
 import { type PasswordRequest } from '@WalletCoreExtends/Plugins/Authentication';
 
+const defaultPassword = isDev ? '12345678' : '';
 const PasswordVerify: React.FC = () => {
   const { theme } = useTheme();
 
   const [visible, setVisible] = useState(false);
   const [inVerify, setInVerify] = useState(false);
-  const [password, setPassword] = useState('');
+  const [password, setPassword] = useState(defaultPassword);
   const [error, setError] = useState('');
 
   const currentRequest = useRef<PasswordRequest | null>(null);
@@ -34,7 +36,7 @@ const PasswordVerify: React.FC = () => {
   const handleCancel = useCallback(() => {
     setVisible(false);
     setInVerify(false);
-    setPassword('');
+    setPassword(defaultPassword);
     setError('');
     currentRequest.current?.reject?.('cancel');
   }, []);
@@ -46,7 +48,7 @@ const PasswordVerify: React.FC = () => {
     if (isCorrectPasword) {
       currentRequest.current?.resolve?.(password);
       setVisible(false);
-      setPassword('');
+      setPassword(defaultPassword);
       setError('');
       currentRequest.current = null;
     } else {

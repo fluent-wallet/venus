@@ -66,19 +66,19 @@ export enum CoinTypes {
 }
 
 export const BSIM_ERRORS: Record<string, string> = {
-  default: 'Execution failed, unknown error.',
-  A000: 'Execution failed, unknown error. Code: A000',
+  default: 'BSIM error, unknown error.',
+  A000: 'BSIM error, unknown error. Error code: A000',
   '6E00': 'Failed to call BSIM. Error code: 6E00',
   '6D00': 'Failed to call BSIM. Error code: 6D00',
   '6700': 'Failed to call BSIM. Error code: 6700',
   '6A80': 'Failed to call BSIM. Error code: 6A80',
   '6A84': 'Failed to call BSIM. Error code: 6A84',
   '6A86': 'Failed to call BSIM. Error code: 6A86',
-  '6A88': 'Wrong BPIN, unable to complete authentication.',
+  '6A88': 'Wrong BPIN, unable to complete authentication. Error code:6A88',
   '6982': 'BSIM has not yet completed certification. Error code: 6982',
   '6983': 'BSIM Card is locked. Error code: 6983',
   '6984': 'Failed to call BSIM. Error code: 6984',
-  '6985': 'Execution failed. Error code: 6985',
+  '6985': 'BSIM error. Error code: 6985',
   '6300': 'Authentication failed.',
   '63C1': 'Authentication failed, 1 attempt remaining.',
   '63C2': 'Authentication failed, 2 attempt remaining.',

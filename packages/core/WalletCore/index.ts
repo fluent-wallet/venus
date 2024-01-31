@@ -20,6 +20,7 @@ export class WalletCore {
       } else {
         await this.methods.initDatabaseDefault();
       }
+      await this.methods.rejectAllPendingRequests();
       await this.events.lifecycleChangedSubject.next(LifeCycle.Ready);
     } catch (error) {
       console.log('WalletCore setup error: ', error);

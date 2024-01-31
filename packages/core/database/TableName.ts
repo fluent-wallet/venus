@@ -11,7 +11,6 @@ enum TableName {
   Vault = 'vault',
   Account = 'account',
   ExtraInfo = 'extra_info',
-  Site = 'site',
   App = 'app',
   Request = 'request',
   Permission = 'permission',

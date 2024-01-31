@@ -98,9 +98,11 @@ const SetAmount: React.FC<NativeStackScreenProps<RootStackList, 'SetAmount'>> = 
       return setInputError(true);
     }
     if (currentToken) {
+      console.log(currentToken);
       if (currentToken.type === AssetType.Native) {
         setCurrentToken({ ...currentToken, parameters: { value: currentToken.decimals ? parseUnits(value, currentToken.decimals) : BigInt(value) } });
       } else {
+        console.log(currentToken);
         setCurrentToken({
           ...currentToken,
           parameters: { address: currentToken.contractAddress, uint256: currentToken.decimals ? parseUnits(value, currentToken.decimals) : BigInt(value) },
@@ -159,8 +161,7 @@ const SetAmount: React.FC<NativeStackScreenProps<RootStackList, 'SetAmount'>> = 
           }),
           map((res) => {
             if (res.status !== '1') return [];
-
-            return res.result.map((item) => ({ ...item, icon: item.iconUrl }));
+            return res.result.map((item) => ({ ...item, icon: item.iconUrl, contractAddress: item.contract }));
           }),
         ),
       );

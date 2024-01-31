@@ -1,4 +1,4 @@
-import BSIMSDK, { BSIM_SUPPORT_ACCOUNT_LIMIT, CoinTypes } from './BSIMSDK';
+import BSIMSDK, { BSIM_ERRORS, BSIM_SUPPORT_ACCOUNT_LIMIT, CoinTypes } from './BSIMSDK';
 import { addHexPrefix } from '@core/utils/base';
 import { computeAddress } from 'ethers';
 import { type Plugin } from '@core/WalletCore/Plugins';
@@ -11,16 +11,6 @@ declare module '@core/WalletCore/Plugins' {
   }
 }
 
-const formatBSIMPubkey = (key: string) => {
-  if (key.length === 128) {
-    return key;
-  }
-  if (key.length === 130 && key.slice(0, 2) === '00') {
-    return key.slice(2);
-  }
-  return key;
-};
-
 let hasInit = false;
 const eSpaceCoinType = 60;
 
@@ -31,7 +21,6 @@ export class BSIMPluginClass implements Plugin {
   name = 'BSIM' as const;
 
   chainLimtCount = 25 as const;
-  indexMap: Record<number, { index: number; coinType: number }> = {};
 
   checkIsInit = async () => {
     if (!hasInit) {
@@ -40,21 +29,27 @@ export class BSIMPluginClass implements Plugin {
     }
   };
 
+  public formatBSIMPubkey = (key: string) => {
+    if (key.length === 128) {
+      return key;
+    }
+    if (key.length === 130 && key.slice(0, 2) === '00') {
+      return key.slice(2);
+    }
+    return key;
+  };
+
+  public getBSIMPubkeys = () => BSIMSDK.getPubkeyList();
+
   public getBSIMList = async () => {
     try {
       await this.checkIsInit();
       const list = await BSIMSDK.getPubkeyList();
-      const temp = list
-        .map((item) => ({ hexAddress: computeAddress(addHexPrefix(formatBSIMPubkey(item.key))), index: item.index, coinType: item.coinType }))
+      return list
+        .map((item) => ({ hexAddress: computeAddress(addHexPrefix(this.formatBSIMPubkey(item.key))), index: item.index, coinType: item.coinType }))
         .filter((item) => item.index > 0)
         .filter((item) => item.coinType === eSpaceCoinType)
         .sort((itemA, itemB) => itemA.index - itemB.index);
-
-      const result = temp.map((item, index) => {
-        this.indexMap[index] = { coinType: item.coinType, index: item.index };
-        return { ...item, index };
-      });
-      return result;
     } catch (err) {
       return [];
     }
@@ -72,15 +67,13 @@ export class BSIMPluginClass implements Plugin {
       if (!BSIMKey) throw new Error('create new BSIM account failed');
 
       return { hexAddress: BSIMKey.hexAddress, index: BSIMKey.index };
-    } catch (error) {
-      console.log('create new BSIM account failed', error);
-      if (String(error).includes('密钥存储空间已满')) {
-        throw new Error('Your BSIM card is full.');
-      } else {
-        throw error;
+    } catch (error: any) {
+      if (error?.code) {
+        const errorMsg = BSIM_ERRORS[error.code?.toUpperCase()] || error.message;
+        throw new Error(errorMsg);
       }
+      throw error;
     }
-
   };
 
   public createBSIMAccountToIndex = async (targetIndex: number) => {
