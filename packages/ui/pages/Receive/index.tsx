@@ -22,6 +22,7 @@ import SetAmountIcon from '@assets/icons/setAmount.svg';
 import CFXTokenIcon from '@assets/icons/cfxToken.svg';
 import DefaultTokenIcon from '@assets/icons/defaultToken.svg';
 import { SHOW_SET_AMOUNT_FEATURE } from '@utils/features';
+import { useAssetsHash } from '@core/WalletCore/Plugins/ReactInject/data/useAssets';
 
 const Receive: React.FC<NativeStackScreenProps<RootStackList, 'Receive'>> = ({ navigation }) => {
   const { theme } = useTheme();
@@ -30,13 +31,21 @@ const Receive: React.FC<NativeStackScreenProps<RootStackList, 'Receive'>> = ({ n
   const currentAccount = useCurrentAccount();
   const [shareDisabled, setShareDisabled] = useState(true);
   const [setAmountDisabled, setSetAmountDisabled] = useState(!SHOW_SET_AMOUNT_FEATURE.allow);
-
-  const [currentToken, setCurrentToken] = useAtom(setTokenQRInfoAtom);
+  const assetsHash = useAssetsHash();
+  const [userSelectToken, setUserSelectToken] = useAtom(setTokenQRInfoAtom);
   const handleSetAmount = () => {
     navigation.navigate(SetAmountStackName);
   };
 
+const currentToken = userSelectToken || (assetsHash ? assetsHash[AssetType.Native] : null);
+
   const getQRValue = () => {
+    const token = currentToken || (assetsHash ? assetsHash[AssetType.Native] : null);
+    // if get token list is not finished, return current address
+    if (!token) {
+      return currentAddressValue;
+    }
+
     const encodeValues: ETHURL = {
       schema_prefix: 'ethereum',
       target_address: currentAddressValue,
@@ -44,7 +53,9 @@ const Receive: React.FC<NativeStackScreenProps<RootStackList, 'Receive'>> = ({ n
     };
 
     if (currentToken?.type !== AssetType.Native) {
-      encodeValues.function_name = 'transfer';
+      if (currentToken?.parameters?.address) {
+        encodeValues.function_name = 'transfer';
+      }
     }
     return encodeETHURL(encodeValues);
   };
@@ -67,14 +78,14 @@ const Receive: React.FC<NativeStackScreenProps<RootStackList, 'Receive'>> = ({ n
   useFocusEffect(
     useCallback(() => {
       return () => {
-        setCurrentToken(null);
+        setUserSelectToken(null);
       };
-    }, [setCurrentToken])
+    }, [setUserSelectToken]),
   );
 
   return (
     <SafeAreaView className="flex-1">
-      <ScrollView contentContainerStyle={{ minHeight: '100%'}}>
+      <ScrollView contentContainerStyle={{ minHeight: '100%' }}>
         <LinearGradientBackground style={{ paddingTop: statusBarHeight + 48, paddingHorizontal: 24, paddingBottom: 28, minHeight: '100%' }}>
           <View className="flex items-center">
             <View className="w-20 h-20 rounded-full bg-slate-300">
@@ -128,7 +139,13 @@ const Receive: React.FC<NativeStackScreenProps<RootStackList, 'Receive'>> = ({ n
                 </Button>
               </View>
               <View className="ml-9">
-                <Button disabled={setAmountDisabled} testID="setAmount" type="clear" buttonStyle={{ display: 'flex', flexDirection: 'column' }} onPress={handleSetAmount}>
+                <Button
+                  disabled={setAmountDisabled}
+                  testID="setAmount"
+                  type="clear"
+                  buttonStyle={{ display: 'flex', flexDirection: 'column' }}
+                  onPress={handleSetAmount}
+                >
                   <View className="w-[60px] h-[60px] rounded-full" style={{ backgroundColor: theme.colors.surfaceThird }}>
                     <SetAmountIcon width={60} height={60} color={setAmountDisabled ? theme.colors.surfaceSecondary : theme.colors.surfaceBrand} />
                   </View>
