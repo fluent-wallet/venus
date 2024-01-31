@@ -7,7 +7,7 @@ import { iface1155, iface721, iface777 } from '@core/contracts';
 import { firstValueFrom, map, switchMap, defer, from, retry, timeout, Subject, tap, catchError, throwError } from 'rxjs';
 import { getCurrentAddress } from '../Plugins/ReactInject/data/useCurrentAddress';
 import { addHexPrefix } from '@core/utils/base';
-import { parseUnits } from 'ethers';
+import { computeAddress, parseUnits } from 'ethers';
 import { RPCResponse, RPCSend } from '@core/utils/send';
 import { Transaction } from 'ethers';
 import { Address } from '@core/database/models/Address';
@@ -73,13 +73,11 @@ export class TransactionMethod {
 
     if (vaultType === 'BSIM') {
       const hash = transaction.unsignedHash;
-      const accountIndex = (await currentAddress.account).index;
-
       try {
         await BSIM.verifyBPIN();
       } catch (error: any) {
         if (error?.code && error.code === 'A000') {
-          console.log("get error code A000, it's ok")
+          console.log("get error code A000, it's ok");
           // ignore A000 error by verifyBPIN function
         } else {
           throw new BSIMError(error.code, error.message);
@@ -91,14 +89,17 @@ export class TransactionMethod {
       let errorMsg = '';
       let errorCode = '';
       // retrieve the R S V of the transaction through a polling mechanism
-      const BSIMInfo = plugins.BSIM.indexMap[accountIndex]
 
-      if (!BSIMInfo) {
-        throw new Error("can't get coin type and index")
+      const pubkeyList = await plugins.BSIM.getBSIMPubkeys();
+
+      const currentPubkey = pubkeyList.find((item) => computeAddress(addHexPrefix(plugins.BSIM.formatBSIMPubkey(item.key))) === currentAddress.hex);
+
+      if (!currentPubkey) {
+        throw new Error("Can't get current pubkey from BSIM card");
       }
 
       const res = await firstValueFrom(
-        defer(() => from(BSIM.signMessage(hash, BSIMInfo.coinType, BSIMInfo.index))).pipe(
+        defer(() => from(BSIM.signMessage(hash, currentPubkey.coinType, currentPubkey.index))).pipe(
           catchError((err: { code: string; message: string }) => {
             errorMsg = err.message;
             errorCode = err.code;
