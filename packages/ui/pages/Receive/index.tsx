@@ -40,12 +40,10 @@ const Receive: React.FC<NativeStackScreenProps<RootStackList, 'Receive'>> = ({ n
 const currentToken = userSelectToken || (assetsHash ? assetsHash[AssetType.Native] : null);
 
   const getQRValue = () => {
-    const token = currentToken || (assetsHash ? assetsHash[AssetType.Native] : null);
     // if get token list is not finished, return current address
-    if (!token) {
+    if (!currentToken) {
       return currentAddressValue;
     }
-
     const encodeValues: ETHURL = {
       schema_prefix: 'ethereum',
       target_address: currentAddressValue,
