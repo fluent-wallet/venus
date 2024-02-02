@@ -1,5 +1,3 @@
-// CustomText.js
-
 import { type PropsWithChildren } from 'react';
 import { Text as NativeText, StyleSheet, type TextProps } from 'react-native';
 

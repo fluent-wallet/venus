@@ -69,7 +69,9 @@ const ImportExistingWallet: React.FC<Props> = ({ bottomSheetRef, onSuccessConfir
   }, []);
 
   const renderBackdrop = useCallback(
-    (props: BottomSheetBackdropProps) => <BottomSheetBackdrop {...props} disappearsOnIndex={-1} appearsOnIndex={0} pressBehavior="collapse" onPress={handleClickBackdrop} />,
+    (props: BottomSheetBackdropProps) => (
+      <BottomSheetBackdrop {...props} disappearsOnIndex={-1} appearsOnIndex={0} pressBehavior="collapse" onPress={handleClickBackdrop} />
+    ),
     [],
   );
 
@@ -122,15 +124,6 @@ const ImportExistingWallet: React.FC<Props> = ({ bottomSheetRef, onSuccessConfir
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: 'grey',
-  },
-  backdrop: {
-    backgroundColor: '#E5E5E5',
-    width: '500%',
-    height: '100%',
-  },
   bottomSheetContainer: {
     flex: 1,
     display: 'flex',

@@ -4,7 +4,7 @@ import CryptoToolPlugin, { CryptoToolPluginClass } from '../CryptoTool';
 import plugins, { type Plugin } from '@core/WalletCore/Plugins';
 import database from '@core/database';
 import { getEncryptedVaultWithBSIM } from '@core/database/models/Vault/query';
-// import { showBiometricsDisabledMessage } from '@pages/SetPassword/Biometrics';
+import { showBiometricsDisabledMessage } from '@pages/InitWallet/BiometricsWay';
 import { getPasswordCryptoKey } from '@utils/getEnv';
 
 declare module '@core/WalletCore/Plugins' {
@@ -66,7 +66,7 @@ class AuthenticationPluginClass implements Plugin {
         if (containsCancel(errString)) {
           throw new Error('User canceled biometrics.');
         } else {
-          // showBiometricsDisabledMessage();
+          showBiometricsDisabledMessage();
           throw new Error('Biometrics not enable.');
         }
       }
@@ -107,6 +107,7 @@ class AuthenticationPluginClass implements Plugin {
     (params: { password: string }): Promise<void>;
   } = async ({ password, authType }: { password?: string; authType?: AuthenticationType }) => {
     if (authType === AuthenticationType.Biometrics) {
+      KeyChain.getGenericPassword({ ...defaultOptions });
       const encryptedPassword = await authCryptoTool.encrypt(`${authCryptoTool.generateRandomString()}${new Date().getTime()}`);
 
       await KeyChain.setGenericPassword('ePayWallet-user', encryptedPassword, {
@@ -116,8 +117,8 @@ class AuthenticationPluginClass implements Plugin {
       this.settleAuthenticationType = AuthenticationType.Biometrics;
       await database.localStorage.set('SettleAuthentication', AuthenticationType.Biometrics);
 
-      // If the user enables biometrics, we're trying to read the password immediately so we get the permission prompt.
-      await this.getPassword();
+      // // If the user enables biometrics, we're trying to read the password immediately so we get the permission prompt.
+      // await this.getPassword();
     }
 
     if (typeof password === 'string' && !!password) {
@@ -150,8 +151,7 @@ CryptoToolPlugin.setGetPasswordMethod(AuthenticationPlugin.getPassword);
 
 export default AuthenticationPlugin;
 
-
-const pattern = /cancel|\u53d6\u6d88/i; 
+const pattern = /cancel|\u53d6\u6d88/i;
 export function containsCancel(str: string): boolean {
   return pattern.test(str);
 }

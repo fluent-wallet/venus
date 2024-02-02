@@ -5,24 +5,32 @@ import FlashMessage from 'react-native-flash-message';
 import { NavigationContainer, type Theme } from '@react-navigation/native';
 import { JotaiNexus, useHasVault } from '@core/WalletCore/Plugins/ReactInject';
 import CustomMessage from '@modules/CustomMessage';
+import { statusBarHeight, OS, supports3DStructureLight } from './utils/deviceInfo';
+import { useMode } from '@hooks/useMode';
 import { palette, lightColors, darkColors, fonts } from './theme';
 import Router from './router';
 import '@assets/i18n';
 import * as SplashScreen from 'expo-splash-screen';
 
+const messagesTop = { top: statusBarHeight + 20 + (OS === 'android' ? 0 : supports3DStructureLight ? 40 : 10) };
 
 const App: React.FC = () => {
-  const mode = useColorScheme();
   const hasVault = useHasVault();
+
+  const systemMode = useColorScheme();
+  const innerMode = useMode();
+  const mode = useMemo(() => (innerMode === 'system' ? (systemMode === 'dark' ? 'dark' : 'light') : innerMode), [innerMode, systemMode]);
   const theme = useMemo(
     () => ({
-      mode: mode === 'dark' ? 'dark' : 'light',
+      mode,
       palette,
       fonts,
       colors: mode === 'dark' ? darkColors : lightColors,
+      background: 'blue',
     }),
     [mode],
   );
+
   useEffect(() => {
     SplashScreen.hideAsync();
   }, []);
@@ -32,7 +40,7 @@ const App: React.FC = () => {
       <GestureHandlerRootView style={{ flex: 1 }}>
         <NavigationContainer theme={theme as unknown as Theme}>
           {typeof hasVault === 'boolean' && <Router />}
-          <FlashMessage position="bottom" MessageComponent={CustomMessage} duration={1500} animated={false} />
+          <FlashMessage position={messagesTop} MessageComponent={CustomMessage} duration={3000} />
         </NavigationContainer>
       </GestureHandlerRootView>
       <JotaiNexus />
