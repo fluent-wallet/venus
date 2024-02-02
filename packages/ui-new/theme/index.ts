@@ -52,6 +52,7 @@ export const lightColors = {
   textThird: palette.gray8,
   textFourth: palette.gray1,
   textFifth: palette.gray1,
+  textNotice: '#01C2E1',
   borderPrimary: palette.gray8,
   borderSecondary: palette.gray8,
   borderThird: palette.gray2,
@@ -60,6 +61,10 @@ export const lightColors = {
   iconSecondary: palette.gray2,
   iconThird: palette.gray4,
   iconFourth: palette.gray8,
+  iconFifth: palette.gray0,
+  underlay: palette.gray2,
+  up: palette.green4,
+  down: '#FD6464',
 };
 
 export const darkColors: typeof lightColors = {
@@ -72,6 +77,7 @@ export const darkColors: typeof lightColors = {
   textThird: palette.gray8,
   textFourth: palette.gray1,
   textFifth: palette.gray8,
+  textNotice: palette.green4,
   borderPrimary: palette.gray2,
   borderSecondary: palette.gray8,
   borderThird: palette.gray7,
@@ -80,6 +86,10 @@ export const darkColors: typeof lightColors = {
   iconSecondary: palette.gray6,
   iconThird: palette.gray5,
   iconFourth: palette.gray8,
+  iconFifth: palette.gray8,
+  underlay: palette.gray7,
+  up: palette.green4,
+  down: '#FD6464',
 };
 
 const defaultFont = {

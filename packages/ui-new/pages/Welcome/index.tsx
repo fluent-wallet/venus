@@ -1,38 +1,44 @@
 import React from 'react';
-import { ImageBackground, StyleSheet } from 'react-native';
+import { ImageBackground, View, ScrollView, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTheme, StackActions } from '@react-navigation/native';
 import { Image } from 'expo-image';
-import Text from '@components/Text';
 import Button from '@components/Button';
 import { WelcomeStackName, WayToInitWalletStackName, type StackScreenProps } from '@router/configs';
 import ArrowRight from '@assets/icons/arrow-right.svg';
 import EnterWeb3Dark from '@assets/images/enter-web3-dark.webp';
 import EnterWeb3Light from '@assets/images/enter-web3-light.webp';
-import welcomeBgLight from '@assets/images/welcome-bg-light.webp';
-import welcomeBgDark from '@assets/images/welcome-bg-dark.webp';
-import Img from '@assets/images/welcome-img.webp';
+import WelcomeBgLight from '@assets/images/welcome-bg-light.webp';
+import WelcomeBgDark from '@assets/images/welcome-bg-dark.webp';
+import WelcomeTextLight from '@assets/images/enter-web3-text-light.webp';
+import WelcomeTextDark from '@assets/images/enter-web3-text-dark.webp';
 
-const Welcome: React.FC<{ navigation: StackScreenProps<typeof WelcomeStackName> }> = ({ navigation }) => {
+import Img from '@assets/images/enter-web3-img.webp';
+
+const Welcome: React.FC<StackScreenProps<typeof WelcomeStackName>> = ({ navigation }) => {
   const { mode, colors } = useTheme();
 
   return (
-    <ImageBackground source={mode === 'dark' ? welcomeBgDark : welcomeBgLight} style={styles.bg} resizeMode="cover">
-      <SafeAreaView style={styles.container}>
-        <Image style={styles.enterWeb3} source={mode === 'dark' ? EnterWeb3Dark : EnterWeb3Light} />
-        <Text style={[styles.first, { color: colors.textFifth, backgroundColor: colors.bgThird }]}>First, let's add a wallet</Text>
-        <Image style={styles.img} source={Img} />
+    <ImageBackground source={mode === 'dark' ? WelcomeBgDark : WelcomeBgLight} style={styles.bg} resizeMode="cover">
+      <ScrollView>
+        <SafeAreaView style={styles.container}>
+          <Image style={styles.enterWeb3} source={mode === 'dark' ? EnterWeb3Dark : EnterWeb3Light} contentFit="contain" />
+          <View style={[styles.first, { backgroundColor: colors.bgThird }]}>
+            <Image style={styles.firstText} source={mode === 'dark' ? WelcomeTextDark : WelcomeTextLight} contentFit="contain" />
+          </View>
+          <Image style={styles.img} source={Img} contentFit="contain" />
 
-        <Button
-          testID="Get Started"
-          textAlign="left"
-          Icon={ArrowRight}
-          style={styles.btn}
-          onPress={() => navigation.dispatch(StackActions.replace(WayToInitWalletStackName))}
-        >
-          Get Started
-        </Button>
-      </SafeAreaView>
+          <Button
+            testID="Get Started"
+            textAlign="left"
+            Icon={ArrowRight}
+            style={styles.btn}
+            onPress={() => navigation.dispatch(StackActions.replace(WayToInitWalletStackName))}
+          >
+            Get Started
+          </Button>
+        </SafeAreaView>
+      </ScrollView>
     </ImageBackground>
   );
 };
@@ -42,33 +48,37 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   container: {
-    flex: 1,
-    flexDirection: 'column',
-    alignItems: 'center',
     paddingTop: 48,
-    paddingHorizontal: 16
+    paddingHorizontal: 16,
   },
   enterWeb3: {
+    alignSelf: 'center',
     width: 232,
     height: 100,
   },
   first: {
+    alignSelf: 'center',
     marginTop: 24,
-    fontFamily: 'Stalinist One',
     width: 230,
     height: 24,
-    lineHeight: 24,
-    fontSize: 10,
-    textAlign: 'center',
+    paddingHorizontal: 10,
+    display: 'flex',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  firstText: {
+    width: 198,
+    aspectRatio: 4.5,
   },
   img: {
-    width: 388,
-    height: 388,
-    marginTop: 24,
+    alignSelf: 'center',
+    width: '115%',
+    aspectRatio: 1.285,
+    marginTop: 52,
   },
   btn: {
-    width: '100%',
-    marginTop: 44,
+    marginTop: 64,
+    marginBottom: 32,
   },
 });
 

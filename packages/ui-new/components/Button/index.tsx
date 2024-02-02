@@ -1,5 +1,6 @@
 import { useMemo, useCallback, type Component, type PropsWithChildren } from 'react';
-import { StyleSheet, Pressable, useColorScheme, Platform, type PressableProps, type PressableStateCallbackType } from 'react-native';
+import { StyleSheet, Pressable, Platform, type PressableProps, type PressableStateCallbackType } from 'react-native';
+import { useTheme } from '@react-navigation/native';
 import { type SvgProps } from 'react-native-svg';
 import Text from '@components/Text';
 import HourglassLoading from '@components/Loading/Hourglass';
@@ -26,9 +27,9 @@ const Button = ({
   style,
   ...props
 }: Props) => {
-  const systemMode = useColorScheme();
+  const { mode: usedMode } = useTheme();
 
-  const mode = useMemo(() => (_mode === 'auto' ? (systemMode === 'dark' ? 'dark' : 'light') : _mode), [systemMode, _mode]);
+  const mode = useMemo(() => (_mode === 'auto' ? (usedMode === 'dark' ? 'light' : 'dark') : _mode), [usedMode, _mode]);
   const disabled = loading ? false : _disabled;
 
   const containerStyle = useCallback(

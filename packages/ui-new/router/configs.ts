@@ -1,4 +1,4 @@
-import { type NavigationProp } from '@react-navigation/native';
+import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 
 const WelcomeStackName = 'Welcome';
 const WayToInitWalletStackName = 'WayToInitWallet';
@@ -16,4 +16,4 @@ export type RootStackParamList = {
   [HomeStackName]: undefined;
 };
 
-export type StackScreenProps<T extends keyof RootStackParamList> = NavigationProp<RootStackParamList, T>;
+export type StackScreenProps<T extends keyof RootStackParamList> = NativeStackScreenProps<RootStackParamList, T>;
