@@ -2,9 +2,8 @@ import { Network, NetworkType } from '@core/database/models/Network';
 import { inject, injectable } from 'inversify';
 import { getCurrentNetwork } from '../Plugins/ReactInject/data/useCurrentNetwork';
 import { AssetType } from '@core/database/models/Asset';
-import { TxEventTypesName, WalletTransactionType } from '../Plugins/ReactInject/data/useTransaction';
 import { iface1155, iface721, iface777 } from '@core/contracts';
-import { firstValueFrom, map, switchMap, defer, from, retry, timeout, Subject, tap, catchError, throwError } from 'rxjs';
+import { firstValueFrom, map, switchMap, defer, from, retry, timeout, tap, catchError, throwError, Subject } from 'rxjs';
 import { getCurrentAddress } from '../Plugins/ReactInject/data/useCurrentAddress';
 import { addHexPrefix } from '@core/utils/base';
 import { computeAddress, parseUnits } from 'ethers';
@@ -18,6 +17,39 @@ import { JsonRpcProvider } from 'ethers';
 import { GetDecryptedVaultDataMethod } from './getDecryptedVaultData';
 import BSIMSDK, { BSIMError, BSIMErrorEndTimeout, BSIM_ERRORS } from 'packages/WalletCoreExtends/Plugins/BSIM/BSIMSDK';
 import plugins from '@core/WalletCore/Plugins';
+
+export enum TxEventTypesName {
+  ERROR = 'error',
+  GET_NONCE = 'getNonce',
+
+  BSIM_VERIFY_START = 'BSIMVerifyStart',
+  BSIM_SIGN_START = 'BSIMSignStart',
+  BSIM_TX_SEND = 'BSIMTxSend',
+}
+
+export interface TxEvent {
+  type: TxEventTypesName;
+  message?: string;
+  error?: boolean;
+  nonce?: string;
+}
+
+export interface WalletTransactionType {
+  from: string;
+  to: string;
+  assetType: AssetType;
+  balance: string;
+  decimals: number;
+  symbol: string;
+  contractAddress?: string;
+  iconUrl?: string;
+  amount: string;
+  priceInUSDT?: string;
+  tokenId?: string; // 721
+  tokenImage?: string; // 721
+  contractName?: string; // 721
+  nftName?: string; // 721
+}
 
 @injectable()
 export class TransactionMethod {
@@ -68,7 +100,7 @@ export class TransactionMethod {
     }
   };
 
-  signAndSendTransaction = async (endpoint: string, currentAddress: Address, transaction: Transaction, walletTx: WalletTransactionType) => {
+  signAndSendTransaction = async (endpoint: string, currentAddress: Address, transaction: Transaction, txEvent?: Subject<TxEvent>) => {
     const vaultType = await currentAddress.getVaultType();
 
     if (vaultType === 'BSIM') {
@@ -83,8 +115,9 @@ export class TransactionMethod {
           throw new BSIMError(error.code, error.message);
         }
       }
-
-      walletTx.event.next({ type: TxEventTypesName.BSIM_VERIFY_START });
+      if (txEvent) {
+        txEvent.next({ type: TxEventTypesName.BSIM_VERIFY_START });
+      }
 
       let errorMsg = '';
       let errorCode = '';
@@ -109,14 +142,19 @@ export class TransactionMethod {
           timeout({ each: 30 * 1000, with: () => throwError(() => new BSIMErrorEndTimeout(errorCode, errorMsg)) }),
         ),
       );
-      walletTx.event.next({ type: TxEventTypesName.BSIM_SIGN_START });
+
+      if (txEvent) {
+        txEvent.next({ type: TxEventTypesName.BSIM_SIGN_START });
+      }
       //  add the R S V to the transaction
       transaction.signature = Signature.from({ r: res.r, s: res.s, v: res.v });
       // get the transaction encoded
       const encodeTx = transaction.serialized;
       const txRes = await firstValueFrom(RPCSend<RPCResponse<string>>(endpoint, { method: 'eth_sendRawTransaction', params: [encodeTx] }));
 
-      walletTx.event.next({ type: TxEventTypesName.BSIM_TX_SEND });
+      if (txEvent) {
+        txEvent.next({ type: TxEventTypesName.BSIM_TX_SEND });
+      }
 
       return { txHash: txRes.result, error: txRes.error, txRaw: encodeTx };
     } else {
@@ -126,6 +164,13 @@ export class TransactionMethod {
       const txRes = await firstValueFrom(RPCSend<RPCResponse<string>>(endpoint, { method: 'eth_sendRawTransaction', params: [encodeTx] }));
       return { txHash: txRes.result, error: txRes.error, txRaw: encodeTx };
     }
+  };
+  getGasPrice = () => {
+    const currentNetwork = getCurrentNetwork();
+    if (!currentNetwork) {
+      throw new Error("Can't get current network");
+    }
+    return firstValueFrom(RPCSend<RPCResponse<string>>(currentNetwork.endpoint, { method: 'eth_gasPrice' }));
   };
 
   getGasPriceAndLimit = async (args: Pick<WalletTransactionType, 'to' | 'assetType' | 'amount' | 'contractAddress' | 'tokenId' | 'decimals'>) => {
@@ -177,7 +222,7 @@ export class TransactionMethod {
     );
   };
 
-  sendTransaction = async (walletTx: WalletTransactionType, gas: { gasLimit: string; gasPrice: string }) => {
+  sendTransaction = async (walletTx: WalletTransactionType & { txEvent?: Subject<TxEvent> }, gas: { gasLimit: string; gasPrice: string }) => {
     const currentNetwork = getCurrentNetwork();
     const currentAddress = getCurrentAddress();
     if (!currentAddress) {
@@ -197,7 +242,9 @@ export class TransactionMethod {
 
     const nonce = await this.getNonce(currentNetwork.endpoint, currentAddress.hex);
     transaction.nonce = nonce.result;
-    walletTx.event.next({ type: TxEventTypesName.GET_NONCE, nonce: nonce.result });
+    if (walletTx.txEvent) {
+      walletTx.txEvent.next({ type: TxEventTypesName.GET_NONCE, nonce: nonce.result });
+    }
 
     if (walletTx.assetType === AssetType.Native) {
       transaction.to = walletTx.to;
@@ -209,7 +256,7 @@ export class TransactionMethod {
       transaction.to = walletTx.contractAddress;
       transaction.data = this.getContractTransactionData(currentAddress.hex, walletTx);
     }
-    const { txHash, txRaw, error } = await this.signAndSendTransaction(currentNetwork.endpoint, currentAddress, transaction, walletTx);
+    const { txHash, txRaw, error } = await this.signAndSendTransaction(currentNetwork.endpoint, currentAddress, transaction, walletTx.txEvent);
 
     return { txHash, txRaw, transaction, error };
   };

@@ -16,19 +16,17 @@ import { runOnJS } from 'react-native-reanimated';
 import { Icon, Text, useTheme, Overlay, Button } from '@rneui/themed';
 import { HomeStackName, ReceiveAddressStackName, RootStackList, ScanQRCodeStackName, SendToStackName, StackNavigation, WalletStackName } from '@router/configs';
 import { useAssetsTokenList } from '@core/WalletCore/Plugins/ReactInject/data/useAssets';
-import { useAtom } from 'jotai';
-import { setTokenTransaction, setTransactionAmount, setTransactionTo } from '@core/WalletCore/Plugins/ReactInject/data/useTransaction';
 import { AssetType } from '@core/database/models/Asset';
 import plugins from '@core/WalletCore/Plugins';
-import { type AssetInfo } from '@core/WalletCore/Plugins/AssetsTracker/types';
 import { BaseButton } from '@components/Button';
 import { parseETHURL, type ETHURL } from '@utils/ETHURL';
-import { isHexAddress } from '@core/utils/account';
 import { statusBarHeight } from '@utils/deviceInfo';
 import { showMessage } from 'react-native-flash-message';
 import { isAddress } from 'ethers';
 import { parseUri } from '@walletconnect/utils';
 import { ENABLE_WALLET_CONNECT_FEATURE } from '@utils/features';
+import { WalletTransactionType } from '@core/WalletCore/Methods/transactionMethod';
+import { useCurrentAddress } from '@core/WalletCore/Plugins/ReactInject';
 
 const screenWidth = Dimensions.get('window').width;
 const screenHeight = Dimensions.get('window').height;
@@ -42,13 +40,14 @@ const ScanQRCode: React.FC<{ navigation: StackNavigation; route: RouteProp<RootS
   const device = useCameraDevice('back');
   const format = useCameraFormat(device, [{ fps: 30 }]);
   const isScanningInProgress = useRef(false);
+  const currentAddress = useCurrentAddress()!;
 
   const [showPermissionModel, setShowPermissionModel] = useState(!hasPermission);
   const [showRejectPermissionModel, setShowRejectPermissionModel] = useState(false);
 
-  const [, setTXTo] = useAtom(setTransactionTo);
-  const [, setTokenTX] = useAtom(setTokenTransaction);
-  const [, setTXAmount] = useAtom(setTransactionAmount);
+  // const [, setTXTo] = useAtom(setTransactionTo);
+  // const [, setTokenTX] = useAtom(setTokenTransaction);
+  // const [, setTXAmount] = useAtom(setTransactionAmount);
   const tokens = useAssetsTokenList();
 
   const handleScanETHURL = useCallback(
@@ -64,7 +63,6 @@ const ScanQRCode: React.FC<{ navigation: StackNavigation; route: RouteProp<RootS
 
       const { target_address, chain_id, function_name, parameters } = ethURL;
 
-      setTXTo(target_address);
       if (!tokens || tokens.length === 0) {
         return showMessage({
           message: `Looks like you don't have that asset in your wallet.`,
@@ -80,8 +78,9 @@ const ScanQRCode: React.FC<{ navigation: StackNavigation; route: RouteProp<RootS
             message: `Looks like you don't have that asset in your wallet.`,
           });
         }
-
-        setTokenTX({
+        const txParams: WalletTransactionType = {
+          from: currentAddress?.hex,
+          to: target_address,
           assetType: token.type,
           balance: token.balance,
           symbol: token.symbol,
@@ -89,11 +88,12 @@ const ScanQRCode: React.FC<{ navigation: StackNavigation; route: RouteProp<RootS
           contractAddress: token.contractAddress,
           iconUrl: token.icon,
           priceInUSDT: token.priceInUSDT,
-        });
+          amount: '0',
+        };
 
         if (parameters && typeof parameters.value !== 'undefined') {
-          setTXAmount(parameters.value);
-          return navigation.dispatch(StackActions.replace(SendToStackName));
+          txParams.amount = parameters.value.toString();
+          return navigation.dispatch(StackActions.replace(SendToStackName, txParams));
         }
       } else if (function_name === 'transfer') {
         // send 20 token
@@ -112,7 +112,9 @@ const ScanQRCode: React.FC<{ navigation: StackNavigation; route: RouteProp<RootS
           });
         }
 
-        setTokenTX({
+        const txParams: WalletTransactionType = {
+          from: currentAddress?.hex,
+          to: target_address,
           assetType: token.type,
           balance: token.balance,
           symbol: token.symbol,
@@ -120,12 +122,14 @@ const ScanQRCode: React.FC<{ navigation: StackNavigation; route: RouteProp<RootS
           contractAddress: token.contractAddress,
           iconUrl: token.icon,
           priceInUSDT: token.priceInUSDT,
-        });
+          amount: '0',
+        };
 
         if (parameters.uint256) {
-          setTXAmount(parameters.uint256);
+          txParams.amount = parameters.uint256.toString();
         }
-        return navigation.dispatch(StackActions.replace(SendToStackName));
+
+        return navigation.dispatch(StackActions.replace(SendToStackName, txParams));
       } else {
         return showMessage({
           message: `This action is currently not supported`,
@@ -133,9 +137,9 @@ const ScanQRCode: React.FC<{ navigation: StackNavigation; route: RouteProp<RootS
       }
 
       // default go to receive address
-      return navigation.dispatch(StackActions.replace(ReceiveAddressStackName));
+      return navigation.dispatch(StackActions.replace(ReceiveAddressStackName, { to: target_address }));
     },
-    [navigation, setTXAmount, setTXTo, setTokenTX, tokens],
+    [navigation, tokens, currentAddress?.hex],
   );
 
   const handleCodeScan = async (code: Code) => {
@@ -145,8 +149,7 @@ const ScanQRCode: React.FC<{ navigation: StackNavigation; route: RouteProp<RootS
     const ethAddress = code.value;
     if (ethAddress.startsWith('0x') && isAddress(ethAddress)) {
       isScanningInProgress.current = false;
-      setTXTo(ethAddress);
-      return navigation.dispatch(StackActions.replace(ReceiveAddressStackName));
+      return navigation.dispatch(StackActions.replace(ReceiveAddressStackName, { to: ethAddress }));
     }
 
     // check is EIP 681

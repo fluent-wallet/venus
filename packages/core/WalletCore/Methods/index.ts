@@ -126,6 +126,9 @@ export class Methods {
   public getTransactionGasAndGasLimit(...args: Parameters<TransactionMethod['getGasPriceAndLimit']>) {
     return this.TransactionMethod.getGasPriceAndLimit(...args);
   }
+  public getETHGasPrice = () => {
+    return this.TransactionMethod.getGasPrice();
+  };
   public sendTransaction(...args: Parameters<TransactionMethod['sendTransaction']>) {
     return this.TransactionMethod.sendTransaction(...args);
   }

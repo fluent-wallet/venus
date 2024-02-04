@@ -9,7 +9,6 @@ import { statusBarHeight } from '@utils/deviceInfo';
 import { useCurrentAccount, useCurrentNetwork, useAssetsTotalPriceValue, useVaultOfAccount } from '@core/WalletCore/Plugins/ReactInject';
 import { CFX_ESPACE_MAINNET_CHAINID, CFX_ESPACE_TESTNET_CHAINID } from '@core/consts/network';
 import plugins from '@core/WalletCore/Plugins';
-import { resetTransaction } from '@core/WalletCore/Plugins/ReactInject/data/useTransaction';
 import { BackUpNoticeStackName, ReceiveAddressStackName, ReceiveStackName, type StackNavigation } from '@router/configs';
 import { updateNFTDetail } from '@modules/AssetList/ESpaceNFTList/fetch';
 import TokenList from '@modules/AssetList/TokenList';
@@ -69,7 +68,7 @@ const Wallet: React.FC<{ navigation: StackNavigation }> = ({ navigation }) => {
   const [refreshing, setRefreshing] = useState(false);
   const [tabIndex, setTabIndex] = useState(0);
   const tabRef = useRef<PagerView>(null);
-  const [, resetTX] = useAtom(resetTransaction);
+
   const handleTabChange = (index: number) => {
     if (tabRef.current) {
       setTabIndex(index);
@@ -98,11 +97,6 @@ const Wallet: React.FC<{ navigation: StackNavigation }> = ({ navigation }) => {
   const handleScroll = useCallback((evt: NativeSyntheticEvent<NativeScrollEvent>) => {
     setInSticky(evt.nativeEvent.contentOffset.y >= h);
   }, []);
-  useFocusEffect(
-    useCallback(() => {
-      resetTX();
-    }, [resetTX]),
-  );
 
   const tabs = useMemo(
     () =>

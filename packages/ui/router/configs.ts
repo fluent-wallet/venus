@@ -1,3 +1,4 @@
+import { AssetType } from '@core/database/models/Asset';
 import VaultType from '@core/database/models/Vault/VaultType';
 import { type NavigationProp } from '@react-navigation/native';
 
@@ -71,17 +72,45 @@ export type RootStackList = {
   [LockStackName]: undefined;
   [AddAccountStackName]: { type?: 'add' | 'create' };
   [AccountSelectStackName]: undefined;
-  [TokensStackName]: undefined;
-  [SendToStackName]: undefined;
-  [TransactionConfirmStackName]: undefined;
-  [ReceiveAddressStackName]: { address?: string };
+  [TokensStackName]: { to: string };
+  [SendToStackName]: {
+    to: string
+    assetType: AssetType;
+    balance: string;
+    symbol: string;
+    decimals: number;
+    amount?: string;
+    contractAddress?: string;
+    iconUrl?: string;
+    priceInUSDT?: string;
+    nftName?: string;
+    tokenId?: string;
+    tokenImage?: string;
+    contractName?: string;
+  };
+  [TransactionConfirmStackName]: {
+    to:string
+    assetType: AssetType;
+    balance: string;
+    symbol: string;
+    decimals: number;
+    amount: string;
+    contractAddress?: string;
+    iconUrl?: string;
+    priceInUSDT?: string;
+    nftName?: string;
+    tokenId?: string;
+    tokenImage?: string;
+    contractName?: string;
+  };
+  [ReceiveAddressStackName]: { to?: string };
 
   [BackUpStackName]: { accountGroupId: string; type: VaultType; accountIndex?: number };
   [ReceiveStackName]: undefined;
   [SetAmountStackName]: undefined;
-  [ScanQRCodeStackName]: { path: keyof RootStackList };
+  [ScanQRCodeStackName]: undefined;
   [BackUpNoticeStackName]: undefined;
-  [BackUpVerifyStackName]: { seedPhrase: { index: number; word: string }[] , accountGroupId: string};
+  [BackUpVerifyStackName]: { seedPhrase: { index: number; word: string }[]; accountGroupId: string };
 
   Home: { screen: typeof WalletStackName };
 };

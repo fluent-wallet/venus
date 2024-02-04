@@ -52,7 +52,7 @@ const SwitchCurrentAddress: React.FC = () => {
       <Pressable testID="menu" onPress={() => navigation.navigate(AccountSelectStackName)}>
         <AccountWallet color={theme.colors.surfaceBrand} className="w-[24] h-[24]" style={{ marginRight: 18 }} />
       </Pressable>
-      <Pressable testID="scanQRCode" onPress={() => navigation.navigate(ScanQRCodeStackName, { path: ReceiveAddressStackName })}>
+      <Pressable testID="scanQRCode" onPress={() => navigation.navigate(ScanQRCodeStackName)}>
         <Flip color={theme.colors.surfaceBrand} className="w-[24] h-[24]" />
       </Pressable>
     </View>
@@ -74,4 +74,4 @@ export const getWalletHeaderOptions = () =>
     headerTitle: () => null,
     headerRight: () => <SwitchCurrentNetwork />,
     headerTitleAlign: 'center',
-  } as const);
+  }) as const;
