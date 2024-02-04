@@ -1,8 +1,8 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Pressable, SafeAreaView, View, ScrollView } from 'react-native';
 import { RouteProp } from '@react-navigation/native';
-import { firstValueFrom } from 'rxjs';
-import { formatUnits } from 'ethers';
+import { Subject } from 'rxjs';
+import { ethers, formatUnits } from 'ethers';
 import { Button, Divider, Text, useTheme } from '@rneui/themed';
 import { statusBarHeight } from '@utils/deviceInfo';
 import { useCurrentAccount, useCurrentAddress, useCurrentNetwork, useVaultOfAccount } from '@core/WalletCore/Plugins/ReactInject';
@@ -15,7 +15,6 @@ import SendIcon from '@assets/icons/send.svg';
 import AvatarIcon from '@assets/icons/avatar.svg';
 import CopyAllIcon from '@assets/icons/copy_all.svg';
 import Warning from '@assets/icons/warning_2.svg';
-import { TxEventTypesName, resetTransaction, useReadOnlyTransaction } from '@core/WalletCore/Plugins/ReactInject/data/useTransaction';
 import MixinImage from '@components/MixinImage';
 import { AssetType } from '@core/database/models/Asset';
 import Methods from '@core/WalletCore/Methods';
@@ -25,7 +24,6 @@ import VaultType from '@core/database/models/Vault/VaultType';
 import BSIMSendTX from './SendTX';
 import { BSIMErrorEndTimeout, BSIM_ERRORS } from 'packages/WalletCoreExtends/Plugins/BSIM/BSIMSDK';
 import EstimateGas from './EstimateGas';
-import { RPCResponse, RPCSend } from '@core/utils/send';
 import matchRPCErrorMessage from '@utils/matchRPCErrorMssage';
 import Decimal from 'decimal.js';
 import Clipboard from '@react-native-clipboard/clipboard';
@@ -35,13 +33,14 @@ import { updateNFTDetail } from '@modules/AssetList/ESpaceNFTList/fetch';
 import assetsTracker from '@core/WalletCore/Plugins/AssetsTracker';
 import ConfluxNetworkIcon from '@assets/icons/confluxNet.svg';
 import { balanceFormat } from '@core/utils/balance';
-import { useAtom } from 'jotai';
 import { useAssetsHash } from '@core/WalletCore/Plugins/ReactInject/data/useAssets';
+import { TxEvent, TxEventTypesName } from '@core/WalletCore/Methods/transactionMethod';
 
 const TransactionConfirm: React.FC<{
   navigation: StackNavigation;
   route: RouteProp<RootStackList, typeof TransactionConfirmStackName>;
 }> = ({ navigation, route }) => {
+  const txParams = route.params;
   const { theme } = useTheme();
   const { isConnected } = useNetInfo();
   const [loading, setLoading] = useState(false);
@@ -51,35 +50,40 @@ const TransactionConfirm: React.FC<{
   const currentVault = useVaultOfAccount(currentAccount?.id);
   const assetsHash = useAssetsHash();
 
+  const txEvent = useRef(new Subject<TxEvent>());
+
   const [error, setError] = useState('');
-  const tx = useReadOnlyTransaction();
-  const [, resetTX] = useAtom(resetTransaction);
+  // const tx = useReadOnlyTransaction();
+  // const [, resetTX] = useAtom(resetTransaction);
   const [gas, setGas] = useState<{ gasLimit?: string; gasPrice?: string; loading: boolean; error: boolean; errorMsg?: string }>({
     loading: true,
     error: false,
   });
 
   const price = useMemo(() => {
-    if (tx.priceInUSDT) {
-      const n = new Decimal(formatUnits(tx.amount, tx.decimals)).mul(new Decimal(tx.priceInUSDT));
+    if (txParams.priceInUSDT) {
+      const n = new Decimal(formatUnits(txParams.amount, txParams.decimals)).mul(new Decimal(txParams.priceInUSDT));
       if (n.lessThan(new Decimal(10).pow(-2))) {
         return '<$0.01';
       }
       return `$${balanceFormat(n.toString(), { decimals: 0, truncateLength: 2 })}`;
     }
     return '';
-  }, [tx.priceInUSDT, tx.amount, tx.decimals]);
+  }, [txParams.priceInUSDT, txParams.amount, txParams.decimals]);
 
   const handleSend = async () => {
     if (gas?.gasLimit && gas.gasPrice) {
       setLoading(true);
       try {
         try {
-          const { txHash, txRaw, transaction, error } = await Methods.sendTransaction(tx, { gasLimit: gas.gasLimit, gasPrice: gas.gasPrice });
+          const { txHash, txRaw, transaction, error } = await Methods.sendTransaction(
+            { from: currentAddress.hex, ...txParams, txEvent: txEvent.current },
+            { gasLimit: gas.gasLimit, gasPrice: gas.gasPrice },
+          );
 
           if (error && error.message && error.data) {
             const errorMsg = matchRPCErrorMessage({ message: error.message, data: error.data });
-            tx.event.next({ type: TxEventTypesName.ERROR, message: errorMsg });
+            txEvent.current.next({ type: TxEventTypesName.ERROR, message: errorMsg });
             setLoading(false);
             return setError(errorMsg);
           }
@@ -89,15 +93,15 @@ const TransactionConfirm: React.FC<{
             txRaw,
             transaction,
             extraParams: {
-              assetType: tx.assetType,
-              contractAddress: tx.contractAddress,
-              to: tx.to,
+              assetType: txParams.assetType,
+              contractAddress: txParams.contractAddress,
+              to: txParams.to,
               sendAt: new Date(),
             },
           });
 
-          if (tx.assetType === AssetType.ERC1155 || tx.assetType === AssetType.ERC721) {
-            updateNFTDetail(tx.contractAddress);
+          if (txParams.assetType === AssetType.ERC1155 || txParams.assetType === AssetType.ERC721) {
+            updateNFTDetail(txParams.contractAddress);
             assetsTracker.updateCurrentTracker();
           } else {
             assetsTracker.updateCurrentTracker();
@@ -108,8 +112,6 @@ const TransactionConfirm: React.FC<{
             description: 'Waiting for execution',
             icon: 'loading' as unknown as undefined,
           });
-          // tx send success then reset tx atom
-          resetTX();
 
           navigation.navigate(HomeStackName, { screen: WalletStackName });
         } catch (error: any) {
@@ -119,13 +121,13 @@ const TransactionConfirm: React.FC<{
           if (error.code) {
             const errorMsg = BSIM_ERRORS[error.code?.toUpperCase()];
             if (errorMsg) {
-              tx.event.next({ type: TxEventTypesName.ERROR, message: errorMsg });
+              txEvent.current.next({ type: TxEventTypesName.ERROR, message: errorMsg });
             } else {
-              tx.event.next({ type: TxEventTypesName.ERROR, message: error?.message || BSIM_ERRORS.default });
+              txEvent.current.next({ type: TxEventTypesName.ERROR, message: error?.message || BSIM_ERRORS.default });
             }
           } else {
             // not BSIM error
-            tx.event.next({ type: TxEventTypesName.ERROR, message: error?.message || BSIM_ERRORS.default });
+            txEvent.current.next({ type: TxEventTypesName.ERROR, message: error?.message || BSIM_ERRORS.default });
           }
         }
         setLoading(false);
@@ -135,21 +137,26 @@ const TransactionConfirm: React.FC<{
       }
     }
   };
-  const getGas = useCallback(() => {
+  const getGas = useCallback(async () => {
     setGas({ loading: true, error: false });
-    Methods.getTransactionGasAndGasLimit({
-      to: tx.to,
-      amount: tx.amount,
-      assetType: tx.assetType,
-      contractAddress: tx.contractAddress,
-      tokenId: tx.tokenId,
-      decimals: tx.decimals,
-    })
-      .then((res) => {
-        if (!res.gasLimit.error && !res.gasPrice.error) {
+    try {
+      if (txParams.assetType === AssetType.Native) {
+        const gasPrice = await Methods.getETHGasPrice();
+        const gas = ethers.toBeHex(21000);
+        return setGas({ gasLimit: gas, gasPrice: gasPrice.result, loading: false, error: false });
+      } else {
+        const resut = await Methods.getTransactionGasAndGasLimit({
+          to: txParams.to,
+          amount: txParams.amount,
+          assetType: txParams.assetType,
+          contractAddress: txParams.contractAddress,
+          tokenId: txParams.tokenId,
+          decimals: txParams.decimals,
+        });
+        if (!resut.gasLimit.error && !resut.gasPrice.error) {
           setGas({
-            gasLimit: res.gasLimit.result,
-            gasPrice: res.gasPrice.result,
+            gasLimit: resut.gasLimit.result,
+            gasPrice: resut.gasPrice.result,
             loading: false,
             error: false,
           });
@@ -158,17 +165,17 @@ const TransactionConfirm: React.FC<{
             loading: false,
             error: true,
             errorMsg: matchRPCErrorMessage({
-              message: res.gasLimit?.error?.message || res.gasPrice?.error?.message || '',
-              data: res.gasLimit?.error?.data || res.gasPrice?.error?.data || '',
+              message: resut.gasLimit?.error?.message || resut.gasPrice?.error?.message || '',
+              data: resut.gasLimit?.error?.data || resut.gasPrice?.error?.data || '',
             }),
           });
         }
-      })
-      .catch((err) => {
-        console.log('getTransactionGasAndGasLimit error', err);
-        setGas({ loading: false, error: true });
-      });
-  }, [tx.assetType, tx.contractAddress, tx.to, tx.amount, tx.tokenId, tx.decimals]);
+      }
+    } catch (error) {
+      console.log('getTransactionGasAndGasLimit error', error);
+      setGas({ loading: false, error: true });
+    }
+  }, [txParams.assetType, txParams.contractAddress, txParams.to, txParams.amount, txParams.tokenId, txParams.decimals]);
 
   useEffect(() => {
     if (!isConnected) return;
@@ -176,11 +183,11 @@ const TransactionConfirm: React.FC<{
   }, [currentNetwork.endpoint, currentAddress.hex, getGas, isConnected]);
 
   const renderAmount = () => {
-    if (tx.assetType === AssetType.ERC20 || tx.assetType === AssetType.Native || tx.assetType === AssetType.ERC1155) {
-      return `${formatUnits(tx.amount, tx.decimals)} ${tx.symbol}`;
+    if (txParams.assetType === AssetType.ERC20 || txParams.assetType === AssetType.Native || txParams.assetType === AssetType.ERC1155) {
+      return `${formatUnits(txParams.amount, txParams.decimals)} ${txParams.symbol}`;
     }
-    if (tx.assetType === AssetType.ERC721) {
-      return `1 ${tx.contractName}`;
+    if (txParams.assetType === AssetType.ERC721) {
+      return `1 ${txParams.contractName}`;
     }
   };
 
@@ -206,11 +213,11 @@ const TransactionConfirm: React.FC<{
           </View>
         )}
         <View className="px-6">
-          {(tx.assetType === AssetType.ERC721 || tx.assetType === AssetType.ERC1155) && (
+          {(txParams.assetType === AssetType.ERC721 || txParams.assetType === AssetType.ERC1155) && (
             <View className="flex flex-row p-4 rounded-lg w-full mb-4" style={{ backgroundColor: theme.colors.surfaceCard }}>
-              {tx.tokenImage ? (
+              {txParams.tokenImage ? (
                 <MixinImage
-                  source={{ uri: tx.tokenImage }}
+                  source={{ uri: txParams.tokenImage }}
                   width={63}
                   height={63}
                   className="mr-4 rounded"
@@ -222,18 +229,18 @@ const TransactionConfirm: React.FC<{
               <View className="flex justify-center ml-4">
                 <View className="flex flex-row mb-1">
                   <View className="w-6 h-6 overflow-hidden rounded-full mr-2">
-                    {tx.iconUrl ? (
-                      <MixinImage source={{ uri: tx.iconUrl }} width={24} height={24} fallback={<DefaultNFTImage width={24} height={24} />} />
+                    {txParams.iconUrl ? (
+                      <MixinImage source={{ uri: txParams.iconUrl }} width={24} height={24} fallback={<DefaultNFTImage width={24} height={24} />} />
                     ) : (
                       <DefaultNFTImage width={24} height={24} />
                     )}
                   </View>
                   <Text numberOfLines={1} style={{ color: theme.colors.textSecondary, maxWidth: 204 }} className="leading-normal">
-                    {tx.contractName}
+                    {txParams.contractName}
                   </Text>
                 </View>
                 <Text numberOfLines={1} style={{ color: theme.colors.textPrimary, maxWidth: 235 }} className="leading-normal font-medium">
-                  {tx.nftName}
+                  {txParams.nftName}
                 </Text>
               </View>
             </View>
@@ -255,7 +262,11 @@ const TransactionConfirm: React.FC<{
               </Pressable>
             </View>
             <Text className="ml-8 leading-6" style={{ color: theme.colors.textSecondary }}>
-              Balance: {tx.assetType === AssetType.ERC20 || tx.assetType === AssetType.Native ? formatUnits(tx.balance, tx.decimals) : tx.balance} {tx.symbol}
+              Balance:{' '}
+              {txParams.assetType === AssetType.ERC20 || txParams.assetType === AssetType.Native
+                ? formatUnits(txParams.balance, txParams.decimals)
+                : txParams.balance}{' '}
+              {txParams.symbol}
             </Text>
 
             <Divider className="my-4" />
@@ -267,8 +278,8 @@ const TransactionConfirm: React.FC<{
               <View className="mr-2">
                 <AvatarIcon width={24} height={24} />
               </View>
-              <Text>{shortenAddress(tx.to)}</Text>
-              <Pressable onPress={() => Clipboard.setString(tx.to)}>
+              <Text>{shortenAddress(txParams.to)}</Text>
+              <Pressable onPress={() => Clipboard.setString(txParams.to)}>
                 <View className="m-1">
                   <CopyAllIcon color={theme.colors.textPrimary} width={16} height={16} />
                 </View>
@@ -315,7 +326,7 @@ const TransactionConfirm: React.FC<{
         </View>
       </ScrollView>
       {currentVault?.type === VaultType.BSIM ? (
-        <BSIMSendTX onSend={handleSend} txEvent={tx.event} />
+        <BSIMSendTX onSend={handleSend} txEvent={txEvent.current} />
       ) : (
         <View className="flex flex-row items-center mt-auto px-6 mb-6">
           <Button

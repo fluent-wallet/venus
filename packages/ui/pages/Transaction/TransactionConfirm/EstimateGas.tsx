@@ -18,7 +18,6 @@ interface EstimateGasProps {
 
 const EstimateGas: React.FC<EstimateGasProps> = ({ gasLimit, gasPrice, loading, error, retry, priceInUSDT }) => {
   const { theme } = useTheme();
-
   const gas = useMemo(
     () => (loading || !gasLimit || !gasPrice ? null : formatUnits(BigInt(gasLimit) * BigInt(gasPrice), DEFAULT_CURRENCY_DECIMALS)),
     [gasLimit, gasPrice, loading],

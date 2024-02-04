@@ -1,8 +1,8 @@
 import { useCallback, useMemo, useState } from 'react';
 import { SafeAreaView, View, KeyboardAvoidingView, Image, TextInput, Pressable, ScrollView, BackHandler } from 'react-native';
 import { RouteProp, useFocusEffect } from '@react-navigation/native';
-import { useAtom } from 'jotai';
-import { formatUnits, parseUnits } from 'ethers';
+
+import { formatUnits, parseUnits, toBeHex } from 'ethers';
 import { shortenAddress } from '@core/utils/address';
 import { Text, useTheme } from '@rneui/themed';
 import { statusBarHeight } from '@utils/deviceInfo';
@@ -12,7 +12,6 @@ import TokenIconDefault from '@assets/icons/defaultToken.svg';
 import AvatarIcon from '@assets/icons/avatar.svg';
 import CopyAllIcon from '@assets/icons/copy_all.svg';
 import { AssetType } from '@core/database/models/Asset';
-import { resetTransactionAmount, setTransactionAmount, useReadOnlyTransaction } from '@core/WalletCore/Plugins/ReactInject/data/useTransaction';
 import MixinImage from '@components/MixinImage';
 import Methods from '@core/WalletCore/Methods';
 import WarningIcon from '@assets/icons/warning_2.svg';
@@ -34,23 +33,24 @@ const SendTo: React.FC<{ navigation: StackNavigation; route: RouteProp<RootStack
   const { isConnected } = useNetInfo();
   const currentNetwork = useCurrentNetwork()!;
   const currentAddress = useCurrentAddress();
-  const [, setTXAmount] = useAtom(setTransactionAmount);
-  const [, resetTXAmount] = useAtom(resetTransactionAmount);
-  const tx = useReadOnlyTransaction();
-  const [value, setValue] = useState(tx.amount ? new Decimal(formatUnits(tx.amount, tx.decimals)).toString() : '');
+  const txParams = route.params;
+  const [value, setValue] = useState(txParams.amount ? new Decimal(formatUnits(txParams.amount, txParams.decimals)).toString() : '');
   const [invalidInputErr, setInvalidInputErr] = useState({ err: false, msg: '' });
   const [rpcError, setRpcError] = useState({ err: false, msg: '' });
   const [maxBtnLoading, setMaxBtnLoading] = useState(false);
 
   const accountBalance = useMemo(
-    () => numberWithCommas(tx.assetType === AssetType.ERC20 || tx.assetType === AssetType.Native ? formatUnits(tx.balance, tx.decimals) : tx.balance),
-    [tx.assetType, tx.balance, tx.decimals]
+    () =>
+      numberWithCommas(
+        txParams.assetType === AssetType.ERC20 || txParams.assetType === AssetType.Native ? formatUnits(txParams.balance, txParams.decimals) : txParams.balance,
+      ),
+    [txParams.assetType, txParams.balance, txParams.decimals],
   );
 
   const handleChange = (v: string) => {
     setInvalidInputErr({ err: false, msg: '' });
 
-    if (tx.assetType === AssetType.ERC721 || tx.assetType === AssetType.ERC1155) {
+    if (txParams.assetType === AssetType.ERC721 || txParams.assetType === AssetType.ERC1155) {
       return setValue(v.replace(/[^0-9]/g, ''));
     }
     setValue(v);
@@ -63,7 +63,7 @@ const SendTo: React.FC<{ navigation: StackNavigation; route: RouteProp<RootStack
         return setInvalidInputErr({ err: true, msg: 'Invalid amount' });
       }
 
-      if (tx.assetType === AssetType.ERC721 || tx.assetType === AssetType.ERC1155) {
+      if (txParams.assetType === AssetType.ERC721 || txParams.assetType === AssetType.ERC1155) {
         if (DValue.lessThan(1)) {
           return setInvalidInputErr({ err: true, msg: 'Invalid amount' });
         }
@@ -71,14 +71,17 @@ const SendTo: React.FC<{ navigation: StackNavigation; route: RouteProp<RootStack
 
       if (
         DValue.greaterThan(
-          new Decimal(tx.assetType === AssetType.ERC20 || tx.assetType === AssetType.Native ? formatUnits(tx.balance, tx.decimals) : tx.balance)
+          new Decimal(
+            txParams.assetType === AssetType.ERC20 || txParams.assetType === AssetType.Native
+              ? formatUnits(txParams.balance, txParams.decimals)
+              : txParams.balance,
+          ),
         )
       ) {
         return setInvalidInputErr({ err: true, msg: 'Insufficient balance' });
       }
 
-      setTXAmount(parseUnits(value, tx.decimals));
-      navigation.navigate(TransactionConfirmStackName);
+      navigation.navigate(TransactionConfirmStackName, { ...txParams, amount: parseUnits(value, txParams.decimals).toString() });
     } catch (error) {
       return setInvalidInputErr({ err: true, msg: 'Invalid amount' });
     }
@@ -89,13 +92,32 @@ const SendTo: React.FC<{ navigation: StackNavigation; route: RouteProp<RootStack
   };
 
   const getGas = async (amount: bigint) => {
+    if (txParams.assetType === AssetType.Native) {
+      const gasPriceResult = await Methods.getETHGasPrice();
+      if (gasPriceResult.error) {
+        const errorMsg = matchRPCErrorMessage({
+          message: gasPriceResult.error?.message || '',
+          data: gasPriceResult.error?.data || gasPriceResult.error?.data || '',
+        });
+        setRpcError({ err: true, msg: errorMsg });
+        return;
+      }
+
+      const gasLimit = toBeHex(21000);
+
+      return {
+        gasLimit,
+        gasPrice: gasPriceResult.result,
+      };
+    }
+
     const gas = await Methods.getTransactionGasAndGasLimit({
-      to: tx.to,
-      amount: amount,
-      assetType: tx.assetType,
-      contractAddress: tx.contractAddress,
-      tokenId: tx.tokenId,
-      decimals: tx.decimals,
+      to: txParams.to,
+      amount: amount.toString(),
+      assetType: txParams.assetType,
+      contractAddress: txParams.contractAddress,
+      tokenId: txParams.tokenId,
+      decimals: txParams.decimals,
     });
 
     if (gas.gasLimit.error || gas.gasPrice.error) {
@@ -106,12 +128,15 @@ const SendTo: React.FC<{ navigation: StackNavigation; route: RouteProp<RootStack
       setRpcError({ err: true, msg: errorMsg });
       return;
     }
-    return gas;
+    return {
+      gasLimit: gas.gasLimit.result,
+      gasPrice: gas.gasPrice.result,
+    };
   };
 
   const handleChangeMax = async () => {
     setMaxBtnLoading(true);
-    if (tx.assetType === AssetType.Native && isConnected) {
+    if (txParams.assetType === AssetType.Native && isConnected) {
       try {
         // there need to be a network connection to get the native balance
         const nativeBalance = await getNativeBalance();
@@ -119,7 +144,7 @@ const SendTo: React.FC<{ navigation: StackNavigation; route: RouteProp<RootStack
           return setRpcError({ err: true, msg: nativeBalance.error.message || '' });
         }
         const balance = BigInt(nativeBalance.result);
-        
+
         if (balance === BigInt(0)) {
           setMaxBtnLoading(false);
           return setValue('0');
@@ -130,7 +155,7 @@ const SendTo: React.FC<{ navigation: StackNavigation; route: RouteProp<RootStack
           return setMaxBtnLoading(false);
         }
         // if there is native asset, the max value should be the balance - gas fee
-        const max = formatUnits(BigInt(balance) - BigInt(gas.gasLimit.result) * BigInt(gas.gasPrice.result), tx.decimals);
+        const max = formatUnits(BigInt(balance) - BigInt(gas.gasLimit) * BigInt(gas.gasPrice), txParams.decimals);
         setValue(max);
         setInvalidInputErr({ err: false, msg: '' });
       } catch (error) {
@@ -139,23 +164,15 @@ const SendTo: React.FC<{ navigation: StackNavigation; route: RouteProp<RootStack
       }
     }
 
-    if (tx.assetType === AssetType.ERC20 || tx.assetType === AssetType.ERC721 || tx.assetType === AssetType.ERC1155) {
+    if (txParams.assetType === AssetType.ERC20 || txParams.assetType === AssetType.ERC721 || txParams.assetType === AssetType.ERC1155) {
       setInvalidInputErr({ err: false, msg: '' });
-      setValue(formatUnits(tx.balance, tx.decimals));
+      setValue(formatUnits(txParams.balance, txParams.decimals));
     }
 
     setMaxBtnLoading(false);
   };
 
-  useFocusEffect(
-    useCallback(() => {
-      navigation.addListener('beforeRemove', () => {
-        resetTXAmount();
-      });
-    }, [navigation, resetTXAmount])
-  );
-
-  const isNFT = tx.assetType === AssetType.ERC721 || tx.assetType === AssetType.ERC1155;
+  const isNFT = txParams.assetType === AssetType.ERC721 || txParams.assetType === AssetType.ERC1155;
   return (
     <SafeAreaView className="flex-1 " style={{ backgroundColor: theme.colors.surfacePrimaryWithOpacity7, paddingTop: statusBarHeight + 48 }}>
       <NoNetwork />
@@ -173,11 +190,11 @@ const SendTo: React.FC<{ navigation: StackNavigation; route: RouteProp<RootStack
                 </Text>
               </View>
             )}
-            {(tx.assetType === AssetType.ERC721 || tx.assetType === AssetType.ERC1155) && (
+            {(txParams.assetType === AssetType.ERC721 || txParams.assetType === AssetType.ERC1155) && (
               <View className="flex flex-row p-4 rounded-lg w-full mb-4" style={{ backgroundColor: theme.colors.surfaceCard }}>
-                {tx.tokenImage ? (
+                {txParams.tokenImage ? (
                   <MixinImage
-                    source={{ uri: tx.tokenImage }}
+                    source={{ uri: txParams.tokenImage }}
                     width={63}
                     height={63}
                     className="mr-4 rounded"
@@ -189,18 +206,18 @@ const SendTo: React.FC<{ navigation: StackNavigation; route: RouteProp<RootStack
                 <View className="flex justify-center ml-4">
                   <View className="flex flex-row mb-1">
                     <View className="w-6 h-6 overflow-hidden rounded-full mr-2">
-                      {tx.iconUrl ? (
-                        <MixinImage source={{ uri: tx.iconUrl }} width={24} height={24} fallback={<DefaultNFTImage width={24} height={24} />} />
+                      {txParams.iconUrl ? (
+                        <MixinImage source={{ uri: txParams.iconUrl }} width={24} height={24} fallback={<DefaultNFTImage width={24} height={24} />} />
                       ) : (
                         <DefaultNFTImage width={24} height={24} />
                       )}
                     </View>
                     <Text numberOfLines={1} style={{ color: theme.colors.textSecondary, maxWidth: 204 }} className="leading-normal">
-                      {tx.contractName}
+                      {txParams.contractName}
                     </Text>
                   </View>
                   <Text numberOfLines={1} style={{ color: theme.colors.textPrimary, maxWidth: 235 }} className="leading-normal font-medium">
-                    {tx.nftName}
+                    {txParams.nftName}
                   </Text>
                 </View>
               </View>
@@ -213,8 +230,8 @@ const SendTo: React.FC<{ navigation: StackNavigation; route: RouteProp<RootStack
                 <View className="m-2">
                   <AvatarIcon width={24} height={24} />
                 </View>
-                <Text>{shortenAddress(tx.to)}</Text>
-                <Pressable onPress={() => Clipboard.setString(tx.to)}>
+                <Text>{shortenAddress(txParams.to)}</Text>
+                <Pressable onPress={() => Clipboard.setString(txParams.to)}>
                   <View className="m-1">
                     <CopyAllIcon color={theme.colors.textPrimary} width={16} height={16} />
                   </View>
@@ -241,12 +258,12 @@ const SendTo: React.FC<{ navigation: StackNavigation; route: RouteProp<RootStack
                   className="flex-1"
                   autoFocus
                 />
-                {tx.assetType === AssetType.Native ? (
+                {txParams.assetType === AssetType.Native ? (
                   <CFXTokenIcon width={24} height={24} />
-                ) : tx.iconUrl ? (
+                ) : txParams.iconUrl ? (
                   <MixinImage
                     resizeMode="center"
-                    source={{ uri: isNFT ? tx.tokenImage : tx.iconUrl }}
+                    source={{ uri: isNFT ? txParams.tokenImage : txParams.iconUrl }}
                     width={24}
                     height={24}
                     fallback={<TokenIconDefault width={24} height={24} />}
@@ -257,7 +274,7 @@ const SendTo: React.FC<{ navigation: StackNavigation; route: RouteProp<RootStack
               </View>
               <View className="flex flex-row justify-end items-center mt-2">
                 <Text className="flex-1 leading-6" style={{ maxWidth: 274 }}>
-                  Balance: {accountBalance} {tx.symbol}
+                  Balance: {accountBalance} {txParams.symbol}
                 </Text>
                 <View className="rounded-lg px-2 py-1 ml-2">
                   <Button

@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { SafeAreaView, View, KeyboardAvoidingView, TextInput, Pressable, ScrollView } from 'react-native';
 import { isAddress } from 'ethers';
+import { firstValueFrom } from 'rxjs';
 import { useAtom } from 'jotai';
 import { Text, useTheme, Divider } from '@rneui/themed';
 import { type StackNavigation, TokensStackName, RootStackList, ReceiveAddressStackName, ScanQRCodeStackName } from '@router/configs';
@@ -11,10 +12,11 @@ import WarningIcon from '@assets/icons/warning_2.svg';
 import WarningIcon1 from '@assets/icons/warning_1.svg';
 import Flip from '@assets/icons/flip.svg';
 import { RouteProp } from '@react-navigation/native';
-import { useReadOnlyTransaction, setTransactionTo } from '@core/WalletCore/Plugins/ReactInject/data/useTransaction';
+
 import { fetchChain } from '@cfx-kit/dapp-utils/dist/fetch';
 import { getCurrentNetwork } from '@core/WalletCore/Plugins/ReactInject/data/useCurrentNetwork';
 import { CHECK_ADDRESS_FEATURE } from '@utils/features';
+import { RPCResponse, RPCSend } from '@core/utils/send';
 
 export const SendPageHeaderOptions = ({ title = 'Send To' }: { title?: string }) =>
   ({
@@ -24,10 +26,12 @@ export const SendPageHeaderOptions = ({ title = 'Send To' }: { title?: string })
 
 const SendReceiver: React.FC<{ navigation: StackNavigation; route: RouteProp<RootStackList, typeof ReceiveAddressStackName> }> = ({ navigation, route }) => {
   const { theme } = useTheme();
-  const tx = useReadOnlyTransaction();
-  const [address, setAddress] = useState(tx?.to || '');
+  const {
+    params: { to },
+  } = route;
+  const [address, setAddress] = useState(to);
   const [errorMsg, setErrorMsg] = useState('');
-  const [, setToAddress] = useAtom(setTransactionTo);
+  // const [, setToAddress] = useAtom(setTransactionTo);
   const [loading, setLoading] = useState(false);
   const [isContractAddress, setIsContractAddress] = useState(false);
   const [isKnowRisk, setIsKnowRisk] = useState(false);
@@ -46,8 +50,7 @@ const SendReceiver: React.FC<{ navigation: StackNavigation; route: RouteProp<Roo
     } else {
       setErrorMsg('');
     }
-    setToAddress(address);
-    navigation.navigate(TokensStackName);
+    navigation.navigate(TokensStackName, { to: address });
   };
   const handleNextWithCheck = async () => {
     setLoading(true);
@@ -55,12 +58,11 @@ const SendReceiver: React.FC<{ navigation: StackNavigation; route: RouteProp<Roo
       setErrorMsg('');
       // check is contract address
       if (currentNetwork && !isContractAddress && !isKnowRisk) {
-        try {
-          const code = await fetchChain({ url: currentNetwork.endpoint, method: 'eth_getCode', params: [address] });
+        const code = await firstValueFrom(RPCSend<RPCResponse<string>>(currentNetwork.endpoint, { method: 'eth_getCode', params: [address] }));
+
+        if (code.result && code.result.startsWith('0x') && code.result.length > 2) {
           setLoading(false);
-          if (code) return setIsContractAddress(true);
-        } catch (error) {
-          setIsContractAddress(false);
+          return setIsContractAddress(true);
         }
       }
     } else {
@@ -69,8 +71,7 @@ const SendReceiver: React.FC<{ navigation: StackNavigation; route: RouteProp<Roo
     }
 
     setLoading(false);
-    setToAddress(address);
-    navigation.navigate(TokensStackName);
+    navigation.navigate(TokensStackName, { to: address });
   };
 
   const nextButtonDisabled = () => {
@@ -109,7 +110,7 @@ const SendReceiver: React.FC<{ navigation: StackNavigation; route: RouteProp<Roo
                 numberOfLines={2}
                 selectionColor={theme.colors.surfaceBrand}
               />
-              <Pressable testID="scanQRCode" onPress={() => navigation.navigate(ScanQRCodeStackName, { path: ReceiveAddressStackName })}>
+              <Pressable testID="scanQRCode" onPress={() => navigation.navigate(ScanQRCodeStackName)}>
                 <Flip color={theme.colors.surfaceBrand} width={20} height={20} />
               </Pressable>
             </View>
