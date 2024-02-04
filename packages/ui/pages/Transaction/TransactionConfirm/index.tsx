@@ -145,7 +145,7 @@ const TransactionConfirm: React.FC<{
         const gas = ethers.toBeHex(21000);
         return setGas({ gasLimit: gas, gasPrice: gasPrice.result, loading: false, error: false });
       } else {
-        const resut = await Methods.getTransactionGasAndGasLimit({
+        const gasRes = await Methods.getTransactionGasAndGasLimit({
           to: txParams.to,
           amount: txParams.amount,
           assetType: txParams.assetType,
@@ -153,10 +153,10 @@ const TransactionConfirm: React.FC<{
           tokenId: txParams.tokenId,
           decimals: txParams.decimals,
         });
-        if (!resut.gasLimit.error && !resut.gasPrice.error) {
+        if (!gasRes.gasLimit.error && !gasRes.gasPrice.error) {
           setGas({
-            gasLimit: resut.gasLimit.result,
-            gasPrice: resut.gasPrice.result,
+            gasLimit: gasRes.gasLimit.result,
+            gasPrice: gasRes.gasPrice.result,
             loading: false,
             error: false,
           });
@@ -165,8 +165,8 @@ const TransactionConfirm: React.FC<{
             loading: false,
             error: true,
             errorMsg: matchRPCErrorMessage({
-              message: resut.gasLimit?.error?.message || resut.gasPrice?.error?.message || '',
-              data: resut.gasLimit?.error?.data || resut.gasPrice?.error?.data || '',
+              message: gasRes.gasLimit?.error?.message || gasRes.gasPrice?.error?.message || '',
+              data: gasRes.gasLimit?.error?.data || gasRes.gasPrice?.error?.data || '',
             }),
           });
         }
