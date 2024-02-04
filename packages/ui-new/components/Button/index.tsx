@@ -50,11 +50,11 @@ const Button = ({
   const textStyle = useMemo(() => ({ ...styles.text, ...styles[`text-${mode}`], ...(disabled ? styles[`text-${mode}-disabled`] : null) }), [mode, disabled]);
   const iconPositionStyle = useMemo(
     () => ({
-      marginLeft: textAlign === 'center' ? 10 : ('auto' as const),
+      marginLeft: children === undefined ? undefined : textAlign === 'center' ? 10 : ('auto' as const),
       width: 24,
       height: 24,
     }),
-    [textAlign],
+    [textAlign, children],
   );
   const iconStyle = useMemo(() => ({ ...textStyle, ...iconPositionStyle }), [textStyle, iconPositionStyle]);
 
@@ -108,10 +108,10 @@ const styles = StyleSheet.create({
   ['button-small-square']: {
     ...Platform.select({
       android: {
-        height: 48,
+        width: 48,
       },
       ios: {
-        height: 45,
+        width: 45,
       },
     }),
   },
@@ -128,10 +128,10 @@ const styles = StyleSheet.create({
   ['button-medium-square']: {
     ...Platform.select({
       android: {
-        height: 56,
+        width: 56,
       },
       ios: {
-        height: 53,
+        width: 53,
       },
     }),
   },
@@ -148,10 +148,10 @@ const styles = StyleSheet.create({
   ['button-large-square']: {
     ...Platform.select({
       android: {
-        height: 64,
+        width: 64,
       },
       ios: {
-        height: 61,
+        width: 61,
       },
     }),
   },
