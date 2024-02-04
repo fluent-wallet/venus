@@ -19,15 +19,16 @@ const iconSourceMap = {
   loading: Loading,
 };
 
-type Message = Omit<_Message, 'type'> & { type: keyof typeof iconSourceMap };
+type Message = Omit<_Message, 'type'> & { type: keyof typeof iconSourceMap; width?: number | 'full' };
 
 declare module 'react-native-flash-message' {
-  export function showMessage(params: Omit<MessageOptions, 'type'> & { type: keyof typeof iconSourceMap }): void;
+  export function showMessage(params: Omit<MessageOptions, 'type'> & { type: keyof typeof iconSourceMap; width?: number | 'full' }): void;
 }
 
-const messageWidth = screenWidth - 32;
-const CustomMessage: React.FC<{ message: Message; style?: StyleProp<ViewStyle> }> = ({ style, message: { type, message, description, duration } }) => {
+const fullMessageWidth = screenWidth - 32;
+const CustomMessage: React.FC<{ message: Message; style?: StyleProp<ViewStyle> }> = ({ style, message: { type, message, description, duration, width } }) => {
   const { colors } = useTheme();
+  const messageWidth = !width || width === 'full' ? fullMessageWidth : width;
   const translateX = useSharedValue(-messageWidth);
   const opacity = useSharedValue(100);
 
@@ -41,7 +42,17 @@ const CustomMessage: React.FC<{ message: Message; style?: StyleProp<ViewStyle> }
   const progressBg = useMemo(() => (type === 'success' || type === 'loading' ? '#01C2E1' : '#FD6464'), [type]);
 
   return (
-    <View style={[styles.wrapper, { backgroundColor: colors.bgSecondary }, style]}>
+    <View
+      style={[
+        styles.wrapper,
+        {
+          backgroundColor: colors.bgSecondary,
+          width: messageWidth,
+          justifyContent: !width || width === 'full' ? 'flex-start' : 'center',
+        },
+        style,
+      ]}
+    >
       {type && iconSourceMap[type] && <Image style={styles.icon} source={iconSourceMap[type]} contentFit="contain" />}
 
       <View style={styles.textArea}>
@@ -50,7 +61,7 @@ const CustomMessage: React.FC<{ message: Message; style?: StyleProp<ViewStyle> }
         {description && <Text style={[styles.description, { color: colors.textPrimary }]}>{description}</Text>}
       </View>
 
-      <Animated.View style={[styles.duration, { transform: [{ translateX }], opacity, backgroundColor: progressBg }]} />
+      <Animated.View style={[styles.duration, { transform: [{ translateX }], opacity, backgroundColor: progressBg, width: messageWidth }]} />
     </View>
   );
 };
@@ -61,7 +72,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     position: 'relative',
-    marginHorizontal: 16,
+    alignSelf: 'center',
     padding: 16,
     borderRadius: 6,
     overflow: 'hidden',
@@ -73,7 +84,7 @@ const styles = StyleSheet.create({
     alignSelf: 'flex-start',
   },
   textArea: {
-    flex: 1,
+    alignSelf: 'flex-start',
   },
   title: {
     fontSize: 16,
@@ -86,7 +97,6 @@ const styles = StyleSheet.create({
   },
   duration: {
     position: 'absolute',
-    width: messageWidth,
     height: 4,
     backgroundColor: 'red',
     bottom: 0,
