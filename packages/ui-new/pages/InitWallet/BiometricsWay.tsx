@@ -22,7 +22,7 @@ export const showBiometricsDisabledMessage = () => {
 const BiometricsWay: React.FC<StackScreenProps<typeof BiometricsWayStackName>> = ({ navigation, route }) => {
   const { colors } = useTheme();
 
-  const _handleEnableBiometrics = useCallback(async () => {
+  const _handleCreateVault = useCallback(async () => {
     try {
       navigation.setOptions({ gestureEnabled: false });
       const supportedBiometryType = await plugins.Authentication.getSupportedBiometryType();
@@ -43,7 +43,7 @@ const BiometricsWay: React.FC<StackScreenProps<typeof BiometricsWayStackName>> =
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const { inAsync, execAsync: handleEnableBiometrics } = useInAsync(_handleEnableBiometrics);
+  const { inAsync, execAsync: handleCreateVault } = useInAsync(_handleCreateVault);
 
   return (
     <ScrollView style={styles.container}>
@@ -57,11 +57,11 @@ const BiometricsWay: React.FC<StackScreenProps<typeof BiometricsWayStackName>> =
         <Text style={{ color: colors.textNotice, fontWeight: '600' }}>Fingerprint</Text>.
       </Text>
 
-      <Button testID="enable" style={styles.btnEnable} mode="auto" loading={inAsync} onPress={handleEnableBiometrics}>
+      <Button testID="enable" style={styles.btnEnable} mode="auto" size="small" loading={inAsync} onPress={handleCreateVault}>
         Enable
       </Button>
 
-      <TouchableHighlight underlayColor={colors.underlay} style={styles.gotoSetpwd} onPress={() => navigation.navigate(PasswordWayStackName)}>
+      <TouchableHighlight underlayColor={colors.underlay} style={styles.gotoSetpwd} onPress={() => navigation.navigate(PasswordWayStackName, route.params)}>
         <Text style={[styles.gotoSetpwdText, { color: colors.textPrimary }]}>Set Password</Text>
       </TouchableHighlight>
     </ScrollView>

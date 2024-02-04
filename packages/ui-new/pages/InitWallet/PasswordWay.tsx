@@ -1,20 +1,24 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import { ScrollView, KeyboardAvoidingView, View, TouchableWithoutFeedback, StyleSheet } from 'react-native';
-import { useTheme } from '@react-navigation/native';
+import { useTheme, CommonActions } from '@react-navigation/native';
+import { showMessage } from 'react-native-flash-message';
 import { useForm, Controller } from 'react-hook-form';
+import plugins from '@core/WalletCore/Plugins';
+import useInAsync from '@hooks/useInAsync';
 import Text from '@components/Text';
 import Button from '@components/Button';
 import TextInput from '@components/TextInput';
 import Checkbox from '@components/Checkbox';
 import { isDev } from '@utils/getEnv';
-import { PasswordWayStackName, type StackScreenProps } from '@router/configs';
+import { PasswordWayStackName, HomeStackName, type StackScreenProps } from '@router/configs';
+import createVault from './createVaultWithRouterParams';
 
 type FormData = {
   password: string;
   confirm: string;
 };
 
-const PasswordWay: React.FC<StackScreenProps<typeof PasswordWayStackName>> = ({ navigation }) => {
+const PasswordWay: React.FC<StackScreenProps<typeof PasswordWayStackName>> = ({ navigation, route }) => {
   const { colors } = useTheme();
 
   const {
@@ -28,9 +32,26 @@ const PasswordWay: React.FC<StackScreenProps<typeof PasswordWayStackName>> = ({ 
       confirm: isDev ? '12345678' : '',
     },
   });
-  const onSubmit = (data: FormData) => console.log(data);
 
   const [confirm, setConfirm] = useState(isDev);
+
+  const _handleCreateVault = useCallback(async (data: FormData) => {
+    try {
+      navigation.setOptions({ gestureEnabled: false });
+      await plugins.Authentication.setPassword({ password: data.confirm });
+      if (await createVault(route.params, data.confirm)) {
+        showMessage({ type: 'success', message: 'You’ve successfully protected wallet. Remember to keep your Password, it’s your responsibility!' });
+        navigation.navigate(HomeStackName);
+        navigation.dispatch(CommonActions.reset({ index: 0, routes: [{ name: HomeStackName }] }));
+      }
+    } catch (err) {
+      console.log('Init Wallet by password error: ', err);
+    } finally {
+      navigation.setOptions({ gestureEnabled: true });
+    }
+  }, []);
+
+  const { inAsync, execAsync: handleCreateVault } = useInAsync(_handleCreateVault);
 
   return (
     <KeyboardAvoidingView style={styles.keyboardView}>
@@ -69,9 +90,9 @@ const PasswordWay: React.FC<StackScreenProps<typeof PasswordWayStackName>> = ({ 
           {errors.confirm?.type === 'validate' ? 'Password must be match.' : 'Must be at least 8 characters.'}
         </Text>
 
-        <TouchableWithoutFeedback onPress={() => setConfirm(pre => !pre)}>
+        <TouchableWithoutFeedback onPress={() => setConfirm((pre) => !pre)}>
           <View style={styles.rememberView}>
-            <Checkbox checked={confirm} pointerEvents='none'/>
+            <Checkbox checked={confirm} pointerEvents="none" />
             <Text style={[styles.rememberText, { color: colors.textPrimary }]}>
               ePay Wallet does not store your password.
               {'\n'}
@@ -80,7 +101,15 @@ const PasswordWay: React.FC<StackScreenProps<typeof PasswordWayStackName>> = ({ 
           </View>
         </TouchableWithoutFeedback>
 
-        <Button testID="createPasswordButton" style={styles.btn} mode="auto" onPress={handleSubmit(onSubmit)} disabled={!confirm}>
+        <Button
+          testID="createPasswordButton"
+          style={styles.btn}
+          mode="auto"
+          size="small"
+          onPress={handleSubmit(handleCreateVault)}
+          disabled={!confirm}
+          loading={inAsync}
+        >
           Create Password
         </Button>
       </ScrollView>
