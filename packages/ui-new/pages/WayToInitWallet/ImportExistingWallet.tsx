@@ -1,6 +1,6 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 import React, { useRef, useState, useCallback, type MutableRefObject } from 'react';
-import { View, TouchableWithoutFeedback, Keyboard, StyleSheet, type TextInput } from 'react-native';
+import { Pressable, Keyboard, StyleSheet, type TextInput } from 'react-native';
 import { useTheme } from '@react-navigation/native';
 import BottomSheet, { BottomSheetBackdrop, BottomSheetTextInput, type BottomSheetBackdropProps } from '@gorhom/bottom-sheet';
 import { Mnemonic } from 'ethers';
@@ -89,36 +89,35 @@ const ImportExistingWallet: React.FC<Props> = ({ bottomSheetRef, onSuccessConfir
       backdropComponent={renderBackdrop}
       onClose={handleClose}
     >
-      <TouchableWithoutFeedback
+      <Pressable
         onPress={() => {
           Keyboard.dismiss();
         }}
+        style={styles.bottomSheetContainer}
       >
-        <View style={styles.bottomSheetContainer}>
-          <BottomSheetTextInput
-            ref={textInputRef as any}
-            style={[styles.input, { color: colors.textPrimary }]}
-            testID="existingWalletInput"
-            underlineColorAndroid="transparent"
-            secureTextEntry={true}
-            editable
-            multiline
-            numberOfLines={6}
-            placeholder="Enter your seed phrase which words separated by space or private key"
-            onChangeText={(value) => {
-              setStatus(null);
-              existWalletValueRef.current = value;
-            }}
-            onBlur={handleCheckInput}
-          />
-          <Text style={[styles.tipText, { color: status?.type === 'error' ? palette.red4 : 'green', opacity: status === null ? 0 : 1 }]}>
-            {status?.message || 'placeholder'}
-          </Text>
-          <Button testID="confirmImportExistingWallet" style={styles.btn} onPress={handleConfirm} loading={inAsync}>
-            Confirm
-          </Button>
-        </View>
-      </TouchableWithoutFeedback>
+        <BottomSheetTextInput
+          ref={textInputRef as any}
+          style={[styles.input, { color: colors.textPrimary }]}
+          testID="existingWalletInput"
+          underlineColorAndroid="transparent"
+          secureTextEntry={true}
+          editable
+          multiline
+          numberOfLines={6}
+          placeholder="Enter your seed phrase which words separated by space or private key"
+          onChangeText={(value) => {
+            setStatus(null);
+            existWalletValueRef.current = value;
+          }}
+          onBlur={handleCheckInput}
+        />
+        <Text style={[styles.tipText, { color: status?.type === 'error' ? palette.red4 : 'green', opacity: status === null ? 0 : 1 }]}>
+          {status?.message || 'placeholder'}
+        </Text>
+        <Button testID="confirmImportExistingWallet" style={styles.btn} onPress={handleConfirm} loading={inAsync}>
+          Confirm
+        </Button>
+      </Pressable>
     </BottomSheet>
   );
 };

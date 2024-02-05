@@ -1,5 +1,5 @@
 import React, { useState, useCallback } from 'react';
-import { ScrollView, KeyboardAvoidingView, View, TouchableWithoutFeedback, StyleSheet } from 'react-native';
+import { ScrollView, KeyboardAvoidingView, Pressable, StyleSheet } from 'react-native';
 import { useTheme, CommonActions } from '@react-navigation/native';
 import { showMessage } from 'react-native-flash-message';
 import { useForm, Controller } from 'react-hook-form';
@@ -46,6 +46,9 @@ const PasswordWay: React.FC<StackScreenProps<typeof PasswordWayStackName>> = ({ 
       }
     } catch (err) {
       console.log('Init Wallet by password error: ', err);
+      showMessage({ type: 'failed', message: 'Create wallet failed!', description: String(err) ?? '' });
+      navigation.navigate(HomeStackName);
+      navigation.dispatch(CommonActions.reset({ index: 0, routes: [{ name: HomeStackName }] }));
     } finally {
       navigation.setOptions({ gestureEnabled: true });
     }
@@ -90,16 +93,14 @@ const PasswordWay: React.FC<StackScreenProps<typeof PasswordWayStackName>> = ({ 
           {errors.confirm?.type === 'validate' ? 'Password must be match.' : 'Must be at least 8 characters.'}
         </Text>
 
-        <TouchableWithoutFeedback onPress={() => setConfirm((pre) => !pre)}>
-          <View style={styles.rememberView}>
-            <Checkbox checked={confirm} pointerEvents="none" />
-            <Text style={[styles.rememberText, { color: colors.textPrimary }]}>
-              ePay Wallet does not store your password.
-              {'\n'}
-              Please <Text style={{ color: colors.textNotice, fontWeight: '600' }}>remember</Text> your password.
-            </Text>
-          </View>
-        </TouchableWithoutFeedback>
+        <Pressable style={styles.rememberView} onPress={() => setConfirm((pre) => !pre)}>
+          <Checkbox checked={confirm} pointerEvents="none" />
+          <Text style={[styles.rememberText, { color: colors.textPrimary }]}>
+            ePay Wallet does not store your password.
+            {'\n'}
+            Please <Text style={{ color: colors.textNotice, fontWeight: '600' }}>remember</Text> your password.
+          </Text>
+        </Pressable>
 
         <Button
           testID="createPasswordButton"

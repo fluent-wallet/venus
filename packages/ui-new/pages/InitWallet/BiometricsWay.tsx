@@ -1,5 +1,5 @@
 import React, { useCallback } from 'react';
-import { ScrollView, StyleSheet, TouchableHighlight } from 'react-native';
+import { ScrollView, StyleSheet, Pressable } from 'react-native';
 import { useTheme, CommonActions } from '@react-navigation/native';
 import { showMessage } from 'react-native-flash-message';
 import { Image } from 'expo-image';
@@ -36,7 +36,7 @@ const BiometricsWay: React.FC<StackScreenProps<typeof BiometricsWayStackName>> =
         navigation.dispatch(CommonActions.reset({ index: 0, routes: [{ name: HomeStackName }] }));
       }
     } catch (err) {
-      console.error('Enable Biometrics error: ', err);
+      console.log('Init Wallet by BiometricsWay error: ', err);
     } finally {
       navigation.setOptions({ gestureEnabled: true });
     }
@@ -61,9 +61,12 @@ const BiometricsWay: React.FC<StackScreenProps<typeof BiometricsWayStackName>> =
         Enable
       </Button>
 
-      <TouchableHighlight underlayColor={colors.underlay} style={styles.gotoSetpwd} onPress={() => navigation.navigate(PasswordWayStackName, route.params)}>
+      <Pressable
+        style={({ pressed }) => [styles.gotoSetpwd, { backgroundColor: pressed ? colors.underlay : 'transparent' }]}
+        onPress={() => navigation.navigate(PasswordWayStackName, route.params)}
+      >
         <Text style={[styles.gotoSetpwdText, { color: colors.textPrimary }]}>Set Password</Text>
-      </TouchableHighlight>
+      </Pressable>
     </ScrollView>
   );
 };

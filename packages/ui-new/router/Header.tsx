@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, TouchableHighlight, StyleSheet, Text, Platform } from 'react-native';
+import { View, Pressable, StyleSheet, Text, Platform } from 'react-native';
 import { useNavigation, useTheme } from '@react-navigation/native';
 import ArrowLeft from '@assets/icons/arrow-left.svg';
 import { setMode } from '@hooks/useMode';
@@ -11,9 +11,12 @@ const BackButton: React.FC = () => {
 
   if (!navigation.canGoBack()) return null;
   return (
-    <TouchableHighlight style={[styles.backButton, { borderColor: colors.borderThird }]} underlayColor={colors.underlay} onPress={() => navigation.goBack()}>
+    <Pressable
+      style={({ pressed }) => [styles.backButton, { borderColor: colors.borderThird, backgroundColor: pressed ? colors.underlay : 'transparent' }]}
+      onPress={() => navigation.goBack()}
+    >
       <ArrowLeft color={colors.iconPrimary} />
-    </TouchableHighlight>
+    </Pressable>
   );
 };
 
@@ -23,13 +26,15 @@ const Header: React.FC = () => {
   return (
     <View style={styles.header}>
       <BackButton />
-      <TouchableHighlight
-        style={[styles.backButton, { borderColor: colors.borderThird, marginLeft: 'auto' }]}
-        underlayColor={colors.underlay}
+      <Pressable
+        style={({ pressed }) => [
+          styles.backButton,
+          { borderColor: colors.borderThird, marginLeft: 'auto', backgroundColor: pressed ? colors.underlay : 'transparent' },
+        ]}
         onPress={() => setMode(mode === 'light' ? 'dark' : 'light')}
       >
         <Text style={{ color: colors.iconPrimary }}>M</Text>
-      </TouchableHighlight>
+      </Pressable>
     </View>
   );
 };
