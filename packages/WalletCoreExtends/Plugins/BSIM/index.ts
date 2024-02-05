@@ -49,7 +49,8 @@ export class BSIMPluginClass implements Plugin {
         .map((item) => ({ hexAddress: computeAddress(addHexPrefix(this.formatBSIMPubkey(item.key))), index: item.index, coinType: item.coinType }))
         .filter((item) => item.index > 0)
         .filter((item) => item.coinType === eSpaceCoinType)
-        .sort((itemA, itemB) => itemA.index - itemB.index);
+        .sort((itemA, itemB) => itemA.index - itemB.index)
+        .map((item, index) => ({ ...item, index }));
     } catch (err) {
       return [];
     }
