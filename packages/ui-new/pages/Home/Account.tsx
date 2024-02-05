@@ -1,5 +1,5 @@
 import React from 'react';
-import { TouchableHighlight, View, StyleSheet } from 'react-native';
+import { Pressable, View, StyleSheet } from 'react-native';
 import { useTheme } from '@react-navigation/native';
 import { Image } from 'expo-image';
 import { useCurrentAccount, useCurrentAddressOfAccount, useVaultOfAccount, VaultType } from '@core/WalletCore/Plugins/ReactInject';
@@ -16,26 +16,23 @@ const Account: React.FC<{ onPress: () => void }> = ({ onPress }) => {
   const vault = useVaultOfAccount(account?.id);
 
   return (
-    <TouchableHighlight underlayColor={colors.underlay} onPress={onPress} style={styles.accountHighLight}>
-      <View style={[styles.accountContainer, { borderColor: colors.borderThird }]}>
-        <View style={styles.accountImageWrapper}>
-          <Image style={styles.accountImage} source={{ uri: toDataUrl(address?.hex || zeroAddress) }} />
-          {vault?.type === VaultType.BSIM && <Image style={styles.acccountImageBSIMCard} source={BSIMCard} />}
-        </View>
-        <Text style={[styles.accountText, { color: colors.textPrimary }]} numberOfLines={1} ellipsizeMode="middle">
-          {account?.nickname ?? 'Loading...'}
-        </Text>
-        <ArrowLeft style={styles.accountArrow} color={colors.iconPrimary} />
+    <Pressable
+      style={({ pressed }) => [styles.accountContainer, { borderColor: colors.borderThird, backgroundColor: pressed ? colors.underlay : 'transparent' }]}
+      onPress={onPress}
+    >
+      <View style={styles.accountImageWrapper}>
+        <Image style={styles.accountImage} source={{ uri: toDataUrl(address?.hex || zeroAddress) }} />
+        {vault?.type === VaultType.BSIM && <Image style={styles.acccountImageBSIMCard} source={BSIMCard} />}
       </View>
-    </TouchableHighlight>
+      <Text style={[styles.accountText, { color: colors.textPrimary }]} numberOfLines={1} ellipsizeMode="middle">
+        {account?.nickname ?? 'Loading...'}
+      </Text>
+      <ArrowLeft style={styles.accountArrow} color={colors.iconPrimary} />
+    </Pressable>
   );
 };
 
 const styles = StyleSheet.create({
-  accountHighLight: {
-    overflow: 'hidden',
-    borderRadius: 6,
-  },
   accountContainer: {
     display: 'flex',
     flexDirection: 'row',
@@ -46,6 +43,7 @@ const styles = StyleSheet.create({
     height: 40,
     borderRadius: 6,
     borderWidth: 1,
+    overflow: 'hidden',
   },
   accountImageWrapper: {
     position: 'relative',

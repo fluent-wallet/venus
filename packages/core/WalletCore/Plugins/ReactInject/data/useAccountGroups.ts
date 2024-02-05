@@ -15,19 +15,19 @@ export const accountGroupsObservable = dbRefresh$.pipe(
         accountGroups.map(async (accountGroup) => ({
           accountGroup,
           vault: await accountGroup.vault,
-        }))
-      )
-    )
+        })),
+      ),
+    ),
   ),
-  map((mergeGroupsData) => {
-    const BSIMGroupIndex = mergeGroupsData.findIndex(({ vault }) => vault.type === VaultType.BSIM);
-    const accountGroups = mergeGroupsData.map(({ accountGroup }) => accountGroup);
+  map((groupDataAfterMergeValut) => {
+    const BSIMGroupIndex = groupDataAfterMergeValut.findIndex(({ vault }) => vault.type === VaultType.BSIM);
+    const accountGroups = groupDataAfterMergeValut.map(({ accountGroup }) => accountGroup);
     if (BSIMGroupIndex > -1) {
       const [BSIMGroup] = accountGroups.splice(BSIMGroupIndex, 1);
       return [BSIMGroup, ...accountGroups];
     }
     return accountGroups;
-  })
+  }),
 );
 
 const accountGroupsAtom = atomWithObservable(() => accountGroupsObservable, {

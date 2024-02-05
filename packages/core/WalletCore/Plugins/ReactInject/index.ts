@@ -19,6 +19,7 @@ export { useCurrentHdPath } from './data/useCurrentHdPath';
 export { useFinishedTxs, usePayloadOfTx, useUnfinishedTxs, useAssetOfTx } from './data/useTxs';
 export { useAssetsAllList, useAssetsNFTList, useAssetsTokenList, useAssetsTotalPriceValue, useAssetsInFetch } from './data/useAssets';
 export { usePendingRequests, useAllRequests } from './data/useRequests';
+export { useAccountsManage } from './data/useAccountsManage';
 export { default as VaultType } from '../../../database/models/Vault/VaultType';
 export { NetworkType, ChainType } from '../../../database/models/Network';
 

@@ -107,21 +107,14 @@ class AuthenticationPluginClass implements Plugin {
     (params: { password: string }): Promise<void>;
   } = async ({ password, authType }: { password?: string; authType?: AuthenticationType }) => {
     if (authType === AuthenticationType.Biometrics) {
-      KeyChain.getGenericPassword({ ...defaultOptions });
       const encryptedPassword = await authCryptoTool.encrypt(`${authCryptoTool.generateRandomString()}${new Date().getTime()}`);
 
       await KeyChain.setGenericPassword('ePayWallet-user', encryptedPassword, {
         ...defaultOptions,
       });
-
       this.settleAuthenticationType = AuthenticationType.Biometrics;
       await database.localStorage.set('SettleAuthentication', AuthenticationType.Biometrics);
-
-      // // If the user enables biometrics, we're trying to read the password immediately so we get the permission prompt.
-      // await this.getPassword();
-    }
-
-    if (typeof password === 'string' && !!password) {
+    } else if (typeof password === 'string' && !!password) {
       this.settleAuthenticationType = AuthenticationType.Password;
       await database.localStorage.set('SettleAuthentication', AuthenticationType.Password);
     }

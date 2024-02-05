@@ -40,37 +40,39 @@ const WayToInitWallet: React.FC<StackScreenProps<typeof WayToInitWalletStackName
   const bottomSheetRef = useRef<BottomSheet>(null!);
 
   return (
-    <ImageBackground source={mode === 'dark' ? WelcomeBgDark : WelcomeBgLight} style={styles.bg} resizeMode="cover">
-      <ScrollView>
-        <SafeAreaView style={styles.container}>
-          <Image style={styles.img} source={Img} contentFit="contain" />
-          <Image style={styles.welcomeSwiftShield} source={mode === 'dark' ? WelcomeSwiftShieldDark : WelcomeSwiftShieldLight} contentFit="contain" />
+    <>
+      <ImageBackground source={mode === 'dark' ? WelcomeBgDark : WelcomeBgLight} style={styles.bg} resizeMode="cover">
+        <ScrollView>
+          <SafeAreaView style={styles.container}>
+            <Image style={styles.img} source={Img} contentFit="contain" />
+            <Image style={styles.welcomeSwiftShield} source={mode === 'dark' ? WelcomeSwiftShieldDark : WelcomeSwiftShieldLight} contentFit="contain" />
 
-          <Button testID="connectBSIMWallet" textAlign="left" Icon={ArrowRight} style={styles.btn} onPress={handleConnectBSIMCard} loading={inConnecting}>
-            Connect BSIM Wallet
-          </Button>
+            <Button testID="connectBSIMWallet" textAlign="left" Icon={ArrowRight} style={styles.btn} onPress={handleConnectBSIMCard} loading={inConnecting}>
+              Connect BSIM Wallet
+            </Button>
 
-          <Text style={[styles.orAddWith, { color: colors.textThird }]}>or add with:</Text>
+            <Text style={[styles.orAddWith, { color: colors.textThird }]}>or add with:</Text>
 
-          <Button
-            testID="createNewWallet"
-            textAlign="left"
-            style={styles.btn}
-            onPress={() => navigation.navigate(BiometricsWayStackName, { type: 'createNewWallet' })}
-          >
-            Create new wallet
-          </Button>
+            <Button
+              testID="createNewWallet"
+              textAlign="left"
+              style={styles.btn}
+              onPress={() => navigation.navigate(BiometricsWayStackName, { type: 'createNewWallet' })}
+            >
+              Create new wallet
+            </Button>
 
-          <Button testID="importExistingWallet" textAlign="left" style={styles.btnLast} onPress={() => bottomSheetRef.current?.expand()}>
-            Import existing wallet
-          </Button>
-        </SafeAreaView>
-      </ScrollView>
+            <Button testID="importExistingWallet" textAlign="left" style={styles.btnLast} onPress={() => bottomSheetRef.current?.expand()}>
+              Import existing wallet
+            </Button>
+          </SafeAreaView>
+        </ScrollView>
+      </ImageBackground>
       <ImportExistingWallet
         bottomSheetRef={bottomSheetRef}
         onSuccessConfirm={(value) => navigation.navigate(BiometricsWayStackName, { type: 'importExistWallet', value })}
       />
-    </ImageBackground>
+    </>
   );
 };
 

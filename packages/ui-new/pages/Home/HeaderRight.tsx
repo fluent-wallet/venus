@@ -1,8 +1,9 @@
 import React, { useMemo } from 'react';
-import { TouchableHighlight, View, StyleSheet } from 'react-native';
+import { Pressable, View, StyleSheet } from 'react-native';
 import { useTheme } from '@react-navigation/native';
 import { useCurrentNetwork } from '@core/WalletCore/Plugins/ReactInject';
 import Text from '@components/Text';
+import { HomeStackName, SettingsStackName, type StackScreenProps } from '@router/configs';
 import ESpaceMainnet from '@assets/chains/eSpace-mainnet.svg';
 import QrCode from '@assets/icons/qr-code.svg';
 import Settings from '@assets/icons/settings.svg';
@@ -25,26 +26,33 @@ const Network: React.FC = () => {
   return <Text style={[styles.networkText, { color: colors.textPrimary }]}>{showName}</Text>;
 };
 
-const HeaderRight: React.FC = () => {
+const HeaderRight: React.FC<{ navigation: StackScreenProps<typeof HomeStackName>['navigation'] }> = ({ navigation }) => {
   const { colors } = useTheme();
 
   return (
     <View style={styles.container}>
-      <TouchableHighlight underlayColor={colors.underlay}>
-        <View style={[styles.wrapper, styles.wrapperLeft, { borderColor: colors.borderThird }]}>
-          <Network />
-        </View>
-      </TouchableHighlight>
-      <TouchableHighlight underlayColor={colors.underlay}>
-        <View style={[styles.wrapper, { borderColor: colors.borderThird }]}>
-          <QrCode />
-        </View>
-      </TouchableHighlight>
-      <TouchableHighlight underlayColor={colors.underlay}>
-        <View style={[styles.wrapper, styles.wrapperRight, { borderColor: colors.borderThird }]}>
-          <Settings />
-        </View>
-      </TouchableHighlight>
+      <Pressable
+        style={({ pressed }) => [
+          styles.wrapper,
+          styles.wrapperLeft,
+          { borderColor: colors.borderThird, backgroundColor: pressed ? colors.underlay : 'transparent' },
+        ]}
+      >
+        <Network />
+      </Pressable>
+      <Pressable style={({ pressed }) => [styles.wrapper, { borderColor: colors.borderThird, backgroundColor: pressed ? colors.underlay : 'transparent' }]}>
+        <QrCode />
+      </Pressable>
+      <Pressable
+        style={({ pressed }) => [
+          styles.wrapper,
+          styles.wrapperRight,
+          { borderColor: colors.borderThird, backgroundColor: pressed ? colors.underlay : 'transparent' },
+        ]}
+        onPress={() => navigation.navigate(SettingsStackName)}
+      >
+        <Settings />
+      </Pressable>
     </View>
   );
 };
