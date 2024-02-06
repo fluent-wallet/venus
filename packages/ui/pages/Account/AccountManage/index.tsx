@@ -82,7 +82,6 @@ const AccountManage: React.FC<{ navigation: StackNavigation }> = ({ navigation }
                   type: 'success',
                 });
                 RNRestart.restart();
-                navigation.navigate(WelcomeStackName);
               } catch (err) {
                 if (String(err)?.includes('cancel')) {
                   return;
