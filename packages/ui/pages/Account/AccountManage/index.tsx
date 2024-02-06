@@ -10,6 +10,7 @@ import { useAccountGroups } from '@core/WalletCore/Plugins/ReactInject';
 import { type StackNavigation, WelcomeStackName, AddAccountStackName } from '@router/configs';
 import AccountGroupItem from '../AccountGroupItem';
 import { ADD_ACCOUNT_FEATURE } from '@utils/features';
+import RNRestart from 'react-native-restart'; 
 
 const AccountManage: React.FC<{ navigation: StackNavigation }> = ({ navigation }: { navigation: StackNavigation }) => {
   const { theme } = useTheme();
@@ -80,6 +81,7 @@ const AccountManage: React.FC<{ navigation: StackNavigation }> = ({ navigation }
                   message: 'Clear account data successfully',
                   type: 'success',
                 });
+                RNRestart.restart();
                 navigation.navigate(WelcomeStackName);
               } catch (err) {
                 if (String(err)?.includes('cancel')) {
