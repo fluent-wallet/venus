@@ -78,24 +78,17 @@ const Tabs: React.FC = () => {
   return (
     <>
       <TabsSelector tabs={tabs} currentTabIndex={currentTabIndex} currentTab={currentTab} handleClickTabLabel={handleClickTabLabel} />
-      <PagerView ref={pageViewRef} style={{ flex: 1 }} initialPage={0} onPageSelected={(evt) => setCurrentTab(tabs[evt.nativeEvent.position])}>
+      <PagerView
+        ref={pageViewRef}
+        style={{ flex: 1, backgroundColor: 'yellow' }}
+        initialPage={0}
+        onPageSelected={(evt) => setCurrentTab(tabs[evt.nativeEvent.position])}
+      >
         {tabs?.map((tab, index) => (
-          <View style={{ backgroundColor: 'red' }} key={index}>
-            {tab === 'Tokens' && index === currentTabIndex && (
-              <View>
-                <Text>Tokens</Text>
-              </View>
-            )}
-            {tab === 'NFTs' && index === currentTabIndex && (
-              <View>
-                <Text>Nfts</Text>
-              </View>
-            )}
-            {tab === 'Activity' && index === currentTabIndex && (
-              <View>
-                <Text>Activity</Text>
-              </View>
-            )}
+          <View style={{ flex: 1 }} key={index}>
+            {tab === 'Tokens' && index === currentTabIndex && <Text>Tokens</Text>}
+            {tab === 'NFTs' && index === currentTabIndex && <Text>Nfts</Text>}
+            {tab === 'Activity' && index === currentTabIndex && <Text>Activity</Text>}
           </View>
         ))}
       </PagerView>

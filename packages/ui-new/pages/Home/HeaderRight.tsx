@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React from 'react';
 import { Pressable, View, StyleSheet } from 'react-native';
 import { useTheme } from '@react-navigation/native';
 import { useCurrentNetwork } from '@core/WalletCore/Plugins/ReactInject';
@@ -15,18 +15,20 @@ const NetworkSelector: React.FC<{ onPress: () => void }> = ({ onPress }) => {
 const Network: React.FC = () => {
   const { colors } = useTheme();
   const currentNetwork = useCurrentNetwork();
-  const showName = useMemo(() => {
-    if (!currentNetwork?.name) return '';
-    const split = currentNetwork.name.split(' ');
-    return split.length > 1 ? split[1] : split[0];
-  }, [currentNetwork?.name]);
 
   if (!currentNetwork) return null;
   if (currentNetwork.netId === 1030) return <ESpaceMainnet />;
-  return <Text style={[styles.networkText, { color: colors.textPrimary }]}>{showName}</Text>;
+  return (
+    <Text style={[styles.networkText, { color: colors.textPrimary }]} numberOfLines={2}>
+      {currentNetwork.name}
+    </Text>
+  );
 };
 
-const HeaderRight: React.FC<{ navigation: StackScreenProps<typeof HomeStackName>['navigation'] }> = ({ navigation }) => {
+const HeaderRight: React.FC<{ navigation: StackScreenProps<typeof HomeStackName>['navigation']; onPressNetwork: () => void }> = ({
+  navigation,
+  onPressNetwork,
+}) => {
   const { colors } = useTheme();
 
   return (
@@ -37,6 +39,7 @@ const HeaderRight: React.FC<{ navigation: StackScreenProps<typeof HomeStackName>
           styles.wrapperLeft,
           { borderColor: colors.borderThird, backgroundColor: pressed ? colors.underlay : 'transparent' },
         ]}
+        onPress={onPressNetwork}
       >
         <Network />
       </Pressable>

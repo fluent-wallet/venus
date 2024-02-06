@@ -1,3 +1,6 @@
+import { zeroAddress } from '@core/utils/address';
+import { memoize } from 'lodash-es';
+
 /* eslint-disable no-bitwise */
 // helper functions for that ctx
 function write(buffer: any, offs: any, ...data: any[]) {
@@ -360,7 +363,8 @@ class Blockies {
   static cache: Record<string, string> = {}; // Use Record<keyType, valueType> for object types
 }
 
-export function toDataUrl(address: string) {
+function _toDataUrl(_address: string | null | undefined) {
+  const address = _address || zeroAddress;
   const cache = Blockies.cache[address];
   if (address && cache) {
     return cache;
@@ -394,3 +398,5 @@ export function toDataUrl(address: string) {
   Blockies.cache[address] = ret;
   return ret;
 }
+
+export const toDataUrl = memoize(_toDataUrl);

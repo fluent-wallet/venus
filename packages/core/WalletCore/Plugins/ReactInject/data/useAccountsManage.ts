@@ -18,6 +18,7 @@ export const accountsManageObservable = combineLatest([dbRefresh$.pipe(startWith
           const accountGroup = await account.accountGroup;
           return {
             account: {
+              key: account.id,
               nickname: account.nickname,
               id: account.id,
               hidden: account.hidden,
@@ -31,20 +32,52 @@ export const accountsManageObservable = combineLatest([dbRefresh$.pipe(startWith
     ),
   ),
   map((mergedAccountsData) => {
+    // const grouped = groupBy(
+    //   mergedAccountsData.filter((item) => !item.account.hidden),
+    //   (account) => account.accountGroup.id,
+    // );
+    // const groupedArray = toPairs(grouped).map(([accountGroupId, accounts]) => ({
+    //   key: accountGroupId,
+    //   id: accountGroupId,
+    //   nickname: accounts[0].accountGroup.nickname,
+    //   vaultType: accounts[0].vault.type,
+    //   accounts: accounts.map(({ account }) => account),
+    // }));
+
+    // const sortedGroupedArray = sortBy(groupedArray, (item) => item.vaultType !== VaultType.BSIM);
+
+    // return flatMap(sortedGroupedArray, ({ id, nickname, vaultType, accounts }) => [{ id, nickname, vaultType }, ...accounts]);
+
     const grouped = groupBy(
       mergedAccountsData.filter((item) => !item.account.hidden),
       (account) => account.accountGroup.id,
     );
     const groupedArray = toPairs(grouped).map(([accountGroupId, accounts]) => ({
-      id: accountGroupId,
-      nickname: accounts[0].accountGroup.nickname,
-      vaultType: accounts[0].vault.type,
-      accounts: accounts.map(({ account }) => account),
+      title: {
+        key: accountGroupId,
+        id: accountGroupId,
+        nickname: accounts[0].accountGroup.nickname,
+        vaultType: accounts[0].vault.type,
+      },
+      data: accounts.map(({ account }) => account),
     }));
 
-    const sortedGroupedArray = sortBy(groupedArray, (item) => item.vaultType !== VaultType.BSIM);
-
-    return flatMap(sortedGroupedArray, ({ id, nickname, vaultType, accounts }) => [{ id, nickname, vaultType }, ...accounts]);
+    const sortedGroupedArray = sortBy(groupedArray, (item) => item.title.vaultType !== VaultType.BSIM);
+    return [
+      ...sortedGroupedArray,
+      ...sortedGroupedArray,
+      ...sortedGroupedArray,
+      ...sortedGroupedArray,
+      ...sortedGroupedArray,
+      ...sortedGroupedArray,
+      ...sortedGroupedArray,
+      ...sortedGroupedArray,
+      ...sortedGroupedArray,
+      ...sortedGroupedArray,
+      ...sortedGroupedArray,
+      ...sortedGroupedArray,
+      ...sortedGroupedArray,
+    ];
   }),
 );
 
