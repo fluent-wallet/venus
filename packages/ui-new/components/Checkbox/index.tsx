@@ -8,11 +8,11 @@ interface Props extends PressableProps {
   onChange?: (checked: boolean) => void;
 }
 
-const Checkbox: React.FC<Props> = ({ checked, onChange, ...props }) => {
+const Checkbox: React.FC<Props> = ({ checked, onChange, style, ...props }) => {
   const { colors, palette } = useTheme();
 
   return (
-    <Pressable style={[styles.checkbox, { backgroundColor: colors.up }]} onPress={!onChange ? undefined : () => onChange?.(!checked)} {...props}>
+    <Pressable style={[styles.checkbox, { backgroundColor: colors.up }, typeof style === 'object' && style]} onPress={!onChange ? undefined : () => onChange?.(!checked)} {...props}>
       <Check color={checked ? palette.gray8 : palette.gray0} />
     </Pressable>
   );
@@ -25,7 +25,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     width: 24,
     height: 24,
-    borderRadius: 4,
+    borderRadius: 4.8,
   },
 });
 

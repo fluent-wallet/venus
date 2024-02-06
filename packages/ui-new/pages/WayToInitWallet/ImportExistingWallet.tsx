@@ -2,17 +2,17 @@
 import React, { useRef, useState, useCallback, type MutableRefObject } from 'react';
 import { Pressable, Keyboard, StyleSheet, type TextInput } from 'react-native';
 import { useTheme } from '@react-navigation/native';
-import BottomSheet, { BottomSheetBackdrop, BottomSheetTextInput, type BottomSheetBackdropProps } from '@gorhom/bottom-sheet';
 import { Mnemonic } from 'ethers';
 import * as secp from '@noble/secp256k1';
 import { stripHexPrefix } from '@core/utils/base';
 import useInAsync from '@hooks/useInAsync';
 import Button from '@components/Button';
 import Text from '@components/Text';
-export { type BottomSheet };
+import BottomSheet, { BottomSheetTextInput, type BottomSheetMethods } from '@components/BottomSheet';
+export { type BottomSheetMethods };
 
 interface Props {
-  bottomSheetRef: MutableRefObject<BottomSheet>;
+  bottomSheetRef: MutableRefObject<BottomSheetMethods>;
   onSuccessConfirm?: (value: string) => void;
 }
 
@@ -59,7 +59,7 @@ const ImportExistingWallet: React.FC<Props> = ({ bottomSheetRef, onSuccessConfir
     }
   }, [status, handleCheckInput, onSuccessConfirm]);
 
-  const handleClickBackdrop = useCallback(() => {
+  const handlePressBackdrop = useCallback(() => {
     if (!textInputRef.current) return;
     if (textInputRef.current.isFocused()) {
       textInputRef.current.blur();
@@ -68,27 +68,12 @@ const ImportExistingWallet: React.FC<Props> = ({ bottomSheetRef, onSuccessConfir
     }
   }, []);
 
-  const renderBackdrop = useCallback(
-    (props: BottomSheetBackdropProps) => (
-      <BottomSheetBackdrop {...props} disappearsOnIndex={-1} appearsOnIndex={0} pressBehavior="collapse" onPress={handleClickBackdrop} />
-    ),
-    [],
-  );
-
   const handleClose = useCallback(() => {
     setStatus(null);
   }, []);
 
   return (
-    <BottomSheet
-      ref={bottomSheetRef}
-      index={-1}
-      snapPoints={snapPoints}
-      keyboardBlurBehavior="restore"
-      enablePanDownToClose
-      backdropComponent={renderBackdrop}
-      onClose={handleClose}
-    >
+    <BottomSheet ref={bottomSheetRef} snapPoints={snapPoints} onClose={handleClose} backDropPressBehavior="collapse" handlePressBackdrop={handlePressBackdrop}>
       <Pressable
         onPress={() => {
           Keyboard.dismiss();

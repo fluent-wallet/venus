@@ -63,7 +63,7 @@ export const lightColors = {
   iconFourth: palette.gray8,
   iconFifth: palette.gray0,
   underlay: palette.gray2,
-  up: palette.green4,
+  up: '#01C2E1',
   down: '#FD6464',
 };
 
@@ -88,7 +88,7 @@ export const darkColors: typeof lightColors = {
   iconFourth: palette.gray8,
   iconFifth: palette.gray8,
   underlay: palette.gray7,
-  up: palette.green4,
+  up: '#01C2E1',
   down: '#FD6464',
 };
 

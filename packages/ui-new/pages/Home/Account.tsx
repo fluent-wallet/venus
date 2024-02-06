@@ -3,7 +3,6 @@ import { Pressable, View, StyleSheet } from 'react-native';
 import { useTheme } from '@react-navigation/native';
 import { Image } from 'expo-image';
 import { useCurrentAccount, useCurrentAddressOfAccount, useVaultOfAccount, VaultType } from '@core/WalletCore/Plugins/ReactInject';
-import { zeroAddress } from '@core/utils/address';
 import Text from '@components/Text';
 import { toDataUrl } from '@utils/blockies';
 import BSIMCard from '@assets/icons/bsim-card.webp';
@@ -21,7 +20,7 @@ const Account: React.FC<{ onPress: () => void }> = ({ onPress }) => {
       onPress={onPress}
     >
       <View style={styles.accountImageWrapper}>
-        <Image style={styles.accountImage} source={{ uri: toDataUrl(address?.hex || zeroAddress) }} />
+        <Image style={styles.accountImage} source={{ uri: toDataUrl(address?.hex) }} />
         {vault?.type === VaultType.BSIM && <Image style={styles.acccountImageBSIMCard} source={BSIMCard} />}
       </View>
       <Text style={[styles.accountText, { color: colors.textPrimary }]} numberOfLines={1} ellipsizeMode="middle">
@@ -54,7 +53,7 @@ const styles = StyleSheet.create({
   accountImage: {
     width: 24,
     height: 24,
-    borderRadius: 22,
+    borderRadius: 24,
   },
   acccountImageBSIMCard: {
     position: 'absolute',

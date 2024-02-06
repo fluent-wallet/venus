@@ -15,7 +15,7 @@ import WelcomeSwiftShieldLight from '@assets/images/welcome-SwiftShield-light.we
 import WelcomeBgLight from '@assets/images/welcome-bg-light.webp';
 import WelcomeBgDark from '@assets/images/welcome-bg-dark.webp';
 import Img from '@assets/images/welcome-img.webp';
-import ImportExistingWallet, { type BottomSheet } from './ImportExistingWallet';
+import ImportExistingWallet, { type BottomSheetMethods } from './ImportExistingWallet';
 
 const WayToInitWallet: React.FC<StackScreenProps<typeof WayToInitWalletStackName>> = ({ navigation }) => {
   const { mode, colors } = useTheme();
@@ -37,7 +37,7 @@ const WayToInitWallet: React.FC<StackScreenProps<typeof WayToInitWalletStackName
 
   const { inAsync: inConnecting, execAsync: handleConnectBSIMCard } = useInAsync(_handleConnectBSIMCard);
 
-  const bottomSheetRef = useRef<BottomSheet>(null!);
+  const bottomSheetRef = useRef<BottomSheetMethods>(null!);
 
   return (
     <>

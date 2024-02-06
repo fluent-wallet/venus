@@ -2,15 +2,19 @@ import React, { useRef, type ComponentProps } from 'react';
 import { ScrollView, View, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTheme } from '@react-navigation/native';
+import methods from '@core/WalletCore/Methods';
+import { getCurrentNetwork } from '@core/WalletCore/Plugins/ReactInject/data/useCurrentNetwork';
 import Button from '@components/Button';
 import Text from '@components/Text';
 import { HomeStackName, type StackScreenProps } from '@router/configs';
+import { isProd } from '@utils/getEnv';
 import ArrowUpward from '@assets/icons/arrow-upward.svg';
 import ArrowDownward from '@assets/icons/arrow-downward.svg';
 import Buy from '@assets/icons/buy.svg';
 import More from '@assets/icons/more.svg';
 import Account from './Account';
-import AccountSelector, { type BottomSheet } from './AccountSelector';
+import AccountSelector, { type BottomSheetMethods } from './AccountSelector';
+import NetworkSelector from './NetworkSelector';
 import HeaderRight from './HeaderRight';
 import { CurrentAddress, TotalPrice } from './Address&TotalPrice';
 import Tabs from './Tabs';
@@ -26,36 +30,48 @@ const WalletLink: React.FC<{ title: string; Icon: ComponentProps<typeof Button>[
 };
 
 const Home: React.FC<StackScreenProps<typeof HomeStackName>> = ({ navigation }) => {
-  const accountSelectorRef = useRef<BottomSheet>(null!);
+  const accountSelectorRef = useRef<BottomSheetMethods>(null!);
+  const networkSelectorRef = useRef<BottomSheetMethods>(null!);
 
   return (
     <>
-      <ScrollView>
-        <SafeAreaView style={styles.container}>
-          <View style={styles.header}>
-            <Account onPress={() => accountSelectorRef.current?.expand()} />
-            <HeaderRight navigation={navigation} />
-          </View>
-          <CurrentAddress />
-          <TotalPrice />
-          <View style={styles.walletLinkContainer}>
-            <WalletLink title="Send" Icon={ArrowUpward} />
-            <WalletLink title="Receive" Icon={ArrowDownward} />
-            <WalletLink title="Buy" Icon={Buy} />
-            <WalletLink title="More" Icon={More} />
-          </View>
-          <Tabs />
-        </SafeAreaView>
-      </ScrollView>
-      <AccountSelector accountSelectorRef={accountSelectorRef} />
+      <SafeAreaView style={styles.container}>
+        <View style={styles.header}>
+          <Account onPress={() => accountSelectorRef.current?.expand()} />
+          <HeaderRight
+            navigation={navigation}
+            onPressNetwork={() => {
+              if (isProd) {
+                const currentNetwork = getCurrentNetwork();
+                methods.switchToNetwork(currentNetwork?.netId === 1030 ? 71 : 1030);
+              } else {
+                networkSelectorRef.current?.expand();
+              }
+            }}
+          />
+        </View>
+        <CurrentAddress />
+        <TotalPrice />
+        <View style={styles.walletLinkContainer}>
+          <WalletLink title="Send" Icon={ArrowUpward} />
+          <WalletLink title="Receive" Icon={ArrowDownward} />
+          <WalletLink title="Buy" Icon={Buy} />
+          <WalletLink title="More" Icon={More} />
+        </View>
+        <Tabs />
+      </SafeAreaView>
+      <AccountSelector selectorRef={accountSelectorRef} />
+      <NetworkSelector selectorRef={networkSelectorRef} />
     </>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
+    flex: 1,
     paddingTop: 12,
     paddingHorizontal: 16,
+    paddingBottom: 16,
   },
   header: {
     display: 'flex',
