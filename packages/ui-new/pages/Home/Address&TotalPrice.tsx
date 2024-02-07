@@ -80,6 +80,7 @@ const styles = StyleSheet.create({
     display: 'flex',
     flexDirection: 'row',
     alignItems: 'center',
+    paddingHorizontal: 16,
     minWidth: 140,
     gap: 6,
   },
@@ -89,6 +90,7 @@ const styles = StyleSheet.create({
     display: 'flex',
     flexDirection: 'row',
     alignItems: 'center',
+    paddingHorizontal: 16,
     minWidth: 140,
     height: 45,
   },
@@ -102,6 +104,7 @@ const styles = StyleSheet.create({
     display: 'flex',
     flexDirection: 'row',
     alignItems: 'center',
+    left: 16,
     gap: 2,
   },
   eye: {

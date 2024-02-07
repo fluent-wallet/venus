@@ -88,8 +88,8 @@ export const fetchAssetsBalance = async ({
     assets.map(({ contractAddress, assetType }) =>
       assetType === AssetType.ERC20 && contractAddress
         ? fetchContractAssetBalance({ networkType, endpoint, account, contractAddress })
-        : fetchNativeAssetBalance({ networkType, endpoint, account })
-    )
+        : fetchNativeAssetBalance({ networkType, endpoint, account }),
+    ),
   );
 
 export const fetchAssetsBalanceBatch = ({
@@ -97,7 +97,7 @@ export const fetchAssetsBalanceBatch = ({
   account,
   assets,
   networkType,
-  key
+  key,
 }: {
   endpoint: string;
   account: string;
@@ -122,6 +122,7 @@ export const fetchAssetsBalanceBatch = ({
               to: contractAddress,
               data: `0x70a08231000000000000000000000000${account.slice(2)}`,
             },
+        // networkRpcSuffixMap[networkType],
       ],
     })),
   });

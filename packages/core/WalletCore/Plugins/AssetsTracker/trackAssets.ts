@@ -25,13 +25,20 @@ const trackAssets = async ({
 }) => {
   const assetsHash: Record<string, AssetInfo> = {};
   const assetsSortedKeys: Array<string> = [];
-  
+
   /** Prioritize the use of data from fetchFromServer. */
   if (chainFetcher && typeof chainFetcher.fetchFromServer === 'function') {
     let assets: AssetInfo[];
     try {
       assets = await chainFetcher.fetchFromServer({ address, network });
-      assets?.forEach((asset) => (assetsHash[asset.contractAddress || AssetType.Native] = asset));
+      assets?.forEach((asset) => {
+        if (!asset.contractAddress) {
+          assetsHash[AssetType.Native] = asset;
+          assetsHash[AssetType.Native].icon = nativeAsset.icon ?? undefined;
+        } else {
+          assetsHash[asset.contractAddress] = asset;
+        }
+      });
     } catch (err) {
       assets = [];
     }
@@ -53,8 +60,8 @@ const trackAssets = async ({
                 network,
                 ...assets[index],
               },
-              true
-            )
+              true,
+            ),
           );
         }
 
@@ -68,7 +75,7 @@ const trackAssets = async ({
                 asset: assetInDB,
                 ...(priceChanged ? { priceInUSDT: assets[index].priceInUSDT } : null),
                 ...(iconChanged ? { icon: assets[index].icon } : null),
-              })
+              }),
             );
           }
         }
@@ -115,20 +122,22 @@ const trackAssets = async ({
                 endpoint: network.endpoint,
                 account: address.hex,
                 assets: assetsNeedFetch.map((asset) => ({ assetType: asset.type, contractAddress: asset.contractAddress })),
-              })
-            ).pipe(catchError(() => of(null)))
-          )
-        ).pipe(take(1))
+              }),
+            ).pipe(catchError(() => of(null))),
+          ),
+        ).pipe(take(1)),
       );
       const assets: Array<AssetInfo> | undefined = balancesResult?.map((balance, index) => {
         const asset = assetsNeedFetch[index];
+
         return {
           type: asset.type!,
           contractAddress: asset.contractAddress!,
           name: asset.name!,
           symbol: asset.symbol!,
           decimals: asset.decimals!,
-          balance,
+          balance: typeof balance === 'string' ? balance : undefined!,
+          icon: asset.icon!,
         };
       });
       assets?.forEach((asset) => (assetsHash[asset.contractAddress || AssetType.Native] = asset));
@@ -142,7 +151,7 @@ const trackAssets = async ({
         new Decimal(assetsHash[hashKey].priceInUSDT!)
           .mul(new Decimal(assetsHash[hashKey].balance).div(Decimal.pow(new Decimal(10), new Decimal(assetsHash[hashKey].decimals ?? 0))))
           .toString(),
-        2
+        2,
       );
     }
   }
@@ -179,7 +188,7 @@ const trackAssets = async ({
       return varA < varB ? -1 : 1;
     })
     .forEach((hashKey) => assetsSortedKeys.push(hashKey));
-  
+
   return { assetsHash, assetsSortedKeys } as const;
 };
 

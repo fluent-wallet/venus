@@ -40,7 +40,7 @@ export class NetworkMethod {
         name: params.nativeAsset?.name || network.name.split(' ')?.[0] || 'Ether',
         symbol: params.nativeAsset?.symbol || network.name.split(' ')?.[0] || 'ETH',
         decimals: params.nativeAsset?.decimals || 18,
-        icon: params.nativeAsset?.icon || 'https://scan-icons.oss-cn-hongkong.aliyuncs.com/mainnet/0x14b2d3bc65e74dae1030eafd8ac30c533c976a9b.png',
+        icon: params.nativeAsset?.icon,
       },
       true
     );

@@ -70,7 +70,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     paddingTop: 12,
-    paddingHorizontal: 16,
     paddingBottom: 16,
   },
   header: {
@@ -78,6 +77,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+    paddingHorizontal: 16,
   },
   walletLinkContainer: {
     marginTop: 32,
@@ -85,6 +85,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+    paddingHorizontal: 16,
   },
   walletLink: {
     flex: 0,

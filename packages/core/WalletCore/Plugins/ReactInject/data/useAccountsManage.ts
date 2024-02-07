@@ -63,21 +63,7 @@ export const accountsManageObservable = combineLatest([dbRefresh$.pipe(startWith
     }));
 
     const sortedGroupedArray = sortBy(groupedArray, (item) => item.title.vaultType !== VaultType.BSIM);
-    return [
-      ...sortedGroupedArray,
-      ...sortedGroupedArray,
-      ...sortedGroupedArray,
-      ...sortedGroupedArray,
-      ...sortedGroupedArray,
-      ...sortedGroupedArray,
-      ...sortedGroupedArray,
-      ...sortedGroupedArray,
-      ...sortedGroupedArray,
-      ...sortedGroupedArray,
-      ...sortedGroupedArray,
-      ...sortedGroupedArray,
-      ...sortedGroupedArray,
-    ];
+    return sortedGroupedArray;
   }),
 );
 
