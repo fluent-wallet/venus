@@ -1,12 +1,12 @@
-import React, { useState, useMemo, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useMemo, useEffect, useRef, useCallback, Fragment } from 'react';
 import { View, Pressable, StyleSheet } from 'react-native';
 import { useTheme } from '@react-navigation/native';
 import Animated, { useSharedValue, useAnimatedStyle, withTiming } from 'react-native-reanimated';
 import PagerView from 'react-native-pager-view';
 import { useCurrentNetwork } from '@core/WalletCore/Plugins/ReactInject';
 import { CFX_ESPACE_MAINNET_CHAINID, CFX_ESPACE_TESTNET_CHAINID } from '@core/consts/network';
-import { screenWidth } from '@utils/deviceInfo';
 import Text from '@components/Text';
+import TokensList from '@modules/AssetsList/TokensList';
 
 type Tab = 'Tokens' | 'NFTs' | 'Activity';
 type Tabs = Array<Tab>;
@@ -78,18 +78,13 @@ const Tabs: React.FC = () => {
   return (
     <>
       <TabsSelector tabs={tabs} currentTabIndex={currentTabIndex} currentTab={currentTab} handleClickTabLabel={handleClickTabLabel} />
-      <PagerView
-        ref={pageViewRef}
-        style={{ flex: 1, backgroundColor: 'yellow' }}
-        initialPage={0}
-        onPageSelected={(evt) => setCurrentTab(tabs[evt.nativeEvent.position])}
-      >
+      <PagerView ref={pageViewRef} style={styles.pagerView} initialPage={0} onPageSelected={(evt) => setCurrentTab(tabs[evt.nativeEvent.position])}>
         {tabs?.map((tab, index) => (
-          <View style={{ flex: 1 }} key={index}>
-            {tab === 'Tokens' && index === currentTabIndex && <Text>Tokens</Text>}
+          <Fragment key={tab}>
+            {tab === 'Tokens' && index === currentTabIndex && <TokensList showReceiveFunds />}
             {tab === 'NFTs' && index === currentTabIndex && <Text>Nfts</Text>}
             {tab === 'Activity' && index === currentTabIndex && <Text>Activity</Text>}
-          </View>
+          </Fragment>
         ))}
       </PagerView>
     </>
@@ -103,6 +98,7 @@ const styles = StyleSheet.create({
     display: 'flex',
     flexDirection: 'row',
     height: 28,
+    paddingHorizontal: 16,
   },
   tabLabel: {
     width: TAB_WIDTH,
@@ -113,16 +109,17 @@ const styles = StyleSheet.create({
   animatedBorder: {
     position: 'absolute',
     bottom: 0,
-    left: 0,
+    left: 16,
     width: TAB_WIDTH,
     height: 2,
     borderTopLeftRadius: 1,
     borderTopRightRadius: 1,
   },
   divider: {
-    width: screenWidth,
     height: 1,
-    transform: [{ translateX: -16 }],
+  },
+  pagerView: {
+    flex: 1,
   },
 });
 

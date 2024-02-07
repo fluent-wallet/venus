@@ -15,7 +15,7 @@ const Settings: React.FC<StackScreenProps<typeof SettingsStackName>> = ({ naviga
 
   const handleClearAccoutData = useCallback(async () => {
     try {
-      await methods.clearAccountData();
+      await methods.resetDatabase();
       showMessage({
         message: 'Reset wallet data successfully',
         type: 'success',

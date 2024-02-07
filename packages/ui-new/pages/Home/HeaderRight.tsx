@@ -8,10 +8,6 @@ import ESpaceMainnet from '@assets/chains/eSpace-mainnet.svg';
 import QrCode from '@assets/icons/qr-code.svg';
 import Settings from '@assets/icons/settings.svg';
 
-const NetworkSelector: React.FC<{ onPress: () => void }> = ({ onPress }) => {
-  const { colors } = useTheme();
-};
-
 const Network: React.FC = () => {
   const { colors } = useTheme();
   const currentNetwork = useCurrentNetwork();
@@ -19,7 +15,7 @@ const Network: React.FC = () => {
   if (!currentNetwork) return null;
   if (currentNetwork.netId === 1030) return <ESpaceMainnet />;
   return (
-    <Text style={[styles.networkText, { color: colors.textPrimary }]} numberOfLines={2}>
+    <Text style={[styles.networkText, { color: colors.textPrimary }]} numberOfLines={3}>
       {currentNetwork.name}
     </Text>
   );
