@@ -1,20 +1,39 @@
 import React from 'react';
-import { View } from 'react-native';
-import { FlashList } from '@shopify/flash-list';
-import { useTheme } from '@react-navigation/native';
+import { FlashList, type FlashListProps } from '@shopify/flash-list';
 import { useAssetsTokenList, useIsAssetsEmpty } from '@core/WalletCore/Plugins/ReactInject';
 import { type AssetInfo } from '@core/WalletCore/Plugins/AssetsTracker/types';
 import TokenItem from './TokenItem';
 import ReceiveFunds from './ReceiveFunds';
 
-const TokenList: React.FC<{
+interface Props {
   onPress?: (v: AssetInfo) => void;
-  skeleton?: number;
   showReceiveFunds?: boolean;
   hidePrice?: boolean;
-}> = ({ onPress, showReceiveFunds = false, hidePrice = false }) => {
-  const { colors } = useTheme();
+}
 
+const TokenList: React.FC<Props> = ({ onPress, showReceiveFunds = false, hidePrice = false }) => {
+  const tokens = useAssetsTokenList();
+  const isEmpty = useIsAssetsEmpty();
+
+  if (tokens === null) {
+    return null;
+  }
+
+  if (showReceiveFunds && isEmpty) {
+    return <ReceiveFunds />;
+  }
+
+  return tokens.map((token, index) => <TokenItem key={index} hidePrice={hidePrice} data={token} onPress={onPress} />);
+};
+
+type FlashProps = FlashListProps<any> & Props;
+
+export const FlashTokenList: React.FC<Omit<FlashProps, 'data' | 'renderItem' | 'estimatedItemSize'>> = ({
+  onPress,
+  showReceiveFunds = false,
+  hidePrice = false,
+  ...props
+}) => {
   const tokens = useAssetsTokenList();
   const isEmpty = useIsAssetsEmpty();
 
@@ -28,6 +47,7 @@ const TokenList: React.FC<{
 
   return (
     <FlashList
+      {...props}
       estimatedItemSize={70}
       data={tokens}
       renderItem={({ item }) => {

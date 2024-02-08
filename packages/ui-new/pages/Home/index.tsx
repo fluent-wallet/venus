@@ -1,37 +1,25 @@
-import React, { useRef, type ComponentProps } from 'react';
-import { ScrollView, View, StyleSheet } from 'react-native';
+import React, { useRef, useState } from 'react';
+import { View, ScrollView, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useTheme } from '@react-navigation/native';
+import PagerView from 'react-native-pager-view';
 import methods from '@core/WalletCore/Methods';
 import { getCurrentNetwork } from '@core/WalletCore/Plugins/ReactInject/data/useCurrentNetwork';
-import Button from '@components/Button';
-import Text from '@components/Text';
 import { HomeStackName, type StackScreenProps } from '@router/configs';
 import { isProd } from '@utils/getEnv';
-import ArrowUpward from '@assets/icons/arrow-upward.svg';
-import ArrowDownward from '@assets/icons/arrow-downward.svg';
-import Buy from '@assets/icons/buy.svg';
-import More from '@assets/icons/more.svg';
 import Account from './Account';
 import AccountSelector, { type BottomSheetMethods } from './AccountSelector';
 import NetworkSelector from './NetworkSelector';
 import HeaderRight from './HeaderRight';
 import { CurrentAddress, TotalPrice } from './Address&TotalPrice';
-import Tabs from './Tabs';
-
-const WalletLink: React.FC<{ title: string; Icon: ComponentProps<typeof Button>['Icon'] }> = ({ title, Icon }) => {
-  const { colors } = useTheme();
-  return (
-    <View style={styles.walletLink}>
-      <Button square size="small" Icon={Icon} />
-      <Text style={[styles.walletLinkText, { color: colors.textPrimary }]}>{title}</Text>
-    </View>
-  );
-};
+import Navigations from './Navigations';
+import { Tabs, TabsContent } from './Tabs';
 
 const Home: React.FC<StackScreenProps<typeof HomeStackName>> = ({ navigation }) => {
   const accountSelectorRef = useRef<BottomSheetMethods>(null!);
   const networkSelectorRef = useRef<BottomSheetMethods>(null!);
+
+  const [currentTab, setCurrentTab] = useState<'Tokens' | 'NFTs' | 'Activity'>('Tokens');
+  const pageViewRef = useRef<PagerView>(null);
 
   return (
     <>
@@ -50,15 +38,13 @@ const Home: React.FC<StackScreenProps<typeof HomeStackName>> = ({ navigation }) 
             }}
           />
         </View>
-        <CurrentAddress />
-        <TotalPrice />
-        <View style={styles.walletLinkContainer}>
-          <WalletLink title="Send" Icon={ArrowUpward} />
-          <WalletLink title="Receive" Icon={ArrowDownward} />
-          <WalletLink title="Buy" Icon={Buy} />
-          <WalletLink title="More" Icon={More} />
-        </View>
-        <Tabs />
+        <ScrollView style={styles.scrollView} stickyHeaderIndices={[3]}>
+          <CurrentAddress />
+          <TotalPrice />
+          <Navigations />
+          <Tabs currentTab={currentTab} setCurrentTab={setCurrentTab} pageViewRef={pageViewRef} />
+          <TabsContent currentTab={currentTab} setCurrentTab={setCurrentTab} pageViewRef={pageViewRef} />
+        </ScrollView>
       </SafeAreaView>
       <AccountSelector selectorRef={accountSelectorRef} />
       <NetworkSelector selectorRef={networkSelectorRef} />
@@ -78,6 +64,10 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: 16,
+    marginBottom: 16,
+  },
+  scrollView: {
+    flex: 1,
   },
   walletLinkContainer: {
     marginTop: 32,
