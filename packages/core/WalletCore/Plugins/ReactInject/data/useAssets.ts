@@ -27,7 +27,8 @@ const assetsListAtom = atomFamily((key: string) =>
 const assetsTokenListAtom = atomFamily((key: string) =>
   atom((get) => {
     const assets = get(assetsListAtom(key));
-    return assets ? assets.filter((asset) => asset.type === AssetType.Native || asset.type === AssetType.ERC20) : null;
+    const res = assets ? assets.filter((asset) => asset.type === AssetType.Native || asset.type === AssetType.ERC20) : null;
+    return res ? [...res, ...res, ...res] : null;
   }),
 );
 const assetsNFTListAtom = atomFamily((key: string) =>

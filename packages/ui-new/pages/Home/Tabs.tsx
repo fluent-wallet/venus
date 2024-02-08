@@ -12,48 +12,16 @@ type Tab = 'Tokens' | 'NFTs' | 'Activity';
 type Tabs = Array<Tab>;
 const TAB_WIDTH = 64;
 
-const TabsSelector: React.FC<{
-  tabs: Tabs;
-  currentTabIndex: number;
+interface Props {
   currentTab: Tab;
-  handleClickTabLabel: (tab: Tab) => void;
-}> = ({ tabs, currentTabIndex, currentTab, handleClickTabLabel }) => {
+  setCurrentTab: (tab: Tab) => void;
+  pageViewRef: React.RefObject<PagerView>;
+}
+
+export const Tabs: React.FC<Props> = ({ currentTab, setCurrentTab, pageViewRef }) => {
   const { colors } = useTheme();
 
-  const offset = useSharedValue(0);
-  const animatedStyles = useAnimatedStyle(() => ({
-    transform: [{ translateX: offset.value }],
-  }));
-  useEffect(() => {
-    offset.value = withTiming(TAB_WIDTH * currentTabIndex);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentTabIndex]);
-
-  return (
-    <>
-      <View style={styles.tabsSelector}>
-        {tabs.map((tab) => (
-          <Pressable key={tab} onPress={() => handleClickTabLabel(tab)}>
-            <Text
-              style={[styles.tabLabel, { color: colors[currentTab === tab ? 'textPrimary' : 'textSecondary'], fontWeight: currentTab === tab ? '600' : '300' }]}
-            >
-              {tab}
-            </Text>
-          </Pressable>
-        ))}
-        <Animated.View style={[styles.animatedBorder, animatedStyles, { backgroundColor: colors.borderPrimary }]} />
-      </View>
-      <View style={[styles.divider, { backgroundColor: colors.borderThird }]} />
-    </>
-  );
-};
-
-const Tabs: React.FC = () => {
-  const [currentTab, setCurrentTab] = useState<'Tokens' | 'NFTs' | 'Activity'>('Tokens');
   const currentNetwork = useCurrentNetwork();
-
-  const pageViewRef = useRef<PagerView>(null);
-
   const tabs = useMemo(
     () =>
       currentNetwork && (currentNetwork.chainId === CFX_ESPACE_MAINNET_CHAINID || currentNetwork.chainId === CFX_ESPACE_TESTNET_CHAINID)
@@ -70,30 +38,68 @@ const Tabs: React.FC = () => {
     (tab: Tab) => {
       let index = tabs.indexOf(tab);
       index = index === -1 ? 0 : index;
-      pageViewRef.current?.setPage(index);
+      pageViewRef?.current?.setPage(index);
     },
     [tabs],
   );
 
+  const offset = useSharedValue(0);
+  const animatedStyles = useAnimatedStyle(() => ({
+    transform: [{ translateX: offset.value }],
+  }));
+  useEffect(() => {
+    offset.value = withTiming(TAB_WIDTH * currentTabIndex);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentTabIndex]);
+
   return (
     <>
-      <TabsSelector tabs={tabs} currentTabIndex={currentTabIndex} currentTab={currentTab} handleClickTabLabel={handleClickTabLabel} />
-      <PagerView ref={pageViewRef} style={styles.pagerView} initialPage={0} onPageSelected={(evt) => setCurrentTab(tabs[evt.nativeEvent.position])}>
-        {tabs?.map((tab, index) => (
-          <Fragment key={tab}>
-            {tab === 'Tokens' && index === currentTabIndex && <TokensList showReceiveFunds />}
-            {tab === 'NFTs' && index === currentTabIndex && <Text>Nfts</Text>}
-            {tab === 'Activity' && index === currentTabIndex && <Text>Activity</Text>}
-          </Fragment>
+      <View style={[styles.tabsSelector, { backgroundColor: colors.bgPrimary }]}>
+        {tabs.map((tab) => (
+          <Pressable key={tab} onPress={() => handleClickTabLabel(tab)}>
+            <Text
+              style={[styles.tabLabel, { color: colors[currentTab === tab ? 'textPrimary' : 'textSecondary'], fontWeight: currentTab === tab ? '600' : '300' }]}
+            >
+              {tab}
+            </Text>
+          </Pressable>
         ))}
-      </PagerView>
+        <Animated.View style={[styles.animatedBorder, animatedStyles, { backgroundColor: colors.borderPrimary }]} />
+      </View>
+      <View style={[styles.divider, { backgroundColor: colors.borderThird }]} />
     </>
+  );
+};
+
+export const TabsContent: React.FC<Props> = ({ currentTab, setCurrentTab, pageViewRef }) => {
+  const currentNetwork = useCurrentNetwork();
+  const tabs = useMemo(
+    () =>
+      currentNetwork && (currentNetwork.chainId === CFX_ESPACE_MAINNET_CHAINID || currentNetwork.chainId === CFX_ESPACE_TESTNET_CHAINID)
+        ? (['Tokens', 'NFTs', 'Activity'] as Tabs)
+        : (['Tokens', 'Activity'] as Tabs),
+    [currentNetwork],
+  );
+  const currentTabIndex = useMemo(() => {
+    const index = tabs.indexOf(currentTab as 'Tokens');
+    return index === -1 ? 0 : index;
+  }, [tabs, currentTab]);
+
+  return (
+    <PagerView ref={pageViewRef} style={styles.pagerView} initialPage={0} onPageSelected={(evt) => setCurrentTab(tabs[evt.nativeEvent.position])}>
+      {tabs?.map((tab, index) => (
+        <Fragment key={tab}>
+          {tab === 'Tokens' && index === currentTabIndex && <TokensList showReceiveFunds />}
+          {tab === 'NFTs' && index === currentTabIndex && <Text>Nfts</Text>}
+          {tab === 'Activity' && index === currentTabIndex && <Text>Activity</Text>}
+        </Fragment>
+      ))}
+    </PagerView>
   );
 };
 
 const styles = StyleSheet.create({
   tabsSelector: {
-    marginTop: 24,
     position: 'relative',
     display: 'flex',
     flexDirection: 'row',
@@ -122,5 +128,3 @@ const styles = StyleSheet.create({
     flex: 1,
   },
 });
-
-export default Tabs;

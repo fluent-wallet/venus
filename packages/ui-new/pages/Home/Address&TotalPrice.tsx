@@ -74,7 +74,6 @@ export const TotalPrice: React.FC = () => {
 
 const styles = StyleSheet.create({
   addressContainer: {
-    marginTop: 16,
     marginBottom: 4,
     alignSelf: 'flex-start',
     display: 'flex',
