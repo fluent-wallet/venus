@@ -14,6 +14,7 @@ export { type BottomSheetMethods };
 interface Props {
   bottomSheetRef: MutableRefObject<BottomSheetMethods>;
   onSuccessConfirm?: (value: string) => void;
+  isModal: boolean;
 }
 
 interface Status {
@@ -21,8 +22,8 @@ interface Status {
   message: string;
 }
 
-const ImportExistingWallet: React.FC<Props> = ({ bottomSheetRef, onSuccessConfirm }) => {
-  const { colors, palette } = useTheme();
+const ImportExistingWallet: React.FC<Props> = ({ bottomSheetRef, onSuccessConfirm, isModal }) => {
+  const { colors } = useTheme();
 
   const textInputRef = useRef<TextInput>(null!);
   const existWalletValueRef = useRef('');
@@ -30,34 +31,38 @@ const ImportExistingWallet: React.FC<Props> = ({ bottomSheetRef, onSuccessConfir
 
   const _handleCheckInput = useCallback(() => {
     const value = String(existWalletValueRef.current).trim();
-    let status: Status;
+    let statusRes: Status;
     if (!value) {
-      status = { type: 'error', message: 'Input cannot be empty' };
+      statusRes = { type: 'error', message: 'Input cannot be empty' };
     } else if (Mnemonic.isValidMnemonic(value)) {
-      status = { type: 'success', message: 'Valid seed phrase' };
+      statusRes = { type: 'success', message: 'Valid seed phrase' };
     } else if (secp.utils.isValidPrivateKey(stripHexPrefix(value))) {
-      status = { type: 'success', message: 'Valid private key' };
+      statusRes = { type: 'success', message: 'Valid private key' };
     } else {
-      status = { type: 'error', message: 'Invalid seed phrase or private key' };
+      statusRes = { type: 'error', message: 'Invalid seed phrase or private key' };
     }
-    setStatus(status);
-    return status;
+    setStatus(statusRes);
+    return statusRes;
   }, []);
 
   const { inAsync, execAsync: handleCheckInput } = useInAsync(_handleCheckInput);
 
-  const handleConfirm = useCallback(() => {
+  const handleConfirm = useCallback(async () => {
     let _status = status;
     if (_status === null) {
-      _status = handleCheckInput();
+      _status = await handleCheckInput();
     }
     if (_status?.type === 'success') {
-      bottomSheetRef.current?.close();
       setTimeout(() => bottomSheetRef.current?.close(), 100);
       Keyboard.dismiss();
+      if (isModal) {
+        bottomSheetRef.current?.dismiss();
+      } else {
+        bottomSheetRef.current?.close();
+      }
       onSuccessConfirm?.(existWalletValueRef.current);
     }
-  }, [status, handleCheckInput, onSuccessConfirm]);
+  }, [status, onSuccessConfirm]);
 
   const handlePressBackdrop = useCallback(() => {
     if (!textInputRef.current) return;
@@ -73,7 +78,15 @@ const ImportExistingWallet: React.FC<Props> = ({ bottomSheetRef, onSuccessConfir
   }, []);
 
   return (
-    <BottomSheet ref={bottomSheetRef} snapPoints={snapPoints} onClose={handleClose} backDropPressBehavior="collapse" handlePressBackdrop={handlePressBackdrop}>
+    <BottomSheet
+      ref={bottomSheetRef}
+      snapPoints={snapPoints}
+      onChange={isModal ? undefined : handleClose}
+      onDismiss={isModal ? handleClose : undefined}
+      backDropPressBehavior="collapse"
+      handlePressBackdrop={handlePressBackdrop}
+      isModal={isModal}
+    >
       <Pressable
         onPress={() => {
           Keyboard.dismiss();
@@ -95,6 +108,7 @@ const ImportExistingWallet: React.FC<Props> = ({ bottomSheetRef, onSuccessConfir
             existWalletValueRef.current = value;
           }}
           onBlur={handleCheckInput}
+          autoFocus
         />
         <Text style={[styles.tipText, { color: status?.type === 'error' ? colors.down : colors.up, opacity: status === null ? 0 : 1 }]}>
           {status?.message || 'placeholder'}
@@ -135,6 +149,6 @@ const styles = StyleSheet.create({
   },
 });
 
-const snapPoints = ['45%'];
+const snapPoints = ['40%'];
 
 export default ImportExistingWallet;

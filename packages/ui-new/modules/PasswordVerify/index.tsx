@@ -3,6 +3,7 @@ import { View, StyleSheet } from 'react-native';
 import plugins from '@core/WalletCore/Plugins';
 import { useTheme } from '@react-navigation/native';
 import Button from '@components/Button';
+import Text from '@components/Text';
 import TextInput from '@components/TextInput';
 import BottomSheet, { type BottomSheetMethods } from '@components/BottomSheet';
 import { isDev } from '@utils/getEnv';
@@ -35,7 +36,7 @@ const PasswordVerify: React.FC = () => {
   }, []);
 
   const handleCancel = useCallback(() => {
-    bottomSheetRef.current?.close();
+    bottomSheetRef.current?.dismiss();
     setInVerify(false);
     setPassword(defaultPassword);
     setError('');
@@ -48,7 +49,7 @@ const PasswordVerify: React.FC = () => {
     const isCorrectPasword = await currentRequest.current?.verify?.(password);
     if (isCorrectPasword) {
       currentRequest.current?.resolve?.(password);
-      bottomSheetRef.current?.close();
+      bottomSheetRef.current?.dismiss();
       setPassword(defaultPassword);
       setError('');
       currentRequest.current = null;
@@ -61,6 +62,7 @@ const PasswordVerify: React.FC = () => {
   return (
     <BottomSheet ref={bottomSheetRef} snapPoints={snapPoints} onDismiss={handleCancel}>
       <View style={styles.container}>
+        <Text style={[styles.title, { color: colors.textPrimary }]}>Verify Password</Text>
         <TextInput
           value={password}
           onChangeText={(value) => {
@@ -68,8 +70,11 @@ const PasswordVerify: React.FC = () => {
             setError('');
           }}
           onSubmitEditing={handleConfirm}
+          isInBottomSheet
+          autoFocus
         />
-        <Button testID="confirm" loading={inVerify} onPress={handleConfirm} disabled={!password}>
+        <Text style={[styles.error, { color: colors.down, opacity: !error ? 0 : 1 }]}>{error || 'placeholder'}</Text>
+        <Button testID="confirm" loading={inVerify} onPress={handleConfirm} disabled={!password} style={styles.btn}>
           Confirm
         </Button>
       </View>
@@ -80,9 +85,26 @@ const PasswordVerify: React.FC = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    padding: 16,
+  },
+  title: {
+    marginBottom: 16,
+    fontSize: 16,
+    lineHeight: 20,
+    fontWeight: '600',
+    textAlign: 'center',
+  },
+  error: {
+    width: '100%',
+    marginTop: 8,
+    fontSize: 12,
+    textAlign: 'left',
+  },
+  btn: {
+    marginTop: 'auto',
   },
 });
 
-const snapPoints = ['40%'];
+const snapPoints = ['33.5%'];
 
 export default PasswordVerify;

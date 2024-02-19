@@ -14,7 +14,16 @@ interface Props extends ComponentProps<typeof BottomSheetModal> {
 
 const BottomSheet = forwardRef<BottomSheetModal, Props>(
   (
-    { children, enablePanDownToClose = true, keyboardBlurBehavior = 'restore', backDropPressBehavior = 'close', handlePressBackdrop, isModal = true, ...props },
+    {
+      children,
+      enablePanDownToClose = true,
+      keyboardBlurBehavior = 'restore',
+      backDropPressBehavior = 'close',
+      handlePressBackdrop,
+      isModal = true,
+      onChange,
+      ...props
+    },
     _forwardRef,
   ) => {
     const { colors, palette } = useTheme();
@@ -41,11 +50,15 @@ const BottomSheet = forwardRef<BottomSheetModal, Props>(
 
     const onBackPress = useCallback(() => {
       if (indexRef.current !== -1) {
-        bottomSheetRef.current?.close();
+        if (isModal) {
+          bottomSheetRef.current?.dismiss();
+        } else {
+          bottomSheetRef.current?.close();
+        }
         return true;
       }
       return false;
-    }, []);
+    }, [isModal]);
 
     useFocusEffect(
       useCallback(() => {
@@ -59,7 +72,10 @@ const BottomSheet = forwardRef<BottomSheetModal, Props>(
       <RenderBottomSheet
         ref={composeRef([_forwardRef!, bottomSheetRef])}
         index={defaultIndex}
-        onChange={(index) => (indexRef.current = index)}
+        onChange={(index) => {
+          indexRef.current = index;
+          onChange?.(index);
+        }}
         enablePanDownToClose={enablePanDownToClose}
         keyboardBlurBehavior={keyboardBlurBehavior}
         backdropComponent={renderBackdrop}

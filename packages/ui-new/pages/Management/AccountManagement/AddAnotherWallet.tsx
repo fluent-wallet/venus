@@ -34,7 +34,12 @@ const AddAnotherWallet: React.FC<Props> = ({ navigation, bottomSheetRef }) => {
       await plugins.BSIM.getBSIMVersion();
       await new Promise((resolve) => setTimeout(resolve));
       if (await createVault({ type: 'connectBSIM' })) {
-        bottomSheetRef.current?.close();
+        bottomSheetRef.current?.dismiss();
+        setTimeout(() => bottomSheetRef.current?.dismiss(), 25);
+        showMessage({
+          message: 'Connect BSIM wallet success',
+          type: 'success',
+        });
       }
     } catch (error) {
       showNotFindBSIMCardMessage();
@@ -49,12 +54,36 @@ const AddAnotherWallet: React.FC<Props> = ({ navigation, bottomSheetRef }) => {
     navigation.setOptions({ gestureEnabled: false });
     await new Promise((resolve) => setTimeout(resolve));
     if (await createVault({ type: 'createNewWallet' })) {
-      bottomSheetRef.current?.close();
+      bottomSheetRef.current?.dismiss();
+      setTimeout(() => bottomSheetRef.current?.dismiss(), 25);
+      showMessage({
+        message: 'Add new wallet success',
+        type: 'success',
+      });
     }
     navigation.setOptions({ gestureEnabled: false });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
   const { inAsync: inCreating, execAsync: handleCreateNewHdWallet } = useInAsync(_handleCreateNewHdWallet);
+
+  const _handleImportExistWallet = useCallback(async (value: string) => {
+    navigation.setOptions({ gestureEnabled: false });
+    await new Promise((resolve) => setTimeout(resolve));
+    const res = await createVault({ type: 'importExistWallet', value })
+    if (res) {
+      bottomSheetRef.current?.dismiss();
+      setTimeout(() => bottomSheetRef.current?.dismiss(), 25);
+      showMessage({
+        message: 'Import wallet success',
+        type: 'success',
+      });
+    } else if (res === undefined) {
+      importExistRef.current?.dismiss();
+    }
+    navigation.setOptions({ gestureEnabled: false });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+  const { inAsync: inImporting, execAsync: handleImportExistWallet } = useInAsync(_handleImportExistWallet);
 
   return (
     <>
@@ -88,10 +117,11 @@ const AddAnotherWallet: React.FC<Props> = ({ navigation, bottomSheetRef }) => {
           >
             {<Image style={accountListStyles.groupTypeImage} source={BSIMCard} />}
             <Text style={[accountListStyles.manageText, { color: colors.textPrimary }]}>Import existing wallet</Text>
+            {inImporting && <HourglassLoading style={accountListStyles.addAccountLoading} />}
           </Pressable>
         </View>
       </BottomSheet>
-      <ImportExistingWallet bottomSheetRef={importExistRef} onSuccessConfirm={() => bottomSheetRef.current?.close()} />
+      <ImportExistingWallet bottomSheetRef={importExistRef} onSuccessConfirm={handleImportExistWallet} isModal />
     </>
   );
 };

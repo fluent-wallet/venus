@@ -6,7 +6,7 @@ import { getAtom } from '../nexus';
 
 export const currentAddressObservable = currentAccountObservable.pipe(
   filter((account) => !!account),
-  switchMap((account) => account!.currentNetworkAddressObservable.pipe(catchError(() => of(null))))
+  switchMap((account) => account?.currentNetworkAddressObservable.pipe(catchError(() => of(null))))
 );
 
 const currentAddressValueObservable = currentAddressObservable.pipe(

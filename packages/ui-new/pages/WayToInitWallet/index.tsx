@@ -68,7 +68,7 @@ const WayToInitWallet: React.FC<StackScreenProps<typeof WayToInitWalletStackName
               Create new wallet
             </Button>
 
-            <Button testID="importExistingWallet" textAlign="left" style={styles.btnLast} onPress={() => bottomSheetRef.current?.present()}>
+            <Button testID="importExistingWallet" textAlign="left" style={styles.btnLast} onPress={() => bottomSheetRef.current?.expand()}>
               Import existing wallet
             </Button>
           </SafeAreaView>
@@ -77,6 +77,7 @@ const WayToInitWallet: React.FC<StackScreenProps<typeof WayToInitWalletStackName
       <ImportExistingWallet
         bottomSheetRef={bottomSheetRef}
         onSuccessConfirm={(value) => navigation.navigate(BiometricsWayStackName, { type: 'importExistWallet', value })}
+        isModal={false}
       />
     </>
   );
