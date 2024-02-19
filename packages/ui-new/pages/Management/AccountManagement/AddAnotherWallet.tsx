@@ -13,7 +13,10 @@ import { styles as accountListStyles } from '@modules/AccountsList';
 import { showNotFindBSIMCardMessage } from '@pages/WayToInitWallet';
 import ImportExistingWallet from '@pages/WayToInitWallet/ImportExistingWallet';
 import { AccountManagementStackName, type StackScreenProps } from '@router/configs';
-import BSIMCard from '@assets/icons/bsim-card-noshadow.webp';
+import { screenHeight } from '@utils/deviceInfo'
+import BSIMCardWallet from '@assets/icons/wallet-bsim.webp';
+import HDWallet from '@assets/icons/wallet-hd.webp';
+import ExistWallet from '@assets/icons/wallet-Imported.webp';
 import createVault from '@pages/InitWallet/createVaultWithRouterParams';
 
 interface Props {
@@ -69,7 +72,7 @@ const AddAnotherWallet: React.FC<Props> = ({ navigation, bottomSheetRef }) => {
   const _handleImportExistWallet = useCallback(async (value: string) => {
     navigation.setOptions({ gestureEnabled: false });
     await new Promise((resolve) => setTimeout(resolve));
-    const res = await createVault({ type: 'importExistWallet', value })
+    const res = await createVault({ type: 'importExistWallet', value });
     if (res) {
       bottomSheetRef.current?.dismiss();
       setTimeout(() => bottomSheetRef.current?.dismiss(), 25);
@@ -95,7 +98,7 @@ const AddAnotherWallet: React.FC<Props> = ({ navigation, bottomSheetRef }) => {
               disabled={inConnecting}
               onPress={handleConnectBSIMCard}
             >
-              {<Image style={accountListStyles.groupTypeImage} source={BSIMCard} />}
+              <Image style={accountListStyles.groupTypeImage} source={BSIMCardWallet} />
               <Text style={[accountListStyles.manageText, { color: colors.textPrimary }]}>Connect BSIM Wallet</Text>
               {inConnecting && <HourglassLoading style={accountListStyles.addAccountLoading} />}
             </Pressable>
@@ -106,7 +109,7 @@ const AddAnotherWallet: React.FC<Props> = ({ navigation, bottomSheetRef }) => {
             disabled={inCreating}
             onPress={handleCreateNewHdWallet}
           >
-            {<Image style={accountListStyles.groupTypeImage} source={BSIMCard} />}
+            {<Image style={accountListStyles.groupTypeImage} source={HDWallet} />}
             <Text style={[accountListStyles.manageText, { color: colors.textPrimary }]}>Create new wallet</Text>
             {inCreating && <HourglassLoading style={accountListStyles.addAccountLoading} />}
           </Pressable>
@@ -115,7 +118,7 @@ const AddAnotherWallet: React.FC<Props> = ({ navigation, bottomSheetRef }) => {
             style={({ pressed }) => [accountListStyles.row, { backgroundColor: pressed ? colors.underlay : 'transparent' }]}
             onPress={() => importExistRef.current?.present()}
           >
-            {<Image style={accountListStyles.groupTypeImage} source={BSIMCard} />}
+            {<Image style={accountListStyles.groupTypeImage} source={ExistWallet} />}
             <Text style={[accountListStyles.manageText, { color: colors.textPrimary }]}>Import existing wallet</Text>
             {inImporting && <HourglassLoading style={accountListStyles.addAccountLoading} />}
           </Pressable>
@@ -132,6 +135,6 @@ const styles = StyleSheet.create({
   },
 });
 
-const snapPoints = ['30%'];
+const snapPoints = [`${(240 / screenHeight * 100).toFixed(2)}%`];
 
 export default AddAnotherWallet;

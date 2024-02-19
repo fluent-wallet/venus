@@ -1,15 +1,16 @@
-import { useCallback, useRef, forwardRef, type ComponentProps, useMemo } from 'react';
-import { BackHandler } from 'react-native';
+import { useCallback, useRef, forwardRef, useMemo } from 'react';
+import { BackHandler, Keyboard } from 'react-native';
 import { useFocusEffect, useTheme } from '@react-navigation/native';
-import BottomSheet_, { BottomSheetModal, BottomSheetBackdrop, type BottomSheetBackdropProps } from '@gorhom/bottom-sheet';
+import BottomSheet_, { BottomSheetModal, BottomSheetBackdrop, type BottomSheetBackdropProps, type BottomSheetModalProps } from '@gorhom/bottom-sheet';
 import composeRef from '@cfx-kit/react-utils/dist/composeRef';
 export * from '@gorhom/bottom-sheet';
 export { BottomSheetModal as BottomSheetMethods } from '@gorhom/bottom-sheet';
 
-interface Props extends ComponentProps<typeof BottomSheetModal> {
+interface Props extends BottomSheetModalProps {
   backDropPressBehavior?: 'none' | 'close' | 'collapse' | number;
   handlePressBackdrop?: () => void;
   isModal?: boolean;
+  onClose?: () => void;
 }
 
 const BottomSheet = forwardRef<BottomSheetModal, Props>(
@@ -22,6 +23,8 @@ const BottomSheet = forwardRef<BottomSheetModal, Props>(
       handlePressBackdrop,
       isModal = true,
       onChange,
+      onDismiss,
+      onClose,
       ...props
     },
     _forwardRef,
@@ -68,6 +71,18 @@ const BottomSheet = forwardRef<BottomSheetModal, Props>(
       }, [onBackPress]),
     );
 
+    const handleDismiss = useCallback(() => {
+      if (!isModal) return;
+      onDismiss?.();
+      Keyboard.dismiss();
+    }, [isModal, onDismiss]);
+
+    const handleClose = useCallback(() => {
+      if (isModal) return;
+      onClose?.();
+      Keyboard.dismiss();
+    }, [isModal, onClose]);
+
     return (
       <RenderBottomSheet
         ref={composeRef([_forwardRef!, bottomSheetRef])}
@@ -76,6 +91,8 @@ const BottomSheet = forwardRef<BottomSheetModal, Props>(
           indexRef.current = index;
           onChange?.(index);
         }}
+        onDismiss={handleDismiss}
+        onClose={handleClose}
         enablePanDownToClose={enablePanDownToClose}
         keyboardBlurBehavior={keyboardBlurBehavior}
         backdropComponent={renderBackdrop}

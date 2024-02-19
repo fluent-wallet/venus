@@ -20,5 +20,6 @@ const Check3DStructureLight = () => {
 // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 export const statusBarHeight = Platform.OS === 'android' ? StatusBar.currentHeight! : 0;
 export const screenWidth = Dimensions.get('window').width;
+export const screenHeight = Dimensions.get('window').height;
 export const supports3DStructureLight = Check3DStructureLight();
 export const OS = Platform.OS;

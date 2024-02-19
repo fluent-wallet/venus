@@ -27,7 +27,7 @@ const AccountSelector: React.FC<Props> = ({ selectorRef }) => {
             <Text style={[styles.title, { color: colors.textPrimary }]}>⚙️ Edit</Text>
           </Pressable>
         </View>
-        <AccountsList type="selector" />
+        <AccountsList type="selector" onSelect={() => selectorRef.current?.close()} />
       </View>
     </BottomSheet>
   );

@@ -1,6 +1,6 @@
 import React, { useState, useCallback, useMemo } from 'react';
 import { View, SectionList, Pressable, StyleSheet } from 'react-native';
-import { useTheme, useNavigation } from '@react-navigation/native';
+import { useTheme } from '@react-navigation/native';
 import { BottomSheetSectionList } from '@gorhom/bottom-sheet';
 import { Image } from 'expo-image';
 import { useAccountsManage, useCurrentAccount, VaultType } from '@core/WalletCore/Plugins/ReactInject';
@@ -12,7 +12,9 @@ import Text from '@components/Text';
 import Checkbox from '@components/Checkbox';
 import HourglassLoading from '@components/Loading/Hourglass';
 import { toDataUrl } from '@utils/blockies';
-import BSIMCard from '@assets/icons/bsim-card-noshadow.webp';
+import BSIMCardWallet from '@assets/icons/wallet-bsim.webp';
+import HDWallet from '@assets/icons/wallet-hd.webp';
+import ExistWallet from '@assets/icons/wallet-Imported.webp';
 import More from '@assets/icons/more-circle.svg';
 import Add from '@assets/icons/add.svg';
 
@@ -34,8 +36,6 @@ interface AccountProps {
   addressValue: string;
 }
 
-const rowHeight = 57;
-
 const AccountGroup: React.FC<AccountGroupProps & { colors: ReturnType<typeof useTheme>['colors']; type: ListType }> = ({
   nickname,
   vaultType,
@@ -44,12 +44,17 @@ const AccountGroup: React.FC<AccountGroupProps & { colors: ReturnType<typeof use
 }) => {
   return (
     <Pressable
-      style={({ pressed }) => [styles.row, { backgroundColor: pressed ? colors.underlay : 'transparent' }]}
-      disabled={type === 'selector' || (vaultType !== VaultType.BSIM && vaultType !== VaultType.HierarchicalDeterministic)}
+      style={({ pressed }) => [styles.row, styles.group, { backgroundColor: pressed ? colors.underlay : 'transparent' }]}
+      disabled={type === 'selector' || vaultType === VaultType.PrivateKey || vaultType === VaultType.PublicAddress}
     >
-      {<Image style={styles.groupTypeImage} source={BSIMCard} />}
-      <Text style={[styles.groupName, { color: colors.textSecondary }]}>{nickname}</Text>
-      {type === 'management' && <Text style={[styles.groupManagement, { color: colors.textNotice }]}>ManageMent</Text>}
+      <Image
+        style={styles.groupTypeImage}
+        source={vaultType === VaultType.BSIM ? BSIMCardWallet : vaultType === VaultType.HierarchicalDeterministic ? HDWallet : ExistWallet}
+      />
+      <Text style={[styles.groupName, { color: colors.textSecondary }]}>{vaultType === VaultType.PrivateKey ? 'Imported Private Key' : nickname}</Text>
+      {type === 'management' && vaultType !== VaultType.PrivateKey && vaultType !== VaultType.PublicAddress && (
+        <Text style={[styles.groupManagement, { color: colors.textNotice }]}>ManageMent</Text>
+      )}
     </Pressable>
   );
 };
@@ -87,15 +92,23 @@ const AddAccount: React.FC<
   const notReachMax =
     (vaultType === VaultType.HierarchicalDeterministic && accountCount < 256) || (vaultType === VaultType.BSIM && accountCount < plugins.BSIM.chainLimtCount);
 
-  if ((vaultType !== VaultType.BSIM && vaultType !== VaultType.HierarchicalDeterministic) || !notReachMax)
-    return <View style={{ height: 1, backgroundColor: colors.borderThird }} pointerEvents="none" />;
+  if (vaultType === VaultType.PrivateKey || vaultType === VaultType.PublicAddress || !notReachMax) {
+    return <View style={[styles.divider, { backgroundColor: colors.borderThird }]} pointerEvents="none" />;
+  }
+
   return (
-    <Pressable style={({ pressed }) => [styles.row, { backgroundColor: pressed ? colors.underlay : 'transparent' }]} onPress={onPress} disabled={inAdding}>
-      <Checkbox checked={mode === 'dark'} Icon={Add} />
-      <Text style={[styles.manageText, { color: colors.textPrimary }]}>Add Account</Text>
-      {inAdding && <HourglassLoading style={styles.addAccountLoading} />}
+    <>
+      <Pressable
+        style={({ pressed }) => [styles.row, styles.group, { backgroundColor: pressed ? colors.underlay : 'transparent' }]}
+        onPress={onPress}
+        disabled={inAdding}
+      >
+        <Checkbox checked={mode === 'dark'} Icon={Add} />
+        <Text style={[styles.manageText, { color: colors.textPrimary }]}>Add Account</Text>
+        {inAdding && <HourglassLoading style={styles.addAccountLoading} />}
+      </Pressable>
       <View style={[styles.divider, { backgroundColor: colors.borderThird }]} pointerEvents="none" />
-    </Pressable>
+    </>
   );
 };
 
@@ -142,7 +155,7 @@ const AccountsList: React.FC<{ type: ListType; onSelect?: () => void }> = ({ typ
       renderItem={({ item }) => <Account {...item} colors={colors} type={type} isCurrent={currentAccount?.id === item.id} mode={mode} onSelect={onSelect} />}
       renderSectionFooter={
         type === 'selector'
-          ? undefined
+          ? () => <View pointerEvents="none" style={styles.placeholder} />
           : ({ section: { title } }) => (
               <AddAccount {...title} colors={colors} type={type} mode={mode} inAdding={inAddingId === title.id} onPress={() => addAccount(title)} />
             )
@@ -158,8 +171,14 @@ export const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'flex-start',
     alignItems: 'center',
-    height: rowHeight,
+    height: 64,
     paddingHorizontal: 16,
+  },
+  placeholder: {
+    height: 8,
+  },
+  group: {
+    height: 48,
   },
   groupTypeImage: {
     width: 24,
@@ -209,10 +228,7 @@ export const styles = StyleSheet.create({
     height: 20,
   },
   divider: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
+    marginVertical: 12,
     height: 1,
   },
 });

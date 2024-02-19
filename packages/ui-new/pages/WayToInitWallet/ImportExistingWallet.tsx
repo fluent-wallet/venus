@@ -9,6 +9,7 @@ import useInAsync from '@hooks/useInAsync';
 import Button from '@components/Button';
 import Text from '@components/Text';
 import BottomSheet, { BottomSheetTextInput, type BottomSheetMethods } from '@components/BottomSheet';
+import { screenHeight } from '@utils/deviceInfo'
 export { type BottomSheetMethods };
 
 interface Props {
@@ -128,6 +129,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     padding: 16,
+    paddingBottom: 32,
   },
   input: {
     width: '100%',
@@ -145,10 +147,9 @@ const styles = StyleSheet.create({
   },
   btn: {
     width: '100%',
-    marginBottom: 40,
   },
 });
 
-const snapPoints = ['40%'];
+const snapPoints = [`${(310 / screenHeight * 100).toFixed(2)}%`];
 
 export default ImportExistingWallet;
