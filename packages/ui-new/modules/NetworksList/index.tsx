@@ -23,18 +23,9 @@ interface NetworkProp {
   chainType: ChainType;
 }
 
-const Network: React.FC<NetworkProp & { colors: ReturnType<typeof useTheme>['colors']; isCurrent: boolean; type: ListType; onSelect?: () => void }> = ({
-  id,
-  netId,
-  chainId,
-  name,
-  networkType,
-  chainType,
-  colors,
-  isCurrent,
-  type,
-  onSelect,
-}) => {
+const Network: React.FC<
+  NetworkProp & { colors: ReturnType<typeof useTheme>['colors']; isCurrent: boolean; type: ListType; mode: 'dark' | 'light'; onSelect?: () => void }
+> = ({ id, netId, chainId, name, networkType, chainType, colors, isCurrent, type, mode, onSelect }) => {
   return (
     <Pressable
       style={({ pressed }) => [styles.row, { backgroundColor: pressed ? colors.underlay : 'transparent' }]}
@@ -54,7 +45,7 @@ const Network: React.FC<NetworkProp & { colors: ReturnType<typeof useTheme>['col
           {networkType} - {chainType}: {netId}
         </Text>
       </View>
-      {isCurrent && <Checkbox style={styles.checkbox} checked={false} />}
+      {isCurrent && <Checkbox style={styles.checkbox} checked={mode === 'dark'} />}
     </Pressable>
   );
 };
@@ -63,7 +54,7 @@ const NetworksList: React.FC<{ type: ListType; onSelect?: () => void }> = ({ typ
   const networks = useNetworks();
   const currentNetwork = useCurrentNetwork();
 
-  const { colors } = useTheme();
+  const { colors, mode } = useTheme();
   const ListComponent = useMemo(() => (type === 'selector' ? BottomSheetFlatList : FlatList), [type]);
 
   if (!networks?.length) return null;
@@ -82,6 +73,7 @@ const NetworksList: React.FC<{ type: ListType; onSelect?: () => void }> = ({ typ
           colors={colors}
           type={type}
           isCurrent={currentNetwork?.id === item.id}
+          mode={mode}
           onSelect={onSelect}
         />
       )}

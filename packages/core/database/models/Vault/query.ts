@@ -41,3 +41,5 @@ export const getEncryptedVaultWithBSIM = () =>
     .get<Vault>(TableName.Vault)
     .query(Q.where('type', Q.oneOf([VaultType.PrivateKey, VaultType.HierarchicalDeterministic, VaultType.BSIM])))
     .fetch();
+
+export const queryVaultById = async (id: string) => database.get(TableName.Vault).find(id) as Promise<Vault>;

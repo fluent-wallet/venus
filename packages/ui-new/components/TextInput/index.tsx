@@ -1,6 +1,7 @@
-import { useState, useCallback, useRef, forwardRef } from 'react';
+import { useState, useMemo, useCallback, useRef, forwardRef } from 'react';
 import { View, TextInput, StyleSheet, Pressable, type TextInputProps, type ViewStyle, type StyleProp } from 'react-native';
 import { useTheme } from '@react-navigation/native';
+import { BottomSheetTextInput } from '@components/BottomSheet';
 import composeRef from '@cfx-kit/react-utils/dist/composeRef';
 import { isDev } from '@utils/getEnv';
 import EyeOpen from '@assets/icons/eye-open.svg';
@@ -12,11 +13,15 @@ interface Props extends TextInputProps {
   showVisible?: boolean;
   showClear?: boolean;
   disabled?: boolean;
+  isInBottomSheet?: boolean;
 }
 
 const CustomTextInput = forwardRef<TextInput, Props>(
-  ({ style, containerStyle, showVisible = true, showClear = true, disabled, onChangeText, ...props }, _forwardRef) => {
+  ({ style, containerStyle, showVisible = true, showClear = true, disabled, onChangeText, isInBottomSheet, ...props }, _forwardRef) => {
     const { colors } = useTheme();
+
+    const UsedTextInput = useMemo(() => (isInBottomSheet ? BottomSheetTextInput : TextInput), [isInBottomSheet]);
+
     const [visible, setVisible] = useState(isDev);
     const [hasValue, setHasValue] = useState(isDev);
     const handleChangeText = useCallback(
@@ -37,7 +42,7 @@ const CustomTextInput = forwardRef<TextInput, Props>(
 
     return (
       <View style={[styles.defaultContainerStyle, { backgroundColor: colors.bgSecondary }, containerStyle]}>
-        <TextInput
+        <UsedTextInput
           ref={composeRef([inputRef, _forwardRef as any])}
           style={[styles.defaultInputStyle, { color: colors.textPrimary, fontWeight: hasValue ? '600' : '300' }, style]}
           placeholderTextColor={colors.textSecondary}

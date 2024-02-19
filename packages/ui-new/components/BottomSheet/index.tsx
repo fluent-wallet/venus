@@ -1,26 +1,40 @@
-import { useCallback, useRef, forwardRef, type ComponentProps } from 'react';
+import { useCallback, useRef, forwardRef, type ComponentProps, useMemo } from 'react';
 import { BackHandler } from 'react-native';
-import { useFocusEffect } from '@react-navigation/native';
-import BottomSheet_, { BottomSheetBackdrop, type BottomSheetBackdropProps } from '@gorhom/bottom-sheet';
+import { useFocusEffect, useTheme } from '@react-navigation/native';
+import BottomSheet_, { BottomSheetModal, BottomSheetBackdrop, type BottomSheetBackdropProps } from '@gorhom/bottom-sheet';
 import composeRef from '@cfx-kit/react-utils/dist/composeRef';
 export * from '@gorhom/bottom-sheet';
-export { default as BottomSheetMethods } from '@gorhom/bottom-sheet';
+export { BottomSheetModal as BottomSheetMethods } from '@gorhom/bottom-sheet';
 
-interface Props extends ComponentProps<typeof BottomSheet_> {
+interface Props extends ComponentProps<typeof BottomSheetModal> {
   backDropPressBehavior?: 'none' | 'close' | 'collapse' | number;
   handlePressBackdrop?: () => void;
+  isModal?: boolean;
 }
-const BottomSheet = forwardRef<BottomSheet_, Props>(
+
+const BottomSheet = forwardRef<BottomSheetModal, Props>(
   (
-    { children, enablePanDownToClose = true, keyboardBlurBehavior = 'restore', backDropPressBehavior = 'close', handlePressBackdrop, ...props },
+    { children, enablePanDownToClose = true, keyboardBlurBehavior = 'restore', backDropPressBehavior = 'close', handlePressBackdrop, isModal = true, ...props },
     _forwardRef,
   ) => {
+    const { colors, palette } = useTheme();
+
     const indexRef = useRef(-1);
-    const bottomSheetRef = useRef<BottomSheet_>(null);
+    const bottomSheetRef = useRef<BottomSheetModal>(null);
+
+    const RenderBottomSheet = useMemo(() => (isModal ? BottomSheetModal : BottomSheet_), [isModal]);
+    const defaultIndex = useMemo(() => (isModal ? 0 : -1), [isModal]);
 
     const renderBackdrop = useCallback(
       (props: BottomSheetBackdropProps) => (
-        <BottomSheetBackdrop {...props} disappearsOnIndex={-1} appearsOnIndex={0} pressBehavior={backDropPressBehavior} onPress={handlePressBackdrop} />
+        <BottomSheetBackdrop
+          {...props}
+          disappearsOnIndex={-1}
+          appearsOnIndex={0}
+          pressBehavior={backDropPressBehavior}
+          enableTouchThrough={false}
+          onPress={handlePressBackdrop}
+        />
       ),
       [backDropPressBehavior, handlePressBackdrop],
     );
@@ -42,17 +56,19 @@ const BottomSheet = forwardRef<BottomSheet_, Props>(
     );
 
     return (
-      <BottomSheet_
+      <RenderBottomSheet
         ref={composeRef([_forwardRef!, bottomSheetRef])}
-        index={-1}
+        index={defaultIndex}
         onChange={(index) => (indexRef.current = index)}
         enablePanDownToClose={enablePanDownToClose}
         keyboardBlurBehavior={keyboardBlurBehavior}
         backdropComponent={renderBackdrop}
+        backgroundStyle={{ backgroundColor: colors.bgFourth }}
+        handleIndicatorStyle={{ backgroundColor: palette.gray4 }}
         {...props}
       >
         {children}
-      </BottomSheet_>
+      </RenderBottomSheet>
     );
   },
 );

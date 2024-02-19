@@ -1,7 +1,7 @@
 import { useAtomValue } from 'jotai';
 import { atomWithObservable } from 'jotai/utils';
 import { switchMap, startWith, map, from, combineLatest, type Observable } from 'rxjs';
-import { groupBy, flatMap, toPairs, sortBy } from 'lodash-es';
+import { groupBy, toPairs, sortBy } from 'lodash-es';
 import database, { dbRefresh$ } from '../../../../database';
 import TableName from '../../../../database/TableName';
 import VaultType from '../../../../database/models/Vault/VaultType';
@@ -58,6 +58,7 @@ export const accountsManageObservable = combineLatest([dbRefresh$.pipe(startWith
         id: accountGroupId,
         nickname: accounts[0].accountGroup.nickname,
         vaultType: accounts[0].vault.type,
+        accountCount: accounts.length,
       },
       data: accounts.map(({ account }) => account),
     }));

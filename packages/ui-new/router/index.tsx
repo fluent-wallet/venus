@@ -9,7 +9,17 @@ import BiometricsWay from '@pages/InitWallet/BiometricsWay';
 import PasswordWay from '@pages/InitWallet/PasswordWay';
 import Home from '@pages/Home';
 import Settings from '@pages/Settings';
-import { WelcomeStackName, WayToInitWalletStackName, HomeStackName, BiometricsWayStackName, PasswordWayStackName, SettingsStackName, type RootStackParamList } from './configs';
+import AccountManagement from '@pages/Management/AccountManagement';
+import {
+  WelcomeStackName,
+  WayToInitWalletStackName,
+  HomeStackName,
+  BiometricsWayStackName,
+  PasswordWayStackName,
+  SettingsStackName,
+  AccountManagementStackName,
+  type RootStackParamList,
+} from './configs';
 import Header from './Header';
 
 const RootStack = createNativeStackNavigator<RootStackParamList>();
@@ -38,6 +48,7 @@ const Router: React.FC = () => {
         <RootStack.Screen name={HomeStackName} component={Home} options={{ headerShown: false }} />
         <RootStack.Screen name={BiometricsWayStackName} component={BiometricsWay} />
         <RootStack.Screen name={PasswordWayStackName} component={PasswordWay} />
+        <RootStack.Screen name={AccountManagementStackName} component={AccountManagement} />
         <RootStack.Screen name={SettingsStackName} component={Settings} />
       </RootStack.Navigator>
     </View>

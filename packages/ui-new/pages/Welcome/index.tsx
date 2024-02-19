@@ -12,7 +12,6 @@ import WelcomeBgLight from '@assets/images/welcome-bg-light.webp';
 import WelcomeBgDark from '@assets/images/welcome-bg-dark.webp';
 import WelcomeTextLight from '@assets/images/enter-web3-text-light.webp';
 import WelcomeTextDark from '@assets/images/enter-web3-text-dark.webp';
-
 import Img from '@assets/images/enter-web3-img.webp';
 
 const Welcome: React.FC<StackScreenProps<typeof WelcomeStackName>> = ({ navigation }) => {

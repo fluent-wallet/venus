@@ -1,5 +1,3 @@
-import { Platform } from 'react-native';
-
 export const palette = {
   blue0: '#DEE6FB',
   blue1: '#C2D2FB',
@@ -31,13 +29,7 @@ export const palette = {
   gray7: '#383838',
   gray8: '#1E1E1E',
 
-  red0: '#FEF2F2',
-  red1: '#FECACA',
-  red2: '#F87171',
-  red3: '#EF4444',
-  red4: '#DC2626',
-  red5: '#991B1B',
-
+  red: '#FD6464',
   white: '#FFFFFF',
   black: '#000000',
 };
@@ -47,12 +39,13 @@ export const lightColors = {
   bgSecondary: palette.gray1,
   bgThird: palette.gray8,
   bgFourth: palette.white,
+  bgSelect: palette.green3,
   textPrimary: palette.gray8,
   textSecondary: palette.gray4,
   textThird: palette.gray8,
   textFourth: palette.gray1,
   textFifth: palette.gray1,
-  textNotice: '#01C2E1',
+  textNotice: palette.green5,
   borderPrimary: palette.gray8,
   borderSecondary: palette.gray8,
   borderThird: palette.gray2,
@@ -63,8 +56,8 @@ export const lightColors = {
   iconFourth: palette.gray8,
   iconFifth: palette.gray0,
   underlay: palette.gray2,
-  up: '#01C2E1',
-  down: '#FD6464',
+  up: palette.green5,
+  down: palette.red,
 };
 
 export const darkColors: typeof lightColors = {
@@ -72,6 +65,7 @@ export const darkColors: typeof lightColors = {
   bgSecondary: palette.gray7,
   bgThird: palette.gray0,
   bgFourth: palette.gray7,
+  bgSelect: palette.green4,
   textPrimary: palette.gray1,
   textSecondary: palette.gray5,
   textThird: palette.gray8,
@@ -88,8 +82,8 @@ export const darkColors: typeof lightColors = {
   iconFourth: palette.gray8,
   iconFifth: palette.gray8,
   underlay: palette.gray7,
-  up: '#01C2E1',
-  down: '#FD6464',
+  up: palette.green4,
+  down: palette.red,
 };
 
 const defaultFont = {

@@ -14,7 +14,7 @@ const NetworkSelector: React.FC<Props> = ({ selectorRef }) => {
   const { colors } = useTheme();
 
   return (
-    <BottomSheet ref={selectorRef} snapPoints={snapPoints}>
+    <BottomSheet ref={selectorRef} snapPoints={snapPoints} isModal={false}>
       <View style={styles.container}>
         <View style={styles.header}>
           <Text style={[styles.title, { color: colors.textPrimary }]}>Network</Text>

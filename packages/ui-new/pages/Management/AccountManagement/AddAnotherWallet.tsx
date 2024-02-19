@@ -1,0 +1,107 @@
+import React, { useCallback, useRef, type MutableRefObject } from 'react';
+import { View, Pressable, StyleSheet } from 'react-native';
+import { useTheme } from '@react-navigation/native';
+import { showMessage } from 'react-native-flash-message';
+import { Image } from 'expo-image';
+import plugins from '@core/WalletCore/Plugins';
+import { useHasBSIMVaultCreated } from '@core/WalletCore/Plugins/ReactInject';
+import useInAsync from '@hooks/useInAsync';
+import Text from '@components/Text';
+import BottomSheet, { type BottomSheetMethods } from '@components/BottomSheet';
+import HourglassLoading from '@components/Loading/Hourglass';
+import { styles as accountListStyles } from '@modules/AccountsList';
+import { showNotFindBSIMCardMessage } from '@pages/WayToInitWallet';
+import ImportExistingWallet from '@pages/WayToInitWallet/ImportExistingWallet';
+import { AccountManagementStackName, type StackScreenProps } from '@router/configs';
+import BSIMCard from '@assets/icons/bsim-card-noshadow.webp';
+import createVault from '@pages/InitWallet/createVaultWithRouterParams';
+
+interface Props {
+  navigation: StackScreenProps<typeof AccountManagementStackName>['navigation'];
+  bottomSheetRef: MutableRefObject<BottomSheetMethods>;
+}
+
+const AddAnotherWallet: React.FC<Props> = ({ navigation, bottomSheetRef }) => {
+  const { colors } = useTheme();
+  const importExistRef = useRef<BottomSheetMethods>(null!);
+
+  const hasBSIMVaultCreated = useHasBSIMVaultCreated();
+
+  const _handleConnectBSIMCard = useCallback(async () => {
+    try {
+      navigation.setOptions({ gestureEnabled: false });
+      await new Promise((resolve) => setTimeout(resolve));
+      await plugins.BSIM.getBSIMVersion();
+      await new Promise((resolve) => setTimeout(resolve));
+      if (await createVault({ type: 'connectBSIM' })) {
+        bottomSheetRef.current?.close();
+      }
+    } catch (error) {
+      showNotFindBSIMCardMessage();
+    } finally {
+      navigation.setOptions({ gestureEnabled: false });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+  const { inAsync: inConnecting, execAsync: handleConnectBSIMCard } = useInAsync(_handleConnectBSIMCard);
+
+  const _handleCreateNewHdWallet = useCallback(async () => {
+    navigation.setOptions({ gestureEnabled: false });
+    await new Promise((resolve) => setTimeout(resolve));
+    if (await createVault({ type: 'createNewWallet' })) {
+      bottomSheetRef.current?.close();
+    }
+    navigation.setOptions({ gestureEnabled: false });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+  const { inAsync: inCreating, execAsync: handleCreateNewHdWallet } = useInAsync(_handleCreateNewHdWallet);
+
+  return (
+    <>
+      <BottomSheet ref={bottomSheetRef} snapPoints={snapPoints}>
+        <View style={styles.container}>
+          {!hasBSIMVaultCreated && (
+            <Pressable
+              style={({ pressed }) => [accountListStyles.row, { backgroundColor: pressed ? colors.underlay : 'transparent' }]}
+              disabled={inConnecting}
+              onPress={handleConnectBSIMCard}
+            >
+              {<Image style={accountListStyles.groupTypeImage} source={BSIMCard} />}
+              <Text style={[accountListStyles.manageText, { color: colors.textPrimary }]}>Connect BSIM Wallet</Text>
+              {inConnecting && <HourglassLoading style={accountListStyles.addAccountLoading} />}
+            </Pressable>
+          )}
+
+          <Pressable
+            style={({ pressed }) => [accountListStyles.row, { backgroundColor: pressed ? colors.underlay : 'transparent' }]}
+            disabled={inCreating}
+            onPress={handleCreateNewHdWallet}
+          >
+            {<Image style={accountListStyles.groupTypeImage} source={BSIMCard} />}
+            <Text style={[accountListStyles.manageText, { color: colors.textPrimary }]}>Create new wallet</Text>
+            {inCreating && <HourglassLoading style={accountListStyles.addAccountLoading} />}
+          </Pressable>
+
+          <Pressable
+            style={({ pressed }) => [accountListStyles.row, { backgroundColor: pressed ? colors.underlay : 'transparent' }]}
+            onPress={() => importExistRef.current?.present()}
+          >
+            {<Image style={accountListStyles.groupTypeImage} source={BSIMCard} />}
+            <Text style={[accountListStyles.manageText, { color: colors.textPrimary }]}>Import existing wallet</Text>
+          </Pressable>
+        </View>
+      </BottomSheet>
+      <ImportExistingWallet bottomSheetRef={importExistRef} onSuccessConfirm={() => bottomSheetRef.current?.close()} />
+    </>
+  );
+};
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+  },
+});
+
+const snapPoints = ['30%'];
+
+export default AddAnotherWallet;

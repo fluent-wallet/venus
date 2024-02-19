@@ -17,20 +17,26 @@ import WelcomeBgDark from '@assets/images/welcome-bg-dark.webp';
 import Img from '@assets/images/welcome-img.webp';
 import ImportExistingWallet, { type BottomSheetMethods } from './ImportExistingWallet';
 
+export const showNotFindBSIMCardMessage = () =>
+  showMessage({
+    message: `Can't find the BSIM Card`,
+    description: "Please make sure you've inserted the BSIM Card and try again.",
+    type: 'failed',
+  });
+
 const WayToInitWallet: React.FC<StackScreenProps<typeof WayToInitWalletStackName>> = ({ navigation }) => {
   const { mode, colors } = useTheme();
 
   const _handleConnectBSIMCard = useCallback(async () => {
     try {
-      await new Promise((resolve) => setTimeout(resolve, 20));
+      navigation.setOptions({ gestureEnabled: false });
+      await new Promise((resolve) => setTimeout(resolve));
       await plugins.BSIM.getBSIMVersion();
       navigation.navigate(BiometricsWayStackName, { type: 'connectBSIM' });
     } catch (error) {
-      showMessage({
-        message: `Can't find the BSIM Card`,
-        description: "Please make sure you've inserted the BSIM Card and try again.",
-        type: 'failed',
-      });
+      showNotFindBSIMCardMessage();
+    } finally {
+      navigation.setOptions({ gestureEnabled: false });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -62,7 +68,7 @@ const WayToInitWallet: React.FC<StackScreenProps<typeof WayToInitWalletStackName
               Create new wallet
             </Button>
 
-            <Button testID="importExistingWallet" textAlign="left" style={styles.btnLast} onPress={() => bottomSheetRef.current?.expand()}>
+            <Button testID="importExistingWallet" textAlign="left" style={styles.btnLast} onPress={() => bottomSheetRef.current?.present()}>
               Import existing wallet
             </Button>
           </SafeAreaView>
