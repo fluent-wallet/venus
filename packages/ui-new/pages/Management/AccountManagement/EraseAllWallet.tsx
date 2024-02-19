@@ -8,6 +8,7 @@ import plugins from '@core/WalletCore/Plugins';
 import Text from '@components/Text';
 import Button from '@components/Button';
 import BottomSheet, { type BottomSheetMethods } from '@components/BottomSheet';
+import { screenHeight } from '@utils/deviceInfo'
 import { AccountManagementStackName, WelcomeStackName, type StackScreenProps } from '@router/configs';
 
 interface Props {
@@ -74,6 +75,7 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingTop: 12,
     paddingHorizontal: 16,
+    paddingBottom: 32,
   },
   title: {
     fontSize: 20,
@@ -89,6 +91,7 @@ const styles = StyleSheet.create({
     lineHeight: 20,
   },
   btnArea: {
+    marginTop: 'auto',
     display: 'flex',
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -101,6 +104,6 @@ const styles = StyleSheet.create({
   },
 });
 
-const snapPoints = ['50%'];
+const snapPoints = [`${(400 / screenHeight * 100).toFixed(2)}%`];
 
 export default EraseAllWallet;

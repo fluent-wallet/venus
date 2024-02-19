@@ -24,7 +24,7 @@ const AccountManagement: React.FC<StackScreenProps<typeof AccountManagementStack
         <AccountsList type="management" />
 
         <Pressable
-          style={({ pressed }) => [accountListStyles.row, { backgroundColor: pressed ? colors.underlay : 'transparent' }]}
+          style={({ pressed }) => [accountListStyles.row, accountListStyles.group, { backgroundColor: pressed ? colors.underlay : 'transparent' }]}
           onPress={() => addAnotherWalletRef.current?.present()}
         >
           <Checkbox checked={mode === 'dark'} Icon={Add} />
@@ -32,7 +32,7 @@ const AccountManagement: React.FC<StackScreenProps<typeof AccountManagementStack
         </Pressable>
 
         <Pressable
-          style={({ pressed }) => [accountListStyles.row, { backgroundColor: pressed ? colors.underlay : 'transparent' }]}
+          style={({ pressed }) => [accountListStyles.row, accountListStyles.group, { backgroundColor: pressed ? colors.underlay : 'transparent' }]}
           onPress={() => eraseAllWalletRef.current?.present()}
         >
           <Checkbox checked={mode === 'dark'} Icon={Delete} />
@@ -54,7 +54,7 @@ const styles = StyleSheet.create({
     flexDirection: 'column',
   },
   title: {
-    marginBottom: 4,
+    marginBottom: 8,
     marginHorizontal: 16,
     fontSize: 22,
     fontWeight: '600',

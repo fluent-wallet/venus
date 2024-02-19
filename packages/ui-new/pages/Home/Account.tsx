@@ -5,7 +5,9 @@ import { Image } from 'expo-image';
 import { useCurrentAccount, useCurrentAddressOfAccount, useVaultOfAccount, VaultType } from '@core/WalletCore/Plugins/ReactInject';
 import Text from '@components/Text';
 import { toDataUrl } from '@utils/blockies';
-import BSIMCard from '@assets/icons/bsim-card.webp';
+import BSIMCardWallet from '@assets/icons/wallet-bsim-shadow.webp';
+import HDWallet from '@assets/icons/wallet-hd.webp';
+import ExistWallet from '@assets/icons/wallet-Imported.webp';
 import ArrowLeft from '@assets/icons/arrow-left.svg';
 
 const Account: React.FC<{ onPress: () => void }> = ({ onPress }) => {
@@ -21,7 +23,10 @@ const Account: React.FC<{ onPress: () => void }> = ({ onPress }) => {
     >
       <View style={styles.accountImageWrapper}>
         <Image style={styles.accountImage} source={{ uri: toDataUrl(address?.hex) }} />
-        {vault?.type === VaultType.BSIM && <Image style={styles.acccountImageBSIMCard} source={BSIMCard} />}
+        <Image
+          style={styles.acccountImageBSIMCard}
+          source={vault?.type === VaultType.BSIM ? BSIMCardWallet : vault?.type === VaultType.HierarchicalDeterministic ? HDWallet : ExistWallet}
+        />
       </View>
       <Text style={[styles.accountText, { color: colors.textPrimary }]} numberOfLines={1} ellipsizeMode="middle">
         {account?.nickname ?? 'Loading...'}

@@ -7,6 +7,7 @@ import Text from '@components/Text';
 import TextInput from '@components/TextInput';
 import BottomSheet, { type BottomSheetMethods } from '@components/BottomSheet';
 import { isDev } from '@utils/getEnv';
+import { screenHeight } from '@utils/deviceInfo'
 import { type PasswordRequest } from '@WalletCoreExtends/Plugins/Authentication';
 
 const defaultPassword = isDev ? '12345678' : '';
@@ -105,6 +106,6 @@ const styles = StyleSheet.create({
   },
 });
 
-const snapPoints = ['33.5%'];
+const snapPoints = [`${(260 / screenHeight * 100).toFixed(2)}%`];
 
 export default PasswordVerify;
