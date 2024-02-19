@@ -20,6 +20,14 @@ const createVaultWithRouterParams = async (args: RootStackParamList['Biometrics'
     }
 
     if (args?.type === 'importExistWallet') {
+      const hasSame = await methods.checkHasSameVault(args.value!);
+      if (hasSame) {
+        showMessage({
+          message: `This ${type === 'SeedPhrase' ? 'seed phrase' : 'private key'} has been added`,
+          type: 'failed',
+        });
+        return;
+      }
       if (type === 'PrivateKey') {
         await methods.createPrivateKeyVault(args.value!, password);
       } else {

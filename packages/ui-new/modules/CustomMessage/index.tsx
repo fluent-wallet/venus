@@ -78,12 +78,14 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   icon: {
+    flexShrink: 0,
     width: 24,
     height: 24,
     marginRight: 12,
     alignSelf: 'flex-start',
   },
   textArea: {
+    flexShrink: 1,
     alignSelf: 'flex-start',
   },
   title: {

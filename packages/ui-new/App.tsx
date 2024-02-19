@@ -3,6 +3,7 @@ import { useColorScheme } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import FlashMessage from 'react-native-flash-message';
 import { NavigationContainer, type Theme } from '@react-navigation/native';
+import * as SplashScreen from 'expo-splash-screen';
 import { BottomSheetModalProvider } from '@gorhom/bottom-sheet';
 import { JotaiNexus, useHasVault } from '@core/WalletCore/Plugins/ReactInject';
 import CustomMessage from '@modules/CustomMessage';
@@ -12,7 +13,6 @@ import { useMode } from '@hooks/useMode';
 import { palette, lightColors, darkColors, fonts } from './theme';
 import Router from './router';
 import '@assets/i18n';
-import * as SplashScreen from 'expo-splash-screen';
 
 const messagesTop = { top: statusBarHeight + 20 + (OS === 'android' ? 0 : supports3DStructureLight ? 40 : 10) };
 

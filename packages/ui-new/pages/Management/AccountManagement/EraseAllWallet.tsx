@@ -2,6 +2,7 @@ import React, { useCallback, type MutableRefObject } from 'react';
 import { View, StyleSheet } from 'react-native';
 import { useTheme } from '@react-navigation/native';
 import { showMessage } from 'react-native-flash-message';
+import RNRestart from 'react-native-restart';
 import methods from '@core/WalletCore/Methods';
 import plugins from '@core/WalletCore/Plugins';
 import Text from '@components/Text';
@@ -21,13 +22,14 @@ const EraseAllWallet: React.FC<Props> = ({ navigation, bottomSheetRef }) => {
     try {
       await plugins.Authentication.getPassword();
       navigation.navigate(WelcomeStackName);
-      bottomSheetRef.current.close();
+      bottomSheetRef.current.dismiss();
       await new Promise((resolve) => setTimeout(resolve, 100));
       await methods.clearAccountData();
-      showMessage({
-        message: 'Clear account data successfully',
-        type: 'success',
-      });
+      await RNRestart.restart();
+      // showMessage({
+      //   message: 'Clear account data successfully',
+      //   type: 'success',
+      // });
     } catch (err) {
       if (String(err)?.includes('cancel')) {
         return;
