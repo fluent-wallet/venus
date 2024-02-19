@@ -1,9 +1,10 @@
 import React, { type MutableRefObject } from 'react';
 import { View, Pressable, StyleSheet } from 'react-native';
-import { useTheme } from '@react-navigation/native';
+import { useTheme, useNavigation } from '@react-navigation/native';
 import AccountsList from '@modules/AccountsList';
 import Text from '@components/Text';
 import BottomSheet, { type BottomSheetMethods } from '@components/BottomSheet';
+import { AccountManagementStackName, HomeStackName, type StackScreenProps } from '@router/configs';
 export { type BottomSheetMethods };
 
 interface Props {
@@ -12,13 +13,17 @@ interface Props {
 
 const AccountSelector: React.FC<Props> = ({ selectorRef }) => {
   const { colors } = useTheme();
+  const navigation = useNavigation<StackScreenProps<typeof HomeStackName>['navigation']>();
 
   return (
-    <BottomSheet ref={selectorRef} snapPoints={snapPoints}>
+    <BottomSheet ref={selectorRef} snapPoints={snapPoints} isModal={false}>
       <View style={styles.container}>
         <View style={styles.header}>
           <Text style={[styles.title, { color: colors.textPrimary }]}>Account</Text>
-          <Pressable style={({ pressed }) => [styles.edit, { borderColor: colors.borderThird, backgroundColor: pressed ? colors.underlay : 'transparent' }]}>
+          <Pressable
+            style={({ pressed }) => [styles.edit, { borderColor: colors.borderThird, backgroundColor: pressed ? colors.underlay : 'transparent' }]}
+            onPress={() => navigation.navigate(AccountManagementStackName)}
+          >
             <Text style={[styles.title, { color: colors.textPrimary }]}>⚙️ Edit</Text>
           </Pressable>
         </View>

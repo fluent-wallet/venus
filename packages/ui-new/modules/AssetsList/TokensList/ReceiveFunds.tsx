@@ -1,35 +1,44 @@
 import React from 'react';
-import { View, Pressable, StyleSheet } from 'react-native';
+import { StyleSheet } from 'react-native';
 import { useTheme } from '@react-navigation/native';
+import { Image } from 'expo-image';
+import Button from '@components/Button';
 import Text from '@components/Text';
 import { useNavigation } from '@react-navigation/native';
-import QRCodeIcon from '@assets/icons/qr-code.svg';
+import Img from '@assets/images/welcome-img.webp';
 
 const ReceiveFunds: React.FC = () => {
   const { colors } = useTheme();
   const navigation = useNavigation();
 
   return (
-    <Pressable
-      testID="receiveFunds"
-      style={({ pressed }) => [styles.container, { backgroundColor: pressed ? colors.underlay : 'transparent' }]}
-      className="rounded-[8px] overflow-hidden"
-    >
-      <View>
-        <View className="mr-[8px] my-[12px]">
-          <QRCodeIcon color="#000" width={32} height={32} />
-        </View>
-        <View>
-          <Text>Receive Funds</Text>
-          <Text>Deposit tokens to your wallet</Text>
-        </View>
-      </View>
-    </Pressable>
+    <>
+      <Image style={styles.img} source={Img} contentFit="contain" />
+      <Text style={[styles.text, { color: colors.textSecondary }]}>Deposit tokens to your wallet</Text>
+      <Button testID="receiveFunds" style={styles.btn}>Receive</Button>
+    </>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {},
+  img: {
+    alignSelf: 'center',
+    width: 138,
+    aspectRatio: 1.285,
+    marginTop: 36,
+  },
+  text: {
+    alignSelf: 'center',
+    marginTop: 12,
+    marginBottom: 24,
+    fontSize: 16,
+    fontWeight: '300',
+    lineHeight: 20,
+  },
+  btn: {
+    alignSelf: 'center',
+    width: 184
+  }
 });
 
 export default ReceiveFunds;

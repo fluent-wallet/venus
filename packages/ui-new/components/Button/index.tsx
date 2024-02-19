@@ -62,7 +62,7 @@ const Button = ({
     <Pressable style={containerStyle} disabled={disabled || loading} {...props}>
       {typeof children === 'string' ? <Text style={textStyle}>{children}</Text> : children}
       {Icon && !loading && <Icon style={iconStyle} />}
-      {loading && <HourglassLoading color={styles[`text-${mode}`].color} style={iconPositionStyle} />}
+      {loading && <HourglassLoading style={iconPositionStyle} />}
     </Pressable>
   );
 };

@@ -96,7 +96,7 @@ const ImportExistingWallet: React.FC<Props> = ({ bottomSheetRef, onSuccessConfir
           }}
           onBlur={handleCheckInput}
         />
-        <Text style={[styles.tipText, { color: status?.type === 'error' ? palette.red4 : 'green', opacity: status === null ? 0 : 1 }]}>
+        <Text style={[styles.tipText, { color: status?.type === 'error' ? colors.down : colors.up, opacity: status === null ? 0 : 1 }]}>
           {status?.message || 'placeholder'}
         </Text>
         <Button testID="confirmImportExistingWallet" style={styles.btn} onPress={handleConfirm} loading={inAsync}>

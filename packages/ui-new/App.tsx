@@ -3,8 +3,10 @@ import { useColorScheme } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import FlashMessage from 'react-native-flash-message';
 import { NavigationContainer, type Theme } from '@react-navigation/native';
+import { BottomSheetModalProvider } from '@gorhom/bottom-sheet';
 import { JotaiNexus, useHasVault } from '@core/WalletCore/Plugins/ReactInject';
 import CustomMessage from '@modules/CustomMessage';
+import PasswordVerify from '@modules/PasswordVerify';
 import { statusBarHeight, OS, supports3DStructureLight } from './utils/deviceInfo';
 import { useMode } from '@hooks/useMode';
 import { palette, lightColors, darkColors, fonts } from './theme';
@@ -39,7 +41,10 @@ const App: React.FC = () => {
     <>
       <GestureHandlerRootView style={{ flex: 1 }}>
         <NavigationContainer theme={theme as unknown as Theme}>
-          {typeof hasVault === 'boolean' && <Router />}
+          <BottomSheetModalProvider>
+            {typeof hasVault === 'boolean' && <Router />}
+            <PasswordVerify />
+          </BottomSheetModalProvider>
           <FlashMessage position={messagesTop} MessageComponent={CustomMessage} duration={3000} />
         </NavigationContainer>
       </GestureHandlerRootView>
@@ -47,5 +52,16 @@ const App: React.FC = () => {
     </>
   );
 };
+
+window.onerror = handleError;
+function handleError(msg, url, l) {
+  let txt = 'There was an error on this page.\n\n';
+  txt += 'Error: ' + msg + '\n';
+  txt += 'URL: ' + url + '\n';
+  txt += 'Line: ' + l + '\n\n';
+  txt += 'Click OK to continue.\n\n';
+  console.log(txt);
+  return true;
+}
 
 export default App;
