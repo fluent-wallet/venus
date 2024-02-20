@@ -1,3 +1,4 @@
+import { RequestSubject } from '@core/WalletCore/Events/requestSubject';
 import { AssetType } from '@core/database/models/Asset';
 import VaultType from '@core/database/models/Vault/VaultType';
 import { type NavigationProp } from '@react-navigation/native';
@@ -31,6 +32,9 @@ const BackUpNoticeStackName = 'BackUpNotice';
 
 const BackUpVerifyStackName = 'BackUpVerify';
 
+const WalletConnectApprovalSheetStackName = 'WalletConnectApprovalSheet';
+const WalletConnectSignTransactionStackName = 'WalletConnectSignTransaction';
+
 export {
   WelcomeStackName,
   SetPasswordStackName,
@@ -56,6 +60,8 @@ export {
   ScanQRCodeStackName,
   BackUpNoticeStackName,
   BackUpVerifyStackName,
+  WalletConnectApprovalSheetStackName,
+  WalletConnectSignTransactionStackName,
 };
 
 export type RootStackList = {
@@ -74,7 +80,7 @@ export type RootStackList = {
   [AccountSelectStackName]: undefined;
   [TokensStackName]: { to: string };
   [SendToStackName]: {
-    to: string
+    to: string;
     assetType: AssetType;
     balance: string;
     symbol: string;
@@ -89,7 +95,7 @@ export type RootStackList = {
     contractName?: string;
   };
   [TransactionConfirmStackName]: {
-    to:string
+    to: string;
     assetType: AssetType;
     balance: string;
     symbol: string;
@@ -111,6 +117,9 @@ export type RootStackList = {
   [ScanQRCodeStackName]: undefined;
   [BackUpNoticeStackName]: undefined;
   [BackUpVerifyStackName]: { seedPhrase: { index: number; word: string }[]; accountGroupId: string };
+
+  [WalletConnectApprovalSheetStackName]: { requestId: string };
+  [WalletConnectSignTransactionStackName]: { requestId: string };
 
   Home: { screen: typeof WalletStackName };
 };
