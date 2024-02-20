@@ -143,7 +143,7 @@ const ScanQRCode: React.FC<{ navigation: StackNavigation; route: RouteProp<RootS
   );
 
   const handleCodeScan = async (code: Code) => {
-    if (!code || !isScanningInProgress) return;
+    if (!code || isScanningInProgress.current) return;
     if (!code.value) return;
     isScanningInProgress.current = true;
     const ethAddress = code.value;
@@ -166,7 +166,6 @@ const ScanQRCode: React.FC<{ navigation: StackNavigation; route: RouteProp<RootS
     }
 
     if (code.value.startsWith('wc:')) {
-      isScanningInProgress.current = false;
       try {
         const { version } = parseUri(code.value);
         if (version === 1)
@@ -175,11 +174,14 @@ const ScanQRCode: React.FC<{ navigation: StackNavigation; route: RouteProp<RootS
           });
         await plugins.WalletConnect.pair(code.value);
         navigation.dispatch(StackActions.replace(HomeStackName, { screen: WalletStackName }));
+        isScanningInProgress.current = false;
       } catch (err) {
         showMessage({
           message: 'Connect to wallet-connect failed',
           description: String(err ?? ''),
+          duration: 3000,
         });
+        isScanningInProgress.current = false;
       }
       return;
     }

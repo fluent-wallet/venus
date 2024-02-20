@@ -5,12 +5,12 @@ import { EthTxTrack } from './EthTxTrack';
 
 declare module '../../../WalletCore/Plugins' {
   interface Plugins {
-    Transaction: TransactionPluginClass;
+    Transaction: TxTrackerPluginClass;
   }
 }
 
-class TransactionPluginClass implements Plugin {
-  public name = 'Transaction';
+class TxTrackerPluginClass implements Plugin {
+  public name = 'TxTracker';
   private _ethTracker = new EthTxTrack();
 
   constructor() {
@@ -24,4 +24,4 @@ class TransactionPluginClass implements Plugin {
   }
 }
 
-export default new TransactionPluginClass();
+export default new TxTrackerPluginClass();

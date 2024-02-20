@@ -14,38 +14,49 @@ let newestRequestSubjectObj: RequestSubject | null = null;
 
 @injectable()
 export class RequestMethod {
-  createRequest = async (params: Omit<RequestParams, 'status'>) => {
-    let resolve!: RequestSubject['resolve'];
-    let reject!: RequestSubject['reject'];
-    const promise = new Promise<boolean>((_resolve, _reject) => {
-      resolve = _resolve;
-      reject = _reject;
-    });
-    console.log('createRequest', params)
-    if (requestConfig.rejectPrevRequest && newestRequestSubjectObj) {
-      newestRequestSubjectObj.reject('User reject request.');
-    }
+  createRequest = async (
+    params: Omit<RequestParams, 'status'> & { resolve?: (...args: any[]) => Promise<void>; reject?: (...args: any[]) => Promise<void>; payload?: any },
+  ) => {
     const request = await _createRequest({ ...params, status: RequestStatus.Pending });
+
+    const _finally = () => {
+      // clear work
+      requestSubjectsMap.delete(request.id);
+      if (newestRequestSubjectObj === requestSubjectObj) {
+        newestRequestSubjectObj = null;
+      }
+    };
     const requestSubjectObj: RequestSubject = {
-      promise,
-      resolve,
-      reject,
+      resolve: async (...args) => {
+        if (params.resolve) {
+          await params?.resolve(...args);
+        }
+        request.updateStatus(RequestStatus.Resolved);
+        _finally();
+      },
+      reject: async (...args) => {
+        if (params.reject) {
+          await params.reject(...args);
+        }
+        request.updateStatus(RequestStatus.Rejected);
+        _finally();
+      },
+      payload: params.payload,
       request: {
+        id: request.id,
         type: request.type,
         value: request.value,
         app: params.app!,
       },
     };
+
     requestSubjectsMap.set(request.id, requestSubjectObj);
     newestRequestSubject.next(requestSubjectObj);
     newestRequestSubjectObj = requestSubjectObj;
-    promise.finally(() => {
-      requestSubjectsMap.delete(request.id);
-      if (newestRequestSubjectObj === requestSubjectObj) {
-        newestRequestSubjectObj = null;
-      }
-    });
-    return promise;
+  };
+
+  getRequestById = (id: string) => {
+    return requestSubjectsMap.get(id);
   };
 
   rejectAllPendingRequests = async () => {

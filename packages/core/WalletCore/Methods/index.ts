@@ -150,6 +150,9 @@ export class Methods {
   public createRequest(...args: Parameters<RequestMethod['createRequest']>) {
     return this.RequestMethod.createRequest(...args);
   }
+  public getRequestById(...args: Parameters<RequestMethod['getRequestById']>) {
+    return this.RequestMethod.getRequestById(...args);
+  }
   public rejectAllPendingRequests(...args: Parameters<RequestMethod['rejectAllPendingRequests']>) {
     return this.RequestMethod.rejectAllPendingRequests(...args);
   }
