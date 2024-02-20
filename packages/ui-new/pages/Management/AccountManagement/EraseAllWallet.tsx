@@ -27,10 +27,6 @@ const EraseAllWallet: React.FC<Props> = ({ navigation, bottomSheetRef }) => {
       await new Promise((resolve) => setTimeout(resolve, 100));
       await methods.clearAccountData();
       await RNRestart.restart();
-      // showMessage({
-      //   message: 'Clear account data successfully',
-      //   type: 'success',
-      // });
     } catch (err) {
       if (String(err)?.includes('cancel')) {
         return;
@@ -46,11 +42,11 @@ const EraseAllWallet: React.FC<Props> = ({ navigation, bottomSheetRef }) => {
   return (
     <BottomSheet ref={bottomSheetRef} snapPoints={snapPoints}>
       <View style={styles.container}>
-        <Text style={[styles.title, { color: colors.textPrimary }]}>⚠️ Confirm to delete{'\n'}this wallet?</Text>
+        <Text style={[styles.title, { color: colors.textPrimary }]}>⚠️ Confirm to clear{'\n'}account data?</Text>
         <Text style={[styles.description, { color: colors.textSecondary }]}>
-          This Action will remove this wallet form the app.{'\n'}
+          Account data will be cleared.{'\n'}
           {'\n'}
-          App can not restore your wallet, you can restore with its seed phrase / private key.{'\n'}
+          But network settings and other configurations will remain.{'\n'}
           {'\n'}
           Be sure to back up your wallet, otherwise you will permanently lose it and all assets.
         </Text>

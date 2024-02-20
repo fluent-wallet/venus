@@ -1,9 +1,9 @@
-import React, { useState, useCallback, type MutableRefObject, useEffect } from 'react';
-import { View, Pressable, StyleSheet } from 'react-native';
+import React, { useState, useCallback, useRef, useEffect, type MutableRefObject } from 'react';
+import { Pressable, StyleSheet } from 'react-native';
 import { useTheme } from '@react-navigation/native';
 import { showMessage } from 'react-native-flash-message';
-import { Image } from 'expo-image';
 import methods from '@core/WalletCore/Methods';
+import plugins from '@core/WalletCore/Plugins';
 import { useAccountFromId, useCurrentAddressValueOfAccount, useVaultOfAccount, VaultType } from '@core/WalletCore/Plugins/ReactInject';
 import { zeroAddress } from '@core/utils/address';
 import Text from '@components/Text';
@@ -14,6 +14,7 @@ import BottomSheet, { BottomSheetScrollView, type BottomSheetMethods } from '@co
 import { AccountManagementStackName, type StackScreenProps } from '@router/configs';
 import ArrowRight from '@assets/icons/arrow-right2.svg';
 import Delete from '@assets/icons/delete.svg';
+import DeleteConfirm from './DeleteConfirm';
 
 interface Props {
   navigation: StackScreenProps<typeof AccountManagementStackName>['navigation'];
@@ -22,7 +23,7 @@ interface Props {
   onDismiss: () => void;
 }
 
-const AccountConfig: React.FC<Props> = ({ bottomSheetRef, accountId, onDismiss }) => {
+const AccountConfig: React.FC<Props> = ({ bottomSheetRef, accountId, navigation, onDismiss }) => {
   const { colors, mode } = useTheme();
   const account = useAccountFromId(accountId);
   const vault = useVaultOfAccount(accountId);
@@ -37,43 +38,89 @@ const AccountConfig: React.FC<Props> = ({ bottomSheetRef, accountId, onDismiss }
     if (!account || !accountName) return;
     await methods.updateAccountNickName({ account, nickname: accountName });
     bottomSheetRef.current?.dismiss();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [account, accountName]);
 
-  return (
-    <BottomSheet ref={bottomSheetRef} snapPoints={snapPoints} onDismiss={onDismiss}>
-      <BottomSheetScrollView contentContainerStyle={styles.container}>
-        <Text style={[styles.title, styles.mainText, { color: colors.textPrimary }]}>Account</Text>
-        <Text style={[styles.description, { color: colors.textSecondary }]}>Address</Text>
-        <Text style={[styles.address, styles.mainText, { color: colors.textPrimary, opacity: addressValue ? 1 : 0 }]}>{addressValue || zeroAddress}</Text>
-        <Text style={[styles.description, { color: colors.textSecondary }]}>Account Name</Text>
-        <TextInput
-          containerStyle={[styles.textinput, { borderColor: colors.borderFourth }]}
-          showVisible={false}
-          value={accountName}
-          onChangeText={(newNickName) => setAccountName(newNickName)}
-        />
-        {(vault?.type === VaultType.HierarchicalDeterministic || vault?.type === VaultType.PrivateKey) && (
-          <>
-            <Text style={[styles.description, styles.backupDescription, { color: colors.textSecondary }]}>Backup</Text>
-            <Pressable style={({ pressed }) => [styles.row, { backgroundColor: pressed ? colors.underlay : 'transparent' }]}>
-              <Text style={[styles.mainText, styles.backupText, { color: colors.textPrimary }]}>
-                {vault.type === VaultType.PrivateKey ? 'Private Key' : 'Seed Phrase'}
-              </Text>
-              <ArrowRight color={colors.iconPrimary} />
-            </Pressable>
-          </>
-        )}
-        <Pressable style={({ pressed }) => [styles.row, styles.removeContainer, { backgroundColor: pressed ? colors.underlay : 'transparent' }]}>
-          <Checkbox checked={mode === 'dark'} Icon={Delete} />
-          <Text style={[styles.mainText, styles.removeText, { color: colors.textPrimary }]}>Remove Account</Text>
-        </Pressable>
+  const deleteBottomSheetRef = useRef<BottomSheetMethods>(null!);
 
-        <Button style={styles.btn} mode="auto" disabled={accountName === account?.nickname} onPress={handleUpdateAccountNickName}>
-          OK
-        </Button>
-      </BottomSheetScrollView>
-    </BottomSheet>
+  const handlePressDelete = useCallback(() => {
+    if (!account) return;
+    if (account.selected) {
+      showMessage({
+        message: "Selected account can't remove.",
+        type: 'warning',
+      });
+    } else {
+      deleteBottomSheetRef.current?.present();
+    }
+  }, [account]);
+
+  const handleConfirmDelete = useCallback(async () => {
+    if (!account || !vault) return;
+    try {
+      if (vault.isGroup) {
+        await methods.changeAccountHidden({ account, hidden: true });
+      } else {
+        await plugins.Authentication.getPassword();
+        await methods.deleteVault(vault);
+      }
+      showMessage({
+        message: 'Remove account successfully',
+        type: 'success',
+      });
+      bottomSheetRef.current?.dismiss();
+    } catch (err) {
+      if (plugins.Authentication.containsCancel(String(err))) {
+        return;
+      }
+      showMessage({
+        message: 'Remove account failed',
+        description: String(err ?? ''),
+        type: 'warning',
+      });
+    }
+    deleteBottomSheetRef.current?.dismiss();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [account, vault, navigation]);
+
+  return (
+    <>
+      <BottomSheet ref={bottomSheetRef} snapPoints={snapPoints} onDismiss={onDismiss}>
+        <BottomSheetScrollView contentContainerStyle={styles.container}>
+          <Text style={[styles.title, styles.mainText, { color: colors.textPrimary }]}>Account</Text>
+          <Text style={[styles.description, { color: colors.textSecondary }]}>Address</Text>
+          <Text style={[styles.address, styles.mainText, { color: colors.textPrimary, opacity: addressValue ? 1 : 0 }]}>{addressValue || zeroAddress}</Text>
+          <Text style={[styles.description, { color: colors.textSecondary }]}>Account Name</Text>
+          <TextInput
+            containerStyle={[styles.textinput, { borderColor: colors.borderFourth }]}
+            showVisible={false}
+            value={accountName}
+            onChangeText={(newNickName) => setAccountName(newNickName)}
+          />
+          {(vault?.type === VaultType.HierarchicalDeterministic || vault?.type === VaultType.PrivateKey) && (
+            <>
+              <Text style={[styles.description, styles.backupDescription, { color: colors.textSecondary }]}>Backup</Text>
+              <Pressable style={({ pressed }) => [styles.row, { backgroundColor: pressed ? colors.underlay : 'transparent' }]}>
+                <Text style={[styles.mainText, styles.backupText, { color: colors.textPrimary }]}>Private Key</Text>
+                <ArrowRight color={colors.iconPrimary} />
+              </Pressable>
+            </>
+          )}
+          <Pressable
+            style={({ pressed }) => [styles.row, styles.removeContainer, { backgroundColor: pressed ? colors.underlay : 'transparent' }]}
+            onPress={handlePressDelete}
+          >
+            <Checkbox checked={mode === 'dark'} Icon={Delete} />
+            <Text style={[styles.mainText, styles.removeText, { color: colors.textPrimary }]}>Remove Account</Text>
+          </Pressable>
+
+          <Button style={styles.btn} mode="auto" disabled={!accountName || accountName === account?.nickname} onPress={handleUpdateAccountNickName}>
+            OK
+          </Button>
+        </BottomSheetScrollView>
+      </BottomSheet>
+      <DeleteConfirm bottomSheetRef={deleteBottomSheetRef} navigation={navigation} onConfirm={handleConfirmDelete} />
+    </>
   );
 };
 

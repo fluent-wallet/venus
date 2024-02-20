@@ -20,6 +20,7 @@ export { useFinishedTxs, usePayloadOfTx, useUnfinishedTxs, useAssetOfTx } from '
 export { useAssetsAllList, useAssetsNFTList, useAssetsTokenList, useAssetsTotalPriceValue, useAssetsInFetch, useIsAssetsEmpty } from './data/useAssets';
 export { usePendingRequests, useAllRequests } from './data/useRequests';
 export { useAccountsManage } from './data/useAccountsManage';
+export { useGroupFromId } from './data/useGroupFromId';
 export { default as VaultType } from '../../../database/models/Vault/VaultType';
 export { NetworkType, ChainType } from '../../../database/models/Network';
 

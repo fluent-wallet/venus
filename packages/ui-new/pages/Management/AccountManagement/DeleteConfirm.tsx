@@ -1,15 +1,11 @@
-import React, { useCallback, type MutableRefObject } from 'react';
+import React, { type MutableRefObject } from 'react';
 import { View, StyleSheet } from 'react-native';
 import { useTheme } from '@react-navigation/native';
-import { showMessage } from 'react-native-flash-message';
-import RNRestart from 'react-native-restart';
-import methods from '@core/WalletCore/Methods';
-import plugins from '@core/WalletCore/Plugins';
 import Text from '@components/Text';
 import Button from '@components/Button';
 import BottomSheet, { type BottomSheetMethods } from '@components/BottomSheet';
 import { screenHeight } from '@utils/deviceInfo';
-import { AccountManagementStackName, WelcomeStackName, type StackScreenProps } from '@router/configs';
+import { AccountManagementStackName, type StackScreenProps } from '@router/configs';
 
 interface Props {
   navigation: StackScreenProps<typeof AccountManagementStackName>['navigation'];
@@ -25,7 +21,7 @@ const DeleteConfirm: React.FC<Props> = ({ bottomSheetRef, onConfirm }) => {
       <View style={styles.container}>
         <Text style={[styles.title, { color: colors.textPrimary }]}>⚠️ Confirm to delete{'\n'}this wallet?</Text>
         <Text style={[styles.description, { color: colors.textSecondary }]}>
-          This Action will remove this wallet form the app.{'\n'}
+          This Action will remove this wallet from the app.{'\n'}
           {'\n'}
           App can not restore your wallet, you can restore with its seed phrase / private key.{'\n'}
           {'\n'}
