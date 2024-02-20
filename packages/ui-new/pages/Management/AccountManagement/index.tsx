@@ -11,13 +11,15 @@ import Delete from '@assets/icons/delete.svg';
 import AddAnotherWallet from './AddAnotherWallet';
 import EraseAllWallet from './EraseAllWallet';
 import AccountConfig from './AccountConfig';
+import GroupConfig from './GroupConfig';
 
 const AccountManagement: React.FC<StackScreenProps<typeof AccountManagementStackName>> = ({ navigation }) => {
   const { colors, mode } = useTheme();
 
   const addAnotherWalletRef = useRef<BottomSheetMethods>(null!);
   const eraseAllWalletRef = useRef<BottomSheetMethods>(null!);
-  const AccountConfigRef = useRef<BottomSheetMethods>(null!);
+  const accountConfigRef = useRef<BottomSheetMethods>(null!);
+  const groupConfigRef = useRef<BottomSheetMethods>(null!);
 
   const [accountId, setAccountId] = useState<string | null>(null);
   const [groupId, setGroupId] = useState<string | null>(null);
@@ -30,10 +32,11 @@ const AccountManagement: React.FC<StackScreenProps<typeof AccountManagementStack
           type="management"
           onPressAccount={(_accountId) => {
             setAccountId(_accountId);
-            AccountConfigRef.current?.present();
+            accountConfigRef.current?.present();
           }}
           onPressGroup={(_groupId) => {
-            // setGroupId(_groupId);
+            setGroupId(_groupId);
+            groupConfigRef.current?.present();
           }}
         />
 
@@ -55,7 +58,8 @@ const AccountManagement: React.FC<StackScreenProps<typeof AccountManagementStack
       </View>
       <AddAnotherWallet bottomSheetRef={addAnotherWalletRef} navigation={navigation} />
       <EraseAllWallet bottomSheetRef={eraseAllWalletRef} navigation={navigation} />
-      <AccountConfig bottomSheetRef={AccountConfigRef} navigation={navigation} accountId={accountId} onDismiss={() => setAccountId(null)} />
+      <AccountConfig bottomSheetRef={accountConfigRef} navigation={navigation} accountId={accountId} onDismiss={() => setAccountId(null)} />
+      <GroupConfig bottomSheetRef={groupConfigRef} navigation={navigation} groupId={groupId} onDismiss={() => setGroupId(null)} />
     </>
   );
 };

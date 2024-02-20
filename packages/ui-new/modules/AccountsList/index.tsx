@@ -57,7 +57,7 @@ const AccountGroup: React.FC<
   );
 };
 
-const Account: React.FC<
+export const Account: React.FC<
   AccountProps & {
     colors: ReturnType<typeof useTheme>['colors'];
     isCurrent: boolean;

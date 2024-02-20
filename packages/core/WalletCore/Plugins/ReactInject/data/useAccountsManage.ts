@@ -7,17 +7,20 @@ import TableName from '../../../../database/TableName';
 import VaultType from '../../../../database/models/Vault/VaultType';
 import { type Account } from '../../../../database/models/Account';
 import { currentNetworkObservable } from './useCurrentNetwork';
+import { accountGroupsObservable } from './useAccountGroups';
 import { zeroAddress } from '../../../../utils/address';
 
-export const accountsManageObservable = combineLatest([dbRefresh$.pipe(startWith(null)), currentNetworkObservable]).pipe(
+export const accountsManageObservable = combineLatest([dbRefresh$.pipe(startWith(null)), currentNetworkObservable, accountGroupsObservable]).pipe(
   switchMap(() => database.collections.get(TableName.Account).query().observeWithColumns(['nickname', 'hidden']) as Observable<Array<Account>>),
   withLatestFrom(currentNetworkObservable),
-  switchMap(([accounts, currentNetwork]) => {
+  withLatestFrom(accountGroupsObservable),
+  switchMap(([[accounts, currentNetwork], accountGroups]) => {
     if (!currentNetwork) return [];
     return from(
       Promise.all(
         accounts.map(async (account) => {
-          const accountGroup = await account.accountGroup;
+          const _accountGroup = await account.accountGroup;
+          const accountGroup = accountGroups.find((group) => group.id === _accountGroup.id)! || _accountGroup;
           const addresses = await account.addresses;
           const networks = await Promise.all(addresses.map((address) => address.network));
           const currentNetworkAddress = addresses.find((_, index) => networks[index].id === currentNetwork.id);
@@ -30,7 +33,7 @@ export const accountsManageObservable = combineLatest([dbRefresh$.pipe(startWith
               addressValue: currentNetworkAddress ? await currentNetworkAddress.getValue() : zeroAddress,
             },
             accountGroup,
-            vault: await accountGroup.vault,
+            vault: await _accountGroup.vault,
           };
         }),
       ),
