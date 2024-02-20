@@ -164,7 +164,7 @@ class WalletConnectPluginClass implements Plugin {
     const proposer = proposal.params.proposer;
 
     if (!proposer.publicKey) return;
-
+    console.log(proposal.params, 'session proposal')
     const app = await this.getAPP(proposer);
 
     await methods.createRequest({

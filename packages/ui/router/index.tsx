@@ -64,7 +64,7 @@ import ScanQRCode from '@pages/ScanQRCode';
 import BootSplash from 'react-native-bootsplash';
 import BackUpNotice from '@pages/Account/BackupNotice';
 import VerifySeedPhrase from '@pages/Account/VerifySeedPhrase';
-import WalletConnectApprovalSheet from '@pages/WalletConnect/Apprpval';
+import WalletConnectApprovalSheet from '@pages/WalletConnect/Approval';
 import { RequestType } from '@core/database/models/Request/RequestType';
 import WalletConnectSignTransactionSheet from '@pages/WalletConnect/SignTransaction';
 const Stack = createNativeStackNavigator<RootStackList>();
