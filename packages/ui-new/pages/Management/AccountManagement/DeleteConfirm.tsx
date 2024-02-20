@@ -14,34 +14,11 @@ import { AccountManagementStackName, WelcomeStackName, type StackScreenProps } f
 interface Props {
   navigation: StackScreenProps<typeof AccountManagementStackName>['navigation'];
   bottomSheetRef: MutableRefObject<BottomSheetMethods>;
+  onConfirm: () => void;
 }
 
-const EraseAllWallet: React.FC<Props> = ({ navigation, bottomSheetRef }) => {
+const DeleteConfirm: React.FC<Props> = ({ bottomSheetRef, onConfirm }) => {
   const { colors } = useTheme();
-
-  const handleDelete = useCallback(async () => {
-    try {
-      await plugins.Authentication.getPassword();
-      navigation.navigate(WelcomeStackName);
-      bottomSheetRef.current.dismiss();
-      await new Promise((resolve) => setTimeout(resolve, 100));
-      await methods.clearAccountData();
-      await RNRestart.restart();
-      // showMessage({
-      //   message: 'Clear account data successfully',
-      //   type: 'success',
-      // });
-    } catch (err) {
-      if (String(err)?.includes('cancel')) {
-        return;
-      }
-      showMessage({
-        message: 'Clear account data failed',
-        description: String(err ?? ''),
-        type: 'warning',
-      });
-    }
-  }, []);
 
   return (
     <BottomSheet ref={bottomSheetRef} snapPoints={snapPoints}>
@@ -59,7 +36,13 @@ const EraseAllWallet: React.FC<Props> = ({ navigation, bottomSheetRef }) => {
           <Button style={styles.btn} onPress={() => bottomSheetRef.current?.close()}>
             Cancel
           </Button>
-          <Button style={[styles.btn, { backgroundColor: colors.down }]} onPress={handleDelete}>
+          <Button
+            style={[styles.btn, { backgroundColor: colors.down }]}
+            onPress={() => {
+              bottomSheetRef.current?.close();
+              onConfirm();
+            }}
+          >
             ⚠️ Delete
           </Button>
         </View>
@@ -104,4 +87,4 @@ const styles = StyleSheet.create({
 
 const snapPoints = [`${((400 / screenHeight) * 100).toFixed(2)}%`];
 
-export default EraseAllWallet;
+export default DeleteConfirm;

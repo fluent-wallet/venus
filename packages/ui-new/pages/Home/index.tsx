@@ -25,7 +25,7 @@ const Home: React.FC<StackScreenProps<typeof HomeStackName>> = ({ navigation }) 
     <>
       <SafeAreaView style={styles.container}>
         <View style={styles.header}>
-          <Account onPress={() => accountSelectorRef.current?.expand()} />
+          <Account onPress={() => accountSelectorRef.current?.expand()} navigation={navigation} />
           <HeaderRight
             navigation={navigation}
             onPressNetwork={() => {
