@@ -17,7 +17,7 @@ interface Props extends TextInputProps {
 }
 
 const CustomTextInput = forwardRef<TextInput, Props>(
-  ({ style, containerStyle, showVisible = true, showClear = true, disabled, onChangeText, isInBottomSheet, ...props }, _forwardRef) => {
+  ({ style, containerStyle, showVisible = true, showClear = true, disabled, onChangeText, isInBottomSheet, secureTextEntry, ...props }, _forwardRef) => {
     const { colors } = useTheme();
 
     const UsedTextInput = useMemo(() => (isInBottomSheet ? BottomSheetTextInput : TextInput), [isInBottomSheet]);
@@ -46,7 +46,7 @@ const CustomTextInput = forwardRef<TextInput, Props>(
           ref={composeRef([inputRef, _forwardRef as any])}
           style={[styles.defaultInputStyle, { color: colors.textPrimary, fontWeight: hasValue ? '600' : '300' }, style]}
           placeholderTextColor={colors.textSecondary}
-          secureTextEntry={showVisible ? !visible : undefined}
+          secureTextEntry={showVisible ? !visible : (secureTextEntry || false)}
           {...props}
           onChangeText={handleChangeText}
         />
@@ -80,6 +80,7 @@ const styles = StyleSheet.create({
   defaultInputStyle: {
     fontFamily: 'Sora',
     fontSize: 16,
+    fontWeight: '600',
     height: 48,
     flexGrow: 1,
     flexShrink: 1,

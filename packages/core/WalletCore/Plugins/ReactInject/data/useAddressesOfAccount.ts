@@ -5,17 +5,17 @@ import { memoize } from 'lodash-es';
 import { observeAccountById } from '../../../../database/models/Account/query';
 
 const addressesAtomFamilyOfAccount = atomFamily((accountId: string) =>
-  atomWithObservable(() => observeAccountById(accountId).pipe(switchMap((account) => account.addresses.observe())), { initialValue: [] })
+  atomWithObservable(() => observeAccountById(accountId).pipe(switchMap((account) => account.addresses.observe())), { initialValue: [] }),
 );
 export const useAddressesOfAccount = (accountId: string) => useAtomValue(addressesAtomFamilyOfAccount(accountId));
 
 const observeCurrentAddressOfAccount = memoize((accountId: string) =>
-  observeAccountById(accountId).pipe(switchMap((account) => account.currentNetworkAddressObservable))
+  observeAccountById(accountId).pipe(switchMap((account) => account.currentNetworkAddressObservable)),
 );
-const currentAddressAtomFamilyOfAccount = atomFamily((accountId: string | undefined) =>
-  atomWithObservable(() => (accountId ? observeCurrentAddressOfAccount(accountId) : of(null)), { initialValue: null! })
+const currentAddressAtomFamilyOfAccount = atomFamily((accountId: string | undefined | null) =>
+  atomWithObservable(() => (accountId ? observeCurrentAddressOfAccount(accountId) : of(null)), { initialValue: null! }),
 );
-const currentAddressValueAtomFamilyOfAccount = atomFamily((accountId: string | undefined) =>
+const currentAddressValueAtomFamilyOfAccount = atomFamily((accountId: string | undefined | null) =>
   atomWithObservable(
     () =>
       accountId
@@ -23,8 +23,8 @@ const currentAddressValueAtomFamilyOfAccount = atomFamily((accountId: string | u
         : of(null),
     {
       initialValue: null!,
-    }
-  )
+    },
+  ),
 );
-export const useCurrentAddressOfAccount = (accountId: string | undefined) => useAtomValue(currentAddressAtomFamilyOfAccount(accountId));
-export const useCurrentAddressValueOfAccount = (accountId: string | undefined) => useAtomValue(currentAddressValueAtomFamilyOfAccount(accountId));
+export const useCurrentAddressOfAccount = (accountId: string | undefined | null) => useAtomValue(currentAddressAtomFamilyOfAccount(accountId));
+export const useCurrentAddressValueOfAccount = (accountId: string | undefined | null) => useAtomValue(currentAddressValueAtomFamilyOfAccount(accountId));

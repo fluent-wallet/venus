@@ -8,8 +8,8 @@ export const observeVaultOfAccount = memoize((accountId: string) =>
   observeGroupOfAccount(accountId).pipe(switchMap((accountGroup) => accountGroup.vault.observe())),
 );
 
-const vaultAtomFamilyOfAccount = atomFamily((accountId: string | undefined) =>
+const vaultAtomFamilyOfAccount = atomFamily((accountId: string | undefined | null) =>
   atomWithObservable(() => (accountId ? observeVaultOfAccount(accountId) : of(null)), { initialValue: null! }),
 );
 
-export const useVaultOfAccount = (accountId: string | undefined) => useAtomValue(vaultAtomFamilyOfAccount(accountId));
+export const useVaultOfAccount = (accountId: string | undefined | null) => useAtomValue(vaultAtomFamilyOfAccount(accountId));

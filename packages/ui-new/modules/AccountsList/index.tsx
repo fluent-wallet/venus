@@ -36,16 +36,14 @@ interface AccountProps {
   addressValue: string;
 }
 
-const AccountGroup: React.FC<AccountGroupProps & { colors: ReturnType<typeof useTheme>['colors']; type: ListType }> = ({
-  nickname,
-  vaultType,
-  colors,
-  type,
-}) => {
+const AccountGroup: React.FC<
+  AccountGroupProps & { colors: ReturnType<typeof useTheme>['colors']; type: ListType; onPressGroup?: (groupId: string) => void }
+> = ({ id, nickname, vaultType, colors, type, onPressGroup }) => {
   return (
     <Pressable
       style={({ pressed }) => [styles.row, styles.group, { backgroundColor: pressed ? colors.underlay : 'transparent' }]}
       disabled={type === 'selector' || vaultType === VaultType.PrivateKey || vaultType === VaultType.PublicAddress}
+      onPress={() => onPressGroup?.(id)}
     >
       <Image
         style={styles.groupTypeImage}
@@ -60,8 +58,14 @@ const AccountGroup: React.FC<AccountGroupProps & { colors: ReturnType<typeof use
 };
 
 const Account: React.FC<
-  AccountProps & { colors: ReturnType<typeof useTheme>['colors']; isCurrent: boolean; type: ListType; mode: 'dark' | 'light'; onSelect?: () => void }
-> = ({ id, nickname, addressValue, colors, isCurrent, type, mode, onSelect }) => {
+  AccountProps & {
+    colors: ReturnType<typeof useTheme>['colors'];
+    isCurrent: boolean;
+    type: ListType;
+    mode: 'dark' | 'light';
+    onPressAccount?: (accountId: string) => void;
+  }
+> = ({ id, nickname, addressValue, colors, isCurrent, type, mode, onPressAccount }) => {
   return (
     <Pressable
       style={({ pressed }) => [styles.row, { backgroundColor: pressed ? colors.underlay : 'transparent' }]}
@@ -69,9 +73,9 @@ const Account: React.FC<
       onPress={() => {
         if (type === 'selector') {
           methods.selectAccount(id);
-          onSelect?.();
+          onPressAccount?.(id);
         } else {
-          console.log();
+          onPressAccount?.(id);
         }
       }}
     >
@@ -112,7 +116,11 @@ const AddAccount: React.FC<
   );
 };
 
-const AccountsList: React.FC<{ type: ListType; onSelect?: () => void }> = ({ type, onSelect }) => {
+const AccountsList: React.FC<{ type: ListType; onPressAccount?: (accountId: string) => void; onPressGroup?: (groupId: string) => void }> = ({
+  type,
+  onPressAccount,
+  onPressGroup,
+}) => {
   const accountsManage = useAccountsManage();
   const currentAccount = useCurrentAccount();
   const { colors, mode } = useTheme();
@@ -151,8 +159,10 @@ const AccountsList: React.FC<{ type: ListType; onSelect?: () => void }> = ({ typ
   return (
     <ListComponent
       sections={accountsManage}
-      renderSectionHeader={({ section: { title } }) => <AccountGroup {...title} colors={colors} type={type} />}
-      renderItem={({ item }) => <Account {...item} colors={colors} type={type} isCurrent={currentAccount?.id === item.id} mode={mode} onSelect={onSelect} />}
+      renderSectionHeader={({ section: { title } }) => <AccountGroup {...title} colors={colors} type={type} onPressGroup={onPressGroup} />}
+      renderItem={({ item }) => (
+        <Account {...item} colors={colors} type={type} isCurrent={currentAccount?.id === item.id} mode={mode} onPressAccount={onPressAccount} />
+      )}
       renderSectionFooter={
         type === 'selector'
           ? () => <View pointerEvents="none" style={styles.placeholder} />

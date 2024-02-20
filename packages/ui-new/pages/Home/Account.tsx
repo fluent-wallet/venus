@@ -2,19 +2,22 @@ import React from 'react';
 import { Pressable, View, StyleSheet } from 'react-native';
 import { useTheme } from '@react-navigation/native';
 import { Image } from 'expo-image';
-import { useCurrentAccount, useCurrentAddressOfAccount, useVaultOfAccount, VaultType } from '@core/WalletCore/Plugins/ReactInject';
+import { useCurrentAccount, useCurrentAddressValueOfAccount, useVaultOfAccount, VaultType } from '@core/WalletCore/Plugins/ReactInject';
 import Text from '@components/Text';
+import useForceUpdateOnFocus from '@hooks/useUpdateOnFocus';
+import { HomeStackName, type StackScreenProps } from '@router/configs';
 import { toDataUrl } from '@utils/blockies';
 import BSIMCardWallet from '@assets/icons/wallet-bsim-shadow.webp';
 import HDWallet from '@assets/icons/wallet-hd.webp';
 import ExistWallet from '@assets/icons/wallet-Imported.webp';
 import ArrowLeft from '@assets/icons/arrow-left.svg';
 
-const Account: React.FC<{ onPress: () => void }> = ({ onPress }) => {
+const Account: React.FC<{ onPress: () => void; navigation: StackScreenProps<typeof HomeStackName>['navigation'] }> = ({ navigation, onPress }) => {
   const { colors } = useTheme();
   const account = useCurrentAccount();
-  const address = useCurrentAddressOfAccount(account?.id);
+  const addressValue = useCurrentAddressValueOfAccount(account?.id);
   const vault = useVaultOfAccount(account?.id);
+  useForceUpdateOnFocus(navigation);
 
   return (
     <Pressable
@@ -22,7 +25,7 @@ const Account: React.FC<{ onPress: () => void }> = ({ onPress }) => {
       onPress={onPress}
     >
       <View style={styles.accountImageWrapper}>
-        <Image style={styles.accountImage} source={{ uri: toDataUrl(address?.hex) }} />
+        <Image style={styles.accountImage} source={{ uri: toDataUrl(addressValue) }} />
         <Image
           style={styles.acccountImageBSIMCard}
           source={vault?.type === VaultType.BSIM ? BSIMCardWallet : vault?.type === VaultType.HierarchicalDeterministic ? HDWallet : ExistWallet}

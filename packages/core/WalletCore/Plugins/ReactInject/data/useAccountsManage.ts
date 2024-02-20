@@ -1,36 +1,41 @@
 import { useAtomValue } from 'jotai';
 import { atomWithObservable } from 'jotai/utils';
-import { switchMap, startWith, map, from, combineLatest, type Observable } from 'rxjs';
+import { switchMap, startWith, map, combineLatest, withLatestFrom, from, type Observable } from 'rxjs';
 import { groupBy, toPairs, sortBy } from 'lodash-es';
 import database, { dbRefresh$ } from '../../../../database';
 import TableName from '../../../../database/TableName';
 import VaultType from '../../../../database/models/Vault/VaultType';
 import { type Account } from '../../../../database/models/Account';
 import { currentNetworkObservable } from './useCurrentNetwork';
+import { zeroAddress } from '../../../../utils/address';
 
 export const accountsManageObservable = combineLatest([dbRefresh$.pipe(startWith(null)), currentNetworkObservable]).pipe(
-  startWith(null),
   switchMap(() => database.collections.get(TableName.Account).query().observeWithColumns(['nickname', 'hidden']) as Observable<Array<Account>>),
-  switchMap((accounts) =>
-    from(
+  withLatestFrom(currentNetworkObservable),
+  switchMap(([accounts, currentNetwork]) => {
+    if (!currentNetwork) return [];
+    return from(
       Promise.all(
         accounts.map(async (account) => {
           const accountGroup = await account.accountGroup;
+          const addresses = await account.addresses;
+          const networks = await Promise.all(addresses.map((address) => address.network));
+          const currentNetworkAddress = addresses.find((_, index) => networks[index].id === currentNetwork.id);
           return {
             account: {
               key: account.id,
               nickname: account.nickname,
               id: account.id,
               hidden: account.hidden,
-              addressValue: await (await account.currentNetworkAddress).getValue(),
+              addressValue: currentNetworkAddress ? await currentNetworkAddress.getValue() : zeroAddress,
             },
             accountGroup,
             vault: await accountGroup.vault,
           };
         }),
       ),
-    ),
-  ),
+    );
+  }),
   map((mergedAccountsData) => {
     // const grouped = groupBy(
     //   mergedAccountsData.filter((item) => !item.account.hidden),

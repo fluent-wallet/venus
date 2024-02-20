@@ -1,4 +1,4 @@
-import React, { useRef } from 'react';
+import React, { useRef, useState } from 'react';
 import { View, Pressable, StyleSheet } from 'react-native';
 import { useTheme } from '@react-navigation/native';
 import Text from '@components/Text';
@@ -10,18 +10,32 @@ import Add from '@assets/icons/add.svg';
 import Delete from '@assets/icons/delete.svg';
 import AddAnotherWallet from './AddAnotherWallet';
 import EraseAllWallet from './EraseAllWallet';
+import AccountConfig from './AccountConfig';
 
 const AccountManagement: React.FC<StackScreenProps<typeof AccountManagementStackName>> = ({ navigation }) => {
   const { colors, mode } = useTheme();
 
   const addAnotherWalletRef = useRef<BottomSheetMethods>(null!);
   const eraseAllWalletRef = useRef<BottomSheetMethods>(null!);
+  const AccountConfigRef = useRef<BottomSheetMethods>(null!);
+
+  const [accountId, setAccountId] = useState<string | null>(null);
+  const [groupId, setGroupId] = useState<string | null>(null);
 
   return (
     <>
       <View style={styles.container}>
         <Text style={[styles.title, { color: colors.textPrimary }]}>Account Management</Text>
-        <AccountsList type="management" />
+        <AccountsList
+          type="management"
+          onPressAccount={(_accountId) => {
+            setAccountId(_accountId);
+            AccountConfigRef.current?.present();
+          }}
+          onPressGroup={(_groupId) => {
+            // setGroupId(_groupId);
+          }}
+        />
 
         <Pressable
           style={({ pressed }) => [accountListStyles.row, accountListStyles.group, { backgroundColor: pressed ? colors.underlay : 'transparent' }]}
@@ -41,6 +55,7 @@ const AccountManagement: React.FC<StackScreenProps<typeof AccountManagementStack
       </View>
       <AddAnotherWallet bottomSheetRef={addAnotherWalletRef} navigation={navigation} />
       <EraseAllWallet bottomSheetRef={eraseAllWalletRef} navigation={navigation} />
+      <AccountConfig bottomSheetRef={AccountConfigRef} navigation={navigation} accountId={accountId} onDismiss={() => setAccountId(null)} />
     </>
   );
 };
