@@ -41,7 +41,11 @@ const AccountGroup: React.FC<
 > = ({ id, nickname, vaultType, colors, type, onPressGroup }) => {
   return (
     <Pressable
-      style={({ pressed }) => [styles.row, styles.group, { backgroundColor: pressed ? colors.underlay : type === 'selector' ? colors.bgFourth : colors.bgPrimary}]}
+      style={({ pressed }) => [
+        styles.row,
+        styles.group,
+        { backgroundColor: pressed ? colors.underlay : type === 'selector' ? colors.bgFourth : colors.bgPrimary },
+      ]}
       disabled={type === 'selector' || vaultType === VaultType.PrivateKey || vaultType === VaultType.PublicAddress}
       onPress={() => onPressGroup?.(id)}
     >
@@ -57,36 +61,62 @@ const AccountGroup: React.FC<
   );
 };
 
-export const Account: React.FC<
-  AccountProps & {
-    colors: ReturnType<typeof useTheme>['colors'];
-    isCurrent: boolean;
-    type: ListType;
-    mode: 'dark' | 'light';
-    onPressAccount?: (accountId: string) => void;
-  }
-> = ({ id, nickname, addressValue, colors, isCurrent, type, mode, onPressAccount }) => {
+export const AccountItemView: React.FC<{
+  colors: ReturnType<typeof useTheme>['colors'];
+  mode: 'light' | 'dark';
+  showSelect?: boolean;
+  showMore?: boolean;
+  addressValue: string;
+  nickname: string;
+  onPress?: () => void;
+}> = ({ colors, mode, showSelect, showMore, addressValue, nickname, onPress }) => {
   return (
     <Pressable
       style={({ pressed }) => [styles.row, { backgroundColor: pressed ? colors.underlay : 'transparent' }]}
-      disabled={type === 'selector' && isCurrent}
-      onPress={() => {
-        if (type === 'selector') {
-          methods.selectAccount(id);
-          onPressAccount?.(id);
-        } else {
-          onPressAccount?.(id);
-        }
-      }}
+      pointerEvents={!onPress ? 'none' : 'auto'}
+      onPress={onPress}
     >
       <Image style={styles.accountImage} source={{ uri: toDataUrl(addressValue) }} />
       <View>
         <Text style={[styles.accountName, { color: colors.textPrimary, opacity: nickname ? 1 : 0 }]}>{nickname || 'placeholder'}</Text>
         <Text style={[styles.accountAddress, { color: colors.textSecondary }]}>{shortenAddress(addressValue)}</Text>
       </View>
-      {type === 'selector' && isCurrent && <Checkbox style={styles.accountRight} checked={mode === 'dark'} />}
-      {type === 'management' && <More style={styles.accountRight} color={colors.textNotice} />}
+      {showSelect && <Checkbox style={styles.accountRight} checked={mode === 'dark'} />}
+      {showMore && <More style={styles.accountRight} color={colors.textNotice} />}
     </Pressable>
+  );
+};
+
+const Account: React.FC<
+  AccountProps & {
+    colors: ReturnType<typeof useTheme>['colors'];
+    isCurrent: boolean;
+    type: ListType;
+    mode: 'dark' | 'light';
+    onPress?: (accountId: string) => void;
+  }
+> = ({ id, nickname, addressValue, colors, isCurrent, type, mode, onPress }) => {
+  return (
+    <AccountItemView
+      nickname={nickname}
+      addressValue={addressValue}
+      colors={colors}
+      mode={mode}
+      showSelect={type === 'selector' && isCurrent}
+      showMore={type === 'management'}
+      onPress={
+        type === 'selector'
+          ? isCurrent
+            ? undefined
+            : () => {
+                methods.selectAccount(id);
+                onPress?.(id);
+              }
+          : () => {
+              onPress?.(id);
+            }
+      }
+    />
   );
 };
 
@@ -161,7 +191,7 @@ const AccountsList: React.FC<{ type: ListType; onPressAccount?: (accountId: stri
       sections={accountsManage}
       renderSectionHeader={({ section: { title } }) => <AccountGroup {...title} colors={colors} type={type} onPressGroup={onPressGroup} />}
       renderItem={({ item }) => (
-        <Account {...item} colors={colors} type={type} isCurrent={currentAccount?.id === item.id} mode={mode} onPressAccount={onPressAccount} />
+        <Account {...item} colors={colors} type={type} isCurrent={currentAccount?.id === item.id} mode={mode} onPress={onPressAccount} />
       )}
       renderSectionFooter={
         type === 'selector'

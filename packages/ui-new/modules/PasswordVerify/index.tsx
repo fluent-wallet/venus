@@ -1,19 +1,21 @@
 import React, { useCallback, useRef, useEffect, useState } from 'react';
 import { View, StyleSheet } from 'react-native';
 import plugins from '@core/WalletCore/Plugins';
-import { useTheme } from '@react-navigation/native';
+import { useTheme, useNavigation } from '@react-navigation/native';
 import Button from '@components/Button';
 import Text from '@components/Text';
 import TextInput from '@components/TextInput';
 import BottomSheet, { type BottomSheetMethods } from '@components/BottomSheet';
+import { PasswordVerifyStackName, type StackScreenProps } from '@router/configs';
 import { isDev } from '@utils/getEnv';
-import { screenHeight } from '@utils/deviceInfo'
+import { screenHeight } from '@utils/deviceInfo';
 import { type PasswordRequest } from '@WalletCoreExtends/Plugins/Authentication';
 
 const defaultPassword = isDev ? '12345678' : '';
 
-const PasswordVerify: React.FC = () => {
+const PasswordVerify: React.FC<StackScreenProps<typeof PasswordVerifyStackName>> = () => {
   const { colors } = useTheme();
+  const navigation = useNavigation();
 
   const bottomSheetRef = useRef<BottomSheetMethods>(null!);
   const [inVerify, setInVerify] = useState(false);
@@ -25,11 +27,10 @@ const PasswordVerify: React.FC = () => {
   useEffect(() => {
     const subscription = plugins.Authentication.passwordRequestSubject.subscribe({
       next: (request) => {
-        bottomSheetRef.current?.present();
+        if (!request) return;
         currentRequest.current = request;
       },
     });
-
     return () => {
       setInVerify(false);
       subscription.unsubscribe();
@@ -37,11 +38,12 @@ const PasswordVerify: React.FC = () => {
   }, []);
 
   const handleCancel = useCallback(() => {
-    bottomSheetRef.current?.dismiss();
+    currentRequest.current?.reject?.('cancel');
+    navigation.goBack();
     setInVerify(false);
     setPassword(defaultPassword);
     setError('');
-    currentRequest.current?.reject?.('cancel');
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleConfirm = useCallback(async () => {
@@ -50,7 +52,7 @@ const PasswordVerify: React.FC = () => {
     const isCorrectPasword = await currentRequest.current?.verify?.(password);
     if (isCorrectPasword) {
       currentRequest.current?.resolve?.(password);
-      bottomSheetRef.current?.dismiss();
+      navigation.goBack();
       setPassword(defaultPassword);
       setError('');
       currentRequest.current = null;
@@ -61,7 +63,7 @@ const PasswordVerify: React.FC = () => {
   }, [password]);
 
   return (
-    <BottomSheet ref={bottomSheetRef} snapPoints={snapPoints} onDismiss={handleCancel}>
+    <BottomSheet ref={bottomSheetRef} snapPoints={snapPoints} onClose={handleCancel} index={0} animateOnMount={true} isModal={false}>
       <View style={styles.container}>
         <Text style={[styles.title, { color: colors.textPrimary }]}>Verify Password</Text>
         <TextInput
@@ -107,6 +109,6 @@ const styles = StyleSheet.create({
   },
 });
 
-const snapPoints = [`${(260 / screenHeight * 100).toFixed(2)}%`];
+const snapPoints = [`${((260 / screenHeight) * 100).toFixed(2)}%`];
 
 export default PasswordVerify;

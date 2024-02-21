@@ -1,8 +1,8 @@
-import React, { useRef, useState } from 'react';
+import React, { useRef } from 'react';
 import { View, Pressable, StyleSheet } from 'react-native';
 import { useTheme } from '@react-navigation/native';
 import Text from '@components/Text';
-import { AccountManagementStackName, type StackScreenProps } from '@router/configs';
+import { AccountManagementStackName, AccountSettingStackName, GroupSettingStackName, type StackScreenProps } from '@router/configs';
 import AccountsList, { styles as accountListStyles } from '@modules/AccountsList';
 import Checkbox from '@components/Checkbox';
 import { type BottomSheetMethods } from '@components/BottomSheet';
@@ -10,19 +10,12 @@ import Add from '@assets/icons/add.svg';
 import Delete from '@assets/icons/delete.svg';
 import AddAnotherWallet from './AddAnotherWallet';
 import EraseAllWallet from './EraseAllWallet';
-import AccountConfig from './AccountConfig';
-import GroupConfig from './GroupConfig';
 
 const AccountManagement: React.FC<StackScreenProps<typeof AccountManagementStackName>> = ({ navigation }) => {
   const { colors, mode } = useTheme();
 
   const addAnotherWalletRef = useRef<BottomSheetMethods>(null!);
   const eraseAllWalletRef = useRef<BottomSheetMethods>(null!);
-  const accountConfigRef = useRef<BottomSheetMethods>(null!);
-  const groupConfigRef = useRef<BottomSheetMethods>(null!);
-
-  const [accountId, setAccountId] = useState<string | null>(null);
-  const [groupId, setGroupId] = useState<string | null>(null);
 
   return (
     <>
@@ -30,14 +23,8 @@ const AccountManagement: React.FC<StackScreenProps<typeof AccountManagementStack
         <Text style={[styles.title, { color: colors.textPrimary }]}>Account Management</Text>
         <AccountsList
           type="management"
-          onPressAccount={(_accountId) => {
-            setAccountId(_accountId);
-            accountConfigRef.current?.present();
-          }}
-          onPressGroup={(_groupId) => {
-            setGroupId(_groupId);
-            groupConfigRef.current?.present();
-          }}
+          onPressAccount={(accountId) => navigation.navigate(AccountSettingStackName, { accountId })}
+          onPressGroup={(groupId) => navigation.navigate(GroupSettingStackName, { groupId })}
         />
 
         <Pressable
@@ -58,8 +45,6 @@ const AccountManagement: React.FC<StackScreenProps<typeof AccountManagementStack
       </View>
       <AddAnotherWallet bottomSheetRef={addAnotherWalletRef} navigation={navigation} />
       <EraseAllWallet bottomSheetRef={eraseAllWalletRef} navigation={navigation} />
-      <AccountConfig bottomSheetRef={accountConfigRef} navigation={navigation} accountId={accountId} onDismiss={() => setAccountId(null)} />
-      <GroupConfig bottomSheetRef={groupConfigRef} navigation={navigation} groupId={groupId} onDismiss={() => setGroupId(null)} />
     </>
   );
 };

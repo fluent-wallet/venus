@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useRef, useEffect, type MutableRefObject } from 'react';
+import React, { useState, useCallback, useRef, useEffect } from 'react';
 import { Pressable, StyleSheet } from 'react-native';
 import { useTheme } from '@react-navigation/native';
 import { showMessage } from 'react-native-flash-message';
@@ -11,23 +11,16 @@ import TextInput from '@components/TextInput';
 import Checkbox from '@components/Checkbox';
 import Button from '@components/Button';
 import BottomSheet, { BottomSheetScrollView, type BottomSheetMethods } from '@components/BottomSheet';
-import { AccountManagementStackName, type StackScreenProps } from '@router/configs';
+import { AccountSettingStackName, type StackScreenProps } from '@router/configs';
 import ArrowRight from '@assets/icons/arrow-right2.svg';
 import Delete from '@assets/icons/delete.svg';
 import DeleteConfirm from './DeleteConfirm';
 
-interface Props {
-  navigation: StackScreenProps<typeof AccountManagementStackName>['navigation'];
-  bottomSheetRef: MutableRefObject<BottomSheetMethods>;
-  accountId: string | null;
-  onDismiss: () => void;
-}
-
-const AccountConfig: React.FC<Props> = ({ bottomSheetRef, accountId, navigation, onDismiss }) => {
+const AccountConfig: React.FC<StackScreenProps<typeof AccountSettingStackName>> = ({ navigation, route }) => {
   const { colors, mode } = useTheme();
-  const account = useAccountFromId(accountId);
-  const vault = useVaultOfAccount(accountId);
-  const addressValue = useCurrentAddressValueOfAccount(accountId);
+  const account = useAccountFromId(route.params.accountId);
+  const vault = useVaultOfAccount(route.params.accountId);
+  const addressValue = useCurrentAddressValueOfAccount(route.params.accountId);
 
   const [accountName, setAccountName] = useState(() => account?.nickname);
   useEffect(() => {
@@ -37,7 +30,7 @@ const AccountConfig: React.FC<Props> = ({ bottomSheetRef, accountId, navigation,
   const handleUpdateAccountNickName = useCallback(async () => {
     if (!account || !accountName) return;
     await methods.updateAccountNickName({ account, nickname: accountName });
-    bottomSheetRef.current?.dismiss();
+    navigation.goBack();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [account, accountName]);
 
@@ -51,7 +44,7 @@ const AccountConfig: React.FC<Props> = ({ bottomSheetRef, accountId, navigation,
         type: 'warning',
       });
     } else {
-      deleteBottomSheetRef.current?.present();
+      deleteBottomSheetRef.current?.expand();
     }
   }, [account]);
 
@@ -68,7 +61,7 @@ const AccountConfig: React.FC<Props> = ({ bottomSheetRef, accountId, navigation,
         message: 'Remove account successfully',
         type: 'success',
       });
-      bottomSheetRef.current?.dismiss();
+      navigation.goBack();
     } catch (err) {
       if (plugins.Authentication.containsCancel(String(err))) {
         return;
@@ -85,7 +78,7 @@ const AccountConfig: React.FC<Props> = ({ bottomSheetRef, accountId, navigation,
 
   return (
     <>
-      <BottomSheet ref={bottomSheetRef} snapPoints={snapPoints} onDismiss={onDismiss}>
+      <BottomSheet snapPoints={snapPoints} index={0} animateOnMount={true} isModal={false} onClose={() => navigation.goBack()}>
         <BottomSheetScrollView contentContainerStyle={styles.container}>
           <Text style={[styles.title, styles.mainText, { color: colors.textPrimary }]}>Account</Text>
           <Text style={[styles.description, { color: colors.textSecondary }]}>Address</Text>

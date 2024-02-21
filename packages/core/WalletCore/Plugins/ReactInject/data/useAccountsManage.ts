@@ -1,5 +1,5 @@
-import { useAtomValue } from 'jotai';
-import { atomWithObservable } from 'jotai/utils';
+import { atom, useAtomValue } from 'jotai';
+import { atomWithObservable, atomFamily } from 'jotai/utils';
 import { switchMap, startWith, map, combineLatest, withLatestFrom, from, type Observable } from 'rxjs';
 import { groupBy, toPairs, sortBy } from 'lodash-es';
 import database, { dbRefresh$ } from '../../../../database';
@@ -11,7 +11,7 @@ import { accountGroupsObservable } from './useAccountGroups';
 import { zeroAddress } from '../../../../utils/address';
 
 export const accountsManageObservable = combineLatest([dbRefresh$.pipe(startWith(null)), currentNetworkObservable, accountGroupsObservable]).pipe(
-  switchMap(() => database.collections.get(TableName.Account).query().observeWithColumns(['nickname', 'hidden']) as Observable<Array<Account>>),
+  switchMap(() => database.collections.get(TableName.Account).query().observeWithColumns(['nickname', 'hidden', 'selected']) as Observable<Array<Account>>),
   withLatestFrom(currentNetworkObservable),
   withLatestFrom(accountGroupsObservable),
   switchMap(([[accounts, currentNetwork], accountGroups]) => {
@@ -29,7 +29,9 @@ export const accountsManageObservable = combineLatest([dbRefresh$.pipe(startWith
               key: account.id,
               nickname: account.nickname,
               id: account.id,
+              index: account.index,
               hidden: account.hidden,
+              selected: account.selected,
               addressValue: currentNetworkAddress ? await currentNetworkAddress.getValue() : zeroAddress,
             },
             accountGroup,
@@ -80,4 +82,12 @@ const accountsManageAtom = atomWithObservable(() => accountsManageObservable, {
   initialValue: [],
 });
 
+const accountsOfGroupInManageAtomFamily = atomFamily((groupId: string | null | undefined) =>
+  atom((get) => {
+    const accountsManage = get(accountsManageAtom);
+    return accountsManage?.find?.((group) => group.title.id === groupId)?.data || [];
+  }),
+);
+
 export const useAccountsManage = () => useAtomValue(accountsManageAtom);
+export const useAccountsOfGroupInManage = (groupId: string | null | undefined) => useAtomValue(accountsOfGroupInManageAtomFamily(groupId));

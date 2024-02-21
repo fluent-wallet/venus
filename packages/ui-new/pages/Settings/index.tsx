@@ -1,12 +1,9 @@
 import React from 'react';
 import { ScrollView, Pressable, StyleSheet } from 'react-native';
 import { useTheme } from '@react-navigation/native';
-import { showMessage } from 'react-native-flash-message';
-import methods from '@core/WalletCore/Methods';
-import Button from '@components/Button';
 import Text from '@components/Text';
 import { SettingsStackName, AccountManagementStackName, type StackScreenProps } from '@router/configs';
-import { APP_VERSION_FLAG_FEATURE, RESET_WALLET_DATA_FEATURE } from '@utils/features';
+import { APP_VERSION_FLAG_FEATURE } from '@utils/features';
 import Arrow from '@assets/icons/arrow-right2.svg';
 import pkg from '../../../../package.json';
 
@@ -22,24 +19,6 @@ const SettingItem: React.FC<{ title: string; onPress: () => void }> = ({ title, 
 
 const Settings: React.FC<StackScreenProps<typeof SettingsStackName>> = ({ navigation }) => {
   const { colors } = useTheme();
-
-  // const handleClearAccoutData = useCallback(async () => {
-  //   try {
-  //     await methods.resetDatabase();
-  //     showMessage({
-  //       message: 'Reset wallet data successfully',
-  //       type: 'success',
-  //     });
-  //     navigation.navigate(WelcomeStackName);
-  //   } catch (err) {
-  //     showMessage({
-  //       message: 'Reset wallet data failed',
-  //       description: String(err ?? ''),
-  //       type: 'warning',
-  //     });
-  //   }
-  //   // eslint-disable-next-line react-hooks/exhaustive-deps
-  // }, []);
 
   return (
     <ScrollView contentContainerStyle={styles.container}>

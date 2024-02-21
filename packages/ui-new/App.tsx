@@ -7,7 +7,6 @@ import * as SplashScreen from 'expo-splash-screen';
 import { BottomSheetModalProvider } from '@gorhom/bottom-sheet';
 import { JotaiNexus, useHasVault } from '@core/WalletCore/Plugins/ReactInject';
 import CustomMessage from '@modules/CustomMessage';
-import PasswordVerify from '@modules/PasswordVerify';
 import { statusBarHeight, OS, supports3DStructureLight } from './utils/deviceInfo';
 import { useMode } from '@hooks/useMode';
 import { palette, lightColors, darkColors, fonts } from './theme';
@@ -43,7 +42,6 @@ const App: React.FC = () => {
         <NavigationContainer theme={theme as unknown as Theme}>
           <BottomSheetModalProvider>
             {typeof hasVault === 'boolean' && <Router />}
-            <PasswordVerify />
           </BottomSheetModalProvider>
           <FlashMessage position={messagesTop} MessageComponent={CustomMessage} duration={3000} />
         </NavigationContainer>
