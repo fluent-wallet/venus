@@ -12,7 +12,6 @@ const useInAsync = <T extends (params: any) => void | Promise<any> | null | unde
     try {
       setInAsync(true);
       const res = await refAsyncFunc.current(...params);
-      console.log('inAsync', res);
       setInAsync(false);
       return res;
     } catch (err) {

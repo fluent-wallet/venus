@@ -5,10 +5,10 @@ import Text from '@components/Text';
 import Button from '@components/Button';
 import BottomSheet, { type BottomSheetMethods } from '@components/BottomSheet';
 import { screenHeight } from '@utils/deviceInfo';
-import { AccountManagementStackName, type StackScreenProps } from '@router/configs';
+import { AccountSettingStackName, GroupSettingStackName, type StackScreenProps } from '@router/configs';
 
 interface Props {
-  navigation: StackScreenProps<typeof AccountManagementStackName>['navigation'];
+  navigation: StackScreenProps<typeof AccountSettingStackName | typeof GroupSettingStackName>['navigation'];
   bottomSheetRef: MutableRefObject<BottomSheetMethods>;
   onConfirm: () => void;
 }
@@ -17,7 +17,7 @@ const DeleteConfirm: React.FC<Props> = ({ bottomSheetRef, onConfirm }) => {
   const { colors } = useTheme();
 
   return (
-    <BottomSheet ref={bottomSheetRef} snapPoints={snapPoints}>
+    <BottomSheet ref={bottomSheetRef} snapPoints={snapPoints} isModal={false}>
       <View style={styles.container}>
         <Text style={[styles.title, { color: colors.textPrimary }]}>⚠️ Confirm to delete{'\n'}this wallet?</Text>
         <Text style={[styles.description, { color: colors.textSecondary }]}>

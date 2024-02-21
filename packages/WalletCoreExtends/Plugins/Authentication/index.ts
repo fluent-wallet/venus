@@ -1,5 +1,5 @@
 import * as KeyChain from 'react-native-keychain';
-import { Subject } from 'rxjs';
+import { BehaviorSubject } from 'rxjs';
 import CryptoToolPlugin, { CryptoToolPluginClass } from '../CryptoTool';
 import plugins, { type Plugin } from '@core/WalletCore/Plugins';
 import database from '@core/database';
@@ -42,7 +42,7 @@ class AuthenticationPluginClass implements Plugin {
 
   private settleAuthenticationType: AuthenticationType | null = null;
   public AuthenticationType = AuthenticationType;
-  public passwordRequestSubject = new Subject<PasswordRequest>();
+  public passwordRequestSubject = new BehaviorSubject<PasswordRequest>(null!);
   private pwdCache: { password: string; cacheTime: number } | null = null;
   private getPasswordPromise: Promise<string | null> | null = null;
 

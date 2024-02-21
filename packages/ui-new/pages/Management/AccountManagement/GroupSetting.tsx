@@ -1,33 +1,26 @@
-import React, { useState, useCallback, useRef, useMemo, useEffect, type MutableRefObject } from 'react';
+import React, { useState, useCallback, useRef, useMemo, useEffect } from 'react';
 import { View, Pressable, FlatList, StyleSheet } from 'react-native';
 import { useTheme } from '@react-navigation/native';
 import { showMessage } from 'react-native-flash-message';
 import methods from '@core/WalletCore/Methods';
 import plugins from '@core/WalletCore/Plugins';
-import { useGroupFromId, useAccountsOfGroup, useVaultOfGroup, VaultType } from '@core/WalletCore/Plugins/ReactInject';
+import { useGroupFromId, useAccountsOfGroupInManage, useVaultOfGroup, VaultType } from '@core/WalletCore/Plugins/ReactInject';
 import Text from '@components/Text';
 import TextInput from '@components/TextInput';
 import Checkbox from '@components/Checkbox';
 import Button from '@components/Button';
 import BottomSheet, { type BottomSheetMethods } from '@components/BottomSheet';
-import { Account } from '@modules/AccountsList';
-import { AccountManagementStackName, type StackScreenProps } from '@router/configs';
+import { AccountItemView } from '@modules/AccountsList';
+import { GroupSettingStackName, HDSettingStackName, type StackScreenProps } from '@router/configs';
 import ArrowRight from '@assets/icons/arrow-right2.svg';
 import Delete from '@assets/icons/delete.svg';
 import DeleteConfirm from './DeleteConfirm';
 
-interface Props {
-  navigation: StackScreenProps<typeof AccountManagementStackName>['navigation'];
-  bottomSheetRef: MutableRefObject<BottomSheetMethods>;
-  groupId: string | null;
-  onDismiss: () => void;
-}
-
-const GroupConfig: React.FC<Props> = ({ bottomSheetRef, groupId, navigation, onDismiss }) => {
+const GroupConfig: React.FC<StackScreenProps<typeof GroupSettingStackName>> = ({ navigation, route }) => {
   const { colors, mode } = useTheme();
-  const accountGroup = useGroupFromId(groupId);
-  const vault = useVaultOfGroup(groupId);
-  const accounts = useAccountsOfGroup(groupId);
+  const accountGroup = useGroupFromId(route.params.groupId);
+  const vault = useVaultOfGroup(route.params.groupId);
+  const accounts = useAccountsOfGroupInManage(route.params.groupId);
 
   const GroupTitle = useMemo(() => (!vault?.type ? 'Group' : vault?.type === VaultType.HierarchicalDeterministic ? 'Seed Group' : 'BSIM Group'), [vault?.type]);
 
@@ -36,10 +29,10 @@ const GroupConfig: React.FC<Props> = ({ bottomSheetRef, groupId, navigation, onD
     setAccountGroupName(accountGroup?.nickname);
   }, [accountGroup?.nickname]);
 
-  const handleUpdateAccountNickName = useCallback(async () => {
+  const handleUpdateAccountGroupNickName = useCallback(async () => {
     if (!accountGroup || !accountGroupName) return;
     await methods.updateAccountGroupNickName({ accountGroup, nickname: accountGroupName });
-    bottomSheetRef.current?.dismiss();
+    navigation.goBack();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [accountGroup, accountGroupName]);
 
@@ -55,7 +48,7 @@ const GroupConfig: React.FC<Props> = ({ bottomSheetRef, groupId, navigation, onD
         type: 'warning',
       });
     } else {
-      deleteBottomSheetRef.current?.present();
+      deleteBottomSheetRef.current?.expand();
     }
   }, [accounts]);
 
@@ -68,7 +61,7 @@ const GroupConfig: React.FC<Props> = ({ bottomSheetRef, groupId, navigation, onD
         message: 'Remove Group successfully',
         type: 'success',
       });
-      bottomSheetRef.current?.dismiss();
+      navigation.goBack();
     } catch (err) {
       if (plugins.Authentication.containsCancel(String(err))) {
         return;
@@ -85,7 +78,7 @@ const GroupConfig: React.FC<Props> = ({ bottomSheetRef, groupId, navigation, onD
 
   return (
     <>
-      <BottomSheet ref={bottomSheetRef} snapPoints={snapPoints} onDismiss={onDismiss}>
+      <BottomSheet snapPoints={snapPoints} index={0} animateOnMount={true} isModal={false} onClose={() => navigation.goBack()}>
         <View style={styles.container}>
           <Text style={[styles.title, styles.mainText, { color: colors.textPrimary }]}>{GroupTitle}</Text>
           <Text style={[styles.description, { color: colors.textSecondary }]}>Account Name</Text>
@@ -105,7 +98,10 @@ const GroupConfig: React.FC<Props> = ({ bottomSheetRef, groupId, navigation, onD
             </>
           )}
 
-          <Pressable style={({ pressed }) => [styles.HDManage, { backgroundColor: pressed ? colors.underlay : 'transparent' }]} onPress={handlePressDelete}>
+          <Pressable
+            style={({ pressed }) => [styles.HDManage, { backgroundColor: pressed ? colors.underlay : 'transparent' }]}
+            onPress={() => navigation.navigate(HDSettingStackName, { groupId: route.params.groupId })}
+          >
             <Text style={[styles.HDManageText, { color: colors.textSecondary }]}>HD Wallets</Text>
             <Text style={[styles.HDManageText, styles.management, { color: colors.textNotice }]}>Management</Text>
           </Pressable>
@@ -113,7 +109,7 @@ const GroupConfig: React.FC<Props> = ({ bottomSheetRef, groupId, navigation, onD
           <FlatList
             style={styles.accountsContainer}
             data={accounts}
-            renderItem={({ item }) => <Account {...item} colors={colors} mode={mode} type="management" isCurrent={false} />}
+            renderItem={({ item }) => <AccountItemView nickname={item.nickname} addressValue={item.addressValue} colors={colors} mode={mode} />}
           />
 
           <Pressable
@@ -128,7 +124,7 @@ const GroupConfig: React.FC<Props> = ({ bottomSheetRef, groupId, navigation, onD
             style={styles.btn}
             mode="auto"
             disabled={!accountGroupName || accountGroupName === accountGroup?.nickname}
-            onPress={handleUpdateAccountNickName}
+            onPress={handleUpdateAccountGroupNickName}
           >
             OK
           </Button>

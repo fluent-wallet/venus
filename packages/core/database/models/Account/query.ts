@@ -8,3 +8,5 @@ import database from '../..';
 export const querySelectedAccount = () => database.get(TableName.Account).query(Q.where('selected', true)) as unknown as Query<Account>;
 
 export const observeAccountById = memoize((accountId: string) => database.get(TableName.Account).findAndObserve(accountId) as Observable<Account>);
+
+export const queryAccountById = (accountId: string) => database.get(TableName.Account).find(accountId) as Promise<Account>;

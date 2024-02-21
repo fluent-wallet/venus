@@ -1,4 +1,5 @@
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
+import type { NavigationProp } from '@react-navigation/native';
 
 const WelcomeStackName = 'Welcome';
 const WayToInitWalletStackName = 'WayToInitWallet';
@@ -7,7 +8,11 @@ const PasswordWayStackName = 'PasswordWay';
 const HomeStackName = 'Home';
 const SettingsStackName = 'Settings';
 const AccountManagementStackName = 'WalletManagement';
+const AccountSettingStackName = 'AccountSetting';
+const GroupSettingStackName = 'GroupSettin';
+const HDSettingStackName = 'HDSetting';
 const NetworkManagementStackName = 'NetworkManagement';
+const PasswordVerifyStackName = 'PasswordVerify';
 
 export {
   WelcomeStackName,
@@ -17,7 +22,11 @@ export {
   PasswordWayStackName,
   SettingsStackName,
   AccountManagementStackName,
+  AccountSettingStackName,
+  GroupSettingStackName,
+  HDSettingStackName,
   NetworkManagementStackName,
+  PasswordVerifyStackName,
 };
 
 export type RootStackParamList = {
@@ -28,7 +37,12 @@ export type RootStackParamList = {
   [HomeStackName]: undefined;
   [SettingsStackName]: undefined;
   [AccountManagementStackName]: undefined;
+  [AccountSettingStackName]: { accountId: string };
+  [GroupSettingStackName]: { groupId: string };
+  [HDSettingStackName]: { groupId: string };
   [NetworkManagementStackName]: undefined;
+  [PasswordVerifyStackName]: undefined;
 };
 
 export type StackScreenProps<T extends keyof RootStackParamList> = NativeStackScreenProps<RootStackParamList, T>;
+export type StackNavigation = NavigationProp<RootStackParamList>;
