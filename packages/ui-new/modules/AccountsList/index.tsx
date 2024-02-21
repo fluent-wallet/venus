@@ -41,7 +41,7 @@ const AccountGroup: React.FC<
 > = ({ id, nickname, vaultType, colors, type, onPressGroup }) => {
   return (
     <Pressable
-      style={({ pressed }) => [styles.row, styles.group, { backgroundColor: pressed ? colors.underlay : 'transparent' }]}
+      style={({ pressed }) => [styles.row, styles.group, { backgroundColor: pressed ? colors.underlay : type === 'selector' ? colors.bgFourth : colors.bgPrimary}]}
       disabled={type === 'selector' || vaultType === VaultType.PrivateKey || vaultType === VaultType.PublicAddress}
       onPress={() => onPressGroup?.(id)}
     >

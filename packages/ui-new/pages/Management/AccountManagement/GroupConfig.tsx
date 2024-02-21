@@ -9,7 +9,7 @@ import Text from '@components/Text';
 import TextInput from '@components/TextInput';
 import Checkbox from '@components/Checkbox';
 import Button from '@components/Button';
-import BottomSheet, { BottomSheetScrollView, type BottomSheetMethods } from '@components/BottomSheet';
+import BottomSheet, { type BottomSheetMethods } from '@components/BottomSheet';
 import { Account } from '@modules/AccountsList';
 import { AccountManagementStackName, type StackScreenProps } from '@router/configs';
 import ArrowRight from '@assets/icons/arrow-right2.svg';
@@ -86,7 +86,7 @@ const GroupConfig: React.FC<Props> = ({ bottomSheetRef, groupId, navigation, onD
   return (
     <>
       <BottomSheet ref={bottomSheetRef} snapPoints={snapPoints} onDismiss={onDismiss}>
-        <BottomSheetScrollView contentContainerStyle={styles.container}>
+        <View style={styles.container}>
           <Text style={[styles.title, styles.mainText, { color: colors.textPrimary }]}>{GroupTitle}</Text>
           <Text style={[styles.description, { color: colors.textSecondary }]}>Account Name</Text>
           <TextInput
@@ -132,7 +132,7 @@ const GroupConfig: React.FC<Props> = ({ bottomSheetRef, groupId, navigation, onD
           >
             OK
           </Button>
-        </BottomSheetScrollView>
+        </View>
       </BottomSheet>
       <DeleteConfirm bottomSheetRef={deleteBottomSheetRef} navigation={navigation} onConfirm={handleConfirmDelete} />
     </>
@@ -174,7 +174,7 @@ const styles = StyleSheet.create({
     lineHeight: 18,
   },
   accountsContainer: {
-    flexGrow: 1,
+    flexGrow: 0,
   },
   management: {
     fontWeight: '600',
