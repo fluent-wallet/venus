@@ -116,6 +116,12 @@ export class BSIMPluginClass implements Plugin {
 
     return BSIMSDK.signMessage(message, coinTypeIndex, index);
   };
+
+  public updateBPIN = async () => {
+    await this.checkIsInit();
+    return BSIMSDK.updateBPIN()
+  }
+
 }
 
 export default new BSIMPluginClass();

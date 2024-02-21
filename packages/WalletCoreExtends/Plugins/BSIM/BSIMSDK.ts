@@ -157,6 +157,11 @@ interface BSIMSDKInterface {
    */
   getVersion(): Promise<string>;
   verifyBPIN(): Promise<string>;
+  /**
+   * update BPIN
+   */
+  updateBPIN(): Promise<string>;
+
 }
 
 export default BSIMSDK as BSIMSDKInterface;
