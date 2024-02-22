@@ -77,7 +77,7 @@ const PasswordVerify: React.FC<StackScreenProps<typeof PasswordVerifyStackName>>
           autoFocus
         />
         <Text style={[styles.error, { color: colors.down, opacity: !error ? 0 : 1 }]}>{error || 'placeholder'}</Text>
-        <Button testID="confirm" loading={inVerify} onPress={handleConfirm} disabled={!password} style={styles.btn}>
+        <Button testID="confirm" loading={inVerify} mode="auto" onPress={handleConfirm} disabled={!password} style={styles.btn}>
           Confirm
         </Button>
       </View>

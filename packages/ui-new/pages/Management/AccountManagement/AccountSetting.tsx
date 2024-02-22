@@ -12,6 +12,7 @@ import Checkbox from '@components/Checkbox';
 import Button from '@components/Button';
 import BottomSheet, { BottomSheetScrollView, type BottomSheetMethods } from '@components/BottomSheet';
 import { AccountSettingStackName, type StackScreenProps } from '@router/configs';
+import { screenHeight } from '@utils/deviceInfo';
 import ArrowRight from '@assets/icons/arrow-right2.svg';
 import Delete from '@assets/icons/delete.svg';
 import DeleteConfirm from './DeleteConfirm';
@@ -120,6 +121,7 @@ const AccountConfig: React.FC<StackScreenProps<typeof AccountSettingStackName>> 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    paddingTop: 12,
   },
   title: {
     marginBottom: 24,
@@ -177,6 +179,6 @@ const styles = StyleSheet.create({
   },
 });
 
-const snapPoints = ['90%'];
+const snapPoints = [`${(((screenHeight - 124) / screenHeight) * 100).toFixed(2)}%`];
 
 export default AccountConfig;
