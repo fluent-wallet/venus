@@ -12,6 +12,7 @@ import Button from '@components/Button';
 import BottomSheet, { type BottomSheetMethods } from '@components/BottomSheet';
 import { AccountItemView } from '@modules/AccountsList';
 import { GroupSettingStackName, HDSettingStackName, type StackScreenProps } from '@router/configs';
+import { screenHeight } from '@utils/deviceInfo';
 import ArrowRight from '@assets/icons/arrow-right2.svg';
 import Delete from '@assets/icons/delete.svg';
 import DeleteConfirm from './DeleteConfirm';
@@ -138,6 +139,7 @@ const GroupConfig: React.FC<StackScreenProps<typeof GroupSettingStackName>> = ({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    paddingTop: 12,
   },
   title: {
     marginBottom: 24,
@@ -215,6 +217,6 @@ const styles = StyleSheet.create({
   },
 });
 
-const snapPoints = ['90%'];
+const snapPoints = [`${(((screenHeight - 124) / screenHeight) * 100).toFixed(2)}%`];
 
 export default GroupConfig;

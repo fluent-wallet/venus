@@ -1,6 +1,7 @@
-import React, { useState, useMemo, useEffect, Fragment } from 'react';
+import React, { useState, useMemo, useCallback, useEffect, useRef } from 'react';
 import { View, Pressable, StyleSheet } from 'react-native';
 import { useTheme } from '@react-navigation/native';
+import { debounce } from 'lodash-es';
 import methods from '@core/WalletCore/Methods';
 import plugins from '@core/WalletCore/Plugins';
 import {
@@ -21,10 +22,13 @@ import Text from '@components/Text';
 import Checkbox from '@components/Checkbox';
 import Button from '@components/Button';
 import BottomSheet, { BottomSheetScrollView } from '@components/BottomSheet';
+import HourglassLoading from '@components/Loading/Hourglass';
 import { HDSettingStackName, type StackScreenProps } from '@router/configs';
+import { screenHeight } from '@utils/deviceInfo';
 import ArrowRight from '@assets/icons/arrow-right2.svg';
 
 const countPerPage = 5;
+const defaultPages = Array.from({ length: countPerPage }).map((_, index) => ({ addressValue: '', index }));
 
 const HDManagement: React.FC<StackScreenProps<typeof HDSettingStackName>> = ({ navigation, route }) => {
   const { colors } = useTheme();
@@ -42,7 +46,7 @@ const HDManagement: React.FC<StackScreenProps<typeof HDSettingStackName>> = ({ n
   const [mnemonic, setMnemonic] = useState('');
   const [inCalc, setInCalc] = useState<string | boolean>(true);
   const [inNext, setInNext] = useState(false);
-  const [pageAccounts, setPageAccounts] = useState<Array<{ addressValue: string; index: number }>>([]);
+  const [pageAccounts, setPageAccounts] = useState<Array<{ addressValue: string; index: number }>>(() => defaultPages);
   const [chooseAccounts, setChooseAccounts] = useState<Array<{ index: number }>>([]);
 
   useEffect(() => {
@@ -51,12 +55,18 @@ const HDManagement: React.FC<StackScreenProps<typeof HDSettingStackName>> = ({ n
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  const calcAccountsRef = useRef<() => void>(null!);
+  const calcAccountsDebounce = useCallback(
+    debounce(() => calcAccountsRef.current?.(), 360),
+    [],
+  );
+
   useEffect(() => {
-    const calcAccounts = async () => {
+    if (!currentHdPath?.value || !vault || !currentNetwork) {
+      return;
+    }
+    calcAccountsRef.current = async () => {
       try {
-        if (!currentHdPath?.value || !vault || !currentNetwork) {
-          return;
-        }
         setInCalc(true);
         await new Promise((resolve) => setTimeout(resolve, 10));
         if (vault.type === VaultType.HierarchicalDeterministic && !mnemonic) {
@@ -95,45 +105,50 @@ const HDManagement: React.FC<StackScreenProps<typeof HDSettingStackName>> = ({ n
         setPageAccounts(newPageAccounts);
         setInCalc(false);
       } catch (err) {
-        console.log('err');
         setInCalc(String(err));
+        if (pageAccounts === defaultPages) {
+          setPageAccounts([]);
+        }
       }
     };
-    calcAccounts();
+
+    calcAccountsDebounce();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pageIndex, mnemonic, currentHdPath?.value, _]);
 
   const handleClickNext = async () => {
     if (!accountGroup) return;
-    setInNext(true);
-    const newAccountsInChoose = chooseAccounts
-      .filter((account) => !accounts.find((_account) => _account.index === account.index))
-      .sort((a, b) => a.index - b.index);
-    const _oldAccountsNeedHidden = accounts.filter((account) => !chooseAccounts.find((_account) => _account.index === account.index));
-    const _oldAccountsNeedShow = accounts.filter((account) => !!chooseAccounts.find((_account) => _account.index === account.index));
-    const oldAccountsNeedHidden = await Promise.all(_oldAccountsNeedHidden.map((account) => queryAccountById(account.id)));
-    const oldAccountsNeedShow = await Promise.all(_oldAccountsNeedShow.map((account) => queryAccountById(account.id)));
+    try {
+      setInNext(true);
+      const newAccountsInChoose = chooseAccounts
+        .filter((account) => !accounts.find((_account) => _account.index === account.index))
+        .sort((a, b) => a.index - b.index);
+      const _oldAccountsNeedHidden = accounts.filter((account) => !chooseAccounts.find((_account) => _account.index === account.index));
+      const _oldAccountsNeedShow = accounts.filter((account) => !!chooseAccounts.find((_account) => _account.index === account.index));
+      const oldAccountsNeedHidden = await Promise.all(_oldAccountsNeedHidden.map((account) => queryAccountById(account.id)));
+      const oldAccountsNeedShow = await Promise.all(_oldAccountsNeedShow.map((account) => queryAccountById(account.id)));
 
-    await database.write(async () => {
-      await database.batch(
-        ...oldAccountsNeedHidden.map((account) => methods.prepareChangeAccountHidden({ account, hidden: true })),
-        ...oldAccountsNeedShow.map((account) => methods.prepareChangeAccountHidden({ account, hidden: false })),
+      await database.write(async () => {
+        await database.batch(
+          ...oldAccountsNeedHidden.map((account) => methods.prepareChangeAccountHidden({ account, hidden: true })),
+          ...oldAccountsNeedShow.map((account) => methods.prepareChangeAccountHidden({ account, hidden: false })),
+        );
+      });
+
+      await Promise.all(
+        newAccountsInChoose.map((account) =>
+          methods.addAccount({
+            accountGroup,
+            ...account,
+          }),
+        ),
       );
-    });
 
-    newAccountsInChoose.forEach(async (account) => {
-      try {
-        methods.addAccount({
-          accountGroup,
-          ...account,
-        });
-      } catch (err) {
-        console.error(err);
-      }
-    });
-
-    setInNext(false);
-    navigation.goBack();
+      setInNext(false);
+      navigation.goBack();
+    } catch (err) {
+      console.error(err);
+    }
   };
 
   return (
@@ -141,80 +156,100 @@ const HDManagement: React.FC<StackScreenProps<typeof HDSettingStackName>> = ({ n
       <BottomSheetScrollView contentContainerStyle={styles.container}>
         <Text style={[styles.title, styles.mainText, { color: colors.textPrimary }]}>Select HD Wallets</Text>
         <Text style={[styles.description, { color: colors.textSecondary }]}>HD Path Type</Text>
-        <Text style={[styles.address, styles.mainText]}>BIP44</Text>
+        <Text style={[styles.contentText, styles.mainText, { color: colors.textPrimary }]}>BIP44</Text>
         <Text style={[styles.description, { color: colors.textSecondary }]}>Index</Text>
-        <Text style={[styles.address, styles.mainText]}>{currentHdPath?.value}</Text>
+        <Text style={[styles.contentText, styles.mainText, { color: colors.textPrimary }]}>{currentHdPath?.value}</Text>
 
         <View style={styles.selectArea}>
-          {/* {inCalc && (
-            <View className="absolute left-0 top-0 w-full h-full px-[16px] bg-transparent flex justify-center items-center">
-              {inCalc === true && <ActivityIndicator size={40} color={theme.colors.surfaceBrand} />}
-              {typeof inCalc === 'string' && (
-                <>
-                  {plugins.Authentication.containsCancel(String(inCalc)) ? (
-                    <Pressable onPress={() => forceAuth((pre) => !pre)}>
-                      <Text className="text-center text-[16px]" style={{ color: theme.colors.textPrimary }}>
-                        You have not completed the security verification,{'\n'}
-                        <Text className="underline">try again</Text>.
-                      </Text>
-                    </Pressable>
-                  ) : (
-                    <Text className="text-[16px]" style={{ color: theme.colors.error }}>
-                      {inCalc}
-                    </Text>
-                  )}
-                </>
-              )}
-            </View>
-          )} */}
           {pageAccounts.map((account) => {
             const isSelected = !!currentAddress && (currentAddress.hex === account.addressValue || currentAddress.base32 === account.addressValue);
             const isInChoose = !!chooseAccounts?.find((_account) => _account.index === account.index);
             return (
-              <Fragment key={account.index}>
-                <Pressable
-                  testID="addressItem"
-                  style={({ pressed }) => [styles.selectItem, { backgroundColor: pressed ? colors.underlay : 'transparent' }]}
-                  disabled={isSelected}
-                  onPress={() => {
-                    if (chooseAccounts.find((_account) => _account.index === account.index)) {
-                      setChooseAccounts(chooseAccounts.filter((_account) => _account.index !== account.index));
-                    } else {
-                      setChooseAccounts([...chooseAccounts, account]);
-                    }
-                  }}
-                >
-                  <Checkbox checked={isInChoose} disabled />
-                  <Text style={{ color: colors.textPrimary }}>{account.index + 1}</Text>
-                  <Text style={{ color: colors.textPrimary }}>{shortenAddress(account.addressValue)}</Text>
-                  <Text style={{ color: colors.textSecondary }}>
-                    {currentHdPath?.value.slice(0, -1)}
-                    {account.index}
-                  </Text>
-                </Pressable>
-              </Fragment>
+              <Pressable
+                key={account.index}
+                testID="addressItem"
+                style={({ pressed }) => [styles.selectItem, { backgroundColor: pressed ? colors.underlay : 'transparent' }]}
+                disabled={isSelected}
+                onPress={() => {
+                  if (chooseAccounts.find((_account) => _account.index === account.index)) {
+                    setChooseAccounts(chooseAccounts.filter((_account) => _account.index !== account.index));
+                  } else {
+                    setChooseAccounts([...chooseAccounts, account]);
+                  }
+                }}
+              >
+                <Checkbox
+                  checked={false}
+                  disabled
+                  style={isSelected && styles.currentSelectCheck}
+                  showBackgroundColor={isInChoose}
+                  color={isSelected ? colors.up : isInChoose ? colors.iconFifth : 'transparent'}
+                />
+                <Text style={[styles.accountIndex, { color: colors.textPrimary }]}>{account.index + 1}</Text>
+                <Text style={[styles.accountAddress, { color: colors.textPrimary }]}>{shortenAddress(account.addressValue)}</Text>
+                <Text style={[styles.acccountPath, { color: colors.textSecondary }]}>
+                  {currentHdPath?.value.slice(0, -1)}
+                  {account.index}
+                </Text>
+              </Pressable>
             );
           })}
+          {inCalc && (
+            <View style={styles.selectAbsolute}>
+              {inCalc === true && (
+                <>
+                  <View style={[styles.selectAbsolute, { backgroundColor: colors.bgFourth, opacity: 0.75 }]} pointerEvents="none" />
+                  <HourglassLoading style={styles.calcLoading} />
+                </>
+              )}
+
+              {typeof inCalc === 'string' && (
+                <>
+                  <View style={[styles.selectAbsolute, { backgroundColor: colors.bgFourth }]} />
+                  {plugins.Authentication.containsCancel(String(inCalc)) ? (
+                    <Pressable
+                      onPress={() => forceAuth((pre) => !pre)}
+                      style={({ pressed }) => [{ backgroundColor: pressed ? colors.underlay : 'transparent' }]}
+                    >
+                      <Text style={[styles.selectText, { color: colors.textPrimary }]}>
+                        You have not completed{'\n'}the security verification,
+                        <Text style={styles.underline}> try again</Text>.
+                      </Text>
+                    </Pressable>
+                  ) : (
+                    <Text style={[styles.selectText, { color: colors.textPrimary }]}>{inCalc}</Text>
+                  )}
+                </>
+              )}
+            </View>
+          )}
         </View>
 
-        <View>
-          {pageIndex > 0 && (
-            <Pressable onPress={() => setPageIndex((pre) => pre - 1)}>
-              <View>
-                <ArrowRight color={pageIndex === 0 || inNext ? colors.up : colors.iconPrimary} width={12} height={12} />
-              </View>
-            </Pressable>
-          )}
-          <Text style={{ color: colors.textPrimary }}>
+        <View style={styles.pagination}>
+          <Pressable
+            onPress={() => setPageIndex((pre) => pre - 1)}
+            style={({ pressed }) => [
+              styles.paginationArrow,
+              styles.arrowLeft,
+              { backgroundColor: pressed ? colors.underlay : 'transparent', opacity: pageIndex <= 0 ? 0 : 1 },
+            ]}
+            disabled={inNext || pageIndex <= 0}
+          >
+            <ArrowRight color={pageIndex === 0 || inNext ? colors.up : colors.iconPrimary} width={12} height={12} />
+          </Pressable>
+          <Text style={[styles.paginationText, { color: colors.textPrimary }]}>
             {chooseAccounts.length} address{chooseAccounts.length > 0 ? `(es)` : ''} selected
           </Text>
-          {(pageIndex + 1) * countPerPage < maxCountLimit && (
-            <Pressable onPress={() => setPageIndex((pre) => pre + 1)}>
-              <View>
-                <ArrowRight color={inNext ? colors.up : colors.iconPrimary} width={12} height={12} />
-              </View>
-            </Pressable>
-          )}
+          <Pressable
+            onPress={() => setPageIndex((pre) => pre + 1)}
+            style={({ pressed }) => [
+              styles.paginationArrow,
+              { backgroundColor: pressed ? colors.underlay : 'transparent', opacity: (pageIndex + 1) * countPerPage >= maxCountLimit ? 0 : 1 },
+            ]}
+            disabled={inNext || (pageIndex + 1) * countPerPage >= maxCountLimit}
+          >
+            <ArrowRight color={inNext ? colors.up : colors.iconPrimary} width={12} height={12} />
+          </Pressable>
         </View>
 
         <Button style={styles.btn} mode="auto" disabled={chooseAccounts.length === 0} onPress={handleClickNext} loading={inNext}>
@@ -228,6 +263,7 @@ const HDManagement: React.FC<StackScreenProps<typeof HDSettingStackName>> = ({ n
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    paddingTop: 12,
   },
   title: {
     marginBottom: 24,
@@ -246,21 +282,91 @@ const styles = StyleSheet.create({
     fontWeight: '300',
     lineHeight: 18,
   },
-  address: {
-    marginBottom: 32,
+  contentText: {
+    marginBottom: 8,
     marginHorizontal: 16,
     paddingVertical: 12,
     paddingHorizontal: 16,
   },
   selectArea: {
-    marginTop: 28,
-    marginBottom: 20,
+    position: 'relative',
+    marginVertical: 20,
+    height: 240,
+  },
+  selectAbsolute: {
+    position: 'absolute',
+    display: 'flex',
+    justifyContent: 'center',
+    alignItems: 'center',
+    left: 0,
+    top: 0,
+    right: 0,
+    bottom: 0,
+  },
+  selectText: {
+    fontSize: 16,
+    fontWeight: '600',
+    lineHeight: 28,
+    textAlign: 'center',
+    paddingVertical: 16,
+  },
+  underline: {
+    textDecorationLine: 'underline',
   },
   selectItem: {
     display: 'flex',
     flexDirection: 'row',
     alignItems: 'center',
     height: 48,
+    paddingHorizontal: 32,
+  },
+  calcLoading: {
+    width: 48,
+    height: 48,
+  },
+  accountIndex: {
+    fontSize: 14,
+    fontWeight: '600',
+    marginLeft: 8,
+    marginRight: 16,
+  },
+  accountAddress: {
+    fontSize: 14,
+    fontWeight: '600',
+    marginRight: 'auto',
+  },
+  acccountPath: {
+    fontSize: 14,
+    fontWeight: '300',
+  },
+  currentSelectCheck: {
+    borderColor: 'transparent',
+    backgroundColor: 'transparent',
+  },
+  pagination: {
+    marginTop: 8,
+    display: 'flex',
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    height: 48,
+  },
+  arrowLeft: {
+    transform: [{ rotate: '180deg' }],
+  },
+  paginationArrow: {
+    width: 40,
+    height: 48,
+    display: 'flex',
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  paginationText: {
+    minWidth: 196,
+    textAlign: 'center',
+    fontSize: 16,
+    fontWeight: '600',
   },
   btn: {
     marginTop: 'auto',
@@ -269,6 +375,6 @@ const styles = StyleSheet.create({
   },
 });
 
-const snapPoints = ['90%'];
+const snapPoints = [`${(((screenHeight - 124) / screenHeight) * 100).toFixed(2)}%`];
 
 export default HDManagement;
