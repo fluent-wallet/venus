@@ -12,6 +12,7 @@ import { RouteProp } from '@react-navigation/native';
 import { getCurrentNetwork } from '@core/WalletCore/Plugins/ReactInject/data/useCurrentNetwork';
 import { CHECK_ADDRESS_FEATURE } from '@utils/features';
 import Methods from '@core/WalletCore/Methods';
+import useProvider from '@hooks/useProvider';
 
 export const SendPageHeaderOptions = ({ title = 'Send To' }: { title?: string }) =>
   ({
@@ -31,11 +32,7 @@ const SendReceiver: React.FC<{ navigation: StackNavigation; route: RouteProp<Roo
   const [isContractAddress, setIsContractAddress] = useState(false);
   const [isKnowRisk, setIsKnowRisk] = useState(false);
   const currentNetwork = getCurrentNetwork();
-
-  const provider = useMemo(() => {
-    if (currentNetwork) return Methods.getTxProvider(currentNetwork);
-    return null;
-  }, [currentNetwork]);
+  const provider = useProvider();
 
   const handleChange = (v: string) => {
     setAddress(v);
@@ -46,7 +43,7 @@ const SendReceiver: React.FC<{ navigation: StackNavigation; route: RouteProp<Roo
 
   const handleNext = () => {
     if (address) {
-      if (provider && provider.validateAddress(address)) {
+      if (provider.validateAddress(address)) {
         return setErrorMsg('Please enter valid hex address');
       } else {
         setErrorMsg('');
@@ -55,7 +52,7 @@ const SendReceiver: React.FC<{ navigation: StackNavigation; route: RouteProp<Roo
     }
   };
   const handleNextWithCheck = async () => {
-    if (provider && address) {
+    if (address) {
       setLoading(true);
       if (provider.validateAddress(address)) {
         setErrorMsg('');
