@@ -1,8 +1,5 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { SafeAreaView, View, KeyboardAvoidingView, TextInput, Pressable, ScrollView } from 'react-native';
-import { isAddress } from 'ethers';
-import { firstValueFrom } from 'rxjs';
-import { useAtom } from 'jotai';
 import { Text, useTheme, Divider } from '@rneui/themed';
 import { type StackNavigation, TokensStackName, RootStackList, ReceiveAddressStackName, ScanQRCodeStackName } from '@router/configs';
 import { statusBarHeight } from '@utils/deviceInfo';
@@ -12,11 +9,9 @@ import WarningIcon from '@assets/icons/warning_2.svg';
 import WarningIcon1 from '@assets/icons/warning_1.svg';
 import Flip from '@assets/icons/flip.svg';
 import { RouteProp } from '@react-navigation/native';
-
-import { fetchChain } from '@cfx-kit/dapp-utils/dist/fetch';
 import { getCurrentNetwork } from '@core/WalletCore/Plugins/ReactInject/data/useCurrentNetwork';
 import { CHECK_ADDRESS_FEATURE } from '@utils/features';
-import { RPCResponse, RPCSend } from '@core/utils/send';
+import Methods from '@core/WalletCore/Methods';
 
 export const SendPageHeaderOptions = ({ title = 'Send To' }: { title?: string }) =>
   ({
@@ -37,6 +32,11 @@ const SendReceiver: React.FC<{ navigation: StackNavigation; route: RouteProp<Roo
   const [isKnowRisk, setIsKnowRisk] = useState(false);
   const currentNetwork = getCurrentNetwork();
 
+  const provider = useMemo(() => {
+    if (currentNetwork) return Methods.getTxProvider(currentNetwork);
+    return null;
+  }, [currentNetwork]);
+
   const handleChange = (v: string) => {
     setAddress(v);
     setErrorMsg('');
@@ -45,36 +45,42 @@ const SendReceiver: React.FC<{ navigation: StackNavigation; route: RouteProp<Roo
   };
 
   const handleNext = () => {
-    if (!isAddress(address)) {
-      return setErrorMsg('Please enter valid hex address');
-    } else {
-      setErrorMsg('');
+    if (address) {
+      if (provider && provider.validateAddress(address)) {
+        return setErrorMsg('Please enter valid hex address');
+      } else {
+        setErrorMsg('');
+      }
+      navigation.navigate(TokensStackName, { to: address });
     }
-    navigation.navigate(TokensStackName, { to: address });
   };
   const handleNextWithCheck = async () => {
-    setLoading(true);
-    if (isAddress(address)) {
-      setErrorMsg('');
-      // check is contract address
-      if (currentNetwork && !isContractAddress && !isKnowRisk) {
-        const code = await firstValueFrom(RPCSend<RPCResponse<string>>(currentNetwork.endpoint, { method: 'eth_getCode', params: [address] }));
-
-        if (code.result && code.result.startsWith('0x') && code.result.length > 2) {
-          setLoading(false);
-          return setIsContractAddress(true);
+    if (provider && address) {
+      setLoading(true);
+      if (provider.validateAddress(address)) {
+        setErrorMsg('');
+        // check is contract address
+        if (currentNetwork && !isContractAddress && !isKnowRisk) {
+          const checkIsContractAddress = await provider.isContractAddress(address);
+          if (checkIsContractAddress) {
+            setLoading(false);
+            return setIsContractAddress(checkIsContractAddress);
+          }
         }
+      } else {
+        setLoading(false);
+        return setErrorMsg('Please enter valid hex address');
       }
-    } else {
-      setLoading(false);
-      return setErrorMsg('Please enter valid hex address');
-    }
 
-    setLoading(false);
-    navigation.navigate(TokensStackName, { to: address });
+      setLoading(false);
+      navigation.navigate(TokensStackName, { to: address });
+    }
   };
 
   const nextButtonDisabled = () => {
+    if (!provider) {
+      return false;
+    }
     if (!address) {
       return true;
     }

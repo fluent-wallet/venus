@@ -11,15 +11,15 @@ interface EstimateGasProps {
   loading: boolean;
   error: boolean;
   retry: () => void;
-  gasLimit?: string;
-  gasPrice?: string;
+  gasLimit?: bigint;
+  gasPrice?: bigint;
   priceInUSDT?: string;
 }
 
 const EstimateGas: React.FC<EstimateGasProps> = ({ gasLimit, gasPrice, loading, error, retry, priceInUSDT }) => {
   const { theme } = useTheme();
   const gas = useMemo(
-    () => (loading || !gasLimit || !gasPrice ? null : formatUnits(BigInt(gasLimit) * BigInt(gasPrice), DEFAULT_CURRENCY_DECIMALS)),
+    () => (loading || !gasLimit || !gasPrice ? null : formatUnits(gasLimit * gasPrice, DEFAULT_CURRENCY_DECIMALS)),
     [gasLimit, gasPrice, loading],
   );
   const price = useMemo(() => {
