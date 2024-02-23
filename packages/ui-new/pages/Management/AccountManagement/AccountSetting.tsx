@@ -10,9 +10,8 @@ import Text from '@components/Text';
 import TextInput from '@components/TextInput';
 import Checkbox from '@components/Checkbox';
 import Button from '@components/Button';
-import BottomSheet, { BottomSheetScrollView, type BottomSheetMethods } from '@components/BottomSheet';
+import BottomSheet, { snapPoints, BottomSheetScrollView, type BottomSheetMethods } from '@components/BottomSheet';
 import { AccountSettingStackName, type StackScreenProps } from '@router/configs';
-import { screenHeight } from '@utils/deviceInfo';
 import ArrowRight from '@assets/icons/arrow-right2.svg';
 import Delete from '@assets/icons/delete.svg';
 import DeleteConfirm from './DeleteConfirm';
@@ -79,7 +78,7 @@ const AccountConfig: React.FC<StackScreenProps<typeof AccountSettingStackName>> 
 
   return (
     <>
-      <BottomSheet snapPoints={snapPoints} index={0} animateOnMount={true} isModal={false} onClose={() => navigation.goBack()}>
+      <BottomSheet snapPoints={snapPoints.large} index={0} isModal={false} onClose={() => navigation.goBack()}>
         <BottomSheetScrollView contentContainerStyle={styles.container}>
           <Text style={[styles.title, styles.mainText, { color: colors.textPrimary }]}>Account</Text>
           <Text style={[styles.description, { color: colors.textSecondary }]}>Address</Text>
@@ -178,7 +177,5 @@ const styles = StyleSheet.create({
     marginHorizontal: 16,
   },
 });
-
-const snapPoints = [`${(((screenHeight - 124) / screenHeight) * 100).toFixed(2)}%`];
 
 export default AccountConfig;

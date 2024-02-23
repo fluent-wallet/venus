@@ -3,6 +3,7 @@ import { BackHandler, Keyboard } from 'react-native';
 import { useFocusEffect, useTheme } from '@react-navigation/native';
 import BottomSheet_, { BottomSheetModal, BottomSheetBackdrop, type BottomSheetBackdropProps, type BottomSheetModalProps } from '@gorhom/bottom-sheet';
 import composeRef from '@cfx-kit/react-utils/dist/composeRef';
+import { screenHeight } from '@utils/deviceInfo';
 export * from '@gorhom/bottom-sheet';
 export { BottomSheetModal as BottomSheetMethods } from '@gorhom/bottom-sheet';
 
@@ -25,6 +26,7 @@ const BottomSheet = forwardRef<BottomSheetModal, Props>(
       onChange,
       onDismiss,
       onClose,
+      index,
       ...props
     },
     _forwardRef,
@@ -86,7 +88,7 @@ const BottomSheet = forwardRef<BottomSheetModal, Props>(
     return (
       <RenderBottomSheet
         ref={composeRef([_forwardRef!, bottomSheetRef])}
-        index={defaultIndex}
+        index={index ?? defaultIndex}
         onChange={(index) => {
           indexRef.current = index;
           onChange?.(index);
@@ -105,5 +107,10 @@ const BottomSheet = forwardRef<BottomSheetModal, Props>(
     );
   },
 );
+
+
+export const snapPoints = {
+  large: [`${(((screenHeight - 124) / screenHeight) * 100).toFixed(2)}%`]
+} as const;
 
 export default BottomSheet;
