@@ -5,7 +5,7 @@ import { EthTxTrack } from './EthTxTrack';
 
 declare module '../../../WalletCore/Plugins' {
   interface Plugins {
-    Transaction: TxTrackerPluginClass;
+    TxTracker: TxTrackerPluginClass;
   }
 }
 

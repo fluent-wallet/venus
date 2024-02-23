@@ -75,7 +75,8 @@
     "react-native-vision-camera": "^3.8.0",
     "reflect-metadata": "^0.2.1",
     "stream-browserify": "^3.0.0",
-    "validator": "^13.11.0"
+    "validator": "^13.11.0",
+    "viem": "^2.7.12"
   },
   "devDependencies": {
     "@babel/core": "^7.23.7",

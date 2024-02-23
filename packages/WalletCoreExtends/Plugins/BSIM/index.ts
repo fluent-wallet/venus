@@ -1,7 +1,9 @@
-import BSIMSDK, { BSIM_ERRORS, BSIM_SUPPORT_ACCOUNT_LIMIT, CoinTypes } from './BSIMSDK';
+import BSIMSDK, { BSIMError, BSIMErrorEndTimeout, BSIM_ERRORS, BSIM_SUPPORT_ACCOUNT_LIMIT, CoinTypes } from './BSIMSDK';
 import { addHexPrefix } from '@core/utils/base';
-import { computeAddress } from 'ethers';
+import { Signature, Transaction, computeAddress } from 'ethers';
 import { type Plugin } from '@core/WalletCore/Plugins';
+import { Subject, catchError, defer, firstValueFrom, from, retry, throwError, timeout } from 'rxjs';
+import { TxEvent, TxEventTypesName } from './types';
 
 export { CoinTypes, CFXCoinTypes } from './BSIMSDK';
 
@@ -119,9 +121,48 @@ export class BSIMPluginClass implements Plugin {
 
   public updateBPIN = async () => {
     await this.checkIsInit();
-    return BSIMSDK.updateBPIN()
-  }
+    return BSIMSDK.updateBPIN();
+  };
 
+  public signTransaction = async (fromAddress: string, tx: Transaction) => {
+    const hash = tx.unsignedHash;
+    try {
+      await this.verifyBPIN();
+    } catch (error: any) {
+      if (error?.code && error.code === 'A000') {
+        console.log("get error code A000, it's ok");
+        // ignore A000 error by verifyBPIN function
+      } else {
+        throw new BSIMError(error.code, error.message);
+      }
+    }
+
+    let errorMsg = '';
+    let errorCode = '';
+    // retrieve the R S V of the transaction through a polling mechanism
+    const pubkeyList = await this.getBSIMPubkeys();
+    const currentPubkey = pubkeyList.find((item) => computeAddress(addHexPrefix(this.formatBSIMPubkey(item.key))) === fromAddress);
+
+    if (!currentPubkey) {
+      throw new Error("Can't get current pubkey from BSIM card");
+    }
+
+    const res = await firstValueFrom(
+      defer(() => from(this.signMessage(hash, currentPubkey.coinType, currentPubkey.index))).pipe(
+        catchError((err: { code: string; message: string }) => {
+          errorMsg = err.message;
+          errorCode = err.code;
+          return throwError(() => err);
+        }),
+        retry({ delay: 1000 }),
+        timeout({ each: 30 * 1000, with: () => throwError(() => new BSIMErrorEndTimeout(errorCode, errorMsg)) }),
+      ),
+    );
+    tx.signature = Signature.from({ r: res.r, s: res.s, v: res.v });
+    // get the transaction encoded
+    const encodeTx = tx.serialized;
+    return encodeTx;
+  };
 }
 
 export default new BSIMPluginClass();

@@ -27,17 +27,19 @@ import CFXTokenIcon from '@assets/icons/cfxToken.svg';
 import { useNetInfo } from '@react-native-community/netinfo';
 import NoNetwork from '@modules/NoNetwork';
 import Decimal from 'decimal.js';
+import useProvider from '@hooks/useProvider';
 
 const SendTo: React.FC<{ navigation: StackNavigation; route: RouteProp<RootStackList, typeof SendToStackName> }> = ({ navigation, route }) => {
   const { theme } = useTheme();
   const { isConnected } = useNetInfo();
-  const currentNetwork = useCurrentNetwork()!;
   const currentAddress = useCurrentAddress();
   const txParams = route.params;
   const [value, setValue] = useState(txParams.amount ? new Decimal(formatUnits(txParams.amount, txParams.decimals)).toString() : '');
   const [invalidInputErr, setInvalidInputErr] = useState({ err: false, msg: '' });
   const [rpcError, setRpcError] = useState({ err: false, msg: '' });
   const [maxBtnLoading, setMaxBtnLoading] = useState(false);
+
+  const provider = useProvider()
 
   const accountBalance = useMemo(
     () =>
@@ -87,79 +89,35 @@ const SendTo: React.FC<{ navigation: StackNavigation; route: RouteProp<RootStack
     }
   };
 
-  const getNativeBalance = async () => {
-    return firstValueFrom(RPCSend<RPCResponse<string>>(currentNetwork.endpoint, { method: 'eth_getBalance', params: [currentAddress?.hex, 'latest'] }));
-  };
-
-  const getGas = async (amount: bigint) => {
-    if (txParams.assetType === AssetType.Native) {
-      const gasPriceResult = await Methods.getETHGasPrice();
-      if (gasPriceResult.error) {
-        const errorMsg = matchRPCErrorMessage({
-          message: gasPriceResult.error?.message || '',
-          data: gasPriceResult.error?.data || gasPriceResult.error?.data || '',
-        });
-        setRpcError({ err: true, msg: errorMsg });
-        return;
-      }
-
-      const gasLimit = toBeHex(21000);
-
-      return {
-        gasLimit,
-        gasPrice: gasPriceResult.result,
-      };
-    }
-
-    const gas = await Methods.getTransactionGasAndGasLimit({
-      to: txParams.to,
-      amount: amount.toString(),
-      assetType: txParams.assetType,
-      contractAddress: txParams.contractAddress,
-      tokenId: txParams.tokenId,
-      decimals: txParams.decimals,
-    });
-
-    if (gas.gasLimit.error || gas.gasPrice.error) {
-      const errorMsg = matchRPCErrorMessage({
-        message: gas.gasLimit.error?.message || gas.gasPrice.error?.message || '',
-        data: gas.gasLimit.error?.data || gas.gasPrice.error?.data || '',
-      });
-      setRpcError({ err: true, msg: errorMsg });
-      return;
-    }
-    return {
-      gasLimit: gas.gasLimit.result,
-      gasPrice: gas.gasPrice.result,
-    };
-  };
 
   const handleChangeMax = async () => {
     setMaxBtnLoading(true);
     if (txParams.assetType === AssetType.Native && isConnected) {
       try {
         // there need to be a network connection to get the native balance
-        const nativeBalance = await getNativeBalance();
-        if (nativeBalance.error) {
-          return setRpcError({ err: true, msg: nativeBalance.error.message || '' });
-        }
-        const balance = BigInt(nativeBalance.result);
+        const nativeBalance = await provider.getBalance({ address: currentAddress?.hex || '' });
+
+        const balance = nativeBalance;
 
         if (balance === BigInt(0)) {
           setMaxBtnLoading(false);
           return setValue('0');
         }
+        const gasLimit = 21000n;
+        const gasPrice = await provider.fetchGasPrice();
 
-        const gas = await getGas(BigInt(balance));
-        if (!gas) {
+        if (!gasPrice) {
           return setMaxBtnLoading(false);
         }
+
         // if there is native asset, the max value should be the balance - gas fee
-        const max = formatUnits(BigInt(balance) - BigInt(gas.gasLimit) * BigInt(gas.gasPrice), txParams.decimals);
+        const max = formatUnits(balance - gasLimit * gasPrice, txParams.decimals);
+  
         setValue(max);
+        setRpcError({ err: false, msg: '' });
         setInvalidInputErr({ err: false, msg: '' });
-      } catch (error) {
-        console.log(error);
+      } catch (error: any) {
+        setRpcError({ err: true, msg: error.message || '' });
         setMaxBtnLoading(false);
       }
     }

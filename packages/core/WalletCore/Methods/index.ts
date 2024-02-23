@@ -123,14 +123,8 @@ export class Methods {
   }
 
   @inject(TransactionMethod) private TransactionMethod!: TransactionMethod;
-  public getTransactionGasAndGasLimit(...args: Parameters<TransactionMethod['getGasPriceAndLimit']>) {
-    return this.TransactionMethod.getGasPriceAndLimit(...args);
-  }
-  public getETHGasPrice = () => {
-    return this.TransactionMethod.getGasPrice();
-  };
-  public sendTransaction(...args: Parameters<TransactionMethod['sendTransaction']>) {
-    return this.TransactionMethod.sendTransaction(...args);
+  public getTxProvider(...args: Parameters<TransactionMethod['getTxProvider']>) {
+    return this.TransactionMethod.getTxProvider(...args);
   }
 
   @inject(TxMethod) private TxMethod!: TxMethod;
