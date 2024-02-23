@@ -89,5 +89,11 @@ const accountsOfGroupInManageAtomFamily = atomFamily((groupId: string | null | u
   }),
 );
 
+const allAccountsInManageAtom = atom((get) => {
+  const accountsManage = get(accountsManageAtom);
+  return accountsManage?.map((item) => item.data).flat();
+});
+
 export const useAccountsManage = () => useAtomValue(accountsManageAtom);
 export const useAccountsOfGroupInManage = (groupId: string | null | undefined) => useAtomValue(accountsOfGroupInManageAtomFamily(groupId));
+export const useAllAccountsInManage = () => useAtomValue(allAccountsInManageAtom);

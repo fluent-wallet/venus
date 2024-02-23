@@ -9,10 +9,9 @@ import Text from '@components/Text';
 import TextInput from '@components/TextInput';
 import Checkbox from '@components/Checkbox';
 import Button from '@components/Button';
-import BottomSheet, { type BottomSheetMethods } from '@components/BottomSheet';
+import BottomSheet, { snapPoints, type BottomSheetMethods } from '@components/BottomSheet';
 import { AccountItemView } from '@modules/AccountsList';
 import { GroupSettingStackName, HDSettingStackName, type StackScreenProps } from '@router/configs';
-import { screenHeight } from '@utils/deviceInfo';
 import ArrowRight from '@assets/icons/arrow-right2.svg';
 import Delete from '@assets/icons/delete.svg';
 import DeleteConfirm from './DeleteConfirm';
@@ -79,7 +78,7 @@ const GroupConfig: React.FC<StackScreenProps<typeof GroupSettingStackName>> = ({
 
   return (
     <>
-      <BottomSheet snapPoints={snapPoints} index={0} animateOnMount={true} isModal={false} onClose={() => navigation.goBack()}>
+      <BottomSheet snapPoints={snapPoints.large} index={0} isModal={false} onClose={() => navigation.goBack()}>
         <View style={styles.container}>
           <Text style={[styles.title, styles.mainText, { color: colors.textPrimary }]}>{GroupTitle}</Text>
           <Text style={[styles.description, { color: colors.textSecondary }]}>Account Name</Text>
@@ -217,6 +216,5 @@ const styles = StyleSheet.create({
   },
 });
 
-const snapPoints = [`${(((screenHeight - 124) / screenHeight) * 100).toFixed(2)}%`];
 
 export default GroupConfig;

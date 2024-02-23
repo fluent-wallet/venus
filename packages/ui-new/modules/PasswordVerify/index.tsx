@@ -63,7 +63,7 @@ const PasswordVerify: React.FC<StackScreenProps<typeof PasswordVerifyStackName>>
   }, [password]);
 
   return (
-    <BottomSheet ref={bottomSheetRef} snapPoints={snapPoints} onClose={handleCancel} index={0} animateOnMount={true} isModal={false}>
+    <BottomSheet ref={bottomSheetRef} snapPoints={snapPoints} onClose={handleCancel} index={0} isModal={false}>
       <View style={styles.container}>
         <Text style={[styles.title, { color: colors.textPrimary }]}>Verify Password</Text>
         <TextInput

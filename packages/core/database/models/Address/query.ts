@@ -1,4 +1,6 @@
 import { Q, type Query } from '@nozbe/watermelondb';
+import { memoize } from 'lodash-es';
+import { type Observable } from 'rxjs';
 import { type Account } from '../Account';
 import { NetworkType, type Network } from '../Network';
 import { type AssetRule } from '../AssetRule';
@@ -36,6 +38,7 @@ export const querySelectedAddress = () =>
 export const observeSelectedAddress = () => querySelectedAddress().observe();
 export const queryAddressById = async (id: string) => database.get(TableName.Address).find(id) as Promise<Address>;
 export const queryAllAddresses = () => database.get(TableName.Address).query() as unknown as Query<Address>;
+export const observeAddressById = memoize((id: string) => database.get(TableName.Address).findAndObserve(id) as Observable<Address>);
 
 export const convertHexAddressToBase32 = (hexAddress: string, network: Network) => encode(toAccountAddress(hexAddress), network.netId);
 export const getAddressValueByNetwork = (address: string, network: Network) => {

@@ -14,7 +14,7 @@ import CryptoToolPlugin from './packages/WalletCoreExtends/Plugins/CryptoTool';
 import AuthenticationPlugin from './packages/WalletCoreExtends/Plugins/Authentication';
 import BSIMPlugin from './packages/WalletCoreExtends/Plugins/BSIM';
 import TransactionPlugin from './packages/core/WalletCore/Plugins/Transaction';
-import App from './packages/ui/App';
+import App from './packages/ui-new/App';
 import { name as appName } from './app.json';
 import { ENABLE_WALLET_CONNECT_FEATURE } from './packages/ui/utils/features';
 import * as SplashScreen from 'expo-splash-screen';
