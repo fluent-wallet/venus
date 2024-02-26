@@ -28,6 +28,7 @@ import { useNetInfo } from '@react-native-community/netinfo';
 import NoNetwork from '@modules/NoNetwork';
 import Decimal from 'decimal.js';
 import useProvider from '@hooks/useProvider';
+import { GetBalanceErrorType } from 'viem';
 
 const SendTo: React.FC<{ navigation: StackNavigation; route: RouteProp<RootStackList, typeof SendToStackName> }> = ({ navigation, route }) => {
   const { theme } = useTheme();
@@ -39,7 +40,7 @@ const SendTo: React.FC<{ navigation: StackNavigation; route: RouteProp<RootStack
   const [rpcError, setRpcError] = useState({ err: false, msg: '' });
   const [maxBtnLoading, setMaxBtnLoading] = useState(false);
 
-  const provider = useProvider()
+  const provider = useProvider();
 
   const accountBalance = useMemo(
     () =>
@@ -89,7 +90,6 @@ const SendTo: React.FC<{ navigation: StackNavigation; route: RouteProp<RootStack
     }
   };
 
-
   const handleChangeMax = async () => {
     setMaxBtnLoading(true);
     if (txParams.assetType === AssetType.Native && isConnected) {
@@ -112,12 +112,16 @@ const SendTo: React.FC<{ navigation: StackNavigation; route: RouteProp<RootStack
 
         // if there is native asset, the max value should be the balance - gas fee
         const max = formatUnits(balance - gasLimit * gasPrice, txParams.decimals);
-  
+
         setValue(max);
         setRpcError({ err: false, msg: '' });
         setInvalidInputErr({ err: false, msg: '' });
       } catch (error: any) {
-        setRpcError({ err: true, msg: error.message || '' });
+        if ((error as GetBalanceErrorType).name === 'HttpRequestError') {
+          setRpcError({ err: true, msg: 'Network error, please try again later' });
+        } else {
+          setRpcError({ err: true, msg: matchRPCErrorMessage({ message: error?.details || error.message || 'unknown error' }) });
+        }
         setMaxBtnLoading(false);
       }
     }

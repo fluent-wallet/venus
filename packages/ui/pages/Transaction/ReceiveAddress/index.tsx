@@ -13,6 +13,7 @@ import { getCurrentNetwork } from '@core/WalletCore/Plugins/ReactInject/data/use
 import { CHECK_ADDRESS_FEATURE } from '@utils/features';
 import Methods from '@core/WalletCore/Methods';
 import useProvider from '@hooks/useProvider';
+import { GetBytecodeErrorType } from 'viem';
 
 export const SendPageHeaderOptions = ({ title = 'Send To' }: { title?: string }) =>
   ({
@@ -52,25 +53,35 @@ const SendReceiver: React.FC<{ navigation: StackNavigation; route: RouteProp<Roo
     }
   };
   const handleNextWithCheck = async () => {
-    if (address) {
-      setLoading(true);
-      if (provider.validateAddress(address)) {
-        setErrorMsg('');
-        // check is contract address
-        if (currentNetwork && !isContractAddress && !isKnowRisk) {
-          const checkIsContractAddress = await provider.isContractAddress(address);
-          if (checkIsContractAddress) {
-            setLoading(false);
-            return setIsContractAddress(checkIsContractAddress);
+    setErrorMsg('');
+    setLoading(true);
+    try {
+      if (address) {
+        if (provider.validateAddress(address)) {
+          // check is contract address
+          if (currentNetwork && !isContractAddress && !isKnowRisk) {
+            const checkIsContractAddress = await provider.isContractAddress(address);
+            if (checkIsContractAddress) {
+              setLoading(false);
+              return setIsContractAddress(checkIsContractAddress);
+            }
           }
+        } else {
+          setLoading(false);
+          return setErrorMsg('Please enter valid hex address');
         }
-      } else {
-        setLoading(false);
-        return setErrorMsg('Please enter valid hex address');
-      }
 
+        setLoading(false);
+        navigation.navigate(TokensStackName, { to: address });
+      }
+    } catch (e) {
       setLoading(false);
-      navigation.navigate(TokensStackName, { to: address });
+      const error = e as GetBytecodeErrorType;
+      if (error.name === 'HttpRequestError') {
+        setErrorMsg('Network error, please try again later');
+      } else {
+        setErrorMsg((error as any)?.details || error.message || 'Unknown error');
+      }
     }
   };
 
@@ -79,10 +90,6 @@ const SendReceiver: React.FC<{ navigation: StackNavigation; route: RouteProp<Roo
       return false;
     }
     if (!address) {
-      return true;
-    }
-
-    if (errorMsg) {
       return true;
     }
     if (isContractAddress && !isKnowRisk) {

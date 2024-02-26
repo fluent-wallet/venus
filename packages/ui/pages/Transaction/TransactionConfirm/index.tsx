@@ -196,7 +196,7 @@ const TransactionConfirm: React.FC<{
         }
       } catch (error: any) {
         console.log(error);
-        setError(matchRPCErrorMessage({ message: error.details || error.message, data: error.data }));
+        setError(matchRPCErrorMessage({ message: error?.details || error?.message }));
         setLoading(false);
       }
       setLoading(false);
