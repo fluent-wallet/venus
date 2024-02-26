@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { View, useColorScheme, ImageBackground, Image } from 'react-native';
 import QRCode from 'react-native-qrcode-svg';
 import Clipboard from '@react-native-clipboard/clipboard';
@@ -7,6 +7,7 @@ import { Icon, Text, useTheme, Tooltip } from '@rneui/themed';
 import { BaseButton } from '@components/Button';
 import PKMask from '@assets/images/privateKeyMask.webp';
 import SeedMask from '@assets/images/seedPhraseMask.webp';
+import { useFocusEffect } from '@react-navigation/native';
 
 const emptyString = '           ';
 const PrivateKeyMask = Image.resolveAssetSource(PKMask).uri;
@@ -40,6 +41,14 @@ const Secret = ({ backupType, getSecretData }: { backupType: 'Seed Phrase' | 'Pr
     Clipboard.setString(secret);
     setTooltipShow(true);
   };
+  useFocusEffect(
+    useCallback(() => {
+      return () => {
+        setSecret(emptyString);
+        setShow(false);
+      };
+    }, []),
+  );
 
   return (
     <View>
@@ -67,7 +76,7 @@ const Secret = ({ backupType, getSecretData }: { backupType: 'Seed Phrase' | 'Pr
             <Text className="text-xl font-bold leading-tight">Tap to view the {backupType === 'Seed Phrase' ? 'seed phrase' : 'private key'}</Text>
             <Text className="text-base font-normal leading-6">Make sure your environment is safe</Text>
             <View className="mt-4">
-              <BaseButton testID='viewSecret' loading={loading} buttonStyle={{ paddingHorizontal: 20, paddingVertical: 10 }} onPress={handleGetSecretData}>
+              <BaseButton testID="viewSecret" loading={loading} buttonStyle={{ paddingHorizontal: 20, paddingVertical: 10 }} onPress={handleGetSecretData}>
                 <Icon name="remove-red-eye" className="pr-1" color={theme.colors.textInvert} />
                 <Text className="text-sm leading-6" style={{ color: theme.colors.textInvert }}>
                   View
