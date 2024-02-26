@@ -14,6 +14,7 @@ import AccountManagement from '@pages/Management/AccountManagement';
 import AccountSetting from '@pages/Management/AccountManagement/AccountSetting';
 import GroupSetting from '@pages/Management/AccountManagement/GroupSetting';
 import HDSetting from '@pages/Management/AccountManagement/HDSetting';
+import Backup from '@pages/Management/AccountManagement/Backup';
 import PasswordVerify from '@modules/PasswordVerify';
 import {
   WelcomeStackName,
@@ -27,6 +28,7 @@ import {
   GroupSettingStackName,
   HDSettingStackName,
   PasswordVerifyStackName,
+  BackupStackName,
   type RootStackParamList,
   type StackNavigation,
 } from './configs';
@@ -77,6 +79,7 @@ const Router: React.FC = () => {
         <RootStack.Screen name={AccountSettingStackName} component={AccountSetting} options={SheetBottomOption} />
         <RootStack.Screen name={GroupSettingStackName} component={GroupSetting} options={SheetBottomOption} />
         <RootStack.Screen name={HDSettingStackName} component={HDSetting} options={SheetBottomOption} />
+        <RootStack.Screen name={BackupStackName} component={Backup} options={SheetBottomOption} />
         <RootStack.Screen name={SettingsStackName} component={Settings} />
         <RootStack.Screen name={PasswordVerifyStackName} component={PasswordVerify} options={SheetBottomOption} />
       </RootStack.Navigator>
