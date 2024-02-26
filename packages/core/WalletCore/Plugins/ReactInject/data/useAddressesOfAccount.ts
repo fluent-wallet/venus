@@ -4,10 +4,12 @@ import { switchMap, from, of } from 'rxjs';
 import { memoize } from 'lodash-es';
 import { observeAccountById } from '../../../../database/models/Account/query';
 
-const addressesAtomFamilyOfAccount = atomFamily((accountId: string) =>
-  atomWithObservable(() => observeAccountById(accountId).pipe(switchMap((account) => account.addresses.observe())), { initialValue: [] }),
+const addressesAtomFamilyOfAccount = atomFamily((accountId: string | null | undefined) =>
+  atomWithObservable(() => (!accountId ? of(null) : observeAccountById(accountId).pipe(switchMap((account) => account.addresses.observe()))), {
+    initialValue: [],
+  }),
 );
-export const useAddressesOfAccount = (accountId: string) => useAtomValue(addressesAtomFamilyOfAccount(accountId));
+export const useAddressesOfAccount = (accountId: string | null | undefined) => useAtomValue(addressesAtomFamilyOfAccount(accountId));
 
 const observeCurrentAddressOfAccount = memoize((accountId: string) =>
   observeAccountById(accountId).pipe(switchMap((account) => account.currentNetworkAddressObservable)),

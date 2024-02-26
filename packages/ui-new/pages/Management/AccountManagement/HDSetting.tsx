@@ -161,8 +161,8 @@ const HDManagement: React.FC<StackScreenProps<typeof HDSettingStackName>> = ({ n
 
         <View style={styles.selectArea}>
           {pageAccounts.map((account) => {
-            const isSelected = !!currentAddress && (currentAddress.hex === account.addressValue || currentAddress.base32 === account.addressValue);
-            const isInChoose = !!chooseAccounts?.find((_account) => _account.index === account.index);
+            const isSelected = pageAccounts !== defaultPages && !!currentAddress && (currentAddress.hex === account.addressValue || currentAddress.base32 === account.addressValue);
+            const isInChoose = pageAccounts !== defaultPages && !!chooseAccounts?.find((_account) => _account.index === account.index);
             return (
               <Pressable
                 key={account.index}
@@ -262,11 +262,10 @@ const HDManagement: React.FC<StackScreenProps<typeof HDSettingStackName>> = ({ n
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    paddingTop: 12,
+    paddingTop: 8,
   },
   title: {
     marginBottom: 24,
-    lineHeight: 40,
     textAlign: 'center',
   },
   mainText: {

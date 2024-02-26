@@ -50,7 +50,7 @@ const DeleteConfirm: React.FC<Props> = ({ bottomSheetRef, onConfirm }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    paddingTop: 12,
+    paddingTop: 8,
     paddingHorizontal: 16,
     paddingBottom: 32,
   },

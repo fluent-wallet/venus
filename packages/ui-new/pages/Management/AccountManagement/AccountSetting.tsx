@@ -11,7 +11,7 @@ import TextInput from '@components/TextInput';
 import Checkbox from '@components/Checkbox';
 import Button from '@components/Button';
 import BottomSheet, { snapPoints, BottomSheetScrollView, type BottomSheetMethods } from '@components/BottomSheet';
-import { AccountSettingStackName, type StackScreenProps } from '@router/configs';
+import { AccountSettingStackName, BackupStackName, type StackScreenProps } from '@router/configs';
 import ArrowRight from '@assets/icons/arrow-right2.svg';
 import Delete from '@assets/icons/delete.svg';
 import DeleteConfirm from './DeleteConfirm';
@@ -93,7 +93,10 @@ const AccountConfig: React.FC<StackScreenProps<typeof AccountSettingStackName>> 
           {(vault?.type === VaultType.HierarchicalDeterministic || vault?.type === VaultType.PrivateKey) && (
             <>
               <Text style={[styles.description, styles.backupDescription, { color: colors.textSecondary }]}>Backup</Text>
-              <Pressable style={({ pressed }) => [styles.row, { backgroundColor: pressed ? colors.underlay : 'transparent' }]}>
+              <Pressable
+                style={({ pressed }) => [styles.row, { backgroundColor: pressed ? colors.underlay : 'transparent' }]}
+                onPress={() => navigation.navigate(BackupStackName, { accountId: route.params.accountId })}
+              >
                 <Text style={[styles.mainText, styles.backupText, { color: colors.textPrimary }]}>Private Key</Text>
                 <ArrowRight color={colors.iconPrimary} />
               </Pressable>
@@ -120,11 +123,10 @@ const AccountConfig: React.FC<StackScreenProps<typeof AccountSettingStackName>> 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    paddingTop: 12,
+    paddingTop: 8,
   },
   title: {
     marginBottom: 24,
-    lineHeight: 40,
     textAlign: 'center',
   },
   mainText: {

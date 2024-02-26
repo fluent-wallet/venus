@@ -11,6 +11,7 @@ const AccountManagementStackName = 'WalletManagement';
 const AccountSettingStackName = 'AccountSetting';
 const GroupSettingStackName = 'GroupSettin';
 const HDSettingStackName = 'HDSetting';
+const BackupStackName = 'Backup';
 const NetworkManagementStackName = 'NetworkManagement';
 const PasswordVerifyStackName = 'PasswordVerify';
 
@@ -25,6 +26,7 @@ export {
   AccountSettingStackName,
   GroupSettingStackName,
   HDSettingStackName,
+  BackupStackName,
   NetworkManagementStackName,
   PasswordVerifyStackName,
 };
@@ -40,6 +42,7 @@ export type RootStackParamList = {
   [AccountSettingStackName]: { accountId: string };
   [GroupSettingStackName]: { groupId: string };
   [HDSettingStackName]: { groupId: string };
+  [BackupStackName]: { accountId?: string; groupId?: string };
   [NetworkManagementStackName]: undefined;
   [PasswordVerifyStackName]: undefined;
 };

@@ -13,7 +13,7 @@ import { styles as accountListStyles } from '@modules/AccountsList';
 import { showNotFindBSIMCardMessage } from '@pages/WayToInitWallet';
 import ImportExistingWallet from '@pages/WayToInitWallet/ImportExistingWallet';
 import { AccountManagementStackName, type StackScreenProps } from '@router/configs';
-import { screenHeight } from '@utils/deviceInfo'
+import { screenHeight } from '@utils/deviceInfo';
 import BSIMCardWallet from '@assets/icons/wallet-bsim.webp';
 import HDWallet from '@assets/icons/wallet-hd.webp';
 import ExistWallet from '@assets/icons/wallet-Imported.webp';
@@ -135,6 +135,6 @@ const styles = StyleSheet.create({
   },
 });
 
-const snapPoints = [`${(240 / screenHeight * 100).toFixed(2)}%`];
+const snapPoints = [`${((240 / screenHeight) * 100).toFixed(2)}%`];
 
 export default AddAnotherWallet;
