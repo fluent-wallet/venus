@@ -1,6 +1,6 @@
 {
   "name": "venus",
-  "version": "0.1.5",
+  "version": "0.1.6",
   "private": true,
   "scripts": {
     "android": "react-native run-android --tasks installDevDebug",
@@ -22,7 +22,7 @@
     "@fluent-wallet/detect-address-type": "^0.0.2",
     "@fluent-wallet/hdkey": "^0.1.1",
     "@fluent-wallet/signature": "^0.0.16",
-    "@gorhom/bottom-sheet": "^4.5.1",
+    "@gorhom/bottom-sheet": "^4.6.0",
     "@json-rpc-tools/utils": "^1.7.6",
     "@noble/secp256k1": "^2.0.0",
     "@nozbe/watermelondb": "^0.27.1",
@@ -75,7 +75,8 @@
     "react-native-vision-camera": "^3.8.0",
     "reflect-metadata": "^0.2.1",
     "stream-browserify": "^3.0.0",
-    "validator": "^13.11.0"
+    "validator": "^13.11.0",
+    "viem": "^2.7.12"
   },
   "devDependencies": {
     "@babel/core": "^7.23.7",

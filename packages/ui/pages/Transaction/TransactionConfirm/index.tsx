@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Pressable, SafeAreaView, View, ScrollView } from 'react-native';
 import { RouteProp } from '@react-navigation/native';
 import { Subject } from 'rxjs';
-import { ethers, formatUnits } from 'ethers';
+import { Transaction, TransactionRequest, ethers, formatUnits } from 'ethers';
 import { Button, Divider, Text, useTheme } from '@rneui/themed';
 import { statusBarHeight } from '@utils/deviceInfo';
 import { useCurrentAccount, useCurrentAddress, useCurrentNetwork, useVaultOfAccount } from '@core/WalletCore/Plugins/ReactInject';
@@ -34,7 +34,15 @@ import assetsTracker from '@core/WalletCore/Plugins/AssetsTracker';
 import ConfluxNetworkIcon from '@assets/icons/confluxNet.svg';
 import { balanceFormat } from '@core/utils/balance';
 import { useAssetsHash } from '@core/WalletCore/Plugins/ReactInject/data/useAssets';
-import { TxEvent, TxEventTypesName } from '@core/WalletCore/Methods/transactionMethod';
+
+import { iface777 } from '@core/contracts';
+import ERC721 from '@core/contracts/ABI/ERC721';
+import ERC777 from '@core/contracts/ABI/ERC777';
+import ERC1155 from '@core/contracts/ABI/ERC1155';
+import BSIM from '@WalletCoreExtends/Plugins/BSIM';
+import { type HexStringType } from '@core/WalletCore/Plugins/Transaction/types';
+import { TxEvent, TxEventTypesName } from '@WalletCoreExtends/Plugins/BSIM/types';
+import useProvider from '@hooks/useProvider';
 
 const TransactionConfirm: React.FC<{
   navigation: StackNavigation;
@@ -49,13 +57,13 @@ const TransactionConfirm: React.FC<{
   const currentAccount = useCurrentAccount()!;
   const currentVault = useVaultOfAccount(currentAccount?.id);
   const assetsHash = useAssetsHash();
+  const provider = useProvider();
 
   const txEvent = useRef(new Subject<TxEvent>());
 
   const [error, setError] = useState('');
-  // const tx = useReadOnlyTransaction();
-  // const [, resetTX] = useAtom(resetTransaction);
-  const [gas, setGas] = useState<{ gasLimit?: string; gasPrice?: string; loading: boolean; error: boolean; errorMsg?: string }>({
+
+  const [gas, setGas] = useState<{ gasLimit?: bigint; gasPrice?: bigint; loading: boolean; error: boolean; errorMsg?: string }>({
     loading: true,
     error: false,
   });
@@ -71,111 +79,170 @@ const TransactionConfirm: React.FC<{
     return '';
   }, [txParams.priceInUSDT, txParams.amount, txParams.decimals]);
 
+  const pushBroadcastTransactionEvent = useCallback(
+    (txHash: string, txRaw: string, transaction: Transaction) => {
+      Events.broadcastTransactionSubjectPush.next({
+        txHash,
+        txRaw,
+        transaction: transaction,
+        extraParams: {
+          assetType: txParams.assetType,
+          contractAddress: txParams.contractAddress,
+          to: txParams.to,
+          sendAt: new Date(),
+        },
+      });
+    },
+    [txParams.assetType, txParams.contractAddress, txParams.to],
+  );
+
+  const finishTx = useCallback(() => {
+    showMessage({
+      type: 'success',
+      message: 'Transaction Submitted',
+      description: 'Waiting for execution',
+      icon: 'loading' as unknown as undefined,
+    });
+
+    navigation.navigate(HomeStackName, { screen: WalletStackName });
+  }, [navigation]);
+
   const handleSend = async () => {
     if (gas?.gasLimit && gas.gasPrice) {
       setLoading(true);
+
       try {
-        try {
-          const { txHash, txRaw, transaction, error } = await Methods.sendTransaction(
-            { from: currentAddress.hex, ...txParams, txEvent: txEvent.current },
-            { gasLimit: gas.gasLimit, gasPrice: gas.gasPrice },
-          );
+        const sendTransaction = new Transaction();
+        sendTransaction.to = txParams.to;
+        sendTransaction.chainId = currentNetwork.chainId;
+        sendTransaction.gasLimit = gas.gasLimit;
+        sendTransaction.gasPrice = gas.gasPrice;
+        sendTransaction.type = 0; // eSpace only support legacy transaction by now
+        sendTransaction.data = '0x';
 
-          if (error && error.message && error.data) {
-            const errorMsg = matchRPCErrorMessage({ message: error.message, data: error.data });
-            txEvent.current.next({ type: TxEventTypesName.ERROR, message: errorMsg });
-            setLoading(false);
-            return setError(errorMsg);
-          }
-
-          Events.broadcastTransactionSubjectPush.next({
-            txHash,
-            txRaw,
-            transaction,
-            extraParams: {
-              assetType: txParams.assetType,
-              contractAddress: txParams.contractAddress,
-              to: txParams.to,
-              sendAt: new Date(),
-            },
-          });
-
-          if (txParams.assetType === AssetType.ERC1155 || txParams.assetType === AssetType.ERC721) {
-            updateNFTDetail(txParams.contractAddress);
-            assetsTracker.updateCurrentTracker();
+        // get nonce
+        const nonce = await provider.getTransactionCount(currentAddress.hex);
+        sendTransaction.nonce = nonce;
+        // get value or data
+        if (txParams.assetType === AssetType.Native) {
+          sendTransaction.to = txParams.to;
+          sendTransaction.value = txParams.amount;
+        } else {
+          // is contract need to encode data
+          if (!txParams.contractAddress) throw new Error(`send ${txParams.assetType} need contract address`);
+          if (txParams.assetType === AssetType.ERC20) {
+            sendTransaction.to = txParams.contractAddress;
+            sendTransaction.data = await provider.encodeFunctionData({ abi: ERC777, functionName: 'transfer', args: [txParams.to, txParams.amount] });
+          } else if (txParams.assetType === AssetType.ERC721) {
+            sendTransaction.to = txParams.contractAddress;
+            sendTransaction.data = await provider.encodeFunctionData({
+              abi: ERC721,
+              functionName: 'transferFrom',
+              args: [currentAddress.hex, txParams.to, txParams.tokenId],
+            });
+          } else if (txParams.assetType === AssetType.ERC1155) {
+            sendTransaction.to = txParams.contractAddress;
+            sendTransaction.data = await provider.encodeFunctionData({
+              abi: ERC1155,
+              functionName: 'safeTransferFrom',
+              args: [currentAddress.hex, txParams.to, txParams.tokenId, txParams.amount, '0x'],
+            });
           } else {
-            assetsTracker.updateCurrentTracker();
-          }
-          showMessage({
-            type: 'success',
-            message: 'Transaction Submitted',
-            description: 'Waiting for execution',
-            icon: 'loading' as unknown as undefined,
-          });
-
-          navigation.navigate(HomeStackName, { screen: WalletStackName });
-        } catch (error: any) {
-          console.log(error);
-          setLoading(false);
-          // error
-          if (error.code) {
-            const errorMsg = BSIM_ERRORS[error.code?.toUpperCase()];
-            if (errorMsg) {
-              txEvent.current.next({ type: TxEventTypesName.ERROR, message: errorMsg });
-            } else {
-              txEvent.current.next({ type: TxEventTypesName.ERROR, message: error?.message || BSIM_ERRORS.default });
-            }
-          } else {
-            // not BSIM error
-            txEvent.current.next({ type: TxEventTypesName.ERROR, message: error?.message || BSIM_ERRORS.default });
+            throw new Error('unknown asset type');
           }
         }
-        setLoading(false);
-      } catch (error) {
+
+        // sign tx
+        if (currentVault.type === VaultType.BSIM) {
+          try {
+            txEvent.current.next({ type: TxEventTypesName.BSIM_VERIFY_START });
+            txEvent.current.next({ type: TxEventTypesName.BSIM_SIGN_START });
+            // sendTransaction has from field, but it is readonly, and it is only have by tx is signed otherwise it is null, so we need to pass the from address to signTransaction
+            const txRaw = await BSIM.signTransaction(currentAddress.hex, sendTransaction);
+            txEvent.current.next({ type: TxEventTypesName.BSIM_TX_SEND });
+            const txHash = await provider.broadcastTransaction(txRaw as HexStringType);
+            pushBroadcastTransactionEvent(txHash, txRaw, sendTransaction);
+            finishTx();
+          } catch (error: any) {
+            console.log('BSIM error', error);
+            setLoading(false);
+            // error
+            if (error.code) {
+              const errorMsg = BSIM_ERRORS[error.code?.toUpperCase()];
+              if (errorMsg) {
+                txEvent.current.next({ type: TxEventTypesName.ERROR, message: errorMsg });
+              } else {
+                txEvent.current.next({ type: TxEventTypesName.ERROR, message: error?.message || BSIM_ERRORS.default });
+              }
+            } else {
+              // not BSIM error
+              txEvent.current.next({ type: TxEventTypesName.ERROR, message: error?.message || BSIM_ERRORS.default });
+            }
+          }
+        } else {
+          const pk = await Methods.getPrivateKeyOfAddress(currentAddress);
+          const signer = await provider.getSigner(pk);
+          const txRaw = await signer.signTransaction(sendTransaction);
+          const txHash = await provider.broadcastTransaction(txRaw as HexStringType);
+          pushBroadcastTransactionEvent(txHash, txRaw, sendTransaction);
+          finishTx();
+        }
+
+        if (txParams.assetType === AssetType.ERC1155 || txParams.assetType === AssetType.ERC721) {
+          updateNFTDetail(txParams.contractAddress);
+          assetsTracker.updateCurrentTracker();
+        } else {
+          assetsTracker.updateCurrentTracker();
+        }
+      } catch (error: any) {
         console.log(error);
+        setError(matchRPCErrorMessage({ message: error?.details || error?.message }));
         setLoading(false);
       }
+      setLoading(false);
     }
   };
   const getGas = useCallback(async () => {
     setGas({ loading: true, error: false });
     try {
       if (txParams.assetType === AssetType.Native) {
-        const gasPrice = await Methods.getETHGasPrice();
-        const gas = ethers.toBeHex(21000);
-        return setGas({ gasLimit: gas, gasPrice: gasPrice.result, loading: false, error: false });
+        const gas = await provider.fetchFeeInfo({ from: currentAddress.hex, to: txParams.to, value: BigInt(txParams.amount) });
+        return setGas({ gasLimit: gas?.gas, gasPrice: gas?.gasPrice, loading: false, error: false });
       } else {
-        const gasRes = await Methods.getTransactionGasAndGasLimit({
-          to: txParams.to,
-          amount: txParams.amount,
-          assetType: txParams.assetType,
-          contractAddress: txParams.contractAddress,
-          tokenId: txParams.tokenId,
-          decimals: txParams.decimals,
-        });
-        if (!gasRes.gasLimit.error && !gasRes.gasPrice.error) {
-          setGas({
-            gasLimit: gasRes.gasLimit.result,
-            gasPrice: gasRes.gasPrice.result,
-            loading: false,
-            error: false,
+        if (txParams.assetType === AssetType.ERC20 && txParams.contractAddress) {
+          const data = await provider.encodeFunctionData({ abi: ERC777, functionName: 'transfer', args: [txParams.to, txParams.amount] });
+          const gas = await provider.fetchFeeInfo({
+            from: currentAddress.hex,
+            to: txParams.contractAddress,
+            value: 0n,
+            data,
           });
-        } else {
-          setGas({
-            loading: false,
-            error: true,
-            errorMsg: matchRPCErrorMessage({
-              message: gasRes.gasLimit?.error?.message || gasRes.gasPrice?.error?.message || '',
-              data: gasRes.gasLimit?.error?.data || gasRes.gasPrice?.error?.data || '',
-            }),
+          return setGas({ gasLimit: gas?.gas, gasPrice: gas?.gasPrice, loading: false, error: false });
+        }
+        if (txParams.assetType === AssetType.ERC721 && txParams.contractAddress) {
+          const data = await provider.encodeFunctionData({
+            abi: ERC721,
+            functionName: 'transferFrom',
+            args: [currentAddress.hex, txParams.to, txParams.tokenId],
           });
+          const gas = await provider.fetchFeeInfo({ from: currentAddress.hex, to: txParams.contractAddress, value: 0n, data });
+          return setGas({ gasLimit: gas?.gas, gasPrice: gas?.gasPrice, loading: false, error: false });
+        }
+
+        if (txParams.assetType === AssetType.ERC1155 && txParams.contractAddress) {
+          const data = await provider.encodeFunctionData({
+            abi: ERC1155,
+            functionName: 'safeTransferFrom',
+            args: [currentAddress.hex, txParams.to, txParams.tokenId, txParams.amount, '0x'],
+          });
+          const gas = await provider.fetchFeeInfo({ from: currentAddress.hex, to: txParams.contractAddress, value: 0n, data });
+          return setGas({ gasLimit: gas?.gas, gasPrice: gas?.gasPrice, loading: false, error: false });
         }
       }
-    } catch (error) {
-      console.log('getTransactionGasAndGasLimit error', error);
-      setGas({ loading: false, error: true });
+    } catch (error: any) {
+      setGas({ loading: false, error: true, errorMsg: matchRPCErrorMessage({ message: error.details || error.message, data: error.data }) });
     }
-  }, [txParams.assetType, txParams.contractAddress, txParams.to, txParams.amount, txParams.tokenId, txParams.decimals]);
+  }, [txParams.assetType, txParams.contractAddress, txParams.to, txParams.amount, txParams.tokenId, currentAddress.hex, provider]);
 
   useEffect(() => {
     if (!isConnected) return;

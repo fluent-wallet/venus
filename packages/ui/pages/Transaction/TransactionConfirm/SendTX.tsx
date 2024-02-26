@@ -13,7 +13,8 @@ import { HomeStackName, StackNavigation, WalletStackName } from '@router/configs
 import { useCallback, useState } from 'react';
 import BSIM from '@WalletCoreExtends/Plugins/BSIM';
 import { useNetInfo } from '@react-native-community/netinfo';
-import { TxEvent, TxEventTypesName } from '@core/WalletCore/Methods/transactionMethod';
+import { TxEvent, TxEventTypesName } from '@WalletCoreExtends/Plugins/BSIM/types';
+
 
 export enum BSIM_SIGN_STATUS {
   NOT_HAVE_BSIM = 'NOT_HAVE_BSIM',

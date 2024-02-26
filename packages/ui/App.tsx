@@ -24,7 +24,7 @@ const App: React.FC = () => {
         <SafeAreaProvider>
           {typeof hasVault === 'boolean' && <Router />}
           <PasswordVerify />
-          <RequestHandler /> 
+          {/* <RequestHandler />  */}
           <FlashMessage position="bottom" MessageComponent={CustomMessage} duration={1500} animated={false} />
         </SafeAreaProvider>
       </ThemeProvider>

@@ -123,14 +123,8 @@ export class Methods {
   }
 
   @inject(TransactionMethod) private TransactionMethod!: TransactionMethod;
-  public getTransactionGasAndGasLimit(...args: Parameters<TransactionMethod['getGasPriceAndLimit']>) {
-    return this.TransactionMethod.getGasPriceAndLimit(...args);
-  }
-  public getETHGasPrice = () => {
-    return this.TransactionMethod.getGasPrice();
-  };
-  public sendTransaction(...args: Parameters<TransactionMethod['sendTransaction']>) {
-    return this.TransactionMethod.sendTransaction(...args);
+  public getTxProvider(...args: Parameters<TransactionMethod['getTxProvider']>) {
+    return this.TransactionMethod.getTxProvider(...args);
   }
 
   @inject(TxMethod) private TxMethod!: TxMethod;
@@ -149,6 +143,9 @@ export class Methods {
   @inject(RequestMethod) private RequestMethod!: RequestMethod;
   public createRequest(...args: Parameters<RequestMethod['createRequest']>) {
     return this.RequestMethod.createRequest(...args);
+  }
+  public getRequestById(...args: Parameters<RequestMethod['getRequestById']>) {
+    return this.RequestMethod.getRequestById(...args);
   }
   public rejectAllPendingRequests(...args: Parameters<RequestMethod['rejectAllPendingRequests']>) {
     return this.RequestMethod.rejectAllPendingRequests(...args);

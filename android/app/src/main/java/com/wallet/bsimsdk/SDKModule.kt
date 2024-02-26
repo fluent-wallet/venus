@@ -221,5 +221,14 @@ class SDKModule(private val reactContext: ReactApplicationContext) :
         }
 
     }
+    @ReactMethod
+    fun updateBPIN(promise: Promise){
+        if (BSIMSDKInstance == null) {
+            promise.reject("400", error["400"])
+            return
+        }
+        BSIMSDKInstance?.updateBPIN()
+
+    }
 
 }

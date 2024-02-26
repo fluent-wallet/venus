@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Platform, TouchableOpacity } from 'react-native';
 import { NavigationContainer, useNavigation, DefaultTheme } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
@@ -16,6 +16,7 @@ import AccountSelect from '@pages/Account/AccountSelect';
 import AddAccount from '@pages/Account/AddAccount';
 import Login from '@pages/Login';
 import Lock from '@pages/Lock';
+import events from '@core/WalletCore/Events';
 import {
   type StackNavigation,
   type RootStackList,
@@ -43,6 +44,8 @@ import {
   ScanQRCodeStackName,
   BackUpNoticeStackName,
   BackUpVerifyStackName,
+  WalletConnectApprovalSheetStackName,
+  WalletConnectSignTransactionStackName,
 } from './configs';
 import SendReceiver, { SendPageHeaderOptions } from '@pages/Transaction/ReceiveAddress';
 import TransactionConfirm from '@pages/Transaction/TransactionConfirm';
@@ -61,8 +64,13 @@ import ScanQRCode from '@pages/ScanQRCode';
 import BootSplash from 'react-native-bootsplash';
 import BackUpNotice from '@pages/Account/BackupNotice';
 import VerifySeedPhrase from '@pages/Account/VerifySeedPhrase';
+import WalletConnectApprovalSheet from '@pages/WalletConnect/Approval';
+import { RequestType } from '@core/database/models/Request/RequestType';
+import WalletConnectSignTransactionSheet from '@pages/WalletConnect/SignTransaction';
 const Stack = createNativeStackNavigator<RootStackList>();
 const BottomTabStack = createBottomTabNavigator();
+
+const SheetButtonOption = { headerShown: false, presentation: 'transparentModal' as const, safeAreaInsets: { top: 0 } };
 
 const HomeScreenNavigator = () => {
   const { theme } = useTheme();
@@ -102,6 +110,26 @@ const StackNavigator = () => {
   const navigation = useNavigation<StackNavigation>();
   const { theme } = useTheme();
   const hasVault = useHasVault();
+
+  useEffect(() => {
+    const subscription = events.newestRequestSubject.subscribe((event) => {
+      switch (event.request.type) {
+        case RequestType.WalletConnectProposal:
+          console.log('navigate to WalletConnectApprovalSheetStackName');
+          navigation.navigate(WalletConnectApprovalSheetStackName, { requestId: event.request.id });
+          break;
+        case RequestType.WalletRequest:
+          console.log('navigate to WalletConnectSignTransactionStackName');
+          navigation.navigate(WalletConnectSignTransactionStackName, { requestId: event.request.id });
+          break;
+        default: {
+          console.log('unknown request type');
+        }
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, [navigation]);
 
   return (
     <Stack.Navigator
@@ -166,6 +194,8 @@ const StackNavigator = () => {
       <Stack.Screen name={ReceiveStackName} component={Receive} />
       <Stack.Screen name={SetAmountStackName} component={SetAmount} />
       <Stack.Screen name={ScanQRCodeStackName} component={ScanQRCode} options={{ headerShown: false }} />
+      <Stack.Screen name={WalletConnectApprovalSheetStackName} component={WalletConnectApprovalSheet} options={SheetButtonOption} />
+      <Stack.Screen name={WalletConnectSignTransactionStackName} component={WalletConnectSignTransactionSheet} options={SheetButtonOption} />
     </Stack.Navigator>
   );
 };

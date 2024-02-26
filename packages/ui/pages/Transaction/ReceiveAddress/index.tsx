@@ -1,8 +1,5 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { SafeAreaView, View, KeyboardAvoidingView, TextInput, Pressable, ScrollView } from 'react-native';
-import { isAddress } from 'ethers';
-import { firstValueFrom } from 'rxjs';
-import { useAtom } from 'jotai';
 import { Text, useTheme, Divider } from '@rneui/themed';
 import { type StackNavigation, TokensStackName, RootStackList, ReceiveAddressStackName, ScanQRCodeStackName } from '@router/configs';
 import { statusBarHeight } from '@utils/deviceInfo';
@@ -12,11 +9,11 @@ import WarningIcon from '@assets/icons/warning_2.svg';
 import WarningIcon1 from '@assets/icons/warning_1.svg';
 import Flip from '@assets/icons/flip.svg';
 import { RouteProp } from '@react-navigation/native';
-
-import { fetchChain } from '@cfx-kit/dapp-utils/dist/fetch';
 import { getCurrentNetwork } from '@core/WalletCore/Plugins/ReactInject/data/useCurrentNetwork';
 import { CHECK_ADDRESS_FEATURE } from '@utils/features';
-import { RPCResponse, RPCSend } from '@core/utils/send';
+import Methods from '@core/WalletCore/Methods';
+import useProvider from '@hooks/useProvider';
+import { GetBytecodeErrorType } from 'viem';
 
 export const SendPageHeaderOptions = ({ title = 'Send To' }: { title?: string }) =>
   ({
@@ -36,6 +33,7 @@ const SendReceiver: React.FC<{ navigation: StackNavigation; route: RouteProp<Roo
   const [isContractAddress, setIsContractAddress] = useState(false);
   const [isKnowRisk, setIsKnowRisk] = useState(false);
   const currentNetwork = getCurrentNetwork();
+  const provider = useProvider();
 
   const handleChange = (v: string) => {
     setAddress(v);
@@ -45,41 +43,53 @@ const SendReceiver: React.FC<{ navigation: StackNavigation; route: RouteProp<Roo
   };
 
   const handleNext = () => {
-    if (!isAddress(address)) {
-      return setErrorMsg('Please enter valid hex address');
-    } else {
-      setErrorMsg('');
+    if (address) {
+      if (provider.validateAddress(address)) {
+        return setErrorMsg('Please enter valid hex address');
+      } else {
+        setErrorMsg('');
+      }
+      navigation.navigate(TokensStackName, { to: address });
     }
-    navigation.navigate(TokensStackName, { to: address });
   };
   const handleNextWithCheck = async () => {
+    setErrorMsg('');
     setLoading(true);
-    if (isAddress(address)) {
-      setErrorMsg('');
-      // check is contract address
-      if (currentNetwork && !isContractAddress && !isKnowRisk) {
-        const code = await firstValueFrom(RPCSend<RPCResponse<string>>(currentNetwork.endpoint, { method: 'eth_getCode', params: [address] }));
-
-        if (code.result && code.result.startsWith('0x') && code.result.length > 2) {
+    try {
+      if (address) {
+        if (provider.validateAddress(address)) {
+          // check is contract address
+          if (currentNetwork && !isContractAddress && !isKnowRisk) {
+            const checkIsContractAddress = await provider.isContractAddress(address);
+            if (checkIsContractAddress) {
+              setLoading(false);
+              return setIsContractAddress(checkIsContractAddress);
+            }
+          }
+        } else {
           setLoading(false);
-          return setIsContractAddress(true);
+          return setErrorMsg('Please enter valid hex address');
         }
-      }
-    } else {
-      setLoading(false);
-      return setErrorMsg('Please enter valid hex address');
-    }
 
-    setLoading(false);
-    navigation.navigate(TokensStackName, { to: address });
+        setLoading(false);
+        navigation.navigate(TokensStackName, { to: address });
+      }
+    } catch (e) {
+      setLoading(false);
+      const error = e as GetBytecodeErrorType;
+      if (error.name === 'HttpRequestError') {
+        setErrorMsg('Network error, please try again later');
+      } else {
+        setErrorMsg((error as any)?.details || error.message || 'Unknown error');
+      }
+    }
   };
 
   const nextButtonDisabled = () => {
-    if (!address) {
-      return true;
+    if (!provider) {
+      return false;
     }
-
-    if (errorMsg) {
+    if (!address) {
       return true;
     }
     if (isContractAddress && !isKnowRisk) {

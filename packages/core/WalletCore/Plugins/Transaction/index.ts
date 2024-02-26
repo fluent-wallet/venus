@@ -1,7 +1,6 @@
-import { broadcastTransactionSubject } from '@core/WalletCore/Events/broadcastTransactionSubject';
+import { Network, NetworkType } from '@core/database/models/Network';
 import { type Plugin } from '../';
-import Methods from '@core/WalletCore/Methods';
-import { EthTxTrack } from './EthTxTrack';
+import { EVMTransactionPlugin } from './evm';
 
 declare module '../../../WalletCore/Plugins' {
   interface Plugins {
@@ -11,16 +10,19 @@ declare module '../../../WalletCore/Plugins' {
 
 class TransactionPluginClass implements Plugin {
   public name = 'Transaction';
-  private _ethTracker = new EthTxTrack();
 
-  constructor() {
-    this._setup();
-  }
+  providerCache: { [k: string]: EVMTransactionPlugin } = {};
 
-  private _setup() {
-    broadcastTransactionSubject.subscribe(async (value) => {
-      Methods.createTx(value);
-    });
+  getTxProvider(network: Network) {
+    if(network.networkType !== NetworkType.Ethereum) {
+      throw new Error('get Tx Provider error Unsupported network type')
+    }
+    if (this.providerCache[network.id]) {
+      return this.providerCache[network.id];
+    }
+    // by now we only support EVM
+    this.providerCache[network.id] = new EVMTransactionPlugin(network);
+    return this.providerCache[network.id];
   }
 }
 
