@@ -38,6 +38,7 @@
     "@shopify/flash-list": "^1.6.3",
     "@walletconnect/react-native-compat": "^2.11.0",
     "@walletconnect/web3wallet": "^1.10.0",
+    "bip39": "^3.1.0",
     "clsx": "^2.1.0",
     "decimal.js": "^10.4.3",
     "ethers": "^6.10.0",

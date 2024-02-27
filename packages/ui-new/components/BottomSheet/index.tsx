@@ -8,6 +8,7 @@ export * from '@gorhom/bottom-sheet';
 export { BottomSheetModal as BottomSheetMethods } from '@gorhom/bottom-sheet';
 
 interface Props extends BottomSheetModalProps {
+  showBackDrop?: boolean;
   backDropPressBehavior?: 'none' | 'close' | 'collapse' | number;
   handlePressBackdrop?: () => void;
   isModal?: boolean;
@@ -18,6 +19,7 @@ const BottomSheet = forwardRef<BottomSheetModal, Props>(
   (
     {
       children,
+      showBackDrop = true,
       enablePanDownToClose = true,
       keyboardBlurBehavior = 'restore',
       backDropPressBehavior = 'close',
@@ -97,7 +99,7 @@ const BottomSheet = forwardRef<BottomSheetModal, Props>(
         onClose={handleClose}
         enablePanDownToClose={enablePanDownToClose}
         keyboardBlurBehavior={keyboardBlurBehavior}
-        backdropComponent={renderBackdrop}
+        backdropComponent={showBackDrop ? renderBackdrop : undefined}
         backgroundStyle={{ backgroundColor: colors.bgFourth }}
         handleIndicatorStyle={{ backgroundColor: palette.gray4 }}
         {...props}
@@ -108,9 +110,8 @@ const BottomSheet = forwardRef<BottomSheetModal, Props>(
   },
 );
 
-
 export const snapPoints = {
-  large: [`${(((screenHeight - 124) / screenHeight) * 100).toFixed(2)}%`]
+  large: [`${(((screenHeight - 124) / screenHeight) * 100).toFixed(2)}%`],
 } as const;
 
 export default BottomSheet;
