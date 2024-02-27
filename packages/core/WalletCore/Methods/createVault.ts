@@ -80,7 +80,7 @@ export class CreateVaultMethod {
           device: 'ePayWallet',
           ...(data ? { data } : null),
           source: isImportByUser ? VaultSourceType.IMPORT_BY_USER : VaultSourceType.CREATE_BY_WALLET,
-          isBackup: false,
+          isBackup: isImportByUser,
         },
         true,
       );
