@@ -11,29 +11,26 @@ import Img from '@assets/images/welcome-img.webp';
 
 interface Props {
   bottomSheetRef: MutableRefObject<BottomSheetMethods>;
-  type: 'success' | 'failed';
 }
 
-const DeleteConfirm: React.FC<Props> = ({ type, bottomSheetRef }) => {
+const BackupSuccess: React.FC<Props> = ({ bottomSheetRef }) => {
   const { colors } = useTheme();
   const navigation = useNavigation<StackScreenProps<typeof BackupStackName>['navigation']>();
 
   return (
     <BottomSheet ref={bottomSheetRef} snapPoints={snapPoints} isModal={false}>
       <View style={styles.container}>
-        <Text style={[styles.title, { color: colors.textPrimary }]}>{type === 'success' ? '🥳 Backuped !' : '🥳 Wrong Select!'}</Text>
+        <Text style={[styles.title, { color: colors.textPrimary }]}>🥳 Backuped !</Text>
         <Image style={styles.img} source={Img} contentFit="contain" />
 
         <Button
           style={styles.btn}
           onPress={() => {
             bottomSheetRef.current?.close();
-            if (type === 'success') {
-              navigation.goBack();
-            }
+            navigation.goBack();
           }}
         >
-          {type === 'failed' ? 'Return' : 'OK'}
+          OK
         </Button>
       </View>
     </BottomSheet>
@@ -67,4 +64,4 @@ const styles = StyleSheet.create({
 
 const snapPoints = [`${((440 / screenHeight) * 100).toFixed(2)}%`];
 
-export default DeleteConfirm;
+export default BackupSuccess;

@@ -52,7 +52,7 @@ const BackupStep1: React.FC<{
         type: 'failed',
       });
     }
-  }, [vault, address, backupType]);
+  }, [vault, address, backupType, backupText]);
 
   const { inAsync, execAsync: handleClickView } = useInAsync(_handleClickView);
   

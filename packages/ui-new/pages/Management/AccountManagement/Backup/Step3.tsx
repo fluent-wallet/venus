@@ -1,13 +1,14 @@
 import React, { useState, useMemo, useRef, Fragment } from 'react';
 import { View, Pressable, StyleSheet } from 'react-native';
 import { useTheme } from '@react-navigation/native';
+import { showMessage } from 'react-native-flash-message';
 import { wordlists } from 'bip39';
 import { sampleSize, shuffle } from 'lodash-es';
 import { type Vault } from '@core/database/models/Vault';
 import Text from '@components/Text';
 import Button from '@components/Button';
 import { BottomSheetMethods } from '@components/BottomSheet';
-import BackupResult from './BackupResult';
+import BackupSuccess from './BackupSuccess';
 
 type Ele = string | null;
 const BackupStep3: React.FC<{ phrases: Array<string>; vault: Vault }> = ({ phrases, vault }) => {
@@ -33,7 +34,7 @@ const BackupStep3: React.FC<{ phrases: Array<string>; vault: Vault }> = ({ phras
 
   const isAllSelected = useMemo(() => selectedWords?.every((word) => !!word), [selectedWords]);
   const isAllCorrect = useMemo(() => selectedWords?.every((word, index) => word === mixers[index].phrase), [selectedWords, mixers]);
-  console.log(isAllCorrect)
+
   return (
     <>
       <Text style={[styles.title, { color: colors.textPrimary }]}>🔍 Verify your seed phrase</Text>
@@ -61,15 +62,25 @@ const BackupStep3: React.FC<{ phrases: Array<string>; vault: Vault }> = ({ phras
           </View>
         </Fragment>
       ))}
-      <Button style={styles.btn} mode="auto" disabled={!isAllSelected} onPress={() => {
-        bottomSheetRef.current?.expand();
-        if (isAllCorrect) {
-          vault?.finishBackup?.();
-        }
-      }}>
+      <Button
+        style={styles.btn}
+        mode="auto"
+        disabled={!isAllSelected}
+        onPress={() => {
+          if (isAllCorrect) {
+            bottomSheetRef.current?.expand();
+            vault?.finishBackup?.();
+          } else {
+            showMessage({
+              message: '🤔 Wrong word, please check again.',
+              type: 'warning',
+            });
+          }
+        }}
+      >
         Confirm
       </Button>
-      <BackupResult bottomSheetRef={bottomSheetRef} type={isAllCorrect ? 'success' : 'failed'} />
+      <BackupSuccess bottomSheetRef={bottomSheetRef} />
     </>
   );
 };
