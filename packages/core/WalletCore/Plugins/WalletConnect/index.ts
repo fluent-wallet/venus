@@ -49,7 +49,7 @@ class WalletConnectPluginClass implements Plugin {
     // WalletConnectRPCMethod.Sign, // see : https://support.metamask.io/hc/en-us/articles/14764161421467-What-is-eth-sign-and-why-is-it-a-risk
     WalletConnectRPCMethod.PersonalSign,
     WalletConnectRPCMethod.SignTypedData,
-    WalletConnectRPCMethod.SignTypedDataV4
+    WalletConnectRPCMethod.SignTypedDataV4,
   ];
   supportedTransactionMethods = [WalletConnectRPCMethod.SendTransaction];
 
@@ -164,7 +164,6 @@ class WalletConnectPluginClass implements Plugin {
     const proposer = proposal.params.proposer;
 
     if (!proposer.publicKey) return;
-    console.log(proposal.params, 'session proposal')
     const app = await this.getAPP(proposer);
 
     await methods.createRequest({

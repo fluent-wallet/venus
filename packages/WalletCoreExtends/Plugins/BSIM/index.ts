@@ -1,6 +1,6 @@
 import BSIMSDK, { BSIMError, BSIMErrorEndTimeout, BSIM_ERRORS, BSIM_SUPPORT_ACCOUNT_LIMIT, CoinTypes } from './BSIMSDK';
 import { addHexPrefix } from '@core/utils/base';
-import { Signature, Transaction, computeAddress } from 'ethers';
+import { Signature, Transaction, TypedDataDomain, TypedDataEncoder, TypedDataField, computeAddress, hashMessage, hexlify } from 'ethers';
 import { type Plugin } from '@core/WalletCore/Plugins';
 import { Subject, catchError, defer, firstValueFrom, from, retry, throwError, timeout } from 'rxjs';
 import { TxEvent, TxEventTypesName } from './types';
@@ -113,7 +113,7 @@ export class BSIMPluginClass implements Plugin {
     await this.checkIsInit();
     return BSIMSDK.getBSIMVersion();
   };
-  public signMessage = async (message: string, coinTypeIndex: number, index: number) => {
+  public BSIMSignMessage = async (message: string, coinTypeIndex: number, index: number) => {
     await this.checkIsInit();
 
     return BSIMSDK.signMessage(message, coinTypeIndex, index);
@@ -124,8 +124,7 @@ export class BSIMPluginClass implements Plugin {
     return BSIMSDK.updateBPIN();
   };
 
-  public signTransaction = async (fromAddress: string, tx: Transaction) => {
-    const hash = tx.unsignedHash;
+  private BSIMSign = async (hash: string, fromAddress: string) => {
     try {
       await this.verifyBPIN();
     } catch (error: any) {
@@ -148,7 +147,7 @@ export class BSIMPluginClass implements Plugin {
     }
 
     const res = await firstValueFrom(
-      defer(() => from(this.signMessage(hash, currentPubkey.coinType, currentPubkey.index))).pipe(
+      defer(() => from(this.BSIMSignMessage(hash, currentPubkey.coinType, currentPubkey.index))).pipe(
         catchError((err: { code: string; message: string }) => {
           errorMsg = err.message;
           errorCode = err.code;
@@ -158,10 +157,31 @@ export class BSIMPluginClass implements Plugin {
         timeout({ each: 30 * 1000, with: () => throwError(() => new BSIMErrorEndTimeout(errorCode, errorMsg)) }),
       ),
     );
+
+    return res;
+  };
+
+  public signTransaction = async (fromAddress: string, tx: Transaction) => {
+    const hash = tx.unsignedHash;
+    const res = await this.BSIMSign(hash, fromAddress);
     tx.signature = Signature.from({ r: res.r, s: res.s, v: res.v });
     // get the transaction encoded
     const encodeTx = tx.serialized;
     return encodeTx;
+  };
+
+  public signMessage = async (message: string, fromAddress: string) => {
+    const hash = hashMessage(message);
+    const res = await this.BSIMSign(hash, fromAddress);
+    const signature = Signature.from({ r: res.r, s: res.s, v: res.v });
+    return signature.serialized;
+  };
+
+  public signTypedData = async (domain: TypedDataDomain, types: Record<string, Array<TypedDataField>>, value: Record<string, any>, fromAddress: string) => {
+    const hash = TypedDataEncoder.hash(domain, types, value);
+    const res = await this.BSIMSign(hash, fromAddress);
+    const signature = Signature.from({ r: res.r, s: res.s, v: res.v });
+    return signature.serialized;
   };
 }
 
