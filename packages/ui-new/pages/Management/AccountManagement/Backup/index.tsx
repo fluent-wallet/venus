@@ -1,9 +1,6 @@
 import React, { useState } from 'react';
 import { StyleSheet } from 'react-native';
 import { useTheme } from '@react-navigation/native';
-import methods from '@core/WalletCore/Methods';
-import plugins from '@core/WalletCore/Plugins';
-import { useAccountFromId, useAccountGroupFromId, useVaultOfAccount, VaultType } from '@core/WalletCore/Plugins/ReactInject';
 import Text from '@components/Text';
 import BottomSheet, { snapPoints, BottomSheetScrollView } from '@components/BottomSheet';
 import { BackupStackName, type StackScreenProps } from '@router/configs';
@@ -11,10 +8,7 @@ import BackupStep1 from './Step1';
 import BackupStep2 from './Step2';
 
 const Backup: React.FC<StackScreenProps<typeof BackupStackName>> = ({ navigation, route }) => {
-  const { colors, mode } = useTheme();
-  const accountGroup = useAccountGroupFromId(route.params.groupId);
-  const account = useAccountFromId(route.params.accountId);
-  const vault = useVaultOfAccount(route.params.accountId);
+  const { colors } = useTheme();
 
   const [step, setStep] = useState(() => 1);
 
@@ -23,7 +17,7 @@ const Backup: React.FC<StackScreenProps<typeof BackupStackName>> = ({ navigation
       <BottomSheetScrollView contentContainerStyle={styles.container}>
         <Text style={[styles.title, { color: colors.textPrimary }]}>Back Up</Text>
         {step === 1 && <BackupStep1 setStep={setStep} />}
-        {step === 2 && <BackupStep2 setStep={setStep} route={route} />}
+        {(step === 2 || step === 3) && <BackupStep2 setStep={setStep} route={route} step={step} />}
       </BottomSheetScrollView>
     </BottomSheet>
   );
