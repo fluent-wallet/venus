@@ -9,6 +9,7 @@ import { BaseButton } from '@components/Button';
 import { RootStackList, StackNavigation, WalletConnectApprovalSheetStackName } from '@router/configs';
 import { showMessage } from 'react-native-flash-message';
 import Methods from '@core/WalletCore/Methods';
+import MixinImage from '@components/MixinImage';
 
 const WalletConnectApprovalSheet: React.FC<{
   navigation: StackNavigation;
@@ -52,12 +53,17 @@ const WalletConnectApprovalSheet: React.FC<{
       });
     }
   }, [navigation, resolve]);
-
+  const { icon,name, origin } = request.app;
   return (
     <View className="flex flex-1">
       <BottomSheet ref={bottomSheetRef} snapPoints={snapPoints} index={1} animateOnMount={true}>
         <BottomSheetScrollView style={{ flex: 1 }}>
-          <Text>{request.app.name}</Text>
+          {request.app.icon && (
+            <View>
+              <MixinImage source={{ uri: icon }} width={50} height={50} />
+            </View>
+          )}
+          <View><Text>{name}</Text></View>
           <Text>{request.app.origin}</Text>
           <Text>连接此站点?</Text>
           <Text>单机连接即表示您允许次去中心化应用查看你的公钥。这是保护您的数据防范网络钓鱼风险的重要安全步骤。</Text>

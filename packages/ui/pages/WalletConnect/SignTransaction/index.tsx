@@ -2,8 +2,8 @@ import { Text, View, Image, StyleSheet, Pressable } from 'react-native';
 import BottomSheet, { BottomSheetScrollView } from '@gorhom/bottom-sheet';
 import { useCallback, useMemo, useRef, useState } from 'react';
 import { Button } from '@rneui/base';
-import { RouteProp } from '@react-navigation/native';
-import { useCurrentAccount, useCurrentAddressValueOfAccount } from '@core/WalletCore/Plugins/ReactInject';
+import { RouteProp, useNavigation } from '@react-navigation/native';
+import { useCurrentAccount, useCurrentAddressValueOfAccount, useVaultOfAccount } from '@core/WalletCore/Plugins/ReactInject';
 import { RootStackList, StackNavigation, WalletConnectSignTransactionStackName } from '@router/configs';
 import { showMessage } from 'react-native-flash-message';
 import { BaseButton } from '@components/Button';
@@ -12,12 +12,15 @@ import Methods from '@core/WalletCore/Methods';
 import { isAddress } from 'ethers';
 import SignMessage from './SignMessage';
 import SignTransaction from './SignTransaction';
+import useProvider from '@hooks/useProvider';
+import VaultType from '@core/database/models/Vault/VaultType';
 
 const WalletConnectSignTransactionSheet: React.FC<{
   navigation: StackNavigation;
   route: RouteProp<RootStackList, typeof WalletConnectSignTransactionStackName>;
 }> = ({ navigation, route }) => {
   const snapPoints = useMemo(() => ['25%', '50%', '75%'], []);
+
   const { requestId } = route.params;
   // need to check if request is undefined
   const requestEvent = Methods.getRequestById(requestId)!;
@@ -26,9 +29,6 @@ const WalletConnectSignTransactionSheet: React.FC<{
   const payload = requestEvent.payload as Web3WalletTypes.SessionRequest['params'];
 
   const isSignMessage = ['personal_sign', 'eth_signTypedData', 'eth_signTypedData_v4'].includes(payload.request.method);
-
-  console.log('request', request);
-  console.log('payload', JSON.stringify(payload));
 
   const handleReject = useCallback(async () => {
     console.log('reject');
@@ -44,20 +44,23 @@ const WalletConnectSignTransactionSheet: React.FC<{
     }
   }, [navigation, reject]);
 
-  const handleResolve = useCallback(async () => {
-    console.log('resolve');
+  const handleResolve = useCallback(
+    async (hex: string) => {
+      console.log('resolve');
 
-    try {
-      await resolve();
-      navigation.goBack();
-    } catch (error: any) {
-      showMessage({
-        message: error?.message || '',
-        type: 'danger',
-        duration: 3000,
-      });
-    }
-  }, [navigation, resolve]);
+      try {
+        await resolve(hex);
+        navigation.goBack();
+      } catch (error: any) {
+        showMessage({
+          message: error?.message || '',
+          type: 'danger',
+          duration: 3000,
+        });
+      }
+    },
+    [navigation, resolve],
+  );
 
   return (
     <View className="flex flex-1">
@@ -71,11 +74,12 @@ const WalletConnectSignTransactionSheet: React.FC<{
               </View>
             </View>
             <BottomSheetScrollView style={{ maxHeight: 300 }}>
-              {isSignMessage ? <SignMessage payload={payload} /> : <SignTransaction payload={payload} />}
+              {isSignMessage ? (
+                <SignMessage payload={payload} onSignMessage={handleResolve} onCancel={handleReject} />
+              ) : (
+                <SignTransaction payload={payload} onSignTx={handleResolve} onCancel={handleReject} />
+              )}
             </BottomSheetScrollView>
-            <BaseButton testID="reject-wallet-connect" onPress={handleReject}>
-              Cancel
-            </BaseButton>
 
             {/* <BaseButton testID="connect-wallet-connect" onPress={handleResolve}>
               Sign
