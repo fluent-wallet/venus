@@ -101,6 +101,15 @@ const BackUp: React.FC<NativeStackScreenProps<RootStackList, 'BackUp'>> = ({ nav
     return '';
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [targetAddress?.id]);
+
+  useFocusEffect(useCallback(() => {
+    return () => {
+      setIsShowSecret(false);
+      setVerifySeedPhrase([]);
+    }
+
+  }, []));
+
   const renderButton = () => {
     if (isShowSecret && vault.type === VaultType.HierarchicalDeterministic && vault.source === VaultSourceType.CREATE_BY_WALLET && vault.isBackup === false) {
       return (
