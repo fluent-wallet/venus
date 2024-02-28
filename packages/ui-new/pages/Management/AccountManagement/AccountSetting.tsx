@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useRef, useEffect } from 'react';
-import { Pressable, StyleSheet } from 'react-native';
+import { Pressable, View, StyleSheet } from 'react-native';
 import { useTheme } from '@react-navigation/native';
 import { showMessage } from 'react-native-flash-message';
 import methods from '@core/WalletCore/Methods';
@@ -10,7 +10,7 @@ import Text from '@components/Text';
 import TextInput from '@components/TextInput';
 import Checkbox from '@components/Checkbox';
 import Button from '@components/Button';
-import BottomSheet, { snapPoints, BottomSheetScrollView, type BottomSheetMethods } from '@components/BottomSheet';
+import BottomSheet, { snapPoints, type BottomSheetMethods } from '@components/BottomSheet';
 import { AccountSettingStackName, BackupStackName, type StackScreenProps } from '@router/configs';
 import ArrowRight from '@assets/icons/arrow-right2.svg';
 import Delete from '@assets/icons/delete.svg';
@@ -79,7 +79,7 @@ const AccountConfig: React.FC<StackScreenProps<typeof AccountSettingStackName>> 
   return (
     <>
       <BottomSheet snapPoints={snapPoints.large} index={0} isModal={false} onClose={() => navigation.goBack()}>
-        <BottomSheetScrollView contentContainerStyle={styles.container}>
+        <View style={styles.container}>
           <Text style={[styles.title, styles.mainText, { color: colors.textPrimary }]}>Account</Text>
           <Text style={[styles.description, { color: colors.textSecondary }]}>Address</Text>
           <Text style={[styles.address, styles.mainText, { color: colors.textPrimary, opacity: addressValue ? 1 : 0 }]}>{addressValue || zeroAddress}</Text>
@@ -113,7 +113,7 @@ const AccountConfig: React.FC<StackScreenProps<typeof AccountSettingStackName>> 
           <Button style={styles.btn} mode="auto" disabled={!accountName || accountName === account?.nickname} onPress={handleUpdateAccountNickName}>
             OK
           </Button>
-        </BottomSheetScrollView>
+        </View>
       </BottomSheet>
       <DeleteConfirm bottomSheetRef={deleteBottomSheetRef} navigation={navigation} onConfirm={handleConfirmDelete} />
     </>
@@ -175,7 +175,7 @@ const styles = StyleSheet.create({
   },
   btn: {
     marginTop: 'auto',
-    marginBottom: 80,
+    marginBottom: 40,
     marginHorizontal: 16,
   },
 });

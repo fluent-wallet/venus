@@ -4,6 +4,7 @@ import { useTheme } from '@react-navigation/native';
 import { Image } from 'expo-image';
 import Text from '@components/Text';
 import Button from '@components/Button';
+import { isSmallDevice } from '@utils/deviceInfo';
 import Img from '@assets/images/welcome-img.webp';
 
 const BackupStep1: React.FC<{ setStep: React.Dispatch<React.SetStateAction<number>> }> = ({ setStep }) => {
@@ -35,7 +36,7 @@ const BackupStep1: React.FC<{ setStep: React.Dispatch<React.SetStateAction<numbe
 
 const styles = StyleSheet.create({
   notice: {
-    marginTop: 40,
+    marginTop: isSmallDevice ? 20 : 40,
     marginBottom: 24,
     paddingHorizontal: 16,
     fontSize: 22,

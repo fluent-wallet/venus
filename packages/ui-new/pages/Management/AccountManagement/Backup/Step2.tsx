@@ -12,6 +12,7 @@ import Text from '@components/Text';
 import Button from '@components/Button';
 import useInAsync from '@hooks/useInAsync';
 import { BackupStackName, type StackScreenProps } from '@router/configs';
+import { isSmallDevice } from '@utils/deviceInfo';
 import MaskPrivateKey from '@assets/images/mask-private-key.webp';
 import MaskSeedPhrase from '@assets/images/mask-seed-phrase.webp';
 import Copy from '@assets/icons/copy.svg';
@@ -142,7 +143,7 @@ const styles = StyleSheet.create({
     lineHeight: 28,
   },
   notice: {
-    marginTop: 20,
+    marginTop: isSmallDevice ? 10 : 20,
     marginBottom: 16,
     paddingHorizontal: 0,
     textAlign: 'center',
@@ -150,8 +151,8 @@ const styles = StyleSheet.create({
   description: {
     fontSize: 14,
     fontWeight: '300',
-    lineHeight: 18,
-    marginBottom: 8,
+    lineHeight: isSmallDevice ? 16 : 18,
+    marginBottom: isSmallDevice ? 6 : 8,
   },
   noticeDescription: {
     paddingHorizontal: 44,
@@ -161,7 +162,7 @@ const styles = StyleSheet.create({
     flexDirection: 'column',
     justifyContent: 'center',
     alignContent: 'center',
-    marginTop: 16,
+    marginTop: isSmallDevice ? 8 : 16,
     position: 'relative',
     marginHorizontal: 24,
     height: 316,
@@ -215,7 +216,7 @@ const styles = StyleSheet.create({
   },
   btn: {
     marginTop: 'auto',
-    marginBottom: 32,
+    marginBottom: isSmallDevice ? 16 : 32,
     marginHorizontal: 16,
   },
 });

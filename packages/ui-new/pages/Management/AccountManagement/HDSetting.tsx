@@ -21,9 +21,10 @@ import { shortenAddress } from '@core/utils/address';
 import Text from '@components/Text';
 import Checkbox from '@components/Checkbox';
 import Button from '@components/Button';
-import BottomSheet, { snapPoints, BottomSheetScrollView } from '@components/BottomSheet';
+import BottomSheet, { snapPoints } from '@components/BottomSheet';
 import HourglassLoading from '@components/Loading/Hourglass';
 import { HDSettingStackName, type StackScreenProps } from '@router/configs';
+import { isSmallDevice } from '@utils/deviceInfo';
 import ArrowRight from '@assets/icons/arrow-right2.svg';
 
 const countPerPage = 5;
@@ -152,7 +153,7 @@ const HDManagement: React.FC<StackScreenProps<typeof HDSettingStackName>> = ({ n
 
   return (
     <BottomSheet snapPoints={snapPoints.large} index={0} isModal={false} onClose={() => navigation.goBack()}>
-      <BottomSheetScrollView contentContainerStyle={styles.container}>
+      <View style={styles.container}>
         <Text style={[styles.title, styles.mainText, { color: colors.textPrimary }]}>Select HD Wallets</Text>
         <Text style={[styles.description, { color: colors.textSecondary }]}>HD Path Type</Text>
         <Text style={[styles.contentText, styles.mainText, { color: colors.textPrimary }]}>BIP44</Text>
@@ -254,7 +255,7 @@ const HDManagement: React.FC<StackScreenProps<typeof HDSettingStackName>> = ({ n
         <Button style={styles.btn} mode="auto" disabled={chooseAccounts.length === 0} onPress={handleClickNext} loading={inNext}>
           Next
         </Button>
-      </BottomSheetScrollView>
+      </View>
     </BottomSheet>
   );
 };
@@ -265,20 +266,20 @@ const styles = StyleSheet.create({
     paddingTop: 8,
   },
   title: {
-    marginBottom: 24,
+    marginBottom: isSmallDevice ? 12 : 24,
     textAlign: 'center',
   },
   mainText: {
     fontSize: 16,
     fontWeight: '600',
-    lineHeight: 20,
+    lineHeight: isSmallDevice ? 16 : 20,
   },
   description: {
-    marginBottom: 16,
+    marginBottom: isSmallDevice ? 8 : 16,
     marginHorizontal: 16,
     fontSize: 14,
     fontWeight: '300',
-    lineHeight: 18,
+    lineHeight: isSmallDevice ? 14 : 18,
   },
   contentText: {
     marginBottom: 8,
@@ -288,7 +289,7 @@ const styles = StyleSheet.create({
   },
   selectArea: {
     position: 'relative',
-    marginVertical: 20,
+    marginVertical: isSmallDevice ? 10 : 20,
     height: 240,
   },
   selectAbsolute: {
@@ -368,7 +369,7 @@ const styles = StyleSheet.create({
   },
   btn: {
     marginTop: 'auto',
-    marginBottom: 80,
+    marginBottom: 40,
     marginHorizontal: 16,
   },
 });
