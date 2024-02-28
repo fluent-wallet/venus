@@ -86,7 +86,7 @@ const GroupConfig: React.FC<StackScreenProps<typeof GroupSettingStackName>> = ({
             containerStyle={[styles.textinput, { borderColor: colors.borderFourth }]}
             showVisible={false}
             value={accountGroupName}
-            onChangeText={(newNickName) => setAccountGroupName(newNickName)}
+            onChangeText={(newNickName) => setAccountGroupName(newNickName?.trim())}
           />
           {vault?.type === VaultType.HierarchicalDeterministic && (
             <>

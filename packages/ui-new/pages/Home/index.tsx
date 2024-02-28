@@ -13,6 +13,7 @@ import HeaderRight from './HeaderRight';
 import { CurrentAddress, TotalPrice } from './Address&TotalPrice';
 import Navigations from './Navigations';
 import { Tabs, TabsContent } from './Tabs';
+import NotBackup from './NotBackup';
 
 const Home: React.FC<StackScreenProps<typeof HomeStackName>> = ({ navigation }) => {
   const accountSelectorRef = useRef<BottomSheetMethods>(null!);
@@ -38,10 +39,11 @@ const Home: React.FC<StackScreenProps<typeof HomeStackName>> = ({ navigation }) 
             }}
           />
         </View>
-        <ScrollView style={styles.scrollView} stickyHeaderIndices={[3]}>
+        <ScrollView style={styles.scrollView} stickyHeaderIndices={[4]}>
           <CurrentAddress />
           <TotalPrice />
           <Navigations />
+          <NotBackup navigation={navigation} />
           <Tabs currentTab={currentTab} setCurrentTab={setCurrentTab} pageViewRef={pageViewRef} />
           <TabsContent currentTab={currentTab} setCurrentTab={setCurrentTab} pageViewRef={pageViewRef} />
         </ScrollView>
