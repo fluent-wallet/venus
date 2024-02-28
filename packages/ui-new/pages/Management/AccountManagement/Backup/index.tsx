@@ -9,7 +9,6 @@ import BackupStep2 from './Step2';
 
 const Backup: React.FC<StackScreenProps<typeof BackupStackName>> = ({ navigation, route }) => {
   const { colors } = useTheme();
-
   const [step, setStep] = useState(() => 1);
 
   return (

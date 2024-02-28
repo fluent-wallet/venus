@@ -88,7 +88,7 @@ const AccountConfig: React.FC<StackScreenProps<typeof AccountSettingStackName>> 
             containerStyle={[styles.textinput, { borderColor: colors.borderFourth }]}
             showVisible={false}
             value={accountName}
-            onChangeText={(newNickName) => setAccountName(newNickName)}
+            onChangeText={(newNickName) => setAccountName(newNickName?.trim())}
           />
           {(vault?.type === VaultType.HierarchicalDeterministic || vault?.type === VaultType.PrivateKey) && (
             <>
