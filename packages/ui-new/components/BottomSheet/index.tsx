@@ -1,6 +1,7 @@
 import { useCallback, useRef, forwardRef, useMemo } from 'react';
 import { BackHandler, Keyboard } from 'react-native';
 import { useFocusEffect, useTheme } from '@react-navigation/native';
+import { clamp } from 'lodash-es';
 import BottomSheet_, { BottomSheetModal, BottomSheetBackdrop, type BottomSheetBackdropProps, type BottomSheetModalProps } from '@gorhom/bottom-sheet';
 import composeRef from '@cfx-kit/react-utils/dist/composeRef';
 import { screenHeight } from '@utils/deviceInfo';
@@ -111,7 +112,7 @@ const BottomSheet = forwardRef<BottomSheetModal, Props>(
 );
 
 export const snapPoints = {
-  large: [`${(((screenHeight - 124) / screenHeight) * 100).toFixed(2)}%`],
+  large: [`${((clamp(screenHeight - 124, 628, screenHeight - 40) / screenHeight) * 100).toFixed(2)}%`],
 } as const;
 
 export default BottomSheet;

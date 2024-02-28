@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
-import { StyleSheet } from 'react-native';
+import { View, StyleSheet } from 'react-native';
 import { useTheme } from '@react-navigation/native';
 import Text from '@components/Text';
-import BottomSheet, { snapPoints, BottomSheetScrollView } from '@components/BottomSheet';
+import BottomSheet, { snapPoints } from '@components/BottomSheet';
 import { BackupStackName, type StackScreenProps } from '@router/configs';
 import BackupStep1 from './Step1';
 import BackupStep2 from './Step2';
@@ -13,11 +13,11 @@ const Backup: React.FC<StackScreenProps<typeof BackupStackName>> = ({ navigation
 
   return (
     <BottomSheet snapPoints={snapPoints.large} index={0} isModal={false} onClose={() => navigation.goBack()}>
-      <BottomSheetScrollView contentContainerStyle={styles.container}>
+      <View style={styles.container}>
         <Text style={[styles.title, { color: colors.textPrimary }]}>Back Up</Text>
         {step === 1 && <BackupStep1 setStep={setStep} />}
         {(step === 2 || step === 3) && <BackupStep2 setStep={setStep} route={route} step={step} />}
-      </BottomSheetScrollView>
+      </View>
     </BottomSheet>
   );
 };

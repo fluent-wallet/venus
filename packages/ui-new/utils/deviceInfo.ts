@@ -23,3 +23,4 @@ export const screenWidth = Dimensions.get('window').width;
 export const screenHeight = Dimensions.get('window').height;
 export const supports3DStructureLight = Check3DStructureLight();
 export const OS = Platform.OS;
+export const isSmallDevice = screenHeight < 680;
