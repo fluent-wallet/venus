@@ -16,7 +16,7 @@ const BackupSuccess: React.FC = () => {
   const navigation = useNavigation<StackScreenProps<typeof BackupStackName>['navigation']>();
 
   return (
-    <BackupBottomSheet onClose={() => {}}>
+    <BackupBottomSheet onClose={() => navigation.navigate(HomeStackName)}>
       <View style={styles.container}>
         <Text style={[styles.title, { color: colors.textPrimary }]}>🥳 Backuped !</Text>
         <Image style={styles.img} source={Img} contentFit="contain" />
