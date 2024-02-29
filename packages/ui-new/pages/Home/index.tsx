@@ -2,10 +2,8 @@ import React, { useCallback, useRef, useState } from 'react';
 import { View, ScrollView, StyleSheet, type NativeSyntheticEvent, type NativeScrollEvent } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import PagerView from 'react-native-pager-view';
-import { atom, useAtomValue } from 'jotai';
 import methods from '@core/WalletCore/Methods';
 import { getCurrentNetwork } from '@core/WalletCore/Plugins/ReactInject/data/useCurrentNetwork';
-import { setAtom } from '@core/WalletCore/Plugins/ReactInject';
 import { HomeStackName, type StackScreenProps } from '@router/configs';
 import { isProd } from '@utils/getEnv';
 import Account from './Account';
@@ -14,12 +12,8 @@ import NetworkSelector from './NetworkSelector';
 import HeaderRight from './HeaderRight';
 import { CurrentAddress, TotalPrice } from './Address&TotalPrice';
 import Navigations from './Navigations';
-import { Tabs, TabsContent } from './Tabs';
+import { Tabs, TabsContent, setScrollY } from './Tabs';
 import NotBackup from './NotBackup';
-
-const tabPageViewScrollYAtom = atom(0);
-const setScrollY = (height: number) => setAtom(tabPageViewScrollYAtom, height);
-export const useTabPageViewScrollY = () => useAtomValue(tabPageViewScrollYAtom);
 
 const Home: React.FC<StackScreenProps<typeof HomeStackName>> = ({ navigation }) => {
   const accountSelectorRef = useRef<BottomSheetMethods>(null!);
@@ -29,7 +23,7 @@ const Home: React.FC<StackScreenProps<typeof HomeStackName>> = ({ navigation }) 
   const pageViewRef = useRef<PagerView>(null);
 
   const handleScroll = useCallback((evt: NativeSyntheticEvent<NativeScrollEvent>) => {
-    setScrollY(evt.nativeEvent.contentOffset.y)
+    setScrollY(evt.nativeEvent.contentOffset.y);
   }, []);
 
   return (
