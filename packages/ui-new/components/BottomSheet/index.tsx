@@ -103,6 +103,7 @@ const BottomSheet = forwardRef<BottomSheetModal, Props>(
         backdropComponent={showBackDrop ? renderBackdrop : undefined}
         backgroundStyle={{ backgroundColor: colors.bgFourth }}
         handleIndicatorStyle={{ backgroundColor: palette.gray4 }}
+        enableDynamicSizing={false}
         {...props}
       >
         {children}
@@ -112,7 +113,7 @@ const BottomSheet = forwardRef<BottomSheetModal, Props>(
 );
 
 export const snapPoints = {
-  large: [`${((clamp(screenHeight - 124, 628, screenHeight - 40) / screenHeight) * 100).toFixed(2)}%`],
+  large: [`${((clamp(screenHeight - 124, 628, screenHeight - 40) / screenHeight) * 100).toFixed(2)}%`] as string[],
 } as const;
 
 export default BottomSheet;

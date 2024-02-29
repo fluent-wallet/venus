@@ -31,6 +31,7 @@ import {
   BackupStackName,
   type RootStackParamList,
   type StackNavigation,
+  SheetBottomOption,
 } from './configs';
 import Header from './Header';
 
@@ -42,7 +43,7 @@ const screenOptions = {
   statusBarTranslucent: true,
   statusBarBackgroundColor: 'transparent',
 } as const;
-const SheetBottomOption = { headerShown: false, presentation: 'transparentModal' as const, safeAreaInsets: { top: 0 } };
+
 
 const Router: React.FC = () => {
   const hasVault = useHasVault();
