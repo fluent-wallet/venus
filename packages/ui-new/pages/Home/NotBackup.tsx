@@ -4,7 +4,7 @@ import { useTheme } from '@react-navigation/native';
 import { Image } from 'expo-image';
 import { useCurrentAccount, useGroupOfAccount, useVaultOfAccount } from '@core/WalletCore/Plugins/ReactInject';
 import Text from '@components/Text';
-import { HomeStackName, BackupStackName, type StackScreenProps } from '@router/configs';
+import { HomeStackName, BackupStackName, type StackScreenProps, BackupStep1StackName } from '@router/configs';
 import useForceUpdateOnFocus from '@hooks/useUpdateOnFocus';
 import Img from '@assets/images/welcome-img.webp';
 
@@ -12,15 +12,15 @@ const NotBackup: React.FC<{ navigation: StackScreenProps<typeof HomeStackName>['
   const { colors } = useTheme();
   const account = useCurrentAccount();
   const vault = useVaultOfAccount(account?.id);
-  const accoutGroup = useGroupOfAccount(account?.id);
+  const accountGroup = useGroupOfAccount(account?.id);
   useForceUpdateOnFocus(navigation);
 
-  if (!vault || !accoutGroup || vault.isBackup) return null;
+  if (!vault || !accountGroup || vault.isBackup) return null;
   return (
     <Pressable
       style={({ pressed }) => [styles.container, { borderColor: colors.borderThird, backgroundColor: pressed ? colors.underlay : 'transparent' }]}
-      disabled={!accoutGroup}
-      onPress={() => navigation.navigate(BackupStackName, { groupId: accoutGroup?.id })}
+      disabled={!accountGroup}
+      onPress={() => navigation.navigate(BackupStackName, { screen: BackupStep1StackName, params: { groupId: accountGroup.id } })}
     >
       <Image style={styles.img} source={Img} />
       <View style={styles.textArea}>

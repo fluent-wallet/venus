@@ -4,21 +4,19 @@ import { useTheme, useNavigation } from '@react-navigation/native';
 import { Image } from 'expo-image';
 import Text from '@components/Text';
 import Button from '@components/Button';
-import BottomSheet, { type BottomSheetMethods } from '@components/BottomSheet';
 import { screenHeight } from '@utils/deviceInfo';
-import { BackupStackName, type StackScreenProps } from '@router/configs';
+import { BackupStackName, HomeStackName, type StackScreenProps } from '@router/configs';
 import Img from '@assets/images/welcome-img.webp';
+import BackupBottomSheet from './BackupBottomSheet';
 
-interface Props {
-  bottomSheetRef: MutableRefObject<BottomSheetMethods>;
-}
+export const BackupSuccessStackName = 'BackupSuccess';
 
-const BackupSuccess: React.FC<Props> = ({ bottomSheetRef }) => {
+const BackupSuccess: React.FC = () => {
   const { colors } = useTheme();
   const navigation = useNavigation<StackScreenProps<typeof BackupStackName>['navigation']>();
 
   return (
-    <BottomSheet ref={bottomSheetRef} snapPoints={snapPoints} isModal={false}>
+    <BackupBottomSheet onClose={() => {}}>
       <View style={styles.container}>
         <Text style={[styles.title, { color: colors.textPrimary }]}>🥳 Backuped !</Text>
         <Image style={styles.img} source={Img} contentFit="contain" />
@@ -26,14 +24,13 @@ const BackupSuccess: React.FC<Props> = ({ bottomSheetRef }) => {
         <Button
           style={styles.btn}
           onPress={() => {
-            bottomSheetRef.current?.close();
-            navigation.goBack();
+            navigation.navigate(HomeStackName);
           }}
         >
           OK
         </Button>
       </View>
-    </BottomSheet>
+    </BackupBottomSheet>
   );
 };
 

@@ -1,6 +1,6 @@
 import React, { useState, useCallback, useMemo } from 'react';
 import { View, Pressable, StyleSheet } from 'react-native';
-import { useTheme, useNavigation } from '@react-navigation/native';
+import { useFocusEffect, useTheme } from '@react-navigation/native';
 import Clipboard from '@react-native-clipboard/clipboard';
 import { showMessage } from 'react-native-flash-message';
 import QRCode from 'react-native-qrcode-svg';
@@ -11,20 +11,15 @@ import plugins from '@core/WalletCore/Plugins';
 import Text from '@components/Text';
 import Button from '@components/Button';
 import useInAsync from '@hooks/useInAsync';
-import { BackupStackName, type StackScreenProps } from '@router/configs';
+import { BackupScreenProps, BackupStep2StackName, BackupStep3StackName } from '@router/configs';
 import { isSmallDevice } from '@utils/deviceInfo';
 import MaskPrivateKey from '@assets/images/mask-private-key.webp';
 import MaskSeedPhrase from '@assets/images/mask-seed-phrase.webp';
 import Copy from '@assets/icons/copy.svg';
-import BackupStep3 from './Step3';
+import BackupBottomSheet from './BackupBottomSheet';
 
-const BackupStep1: React.FC<{
-  setStep: React.Dispatch<React.SetStateAction<number>>;
-  route: StackScreenProps<typeof BackupStackName>['route'];
-  step: number;
-}> = ({ setStep, route, step }) => {
+const BackupStep2: React.FC<BackupScreenProps<typeof BackupStep2StackName>> = ({ route, navigation }) => {
   const { colors } = useTheme();
-  const navigation = useNavigation<StackScreenProps<typeof BackupStackName>['navigation']>();
 
   const backupType = route.params.groupId ? VaultType.HierarchicalDeterministic : VaultType.PrivateKey;
   const backupText = useMemo(() => (backupType === VaultType.HierarchicalDeterministic ? 'seed phrase' : 'private key'), [backupType]);
@@ -56,84 +51,86 @@ const BackupStep1: React.FC<{
   }, [vault, address, backupType, backupText]);
 
   const { inAsync, execAsync: handleClickView } = useInAsync(_handleClickView);
-  
-  if (step === 3) {
-    return <BackupStep3 phrases={phrases!} vault={vault!}/>;
-  }
-  if (step === 2) {
-    return (
-      <>
-        <Text style={[styles.largetText, styles.notice, { color: colors.textPrimary }]}>
-          ✏️ Write Down Your {backupType === VaultType.HierarchicalDeterministic ? 'Seed Phrase' : 'Private Key'}
+
+  return (
+    <BackupBottomSheet onClose={navigation.goBack}>
+      <Text style={[styles.largetText, styles.notice, { color: colors.textPrimary }]}>
+        ✏️ Write Down Your {backupType === VaultType.HierarchicalDeterministic ? 'Seed Phrase' : 'Private Key'}
+      </Text>
+      <Text style={[styles.description, styles.noticeDescription, { color: colors.textSecondary }]}>✅ Do NOT take a screenshot of this page</Text>
+      <Text style={[styles.description, styles.noticeDescription, { color: colors.textSecondary }]}>✅ Writing down on paper is recommended</Text>
+      {backupType === VaultType.PrivateKey && (
+        <Text style={[styles.description, styles.noticeDescription, { color: colors.textSecondary }]}>
+          ✅ Or scan the QR code directly from the trusted app you wish to import to
         </Text>
-        <Text style={[styles.description, styles.noticeDescription, { color: colors.textSecondary }]}>✅ Do NOT take a screenshot of this page</Text>
-        <Text style={[styles.description, styles.noticeDescription, { color: colors.textSecondary }]}>✅ Writing down on paper is recommended</Text>
-        {backupType === VaultType.PrivateKey && (
-          <Text style={[styles.description, styles.noticeDescription, { color: colors.textSecondary }]}>
-            ✅ Or scan the QR code directly from the trusted app you wish to import to
-          </Text>
-        )}
-        <View style={[styles.secretArea, { borderColor: colors.borderFourth }]}>
-          {!secretData && (
-            <>
-              <Image style={styles.mask} source={backupType === VaultType.HierarchicalDeterministic ? MaskSeedPhrase : MaskPrivateKey} contentFit="contain" />
+      )}
+      <View style={[styles.secretArea, { borderColor: colors.borderFourth }]}>
+        {!secretData && (
+          <>
+            <Image style={styles.mask} source={backupType === VaultType.HierarchicalDeterministic ? MaskSeedPhrase : MaskPrivateKey} contentFit="contain" />
 
-              <Text style={[styles.largetText, { color: colors.textPrimary, textAlign: 'center' }]}>Tap to view the {backupText}</Text>
-              <Text style={[styles.description, { color: colors.textSecondary, textAlign: 'center', marginTop: 8 }]}>Make sure your environment is safe</Text>
-              <Button style={styles.viewBtn} mode="auto" onPress={handleClickView} loading={inAsync}>
-                View
-              </Button>
-            </>
-          )}
-          {secretData && backupType === VaultType.PrivateKey && (
-            <>
-              <View style={styles.qrcode}>
-                <QRCode value={secretData} size={240} />
-              </View>
-              <Pressable
-                onPress={() => {
-                  Clipboard.setString(secretData);
-                  showMessage({
-                    message: 'Copied!',
-                    type: 'success',
-                    duration: 1500,
-                    width: 160,
-                  });
-                }}
-                style={({ pressed }) => [styles.privateKey, { backgroundColor: pressed ? colors.underlay : 'transparent' }]}
-              >
-                <Text style={[styles.privateKeyText, { color: colors.textPrimary }]}>{secretData}</Text>
-                <Copy color={colors.iconPrimary} />
-              </Pressable>
-            </>
-          )}
-          {secretData && backupType === VaultType.HierarchicalDeterministic && (
-            <View style={styles.phraseContainer}>
-              {phrases?.map((phrase, index) => (
-                <Text key={index} style={[styles.phrase, { backgroundColor: colors.bgPrimary }]}>
-                  {index + 1}. {phrase}
-                </Text>
-              ))}
+            <Text style={[styles.largetText, { color: colors.textPrimary, textAlign: 'center' }]}>Tap to view the {backupText}</Text>
+            <Text style={[styles.description, { color: colors.textSecondary, textAlign: 'center', marginTop: 8 }]}>Make sure your environment is safe</Text>
+            <Button style={styles.viewBtn} mode="auto" onPress={handleClickView} loading={inAsync}>
+              View
+            </Button>
+          </>
+        )}
+        {secretData && backupType === VaultType.PrivateKey && (
+          <>
+            <View style={styles.qrcode}>
+              <QRCode value={secretData} size={240} />
             </View>
-          )}
-        </View>
-
-        {vault?.source === VaultSourceType.CREATE_BY_WALLET &&
-        vault?.type === VaultType.HierarchicalDeterministic &&
-        !vault.isBackup &&
-        backupType === VaultType.HierarchicalDeterministic ? (
-          <Button style={styles.btn} mode="auto" disabled={!secretData} onPress={() => setStep(3)}>
-            Next
-          </Button>
-        ) : (
-          <Button style={styles.btn} mode="auto" onPress={() => navigation.goBack()}>
-            Return
-          </Button>
+            <Pressable
+              onPress={() => {
+                Clipboard.setString(secretData);
+                showMessage({
+                  message: 'Copied!',
+                  type: 'success',
+                  duration: 1500,
+                  width: 160,
+                });
+              }}
+              style={({ pressed }) => [styles.privateKey, { backgroundColor: pressed ? colors.underlay : 'transparent' }]}
+            >
+              <Text style={[styles.privateKeyText, { color: colors.textPrimary }]}>{secretData}</Text>
+              <Copy color={colors.iconPrimary} />
+            </Pressable>
+          </>
         )}
-      </>
-    );
-  }
-  return null;
+        {secretData && backupType === VaultType.HierarchicalDeterministic && (
+          <View style={styles.phraseContainer}>
+            {phrases?.map((phrase, index) => (
+              <Text key={index} style={[styles.phrase, { backgroundColor: colors.bgPrimary }]}>
+                {index + 1}. {phrase}
+              </Text>
+            ))}
+          </View>
+        )}
+      </View>
+
+      {vault?.source === VaultSourceType.CREATE_BY_WALLET &&
+      vault?.type === VaultType.HierarchicalDeterministic &&
+      !vault.isBackup &&
+      backupType === VaultType.HierarchicalDeterministic ? (
+        <Button
+          style={styles.btn}
+          mode="auto"
+          disabled={!secretData}
+          onPress={() => {
+            setSecretData(null);
+            navigation.navigate(BackupStep3StackName, { phrases: phrases || [], vaultId: vault.id });
+          }}
+        >
+          Next
+        </Button>
+      ) : (
+        <Button style={styles.btn} mode="auto" onPress={() => navigation.goBack()}>
+          Return
+        </Button>
+      )}
+    </BackupBottomSheet>
+  );
 };
 
 const styles = StyleSheet.create({
@@ -221,4 +218,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default BackupStep1;
+export default BackupStep2;

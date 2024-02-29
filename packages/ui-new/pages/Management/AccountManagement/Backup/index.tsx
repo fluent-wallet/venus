@@ -1,39 +1,36 @@
 import React, { useState } from 'react';
 import { View, StyleSheet } from 'react-native';
 import { useTheme } from '@react-navigation/native';
+import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import Text from '@components/Text';
 import BottomSheet, { snapPoints } from '@components/BottomSheet';
-import { BackupStackName, type StackScreenProps } from '@router/configs';
+
+import {
+  BackupStackName,
+  type StackScreenProps,
+  BackupStep1StackName,
+  BackupStep2StackName,
+  BackupStep3StackName,
+  BackupSuccessStackName,
+  BackupStackParamList,
+  SheetBottomOption,
+} from '@router/configs';
 import BackupStep1 from './Step1';
 import BackupStep2 from './Step2';
+import BackupStep3 from './Step3';
+import BackupSuccess from './BackupSuccess';
 
-const Backup: React.FC<StackScreenProps<typeof BackupStackName>> = ({ navigation, route }) => {
-  const { colors } = useTheme();
-  const [step, setStep] = useState(() => 1);
+const BackupStack = createNativeStackNavigator<BackupStackParamList>();
 
+const Backup: React.FC<StackScreenProps<typeof BackupStackName>> = (props) => {
   return (
-    <BottomSheet snapPoints={snapPoints.large} index={0} isModal={false} onClose={() => navigation.goBack()}>
-      <View style={styles.container}>
-        <Text style={[styles.title, { color: colors.textPrimary }]}>Back Up</Text>
-        {step === 1 && <BackupStep1 setStep={setStep} />}
-        {(step === 2 || step === 3) && <BackupStep2 setStep={setStep} route={route} step={step} />}
-      </View>
-    </BottomSheet>
+    <BackupStack.Navigator>
+      <BackupStack.Screen name={BackupStep1StackName} component={BackupStep1} options={SheetBottomOption} />
+      <BackupStack.Screen name={BackupStep2StackName} component={BackupStep2} options={SheetBottomOption} />
+      <BackupStack.Screen name={BackupStep3StackName} component={BackupStep3} options={SheetBottomOption} />
+      <BackupStack.Screen name={BackupSuccessStackName} component={BackupSuccess} options={SheetBottomOption} />
+    </BackupStack.Navigator>
   );
 };
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    paddingTop: 8,
-  },
-  title: {
-    marginBottom: 0,
-    lineHeight: 20,
-    textAlign: 'center',
-    fontSize: 16,
-    fontWeight: '600',
-  },
-});
 
 export default Backup;

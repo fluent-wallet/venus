@@ -1,19 +1,23 @@
 import React from 'react';
-import { StyleSheet } from 'react-native';
-import { useTheme } from '@react-navigation/native';
+import { StyleSheet, View } from 'react-native';
+import { useNavigation, useTheme } from '@react-navigation/native';
 import { Image } from 'expo-image';
 import Text from '@components/Text';
 import Button from '@components/Button';
 import { isSmallDevice } from '@utils/deviceInfo';
 import Img from '@assets/images/welcome-img.webp';
+import BottomSheet, { snapPoints } from '@components/BottomSheet';
+import BackupBottomSheet from './BackupBottomSheet';
+import { BackupScreenProps, BackupStep2StackName } from '@router/configs';
 
-const BackupStep1: React.FC<{ setStep: React.Dispatch<React.SetStateAction<number>> }> = ({ setStep }) => {
+export const BackupStep1StackName = 'BackupStep1';
+
+const BackupStep1: React.FC<BackupScreenProps<typeof BackupStep1StackName>> = ({ navigation, route }) => {
   const { colors } = useTheme();
 
   return (
-    <>
+    <BackupBottomSheet onClose={navigation.goBack}>
       <Image style={styles.img} source={Img} contentFit="contain" />
-
       <Text style={[styles.notice, { color: colors.textPrimary }]}>📢 Notice</Text>
       <Text style={[styles.description, { color: colors.textPrimary }]}>
         If you lose your <Text style={[styles.descriptionBold, { color: colors.textNotice }]}>seed phrase</Text> or{' '}
@@ -27,10 +31,10 @@ const BackupStep1: React.FC<{ setStep: React.Dispatch<React.SetStateAction<numbe
         Please <Text style={[styles.descriptionBold, { color: colors.textNotice }]}>protect</Text> them carefully
       </Text>
 
-      <Button style={styles.btn} mode="auto" onPress={() => setStep(2)}>
+      <Button style={styles.btn} mode="auto" onPress={() => navigation.navigate(BackupStep2StackName, route.params)}>
         Next
       </Button>
-    </>
+    </BackupBottomSheet>
   );
 };
 

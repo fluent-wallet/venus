@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useRef, Fragment } from 'react';
 import { View, Pressable, StyleSheet } from 'react-native';
-import { useTheme } from '@react-navigation/native';
+import { useNavigation, useTheme } from '@react-navigation/native';
 import { showMessage } from 'react-native-flash-message';
 import { wordlists } from 'bip39';
 import { sampleSize, shuffle } from 'lodash-es';
@@ -9,11 +9,16 @@ import Text from '@components/Text';
 import Button from '@components/Button';
 import { BottomSheetMethods } from '@components/BottomSheet';
 import BackupSuccess from './BackupSuccess';
+import BottomSheet, { snapPoints } from '@components/BottomSheet';
+import { BackupScreenProps, BackupStep3StackName, BackupSuccessStackName, HomeStackName } from '@router/configs';
+import BackupBottomSheet from './BackupBottomSheet';
+import { useVaultFromId } from '@core/WalletCore/Plugins/ReactInject';
 
 type Ele = string | null;
-const BackupStep3: React.FC<{ phrases: Array<string>; vault: Vault }> = ({ phrases, vault }) => {
+const BackupStep3: React.FC<BackupScreenProps<typeof BackupStep3StackName>> = ({ route, navigation }) => {
   const { colors } = useTheme();
-  const bottomSheetRef = useRef<BottomSheetMethods>(null!);
+  const { phrases, vaultId } = route.params;
+  const vault = useVaultFromId(vaultId);
 
   const [selectedWords, setSelectedWords] = useState<[Ele, Ele, Ele]>([null, null, null]);
 
@@ -36,7 +41,7 @@ const BackupStep3: React.FC<{ phrases: Array<string>; vault: Vault }> = ({ phras
   const isAllCorrect = useMemo(() => selectedWords?.every((word, index) => word === mixers[index].phrase), [selectedWords, mixers]);
 
   return (
-    <>
+    <BackupBottomSheet onClose={navigation.goBack}>
       <Text style={[styles.title, { color: colors.textPrimary }]}>🔍 Verify your seed phrase</Text>
       {mixers.map(({ originIndex, mixer }, index) => (
         <Fragment key={index}>
@@ -68,8 +73,8 @@ const BackupStep3: React.FC<{ phrases: Array<string>; vault: Vault }> = ({ phras
         disabled={!isAllSelected}
         onPress={() => {
           if (isAllCorrect) {
-            bottomSheetRef.current?.expand();
             vault?.finishBackup?.();
+            navigation.navigate(BackupSuccessStackName);
           } else {
             showMessage({
               message: '🤔 Wrong word, please check again.',
@@ -80,8 +85,7 @@ const BackupStep3: React.FC<{ phrases: Array<string>; vault: Vault }> = ({ phras
       >
         Confirm
       </Button>
-      <BackupSuccess bottomSheetRef={bottomSheetRef} />
-    </>
+    </BackupBottomSheet>
   );
 };
 
