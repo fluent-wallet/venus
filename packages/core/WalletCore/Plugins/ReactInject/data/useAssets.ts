@@ -9,6 +9,7 @@ import { AssetType } from '../../../../database/models/Asset';
 import { getCurrentNetwork, useCurrentNetwork } from './useCurrentNetwork';
 import { getCurrentAddress, useCurrentAddress } from './useCurrentAddress';
 import { type AssetInfo } from '../../AssetsTracker/types';
+import { type NFTItemDetail } from '../../NFTDetailTracker';
 import { truncate } from '../../../../utils/balance';
 
 export const getAssetsAtomKey = ({ network, address }: { network: Network | null; address: Address | null }) =>
@@ -27,8 +28,7 @@ const assetsListAtom = atomFamily((key: string) =>
 const assetsTokenListAtom = atomFamily((key: string) =>
   atom((get) => {
     const assets = get(assetsListAtom(key));
-    const res = assets ? assets.filter((asset) => asset.type === AssetType.Native || asset.type === AssetType.ERC20) : null;
-    return res ? [...res, ...res, ...res] : null;
+    return assets ? assets.filter((asset) => asset.type === AssetType.Native || asset.type === AssetType.ERC20) : null;
   }),
 );
 const assetsNFTListAtom = atomFamily((key: string) =>
@@ -47,10 +47,17 @@ const assetsTotalPriceValueAtom = atomFamily((key: string) =>
         : truncate(assets.reduce((total, item) => total.add(new Decimal(item?.priceValue ?? 0)), new Decimal(0)).toString(), 2);
   }),
 );
-const assetsEmptyAtom = atomFamily((key: string) =>
+const tokensEmptyAtom = atomFamily((key: string) =>
   atom((get) => {
-    const assets = get(assetsListAtom(key));
+    const assets = get(assetsTokenListAtom(key));
     return assets === null ? null : !assets?.length ? true : assets?.every((asset) => BigInt(isNaN(Number(asset?.balance)) ? 0 : Number(asset?.balance)) <= 0);
+  }),
+);
+
+const nftsEmptyAtom = atomFamily((key: string) =>
+  atom((get) => {
+    const assets = get(assetsNFTListAtom(key));
+    return assets === null ? null : !assets?.length;
   }),
 );
 
@@ -109,11 +116,18 @@ export const useAssetsTotalPriceValue = () => {
   return useAtomValue(assetsTotalPriceValueAtom(key));
 };
 
-export const useIsAssetsEmpty = () => {
+export const useIsTokensEmpty = () => {
   const network = useCurrentNetwork();
   const address = useCurrentAddress();
   const key = useMemo(() => getAssetsAtomKey({ network, address }), [network, address]);
-  return useAtomValue(assetsEmptyAtom(key));
+  return useAtomValue(tokensEmptyAtom(key));
+};
+
+export const useIsNftsEmpty = () => {
+  const network = useCurrentNetwork();
+  const address = useCurrentAddress();
+  const key = useMemo(() => getAssetsAtomKey({ network, address }), [network, address]);
+  return useAtomValue(nftsEmptyAtom(key));
 };
 
 export const useCurrentAssetsKey = () => {
@@ -123,4 +137,8 @@ export const useCurrentAssetsKey = () => {
 };
 
 export const useAssetsTotalPriceValueWithKey = (key: string) => useAtomValue(assetsTotalPriceValueAtom(key));
-export const useIsAssetsEmptyWithKey = (key: string) => useAtomValue(assetsEmptyAtom(key));
+
+const currentOpenNFTDetailAtom = atom<{ nft: AssetInfo; index: number; items?: Array<NFTItemDetail> } | undefined>(undefined);
+export const getCurrentOpenNFTDetail = () => getAtom(currentOpenNFTDetailAtom);
+export const setCurrentOpenNFTDetail = (data?: { nft: AssetInfo; index: number; items?: Array<NFTItemDetail> }) => setAtom(currentOpenNFTDetailAtom, data);
+export const useCurrentOpenNFTDetail = () => useAtomValue(currentOpenNFTDetailAtom);

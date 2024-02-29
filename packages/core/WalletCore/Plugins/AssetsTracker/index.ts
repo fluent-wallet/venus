@@ -87,7 +87,7 @@ class AssetsTrackerPluginClass implements Plugin {
 
   register({ networkType, chainId, fetcher }: { networkType: NetworkType; chainId?: string; fetcher: Fetcher }) {
     if (!networkType && !chainId) {
-      throw new Error('networkType or string is required');
+      throw new Error('networkType or chainId is required');
     }
     const existFetcher = this.fetcherMap.get(getFetcherKey({ networkType, chainId })) ?? (Object.create(null) as Fetcher);
     Object.assign(existFetcher, fetcher);
@@ -107,7 +107,10 @@ class AssetsTrackerPluginClass implements Plugin {
   private startPolling = async ({ network, address }: { network: Network; address: Address }, forceUpdate = false) => {
     if (!forceUpdate) {
       this.disposeCurrentSubscription();
+    } else {
+      this.cancelCurrentTracker();
     }
+
     this.cancel$ = new Subject<void>();
 
     let resolve!: (value: boolean | PromiseLike<boolean>) => void, reject!: (reason?: any) => void;
@@ -193,10 +196,7 @@ class AssetsTrackerPluginClass implements Plugin {
     this.cancel$ = null;
   };
 
-  public updateCurrentTracker = async () => {
-    this.cancelCurrentTracker();
-    return this.startPolling({ network: this.currentNetwork!, address: this.currentAddress! }, true);
-  };
+  public updateCurrentTracker = async () => this.startPolling({ network: this.currentNetwork!, address: this.currentAddress! }, true);
 }
 
 const assetsTracker = new AssetsTrackerPluginClass();
