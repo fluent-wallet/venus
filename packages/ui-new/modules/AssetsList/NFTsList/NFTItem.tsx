@@ -1,138 +1,144 @@
-import { Pressable, View, TouchableHighlight } from 'react-native';
-import clsx from 'clsx';
-import { Icon } from '@rneui/base';
-import { Text, useTheme } from '@rneui/themed';
+import { useCallback, useMemo } from 'react';
+import { Pressable, View, StyleSheet } from 'react-native';
+import { useTheme } from '@react-navigation/native';
+import plugins from '@core/WalletCore/Plugins';
 import { type AssetInfo } from '@core/WalletCore/Plugins/AssetsTracker/types';
-import { AssetType } from '@core/database/models/Asset';
-import Skeleton from '@components/Skeleton';
-import MixinImage from '@components/MixinImage';
-import DefaultNFTAvatar from '@assets/icons/defaultNFT.svg';
-import DefaultNFTImage from '@assets/images/NFT.svg';
-import { type NFTWithDetail, type NFTItemDetail } from './fetch';
+import { useCurrentOpenNFTDetail } from '@core/WalletCore/Plugins/ReactInject';
+import Text from '@components/Text';
+import ArrowRight from '@assets/icons/arrow-right2.svg';
+import { screenWidth } from '@utils/deviceInfo';
+import NFTIcon from './NFTIcon';
+
+export const StickyNFTItem: React.FC<{ startY: number; scrollY: number }> = ({ startY, scrollY }) => {
+  const currentOpenNFT = useCurrentOpenNFTDetail();
+  const showY = useMemo(() => startY + (currentOpenNFT?.index ?? 0) * 70, [startY, currentOpenNFT?.index]);
+  if (!currentOpenNFT || scrollY < showY) return null;
+  return <NFT isSticky data={currentOpenNFT.nft} onPress={() => plugins.NFTDetailTracker.setCurrentOpenNFT(undefined)} />;
+};
+
+const NFT: React.FC<{ data: AssetInfo; onPress: () => void; isSticky?: boolean }> = ({ data, onPress, isSticky }) => {
+  const { colors } = useTheme();
+
+  return (
+    <Pressable
+      testID="tokenItem"
+      style={({ pressed }) => [styles.container, isSticky && styles.sticky, { backgroundColor: pressed ? colors.underlay : colors.bgPrimary }]}
+      onPress={onPress}
+    >
+      <NFTIcon style={styles.nftIcon} source={data.icon} />
+      <View style={styles.textArea}>
+        <Text style={[styles.nftName, { color: colors.textPrimary }]} numberOfLines={1}>
+          {data.name}
+        </Text>
+        <ArrowRight width={15} height={15} color={colors.iconPrimary} />
+      </View>
+    </Pressable>
+  );
+};
 
 const NFTItem: React.FC<{
   data: AssetInfo;
-  isExpanded: boolean;
-  isCurrentOpenHeaderInView: boolean;
-  onPress?: () => void;
-  onSelectNftItem?: (nft: NFTWithDetail) => void;
-  isCurrentOpenNftInFetch: boolean;
-  details: Array<NFTItemDetail> | null;
+  currentOpenNFTDetail: ReturnType<typeof useCurrentOpenNFTDetail>;
+  onPress?: (v: AssetInfo) => void;
   index: number;
-  nftLength: number;
-}> = ({ onPress, onSelectNftItem, data, isExpanded, isCurrentOpenHeaderInView, isCurrentOpenNftInFetch, details, index, nftLength }) => {
-  const { theme } = useTheme();
+}> = ({ onPress, data, index, currentOpenNFTDetail }) => {
+  const { colors } = useTheme();
+
+  const handlePress = useCallback(() => {
+    plugins.NFTDetailTracker.setCurrentOpenNFT(currentOpenNFTDetail?.nft?.contractAddress === data.contractAddress ? undefined : { nft: data, index });
+  }, [data, index, currentOpenNFTDetail?.nft?.contractAddress]);
 
   return (
     <>
-      {(!isExpanded || (isExpanded && isCurrentOpenHeaderInView)) && (
-        <TouchableHighlight
-          testID={`"NFTTitle-${data.contractAddress}}`}
-          onPress={onPress}
-          underlayColor={theme.colors.underlayColor}
-          className={clsx(
-            'border-l-[1px] border-r-[1px]',
-            index === 0 && 'rounded-t-[10px] border-t-[1px]',
-            index === nftLength - 1 && !isExpanded && 'rounded-b-[10px] border-b-[1px]',
-          )}
-          style={{ backgroundColor: theme.colors.pureBlackAndWight, borderColor: theme.colors.borderSecondary }}
-        >
-          <View className="relative flex flex-row items-center w-full h-[72px] px-[24px]">
-            {data.icon ? (
-              <MixinImage
-                source={{ uri: data.icon }}
-                width={32}
-                height={32}
-                className="rounded-full"
-                fallback={<DefaultNFTAvatar className="rounded-full" width={32} height={32} />}
-              />
-            ) : (
-              <DefaultNFTAvatar className="rounded-full" width={32} height={32} />
-            )}
-            <Text style={{ color: theme.colors.contrastWhiteAndBlack }} className="text-base font-medium ml-[8px] mr-auto">
-              {data.name}
-            </Text>
-
-            <View className={clsx(isExpanded && 'rotate-[-180deg]')}>
-              <Icon name="keyboard-arrow-down" color={theme.colors.surfaceFourth} />
-            </View>
-            {index !== 0 && <View className="absolute top-0 left-0 w-[120%] h-[1px]" style={{ backgroundColor: theme.colors.borderSecondary }} />}
-          </View>
-        </TouchableHighlight>
-      )}
-
-      {isExpanded && (
-        <View
-          className={clsx(
-            'flex flex-row flex-wrap justify-between w-full p-[10px] border-l-[1px] border-r-[1px] overflow-hidden',
-            index === nftLength - 1 && isExpanded && 'rounded-b-[10px] border-b-[1px]',
-          )}
-          style={{ backgroundColor: theme.colors.pureBlackAndWight, borderColor: theme.colors.borderSecondary }}
-        >
-          {isCurrentOpenNftInFetch && !details && (
-            <>
-              {Array.from({ length: 2 }).map((_, i) => (
-                <View
-                  key={i}
-                  style={{ backgroundColor: theme.colors.surfaceCard, borderColor: theme.colors.borderSecondary }}
-                  className="p-[12px] w-[48%] rounded-[6px] border-[1px] overflow-hidden"
-                >
-                  <View className="w-full aspect-square rounded-[8px] overflow-hidden">
-                    <Skeleton width="100%" height="100%" />
-                  </View>
-                  <View className="mt-[8px] mb-[4px]">
-                    <Skeleton width={70} height={16} />
-                  </View>
-                  <View>
-                    <Skeleton width={141} height={16} />
-                  </View>
-                </View>
-              ))}
-            </>
-          )}
-
-          {details &&
-            details.map((detail, _index) => (
-              <Pressable
-                testID="NFTItem"
-                key={detail.tokenId}
-                style={{ width: '48%', marginTop: _index > 1 ? 16 : 0 }}
-                onPress={() => onSelectNftItem?.({ ...data, detail })}
-              >
-                <View
-                  style={{ backgroundColor: theme.colors.surfaceCard, borderColor: theme.colors.borderSecondary }}
-                  className="relative w-full p-[12px] rounded-[8px] border-[1px] overflow-hidden"
-                >
-                  <View className="flex items-center w-full aspect-square rounded-[8px] overflow-hidden">
-                    {detail.icon ? (
-                      <MixinImage source={{ uri: detail.icon }} fallback={<DefaultNFTImage width="100%" height="100%" />} className="w-full h-full" />
-                    ) : (
-                      <DefaultNFTImage width="100%" height="100%" />
-                    )}
-                  </View>
-                  <Text style={{ color: theme.colors.textSecondary }} className="mt-[8px] mb-[4px] text-sm leading-[16px]">
-                    {data.name}
-                  </Text>
-                  <Text style={{ color: theme.colors.contrastWhiteAndBlack }} className="text-sm leading-[16px]">
-                    {detail.name} #{detail.tokenId}
-                  </Text>
-                  {detail.amount && data.type === AssetType.ERC1155 && (
-                    <View
-                      className="absolute top-[16px] right-[16px] z-10 max-w-[128px] px-2 rounded-full"
-                      style={{ backgroundColor: theme.colors.surfaceCard }}
-                    >
-                      <Text className="text-[10px]" style={{ color: theme.colors.textPrimary }} numberOfLines={1}>
-                        x{detail.amount}
-                      </Text>
-                    </View>
-                  )}
-                </View>
-              </Pressable>
+      <NFT data={data} onPress={handlePress} />
+      {currentOpenNFTDetail?.nft?.contractAddress === data.contractAddress && (
+        <View style={styles.itemsArea}>
+          {!currentOpenNFTDetail?.items && <Text>loading...</Text>}
+          {currentOpenNFTDetail?.items &&
+            currentOpenNFTDetail.items.length > 0 &&
+            currentOpenNFTDetail.items.map((item) => (
+              <View style={[styles.item, { borderColor: colors.borderThird }]} key={item.tokenId}>
+                <NFTIcon style={styles.nftItemImg} source={item.icon} isNftItem placeholderContentFit="cover" contentFit="cover" />
+                <Text style={[styles.nftNameInItem, { color: colors.textSecondary }]}>{data.name}</Text>
+                <Text style={[styles.nftItemName, { color: colors.textPrimary }]}>
+                  {item.name} #{item.tokenId}
+                </Text>
+              </View>
             ))}
         </View>
       )}
     </>
   );
 };
+
+const styles = StyleSheet.create({
+  container: {
+    display: 'flex',
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    height: 70,
+  },
+  sticky: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    top: 0,
+  },
+  nftIcon: {
+    width: 40,
+    height: 40,
+  },
+  textArea: {
+    flex: 1,
+    marginLeft: 8,
+    display: 'flex',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  nftName: {
+    fontSize: 14,
+    fontWeight: '600',
+    lineHeight: 18,
+    maxWidth: 160,
+  },
+  itemsArea: {
+    marginVertical: 4,
+    display: 'flex',
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    paddingLeft: 56,
+    paddingRight: 16,
+    gap: 16,
+  },
+  item: {
+    flexGrow: 0,
+    flexShrink: 1,
+    width: (screenWidth - 56 - 16 - 16) / 2,
+    borderRadius: 6,
+    borderWidth: 1,
+    paddingHorizontal: 8,
+    paddingTop: 8,
+    paddingBottom: 16,
+  },
+  nftItemImg: {
+    width: '100%',
+    aspectRatio: 1,
+    borderRadius: 6,
+  },
+  nftNameInItem: {
+    fontSize: 12,
+    fontWeight: '300',
+    lineHeight: 16,
+    marginTop: 10,
+    marginBottom: 4,
+  },
+  nftItemName: {
+    fontSize: 14,
+    fontWeight: '600',
+    lineHeight: 18,
+  },
+});
 
 export default NFTItem;

@@ -14,6 +14,7 @@ import CryptoToolPlugin from './packages/WalletCoreExtends/Plugins/CryptoTool';
 import AuthenticationPlugin from './packages/WalletCoreExtends/Plugins/Authentication';
 import BSIMPlugin from './packages/WalletCoreExtends/Plugins/BSIM';
 import TransactionPlugin from './packages/core/WalletCore/Plugins/Transaction';
+import NFTDetailTracker from './packages/core/WalletCore/Plugins/NFTDetailTracker';
 import App from './packages/ui-new/App';
 import { name as appName } from './app.json';
 import { ENABLE_WALLET_CONNECT_FEATURE } from './packages/ui/utils/features';
@@ -25,8 +26,7 @@ SplashScreen.preventAutoHideAsync()
   .then((result) => console.log(`SplashScreen.preventAutoHideAsync() succeeded: ${result}`))
   .catch(console.warn); // it's good to explicitly catch and inspect any error
 
-
-const plugins = [CryptoToolPlugin, AuthenticationPlugin, BSIMPlugin, ReactInjectPlugin, AssetsTracker, TxTrackerPlugin, TransactionPlugin];
+const plugins = [CryptoToolPlugin, AuthenticationPlugin, BSIMPlugin, ReactInjectPlugin, AssetsTracker, TxTrackerPlugin, TransactionPlugin, NFTDetailTracker];
 
 if (ENABLE_WALLET_CONNECT_FEATURE.allow) {
   plugins.push(new WalletConnectPlugin());

@@ -17,7 +17,16 @@ export { useVaults } from './data/useVaults';
 export { useHasVault } from './data/useHasVault';
 export { useCurrentHdPath } from './data/useCurrentHdPath';
 export { useFinishedTxs, usePayloadOfTx, useUnfinishedTxs, useAssetOfTx } from './data/useTxs';
-export { useAssetsAllList, useAssetsNFTList, useAssetsTokenList, useAssetsTotalPriceValue, useAssetsInFetch, useIsAssetsEmpty } from './data/useAssets';
+export {
+  useAssetsAllList,
+  useAssetsNFTList,
+  useAssetsTokenList,
+  useAssetsTotalPriceValue,
+  useAssetsInFetch,
+  useIsNftsEmpty,
+  useIsTokensEmpty,
+  useCurrentOpenNFTDetail
+} from './data/useAssets';
 export { usePendingRequests, useAllRequests } from './data/useRequests';
 export { useAccountsManage, useAccountsOfGroupInManage, useAllAccountsInManage } from './data/useAccountsManage';
 export { useGroupFromId } from './data/useGroupFromId';

@@ -12,9 +12,9 @@ PODS:
   - DoubleConversion (1.1.6)
   - EXConstants (15.4.5):
     - ExpoModulesCore
-  - Expo (50.0.7):
+  - Expo (50.0.8):
     - ExpoModulesCore
-  - ExpoFileSystem (16.0.6):
+  - ExpoFileSystem (16.0.7):
     - ExpoModulesCore
   - ExpoImage (1.10.6):
     - ExpoModulesCore
@@ -1021,7 +1021,7 @@ PODS:
     - React-Core
   - react-native-get-random-values (1.10.0):
     - React-Core
-  - react-native-netinfo (11.2.1):
+  - react-native-netinfo (11.3.1):
     - React-Core
   - react-native-pager-view (7.0.0-rc.0):
     - React-Core
@@ -1559,8 +1559,8 @@ SPEC CHECKSUMS:
   CodePush: c3fdecab0dba1f760a1c6d1a562b9b88ce311fe1
   DoubleConversion: fea03f2699887d960129cc54bba7e52542b6f953
   EXConstants: 988aa430ca0f76b43cd46b66e7fae3287f9cc2fc
-  Expo: 1cf3922a9b26262b2556544d4defcecccd37d033
-  ExpoFileSystem: a9273932e69a9a1e1a8d01b6ba895bb8294bbea2
+  Expo: c2d3edc1b1e833e26d837b03aa46d9137ca63302
+  ExpoFileSystem: c7488590959bf85ebc114909eb8186cbd62e3a25
   ExpoImage: 8cf2d51de3d03b7e984e9b0ba8f19c0c22057001
   ExpoModulesCore: 1391529545de72f7f64ecabc7adb912306ab4d34
   EXSplashScreen: 5538a51beec451bf1fcf5198e3062790e2534df3
@@ -1583,8 +1583,8 @@ SPEC CHECKSUMS:
   libevent: 4049cae6c81cdb3654a443be001fb9bdceff7913
   libvmaf: 27f523f1e63c694d14d534cd0fddd2fab0ae8711
   libwebp: 1786c9f4ff8a279e4dac1e8f385004d5fc253009
-  lottie-ios: e047b1d2e6239b787cc5e9755b988869cf190494
-  lottie-react-native: b24edb4537f3cb3259c0ec512ed899d14e6e96d3
+  lottie-ios: 3d98679b41fa6fd6aff2352b3953dbd3df8a397e
+  lottie-react-native: 47647f2d687cc522179dc473650e4e5101021786
   OpenSSL-Universal: ebc357f1e6bc71fa463ccb2fe676756aff50e88c
   RCT-Folly: 7169b2b1c44399c76a47b5deaaba715eeeb476c0
   RCTRequired: 2544c0f1081a5fa12e108bb8cb40e5f4581ccd87
@@ -1611,7 +1611,7 @@ SPEC CHECKSUMS:
   react-native-compat: 5a5b7a043bec932a7814dc35f0649712bc10324e
   react-native-config: 86038147314e2e6d10ea9972022aa171e6b1d4d8
   react-native-get-random-values: 384787fd76976f5aec9465aff6fa9e9129af1e74
-  react-native-netinfo: 8a7fd3f7130ef4ad2fb4276d5c9f8d3f28d2df3d
+  react-native-netinfo: bdb108d340cdb41875c9ced535977cac6d2ff321
   react-native-pager-view: 563a43b511eea680f803ab4fb20bd7525fbde2cc
   react-native-quick-base64: 777057ea4286f806b00259ede65dc79c7c706320
   react-native-quick-crypto: 455c1b411db006dba1026a30681ececb19180187
@@ -1643,7 +1643,7 @@ SPEC CHECKSUMS:
   RNFlashList: 4b4b6b093afc0df60ae08f9cbf6ccd4c836c667a
   RNGestureHandler: 15c6ef51acba34c49ff03003806cf5dd6098f383
   RNKeychain: a65256b6ca6ba6976132cc4124b238a5b13b3d9c
-  RNReanimated: 15a855719335a6b655a214531e86d806edfd49da
+  RNReanimated: 4f0931c29b1535a3a40a6c06797b1d9d39f50754
   RNScreens: 17e2f657f1b09a71ec3c821368a04acbb7ebcb46
   RNScreenshotPrevent: cdfbe213203774c7486c6a2f198af8a4ebe10c47
   RNSVG: ba3e7232f45e34b7b47e74472386cf4e1a676d0a
@@ -1656,7 +1656,7 @@ SPEC CHECKSUMS:
   SSZipArchive: 62d4947b08730e4cda640473b0066d209ff033c9
   VisionCamera: 4b98b273902ac18491bb68481b6601f1f0da0f2d
   WatermelonDB: 842d22ba555425aa9f3ce551239a001200c539bc
-  Yoga: a716eea57d0d3430219c0a5a233e1e93ee931eb7
+  Yoga: 9e6a04eacbd94f97d94577017e9f23b3ab41cf6c
 
 PODFILE CHECKSUM: b1be883fbf850e57cf1434018595f1151c7898e2
 

@@ -9,7 +9,7 @@ import useInAsync from '@hooks/useInAsync';
 import Button from '@components/Button';
 import Text from '@components/Text';
 import BottomSheet, { BottomSheetTextInput, type BottomSheetMethods } from '@components/BottomSheet';
-import { screenHeight } from '@utils/deviceInfo'
+import { screenHeight } from '@utils/deviceInfo';
 export { type BottomSheetMethods };
 
 interface Props {
@@ -54,16 +54,15 @@ const ImportExistingWallet: React.FC<Props> = ({ bottomSheetRef, onSuccessConfir
       _status = await handleCheckInput();
     }
     if (_status?.type === 'success') {
-      setTimeout(() => bottomSheetRef.current?.close(), 100);
       Keyboard.dismiss();
       if (isModal) {
-        bottomSheetRef.current?.dismiss();
+        setTimeout(() => bottomSheetRef.current?.dismiss(), 100);
       } else {
-        bottomSheetRef.current?.close();
+        setTimeout(() => bottomSheetRef.current?.close(), 100);
       }
       onSuccessConfirm?.(existWalletValueRef.current);
     }
-  }, [status, onSuccessConfirm]);
+  }, [isModal, status, onSuccessConfirm]);
 
   const handlePressBackdrop = useCallback(() => {
     if (!textInputRef.current) return;
@@ -150,6 +149,6 @@ const styles = StyleSheet.create({
   },
 });
 
-const snapPoints = [`${(310 / screenHeight * 100).toFixed(2)}%`];
+const snapPoints = [`${((310 / screenHeight) * 100).toFixed(2)}%`];
 
 export default ImportExistingWallet;
