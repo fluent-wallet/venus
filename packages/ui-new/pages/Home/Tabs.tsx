@@ -2,14 +2,14 @@ import React, { useMemo, useEffect, useCallback, Fragment } from 'react';
 import { View, Pressable, StyleSheet } from 'react-native';
 import { useTheme } from '@react-navigation/native';
 import Animated, { useSharedValue, useAnimatedStyle, withTiming } from 'react-native-reanimated';
+import { atom, useAtomValue } from 'jotai';
 import PagerView from 'react-native-pager-view';
-import { useCurrentNetwork } from '@core/WalletCore/Plugins/ReactInject';
+import { useCurrentNetwork, setAtom } from '@core/WalletCore/Plugins/ReactInject';
 import { CFX_ESPACE_MAINNET_CHAINID, CFX_ESPACE_TESTNET_CHAINID } from '@core/consts/network';
 import Text from '@components/Text';
 import TokensList from '@modules/AssetsList/TokensList';
 import NFTsList from '@modules/AssetsList/NFTsList';
 import { StickyNFTItem } from '@modules/AssetsList/NFTsList/NFTItem';
-import { useTabPageViewScrollY } from './';
 
 type Tab = 'Tokens' | 'NFTs' | 'Activity';
 type Tabs = Array<Tab>;
@@ -74,6 +74,10 @@ export const Tabs: React.FC<Omit<Props, 'setCurrentTab'>> = ({ currentTab, pageV
   );
 };
 
+
+const tabPageViewScrollYAtom = atom(0);
+export const setScrollY = (height: number) => setAtom(tabPageViewScrollYAtom, height);
+const useTabPageViewScrollY = () => useAtomValue(tabPageViewScrollYAtom);
 export const StickyNFT: React.FC = () => {
   const scrollY = useTabPageViewScrollY();
   return <StickyNFTItem scrollY={scrollY} startY={200} />;

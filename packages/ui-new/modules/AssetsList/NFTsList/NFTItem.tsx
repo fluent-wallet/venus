@@ -12,17 +12,20 @@ import NFTIcon from './NFTIcon';
 export const StickyNFTItem: React.FC<{ startY: number; scrollY: number }> = ({ startY, scrollY }) => {
   const currentOpenNFT = useCurrentOpenNFTDetail();
   const showY = useMemo(() => startY + (currentOpenNFT?.index ?? 0) * 70, [startY, currentOpenNFT?.index]);
-  if (!currentOpenNFT || scrollY < showY) return null;
-  return <NFT isSticky data={currentOpenNFT.nft} onPress={() => plugins.NFTDetailTracker.setCurrentOpenNFT(undefined)} />;
+  if (!currentOpenNFT) return null;
+  return (
+    <NFTItem isSticky={scrollY < showY ? 'hide' : 'show'} data={currentOpenNFT.nft} onPress={() => plugins.NFTDetailTracker.setCurrentOpenNFT(undefined)} />
+  );
 };
 
-const NFT: React.FC<{ data: AssetInfo; onPress: () => void; isSticky?: boolean }> = ({ data, onPress, isSticky }) => {
+const NFTItem: React.FC<{ data: AssetInfo; onPress: () => void; isSticky?: 'hide' | 'show' }> = ({ data, onPress, isSticky }) => {
   const { colors } = useTheme();
 
   return (
     <Pressable
       testID="tokenItem"
-      style={({ pressed }) => [styles.container, isSticky && styles.sticky, { backgroundColor: pressed ? colors.underlay : colors.bgPrimary }]}
+      style={({ pressed }) => [styles.container, isSticky && styles.sticky, { backgroundColor: pressed ? colors.underlay : colors.bgPrimary, opacity: isSticky === 'hide' ? 0 : 1 }]}
+      pointerEvents={isSticky === 'hide' ? 'none' : 'auto'}
       onPress={onPress}
     >
       <NFTIcon style={styles.nftIcon} source={data.icon} />
@@ -36,7 +39,7 @@ const NFT: React.FC<{ data: AssetInfo; onPress: () => void; isSticky?: boolean }
   );
 };
 
-const NFTItem: React.FC<{
+const NFTItemAndDetail: React.FC<{
   data: AssetInfo;
   currentOpenNFTDetail: ReturnType<typeof useCurrentOpenNFTDetail>;
   onPress?: (v: AssetInfo) => void;
@@ -50,7 +53,7 @@ const NFTItem: React.FC<{
 
   return (
     <>
-      <NFT data={data} onPress={handlePress} />
+      <NFTItem data={data} onPress={handlePress} />
       {currentOpenNFTDetail?.nft?.contractAddress === data.contractAddress && (
         <View style={styles.itemsArea}>
           {!currentOpenNFTDetail?.items && <Text>loading...</Text>}
@@ -141,4 +144,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default NFTItem;
+export default NFTItemAndDetail;
