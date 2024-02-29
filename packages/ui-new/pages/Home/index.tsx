@@ -1,4 +1,4 @@
-import React, { useCallback, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { View, ScrollView, StyleSheet, type NativeSyntheticEvent, type NativeScrollEvent } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import PagerView from 'react-native-pager-view';
@@ -26,6 +26,10 @@ const Home: React.FC<StackScreenProps<typeof HomeStackName>> = ({ navigation }) 
     setScrollY(evt.nativeEvent.contentOffset.y);
   }, []);
 
+  useEffect(() => {
+    setScrollY(0);
+  }, [currentTab]);
+
   return (
     <>
       <SafeAreaView style={styles.container}>
@@ -43,7 +47,12 @@ const Home: React.FC<StackScreenProps<typeof HomeStackName>> = ({ navigation }) 
             }}
           />
         </View>
-        <ScrollView style={styles.scrollView} stickyHeaderIndices={[4]} onScroll={handleScroll} scrollEventThrottle={16}>
+        <ScrollView
+          style={styles.scrollView}
+          stickyHeaderIndices={[4]}
+          onScroll={currentTab === 'NFTs' ? handleScroll : undefined}
+          scrollEventThrottle={currentTab === 'NFTs' ? 16 : undefined}
+        >
           <CurrentAddress />
           <TotalPrice />
           <Navigations />
