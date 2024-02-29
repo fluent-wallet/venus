@@ -1,6 +1,6 @@
 import React from 'react';
 import { FlashList, type FlashListProps } from '@shopify/flash-list';
-import { useAssetsTokenList, useIsAssetsEmpty } from '@core/WalletCore/Plugins/ReactInject';
+import { useAssetsTokenList, useIsTokensEmpty } from '@core/WalletCore/Plugins/ReactInject';
 import { type AssetInfo } from '@core/WalletCore/Plugins/AssetsTracker/types';
 import TokenItem from './TokenItem';
 import ReceiveFunds from './ReceiveFunds';
@@ -13,7 +13,7 @@ interface Props {
 
 const TokenList: React.FC<Props> = ({ onPress, showReceiveFunds = false, hidePrice = false }) => {
   const tokens = useAssetsTokenList();
-  const isEmpty = useIsAssetsEmpty();
+  const isEmpty = useIsTokensEmpty();
 
   if (tokens === null) {
     return null;
@@ -35,7 +35,7 @@ export const FlashTokenList: React.FC<Omit<FlashProps, 'data' | 'renderItem' | '
   ...props
 }) => {
   const tokens = useAssetsTokenList();
-  const isEmpty = useIsAssetsEmpty();
+  const isEmpty = useIsTokensEmpty();
 
   if (tokens === null) {
     return null;

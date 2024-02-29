@@ -1,12 +1,15 @@
-import React, { useState, useMemo, useEffect, useRef, useCallback, Fragment } from 'react';
+import React, { useMemo, useEffect, useCallback, Fragment } from 'react';
 import { View, Pressable, StyleSheet } from 'react-native';
 import { useTheme } from '@react-navigation/native';
 import Animated, { useSharedValue, useAnimatedStyle, withTiming } from 'react-native-reanimated';
+import { atom, useAtomValue } from 'jotai';
 import PagerView from 'react-native-pager-view';
-import { useCurrentNetwork } from '@core/WalletCore/Plugins/ReactInject';
+import { useCurrentNetwork, setAtom } from '@core/WalletCore/Plugins/ReactInject';
 import { CFX_ESPACE_MAINNET_CHAINID, CFX_ESPACE_TESTNET_CHAINID } from '@core/consts/network';
 import Text from '@components/Text';
 import TokensList from '@modules/AssetsList/TokensList';
+import NFTsList from '@modules/AssetsList/NFTsList';
+import { StickyNFTItem } from '@modules/AssetsList/NFTsList/NFTItem';
 
 type Tab = 'Tokens' | 'NFTs' | 'Activity';
 type Tabs = Array<Tab>;
@@ -14,11 +17,11 @@ const TAB_WIDTH = 64;
 
 interface Props {
   currentTab: Tab;
-  setCurrentTab: (tab: Tab) => void;
   pageViewRef: React.RefObject<PagerView>;
+  setCurrentTab: (tab: Tab) => void;
 }
 
-export const Tabs: React.FC<Props> = ({ currentTab, setCurrentTab, pageViewRef }) => {
+export const Tabs: React.FC<Omit<Props, 'setCurrentTab'>> = ({ currentTab, pageViewRef }) => {
   const { colors } = useTheme();
 
   const currentNetwork = useCurrentNetwork();
@@ -66,9 +69,18 @@ export const Tabs: React.FC<Props> = ({ currentTab, setCurrentTab, pageViewRef }
         ))}
         <Animated.View style={[styles.animatedBorder, animatedStyles, { backgroundColor: colors.borderPrimary }]} />
       </View>
-      <View style={[styles.divider, { backgroundColor: colors.borderThird }]} />
+      <View style={[styles.divider, { backgroundColor: colors.borderThird }]}>{currentTab === 'NFTs' && <StickyNFT />}</View>
     </>
   );
+};
+
+
+const tabPageViewScrollYAtom = atom(0);
+export const setScrollY = (height: number) => setAtom(tabPageViewScrollYAtom, height);
+const useTabPageViewScrollY = () => useAtomValue(tabPageViewScrollYAtom);
+export const StickyNFT: React.FC = () => {
+  const scrollY = useTabPageViewScrollY();
+  return <StickyNFTItem scrollY={scrollY} startY={200} />;
 };
 
 export const TabsContent: React.FC<Props> = ({ currentTab, setCurrentTab, pageViewRef }) => {
@@ -90,7 +102,7 @@ export const TabsContent: React.FC<Props> = ({ currentTab, setCurrentTab, pageVi
       {tabs?.map((tab, index) => (
         <Fragment key={tab}>
           {tab === 'Tokens' && index === currentTabIndex && <TokensList showReceiveFunds />}
-          {tab === 'NFTs' && index === currentTabIndex && <Text>Nfts</Text>}
+          {tab === 'NFTs' && index === currentTabIndex && <NFTsList />}
           {tab === 'Activity' && index === currentTabIndex && <Text>Activity</Text>}
         </Fragment>
       ))}
@@ -122,6 +134,7 @@ const styles = StyleSheet.create({
     borderTopRightRadius: 1,
   },
   divider: {
+    position: 'relative',
     height: 1,
   },
   pagerView: {

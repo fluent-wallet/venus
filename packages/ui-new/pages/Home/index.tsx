@@ -1,5 +1,5 @@
-import React, { useRef, useState } from 'react';
-import { View, ScrollView, StyleSheet } from 'react-native';
+import React, { useCallback, useRef, useState } from 'react';
+import { View, ScrollView, StyleSheet, type NativeSyntheticEvent, type NativeScrollEvent } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import PagerView from 'react-native-pager-view';
 import methods from '@core/WalletCore/Methods';
@@ -12,7 +12,7 @@ import NetworkSelector from './NetworkSelector';
 import HeaderRight from './HeaderRight';
 import { CurrentAddress, TotalPrice } from './Address&TotalPrice';
 import Navigations from './Navigations';
-import { Tabs, TabsContent } from './Tabs';
+import { Tabs, TabsContent, setScrollY } from './Tabs';
 import NotBackup from './NotBackup';
 
 const Home: React.FC<StackScreenProps<typeof HomeStackName>> = ({ navigation }) => {
@@ -21,6 +21,10 @@ const Home: React.FC<StackScreenProps<typeof HomeStackName>> = ({ navigation }) 
 
   const [currentTab, setCurrentTab] = useState<'Tokens' | 'NFTs' | 'Activity'>('Tokens');
   const pageViewRef = useRef<PagerView>(null);
+
+  const handleScroll = useCallback((evt: NativeSyntheticEvent<NativeScrollEvent>) => {
+    setScrollY(evt.nativeEvent.contentOffset.y);
+  }, []);
 
   return (
     <>
@@ -39,12 +43,12 @@ const Home: React.FC<StackScreenProps<typeof HomeStackName>> = ({ navigation }) 
             }}
           />
         </View>
-        <ScrollView style={styles.scrollView} stickyHeaderIndices={[4]}>
+        <ScrollView style={styles.scrollView} stickyHeaderIndices={[4]} onScroll={handleScroll} scrollEventThrottle={16}>
           <CurrentAddress />
           <TotalPrice />
           <Navigations />
           <NotBackup navigation={navigation} />
-          <Tabs currentTab={currentTab} setCurrentTab={setCurrentTab} pageViewRef={pageViewRef} />
+          <Tabs currentTab={currentTab} pageViewRef={pageViewRef} />
           <TabsContent currentTab={currentTab} setCurrentTab={setCurrentTab} pageViewRef={pageViewRef} />
         </ScrollView>
       </SafeAreaView>

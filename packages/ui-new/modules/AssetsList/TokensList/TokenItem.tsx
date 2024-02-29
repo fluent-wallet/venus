@@ -26,7 +26,6 @@ const TokenItem: React.FC<{
   const price = useMemo(() => (data.priceValue ? `$${numberWithCommas(data.priceValue)}` : '--'), [data.priceValue]);
 
   const handlePress = useCallback(() => onPress?.(data), [onPress, data]);
-
   return (
     <Pressable
       testID="tokenItem"
