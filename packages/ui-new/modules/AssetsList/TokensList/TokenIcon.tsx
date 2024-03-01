@@ -10,7 +10,7 @@ const TokenIcon: React.FC<ImageProps> = ({ style, ...props }) => {
   const needRenderSVG = useMemo(() => Platform.OS === 'ios' && typeof props.source === 'string' && props.source.endsWith('svg'), [props.source]);
 
   if (needRenderSVG) {
-    return <SvgUri style={[styles.container, typeof style === 'object' && style]} uri={props.source as string} />;
+    return <SvgUri style={[styles.container, typeof style === 'object' && style]} uri={props.source as string} width={40} height={40} />;
   }
 
   return (

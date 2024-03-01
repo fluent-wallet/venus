@@ -8,6 +8,7 @@ import Text from '@components/Text';
 import ArrowRight from '@assets/icons/arrow-right2.svg';
 import { screenWidth } from '@utils/deviceInfo';
 import NFTIcon from './NFTIcon';
+import { SkeletoDetailItem } from './Skeleton';
 
 export const StickyNFTItem: React.FC<{ startY: number; scrollY: number }> = ({ startY, scrollY }) => {
   const currentOpenNFT = useCurrentOpenNFTDetail();
@@ -24,7 +25,11 @@ const NFTItem: React.FC<{ data: AssetInfo; onPress: () => void; isSticky?: 'hide
   return (
     <Pressable
       testID="tokenItem"
-      style={({ pressed }) => [styles.container, isSticky && styles.sticky, { backgroundColor: pressed ? colors.underlay : colors.bgPrimary, opacity: isSticky === 'hide' ? 0 : 1 }]}
+      style={({ pressed }) => [
+        styles.container,
+        isSticky && styles.sticky,
+        { backgroundColor: pressed ? colors.underlay : colors.bgPrimary, opacity: isSticky === 'hide' ? 0 : 1 },
+      ]}
       pointerEvents={isSticky === 'hide' ? 'none' : 'auto'}
       onPress={onPress}
     >
@@ -38,6 +43,13 @@ const NFTItem: React.FC<{ data: AssetInfo; onPress: () => void; isSticky?: 'hide
     </Pressable>
   );
 };
+
+const SkeletoDetail: React.FC<{ colors: ReturnType<typeof useTheme>['colors'] }> = ({ colors }) =>
+  Array.from({ length: 2 }).map((_, index) => (
+    <View style={[styles.item, { borderColor: colors.borderThird }]} key={index}>
+      <SkeletoDetailItem colors={colors} />
+    </View>
+  ));
 
 const NFTItemAndDetail: React.FC<{
   data: AssetInfo;
@@ -56,7 +68,7 @@ const NFTItemAndDetail: React.FC<{
       <NFTItem data={data} onPress={handlePress} />
       {currentOpenNFTDetail?.nft?.contractAddress === data.contractAddress && (
         <View style={styles.itemsArea}>
-          {!currentOpenNFTDetail?.items && <Text>loading...</Text>}
+          {!currentOpenNFTDetail?.items && <SkeletoDetail colors={colors} />}
           {currentOpenNFTDetail?.items &&
             currentOpenNFTDetail.items.length > 0 &&
             currentOpenNFTDetail.items.map((item) => (
@@ -119,11 +131,12 @@ const styles = StyleSheet.create({
     flexGrow: 0,
     flexShrink: 1,
     width: (screenWidth - 56 - 16 - 16) / 2,
+    minHeight: 205,
     borderRadius: 6,
     borderWidth: 1,
     paddingHorizontal: 8,
     paddingTop: 8,
-    paddingBottom: 16,
+    paddingBottom: 12,
   },
   nftItemImg: {
     width: '100%',

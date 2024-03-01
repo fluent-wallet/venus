@@ -61,6 +61,10 @@ class NFTDetailTrackerPluginClass implements Plugin {
   }
 
   private setup() {
+    events.currentAccountChangedSubject.subscribe((address) => {
+      setCurrentOpenNFTDetail(undefined);
+    });
+
     events.combineNetworkAndAddressChangedSubject.subscribe(([network, address]) => {
       if (this.currentNFTSubscription) {
         this.currentNFTSubscription?.unsubscribe();
@@ -109,7 +113,7 @@ class NFTDetailTrackerPluginClass implements Plugin {
     });
 
     try {
-      this.currentPollingSubscription = interval(8888)
+      this.currentPollingSubscription = interval(7777)
         .pipe(
           startWith(0),
           switchMap(() => fetcher({ nftAddress: nft.contractAddress!, accountAddress })),

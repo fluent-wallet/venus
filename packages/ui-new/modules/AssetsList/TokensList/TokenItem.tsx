@@ -87,9 +87,9 @@ const styles = StyleSheet.create({
   tokenBalance: {
     fontSize: 12,
     fontWeight: '300',
-    lineHeight: 15,
+    lineHeight: 16,
     maxWidth: 136,
-    marginTop: 5,
+    marginTop: 6,
   },
 });
 

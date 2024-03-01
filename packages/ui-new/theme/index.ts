@@ -58,6 +58,7 @@ export const lightColors = {
   underlay: palette.gray2,
   up: palette.green5,
   down: palette.red,
+  foreg: '#f3f3f3',
 };
 
 export const darkColors: typeof lightColors = {
@@ -84,6 +85,7 @@ export const darkColors: typeof lightColors = {
   underlay: palette.gray6,
   up: palette.green4,
   down: palette.red,
+  foreg: palette.gray6,
 };
 
 const defaultFont = {

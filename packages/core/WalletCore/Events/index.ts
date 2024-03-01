@@ -30,7 +30,7 @@ export class Events {
   public newestRequestSubject = newestRequestSubject;
   public combineNetworkAndAddressChangedSubject = combineLatest([this.currentNetworkObservable, this.currentAddressObservable]).pipe(
     filter((tuple): tuple is [Network, Address] => tuple.every((ele) => !!ele)),
-    debounceTime(40),
+    debounceTime(25),
     distinctUntilChanged(compareNetworkAndAddress),
   );
 }

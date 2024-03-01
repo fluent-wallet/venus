@@ -6,6 +6,7 @@ import { type AssetInfo } from '@core/WalletCore/Plugins/AssetsTracker/types';
 import Text from '@components/Text';
 import NoData from '@assets/icons/no-data.svg';
 import NFTItem from './NFTItem';
+import { SkeletonList } from './Skeleton';
 
 interface Props {
   onPress?: (v: AssetInfo) => void;
@@ -18,7 +19,7 @@ const NFTList: React.FC<Props> = ({ onPress }) => {
   const currentOpenNFTDetail = useCurrentOpenNFTDetail();
 
   if (nfts === null) {
-    return null;
+    return SkeletonList;
   }
 
   if (isEmpty) {

@@ -4,6 +4,7 @@ import { useAssetsTokenList, useIsTokensEmpty } from '@core/WalletCore/Plugins/R
 import { type AssetInfo } from '@core/WalletCore/Plugins/AssetsTracker/types';
 import TokenItem from './TokenItem';
 import ReceiveFunds from './ReceiveFunds';
+import Skeleton from './Skeleton';
 
 interface Props {
   onPress?: (v: AssetInfo) => void;
@@ -16,7 +17,7 @@ const TokenList: React.FC<Props> = ({ onPress, showReceiveFunds = false, hidePri
   const isEmpty = useIsTokensEmpty();
 
   if (tokens === null) {
-    return null;
+    return Skeleton;
   }
 
   if (showReceiveFunds && isEmpty) {

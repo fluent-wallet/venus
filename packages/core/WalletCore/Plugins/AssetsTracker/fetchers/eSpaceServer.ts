@@ -45,9 +45,6 @@ export const fetchESpaceServer = async ({
       serverFetcher.fetchServer<{ message: string; status: '0' | '1'; result?: { list: Array<AssetInfoFromScan> } }>({
         key: `eSpaceAssetsFromScan-${hexAddress}-${network.chainId}`,
         url: `account/tokens?account=${hexAddress}${assetType ? `&tokenType=${assetType}` : ''}`,
-        options: {
-          retry: 2,
-        },
       }),
     ).pipe(
       concatMap((scanRes) => {

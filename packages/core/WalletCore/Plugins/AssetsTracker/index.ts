@@ -134,7 +134,7 @@ class AssetsTrackerPluginClass implements Plugin {
       const nativeAsset = (await network.nativeAssetQuery.fetch())?.[0];
       const assetsAtomKey = getAssetsAtomKey({ network, address });
 
-      this.currentSubscription = interval(8888)
+      this.currentSubscription = interval(7777)
         .pipe(
           startWith(0),
           switchMap(() => {
