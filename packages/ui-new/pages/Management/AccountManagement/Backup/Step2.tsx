@@ -54,7 +54,7 @@ const BackupStep2: React.FC<BackupScreenProps<typeof BackupStep2StackName>> = ({
 
   return (
     <BackupBottomSheet onClose={navigation.goBack}>
-      <Text style={[styles.largetText, styles.notice, { color: colors.textPrimary }]}>
+      <Text style={[styles.largeText, styles.notice, { color: colors.textPrimary }]}>
         ✏️ Write Down Your {backupType === VaultType.HierarchicalDeterministic ? 'Seed Phrase' : 'Private Key'}
       </Text>
       <Text style={[styles.description, styles.noticeDescription, { color: colors.textSecondary }]}>✅ Do NOT take a screenshot of this page</Text>
@@ -69,7 +69,7 @@ const BackupStep2: React.FC<BackupScreenProps<typeof BackupStep2StackName>> = ({
           <>
             <Image style={styles.mask} source={backupType === VaultType.HierarchicalDeterministic ? MaskSeedPhrase : MaskPrivateKey} contentFit="contain" />
 
-            <Text style={[styles.largetText, { color: colors.textPrimary, textAlign: 'center' }]}>Tap to view the {backupText}</Text>
+            <Text style={[styles.largeText, { color: colors.textPrimary, textAlign: 'center' }]}>Tap to view the {backupText}</Text>
             <Text style={[styles.description, { color: colors.textSecondary, textAlign: 'center', marginTop: 8 }]}>Make sure your environment is safe</Text>
             <Button style={styles.viewBtn} mode="auto" onPress={handleClickView} loading={inAsync}>
               View
@@ -134,7 +134,7 @@ const BackupStep2: React.FC<BackupScreenProps<typeof BackupStep2StackName>> = ({
 };
 
 const styles = StyleSheet.create({
-  largetText: {
+  largeText: {
     fontSize: 22,
     fontWeight: '600',
     lineHeight: 28,

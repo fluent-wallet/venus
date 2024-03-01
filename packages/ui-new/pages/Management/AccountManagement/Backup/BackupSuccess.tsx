@@ -1,6 +1,6 @@
-import React from 'react';
+import React, { useCallback } from 'react';
 import { View, StyleSheet } from 'react-native';
-import { useTheme, useNavigation } from '@react-navigation/native';
+import { useTheme, useNavigation, CommonActions } from '@react-navigation/native';
 import { Image } from 'expo-image';
 import Text from '@components/Text';
 import Button from '@components/Button';
@@ -14,19 +14,17 @@ export const BackupSuccessStackName = 'BackupSuccess';
 const BackupSuccess: React.FC = () => {
   const { colors } = useTheme();
   const navigation = useNavigation<StackScreenProps<typeof BackupStackName>['navigation']>();
+  const goHome = useCallback(() => {
+    navigation.dispatch(CommonActions.reset({ index: 0, routes: [{ name: HomeStackName }] }));
+  }, [navigation]);
 
   return (
-    <BackupBottomSheet onClose={() => navigation.navigate(HomeStackName)} snapPoints={snapPoints} showTitle={false}>
+    <BackupBottomSheet onClose={goHome} snapPoints={snapPoints} showTitle={false}>
       <View style={styles.container}>
         <Text style={[styles.title, { color: colors.textPrimary }]}>🥳 Backuped !</Text>
         <Image style={styles.img} source={Img} contentFit="contain" />
 
-        <Button
-          style={styles.btn}
-          onPress={() => {
-            navigation.navigate(HomeStackName);
-          }}
-        >
+        <Button style={styles.btn} onPress={goHome}>
           OK
         </Button>
       </View>
