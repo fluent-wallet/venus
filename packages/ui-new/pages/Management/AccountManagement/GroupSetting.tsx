@@ -11,7 +11,7 @@ import Checkbox from '@components/Checkbox';
 import Button from '@components/Button';
 import BottomSheet, { snapPoints, type BottomSheetMethods } from '@components/BottomSheet';
 import { AccountItemView } from '@modules/AccountsList';
-import { GroupSettingStackName, HDSettingStackName, BackupStackName, type StackScreenProps } from '@router/configs';
+import { GroupSettingStackName, HDSettingStackName, BackupStackName, BackupStep1StackName, type StackScreenProps } from '@router/configs';
 import ArrowRight from '@assets/icons/arrow-right2.svg';
 import Delete from '@assets/icons/delete.svg';
 import DeleteConfirm from './DeleteConfirm';
@@ -93,7 +93,7 @@ const GroupConfig: React.FC<StackScreenProps<typeof GroupSettingStackName>> = ({
               <Text style={[styles.description, styles.backupDescription, { color: colors.textSecondary }]}>Backup</Text>
               <Pressable
                 style={({ pressed }) => [styles.row, { backgroundColor: pressed ? colors.underlay : 'transparent' }]}
-                onPress={() => navigation.navigate(BackupStackName, { groupId: route.params.groupId })}
+                onPress={() => navigation.navigate(BackupStackName, { screen: BackupStep1StackName, params: { groupId: route.params.groupId } })}
               >
                 <Text style={[styles.mainText, styles.backupText, { color: colors.textPrimary }]}>Seed Phrase</Text>
                 <ArrowRight color={colors.iconPrimary} />

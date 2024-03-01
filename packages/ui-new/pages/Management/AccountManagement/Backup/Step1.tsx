@@ -1,12 +1,11 @@
 import React from 'react';
-import { StyleSheet, View } from 'react-native';
-import { useNavigation, useTheme } from '@react-navigation/native';
+import { StyleSheet } from 'react-native';
+import { useTheme } from '@react-navigation/native';
 import { Image } from 'expo-image';
 import Text from '@components/Text';
 import Button from '@components/Button';
 import { isSmallDevice } from '@utils/deviceInfo';
 import Img from '@assets/images/welcome-img.webp';
-import BottomSheet, { snapPoints } from '@components/BottomSheet';
 import BackupBottomSheet from './BackupBottomSheet';
 import { BackupScreenProps, BackupStep2StackName } from '@router/configs';
 

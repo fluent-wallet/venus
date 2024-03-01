@@ -11,7 +11,7 @@ import TextInput from '@components/TextInput';
 import Checkbox from '@components/Checkbox';
 import Button from '@components/Button';
 import BottomSheet, { snapPoints, type BottomSheetMethods } from '@components/BottomSheet';
-import { AccountSettingStackName, BackupStackName, type StackScreenProps } from '@router/configs';
+import { AccountSettingStackName, BackupStackName, BackupStep1StackName, type StackScreenProps } from '@router/configs';
 import ArrowRight from '@assets/icons/arrow-right2.svg';
 import Delete from '@assets/icons/delete.svg';
 import DeleteConfirm from './DeleteConfirm';
@@ -95,7 +95,7 @@ const AccountConfig: React.FC<StackScreenProps<typeof AccountSettingStackName>> 
               <Text style={[styles.description, styles.backupDescription, { color: colors.textSecondary }]}>Backup</Text>
               <Pressable
                 style={({ pressed }) => [styles.row, { backgroundColor: pressed ? colors.underlay : 'transparent' }]}
-                onPress={() => navigation.navigate(BackupStackName, { accountId: route.params.accountId })}
+                onPress={() => navigation.navigate(BackupStackName, { screen: BackupStep1StackName, params: { accountId: route.params.accountId } })}
               >
                 <Text style={[styles.mainText, styles.backupText, { color: colors.textPrimary }]}>Private Key</Text>
                 <ArrowRight color={colors.iconPrimary} />

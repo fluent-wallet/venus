@@ -1,6 +1,6 @@
 import React, { useState, useCallback, useMemo } from 'react';
 import { View, Pressable, StyleSheet } from 'react-native';
-import { useFocusEffect, useTheme } from '@react-navigation/native';
+import { useTheme } from '@react-navigation/native';
 import Clipboard from '@react-native-clipboard/clipboard';
 import { showMessage } from 'react-native-flash-message';
 import QRCode from 'react-native-qrcode-svg';
@@ -101,7 +101,7 @@ const BackupStep2: React.FC<BackupScreenProps<typeof BackupStep2StackName>> = ({
         {secretData && backupType === VaultType.HierarchicalDeterministic && (
           <View style={styles.phraseContainer}>
             {phrases?.map((phrase, index) => (
-              <Text key={index} style={[styles.phrase, { backgroundColor: colors.bgPrimary }]}>
+              <Text key={index} style={[styles.phrase, { color: colors.textPrimary, backgroundColor: colors.bgPrimary }]}>
                 {index + 1}. {phrase}
               </Text>
             ))}

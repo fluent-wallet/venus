@@ -1,4 +1,4 @@
-import React, { type MutableRefObject } from 'react';
+import React from 'react';
 import { View, StyleSheet } from 'react-native';
 import { useTheme, useNavigation } from '@react-navigation/native';
 import { Image } from 'expo-image';
@@ -16,7 +16,7 @@ const BackupSuccess: React.FC = () => {
   const navigation = useNavigation<StackScreenProps<typeof BackupStackName>['navigation']>();
 
   return (
-    <BackupBottomSheet onClose={() => navigation.navigate(HomeStackName)}>
+    <BackupBottomSheet onClose={() => navigation.navigate(HomeStackName)} snapPoints={snapPoints} showTitle={false}>
       <View style={styles.container}>
         <Text style={[styles.title, { color: colors.textPrimary }]}>🥳 Backuped !</Text>
         <Image style={styles.img} source={Img} contentFit="contain" />

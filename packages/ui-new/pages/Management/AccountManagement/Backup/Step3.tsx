@@ -1,16 +1,12 @@
-import React, { useState, useMemo, useRef, Fragment } from 'react';
+import React, { useState, useMemo, Fragment } from 'react';
 import { View, Pressable, StyleSheet } from 'react-native';
-import { useNavigation, useTheme } from '@react-navigation/native';
+import { useTheme } from '@react-navigation/native';
 import { showMessage } from 'react-native-flash-message';
 import { wordlists } from 'bip39';
 import { sampleSize, shuffle } from 'lodash-es';
-import { type Vault } from '@core/database/models/Vault';
 import Text from '@components/Text';
 import Button from '@components/Button';
-import { BottomSheetMethods } from '@components/BottomSheet';
-import BackupSuccess from './BackupSuccess';
-import BottomSheet, { snapPoints } from '@components/BottomSheet';
-import { BackupScreenProps, BackupStep3StackName, BackupSuccessStackName, HomeStackName } from '@router/configs';
+import { BackupScreenProps, BackupStep3StackName, BackupSuccessStackName } from '@router/configs';
 import BackupBottomSheet from './BackupBottomSheet';
 import { useVaultFromId } from '@core/WalletCore/Plugins/ReactInject';
 

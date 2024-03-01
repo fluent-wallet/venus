@@ -1,18 +1,20 @@
-import BottomSheet, { snapPoints } from '@components/BottomSheet';
+import React, { type ComponentProps } from 'react';
 import { useTheme } from '@react-navigation/native';
 import { Text, View, StyleSheet } from 'react-native';
+import BottomSheet, { snapPoints as defaultSnapPoints } from '@components/BottomSheet';
 
-interface Props {
+interface Props extends ComponentProps<typeof BottomSheet> {
   children: React.ReactNode;
-  onClose: () => void;
+  showTitle?: boolean;
 }
 
-const BackupBottomSheet: React.FC<Props> = ({ children, onClose }) => {
+const BackupBottomSheet: React.FC<Props> = ({ children, snapPoints, showTitle = true, ...props }) => {
   const { colors } = useTheme();
+
   return (
-    <BottomSheet snapPoints={snapPoints.large} index={0} isModal={false} onClose={onClose}>
+    <BottomSheet snapPoints={snapPoints || defaultSnapPoints.large} index={0} isModal={false} {...props}>
       <View style={styles.container}>
-        <Text style={[styles.title, { color: colors.textPrimary }]}>Back Up</Text>
+        {showTitle && <Text style={[styles.title, { color: colors.textPrimary }]}>Back Up</Text>}
         {children}
       </View>
     </BottomSheet>

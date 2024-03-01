@@ -22,7 +22,7 @@ import BackupSuccess from './BackupSuccess';
 
 const BackupStack = createNativeStackNavigator<BackupStackParamList>();
 
-const Backup: React.FC<StackScreenProps<typeof BackupStackName>> = (props) => {
+const Backup: React.FC<StackScreenProps<typeof BackupStackName>> = () => {
   return (
     <BackupStack.Navigator>
       <BackupStack.Screen name={BackupStep1StackName} component={BackupStep1} options={SheetBottomOption} />
