@@ -1,14 +1,16 @@
 import { injectable, inject } from 'inversify';
 import { from, concatMap, firstValueFrom, toArray } from 'rxjs';
-import { type Network } from '../../database/models/Network';
+import { memoize } from 'lodash-es';
+import { fetchChain } from '@cfx-kit/dapp-utils/dist/fetch';
+import { networkRpcPrefixMap, networkRpcSuffixMap, NetworkType, type Network } from '../../database/models/Network';
 import VaultType from '../../database/models/Vault/VaultType';
 import {
   createNetwork as _createNetwork,
-  type NetworkParams,
   querySelectedNetwork,
   queryNetworkById,
   queryNetworkByChainId,
   queryNetworkByNetId,
+  type NetworkParams,
 } from '../../database/models/Network/query';
 import { type Account } from '../../database/models/Account';
 import { createAddress } from '../../database/models/Address/query';
@@ -19,6 +21,7 @@ import database from '../../database';
 import TableName from '../../database/TableName';
 import { getNthAccountOfHDKey } from '../../utils/hdkey';
 import { fromPrivate } from '../../utils/account';
+import { validateCfxAddress, validateHexAddress } from '../../utils/address';
 import { GetDecryptedVaultDataMethod } from './getDecryptedVaultData';
 
 @injectable()
@@ -42,7 +45,7 @@ export class NetworkMethod {
         decimals: params.nativeAsset?.decimals || 18,
         icon: params.nativeAsset?.icon,
       },
-      true
+      true,
     );
 
     const hdPathValue = params.hdPath?.value;
@@ -53,8 +56,8 @@ export class NetworkMethod {
           from(addresses).pipe(
             concatMap((address) => from(address.network.fetch())), // Get network for each address
             concatMap((network) => from(network.hdPath.fetch())), // Get HdPath for each network
-            toArray()
-          )
+            toArray(),
+          ),
         );
         const sameHdPathIndex = allAddressHdPaths.findIndex((hdPath) => hdPath.value === hdPathValue);
         let hex: string;
@@ -82,7 +85,7 @@ export class NetworkMethod {
         }
 
         return createAddress({ network, assetRule: defaultAssetRule, account, hex }, true);
-      })
+      }),
     );
 
     if (prepareCreate) return [network, ...newAddresses, defaultAssetRule, nativeAsset];
@@ -110,15 +113,40 @@ export class NetworkMethod {
         .map((network) =>
           network.prepareUpdate((_network) => {
             _network.selected = false;
-          })
+          }),
         )
         .concat(
           targetNetwork!.prepareUpdate((_network) => {
             _network.selected = true;
-          })
+          }),
         );
       return await database.batch(...updates);
     });
   }
 
+  async checkIsValidAddress({ networkType, addressValue }: { networkType: NetworkType; addressValue: string }) {
+    if (!addressValue) return false;
+    if (networkType === NetworkType.Conflux) {
+      return validateCfxAddress(addressValue);
+    } else if (networkType === NetworkType.Ethereum) {
+      return validateHexAddress(addressValue);
+    } else {
+      return false;
+    }
+  }
+
+  private async _checkIsContractAddress({ networkType, endpoint, addressValue }: { networkType: NetworkType; endpoint: string; addressValue: string }) {
+    const rpcPrefix = networkRpcPrefixMap[networkType];
+    const rpcSuffix = networkRpcSuffixMap[networkType];
+
+    try {
+      await fetchChain<string>({ url: endpoint, method: `${rpcPrefix}_getCode`, params: [addressValue, rpcSuffix] });
+      return true;
+    } catch (err) {
+      if (String(err)?.includes('Invalid response')) return false;
+      throw err;
+    }
+  }
+
+  checkIsContractAddress = memoize(this._checkIsContractAddress);
 }

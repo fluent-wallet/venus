@@ -20,6 +20,7 @@ import { name as appName } from './app.json';
 import { ENABLE_WALLET_CONNECT_FEATURE } from './packages/ui/utils/features';
 import * as SplashScreen from 'expo-splash-screen';
 LogBox.ignoreLogs(['RCTBridge required dispatch_sync to load']);
+LogBox.ignoreLogs(['Error: Invalid response']);
 
 // Prevent native splash screen from autohiding before App component declaration
 SplashScreen.preventAutoHideAsync()

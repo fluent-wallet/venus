@@ -4,6 +4,11 @@ import { type Address } from '../Address';
 import { type Network } from '../Network';
 import TableName from '../../TableName';
 
+export enum AddressType {
+  EOA = 'EOA',
+  Contract = 'Contract',
+}
+
 export class AddressBook extends Model {
   static table = TableName.Address;
   static associations = {
@@ -13,6 +18,7 @@ export class AddressBook extends Model {
 
   @text('name') name!: string;
   @text('address_value') addressValue!: string;
+  @text('type') type!: AddressType;
   @immutableRelation(TableName.Address, 'address_id') account!: Relation<Address>;
   @immutableRelation(TableName.Network, 'network_id') network!: Relation<Network>;
 }

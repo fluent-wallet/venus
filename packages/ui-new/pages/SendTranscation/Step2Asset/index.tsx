@@ -4,7 +4,7 @@ import { useTheme } from '@react-navigation/native';
 import Text from '@components/Text';
 import TextInput from '@components/TextInput';
 import Button from '@components/Button';
-import BackupBottomSheet from './SendTranscationBottomSheet';
+import BackupBottomSheet from '../SendTranscationBottomSheet';
 import { SendTranscationStep2StackName, SendTranscationStep3StackName, type SendTranscationScreenProps } from '@router/configs';
 
 const SendTranscationStep2Asset: React.FC<SendTranscationScreenProps<typeof SendTranscationStep2StackName>> = ({ navigation }) => {

@@ -1,17 +1,7 @@
 import { fetchChain, fetchChainBatch, fetchChainMulticall } from '@cfx-kit/dapp-utils/dist/fetch';
 import { createERC20Contract } from '@cfx-kit/dapp-utils/dist/contract';
-import { NetworkType } from '../../../../database/models/Network';
+import { NetworkType, networkRpcPrefixMap, networkRpcSuffixMap } from '../../../../database/models/Network';
 import { AssetType } from '../../../../database/models/Asset';
-
-const networkRpcPrefixMap = {
-  [NetworkType.Conflux]: 'cfx',
-  [NetworkType.Ethereum]: 'eth',
-} as const;
-
-const networkRpcSuffixMap = {
-  [NetworkType.Conflux]: 'latest_state',
-  [NetworkType.Ethereum]: 'latest',
-} as const;
 
 export const fetchNativeAssetBalance = ({ networkType, endpoint, account }: { networkType: NetworkType; endpoint: string; account: string }) => {
   switch (networkType) {

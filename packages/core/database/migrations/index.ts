@@ -112,6 +112,7 @@ const migrations = schemaMigrations({
             { name: 'network_id', type: 'string', isIndexed: true },
             { name: 'name', type: 'string' },
             { name: 'address_value', type: 'string' },
+            { name: 'type', type: 'string'}
           ],
         }),
       ],

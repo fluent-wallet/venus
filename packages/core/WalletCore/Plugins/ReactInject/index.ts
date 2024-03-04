@@ -1,7 +1,7 @@
 import { type Plugin } from '../';
 export { useAccountGroups } from './data/useAccountGroups';
 export { useNetworks } from './data/useNetworks';
-export { useCurrentNetwork } from './data/useCurrentNetwork';
+export { useCurrentNetwork, getCurrentNetwork } from './data/useCurrentNetwork';
 export { useCurrentAccount } from './data/useCurrentAccount';
 export { useCurrentAddress, useCurrentAddressValue } from './data/useCurrentAddress';
 export { useAccountsOfGroup } from './data/useAccountsOfGroup';
@@ -35,6 +35,7 @@ export { useAccountOfAddress } from './data/useAccountOfAddress';
 export { default as VaultType } from '../../../database/models/Vault/VaultType';
 export { default as VaultSourceType } from '../../../database/models/Vault/VaultSourceType';
 export { NetworkType, ChainType } from '../../../database/models/Network';
+export { AddressType } from '../../../database/models/AddressBook';
 
 declare module '../../../WalletCore/Plugins' {
   interface Plugins {

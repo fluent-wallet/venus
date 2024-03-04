@@ -18,6 +18,16 @@ export enum ChainType {
   Custom = 'Custom',
 }
 
+export const networkRpcPrefixMap = {
+  [NetworkType.Conflux]: 'cfx',
+  [NetworkType.Ethereum]: 'eth',
+} as const;
+
+export const networkRpcSuffixMap = {
+  [NetworkType.Conflux]: 'latest_state',
+  [NetworkType.Ethereum]: 'latest',
+} as const;
+
 export class Network extends Model {
   static table = TableName.Network;
   static associations = {

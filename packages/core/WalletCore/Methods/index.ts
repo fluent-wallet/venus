@@ -97,6 +97,12 @@ export class Methods {
   public switchToNetwork(...args: Parameters<NetworkMethod['switchToNetwork']>) {
     return this.NetworkMethod.switchToNetwork(...args);
   }
+  public checkIsValidAddress(...args: Parameters<NetworkMethod['checkIsValidAddress']>) {
+    return this.NetworkMethod.checkIsValidAddress(...args);
+  }
+  public checkIsContractAddress(...args: Parameters<NetworkMethod['checkIsContractAddress']>) {
+    return this.NetworkMethod.checkIsContractAddress(...args);
+  }
 
   @inject(DatabaseMethod) private DatabaseMethod!: DatabaseMethod;
   public initDatabaseDefault(...args: Parameters<DatabaseMethod['initDatabaseDefault']>) {
