@@ -1,5 +1,5 @@
-import { useCallback, useRef, useState } from 'react';
-import { PanResponder, StyleSheet, View, type NativeSyntheticEvent, type NativeScrollEvent } from 'react-native';
+import { useCallback, useRef, type ComponentProps } from 'react';
+import { StyleSheet, View, type NativeScrollEvent } from 'react-native';
 import { Gesture, GestureDetector, ScrollView } from 'react-native-gesture-handler';
 import Animated, { ReduceMotion, runOnJS, useAnimatedScrollHandler, useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 import RefreshIcon from '@assets/icons/refreshLogo.webp';
@@ -8,13 +8,12 @@ const AnimatedScroll = Animated.createAnimatedComponent(ScrollView);
 const maxContentHeight = 150;
 const refreshHeight = 100;
 
-const HomeRefresh: React.FC<
-  React.PropsWithChildren<{
-    onRefresh: (done: () => void) => void;
-    onScroll?: (event: NativeScrollEvent) => void;
-    stickyHeaderIndices?: number[];
-  }>
-> = ({ children, onRefresh, onScroll, stickyHeaderIndices }) => {
+export interface Props extends Omit<ComponentProps<ScrollView>, 'onScroll'> {
+  onScroll?: (evt: NativeScrollEvent) => void;
+  onRefresh: (done: () => void) => void;
+}
+
+const HomeRefresh: React.FC<Props> = ({ children, onRefresh, onScroll, stickyHeaderIndices }) => {
   const scrollPosition = useSharedValue(0);
   const pullPosition = useSharedValue(0);
   const isReadyToRefresh = useSharedValue(false);
@@ -27,10 +26,10 @@ const HomeRefresh: React.FC<
   }, [pullPosition, isRefreshing]);
   // store the last scroll position
   const handleScroll = useAnimatedScrollHandler({
-    onScroll: (e) => {
-      scrollPosition.value = e.contentOffset.y;
+    onScroll: (evt) => {
+      scrollPosition.value = evt.contentOffset.y;
       if (onScroll) {
-        runOnJS(onScroll)(e);
+        runOnJS(onScroll)(evt);
       }
     },
   });
@@ -71,7 +70,7 @@ const HomeRefresh: React.FC<
         }
       }
     })
-    .onEnd((e) => {
+    .onEnd((_) => {
       if (isRefreshing.value) return;
       const refreshingHeight = 100;
       pullPosition.value = withTiming(isReadyToRefresh.value ? refreshingHeight : 0, { reduceMotion: ReduceMotion.Never, duration: 200 });
@@ -96,7 +95,7 @@ const HomeRefresh: React.FC<
           <AnimatedScroll
             ref={scrollRef}
             onScroll={handleScroll}
-            scrollEventThrottle={30}
+            scrollEventThrottle={16}
             showsVerticalScrollIndicator={false}
             stickyHeaderIndices={stickyHeaderIndices}
           >

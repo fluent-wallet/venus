@@ -1,7 +1,8 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { View, ScrollView, StyleSheet, type NativeSyntheticEvent, type NativeScrollEvent } from 'react-native';
+import { View, StyleSheet, type NativeScrollEvent } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import PagerView from 'react-native-pager-view';
+import plugins from '@core/WalletCore/Plugins';
 import methods from '@core/WalletCore/Methods';
 import { getCurrentNetwork } from '@core/WalletCore/Plugins/ReactInject/data/useCurrentNetwork';
 import { HomeStackName, type StackScreenProps } from '@router/configs';
@@ -14,7 +15,7 @@ import { CurrentAddress, TotalPrice } from './Address&TotalPrice';
 import Navigations from './Navigations';
 import { Tabs, TabsContent, setScrollY } from './Tabs';
 import NotBackup from './NotBackup';
-import HomeRefresh from '@components/HomeRefresh';
+import RefreshScrollView from './RefreshScrollView';
 
 const Home: React.FC<StackScreenProps<typeof HomeStackName>> = ({ navigation }) => {
   const accountSelectorRef = useRef<BottomSheetMethods>(null!);
@@ -30,6 +31,11 @@ const Home: React.FC<StackScreenProps<typeof HomeStackName>> = ({ navigation }) 
   useEffect(() => {
     setScrollY(0);
   }, [currentTab]);
+
+  const handleRefresh = useCallback((closeRefresh: VoidFunction) => {
+    plugins.NFTDetailTracker.updateCurrentOpenNFT();
+    plugins.AssetsTracker.updateCurrentTracker().finally(() => closeRefresh());
+  }, []);
 
   return (
     <>
@@ -48,20 +54,14 @@ const Home: React.FC<StackScreenProps<typeof HomeStackName>> = ({ navigation }) 
             }}
           />
         </View>
-        <HomeRefresh
-          stickyHeaderIndices={[4]}
-          onRefresh={(closeRefresh) => {
-            setTimeout(closeRefresh, 1000);
-          }}
-          onScroll={currentTab === 'NFTs' ? handleScroll : undefined}
-        >
+        <RefreshScrollView stickyHeaderIndices={[4]} onRefresh={handleRefresh} onScroll={currentTab === 'NFTs' ? handleScroll : undefined}>
           <CurrentAddress />
           <TotalPrice />
           <Navigations />
           <NotBackup navigation={navigation} />
           <Tabs currentTab={currentTab} pageViewRef={pageViewRef} />
           <TabsContent currentTab={currentTab} setCurrentTab={setCurrentTab} pageViewRef={pageViewRef} />
-        </HomeRefresh>
+        </RefreshScrollView>
       </SafeAreaView>
       <AccountSelector selectorRef={accountSelectorRef} />
       <NetworkSelector selectorRef={networkSelectorRef} />
@@ -82,9 +82,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 16,
     marginBottom: 16,
-  },
-  scrollView: {
-    flex: 1,
   },
   walletLinkContainer: {
     marginTop: 32,

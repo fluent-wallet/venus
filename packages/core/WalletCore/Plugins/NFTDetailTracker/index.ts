@@ -157,9 +157,9 @@ class NFTDetailTrackerPluginClass implements Plugin {
 
   public setCurrentOpenNFT = (params?: { nft: AssetInfo; index: number }) => this.currentOpenNFTSubject.next(params);
 
-  public updateCurrentOpenNFT = () => {
+  public updateCurrentOpenNFT = (targetNftAddress?: string | null) => {
     const current = this.currentOpenNFTSubject.getValue();
-    if (current) {
+    if ((current && !targetNftAddress) || (current && targetNftAddress && current.nft.contractAddress === targetNftAddress)) {
       this.setCurrentOpenNFT(current);
     }
   };
