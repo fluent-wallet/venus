@@ -31,6 +31,7 @@ const BiometricsWay: React.FC<StackScreenProps<typeof BiometricsWayStackName>> =
         return;
       }
       await plugins.Authentication.setPassword({ authType: plugins.Authentication.AuthenticationType.Biometrics });
+      await new Promise((resolve) => setTimeout(() => resolve(null!), 20));
       if (await createVault(route.params)) {
         navigation.navigate(HomeStackName);
         navigation.dispatch(CommonActions.reset({ index: 0, routes: [{ name: HomeStackName }] }));

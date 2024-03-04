@@ -39,6 +39,7 @@ const PasswordWay: React.FC<StackScreenProps<typeof PasswordWayStackName>> = ({ 
     try {
       navigation.setOptions({ gestureEnabled: false });
       await plugins.Authentication.setPassword({ password: data.confirm });
+      await new Promise((resolve) => setTimeout(() => resolve(null!), 20));
       if (await createVault(route.params, data.confirm)) {
         showMessage({ type: 'success', message: 'You’ve successfully protected wallet. Remember to keep your Password, it’s your responsibility!' });
         navigation.navigate(HomeStackName);
@@ -70,7 +71,9 @@ const PasswordWay: React.FC<StackScreenProps<typeof PasswordWayStackName>> = ({ 
             required: true,
             minLength: 8,
           }}
-          render={({ field: { onChange, onBlur, value } }) => <TextInput placeholder="Password" onBlur={onBlur} onChangeText={onChange} value={value} />}
+          render={({ field: { onChange, onBlur, value } }) => (
+            <TextInput placeholder="Password" onBlur={onBlur} onChangeText={onChange} value={value} defaultHasValue={isDev} />
+          )}
           name="password"
         />
         <Text style={[styles.inputError, { opacity: errors.password ? 1 : 0, color: colors.down }]}>Must be at least 8 characters.</Text>
@@ -86,7 +89,9 @@ const PasswordWay: React.FC<StackScreenProps<typeof PasswordWayStackName>> = ({ 
               return password === confirmValue;
             },
           }}
-          render={({ field: { onChange, onBlur, value } }) => <TextInput placeholder="Password" onBlur={onBlur} onChangeText={onChange} value={value} />}
+          render={({ field: { onChange, onBlur, value } }) => (
+            <TextInput placeholder="Password" onBlur={onBlur} onChangeText={onChange} value={value} defaultHasValue={isDev} />
+          )}
           name="confirm"
         />
         <Text style={[styles.inputError, { opacity: errors.confirm ? 1 : 0, color: colors.down }]}>

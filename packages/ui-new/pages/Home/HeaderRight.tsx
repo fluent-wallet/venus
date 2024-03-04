@@ -40,7 +40,7 @@ const HeaderRight: React.FC<{ navigation: StackScreenProps<typeof HomeStackName>
         <Network />
       </Pressable>
       <Pressable style={({ pressed }) => [styles.wrapper, { borderColor: colors.borderThird, backgroundColor: pressed ? colors.underlay : 'transparent' }]}>
-        <QrCode />
+        <QrCode color={colors.iconThird} />
       </Pressable>
       <Pressable
         style={({ pressed }) => [
@@ -50,7 +50,7 @@ const HeaderRight: React.FC<{ navigation: StackScreenProps<typeof HomeStackName>
         ]}
         onPress={() => navigation.navigate(SettingsStackName)}
       >
-        <Settings />
+        <Settings color={colors.iconThird} />
       </Pressable>
     </View>
   );

@@ -6,12 +6,12 @@ import { wordlists } from 'bip39';
 import { sampleSize, shuffle } from 'lodash-es';
 import Text from '@components/Text';
 import Button from '@components/Button';
-import { BackupScreenProps, BackupStep3StackName, BackupSuccessStackName } from '@router/configs';
+import { BackupStep3StackName, BackupSuccessStackName, type BackupScreenProps } from '@router/configs';
 import BackupBottomSheet from './BackupBottomSheet';
 import { useVaultFromId } from '@core/WalletCore/Plugins/ReactInject';
 
 type Ele = string | null;
-const BackupStep3: React.FC<BackupScreenProps<typeof BackupStep3StackName>> = ({ route, navigation }) => {
+const BackupStep3RandomCheck: React.FC<BackupScreenProps<typeof BackupStep3StackName>> = ({ route, navigation }) => {
   const { colors } = useTheme();
   const { phrases, vaultId } = route.params;
   const vault = useVaultFromId(vaultId);
@@ -126,4 +126,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default BackupStep3;
+export default BackupStep3RandomCheck;

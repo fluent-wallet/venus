@@ -14,6 +14,7 @@ export const HDSettingStackName = 'HDSetting';
 export const BackupStackName = 'Backup';
 export const NetworkManagementStackName = 'NetworkManagement';
 export const PasswordVerifyStackName = 'PasswordVerify';
+export const SendTranscationStackName = 'SendTranscation';
 
 export type RootStackParamList = {
   [WelcomeStackName]: undefined;
@@ -27,6 +28,7 @@ export type RootStackParamList = {
   [GroupSettingStackName]: { groupId: string };
   [HDSettingStackName]: { groupId: string };
   [BackupStackName]: NavigatorScreenParams<BackupStackParamList>;
+  [SendTranscationStackName]: NavigatorScreenParams<SendTranscationParamList>;
   [NetworkManagementStackName]: undefined;
   [PasswordVerifyStackName]: undefined;
 };
@@ -51,5 +53,18 @@ export type BackupStackParamList = {
   [HomeStackName]: undefined;
 };
 export type BackupScreenProps<T extends keyof BackupStackParamList> = NativeStackScreenProps<BackupStackParamList, T>;
-export type BackupStackNavigation = NavigationProp<BackupStackParamList>;
 // end backup nest stack
+
+// sendTranscation nest stack
+export const SendTranscationStep1StackName = 'SendTranscationStep1';
+export const SendTranscationStep2StackName = 'SendTranscationStep2';
+export const SendTranscationStep3StackName = 'SendTranscationStep3';
+export type SendTranscationParamList = {
+  [SendTranscationStep1StackName]: undefined;
+  [SendTranscationStep2StackName]: undefined;
+  [SendTranscationStep3StackName]: undefined;
+  // navigate to home
+  [HomeStackName]: undefined;
+};
+export type SendTranscationScreenProps<T extends keyof SendTranscationParamList> = NativeStackScreenProps<SendTranscationParamList, T>;
+// end sendTranscation nest stack

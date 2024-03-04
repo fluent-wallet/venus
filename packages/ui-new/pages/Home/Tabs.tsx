@@ -27,11 +27,12 @@ export const Tabs: React.FC<Omit<Props, 'setCurrentTab'>> = ({ currentTab, pageV
   const currentNetwork = useCurrentNetwork();
   const tabs = useMemo(
     () =>
-      currentNetwork && (currentNetwork.chainId === CFX_ESPACE_MAINNET_CHAINID || currentNetwork.chainId === CFX_ESPACE_TESTNET_CHAINID)
+      !currentNetwork || (currentNetwork && (currentNetwork.chainId === CFX_ESPACE_MAINNET_CHAINID || currentNetwork.chainId === CFX_ESPACE_TESTNET_CHAINID))
         ? (['Tokens', 'NFTs', 'Activity'] as Tabs)
         : (['Tokens', 'Activity'] as Tabs),
     [currentNetwork],
   );
+
   const currentTabIndex = useMemo(() => {
     const index = tabs.indexOf(currentTab as 'Tokens');
     return index === -1 ? 0 : index;
@@ -73,7 +74,6 @@ export const Tabs: React.FC<Omit<Props, 'setCurrentTab'>> = ({ currentTab, pageV
     </>
   );
 };
-
 
 const tabPageViewScrollYAtom = atom(0);
 export const setScrollY = (height: number) => setAtom(tabPageViewScrollYAtom, height);

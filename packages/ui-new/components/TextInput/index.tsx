@@ -1,8 +1,9 @@
-import { useState, useMemo, useCallback, useRef, forwardRef } from 'react';
-import { View, TextInput, StyleSheet, Pressable, type TextInputProps, type ViewStyle, type StyleProp } from 'react-native';
+import { useState, useMemo, useCallback, useRef, forwardRef, type Component } from 'react';
+import { View, TextInput, StyleSheet, Pressable, Platform, type TextInputProps, type ViewStyle, type StyleProp } from 'react-native';
 import { useTheme } from '@react-navigation/native';
-import { BottomSheetTextInput } from '@components/BottomSheet';
+import { type SvgProps } from 'react-native-svg';
 import composeRef from '@cfx-kit/react-utils/dist/composeRef';
+import { BottomSheetTextInput } from '@components/BottomSheet';
 import { isDev } from '@utils/getEnv';
 import EyeOpen from '@assets/icons/eye-open.svg';
 import EyeClose from '@assets/icons/eye-close.svg';
@@ -12,18 +13,37 @@ interface Props extends TextInputProps {
   containerStyle?: StyleProp<ViewStyle>;
   showVisible?: boolean;
   showClear?: boolean;
+  defaultHasValue?: boolean;
   disabled?: boolean;
   isInBottomSheet?: boolean;
+  SuffixIcon?: typeof Component<SvgProps>;
+  onPressSuffixIcon?: () => void;
 }
 
 const CustomTextInput = forwardRef<TextInput, Props>(
-  ({ style, containerStyle, showVisible = true, showClear = true, disabled, onChangeText, isInBottomSheet, secureTextEntry, ...props }, _forwardRef) => {
+  (
+    {
+      style,
+      containerStyle,
+      showVisible = true,
+      showClear = true,
+      disabled,
+      defaultHasValue,
+      onChangeText,
+      isInBottomSheet,
+      secureTextEntry,
+      SuffixIcon,
+      onPressSuffixIcon,
+      ...props
+    },
+    _forwardRef,
+  ) => {
     const { colors } = useTheme();
 
     const UsedTextInput = useMemo(() => (isInBottomSheet ? BottomSheetTextInput : TextInput), [isInBottomSheet]);
 
     const [visible, setVisible] = useState(isDev);
-    const [hasValue, setHasValue] = useState(isDev);
+    const [hasValue, setHasValue] = useState(defaultHasValue ?? isDev);
     const handleChangeText = useCallback(
       (text: string) => {
         setHasValue(text?.length > 0);
@@ -44,15 +64,20 @@ const CustomTextInput = forwardRef<TextInput, Props>(
       <View style={[styles.defaultContainerStyle, { backgroundColor: colors.bgSecondary }, containerStyle]}>
         <UsedTextInput
           ref={composeRef([inputRef, _forwardRef as any])}
-          style={[styles.defaultInputStyle, { color: colors.textPrimary, fontWeight: hasValue ? '600' : '300' }, style]}
+          style={[
+            styles.defaultInputStyle,
+            props.multiline && styles.defaultMultilineInputStyle,
+            { color: colors.textPrimary, fontWeight: hasValue ? '600' : '300' },
+            style,
+          ]}
           placeholderTextColor={colors.textSecondary}
-          secureTextEntry={showVisible ? !visible : (secureTextEntry || false)}
+          secureTextEntry={showVisible ? !visible : secureTextEntry || false}
           {...props}
           onChangeText={handleChangeText}
         />
         {showClear && !disabled && (
           <Pressable onPress={() => handlePressClear()}>
-            <Clear style={[styles.icon, { opacity: hasValue ? 1 : 0 }]} color={colors.textPrimary} />
+            <Clear style={[styles.icon, { opacity: hasValue ? 1 : 0 }]} color={colors.iconPrimary} />
           </Pressable>
         )}
         {showVisible && !disabled && (
@@ -62,6 +87,11 @@ const CustomTextInput = forwardRef<TextInput, Props>(
             ) : (
               <EyeOpen style={[styles.icon]} color={hasValue ? colors.iconPrimary : colors.iconThird} />
             )}
+          </Pressable>
+        )}
+        {SuffixIcon && (
+          <Pressable onPress={onPressSuffixIcon}>
+            <SuffixIcon style={styles.icon} color={colors.iconPrimary} />
           </Pressable>
         )}
       </View>
@@ -84,6 +114,20 @@ const styles = StyleSheet.create({
     height: 48,
     flexGrow: 1,
     flexShrink: 1,
+  },
+  defaultMultilineInputStyle: {
+    height: 'auto',
+    minHeight: 48,
+    maxHeight: 96,
+    ...Platform.select({
+      ios: {
+        paddingTop: 14,
+        paddingBottom: 14,
+      },
+      android: {
+        textAlignVertical: 'center',
+      },
+    }),
   },
   icon: {
     flexGrow: 0,

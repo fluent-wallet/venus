@@ -120,4 +120,5 @@ export class NetworkMethod {
       return await database.batch(...updates);
     });
   }
+
 }

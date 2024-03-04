@@ -2,10 +2,10 @@ import React from 'react';
 import { Pressable, View, StyleSheet } from 'react-native';
 import { useTheme } from '@react-navigation/native';
 import { Image } from 'expo-image';
-import { useCurrentAccount, useGroupOfAccount, useVaultOfAccount } from '@core/WalletCore/Plugins/ReactInject';
+import { useCurrentAccount, useGroupOfAccount, useVaultOfAccount, VaultType, VaultSourceType } from '@core/WalletCore/Plugins/ReactInject';
 import Text from '@components/Text';
-import { HomeStackName, BackupStackName, type StackScreenProps, BackupStep1StackName } from '@router/configs';
 import useForceUpdateOnFocus from '@hooks/useUpdateOnFocus';
+import { HomeStackName, BackupStackName, BackupStep1StackName, type StackScreenProps } from '@router/configs';
 import Img from '@assets/images/welcome-img.webp';
 
 const NotBackup: React.FC<{ navigation: StackScreenProps<typeof HomeStackName>['navigation'] }> = ({ navigation }) => {
@@ -15,7 +15,8 @@ const NotBackup: React.FC<{ navigation: StackScreenProps<typeof HomeStackName>['
   const accountGroup = useGroupOfAccount(account?.id);
   useForceUpdateOnFocus(navigation);
 
-  if (!vault || !accountGroup || vault.isBackup) return null;
+  if (!vault || !accountGroup || vault.type !== VaultType.HierarchicalDeterministic || vault.source === VaultSourceType.IMPORT_BY_USER || vault.isBackup)
+    return null;
   return (
     <Pressable
       style={({ pressed }) => [styles.container, { borderColor: colors.borderThird, backgroundColor: pressed ? colors.underlay : 'transparent' }]}

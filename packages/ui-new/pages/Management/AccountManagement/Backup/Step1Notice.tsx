@@ -7,11 +7,9 @@ import Button from '@components/Button';
 import { isSmallDevice } from '@utils/deviceInfo';
 import Img from '@assets/images/welcome-img.webp';
 import BackupBottomSheet from './BackupBottomSheet';
-import { BackupScreenProps, BackupStep2StackName } from '@router/configs';
+import { BackupStep1StackName, BackupStep2StackName, type BackupScreenProps } from '@router/configs';
 
-export const BackupStep1StackName = 'BackupStep1';
-
-const BackupStep1: React.FC<BackupScreenProps<typeof BackupStep1StackName>> = ({ navigation, route }) => {
+const BackupStep1Notice: React.FC<BackupScreenProps<typeof BackupStep1StackName>> = ({ navigation, route }) => {
   const { colors } = useTheme();
 
   return (
@@ -68,4 +66,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default BackupStep1;
+export default BackupStep1Notice;

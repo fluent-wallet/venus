@@ -71,7 +71,7 @@ const AddAnotherWallet: React.FC<Props> = ({ navigation, bottomSheetRef }) => {
 
   const _handleImportExistWallet = useCallback(async (value: string) => {
     navigation.setOptions({ gestureEnabled: false });
-    await new Promise((resolve) => setTimeout(resolve));
+    await new Promise((resolve) => setTimeout(() => resolve(null!), 20));
     const res = await createVault({ type: 'importExistWallet', value });
     if (res) {
       bottomSheetRef.current?.dismiss();

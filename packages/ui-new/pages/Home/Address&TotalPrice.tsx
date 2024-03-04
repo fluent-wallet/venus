@@ -56,7 +56,7 @@ export const TotalPrice: React.FC = () => {
   );
 
   if (totalPriceValue === null) {
-    return <Skeleton width={140} height={45} />;
+    return <Skeleton width={140} height={45} startX={16}/>;
   }
 
   return (
@@ -79,7 +79,7 @@ const styles = StyleSheet.create({
     display: 'flex',
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 16,
+    marginLeft: 16,
     minWidth: 140,
     gap: 6,
   },
@@ -89,7 +89,7 @@ const styles = StyleSheet.create({
     display: 'flex',
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 16,
+    marginLeft: 16,
     minWidth: 140,
     height: 45,
   },

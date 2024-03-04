@@ -11,14 +11,14 @@ import plugins from '@core/WalletCore/Plugins';
 import Text from '@components/Text';
 import Button from '@components/Button';
 import useInAsync from '@hooks/useInAsync';
-import { BackupScreenProps, BackupStep2StackName, BackupStep3StackName } from '@router/configs';
+import { BackupStep2StackName, BackupStep3StackName, type BackupScreenProps } from '@router/configs';
 import { isSmallDevice } from '@utils/deviceInfo';
 import MaskPrivateKey from '@assets/images/mask-private-key.webp';
 import MaskSeedPhrase from '@assets/images/mask-seed-phrase.webp';
 import Copy from '@assets/icons/copy.svg';
 import BackupBottomSheet from './BackupBottomSheet';
 
-const BackupStep2: React.FC<BackupScreenProps<typeof BackupStep2StackName>> = ({ route, navigation }) => {
+const BackupStep2ViewSecret: React.FC<BackupScreenProps<typeof BackupStep2StackName>> = ({ route, navigation }) => {
   const { colors } = useTheme();
 
   const backupType = route.params.groupId ? VaultType.HierarchicalDeterministic : VaultType.PrivateKey;
@@ -218,4 +218,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default BackupStep2;
+export default BackupStep2ViewSecret;

@@ -17,6 +17,7 @@ class TransactionPluginClass implements Plugin {
     if(network.networkType !== NetworkType.Ethereum) {
       throw new Error('get Tx Provider error Unsupported network type')
     }
+    
     if (this.providerCache[network.id]) {
       return this.providerCache[network.id];
     }

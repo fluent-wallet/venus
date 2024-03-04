@@ -3,26 +3,27 @@ import { View, StyleSheet } from 'react-native';
 import { useTheme } from '@react-navigation/native';
 import Button from '@components/Button';
 import Text from '@components/Text';
+import { HomeStackName, SendTranscationStackName, SendTranscationStep1StackName, type StackScreenProps } from '@router/configs';
 import ArrowUpward from '@assets/icons/arrow-upward.svg';
 import ArrowDownward from '@assets/icons/arrow-downward.svg';
 import Buy from '@assets/icons/buy.svg';
 import More from '@assets/icons/more.svg';
 
-const Navigation: React.FC<{ title: string; Icon: ComponentProps<typeof Button>['Icon'] }> = ({ title, Icon }) => {
+const Navigation: React.FC<{ title: string; Icon: ComponentProps<typeof Button>['Icon']; onPress?: VoidFunction }> = ({ title, Icon, onPress }) => {
   const { colors } = useTheme();
 
   return (
     <View style={styles.navigation}>
-      <Button square size="small" Icon={Icon} />
+      <Button square size="small" Icon={Icon} onPress={onPress} />
       <Text style={[styles.navigationText, { color: colors.textPrimary }]}>{title}</Text>
     </View>
   );
 };
 
-const Navigations: React.FC = () => {
+const Navigations: React.FC<{ navigation: StackScreenProps<typeof HomeStackName>['navigation'] }> = ({ navigation }) => {
   return (
     <View style={styles.container}>
-      <Navigation title="Send" Icon={ArrowUpward} />
+      <Navigation title="Send" Icon={ArrowUpward} onPress={() => navigation.navigate(SendTranscationStackName, { screen: SendTranscationStep1StackName })} />
       <Navigation title="Receive" Icon={ArrowDownward} />
       <Navigation title="Buy" Icon={Buy} />
       <Navigation title="More" Icon={More} />
