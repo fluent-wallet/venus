@@ -14,6 +14,7 @@ import { CurrentAddress, TotalPrice } from './Address&TotalPrice';
 import Navigations from './Navigations';
 import { Tabs, TabsContent, setScrollY } from './Tabs';
 import NotBackup from './NotBackup';
+import HomeRefresh from '@components/HomeRefresh';
 
 const Home: React.FC<StackScreenProps<typeof HomeStackName>> = ({ navigation }) => {
   const accountSelectorRef = useRef<BottomSheetMethods>(null!);
@@ -22,8 +23,8 @@ const Home: React.FC<StackScreenProps<typeof HomeStackName>> = ({ navigation }) 
   const [currentTab, setCurrentTab] = useState<'Tokens' | 'NFTs' | 'Activity'>('Tokens');
   const pageViewRef = useRef<PagerView>(null);
 
-  const handleScroll = useCallback((evt: NativeSyntheticEvent<NativeScrollEvent>) => {
-    setScrollY(evt.nativeEvent.contentOffset.y);
+  const handleScroll = useCallback((evt: NativeScrollEvent) => {
+    setScrollY(evt.contentOffset.y);
   }, []);
 
   useEffect(() => {
@@ -47,11 +48,12 @@ const Home: React.FC<StackScreenProps<typeof HomeStackName>> = ({ navigation }) 
             }}
           />
         </View>
-        <ScrollView
-          style={styles.scrollView}
+        <HomeRefresh
           stickyHeaderIndices={[4]}
+          onRefresh={(closeRefresh) => {
+            setTimeout(closeRefresh, 1000);
+          }}
           onScroll={currentTab === 'NFTs' ? handleScroll : undefined}
-          scrollEventThrottle={currentTab === 'NFTs' ? 16 : undefined}
         >
           <CurrentAddress />
           <TotalPrice />
@@ -59,7 +61,7 @@ const Home: React.FC<StackScreenProps<typeof HomeStackName>> = ({ navigation }) 
           <NotBackup navigation={navigation} />
           <Tabs currentTab={currentTab} pageViewRef={pageViewRef} />
           <TabsContent currentTab={currentTab} setCurrentTab={setCurrentTab} pageViewRef={pageViewRef} />
-        </ScrollView>
+        </HomeRefresh>
       </SafeAreaView>
       <AccountSelector selectorRef={accountSelectorRef} />
       <NetworkSelector selectorRef={networkSelectorRef} />
