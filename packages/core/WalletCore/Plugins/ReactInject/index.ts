@@ -36,6 +36,7 @@ export { default as VaultType } from '../../../database/models/Vault/VaultType';
 export { default as VaultSourceType } from '../../../database/models/Vault/VaultSourceType';
 export { NetworkType, ChainType } from '../../../database/models/Network';
 export { AddressType } from '../../../database/models/AddressBook';
+export { AssetType } from '../../../database/models/Asset';
 
 declare module '../../../WalletCore/Plugins' {
   interface Plugins {

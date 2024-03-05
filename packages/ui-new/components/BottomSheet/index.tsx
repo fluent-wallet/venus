@@ -92,9 +92,9 @@ const BottomSheet = forwardRef<BottomSheetModal, Props>(
       <RenderBottomSheet
         ref={composeRef([_forwardRef!, bottomSheetRef])}
         index={index ?? defaultIndex}
-        onChange={(index) => {
+        onChange={(index, position, type) => {
           indexRef.current = index;
-          onChange?.(index);
+          onChange?.(index, position, type);
         }}
         onDismiss={handleDismiss}
         onClose={handleClose}

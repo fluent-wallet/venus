@@ -16,6 +16,7 @@ import GroupSetting from '@pages/Management/AccountManagement/GroupSetting';
 import HDSetting from '@pages/Management/AccountManagement/HDSetting';
 import Backup from '@pages/Management/AccountManagement/Backup';
 import SendTranscation from '@pages/SendTranscation';
+import ScanQRCode from '@pages/ScanQRCode';
 import PasswordVerify from '@modules/PasswordVerify';
 import {
   WelcomeStackName,
@@ -31,6 +32,7 @@ import {
   PasswordVerifyStackName,
   BackupStackName,
   SendTranscationStackName,
+  ScanQRCodeStackName,
   type RootStackParamList,
   type StackNavigation,
   SheetBottomOption,
@@ -45,7 +47,6 @@ const screenOptions = {
   statusBarTranslucent: true,
   statusBarBackgroundColor: 'transparent',
 } as const;
-
 
 const Router: React.FC = () => {
   const hasVault = useHasVault();
@@ -84,6 +85,7 @@ const Router: React.FC = () => {
         <RootStack.Screen name={HDSettingStackName} component={HDSetting} options={SheetBottomOption} />
         <RootStack.Screen name={BackupStackName} component={Backup} options={SheetBottomOption} />
         <RootStack.Screen name={SendTranscationStackName} component={SendTranscation} options={SheetBottomOption} />
+        <RootStack.Screen name={ScanQRCodeStackName} component={ScanQRCode} options={SheetBottomOption} />
         <RootStack.Screen name={SettingsStackName} component={Settings} />
         <RootStack.Screen name={PasswordVerifyStackName} component={PasswordVerify} options={SheetBottomOption} />
       </RootStack.Navigator>

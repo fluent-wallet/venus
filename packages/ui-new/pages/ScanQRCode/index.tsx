@@ -1,54 +1,39 @@
-import React, { useCallback, useEffect, useState, useRef } from 'react';
-import { Pressable, SafeAreaView, View, Linking, Dimensions, StatusBar } from 'react-native';
-import { RouteProp, StackActions } from '@react-navigation/native';
-import {
-  useCameraPermission,
-  useCameraDevice,
-  useCodeScanner,
-  useCameraFormat,
-  Camera,
-  CodeScannerFrame,
-  type Point,
-  type Code,
-} from 'react-native-vision-camera';
+import React, { useState, useCallback, useEffect, useRef } from 'react';
+import { useTheme, StackActions } from '@react-navigation/native';
+import { Pressable, View, Linking, StyleSheet } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
+import { useCameraPermission, useCameraDevice, useCameraFormat, Camera, type Point, type Code } from 'react-native-vision-camera';
 import { runOnJS } from 'react-native-reanimated';
-import { Icon, Text, useTheme, Overlay, Button } from '@rneui/themed';
-import { HomeStackName, ReceiveAddressStackName, RootStackList, ScanQRCodeStackName, SendToStackName, StackNavigation, WalletStackName } from '@router/configs';
-import { useAssetsTokenList } from '@core/WalletCore/Plugins/ReactInject/data/useAssets';
-import { AssetType } from '@core/database/models/Asset';
-import plugins from '@core/WalletCore/Plugins';
-import { BaseButton } from '@components/Button';
-import { parseETHURL, type ETHURL } from '@utils/ETHURL';
-import { statusBarHeight } from '@utils/deviceInfo';
 import { showMessage } from 'react-native-flash-message';
-import { isAddress } from 'ethers';
 import { parseUri } from '@walletconnect/utils';
+import { useAssetsTokenList, useCurrentAddress, useCurrentNetwork, AssetType } from '@core/WalletCore/Plugins/ReactInject';
+import methods from '@core/WalletCore/Methods';
+import plugins from '@core/WalletCore/Plugins';
+import { type WalletTransactionType } from '@core/WalletCore/Methods/transactionMethod';
+import BottomSheet, { snapPoints } from '@components/BottomSheet';
+import Text from '@components/Text';
+import Button from '@components/Button';
+import { ScanQRCodeStackName, SendTranscationStackName, type StackScreenProps } from '@router/configs';
+import { screenWidth } from '@utils/deviceInfo';
+import { parseETHURL, type ETHURL } from '@utils/ETHURL';
 import { ENABLE_WALLET_CONNECT_FEATURE } from '@utils/features';
-import { WalletTransactionType } from '@core/WalletCore/Methods/transactionMethod';
-import { useCurrentAddress } from '@core/WalletCore/Plugins/ReactInject';
 
-const screenWidth = Dimensions.get('window').width;
-const screenHeight = Dimensions.get('window').height;
+const scanAreaTop = 50;
 const scanAreaWidth = 250;
 
-const ScanQRCode: React.FC<{ navigation: StackNavigation; route: RouteProp<RootStackList, typeof ScanQRCodeStackName> }> = ({ navigation, route }) => {
-  const { theme } = useTheme();
+const ScanQrCode: React.FC<StackScreenProps<typeof ScanQRCodeStackName>> = ({ navigation }) => {
+  const { colors } = useTheme();
+  const currentAddress = useCurrentAddress()!;
+  const currentNetwork = useCurrentNetwork()!;
+  const tokens = useAssetsTokenList();
 
   const camera = useRef<Camera>(null);
-  const { hasPermission, requestPermission } = useCameraPermission();
   const device = useCameraDevice('back');
   const format = useCameraFormat(device, [{ fps: 30 }]);
   const isScanningInProgress = useRef(false);
-  const currentAddress = useCurrentAddress()!;
 
-  const [showPermissionModel, setShowPermissionModel] = useState(!hasPermission);
-  const [showRejectPermissionModel, setShowRejectPermissionModel] = useState(false);
-
-  // const [, setTXTo] = useAtom(setTransactionTo);
-  // const [, setTokenTX] = useAtom(setTokenTransaction);
-  // const [, setTXAmount] = useAtom(setTransactionAmount);
-  const tokens = useAssetsTokenList();
+  const { hasPermission, requestPermission } = useCameraPermission();
+  const [hasRejectPermission, setHasRejectPermission] = useState(false);
 
   const handleScanETHURL = useCallback(
     (url: string) => {
@@ -65,7 +50,8 @@ const ScanQRCode: React.FC<{ navigation: StackNavigation; route: RouteProp<RootS
 
       if (!tokens || tokens.length === 0) {
         return showMessage({
-          message: `Looks like you don't have that asset in your wallet.`,
+          message: `Wait for loading assets...`,
+          type: 'warning',
         });
       }
 
@@ -76,6 +62,7 @@ const ScanQRCode: React.FC<{ navigation: StackNavigation; route: RouteProp<RootS
         if (!token) {
           return showMessage({
             message: `Looks like you don't have that asset in your wallet.`,
+            type: 'warning',
           });
         }
         const txParams: WalletTransactionType = {
@@ -93,7 +80,8 @@ const ScanQRCode: React.FC<{ navigation: StackNavigation; route: RouteProp<RootS
 
         if (parameters && typeof parameters.value !== 'undefined') {
           txParams.amount = parameters.value.toString();
-          return navigation.dispatch(StackActions.replace(SendToStackName, txParams));
+          return;
+          // return navigation.dispatch(StackActions.replace(SendToStackName, txParams));
         }
       } else if (function_name === 'transfer') {
         // send 20 token
@@ -101,6 +89,7 @@ const ScanQRCode: React.FC<{ navigation: StackNavigation; route: RouteProp<RootS
         if (!parameters || !parameters.address) {
           return showMessage({
             message: 'Invalid QR code',
+            type: 'warning',
           });
         }
 
@@ -109,6 +98,7 @@ const ScanQRCode: React.FC<{ navigation: StackNavigation; route: RouteProp<RootS
         if (!token) {
           return showMessage({
             message: `Looks like you don't have that asset in your wallet.`,
+            type: 'warning',
           });
         }
 
@@ -129,7 +119,8 @@ const ScanQRCode: React.FC<{ navigation: StackNavigation; route: RouteProp<RootS
           txParams.amount = parameters.uint256.toString();
         }
 
-        return navigation.dispatch(StackActions.replace(SendToStackName, txParams));
+        return;
+        // return navigation.dispatch(StackActions.replace(SendToStackName, txParams));
       } else {
         return showMessage({
           message: `This action is currently not supported`,
@@ -137,7 +128,8 @@ const ScanQRCode: React.FC<{ navigation: StackNavigation; route: RouteProp<RootS
       }
 
       // default go to receive address
-      return navigation.dispatch(StackActions.replace(ReceiveAddressStackName, { to: target_address }));
+      return;
+      // return navigation.dispatch(StackActions.replace(ReceiveAddressStackName, { to: target_address }));
     },
     [navigation, tokens, currentAddress?.hex],
   );
@@ -146,26 +138,22 @@ const ScanQRCode: React.FC<{ navigation: StackNavigation; route: RouteProp<RootS
     if (!code || isScanningInProgress.current) return;
     if (!code.value) return;
     isScanningInProgress.current = true;
-    const ethAddress = code.value;
-    if (ethAddress.startsWith('0x') && isAddress(ethAddress)) {
+
+    if (await methods.checkIsValidAddress({ networkType: currentNetwork.networkType, addressValue: code.value })) {
       isScanningInProgress.current = false;
-      return navigation.dispatch(StackActions.replace(ReceiveAddressStackName, { to: ethAddress }));
+      return;
+      // return navigation.dispatch(StackActions.replace(ReceiveAddressStackName, { to: ethAddress }));
     }
 
     // check is EIP 681
-    // maybe we also need support EIP 831
-
+    // maybe we also need support EIP 83
     if (code.value.startsWith('ethereum:')) {
       isScanningInProgress.current = false;
       return handleScanETHURL(code.value);
     }
 
-    if (!ENABLE_WALLET_CONNECT_FEATURE.allow) {
+    if (code.value.startsWith('wc:') && ENABLE_WALLET_CONNECT_FEATURE.allow) {
       isScanningInProgress.current = false;
-      return;
-    }
-
-    if (code.value.startsWith('wc:')) {
       try {
         const { version } = parseUri(code.value);
         if (version === 1)
@@ -173,7 +161,7 @@ const ScanQRCode: React.FC<{ navigation: StackNavigation; route: RouteProp<RootS
             message: 'Sorry, The OR code version is to low',
           });
         await plugins.WalletConnect.pair(code.value);
-        navigation.dispatch(StackActions.replace(HomeStackName, { screen: WalletStackName }));
+        // navigation.dispatch(StackActions.replace(HomeStackName, { screen: WalletStackName }));
         isScanningInProgress.current = false;
       } catch (err) {
         showMessage({
@@ -187,29 +175,10 @@ const ScanQRCode: React.FC<{ navigation: StackNavigation; route: RouteProp<RootS
     }
 
     isScanningInProgress.current = false;
-
     return showMessage({
       message: 'Sorry, this QR code could not be recognized.',
     });
   };
-
-  const handlePermission = useCallback(async () => {
-    if (!hasPermission) {
-      const isOk = await requestPermission();
-      setShowPermissionModel(false);
-      if (!isOk) {
-        setShowRejectPermissionModel(true);
-      }
-    }
-  }, [hasPermission, requestPermission]);
-
-  useEffect(() => {
-    if (hasPermission) {
-      setShowPermissionModel(false);
-    } else {
-      setShowPermissionModel(true);
-    }
-  }, [hasPermission]);
 
   const focus = useCallback((point: Point) => {
     if (camera.current === null) return;
@@ -220,12 +189,24 @@ const ScanQRCode: React.FC<{ navigation: StackNavigation; route: RouteProp<RootS
     runOnJS(() => focus({ x: screenWidth / 2, y: 250 }));
   });
 
+  useEffect(() => {
+    if (!hasPermission) {
+      const execRequestPermission = async () => {
+        const isSuccess = await requestPermission();
+        if (!isSuccess) {
+          setHasRejectPermission(true);
+        }
+      };
+      execRequestPermission();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   return (
-    <SafeAreaView className="flex-1 flex flex-col justify-start" style={{ paddingTop: statusBarHeight }}>
-      <StatusBar backgroundColor={theme.colors.pureBlackAndWight} />
-      <>
-        {hasPermission && device && device !== null && (
-          <View className="flex-1">
+    <BottomSheet snapPoints={snapPoints.large} index={0} isModal={false} onClose={navigation.goBack}>
+      <View style={styles.container}>
+        {hasPermission && (
+          <>
             {device && (
               <GestureDetector gesture={gesture}>
                 <Camera
@@ -246,129 +227,105 @@ const ScanQRCode: React.FC<{ navigation: StackNavigation; route: RouteProp<RootS
                 />
               </GestureDetector>
             )}
-
-            <View className="absolute w-full h-full left-0 top-0">
-              <View
-                className="absolute w-full h-[125px] left-0 top-0 opacity-95"
-                pointerEvents="box-none"
-                style={{ backgroundColor: theme.colors.pureBlackAndWight }}
-              />
-              <View
-                className="absolute w-full left-0 top-0 opacity-95"
-                pointerEvents="box-none"
-                style={{ backgroundColor: theme.colors.pureBlackAndWight, top: 125 + scanAreaWidth, height: '100%' }}
-              />
-              <View
-                className="absolute left-0 opacity-95"
-                pointerEvents="box-none"
-                style={{
-                  backgroundColor: theme.colors.pureBlackAndWight,
-                  top: 125,
-                  width: (screenWidth - scanAreaWidth) / 2,
-                  height: scanAreaWidth,
-                }}
-              />
-              <View
-                className="absolute right-0 opacity-95"
-                pointerEvents="box-none"
-                style={{
-                  backgroundColor: theme.colors.pureBlackAndWight,
-                  top: 125,
-                  width: (screenWidth - scanAreaWidth) / 2,
-                  height: scanAreaWidth,
-                }}
-              />
-              <Pressable
-                onPress={() => navigation.goBack()}
-                style={{ backgroundColor: theme.colors.contrastWhiteAndBlack }}
-                className="flex items-center justify-center absolute top-4 left-2 w-12 h-12 rounded-full z-10"
-              >
-                <Icon name="arrow-back" color={theme.colors.pureBlackAndWight} size={40} />
-              </Pressable>
-              {/* <BaseButton testID="Photos" containerStyle={{ marginTop: screenHeight - 200, marginHorizontal: 24 }} onPress={handleSelectImage}>
-                Photos
-              </BaseButton> */}
+            
+            <View style={[styles.overlay, styles.container]}>
+              <View style={[styles.overlayTop, { backgroundColor: colors.bgPrimary }]} pointerEvents="box-none" />
+              <View style={[styles.overlayBottom, { backgroundColor: colors.bgSecondary }]} pointerEvents="box-none" />
+              <View style={[styles.overlayLeft, { backgroundColor: colors.bgPrimary }]} pointerEvents="box-none" />
+              <View style={[styles.overlayRight, { backgroundColor: colors.bgPrimary }]} pointerEvents="box-none" />
+              <Text style={[styles.title, { color: colors.textPrimary }]}>Scan</Text>
             </View>
-          </View>
+          </>
         )}
-      </>
-      <Overlay
-        backdropStyle={{ backgroundColor: undefined }}
-        overlayStyle={{ borderRadius: 10, backgroundColor: theme.colors.surfaceCard }}
-        isVisible={showPermissionModel}
-      >
-        <View className="p-5 w-[270px]">
-          <Text className="text-xl font-bold leading-tight mb-5">Wallet Requires Access</Text>
-          <Text>Please allow SwiftShield wallet to use camera permissions to scan the QR code.</Text>
-          <View className="flex flex-row py-4">
-            <View className="flex-1 mr-2">
-              <Button
-                type="outline"
-                buttonStyle={{ borderRadius: 7, borderWidth: 1, borderColor: theme.colors.textBrand, minHeight: 48 }}
-                titleStyle={{ color: theme.colors.textBrand }}
-                onPress={() => {
-                  setShowPermissionModel(false);
-                  navigation.goBack();
-                }}
-              >
-                <Text className="text-sm" style={{ color: theme.colors.textBrand }}>
-                  Deny
-                </Text>
-              </Button>
-            </View>
-            <View className="flex-1">
-              <BaseButton buttonStyle={{ backgroundColor: theme.colors.surfaceBrand }} onPress={handlePermission}>
-                <Text className="text-sm" style={{ color: theme.colors.textInvert }}>
-                  OK
-                </Text>
-              </BaseButton>
-            </View>
-          </View>
-        </View>
-      </Overlay>
-      <Overlay
-        backdropStyle={{ backgroundColor: undefined }}
-        isVisible={showRejectPermissionModel}
-        overlayStyle={{ borderRadius: 10, backgroundColor: theme.colors.surfaceCard }}
-      >
-        <View className="p-5 w-[270px]">
-          <Text className="text-xl font-bold leading-tight mb-5">Camera permission not granted for this app</Text>
-          <Text>Unable to scan. Please open Camera in the system permission.</Text>
-          <View className="flex flex-row py-4">
-            <View className="flex-1 mr-2">
-              <Button
-                type="outline"
-                buttonStyle={{ borderRadius: 40, borderWidth: 1, borderColor: theme.colors.textBrand }}
-                titleStyle={{ color: theme.colors.textBrand }}
-                onPress={() => {
-                  setShowPermissionModel(false);
-                  navigation.goBack();
-                }}
-              >
-                <Text className="text-sm" style={{ color: theme.colors.textBrand }}>
-                  Dismiss
-                </Text>
-              </Button>
-            </View>
-            <View className="flex-1">
-              <BaseButton
-                buttonStyle={{ backgroundColor: theme.colors.surfaceBrand }}
-                onPress={() => {
-                  setShowRejectPermissionModel(false);
-                  Linking.openSettings();
-                  setShowPermissionModel(true);
-                }}
-              >
-                <Text className="text-sm" style={{ color: theme.colors.textInvert }}>
-                  Open settings
-                </Text>
-              </BaseButton>
-            </View>
-          </View>
-        </View>
-      </Overlay>
-    </SafeAreaView>
+        {!hasPermission && (
+          <>
+            {!hasRejectPermission && (
+              <>
+                <Text>Wallet Requires Access</Text>
+                <Text>Please allow SwiftShield wallet to use camera permissions to scan the QR code.</Text>
+              </>
+            )}
+            {hasRejectPermission && (
+              <>
+                <Text>Camera permission not granted for this app</Text>
+                <Text>Unable to scan. Please open Camera in the system permission.</Text>
+                <View>
+                  <Button
+                    onPress={() => {
+                      navigation.goBack();
+                    }}
+                  >
+                    Dismiss
+                  </Button>
+                  <Button
+                    onPress={() => {
+                      Linking.openSettings();
+                    }}
+                  >
+                    Open settings
+                  </Button>
+                </View>
+              </>
+            )}
+          </>
+        )}
+      </View>
+    </BottomSheet>
   );
 };
 
-export default ScanQRCode;
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+  },
+  title: {
+    marginTop: 8,
+    marginBottom: 0,
+    lineHeight: 20,
+    textAlign: 'center',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  overlay: {
+    position: 'absolute',
+    left: 0,
+    top: 0,
+    right: 0,
+    bottom: 0,
+  },
+  overlayTop: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    top: 0,
+    height: scanAreaTop,
+    opacity: 95,
+  },
+  overlayLeft: {
+    position: 'absolute',
+    left: 0,
+    width: (screenWidth - scanAreaWidth) / 2,
+    top: scanAreaTop,
+    height: scanAreaWidth,
+    opacity: 95,
+  },
+  overlayRight: {
+    position: 'absolute',
+    left: scanAreaWidth + (screenWidth - scanAreaWidth) / 2,
+    width: (screenWidth - scanAreaWidth) / 2,
+    top: scanAreaTop,
+    height: scanAreaWidth,
+    opacity: 95,
+  },
+  overlayBottom: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    top: scanAreaTop + scanAreaWidth,
+    height: 400,
+    bottom: 0,
+    opacity: 95,
+  },
+});
+
+export default ScanQrCode;

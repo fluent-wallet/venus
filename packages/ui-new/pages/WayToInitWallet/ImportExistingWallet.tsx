@@ -76,12 +76,24 @@ const ImportExistingWallet: React.FC<Props> = ({ bottomSheetRef, onSuccessConfir
   const handleClose = useCallback(() => {
     setStatus(null);
   }, []);
+  const handleOnChange = useCallback(
+    (index: number) => {
+      if ((isModal && index === 1) || (!isModal && index === 0)) {
+        textInputRef.current?.focus();
+      } else {
+        if (!isModal && index === -1) {
+          handleClose();
+        }
+      }
+    },
+    [isModal],
+  );
 
   return (
     <BottomSheet
       ref={bottomSheetRef}
       snapPoints={snapPoints}
-      onChange={isModal ? undefined : handleClose}
+      onChange={handleOnChange}
       onDismiss={isModal ? handleClose : undefined}
       backDropPressBehavior="collapse"
       handlePressBackdrop={handlePressBackdrop}
@@ -108,7 +120,6 @@ const ImportExistingWallet: React.FC<Props> = ({ bottomSheetRef, onSuccessConfir
             existWalletValueRef.current = value;
           }}
           onBlur={handleCheckInput}
-          autoFocus
         />
         <Text style={[styles.tipText, { color: status?.type === 'error' ? colors.down : colors.up, opacity: status === null ? 0 : 1 }]}>
           {status?.message || 'placeholder'}

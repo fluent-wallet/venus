@@ -15,6 +15,7 @@ export const BackupStackName = 'Backup';
 export const NetworkManagementStackName = 'NetworkManagement';
 export const PasswordVerifyStackName = 'PasswordVerify';
 export const SendTranscationStackName = 'SendTranscation';
+export const ScanQRCodeStackName = 'ScanQRCode';
 
 export type RootStackParamList = {
   [WelcomeStackName]: undefined;
@@ -31,6 +32,7 @@ export type RootStackParamList = {
   [SendTranscationStackName]: NavigatorScreenParams<SendTranscationParamList>;
   [NetworkManagementStackName]: undefined;
   [PasswordVerifyStackName]: undefined;
+  [ScanQRCodeStackName]: undefined,
 };
 
 export type StackScreenProps<T extends keyof RootStackParamList> = NativeStackScreenProps<RootStackParamList, T>;

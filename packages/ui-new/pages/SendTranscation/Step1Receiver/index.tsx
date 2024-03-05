@@ -12,7 +12,7 @@ import HourglassLoading from '@components/Loading/Hourglass';
 import { SendTranscationStep1StackName, SendTranscationStep2StackName, type SendTranscationScreenProps } from '@router/configs';
 import QrCode from '@assets/icons/qr-code.svg';
 import BackupBottomSheet from '../SendTranscationBottomSheet';
-
+// 0xf4c4fec8b4074E37db8042DCB157B52FA62a46B7  | 0xbe9153ae8B5Ec18df748729D9E6582dC87f85fB7
 const SendTranscationStep1Receiver: React.FC<SendTranscationScreenProps<typeof SendTranscationStep1StackName>> = ({ navigation }) => {
   const { colors } = useTheme();
   const _currentNetwork = useCurrentNetwork();

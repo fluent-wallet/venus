@@ -3,7 +3,7 @@ import { Pressable, View, StyleSheet } from 'react-native';
 import { useTheme } from '@react-navigation/native';
 import { useCurrentNetwork } from '@core/WalletCore/Plugins/ReactInject';
 import Text from '@components/Text';
-import { HomeStackName, SettingsStackName, type StackScreenProps } from '@router/configs';
+import { HomeStackName, SettingsStackName, ScanQRCodeStackName, type StackScreenProps } from '@router/configs';
 import ESpaceMainnet from '@assets/chains/eSpace-mainnet.svg';
 import QrCode from '@assets/icons/qr-code.svg';
 import Settings from '@assets/icons/settings.svg';
@@ -39,7 +39,10 @@ const HeaderRight: React.FC<{ navigation: StackScreenProps<typeof HomeStackName>
       >
         <Network />
       </Pressable>
-      <Pressable style={({ pressed }) => [styles.wrapper, { borderColor: colors.borderThird, backgroundColor: pressed ? colors.underlay : 'transparent' }]}>
+      <Pressable
+        style={({ pressed }) => [styles.wrapper, { borderColor: colors.borderThird, backgroundColor: pressed ? colors.underlay : 'transparent' }]}
+        onPress={() => navigation.navigate(ScanQRCodeStackName)}
+      >
         <QrCode color={colors.iconThird} />
       </Pressable>
       <Pressable
