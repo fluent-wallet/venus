@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { Pressable, StyleSheet } from 'react-native';
 import { useTheme } from '@react-navigation/native';
 import { debounce } from 'lodash-es';
@@ -9,13 +9,18 @@ import TextInput from '@components/TextInput';
 import Button from '@components/Button';
 import Checkbox from '@components/Checkbox';
 import HourglassLoading from '@components/Loading/Hourglass';
+import { type BottomSheetMethods } from '@components/BottomSheet';
 import { SendTranscationStep1StackName, SendTranscationStep2StackName, type SendTranscationScreenProps } from '@router/configs';
 import QrCode from '@assets/icons/qr-code.svg';
 import BackupBottomSheet from '../SendTranscationBottomSheet';
+import ScanQRCode from '@pages/ScanQRCode';
+import bottomSheet from '@gorhom/bottom-sheet/lib/typescript/components/bottomSheet';
+
 // 0xf4c4fec8b4074E37db8042DCB157B52FA62a46B7  | 0xbe9153ae8B5Ec18df748729D9E6582dC87f85fB7
 const SendTranscationStep1Receiver: React.FC<SendTranscationScreenProps<typeof SendTranscationStep1StackName>> = ({ navigation }) => {
   const { colors } = useTheme();
   const _currentNetwork = useCurrentNetwork();
+  const scanQRCodeRef = useRef<BottomSheetMethods>(null!);
 
   const [receiver, setReceiver] = useState('');
   const [inChecking, setInChecking] = useState(false);
@@ -25,6 +30,7 @@ const SendTranscationStep1Receiver: React.FC<SendTranscationScreenProps<typeof S
   const checkReceiver = useCallback(
     debounce(async (receiver: string) => {
       try {
+        if (!receiver) return;
         const currentNetwork = _currentNetwork ?? getCurrentNetwork()!;
         const isValidAddress = await method.checkIsValidAddress({ networkType: currentNetwork.networkType, addressValue: receiver });
         if (!isValidAddress) {
@@ -58,64 +64,68 @@ const SendTranscationStep1Receiver: React.FC<SendTranscationScreenProps<typeof S
   }, [receiver, checkReceiver]);
 
   return (
-    <BackupBottomSheet onClose={navigation.goBack}>
-      <Text style={[styles.receiver, { color: colors.textSecondary }]}>Receiver</Text>
-      <TextInput
-        containerStyle={[styles.textinput, { borderColor: colors.borderFourth }]}
-        showVisible={false}
-        defaultHasValue={false}
-        value={receiver}
-        onChangeText={(newNickName) => setReceiver(newNickName?.trim())}
-        isInBottomSheet
-        SuffixIcon={!receiver ? QrCode : undefined}
-        showClear={!!receiver}
-        placeholder="Enter an address or account name"
-        multiline
-        numberOfLines={3}
-      />
+    <>
+      <BackupBottomSheet onClose={navigation.goBack}>
+        <Text style={[styles.receiver, { color: colors.textSecondary }]}>Receiver</Text>
+        <TextInput
+          containerStyle={[styles.textinput, { borderColor: colors.borderFourth }]}
+          showVisible={false}
+          defaultHasValue={false}
+          value={receiver}
+          onChangeText={(newNickName) => setReceiver(newNickName?.trim())}
+          isInBottomSheet
+          SuffixIcon={!receiver ? QrCode : undefined}
+          onPressSuffixIcon={() => scanQRCodeRef.current?.present()}
+          showClear={!!receiver}
+          placeholder="Enter an address or account name"
+          multiline
+          numberOfLines={3}
+        />
 
-      {checkRes === 'NetworkError' && !inChecking && (
-        <Pressable
-          style={({ pressed }) => [styles.checkFail, { backgroundColor: pressed ? colors.underlay : 'transparent' }]}
-          onPress={() => checkReceiver(receiver)}
-        >
-          <Text style={[styles.checkFailText, { color: colors.down }]}>
-            Fail to check address, <Text style={{ textDecorationLine: 'underline' }}>click to try again</Text>.
-          </Text>
-        </Pressable>
-      )}
-      {!checkRes && inChecking && <HourglassLoading style={styles.checkLoading} />}
-      {(checkRes === AddressType.EOA || checkRes === AddressType.Contract || checkRes === 'Invalid') && (
-        <Text style={[styles.checkRes, { color: colors.textPrimary }]}>
-          {checkRes === 'Invalid' ? '🚫' : checkRes === AddressType.EOA ? '🎉' : '📑'}
-          {'   '}
-          {checkRes === 'Invalid' ? 'Invalid' : 'Valid'} Address
-        </Text>
-      )}
-      {checkRes === AddressType.Contract && (
-        <>
-          <Text style={[styles.contractAddressTip, { color: colors.textPrimary }]}>
-            This address is a contract address, and transferring to this address may result in asset loss.
-          </Text>
+        {checkRes === 'NetworkError' && !inChecking && (
           <Pressable
-            style={({ pressed }) => [styles.knowRiskWrapper, { backgroundColor: pressed ? colors.underlay : 'transparent' }]}
-            onPress={() => setKnowRist((pre) => !pre)}
+            style={({ pressed }) => [styles.checkFail, { backgroundColor: pressed ? colors.underlay : 'transparent' }]}
+            onPress={() => checkReceiver(receiver)}
           >
-            <Checkbox checked={knowRisk} color={knowRisk ? colors.iconFifth : 'transparent'} showBackgroundColor={knowRisk} pointerEvents="none" />
-            <Text style={(styles.contractAddressTip, { color: colors.textPrimary })}>Known the risks</Text>
+            <Text style={[styles.checkFailText, { color: colors.down }]}>
+              Fail to check address, <Text style={{ textDecorationLine: 'underline' }}>click to try again</Text>.
+            </Text>
           </Pressable>
-        </>
-      )}
+        )}
+        {!checkRes && inChecking && <HourglassLoading style={styles.checkLoading} />}
+        {(checkRes === AddressType.EOA || checkRes === AddressType.Contract || checkRes === 'Invalid') && (
+          <Text style={[styles.checkRes, { color: colors.textPrimary }]}>
+            {checkRes === 'Invalid' ? '🚫' : checkRes === AddressType.EOA ? '🎉' : '📑'}
+            {'   '}
+            {checkRes === 'Invalid' ? 'Invalid' : 'Valid'} Address
+          </Text>
+        )}
+        {checkRes === AddressType.Contract && (
+          <>
+            <Text style={[styles.contractAddressTip, { color: colors.textPrimary }]}>
+              This address is a contract address, and transferring to this address may result in asset loss.
+            </Text>
+            <Pressable
+              style={({ pressed }) => [styles.knowRiskWrapper, { backgroundColor: pressed ? colors.underlay : 'transparent' }]}
+              onPress={() => setKnowRist((pre) => !pre)}
+            >
+              <Checkbox checked={knowRisk} color={knowRisk ? colors.iconFifth : 'transparent'} showBackgroundColor={knowRisk} pointerEvents="none" />
+              <Text style={(styles.contractAddressTip, { color: colors.textPrimary })}>Known the risks</Text>
+            </Pressable>
+          </>
+        )}
 
-      <Button
-        style={styles.btn}
-        mode="auto"
-        onPress={() => navigation.navigate(SendTranscationStep2StackName)}
-        disabled={!(checkRes === AddressType.EOA || checkRes === AddressType.Contract) || (checkRes === AddressType.Contract && !knowRisk)}
-      >
-        Next
-      </Button>
-    </BackupBottomSheet>
+        <Button
+          style={styles.btn}
+          mode="auto"
+          onPress={() => navigation.navigate(SendTranscationStep2StackName)}
+          disabled={!(checkRes === AddressType.EOA || checkRes === AddressType.Contract) || (checkRes === AddressType.Contract && !knowRisk)}
+        >
+          Next
+        </Button>
+      </BackupBottomSheet>
+      <ScanQRCode bottomSheetRefOuter={scanQRCodeRef} onConfirm={(ethURL) => setReceiver(ethURL?.target_address ?? '')} />
+    </>
   );
 };
 

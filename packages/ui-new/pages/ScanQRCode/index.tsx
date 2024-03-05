@@ -1,31 +1,34 @@
-import React, { useState, useCallback, useEffect, useRef } from 'react';
+import React, { useState, useCallback, useEffect, useRef, type MutableRefObject } from 'react';
 import { useTheme, StackActions } from '@react-navigation/native';
-import { Pressable, View, Linking, StyleSheet } from 'react-native';
-import { Gesture, GestureDetector } from 'react-native-gesture-handler';
-import { useCameraPermission, useCameraDevice, useCameraFormat, Camera, type Point, type Code } from 'react-native-vision-camera';
-import { runOnJS } from 'react-native-reanimated';
+import { View, Linking, StyleSheet } from 'react-native';
+import { useCameraPermission, useCameraDevice, useCameraFormat, Camera, type Code } from 'react-native-vision-camera';
 import { showMessage } from 'react-native-flash-message';
+import * as ImagePicker from 'expo-image-picker';
+import composeRef from '@cfx-kit/react-utils/dist/composeRef';
 import { parseUri } from '@walletconnect/utils';
-import { useAssetsTokenList, useCurrentAddress, useCurrentNetwork, AssetType } from '@core/WalletCore/Plugins/ReactInject';
+import { useCurrentNetwork, NetworkType } from '@core/WalletCore/Plugins/ReactInject';
 import methods from '@core/WalletCore/Methods';
 import plugins from '@core/WalletCore/Plugins';
-import { type WalletTransactionType } from '@core/WalletCore/Methods/transactionMethod';
-import BottomSheet, { snapPoints } from '@components/BottomSheet';
+import BottomSheet, { snapPoints, type BottomSheetMethods } from '@components/BottomSheet';
 import Text from '@components/Text';
 import Button from '@components/Button';
-import { ScanQRCodeStackName, SendTranscationStackName, type StackScreenProps } from '@router/configs';
-import { screenWidth } from '@utils/deviceInfo';
+import { ScanQRCodeStackName, type StackScreenProps } from '@router/configs';
 import { parseETHURL, type ETHURL } from '@utils/ETHURL';
 import { ENABLE_WALLET_CONNECT_FEATURE } from '@utils/features';
+import ScanBorder from '@assets/icons/scan-border.svg';
 
-const scanAreaTop = 50;
-const scanAreaWidth = 250;
+// has onConfirm props means open in SendTranscation with local modal way.
+interface Props {
+  onConfirm?: (ethUrl: ETHURL) => void;
+  bottomSheetRefOuter?: MutableRefObject<BottomSheetMethods>;
+  navigation?: StackScreenProps<typeof ScanQRCodeStackName>['navigation'];
+}
 
-const ScanQrCode: React.FC<StackScreenProps<typeof ScanQRCodeStackName>> = ({ navigation }) => {
+const scanAreaWidth = 220;
+const ScanQrCode: React.FC<Props> = ({ navigation, bottomSheetRefOuter, onConfirm }) => {
   const { colors } = useTheme();
-  const currentAddress = useCurrentAddress()!;
+  const bottomSheetRef = useRef<BottomSheetMethods>(null!);
   const currentNetwork = useCurrentNetwork()!;
-  const tokens = useAssetsTokenList();
 
   const camera = useRef<Camera>(null);
   const device = useCameraDevice('back');
@@ -35,159 +38,67 @@ const ScanQrCode: React.FC<StackScreenProps<typeof ScanQRCodeStackName>> = ({ na
   const { hasPermission, requestPermission } = useCameraPermission();
   const [hasRejectPermission, setHasRejectPermission] = useState(false);
 
-  const handleScanETHURL = useCallback(
-    (url: string) => {
-      let ethURL: ETHURL;
-      try {
-        ethURL = parseETHURL(url);
-      } catch (error) {
-        return showMessage({
-          message: 'Invalid QR code',
-        });
-      }
-
-      const { target_address, chain_id, function_name, parameters } = ethURL;
-
-      if (!tokens || tokens.length === 0) {
-        return showMessage({
-          message: `Wait for loading assets...`,
-          type: 'warning',
-        });
-      }
-
-      if (!function_name) {
-        // if don't have function then  send native token
-        // is send native token and have value
-        const token = tokens.find((t) => t.type === AssetType.Native);
-        if (!token) {
-          return showMessage({
-            message: `Looks like you don't have that asset in your wallet.`,
-            type: 'warning',
-          });
-        }
-        const txParams: WalletTransactionType = {
-          from: currentAddress?.hex,
-          to: target_address,
-          assetType: token.type,
-          balance: token.balance,
-          symbol: token.symbol,
-          decimals: token.decimals,
-          contractAddress: token.contractAddress,
-          iconUrl: token.icon,
-          priceInUSDT: token.priceInUSDT,
-          amount: '0',
-        };
-
-        if (parameters && typeof parameters.value !== 'undefined') {
-          txParams.amount = parameters.value.toString();
-          return;
-          // return navigation.dispatch(StackActions.replace(SendToStackName, txParams));
-        }
-      } else if (function_name === 'transfer') {
-        // send 20 token
-        // check is has uint256
-        if (!parameters || !parameters.address) {
-          return showMessage({
-            message: 'Invalid QR code',
-            type: 'warning',
-          });
-        }
-
-        //  is send 20 token and have value
-        const token = tokens.find((t) => t.contractAddress?.toLowerCase() === parameters.address?.toLowerCase());
-        if (!token) {
-          return showMessage({
-            message: `Looks like you don't have that asset in your wallet.`,
-            type: 'warning',
-          });
-        }
-
-        const txParams: WalletTransactionType = {
-          from: currentAddress?.hex,
-          to: target_address,
-          assetType: token.type,
-          balance: token.balance,
-          symbol: token.symbol,
-          decimals: token.decimals,
-          contractAddress: token.contractAddress,
-          iconUrl: token.icon,
-          priceInUSDT: token.priceInUSDT,
-          amount: '0',
-        };
-
-        if (parameters.uint256) {
-          txParams.amount = parameters.uint256.toString();
-        }
-
+  const onParseEthUrlSuccess = useCallback(
+    (ethUrl: ETHURL) => {
+      if (onConfirm) {
+        onConfirm(ethUrl);
+        bottomSheetRef.current?.close();
         return;
-        // return navigation.dispatch(StackActions.replace(SendToStackName, txParams));
       } else {
-        return showMessage({
-          message: `This action is currently not supported`,
-        });
+        // return navigation.dispatch(StackActions.replace(ReceiveAddressStackName, { to: ethAddress }));
       }
-
-      // default go to receive address
-      return;
-      // return navigation.dispatch(StackActions.replace(ReceiveAddressStackName, { to: target_address }));
     },
-    [navigation, tokens, currentAddress?.hex],
+    [onConfirm, navigation],
   );
 
-  const handleCodeScan = async (code: Code) => {
-    if (!code || isScanningInProgress.current) return;
-    if (!code.value) return;
-    isScanningInProgress.current = true;
-
-    if (await methods.checkIsValidAddress({ networkType: currentNetwork.networkType, addressValue: code.value })) {
-      isScanningInProgress.current = false;
-      return;
-      // return navigation.dispatch(StackActions.replace(ReceiveAddressStackName, { to: ethAddress }));
-    }
-
-    // check is EIP 681
-    // maybe we also need support EIP 83
-    if (code.value.startsWith('ethereum:')) {
-      isScanningInProgress.current = false;
-      return handleScanETHURL(code.value);
-    }
-
-    if (code.value.startsWith('wc:') && ENABLE_WALLET_CONNECT_FEATURE.allow) {
-      isScanningInProgress.current = false;
-      try {
-        const { version } = parseUri(code.value);
-        if (version === 1)
-          return showMessage({
-            message: 'Sorry, The OR code version is to low',
-          });
-        await plugins.WalletConnect.pair(code.value);
-        // navigation.dispatch(StackActions.replace(HomeStackName, { screen: WalletStackName }));
-        isScanningInProgress.current = false;
-      } catch (err) {
-        showMessage({
-          message: 'Connect to wallet-connect failed',
-          description: String(err ?? ''),
-          duration: 3000,
-        });
-        isScanningInProgress.current = false;
+  const handleCodeScan = useCallback(
+    async (codes: Code[]) => {
+      const code = codes[0];
+      console.log('1handleCodeScan', isScanningInProgress.current);
+      if (!code || isScanningInProgress.current) return;
+      if (!code.value) return;
+      let ethUrl: ETHURL;
+      isScanningInProgress.current = true;
+      if (await methods.checkIsValidAddress({ networkType: currentNetwork.networkType, addressValue: code.value })) {
+        ethUrl = { target_address: code.value, schema_prefix: currentNetwork.networkType === NetworkType.Ethereum ? 'ethereum:' : 'conflux:' } as ETHURL;
+        onParseEthUrlSuccess(ethUrl);
+        return;
       }
-      return;
-    }
+      try {
+        ethUrl = parseETHURL(code.value);
+        onParseEthUrlSuccess(ethUrl);
+      } catch (err) {
+        if (!onConfirm && code.value.startsWith('wc:') && ENABLE_WALLET_CONNECT_FEATURE.allow) {
+          try {
+            const { version } = parseUri(code.value);
+            if (version === 1) {
+              isScanningInProgress.current = false;
+              return showMessage({
+                message: 'Sorry, The OR code version is to low',
+              });
+            }
 
-    isScanningInProgress.current = false;
-    return showMessage({
-      message: 'Sorry, this QR code could not be recognized.',
-    });
-  };
-
-  const focus = useCallback((point: Point) => {
-    if (camera.current === null) return;
-    camera.current.focus(point);
-  }, []);
-
-  const gesture = Gesture.Tap().onEnd(() => {
-    runOnJS(() => focus({ x: screenWidth / 2, y: 250 }));
-  });
+            await plugins.WalletConnect.pair(code.value);
+            // navigation.dispatch(StackActions.replace(HomeStackName, { screen: WalletStackName }));
+          } catch (err) {
+            showMessage({
+              message: 'Connect to wallet-connect failed',
+              description: String(err ?? ''),
+              duration: 3000,
+            });
+            isScanningInProgress.current = false;
+          }
+          return;
+        } else {
+          isScanningInProgress.current = false;
+          return showMessage({
+            message: 'Sorry, this QR code could not be recognized.',
+          });
+        }
+      }
+    },
+    [currentNetwork?.networkType, onConfirm, onParseEthUrlSuccess],
+  );
 
   useEffect(() => {
     if (!hasPermission) {
@@ -202,62 +113,85 @@ const ScanQrCode: React.FC<StackScreenProps<typeof ScanQRCodeStackName>> = ({ na
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  const pickImage = useCallback(async () => {
+    // No permissions request is necessary for launching the image library
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.All,
+      allowsEditing: true,
+      aspect: [4, 3],
+      quality: 1,
+    });
+
+    console.log(result);
+
+    if (!result.canceled) {
+      console.log(result);
+    }
+  }, []);
+
+  const handleOnChange = useCallback((index: number) => {
+    if (index === 0) {
+      isScanningInProgress.current = false;
+    }
+  }, []);
+
   return (
-    <BottomSheet snapPoints={snapPoints.large} index={0} isModal={false} onClose={navigation.goBack}>
+    <BottomSheet
+      ref={bottomSheetRefOuter ? composeRef([bottomSheetRef, bottomSheetRefOuter]) : bottomSheetRef}
+      snapPoints={snapPoints.large}
+      index={!onConfirm ? 0 : undefined}
+      isModal={!!onConfirm}
+      onChange={!onConfirm ? undefined : handleOnChange}
+      onClose={!onConfirm ? navigation?.goBack : undefined}
+    >
       <View style={styles.container}>
+        <Text style={[styles.title, { color: colors.textPrimary }]}>Scan</Text>
         {hasPermission && (
           <>
             {device && (
-              <GestureDetector gesture={gesture}>
-                <Camera
-                  ref={camera}
-                  isActive={true}
-                  device={device}
-                  codeScanner={{
-                    codeTypes: ['qr', 'ean-13'],
-                    onCodeScanned: (code) => {
-                      if (code[0].value) {
-                        handleCodeScan(code[0]);
-                      }
-                    },
-                  }}
-                  style={{ flex: 1 }}
-                  format={format}
-                  enableZoomGesture
-                />
-              </GestureDetector>
+              <>
+                <View style={styles.cameraWrapper}>
+                  <Camera
+                    ref={camera}
+                    isActive
+                    device={device}
+                    codeScanner={{
+                      codeTypes: ['qr', 'ean-13'],
+                      onCodeScanned: handleCodeScan,
+                    }}
+                    style={styles.camera}
+                    format={format}
+                    enableZoomGesture
+                  />
+                </View>
+                <ScanBorder style={styles.scanBorder} color={colors.borderFourth} pointerEvents="none" />
+                <Button style={styles.photos} onPress={pickImage}>
+                  Photos
+                </Button>
+              </>
             )}
-            
-            <View style={[styles.overlay, styles.container]}>
-              <View style={[styles.overlayTop, { backgroundColor: colors.bgPrimary }]} pointerEvents="box-none" />
-              <View style={[styles.overlayBottom, { backgroundColor: colors.bgSecondary }]} pointerEvents="box-none" />
-              <View style={[styles.overlayLeft, { backgroundColor: colors.bgPrimary }]} pointerEvents="box-none" />
-              <View style={[styles.overlayRight, { backgroundColor: colors.bgPrimary }]} pointerEvents="box-none" />
-              <Text style={[styles.title, { color: colors.textPrimary }]}>Scan</Text>
-            </View>
           </>
         )}
         {!hasPermission && (
           <>
             {!hasRejectPermission && (
               <>
-                <Text>Wallet Requires Access</Text>
-                <Text>Please allow SwiftShield wallet to use camera permissions to scan the QR code.</Text>
+                <Text style={[styles.tip, { color: colors.down, marginBottom: 8 }]}>Wallet Requires Access</Text>
+                <Text style={[styles.tip, { color: colors.textPrimary }]}>Please allow SwiftShield wallet to use camera permissions to scan the QR code.</Text>
               </>
             )}
             {hasRejectPermission && (
               <>
-                <Text>Camera permission not granted for this app</Text>
-                <Text>Unable to scan. Please open Camera in the system permission.</Text>
-                <View>
-                  <Button
-                    onPress={() => {
-                      navigation.goBack();
-                    }}
-                  >
+                <Text style={[styles.tip, { color: colors.textPrimary, marginBottom: 8 }]}>Camera permission not granted for this app</Text>
+                <Text style={[styles.tip, { color: colors.textPrimary }]}>
+                  Unable to scan. Please <Text style={{ color: colors.down }}>open Camera</Text> in the system permission.
+                </Text>
+                <View style={styles.btnArea}>
+                  <Button style={styles.btn} onPress={() => (!onConfirm ? bottomSheetRef.current?.close() : bottomSheetRef.current?.dismiss())}>
                     Dismiss
                   </Button>
                   <Button
+                    style={styles.btn}
                     onPress={() => {
                       Linking.openSettings();
                     }}
@@ -277,54 +211,54 @@ const ScanQrCode: React.FC<StackScreenProps<typeof ScanQRCodeStackName>> = ({ na
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    paddingTop: 8,
   },
   title: {
-    marginTop: 8,
-    marginBottom: 0,
+    marginBottom: 24,
     lineHeight: 20,
     textAlign: 'center',
     fontSize: 16,
     fontWeight: '600',
   },
-  overlay: {
+  scanBorder: {
     position: 'absolute',
-    left: 0,
-    top: 0,
-    right: 0,
-    bottom: 0,
+    top: 80,
+    alignSelf: 'center',
   },
-  overlayTop: {
-    position: 'absolute',
-    left: 0,
-    right: 0,
-    top: 0,
-    height: scanAreaTop,
-    opacity: 95,
-  },
-  overlayLeft: {
-    position: 'absolute',
-    left: 0,
-    width: (screenWidth - scanAreaWidth) / 2,
-    top: scanAreaTop,
+  cameraWrapper: {
+    marginTop: 56,
+    width: scanAreaWidth,
     height: scanAreaWidth,
-    opacity: 95,
+    alignSelf: 'center',
+    borderRadius: 6,
+    overflow: 'hidden',
   },
-  overlayRight: {
-    position: 'absolute',
-    left: scanAreaWidth + (screenWidth - scanAreaWidth) / 2,
-    width: (screenWidth - scanAreaWidth) / 2,
-    top: scanAreaTop,
-    height: scanAreaWidth,
-    opacity: 95,
+  camera: {
+    width: '100%',
+    height: '100%',
   },
-  overlayBottom: {
-    position: 'absolute',
-    left: 0,
-    right: 0,
-    top: scanAreaTop + scanAreaWidth,
-    height: 400,
-    bottom: 0,
-    opacity: 95,
+  photos: {
+    width: 180,
+    alignSelf: 'center',
+    marginTop: 'auto',
+    marginBottom: 80,
+  },
+  tip: {
+    fontSize: 14,
+    lineHeight: 20,
+    paddingHorizontal: 16,
+  },
+  btnArea: {
+    marginTop: 'auto',
+    marginBottom: 80,
+    display: 'flex',
+    flexDirection: 'row',
+    gap: 16,
+    paddingHorizontal: 16,
+  },
+  btn: {
+    width: '50%',
+    flexShrink: 1,
   },
 });
 
