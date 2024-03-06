@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect, useRef, type MutableRefObject } from 'react';
+import React, { useState, useCallback, useRef, type MutableRefObject } from 'react';
 import { useTheme, StackActions } from '@react-navigation/native';
 import { View, Linking, StyleSheet } from 'react-native';
 import { useCameraPermission, useCameraDevice, useCameraFormat, Camera, type Code } from 'react-native-vision-camera';
@@ -33,7 +33,7 @@ const ScanQrCode: React.FC<Props> = ({ navigation, bottomSheetRefOuter, onConfir
   const camera = useRef<Camera>(null);
   const device = useCameraDevice('back');
   const format = useCameraFormat(device, [{ fps: 30 }]);
-  const isScanningInProgress = useRef(false);
+  const [scanStatus, setScanStatus] = useState<'Pending' | 'Parsing' | { errorMessage: string }>('Pending');
 
   const { hasPermission, requestPermission } = useCameraPermission();
   const [hasRejectPermission, setHasRejectPermission] = useState(false);
@@ -54,11 +54,9 @@ const ScanQrCode: React.FC<Props> = ({ navigation, bottomSheetRefOuter, onConfir
   const handleCodeScan = useCallback(
     async (codes: Code[]) => {
       const code = codes[0];
-      console.log('1handleCodeScan', isScanningInProgress.current);
-      if (!code || isScanningInProgress.current) return;
+      if (!code || scanStatus === 'Parsing') return;
       if (!code.value) return;
       let ethUrl: ETHURL;
-      isScanningInProgress.current = true;
       if (await methods.checkIsValidAddress({ networkType: currentNetwork.networkType, addressValue: code.value })) {
         ethUrl = { target_address: code.value, schema_prefix: currentNetwork.networkType === NetworkType.Ethereum ? 'ethereum:' : 'conflux:' } as ETHURL;
         onParseEthUrlSuccess(ethUrl);
@@ -72,46 +70,26 @@ const ScanQrCode: React.FC<Props> = ({ navigation, bottomSheetRefOuter, onConfir
           try {
             const { version } = parseUri(code.value);
             if (version === 1) {
-              isScanningInProgress.current = false;
-              return showMessage({
-                message: 'Sorry, The OR code version is to low',
-              });
+              setScanStatus({ errorMessage: 'Sorry, The OR code version is to low' });
+            } else {
+              await plugins.WalletConnect.pair(code.value);
+              // navigation.dispatch(StackActions.replace(HomeStackName, { screen: WalletStackName }));
             }
-
-            await plugins.WalletConnect.pair(code.value);
-            // navigation.dispatch(StackActions.replace(HomeStackName, { screen: WalletStackName }));
           } catch (err) {
             showMessage({
               message: 'Connect to wallet-connect failed',
               description: String(err ?? ''),
               duration: 3000,
             });
-            isScanningInProgress.current = false;
+            setScanStatus({ errorMessage: `Connect to wallet-connect failed: ${String(err ?? '')}` });
           }
-          return;
         } else {
-          isScanningInProgress.current = false;
-          return showMessage({
-            message: 'Sorry, this QR code could not be recognized.',
-          });
+          setScanStatus({ errorMessage: 'Sorry, this QR code could not be recognized.' });
         }
       }
     },
-    [currentNetwork?.networkType, onConfirm, onParseEthUrlSuccess],
+    [currentNetwork?.networkType, onConfirm, onParseEthUrlSuccess, scanStatus],
   );
-
-  useEffect(() => {
-    if (!hasPermission) {
-      const execRequestPermission = async () => {
-        const isSuccess = await requestPermission();
-        if (!isSuccess) {
-          setHasRejectPermission(true);
-        }
-      };
-      execRequestPermission();
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
 
   const pickImage = useCallback(async () => {
     // No permissions request is necessary for launching the image library
@@ -131,7 +109,16 @@ const ScanQrCode: React.FC<Props> = ({ navigation, bottomSheetRefOuter, onConfir
 
   const handleOnChange = useCallback((index: number) => {
     if (index === 0) {
-      isScanningInProgress.current = false;
+      setScanStatus('Pending');
+      if (!hasPermission) {
+        const execRequestPermission = async () => {
+          const isSuccess = await requestPermission();
+          if (!isSuccess) {
+            setHasRejectPermission(true);
+          }
+        };
+        execRequestPermission();
+      }
     }
   }, []);
 
@@ -153,7 +140,7 @@ const ScanQrCode: React.FC<Props> = ({ navigation, bottomSheetRefOuter, onConfir
                 <View style={styles.cameraWrapper}>
                   <Camera
                     ref={camera}
-                    isActive
+                    isActive={scanStatus !== 'Pending'}
                     device={device}
                     codeScanner={{
                       codeTypes: ['qr', 'ean-13'],
@@ -165,6 +152,9 @@ const ScanQrCode: React.FC<Props> = ({ navigation, bottomSheetRefOuter, onConfir
                   />
                 </View>
                 <ScanBorder style={styles.scanBorder} color={colors.borderFourth} pointerEvents="none" />
+                {typeof scanStatus === 'object' && scanStatus.errorMessage && (
+                  <Text style={[styles.errorMessage, { color: colors.down }]}>{scanStatus.errorMessage}</Text>
+                )}
                 <Button style={styles.photos} onPress={pickImage}>
                   Photos
                 </Button>
@@ -236,6 +226,13 @@ const styles = StyleSheet.create({
   camera: {
     width: '100%',
     height: '100%',
+  },
+  errorMessage: {
+    marginTop: 48,
+    fontSize: 14,
+    lineHeight: 20,
+    paddingHorizontal: 16,
+    textAlign: 'center',
   },
   photos: {
     width: 180,

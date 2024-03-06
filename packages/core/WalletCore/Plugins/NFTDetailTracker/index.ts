@@ -36,7 +36,7 @@ class NFTDetailTrackerPluginClass implements Plugin {
   private cancel$: Subject<void> | null = null;
   private currentNFTSubscription?: Subscription;
   private currentPollingSubscription?: Subscription;
-  private currentOpenNFTSubject = new BehaviorSubject<{ nft: AssetInfo; index: number } | undefined>(undefined);
+  private currentOpenNFTSubject = new BehaviorSubject<{ nft: AssetInfo; index?: number } | undefined>(undefined);
 
   constructor() {
     this.register({
@@ -61,7 +61,7 @@ class NFTDetailTrackerPluginClass implements Plugin {
   }
 
   private setup() {
-    events.currentAccountChangedSubject.subscribe((address) => {
+    events.currentAccountChangedSubject.subscribe(() => {
       setCurrentOpenNFTDetail(undefined);
     });
 
@@ -95,7 +95,7 @@ class NFTDetailTrackerPluginClass implements Plugin {
 
   /** This function immediately start a tracker for the current nft and returns a Promise that resolves when first fetchDetail success. */
   private startPolling = async (
-    { params: { nft, index }, accountAddress, fetcher }: { params: { nft: AssetInfo; index: number }; accountAddress: string; fetcher: Fetcher },
+    { params: { nft, index }, accountAddress, fetcher }: { params: { nft: AssetInfo; index?: number }; accountAddress: string; fetcher: Fetcher },
     forceUpdate = false,
   ) => {
     if (!forceUpdate) {
@@ -155,7 +155,7 @@ class NFTDetailTrackerPluginClass implements Plugin {
     this.cancel$ = null;
   };
 
-  public setCurrentOpenNFT = (params?: { nft: AssetInfo; index: number }) => this.currentOpenNFTSubject.next(params);
+  public setCurrentOpenNFT = (params?: { nft: AssetInfo; index?: number }) => this.currentOpenNFTSubject.next(params);
 
   public updateCurrentOpenNFT = (targetNftAddress?: string | null) => {
     const current = this.currentOpenNFTSubject.getValue();

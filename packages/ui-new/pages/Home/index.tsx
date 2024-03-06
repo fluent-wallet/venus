@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useRef, useState } from 'react';
 import { View, StyleSheet, type NativeScrollEvent } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import PagerView from 'react-native-pager-view';
@@ -7,13 +7,13 @@ import methods from '@core/WalletCore/Methods';
 import { getCurrentNetwork } from '@core/WalletCore/Plugins/ReactInject/data/useCurrentNetwork';
 import { HomeStackName, type StackScreenProps } from '@router/configs';
 import { isProd } from '@utils/getEnv';
+import { Tabs, TabsContent, setHomeScrollY, type Tab } from '@modules/AssetsTabs';
 import Account from './Account';
 import AccountSelector, { type BottomSheetMethods } from './AccountSelector';
 import NetworkSelector from './NetworkSelector';
 import HeaderRight from './HeaderRight';
 import { CurrentAddress, TotalPrice } from './Address&TotalPrice';
 import Navigations from './Navigations';
-import { Tabs, TabsContent, setScrollY } from './Tabs';
 import NotBackup from './NotBackup';
 import RefreshScrollView from './RefreshScrollView';
 
@@ -21,16 +21,12 @@ const Home: React.FC<StackScreenProps<typeof HomeStackName>> = ({ navigation }) 
   const accountSelectorRef = useRef<BottomSheetMethods>(null!);
   const networkSelectorRef = useRef<BottomSheetMethods>(null!);
 
-  const [currentTab, setCurrentTab] = useState<'Tokens' | 'NFTs' | 'Activity'>('Tokens');
+  const [currentTab, setCurrentTab] = useState<Tab>('Tokens');
   const pageViewRef = useRef<PagerView>(null);
 
   const handleScroll = useCallback((evt: NativeScrollEvent) => {
-    setScrollY(evt.contentOffset.y);
+    setHomeScrollY(evt.contentOffset.y);
   }, []);
-
-  useEffect(() => {
-    setScrollY(0);
-  }, [currentTab]);
 
   const handleRefresh = useCallback((closeRefresh: VoidFunction) => {
     plugins.NFTDetailTracker.updateCurrentOpenNFT();
@@ -59,8 +55,8 @@ const Home: React.FC<StackScreenProps<typeof HomeStackName>> = ({ navigation }) 
           <TotalPrice />
           <Navigations navigation={navigation} />
           <NotBackup navigation={navigation} />
-          <Tabs currentTab={currentTab} pageViewRef={pageViewRef} />
-          <TabsContent currentTab={currentTab} setCurrentTab={setCurrentTab} pageViewRef={pageViewRef} />
+          <Tabs currentTab={currentTab} pageViewRef={pageViewRef} type="Home" />
+          <TabsContent currentTab={currentTab} setCurrentTab={setCurrentTab} pageViewRef={pageViewRef} type="Home" />
         </RefreshScrollView>
       </SafeAreaView>
       <AccountSelector selectorRef={accountSelectorRef} />

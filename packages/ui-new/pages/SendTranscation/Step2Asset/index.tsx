@@ -1,33 +1,142 @@
-import React, { useState } from 'react';
-import { StyleSheet } from 'react-native';
+import React, { useState, useRef, useCallback, useEffect } from 'react';
+import { Pressable, StyleSheet, type NativeScrollEvent, type NativeSyntheticEvent } from 'react-native';
 import { useTheme } from '@react-navigation/native';
+import PagerView from 'react-native-pager-view';
+import { debounce, escapeRegExp } from 'lodash-es';
+import { useAssetsAllList, useCurrentNetwork, useCurrentAddressValue, useCurrentOpenNFTDetail, AssetType } from '@core/WalletCore/Plugins/ReactInject';
+import { fetchERC20AssetInfoBatchWithAccount } from '@core/WalletCore/Plugins/AssetsTracker/fetchers/basic';
+import { type AssetInfo } from '@core/WalletCore/Plugins/AssetsTracker/types';
+import methods from '@core/WalletCore/Methods';
+import plugins from '@core/WalletCore/Plugins';
 import Text from '@components/Text';
 import TextInput from '@components/TextInput';
 import Button from '@components/Button';
-import BackupBottomSheet from '../SendTranscationBottomSheet';
+import { BottomSheetScrollView } from '@components/BottomSheet';
 import { SendTranscationStep2StackName, SendTranscationStep3StackName, type SendTranscationScreenProps } from '@router/configs';
+import { Tabs, TabsContent, setSendScrollY, type Tab } from '@modules/AssetsTabs';
+import TokenItem from '@modules/AssetsList/TokensList/TokenItem';
+import NFTItem from '@modules/AssetsList/NFTsList/NFTItem';
+
+import BackupBottomSheet from '../SendTranscationBottomSheet';
 
 const SendTranscationStep2Asset: React.FC<SendTranscationScreenProps<typeof SendTranscationStep2StackName>> = ({ navigation }) => {
   const { colors } = useTheme();
-  const [assetAddress, setAssetAddress] = useState('');
+
+  const [currentTab, setCurrentTab] = useState<Tab>('Tokens');
+  const pageViewRef = useRef<PagerView>(null);
+  const handleScroll = useCallback((evt: NativeSyntheticEvent<NativeScrollEvent>) => {
+    setSendScrollY(evt.nativeEvent.contentOffset.y);
+  }, []);
+
+  const currentNetwork = useCurrentNetwork()!;
+  const currentAddressValue = useCurrentAddressValue();
+  const currentOpenNFTDetail = useCurrentOpenNFTDetail();
+  const assets = useAssetsAllList();
+
+  const [searchAsset, setSearchAsset] = useState('');
+  const [filterAssets, setFilterAssets] = useState<{
+    type: 'local' | 'remote' | 'invalid-format' | 'invalid-ERC20' | 'network-error';
+    assets: Array<AssetInfo>;
+  }>(() => ({ type: 'local', assets: [] }));
+
+  const searchFilterAssets = useCallback(
+    debounce(async (value: string) => {
+      if (value) {
+        plugins.NFTDetailTracker.setCurrentOpenNFT(undefined);
+      }
+
+      const localAssets = assets?.filter((asset) =>
+        [asset.name, asset.symbol, asset.type === AssetType.Native ? AssetType.Native : asset.contractAddress].some(
+          (str) => str?.search(new RegExp(escapeRegExp(value), 'i')) !== -1,
+        ),
+      );
+      if (localAssets && localAssets?.length > 0) {
+        setFilterAssets({ type: 'local', assets: localAssets });
+      } else {
+        try {
+          const isValidAddress = await methods.checkIsValidAddress({
+            networkType: currentNetwork.networkType,
+            addressValue: value!,
+          });
+
+          if (isValidAddress) {
+            const remoteAssets = await fetchERC20AssetInfoBatchWithAccount({
+              networkType: currentNetwork.networkType,
+              endpoint: currentNetwork?.endpoint,
+              contractAddress: value,
+              accountAddress: currentAddressValue!,
+            });
+            setFilterAssets({ type: 'remote', assets: [{ ...remoteAssets, type: AssetType.ERC20, contractAddress: value }] });
+          } else {
+            setFilterAssets({ type: 'invalid-format', assets: [] });
+          }
+        } catch (err) {
+          console.log(err);
+          if (String(err).includes('timed out')) {
+            setFilterAssets({ type: 'network-error', assets: [] });
+          } else {
+            setFilterAssets({ type: 'invalid-ERC20', assets: [] });
+          }
+        }
+      }
+    }, 500),
+    [assets, currentNetwork, currentAddressValue],
+  );
+
+  useEffect(() => {
+    searchFilterAssets(searchAsset);
+  }, [searchFilterAssets, searchAsset]);
 
   return (
     <BackupBottomSheet onClose={navigation.goBack}>
-      <Text style={[styles.selectAsset, { color: colors.textSecondary }]}>Asset</Text>
+      <Text style={[styles.selectAsset, { color: colors.textSecondary }]}>Select an asset</Text>
       <TextInput
         containerStyle={[styles.textinput, { borderColor: colors.borderFourth }]}
         showVisible={false}
         defaultHasValue={false}
-        value={assetAddress}
-        onChangeText={(newNickName) => setAssetAddress(newNickName?.trim())}
+        value={searchAsset}
+        onChangeText={(newNickName) => setSearchAsset(newNickName?.trim())}
         isInBottomSheet
         placeholder="Enter an asset name or address"
         multiline
       />
 
-      <Button style={styles.btn} mode="auto" onPress={() => navigation.navigate(SendTranscationStep3StackName)}>
-        Next
-      </Button>
+      {!searchAsset && (
+        <BottomSheetScrollView style={styles.scrollView} stickyHeaderIndices={[0]} onScroll={handleScroll}>
+          <Tabs currentTab={currentTab} pageViewRef={pageViewRef} type="SendTranscation" />
+          <TabsContent currentTab={currentTab} setCurrentTab={setCurrentTab} pageViewRef={pageViewRef} type="SendTranscation" />
+        </BottomSheetScrollView>
+      )}
+      {searchAsset && (
+        <BottomSheetScrollView style={[styles.scrollView, { marginTop: 8 }]} onScroll={handleScroll}>
+          {filterAssets.assets?.length > 0 &&
+            filterAssets.assets.map((asset) =>
+              asset.type === AssetType.ERC20 || asset.type === AssetType.Native ? (
+                <TokenItem key={asset.contractAddress ?? AssetType.Native} data={asset} showTypeLabel />
+              ) : (
+                <NFTItem key={asset.contractAddress} data={asset} currentOpenNFTDetail={currentOpenNFTDetail} tabsType="SendTranscation" showTypeLabel />
+              ),
+            )}
+
+          {filterAssets.type !== 'local' && filterAssets.type !== 'remote' && (
+            <Pressable
+              style={({ pressed }) => [{ backgroundColor: pressed ? colors.underlay : 'transparent' }]}
+              disabled={filterAssets.type !== 'network-error'}
+            >
+              <Text style={[styles.invalidTip, { color: colors.textPrimary }]}>
+                🚫{'   '}
+                {filterAssets.type === 'invalid-format' && 'Invalid contract address format'}
+                {filterAssets.type === 'invalid-ERC20' && 'Only valid ERC20 token search is supported'}
+                {filterAssets.type === 'network-error' && (
+                  <>
+                    Network error, <Text style={{ textDecorationLine: 'underline' }}>click to retry</Text>
+                  </>
+                )}
+              </Text>
+            </Pressable>
+          )}
+        </BottomSheetScrollView>
+      )}
     </BackupBottomSheet>
   );
 };
@@ -41,15 +150,21 @@ const styles = StyleSheet.create({
     fontWeight: '300',
     lineHeight: 18,
   },
+  scrollView: {
+    flex: 1,
+    marginVertical: 16,
+  },
+  invalidTip: {
+    paddingHorizontal: 32,
+    fontSize: 16,
+    fontWeight: '600',
+    lineHeight: 24,
+    marginTop: 16,
+  },
   textinput: {
     marginHorizontal: 16,
     borderWidth: 1,
     backgroundColor: 'transparent',
-  },
-  btn: {
-    marginTop: 'auto',
-    marginBottom: 32,
-    marginHorizontal: 16,
   },
 });
 

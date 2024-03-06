@@ -6,17 +6,22 @@ import { type AssetInfo } from '@core/WalletCore/Plugins/AssetsTracker/types';
 import { balanceFormat, convertBalanceToDecimal, numberWithCommas } from '@core/utils/balance';
 import Text from '@components/Text';
 import TokenIcon from './TokenIcon';
+import AssetTypeLabel from '../AssetTypeLabel';
 
 const TokenItem: React.FC<{
   data: AssetInfo;
   onPress?: (v: AssetInfo) => void;
   hidePrice?: boolean;
   hideBalance?: boolean;
-}> = ({ onPress, data, hidePrice = false, hideBalance = false }) => {
+  showTypeLabel?: boolean;
+}> = ({ onPress, data, hidePrice = false, hideBalance = false, showTypeLabel = false }) => {
   const { colors } = useTheme();
 
   const balance = useMemo(() => {
     const n = new Decimal(convertBalanceToDecimal(data.balance, data.decimals));
+    if (n.equals(0)) {
+      return '0';
+    }
     if (n.lessThan(new Decimal(10).pow(-4))) {
       return '<0.0001';
     }
@@ -39,8 +44,9 @@ const TokenItem: React.FC<{
           <Text style={[styles.tokenName, { color: colors.textPrimary }]} numberOfLines={1}>
             {data.name}
           </Text>
+          {showTypeLabel && <AssetTypeLabel assetType={data.type} />}
           {!hidePrice && (
-            <Text style={[styles.tokenName, { textAlign: 'right', color: colors.textPrimary }]} numberOfLines={1}>
+            <Text style={[styles.tokenName, { marginLeft: 'auto', textAlign: 'right', color: colors.textPrimary }]} numberOfLines={1}>
               {price}
             </Text>
           )}
@@ -75,7 +81,6 @@ const styles = StyleSheet.create({
   textTitle: {
     display: 'flex',
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
   },
   tokenName: {

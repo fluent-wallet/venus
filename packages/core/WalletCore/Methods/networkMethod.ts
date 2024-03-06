@@ -124,7 +124,7 @@ export class NetworkMethod {
     });
   }
 
-  async checkIsValidAddress({ networkType, addressValue }: { networkType: NetworkType; addressValue: string }) {
+  async _checkIsValidAddress({ networkType, addressValue }: { networkType: NetworkType; addressValue: string }) {
     if (!addressValue) return false;
     if (networkType === NetworkType.Conflux) {
       return validateCfxAddress(addressValue);
@@ -143,10 +143,11 @@ export class NetworkMethod {
       await fetchChain<string>({ url: endpoint, method: `${rpcPrefix}_getCode`, params: [addressValue, rpcSuffix] });
       return true;
     } catch (err) {
-      if (String(err)?.includes('Invalid response')) return false;
-      throw err;
+      if (String(err)?.includes('timed out')) throw err;
+      return false;
     }
   }
 
   checkIsContractAddress = memoize(this._checkIsContractAddress);
+  checkIsValidAddress = memoize(this._checkIsValidAddress);
 }

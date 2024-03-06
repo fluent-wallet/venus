@@ -1,25 +1,39 @@
-import { useCallback, useMemo } from 'react';
+import { useCallback, useEffect, useMemo } from 'react';
 import { Pressable, View, StyleSheet } from 'react-native';
 import { useTheme } from '@react-navigation/native';
 import plugins from '@core/WalletCore/Plugins';
 import { type AssetInfo } from '@core/WalletCore/Plugins/AssetsTracker/types';
 import { useCurrentOpenNFTDetail } from '@core/WalletCore/Plugins/ReactInject';
 import Text from '@components/Text';
-import ArrowRight from '@assets/icons/arrow-right2.svg';
 import { screenWidth } from '@utils/deviceInfo';
+import { type TabsType } from '@modules/AssetsTabs';
+import ArrowRight from '@assets/icons/arrow-right2.svg';
 import NFTIcon from './NFTIcon';
 import { SkeletoDetailItem } from './Skeleton';
+import AssetTypeLabel from '../AssetTypeLabel';
 
-export const StickyNFTItem: React.FC<{ startY: number; scrollY: number }> = ({ startY, scrollY }) => {
+export const StickyNFTItem: React.FC<{ startY: number; scrollY: number; tabsType: TabsType }> = ({ startY, scrollY, tabsType }) => {
   const currentOpenNFT = useCurrentOpenNFTDetail();
   const showY = useMemo(() => startY + (currentOpenNFT?.index ?? 0) * 70, [startY, currentOpenNFT?.index]);
-  if (!currentOpenNFT) return null;
+
+  if (!currentOpenNFT || currentOpenNFT?.index === undefined) return null;
   return (
-    <NFTItem isSticky={scrollY < showY ? 'hide' : 'show'} data={currentOpenNFT.nft} onPress={() => plugins.NFTDetailTracker.setCurrentOpenNFT(undefined)} />
+    <NFTItem
+      isSticky={scrollY < showY ? 'hide' : 'show'}
+      data={currentOpenNFT.nft}
+      onPress={() => plugins.NFTDetailTracker.setCurrentOpenNFT(undefined)}
+      tabsType={tabsType}
+    />
   );
 };
 
-const NFTItem: React.FC<{ data: AssetInfo; onPress: () => void; isSticky?: 'hide' | 'show' }> = ({ data, onPress, isSticky }) => {
+const NFTItem: React.FC<{ data: AssetInfo; onPress: () => void; isSticky?: 'hide' | 'show'; tabsType: TabsType; showTypeLabel?: boolean }> = ({
+  data,
+  onPress,
+  isSticky,
+  tabsType,
+  showTypeLabel,
+}) => {
   const { colors } = useTheme();
 
   return (
@@ -28,7 +42,7 @@ const NFTItem: React.FC<{ data: AssetInfo; onPress: () => void; isSticky?: 'hide
       style={({ pressed }) => [
         styles.container,
         isSticky && styles.sticky,
-        { backgroundColor: pressed ? colors.underlay : colors.bgPrimary, opacity: isSticky === 'hide' ? 0 : 1 },
+        { backgroundColor: pressed ? colors.underlay : tabsType === 'Home' ? colors.bgPrimary : colors.bgFourth, opacity: isSticky === 'hide' ? 0 : 1 },
       ]}
       pointerEvents={isSticky === 'hide' ? 'none' : 'auto'}
       onPress={onPress}
@@ -38,7 +52,8 @@ const NFTItem: React.FC<{ data: AssetInfo; onPress: () => void; isSticky?: 'hide
         <Text style={[styles.nftName, { color: colors.textPrimary }]} numberOfLines={1}>
           {data.name}
         </Text>
-        <ArrowRight width={15} height={15} color={colors.iconPrimary} />
+        {showTypeLabel && <AssetTypeLabel assetType={data.type} />}
+        <ArrowRight style={styles.arrow} width={15} height={15} color={colors.iconPrimary} />
       </View>
     </Pressable>
   );
@@ -55,17 +70,20 @@ const NFTItemAndDetail: React.FC<{
   data: AssetInfo;
   currentOpenNFTDetail: ReturnType<typeof useCurrentOpenNFTDetail>;
   onPress?: (v: AssetInfo) => void;
-  index: number;
-}> = ({ onPress, data, index, currentOpenNFTDetail }) => {
+  index?: number;
+  tabsType: TabsType;
+  showTypeLabel?: boolean;
+}> = ({ onPress, data, index, currentOpenNFTDetail, tabsType, showTypeLabel }) => {
   const { colors } = useTheme();
 
   const handlePress = useCallback(() => {
     plugins.NFTDetailTracker.setCurrentOpenNFT(currentOpenNFTDetail?.nft?.contractAddress === data.contractAddress ? undefined : { nft: data, index });
   }, [data, index, currentOpenNFTDetail?.nft?.contractAddress]);
+  
 
   return (
     <>
-      <NFTItem data={data} onPress={handlePress} />
+      <NFTItem data={data} onPress={handlePress} tabsType={tabsType} showTypeLabel={showTypeLabel} />
       {currentOpenNFTDetail?.nft?.contractAddress === data.contractAddress && (
         <View style={styles.itemsArea}>
           {!currentOpenNFTDetail?.items && <SkeletoDetail colors={colors} />}
@@ -109,7 +127,6 @@ const styles = StyleSheet.create({
     marginLeft: 8,
     display: 'flex',
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
   },
   nftName: {
@@ -117,6 +134,9 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     lineHeight: 18,
     maxWidth: 160,
+  },
+  arrow: {
+    marginLeft: 'auto',
   },
   itemsArea: {
     marginVertical: 4,

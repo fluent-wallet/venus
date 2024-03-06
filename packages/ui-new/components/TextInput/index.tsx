@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback, useRef, forwardRef, type Component } from 'react';
+import { useState, useMemo, useCallback, useRef, forwardRef, useEffect, type Component } from 'react';
 import { View, TextInput, StyleSheet, Pressable, Platform, type TextInputProps, type ViewStyle, type StyleProp } from 'react-native';
 import { useTheme } from '@react-navigation/native';
 import { type SvgProps } from 'react-native-svg';
@@ -28,6 +28,7 @@ const CustomTextInput = forwardRef<TextInput, Props>(
       showVisible = true,
       showClear = true,
       disabled,
+      value,
       defaultHasValue,
       onChangeText,
       isInBottomSheet,
@@ -43,7 +44,7 @@ const CustomTextInput = forwardRef<TextInput, Props>(
     const UsedTextInput = useMemo(() => (isInBottomSheet ? BottomSheetTextInput : TextInput), [isInBottomSheet]);
 
     const [visible, setVisible] = useState(isDev);
-    const [hasValue, setHasValue] = useState(defaultHasValue ?? isDev);
+    const [hasValue, setHasValue] = useState(() => (value !== undefined ? !!value : defaultHasValue ?? isDev));
     const handleChangeText = useCallback(
       (text: string) => {
         setHasValue(text?.length > 0);
@@ -60,6 +61,12 @@ const CustomTextInput = forwardRef<TextInput, Props>(
       setHasValue(false);
     }, [onChangeText]);
 
+    useEffect(() => {
+      if (value !== undefined) {
+        setHasValue(!!value);
+      }
+    }, [value]);
+
     return (
       <View style={[styles.defaultContainerStyle, { backgroundColor: colors.bgSecondary }, containerStyle]}>
         <UsedTextInput
@@ -72,6 +79,7 @@ const CustomTextInput = forwardRef<TextInput, Props>(
           ]}
           placeholderTextColor={colors.textSecondary}
           secureTextEntry={showVisible ? !visible : secureTextEntry || false}
+          value={value}
           {...props}
           onChangeText={handleChangeText}
         />

@@ -138,7 +138,7 @@ export const useCurrentAssetsKey = () => {
 
 export const useAssetsTotalPriceValueWithKey = (key: string) => useAtomValue(assetsTotalPriceValueAtom(key));
 
-const currentOpenNFTDetailAtom = atom<{ nft: AssetInfo; index: number; items?: Array<NFTItemDetail> } | undefined>(undefined);
+const currentOpenNFTDetailAtom = atom<{ nft: AssetInfo; index?: number; items?: Array<NFTItemDetail> } | undefined>(undefined);
 export const getCurrentOpenNFTDetail = () => getAtom(currentOpenNFTDetailAtom);
-export const setCurrentOpenNFTDetail = (data?: { nft: AssetInfo; index: number; items?: Array<NFTItemDetail> }) => setAtom(currentOpenNFTDetailAtom, data);
+export const setCurrentOpenNFTDetail = (data?: { nft: AssetInfo; index?: number; items?: Array<NFTItemDetail> }) => setAtom(currentOpenNFTDetailAtom, data);
 export const useCurrentOpenNFTDetail = () => useAtomValue(currentOpenNFTDetailAtom);

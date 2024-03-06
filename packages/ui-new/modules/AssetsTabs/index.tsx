@@ -11,27 +11,30 @@ import TokensList from '@modules/AssetsList/TokensList';
 import NFTsList from '@modules/AssetsList/NFTsList';
 import { StickyNFTItem } from '@modules/AssetsList/NFTsList/NFTItem';
 
-type Tab = 'Tokens' | 'NFTs' | 'Activity';
+export type Tab = 'Tokens' | 'NFTs' | 'Activity';
+export type TabsType = 'Home' | 'SendTranscation';
 type Tabs = Array<Tab>;
 const TAB_WIDTH = 64;
 
 interface Props {
+  type: TabsType;
   currentTab: Tab;
   pageViewRef: React.RefObject<PagerView>;
   setCurrentTab: (tab: Tab) => void;
 }
 
-export const Tabs: React.FC<Omit<Props, 'setCurrentTab'>> = ({ currentTab, pageViewRef }) => {
+export const Tabs: React.FC<Omit<Props, 'setCurrentTab'>> = ({ type, currentTab, pageViewRef }) => {
   const { colors } = useTheme();
 
   const currentNetwork = useCurrentNetwork();
-  const tabs = useMemo(
-    () =>
+  const tabs = useMemo(() => {
+    const res =
       !currentNetwork || (currentNetwork && (currentNetwork.chainId === CFX_ESPACE_MAINNET_CHAINID || currentNetwork.chainId === CFX_ESPACE_TESTNET_CHAINID))
-        ? (['Tokens', 'NFTs', 'Activity'] as Tabs)
-        : (['Tokens', 'Activity'] as Tabs),
-    [currentNetwork],
-  );
+        ? (['Tokens', 'NFTs'] as Tabs)
+        : (['Tokens'] as Tabs);
+    type === 'Home' && res.push('Activity');
+    return res;
+  }, [currentNetwork, type]);
 
   const currentTabIndex = useMemo(() => {
     const index = tabs.indexOf(currentTab as 'Tokens');
@@ -44,6 +47,7 @@ export const Tabs: React.FC<Omit<Props, 'setCurrentTab'>> = ({ currentTab, pageV
       index = index === -1 ? 0 : index;
       pageViewRef?.current?.setPage(index);
     },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [tabs],
   );
 
@@ -51,14 +55,26 @@ export const Tabs: React.FC<Omit<Props, 'setCurrentTab'>> = ({ currentTab, pageV
   const animatedStyles = useAnimatedStyle(() => ({
     transform: [{ translateX: offset.value }],
   }));
+
   useEffect(() => {
     offset.value = withTiming(TAB_WIDTH * currentTabIndex);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentTabIndex]);
 
+  useEffect(() => {
+    mapOfSetScrollY[type](0);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentTab]);
+  useEffect(() => {
+    return () => {
+      mapOfSetScrollY[type](0);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   return (
     <>
-      <View style={[styles.tabsSelector, { backgroundColor: colors.bgPrimary }]}>
+      <View style={[styles.tabsSelector, { backgroundColor: type !== 'Home' ? colors.bgFourth : colors.bgPrimary }]}>
         {tabs.map((tab) => (
           <Pressable key={tab} onPress={() => handleClickTabLabel(tab)}>
             <Text
@@ -70,20 +86,40 @@ export const Tabs: React.FC<Omit<Props, 'setCurrentTab'>> = ({ currentTab, pageV
         ))}
         <Animated.View style={[styles.animatedBorder, animatedStyles, { backgroundColor: colors.borderPrimary }]} />
       </View>
-      <View style={[styles.divider, { backgroundColor: colors.borderThird }]}>{currentTab === 'NFTs' && <StickyNFT />}</View>
+      <View style={[styles.divider, { backgroundColor: type !== 'Home' ? colors.borderFourth : colors.borderThird }]}>
+        {currentTab === 'NFTs' && <StickyNFT type={type} />}
+      </View>
     </>
   );
 };
 
-const tabPageViewScrollYAtom = atom(0);
-export const setScrollY = (height: number) => setAtom(tabPageViewScrollYAtom, height);
-const useTabPageViewScrollY = () => useAtomValue(tabPageViewScrollYAtom);
-export const StickyNFT: React.FC = () => {
-  const scrollY = useTabPageViewScrollY();
-  return <StickyNFTItem scrollY={scrollY} startY={200} />;
+const createStickyNFTScrollAtom = () => {
+  const tabPageViewScrollYAtom = atom(0);
+  const setScrollY = (height: number) => setAtom(tabPageViewScrollYAtom, height);
+  const useTabPageViewScrollY = () => useAtomValue(tabPageViewScrollYAtom);
+  return {
+    setScrollY,
+    useTabPageViewScrollY,
+  };
+};
+export const { setScrollY: setHomeScrollY, useTabPageViewScrollY: useHomeTabPageViewScrollY } = createStickyNFTScrollAtom();
+export const { setScrollY: setSendScrollY, useTabPageViewScrollY: useSendTabPageViewScrollY } = createStickyNFTScrollAtom();
+const mapOfUseTabPageViewScrollY = {
+  Home: useHomeTabPageViewScrollY,
+  SendTranscation: useSendTabPageViewScrollY,
+};
+const mapOfSetScrollY = {
+  Home: setHomeScrollY,
+  SendTranscation: setSendScrollY,
 };
 
-export const TabsContent: React.FC<Props> = ({ currentTab, setCurrentTab, pageViewRef }) => {
+export const StickyNFT: React.FC<{ type: TabsType }> = ({ type }) => {
+  const scrollY = mapOfUseTabPageViewScrollY[type]();
+  const startY = useMemo(() => (type === 'Home' ? 200 : 1), [type]);
+  return <StickyNFTItem scrollY={scrollY} startY={startY} tabsType={type} />;
+};
+
+export const TabsContent: React.FC<Props> = ({ currentTab, setCurrentTab, pageViewRef, type }) => {
   const currentNetwork = useCurrentNetwork();
   const tabs = useMemo(
     () =>
@@ -102,7 +138,7 @@ export const TabsContent: React.FC<Props> = ({ currentTab, setCurrentTab, pageVi
       {tabs?.map((tab, index) => (
         <Fragment key={tab}>
           {tab === 'Tokens' && index === currentTabIndex && <TokensList showReceiveFunds />}
-          {tab === 'NFTs' && index === currentTabIndex && <NFTsList />}
+          {tab === 'NFTs' && index === currentTabIndex && <NFTsList tabsType={type} />}
           {tab === 'Activity' && index === currentTabIndex && <Text>Activity</Text>}
         </Fragment>
       ))}

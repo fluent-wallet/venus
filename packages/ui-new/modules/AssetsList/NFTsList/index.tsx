@@ -4,15 +4,17 @@ import { useTheme } from '@react-navigation/native';
 import { useAssetsNFTList, useIsNftsEmpty, useCurrentOpenNFTDetail } from '@core/WalletCore/Plugins/ReactInject';
 import { type AssetInfo } from '@core/WalletCore/Plugins/AssetsTracker/types';
 import Text from '@components/Text';
+import { type TabsType } from '@modules/AssetsTabs';
 import NoData from '@assets/icons/no-data.svg';
 import NFTItem from './NFTItem';
 import { SkeletonList } from './Skeleton';
 
 interface Props {
   onPress?: (v: AssetInfo) => void;
+  tabsType: TabsType;
 }
 
-const NFTList: React.FC<Props> = ({ onPress }) => {
+const NFTList: React.FC<Props> = ({ onPress, tabsType }) => {
   const { colors } = useTheme();
   const nfts = useAssetsNFTList();
   const isEmpty = useIsNftsEmpty();
@@ -31,7 +33,7 @@ const NFTList: React.FC<Props> = ({ onPress }) => {
     );
   }
 
-  return nfts.map((nft, index) => <NFTItem key={index} data={nft} onPress={onPress} currentOpenNFTDetail={currentOpenNFTDetail} index={index} />);
+  return nfts.map((nft, index) => <NFTItem key={index} data={nft} onPress={onPress} currentOpenNFTDetail={currentOpenNFTDetail} index={index} tabsType={tabsType} />);
 };
 
 const styles = StyleSheet.create({

@@ -22,7 +22,7 @@ const SendTranscationStep1Receiver: React.FC<SendTranscationScreenProps<typeof S
   const _currentNetwork = useCurrentNetwork();
   const scanQRCodeRef = useRef<BottomSheetMethods>(null!);
 
-  const [receiver, setReceiver] = useState('');
+  const [receiver, setReceiver] = useState('0x102e0fb8a5ED6E0f0899C3ed9896cb8973aA29bB');
   const [inChecking, setInChecking] = useState(false);
   const [knowRisk, setKnowRist] = useState(false);
   const [checkRes, setCheckRes] = useState<null | AddressType | 'Invalid' | 'NetworkError'>(null);
