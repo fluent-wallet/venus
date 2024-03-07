@@ -124,7 +124,7 @@ export class NetworkMethod {
     });
   }
 
-  async _checkIsValidAddress({ networkType, addressValue }: { networkType: NetworkType; addressValue: string }) {
+  _checkIsValidAddress({ networkType, addressValue }: { networkType: NetworkType; addressValue: string }) {
     if (!addressValue) return false;
     if (networkType === NetworkType.Conflux) {
       return validateCfxAddress(addressValue);

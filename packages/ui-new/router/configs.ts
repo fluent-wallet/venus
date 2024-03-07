@@ -1,5 +1,7 @@
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { NavigationProp, NavigatorScreenParams } from '@react-navigation/native';
+import { type AssetInfo } from '@core/WalletCore/Plugins/AssetsTracker/types';
+import { type NFTItemDetail } from '@core/WalletCore/Plugins/NFTDetailTracker';
 
 export const WelcomeStackName = 'Welcome';
 export const WayToInitWalletStackName = 'WayToInitWallet';
@@ -32,7 +34,7 @@ export type RootStackParamList = {
   [SendTranscationStackName]: NavigatorScreenParams<SendTranscationParamList>;
   [NetworkManagementStackName]: undefined;
   [PasswordVerifyStackName]: undefined;
-  [ScanQRCodeStackName]: undefined,
+  [ScanQRCodeStackName]: undefined;
 };
 
 export type StackScreenProps<T extends keyof RootStackParamList> = NativeStackScreenProps<RootStackParamList, T>;
@@ -61,10 +63,12 @@ export type BackupScreenProps<T extends keyof BackupStackParamList> = NativeStac
 export const SendTranscationStep1StackName = 'SendTranscationStep1';
 export const SendTranscationStep2StackName = 'SendTranscationStep2';
 export const SendTranscationStep3StackName = 'SendTranscationStep3';
+export const SendTranscationStep4StackName = 'SendTranscationStep4';
 export type SendTranscationParamList = {
   [SendTranscationStep1StackName]: undefined;
-  [SendTranscationStep2StackName]: undefined;
-  [SendTranscationStep3StackName]: undefined;
+  [SendTranscationStep2StackName]: { targetAddress: string };
+  [SendTranscationStep3StackName]: { asset: AssetInfo; targetAddress: string; nftItemDetail?: NFTItemDetail };
+  [SendTranscationStep4StackName]: { asset: AssetInfo; targetAddress: string; amount: string; nftItemDetail?: NFTItemDetail };
   // navigate to home
   [HomeStackName]: undefined;
 };

@@ -1,9 +1,9 @@
 import { useCallback, useMemo } from 'react';
 import { Pressable, View, StyleSheet } from 'react-native';
 import { useTheme } from '@react-navigation/native';
-import Decimal from 'decimal.js';
 import { type AssetInfo } from '@core/WalletCore/Plugins/AssetsTracker/types';
-import { balanceFormat, convertBalanceToDecimal, numberWithCommas } from '@core/utils/balance';
+import { numberWithCommas } from '@core/utils/balance';
+import useFormatBalance from '@hooks/useFormatBalance';
 import Text from '@components/Text';
 import TokenIcon from './TokenIcon';
 import AssetTypeLabel from '../AssetTypeLabel';
@@ -17,17 +17,7 @@ const TokenItem: React.FC<{
 }> = ({ onPress, data, hidePrice = false, hideBalance = false, showTypeLabel = false }) => {
   const { colors } = useTheme();
 
-  const balance = useMemo(() => {
-    const n = new Decimal(convertBalanceToDecimal(data.balance, data.decimals));
-    if (n.equals(0)) {
-      return '0';
-    }
-    if (n.lessThan(new Decimal(10).pow(-4))) {
-      return '<0.0001';
-    }
-    return numberWithCommas(balanceFormat(data.balance, { decimals: data.decimals }));
-  }, [data.balance, data.decimals]);
-
+  const balance = useFormatBalance(data.balance, data.decimals);
   const price = useMemo(() => (data.priceValue ? `$${numberWithCommas(data.priceValue)}` : '--'), [data.priceValue]);
 
   const handlePress = useCallback(() => onPress?.(data), [onPress, data]);

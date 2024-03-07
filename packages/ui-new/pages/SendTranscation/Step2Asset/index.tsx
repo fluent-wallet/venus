@@ -2,15 +2,17 @@ import React, { useState, useRef, useCallback, useEffect } from 'react';
 import { Pressable, StyleSheet, type NativeScrollEvent, type NativeSyntheticEvent } from 'react-native';
 import { useTheme } from '@react-navigation/native';
 import PagerView from 'react-native-pager-view';
+import { showMessage } from 'react-native-flash-message';
 import { debounce, escapeRegExp } from 'lodash-es';
 import { useAssetsAllList, useCurrentNetwork, useCurrentAddressValue, useCurrentOpenNFTDetail, AssetType } from '@core/WalletCore/Plugins/ReactInject';
 import { fetchERC20AssetInfoBatchWithAccount } from '@core/WalletCore/Plugins/AssetsTracker/fetchers/basic';
 import { type AssetInfo } from '@core/WalletCore/Plugins/AssetsTracker/types';
+import { type NFTItemDetail } from '@core/WalletCore/Plugins/NFTDetailTracker';
 import methods from '@core/WalletCore/Methods';
 import plugins from '@core/WalletCore/Plugins';
 import Text from '@components/Text';
 import TextInput from '@components/TextInput';
-import Button from '@components/Button';
+import HourglassLoading from '@components/Loading/Hourglass';
 import { BottomSheetScrollView } from '@components/BottomSheet';
 import { SendTranscationStep2StackName, SendTranscationStep3StackName, type SendTranscationScreenProps } from '@router/configs';
 import { Tabs, TabsContent, setSendScrollY, type Tab } from '@modules/AssetsTabs';
@@ -19,7 +21,7 @@ import NFTItem from '@modules/AssetsList/NFTsList/NFTItem';
 
 import BackupBottomSheet from '../SendTranscationBottomSheet';
 
-const SendTranscationStep2Asset: React.FC<SendTranscationScreenProps<typeof SendTranscationStep2StackName>> = ({ navigation }) => {
+const SendTranscationStep2Asset: React.FC<SendTranscationScreenProps<typeof SendTranscationStep2StackName>> = ({ navigation, route }) => {
   const { colors } = useTheme();
 
   const [currentTab, setCurrentTab] = useState<Tab>('Tokens');
@@ -34,6 +36,7 @@ const SendTranscationStep2Asset: React.FC<SendTranscationScreenProps<typeof Send
   const assets = useAssetsAllList();
 
   const [searchAsset, setSearchAsset] = useState('');
+  const [inFetchingRemote, setInFetchingRemote] = useState(false);
   const [filterAssets, setFilterAssets] = useState<{
     type: 'local' | 'remote' | 'invalid-format' | 'invalid-ERC20' | 'network-error';
     assets: Array<AssetInfo>;
@@ -54,12 +57,14 @@ const SendTranscationStep2Asset: React.FC<SendTranscationScreenProps<typeof Send
         setFilterAssets({ type: 'local', assets: localAssets });
       } else {
         try {
-          const isValidAddress = await methods.checkIsValidAddress({
+          const isValidAddress = methods.checkIsValidAddress({
             networkType: currentNetwork.networkType,
             addressValue: value!,
           });
 
           if (isValidAddress) {
+            setInFetchingRemote(true);
+            await new Promise((resolve) => setTimeout(() => resolve(null!)));
             const remoteAssets = await fetchERC20AssetInfoBatchWithAccount({
               networkType: currentNetwork.networkType,
               endpoint: currentNetwork?.endpoint,
@@ -77,6 +82,8 @@ const SendTranscationStep2Asset: React.FC<SendTranscationScreenProps<typeof Send
           } else {
             setFilterAssets({ type: 'invalid-ERC20', assets: [] });
           }
+        } finally {
+          setInFetchingRemote(false);
         }
       }
     }, 500),
@@ -86,6 +93,16 @@ const SendTranscationStep2Asset: React.FC<SendTranscationScreenProps<typeof Send
   useEffect(() => {
     searchFilterAssets(searchAsset);
   }, [searchFilterAssets, searchAsset]);
+
+  const handleClickAsset = useCallback((asset: AssetInfo, nftItemDetail?: NFTItemDetail) => {
+    if (asset.type === AssetType.ERC20 && (asset.balance === '0' || asset.balance === '0x')) {
+      return showMessage({
+        message: `The balance of asset ${asset.name} is 0`,
+        type: 'warning',
+      });
+    }
+    navigation.navigate(SendTranscationStep3StackName, { ...route.params, asset, nftItemDetail });
+  }, []);
 
   return (
     <BackupBottomSheet onClose={navigation.goBack}>
@@ -104,7 +121,7 @@ const SendTranscationStep2Asset: React.FC<SendTranscationScreenProps<typeof Send
       {!searchAsset && (
         <BottomSheetScrollView style={styles.scrollView} stickyHeaderIndices={[0]} onScroll={handleScroll}>
           <Tabs currentTab={currentTab} pageViewRef={pageViewRef} type="SendTranscation" />
-          <TabsContent currentTab={currentTab} setCurrentTab={setCurrentTab} pageViewRef={pageViewRef} type="SendTranscation" />
+          <TabsContent currentTab={currentTab} setCurrentTab={setCurrentTab} pageViewRef={pageViewRef} type="SendTranscation" onPressItem={handleClickAsset} />
         </BottomSheetScrollView>
       )}
       {searchAsset && (
@@ -112,9 +129,16 @@ const SendTranscationStep2Asset: React.FC<SendTranscationScreenProps<typeof Send
           {filterAssets.assets?.length > 0 &&
             filterAssets.assets.map((asset) =>
               asset.type === AssetType.ERC20 || asset.type === AssetType.Native ? (
-                <TokenItem key={asset.contractAddress ?? AssetType.Native} data={asset} showTypeLabel />
+                <TokenItem key={asset.contractAddress ?? AssetType.Native} data={asset} showTypeLabel onPress={handleClickAsset} />
               ) : (
-                <NFTItem key={asset.contractAddress} data={asset} currentOpenNFTDetail={currentOpenNFTDetail} tabsType="SendTranscation" showTypeLabel />
+                <NFTItem
+                  key={asset.contractAddress}
+                  data={asset}
+                  currentOpenNFTDetail={currentOpenNFTDetail}
+                  tabsType="SendTranscation"
+                  showTypeLabel
+                  onPress={handleClickAsset}
+                />
               ),
             )}
 
@@ -135,6 +159,7 @@ const SendTranscationStep2Asset: React.FC<SendTranscationScreenProps<typeof Send
               </Text>
             </Pressable>
           )}
+          {inFetchingRemote && <HourglassLoading style={styles.fetchLoading} />}
         </BottomSheetScrollView>
       )}
     </BackupBottomSheet>
@@ -160,6 +185,12 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     lineHeight: 24,
     marginTop: 16,
+  },
+  fetchLoading: {
+    marginTop: 24,
+    width: 60,
+    height: 60,
+    alignSelf: 'center',
   },
   textinput: {
     marginHorizontal: 16,

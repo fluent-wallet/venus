@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback, useRef, forwardRef, useEffect, type Component } from 'react';
+import { useState, useMemo, useCallback, useRef, forwardRef, useEffect, isValidElement, type Component } from 'react';
 import { View, TextInput, StyleSheet, Pressable, Platform, type TextInputProps, type ViewStyle, type StyleProp } from 'react-native';
 import { useTheme } from '@react-navigation/native';
 import { type SvgProps } from 'react-native-svg';
@@ -16,7 +16,7 @@ interface Props extends TextInputProps {
   defaultHasValue?: boolean;
   disabled?: boolean;
   isInBottomSheet?: boolean;
-  SuffixIcon?: typeof Component<SvgProps>;
+  SuffixIcon?: typeof Component<SvgProps> | React.ReactNode;
   onPressSuffixIcon?: () => void;
 }
 
@@ -99,7 +99,7 @@ const CustomTextInput = forwardRef<TextInput, Props>(
         )}
         {SuffixIcon && (
           <Pressable onPress={onPressSuffixIcon}>
-            <SuffixIcon style={styles.icon} color={colors.iconPrimary} />
+            {isValidElement(SuffixIcon) ? SuffixIcon : typeof SuffixIcon === 'function' ? <SuffixIcon style={styles.icon} color={colors.iconPrimary} /> : null}
           </Pressable>
         )}
       </View>

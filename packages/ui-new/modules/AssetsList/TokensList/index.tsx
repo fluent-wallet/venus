@@ -7,12 +7,12 @@ import ReceiveFunds from './ReceiveFunds';
 import Skeleton from './Skeleton';
 
 interface Props {
-  onPress?: (v: AssetInfo) => void;
+  onPressItem?: (v: AssetInfo) => void;
   showReceiveFunds?: boolean;
   hidePrice?: boolean;
 }
 
-const TokenList: React.FC<Props> = ({ onPress, showReceiveFunds = false, hidePrice = false }) => {
+const TokenList: React.FC<Props> = ({ onPressItem, showReceiveFunds = false, hidePrice = false }) => {
   const tokens = useAssetsTokenList();
   const isEmpty = useIsTokensEmpty();
 
@@ -24,13 +24,13 @@ const TokenList: React.FC<Props> = ({ onPress, showReceiveFunds = false, hidePri
     return <ReceiveFunds />;
   }
 
-  return tokens.map((token, index) => <TokenItem key={index} hidePrice={hidePrice} data={token} onPress={onPress} />);
+  return tokens.map((token, index) => <TokenItem key={index} hidePrice={hidePrice} data={token} onPress={onPressItem} />);
 };
 
 type FlashProps = FlashListProps<any> & Props;
 
 export const FlashTokenList: React.FC<Omit<FlashProps, 'data' | 'renderItem' | 'estimatedItemSize'>> = ({
-  onPress,
+  onPressItem,
   showReceiveFunds = false,
   hidePrice = false,
   ...props
@@ -52,7 +52,7 @@ export const FlashTokenList: React.FC<Omit<FlashProps, 'data' | 'renderItem' | '
       estimatedItemSize={70}
       data={tokens}
       renderItem={({ item }) => {
-        return <TokenItem hidePrice={hidePrice} data={item} onPress={onPress} />;
+        return <TokenItem hidePrice={hidePrice} data={item} onPress={onPressItem} />;
       }}
     />
   );

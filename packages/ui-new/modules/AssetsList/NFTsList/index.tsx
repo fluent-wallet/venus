@@ -10,11 +10,11 @@ import NFTItem from './NFTItem';
 import { SkeletonList } from './Skeleton';
 
 interface Props {
-  onPress?: (v: AssetInfo) => void;
+  onPressItem?: (v: AssetInfo) => void;
   tabsType: TabsType;
 }
 
-const NFTList: React.FC<Props> = ({ onPress, tabsType }) => {
+const NFTList: React.FC<Props> = ({ onPressItem, tabsType }) => {
   const { colors } = useTheme();
   const nfts = useAssetsNFTList();
   const isEmpty = useIsNftsEmpty();
@@ -33,7 +33,9 @@ const NFTList: React.FC<Props> = ({ onPress, tabsType }) => {
     );
   }
 
-  return nfts.map((nft, index) => <NFTItem key={index} data={nft} onPress={onPress} currentOpenNFTDetail={currentOpenNFTDetail} index={index} tabsType={tabsType} />);
+  return nfts.map((nft, index) => (
+    <NFTItem key={index} data={nft} onPress={onPressItem} currentOpenNFTDetail={currentOpenNFTDetail} index={index} tabsType={tabsType} />
+  ));
 };
 
 const styles = StyleSheet.create({
