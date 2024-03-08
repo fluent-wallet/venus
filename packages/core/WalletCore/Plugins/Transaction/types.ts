@@ -3,7 +3,7 @@ export type HexStringType = `0x${string}`;
 export type ITxEvm = {
   from: string;
   to: string;
-  value: bigint;
+  value: string;
   data?: string;
 
   nonce?: number;

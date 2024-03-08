@@ -1,24 +1,30 @@
-import React, { useState, useMemo, useCallback } from 'react';
+import React, { useState, useMemo, useCallback, useEffect } from 'react';
 import { View, Pressable, StyleSheet } from 'react-native';
 import { useTheme } from '@react-navigation/native';
+import { showMessage } from 'react-native-flash-message';
 import { formatUnits } from 'ethers';
-import { useCurrentNetwork, AssetType } from '@core/WalletCore/Plugins/ReactInject';
+import Decimal from 'decimal.js';
+import { useCurrentNetwork, useCurrentAddressValue, AssetType } from '@core/WalletCore/Plugins/ReactInject';
 import plugins from '@core/WalletCore/Plugins';
 import Text from '@components/Text';
 import TextInput from '@components/TextInput';
 import Button from '@components/Button';
+import HourglassLoading from '@components/Loading/Hourglass';
 import TokenIcon from '@modules/AssetsList/TokensList/TokenIcon';
 import { getDetailSymbol } from '@modules/AssetsList/NFTsList/NFTItem';
+import { AccountItemView } from '@modules/AccountsList';
 import useFormatBalance from '@hooks/useFormatBalance';
+import useInAsync from '@hooks/useInAsync';
 import { SendTranscationStep3StackName, SendTranscationStep4StackName, type SendTranscationScreenProps } from '@router/configs';
 import BackupBottomSheet from '../SendTranscationBottomSheet';
-import { AccountItemView } from '@modules/AccountsList';
 
 const SendTranscationStep3Amount: React.FC<SendTranscationScreenProps<typeof SendTranscationStep3StackName>> = ({ navigation, route }) => {
   const { colors, mode } = useTheme();
   const currentNetwork = useCurrentNetwork()!;
+  const currentAddressValue = useCurrentAddressValue()!;
 
   const [amount, setAmount] = useState('');
+  const [validMax, setValidMax] = useState<Decimal | null>(null);
 
   const balance = useFormatBalance(route.params.asset.balance, route.params.asset.decimals);
   const symbol = useMemo(() => {
@@ -28,17 +34,51 @@ const SendTranscationStep3Amount: React.FC<SendTranscationScreenProps<typeof Sen
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const handleClickMax = useCallback(async () => {
+  const _handleEstimateMax = useCallback(async (isInit: boolean) => {
     if (route.params.asset.type !== AssetType.Native) {
       if (route.params.nftItemDetail) {
-        setAmount(route.params.nftItemDetail.amount);
+        const res = new Decimal(route.params.nftItemDetail.amount);
+        setValidMax(res);
+        return res;
       } else {
-        setAmount(formatUnits(route.params.asset.balance, route.params.asset.decimals));
+        const res = new Decimal(route.params.asset.balance);
+        return res;
       }
     } else {
-      plugins.Transaction.getTxProvider
-      setAmount(formatUnits(route.params.asset.balance, route.params.asset.decimals));
+      try {
+        const { gas, gasPrice } = await plugins.Transaction.estimate({
+          tx: { to: route.params.targetAddress, value: '0x0', from: currentAddressValue },
+          network: currentNetwork,
+        });
+        const res = new Decimal(route.params.asset.balance).sub(new Decimal(gas).mul(new Decimal(gasPrice)));
+        setValidMax(res);
+        return res;
+      } catch (err) {
+        if (!isInit) {
+          showMessage({
+            message: 'Failed to estimate, please try again',
+            description: String(err ?? ''),
+            type: 'warning',
+          });
+        }
+      }
     }
+  }, []);
+  const { inAsync, execAsync: handleEstimateMax } = useInAsync(_handleEstimateMax);
+
+  const handleClickMax = useCallback(async () => {
+    if (validMax === null) {
+      const max = await handleEstimateMax(false);
+      if (max) {
+        setAmount(formatUnits(max.toHex(), route.params.asset.decimals));
+      }
+    } else {
+      setAmount(formatUnits(validMax.toHex(), route.params.asset.decimals));
+    }
+  }, [validMax]);
+
+  useEffect(() => {
+    handleEstimateMax(true);
   }, []);
 
   const Suffix = useCallback(
@@ -46,14 +86,37 @@ const SendTranscationStep3Amount: React.FC<SendTranscationScreenProps<typeof Sen
       <View style={styles.suffix}>
         <TokenIcon style={styles.assetIcon} source={(route.params.nftItemDetail ?? route.params.asset).icon} />
         <View style={[styles.divider, { backgroundColor: colors.borderPrimary }]} />
-        <Pressable style={({ pressed }) => [styles.maxBtn, { backgroundColor: pressed ? colors.underlay : 'transparent' }]} onPress={handleClickMax}>
-          <Text style={[styles.text, { color: colors.textPrimary, borderColor: colors.textPrimary }]}>Max</Text>
+        <Pressable
+          style={({ pressed }) => [styles.maxBtn, { backgroundColor: pressed ? colors.underlay : 'transparent' }]}
+          onPress={handleClickMax}
+          disabled={inAsync}
+        >
+          <Text style={[styles.text, { color: colors.textPrimary, borderColor: colors.textPrimary, opacity: inAsync ? 0 : 1 }]}>Max</Text>
+          {inAsync && <HourglassLoading style={styles.maxLoading} />}
         </Pressable>
       </View>
     ),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [],
   );
+
+  const isAmountValid = useMemo(() => {
+    if (!validMax || !amount) return null;
+    if (route.params.nftItemDetail) {
+      if (!/^-?\d+$/.test(amount)) {
+        return 'nft-pure-integer';
+      }
+    } else {
+      if (!/^-?\d+(\.\d+)?$/.test(amount)) {
+        return 'unvalid-number-format';
+      }
+    }
+    if (new Decimal(amount).lessThan(new Decimal(0))) return 'less-than-zero';
+    return validMax.greaterThanOrEqualTo(
+      new Decimal(amount).mul(route.params.nftItemDetail ? new Decimal(1) : Decimal.pow(new Decimal(10), new Decimal(route.params.asset.decimals))),
+    );
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [amount, validMax]);
 
   return (
     <BackupBottomSheet onClose={navigation.goBack}>
@@ -77,8 +140,25 @@ const SendTranscationStep3Amount: React.FC<SendTranscationScreenProps<typeof Sen
         Balance: {route.params.nftItemDetail ? route.params.nftItemDetail.amount : balance} {symbol}
       </Text>
 
-      <Button style={styles.btn} mode="auto">
-        Next
+      {isAmountValid !== true && isAmountValid !== null && (
+        <Text style={[styles.errorTip, { color: colors.textPrimary }]}>
+          🚫{' '}
+          {isAmountValid === false
+            ? `Insufficient ${symbol} balance`
+            : isAmountValid === 'less-than-zero'
+              ? 'Invalid amount'
+              : isAmountValid === 'nft-pure-integer'
+                ? 'Invalid amount'
+                : 'Invalid amount'}
+        </Text>
+      )}
+      <Button
+        style={styles.btn}
+        mode="auto"
+        disabled={validMax !== null && isAmountValid !== true}
+        onPress={validMax === null ? () => handleEstimateMax(false) : () => navigation.navigate(SendTranscationStep4StackName, { ...route.params, amount })}
+      >
+        {validMax === null ? 'Estimate Max' : 'Next'}
       </Button>
     </BackupBottomSheet>
   );
@@ -125,6 +205,7 @@ const styles = StyleSheet.create({
     marginHorizontal: 8,
   },
   maxBtn: {
+    position: 'relative',
     display: 'flex',
     justifyContent: 'center',
     alignItems: 'center',
@@ -132,6 +213,18 @@ const styles = StyleSheet.create({
     height: 34,
     borderWidth: 1,
     borderRadius: 6,
+  },
+  maxLoading: {
+    width: 20,
+    height: 20,
+    position: 'absolute',
+  },
+  errorTip: {
+    marginTop: 32,
+    paddingHorizontal: 16,
+    fontSize: 16,
+    fontWeight: '600',
+    lineHeight: 24,
   },
   btn: {
     marginTop: 'auto',

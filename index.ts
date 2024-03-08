@@ -5,6 +5,7 @@ import './packages/setup/getRandomValues';
 import '@ethersproject/shims';
 import './packages/setup/ethers';
 import codePush from 'react-native-code-push';
+import Decimal from 'decimal.js';
 import WalletCore from './packages/core/WalletCore';
 import TxTrackerPlugin from './packages/core/WalletCore/Plugins/TxTracker';
 import ReactInjectPlugin from './packages/core/WalletCore/Plugins/ReactInject';
@@ -19,6 +20,8 @@ import App from './packages/ui-new/App';
 import { name as appName } from './app.json';
 import { ENABLE_WALLET_CONNECT_FEATURE } from './packages/ui/utils/features';
 import * as SplashScreen from 'expo-splash-screen';
+Decimal.set({ precision: 80 });
+
 LogBox.ignoreLogs(['RCTBridge required dispatch_sync to load']);
 LogBox.ignoreLogs(['Error: Invalid response']);
 

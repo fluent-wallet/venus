@@ -5,7 +5,7 @@ import BottomSheet, { snapPoints as defaultSnapPoints } from '@components/Bottom
 
 interface Props extends ComponentProps<typeof BottomSheet> {
   children: React.ReactNode;
-  showTitle?: boolean;
+  showTitle?: boolean | string;
 }
 
 const SendTranscationBottomSheet: React.FC<Props> = ({ children, snapPoints, showTitle = true, ...props }) => {
@@ -14,7 +14,7 @@ const SendTranscationBottomSheet: React.FC<Props> = ({ children, snapPoints, sho
   return (
     <BottomSheet snapPoints={snapPoints || defaultSnapPoints.large} index={0} isModal={false} {...props}>
       <View style={styles.container}>
-        {showTitle && <Text style={[styles.title, { color: colors.textPrimary }]}>Send To</Text>}
+        {showTitle && <Text style={[styles.title, { color: colors.textPrimary }]}>{typeof showTitle === 'string' ? showTitle : 'Send To'}</Text>}
         {children}
       </View>
     </BottomSheet>

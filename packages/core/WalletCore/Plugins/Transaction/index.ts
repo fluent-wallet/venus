@@ -1,7 +1,10 @@
-import { Network, NetworkType } from '@core/database/models/Network';
+import { NetworkType, Network } from '@core/database/models/Network';
 import { type Plugin } from '../';
-import { EVMTransactionPlugin } from './evm';
+import EVMTranscation from './chains/evm';
+import ConfluxTranscation from './chains/conflux';
+import { type ITxEvm } from './types';
 
+const getTranscationInstance = (network: Network) => (network.networkType === NetworkType.Conflux ? ConfluxTranscation : EVMTranscation);
 declare module '../../../WalletCore/Plugins' {
   interface Plugins {
     Transaction: TransactionPluginClass;
@@ -11,21 +14,20 @@ declare module '../../../WalletCore/Plugins' {
 class TransactionPluginClass implements Plugin {
   public name = 'Transaction';
 
-  providerCache: { [k: string]: EVMTransactionPlugin } = {};
+  public getGasPrice = (network: Network) => {
+    const transcationInstance = getTranscationInstance(network);
+    return transcationInstance.getGasPrice(network.endpoint);
+  };
 
-  getTxProvider(network: Network | NetworkType) {
-    const networkType = typeof network === 'string' ? network : network.networkType;
-    if(networkType !== NetworkType.Ethereum) {
-      throw new Error('get Transaction Provider error Unsupported network type')
-    }
-    
-    if (this.providerCache[networkType]) {
-      return this.providerCache[networkType];
-    }
-    // by now we only support EVM
-    this.providerCache[networkType] = new EVMTransactionPlugin(network);
-    return this.providerCache[networkType];
-  }
+  public estimateGas = ({ tx, network }: { network: Network; tx: ITxEvm }) => {
+    const transcationInstance = getTranscationInstance(network);
+    return transcationInstance.estimateGas({ tx, endpoint: network.endpoint, gasBuffer: network.gasBuffer });
+  };
+
+  public estimate = ({ tx, network }: { network: Network; tx: ITxEvm }) => {
+    const transcationInstance = getTranscationInstance(network);
+    return transcationInstance.estimate({ tx, endpoint: network.endpoint, gasBuffer: network.gasBuffer });
+  };
 }
 
 export default new TransactionPluginClass();
