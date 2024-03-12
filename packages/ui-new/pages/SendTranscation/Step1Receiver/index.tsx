@@ -118,6 +118,7 @@ const SendTranscationStep1Receiver: React.FC<SendTranscationScreenProps<typeof S
           mode="auto"
           onPress={() => navigation.navigate(SendTranscationStep2StackName, { targetAddress: receiver })}
           disabled={!(checkRes === AddressType.EOA || checkRes === AddressType.Contract) || (checkRes === AddressType.Contract && !knowRisk)}
+          size='small'
         >
           Next
         </Button>

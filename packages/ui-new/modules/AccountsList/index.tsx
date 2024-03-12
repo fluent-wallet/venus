@@ -69,10 +69,11 @@ export const AccountItemView: React.FC<{
   addressValue: string;
   nickname: string;
   onPress?: () => void;
-}> = ({ colors, mode, showSelect, showMore, addressValue, nickname, onPress }) => {
+  children?: React.ReactNode;
+}> = ({ colors, mode, showSelect, showMore, addressValue, nickname, children, onPress }) => {
   return (
     <Pressable
-      style={({ pressed }) => [styles.row, { backgroundColor: pressed ? colors.underlay : 'transparent' }]}
+      style={({ pressed }) => [styles.row, { backgroundColor: pressed ? colors.underlay : 'transparent', position: 'relative' }]}
       pointerEvents={!onPress ? 'none' : 'auto'}
       onPress={onPress}
     >
@@ -83,6 +84,7 @@ export const AccountItemView: React.FC<{
       </View>
       {showSelect && <Checkbox style={styles.accountRight} checked={mode === 'dark'} />}
       {showMore && <More style={styles.accountRight} color={colors.textNotice} />}
+      {children}
     </Pressable>
   );
 };

@@ -1,7 +1,7 @@
 import { type Plugin } from '../';
 export { useAccountGroups } from './data/useAccountGroups';
 export { useNetworks } from './data/useNetworks';
-export { useCurrentNetwork, getCurrentNetwork } from './data/useCurrentNetwork';
+export { useCurrentNetwork, getCurrentNetwork, useCurrentNetworkNativeAsset, getCurrentNetworkNativeAsset } from './data/useCurrentNetwork';
 export { useCurrentAccount } from './data/useCurrentAccount';
 export { useCurrentAddress, useCurrentAddressValue } from './data/useCurrentAddress';
 export { useAccountsOfGroup } from './data/useAccountsOfGroup';

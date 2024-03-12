@@ -6,11 +6,14 @@ import { formatUnits } from 'ethers';
 import Decimal from 'decimal.js';
 import { useCurrentNetwork, useCurrentAddressValue, AssetType } from '@core/WalletCore/Plugins/ReactInject';
 import plugins from '@core/WalletCore/Plugins';
+import { type AssetInfo } from '@core/WalletCore/Plugins/AssetsTracker/types';
+import { type NFTItemDetail } from '@core/WalletCore/Plugins/NFTDetailTracker';
 import Text from '@components/Text';
 import TextInput from '@components/TextInput';
 import Button from '@components/Button';
 import HourglassLoading from '@components/Loading/Hourglass';
 import TokenIcon from '@modules/AssetsList/TokensList/TokenIcon';
+import NFTIcon from '@modules/AssetsList/NFTsList/NFTIcon';
 import { getDetailSymbol } from '@modules/AssetsList/NFTsList/NFTItem';
 import { AccountItemView } from '@modules/AccountsList';
 import useFormatBalance from '@hooks/useFormatBalance';
@@ -84,7 +87,12 @@ const SendTranscationStep3Amount: React.FC<SendTranscationScreenProps<typeof Sen
   const Suffix = useCallback(
     () => (
       <View style={styles.suffix}>
-        <TokenIcon style={styles.assetIcon} source={(route.params.nftItemDetail ?? route.params.asset).icon} />
+        {route.params.nftItemDetail ? (
+          <NFTIcon style={[styles.assetIcon, { borderRadius: 2 }]} source={(route.params.nftItemDetail ?? route.params.asset).icon} />
+        ) : (
+          <TokenIcon style={[styles.assetIcon, { borderRadius: 48 }]} source={(route.params.nftItemDetail ?? route.params.asset).icon} />
+        )}
+
         <View style={[styles.divider, { backgroundColor: colors.borderPrimary }]} />
         <Pressable
           style={({ pressed }) => [styles.maxBtn, { backgroundColor: pressed ? colors.underlay : 'transparent' }]}
@@ -120,6 +128,13 @@ const SendTranscationStep3Amount: React.FC<SendTranscationScreenProps<typeof Sen
 
   return (
     <BackupBottomSheet onClose={navigation.goBack}>
+      {route.params.nftItemDetail && (
+        <>
+          <Text style={[styles.text, styles.to, { color: colors.textSecondary }]}>Send</Text>
+          <NFT colors={colors} asset={route.params.asset} nftItemDetail={route.params.nftItemDetail} />
+        </>
+      )}
+
       <Text style={[styles.text, styles.to, { color: colors.textSecondary }]}>To</Text>
       <AccountItemView nickname={''} addressValue={route.params.targetAddress} colors={colors} mode={mode} />
 
@@ -157,6 +172,7 @@ const SendTranscationStep3Amount: React.FC<SendTranscationScreenProps<typeof Sen
         mode="auto"
         disabled={validMax !== null && isAmountValid !== true}
         onPress={validMax === null ? () => handleEstimateMax(false) : () => navigation.navigate(SendTranscationStep4StackName, { ...route.params, amount })}
+        size='small'
       >
         {validMax === null ? 'Estimate Max' : 'Next'}
       </Button>
@@ -164,7 +180,48 @@ const SendTranscationStep3Amount: React.FC<SendTranscationScreenProps<typeof Sen
   );
 };
 
+export const NFT: React.FC<{ colors: ReturnType<typeof useTheme>['colors']; asset: AssetInfo; nftItemDetail: NFTItemDetail }> = ({
+  colors,
+  asset,
+  nftItemDetail,
+}) => (
+  <View style={styles.nftItem}>
+    <NFTIcon style={styles.nftItemImg} source={nftItemDetail.icon} isNftItem placeholderContentFit="cover" contentFit="cover" />
+    <Text style={[styles.nftAssetName, { color: colors.textSecondary }]}>{asset.name}</Text>
+    <Text style={[styles.nftItemName, { color: colors.textPrimary }]}>{getDetailSymbol(nftItemDetail)}</Text>
+  </View>
+);
+
 const styles = StyleSheet.create({
+  nftItem: {
+    marginTop: 14,
+    position: 'relative',
+    display: 'flex',
+    flexDirection: 'column',
+    justifyContent: 'center',
+    height: 60,
+    paddingLeft: 92,
+    paddingRight: 16,
+  },
+  nftItemImg: {
+    position: 'absolute',
+    left: 16,
+    top: 0,
+    width: 60,
+    height: 60,
+    borderRadius: 2,
+  },
+  nftAssetName: {
+    fontSize: 12,
+    fontWeight: '300',
+    lineHeight: 16,
+  },
+  nftItemName: {
+    fontSize: 14,
+    fontWeight: '600',
+    lineHeight: 18,
+    marginTop: 4,
+  },
   text: {
     fontSize: 14,
     fontWeight: '300',

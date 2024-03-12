@@ -2,10 +2,10 @@ import { useMemo } from 'react';
 import Decimal from 'decimal.js';
 import { balanceFormat, convertBalanceToDecimal, numberWithCommas } from '@core/utils/balance';
 
-const useFormatBalance = (balance: string | undefined, decimals: number | undefined) =>
+const useFormatBalance = (balance: string | undefined, decimals?: number | undefined) =>
   useMemo(() => {
     if (!balance) return '0';
-    if (!decimals) return balance;
+    if (!decimals) return numberWithCommas(balance);
     const n = new Decimal(convertBalanceToDecimal(balance, decimals));
     if (n.equals(0)) {
       return '0';
@@ -15,5 +15,6 @@ const useFormatBalance = (balance: string | undefined, decimals: number | undefi
     }
     return numberWithCommas(balanceFormat(balance, { decimals }));
   }, [balance, decimals]);
+
 
 export default useFormatBalance;
