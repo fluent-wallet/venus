@@ -33,11 +33,11 @@ import { getDetailSymbol } from '@modules/AssetsList/NFTsList/NFTItem';
 import { AccountItemView } from '@modules/AccountsList';
 import useFormatBalance from '@hooks/useFormatBalance';
 import useInAsync from '@hooks/useInAsync';
-import { SendTranscationStep4StackName, HomeStackName, type SendTranscationScreenProps } from '@router/configs';
+import { SendTransactionStep4StackName, HomeStackName, type SendTransactionScreenProps } from '@router/configs';
 import BackupBottomSheet from '../SendTranscationBottomSheet';
 import { NFT } from '../Step3Amount';
 
-const SendTranscationStep4Confirm: React.FC<SendTranscationScreenProps<typeof SendTranscationStep4StackName>> = ({ navigation, route }) => {
+const SendTranscationStep4Confirm: React.FC<SendTransactionScreenProps<typeof SendTransactionStep4StackName>> = ({ navigation, route }) => {
   useEffect(() => Keyboard.dismiss(), []);
   const { colors, mode } = useTheme();
   const currentNetwork = useCurrentNetwork()!;

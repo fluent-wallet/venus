@@ -17,10 +17,10 @@ import { getDetailSymbol } from '@modules/AssetsList/NFTsList/NFTItem';
 import { AccountItemView } from '@modules/AccountsList';
 import useFormatBalance from '@hooks/useFormatBalance';
 import useInAsync from '@hooks/useInAsync';
-import { SendTranscationStep3StackName, SendTranscationStep4StackName, type SendTranscationScreenProps } from '@router/configs';
+import { SendTransactionStep3StackName, SendTransactionStep4StackName, type SendTransactionScreenProps } from '@router/configs';
 import BackupBottomSheet from '../SendTranscationBottomSheet';
 
-const SendTranscationStep3Amount: React.FC<SendTranscationScreenProps<typeof SendTranscationStep3StackName>> = ({ navigation, route }) => {
+const SendTranscationStep3Amount: React.FC<SendTransactionScreenProps<typeof SendTransactionStep3StackName>> = ({ navigation, route }) => {
   const { colors, mode } = useTheme();
   const currentNetwork = useCurrentNetwork()!;
   const currentAddressValue = useCurrentAddressValue()!;
@@ -170,7 +170,7 @@ const SendTranscationStep3Amount: React.FC<SendTranscationScreenProps<typeof Sen
         style={styles.btn}
         mode="auto"
         disabled={validMax !== null && isAmountValid !== true}
-        onPress={validMax === null ? () => handleEstimateMax(false) : () => navigation.navigate(SendTranscationStep4StackName, { ...route.params, amount })}
+        onPress={validMax === null ? () => handleEstimateMax(false) : () => navigation.navigate(SendTransactionStep4StackName, { ...route.params, amount })}
         size="small"
       >
         {validMax === null ? 'Estimate Max' : 'Next'}

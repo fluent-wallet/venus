@@ -4,8 +4,8 @@ import {
   SendTranscationStackName,
   SendTranscationStep1StackName,
   SendTranscationStep2StackName,
-  SendTranscationStep3StackName,
-  SendTranscationStep4StackName,
+  SendTransactionStep3StackName,
+  SendTransactionStep4StackName,
   SendTranscationParamList,
   SheetBottomOption,
   type StackScreenProps,
@@ -22,8 +22,8 @@ const Backup: React.FC<StackScreenProps<typeof SendTranscationStackName>> = () =
     <SendTranscationStack.Navigator>
       <SendTranscationStack.Screen name={SendTranscationStep1StackName} component={SendTranscationStep1Receiver} options={SheetBottomOption} />
       <SendTranscationStack.Screen name={SendTranscationStep2StackName} component={SendTranscationStep2Asset} options={SheetBottomOption} />
-      <SendTranscationStack.Screen name={SendTranscationStep3StackName} component={SendTranscationStep3Amount} options={SheetBottomOption} />
-      <SendTranscationStack.Screen name={SendTranscationStep4StackName} component={SendTranscationStep4Confirm} options={SheetBottomOption} />
+      <SendTranscationStack.Screen name={SendTransactionStep3StackName} component={SendTranscationStep3Amount} options={SheetBottomOption} />
+      <SendTranscationStack.Screen name={SendTransactionStep4StackName} component={SendTranscationStep4Confirm} options={SheetBottomOption} />
     </SendTranscationStack.Navigator>
   );
 };

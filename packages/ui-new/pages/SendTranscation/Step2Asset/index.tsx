@@ -14,14 +14,14 @@ import Text from '@components/Text';
 import TextInput from '@components/TextInput';
 import HourglassLoading from '@components/Loading/Hourglass';
 import { BottomSheetScrollView } from '@components/BottomSheet';
-import { SendTranscationStep2StackName, SendTranscationStep3StackName, type SendTranscationScreenProps } from '@router/configs';
+import { SendTranscationStep2StackName, SendTransactionStep3StackName, type SendTransactionScreenProps } from '@router/configs';
 import { Tabs, TabsContent, setSendScrollY, type Tab } from '@modules/AssetsTabs';
 import TokenItem from '@modules/AssetsList/TokensList/TokenItem';
 import NFTItem from '@modules/AssetsList/NFTsList/NFTItem';
 
 import BackupBottomSheet from '../SendTranscationBottomSheet';
 
-const SendTranscationStep2Asset: React.FC<SendTranscationScreenProps<typeof SendTranscationStep2StackName>> = ({ navigation, route }) => {
+const SendTranscationStep2Asset: React.FC<SendTransactionScreenProps<typeof SendTranscationStep2StackName>> = ({ navigation, route }) => {
   const { colors } = useTheme();
 
   const [currentTab, setCurrentTab] = useState<Tab>('Tokens');
@@ -101,7 +101,7 @@ const SendTranscationStep2Asset: React.FC<SendTranscationScreenProps<typeof Send
         type: 'warning',
       });
     }
-    navigation.navigate(SendTranscationStep3StackName, { ...route.params, asset, nftItemDetail });
+    navigation.navigate(SendTransactionStep3StackName, { ...route.params, asset, nftItemDetail });
   }, []);
 
   return (

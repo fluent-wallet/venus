@@ -1,11 +1,11 @@
-import { Transaction, Wallet } from 'ethers';
+import { Transaction as EVMTransaction, Wallet } from 'ethers';
 import { fetchChain } from '@cfx-kit/dapp-utils/dist/fetch';
 import { addHexPrefix } from '@core/utils/base';
 import { NetworkType } from '@core/database/models/Network';
 import methods from '@core/WalletCore/Methods';
 import { type ITxEvm } from '../types';
 
-class Transcation {
+class Transaction {
   public getGasPrice = (endpoint: string) => fetchChain<string>({ url: endpoint, method: 'eth_gasPrice' });
 
   public estimateGas = async ({ tx, endpoint, gasBuffer = 1 }: { tx: ITxEvm; endpoint: string; gasBuffer?: number }) => {
@@ -35,7 +35,7 @@ class Transcation {
   };
 
   public getTransactionCount = ({ endpoint, addressValue }: { endpoint: string; addressValue: string }) =>
-    fetchChain<string>({ url: endpoint, method: 'eth_getTransactionCount', params: [addressValue, 'latest'] });
+    fetchChain<string>({ url: endpoint, method: 'eth_getTransactionCount', params: [addressValue, 'pending'] });
 
   public sendRawTransaction = ({ txRaw, endpoint }: { txRaw: string; endpoint: string }) =>
     fetchChain<string>({
@@ -44,10 +44,10 @@ class Transcation {
       params: [txRaw],
     });
 
-  async signTransaction({ privateKey, transaction }: { privateKey: string; transaction: Transaction }) {
+  async signTransaction({ privateKey, transaction }: { privateKey: string; transaction: EVMTransaction }) {
     const wallet = new Wallet(privateKey);
     return wallet.signTransaction(transaction);
   }
 }
 
-export default new Transcation();
+export default new Transaction();

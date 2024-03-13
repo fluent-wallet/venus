@@ -62,15 +62,15 @@ export type BackupScreenProps<T extends keyof BackupStackParamList> = NativeStac
 // sendTranscation nest stack
 export const SendTranscationStep1StackName = 'SendTranscationStep1';
 export const SendTranscationStep2StackName = 'SendTranscationStep2';
-export const SendTranscationStep3StackName = 'SendTranscationStep3';
-export const SendTranscationStep4StackName = 'SendTranscationStep4';
+export const SendTransactionStep3StackName = 'SendTranscationStep3';
+export const SendTransactionStep4StackName = 'SendTranscationStep4';
 export type SendTranscationParamList = {
   [SendTranscationStep1StackName]: undefined;
   [SendTranscationStep2StackName]: { targetAddress: string };
-  [SendTranscationStep3StackName]: { asset: AssetInfo; targetAddress: string; nftItemDetail?: NFTItemDetail };
-  [SendTranscationStep4StackName]: { asset: AssetInfo; targetAddress: string; amount: string; nftItemDetail?: NFTItemDetail };
+  [SendTransactionStep3StackName]: { asset: AssetInfo; targetAddress: string; nftItemDetail?: NFTItemDetail };
+  [SendTransactionStep4StackName]: { asset: AssetInfo; targetAddress: string; amount: string; nftItemDetail?: NFTItemDetail };
   // navigate to home
   [HomeStackName]: undefined;
 };
-export type SendTranscationScreenProps<T extends keyof SendTranscationParamList> = NativeStackScreenProps<SendTranscationParamList, T>;
+export type SendTransactionScreenProps<T extends keyof SendTranscationParamList> = NativeStackScreenProps<SendTranscationParamList, T>;
 // end sendTranscation nest stack

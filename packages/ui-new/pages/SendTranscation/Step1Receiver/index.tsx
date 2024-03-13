@@ -10,12 +10,12 @@ import Button from '@components/Button';
 import Checkbox from '@components/Checkbox';
 import HourglassLoading from '@components/Loading/Hourglass';
 import { type BottomSheetMethods } from '@components/BottomSheet';
-import { SendTranscationStep1StackName, SendTranscationStep2StackName, type SendTranscationScreenProps } from '@router/configs';
+import { SendTranscationStep1StackName, SendTranscationStep2StackName, type SendTransactionScreenProps } from '@router/configs';
 import QrCode from '@assets/icons/qr-code.svg';
 import BackupBottomSheet from '../SendTranscationBottomSheet';
 import ScanQRCode from '@pages/ScanQRCode';
 
-const SendTranscationStep1Receiver: React.FC<SendTranscationScreenProps<typeof SendTranscationStep1StackName>> = ({ navigation }) => {
+const SendTranscationStep1Receiver: React.FC<SendTransactionScreenProps<typeof SendTranscationStep1StackName>> = ({ navigation }) => {
   const { colors } = useTheme();
   const _currentNetwork = useCurrentNetwork();
   const scanQRCodeRef = useRef<BottomSheetMethods>(null!);
