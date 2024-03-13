@@ -12,8 +12,8 @@
     "postinstall": "patch-package && yarn pod:install"
   },
   "dependencies": {
-    "@cfx-kit/dapp-utils": "^0.0.23",
-    "@cfx-kit/react-utils": "^0.0.21",
+    "@cfx-kit/dapp-utils": "^0.1.1",
+    "@cfx-kit/react-utils": "^0.0.22",
     "@craftzdog/react-native-buffer": "^6.0.5",
     "@ethersproject/abi": "^5.7.0",
     "@ethersproject/shims": "^5.7.0",

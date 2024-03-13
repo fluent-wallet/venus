@@ -1,5 +1,4 @@
-import { createPublicClient, http, isAddress, hexToBigInt, encodeFunctionData as viemEncodeFunctionData, type Abi, type BlockTag, signatureToHex } from 'viem';
-import { JsonRpcProvider, getBigInt, Transaction, Wallet, Signer, TransactionResponse } from 'ethers';
+import { Transaction, Wallet } from 'ethers';
 import { fetchChain } from '@cfx-kit/dapp-utils/dist/fetch';
 import { addHexPrefix } from '@core/utils/base';
 import methods from '@core/WalletCore/Methods';
@@ -13,14 +12,14 @@ class Transcation {
     const isToAddressContract = methods.checkIsContractAddress({ networkType: NetworkType.Conflux, endpoint: endpoint, addressValue: tx.to });
     const isSendNativeToken = (!!tx.to && !isToAddressContract) || !tx.data || tx.data === '0x';
 
-    if (isSendNativeToken) return BigInt(21000 * gasBuffer).toString(16);
+    if (isSendNativeToken) return addHexPrefix(BigInt(21000 * gasBuffer).toString(16));
 
     const gas = await fetchChain<string>({
       url: endpoint,
       method: 'cfx_estimateGas',
       params: [
         {
-          account: addHexPrefix(tx.from),
+          from: addHexPrefix(tx.from),
           to: addHexPrefix(tx.to),
           value: tx.value,
           data: tx.data ? addHexPrefix(tx.data) : undefined,
@@ -28,13 +27,24 @@ class Transcation {
         'latest_state',
       ],
     });
-    return (BigInt(gas) * BigInt(gasBuffer)).toString(16);
+    return addHexPrefix((BigInt(gas) * BigInt(gasBuffer)).toString(16));
   };
 
   public estimate = async ({ tx, endpoint, gasBuffer = 1 }: { tx: ITxEvm; endpoint: string; gasBuffer?: number }) => {
-    const [gasPrice, gas] = await Promise.all([this.getGasPrice(endpoint), this.estimateGas({ tx, endpoint, gasBuffer })]);
-    return { gasPrice, gas };
+    const [gasPrice, gasLimit] = await Promise.all([this.getGasPrice(endpoint), this.estimateGas({ tx, endpoint, gasBuffer })]);
+    return { gasPrice, gasLimit };
   };
+
+  public getTransactionCount = ({ endpoint, addressValue }: { endpoint: string; addressValue: string }) =>
+    fetchChain<string>({ url: endpoint, method: 'cfx_getNextNonce', params: [addressValue, 'latest_state'] });
+
+  public sendRawTransaction = ({ txRaw, endpoint }: { txRaw: string; endpoint: string }) =>
+    fetchChain<string>({ url: endpoint, method: 'cfx_sendRawTransaction', params: [txRaw] });
+
+  async signTransaction({ privateKey, transaction }: { privateKey: string; transaction: Transaction }) {
+    const wallet = new Wallet(privateKey);
+    return wallet.signTransaction(transaction);
+  }
 }
 
 export default new Transcation();

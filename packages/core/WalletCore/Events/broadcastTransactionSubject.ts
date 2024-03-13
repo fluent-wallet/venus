@@ -1,6 +1,6 @@
 import { BehaviorSubject, filter } from 'rxjs';
 import { Transaction } from 'ethers';
-import { WalletTransactionType } from '../Plugins/ReactInject/data/useTransaction';
+import { type WalletTransactionType } from '../Plugins/Transaction/types';
 
 export interface TransactionSubjectValue {
   txHash: string;

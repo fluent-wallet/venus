@@ -13,7 +13,6 @@ import { AccountGroupMethod } from './accountGroupMethod';
 import { VaultMethod } from './vaultMethod';
 import { NetworkMethod } from './networkMethod';
 import { DatabaseMethod } from './databaseMethod';
-import { TransactionMethod } from './transactionMethod';
 import { TxMethod } from './txMethod';
 import { AssetMethod, type AssetParams } from './assetMethod';
 import { AppMethod } from './appMethod';
@@ -128,11 +127,6 @@ export class Methods {
     return this.AssetMethod.prepareUpdateAsset(...args);
   }
 
-  @inject(TransactionMethod) private TransactionMethod!: TransactionMethod;
-  public getTxProvider(...args: Parameters<TransactionMethod['getTxProvider']>) {
-    return this.TransactionMethod.getTxProvider(...args);
-  }
-
   @inject(TxMethod) private TxMethod!: TxMethod;
   public createTx(...args: Parameters<TxMethod['createTx']>) {
     return this.TxMethod.createTx(...args);
@@ -171,7 +165,6 @@ container.bind(AccountGroupMethod).to(AccountGroupMethod).inSingletonScope();
 container.bind(VaultMethod).to(VaultMethod).inSingletonScope();
 container.bind(NetworkMethod).to(NetworkMethod).inSingletonScope();
 container.bind(DatabaseMethod).to(DatabaseMethod).inSingletonScope();
-container.bind(TransactionMethod).to(TransactionMethod).inSingletonScope();
 container.bind(TxMethod).to(TxMethod).inSingletonScope();
 container.bind(AssetMethod).to(AssetMethod).inSingletonScope();
 container.bind(Methods).to(Methods).inSingletonScope();

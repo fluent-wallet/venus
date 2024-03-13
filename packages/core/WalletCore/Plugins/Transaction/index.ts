@@ -1,3 +1,4 @@
+import { Transaction } from 'ethers';
 import { NetworkType, Network } from '@core/database/models/Network';
 import { type Plugin } from '../';
 import EVMTranscation from './chains/evm';
@@ -27,6 +28,21 @@ class TransactionPluginClass implements Plugin {
   public estimate = ({ tx, network }: { network: Network; tx: ITxEvm }) => {
     const transcationInstance = getTranscationInstance(network);
     return transcationInstance.estimate({ tx, endpoint: network.endpoint, gasBuffer: network.gasBuffer });
+  };
+
+  public getTransactionCount = ({ network, addressValue }: { network: Network; addressValue: string }) => {
+    const transcationInstance = getTranscationInstance(network);
+    return transcationInstance.getTransactionCount({ endpoint: network.endpoint, addressValue });
+  };
+
+  public sendRawTransaction = ({ network, txRaw }: { network: Network; txRaw: string }) => {
+    const transcationInstance = getTranscationInstance(network);
+    return transcationInstance.sendRawTransaction({ txRaw, endpoint: network.endpoint });
+  };
+
+  public signTransaction = ({ network, privateKey, transaction }: { network: Network; privateKey: string; transaction: Transaction }) => {
+    const transcationInstance = getTranscationInstance(network);
+    return transcationInstance.signTransaction({ transaction, privateKey });
   };
 }
 

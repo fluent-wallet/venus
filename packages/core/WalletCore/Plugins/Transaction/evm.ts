@@ -1,9 +1,8 @@
-import { JsonRpcProvider, getBigInt, Transaction, Wallet, Signer, TransactionResponse } from 'ethers';
+import { Transaction, Wallet, Signer } from 'ethers';
 import { Network, NetworkType } from '@core/database/models/Network';
 import { HexStringType, ITxEvm } from './types';
-import { createPublicClient, http, isAddress, hexToBigInt, encodeFunctionData as viemEncodeFunctionData, type Abi, type BlockTag , signatureToHex} from 'viem';
+import { createPublicClient, http, isAddress, hexToBigInt, encodeFunctionData as viemEncodeFunctionData, type Abi, type BlockTag, signatureToHex } from 'viem';
 import { confluxESpace, confluxESpaceTestnet } from 'viem/chains';
-import { chain } from 'lodash-es';
 import { CFX_ESPACE_MAINNET_CHAINID, CFX_ESPACE_TESTNET_CHAINID } from '@core/consts/network';
 
 export class EVMTransactionPlugin {

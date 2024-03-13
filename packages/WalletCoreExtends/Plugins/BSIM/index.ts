@@ -2,7 +2,7 @@ import BSIMSDK, { BSIMError, BSIMErrorEndTimeout, BSIM_ERRORS, BSIM_SUPPORT_ACCO
 import { addHexPrefix } from '@core/utils/base';
 import { Signature, Transaction, TypedDataDomain, TypedDataEncoder, TypedDataField, computeAddress, hashMessage, hexlify } from 'ethers';
 import { type Plugin } from '@core/WalletCore/Plugins';
-import { Subject, catchError, defer, firstValueFrom, from, retry, throwError, timeout } from 'rxjs';
+import { catchError, defer, firstValueFrom, from, retry, throwError, timeout } from 'rxjs';
 import { TxEvent, TxEventTypesName } from './types';
 
 export { CoinTypes, CFXCoinTypes } from './BSIMSDK';

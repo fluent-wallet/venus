@@ -1,33 +1,51 @@
 /* eslint-disable react-hooks/exhaustive-deps */
-import React, { useMemo, useState, useEffect } from 'react';
+import React, { useMemo, useState, useEffect, useCallback, useRef } from 'react';
 import { View, StyleSheet, Keyboard } from 'react-native';
-import { useTheme } from '@react-navigation/native';
+import { useTheme, CommonActions } from '@react-navigation/native';
 import { showMessage } from 'react-native-flash-message';
-import { formatUnits } from 'ethers';
+import { Transaction } from 'ethers';
 import Decimal from 'decimal.js';
-import { interval, switchMap, startWith } from 'rxjs';
+import { interval, switchMap, startWith, Subject } from 'rxjs';
 import { createERC20Contract, createERC721Contract, createERC1155Contract } from '@cfx-kit/dapp-utils/dist/contract';
-import { useCurrentNetwork, useCurrentNetworkNativeAsset, useCurrentAddressValue, AssetType } from '@core/WalletCore/Plugins/ReactInject';
+import {
+  useCurrentNetwork,
+  useCurrentNetworkNativeAsset,
+  useCurrentAddressValue,
+  useCurrentAccount,
+  useCurrentAddress,
+  useVaultOfAccount,
+  AssetType,
+  NetworkType,
+  VaultType,
+} from '@core/WalletCore/Plugins/ReactInject';
+import { CFX_ESPACE_MAINNET_CHAINID, CFX_ESPACE_TESTNET_CHAINID } from '@core/consts/network';
+import { type ITxEvm } from '@core/WalletCore/Plugins/Transaction/types';
+import { TxEventTypesName, TxEvent } from '@WalletCoreExtends/Plugins/BSIM/types';
+import { BSIM_ERRORS } from 'packages/WalletCoreExtends/Plugins/BSIM/BSIMSDK';
 import plugins from '@core/WalletCore/Plugins';
+import methods from '@core/WalletCore/Methods';
+import events from '@core/WalletCore/Events';
 import Text from '@components/Text';
-import TextInput from '@components/TextInput';
 import Button from '@components/Button';
 import TokenIcon from '@modules/AssetsList/TokensList/TokenIcon';
 import { BottomSheetScrollView } from '@components/BottomSheet';
 import { getDetailSymbol } from '@modules/AssetsList/NFTsList/NFTItem';
 import { AccountItemView } from '@modules/AccountsList';
 import useFormatBalance from '@hooks/useFormatBalance';
-
+import useInAsync from '@hooks/useInAsync';
 import { SendTranscationStep4StackName, HomeStackName, type SendTranscationScreenProps } from '@router/configs';
 import BackupBottomSheet from '../SendTranscationBottomSheet';
 import { NFT } from '../Step3Amount';
 
 const SendTranscationStep4Confirm: React.FC<SendTranscationScreenProps<typeof SendTranscationStep4StackName>> = ({ navigation, route }) => {
-  useEffect(() => Keyboard.dismiss, []);
+  useEffect(() => Keyboard.dismiss(), []);
   const { colors, mode } = useTheme();
   const currentNetwork = useCurrentNetwork()!;
   const nativeAsset = useCurrentNetworkNativeAsset()!;
+  const currentAddress = useCurrentAddress()!;
   const currentAddressValue = useCurrentAddressValue()!;
+  const currentAccount = useCurrentAccount();
+  const currentVault = useVaultOfAccount(currentAccount?.id);
 
   const formatedAmount = useFormatBalance(route.params.amount);
   const price = useMemo(() => new Decimal(route.params.asset.priceInUSDT || 0).mul(new Decimal(route.params.amount || 0)).toFixed(2), []);
@@ -42,8 +60,8 @@ const SendTranscationStep4Confirm: React.FC<SendTranscationScreenProps<typeof Se
     [],
   );
 
-  const tx = useMemo(() => {
-    let data: undefined | string = undefined;
+  const txHalf = useMemo(() => {
+    let data = '0x';
     if (route.params.asset.type === AssetType.ERC20) {
       const contract = createERC20Contract(route.params.asset.contractAddress!);
       data = contract.encodeFunctionData('transfer', [route.params.targetAddress as `0x${string}`, transferAmountHex as unknown as bigint]);
@@ -66,17 +84,23 @@ const SendTranscationStep4Confirm: React.FC<SendTranscationScreenProps<typeof Se
     }
 
     return {
-      to: route.params.targetAddress,
+      to: route.params.asset.type === AssetType.Native ? route.params.targetAddress : route.params.asset.contractAddress,
       value: route.params.asset.type === AssetType.Native ? transferAmountHex : '0x0',
       data,
       from: currentAddressValue,
-    };
+      chainId: currentNetwork.chainId,
+      // eSpace only support legacy transaction by now
+      ...(currentNetwork.networkType === NetworkType.Ethereum &&
+      (currentNetwork.chainId === CFX_ESPACE_MAINNET_CHAINID || currentNetwork.chainId === CFX_ESPACE_TESTNET_CHAINID)
+        ? { type: 0 }
+        : null),
+    } as ITxEvm;
   }, []);
 
   const [gasInfo, setGasInfo] = useState<Awaited<ReturnType<typeof plugins.Transaction.estimate>> | null>(null);
   const gasCostAndPriceInUSDT = useMemo(() => {
     if (!gasInfo || !nativeAsset?.priceInUSDT) return null;
-    const cost = new Decimal(gasInfo.gas).mul(new Decimal(gasInfo.gasPrice)).div(Decimal.pow(10, nativeAsset?.decimals ?? 18));
+    const cost = new Decimal(gasInfo.gasLimit).mul(new Decimal(gasInfo.gasPrice)).div(Decimal.pow(10, nativeAsset?.decimals ?? 18));
     const priceInUSDT = nativeAsset?.priceInUSDT ? cost.mul(new Decimal(nativeAsset.priceInUSDT)) : null;
     return {
       cost: cost.toString(),
@@ -90,7 +114,7 @@ const SendTranscationStep4Confirm: React.FC<SendTranscationScreenProps<typeof Se
         startWith(0),
         switchMap(() =>
           plugins.Transaction.estimate({
-            tx,
+            tx: txHalf,
             network: currentNetwork,
           }),
         ),
@@ -99,12 +123,92 @@ const SendTranscationStep4Confirm: React.FC<SendTranscationScreenProps<typeof Se
         next: (res) => {
           setGasInfo(res);
         },
+        error: (err) => {
+          console.error('estimate gas error: ', err);
+        },
       });
 
     return () => {
       pollingGasSub.unsubscribe();
     };
   }, []);
+
+  const txEvent = useRef(new Subject<TxEvent>());
+  const _handleSend = useCallback(async () => {
+    try {
+      const tx = Object.assign({}, txHalf, { gasLimit: gasInfo?.gasLimit, gasPrice: gasInfo?.gasPrice });
+      const nonce = await plugins.Transaction.getTransactionCount({ network: currentNetwork, addressValue: currentAddressValue });
+      tx.nonce = nonce;
+      const transaction = new Transaction();
+      for (const key in tx) {
+        transaction[key as 'to'] = tx[key as 'to'];
+      }
+
+      let txRaw!: string;
+      if (currentVault?.type === VaultType.BSIM) {
+        try {
+          txEvent.current.next({ type: TxEventTypesName.BSIM_VERIFY_START });
+          txEvent.current.next({ type: TxEventTypesName.BSIM_SIGN_START });
+          // sendTransaction has from field, but it is readonly, and it is only have by tx is signed otherwise it is null, so we need to pass the from address to signTransaction
+          txRaw = await plugins.BSIM.signTransaction(currentAddressValue, transaction);
+          txEvent.current.next({ type: TxEventTypesName.BSIM_TX_SEND });
+        } catch (bsimError) {
+          const code = (bsimError as { code: string })?.code;
+          const message = (bsimError as { message: string })?.message;
+          if (code) {
+            const errorMsg = BSIM_ERRORS[code?.toUpperCase()];
+            if (errorMsg) {
+              txEvent.current.next({ type: TxEventTypesName.ERROR, message: errorMsg });
+            } else {
+              txEvent.current.next({ type: TxEventTypesName.ERROR, message: message || BSIM_ERRORS.default });
+            }
+          } else {
+            txEvent.current.next({ type: TxEventTypesName.ERROR, message: message || BSIM_ERRORS.default });
+          }
+        }
+      } else {
+        const privateKey = await methods.getPrivateKeyOfAddress(currentAddress);
+        txRaw = await plugins.Transaction.signTransaction({ network: currentNetwork, transaction, privateKey });
+      }
+
+      if (txRaw) {
+        const txHash = await plugins.Transaction.sendRawTransaction({ txRaw, network: currentNetwork });
+        events.broadcastTransactionSubjectPush.next({
+          txHash,
+          txRaw,
+          transaction: transaction,
+          extraParams: {
+            assetType: route.params.asset.type,
+            contractAddress: route.params.asset.contractAddress,
+            to: route.params.targetAddress,
+            sendAt: new Date(),
+          },
+        });
+        showMessage({
+          type: 'success',
+          message: 'Transaction Submitted',
+          description: 'Waiting for execution',
+          icon: 'loading' as unknown as undefined,
+        });
+        navigation.dispatch(CommonActions.reset({ index: 0, routes: [{ name: HomeStackName }] }));
+        plugins.AssetsTracker.updateCurrentTracker();
+        if (route.params.nftItemDetail) {
+          plugins.NFTDetailTracker.updateCurrentOpenNFT();
+        }
+      }
+    } catch (err: any) {
+      if (String(err)?.includes('cancel')) {
+        return;
+      }
+      showMessage({
+        message: 'Transaction Failed',
+        description: String(err.data || err?.message || err),
+        type: 'failed',
+      });
+    }
+  }, [gasInfo, currentVault?.id, currentNetwork?.id]);
+
+  const { inAsync: inSend, execAsync: handleSend } = useInAsync(_handleSend);
 
   return (
     <BackupBottomSheet showTitle="Transaction Confirm" onClose={navigation.goBack}>
@@ -116,7 +220,7 @@ const SendTranscationStep4Confirm: React.FC<SendTranscationScreenProps<typeof Se
             <Text style={[styles.text, styles.to, { color: colors.textSecondary }]}>Amount</Text>
             <View style={styles.balanceWrapper}>
               <Text style={[styles.balance, { color: colors.textPrimary }]} numberOfLines={1}>
-                {route.params.nftItemDetail ? route.params.nftItemDetail.amount : formatedAmount} {symbol}
+                {route.params.nftItemDetail ? route.params.amount : formatedAmount} {symbol}
               </Text>
               {(route.params.asset.type === AssetType.Native || route.params.asset.type === AssetType.ERC20) && (
                 <TokenIcon style={styles.assetIcon} source={route.params.asset.icon} />
@@ -157,10 +261,15 @@ const SendTranscationStep4Confirm: React.FC<SendTranscationScreenProps<typeof Se
         </View>
 
         <View style={styles.btnArea}>
-          <Button style={styles.btn} size="small" onPress={() => navigation.goBack()}>
+          <Button
+            style={styles.btn}
+            size="small"
+            onPress={() => navigation.dispatch(CommonActions.reset({ index: 0, routes: [{ name: HomeStackName }] }))}
+            disabled={inSend}
+          >
             Cancel
           </Button>
-          <Button style={styles.btn} size="small">
+          <Button style={styles.btn} size="small" disabled={!gasInfo} loading={inSend} onPress={handleSend}>
             Send
           </Button>
         </View>

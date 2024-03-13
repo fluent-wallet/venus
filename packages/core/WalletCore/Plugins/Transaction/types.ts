@@ -1,4 +1,4 @@
-export type HexStringType = `0x${string}`;
+import { AssetType } from '@core/database/models/Asset';
 
 export type ITxEvm = {
   from: string;
@@ -6,7 +6,7 @@ export type ITxEvm = {
   value: string;
   data?: string;
 
-  nonce?: number;
+  nonce?: string;
   type?: number
 
 //   gas?: string;
@@ -30,3 +30,21 @@ export enum IBSIMTxEventTypesName {
     error?: boolean;
     nonce?: string;
   }
+
+  export interface WalletTransactionType {
+    from: string;
+    to: string;
+    assetType: AssetType;
+    balance: string;
+    decimals: number;
+    symbol: string;
+    contractAddress?: string;
+    iconUrl?: string;
+    amount: string;
+    priceInUSDT?: string;
+    tokenId?: string; // 721
+    tokenImage?: string; // 721
+    contractName?: string; // 721
+    nftName?: string; // 721
+  }
+  

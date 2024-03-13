@@ -2,7 +2,6 @@ import React, { useState, useMemo, useCallback, useEffect } from 'react';
 import { View, Pressable, StyleSheet } from 'react-native';
 import { useTheme } from '@react-navigation/native';
 import { showMessage } from 'react-native-flash-message';
-import { formatUnits } from 'ethers';
 import Decimal from 'decimal.js';
 import { useCurrentNetwork, useCurrentAddressValue, AssetType } from '@core/WalletCore/Plugins/ReactInject';
 import plugins from '@core/WalletCore/Plugins';
@@ -45,15 +44,16 @@ const SendTranscationStep3Amount: React.FC<SendTranscationScreenProps<typeof Sen
         return res;
       } else {
         const res = new Decimal(route.params.asset.balance);
+        setValidMax(res);
         return res;
       }
     } else {
       try {
-        const { gas, gasPrice } = await plugins.Transaction.estimate({
+        const { gasLimit, gasPrice } = await plugins.Transaction.estimate({
           tx: { to: route.params.targetAddress, value: '0x0', from: currentAddressValue },
           network: currentNetwork,
         });
-        const res = new Decimal(route.params.asset.balance).sub(new Decimal(gas).mul(new Decimal(gasPrice)));
+        const res = new Decimal(route.params.asset.balance).sub(new Decimal(gasLimit).mul(new Decimal(gasPrice)));
         setValidMax(res);
         return res;
       } catch (err) {
@@ -70,13 +70,12 @@ const SendTranscationStep3Amount: React.FC<SendTranscationScreenProps<typeof Sen
   const { inAsync, execAsync: handleEstimateMax } = useInAsync(_handleEstimateMax);
 
   const handleClickMax = useCallback(async () => {
-    if (validMax === null) {
-      const max = await handleEstimateMax(false);
-      if (max) {
-        setAmount(formatUnits(max.toHex(), route.params.asset.decimals));
-      }
-    } else {
-      setAmount(formatUnits(validMax.toHex(), route.params.asset.decimals));
+    let usedMax: Decimal | null | undefined = validMax;
+    if (usedMax === null) {
+      usedMax = await handleEstimateMax(false);
+    }
+    if (usedMax) {
+      setAmount(usedMax.div(Decimal.pow(10, route.params.nftItemDetail ? 0 : route.params.asset.decimals)).toString());
     }
   }, [validMax]);
 
@@ -172,7 +171,7 @@ const SendTranscationStep3Amount: React.FC<SendTranscationScreenProps<typeof Sen
         mode="auto"
         disabled={validMax !== null && isAmountValid !== true}
         onPress={validMax === null ? () => handleEstimateMax(false) : () => navigation.navigate(SendTranscationStep4StackName, { ...route.params, amount })}
-        size='small'
+        size="small"
       >
         {validMax === null ? 'Estimate Max' : 'Next'}
       </Button>
