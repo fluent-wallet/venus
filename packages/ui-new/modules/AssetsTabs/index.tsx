@@ -10,6 +10,7 @@ import { CFX_ESPACE_MAINNET_CHAINID, CFX_ESPACE_TESTNET_CHAINID } from '@core/co
 import Text from '@components/Text';
 import TokensList from '@modules/AssetsList/TokensList';
 import NFTsList from '@modules/AssetsList/NFTsList';
+import ActivityList from '@modules/ActivityList';
 import { StickyNFTItem } from '@modules/AssetsList/NFTsList/NFTItem';
 
 export type Tab = 'Tokens' | 'NFTs' | 'Activity';
@@ -141,7 +142,7 @@ export const TabsContent: React.FC<Props> = ({ currentTab, setCurrentTab, pageVi
         <Fragment key={tab}>
           {tab === 'Tokens' && index === currentTabIndex && <TokensList showReceiveFunds onPressItem={onPressItem} />}
           {tab === 'NFTs' && index === currentTabIndex && <NFTsList tabsType={type} onPressItem={onPressItem} />}
-          {tab === 'Activity' && index === currentTabIndex && <Text>Activity</Text>}
+          {tab === 'Activity' && index === currentTabIndex && <ActivityList />}
         </Fragment>
       ))}
     </PagerView>

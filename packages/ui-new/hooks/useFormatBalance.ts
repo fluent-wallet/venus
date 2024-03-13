@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 import Decimal from 'decimal.js';
 import { balanceFormat, convertBalanceToDecimal, numberWithCommas } from '@core/utils/balance';
 
-const useFormatBalance = (balance: string | undefined, decimals?: number | undefined) =>
+const useFormatBalance = (balance: string | undefined | null, decimals?: number | undefined) =>
   useMemo(() => {
     if (!balance) return '0';
     if (!decimals) return numberWithCommas(balance);
