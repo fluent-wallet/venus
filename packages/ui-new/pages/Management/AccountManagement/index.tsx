@@ -29,7 +29,7 @@ const AccountManagement: React.FC<StackScreenProps<typeof AccountManagementStack
 
         <Pressable
           style={({ pressed }) => [accountListStyles.row, accountListStyles.group, { backgroundColor: pressed ? colors.underlay : 'transparent' }]}
-          onPress={() => addAnotherWalletRef.current?.present()}
+          onPress={() => addAnotherWalletRef.current?.expand()}
         >
           <Checkbox checked={mode === 'dark'} Icon={Add} />
           <Text style={[accountListStyles.manageText, { color: colors.textPrimary }]}>Add another wallet</Text>
@@ -37,7 +37,7 @@ const AccountManagement: React.FC<StackScreenProps<typeof AccountManagementStack
 
         <Pressable
           style={({ pressed }) => [accountListStyles.row, accountListStyles.group, { backgroundColor: pressed ? colors.underlay : 'transparent' }]}
-          onPress={() => eraseAllWalletRef.current?.present()}
+          onPress={() => eraseAllWalletRef.current?.expand()}
         >
           <Checkbox checked={mode === 'dark'} Icon={Delete} />
           <Text style={[accountListStyles.manageText, { color: colors.textPrimary }]}>Erase all wallets</Text>

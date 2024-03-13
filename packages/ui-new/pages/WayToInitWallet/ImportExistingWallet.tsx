@@ -147,6 +147,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#E5E5E5',
     justifyContent: 'flex-start',
+    paddingHorizontal: 12,
   },
   tipText: {
     width: '100%',

@@ -23,7 +23,7 @@ const EraseAllWallet: React.FC<Props> = ({ navigation, bottomSheetRef }) => {
     try {
       await plugins.Authentication.getPassword();
       navigation.navigate(WelcomeStackName);
-      bottomSheetRef.current.dismiss();
+      bottomSheetRef.current.close();
       await new Promise((resolve) => setTimeout(resolve, 100));
       await methods.clearAccountData();
       await RNRestart.restart();
@@ -40,7 +40,7 @@ const EraseAllWallet: React.FC<Props> = ({ navigation, bottomSheetRef }) => {
   }, []);
 
   return (
-    <BottomSheet ref={bottomSheetRef} snapPoints={snapPoints}>
+    <BottomSheet ref={bottomSheetRef} snapPoints={snapPoints} isModal={false}>
       <View style={styles.container}>
         <Text style={[styles.title, { color: colors.textPrimary }]}>⚠️ Confirm to clear{'\n'}account data?</Text>
         <Text style={[styles.description, { color: colors.textSecondary }]}>
