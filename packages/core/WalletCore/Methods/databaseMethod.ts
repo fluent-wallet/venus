@@ -1,6 +1,9 @@
 import { injectable, inject } from 'inversify';
+import { Q, Query } from '@nozbe/watermelondb';
 import database, { dbRefresh$ } from '../../database';
 import TableName from '../../database/TableName';
+import { Address } from './../../database/models/Address';
+import { convertHexAddressToBase32 } from './../../database/models/Address/query';
 import { createHdPath } from '../../database/models/HdPath/query';
 import { ChainType, NetworkType } from '../../database/models/Network';
 import { NetworkParams } from '../../database/models/Network/query';
@@ -233,6 +236,21 @@ export class DatabaseMethod {
     try {
       // Should skip if the DB has already been initialized.
       if ((await database.get(TableName.HdPath).query().fetchCount()) !== 0) {
+        const cfxTestnetAddressesQuery = database
+          .get(TableName.Address)
+          .query(
+            Q.on(TableName.Network, Q.and(Q.where('network_type', NetworkType.Conflux), Q.where('chain_type', ChainType.Testnet))),
+          ) as unknown as Query<Address>;
+        const addresses = await cfxTestnetAddressesQuery.fetch();
+        if (addresses?.length) {
+          await database.write(async () => {
+            const networks = await Promise.all(addresses.map((address) => address.network));
+            const updates = addresses.map((address, index) =>
+              address.prepareUpdate((address) => (address.base32 = convertHexAddressToBase32(address.hex, networks[index].netId))),
+            );
+            return database.batch(...updates);
+          });
+        }
         return true;
       }
 

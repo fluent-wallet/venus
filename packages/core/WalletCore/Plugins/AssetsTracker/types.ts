@@ -4,7 +4,7 @@ import { type Network } from './../../../database/models/Network';
 
 export type FetchAssetBalance = (params: {
   endpoint: string;
-  account: string;
+  accountAddress: Address;
   assets: Array<{
     contractAddress?: string | null;
     assetType?: Omit<AssetType, AssetType.ERC1155 | AssetType.ERC721>;

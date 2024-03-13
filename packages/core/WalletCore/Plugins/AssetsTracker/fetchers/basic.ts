@@ -1,9 +1,10 @@
 import { fetchChain, fetchChainBatch, fetchChainMulticall } from '@cfx-kit/dapp-utils/dist/fetch';
 import { createERC20Contract } from '@cfx-kit/dapp-utils/dist/contract';
+import { type Address } from './../../../../database/models/Address';
 import { NetworkType, networkRpcPrefixMap, networkRpcSuffixMap } from '../../../../database/models/Network';
 import { AssetType } from '../../../../database/models/Asset';
 
-export const fetchNativeAssetBalance = ({ networkType, endpoint, account }: { networkType: NetworkType; endpoint: string; account: string }) => {
+export const fetchNativeAssetBalance = ({ networkType, endpoint, accountAddress }: { networkType: NetworkType; endpoint: string; accountAddress: Address }) => {
   switch (networkType) {
     case NetworkType.Conflux:
     case NetworkType.Ethereum:
@@ -11,26 +12,30 @@ export const fetchNativeAssetBalance = ({ networkType, endpoint, account }: { ne
       const rpcPrefix = networkRpcPrefixMap[networkType];
       const rpcSuffix = networkRpcSuffixMap[networkType];
 
-      return fetchChain<string>({ url: endpoint, method: `${rpcPrefix}_getBalance`, params: [account, rpcSuffix] });
+      return fetchChain<string>({
+        url: endpoint,
+        method: `${rpcPrefix}_getBalance`,
+        params: [networkType === NetworkType.Conflux ? accountAddress.base32 : accountAddress.hex, rpcSuffix],
+      });
     }
   }
 };
 
-export const fetchConfluxNativeAssetBalance = ({ endpoint, account }: { endpoint: string; account: string }) =>
-  fetchNativeAssetBalance({ networkType: NetworkType.Conflux, endpoint, account });
+export const fetchConfluxNativeAssetBalance = ({ endpoint, accountAddress }: { endpoint: string; accountAddress: Address }) =>
+  fetchNativeAssetBalance({ networkType: NetworkType.Conflux, endpoint, accountAddress });
 
-export const fetchEthereumNativeAssetBalance = ({ endpoint, account }: { endpoint: string; account: string }) =>
-  fetchNativeAssetBalance({ networkType: NetworkType.Ethereum, endpoint, account });
+export const fetchEthereumNativeAssetBalance = ({ endpoint, accountAddress }: { endpoint: string; accountAddress: Address }) =>
+  fetchNativeAssetBalance({ networkType: NetworkType.Ethereum, endpoint, accountAddress });
 
 export function fetchContractAssetBalance({
   networkType,
   endpoint,
-  account,
+  accountAddress,
   contractAddress,
 }: {
   networkType: NetworkType;
   endpoint: string;
-  account: string;
+  accountAddress: Address;
   contractAddress: string;
 }) {
   switch (networkType) {
@@ -45,7 +50,7 @@ export function fetchContractAssetBalance({
         params: [
           {
             to: contractAddress,
-            data: `0x70a08231000000000000000000000000${account.slice(2)}`,
+            data: `0x70a08231000000000000000000000000${accountAddress.hex.slice(2)}`,
           },
           rpcSuffix,
         ],
@@ -54,21 +59,35 @@ export function fetchContractAssetBalance({
   }
 }
 
-export const fetchConfluxERC20AssetBalance = ({ endpoint, account, contractAddress }: { endpoint: string; account: string; contractAddress: string }) =>
-  fetchContractAssetBalance({ networkType: NetworkType.Conflux, endpoint, account, contractAddress });
+export const fetchConfluxERC20AssetBalance = ({
+  endpoint,
+  accountAddress,
+  contractAddress,
+}: {
+  endpoint: string;
+  accountAddress: Address;
+  contractAddress: string;
+}) => fetchContractAssetBalance({ networkType: NetworkType.Conflux, endpoint, accountAddress, contractAddress });
 
-export const fetchEthereumERC20AssetBalance = ({ endpoint, account, contractAddress }: { endpoint: string; account: string; contractAddress: string }) =>
-  fetchContractAssetBalance({ networkType: NetworkType.Ethereum, endpoint, account, contractAddress });
+export const fetchEthereumERC20AssetBalance = ({
+  endpoint,
+  accountAddress,
+  contractAddress,
+}: {
+  endpoint: string;
+  accountAddress: Address;
+  contractAddress: string;
+}) => fetchContractAssetBalance({ networkType: NetworkType.Ethereum, endpoint, accountAddress, contractAddress });
 
 export const fetchAssetsBalance = async ({
   networkType,
   endpoint,
-  account,
+  accountAddress,
   assets,
 }: {
   networkType: NetworkType;
   endpoint: string;
-  account: string;
+  accountAddress: Address;
   assets: Array<{
     contractAddress?: string | null;
     assetType?: Omit<AssetType, AssetType.ERC1155 | AssetType.ERC721>;
@@ -77,20 +96,20 @@ export const fetchAssetsBalance = async ({
   Promise.all(
     assets.map(({ contractAddress, assetType }) =>
       assetType === AssetType.ERC20 && contractAddress
-        ? fetchContractAssetBalance({ networkType, endpoint, account, contractAddress })
-        : fetchNativeAssetBalance({ networkType, endpoint, account }),
+        ? fetchContractAssetBalance({ networkType, endpoint, accountAddress, contractAddress })
+        : fetchNativeAssetBalance({ networkType, endpoint, accountAddress }),
     ),
   );
 
 export const fetchAssetsBalanceBatch = ({
   endpoint,
-  account,
+  accountAddress,
   assets,
   networkType,
   key,
 }: {
   endpoint: string;
-  account: string;
+  accountAddress: Address;
   assets: Array<{ assetType?: Omit<AssetType, AssetType.ERC1155 | AssetType.ERC721>; contractAddress?: string | null }>;
   networkType: NetworkType;
   key?: string;
@@ -99,7 +118,6 @@ export const fetchAssetsBalanceBatch = ({
     throw new Error('assetType or contractAsset is required');
   }
   const rpcPrefix = networkRpcPrefixMap[networkType];
-
   return fetchChainBatch<Array<string>>({
     key,
     url: endpoint,
@@ -107,10 +125,12 @@ export const fetchAssetsBalanceBatch = ({
       method: assetType === AssetType.Native ? `${rpcPrefix}_getBalance` : `${rpcPrefix}_call`,
       params: [
         assetType === AssetType.Native
-          ? account
+          ? networkType === NetworkType.Conflux
+            ? accountAddress.base32
+            : accountAddress.hex
           : {
               to: contractAddress,
-              data: `0x70a08231000000000000000000000000${account.slice(2)}`,
+              data: `0x70a08231000000000000000000000000${accountAddress.hex.slice(2)}`,
             },
         // networkRpcSuffixMap[networkType],
       ],
@@ -120,14 +140,14 @@ export const fetchAssetsBalanceBatch = ({
 
 export const fetchAssetsBalanceMulticall = ({
   endpoint,
-  account,
+  accountAddress,
   assets,
   networkType,
   multicallContractAddress,
   key,
 }: {
   endpoint: string;
-  account: string;
+  accountAddress: Address;
   assets: Array<{ assetType?: Omit<AssetType, AssetType.ERC1155 | AssetType.ERC721>; contractAddress?: string | null }>;
   networkType: NetworkType;
   multicallContractAddress: string;
@@ -144,7 +164,7 @@ export const fetchAssetsBalanceMulticall = ({
 
   let promiseNative: Promise<string> | undefined;
   if (nativeAssetIndex !== -1) {
-    promiseNative = fetchNativeAssetBalance({ networkType, endpoint, account });
+    promiseNative = fetchNativeAssetBalance({ networkType, endpoint, accountAddress });
   }
 
   let promiseContracts: Promise<Array<string>> | undefined;
@@ -156,7 +176,7 @@ export const fetchAssetsBalanceMulticall = ({
       multicallContractAddress,
       data: contractAssets.map(({ contractAddress }) => ({
         contractAddress: contractAddress!,
-        encodedData: `0x70a08231000000000000000000000000${account.slice(2)}`,
+        encodedData: `0x70a08231000000000000000000000000${accountAddress.hex.slice(2)}`,
       })),
     });
   }
@@ -399,7 +419,7 @@ export const fetchERC20AssetInfoBatchWithAccount = async ({
   networkType: NetworkType;
   endpoint: string;
   contractAddress: string;
-  accountAddress: string;
+  accountAddress: Address;
 }) => {
   const rpcPrefix = networkRpcPrefixMap[networkType];
   const rpcSuffix = networkRpcSuffixMap[networkType];
@@ -422,7 +442,7 @@ export const fetchERC20AssetInfoBatchWithAccount = async ({
       },
       {
         method: `${rpcPrefix}_call`,
-        params: [{ to: contractAddress, data: contract.encodeFunctionData('balanceOf', [accountAddress as `0x${string}`]) }, rpcSuffix],
+        params: [{ to: contractAddress, data: contract.encodeFunctionData('balanceOf', [accountAddress.hex as `0x${string}`]) }, rpcSuffix],
       },
     ],
   }).then((res) => {
