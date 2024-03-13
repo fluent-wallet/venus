@@ -21,7 +21,7 @@ const BackupStep1Notice: React.FC<BackupScreenProps<typeof BackupStep1StackName>
         <Text style={[styles.descriptionBold, { color: colors.textNotice }]}>private key</Text>, you won’t be able to recover you wallet.
         {'\n'}
         {'\n'}
-        btaining <Text style={[styles.descriptionBold, { color: colors.textNotice }]}>seed phrase</Text> or{' '}
+        Obtaining <Text style={[styles.descriptionBold, { color: colors.textNotice }]}>seed phrase</Text> or{' '}
         <Text style={[styles.descriptionBold, { color: colors.textNotice }]}>private key</Text> means owning all assets.
         {'\n'}
         {'\n'}
