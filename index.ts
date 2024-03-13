@@ -23,6 +23,7 @@ import * as SplashScreen from 'expo-splash-screen';
 Decimal.set({ precision: 80 });
 
 LogBox.ignoreLogs(['Error: Invalid response']);
+LogBox.ignoreLogs(['Request timed out']);
 LogBox.ignoreLogs(['RCTBridge required dispatch_sync to load']);
 
 // Prevent native splash screen from autohiding before App component declaration

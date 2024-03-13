@@ -1,4 +1,4 @@
-import React, { useCallback, useRef, type MutableRefObject } from 'react';
+import React, { useState, useCallback, useRef, type MutableRefObject } from 'react';
 import { View, Pressable, StyleSheet } from 'react-native';
 import { useTheme } from '@react-navigation/native';
 import { showMessage } from 'react-native-flash-message';
@@ -37,8 +37,8 @@ const AddAnotherWallet: React.FC<Props> = ({ navigation, bottomSheetRef }) => {
       await plugins.BSIM.getBSIMVersion();
       await new Promise((resolve) => setTimeout(resolve));
       if (await createVault({ type: 'connectBSIM' })) {
-        bottomSheetRef.current?.dismiss();
-        setTimeout(() => bottomSheetRef.current?.dismiss(), 25);
+        bottomSheetRef.current?.close();
+        setTimeout(() => bottomSheetRef.current?.close(), 25);
         showMessage({
           message: 'Connect BSIM wallet success',
           type: 'success',
@@ -57,8 +57,8 @@ const AddAnotherWallet: React.FC<Props> = ({ navigation, bottomSheetRef }) => {
     navigation.setOptions({ gestureEnabled: false });
     await new Promise((resolve) => setTimeout(resolve));
     if (await createVault({ type: 'createNewWallet' })) {
-      bottomSheetRef.current?.dismiss();
-      setTimeout(() => bottomSheetRef.current?.dismiss(), 25);
+      bottomSheetRef.current?.close();
+      setTimeout(() => bottomSheetRef.current?.close(), 25);
       showMessage({
         message: 'Add new wallet success',
         type: 'success',
@@ -74,23 +74,24 @@ const AddAnotherWallet: React.FC<Props> = ({ navigation, bottomSheetRef }) => {
     await new Promise((resolve) => setTimeout(() => resolve(null!), 20));
     const res = await createVault({ type: 'importExistWallet', value });
     if (res) {
-      bottomSheetRef.current?.dismiss();
-      setTimeout(() => bottomSheetRef.current?.dismiss(), 25);
+      bottomSheetRef.current?.close();
+      setTimeout(() => bottomSheetRef.current?.close(), 50);
       showMessage({
         message: 'Import wallet success',
         type: 'success',
       });
     } else if (res === undefined) {
-      importExistRef.current?.dismiss();
+      importExistRef.current?.close();
     }
     navigation.setOptions({ gestureEnabled: false });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
   const { inAsync: inImporting, execAsync: handleImportExistWallet } = useInAsync(_handleImportExistWallet);
+  const [bottomSheetIndex, setBottomSheetIndex] = useState(0);
 
   return (
     <>
-      <BottomSheet ref={bottomSheetRef} snapPoints={snapPoints}>
+      <BottomSheet ref={bottomSheetRef} snapPoints={snapPoints} isModal={false} onChange={(index) => setBottomSheetIndex(index)}>
         <View style={styles.container}>
           {!hasBSIMVaultCreated && (
             <Pressable
@@ -116,7 +117,7 @@ const AddAnotherWallet: React.FC<Props> = ({ navigation, bottomSheetRef }) => {
 
           <Pressable
             style={({ pressed }) => [accountListStyles.row, { backgroundColor: pressed ? colors.underlay : 'transparent' }]}
-            onPress={() => importExistRef.current?.present()}
+            onPress={() => importExistRef.current?.expand()}
           >
             {<Image style={accountListStyles.groupTypeImage} source={ExistWallet} />}
             <Text style={[accountListStyles.manageText, { color: colors.textPrimary }]}>Import existing wallet</Text>
@@ -124,7 +125,7 @@ const AddAnotherWallet: React.FC<Props> = ({ navigation, bottomSheetRef }) => {
           </Pressable>
         </View>
       </BottomSheet>
-      <ImportExistingWallet bottomSheetRef={importExistRef} onSuccessConfirm={handleImportExistWallet} isModal />
+      {bottomSheetIndex === 0 && <ImportExistingWallet bottomSheetRef={importExistRef} onSuccessConfirm={handleImportExistWallet} isModal={false} />}
     </>
   );
 };
