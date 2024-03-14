@@ -28,7 +28,7 @@ class Transaction {
       ],
     });
     const {gasLimit, storageCollateralized} = rst
-    return {gasLimit: addHexPrefix((BigInt(gasLimit) * BigInt(gasBuffer)).toString(16)), storageCollateralized};
+    return {gasLimit: addHexPrefix((BigInt(gasLimit) * BigInt(gasBuffer)).toString(16)), storageLimit: storageCollateralized};
   };
 
   public checkPayContract = async({tx, endpoint}: { tx: ITxEvm; endpoint: string; }) => {
@@ -61,8 +61,8 @@ class Transaction {
   }
 
   public estimate = async ({ tx, endpoint, gasBuffer = 1 }: { tx: ITxEvm; endpoint: string; gasBuffer?: number }) => {
-    const [gasPrice, {gasLimit, storageCollateralized}, {isBalanceEnough, willPayCollateral, willPayTxFee}] = await Promise.all([this.getGasPrice(endpoint), this.estimateGas({ tx, endpoint, gasBuffer }), this.checkPayContract({ tx, endpoint })]);
-    return { gasPrice, gasLimit, storageCollateralized, isBalanceEnough, willPayCollateral, willPayTxFee};
+    const [gasPrice, {gasLimit, storageLimit}, {isBalanceEnough, willPayCollateral, willPayTxFee}] = await Promise.all([this.getGasPrice(endpoint), this.estimateGas({ tx, endpoint, gasBuffer }), this.checkPayContract({ tx, endpoint })]);
+    return { gasPrice, gasLimit, storageLimit, isBalanceEnough, willPayCollateral, willPayTxFee};
   };
 
   public getTransactionCount = ({ endpoint, addressValue }: { endpoint: string; addressValue: string }) =>
