@@ -12,7 +12,7 @@ class Transaction {
     const isToAddressContract = methods.checkIsContractAddress({ networkType: NetworkType.Conflux, endpoint: endpoint, addressValue: tx.to });
     const isSendNativeToken = (!!tx.to && !isToAddressContract) || !tx.data || tx.data === '0x';
 
-    if (isSendNativeToken) return {gasLimit: addHexPrefix(BigInt(21000 * gasBuffer).toString(16)), storageCollateralized: '0x0'};
+    if (isSendNativeToken) return {gasLimit: addHexPrefix(BigInt(21000 * gasBuffer).toString(16)), storageLimit: '0x0'};
 
     const rst = await fetchChain<{gasLimit: string, storageCollateralized: string}>({
       url: endpoint,
