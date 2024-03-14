@@ -54,12 +54,11 @@ class Transaction {
   };
 
   public estimate = async ({ tx, endpoint, gasBuffer = 1 }: { tx: ITxEvm; endpoint: string; gasBuffer?: number }) => {
-    const [gasPrice, { gasLimit, storageLimit }, { isBalanceEnough, willPayCollateral, willPayTxFee }] = await Promise.all([
+    const [gasPrice, { gasLimit, storageLimit }] = await Promise.all([
       this.getGasPrice(endpoint),
       this.estimateGas({ tx, endpoint, gasBuffer }),
-      this.checkPayContract({ tx, endpoint }),
     ]);
-    return { gasPrice, gasLimit, storageLimit, isBalanceEnough, willPayCollateral, willPayTxFee };
+    return { gasPrice, gasLimit, storageLimit };
   };
 
   public getBlockNumber = (endpoint: string) => fetchChain<string>({ url: endpoint, method: 'cfx_epochNumber' });
