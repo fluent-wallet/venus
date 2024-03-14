@@ -4,12 +4,13 @@ import { useTheme } from '@react-navigation/native';
 import Animated, { useSharedValue, useAnimatedStyle, withTiming } from 'react-native-reanimated';
 import { atom, useAtomValue } from 'jotai';
 import PagerView from 'react-native-pager-view';
-import { useCurrentNetwork, setAtom } from '@core/WalletCore/Plugins/ReactInject';
+import { useCurrentNetwork, setAtom, NetworkType } from '@core/WalletCore/Plugins/ReactInject';
 import { type AssetInfo } from '@core/WalletCore/Plugins/AssetsTracker/types';
 import { CFX_ESPACE_MAINNET_CHAINID, CFX_ESPACE_TESTNET_CHAINID } from '@core/consts/network';
 import Text from '@components/Text';
 import TokensList from '@modules/AssetsList/TokensList';
 import NFTsList from '@modules/AssetsList/NFTsList';
+import ActivityList from '@modules/ActivityList';
 import { StickyNFTItem } from '@modules/AssetsList/NFTsList/NFTItem';
 
 export type Tab = 'Tokens' | 'NFTs' | 'Activity';
@@ -139,9 +140,17 @@ export const TabsContent: React.FC<Props> = ({ currentTab, setCurrentTab, pageVi
     <PagerView ref={pageViewRef} style={styles.pagerView} initialPage={0} onPageSelected={(evt) => setCurrentTab(tabs[evt.nativeEvent.position])}>
       {tabs?.map((tab, index) => (
         <Fragment key={tab}>
-          {tab === 'Tokens' && index === currentTabIndex && <TokensList showReceiveFunds onPressItem={onPressItem} />}
+          {tab === 'Tokens' && index === currentTabIndex && (
+            <TokensList
+              showReceiveFunds={
+                currentNetwork?.networkType === NetworkType.Ethereum &&
+                (currentNetwork.chainId === CFX_ESPACE_MAINNET_CHAINID || currentNetwork.chainId === CFX_ESPACE_TESTNET_CHAINID)
+              }
+              onPressItem={onPressItem}
+            />
+          )}
           {tab === 'NFTs' && index === currentTabIndex && <NFTsList tabsType={type} onPressItem={onPressItem} />}
-          {tab === 'Activity' && index === currentTabIndex && <Text>Activity</Text>}
+          {tab === 'Activity' && index === currentTabIndex && <ActivityList />}
         </Fragment>
       ))}
     </PagerView>

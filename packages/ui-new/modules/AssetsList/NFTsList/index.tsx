@@ -28,7 +28,7 @@ const NFTList: React.FC<Props> = ({ onPressItem, tabsType }) => {
     return (
       <>
         <NoData style={styles.noNFTIcon} />
-        <Text style={[styles.noNFT, { color: colors.textSecondary }]}>No NFT</Text>
+        <Text style={[styles.noNFTText, { color: colors.textSecondary }]}>No NFT</Text>
       </>
     );
   }
@@ -44,7 +44,7 @@ const styles = StyleSheet.create({
     marginBottom: 6,
     alignSelf: 'center',
   },
-  noNFT: {
+  noNFTText: {
     fontSize: 14,
     textAlign: 'center',
   },

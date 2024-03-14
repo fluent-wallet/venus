@@ -166,7 +166,7 @@ function polyMod(buffer: any) {
   return JSBI.bitwiseXor(checksumBigInt, BIGINT_1);
 }
 
-function _encode(_hexAddress: string, netId: number = 1029, verbose = false) {
+function _encode(_hexAddress: string, netId = 1029, verbose = false) {
   let hexAddress!: any;
   if (validateHexAddress(_hexAddress)) {
     hexAddress = Buffer.from(_hexAddress.slice(2), 'hex');
@@ -234,7 +234,7 @@ function _decode(cfxAdress: string) {
 
   return { hexAddress, netId, type };
 }
-export const encode = memoize(_encode);
+export const encode = memoize(_encode, (...args) => JSON.stringify(args));
 export const decode = memoize(_decode);
 
 const _validateCfxAddress = (address: string) => {

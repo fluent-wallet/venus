@@ -120,7 +120,7 @@ const trackAssets = async ({
               fetchAssetBalances({
                 key: `assetsBalanceInRules-${address.hex}-${network.chainId}`,
                 endpoint: network.endpoint,
-                account: address.hex,
+                accountAddress: address,
                 assets: assetsNeedFetch.map((asset) => ({ assetType: asset.type, contractAddress: asset.contractAddress })),
               }),
             ).pipe(catchError(() => of(null))),

@@ -148,6 +148,6 @@ export class NetworkMethod {
     }
   }
 
-  checkIsContractAddress = memoize(this._checkIsContractAddress);
-  checkIsValidAddress = memoize(this._checkIsValidAddress);
+  checkIsContractAddress = memoize(this._checkIsContractAddress, (...args) => JSON.stringify(args));
+  checkIsValidAddress = memoize(this._checkIsValidAddress, (...args) => JSON.stringify(args));
 }

@@ -21,7 +21,7 @@ import { fetchESpaceServer } from './fetchers/eSpaceServer';
 import { queryNetworkById } from '../../../database/models/Network/query';
 import { queryAddressById } from '../../../database/models/Address/query';
 import trackAssets from './trackAssets';
-import { type FetchAssetBalance, type AssetInfo, type Fetcher } from './types';
+import { type FetchAssetBalance, type Fetcher } from './types';
 import {
   getAssetsHash,
   setAssetsHash,
