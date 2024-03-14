@@ -237,8 +237,9 @@ function _decode(cfxAdress: string) {
 export const encode = memoize(_encode, (...args) => JSON.stringify(args));
 export const decode = memoize(_decode);
 
-const _validateCfxAddress = (address: string) => {
+const _validateCfxAddress = (address: string | null | undefined) => {
   try {
+    if (!address) return false;
     decode(address);
     return true;
   } catch (e) {

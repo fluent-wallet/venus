@@ -7,9 +7,8 @@ import { type AssetRule } from '../AssetRule';
 import { type Address } from '.';
 import TableName from '../../TableName';
 import { createModel } from '../../helper/modelHelper';
-import { encode } from '../../../utils/address';
 import { toAccountAddress } from '../../../utils/account';
-import { validateCfxAddress, validateHexAddress, toHex } from '../../../utils/address';
+import { validateCfxAddress, validateHexAddress, toHex, encode } from '../../../utils/address';
 import database from '../..';
 
 type Params = { hex: string; account: Account; network: Network; assetRule: AssetRule };

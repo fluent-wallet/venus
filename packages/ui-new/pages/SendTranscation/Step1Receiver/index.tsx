@@ -2,7 +2,7 @@ import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { Pressable, StyleSheet } from 'react-native';
 import { useTheme } from '@react-navigation/native';
 import { debounce } from 'lodash-es';
-import { useCurrentNetwork, getCurrentNetwork, AddressType } from '@core/WalletCore/Plugins/ReactInject';
+import { useCurrentNetwork, getCurrentNetwork, AddressType, NetworkType } from '@core/WalletCore/Plugins/ReactInject';
 import method from '@core/WalletCore/Methods';
 import Text from '@components/Text';
 import TextInput from '@components/TextInput';
@@ -20,7 +20,7 @@ const SendTranscationStep1Receiver: React.FC<SendTransactionScreenProps<typeof S
   const _currentNetwork = useCurrentNetwork();
   const scanQRCodeRef = useRef<BottomSheetMethods>(null!);
 
-  const [receiver, setReceiver] = useState('0x102e0fb8a5ED6E0f0899C3ed9896cb8973aA29bB');
+  const [receiver, setReceiver] = useState(() => _currentNetwork?.networkType === NetworkType.Conflux ? 'cfxtest:aas7an99m9dbwm13p5mpe1xmc1b647743u00vwvmpn' : '0x102e0fb8a5ED6E0f0899C3ed9896cb8973aA29bB');
   const [inChecking, setInChecking] = useState(false);
   const [knowRisk, setKnowRist] = useState(false);
   const [checkRes, setCheckRes] = useState<null | AddressType | 'Invalid' | 'NetworkError'>(null);

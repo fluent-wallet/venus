@@ -19,13 +19,13 @@ const getMinNonceTx = async (txs: Tx[]) => {
     return;
   }
   const payloads = await Promise.all(txs.map((tx) => tx.txPayload));
-  let minNonce = payloads[0].nonce;
+  let minNonce = payloads[0].nonce!;
   let minNonceTx = txs[0];
   for (let i = 1; i < txs.length; i++) {
     const payload = payloads[i];
-    if (payload.nonce < minNonce) {
+    if (payload.nonce! < minNonce) {
       minNonceTx = txs[i];
-      minNonce = payload.nonce;
+      minNonce = payload.nonce!;
     }
   }
   return minNonceTx;

@@ -29,6 +29,8 @@ class Transaction {
     return addHexPrefix((BigInt(gas) * BigInt(gasBuffer)).toString(16));
   };
 
+  public getBlockNumber = (endpoint: string) => fetchChain<string>({ url: endpoint, method: 'eth_blockNumber' });
+
   public estimate = async ({ tx, endpoint, gasBuffer = 1 }: { tx: ITxEvm; endpoint: string; gasBuffer?: number }) => {
     const [gasPrice, gasLimit] = await Promise.all([this.getGasPrice(endpoint), this.estimateGas({ tx, endpoint, gasBuffer })]);
     return { gasPrice, gasLimit };
@@ -37,17 +39,21 @@ class Transaction {
   public getTransactionCount = ({ endpoint, addressValue }: { endpoint: string; addressValue: string }) =>
     fetchChain<string>({ url: endpoint, method: 'eth_getTransactionCount', params: [addressValue, 'pending'] });
 
+  async signTransaction({ privateKey, tx }: { privateKey: string; tx: ITxEvm }) {
+    const transaction = new EVMTransaction();
+    for (const key in tx) {
+      transaction[key as 'to'] = tx[key as 'to'];
+    }
+    const wallet = new Wallet(privateKey);
+    return wallet.signTransaction(transaction);
+  }
+
   public sendRawTransaction = ({ txRaw, endpoint }: { txRaw: string; endpoint: string }) =>
     fetchChain<string>({
       url: endpoint,
       method: 'eth_sendRawTransaction',
       params: [txRaw],
     });
-
-  async signTransaction({ privateKey, transaction }: { privateKey: string; transaction: EVMTransaction }) {
-    const wallet = new Wallet(privateKey);
-    return wallet.signTransaction(transaction);
-  }
 }
 
 export default new Transaction();

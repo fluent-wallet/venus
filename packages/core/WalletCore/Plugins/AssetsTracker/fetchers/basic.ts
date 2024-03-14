@@ -1,8 +1,11 @@
 import { fetchChain, fetchChainBatch, fetchChainMulticall } from '@cfx-kit/dapp-utils/dist/fetch';
 import { createERC20Contract } from '@cfx-kit/dapp-utils/dist/contract';
+import { convertCfxToHex as _convertCfxToHex } from '@cfx-kit/dapp-utils/dist/address';
+import { memoize } from 'lodash-es';
 import { type Address } from './../../../../database/models/Address';
 import { NetworkType, networkRpcPrefixMap, networkRpcSuffixMap } from '../../../../database/models/Network';
 import { AssetType } from '../../../../database/models/Asset';
+const convertCfxToHex = memoize(_convertCfxToHex);
 
 export const fetchNativeAssetBalance = ({ networkType, endpoint, accountAddress }: { networkType: NetworkType; endpoint: string; accountAddress: Address }) => {
   switch (networkType) {
@@ -442,15 +445,23 @@ export const fetchERC20AssetInfoBatchWithAccount = async ({
       },
       {
         method: `${rpcPrefix}_call`,
-        params: [{ to: contractAddress, data: contract.encodeFunctionData('balanceOf', [accountAddress.hex as `0x${string}`]) }, rpcSuffix],
+        params: [
+          {
+            to: contractAddress,
+            data: contract.encodeFunctionData('balanceOf', [
+              (networkType === NetworkType.Conflux ? convertCfxToHex(accountAddress.base32) : accountAddress.hex) as `0x${string}`,
+            ]),
+          },
+          rpcSuffix,
+        ],
       },
     ],
   }).then((res) => {
     return {
       name: contract.decodeFunctionResult('name', res[0])?.[0],
       symbol: contract.decodeFunctionResult('symbol', res[1])?.[0],
-      decimals: contract.decodeFunctionResult('decimals', res[2])?.[0],
-      balance: String(contract.decodeFunctionResult('balanceOf', res[3])?.[0]),
+      decimals: Number(contract.decodeFunctionResult('decimals', res[2])?.[0]),
+      balance: contract.decodeFunctionResult('balanceOf', res[3])?.[0].toString(),
     };
   });
 };

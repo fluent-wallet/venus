@@ -51,6 +51,7 @@
     "intl-pluralrules": "^2.0.1",
     "inversify": "^6.0.2",
     "jotai": "^2.6.2",
+    "js-conflux-sdk": "^2.3.0",
     "ky": "^1.2.0",
     "lodash-es": "^4.17.21",
     "lottie-react-native": "^6.5.1",

@@ -9,7 +9,6 @@ export type ITxEvm = {
   nonce?: string;
   type?: number
 
-//   gas?: string;
   gasLimit?: string;
   gasPrice?: string;
   storageLimit?: string;

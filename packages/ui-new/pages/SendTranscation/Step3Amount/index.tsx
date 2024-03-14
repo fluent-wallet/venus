@@ -25,7 +25,6 @@ const SendTranscationStep3Amount: React.FC<SendTransactionScreenProps<typeof Sen
   const { colors, mode } = useTheme();
   const currentNetwork = useCurrentNetwork()!;
   const currentAddressValue = useCurrentAddressValue()!;
-
   const [amount, setAmount] = useState('');
   const [validMax, setValidMax] = useState<Decimal | null>(null);
 
@@ -121,7 +120,7 @@ const SendTranscationStep3Amount: React.FC<SendTransactionScreenProps<typeof Sen
     }
     if (new Decimal(amount).lessThan(new Decimal(0))) return 'less-than-zero';
     return validMax.greaterThanOrEqualTo(
-      new Decimal(amount).mul(route.params.nftItemDetail ? new Decimal(1) : Decimal.pow(new Decimal(10), new Decimal(route.params.asset.decimals))),
+      new Decimal(amount).mul(route.params.nftItemDetail ? new Decimal(1) : Decimal.pow(10, route.params.asset.decimals)),
     );
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [amount, validMax]);

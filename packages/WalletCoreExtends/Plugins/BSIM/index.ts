@@ -1,6 +1,7 @@
 import BSIMSDK, { BSIMError, BSIMErrorEndTimeout, BSIM_ERRORS, BSIM_SUPPORT_ACCOUNT_LIMIT, CoinTypes } from './BSIMSDK';
 import { addHexPrefix } from '@core/utils/base';
-import { Signature, Transaction, TypedDataDomain, TypedDataEncoder, TypedDataField, computeAddress, hashMessage, hexlify } from 'ethers';
+import { Signature, Transaction, TypedDataDomain, TypedDataEncoder, TypedDataField, computeAddress, hashMessage } from 'ethers';
+import { ITxEvm } from '@core/WalletCore/Plugins/Transaction/types';
 import { type Plugin } from '@core/WalletCore/Plugins';
 import { catchError, defer, firstValueFrom, from, retry, throwError, timeout } from 'rxjs';
 import { TxEvent, TxEventTypesName } from './types';
@@ -161,12 +162,17 @@ export class BSIMPluginClass implements Plugin {
     return res;
   };
 
-  public signTransaction = async (fromAddress: string, tx: Transaction) => {
-    const hash = tx.unsignedHash;
+  public signTransaction = async (fromAddress: string, tx: ITxEvm) => {
+    const transaction = new Transaction();
+    for (const key in tx) {
+      transaction[key as 'to'] = tx[key as 'to'];
+    }
+
+    const hash = transaction.unsignedHash;
     const res = await this.BSIMSign(hash, fromAddress);
-    tx.signature = Signature.from({ r: res.r, s: res.s, v: res.v });
+    transaction.signature = Signature.from({ r: res.r, s: res.s, v: res.v });
     // get the transaction encoded
-    const encodeTx = tx.serialized;
+    const encodeTx = transaction.serialized;
     return encodeTx;
   };
 

@@ -66,8 +66,8 @@ const ActivityList: React.FC<{ onPress?: (v: Tx) => void }> = memo(({ onPress })
 
   return (
     <>
-      {!!unfinishedTxs?.length && unfinishedTxs.map((tx) => <ActivityItem tx={tx} onPress={onPress} />)}
-      {finishedTxs?.length &&
+      {!!unfinishedTxs?.length && unfinishedTxs.map((tx) => <ActivityItem key={(tx as Tx).id} tx={tx} onPress={onPress} />)}
+      {finishedTxs?.length > 0 &&
         finishedTxsByDay.map((tx) =>
           tx instanceof ActivityDate ? (
             <Text key={`${tx.day}${tx.month}${tx.year}`} style={[styles.date, { color: colors.textSecondary, borderColor: colors.borderThird }]}>

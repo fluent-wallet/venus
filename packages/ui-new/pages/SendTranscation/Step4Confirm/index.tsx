@@ -3,10 +3,10 @@ import React, { useMemo, useState, useEffect, useCallback, useRef } from 'react'
 import { View, StyleSheet, Keyboard } from 'react-native';
 import { useTheme, CommonActions } from '@react-navigation/native';
 import { showMessage } from 'react-native-flash-message';
-import { Transaction } from 'ethers';
 import Decimal from 'decimal.js';
 import { interval, switchMap, startWith, Subject } from 'rxjs';
 import { createERC20Contract, createERC721Contract, createERC1155Contract } from '@cfx-kit/dapp-utils/dist/contract';
+import { convertCfxToHex } from '@cfx-kit/dapp-utils/dist/address';
 import {
   useCurrentNetwork,
   useCurrentNetworkNativeAsset,
@@ -64,7 +64,10 @@ const SendTranscationStep4Confirm: React.FC<SendTransactionScreenProps<typeof Se
     let data = '0x';
     if (route.params.asset.type === AssetType.ERC20) {
       const contract = createERC20Contract(route.params.asset.contractAddress!);
-      data = contract.encodeFunctionData('transfer', [route.params.targetAddress as `0x${string}`, transferAmountHex as unknown as bigint]);
+      data = contract.encodeFunctionData('transfer', [
+        (currentNetwork.networkType === NetworkType.Conflux ? convertCfxToHex(route.params.targetAddress) : route.params.targetAddress) as `0x${string}`,
+        transferAmountHex as unknown as bigint,
+      ]);
     } else if (route.params.asset.type === AssetType.ERC721) {
       const contract = createERC721Contract(route.params.asset.contractAddress!);
       data = contract.encodeFunctionData('transferFrom', [
@@ -136,13 +139,23 @@ const SendTranscationStep4Confirm: React.FC<SendTransactionScreenProps<typeof Se
   const txEvent = useRef(new Subject<TxEvent>());
   const _handleSend = useCallback(async () => {
     try {
-      const tx = Object.assign({}, txHalf, { gasLimit: gasInfo?.gasLimit, gasPrice: gasInfo?.gasPrice });
+      if (route.params.asset.type === AssetType.ERC20 && route.params.asset.contractAddress) {
+        const isInDB = await currentNetwork.queryAssetByAddress(route.params.asset.contractAddress);
+        if (!isInDB) {
+          await methods.createAsset({
+            network: currentNetwork,
+            ...route.params.asset,
+          });
+        }
+      }
+      const tx = Object.assign({}, txHalf, {
+        gasLimit: gasInfo?.gasLimit,
+        gasPrice: gasInfo?.gasPrice,
+        ...(currentNetwork.networkType === NetworkType.Conflux ? { storageLimit: gasInfo?.storageLimit } : null),
+      });
       const nonce = await plugins.Transaction.getTransactionCount({ network: currentNetwork, addressValue: currentAddressValue });
       tx.nonce = nonce;
-      const transaction = new Transaction();
-      for (const key in tx) {
-        transaction[key as 'to'] = tx[key as 'to'];
-      }
+      const blockNumber = await plugins.Transaction.getBlockNumber(currentNetwork);
 
       let txRaw!: string;
       if (currentVault?.type === VaultType.BSIM) {
@@ -150,7 +163,7 @@ const SendTranscationStep4Confirm: React.FC<SendTransactionScreenProps<typeof Se
           txEvent.current.next({ type: TxEventTypesName.BSIM_VERIFY_START });
           txEvent.current.next({ type: TxEventTypesName.BSIM_SIGN_START });
           // sendTransaction has from field, but it is readonly, and it is only have by tx is signed otherwise it is null, so we need to pass the from address to signTransaction
-          txRaw = await plugins.BSIM.signTransaction(currentAddressValue, transaction);
+          txRaw = await plugins.BSIM.signTransaction(currentAddressValue, tx);
           txEvent.current.next({ type: TxEventTypesName.BSIM_TX_SEND });
         } catch (bsimError) {
           const code = (bsimError as { code: string })?.code;
@@ -168,7 +181,7 @@ const SendTranscationStep4Confirm: React.FC<SendTransactionScreenProps<typeof Se
         }
       } else {
         const privateKey = await methods.getPrivateKeyOfAddress(currentAddress);
-        txRaw = await plugins.Transaction.signTransaction({ network: currentNetwork, transaction, privateKey });
+        txRaw = await plugins.Transaction.signTransaction({ network: currentNetwork, tx, privateKey, blockNumber });
       }
 
       if (txRaw) {
@@ -176,7 +189,7 @@ const SendTranscationStep4Confirm: React.FC<SendTransactionScreenProps<typeof Se
         events.broadcastTransactionSubjectPush.next({
           txHash,
           txRaw,
-          transaction: transaction,
+          tx,
           extraParams: {
             assetType: route.params.asset.type,
             contractAddress: route.params.asset.contractAddress,
@@ -200,6 +213,7 @@ const SendTranscationStep4Confirm: React.FC<SendTransactionScreenProps<typeof Se
       if (String(err)?.includes('cancel')) {
         return;
       }
+      console.log(err);
       showMessage({
         message: 'Transaction Failed',
         description: String(err.data || err?.message || err),

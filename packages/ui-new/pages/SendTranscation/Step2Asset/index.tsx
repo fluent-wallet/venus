@@ -4,7 +4,7 @@ import { useTheme } from '@react-navigation/native';
 import PagerView from 'react-native-pager-view';
 import { showMessage } from 'react-native-flash-message';
 import { debounce, escapeRegExp } from 'lodash-es';
-import { useAssetsAllList, useCurrentNetwork, useCurrentAddressValue, useCurrentOpenNFTDetail, AssetType } from '@core/WalletCore/Plugins/ReactInject';
+import { useAssetsAllList, useCurrentNetwork, useCurrentAddressValue, useCurrentAddress, useCurrentOpenNFTDetail, AssetType } from '@core/WalletCore/Plugins/ReactInject';
 import { fetchERC20AssetInfoBatchWithAccount } from '@core/WalletCore/Plugins/AssetsTracker/fetchers/basic';
 import { type AssetInfo } from '@core/WalletCore/Plugins/AssetsTracker/types';
 import { type NFTItemDetail } from '@core/WalletCore/Plugins/NFTDetailTracker';
@@ -31,6 +31,7 @@ const SendTranscationStep2Asset: React.FC<SendTransactionScreenProps<typeof Send
   }, []);
 
   const currentNetwork = useCurrentNetwork()!;
+  const currentAddress = useCurrentAddress();
   const currentAddressValue = useCurrentAddressValue();
   const currentOpenNFTDetail = useCurrentOpenNFTDetail();
   const assets = useAssetsAllList();
@@ -65,13 +66,13 @@ const SendTranscationStep2Asset: React.FC<SendTransactionScreenProps<typeof Send
           if (isValidAddress) {
             setInFetchingRemote(true);
             await new Promise((resolve) => setTimeout(() => resolve(null!)));
-            const remoteAssets = await fetchERC20AssetInfoBatchWithAccount({
+            const remoteAsset = await fetchERC20AssetInfoBatchWithAccount({
               networkType: currentNetwork.networkType,
               endpoint: currentNetwork?.endpoint,
               contractAddress: value,
-              accountAddress: currentAddressValue!,
+              accountAddress: currentAddress!,
             });
-            setFilterAssets({ type: 'remote', assets: [{ ...remoteAssets, type: AssetType.ERC20, contractAddress: value }] });
+            setFilterAssets({ type: 'remote', assets: [{ ...remoteAsset, type: AssetType.ERC20, contractAddress: value }] });
           } else {
             setFilterAssets({ type: 'invalid-format', assets: [] });
           }

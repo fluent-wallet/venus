@@ -27,7 +27,14 @@ class TransactionPluginClass implements Plugin {
 
   public estimate = ({ tx, network }: { network: Network; tx: ITxEvm }) => {
     const transactionInstance = getTransactionInstance(network);
-    return transactionInstance.estimate({ tx, endpoint: network.endpoint, gasBuffer: network.gasBuffer });
+    return transactionInstance.estimate({ tx, endpoint: network.endpoint, gasBuffer: network.gasBuffer }) as ReturnType<
+      (typeof ConfluxTransaction)['estimate']
+    >;
+  };
+  
+  public getBlockNumber = (network: Network) => {
+    const transactionInstance = getTransactionInstance(network);
+    return transactionInstance.getBlockNumber(network.endpoint);
   };
 
   public getTransactionCount = ({ network, addressValue }: { network: Network; addressValue: string }) => {
@@ -35,14 +42,14 @@ class TransactionPluginClass implements Plugin {
     return transactionInstance.getTransactionCount({ endpoint: network.endpoint, addressValue });
   };
 
+  public signTransaction = ({ network, privateKey, tx, blockNumber }: { network: Network; privateKey: string; tx: ITxEvm; blockNumber: string }) => {
+    const transactionInstance = getTransactionInstance(network);
+    return transactionInstance.signTransaction({ tx, privateKey, netId: network.netId, blockNumber });
+  };
+
   public sendRawTransaction = ({ network, txRaw }: { network: Network; txRaw: string }) => {
     const transactionInstance = getTransactionInstance(network);
     return transactionInstance.sendRawTransaction({ txRaw, endpoint: network.endpoint });
-  };
-
-  public signTransaction = ({ network, privateKey, transaction }: { network: Network; privateKey: string; transaction: Transaction }) => {
-    const transactionInstance = getTransactionInstance(network);
-    return transactionInstance.signTransaction({ transaction, privateKey });
   };
 }
 
