@@ -1,8 +1,6 @@
 PODS:
   - Base64 (1.1.2)
   - boost (1.83.0)
-  - BVLinearGradient (2.8.3):
-    - React-Core
   - CocoaAsyncSocket (7.6.5)
   - CodePush (8.1.1):
     - Base64 (~> 1.1)
@@ -15,9 +13,9 @@ PODS:
   - EXImageLoader (4.6.0):
     - ExpoModulesCore
     - React-Core
-  - Expo (50.0.8):
+  - Expo (50.0.13):
     - ExpoModulesCore
-  - ExpoFileSystem (16.0.7):
+  - ExpoFileSystem (16.0.8):
     - ExpoModulesCore
   - ExpoImage (1.10.6):
     - ExpoModulesCore
@@ -27,7 +25,7 @@ PODS:
     - SDWebImageWebPCoder (~> 0.13.0)
   - ExpoImagePicker (14.7.1):
     - ExpoModulesCore
-  - ExpoModulesCore (1.11.9):
+  - ExpoModulesCore (1.11.12):
     - glog
     - RCT-Folly (= 2022.05.16.00)
     - React-Core
@@ -105,9 +103,9 @@ PODS:
     - FlipperKit/FlipperKitNetworkPlugin
   - fmt (6.2.1)
   - glog (0.3.5)
-  - hermes-engine (0.73.5):
-    - hermes-engine/Pre-built (= 0.73.5)
-  - hermes-engine/Pre-built (0.73.5)
+  - hermes-engine (0.73.6):
+    - hermes-engine/Pre-built (= 0.73.6)
+  - hermes-engine/Pre-built (0.73.6)
   - JWT (3.0.0-beta.14):
     - Base64 (~> 1.1.2)
   - libaom (3.0.0):
@@ -133,9 +131,9 @@ PODS:
   - libwebp/webp (1.3.2):
     - libwebp/sharpyuv
   - lottie-ios (4.4.1)
-  - lottie-react-native (6.6.0):
+  - lottie-react-native (6.7.0):
     - glog
-    - lottie-ios (~> 4.4.0)
+    - lottie-ios (~> 4.4.1)
     - RCT-Folly (= 2022.05.16.00)
     - React-Core
   - OpenSSL-Universal (1.1.1100)
@@ -1024,7 +1022,7 @@ PODS:
     - react-native-config/App (= 1.5.1)
   - react-native-config/App (1.5.1):
     - React-Core
-  - react-native-get-random-values (1.10.0):
+  - react-native-get-random-values (1.11.0):
     - React-Core
   - react-native-netinfo (11.3.1):
     - React-Core
@@ -1220,9 +1218,9 @@ PODS:
     - glog
     - RCT-Folly (= 2022.05.16.00)
     - React-Core
-  - RNKeychain (8.1.3):
+  - RNKeychain (8.2.0):
     - React-Core
-  - RNReanimated (3.7.1):
+  - RNReanimated (3.8.0):
     - glog
     - RCT-Folly (= 2022.05.16.00)
     - React-Core
@@ -1231,7 +1229,7 @@ PODS:
     - glog
     - RCT-Folly (= 2022.05.16.00)
     - React-Core
-  - RNScreenshotPrevent (1.1.9):
+  - RNScreenshotPrevent (1.2.0):
     - React
   - RNSVG (14.1.0):
     - React-Core
@@ -1249,7 +1247,7 @@ PODS:
   - simdjson (3.1.0-wmelon1)
   - SocketRocket (0.6.1)
   - SSZipArchive (2.2.3)
-  - VisionCamera (3.9.0):
+  - VisionCamera (3.9.1):
     - React
     - React-callinvoker
     - React-Core
@@ -1260,7 +1258,6 @@ PODS:
 
 DEPENDENCIES:
   - boost (from `../node_modules/react-native/third-party-podspecs/boost.podspec`)
-  - BVLinearGradient (from `../node_modules/react-native-linear-gradient`)
   - CodePush (from `../node_modules/react-native-code-push`)
   - DoubleConversion (from `../node_modules/react-native/third-party-podspecs/DoubleConversion.podspec`)
   - EXConstants (from `../node_modules/expo-constants/ios`)
@@ -1398,8 +1395,6 @@ SPEC REPOS:
 EXTERNAL SOURCES:
   boost:
     :podspec: "../node_modules/react-native/third-party-podspecs/boost.podspec"
-  BVLinearGradient:
-    :path: "../node_modules/react-native-linear-gradient"
   CodePush:
     :path: "../node_modules/react-native-code-push"
   DoubleConversion:
@@ -1565,17 +1560,16 @@ EXTERNAL SOURCES:
 SPEC CHECKSUMS:
   Base64: cecfb41a004124895a7bcee567a89bae5a89d49b
   boost: d3f49c53809116a5d38da093a8aa78bf551aed09
-  BVLinearGradient: 880f91a7854faff2df62518f0281afb1c60d49a3
   CocoaAsyncSocket: 065fd1e645c7abab64f7a6a2007a48038fdc6a99
   CodePush: c3fdecab0dba1f760a1c6d1a562b9b88ce311fe1
   DoubleConversion: fea03f2699887d960129cc54bba7e52542b6f953
   EXConstants: 988aa430ca0f76b43cd46b66e7fae3287f9cc2fc
   EXImageLoader: 55080616b2fe9da19ef8c7f706afd9814e279b6b
-  Expo: c2d3edc1b1e833e26d837b03aa46d9137ca63302
-  ExpoFileSystem: c7488590959bf85ebc114909eb8186cbd62e3a25
+  Expo: a7c9bd836cb7c86e699c2539a906c9ff873f19f8
+  ExpoFileSystem: eecaf6796aed0f4dd20042dc2ca2cac6c4bc1185
   ExpoImage: 8cf2d51de3d03b7e984e9b0ba8f19c0c22057001
   ExpoImagePicker: 66970181d1c838f444e5e1f81b804ab2d5ff49bd
-  ExpoModulesCore: 1391529545de72f7f64ecabc7adb912306ab4d34
+  ExpoModulesCore: 61dc57c6e2a35f2f84baf488146db624e03af4cd
   EXSplashScreen: 5538a51beec451bf1fcf5198e3062790e2534df3
   FBLazyVector: 56e0e498dbb513b96c40bac6284729ba4e62672d
   FBReactNativeSpec: 146c741a3f40361f6bc13a4ba284678cbedb5881
@@ -1589,7 +1583,7 @@ SPEC CHECKSUMS:
   FlipperKit: 37525a5d056ef9b93d1578e04bc3ea1de940094f
   fmt: ff9d55029c625d3757ed641535fd4a75fedc7ce9
   glog: c5d68082e772fa1c511173d6b30a9de2c05a69a2
-  hermes-engine: 1d1835b2cc54c381909d94d1b3c8e0a2f1a94a0e
+  hermes-engine: 9cecf9953a681df7556b8cc9c74905de8f3293c0
   JWT: ef71dfb03e1f842081e64dc42eef0e164f35d251
   libaom: 144606b1da4b5915a1054383c3a4459ccdb3c661
   libavif: 84bbb62fb232c3018d6f1bab79beea87e35de7b7
@@ -1597,7 +1591,7 @@ SPEC CHECKSUMS:
   libvmaf: 27f523f1e63c694d14d534cd0fddd2fab0ae8711
   libwebp: 1786c9f4ff8a279e4dac1e8f385004d5fc253009
   lottie-ios: e047b1d2e6239b787cc5e9755b988869cf190494
-  lottie-react-native: b24edb4537f3cb3259c0ec512ed899d14e6e96d3
+  lottie-react-native: 13cd0c4782c3e6bb26bfa4cc2d08bfb84f6d1ab6
   OpenSSL-Universal: ebc357f1e6bc71fa463ccb2fe676756aff50e88c
   RCT-Folly: 7169b2b1c44399c76a47b5deaaba715eeeb476c0
   RCTRequired: 2544c0f1081a5fa12e108bb8cb40e5f4581ccd87
@@ -1623,7 +1617,7 @@ SPEC CHECKSUMS:
   react-native-bignumber: 986c34989c5b5adc9ba5c3a849ed33e60416a79b
   react-native-compat: 3af9add14d349701306d3d052638435f6795ac2c
   react-native-config: 86038147314e2e6d10ea9972022aa171e6b1d4d8
-  react-native-get-random-values: 384787fd76976f5aec9465aff6fa9e9129af1e74
+  react-native-get-random-values: 21325b2244dfa6b58878f51f9aa42821e7ba3d06
   react-native-netinfo: bdb108d340cdb41875c9ced535977cac6d2ff321
   react-native-pager-view: 563a43b511eea680f803ab4fb20bd7525fbde2cc
   react-native-quick-base64: 777057ea4286f806b00259ede65dc79c7c706320
@@ -1655,10 +1649,10 @@ SPEC CHECKSUMS:
   RNDeviceInfo: 4f9c7cfd6b9db1b05eb919620a001cf35b536423
   RNFlashList: 4b4b6b093afc0df60ae08f9cbf6ccd4c836c667a
   RNGestureHandler: 67fb54b3e6ca338a8044e85cd6f340265aa41091
-  RNKeychain: f1b48665a4646f61191eb048c4c05c58d9a7596f
-  RNReanimated: 15a855719335a6b655a214531e86d806edfd49da
+  RNKeychain: bfe3d12bf4620fe488771c414530bf16e88f3678
+  RNReanimated: 00ee495a70897aa9d541e76debec14253133b812
   RNScreens: 17e2f657f1b09a71ec3c821368a04acbb7ebcb46
-  RNScreenshotPrevent: cdfbe213203774c7486c6a2f198af8a4ebe10c47
+  RNScreenshotPrevent: dc9741e416ba80c3739418f112ac4093188315e9
   RNSVG: ba3e7232f45e34b7b47e74472386cf4e1a676d0a
   SDWebImage: 750adf017a315a280c60fde706ab1e552a3ae4e9
   SDWebImageAVIFCoder: 8348fef6d0ec69e129c66c9fe4d74fbfbf366112
@@ -1667,9 +1661,9 @@ SPEC CHECKSUMS:
   simdjson: e6bfae9ce4bcdc80452d388d593816f1ca2106f3
   SocketRocket: f32cd54efbe0f095c4d7594881e52619cfe80b17
   SSZipArchive: 62d4947b08730e4cda640473b0066d209ff033c9
-  VisionCamera: 7a5c87805b13adaaa557132b44879ed1e1e39786
+  VisionCamera: 52f98e7628f9deea3e311c3b6d4870bb44445e05
   WatermelonDB: 842d22ba555425aa9f3ce551239a001200c539bc
-  Yoga: 9e6a04eacbd94f97d94577017e9f23b3ab41cf6c
+  Yoga: a716eea57d0d3430219c0a5a233e1e93ee931eb7
 
 PODFILE CHECKSUM: b1be883fbf850e57cf1434018595f1151c7898e2
 
