@@ -61,7 +61,7 @@
     "react-content-loader": "^6.2.1",
     "react-hook-form": "^7.50.0",
     "react-i18next": "^14.0.0",
-    "react-native": "0.73.5",
+    "react-native": "0.73.6",
     "react-native-bignumber": "^0.2.2",
     "react-native-code-push": "8.1.1",
     "react-native-config": "^1.5.1",
