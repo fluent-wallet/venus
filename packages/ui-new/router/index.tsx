@@ -17,6 +17,7 @@ import HDSetting from '@pages/Management/AccountManagement/HDSetting';
 import Backup from '@pages/Management/AccountManagement/Backup';
 import SendTranscation from '@pages/SendTranscation';
 import ScanQRCode from '@pages/ScanQRCode';
+import Receive from '@pages/Receive';
 import PasswordVerify from '@modules/PasswordVerify';
 import {
   WelcomeStackName,
@@ -33,6 +34,7 @@ import {
   BackupStackName,
   SendTranscationStackName,
   ScanQRCodeStackName,
+  ReceiveStackName,
   type RootStackParamList,
   type StackNavigation,
   SheetBottomOption,
@@ -86,6 +88,7 @@ const Router: React.FC = () => {
         <RootStack.Screen name={BackupStackName} component={Backup} options={SheetBottomOption} />
         <RootStack.Screen name={SendTranscationStackName} component={SendTranscation} options={SheetBottomOption} />
         <RootStack.Screen name={ScanQRCodeStackName} component={ScanQRCode} options={SheetBottomOption} />
+        <RootStack.Screen name={ReceiveStackName} component={Receive} options={SheetBottomOption} />
         <RootStack.Screen name={SettingsStackName} component={Settings} />
         <RootStack.Screen name={PasswordVerifyStackName} component={PasswordVerify} options={SheetBottomOption} />
       </RootStack.Navigator>

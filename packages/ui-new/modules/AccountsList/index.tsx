@@ -68,9 +68,10 @@ export const AccountItemView: React.FC<{
   showMore?: boolean;
   addressValue: string;
   nickname: string;
+  shorten?: boolean;
   onPress?: () => void;
   children?: React.ReactNode;
-}> = ({ colors, mode, showSelect, showMore, addressValue, nickname, children, onPress }) => {
+}> = ({ colors, mode, showSelect, showMore, addressValue, nickname, children, shorten = true, onPress }) => {
   return (
     <Pressable
       style={({ pressed }) => [styles.row, { backgroundColor: pressed ? colors.underlay : 'transparent', position: 'relative' }]}
@@ -78,9 +79,9 @@ export const AccountItemView: React.FC<{
       onPress={onPress}
     >
       <Image style={styles.accountImage} source={{ uri: toDataUrl(addressValue) }} />
-      <View>
+      <View style={{ flex: 1 }}>
         <Text style={[styles.accountName, { color: colors.textPrimary, opacity: nickname ? 1 : 0 }]}>{nickname || 'placeholder'}</Text>
-        <Text style={[styles.accountAddress, { color: colors.textSecondary }]}>{shortenAddress(addressValue)}</Text>
+        <Text style={[styles.accountAddress, { color: colors.textSecondary }]}>{shorten ? shortenAddress(addressValue) : addressValue}</Text>
       </View>
       {showSelect && <Checkbox style={styles.accountRight} checked={mode === 'dark'} />}
       {showMore && <More style={styles.accountRight} color={colors.textNotice} />}

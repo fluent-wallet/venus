@@ -114,7 +114,7 @@ export const parseETHURL = (ETHURL: string) => {
 };
 
 export const encodeETHURL = (params: ETHURL) => {
-  const { parameters, function_name, target_address, chain_id } = params;
+  const { parameters, function_name, target_address, chain_id, schema_prefix } = params;
   let query = '';
   const queryString: Record<string, string> = {};
 
@@ -136,5 +136,5 @@ export const encodeETHURL = (params: ETHURL) => {
       .join('&');
   }
 
-  return `ethereum:${target_address}${chain_id ? `@${chain_id}` : ''}${function_name ? `/${function_name}` : ''}${query ? `?${query}` : ''}`;
+  return `${schema_prefix}:${target_address}${chain_id ? `@${chain_id}` : ''}${function_name ? `/${function_name}` : ''}${query ? `?${query}` : ''}`;
 };

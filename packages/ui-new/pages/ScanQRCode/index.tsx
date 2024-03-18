@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useRef, type MutableRefObject } from 'react';
+import React, { useState, useCallback, useRef, type MutableRefObject, useEffect } from 'react';
 import { useTheme, StackActions } from '@react-navigation/native';
 import { View, Linking, StyleSheet } from 'react-native';
 import { useCameraPermission, useCameraDevice, useCameraFormat, Camera, type Code } from 'react-native-vision-camera';
@@ -110,6 +110,20 @@ const ScanQrCode: React.FC<Props> = ({ navigation, bottomSheetRefOuter, onConfir
   const handleOnChange = useCallback((index: number) => {
     if (index === 0) {
       setScanStatus('Pending');
+      if (!hasPermission) {
+        const execRequestPermission = async () => {
+          const isSuccess = await requestPermission();
+          if (!isSuccess) {
+            setHasRejectPermission(true);
+          }
+        };
+        execRequestPermission();
+      }
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!onConfirm) {
       if (!hasPermission) {
         const execRequestPermission = async () => {
           const isSuccess = await requestPermission();

@@ -1,25 +1,25 @@
-import React, { type ComponentProps } from 'react';
+import React, { forwardRef, type ComponentProps } from 'react';
 import { useTheme } from '@react-navigation/native';
 import { Text, View, StyleSheet } from 'react-native';
-import BottomSheet, { snapPoints as defaultSnapPoints } from '@components/BottomSheet';
+import BottomSheet, { snapPoints as defaultSnapPoints, type BottomSheetMethods } from '@components/BottomSheet';
 
 interface Props extends ComponentProps<typeof BottomSheet> {
   children: React.ReactNode;
   showTitle?: boolean | string;
 }
 
-const SendTranscationBottomSheet: React.FC<Props> = ({ children, snapPoints, showTitle = true, ...props }) => {
+const SendTranscationBottomSheet = forwardRef<BottomSheetMethods, Props>(({ children, snapPoints, showTitle = true, ...props }, ref) => {
   const { colors } = useTheme();
 
   return (
-    <BottomSheet snapPoints={snapPoints || defaultSnapPoints.large} index={0} isModal={false} {...props}>
+    <BottomSheet ref={ref} snapPoints={snapPoints || defaultSnapPoints.large} index={0} isModal={false} {...props}>
       <View style={styles.container}>
         {showTitle && <Text style={[styles.title, { color: colors.textPrimary }]}>{typeof showTitle === 'string' ? showTitle : 'Send To'}</Text>}
         {children}
       </View>
     </BottomSheet>
   );
-};
+});
 
 const styles = StyleSheet.create({
   container: {

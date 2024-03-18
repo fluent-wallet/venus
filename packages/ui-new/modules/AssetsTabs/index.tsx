@@ -14,7 +14,7 @@ import ActivityList from '@modules/ActivityList';
 import { StickyNFTItem } from '@modules/AssetsList/NFTsList/NFTItem';
 
 export type Tab = 'Tokens' | 'NFTs' | 'Activity';
-export type TabsType = 'Home' | 'SendTranscation';
+export type TabsType = 'Home' | 'SelectAsset';
 type Tabs = Array<Tab>;
 const TAB_WIDTH = 64;
 
@@ -24,15 +24,16 @@ interface Props {
   pageViewRef: React.RefObject<PagerView>;
   setCurrentTab: (tab: Tab) => void;
   onPressItem?: (v: AssetInfo) => void;
+  onlyToken?: boolean;
 }
 
-export const Tabs: React.FC<Omit<Props, 'setCurrentTab' | 'onPressItem'>> = ({ type, currentTab, pageViewRef }) => {
+export const Tabs: React.FC<Omit<Props, 'setCurrentTab' | 'onPressItem'>> = ({ type, currentTab, pageViewRef, onlyToken }) => {
   const { colors } = useTheme();
 
   const currentNetwork = useCurrentNetwork();
   const tabs = useMemo(() => {
     const res =
-      !currentNetwork || (currentNetwork && (currentNetwork.chainId === CFX_ESPACE_MAINNET_CHAINID || currentNetwork.chainId === CFX_ESPACE_TESTNET_CHAINID))
+      !onlyToken && (!currentNetwork || (currentNetwork && (currentNetwork.chainId === CFX_ESPACE_MAINNET_CHAINID || currentNetwork.chainId === CFX_ESPACE_TESTNET_CHAINID)))
         ? (['Tokens', 'NFTs'] as Tabs)
         : (['Tokens'] as Tabs);
     type === 'Home' && res.push('Activity');
@@ -106,14 +107,14 @@ const createStickyNFTScrollAtom = () => {
   };
 };
 export const { setScrollY: setHomeScrollY, useTabPageViewScrollY: useHomeTabPageViewScrollY } = createStickyNFTScrollAtom();
-export const { setScrollY: setSendScrollY, useTabPageViewScrollY: useSendTabPageViewScrollY } = createStickyNFTScrollAtom();
+export const { setScrollY: setSelectAssetScrollY, useTabPageViewScrollY: useSelectAssetTabPageViewScrollY } = createStickyNFTScrollAtom();
 const mapOfUseTabPageViewScrollY = {
   Home: useHomeTabPageViewScrollY,
-  SendTranscation: useSendTabPageViewScrollY,
+  SelectAsset: useSelectAssetTabPageViewScrollY,
 };
 const mapOfSetScrollY = {
   Home: setHomeScrollY,
-  SendTranscation: setSendScrollY,
+  SelectAsset: setSelectAssetScrollY,
 };
 
 export const StickyNFT: React.FC<{ type: TabsType }> = ({ type }) => {

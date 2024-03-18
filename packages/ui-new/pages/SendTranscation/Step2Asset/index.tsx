@@ -1,10 +1,18 @@
-import React, { useState, useRef, useCallback, useEffect } from 'react';
+import React, { useState, useRef, useCallback, useEffect, type MutableRefObject } from 'react';
 import { Pressable, StyleSheet, type NativeScrollEvent, type NativeSyntheticEvent } from 'react-native';
 import { useTheme } from '@react-navigation/native';
 import PagerView from 'react-native-pager-view';
 import { showMessage } from 'react-native-flash-message';
 import { debounce, escapeRegExp } from 'lodash-es';
-import { useAssetsAllList, useCurrentNetwork, useCurrentAddressValue, useCurrentAddress, useCurrentOpenNFTDetail, AssetType } from '@core/WalletCore/Plugins/ReactInject';
+import composeRef from '@cfx-kit/react-utils/dist/composeRef';
+import {
+  useAssetsAllList,
+  useCurrentNetwork,
+  useCurrentAddressValue,
+  useCurrentAddress,
+  useCurrentOpenNFTDetail,
+  AssetType,
+} from '@core/WalletCore/Plugins/ReactInject';
 import { fetchERC20AssetInfoBatchWithAccount } from '@core/WalletCore/Plugins/AssetsTracker/fetchers/basic';
 import { type AssetInfo } from '@core/WalletCore/Plugins/AssetsTracker/types';
 import { type NFTItemDetail } from '@core/WalletCore/Plugins/NFTDetailTracker';
@@ -13,21 +21,32 @@ import plugins from '@core/WalletCore/Plugins';
 import Text from '@components/Text';
 import TextInput from '@components/TextInput';
 import HourglassLoading from '@components/Loading/Hourglass';
-import { BottomSheetScrollView } from '@components/BottomSheet';
+import { BottomSheetScrollView, type BottomSheetMethods } from '@components/BottomSheet';
 import { SendTranscationStep2StackName, SendTransactionStep3StackName, type SendTransactionScreenProps } from '@router/configs';
-import { Tabs, TabsContent, setSendScrollY, type Tab } from '@modules/AssetsTabs';
+import { Tabs, TabsContent, setSelectAssetScrollY, type Tab } from '@modules/AssetsTabs';
 import TokenItem from '@modules/AssetsList/TokensList/TokenItem';
 import NFTItem from '@modules/AssetsList/NFTsList/NFTItem';
-
 import BackupBottomSheet from '../SendTranscationBottomSheet';
 
-const SendTranscationStep2Asset: React.FC<SendTransactionScreenProps<typeof SendTranscationStep2StackName>> = ({ navigation, route }) => {
+interface Props {
+  navigation?: SendTransactionScreenProps<typeof SendTranscationStep2StackName>['navigation'];
+  route?: SendTransactionScreenProps<typeof SendTranscationStep2StackName>['route'];
+  onConfirm?: (asset: AssetInfo) => void;
+  bottomSheetRefOuter?: MutableRefObject<BottomSheetMethods>;
+}
+
+const SendTranscationStep2Asset: React.FC<Props> = ({ navigation, route, onConfirm, bottomSheetRefOuter }) => {
   const { colors } = useTheme();
 
   const [currentTab, setCurrentTab] = useState<Tab>('Tokens');
   const pageViewRef = useRef<PagerView>(null);
   const handleScroll = useCallback((evt: NativeSyntheticEvent<NativeScrollEvent>) => {
-    setSendScrollY(evt.nativeEvent.contentOffset.y);
+    setSelectAssetScrollY(evt.nativeEvent.contentOffset.y);
+  }, []);
+  useEffect(() => {
+    return () => {
+      setSelectAssetScrollY(0);
+    };
   }, []);
 
   const currentNetwork = useCurrentNetwork()!;
@@ -72,7 +91,15 @@ const SendTranscationStep2Asset: React.FC<SendTransactionScreenProps<typeof Send
               contractAddress: value,
               accountAddress: currentAddress!,
             });
-            setFilterAssets({ type: 'remote', assets: [{ ...remoteAsset, type: AssetType.ERC20, contractAddress: value }] });
+            const assetInfo = { ...remoteAsset, type: AssetType.ERC20, contractAddress: value };
+            setFilterAssets({ type: 'remote', assets: [assetInfo] });
+            const isInDB = await currentNetwork.queryAssetByAddress(value);
+            if (!isInDB) {
+              await methods.createAsset({
+                network: currentNetwork,
+                ...assetInfo,
+              });
+            }
           } else {
             setFilterAssets({ type: 'invalid-format', assets: [] });
           }
@@ -96,17 +123,28 @@ const SendTranscationStep2Asset: React.FC<SendTransactionScreenProps<typeof Send
   }, [searchFilterAssets, searchAsset]);
 
   const handleClickAsset = useCallback((asset: AssetInfo, nftItemDetail?: NFTItemDetail) => {
-    if (asset.type === AssetType.ERC20 && (asset.balance === '0' || asset.balance === '0x')) {
-      return showMessage({
-        message: `The balance of asset ${asset.name} is 0`,
-        type: 'warning',
-      });
+    if (navigation) {
+      if (asset.type === AssetType.ERC20 && (asset.balance === '0' || asset.balance === '0x')) {
+        return showMessage({
+          message: `The balance of asset ${asset.name} is 0`,
+          type: 'warning',
+        });
+      }
+      navigation.navigate(SendTransactionStep3StackName, { ...route!.params, asset, nftItemDetail });
+    } else if (onConfirm) {
+      onConfirm(asset);
+      setSearchAsset('');
+      bottomSheetRefOuter?.current?.dismiss();
     }
-    navigation.navigate(SendTransactionStep3StackName, { ...route.params, asset, nftItemDetail });
   }, []);
 
   return (
-    <BackupBottomSheet onClose={navigation.goBack}>
+    <BackupBottomSheet
+      ref={bottomSheetRefOuter ? composeRef([bottomSheetRefOuter]) : undefined}
+      index={!onConfirm ? 0 : undefined}
+      isModal={!!onConfirm}
+      onClose={!onConfirm ? navigation?.goBack : undefined}
+    >
       <Text style={[styles.selectAsset, { color: colors.textSecondary }]}>Select an asset</Text>
       <TextInput
         containerStyle={[styles.textinput, { borderColor: colors.borderFourth }]}
@@ -121,8 +159,8 @@ const SendTranscationStep2Asset: React.FC<SendTransactionScreenProps<typeof Send
 
       {!searchAsset && (
         <BottomSheetScrollView style={styles.scrollView} stickyHeaderIndices={[0]} onScroll={handleScroll}>
-          <Tabs currentTab={currentTab} pageViewRef={pageViewRef} type="SendTranscation" />
-          <TabsContent currentTab={currentTab} setCurrentTab={setCurrentTab} pageViewRef={pageViewRef} type="SendTranscation" onPressItem={handleClickAsset} />
+          <Tabs currentTab={currentTab} pageViewRef={pageViewRef} type="SelectAsset" onlyToken={!navigation} />
+          <TabsContent currentTab={currentTab} setCurrentTab={setCurrentTab} pageViewRef={pageViewRef} type="SelectAsset" onPressItem={handleClickAsset} />
         </BottomSheetScrollView>
       )}
       {searchAsset && (
@@ -136,7 +174,7 @@ const SendTranscationStep2Asset: React.FC<SendTransactionScreenProps<typeof Send
                   key={asset.contractAddress}
                   data={asset}
                   currentOpenNFTDetail={currentOpenNFTDetail}
-                  tabsType="SendTranscation"
+                  tabsType="SelectAsset"
                   showTypeLabel
                   onPress={handleClickAsset}
                 />
