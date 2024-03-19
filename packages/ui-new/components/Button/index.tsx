@@ -20,7 +20,7 @@ const Button = ({
   loading,
   size = 'medium',
   disabled: _disabled,
-  mode: _mode = 'dark',
+  mode: _mode = 'auto',
   textAlign = 'center',
   square,
   Icon,

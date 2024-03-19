@@ -65,7 +65,6 @@ const BackupStep3RandomCheck: React.FC<BackupScreenProps<typeof BackupStep3Stack
       ))}
       <Button
         style={styles.btn}
-        mode="auto"
         disabled={!isAllSelected}
         onPress={() => {
           if (isAllCorrect) {

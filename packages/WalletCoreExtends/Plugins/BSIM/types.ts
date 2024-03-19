@@ -1,4 +1,5 @@
-export enum TxEventTypesName {
+export enum BSIMEventTypesName {
+  Cancel = 'cancel',
   ERROR = 'error',
   GET_NONCE = 'getNonce',
 
@@ -7,8 +8,8 @@ export enum TxEventTypesName {
   BSIM_TX_SEND = 'BSIMTxSend',
 }
 
-export interface TxEvent {
-  type: TxEventTypesName;
+export interface BSIMEvent {
+  type: BSIMEventTypesName;
   message?: string;
   error?: boolean;
   nonce?: string;

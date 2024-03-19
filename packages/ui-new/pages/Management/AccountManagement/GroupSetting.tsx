@@ -125,12 +125,7 @@ const GroupConfig: React.FC<StackScreenProps<typeof GroupSettingStackName>> = ({
             <Text style={[styles.mainText, styles.removeText, { color: colors.textPrimary }]}>Remove Group</Text>
           </Pressable>
 
-          <Button
-            style={styles.btn}
-            mode="auto"
-            disabled={!accountGroupName || accountGroupName === accountGroup?.nickname}
-            onPress={handleUpdateAccountGroupNickName}
-          >
+          <Button style={styles.btn} disabled={!accountGroupName || accountGroupName === accountGroup?.nickname} onPress={handleUpdateAccountGroupNickName}>
             OK
           </Button>
         </View>

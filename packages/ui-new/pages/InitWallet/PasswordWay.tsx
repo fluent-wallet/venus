@@ -110,7 +110,6 @@ const PasswordWay: React.FC<StackScreenProps<typeof PasswordWayStackName>> = ({ 
         <Button
           testID="createPasswordButton"
           style={styles.btn}
-          mode="auto"
           size="small"
           onPress={handleSubmit(handleCreateVault)}
           disabled={!confirm}

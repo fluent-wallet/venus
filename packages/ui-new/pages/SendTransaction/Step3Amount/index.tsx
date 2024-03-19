@@ -29,7 +29,6 @@ const SendTransactionStep3Amount: React.FC<SendTransactionScreenProps<typeof Sen
         {({ amount, validMax, isAmountValid, handleEstimateMax }) => (
           <Button
             style={styles.btn}
-            mode="auto"
             disabled={validMax !== null && isAmountValid !== true}
             onPress={validMax === null ? () => handleEstimateMax() : () => navigation.navigate(SendTransactionStep4StackName, { ...route.params, amount })}
             size="small"

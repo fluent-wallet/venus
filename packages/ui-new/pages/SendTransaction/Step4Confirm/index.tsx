@@ -4,7 +4,7 @@ import { View, StyleSheet, Keyboard } from 'react-native';
 import { useTheme, CommonActions } from '@react-navigation/native';
 import { showMessage } from 'react-native-flash-message';
 import Decimal from 'decimal.js';
-import { interval, switchMap, startWith, Subject } from 'rxjs';
+import { interval, switchMap, startWith } from 'rxjs';
 import { createERC20Contract, createERC721Contract, createERC1155Contract } from '@cfx-kit/dapp-utils/dist/contract';
 import { convertCfxToHex } from '@cfx-kit/dapp-utils/dist/address';
 import {
@@ -20,7 +20,7 @@ import {
 } from '@core/WalletCore/Plugins/ReactInject';
 import { CFX_ESPACE_MAINNET_CHAINID, CFX_ESPACE_TESTNET_CHAINID } from '@core/consts/network';
 import { type ITxEvm } from '@core/WalletCore/Plugins/Transaction/types';
-import { TxEventTypesName, TxEvent } from '@WalletCoreExtends/Plugins/BSIM/types';
+import { BSIMEventTypesName, BSIMEvent } from '@WalletCoreExtends/Plugins/BSIM/types';
 import { BSIM_ERRORS } from 'packages/WalletCoreExtends/Plugins/BSIM/BSIMSDK';
 import plugins from '@core/WalletCore/Plugins';
 import methods from '@core/WalletCore/Methods';
@@ -28,7 +28,7 @@ import events from '@core/WalletCore/Events';
 import Text from '@components/Text';
 import Button from '@components/Button';
 import TokenIcon from '@modules/AssetsList/TokensList/TokenIcon';
-import { BottomSheetScrollView } from '@components/BottomSheet';
+import { BottomSheetScrollView, type BottomSheetMethods } from '@components/BottomSheet';
 import { getDetailSymbol } from '@modules/AssetsList/NFTsList/NFTItem';
 import { AccountItemView } from '@modules/AccountsList';
 import useFormatBalance from '@hooks/useFormatBalance';
@@ -36,10 +36,13 @@ import useInAsync from '@hooks/useInAsync';
 import { SendTransactionStep4StackName, HomeStackName, type SendTransactionScreenProps } from '@router/configs';
 import BackupBottomSheet from '../SendTransactionBottomSheet';
 import { NFT } from '../Step3Amount';
+import BSIMVerify from '../BSIMVerify';
 
 const SendTransactionStep4Confirm: React.FC<SendTransactionScreenProps<typeof SendTransactionStep4StackName>> = ({ navigation, route }) => {
   useEffect(() => Keyboard.dismiss(), []);
   const { colors, mode } = useTheme();
+  const BSIMVerifyRef = useRef<BottomSheetMethods>(null!);
+
   const currentNetwork = useCurrentNetwork()!;
   const nativeAsset = useCurrentNetworkNativeAsset()!;
   const currentAddress = useCurrentAddress()!;
@@ -136,8 +139,12 @@ const SendTransactionStep4Confirm: React.FC<SendTransactionScreenProps<typeof Se
     };
   }, []);
 
-  const txEvent = useRef(new Subject<TxEvent>());
-  const _handleSend = useCallback(async () => {
+  const [bsimEvent, setBSIMEvent] = useState<BSIMEvent | null>(null);
+  const bsimCancelRef = useRef<() => void>(() => {});
+  const handleSend = useCallback(async () => {
+    setBSIMEvent(null);
+    bsimCancelRef.current?.();
+
     try {
       if (route.params.asset.type === AssetType.ERC20 && route.params.asset.contractAddress) {
         const isInDB = await currentNetwork.queryAssetByAddress(route.params.asset.contractAddress);
@@ -160,24 +167,30 @@ const SendTransactionStep4Confirm: React.FC<SendTransactionScreenProps<typeof Se
       let txRaw!: string;
       if (currentVault?.type === VaultType.BSIM) {
         try {
-          txEvent.current.next({ type: TxEventTypesName.BSIM_VERIFY_START });
-          txEvent.current.next({ type: TxEventTypesName.BSIM_SIGN_START });
+          setBSIMEvent({ type: BSIMEventTypesName.BSIM_SIGN_START });
           // sendTransaction has from field, but it is readonly, and it is only have by tx is signed otherwise it is null, so we need to pass the from address to signTransaction
-          txRaw = await plugins.BSIM.signTransaction(currentAddressValue, tx);
-          txEvent.current.next({ type: TxEventTypesName.BSIM_TX_SEND });
+          const [txRawPromise, cancel] = await plugins.BSIM.signTransaction(currentAddressValue, tx);
+          bsimCancelRef.current = cancel;
+          txRaw = await txRawPromise;
         } catch (bsimError) {
+          console.log(bsimError);
           const code = (bsimError as { code: string })?.code;
           const message = (bsimError as { message: string })?.message;
           if (code) {
-            const errorMsg = BSIM_ERRORS[code?.toUpperCase()];
-            if (errorMsg) {
-              txEvent.current.next({ type: TxEventTypesName.ERROR, message: errorMsg });
+            if (code === 'cancel') {
+              setBSIMEvent(null);
             } else {
-              txEvent.current.next({ type: TxEventTypesName.ERROR, message: message || BSIM_ERRORS.default });
+              const errorMsg = BSIM_ERRORS[code?.toUpperCase()];
+              if (errorMsg) {
+                setBSIMEvent({ type: BSIMEventTypesName.ERROR, message: errorMsg });
+              } else {
+                setBSIMEvent({ type: BSIMEventTypesName.ERROR, message: message || BSIM_ERRORS.default });
+              }
             }
           } else {
-            txEvent.current.next({ type: TxEventTypesName.ERROR, message: message || BSIM_ERRORS.default });
+            setBSIMEvent({ type: BSIMEventTypesName.ERROR, message: message || BSIM_ERRORS.default });
           }
+          bsimCancelRef.current = () => {};
         }
       } else {
         const privateKey = await methods.getPrivateKeyOfAddress(currentAddress);
@@ -222,73 +235,84 @@ const SendTransactionStep4Confirm: React.FC<SendTransactionScreenProps<typeof Se
     }
   }, [gasInfo, currentVault?.id, currentNetwork?.id]);
 
-  const { inAsync: inSend, execAsync: handleSend } = useInAsync(_handleSend);
-
   return (
-    <BackupBottomSheet showTitle="Transaction Confirm" onClose={navigation.goBack}>
-      <BottomSheetScrollView>
-        <Text style={[styles.sendTitle, { color: colors.textPrimary }]}>↗️ Send</Text>
-        {route.params.nftItemDetail && <NFT colors={colors} asset={route.params.asset} nftItemDetail={route.params.nftItemDetail} />}
-        {route.params.asset.type !== AssetType.ERC721 && (
-          <>
-            <Text style={[styles.text, styles.to, { color: colors.textSecondary }]}>Amount</Text>
-            <View style={styles.balanceWrapper}>
-              <Text style={[styles.balance, { color: colors.textPrimary }]} numberOfLines={1}>
-                {route.params.nftItemDetail ? route.params.amount : formatedAmount} {symbol}
-              </Text>
-              {(route.params.asset.type === AssetType.Native || route.params.asset.type === AssetType.ERC20) && (
-                <TokenIcon style={styles.assetIcon} source={route.params.asset.icon} />
-              )}
-            </View>
-            {route.params.asset.priceInUSDT && price && <Text style={[styles.text, styles.price, { color: colors.textSecondary }]}>≈${price}</Text>}
-          </>
-        )}
-
-        <Text style={[styles.text, styles.to, { color: colors.textSecondary }]}>To</Text>
-        <AccountItemView nickname={''} addressValue={route.params.targetAddress} colors={colors} mode={mode} />
-
-        <View style={[styles.divider, { backgroundColor: colors.borderFourth }]} />
-
-        <AccountItemView nickname="Signing with" addressValue={currentAddressValue} colors={colors} mode={mode}>
-          <Text style={[styles.networkName, { color: colors.textSecondary }]} numberOfLines={1}>
-            on {currentNetwork?.name}
-          </Text>
-        </AccountItemView>
-
-        <Text style={[styles.estimateFee, { color: colors.textPrimary }]}>Estimated Fee</Text>
-        <View style={styles.estimateWrapper}>
-          <TokenIcon style={styles.assetIcon} source={nativeAsset?.icon} />
-          {gasCostAndPriceInUSDT && (
+    <>
+      <BackupBottomSheet showTitle="Transaction Confirm" onClose={navigation.goBack}>
+        <BottomSheetScrollView>
+          <Text style={[styles.sendTitle, { color: colors.textPrimary }]}>↗️ Send</Text>
+          {route.params.nftItemDetail && <NFT colors={colors} asset={route.params.asset} nftItemDetail={route.params.nftItemDetail} />}
+          {route.params.asset.type !== AssetType.ERC721 && (
             <>
-              <Text style={[styles.gasText, { color: colors.textSecondary }]}>
-                {'  '}
-                {gasCostAndPriceInUSDT.cost} {nativeAsset?.symbol}
-              </Text>
-              {gasCostAndPriceInUSDT.priceInUSDT && (
-                <Text style={[styles.gasText, { color: colors.textSecondary }]}>
-                  {'    '}
-                  {gasCostAndPriceInUSDT.priceInUSDT}
+              <Text style={[styles.text, styles.to, { color: colors.textSecondary }]}>Amount</Text>
+              <View style={styles.balanceWrapper}>
+                <Text style={[styles.balance, { color: colors.textPrimary }]} numberOfLines={1}>
+                  {route.params.nftItemDetail ? route.params.amount : formatedAmount} {symbol}
                 </Text>
-              )}
+                {(route.params.asset.type === AssetType.Native || route.params.asset.type === AssetType.ERC20) && (
+                  <TokenIcon style={styles.assetIcon} source={route.params.asset.icon} />
+                )}
+              </View>
+              {route.params.asset.priceInUSDT && price && <Text style={[styles.text, styles.price, { color: colors.textSecondary }]}>≈${price}</Text>}
             </>
           )}
-        </View>
 
-        <View style={styles.btnArea}>
-          <Button
-            style={styles.btn}
-            size="small"
-            onPress={() => navigation.dispatch(CommonActions.reset({ index: 0, routes: [{ name: HomeStackName }] }))}
-            disabled={inSend}
-          >
-            Cancel
-          </Button>
-          <Button style={styles.btn} size="small" disabled={!gasInfo} loading={inSend} onPress={handleSend}>
-            Send
-          </Button>
-        </View>
-      </BottomSheetScrollView>
-    </BackupBottomSheet>
+          <Text style={[styles.text, styles.to, { color: colors.textSecondary }]}>To</Text>
+          <AccountItemView nickname={''} addressValue={route.params.targetAddress} colors={colors} mode={mode} />
+
+          <View style={[styles.divider, { backgroundColor: colors.borderFourth }]} />
+
+          <AccountItemView nickname="Signing with" addressValue={currentAddressValue} colors={colors} mode={mode}>
+            <Text style={[styles.networkName, { color: colors.textSecondary }]} numberOfLines={1}>
+              on {currentNetwork?.name}
+            </Text>
+          </AccountItemView>
+
+          <Text style={[styles.estimateFee, { color: colors.textPrimary }]}>Estimated Fee</Text>
+          <View style={styles.estimateWrapper}>
+            <TokenIcon style={styles.assetIcon} source={nativeAsset?.icon} />
+            {gasCostAndPriceInUSDT && (
+              <>
+                <Text style={[styles.gasText, { color: colors.textSecondary }]}>
+                  {'  '}
+                  {gasCostAndPriceInUSDT.cost} {nativeAsset?.symbol}
+                </Text>
+                {gasCostAndPriceInUSDT.priceInUSDT && (
+                  <Text style={[styles.gasText, { color: colors.textSecondary }]}>
+                    {'    '}
+                    {gasCostAndPriceInUSDT.priceInUSDT}
+                  </Text>
+                )}
+              </>
+            )}
+          </View>
+
+          <View style={styles.btnArea}>
+            <Button
+              style={styles.btn}
+              size="small"
+              onPress={() => navigation.dispatch(CommonActions.reset({ index: 0, routes: [{ name: HomeStackName }] }))}
+              disabled={inSend}
+            >
+              Cancel
+            </Button>
+            <Button style={styles.btn} size="small" disabled={!gasInfo} onPress={handleSend}>
+              Send
+            </Button>
+          </View>
+        </BottomSheetScrollView>
+      </BackupBottomSheet>
+      {bsimEvent?.type === BSIMEventTypesName.ERROR && (
+        <BSIMVerify
+          bottomSheetRef={BSIMVerifyRef}
+          bsimEvent={bsimEvent}
+          onClose={() => {
+            setBSIMEvent(null);
+            bsimCancelRef.current?.();
+          }}
+          onRetry={handleSend}
+        />
+      )}
+    </>
   );
 };
 

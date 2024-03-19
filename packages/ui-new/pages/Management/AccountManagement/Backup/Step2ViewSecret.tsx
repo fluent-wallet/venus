@@ -71,7 +71,7 @@ const BackupStep2ViewSecret: React.FC<BackupScreenProps<typeof BackupStep2StackN
 
             <Text style={[styles.largeText, { color: colors.textPrimary, textAlign: 'center' }]}>Tap to view the {backupText}</Text>
             <Text style={[styles.description, { color: colors.textSecondary, textAlign: 'center', marginTop: 8 }]}>Make sure your environment is safe</Text>
-            <Button style={styles.viewBtn} mode="auto" onPress={handleClickView} loading={inAsync}>
+            <Button style={styles.viewBtn} onPress={handleClickView} loading={inAsync}>
               View
             </Button>
           </>
@@ -115,7 +115,6 @@ const BackupStep2ViewSecret: React.FC<BackupScreenProps<typeof BackupStep2StackN
       backupType === VaultType.HierarchicalDeterministic ? (
         <Button
           style={styles.btn}
-          mode="auto"
           disabled={!secretData}
           onPress={() => {
             setSecretData(null);
@@ -125,7 +124,7 @@ const BackupStep2ViewSecret: React.FC<BackupScreenProps<typeof BackupStep2StackN
           Next
         </Button>
       ) : (
-        <Button style={styles.btn} mode="auto" onPress={() => navigation.goBack()}>
+        <Button style={styles.btn} onPress={() => navigation.goBack()}>
           Return
         </Button>
       )}

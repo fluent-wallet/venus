@@ -115,7 +115,6 @@ const SendTransactionStep1Receiver: React.FC<SendTransactionScreenProps<typeof S
 
         <Button
           style={styles.btn}
-          mode="auto"
           onPress={() => navigation.navigate(SendTransactionStep2StackName, { targetAddress: receiver })}
           disabled={!(checkRes === AddressType.EOA || checkRes === AddressType.Contract) || (checkRes === AddressType.Contract && !knowRisk)}
           size='small'

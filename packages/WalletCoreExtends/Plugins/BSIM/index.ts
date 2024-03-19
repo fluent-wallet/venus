@@ -3,8 +3,8 @@ import { addHexPrefix } from '@core/utils/base';
 import { Signature, Transaction, TypedDataDomain, TypedDataEncoder, TypedDataField, computeAddress, hashMessage } from 'ethers';
 import { ITxEvm } from '@core/WalletCore/Plugins/Transaction/types';
 import { type Plugin } from '@core/WalletCore/Plugins';
-import { catchError, defer, firstValueFrom, from, retry, throwError, timeout } from 'rxjs';
-import { TxEvent, TxEventTypesName } from './types';
+import { catchError, defer, firstValueFrom, from, retry, throwError, timeout, takeUntil, Subject } from 'rxjs';
+import { BSIMEvent, BSIMEventTypesName } from './types';
 
 export { CoinTypes, CFXCoinTypes } from './BSIMSDK';
 
@@ -147,7 +147,18 @@ export class BSIMPluginClass implements Plugin {
       throw new Error("Can't get current pubkey from BSIM card");
     }
 
-    const res = await firstValueFrom(
+    const cancelSignal = new Subject<void>();
+    let cancel!: () => void;
+    const cancelPromise = new Promise(
+      (_, reject) =>
+        (cancel = () => {
+          cancelSignal.next();
+          cancelSignal.complete();
+          reject(new BSIMError('cancel', BSIM_ERRORS.cancel));
+        }),
+    );
+
+    const polling = firstValueFrom(
       defer(() => from(this.BSIMSignMessage(hash, currentPubkey.coinType, currentPubkey.index))).pipe(
         catchError((err: { code: string; message: string }) => {
           errorMsg = err.message;
@@ -156,10 +167,28 @@ export class BSIMPluginClass implements Plugin {
         }),
         retry({ delay: 1000 }),
         timeout({ each: 30 * 1000, with: () => throwError(() => new BSIMErrorEndTimeout(errorCode, errorMsg)) }),
+        takeUntil(cancelSignal),
       ),
     );
-
-    return res;
+    const resPromise = Promise.race([polling, cancelPromise] as const)
+      .then(
+        (res) =>
+          (res as any)?.[0] as {
+            code: string;
+            message: string;
+            r: string;
+            s: string;
+            v: string;
+          },
+      )
+      .catch((err) => {
+        if (String(err).includes('no elements in sequence')) {
+          throw new BSIMError('cancel', BSIM_ERRORS.cancel);
+        } else {
+          throw err;
+        }
+      });
+    return [resPromise, cancel] as const;
   };
 
   public signTransaction = async (fromAddress: string, tx: ITxEvm) => {
@@ -169,25 +198,28 @@ export class BSIMPluginClass implements Plugin {
     }
 
     const hash = transaction.unsignedHash;
-    const res = await this.BSIMSign(hash, fromAddress);
-    transaction.signature = Signature.from({ r: res.r, s: res.s, v: res.v });
-    // get the transaction encoded
-    const encodeTx = transaction.serialized;
-    return encodeTx;
+    const [resPromise, cancel] = await this.BSIMSign(hash, fromAddress);
+
+    return [
+      resPromise.then((res) => {
+        transaction.signature = Signature.from({ r: res.r, s: res.s, v: res.v });
+        // get the transaction encoded
+        return transaction.serialized;
+      }),
+      cancel,
+    ] as const;
   };
 
   public signMessage = async (message: string, fromAddress: string) => {
     const hash = hashMessage(message);
-    const res = await this.BSIMSign(hash, fromAddress);
-    const signature = Signature.from({ r: res.r, s: res.s, v: res.v });
-    return signature.serialized;
+    const [resPromise, cancel] = await this.BSIMSign(hash, fromAddress);
+    return [resPromise.then((res) => Signature.from({ r: res.r, s: res.s, v: res.v })), cancel] as const;
   };
 
   public signTypedData = async (domain: TypedDataDomain, types: Record<string, Array<TypedDataField>>, value: Record<string, any>, fromAddress: string) => {
     const hash = TypedDataEncoder.hash(domain, types, value);
-    const res = await this.BSIMSign(hash, fromAddress);
-    const signature = Signature.from({ r: res.r, s: res.s, v: res.v });
-    return signature.serialized;
+    const [resPromise, cancel] = await this.BSIMSign(hash, fromAddress);
+    return [resPromise.then((res) => Signature.from({ r: res.r, s: res.s, v: res.v })), cancel] as const;
   };
 }
 

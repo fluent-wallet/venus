@@ -162,7 +162,10 @@ const HDManagement: React.FC<StackScreenProps<typeof HDSettingStackName>> = ({ n
 
         <View style={styles.selectArea}>
           {pageAccounts.map((account) => {
-            const isSelected = pageAccounts !== defaultPages && !!currentAddress && (currentAddress.hex === account.addressValue || currentAddress.base32 === account.addressValue);
+            const isSelected =
+              pageAccounts !== defaultPages &&
+              !!currentAddress &&
+              (currentAddress.hex === account.addressValue || currentAddress.base32 === account.addressValue);
             const isInChoose = pageAccounts !== defaultPages && !!chooseAccounts?.find((_account) => _account.index === account.index);
             return (
               <Pressable
@@ -252,7 +255,7 @@ const HDManagement: React.FC<StackScreenProps<typeof HDSettingStackName>> = ({ n
           </Pressable>
         </View>
 
-        <Button style={styles.btn} mode="auto" disabled={chooseAccounts.length === 0} onPress={handleClickNext} loading={inNext}>
+        <Button style={styles.btn} disabled={chooseAccounts.length === 0} onPress={handleClickNext} loading={inNext}>
           Next
         </Button>
       </View>

@@ -51,7 +51,6 @@ const ReceiveSetAsset: React.FC<Props> = ({ bottomSheetRef, onConfirm, selectedA
                 {({ amount, isAmountValid }) => (
                   <Button
                     style={styles.btn}
-                    mode="auto"
                     disabled={!!amount && isAmountValid !== true}
                     size="small"
                     onPress={() => {
@@ -66,7 +65,7 @@ const ReceiveSetAsset: React.FC<Props> = ({ bottomSheetRef, onConfirm, selectedA
             </>
           )}
           {!selectedAsset && (
-            <Button style={styles.btn} mode="auto" size="small" onPress={() => selectAssetRef.current?.present()}>
+            <Button style={styles.btn} size="small" onPress={() => selectAssetRef.current?.present()}>
               Select Asset
             </Button>
           )}

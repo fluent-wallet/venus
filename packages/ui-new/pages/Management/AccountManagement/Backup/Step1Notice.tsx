@@ -28,7 +28,7 @@ const BackupStep1Notice: React.FC<BackupScreenProps<typeof BackupStep1StackName>
         Please <Text style={[styles.descriptionBold, { color: colors.textNotice }]}>protect</Text> them carefully
       </Text>
 
-      <Button style={styles.btn} mode="auto" onPress={() => navigation.navigate(BackupStep2StackName, route.params)}>
+      <Button style={styles.btn} onPress={() => navigation.navigate(BackupStep2StackName, route.params)}>
         Next
       </Button>
     </BackupBottomSheet>
