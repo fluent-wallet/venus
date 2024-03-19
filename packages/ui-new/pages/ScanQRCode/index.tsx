@@ -3,7 +3,7 @@ import { useTheme, StackActions } from '@react-navigation/native';
 import { View, Linking, StyleSheet } from 'react-native';
 import { useCameraPermission, useCameraDevice, useCameraFormat, Camera, type Code } from 'react-native-vision-camera';
 import { showMessage } from 'react-native-flash-message';
-import * as ImagePicker from 'expo-image-picker';
+import { launchImageLibraryAsync } from 'expo-image-picker';
 import composeRef from '@cfx-kit/react-utils/dist/composeRef';
 import { parseUri } from '@walletconnect/utils';
 import { useCurrentNetwork, NetworkType } from '@core/WalletCore/Plugins/ReactInject';
@@ -16,6 +16,7 @@ import { ScanQRCodeStackName, type StackScreenProps } from '@router/configs';
 import { parseETHURL, type ETHURL } from '@utils/ETHURL';
 import { ENABLE_WALLET_CONNECT_FEATURE } from '@utils/features';
 import ScanBorder from '@assets/icons/scan-border.svg';
+import { BarCodeScanner } from 'expo-barcode-scanner';
 
 // has onConfirm props means open in SendTranscation with local modal way.
 interface Props {
@@ -51,28 +52,25 @@ const ScanQrCode: React.FC<Props> = ({ navigation, bottomSheetRefOuter, onConfir
     [onConfirm, navigation],
   );
 
-  const handleCodeScan = useCallback(
-    async (codes: Code[]) => {
-      const code = codes[0];
-      if (!code || scanStatus === 'Parsing') return;
-      if (!code.value) return;
+  const handleQRCode = useCallback(
+    async (QRCodeString: string) => {
       let ethUrl: ETHURL;
-      if (await methods.checkIsValidAddress({ networkType: currentNetwork.networkType, addressValue: code.value })) {
-        ethUrl = { target_address: code.value, schema_prefix: currentNetwork.networkType === NetworkType.Ethereum ? 'ethereum:' : 'conflux:' } as ETHURL;
+      if (await methods.checkIsValidAddress({ networkType: currentNetwork.networkType, addressValue: QRCodeString })) {
+        ethUrl = { target_address: QRCodeString, schema_prefix: currentNetwork.networkType === NetworkType.Ethereum ? 'ethereum:' : 'conflux:' } as ETHURL;
         onParseEthUrlSuccess(ethUrl);
         return;
       }
       try {
-        ethUrl = parseETHURL(code.value);
+        ethUrl = parseETHURL(QRCodeString);
         onParseEthUrlSuccess(ethUrl);
       } catch (err) {
-        if (!onConfirm && code.value.startsWith('wc:') && ENABLE_WALLET_CONNECT_FEATURE.allow) {
+        if (!onConfirm && QRCodeString.startsWith('wc:') && ENABLE_WALLET_CONNECT_FEATURE.allow) {
           try {
-            const { version } = parseUri(code.value);
+            const { version } = parseUri(QRCodeString);
             if (version === 1) {
               setScanStatus({ errorMessage: 'Sorry, The OR code version is to low' });
             } else {
-              await plugins.WalletConnect.pair(code.value);
+              await plugins.WalletConnect.pair(QRCodeString);
               // navigation.dispatch(StackActions.replace(HomeStackName, { screen: WalletStackName }));
             }
           } catch (err) {
@@ -88,24 +86,44 @@ const ScanQrCode: React.FC<Props> = ({ navigation, bottomSheetRefOuter, onConfir
         }
       }
     },
+    [onConfirm, onParseEthUrlSuccess, currentNetwork.networkType],
+  );
+
+  const handleCodeScan = useCallback(
+    async (codes: Code[]) => {
+      const code = codes[0];
+      if (!code || scanStatus === 'Parsing') return;
+      if (!code.value) return;
+
+      await handleQRCode(code.value);
+    },
     [currentNetwork?.networkType, onConfirm, onParseEthUrlSuccess, scanStatus],
   );
 
   const pickImage = useCallback(async () => {
     // No permissions request is necessary for launching the image library
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.All,
+    const result = await launchImageLibraryAsync({
       allowsEditing: true,
+      allowsMultipleSelection: false,
       aspect: [4, 3],
       quality: 1,
     });
-
-    console.log(result);
-
+    // check is user cancel choose image
     if (!result.canceled) {
-      console.log(result);
+      try {
+        const [assets] = result.assets;
+        if (!assets || !assets.uri) return;
+        // TODO: update and remove BarCodeScanner package  see : https://docs.expo.dev/versions/latest/sdk/bar-code-scanner/
+        const [codeRes] = await BarCodeScanner.scanFromURLAsync(assets.uri);
+
+        if (codeRes.data) {
+          await handleQRCode(codeRes.data);
+        }
+      } catch (error) {
+        console.log('scan image error: ', error);
+      }
     }
-  }, []);
+  }, [handleQRCode]);
 
   const handleOnChange = useCallback((index: number) => {
     if (index === 0) {
@@ -154,7 +172,7 @@ const ScanQrCode: React.FC<Props> = ({ navigation, bottomSheetRefOuter, onConfir
                 <View style={styles.cameraWrapper}>
                   <Camera
                     ref={camera}
-                    isActive={scanStatus !== 'Pending'}
+                    isActive={true}
                     device={device}
                     codeScanner={{
                       codeTypes: ['qr', 'ean-13'],
