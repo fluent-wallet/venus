@@ -1,8 +1,8 @@
-import React, { useState, useRef, type MutableRefObject } from 'react';
+import React, { useRef, type MutableRefObject } from 'react';
 import { useTheme } from '@react-navigation/native';
 import { View, StyleSheet, Pressable } from 'react-native';
 import { type AssetInfo } from '@core/WalletCore/Plugins/AssetsTracker/types';
-import { useAssetsTokenList, useCurrentAddressValue } from '@core/WalletCore/Plugins/ReactInject';
+import {  useCurrentAddressValue } from '@core/WalletCore/Plugins/ReactInject';
 import BottomSheet, { snapPoints, type BottomSheetMethods } from '@components/BottomSheet';
 import Text from '@components/Text';
 import Button from '@components/Button';
@@ -11,18 +11,18 @@ import SelectAsset from '@pages/SendTranscation/Step2Asset';
 import SetAssetAmount from '@pages/SendTranscation/Step3Amount/SetAssetAmount';
 
 interface Props {
+  selectedAsset: AssetInfo | null;
+  setSelectedAsset: (asset: AssetInfo | null) => void;
+  amount: string;
   onConfirm: (params: { asset: AssetInfo; amount?: string }) => void;
   bottomSheetRef: MutableRefObject<BottomSheetMethods>;
 }
 
-const ReceiveSetAsset: React.FC<Props> = ({ bottomSheetRef, onConfirm }) => {
+const ReceiveSetAsset: React.FC<Props> = ({ bottomSheetRef, onConfirm, selectedAsset, setSelectedAsset, amount }) => {
   const { colors } = useTheme();
   const selectAssetRef = useRef<BottomSheetMethods>(null!);
 
   const currentAddressValue = useCurrentAddressValue()!;
-  const assetsToken = useAssetsTokenList();
-  const [selectedAsset, setSelectedAsset] = useState<AssetInfo | null>(() => assetsToken?.[0] || null);
-
   return (
     <>
       <BottomSheet ref={bottomSheetRef} snapPoints={snapPoints.large} isModal={true}>
@@ -47,7 +47,7 @@ const ReceiveSetAsset: React.FC<Props> = ({ bottomSheetRef, onConfirm }) => {
           {selectedAsset && (
             <>
               <Text style={[styles.text, styles.amount, { color: colors.textSecondary }]}>Amount</Text>
-              <SetAssetAmount targetAddress={currentAddressValue} asset={selectedAsset} isReceive>
+              <SetAssetAmount targetAddress={currentAddressValue} asset={selectedAsset} isReceive defaultAmount={amount}>
                 {({ amount, isAmountValid }) => (
                   <Button
                     style={styles.btn}

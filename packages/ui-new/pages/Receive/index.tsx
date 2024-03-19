@@ -4,6 +4,7 @@ import { View, Linking, StyleSheet } from 'react-native';
 import { showMessage } from 'react-native-flash-message';
 import Clipboard from '@react-native-clipboard/clipboard';
 import QRCode from 'react-native-qrcode-svg';
+import Decimal from 'decimal.js';
 import { useCurrentAccount, useCurrentNetwork, useCurrentAddressValue, NetworkType } from '@core/WalletCore/Plugins/ReactInject';
 import { type AssetInfo } from '@core/WalletCore/Plugins/AssetsTracker/types';
 import methods from '@core/WalletCore/Methods';
@@ -15,6 +16,7 @@ import Text from '@components/Text';
 import Button from '@components/Button';
 import { Navigation } from '@pages/Home/Navigations';
 import { encodeETHURL } from '@utils/ETHURL';
+import { trimDecimalZeros } from '@core/utils/balance';
 import Logo from '@assets/icons/logo.png';
 import Share from '@assets/icons/share.svg';
 import PoundKey from '@assets/icons/pound-key.svg';
@@ -33,10 +35,28 @@ const Receive: React.FC<Props> = ({ navigation }) => {
   const currentNetwork = useCurrentNetwork()!;
   const currentAddressValue = useCurrentAddressValue()!;
 
-  const [selectAsset, setSelectAsset] = useState<AssetInfo | null>(null);
+  const [selectedAsset, setSelectedAsset] = useState<AssetInfo | null>(null);
+  const [amount, setAmount] = useState<string>('');
+  const price = useMemo(
+    () => (!selectedAsset?.priceInUSDT ? null : trimDecimalZeros(new Decimal(selectedAsset.priceInUSDT || 0).mul(new Decimal(amount || 0)).toFixed(2))),
+    [selectedAsset?.priceInUSDT, amount],
+  );
+
   const ethUrl = useMemo(
-    () => encodeETHURL({ target_address: currentAddressValue, schema_prefix: currentNetwork.networkType === NetworkType.Conflux ? 'conflux' : 'ethereum' }),
-    [],
+    () =>
+      encodeETHURL({
+        target_address: currentAddressValue,
+        schema_prefix: currentNetwork.networkType === NetworkType.Conflux ? 'conflux' : 'ethereum',
+        chain_id: currentNetwork.chainId,
+        ...(selectedAsset && {
+          ...(selectedAsset?.contractAddress && { function_name: 'transfer' }),
+          parameters: {
+            ...(selectedAsset?.contractAddress && { address: selectedAsset?.contractAddress }),
+            ...(amount && amount !== '0' && { value: new Decimal(amount || 0).mul(Decimal.pow(10, selectedAsset.decimals ?? 0)).toHex() }),
+          },
+        }),
+      }),
+    [selectedAsset?.contractAddress, amount, currentAddressValue, currentNetwork.chainId, selectedAsset?.decimals, currentNetwork.networkType],
   );
 
   return (
@@ -46,8 +66,21 @@ const Receive: React.FC<Props> = ({ navigation }) => {
           <Text style={[styles.title, { color: colors.textPrimary }]}>Receive</Text>
           <Text style={[styles.tip, { color: colors.textPrimary }]}>Only send {currentNetwork?.name} network assets to this address.</Text>
 
-          <View style={[styles.qrcodeWrapper, { backgroundColor: colors.bgSecondary }]}>
+          <View style={[styles.qrcodeWrapper, { backgroundColor: colors.bgSecondary, paddingBottom: selectedAsset ? 18 : 30 }]}>
             <QRCode value={ethUrl} size={220} logo={Logo} logoSize={60} logoBackgroundColor="transparent" />
+            {selectedAsset && (
+              <>
+                <Text style={[styles.receive, { color: colors.textPrimary }]}>
+                  {amount} {selectedAsset?.symbol}{' '}
+                </Text>
+                {price && price !== '0' && (
+                  <Text style={[styles.price, { color: colors.textSecondary }]} numberOfLines={1}>
+                    ≈ ${price}
+                  </Text>
+                )}
+                {}
+              </>
+            )}
           </View>
 
           <View style={styles.accountWrapper}>
@@ -59,7 +92,7 @@ const Receive: React.FC<Props> = ({ navigation }) => {
               title="Share"
               Icon={Share}
               onPress={() => {
-                Clipboard.setString(currentAddressValue ?? '');
+                Clipboard.setString(ethUrl);
                 showMessage({
                   message: 'Copied!',
                   type: 'success',
@@ -72,7 +105,18 @@ const Receive: React.FC<Props> = ({ navigation }) => {
           </View>
         </BottomSheetScrollView>
       </BottomSheet>
-      <ReceiveSetAsset bottomSheetRef={setAssetRef} onConfirm={({ asset }) => setSelectAsset(asset)} />
+      <ReceiveSetAsset
+        selectedAsset={selectedAsset}
+        setSelectedAsset={setSelectedAsset}
+        amount={amount}
+        bottomSheetRef={setAssetRef}
+        onConfirm={({ asset, amount }) => {
+          setSelectedAsset(asset);
+          if (amount) {
+            setAmount(amount);
+          }
+        }}
+      />
     </>
   );
 };
@@ -102,8 +146,18 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     width: 280,
-    height: 280,
     borderRadius: 8,
+    paddingTop: 30,
+  },
+  receive: {
+    marginTop: 16,
+    fontSize: 20,
+    fontWeight: '700',
+    lineHeight: 26,
+  },
+  price: {
+    fontSize: 14,
+    lineHeight: 22,
   },
   accountWrapper: {
     alignSelf: 'center',

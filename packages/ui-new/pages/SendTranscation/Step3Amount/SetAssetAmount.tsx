@@ -29,20 +29,25 @@ interface Props {
   asset: AssetInfo;
   nftItemDetail?: NFTItemDetail;
   onAmountInfoChange?: (info: Omit<Info, 'handleEstimateMax'>) => void;
+  defaultAmount?: string;
   children?: (info: Info) => React.ReactNode;
   isReceive?: boolean;
 }
 
-const SetAssetAmount: React.FC<Props> = ({ targetAddress, asset, nftItemDetail, onAmountInfoChange, children, isReceive }) => {
+const SetAssetAmount: React.FC<Props> = ({ targetAddress, asset, nftItemDetail, onAmountInfoChange, children, defaultAmount, isReceive }) => {
   const { colors } = useTheme();
   const currentNetwork = useCurrentNetwork()!;
   const currentAddressValue = useCurrentAddressValue()!;
-  const [amount, setAmount] = useState('');
+  const [amount, setAmount] = useState(() => defaultAmount ?? '');
   const [validMax, setValidMax] = useState<Decimal | null>(() => (isReceive ? new Decimal(Infinity) : null));
   const price = useMemo(
     () => (!isReceive ? '' : trimDecimalZeros(new Decimal(asset.priceInUSDT || 0).mul(new Decimal(amount || 0)).toFixed(2))),
     [asset?.priceInUSDT, amount],
   );
+
+  useEffect(() => {
+    setAmount('');
+  }, [asset?.contractAddress]);
 
   const balance = useFormatBalance(asset.balance, asset.decimals);
   const symbol = useMemo(() => {

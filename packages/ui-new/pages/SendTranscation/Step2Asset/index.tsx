@@ -68,11 +68,13 @@ const SendTranscationStep2Asset: React.FC<Props> = ({ navigation, route, onConfi
         plugins.NFTDetailTracker.setCurrentOpenNFT(undefined);
       }
 
-      const localAssets = assets?.filter((asset) =>
-        [asset.name, asset.symbol, asset.type === AssetType.Native ? AssetType.Native : asset.contractAddress].some(
-          (str) => str?.search(new RegExp(escapeRegExp(value), 'i')) !== -1,
-        ),
-      );
+      const localAssets = assets
+        ?.filter((asset) =>
+          [asset.name, asset.symbol, asset.type === AssetType.Native ? AssetType.Native : asset.contractAddress].some(
+            (str) => str?.search(new RegExp(escapeRegExp(value), 'i')) !== -1,
+          ),
+        )
+        .filter((asset) => (onConfirm ? asset.type !== AssetType.ERC1155 && asset.type !== AssetType.ERC721 : true));
       if (localAssets && localAssets?.length > 0) {
         setFilterAssets({ type: 'local', assets: localAssets });
       } else {
