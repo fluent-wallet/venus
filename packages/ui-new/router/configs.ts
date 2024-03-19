@@ -16,7 +16,7 @@ export const HDSettingStackName = 'HDSetting';
 export const BackupStackName = 'Backup';
 export const NetworkManagementStackName = 'NetworkManagement';
 export const PasswordVerifyStackName = 'PasswordVerify';
-export const SendTranscationStackName = 'SendTranscation';
+export const SendTransactionStackName = 'SendTransaction';
 export const ScanQRCodeStackName = 'ScanQRCode';
 export const ReceiveStackName = 'Receive';
 
@@ -32,7 +32,7 @@ export type RootStackParamList = {
   [GroupSettingStackName]: { groupId: string };
   [HDSettingStackName]: { groupId: string };
   [BackupStackName]: NavigatorScreenParams<BackupStackParamList>;
-  [SendTranscationStackName]: NavigatorScreenParams<SendTranscationParamList>;
+  [SendTransactionStackName]: NavigatorScreenParams<SendTransactionParamList>;
   [NetworkManagementStackName]: undefined;
   [PasswordVerifyStackName]: undefined;
   [ScanQRCodeStackName]: undefined;
@@ -61,18 +61,18 @@ export type BackupStackParamList = {
 export type BackupScreenProps<T extends keyof BackupStackParamList> = NativeStackScreenProps<BackupStackParamList, T>;
 // end backup nest stack
 
-// sendTranscation nest stack
-export const SendTranscationStep1StackName = 'SendTranscationStep1';
-export const SendTranscationStep2StackName = 'SendTranscationStep2';
-export const SendTransactionStep3StackName = 'SendTranscationStep3';
-export const SendTransactionStep4StackName = 'SendTranscationStep4';
-export type SendTranscationParamList = {
-  [SendTranscationStep1StackName]: undefined;
-  [SendTranscationStep2StackName]: { targetAddress: string };
+// SendTransaction nest stack
+export const SendTransactionStep1StackName = 'SendTransactionStep1';
+export const SendTransactionStep2StackName = 'SendTransactionStep2';
+export const SendTransactionStep3StackName = 'SendTransactionStep3';
+export const SendTransactionStep4StackName = 'SendTransactionStep4';
+export type SendTransactionParamList = {
+  [SendTransactionStep1StackName]: undefined;
+  [SendTransactionStep2StackName]: { targetAddress: string; searchAddress?: string; };
   [SendTransactionStep3StackName]: { asset: AssetInfo; targetAddress: string; nftItemDetail?: NFTItemDetail };
   [SendTransactionStep4StackName]: { asset: AssetInfo; targetAddress: string; amount: string; nftItemDetail?: NFTItemDetail };
   // navigate to home
   [HomeStackName]: undefined;
 };
-export type SendTransactionScreenProps<T extends keyof SendTranscationParamList> = NativeStackScreenProps<SendTranscationParamList, T>;
-// end sendTranscation nest stack
+export type SendTransactionScreenProps<T extends keyof SendTransactionParamList> = NativeStackScreenProps<SendTransactionParamList, T>;
+// end SendTransaction nest stack

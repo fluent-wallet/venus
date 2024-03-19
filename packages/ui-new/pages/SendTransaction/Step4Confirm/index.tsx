@@ -34,10 +34,10 @@ import { AccountItemView } from '@modules/AccountsList';
 import useFormatBalance from '@hooks/useFormatBalance';
 import useInAsync from '@hooks/useInAsync';
 import { SendTransactionStep4StackName, HomeStackName, type SendTransactionScreenProps } from '@router/configs';
-import BackupBottomSheet from '../SendTranscationBottomSheet';
+import BackupBottomSheet from '../SendTransactionBottomSheet';
 import { NFT } from '../Step3Amount';
 
-const SendTranscationStep4Confirm: React.FC<SendTransactionScreenProps<typeof SendTransactionStep4StackName>> = ({ navigation, route }) => {
+const SendTransactionStep4Confirm: React.FC<SendTransactionScreenProps<typeof SendTransactionStep4StackName>> = ({ navigation, route }) => {
   useEffect(() => Keyboard.dismiss(), []);
   const { colors, mode } = useTheme();
   const currentNetwork = useCurrentNetwork()!;
@@ -389,4 +389,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default SendTranscationStep4Confirm;
+export default SendTransactionStep4Confirm;

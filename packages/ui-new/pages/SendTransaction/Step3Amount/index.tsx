@@ -9,10 +9,10 @@ import NFTIcon from '@modules/AssetsList/NFTsList/NFTIcon';
 import { getDetailSymbol } from '@modules/AssetsList/NFTsList/NFTItem';
 import { AccountItemView } from '@modules/AccountsList';
 import { SendTransactionStep3StackName, SendTransactionStep4StackName, type SendTransactionScreenProps } from '@router/configs';
-import BackupBottomSheet from '../SendTranscationBottomSheet';
+import BackupBottomSheet from '../SendTransactionBottomSheet';
 import SetAssetAmount from './SetAssetAmount';
 
-const SendTranscationStep3Amount: React.FC<SendTransactionScreenProps<typeof SendTransactionStep3StackName>> = ({ navigation, route }) => {
+const SendTransactionStep3Amount: React.FC<SendTransactionScreenProps<typeof SendTransactionStep3StackName>> = ({ navigation, route }) => {
   const { colors, mode } = useTheme();
   return (
     <BackupBottomSheet onClose={navigation.goBack}>
@@ -106,4 +106,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default SendTranscationStep3Amount;
+export default SendTransactionStep3Amount;

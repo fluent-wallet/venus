@@ -22,20 +22,20 @@ import Text from '@components/Text';
 import TextInput from '@components/TextInput';
 import HourglassLoading from '@components/Loading/Hourglass';
 import { BottomSheetScrollView, type BottomSheetMethods } from '@components/BottomSheet';
-import { SendTranscationStep2StackName, SendTransactionStep3StackName, type SendTransactionScreenProps } from '@router/configs';
+import { SendTransactionStep2StackName, SendTransactionStep3StackName, SendTransactionStep4StackName, type SendTransactionScreenProps } from '@router/configs';
 import { Tabs, TabsContent, setSelectAssetScrollY, type Tab } from '@modules/AssetsTabs';
 import TokenItem from '@modules/AssetsList/TokensList/TokenItem';
 import NFTItem from '@modules/AssetsList/NFTsList/NFTItem';
-import BackupBottomSheet from '../SendTranscationBottomSheet';
+import BackupBottomSheet from '../SendTransactionBottomSheet';
 
 interface Props {
-  navigation?: SendTransactionScreenProps<typeof SendTranscationStep2StackName>['navigation'];
-  route?: SendTransactionScreenProps<typeof SendTranscationStep2StackName>['route'];
+  navigation?: SendTransactionScreenProps<typeof SendTransactionStep2StackName>['navigation'];
+  route?: SendTransactionScreenProps<typeof SendTransactionStep2StackName>['route'];
   onConfirm?: (asset: AssetInfo) => void;
   bottomSheetRefOuter?: MutableRefObject<BottomSheetMethods>;
 }
 
-const SendTranscationStep2Asset: React.FC<Props> = ({ navigation, route, onConfirm, bottomSheetRefOuter }) => {
+const SendTransactionStep2Asset: React.FC<Props> = ({ navigation, route, onConfirm, bottomSheetRefOuter }) => {
   const { colors } = useTheme();
 
   const [currentTab, setCurrentTab] = useState<Tab>('Tokens');
@@ -55,7 +55,7 @@ const SendTranscationStep2Asset: React.FC<Props> = ({ navigation, route, onConfi
   const currentOpenNFTDetail = useCurrentOpenNFTDetail();
   const assets = useAssetsAllList();
 
-  const [searchAsset, setSearchAsset] = useState('');
+  const [searchAsset, setSearchAsset] = useState(() => route?.params?.searchAddress ?? '');
   const [inFetchingRemote, setInFetchingRemote] = useState(false);
   const [filterAssets, setFilterAssets] = useState<{
     type: 'local' | 'remote' | 'invalid-format' | 'invalid-ERC20' | 'network-error';
@@ -132,7 +132,11 @@ const SendTranscationStep2Asset: React.FC<Props> = ({ navigation, route, onConfi
           type: 'warning',
         });
       }
-      navigation.navigate(SendTransactionStep3StackName, { ...route!.params, asset, nftItemDetail });
+      if (asset.type === AssetType.ERC721) {
+        navigation.navigate(SendTransactionStep4StackName, { ...route!.params, asset, nftItemDetail, amount: '1' });
+      } else {
+        navigation.navigate(SendTransactionStep3StackName, { ...route!.params, asset, nftItemDetail });
+      }
     } else if (onConfirm) {
       onConfirm(asset);
       setSearchAsset('');
@@ -240,4 +244,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default SendTranscationStep2Asset;
+export default SendTransactionStep2Asset;

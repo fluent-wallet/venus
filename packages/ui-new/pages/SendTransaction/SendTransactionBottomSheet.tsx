@@ -8,7 +8,7 @@ interface Props extends ComponentProps<typeof BottomSheet> {
   showTitle?: boolean | string;
 }
 
-const SendTranscationBottomSheet = forwardRef<BottomSheetMethods, Props>(({ children, snapPoints, showTitle = true, ...props }, ref) => {
+const SendTransactionBottomSheet = forwardRef<BottomSheetMethods, Props>(({ children, snapPoints, showTitle = true, ...props }, ref) => {
   const { colors } = useTheme();
 
   return (
@@ -35,4 +35,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default SendTranscationBottomSheet;
+export default SendTransactionBottomSheet;

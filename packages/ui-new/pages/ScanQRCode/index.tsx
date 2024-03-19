@@ -3,22 +3,30 @@ import { useTheme, StackActions } from '@react-navigation/native';
 import { View, Linking, StyleSheet } from 'react-native';
 import { useCameraPermission, useCameraDevice, useCameraFormat, Camera, type Code } from 'react-native-vision-camera';
 import { showMessage } from 'react-native-flash-message';
+import { BarCodeScanner } from 'expo-barcode-scanner';
 import { launchImageLibraryAsync } from 'expo-image-picker';
+import Decimal from 'decimal.js';
 import composeRef from '@cfx-kit/react-utils/dist/composeRef';
 import { parseUri } from '@walletconnect/utils';
-import { useCurrentNetwork, NetworkType } from '@core/WalletCore/Plugins/ReactInject';
+import { useCurrentNetwork, NetworkType, getAssetsTokenList, AssetType } from '@core/WalletCore/Plugins/ReactInject';
 import methods from '@core/WalletCore/Methods';
 import plugins from '@core/WalletCore/Plugins';
 import BottomSheet, { snapPoints, type BottomSheetMethods } from '@components/BottomSheet';
 import Text from '@components/Text';
 import Button from '@components/Button';
-import { ScanQRCodeStackName, type StackScreenProps } from '@router/configs';
+import {
+  ScanQRCodeStackName,
+  SendTransactionStackName,
+  SendTransactionStep2StackName,
+  SendTransactionStep3StackName,
+  SendTransactionStep4StackName,
+  type StackScreenProps,
+} from '@router/configs';
 import { parseETHURL, type ETHURL } from '@utils/ETHURL';
 import { ENABLE_WALLET_CONNECT_FEATURE } from '@utils/features';
 import ScanBorder from '@assets/icons/scan-border.svg';
-import { BarCodeScanner } from 'expo-barcode-scanner';
 
-// has onConfirm props means open in SendTranscation with local modal way.
+// has onConfirm props means open in SendTransaction with local modal way.
 interface Props {
   onConfirm?: (ethUrl: ETHURL) => void;
   bottomSheetRefOuter?: MutableRefObject<BottomSheetMethods>;
@@ -40,16 +48,79 @@ const ScanQrCode: React.FC<Props> = ({ navigation, bottomSheetRefOuter, onConfir
   const [hasRejectPermission, setHasRejectPermission] = useState(false);
 
   const onParseEthUrlSuccess = useCallback(
-    (ethUrl: ETHURL) => {
+    async (ethUrl: ETHURL) => {
       if (onConfirm) {
         onConfirm(ethUrl);
         bottomSheetRef.current?.close();
         return;
-      } else {
-        // return navigation.dispatch(StackActions.replace(ReceiveAddressStackName, { to: ethAddress }));
+      } else if (navigation) {
+        if (
+          (currentNetwork.networkType === NetworkType.Conflux && ethUrl.schema_prefix === 'ethereum:') ||
+          (currentNetwork.networkType === NetworkType.Ethereum && ethUrl.schema_prefix === 'conflux:')
+        ) {
+          setScanStatus({ errorMessage: 'Mismatched chain types.' });
+          return;
+        }
+
+        if (ethUrl.chain_id !== currentNetwork.chainId) {
+          setScanStatus({ errorMessage: 'Mismatched chain ID.' });
+          return;
+        }
+
+        if (!(await methods.checkIsValidAddress({ networkType: currentNetwork.networkType, addressValue: ethUrl.target_address }))) {
+          setScanStatus({ errorMessage: 'Unvalid target address.' });
+          return;
+        }
+
+        if (!ethUrl.function_name) {
+          navigation.dispatch(
+            StackActions.replace(SendTransactionStackName, { screen: SendTransactionStep2StackName, params: { targetAddress: ethUrl.target_address } }),
+          );
+          return;
+        } else if (ethUrl.function_name === 'transfer') {
+          const allAssetsTokens = getAssetsTokenList();
+          if (!allAssetsTokens?.length) return;
+
+          const targetAsset = !ethUrl.parameters?.address
+            ? allAssetsTokens?.find((asset) => asset.type === AssetType.Native)
+            : allAssetsTokens?.find((asset) => asset.contractAddress === ethUrl.parameters?.address);
+
+          if (!targetAsset) {
+            if (ethUrl.parameters?.address) {
+              navigation.dispatch(
+                StackActions.replace(SendTransactionStackName, {
+                  screen: SendTransactionStep2StackName,
+                  params: { targetAddress: ethUrl.target_address, searchAddress: ethUrl.parameters?.address },
+                }),
+              );
+            } else {
+              setScanStatus({ errorMessage: 'Unvalid ETHURL.' });
+            }
+          } else {
+            if (!ethUrl.parameters?.value) {
+              navigation.dispatch(
+                StackActions.replace(SendTransactionStackName, {
+                  screen: SendTransactionStep4StackName,
+                  params: {
+                    targetAddress: ethUrl.target_address,
+                    asset: targetAsset,
+                    amount: new Decimal(String(ethUrl.parameters?.value)).div(Decimal.pow(10, targetAsset.decimals ?? 18)).toString(),
+                  },
+                }),
+              );
+            } else {
+              navigation.dispatch(
+                StackActions.replace(SendTransactionStackName, {
+                  screen: SendTransactionStep3StackName,
+                  params: { targetAddress: ethUrl.target_address, asset: targetAsset },
+                }),
+              );
+            }
+          }
+        }
       }
     },
-    [onConfirm, navigation],
+    [onConfirm, navigation, currentNetwork],
   );
 
   const handleQRCode = useCallback(
@@ -125,17 +196,18 @@ const ScanQrCode: React.FC<Props> = ({ navigation, bottomSheetRefOuter, onConfir
     }
   }, [handleQRCode]);
 
+  const requestCameraPermission = useCallback(async () => {
+    const isSuccess = await requestPermission();
+    if (!isSuccess) {
+      setHasRejectPermission(true);
+    }
+  }, []);
+
   const handleOnChange = useCallback((index: number) => {
     if (index === 0) {
       setScanStatus('Pending');
       if (!hasPermission) {
-        const execRequestPermission = async () => {
-          const isSuccess = await requestPermission();
-          if (!isSuccess) {
-            setHasRejectPermission(true);
-          }
-        };
-        execRequestPermission();
+        requestCameraPermission();
       }
     }
   }, []);
@@ -143,13 +215,7 @@ const ScanQrCode: React.FC<Props> = ({ navigation, bottomSheetRefOuter, onConfir
   useEffect(() => {
     if (!onConfirm) {
       if (!hasPermission) {
-        const execRequestPermission = async () => {
-          const isSuccess = await requestPermission();
-          if (!isSuccess) {
-            setHasRejectPermission(true);
-          }
-        };
-        execRequestPermission();
+        requestCameraPermission();
       }
     }
   }, []);
@@ -172,7 +238,7 @@ const ScanQrCode: React.FC<Props> = ({ navigation, bottomSheetRefOuter, onConfir
                 <View style={styles.cameraWrapper}>
                   <Camera
                     ref={camera}
-                    isActive={true}
+                    isActive={scanStatus !== 'Parsing'}
                     device={device}
                     codeScanner={{
                       codeTypes: ['qr', 'ean-13'],

@@ -7,8 +7,8 @@ import BottomSheet, { snapPoints, type BottomSheetMethods } from '@components/Bo
 import Text from '@components/Text';
 import Button from '@components/Button';
 import TokenIcon from '@modules/AssetsList/TokensList/TokenIcon';
-import SelectAsset from '@pages/SendTranscation/Step2Asset';
-import SetAssetAmount from '@pages/SendTranscation/Step3Amount/SetAssetAmount';
+import SelectAsset from '@pages/SendTransaction/Step2Asset';
+import SetAssetAmount from '@pages/SendTransaction/Step3Amount/SetAssetAmount';
 
 interface Props {
   selectedAsset: AssetInfo | null;

@@ -10,12 +10,12 @@ import Button from '@components/Button';
 import Checkbox from '@components/Checkbox';
 import HourglassLoading from '@components/Loading/Hourglass';
 import { type BottomSheetMethods } from '@components/BottomSheet';
-import { SendTranscationStep1StackName, SendTranscationStep2StackName, type SendTransactionScreenProps } from '@router/configs';
+import { SendTransactionStep1StackName, SendTransactionStep2StackName, type SendTransactionScreenProps } from '@router/configs';
 import QrCode from '@assets/icons/qr-code.svg';
-import BackupBottomSheet from '../SendTranscationBottomSheet';
+import BackupBottomSheet from '../SendTransactionBottomSheet';
 import ScanQRCode from '@pages/ScanQRCode';
 
-const SendTranscationStep1Receiver: React.FC<SendTransactionScreenProps<typeof SendTranscationStep1StackName>> = ({ navigation }) => {
+const SendTransactionStep1Receiver: React.FC<SendTransactionScreenProps<typeof SendTransactionStep1StackName>> = ({ navigation }) => {
   const { colors } = useTheme();
   const _currentNetwork = useCurrentNetwork();
   const scanQRCodeRef = useRef<BottomSheetMethods>(null!);
@@ -116,7 +116,7 @@ const SendTranscationStep1Receiver: React.FC<SendTransactionScreenProps<typeof S
         <Button
           style={styles.btn}
           mode="auto"
-          onPress={() => navigation.navigate(SendTranscationStep2StackName, { targetAddress: receiver })}
+          onPress={() => navigation.navigate(SendTransactionStep2StackName, { targetAddress: receiver })}
           disabled={!(checkRes === AddressType.EOA || checkRes === AddressType.Contract) || (checkRes === AddressType.Contract && !knowRisk)}
           size='small'
         >
@@ -187,4 +187,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default SendTranscationStep1Receiver;
+export default SendTransactionStep1Receiver;

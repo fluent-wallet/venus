@@ -49,7 +49,7 @@ const Receive: React.FC<Props> = ({ navigation }) => {
         schema_prefix: currentNetwork.networkType === NetworkType.Conflux ? 'conflux' : 'ethereum',
         chain_id: currentNetwork.chainId,
         ...(selectedAsset && {
-          ...(selectedAsset?.contractAddress && { function_name: 'transfer' }),
+          function_name: 'transfer',
           parameters: {
             ...(selectedAsset?.contractAddress && { address: selectedAsset?.contractAddress }),
             ...(amount && amount !== '0' && { value: new Decimal(amount || 0).mul(Decimal.pow(10, selectedAsset.decimals ?? 0)).toHex() }),

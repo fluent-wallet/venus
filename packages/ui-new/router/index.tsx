@@ -15,7 +15,7 @@ import AccountSetting from '@pages/Management/AccountManagement/AccountSetting';
 import GroupSetting from '@pages/Management/AccountManagement/GroupSetting';
 import HDSetting from '@pages/Management/AccountManagement/HDSetting';
 import Backup from '@pages/Management/AccountManagement/Backup';
-import SendTranscation from '@pages/SendTranscation';
+import SendTransaction from '@pages/SendTransaction';
 import ScanQRCode from '@pages/ScanQRCode';
 import Receive from '@pages/Receive';
 import PasswordVerify from '@modules/PasswordVerify';
@@ -32,7 +32,7 @@ import {
   HDSettingStackName,
   PasswordVerifyStackName,
   BackupStackName,
-  SendTranscationStackName,
+  SendTransactionStackName,
   ScanQRCodeStackName,
   ReceiveStackName,
   type RootStackParamList,
@@ -86,7 +86,7 @@ const Router: React.FC = () => {
         <RootStack.Screen name={GroupSettingStackName} component={GroupSetting} options={SheetBottomOption} />
         <RootStack.Screen name={HDSettingStackName} component={HDSetting} options={SheetBottomOption} />
         <RootStack.Screen name={BackupStackName} component={Backup} options={SheetBottomOption} />
-        <RootStack.Screen name={SendTranscationStackName} component={SendTranscation} options={SheetBottomOption} />
+        <RootStack.Screen name={SendTransactionStackName} component={SendTransaction} options={SheetBottomOption} />
         <RootStack.Screen name={ScanQRCodeStackName} component={ScanQRCode} options={SheetBottomOption} />
         <RootStack.Screen name={ReceiveStackName} component={Receive} options={SheetBottomOption} />
         <RootStack.Screen name={SettingsStackName} component={Settings} />

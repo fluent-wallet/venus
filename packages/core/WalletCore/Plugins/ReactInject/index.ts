@@ -25,7 +25,8 @@ export {
   useAssetsInFetch,
   useIsNftsEmpty,
   useIsTokensEmpty,
-  useCurrentOpenNFTDetail
+  useCurrentOpenNFTDetail,
+  getAssetsTokenList
 } from './data/useAssets';
 export { usePendingRequests, useAllRequests } from './data/useRequests';
 export { useAccountsManage, useAccountsOfGroupInManage, useAllAccountsInManage } from './data/useAccountsManage';
