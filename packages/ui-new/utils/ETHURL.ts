@@ -11,7 +11,7 @@ export interface ETHURL {
   target_address: string;
   chain_id?: string;
   function_name?: string;
-  parameters?: { address?: string; value?: bigint; uint256?: bigint; gas?: string; gasLimit?: string; gasPrice?: string };
+  parameters?: { address?: string; value?: string | bigint; uint256?: bigint | bigint; gas?: string; gasLimit?: string; gasPrice?: string };
 }
 
 export function bigIntToExponential(value: bigint): string {
@@ -90,11 +90,14 @@ export const parseETHURL = (ETHURL: string) => {
   if (function_name) {
     result.function_name = function_name;
   }
-  const params = parameters.split('&').reduce((acc, cur) => {
-    const [key, value] = cur.split('=');
-    acc[key] = value;
-    return acc;
-  }, {} as Record<string, string>);
+  const params = parameters.split('&').reduce(
+    (acc, cur) => {
+      const [key, value] = cur.split('=');
+      acc[key] = value;
+      return acc;
+    },
+    {} as Record<string, string>,
+  );
 
   Object.entries(params).forEach(([key, value]) => {
     if (!result.parameters) {
@@ -114,7 +117,7 @@ export const parseETHURL = (ETHURL: string) => {
 };
 
 export const encodeETHURL = (params: ETHURL) => {
-  const { parameters, function_name, target_address, chain_id } = params;
+  const { parameters, function_name, target_address, chain_id, schema_prefix } = params;
   let query = '';
   const queryString: Record<string, string> = {};
 
@@ -122,12 +125,15 @@ export const encodeETHURL = (params: ETHURL) => {
     Object.keys(parameters)
       .sort()
       .forEach((key) => {
-        if (key === 'uint256' && function_name && function_name === 'transfer' && parameters.uint256) {
-          queryString.uint256 = bigIntToExponential(parameters.uint256);
-        } else if (key === 'value' && parameters.value) {
-          queryString.value = bigIntToExponential(parameters.value);
+        if (key === 'uint256') {
+          if (parameters.uint256)
+            queryString.uint256 = bigIntToExponential(BigInt(parameters.uint256));
+        } else if (key === 'value') {
+          if (parameters.value)
+            queryString.value = bigIntToExponential(BigInt(parameters.value));
         } else {
-          queryString[key] = `${parameters[key]}`;
+          queryString[key] = String(parameters[key]);
+
         }
       });
 
@@ -135,6 +141,5 @@ export const encodeETHURL = (params: ETHURL) => {
       .map(([key, value]) => `${key}=${value}`)
       .join('&');
   }
-
-  return `ethereum:${target_address}${chain_id ? `@${chain_id}` : ''}${function_name ? `/${function_name}` : ''}${query ? `?${query}` : ''}`;
+  return `${schema_prefix}:${target_address}${chain_id ? `@${chain_id}` : ''}${function_name ? `/${function_name}` : ''}${query ? `?${query}` : ''}`;
 };
