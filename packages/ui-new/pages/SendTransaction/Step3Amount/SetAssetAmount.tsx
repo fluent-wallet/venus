@@ -40,10 +40,6 @@ const SetAssetAmount: React.FC<Props> = ({ targetAddress, asset, nftItemDetail, 
   const currentAddressValue = useCurrentAddressValue()!;
   const [amount, setAmount] = useState(() => defaultAmount ?? '');
   const [validMax, setValidMax] = useState<Decimal | null>(() => (isReceive ? new Decimal(Infinity) : null));
-  const price = useMemo(
-    () => (!isReceive ? '' : trimDecimalZeros(new Decimal(asset.priceInUSDT || 0).mul(new Decimal(amount || 0)).toFixed(2))),
-    [asset?.priceInUSDT, amount],
-  );
 
   useEffect(() => {
     setAmount('');
@@ -160,6 +156,10 @@ const SetAssetAmount: React.FC<Props> = ({ targetAddress, asset, nftItemDetail, 
     }
   }, [amount, isAmountValid, validMax]);
 
+  const price = useMemo(
+    () => (isAmountValid !== true || !isReceive ? '' : trimDecimalZeros(new Decimal(asset.priceInUSDT || 0).mul(new Decimal(amount || 0)).toFixed(2))),
+    [asset?.priceInUSDT, isAmountValid, amount],
+  );
   return (
     <>
       <TextInput
