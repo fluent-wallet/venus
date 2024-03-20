@@ -90,7 +90,7 @@ const theme = createTheme({
   components: {
     Text: (_, theme) => ({
       style: {
-        fontFamily: 'SF Pro Display',
+        fontFamily: 'Sora',
         color: theme.colors.textPrimary,
         fontSize: 16,
         fontWeight: '400',

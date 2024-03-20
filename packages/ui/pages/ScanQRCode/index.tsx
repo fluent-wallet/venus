@@ -187,10 +187,6 @@ const ScanQRCode: React.FC<{ navigation: StackNavigation; route: RouteProp<RootS
     }
 
     isScanningInProgress.current = false;
-
-    return showMessage({
-      message: 'Sorry, this QR code could not be recognized.',
-    });
   };
 
   const handlePermission = useCallback(async () => {

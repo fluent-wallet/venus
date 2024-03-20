@@ -1,10 +1,10 @@
 import * as KeyChain from 'react-native-keychain';
-import { Subject } from 'rxjs';
+import { BehaviorSubject } from 'rxjs';
 import CryptoToolPlugin, { CryptoToolPluginClass } from '../CryptoTool';
 import plugins, { type Plugin } from '@core/WalletCore/Plugins';
 import database from '@core/database';
 import { getEncryptedVaultWithBSIM } from '@core/database/models/Vault/query';
-import { showBiometricsDisabledMessage } from '@pages/SetPassword/Biometrics';
+import { showBiometricsDisabledMessage } from '@pages/InitWallet/BiometricsWay';
 import { getPasswordCryptoKey } from '@utils/getEnv';
 
 declare module '@core/WalletCore/Plugins' {
@@ -42,7 +42,7 @@ class AuthenticationPluginClass implements Plugin {
 
   private settleAuthenticationType: AuthenticationType | null = null;
   public AuthenticationType = AuthenticationType;
-  public passwordRequestSubject = new Subject<PasswordRequest>();
+  public passwordRequestSubject = new BehaviorSubject<PasswordRequest>(null!);
   private pwdCache: { password: string; cacheTime: number } | null = null;
   private getPasswordPromise: Promise<string | null> | null = null;
 
@@ -112,15 +112,9 @@ class AuthenticationPluginClass implements Plugin {
       await KeyChain.setGenericPassword('ePayWallet-user', encryptedPassword, {
         ...defaultOptions,
       });
-
       this.settleAuthenticationType = AuthenticationType.Biometrics;
       await database.localStorage.set('SettleAuthentication', AuthenticationType.Biometrics);
-
-      // If the user enables biometrics, we're trying to read the password immediately so we get the permission prompt.
-      await this.getPassword();
-    }
-
-    if (typeof password === 'string' && !!password) {
+    } else if (typeof password === 'string' && !!password) {
       this.settleAuthenticationType = AuthenticationType.Password;
       await database.localStorage.set('SettleAuthentication', AuthenticationType.Password);
     }
@@ -150,8 +144,7 @@ CryptoToolPlugin.setGetPasswordMethod(AuthenticationPlugin.getPassword);
 
 export default AuthenticationPlugin;
 
-
-const pattern = /cancel|\u53d6\u6d88/i; 
+const pattern = /cancel|\u53d6\u6d88/i;
 export function containsCancel(str: string): boolean {
   return pattern.test(str);
 }

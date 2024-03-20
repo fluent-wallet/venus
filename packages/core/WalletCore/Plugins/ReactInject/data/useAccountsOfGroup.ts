@@ -1,16 +1,20 @@
 import { useAtomValue } from 'jotai';
 import { atomFamily, atomWithObservable } from 'jotai/utils';
-import { switchMap } from 'rxjs';
+import { switchMap, of } from 'rxjs';
 import { observeAccountGroupById } from '../../../../database/models/AccountGroup/query';
 
-const accountsAtomFamilyOfGroup = atomFamily((accountGroupId: string) =>
+const accountsAtomFamilyOfGroup = atomFamily((accountGroupId: string | undefined | null) =>
   atomWithObservable(
     () =>
-      observeAccountGroupById(accountGroupId).pipe(switchMap((accountGroup) => accountGroup.accounts.observeWithColumns(['nickname', 'selected', 'hidden']))),
+      !accountGroupId
+        ? of([])
+        : observeAccountGroupById(accountGroupId).pipe(
+            switchMap((accountGroup) => accountGroup.accounts.observeWithColumns(['nickname', 'selected', 'hidden'])),
+          ),
     {
       initialValue: [],
-    }
-  )
+    },
+  ),
 );
 
-export const useAccountsOfGroup = (accountGroupId: string) => useAtomValue(accountsAtomFamilyOfGroup(accountGroupId));
+export const useAccountsOfGroup = (accountGroupId: string | undefined | null) => useAtomValue(accountsAtomFamilyOfGroup(accountGroupId));

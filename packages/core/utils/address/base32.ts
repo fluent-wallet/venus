@@ -1,5 +1,6 @@
 import JSBI from 'jsbi';
 import { Buffer } from 'buffer';
+import { memoize } from 'lodash-es';
 
 const ALPHABET = 'ABCDEFGHJKMNPRSTUVWXYZ0123456789';
 const VERSION_BYTE = 0;
@@ -165,7 +166,7 @@ function polyMod(buffer: any) {
   return JSBI.bitwiseXor(checksumBigInt, BIGINT_1);
 }
 
-export function encode(_hexAddress: string, netId: number = 1029, verbose = false) {
+function _encode(_hexAddress: string, netId = 1029, verbose = false) {
   let hexAddress!: any;
   if (validateHexAddress(_hexAddress)) {
     hexAddress = Buffer.from(_hexAddress.slice(2), 'hex');
@@ -193,7 +194,7 @@ export function encode(_hexAddress: string, netId: number = 1029, verbose = fals
   return verbose ? `${netName}:TYPE.${addressType}:${payload}${checksum}` : `${netName}:${payload}${checksum}`.toLowerCase();
 }
 
-export function decode(cfxAdress: string) {
+function _decode(cfxAdress: string) {
   // don't allow mixed case
   const lowered = cfxAdress.toLowerCase();
   const uppered = cfxAdress.toUpperCase();
@@ -233,23 +234,28 @@ export function decode(cfxAdress: string) {
 
   return { hexAddress, netId, type };
 }
+export const encode = memoize(_encode, (...args) => JSON.stringify(args));
+export const decode = memoize(_decode);
 
-export const validateCfxAddress = (address: string) => {
+const _validateCfxAddress = (address: string | null | undefined) => {
   try {
+    if (!address) return false;
     decode(address);
     return true;
   } catch (e) {
     return false;
   }
 };
+export const validateCfxAddress = memoize(_validateCfxAddress);
 
-export const validateHexAddress = (address: string) => /^0x[0-9a-fA-F]{40}$/.test(address);
+const _validateHexAddress = (address: string) => /^0x[0-9a-fA-F]{40}$/.test(address);
+export const validateHexAddress = memoize(_validateHexAddress);
 
 export const validateCNSAddress = (address: string) => {
   return address.endsWith('.web3');
 };
 
-export const toHex = (value: string) => {
+const _toHex = (value: string) => {
   let hex;
 
   if (typeof value === 'string') {
@@ -271,3 +277,5 @@ export const toHex = (value: string) => {
   }
   return hex.length % 2 ? `0x0${hex.slice(2)}` : hex;
 };
+
+export const toHex = memoize(_toHex);
