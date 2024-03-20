@@ -76,6 +76,23 @@ const GroupConfig: React.FC<StackScreenProps<typeof GroupSettingStackName>> = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [vault, navigation]);
 
+  const handleBackupSeedPhrase = useCallback(() => {
+    navigation.navigate(BackupStackName, { screen: BackupStep1StackName, params: { groupId: route.params.groupId } });
+  }, [navigation, route.params.groupId]);
+
+  const handleChangeBSIMPin = useCallback(() => {
+    plugins.BSIM.updateBPIN();
+  }, []);
+
+  const renderByVaultType = useCallback(
+    <A, B>(HD: A, BSIM: B): A | B => {
+      const type = vault?.type;
+      if (type === VaultType.HierarchicalDeterministic) return HD;
+      return BSIM;
+    },
+    [vault?.type],
+  );
+
   return (
     <>
       <BottomSheet snapPoints={snapPoints.large} index={0} isModal={false} onClose={() => navigation.goBack()}>
@@ -90,14 +107,16 @@ const GroupConfig: React.FC<StackScreenProps<typeof GroupSettingStackName>> = ({
             onChangeText={(newNickName) => setAccountGroupName(newNickName?.trim())}
             isInBottomSheet
           />
-          {vault?.type === VaultType.HierarchicalDeterministic && (
+          {(vault?.type === VaultType.HierarchicalDeterministic || vault?.type === VaultType.BSIM) && (
             <>
-              <Text style={[styles.description, styles.backupDescription, { color: colors.textSecondary }]}>Backup</Text>
+              <Text style={[styles.description, styles.backupDescription, { color: colors.textSecondary }]}>
+                {renderByVaultType('Backup', 'BSIM Card Settings')}
+              </Text>
               <Pressable
                 style={({ pressed }) => [styles.row, { backgroundColor: pressed ? colors.underlay : 'transparent' }]}
-                onPress={() => navigation.navigate(BackupStackName, { screen: BackupStep1StackName, params: { groupId: route.params.groupId } })}
+                onPress={renderByVaultType(handleBackupSeedPhrase, handleChangeBSIMPin)}
               >
-                <Text style={[styles.mainText, styles.backupText, { color: colors.textPrimary }]}>Seed Phrase</Text>
+                <Text style={[styles.mainText, styles.backupText, { color: colors.textPrimary }]}>{renderByVaultType('Seed Phrase', 'Change BSIM Code')}</Text>
                 <ArrowRight color={colors.iconPrimary} />
               </Pressable>
             </>
