@@ -173,7 +173,7 @@ export class BSIMPluginClass implements Plugin {
     const resPromise = Promise.race([polling, cancelPromise] as const)
       .then(
         (res) =>
-          (res as any)?.[0] as {
+          res as {
             code: string;
             message: string;
             r: string;

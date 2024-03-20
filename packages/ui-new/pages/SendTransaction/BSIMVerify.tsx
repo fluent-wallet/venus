@@ -30,20 +30,17 @@ const BSIMVerify: React.FC<Props> = ({ bottomSheetRef, bsimEvent, onClose, onRet
           <Image style={styles.bsimImg} source={BSIMCardWallet} />
           <View style={{ flex: 1 }}>
             <Text style={(styles.tip, { color: colors.textPrimary })}>
-              {bsimEvent.type === BSIMEventTypesName.ERROR ? bsimEvent.message : 'BSIM Card is signing'}
+              {bsimEvent.type === BSIMEventTypesName.ERROR ? bsimEvent.message : 'Communicating with BSIM Card...'}
             </Text>
           </View>
         </View>
 
-        {bsimEvent.type !== BSIMEventTypesName.ERROR && <Button style={styles.btnLoading} loading size="small" />}
-        {bsimEvent.type === BSIMEventTypesName.ERROR && (
-          <View style={styles.btnArea}>
-            <Button style={styles.btnLoading} size="small" square Icon={ArrowLeft} onPress={() => bottomSheetRef.current?.close()} />
-            <Button style={styles.btnRetry} size="small" onPress={onRetry}>
-              Retry
-            </Button>
-          </View>
-        )}
+        <View style={styles.btnArea}>
+          <Button size="small" square Icon={ArrowLeft} onPress={() => bottomSheetRef.current?.close()} />
+          <Button style={styles.btnRetry} size="small" onPress={onRetry} loading={bsimEvent.type !== BSIMEventTypesName.ERROR}>
+            Retry
+          </Button>
+        </View>
       </View>
     </BottomSheet>
   );
@@ -78,9 +75,6 @@ const styles = StyleSheet.create({
   bsimImg: {
     width: 60,
     height: 40,
-  },
-  btnLoading: {
-    marginTop: 'auto',
   },
   btnArea: {
     marginTop: 'auto',

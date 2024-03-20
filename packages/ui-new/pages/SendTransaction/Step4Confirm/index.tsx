@@ -141,7 +141,7 @@ const SendTransactionStep4Confirm: React.FC<SendTransactionScreenProps<typeof Se
 
   const [bsimEvent, setBSIMEvent] = useState<BSIMEvent | null>(null);
   const bsimCancelRef = useRef<() => void>(() => {});
-  const handleSend = useCallback(async () => {
+  const _handleSend = useCallback(async () => {
     setBSIMEvent(null);
     bsimCancelRef.current?.();
 
@@ -171,9 +171,10 @@ const SendTransactionStep4Confirm: React.FC<SendTransactionScreenProps<typeof Se
           // sendTransaction has from field, but it is readonly, and it is only have by tx is signed otherwise it is null, so we need to pass the from address to signTransaction
           const [txRawPromise, cancel] = await plugins.BSIM.signTransaction(currentAddressValue, tx);
           bsimCancelRef.current = cancel;
+          console.log(123)
           txRaw = await txRawPromise;
+          console.log('txRaw', txRaw)
         } catch (bsimError) {
-          console.log(bsimError);
           const code = (bsimError as { code: string })?.code;
           const message = (bsimError as { message: string })?.message;
           if (code) {
@@ -235,6 +236,8 @@ const SendTransactionStep4Confirm: React.FC<SendTransactionScreenProps<typeof Se
     }
   }, [gasInfo, currentVault?.id, currentNetwork?.id]);
 
+  const { inAsync: inSending, execAsync: handleSend } = useInAsync(_handleSend);
+
   return (
     <>
       <BackupBottomSheet showTitle="Transaction Confirm" onClose={navigation.goBack}>
@@ -291,17 +294,17 @@ const SendTransactionStep4Confirm: React.FC<SendTransactionScreenProps<typeof Se
               style={styles.btn}
               size="small"
               onPress={() => navigation.dispatch(CommonActions.reset({ index: 0, routes: [{ name: HomeStackName }] }))}
-              disabled={inSend}
+              disabled={inSending}
             >
               Cancel
             </Button>
-            <Button style={styles.btn} size="small" disabled={!gasInfo} onPress={handleSend}>
+            <Button style={styles.btn} size="small" disabled={!gasInfo} onPress={handleSend} loading={inSending}>
               Send
             </Button>
           </View>
         </BottomSheetScrollView>
       </BackupBottomSheet>
-      {bsimEvent?.type === BSIMEventTypesName.ERROR && (
+      {bsimEvent && (
         <BSIMVerify
           bottomSheetRef={BSIMVerifyRef}
           bsimEvent={bsimEvent}
