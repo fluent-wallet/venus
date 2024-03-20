@@ -113,7 +113,7 @@ const BottomSheet = forwardRef<BottomSheetModal, Props>(
 );
 
 export const snapPoints = {
-  large: [`${((clamp(screenHeight - 124, 628, screenHeight - 40) / screenHeight) * 100).toFixed(2)}%`] as string[],
+  large: [`${((clamp(screenHeight - 100, 628, screenHeight - 40) / screenHeight) * 100).toFixed(2)}%`] as string[],
 } as const;
 
 export default BottomSheet;

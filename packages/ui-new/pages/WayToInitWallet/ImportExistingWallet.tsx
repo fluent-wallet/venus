@@ -108,6 +108,7 @@ const ImportExistingWallet: React.FC<Props> = ({ bottomSheetRef, onSuccessConfir
         <BottomSheetTextInput
           ref={textInputRef as any}
           style={[styles.input, { color: colors.textPrimary }]}
+          placeholderTextColor={colors.textSecondary}
           testID="existingWalletInput"
           underlineColorAndroid="transparent"
           secureTextEntry={true}

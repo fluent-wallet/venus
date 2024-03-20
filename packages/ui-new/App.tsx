@@ -21,6 +21,7 @@ const App: React.FC = () => {
   const systemMode = useColorScheme();
   const innerMode = useMode();
   const mode = useMemo(() => (innerMode === 'system' ? (systemMode === 'dark' ? 'dark' : 'light') : innerMode), [innerMode, systemMode]);
+  
   const theme = useMemo(
     () => ({
       mode,

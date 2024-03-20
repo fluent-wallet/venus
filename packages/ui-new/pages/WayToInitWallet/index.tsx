@@ -53,7 +53,15 @@ const WayToInitWallet: React.FC<StackScreenProps<typeof WayToInitWalletStackName
             <Image style={styles.img} source={Img} contentFit="contain" />
             <Image style={styles.welcomeSwiftShield} source={mode === 'dark' ? WelcomeSwiftShieldDark : WelcomeSwiftShieldLight} contentFit="contain" />
 
-            <Button testID="connectBSIMWallet" textAlign="left" Icon={ArrowRight} style={styles.btn} onPress={handleConnectBSIMCard} loading={inConnecting}>
+            <Button
+              testID="connectBSIMWallet"
+              textAlign="left"
+              Icon={ArrowRight}
+              style={styles.btn}
+              onPress={handleConnectBSIMCard}
+              loading={inConnecting}
+              mode="dark"
+            >
               Connect BSIM Wallet
             </Button>
 
@@ -64,11 +72,12 @@ const WayToInitWallet: React.FC<StackScreenProps<typeof WayToInitWalletStackName
               textAlign="left"
               style={styles.btn}
               onPress={() => navigation.navigate(BiometricsWayStackName, { type: 'createNewWallet' })}
+              mode="dark"
             >
               Create new wallet
             </Button>
 
-            <Button testID="importExistingWallet" textAlign="left" style={styles.btnLast} onPress={() => bottomSheetRef.current?.expand()}>
+            <Button testID="importExistingWallet" textAlign="left" style={styles.btnLast} onPress={() => bottomSheetRef.current?.expand()} mode="dark">
               Import existing wallet
             </Button>
           </SafeAreaView>

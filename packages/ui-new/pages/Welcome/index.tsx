@@ -33,6 +33,7 @@ const Welcome: React.FC<StackScreenProps<typeof WelcomeStackName>> = ({ navigati
             Icon={ArrowRight}
             style={styles.btn}
             onPress={() => navigation.dispatch(StackActions.replace(WayToInitWalletStackName))}
+            mode='dark'
           >
             Get Started
           </Button>

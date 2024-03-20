@@ -115,7 +115,7 @@ const SetAssetAmount: React.FC<Props> = ({ targetAddress, asset, nftItemDetail, 
           <>
             <View style={[styles.divider, { backgroundColor: colors.borderPrimary }]} />
             <Pressable
-              style={({ pressed }) => [styles.maxBtn, { backgroundColor: pressed ? colors.underlay : 'transparent' }]}
+              style={({ pressed }) => [styles.maxBtn, { backgroundColor: pressed ? colors.underlay : 'transparent', borderColor: colors.textPrimary }]}
               onPress={handleClickMax}
               disabled={inAsync}
             >
