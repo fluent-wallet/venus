@@ -1,21 +1,24 @@
 import React from 'react';
 import { StyleSheet } from 'react-native';
 import { useTheme } from '@react-navigation/native';
+import { useNavigation } from '@react-navigation/native';
 import { Image } from 'expo-image';
 import Button from '@components/Button';
 import Text from '@components/Text';
-import { useNavigation } from '@react-navigation/native';
+import { HomeStackName, ReceiveStackName, type StackScreenProps } from '@router/configs';
 import Img from '@assets/images/welcome-img.webp';
 
 const ReceiveFunds: React.FC = () => {
   const { colors } = useTheme();
-  const navigation = useNavigation();
+  const navigation = useNavigation<StackScreenProps<typeof HomeStackName>['navigation']>();
 
   return (
     <>
       <Image style={styles.img} source={Img} contentFit="contain" />
       <Text style={[styles.text, { color: colors.textSecondary }]}>Deposit tokens to your wallet</Text>
-      <Button testID="receiveFunds" style={styles.btn}>Receive</Button>
+      <Button testID="receiveFunds" style={styles.btn} onPress={() => navigation.navigate(ReceiveStackName)}>
+        Receive
+      </Button>
     </>
   );
 };
@@ -37,8 +40,8 @@ const styles = StyleSheet.create({
   },
   btn: {
     alignSelf: 'center',
-    width: 184
-  }
+    width: 184,
+  },
 });
 
 export default ReceiveFunds;

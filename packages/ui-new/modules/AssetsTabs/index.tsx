@@ -144,6 +144,7 @@ export const TabsContent: React.FC<Props> = ({ currentTab, setCurrentTab, pageVi
           {tab === 'Tokens' && index === currentTabIndex && (
             <TokensList
               showReceiveFunds={
+                type === 'Home' &&
                 currentNetwork?.networkType === NetworkType.Ethereum &&
                 (currentNetwork.chainId === CFX_ESPACE_MAINNET_CHAINID || currentNetwork.chainId === CFX_ESPACE_TESTNET_CHAINID)
               }
