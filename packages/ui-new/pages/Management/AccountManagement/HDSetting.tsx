@@ -47,7 +47,7 @@ const HDManagement: React.FC<StackScreenProps<typeof HDSettingStackName>> = ({ n
   const [inCalc, setInCalc] = useState<string | boolean>(true);
   const [inNext, setInNext] = useState(false);
   const [pageAccounts, setPageAccounts] = useState<Array<{ addressValue: string; index: number }>>(() => defaultPages);
-  const [chooseAccounts, setChooseAccounts] = useState<Array<{ index: number }>>([]);
+  const [chooseAccounts, setChooseAccounts] = useState<Array<{ addressValue: string; index: number }>>([]);
 
   useEffect(() => {
     const visibleAccounts = accounts.filter((account) => !account.hidden);
@@ -127,7 +127,6 @@ const HDManagement: React.FC<StackScreenProps<typeof HDSettingStackName>> = ({ n
       const _oldAccountsNeedShow = accounts.filter((account) => !!chooseAccounts.find((_account) => _account.index === account.index));
       const oldAccountsNeedHidden = await Promise.all(_oldAccountsNeedHidden.map((account) => queryAccountById(account.id)));
       const oldAccountsNeedShow = await Promise.all(_oldAccountsNeedShow.map((account) => queryAccountById(account.id)));
-
       await database.write(async () => {
         await database.batch(
           ...oldAccountsNeedHidden.map((account) => methods.prepareChangeAccountHidden({ account, hidden: true })),
@@ -139,7 +138,8 @@ const HDManagement: React.FC<StackScreenProps<typeof HDSettingStackName>> = ({ n
         newAccountsInChoose.map((account) =>
           methods.addAccount({
             accountGroup,
-            ...account,
+            index: account.index,
+            hexAddress: account.addressValue,
           }),
         ),
       );

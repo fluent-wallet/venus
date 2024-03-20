@@ -22,11 +22,14 @@ import { name as appName } from './app.json';
 import { ENABLE_WALLET_CONNECT_FEATURE } from './packages/ui/utils/features';
 import * as SplashScreen from 'expo-splash-screen';
 Decimal.set({ precision: 80 });
-
-LogBox.ignoreLogs(['Error: Invalid response']);
-LogBox.ignoreLogs(['Request timed out']);
-LogBox.ignoreLogs(['RCTBridge required dispatch_sync to load']);
-LogBox.ignoreLogs(['network does not support ENS']);
+LogBox.ignoreLogs([
+  'WebSocket connection failed for host',
+  'Socket stalled when trying to connect',
+  'Error: Invalid response',
+  'Request timed out',
+  'RCTBridge required dispatch_sync to load',
+  'network does not support ENS',
+]);
 
 // Prevent native splash screen from autohiding before App component declaration
 SplashScreen.preventAutoHideAsync()

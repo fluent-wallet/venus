@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useRef, useMemo, useEffect } from 'react';
-import { View, Pressable, FlatList, StyleSheet } from 'react-native';
+import { View, Pressable, StyleSheet } from 'react-native';
 import { useTheme } from '@react-navigation/native';
 import { showMessage } from 'react-native-flash-message';
 import methods from '@core/WalletCore/Methods';
@@ -9,7 +9,7 @@ import Text from '@components/Text';
 import TextInput from '@components/TextInput';
 import Checkbox from '@components/Checkbox';
 import Button from '@components/Button';
-import BottomSheet, { snapPoints, type BottomSheetMethods } from '@components/BottomSheet';
+import BottomSheet, { snapPoints, BottomSheetScrollView, type BottomSheetMethods } from '@components/BottomSheet';
 import { AccountItemView } from '@modules/AccountsList';
 import { GroupSettingStackName, HDSettingStackName, BackupStackName, BackupStep1StackName, type StackScreenProps } from '@router/configs';
 import ArrowRight from '@assets/icons/arrow-right2.svg';
@@ -130,11 +130,9 @@ const GroupConfig: React.FC<StackScreenProps<typeof GroupSettingStackName>> = ({
             <Text style={[styles.HDManageText, styles.management, { color: colors.textNotice }]}>Management</Text>
           </Pressable>
 
-          <FlatList
-            style={styles.accountsContainer}
-            data={accounts}
-            renderItem={({ item }) => <AccountItemView nickname={item.nickname} addressValue={item.addressValue} colors={colors} mode={mode} />}
-          />
+          <BottomSheetScrollView style={styles.accountsContainer}>
+            {accounts?.map((account) => <AccountItemView key={account.id} nickname={account.nickname} addressValue={account.addressValue} colors={colors} mode={mode} />)}
+          </BottomSheetScrollView>
 
           <Pressable
             style={({ pressed }) => [styles.row, styles.removeContainer, { backgroundColor: pressed ? colors.underlay : 'transparent' }]}

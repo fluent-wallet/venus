@@ -117,6 +117,7 @@ const AddAnotherWallet: React.FC<Props> = ({ navigation, bottomSheetRef }) => {
 
           <Pressable
             style={({ pressed }) => [accountListStyles.row, { backgroundColor: pressed ? colors.underlay : 'transparent' }]}
+            disabled={inCreating}
             onPress={() => importExistRef.current?.expand()}
           >
             {<Image style={accountListStyles.groupTypeImage} source={ExistWallet} />}
