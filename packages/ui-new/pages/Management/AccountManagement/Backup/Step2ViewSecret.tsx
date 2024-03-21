@@ -53,7 +53,7 @@ const BackupStep2ViewSecret: React.FC<BackupScreenProps<typeof BackupStep2StackN
   const { inAsync, execAsync: handleClickView } = useInAsync(_handleClickView);
 
   return (
-    <BackupBottomSheet onClose={navigation.goBack}>
+    <BackupBottomSheet>
       <Text style={[styles.largeText, styles.notice, { color: colors.textPrimary }]}>
         ✏️ Write Down Your {backupType === VaultType.HierarchicalDeterministic ? 'Seed Phrase' : 'Private Key'}
       </Text>

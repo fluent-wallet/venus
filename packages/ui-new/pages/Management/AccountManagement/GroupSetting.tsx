@@ -1,5 +1,5 @@
-import React, { useState, useCallback, useRef, useMemo, useEffect } from 'react';
-import { View, Pressable, StyleSheet } from 'react-native';
+import React, { useState, useCallback, useMemo, useEffect } from 'react';
+import { Pressable, StyleSheet } from 'react-native';
 import { useTheme } from '@react-navigation/native';
 import { showMessage } from 'react-native-flash-message';
 import methods from '@core/WalletCore/Methods';
@@ -9,7 +9,7 @@ import Text from '@components/Text';
 import TextInput from '@components/TextInput';
 import Checkbox from '@components/Checkbox';
 import Button from '@components/Button';
-import BottomSheet, { snapPoints, BottomSheetScrollView, type BottomSheetMethods } from '@components/BottomSheet';
+import BottomSheet, { snapPoints, BottomSheetView, BottomSheetScrollView } from '@components/BottomSheetNew';
 import { AccountItemView } from '@modules/AccountsList';
 import { GroupSettingStackName, HDSettingStackName, BackupStackName, BackupStep1StackName, type StackScreenProps } from '@router/configs';
 import ArrowRight from '@assets/icons/arrow-right2.svg';
@@ -36,7 +36,7 @@ const GroupConfig: React.FC<StackScreenProps<typeof GroupSettingStackName>> = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [accountGroup, accountGroupName]);
 
-  const deleteBottomSheetRef = useRef<BottomSheetMethods>(null!);
+  const [showDeleteBottomSheet, setShowDeleteBottomSheet] = useState(() => false);
 
   const handlePressDelete = useCallback(() => {
     if (!accounts || !accounts?.length) return;
@@ -48,11 +48,12 @@ const GroupConfig: React.FC<StackScreenProps<typeof GroupSettingStackName>> = ({
         type: 'warning',
       });
     } else {
-      deleteBottomSheetRef.current?.expand();
+      setShowDeleteBottomSheet(true);
     }
   }, [accounts]);
 
   const handleConfirmDelete = useCallback(async () => {
+    setShowDeleteBottomSheet(false);
     if (!vault) return;
     try {
       await plugins.Authentication.getPassword();
@@ -72,7 +73,6 @@ const GroupConfig: React.FC<StackScreenProps<typeof GroupSettingStackName>> = ({
         type: 'warning',
       });
     }
-    deleteBottomSheetRef.current?.dismiss();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [vault, navigation]);
 
@@ -95,8 +95,8 @@ const GroupConfig: React.FC<StackScreenProps<typeof GroupSettingStackName>> = ({
 
   return (
     <>
-      <BottomSheet snapPoints={snapPoints.large} index={0} isModal={false} onClose={() => navigation.goBack()}>
-        <View style={styles.container}>
+      <BottomSheet snapPoints={snapPoints.large} isRoute>
+        <BottomSheetView style={styles.container}>
           <Text style={[styles.title, styles.mainText, { color: colors.textPrimary }]}>{GroupTitle}</Text>
           <Text style={[styles.description, { color: colors.textSecondary }]}>Account Name</Text>
           <TextInput
@@ -131,7 +131,9 @@ const GroupConfig: React.FC<StackScreenProps<typeof GroupSettingStackName>> = ({
           </Pressable>
 
           <BottomSheetScrollView style={styles.accountsContainer}>
-            {accounts?.map((account) => <AccountItemView key={account.id} nickname={account.nickname} addressValue={account.addressValue} colors={colors} mode={mode} />)}
+            {accounts?.map((account) => (
+              <AccountItemView key={account.id} nickname={account.nickname} addressValue={account.addressValue} colors={colors} mode={mode} />
+            ))}
           </BottomSheetScrollView>
 
           <Pressable
@@ -145,9 +147,9 @@ const GroupConfig: React.FC<StackScreenProps<typeof GroupSettingStackName>> = ({
           <Button style={styles.btn} disabled={!accountGroupName || accountGroupName === accountGroup?.nickname} onPress={handleUpdateAccountGroupNickName}>
             OK
           </Button>
-        </View>
+        </BottomSheetView>
       </BottomSheet>
-      <DeleteConfirm bottomSheetRef={deleteBottomSheetRef} navigation={navigation} onConfirm={handleConfirmDelete} />
+      {showDeleteBottomSheet && <DeleteConfirm onConfirm={handleConfirmDelete} onClose={() => setShowDeleteBottomSheet(false)} />}
     </>
   );
 };

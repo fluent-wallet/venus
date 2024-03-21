@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useRef, type MutableRefObject } from 'react';
+import React, { useState, useCallback, useRef } from 'react';
 import { View, Pressable, StyleSheet } from 'react-native';
 import { useTheme } from '@react-navigation/native';
 import { showMessage } from 'react-native-flash-message';
@@ -7,7 +7,7 @@ import plugins from '@core/WalletCore/Plugins';
 import { useHasBSIMVaultCreated } from '@core/WalletCore/Plugins/ReactInject';
 import useInAsync from '@hooks/useInAsync';
 import Text from '@components/Text';
-import BottomSheet, { type BottomSheetMethods } from '@components/BottomSheet';
+import BottomSheet, { BottomSheetView, type BottomSheetMethods } from '@components/BottomSheetNew';
 import HourglassLoading from '@components/Loading/Hourglass';
 import { styles as accountListStyles } from '@modules/AccountsList';
 import { showNotFindBSIMCardMessage } from '@pages/WayToInitWallet';
@@ -21,11 +21,11 @@ import createVault from '@pages/InitWallet/createVaultWithRouterParams';
 
 interface Props {
   navigation: StackScreenProps<typeof AccountManagementStackName>['navigation'];
-  bottomSheetRef: MutableRefObject<BottomSheetMethods>;
 }
 
-const AddAnotherWallet: React.FC<Props> = ({ navigation, bottomSheetRef }) => {
+const AddAnotherWallet: React.FC<Props> = ({ navigation }) => {
   const { colors } = useTheme();
+  const bottomSheetRef = useRef<BottomSheetMethods>(null!);
   const importExistRef = useRef<BottomSheetMethods>(null!);
 
   const hasBSIMVaultCreated = useHasBSIMVaultCreated();
@@ -37,7 +37,6 @@ const AddAnotherWallet: React.FC<Props> = ({ navigation, bottomSheetRef }) => {
       await plugins.BSIM.getBSIMVersion();
       await new Promise((resolve) => setTimeout(resolve));
       if (await createVault({ type: 'connectBSIM' })) {
-        bottomSheetRef.current?.close();
         setTimeout(() => bottomSheetRef.current?.close(), 25);
         showMessage({
           message: 'Connect BSIM wallet success',
@@ -57,7 +56,6 @@ const AddAnotherWallet: React.FC<Props> = ({ navigation, bottomSheetRef }) => {
     navigation.setOptions({ gestureEnabled: false });
     await new Promise((resolve) => setTimeout(resolve));
     if (await createVault({ type: 'createNewWallet' })) {
-      bottomSheetRef.current?.close();
       setTimeout(() => bottomSheetRef.current?.close(), 25);
       showMessage({
         message: 'Add new wallet success',
@@ -74,7 +72,6 @@ const AddAnotherWallet: React.FC<Props> = ({ navigation, bottomSheetRef }) => {
     await new Promise((resolve) => setTimeout(() => resolve(null!), 20));
     const res = await createVault({ type: 'importExistWallet', value });
     if (res) {
-      bottomSheetRef.current?.close();
       setTimeout(() => bottomSheetRef.current?.close(), 50);
       showMessage({
         message: 'Import wallet success',
@@ -91,8 +88,8 @@ const AddAnotherWallet: React.FC<Props> = ({ navigation, bottomSheetRef }) => {
 
   return (
     <>
-      <BottomSheet ref={bottomSheetRef} snapPoints={snapPoints} isModal={false} onChange={(index) => setBottomSheetIndex(index)}>
-        <View style={styles.container}>
+      <BottomSheet ref={bottomSheetRef} snapPoints={snapPoints} isRoute onChange={(index) => setBottomSheetIndex(index)}>
+        <BottomSheetView style={styles.container}>
           {!hasBSIMVaultCreated && (
             <Pressable
               style={({ pressed }) => [accountListStyles.row, { backgroundColor: pressed ? colors.underlay : 'transparent' }]}
@@ -124,7 +121,7 @@ const AddAnotherWallet: React.FC<Props> = ({ navigation, bottomSheetRef }) => {
             <Text style={[accountListStyles.manageText, { color: colors.textPrimary }]}>Import existing wallet</Text>
             {inImporting && <HourglassLoading style={accountListStyles.addAccountLoading} />}
           </Pressable>
-        </View>
+        </BottomSheetView>
       </BottomSheet>
       {bottomSheetIndex === 0 && <ImportExistingWallet bottomSheetRef={importExistRef} onSuccessConfirm={handleImportExistWallet} isModal={false} />}
     </>

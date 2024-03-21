@@ -123,7 +123,7 @@ const SendTransactionStep1Receiver: React.FC<SendTransactionScreenProps<typeof S
           Next
         </Button>
       </BackupBottomSheet>
-      <ScanQRCode bottomSheetRefOuter={scanQRCodeRef} onConfirm={(ethURL) => setReceiver(ethURL?.target_address ?? '')} />
+      <ScanQRCode bottomSheetRef={scanQRCodeRef} onConfirm={(ethURL) => setReceiver(ethURL?.target_address ?? '')} />
     </>
   );
 };

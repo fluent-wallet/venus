@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useRef, type MutableRefObject, useEffect } from 'react';
+import React, { useState, useCallback, useRef, type RefObject } from 'react';
 import { useTheme, StackActions } from '@react-navigation/native';
 import { View, Linking, StyleSheet } from 'react-native';
 import { useCameraPermission, useCameraDevice, useCameraFormat, Camera, type Code } from 'react-native-vision-camera';
@@ -6,12 +6,12 @@ import { showMessage } from 'react-native-flash-message';
 import { BarCodeScanner } from 'expo-barcode-scanner';
 import { launchImageLibraryAsync } from 'expo-image-picker';
 import Decimal from 'decimal.js';
-import composeRef from '@cfx-kit/react-utils/dist/composeRef';
 import { parseUri } from '@walletconnect/utils';
 import { useCurrentNetwork, NetworkType, getAssetsTokenList, AssetType } from '@core/WalletCore/Plugins/ReactInject';
 import methods from '@core/WalletCore/Methods';
 import plugins from '@core/WalletCore/Plugins';
-import BottomSheet, { snapPoints, type BottomSheetMethods } from '@components/BottomSheet';
+// import BottomSheet, { snapPoints, type BottomSheetMethods } from '@components/BottomSheet';
+import BottomSheet, { BottomSheetView, snapPoints, type BottomSheetMethods } from '@components/BottomSheetNew';
 import Text from '@components/Text';
 import Button from '@components/Button';
 import {
@@ -29,14 +29,13 @@ import ScanBorder from '@assets/icons/scan-border.svg';
 // has onConfirm props means open in SendTransaction with local modal way.
 interface Props {
   onConfirm?: (ethUrl: ETHURL) => void;
-  bottomSheetRefOuter?: MutableRefObject<BottomSheetMethods>;
+  bottomSheetRef?: RefObject<BottomSheetMethods>;
   navigation?: StackScreenProps<typeof ScanQRCodeStackName>['navigation'];
 }
 
 const scanAreaWidth = 220;
-const ScanQrCode: React.FC<Props> = ({ navigation, bottomSheetRefOuter, onConfirm }) => {
+const ScanQrCode: React.FC<Props> = ({ navigation, bottomSheetRef, onConfirm }) => {
   const { colors } = useTheme();
-  const bottomSheetRef = useRef<BottomSheetMethods>(null!);
   const currentNetwork = useCurrentNetwork()!;
 
   const camera = useRef<Camera>(null);
@@ -51,7 +50,7 @@ const ScanQrCode: React.FC<Props> = ({ navigation, bottomSheetRefOuter, onConfir
     async (ethUrl: ETHURL) => {
       if (onConfirm) {
         onConfirm(ethUrl);
-        bottomSheetRef.current?.close();
+        bottomSheetRef?.current?.close();
         return;
       } else if (navigation) {
         if (
@@ -203,33 +202,16 @@ const ScanQrCode: React.FC<Props> = ({ navigation, bottomSheetRefOuter, onConfir
     }
   }, []);
 
-  const handleOnChange = useCallback((index: number) => {
-    if (index === 0) {
-      setScanStatus('Pending');
-      if (!hasPermission) {
-        requestCameraPermission();
-      }
-    }
-  }, []);
-
-  useEffect(() => {
-    if (!onConfirm) {
-      if (!hasPermission) {
-        requestCameraPermission();
-      }
+  const handleOnOpen = useCallback(() => {
+    setScanStatus('Pending');
+    if (!hasPermission) {
+      requestCameraPermission();
     }
   }, []);
 
   return (
-    <BottomSheet
-      ref={bottomSheetRefOuter ? composeRef([bottomSheetRef, bottomSheetRefOuter]) : bottomSheetRef}
-      snapPoints={snapPoints.large}
-      index={!onConfirm ? 0 : undefined}
-      isModal={!!onConfirm}
-      onChange={!onConfirm ? undefined : handleOnChange}
-      onClose={!onConfirm ? navigation?.goBack : undefined}
-    >
-      <View style={styles.container}>
+    <BottomSheet ref={bottomSheetRef} snapPoints={snapPoints.large} isRoute={!onConfirm} onOpen={handleOnOpen}>
+      <BottomSheetView style={styles.container}>
         <Text style={[styles.title, { color: colors.textPrimary }]}>Scan</Text>
         {hasPermission && (
           <>
@@ -275,7 +257,7 @@ const ScanQrCode: React.FC<Props> = ({ navigation, bottomSheetRefOuter, onConfir
                   Unable to scan. Please <Text style={{ color: colors.down }}>open Camera</Text> in the system permission.
                 </Text>
                 <View style={styles.btnArea}>
-                  <Button style={styles.btn} onPress={() => (!onConfirm ? bottomSheetRef.current?.close() : bottomSheetRef.current?.dismiss())}>
+                  <Button style={styles.btn} onPress={() => (bottomSheetRef?.current ? bottomSheetRef.current.close() : navigation?.goBack())}>
                     Dismiss
                   </Button>
                   <Button
@@ -291,7 +273,7 @@ const ScanQrCode: React.FC<Props> = ({ navigation, bottomSheetRefOuter, onConfir
             )}
           </>
         )}
-      </View>
+      </BottomSheetView>
     </BottomSheet>
   );
 };

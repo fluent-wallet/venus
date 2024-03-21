@@ -15,10 +15,14 @@ import AccountSetting from '@pages/Management/AccountManagement/AccountSetting';
 import GroupSetting from '@pages/Management/AccountManagement/GroupSetting';
 import HDSetting from '@pages/Management/AccountManagement/HDSetting';
 import Backup from '@pages/Management/AccountManagement/Backup';
+import AddAnotherWallet from '@pages/Management/AccountManagement/AddAnotherWallet';
+import EraseAllWallet from '@pages/Management/AccountManagement/EraseAllWallet';
 import SendTransaction from '@pages/SendTransaction';
 import ScanQRCode from '@pages/ScanQRCode';
 import Receive from '@pages/Receive';
 import PasswordVerify from '@modules/PasswordVerify';
+import AccountSelector from '@modules/AccountSelector';
+import NetworkSelector from '@modules/NetworkSelector';
 import {
   WelcomeStackName,
   WayToInitWalletStackName,
@@ -32,9 +36,13 @@ import {
   HDSettingStackName,
   PasswordVerifyStackName,
   BackupStackName,
+  EraseAllWalletStackName,
+  AddAnotherWalletStackName,
   SendTransactionStackName,
   ScanQRCodeStackName,
   ReceiveStackName,
+  AccountSelectorStackName,
+  NetworkSelectorStackName,
   type RootStackParamList,
   type StackNavigation,
   SheetBottomOption,
@@ -86,11 +94,15 @@ const Router: React.FC = () => {
         <RootStack.Screen name={GroupSettingStackName} component={GroupSetting} options={SheetBottomOption} />
         <RootStack.Screen name={HDSettingStackName} component={HDSetting} options={SheetBottomOption} />
         <RootStack.Screen name={BackupStackName} component={Backup} options={SheetBottomOption} />
+        <RootStack.Screen name={EraseAllWalletStackName} component={EraseAllWallet} options={SheetBottomOption} />
+        <RootStack.Screen name={AddAnotherWalletStackName} component={AddAnotherWallet} options={SheetBottomOption} />
         <RootStack.Screen name={SendTransactionStackName} component={SendTransaction} options={SheetBottomOption} />
         <RootStack.Screen name={ScanQRCodeStackName} component={ScanQRCode} options={SheetBottomOption} />
         <RootStack.Screen name={ReceiveStackName} component={Receive} options={SheetBottomOption} />
         <RootStack.Screen name={SettingsStackName} component={Settings} />
         <RootStack.Screen name={PasswordVerifyStackName} component={PasswordVerify} options={SheetBottomOption} />
+        <RootStack.Screen name={AccountSelectorStackName} component={AccountSelector} options={SheetBottomOption} />
+        <RootStack.Screen name={NetworkSelectorStackName} component={NetworkSelector} options={SheetBottomOption} />
       </RootStack.Navigator>
     </View>
   );

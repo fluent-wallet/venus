@@ -19,6 +19,10 @@ export const PasswordVerifyStackName = 'PasswordVerify';
 export const SendTransactionStackName = 'SendTransaction';
 export const ScanQRCodeStackName = 'ScanQRCode';
 export const ReceiveStackName = 'Receive';
+export const AccountSelectorStackName = 'AccountSelector';
+export const NetworkSelectorStackName = 'NetworkSelector';
+export const EraseAllWalletStackName = 'EraseAllWallet';
+export const AddAnotherWalletStackName = 'AddAnotherWallet';
 
 export type RootStackParamList = {
   [WelcomeStackName]: undefined;
@@ -37,6 +41,10 @@ export type RootStackParamList = {
   [PasswordVerifyStackName]: undefined;
   [ScanQRCodeStackName]: undefined;
   [ReceiveStackName]: undefined;
+  [AccountSelectorStackName]: undefined;
+  [NetworkSelectorStackName]: undefined;
+  [EraseAllWalletStackName]: undefined;
+  [AddAnotherWalletStackName]: undefined;
 };
 
 export type StackScreenProps<T extends keyof RootStackParamList> = NativeStackScreenProps<RootStackParamList, T>;
@@ -68,7 +76,7 @@ export const SendTransactionStep3StackName = 'SendTransactionStep3';
 export const SendTransactionStep4StackName = 'SendTransactionStep4';
 export type SendTransactionParamList = {
   [SendTransactionStep1StackName]: undefined;
-  [SendTransactionStep2StackName]: { targetAddress: string; searchAddress?: string; };
+  [SendTransactionStep2StackName]: { targetAddress: string; searchAddress?: string };
   [SendTransactionStep3StackName]: { asset: AssetInfo; targetAddress: string; nftItemDetail?: NFTItemDetail };
   [SendTransactionStep4StackName]: { asset: AssetInfo; targetAddress: string; amount: string; nftItemDetail?: NFTItemDetail };
   // navigate to home

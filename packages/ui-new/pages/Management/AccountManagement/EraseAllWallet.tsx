@@ -1,4 +1,4 @@
-import React, { useCallback, type MutableRefObject } from 'react';
+import React, { useCallback, useRef } from 'react';
 import { View, StyleSheet } from 'react-native';
 import { useTheme } from '@react-navigation/native';
 import { showMessage } from 'react-native-flash-message';
@@ -7,23 +7,23 @@ import methods from '@core/WalletCore/Methods';
 import plugins from '@core/WalletCore/Plugins';
 import Text from '@components/Text';
 import Button from '@components/Button';
-import BottomSheet, { type BottomSheetMethods } from '@components/BottomSheet';
+import BottomSheet, { BottomSheetView, type BottomSheetMethods } from '@components/BottomSheetNew';
 import { screenHeight } from '@utils/deviceInfo';
 import { AccountManagementStackName, WelcomeStackName, type StackScreenProps } from '@router/configs';
 
 interface Props {
   navigation: StackScreenProps<typeof AccountManagementStackName>['navigation'];
-  bottomSheetRef: MutableRefObject<BottomSheetMethods>;
 }
 
-const EraseAllWallet: React.FC<Props> = ({ navigation, bottomSheetRef }) => {
+const EraseAllWallet: React.FC<Props> = ({ navigation }) => {
   const { colors } = useTheme();
+  const bottomSheetRef = useRef<BottomSheetMethods>(null!);
 
   const handleDelete = useCallback(async () => {
     try {
       await plugins.Authentication.getPassword();
+      bottomSheetRef.current?.close();
       navigation.navigate(WelcomeStackName);
-      bottomSheetRef.current.close();
       await new Promise((resolve) => setTimeout(resolve, 100));
       await methods.clearAccountData();
       await RNRestart.restart();
@@ -40,8 +40,8 @@ const EraseAllWallet: React.FC<Props> = ({ navigation, bottomSheetRef }) => {
   }, []);
 
   return (
-    <BottomSheet ref={bottomSheetRef} snapPoints={snapPoints} isModal={false}>
-      <View style={styles.container}>
+    <BottomSheet ref={bottomSheetRef} snapPoints={snapPoints} isRoute>
+      <BottomSheetView style={styles.container}>
         <Text style={[styles.title, { color: colors.textPrimary }]}>⚠️ Confirm to clear{'\n'}account data?</Text>
         <Text style={[styles.description, { color: colors.textSecondary }]}>
           Account data will be cleared.{'\n'}
@@ -59,7 +59,7 @@ const EraseAllWallet: React.FC<Props> = ({ navigation, bottomSheetRef }) => {
             ⚠️ Delete
           </Button>
         </View>
-      </View>
+      </BottomSheetView>
     </BottomSheet>
   );
 };

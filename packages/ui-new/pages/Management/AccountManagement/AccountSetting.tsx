@@ -1,5 +1,5 @@
-import React, { useState, useCallback, useRef, useEffect } from 'react';
-import { Pressable, View, StyleSheet } from 'react-native';
+import React, { useState, useCallback, useEffect } from 'react';
+import { Pressable, StyleSheet } from 'react-native';
 import { useTheme } from '@react-navigation/native';
 import { showMessage } from 'react-native-flash-message';
 import methods from '@core/WalletCore/Methods';
@@ -10,7 +10,7 @@ import Text from '@components/Text';
 import TextInput from '@components/TextInput';
 import Checkbox from '@components/Checkbox';
 import Button from '@components/Button';
-import BottomSheet, { snapPoints, type BottomSheetMethods } from '@components/BottomSheet';
+import BottomSheet, { BottomSheetView, snapPoints } from '@components/BottomSheetNew';
 import { AccountSettingStackName, BackupStackName, BackupStep1StackName, type StackScreenProps } from '@router/configs';
 import ArrowRight from '@assets/icons/arrow-right2.svg';
 import Delete from '@assets/icons/delete.svg';
@@ -34,7 +34,7 @@ const AccountConfig: React.FC<StackScreenProps<typeof AccountSettingStackName>> 
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [account, accountName]);
 
-  const deleteBottomSheetRef = useRef<BottomSheetMethods>(null!);
+  const [showDeleteBottomSheet, setShowDeleteBottomSheet] = useState(() => false);
 
   const handlePressDelete = useCallback(() => {
     if (!account) return;
@@ -44,11 +44,13 @@ const AccountConfig: React.FC<StackScreenProps<typeof AccountSettingStackName>> 
         type: 'warning',
       });
     } else {
-      deleteBottomSheetRef.current?.expand();
+      console.log('handlePressDelete')
+      setShowDeleteBottomSheet(true);
     }
   }, [account]);
 
   const handleConfirmDelete = useCallback(async () => {
+    setShowDeleteBottomSheet(false);
     if (!account || !vault) return;
     try {
       if (vault.isGroup) {
@@ -72,14 +74,13 @@ const AccountConfig: React.FC<StackScreenProps<typeof AccountSettingStackName>> 
         type: 'warning',
       });
     }
-    deleteBottomSheetRef.current?.dismiss();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [account, vault, navigation]);
 
   return (
     <>
-      <BottomSheet snapPoints={snapPoints.large} index={0} isModal={false} onClose={() => navigation.goBack()}>
-        <View style={styles.container}>
+      <BottomSheet snapPoints={snapPoints.large} isRoute>
+        <BottomSheetView style={styles.container}>
           <Text style={[styles.title, styles.mainText, { color: colors.textPrimary }]}>Account</Text>
           <Text style={[styles.description, { color: colors.textSecondary }]}>Address</Text>
           <Text style={[styles.address, styles.mainText, { color: colors.textPrimary, opacity: addressValue ? 1 : 0 }]}>{addressValue || zeroAddress}</Text>
@@ -115,9 +116,9 @@ const AccountConfig: React.FC<StackScreenProps<typeof AccountSettingStackName>> 
           <Button style={styles.btn} disabled={!accountName || accountName === account?.nickname} onPress={handleUpdateAccountNickName}>
             OK
           </Button>
-        </View>
+        </BottomSheetView>
       </BottomSheet>
-      <DeleteConfirm bottomSheetRef={deleteBottomSheetRef} navigation={navigation} onConfirm={handleConfirmDelete} />
+      {showDeleteBottomSheet && <DeleteConfirm onConfirm={handleConfirmDelete} onClose={() => setShowDeleteBottomSheet(false)} />}
     </>
   );
 };
