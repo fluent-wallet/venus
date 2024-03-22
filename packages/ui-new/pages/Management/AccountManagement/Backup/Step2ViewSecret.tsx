@@ -100,11 +100,20 @@ const BackupStep2ViewSecret: React.FC<BackupScreenProps<typeof BackupStep2StackN
         )}
         {secretData && backupType === VaultType.HierarchicalDeterministic && (
           <View style={styles.phraseContainer}>
-            {phrases?.map((phrase, index) => (
-              <Text key={index} style={[styles.phrase, { color: colors.textPrimary, backgroundColor: colors.bgPrimary }]}>
-                {index + 1}. {phrase}
-              </Text>
-            ))}
+            <View style={styles.phraseColumn}>
+              {phrases?.slice(0, 6).map((phrase, index) => (
+                <Text key={index} style={[styles.phrase, { color: colors.textPrimary, backgroundColor: colors.bgPrimary }]}>
+                  {index + 1}. {phrase}
+                </Text>
+              ))}
+            </View>
+            <View style={styles.phraseColumn}>
+              {phrases?.slice(6).map((phrase, index) => (
+                <Text key={index} style={[styles.phrase, { color: colors.textPrimary, backgroundColor: colors.bgPrimary }]}>
+                  {index + 7}. {phrase}
+                </Text>
+              ))}
+            </View>
           </View>
         )}
       </View>
@@ -161,10 +170,10 @@ const styles = StyleSheet.create({
     marginTop: isSmallDevice ? 8 : 16,
     position: 'relative',
     marginHorizontal: 24,
-    height: 316,
     borderWidth: 1,
     borderRadius: 6,
     overflow: 'hidden',
+    minHeight: 316,
   },
   qrcode: {
     alignSelf: 'center',
@@ -185,13 +194,17 @@ const styles = StyleSheet.create({
   phraseContainer: {
     margin: 16,
     display: 'flex',
+    flexDirection: 'row',
+    gap: 10,
+  },
+  phraseColumn: {
+    width: '50%',
+    flexShrink: 1,
+    display: 'flex',
     flexDirection: 'column',
-    flexWrap: 'wrap',
-    gap: 8,
+    gap: 10,
   },
   phrase: {
-    flexShrink: 1,
-    width: '50%',
     lineHeight: 40,
     paddingLeft: 16,
     borderRadius: 6,
