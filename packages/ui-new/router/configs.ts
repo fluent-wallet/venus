@@ -19,8 +19,6 @@ export const PasswordVerifyStackName = 'PasswordVerify';
 export const SendTransactionStackName = 'SendTransaction';
 export const ScanQRCodeStackName = 'ScanQRCode';
 export const ReceiveStackName = 'Receive';
-export const AccountSelectorStackName = 'AccountSelector';
-export const NetworkSelectorStackName = 'NetworkSelector';
 export const EraseAllWalletStackName = 'EraseAllWallet';
 export const AddAnotherWalletStackName = 'AddAnotherWallet';
 
@@ -41,8 +39,6 @@ export type RootStackParamList = {
   [PasswordVerifyStackName]: undefined;
   [ScanQRCodeStackName]: undefined;
   [ReceiveStackName]: undefined;
-  [AccountSelectorStackName]: undefined;
-  [NetworkSelectorStackName]: undefined;
   [EraseAllWalletStackName]: undefined;
   [AddAnotherWalletStackName]: undefined;
 };

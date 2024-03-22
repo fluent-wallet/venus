@@ -1,7 +1,6 @@
-import React, { useCallback, useRef, type RefObject } from 'react';
+import React, { useCallback, useRef } from 'react';
 import { View, Pressable, StyleSheet } from 'react-native';
 import { useTheme, useNavigation } from '@react-navigation/native';
-import composeRef from '@cfx-kit/react-utils/dist/composeRef';
 import AccountsList from '@modules/AccountsList';
 import Text from '@components/Text';
 import BottomSheet, { BottomSheetView, snapPoints, type BottomSheetMethods } from '@components/BottomSheet';
@@ -9,10 +8,10 @@ import { AccountManagementStackName, HomeStackName, type StackScreenProps } from
 export { type BottomSheetMethods };
 
 interface Props {
-  selectorRef?: RefObject<BottomSheetMethods>;
+  onClose: () => void;
 }
 
-const AccountSelector: React.FC<Props> = ({ selectorRef }) => {
+const AccountSelector: React.FC<Props> = ({ onClose }) => {
   const { colors } = useTheme();
   const navigation = useNavigation<StackScreenProps<typeof HomeStackName>['navigation']>();
 
@@ -22,10 +21,10 @@ const AccountSelector: React.FC<Props> = ({ selectorRef }) => {
   }, []);
 
   return (
-    <BottomSheet ref={composeRef([bottomSheetRef, ...(selectorRef ? [selectorRef] : [])])} snapPoints={snapPoints.percent75} isRoute={!selectorRef}>
+    <BottomSheet ref={bottomSheetRef} snapPoints={snapPoints.percent75} index={0} onClose={onClose}>
       <BottomSheetView style={styles.container}>
         <View style={styles.header}>
-          <Text style={[styles.title, { color: colors.textPrimary }]}>Account</Text>
+          <Text style={[styles.title, { color: colors.textPrimary }]}>Account1</Text>
           <Pressable
             style={({ pressed }) => [styles.edit, { borderColor: colors.borderThird, backgroundColor: pressed ? colors.underlay : 'transparent' }]}
             onPress={() => navigation.navigate(AccountManagementStackName)}

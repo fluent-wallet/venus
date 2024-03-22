@@ -21,8 +21,6 @@ import SendTransaction from '@pages/SendTransaction';
 import ScanQRCode from '@pages/ScanQRCode';
 import Receive from '@pages/Receive';
 import PasswordVerify from '@modules/PasswordVerify';
-import AccountSelector from '@modules/AccountSelector';
-import NetworkSelector from '@modules/NetworkSelector';
 import {
   WelcomeStackName,
   WayToInitWalletStackName,
@@ -41,8 +39,6 @@ import {
   SendTransactionStackName,
   ScanQRCodeStackName,
   ReceiveStackName,
-  AccountSelectorStackName,
-  NetworkSelectorStackName,
   type RootStackParamList,
   type StackNavigation,
   SheetBottomOption,
@@ -101,8 +97,6 @@ const Router: React.FC = () => {
         <RootStack.Screen name={ReceiveStackName} component={Receive} options={SheetBottomOption} />
         <RootStack.Screen name={SettingsStackName} component={Settings} />
         <RootStack.Screen name={PasswordVerifyStackName} component={PasswordVerify} options={SheetBottomOption} />
-        <RootStack.Screen name={AccountSelectorStackName} component={AccountSelector} options={SheetBottomOption} />
-        <RootStack.Screen name={NetworkSelectorStackName} component={NetworkSelector} options={SheetBottomOption} />
       </RootStack.Navigator>
     </View>
   );

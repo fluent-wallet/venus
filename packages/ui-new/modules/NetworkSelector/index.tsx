@@ -1,17 +1,16 @@
 import React, { useCallback, useRef, type RefObject } from 'react';
 import { View, Pressable, StyleSheet } from 'react-native';
 import { useTheme } from '@react-navigation/native';
-import composeRef from '@cfx-kit/react-utils/dist/composeRef';
 import NetworksList from '@modules/NetworksList';
 import Text from '@components/Text';
 import BottomSheet, { BottomSheetView, snapPoints, type BottomSheetMethods } from '@components/BottomSheet';
 export { type BottomSheetMethods };
 
 interface Props {
-  selectorRef?: RefObject<BottomSheetMethods>;
+  onClose: () => void;
 }
 
-const NetworkSelector: React.FC<Props> = ({ selectorRef }) => {
+const NetworkSelector: React.FC<Props> = ({ onClose }) => {
   const { colors } = useTheme();
 
   const bottomSheetRef = useRef<BottomSheetMethods>(null!);
@@ -20,7 +19,7 @@ const NetworkSelector: React.FC<Props> = ({ selectorRef }) => {
   }, []);
 
   return (
-    <BottomSheet ref={composeRef([bottomSheetRef, ...(selectorRef ? [selectorRef] : [])])} snapPoints={snapPoints.percent75} isRoute={!selectorRef}>
+    <BottomSheet ref={bottomSheetRef} snapPoints={snapPoints.percent75} index={0} onClose={onClose}>
       <BottomSheetView style={styles.container}>
         <View style={styles.header}>
           <Text style={[styles.title, { color: colors.textPrimary }]}>Network</Text>
