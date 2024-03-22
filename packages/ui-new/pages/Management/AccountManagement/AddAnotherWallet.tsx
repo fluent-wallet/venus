@@ -123,7 +123,7 @@ const AddAnotherWallet: React.FC<Props> = ({ navigation }) => {
           </Pressable>
         </BottomSheetView>
       </BottomSheet>
-      {bottomSheetIndex === 0 && <ImportExistingWallet bottomSheetRef={importExistRef} onSuccessConfirm={handleImportExistWallet} isModal={false} />}
+      {bottomSheetIndex === 0 && <ImportExistingWallet bottomSheetRef={importExistRef} onSuccessConfirm={handleImportExistWallet} />}
     </>
   );
 };

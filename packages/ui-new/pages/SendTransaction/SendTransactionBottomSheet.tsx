@@ -1,7 +1,7 @@
 import React, { forwardRef, type ComponentProps } from 'react';
 import { useTheme } from '@react-navigation/native';
-import { Text, View, StyleSheet } from 'react-native';
-import BottomSheet, { snapPoints as defaultSnapPoints, type BottomSheetMethods } from '@components/BottomSheet';
+import { Text, StyleSheet } from 'react-native';
+import BottomSheet, { BottomSheetView, snapPoints as defaultSnapPoints, type BottomSheetMethods } from '@components/BottomSheet';
 
 interface Props extends ComponentProps<typeof BottomSheet> {
   children: React.ReactNode;
@@ -13,10 +13,10 @@ const SendTransactionBottomSheet = forwardRef<BottomSheetMethods, Props>(({ chil
 
   return (
     <BottomSheet ref={ref} snapPoints={snapPoints || defaultSnapPoints.large} isRoute {...props}>
-      <View style={styles.container}>
+      <BottomSheetView style={styles.container}>
         {showTitle && <Text style={[styles.title, { color: colors.textPrimary }]}>{typeof showTitle === 'string' ? showTitle : 'Send To'}</Text>}
         {children}
-      </View>
+      </BottomSheetView>
     </BottomSheet>
   );
 });
