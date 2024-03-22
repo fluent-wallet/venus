@@ -21,7 +21,7 @@ import { shortenAddress } from '@core/utils/address';
 import Text from '@components/Text';
 import Checkbox from '@components/Checkbox';
 import Button from '@components/Button';
-import BottomSheet, { snapPoints } from '@components/BottomSheet';
+import BottomSheet, { BottomSheetView, snapPoints, type BottomSheetMethods } from '@components/BottomSheet';
 import HourglassLoading from '@components/Loading/Hourglass';
 import { HDSettingStackName, type StackScreenProps } from '@router/configs';
 import { isSmallDevice } from '@utils/deviceInfo';
@@ -32,6 +32,7 @@ const defaultPages = Array.from({ length: countPerPage }).map((_, index) => ({ a
 
 const HDManagement: React.FC<StackScreenProps<typeof HDSettingStackName>> = ({ navigation, route }) => {
   const { colors } = useTheme();
+  const bottomSheetRef = useRef<BottomSheetMethods>(null!);
 
   const accountGroup = useAccountGroupFromId(route.params.groupId);
   const accounts = useAccountsOfGroupInManage(route.params.groupId);
@@ -47,7 +48,7 @@ const HDManagement: React.FC<StackScreenProps<typeof HDSettingStackName>> = ({ n
   const [inCalc, setInCalc] = useState<string | boolean>(true);
   const [inNext, setInNext] = useState(false);
   const [pageAccounts, setPageAccounts] = useState<Array<{ addressValue: string; index: number }>>(() => defaultPages);
-  const [chooseAccounts, setChooseAccounts] = useState<Array<{ index: number }>>([]);
+  const [chooseAccounts, setChooseAccounts] = useState<Array<{ addressValue: string; index: number }>>([]);
 
   useEffect(() => {
     const visibleAccounts = accounts.filter((account) => !account.hidden);
@@ -127,7 +128,6 @@ const HDManagement: React.FC<StackScreenProps<typeof HDSettingStackName>> = ({ n
       const _oldAccountsNeedShow = accounts.filter((account) => !!chooseAccounts.find((_account) => _account.index === account.index));
       const oldAccountsNeedHidden = await Promise.all(_oldAccountsNeedHidden.map((account) => queryAccountById(account.id)));
       const oldAccountsNeedShow = await Promise.all(_oldAccountsNeedShow.map((account) => queryAccountById(account.id)));
-
       await database.write(async () => {
         await database.batch(
           ...oldAccountsNeedHidden.map((account) => methods.prepareChangeAccountHidden({ account, hidden: true })),
@@ -139,21 +139,22 @@ const HDManagement: React.FC<StackScreenProps<typeof HDSettingStackName>> = ({ n
         newAccountsInChoose.map((account) =>
           methods.addAccount({
             accountGroup,
-            ...account,
+            index: account.index,
+            hexAddress: account.addressValue,
           }),
         ),
       );
 
       setInNext(false);
-      navigation.goBack();
+      bottomSheetRef.current?.close();
     } catch (err) {
       console.error(err);
     }
   };
 
   return (
-    <BottomSheet snapPoints={snapPoints.large} index={0} isModal={false} onClose={() => navigation.goBack()}>
-      <View style={styles.container}>
+    <BottomSheet ref={bottomSheetRef} snapPoints={snapPoints.large} isRoute>
+      <BottomSheetView style={styles.container}>
         <Text style={[styles.title, styles.mainText, { color: colors.textPrimary }]}>Select HD Wallets</Text>
         <Text style={[styles.description, { color: colors.textSecondary }]}>HD Path Type</Text>
         <Text style={[styles.contentText, styles.mainText, { color: colors.textPrimary }]}>BIP44</Text>
@@ -258,7 +259,7 @@ const HDManagement: React.FC<StackScreenProps<typeof HDSettingStackName>> = ({ n
         <Button style={styles.btn} disabled={chooseAccounts.length === 0} onPress={handleClickNext} loading={inNext}>
           Next
         </Button>
-      </View>
+      </BottomSheetView>
     </BottomSheet>
   );
 };

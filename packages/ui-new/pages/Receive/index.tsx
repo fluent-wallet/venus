@@ -1,19 +1,16 @@
-import React, { useState, useCallback, useMemo, useRef } from 'react';
-import { useTheme, StackActions } from '@react-navigation/native';
-import { View, Linking, StyleSheet } from 'react-native';
+import React, { useState, useMemo } from 'react';
+import { useTheme } from '@react-navigation/native';
+import { View, StyleSheet } from 'react-native';
 import { showMessage } from 'react-native-flash-message';
 import Clipboard from '@react-native-clipboard/clipboard';
 import QRCode from 'react-native-qrcode-svg';
 import Decimal from 'decimal.js';
 import { useCurrentAccount, useCurrentNetwork, useCurrentAddressValue, NetworkType } from '@core/WalletCore/Plugins/ReactInject';
 import { type AssetInfo } from '@core/WalletCore/Plugins/AssetsTracker/types';
-import methods from '@core/WalletCore/Methods';
-import plugins from '@core/WalletCore/Plugins';
 import { ReceiveStackName, type StackScreenProps } from '@router/configs';
 import { AccountItemView } from '@modules/AccountsList';
 import BottomSheet, { snapPoints, BottomSheetScrollView, type BottomSheetMethods } from '@components/BottomSheet';
 import Text from '@components/Text';
-import Button from '@components/Button';
 import { Navigation } from '@pages/Home/Navigations';
 import { encodeETHURL } from '@utils/ETHURL';
 import { trimDecimalZeros } from '@core/utils/balance';
@@ -28,8 +25,7 @@ interface Props {
 
 const Receive: React.FC<Props> = ({ navigation }) => {
   const { colors, mode } = useTheme();
-  const bottomSheetRef = useRef<BottomSheetMethods>(null!);
-  const setAssetRef = useRef<BottomSheetMethods>(null!);
+  const [showSetAsset, setShowSetAsset] = useState(false);
 
   const currentAccount = useCurrentAccount()!;
   const currentNetwork = useCurrentNetwork()!;
@@ -61,7 +57,7 @@ const Receive: React.FC<Props> = ({ navigation }) => {
 
   return (
     <>
-      <BottomSheet ref={bottomSheetRef} snapPoints={snapPoints.large} index={0} isModal={false} onClose={() => navigation.goBack()}>
+      <BottomSheet snapPoints={snapPoints.large} isRoute>
         <BottomSheetScrollView style={styles.container}>
           <Text style={[styles.title, { color: colors.textPrimary }]}>Receive</Text>
           <Text style={[styles.tip, { color: colors.textPrimary }]}>Only send {currentNetwork?.name} network assets to this address.</Text>
@@ -101,22 +97,24 @@ const Receive: React.FC<Props> = ({ navigation }) => {
                 });
               }}
             />
-            <Navigation title="Set amount" Icon={PoundKey} onPress={() => setAssetRef.current?.present()} />
+            <Navigation title="Set amount" Icon={PoundKey} onPress={() => setShowSetAsset(true)} />
           </View>
         </BottomSheetScrollView>
       </BottomSheet>
-      <ReceiveSetAsset
-        selectedAsset={selectedAsset}
-        setSelectedAsset={setSelectedAsset}
-        amount={amount}
-        bottomSheetRef={setAssetRef}
-        onConfirm={({ asset, amount }) => {
-          setSelectedAsset(asset);
-          if (amount) {
-            setAmount(amount);
-          }
-        }}
-      />
+      {showSetAsset && (
+        <ReceiveSetAsset
+          selectedAsset={selectedAsset}
+          setSelectedAsset={setSelectedAsset}
+          amount={amount}
+          onConfirm={({ asset, amount }) => {
+            setSelectedAsset(asset);
+            if (amount) {
+              setAmount(amount);
+            }
+          }}
+          onClose={() => setShowSetAsset(false)}
+        />
+      )}
     </>
   );
 };

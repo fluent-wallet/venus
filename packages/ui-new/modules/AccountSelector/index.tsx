@@ -1,23 +1,29 @@
-import React, { type MutableRefObject } from 'react';
+import React, { useCallback, useRef, type RefObject } from 'react';
 import { View, Pressable, StyleSheet } from 'react-native';
 import { useTheme, useNavigation } from '@react-navigation/native';
+import composeRef from '@cfx-kit/react-utils/dist/composeRef';
 import AccountsList from '@modules/AccountsList';
 import Text from '@components/Text';
-import BottomSheet, { type BottomSheetMethods } from '@components/BottomSheet';
+import BottomSheet, { BottomSheetView, snapPoints, type BottomSheetMethods } from '@components/BottomSheet';
 import { AccountManagementStackName, HomeStackName, type StackScreenProps } from '@router/configs';
 export { type BottomSheetMethods };
 
 interface Props {
-  selectorRef: MutableRefObject<BottomSheetMethods>;
+  selectorRef?: RefObject<BottomSheetMethods>;
 }
 
 const AccountSelector: React.FC<Props> = ({ selectorRef }) => {
   const { colors } = useTheme();
   const navigation = useNavigation<StackScreenProps<typeof HomeStackName>['navigation']>();
 
+  const bottomSheetRef = useRef<BottomSheetMethods>(null!);
+  const handleSelect = useCallback(() => {
+    bottomSheetRef?.current?.close();
+  }, []);
+
   return (
-    <BottomSheet ref={selectorRef} snapPoints={snapPoints} isModal={false}>
-      <View style={styles.container}>
+    <BottomSheet ref={composeRef([bottomSheetRef, ...(selectorRef ? [selectorRef] : [])])} snapPoints={snapPoints.percent75} isRoute={!selectorRef}>
+      <BottomSheetView style={styles.container}>
         <View style={styles.header}>
           <Text style={[styles.title, { color: colors.textPrimary }]}>Account</Text>
           <Pressable
@@ -27,8 +33,8 @@ const AccountSelector: React.FC<Props> = ({ selectorRef }) => {
             <Text style={[styles.title, { color: colors.textPrimary }]}>⚙️ Edit</Text>
           </Pressable>
         </View>
-        <AccountsList type="selector" onPressAccount={() => selectorRef.current?.close()} />
-      </View>
+        <AccountsList type="selector" onPressAccount={handleSelect} />
+      </BottomSheetView>
     </BottomSheet>
   );
 };
@@ -36,7 +42,6 @@ const AccountSelector: React.FC<Props> = ({ selectorRef }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    height: 300,
   },
   header: {
     position: 'relative',
@@ -62,7 +67,5 @@ const styles = StyleSheet.create({
     right: 0,
   },
 });
-
-const snapPoints = ['75%'];
 
 export default AccountSelector;

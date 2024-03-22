@@ -15,7 +15,7 @@ import SetAssetAmount from './SetAssetAmount';
 const SendTransactionStep3Amount: React.FC<SendTransactionScreenProps<typeof SendTransactionStep3StackName>> = ({ navigation, route }) => {
   const { colors, mode } = useTheme();
   return (
-    <BackupBottomSheet onClose={navigation.goBack}>
+    <BackupBottomSheet>
       {route.params.nftItemDetail && (
         <>
           <Text style={[styles.text, styles.to, { color: colors.textSecondary }]}>Send</Text>

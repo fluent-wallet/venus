@@ -171,9 +171,9 @@ const SendTransactionStep4Confirm: React.FC<SendTransactionScreenProps<typeof Se
           // sendTransaction has from field, but it is readonly, and it is only have by tx is signed otherwise it is null, so we need to pass the from address to signTransaction
           const [txRawPromise, cancel] = await plugins.BSIM.signTransaction(currentAddressValue, tx);
           bsimCancelRef.current = cancel;
-          console.log(123)
+          console.log(123);
           txRaw = await txRawPromise;
-          console.log('txRaw', txRaw)
+          console.log('txRaw', txRaw);
         } catch (bsimError) {
           const code = (bsimError as { code: string })?.code;
           const message = (bsimError as { message: string })?.message;
@@ -240,7 +240,7 @@ const SendTransactionStep4Confirm: React.FC<SendTransactionScreenProps<typeof Se
 
   return (
     <>
-      <BackupBottomSheet showTitle="Transaction Confirm" onClose={navigation.goBack}>
+      <BackupBottomSheet showTitle="Transaction Confirm">
         <BottomSheetScrollView>
           <Text style={[styles.sendTitle, { color: colors.textPrimary }]}>↗️ Send</Text>
           {route.params.nftItemDetail && <NFT colors={colors} asset={route.params.asset} nftItemDetail={route.params.nftItemDetail} />}

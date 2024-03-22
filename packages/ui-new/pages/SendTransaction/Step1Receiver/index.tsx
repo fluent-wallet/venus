@@ -9,7 +9,6 @@ import TextInput from '@components/TextInput';
 import Button from '@components/Button';
 import Checkbox from '@components/Checkbox';
 import HourglassLoading from '@components/Loading/Hourglass';
-import { type BottomSheetMethods } from '@components/BottomSheet';
 import { SendTransactionStep1StackName, SendTransactionStep2StackName, type SendTransactionScreenProps } from '@router/configs';
 import { isDev } from '@utils/getEnv';
 import QrCode from '@assets/icons/qr-code.svg';
@@ -19,9 +18,15 @@ import ScanQRCode from '@pages/ScanQRCode';
 const SendTransactionStep1Receiver: React.FC<SendTransactionScreenProps<typeof SendTransactionStep1StackName>> = ({ navigation }) => {
   const { colors } = useTheme();
   const _currentNetwork = useCurrentNetwork();
-  const scanQRCodeRef = useRef<BottomSheetMethods>(null!);
+  const [showScanQRCode, setShowScanQRCode] = useState(false);
 
-  const [receiver, setReceiver] = useState(() => !isDev ? '' : (_currentNetwork?.networkType === NetworkType.Conflux ? 'cfxtest:aas7an99m9dbwm13p5mpe1xmc1b647743u00vwvmpn' : '0x102e0fb8a5ED6E0f0899C3ed9896cb8973aA29bB'));
+  const [receiver, setReceiver] = useState(() =>
+    !isDev
+      ? ''
+      : _currentNetwork?.networkType === NetworkType.Conflux
+        ? 'cfxtest:aas7an99m9dbwm13p5mpe1xmc1b647743u00vwvmpn'
+        : '0x102e0fb8a5ED6E0f0899C3ed9896cb8973aA29bB',
+  );
   const [inChecking, setInChecking] = useState(false);
   const [knowRisk, setKnowRist] = useState(false);
   const [checkRes, setCheckRes] = useState<null | AddressType | 'Invalid' | 'NetworkError'>(null);
@@ -64,7 +69,7 @@ const SendTransactionStep1Receiver: React.FC<SendTransactionScreenProps<typeof S
 
   return (
     <>
-      <BackupBottomSheet onClose={navigation.goBack}>
+      <BackupBottomSheet>
         <Text style={[styles.receiver, { color: colors.textSecondary }]}>Receiver</Text>
         <TextInput
           containerStyle={[styles.textinput, { borderColor: colors.borderFourth }]}
@@ -74,7 +79,7 @@ const SendTransactionStep1Receiver: React.FC<SendTransactionScreenProps<typeof S
           onChangeText={(newNickName) => setReceiver(newNickName?.trim())}
           isInBottomSheet
           SuffixIcon={!receiver ? QrCode : undefined}
-          onPressSuffixIcon={() => scanQRCodeRef.current?.present()}
+          onPressSuffixIcon={() => setShowScanQRCode(true)}
           showClear={!!receiver}
           placeholder="Enter an address or account name"
           multiline
@@ -118,12 +123,12 @@ const SendTransactionStep1Receiver: React.FC<SendTransactionScreenProps<typeof S
           style={styles.btn}
           onPress={() => navigation.navigate(SendTransactionStep2StackName, { targetAddress: receiver })}
           disabled={!(checkRes === AddressType.EOA || checkRes === AddressType.Contract) || (checkRes === AddressType.Contract && !knowRisk)}
-          size='small'
+          size="small"
         >
           Next
         </Button>
       </BackupBottomSheet>
-      <ScanQRCode bottomSheetRefOuter={scanQRCodeRef} onConfirm={(ethURL) => setReceiver(ethURL?.target_address ?? '')} />
+      {showScanQRCode && <ScanQRCode onConfirm={(ethURL) => setReceiver(ethURL?.target_address ?? '')} onClose={() => setShowScanQRCode(false)} />}
     </>
   );
 };

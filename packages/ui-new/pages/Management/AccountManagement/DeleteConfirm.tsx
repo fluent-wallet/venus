@@ -1,24 +1,23 @@
-import React, { type MutableRefObject } from 'react';
+import React, { useRef } from 'react';
 import { View, StyleSheet } from 'react-native';
 import { useTheme } from '@react-navigation/native';
 import Text from '@components/Text';
 import Button from '@components/Button';
-import BottomSheet, { type BottomSheetMethods } from '@components/BottomSheet';
+import BottomSheet, { BottomSheetMethods, BottomSheetView } from '@components/BottomSheet';
 import { screenHeight } from '@utils/deviceInfo';
-import { AccountSettingStackName, GroupSettingStackName, type StackScreenProps } from '@router/configs';
 
 interface Props {
-  navigation: StackScreenProps<typeof AccountSettingStackName | typeof GroupSettingStackName>['navigation'];
-  bottomSheetRef: MutableRefObject<BottomSheetMethods>;
   onConfirm: () => void;
+  onClose: () => void;
 }
 
-const DeleteConfirm: React.FC<Props> = ({ bottomSheetRef, onConfirm }) => {
+const DeleteConfirm: React.FC<Props> = ({ onConfirm, onClose }) => {
   const { colors } = useTheme();
+  const bottomSheetRef = useRef<BottomSheetMethods>(null!);
 
   return (
-    <BottomSheet ref={bottomSheetRef} snapPoints={snapPoints} isModal={false}>
-      <View style={styles.container}>
+    <BottomSheet ref={bottomSheetRef} snapPoints={snapPoints} index={0} onClose={onClose}>
+      <BottomSheetView style={styles.container}>
         <Text style={[styles.title, { color: colors.textPrimary }]}>⚠️ Confirm to delete{'\n'}this wallet?</Text>
         <Text style={[styles.description, { color: colors.textSecondary }]}>
           This Action will remove this wallet from the app.{'\n'}
@@ -29,7 +28,12 @@ const DeleteConfirm: React.FC<Props> = ({ bottomSheetRef, onConfirm }) => {
         </Text>
 
         <View style={styles.btnArea}>
-          <Button style={styles.btn} onPress={() => bottomSheetRef.current?.close()}>
+          <Button
+            style={styles.btn}
+            onPress={() => {
+              bottomSheetRef.current?.close();
+            }}
+          >
             Cancel
           </Button>
           <Button
@@ -42,7 +46,7 @@ const DeleteConfirm: React.FC<Props> = ({ bottomSheetRef, onConfirm }) => {
             ⚠️ Delete
           </Button>
         </View>
-      </View>
+      </BottomSheetView>
     </BottomSheet>
   );
 };

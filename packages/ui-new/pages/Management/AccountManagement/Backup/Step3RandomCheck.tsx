@@ -37,7 +37,7 @@ const BackupStep3RandomCheck: React.FC<BackupScreenProps<typeof BackupStep3Stack
   const isAllCorrect = useMemo(() => selectedWords?.every((word, index) => word === mixers[index].phrase), [selectedWords, mixers]);
 
   return (
-    <BackupBottomSheet onClose={navigation.goBack}>
+    <BackupBottomSheet>
       <Text style={[styles.title, { color: colors.textPrimary }]}>🔍 Verify your seed phrase</Text>
       {mixers.map(({ originIndex, mixer }, index) => (
         <Fragment key={index}>

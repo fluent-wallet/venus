@@ -1,5 +1,5 @@
 /* eslint-disable react-hooks/exhaustive-deps */
-import React, { useRef, useState, useCallback, type MutableRefObject } from 'react';
+import React, { useRef, useState, useCallback, type RefObject } from 'react';
 import { Pressable, Keyboard, StyleSheet, type TextInput } from 'react-native';
 import { useTheme } from '@react-navigation/native';
 import { Mnemonic } from 'ethers';
@@ -8,14 +8,13 @@ import { stripHexPrefix } from '@core/utils/base';
 import useInAsync from '@hooks/useInAsync';
 import Button from '@components/Button';
 import Text from '@components/Text';
-import BottomSheet, { BottomSheetTextInput, type BottomSheetMethods } from '@components/BottomSheet';
-import { screenHeight } from '@utils/deviceInfo';
-export { type BottomSheetMethods };
+import BottomSheet, { BottomSheetView, BottomSheetTextInput, type BottomSheetMethods } from '@components/BottomSheet';
+import { screenHeight, isAdjustResize } from '@utils/deviceInfo';
+export { BottomSheetMethods };
 
 interface Props {
-  bottomSheetRef: MutableRefObject<BottomSheetMethods>;
+  bottomSheetRef: RefObject<BottomSheetMethods>;
   onSuccessConfirm?: (value: string) => void;
-  isModal: boolean;
 }
 
 interface Status {
@@ -23,7 +22,7 @@ interface Status {
   message: string;
 }
 
-const ImportExistingWallet: React.FC<Props> = ({ bottomSheetRef, onSuccessConfirm, isModal }) => {
+const ImportExistingWallet: React.FC<Props> = ({ bottomSheetRef, onSuccessConfirm }) => {
   const { colors } = useTheme();
 
   const textInputRef = useRef<TextInput>(null!);
@@ -55,14 +54,10 @@ const ImportExistingWallet: React.FC<Props> = ({ bottomSheetRef, onSuccessConfir
     }
     if (_status?.type === 'success') {
       Keyboard.dismiss();
-      if (isModal) {
-        setTimeout(() => bottomSheetRef.current?.dismiss(), 100);
-      } else {
-        setTimeout(() => bottomSheetRef.current?.close(), 100);
-      }
+      setTimeout(() => bottomSheetRef.current?.close(), 100);
       onSuccessConfirm?.(existWalletValueRef.current);
     }
-  }, [isModal, status, onSuccessConfirm]);
+  }, [status, onSuccessConfirm]);
 
   const handlePressBackdrop = useCallback(() => {
     if (!textInputRef.current) return;
@@ -73,62 +68,54 @@ const ImportExistingWallet: React.FC<Props> = ({ bottomSheetRef, onSuccessConfir
     }
   }, []);
 
-  const handleClose = useCallback(() => {
-    setStatus(null);
+  const handleOnChange = useCallback((index: number) => {
+    if (index === -1) {
+      setStatus(null);
+    } else {
+      textInputRef.current.focus();
+    }
   }, []);
-  const handleOnChange = useCallback(
-    (index: number) => {
-      if ((isModal && index === 1) || (!isModal && index === 0)) {
-        textInputRef.current?.focus();
-      } else {
-        if (!isModal && index === -1) {
-          handleClose();
-        }
-      }
-    },
-    [isModal],
-  );
 
   return (
     <BottomSheet
       ref={bottomSheetRef}
-      snapPoints={snapPoints}
       onChange={handleOnChange}
-      onDismiss={isModal ? handleClose : undefined}
       backDropPressBehavior="collapse"
       handlePressBackdrop={handlePressBackdrop}
-      isModal={isModal}
+      snapPoints={snapPoints}
     >
-      <Pressable
-        onPress={() => {
-          Keyboard.dismiss();
-        }}
-        style={styles.bottomSheetContainer}
-      >
-        <BottomSheetTextInput
-          ref={textInputRef as any}
-          style={[styles.input, { color: colors.textPrimary }]}
-          placeholderTextColor={colors.textSecondary}
-          testID="existingWalletInput"
-          underlineColorAndroid="transparent"
-          secureTextEntry={true}
-          editable
-          multiline
-          numberOfLines={6}
-          placeholder="Enter your seed phrase which words separated by space or private key"
-          onChangeText={(value) => {
-            setStatus(null);
-            existWalletValueRef.current = value;
+      <BottomSheetView style={{ flex: 1 }}>
+        <Pressable
+          onPress={() => {
+            Keyboard.dismiss();
           }}
-          onBlur={handleCheckInput}
-        />
-        <Text style={[styles.tipText, { color: status?.type === 'error' ? colors.down : colors.up, opacity: status === null ? 0 : 1 }]}>
-          {status?.message || 'placeholder'}
-        </Text>
-        <Button testID="confirmImportExistingWallet" style={styles.btn} onPress={handleConfirm} loading={inAsync}>
-          Confirm
-        </Button>
-      </Pressable>
+          style={styles.bottomSheetContainer}
+        >
+          <BottomSheetTextInput
+            ref={textInputRef as any}
+            style={[styles.input, { color: colors.textPrimary }]}
+            placeholderTextColor={colors.textSecondary}
+            testID="existingWalletInput"
+            underlineColorAndroid="transparent"
+            secureTextEntry={true}
+            editable
+            multiline
+            numberOfLines={6}
+            placeholder="Enter your seed phrase which words separated by space or private key"
+            onChangeText={(value) => {
+              setStatus(null);
+              existWalletValueRef.current = value;
+            }}
+            onBlur={handleCheckInput}
+          />
+          <Text style={[styles.tipText, { color: status?.type === 'error' ? colors.down : colors.up, opacity: status === null ? 0 : 1 }]}>
+            {status?.message || 'placeholder'}
+          </Text>
+          <Button testID="confirmImportExistingWallet" style={styles.btn} onPress={handleConfirm} loading={inAsync}>
+            Confirm
+          </Button>
+        </Pressable>
+      </BottomSheetView>
     </BottomSheet>
   );
 };
@@ -162,6 +149,6 @@ const styles = StyleSheet.create({
   },
 });
 
-const snapPoints = [`${((310 / screenHeight) * 100).toFixed(2)}%`];
+const snapPoints = [`${(((isAdjustResize ? 400 : 300) / screenHeight) * 100).toFixed(2)}%`];
 
 export default ImportExistingWallet;

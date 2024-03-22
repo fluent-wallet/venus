@@ -13,7 +13,7 @@ const BackupStep1Notice: React.FC<BackupScreenProps<typeof BackupStep1StackName>
   const { colors } = useTheme();
 
   return (
-    <BackupBottomSheet onClose={navigation.goBack}>
+    <BackupBottomSheet>
       <Image style={styles.img} source={Img} contentFit="contain" />
       <Text style={[styles.notice, { color: colors.textPrimary }]}>📢 Notice</Text>
       <Text style={[styles.description, { color: colors.textPrimary }]}>

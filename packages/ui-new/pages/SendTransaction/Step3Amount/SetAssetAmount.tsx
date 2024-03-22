@@ -70,7 +70,8 @@ const SetAssetAmount: React.FC<Props> = ({ targetAddress, asset, nftItemDetail, 
           tx: { to: targetAddress, value: '0x0', from: currentAddressValue },
           network: currentNetwork!,
         });
-        const res = new Decimal(asset.balance).sub(new Decimal(gasLimit).mul(new Decimal(gasPrice)));
+        let res = new Decimal(asset.balance).sub(new Decimal(gasLimit).mul(new Decimal(gasPrice)));
+        res = res.greaterThan(0) ? res : new Decimal(0);
         setValidMax(res);
         return res;
       } catch (err) {

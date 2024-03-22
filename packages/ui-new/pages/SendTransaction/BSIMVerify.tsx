@@ -21,7 +21,7 @@ const BSIMVerify: React.FC<Props> = ({ bottomSheetRef, bsimEvent, onClose, onRet
   const { colors } = useTheme();
 
   return (
-    <BottomSheet ref={bottomSheetRef} snapPoints={snapPoints} isModal={false} index={0} onClose={onClose}>
+    <BottomSheet ref={bottomSheetRef} snapPoints={snapPoints} onClose={onClose}>
       <View style={styles.container}>
         <Text style={[styles.title, { color: colors.textPrimary }]}>
           {bsimEvent.type === BSIMEventTypesName.ERROR ? '🚫 Signing Error' : 'Transaction Confirmation'}
