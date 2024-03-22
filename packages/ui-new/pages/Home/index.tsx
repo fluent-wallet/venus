@@ -5,9 +5,11 @@ import PagerView from 'react-native-pager-view';
 import plugins from '@core/WalletCore/Plugins';
 import methods from '@core/WalletCore/Methods';
 import { getCurrentNetwork } from '@core/WalletCore/Plugins/ReactInject/data/useCurrentNetwork';
-import { HomeStackName, AccountSelectorStackName, NetworkSelectorStackName, type StackScreenProps } from '@router/configs';
+import { HomeStackName, type StackScreenProps } from '@router/configs';
 import { isProd } from '@utils/getEnv';
 import { Tabs, TabsContent, setHomeScrollY, type Tab } from '@modules/AssetsTabs';
+import AccountSelector from '@modules/AccountSelector';
+import NetworkSelector from '@modules/NetworkSelector';
 import Account from './Account';
 import HeaderRight from './HeaderRight';
 import { CurrentAddress, TotalPrice } from './Address&TotalPrice';
@@ -28,31 +30,38 @@ const Home: React.FC<StackScreenProps<typeof HomeStackName>> = ({ navigation }) 
     plugins.AssetsTracker.updateCurrentTracker().finally(() => closeRefresh());
   }, []);
 
+  const [showAccountSelector, setShowAccountSelector] = useState(false);
+  const [showNetworkSelector, setShowNetworkSelector] = useState(false);
+
   return (
-    <SafeAreaView style={styles.container}>
-      <View style={styles.header}>
-        <Account onPress={() => navigation.navigate(AccountSelectorStackName)} navigation={navigation} />
-        <HeaderRight
-          navigation={navigation}
-          onPressNetwork={() => {
-            if (isProd) {
-              const currentNetwork = getCurrentNetwork();
-              methods.switchToNetwork(currentNetwork?.netId === 1030 ? 71 : 1030);
-            } else {
-              navigation.navigate(NetworkSelectorStackName);
-            }
-          }}
-        />
-      </View>
-      <RefreshScrollView stickyHeaderIndices={[4]} onRefresh={handleRefresh} onScroll={currentTab === 'NFTs' ? handleScroll : undefined}>
-        <CurrentAddress />
-        <TotalPrice />
-        <Navigations navigation={navigation} />
-        <NotBackup navigation={navigation} />
-        <Tabs currentTab={currentTab} pageViewRef={pageViewRef} type="Home" />
-        <TabsContent currentTab={currentTab} setCurrentTab={setCurrentTab} pageViewRef={pageViewRef} type="Home" />
-      </RefreshScrollView>
-    </SafeAreaView>
+    <>
+      <SafeAreaView style={styles.container}>
+        <View style={styles.header}>
+          <Account onPress={() => setShowAccountSelector(true)} navigation={navigation} />
+          <HeaderRight
+            navigation={navigation}
+            onPressNetwork={() => {
+              if (isProd) {
+                const currentNetwork = getCurrentNetwork();
+                methods.switchToNetwork(currentNetwork?.netId === 1030 ? 71 : 1030);
+              } else {
+                setShowNetworkSelector(true);
+              }
+            }}
+          />
+        </View>
+        <RefreshScrollView stickyHeaderIndices={[4]} onRefresh={handleRefresh} onScroll={currentTab === 'NFTs' ? handleScroll : undefined}>
+          <CurrentAddress />
+          <TotalPrice />
+          <Navigations navigation={navigation} />
+          <NotBackup navigation={navigation} />
+          <Tabs currentTab={currentTab} pageViewRef={pageViewRef} type="Home" />
+          <TabsContent currentTab={currentTab} setCurrentTab={setCurrentTab} pageViewRef={pageViewRef} type="Home" />
+        </RefreshScrollView>
+      </SafeAreaView>
+      {showAccountSelector && <AccountSelector onClose={() => setShowAccountSelector(false)} />}
+      {showNetworkSelector && <NetworkSelector onClose={() => setShowNetworkSelector(false)} />}
+    </>
   );
 };
 
