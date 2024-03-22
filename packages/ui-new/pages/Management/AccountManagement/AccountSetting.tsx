@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { Pressable, StyleSheet } from 'react-native';
 import { useTheme } from '@react-navigation/native';
 import { showMessage } from 'react-native-flash-message';
@@ -10,7 +10,7 @@ import Text from '@components/Text';
 import TextInput from '@components/TextInput';
 import Checkbox from '@components/Checkbox';
 import Button from '@components/Button';
-import BottomSheet, { BottomSheetView, snapPoints } from '@components/BottomSheetNew';
+import BottomSheet, { BottomSheetView, snapPoints, type BottomSheetMethods } from '@components/BottomSheet';
 import { AccountSettingStackName, BackupStackName, BackupStep1StackName, type StackScreenProps } from '@router/configs';
 import ArrowRight from '@assets/icons/arrow-right2.svg';
 import Delete from '@assets/icons/delete.svg';
@@ -18,6 +18,8 @@ import DeleteConfirm from './DeleteConfirm';
 
 const AccountConfig: React.FC<StackScreenProps<typeof AccountSettingStackName>> = ({ navigation, route }) => {
   const { colors, mode } = useTheme();
+  const bottomSheetRef = useRef<BottomSheetMethods>(null!);
+
   const account = useAccountFromId(route.params.accountId);
   const vault = useVaultOfAccount(route.params.accountId);
   const addressValue = useCurrentAddressValueOfAccount(route.params.accountId);
@@ -30,7 +32,7 @@ const AccountConfig: React.FC<StackScreenProps<typeof AccountSettingStackName>> 
   const handleUpdateAccountNickName = useCallback(async () => {
     if (!account || !accountName) return;
     await methods.updateAccountNickName({ account, nickname: accountName });
-    navigation.goBack();
+    bottomSheetRef.current?.close();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [account, accountName]);
 
@@ -44,13 +46,12 @@ const AccountConfig: React.FC<StackScreenProps<typeof AccountSettingStackName>> 
         type: 'warning',
       });
     } else {
-      console.log('handlePressDelete')
+      console.log('handlePressDelete');
       setShowDeleteBottomSheet(true);
     }
   }, [account]);
 
   const handleConfirmDelete = useCallback(async () => {
-    setShowDeleteBottomSheet(false);
     if (!account || !vault) return;
     try {
       if (vault.isGroup) {
@@ -63,7 +64,8 @@ const AccountConfig: React.FC<StackScreenProps<typeof AccountSettingStackName>> 
         message: 'Remove account successfully',
         type: 'success',
       });
-      navigation.goBack();
+      setShowDeleteBottomSheet(false);
+      bottomSheetRef.current?.close();
     } catch (err) {
       if (plugins.Authentication.containsCancel(String(err))) {
         return;
@@ -79,7 +81,7 @@ const AccountConfig: React.FC<StackScreenProps<typeof AccountSettingStackName>> 
 
   return (
     <>
-      <BottomSheet snapPoints={snapPoints.large} isRoute>
+      <BottomSheet ref={bottomSheetRef} snapPoints={snapPoints.large} isRoute>
         <BottomSheetView style={styles.container}>
           <Text style={[styles.title, styles.mainText, { color: colors.textPrimary }]}>Account</Text>
           <Text style={[styles.description, { color: colors.textSecondary }]}>Address</Text>

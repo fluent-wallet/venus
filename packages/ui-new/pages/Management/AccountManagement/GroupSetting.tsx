@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useMemo, useEffect } from 'react';
+import React, { useState, useCallback, useMemo, useEffect, useRef } from 'react';
 import { Pressable, StyleSheet } from 'react-native';
 import { useTheme } from '@react-navigation/native';
 import { showMessage } from 'react-native-flash-message';
@@ -9,7 +9,7 @@ import Text from '@components/Text';
 import TextInput from '@components/TextInput';
 import Checkbox from '@components/Checkbox';
 import Button from '@components/Button';
-import BottomSheet, { snapPoints, BottomSheetView, BottomSheetScrollView } from '@components/BottomSheetNew';
+import BottomSheet, { snapPoints, BottomSheetView, BottomSheetScrollView, type BottomSheetMethods } from '@components/BottomSheet';
 import { AccountItemView } from '@modules/AccountsList';
 import { GroupSettingStackName, HDSettingStackName, BackupStackName, BackupStep1StackName, type StackScreenProps } from '@router/configs';
 import ArrowRight from '@assets/icons/arrow-right2.svg';
@@ -18,6 +18,8 @@ import DeleteConfirm from './DeleteConfirm';
 
 const GroupConfig: React.FC<StackScreenProps<typeof GroupSettingStackName>> = ({ navigation, route }) => {
   const { colors, mode } = useTheme();
+  const bottomSheetRef = useRef<BottomSheetMethods>(null!);
+
   const accountGroup = useGroupFromId(route.params.groupId);
   const vault = useVaultOfGroup(route.params.groupId);
   const accounts = useAccountsOfGroupInManage(route.params.groupId);
@@ -32,7 +34,7 @@ const GroupConfig: React.FC<StackScreenProps<typeof GroupSettingStackName>> = ({
   const handleUpdateAccountGroupNickName = useCallback(async () => {
     if (!accountGroup || !accountGroupName) return;
     await methods.updateAccountGroupNickName({ accountGroup, nickname: accountGroupName });
-    navigation.goBack();
+    bottomSheetRef.current?.close();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [accountGroup, accountGroupName]);
 
@@ -53,7 +55,6 @@ const GroupConfig: React.FC<StackScreenProps<typeof GroupSettingStackName>> = ({
   }, [accounts]);
 
   const handleConfirmDelete = useCallback(async () => {
-    setShowDeleteBottomSheet(false);
     if (!vault) return;
     try {
       await plugins.Authentication.getPassword();
@@ -62,7 +63,8 @@ const GroupConfig: React.FC<StackScreenProps<typeof GroupSettingStackName>> = ({
         message: 'Remove Group successfully',
         type: 'success',
       });
-      navigation.goBack();
+      setShowDeleteBottomSheet(false);
+      bottomSheetRef.current?.close();
     } catch (err) {
       if (plugins.Authentication.containsCancel(String(err))) {
         return;
@@ -95,7 +97,7 @@ const GroupConfig: React.FC<StackScreenProps<typeof GroupSettingStackName>> = ({
 
   return (
     <>
-      <BottomSheet snapPoints={snapPoints.large} isRoute>
+      <BottomSheet ref={bottomSheetRef} snapPoints={snapPoints.large} isRoute>
         <BottomSheetView style={styles.container}>
           <Text style={[styles.title, styles.mainText, { color: colors.textPrimary }]}>{GroupTitle}</Text>
           <Text style={[styles.description, { color: colors.textSecondary }]}>Account Name</Text>

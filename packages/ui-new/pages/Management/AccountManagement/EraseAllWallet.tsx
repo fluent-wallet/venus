@@ -7,7 +7,7 @@ import methods from '@core/WalletCore/Methods';
 import plugins from '@core/WalletCore/Plugins';
 import Text from '@components/Text';
 import Button from '@components/Button';
-import BottomSheet, { BottomSheetView, type BottomSheetMethods } from '@components/BottomSheetNew';
+import BottomSheet, { BottomSheetView, type BottomSheetMethods } from '@components/BottomSheet';
 import { screenHeight } from '@utils/deviceInfo';
 import { AccountManagementStackName, WelcomeStackName, type StackScreenProps } from '@router/configs';
 

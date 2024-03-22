@@ -8,14 +8,13 @@ import { stripHexPrefix } from '@core/utils/base';
 import useInAsync from '@hooks/useInAsync';
 import Button from '@components/Button';
 import Text from '@components/Text';
-import BottomSheet, { BottomSheetView, BottomSheetTextInput, type BottomSheetMethods } from '@components/BottomSheetNew';
-import { screenHeight } from '@utils/deviceInfo';
+import BottomSheet, { BottomSheetView, BottomSheetTextInput, type BottomSheetMethods } from '@components/BottomSheet';
+import { screenHeight, isAdjustResize } from '@utils/deviceInfo';
 export { BottomSheetMethods };
 
 interface Props {
   bottomSheetRef: RefObject<BottomSheetMethods>;
   onSuccessConfirm?: (value: string) => void;
-  isModal: boolean;
 }
 
 interface Status {
@@ -23,7 +22,7 @@ interface Status {
   message: string;
 }
 
-const ImportExistingWallet: React.FC<Props> = ({ bottomSheetRef, onSuccessConfirm, isModal }) => {
+const ImportExistingWallet: React.FC<Props> = ({ bottomSheetRef, onSuccessConfirm }) => {
   const { colors } = useTheme();
 
   const textInputRef = useRef<TextInput>(null!);
@@ -58,10 +57,9 @@ const ImportExistingWallet: React.FC<Props> = ({ bottomSheetRef, onSuccessConfir
       setTimeout(() => bottomSheetRef.current?.close(), 100);
       onSuccessConfirm?.(existWalletValueRef.current);
     }
-  }, [isModal, status, onSuccessConfirm]);
+  }, [status, onSuccessConfirm]);
 
   const handlePressBackdrop = useCallback(() => {
-    console.log('handlePressBackdrop');
     if (!textInputRef.current) return;
     if (textInputRef.current.isFocused()) {
       textInputRef.current.blur();
@@ -70,16 +68,13 @@ const ImportExistingWallet: React.FC<Props> = ({ bottomSheetRef, onSuccessConfir
     }
   }, []);
 
-  const handleOnChange = useCallback(
-    (index: number) => {
-      if (index === -1) {
-        setStatus(null);
-      } else {
-        textInputRef.current.focus();
-      }
-    },
-    [isModal],
-  );
+  const handleOnChange = useCallback((index: number) => {
+    if (index === -1) {
+      setStatus(null);
+    } else {
+      textInputRef.current.focus();
+    }
+  }, []);
 
   return (
     <BottomSheet
@@ -154,6 +149,6 @@ const styles = StyleSheet.create({
   },
 });
 
-const snapPoints = [`${((360 / screenHeight) * 100).toFixed(2)}%`];
+const snapPoints = [`${(((isAdjustResize ? 400 : 300) / screenHeight) * 100).toFixed(2)}%`];
 
 export default ImportExistingWallet;

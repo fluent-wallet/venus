@@ -1,10 +1,10 @@
 import React, { useCallback, useRef, type RefObject } from 'react';
 import { View, Pressable, StyleSheet } from 'react-native';
 import { useTheme, useNavigation } from '@react-navigation/native';
+import composeRef from '@cfx-kit/react-utils/dist/composeRef';
 import AccountsList from '@modules/AccountsList';
 import Text from '@components/Text';
-// import BottomSheet, { BottomSheetView, snapPoints, type BottomSheetMethods } from '@components/BottomSheet';
-import BottomSheet, { BottomSheetView, snapPoints, type BottomSheetMethods } from '@components/BottomSheetNew';
+import BottomSheet, { BottomSheetView, snapPoints, type BottomSheetMethods } from '@components/BottomSheet';
 import { AccountManagementStackName, HomeStackName, type StackScreenProps } from '@router/configs';
 export { type BottomSheetMethods };
 
@@ -22,7 +22,7 @@ const AccountSelector: React.FC<Props> = ({ selectorRef }) => {
   }, []);
 
   return (
-    <BottomSheet snapPoints={snapPoints.percent75} isRoute={!selectorRef}>
+    <BottomSheet ref={composeRef([bottomSheetRef, ...(selectorRef ? [selectorRef] : [])])} snapPoints={snapPoints.percent75} isRoute={!selectorRef}>
       <BottomSheetView style={styles.container}>
         <View style={styles.header}>
           <Text style={[styles.title, { color: colors.textPrimary }]}>Account</Text>

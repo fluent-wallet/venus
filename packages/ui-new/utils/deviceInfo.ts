@@ -24,3 +24,4 @@ export const screenHeight = Dimensions.get('window').height;
 export const supports3DStructureLight = Check3DStructureLight();
 export const OS = Platform.OS;
 export const isSmallDevice = screenHeight < 700;
+export const isAdjustResize = Platform.OS === 'android' && Number(Platform.Version) < 30;

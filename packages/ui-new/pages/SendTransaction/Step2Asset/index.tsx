@@ -1,10 +1,9 @@
-import React, { useState, useRef, useCallback, useEffect, type MutableRefObject } from 'react';
+import React, { useState, useRef, useCallback, useEffect } from 'react';
 import { Pressable, StyleSheet, type NativeScrollEvent, type NativeSyntheticEvent } from 'react-native';
 import { useTheme } from '@react-navigation/native';
 import PagerView from 'react-native-pager-view';
 import { showMessage } from 'react-native-flash-message';
 import { debounce, escapeRegExp } from 'lodash-es';
-import composeRef from '@cfx-kit/react-utils/dist/composeRef';
 import {
   useAssetsAllList,
   useCurrentNetwork,
@@ -21,7 +20,7 @@ import plugins from '@core/WalletCore/Plugins';
 import Text from '@components/Text';
 import TextInput from '@components/TextInput';
 import HourglassLoading from '@components/Loading/Hourglass';
-import { BottomSheetScrollView, type BottomSheetMethods } from '@components/BottomSheet';
+import { BottomSheetMethods, BottomSheetScrollView } from '@components/BottomSheet';
 import { SendTransactionStep2StackName, SendTransactionStep3StackName, SendTransactionStep4StackName, type SendTransactionScreenProps } from '@router/configs';
 import { Tabs, TabsContent, setSelectAssetScrollY, type Tab } from '@modules/AssetsTabs';
 import TokenItem from '@modules/AssetsList/TokensList/TokenItem';
@@ -32,11 +31,12 @@ interface Props {
   navigation?: SendTransactionScreenProps<typeof SendTransactionStep2StackName>['navigation'];
   route?: SendTransactionScreenProps<typeof SendTransactionStep2StackName>['route'];
   onConfirm?: (asset: AssetInfo) => void;
-  bottomSheetRefOuter?: MutableRefObject<BottomSheetMethods>;
+  onClose?: () => void;
 }
 
-const SendTransactionStep2Asset: React.FC<Props> = ({ navigation, route, onConfirm, bottomSheetRefOuter }) => {
+const SendTransactionStep2Asset: React.FC<Props> = ({ navigation, route, onConfirm, onClose }) => {
   const { colors } = useTheme();
+  const bottomSheetRef = useRef<BottomSheetMethods>(null!);
 
   const [currentTab, setCurrentTab] = useState<Tab>('Tokens');
   const pageViewRef = useRef<PagerView>(null);
@@ -126,9 +126,10 @@ const SendTransactionStep2Asset: React.FC<Props> = ({ navigation, route, onConfi
 
   const handleClickAsset = useCallback((asset: AssetInfo, nftItemDetail?: NFTItemDetail) => {
     if (navigation) {
-      if (asset.type === AssetType.ERC20 && (asset.balance === '0' || asset.balance === '0x')) {
+      console.log(asset.type, asset.balance);
+      if ((asset.type === AssetType.ERC20 || asset.type === AssetType.Native) && (Number(asset.balance) === 0 || isNaN(Number(asset.balance)))) {
         return showMessage({
-          message: `The balance of asset ${asset.name} is 0`,
+          message: `The balance of asset ${asset.symbol} is 0`,
           type: 'warning',
         });
       }
@@ -140,17 +141,12 @@ const SendTransactionStep2Asset: React.FC<Props> = ({ navigation, route, onConfi
     } else if (onConfirm) {
       onConfirm(asset);
       setSearchAsset('');
-      bottomSheetRefOuter?.current?.dismiss();
+      bottomSheetRef?.current?.close();
     }
   }, []);
 
   return (
-    <BackupBottomSheet
-      ref={bottomSheetRefOuter ? composeRef([bottomSheetRefOuter]) : undefined}
-      index={!onConfirm ? 0 : undefined}
-      isModal={!!onConfirm}
-      onClose={!onConfirm ? navigation?.goBack : undefined}
-    >
+    <BackupBottomSheet ref={bottomSheetRef} isRoute={!onConfirm} index={!onConfirm ? undefined : 0} onClose={onClose}>
       <Text style={[styles.selectAsset, { color: colors.textSecondary }]}>Select an asset</Text>
       <TextInput
         containerStyle={[styles.textinput, { borderColor: colors.borderFourth }]}

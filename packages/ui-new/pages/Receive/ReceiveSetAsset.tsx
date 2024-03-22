@@ -1,8 +1,8 @@
-import React, { useRef, type MutableRefObject } from 'react';
+import React, { useState, useRef } from 'react';
 import { useTheme } from '@react-navigation/native';
-import { View, StyleSheet, Pressable } from 'react-native';
+import { View, StyleSheet, Pressable, Keyboard } from 'react-native';
 import { type AssetInfo } from '@core/WalletCore/Plugins/AssetsTracker/types';
-import {  useCurrentAddressValue } from '@core/WalletCore/Plugins/ReactInject';
+import { useCurrentAddressValue } from '@core/WalletCore/Plugins/ReactInject';
 import BottomSheet, { snapPoints, type BottomSheetMethods } from '@components/BottomSheet';
 import Text from '@components/Text';
 import Button from '@components/Button';
@@ -15,24 +15,27 @@ interface Props {
   setSelectedAsset: (asset: AssetInfo | null) => void;
   amount: string;
   onConfirm: (params: { asset: AssetInfo; amount?: string }) => void;
-  bottomSheetRef: MutableRefObject<BottomSheetMethods>;
+  onClose: () => void;
 }
 
-const ReceiveSetAsset: React.FC<Props> = ({ bottomSheetRef, onConfirm, selectedAsset, setSelectedAsset, amount }) => {
+const ReceiveSetAsset: React.FC<Props> = ({ onConfirm, selectedAsset, setSelectedAsset, amount, onClose }) => {
   const { colors } = useTheme();
-  const selectAssetRef = useRef<BottomSheetMethods>(null!);
+
+  const bottomSheetRef = useRef<BottomSheetMethods>(null!);
+  const [showSelectAsset, setShowSelectAsset] = useState(false);
 
   const currentAddressValue = useCurrentAddressValue()!;
+
   return (
     <>
-      <BottomSheet ref={bottomSheetRef} snapPoints={snapPoints.large} isModal={true}>
+      <BottomSheet ref={bottomSheetRef} snapPoints={snapPoints.large} index={0} onClose={onClose}>
         <View style={styles.container}>
           <Text style={[styles.title, { color: colors.textPrimary }]}>Receive</Text>
 
           <Text style={[styles.text, styles.to, { color: colors.textSecondary }]}>Select a token</Text>
           <Pressable
             style={({ pressed }) => [styles.assetWrapper, { backgroundColor: pressed ? colors.underlay : 'transparent' }]}
-            onPress={() => selectAssetRef.current?.present()}
+            onPress={() => setShowSelectAsset(true)}
           >
             {selectedAsset && (
               <>
@@ -54,8 +57,13 @@ const ReceiveSetAsset: React.FC<Props> = ({ bottomSheetRef, onConfirm, selectedA
                     disabled={!!amount && isAmountValid !== true}
                     size="small"
                     onPress={() => {
+                      if (Keyboard.isVisible()) {
+                        Keyboard.dismiss();
+                        setTimeout(() => bottomSheetRef.current?.close(), 188);
+                      } else {
+                        bottomSheetRef.current?.close();
+                      }
                       onConfirm({ asset: selectedAsset, amount });
-                      bottomSheetRef.current?.dismiss();
                     }}
                   >
                     Continue
@@ -65,13 +73,13 @@ const ReceiveSetAsset: React.FC<Props> = ({ bottomSheetRef, onConfirm, selectedA
             </>
           )}
           {!selectedAsset && (
-            <Button style={styles.btn} size="small" onPress={() => selectAssetRef.current?.present()}>
+            <Button style={styles.btn} size="small" onPress={() => setShowSelectAsset(true)}>
               Select Asset
             </Button>
           )}
         </View>
       </BottomSheet>
-      <SelectAsset bottomSheetRefOuter={selectAssetRef} onConfirm={(asset) => setSelectedAsset(asset)} />
+      {showSelectAsset && <SelectAsset onConfirm={(asset) => setSelectedAsset(asset)} onClose={() => setShowSelectAsset(false)} />}
     </>
   );
 };

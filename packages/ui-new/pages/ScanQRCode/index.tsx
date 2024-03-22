@@ -10,8 +10,7 @@ import { parseUri } from '@walletconnect/utils';
 import { useCurrentNetwork, NetworkType, getAssetsTokenList, AssetType } from '@core/WalletCore/Plugins/ReactInject';
 import methods from '@core/WalletCore/Methods';
 import plugins from '@core/WalletCore/Plugins';
-// import BottomSheet, { snapPoints, type BottomSheetMethods } from '@components/BottomSheet';
-import BottomSheet, { BottomSheetView, snapPoints, type BottomSheetMethods } from '@components/BottomSheetNew';
+import BottomSheet, { BottomSheetView, snapPoints, type BottomSheetMethods } from '@components/BottomSheet';
 import Text from '@components/Text';
 import Button from '@components/Button';
 import {
@@ -31,10 +30,11 @@ interface Props {
   onConfirm?: (ethUrl: ETHURL) => void;
   bottomSheetRef?: RefObject<BottomSheetMethods>;
   navigation?: StackScreenProps<typeof ScanQRCodeStackName>['navigation'];
+  onClose?: () => void;
 }
 
 const scanAreaWidth = 220;
-const ScanQrCode: React.FC<Props> = ({ navigation, bottomSheetRef, onConfirm }) => {
+const ScanQrCode: React.FC<Props> = ({ navigation, bottomSheetRef, onConfirm, onClose }) => {
   const { colors } = useTheme();
   const currentNetwork = useCurrentNetwork()!;
 
@@ -210,7 +210,14 @@ const ScanQrCode: React.FC<Props> = ({ navigation, bottomSheetRef, onConfirm }) 
   }, []);
 
   return (
-    <BottomSheet ref={bottomSheetRef} snapPoints={snapPoints.large} isRoute={!onConfirm} onOpen={handleOnOpen}>
+    <BottomSheet
+      ref={bottomSheetRef}
+      snapPoints={snapPoints.large}
+      isRoute={!onConfirm}
+      index={!onConfirm ? undefined : 0}
+      onOpen={handleOnOpen}
+      onClose={onClose}
+    >
       <BottomSheetView style={styles.container}>
         <Text style={[styles.title, { color: colors.textPrimary }]}>Scan</Text>
         {hasPermission && (

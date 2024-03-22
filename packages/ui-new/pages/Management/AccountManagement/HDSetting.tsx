@@ -21,7 +21,7 @@ import { shortenAddress } from '@core/utils/address';
 import Text from '@components/Text';
 import Checkbox from '@components/Checkbox';
 import Button from '@components/Button';
-import BottomSheet, { BottomSheetView, snapPoints } from '@components/BottomSheetNew';
+import BottomSheet, { BottomSheetView, snapPoints, type BottomSheetMethods } from '@components/BottomSheet';
 import HourglassLoading from '@components/Loading/Hourglass';
 import { HDSettingStackName, type StackScreenProps } from '@router/configs';
 import { isSmallDevice } from '@utils/deviceInfo';
@@ -32,6 +32,7 @@ const defaultPages = Array.from({ length: countPerPage }).map((_, index) => ({ a
 
 const HDManagement: React.FC<StackScreenProps<typeof HDSettingStackName>> = ({ navigation, route }) => {
   const { colors } = useTheme();
+  const bottomSheetRef = useRef<BottomSheetMethods>(null!);
 
   const accountGroup = useAccountGroupFromId(route.params.groupId);
   const accounts = useAccountsOfGroupInManage(route.params.groupId);
@@ -145,14 +146,14 @@ const HDManagement: React.FC<StackScreenProps<typeof HDSettingStackName>> = ({ n
       );
 
       setInNext(false);
-      navigation.goBack();
+      bottomSheetRef.current?.close();
     } catch (err) {
       console.error(err);
     }
   };
 
   return (
-    <BottomSheet snapPoints={snapPoints.large} isRoute>
+    <BottomSheet ref={bottomSheetRef} snapPoints={snapPoints.large} isRoute>
       <BottomSheetView style={styles.container}>
         <Text style={[styles.title, styles.mainText, { color: colors.textPrimary }]}>Select HD Wallets</Text>
         <Text style={[styles.description, { color: colors.textSecondary }]}>HD Path Type</Text>

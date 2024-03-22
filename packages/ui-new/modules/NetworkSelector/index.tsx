@@ -4,7 +4,7 @@ import { useTheme } from '@react-navigation/native';
 import composeRef from '@cfx-kit/react-utils/dist/composeRef';
 import NetworksList from '@modules/NetworksList';
 import Text from '@components/Text';
-import BottomSheet, { BottomSheetView, snapPoints, type BottomSheetMethods } from '@components/BottomSheetNew';
+import BottomSheet, { BottomSheetView, snapPoints, type BottomSheetMethods } from '@components/BottomSheet';
 export { type BottomSheetMethods };
 
 interface Props {

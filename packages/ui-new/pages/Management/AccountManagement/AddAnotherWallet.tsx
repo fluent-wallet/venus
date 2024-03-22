@@ -7,7 +7,7 @@ import plugins from '@core/WalletCore/Plugins';
 import { useHasBSIMVaultCreated } from '@core/WalletCore/Plugins/ReactInject';
 import useInAsync from '@hooks/useInAsync';
 import Text from '@components/Text';
-import BottomSheet, { BottomSheetView, type BottomSheetMethods } from '@components/BottomSheetNew';
+import BottomSheet, { BottomSheetView, type BottomSheetMethods } from '@components/BottomSheet';
 import HourglassLoading from '@components/Loading/Hourglass';
 import { styles as accountListStyles } from '@modules/AccountsList';
 import { showNotFindBSIMCardMessage } from '@pages/WayToInitWallet';

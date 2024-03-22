@@ -3,7 +3,7 @@ import { View, StyleSheet } from 'react-native';
 import { useTheme } from '@react-navigation/native';
 import Text from '@components/Text';
 import Button from '@components/Button';
-import BottomSheet, { BottomSheetMethods, BottomSheetView } from '@components/BottomSheetNew';
+import BottomSheet, { BottomSheetMethods, BottomSheetView } from '@components/BottomSheet';
 import { screenHeight } from '@utils/deviceInfo';
 
 interface Props {
@@ -28,7 +28,12 @@ const DeleteConfirm: React.FC<Props> = ({ onConfirm, onClose }) => {
         </Text>
 
         <View style={styles.btnArea}>
-          <Button style={styles.btn} onPress={() => bottomSheetRef.current?.close()}>
+          <Button
+            style={styles.btn}
+            onPress={() => {
+              bottomSheetRef.current?.close();
+            }}
+          >
             Cancel
           </Button>
           <Button
