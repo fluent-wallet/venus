@@ -28,6 +28,7 @@ const SendTransactionStep3Amount: React.FC<SendTransactionScreenProps<typeof Sen
       <SetAssetAmount targetAddress={route.params.targetAddress} asset={route.params.asset} nftItemDetail={route.params.nftItemDetail}>
         {({ amount, validMax, isAmountValid, handleEstimateMax }) => (
           <Button
+            testID='next'
             style={styles.btn}
             disabled={validMax !== null && isAmountValid !== true}
             onPress={validMax === null ? () => handleEstimateMax() : () => navigation.navigate(SendTransactionStep4StackName, { ...route.params, amount })}

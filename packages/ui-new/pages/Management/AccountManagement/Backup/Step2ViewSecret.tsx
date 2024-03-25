@@ -71,7 +71,7 @@ const BackupStep2ViewSecret: React.FC<BackupScreenProps<typeof BackupStep2StackN
 
             <Text style={[styles.largeText, { color: colors.textPrimary, textAlign: 'center' }]}>Tap to view the {backupText}</Text>
             <Text style={[styles.description, { color: colors.textSecondary, textAlign: 'center', marginTop: 8 }]}>Make sure your environment is safe</Text>
-            <Button style={styles.viewBtn} onPress={handleClickView} loading={inAsync}>
+            <Button testID='view' style={styles.viewBtn} onPress={handleClickView} loading={inAsync}>
               View
             </Button>
           </>
@@ -133,7 +133,7 @@ const BackupStep2ViewSecret: React.FC<BackupScreenProps<typeof BackupStep2StackN
           Next
         </Button>
       ) : (
-        <Button style={styles.btn} onPress={() => navigation.goBack()}>
+        <Button testID='return' style={styles.btn} onPress={() => navigation.goBack()}>
           Return
         </Button>
       )}

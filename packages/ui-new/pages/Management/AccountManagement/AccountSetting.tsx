@@ -115,7 +115,7 @@ const AccountConfig: React.FC<StackScreenProps<typeof AccountSettingStackName>> 
             <Text style={[styles.mainText, styles.removeText, { color: colors.textPrimary }]}>Remove Account</Text>
           </Pressable>
 
-          <Button style={styles.btn} disabled={!accountName || accountName === account?.nickname} onPress={handleUpdateAccountNickName}>
+          <Button testID='ok' style={styles.btn} disabled={!accountName || accountName === account?.nickname} onPress={handleUpdateAccountNickName}>
             OK
           </Button>
         </BottomSheetView>

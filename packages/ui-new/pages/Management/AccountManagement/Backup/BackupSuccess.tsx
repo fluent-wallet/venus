@@ -24,7 +24,7 @@ const BackupSuccess: React.FC = () => {
         <Text style={[styles.title, { color: colors.textPrimary }]}>🥳 Backuped !</Text>
         <Image style={styles.img} source={Img} contentFit="contain" />
 
-        <Button style={styles.btn} onPress={goHome}>
+        <Button testID='ok' style={styles.btn} onPress={goHome}>
           OK
         </Button>
       </View>

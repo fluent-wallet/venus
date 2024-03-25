@@ -52,10 +52,10 @@ const EraseAllWallet: React.FC<Props> = ({ navigation }) => {
         </Text>
 
         <View style={styles.btnArea}>
-          <Button style={styles.btn} onPress={() => bottomSheetRef.current?.close()}>
+          <Button testID='cancel' style={styles.btn} onPress={() => bottomSheetRef.current?.close()}>
             Cancel
           </Button>
-          <Button style={[styles.btn, { backgroundColor: colors.down }]} onPress={handleDelete}>
+          <Button testID='delete' style={[styles.btn, { backgroundColor: colors.down }]} onPress={handleDelete}>
             ⚠️ Delete
           </Button>
         </View>
