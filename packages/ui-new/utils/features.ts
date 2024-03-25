@@ -55,3 +55,8 @@ export const ENABLE_WALLET_CONNECT_FEATURE = {
   describe: 'wallet connect feature',
   allow: false,
 };
+
+export const SWITCH_NETWORK_DRAWER_FEATURE = {
+  describe: 'switch network driver',
+  allow: isDev,
+};

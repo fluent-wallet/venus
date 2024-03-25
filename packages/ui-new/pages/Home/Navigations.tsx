@@ -14,7 +14,7 @@ export const Navigation: React.FC<{ title: string; Icon: ComponentProps<typeof B
 
   return (
     <View style={styles.navigation}>
-      <Button square size="small" Icon={Icon} onPress={onPress} />
+      <Button testID={title} square size="small" Icon={Icon} onPress={onPress} />
       <Text style={[styles.navigationText, { color: colors.textPrimary }]}>{title}</Text>
     </View>
   );

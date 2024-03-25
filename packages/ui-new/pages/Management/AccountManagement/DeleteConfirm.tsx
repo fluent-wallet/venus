@@ -28,15 +28,11 @@ const DeleteConfirm: React.FC<Props> = ({ onConfirm, onClose }) => {
         </Text>
 
         <View style={styles.btnArea}>
-          <Button
-            style={styles.btn}
-            onPress={() => {
-              bottomSheetRef.current?.close();
-            }}
-          >
+          <Button testID='cancel' style={styles.btn} onPress={() => bottomSheetRef.current?.close()}>
             Cancel
           </Button>
           <Button
+            testID='delete'
             style={[styles.btn, { backgroundColor: colors.down }]}
             onPress={() => {
               bottomSheetRef.current?.close();

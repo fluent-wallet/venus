@@ -64,6 +64,7 @@ const BackupStep3RandomCheck: React.FC<BackupScreenProps<typeof BackupStep3Stack
         </Fragment>
       ))}
       <Button
+        testID='confirm'
         style={styles.btn}
         disabled={!isAllSelected}
         onPress={() => {

@@ -53,6 +53,7 @@ const ReceiveSetAsset: React.FC<Props> = ({ onConfirm, selectedAsset, setSelecte
               <SetAssetAmount targetAddress={currentAddressValue} asset={selectedAsset} isReceive defaultAmount={amount}>
                 {({ amount, isAmountValid }) => (
                   <Button
+                    testID="continue"
                     style={styles.btn}
                     disabled={!!amount && isAmountValid !== true}
                     size="small"

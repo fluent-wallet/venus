@@ -291,6 +291,7 @@ const SendTransactionStep4Confirm: React.FC<SendTransactionScreenProps<typeof Se
 
           <View style={styles.btnArea}>
             <Button
+              testID="cancel"
               style={styles.btn}
               size="small"
               onPress={() => navigation.dispatch(CommonActions.reset({ index: 0, routes: [{ name: HomeStackName }] }))}
@@ -298,7 +299,7 @@ const SendTransactionStep4Confirm: React.FC<SendTransactionScreenProps<typeof Se
             >
               Cancel
             </Button>
-            <Button style={styles.btn} size="small" disabled={!gasInfo} onPress={handleSend} loading={inSending}>
+            <Button testID="send" style={styles.btn} size="small" disabled={!gasInfo} onPress={handleSend} loading={inSending}>
               Send
             </Button>
           </View>

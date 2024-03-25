@@ -36,8 +36,8 @@ const BSIMVerify: React.FC<Props> = ({ bottomSheetRef, bsimEvent, onClose, onRet
         </View>
 
         <View style={styles.btnArea}>
-          <Button size="small" square Icon={ArrowLeft} onPress={() => bottomSheetRef.current?.close()} />
-          <Button style={styles.btnRetry} size="small" onPress={onRetry} loading={bsimEvent.type !== BSIMEventTypesName.ERROR}>
+          <Button testID='close'  size="small" square Icon={ArrowLeft} onPress={() => bottomSheetRef.current?.close()} />
+          <Button testID='retry' style={styles.btnRetry} size="small" onPress={onRetry} loading={bsimEvent.type !== BSIMEventTypesName.ERROR}>
             Retry
           </Button>
         </View>

@@ -256,7 +256,7 @@ const HDManagement: React.FC<StackScreenProps<typeof HDSettingStackName>> = ({ n
           </Pressable>
         </View>
 
-        <Button style={styles.btn} disabled={chooseAccounts.length === 0} onPress={handleClickNext} loading={inNext}>
+        <Button testID='next' style={styles.btn} disabled={chooseAccounts.length === 0} onPress={handleClickNext} loading={inNext}>
           Next
         </Button>
       </BottomSheetView>

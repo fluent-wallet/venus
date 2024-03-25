@@ -16,6 +16,7 @@ import { CurrentAddress, TotalPrice } from './Address&TotalPrice';
 import Navigations from './Navigations';
 import NotBackup from './NotBackup';
 import RefreshScrollView from './RefreshScrollView';
+import { SWITCH_NETWORK_DRAWER_FEATURE } from '@utils/features';
 
 const Home: React.FC<StackScreenProps<typeof HomeStackName>> = ({ navigation }) => {
   const [currentTab, setCurrentTab] = useState<Tab>('Tokens');
@@ -41,7 +42,7 @@ const Home: React.FC<StackScreenProps<typeof HomeStackName>> = ({ navigation }) 
           <HeaderRight
             navigation={navigation}
             onPressNetwork={() => {
-              if (isProd) {
+              if (SWITCH_NETWORK_DRAWER_FEATURE) {
                 const currentNetwork = getCurrentNetwork();
                 methods.switchToNetwork(currentNetwork?.netId === 1030 ? 71 : 1030);
               } else {
