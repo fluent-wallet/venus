@@ -11,7 +11,7 @@ import {
   useCurrentAddress,
   useCurrentOpenNFTDetail,
   AssetType,
-  AssetSource
+  AssetSource,
 } from '@core/WalletCore/Plugins/ReactInject';
 import { fetchERC20AssetInfoBatchWithAccount } from '@core/WalletCore/Plugins/AssetsTracker/fetchers/basic';
 import { type AssetInfo } from '@core/WalletCore/Plugins/AssetsTracker/types';
@@ -75,6 +75,7 @@ const SendTransactionStep2Asset: React.FC<Props> = ({ navigation, route, onConfi
             (str) => str?.search(new RegExp(escapeRegExp(value), 'i')) !== -1,
           ),
         )
+        .filter((asset) => !!asset.type)
         .filter((asset) => (onConfirm ? asset.type !== AssetType.ERC1155 && asset.type !== AssetType.ERC721 : true));
       if (localAssets && localAssets?.length > 0) {
         setFilterAssets({ type: 'local', assets: localAssets });
@@ -101,7 +102,7 @@ const SendTransactionStep2Asset: React.FC<Props> = ({ navigation, route, onConfi
               await methods.createAsset({
                 network: currentNetwork,
                 ...assetInfo,
-                source: AssetSource.Custom
+                source: AssetSource.Custom,
               });
             }
           } else {
@@ -171,7 +172,7 @@ const SendTransactionStep2Asset: React.FC<Props> = ({ navigation, route, onConfi
             filterAssets.assets.map((asset) =>
               asset.type === AssetType.ERC20 || asset.type === AssetType.Native ? (
                 <TokenItem key={asset.contractAddress ?? AssetType.Native} data={asset} showTypeLabel onPress={handleClickAsset} />
-              ) : (
+              ) : asset.type === AssetType.ERC1155 || asset.type === AssetType.ERC721 ? (
                 <NFTItem
                   key={asset.contractAddress}
                   data={asset}
@@ -180,7 +181,7 @@ const SendTransactionStep2Asset: React.FC<Props> = ({ navigation, route, onConfi
                   showTypeLabel
                   onPress={handleClickAsset}
                 />
-              ),
+              ) : null,
             )}
 
           {filterAssets.type !== 'local' && filterAssets.type !== 'remote' && (
