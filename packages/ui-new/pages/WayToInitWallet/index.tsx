@@ -86,7 +86,6 @@ const WayToInitWallet: React.FC<StackScreenProps<typeof WayToInitWalletStackName
       <ImportExistingWallet
         bottomSheetRef={bottomSheetRef}
         onSuccessConfirm={(value) => navigation.navigate(BiometricsWayStackName, { type: 'importExistWallet', value })}
-        isModal={false}
       />
     </>
   );

@@ -52,6 +52,7 @@ const screenOptions = {
   headerBackVisible: false,
   statusBarTranslucent: true,
   statusBarBackgroundColor: 'transparent',
+  animation: 'fade'
 } as const;
 
 const Router: React.FC = () => {
@@ -76,9 +77,7 @@ const Router: React.FC = () => {
     <View style={{ flex: 1, backgroundColor: colors.bgPrimary }}>
       <RootStack.Navigator
         initialRouteName={hasVault ? HomeStackName : WelcomeStackName}
-        screenOptions={{
-          ...screenOptions,
-        }}
+        screenOptions={screenOptions}
       >
         <RootStack.Screen name={WelcomeStackName} component={Welcome} options={{ headerShown: false }} />
         <RootStack.Screen name={WayToInitWalletStackName} component={WayToInitWallet} options={{ headerShown: false }} />

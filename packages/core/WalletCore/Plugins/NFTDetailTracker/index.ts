@@ -54,8 +54,8 @@ class NFTDetailTrackerPluginClass implements Plugin {
   }
 
   register({ networkType, chainId, fetcher }: { networkType: NetworkType; chainId: string; fetcher: Fetcher }) {
-    if (!networkType && !chainId) {
-      throw new Error('networkType or chainId is required');
+    if (!networkType || !chainId) {
+      throw new Error('networkType and chainId is required');
     }
     this.fetcherMap.set(getFetcherKey({ networkType, chainId }), fetcher);
   }

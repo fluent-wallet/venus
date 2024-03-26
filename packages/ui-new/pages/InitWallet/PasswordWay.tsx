@@ -58,7 +58,7 @@ const PasswordWay: React.FC<StackScreenProps<typeof PasswordWayStackName>> = ({ 
   const { inAsync, execAsync: handleCreateVault } = useInAsync(_handleCreateVault);
 
   return (
-    <KeyboardAvoidingView style={styles.keyboardView}>
+    <KeyboardAvoidingView style={[styles.keyboardView, { backgroundColor: colors.bgPrimary }]}>
       <ScrollView contentContainerStyle={styles.container}>
         <Text style={[styles.title, { color: colors.textPrimary }]}>🔐 Set Password</Text>
 
@@ -107,14 +107,7 @@ const PasswordWay: React.FC<StackScreenProps<typeof PasswordWayStackName>> = ({ 
           </Text>
         </Pressable>
 
-        <Button
-          testID="createPasswordButton"
-          style={styles.btn}
-          size="small"
-          onPress={handleSubmit(handleCreateVault)}
-          disabled={!confirm}
-          loading={inAsync}
-        >
+        <Button testID="createPasswordButton" style={styles.btn} size="small" onPress={handleSubmit(handleCreateVault)} disabled={!confirm} loading={inAsync}>
           Create Password
         </Button>
       </ScrollView>

@@ -16,7 +16,7 @@ export { useVaultOfAccount } from './data/useVaultOfAccount';
 export { useVaults } from './data/useVaults';
 export { useHasVault } from './data/useHasVault';
 export { useCurrentHdPath } from './data/useCurrentHdPath';
-export { useFinishedTxs, usePayloadOfTx, useUnfinishedTxs, useAssetOfTx } from './data/useTxs';
+export { useFinishedTxs, usePayloadOfTx, useUnfinishedTxs, useAssetOfTx, useRecentlyAddress } from './data/useTxs';
 export {
   useAssetsAllList,
   useAssetsNFTList,
@@ -37,7 +37,7 @@ export { default as VaultType } from '../../../database/models/Vault/VaultType';
 export { default as VaultSourceType } from '../../../database/models/Vault/VaultSourceType';
 export { NetworkType, ChainType } from '../../../database/models/Network';
 export { AddressType } from '../../../database/models/AddressBook';
-export { AssetType } from '../../../database/models/Asset';
+export { AssetType, AssetSource } from '../../../database/models/Asset';
 
 declare module '../../../WalletCore/Plugins' {
   interface Plugins {

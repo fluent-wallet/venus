@@ -1,9 +1,9 @@
-import React, { useMemo, useEffect, useCallback, Fragment } from 'react';
+import React, { useMemo, useEffect, useCallback } from 'react';
 import { View, Pressable, StyleSheet } from 'react-native';
 import { useTheme } from '@react-navigation/native';
 import Animated, { useSharedValue, useAnimatedStyle, withTiming } from 'react-native-reanimated';
-import { atom, useAtomValue } from 'jotai';
 import PagerView from 'react-native-pager-view';
+import { atom, useAtomValue } from 'jotai';
 import { useCurrentNetwork, setAtom, NetworkType } from '@core/WalletCore/Plugins/ReactInject';
 import { type AssetInfo } from '@core/WalletCore/Plugins/AssetsTracker/types';
 import { CFX_ESPACE_MAINNET_CHAINID, CFX_ESPACE_TESTNET_CHAINID } from '@core/consts/network';
@@ -33,7 +33,8 @@ export const Tabs: React.FC<Omit<Props, 'setCurrentTab' | 'onPressItem'>> = ({ t
   const currentNetwork = useCurrentNetwork();
   const tabs = useMemo(() => {
     const res =
-      !onlyToken && (!currentNetwork || (currentNetwork && (currentNetwork.chainId === CFX_ESPACE_MAINNET_CHAINID || currentNetwork.chainId === CFX_ESPACE_TESTNET_CHAINID)))
+      !onlyToken &&
+      (!currentNetwork || (currentNetwork && (currentNetwork.chainId === CFX_ESPACE_MAINNET_CHAINID || currentNetwork.chainId === CFX_ESPACE_TESTNET_CHAINID)))
         ? (['Tokens', 'NFTs'] as Tabs)
         : (['Tokens'] as Tabs);
     type === 'Home' && res.push('Activity');
@@ -140,7 +141,7 @@ export const TabsContent: React.FC<Props> = ({ currentTab, setCurrentTab, pageVi
   return (
     <PagerView ref={pageViewRef} style={styles.pagerView} initialPage={0} onPageSelected={(evt) => setCurrentTab(tabs[evt.nativeEvent.position])}>
       {tabs?.map((tab, index) => (
-        <Fragment key={tab}>
+        <View key={tab}>
           {tab === 'Tokens' && index === currentTabIndex && (
             <TokensList
               showReceiveFunds={
@@ -153,7 +154,7 @@ export const TabsContent: React.FC<Props> = ({ currentTab, setCurrentTab, pageVi
           )}
           {tab === 'NFTs' && index === currentTabIndex && <NFTsList tabsType={type} onPressItem={onPressItem} />}
           {tab === 'Activity' && index === currentTabIndex && <ActivityList />}
-        </Fragment>
+        </View>
       ))}
     </PagerView>
   );

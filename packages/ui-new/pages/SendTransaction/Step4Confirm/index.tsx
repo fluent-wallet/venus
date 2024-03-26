@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-empty-function */
 /* eslint-disable react-hooks/exhaustive-deps */
 import React, { useMemo, useState, useEffect, useCallback, useRef } from 'react';
 import { View, StyleSheet, Keyboard } from 'react-native';
@@ -17,6 +18,7 @@ import {
   AssetType,
   NetworkType,
   VaultType,
+  AssetSource,
 } from '@core/WalletCore/Plugins/ReactInject';
 import { CFX_ESPACE_MAINNET_CHAINID, CFX_ESPACE_TESTNET_CHAINID } from '@core/consts/network';
 import { type ITxEvm } from '@core/WalletCore/Plugins/Transaction/types';
@@ -140,7 +142,7 @@ const SendTransactionStep4Confirm: React.FC<SendTransactionScreenProps<typeof Se
   }, []);
 
   const [bsimEvent, setBSIMEvent] = useState<BSIMEvent | null>(null);
-  const bsimCancelRef = useRef<() => void>(() => {});
+  const bsimCancelRef = useRef<VoidFunction>(() => {});
   const _handleSend = useCallback(async () => {
     setBSIMEvent(null);
     bsimCancelRef.current?.();
@@ -152,6 +154,7 @@ const SendTransactionStep4Confirm: React.FC<SendTransactionScreenProps<typeof Se
           await methods.createAsset({
             network: currentNetwork,
             ...route.params.asset,
+            source: AssetSource.Custom,
           });
         }
       }
@@ -171,9 +174,7 @@ const SendTransactionStep4Confirm: React.FC<SendTransactionScreenProps<typeof Se
           // sendTransaction has from field, but it is readonly, and it is only have by tx is signed otherwise it is null, so we need to pass the from address to signTransaction
           const [txRawPromise, cancel] = await plugins.BSIM.signTransaction(currentAddressValue, tx);
           bsimCancelRef.current = cancel;
-          console.log(123);
           txRaw = await txRawPromise;
-          console.log('txRaw', txRaw);
         } catch (bsimError) {
           const code = (bsimError as { code: string })?.code;
           const message = (bsimError as { message: string })?.message;

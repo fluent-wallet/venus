@@ -42,7 +42,7 @@ export class Tx extends Model {
   /** optional, Relation<App | null> */
   @immutableRelation(TableName.App, 'app_id') app!: Relation<App>;
   /** optional, Relation<Asset | null> */
-  @immutableRelation(TableName.Asset, 'asset_id') private asset!: Relation<Asset>;
+  @immutableRelation(TableName.Asset, 'asset_id') asset!: Relation<Asset>;
   @immutableRelation(TableName.Address, 'address_id') address!: Relation<Address>;
   @immutableRelation(TableName.TxExtra, 'tx_extra_id') txExtra!: Relation<TxExtra>;
   @immutableRelation(TableName.TxPayload, 'tx_payload_id') txPayload!: Relation<TxPayload>;

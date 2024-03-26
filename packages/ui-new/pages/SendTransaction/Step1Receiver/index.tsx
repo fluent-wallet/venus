@@ -1,32 +1,26 @@
-import React, { useState, useCallback, useEffect, useRef } from 'react';
-import { Pressable, StyleSheet } from 'react-native';
+import React, { useState, useCallback, useEffect } from 'react';
+import { Pressable, StyleSheet, Keyboard } from 'react-native';
 import { useTheme } from '@react-navigation/native';
 import { debounce } from 'lodash-es';
-import { useCurrentNetwork, getCurrentNetwork, AddressType, NetworkType } from '@core/WalletCore/Plugins/ReactInject';
+import { useCurrentNetwork, getCurrentNetwork, AddressType } from '@core/WalletCore/Plugins/ReactInject';
 import method from '@core/WalletCore/Methods';
 import Text from '@components/Text';
 import TextInput from '@components/TextInput';
 import Button from '@components/Button';
 import Checkbox from '@components/Checkbox';
 import HourglassLoading from '@components/Loading/Hourglass';
+import ScanQRCode from '@pages/ScanQRCode';
 import { SendTransactionStep1StackName, SendTransactionStep2StackName, type SendTransactionScreenProps } from '@router/configs';
-import { isDev } from '@utils/getEnv';
 import QrCode from '@assets/icons/qr-code.svg';
 import BackupBottomSheet from '../SendTransactionBottomSheet';
-import ScanQRCode from '@pages/ScanQRCode';
+import Contract from './Contract';
 
 const SendTransactionStep1Receiver: React.FC<SendTransactionScreenProps<typeof SendTransactionStep1StackName>> = ({ navigation }) => {
   const { colors } = useTheme();
   const _currentNetwork = useCurrentNetwork();
   const [showScanQRCode, setShowScanQRCode] = useState(false);
 
-  const [receiver, setReceiver] = useState(() =>
-    !isDev
-      ? ''
-      : _currentNetwork?.networkType === NetworkType.Conflux
-        ? 'cfxtest:aas7an99m9dbwm13p5mpe1xmc1b647743u00vwvmpn'
-        : '0x102e0fb8a5ED6E0f0899C3ed9896cb8973aA29bB',
-  );
+  const [receiver, setReceiver] = useState('');
   const [inChecking, setInChecking] = useState(false);
   const [knowRisk, setKnowRist] = useState(false);
   const [checkRes, setCheckRes] = useState<null | AddressType | 'Invalid' | 'NetworkError'>(null);
@@ -85,6 +79,7 @@ const SendTransactionStep1Receiver: React.FC<SendTransactionScreenProps<typeof S
           multiline
           numberOfLines={3}
         />
+        <Contract />
 
         {checkRes === 'NetworkError' && !inChecking && (
           <Pressable
@@ -122,7 +117,12 @@ const SendTransactionStep1Receiver: React.FC<SendTransactionScreenProps<typeof S
         <Button
           testID='next'
           style={styles.btn}
-          onPress={() => navigation.navigate(SendTransactionStep2StackName, { targetAddress: receiver })}
+          onPress={() => {
+            navigation.navigate(SendTransactionStep2StackName, { targetAddress: receiver });
+            if (Keyboard.isVisible()) {
+              Keyboard.dismiss();
+            }
+          }}
           disabled={!(checkRes === AddressType.EOA || checkRes === AddressType.Contract) || (checkRes === AddressType.Contract && !knowRisk)}
           size="small"
         >

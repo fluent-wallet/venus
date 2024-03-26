@@ -1,16 +1,16 @@
-import React, { useState, useCallback, useRef, type RefObject } from 'react';
+import React, { useState, useCallback, useRef } from 'react';
 import { useTheme, StackActions } from '@react-navigation/native';
 import { View, Linking, StyleSheet } from 'react-native';
 import { useCameraPermission, useCameraDevice, useCameraFormat, Camera, type Code } from 'react-native-vision-camera';
 import { showMessage } from 'react-native-flash-message';
-import { BarCodeScanner } from 'expo-barcode-scanner';
+import { scanFromURLAsync } from 'expo-barcode-scanner';
 import { launchImageLibraryAsync } from 'expo-image-picker';
 import Decimal from 'decimal.js';
 import { parseUri } from '@walletconnect/utils';
 import { useCurrentNetwork, NetworkType, getAssetsTokenList, AssetType } from '@core/WalletCore/Plugins/ReactInject';
 import methods from '@core/WalletCore/Methods';
 import plugins from '@core/WalletCore/Plugins';
-import BottomSheet, { BottomSheetView, snapPoints, type BottomSheetMethods } from '@components/BottomSheet';
+import BottomSheet, { BottomSheetMethods, BottomSheetView, snapPoints } from '@components/BottomSheet';
 import Text from '@components/Text';
 import Button from '@components/Button';
 import {
@@ -28,14 +28,14 @@ import ScanBorder from '@assets/icons/scan-border.svg';
 // has onConfirm props means open in SendTransaction with local modal way.
 interface Props {
   onConfirm?: (ethUrl: ETHURL) => void;
-  bottomSheetRef?: RefObject<BottomSheetMethods>;
   navigation?: StackScreenProps<typeof ScanQRCodeStackName>['navigation'];
   onClose?: () => void;
 }
 
 const scanAreaWidth = 220;
-const ScanQrCode: React.FC<Props> = ({ navigation, bottomSheetRef, onConfirm, onClose }) => {
+const ScanQrCode: React.FC<Props> = ({ navigation, onConfirm, onClose }) => {
   const { colors } = useTheme();
+  const bottomSheetRef = useRef<BottomSheetMethods>(null!);
   const currentNetwork = useCurrentNetwork()!;
 
   const camera = useRef<Camera>(null);
@@ -184,7 +184,7 @@ const ScanQrCode: React.FC<Props> = ({ navigation, bottomSheetRef, onConfirm, on
         const [assets] = result.assets;
         if (!assets || !assets.uri) return;
         // TODO: update and remove BarCodeScanner package  see : https://docs.expo.dev/versions/latest/sdk/bar-code-scanner/
-        const [codeRes] = await BarCodeScanner.scanFromURLAsync(assets.uri);
+        const [codeRes] = await scanFromURLAsync(assets.uri);
 
         if (codeRes.data) {
           await handleQRCode(codeRes.data);
