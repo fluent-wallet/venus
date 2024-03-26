@@ -24,7 +24,7 @@ const AccountSelector: React.FC<Props> = ({ onClose }) => {
     <BottomSheet ref={bottomSheetRef} snapPoints={snapPoints.percent75} index={0} onClose={onClose}>
       <View style={styles.container}>
         <View style={styles.header}>
-          <Text style={[styles.title, { color: colors.textPrimary }]}>Account1</Text>
+          <Text style={[styles.title, { color: colors.textPrimary }]}>Account</Text>
           <Pressable
             style={({ pressed }) => [styles.edit, { borderColor: colors.borderThird, backgroundColor: pressed ? colors.underlay : 'transparent' }]}
             onPress={() => navigation.navigate(AccountManagementStackName)}

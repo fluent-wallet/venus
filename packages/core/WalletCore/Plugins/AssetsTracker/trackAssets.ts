@@ -59,7 +59,7 @@ const trackAssets = async ({
               {
                 network,
                 ...assets[index],
-                source: AssetSource.Official
+                source: AssetSource.Official,
               },
               true,
             ),

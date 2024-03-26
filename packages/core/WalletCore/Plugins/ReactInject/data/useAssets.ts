@@ -142,4 +142,3 @@ const currentOpenNFTDetailAtom = atom<{ nft: AssetInfo; index?: number; items?: 
 export const getCurrentOpenNFTDetail = () => getAtom(currentOpenNFTDetailAtom);
 export const setCurrentOpenNFTDetail = (data?: { nft: AssetInfo; index?: number; items?: Array<NFTItemDetail> }) => setAtom(currentOpenNFTDetailAtom, data);
 export const useCurrentOpenNFTDetail = () => useAtomValue(currentOpenNFTDetailAtom);
-
