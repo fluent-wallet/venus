@@ -99,11 +99,12 @@ export const fetchESpaceServer = async ({
                 });
                 const assetsWithCFX = [
                   {
-                    type: AssetType.Native,
                     name: 'CFX',
                     symbol: 'CFX',
                     decimals: 18,
                     balance: cfxBalance,
+                    ...scanInfoMap[AssetType.Native],
+                    type: AssetType.Native,
                   },
                   ...assets.filter((asset) => asset.contractAddress !== '0x0000000000000000000000000000000000000000'),
                 ];
