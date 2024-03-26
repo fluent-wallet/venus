@@ -3,7 +3,7 @@ import { View, StyleSheet } from 'react-native';
 import { useTheme } from '@react-navigation/native';
 import Text from '@components/Text';
 import Button from '@components/Button';
-import BottomSheet, { BottomSheetMethods, BottomSheetView } from '@components/BottomSheet';
+import BottomSheet, { BottomSheetMethods } from '@components/BottomSheet';
 import { screenHeight } from '@utils/deviceInfo';
 
 interface Props {
@@ -17,7 +17,7 @@ const DeleteConfirm: React.FC<Props> = ({ onConfirm, onClose }) => {
 
   return (
     <BottomSheet ref={bottomSheetRef} snapPoints={snapPoints} index={0} onClose={onClose}>
-      <BottomSheetView style={styles.container}>
+      <View style={styles.container}>
         <Text style={[styles.title, { color: colors.textPrimary }]}>⚠️ Confirm to delete{'\n'}this wallet?</Text>
         <Text style={[styles.description, { color: colors.textSecondary }]}>
           This Action will remove this wallet from the app.{'\n'}
@@ -42,7 +42,7 @@ const DeleteConfirm: React.FC<Props> = ({ onConfirm, onClose }) => {
             ⚠️ Delete
           </Button>
         </View>
-      </BottomSheetView>
+      </View>
     </BottomSheet>
   );
 };

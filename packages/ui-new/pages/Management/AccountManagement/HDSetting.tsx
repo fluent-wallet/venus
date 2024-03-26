@@ -21,7 +21,7 @@ import { shortenAddress } from '@core/utils/address';
 import Text from '@components/Text';
 import Checkbox from '@components/Checkbox';
 import Button from '@components/Button';
-import BottomSheet, { BottomSheetView, snapPoints, type BottomSheetMethods } from '@components/BottomSheet';
+import BottomSheet, { snapPoints, type BottomSheetMethods } from '@components/BottomSheet';
 import HourglassLoading from '@components/Loading/Hourglass';
 import { HDSettingStackName, type StackScreenProps } from '@router/configs';
 import { isSmallDevice } from '@utils/deviceInfo';
@@ -154,7 +154,7 @@ const HDManagement: React.FC<StackScreenProps<typeof HDSettingStackName>> = ({ n
 
   return (
     <BottomSheet ref={bottomSheetRef} snapPoints={snapPoints.large} isRoute>
-      <BottomSheetView style={styles.container}>
+      <View style={styles.container}>
         <Text style={[styles.title, styles.mainText, { color: colors.textPrimary }]}>Select HD Wallets</Text>
         <Text style={[styles.description, { color: colors.textSecondary }]}>HD Path Type</Text>
         <Text style={[styles.contentText, styles.mainText, { color: colors.textPrimary }]}>BIP44</Text>
@@ -259,7 +259,7 @@ const HDManagement: React.FC<StackScreenProps<typeof HDSettingStackName>> = ({ n
         <Button testID='next' style={styles.btn} disabled={chooseAccounts.length === 0} onPress={handleClickNext} loading={inNext}>
           Next
         </Button>
-      </BottomSheetView>
+      </View>
     </BottomSheet>
   );
 };

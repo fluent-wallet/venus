@@ -1,9 +1,9 @@
 import React, { useState, useRef } from 'react';
+import { View, StyleSheet, Pressable, Keyboard } from 'react-native';
 import { useTheme } from '@react-navigation/native';
-import { StyleSheet, Pressable, Keyboard } from 'react-native';
 import { type AssetInfo } from '@core/WalletCore/Plugins/AssetsTracker/types';
 import { useCurrentAddressValue } from '@core/WalletCore/Plugins/ReactInject';
-import BottomSheet, { BottomSheetView, snapPoints, type BottomSheetMethods } from '@components/BottomSheet';
+import BottomSheet, { snapPoints, type BottomSheetMethods } from '@components/BottomSheet';
 import Text from '@components/Text';
 import Button from '@components/Button';
 import TokenIcon from '@modules/AssetsList/TokensList/TokenIcon';
@@ -29,7 +29,7 @@ const ReceiveSetAsset: React.FC<Props> = ({ onConfirm, selectedAsset, setSelecte
   return (
     <>
       <BottomSheet ref={bottomSheetRef} snapPoints={snapPoints.large} index={0} onClose={onClose}>
-        <BottomSheetView style={styles.container}>
+        <View style={styles.container}>
           <Text style={[styles.title, { color: colors.textPrimary }]}>Receive</Text>
 
           <Text style={[styles.text, styles.to, { color: colors.textSecondary }]}>Select a token</Text>
@@ -78,7 +78,7 @@ const ReceiveSetAsset: React.FC<Props> = ({ onConfirm, selectedAsset, setSelecte
               Select Asset
             </Button>
           )}
-        </BottomSheetView>
+        </View>
       </BottomSheet>
       {showSelectAsset && <SelectAsset onConfirm={(asset) => setSelectedAsset(asset)} onClose={() => setShowSelectAsset(false)} />}
     </>

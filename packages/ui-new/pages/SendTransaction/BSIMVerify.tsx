@@ -3,7 +3,7 @@ import { View, StyleSheet } from 'react-native';
 import { useTheme } from '@react-navigation/native';
 import { Image } from 'expo-image';
 import { BSIMEvent, BSIMEventTypesName } from '@WalletCoreExtends/Plugins/BSIM/types';
-import BottomSheet, { BottomSheetView, type BottomSheetMethods } from '@components/BottomSheet';
+import BottomSheet, { type BottomSheetMethods } from '@components/BottomSheet';
 import Text from '@components/Text';
 import Button from '@components/Button';
 import { screenHeight } from '@utils/deviceInfo';
@@ -22,7 +22,7 @@ const BSIMVerify: React.FC<Props> = ({ bottomSheetRef, bsimEvent, onClose, onRet
 
   return (
     <BottomSheet ref={bottomSheetRef} snapPoints={snapPoints} onClose={onClose}>
-      <BottomSheetView style={styles.container}>
+      <View style={styles.container}>
         <Text style={[styles.title, { color: colors.textPrimary }]}>
           {bsimEvent.type === BSIMEventTypesName.ERROR ? '🚫 Signing Error' : 'Transaction Confirmation'}
         </Text>
@@ -41,7 +41,7 @@ const BSIMVerify: React.FC<Props> = ({ bottomSheetRef, bsimEvent, onClose, onRet
             Retry
           </Button>
         </View>
-      </BottomSheetView>
+      </View>
     </BottomSheet>
   );
 };

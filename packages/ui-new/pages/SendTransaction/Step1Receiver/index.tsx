@@ -73,7 +73,12 @@ const SendTransactionStep1Receiver: React.FC<SendTransactionScreenProps<typeof S
           onChangeText={(newNickName) => setReceiver(newNickName?.trim())}
           isInBottomSheet
           SuffixIcon={!receiver ? QrCode : undefined}
-          onPressSuffixIcon={() => setShowScanQRCode(true)}
+          onPressSuffixIcon={() => {
+            if (Keyboard.isVisible()) {
+              Keyboard.dismiss();
+            }
+            setShowScanQRCode(true);
+          }}
           showClear={!!receiver}
           placeholder="Enter an address or account name"
           multiline
@@ -115,7 +120,7 @@ const SendTransactionStep1Receiver: React.FC<SendTransactionScreenProps<typeof S
         )}
 
         <Button
-          testID='next'
+          testID="next"
           style={styles.btn}
           onPress={() => {
             navigation.navigate(SendTransactionStep2StackName, { targetAddress: receiver });

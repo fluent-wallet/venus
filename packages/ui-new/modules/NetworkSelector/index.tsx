@@ -1,9 +1,9 @@
-import React, { useCallback, useRef, type RefObject } from 'react';
+import React, { useCallback, useRef } from 'react';
 import { View, Pressable, StyleSheet } from 'react-native';
 import { useTheme } from '@react-navigation/native';
 import NetworksList from '@modules/NetworksList';
 import Text from '@components/Text';
-import BottomSheet, { BottomSheetView, snapPoints, type BottomSheetMethods } from '@components/BottomSheet';
+import BottomSheet, { snapPoints, type BottomSheetMethods } from '@components/BottomSheet';
 export { type BottomSheetMethods };
 
 interface Props {
@@ -20,7 +20,7 @@ const NetworkSelector: React.FC<Props> = ({ onClose }) => {
 
   return (
     <BottomSheet ref={bottomSheetRef} snapPoints={snapPoints.percent75} index={0} onClose={onClose}>
-      <BottomSheetView style={styles.container}>
+      <View style={styles.container}>
         <View style={styles.header}>
           <Text style={[styles.title, { color: colors.textPrimary }]}>Network</Text>
           <Pressable style={({ pressed }) => [styles.edit, { borderColor: colors.borderThird, backgroundColor: pressed ? colors.underlay : 'transparent' }]}>
@@ -28,7 +28,7 @@ const NetworkSelector: React.FC<Props> = ({ onClose }) => {
           </Pressable>
         </View>
         <NetworksList type="selector" onSelect={handleSelect} />
-      </BottomSheetView>
+      </View>
     </BottomSheet>
   );
 };

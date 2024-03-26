@@ -3,7 +3,7 @@ import { View, Pressable, StyleSheet } from 'react-native';
 import { useTheme, useNavigation } from '@react-navigation/native';
 import AccountsList from '@modules/AccountsList';
 import Text from '@components/Text';
-import BottomSheet, { BottomSheetView, snapPoints, type BottomSheetMethods } from '@components/BottomSheet';
+import BottomSheet, {  snapPoints, type BottomSheetMethods } from '@components/BottomSheet';
 import { AccountManagementStackName, HomeStackName, type StackScreenProps } from '@router/configs';
 export { type BottomSheetMethods };
 
@@ -22,7 +22,7 @@ const AccountSelector: React.FC<Props> = ({ onClose }) => {
 
   return (
     <BottomSheet ref={bottomSheetRef} snapPoints={snapPoints.percent75} index={0} onClose={onClose}>
-      <BottomSheetView style={styles.container}>
+      <View style={styles.container}>
         <View style={styles.header}>
           <Text style={[styles.title, { color: colors.textPrimary }]}>Account1</Text>
           <Pressable
@@ -33,7 +33,7 @@ const AccountSelector: React.FC<Props> = ({ onClose }) => {
           </Pressable>
         </View>
         <AccountsList type="selector" onPressAccount={handleSelect} />
-      </BottomSheetView>
+      </View>
     </BottomSheet>
   );
 };

@@ -7,7 +7,7 @@ import methods from '@core/WalletCore/Methods';
 import plugins from '@core/WalletCore/Plugins';
 import Text from '@components/Text';
 import Button from '@components/Button';
-import BottomSheet, { BottomSheetView, type BottomSheetMethods } from '@components/BottomSheet';
+import BottomSheet, { type BottomSheetMethods } from '@components/BottomSheet';
 import { screenHeight } from '@utils/deviceInfo';
 import { AccountManagementStackName, WelcomeStackName, type StackScreenProps } from '@router/configs';
 
@@ -41,7 +41,7 @@ const EraseAllWallet: React.FC<Props> = ({ navigation }) => {
 
   return (
     <BottomSheet ref={bottomSheetRef} snapPoints={snapPoints} isRoute>
-      <BottomSheetView style={styles.container}>
+      <View style={styles.container}>
         <Text style={[styles.title, { color: colors.textPrimary }]}>⚠️ Confirm to clear{'\n'}account data?</Text>
         <Text style={[styles.description, { color: colors.textSecondary }]}>
           Account data will be cleared.{'\n'}
@@ -59,7 +59,7 @@ const EraseAllWallet: React.FC<Props> = ({ navigation }) => {
             ⚠️ Delete
           </Button>
         </View>
-      </BottomSheetView>
+      </View>
     </BottomSheet>
   );
 };

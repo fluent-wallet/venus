@@ -1,6 +1,6 @@
 import React, { useState, useCallback, useRef } from 'react';
-import { useTheme, StackActions } from '@react-navigation/native';
 import { View, Linking, StyleSheet } from 'react-native';
+import { useTheme, StackActions } from '@react-navigation/native';
 import { useCameraPermission, useCameraDevice, useCameraFormat, Camera, type Code } from 'react-native-vision-camera';
 import { showMessage } from 'react-native-flash-message';
 import { scanFromURLAsync } from 'expo-barcode-scanner';
@@ -10,7 +10,7 @@ import { parseUri } from '@walletconnect/utils';
 import { useCurrentNetwork, NetworkType, getAssetsTokenList, AssetType } from '@core/WalletCore/Plugins/ReactInject';
 import methods from '@core/WalletCore/Methods';
 import plugins from '@core/WalletCore/Plugins';
-import BottomSheet, { BottomSheetMethods, BottomSheetView, snapPoints } from '@components/BottomSheet';
+import BottomSheet, { BottomSheetMethods, snapPoints } from '@components/BottomSheet';
 import Text from '@components/Text';
 import Button from '@components/Button';
 import {
@@ -72,6 +72,7 @@ const ScanQrCode: React.FC<Props> = ({ navigation, onConfirm, onClose }) => {
         }
 
         if (!ethUrl.function_name) {
+          bottomSheetRef.current?.close();
           navigation.dispatch(
             StackActions.replace(SendTransactionStackName, { screen: SendTransactionStep2StackName, params: { targetAddress: ethUrl.target_address } }),
           );
@@ -86,6 +87,7 @@ const ScanQrCode: React.FC<Props> = ({ navigation, onConfirm, onClose }) => {
 
           if (!targetAsset) {
             if (ethUrl.parameters?.address) {
+              bottomSheetRef.current?.close();
               navigation.dispatch(
                 StackActions.replace(SendTransactionStackName, {
                   screen: SendTransactionStep2StackName,
@@ -97,6 +99,7 @@ const ScanQrCode: React.FC<Props> = ({ navigation, onConfirm, onClose }) => {
             }
           } else {
             if (!ethUrl.parameters?.value) {
+              bottomSheetRef.current?.close();
               navigation.dispatch(
                 StackActions.replace(SendTransactionStackName, {
                   screen: SendTransactionStep4StackName,
@@ -108,6 +111,7 @@ const ScanQrCode: React.FC<Props> = ({ navigation, onConfirm, onClose }) => {
                 }),
               );
             } else {
+              bottomSheetRef.current?.close();
               navigation.dispatch(
                 StackActions.replace(SendTransactionStackName, {
                   screen: SendTransactionStep3StackName,
@@ -218,7 +222,7 @@ const ScanQrCode: React.FC<Props> = ({ navigation, onConfirm, onClose }) => {
       onOpen={handleOnOpen}
       onClose={onClose}
     >
-      <BottomSheetView style={styles.container}>
+      <View style={styles.container}>
         <Text style={[styles.title, { color: colors.textPrimary }]}>Scan</Text>
         {hasPermission && (
           <>
@@ -281,7 +285,7 @@ const ScanQrCode: React.FC<Props> = ({ navigation, onConfirm, onClose }) => {
             )}
           </>
         )}
-      </BottomSheetView>
+      </View>
     </BottomSheet>
   );
 };
