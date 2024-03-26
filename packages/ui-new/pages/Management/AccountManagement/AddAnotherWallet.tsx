@@ -7,7 +7,7 @@ import plugins from '@core/WalletCore/Plugins';
 import { useHasBSIMVaultCreated } from '@core/WalletCore/Plugins/ReactInject';
 import useInAsync from '@hooks/useInAsync';
 import Text from '@components/Text';
-import BottomSheet, { BottomSheetView, type BottomSheetMethods } from '@components/BottomSheet';
+import BottomSheet, { type BottomSheetMethods } from '@components/BottomSheet';
 import HourglassLoading from '@components/Loading/Hourglass';
 import { styles as accountListStyles } from '@modules/AccountsList';
 import { showNotFindBSIMCardMessage } from '@pages/WayToInitWallet';
@@ -89,7 +89,7 @@ const AddAnotherWallet: React.FC<Props> = ({ navigation }) => {
   return (
     <>
       <BottomSheet ref={bottomSheetRef} snapPoints={snapPoints} isRoute onChange={(index) => setBottomSheetIndex(index)}>
-        <BottomSheetView style={styles.container}>
+        <View style={styles.container}>
           {!hasBSIMVaultCreated && (
             <Pressable
               style={({ pressed }) => [accountListStyles.row, { backgroundColor: pressed ? colors.underlay : 'transparent' }]}
@@ -121,7 +121,7 @@ const AddAnotherWallet: React.FC<Props> = ({ navigation }) => {
             <Text style={[accountListStyles.manageText, { color: colors.textPrimary }]}>Import existing wallet</Text>
             {inImporting && <HourglassLoading style={accountListStyles.addAccountLoading} />}
           </Pressable>
-        </BottomSheetView>
+        </View>
       </BottomSheet>
       {bottomSheetIndex === 0 && <ImportExistingWallet bottomSheetRef={importExistRef} onSuccessConfirm={handleImportExistWallet} />}
     </>

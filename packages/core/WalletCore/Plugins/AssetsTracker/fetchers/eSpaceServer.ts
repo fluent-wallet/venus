@@ -11,12 +11,12 @@ import {
   CFX_ESPACE_MAINNET_WALLET_CONTRACT_ADDRESS,
   CFX_ESPACE_TESTNET_SCAN_OPENAPI,
   CFX_ESPACE_TESTNET_WALLET_CONTRACT_ADDRESS,
-} from '@core/consts/network';
+} from '../../../../consts/network';
 
-const eSpaceTestnetWalletContract = createContract({ address: CFX_ESPACE_TESTNET_WALLET_CONTRACT_ADDRESS, ABI: ESpaceWalletABI });
-const eSpaceTestnetServerFetcher = createFetchServer({ prefixUrl: CFX_ESPACE_TESTNET_SCAN_OPENAPI });
-const eSpaceWalletContract = createContract({ address: CFX_ESPACE_MAINNET_WALLET_CONTRACT_ADDRESS, ABI: ESpaceWalletABI });
-const eSpaceServerFetcher = createFetchServer({ prefixUrl: CFX_ESPACE_MAINNET_SCAN_OPENAPI });
+export const eSpaceTestnetWalletContract = createContract({ address: CFX_ESPACE_TESTNET_WALLET_CONTRACT_ADDRESS, ABI: ESpaceWalletABI });
+export const eSpaceTestnetServerFetcher = createFetchServer({ prefixUrl: CFX_ESPACE_TESTNET_SCAN_OPENAPI });
+export const eSpaceWalletContract = createContract({ address: CFX_ESPACE_MAINNET_WALLET_CONTRACT_ADDRESS, ABI: ESpaceWalletABI });
+export const eSpaceServerFetcher = createFetchServer({ prefixUrl: CFX_ESPACE_MAINNET_SCAN_OPENAPI });
 
 interface AssetInfoFromScan {
   type: Omit<AssetType, AssetType.Native> & 'native';

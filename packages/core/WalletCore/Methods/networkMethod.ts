@@ -14,7 +14,7 @@ import {
 } from '../../database/models/Network/query';
 import { type Account } from '../../database/models/Account';
 import { createAddress } from '../../database/models/Address/query';
-import { AssetType } from '../../database/models/Asset';
+import { AssetType, AssetSource } from '../../database/models/Asset';
 import { createAsset } from '../../database/models/Asset/query';
 import { createAssetRule } from '../../database/models/AssetRule/query';
 import database from '../../database';
@@ -44,6 +44,7 @@ export class NetworkMethod {
         symbol: params.nativeAsset?.symbol || network.name.split(' ')?.[0] || 'ETH',
         decimals: params.nativeAsset?.decimals || 18,
         icon: params.nativeAsset?.icon,
+        source: AssetSource.Official
       },
       true,
     );

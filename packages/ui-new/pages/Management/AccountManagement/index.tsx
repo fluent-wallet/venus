@@ -19,7 +19,7 @@ const AccountManagement: React.FC<StackScreenProps<typeof AccountManagementStack
   const { colors, mode } = useTheme();
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: colors.bgPrimary }]}>
       <Text style={[styles.title, { color: colors.textPrimary }]}>Account Management</Text>
       <AccountsList
         type="management"

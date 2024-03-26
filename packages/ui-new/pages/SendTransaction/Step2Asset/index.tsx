@@ -11,6 +11,7 @@ import {
   useCurrentAddress,
   useCurrentOpenNFTDetail,
   AssetType,
+  AssetSource
 } from '@core/WalletCore/Plugins/ReactInject';
 import { fetchERC20AssetInfoBatchWithAccount } from '@core/WalletCore/Plugins/AssetsTracker/fetchers/basic';
 import { type AssetInfo } from '@core/WalletCore/Plugins/AssetsTracker/types';
@@ -100,13 +101,13 @@ const SendTransactionStep2Asset: React.FC<Props> = ({ navigation, route, onConfi
               await methods.createAsset({
                 network: currentNetwork,
                 ...assetInfo,
+                source: AssetSource.Custom
               });
             }
           } else {
             setFilterAssets({ type: 'invalid-format', assets: [] });
           }
         } catch (err) {
-          console.log(err);
           if (String(err).includes('timed out')) {
             setFilterAssets({ type: 'network-error', assets: [] });
           } else {
@@ -116,7 +117,7 @@ const SendTransactionStep2Asset: React.FC<Props> = ({ navigation, route, onConfi
           setInFetchingRemote(false);
         }
       }
-    }, 500),
+    }, 200),
     [assets, currentNetwork, currentAddressValue],
   );
 
@@ -126,7 +127,6 @@ const SendTransactionStep2Asset: React.FC<Props> = ({ navigation, route, onConfi
 
   const handleClickAsset = useCallback((asset: AssetInfo, nftItemDetail?: NFTItemDetail) => {
     if (navigation) {
-      console.log(asset.type, asset.balance);
       if ((asset.type === AssetType.ERC20 || asset.type === AssetType.Native) && (Number(asset.balance) === 0 || isNaN(Number(asset.balance)))) {
         return showMessage({
           message: `The balance of asset ${asset.symbol} is 0`,

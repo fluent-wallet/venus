@@ -9,7 +9,7 @@ export const currentAddressObservable = currentAccountObservable.pipe(
   switchMap((account) => account?.currentNetworkAddressObservable.pipe(catchError(() => of(null))))
 );
 
-const currentAddressValueObservable = currentAddressObservable.pipe(
+export const currentAddressValueObservable = currentAddressObservable.pipe(
   switchMap((currentAddress) => (currentAddress ? from(currentAddress.getValue()).pipe(catchError(() => of(null))) : of(null)))
 );
 export const currentAddressAtom = atomWithObservable(() => currentAddressObservable, { initialValue: null });

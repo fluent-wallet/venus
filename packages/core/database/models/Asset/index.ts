@@ -5,6 +5,11 @@ import { type AssetRule } from '../AssetRule';
 import { type Tx } from '../Tx';
 import TableName from '../../TableName';
 
+export enum AssetSource {
+  Custom = 'Custom',
+  Official = 'Official',
+}
+
 export enum AssetType {
   Native = 'Native',
   ERC20 = 'ERC20',
@@ -27,6 +32,7 @@ export class Asset extends Model {
   @field('decimals') decimals!: number | null;
   @text('icon') icon!: string | null;
   @text('price_in_usdt') priceInUSDT!: string | null;
+  @text('source') source!: AssetSource | null;
   @children(TableName.Tx) txs!: Query<Tx>;
   @immutableRelation(TableName.Network, 'network_id') network!: Relation<Network>;
   @immutableRelation(TableName.AssetRule, 'asset_rule_id') assetRule!: Relation<AssetRule>;

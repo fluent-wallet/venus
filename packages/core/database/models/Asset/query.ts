@@ -12,3 +12,4 @@ export function createAsset(params: AssetParams, prepareCreate?: true) {
 }
 
 export const queryAssetByAddress = (address: string) => database.get(TableName.Asset).query(Q.where('contract_address', address)) as unknown as Query<Asset>;
+export const queryAllAssets = () => database.get(TableName.Request).query() as unknown as Query<Asset>;

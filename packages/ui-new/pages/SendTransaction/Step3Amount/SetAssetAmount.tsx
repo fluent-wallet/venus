@@ -23,6 +23,7 @@ interface Info {
   isAmountValid: boolean;
   validMax: Decimal | null;
   handleEstimateMax: () => void;
+  inEstimate: boolean;
 }
 interface Props {
   targetAddress: string;
@@ -85,7 +86,7 @@ const SetAssetAmount: React.FC<Props> = ({ targetAddress, asset, nftItemDetail, 
       }
     }
   }, []);
-  const { inAsync, execAsync: handleEstimateMax } = useInAsync(_handleEstimateMax);
+  const { inAsync: inEstimate, execAsync: handleEstimateMax } = useInAsync(_handleEstimateMax);
 
   const handleClickMax = useCallback(async () => {
     let usedMax: Decimal | null | undefined = validMax;
@@ -118,10 +119,10 @@ const SetAssetAmount: React.FC<Props> = ({ targetAddress, asset, nftItemDetail, 
             <Pressable
               style={({ pressed }) => [styles.maxBtn, { backgroundColor: pressed ? colors.underlay : 'transparent', borderColor: colors.textPrimary }]}
               onPress={handleClickMax}
-              disabled={inAsync}
+              disabled={inEstimate}
             >
-              <Text style={[styles.text, { color: colors.textPrimary, borderColor: colors.textPrimary, opacity: inAsync ? 0 : 1 }]}>Max</Text>
-              {inAsync && <HourglassLoading style={styles.maxLoading} />}
+              <Text style={[styles.text, { color: colors.textPrimary, borderColor: colors.textPrimary, opacity: inEstimate ? 0 : 1 }]}>Max</Text>
+              {inEstimate && <HourglassLoading style={styles.maxLoading} />}
             </Pressable>
           </>
         )}
@@ -153,6 +154,7 @@ const SetAssetAmount: React.FC<Props> = ({ targetAddress, asset, nftItemDetail, 
         amount,
         isAmountValid: isAmountValid === true,
         validMax: validMax,
+        inEstimate
       });
     }
   }, [amount, isAmountValid, validMax]);
@@ -199,7 +201,7 @@ const SetAssetAmount: React.FC<Props> = ({ targetAddress, asset, nftItemDetail, 
         </Text>
       )}
       {typeof children === 'function' &&
-        children({ amount, isAmountValid: isAmountValid === true, validMax: validMax!, handleEstimateMax: handleEstimateMax as unknown as () => void })}
+        children({ amount, isAmountValid: isAmountValid === true, validMax: validMax!, inEstimate, handleEstimateMax: handleEstimateMax as unknown as () => void })}
     </>
   );
 };

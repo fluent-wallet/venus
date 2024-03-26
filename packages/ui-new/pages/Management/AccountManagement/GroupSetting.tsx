@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useMemo, useEffect, useRef } from 'react';
-import { Pressable, StyleSheet } from 'react-native';
+import { View, Pressable, StyleSheet } from 'react-native';
 import { useTheme } from '@react-navigation/native';
 import { showMessage } from 'react-native-flash-message';
 import methods from '@core/WalletCore/Methods';
@@ -9,7 +9,7 @@ import Text from '@components/Text';
 import TextInput from '@components/TextInput';
 import Checkbox from '@components/Checkbox';
 import Button from '@components/Button';
-import BottomSheet, { snapPoints, BottomSheetView, BottomSheetScrollView, type BottomSheetMethods } from '@components/BottomSheet';
+import BottomSheet, { snapPoints, BottomSheetScrollView, type BottomSheetMethods } from '@components/BottomSheet';
 import { AccountItemView } from '@modules/AccountsList';
 import { GroupSettingStackName, HDSettingStackName, BackupStackName, BackupStep1StackName, type StackScreenProps } from '@router/configs';
 import ArrowRight from '@assets/icons/arrow-right2.svg';
@@ -98,7 +98,7 @@ const GroupConfig: React.FC<StackScreenProps<typeof GroupSettingStackName>> = ({
   return (
     <>
       <BottomSheet ref={bottomSheetRef} snapPoints={snapPoints.large} isRoute>
-        <BottomSheetView style={styles.container}>
+        <View style={styles.container}>
           <Text style={[styles.title, styles.mainText, { color: colors.textPrimary }]}>{GroupTitle}</Text>
           <Text style={[styles.description, { color: colors.textSecondary }]}>Account Name</Text>
           <TextInput
@@ -149,7 +149,7 @@ const GroupConfig: React.FC<StackScreenProps<typeof GroupSettingStackName>> = ({
           <Button testID='ok' style={styles.btn} disabled={!accountGroupName || accountGroupName === accountGroup?.nickname} onPress={handleUpdateAccountGroupNickName}>
             OK
           </Button>
-        </BottomSheetView>
+        </View>
       </BottomSheet>
       {showDeleteBottomSheet && <DeleteConfirm onConfirm={handleConfirmDelete} onClose={() => setShowDeleteBottomSheet(false)} />}
     </>

@@ -4,7 +4,7 @@ import { truncate } from '../../../utils/balance';
 import Decimal from 'decimal.js';
 import methods from '../../Methods';
 import database from '../../../database';
-import { AssetType, type Asset } from './../../../database/models/Asset';
+import { AssetType, AssetSource, type Asset } from './../../../database/models/Asset';
 import { type Address } from './../../../database/models/Address';
 import { type Network } from './../../../database/models/Network';
 import { priorityFetcher, type Fetcher, type FetchAssetBalance, type AssetInfo } from './types';
@@ -59,6 +59,7 @@ const trackAssets = async ({
               {
                 network,
                 ...assets[index],
+                source: AssetSource.Official
               },
               true,
             ),

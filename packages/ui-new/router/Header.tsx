@@ -24,7 +24,7 @@ const Header: React.FC = () => {
   const { mode, colors } = useTheme();
 
   return (
-    <View style={styles.header}>
+    <View style={[styles.header, { backgroundColor: colors.bgPrimary }]}>
       <BackButton />
       <Pressable
         style={({ pressed }) => [

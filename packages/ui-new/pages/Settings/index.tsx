@@ -21,7 +21,7 @@ const Settings: React.FC<StackScreenProps<typeof SettingsStackName>> = ({ naviga
   const { colors } = useTheme();
 
   return (
-    <ScrollView contentContainerStyle={styles.container}>
+    <ScrollView contentContainerStyle={[styles.container, { backgroundColor: colors.bgPrimary }]}>
       <Text style={[styles.title, { color: colors.textPrimary }]}>⚙️ Settings</Text>
 
       <SettingItem title="Account Management" onPress={() => navigation.navigate(AccountManagementStackName)} />

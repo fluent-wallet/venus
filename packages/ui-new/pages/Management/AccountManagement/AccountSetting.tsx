@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useEffect, useRef } from 'react';
-import { Pressable, StyleSheet } from 'react-native';
+import { View, Pressable, StyleSheet } from 'react-native';
 import { useTheme } from '@react-navigation/native';
 import { showMessage } from 'react-native-flash-message';
 import methods from '@core/WalletCore/Methods';
@@ -10,7 +10,7 @@ import Text from '@components/Text';
 import TextInput from '@components/TextInput';
 import Checkbox from '@components/Checkbox';
 import Button from '@components/Button';
-import BottomSheet, { BottomSheetView, snapPoints, type BottomSheetMethods } from '@components/BottomSheet';
+import BottomSheet, { snapPoints, type BottomSheetMethods } from '@components/BottomSheet';
 import { AccountSettingStackName, BackupStackName, BackupStep1StackName, type StackScreenProps } from '@router/configs';
 import ArrowRight from '@assets/icons/arrow-right2.svg';
 import Delete from '@assets/icons/delete.svg';
@@ -82,7 +82,7 @@ const AccountConfig: React.FC<StackScreenProps<typeof AccountSettingStackName>> 
   return (
     <>
       <BottomSheet ref={bottomSheetRef} snapPoints={snapPoints.large} isRoute>
-        <BottomSheetView style={styles.container}>
+        <View style={styles.container}>
           <Text style={[styles.title, styles.mainText, { color: colors.textPrimary }]}>Account</Text>
           <Text style={[styles.description, { color: colors.textSecondary }]}>Address</Text>
           <Text style={[styles.address, styles.mainText, { color: colors.textPrimary, opacity: addressValue ? 1 : 0 }]}>{addressValue || zeroAddress}</Text>
@@ -118,7 +118,7 @@ const AccountConfig: React.FC<StackScreenProps<typeof AccountSettingStackName>> 
           <Button testID='ok' style={styles.btn} disabled={!accountName || accountName === account?.nickname} onPress={handleUpdateAccountNickName}>
             OK
           </Button>
-        </BottomSheetView>
+        </View>
       </BottomSheet>
       {showDeleteBottomSheet && <DeleteConfirm onConfirm={handleConfirmDelete} onClose={() => setShowDeleteBottomSheet(false)} />}
     </>

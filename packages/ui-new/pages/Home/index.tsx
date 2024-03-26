@@ -1,7 +1,8 @@
 import React, { useCallback, useRef, useState } from 'react';
-import { View, StyleSheet, type NativeScrollEvent } from 'react-native';
+import { View, StyleSheet, type NativeScrollEvent, Text } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import PagerView from 'react-native-pager-view';
+import { useTheme } from '@react-navigation/native';
 import plugins from '@core/WalletCore/Plugins';
 import methods from '@core/WalletCore/Methods';
 import { getCurrentNetwork } from '@core/WalletCore/Plugins/ReactInject/data/useCurrentNetwork';
@@ -19,6 +20,7 @@ import RefreshScrollView from './RefreshScrollView';
 import { SWITCH_NETWORK_DRAWER_FEATURE } from '@utils/features';
 
 const Home: React.FC<StackScreenProps<typeof HomeStackName>> = ({ navigation }) => {
+  const { colors } = useTheme();
   const [currentTab, setCurrentTab] = useState<Tab>('Tokens');
   const pageViewRef = useRef<PagerView>(null);
 
@@ -36,7 +38,7 @@ const Home: React.FC<StackScreenProps<typeof HomeStackName>> = ({ navigation }) 
 
   return (
     <>
-      <SafeAreaView style={styles.container}>
+      <SafeAreaView style={[styles.container, { backgroundColor: colors.bgPrimary }]}>
         <View style={styles.header}>
           <Account onPress={() => setShowAccountSelector(true)} navigation={navigation} />
           <HeaderRight
