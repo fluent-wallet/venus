@@ -15,7 +15,6 @@ interface Props {
 const TokenList: React.FC<Props> = ({ onPressItem, showReceiveFunds = false, hidePrice = false }) => {
   const tokens = useAssetsTokenList();
   const isEmpty = useIsTokensEmpty();
-
   if (tokens === null) {
     return Skeleton;
   }
