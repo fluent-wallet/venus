@@ -12,11 +12,9 @@ const SendTransactionBottomSheet = forwardRef<BottomSheetMethods, Props>(({ chil
   const { colors } = useTheme();
 
   return (
-    <BottomSheet ref={ref} snapPoints={snapPoints || defaultSnapPoints.large} isRoute {...props}>
-      <View style={styles.container}>
-        {showTitle && <Text style={[styles.title, { color: colors.textPrimary }]}>{typeof showTitle === 'string' ? showTitle : 'Send To'}</Text>}
-        {children}
-      </View>
+    <BottomSheet ref={ref} snapPoints={snapPoints || defaultSnapPoints.large} isRoute style={styles.container} {...props}>
+      {showTitle && <Text style={[styles.title, { color: colors.textPrimary }]}>{typeof showTitle === 'string' ? showTitle : 'Send To'}</Text>}
+      {children}
     </BottomSheet>
   );
 });
