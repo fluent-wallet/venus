@@ -28,59 +28,57 @@ const ReceiveSetAsset: React.FC<Props> = ({ onConfirm, selectedAsset, setSelecte
 
   return (
     <>
-      <BottomSheet ref={bottomSheetRef} snapPoints={snapPoints.large} index={0} onClose={onClose}>
-        <View style={styles.container}>
-          <Text style={[styles.title, { color: colors.textPrimary }]}>Receive</Text>
+      <BottomSheet ref={bottomSheetRef} snapPoints={snapPoints.large} index={0} onClose={onClose} style={styles.container}>
+        <Text style={[styles.title, { color: colors.textPrimary }]}>Receive</Text>
 
-          <Text style={[styles.text, styles.to, { color: colors.textSecondary }]}>Select a token</Text>
-          <Pressable
-            style={({ pressed }) => [styles.assetWrapper, { backgroundColor: pressed ? colors.underlay : 'transparent' }]}
-            onPress={() => setShowSelectAsset(true)}
-          >
-            {selectedAsset && (
-              <>
-                <TokenIcon style={styles.assetIcon} source={selectedAsset?.icon} />
-                <Text style={[styles.assetSymbol, { color: colors.textPrimary }]}>{selectedAsset.symbol}</Text>
-                {selectedAsset.name !== selectedAsset.symbol && <Text style={[styles.assetSymbol, { color: colors.textSecondary }]}>{selectedAsset.name}</Text>}
-              </>
-            )}
-            {!selectedAsset && <Text style={[styles.assetSymbol, { color: colors.textSecondary }]}>Click Here to select</Text>}
-          </Pressable>
-
+        <Text style={[styles.text, styles.to, { color: colors.textSecondary }]}>Select a token</Text>
+        <Pressable
+          style={({ pressed }) => [styles.assetWrapper, { backgroundColor: pressed ? colors.underlay : 'transparent' }]}
+          onPress={() => setShowSelectAsset(true)}
+        >
           {selectedAsset && (
             <>
-              <Text style={[styles.text, styles.amount, { color: colors.textSecondary }]}>Amount</Text>
-              <SetAssetAmount targetAddress={currentAddressValue} asset={selectedAsset} isReceive defaultAmount={amount}>
-                {({ amount, isAmountValid }) => (
-                  <Button
-                    testID="continue"
-                    style={styles.btn}
-                    disabled={!!amount && isAmountValid !== true}
-                    size="small"
-                    onPress={() => {
-                      if (Keyboard.isVisible()) {
-                        Keyboard.dismiss();
-                        setTimeout(() => bottomSheetRef.current?.close(), 188);
-                      } else {
-                        bottomSheetRef.current?.close();
-                      }
-                      onConfirm({ asset: selectedAsset, amount });
-                    }}
-                  >
-                    Continue
-                  </Button>
-                )}
-              </SetAssetAmount>
+              <TokenIcon style={styles.assetIcon} source={selectedAsset?.icon} />
+              <Text style={[styles.assetSymbol, { color: colors.textPrimary }]}>{selectedAsset.symbol}</Text>
+              {selectedAsset.name !== selectedAsset.symbol && <Text style={[styles.assetSymbol, { color: colors.textSecondary }]}>{selectedAsset.name}</Text>}
             </>
           )}
-          {!selectedAsset && (
-            <Button style={styles.btn} size="small" onPress={() => setShowSelectAsset(true)}>
-              Select Asset
-            </Button>
-          )}
-        </View>
+          {!selectedAsset && <Text style={[styles.assetSymbol, { color: colors.textSecondary }]}>Click Here to select</Text>}
+        </Pressable>
+
+        {selectedAsset && (
+          <>
+            <Text style={[styles.text, styles.amount, { color: colors.textSecondary }]}>Amount</Text>
+            <SetAssetAmount targetAddress={currentAddressValue} asset={selectedAsset} isReceive defaultAmount={amount}>
+              {({ amount, isAmountValid }) => (
+                <Button
+                  testID="continue"
+                  style={styles.btn}
+                  disabled={!!amount && isAmountValid !== true}
+                  size="small"
+                  onPress={() => {
+                    if (Keyboard.isVisible()) {
+                      Keyboard.dismiss();
+                      setTimeout(() => bottomSheetRef.current?.close(), 188);
+                    } else {
+                      bottomSheetRef.current?.close();
+                    }
+                    onConfirm({ asset: selectedAsset, amount });
+                  }}
+                >
+                  Continue
+                </Button>
+              )}
+            </SetAssetAmount>
+          </>
+        )}
+        {!selectedAsset && (
+          <Button style={styles.btn} size="small" onPress={() => setShowSelectAsset(true)}>
+            Select Asset
+          </Button>
+        )}
       </BottomSheet>
-      {showSelectAsset && <SelectAsset selectType='Receive' onConfirm={(asset) => setSelectedAsset(asset)} onClose={() => setShowSelectAsset(false)} />}
+      {showSelectAsset && <SelectAsset selectType="Receive" onConfirm={(asset) => setSelectedAsset(asset)} onClose={() => setShowSelectAsset(false)} />}
     </>
   );
 };

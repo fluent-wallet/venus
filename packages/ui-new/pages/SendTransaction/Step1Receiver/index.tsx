@@ -12,7 +12,7 @@ import HourglassLoading from '@components/Loading/Hourglass';
 import ScanQRCode from '@pages/ScanQRCode';
 import { SendTransactionStep1StackName, SendTransactionStep2StackName, type SendTransactionScreenProps } from '@router/configs';
 import QrCode from '@assets/icons/qr-code.svg';
-import BackupBottomSheet from '../SendTransactionBottomSheet';
+import SendTransactionBottomSheet from '../SendTransactionBottomSheet';
 import Contract from './Contract';
 
 const SendTransactionStep1Receiver: React.FC<SendTransactionScreenProps<typeof SendTransactionStep1StackName>> = ({ navigation }) => {
@@ -63,7 +63,7 @@ const SendTransactionStep1Receiver: React.FC<SendTransactionScreenProps<typeof S
 
   return (
     <>
-      <BackupBottomSheet>
+      <SendTransactionBottomSheet>
         <Text style={[styles.receiver, { color: colors.textSecondary }]}>Receiver</Text>
         <TextInput
           containerStyle={[styles.textinput, { borderColor: colors.borderFourth }]}
@@ -133,7 +133,7 @@ const SendTransactionStep1Receiver: React.FC<SendTransactionScreenProps<typeof S
         >
           Next
         </Button>
-      </BackupBottomSheet>
+      </SendTransactionBottomSheet>
       {showScanQRCode && <ScanQRCode onConfirm={(ethURL) => setReceiver(ethURL?.target_address ?? '')} onClose={() => setShowScanQRCode(false)} />}
     </>
   );
