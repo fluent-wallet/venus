@@ -33,9 +33,10 @@ interface Props {
   route?: SendTransactionScreenProps<typeof SendTransactionStep2StackName>['route'];
   onConfirm?: (asset: AssetInfo) => void;
   onClose?: () => void;
+  selectType?: 'Send' | 'Receive';
 }
 
-const SendTransactionStep2Asset: React.FC<Props> = ({ navigation, route, onConfirm, onClose }) => {
+const SendTransactionStep2Asset: React.FC<Props> = ({ navigation, route, onConfirm, onClose, selectType = 'Send' }) => {
   const { colors } = useTheme();
   const bottomSheetRef = useRef<BottomSheetMethods>(null!);
 
@@ -163,7 +164,14 @@ const SendTransactionStep2Asset: React.FC<Props> = ({ navigation, route, onConfi
       {!searchAsset && (
         <BottomSheetScrollView style={styles.scrollView} stickyHeaderIndices={[0]} onScroll={handleScroll}>
           <Tabs currentTab={currentTab} pageViewRef={pageViewRef} type="SelectAsset" onlyToken={!navigation} />
-          <TabsContent currentTab={currentTab} setCurrentTab={setCurrentTab} pageViewRef={pageViewRef} type="SelectAsset" onPressItem={handleClickAsset} />
+          <TabsContent
+            currentTab={currentTab}
+            setCurrentTab={setCurrentTab}
+            pageViewRef={pageViewRef}
+            type="SelectAsset"
+            selectType={selectType}
+            onPressItem={handleClickAsset}
+          />
         </BottomSheetScrollView>
       )}
       {searchAsset && (

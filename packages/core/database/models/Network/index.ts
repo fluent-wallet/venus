@@ -65,5 +65,5 @@ export class Network extends Model {
   @lazy nativeAsset = firstValueFrom(this.nativeAssetQuery.observe().pipe(map((assets) => assets?.[0])));
   @lazy defaultAssetRuleQuery = this.assetRules.extend(Q.where('index', 0));
   @lazy defaultAssetRule = firstValueFrom(this.defaultAssetRuleQuery.observe().pipe(map((assetRules) => assetRules?.[0])));
-  // @lazy allAssetsSorted = this.assets.
+  @lazy tokenList = this.assets.extend(Q.or(Q.where('type', AssetType.ERC20), Q.where('type', AssetType.Native)));
 }

@@ -59,7 +59,7 @@ class ReceiveAssetsTrackerPluginClass implements Plugin {
               {
                 network,
                 ...assetInfo,
-                source: AssetSource.Official
+                source: AssetSource.Official,
               },
               true,
             ),

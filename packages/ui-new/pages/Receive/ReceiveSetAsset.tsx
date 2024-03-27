@@ -80,7 +80,7 @@ const ReceiveSetAsset: React.FC<Props> = ({ onConfirm, selectedAsset, setSelecte
           )}
         </View>
       </BottomSheet>
-      {showSelectAsset && <SelectAsset onConfirm={(asset) => setSelectedAsset(asset)} onClose={() => setShowSelectAsset(false)} />}
+      {showSelectAsset && <SelectAsset selectType='Receive' onConfirm={(asset) => setSelectedAsset(asset)} onClose={() => setShowSelectAsset(false)} />}
     </>
   );
 };

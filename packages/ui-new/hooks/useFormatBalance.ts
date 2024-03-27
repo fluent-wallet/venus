@@ -4,8 +4,8 @@ import { balanceFormat, convertBalanceToDecimal, numberWithCommas } from '@core/
 
 const useFormatBalance = (balance: string | undefined | null, decimals?: number | undefined) =>
   useMemo(() => {
-    if (!balance) return '0';
-    if (!decimals) return numberWithCommas(balance);
+    if (typeof balance !== 'string') return '0';
+    if (typeof decimals !== 'number') return numberWithCommas(balance);
     const n = new Decimal(convertBalanceToDecimal(balance, decimals));
     if (n.equals(0)) {
       return '0';
@@ -15,6 +15,5 @@ const useFormatBalance = (balance: string | undefined | null, decimals?: number 
     }
     return numberWithCommas(balanceFormat(balance, { decimals }));
   }, [balance, decimals]);
-
 
 export default useFormatBalance;

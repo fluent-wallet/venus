@@ -7,7 +7,6 @@ import plugins from '@core/WalletCore/Plugins';
 import methods from '@core/WalletCore/Methods';
 import { getCurrentNetwork } from '@core/WalletCore/Plugins/ReactInject/data/useCurrentNetwork';
 import { HomeStackName, type StackScreenProps } from '@router/configs';
-import { isProd } from '@utils/getEnv';
 import { Tabs, TabsContent, setHomeScrollY, type Tab } from '@modules/AssetsTabs';
 import AccountSelector from '@modules/AccountSelector';
 import NetworkSelector from '@modules/NetworkSelector';
@@ -59,7 +58,7 @@ const Home: React.FC<StackScreenProps<typeof HomeStackName>> = ({ navigation }) 
           <Navigations navigation={navigation} />
           <NotBackup navigation={navigation} />
           <Tabs currentTab={currentTab} pageViewRef={pageViewRef} type="Home" />
-          <TabsContent currentTab={currentTab} setCurrentTab={setCurrentTab} pageViewRef={pageViewRef} type="Home" />
+          <TabsContent currentTab={currentTab} setCurrentTab={setCurrentTab} pageViewRef={pageViewRef} type="Home" selectType="Send" />
         </RefreshScrollView>
       </SafeAreaView>
       {showAccountSelector && <AccountSelector onClose={() => setShowAccountSelector(false)} />}

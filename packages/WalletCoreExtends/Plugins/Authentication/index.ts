@@ -37,14 +37,16 @@ export interface PasswordRequest {
 const authCryptoTool = new CryptoToolPluginClass();
 authCryptoTool.setGetPasswordMethod(getPasswordCryptoKey);
 
+const cacheTime = 750; // ms
 class AuthenticationPluginClass implements Plugin {
   name = 'Authentication' as const;
 
   private settleAuthenticationType: AuthenticationType | null = null;
   public AuthenticationType = AuthenticationType;
   public passwordRequestSubject = new BehaviorSubject<PasswordRequest>(null!);
-  private pwdCache: { password: string; cacheTime: number } | null = null;
+  private pwdCache: string | null = null;
   private getPasswordPromise: Promise<string | null> | null = null;
+  private pwdCacheTimer: NodeJS.Timeout | null = null;
 
   constructor() {
     const getSettleAuthentication = async () => {
@@ -73,14 +75,20 @@ class AuthenticationPluginClass implements Plugin {
     } else if (this.settleAuthenticationType === AuthenticationType.Password) {
       if (this.getPasswordPromise) return this.getPasswordPromise;
       this.getPasswordPromise = new Promise<string>((_resolve, _reject) => {
-        if (!this.pwdCache || Date.now() - this.pwdCache.cacheTime > 0.75 * 1000) {
+        if (!this.pwdCache) {
+          if (this.pwdCacheTimer !== null) {
+            clearTimeout(this.pwdCacheTimer);
+            this.pwdCacheTimer = null;
+          }
+
           this.passwordRequestSubject.next({
             resolve: (pwd: string) => {
-              this.pwdCache = {
-                cacheTime: Date.now(),
-                password: pwd,
-              };
+              this.pwdCache = pwd;
               _resolve(pwd);
+              this.pwdCacheTimer = setTimeout(() => {
+                this.pwdCache = null;
+                this.pwdCacheTimer = null;
+              }, cacheTime);
             },
             reject: (err: any) => {
               this.pwdCache = null;
@@ -89,8 +97,7 @@ class AuthenticationPluginClass implements Plugin {
             verify: this.verifyPassword,
           });
         } else {
-          _resolve(this.pwdCache.password);
-          this.pwdCache.cacheTime = Date.now();
+          _resolve(this.pwdCache);
         }
       }).finally(() => {
         this.getPasswordPromise = null;
