@@ -24,7 +24,16 @@ const TokenList: React.FC<Props> = ({ onPressItem, selectType = 'Send', showRece
     return <ReceiveFunds />;
   }
 
-  return tokens.map((token, index) => <TokenItem key={index} hidePrice={selectType === 'Receive' ? true : hidePrice} data={token} onPress={onPressItem} />);
+  return tokens.map((token, index) => (
+    <TokenItem
+      key={index}
+      hidePrice={selectType === 'Receive' ? true : hidePrice}
+      hideBalance={selectType === 'Receive'}
+      showAddress={selectType === 'Receive'}
+      data={token}
+      onPress={onPressItem}
+    />
+  ));
 };
 
 type FlashProps = FlashListProps<any> & Props;

@@ -7,14 +7,16 @@ import useFormatBalance from '@hooks/useFormatBalance';
 import Text from '@components/Text';
 import TokenIcon from './TokenIcon';
 import AssetTypeLabel from '../AssetTypeLabel';
+import { shortenAddress } from '@core/utils/address';
 
 const TokenItem: React.FC<{
   data: AssetInfo;
   onPress?: (v: AssetInfo) => void;
   hidePrice?: boolean;
   hideBalance?: boolean;
+  showAddress?: boolean;
   showTypeLabel?: boolean;
-}> = ({ onPress, data, hidePrice = false, hideBalance = false, showTypeLabel = false }) => {
+}> = ({ onPress, data, hidePrice = false, hideBalance = false, showTypeLabel = false, showAddress = false }) => {
   const { colors } = useTheme();
   const balance = useFormatBalance(data.balance, data.decimals);
   const price = useMemo(() => (data.priceValue ? `$${numberWithCommas(data.priceValue)}` : '--'), [data.priceValue]);
@@ -34,18 +36,21 @@ const TokenItem: React.FC<{
             {data.name}
           </Text>
           {showTypeLabel && <AssetTypeLabel assetType={data.type} />}
-          {!hidePrice && (
+          {hidePrice === false && (
             <Text style={[styles.tokenName, { marginLeft: 'auto', textAlign: 'right', color: colors.textPrimary }]} numberOfLines={1}>
               {price}
             </Text>
           )}
+          {showAddress && data?.contractAddress && (
+            <Text style={[styles.tokenAddress, { marginLeft: 'auto', textAlign: 'right', color: colors.textSecondary }]} numberOfLines={1}>
+              {shortenAddress(data.contractAddress)}
+            </Text>
+          )}
         </View>
 
-        {!hideBalance && (
-          <Text style={[styles.tokenBalance, { color: colors.textSecondary }]} numberOfLines={1}>
-            {balance} {data.symbol}
-          </Text>
-        )}
+        <Text style={[styles.tokenBalance, { color: colors.textSecondary }]} numberOfLines={1}>
+          {hideBalance ? data.symbol : `${balance} ${data.symbol}`}
+        </Text>
       </View>
     </Pressable>
   );
@@ -64,6 +69,7 @@ const styles = StyleSheet.create({
     height: 40,
   },
   textArea: {
+    position: 'relative',
     flex: 1,
     marginLeft: 8,
   },
@@ -84,6 +90,10 @@ const styles = StyleSheet.create({
     lineHeight: 16,
     maxWidth: 136,
     marginTop: 6,
+  },
+  tokenAddress: {
+    fontSize: 12,
+    fontWeight: '300',
   },
 });
 
