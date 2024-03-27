@@ -5,7 +5,7 @@ import { useTheme } from '@react-navigation/native';
 import Button from '@components/Button';
 import Text from '@components/Text';
 import TextInput from '@components/TextInput';
-import BottomSheet, { type BottomSheetMethods } from '@components/BottomSheet';
+import BottomSheet, { BottomSheetView, type BottomSheetMethods } from '@components/BottomSheet';
 import { PasswordVerifyStackName, type StackScreenProps } from '@router/configs';
 import { isDev } from '@utils/getEnv';
 import { screenHeight } from '@utils/deviceInfo';
@@ -65,7 +65,7 @@ const PasswordVerify: React.FC<StackScreenProps<typeof PasswordVerifyStackName>>
 
   return (
     <BottomSheet ref={bottomSheetRef} snapPoints={snapPoints} onClose={handleCancel} isRoute onOpen={() => textInputRef.current?.focus()}>
-      <View style={styles.container}>
+      <BottomSheetView style={styles.container}>
         <Text style={[styles.title, { color: colors.textPrimary }]}>Verify Password</Text>
         <TextInput
           ref={textInputRef}
@@ -81,7 +81,7 @@ const PasswordVerify: React.FC<StackScreenProps<typeof PasswordVerifyStackName>>
         <Button testID="confirm" loading={inVerify} onPress={handleConfirm} disabled={!password} style={styles.btn}>
           Confirm
         </Button>
-      </View>
+      </BottomSheetView>
     </BottomSheet>
   );
 };
