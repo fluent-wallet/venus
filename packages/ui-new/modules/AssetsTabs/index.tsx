@@ -20,6 +20,7 @@ const TAB_WIDTH = 64;
 
 interface Props {
   type: TabsType;
+  selectType: 'Send' | 'Receive';
   currentTab: Tab;
   pageViewRef: React.RefObject<PagerView>;
   setCurrentTab: (tab: Tab) => void;
@@ -27,7 +28,7 @@ interface Props {
   onlyToken?: boolean;
 }
 
-export const Tabs: React.FC<Omit<Props, 'setCurrentTab' | 'onPressItem'>> = ({ type, currentTab, pageViewRef, onlyToken }) => {
+export const Tabs: React.FC<Omit<Props, 'setCurrentTab' | 'onPressItem' | 'selectType'>> = ({ type, currentTab, pageViewRef, onlyToken }) => {
   const { colors } = useTheme();
 
   const currentNetwork = useCurrentNetwork();
@@ -124,7 +125,7 @@ export const StickyNFT: React.FC<{ type: TabsType }> = ({ type }) => {
   return <StickyNFTItem scrollY={scrollY} startY={startY} tabsType={type} />;
 };
 
-export const TabsContent: React.FC<Props> = ({ currentTab, setCurrentTab, pageViewRef, type, onPressItem }) => {
+export const TabsContent: React.FC<Props> = ({ currentTab, setCurrentTab, pageViewRef, type, selectType, onPressItem }) => {
   const currentNetwork = useCurrentNetwork();
   const tabs = useMemo(
     () =>
@@ -144,6 +145,7 @@ export const TabsContent: React.FC<Props> = ({ currentTab, setCurrentTab, pageVi
         <View key={tab}>
           {tab === 'Tokens' && index === currentTabIndex && (
             <TokensList
+              selectType={selectType}
               showReceiveFunds={
                 type === 'Home' &&
                 currentNetwork?.networkType === NetworkType.Ethereum &&

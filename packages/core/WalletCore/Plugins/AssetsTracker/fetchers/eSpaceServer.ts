@@ -48,7 +48,7 @@ export const fetchESpaceServer = async ({
       }),
     ).pipe(
       concatMap((scanRes) => {
-        if (typeof scanRes?.status === 'string') {
+        if (scanRes?.status === '1') {
           if (Array.isArray(scanRes?.result?.list)) {
             const scanResList = scanRes?.result?.list;
             scanResList.forEach((asset) => {

@@ -1,7 +1,8 @@
 import React, { forwardRef, type ComponentProps } from 'react';
 import { useTheme } from '@react-navigation/native';
-import { View, Text, StyleSheet } from 'react-native';
+import { StyleSheet } from 'react-native';
 import BottomSheet, { snapPoints as defaultSnapPoints, type BottomSheetMethods } from '@components/BottomSheet';
+import Text from '@components/Text';
 
 interface Props extends ComponentProps<typeof BottomSheet> {
   children: React.ReactNode;

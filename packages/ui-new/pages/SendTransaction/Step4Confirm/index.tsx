@@ -36,7 +36,7 @@ import { AccountItemView } from '@modules/AccountsList';
 import useFormatBalance from '@hooks/useFormatBalance';
 import useInAsync from '@hooks/useInAsync';
 import { SendTransactionStep4StackName, HomeStackName, type SendTransactionScreenProps } from '@router/configs';
-import BackupBottomSheet from '../SendTransactionBottomSheet';
+import SendTransactionBottomSheet from '../SendTransactionBottomSheet';
 import { NFT } from '../Step3Amount';
 import BSIMVerify from '../BSIMVerify';
 
@@ -241,7 +241,7 @@ const SendTransactionStep4Confirm: React.FC<SendTransactionScreenProps<typeof Se
 
   return (
     <>
-      <BackupBottomSheet showTitle="Transaction Confirm">
+      <SendTransactionBottomSheet showTitle="Transaction Confirm">
         <BottomSheetScrollView>
           <Text style={[styles.sendTitle, { color: colors.textPrimary }]}>↗️ Send</Text>
           {route.params.nftItemDetail && <NFT colors={colors} asset={route.params.asset} nftItemDetail={route.params.nftItemDetail} />}
@@ -305,7 +305,7 @@ const SendTransactionStep4Confirm: React.FC<SendTransactionScreenProps<typeof Se
             </Button>
           </View>
         </BottomSheetScrollView>
-      </BackupBottomSheet>
+      </SendTransactionBottomSheet>
       {bsimEvent && (
         <BSIMVerify
           bottomSheetRef={BSIMVerifyRef}

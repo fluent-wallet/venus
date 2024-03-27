@@ -1,7 +1,8 @@
 import React, { type ComponentProps } from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, StyleSheet } from 'react-native';
 import { useTheme } from '@react-navigation/native';
 import BottomSheet, { snapPoints as defaultSnapPoints } from '@components/BottomSheet';
+import Text from '@components/Text';
 
 interface Props extends ComponentProps<typeof BottomSheet> {
   children: React.ReactNode;

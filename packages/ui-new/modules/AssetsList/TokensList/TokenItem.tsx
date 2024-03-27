@@ -16,7 +16,6 @@ const TokenItem: React.FC<{
   showTypeLabel?: boolean;
 }> = ({ onPress, data, hidePrice = false, hideBalance = false, showTypeLabel = false }) => {
   const { colors } = useTheme();
-
   const balance = useFormatBalance(data.balance, data.decimals);
   const price = useMemo(() => (data.priceValue ? `$${numberWithCommas(data.priceValue)}` : '--'), [data.priceValue]);
 
@@ -28,7 +27,7 @@ const TokenItem: React.FC<{
       disabled={!onPress}
       onPress={handlePress}
     >
-      <TokenIcon style={styles.tokenIcon} source={data.icon}/>
+      <TokenIcon style={styles.tokenIcon} source={data.icon} />
       <View style={styles.textArea}>
         <View style={styles.textTitle}>
           <Text style={[styles.tokenName, { color: colors.textPrimary }]} numberOfLines={1}>

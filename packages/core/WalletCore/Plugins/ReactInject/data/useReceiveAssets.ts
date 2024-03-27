@@ -1,15 +1,23 @@
 import { useAtomValue } from 'jotai';
 import { atomFamily, atomWithObservable } from 'jotai/utils';
-import { switchMap, of } from 'rxjs';
+import { switchMap, of, Observable } from 'rxjs';
 import { memoize } from 'lodash-es';
 import { observeNetworkById } from '../../../../database/models/Network/query';
+import { useCurrentNetwork } from './useCurrentNetwork';
+import { type AssetInfo } from '../../AssetsTracker/types';
 
-export const observeAssetsOfNetwork = memoize((networkId: string) => observeNetworkById(networkId).pipe(switchMap((network) => network.assets.observe())));
+export const observeTokenListOfNetwork = memoize((networkId: string) =>
+  observeNetworkById(networkId).pipe(switchMap((network) => network.tokenList.observe() as unknown as Observable<AssetInfo[]>)),
+);
 
-const assetsAtomFamilyOfNetwork = atomFamily((networkId: string | undefined | null) =>
-  atomWithObservable(() => (!networkId ? of([]) : observeAssetsOfNetwork(networkId)), {
+const tokenListAtomFamilyOfNetwork = atomFamily((networkId: string | undefined | null) =>
+  atomWithObservable(() => (!networkId ? of([]) : observeTokenListOfNetwork(networkId)), {
     initialValue: [],
   }),
 );
 
-export const useAssetsOfNetwork = (networkId: string | undefined | null) => useAtomValue(assetsAtomFamilyOfNetwork(networkId));
+export const useTokenListOfNetwork = (networkId: string | undefined | null) => useAtomValue(tokenListAtomFamilyOfNetwork(networkId));
+export const useTokenListOfCurrentNetwork = () => {
+  const currentNetwork = useCurrentNetwork();
+  return useAtomValue(tokenListAtomFamilyOfNetwork(currentNetwork?.id));
+};

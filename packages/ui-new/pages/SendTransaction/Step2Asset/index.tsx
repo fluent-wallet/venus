@@ -26,16 +26,17 @@ import { SendTransactionStep2StackName, SendTransactionStep3StackName, SendTrans
 import { Tabs, TabsContent, setSelectAssetScrollY, type Tab } from '@modules/AssetsTabs';
 import TokenItem from '@modules/AssetsList/TokensList/TokenItem';
 import NFTItem from '@modules/AssetsList/NFTsList/NFTItem';
-import BackupBottomSheet from '../SendTransactionBottomSheet';
+import SendTransactionBottomSheet from '../SendTransactionBottomSheet';
 
 interface Props {
   navigation?: SendTransactionScreenProps<typeof SendTransactionStep2StackName>['navigation'];
   route?: SendTransactionScreenProps<typeof SendTransactionStep2StackName>['route'];
   onConfirm?: (asset: AssetInfo) => void;
   onClose?: () => void;
+  selectType?: 'Send' | 'Receive';
 }
 
-const SendTransactionStep2Asset: React.FC<Props> = ({ navigation, route, onConfirm, onClose }) => {
+const SendTransactionStep2Asset: React.FC<Props> = ({ navigation, route, onConfirm, onClose, selectType = 'Send' }) => {
   const { colors } = useTheme();
   const bottomSheetRef = useRef<BottomSheetMethods>(null!);
 
@@ -147,7 +148,13 @@ const SendTransactionStep2Asset: React.FC<Props> = ({ navigation, route, onConfi
   }, []);
 
   return (
-    <BackupBottomSheet ref={bottomSheetRef} isRoute={!onConfirm} index={!onConfirm ? undefined : 0} onClose={onClose}>
+    <SendTransactionBottomSheet
+      ref={bottomSheetRef}
+      isRoute={!onConfirm}
+      index={!onConfirm ? undefined : 0}
+      onClose={onClose}
+      showTitle={selectType === 'Receive' ? 'Receive' : undefined}
+    >
       <Text style={[styles.selectAsset, { color: colors.textSecondary }]}>Select an asset</Text>
       <TextInput
         containerStyle={[styles.textinput, { borderColor: colors.borderFourth }]}
@@ -163,7 +170,14 @@ const SendTransactionStep2Asset: React.FC<Props> = ({ navigation, route, onConfi
       {!searchAsset && (
         <BottomSheetScrollView style={styles.scrollView} stickyHeaderIndices={[0]} onScroll={handleScroll}>
           <Tabs currentTab={currentTab} pageViewRef={pageViewRef} type="SelectAsset" onlyToken={!navigation} />
-          <TabsContent currentTab={currentTab} setCurrentTab={setCurrentTab} pageViewRef={pageViewRef} type="SelectAsset" onPressItem={handleClickAsset} />
+          <TabsContent
+            currentTab={currentTab}
+            setCurrentTab={setCurrentTab}
+            pageViewRef={pageViewRef}
+            type="SelectAsset"
+            selectType={selectType}
+            onPressItem={handleClickAsset}
+          />
         </BottomSheetScrollView>
       )}
       {searchAsset && (
@@ -204,7 +218,7 @@ const SendTransactionStep2Asset: React.FC<Props> = ({ navigation, route, onConfi
           {inFetchingRemote && <HourglassLoading style={styles.fetchLoading} />}
         </BottomSheetScrollView>
       )}
-    </BackupBottomSheet>
+    </SendTransactionBottomSheet>
   );
 };
 
