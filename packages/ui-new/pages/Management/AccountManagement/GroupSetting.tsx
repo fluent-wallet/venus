@@ -98,58 +98,61 @@ const GroupConfig: React.FC<StackScreenProps<typeof GroupSettingStackName>> = ({
   return (
     <>
       <BottomSheet ref={bottomSheetRef} snapPoints={snapPoints.large} isRoute>
-        <View style={styles.container}>
-          <Text style={[styles.title, styles.mainText, { color: colors.textPrimary }]}>{GroupTitle}</Text>
-          <Text style={[styles.description, { color: colors.textSecondary }]}>Account Name</Text>
-          <TextInput
-            containerStyle={[styles.textinput, { borderColor: colors.borderFourth }]}
-            showVisible={false}
-            defaultHasValue
-            value={accountGroupName}
-            onChangeText={(newNickName) => setAccountGroupName(newNickName?.trim())}
-            isInBottomSheet
-          />
-          {(vault?.type === VaultType.HierarchicalDeterministic || vault?.type === VaultType.BSIM) && (
-            <>
-              <Text style={[styles.description, styles.backupDescription, { color: colors.textSecondary }]}>
-                {renderByVaultType('Backup', 'BSIM Card Settings')}
-              </Text>
-              <Pressable
-                style={({ pressed }) => [styles.row, { backgroundColor: pressed ? colors.underlay : 'transparent' }]}
-                onPress={renderByVaultType(handleBackupSeedPhrase, handleChangeBSIMPin)}
-              >
-                <Text style={[styles.mainText, styles.backupText, { color: colors.textPrimary }]}>{renderByVaultType('Seed Phrase', 'Change BSIM Code')}</Text>
-                <ArrowRight color={colors.iconPrimary} />
-              </Pressable>
-            </>
-          )}
+        <Text style={[styles.title, styles.mainText, { color: colors.textPrimary }]}>{GroupTitle}</Text>
+        <Text style={[styles.description, { color: colors.textSecondary }]}>Account Name</Text>
+        <TextInput
+          containerStyle={[styles.textinput, { borderColor: colors.borderFourth }]}
+          showVisible={false}
+          defaultHasValue
+          value={accountGroupName}
+          onChangeText={(newNickName) => setAccountGroupName(newNickName?.trim())}
+          isInBottomSheet
+        />
+        {(vault?.type === VaultType.HierarchicalDeterministic || vault?.type === VaultType.BSIM) && (
+          <>
+            <Text style={[styles.description, styles.backupDescription, { color: colors.textSecondary }]}>
+              {renderByVaultType('Backup', 'BSIM Card Settings')}
+            </Text>
+            <Pressable
+              style={({ pressed }) => [styles.row, { backgroundColor: pressed ? colors.underlay : 'transparent' }]}
+              onPress={renderByVaultType(handleBackupSeedPhrase, handleChangeBSIMPin)}
+            >
+              <Text style={[styles.mainText, styles.backupText, { color: colors.textPrimary }]}>{renderByVaultType('Seed Phrase', 'Change BSIM Code')}</Text>
+              <ArrowRight color={colors.iconPrimary} />
+            </Pressable>
+          </>
+        )}
 
-          <Pressable
-            style={({ pressed }) => [styles.HDManage, { backgroundColor: pressed ? colors.underlay : 'transparent' }]}
-            onPress={() => navigation.navigate(HDSettingStackName, { groupId: route.params.groupId })}
-          >
-            <Text style={[styles.HDManageText, { color: colors.textSecondary }]}>HD Wallets</Text>
-            <Text style={[styles.HDManageText, styles.management, { color: colors.textNotice }]}>Management</Text>
-          </Pressable>
+        <Pressable
+          style={({ pressed }) => [styles.HDManage, { backgroundColor: pressed ? colors.underlay : 'transparent' }]}
+          onPress={() => navigation.navigate(HDSettingStackName, { groupId: route.params.groupId })}
+        >
+          <Text style={[styles.HDManageText, { color: colors.textSecondary }]}>HD Wallets</Text>
+          <Text style={[styles.HDManageText, styles.management, { color: colors.textNotice }]}>Management</Text>
+        </Pressable>
 
-          <BottomSheetScrollView style={styles.accountsContainer}>
-            {accounts?.map((account) => (
-              <AccountItemView key={account.id} nickname={account.nickname} addressValue={account.addressValue} colors={colors} mode={mode} />
-            ))}
-          </BottomSheetScrollView>
+        <BottomSheetScrollView style={styles.accountsContainer}>
+          {accounts?.map((account) => (
+            <AccountItemView key={account.id} nickname={account.nickname} addressValue={account.addressValue} colors={colors} mode={mode} />
+          ))}
+        </BottomSheetScrollView>
 
-          <Pressable
-            style={({ pressed }) => [styles.row, styles.removeContainer, { backgroundColor: pressed ? colors.underlay : 'transparent' }]}
-            onPress={handlePressDelete}
-          >
-            <Checkbox checked={mode === 'dark'} Icon={Delete} />
-            <Text style={[styles.mainText, styles.removeText, { color: colors.textPrimary }]}>Remove Group</Text>
-          </Pressable>
+        <Pressable
+          style={({ pressed }) => [styles.row, styles.removeContainer, { backgroundColor: pressed ? colors.underlay : 'transparent' }]}
+          onPress={handlePressDelete}
+        >
+          <Checkbox checked={mode === 'dark'} Icon={Delete} />
+          <Text style={[styles.mainText, styles.removeText, { color: colors.textPrimary }]}>Remove Group</Text>
+        </Pressable>
 
-          <Button testID='ok' style={styles.btn} disabled={!accountGroupName || accountGroupName === accountGroup?.nickname} onPress={handleUpdateAccountGroupNickName}>
-            OK
-          </Button>
-        </View>
+        <Button
+          testID="ok"
+          style={styles.btn}
+          disabled={!accountGroupName || accountGroupName === accountGroup?.nickname}
+          onPress={handleUpdateAccountGroupNickName}
+        >
+          OK
+        </Button>
       </BottomSheet>
       {showDeleteBottomSheet && <DeleteConfirm onConfirm={handleConfirmDelete} onClose={() => setShowDeleteBottomSheet(false)} />}
     </>
