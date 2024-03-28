@@ -13,6 +13,7 @@ import WelcomeBgDark from '@assets/images/welcome-bg-dark.webp';
 import WelcomeTextLight from '@assets/images/enter-web3-text-light.webp';
 import WelcomeTextDark from '@assets/images/enter-web3-text-dark.webp';
 import Img from '@assets/images/enter-web3-img.webp';
+import ImgNew from '@assets/images/enter-web3-img-new.webp';
 
 const Welcome: React.FC<StackScreenProps<typeof WelcomeStackName>> = ({ navigation }) => {
   const { mode, colors } = useTheme();
@@ -25,8 +26,7 @@ const Welcome: React.FC<StackScreenProps<typeof WelcomeStackName>> = ({ navigati
           <View style={[styles.first, { backgroundColor: colors.bgThird }]}>
             <Image style={styles.firstText} source={mode === 'dark' ? WelcomeTextDark : WelcomeTextLight} contentFit="contain" />
           </View>
-          <Image style={styles.img} source={Img} contentFit="contain" />
-
+          <Image style={styles.img} source={ImgNew} />
           <Button
             testID="Get Started"
             textAlign="left"
@@ -42,6 +42,7 @@ const Welcome: React.FC<StackScreenProps<typeof WelcomeStackName>> = ({ navigati
     </ImageBackground>
   );
 };
+
 
 const styles = StyleSheet.create({
   bg: {
@@ -72,8 +73,8 @@ const styles = StyleSheet.create({
   },
   img: {
     alignSelf: 'center',
-    width: '115%',
-    aspectRatio: 1.285,
+    width: '100%',
+    aspectRatio: 1,
     marginTop: 52,
   },
   btn: {
