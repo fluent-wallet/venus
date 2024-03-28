@@ -150,6 +150,7 @@ const GroupConfig: React.FC<StackScreenProps<typeof GroupSettingStackName>> = ({
           style={styles.btn}
           disabled={!accountGroupName || accountGroupName === accountGroup?.nickname}
           onPress={handleUpdateAccountGroupNickName}
+          size="small"
         >
           OK
         </Button>

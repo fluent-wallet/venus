@@ -6,6 +6,7 @@ import { showMessage } from 'react-native-flash-message';
 import { debounce, escapeRegExp } from 'lodash-es';
 import {
   useAssetsAllList,
+  useTokenListOfCurrentNetwork,
   useCurrentNetwork,
   useCurrentAddressValue,
   useCurrentAddress,
@@ -55,7 +56,7 @@ const SendTransactionStep2Asset: React.FC<Props> = ({ navigation, route, onConfi
   const currentAddress = useCurrentAddress();
   const currentAddressValue = useCurrentAddressValue();
   const currentOpenNFTDetail = useCurrentOpenNFTDetail();
-  const assets = useAssetsAllList();
+  const assets = (selectType === 'Send' ? useAssetsAllList : useTokenListOfCurrentNetwork)();
 
   const [searchAsset, setSearchAsset] = useState(() => route?.params?.searchAddress ?? '');
   const [inFetchingRemote, setInFetchingRemote] = useState(false);

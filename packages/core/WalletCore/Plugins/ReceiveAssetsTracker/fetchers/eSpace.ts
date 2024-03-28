@@ -25,6 +25,7 @@ export const fetchReceiveAssets = ({ endpoint, isTestnet }: { endpoint: string; 
     ],
   }).then(async (res) => {
     const [_, addressList] = contract.decodeFunctionResult('listTokens', res);
+    if (!Array.isArray(addressList) || addressList.length === 0) return [];
     const { result } = await serverFetcher.fetchServer<{
       message: string;
       result: Array<{ contract: string; name: string; symbol: string; decimals: number; iconUrl?: string }>;

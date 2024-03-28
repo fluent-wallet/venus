@@ -54,8 +54,8 @@ const BackupStep2ViewSecret: React.FC<BackupScreenProps<typeof BackupStep2StackN
 
   return (
     <BackupBottomSheet>
-      <Text style={[styles.largeText, styles.notice, { color: colors.textPrimary }]}>
-        ✏️ Write Down Your {backupType === VaultType.HierarchicalDeterministic ? 'Seed Phrase' : 'Private Key'}
+      <Text style={[styles.largeText, styles.notice, { color: colors.textPrimary }]} numberOfLines={1}>
+        {isSmallDevice ? '' : '✏️ '}Write Down Your {backupType === VaultType.HierarchicalDeterministic ? 'Seed Phrase' : 'Private Key'}
       </Text>
       <Text style={[styles.description, styles.noticeDescription, { color: colors.textSecondary }]}>✅ Do NOT take a screenshot of this page</Text>
       <Text style={[styles.description, styles.noticeDescription, { color: colors.textSecondary }]}>✅ Writing down on paper is recommended</Text>
@@ -71,7 +71,7 @@ const BackupStep2ViewSecret: React.FC<BackupScreenProps<typeof BackupStep2StackN
 
             <Text style={[styles.largeText, { color: colors.textPrimary, textAlign: 'center' }]}>Tap to view the {backupText}</Text>
             <Text style={[styles.description, { color: colors.textSecondary, textAlign: 'center', marginTop: 8 }]}>Make sure your environment is safe</Text>
-            <Button testID='view' style={styles.viewBtn} onPress={handleClickView} loading={inAsync}>
+            <Button testID="view" style={styles.viewBtn} onPress={handleClickView} loading={inAsync}>
               View
             </Button>
           </>
@@ -79,7 +79,7 @@ const BackupStep2ViewSecret: React.FC<BackupScreenProps<typeof BackupStep2StackN
         {secretData && backupType === VaultType.PrivateKey && (
           <>
             <View style={styles.qrcode}>
-              <QRCode value={secretData} size={240} />
+              <QRCode value={secretData} size={isSmallDevice ? 220 : 240} />
             </View>
             <Pressable
               onPress={() => {
@@ -129,11 +129,12 @@ const BackupStep2ViewSecret: React.FC<BackupScreenProps<typeof BackupStep2StackN
             setSecretData(null);
             navigation.navigate(BackupStep3StackName, { phrases: phrases || [], vaultId: vault.id });
           }}
+          size="small"
         >
           Next
         </Button>
       ) : (
-        <Button testID='return' style={styles.btn} onPress={() => navigation.goBack()}>
+        <Button testID="return" style={styles.btn} onPress={() => navigation.goBack()} size="small">
           Return
         </Button>
       )}
@@ -160,7 +161,7 @@ const styles = StyleSheet.create({
     marginBottom: isSmallDevice ? 6 : 8,
   },
   noticeDescription: {
-    paddingHorizontal: 44,
+    paddingHorizontal: isSmallDevice ? 22 : 44,
   },
   secretArea: {
     display: 'flex',
@@ -173,7 +174,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderRadius: 6,
     overflow: 'hidden',
-    minHeight: 316,
+    minHeight: isSmallDevice ? 300 : 316,
   },
   qrcode: {
     alignSelf: 'center',
@@ -183,7 +184,7 @@ const styles = StyleSheet.create({
     display: 'flex',
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 16,
+    paddingHorizontal: isSmallDevice ? 12 : 16,
   },
   privateKeyText: {
     width: '92%',

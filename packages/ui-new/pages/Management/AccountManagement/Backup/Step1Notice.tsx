@@ -28,7 +28,7 @@ const BackupStep1Notice: React.FC<BackupScreenProps<typeof BackupStep1StackName>
         Please <Text style={[styles.descriptionBold, { color: colors.textNotice }]}>protect</Text> them carefully
       </Text>
 
-      <Button testID='next' style={styles.btn} onPress={() => navigation.navigate(BackupStep2StackName, route.params)}>
+      <Button testID='next' style={styles.btn} onPress={() => navigation.navigate(BackupStep2StackName, route.params)} size='small'>
         Next
       </Button>
     </BackupBottomSheet>
@@ -36,9 +36,15 @@ const BackupStep1Notice: React.FC<BackupScreenProps<typeof BackupStep1StackName>
 };
 
 const styles = StyleSheet.create({
+  img: {
+    alignSelf: 'center',
+    width: isSmallDevice ? '80%' : '85%',
+    aspectRatio: 1.285,
+    marginTop: 6,
+  },
   notice: {
     marginTop: isSmallDevice ? 20 : 40,
-    marginBottom: 24,
+    marginBottom: isSmallDevice ? 16 : 24,
     paddingHorizontal: 16,
     fontSize: 22,
     fontWeight: '600',
@@ -52,12 +58,6 @@ const styles = StyleSheet.create({
   },
   descriptionBold: {
     fontWeight: '600',
-  },
-  img: {
-    alignSelf: 'center',
-    width: '85%',
-    aspectRatio: 1.285,
-    marginTop: 6,
   },
   btn: {
     marginTop: 'auto',
