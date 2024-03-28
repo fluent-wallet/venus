@@ -77,7 +77,9 @@ const HomeRefresh: React.FC<Props> = ({ children, onRefresh, onScroll, stickyHea
       if (isRefreshing.value) return;
       const refreshingHeight = 100;
       pullPosition.value = withTiming(isReadyToRefresh.value ? refreshingHeight : 0, { reduceMotion: ReduceMotion.Never, duration: 200 });
-      rotateValue.value = isReadyToRefresh.value ? withRepeat(withTiming(360, { duration: 800, reduceMotion: ReduceMotion.Never }), -1) : 0;
+      rotateValue.value = isReadyToRefresh.value
+        ? withRepeat(withTiming(360, { duration: 1000, reduceMotion: ReduceMotion.Never }), 0, false, undefined, ReduceMotion.Never)
+        : 0;
       // pull is enough to trigger a refresh
       if (isReadyToRefresh.value) {
         isReadyToRefresh.value = false;
