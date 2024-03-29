@@ -21,7 +21,7 @@ const BSIMVerify: React.FC<Props> = ({ bottomSheetRef, bsimEvent, onClose, onRet
   const { colors } = useTheme();
 
   return (
-    <BottomSheet ref={bottomSheetRef} snapPoints={snapPoints} onClose={onClose}>
+    <BottomSheet ref={bottomSheetRef} snapPoints={snapPoints} onClose={onClose} index={0}>
       <View style={styles.container}>
         <Text style={[styles.title, { color: colors.textPrimary }]}>
           {bsimEvent.type === BSIMEventTypesName.ERROR ? '🚫 Signing Error' : 'Transaction Confirmation'}
@@ -36,8 +36,8 @@ const BSIMVerify: React.FC<Props> = ({ bottomSheetRef, bsimEvent, onClose, onRet
         </View>
 
         <View style={styles.btnArea}>
-          <Button testID='close'  size="small" square Icon={ArrowLeft} onPress={() => bottomSheetRef.current?.close()} />
-          <Button testID='retry' style={styles.btnRetry} size="small" onPress={onRetry} loading={bsimEvent.type !== BSIMEventTypesName.ERROR}>
+          <Button testID="close" size="small" square Icon={ArrowLeft} onPress={() => bottomSheetRef.current?.close()} />
+          <Button testID="retry" style={styles.btnRetry} size="small" onPress={onRetry} loading={bsimEvent.type !== BSIMEventTypesName.ERROR}>
             Retry
           </Button>
         </View>

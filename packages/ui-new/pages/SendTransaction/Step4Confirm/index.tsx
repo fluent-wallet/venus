@@ -214,6 +214,7 @@ const SendTransactionStep4Confirm: React.FC<SendTransactionScreenProps<typeof Se
             sendAt: new Date(),
           },
         });
+        setBSIMEvent(null);
         showMessage({
           type: 'success',
           message: 'Transaction Submitted',
@@ -227,6 +228,7 @@ const SendTransactionStep4Confirm: React.FC<SendTransactionScreenProps<typeof Se
         }
       }
     } catch (_err: any) {
+      setBSIMEvent(null);
       const err = String(_err.data || _err?.message || _err);
       if (err.includes('cancel')) {
         return;
