@@ -268,7 +268,12 @@ const ScanQrCode: React.FC<Props> = ({ navigation, onConfirm, onClose }) => {
                   Unable to scan. Please <Text style={{ color: colors.down }}>open Camera</Text> in the system permission.
                 </Text>
                 <View style={styles.btnArea}>
-                  <Button testID="dismiss" style={styles.btn} onPress={() => (bottomSheetRef?.current ? bottomSheetRef.current.close() : navigation?.goBack())}>
+                  <Button
+                    testID="dismiss"
+                    style={styles.btn}
+                    onPress={() => (bottomSheetRef?.current ? bottomSheetRef.current.close() : navigation?.goBack())}
+                    size="small"
+                  >
                     Dismiss
                   </Button>
                   <Button
@@ -277,6 +282,7 @@ const ScanQrCode: React.FC<Props> = ({ navigation, onConfirm, onClose }) => {
                     onPress={() => {
                       Linking.openSettings();
                     }}
+                    size="small"
                   >
                     Open settings
                   </Button>

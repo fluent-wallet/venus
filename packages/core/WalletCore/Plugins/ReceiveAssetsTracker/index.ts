@@ -50,6 +50,7 @@ class ReceiveAssetsTrackerPluginClass implements Plugin {
       if (!fetcher) return;
 
       fetcher(network.endpoint).then(async (assets) => {
+        if (!Array.isArray(assets)) return;
         const assetsInDB = await network.assets;
         const assetsNotInDB = assets.filter((asset) => !assetsInDB.find((dbAsset) => dbAsset.contractAddress === asset.contractAddress));
         const preCreate: Array<Asset> = [];

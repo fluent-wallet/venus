@@ -54,7 +54,7 @@ const SetAssetAmount: React.FC<Props> = ({ targetAddress, asset, nftItemDetail, 
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const _handleEstimateMax = useCallback(async (isInit: boolean = false) => {
+  const _handleEstimateMax = useCallback(async (isInit = false) => {
     if (asset.type !== AssetType.Native) {
       if (nftItemDetail) {
         const res = new Decimal(nftItemDetail.amount);
@@ -154,7 +154,7 @@ const SetAssetAmount: React.FC<Props> = ({ targetAddress, asset, nftItemDetail, 
         amount,
         isAmountValid: isAmountValid === true,
         validMax: validMax,
-        inEstimate
+        inEstimate,
       });
     }
   }, [amount, isAmountValid, validMax]);
@@ -201,7 +201,13 @@ const SetAssetAmount: React.FC<Props> = ({ targetAddress, asset, nftItemDetail, 
         </Text>
       )}
       {typeof children === 'function' &&
-        children({ amount, isAmountValid: isAmountValid === true, validMax: validMax!, inEstimate, handleEstimateMax: handleEstimateMax as unknown as () => void })}
+        children({
+          amount,
+          isAmountValid: isAmountValid === true,
+          validMax: validMax!,
+          inEstimate,
+          handleEstimateMax: handleEstimateMax as unknown as () => void,
+        })}
     </>
   );
 };

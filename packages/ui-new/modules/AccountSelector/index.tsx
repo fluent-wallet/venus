@@ -1,9 +1,10 @@
-import React, { useCallback, useRef } from 'react';
+import React, { useRef } from 'react';
 import { View, Pressable, StyleSheet } from 'react-native';
 import { useTheme, useNavigation } from '@react-navigation/native';
+import methods from '@core/WalletCore/Methods';
 import AccountsList from '@modules/AccountsList';
 import Text from '@components/Text';
-import BottomSheet, {  snapPoints, type BottomSheetMethods } from '@components/BottomSheet';
+import BottomSheet, { snapPoints, type BottomSheetMethods } from '@components/BottomSheet';
 import { AccountManagementStackName, HomeStackName, type StackScreenProps } from '@router/configs';
 export { type BottomSheetMethods };
 
@@ -16,9 +17,6 @@ const AccountSelector: React.FC<Props> = ({ onClose }) => {
   const navigation = useNavigation<StackScreenProps<typeof HomeStackName>['navigation']>();
 
   const bottomSheetRef = useRef<BottomSheetMethods>(null!);
-  const handleSelect = useCallback(() => {
-    bottomSheetRef?.current?.close();
-  }, []);
 
   return (
     <BottomSheet ref={bottomSheetRef} snapPoints={snapPoints.percent75} index={0} onClose={onClose}>
@@ -32,7 +30,15 @@ const AccountSelector: React.FC<Props> = ({ onClose }) => {
             <Text style={[styles.title, { color: colors.textPrimary }]}>⚙️ Edit</Text>
           </Pressable>
         </View>
-        <AccountsList type="selector" onPressAccount={handleSelect} />
+        <AccountsList
+          type="selector"
+          disabledCurrent
+          onPressAccount={({ accountId, isCurrent }) => {
+            if (isCurrent) return;
+            methods.selectAccount(accountId);
+            bottomSheetRef?.current?.close();
+          }}
+        />
       </View>
     </BottomSheet>
   );

@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 import React, { useMemo, useEffect, useCallback } from 'react';
 import { View, Pressable, StyleSheet } from 'react-native';
 import { useTheme } from '@react-navigation/native';
@@ -53,7 +54,6 @@ export const Tabs: React.FC<Omit<Props, 'setCurrentTab' | 'onPressItem' | 'selec
       index = index === -1 ? 0 : index;
       pageViewRef?.current?.setPage(index);
     },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
     [tabs],
   );
 
@@ -64,18 +64,15 @@ export const Tabs: React.FC<Omit<Props, 'setCurrentTab' | 'onPressItem' | 'selec
 
   useEffect(() => {
     offset.value = withTiming(TAB_WIDTH * currentTabIndex);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentTabIndex]);
 
   useEffect(() => {
     mapOfSetScrollY[type](0);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentTab]);
   useEffect(() => {
     return () => {
       mapOfSetScrollY[type](0);
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (

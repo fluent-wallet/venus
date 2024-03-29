@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { View, StyleSheet, Pressable, Keyboard } from 'react-native';
+import { StyleSheet, Pressable, Keyboard } from 'react-native';
 import { useTheme } from '@react-navigation/native';
 import { type AssetInfo } from '@core/WalletCore/Plugins/AssetsTracker/types';
 import { useCurrentAddressValue } from '@core/WalletCore/Plugins/ReactInject';
@@ -9,6 +9,7 @@ import Button from '@components/Button';
 import TokenIcon from '@modules/AssetsList/TokensList/TokenIcon';
 import SelectAsset from '@pages/SendTransaction/Step2Asset';
 import SetAssetAmount from '@pages/SendTransaction/Step3Amount/SetAssetAmount';
+import ArrowRigiht from '@assets/icons/arrow-right2.svg';
 
 interface Props {
   selectedAsset: AssetInfo | null;
@@ -22,8 +23,7 @@ const ReceiveSetAsset: React.FC<Props> = ({ onConfirm, selectedAsset, setSelecte
   const { colors } = useTheme();
 
   const bottomSheetRef = useRef<BottomSheetMethods>(null!);
-  const [showSelectAsset, setShowSelectAsset] = useState(false);
-
+  const [showSelectAsset, setShowSelectAsset] = useState(() => !selectedAsset);
   const currentAddressValue = useCurrentAddressValue()!;
 
   return (
@@ -41,6 +41,7 @@ const ReceiveSetAsset: React.FC<Props> = ({ onConfirm, selectedAsset, setSelecte
               <TokenIcon style={styles.assetIcon} source={selectedAsset?.icon} />
               <Text style={[styles.assetSymbol, { color: colors.textPrimary }]}>{selectedAsset.symbol}</Text>
               {selectedAsset.name !== selectedAsset.symbol && <Text style={[styles.assetSymbol, { color: colors.textSecondary }]}>{selectedAsset.name}</Text>}
+              <ArrowRigiht color={colors.iconPrimary} style={styles.assetArrow} />
             </>
           )}
           {!selectedAsset && <Text style={[styles.assetSymbol, { color: colors.textSecondary }]}>Click Here to select</Text>}
@@ -131,6 +132,10 @@ const styles = StyleSheet.create({
     fontWeight: '300',
     lineHeight: 16,
     marginTop: 6,
+  },
+  assetArrow: {
+    position: 'absolute',
+    right: 16,
   },
   amount: {
     marginTop: 24,

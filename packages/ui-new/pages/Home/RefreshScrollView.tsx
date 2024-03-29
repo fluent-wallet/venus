@@ -1,7 +1,7 @@
 import { useCallback, useRef, type ComponentProps } from 'react';
 import { StyleSheet, View, type NativeScrollEvent } from 'react-native';
 import { Gesture, GestureDetector, ScrollView } from 'react-native-gesture-handler';
-import Animated, { ReduceMotion, runOnJS, useAnimatedScrollHandler, useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
+import Animated, { ReduceMotion, runOnJS, useAnimatedScrollHandler, useAnimatedStyle, useSharedValue, withRepeat, withTiming } from 'react-native-reanimated';
 import RefreshIcon from '@assets/icons/refreshLogo.webp';
 
 const AnimatedScroll = Animated.createAnimatedComponent(ScrollView);
@@ -19,11 +19,13 @@ const HomeRefresh: React.FC<Props> = ({ children, onRefresh, onScroll, stickyHea
   const isReadyToRefresh = useSharedValue(false);
   const isRefreshing = useSharedValue(false);
   const scrollRef = useRef<Animated.ScrollView>(null);
+  const rotateValue = useSharedValue(0);
 
   const handleRefresh = useCallback(() => {
     pullPosition.value = withTiming(0, { reduceMotion: ReduceMotion.Never, duration: 200 });
+    rotateValue.value = 0;
     isRefreshing.value = false;
-  }, [pullPosition, isRefreshing]);
+  }, [pullPosition, isRefreshing, rotateValue]);
   // store the last scroll position
   const handleScroll = useAnimatedScrollHandler({
     onScroll: (evt) => {
@@ -51,6 +53,7 @@ const HomeRefresh: React.FC<Props> = ({ children, onRefresh, onScroll, stickyHea
         {
           scale: Math.min(1, Math.max(0, pullPosition.value / refreshHeight)),
         },
+        { rotate: `${rotateValue.value}deg` },
       ],
     };
   });
@@ -74,7 +77,9 @@ const HomeRefresh: React.FC<Props> = ({ children, onRefresh, onScroll, stickyHea
       if (isRefreshing.value) return;
       const refreshingHeight = 100;
       pullPosition.value = withTiming(isReadyToRefresh.value ? refreshingHeight : 0, { reduceMotion: ReduceMotion.Never, duration: 200 });
-
+      rotateValue.value = isReadyToRefresh.value
+        ? withRepeat(withTiming(360, { duration: 1000, reduceMotion: ReduceMotion.Never }), 0, false, undefined, ReduceMotion.Never)
+        : 0;
       // pull is enough to trigger a refresh
       if (isReadyToRefresh.value) {
         isReadyToRefresh.value = false;

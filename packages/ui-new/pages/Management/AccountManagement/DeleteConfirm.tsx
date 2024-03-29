@@ -38,6 +38,7 @@ const DeleteConfirm: React.FC<Props> = ({ onConfirm, onClose }) => {
               bottomSheetRef.current?.close();
               onConfirm();
             }}
+            size='small'
           >
             ⚠️ Delete
           </Button>

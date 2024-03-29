@@ -23,7 +23,7 @@ const AccountManagement: React.FC<StackScreenProps<typeof AccountManagementStack
       <Text style={[styles.title, { color: colors.textPrimary }]}>Account Management</Text>
       <AccountsList
         type="management"
-        onPressAccount={(accountId) => navigation.navigate(AccountSettingStackName, { accountId })}
+        onPressAccount={({ accountId }) => navigation.navigate(AccountSettingStackName, { accountId })}
         onPressGroup={(groupId) => navigation.navigate(GroupSettingStackName, { groupId })}
       />
 
