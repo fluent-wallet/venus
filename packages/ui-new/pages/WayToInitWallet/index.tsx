@@ -14,8 +14,9 @@ import WelcomeSwiftShieldDark from '@assets/images/welcome-SwiftShield-dark.webp
 import WelcomeSwiftShieldLight from '@assets/images/welcome-SwiftShield-light.webp';
 import WelcomeBgLight from '@assets/images/welcome-bg-light.webp';
 import WelcomeBgDark from '@assets/images/welcome-bg-dark.webp';
-import Img from '@assets/images/welcome-img.webp';
+import ImgNew from '@assets/images/welcome-img-new.webp';
 import ImportExistingWallet, { type BottomSheetMethods } from './ImportExistingWallet';
+
 
 export const showNotFindBSIMCardMessage = () =>
   showMessage({
@@ -50,7 +51,7 @@ const WayToInitWallet: React.FC<StackScreenProps<typeof WayToInitWalletStackName
       <ImageBackground source={mode === 'dark' ? WelcomeBgDark : WelcomeBgLight} style={styles.bg} resizeMode="cover">
         <ScrollView>
           <SafeAreaView style={styles.container}>
-            <Image style={styles.img} source={Img} contentFit="contain" />
+            <Image style={styles.img} source={ImgNew} contentFit="contain" />
             <Image style={styles.welcomeSwiftShield} source={mode === 'dark' ? WelcomeSwiftShieldDark : WelcomeSwiftShieldLight} contentFit="contain" />
 
             <Button
