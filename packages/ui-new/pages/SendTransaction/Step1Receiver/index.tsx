@@ -84,7 +84,7 @@ const SendTransactionStep1Receiver: React.FC<SendTransactionScreenProps<typeof S
           multiline
           numberOfLines={3}
         />
-        <Contract />
+        {/* <Contract /> */}
 
         {checkRes === 'NetworkError' && !inChecking && (
           <Pressable
@@ -152,6 +152,7 @@ const styles = StyleSheet.create({
     marginHorizontal: 16,
     borderWidth: 1,
     backgroundColor: 'transparent',
+    minHeight: 84
   },
   checkFail: {
     marginTop: 26,

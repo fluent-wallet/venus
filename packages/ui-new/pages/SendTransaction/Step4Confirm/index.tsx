@@ -141,6 +141,8 @@ const SendTransactionStep4Confirm: React.FC<SendTransactionScreenProps<typeof Se
     };
   }, []);
 
+  const [error, setError] = useState<{ type?: string; message: string } | null>(null);
+
   const [bsimEvent, setBSIMEvent] = useState<BSIMEvent | null>(null);
   const bsimCancelRef = useRef<VoidFunction>(() => {});
   const _handleSend = useCallback(async () => {
@@ -224,14 +226,18 @@ const SendTransactionStep4Confirm: React.FC<SendTransactionScreenProps<typeof Se
           plugins.NFTDetailTracker.updateCurrentOpenNFT();
         }
       }
-    } catch (err: any) {
-      if (String(err)?.includes('cancel')) {
+    } catch (_err: any) {
+      const err = String(_err.data || _err?.message || _err);
+      if (err.includes('cancel')) {
         return;
       }
-      console.log(err);
+      setError({
+        message: err,
+        ...(err.includes('out of balance') ? { type: 'out of balance' } : err.includes('timed out') ? { type: 'network error' } : null),
+      });
       showMessage({
         message: 'Transaction Failed',
-        description: String(err.data || err?.message || err),
+        description: err,
         type: 'failed',
       });
     }
@@ -290,7 +296,20 @@ const SendTransactionStep4Confirm: React.FC<SendTransactionScreenProps<typeof Se
             )}
           </View>
 
-          <View style={styles.btnArea}>
+          {error && (
+            <>
+              <View style={[styles.divider, { backgroundColor: colors.borderFourth }]} />
+              <Text style={[styles.errorText, { color: colors.textPrimary }]}>
+                {error.type === 'out of balance'
+                  ? `🤕 Insufficient ${nativeAsset?.symbol} balance${route.params.asset.type === AssetType.Native ? '.' : ' for gas.'}`
+                  : error.type === 'network error'
+                    ? '🚫 Your network is weak, trg again later.'
+                    : '🚫 Send transaction Error.'}
+              </Text>
+            </>
+          )}
+
+          <View style={[styles.btnArea, { marginTop: error ? 16 : 40 }]}>
             <Button
               testID="cancel"
               style={styles.btn}
@@ -301,7 +320,7 @@ const SendTransactionStep4Confirm: React.FC<SendTransactionScreenProps<typeof Se
               Cancel
             </Button>
             <Button testID="send" style={styles.btn} size="small" disabled={!gasInfo} onPress={handleSend} loading={inSending}>
-              Send
+              {error ? 'Retry' : 'Send'}
             </Button>
           </View>
         </BottomSheetScrollView>
@@ -404,8 +423,14 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '300',
   },
+  errorText: {
+    marginTop: 8,
+    fontSize: 16,
+    fontWeight: '600',
+    lineHeight: 24,
+    paddingHorizontal: 16,
+  },
   btnArea: {
-    marginTop: 40,
     marginBottom: 32,
     display: 'flex',
     flexDirection: 'row',

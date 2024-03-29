@@ -210,7 +210,7 @@ const SendTransactionStep2Asset: React.FC<Props> = ({ navigation, route, onConfi
                 {filterAssets.type === 'invalid-ERC20' && 'Only valid ERC20 token search is supported'}
                 {filterAssets.type === 'network-error' && (
                   <>
-                    Network error, <Text style={{ textDecorationLine: 'underline' }}>click to retry</Text>
+                    Your Network is weak, <Text style={{ textDecorationLine: 'underline' }}>click to retry</Text>
                   </>
                 )}
               </Text>

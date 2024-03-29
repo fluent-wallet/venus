@@ -71,12 +71,14 @@ export const AccountItemView: React.FC<{
   shorten?: boolean;
   onPress?: () => void;
   children?: React.ReactNode;
-}> = ({ colors, mode, showSelect, showMore, addressValue, nickname, children, shorten = true, onPress }) => {
+  disabled?: boolean;
+}> = ({ colors, mode, showSelect, showMore, addressValue, nickname, children, shorten = true, disabled, onPress }) => {
   return (
     <Pressable
       style={({ pressed }) => [styles.row, { backgroundColor: pressed ? colors.underlay : 'transparent', position: 'relative' }]}
       pointerEvents={!onPress ? 'none' : 'auto'}
       onPress={onPress}
+      disabled={disabled}
     >
       <Image style={styles.accountImage} source={{ uri: toDataUrl(addressValue) }} />
       <View style={{ flex: 1 }}>
@@ -96,9 +98,10 @@ const Account: React.FC<
     isCurrent: boolean;
     type: ListType;
     mode: 'dark' | 'light';
-    onPress?: (accountId: string) => void;
+    disabledCurrent?: boolean;
+    onPress?: (params: { accountId: string; addressValue: string; isCurrent: boolean }) => void;
   }
-> = ({ id, nickname, addressValue, colors, isCurrent, type, mode, onPress }) => {
+> = ({ id, nickname, addressValue, colors, isCurrent, type, mode, disabledCurrent, onPress }) => {
   return (
     <AccountItemView
       nickname={nickname}
@@ -107,18 +110,8 @@ const Account: React.FC<
       mode={mode}
       showSelect={type === 'selector' && isCurrent}
       showMore={type === 'management'}
-      onPress={
-        type === 'selector'
-          ? isCurrent
-            ? undefined
-            : () => {
-                methods.selectAccount(id);
-                onPress?.(id);
-              }
-          : () => {
-              onPress?.(id);
-            }
-      }
+      disabled={disabledCurrent && isCurrent}
+      onPress={() => onPress?.({ accountId: id, addressValue, isCurrent })}
     />
   );
 };
@@ -149,11 +142,12 @@ const AddAccount: React.FC<
   );
 };
 
-const AccountsList: React.FC<{ type: ListType; onPressAccount?: (accountId: string) => void; onPressGroup?: (groupId: string) => void }> = ({
-  type,
-  onPressAccount,
-  onPressGroup,
-}) => {
+const AccountsList: React.FC<{
+  type: ListType;
+  disabledCurrent?: boolean;
+  onPressAccount?: (params: { accountId: string; addressValue: string; isCurrent: boolean }) => void;
+  onPressGroup?: (groupId: string) => void;
+}> = ({ type, disabledCurrent, onPressAccount, onPressGroup }) => {
   const accountsManage = useAccountsManage();
   const currentAccount = useCurrentAccount();
   const { colors, mode } = useTheme();
@@ -194,7 +188,15 @@ const AccountsList: React.FC<{ type: ListType; onPressAccount?: (accountId: stri
       sections={accountsManage}
       renderSectionHeader={({ section: { title } }) => <AccountGroup {...title} colors={colors} type={type} onPressGroup={onPressGroup} />}
       renderItem={({ item }) => (
-        <Account {...item} colors={colors} type={type} isCurrent={currentAccount?.id === item.id} mode={mode} onPress={onPressAccount} />
+        <Account
+          {...item}
+          colors={colors}
+          type={type}
+          isCurrent={currentAccount?.id === item.id}
+          mode={mode}
+          onPress={onPressAccount}
+          disabledCurrent={disabledCurrent}
+        />
       )}
       renderSectionFooter={
         type === 'selector'
