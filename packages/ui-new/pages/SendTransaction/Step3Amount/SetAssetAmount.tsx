@@ -167,7 +167,7 @@ const SetAssetAmount: React.FC<Props> = ({ targetAddress, asset, nftItemDetail, 
     <>
       <TextInput
         keyboardType="numeric"
-        containerStyle={[styles.textinput, { borderColor: colors.borderFourth }]}
+        containerStyle={[styles.textinput, { borderColor: isAmountValid === true || isAmountValid === null ? colors.borderFourth : colors.down }]}
         showVisible={false}
         defaultHasValue={false}
         value={amount}

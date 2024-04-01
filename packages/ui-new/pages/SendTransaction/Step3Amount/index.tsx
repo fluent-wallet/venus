@@ -13,7 +13,7 @@ import SendTransactionBottomSheet from '../SendTransactionBottomSheet';
 import SetAssetAmount from './SetAssetAmount';
 
 const SendTransactionStep3Amount: React.FC<SendTransactionScreenProps<typeof SendTransactionStep3StackName>> = ({ navigation, route }) => {
-  const { colors, mode } = useTheme();
+  const { colors } = useTheme();
   return (
     <SendTransactionBottomSheet>
       {route.params.nftItemDetail && (
@@ -24,7 +24,7 @@ const SendTransactionStep3Amount: React.FC<SendTransactionScreenProps<typeof Sen
       )}
 
       <Text style={[styles.text, styles.to, { color: colors.textSecondary }]}>To</Text>
-      <AccountItemView nickname={''} addressValue={route.params.targetAddress} colors={colors} mode={mode} />
+      <AccountItemView nickname={''} addressValue={route.params.targetAddress} colors={colors} />
       <SetAssetAmount targetAddress={route.params.targetAddress} asset={route.params.asset} nftItemDetail={route.params.nftItemDetail}>
         {({ amount, validMax, isAmountValid, inEstimate, handleEstimateMax }) => (
           <Button

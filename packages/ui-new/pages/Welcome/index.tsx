@@ -33,7 +33,7 @@ const Welcome: React.FC<StackScreenProps<typeof WelcomeStackName>> = ({ navigati
             style={styles.btn}
             // onPress={() => navigation.dispatch(StackActions.replace(WayToInitWalletStackName))}
             onPress={() => navigation.navigate(WayToInitWalletStackName)}
-            mode='dark'
+            mode="dark"
           >
             Get Started
           </Button>
@@ -43,13 +43,12 @@ const Welcome: React.FC<StackScreenProps<typeof WelcomeStackName>> = ({ navigati
   );
 };
 
-
 const styles = StyleSheet.create({
   bg: {
     flex: 1,
   },
   container: {
-    paddingTop: 48,
+    paddingTop: 44,
     paddingHorizontal: 16,
   },
   enterWeb3: {
@@ -73,14 +72,13 @@ const styles = StyleSheet.create({
   },
   img: {
     alignSelf: 'center',
-    width: '100%',
+    width: 332,
     aspectRatio: 1,
     marginTop: 52,
   },
   btn: {
-    marginTop: 64,
+    marginTop: 45,
     marginBottom: 32,
-    marginHorizontal: 16,
   },
 });
 

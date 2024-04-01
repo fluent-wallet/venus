@@ -58,7 +58,7 @@ const BiometricsWay: React.FC<StackScreenProps<typeof BiometricsWayStackName>> =
         <Text style={{ color: colors.textNotice, fontWeight: '600' }}>Fingerprint</Text>.
       </Text>
 
-      <Button testID="enable" style={styles.btnEnable} size="small" loading={inAsync} onPress={handleCreateVault}>
+      <Button testID="enable" style={styles.btnEnable} loading={inAsync} onPress={handleCreateVault}>
         Enable
       </Button>
 
@@ -85,7 +85,7 @@ const styles = StyleSheet.create({
     textAlign: 'left',
   },
   img: {
-    width: 240,
+    width: 269,
     aspectRatio: 1,
     marginTop: 24,
     marginBottom: 60,
@@ -105,7 +105,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 32,
-    height: 48,
+    height: 56,
     borderRadius: 8,
     overflow: 'hidden',
   },

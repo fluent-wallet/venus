@@ -16,7 +16,7 @@ import Add from '@assets/icons/add.svg';
 import Delete from '@assets/icons/delete.svg';
 
 const AccountManagement: React.FC<StackScreenProps<typeof AccountManagementStackName>> = ({ navigation }) => {
-  const { colors, mode } = useTheme();
+  const { colors } = useTheme();
 
   return (
     <View style={[styles.container, { backgroundColor: colors.bgPrimary }]}>
@@ -31,7 +31,7 @@ const AccountManagement: React.FC<StackScreenProps<typeof AccountManagementStack
         style={({ pressed }) => [accountListStyles.row, accountListStyles.group, { backgroundColor: pressed ? colors.underlay : 'transparent' }]}
         onPress={() => navigation.navigate(AddAnotherWalletStackName)}
       >
-        <Checkbox checked={mode === 'dark'} Icon={Add} />
+        <Checkbox checked Icon={Add} pointerEvents="none" />
         <Text style={[accountListStyles.manageText, { color: colors.textPrimary }]}>Add another wallet</Text>
       </Pressable>
 
@@ -39,7 +39,7 @@ const AccountManagement: React.FC<StackScreenProps<typeof AccountManagementStack
         style={({ pressed }) => [accountListStyles.row, accountListStyles.group, { backgroundColor: pressed ? colors.underlay : 'transparent' }]}
         onPress={() => navigation.navigate(EraseAllWalletStackName)}
       >
-        <Checkbox checked={mode === 'dark'} Icon={Delete} />
+        <Checkbox checked Icon={Delete} pointerEvents="none" />
         <Text style={[accountListStyles.manageText, { color: colors.textPrimary }]}>Erase all wallets</Text>
       </Pressable>
     </View>

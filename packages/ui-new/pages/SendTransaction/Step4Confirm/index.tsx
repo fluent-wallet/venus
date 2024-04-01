@@ -42,7 +42,7 @@ import BSIMVerify from '../BSIMVerify';
 
 const SendTransactionStep4Confirm: React.FC<SendTransactionScreenProps<typeof SendTransactionStep4StackName>> = ({ navigation, route }) => {
   useEffect(() => Keyboard.dismiss(), []);
-  const { colors, mode } = useTheme();
+  const { colors } = useTheme();
   const BSIMVerifyRef = useRef<BottomSheetMethods>(null!);
 
   const currentNetwork = useCurrentNetwork()!;
@@ -269,11 +269,11 @@ const SendTransactionStep4Confirm: React.FC<SendTransactionScreenProps<typeof Se
           )}
 
           <Text style={[styles.text, styles.to, { color: colors.textSecondary }]}>To</Text>
-          <AccountItemView nickname={''} addressValue={route.params.targetAddress} colors={colors} mode={mode} />
+          <AccountItemView nickname={''} addressValue={route.params.targetAddress} colors={colors} />
 
           <View style={[styles.divider, { backgroundColor: colors.borderFourth }]} />
 
-          <AccountItemView nickname="Signing with" addressValue={currentAddressValue} colors={colors} mode={mode}>
+          <AccountItemView nickname="Signing with" addressValue={currentAddressValue} colors={colors}>
             <Text style={[styles.networkName, { color: colors.textSecondary }]} numberOfLines={1}>
               on {currentNetwork?.name}
             </Text>

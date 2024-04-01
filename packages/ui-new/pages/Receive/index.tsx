@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 import React, { useState, useMemo } from 'react';
 import { useTheme } from '@react-navigation/native';
 import { View, StyleSheet } from 'react-native';
@@ -7,13 +8,15 @@ import QRCode from 'react-native-qrcode-svg';
 import Decimal from 'decimal.js';
 import { useCurrentAccount, useCurrentNetwork, useCurrentAddressValue, NetworkType } from '@core/WalletCore/Plugins/ReactInject';
 import { type AssetInfo } from '@core/WalletCore/Plugins/AssetsTracker/types';
+import { trimDecimalZeros } from '@core/utils/balance';
 import { ReceiveStackName, type StackScreenProps } from '@router/configs';
 import { AccountItemView } from '@modules/AccountsList';
-import BottomSheet, { snapPoints, BottomSheetScrollView, type BottomSheetMethods } from '@components/BottomSheet';
+import BottomSheet, { snapPoints } from '@components/BottomSheet';
 import Text from '@components/Text';
 import { Navigation } from '@pages/Home/Navigations';
+import SelectAsset from '@pages/SendTransaction/Step2Asset';
 import { encodeETHURL } from '@utils/ETHURL';
-import { trimDecimalZeros } from '@core/utils/balance';
+import { isSmallDevice } from '@utils/deviceInfo';
 import Logo from '@assets/icons/logo.png';
 import Share from '@assets/icons/share.svg';
 import PoundKey from '@assets/icons/pound-key.svg';
@@ -24,8 +27,9 @@ interface Props {
 }
 
 const Receive: React.FC<Props> = ({ navigation }) => {
-  const { colors, mode } = useTheme();
+  const { colors } = useTheme();
   const [showSetAsset, setShowSetAsset] = useState(false);
+  const [showSelectAsset, setShowSelectAsset] = useState(false);
 
   const currentAccount = useCurrentAccount()!;
   const currentNetwork = useCurrentNetwork()!;
@@ -57,34 +61,33 @@ const Receive: React.FC<Props> = ({ navigation }) => {
 
   return (
     <>
-      <BottomSheet snapPoints={snapPoints.large} isRoute>
-        <BottomSheetScrollView style={styles.container}>
-          <Text style={[styles.title, { color: colors.textPrimary }]}>Receive</Text>
-          <Text style={[styles.tip, { color: colors.textPrimary }]}>Only send {currentNetwork?.name} network assets to this address.</Text>
+      <BottomSheet snapPoints={snapPoints.large} isRoute style={styles.container}>
+        <Text style={[styles.title, { color: colors.textPrimary }]}>Receive</Text>
+        <Text style={[styles.tip, { color: colors.textPrimary }]}>Only send {currentNetwork?.name} network assets to this address.</Text>
 
-          <View style={[styles.qrcodeWrapper, { backgroundColor: colors.bgSecondary, paddingBottom: selectedAsset ? 18 : 30 }]}>
-            <QRCode value={ethUrl} size={220} logo={Logo} logoSize={60} logoBackgroundColor="transparent" />
-            {selectedAsset && (
-              <>
-                <Text style={[styles.receive, { color: colors.textPrimary }]}>
-                  {amount} {selectedAsset?.symbol}{' '}
+        <View style={[styles.qrcodeWrapper, { backgroundColor: colors.bgSecondary, paddingBottom: selectedAsset ? 18 : 30 }]}>
+          <QRCode value={ethUrl} size={220} logo={Logo} logoSize={60} logoBackgroundColor="transparent" />
+          {selectedAsset && (
+            <>
+              <Text style={[styles.receive, { color: colors.textPrimary }]}>
+                {amount} {selectedAsset?.symbol}{' '}
+              </Text>
+              {price && price !== '0' && (
+                <Text style={[styles.price, { color: colors.textSecondary }]} numberOfLines={1}>
+                  ≈ ${price}
                 </Text>
-                {price && price !== '0' && (
-                  <Text style={[styles.price, { color: colors.textSecondary }]} numberOfLines={1}>
-                    ≈ ${price}
-                  </Text>
-                )}
-                {}
-              </>
-            )}
-          </View>
+              )}
+              {}
+            </>
+          )}
+        </View>
 
-          <View style={styles.accountWrapper}>
-            <AccountItemView nickname={currentAccount?.nickname} addressValue={currentAddressValue} colors={colors} mode={mode} shorten={false} />
-          </View>
+        <View style={styles.accountWrapper}>
+          <AccountItemView nickname={currentAccount?.nickname} addressValue={currentAddressValue} colors={colors} shorten={false} />
+        </View>
 
-          <View style={styles.btnWrapper}>
-            <Navigation
+        <View style={styles.btnWrapper}>
+          {/* <Navigation
               title="Share"
               Icon={Share}
               onPress={() => {
@@ -96,10 +99,19 @@ const Receive: React.FC<Props> = ({ navigation }) => {
                   width: 160,
                 });
               }}
-            />
-            <Navigation title="Set amount" Icon={PoundKey} onPress={() => setShowSetAsset(true)} />
-          </View>
-        </BottomSheetScrollView>
+            /> */}
+          <Navigation
+            title={selectedAsset ? 'Set amount' : 'Select asset'}
+            Icon={PoundKey}
+            onPress={() => {
+              if (!selectedAsset) {
+                setShowSelectAsset(true);
+              } else {
+                setShowSetAsset(true);
+              }
+            }}
+          />
+        </View>
       </BottomSheet>
       {showSetAsset && (
         <ReceiveSetAsset
@@ -115,9 +127,11 @@ const Receive: React.FC<Props> = ({ navigation }) => {
           onClose={() => setShowSetAsset(false)}
         />
       )}
+      {showSelectAsset && <SelectAsset selectType="Receive" onConfirm={(asset) => setSelectedAsset(asset)} onClose={() => setShowSelectAsset(false)} />}
     </>
   );
 };
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -163,7 +177,8 @@ const styles = StyleSheet.create({
     width: 280,
   },
   btnWrapper: {
-    marginTop: 102,
+    marginTop: isSmallDevice ? 'auto' : 102,
+    marginBottom: isSmallDevice ? 32 : 0,
     display: 'flex',
     flexDirection: 'row',
     justifyContent: 'center',

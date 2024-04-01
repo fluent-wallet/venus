@@ -9,12 +9,17 @@ import ArrowDownward from '@assets/icons/arrow-downward.svg';
 import Buy from '@assets/icons/buy.svg';
 import More from '@assets/icons/more.svg';
 
-export const Navigation: React.FC<{ title: string; Icon: ComponentProps<typeof Button>['Icon']; onPress?: VoidFunction }> = ({ title, Icon, onPress }) => {
+export const Navigation: React.FC<{ title: string; Icon: ComponentProps<typeof Button>['Icon']; onPress?: VoidFunction; disabled?: boolean }> = ({
+  title,
+  Icon,
+  onPress,
+  disabled,
+}) => {
   const { colors } = useTheme();
 
   return (
-    <Pressable style={styles.navigation} onPress={onPress}>
-      <Button testID={title} square size="small" Icon={Icon} onPress={onPress} />
+    <Pressable style={styles.navigation} onPress={onPress} disabled={disabled}>
+      <Button testID={title} square size="small" Icon={Icon} onPress={onPress} disabled={disabled} />
       <Text style={[styles.navigationText, { color: colors.textPrimary }]}>{title}</Text>
     </Pressable>
   );
@@ -25,7 +30,7 @@ const Navigations: React.FC<{ navigation: StackScreenProps<typeof HomeStackName>
     <View style={styles.container}>
       <Navigation title="Send" Icon={ArrowUpward} onPress={() => navigation.navigate(SendTransactionStackName, { screen: SendTransactionStep1StackName })} />
       <Navigation title="Receive" Icon={ArrowDownward} onPress={() => navigation.navigate(ReceiveStackName)} />
-      <Navigation title="Buy" Icon={Buy} />
+      <Navigation title="Buy" Icon={Buy} disabled />
       <Navigation title="More" Icon={More} />
     </View>
   );

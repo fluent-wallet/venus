@@ -63,7 +63,6 @@ const AccountGroup: React.FC<
 
 export const AccountItemView: React.FC<{
   colors: ReturnType<typeof useTheme>['colors'];
-  mode: 'light' | 'dark';
   showSelect?: boolean;
   showMore?: boolean;
   addressValue: string;
@@ -72,7 +71,7 @@ export const AccountItemView: React.FC<{
   onPress?: () => void;
   children?: React.ReactNode;
   disabled?: boolean;
-}> = ({ colors, mode, showSelect, showMore, addressValue, nickname, children, shorten = true, disabled, onPress }) => {
+}> = ({ colors, showSelect, showMore, addressValue, nickname, children, shorten = true, disabled, onPress }) => {
   return (
     <Pressable
       style={({ pressed }) => [styles.row, { backgroundColor: pressed ? colors.underlay : 'transparent', position: 'relative' }]}
@@ -85,7 +84,7 @@ export const AccountItemView: React.FC<{
         <Text style={[styles.accountName, { color: colors.textPrimary, opacity: nickname ? 1 : 0 }]}>{nickname || 'placeholder'}</Text>
         <Text style={[styles.accountAddress, { color: colors.textSecondary }]}>{shorten ? shortenAddress(addressValue) : addressValue}</Text>
       </View>
-      {showSelect && <Checkbox style={styles.accountRight} checked={mode === 'dark'} />}
+      {showSelect && <Checkbox style={styles.accountRight} checked pointerEvents="none" />}
       {showMore && <More style={styles.accountRight} color={colors.textNotice} />}
       {children}
     </Pressable>
@@ -97,17 +96,15 @@ const Account: React.FC<
     colors: ReturnType<typeof useTheme>['colors'];
     isCurrent: boolean;
     type: ListType;
-    mode: 'dark' | 'light';
     disabledCurrent?: boolean;
     onPress?: (params: { accountId: string; addressValue: string; isCurrent: boolean }) => void;
   }
-> = ({ id, nickname, addressValue, colors, isCurrent, type, mode, disabledCurrent, onPress }) => {
+> = ({ id, nickname, addressValue, colors, isCurrent, type, disabledCurrent, onPress }) => {
   return (
     <AccountItemView
       nickname={nickname}
       addressValue={addressValue}
       colors={colors}
-      mode={mode}
       showSelect={type === 'selector' && isCurrent}
       showMore={type === 'management'}
       disabled={disabledCurrent && isCurrent}
@@ -116,9 +113,13 @@ const Account: React.FC<
   );
 };
 
-const AddAccount: React.FC<
-  AccountGroupProps & { colors: ReturnType<typeof useTheme>['colors']; type: ListType; mode: 'dark' | 'light'; inAdding: boolean; onPress: () => void }
-> = ({ colors, mode, accountCount, vaultType, inAdding, onPress }) => {
+const AddAccount: React.FC<AccountGroupProps & { colors: ReturnType<typeof useTheme>['colors']; type: ListType; inAdding: boolean; onPress: () => void }> = ({
+  colors,
+  accountCount,
+  vaultType,
+  inAdding,
+  onPress,
+}) => {
   const notReachMax =
     (vaultType === VaultType.HierarchicalDeterministic && accountCount < 256) || (vaultType === VaultType.BSIM && accountCount < plugins.BSIM.chainLimtCount);
 
@@ -133,7 +134,7 @@ const AddAccount: React.FC<
         onPress={onPress}
         disabled={inAdding}
       >
-        <Checkbox checked={mode === 'dark'} Icon={Add} />
+        <Checkbox checked Icon={Add} pointerEvents="none" />
         <Text style={[styles.manageText, { color: colors.textPrimary }]}>Add Account</Text>
         {inAdding && <HourglassLoading style={styles.addAccountLoading} />}
       </Pressable>
@@ -150,7 +151,7 @@ const AccountsList: React.FC<{
 }> = ({ type, disabledCurrent, onPressAccount, onPressGroup }) => {
   const accountsManage = useAccountsManage();
   const currentAccount = useCurrentAccount();
-  const { colors, mode } = useTheme();
+  const { colors } = useTheme();
   const ListComponent = useMemo(() => (type === 'selector' ? BottomSheetSectionList : SectionList), [type]);
 
   const [inAddingId, setInAddingId] = useState<string | null>(null);
@@ -188,21 +189,13 @@ const AccountsList: React.FC<{
       sections={accountsManage}
       renderSectionHeader={({ section: { title } }) => <AccountGroup {...title} colors={colors} type={type} onPressGroup={onPressGroup} />}
       renderItem={({ item }) => (
-        <Account
-          {...item}
-          colors={colors}
-          type={type}
-          isCurrent={currentAccount?.id === item.id}
-          mode={mode}
-          onPress={onPressAccount}
-          disabledCurrent={disabledCurrent}
-        />
+        <Account {...item} colors={colors} type={type} isCurrent={currentAccount?.id === item.id} onPress={onPressAccount} disabledCurrent={disabledCurrent} />
       )}
       renderSectionFooter={
         type === 'selector'
           ? () => <View pointerEvents="none" style={styles.placeholder} />
           : ({ section: { title } }) => (
-              <AddAccount {...title} colors={colors} type={type} mode={mode} inAdding={inAddingId === title.id} onPress={() => addAccount(title)} />
+              <AddAccount {...title} colors={colors} type={type} inAdding={inAddingId === title.id} onPress={() => addAccount(title)} />
             )
       }
     />

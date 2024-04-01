@@ -66,7 +66,7 @@ const SendTransactionStep1Receiver: React.FC<SendTransactionScreenProps<typeof S
       <SendTransactionBottomSheet>
         <Text style={[styles.receiver, { color: colors.textSecondary }]}>Receiver</Text>
         <TextInput
-          containerStyle={[styles.textinput, { borderColor: colors.borderFourth }]}
+          containerStyle={[styles.textinput, { borderColor: checkRes === 'Invalid' ? colors.down : colors.borderFourth }]}
           showVisible={false}
           defaultHasValue={false}
           value={receiver}
@@ -111,7 +111,7 @@ const SendTransactionStep1Receiver: React.FC<SendTransactionScreenProps<typeof S
               style={({ pressed }) => [styles.knowRiskWrapper, { backgroundColor: pressed ? colors.underlay : 'transparent' }]}
               onPress={() => setKnowRist((pre) => !pre)}
             >
-              <Checkbox checked={knowRisk} color={knowRisk ? colors.iconFifth : 'transparent'} showBackgroundColor={knowRisk} pointerEvents="none" />
+              <Checkbox checked={knowRisk} pointerEvents="none" />
               <Text style={(styles.contractAddressTip, { color: colors.textPrimary })}>Known the risks</Text>
             </Pressable>
           </>
