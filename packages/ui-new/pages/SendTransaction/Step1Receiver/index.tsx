@@ -46,7 +46,7 @@ const SendTransactionStep1Receiver: React.FC<SendTransactionScreenProps<typeof S
       } finally {
         setInChecking(false);
       }
-    }, 500),
+    }, 200),
     [],
   );
 
@@ -66,7 +66,7 @@ const SendTransactionStep1Receiver: React.FC<SendTransactionScreenProps<typeof S
       <SendTransactionBottomSheet>
         <Text style={[styles.receiver, { color: colors.textSecondary }]}>Receiver</Text>
         <TextInput
-          containerStyle={[styles.textinput, { borderColor: colors.borderFourth }]}
+          containerStyle={[styles.textinput, { borderColor: checkRes === 'Invalid' ? colors.down : colors.borderFourth }]}
           showVisible={false}
           defaultHasValue={false}
           value={receiver}
@@ -80,12 +80,10 @@ const SendTransactionStep1Receiver: React.FC<SendTransactionScreenProps<typeof S
             setShowScanQRCode(true);
           }}
           showClear={!!receiver}
-          placeholder="Enter an address or account name"
+          placeholder="Enter an address"
           multiline
           numberOfLines={3}
         />
-        {/* <Contract /> */}
-
         {checkRes === 'NetworkError' && !inChecking && (
           <Pressable
             style={({ pressed }) => [styles.checkFail, { backgroundColor: pressed ? colors.underlay : 'transparent' }]}
@@ -113,12 +111,12 @@ const SendTransactionStep1Receiver: React.FC<SendTransactionScreenProps<typeof S
               style={({ pressed }) => [styles.knowRiskWrapper, { backgroundColor: pressed ? colors.underlay : 'transparent' }]}
               onPress={() => setKnowRist((pre) => !pre)}
             >
-              <Checkbox checked={knowRisk} color={knowRisk ? colors.iconFifth : 'transparent'} showBackgroundColor={knowRisk} pointerEvents="none" />
+              <Checkbox checked={knowRisk} pointerEvents="none" />
               <Text style={(styles.contractAddressTip, { color: colors.textPrimary })}>Known the risks</Text>
             </Pressable>
           </>
         )}
-
+        {/* <Contract setReceiver={setReceiver} /> */}
         <Button
           testID="next"
           style={styles.btn}

@@ -23,7 +23,7 @@ const ReceiveSetAsset: React.FC<Props> = ({ onConfirm, selectedAsset, setSelecte
   const { colors } = useTheme();
 
   const bottomSheetRef = useRef<BottomSheetMethods>(null!);
-  const [showSelectAsset, setShowSelectAsset] = useState(() => !selectedAsset);
+  const [showSelectAsset, setShowSelectAsset] = useState(false);
   const currentAddressValue = useCurrentAddressValue()!;
 
   return (
@@ -31,7 +31,7 @@ const ReceiveSetAsset: React.FC<Props> = ({ onConfirm, selectedAsset, setSelecte
       <BottomSheet ref={bottomSheetRef} snapPoints={snapPoints.large} index={0} onClose={onClose} style={styles.container}>
         <Text style={[styles.title, { color: colors.textPrimary }]}>Receive</Text>
 
-        <Text style={[styles.text, styles.to, { color: colors.textSecondary }]}>Select a token</Text>
+        <Text style={[styles.text, styles.to, { color: colors.textSecondary }]}>Select an asset</Text>
         <Pressable
           style={({ pressed }) => [styles.assetWrapper, { backgroundColor: pressed ? colors.underlay : 'transparent' }]}
           onPress={() => setShowSelectAsset(true)}

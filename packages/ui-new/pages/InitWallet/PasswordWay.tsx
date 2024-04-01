@@ -107,7 +107,7 @@ const PasswordWay: React.FC<StackScreenProps<typeof PasswordWayStackName>> = ({ 
           </Text>
         </Pressable>
 
-        <Button testID="createPasswordButton" style={styles.btn} size="small" onPress={handleSubmit(handleCreateVault)} disabled={!confirm} loading={inAsync}>
+        <Button testID="createPasswordButton" style={styles.btn} onPress={handleSubmit(handleCreateVault)} disabled={!confirm} loading={inAsync}>
           Create Password
         </Button>
       </ScrollView>

@@ -97,20 +97,20 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   container: {
-    paddingTop: 40,
+    paddingTop: 44,
     paddingHorizontal: 16,
   },
   img: {
     alignSelf: 'center',
-    width: 240,
+    width: 320,
     aspectRatio: 1,
-    marginBottom: 68,
+    marginBottom: 16,
   },
   welcomeSwiftShield: {
     alignSelf: 'center',
-    width: '100%',
+    width: 333,
     aspectRatio: 3.36,
-    marginBottom: 24,
+    marginBottom: 38,
   },
   orAddWith: {
     marginBottom: 16,

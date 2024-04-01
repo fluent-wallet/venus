@@ -5,6 +5,7 @@ import { FlashList, type FlashListProps } from '@shopify/flash-list';
 import { useAssetsTokenList, useIsTokensEmpty, useTokenListOfCurrentNetwork } from '@core/WalletCore/Plugins/ReactInject';
 import { type AssetInfo } from '@core/WalletCore/Plugins/AssetsTracker/types';
 import Text from '@components/Text';
+import { usePriceVisibleValue } from '@hooks/usePriceVisible';
 import NoData from '@assets/icons/no-data.svg';
 import TokenItem from './TokenItem';
 import ReceiveFunds from './ReceiveFunds';
@@ -20,6 +21,7 @@ interface Props {
 const TokenList: React.FC<Props> = ({ onPressItem, selectType = 'Send', showReceiveFunds = false, hidePrice = false }) => {
   const tokens = (selectType === 'Send' ? useAssetsTokenList : useTokenListOfCurrentNetwork)();
   const isEmpty = useIsTokensEmpty();
+  const priceVisible = usePriceVisibleValue();
 
   if (tokens === null) {
     return Skeleton;
@@ -32,7 +34,7 @@ const TokenList: React.FC<Props> = ({ onPressItem, selectType = 'Send', showRece
   return tokens.map((token, index) => (
     <TokenItem
       key={index}
-      hidePrice={selectType === 'Receive' ? true : hidePrice}
+      hidePrice={selectType === 'Receive' ? true : !priceVisible ? true : hidePrice}
       hideBalance={selectType === 'Receive'}
       showAddress={selectType === 'Receive'}
       data={token}

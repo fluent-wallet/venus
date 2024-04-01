@@ -45,7 +45,7 @@ const Network: React.FC<
           {networkType} - {chainType}: {netId}
         </Text>
       </View>
-      {isCurrent && <Checkbox style={styles.checkbox} checked={mode === 'dark'} />}
+      {isCurrent && <Checkbox style={styles.checkbox} checked pointerEvents="none" />}
     </Pressable>
   );
 };

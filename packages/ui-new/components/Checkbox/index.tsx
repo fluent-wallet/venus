@@ -8,25 +8,25 @@ interface Props extends PressableProps {
   checked: boolean;
   onChange?: (checked: boolean) => void;
   Icon?: typeof Component<SvgProps>;
-  showBackgroundColor?: boolean;
+  reversal?: boolean;
   color?: string;
 }
 
-const Checkbox: React.FC<Props> = ({ checked, onChange, style, Icon, showBackgroundColor = true, color, ...props }) => {
-  const { colors, palette } = useTheme();
+const Checkbox: React.FC<Props> = ({ checked, onChange, style, Icon, reversal, color, ...props }) => {
+  const { colors } = useTheme();
   const UsedIcon = useMemo(() => (Icon ? Icon : Check), [Icon]);
 
   return (
     <Pressable
       style={[
         styles.checkbox,
-        { backgroundColor: showBackgroundColor ? colors.up : 'transparent', borderColor: colors.up },
+        { backgroundColor: !checked || reversal ? 'transparent' : colors.up, borderColor: reversal ? 'transparent' : colors.up },
         typeof style === 'object' && style,
       ]}
       onPress={!onChange ? undefined : () => onChange?.(!checked)}
       {...props}
     >
-      <UsedIcon color={color || (checked ? palette.gray8 : palette.gray0)} />
+      <UsedIcon color={color || (reversal ? colors.up : checked ? colors.iconFifth : 'transparent')} />
     </Pressable>
   );
 };

@@ -6,7 +6,7 @@ import { showMessage } from 'react-native-flash-message';
 import { useCurrentAddressValue, useAssetsTotalPriceValue } from '@core/WalletCore/Plugins/ReactInject';
 import { zeroAddress } from '@core/utils/address';
 import { shortenAddress } from '@core/utils/address';
-import useStorageState from '@hooks/useStorageState';
+import { usePriceVisible } from '@hooks/usePriceVisible';
 import Text from '@components/Text';
 import Skeleton from '@components/Skeleton';
 import Copy from '@assets/icons/copy.svg';
@@ -41,33 +41,33 @@ export const CurrentAddress: React.FC = () => {
 export const TotalPrice: React.FC = () => {
   const { colors } = useTheme();
   const totalPriceValue = useAssetsTotalPriceValue();
-  const [visible, setVisible] = useStorageState({ key: 'totalPriceVisible', initState: true });
+  const [priceVisible, setPriceVisible] = usePriceVisible();
 
   const Asterisks = useCallback(
     () => (
-      <View style={[styles.asterisksContainer, { opacity: visible ? 0 : 1 }]} pointerEvents="none">
+      <View style={[styles.asterisksContainer, { opacity: priceVisible ? 0 : 1 }]} pointerEvents="none">
         {Array.from({ length: 6 }).map((_, index) => (
           <Asterisk key={index} color={colors.textPrimary} width={12} height={12} />
         ))}
         <EyeOpen color={colors.textPrimary} width={24} height={24} style={styles.eye} />
       </View>
     ),
-    [colors.textPrimary, visible],
+    [colors.textPrimary, priceVisible],
   );
 
   if (totalPriceValue === null) {
-    return <Skeleton width={140} height={45} startX={16}/>;
+    return <Skeleton width={140} height={45} startX={16} />;
   }
 
   return (
     <Pressable
-      onPress={() => setVisible((pre) => !pre)}
-      disabled={visible === undefined}
+      onPress={() => setPriceVisible(!priceVisible)}
+      disabled={priceVisible === undefined}
       style={({ pressed }) => [styles.totalPriceContainer, { backgroundColor: pressed ? colors.underlay : 'transparent' }]}
     >
       <Asterisks />
-      <Text style={[styles.totalPriceText, { color: colors.textPrimary, opacity: visible ? 1 : 0 }]}>${totalPriceValue}</Text>
-      <EyeClose color={colors.textPrimary} width={24} height={24} style={[styles.eye, { opacity: visible ? 1 : 0 }]} />
+      <Text style={[styles.totalPriceText, { color: colors.textPrimary, opacity: priceVisible ? 1 : 0 }]}>${totalPriceValue}</Text>
+      <EyeClose color={colors.textPrimary} width={24} height={24} style={[styles.eye, { opacity: priceVisible ? 1 : 0 }]} />
     </Pressable>
   );
 };

@@ -21,7 +21,7 @@ import ReceiveAssetsTracker from './packages/core/WalletCore/Plugins/ReceiveAsse
 import App from './packages/ui-new/App';
 import { name as appName } from './app.json';
 import { ENABLE_WALLET_CONNECT_FEATURE } from './packages/ui/utils/features';
-import * as SplashScreen from 'expo-splash-screen';
+
 Decimal.set({ precision: 80 });
 LogBox.ignoreLogs([
   'WebSocket connection failed for host',
@@ -31,11 +31,6 @@ LogBox.ignoreLogs([
   'RCTBridge required dispatch_sync to load',
   'network does not support ENS',
 ]);
-
-// Prevent native splash screen from autohiding before App component declaration
-SplashScreen.preventAutoHideAsync()
-  .then((result) => console.log(`SplashScreen.preventAutoHideAsync() succeeded: ${result}`))
-  .catch(console.warn); // it's good to explicitly catch and inspect any error
 
 const plugins = [
   CryptoToolPlugin,

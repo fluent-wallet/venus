@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useMemo, useEffect, useRef } from 'react';
-import { View, Pressable, StyleSheet } from 'react-native';
+import { Pressable, StyleSheet } from 'react-native';
 import { useTheme } from '@react-navigation/native';
 import { showMessage } from 'react-native-flash-message';
 import methods from '@core/WalletCore/Methods';
@@ -17,7 +17,7 @@ import Delete from '@assets/icons/delete.svg';
 import DeleteConfirm from './DeleteConfirm';
 
 const GroupConfig: React.FC<StackScreenProps<typeof GroupSettingStackName>> = ({ navigation, route }) => {
-  const { colors, mode } = useTheme();
+  const { colors } = useTheme();
   const bottomSheetRef = useRef<BottomSheetMethods>(null!);
 
   const accountGroup = useGroupFromId(route.params.groupId);
@@ -132,16 +132,14 @@ const GroupConfig: React.FC<StackScreenProps<typeof GroupSettingStackName>> = ({
         </Pressable>
 
         <BottomSheetScrollView style={styles.accountsContainer}>
-          {accounts?.map((account) => (
-            <AccountItemView key={account.id} nickname={account.nickname} addressValue={account.addressValue} colors={colors} mode={mode} />
-          ))}
+          {accounts?.map((account) => <AccountItemView key={account.id} nickname={account.nickname} addressValue={account.addressValue} colors={colors} />)}
         </BottomSheetScrollView>
 
         <Pressable
           style={({ pressed }) => [styles.row, styles.removeContainer, { backgroundColor: pressed ? colors.underlay : 'transparent' }]}
           onPress={handlePressDelete}
         >
-          <Checkbox checked={mode === 'dark'} Icon={Delete} />
+          <Checkbox checked Icon={Delete} pointerEvents="none" />
           <Text style={[styles.mainText, styles.removeText, { color: colors.textPrimary }]}>Remove Group</Text>
         </Pressable>
 

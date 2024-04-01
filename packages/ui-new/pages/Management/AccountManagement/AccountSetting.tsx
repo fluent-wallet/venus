@@ -111,7 +111,7 @@ const AccountConfig: React.FC<StackScreenProps<typeof AccountSettingStackName>> 
             style={({ pressed }) => [styles.row, styles.removeContainer, { backgroundColor: pressed ? colors.underlay : 'transparent' }]}
             onPress={handlePressDelete}
           >
-            <Checkbox checked={mode === 'dark'} Icon={Delete} />
+            <Checkbox checked Icon={Delete} pointerEvents="none" />
             <Text style={[styles.mainText, styles.removeText, { color: colors.textPrimary }]}>Remove Account</Text>
           </Pressable>
 
