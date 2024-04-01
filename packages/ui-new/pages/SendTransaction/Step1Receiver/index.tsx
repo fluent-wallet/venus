@@ -80,7 +80,7 @@ const SendTransactionStep1Receiver: React.FC<SendTransactionScreenProps<typeof S
             setShowScanQRCode(true);
           }}
           showClear={!!receiver}
-          placeholder="Enter an address or account name"
+          placeholder="Enter an address"
           multiline
           numberOfLines={3}
         />
