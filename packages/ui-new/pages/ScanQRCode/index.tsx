@@ -189,6 +189,9 @@ const ScanQrCode: React.FC<Props> = ({ navigation, onConfirm, onClose }) => {
         if (!assets || !assets.uri) return;
         // TODO: update and remove BarCodeScanner package  see : https://docs.expo.dev/versions/latest/sdk/bar-code-scanner/
         const [codeRes] = await scanFromURLAsync(assets.uri);
+        if (!codeRes) {
+          setScanStatus({ errorMessage: 'Sorry, this QR code could not be recognized.' });
+        }
 
         if (codeRes.data) {
           await handleQRCode(codeRes.data);
