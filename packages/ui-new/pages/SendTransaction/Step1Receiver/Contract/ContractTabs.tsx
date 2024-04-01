@@ -15,11 +15,12 @@ interface Props {
   currentTab: Tab;
   pageViewRef: React.RefObject<PagerView>;
   setCurrentTab: (tab: Tab) => void;
+  onPressReceiver: (receiver: string) => void;
 }
 
 const tabs = ['Recently', 'Contact', 'Account'] as const;
 
-export const Tabs: React.FC<Omit<Props, 'setCurrentTab' | 'onPressItem' | 'selectType'>> = ({ currentTab, pageViewRef }) => {
+export const Tabs: React.FC<Omit<Props, 'setCurrentTab' | 'onPressReceiver'>> = ({ currentTab, pageViewRef }) => {
   const { colors } = useTheme();
   const currentNetwork = useCurrentNetwork();
 
@@ -63,7 +64,7 @@ export const Tabs: React.FC<Omit<Props, 'setCurrentTab' | 'onPressItem' | 'selec
   );
 };
 
-export const TabsContent: React.FC<Props> = ({ currentTab, setCurrentTab, pageViewRef }) => {
+export const TabsContent: React.FC<Props> = ({ currentTab, setCurrentTab, pageViewRef, onPressReceiver }) => {
   const currentNetwork = useCurrentNetwork();
   const currentTabIndex = useMemo(() => {
     const index = tabs.indexOf(currentTab as 'Recently');
@@ -72,7 +73,13 @@ export const TabsContent: React.FC<Props> = ({ currentTab, setCurrentTab, pageVi
 
   return (
     <PagerView ref={pageViewRef} style={styles.pagerView} initialPage={0} onPageSelected={(evt) => setCurrentTab(tabs[evt.nativeEvent.position])}>
-      {tabs?.map((tab, index) => <View key={tab}>{tab === 'Account' && index === currentTabIndex && <AccountsList type="selector" onPressAccount={(account) => console.log(account)} />}</View>)}
+      {tabs?.map((tab, index) => (
+        <View key={tab}>
+          {tab === 'Account' && index === currentTabIndex && (
+            <AccountsList type="selector" onPressAccount={({ addressValue }) => onPressReceiver(addressValue)} />
+          )}
+        </View>
+      ))}
     </PagerView>
   );
 };

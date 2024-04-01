@@ -46,7 +46,7 @@ const SendTransactionStep1Receiver: React.FC<SendTransactionScreenProps<typeof S
       } finally {
         setInChecking(false);
       }
-    }, 500),
+    }, 200),
     [],
   );
 
@@ -84,8 +84,6 @@ const SendTransactionStep1Receiver: React.FC<SendTransactionScreenProps<typeof S
           multiline
           numberOfLines={3}
         />
-        {/* <Contract /> */}
-
         {checkRes === 'NetworkError' && !inChecking && (
           <Pressable
             style={({ pressed }) => [styles.checkFail, { backgroundColor: pressed ? colors.underlay : 'transparent' }]}
@@ -118,7 +116,7 @@ const SendTransactionStep1Receiver: React.FC<SendTransactionScreenProps<typeof S
             </Pressable>
           </>
         )}
-
+        {/* <Contract setReceiver={setReceiver} /> */}
         <Button
           testID="next"
           style={styles.btn}

@@ -1,5 +1,5 @@
 import React, { type ComponentProps } from 'react';
-import { View, StyleSheet } from 'react-native';
+import { View, Pressable, StyleSheet } from 'react-native';
 import { useTheme } from '@react-navigation/native';
 import Button from '@components/Button';
 import Text from '@components/Text';
@@ -13,10 +13,10 @@ export const Navigation: React.FC<{ title: string; Icon: ComponentProps<typeof B
   const { colors } = useTheme();
 
   return (
-    <View style={styles.navigation}>
+    <Pressable style={styles.navigation} onPress={onPress}>
       <Button testID={title} square size="small" Icon={Icon} onPress={onPress} />
       <Text style={[styles.navigationText, { color: colors.textPrimary }]}>{title}</Text>
-    </View>
+    </Pressable>
   );
 };
 
