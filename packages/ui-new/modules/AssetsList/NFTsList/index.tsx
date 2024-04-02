@@ -8,6 +8,8 @@ import { type TabsType } from '@modules/AssetsTabs';
 import NoData from '@assets/icons/no-data.svg';
 import NFTItem from './NFTItem';
 import { SkeletonList } from './Skeleton';
+import Img from '@assets/images/home-receive.webp';
+import { Image } from 'expo-image';
 
 interface Props {
   onPressItem?: (v: AssetInfo) => void;
@@ -27,7 +29,7 @@ const NFTList: React.FC<Props> = ({ onPressItem, tabsType }) => {
   if (isEmpty) {
     return (
       <>
-        <NoData style={styles.noNFTIcon} />
+        <Image style={styles.img} source={Img} contentFit="contain" />
         <Text style={[styles.noNFTText, { color: colors.textSecondary }]}>No NFT</Text>
       </>
     );
@@ -47,6 +49,12 @@ const styles = StyleSheet.create({
   noNFTText: {
     fontSize: 14,
     textAlign: 'center',
+  },
+  img: {
+    alignSelf: 'center',
+    width: 160,
+    aspectRatio: 1,
+    marginTop: 36,
   },
 });
 

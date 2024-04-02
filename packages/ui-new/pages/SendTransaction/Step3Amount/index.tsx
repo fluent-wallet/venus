@@ -25,10 +25,15 @@ const SendTransactionStep3Amount: React.FC<SendTransactionScreenProps<typeof Sen
 
       <Text style={[styles.text, styles.to, { color: colors.textSecondary }]}>To</Text>
       <AccountItemView nickname={''} addressValue={route.params.targetAddress} colors={colors} />
-      <SetAssetAmount targetAddress={route.params.targetAddress} asset={route.params.asset} nftItemDetail={route.params.nftItemDetail}>
+      <SetAssetAmount
+        targetAddress={route.params.targetAddress}
+        asset={route.params.asset}
+        nftItemDetail={route.params.nftItemDetail}
+        defaultAmount={route.params.amount}
+      >
         {({ amount, validMax, isAmountValid, inEstimate, handleEstimateMax }) => (
           <Button
-            testID='next'
+            testID="next"
             style={styles.btn}
             disabled={validMax !== null && isAmountValid !== true}
             onPress={validMax === null ? () => handleEstimateMax() : () => navigation.navigate(SendTransactionStep4StackName, { ...route.params, amount })}

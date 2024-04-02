@@ -164,6 +164,7 @@ const styles = StyleSheet.create({
   },
   ['button-light-disabled']: {
     borderColor: palette.gray4,
+    backgroundColor: palette.gray8,
   },
   ['button-dark']: {
     borderColor: palette.gray8,
@@ -174,7 +175,7 @@ const styles = StyleSheet.create({
   },
   ['button-dark-disabled']: {
     borderColor: palette.gray3,
-    backgroundColor: palette.gray2,
+    backgroundColor: palette.gray0,
   },
   text: {
     fontSize: 16,

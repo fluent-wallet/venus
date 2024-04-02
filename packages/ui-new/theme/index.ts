@@ -120,5 +120,6 @@ export const fonts = {
 export interface CustomTheme {
   mode: 'light' | 'dark';
   colors: typeof lightColors;
+  reverseColors: typeof lightColors;
   palette: typeof palette;
 }

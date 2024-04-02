@@ -83,7 +83,22 @@ const Receive: React.FC<Props> = ({ navigation }) => {
         </View>
 
         <View style={styles.accountWrapper}>
-          <AccountItemView nickname={currentAccount?.nickname} addressValue={currentAddressValue} colors={colors} shorten={false} />
+          <AccountItemView
+            nickname={currentAccount?.nickname}
+            addressValue={currentAddressValue}
+            colors={colors}
+            shorten={false}
+            showCopy
+            onPress={() => {
+              Clipboard.setString(currentAddressValue);
+              showMessage({
+                message: 'Copied!',
+                type: 'success',
+                duration: 1500,
+                width: 160,
+              });
+            }}
+          />
         </View>
 
         <View style={styles.btnWrapper}>

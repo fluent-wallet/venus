@@ -27,7 +27,7 @@ declare module 'react-native-flash-message' {
 
 const fullMessageWidth = screenWidth - 32;
 const CustomMessage: React.FC<{ message: Message; style?: StyleProp<ViewStyle> }> = ({ style, message: { type, message, description, duration, width } }) => {
-  const { colors } = useTheme();
+  const { reverseColors } = useTheme();
   const messageWidth = !width || width === 'full' ? fullMessageWidth : width;
   const translateX = useSharedValue(-messageWidth);
   const opacity = useSharedValue(100);
@@ -46,7 +46,7 @@ const CustomMessage: React.FC<{ message: Message; style?: StyleProp<ViewStyle> }
       style={[
         styles.wrapper,
         {
-          backgroundColor: colors.bgSecondary,
+          backgroundColor: reverseColors.bgSecondary,
           width: messageWidth,
           justifyContent: !width || width === 'full' ? 'flex-start' : 'center',
         },
@@ -56,9 +56,9 @@ const CustomMessage: React.FC<{ message: Message; style?: StyleProp<ViewStyle> }
       {type && iconSourceMap[type] && <Image style={styles.icon} source={iconSourceMap[type]} contentFit="contain" />}
 
       <View style={styles.textArea}>
-        {message && <Text style={[styles.title, { color: colors.textPrimary }]}>{message}</Text>}
+        {message && <Text style={[styles.title, { color: reverseColors.textPrimary }]}>{message}</Text>}
 
-        {description && <Text style={[styles.description, { color: colors.textPrimary }]}>{description}</Text>}
+        {description && <Text style={[styles.description, { color: reverseColors.textPrimary }]}>{description}</Text>}
       </View>
 
       <Animated.View style={[styles.duration, { transform: [{ translateX }], opacity, backgroundColor: progressBg, width: messageWidth }]} />

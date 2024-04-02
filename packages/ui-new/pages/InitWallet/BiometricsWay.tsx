@@ -8,7 +8,8 @@ import useInAsync from '@hooks/useInAsync';
 import Text from '@components/Text';
 import Button from '@components/Button';
 import { BiometricsWayStackName, PasswordWayStackName, HomeStackName, type StackScreenProps } from '@router/configs';
-import Img from '@assets/images/welcome-img.webp';
+// import Img from '@assets/images/welcome-img.webp';
+import Img from '@assets/images/fingerPrint.webp'
 import createVault from './createVaultWithRouterParams';
 
 export const showBiometricsDisabledMessage = () => {
@@ -48,7 +49,7 @@ const BiometricsWay: React.FC<StackScreenProps<typeof BiometricsWayStackName>> =
 
   return (
     <ScrollView style={styles.container}>
-      <Text style={[styles.title, { color: colors.textPrimary }]}>🖐️ Enable Fingerprint</Text>
+      <Text style={[styles.title, { color: colors.textPrimary }]} numberOfLines={1}>🖐️ Enable Fingerprint</Text>
       <Image style={styles.img} source={Img} contentFit="contain" />
 
       <Text style={[styles.description, { color: colors.textPrimary }]}>
@@ -85,10 +86,10 @@ const styles = StyleSheet.create({
     textAlign: 'left',
   },
   img: {
-    width: 269,
+    width: 160,
     aspectRatio: 1,
-    marginTop: 24,
-    marginBottom: 60,
+    marginTop: 64,
+    marginBottom: 100,
     alignSelf: 'center',
   },
   description: {

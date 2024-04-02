@@ -5,7 +5,8 @@ import { Image } from 'expo-image';
 import Text from '@components/Text';
 import Button from '@components/Button';
 import { isSmallDevice } from '@utils/deviceInfo';
-import Img from '@assets/images/welcome-img.webp';
+// import Img from '@assets/images/welcome-img.webp';
+import Img from '@assets/images/backup.webp';
 import BackupBottomSheet from './BackupBottomSheet';
 import { BackupStep1StackName, BackupStep2StackName, type BackupScreenProps } from '@router/configs';
 
@@ -28,7 +29,7 @@ const BackupStep1Notice: React.FC<BackupScreenProps<typeof BackupStep1StackName>
         Please <Text style={[styles.descriptionBold, { color: colors.textNotice }]}>protect</Text> them carefully
       </Text>
 
-      <Button testID='next' style={styles.btn} onPress={() => navigation.navigate(BackupStep2StackName, route.params)} size='small'>
+      <Button testID="next" style={styles.btn} onPress={() => navigation.navigate(BackupStep2StackName, route.params)} size="small">
         Next
       </Button>
     </BackupBottomSheet>
