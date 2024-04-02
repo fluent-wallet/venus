@@ -17,6 +17,7 @@ import HDWallet from '@assets/icons/wallet-hd.webp';
 import ExistWallet from '@assets/icons/wallet-Imported.webp';
 import More from '@assets/icons/more-circle.svg';
 import Add from '@assets/icons/add.svg';
+import Copy from '@assets/icons/copy.svg';
 
 type ListType = 'selector' | 'management';
 
@@ -65,16 +66,17 @@ export const AccountItemView: React.FC<{
   colors: ReturnType<typeof useTheme>['colors'];
   showSelect?: boolean;
   showMore?: boolean;
+  showCopy?: boolean;
   addressValue: string;
   nickname: string;
   shorten?: boolean;
   onPress?: () => void;
   children?: React.ReactNode;
   disabled?: boolean;
-}> = ({ colors, showSelect, showMore, addressValue, nickname, children, shorten = true, disabled, onPress }) => {
+}> = ({ colors, showSelect, showMore, addressValue, nickname, children, shorten = true, disabled, showCopy, onPress }) => {
   return (
     <Pressable
-      style={({ pressed }) => [styles.row, { backgroundColor: pressed ? colors.underlay : 'transparent', position: 'relative' }]}
+      style={({ pressed }) => [styles.row, { backgroundColor: pressed ? colors.underlay : 'transparent', position: 'relative', paddingRight: 0 }]}
       pointerEvents={!onPress ? 'none' : 'auto'}
       onPress={onPress}
       disabled={disabled}
@@ -82,7 +84,22 @@ export const AccountItemView: React.FC<{
       <Image style={styles.accountImage} source={{ uri: toDataUrl(addressValue) }} />
       <View style={{ flex: 1 }}>
         <Text style={[styles.accountName, { color: colors.textPrimary, opacity: nickname ? 1 : 0 }]}>{nickname || 'placeholder'}</Text>
-        <Text style={[styles.accountAddress, { color: colors.textSecondary }]}>{shorten ? shortenAddress(addressValue) : addressValue}</Text>
+        <View style={styles.accountAddressWrapper}>
+          <Text
+            style={[
+              styles.accountAddress,
+              {
+                color: colors.textSecondary,
+                borderRightColor: showCopy ? colors.borderFourth : 'transparent',
+                borderRightWidth: showCopy ? 1 : 0,
+                paddingRight: showCopy ? 5 : 0,
+              },
+            ]}
+          >
+            {shorten ? shortenAddress(addressValue) : addressValue}
+          </Text>
+          {showCopy && <Copy style={styles.accountAddressCopy} />}
+        </View>
       </View>
       {showSelect && <Checkbox style={styles.accountRight} checked pointerEvents="none" />}
       {showMore && <More style={styles.accountRight} color={colors.textNotice} />}
@@ -244,15 +261,28 @@ export const styles = StyleSheet.create({
     fontSize: 14,
     lineHeight: 18,
     fontWeight: '600',
+    paddingRight: 16,
+  },
+  accountAddressWrapper: {
+    marginTop: 4,
+    width: '100%',
+    display: 'flex',
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   accountAddress: {
-    marginTop: 4,
+    flexShrink: 1,
     fontSize: 12,
     lineHeight: 16,
     fontWeight: '300',
+    borderStyle: 'dashed',
+  },
+  accountAddressCopy: {
+    marginHorizontal: 12,
   },
   accountRight: {
     marginLeft: 'auto',
+    marginRight: 16,
   },
   manageText: {
     marginLeft: 8,
