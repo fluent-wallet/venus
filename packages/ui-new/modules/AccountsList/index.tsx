@@ -73,10 +73,11 @@ export const AccountItemView: React.FC<{
   onPress?: () => void;
   children?: React.ReactNode;
   disabled?: boolean;
-}> = ({ colors, showSelect, showMore, addressValue, nickname, children, shorten = true, disabled, showCopy, onPress }) => {
+  showUnderlay?: boolean;
+}> = ({ colors, showSelect, showMore, addressValue, nickname, children, shorten = true, showUnderlay = true, disabled, showCopy, onPress }) => {
   return (
     <Pressable
-      style={({ pressed }) => [styles.row, { backgroundColor: pressed ? colors.underlay : 'transparent', position: 'relative', paddingRight: 0 }]}
+      style={({ pressed }) => [styles.row, { backgroundColor: showUnderlay && pressed ? colors.underlay : 'transparent', position: 'relative', paddingRight: 0 }]}
       pointerEvents={!onPress ? 'none' : 'auto'}
       onPress={onPress}
       disabled={disabled}

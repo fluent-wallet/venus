@@ -21,7 +21,7 @@ const TAB_WIDTH = 64;
 
 interface Props {
   type: TabsType;
-  selectType: 'Send' | 'Receive';
+  selectType: 'Home' | 'Send' | 'Receive';
   currentTab: Tab;
   pageViewRef: React.RefObject<PagerView>;
   setCurrentTab: (tab: Tab) => void;

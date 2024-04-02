@@ -8,7 +8,6 @@ export const WayToInitWalletStackName = 'WayToInitWallet';
 export const BiometricsWayStackName = 'Biometrics';
 export const PasswordWayStackName = 'PasswordWay';
 export const HomeStackName = 'Home';
-export const SettingsStackName = 'Settings';
 export const AccountManagementStackName = 'WalletManagement';
 export const AccountSettingStackName = 'AccountSetting';
 export const GroupSettingStackName = 'GroupSettin';
@@ -21,6 +20,8 @@ export const ScanQRCodeStackName = 'ScanQRCode';
 export const ReceiveStackName = 'Receive';
 export const EraseAllWalletStackName = 'EraseAllWallet';
 export const AddAnotherWalletStackName = 'AddAnotherWallet';
+export const SettingsStackName = 'Settings';
+export const AboutUsStackName = 'AboutUs';
 
 export type RootStackParamList = {
   [WelcomeStackName]: undefined;
@@ -28,7 +29,6 @@ export type RootStackParamList = {
   [PasswordWayStackName]?: { type?: 'importExistWallet' | 'createNewWallet' | 'connectBSIM'; value?: string };
   [BiometricsWayStackName]?: { type?: 'importExistWallet' | 'createNewWallet' | 'connectBSIM'; value?: string };
   [HomeStackName]: undefined;
-  [SettingsStackName]: undefined;
   [AccountManagementStackName]: undefined;
   [AccountSettingStackName]: { accountId: string };
   [GroupSettingStackName]: { groupId: string };
@@ -41,6 +41,8 @@ export type RootStackParamList = {
   [ReceiveStackName]: undefined;
   [EraseAllWalletStackName]: undefined;
   [AddAnotherWalletStackName]: undefined;
+  [SettingsStackName]: undefined;
+  [AboutUsStackName]: undefined
 };
 
 export type StackScreenProps<T extends keyof RootStackParamList> = NativeStackScreenProps<RootStackParamList, T>;
