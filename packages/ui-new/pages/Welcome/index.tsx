@@ -7,10 +7,10 @@ import Button from '@components/Button';
 import { WelcomeStackName, WayToInitWalletStackName, type StackScreenProps } from '@router/configs';
 import ArrowRight from '@assets/icons/arrow-right.svg';
 import EnterWeb3Dark from '@assets/images/enter-web3-dark.webp';
-import EnterWeb3Light from '@assets/images/enter-web3-light.webp';
-import WelcomeBgLight from '@assets/images/welcome-bg-light.webp';
+// import EnterWeb3Light from '@assets/images/enter-web3-light.webp';
+// import WelcomeBgLight from '@assets/images/welcome-bg-light.webp';
 import WelcomeBgDark from '@assets/images/welcome-bg-dark.webp';
-import WelcomeTextLight from '@assets/images/enter-web3-text-light.webp';
+// import WelcomeTextLight from '@assets/images/enter-web3-text-light.webp';
 import WelcomeTextDark from '@assets/images/enter-web3-text-dark.webp';
 import ImgNew from '@assets/images/enter-web3-img-new.webp';
 
@@ -22,7 +22,7 @@ const Welcome: React.FC<StackScreenProps<typeof WelcomeStackName>> = ({ navigati
       <ScrollView>
         <SafeAreaView style={styles.container}>
           <Image style={styles.enterWeb3} source={EnterWeb3Dark} contentFit="contain" />
-          <View style={[styles.first, { backgroundColor: colors.bgThird }]}>
+          <View style={[styles.first, { backgroundColor: '#FAFAFA' }]}>
             <Image style={styles.firstText} source={WelcomeTextDark} contentFit="contain" />
           </View>
           <Image style={styles.img} source={ImgNew} />
