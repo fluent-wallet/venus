@@ -50,6 +50,10 @@ const SendTransactionStep1Receiver: React.FC<SendTransactionScreenProps<typeof S
     [],
   );
 
+  const handleCodeScan = useCallback((target_address: string) => {
+    setReceiver(target_address);
+  }, []);
+
   useEffect(() => {
     setCheckRes(null);
     setKnowRist(false);
@@ -132,7 +136,7 @@ const SendTransactionStep1Receiver: React.FC<SendTransactionScreenProps<typeof S
           Next
         </Button>
       </SendTransactionBottomSheet>
-      {showScanQRCode && <ScanQRCode onConfirm={(ethURL) => setReceiver(ethURL?.target_address ?? '')} onClose={() => setShowScanQRCode(false)} />}
+      {showScanQRCode && <ScanQRCode onConfirmOnlyAddress={handleCodeScan} onClose={() => setShowScanQRCode(false)} navigation={navigation} />}
     </>
   );
 };
@@ -150,7 +154,7 @@ const styles = StyleSheet.create({
     marginHorizontal: 16,
     borderWidth: 1,
     backgroundColor: 'transparent',
-    minHeight: 84
+    minHeight: 84,
   },
   checkFail: {
     marginTop: 26,

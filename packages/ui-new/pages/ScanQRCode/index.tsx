@@ -28,12 +28,13 @@ import ScanBorder from '@assets/icons/scan-border.svg';
 // has onConfirm props means open in SendTransaction with local modal way.
 interface Props {
   onConfirm?: (ethUrl: ETHURL) => void;
-  navigation?: StackScreenProps<typeof ScanQRCodeStackName>['navigation'];
+  navigation?: StackScreenProps<any>['navigation'];
   onClose?: () => void;
+  onConfirmOnlyAddress?: (address: string) => void;
 }
 
 const scanAreaWidth = 220;
-const ScanQrCode: React.FC<Props> = ({ navigation, onConfirm, onClose }) => {
+const ScanQrCode: React.FC<Props> = ({ navigation, onConfirm, onClose, onConfirmOnlyAddress }) => {
   const { colors } = useTheme();
   const bottomSheetRef = useRef<BottomSheetMethods>(null!);
   const currentNetwork = useCurrentNetwork()!;
@@ -73,13 +74,26 @@ const ScanQrCode: React.FC<Props> = ({ navigation, onConfirm, onClose }) => {
 
         if (!ethUrl.function_name) {
           bottomSheetRef.current?.close();
-          navigation.dispatch(
-            StackActions.replace(SendTransactionStackName, { screen: SendTransactionStep2StackName, params: { targetAddress: ethUrl.target_address } }),
-          );
+          if (onConfirmOnlyAddress) {
+            onConfirmOnlyAddress(ethUrl.target_address);
+          } else {
+            navigation.dispatch(
+              StackActions.replace(SendTransactionStackName, { screen: SendTransactionStep2StackName, params: { targetAddress: ethUrl.target_address } }),
+            );
+          }
           return;
         } else if (ethUrl.function_name === 'transfer') {
           const allAssetsTokens = getAssetsTokenList();
-          if (!allAssetsTokens?.length) return;
+          if (!allAssetsTokens?.length) {
+            if (onConfirmOnlyAddress) {
+              onConfirmOnlyAddress(ethUrl.target_address);
+            } else {
+              navigation.dispatch(
+                StackActions.replace(SendTransactionStackName, { screen: SendTransactionStep2StackName, params: { targetAddress: ethUrl.target_address } }),
+              );
+            }
+            return;
+          }
 
           const targetAsset = !ethUrl.parameters?.address
             ? allAssetsTokens?.find((asset) => asset.type === AssetType.Native)
@@ -98,7 +112,7 @@ const ScanQrCode: React.FC<Props> = ({ navigation, onConfirm, onClose }) => {
               setScanStatus({ errorMessage: 'Unvalid ETHURL.' });
             }
           } else {
-            if (!ethUrl.parameters?.value) {
+            if (ethUrl.parameters?.value) {
               bottomSheetRef.current?.close();
               navigation.dispatch(
                 StackActions.replace(SendTransactionStackName, {
