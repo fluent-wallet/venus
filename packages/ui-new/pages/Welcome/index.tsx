@@ -1,7 +1,7 @@
 import React from 'react';
 import { ImageBackground, View, ScrollView, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useTheme, StackActions } from '@react-navigation/native';
+import { useTheme } from '@react-navigation/native';
 import { Image } from 'expo-image';
 import Button from '@components/Button';
 import { WelcomeStackName, WayToInitWalletStackName, type StackScreenProps } from '@router/configs';
@@ -72,7 +72,7 @@ const styles = StyleSheet.create({
   },
   img: {
     alignSelf: 'center',
-    width: 332,
+    width: 352,
     aspectRatio: 1,
     marginTop: 52,
   },

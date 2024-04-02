@@ -96,14 +96,12 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   container: {
-    paddingTop: 44,
     paddingHorizontal: 16,
   },
   img: {
     alignSelf: 'center',
-    width: 320,
+    width: 400,
     aspectRatio: 1,
-    marginBottom: 16,
   },
   welcomeSwiftShield: {
     alignSelf: 'center',

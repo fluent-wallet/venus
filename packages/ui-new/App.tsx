@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo } from 'react';
+import React, { useMemo } from 'react';
 import { useColorScheme } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import FlashMessage from 'react-native-flash-message';
@@ -28,6 +28,7 @@ const App: React.FC = () => {
       palette,
       fonts,
       colors: mode === 'dark' ? darkColors : lightColors,
+      reverseColors: mode === 'dark' ? lightColors : darkColors,
       background: 'blue',
     }),
     [mode],

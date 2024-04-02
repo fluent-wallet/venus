@@ -20,7 +20,7 @@ export const Navigation: React.FC<{ title: string; Icon: ComponentProps<typeof B
   return (
     <Pressable style={styles.navigation} onPress={onPress} disabled={disabled}>
       <Button testID={title} square size="small" Icon={Icon} onPress={onPress} disabled={disabled} />
-      <Text style={[styles.navigationText, { color: colors.textPrimary }]}>{title}</Text>
+      <Text style={[styles.navigationText, { color: disabled ? colors.iconThird : colors.textPrimary }]}>{title}</Text>
     </Pressable>
   );
 };
