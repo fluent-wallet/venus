@@ -18,12 +18,12 @@ const Welcome: React.FC<StackScreenProps<typeof WelcomeStackName>> = ({ navigati
   const { mode, colors } = useTheme();
 
   return (
-    <ImageBackground source={mode === 'dark' ? WelcomeBgDark : WelcomeBgLight} style={styles.bg} resizeMode="cover">
+    <ImageBackground source={WelcomeBgDark} style={styles.bg} resizeMode="cover">
       <ScrollView>
         <SafeAreaView style={styles.container}>
-          <Image style={styles.enterWeb3} source={mode === 'dark' ? EnterWeb3Dark : EnterWeb3Light} contentFit="contain" />
+          <Image style={styles.enterWeb3} source={EnterWeb3Dark} contentFit="contain" />
           <View style={[styles.first, { backgroundColor: colors.bgThird }]}>
-            <Image style={styles.firstText} source={mode === 'dark' ? WelcomeTextDark : WelcomeTextLight} contentFit="contain" />
+            <Image style={styles.firstText} source={WelcomeTextDark} contentFit="contain" />
           </View>
           <Image style={styles.img} source={ImgNew} />
           <Button
