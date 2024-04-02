@@ -5,7 +5,8 @@ import { Image } from 'expo-image';
 import Button from '@components/Button';
 import Text from '@components/Text';
 import { useNavigation } from '@react-navigation/native';
-import Img from '@assets/images/welcome-img.webp';
+// import Img from '@assets/images/welcome-img.webp';
+import Img from '@assets/images/home-receive.webp'
 
 const ReceiveFunds: React.FC = () => {
   const { colors } = useTheme();
@@ -23,8 +24,8 @@ const ReceiveFunds: React.FC = () => {
 const styles = StyleSheet.create({
   img: {
     alignSelf: 'center',
-    width: 138,
-    aspectRatio: 1.285,
+    width: 160,
+    aspectRatio: 1,
     marginTop: 36,
   },
   text: {

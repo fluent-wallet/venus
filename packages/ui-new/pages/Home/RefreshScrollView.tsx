@@ -2,7 +2,9 @@ import { useCallback, useRef, type ComponentProps } from 'react';
 import { StyleSheet, View, type NativeScrollEvent } from 'react-native';
 import { Gesture, GestureDetector, ScrollView } from 'react-native-gesture-handler';
 import Animated, { ReduceMotion, runOnJS, useAnimatedScrollHandler, useAnimatedStyle, useSharedValue, withRepeat, withTiming } from 'react-native-reanimated';
-import RefreshIcon from '@assets/icons/refreshLogo.webp';
+import RefreshIconDark from '@assets/icons/refreshLogoDark.webp';
+import RefreshIconLight from '@assets/icons/refreshLogoLight.webp';
+import { useTheme } from '@react-navigation/native';
 
 const AnimatedScroll = Animated.createAnimatedComponent(ScrollView);
 const maxContentHeight = 150;
@@ -14,6 +16,7 @@ export interface Props extends Omit<ComponentProps<ScrollView>, 'onScroll'> {
 }
 
 const HomeRefresh: React.FC<Props> = ({ children, onRefresh, onScroll, stickyHeaderIndices }) => {
+  const { mode } = useTheme();
   const scrollPosition = useSharedValue(0);
   const pullPosition = useSharedValue(0);
   const isReadyToRefresh = useSharedValue(false);
@@ -94,7 +97,7 @@ const HomeRefresh: React.FC<Props> = ({ children, onRefresh, onScroll, stickyHea
     <GestureDetector gesture={pan}>
       <View style={style.container}>
         <Animated.View style={[style.refreshContainer, refreshContainerStyles]}>
-          <Animated.Image source={RefreshIcon} style={[style.refreshIcon, refreshIconStyle]} />
+          <Animated.Image source={mode === 'dark' ? RefreshIconDark : RefreshIconLight} style={[style.refreshIcon, refreshIconStyle]} />
         </Animated.View>
         <Animated.View style={[pullDownStyle]}>
           <AnimatedScroll
