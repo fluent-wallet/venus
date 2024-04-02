@@ -14,7 +14,6 @@ import { AccountItemView } from '@modules/AccountsList';
 import BottomSheet, { snapPoints } from '@components/BottomSheet';
 import Text from '@components/Text';
 import { Navigation } from '@pages/Home/Navigations';
-import SelectAsset from '@pages/SendTransaction/Step2Asset';
 import { encodeETHURL } from '@utils/ETHURL';
 import { isSmallDevice } from '@utils/deviceInfo';
 import Logo from '@assets/icons/logo.png';
@@ -29,13 +28,13 @@ interface Props {
 const Receive: React.FC<Props> = ({ navigation }) => {
   const { colors } = useTheme();
   const [showSetAsset, setShowSetAsset] = useState(false);
-  const [showSelectAsset, setShowSelectAsset] = useState(false);
 
   const currentAccount = useCurrentAccount()!;
   const currentNetwork = useCurrentNetwork()!;
   const currentAddressValue = useCurrentAddressValue()!;
 
   const [selectedAsset, setSelectedAsset] = useState<AssetInfo | null>(null);
+
   const [amount, setAmount] = useState<string>('');
   const price = useMemo(
     () => (!selectedAsset?.priceInUSDT ? null : trimDecimalZeros(new Decimal(selectedAsset.priceInUSDT || 0).mul(new Decimal(amount || 0)).toFixed(2))),
@@ -89,6 +88,7 @@ const Receive: React.FC<Props> = ({ navigation }) => {
             colors={colors}
             shorten={false}
             showCopy
+            showUnderlay={false}
             onPress={() => {
               Clipboard.setString(currentAddressValue);
               showMessage({
@@ -115,17 +115,7 @@ const Receive: React.FC<Props> = ({ navigation }) => {
                 });
               }}
             /> */}
-          <Navigation
-            title={selectedAsset ? 'Set amount' : 'Select asset'}
-            Icon={PoundKey}
-            onPress={() => {
-              if (!selectedAsset) {
-                setShowSelectAsset(true);
-              } else {
-                setShowSetAsset(true);
-              }
-            }}
-          />
+          <Navigation title="Select asset" Icon={PoundKey} onPress={() => setShowSetAsset(true)} />
         </View>
       </BottomSheet>
       {showSetAsset && (
@@ -142,7 +132,6 @@ const Receive: React.FC<Props> = ({ navigation }) => {
           onClose={() => setShowSetAsset(false)}
         />
       )}
-      {showSelectAsset && <SelectAsset selectType="Receive" onConfirm={(asset) => setSelectedAsset(asset)} onClose={() => setShowSelectAsset(false)} />}
     </>
   );
 };

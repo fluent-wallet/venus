@@ -27,7 +27,6 @@ import {
   HomeStackName,
   BiometricsWayStackName,
   PasswordWayStackName,
-  SettingsStackName,
   AccountManagementStackName,
   AccountSettingStackName,
   GroupSettingStackName,
@@ -39,6 +38,8 @@ import {
   SendTransactionStackName,
   ScanQRCodeStackName,
   ReceiveStackName,
+  SettingsStackName,
+  AboutUsStackName,
   type RootStackParamList,
   type StackNavigation,
   SheetBottomOption,
@@ -71,6 +72,7 @@ const Router: React.FC = () => {
     return () => {
       subscription.unsubscribe();
     };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (
@@ -94,8 +96,8 @@ const Router: React.FC = () => {
         <RootStack.Screen name={SendTransactionStackName} component={SendTransaction} options={SheetBottomOption} />
         <RootStack.Screen name={ScanQRCodeStackName} component={ScanQRCode} options={SheetBottomOption} />
         <RootStack.Screen name={ReceiveStackName} component={Receive} options={SheetBottomOption} />
-        <RootStack.Screen name={SettingsStackName} component={Settings} />
         <RootStack.Screen name={PasswordVerifyStackName} component={PasswordVerify} options={SheetBottomOption} />
+        <RootStack.Screen name={SettingsStackName} component={Settings} />
       </RootStack.Navigator>
     </View>
   );

@@ -62,7 +62,7 @@ const ScanQrCode: React.FC<Props> = ({ navigation, onConfirm, onClose, onConfirm
           return;
         }
 
-        if (ethUrl.chain_id !== currentNetwork.chainId) {
+        if (ethUrl.chain_id && (ethUrl.chain_id !== currentNetwork.chainId)) {
           setScanStatus({ errorMessage: 'Mismatched chain ID.' });
           return;
         }

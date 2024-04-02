@@ -58,7 +58,7 @@ const Home: React.FC<StackScreenProps<typeof HomeStackName>> = ({ navigation }) 
           <Navigations navigation={navigation} />
           <NotBackup navigation={navigation} />
           <Tabs currentTab={currentTab} pageViewRef={pageViewRef} type="Home" />
-          <TabsContent currentTab={currentTab} setCurrentTab={setCurrentTab} pageViewRef={pageViewRef} type="Home" selectType="Send" />
+          <TabsContent currentTab={currentTab} setCurrentTab={setCurrentTab} pageViewRef={pageViewRef} type="Home" selectType="Home" />
         </RefreshScrollView>
       </SafeAreaView>
       {showAccountSelector && <AccountSelector onClose={() => setShowAccountSelector(false)} />}

@@ -12,8 +12,8 @@ import { shortenAddress } from '@core/utils/address';
 const TokenItem: React.FC<{
   data: AssetInfo;
   onPress?: (v: AssetInfo) => void;
-  hidePrice?: boolean;
-  hideBalance?: boolean;
+  hidePrice?: boolean | 'encryption';
+  hideBalance?: boolean | 'encryption';
   showAddress?: boolean;
   showTypeLabel?: boolean;
 }> = ({ onPress, data, hidePrice = false, hideBalance = false, showTypeLabel = false, showAddress = false }) => {
@@ -36,9 +36,9 @@ const TokenItem: React.FC<{
             {data.name}
           </Text>
           {showTypeLabel && <AssetTypeLabel assetType={data.type} />}
-          {hidePrice === false && (
+          {(hidePrice === false || hidePrice === 'encryption') && (
             <Text style={[styles.tokenName, { marginLeft: 'auto', textAlign: 'right', color: colors.textPrimary }]} numberOfLines={1}>
-              {price}
+              {hidePrice === 'encryption'  ? '***' : price}
             </Text>
           )}
           {showAddress && data?.contractAddress && (
@@ -49,7 +49,7 @@ const TokenItem: React.FC<{
         </View>
 
         <Text style={[styles.tokenBalance, { color: colors.textSecondary }]} numberOfLines={1}>
-          {hideBalance ? data.symbol : `${balance} ${data.symbol}`}
+          {hideBalance === true ? data.symbol : `${hideBalance === 'encryption' ? '***' : balance} ${data.symbol}`}
         </Text>
       </View>
     </Pressable>

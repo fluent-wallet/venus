@@ -1,7 +1,6 @@
 import React from 'react';
 import { StyleSheet } from 'react-native';
 import { useTheme } from '@react-navigation/native';
-import { FlashList, type FlashListProps } from '@shopify/flash-list';
 import { useAssetsTokenList, useIsTokensEmpty, useTokenListOfCurrentNetwork } from '@core/WalletCore/Plugins/ReactInject';
 import { type AssetInfo } from '@core/WalletCore/Plugins/AssetsTracker/types';
 import Text from '@components/Text';
@@ -14,49 +13,17 @@ import Skeleton from './Skeleton';
 interface Props {
   onPressItem?: (v: AssetInfo) => void;
   showReceiveFunds?: boolean;
-  hidePrice?: boolean;
-  selectType?: 'Send' | 'Receive';
+  selectType: 'Home' | 'Send' | 'Receive';
 }
 
-const TokenList: React.FC<Props> = ({ onPressItem, selectType = 'Send', showReceiveFunds = false, hidePrice = false }) => {
-  const tokens = (selectType === 'Send' ? useAssetsTokenList : useTokenListOfCurrentNetwork)();
+const TokensList: React.FC<Props> = ({ onPressItem, selectType, showReceiveFunds = false }) => {
+  const { colors } = useTheme();
+  const tokens = (selectType === 'Receive' ? useTokenListOfCurrentNetwork : useAssetsTokenList)();
   const isEmpty = useIsTokensEmpty();
   const priceVisible = usePriceVisibleValue();
 
   if (tokens === null) {
     return Skeleton;
-  }
-
-  if (showReceiveFunds && isEmpty) {
-    return <ReceiveFunds />;
-  }
-
-  return tokens.map((token, index) => (
-    <TokenItem
-      key={index}
-      hidePrice={selectType === 'Receive' ? true : !priceVisible ? true : hidePrice}
-      hideBalance={selectType === 'Receive'}
-      showAddress={selectType === 'Receive'}
-      data={token}
-      onPress={onPressItem}
-    />
-  ));
-};
-
-type FlashProps = FlashListProps<any> & Props;
-
-export const FlashTokenList: React.FC<Omit<FlashProps, 'data' | 'renderItem' | 'estimatedItemSize'>> = ({
-  onPressItem,
-  showReceiveFunds = false,
-  hidePrice = false,
-  ...props
-}) => {
-  const { colors } = useTheme();
-  const tokens = useAssetsTokenList();
-  const isEmpty = useIsTokensEmpty();
-
-  if (tokens === null) {
-    return null;
   }
 
   if (isEmpty) {
@@ -72,16 +39,16 @@ export const FlashTokenList: React.FC<Omit<FlashProps, 'data' | 'renderItem' | '
     }
   }
 
-  return (
-    <FlashList
-      {...props}
-      estimatedItemSize={70}
-      data={tokens}
-      renderItem={({ item }) => {
-        return <TokenItem hidePrice={hidePrice} data={item} onPress={onPressItem} />;
-      }}
+  return tokens.map((token, index) => (
+    <TokenItem
+      key={index}
+      hidePrice={selectType === 'Receive' ? true : selectType === 'Home' ? (!priceVisible ? 'encryption' : false) : false}
+      hideBalance={selectType === 'Receive' ? true : selectType === 'Home' ? (!priceVisible ? 'encryption' : false) : false}
+      showAddress={selectType === 'Receive'}
+      data={token}
+      onPress={onPressItem}
     />
-  );
+  ));
 };
 
 const styles = StyleSheet.create({
@@ -96,4 +63,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default TokenList;
+export default TokensList;
