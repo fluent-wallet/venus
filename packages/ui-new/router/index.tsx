@@ -60,7 +60,7 @@ const screenOptions = {
   headerBackVisible: false,
   statusBarTranslucent: true,
   statusBarBackgroundColor: 'transparent',
-  animation: 'fade',
+  // animation: 'fade',
 } as const;
 
 const Router: React.FC = () => {
