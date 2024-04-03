@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useRef } from 'react';
-import { View, Pressable, StyleSheet } from 'react-native';
+import { Pressable, StyleSheet } from 'react-native';
 import { useTheme } from '@react-navigation/native';
 import { showMessage } from 'react-native-flash-message';
 import { Image } from 'expo-image';
@@ -88,52 +88,59 @@ const AddAnotherWallet: React.FC<Props> = ({ navigation }) => {
 
   return (
     <>
-      <BottomSheet ref={bottomSheetRef} snapPoints={snapPoints} isRoute onChange={(index) => setBottomSheetIndex(index)}>
-        <View style={styles.container}>
-          {!hasBSIMVaultCreated && (
-            <Pressable
-              style={({ pressed }) => [accountListStyles.row, { backgroundColor: pressed ? colors.underlay : 'transparent' }]}
-              disabled={inConnecting}
-              onPress={handleConnectBSIMCard}
-            >
-              <Image style={accountListStyles.groupTypeImage} source={BSIMCardWallet} />
-              <Text style={[accountListStyles.manageText, { color: colors.textPrimary }]}>Connect BSIM Wallet</Text>
-              {inConnecting && <HourglassLoading style={accountListStyles.addAccountLoading} />}
-            </Pressable>
-          )}
-
+      <BottomSheet ref={bottomSheetRef} snapPoints={snapPoints} isRoute onChange={(index) => setBottomSheetIndex(index)} containerStyle={styles.container}>
+        <Text style={[styles.title, { color: colors.textPrimary }]}>Add Wallet</Text>
+        {!hasBSIMVaultCreated && (
           <Pressable
             style={({ pressed }) => [accountListStyles.row, { backgroundColor: pressed ? colors.underlay : 'transparent' }]}
-            disabled={inCreating}
-            onPress={handleCreateNewHdWallet}
+            disabled={inConnecting}
+            onPress={handleConnectBSIMCard}
           >
-            {<Image style={accountListStyles.groupTypeImage} source={HDWallet} />}
-            <Text style={[accountListStyles.manageText, { color: colors.textPrimary }]}>Create new wallet</Text>
-            {inCreating && <HourglassLoading style={accountListStyles.addAccountLoading} />}
+            <Image style={accountListStyles.groupTypeImage} source={BSIMCardWallet} />
+            <Text style={[accountListStyles.manageText, { color: colors.textPrimary }]}>Connect BSIM Wallet</Text>
+            {inConnecting && <HourglassLoading style={accountListStyles.addAccountLoading} />}
           </Pressable>
+        )}
 
-          <Pressable
-            style={({ pressed }) => [accountListStyles.row, { backgroundColor: pressed ? colors.underlay : 'transparent' }]}
-            disabled={inCreating}
-            onPress={() => importExistRef.current?.expand()}
-          >
-            {<Image style={accountListStyles.groupTypeImage} source={ExistWallet} />}
-            <Text style={[accountListStyles.manageText, { color: colors.textPrimary }]}>Import existing wallet</Text>
-            {inImporting && <HourglassLoading style={accountListStyles.addAccountLoading} />}
-          </Pressable>
-        </View>
+        <Pressable
+          style={({ pressed }) => [accountListStyles.row, { backgroundColor: pressed ? colors.underlay : 'transparent' }]}
+          disabled={inCreating}
+          onPress={handleCreateNewHdWallet}
+        >
+          {<Image style={accountListStyles.groupTypeImage} source={HDWallet} />}
+          <Text style={[accountListStyles.manageText, { color: colors.textPrimary }]}>Create new wallet</Text>
+          {inCreating && <HourglassLoading style={accountListStyles.addAccountLoading} />}
+        </Pressable>
+
+        <Pressable
+          style={({ pressed }) => [accountListStyles.row, { backgroundColor: pressed ? colors.underlay : 'transparent' }]}
+          disabled={inCreating}
+          onPress={() => importExistRef.current?.expand()}
+        >
+          {<Image style={accountListStyles.groupTypeImage} source={ExistWallet} />}
+          <Text style={[accountListStyles.manageText, { color: colors.textPrimary }]}>Import existing wallet</Text>
+          {inImporting && <HourglassLoading style={accountListStyles.addAccountLoading} />}
+        </Pressable>
       </BottomSheet>
       {bottomSheetIndex === 0 && <ImportExistingWallet bottomSheetRef={importExistRef} onSuccessConfirm={handleImportExistWallet} />}
     </>
   );
 };
 
-const styles = StyleSheet.create({
+export const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
+  title: {
+    marginTop: 12,
+    marginBottom: 32,
+    fontSize: 16,
+    fontWeight: '600',
+    lineHeight: 20,
+    textAlign: 'center',
+  },
 });
 
-const snapPoints = [`${((240 / screenHeight) * 100).toFixed(2)}%`];
+export const snapPoints = [`${((306 / screenHeight) * 100).toFixed(2)}%`];
 
 export default AddAnotherWallet;

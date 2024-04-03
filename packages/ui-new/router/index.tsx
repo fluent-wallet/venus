@@ -9,7 +9,6 @@ import WayToInitWallet from '@pages/WayToInitWallet';
 import BiometricsWay from '@pages/InitWallet/BiometricsWay';
 import PasswordWay from '@pages/InitWallet/PasswordWay';
 import Home from '@pages/Home';
-import Settings from '@pages/Settings';
 import AccountManagement from '@pages/Management/AccountManagement';
 import AccountSetting from '@pages/Management/AccountManagement/AccountSetting';
 import GroupSetting from '@pages/Management/AccountManagement/GroupSetting';
@@ -21,6 +20,11 @@ import SendTransaction from '@pages/SendTransaction';
 import ScanQRCode from '@pages/ScanQRCode';
 import Receive from '@pages/Receive';
 import PasswordVerify from '@modules/PasswordVerify';
+import Settings from '@pages/Settings';
+import AboutUs from '@pages/Settings/AboutUs';
+import Preferences from '@pages/Settings/Preferences';
+import Appearance from '@pages/Settings/Appearance';
+import Language from '@pages/Settings/Language';
 import {
   WelcomeStackName,
   WayToInitWalletStackName,
@@ -40,6 +44,9 @@ import {
   ReceiveStackName,
   SettingsStackName,
   AboutUsStackName,
+  PreferencesStackName,
+  AppearanceStackName,
+  LanguageStackName,
   type RootStackParamList,
   type StackNavigation,
   SheetBottomOption,
@@ -53,7 +60,7 @@ const screenOptions = {
   headerBackVisible: false,
   statusBarTranslucent: true,
   statusBarBackgroundColor: 'transparent',
-  animation: 'fade'
+  animation: 'fade',
 } as const;
 
 const Router: React.FC = () => {
@@ -72,15 +79,12 @@ const Router: React.FC = () => {
     return () => {
       subscription.unsubscribe();
     };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.bgPrimary }}>
-      <RootStack.Navigator
-        initialRouteName={hasVault ? HomeStackName : WelcomeStackName}
-        screenOptions={screenOptions}
-      >
+      <RootStack.Navigator initialRouteName={hasVault ? HomeStackName : WelcomeStackName} screenOptions={screenOptions}>
         <RootStack.Screen name={WelcomeStackName} component={Welcome} options={{ headerShown: false }} />
         <RootStack.Screen name={WayToInitWalletStackName} component={WayToInitWallet} options={{ headerShown: false }} />
         <RootStack.Screen name={HomeStackName} component={Home} options={{ headerShown: false }} />
@@ -98,6 +102,10 @@ const Router: React.FC = () => {
         <RootStack.Screen name={ReceiveStackName} component={Receive} options={SheetBottomOption} />
         <RootStack.Screen name={PasswordVerifyStackName} component={PasswordVerify} options={SheetBottomOption} />
         <RootStack.Screen name={SettingsStackName} component={Settings} />
+        <RootStack.Screen name={AboutUsStackName} component={AboutUs} />
+        <RootStack.Screen name={PreferencesStackName} component={Preferences} />
+        <RootStack.Screen name={AppearanceStackName} component={Appearance} options={SheetBottomOption} />
+        <RootStack.Screen name={LanguageStackName} component={Language} options={SheetBottomOption} />
       </RootStack.Navigator>
     </View>
   );

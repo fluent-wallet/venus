@@ -2,7 +2,7 @@ import React from 'react';
 import { ScrollView, Pressable, StyleSheet } from 'react-native';
 import { useTheme } from '@react-navigation/native';
 import Text from '@components/Text';
-import { SettingsStackName, AccountManagementStackName, type StackScreenProps } from '@router/configs';
+import { SettingsStackName, AccountManagementStackName, PreferencesStackName, AboutUsStackName, type StackScreenProps } from '@router/configs';
 import Arrow from '@assets/icons/arrow-right2.svg';
 
 export const SettingItem: React.FC<{ title: string; onPress: () => void }> = ({ title, onPress }) => {
@@ -20,17 +20,17 @@ const Settings: React.FC<StackScreenProps<typeof SettingsStackName>> = ({ naviga
 
   return (
     <ScrollView contentContainerStyle={[styles.container, { backgroundColor: colors.bgPrimary }]}>
-      <Text style={[styles.title, { color: colors.textPrimary }]}>⚙️ Settings</Text>
+      <Text style={[styles.title, { color: colors.textPrimary }]}>Settings</Text>
 
-      <SettingItem title="Preferences" onPress={() => {}} />
+      <SettingItem title="Preferences" onPress={() => navigation.navigate(PreferencesStackName)} />
       <SettingItem title="Account Management" onPress={() => navigation.navigate(AccountManagementStackName)} />
-      <SettingItem title="Network Management" onPress={() => {}} />
-      <SettingItem title="About us" onPress={() => {}} />
+      {/* <SettingItem title="Network Management" onPress={() => {}} /> */}
+      <SettingItem title="About us" onPress={() => navigation.navigate(AboutUsStackName)} />
     </ScrollView>
   );
 };
 
-const styles = StyleSheet.create({
+export const styles = StyleSheet.create({
   container: {
     flex: 1,
     paddingTop: 24,
@@ -57,11 +57,6 @@ const styles = StyleSheet.create({
     fontWeight: '300',
   },
   arrow: {},
-  version: {
-    marginTop: 'auto',
-    marginBottom: 32,
-    textAlign: 'center',
-  },
 });
 
 export default Settings;

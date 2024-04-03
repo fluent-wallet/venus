@@ -11,7 +11,7 @@ import { useMode } from '@hooks/useMode';
 import { palette, lightColors, darkColors, fonts } from './theme';
 import Router from './router';
 import '@assets/i18n';
-import BootSplash from "react-native-bootsplash";
+import BootSplash from 'react-native-bootsplash';
 
 const messagesTop = { top: statusBarHeight + 20 + (OS === 'android' ? 0 : supports3DStructureLight ? 40 : 10) };
 
@@ -21,7 +21,6 @@ const App: React.FC = () => {
   const systemMode = useColorScheme();
   const innerMode = useMode();
   const mode = useMemo(() => (innerMode === 'system' ? (systemMode === 'dark' ? 'dark' : 'light') : innerMode), [innerMode, systemMode]);
-  
   const theme = useMemo(
     () => ({
       mode,
@@ -34,14 +33,11 @@ const App: React.FC = () => {
     [mode],
   );
 
-
   return (
     <>
       <GestureHandlerRootView style={{ flex: 1 }}>
         <NavigationContainer theme={theme as unknown as Theme} onReady={BootSplash.hide}>
-          <BottomSheetModalProvider>
-            {typeof hasVault === 'boolean' && <Router />}
-          </BottomSheetModalProvider>
+          <BottomSheetModalProvider>{typeof hasVault === 'boolean' && <Router />}</BottomSheetModalProvider>
           <FlashMessage position={messagesTop} MessageComponent={CustomMessage} duration={3000} />
         </NavigationContainer>
       </GestureHandlerRootView>

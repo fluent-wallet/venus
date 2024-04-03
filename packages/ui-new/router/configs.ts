@@ -22,6 +22,9 @@ export const EraseAllWalletStackName = 'EraseAllWallet';
 export const AddAnotherWalletStackName = 'AddAnotherWallet';
 export const SettingsStackName = 'Settings';
 export const AboutUsStackName = 'AboutUs';
+export const PreferencesStackName = 'Preferences';
+export const AppearanceStackName = 'Appearance';
+export const LanguageStackName = 'Language';
 
 export type RootStackParamList = {
   [WelcomeStackName]: undefined;
@@ -42,7 +45,10 @@ export type RootStackParamList = {
   [EraseAllWalletStackName]: undefined;
   [AddAnotherWalletStackName]: undefined;
   [SettingsStackName]: undefined;
-  [AboutUsStackName]: undefined
+  [AboutUsStackName]: undefined;
+  [PreferencesStackName]: undefined;
+  [AppearanceStackName]: undefined;
+  [LanguageStackName]: undefined;
 };
 
 export type StackScreenProps<T extends keyof RootStackParamList> = NativeStackScreenProps<RootStackParamList, T>;

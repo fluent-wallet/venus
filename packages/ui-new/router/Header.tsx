@@ -1,8 +1,7 @@
 import React from 'react';
-import { View, Pressable, StyleSheet, Text, Platform } from 'react-native';
+import { View, Pressable, StyleSheet, Platform } from 'react-native';
 import { useNavigation, useTheme } from '@react-navigation/native';
 import ArrowLeft from '@assets/icons/arrow-left.svg';
-import { setMode } from '@hooks/useMode';
 import { statusBarHeight, supports3DStructureLight } from '../utils/deviceInfo';
 
 const BackButton: React.FC = () => {
@@ -21,20 +20,11 @@ const BackButton: React.FC = () => {
 };
 
 const Header: React.FC = () => {
-  const { mode, colors } = useTheme();
+  const { colors } = useTheme();
 
   return (
     <View style={[styles.header, { backgroundColor: colors.bgPrimary }]}>
       <BackButton />
-      <Pressable
-        style={({ pressed }) => [
-          styles.backButton,
-          { borderColor: colors.borderThird, marginLeft: 'auto', backgroundColor: pressed ? colors.underlay : 'transparent' },
-        ]}
-        onPress={() => setMode(mode === 'light' ? 'dark' : 'light')}
-      >
-        <Text style={{ color: colors.iconPrimary }}>M</Text>
-      </Pressable>
     </View>
   );
 };
