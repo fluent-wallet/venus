@@ -99,7 +99,7 @@ export const AccountItemView: React.FC<{
           >
             {shorten ? shortenAddress(addressValue) : addressValue}
           </Text>
-          {showCopy && <Copy style={styles.accountAddressCopy} />}
+          {showCopy && <Copy style={styles.accountAddressCopy} color={colors.iconPrimary} />}
         </View>
       </View>
       {showSelect && <Checkbox style={styles.accountRight} checked pointerEvents="none" />}
