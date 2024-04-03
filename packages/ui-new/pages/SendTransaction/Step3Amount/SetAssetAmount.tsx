@@ -189,7 +189,7 @@ const SetAssetAmount: React.FC<Props> = ({ targetAddress, asset, nftItemDetail, 
       )}
 
       {isAmountValid !== true && isAmountValid !== null && (
-        <Text style={[styles.errorTip, { color: colors.textPrimary }]}>
+        <Text style={[styles.errorTip, { color: colors.down }]}>
           🚫{' '}
           {isAmountValid === false
             ? `Insufficient ${symbol} balance`

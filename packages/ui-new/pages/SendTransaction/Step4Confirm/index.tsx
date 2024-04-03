@@ -251,7 +251,7 @@ const SendTransactionStep4Confirm: React.FC<SendTransactionScreenProps<typeof Se
     <>
       <SendTransactionBottomSheet showTitle="Transaction Confirm">
         <BottomSheetScrollView>
-          <Text style={[styles.sendTitle, { color: colors.textPrimary }]}>↗️ Send</Text>
+          <Text style={[styles.sendTitle, { color: colors.textPrimary }]}>Send</Text>
           {route.params.nftItemDetail && <NFT colors={colors} asset={route.params.asset} nftItemDetail={route.params.nftItemDetail} />}
           {route.params.asset.type !== AssetType.ERC721 && (
             <>
@@ -301,7 +301,7 @@ const SendTransactionStep4Confirm: React.FC<SendTransactionScreenProps<typeof Se
           {error && (
             <>
               <View style={[styles.divider, { backgroundColor: colors.borderFourth }]} />
-              <Text style={[styles.errorText, { color: colors.textPrimary }]}>
+              <Text style={[styles.errorText, { color: error.type === 'out of balance' ? colors.middle : colors.down }]}>
                 {error.type === 'out of balance'
                   ? `🤕 Insufficient ${nativeAsset?.symbol} balance${route.params.asset.type === AssetType.Native ? '.' : ' for gas.'}`
                   : error.type === 'network error'

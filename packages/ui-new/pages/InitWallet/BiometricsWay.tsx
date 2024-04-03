@@ -49,7 +49,7 @@ const BiometricsWay: React.FC<StackScreenProps<typeof BiometricsWayStackName>> =
 
   return (
     <ScrollView style={styles.container}>
-      <Text style={[styles.title, { color: colors.textPrimary }]} numberOfLines={1}>🖐️ Enable Fingerprint</Text>
+      <Text style={[styles.title, { color: colors.textPrimary }]} numberOfLines={1}>Enable Fingerprint</Text>
       <Image style={styles.img} source={Img} contentFit="contain" />
 
       <Text style={[styles.description, { color: colors.textPrimary }]}>

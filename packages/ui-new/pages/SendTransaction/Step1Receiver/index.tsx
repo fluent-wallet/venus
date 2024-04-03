@@ -101,7 +101,7 @@ const SendTransactionStep1Receiver: React.FC<SendTransactionScreenProps<typeof S
         )}
         {!checkRes && inChecking && <HourglassLoading style={styles.checkLoading} />}
         {(checkRes === AddressType.EOA || checkRes === AddressType.Contract || checkRes === 'Invalid') && (
-          <Text style={[styles.checkRes, { color: colors.textPrimary }]}>
+          <Text style={[styles.checkRes, { color: checkRes === 'Invalid' ? colors.down : colors.up }]}>
             {checkRes === 'Invalid' ? '🚫' : checkRes === AddressType.EOA ? '🎉' : '📑'}
             {'   '}
             {checkRes === 'Invalid' ? 'Invalid' : 'Valid'} Address
