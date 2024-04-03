@@ -11,6 +11,7 @@ import Checkbox from '@components/Checkbox';
 import HourglassLoading from '@components/Loading/Hourglass';
 import ScanQRCode from '@pages/ScanQRCode';
 import { SendTransactionStep1StackName, SendTransactionStep2StackName, type SendTransactionScreenProps } from '@router/configs';
+import { type ETHURL } from '@utils/ETHURL';
 import QrCode from '@assets/icons/qr-code.svg';
 import SendTransactionBottomSheet from '../SendTransactionBottomSheet';
 import Contract from './Contract';
@@ -50,7 +51,7 @@ const SendTransactionStep1Receiver: React.FC<SendTransactionScreenProps<typeof S
     [],
   );
 
-  const handleCodeScan = useCallback((target_address: string) => {
+  const handleCodeScan = useCallback(({ target_address }: ETHURL) => {
     setReceiver(target_address);
   }, []);
 
@@ -136,7 +137,7 @@ const SendTransactionStep1Receiver: React.FC<SendTransactionScreenProps<typeof S
           Next
         </Button>
       </SendTransactionBottomSheet>
-      {showScanQRCode && <ScanQRCode onConfirmOnlyAddress={handleCodeScan} onClose={() => setShowScanQRCode(false)} navigation={navigation} />}
+      {showScanQRCode && <ScanQRCode onConfirm={handleCodeScan} onClose={() => setShowScanQRCode(false)} />}
     </>
   );
 };

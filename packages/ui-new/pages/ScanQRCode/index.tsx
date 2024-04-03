@@ -30,11 +30,10 @@ interface Props {
   onConfirm?: (ethUrl: ETHURL) => void;
   navigation?: StackScreenProps<any>['navigation'];
   onClose?: () => void;
-  onConfirmOnlyAddress?: (address: string) => void;
 }
 
 const scanAreaWidth = 220;
-const ScanQrCode: React.FC<Props> = ({ navigation, onConfirm, onClose, onConfirmOnlyAddress }) => {
+const ScanQrCode: React.FC<Props> = ({ navigation, onConfirm, onClose }) => {
   const { colors } = useTheme();
   const bottomSheetRef = useRef<BottomSheetMethods>(null!);
   const currentNetwork = useCurrentNetwork()!;
@@ -62,7 +61,7 @@ const ScanQrCode: React.FC<Props> = ({ navigation, onConfirm, onClose, onConfirm
           return;
         }
 
-        if (ethUrl.chain_id && (ethUrl.chain_id !== currentNetwork.chainId)) {
+        if (ethUrl.chain_id && ethUrl.parameters && ethUrl.chain_id !== currentNetwork.chainId) {
           setScanStatus({ errorMessage: 'Mismatched chain ID.' });
           return;
         }
@@ -74,24 +73,17 @@ const ScanQrCode: React.FC<Props> = ({ navigation, onConfirm, onClose, onConfirm
 
         if (!ethUrl.function_name) {
           bottomSheetRef.current?.close();
-          if (onConfirmOnlyAddress) {
-            onConfirmOnlyAddress(ethUrl.target_address);
-          } else {
-            navigation.dispatch(
-              StackActions.replace(SendTransactionStackName, { screen: SendTransactionStep2StackName, params: { targetAddress: ethUrl.target_address } }),
-            );
-          }
+
+          navigation.dispatch(
+            StackActions.replace(SendTransactionStackName, { screen: SendTransactionStep2StackName, params: { targetAddress: ethUrl.target_address } }),
+          );
           return;
         } else if (ethUrl.function_name === 'transfer') {
           const allAssetsTokens = getAssetsTokenList();
           if (!allAssetsTokens?.length) {
-            if (onConfirmOnlyAddress) {
-              onConfirmOnlyAddress(ethUrl.target_address);
-            } else {
-              navigation.dispatch(
-                StackActions.replace(SendTransactionStackName, { screen: SendTransactionStep2StackName, params: { targetAddress: ethUrl.target_address } }),
-              );
-            }
+            navigation.dispatch(
+              StackActions.replace(SendTransactionStackName, { screen: SendTransactionStep2StackName, params: { targetAddress: ethUrl.target_address } }),
+            );
             return;
           }
 
