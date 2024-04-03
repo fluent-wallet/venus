@@ -1,15 +1,21 @@
-import React from 'react';
+import React, { useCallback, useRef } from 'react';
 import { Pressable } from 'react-native';
 import { useTheme } from '@react-navigation/native';
 import Text from '@components/Text';
 import Checkbox from '@components/Checkbox';
-import BottomSheet from '@components/BottomSheet';
+import BottomSheet, { type BottomSheetMethods } from '@components/BottomSheet';
 import { styles as bottomSheetStyle, snapPoints } from '@pages/Management/AccountManagement/AddAnotherWallet';
 import { LanguageStackName, type StackScreenProps } from '@router/configs';
 import { styles } from './Appearance';
 
 const Language: React.FC<StackScreenProps<typeof LanguageStackName>> = () => {
   const { colors } = useTheme();
+
+  const bottomSheetRef = useRef<BottomSheetMethods>(null!);
+  const setLanguage = useCallback((language: Parameters<any>) => {
+    // _setMode(mode);
+    bottomSheetRef.current?.close();
+  }, []);
 
   return (
     <BottomSheet snapPoints={snapPoints} isRoute containerStyle={bottomSheetStyle.container}>

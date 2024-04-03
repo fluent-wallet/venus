@@ -1,19 +1,25 @@
-import React from 'react';
+import React, { useCallback, useRef } from 'react';
 import { Pressable, StyleSheet } from 'react-native';
 import { useTheme } from '@react-navigation/native';
 import Text from '@components/Text';
 import Checkbox from '@components/Checkbox';
-import BottomSheet from '@components/BottomSheet';
+import BottomSheet, { type BottomSheetMethods } from '@components/BottomSheet';
 import { styles as bottomSheetStyle, snapPoints } from '@pages/Management/AccountManagement/AddAnotherWallet';
 import { AppearanceStackName, type StackScreenProps } from '@router/configs';
-import { setMode, useMode } from '@hooks/useMode';
+import { setMode as _setMode, useMode } from '@hooks/useMode';
 
 const Appearance: React.FC<StackScreenProps<typeof AppearanceStackName>> = () => {
   const { colors } = useTheme();
   const mode = useMode();
 
+  const bottomSheetRef = useRef<BottomSheetMethods>(null!);
+  const setMode = useCallback((mode: Parameters<typeof _setMode>[0]) => {
+    _setMode(mode);
+    bottomSheetRef.current?.close();
+  }, []);
+
   return (
-    <BottomSheet snapPoints={snapPoints} isRoute containerStyle={bottomSheetStyle.container}>
+    <BottomSheet ref={bottomSheetRef} snapPoints={snapPoints} isRoute containerStyle={bottomSheetStyle.container}>
       <Text style={[bottomSheetStyle.title, { color: colors.textPrimary }]}>Appearance</Text>
 
       <Pressable
