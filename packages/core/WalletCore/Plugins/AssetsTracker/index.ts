@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/ban-types */
-import { interval, switchMap, takeUntil, Subject, startWith, type Subscription } from 'rxjs';
+import { interval, switchMap, takeUntil, Subject, startWith, from, of, catchError, type Subscription } from 'rxjs';
 import { isEqual } from 'lodash-es';
 import { type Plugin } from '../../Plugins';
 import { NetworkType, ChainType } from './../../../database/models/Network';
@@ -141,44 +141,38 @@ class AssetsTrackerPluginClass implements Plugin {
             if (forceUpdate) {
               setAssetsInFetch(assetsAtomKey, true);
             }
-            return trackAssets({ chainFetcher, networkFetcher, nativeAsset, network, address });
+
+            return from(trackAssets({ chainFetcher, networkFetcher, nativeAsset, network, address })).pipe(
+              catchError((error) => {
+                // console.log(error);
+                reject(false);
+                if (getAssetsInFetch(assetsAtomKey)) {
+                  setAssetsInFetch(assetsAtomKey, false);
+                }
+                return of(null);
+              }),
+            );
           }),
           takeUntil(this.cancel$!),
         )
-        .subscribe({
-          next: (trackRes) => {
-            const { assetsHash, assetsSortedKeys } = trackRes;
-            const assetsHashInAtom = getAssetsHash(assetsAtomKey);
-            const assetsSortedKeysInAtom = getAssetsSortedKeys(assetsAtomKey);
+        .subscribe((trackRes) => {
+          if (trackRes === null) return;
+          const { assetsHash, assetsSortedKeys } = trackRes;
+          const assetsHashInAtom = getAssetsHash(assetsAtomKey);
+          const assetsSortedKeysInAtom = getAssetsSortedKeys(assetsAtomKey);
 
-            if (!isEqual(assetsSortedKeys, assetsSortedKeysInAtom)) {
-              setAssetsSortedKeys(assetsAtomKey, [...assetsSortedKeys]);
-            }
-            if (!isEqual(assetsHashInAtom, assetsHash)) {
-              setAssetsHash(assetsAtomKey, { ...assetsHash });
-            }
-            resolve(true);
-            if (getAssetsInFetch(assetsAtomKey)) {
-              setAssetsInFetch(assetsAtomKey, false);
-            }
-          },
-          error: (error) => {
-            // console.log(`Error in trackAssets(network-${network.name} address-${address.hex}):`, error);
-            reject(false);
-            if (getAssetsInFetch(assetsAtomKey)) {
-              setAssetsInFetch(assetsAtomKey, false);
-            }
-          },
-          complete: () => {
-            // console.log(`trackAssets(network-${network.name} address-${address.hex}) completed or canceled`);
-            reject(false);
-            if (getAssetsInFetch(assetsAtomKey)) {
-              setAssetsInFetch(assetsAtomKey, false);
-            }
-          },
+          if (!isEqual(assetsSortedKeys, assetsSortedKeysInAtom)) {
+            setAssetsSortedKeys(assetsAtomKey, [...assetsSortedKeys]);
+          }
+          if (!isEqual(assetsHashInAtom, assetsHash)) {
+            setAssetsHash(assetsAtomKey, { ...assetsHash });
+          }
+          resolve(true);
+          if (getAssetsInFetch(assetsAtomKey)) {
+            setAssetsInFetch(assetsAtomKey, false);
+          }
         });
     } catch (_) {
-      // console.log()
       reject(false);
     }
 
