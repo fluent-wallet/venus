@@ -19,5 +19,7 @@ export function createAccountGroup(params: Params, prepareCreate?: true) {
 }
 
 export const observeAccountGroupById = memoize(
-  (accountGroupId: string) => database.get(TableName.AccountGroup).findAndObserve(accountGroupId) as Observable<AccountGroup>
+  (accountGroupId: string) => database.get(TableName.AccountGroup).findAndObserve(accountGroupId) as Observable<AccountGroup>,
 );
+
+export const queryAccountGroupById = async (id: string) => database.get(TableName.AccountGroup).find(id) as Promise<AccountGroup>;

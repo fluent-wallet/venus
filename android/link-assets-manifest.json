@@ -1,17 +1,4 @@
 {
   "migIndex": 1,
-  "data": [
-    {
-      "path": "packages/ui/assets/fonts/sfpro_bold.ttf",
-      "sha1": "8c43011f46a0af52b3fa77531957427bf654d3f0"
-    },
-    {
-      "path": "packages/ui/assets/fonts/sfpro_medium.ttf",
-      "sha1": "136596c614806c2762e05512ebbbfd8dd4a014eb"
-    },
-    {
-      "path": "packages/ui/assets/fonts/sfpro_regular.ttf",
-      "sha1": "b5efa9f1048af9869fda79427f5e177fbceae75a"
-    }
-  ]
+  "data": []
 }

@@ -29,7 +29,7 @@ const SwitchCurrentNetwork: React.FC<ComponentProps<typeof View>> = (props) => {
         <View className="w-[16px] h-[16px] mr-[4px]">
           <NetWorkIcon width={16} height={16} />
         </View>
-        <Text className="whitespace-nowrap" style={{ color: theme.colors.contrastWhiteAndBlack, fontSize: 14, fontFamily: 'SF Pro Display' }}>
+        <Text className="whitespace-nowrap" style={{ color: theme.colors.contrastWhiteAndBlack, fontSize: 14 }}>
           {SWITCH_NETWORK_FEATURE.allow ? currentNetwork.name : 'Conflux eSpace'}
         </Text>
       </View>

@@ -11,12 +11,12 @@ import {
   CFX_ESPACE_MAINNET_WALLET_CONTRACT_ADDRESS,
   CFX_ESPACE_TESTNET_SCAN_OPENAPI,
   CFX_ESPACE_TESTNET_WALLET_CONTRACT_ADDRESS,
-} from '@core/consts/network';
+} from '../../../../consts/network';
 
-const eSpaceTestnetWalletContract = createContract({ address: CFX_ESPACE_TESTNET_WALLET_CONTRACT_ADDRESS, ABI: ESpaceWalletABI });
-const eSpaceTestnetServerFetcher = createFetchServer({ prefixUrl: CFX_ESPACE_TESTNET_SCAN_OPENAPI });
-const eSpaceWalletContract = createContract({ address: CFX_ESPACE_MAINNET_WALLET_CONTRACT_ADDRESS, ABI: ESpaceWalletABI });
-const eSpaceServerFetcher = createFetchServer({ prefixUrl: CFX_ESPACE_MAINNET_SCAN_OPENAPI });
+export const eSpaceTestnetWalletContract = createContract({ address: CFX_ESPACE_TESTNET_WALLET_CONTRACT_ADDRESS, ABI: ESpaceWalletABI });
+export const eSpaceTestnetServerFetcher = createFetchServer({ prefixUrl: CFX_ESPACE_TESTNET_SCAN_OPENAPI });
+export const eSpaceWalletContract = createContract({ address: CFX_ESPACE_MAINNET_WALLET_CONTRACT_ADDRESS, ABI: ESpaceWalletABI });
+export const eSpaceServerFetcher = createFetchServer({ prefixUrl: CFX_ESPACE_MAINNET_SCAN_OPENAPI });
 
 interface AssetInfoFromScan {
   type: Omit<AssetType, AssetType.Native> & 'native';
@@ -45,13 +45,10 @@ export const fetchESpaceServer = async ({
       serverFetcher.fetchServer<{ message: string; status: '0' | '1'; result?: { list: Array<AssetInfoFromScan> } }>({
         key: `eSpaceAssetsFromScan-${hexAddress}-${network.chainId}`,
         url: `account/tokens?account=${hexAddress}${assetType ? `&tokenType=${assetType}` : ''}`,
-        options: {
-          retry: 2,
-        },
       }),
     ).pipe(
       concatMap((scanRes) => {
-        if (typeof scanRes?.status === 'string') {
+        if (scanRes?.status === '1') {
           if (Array.isArray(scanRes?.result?.list)) {
             const scanResList = scanRes?.result?.list;
             scanResList.forEach((asset) => {
@@ -107,6 +104,7 @@ export const fetchESpaceServer = async ({
                     decimals: 18,
                     balance: cfxBalance,
                     ...scanInfoMap[AssetType.Native],
+                    type: AssetType.Native,
                   },
                   ...assets.filter((asset) => asset.contractAddress !== '0x0000000000000000000000000000000000000000'),
                 ];

@@ -1,10 +1,10 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
-import { of, catchError, from, take, concat, firstValueFrom } from 'rxjs';
+import { of, catchError, from, take, concat, firstValueFrom, filter, throwIfEmpty } from 'rxjs';
 import { truncate } from '../../../utils/balance';
 import Decimal from 'decimal.js';
 import methods from '../../Methods';
 import database from '../../../database';
-import { AssetType, type Asset } from './../../../database/models/Asset';
+import { AssetType, AssetSource, type Asset } from './../../../database/models/Asset';
 import { type Address } from './../../../database/models/Address';
 import { type Network } from './../../../database/models/Network';
 import { priorityFetcher, type Fetcher, type FetchAssetBalance, type AssetInfo } from './types';
@@ -25,13 +25,20 @@ const trackAssets = async ({
 }) => {
   const assetsHash: Record<string, AssetInfo> = {};
   const assetsSortedKeys: Array<string> = [];
-  
+
   /** Prioritize the use of data from fetchFromServer. */
   if (chainFetcher && typeof chainFetcher.fetchFromServer === 'function') {
     let assets: AssetInfo[];
     try {
       assets = await chainFetcher.fetchFromServer({ address, network });
-      assets?.forEach((asset) => (assetsHash[asset.contractAddress || AssetType.Native] = asset));
+      assets?.forEach((asset) => {
+        if (!asset.contractAddress) {
+          assetsHash[AssetType.Native] = asset;
+          assetsHash[AssetType.Native].icon = nativeAsset.icon ?? undefined;
+        } else {
+          assetsHash[asset.contractAddress] = asset;
+        }
+      });
     } catch (err) {
       assets = [];
     }
@@ -52,9 +59,10 @@ const trackAssets = async ({
               {
                 network,
                 ...assets[index],
+                source: AssetSource.Official,
               },
-              true
-            )
+              true,
+            ),
           );
         }
 
@@ -68,7 +76,7 @@ const trackAssets = async ({
                 asset: assetInDB,
                 ...(priceChanged ? { priceInUSDT: assets[index].priceInUSDT } : null),
                 ...(iconChanged ? { icon: assets[index].icon } : null),
-              })
+              }),
             );
           }
         }
@@ -113,22 +121,29 @@ const trackAssets = async ({
               fetchAssetBalances({
                 key: `assetsBalanceInRules-${address.hex}-${network.chainId}`,
                 endpoint: network.endpoint,
-                account: address.hex,
+                accountAddress: address,
                 assets: assetsNeedFetch.map((asset) => ({ assetType: asset.type, contractAddress: asset.contractAddress })),
-              })
-            ).pipe(catchError(() => of(null)))
-          )
-        ).pipe(take(1))
+              }),
+            ).pipe(catchError(() => of(null))),
+          ),
+        ).pipe(
+          filter((result) => result !== null),
+          take(1),
+          throwIfEmpty(() => new Error('All fetchers failed')),
+        ),
       );
+
       const assets: Array<AssetInfo> | undefined = balancesResult?.map((balance, index) => {
         const asset = assetsNeedFetch[index];
+
         return {
           type: asset.type!,
           contractAddress: asset.contractAddress!,
           name: asset.name!,
           symbol: asset.symbol!,
           decimals: asset.decimals!,
-          balance,
+          balance: typeof balance === 'string' ? balance : undefined!,
+          icon: asset.icon!,
         };
       });
       assets?.forEach((asset) => (assetsHash[asset.contractAddress || AssetType.Native] = asset));
@@ -142,7 +157,7 @@ const trackAssets = async ({
         new Decimal(assetsHash[hashKey].priceInUSDT!)
           .mul(new Decimal(assetsHash[hashKey].balance).div(Decimal.pow(new Decimal(10), new Decimal(assetsHash[hashKey].decimals ?? 0))))
           .toString(),
-        2
+        2,
       );
     }
   }
@@ -179,7 +194,7 @@ const trackAssets = async ({
       return varA < varB ? -1 : 1;
     })
     .forEach((hashKey) => assetsSortedKeys.push(hashKey));
-  
+
   return { assetsHash, assetsSortedKeys } as const;
 };
 

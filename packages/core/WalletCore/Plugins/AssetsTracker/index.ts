@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/ban-types */
-import { interval, switchMap, takeUntil, Subject, startWith, type Subscription } from 'rxjs';
+import { interval, switchMap, takeUntil, Subject, startWith, from, of, catchError, type Subscription } from 'rxjs';
 import { isEqual } from 'lodash-es';
 import { type Plugin } from '../../Plugins';
 import { NetworkType, ChainType } from './../../../database/models/Network';
@@ -21,7 +21,7 @@ import { fetchESpaceServer } from './fetchers/eSpaceServer';
 import { queryNetworkById } from '../../../database/models/Network/query';
 import { queryAddressById } from '../../../database/models/Address/query';
 import trackAssets from './trackAssets';
-import { type FetchAssetBalance, type AssetInfo, type Fetcher } from './types';
+import { type FetchAssetBalance, type Fetcher } from './types';
 import {
   getAssetsHash,
   setAssetsHash,
@@ -87,7 +87,7 @@ class AssetsTrackerPluginClass implements Plugin {
 
   register({ networkType, chainId, fetcher }: { networkType: NetworkType; chainId?: string; fetcher: Fetcher }) {
     if (!networkType && !chainId) {
-      throw new Error('networkType or string is required');
+      throw new Error('networkType or chainId is required');
     }
     const existFetcher = this.fetcherMap.get(getFetcherKey({ networkType, chainId })) ?? (Object.create(null) as Fetcher);
     Object.assign(existFetcher, fetcher);
@@ -104,84 +104,77 @@ class AssetsTrackerPluginClass implements Plugin {
   }
 
   /** This function immediately start a tracker for the current network assets and returns a Promise that resolves when first fetchAssets success. */
-  private startPolling = ({ network, address }: { network: Network; address: Address }, forceUpdate = false) => {
+  private startPolling = async ({ network, address }: { network: Network; address: Address }, forceUpdate = false) => {
     if (!forceUpdate) {
       this.disposeCurrentSubscription();
+    } else {
+      this.cancelCurrentTracker();
     }
+
     this.cancel$ = new Subject<void>();
 
-    let resolve: (value: boolean | PromiseLike<boolean>) => void, reject: (reason?: any) => void;
+    let resolve!: (value: boolean | PromiseLike<boolean>) => void, reject!: (reason?: any) => void;
     const firstFetchPromise = new Promise<boolean>((_resolve, _reject) => {
-      (resolve = _resolve), (reject = _reject);
+      resolve = _resolve;
+      reject = _reject;
     });
 
-    setTimeout(
-      async () => {
-        try {
-          /** This subscribe may be triggered after resetData. */
-          if (!forceUpdate) {
-            const isNetworkExist = !!network?.id && !!(await queryNetworkById(network.id));
-            const isAddressExist = !!address?.id && !!(await queryAddressById(address.id));
-            if (!isNetworkExist || !isAddressExist) return;
-          }
+    try {
+      /** This subscribe may be triggered after resetData. */
+      if (!forceUpdate) {
+        const isNetworkExist = !!network?.id && !!(await queryNetworkById(network.id));
+        const isAddressExist = !!address?.id && !!(await queryAddressById(address.id));
+        if (!isNetworkExist || !isAddressExist) return;
+      }
 
-          const chainFetcher = this.fetcherMap.get(getFetcherKey({ networkType: network.networkType, chainId: network.chainId }));
-          const networkFetcher = this.fetcherMap.get(getFetcherKey({ networkType: network.networkType }));
-          if (!networkFetcher && !chainFetcher) return;
+      const chainFetcher = this.fetcherMap.get(getFetcherKey({ networkType: network.networkType, chainId: network.chainId }));
+      const networkFetcher = this.fetcherMap.get(getFetcherKey({ networkType: network.networkType }));
+      if (!networkFetcher && !chainFetcher) return;
 
-          const nativeAsset = (await network.nativeAssetQuery.fetch())?.[0];
-          const assetsAtomKey = getAssetsAtomKey({ network, address });
+      const nativeAsset = (await network.nativeAssetQuery.fetch())?.[0];
+      const assetsAtomKey = getAssetsAtomKey({ network, address });
 
-          this.currentSubscription = interval(8888)
-            .pipe(
-              startWith(0),
-              switchMap(() => {
-                if (forceUpdate) {
-                  setAssetsInFetch(assetsAtomKey, true);
+      this.currentSubscription = interval(7777)
+        .pipe(
+          startWith(0),
+          switchMap(() => {
+            if (forceUpdate) {
+              setAssetsInFetch(assetsAtomKey, true);
+            }
+
+            return from(trackAssets({ chainFetcher, networkFetcher, nativeAsset, network, address })).pipe(
+              catchError((error) => {
+                // console.log(error);
+                reject(false);
+                if (getAssetsInFetch(assetsAtomKey)) {
+                  setAssetsInFetch(assetsAtomKey, false);
                 }
-                return trackAssets({ chainFetcher, networkFetcher, nativeAsset, network, address });
+                return of(null);
               }),
-              takeUntil(this.cancel$!),
-            )
-            .subscribe({
-              next: (trackRes) => {
-                const { assetsHash, assetsSortedKeys } = trackRes;
-                const assetsHashInAtom = getAssetsHash(assetsAtomKey);
-                const assetsSortedKeysInAtom = getAssetsSortedKeys(assetsAtomKey);
+            );
+          }),
+          takeUntil(this.cancel$!),
+        )
+        .subscribe((trackRes) => {
+          if (trackRes === null) return;
+          const { assetsHash, assetsSortedKeys } = trackRes;
+          const assetsHashInAtom = getAssetsHash(assetsAtomKey);
+          const assetsSortedKeysInAtom = getAssetsSortedKeys(assetsAtomKey);
 
-                if (!isEqual(assetsSortedKeys, assetsSortedKeysInAtom)) {
-                  setAssetsSortedKeys(assetsAtomKey, [...assetsSortedKeys]);
-                }
-                if (!isEqual(assetsHashInAtom, assetsHash)) {
-                  setAssetsHash(assetsAtomKey, { ...assetsHash });
-                }
-                resolve(true);
-                if (getAssetsInFetch(assetsAtomKey)) {
-                  setAssetsInFetch(assetsAtomKey, false);
-                }
-              },
-              error: (error) => {
-                // console.log(`Error in trackAssets(network-${network.name} address-${address.hex}):`, error);
-                reject(false);
-                if (getAssetsInFetch(assetsAtomKey)) {
-                  setAssetsInFetch(assetsAtomKey, false);
-                }
-              },
-              complete: () => {
-                // console.log(`trackAssets(network-${network.name} address-${address.hex}) completed or canceled`);
-                reject(false);
-                if (getAssetsInFetch(assetsAtomKey)) {
-                  setAssetsInFetch(assetsAtomKey, false);
-                }
-              },
-            });
-        } catch (_) {
-          // console.log()
-          reject(false);
-        }
-      },
-      forceUpdate ? 0 : 40,
-    );
+          if (!isEqual(assetsSortedKeys, assetsSortedKeysInAtom)) {
+            setAssetsSortedKeys(assetsAtomKey, [...assetsSortedKeys]);
+          }
+          if (!isEqual(assetsHashInAtom, assetsHash)) {
+            setAssetsHash(assetsAtomKey, { ...assetsHash });
+          }
+          resolve(true);
+          if (getAssetsInFetch(assetsAtomKey)) {
+            setAssetsInFetch(assetsAtomKey, false);
+          }
+        });
+    } catch (_) {
+      reject(false);
+    }
 
     return firstFetchPromise;
   };
@@ -197,10 +190,7 @@ class AssetsTrackerPluginClass implements Plugin {
     this.cancel$ = null;
   };
 
-  public updateCurrentTracker = async () => {
-    this.cancelCurrentTracker();
-    return this.startPolling({ network: this.currentNetwork!, address: this.currentAddress! }, true);
-  };
+  public updateCurrentTracker = async () => this.startPolling({ network: this.currentNetwork!, address: this.currentAddress! }, true);
 }
 
 const assetsTracker = new AssetsTrackerPluginClass();

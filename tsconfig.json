@@ -1,9 +1,9 @@
 {
   "extends": "@react-native/typescript-config/tsconfig.json",
   "compilerOptions": {
-    "target": "ES2020",
+    "target": "ESNext",
     "useDefineForClassFields": true,
-    "lib": ["ES2020", "DOM", "DOM.Iterable"],
+    "lib": ["ESNext", "DOM", "DOM.Iterable"],
     "module": "ESNext",
     "skipLibCheck": true,
 
@@ -29,14 +29,14 @@
     "paths": {
       "@core/*": ["./packages/core/*"],
       "@WalletCoreExtends/*": ["./packages/WalletCoreExtends/*"],
-      "@assets/*": ["./packages/ui/assets/*"],
-      "@utils/*": ["./packages/ui/utils/*"],
-      "@modules/*": ["./packages/ui/modules/*"],
-      "@hooks/*": ["./packages/ui/hooks/*"],
-      "@pages/*": ["./packages/ui/pages/*"],
-      "@router/*": ["./packages/ui/router/*"],
-      "@components/*": ["./packages/ui/components/*"],
-      "@service/*": ["./packages/ui/service/*"]
+      "@assets/*": ["./packages/ui-new/assets/*"],
+      "@utils/*": ["./packages/ui-new/utils/*"],
+      "@modules/*": ["./packages/ui-new/modules/*"],
+      "@hooks/*": ["./packages/ui-new/hooks/*"],
+      "@pages/*": ["./packages/ui-new/pages/*"],
+      "@router/*": ["./packages/ui-new/router/*"],
+      "@components/*": ["./packages/ui-new/components/*"],
+      "@service/*": ["./packages/ui-new/service/*"]
     }
   },
   "include": ["packages"]

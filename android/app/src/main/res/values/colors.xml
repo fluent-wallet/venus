@@ -1,4 +1,3 @@
 <resources>
-<!-- react-native-bootsplash -->
-    <color name="bootsplash_background">#4572EC</color>
+    <color name="bootsplash_background">#1E1E1E</color>
 </resources>

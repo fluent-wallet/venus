@@ -9,7 +9,6 @@ apply plugin: "com.facebook.react"
 apply plugin: "kotlin-android"
 apply from: project(':react-native-config').projectDir.getPath() + "/dotenv.gradle"
 
-apply from: file("../../node_modules/react-native-vector-icons/fonts.gradle")
 apply from: "../../node_modules/react-native-code-push/android/codepush.gradle"
 /**
  * This is the configuration block to customize your React Native Android app.
@@ -58,6 +57,11 @@ react {
 //
 //   The list of flags to pass to the Hermes compiler. By default is "-O", "-output-source-map"
 // hermesFlags = ["-O", "-output-source-map"]
+    //
+    // Added by install-expo-modules
+    entryFile = file(["node", "-e", "require('expo/scripts/resolveAppEntry')", rootDir.getAbsoluteFile().getParentFile().getAbsolutePath(), "android", "absolute"].execute(null, rootDir).text.trim())
+    cliFile = new File(["node", "--print", "require.resolve('@expo/cli')"].execute(null, rootDir).text.trim())
+    bundleCommand = "export:embed"
 }
 
 /**
@@ -88,8 +92,8 @@ android {
         applicationId "com.wallet"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 6
-        versionName "0.1.6"
+        versionCode 10
+        versionName "0.2.3"
         resValue "string", "build_config_package", "com.wallet"
     }
     signingConfigs {

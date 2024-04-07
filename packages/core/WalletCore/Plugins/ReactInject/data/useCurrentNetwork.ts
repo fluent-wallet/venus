@@ -10,9 +10,14 @@ export const currentNetworkObservable = dbRefresh$.pipe(
   switchMap(() => querySelectedNetwork().observe()),
   switchMap((selectedNetworks) => {
     return selectedNetworks?.[0] ? of(selectedNetworks[0]) : of(null);
-  })
+  }),
 );
 
 export const currentNetworkAtom = atomWithObservable(() => currentNetworkObservable, { initialValue: null });
 export const useCurrentNetwork = () => useAtomValue(currentNetworkAtom);
 export const getCurrentNetwork = () => getAtom(currentNetworkAtom);
+
+const currentNetworkNativeAssetObservable = currentNetworkObservable.pipe(switchMap((network) => (network ? network.nativeAsset : of(null))));
+export const currentNetworkNativeAssetAtom = atomWithObservable(() => currentNetworkNativeAssetObservable, { initialValue: null });
+export const useCurrentNetworkNativeAsset = () => useAtomValue(currentNetworkNativeAssetAtom);
+export const getCurrentNetworkNativeAsset = () => getAtom(currentNetworkNativeAssetAtom);

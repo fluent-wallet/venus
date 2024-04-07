@@ -6,7 +6,7 @@ import { querySelectedAccount } from '../../../../database/models/Account/query'
 
 export const currentAccountObservable = dbRefresh$.pipe(
   startWith(null),
-  switchMap(() => querySelectedAccount().observe()),
+  switchMap(() => querySelectedAccount().observeWithColumns(['nickname', 'selected', 'hidden'])),
   map((selectedAccounts) => selectedAccounts?.[0] ?? null)
 );
 

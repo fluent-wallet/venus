@@ -5,7 +5,8 @@ module.exports = {
   theme: {
     extend: {
       fontFamily: {
-        sfp: ['SF Pro Display'],
+        sora: ['Sora'],
+        stalinistOne: ['Stalinist One']
       },
     },
   },

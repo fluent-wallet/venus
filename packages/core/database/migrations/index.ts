@@ -102,6 +102,35 @@ const migrations = schemaMigrations({
         }),
       ],
     },
+    {
+      toVersion: 5,
+      steps: [
+        createTable({
+          name: TableName.AddressBook,
+          columns: [
+            { name: 'address_id', type: 'string', isIndexed: true },
+            { name: 'network_id', type: 'string', isIndexed: true },
+            { name: 'name', type: 'string' },
+            { name: 'address_value', type: 'string' },
+            { name: 'type', type: 'string' },
+          ],
+        }),
+      ],
+    },
+    {
+      toVersion: 6,
+      steps: [
+        addColumns({
+          table: TableName.Asset,
+          columns: [
+            {
+              name: 'source',
+              type: 'string',
+            },
+          ],
+        }),
+      ],
+    },
   ],
 });
 

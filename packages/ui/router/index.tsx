@@ -61,7 +61,6 @@ import WalletIcon from '@assets/icons/wallet.svg';
 import SettingsIcon from '@assets/icons/settings.svg';
 import ArrowLeft from '@assets/icons/arrow-left.svg';
 import ScanQRCode from '@pages/ScanQRCode';
-import BootSplash from 'react-native-bootsplash';
 import BackUpNotice from '@pages/Account/BackupNotice';
 import VerifySeedPhrase from '@pages/Account/VerifySeedPhrase';
 import WalletConnectApprovalSheet from '@pages/WalletConnect/Approval';
@@ -203,7 +202,7 @@ const StackNavigator = () => {
 const Router: React.FC = () => {
   const { theme } = useTheme();
   return (
-    <NavigationContainer onReady={BootSplash.hide} theme={{ ...DefaultTheme, colors: { ...DefaultTheme.colors, background: theme.colors.surfacePrimary } }}>
+    <NavigationContainer theme={{ ...DefaultTheme, colors: { ...DefaultTheme.colors, background: theme.colors.surfacePrimary } }}>
       <JotaiNexus />
       <StackNavigator />
     </NavigationContainer>

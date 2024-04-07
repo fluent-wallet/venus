@@ -29,14 +29,17 @@ export class AddAccountMethod {
 
   async addAccount(params: Params & { vault: Vault }, prepareCreate: true): Promise<(Account | Address)[]>;
   async addAccount(params: Params): Promise<Account>;
-  async addAccount({ accountGroup, nickname, hidden, selected, hexAddress, index, vault, vaultData: _vaultData }: Params & { vault?: Vault }, prepareCreate?: true) {
+  async addAccount(
+    { accountGroup, nickname, hidden, selected, hexAddress, index, vault, vaultData: _vaultData }: Params & { vault?: Vault },
+    prepareCreate?: true,
+  ) {
     if (!accountGroup) throw new Error('AccountGroup is required in createAccount.');
     const _vault = vault ?? (await (await accountGroup).vault);
     const [networks, lastAccountIndex, vaultData] = await Promise.all([
       database.get<Network>(TableName.Network).query().fetch(),
       _vault.type === VaultType.HierarchicalDeterministic ? index ?? accountGroup.getLastAccountIndex() : -1,
       _vault.type === VaultType.PrivateKey || _vault.type === VaultType.HierarchicalDeterministic
-        ? (_vaultData ?? this.plugins.CryptoTool.decrypt<string>(_vault.data!))
+        ? _vaultData ?? this.plugins.CryptoTool.decrypt<string>(_vault.data!)
         : _vault.data,
     ]);
     const newAccountIndex = index ?? lastAccountIndex + 1;
@@ -64,13 +67,13 @@ export class AddAccountMethod {
             return ret.hexAddress;
           }
         }
-      })
+      }),
     );
 
     const newAccount = createModel({
       name: TableName.Account,
       params: {
-        nickname: nickname || `Account - ${newAccountIndex + (_vault.type === VaultType.BSIM ? 0 : 1)}`,
+        nickname: nickname || `Account - ${newAccountIndex + 1}`,
         index: newAccountIndex,
         hidden: hidden ?? false,
         selected: selected ?? false,
@@ -78,10 +81,9 @@ export class AddAccountMethod {
       },
       prepareCreate: true,
     }) as Account;
-
     const defaultAssetRules = await Promise.all(networks.map((network) => network.defaultAssetRule));
     const addresses = hexAddressesInNetwork.map((hexAddress, index) =>
-      createAddress({ network: networks[index], assetRule: defaultAssetRules[index], account: newAccount, hex: toChecksum(hexAddress) }, true)
+      createAddress({ network: networks[index], assetRule: defaultAssetRules[index], account: newAccount, hex: toChecksum(hexAddress) }, true),
     );
 
     if (prepareCreate) {

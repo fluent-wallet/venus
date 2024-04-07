@@ -4,6 +4,7 @@ import { map, firstValueFrom } from 'rxjs';
 import { type AccountGroup } from '../AccountGroup';
 import TableName from '../../TableName';
 import VaultType from './VaultType';
+import VaultSourceType from './VaultSourceType';
 
 export class Vault extends Model {
   static table = TableName.Vault;
@@ -21,7 +22,7 @@ export class Vault extends Model {
   @field('cfx_only') cfxOnly!: boolean | null;
   /** is backup to indicate whether the user's mnemonic phrase has been backed up */
   @field('is_backup') isBackup!: boolean;
-  @text("source") source!: string;
+  @text('source') source!: VaultSourceType;
   /**
    * A Vault has only one account group.
    * */
@@ -36,7 +37,6 @@ export class Vault extends Model {
     await this.update((vault) => {
       vault.isBackup = true;
     });
-
   }
   @reader async getAccountGroup() {
     return (await firstValueFrom(this.observeAccountGroup))!;
@@ -50,7 +50,7 @@ export class Vault extends Model {
       ...addresses.map((address) => address.prepareDestroyPermanently()),
       ...accounts.map((account) => account.prepareDestroyPermanently()),
       accountGroup.prepareDestroyPermanently(),
-      this.prepareDestroyPermanently()
+      this.prepareDestroyPermanently(),
     );
   }
 }
