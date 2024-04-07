@@ -8,6 +8,7 @@ import ArrowUpward from '@assets/icons/arrow-upward.svg';
 import ArrowDownward from '@assets/icons/arrow-downward.svg';
 import Buy from '@assets/icons/buy.svg';
 import More from '@assets/icons/more.svg';
+import MoreOption from './MoreOption';
 
 export const Navigation: React.FC<{ title: string; Icon: ComponentProps<typeof Button>['Icon']; onPress?: VoidFunction; disabled?: boolean }> = ({
   title,
@@ -31,7 +32,9 @@ const Navigations: React.FC<{ navigation: StackScreenProps<typeof HomeStackName>
       <Navigation title="Send" Icon={ArrowUpward} onPress={() => navigation.navigate(SendTransactionStackName, { screen: SendTransactionStep1StackName })} />
       <Navigation title="Receive" Icon={ArrowDownward} onPress={() => navigation.navigate(ReceiveStackName)} />
       <Navigation title="Buy" Icon={Buy} disabled />
-      <Navigation title="More" Icon={More} />
+      <MoreOption>
+        <Navigation title="More" Icon={More} />
+      </MoreOption>
     </View>
   );
 };

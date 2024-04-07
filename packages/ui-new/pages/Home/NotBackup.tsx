@@ -6,7 +6,8 @@ import { useCurrentAccount, useGroupOfAccount, useVaultOfAccount, VaultType, Vau
 import Text from '@components/Text';
 import useForceUpdateOnFocus from '@hooks/useUpdateOnFocus';
 import { HomeStackName, BackupStackName, BackupStep1StackName, type StackScreenProps } from '@router/configs';
-import Img from '@assets/images/welcome-img.webp';
+// import Img from '@assets/images/welcome-img.webp';
+import Img from '@assets/images/fundsAtRisk.webp';
 
 const NotBackup: React.FC<{ navigation: StackScreenProps<typeof HomeStackName>['navigation'] }> = ({ navigation }) => {
   const { colors } = useTheme();
@@ -23,12 +24,22 @@ const NotBackup: React.FC<{ navigation: StackScreenProps<typeof HomeStackName>['
       disabled={!accountGroup}
       onPress={() => navigation.navigate(BackupStackName, { screen: BackupStep1StackName, params: { groupId: accountGroup.id } })}
     >
-      <Image style={styles.img} source={Img} />
-      <View style={styles.textArea}>
-        <Text style={[styles.title, { color: colors.textPrimary }]}>Funds at risk</Text>
-        <Text style={[styles.description, { color: colors.textSecondary }]}>
-          You need to back up your phrase to ensure the security of your wallet. <Text>Back Up</Text>
-        </Text>
+      <View
+        style={[
+          styles.content,
+          {
+            borderColor: colors.borderPrimary,
+          },
+        ]}
+      >
+        <Image style={styles.img} source={Img} />
+        <View style={styles.textArea}>
+          <Text style={[styles.title, { color: colors.textPrimary }]}>Funds at risk</Text>
+          <Text style={[styles.description, { color: colors.textSecondary }]}>
+            You need to back up your phrase to ensure the security of your wallet.{' '}
+            <Text style={{ color: colors.textNotice, textDecorationColor: colors.textNotice, textDecorationLine: 'underline' }}>Back Up{'>'}</Text>
+          </Text>
+        </View>
       </View>
     </Pressable>
   );
@@ -41,16 +52,26 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
-    height: 96,
+    // height: 96,
     paddingHorizontal: 16,
     paddingTop: 16,
     borderTopWidth: 1,
   },
+  content: {
+    borderWidth: 1,
+    borderRadius: 8,
+    paddingTop: 8,
+    paddingRight: 7,
+    paddingBottom: 9,
+    paddingLeft: 7,
+    display: 'flex',
+    flexDirection: 'row',
+  },
   img: {
     flexShrink: 0,
     alignSelf: 'center',
-    width: 80,
-    aspectRatio: 1.285,
+    width: 53,
+    aspectRatio: 1.07,
     marginRight: 12,
   },
   textArea: {

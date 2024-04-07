@@ -55,7 +55,7 @@ const BackupStep2ViewSecret: React.FC<BackupScreenProps<typeof BackupStep2StackN
   return (
     <BackupBottomSheet>
       <Text style={[styles.largeText, styles.notice, { color: colors.textPrimary }]} numberOfLines={1}>
-        {isSmallDevice ? '' : '✏️ '}Write Down Your {backupType === VaultType.HierarchicalDeterministic ? 'Seed Phrase' : 'Private Key'}
+        Write Down Your {backupType === VaultType.HierarchicalDeterministic ? 'Seed Phrase' : 'Private Key'}
       </Text>
       <Text style={[styles.description, styles.noticeDescription, { color: colors.textSecondary }]}>✅ Do NOT take a screenshot of this page</Text>
       <Text style={[styles.description, styles.noticeDescription, { color: colors.textSecondary }]}>✅ Writing down on paper is recommended</Text>

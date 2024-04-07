@@ -9,6 +9,7 @@ import Button from '@components/Button';
 import { screenHeight } from '@utils/deviceInfo';
 import BSIMCardWallet from '@assets/icons/wallet-bsim-shadow.webp';
 import ArrowLeft from '@assets/icons/arrow-left2.svg';
+import TxErrorIcon from '@assets/icons/txError.svg';
 
 interface Props {
   bottomSheetRef: MutableRefObject<BottomSheetMethods>;
@@ -23,9 +24,17 @@ const BSIMVerify: React.FC<Props> = ({ bottomSheetRef, bsimEvent, onClose, onRet
   return (
     <BottomSheet ref={bottomSheetRef} snapPoints={snapPoints} onClose={onClose} index={0}>
       <View style={styles.container}>
-        <Text style={[styles.title, { color: colors.textPrimary }]}>
-          {bsimEvent.type === BSIMEventTypesName.ERROR ? '🚫 Signing Error' : 'Transaction Confirmation'}
-        </Text>
+        {bsimEvent.type === BSIMEventTypesName.ERROR ? (
+          <View style={styles.titleContainer}>
+            <TxErrorIcon />
+            <Text style={[styles.title, { color: colors.textPrimary }]}>Signing Error</Text>
+          </View>
+        ) : (
+          <View style={styles.titleContainer}>
+            <Text style={[styles.title, { color: colors.textPrimary }]}>'Transaction Confirmation'</Text>
+          </View>
+        )}
+
         <View style={styles.content}>
           <Image style={styles.bsimImg} source={BSIMCardWallet} />
           <View style={{ flex: 1 }}>
@@ -84,6 +93,10 @@ const styles = StyleSheet.create({
   },
   btnRetry: {
     flex: 1,
+  },
+  titleContainer: {
+    display: 'flex',
+    flexDirection: 'row',
   },
 });
 

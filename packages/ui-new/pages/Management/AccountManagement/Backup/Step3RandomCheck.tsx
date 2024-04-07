@@ -38,7 +38,7 @@ const BackupStep3RandomCheck: React.FC<BackupScreenProps<typeof BackupStep3Stack
 
   return (
     <BackupBottomSheet>
-      <Text style={[styles.title, { color: colors.textPrimary }]}>🔍 Verify your seed phrase</Text>
+      <Text style={[styles.title, { color: colors.textPrimary }]}>Verify your seed phrase</Text>
       {mixers.map(({ originIndex, mixer }, index) => (
         <Fragment key={index}>
           <Text style={[styles.text, { marginHorizontal: 16, color: colors.textPrimary }]}>Word #{originIndex + 1}</Text>

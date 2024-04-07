@@ -23,7 +23,7 @@ const NFTList: React.FC<Props> = ({ onPressItem, tabsType }) => {
   const currentOpenNFTDetail = useCurrentOpenNFTDetail();
 
   if (nfts === null) {
-    return SkeletonList;
+    return <SkeletonList />;
   }
 
   if (isEmpty) {
@@ -52,7 +52,7 @@ const styles = StyleSheet.create({
   },
   img: {
     alignSelf: 'center',
-    width: 160,
+    width: 120,
     aspectRatio: 1,
     marginTop: 36,
   },

@@ -60,7 +60,7 @@ const PasswordWay: React.FC<StackScreenProps<typeof PasswordWayStackName>> = ({ 
   return (
     <KeyboardAvoidingView style={[styles.keyboardView, { backgroundColor: colors.bgPrimary }]}>
       <ScrollView contentContainerStyle={styles.container}>
-        <Text style={[styles.title, { color: colors.textPrimary }]}>🔐 Set Password</Text>
+        <Text style={[styles.title, { color: colors.textPrimary }]}>Set Password</Text>
 
         <Text style={[styles.description, { color: colors.textPrimary }]}>Add security verification to ensure the safety of your funds.</Text>
 

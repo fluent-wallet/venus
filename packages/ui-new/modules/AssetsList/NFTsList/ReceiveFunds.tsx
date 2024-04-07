@@ -24,7 +24,7 @@ const ReceiveFunds: React.FC = () => {
 const styles = StyleSheet.create({
   img: {
     alignSelf: 'center',
-    width: 160,
+    width: 120,
     aspectRatio: 1,
     marginTop: 36,
   },

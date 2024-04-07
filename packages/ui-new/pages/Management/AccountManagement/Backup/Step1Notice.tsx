@@ -16,7 +16,7 @@ const BackupStep1Notice: React.FC<BackupScreenProps<typeof BackupStep1StackName>
   return (
     <BackupBottomSheet>
       <Image style={styles.img} source={Img} contentFit="contain" />
-      <Text style={[styles.notice, { color: colors.textPrimary }]}>📢 Notice</Text>
+      <Text style={[styles.notice, { color: colors.textPrimary }]}>Notice</Text>
       <Text style={[styles.description, { color: colors.textPrimary }]}>
         If you lose your <Text style={[styles.descriptionBold, { color: colors.textNotice }]}>seed phrase</Text> or{' '}
         <Text style={[styles.descriptionBold, { color: colors.textNotice }]}>private key</Text>, you won’t be able to recover you wallet.

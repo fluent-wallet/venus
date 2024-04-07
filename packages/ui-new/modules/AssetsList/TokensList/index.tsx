@@ -23,7 +23,7 @@ const TokensList: React.FC<Props> = ({ onPressItem, selectType, showReceiveFunds
   const priceVisible = usePriceVisibleValue();
 
   if (tokens === null) {
-    return Skeleton;
+    return <Skeleton />;
   }
 
   if (isEmpty) {

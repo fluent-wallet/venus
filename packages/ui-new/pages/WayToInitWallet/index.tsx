@@ -11,8 +11,8 @@ import { WayToInitWalletStackName, BiometricsWayStackName, type StackScreenProps
 import useInAsync from '@hooks/useInAsync';
 import ArrowRight from '@assets/icons/arrow-right.svg';
 import WelcomeSwiftShieldDark from '@assets/images/welcome-SwiftShield-dark.webp';
-import WelcomeSwiftShieldLight from '@assets/images/welcome-SwiftShield-light.webp';
-import WelcomeBgLight from '@assets/images/welcome-bg-light.webp';
+// import WelcomeSwiftShieldLight from '@assets/images/welcome-SwiftShield-light.webp';
+// import WelcomeBgLight from '@assets/images/welcome-bg-light.webp';
 import WelcomeBgDark from '@assets/images/welcome-bg-dark.webp';
 import ImgNew from '@assets/images/welcome-img-new.webp';
 import ImportExistingWallet, { type BottomSheetMethods } from './ImportExistingWallet';
