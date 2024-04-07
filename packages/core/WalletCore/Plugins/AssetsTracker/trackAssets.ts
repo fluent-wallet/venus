@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
-import { of, catchError, from, take, concat, firstValueFrom } from 'rxjs';
+import { of, catchError, from, take, concat, firstValueFrom, filter, throwIfEmpty } from 'rxjs';
 import { truncate } from '../../../utils/balance';
 import Decimal from 'decimal.js';
 import methods from '../../Methods';
@@ -126,8 +126,13 @@ const trackAssets = async ({
               }),
             ).pipe(catchError(() => of(null))),
           ),
-        ).pipe(take(1)),
+        ).pipe(
+          filter((result) => result !== null),
+          take(1),
+          throwIfEmpty(() => new Error('All fetchers failed')),
+        ),
       );
+
       const assets: Array<AssetInfo> | undefined = balancesResult?.map((balance, index) => {
         const asset = assetsNeedFetch[index];
 
