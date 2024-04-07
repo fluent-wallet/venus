@@ -1,17 +1,26 @@
 import React from 'react';
-import { type useTheme } from '@react-navigation/native';
+import { useTheme } from '@react-navigation/native';
 import ContentLoader, { Rect, Circle } from 'react-content-loader/native';
 import { random } from 'lodash-es';
 import { screenWidth } from '@utils/deviceInfo';
 
-const ListItem = (key: string | number) => (
-  <ContentLoader key={key} speed={2} width={screenWidth} height={70} viewBox={`0 0 ${screenWidth} 70`} backgroundColor="#f3f3f3" foregroundColor="#ecebeb">
-    <Circle cx="36" cy="35" r="20" />
-    <Rect x="64" y="26" rx="4" ry="4" width={random(140, 200)} height={18} />
-  </ContentLoader>
-);
-
-export const SkeletonList = Array.from({ length: 6 }).map((_, index) => ListItem(index));
+export const SkeletonList = () => {
+  const { colors } = useTheme();
+  return Array.from({ length: 6 }).map((_, index) => (
+    <ContentLoader
+      key={index}
+      speed={2}
+      width={screenWidth}
+      height={70}
+      viewBox={`0 0 ${screenWidth} 70`}
+      backgroundColor={colors.borderThird}
+      foregroundColor={colors.foreg}
+    >
+      <Circle cx="36" cy="35" r="20" />
+      <Rect x="64" y="26" rx="4" ry="4" width={random(140, 200)} height={18} />
+    </ContentLoader>
+  ));
+};
 
 const detailImgSize = (screenWidth - 56 - 16 - 16) / 2 - 16;
 const detailWidth = detailImgSize;

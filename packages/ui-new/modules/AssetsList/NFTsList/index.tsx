@@ -23,7 +23,7 @@ const NFTList: React.FC<Props> = ({ onPressItem, tabsType }) => {
   const currentOpenNFTDetail = useCurrentOpenNFTDetail();
 
   if (nfts === null) {
-    return SkeletonList;
+    return <SkeletonList />;
   }
 
   if (isEmpty) {
