@@ -16,13 +16,13 @@ const MoreOption: React.FC<{ children: React.ReactElement }> = ({ children }) =>
   const position = useSharedValue({ right: 0, top: 0 });
 
   const handleLayout = useCallback((event: LayoutChangeEvent) => {
-    event.target.measure((width, height, pageX, pageY) => {
+    event.target.measure((x: number, y: number, width: number, height: number, pageX: number, pageY: number) => {    
       position.value = {
-        top: height + pageY,
+        top: pageY + (height / 2),
         right: Dimensions.get('window').width - pageX - width,
       };
     });
-  }, []);
+  }, [position]);
 
   const optionStyle = useAnimatedStyle(() => {
     return {
@@ -41,7 +41,7 @@ const MoreOption: React.FC<{ children: React.ReactElement }> = ({ children }) =>
       }
       setVisible(false);
     }
-  }, []);
+  }, [currentNetwork?.chainId, currentNetwork?.networkType]);
 
   const handleCoy = useCallback(() => {
     Clipboard.setString(currentAddressValue ?? '');
@@ -57,15 +57,15 @@ const MoreOption: React.FC<{ children: React.ReactElement }> = ({ children }) =>
     <View style={styles.container}>
       <View onLayout={handleLayout}>{React.cloneElement(children, { onPress: () => setVisible(!visible) })}</View>
       <Modal visible={visible} onRequestClose={() => setVisible(false)} transparent animationType="none">
-        <Pressable onPress={() => setVisible(!visible)} style={styles.overlay} testID='more'>
+        <Pressable onPress={() => setVisible(!visible)} style={styles.overlay} testID="more">
           <Animated.View style={[styles.options, optionStyle, { backgroundColor: reverseColors.borderThird }]}>
-            <Pressable onPress={handleOpenScan} testID=''>
-              <View style={styles.optionItem} testID='view'>
+            <Pressable onPress={handleOpenScan} testID="">
+              <View style={styles.optionItem} testID="view">
                 <Text style={[{ color: reverseColors.textPrimary }, styles.optionItemText]}>View in explorer</Text>
                 <Earth color={reverseColors.textPrimary} width={22} height={22} />
               </View>
             </Pressable>
-            <Pressable onPress={handleCoy} testID='copy'>
+            <Pressable onPress={handleCoy} testID="copy">
               <View style={styles.optionItem}>
                 <Text style={[{ color: reverseColors.textPrimary }, styles.optionItemText]}>Copy address</Text>
                 <Copy color={reverseColors.textPrimary} width={20} height={20} />
