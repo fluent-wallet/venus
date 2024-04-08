@@ -98,7 +98,7 @@ const PasswordWay: React.FC<StackScreenProps<typeof PasswordWayStackName>> = ({ 
           {errors.confirm?.type === 'validate' ? 'Password must be match.' : 'Must be at least 8 characters.'}
         </Text>
 
-        <Pressable style={styles.rememberView} onPress={() => setConfirm((pre) => !pre)}>
+        <Pressable testID='checkbox' style={styles.rememberView} onPress={() => setConfirm((pre) => !pre)}>
           <Checkbox checked={confirm} pointerEvents="none" />
           <Text style={[styles.rememberText, { color: colors.textPrimary }]}>
             ePay Wallet does not store your password.

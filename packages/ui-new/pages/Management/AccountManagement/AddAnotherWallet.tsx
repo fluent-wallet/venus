@@ -95,6 +95,7 @@ const AddAnotherWallet: React.FC<Props> = ({ navigation }) => {
             style={({ pressed }) => [accountListStyles.row, { backgroundColor: pressed ? colors.underlay : 'transparent' }]}
             disabled={inConnecting}
             onPress={handleConnectBSIMCard}
+            testID='connectBSIMWallet'
           >
             <Image style={accountListStyles.groupTypeImage} source={BSIMCardWallet} />
             <Text style={[accountListStyles.manageText, { color: colors.textPrimary }]}>Connect BSIM Wallet</Text>
@@ -106,6 +107,7 @@ const AddAnotherWallet: React.FC<Props> = ({ navigation }) => {
           style={({ pressed }) => [accountListStyles.row, { backgroundColor: pressed ? colors.underlay : 'transparent' }]}
           disabled={inCreating}
           onPress={handleCreateNewHdWallet}
+          testID='createNewWallet'
         >
           {<Image style={accountListStyles.groupTypeImage} source={HDWallet} />}
           <Text style={[accountListStyles.manageText, { color: colors.textPrimary }]}>Create new wallet</Text>
@@ -116,6 +118,7 @@ const AddAnotherWallet: React.FC<Props> = ({ navigation }) => {
           style={({ pressed }) => [accountListStyles.row, { backgroundColor: pressed ? colors.underlay : 'transparent' }]}
           disabled={inCreating}
           onPress={() => importExistRef.current?.expand()}
+          testID='importExistWallet'
         >
           {<Image style={accountListStyles.groupTypeImage} source={ExistWallet} />}
           <Text style={[accountListStyles.manageText, { color: colors.textPrimary }]}>Import existing wallet</Text>

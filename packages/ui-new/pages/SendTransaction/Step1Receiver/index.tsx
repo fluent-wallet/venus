@@ -93,6 +93,7 @@ const SendTransactionStep1Receiver: React.FC<SendTransactionScreenProps<typeof S
           <Pressable
             style={({ pressed }) => [styles.checkFail, { backgroundColor: pressed ? colors.underlay : 'transparent' }]}
             onPress={() => checkReceiver(receiver)}
+            testID='tryAgain'
           >
             <Text style={[styles.checkFailText, { color: colors.down }]}>
               Fail to check address, <Text style={{ textDecorationLine: 'underline' }}>click to try again</Text>.
@@ -115,6 +116,7 @@ const SendTransactionStep1Receiver: React.FC<SendTransactionScreenProps<typeof S
             <Pressable
               style={({ pressed }) => [styles.knowRiskWrapper, { backgroundColor: pressed ? colors.underlay : 'transparent' }]}
               onPress={() => setKnowRist((pre) => !pre)}
+              testID='knowRisk'
             >
               <Checkbox checked={knowRisk} pointerEvents="none" />
               <Text style={(styles.contractAddressTip, { color: colors.textPrimary })}>Known the risks</Text>

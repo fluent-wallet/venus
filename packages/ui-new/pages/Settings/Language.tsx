@@ -25,6 +25,7 @@ const Language: React.FC<StackScreenProps<typeof LanguageStackName>> = () => {
         style={({ pressed }) => [styles.item, { backgroundColor: pressed ? colors.underlay : 'transparent' }]}
         // disabled={mode === 'system'}
         // onPress={() => setMode('system')}
+        testID='system'
       >
         <Text style={[styles.itemText, { color: colors.textPrimary }]}>System Language</Text>
         {/* {mode === 'system' && <Checkbox checked pointerEvents="none" />} */}
@@ -33,6 +34,7 @@ const Language: React.FC<StackScreenProps<typeof LanguageStackName>> = () => {
         style={({ pressed }) => [styles.item, { backgroundColor: pressed ? colors.underlay : 'transparent' }]}
         // disabled={mode === 'light'}
         // onPress={() => setMode('light')}
+        testID='english'
       >
         <Text style={[styles.itemText, { color: colors.textPrimary }]}>English</Text>
         {/* {mode === 'light' && <Checkbox checked pointerEvents="none" />} */}
@@ -41,6 +43,7 @@ const Language: React.FC<StackScreenProps<typeof LanguageStackName>> = () => {
         style={({ pressed }) => [styles.item, { backgroundColor: pressed ? colors.underlay : 'transparent' }]}
         // disabled={mode === 'dark'}
         // onPress={() => setMode('dark')}
+        testID='traditionalChinese'
       >
         <Text style={[styles.itemText, { color: colors.textPrimary }]}>繁体中文</Text>
         {/* {mode === 'dark' && <Checkbox checked pointerEvents="none" />} */}

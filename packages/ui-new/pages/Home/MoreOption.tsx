@@ -57,15 +57,15 @@ const MoreOption: React.FC<{ children: React.ReactElement }> = ({ children }) =>
     <View style={styles.container}>
       <View onLayout={handleLayout}>{React.cloneElement(children, { onPress: () => setVisible(!visible) })}</View>
       <Modal visible={visible} onRequestClose={() => setVisible(false)} transparent animationType="none">
-        <Pressable onPress={() => setVisible(!visible)} style={styles.overlay}>
+        <Pressable onPress={() => setVisible(!visible)} style={styles.overlay} testID='more'>
           <Animated.View style={[styles.options, optionStyle, { backgroundColor: reverseColors.borderThird }]}>
-            <Pressable onPress={handleOpenScan}>
-              <View style={styles.optionItem}>
-                <Text style={[{ color: reverseColors.textPrimary }, styles.optionItemText]}>View in explorer1</Text>
+            <Pressable onPress={handleOpenScan} testID=''>
+              <View style={styles.optionItem} testID='view'>
+                <Text style={[{ color: reverseColors.textPrimary }, styles.optionItemText]}>View in explorer</Text>
                 <Earth color={reverseColors.textPrimary} width={22} height={22} />
               </View>
             </Pressable>
-            <Pressable onPress={handleCoy}>
+            <Pressable onPress={handleCoy} testID='copy'>
               <View style={styles.optionItem}>
                 <Text style={[{ color: reverseColors.textPrimary }, styles.optionItemText]}>Copy address</Text>
                 <Copy color={reverseColors.textPrimary} width={20} height={20} />

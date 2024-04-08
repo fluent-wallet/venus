@@ -51,7 +51,7 @@ export const Tabs: React.FC<Omit<Props, 'setCurrentTab' | 'onPressReceiver'>> = 
   return (
     <View style={[styles.tabsSelector, { backgroundColor: colors.bgFourth }]}>
       {tabs.map((tab) => (
-        <Pressable key={tab} onPress={() => handleClickTabLabel(tab)}>
+        <Pressable key={tab} onPress={() => handleClickTabLabel(tab)} testID={tab}>
           <Text
             style={[styles.tabLabel, { color: colors[currentTab === tab ? 'textPrimary' : 'textSecondary'], fontWeight: currentTab === tab ? '600' : '300' }]}
           >

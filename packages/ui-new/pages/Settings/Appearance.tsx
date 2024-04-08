@@ -26,6 +26,7 @@ const Appearance: React.FC<StackScreenProps<typeof AppearanceStackName>> = () =>
         style={({ pressed }) => [styles.item, { backgroundColor: pressed ? colors.underlay : 'transparent' }]}
         disabled={mode === 'system'}
         onPress={() => setMode('system')}
+        testID='system'
       >
         <Text style={[styles.itemText, { color: colors.textPrimary }]}>System</Text>
         {mode === 'system' && <Checkbox checked pointerEvents="none" />}
@@ -34,6 +35,7 @@ const Appearance: React.FC<StackScreenProps<typeof AppearanceStackName>> = () =>
         style={({ pressed }) => [styles.item, { backgroundColor: pressed ? colors.underlay : 'transparent' }]}
         disabled={mode === 'light'}
         onPress={() => setMode('light')}
+        testID='light'
       >
         <Text style={[styles.itemText, { color: colors.textPrimary }]}>Light</Text>
         {mode === 'light' && <Checkbox checked pointerEvents="none" />}
@@ -42,6 +44,7 @@ const Appearance: React.FC<StackScreenProps<typeof AppearanceStackName>> = () =>
         style={({ pressed }) => [styles.item, { backgroundColor: pressed ? colors.underlay : 'transparent' }]}
         disabled={mode === 'dark'}
         onPress={() => setMode('dark')}
+        testID='dark'
       >
         <Text style={[styles.itemText, { color: colors.textPrimary }]}>Dark</Text>
         {mode === 'dark' && <Checkbox checked pointerEvents="none" />}

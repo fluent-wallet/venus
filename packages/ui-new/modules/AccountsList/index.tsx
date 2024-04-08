@@ -151,6 +151,7 @@ const AddAccount: React.FC<AccountGroupProps & { colors: ReturnType<typeof useTh
         style={({ pressed }) => [styles.row, styles.group, { backgroundColor: pressed ? colors.underlay : 'transparent' }]}
         onPress={onPress}
         disabled={inAdding}
+        testID='addAccount'
       >
         <Checkbox checked Icon={Add} pointerEvents="none" />
         <Text style={[styles.manageText, { color: colors.textPrimary }]}>Add Account</Text>

@@ -101,6 +101,7 @@ const AccountConfig: React.FC<StackScreenProps<typeof AccountSettingStackName>> 
               <Pressable
                 style={({ pressed }) => [styles.row, { backgroundColor: pressed ? colors.underlay : 'transparent' }]}
                 onPress={() => navigation.navigate(BackupStackName, { screen: BackupStep1StackName, params: { accountId: route.params.accountId } })}
+                testID='privateKey'
               >
                 <Text style={[styles.mainText, styles.backupText, { color: colors.textPrimary }]}>Private Key</Text>
                 <ArrowRight color={colors.iconPrimary} />
@@ -110,6 +111,7 @@ const AccountConfig: React.FC<StackScreenProps<typeof AccountSettingStackName>> 
           <Pressable
             style={({ pressed }) => [styles.row, styles.removeContainer, { backgroundColor: pressed ? colors.underlay : 'transparent' }]}
             onPress={handlePressDelete}
+            testID='removeAccount'
           >
             <Checkbox checked Icon={Delete} pointerEvents="none" />
             <Text style={[styles.mainText, styles.removeText, { color: colors.textPrimary }]}>Remove Account</Text>
