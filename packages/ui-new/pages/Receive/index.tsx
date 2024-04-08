@@ -139,9 +139,9 @@ const Receive: React.FC<Props> = ({ navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    paddingTop: 8,
   },
   title: {
+    marginTop: 8,
     marginBottom: 24,
     lineHeight: 20,
     textAlign: 'center',

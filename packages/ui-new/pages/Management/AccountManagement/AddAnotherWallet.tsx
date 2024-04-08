@@ -135,7 +135,7 @@ export const styles = StyleSheet.create({
     flex: 1,
   },
   title: {
-    marginTop: 12,
+    marginTop: 8,
     marginBottom: 32,
     fontSize: 16,
     fontWeight: '600',

@@ -54,7 +54,9 @@ const AccountGroup: React.FC<
         style={styles.groupTypeImage}
         source={vaultType === VaultType.BSIM ? BSIMCardWallet : vaultType === VaultType.HierarchicalDeterministic ? HDWallet : ExistWallet}
       />
-      <Text style={[styles.groupName, { color: colors.textSecondary }]}>{vaultType === VaultType.PrivateKey ? 'Imported Private Key' : nickname}</Text>
+      <Text style={[styles.groupName, { color: colors.textSecondary, flexShrink: 1 }]} numberOfLines={1}>
+        {vaultType === VaultType.PrivateKey ? 'Imported Private Key' : nickname}
+      </Text>
       {type === 'management' && vaultType !== VaultType.PrivateKey && vaultType !== VaultType.PublicAddress && (
         <Text style={[styles.groupManagement, { color: colors.textNotice }]}>ManageMent</Text>
       )}
@@ -77,14 +79,19 @@ export const AccountItemView: React.FC<{
 }> = ({ colors, showSelect, showMore, addressValue, nickname, children, shorten = true, showUnderlay = true, disabled, showCopy, onPress }) => {
   return (
     <Pressable
-      style={({ pressed }) => [styles.row, { backgroundColor: showUnderlay && pressed ? colors.underlay : 'transparent', position: 'relative', paddingRight: 0 }]}
+      style={({ pressed }) => [
+        styles.row,
+        { backgroundColor: showUnderlay && pressed ? colors.underlay : 'transparent', position: 'relative', paddingRight: 0 },
+      ]}
       pointerEvents={!onPress ? 'none' : 'auto'}
       onPress={onPress}
       disabled={disabled}
     >
       <Image style={styles.accountImage} source={{ uri: toDataUrl(addressValue) }} />
       <View style={{ flex: 1 }}>
-        <Text style={[styles.accountName, { color: colors.textPrimary, opacity: nickname ? 1 : 0 }]}>{nickname || 'placeholder'}</Text>
+        <Text style={[styles.accountName, { color: colors.textPrimary, opacity: nickname ? 1 : 0 }]} numberOfLines={1}>
+          {nickname || 'placeholder'}
+        </Text>
         <View style={styles.accountAddressWrapper}>
           <Text
             style={[
@@ -243,6 +250,7 @@ export const styles = StyleSheet.create({
     marginRight: 8,
   },
   groupName: {
+    marginRight: 8,
     fontSize: 14,
     lineHeight: 18,
     fontWeight: '300',
