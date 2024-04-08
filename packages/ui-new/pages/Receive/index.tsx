@@ -182,7 +182,7 @@ const styles = StyleSheet.create({
   },
   btnWrapper: {
     marginTop: isSmallDevice ? 'auto' : 102,
-    marginBottom: isSmallDevice ? 32 : 0,
+    marginBottom: isSmallDevice ? 48 : 0,
     display: 'flex',
     flexDirection: 'row',
     justifyContent: 'center',
