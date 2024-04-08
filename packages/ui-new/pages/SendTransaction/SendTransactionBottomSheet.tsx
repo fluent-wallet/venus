@@ -23,9 +23,9 @@ const SendTransactionBottomSheet = forwardRef<BottomSheetMethods, Props>(({ chil
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    paddingTop: 8,
   },
   title: {
+    marginTop: 8,
     marginBottom: 0,
     lineHeight: 20,
     textAlign: 'center',
