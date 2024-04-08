@@ -116,6 +116,7 @@ const GroupConfig: React.FC<StackScreenProps<typeof GroupSettingStackName>> = ({
             <Pressable
               style={({ pressed }) => [styles.row, { backgroundColor: pressed ? colors.underlay : 'transparent' }]}
               onPress={renderByVaultType(handleBackupSeedPhrase, handleChangeBSIMPin)}
+              testID='action'
             >
               <Text style={[styles.mainText, styles.backupText, { color: colors.textPrimary }]}>{renderByVaultType('Seed Phrase', 'Change BSIM Code')}</Text>
               <ArrowRight color={colors.iconPrimary} />
@@ -126,6 +127,7 @@ const GroupConfig: React.FC<StackScreenProps<typeof GroupSettingStackName>> = ({
         <Pressable
           style={({ pressed }) => [styles.HDManage, { backgroundColor: pressed ? colors.underlay : 'transparent' }]}
           onPress={() => navigation.navigate(HDSettingStackName, { groupId: route.params.groupId })}
+          testID='HDManage'
         >
           <Text style={[styles.HDManageText, { color: colors.textSecondary }]}>HD Wallets</Text>
           <Text style={[styles.HDManageText, styles.management, { color: colors.textNotice }]}>Management</Text>
@@ -138,6 +140,7 @@ const GroupConfig: React.FC<StackScreenProps<typeof GroupSettingStackName>> = ({
         <Pressable
           style={({ pressed }) => [styles.row, styles.removeContainer, { backgroundColor: pressed ? colors.underlay : 'transparent' }]}
           onPress={handlePressDelete}
+          testID='remove'
         >
           <Checkbox checked Icon={Delete} pointerEvents="none" />
           <Text style={[styles.mainText, styles.removeText, { color: colors.textPrimary }]}>Remove Group</Text>

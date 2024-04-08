@@ -67,6 +67,7 @@ const BiometricsWay: React.FC<StackScreenProps<typeof BiometricsWayStackName>> =
         style={({ pressed }) => [styles.gotoSetpwd, { backgroundColor: pressed ? colors.underlay : 'transparent' }]}
         onPress={() => navigation.navigate(PasswordWayStackName, route.params)}
         disabled={inAsync}
+        testID='setPassword'
       >
         <Text style={[styles.gotoSetpwdText, { color: colors.textPrimary }]}>Set Password</Text>
       </Pressable>

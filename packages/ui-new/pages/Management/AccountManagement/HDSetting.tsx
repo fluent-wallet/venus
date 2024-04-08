@@ -208,6 +208,7 @@ const HDManagement: React.FC<StackScreenProps<typeof HDSettingStackName>> = ({ n
                     <Pressable
                       onPress={() => forceAuth((pre) => !pre)}
                       style={({ pressed }) => [{ backgroundColor: pressed ? colors.underlay : 'transparent' }]}
+                      testID='tryAgain'
                     >
                       <Text style={[styles.selectText, { color: colors.textPrimary }]}>
                         You have not completed{'\n'}the security verification,
@@ -232,6 +233,7 @@ const HDManagement: React.FC<StackScreenProps<typeof HDSettingStackName>> = ({ n
               { backgroundColor: pressed ? colors.underlay : 'transparent', opacity: pageIndex <= 0 ? 0 : 1 },
             ]}
             disabled={inNext || pageIndex <= 0}
+            testID='previous'
           >
             <ArrowRight color={pageIndex === 0 || inNext ? colors.up : colors.iconPrimary} width={12} height={12} />
           </Pressable>
@@ -245,6 +247,7 @@ const HDManagement: React.FC<StackScreenProps<typeof HDSettingStackName>> = ({ n
               { backgroundColor: pressed ? colors.underlay : 'transparent', opacity: (pageIndex + 1) * countPerPage >= maxCountLimit ? 0 : 1 },
             ]}
             disabled={inNext || (pageIndex + 1) * countPerPage >= maxCountLimit}
+            testID='next'
           >
             <ArrowRight color={inNext ? colors.up : colors.iconPrimary} width={12} height={12} />
           </Pressable>

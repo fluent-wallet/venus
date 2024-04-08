@@ -10,16 +10,17 @@ import Buy from '@assets/icons/buy.svg';
 import More from '@assets/icons/more.svg';
 import MoreOption from './MoreOption';
 
-export const Navigation: React.FC<{ title: string; Icon: ComponentProps<typeof Button>['Icon']; onPress?: VoidFunction; disabled?: boolean }> = ({
-  title,
-  Icon,
-  onPress,
-  disabled,
-}) => {
+export const Navigation: React.FC<{
+  title: string;
+  Icon: ComponentProps<typeof Button>['Icon'];
+  onPress?: VoidFunction;
+  disabled?: boolean;
+  testId?: string;
+}> = ({ title, Icon, onPress, disabled, testId }) => {
   const { colors } = useTheme();
 
   return (
-    <Pressable style={styles.navigation} onPress={onPress} disabled={disabled}>
+    <Pressable style={styles.navigation} onPress={onPress} disabled={disabled} testID={testId}>
       <Button testID={title} square size="small" Icon={Icon} onPress={onPress} disabled={disabled} />
       <Text style={[styles.navigationText, { color: disabled ? colors.iconThird : colors.textPrimary }]}>{title}</Text>
     </Pressable>
@@ -29,11 +30,16 @@ export const Navigation: React.FC<{ title: string; Icon: ComponentProps<typeof B
 const Navigations: React.FC<{ navigation: StackScreenProps<typeof HomeStackName>['navigation'] }> = ({ navigation }) => {
   return (
     <View style={styles.container}>
-      <Navigation title="Send" Icon={ArrowUpward} onPress={() => navigation.navigate(SendTransactionStackName, { screen: SendTransactionStep1StackName })} />
-      <Navigation title="Receive" Icon={ArrowDownward} onPress={() => navigation.navigate(ReceiveStackName)} />
-      <Navigation title="Buy" Icon={Buy} disabled />
+      <Navigation
+        title="Send"
+        testId="send"
+        Icon={ArrowUpward}
+        onPress={() => navigation.navigate(SendTransactionStackName, { screen: SendTransactionStep1StackName })}
+      />
+      <Navigation title="Receive" testId="receive" Icon={ArrowDownward} onPress={() => navigation.navigate(ReceiveStackName)} />
+      <Navigation title="Buy" testId="buy" Icon={Buy} disabled />
       <MoreOption>
-        <Navigation title="More" Icon={More} />
+        <Navigation title="More" testId='more' Icon={More} />
       </MoreOption>
     </View>
   );

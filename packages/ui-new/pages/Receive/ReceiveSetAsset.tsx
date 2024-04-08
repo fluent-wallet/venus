@@ -42,6 +42,7 @@ const ReceiveSetAsset: React.FC<Props> = ({ onConfirm, selectedAsset, setSelecte
         <Pressable
           style={({ pressed }) => [styles.assetWrapper, { backgroundColor: pressed ? colors.underlay : 'transparent' }]}
           onPress={() => setShowSelectAsset(true)}
+          testID='selectAsset'
         >
           {selectedAsset && (
             <>

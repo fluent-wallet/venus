@@ -203,6 +203,7 @@ const SendTransactionStep2Asset: React.FC<Props> = ({ navigation, route, onConfi
             <Pressable
               style={({ pressed }) => [{ backgroundColor: pressed ? colors.underlay : 'transparent' }]}
               disabled={filterAssets.type !== 'network-error'}
+              testID='retry'
             >
               <Text style={[styles.invalidTip, { color: colors.textPrimary }]}>
                 🚫{'   '}

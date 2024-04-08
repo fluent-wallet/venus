@@ -36,12 +36,14 @@ const HeaderRight: React.FC<{ navigation: StackScreenProps<typeof HomeStackName>
           { borderColor: colors.borderThird, backgroundColor: pressed ? colors.underlay : 'transparent' },
         ]}
         onPress={onPressNetwork}
+        testID='network'
       >
         <Network />
       </Pressable>
       <Pressable
         style={({ pressed }) => [styles.wrapper, { borderColor: colors.borderThird, backgroundColor: pressed ? colors.underlay : 'transparent' }]}
         onPress={() => navigation.navigate(ScanQRCodeStackName)}
+        testID='scanQRCode'
       >
         <QrCode color={colors.iconThird} />
       </Pressable>
@@ -52,6 +54,7 @@ const HeaderRight: React.FC<{ navigation: StackScreenProps<typeof HomeStackName>
           { borderColor: colors.borderThird, backgroundColor: pressed ? colors.underlay : 'transparent' },
         ]}
         onPress={() => navigation.navigate(SettingsStackName)}
+        testID='settings'
       >
         <Settings color={colors.iconThird} />
       </Pressable>

@@ -13,6 +13,7 @@ const BackButton: React.FC = () => {
     <Pressable
       style={({ pressed }) => [styles.backButton, { borderColor: colors.borderThird, backgroundColor: pressed ? colors.underlay : 'transparent' }]}
       onPress={() => navigation.goBack()}
+      testID='backButton'
     >
       <ArrowLeft color={colors.iconPrimary} />
     </Pressable>

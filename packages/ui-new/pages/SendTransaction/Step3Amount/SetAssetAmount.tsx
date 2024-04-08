@@ -120,6 +120,7 @@ const SetAssetAmount: React.FC<Props> = ({ targetAddress, asset, nftItemDetail, 
               style={({ pressed }) => [styles.maxBtn, { backgroundColor: pressed ? colors.underlay : 'transparent', borderColor: colors.textPrimary }]}
               onPress={handleClickMax}
               disabled={inEstimate}
+              testID='max'
             >
               <Text style={[styles.text, { color: colors.textPrimary, borderColor: colors.textPrimary, opacity: inEstimate ? 0 : 1 }]}>Max</Text>
               {inEstimate && <HourglassLoading style={styles.maxLoading} />}

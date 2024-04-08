@@ -8,7 +8,7 @@ import Arrow from '@assets/icons/arrow-right2.svg';
 export const SettingItem: React.FC<{ title: string; onPress: () => void }> = ({ title, onPress }) => {
   const { colors } = useTheme();
   return (
-    <Pressable style={({ pressed }) => [styles.item, { backgroundColor: pressed ? colors.underlay : 'transparent' }]} onPress={onPress}>
+    <Pressable testID={title} style={({ pressed }) => [styles.item, { backgroundColor: pressed ? colors.underlay : 'transparent' }]} onPress={onPress}>
       <Text style={[styles.itemText, { color: colors.textPrimary }]}>{title}</Text>
       <Arrow style={styles.arrow} color={colors.iconPrimary} fontSize={32} />
     </Pressable>

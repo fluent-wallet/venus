@@ -24,6 +24,7 @@ const AccountSelector: React.FC<Props> = ({ onClose }) => {
         <View style={styles.header}>
           <Text style={[styles.title, { color: colors.textPrimary }]}>Account</Text>
           <Pressable
+            testID='edit'
             style={({ pressed }) => [styles.edit, { borderColor: colors.borderThird, backgroundColor: pressed ? colors.underlay : 'transparent' }]}
             onPress={() => navigation.navigate(AccountManagementStackName)}
           >

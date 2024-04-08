@@ -23,6 +23,7 @@ const NotBackup: React.FC<{ navigation: StackScreenProps<typeof HomeStackName>['
       style={({ pressed }) => [styles.container, { borderColor: colors.borderThird, backgroundColor: pressed ? colors.underlay : 'transparent' }]}
       disabled={!accountGroup}
       onPress={() => navigation.navigate(BackupStackName, { screen: BackupStep1StackName, params: { groupId: accountGroup.id } })}
+      testID='backup'
     >
       <View
         style={[

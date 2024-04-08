@@ -56,6 +56,7 @@ const BackupStep3RandomCheck: React.FC<BackupScreenProps<typeof BackupStep3Stack
                   styles.word,
                   { backgroundColor: selectedWords[index] === word ? colors.bgSelect : pressed ? colors.bgSelect : 'transparent', opacity: pressed ? 0.75 : 1 },
                 ]}
+                testID='word'
               >
                 <Text style={[styles.text, { color: colors.textPrimary }]}>{word}</Text>
               </Pressable>
