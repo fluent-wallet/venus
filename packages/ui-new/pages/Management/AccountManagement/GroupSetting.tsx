@@ -63,8 +63,8 @@ const GroupConfig: React.FC<StackScreenProps<typeof GroupSettingStackName>> = ({
         message: 'Remove Group successfully',
         type: 'success',
       });
+      setTimeout(() => bottomSheetRef.current?.close());
       setShowDeleteBottomSheet(false);
-      bottomSheetRef.current?.close();
     } catch (err) {
       if (plugins.Authentication.containsCancel(String(err))) {
         return;

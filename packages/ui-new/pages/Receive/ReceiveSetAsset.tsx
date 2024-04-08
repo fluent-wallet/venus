@@ -1,8 +1,9 @@
+/* eslint-disable @typescript-eslint/no-non-null-assertion */
 import React, { useState, useRef, useEffect } from 'react';
 import { StyleSheet, Pressable, Keyboard } from 'react-native';
 import { useTheme } from '@react-navigation/native';
 import { type AssetInfo } from '@core/WalletCore/Plugins/AssetsTracker/types';
-import { useCurrentAddressValue, useCurrentNetworkNativeAsset } from '@core/WalletCore/Plugins/ReactInject';
+import { useCurrentAddressValue, useCurrentNetwork } from '@core/WalletCore/Plugins/ReactInject';
 import BottomSheet, { snapPoints, type BottomSheetMethods } from '@components/BottomSheet';
 import Text from '@components/Text';
 import Button from '@components/Button';
@@ -26,12 +27,24 @@ const ReceiveSetAsset: React.FC<Props> = ({ onConfirm, selectedAsset, setSelecte
   const [showSelectAsset, setShowSelectAsset] = useState(false);
   const currentAddressValue = useCurrentAddressValue()!;
 
-  const nativeAsset = useCurrentNetworkNativeAsset()!;
+  const currentNetwork = useCurrentNetwork()!;
   useEffect(() => {
-    if (selectedAsset === null) {
-      setSelectedAsset(nativeAsset as unknown as AssetInfo);
+    const initNativeAsset = async () => {
+      const nativeAsset = await currentNetwork.nativeAsset;
+      if (nativeAsset) {
+        setSelectedAsset(nativeAsset as unknown as AssetInfo);
+      }
+      return !!nativeAsset;
+    };
+
+    if (selectedAsset === null && !!currentNetwork) {
+      initNativeAsset().then((success) => {
+        if (!success) {
+          setTimeout(() => initNativeAsset(), 50);
+        }
+      });
     }
-  }, [nativeAsset]);
+  }, [currentNetwork?.id]);
 
   return (
     <>
@@ -95,9 +108,9 @@ const ReceiveSetAsset: React.FC<Props> = ({ onConfirm, selectedAsset, setSelecte
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    paddingTop: 8,
   },
   title: {
+    marginTop: 8,
     marginBottom: 24,
     lineHeight: 20,
     textAlign: 'center',

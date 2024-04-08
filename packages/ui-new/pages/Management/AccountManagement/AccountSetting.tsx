@@ -64,8 +64,8 @@ const AccountConfig: React.FC<StackScreenProps<typeof AccountSettingStackName>> 
         message: 'Remove account successfully',
         type: 'success',
       });
+      setTimeout(() => bottomSheetRef.current?.close());
       setShowDeleteBottomSheet(false);
-      bottomSheetRef.current?.close();
     } catch (err) {
       if (plugins.Authentication.containsCancel(String(err))) {
         return;

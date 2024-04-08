@@ -139,9 +139,9 @@ const Receive: React.FC<Props> = ({ navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    paddingTop: 8,
   },
   title: {
+    marginTop: 8,
     marginBottom: 24,
     lineHeight: 20,
     textAlign: 'center',
@@ -182,7 +182,7 @@ const styles = StyleSheet.create({
   },
   btnWrapper: {
     marginTop: isSmallDevice ? 'auto' : 102,
-    marginBottom: isSmallDevice ? 32 : 0,
+    marginBottom: isSmallDevice ? 48 : 0,
     display: 'flex',
     flexDirection: 'row',
     justifyContent: 'center',

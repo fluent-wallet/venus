@@ -2,13 +2,13 @@ import { atom, useAtom, useAtomValue } from 'jotai';
 import database from '@core/database';
 import { setAtom } from '@core/WalletCore/Plugins/ReactInject';
 
-const _TotalPriceVisibleAtom = atom<boolean | null>(null);
+const _TotalPriceVisibleAtom = atom<boolean | null>(true);
 database.localStorage.get('totalPriceVisible').then((visible) => typeof visible === 'boolean' && setAtom(_TotalPriceVisibleAtom, visible));
 
 const TotalPriceVisibleAtom = atom(
   (get) => {
     const totalPriceVisible = get(_TotalPriceVisibleAtom);
-    return totalPriceVisible || false;
+    return typeof totalPriceVisible === 'boolean' ? totalPriceVisible : true;
   },
   (_, set, update: boolean) => {
     database.localStorage.set('totalPriceVisible', update);

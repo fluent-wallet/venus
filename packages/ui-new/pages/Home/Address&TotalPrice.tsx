@@ -66,7 +66,7 @@ export const TotalPrice: React.FC = () => {
       style={({ pressed }) => [styles.totalPriceContainer, { backgroundColor: pressed ? colors.underlay : 'transparent' }]}
     >
       <Asterisks />
-      <Text style={[styles.totalPriceText, { color: colors.textPrimary, opacity: priceVisible ? 1 : 0 }]}>${totalPriceValue}</Text>
+      <Text style={[styles.totalPriceText, { color: colors.textPrimary, opacity: priceVisible ? 1 : 0 }]} numberOfLines={1}>${totalPriceValue}</Text>
       <EyeClose color={colors.textPrimary} width={24} height={24} style={[styles.eye, { opacity: priceVisible ? 1 : 0 }]} />
     </Pressable>
   );
