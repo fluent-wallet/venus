@@ -121,7 +121,6 @@ const Receive: React.FC<Props> = ({ navigation }) => {
       {showSetAsset && (
         <ReceiveSetAsset
           selectedAsset={selectedAsset}
-          setSelectedAsset={setSelectedAsset}
           amount={amount}
           onConfirm={({ asset, amount }) => {
             setSelectedAsset(asset);

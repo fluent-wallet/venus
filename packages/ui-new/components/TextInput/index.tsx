@@ -1,5 +1,17 @@
 import { useState, useMemo, useCallback, useRef, forwardRef, useEffect, isValidElement, type Component } from 'react';
-import { View, TextInput, StyleSheet, Pressable, Platform, type TextInputProps, type ViewStyle, type StyleProp } from 'react-native';
+import {
+  View,
+  TextInput,
+  StyleSheet,
+  Pressable,
+  Platform,
+  type TextInputProps,
+  type ViewStyle,
+  type StyleProp,
+  type NativeSyntheticEvent,
+  type TextInputSelectionChangeEventData,
+} from 'react-native';
+import Clipboard from '@react-native-clipboard/clipboard';
 import { useTheme } from '@react-navigation/native';
 import { type SvgProps } from 'react-native-svg';
 import composeRef from '@cfx-kit/react-utils/dist/composeRef';
@@ -47,8 +59,9 @@ const CustomTextInput = forwardRef<TextInput, Props>(
     const [hasValue, setHasValue] = useState(() => (value !== undefined ? !!value : defaultHasValue ?? isDev));
     const handleChangeText = useCallback(
       (text: string) => {
-        setHasValue(text?.length > 0);
-        onChangeText?.(text);
+        const filterText = text.replace(/[^\w\s]/gi, '');
+        setHasValue(filterText?.length > 0);
+        onChangeText?.(filterText);
       },
       [onChangeText],
     );
