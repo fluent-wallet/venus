@@ -157,7 +157,7 @@ const styles = StyleSheet.create({
     marginHorizontal: 16,
     borderWidth: 1,
     backgroundColor: 'transparent',
-    minHeight: 84,
+    minHeight: 88,
   },
   checkFail: {
     marginTop: 26,

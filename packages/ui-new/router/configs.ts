@@ -55,7 +55,7 @@ export type StackScreenProps<T extends keyof RootStackParamList> = NativeStackSc
 export type StackNavigation = NavigationProp<RootStackParamList>;
 
 // SheetBottomOption
-export const SheetBottomOption = { headerShown: false, presentation: 'transparentModal' as const, safeAreaInsets: { top: 0 } };
+export const SheetBottomOption = { headerShown: false, presentation: 'transparentModal' as const, safeAreaInsets: { top: 0 }, animation: 'fade' as const };
 
 // backup nest stack
 export const BackupStep1StackName = 'BackupStep1';
