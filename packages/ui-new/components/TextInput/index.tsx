@@ -59,7 +59,7 @@ const CustomTextInput = forwardRef<TextInput, Props>(
     const [hasValue, setHasValue] = useState(() => (value !== undefined ? !!value : defaultHasValue ?? isDev));
     const handleChangeText = useCallback(
       (text: string) => {
-        const filterText = text.replace(/[^\w\s.]/gi, '');
+        const filterText = text.replace(/[^\w\s.:]/gi, '');
         setHasValue(filterText?.length > 0);
         onChangeText?.(filterText);
       },
