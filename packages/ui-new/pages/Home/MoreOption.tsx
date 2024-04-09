@@ -51,7 +51,7 @@ const MoreOption: React.FC<{ children: React.ReactElement }> = ({ children }) =>
       duration: 1500,
     });
     setVisible(false);
-  }, []);
+  }, [currentAddressValue]);
 
   return (
     <View style={styles.container}>

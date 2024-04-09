@@ -57,7 +57,7 @@ const SendTransactionStep2Asset: React.FC<Props> = ({ navigation, route, onConfi
   const currentAddressValue = useCurrentAddressValue();
   const currentOpenNFTDetail = useCurrentOpenNFTDetail();
   const assets = (selectType === 'Send' ? useAssetsAllList : useTokenListOfCurrentNetwork)();
-
+  
   const [searchAsset, setSearchAsset] = useState(() => route?.params?.searchAddress ?? '');
   const [inFetchingRemote, setInFetchingRemote] = useState(false);
   const [filterAssets, setFilterAssets] = useState<{
