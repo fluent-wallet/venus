@@ -53,7 +53,6 @@ const ImportExistingWallet: React.FC<Props> = ({ bottomSheetRef, onSuccessConfir
       _status = await handleCheckInput();
     }
     if (_status?.type === 'success') {
-      Keyboard.dismiss();
       setTimeout(() => bottomSheetRef.current?.close(), 100);
       onSuccessConfirm?.(existWalletValueRef.current);
     }

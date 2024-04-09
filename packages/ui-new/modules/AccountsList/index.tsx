@@ -89,15 +89,18 @@ export const AccountItemView: React.FC<{
     >
       <Image style={styles.accountImage} source={{ uri: toDataUrl(addressValue) }} />
       <View style={{ flex: 1 }}>
-        <Text style={[styles.accountName, { color: colors.textPrimary, opacity: nickname ? 1 : 0 }]} numberOfLines={1}>
-          {nickname || 'placeholder'}
-        </Text>
+        {nickname && (
+          <Text style={[styles.accountName, { color: colors.textPrimary, paddingRight: 16 }]} numberOfLines={1}>
+            {nickname}
+          </Text>
+        )}
         <View style={styles.accountAddressWrapper}>
           <Text
             style={[
               styles.accountAddress,
+              !nickname && styles.accountName,
               {
-                color: colors.textSecondary,
+                color: nickname ? colors.textSecondary : colors.textPrimary,
                 borderRightColor: showCopy ? colors.borderFourth : 'transparent',
                 borderRightWidth: showCopy ? 1 : 0,
                 paddingRight: showCopy ? 5 : 0,
@@ -158,7 +161,7 @@ const AddAccount: React.FC<AccountGroupProps & { colors: ReturnType<typeof useTh
         style={({ pressed }) => [styles.row, styles.group, { backgroundColor: pressed ? colors.underlay : 'transparent' }]}
         onPress={onPress}
         disabled={inAdding}
-        testID='addAccount'
+        testID="addAccount"
       >
         <Checkbox checked Icon={Add} pointerEvents="none" />
         <Text style={[styles.manageText, { color: colors.textPrimary }]}>Add Account</Text>
@@ -271,7 +274,6 @@ export const styles = StyleSheet.create({
     fontSize: 14,
     lineHeight: 18,
     fontWeight: '600',
-    paddingRight: 16,
   },
   accountAddressWrapper: {
     marginTop: 4,
