@@ -26,7 +26,7 @@ const TokensList: React.FC<Props> = ({ onPressItem, selectType, showReceiveFunds
     return <Skeleton />;
   }
 
-  if (isEmpty) {
+  if (selectType !== 'Receive' && isEmpty) {
     if (showReceiveFunds) {
       return <ReceiveFunds />;
     } else {
