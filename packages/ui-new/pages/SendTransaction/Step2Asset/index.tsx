@@ -158,7 +158,7 @@ const SendTransactionStep2Asset: React.FC<Props> = ({ navigation, route, onConfi
     >
       <Text style={[styles.selectAsset, { color: colors.textSecondary }]}>Select an asset</Text>
       <TextInput
-        containerStyle={[styles.textinput, { borderColor: filterAssets?.type && filterAssets.type.startsWith('invalid') ? colors.down : colors.borderFourth }]}
+        containerStyle={[styles.textinput, { borderColor: !!searchAsset && filterAssets?.type && filterAssets.type.startsWith('invalid') ? colors.down : colors.borderFourth }]}
         showVisible={false}
         defaultHasValue={false}
         value={searchAsset}

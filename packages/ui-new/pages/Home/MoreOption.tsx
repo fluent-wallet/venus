@@ -15,14 +15,17 @@ const MoreOption: React.FC<{ children: React.ReactElement }> = ({ children }) =>
   const [visible, setVisible] = useState(false);
   const position = useSharedValue({ right: 0, top: 0 });
 
-  const handleLayout = useCallback((event: LayoutChangeEvent) => {
-    event.target.measure((x: number, y: number, width: number, height: number, pageX: number, pageY: number) => {    
-      position.value = {
-        top: pageY + (height / 2),
-        right: Dimensions.get('window').width - pageX - width,
-      };
-    });
-  }, [position]);
+  const handleLayout = useCallback(
+    (event: LayoutChangeEvent) => {
+      event.target.measure((x: number, y: number, width: number, height: number, pageX: number, pageY: number) => {
+        position.value = {
+          top: pageY + height / 2,
+          right: Dimensions.get('window').width - pageX - width,
+        };
+      });
+    },
+    [position],
+  );
 
   const optionStyle = useAnimatedStyle(() => {
     return {
@@ -34,14 +37,17 @@ const MoreOption: React.FC<{ children: React.ReactElement }> = ({ children }) =>
   const handleOpenScan = useCallback(() => {
     if (currentNetwork?.networkType === NetworkType.Ethereum) {
       if (currentNetwork.chainId === CFX_ESPACE_MAINNET_CHAINID) {
-        Linking.openURL('https://evm.confluxscan.io/');
+        Linking.openURL(`https://evm.confluxscan.io/address/${currentAddressValue}`);
+      } else if (currentNetwork.chainId === CFX_ESPACE_TESTNET_CHAINID) {
+        Linking.openURL(`https://evmtestnet.confluxscan.io/address/${currentAddressValue}`);
+      } else {
+        Linking.openURL(currentNetwork?.scanUrl ?? '');
       }
-      if (currentNetwork.chainId === CFX_ESPACE_TESTNET_CHAINID) {
-        Linking.openURL('https://evmtestnet.confluxscan.io/');
-      }
-      setVisible(false);
+    } else {
+      Linking.openURL(currentNetwork?.scanUrl ?? '');
     }
-  }, [currentNetwork?.chainId, currentNetwork?.networkType]);
+    setVisible(false);
+  }, [currentNetwork?.scanUrl, currentNetwork?.chainId, currentNetwork?.networkType, currentAddressValue]);
 
   const handleCoy = useCallback(() => {
     Clipboard.setString(currentAddressValue ?? '');
