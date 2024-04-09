@@ -70,10 +70,7 @@ const ScanQrCode: React.FC<Props> = ({ navigation, onConfirm, onClose }) => {
           setScanStatus({ errorMessage: 'Unvalid target address.' });
           return;
         }
-
         if (!ethUrl.function_name) {
-          bottomSheetRef.current?.close();
-
           navigation.dispatch(
             StackActions.replace(SendTransactionStackName, { screen: SendTransactionStep2StackName, params: { targetAddress: ethUrl.target_address } }),
           );
@@ -93,7 +90,6 @@ const ScanQrCode: React.FC<Props> = ({ navigation, onConfirm, onClose }) => {
 
           if (!targetAsset) {
             if (ethUrl.parameters?.address) {
-              bottomSheetRef.current?.close();
               navigation.dispatch(
                 StackActions.replace(SendTransactionStackName, {
                   screen: SendTransactionStep2StackName,
@@ -105,7 +101,6 @@ const ScanQrCode: React.FC<Props> = ({ navigation, onConfirm, onClose }) => {
             }
           } else {
             if (ethUrl.parameters?.value) {
-              bottomSheetRef.current?.close();
               navigation.dispatch(
                 StackActions.replace(SendTransactionStackName, {
                   screen: SendTransactionStep4StackName,
@@ -117,7 +112,6 @@ const ScanQrCode: React.FC<Props> = ({ navigation, onConfirm, onClose }) => {
                 }),
               );
             } else {
-              bottomSheetRef.current?.close();
               navigation.dispatch(
                 StackActions.replace(SendTransactionStackName, {
                   screen: SendTransactionStep3StackName,
