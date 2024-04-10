@@ -52,7 +52,7 @@ const EraseAllWallet: React.FC<Props> = ({ navigation }) => {
             {t('common.cancel')}
           </Button>
           <Button testID="delete" style={[styles.btn, { backgroundColor: colors.down }]} onPress={handleDelete} size="small">
-            ⚠️ {t('common.delete')}
+            <Text>⚠️ {t('common.delete')}</Text>
           </Button>
         </View>
       </View>
