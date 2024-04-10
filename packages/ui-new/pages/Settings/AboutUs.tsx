@@ -7,21 +7,22 @@ import { APP_VERSION_FLAG_FEATURE } from '@utils/features';
 import SwiftShieldLogo from '@assets/icons/swift-shield.svg';
 import { SettingItem } from './index';
 import pkg from '../../../../package.json';
+import { useTranslation } from 'react-i18next';
 
 const AboutUs: React.FC<StackScreenProps<typeof AboutUsStackName>> = ({ navigation }) => {
   const { colors } = useTheme();
-
+  const { t } = useTranslation();
   return (
     <ScrollView contentContainerStyle={[styles.container, { backgroundColor: colors.bgPrimary }]}>
       <SwiftShieldLogo style={styles.logo} />
-      <Text style={[styles.swiftshield, { color: colors.textPrimary }]}>SwiftShield Wallet</Text>
+      <Text style={[styles.swiftshield, { color: colors.textPrimary }]}>{t('settings.aboutUs.title')}</Text>
       <Text style={[styles.version, { color: colors.textSecondary }]}>
-        App version: {pkg.version} {APP_VERSION_FLAG_FEATURE.allow && APP_VERSION_FLAG_FEATURE.value}
+        {t('settings.aboutUs.version')}: {pkg.version} {APP_VERSION_FLAG_FEATURE.allow && APP_VERSION_FLAG_FEATURE.value}
       </Text>
 
-      <SettingItem title="Check for updates" onPress={() => {}} />
-      <SettingItem title="Terms of Service" onPress={() => {}} />
-      <SettingItem title="Feedback" onPress={() => {}} />
+      <SettingItem title={t('settings.aboutUs.action.checkUpdate')} onPress={() => {}} />
+      <SettingItem title={t('settings.aboutUs.action.teamsService')} onPress={() => {}} />
+      <SettingItem title={t('settings.aboutUs.action.feedback')} onPress={() => {}} />
     </ScrollView>
   );
 };

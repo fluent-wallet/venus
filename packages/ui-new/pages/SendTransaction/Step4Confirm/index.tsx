@@ -39,9 +39,11 @@ import { SendTransactionStep4StackName, HomeStackName, type SendTransactionScree
 import SendTransactionBottomSheet from '../SendTransactionBottomSheet';
 import { NFT } from '../Step3Amount';
 import BSIMVerify from '../BSIMVerify';
+import { useTranslation } from 'react-i18next';
 
 const SendTransactionStep4Confirm: React.FC<SendTransactionScreenProps<typeof SendTransactionStep4StackName>> = ({ navigation, route }) => {
   useEffect(() => Keyboard.dismiss(), []);
+  const { t } = useTranslation();
   const { colors } = useTheme();
   const BSIMVerifyRef = useRef<BottomSheetMethods>(null!);
 
@@ -217,8 +219,8 @@ const SendTransactionStep4Confirm: React.FC<SendTransactionScreenProps<typeof Se
         setBSIMEvent(null);
         showMessage({
           type: 'success',
-          message: 'Transaction Submitted',
-          description: 'Waiting for execution',
+          message: t('tx.confirm.submitted.message'),
+          description: t('tx.confirm.submitted.description'),
           icon: 'loading' as unknown as undefined,
         });
         navigation.dispatch(CommonActions.reset({ index: 0, routes: [{ name: HomeStackName }] }));
@@ -238,7 +240,7 @@ const SendTransactionStep4Confirm: React.FC<SendTransactionScreenProps<typeof Se
         ...(err.includes('out of balance') ? { type: 'out of balance' } : err.includes('timed out') ? { type: 'network error' } : null),
       });
       showMessage({
-        message: 'Transaction Failed',
+        message: t('tx.confirm.failed'),
         description: err,
         type: 'failed',
       });
@@ -249,13 +251,13 @@ const SendTransactionStep4Confirm: React.FC<SendTransactionScreenProps<typeof Se
 
   return (
     <>
-      <SendTransactionBottomSheet showTitle="Transaction Confirm">
+      <SendTransactionBottomSheet showTitle={t('tx.confirm.title')}>
         <BottomSheetScrollView>
-          <Text style={[styles.sendTitle, { color: colors.textPrimary }]}>Send</Text>
+          <Text style={[styles.sendTitle, { color: colors.textPrimary }]}>{t('common.send')}</Text>
           {route.params.nftItemDetail && <NFT colors={colors} asset={route.params.asset} nftItemDetail={route.params.nftItemDetail} />}
           {route.params.asset.type !== AssetType.ERC721 && (
             <>
-              <Text style={[styles.text, styles.to, { color: colors.textSecondary }]}>Amount</Text>
+              <Text style={[styles.text, styles.to, { color: colors.textSecondary }]}>{t('common.amount')}</Text>
               <View style={styles.balanceWrapper}>
                 <Text style={[styles.balance, { color: colors.textPrimary }]} numberOfLines={1}>
                   {route.params.nftItemDetail ? route.params.amount : formatedAmount} {symbol}
@@ -268,18 +270,18 @@ const SendTransactionStep4Confirm: React.FC<SendTransactionScreenProps<typeof Se
             </>
           )}
 
-          <Text style={[styles.text, styles.to, { color: colors.textSecondary }]}>To</Text>
+          <Text style={[styles.text, styles.to, { color: colors.textSecondary }]}>{t('common.to')}</Text>
           <AccountItemView nickname={''} addressValue={route.params.targetAddress} colors={colors} />
 
           <View style={[styles.divider, { backgroundColor: colors.borderFourth }]} />
 
-          <AccountItemView nickname="Signing with" addressValue={currentAddressValue} colors={colors}>
+          <AccountItemView nickname={t('tx.confirm.signingWith')} addressValue={currentAddressValue} colors={colors}>
             <Text style={[styles.networkName, { color: colors.textSecondary }]} numberOfLines={1}>
               on {currentNetwork?.name}
             </Text>
           </AccountItemView>
 
-          <Text style={[styles.estimateFee, { color: colors.textPrimary }]}>Estimated Fee</Text>
+          <Text style={[styles.estimateFee, { color: colors.textPrimary }]}>{t('tx.confirm.estimatedFee')}</Text>
           <View style={styles.estimateWrapper}>
             <TokenIcon style={styles.assetIcon} source={nativeAsset?.icon} />
             {gasCostAndPriceInUSDT && (
@@ -303,10 +305,10 @@ const SendTransactionStep4Confirm: React.FC<SendTransactionScreenProps<typeof Se
               <View style={[styles.divider, { backgroundColor: colors.borderFourth }]} />
               <Text style={[styles.errorText, { color: error.type === 'out of balance' ? colors.middle : colors.down }]}>
                 {error.type === 'out of balance'
-                  ? `🤕 Insufficient ${nativeAsset?.symbol} balance${route.params.asset.type === AssetType.Native ? '.' : ' for gas.'}`
+                  ? `${route.params.asset.type === AssetType.Native ? t('tx.confirm.error.InsufficientBalance', { symbol: nativeAsset?.symbol }) : t('tx.confirm.error.InsufficientBalanceForGas', { symbol: nativeAsset?.symbol })}`
                   : error.type === 'network error'
-                    ? '🚫 Your network is weak, trg again later.'
-                    : '🚫 Send transaction Error.'}
+                    ? t('tx.confirm.error.network')
+                    : t('tx.confirm.error.unknown')}
               </Text>
             </>
           )}
@@ -319,10 +321,10 @@ const SendTransactionStep4Confirm: React.FC<SendTransactionScreenProps<typeof Se
               onPress={() => navigation.dispatch(CommonActions.reset({ index: 0, routes: [{ name: HomeStackName }] }))}
               disabled={inSending}
             >
-              Cancel
+              {t('common.cancel')}
             </Button>
             <Button testID="send" style={styles.btn} size="small" disabled={!gasInfo} onPress={handleSend} loading={inSending}>
-              {error ? 'Retry' : 'Send'}
+              {error ? t('common.retry') : t('common.send')}
             </Button>
           </View>
         </BottomSheetScrollView>

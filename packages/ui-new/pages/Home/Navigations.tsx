@@ -9,6 +9,7 @@ import ArrowDownward from '@assets/icons/arrow-downward.svg';
 import Buy from '@assets/icons/buy.svg';
 import More from '@assets/icons/more.svg';
 import MoreOption from './MoreOption';
+import { useTranslation } from 'react-i18next';
 
 export const Navigation: React.FC<{
   title: string;
@@ -28,18 +29,19 @@ export const Navigation: React.FC<{
 };
 
 const Navigations: React.FC<{ navigation: StackScreenProps<typeof HomeStackName>['navigation'] }> = ({ navigation }) => {
+  const { t } = useTranslation();
   return (
     <View style={styles.container}>
       <Navigation
-        title="Send"
+        title={t('home.send')}
         testId="send"
         Icon={ArrowUpward}
         onPress={() => navigation.navigate(SendTransactionStackName, { screen: SendTransactionStep1StackName })}
       />
-      <Navigation title="Receive" testId="receive" Icon={ArrowDownward} onPress={() => navigation.navigate(ReceiveStackName)} />
-      <Navigation title="Buy" testId="buy" Icon={Buy} disabled />
+      <Navigation title={t('home.receive')} testId="receive" Icon={ArrowDownward} onPress={() => navigation.navigate(ReceiveStackName)} />
+      <Navigation title={t('home.buy')} testId="buy" Icon={Buy} disabled />
       <MoreOption>
-        <Navigation title="More" testId='more' Icon={More} />
+        <Navigation title={t('home.more')} testId="more" Icon={More} />
       </MoreOption>
     </View>
   );

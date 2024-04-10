@@ -11,19 +11,21 @@ import { AccountItemView } from '@modules/AccountsList';
 import { SendTransactionStep3StackName, SendTransactionStep4StackName, type SendTransactionScreenProps } from '@router/configs';
 import SendTransactionBottomSheet from '../SendTransactionBottomSheet';
 import SetAssetAmount from './SetAssetAmount';
+import { useTranslation } from 'react-i18next';
 
 const SendTransactionStep3Amount: React.FC<SendTransactionScreenProps<typeof SendTransactionStep3StackName>> = ({ navigation, route }) => {
   const { colors } = useTheme();
+  const { t } = useTranslation();
   return (
     <SendTransactionBottomSheet>
       {route.params.nftItemDetail && (
         <>
-          <Text style={[styles.text, styles.to, { color: colors.textSecondary }]}>Send</Text>
+          <Text style={[styles.text, styles.to, { color: colors.textSecondary }]}>{t('common.send')}</Text>
           <NFT colors={colors} asset={route.params.asset} nftItemDetail={route.params.nftItemDetail} />
         </>
       )}
 
-      <Text style={[styles.text, styles.to, { color: colors.textSecondary }]}>To</Text>
+      <Text style={[styles.text, styles.to, { color: colors.textSecondary }]}>{t('common.to')}</Text>
       <AccountItemView nickname={''} addressValue={route.params.targetAddress} colors={colors} />
       <SetAssetAmount
         targetAddress={route.params.targetAddress}
@@ -40,7 +42,7 @@ const SendTransactionStep3Amount: React.FC<SendTransactionScreenProps<typeof Sen
             size="small"
             loading={inEstimate}
           >
-            {validMax === null ? 'Estimate Max' : 'Next'}
+            {validMax === null ? t('tx.amount.estimateMax') : t('common.next')}
           </Button>
         )}
       </SetAssetAmount>

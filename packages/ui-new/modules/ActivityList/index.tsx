@@ -8,6 +8,7 @@ import NoData from '@assets/icons/no-data.svg';
 import ActivityItem from './ActivityItem';
 import Img from '@assets/images/home-receive.webp';
 import { Image } from 'expo-image';
+import { useTranslation } from 'react-i18next';
 
 const DAY_MILLISECONDS = 1000 * 60 * 60 * 24;
 
@@ -35,6 +36,7 @@ const ActivityList: React.FC<{ onPress?: (v: Tx) => void }> = memo(({ onPress })
   const { colors } = useTheme();
   const finishedTxs = useFinishedTxs();
   const unfinishedTxs = useUnfinishedTxs();
+  const { t } = useTranslation();
 
   const finishedTxsByDay = useMemo(() => {
     let day: number;
@@ -61,7 +63,7 @@ const ActivityList: React.FC<{ onPress?: (v: Tx) => void }> = memo(({ onPress })
     return (
       <>
         <Image style={styles.img} source={Img} contentFit="contain" />
-        <Text style={[styles.noActivityText, { color: colors.textSecondary }]}>No Activity</Text>
+        <Text style={[styles.noActivityText, { color: colors.textSecondary }]}>{t('tab.content.noActivity')}</Text>
       </>
     );
   }

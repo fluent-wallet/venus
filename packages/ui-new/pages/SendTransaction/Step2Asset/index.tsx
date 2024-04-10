@@ -28,6 +28,7 @@ import { Tabs, TabsContent, setSelectAssetScrollY, type Tab } from '@modules/Ass
 import TokenItem from '@modules/AssetsList/TokensList/TokenItem';
 import NFTItem from '@modules/AssetsList/NFTsList/NFTItem';
 import SendTransactionBottomSheet from '../SendTransactionBottomSheet';
+import { Trans, useTranslation } from 'react-i18next';
 
 interface Props {
   navigation?: SendTransactionScreenProps<typeof SendTransactionStep2StackName>['navigation'];
@@ -40,7 +41,7 @@ interface Props {
 const SendTransactionStep2Asset: React.FC<Props> = ({ navigation, route, onConfirm, onClose, selectType = 'Send' }) => {
   const { colors } = useTheme();
   const bottomSheetRef = useRef<BottomSheetMethods>(null!);
-
+  const { t } = useTranslation();
   const [currentTab, setCurrentTab] = useState<Tab>('Tokens');
   const pageViewRef = useRef<PagerView>(null);
   const handleScroll = useCallback((evt: NativeSyntheticEvent<NativeScrollEvent>) => {
@@ -57,7 +58,7 @@ const SendTransactionStep2Asset: React.FC<Props> = ({ navigation, route, onConfi
   const currentAddressValue = useCurrentAddressValue();
   const currentOpenNFTDetail = useCurrentOpenNFTDetail();
   const assets = (selectType === 'Send' ? useAssetsAllList : useTokenListOfCurrentNetwork)();
-  
+
   const [searchAsset, setSearchAsset] = useState(() => route?.params?.searchAddress ?? '');
   const [inFetchingRemote, setInFetchingRemote] = useState(false);
   const [filterAssets, setFilterAssets] = useState<{
@@ -132,7 +133,7 @@ const SendTransactionStep2Asset: React.FC<Props> = ({ navigation, route, onConfi
     if (navigation) {
       if ((asset.type === AssetType.ERC20 || asset.type === AssetType.Native) && (Number(asset.balance) === 0 || isNaN(Number(asset.balance)))) {
         return showMessage({
-          message: `The balance of asset ${asset.symbol} is 0`,
+          message: t('tx.asset.zeroBalance', { symbol: asset.symbol }),
           type: 'warning',
         });
       }
@@ -154,9 +155,9 @@ const SendTransactionStep2Asset: React.FC<Props> = ({ navigation, route, onConfi
       isRoute={!onConfirm}
       index={!onConfirm ? undefined : 0}
       onClose={onClose}
-      showTitle={selectType === 'Receive' ? 'Receive' : undefined}
+      showTitle={selectType === 'Receive' ? 'Receive' : t('tx.send.title')}
     >
-      <Text style={[styles.selectAsset, { color: colors.textSecondary }]}>Select an asset</Text>
+      <Text style={[styles.selectAsset, { color: colors.textSecondary }]}>{t('tx.asset.inputTitle')}</Text>
       <TextInput
         containerStyle={[styles.textinput, { borderColor: !!searchAsset && filterAssets?.type && filterAssets.type.startsWith('invalid') ? colors.down : colors.borderFourth }]}
         showVisible={false}
@@ -164,7 +165,7 @@ const SendTransactionStep2Asset: React.FC<Props> = ({ navigation, route, onConfi
         value={searchAsset}
         onChangeText={(newNickName) => setSearchAsset(newNickName?.trim())}
         isInBottomSheet
-        placeholder="Enter an asset name or address"
+        placeholder={t('tx.asset.placeholder')}
         multiline
       />
 
@@ -203,16 +204,16 @@ const SendTransactionStep2Asset: React.FC<Props> = ({ navigation, route, onConfi
             <Pressable
               style={({ pressed }) => [{ backgroundColor: pressed ? colors.underlay : 'transparent' }]}
               disabled={filterAssets.type !== 'network-error'}
-              testID='retry'
+              testID="retry"
             >
               <Text style={[styles.invalidTip, { color: colors.textPrimary }]}>
                 🚫{'   '}
-                {filterAssets.type === 'invalid-format' && 'Invalid contract address format'}
-                {filterAssets.type === 'invalid-ERC20' && 'Only valid ERC20 token search is supported'}
+                {filterAssets.type === 'invalid-format' && t('tx.asset.error.invalidFormat')}
+                {filterAssets.type === 'invalid-ERC20' && t('tx.asset.error.invalidERC20')}
                 {filterAssets.type === 'network-error' && (
-                  <>
+                  <Trans i18nKey={'tx.asset.error.networkError'}>
                     Your Network is weak, <Text style={{ textDecorationLine: 'underline' }}>click to retry</Text>
-                  </>
+                  </Trans>
                 )}
               </Text>
             </Pressable>

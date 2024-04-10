@@ -9,28 +9,28 @@ import { isSmallDevice } from '@utils/deviceInfo';
 import Img from '@assets/images/backup.webp';
 import BackupBottomSheet from './BackupBottomSheet';
 import { BackupStep1StackName, BackupStep2StackName, type BackupScreenProps } from '@router/configs';
+import { Trans, useTranslation } from 'react-i18next';
 
 const BackupStep1Notice: React.FC<BackupScreenProps<typeof BackupStep1StackName>> = ({ navigation, route }) => {
   const { colors } = useTheme();
+  const { t } = useTranslation();
 
   return (
     <BackupBottomSheet>
       <Image style={styles.img} source={Img} contentFit="contain" />
       <Text style={[styles.notice, { color: colors.textPrimary }]}>Notice</Text>
       <Text style={[styles.description, { color: colors.textPrimary }]}>
-        If you lose your <Text style={[styles.descriptionBold, { color: colors.textNotice }]}>seed phrase</Text> or{' '}
-        <Text style={[styles.descriptionBold, { color: colors.textNotice }]}>private key</Text>, you won’t be able to recover you wallet.
-        {'\n'}
-        {'\n'}
-        Obtaining <Text style={[styles.descriptionBold, { color: colors.textNotice }]}>seed phrase</Text> or{' '}
-        <Text style={[styles.descriptionBold, { color: colors.textNotice }]}>private key</Text> means owning all assets.
-        {'\n'}
-        {'\n'}
-        Please <Text style={[styles.descriptionBold, { color: colors.textNotice }]}>protect</Text> them carefully
+        <Trans i18nKey={'backup.notice.describe'}>
+          If you lose your <Text style={[styles.descriptionBold, { color: colors.textNotice }]}>seed phrase</Text> or
+          <Text style={[styles.descriptionBold, { color: colors.textNotice }]}>private key</Text>, you won’t be able to recover you wallet. Obtaining{' '}
+          <Text style={[styles.descriptionBold, { color: colors.textNotice }]}>seed phrase</Text> or
+          <Text style={[styles.descriptionBold, { color: colors.textNotice }]}>private key</Text> means owning all assets. Please{' '}
+          <Text style={[styles.descriptionBold, { color: colors.textNotice }]}>protect</Text> them carefully
+        </Trans>
       </Text>
 
       <Button testID="next" style={styles.btn} onPress={() => navigation.navigate(BackupStep2StackName, route.params)} size="small">
-        Next
+        {t('common.next')}
       </Button>
     </BackupBottomSheet>
   );

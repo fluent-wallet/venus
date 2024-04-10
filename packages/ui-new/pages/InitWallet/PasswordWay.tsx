@@ -12,6 +12,7 @@ import Checkbox from '@components/Checkbox';
 import { isDev } from '@utils/getEnv';
 import { PasswordWayStackName, HomeStackName, type StackScreenProps } from '@router/configs';
 import createVault from './createVaultWithRouterParams';
+import { Trans, useTranslation } from 'react-i18next';
 
 type FormData = {
   password: string;
@@ -20,6 +21,7 @@ type FormData = {
 
 const PasswordWay: React.FC<StackScreenProps<typeof PasswordWayStackName>> = ({ navigation, route }) => {
   const { colors } = useTheme();
+  const { t } = useTranslation();
 
   const {
     control,
@@ -41,13 +43,13 @@ const PasswordWay: React.FC<StackScreenProps<typeof PasswordWayStackName>> = ({ 
       await plugins.Authentication.setPassword({ password: data.confirm });
       await new Promise((resolve) => setTimeout(() => resolve(null!), 20));
       if (await createVault(route.params, data.confirm)) {
-        showMessage({ type: 'success', message: 'You’ve successfully protected wallet. Remember to keep your Password, it’s your responsibility!' });
+        showMessage({ type: 'success', message: t('initWallet.msg.success') });
         navigation.navigate(HomeStackName);
         navigation.dispatch(CommonActions.reset({ index: 0, routes: [{ name: HomeStackName }] }));
       }
     } catch (err) {
       console.log('Init Wallet by password error: ', err);
-      showMessage({ type: 'failed', message: 'Create wallet failed!', description: String(err) ?? '' });
+      showMessage({ type: 'failed', message: t('initWallet.msg.failed'), description: String(err) ?? '' });
       navigation.navigate(HomeStackName);
       navigation.dispatch(CommonActions.reset({ index: 0, routes: [{ name: HomeStackName }] }));
     } finally {
@@ -60,11 +62,11 @@ const PasswordWay: React.FC<StackScreenProps<typeof PasswordWayStackName>> = ({ 
   return (
     <KeyboardAvoidingView style={[styles.keyboardView, { backgroundColor: colors.bgPrimary }]}>
       <ScrollView contentContainerStyle={styles.container}>
-        <Text style={[styles.title, { color: colors.textPrimary }]}>Set Password</Text>
+        <Text style={[styles.title, { color: colors.textPrimary }]}>{t('initWallet.setPassword')}</Text>
 
-        <Text style={[styles.description, { color: colors.textPrimary }]}>Add security verification to ensure the safety of your funds.</Text>
+        <Text style={[styles.description, { color: colors.textPrimary }]}>{t('initWallet.setPassword.describe')}</Text>
 
-        <Text style={[styles.inputTitle, { color: colors.textPrimary }]}>New Password</Text>
+        <Text style={[styles.inputTitle, { color: colors.textPrimary }]}>{t('initWallet.setPassword.new')}</Text>
         <Controller
           control={control}
           rules={{
@@ -76,9 +78,9 @@ const PasswordWay: React.FC<StackScreenProps<typeof PasswordWayStackName>> = ({ 
           )}
           name="password"
         />
-        <Text style={[styles.inputError, { opacity: errors.password ? 1 : 0, color: colors.down }]}>Must be at least 8 characters.</Text>
+        <Text style={[styles.inputError, { opacity: errors.password ? 1 : 0, color: colors.down }]}>{t('initWallet.setPassword.error.length')}</Text>
 
-        <Text style={[styles.inputTitle, { color: colors.textPrimary, marginTop: 32 }]}>Confirm New Password</Text>
+        <Text style={[styles.inputTitle, { color: colors.textPrimary, marginTop: 32 }]}>{t('initWallet.setPassword.confirm')}</Text>
         <Controller
           control={control}
           rules={{
@@ -95,20 +97,20 @@ const PasswordWay: React.FC<StackScreenProps<typeof PasswordWayStackName>> = ({ 
           name="confirm"
         />
         <Text style={[styles.inputError, { opacity: errors.confirm ? 1 : 0, color: colors.down }]}>
-          {errors.confirm?.type === 'validate' ? 'Password must be match.' : 'Must be at least 8 characters.'}
+          {errors.confirm?.type === 'validate' ? t('initWallet.setPassword.error.notMatch') : t('initWallet.setPassword.error.length')}
         </Text>
 
-        <Pressable testID='checkbox' style={styles.rememberView} onPress={() => setConfirm((pre) => !pre)}>
+        <Pressable testID="checkbox" style={styles.rememberView} onPress={() => setConfirm((pre) => !pre)}>
           <Checkbox checked={confirm} pointerEvents="none" />
           <Text style={[styles.rememberText, { color: colors.textPrimary }]}>
-            ePay Wallet does not store your password.
-            {'\n'}
-            Please <Text style={{ color: colors.textNotice, fontWeight: '600' }}>remember</Text> your password.
+            <Trans i18nKey={'initWallet.setPassword.check'}>
+              ePay Wallet does not store your password. Please <Text style={{ color: colors.textNotice, fontWeight: '600' }}>remember</Text> your password.
+            </Trans>
           </Text>
         </Pressable>
 
         <Button testID="createPasswordButton" style={styles.btn} onPress={handleSubmit(handleCreateVault)} disabled={!confirm} loading={inAsync}>
-          Create Password
+          {t('initWallet.setPassword.create')}
         </Button>
       </ScrollView>
     </KeyboardAvoidingView>
