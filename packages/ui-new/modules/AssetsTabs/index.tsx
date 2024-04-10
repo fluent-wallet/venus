@@ -13,6 +13,7 @@ import TokensList from '@modules/AssetsList/TokensList';
 import NFTsList from '@modules/AssetsList/NFTsList';
 import ActivityList from '@modules/ActivityList';
 import { StickyNFTItem } from '@modules/AssetsList/NFTsList/NFTItem';
+import { useShouldShowNotBackup } from '@pages/Home/NotBackup';
 import { useTranslation } from 'react-i18next';
 
 export type Tab = 'Tokens' | 'NFTs' | 'Activity';
@@ -124,8 +125,9 @@ const mapOfSetScrollY = {
 };
 
 export const StickyNFT: React.FC<{ type: TabsType }> = ({ type }) => {
+  const shouldShowNotBackup = useShouldShowNotBackup();
   const scrollY = mapOfUseTabPageViewScrollY[type]();
-  const startY = useMemo(() => (type === 'Home' ? 200 : 1), [type]);
+  const startY = useMemo(() => (type === 'Home' ? (shouldShowNotBackup ? 324 : 200) : 1), [type]);
   return <StickyNFTItem scrollY={scrollY} startY={startY} tabsType={type} />;
 };
 

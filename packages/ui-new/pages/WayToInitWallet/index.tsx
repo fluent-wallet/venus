@@ -1,5 +1,5 @@
 import React, { useCallback, useRef } from 'react';
-import { ImageBackground, ScrollView, StyleSheet } from 'react-native';
+import { ImageBackground, ScrollView, Keyboard, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTheme } from '@react-navigation/native';
 import { showMessage } from 'react-native-flash-message';
@@ -86,7 +86,12 @@ const WayToInitWallet: React.FC<StackScreenProps<typeof WayToInitWalletStackName
       </ImageBackground>
       <ImportExistingWallet
         bottomSheetRef={bottomSheetRef}
-        onSuccessConfirm={(value) => navigation.navigate(BiometricsWayStackName, { type: 'importExistWallet', value })}
+        onSuccessConfirm={(value) => {
+          navigation.navigate(BiometricsWayStackName, { type: 'importExistWallet', value });
+          if (Keyboard.isVisible()) {
+            Keyboard.dismiss();
+          }
+        }}
       />
     </>
   );

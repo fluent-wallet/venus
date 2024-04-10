@@ -1,5 +1,5 @@
 import { useState, useMemo, useCallback, useRef, forwardRef, useEffect, isValidElement, type Component } from 'react';
-import { View, TextInput, StyleSheet, Pressable, Platform, type TextInputProps, type ViewStyle, type StyleProp } from 'react-native';
+import { View, TextInput, StyleSheet, Pressable, Platform, Keyboard, type TextInputProps, type ViewStyle, type StyleProp } from 'react-native';
 import { useTheme } from '@react-navigation/native';
 import { type SvgProps } from 'react-native-svg';
 import composeRef from '@cfx-kit/react-utils/dist/composeRef';
@@ -47,8 +47,9 @@ const CustomTextInput = forwardRef<TextInput, Props>(
     const [hasValue, setHasValue] = useState(() => (value !== undefined ? !!value : defaultHasValue ?? isDev));
     const handleChangeText = useCallback(
       (text: string) => {
-        setHasValue(text?.length > 0);
-        onChangeText?.(text);
+        const filterText = text.replace(/[^\w\s.:]/gi, '');
+        setHasValue(filterText?.length > 0);
+        onChangeText?.(filterText);
       },
       [onChangeText],
     );
@@ -89,7 +90,17 @@ const CustomTextInput = forwardRef<TextInput, Props>(
           </Pressable>
         )}
         {showVisible && !disabled && (
-          <Pressable onPress={() => setVisible((pre) => !pre)}>
+          <Pressable
+            onPress={() => {
+              inputRef.current?.blur();
+              setVisible((pre) => !pre);
+              setTimeout(() => {
+                if (!Keyboard.isVisible()) {
+                  inputRef.current?.focus();
+                }
+              }, 200);
+            }}
+          >
             {visible ? (
               <EyeClose style={[styles.icon]} color={hasValue ? colors.iconPrimary : colors.iconThird} />
             ) : (

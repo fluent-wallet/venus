@@ -10,30 +10,31 @@ import { HomeStackName, BackupStackName, BackupStep1StackName, type StackScreenP
 import Img from '@assets/images/fundsAtRisk.webp';
 import { Trans, useTranslation } from 'react-i18next';
 
+export const useShouldShowNotBackup = () => {
+  const currentAccount = useCurrentAccount();
+  const vault = useVaultOfAccount(currentAccount?.id);
+  const accountGroup = useGroupOfAccount(currentAccount?.id);
+  return !(!vault || !accountGroup || vault.type !== VaultType.HierarchicalDeterministic || vault.source === VaultSourceType.IMPORT_BY_USER || vault.isBackup);
+};
+
 const NotBackup: React.FC<{ navigation: StackScreenProps<typeof HomeStackName>['navigation'] }> = ({ navigation }) => {
   const { t } = useTranslation();
   const { colors } = useTheme();
+  const shouldShowNotBackup = useShouldShowNotBackup();
   const account = useCurrentAccount();
-  const vault = useVaultOfAccount(account?.id);
   const accountGroup = useGroupOfAccount(account?.id);
+
   useForceUpdateOnFocus(navigation);
 
-  if (!vault || !accountGroup || vault.type !== VaultType.HierarchicalDeterministic || vault.source === VaultSourceType.IMPORT_BY_USER || vault.isBackup)
-    return null;
+  if (!shouldShowNotBackup) return null;
   return (
-    <Pressable
-      style={({ pressed }) => [styles.container, { borderColor: colors.borderThird, backgroundColor: pressed ? colors.underlay : 'transparent' }]}
-      disabled={!accountGroup}
-      onPress={() => navigation.navigate(BackupStackName, { screen: BackupStep1StackName, params: { groupId: accountGroup.id } })}
-      testID="backup"
-    >
-      <View
-        style={[
-          styles.content,
-          {
-            borderColor: colors.borderPrimary,
-          },
-        ]}
+    <>
+      <View style={[styles.divider, { backgroundColor: colors.borderThird }]} pointerEvents="none" />
+      <Pressable
+        style={({ pressed }) => [styles.container, { backgroundColor: pressed ? colors.underlay : 'transparent', borderColor: colors.borderPrimary }]}
+        disabled={!accountGroup}
+        onPress={() => navigation.navigate(BackupStackName, { screen: BackupStep1StackName, params: { groupId: accountGroup?.id } })}
+        testID="backup"
       >
         <Image style={styles.img} source={Img} />
         <View style={styles.textArea}>
@@ -45,32 +46,26 @@ const NotBackup: React.FC<{ navigation: StackScreenProps<typeof HomeStackName>['
             </Trans>
           </Text>
         </View>
-      </View>
-    </Pressable>
+      </Pressable>
+    </>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
-    marginBottom: 24,
-    display: 'flex',
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-    // height: 96,
-    paddingHorizontal: 16,
-    paddingTop: 16,
-    borderTopWidth: 1,
+  divider: {
+    marginBottom: 16,
+    height: 1,
   },
-  content: {
+  container: {
+    marginHorizontal: 16,
+    marginBottom: 20,
     borderWidth: 1,
     borderRadius: 8,
-    paddingTop: 8,
-    paddingRight: 7,
-    paddingBottom: 9,
-    paddingLeft: 7,
+    height: 80,
+    paddingHorizontal: 12,
     display: 'flex',
     flexDirection: 'row',
+    alignItems: 'center',
   },
   img: {
     flexShrink: 0,

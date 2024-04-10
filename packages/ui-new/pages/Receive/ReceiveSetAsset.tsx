@@ -15,16 +15,16 @@ import { useTranslation } from 'react-i18next';
 
 interface Props {
   selectedAsset: AssetInfo | null;
-  setSelectedAsset: (asset: AssetInfo | null) => void;
   amount: string;
   onConfirm: (params: { asset: AssetInfo; amount?: string }) => void;
   onClose: () => void;
 }
 
-const ReceiveSetAsset: React.FC<Props> = ({ onConfirm, selectedAsset, setSelectedAsset, amount, onClose }) => {
+const ReceiveSetAsset: React.FC<Props> = ({ onConfirm, selectedAsset, amount, onClose }) => {
   const { colors } = useTheme();
   const { t } = useTranslation();
   const bottomSheetRef = useRef<BottomSheetMethods>(null!);
+  const [tempSelectAsset, setTempSelectAsset] = useState<AssetInfo | null>(() => selectedAsset);
   const [showSelectAsset, setShowSelectAsset] = useState(false);
   const currentAddressValue = useCurrentAddressValue()!;
 
@@ -33,12 +33,12 @@ const ReceiveSetAsset: React.FC<Props> = ({ onConfirm, selectedAsset, setSelecte
     const initNativeAsset = async () => {
       const nativeAsset = await currentNetwork.nativeAsset;
       if (nativeAsset) {
-        setSelectedAsset(nativeAsset as unknown as AssetInfo);
+        setTempSelectAsset(nativeAsset as unknown as AssetInfo);
       }
       return !!nativeAsset;
     };
 
-    if (selectedAsset === null && !!currentNetwork) {
+    if (tempSelectAsset === null && !!currentNetwork) {
       initNativeAsset().then((success) => {
         if (!success) {
           setTimeout(() => initNativeAsset(), 50);
@@ -58,21 +58,23 @@ const ReceiveSetAsset: React.FC<Props> = ({ onConfirm, selectedAsset, setSelecte
           onPress={() => setShowSelectAsset(true)}
           testID="selectAsset"
         >
-          {selectedAsset && (
+          {tempSelectAsset && (
             <>
-              <TokenIcon style={styles.assetIcon} source={selectedAsset?.icon} />
-              <Text style={[styles.assetSymbol, { color: colors.textPrimary }]}>{selectedAsset.symbol}</Text>
-              {selectedAsset.name !== selectedAsset.symbol && <Text style={[styles.assetSymbol, { color: colors.textSecondary }]}>{selectedAsset.name}</Text>}
+              <TokenIcon style={styles.assetIcon} source={tempSelectAsset?.icon} />
+              <Text style={[styles.assetSymbol, { color: colors.textPrimary }]}>{tempSelectAsset.symbol}</Text>
+              {tempSelectAsset.name !== tempSelectAsset.symbol && (
+                <Text style={[styles.assetSymbol, { color: colors.textSecondary }]}>{tempSelectAsset.name}</Text>
+              )}
               <ArrowRigiht color={colors.iconPrimary} style={styles.assetArrow} />
             </>
           )}
-          {!selectedAsset && <Text style={[styles.assetSymbol, { color: colors.textSecondary }]}>{t('receive.clickHereToSelect')}</Text>}
+          {!tempSelectAsset && <Text style={[styles.assetSymbol, { color: colors.textSecondary }]}>{t('receive.clickHereToSelect')}</Text>}
         </Pressable>
 
-        {selectedAsset && (
+        {tempSelectAsset && (
           <>
             <Text style={[styles.text, styles.amount, { color: colors.textSecondary }]}>{t('common.amount')}</Text>
-            <SetAssetAmount targetAddress={currentAddressValue} asset={selectedAsset} isReceive defaultAmount={amount}>
+            <SetAssetAmount targetAddress={currentAddressValue} asset={tempSelectAsset} isReceive defaultAmount={amount}>
               {({ amount, isAmountValid }) => (
                 <Button
                   testID="continue"
@@ -86,7 +88,7 @@ const ReceiveSetAsset: React.FC<Props> = ({ onConfirm, selectedAsset, setSelecte
                     } else {
                       bottomSheetRef.current?.close();
                     }
-                    onConfirm({ asset: selectedAsset, amount });
+                    onConfirm({ asset: tempSelectAsset, amount });
                   }}
                 >
                   {t('common.continue')}
@@ -95,13 +97,13 @@ const ReceiveSetAsset: React.FC<Props> = ({ onConfirm, selectedAsset, setSelecte
             </SetAssetAmount>
           </>
         )}
-        {!selectedAsset && (
+        {!tempSelectAsset && (
           <Button style={styles.btn} size="small" onPress={() => setShowSelectAsset(true)}>
             {t('receive.selectAsset')}
           </Button>
         )}
       </BottomSheet>
-      {showSelectAsset && <SelectAsset selectType="Receive" onConfirm={(asset) => setSelectedAsset(asset)} onClose={() => setShowSelectAsset(false)} />}
+      {showSelectAsset && <SelectAsset selectType="Receive" onConfirm={(asset) => setTempSelectAsset(asset)} onClose={() => setShowSelectAsset(false)} />}
     </>
   );
 };
