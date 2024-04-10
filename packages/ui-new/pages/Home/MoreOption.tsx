@@ -8,12 +8,14 @@ import Earth from '@assets/icons/earth.svg';
 import Clipboard from '@react-native-clipboard/clipboard';
 import { showMessage } from 'react-native-flash-message';
 import { CFX_ESPACE_MAINNET_CHAINID, CFX_ESPACE_TESTNET_CHAINID } from '@core/consts/network';
+import { useTranslation } from 'react-i18next';
 const MoreOption: React.FC<{ children: React.ReactElement }> = ({ children }) => {
   const { reverseColors } = useTheme();
   const currentAddressValue = useCurrentAddressValue();
   const currentNetwork = useCurrentNetwork();
   const [visible, setVisible] = useState(false);
   const position = useSharedValue({ right: 0, top: 0 });
+  const { t } = useTranslation();
 
   const handleLayout = useCallback(
     (event: LayoutChangeEvent) => {
@@ -52,7 +54,7 @@ const MoreOption: React.FC<{ children: React.ReactElement }> = ({ children }) =>
   const handleCoy = useCallback(() => {
     Clipboard.setString(currentAddressValue ?? '');
     showMessage({
-      message: 'Copied!',
+      message: t('common.copied'),
       type: 'success',
       duration: 1500,
     });
@@ -67,13 +69,13 @@ const MoreOption: React.FC<{ children: React.ReactElement }> = ({ children }) =>
           <Animated.View style={[styles.options, optionStyle, { backgroundColor: reverseColors.borderThird }]}>
             <Pressable onPress={handleOpenScan} testID="">
               <View style={styles.optionItem} testID="view">
-                <Text style={[{ color: reverseColors.textPrimary }, styles.optionItemText]}>View in explorer</Text>
+                <Text style={[{ color: reverseColors.textPrimary }, styles.optionItemText]}>{t('home.more.viewInExplorer')}</Text>
                 <Earth color={reverseColors.textPrimary} width={22} height={22} />
               </View>
             </Pressable>
             <Pressable onPress={handleCoy} testID="copy">
               <View style={styles.optionItem}>
-                <Text style={[{ color: reverseColors.textPrimary }, styles.optionItemText]}>Copy address</Text>
+                <Text style={[{ color: reverseColors.textPrimary }, styles.optionItemText]}>{t('home.more.copyAddress')}</Text>
                 <Copy color={reverseColors.textPrimary} width={20} height={20} />
               </View>
             </Pressable>

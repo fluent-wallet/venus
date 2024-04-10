@@ -3,6 +3,7 @@ import { View, StyleSheet } from 'react-native';
 import { useTheme } from '@react-navigation/native';
 import BottomSheet, { snapPoints as defaultSnapPoints } from '@components/BottomSheet';
 import Text from '@components/Text';
+import { useTranslation } from 'react-i18next';
 
 interface Props extends ComponentProps<typeof BottomSheet> {
   children: React.ReactNode;
@@ -11,11 +12,12 @@ interface Props extends ComponentProps<typeof BottomSheet> {
 
 const BackupBottomSheet: React.FC<Props> = ({ children, snapPoints, showTitle = true, ...props }) => {
   const { colors } = useTheme();
+  const {t} = useTranslation()
 
   return (
     <BottomSheet snapPoints={snapPoints || defaultSnapPoints.large} isRoute {...props}>
       <View style={styles.container}>
-        {showTitle && <Text style={[styles.title, { color: colors.textPrimary }]}>Back Up</Text>}
+        {showTitle && <Text style={[styles.title, { color: colors.textPrimary }]}>{t('backup.title')}</Text>}
         {children}
       </View>
     </BottomSheet>

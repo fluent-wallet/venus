@@ -15,9 +15,11 @@ import { AccountSettingStackName, BackupStackName, BackupStep1StackName, type St
 import ArrowRight from '@assets/icons/arrow-right2.svg';
 import Delete from '@assets/icons/delete.svg';
 import DeleteConfirm from './DeleteConfirm';
+import { useTranslation } from 'react-i18next';
 
 const AccountConfig: React.FC<StackScreenProps<typeof AccountSettingStackName>> = ({ navigation, route }) => {
   const { colors, mode } = useTheme();
+  const { t } = useTranslation();
   const bottomSheetRef = useRef<BottomSheetMethods>(null!);
 
   const account = useAccountFromId(route.params.accountId);
@@ -42,7 +44,7 @@ const AccountConfig: React.FC<StackScreenProps<typeof AccountSettingStackName>> 
     if (!account) return;
     if (account.selected) {
       showMessage({
-        message: "Selected account can't remove.",
+        message: t('account.remove.error.removeInUse'),
         type: 'warning',
       });
     } else {
@@ -61,7 +63,7 @@ const AccountConfig: React.FC<StackScreenProps<typeof AccountSettingStackName>> 
         await methods.deleteVault(vault);
       }
       showMessage({
-        message: 'Remove account successfully',
+        message: t('account.remove.successfully'),
         type: 'success',
       });
       setTimeout(() => bottomSheetRef.current?.close());
@@ -71,7 +73,7 @@ const AccountConfig: React.FC<StackScreenProps<typeof AccountSettingStackName>> 
         return;
       }
       showMessage({
-        message: 'Remove account failed',
+        message: t('account.remove.error.feiled'),
         description: String(err ?? ''),
         type: 'warning',
       });
@@ -83,10 +85,10 @@ const AccountConfig: React.FC<StackScreenProps<typeof AccountSettingStackName>> 
     <>
       <BottomSheet ref={bottomSheetRef} snapPoints={snapPoints.large} isRoute>
         <View style={styles.container}>
-          <Text style={[styles.title, styles.mainText, { color: colors.textPrimary }]}>Account</Text>
-          <Text style={[styles.description, { color: colors.textSecondary }]}>Address</Text>
+          <Text style={[styles.title, styles.mainText, { color: colors.textPrimary }]}>{t('account.detail.title')}</Text>
+          <Text style={[styles.description, { color: colors.textSecondary }]}>{t('account.detail.address')}</Text>
           <Text style={[styles.address, styles.mainText, { color: colors.textPrimary, opacity: addressValue ? 1 : 0 }]}>{addressValue || zeroAddress}</Text>
-          <Text style={[styles.description, { color: colors.textSecondary }]}>Account Name</Text>
+          <Text style={[styles.description, { color: colors.textSecondary }]}>{t('account.detail.accountName')}</Text>
           <TextInput
             containerStyle={[styles.textinput, { borderColor: colors.borderFourth }]}
             showVisible={false}
@@ -97,13 +99,13 @@ const AccountConfig: React.FC<StackScreenProps<typeof AccountSettingStackName>> 
           />
           {(vault?.type === VaultType.HierarchicalDeterministic || vault?.type === VaultType.PrivateKey) && (
             <>
-              <Text style={[styles.description, styles.backupDescription, { color: colors.textSecondary }]}>Backup</Text>
+              <Text style={[styles.description, styles.backupDescription, { color: colors.textSecondary }]}>{t('common.backup')}</Text>
               <Pressable
                 style={({ pressed }) => [styles.row, { backgroundColor: pressed ? colors.underlay : 'transparent' }]}
                 onPress={() => navigation.navigate(BackupStackName, { screen: BackupStep1StackName, params: { accountId: route.params.accountId } })}
-                testID='privateKey'
+                testID="privateKey"
               >
-                <Text style={[styles.mainText, styles.backupText, { color: colors.textPrimary }]}>Private Key</Text>
+                <Text style={[styles.mainText, styles.backupText, { color: colors.textPrimary }]}>{t('common.privateKey')}</Text>
                 <ArrowRight color={colors.iconPrimary} />
               </Pressable>
             </>
@@ -111,10 +113,10 @@ const AccountConfig: React.FC<StackScreenProps<typeof AccountSettingStackName>> 
           <Pressable
             style={({ pressed }) => [styles.row, styles.removeContainer, { backgroundColor: pressed ? colors.underlay : 'transparent' }]}
             onPress={handlePressDelete}
-            testID='removeAccount'
+            testID="removeAccount"
           >
             <Checkbox checked Icon={Delete} pointerEvents="none" />
-            <Text style={[styles.mainText, styles.removeText, { color: colors.textPrimary }]}>Remove Account</Text>
+            <Text style={[styles.mainText, styles.removeText, { color: colors.textPrimary }]}>{t('account.action.remove')}</Text>
           </Pressable>
 
           <Button
@@ -124,7 +126,7 @@ const AccountConfig: React.FC<StackScreenProps<typeof AccountSettingStackName>> 
             onPress={handleUpdateAccountNickName}
             size="small"
           >
-            OK
+            {t('common.ok')}
           </Button>
         </View>
       </BottomSheet>

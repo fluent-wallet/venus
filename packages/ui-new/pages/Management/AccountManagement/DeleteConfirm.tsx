@@ -5,6 +5,7 @@ import Text from '@components/Text';
 import Button from '@components/Button';
 import BottomSheet, { BottomSheetMethods } from '@components/BottomSheet';
 import { screenHeight } from '@utils/deviceInfo';
+import { useTranslation } from 'react-i18next';
 
 interface Props {
   onConfirm: () => void;
@@ -13,34 +14,29 @@ interface Props {
 
 const DeleteConfirm: React.FC<Props> = ({ onConfirm, onClose }) => {
   const { colors } = useTheme();
+  const { t } = useTranslation();
   const bottomSheetRef = useRef<BottomSheetMethods>(null!);
 
   return (
     <BottomSheet ref={bottomSheetRef} snapPoints={snapPoints} index={0} onClose={onClose}>
       <View style={styles.container}>
-        <Text style={[styles.title, { color: colors.textPrimary }]}>⚠️ Confirm to delete{'\n'}this wallet?</Text>
-        <Text style={[styles.description, { color: colors.textSecondary }]}>
-          This Action will remove this wallet from the app.{'\n'}
-          {'\n'}
-          App can not restore your wallet, you can restore with its seed phrase / private key.{'\n'}
-          {'\n'}
-          Be sure to back up your wallet, otherwise you will permanently lose it and all assets.
-        </Text>
+        <Text style={[styles.title, { color: colors.textPrimary }]}>{t('account.action.remove.title')}</Text>
+        <Text style={[styles.description, { color: colors.textSecondary }]}>{t('account.action.remove.describe')}</Text>
 
         <View style={styles.btnArea}>
-          <Button testID='cancel' style={styles.btn} onPress={() => bottomSheetRef.current?.close()}>
-            Cancel
+          <Button testID="cancel" style={styles.btn} onPress={() => bottomSheetRef.current?.close()}>
+            {t('common.cancel')}
           </Button>
           <Button
-            testID='delete'
+            testID="delete"
             style={[styles.btn, { backgroundColor: colors.down }]}
             onPress={() => {
               bottomSheetRef.current?.close();
               onConfirm();
             }}
-            size='small'
+            size="small"
           >
-            ⚠️ Delete
+            ⚠️ {t('common.delete')}
           </Button>
         </View>
       </View>

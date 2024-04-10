@@ -1,6 +1,6 @@
 {
   "name": "venus",
-  "version": "0.2.5",
+  "version": "0.2.6",
   "private": true,
   "scripts": {
     "android": "react-native run-android --tasks installDevDebug",
@@ -43,6 +43,7 @@
     "expo-barcode-scanner": "~12.9.3",
     "expo-image": "^1.10.6",
     "expo-image-picker": "~14.7.1",
+    "expo-localization": "~14.8.3",
     "fast-text-encoding": "^1.0.6",
     "i18next": "^23.7.16",
     "intl-pluralrules": "^2.0.1",

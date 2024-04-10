@@ -9,10 +9,12 @@ import Button from '@components/Button';
 import { BackupStep3StackName, BackupSuccessStackName, type BackupScreenProps } from '@router/configs';
 import BackupBottomSheet from './BackupBottomSheet';
 import { useVaultFromId } from '@core/WalletCore/Plugins/ReactInject';
+import { useTranslation } from 'react-i18next';
 
 type Ele = string | null;
 const BackupStep3RandomCheck: React.FC<BackupScreenProps<typeof BackupStep3StackName>> = ({ route, navigation }) => {
   const { colors } = useTheme();
+  const { t } = useTranslation();
   const { phrases, vaultId } = route.params;
   const vault = useVaultFromId(vaultId);
 
@@ -38,10 +40,12 @@ const BackupStep3RandomCheck: React.FC<BackupScreenProps<typeof BackupStep3Stack
 
   return (
     <BackupBottomSheet>
-      <Text style={[styles.title, { color: colors.textPrimary }]}>Verify your seed phrase</Text>
+      <Text style={[styles.title, { color: colors.textPrimary }]}>{t('backup.verify.title')}</Text>
       {mixers.map(({ originIndex, mixer }, index) => (
         <Fragment key={index}>
-          <Text style={[styles.text, { marginHorizontal: 16, color: colors.textPrimary }]}>Word #{originIndex + 1}</Text>
+          <Text style={[styles.text, { marginHorizontal: 16, color: colors.textPrimary }]}>
+            {t('backup.verify.word')} #{originIndex + 1}
+          </Text>
           <View style={styles.wordsWrapper}>
             {mixer.map((word) => (
               <Pressable
@@ -56,7 +60,7 @@ const BackupStep3RandomCheck: React.FC<BackupScreenProps<typeof BackupStep3Stack
                   styles.word,
                   { backgroundColor: selectedWords[index] === word ? colors.bgSelect : pressed ? colors.bgSelect : 'transparent', opacity: pressed ? 0.75 : 1 },
                 ]}
-                testID='word'
+                testID="word"
               >
                 <Text style={[styles.text, { color: colors.textPrimary }]}>{word}</Text>
               </Pressable>

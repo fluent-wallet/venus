@@ -10,6 +10,7 @@ import Button from '@components/Button';
 import Text from '@components/Text';
 import BottomSheet, { BottomSheetTextInput, type BottomSheetMethods } from '@components/BottomSheet';
 import { screenHeight, isAdjustResize } from '@utils/deviceInfo';
+import { useTranslation } from 'react-i18next';
 export { BottomSheetMethods };
 
 interface Props {
@@ -24,6 +25,7 @@ interface Status {
 
 const ImportExistingWallet: React.FC<Props> = ({ bottomSheetRef, onSuccessConfirm }) => {
   const { colors } = useTheme();
+  const { t } = useTranslation();
 
   const textInputRef = useRef<TextInput>(null!);
   const existWalletValueRef = useRef('');
@@ -33,13 +35,13 @@ const ImportExistingWallet: React.FC<Props> = ({ bottomSheetRef, onSuccessConfir
     const value = String(existWalletValueRef.current).trim();
     let statusRes: Status;
     if (!value) {
-      statusRes = { type: 'error', message: 'Input cannot be empty' };
+      statusRes = { type: 'error', message: t('wallet.import.error.empty') };
     } else if (Mnemonic.isValidMnemonic(value)) {
-      statusRes = { type: 'success', message: 'Valid seed phrase' };
+      statusRes = { type: 'success', message: t('wallet.import.error.validPhrase') };
     } else if (secp.utils.isValidPrivateKey(stripHexPrefix(value))) {
-      statusRes = { type: 'success', message: 'Valid private key' };
+      statusRes = { type: 'success', message: t('wallet.import.error.validPrivateKey') };
     } else {
-      statusRes = { type: 'error', message: 'Invalid seed phrase or private key' };
+      statusRes = { type: 'error', message: t('wallet.import.error.unknown') };
     }
     setStatus(statusRes);
     return statusRes;
@@ -92,7 +94,7 @@ const ImportExistingWallet: React.FC<Props> = ({ bottomSheetRef, onSuccessConfir
         >
           <BottomSheetTextInput
             ref={textInputRef as any}
-            style={[styles.input, { color: colors.textPrimary }]}
+            style={[styles.input, { color: colors.textPrimary, borderColor: colors.borderFourth }]}
             placeholderTextColor={colors.textSecondary}
             testID="existingWalletInput"
             underlineColorAndroid="transparent"
@@ -100,7 +102,7 @@ const ImportExistingWallet: React.FC<Props> = ({ bottomSheetRef, onSuccessConfir
             editable
             multiline
             numberOfLines={6}
-            placeholder="Enter your seed phrase which words separated by space or private key"
+            placeholder={t('wallet.import.placeholder')}
             onChangeText={(value) => {
               setStatus(null);
               existWalletValueRef.current = value;
@@ -111,7 +113,7 @@ const ImportExistingWallet: React.FC<Props> = ({ bottomSheetRef, onSuccessConfir
             {status?.message || 'placeholder'}
           </Text>
           <Button testID="confirmImportExistingWallet" style={styles.btn} onPress={handleConfirm} loading={inAsync}>
-            Confirm
+            {t('common.confirm')}
           </Button>
         </Pressable>
       </View>
@@ -132,7 +134,6 @@ const styles = StyleSheet.create({
     width: '100%',
     height: 120,
     borderWidth: 1,
-    borderColor: '#E5E5E5',
     justifyContent: 'flex-start',
     paddingHorizontal: 12,
   },

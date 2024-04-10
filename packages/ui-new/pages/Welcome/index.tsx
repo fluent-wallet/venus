@@ -13,9 +13,10 @@ import WelcomeBgDark from '@assets/images/welcome-bg-dark.webp';
 // import WelcomeTextLight from '@assets/images/enter-web3-text-light.webp';
 import WelcomeTextDark from '@assets/images/enter-web3-text-dark.webp';
 import ImgNew from '@assets/images/enter-web3-img-new.webp';
+import { useTranslation } from 'react-i18next';
 
 const Welcome: React.FC<StackScreenProps<typeof WelcomeStackName>> = ({ navigation }) => {
-  const { mode, colors } = useTheme();
+  const { t } = useTranslation();
 
   return (
     <ImageBackground source={WelcomeBgDark} style={styles.bg} resizeMode="cover">
@@ -35,7 +36,7 @@ const Welcome: React.FC<StackScreenProps<typeof WelcomeStackName>> = ({ navigati
             onPress={() => navigation.navigate(WayToInitWalletStackName)}
             mode="dark"
           >
-            Get Started
+            {t('welcome.getStarted')}
           </Button>
         </SafeAreaView>
       </ScrollView>

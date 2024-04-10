@@ -8,6 +8,7 @@ import useForceUpdateOnFocus from '@hooks/useUpdateOnFocus';
 import { HomeStackName, BackupStackName, BackupStep1StackName, type StackScreenProps } from '@router/configs';
 // import Img from '@assets/images/welcome-img.webp';
 import Img from '@assets/images/fundsAtRisk.webp';
+import { Trans, useTranslation } from 'react-i18next';
 
 export const useShouldShowNotBackup = () => {
   const currentAccount = useCurrentAccount();
@@ -17,6 +18,7 @@ export const useShouldShowNotBackup = () => {
 };
 
 const NotBackup: React.FC<{ navigation: StackScreenProps<typeof HomeStackName>['navigation'] }> = ({ navigation }) => {
+  const { t } = useTranslation();
   const { colors } = useTheme();
   const shouldShowNotBackup = useShouldShowNotBackup();
   const account = useCurrentAccount();
@@ -36,10 +38,12 @@ const NotBackup: React.FC<{ navigation: StackScreenProps<typeof HomeStackName>['
       >
         <Image style={styles.img} source={Img} />
         <View style={styles.textArea}>
-          <Text style={[styles.title, { color: colors.textPrimary }]}>Funds at risk</Text>
+          <Text style={[styles.title, { color: colors.textPrimary }]}>{t('home.backup.title')}</Text>
           <Text style={[styles.description, { color: colors.textSecondary }]}>
-            You need to back up your phrase to ensure the security of your wallet.{' '}
-            <Text style={{ color: colors.textNotice, textDecorationColor: colors.textNotice, textDecorationLine: 'underline' }}>Back Up{'>'}</Text>
+            <Trans i18nKey={'home.backup.describe'}>
+              You need to back up your phrase to ensure the security of your wallet.
+              <Text style={{ color: colors.textNotice, textDecorationColor: colors.textNotice, textDecorationLine: 'underline' }}>Back Up{'>'}</Text>
+            </Trans>
           </Text>
         </View>
       </Pressable>

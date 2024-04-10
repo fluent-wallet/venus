@@ -6,6 +6,7 @@ import AccountsList from '@modules/AccountsList';
 import Text from '@components/Text';
 import BottomSheet, { snapPoints, type BottomSheetMethods } from '@components/BottomSheet';
 import { AccountManagementStackName, HomeStackName, type StackScreenProps } from '@router/configs';
+import { useTranslation } from 'react-i18next';
 export { type BottomSheetMethods };
 
 interface Props {
@@ -14,6 +15,7 @@ interface Props {
 
 const AccountSelector: React.FC<Props> = ({ onClose }) => {
   const { colors } = useTheme();
+  const { t } = useTranslation();
   const navigation = useNavigation<StackScreenProps<typeof HomeStackName>['navigation']>();
 
   const bottomSheetRef = useRef<BottomSheetMethods>(null!);
@@ -22,13 +24,13 @@ const AccountSelector: React.FC<Props> = ({ onClose }) => {
     <BottomSheet ref={bottomSheetRef} snapPoints={snapPoints.percent75} index={0} onClose={onClose}>
       <View style={styles.container}>
         <View style={styles.header}>
-          <Text style={[styles.title, { color: colors.textPrimary }]}>Account</Text>
+          <Text style={[styles.title, { color: colors.textPrimary }]}>{t('common.account')}</Text>
           <Pressable
-            testID='edit'
+            testID="edit"
             style={({ pressed }) => [styles.edit, { borderColor: colors.borderThird, backgroundColor: pressed ? colors.underlay : 'transparent' }]}
             onPress={() => navigation.navigate(AccountManagementStackName)}
           >
-            <Text style={[styles.title, { color: colors.textPrimary }]}>⚙️ Edit</Text>
+            <Text style={[styles.title, { color: colors.textPrimary }]}>⚙️ {t('common.edit')}</Text>
           </Pressable>
         </View>
         <AccountsList

@@ -11,6 +11,7 @@ import TokenIcon from '@modules/AssetsList/TokensList/TokenIcon';
 import SelectAsset from '@pages/SendTransaction/Step2Asset';
 import SetAssetAmount from '@pages/SendTransaction/Step3Amount/SetAssetAmount';
 import ArrowRigiht from '@assets/icons/arrow-right2.svg';
+import { useTranslation } from 'react-i18next';
 
 interface Props {
   selectedAsset: AssetInfo | null;
@@ -21,7 +22,7 @@ interface Props {
 
 const ReceiveSetAsset: React.FC<Props> = ({ onConfirm, selectedAsset, amount, onClose }) => {
   const { colors } = useTheme();
-
+  const { t } = useTranslation();
   const bottomSheetRef = useRef<BottomSheetMethods>(null!);
   const [tempSelectAsset, setTempSelectAsset] = useState<AssetInfo | null>(() => selectedAsset);
   const [showSelectAsset, setShowSelectAsset] = useState(false);
@@ -49,9 +50,9 @@ const ReceiveSetAsset: React.FC<Props> = ({ onConfirm, selectedAsset, amount, on
   return (
     <>
       <BottomSheet ref={bottomSheetRef} snapPoints={snapPoints.large} index={0} onClose={onClose} style={styles.container}>
-        <Text style={[styles.title, { color: colors.textPrimary }]}>Receive</Text>
+        <Text style={[styles.title, { color: colors.textPrimary }]}>{t('receive.title')}</Text>
 
-        <Text style={[styles.text, styles.to, { color: colors.textSecondary }]}>Select an asset</Text>
+        <Text style={[styles.text, styles.to, { color: colors.textSecondary }]}>{t('receive.selectAnAsset')}</Text>
         <Pressable
           style={({ pressed }) => [styles.assetWrapper, { backgroundColor: pressed ? colors.underlay : 'transparent' }]}
           onPress={() => setShowSelectAsset(true)}
@@ -67,12 +68,12 @@ const ReceiveSetAsset: React.FC<Props> = ({ onConfirm, selectedAsset, amount, on
               <ArrowRigiht color={colors.iconPrimary} style={styles.assetArrow} />
             </>
           )}
-          {!tempSelectAsset && <Text style={[styles.assetSymbol, { color: colors.textSecondary }]}>Click Here to select</Text>}
+          {!tempSelectAsset && <Text style={[styles.assetSymbol, { color: colors.textSecondary }]}>{t('receive.clickHereToSelect')}</Text>}
         </Pressable>
 
         {tempSelectAsset && (
           <>
-            <Text style={[styles.text, styles.amount, { color: colors.textSecondary }]}>Amount</Text>
+            <Text style={[styles.text, styles.amount, { color: colors.textSecondary }]}>{t('common.amount')}</Text>
             <SetAssetAmount targetAddress={currentAddressValue} asset={tempSelectAsset} isReceive defaultAmount={amount}>
               {({ amount, isAmountValid }) => (
                 <Button
@@ -90,7 +91,7 @@ const ReceiveSetAsset: React.FC<Props> = ({ onConfirm, selectedAsset, amount, on
                     onConfirm({ asset: tempSelectAsset, amount });
                   }}
                 >
-                  Continue
+                  {t('common.continue')}
                 </Button>
               )}
             </SetAssetAmount>
@@ -98,7 +99,7 @@ const ReceiveSetAsset: React.FC<Props> = ({ onConfirm, selectedAsset, amount, on
         )}
         {!tempSelectAsset && (
           <Button style={styles.btn} size="small" onPress={() => setShowSelectAsset(true)}>
-            Select Asset
+            {t('receive.selectAsset')}
           </Button>
         )}
       </BottomSheet>

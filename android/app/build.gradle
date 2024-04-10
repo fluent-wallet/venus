@@ -92,8 +92,8 @@ android {
         applicationId "com.wallet"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 12
-        versionName "0.2.5"
+        versionCode 13
+        versionName "0.2.6"
         resValue "string", "build_config_package", "com.wallet"
     }
     signingConfigs {
