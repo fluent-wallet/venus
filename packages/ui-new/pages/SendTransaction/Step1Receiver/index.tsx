@@ -15,9 +15,11 @@ import { type ETHURL } from '@utils/ETHURL';
 import QrCode from '@assets/icons/qr-code.svg';
 import SendTransactionBottomSheet from '../SendTransactionBottomSheet';
 import Contract from './Contract';
+import { Trans, useTranslation } from 'react-i18next';
 
 const SendTransactionStep1Receiver: React.FC<SendTransactionScreenProps<typeof SendTransactionStep1StackName>> = ({ navigation }) => {
   const { colors } = useTheme();
+  const { t } = useTranslation();
   const _currentNetwork = useCurrentNetwork();
   const [showScanQRCode, setShowScanQRCode] = useState(false);
 
@@ -25,7 +27,6 @@ const SendTransactionStep1Receiver: React.FC<SendTransactionScreenProps<typeof S
   const [inChecking, setInChecking] = useState(false);
   const [knowRisk, setKnowRist] = useState(false);
   const [checkRes, setCheckRes] = useState<null | AddressType | 'Invalid' | 'NetworkError'>(null);
-
   const checkReceiver = useCallback(
     debounce(async (receiver: string) => {
       try {
@@ -68,8 +69,8 @@ const SendTransactionStep1Receiver: React.FC<SendTransactionScreenProps<typeof S
 
   return (
     <>
-      <SendTransactionBottomSheet>
-        <Text style={[styles.receiver, { color: colors.textSecondary }]}>Receiver</Text>
+      <SendTransactionBottomSheet showTitle={t('tx.send.title')}>
+        <Text style={[styles.receiver, { color: colors.textSecondary }]}>{t('tx.send.receiver')}</Text>
         <TextInput
           containerStyle={[styles.textinput, { borderColor: checkRes === 'Invalid' ? colors.down : colors.borderFourth }]}
           showVisible={false}
@@ -85,7 +86,7 @@ const SendTransactionStep1Receiver: React.FC<SendTransactionScreenProps<typeof S
             setShowScanQRCode(true);
           }}
           showClear={!!receiver}
-          placeholder="Enter an address"
+          placeholder={t('tx.send.placeholder')}
           multiline
           numberOfLines={3}
         />
@@ -93,10 +94,12 @@ const SendTransactionStep1Receiver: React.FC<SendTransactionScreenProps<typeof S
           <Pressable
             style={({ pressed }) => [styles.checkFail, { backgroundColor: pressed ? colors.underlay : 'transparent' }]}
             onPress={() => checkReceiver(receiver)}
-            testID='tryAgain'
+            testID="tryAgain"
           >
             <Text style={[styles.checkFailText, { color: colors.down }]}>
-              Fail to check address, <Text style={{ textDecorationLine: 'underline' }}>click to try again</Text>.
+              <Trans i18nKey={'tx.send.error.failCheck'}>
+                Fail to check address, <Text style={{ textDecorationLine: 'underline' }}>click to try again</Text>.
+              </Trans>
             </Text>
           </Pressable>
         )}
@@ -105,21 +108,19 @@ const SendTransactionStep1Receiver: React.FC<SendTransactionScreenProps<typeof S
           <Text style={[styles.checkRes, { color: checkRes === 'Invalid' ? colors.down : colors.up }]}>
             {checkRes === 'Invalid' ? '🚫' : checkRes === AddressType.EOA ? '🎉' : '📑'}
             {'   '}
-            {checkRes === 'Invalid' ? 'Invalid' : 'Valid'} Address
+            {checkRes === 'Invalid' ? t('tx.send.address.invalid') : t('tx.send.address.valid')}
           </Text>
         )}
         {checkRes === AddressType.Contract && (
           <>
-            <Text style={[styles.contractAddressTip, { color: colors.textPrimary }]}>
-              This address is a contract address, and transferring to this address may result in asset loss.
-            </Text>
+            <Text style={[styles.contractAddressTip, { color: colors.textPrimary }]}>{t('tx.send.address.contractRisk')}</Text>
             <Pressable
               style={({ pressed }) => [styles.knowRiskWrapper, { backgroundColor: pressed ? colors.underlay : 'transparent' }]}
               onPress={() => setKnowRist((pre) => !pre)}
-              testID='knowRisk'
+              testID="knowRisk"
             >
               <Checkbox checked={knowRisk} pointerEvents="none" />
-              <Text style={(styles.contractAddressTip, { color: colors.textPrimary })}>Known the risks</Text>
+              <Text style={(styles.contractAddressTip, { color: colors.textPrimary })}>{t('tx.send.address.contractRiskKnow')}</Text>
             </Pressable>
           </>
         )}
@@ -136,7 +137,7 @@ const SendTransactionStep1Receiver: React.FC<SendTransactionScreenProps<typeof S
           disabled={!(checkRes === AddressType.EOA || checkRes === AddressType.Contract) || (checkRes === AddressType.Contract && !knowRisk)}
           size="small"
         >
-          Next
+          {t('common.next')}
         </Button>
       </SendTransactionBottomSheet>
       {showScanQRCode && <ScanQRCode onConfirm={handleCodeScan} onClose={() => setShowScanQRCode(false)} />}

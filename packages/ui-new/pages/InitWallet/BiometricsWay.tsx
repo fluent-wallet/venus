@@ -9,19 +9,22 @@ import Text from '@components/Text';
 import Button from '@components/Button';
 import { BiometricsWayStackName, PasswordWayStackName, HomeStackName, type StackScreenProps } from '@router/configs';
 // import Img from '@assets/images/welcome-img.webp';
-import Img from '@assets/images/fingerPrint.webp'
+import Img from '@assets/images/fingerPrint.webp';
 import createVault from './createVaultWithRouterParams';
+import { Trans, useTranslation } from 'react-i18next';
+import i18n from '@assets/i18n';
 
 export const showBiometricsDisabledMessage = () => {
   showMessage({
-    message: 'Device biometrics not enabled',
-    description: 'Please enable your biometrics in device settings.',
+    message: i18n.t('initWallet.biometrics.disable.error.title'),
+    description: i18n.t('initWallet.biometrics.disable.error.description'),
     type: 'warning',
   });
 };
 
 const BiometricsWay: React.FC<StackScreenProps<typeof BiometricsWayStackName>> = ({ navigation, route }) => {
   const { colors } = useTheme();
+  const { t } = useTranslation();
 
   const _handleCreateVault = useCallback(async () => {
     try {
@@ -49,27 +52,28 @@ const BiometricsWay: React.FC<StackScreenProps<typeof BiometricsWayStackName>> =
 
   return (
     <ScrollView style={styles.container}>
-      <Text style={[styles.title, { color: colors.textPrimary }]} numberOfLines={1}>Enable Fingerprint</Text>
+      <Text style={[styles.title, { color: colors.textPrimary }]} numberOfLines={1}>
+        {t('initWallet.enableFingerprint')}
+      </Text>
       <Image style={styles.img} source={Img} contentFit="contain" />
 
       <Text style={[styles.description, { color: colors.textPrimary }]}>
-        Enable <Text style={{ color: colors.textNotice, fontWeight: '600' }}>Fingerprint</Text> to access wallet.
-        {'\n\n'}
-        After enabled, you can unlock wallets or make transactions by verifying your{' '}
-        <Text style={{ color: colors.textNotice, fontWeight: '600' }}>Fingerprint</Text>.
+        <Trans i18nKey={'initWallet.describe'}>
+          Enable <Text style={{ color: colors.textNotice, fontWeight: '600' }}>Fingerprint</Text> to access wallet. After enabled, you can unlock wallets or make transactions by verifying your
+          <Text style={{ color: colors.textNotice, fontWeight: '600' }}>Fingerprint</Text>.
+        </Trans>
       </Text>
-
       <Button testID="enable" style={styles.btnEnable} loading={inAsync} onPress={handleCreateVault}>
-        Enable
+        {t('common.enable')}
       </Button>
 
       <Pressable
         style={({ pressed }) => [styles.gotoSetpwd, { backgroundColor: pressed ? colors.underlay : 'transparent' }]}
         onPress={() => navigation.navigate(PasswordWayStackName, route.params)}
         disabled={inAsync}
-        testID='setPassword'
+        testID="setPassword"
       >
-        <Text style={[styles.gotoSetpwdText, { color: colors.textPrimary }]}>Set Password</Text>
+        <Text style={[styles.gotoSetpwdText, { color: colors.textPrimary }]}>{t('initWallet.setPassword')}</Text>
       </Pressable>
     </ScrollView>
   );

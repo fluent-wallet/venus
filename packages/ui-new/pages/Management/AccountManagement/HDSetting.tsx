@@ -26,6 +26,7 @@ import HourglassLoading from '@components/Loading/Hourglass';
 import { HDSettingStackName, type StackScreenProps } from '@router/configs';
 import { isSmallDevice } from '@utils/deviceInfo';
 import ArrowRight from '@assets/icons/arrow-right2.svg';
+import { Trans, useTranslation } from 'react-i18next';
 
 const countPerPage = 5;
 const defaultPages = Array.from({ length: countPerPage }).map((_, index) => ({ addressValue: '', index }));
@@ -33,6 +34,7 @@ const defaultPages = Array.from({ length: countPerPage }).map((_, index) => ({ a
 const HDManagement: React.FC<StackScreenProps<typeof HDSettingStackName>> = ({ navigation, route }) => {
   const { colors } = useTheme();
   const bottomSheetRef = useRef<BottomSheetMethods>(null!);
+  const { t } = useTranslation();
 
   const accountGroup = useAccountGroupFromId(route.params.groupId);
   const accounts = useAccountsOfGroupInManage(route.params.groupId);
@@ -155,10 +157,10 @@ const HDManagement: React.FC<StackScreenProps<typeof HDSettingStackName>> = ({ n
   return (
     <BottomSheet ref={bottomSheetRef} snapPoints={snapPoints.large} isRoute>
       <View style={styles.container}>
-        <Text style={[styles.title, styles.mainText, { color: colors.textPrimary }]}>Select HD Wallets</Text>
-        <Text style={[styles.description, { color: colors.textSecondary }]}>HD Path Type</Text>
+        <Text style={[styles.title, styles.mainText, { color: colors.textPrimary }]}>{t('account.HDWallet.select.title')}</Text>
+        <Text style={[styles.description, { color: colors.textSecondary }]}>{t('account.HDWallet.select.pathType')}</Text>
         <Text style={[styles.contentText, styles.mainText, { color: colors.textPrimary }]}>BIP44</Text>
-        <Text style={[styles.description, { color: colors.textSecondary }]}>Index</Text>
+        <Text style={[styles.description, { color: colors.textSecondary }]}>{t('common.index')}</Text>
         <Text style={[styles.contentText, styles.mainText, { color: colors.textPrimary }]}>{currentHdPath?.value}</Text>
 
         <View style={styles.selectArea}>
@@ -208,11 +210,13 @@ const HDManagement: React.FC<StackScreenProps<typeof HDSettingStackName>> = ({ n
                     <Pressable
                       onPress={() => forceAuth((pre) => !pre)}
                       style={({ pressed }) => [{ backgroundColor: pressed ? colors.underlay : 'transparent' }]}
-                      testID='tryAgain'
+                      testID="tryAgain"
                     >
                       <Text style={[styles.selectText, { color: colors.textPrimary }]}>
-                        You have not completed{'\n'}the security verification,
-                        <Text style={styles.underline}> try again</Text>.
+                        <Trans i18nKey={'account.HDWallet.select.noVerification'}>
+                          You have not completed{'\n'}the security verification,
+                          <Text style={styles.underline}> try again</Text>.
+                        </Trans>
                       </Text>
                     </Pressable>
                   ) : (
@@ -233,12 +237,12 @@ const HDManagement: React.FC<StackScreenProps<typeof HDSettingStackName>> = ({ n
               { backgroundColor: pressed ? colors.underlay : 'transparent', opacity: pageIndex <= 0 ? 0 : 1 },
             ]}
             disabled={inNext || pageIndex <= 0}
-            testID='previous'
+            testID="previous"
           >
             <ArrowRight color={pageIndex === 0 || inNext ? colors.up : colors.iconPrimary} width={12} height={12} />
           </Pressable>
           <Text style={[styles.paginationText, { color: colors.textPrimary }]}>
-            {chooseAccounts.length} address{chooseAccounts.length > 0 ? `(es)` : ''} selected
+            {t('account.HDWallet.select.selected', { accounts: chooseAccounts.length, es: chooseAccounts.length > 0 ? `(es)` : '' })}
           </Text>
           <Pressable
             onPress={() => setPageIndex((pre) => pre + 1)}
@@ -247,14 +251,14 @@ const HDManagement: React.FC<StackScreenProps<typeof HDSettingStackName>> = ({ n
               { backgroundColor: pressed ? colors.underlay : 'transparent', opacity: (pageIndex + 1) * countPerPage >= maxCountLimit ? 0 : 1 },
             ]}
             disabled={inNext || (pageIndex + 1) * countPerPage >= maxCountLimit}
-            testID='next'
+            testID="next"
           >
             <ArrowRight color={inNext ? colors.up : colors.iconPrimary} width={12} height={12} />
           </Pressable>
         </View>
 
         <Button testID="next" style={styles.btn} disabled={chooseAccounts.length === 0} onPress={handleClickNext} loading={inNext} size="small">
-          Next
+          {t('common.next')}
         </Button>
       </View>
     </BottomSheet>

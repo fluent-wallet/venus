@@ -18,6 +18,7 @@ import BSIMCardWallet from '@assets/icons/wallet-bsim.webp';
 import HDWallet from '@assets/icons/wallet-hd.webp';
 import ExistWallet from '@assets/icons/wallet-Imported.webp';
 import createVault from '@pages/InitWallet/createVaultWithRouterParams';
+import { useTranslation } from 'react-i18next';
 
 interface Props {
   navigation: StackScreenProps<typeof AccountManagementStackName>['navigation'];
@@ -25,6 +26,7 @@ interface Props {
 
 const AddAnotherWallet: React.FC<Props> = ({ navigation }) => {
   const { colors } = useTheme();
+  const { t } = useTranslation();
   const bottomSheetRef = useRef<BottomSheetMethods>(null!);
   const importExistRef = useRef<BottomSheetMethods>(null!);
 
@@ -89,16 +91,16 @@ const AddAnotherWallet: React.FC<Props> = ({ navigation }) => {
   return (
     <>
       <BottomSheet ref={bottomSheetRef} snapPoints={snapPoints} isRoute onChange={(index) => setBottomSheetIndex(index)} containerStyle={styles.container}>
-        <Text style={[styles.title, { color: colors.textPrimary }]}>Add Wallet</Text>
+        <Text style={[styles.title, { color: colors.textPrimary }]}>{t('account.action.add.title')}</Text>
         {!hasBSIMVaultCreated && (
           <Pressable
             style={({ pressed }) => [accountListStyles.row, { backgroundColor: pressed ? colors.underlay : 'transparent' }]}
             disabled={inConnecting}
             onPress={handleConnectBSIMCard}
-            testID='connectBSIMWallet'
+            testID="connectBSIMWallet"
           >
             <Image style={accountListStyles.groupTypeImage} source={BSIMCardWallet} />
-            <Text style={[accountListStyles.manageText, { color: colors.textPrimary }]}>Connect BSIM Wallet</Text>
+            <Text style={[accountListStyles.manageText, { color: colors.textPrimary }]}>{t('welcome.connectBSIMWallet')}</Text>
             {inConnecting && <HourglassLoading style={accountListStyles.addAccountLoading} />}
           </Pressable>
         )}
@@ -107,10 +109,10 @@ const AddAnotherWallet: React.FC<Props> = ({ navigation }) => {
           style={({ pressed }) => [accountListStyles.row, { backgroundColor: pressed ? colors.underlay : 'transparent' }]}
           disabled={inCreating}
           onPress={handleCreateNewHdWallet}
-          testID='createNewWallet'
+          testID="createNewWallet"
         >
           {<Image style={accountListStyles.groupTypeImage} source={HDWallet} />}
-          <Text style={[accountListStyles.manageText, { color: colors.textPrimary }]}>Create new wallet</Text>
+          <Text style={[accountListStyles.manageText, { color: colors.textPrimary }]}>{t('welcome.createNewWallet')}</Text>
           {inCreating && <HourglassLoading style={accountListStyles.addAccountLoading} />}
         </Pressable>
 
@@ -118,10 +120,10 @@ const AddAnotherWallet: React.FC<Props> = ({ navigation }) => {
           style={({ pressed }) => [accountListStyles.row, { backgroundColor: pressed ? colors.underlay : 'transparent' }]}
           disabled={inCreating}
           onPress={() => importExistRef.current?.expand()}
-          testID='importExistWallet'
+          testID="importExistWallet"
         >
           {<Image style={accountListStyles.groupTypeImage} source={ExistWallet} />}
-          <Text style={[accountListStyles.manageText, { color: colors.textPrimary }]}>Import existing wallet</Text>
+          <Text style={[accountListStyles.manageText, { color: colors.textPrimary }]}>{t('welcome.importExistingWallet')}</Text>
           {inImporting && <HourglassLoading style={accountListStyles.addAccountLoading} />}
         </Pressable>
       </BottomSheet>

@@ -18,7 +18,7 @@ PODS:
   - EXImageLoader (4.6.0):
     - ExpoModulesCore
     - React-Core
-  - Expo (50.0.14):
+  - Expo (50.0.13):
     - ExpoModulesCore
   - ExpoFileSystem (16.0.8):
     - ExpoModulesCore
@@ -29,6 +29,8 @@ PODS:
     - SDWebImageSVGCoder (~> 1.7.0)
     - SDWebImageWebPCoder (~> 0.13.0)
   - ExpoImagePicker (14.7.1):
+    - ExpoModulesCore
+  - ExpoLocalization (14.8.3):
     - ExpoModulesCore
   - ExpoModulesCore (1.11.12):
     - glog
@@ -1014,7 +1016,7 @@ PODS:
     - React-callinvoker
     - React-Core
     - ReactCommon/turbomodule/core
-  - react-native-compat (2.11.3):
+  - react-native-compat (2.11.2):
     - glog
     - RCT-Folly (= 2022.05.16.00)
     - React-Core
@@ -1208,21 +1210,21 @@ PODS:
     - React-perflogger (= 0.73.6)
   - RNBootSplash (5.4.1):
     - React-Core
-  - RNCAsyncStorage (1.23.1):
+  - RNCAsyncStorage (1.22.3):
     - React-Core
   - RNCClipboard (1.13.2):
     - React-Core
   - RNDeviceInfo (10.13.1):
     - React-Core
-  - RNFlashList (1.6.4):
+  - RNFlashList (1.6.3):
     - React-Core
-  - RNGestureHandler (2.15.0):
+  - RNGestureHandler (2.16.0):
     - glog
     - RCT-Folly (= 2022.05.16.00)
     - React-Core
   - RNKeychain (8.2.0):
     - React-Core
-  - RNReanimated (3.8.1):
+  - RNReanimated (3.8.0):
     - glog
     - RCT-Folly (= 2022.05.16.00)
     - React-Core
@@ -1274,6 +1276,7 @@ DEPENDENCIES:
   - ExpoFileSystem (from `../node_modules/expo-file-system/ios`)
   - ExpoImage (from `../node_modules/expo-image/ios`)
   - ExpoImagePicker (from `../node_modules/expo-image-picker/ios`)
+  - ExpoLocalization (from `../node_modules/expo-localization/ios`)
   - ExpoModulesCore (from `../node_modules/expo-modules-core`)
   - FBLazyVector (from `../node_modules/react-native/Libraries/FBLazyVector`)
   - FBReactNativeSpec (from `../node_modules/react-native/React/FBReactNativeSpec`)
@@ -1422,6 +1425,8 @@ EXTERNAL SOURCES:
     :path: "../node_modules/expo-image/ios"
   ExpoImagePicker:
     :path: "../node_modules/expo-image-picker/ios"
+  ExpoLocalization:
+    :path: "../node_modules/expo-localization/ios"
   ExpoModulesCore:
     :path: "../node_modules/expo-modules-core"
   FBLazyVector:
@@ -1577,10 +1582,11 @@ SPEC CHECKSUMS:
   EXBarCodeScanner: d59fd943cebee3f913ebf4ffde0d05d344da8b78
   EXConstants: 988aa430ca0f76b43cd46b66e7fae3287f9cc2fc
   EXImageLoader: 55080616b2fe9da19ef8c7f706afd9814e279b6b
-  Expo: e01a77c6fa4bc80a6d1bb949cda1d12d21044abd
+  Expo: a7c9bd836cb7c86e699c2539a906c9ff873f19f8
   ExpoFileSystem: eecaf6796aed0f4dd20042dc2ca2cac6c4bc1185
   ExpoImage: 8cf2d51de3d03b7e984e9b0ba8f19c0c22057001
   ExpoImagePicker: 66970181d1c838f444e5e1f81b804ab2d5ff49bd
+  ExpoLocalization: f5f5d71dc0c9514d3d77b2771144f6fed6398d04
   ExpoModulesCore: 61dc57c6e2a35f2f84baf488146db624e03af4cd
   FBLazyVector: f64d1e2ea739b4d8f7e4740cde18089cd97fe864
   FBReactNativeSpec: 9f2b8b243131565335437dba74923a8d3015e780
@@ -1626,7 +1632,7 @@ SPEC CHECKSUMS:
   React-logger: 3eb80a977f0d9669468ef641a5e1fabbc50a09ec
   React-Mapbuffer: 84ea43c6c6232049135b1550b8c60b2faac19fab
   react-native-bignumber: 986c34989c5b5adc9ba5c3a849ed33e60416a79b
-  react-native-compat: bc1a4a74a2c819b903448ffd3c1ed60f4a423720
+  react-native-compat: 3af9add14d349701306d3d052638435f6795ac2c
   react-native-config: 86038147314e2e6d10ea9972022aa171e6b1d4d8
   react-native-get-random-values: 21325b2244dfa6b58878f51f9aa42821e7ba3d06
   react-native-netinfo: bdb108d340cdb41875c9ced535977cac6d2ff321
@@ -1656,13 +1662,13 @@ SPEC CHECKSUMS:
   React-utils: d16c1d2251c088ad817996621947d0ac8167b46c
   ReactCommon: 2aa35648354bd4c4665b9a5084a7d37097b89c10
   RNBootSplash: eff8239c4f795ce42a0604873aef3733aac0dedd
-  RNCAsyncStorage: 826b603ae9c0f88b5ac4e956801f755109fa4d5c
+  RNCAsyncStorage: 10591b9e0a91eaffee14e69b3721009759235125
   RNCClipboard: 60fed4b71560d7bfe40e9d35dea9762b024da86d
   RNDeviceInfo: 4f9c7cfd6b9db1b05eb919620a001cf35b536423
-  RNFlashList: b521ebdd7f9352673817f1d98e8bdc0c8cf8545b
-  RNGestureHandler: 67fb54b3e6ca338a8044e85cd6f340265aa41091
+  RNFlashList: 4b4b6b093afc0df60ae08f9cbf6ccd4c836c667a
+  RNGestureHandler: bc2cdb2dc42facdf34992ae364b8a728e19a3686
   RNKeychain: bfe3d12bf4620fe488771c414530bf16e88f3678
-  RNReanimated: 8a4d86eb951a4a99d8e86266dc71d7735c0c30a9
+  RNReanimated: 00ee495a70897aa9d541e76debec14253133b812
   RNScreens: 17e2f657f1b09a71ec3c821368a04acbb7ebcb46
   RNScreenshotPrevent: dc9741e416ba80c3739418f112ac4093188315e9
   RNSVG: ba3e7232f45e34b7b47e74472386cf4e1a676d0a

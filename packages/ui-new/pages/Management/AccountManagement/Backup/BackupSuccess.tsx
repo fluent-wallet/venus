@@ -8,11 +8,13 @@ import { screenHeight } from '@utils/deviceInfo';
 import { BackupStackName, HomeStackName, type StackScreenProps } from '@router/configs';
 import Img from '@assets/images/welcome-img.webp';
 import BackupBottomSheet from './BackupBottomSheet';
+import { useTranslation } from 'react-i18next';
 
 export const BackupSuccessStackName = 'BackupSuccess';
 
 const BackupSuccess: React.FC = () => {
   const { colors } = useTheme();
+  const { t } = useTranslation();
   const navigation = useNavigation<StackScreenProps<typeof BackupStackName>['navigation']>();
   const goHome = useCallback(() => {
     navigation.dispatch(CommonActions.reset({ index: 0, routes: [{ name: HomeStackName }] }));
@@ -21,11 +23,11 @@ const BackupSuccess: React.FC = () => {
   return (
     <BackupBottomSheet onClose={goHome} snapPoints={snapPoints} showTitle={false}>
       <View style={styles.container}>
-        <Text style={[styles.title, { color: colors.textPrimary }]}>🥳 Backuped !</Text>
+        <Text style={[styles.title, { color: colors.textPrimary }]}>{t('backup.success')}</Text>
         <Image style={styles.img} source={Img} contentFit="contain" />
 
         <Button testID="ok" style={styles.btn} onPress={goHome} size="small">
-          OK
+          {t('common.ok')}
         </Button>
       </View>
     </BackupBottomSheet>

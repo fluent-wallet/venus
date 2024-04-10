@@ -17,12 +17,14 @@ import MaskPrivateKey from '@assets/images/mask-private-key.webp';
 import MaskSeedPhrase from '@assets/images/mask-seed-phrase.webp';
 import Copy from '@assets/icons/copy.svg';
 import BackupBottomSheet from './BackupBottomSheet';
+import { useTranslation } from 'react-i18next';
 
 const BackupStep2ViewSecret: React.FC<BackupScreenProps<typeof BackupStep2StackName>> = ({ route, navigation }) => {
   const { colors } = useTheme();
+  const { t } = useTranslation();
 
   const backupType = route.params.groupId ? VaultType.HierarchicalDeterministic : VaultType.PrivateKey;
-  const backupText = useMemo(() => (backupType === VaultType.HierarchicalDeterministic ? 'seed phrase' : 'private key'), [backupType]);
+  const backupText = useMemo(() => (backupType === VaultType.HierarchicalDeterministic ? t('common.seedPhrase') : t('common.privateKey')), [backupType]);
 
   const address = useCurrentAddressOfAccount(route.params.accountId);
   const vault = useVaultOfGroup(route.params.groupId);
@@ -49,30 +51,27 @@ const BackupStep2ViewSecret: React.FC<BackupScreenProps<typeof BackupStep2StackN
       });
     }
   }, [vault, address, backupType, backupText]);
-
   const { inAsync, execAsync: handleClickView } = useInAsync(_handleClickView);
 
   return (
     <BackupBottomSheet>
       <Text style={[styles.largeText, styles.notice, { color: colors.textPrimary }]} numberOfLines={1}>
-        Write Down Your {backupType === VaultType.HierarchicalDeterministic ? 'Seed Phrase' : 'Private Key'}
+        {t('backup.viewSecret.title', { type: backupType === VaultType.HierarchicalDeterministic ? t('common.seedPhrase') : t('common.privateKey') })}
       </Text>
-      <Text style={[styles.description, styles.noticeDescription, { color: colors.textSecondary }]}>✅ Do NOT take a screenshot of this page</Text>
-      <Text style={[styles.description, styles.noticeDescription, { color: colors.textSecondary }]}>✅ Writing down on paper is recommended</Text>
+      <Text style={[styles.description, styles.noticeDescription, { color: colors.textSecondary }]}>{t('backup.viewSecret.tips1')}</Text>
+      <Text style={[styles.description, styles.noticeDescription, { color: colors.textSecondary }]}>{t('backup.viewSecret.tips2')}</Text>
       {backupType === VaultType.PrivateKey && (
-        <Text style={[styles.description, styles.noticeDescription, { color: colors.textSecondary }]}>
-          ✅ Or scan the QR code directly from the trusted app you wish to import to
-        </Text>
+        <Text style={[styles.description, styles.noticeDescription, { color: colors.textSecondary }]}>{t('backup.viewSecret.tipsForPK')}</Text>
       )}
       <View style={[styles.secretArea, { borderColor: colors.borderFourth }]}>
         {!secretData && (
           <>
             <Image style={styles.mask} source={backupType === VaultType.HierarchicalDeterministic ? MaskSeedPhrase : MaskPrivateKey} contentFit="contain" />
 
-            <Text style={[styles.largeText, { color: colors.textPrimary, textAlign: 'center' }]}>Tap to view the {backupText}</Text>
-            <Text style={[styles.description, { color: colors.textSecondary, textAlign: 'center', marginTop: 8 }]}>Make sure your environment is safe</Text>
+            <Text style={[styles.largeText, { color: colors.textPrimary, textAlign: 'center' }]}>{t('backup.viewSecret.view', { type: backupText })}</Text>
+            <Text style={[styles.description, { color: colors.textSecondary, textAlign: 'center', marginTop: 8 }]}>{t('backup.viewSecret.viewTips')}</Text>
             <Button testID="view" style={styles.viewBtn} onPress={handleClickView} loading={inAsync}>
-              View
+              {t('common.view')}
             </Button>
           </>
         )}
@@ -85,15 +84,15 @@ const BackupStep2ViewSecret: React.FC<BackupScreenProps<typeof BackupStep2StackN
               onPress={() => {
                 Clipboard.setString(secretData);
                 showMessage({
-                  message: 'Copied!',
+                  message: t('common.copied'),
                   type: 'success',
                   duration: 1500,
                   width: 160,
                 });
               }}
               style={({ pressed }) => [styles.privateKey, { backgroundColor: pressed ? colors.underlay : 'transparent' }]}
-              testID='copy'
-           >
+              testID="copy"
+            >
               <Text style={[styles.privateKeyText, { color: colors.textPrimary }]}>{secretData}</Text>
               <Copy color={colors.iconPrimary} />
             </Pressable>
@@ -132,11 +131,11 @@ const BackupStep2ViewSecret: React.FC<BackupScreenProps<typeof BackupStep2StackN
           }}
           size="small"
         >
-          Next
+          {t('common.next')}
         </Button>
       ) : (
         <Button testID="return" style={styles.btn} onPress={() => navigation.goBack()} size="small">
-          Return
+          {t('common.return')}
         </Button>
       )}
     </BackupBottomSheet>

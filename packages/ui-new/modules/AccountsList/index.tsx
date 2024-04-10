@@ -18,6 +18,7 @@ import ExistWallet from '@assets/icons/wallet-Imported.webp';
 import More from '@assets/icons/more-circle.svg';
 import Add from '@assets/icons/add.svg';
 import Copy from '@assets/icons/copy.svg';
+import { useTranslation } from 'react-i18next';
 
 type ListType = 'selector' | 'management';
 
@@ -40,6 +41,7 @@ interface AccountProps {
 const AccountGroup: React.FC<
   AccountGroupProps & { colors: ReturnType<typeof useTheme>['colors']; type: ListType; onPressGroup?: (groupId: string) => void }
 > = ({ id, nickname, vaultType, colors, type, onPressGroup }) => {
+  const { t } = useTranslation();
   return (
     <Pressable
       style={({ pressed }) => [
@@ -58,7 +60,7 @@ const AccountGroup: React.FC<
         {vaultType === VaultType.PrivateKey ? 'Imported Private Key' : nickname}
       </Text>
       {type === 'management' && vaultType !== VaultType.PrivateKey && vaultType !== VaultType.PublicAddress && (
-        <Text style={[styles.groupManagement, { color: colors.textNotice }]}>ManageMent</Text>
+        <Text style={[styles.groupManagement, { color: colors.textNotice }]}>{t('account.action.ManageMent')}</Text>
       )}
     </Pressable>
   );
@@ -158,7 +160,7 @@ const AddAccount: React.FC<AccountGroupProps & { colors: ReturnType<typeof useTh
         style={({ pressed }) => [styles.row, styles.group, { backgroundColor: pressed ? colors.underlay : 'transparent' }]}
         onPress={onPress}
         disabled={inAdding}
-        testID='addAccount'
+        testID="addAccount"
       >
         <Checkbox checked Icon={Add} pointerEvents="none" />
         <Text style={[styles.manageText, { color: colors.textPrimary }]}>Add Account</Text>

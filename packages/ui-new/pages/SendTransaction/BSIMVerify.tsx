@@ -10,6 +10,7 @@ import { screenHeight } from '@utils/deviceInfo';
 import BSIMCardWallet from '@assets/icons/wallet-bsim-shadow.webp';
 import ArrowLeft from '@assets/icons/arrow-left2.svg';
 import TxErrorIcon from '@assets/icons/txError.svg';
+import { useTranslation } from 'react-i18next';
 
 interface Props {
   bottomSheetRef: MutableRefObject<BottomSheetMethods>;
@@ -20,6 +21,7 @@ interface Props {
 
 const BSIMVerify: React.FC<Props> = ({ bottomSheetRef, bsimEvent, onClose, onRetry }) => {
   const { colors } = useTheme();
+  const { t } = useTranslation();
 
   return (
     <BottomSheet ref={bottomSheetRef} snapPoints={snapPoints} onClose={onClose} index={0}>
@@ -27,11 +29,11 @@ const BSIMVerify: React.FC<Props> = ({ bottomSheetRef, bsimEvent, onClose, onRet
         {bsimEvent.type === BSIMEventTypesName.ERROR ? (
           <View style={styles.titleContainer}>
             <TxErrorIcon />
-            <Text style={[styles.title, { color: colors.textPrimary }]}>Signing Error</Text>
+            <Text style={[styles.title, { color: colors.textPrimary }]}>{t('tx.confirm.BSIM.error.title')}</Text>
           </View>
         ) : (
           <View style={styles.titleContainer}>
-            <Text style={[styles.title, { color: colors.textPrimary }]}>'Transaction Confirmation'</Text>
+            <Text style={[styles.title, { color: colors.textPrimary }]}>{t('tx.confirm.BSIM.title')}</Text>
           </View>
         )}
 
@@ -39,7 +41,7 @@ const BSIMVerify: React.FC<Props> = ({ bottomSheetRef, bsimEvent, onClose, onRet
           <Image style={styles.bsimImg} source={BSIMCardWallet} />
           <View style={{ flex: 1 }}>
             <Text style={(styles.tip, { color: colors.textPrimary })}>
-              {bsimEvent.type === BSIMEventTypesName.ERROR ? bsimEvent.message : 'Communicating with BSIM Card...'}
+              {bsimEvent.type === BSIMEventTypesName.ERROR ? bsimEvent.message : `${t('tx.confirm.BSIM.message')}...`}
             </Text>
           </View>
         </View>
@@ -47,7 +49,7 @@ const BSIMVerify: React.FC<Props> = ({ bottomSheetRef, bsimEvent, onClose, onRet
         <View style={styles.btnArea}>
           <Button testID="close" size="small" square Icon={ArrowLeft} onPress={() => bottomSheetRef.current?.close()} />
           <Button testID="retry" style={styles.btnRetry} size="small" onPress={onRetry} loading={bsimEvent.type !== BSIMEventTypesName.ERROR}>
-            Retry
+            {t('common.retry')}
           </Button>
         </View>
       </View>

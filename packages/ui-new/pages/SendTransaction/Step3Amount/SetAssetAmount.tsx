@@ -17,6 +17,7 @@ import NFTIcon from '@modules/AssetsList/NFTsList/NFTIcon';
 import { getDetailSymbol } from '@modules/AssetsList/NFTsList/NFTItem';
 import useFormatBalance from '@hooks/useFormatBalance';
 import useInAsync from '@hooks/useInAsync';
+import { useTranslation } from 'react-i18next';
 
 interface Info {
   amount: string;
@@ -37,6 +38,7 @@ interface Props {
 
 const SetAssetAmount: React.FC<Props> = ({ targetAddress, asset, nftItemDetail, onAmountInfoChange, children, defaultAmount, isReceive }) => {
   const { colors } = useTheme();
+  const { t } = useTranslation();
   const currentNetwork = useCurrentNetwork()!;
   const currentAddressValue = useCurrentAddressValue()!;
   const [amount, setAmount] = useState(() => defaultAmount ?? '');
@@ -78,7 +80,7 @@ const SetAssetAmount: React.FC<Props> = ({ targetAddress, asset, nftItemDetail, 
       } catch (err) {
         if (!isInit) {
           showMessage({
-            message: 'Failed to estimate, please try again',
+            message: t('tx.amount.error.estimate'),
             description: String(err ?? ''),
             type: 'warning',
           });
@@ -120,9 +122,9 @@ const SetAssetAmount: React.FC<Props> = ({ targetAddress, asset, nftItemDetail, 
               style={({ pressed }) => [styles.maxBtn, { backgroundColor: pressed ? colors.underlay : 'transparent', borderColor: colors.textPrimary }]}
               onPress={handleClickMax}
               disabled={inEstimate}
-              testID='max'
+              testID="max"
             >
-              <Text style={[styles.text, { color: colors.textPrimary, borderColor: colors.textPrimary, opacity: inEstimate ? 0 : 1 }]}>Max</Text>
+              <Text style={[styles.text, { color: colors.textPrimary, borderColor: colors.textPrimary, opacity: inEstimate ? 0 : 1 }]}>{t('common.max')}</Text>
               {inEstimate && <HourglassLoading style={styles.maxLoading} />}
             </Pressable>
           </>

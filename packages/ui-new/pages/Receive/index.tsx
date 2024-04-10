@@ -20,6 +20,7 @@ import Logo from '@assets/icons/logo.png';
 import Share from '@assets/icons/share.svg';
 import PoundKey from '@assets/icons/pound-key.svg';
 import ReceiveSetAsset from './ReceiveSetAsset';
+import { useTranslation } from 'react-i18next';
 
 interface Props {
   navigation: StackScreenProps<typeof ReceiveStackName>['navigation'];
@@ -27,6 +28,7 @@ interface Props {
 
 const Receive: React.FC<Props> = ({ navigation }) => {
   const { colors } = useTheme();
+  const { t } = useTranslation();
   const [showSetAsset, setShowSetAsset] = useState(false);
 
   const currentAccount = useCurrentAccount()!;
@@ -61,8 +63,8 @@ const Receive: React.FC<Props> = ({ navigation }) => {
   return (
     <>
       <BottomSheet snapPoints={snapPoints.large} isRoute style={styles.container}>
-        <Text style={[styles.title, { color: colors.textPrimary }]}>Receive</Text>
-        <Text style={[styles.tip, { color: colors.textPrimary }]}>Only send {currentNetwork?.name} network assets to this address.</Text>
+        <Text style={[styles.title, { color: colors.textPrimary }]}>{t('receive.title')}</Text>
+        <Text style={[styles.tip, { color: colors.textPrimary }]}>{t('receive.describe', { netName: currentNetwork?.name })}</Text>
 
         <View style={[styles.qrcodeWrapper, { backgroundColor: colors.bgSecondary, paddingBottom: selectedAsset ? 18 : 30 }]}>
           <QRCode value={ethUrl} size={220} logo={Logo} logoSize={60} logoBackgroundColor="transparent" />
@@ -92,7 +94,7 @@ const Receive: React.FC<Props> = ({ navigation }) => {
             onPress={() => {
               Clipboard.setString(currentAddressValue);
               showMessage({
-                message: 'Copied!',
+                message: t('common.copied'),
                 type: 'success',
                 duration: 1500,
                 width: 160,
@@ -115,7 +117,7 @@ const Receive: React.FC<Props> = ({ navigation }) => {
                 });
               }}
             /> */}
-          <Navigation title="Select asset" Icon={PoundKey} onPress={() => setShowSetAsset(true)} />
+          <Navigation title={t('receive.selectAsset')} Icon={PoundKey} onPress={() => setShowSetAsset(true)} />
         </View>
       </BottomSheet>
       {showSetAsset && (

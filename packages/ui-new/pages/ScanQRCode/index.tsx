@@ -24,6 +24,7 @@ import {
 import { parseETHURL, type ETHURL } from '@utils/ETHURL';
 import { ENABLE_WALLET_CONNECT_FEATURE } from '@utils/features';
 import ScanBorder from '@assets/icons/scan-border.svg';
+import { Trans, useTranslation } from 'react-i18next';
 
 // has onConfirm props means open in SendTransaction with local modal way.
 interface Props {
@@ -35,6 +36,7 @@ interface Props {
 const scanAreaWidth = 220;
 const ScanQrCode: React.FC<Props> = ({ navigation, onConfirm, onClose }) => {
   const { colors } = useTheme();
+  const { t } = useTranslation();
   const bottomSheetRef = useRef<BottomSheetMethods>(null!);
   const currentNetwork = useCurrentNetwork()!;
 
@@ -57,17 +59,17 @@ const ScanQrCode: React.FC<Props> = ({ navigation, onConfirm, onClose }) => {
           (currentNetwork.networkType === NetworkType.Conflux && ethUrl.schema_prefix === 'ethereum:') ||
           (currentNetwork.networkType === NetworkType.Ethereum && ethUrl.schema_prefix === 'conflux:')
         ) {
-          setScanStatus({ errorMessage: 'Mismatched chain types.' });
+          setScanStatus({ errorMessage: t('scan.parse.error.missChianTypes') });
           return;
         }
 
         if (ethUrl.chain_id && ethUrl.parameters && ethUrl.chain_id !== currentNetwork.chainId) {
-          setScanStatus({ errorMessage: 'Mismatched chain ID.' });
+          setScanStatus({ errorMessage: t('scan.parse.error.missChianId') });
           return;
         }
 
         if (!(await methods.checkIsValidAddress({ networkType: currentNetwork.networkType, addressValue: ethUrl.target_address }))) {
-          setScanStatus({ errorMessage: 'Unvalid target address.' });
+          setScanStatus({ errorMessage: t('scan.parse.error.invalidTargetAddress') });
           return;
         }
 
@@ -148,21 +150,21 @@ const ScanQrCode: React.FC<Props> = ({ navigation, onConfirm, onClose }) => {
           try {
             const { version } = parseUri(QRCodeString);
             if (version === 1) {
-              setScanStatus({ errorMessage: 'Sorry, The OR code version is to low' });
+              setScanStatus({ errorMessage: t('scan.walletConnect.error.lowVersion') });
             } else {
               await plugins.WalletConnect.pair(QRCodeString);
               // navigation.dispatch(StackActions.replace(HomeStackName, { screen: WalletStackName }));
             }
           } catch (err) {
             showMessage({
-              message: 'Connect to wallet-connect failed',
+              message: t('scan.walletConnect.error.connectFailed'),
               description: String(err ?? ''),
               duration: 3000,
             });
-            setScanStatus({ errorMessage: `Connect to wallet-connect failed: ${String(err ?? '')}` });
+            setScanStatus({ errorMessage: `${t('scan.walletConnect.error.connectFailed')} ${String(err ?? '')}` });
           }
         } else {
-          setScanStatus({ errorMessage: 'Sorry, this QR code could not be recognized.' });
+          setScanStatus({ errorMessage: t('scan.QRCode.error.notRecognized') });
         }
       }
     },
@@ -196,7 +198,7 @@ const ScanQrCode: React.FC<Props> = ({ navigation, onConfirm, onClose }) => {
         // TODO: update and remove BarCodeScanner package  see : https://docs.expo.dev/versions/latest/sdk/bar-code-scanner/
         const [codeRes] = await scanFromURLAsync(assets.uri);
         if (!codeRes) {
-          setScanStatus({ errorMessage: 'Sorry, this QR code could not be recognized.' });
+          setScanStatus({ errorMessage: t('scan.QRCode.error.notRecognized') });
         }
 
         if (codeRes.data) {
@@ -232,7 +234,7 @@ const ScanQrCode: React.FC<Props> = ({ navigation, onConfirm, onClose }) => {
       onClose={onClose}
     >
       <View style={styles.container}>
-        <Text style={[styles.title, { color: colors.textPrimary }]}>Scan</Text>
+        <Text style={[styles.title, { color: colors.textPrimary }]}>{t('scan.title')}</Text>
         {hasPermission && (
           <>
             {device && (
@@ -256,7 +258,7 @@ const ScanQrCode: React.FC<Props> = ({ navigation, onConfirm, onClose }) => {
                   <Text style={[styles.errorMessage, { color: colors.down }]}>{scanStatus.errorMessage}</Text>
                 )}
                 <Button testID="photos" style={styles.photos} onPress={pickImage}>
-                  Photos
+                  {t('scan.photos')}
                 </Button>
               </>
             )}
@@ -266,15 +268,17 @@ const ScanQrCode: React.FC<Props> = ({ navigation, onConfirm, onClose }) => {
           <>
             {!hasRejectPermission && (
               <>
-                <Text style={[styles.tip, { color: colors.down, marginBottom: 8 }]}>Wallet Requires Access</Text>
-                <Text style={[styles.tip, { color: colors.textPrimary }]}>Please allow SwiftShield wallet to use camera permissions to scan the QR code.</Text>
+                <Text style={[styles.tip, { color: colors.down, marginBottom: 8 }]}>{t('scan.permission.title')}</Text>
+                <Text style={[styles.tip, { color: colors.textPrimary }]}>{t('scan.permission.describe')}</Text>
               </>
             )}
             {hasRejectPermission && (
               <>
-                <Text style={[styles.tip, { color: colors.textPrimary, marginBottom: 8 }]}>Camera permission not granted for this app</Text>
+                <Text style={[styles.tip, { color: colors.textPrimary, marginBottom: 8 }]}>{t('scan.permission.reject.title')}</Text>
                 <Text style={[styles.tip, { color: colors.textPrimary }]}>
-                  Unable to scan. Please <Text style={{ color: colors.down }}>open Camera</Text> in the system permission.
+                  <Trans i18nKey={'scan.permission.reject.describe'}>
+                    Unable to scan. Please <Text style={{ color: colors.down }}>open Camera</Text> in the system permission.
+                  </Trans>
                 </Text>
                 <View style={styles.btnArea}>
                   <Button
@@ -283,7 +287,7 @@ const ScanQrCode: React.FC<Props> = ({ navigation, onConfirm, onClose }) => {
                     onPress={() => (bottomSheetRef?.current ? bottomSheetRef.current.close() : navigation?.goBack())}
                     size="small"
                   >
-                    Dismiss
+                    {t('common.dismiss')}
                   </Button>
                   <Button
                     testID="openSettings"
@@ -293,7 +297,7 @@ const ScanQrCode: React.FC<Props> = ({ navigation, onConfirm, onClose }) => {
                     }}
                     size="small"
                   >
-                    Open settings
+                    {t('scan.permission.reject.openSettings')}
                   </Button>
                 </View>
               </>

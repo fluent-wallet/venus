@@ -13,8 +13,14 @@ import TokensList from '@modules/AssetsList/TokensList';
 import NFTsList from '@modules/AssetsList/NFTsList';
 import ActivityList from '@modules/ActivityList';
 import { StickyNFTItem } from '@modules/AssetsList/NFTsList/NFTItem';
+import { useTranslation } from 'react-i18next';
 
 export type Tab = 'Tokens' | 'NFTs' | 'Activity';
+const TabI18nMap = {
+  Tokens: 'tab.tokens' as const,
+  NFTs: 'tab.nfts' as const,
+  Activity: 'tab.activity' as const,
+};
 export type TabsType = 'Home' | 'SelectAsset';
 type Tabs = Array<Tab>;
 const TAB_WIDTH = 64;
@@ -31,6 +37,7 @@ interface Props {
 
 export const Tabs: React.FC<Omit<Props, 'setCurrentTab' | 'onPressItem' | 'selectType'>> = ({ type, currentTab, pageViewRef, onlyToken }) => {
   const { colors } = useTheme();
+  const { t } = useTranslation();
 
   const currentNetwork = useCurrentNetwork();
   const tabs = useMemo(() => {
@@ -83,7 +90,7 @@ export const Tabs: React.FC<Omit<Props, 'setCurrentTab' | 'onPressItem' | 'selec
             <Text
               style={[styles.tabLabel, { color: colors[currentTab === tab ? 'textPrimary' : 'textSecondary'], fontWeight: currentTab === tab ? '600' : '300' }]}
             >
-              {tab}
+              {t(TabI18nMap[tab])}
             </Text>
           </Pressable>
         ))}

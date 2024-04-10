@@ -6,17 +6,21 @@ import Button from '@components/Button';
 import Text from '@components/Text';
 import { useNavigation } from '@react-navigation/native';
 // import Img from '@assets/images/welcome-img.webp';
-import Img from '@assets/images/home-receive.webp'
+import Img from '@assets/images/home-receive.webp';
+import { useTranslation } from 'react-i18next';
 
 const ReceiveFunds: React.FC = () => {
   const { colors } = useTheme();
+  const { t } = useTranslation();
   const navigation = useNavigation();
 
   return (
     <>
       <Image style={styles.img} source={Img} contentFit="contain" />
-      <Text style={[styles.text, { color: colors.textSecondary }]}>Deposit tokens to your wallet</Text>
-      <Button testID="receiveFunds" style={styles.btn}>Receive</Button>
+      <Text style={[styles.text, { color: colors.textSecondary }]}>{t('tab.content.depositToken')}</Text>
+      <Button testID="receiveFunds" style={styles.btn}>
+        {t('tab.content.receive')}
+      </Button>
     </>
   );
 };
@@ -38,8 +42,8 @@ const styles = StyleSheet.create({
   },
   btn: {
     alignSelf: 'center',
-    width: 184
-  }
+    width: 184,
+  },
 });
 
 export default ReceiveFunds;

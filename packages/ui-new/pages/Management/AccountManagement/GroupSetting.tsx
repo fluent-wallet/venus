@@ -15,16 +15,21 @@ import { GroupSettingStackName, HDSettingStackName, BackupStackName, BackupStep1
 import ArrowRight from '@assets/icons/arrow-right2.svg';
 import Delete from '@assets/icons/delete.svg';
 import DeleteConfirm from './DeleteConfirm';
+import { useTranslation } from 'react-i18next';
 
 const GroupConfig: React.FC<StackScreenProps<typeof GroupSettingStackName>> = ({ navigation, route }) => {
   const { colors } = useTheme();
   const bottomSheetRef = useRef<BottomSheetMethods>(null!);
+  const { t } = useTranslation();
 
   const accountGroup = useGroupFromId(route.params.groupId);
   const vault = useVaultOfGroup(route.params.groupId);
   const accounts = useAccountsOfGroupInManage(route.params.groupId);
 
-  const GroupTitle = useMemo(() => (!vault?.type ? 'Group' : vault?.type === VaultType.HierarchicalDeterministic ? 'Seed Group' : 'BSIM Group'), [vault?.type]);
+  const GroupTitle = useMemo(
+    () => (!vault?.type ? 'Group' : vault?.type === VaultType.HierarchicalDeterministic ? t('account.group.title.seed') : t('account.group.title.BSIM')),
+    [vault?.type],
+  );
 
   const [accountGroupName, setAccountGroupName] = useState(() => accountGroup?.nickname);
   useEffect(() => {
@@ -46,7 +51,7 @@ const GroupConfig: React.FC<StackScreenProps<typeof GroupSettingStackName>> = ({
     const hasAccountSelected = accounts.some((account) => account.selected);
     if (hasAccountSelected) {
       showMessage({
-        message: "Selected Group can't remove.",
+        message: t('account.group.remove.error'),
         type: 'warning',
       });
     } else {
@@ -60,7 +65,7 @@ const GroupConfig: React.FC<StackScreenProps<typeof GroupSettingStackName>> = ({
       await plugins.Authentication.getPassword();
       await methods.deleteVault(vault);
       showMessage({
-        message: 'Remove Group successfully',
+        message: t('account.group.remove.success'),
         type: 'success',
       });
       setTimeout(() => bottomSheetRef.current?.close());
@@ -70,7 +75,7 @@ const GroupConfig: React.FC<StackScreenProps<typeof GroupSettingStackName>> = ({
         return;
       }
       showMessage({
-        message: 'Remove Group failed',
+        message: t('account.group.remove.errorUnknown'),
         description: String(err ?? ''),
         type: 'warning',
       });
@@ -99,7 +104,7 @@ const GroupConfig: React.FC<StackScreenProps<typeof GroupSettingStackName>> = ({
     <>
       <BottomSheet ref={bottomSheetRef} snapPoints={snapPoints.large} isRoute>
         <Text style={[styles.title, styles.mainText, { color: colors.textPrimary }]}>{GroupTitle}</Text>
-        <Text style={[styles.description, { color: colors.textSecondary }]}>Account Name</Text>
+        <Text style={[styles.description, { color: colors.textSecondary }]}>{t('account.group.inputLabel')}</Text>
         <TextInput
           containerStyle={[styles.textinput, { borderColor: colors.borderFourth }]}
           showVisible={false}
@@ -111,14 +116,16 @@ const GroupConfig: React.FC<StackScreenProps<typeof GroupSettingStackName>> = ({
         {(vault?.type === VaultType.HierarchicalDeterministic || vault?.type === VaultType.BSIM) && (
           <>
             <Text style={[styles.description, styles.backupDescription, { color: colors.textSecondary }]}>
-              {renderByVaultType('Backup', 'BSIM Card Settings')}
+              {renderByVaultType(t('common.backup'), t('account.group.settings.BSIM'))}
             </Text>
             <Pressable
               style={({ pressed }) => [styles.row, { backgroundColor: pressed ? colors.underlay : 'transparent' }]}
               onPress={renderByVaultType(handleBackupSeedPhrase, handleChangeBSIMPin)}
-              testID='action'
+              testID="action"
             >
-              <Text style={[styles.mainText, styles.backupText, { color: colors.textPrimary }]}>{renderByVaultType('Seed Phrase', 'Change BSIM Code')}</Text>
+              <Text style={[styles.mainText, styles.backupText, { color: colors.textPrimary }]}>
+                {renderByVaultType(t('common.seedPhrase'), t('account.group.settings.BSIMCode'))}
+              </Text>
               <ArrowRight color={colors.iconPrimary} />
             </Pressable>
           </>
@@ -127,10 +134,10 @@ const GroupConfig: React.FC<StackScreenProps<typeof GroupSettingStackName>> = ({
         <Pressable
           style={({ pressed }) => [styles.HDManage, { backgroundColor: pressed ? colors.underlay : 'transparent' }]}
           onPress={() => navigation.navigate(HDSettingStackName, { groupId: route.params.groupId })}
-          testID='HDManage'
+          testID="HDManage"
         >
-          <Text style={[styles.HDManageText, { color: colors.textSecondary }]}>HD Wallets</Text>
-          <Text style={[styles.HDManageText, styles.management, { color: colors.textNotice }]}>Management</Text>
+          <Text style={[styles.HDManageText, { color: colors.textSecondary }]}>{t('common.HDWallets')}</Text>
+          <Text style={[styles.HDManageText, styles.management, { color: colors.textNotice }]}>{t('account.action.ManageMent')}</Text>
         </Pressable>
 
         <BottomSheetScrollView style={styles.accountsContainer}>
@@ -140,10 +147,10 @@ const GroupConfig: React.FC<StackScreenProps<typeof GroupSettingStackName>> = ({
         <Pressable
           style={({ pressed }) => [styles.row, styles.removeContainer, { backgroundColor: pressed ? colors.underlay : 'transparent' }]}
           onPress={handlePressDelete}
-          testID='remove'
+          testID="remove"
         >
           <Checkbox checked Icon={Delete} pointerEvents="none" />
-          <Text style={[styles.mainText, styles.removeText, { color: colors.textPrimary }]}>Remove Group</Text>
+          <Text style={[styles.mainText, styles.removeText, { color: colors.textPrimary }]}>{t('account.group.action.remove')}</Text>
         </Pressable>
 
         <Button
@@ -153,7 +160,7 @@ const GroupConfig: React.FC<StackScreenProps<typeof GroupSettingStackName>> = ({
           onPress={handleUpdateAccountGroupNickName}
           size="small"
         >
-          OK
+          {t('common.ok')}
         </Button>
       </BottomSheet>
       {showDeleteBottomSheet && <DeleteConfirm onConfirm={handleConfirmDelete} onClose={() => setShowDeleteBottomSheet(false)} />}

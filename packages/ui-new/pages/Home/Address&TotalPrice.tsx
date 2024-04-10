@@ -13,17 +13,19 @@ import Copy from '@assets/icons/copy.svg';
 import EyeOpen from '@assets/icons/eye-open.svg';
 import EyeClose from '@assets/icons/eye-close.svg';
 import Asterisk from '@assets/icons/asterisk.svg';
+import { useTranslation } from 'react-i18next';
 
 export const CurrentAddress: React.FC = () => {
   const { colors } = useTheme();
   const currentAddressValue = useCurrentAddressValue();
+  const { t } = useTranslation();
 
   return (
     <Pressable
       onPress={() => {
         Clipboard.setString(currentAddressValue ?? '');
         showMessage({
-          message: 'Copied!',
+          message: t('common.copied'),
           type: 'success',
           duration: 1500,
           width: 160,
@@ -66,7 +68,9 @@ export const TotalPrice: React.FC = () => {
       style={({ pressed }) => [styles.totalPriceContainer, { backgroundColor: pressed ? colors.underlay : 'transparent' }]}
     >
       <Asterisks />
-      <Text style={[styles.totalPriceText, { color: colors.textPrimary, opacity: priceVisible ? 1 : 0 }]} numberOfLines={1}>${totalPriceValue}</Text>
+      <Text style={[styles.totalPriceText, { color: colors.textPrimary, opacity: priceVisible ? 1 : 0 }]} numberOfLines={1}>
+        ${totalPriceValue}
+      </Text>
       <EyeClose color={colors.textPrimary} width={24} height={24} style={[styles.eye, { opacity: priceVisible ? 1 : 0 }]} />
     </Pressable>
   );

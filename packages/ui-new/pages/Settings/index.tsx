@@ -4,6 +4,7 @@ import { useTheme } from '@react-navigation/native';
 import Text from '@components/Text';
 import { SettingsStackName, AccountManagementStackName, PreferencesStackName, AboutUsStackName, type StackScreenProps } from '@router/configs';
 import Arrow from '@assets/icons/arrow-right2.svg';
+import { useTranslation } from 'react-i18next';
 
 export const SettingItem: React.FC<{ title: string; onPress: () => void }> = ({ title, onPress }) => {
   const { colors } = useTheme();
@@ -17,15 +18,16 @@ export const SettingItem: React.FC<{ title: string; onPress: () => void }> = ({ 
 
 const Settings: React.FC<StackScreenProps<typeof SettingsStackName>> = ({ navigation }) => {
   const { colors } = useTheme();
+  const { t } = useTranslation();
 
   return (
     <ScrollView contentContainerStyle={[styles.container, { backgroundColor: colors.bgPrimary }]}>
-      <Text style={[styles.title, { color: colors.textPrimary }]}>Settings</Text>
+      <Text style={[styles.title, { color: colors.textPrimary }]}>{t('settings.title')}</Text>
 
-      <SettingItem title="Preferences" onPress={() => navigation.navigate(PreferencesStackName)} />
-      <SettingItem title="Account Management" onPress={() => navigation.navigate(AccountManagementStackName)} />
+      <SettingItem title={t('settings.navigation.preferences')} onPress={() => navigation.navigate(PreferencesStackName)} />
+      <SettingItem title={t('settings.navigation.accountManagement')} onPress={() => navigation.navigate(AccountManagementStackName)} />
       {/* <SettingItem title="Network Management" onPress={() => {}} /> */}
-      <SettingItem title="About us" onPress={() => navigation.navigate(AboutUsStackName)} />
+      <SettingItem title={t('settings.navigation.aboutUs')} onPress={() => navigation.navigate(AboutUsStackName)} />
     </ScrollView>
   );
 };

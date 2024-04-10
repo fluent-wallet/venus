@@ -3,6 +3,7 @@ import { showMessage } from 'react-native-flash-message';
 import methods from '@core/WalletCore/Methods';
 import plugins from '@core/WalletCore/Plugins';
 import { type RootStackParamList } from '@router/configs';
+import i18n from '@assets/i18n';
 
 const createVaultWithRouterParams = async (args: RootStackParamList['Biometrics'], password?: string) => {
   const type =
@@ -16,14 +17,14 @@ const createVaultWithRouterParams = async (args: RootStackParamList['Biometrics'
 
   try {
     if (args?.type === 'importExistWallet' && !args?.value) {
-      throw new Error('Create vault failed: invalid value');
+      throw new Error(i18n.t('initWallet.error.invalidValue'));
     }
 
     if (args?.type === 'importExistWallet') {
       const hasSame = await methods.checkHasSameVault(args.value!);
       if (hasSame) {
         showMessage({
-          message: `This ${type === 'SeedPhrase' ? 'seed phrase' : 'private key'} has been added`,
+          message: i18n.t('initWallet.error.exist', { type: type === 'SeedPhrase' ? i18n.t('common.seedPhrase') : i18n.t('common.privateKey') }),
           type: 'failed',
         });
         return;

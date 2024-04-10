@@ -10,6 +10,7 @@ import NFTItem from './NFTItem';
 import { SkeletonList } from './Skeleton';
 import Img from '@assets/images/home-receive.webp';
 import { Image } from 'expo-image';
+import { useTranslation } from 'react-i18next';
 
 interface Props {
   onPressItem?: (v: AssetInfo) => void;
@@ -21,6 +22,7 @@ const NFTList: React.FC<Props> = ({ onPressItem, tabsType }) => {
   const nfts = useAssetsNFTList();
   const isEmpty = useIsNftsEmpty();
   const currentOpenNFTDetail = useCurrentOpenNFTDetail();
+  const { t } = useTranslation();
 
   if (nfts === null) {
     return <SkeletonList />;
@@ -30,7 +32,7 @@ const NFTList: React.FC<Props> = ({ onPressItem, tabsType }) => {
     return (
       <>
         <Image style={styles.img} source={Img} contentFit="contain" />
-        <Text style={[styles.noNFTText, { color: colors.textSecondary }]}>No NFT</Text>
+        <Text style={[styles.noNFTText, { color: colors.textSecondary }]}>{t('tab.content.noNFT')}</Text>
       </>
     );
   }

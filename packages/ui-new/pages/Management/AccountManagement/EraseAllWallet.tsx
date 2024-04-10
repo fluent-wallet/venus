@@ -10,6 +10,7 @@ import Button from '@components/Button';
 import BottomSheet, { type BottomSheetMethods } from '@components/BottomSheet';
 import { screenHeight } from '@utils/deviceInfo';
 import { AccountManagementStackName, WelcomeStackName, type StackScreenProps } from '@router/configs';
+import { useTranslation } from 'react-i18next';
 
 interface Props {
   navigation: StackScreenProps<typeof AccountManagementStackName>['navigation'];
@@ -17,6 +18,7 @@ interface Props {
 
 const EraseAllWallet: React.FC<Props> = ({ navigation }) => {
   const { colors } = useTheme();
+  const { t } = useTranslation();
   const bottomSheetRef = useRef<BottomSheetMethods>(null!);
 
   const handleDelete = useCallback(async () => {
@@ -42,21 +44,15 @@ const EraseAllWallet: React.FC<Props> = ({ navigation }) => {
   return (
     <BottomSheet ref={bottomSheetRef} snapPoints={snapPoints} isRoute>
       <View style={styles.container}>
-        <Text style={[styles.title, { color: colors.textPrimary }]}>⚠️ Confirm to clear{'\n'}account data?</Text>
-        <Text style={[styles.description, { color: colors.textSecondary }]}>
-          Account data will be cleared.{'\n'}
-          {'\n'}
-          But network settings and other configurations will remain.{'\n'}
-          {'\n'}
-          Be sure to back up your wallet, otherwise you will permanently lose it and all assets.
-        </Text>
+        <Text style={[styles.title, { color: colors.textPrimary }]}>{t('account.action.eraseAll.title')}</Text>
+        <Text style={[styles.description, { color: colors.textSecondary }]}>{t('account.action.eraseAll.describe')}</Text>
 
         <View style={styles.btnArea}>
-          <Button testID='cancel' style={styles.btn} onPress={() => bottomSheetRef.current?.close()} size='small'>
-            Cancel
+          <Button testID="cancel" style={styles.btn} onPress={() => bottomSheetRef.current?.close()} size="small">
+            {t('common.cancel')}
           </Button>
-          <Button testID='delete' style={[styles.btn, { backgroundColor: colors.down }]} onPress={handleDelete} size='small'>
-            ⚠️ Delete
+          <Button testID="delete" style={[styles.btn, { backgroundColor: colors.down }]} onPress={handleDelete} size="small">
+            ⚠️ {t('common.delete')}
           </Button>
         </View>
       </View>

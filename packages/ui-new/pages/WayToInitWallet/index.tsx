@@ -16,6 +16,7 @@ import WelcomeSwiftShieldDark from '@assets/images/welcome-SwiftShield-dark.webp
 import WelcomeBgDark from '@assets/images/welcome-bg-dark.webp';
 import ImgNew from '@assets/images/welcome-img-new.webp';
 import ImportExistingWallet, { type BottomSheetMethods } from './ImportExistingWallet';
+import { useTranslation } from 'react-i18next';
 
 export const showNotFindBSIMCardMessage = () =>
   showMessage({
@@ -26,7 +27,7 @@ export const showNotFindBSIMCardMessage = () =>
 
 const WayToInitWallet: React.FC<StackScreenProps<typeof WayToInitWalletStackName>> = ({ navigation }) => {
   const { mode, colors } = useTheme();
-
+  const { t } = useTranslation();
   const _handleConnectBSIMCard = useCallback(async () => {
     try {
       navigation.setOptions({ gestureEnabled: false });
@@ -62,7 +63,7 @@ const WayToInitWallet: React.FC<StackScreenProps<typeof WayToInitWalletStackName
               loading={inConnecting}
               mode="dark"
             >
-              Connect BSIM Wallet
+              {t('welcome.connectBSIMWallet')}
             </Button>
 
             <Text style={[styles.orAddWith, { color: colors.textThird }]}>or add with:</Text>
@@ -74,11 +75,11 @@ const WayToInitWallet: React.FC<StackScreenProps<typeof WayToInitWalletStackName
               onPress={() => navigation.navigate(BiometricsWayStackName, { type: 'createNewWallet' })}
               mode="dark"
             >
-              Create new wallet
+              {t('welcome.createNewWallet')}
             </Button>
 
             <Button testID="importExistingWallet" textAlign="left" style={styles.btnLast} onPress={() => bottomSheetRef.current?.expand()} mode="dark">
-              Import existing wallet
+              {t('welcome.importExistingWallet')}
             </Button>
           </SafeAreaView>
         </ScrollView>
