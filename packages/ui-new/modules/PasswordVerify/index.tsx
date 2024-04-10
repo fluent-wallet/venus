@@ -1,5 +1,5 @@
 import React, { useCallback, useRef, useEffect, useState } from 'react';
-import { View, StyleSheet, type TextInput as TextInputRef } from 'react-native';
+import { StyleSheet, type TextInput as TextInputRef } from 'react-native';
 import plugins from '@core/WalletCore/Plugins';
 import { useTheme } from '@react-navigation/native';
 import Button from '@components/Button';
@@ -15,7 +15,7 @@ import { useTranslation } from 'react-i18next';
 const defaultPassword = isDev ? '12345678' : '';
 
 const PasswordVerify: React.FC<StackScreenProps<typeof PasswordVerifyStackName>> = ({ navigation }) => {
-  const { colors } = useTheme();
+  const { colors, mode } = useTheme();
   const { t } = useTranslation();
   const textInputRef = useRef<TextInputRef>(null!);
   const bottomSheetRef = useRef<BottomSheetMethods>(null!);
@@ -69,6 +69,7 @@ const PasswordVerify: React.FC<StackScreenProps<typeof PasswordVerifyStackName>>
       <BottomSheetView style={styles.container}>
         <Text style={[styles.title, { color: colors.textPrimary }]}>{t('common.verifyPassword')}</Text>
         <TextInput
+          containerStyle={{ borderWidth: mode === 'dark' ? 1 : 0, borderColor: colors.borderFourth }}
           ref={textInputRef}
           value={password}
           onChangeText={(value) => {

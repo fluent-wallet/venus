@@ -94,7 +94,7 @@ const ImportExistingWallet: React.FC<Props> = ({ bottomSheetRef, onSuccessConfir
         >
           <BottomSheetTextInput
             ref={textInputRef as any}
-            style={[styles.input, { color: colors.textPrimary }]}
+            style={[styles.input, { color: colors.textPrimary, borderColor: colors.borderFourth }]}
             placeholderTextColor={colors.textSecondary}
             testID="existingWalletInput"
             underlineColorAndroid="transparent"
@@ -134,7 +134,6 @@ const styles = StyleSheet.create({
     width: '100%',
     height: 120,
     borderWidth: 1,
-    borderColor: '#E5E5E5',
     justifyContent: 'flex-start',
     paddingHorizontal: 12,
   },
