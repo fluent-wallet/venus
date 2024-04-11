@@ -5,7 +5,6 @@ import { Image } from 'expo-image';
 import Text from '@components/Text';
 import Button from '@components/Button';
 import { isSmallDevice } from '@utils/deviceInfo';
-// import Img from '@assets/images/welcome-img.webp';
 import Img from '@assets/images/backup.webp';
 import BackupBottomSheet from './BackupBottomSheet';
 import { BackupStep1StackName, BackupStep2StackName, type BackupScreenProps } from '@router/configs';

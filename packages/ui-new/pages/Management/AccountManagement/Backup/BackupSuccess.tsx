@@ -1,14 +1,14 @@
 import React, { useCallback } from 'react';
 import { View, StyleSheet } from 'react-native';
 import { useTheme, useNavigation, CommonActions } from '@react-navigation/native';
+import { useTranslation } from 'react-i18next';
 import { Image } from 'expo-image';
 import Text from '@components/Text';
 import Button from '@components/Button';
 import { screenHeight } from '@utils/deviceInfo';
 import { BackupStackName, HomeStackName, type StackScreenProps } from '@router/configs';
-import Img from '@assets/images/welcome-img.webp';
+import Congratulate from '@assets/images/congratulate.webp';
 import BackupBottomSheet from './BackupBottomSheet';
-import { useTranslation } from 'react-i18next';
 
 export const BackupSuccessStackName = 'BackupSuccess';
 
@@ -24,7 +24,7 @@ const BackupSuccess: React.FC = () => {
     <BackupBottomSheet onClose={goHome} snapPoints={snapPoints} showTitle={false}>
       <View style={styles.container}>
         <Text style={[styles.title, { color: colors.textPrimary }]}>{t('backup.success')}</Text>
-        <Image style={styles.img} source={Img} contentFit="contain" />
+        <Image style={styles.img} source={Congratulate} contentFit="contain" />
 
         <Button testID="ok" style={styles.btn} onPress={goHome} size="small">
           {t('common.ok')}
@@ -49,8 +49,8 @@ const styles = StyleSheet.create({
   },
   img: {
     alignSelf: 'center',
-    width: '60%',
-    aspectRatio: 1.285,
+    width: 100,
+    aspectRatio: 1,
     marginTop: 12,
     marginBottom: 'auto',
   },

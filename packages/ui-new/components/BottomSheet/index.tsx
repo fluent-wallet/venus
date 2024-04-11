@@ -1,4 +1,4 @@
-import { useCallback, useRef, forwardRef } from 'react';
+import { useCallback, useRef, forwardRef, useState } from 'react';
 import { BackHandler, Keyboard } from 'react-native';
 import { useFocusEffect, useTheme, useNavigation } from '@react-navigation/native';
 import { clamp } from 'lodash-es';
@@ -77,9 +77,14 @@ const BottomSheet = forwardRef<BottomSheet_, Props>(
         Keyboard.dismiss();
       }
       if (isRoute) {
-        navigation.goBack();
+        if (navigation.canGoBack()) {
+          navigation.goBack();
+        }
       }
+      // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [isRoute, onClose]);
+
+    const [couldPanDownToClose, setCouldPanDownToClose] = useState(false);
 
     return (
       <BottomSheet_
@@ -91,16 +96,21 @@ const BottomSheet = forwardRef<BottomSheet_, Props>(
           if (index === 0 && typeof onOpen === 'function') {
             onOpen();
           }
+          if (index >= 0) {
+            setTimeout(() => setCouldPanDownToClose(true), 200);
+          } else {
+            setTimeout(() => setCouldPanDownToClose(false), 200);
+          }
         }}
         onClose={handleClose}
-        enablePanDownToClose={enablePanDownToClose}
+        enablePanDownToClose={couldPanDownToClose && enablePanDownToClose}
         backdropComponent={showBackDrop ? renderBackdrop : undefined}
         backgroundStyle={{ backgroundColor: colors.bgFourth }}
         handleIndicatorStyle={{ backgroundColor: palette.gray4 }}
         android_keyboardInputMode={android_keyboardInputMode}
         keyboardBlurBehavior={keyboardBlurBehavior}
         enableDynamicSizing={false}
-        animateOnMount
+        animateOnMount={true}
         {...props}
       >
         {children}

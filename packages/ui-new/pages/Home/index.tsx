@@ -16,7 +16,7 @@ import { CurrentAddress, TotalPrice } from './Address&TotalPrice';
 import Navigations from './Navigations';
 import NotBackup from './NotBackup';
 import RefreshScrollView from './RefreshScrollView';
-import { SWITCH_NETWORK_DRAWER_FEATURE } from '@utils/features';
+import { SWITCH_NETWORK_FEATURE } from '@utils/features';
 
 const Home: React.FC<StackScreenProps<typeof HomeStackName>> = ({ navigation }) => {
   const { colors } = useTheme();
@@ -43,7 +43,7 @@ const Home: React.FC<StackScreenProps<typeof HomeStackName>> = ({ navigation }) 
           <HeaderRight
             navigation={navigation}
             onPressNetwork={() => {
-              if (!SWITCH_NETWORK_DRAWER_FEATURE.allow) {
+              if (!SWITCH_NETWORK_FEATURE.allow) {
                 const currentNetwork = getCurrentNetwork();
                 methods.switchToNetwork(currentNetwork?.netId === 1030 ? 71 : 1030);
               } else {

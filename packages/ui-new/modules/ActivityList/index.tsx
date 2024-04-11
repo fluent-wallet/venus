@@ -1,14 +1,14 @@
 import React, { memo, useMemo } from 'react';
 import { StyleSheet } from 'react-native';
 import { useTheme } from '@react-navigation/native';
+import { useTranslation } from 'react-i18next';
+import { Image } from 'expo-image';
 import { useUnfinishedTxs, useFinishedTxs } from '@core/WalletCore/Plugins/ReactInject';
 import { type Tx } from '@core/database/models/Tx';
 import Text from '@components/Text';
-import NoData from '@assets/icons/no-data.svg';
+import NoneAsset from '@assets/images/none-asset.webp';
+import { styles as noneStyles } from '../AssetsList/TokensList/ReceiveFunds';
 import ActivityItem from './ActivityItem';
-import Img from '@assets/images/home-receive.webp';
-import { Image } from 'expo-image';
-import { useTranslation } from 'react-i18next';
 
 const DAY_MILLISECONDS = 1000 * 60 * 60 * 24;
 
@@ -62,8 +62,8 @@ const ActivityList: React.FC<{ onPress?: (v: Tx) => void }> = memo(({ onPress })
   if (!unfinishedTxs?.length && !finishedTxsByDay.length) {
     return (
       <>
-        <Image style={styles.img} source={Img} contentFit="contain" />
-        <Text style={[styles.noActivityText, { color: colors.textSecondary }]}>{t('tab.content.noActivity')}</Text>
+        <Image style={noneStyles.noneImg} source={NoneAsset} contentFit="contain" />
+        <Text style={[noneStyles.noneText, { color: colors.textSecondary }]}>{t('tab.content.noActivity')}</Text>
       </>
     );
   }
@@ -87,15 +87,6 @@ const ActivityList: React.FC<{ onPress?: (v: Tx) => void }> = memo(({ onPress })
 });
 
 const styles = StyleSheet.create({
-  noActivityIcon: {
-    marginTop: 24,
-    marginBottom: 6,
-    alignSelf: 'center',
-  },
-  noActivityText: {
-    fontSize: 14,
-    textAlign: 'center',
-  },
   date: {
     alignSelf: 'flex-start',
     marginTop: 16,

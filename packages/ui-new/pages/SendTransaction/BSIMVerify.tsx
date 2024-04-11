@@ -7,7 +7,7 @@ import BottomSheet, { type BottomSheetMethods } from '@components/BottomSheet';
 import Text from '@components/Text';
 import Button from '@components/Button';
 import { screenHeight } from '@utils/deviceInfo';
-import BSIMCardWallet from '@assets/icons/wallet-bsim-shadow.webp';
+import BSIMCardWallet from '@assets/icons/wallet-bsim2.webp';
 import ArrowLeft from '@assets/icons/arrow-left2.svg';
 import TxErrorIcon from '@assets/icons/txError.svg';
 import { useTranslation } from 'react-i18next';

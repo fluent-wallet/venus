@@ -1,14 +1,14 @@
 import React, { useCallback, useRef } from 'react';
 import { Pressable } from 'react-native';
 import { useTheme } from '@react-navigation/native';
+import { useTranslation } from 'react-i18next';
 import Text from '@components/Text';
 import Checkbox from '@components/Checkbox';
 import BottomSheet, { type BottomSheetMethods } from '@components/BottomSheet';
 import { styles as bottomSheetStyle, snapPoints } from '@pages/Management/AccountManagement/AddAnotherWallet';
 import { LanguageStackName, type StackScreenProps } from '@router/configs';
-import { styles } from './Appearance';
 import { Lang, setI18nLanguage, useLang } from '@hooks/useI18n';
-import { useTranslation } from 'react-i18next';
+import { styles } from './Appearance';
 
 const Language: React.FC<StackScreenProps<typeof LanguageStackName>> = () => {
   const { colors } = useTheme();
