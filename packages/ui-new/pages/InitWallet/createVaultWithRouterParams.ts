@@ -45,8 +45,13 @@ const createVaultWithRouterParams = async (args: RootStackParamList['Biometrics'
     if (plugins.Authentication.containsCancel(String(err))) {
       return;
     }
+    const typeMap = {
+      SeedPhrase: i18n.t('common.seedPhrase'),
+      PrivateKey: i18n.t('common.privateKey'),
+      BSIM: 'BSIM',
+    };
     showMessage({
-      message: `Add new ${type} account failed`,
+      message: i18n.t('initWallet.error.unknown', { type: typeMap[type] }),
       description: String(err ?? ''),
       type: 'failed',
     });

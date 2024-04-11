@@ -230,7 +230,7 @@ const HDManagement: React.FC<StackScreenProps<typeof HDSettingStackName>> = ({ n
 
         <View style={styles.pagination}>
           <Pressable
-            onPress={() => setPageIndex((pre) => pre - 1)}
+            onPress={() => setPageIndex((pre) => Math.max(pre - 1, 0))}
             style={({ pressed }) => [
               styles.paginationArrow,
               styles.arrowLeft,
@@ -245,7 +245,7 @@ const HDManagement: React.FC<StackScreenProps<typeof HDSettingStackName>> = ({ n
             {t('account.HDWallet.select.selected', { accounts: chooseAccounts.length, es: chooseAccounts.length > 0 ? `(es)` : '' })}
           </Text>
           <Pressable
-            onPress={() => setPageIndex((pre) => pre + 1)}
+            onPress={() => setPageIndex((pre) => Math.min(pre + 1, Math.floor(maxCountLimit / countPerPage) - 1))}
             style={({ pressed }) => [
               styles.paginationArrow,
               { backgroundColor: pressed ? colors.underlay : 'transparent', opacity: (pageIndex + 1) * countPerPage >= maxCountLimit ? 0 : 1 },
@@ -367,6 +367,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     fontSize: 16,
     fontWeight: '600',
+    lineHeight: 44,
   },
   btn: {
     marginTop: 'auto',

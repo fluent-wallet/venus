@@ -155,7 +155,7 @@ const SendTransactionStep2Asset: React.FC<Props> = ({ navigation, route, onConfi
       isRoute={!onConfirm}
       index={!onConfirm ? undefined : 0}
       onClose={onClose}
-      showTitle={selectType === 'Receive' ? 'Receive' : t('tx.send.title')}
+      showTitle={selectType === 'Receive' ? t('receive.title') : t('tx.send.title')}
     >
       <Text style={[styles.selectAsset, { color: colors.textSecondary }]}>{t('tx.asset.inputTitle')}</Text>
       <TextInput

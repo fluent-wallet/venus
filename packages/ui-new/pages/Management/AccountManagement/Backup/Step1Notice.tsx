@@ -22,9 +22,9 @@ const BackupStep1Notice: React.FC<BackupScreenProps<typeof BackupStep1StackName>
       <Text style={[styles.description, { color: colors.textPrimary }]}>
         <Trans i18nKey={'backup.notice.describe'}>
           If you lose your <Text style={[styles.descriptionBold, { color: colors.textNotice }]}>seed phrase</Text> or
-          <Text style={[styles.descriptionBold, { color: colors.textNotice }]}>private key</Text>, you won’t be able to recover you wallet. Obtaining{' '}
+          <Text style={[styles.descriptionBold, { color: colors.textNotice }]}>private key</Text>, you won’t be able to recover you wallet. Obtaining
           <Text style={[styles.descriptionBold, { color: colors.textNotice }]}>seed phrase</Text> or
-          <Text style={[styles.descriptionBold, { color: colors.textNotice }]}>private key</Text> means owning all assets. Please{' '}
+          <Text style={[styles.descriptionBold, { color: colors.textNotice }]}>private key</Text> means owning all assets. Please
           <Text style={[styles.descriptionBold, { color: colors.textNotice }]}>protect</Text> them carefully
         </Trans>
       </Text>

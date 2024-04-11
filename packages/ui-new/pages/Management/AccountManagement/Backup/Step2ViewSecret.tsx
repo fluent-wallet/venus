@@ -45,7 +45,7 @@ const BackupStep2ViewSecret: React.FC<BackupScreenProps<typeof BackupStep2StackN
         return;
       }
       showMessage({
-        message: `View ${backupText} failed`,
+        message: t('backup.error.viewFailed', { backupText }),
         description: String(err ?? ''),
         type: 'failed',
       });
