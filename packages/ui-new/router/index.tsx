@@ -85,8 +85,8 @@ const Router: React.FC = () => {
   return (
     <View style={{ flex: 1, backgroundColor: colors.bgPrimary }}>
       <RootStack.Navigator initialRouteName={hasVault ? HomeStackName : WelcomeStackName} screenOptions={screenOptions}>
-        <RootStack.Screen name={WelcomeStackName} component={Welcome} options={{ headerShown: false }} />
-        <RootStack.Screen name={WayToInitWalletStackName} component={WayToInitWallet} options={{ headerShown: false }} />
+        <RootStack.Screen name={WelcomeStackName} component={Welcome} options={{ headerShown: false, animation: 'none' }} />
+        <RootStack.Screen name={WayToInitWalletStackName} component={WayToInitWallet} options={{ headerShown: false, animation: 'none' }} />
         <RootStack.Screen name={HomeStackName} component={Home} options={{ headerShown: false }} />
         <RootStack.Screen name={BiometricsWayStackName} component={BiometricsWay} />
         <RootStack.Screen name={PasswordWayStackName} component={PasswordWay} />
