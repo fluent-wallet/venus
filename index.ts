@@ -20,7 +20,7 @@ import NFTDetailTracker from './packages/core/WalletCore/Plugins/NFTDetailTracke
 import ReceiveAssetsTracker from './packages/core/WalletCore/Plugins/ReceiveAssetsTracker';
 import App from './packages/ui-new/App';
 import { name as appName } from './app.json';
-import { ENABLE_WALLET_CONNECT_FEATURE } from './packages/ui/utils/features';
+import { ENABLE_WALLET_CONNECT_FEATURE } from './packages/ui-new/utils/features';
 
 Decimal.set({ precision: 80 });
 LogBox.ignoreLogs([

@@ -53,10 +53,10 @@ export const SHOW_SET_AMOUNT_FEATURE = {
 
 export const ENABLE_WALLET_CONNECT_FEATURE = {
   describe: 'wallet connect feature',
-  allow: false,
+  allow: isDev,
 };
 
-export const SWITCH_NETWORK_DRAWER_FEATURE = {
-  describe: 'switch network driver',
+export const DEVELOPER_FEATURE = {
+  describe: 'developer feature',
   allow: isDev,
 };
