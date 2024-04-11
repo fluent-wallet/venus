@@ -2,6 +2,7 @@
   "account" : {
     "action" : {
       "add" : null,
+      "addOther" : null,
       "add.title" : null,
       "eraseAll" : null,
       "eraseAll.describe" : null,
@@ -11,10 +12,28 @@
       "remove.describe" : null,
       "remove.title" : null
     },
+    "add" : {
+      "another" : {
+        "BSIM" : {
+          "success" : null
+        },
+        "create" : {
+          "success" : null
+        },
+        "import" : {
+          "success" : null
+        }
+      }
+    },
     "detail" : {
       "accountName" : null,
       "address" : null,
       "title" : null
+    },
+    "error" : {
+      "deleteAccount" : {
+        "failed" : null
+      }
     },
     "group" : {
       "action" : {
@@ -48,13 +67,17 @@
     },
     "remove" : {
       "error" : {
-        "feiled" : null,
+        "failed" : null,
         "removeInUse" : null
       },
       "successfully" : null
     }
   },
   "backup" : {
+    "error" : {
+      "checkFailed" : null,
+      "viewFailed" : null
+    },
     "notice" : {
       "describe" : null,
       "title" : null
@@ -91,6 +114,7 @@
     "max" : null,
     "next" : null,
     "ok" : null,
+    "password" : null,
     "privateKey" : null,
     "retry" : null,
     "return" : null,
@@ -125,7 +149,8 @@
     "enableFingerprint" : null,
     "error" : {
       "exist" : null,
-      "invalidValue" : null
+      "invalidValue" : null,
+      "unknown" : null
     },
     "msg" : {
       "failed" : null,
@@ -290,8 +315,17 @@
     }
   },
   "welcome" : {
+    "addWith" : null,
     "connectBSIMWallet" : null,
     "createNewWallet" : null,
+    "error" : {
+      "BSIM" : {
+        "notFInd" : {
+          "describe" : null,
+          "title" : null
+        }
+      }
+    },
     "getStarted" : "开始",
     "importExistingWallet" : null
   }

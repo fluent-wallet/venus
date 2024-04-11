@@ -41,7 +41,7 @@ const AddAnotherWallet: React.FC<Props> = ({ navigation }) => {
       if (await createVault({ type: 'connectBSIM' })) {
         setTimeout(() => bottomSheetRef.current?.close(), 25);
         showMessage({
-          message: 'Connect BSIM wallet success',
+          message: t('account.add.another.BSIM.success'),
           type: 'success',
         });
       }
@@ -60,7 +60,7 @@ const AddAnotherWallet: React.FC<Props> = ({ navigation }) => {
     if (await createVault({ type: 'createNewWallet' })) {
       setTimeout(() => bottomSheetRef.current?.close(), 25);
       showMessage({
-        message: 'Add new wallet success',
+        message: t('account.add.another.create.success'),
         type: 'success',
       });
     }
@@ -76,7 +76,7 @@ const AddAnotherWallet: React.FC<Props> = ({ navigation }) => {
     if (res) {
       setTimeout(() => bottomSheetRef.current?.close(), 50);
       showMessage({
-        message: 'Import wallet success',
+        message: t('account.add.another.import.success'),
         type: 'success',
       });
     } else if (res === undefined) {

@@ -34,7 +34,7 @@ const AccountManagement: React.FC<StackScreenProps<typeof AccountManagementStack
         testID="addAnotherWallet"
       >
         <Checkbox checked Icon={Add} pointerEvents="none" />
-        <Text style={[accountListStyles.manageText, { color: colors.textPrimary }]}>{t('account.action.add')}</Text>
+        <Text style={[accountListStyles.manageText, { color: colors.textPrimary }]}>{t('account.action.addOther')}</Text>
       </Pressable>
 
       <Pressable

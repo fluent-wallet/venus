@@ -34,7 +34,7 @@ const EraseAllWallet: React.FC<Props> = ({ navigation }) => {
         return;
       }
       showMessage({
-        message: 'Clear account data failed',
+        message: t('account.error.deleteAccount.failed'),
         description: String(err ?? ''),
         type: 'warning',
       });

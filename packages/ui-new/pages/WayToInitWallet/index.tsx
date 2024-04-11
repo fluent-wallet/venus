@@ -17,10 +17,11 @@ import WelcomeBgDark from '@assets/images/welcome-bg-dark.webp';
 import ImportExistingWallet, { type BottomSheetMethods } from './ImportExistingWallet';
 import { useTranslation } from 'react-i18next';
 import LottieAnimation from './lottie';
+import i18n from '@assets/i18n';
 export const showNotFindBSIMCardMessage = () =>
   showMessage({
-    message: `Can't find the BSIM Card`,
-    description: "Please make sure you've inserted the BSIM Card and try again.",
+    message: i18n.t('welcome.error.BSIM.notFInd.title'),
+    description: i18n.t('welcome.error.BSIM.notFInd.describe'),
     type: 'failed',
   });
 
@@ -68,7 +69,7 @@ const WayToInitWallet: React.FC<StackScreenProps<typeof WayToInitWalletStackName
               {t('welcome.connectBSIMWallet')}
             </Button>
 
-            <Text style={[styles.orAddWith, { color: colors.textThird }]}>or add with:</Text>
+            <Text style={[styles.orAddWith, { color: colors.textThird }]}>{t('welcome.addWith')}:</Text>
 
             <Button
               testID="createNewWallet"

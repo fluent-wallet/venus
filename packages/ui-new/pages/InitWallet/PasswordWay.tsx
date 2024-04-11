@@ -74,7 +74,7 @@ const PasswordWay: React.FC<StackScreenProps<typeof PasswordWayStackName>> = ({ 
             minLength: 8,
           }}
           render={({ field: { onChange, onBlur, value } }) => (
-            <TextInput placeholder="Password" onBlur={onBlur} onChangeText={onChange} value={value} defaultHasValue={isDev} />
+            <TextInput placeholder={t('common.password')} onBlur={onBlur} onChangeText={onChange} value={value} defaultHasValue={isDev} />
           )}
           name="password"
         />
@@ -92,7 +92,7 @@ const PasswordWay: React.FC<StackScreenProps<typeof PasswordWayStackName>> = ({ 
             },
           }}
           render={({ field: { onChange, onBlur, value } }) => (
-            <TextInput placeholder="Password" onBlur={onBlur} onChangeText={onChange} value={value} defaultHasValue={isDev} />
+            <TextInput placeholder={t('common.password')} onBlur={onBlur} onChangeText={onChange} value={value} defaultHasValue={isDev} />
           )}
           name="confirm"
         />

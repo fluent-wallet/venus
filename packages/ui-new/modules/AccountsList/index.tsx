@@ -150,6 +150,7 @@ const AddAccount: React.FC<AccountGroupProps & { colors: ReturnType<typeof useTh
   inAdding,
   onPress,
 }) => {
+  const { t } = useTranslation();
   const notReachMax =
     (vaultType === VaultType.HierarchicalDeterministic && accountCount < 256) || (vaultType === VaultType.BSIM && accountCount < plugins.BSIM.chainLimtCount);
 
@@ -166,7 +167,7 @@ const AddAccount: React.FC<AccountGroupProps & { colors: ReturnType<typeof useTh
         testID="addAccount"
       >
         <Checkbox checked Icon={Add} pointerEvents="none" />
-        <Text style={[styles.manageText, { color: colors.textPrimary }]}>Add Account</Text>
+        <Text style={[styles.manageText, { color: colors.textPrimary }]}>{t('account.action.add')}</Text>
         {inAdding && <HourglassLoading style={styles.addAccountLoading} />}
       </Pressable>
       <View style={[styles.divider, { backgroundColor: colors.borderThird }]} pointerEvents="none" />

@@ -1,7 +1,8 @@
 {
   "account" : {
     "action" : {
-      "add" : "添加另一個錢包",
+      "add" : "添加賬戶",
+      "addOther" : "添加另一個錢包",
       "add.title" : "添加錢包",
       "eraseAll" : "移除所有錢包",
       "eraseAll.describe" : "帳戶數據將被清除。\n\n請務必備份您的錢包，否則您將永久丟失它和所有資產。",
@@ -11,10 +12,28 @@
       "remove.describe" : "此操作會刪除此錢包。\n\n此應用程序無法恢復您的錢包，您可以使用其助記詞/私鑰恢復。\n\n請務必備份您的錢包，否則您將永久丟失它和所有資產。",
       "remove.title" : "⚠️ 刪除此錢包？"
     },
+    "add" : {
+      "another" : {
+        "BSIM" : {
+          "success" : "成功連接 BSIM 卡錢包"
+        },
+        "create" : {
+          "success" : "成功添加新錢包"
+        },
+        "import" : {
+          "success" : "成功導入錢包"
+        }
+      }
+    },
     "detail" : {
       "accountName" : "賬號賬戶",
       "address" : "地址",
       "title" : "賬戶"
+    },
+    "error" : {
+      "deleteAccount" : {
+        "failed" : "清除賬戶數據失敗"
+      }
     },
     "group" : {
       "action" : {
@@ -48,13 +67,17 @@
     },
     "remove" : {
       "error" : {
-        "feiled" : "移除賬戶失敗",
+        "failed" : "移除賬戶失敗",
         "removeInUse" : "使用中的賬戶不能刪除"
       },
       "successfully" : "賬戶刪除成功"
     }
   },
   "backup" : {
+    "error" : {
+      "checkFailed" : "\uD83E\uDD14 單詞錯誤，請檢查並重試",
+      "viewFailed" : "查看 {{backupText}} 失敗      "
+    },
     "notice" : {
       "describe" : "如果您丟失<1>助記詞</1>或<3>私鑰</3>，您將無法恢復錢包。\n\n獲得<5>助記詞</5>或<7>私鑰</7>意味着擁有所有資產。\n\n請務必<9>保護好</9>",
       "title" : "注意"
@@ -91,6 +114,7 @@
     "max" : "最大",
     "next" : "繼續",
     "ok" : "OK",
+    "password" : "密碼",
     "privateKey" : "私鑰",
     "retry" : "重試",
     "return" : "返回",
@@ -125,7 +149,8 @@
     "enableFingerprint" : "啟用指紋識別",
     "error" : {
       "exist" : "此 {{type}} 已存在",
-      "invalidValue" : "錢包創建失敗：無效值"
+      "invalidValue" : "錢包創建失敗：無效值",
+      "unknown" : "添加新 {{type}} 賬戶失敗"
     },
     "msg" : {
       "failed" : "錢包創建失敗",
@@ -290,9 +315,18 @@
     }
   },
   "welcome" : {
+    "addWith" : "其他方式",
     "connectBSIMWallet" : "連接 BSIM 卡錢包",
     "createNewWallet" : "創建新錢包",
-    "getStarted" : "開始",
+    "error" : {
+      "BSIM" : {
+        "notFInd" : {
+          "describe" : "請檢查你已經插入了 BSIM 卡後重試",
+          "title" : "未能獲取到 BSIM 卡"
+        }
+      }
+    },
+    "getStarted" : "開始使用",
     "importExistingWallet" : "導入已有錢包"
   }
 }

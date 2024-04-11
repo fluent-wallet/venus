@@ -73,7 +73,7 @@ const AccountConfig: React.FC<StackScreenProps<typeof AccountSettingStackName>> 
         return;
       }
       showMessage({
-        message: t('account.remove.error.feiled'),
+        message: t('account.remove.error.failed'),
         description: String(err ?? ''),
         type: 'warning',
       });
