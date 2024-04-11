@@ -4,6 +4,7 @@ import database from '@core/database';
 import { setAtom, getAtom } from '@core/WalletCore/Plugins/ReactInject';
 import i18n from '@assets/i18n';
 import { getLocales } from 'expo-localization';
+import { useState } from 'react';
 
 export enum Lang {
   en = 'en',
@@ -12,7 +13,7 @@ export enum Lang {
   system = 'system',
 }
 
-const getSystemLang = () => {
+export const getSystemLang = () => {
   const locales = getLocales();
   const locale = locales[0];
   const languageTag = locale?.languageTag || Lang.en;
@@ -92,3 +93,8 @@ export const setI18nLanguage = (lang: Lang) => {
 };
 
 export const useLang = () => useAtomValue(langAtom);
+export const useSystemLang = () => {
+  const [sysLang, setSysLang] = useState(getSystemLang());
+
+  return sysLang;
+};
