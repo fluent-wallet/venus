@@ -12,21 +12,22 @@ import { useTranslation } from 'react-i18next';
 
 const Language: React.FC<StackScreenProps<typeof LanguageStackName>> = () => {
   const { colors } = useTheme();
-  const lang = useLang();
-  const bottomSheetRef = useRef<BottomSheetMethods>(null!);
   const { t } = useTranslation();
-  const setLanguage = useCallback((language: Parameters<any>) => {
-    // _setMode(mode);
+  const lang = useLang();
+
+  const bottomSheetRef = useRef<BottomSheetMethods>(null!);
+  const setLanguage = useCallback((language: Parameters<typeof setI18nLanguage>[0]) => {
+    setI18nLanguage(language);
     bottomSheetRef.current?.close();
   }, []);
-  console.log('current lang', lang);
+
   return (
-    <BottomSheet snapPoints={snapPoints} isRoute containerStyle={bottomSheetStyle.container}>
+    <BottomSheet ref={bottomSheetRef} snapPoints={snapPoints} isRoute containerStyle={bottomSheetStyle.container}>
       <Text style={[bottomSheetStyle.title, { color: colors.textPrimary }]}>{t('settings.language.title')}</Text>
 
       <Pressable
         style={({ pressed }) => [styles.item, { backgroundColor: pressed ? colors.underlay : 'transparent' }]}
-        onPress={() => setI18nLanguage(Lang.system)}
+        onPress={() => setLanguage(Lang.system)}
         testID="system"
       >
         <Text style={[styles.itemText, { color: colors.textPrimary }]}>{t('settings.language.systemLang')}</Text>
@@ -34,7 +35,7 @@ const Language: React.FC<StackScreenProps<typeof LanguageStackName>> = () => {
       </Pressable>
       <Pressable
         style={({ pressed }) => [styles.item, { backgroundColor: pressed ? colors.underlay : 'transparent' }]}
-        onPress={() => setI18nLanguage(Lang.en)}
+        onPress={() => setLanguage(Lang.en)}
         testID="english"
       >
         <Text style={[styles.itemText, { color: colors.textPrimary }]}>English</Text>
@@ -43,7 +44,7 @@ const Language: React.FC<StackScreenProps<typeof LanguageStackName>> = () => {
       <Pressable
         style={({ pressed }) => [styles.item, { backgroundColor: pressed ? colors.underlay : 'transparent' }]}
         testID="traditionalChinese"
-        onPress={() => setI18nLanguage(Lang.zhHant)}
+        onPress={() => setLanguage(Lang.zhHant)}
       >
         <Text style={[styles.itemText, { color: colors.textPrimary }]}>繁体中文</Text>
         {lang === Lang.zhHant && <Checkbox checked pointerEvents="none" />}
