@@ -1,5 +1,5 @@
 import React, { useCallback, useRef } from 'react';
-import { ImageBackground, ScrollView, Keyboard, StyleSheet } from 'react-native';
+import { ImageBackground, ScrollView, Keyboard, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTheme } from '@react-navigation/native';
 import { showMessage } from 'react-native-flash-message';
@@ -14,10 +14,9 @@ import WelcomeSwiftShieldDark from '@assets/images/welcome-SwiftShield-dark.webp
 // import WelcomeSwiftShieldLight from '@assets/images/welcome-SwiftShield-light.webp';
 // import WelcomeBgLight from '@assets/images/welcome-bg-light.webp';
 import WelcomeBgDark from '@assets/images/welcome-bg-dark.webp';
-import ImgNew from '@assets/images/welcome-img-new.webp';
 import ImportExistingWallet, { type BottomSheetMethods } from './ImportExistingWallet';
 import { useTranslation } from 'react-i18next';
-
+import LottieAnimation from './lottie';
 export const showNotFindBSIMCardMessage = () =>
   showMessage({
     message: `Can't find the BSIM Card`,
@@ -51,7 +50,10 @@ const WayToInitWallet: React.FC<StackScreenProps<typeof WayToInitWalletStackName
       <ImageBackground source={WelcomeBgDark} style={styles.bg} resizeMode="cover">
         <ScrollView>
           <SafeAreaView style={styles.container}>
-            <Image style={styles.img} source={ImgNew} contentFit="contain" />
+            {/* <Image style={styles.img} source={ImgNew} contentFit="contain" /> */}
+            <View style={styles.lottieAnimation}>
+              <LottieAnimation />
+            </View>
             <Image style={styles.welcomeSwiftShield} source={WelcomeSwiftShieldDark} contentFit="contain" />
 
             <Button
@@ -104,10 +106,10 @@ const styles = StyleSheet.create({
   container: {
     paddingHorizontal: 16,
   },
-  img: {
+  lottieAnimation: {
     alignSelf: 'center',
     width: 400,
-    aspectRatio: 1,
+    height: 400,
   },
   welcomeSwiftShield: {
     alignSelf: 'center',

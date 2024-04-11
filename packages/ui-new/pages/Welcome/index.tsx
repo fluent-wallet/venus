@@ -12,8 +12,8 @@ import EnterWeb3Dark from '@assets/images/enter-web3-dark.webp';
 import WelcomeBgDark from '@assets/images/welcome-bg-dark.webp';
 // import WelcomeTextLight from '@assets/images/enter-web3-text-light.webp';
 import WelcomeTextDark from '@assets/images/enter-web3-text-dark.webp';
-import ImgNew from '@assets/images/enter-web3-img-new.webp';
 import { useTranslation } from 'react-i18next';
+import LottieAnimation from './lottie';
 
 const Welcome: React.FC<StackScreenProps<typeof WelcomeStackName>> = ({ navigation }) => {
   const { t } = useTranslation();
@@ -26,7 +26,9 @@ const Welcome: React.FC<StackScreenProps<typeof WelcomeStackName>> = ({ navigati
           <View style={[styles.first, { backgroundColor: '#FAFAFA' }]}>
             <Image style={styles.firstText} source={WelcomeTextDark} contentFit="contain" />
           </View>
-          <Image style={styles.img} source={ImgNew} />
+          <View style={styles.lottieAnimation}>
+            <LottieAnimation />
+          </View>
           <Button
             testID="Get Started"
             textAlign="left"
@@ -71,10 +73,10 @@ const styles = StyleSheet.create({
     width: 198,
     aspectRatio: 4.5,
   },
-  img: {
+  lottieAnimation: {
     alignSelf: 'center',
     width: 352,
-    aspectRatio: 1,
+    height: 352,
     marginTop: 52,
   },
   btn: {
