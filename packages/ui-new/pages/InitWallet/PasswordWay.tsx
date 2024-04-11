@@ -1,5 +1,5 @@
 import React, { useState, useCallback } from 'react';
-import { ScrollView, KeyboardAvoidingView, Pressable, StyleSheet } from 'react-native';
+import { ScrollView, KeyboardAvoidingView, Pressable, StyleSheet, Platform } from 'react-native';
 import { useTheme, CommonActions } from '@react-navigation/native';
 import { showMessage } from 'react-native-flash-message';
 import { useForm, Controller } from 'react-hook-form';
@@ -60,7 +60,7 @@ const PasswordWay: React.FC<StackScreenProps<typeof PasswordWayStackName>> = ({ 
   const { inAsync, execAsync: handleCreateVault } = useInAsync(_handleCreateVault);
 
   return (
-    <KeyboardAvoidingView style={[styles.keyboardView, { backgroundColor: colors.bgPrimary }]}>
+    <KeyboardAvoidingView style={[styles.keyboardView, { backgroundColor: colors.bgPrimary }]} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
       <ScrollView contentContainerStyle={styles.container}>
         <Text style={[styles.title, { color: colors.textPrimary }]}>{t('initWallet.setPassword')}</Text>
 
