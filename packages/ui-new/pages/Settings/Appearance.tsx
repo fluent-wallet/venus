@@ -11,8 +11,8 @@ import { useTranslation } from 'react-i18next';
 
 const Appearance: React.FC<StackScreenProps<typeof AppearanceStackName>> = () => {
   const { colors } = useTheme();
-  const mode = useMode();
   const { t } = useTranslation();
+  const mode = useMode();
 
   const bottomSheetRef = useRef<BottomSheetMethods>(null!);
   const setMode = useCallback((mode: Parameters<typeof _setMode>[0]) => {
