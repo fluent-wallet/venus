@@ -29,6 +29,7 @@ database.localStorage.get(storageKey).then((dbLang) => {
     setAtom(langAtom, Lang.system);
     changeLangBySystem(lang);
   } else {
+    setAtom(langAtom, dbLang as Lang);
     changeLangBySystem((dbLang as Lang) || Lang.system);
   }
 });
@@ -36,32 +37,37 @@ database.localStorage.get(storageKey).then((dbLang) => {
 const langAtom = atom(
   (get) => {
     const mode = get(_langAtom);
-    console.log('get mode', mode);
     return mode || Lang.system;
   },
   (_, set, update: Lang) => {
-    console.log('set', update);
     set(_langAtom, update);
   },
 );
 
-function changeLang(lang: Lang, { updateDB = false, updateAtom = false }) {
+function changeLang(updateLang: Lang, { updateDB = false, updateAtom = false }) {
   const supportLang = Object.values(Lang);
-  let _lang = Lang.en;
-  if (lang.startsWith(Lang.zhHant)) {
-    _lang = Lang.zhHant;
-  } else if (supportLang.includes(lang)) {
-    _lang = lang;
+  let newLang = Lang.en;
+  if (updateLang.startsWith(Lang.zhHant)) {
+    newLang = Lang.zhHant;
+  } else if (updateLang === Lang.system) {
+    newLang = Lang.system;
+  } else if (supportLang.includes(updateLang)) {
+    newLang = updateLang;
   }
 
-  i18n.changeLanguage(_lang);
+  if (newLang === Lang.system) {
+    const sysLang = getSystemLang();
+    i18n.changeLanguage(sysLang);
+  } else {
+    i18n.changeLanguage(newLang);
+  }
 
   if (updateAtom) {
-    setAtom(langAtom, _lang);
+    setAtom(langAtom, newLang);
   }
 
   if (updateDB) {
-    database.localStorage.set(storageKey, _lang);
+    database.localStorage.set(storageKey, newLang);
   }
 }
 
