@@ -17,18 +17,28 @@ export const getSystemLang = () => {
   const locales = getLocales();
   const locale = locales[0];
   const languageTag = locale?.languageTag || Lang.en;
+  if (['zh-TW', 'zh-HK', 'zh-MO'].includes(languageTag)) {
+    return Lang.zhHant;
+  }
 
-  if (languageTag.startsWith(Lang.zhHant)) return Lang.zhHant;
+  if (languageTag.startsWith(Lang.zhHant)) {
+    return Lang.zhHant;
+  }
+
   return Lang.en;
 };
 
 const storageKey = 'i18n-lang';
 const _langAtom = atom<Lang>(Lang.en);
 database.localStorage.get(storageKey).then((dbLang) => {
-  if (dbLang === Lang.system) {
+  if (dbLang === Lang.system || typeof dbLang === 'undefined') {
     const lang = getSystemLang();
+
     setAtom(langAtom, Lang.system);
     changeLangBySystem(lang);
+    if (typeof dbLang === 'undefined') {
+      database.localStorage.set(storageKey, Lang.system);
+    }
   } else {
     setAtom(langAtom, dbLang as Lang);
     changeLangBySystem((dbLang as Lang) || Lang.system);
