@@ -7,20 +7,20 @@
       "eraseAll.describe" : "帳戶數據將被清除。\n\n請務必備份您的錢包，否則您將永久丟失它和所有資產。",
       "eraseAll.title" : "⚠️ 移除所有錢包？",
       "ManageMent" : "管理",
-      "remove" : "刪除賬號",
+      "remove" : "刪除賬戶",
       "remove.describe" : "此操作會刪除此錢包。\n\n此應用程序無法恢復您的錢包，您可以使用其助記詞/私鑰恢復。\n\n請務必備份您的錢包，否則您將永久丟失它和所有資產。",
       "remove.title" : "⚠️ 刪除此錢包？"
     },
     "detail" : {
-      "accountName" : "賬號名稱",
+      "accountName" : "賬號賬戶",
       "address" : "地址",
-      "title" : "賬號"
+      "title" : "賬戶"
     },
     "group" : {
       "action" : {
         "remove" : "刪除錢包組"
       },
-      "inputLabel" : "賬號名稱",
+      "inputLabel" : "賬戶名稱",
       "remove" : {
         "error" : "正在使用的組不能移除",
         "errorUnknown" : "錢包組移除失敗",
@@ -48,10 +48,10 @@
     },
     "remove" : {
       "error" : {
-        "feiled" : "移除賬號失敗",
-        "removeInUse" : "使用中的賬號不能刪除"
+        "feiled" : "移除賬戶失敗",
+        "removeInUse" : "使用中的賬戶不能刪除"
       },
-      "successfully" : "賬號刪除成功"
+      "successfully" : "賬戶刪除成功"
     }
   },
   "backup" : {
@@ -200,7 +200,7 @@
     },
     "navigation" : {
       "aboutUs" : "關於我們",
-      "accountManagement" : "賬號管理",
+      "accountManagement" : "賬戶管理",
       "preferences" : "偏好設置"
     },
     "preferences" : {
@@ -217,10 +217,10 @@
     "content" : {
       "depositToken" : "快存入資產吧",
       "noActivity" : "還沒有交易",
-      "noNFT" : "無 NFT 資產",
+      "noNFT" : "沒有收藏品",
       "receive" : "接收"
     },
-    "nfts" : "NFTs",
+    "nfts" : "收藏品",
     "tokens" : "代幣"
   },
   "tx" : {

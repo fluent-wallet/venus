@@ -56,7 +56,7 @@
   },
   "backup" : {
     "notice" : {
-      "describe" : "If you lose your <1>seed phrase</1> or <3>private key</3>, you won’t be able to recover you wallet.\n\nObtaining <6>seed phrase</6> or  <8>private key</8> means owning all assets.\n\nPlease <10>protect</10> them carefully",
+      "describe" : "If you lose your <1>seed phrase</1> or <3>private key</3>, you won’t be able to recover you wallet.\n\nObtaining <5>seed phrase</5> or  <7>private key</7> means owning all assets.\n\nPlease <9>protect</9> them carefully",
       "title" : "Notice"
     },
     "success" : "\uD83E\uDD73 Backuped !",
@@ -102,7 +102,7 @@
   },
   "home" : {
     "backup" : {
-      "describe" : " You need to back up seed phrase to ensure the security of this wallet.  <1>Back Up ></1>",
+      "describe" : "Back up seed phrase to ensure the security of this wallet.  <1>Back Up ></1>",
       "title" : "Funds at risk"
     },
     "buy" : "Buy",
@@ -195,7 +195,7 @@
       "title" : "Appearance"
     },
     "language" : {
-      "systemLang" : "System Language",
+      "systemLang" : "Default Language",
       "title" : "Language"
     },
     "navigation" : {
