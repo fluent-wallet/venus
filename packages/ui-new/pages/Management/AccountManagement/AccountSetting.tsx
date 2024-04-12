@@ -48,7 +48,6 @@ const AccountConfig: React.FC<StackScreenProps<typeof AccountSettingStackName>> 
         type: 'warning',
       });
     } else {
-      console.log('handlePressDelete');
       setShowDeleteBottomSheet(true);
     }
   }, [account]);

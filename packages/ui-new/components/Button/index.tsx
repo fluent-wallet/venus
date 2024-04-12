@@ -13,6 +13,7 @@ interface Props extends PropsWithChildren<PressableProps> {
   loading?: boolean;
   square?: boolean;
   Icon?: typeof Component<SvgProps>;
+  textColor?: string;
 }
 
 const Button = ({
@@ -25,6 +26,7 @@ const Button = ({
   square,
   Icon,
   style,
+  textColor,
   ...props
 }: Props) => {
   const { mode: usedMode } = useTheme();
@@ -47,7 +49,10 @@ const Button = ({
     [mode, size, disabled, square, textAlign, style],
   );
 
-  const textStyle = useMemo(() => ({ ...styles.text, ...styles[`text-${mode}`], ...(disabled ? styles[`text-${mode}-disabled`] : null) }), [mode, disabled]);
+  const textStyle = useMemo(
+    () => ({ ...styles.text, ...styles[`text-${mode}`], ...(disabled ? styles[`text-${mode}-disabled`] : null), ...(textColor ? { color: textColor } : null) }),
+    [mode, disabled],
+  );
   const iconPositionStyle = useMemo(
     () => ({
       marginLeft: children === undefined ? undefined : textAlign === 'center' ? 10 : ('auto' as const),

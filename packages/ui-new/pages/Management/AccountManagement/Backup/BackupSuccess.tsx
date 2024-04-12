@@ -37,7 +37,6 @@ const BackupSuccess: React.FC = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    paddingTop: 8,
     paddingHorizontal: 16,
     paddingBottom: 32,
   },
@@ -51,7 +50,7 @@ const styles = StyleSheet.create({
     alignSelf: 'center',
     width: 100,
     aspectRatio: 1,
-    marginTop: 12,
+    marginTop: 24,
     marginBottom: 'auto',
   },
   btn: {
@@ -59,6 +58,6 @@ const styles = StyleSheet.create({
   },
 });
 
-const snapPoints = [`${((440 / screenHeight) * 100).toFixed(2)}%`];
+const snapPoints = [`${((288 / screenHeight) * 100).toFixed(2)}%`];
 
 export default BackupSuccess;

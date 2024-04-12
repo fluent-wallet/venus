@@ -30,13 +30,14 @@ const DeleteConfirm: React.FC<Props> = ({ onConfirm, onClose }) => {
           <Button
             testID="delete"
             style={[styles.btn, { backgroundColor: colors.down }]}
+            textColor="#fff"
             onPress={() => {
               bottomSheetRef.current?.close();
               onConfirm();
             }}
             size="small"
           >
-            <Text>⚠️ {t('common.delete')}</Text>
+            {t('common.delete')}
           </Button>
         </View>
       </View>
