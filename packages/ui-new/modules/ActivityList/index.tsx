@@ -6,7 +6,7 @@ import { Image } from 'expo-image';
 import { useUnfinishedTxs, useFinishedTxs } from '@core/WalletCore/Plugins/ReactInject';
 import { type Tx } from '@core/database/models/Tx';
 import Text from '@components/Text';
-import NoneAsset from '@assets/images/none-asset.webp';
+import NoneActivity from '@assets/images/none-activity.webp';
 import { styles as noneStyles } from '../AssetsList/TokensList/ReceiveFunds';
 import ActivityItem from './ActivityItem';
 
@@ -62,7 +62,7 @@ const ActivityList: React.FC<{ onPress?: (v: Tx) => void }> = memo(({ onPress })
   if (!unfinishedTxs?.length && !finishedTxsByDay.length) {
     return (
       <>
-        <Image style={noneStyles.noneImg} source={NoneAsset} contentFit="contain" />
+        <Image style={noneStyles.noneImg} source={NoneActivity} contentFit="contain" />
         <Text style={[noneStyles.noneText, { color: colors.textSecondary }]}>{t('tab.content.noActivity')}</Text>
       </>
     );

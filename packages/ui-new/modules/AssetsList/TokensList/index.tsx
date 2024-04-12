@@ -6,7 +6,7 @@ import { useAssetsTokenList, useIsTokensEmpty, useTokenListOfCurrentNetwork } fr
 import { type AssetInfo } from '@core/WalletCore/Plugins/AssetsTracker/types';
 import Text from '@components/Text';
 import { usePriceVisibleValue } from '@hooks/usePriceVisible';
-import NoneAsset from '@assets/images/none-asset.webp';
+import NoneToken from '@assets/images/none-token.webp';
 import TokenItem from './TokenItem';
 import ReceiveFunds, { styles } from './ReceiveFunds';
 import Skeleton from './Skeleton';
@@ -35,7 +35,7 @@ const TokensList: React.FC<Props> = ({ onPressItem, selectType, showReceiveFunds
     } else {
       return (
         <>
-          <Image style={styles.noneImg} source={NoneAsset} contentFit="contain" />
+          <Image style={styles.noneImg} source={NoneToken} contentFit="contain" />
           <Text style={[styles.noneText, { color: colors.textSecondary }]}>{t('tab.content.noToken')}</Text>
         </>
       );

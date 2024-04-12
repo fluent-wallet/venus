@@ -6,7 +6,7 @@ import { useAssetsNFTList, useIsNftsEmpty, useCurrentOpenNFTDetail } from '@core
 import { type AssetInfo } from '@core/WalletCore/Plugins/AssetsTracker/types';
 import Text from '@components/Text';
 import { type TabsType } from '@modules/AssetsTabs';
-import NoneAsset from '@assets/images/none-asset.webp';
+import NoneNFT from '@assets/images/none-NFT.webp';
 import { styles } from '../TokensList/ReceiveFunds';
 import NFTItem from './NFTItem';
 import { SkeletonList } from './Skeleton';
@@ -31,7 +31,7 @@ const NFTList: React.FC<Props> = ({ onPressItem, tabsType }) => {
   if (isEmpty) {
     return (
       <>
-        <Image style={styles.noneImg} source={NoneAsset} contentFit="contain" />
+        <Image style={styles.noneImg} source={NoneNFT} contentFit="contain" />
         <Text style={[styles.noneText, { color: colors.textSecondary }]}>{t('tab.content.noNFT')}</Text>
       </>
     );

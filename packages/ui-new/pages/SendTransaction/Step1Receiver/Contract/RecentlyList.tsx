@@ -7,7 +7,7 @@ import { Image } from 'expo-image';
 import { useRecentlyAddress } from '@core/WalletCore/Plugins/ReactInject';
 import Text from '@components/Text';
 import { AccountItemView } from '@modules/AccountsList';
-import NoneAsset from '@assets/images/none-asset.webp';
+import NoneToken from '@assets/images/none-token.webp';
 import { styles as noneStyles } from '@modules/AssetsList/TokensList/ReceiveFunds';
 
 const RecentlyList: React.FC<{
@@ -21,7 +21,7 @@ const RecentlyList: React.FC<{
   if (!recentlyAddress?.length) {
     return (
       <>
-        <Image style={noneStyles.noneImg} source={NoneAsset} contentFit="contain" />
+        <Image style={noneStyles.noneImg} source={NoneToken} contentFit="contain" />
         <Text style={[noneStyles.noneText, { color: colors.textSecondary }]}>{t('tab.content.noNFT')}</Text>
       </>
     );

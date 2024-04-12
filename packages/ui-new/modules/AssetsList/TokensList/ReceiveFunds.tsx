@@ -7,7 +7,7 @@ import { Image } from 'expo-image';
 import Button from '@components/Button';
 import Text from '@components/Text';
 import { HomeStackName, ReceiveStackName, type StackScreenProps } from '@router/configs';
-import NoneAsset from '@assets/images/none-asset.webp';
+import NoneToken from '@assets/images/none-token.webp';
 
 const ReceiveFunds: React.FC = () => {
   const { colors } = useTheme();
@@ -16,7 +16,7 @@ const ReceiveFunds: React.FC = () => {
 
   return (
     <>
-      <Image style={styles.noneImg} source={NoneAsset} contentFit="contain" />
+      <Image style={styles.noneImg} source={NoneToken} contentFit="contain" />
       <Text style={[styles.noneText, { color: colors.textSecondary }]}>{t('tab.content.depositToken')}</Text>
       <Button testID="receiveFunds" style={styles.btn} onPress={() => navigation.navigate(ReceiveStackName)}>
         {t('tab.content.receive')}
@@ -28,13 +28,13 @@ const ReceiveFunds: React.FC = () => {
 export const styles = StyleSheet.create({
   noneImg: {
     alignSelf: 'center',
-    width: 120,
+    width: 160,
     aspectRatio: 1,
-    marginTop: 36,
+    marginTop: 24,
   },
   noneText: {
     alignSelf: 'center',
-    marginTop: 12,
+    marginTop: 16,
     marginBottom: 24,
     fontSize: 16,
     fontWeight: '300',
