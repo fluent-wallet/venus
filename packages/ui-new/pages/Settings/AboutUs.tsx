@@ -37,7 +37,7 @@ const AboutUs: React.FC<StackScreenProps<typeof AboutUsStackName>> = ({ navigati
         {t('settings.aboutUs.version')}: {pkg.version} {APP_VERSION_FLAG_FEATURE.allow && APP_VERSION_FLAG_FEATURE.value}
       </Text>
 
-      <SettingItem title={t('settings.aboutUs.action.checkUpdate')} onPress={() => {}} />
+      {/* <SettingItem title={t('settings.aboutUs.action.checkUpdate')} onPress={() => {}} /> */}
       <SettingItem title={t('settings.aboutUs.action.teamsService')} onPress={openTeamsService} />
       <SettingItem title={t('settings.aboutUs.action.feedback')} onPress={openFeedback} />
     </ScrollView>
