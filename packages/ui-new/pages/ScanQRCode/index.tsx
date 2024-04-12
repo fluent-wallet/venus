@@ -9,7 +9,7 @@ import Decimal from 'decimal.js';
 import { parseUri } from '@walletconnect/utils';
 import { useCurrentNetwork, NetworkType, getAssetsTokenList, AssetType } from '@core/WalletCore/Plugins/ReactInject';
 import methods from '@core/WalletCore/Methods';
-import plugins from '@core/WalletCore/Plugins';
+// import plugins from '@core/WalletCore/Plugins';
 import BottomSheet, { BottomSheetMethods, snapPoints } from '@components/BottomSheet';
 import Text from '@components/Text';
 import Button from '@components/Button';
@@ -141,22 +141,22 @@ const ScanQrCode: React.FC<Props> = ({ navigation, onConfirm, onClose }) => {
         onParseEthUrlSuccess(ethUrl);
       } catch (err) {
         if (!onConfirm && QRCodeString.startsWith('wc:') && ENABLE_WALLET_CONNECT_FEATURE.allow) {
-          try {
-            const { version } = parseUri(QRCodeString);
-            if (version === 1) {
-              setScanStatus({ errorMessage: t('scan.walletConnect.error.lowVersion') });
-            } else {
-              await plugins.WalletConnect.pair(QRCodeString);
-              // navigation.dispatch(StackActions.replace(HomeStackName, { screen: WalletStackName }));
-            }
-          } catch (err) {
-            showMessage({
-              message: t('scan.walletConnect.error.connectFailed'),
-              description: String(err ?? ''),
-              duration: 3000,
-            });
-            setScanStatus({ errorMessage: `${t('scan.walletConnect.error.connectFailed')} ${String(err ?? '')}` });
-          }
+          // try {
+          //   const { version } = parseUri(QRCodeString);
+          //   if (version === 1) {
+          //     setScanStatus({ errorMessage: t('scan.walletConnect.error.lowVersion') });
+          //   } else {
+          //     await plugins.WalletConnect.pair(QRCodeString);
+          //     // navigation.dispatch(StackActions.replace(HomeStackName, { screen: WalletStackName }));
+          //   }
+          // } catch (err) {
+          //   showMessage({
+          //     message: t('scan.walletConnect.error.connectFailed'),
+          //     description: String(err ?? ''),
+          //     duration: 3000,
+          //   });
+          //   setScanStatus({ errorMessage: `${t('scan.walletConnect.error.connectFailed')} ${String(err ?? '')}` });
+          // }
         } else {
           setScanStatus({ errorMessage: t('scan.QRCode.error.notRecognized') });
         }

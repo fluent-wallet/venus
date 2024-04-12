@@ -6,7 +6,6 @@ import { useCurrentAccount, useGroupOfAccount, useVaultOfAccount, VaultType, Vau
 import Text from '@components/Text';
 import useForceUpdateOnFocus from '@hooks/useUpdateOnFocus';
 import { HomeStackName, BackupStackName, BackupStep1StackName, type StackScreenProps } from '@router/configs';
-// import Img from '@assets/images/welcome-img.webp';
 import Img from '@assets/images/fundsAtRisk.webp';
 import { Trans, useTranslation } from 'react-i18next';
 

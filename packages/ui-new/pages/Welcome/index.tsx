@@ -1,31 +1,26 @@
 import React from 'react';
 import { ImageBackground, View, ScrollView, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useTheme } from '@react-navigation/native';
+import { useTranslation } from 'react-i18next';
 import { Image } from 'expo-image';
 import Button from '@components/Button';
 import { WelcomeStackName, WayToInitWalletStackName, type StackScreenProps } from '@router/configs';
+import { Lang, useLanguage } from '@hooks/useI18n';
 import ArrowRight from '@assets/icons/arrow-right.svg';
-import EnterWeb3Dark from '@assets/images/enter-web3-dark.webp';
-// import EnterWeb3Light from '@assets/images/enter-web3-light.webp';
-// import WelcomeBgLight from '@assets/images/welcome-bg-light.webp';
+import EnterWeb3EN from '@assets/images/enter-web3-en.webp';
+import EnterWeb3ZH from '@assets/images/enter-web3-zh.webp';
 import WelcomeBgDark from '@assets/images/welcome-bg-dark.webp';
-// import WelcomeTextLight from '@assets/images/enter-web3-text-light.webp';
-import WelcomeTextDark from '@assets/images/enter-web3-text-dark.webp';
-import { useTranslation } from 'react-i18next';
 import LottieAnimation from './lottie';
 
 const Welcome: React.FC<StackScreenProps<typeof WelcomeStackName>> = ({ navigation }) => {
   const { t } = useTranslation();
+  const lang = useLanguage();
 
   return (
     <ImageBackground source={WelcomeBgDark} style={styles.bg} resizeMode="cover">
       <ScrollView>
         <SafeAreaView style={styles.container}>
-          <Image style={styles.enterWeb3} source={EnterWeb3Dark} contentFit="contain" />
-          <View style={[styles.first, { backgroundColor: '#FAFAFA' }]}>
-            <Image style={styles.firstText} source={WelcomeTextDark} contentFit="contain" />
-          </View>
+          <Image style={styles.enterWeb3} source={lang === Lang.zhHant ? EnterWeb3ZH : EnterWeb3EN} contentFit="contain" />
           <View style={styles.lottieAnimation}>
             <LottieAnimation />
           </View>
@@ -51,23 +46,13 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   container: {
-    paddingTop: 44,
+    paddingTop: 92,
     paddingHorizontal: 16,
   },
   enterWeb3: {
     alignSelf: 'center',
     width: 232,
     height: 100,
-  },
-  first: {
-    alignSelf: 'center',
-    marginTop: 24,
-    width: 230,
-    height: 24,
-    paddingHorizontal: 10,
-    display: 'flex',
-    justifyContent: 'center',
-    alignItems: 'center',
   },
   firstText: {
     width: 198,

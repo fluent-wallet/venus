@@ -1,6 +1,7 @@
 import React, { type ComponentProps } from 'react';
 import { View, Pressable, StyleSheet } from 'react-native';
 import { useTheme } from '@react-navigation/native';
+import { useIsTokensEmpty } from '@core/WalletCore/Plugins/ReactInject';
 import Button from '@components/Button';
 import Text from '@components/Text';
 import { HomeStackName, SendTransactionStackName, SendTransactionStep1StackName, ReceiveStackName, type StackScreenProps } from '@router/configs';
@@ -30,6 +31,8 @@ export const Navigation: React.FC<{
 
 const Navigations: React.FC<{ navigation: StackScreenProps<typeof HomeStackName>['navigation'] }> = ({ navigation }) => {
   const { t } = useTranslation();
+  const isTokenEmpty = useIsTokensEmpty();
+
   return (
     <View style={styles.container}>
       <Navigation
@@ -37,6 +40,7 @@ const Navigations: React.FC<{ navigation: StackScreenProps<typeof HomeStackName>
         testId="send"
         Icon={ArrowUpward}
         onPress={() => navigation.navigate(SendTransactionStackName, { screen: SendTransactionStep1StackName })}
+        disabled={isTokenEmpty !== false}
       />
       <Navigation title={t('home.receive')} testId="receive" Icon={ArrowDownward} onPress={() => navigation.navigate(ReceiveStackName)} />
       <Navigation title={t('home.buy')} testId="buy" Icon={Buy} disabled />

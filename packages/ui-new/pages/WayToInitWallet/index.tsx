@@ -3,21 +3,22 @@ import { ImageBackground, ScrollView, Keyboard, StyleSheet, View } from 'react-n
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTheme } from '@react-navigation/native';
 import { showMessage } from 'react-native-flash-message';
+import { useTranslation } from 'react-i18next';
 import { Image } from 'expo-image';
 import Text from '@components/Text';
 import Button from '@components/Button';
 import plugins from '@core/WalletCore/Plugins';
 import { WayToInitWalletStackName, BiometricsWayStackName, type StackScreenProps } from '@router/configs';
 import useInAsync from '@hooks/useInAsync';
+import { Lang, useLanguage } from '@hooks/useI18n';
 import ArrowRight from '@assets/icons/arrow-right.svg';
-import WelcomeSwiftShieldDark from '@assets/images/welcome-SwiftShield-dark.webp';
-// import WelcomeSwiftShieldLight from '@assets/images/welcome-SwiftShield-light.webp';
-// import WelcomeBgLight from '@assets/images/welcome-bg-light.webp';
+import WelcomeSwiftShieldEN from '@assets/images/welcome-SwiftShield-en.webp';
+import WelcomeSwiftShieldZH from '@assets/images/welcome-SwiftShield-zh.webp';
 import WelcomeBgDark from '@assets/images/welcome-bg-dark.webp';
-import ImportExistingWallet, { type BottomSheetMethods } from './ImportExistingWallet';
-import { useTranslation } from 'react-i18next';
-import LottieAnimation from './lottie';
 import i18n from '@assets/i18n';
+import LottieAnimation from './lottie';
+import ImportExistingWallet, { type BottomSheetMethods } from './ImportExistingWallet';
+
 export const showNotFindBSIMCardMessage = () =>
   showMessage({
     message: i18n.t('welcome.error.BSIM.notFInd.title'),
@@ -26,8 +27,10 @@ export const showNotFindBSIMCardMessage = () =>
   });
 
 const WayToInitWallet: React.FC<StackScreenProps<typeof WayToInitWalletStackName>> = ({ navigation }) => {
-  const { mode, colors } = useTheme();
+  const { colors } = useTheme();
   const { t } = useTranslation();
+  const lang = useLanguage();
+
   const _handleConnectBSIMCard = useCallback(async () => {
     try {
       navigation.setOptions({ gestureEnabled: false });
@@ -55,7 +58,7 @@ const WayToInitWallet: React.FC<StackScreenProps<typeof WayToInitWalletStackName
             <View style={styles.lottieAnimation}>
               <LottieAnimation />
             </View>
-            <Image style={styles.welcomeSwiftShield} source={WelcomeSwiftShieldDark} contentFit="contain" />
+            <Image style={styles.welcomeSwiftShield} source={lang === Lang.zhHant ? WelcomeSwiftShieldZH : WelcomeSwiftShieldEN} contentFit="contain" />
 
             <Button
               testID="connectBSIMWallet"

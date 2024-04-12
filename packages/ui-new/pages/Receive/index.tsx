@@ -16,7 +16,7 @@ import Text from '@components/Text';
 import { Navigation } from '@pages/Home/Navigations';
 import { encodeETHURL } from '@utils/ETHURL';
 import { isSmallDevice } from '@utils/deviceInfo';
-import Logo from '@assets/icons/logo.png';
+import Logo  from '@assets/icons/swift-shield.webp';
 import Share from '@assets/icons/share.svg';
 import PoundKey from '@assets/icons/pound-key.svg';
 import ReceiveSetAsset from './ReceiveSetAsset';

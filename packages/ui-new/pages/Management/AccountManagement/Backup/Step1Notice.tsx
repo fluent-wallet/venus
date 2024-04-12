@@ -5,7 +5,6 @@ import { Image } from 'expo-image';
 import Text from '@components/Text';
 import Button from '@components/Button';
 import { isSmallDevice } from '@utils/deviceInfo';
-// import Img from '@assets/images/welcome-img.webp';
 import Img from '@assets/images/backup.webp';
 import BackupBottomSheet from './BackupBottomSheet';
 import { BackupStep1StackName, BackupStep2StackName, type BackupScreenProps } from '@router/configs';
@@ -41,11 +40,11 @@ const styles = StyleSheet.create({
     alignSelf: 'center',
     width: isSmallDevice ? '80%' : '85%',
     aspectRatio: 1.285,
-    marginTop: 6,
+    marginTop: isSmallDevice ? 16 : 20,
   },
   notice: {
-    marginTop: isSmallDevice ? 20 : 40,
-    marginBottom: isSmallDevice ? 16 : 24,
+    marginTop: isSmallDevice ? 18 : 40,
+    marginBottom: isSmallDevice ? 14 : 24,
     paddingHorizontal: 16,
     fontSize: 22,
     fontWeight: '600',

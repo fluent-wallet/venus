@@ -9,7 +9,7 @@ apply plugin: "com.facebook.react"
 apply plugin: "kotlin-android"
 apply from: project(':react-native-config').projectDir.getPath() + "/dotenv.gradle"
 
-apply from: "../../node_modules/react-native-code-push/android/codepush.gradle"
+// apply from: "../../node_modules/react-native-code-push/android/codepush.gradle"
 /**
  * This is the configuration block to customize your React Native Android app.
  * By default you don't need to apply any configuration, just uncomment the lines you need.
@@ -92,8 +92,8 @@ android {
         applicationId "com.wallet"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 14
-        versionName "0.2.7"
+        versionCode 15
+        versionName "0.2.8"
         resValue "string", "build_config_package", "com.wallet"
     }
     signingConfigs {

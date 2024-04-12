@@ -104,7 +104,13 @@ export const setI18nLanguage = (lang: Lang) => {
 
 export const useLang = () => useAtomValue(langAtom);
 export const useSystemLang = () => {
-  const [sysLang, setSysLang] = useState(getSystemLang());
-
+  const [sysLang, setSysLang] = useState(() => getSystemLang());
   return sysLang;
 };
+
+export const useLanguage = () => {
+  const lang = useLang();
+  const systemLang = useSystemLang();
+
+  return lang === Lang.system ? systemLang : lang;
+}

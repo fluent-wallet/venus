@@ -1,332 +1,190 @@
 {
-  "account" : {
-    "action" : {
-      "add" : "添加賬戶",
-      "addOther" : "添加另一個錢包",
-      "add.title" : "添加錢包",
-      "eraseAll" : "移除所有錢包",
-      "eraseAll.describe" : "帳戶數據將被清除。\n\n請務必備份您的錢包，否則您將永久丟失它和所有資產。",
-      "eraseAll.title" : "⚠️ 移除所有錢包？",
-      "ManageMent" : "管理",
-      "remove" : "刪除賬戶",
-      "remove.describe" : "此操作會刪除此錢包。\n\n此應用程序無法恢復您的錢包，您可以使用其助記詞/私鑰恢復。\n\n請務必備份您的錢包，否則您將永久丟失它和所有資產。",
-      "remove.title" : "⚠️ 刪除此錢包？"
-    },
-    "add" : {
-      "another" : {
-        "BSIM" : {
-          "success" : "成功連接 BSIM 卡錢包"
-        },
-        "create" : {
-          "success" : "成功添加新錢包"
-        },
-        "import" : {
-          "success" : "成功導入錢包"
-        }
-      }
-    },
-    "detail" : {
-      "accountName" : "賬號賬戶",
-      "address" : "地址",
-      "title" : "賬戶"
-    },
-    "error" : {
-      "deleteAccount" : {
-        "failed" : "清除賬戶數據失敗"
-      }
-    },
-    "group" : {
-      "action" : {
-        "remove" : "刪除錢包組"
-      },
-      "inputLabel" : "賬戶名稱",
-      "remove" : {
-        "error" : "正在使用的組不能移除",
-        "errorUnknown" : "錢包組移除失敗",
-        "success" : "成功移除錢包組"
-      },
-      "settings" : {
-        "BSIM" : "設置 BSIM 卡",
-        "BSIMCode" : "修改 BSIM 卡密碼"
-      },
-      "title" : {
-        "BSIM" : "BSIM 錢包組",
-        "seed" : "錢包組"
-      }
-    },
-    "HDWallet" : {
-      "select" : {
-        "noVerification" : "你沒有完成\n安全驗證，<3> 請重試</3>\n\n",
-        "pathType" : "HD 錢包路徑類型",
-        "selected" : "已選擇 {{accounts}} 個地址\n\n\n",
-        "title" : "選擇 HD 錢包"
-      }
-    },
-    "management" : {
-      "title" : "賬戶管理"
-    },
-    "remove" : {
-      "error" : {
-        "failed" : "移除賬戶失敗",
-        "removeInUse" : "使用中的賬戶不能刪除"
-      },
-      "successfully" : "賬戶刪除成功"
-    }
-  },
-  "backup" : {
-    "error" : {
-      "checkFailed" : "\uD83E\uDD14 單詞錯誤，請檢查並重試",
-      "viewFailed" : "查看 {{backupText}} 失敗      "
-    },
-    "notice" : {
-      "describe" : "如果您丟失<1>助記詞</1>或<3>私鑰</3>，您將無法恢復錢包。\n\n獲得<5>助記詞</5>或<7>私鑰</7>意味着擁有所有資產。\n\n請務必<9>保護好</9>",
-      "title" : "注意"
-    },
-    "success" : "\uD83E\uDD73 已備份！",
-    "title" : "備份",
-    "verify" : {
-      "title" : "驗證助記詞",
-      "word" : "單詞"
-    },
-    "viewSecret" : {
-      "tips1" : "✅ 不要截屏此頁面",
-      "tips2" : "✅ 最好抄寫在紙上，並保存好",
-      "tipsForPK" : "✅ 或通過掃描二維碼，導入值得信任的應用程序",
-      "title" : "請記下你的 {{type}}",
-      "view" : "點擊查看 {{type}}",
-      "viewTips" : "請確保四周是安全的"
-    }
-  },
-  "common" : {
-    "account" : "賬戶",
-    "amount" : "數量",
-    "backup" : "備份",
-    "cancel" : "取消",
-    "confirm" : "確認",
-    "continue" : "繼續",
-    "copied" : "已複製",
-    "delete" : "刪除",
-    "dismiss" : "忽略",
-    "edit" : "編輯",
-    "enable" : "啟用",
-    "HDWallets" : "HD 錢包",
-    "index" : "序號",
-    "max" : "最大",
-    "next" : "繼續",
-    "ok" : "OK",
-    "password" : "密碼",
-    "privateKey" : "私鑰",
-    "retry" : "重試",
-    "return" : "返回",
-    "seedPhrase" : "助記詞",
-    "send" : "發送",
-    "to" : "接受方",
-    "verifyPassword" : "驗證密碼",
-    "view" : "查看"
-  },
-  "home" : {
-    "backup" : {
-      "describe" : "你需要備份助記詞以確保錢包安全  <1>去備份 ></1>",
-      "title" : "賬戶存在風險"
-    },
-    "buy" : "購買",
-    "more" : "更多",
-    "more.copyAddress" : "複製地址",
-    "more.viewInExplorer" : "在瀏覽器中查看",
-    "receive" : "接收",
-    "send" : "發送"
-  },
-  "initWallet" : {
-    "biometrics" : {
-      "disable" : {
-        "error" : {
-          "description" : "請開啟此設備的生物識別功能",
-          "title" : "設備的生物識別未啟用"
-        }
-      }
-    },
-    "describe" : "啟用  <1>指紋識別 </1> 保護錢包\n\n啟用後，發送交易時將通過<3>指紋識別 </3> 驗證身份",
-    "enableFingerprint" : "啟用指紋識別",
-    "error" : {
-      "exist" : "此 {{type}} 已存在",
-      "invalidValue" : "錢包創建失敗：無效值",
-      "unknown" : "添加新 {{type}} 賬戶失敗"
-    },
-    "msg" : {
-      "failed" : "錢包創建失敗",
-      "success" : "完成了！請確保記住密碼。"
-    },
-    "setPassword" : "設置密碼",
-    "setPassword.check" : "SwiftShield 錢包不會存儲你的密碼\n無法找回密碼，請 <1>確保記住</1> 密碼。",
-    "setPassword.confirm" : "確認新密碼",
-    "setPassword.create" : "創建密碼",
-    "setPassword.describe" : "添加安全驗證，確保您的資金安全。",
-    "setPassword.error.length" : "至少 8 個字符",
-    "setPassword.error.notMatch" : "密碼不匹配",
-    "setPassword.new" : "新密碼"
-  },
-  "receive" : {
-    "clickHereToSelect" : "點擊以選擇",
-    "describe" : "此地址僅能接收 {{netName}} 網絡的資產。",
-    "selectAnAsset" : "選擇資產",
-    "selectAsset" : "選擇資產",
-    "title" : "收款"
-  },
-  "scan" : {
-    "parse" : {
-      "error" : {
-        "invalidTargetAddress" : "無效的目標地址",
-        "missChianId" : "無法匹配鏈編號",
-        "missChianTypes" : "無法匹配鏈類型"
-      }
-    },
-    "permission" : {
-      "describe" : "請准許 SwiftShield 錢包相機調用權限，用於掃描二維碼",
-      "reject" : {
-        "describe" : "掃描失敗，請 <1>打開相機</1> 使用權限",
-        "openSettings" : "去設置",
-        "title" : "此應用未獲得相機權限"
-      },
-      "title" : "應用權限申請"
-    },
-    "photos" : "相冊",
-    "QRCode" : {
-      "error" : {
-        "notRecognized" : "此二維碼無效"
-      }
-    },
-    "title" : "掃描",
-    "walletConnect" : {
-      "error" : {
-        "connectFailed" : "與 WalletConnect 連接失敗",
-        "lowVersion" : "此二維碼版本過低"
-      }
-    }
-  },
-  "settings" : {
-    "aboutUs" : {
-      "action" : {
-        "checkUpdate" : "檢查更新",
-        "feedback" : "誠邀反饋",
-        "teamsService" : "服務條款"
-      },
-      "title" : "SwiftShield 錢包",
-      "version" : "應用程序版本"
-    },
-    "appearance" : {
-      "dark" : "深色",
-      "light" : "淺色",
-      "system" : "跟隨系統",
-      "title" : "外觀"
-    },
-    "language" : {
-      "systemLang" : "默認語言",
-      "title" : "語言"
-    },
-    "navigation" : {
-      "aboutUs" : "關於我們",
-      "accountManagement" : "賬戶管理",
-      "preferences" : "偏好設置"
-    },
-    "preferences" : {
-      "navigation" : {
-        "appearance" : "外觀",
-        "language" : "語言"
-      },
-      "title" : "偏好設置"
-    },
-    "title" : "設置"
-  },
-  "tab" : {
-    "activity" : "交易記錄",
-    "content" : {
-      "depositToken" : "快存入資產吧",
-      "noActivity" : "還沒有交易",
-      "noNFT" : "沒有收藏品",
-      "receive" : "接收"
-    },
-    "nfts" : "收藏品",
-    "tokens" : "代幣"
-  },
-  "tx" : {
-    "amount" : {
-      "error" : {
-        "estimate" : "預估失敗，請重試"
-      },
-      "estimateMax" : "預估最大值"
-    },
-    "asset" : {
-      "error" : {
-        "invalidERC20" : "只支持搜索 ERC20 代幣",
-        "invalidFormat" : "錯誤的合約地址格式",
-        "networkError" : "網絡連接較弱， <1>點擊重試</1>"
-      },
-      "inputTitle" : "選擇資產",
-      "placeholder" : "輸入代幣名稱或地址",
-      "zeroBalance" : "此资产 {{symbol}} 的余额为 0"
-    },
-    "confirm" : {
-      "BSIM" : {
-        "error" : {
-          "title" : "簽名錯誤"
-        },
-        "message" : "正在調用 BISM 卡",
-        "title" : "交易確認"
-      },
-      "error" : {
-        "InsufficientBalance" : "\uD83E\uDD15 {{symbol}} 餘額不足",
-        "InsufficientBalanceForGas" : "\uD83E\uDD15 {{symbol}} 餘額不足以支付燃氣費",
-        "network" : "\uD83D\uDEAB 網絡信號弱，請稍後重試",
-        "unknown" : "\uD83D\uDEAB 發送交易失敗"
-      },
-      "estimatedFee" : "預估燃氣費",
-      "failed" : "交易失敗",
-      "signingWith" : "用此賬戶簽名",
-      "submitted" : {
-        "description" : "等待執行",
-        "message" : "交易已提交"
-      },
-      "title" : "交易已確認"
-    },
-    "send" : {
-      "address" : {
-        "contractRisk" : "接收方是智能合約地址，轉入此地址有可能導致資產丟失",
-        "contractRiskKnow" : "已知曉風險",
-        "invalid" : "無效地址",
-        "valid" : "地址格式驗證通過"
-      },
-      "error" : {
-        "failCheck" : "地址檢查失敗，<1>點擊重試</1>"
-      },
-      "placeholder" : "輸入一個地址",
-      "receiver" : "接收方",
-      "title" : "發送"
-    }
-  },
-  "wallet" : {
-    "import" : {
-      "error" : {
-        "empty" : "輸入框不能為空",
-        "unknown" : "無效的助記詞或私鑰",
-        "validPhrase" : "有效的助記詞",
-        "validPrivateKey" : "有效的私鑰"
-      },
-      "placeholder" : "請輸入助記詞（以空格分隔）或私鑰"
-    }
-  },
-  "welcome" : {
-    "addWith" : "其他方式",
-    "connectBSIMWallet" : "連接 BSIM 卡錢包",
-    "createNewWallet" : "創建新錢包",
-    "error" : {
-      "BSIM" : {
-        "notFInd" : {
-          "describe" : "請檢查你已經插入了 BSIM 卡後重試",
-          "title" : "未能獲取到 BSIM 卡"
-        }
-      }
-    },
-    "getStarted" : "開始使用",
-    "importExistingWallet" : "導入已有錢包"
-  }
+  "account.action.add" : "添加賬戶",
+  "account.action.addOther" : "添加另一個錢包",
+  "account.action.add.title" : "添加錢包",
+  "account.action.eraseAll" : "移除所有錢包",
+  "account.action.eraseAll.describe" : "帳戶數據將被清除。\n\n請務必備份您的錢包，否則您將永久丟失它和所有資產。",
+  "account.action.eraseAll.title" : "⚠️ 移除所有錢包？",
+  "account.action.ManageMent" : "管理",
+  "account.action.remove" : "刪除賬戶",
+  "account.action.remove.describe" : "此操作會刪除此錢包。\n\n此應用程序無法恢復您的錢包，您可以使用其助記詞/私鑰恢復。\n\n請務必備份您的錢包，否則您將永久丟失它和所有資產。",
+  "account.action.remove.title" : "⚠️ 刪除此錢包？",
+  "account.add.another.BSIM.success" : "成功連接 BSIM 卡錢包",
+  "account.add.another.create.success" : "成功添加新錢包",
+  "account.add.another.import.success" : "成功導入錢包",
+  "account.detail.accountName" : "賬戶名",
+  "account.detail.address" : "地址",
+  "account.detail.title" : "賬戶",
+  "account.error.deleteAccount.failed" : "清除賬戶數據失敗",
+  "account.group.action.remove" : "刪除錢包組",
+  "account.group.inputLabel" : "錢包組名稱",
+  "account.group.remove.error" : "正在使用的組不能移除",
+  "account.group.remove.errorUnknown" : "錢包組移除失敗",
+  "account.group.remove.success" : "成功移除錢包組",
+  "account.group.settings.BSIM" : "設置 BSIM 卡",
+  "account.group.settings.BSIMCode" : "修改 BSIM 卡密碼",
+  "account.group.title.BSIM" : "BSIM 錢包組",
+  "account.group.title.seed" : "錢包組",
+  "account.HDWallet.select.noVerification" : "你沒有完成\n安全驗證，<3>請重試</3>\n\n",
+  "account.HDWallet.select.pathType" : "HD 錢包路徑類型",
+  "account.HDWallet.select.selected" : "已選擇 {{accounts}} 個地址\n\n\n",
+  "account.HDWallet.select.title" : "選擇 HD 錢包",
+  "account.management.title" : "賬戶管理",
+  "account.remove.error.failed" : "移除賬戶失敗",
+  "account.remove.error.removeInUse" : "使用中的賬戶不能刪除",
+  "account.remove.successfully" : "賬戶刪除成功",
+  "backup.error.checkFailed" : "\uD83E\uDD14 單詞錯誤，請檢查並重試",
+  "backup.error.viewFailed" : "查看 {{backupText}} 失敗",
+  "backup.notice.describe" : "若您丟失了<1>助記詞</1>或<3>私鑰</3>，將無法恢復錢包\n\n獲得<5>助記詞</5>或<7>私鑰</7>意味着擁有所有資產\n\n請務必<9>保護好</9>",
+  "backup.notice.title" : "注意",
+  "backup.success" : "已備份！",
+  "backup.title" : "備份",
+  "backup.verify.title" : "驗證助記詞",
+  "backup.verify.word" : "單詞",
+  "backup.viewSecret.tips1" : "✅ 不要截屏此頁面",
+  "backup.viewSecret.tips2" : "✅ 最好抄寫在紙上，並保存好",
+  "backup.viewSecret.tipsForPK" : "✅ 或通過掃描二維碼，導入值得信任的應用程序",
+  "backup.viewSecret.title" : "請記下你的 {{type}}",
+  "backup.viewSecret.view" : "點擊查看 {{type}}",
+  "backup.viewSecret.viewTips" : "請確保四周是安全的",
+  "common.account" : "賬戶",
+  "common.amount" : "數量",
+  "common.backup" : "備份",
+  "common.cancel" : "取消",
+  "common.confirm" : "確認",
+  "common.continue" : "繼續",
+  "common.copied" : "已複製",
+  "common.delete" : "刪除",
+  "common.dismiss" : "忽略",
+  "common.edit" : "編輯",
+  "common.enable" : "啟用",
+  "common.HDWallets" : "HD 錢包",
+  "common.index" : "序號",
+  "common.max" : "最大",
+  "common.next" : "繼續",
+  "common.ok" : "OK",
+  "common.password" : "密碼",
+  "common.privateKey" : "私鑰",
+  "common.retry" : "重試",
+  "common.return" : "返回",
+  "common.seedPhrase" : "助記詞",
+  "common.send" : "發送",
+  "common.to" : "接收方",
+  "common.verifyPassword" : "驗證密碼",
+  "common.view" : "查看",
+  "home.backup.describe" : "你需要備份助記詞以確保錢包安全  <1>去備份 ></1>",
+  "home.backup.title" : "賬戶存在風險",
+  "home.buy" : "購買",
+  "home.more" : "更多",
+  "home.more.copyAddress" : "複製地址",
+  "home.more.viewInExplorer" : "在瀏覽器中查看",
+  "home.receive" : "接收",
+  "home.send" : "發送",
+  "initWallet.biometrics.disable.error.description" : "請開啟此設備的生物識別功能",
+  "initWallet.biometrics.disable.error.title" : "設備的生物識別未啟用",
+  "initWallet.describe" : "啟用<1>指紋識別</1>保護錢包\n\n啟用後，發送交易時將通過<3>指紋識別</3>驗證身份",
+  "initWallet.enableFingerprint" : "啟用指紋識別",
+  "initWallet.error.exist" : "此 {{type}} 已存在",
+  "initWallet.error.invalidValue" : "錢包創建失敗：無效值",
+  "initWallet.error.unknown" : "添加新 {{type}} 賬戶失敗",
+  "initWallet.msg.failed" : "錢包創建失敗",
+  "initWallet.msg.success" : "完成了！請確保記住密碼。",
+  "initWallet.setPassword" : "設置密碼",
+  "initWallet.setPassword.check" : "SwiftShield 錢包不會存儲你的密碼\n無法找回密碼，請<1>確保記住</1>密碼。",
+  "initWallet.setPassword.confirm" : "確認新密碼",
+  "initWallet.setPassword.create" : "創建密碼",
+  "initWallet.setPassword.describe" : "添加安全驗證，確保您的資金安全。",
+  "initWallet.setPassword.error.length" : "至少 8 個字符",
+  "initWallet.setPassword.error.notMatch" : "密碼不匹配",
+  "initWallet.setPassword.new" : "新密碼",
+  "receive.clickHereToSelect" : "點擊以選擇",
+  "receive.describe" : "此地址僅能接收 {{netName}} 網絡的資產。",
+  "receive.selectAnAsset" : "選擇資產",
+  "receive.selectAsset" : "選擇資產",
+  "receive.title" : "收款",
+  "scan.parse.error.invalidTargetAddress" : "無效的目標地址",
+  "scan.parse.error.missChianId" : "無法匹配鏈編號",
+  "scan.parse.error.missChianTypes" : "無法匹配鏈類型",
+  "scan.permission.describe" : "請准許 SwiftShield 錢包相機調用權限，用於掃描二維碼",
+  "scan.permission.reject.describe" : "掃描失敗，請<1>打開相機</1>使用權限",
+  "scan.permission.reject.openSettings" : "去設置",
+  "scan.permission.reject.title" : "此應用未獲得相機權限",
+  "scan.permission.title" : "應用權限申請",
+  "scan.photos" : "相冊",
+  "scan.QRCode.error.notRecognized" : "此二維碼無效",
+  "scan.title" : "掃描",
+  "scan.walletConnect.error.connectFailed" : "與 WalletConnect 連接失敗",
+  "scan.walletConnect.error.lowVersion" : "此二維碼版本過低",
+  "settings.aboutUs.action.checkUpdate" : "檢查更新",
+  "settings.aboutUs.action.feedback" : "誠邀反饋",
+  "settings.aboutUs.action.teamsService" : "服務條款",
+  "settings.aboutUs.title" : "SwiftShield 錢包",
+  "settings.aboutUs.version" : "應用程序版本",
+  "settings.appearance.dark" : "深色",
+  "settings.appearance.light" : "淺色",
+  "settings.appearance.system" : "跟隨系統",
+  "settings.appearance.title" : "外觀",
+  "settings.language.systemLang" : "默認語言",
+  "settings.language.title" : "語言",
+  "settings.navigation.aboutUs" : "關於我們",
+  "settings.navigation.accountManagement" : "賬戶管理",
+  "settings.navigation.preferences" : "偏好設置",
+  "settings.preferences.navigation.appearance" : "外觀",
+  "settings.preferences.navigation.language" : "語言",
+  "settings.preferences.title" : "偏好設置",
+  "settings.title" : "設置",
+  "tab.activity" : "交易記錄",
+  "tab.content.depositToken" : "快存入資產吧",
+  "tab.content.noActivity" : "還沒有交易",
+  "tab.content.noNFT" : "沒有收藏品",
+  "tab.content.noRecord" : "暫無記錄",
+  "tab.content.noToken" : "沒有代幣",
+  "tab.content.receive" : "接收",
+  "tab.nfts" : "收藏品",
+  "tabs.mywallet" : "我的錢包",
+  "tabs.recently" : "最近交易",
+  "tab.tokens" : "代幣",
+  "tx.amount.error.estimate" : "預估失敗，請重試",
+  "tx.amount.estimateMax" : "預估最大值",
+  "tx.asset.error.invalidERC20" : "只支持搜索 ERC20 代幣",
+  "tx.asset.error.invalidFormat" : "錯誤的合約地址格式",
+  "tx.asset.error.networkError" : "網絡連接較弱， <1>點擊重試</1>",
+  "tx.asset.inputTitle" : "選擇資產",
+  "tx.asset.placeholder" : "輸入代幣名稱或地址",
+  "tx.asset.zeroBalance" : "此资产 {{symbol}} 的余额为 0",
+  "tx.confirm.BSIM.error.title" : "簽名錯誤",
+  "tx.confirm.BSIM.message" : "正在調用 BISM 卡",
+  "tx.confirm.BSIM.title" : "交易確認",
+  "tx.confirm.error.InsufficientBalance" : "\uD83E\uDD15 {{symbol}} 餘額不足",
+  "tx.confirm.error.InsufficientBalanceForGas" : "\uD83E\uDD15 {{symbol}} 餘額不足以支付燃氣費",
+  "tx.confirm.error.network" : "\uD83D\uDEAB 網絡信號弱，請稍後重試",
+  "tx.confirm.error.unknown" : "\uD83D\uDEAB 發送交易失敗",
+  "tx.confirm.estimatedFee" : "預估燃氣費",
+  "tx.confirm.failed" : "交易失敗",
+  "tx.confirm.signingWith" : "用此賬戶簽名",
+  "tx.confirm.submitted.description" : "等待執行",
+  "tx.confirm.submitted.message" : "交易已提交",
+  "tx.confirm.title" : "交易已確認",
+  "tx.send.address.contractRisk" : "接收方是智能合約地址，轉入此地址有可能導致資產丟失",
+  "tx.send.address.contractRiskKnow" : "已知曉風險",
+  "tx.send.address.invalid" : "無效地址",
+  "tx.send.address.valid" : "地址格式驗證通過",
+  "tx.send.error.failCheck" : "地址檢查失敗，<1>點擊重試</1>",
+  "tx.send.paste" : "粘貼",
+  "tx.send.placeholder" : "輸入一個地址",
+  "tx.send.receiver" : "接收方",
+  "tx.send.scan" : "掃描",
+  "tx.send.title" : "發送",
+  "wallet.import.error.empty" : "輸入框不能為空",
+  "wallet.import.error.unknown" : "無效的助記詞或私鑰",
+  "wallet.import.error.validPhrase" : "有效的助記詞",
+  "wallet.import.error.validPrivateKey" : "有效的私鑰",
+  "wallet.import.placeholder" : "請輸入助記詞（以空格分隔）或私鑰",
+  "welcome.addWith" : "其他方式",
+  "welcome.connectBSIMWallet" : "連接 BSIM 卡錢包",
+  "welcome.createNewWallet" : "創建新錢包",
+  "welcome.error.BSIM.notFInd.describe" : "請檢查你已經插入了 BSIM 卡後重試",
+  "welcome.error.BSIM.notFInd.title" : "未能獲取到 BSIM 卡",
+  "welcome.getStarted" : "開始使用",
+  "welcome.importExistingWallet" : "導入已有錢包"
 }

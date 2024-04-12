@@ -4,7 +4,7 @@ import { switchMap, startWith, of, combineLatest, map, withLatestFrom } from 'rx
 import { dbRefresh$ } from '../../../../database';
 import { observeTxById, observeFinishedTxWithAddress, observeUnfinishedTxWithAddress } from '../../../../database/models/Tx/query';
 import { observeSelectedAddress } from '../../../../database/models/Address/query';
-import { currentAddressValueObservable } from './useCurrentAddress';
+import { accountsManageObservable } from './useAccountsManage';
 import { TxPayload } from '../../../../database/models/TxPayload';
 import { formatTxData } from '../../../../utils/tx';
 
@@ -46,31 +46,43 @@ const finishedTxsAtom = atomWithObservable(
 );
 export const useFinishedTxs = () => useAtomValue(finishedTxsAtom);
 
-export const recentlyAddressObservable = combineLatest([finishedTxsObservable, unfinishedTxsObservable]).pipe(
+type RecentlyType = 'Account' | 'Contract' | 'Latest';
+export const recentlyAddressObservable = combineLatest([unfinishedTxsObservable, finishedTxsObservable]).pipe(
   switchMap((txs) =>
     Promise.all([
       Promise.all(
         txs
           .flat()
           .filter(Boolean)
-          .map((tx) => tx?.txPayload!),
+          .map((tx) => tx!.txPayload),
       ),
       Promise.all(
         txs
           .flat()
           .filter(Boolean)
-          .map((tx) => tx?.asset!),
+          .map((tx) => tx!.asset),
       ),
     ]),
   ),
-  map(([txPayloads, txAssets]) => txPayloads.map((txPayload, i) => formatTxData(txPayload, txAssets[i]))),
-  withLatestFrom(currentAddressValueObservable),
-  map(
-    ([formatedTxData, currentAddressValue]) =>
-      Array.from(new Set(formatedTxData.flatMap((txPayload) => [txPayload?.to, txPayload?.from]))).filter(
-        (addressValue) => !!addressValue && addressValue !== currentAddressValue,
-      ) as Array<string>,
+  map(([txPayloads, txAssets]) =>
+    txPayloads.sort((a, b) => Number(BigInt(b.nonce ?? 0) - BigInt(a.nonce ?? 0))).map((txPayload, i) => formatTxData(txPayload, txAssets[i])),
   ),
+  map(
+    (formatedTxData) =>
+      Array.from(new Set(formatedTxData.flatMap((txPayload) => [txPayload?.to, txPayload?.from]))).filter((addressValue) => !!addressValue) as Array<string>,
+  ),
+  withLatestFrom(accountsManageObservable),
+  map(([latestAddressValues, accountsManage]) => {
+    const allAccounts = accountsManage?.map((item) => item.data).flat();
+    return latestAddressValues.map((addressValue) => {
+      const isMyAccount = allAccounts.find((account) => account.addressValue === addressValue);
+      return {
+        addressValue,
+        nickname: isMyAccount?.nickname,
+        type: isMyAccount ? 'Account' : ('Latest' as RecentlyType),
+      };
+    });
+  }),
 );
 
 const recentlyAddressAtom = atomWithObservable(() => recentlyAddressObservable, { initialValue: [] });

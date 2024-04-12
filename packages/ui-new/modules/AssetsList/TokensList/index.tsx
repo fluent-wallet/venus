@@ -1,13 +1,14 @@
 import React from 'react';
-import { StyleSheet } from 'react-native';
 import { useTheme } from '@react-navigation/native';
+import { useTranslation } from 'react-i18next';
+import { Image } from 'expo-image';
 import { useAssetsTokenList, useIsTokensEmpty, useTokenListOfCurrentNetwork } from '@core/WalletCore/Plugins/ReactInject';
 import { type AssetInfo } from '@core/WalletCore/Plugins/AssetsTracker/types';
 import Text from '@components/Text';
 import { usePriceVisibleValue } from '@hooks/usePriceVisible';
-import NoData from '@assets/icons/no-data.svg';
+import NoneToken from '@assets/images/none-token.webp';
 import TokenItem from './TokenItem';
-import ReceiveFunds from './ReceiveFunds';
+import ReceiveFunds, { styles } from './ReceiveFunds';
 import Skeleton from './Skeleton';
 
 interface Props {
@@ -18,6 +19,8 @@ interface Props {
 
 const TokensList: React.FC<Props> = ({ onPressItem, selectType, showReceiveFunds = false }) => {
   const { colors } = useTheme();
+  const { t } = useTranslation();
+
   const tokens = (selectType === 'Receive' ? useTokenListOfCurrentNetwork : useAssetsTokenList)();
   const isEmpty = useIsTokensEmpty();
   const priceVisible = usePriceVisibleValue();
@@ -32,8 +35,8 @@ const TokensList: React.FC<Props> = ({ onPressItem, selectType, showReceiveFunds
     } else {
       return (
         <>
-          <NoData style={styles.noTokenIcon} />
-          <Text style={[styles.noTokenText, { color: colors.textSecondary }]}>No Token</Text>
+          <Image style={styles.noneImg} source={NoneToken} contentFit="contain" />
+          <Text style={[styles.noneText, { color: colors.textSecondary }]}>{t('tab.content.noToken')}</Text>
         </>
       );
     }
@@ -50,17 +53,5 @@ const TokensList: React.FC<Props> = ({ onPressItem, selectType, showReceiveFunds
     />
   ));
 };
-
-const styles = StyleSheet.create({
-  noTokenIcon: {
-    marginTop: 24,
-    marginBottom: 6,
-    alignSelf: 'center',
-  },
-  noTokenText: {
-    fontSize: 14,
-    textAlign: 'center',
-  },
-});
 
 export default TokensList;

@@ -79,6 +79,8 @@ const SendTransactionStep1Receiver: React.FC<SendTransactionScreenProps<typeof S
           onChangeText={(newNickName) => setReceiver(newNickName?.trim())}
           isInBottomSheet
           SuffixIcon={!receiver ? QrCode : undefined}
+          // todo this max length need consider network
+          maxLength={200}
           onPressSuffixIcon={() => {
             if (Keyboard.isVisible()) {
               Keyboard.dismiss();

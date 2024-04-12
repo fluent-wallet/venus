@@ -8,7 +8,6 @@ import useInAsync from '@hooks/useInAsync';
 import Text from '@components/Text';
 import Button from '@components/Button';
 import { BiometricsWayStackName, PasswordWayStackName, HomeStackName, type StackScreenProps } from '@router/configs';
-// import Img from '@assets/images/welcome-img.webp';
 import Img from '@assets/images/fingerPrint.webp';
 import createVault from './createVaultWithRouterParams';
 import { Trans, useTranslation } from 'react-i18next';

@@ -72,7 +72,7 @@ export const AccountItemView: React.FC<{
   showMore?: boolean;
   showCopy?: boolean;
   addressValue: string;
-  nickname: string;
+  nickname?: string;
   shorten?: boolean;
   onPress?: () => void;
   children?: React.ReactNode;
@@ -181,9 +181,9 @@ const AccountsList: React.FC<{
   onPressAccount?: (params: { accountId: string; addressValue: string; isCurrent: boolean }) => void;
   onPressGroup?: (groupId: string) => void;
 }> = ({ type, disabledCurrent, onPressAccount, onPressGroup }) => {
+  const { colors } = useTheme();
   const accountsManage = useAccountsManage();
   const currentAccount = useCurrentAccount();
-  const { colors } = useTheme();
   const ListComponent = useMemo(() => (type === 'selector' ? BottomSheetSectionList : SectionList), [type]);
 
   const [inAddingId, setInAddingId] = useState<string | null>(null);

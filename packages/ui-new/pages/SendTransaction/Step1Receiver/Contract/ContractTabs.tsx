@@ -7,8 +7,13 @@ import PagerView from 'react-native-pager-view';
 import { useCurrentNetwork } from '@core/WalletCore/Plugins/ReactInject';
 import Text from '@components/Text';
 import AccountsList from '@modules/AccountsList';
+import RecentlyList from './RecentlyList';
 
-export type Tab = 'Recently' | 'Contact' | 'Account';
+export enum Tab {
+  Recently = 'Recently',
+  Contacts = 'Contacts',
+  MyWallets = 'My Wallets',
+}
 const TAB_WIDTH = 80;
 
 interface Props {
@@ -18,14 +23,14 @@ interface Props {
   onPressReceiver: (receiver: string) => void;
 }
 
-const tabs = ['Recently', 'Contact', 'Account'] as const;
+const tabs = [Tab.Recently, Tab.Contacts, Tab.MyWallets] as const;
 
 export const Tabs: React.FC<Omit<Props, 'setCurrentTab' | 'onPressReceiver'>> = ({ currentTab, pageViewRef }) => {
   const { colors } = useTheme();
   const currentNetwork = useCurrentNetwork();
 
   const currentTabIndex = useMemo(() => {
-    const index = tabs.indexOf(currentTab as 'Recently');
+    const index = tabs.indexOf(currentTab);
     return index === -1 ? 0 : index;
   }, [tabs, currentTab]);
 
@@ -67,7 +72,7 @@ export const Tabs: React.FC<Omit<Props, 'setCurrentTab' | 'onPressReceiver'>> = 
 export const TabsContent: React.FC<Props> = ({ currentTab, setCurrentTab, pageViewRef, onPressReceiver }) => {
   const currentNetwork = useCurrentNetwork();
   const currentTabIndex = useMemo(() => {
-    const index = tabs.indexOf(currentTab as 'Recently');
+    const index = tabs.indexOf(currentTab);
     return index === -1 ? 0 : index;
   }, [tabs, currentTab]);
 
@@ -75,9 +80,10 @@ export const TabsContent: React.FC<Props> = ({ currentTab, setCurrentTab, pageVi
     <PagerView ref={pageViewRef} style={styles.pagerView} initialPage={0} onPageSelected={(evt) => setCurrentTab(tabs[evt.nativeEvent.position])}>
       {tabs?.map((tab, index) => (
         <View key={tab}>
-          {tab === 'Account' && index === currentTabIndex && (
+          {tab === Tab.MyWallets && index === currentTabIndex && (
             <AccountsList type="selector" onPressAccount={({ addressValue }) => onPressReceiver(addressValue)} />
           )}
+          {tab === Tab.Recently && index === currentTabIndex && <RecentlyList onPressAddress={(addressValue) => onPressReceiver(addressValue)} />}
         </View>
       ))}
     </PagerView>
