@@ -36,7 +36,7 @@ const DeleteConfirm: React.FC<Props> = ({ onConfirm, onClose }) => {
             }}
             size="small"
           >
-            ⚠️ {t('common.delete')}
+            <Text>⚠️ {t('common.delete')}</Text>
           </Button>
         </View>
       </View>
