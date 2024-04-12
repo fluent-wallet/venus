@@ -1,6 +1,6 @@
 import './packages/setup/process';
 import 'react-native-gesture-handler';
-import '@walletconnect/react-native-compat';
+// import '@walletconnect/react-native-compat';
 import { AppRegistry, Platform, LogBox } from 'react-native';
 import './packages/setup/getRandomValues';
 import '@ethersproject/shims';
@@ -10,7 +10,7 @@ import Decimal from 'decimal.js';
 import WalletCore from './packages/core/WalletCore';
 import TxTrackerPlugin from './packages/core/WalletCore/Plugins/TxTracker';
 import ReactInjectPlugin from './packages/core/WalletCore/Plugins/ReactInject';
-import WalletConnectPlugin from './packages/core/WalletCore/Plugins/WalletConnect';
+// import WalletConnectPlugin from './packages/core/WalletCore/Plugins/WalletConnect';
 import AssetsTracker from './packages/core/WalletCore/Plugins/AssetsTracker';
 import CryptoToolPlugin from './packages/WalletCoreExtends/Plugins/CryptoTool';
 import AuthenticationPlugin from './packages/WalletCoreExtends/Plugins/Authentication';
@@ -44,9 +44,9 @@ const plugins = [
   ReceiveAssetsTracker,
 ];
 
-if (ENABLE_WALLET_CONNECT_FEATURE.allow) {
-  plugins.push(new WalletConnectPlugin());
-}
+// if (ENABLE_WALLET_CONNECT_FEATURE.allow) {
+//   plugins.push(new WalletConnectPlugin());
+// }
 
 WalletCore.plugins.use(plugins);
 WalletCore.setup();
@@ -57,3 +57,4 @@ AppRegistry.registerComponent(appName, () => App);
 // } else {
 //   AppRegistry.registerComponent(appName, () => codePush(App));
 // }
+
