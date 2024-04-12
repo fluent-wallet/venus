@@ -5,7 +5,7 @@ import { AppRegistry, Platform, LogBox } from 'react-native';
 import './packages/setup/getRandomValues';
 import '@ethersproject/shims';
 import './packages/setup/ethers';
-import codePush from 'react-native-code-push';
+// import codePush from 'react-native-code-push';
 import Decimal from 'decimal.js';
 import WalletCore from './packages/core/WalletCore';
 import TxTrackerPlugin from './packages/core/WalletCore/Plugins/TxTracker';
@@ -52,8 +52,8 @@ WalletCore.plugins.use(plugins);
 WalletCore.setup();
 
 // by now the code push only works on android, if you want to run on ios, need to apply the code push config on ios see: https://github.com/microsoft/react-native-code-push/blob/master/docs/setup-ios.md
-if (__DEV__ || Platform.OS === 'ios') {
-  AppRegistry.registerComponent(appName, () => App);
-} else {
-  AppRegistry.registerComponent(appName, () => codePush(App));
-}
+// if (__DEV__ || Platform.OS === 'ios') {
+AppRegistry.registerComponent(appName, () => App);
+// } else {
+//   AppRegistry.registerComponent(appName, () => codePush(App));
+// }

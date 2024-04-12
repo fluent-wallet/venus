@@ -17,7 +17,7 @@ import com.facebook.react.flipper.ReactNativeFlipper
 import com.facebook.soloader.SoLoader
 import com.facebook.react.common.assets.ReactFontManager;
 
-import com.microsoft.codepush.react.CodePush
+//import com.microsoft.codepush.react.CodePush
 import com.wallet.bsimsdk.BSIMSDKPackage
 import com.nozbe.watermelondb.jsi.WatermelonDBJSIPackage;
 
@@ -38,9 +38,9 @@ class MainApplication : Application(), ReactApplication {
             override fun getJSIModulePackage(): JSIModulePackage? {
                 return WatermelonDBJSIPackage()
             }
-            override fun getJSBundleFile(): String? {
-                return CodePush.getJSBundleFile()
-            }
+//            override fun getJSBundleFile(): String? {
+//                return CodePush.getJSBundleFile()
+//            }
         })
 
     override val reactHost: ReactHost
