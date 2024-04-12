@@ -26,7 +26,7 @@
       }
     },
     "detail" : {
-      "accountName" : "賬號賬戶",
+      "accountName" : "賬戶名",
       "address" : "地址",
       "title" : "賬戶"
     },
@@ -39,7 +39,7 @@
       "action" : {
         "remove" : "刪除錢包組"
       },
-      "inputLabel" : "賬戶名稱",
+      "inputLabel" : "錢包組名稱",
       "remove" : {
         "error" : "正在使用的組不能移除",
         "errorUnknown" : "錢包組移除失敗",
@@ -76,7 +76,7 @@
   "backup" : {
     "error" : {
       "checkFailed" : "\uD83E\uDD14 單詞錯誤，請檢查並重試",
-      "viewFailed" : "查看 {{backupText}} 失敗      "
+      "viewFailed" : "查看 {{backupText}} 失敗"
     },
     "notice" : {
       "describe" : "如果您丟失<1>助記詞</1>或<3>私鑰</3>，您將無法恢復錢包。\n\n獲得<5>助記詞</5>或<7>私鑰</7>意味着擁有所有資產。\n\n請務必<9>保護好</9>",
@@ -120,7 +120,7 @@
     "return" : "返回",
     "seedPhrase" : "助記詞",
     "send" : "發送",
-    "to" : "接受方",
+    "to" : "接收方",
     "verifyPassword" : "驗證密碼",
     "view" : "查看"
   },

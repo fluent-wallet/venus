@@ -39,7 +39,7 @@
       "action" : {
         "remove" : "Remove Group"
       },
-      "inputLabel" : "Account Name",
+      "inputLabel" : "Group Name",
       "remove" : {
         "error" : "The group in use cannot be removed.",
         "errorUnknown" : "Remove group failed",
@@ -76,7 +76,7 @@
   "backup" : {
     "error" : {
       "checkFailed" : "\uD83E\uDD14 Wrong word, please check again.",
-      "viewFailed" : "View {{backupText}} failed      "
+      "viewFailed" : "View {{backupText}} failed"
     },
     "notice" : {
       "describe" : "If you lose your <1>seed phrase</1> or <3>private key</3>, you won’t be able to recover you wallet.\n\nObtaining <5>seed phrase</5> or  <7>private key</7> means owning all assets.\n\nPlease <9>protect</9> them carefully",
