@@ -6,9 +6,10 @@ import Text from '@components/Text';
 import { AboutUsStackName, type StackScreenProps } from '@router/configs';
 import { APP_VERSION_FLAG_FEATURE } from '@utils/features';
 import { Lang, useLanguage } from '@hooks/useI18n';
-import SwiftShieldLogo from '@assets/icons/swift-shield.svg';
+import SwiftShieldLogo from '@assets/icons/swift-shield.webp';
 import { SettingItem } from './index';
 import pkg from '../../../../package.json';
+import { Image } from 'expo-image';
 
 const AboutUs: React.FC<StackScreenProps<typeof AboutUsStackName>> = ({ navigation }) => {
   const { colors } = useTheme();
@@ -29,7 +30,8 @@ const AboutUs: React.FC<StackScreenProps<typeof AboutUsStackName>> = ({ navigati
 
   return (
     <ScrollView contentContainerStyle={[styles.container, { backgroundColor: colors.bgPrimary }]}>
-      <SwiftShieldLogo style={styles.logo} />
+      <Image source={SwiftShieldLogo} style={styles.logo} />
+
       <Text style={[styles.swiftshield, { color: colors.textPrimary }]}>{t('settings.aboutUs.title')}</Text>
       <Text style={[styles.version, { color: colors.textSecondary }]}>
         {t('settings.aboutUs.version')}: {pkg.version} {APP_VERSION_FLAG_FEATURE.allow && APP_VERSION_FLAG_FEATURE.value}
@@ -50,7 +52,9 @@ const styles = StyleSheet.create({
     flexDirection: 'column',
   },
   logo: {
-    marginVertical: 44,
+    width: 72,
+    aspectRatio: 1,
+    margin: 44,
     alignSelf: 'center',
   },
   swiftshield: {
