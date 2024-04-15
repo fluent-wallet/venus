@@ -2,7 +2,7 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 import React, { useMemo, useState, useEffect, useCallback, useRef } from 'react';
 import { View, StyleSheet, Keyboard } from 'react-native';
-import { useTheme, CommonActions } from '@react-navigation/native';
+import { useTheme, StackActions } from '@react-navigation/native';
 import { showMessage } from 'react-native-flash-message';
 import Decimal from 'decimal.js';
 import { interval, switchMap, startWith } from 'rxjs';
@@ -223,7 +223,7 @@ const SendTransactionStep4Confirm: React.FC<SendTransactionScreenProps<typeof Se
           description: t('tx.confirm.submitted.description'),
           icon: 'loading' as unknown as undefined,
         });
-        navigation.dispatch(CommonActions.reset({ index: 0, routes: [{ name: HomeStackName }] }));
+        navigation.dispatch(StackActions.replace(HomeStackName));
         plugins.AssetsTracker.updateCurrentTracker();
         if (route.params.nftItemDetail) {
           plugins.NFTDetailTracker.updateCurrentOpenNFT();
@@ -318,7 +318,7 @@ const SendTransactionStep4Confirm: React.FC<SendTransactionScreenProps<typeof Se
               testID="cancel"
               style={styles.btn}
               size="small"
-              onPress={() => navigation.dispatch(CommonActions.reset({ index: 0, routes: [{ name: HomeStackName }] }))}
+              onPress={() => navigation.dispatch(StackActions.replace(HomeStackName))}
               disabled={inSending}
             >
               {t('common.cancel')}
@@ -405,13 +405,13 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '300',
     maxWidth: '60%',
-    marginLeft: 'auto',
     marginTop: 12,
+    marginRight: 16,
     alignSelf: 'flex-start',
   },
   estimateFee: {
     marginTop: 16,
-    marginBottom: 2,
+    marginBottom: 5,
     fontSize: 14,
     lineHeight: 18,
     fontWeight: '600',

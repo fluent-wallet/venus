@@ -3,6 +3,7 @@ import { Pressable, StyleSheet, type NativeScrollEvent, type NativeSyntheticEven
 import { useTheme } from '@react-navigation/native';
 import PagerView from 'react-native-pager-view';
 import { showMessage } from 'react-native-flash-message';
+import { Trans, useTranslation } from 'react-i18next';
 import { debounce, escapeRegExp } from 'lodash-es';
 import {
   useAssetsAllList,
@@ -28,7 +29,6 @@ import { Tabs, TabsContent, setSelectAssetScrollY, type Tab } from '@modules/Ass
 import TokenItem from '@modules/AssetsList/TokensList/TokenItem';
 import NFTItem from '@modules/AssetsList/NFTsList/NFTItem';
 import SendTransactionBottomSheet from '../SendTransactionBottomSheet';
-import { Trans, useTranslation } from 'react-i18next';
 
 interface Props {
   navigation?: SendTransactionScreenProps<typeof SendTransactionStep2StackName>['navigation'];

@@ -50,7 +50,7 @@ const BiometricsWay: React.FC<StackScreenProps<typeof BiometricsWayStackName>> =
   const { inAsync, execAsync: handleCreateVault } = useInAsync(_handleCreateVault);
 
   return (
-    <ScrollView style={styles.container}>
+    <ScrollView style={[styles.container, { backgroundColor: colors.bgPrimary}]}>
       <Text style={[styles.title, { color: colors.textPrimary }]} numberOfLines={1}>
         {t('initWallet.enableFingerprint')}
       </Text>

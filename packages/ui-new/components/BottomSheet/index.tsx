@@ -41,6 +41,7 @@ const BottomSheet = forwardRef<BottomSheet_, Props>(
 
     const indexRef = useRef(-1);
     const bottomSheetRef = useRef<BottomSheet_>(null);
+    const [couldPanDownToClose, setCouldPanDownToClose] = useState(() => false);
 
     const renderBackdrop = useCallback(
       (props: BottomSheetBackdropProps) => (
@@ -48,12 +49,12 @@ const BottomSheet = forwardRef<BottomSheet_, Props>(
           {...props}
           disappearsOnIndex={-1}
           appearsOnIndex={0}
-          pressBehavior={backDropPressBehavior}
+          pressBehavior={couldPanDownToClose ? backDropPressBehavior : 'none'}
           enableTouchThrough={false}
           onPress={handlePressBackdrop}
         />
       ),
-      [backDropPressBehavior, handlePressBackdrop],
+      [couldPanDownToClose, backDropPressBehavior, handlePressBackdrop],
     );
 
     const onBackPress = useCallback(() => {
@@ -82,9 +83,7 @@ const BottomSheet = forwardRef<BottomSheet_, Props>(
         }
       }
       // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [isRoute, onClose]);
-
-    const [couldPanDownToClose, setCouldPanDownToClose] = useState(false);
+    }, [onClose]);
 
     return (
       <BottomSheet_
@@ -96,11 +95,7 @@ const BottomSheet = forwardRef<BottomSheet_, Props>(
           if (index === 0 && typeof onOpen === 'function') {
             onOpen();
           }
-          if (index >= 0) {
-            setTimeout(() => setCouldPanDownToClose(true), 200);
-          } else {
-            setTimeout(() => setCouldPanDownToClose(false), 200);
-          }
+          setTimeout(() => setCouldPanDownToClose(index >= 0), 250);
         }}
         onClose={handleClose}
         enablePanDownToClose={couldPanDownToClose && enablePanDownToClose}
@@ -110,6 +105,8 @@ const BottomSheet = forwardRef<BottomSheet_, Props>(
         android_keyboardInputMode={android_keyboardInputMode}
         keyboardBlurBehavior={keyboardBlurBehavior}
         enableDynamicSizing={false}
+        enableContentPanningGesture={couldPanDownToClose}
+        enableHandlePanningGesture={couldPanDownToClose}
         animateOnMount={true}
         {...props}
       >

@@ -1,6 +1,6 @@
 import React, { useCallback } from 'react';
 import { View, StyleSheet } from 'react-native';
-import { useTheme, useNavigation, CommonActions } from '@react-navigation/native';
+import { useTheme, useNavigation, StackActions } from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';
 import { Image } from 'expo-image';
 import Text from '@components/Text';
@@ -17,7 +17,7 @@ const BackupSuccess: React.FC = () => {
   const { t } = useTranslation();
   const navigation = useNavigation<StackScreenProps<typeof BackupStackName>['navigation']>();
   const goHome = useCallback(() => {
-    navigation.dispatch(CommonActions.reset({ index: 0, routes: [{ name: HomeStackName }] }));
+    navigation.dispatch(StackActions.replace(HomeStackName));
   }, [navigation]);
 
   return (
