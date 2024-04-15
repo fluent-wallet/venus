@@ -85,7 +85,7 @@ const BackupStep3RandomCheck: React.FC<BackupScreenProps<typeof BackupStep3Stack
         }}
         size="small"
       >
-        Confirm
+        {t('common.confirm')}
       </Button>
     </BackupBottomSheet>
   );
