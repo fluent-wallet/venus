@@ -32,6 +32,66 @@
     {
       "path": "packages/ui-new/assets/fonts/sora_thin.ttf",
       "sha1": "30f93d8cf40119c65358699b62ebed569aee1d93"
+    },
+    {
+      "path": "packages/ui-new/assets/lottie/enter_0.webp",
+      "sha1": "0c3501a0b002b01e360631fbf165836020d44760"
+    },
+    {
+      "path": "packages/ui-new/assets/lottie/enter_1.webp",
+      "sha1": "12470ffee9c0f2e97d8170fd5ee396a300489d84"
+    },
+    {
+      "path": "packages/ui-new/assets/lottie/enter_2.webp",
+      "sha1": "287ed9cafaa4578a7642d69662ec0c9738b0a5d2"
+    },
+    {
+      "path": "packages/ui-new/assets/lottie/enter_3.webp",
+      "sha1": "1e24e6ccf0c0dd35f035567ff4e4fdfe6fc0c601"
+    },
+    {
+      "path": "packages/ui-new/assets/lottie/enter_4.webp",
+      "sha1": "5df1b444292717ba6a23de16e66177093f4636fb"
+    },
+    {
+      "path": "packages/ui-new/assets/lottie/enter_5.webp",
+      "sha1": "1b0ab41ce1957b29f012d53904d457e12597f426"
+    },
+    {
+      "path": "packages/ui-new/assets/lottie/enter_6.webp",
+      "sha1": "ca6d631892d5e0cdb138737165d42f4676e277a2"
+    },
+    {
+      "path": "packages/ui-new/assets/lottie/enter_7.webp",
+      "sha1": "76f2c18b1ac278d046b7dadca4e55e09291d8d39"
+    },
+    {
+      "path": "packages/ui-new/assets/lottie/enter_8.webp",
+      "sha1": "b308f9db23205fb1223f2157013420bb65cc4933"
+    },
+    {
+      "path": "packages/ui-new/assets/lottie/welcome_0.webp",
+      "sha1": "445ab93cd2715dcebde542107915df915e87c502"
+    },
+    {
+      "path": "packages/ui-new/assets/lottie/welcome_1.webp",
+      "sha1": "729ba1e1c7e6414a13a0ff9800fafae8b2232314"
+    },
+    {
+      "path": "packages/ui-new/assets/lottie/welcome_2.webp",
+      "sha1": "30ca792f8451c3806ab99fa6dcf637c1b189b12d"
+    },
+    {
+      "path": "packages/ui-new/assets/lottie/welcome_3.webp",
+      "sha1": "e371368665911b865088c2467dedf608bbda9271"
+    },
+    {
+      "path": "packages/ui-new/assets/lottie/welcome_4.webp",
+      "sha1": "67f0ab64b60bf508bba4337bf37c32e4c22223d1"
+    },
+    {
+      "path": "packages/ui-new/assets/lottie/welcome_5.webp",
+      "sha1": "86275f48cb66a33423ecb49962999599caab841d"
     }
   ]
 }

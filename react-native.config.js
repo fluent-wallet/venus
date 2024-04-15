@@ -4,5 +4,5 @@ module.exports = {
     ios: {},
     android: {}, // grouped into "project"
   },
-  iosAssets: ['./packages/ui-new/assets/fonts'],
+  iosAssets: ['./packages/ui-new/assets/fonts', './packages/ui-new/assets/lottie'],
 };
