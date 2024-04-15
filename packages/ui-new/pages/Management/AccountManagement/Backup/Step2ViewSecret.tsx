@@ -1,6 +1,6 @@
 import React, { useState, useCallback, useMemo } from 'react';
 import { View, Pressable, StyleSheet } from 'react-native';
-import { useTheme } from '@react-navigation/native';
+import { useTheme, StackActions } from '@react-navigation/native';
 import Clipboard from '@react-native-clipboard/clipboard';
 import { showMessage } from 'react-native-flash-message';
 import QRCode from 'react-native-qrcode-svg';
@@ -11,7 +11,7 @@ import plugins from '@core/WalletCore/Plugins';
 import Text from '@components/Text';
 import Button from '@components/Button';
 import useInAsync from '@hooks/useInAsync';
-import { BackupStep2StackName, BackupStep3StackName, type BackupScreenProps } from '@router/configs';
+import { BackupStep2StackName, BackupStep3StackName, HomeStackName, type BackupScreenProps } from '@router/configs';
 import { isSmallDevice } from '@utils/deviceInfo';
 import MaskPrivateKey from '@assets/images/mask-private-key.webp';
 import MaskSeedPhrase from '@assets/images/mask-seed-phrase.webp';
@@ -134,8 +134,8 @@ const BackupStep2ViewSecret: React.FC<BackupScreenProps<typeof BackupStep2StackN
           {t('common.next')}
         </Button>
       ) : (
-        <Button testID="return" style={styles.btn} onPress={() => navigation.goBack()} size="small">
-          {t('common.return')}
+        <Button testID="return" style={styles.btn} onPress={() => navigation.dispatch(StackActions.replace(HomeStackName))} size="small">
+          {t('common.close')}
         </Button>
       )}
     </BackupBottomSheet>
