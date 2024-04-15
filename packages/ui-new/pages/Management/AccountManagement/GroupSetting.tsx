@@ -112,7 +112,14 @@ const GroupConfig: React.FC<StackScreenProps<typeof GroupSettingStackName>> = ({
 
   return (
     <>
-      <BottomSheet ref={bottomSheetRef} snapPoints={snapPoints.large} isRoute>
+      <BottomSheet
+        ref={bottomSheetRef}
+        snapPoints={snapPoints.large}
+        isRoute
+        enablePanDownToClose={!inDelete}
+        enableContentPanningGesture={!inDelete}
+        enableHandlePanningGesture={!inDelete}
+      >
         <Text style={[styles.title, styles.mainText, { color: colors.textPrimary }]}>{GroupTitle}</Text>
         <Text style={[styles.description, { color: colors.textSecondary }]}>{t('account.group.inputLabel')}</Text>
         <TextInput

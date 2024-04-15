@@ -107,6 +107,7 @@ const AccountConfig: React.FC<StackScreenProps<typeof AccountSettingStackName>> 
           <Text style={[styles.address, styles.mainText, { color: colors.textPrimary, opacity: addressValue ? 1 : 0 }]}>{addressValue || zeroAddress}</Text>
           <Text style={[styles.description, { color: colors.textSecondary }]}>{t('account.detail.accountName')}</Text>
           <TextInput
+            ref={textinputRef}
             containerStyle={[styles.textinput, { borderColor: colors.borderFourth }]}
             showVisible={false}
             defaultHasValue
