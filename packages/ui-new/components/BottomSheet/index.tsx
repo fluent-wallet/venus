@@ -24,6 +24,8 @@ const BottomSheet = forwardRef<BottomSheet_, Props>(
       isRoute = false,
       showBackDrop = true,
       enablePanDownToClose = true,
+      enableContentPanningGesture = true,
+      enableHandlePanningGesture = true,
       backDropPressBehavior = 'close',
       keyboardBlurBehavior = 'restore',
       android_keyboardInputMode = isAdjustResize ? 'adjustResize' : 'adjustPan',
@@ -99,14 +101,14 @@ const BottomSheet = forwardRef<BottomSheet_, Props>(
         }}
         onClose={handleClose}
         enablePanDownToClose={couldPanDownToClose && enablePanDownToClose}
+        enableContentPanningGesture={couldPanDownToClose && enableContentPanningGesture}
+        enableHandlePanningGesture={couldPanDownToClose && enableHandlePanningGesture}
         backdropComponent={showBackDrop ? renderBackdrop : undefined}
         backgroundStyle={{ backgroundColor: colors.bgFourth }}
         handleIndicatorStyle={{ backgroundColor: palette.gray4 }}
         android_keyboardInputMode={android_keyboardInputMode}
         keyboardBlurBehavior={keyboardBlurBehavior}
         enableDynamicSizing={false}
-        enableContentPanningGesture={couldPanDownToClose}
-        enableHandlePanningGesture={couldPanDownToClose}
         animateOnMount={true}
         {...props}
       >
