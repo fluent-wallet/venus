@@ -57,6 +57,7 @@ const MoreOption: React.FC<{ children: React.ReactElement }> = ({ children }) =>
       message: t('common.copied'),
       type: 'success',
       duration: 1500,
+      width: 160,
     });
     setVisible(false);
   }, [currentAddressValue]);

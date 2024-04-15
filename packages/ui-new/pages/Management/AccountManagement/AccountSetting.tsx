@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useEffect, useRef } from 'react';
-import { View, Pressable, StyleSheet } from 'react-native';
+import { View, Pressable, StyleSheet, Keyboard, type TextInput as _TextInput } from 'react-native';
 import { useTheme } from '@react-navigation/native';
 import { showMessage } from 'react-native-flash-message';
 import methods from '@core/WalletCore/Methods';
@@ -9,18 +9,21 @@ import { zeroAddress } from '@core/utils/address';
 import Text from '@components/Text';
 import TextInput from '@components/TextInput';
 import Checkbox from '@components/Checkbox';
+import HourglassLoading from '@components/Loading/Hourglass';
 import Button from '@components/Button';
 import BottomSheet, { snapPoints, type BottomSheetMethods } from '@components/BottomSheet';
 import { AccountSettingStackName, BackupStackName, BackupStep1StackName, type StackScreenProps } from '@router/configs';
+import useInAsync from '@hooks/useInAsync';
 import ArrowRight from '@assets/icons/arrow-right2.svg';
 import Delete from '@assets/icons/delete.svg';
 import DeleteConfirm from './DeleteConfirm';
 import { useTranslation } from 'react-i18next';
 
 const AccountConfig: React.FC<StackScreenProps<typeof AccountSettingStackName>> = ({ navigation, route }) => {
-  const { colors, mode } = useTheme();
+  const { colors } = useTheme();
   const { t } = useTranslation();
   const bottomSheetRef = useRef<BottomSheetMethods>(null!);
+  const textinputRef = useRef<_TextInput>(null!);
 
   const account = useAccountFromId(route.params.accountId);
   const vault = useVaultOfAccount(route.params.accountId);
@@ -49,10 +52,15 @@ const AccountConfig: React.FC<StackScreenProps<typeof AccountSettingStackName>> 
       });
     } else {
       setShowDeleteBottomSheet(true);
+      textinputRef.current?.blur();
+      if (Keyboard.isVisible()) {
+        Keyboard.dismiss();
+      }
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [account]);
 
-  const handleConfirmDelete = useCallback(async () => {
+  const _handleConfirmDelete = useCallback(async () => {
     if (!account || !vault) return;
     try {
       if (vault.isGroup) {
@@ -80,9 +88,19 @@ const AccountConfig: React.FC<StackScreenProps<typeof AccountSettingStackName>> 
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [account, vault, navigation]);
 
+  const { inAsync: inDeleting, execAsync: handleConfirmDelete } = useInAsync(_handleConfirmDelete);
+  const inDelete = showDeleteBottomSheet || inDeleting;
+
   return (
     <>
-      <BottomSheet ref={bottomSheetRef} snapPoints={snapPoints.large} isRoute>
+      <BottomSheet
+        ref={bottomSheetRef}
+        snapPoints={snapPoints.large}
+        isRoute
+        enablePanDownToClose={!inDelete}
+        enableContentPanningGesture={!inDelete}
+        enableHandlePanningGesture={!inDelete}
+      >
         <View style={styles.container}>
           <Text style={[styles.title, styles.mainText, { color: colors.textPrimary }]}>{t('account.detail.title')}</Text>
           <Text style={[styles.description, { color: colors.textSecondary }]}>{t('account.detail.address')}</Text>
@@ -95,6 +113,7 @@ const AccountConfig: React.FC<StackScreenProps<typeof AccountSettingStackName>> 
             value={accountName}
             onChangeText={(newNickName) => setAccountName(newNickName?.trim())}
             isInBottomSheet
+            disabled={inDelete}
           />
           {(vault?.type === VaultType.HierarchicalDeterministic || vault?.type === VaultType.PrivateKey) && (
             <>
@@ -103,6 +122,7 @@ const AccountConfig: React.FC<StackScreenProps<typeof AccountSettingStackName>> 
                 style={({ pressed }) => [styles.row, { backgroundColor: pressed ? colors.underlay : 'transparent' }]}
                 onPress={() => navigation.navigate(BackupStackName, { screen: BackupStep1StackName, params: { accountId: route.params.accountId } })}
                 testID="privateKey"
+                disabled={inDelete}
               >
                 <Text style={[styles.mainText, styles.backupText, { color: colors.textPrimary }]}>{t('common.privateKey')}</Text>
                 <ArrowRight color={colors.iconPrimary} />
@@ -113,15 +133,17 @@ const AccountConfig: React.FC<StackScreenProps<typeof AccountSettingStackName>> 
             style={({ pressed }) => [styles.row, styles.removeContainer, { backgroundColor: pressed ? colors.underlay : 'transparent' }]}
             onPress={handlePressDelete}
             testID="removeAccount"
+            disabled={inDelete}
           >
             <Checkbox checked Icon={Delete} pointerEvents="none" />
             <Text style={[styles.mainText, styles.removeText, { color: colors.textPrimary }]}>{t('account.action.remove')}</Text>
+            {inDelete && <HourglassLoading style={styles.deleteLoading} />}
           </Pressable>
 
           <Button
             testID="ok"
             style={styles.btn}
-            disabled={!accountName || accountName === account?.nickname}
+            disabled={inDelete || !accountName || accountName === account?.nickname}
             onPress={handleUpdateAccountNickName}
             size="small"
           >
@@ -186,6 +208,11 @@ const styles = StyleSheet.create({
   },
   removeText: {
     marginLeft: 8,
+  },
+  deleteLoading: {
+    marginLeft: 'auto',
+    width: 20,
+    height: 20,
   },
   btn: {
     marginTop: 'auto',
