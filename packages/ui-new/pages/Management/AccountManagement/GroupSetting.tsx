@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useMemo, useEffect, useRef } from 'react';
-import { Pressable, StyleSheet } from 'react-native';
+import { Pressable, StyleSheet, Keyboard, type TextInput as _TextInput } from 'react-native';
 import { useTheme } from '@react-navigation/native';
 import { showMessage } from 'react-native-flash-message';
 import methods from '@core/WalletCore/Methods';
@@ -8,10 +8,12 @@ import { useGroupFromId, useAccountsOfGroupInManage, useVaultOfGroup, VaultType 
 import Text from '@components/Text';
 import TextInput from '@components/TextInput';
 import Checkbox from '@components/Checkbox';
+import HourglassLoading from '@components/Loading/Hourglass';
 import Button from '@components/Button';
 import BottomSheet, { snapPoints, BottomSheetScrollView, type BottomSheetMethods } from '@components/BottomSheet';
 import { AccountItemView } from '@modules/AccountsList';
 import { GroupSettingStackName, HDSettingStackName, BackupStackName, BackupStep1StackName, type StackScreenProps } from '@router/configs';
+import useInAsync from '@hooks/useInAsync';
 import ArrowRight from '@assets/icons/arrow-right2.svg';
 import Delete from '@assets/icons/delete.svg';
 import DeleteConfirm from './DeleteConfirm';
@@ -20,6 +22,7 @@ import { useTranslation } from 'react-i18next';
 const GroupConfig: React.FC<StackScreenProps<typeof GroupSettingStackName>> = ({ navigation, route }) => {
   const { colors } = useTheme();
   const bottomSheetRef = useRef<BottomSheetMethods>(null!);
+  const textinputRef = useRef<_TextInput>(null!);
   const { t } = useTranslation();
 
   const accountGroup = useGroupFromId(route.params.groupId);
@@ -56,10 +59,14 @@ const GroupConfig: React.FC<StackScreenProps<typeof GroupSettingStackName>> = ({
       });
     } else {
       setShowDeleteBottomSheet(true);
+      textinputRef.current?.blur();
+      if (Keyboard.isVisible()) {
+        Keyboard.dismiss();
+      }
     }
   }, [accounts]);
 
-  const handleConfirmDelete = useCallback(async () => {
+  const _handleConfirmDelete = useCallback(async () => {
     if (!vault) return;
     try {
       await plugins.Authentication.getPassword();
@@ -100,18 +107,30 @@ const GroupConfig: React.FC<StackScreenProps<typeof GroupSettingStackName>> = ({
     [vault?.type],
   );
 
+  const { inAsync: inDeleting, execAsync: handleConfirmDelete } = useInAsync(_handleConfirmDelete);
+  const inDelete = showDeleteBottomSheet || inDeleting;
+
   return (
     <>
-      <BottomSheet ref={bottomSheetRef} snapPoints={snapPoints.large} isRoute>
+      <BottomSheet
+        ref={bottomSheetRef}
+        snapPoints={snapPoints.large}
+        isRoute
+        enablePanDownToClose={!inDelete}
+        enableContentPanningGesture={!inDelete}
+        enableHandlePanningGesture={!inDelete}
+      >
         <Text style={[styles.title, styles.mainText, { color: colors.textPrimary }]}>{GroupTitle}</Text>
         <Text style={[styles.description, { color: colors.textSecondary }]}>{t('account.group.inputLabel')}</Text>
         <TextInput
+          ref={textinputRef}
           containerStyle={[styles.textinput, { borderColor: colors.borderFourth }]}
           showVisible={false}
           defaultHasValue
           value={accountGroupName}
           onChangeText={(newNickName) => setAccountGroupName(newNickName?.trim())}
           isInBottomSheet
+          disabled={inDelete}
         />
         {(vault?.type === VaultType.HierarchicalDeterministic || vault?.type === VaultType.BSIM) && (
           <>
@@ -122,6 +141,7 @@ const GroupConfig: React.FC<StackScreenProps<typeof GroupSettingStackName>> = ({
               style={({ pressed }) => [styles.row, { backgroundColor: pressed ? colors.underlay : 'transparent' }]}
               onPress={renderByVaultType(handleBackupSeedPhrase, handleChangeBSIMPin)}
               testID="action"
+              disabled={inDelete}
             >
               <Text style={[styles.mainText, styles.backupText, { color: colors.textPrimary }]}>
                 {renderByVaultType(t('common.seedPhrase'), t('account.group.settings.BSIMCode'))}
@@ -135,6 +155,7 @@ const GroupConfig: React.FC<StackScreenProps<typeof GroupSettingStackName>> = ({
           style={({ pressed }) => [styles.HDManage, { backgroundColor: pressed ? colors.underlay : 'transparent' }]}
           onPress={() => navigation.navigate(HDSettingStackName, { groupId: route.params.groupId })}
           testID="HDManage"
+          disabled={inDelete}
         >
           <Text style={[styles.HDManageText, { color: colors.textSecondary }]}>{t('common.HDWallets')}</Text>
           <Text style={[styles.HDManageText, styles.management, { color: colors.textNotice }]}>{t('account.action.ManageMent')}</Text>
@@ -148,15 +169,17 @@ const GroupConfig: React.FC<StackScreenProps<typeof GroupSettingStackName>> = ({
           style={({ pressed }) => [styles.row, styles.removeContainer, { backgroundColor: pressed ? colors.underlay : 'transparent' }]}
           onPress={handlePressDelete}
           testID="remove"
+          disabled={inDelete}
         >
           <Checkbox checked Icon={Delete} pointerEvents="none" />
           <Text style={[styles.mainText, styles.removeText, { color: colors.textPrimary }]}>{t('account.group.action.remove')}</Text>
+          {inDelete && <HourglassLoading style={styles.deleteLoading} />}
         </Pressable>
 
         <Button
           testID="ok"
           style={styles.btn}
-          disabled={!accountGroupName || accountGroupName === accountGroup?.nickname}
+          disabled={inDelete || !accountGroupName || accountGroupName === accountGroup?.nickname}
           onPress={handleUpdateAccountGroupNickName}
           size="small"
         >
@@ -240,6 +263,11 @@ const styles = StyleSheet.create({
   },
   removeText: {
     marginLeft: 8,
+  },
+  deleteLoading: {
+    marginLeft: 'auto',
+    width: 20,
+    height: 20,
   },
   btn: {
     marginTop: 'auto',

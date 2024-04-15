@@ -48,7 +48,7 @@ const ImportExistingWallet: React.FC<Props> = ({ bottomSheetRef, inImporting, on
     return statusRes;
   }, []);
 
-  const { inAsync, execAsync: handleCheckInput } = useInAsync(_handleCheckInput);
+  const { inAsync: inChecking, execAsync: handleCheckInput } = useInAsync(_handleCheckInput);
 
   const handleConfirm = useCallback(async () => {
     let _status = status;
@@ -78,6 +78,7 @@ const ImportExistingWallet: React.FC<Props> = ({ bottomSheetRef, inImporting, on
     }
   }, []);
 
+  const inAsync = inChecking || inImporting;
   return (
     <BottomSheet
       ref={bottomSheetRef}
@@ -85,6 +86,9 @@ const ImportExistingWallet: React.FC<Props> = ({ bottomSheetRef, inImporting, on
       backDropPressBehavior="collapse"
       handlePressBackdrop={handlePressBackdrop}
       snapPoints={snapPoints}
+      enablePanDownToClose={!inAsync}
+      enableContentPanningGesture={!inAsync}
+      enableHandlePanningGesture={!inAsync}
     >
       <View style={{ flex: 1 }}>
         <Pressable
@@ -92,7 +96,7 @@ const ImportExistingWallet: React.FC<Props> = ({ bottomSheetRef, inImporting, on
             Keyboard.dismiss();
           }}
           style={styles.bottomSheetContainer}
-          disabled={inAsync || inImporting}
+          disabled={inAsync}
         >
           <BottomSheetTextInput
             ref={textInputRef as any}
@@ -101,7 +105,7 @@ const ImportExistingWallet: React.FC<Props> = ({ bottomSheetRef, inImporting, on
             testID="existingWalletInput"
             underlineColorAndroid="transparent"
             secureTextEntry={true}
-            editable
+            editable={!inAsync}
             multiline
             numberOfLines={6}
             placeholder={t('wallet.import.placeholder')}
@@ -110,12 +114,12 @@ const ImportExistingWallet: React.FC<Props> = ({ bottomSheetRef, inImporting, on
               existWalletValueRef.current = value;
             }}
             onBlur={handleCheckInput}
-            pointerEvents={inAsync || inImporting ? 'none' : 'auto'}
+            pointerEvents={inAsync ? 'none' : 'auto'}
           />
           <Text style={[styles.tipText, { color: status?.type === 'error' ? colors.down : colors.up, opacity: status === null ? 0 : 1 }]}>
             {status?.message || 'placeholder'}
           </Text>
-          <Button testID="confirmImportExistingWallet" style={styles.btn} onPress={handleConfirm} loading={inAsync || inImporting}>
+          <Button testID="confirmImportExistingWallet" style={styles.btn} onPress={handleConfirm} loading={inAsync}>
             {t('common.confirm')}
           </Button>
         </Pressable>
@@ -152,6 +156,6 @@ const styles = StyleSheet.create({
   },
 });
 
-const snapPoints = [`${(((isAdjustResize ? 400 : 300) / screenHeight) * 100).toFixed(2)}%`];
+const snapPoints = [`${(((isAdjustResize ? 400 : 306) / screenHeight) * 100).toFixed(2)}%`];
 
 export default ImportExistingWallet;

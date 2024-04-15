@@ -11,7 +11,7 @@ import com.zoontek.rnbootsplash.RNBootSplash;
 class MainActivity : ReactActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         RNBootSplash.init(this, R.style.BootTheme) // ⬅️ initialize the splash screen
-        super.onCreate(savedInstanceState) // super.onCreate(null) with react-native-screens
+        super.onCreate(null)
    }
 
     /**
