@@ -3,7 +3,7 @@
   "version": "0.2.10",
   "private": true,
   "scripts": {
-    "android": "react-native run-android",
+    "android": "react-native run-android --tasks installDevDebug",
     "ios": "react-native run-ios",
     "lint": "eslint .",
     "start": "react-native start",
