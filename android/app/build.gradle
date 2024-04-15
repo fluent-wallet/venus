@@ -124,13 +124,6 @@ android {
     }
     flavorDimensions "version"
     productFlavors {
-         dev {
-            dimension "version"
-            applicationId defaultConfig.applicationId
-            signingConfig signingConfigs.debug
-            resValue "string", "CodePushDeploymentKey",  ''
-            resValue "string", "CodePushPublicKey", ''
-         }
           qa {
             dimension "version"
             applicationIdSuffix ".qa"
