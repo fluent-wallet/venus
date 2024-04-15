@@ -2,7 +2,7 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 import React, { useMemo, useState, useEffect, useCallback, useRef } from 'react';
 import { View, StyleSheet, Keyboard } from 'react-native';
-import { useTheme, CommonActions } from '@react-navigation/native';
+import { useTheme } from '@react-navigation/native';
 import { showMessage } from 'react-native-flash-message';
 import Decimal from 'decimal.js';
 import { interval, switchMap, startWith } from 'rxjs';
@@ -35,7 +35,7 @@ import { getDetailSymbol } from '@modules/AssetsList/NFTsList/NFTItem';
 import { AccountItemView } from '@modules/AccountsList';
 import useFormatBalance from '@hooks/useFormatBalance';
 import useInAsync from '@hooks/useInAsync';
-import { SendTransactionStep4StackName, HomeStackName, type SendTransactionScreenProps } from '@router/configs';
+import { SendTransactionStep4StackName, type SendTransactionScreenProps } from '@router/configs';
 import SendTransactionBottomSheet from '../SendTransactionBottomSheet';
 import { NFT } from '../Step3Amount';
 import BSIMVerify from '../BSIMVerify';
@@ -223,7 +223,8 @@ const SendTransactionStep4Confirm: React.FC<SendTransactionScreenProps<typeof Se
           description: t('tx.confirm.submitted.description'),
           icon: 'loading' as unknown as undefined,
         });
-        navigation.dispatch(CommonActions.reset({ index: 0, routes: [{ name: HomeStackName }] }));
+        navigation.popToTop();
+        navigation.goBack();
         plugins.AssetsTracker.updateCurrentTracker();
         if (route.params.nftItemDetail) {
           plugins.NFTDetailTracker.updateCurrentOpenNFT();
@@ -318,7 +319,10 @@ const SendTransactionStep4Confirm: React.FC<SendTransactionScreenProps<typeof Se
               testID="cancel"
               style={styles.btn}
               size="small"
-              onPress={() => navigation.dispatch(CommonActions.reset({ index: 0, routes: [{ name: HomeStackName }] }))}
+              onPress={() => {
+                navigation.popToTop();
+                navigation.goBack();
+              }}
               disabled={inSending}
             >
               {t('common.cancel')}
@@ -405,13 +409,13 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '300',
     maxWidth: '60%',
-    marginLeft: 'auto',
     marginTop: 12,
+    marginRight: 16,
     alignSelf: 'flex-start',
   },
   estimateFee: {
     marginTop: 16,
-    marginBottom: 2,
+    marginBottom: 5,
     fontSize: 14,
     lineHeight: 18,
     fontWeight: '600',

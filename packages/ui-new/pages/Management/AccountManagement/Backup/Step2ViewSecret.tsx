@@ -33,6 +33,7 @@ const BackupStep2ViewSecret: React.FC<BackupScreenProps<typeof BackupStep2StackN
 
   const _handleClickView = useCallback(async () => {
     try {
+      await new Promise((resolve) => setTimeout(() => resolve(null!), 20));
       if (backupType === VaultType.HierarchicalDeterministic) {
         if (!vault) return;
         setSecretData(await methods.getMnemonicOfVault(vault));
@@ -134,8 +135,16 @@ const BackupStep2ViewSecret: React.FC<BackupScreenProps<typeof BackupStep2StackN
           {t('common.next')}
         </Button>
       ) : (
-        <Button testID="return" style={styles.btn} onPress={() => navigation.goBack()} size="small">
-          {t('common.return')}
+        <Button
+          testID="return"
+          style={styles.btn}
+          onPress={() => {
+            navigation.popToTop();
+            navigation.goBack();
+          }}
+          size="small"
+        >
+          {t('common.close')}
         </Button>
       )}
     </BackupBottomSheet>

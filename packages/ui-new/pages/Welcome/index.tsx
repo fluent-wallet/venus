@@ -29,7 +29,6 @@ const Welcome: React.FC<StackScreenProps<typeof WelcomeStackName>> = ({ navigati
             textAlign="left"
             Icon={ArrowRight}
             style={styles.btn}
-            // onPress={() => navigation.dispatch(StackActions.replace(WayToInitWalletStackName))}
             onPress={() => navigation.navigate(WayToInitWalletStackName)}
             mode="dark"
           >
