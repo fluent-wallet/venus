@@ -19,7 +19,7 @@ const eSpaceCoinType = 60;
 
 export class BSIMPluginClass implements Plugin {
   constructor() {
-    this.getBSIMList();
+    setTimeout(() => this.getBSIMList(), 1000);
   }
   name = 'BSIM' as const;
 
