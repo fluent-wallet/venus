@@ -88,14 +88,25 @@ const AddAnotherWallet: React.FC<Props> = ({ navigation }) => {
   const { inAsync: inImporting, execAsync: handleImportExistWallet } = useInAsync(_handleImportExistWallet);
   const [bottomSheetIndex, setBottomSheetIndex] = useState(0);
 
+  const inAsync = inConnecting || inCreating || inImporting;
   return (
     <>
-      <BottomSheet ref={bottomSheetRef} snapPoints={snapPoints} isRoute onChange={(index) => setBottomSheetIndex(index)} containerStyle={styles.container}>
+      <BottomSheet
+        ref={bottomSheetRef}
+        snapPoints={snapPoints}
+        isRoute
+        onChange={(index) => setBottomSheetIndex(index)}
+        containerStyle={styles.container}
+        enablePanDownToClose={!inAsync}
+        enableContentPanningGesture={!inAsync}
+        enableHandlePanningGesture={!inAsync}
+        backDropPressBehavior={inAsync ? 'none' : 'close'}
+      >
         <Text style={[styles.title, { color: colors.textPrimary }]}>{t('account.action.add.title')}</Text>
         {!hasBSIMVaultCreated && (
           <Pressable
             style={({ pressed }) => [accountListStyles.row, { backgroundColor: pressed ? colors.underlay : 'transparent' }]}
-            disabled={inConnecting}
+            disabled={inAsync}
             onPress={handleConnectBSIMCard}
             testID="connectBSIMWallet"
           >
@@ -107,7 +118,7 @@ const AddAnotherWallet: React.FC<Props> = ({ navigation }) => {
 
         <Pressable
           style={({ pressed }) => [accountListStyles.row, { backgroundColor: pressed ? colors.underlay : 'transparent' }]}
-          disabled={inCreating}
+          disabled={inAsync}
           onPress={handleCreateNewHdWallet}
           testID="createNewWallet"
         >
@@ -118,7 +129,7 @@ const AddAnotherWallet: React.FC<Props> = ({ navigation }) => {
 
         <Pressable
           style={({ pressed }) => [accountListStyles.row, { backgroundColor: pressed ? colors.underlay : 'transparent' }]}
-          disabled={inCreating}
+          disabled={inAsync}
           onPress={() => importExistRef.current?.expand()}
           testID="importExistWallet"
         >
@@ -127,7 +138,7 @@ const AddAnotherWallet: React.FC<Props> = ({ navigation }) => {
           {inImporting && <HourglassLoading style={accountListStyles.addAccountLoading} />}
         </Pressable>
       </BottomSheet>
-      {bottomSheetIndex === 0 && <ImportExistingWallet bottomSheetRef={importExistRef} onSuccessConfirm={handleImportExistWallet} />}
+      {bottomSheetIndex === 0 && <ImportExistingWallet bottomSheetRef={importExistRef} onSuccessConfirm={handleImportExistWallet} inImporting={inImporting} />}
     </>
   );
 };

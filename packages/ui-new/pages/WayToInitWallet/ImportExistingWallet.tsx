@@ -16,6 +16,7 @@ export { BottomSheetMethods };
 interface Props {
   bottomSheetRef: RefObject<BottomSheetMethods>;
   onSuccessConfirm?: (value: string) => void;
+  inImporting?: boolean;
 }
 
 interface Status {
@@ -23,7 +24,7 @@ interface Status {
   message: string;
 }
 
-const ImportExistingWallet: React.FC<Props> = ({ bottomSheetRef, onSuccessConfirm }) => {
+const ImportExistingWallet: React.FC<Props> = ({ bottomSheetRef, inImporting, onSuccessConfirm }) => {
   const { colors } = useTheme();
   const { t } = useTranslation();
 
@@ -91,6 +92,7 @@ const ImportExistingWallet: React.FC<Props> = ({ bottomSheetRef, onSuccessConfir
             Keyboard.dismiss();
           }}
           style={styles.bottomSheetContainer}
+          disabled={inAsync || inImporting}
         >
           <BottomSheetTextInput
             ref={textInputRef as any}
@@ -108,11 +110,12 @@ const ImportExistingWallet: React.FC<Props> = ({ bottomSheetRef, onSuccessConfir
               existWalletValueRef.current = value;
             }}
             onBlur={handleCheckInput}
+            pointerEvents={inAsync || inImporting ? 'none' : 'auto'}
           />
           <Text style={[styles.tipText, { color: status?.type === 'error' ? colors.down : colors.up, opacity: status === null ? 0 : 1 }]}>
             {status?.message || 'placeholder'}
           </Text>
-          <Button testID="confirmImportExistingWallet" style={styles.btn} onPress={handleConfirm} loading={inAsync}>
+          <Button testID="confirmImportExistingWallet" style={styles.btn} onPress={handleConfirm} loading={inAsync || inImporting}>
             {t('common.confirm')}
           </Button>
         </Pressable>
