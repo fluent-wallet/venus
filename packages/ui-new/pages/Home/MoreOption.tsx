@@ -1,21 +1,23 @@
-import { NetworkType, useCurrentAddress, useCurrentAddressValue, useCurrentNetwork } from '@core/WalletCore/Plugins/ReactInject';
-import { useTheme } from '@react-navigation/native';
 import React, { useCallback, useState } from 'react';
 import { LayoutChangeEvent, StyleSheet, Text, View, Modal, Pressable, Dimensions, Linking } from 'react-native';
 import Animated, { useAnimatedStyle, useSharedValue } from 'react-native-reanimated';
-import Copy from '@assets/icons/copy.svg';
-import Earth from '@assets/icons/earth.svg';
+import { useTheme } from '@react-navigation/native';
+import { useTranslation } from 'react-i18next';
 import Clipboard from '@react-native-clipboard/clipboard';
 import { showMessage } from 'react-native-flash-message';
+import { useCurrentAddressValue, useCurrentNetwork, NetworkType } from '@core/WalletCore/Plugins/ReactInject';
 import { CFX_ESPACE_MAINNET_CHAINID, CFX_ESPACE_TESTNET_CHAINID } from '@core/consts/network';
-import { useTranslation } from 'react-i18next';
+import Copy from '@assets/icons/copy.svg';
+import Earth from '@assets/icons/earth.svg';
+
 const MoreOption: React.FC<{ children: React.ReactElement }> = ({ children }) => {
   const { reverseColors } = useTheme();
+  const { t } = useTranslation();
+
   const currentAddressValue = useCurrentAddressValue();
   const currentNetwork = useCurrentNetwork();
   const [visible, setVisible] = useState(false);
   const position = useSharedValue({ right: 0, top: 0 });
-  const { t } = useTranslation();
 
   const handleLayout = useCallback(
     (event: LayoutChangeEvent) => {

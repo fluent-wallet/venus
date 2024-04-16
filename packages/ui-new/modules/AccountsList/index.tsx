@@ -152,7 +152,7 @@ const AddAccount: React.FC<AccountGroupProps & { colors: ReturnType<typeof useTh
 }) => {
   const { t } = useTranslation();
   const notReachMax =
-    (vaultType === VaultType.HierarchicalDeterministic && accountCount < 256) || (vaultType === VaultType.BSIM && accountCount < plugins.BSIM.chainLimtCount);
+    (vaultType === VaultType.HierarchicalDeterministic && accountCount < 256) || (vaultType === VaultType.BSIM && accountCount < plugins.BSIM.chainLimitCount);
 
   if (vaultType === VaultType.PrivateKey || vaultType === VaultType.PublicAddress || !notReachMax) {
     return <View style={[styles.divider, { backgroundColor: colors.borderThird }]} pointerEvents="none" />;
@@ -192,7 +192,7 @@ const AccountsList: React.FC<{
       setInAddingId(id);
       const accountGroup = await queryAccountGroupById(id);
       const lastIndex = await methods.getAccountGroupLastAccountIndex(accountGroup);
-      if (lastIndex >= (vaultType === VaultType.BSIM ? plugins.BSIM.chainLimtCount : 255)) {
+      if (lastIndex >= (vaultType === VaultType.BSIM ? plugins.BSIM.chainLimitCount : 255)) {
         // navigation.navigate(HDManageStackName, { accountGroupId: accountGroup.id });
         return;
       }

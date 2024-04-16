@@ -79,6 +79,7 @@
   "home.more" : "更多",
   "home.more.copyAddress" : "複製地址",
   "home.more.viewInExplorer" : "在瀏覽器中查看",
+  "home.noNetwork" : "網絡連接已斷開",
   "home.receive" : "接收",
   "home.send" : "發送",
   "initWallet.biometrics.disable.error.description" : "請開啟此設備的生物識別功能",

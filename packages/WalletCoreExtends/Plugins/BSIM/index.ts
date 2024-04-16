@@ -4,8 +4,6 @@ import { Signature, Transaction, TypedDataDomain, TypedDataEncoder, TypedDataFie
 import { ITxEvm } from '@core/WalletCore/Plugins/Transaction/types';
 import { type Plugin } from '@core/WalletCore/Plugins';
 import { catchError, defer, firstValueFrom, from, retry, throwError, timeout, takeUntil, Subject } from 'rxjs';
-import { BSIMEvent, BSIMEventTypesName } from './types';
-
 export { CoinTypes, CFXCoinTypes } from './BSIMSDK';
 
 declare module '@core/WalletCore/Plugins' {
@@ -19,11 +17,11 @@ const eSpaceCoinType = 60;
 
 export class BSIMPluginClass implements Plugin {
   constructor() {
-    setTimeout(() => this.getBSIMList(), 1000);
+    setTimeout(() => this.getBSIMList(), 3000);
   }
   name = 'BSIM' as const;
 
-  chainLimtCount = 25 as const;
+  chainLimitCount = 25 as const;
 
   checkIsInit = async () => {
     if (!hasInit) {
