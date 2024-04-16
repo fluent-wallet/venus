@@ -79,6 +79,7 @@
   "home.more" : "More",
   "home.more.copyAddress" : "Copy address",
   "home.more.viewInExplorer" : "View in explorer",
+  "home.noNetwork" : "Network Disconnected",
   "home.receive" : "Receive",
   "home.send" : "Send",
   "initWallet.biometrics.disable.error.description" : "Please enable your biometrics in device settings.",

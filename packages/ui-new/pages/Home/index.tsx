@@ -10,13 +10,14 @@ import { HomeStackName, type StackScreenProps } from '@router/configs';
 import { Tabs, TabsContent, setHomeScrollY, type Tab } from '@modules/AssetsTabs';
 import AccountSelector from '@modules/AccountSelector';
 import NetworkSelector from '@modules/NetworkSelector';
+import { SWITCH_NETWORK_FEATURE } from '@utils/features';
 import Account from './Account';
 import HeaderRight from './HeaderRight';
 import { CurrentAddress, TotalPrice } from './Address&TotalPrice';
 import Navigations from './Navigations';
 import NotBackup from './NotBackup';
 import RefreshScrollView from './RefreshScrollView';
-import { SWITCH_NETWORK_FEATURE } from '@utils/features';
+import NoNetworkTip from './NoNetworkTip';
 
 const Home: React.FC<StackScreenProps<typeof HomeStackName>> = ({ navigation }) => {
   const { colors } = useTheme();
@@ -52,11 +53,7 @@ const Home: React.FC<StackScreenProps<typeof HomeStackName>> = ({ navigation }) 
             }}
           />
         </View>
-        <RefreshScrollView
-          stickyHeaderIndices={[4]}
-          onRefresh={handleRefresh}
-          onScroll={currentTab === 'NFTs' ? handleScroll : undefined}
-        >
+        <RefreshScrollView stickyHeaderIndices={[4]} onRefresh={handleRefresh} onScroll={currentTab === 'NFTs' ? handleScroll : undefined}>
           <CurrentAddress />
           <TotalPrice />
           <Navigations navigation={navigation} />
@@ -64,6 +61,7 @@ const Home: React.FC<StackScreenProps<typeof HomeStackName>> = ({ navigation }) 
           <Tabs currentTab={currentTab} pageViewRef={pageViewRef} type="Home" />
           <TabsContent currentTab={currentTab} setCurrentTab={setCurrentTab} pageViewRef={pageViewRef} type="Home" selectType="Home" />
         </RefreshScrollView>
+        <NoNetworkTip />
       </SafeAreaView>
       {showAccountSelector && <AccountSelector onClose={() => setShowAccountSelector(false)} />}
       {showNetworkSelector && <NetworkSelector onClose={() => setShowNetworkSelector(false)} />}
@@ -73,6 +71,7 @@ const Home: React.FC<StackScreenProps<typeof HomeStackName>> = ({ navigation }) 
 
 const styles = StyleSheet.create({
   container: {
+    position: 'relative',
     flex: 1,
     paddingTop: 12,
     paddingBottom: 16,
@@ -104,7 +103,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '300',
     lineHeight: 20,
-  }
+  },
 });
 
 export default Home;
