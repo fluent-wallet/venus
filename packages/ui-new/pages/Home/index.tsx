@@ -52,7 +52,11 @@ const Home: React.FC<StackScreenProps<typeof HomeStackName>> = ({ navigation }) 
             }}
           />
         </View>
-        <RefreshScrollView stickyHeaderIndices={[4]} onRefresh={handleRefresh} onScroll={currentTab === 'NFTs' ? handleScroll : undefined}>
+        <RefreshScrollView
+          stickyHeaderIndices={[4]}
+          onRefresh={handleRefresh}
+          onScroll={currentTab === 'NFTs' ? handleScroll : undefined}
+        >
           <CurrentAddress />
           <TotalPrice />
           <Navigations navigation={navigation} />
@@ -100,7 +104,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '300',
     lineHeight: 20,
-  },
+  }
 });
 
 export default Home;

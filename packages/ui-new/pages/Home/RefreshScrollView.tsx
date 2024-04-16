@@ -15,7 +15,7 @@ export interface Props extends Omit<ComponentProps<ScrollView>, 'onScroll'> {
   onRefresh: (done: () => void) => void;
 }
 
-const HomeRefresh: React.FC<Props> = ({ children, onRefresh, onScroll, stickyHeaderIndices }) => {
+const HomeRefresh: React.FC<Props> = ({ children, onRefresh, onScroll, stickyHeaderIndices, ...props }) => {
   const { mode } = useTheme();
   const scrollPosition = useSharedValue(0);
   const pullPosition = useSharedValue(0);
@@ -64,7 +64,7 @@ const HomeRefresh: React.FC<Props> = ({ children, onRefresh, onScroll, stickyHea
   // pan gesture
   const pan = Gesture.Pan()
     .simultaneousWithExternalGesture(scrollRef)
-    .activeOffsetY([-160, 160])
+    .activeOffsetY([-100, 100])
     .onUpdate((e) => {
       if (scrollPosition.value <= 0 && e.translationY >= 0 && isRefreshing.value === false) {
         pullPosition.value = Math.max(Math.min(maxContentHeight, e.translationY), 0);
@@ -97,12 +97,13 @@ const HomeRefresh: React.FC<Props> = ({ children, onRefresh, onScroll, stickyHea
 
   return (
     <GestureDetector gesture={pan}>
-      <View style={style.container}>
-        <Animated.View style={[style.refreshContainer, refreshContainerStyles]}>
-          <Animated.Image source={mode === 'dark' ? RefreshIconDark : RefreshIconLight} style={[style.refreshIcon, refreshIconStyle]} />
+      <View style={styles.container}>
+        <Animated.View style={[styles.refreshContainer, refreshContainerStyles]}>
+          <Animated.Image source={mode === 'dark' ? RefreshIconDark : RefreshIconLight} style={[styles.refreshIcon, refreshIconStyle]} />
         </Animated.View>
-        <Animated.View style={[pullDownStyle]}>
+        <Animated.View style={[pullDownStyle, styles.container]}>
           <AnimatedScroll
+            {...props}
             ref={scrollRef}
             onScroll={handleScroll}
             scrollEventThrottle={16}
@@ -116,7 +117,8 @@ const HomeRefresh: React.FC<Props> = ({ children, onRefresh, onScroll, stickyHea
     </GestureDetector>
   );
 };
-const style = StyleSheet.create({
+
+const styles = StyleSheet.create({
   container: {
     flex: 1,
   },

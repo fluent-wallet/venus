@@ -119,6 +119,7 @@ const GroupConfig: React.FC<StackScreenProps<typeof GroupSettingStackName>> = ({
         enablePanDownToClose={!inDelete}
         enableContentPanningGesture={!inDelete}
         enableHandlePanningGesture={!inDelete}
+        style={styles.container}
       >
         <Text style={[styles.title, styles.mainText, { color: colors.textPrimary }]}>{GroupTitle}</Text>
         <Text style={[styles.description, { color: colors.textSecondary }]}>{t('account.group.inputLabel')}</Text>
@@ -194,9 +195,9 @@ const GroupConfig: React.FC<StackScreenProps<typeof GroupSettingStackName>> = ({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    paddingTop: 8,
   },
   title: {
+    marginTop: 8,
     marginBottom: 24,
     textAlign: 'center',
   },

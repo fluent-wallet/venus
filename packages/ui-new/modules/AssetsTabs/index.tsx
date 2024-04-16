@@ -2,6 +2,7 @@
 import React, { useMemo, useEffect, useCallback } from 'react';
 import { View, Pressable, StyleSheet } from 'react-native';
 import { useTheme } from '@react-navigation/native';
+import { useTranslation } from 'react-i18next';
 import Animated, { useSharedValue, useAnimatedStyle, withTiming } from 'react-native-reanimated';
 import PagerView from 'react-native-pager-view';
 import { atom, useAtomValue } from 'jotai';
@@ -13,8 +14,8 @@ import TokensList from '@modules/AssetsList/TokensList';
 import NFTsList from '@modules/AssetsList/NFTsList';
 import ActivityList from '@modules/ActivityList';
 import { StickyNFTItem } from '@modules/AssetsList/NFTsList/NFTItem';
+import { screenHeight } from '@utils/deviceInfo';
 import { useShouldShowNotBackup } from '@pages/Home/NotBackup';
-import { useTranslation } from 'react-i18next';
 
 export type Tab = 'Tokens' | 'NFTs' | 'Activity';
 const TabI18nMap = {
@@ -146,9 +147,14 @@ export const TabsContent: React.FC<Props> = ({ currentTab, setCurrentTab, pageVi
   }, [tabs, currentTab]);
 
   return (
-    <PagerView ref={pageViewRef} style={styles.pagerView} initialPage={0} onPageSelected={(evt) => setCurrentTab(tabs[evt.nativeEvent.position])}>
+    <PagerView
+      ref={pageViewRef}
+      style={[styles.pagerView, { minHeight: screenHeight - (selectType === 'Home' ? 300 : 280) }]}
+      initialPage={0}
+      onPageSelected={(evt) => setCurrentTab(tabs[evt.nativeEvent.position])}
+    >
       {tabs?.map((tab, index) => (
-        <View key={tab}>
+        <View key={tab} style={styles.pagerView}>
           {tab === 'Tokens' && index === currentTabIndex && (
             <TokensList
               selectType={selectType}
