@@ -42,7 +42,7 @@ const HDManagement: React.FC<StackScreenProps<typeof HDSettingStackName>> = ({ n
   const currentNetwork = useCurrentNetwork();
   const currentHdPath = useCurrentHdPath();
   const vault = useVaultOfGroup(route.params.groupId);
-  const maxCountLimit = useMemo(() => (vault?.type === VaultType.BSIM ? plugins.BSIM.chainLimtCount : 255), [vault?.type]);
+  const maxCountLimit = useMemo(() => (vault?.type === VaultType.BSIM ? plugins.BSIM.chainLimitCount : 255), [vault?.type]);
 
   const [pageIndex, setPageIndex] = useState(0);
   const [_, forceAuth] = useState(false);

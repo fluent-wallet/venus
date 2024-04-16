@@ -19,52 +19,63 @@ import com.facebook.common.logging.FLog;
 import org.web3j.utils.Numeric
 
 class SDKModule(private val reactContext: ReactApplicationContext) :
-    ReactContextBaseJavaModule(reactContext) {
+        ReactContextBaseJavaModule(reactContext) {
+
+    init {
+        FLog.setMinimumLoggingLevel(FLog.DEBUG)
+    }
 
     override fun getName(): String {
         return "BSIMSDK"
     }
 
+    private var sdk: Sdk? = null
+    private val nonInstanced = "400";
+    private val nonInstancedMsg = "BSIMSDK is not create, Please call createMockSDK function first"
 
-    private var BSIMSDKInstance: Sdk? = null
 
-    private val error =
-        mapOf("400" to "BSIMSDK is not create, Please call createMockSDK function first")
 
-    private var BSIM_ERRPR = "BSIM_ERROR"
+    private val failedCreate = "401"
 
     @ReactMethod
     fun create(promise: Promise) {
-        FLog.setMinimumLoggingLevel(FLog.DEBUG)
-        if (BSIMSDKInstance == null) {
-            BSIMSDKInstance = Sdk(reactContext.applicationContext, object : SdkCallBack() {
-                override fun success() {
-                    FLog.d("Debug", "create success")
-                    promise.resolve(null);
-                }
 
-                override fun failed(e: Exception) {
-                    FLog.d("Debug", "create failed")
-                    val failed = "init failed: $e"
-                    promise.reject(BSIM_ERRPR, failed)
-                }
-            })
+        if (sdk == null) {
+            try {
+                FLog.d("BSIMDebug", "start to init sdk")
+                sdk = Sdk(reactContext.applicationContext, object : SdkCallBack() {
+                    override fun success() {
+                        FLog.d("BSIMDebug", "create success")
+                        promise.resolve(null);
+                    }
+
+                    override fun failed(e: Exception) {
+                        FLog.d("BSIMDebug", "create failed")
+                        val failed = "init failed: $e"
+                        promise.reject(failedCreate, failed)
+                    }
+                })
+            } catch (e: Exception) {
+                FLog.d("BSIMDebug", e.stackTraceToString());
+                promise.reject(failedCreate, "initialization BSIM SDK failed，please try again")
+            }
         } else {
             promise.resolve("");
         }
     }
 
+    private val failedGenNewKey = "402"
 
     @ReactMethod
     fun genNewKey(coinTypeString: String, promise: Promise) {
 
-        var coinType: CoinType = try {
+        val coinType: CoinType = try {
             CoinType.valueOf(coinTypeString)
         } catch (e: IllegalArgumentException) {
             CoinType.CONFLUX
         }
 
-        val result = BSIMSDKInstance?.genNewKey(coinType)
+        val result = sdk?.genNewKey(coinType)
 
         if (result != null) {
             if (result.Code == CODE_SUCCESS) {
@@ -73,24 +84,24 @@ class SDKModule(private val reactContext: ReactApplicationContext) :
                 promise.reject(result.Code, result.Message)
             }
         } else {
-            promise.reject("400", error["400"])
+            promise.reject(failedGenNewKey, "BSIM create new key failed")
         }
-
     }
+
+    private val failedGetPubKeyList = "403"
 
     @ReactMethod
     fun getPubkeyList(promise: Promise) {
-        if (BSIMSDKInstance == null) {
-            promise.reject("400", error["400"])
+        if (sdk == null) {
+            promise.reject(nonInstanced, nonInstancedMsg)
             return
         }
-        val pubkeyListResult = BSIMSDKInstance?.getPubkeyList()
+        val pubkeyListResult = sdk?.getPubkeyList()
 
         if (pubkeyListResult != null) {
             if (pubkeyListResult.Code === CODE_SUCCESS) {
-                var resultList = WritableNativeArray()
+                val resultList = WritableNativeArray()
                 for (key in pubkeyListResult.PubkeyList) {
-
                     val temp = WritableNativeMap()
                     temp.putInt("coinType", key.coinType)
                     temp.putString("key", key.key)
@@ -102,11 +113,11 @@ class SDKModule(private val reactContext: ReactApplicationContext) :
                 promise.reject(pubkeyListResult.Code, pubkeyListResult.Message)
             }
         } else {
-            promise.reject("400", error["400"]);
+            promise.reject(failedGetPubKeyList, "get pubkey list error");
         }
     }
 
-
+    private  val failedSignMsg = "404"
     @ReactMethod
     fun signMessage(msg: String, coinTypeIndex: Int, index: Int, promise: Promise) {
         // 校验BPIN
@@ -114,33 +125,33 @@ class SDKModule(private val reactContext: ReactApplicationContext) :
         // !! 输入结果BSIM卡自动校验，提示用户，APP拿不到校验结果，app不参与BPIN相关流程
         // !! 校验失败后sign时会有提示
 
-        var coinType = CoinType.values().find {it.index === coinTypeIndex}
+        val coinType = CoinType.entries.find { it.index == coinTypeIndex }
 
         if (coinType === null) {
-            return promise.reject(BSIM_ERRPR, "coin type not find")
+            return promise.reject(failedSignMsg, "coin type not find")
         }
 
-        var keyList = BSIMSDKInstance?.getPubkeyList()
+        var keyList = sdk?.getPubkeyList()
 
         val message = Message(
-            msg = Numeric.hexStringToByteArray(msg),
-            coinType = coinType,
-            index = index.toUInt()
+                msg = Numeric.hexStringToByteArray(msg),
+                coinType = coinType,
+                index = index.toUInt()
         )
 
-        val signMsg = BSIMSDKInstance?.signMessage(message)
+        val signMsg = sdk?.signMessage(message)
 
         if (signMsg != null && keyList != null) {
-            var pubkey = keyList.PubkeyList.find { it.index == index }
+            val pubKey = keyList.PubkeyList.find { it.index == index }
 
-            if (pubkey != null) {
+            if (pubKey != null) {
                 if (signMsg.Code == CODE_SUCCESS) {
                     val result = WritableNativeMap()
                     val ecSgn = Utils.Companion.hexRSToECDSASignature(signMsg.R, signMsg.S)
                     val signature = Utils.createSignatureData(
-                        ecSgn,
-                        Utils.getECKeyFromString(pubkey.key),
-                        Numeric.hexStringToByteArray(msg)
+                            ecSgn,
+                            Utils.getECKeyFromString(pubKey.key),
+                            Numeric.hexStringToByteArray(msg)
                     )
                     if (signature != null) {
                         result.putString("code", signMsg.Code)
@@ -151,7 +162,7 @@ class SDKModule(private val reactContext: ReactApplicationContext) :
                         promise.resolve(result)
 
                     } else {
-                        promise.reject(BSIM_ERRPR, "signature data from hex error")
+                        promise.reject(failedSignMsg, "signature data from hex error")
                     }
 
                 } else {
@@ -164,18 +175,18 @@ class SDKModule(private val reactContext: ReactApplicationContext) :
 
     @ReactMethod
     fun closeChannel() {
-        if (BSIMSDKInstance != null) {
-            BSIMSDKInstance?.closeChannel()
+        if (sdk != null) {
+            sdk?.closeChannel()
         }
     }
-
+    private val failedGetBSIMVersion = "405"
     @ReactMethod
     fun getBSIMVersion(promise: Promise) {
-        if (BSIMSDKInstance == null) {
-            promise.reject("400", error["400"])
+        if (sdk == null) {
+            promise.reject(nonInstanced, nonInstancedMsg)
             return
         }
-        var result = BSIMSDKInstance?.getBSIMVersion();
+        val result = sdk?.getBSIMVersion();
         if (result != null) {
             if (result.Code == CODE_SUCCESS) {
                 promise.resolve(result.Message)
@@ -183,32 +194,34 @@ class SDKModule(private val reactContext: ReactApplicationContext) :
                 promise.reject(result.Code, result.Message)
             }
         } else {
-            promise.reject("400", error["400"])
+            promise.reject(failedGetBSIMVersion, "get BSIM version failed")
         }
     }
 
+    private  val failedGetSDKVersion = "406"
     @ReactMethod
     fun getVersion(promise: Promise) {
-        if (BSIMSDKInstance == null) {
-            promise.reject("400", error["400"])
+        if (sdk == null) {
+            promise.reject(nonInstanced, nonInstancedMsg)
             return
         }
 
-        var result = BSIMSDKInstance?.getVersion()
+        val result = sdk?.getVersion()
         if (result != null) {
             promise.resolve(result)
         } else {
-            promise.reject(BSIM_ERRPR, "can't get the SDK version")
+            promise.reject(failedGetSDKVersion, "get the SDK version failed")
         }
     }
 
+    private  val failedVerifyBPIN = "407"
     @ReactMethod
     fun verifyBPIN(promise: Promise) {
-        if (BSIMSDKInstance == null) {
-            promise.reject("400", error["400"])
+        if (sdk == null) {
+            promise.reject(nonInstanced, nonInstancedMsg)
             return
         }
-        var result = BSIMSDKInstance?.verifyBPIN();
+        var result = sdk?.verifyBPIN();
 
         if (result != null) {
             if (result.Code == CODE_SUCCESS) {
@@ -217,18 +230,18 @@ class SDKModule(private val reactContext: ReactApplicationContext) :
                 promise.reject(result.Code, result.Message)
             }
         } else {
-            promise.reject("BSIM getVersion error", "")
+            promise.reject(failedVerifyBPIN, "verify BPIN failed")
         }
 
     }
+
     @ReactMethod
-    fun updateBPIN(promise: Promise){
-        if (BSIMSDKInstance == null) {
-            promise.reject("400", error["400"])
+    fun updateBPIN(promise: Promise) {
+        if (sdk == null) {
+            promise.reject(nonInstanced, nonInstancedMsg)
             return
         }
-        BSIMSDKInstance?.updateBPIN()
-
+        sdk?.updateBPIN()
     }
 
 }
