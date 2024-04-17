@@ -14,7 +14,7 @@ import { useTranslation } from 'react-i18next';
 
 const defaultPassword = isDev ? '12345678' : '';
 
-const PasswordVerify: React.FC<StackScreenProps<typeof PasswordVerifyStackName>> = () => {
+const PasswordVerify: React.FC<StackScreenProps<typeof PasswordVerifyStackName>> = ({ navigation }) => {
   const { colors, mode } = useTheme();
   const { t } = useTranslation();
   const textInputRef = useRef<TextInputRef>(null!);
@@ -43,9 +43,11 @@ const PasswordVerify: React.FC<StackScreenProps<typeof PasswordVerifyStackName>>
     setInVerify(false);
     setPassword(defaultPassword);
     setError('');
-    if (Keyboard.isVisible()) {
-      Keyboard.dismiss();
-    }
+    setTimeout(() => {
+      if (Keyboard.isVisible()) {
+        Keyboard.dismiss();
+      }
+    });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -55,20 +57,23 @@ const PasswordVerify: React.FC<StackScreenProps<typeof PasswordVerifyStackName>>
     await new Promise((resolve) => setTimeout(resolve, 25));
     const isCorrectPasword = await currentRequest.current?.verify?.(password);
     if (isCorrectPasword) {
+      if (navigation.canGoBack()) {
+        navigation.goBack();
+      }
       bottomSheetRef.current?.close();
       currentRequest.current?.resolve?.(password);
       setPassword(defaultPassword);
       setError('');
       currentRequest.current = null;
+      setTimeout(() => {
+        if (Keyboard.isVisible()) {
+          Keyboard.dismiss();
+        }
+      });
     } else {
       setError('Wrong password.');
     }
     setInVerify(false);
-    setTimeout(() => {
-      if (Keyboard.isVisible()) {
-        Keyboard.dismiss();
-      }
-    });
   }, [password]);
 
   return (
