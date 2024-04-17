@@ -1,6 +1,7 @@
 import { Model, Q, type Query, type Relation } from '@nozbe/watermelondb';
 import { field, text, children, relation, lazy } from '@nozbe/watermelondb/decorators';
 import { firstValueFrom, map } from 'rxjs';
+import { convertToChecksum } from '../../../utils/account';
 import { type Asset, AssetType } from '../Asset';
 import { type AssetRule } from '../AssetRule';
 import { type HdPath } from '../HdPath';
@@ -56,7 +57,7 @@ export class Network extends Model {
   queryAssetByAddress = (address: string) =>
     firstValueFrom(
       this.assets
-        .extend(Q.where('contract_address', address))
+        .extend(Q.or(Q.where('contract_address', convertToChecksum(address)), Q.where('contract_address', address)))
         .observe()
         .pipe(map((accounts) => accounts?.[0] as Asset | undefined)),
     );

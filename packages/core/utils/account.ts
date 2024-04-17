@@ -12,6 +12,7 @@ export const create = (pk?: string) => {
 };
 
 export const toChecksum = flow(addHexPrefix, toChecksumAddress);
+export const convertToChecksum = <T extends string | null | undefined>(address: T): T => (address ? toChecksum(address) : address) as T;
 export const isChecksummed = flow(addHexPrefix, (addr: string) => {
   try {
     return Boolean(toChecksumAddress(addr));

@@ -1,5 +1,5 @@
 import React, { useCallback, useRef, useEffect, useState } from 'react';
-import { StyleSheet, type TextInput as TextInputRef } from 'react-native';
+import { StyleSheet, Keyboard, type TextInput as TextInputRef } from 'react-native';
 import plugins from '@core/WalletCore/Plugins';
 import { useTheme } from '@react-navigation/native';
 import Button from '@components/Button';
@@ -43,6 +43,9 @@ const PasswordVerify: React.FC<StackScreenProps<typeof PasswordVerifyStackName>>
     setInVerify(false);
     setPassword(defaultPassword);
     setError('');
+    if (Keyboard.isVisible()) {
+      Keyboard.dismiss();
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -61,6 +64,11 @@ const PasswordVerify: React.FC<StackScreenProps<typeof PasswordVerifyStackName>>
       setError('Wrong password.');
     }
     setInVerify(false);
+    setTimeout(() => {
+      if (Keyboard.isVisible()) {
+        Keyboard.dismiss();
+      }
+    });
   }, [password]);
 
   return (

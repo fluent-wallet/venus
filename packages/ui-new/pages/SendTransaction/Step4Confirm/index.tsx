@@ -36,6 +36,7 @@ import { getDetailSymbol } from '@modules/AssetsList/NFTsList/NFTItem';
 import { AccountItemView } from '@modules/AccountsList';
 import useFormatBalance from '@hooks/useFormatBalance';
 import useInAsync from '@hooks/useInAsync';
+import backToHome from '@utils/backToHome';
 import { SendTransactionStep4StackName, type SendTransactionScreenProps } from '@router/configs';
 import SendTransactionBottomSheet from '../SendTransactionBottomSheet';
 import { NFT } from '../Step3Amount';
@@ -223,8 +224,7 @@ const SendTransactionStep4Confirm: React.FC<SendTransactionScreenProps<typeof Se
           description: t('tx.confirm.submitted.description'),
           icon: 'loading' as unknown as undefined,
         });
-        navigation.popToTop();
-        navigation.goBack();
+        backToHome(navigation);
         plugins.AssetsTracker.updateCurrentTracker();
         if (route.params.nftItemDetail) {
           plugins.NFTDetailTracker.updateCurrentOpenNFT();
@@ -315,16 +315,7 @@ const SendTransactionStep4Confirm: React.FC<SendTransactionScreenProps<typeof Se
           )}
 
           <View style={[styles.btnArea, { marginTop: error ? 16 : 40 }]}>
-            <Button
-              testID="cancel"
-              style={styles.btn}
-              size="small"
-              onPress={() => {
-                navigation.popToTop();
-                navigation.goBack();
-              }}
-              disabled={inSending}
-            >
+            <Button testID="cancel" style={styles.btn} size="small" onPress={() => backToHome(navigation)} disabled={inSending}>
               {t('common.cancel')}
             </Button>
             <Button testID="send" style={styles.btn} size="small" disabled={!gasInfo} onPress={handleSend} loading={inSending}>
@@ -389,7 +380,7 @@ const styles = StyleSheet.create({
   balance: {
     fontSize: 16,
     fontWeight: '600',
-    marginRight: 8
+    marginRight: 8,
   },
   price: {
     paddingHorizontal: 16,

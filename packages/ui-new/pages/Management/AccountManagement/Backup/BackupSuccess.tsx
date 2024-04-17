@@ -6,6 +6,7 @@ import { Image } from 'expo-image';
 import Text from '@components/Text';
 import Button from '@components/Button';
 import { screenHeight } from '@utils/deviceInfo';
+import backToHome from '@utils/backToHome';
 import { BackupStackName, type StackScreenProps } from '@router/configs';
 import Congratulate from '@assets/images/congratulate.webp';
 import BackupBottomSheet from './BackupBottomSheet';
@@ -17,8 +18,7 @@ const BackupSuccess: React.FC = () => {
   const { t } = useTranslation();
   const navigation = useNavigation<StackScreenProps<typeof BackupStackName>['navigation']>();
   const goHome = useCallback(() => {
-    navigation.popToTop();
-    navigation.goBack();
+    backToHome(navigation);
   }, [navigation]);
 
   return (
