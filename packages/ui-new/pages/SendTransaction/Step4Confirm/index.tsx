@@ -382,7 +382,6 @@ const styles = StyleSheet.create({
     marginTop: 14,
     display: 'flex',
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: 16,
     height: 24,
@@ -390,6 +389,7 @@ const styles = StyleSheet.create({
   balance: {
     fontSize: 16,
     fontWeight: '600',
+    marginRight: 8
   },
   price: {
     paddingHorizontal: 16,
