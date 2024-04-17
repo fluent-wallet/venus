@@ -105,7 +105,6 @@ const ImportExistingWallet: React.FC<Props> = ({ bottomSheetRef, inImporting, on
             testID="existingWalletInput"
             underlineColorAndroid="transparent"
             secureTextEntry={true}
-            editable={!inAsync}
             multiline
             numberOfLines={6}
             placeholder={t('wallet.import.placeholder')}

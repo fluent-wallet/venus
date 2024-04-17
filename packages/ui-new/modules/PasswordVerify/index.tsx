@@ -14,7 +14,7 @@ import { useTranslation } from 'react-i18next';
 
 const defaultPassword = isDev ? '12345678' : '';
 
-const PasswordVerify: React.FC<StackScreenProps<typeof PasswordVerifyStackName>> = ({ navigation }) => {
+const PasswordVerify: React.FC<StackScreenProps<typeof PasswordVerifyStackName>> = () => {
   const { colors, mode } = useTheme();
   const { t } = useTranslation();
   const textInputRef = useRef<TextInputRef>(null!);
@@ -52,7 +52,6 @@ const PasswordVerify: React.FC<StackScreenProps<typeof PasswordVerifyStackName>>
     await new Promise((resolve) => setTimeout(resolve, 25));
     const isCorrectPasword = await currentRequest.current?.verify?.(password);
     if (isCorrectPasword) {
-      navigation.goBack();
       bottomSheetRef.current?.close();
       currentRequest.current?.resolve?.(password);
       setPassword(defaultPassword);
