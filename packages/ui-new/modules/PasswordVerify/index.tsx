@@ -39,7 +39,6 @@ const PasswordVerify: React.FC<StackScreenProps<typeof PasswordVerifyStackName>>
   }, []);
 
   const handleCancel = useCallback(() => {
-    console.log('handleCancel');
     currentRequest.current?.reject?.('cancel');
     setInVerify(false);
     setPassword(defaultPassword);
