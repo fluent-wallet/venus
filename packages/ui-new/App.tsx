@@ -9,6 +9,7 @@ import CustomMessage from '@modules/CustomMessage';
 import { statusBarHeight, OS, supports3DStructureLight } from './utils/deviceInfo';
 import { useMode } from '@hooks/useMode';
 import { palette, lightColors, darkColors, fonts } from './theme';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 import Router from './router';
 import '@assets/i18n';
 
@@ -36,8 +37,10 @@ const App: React.FC = () => {
     <>
       <GestureHandlerRootView style={{ flex: 1 }}>
         <NavigationContainer theme={theme as unknown as Theme} onReady={BootSplash.hide}>
-          {typeof hasVault === 'boolean' && <Router />}
-          <FlashMessage position={messagesTop} MessageComponent={CustomMessage} duration={3000} />
+          <SafeAreaProvider>
+            {typeof hasVault === 'boolean' && <Router />}
+            <FlashMessage position={messagesTop} MessageComponent={CustomMessage} duration={3000} />
+          </SafeAreaProvider>
         </NavigationContainer>
       </GestureHandlerRootView>
       <JotaiNexus />
