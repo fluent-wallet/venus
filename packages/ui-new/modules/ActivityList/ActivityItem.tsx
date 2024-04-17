@@ -79,10 +79,10 @@ const styles = StyleSheet.create({
     marginLeft: 12,
     fontSize: 12,
     fontWeight: '300',
-    lineHeight: 20,
     borderWidth: 1,
     borderRadius: 4,
     paddingHorizontal: 8,
+    transform: [{ translateY: 2 }],
   },
   address: {
     fontSize: 12,
