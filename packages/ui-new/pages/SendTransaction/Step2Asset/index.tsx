@@ -159,7 +159,10 @@ const SendTransactionStep2Asset: React.FC<Props> = ({ navigation, route, onConfi
     >
       <Text style={[styles.selectAsset, { color: colors.textSecondary }]}>{t('tx.asset.inputTitle')}</Text>
       <TextInput
-        containerStyle={[styles.textinput, { borderColor: !!searchAsset && filterAssets?.type && filterAssets.type.startsWith('invalid') ? colors.down : colors.borderFourth }]}
+        containerStyle={[
+          styles.textinput,
+          { borderColor: !!searchAsset && filterAssets?.type && filterAssets.type.startsWith('invalid') ? colors.down : colors.borderFourth },
+        ]}
         showVisible={false}
         defaultHasValue={false}
         value={searchAsset}
@@ -187,7 +190,15 @@ const SendTransactionStep2Asset: React.FC<Props> = ({ navigation, route, onConfi
           {filterAssets.assets?.length > 0 &&
             filterAssets.assets.map((asset) =>
               asset.type === AssetType.ERC20 || asset.type === AssetType.Native ? (
-                <TokenItem key={asset.contractAddress ?? AssetType.Native} data={asset} showTypeLabel onPress={handleClickAsset} />
+                <TokenItem
+                  key={asset.contractAddress ?? AssetType.Native}
+                  data={asset}
+                  showTypeLabel
+                  onPress={handleClickAsset}
+                  hidePrice={selectType === 'Receive'}
+                  hideBalance={selectType === 'Receive'}
+                  showAddress={selectType === 'Receive'}
+                />
               ) : asset.type === AssetType.ERC1155 || asset.type === AssetType.ERC721 ? (
                 <NFTItem
                   key={asset.contractAddress}

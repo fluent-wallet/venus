@@ -3,6 +3,7 @@
 import React, { useMemo, useState, useEffect, useCallback, useRef } from 'react';
 import { View, StyleSheet, Keyboard } from 'react-native';
 import { useTheme } from '@react-navigation/native';
+import { useTranslation } from 'react-i18next';
 import { showMessage } from 'react-native-flash-message';
 import Decimal from 'decimal.js';
 import { interval, switchMap, startWith } from 'rxjs';
@@ -39,7 +40,6 @@ import { SendTransactionStep4StackName, type SendTransactionScreenProps } from '
 import SendTransactionBottomSheet from '../SendTransactionBottomSheet';
 import { NFT } from '../Step3Amount';
 import BSIMVerify from '../BSIMVerify';
-import { useTranslation } from 'react-i18next';
 
 const SendTransactionStep4Confirm: React.FC<SendTransactionScreenProps<typeof SendTransactionStep4StackName>> = ({ navigation, route }) => {
   useEffect(() => Keyboard.dismiss(), []);

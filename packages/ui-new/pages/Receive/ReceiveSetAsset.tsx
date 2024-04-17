@@ -61,9 +61,9 @@ const ReceiveSetAsset: React.FC<Props> = ({ onConfirm, selectedAsset, amount, on
           {tempSelectAsset && (
             <>
               <TokenIcon style={styles.assetIcon} source={tempSelectAsset?.icon} />
-              <Text style={[styles.assetSymbol, { color: colors.textPrimary }]}>{tempSelectAsset.symbol}</Text>
+              <Text style={[styles.assetName, { color: colors.textPrimary }]}>{tempSelectAsset.name}</Text>
               {tempSelectAsset.name !== tempSelectAsset.symbol && (
-                <Text style={[styles.assetSymbol, { color: colors.textSecondary }]}>{tempSelectAsset.name}</Text>
+                <Text style={[styles.assetSymbol, { color: colors.textSecondary }]}>{tempSelectAsset.symbol}</Text>
               )}
               <ArrowRigiht color={colors.iconPrimary} style={styles.assetArrow} />
             </>
@@ -146,16 +146,11 @@ const styles = StyleSheet.create({
     height: 40,
     borderRadius: 40,
   },
-  assetSymbol: {
+  assetSymbol: { fontSize: 12, fontWeight: '300', lineHeight: 16, marginTop: 6 },
+  assetName: {
     fontSize: 14,
     fontWeight: '600',
     lineHeight: 18,
-  },
-  assetName: {
-    fontSize: 12,
-    fontWeight: '300',
-    lineHeight: 16,
-    marginTop: 6,
   },
   assetArrow: {
     position: 'absolute',

@@ -2,6 +2,7 @@
 import React, { useState, useMemo, useCallback, useEffect } from 'react';
 import { View, Pressable, StyleSheet } from 'react-native';
 import { useTheme } from '@react-navigation/native';
+import { useTranslation } from 'react-i18next';
 import { showMessage } from 'react-native-flash-message';
 import Decimal from 'decimal.js';
 import { type AssetInfo } from '@core/WalletCore/Plugins/AssetsTracker/types';
@@ -17,7 +18,6 @@ import NFTIcon from '@modules/AssetsList/NFTsList/NFTIcon';
 import { getDetailSymbol } from '@modules/AssetsList/NFTsList/NFTItem';
 import useFormatBalance from '@hooks/useFormatBalance';
 import useInAsync from '@hooks/useInAsync';
-import { useTranslation } from 'react-i18next';
 
 interface Info {
   amount: string;
@@ -134,22 +134,28 @@ const SetAssetAmount: React.FC<Props> = ({ targetAddress, asset, nftItemDetail, 
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [],
   );
+  0;
 
   const isAmountValid = useMemo(() => {
     if (!validMax || !amount) return null;
-    if (nftItemDetail) {
-      if (!/^-?\d+$/.test(amount)) {
-        return 'nft-pure-integer';
+    try {
+      if (isReceive && new Decimal(amount).lessThanOrEqualTo(0)) return 'less-than-zero';
+      if (nftItemDetail) {
+        if (!/^-?\d+$/.test(amount)) {
+          return 'nft-pure-integer';
+        }
+      } else {
+        if (!/^-?\d+(\.\d+)?$/.test(amount)) {
+          return 'unvalid-number-format';
+        }
       }
-    } else {
-      if (!/^-?\d+(\.\d+)?$/.test(amount)) {
-        return 'unvalid-number-format';
-      }
+      if (new Decimal(amount).lessThan(new Decimal(0))) return 'less-than-zero';
+      return validMax.greaterThanOrEqualTo(new Decimal(amount).mul(nftItemDetail ? new Decimal(1) : Decimal.pow(10, asset.decimals)));
+    } catch (err) {
+      return 'unvalid-number-format';
     }
-    if (new Decimal(amount).lessThan(new Decimal(0))) return 'less-than-zero';
-    return validMax.greaterThanOrEqualTo(new Decimal(amount).mul(nftItemDetail ? new Decimal(1) : Decimal.pow(10, asset.decimals)));
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [amount, validMax]);
+  }, [isReceive, amount, validMax]);
 
   useEffect(() => {
     if (typeof onAmountInfoChange === 'function') {
@@ -177,12 +183,12 @@ const SetAssetAmount: React.FC<Props> = ({ targetAddress, asset, nftItemDetail, 
         onChangeText={(newNickName) => setAmount(newNickName?.trim())}
         isInBottomSheet
         showClear={!!amount}
-        placeholder={asset.type === AssetType.ERC1155 ? '0' : '0.00'}
+        placeholder={isReceive ? t('tx.amount.anyAmount') : asset.type === AssetType.ERC1155 ? '0' : '0.00'}
         SuffixIcon={<Suffix />}
       />
       {!isReceive && (
         <Text style={[styles.text, styles.balance, { color: colors.textPrimary }]} numberOfLines={3}>
-          Balance: {nftItemDetail ? nftItemDetail.amount : balance} {symbol}
+          {t('common.balance')}: {nftItemDetail ? nftItemDetail.amount : balance} {symbol}
         </Text>
       )}
       {isReceive && !!price && price !== '0' && (
@@ -195,12 +201,12 @@ const SetAssetAmount: React.FC<Props> = ({ targetAddress, asset, nftItemDetail, 
         <Text style={[styles.errorTip, { color: colors.down }]}>
           🚫{' '}
           {isAmountValid === false
-            ? `Insufficient ${symbol} balance`
+            ? t('tx.amount.error.InsufficientBalance', { symbol })
             : isAmountValid === 'less-than-zero'
-              ? 'Invalid amount'
+              ? t('tx.amount.error.invalidAmount')
               : isAmountValid === 'nft-pure-integer'
-                ? 'Invalid amount'
-                : 'Invalid amount'}
+                ? t('tx.amount.error.invalidAmount')
+                : t('tx.amount.error.invalidAmount')}
         </Text>
       )}
       {typeof children === 'function' &&
