@@ -10,6 +10,7 @@ import { ACTIVITY_DB_STATUS_FEATURE } from '@utils/features';
 import useFormatBalance from '@hooks/useFormatBalance';
 import TokenIcon from '@modules/AssetsList/TokensList/TokenIcon';
 import NFTIcon from '@modules/AssetsList/NFTsList/NFTIcon';
+import { useTranslation } from 'react-i18next';
 
 interface Props extends Omit<ComponentProps<typeof Pressable>, 'onPress'> {
   onPress?: (item: Tx) => void;
@@ -23,19 +24,20 @@ const ActivityItem: React.FC<Props> = ({ onPress, tx }) => {
   const status = formatStatus(tx.status);
   const { value, to, decimals, tokenId } = useMemo(() => formatTxData(payload, asset), [payload, asset]);
   const formatBalance = useFormatBalance(value, decimals);
+  const { t } = useTranslation();
 
   return (
     <Pressable style={styles.container} onPress={() => onPress?.(tx)}>
       <View style={styles.title}>
         <Text style={[styles.typeText, { color: colors.textPrimary }]}>
-          Send
+          {t('common.send')}
           {ACTIVITY_DB_STATUS_FEATURE.allow && `  --[${tx.status}]`}
         </Text>
         {status !== 'confirmed' && (
           <Text
             style={[styles.statusText, { color: status === 'failed' ? colors.down : colors.up, borderColor: status === 'failed' ? colors.down : colors.up }]}
           >
-            {status}
+            {status && t(`tx.activity.status.${status}`)}
           </Text>
         )}
 
