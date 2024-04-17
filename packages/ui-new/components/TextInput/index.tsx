@@ -85,12 +85,13 @@ const CustomTextInput = forwardRef<TextInput, Props>(
           onChangeText={handleChangeText}
         />
         {showClear && !disabled && (
-          <Pressable onPress={() => handlePressClear()}>
+          <Pressable onPress={() => handlePressClear()} style={styles.iconPressable}>
             <Clear style={[styles.icon, { opacity: hasValue ? 1 : 0 }]} color={colors.iconPrimary} />
           </Pressable>
         )}
         {showVisible && !disabled && (
           <Pressable
+            style={styles.iconPressable}
             onPress={() => {
               inputRef.current?.blur();
               setVisible((pre) => !pre);
@@ -109,7 +110,7 @@ const CustomTextInput = forwardRef<TextInput, Props>(
           </Pressable>
         )}
         {SuffixIcon && (
-          <Pressable onPress={onPressSuffixIcon}>
+          <Pressable onPress={onPressSuffixIcon} style={styles.iconPressable}>
             {isValidElement(SuffixIcon) ? SuffixIcon : typeof SuffixIcon === 'function' ? <SuffixIcon style={styles.icon} color={colors.iconPrimary} /> : null}
           </Pressable>
         )}
@@ -148,12 +149,14 @@ const styles = StyleSheet.create({
       },
     }),
   },
+  iconPressable: {
+    marginLeft: 8,
+  },
   icon: {
     flexGrow: 0,
     flexShrink: 0,
     width: 24,
     height: 24,
-    marginLeft: 8,
   },
 });
 

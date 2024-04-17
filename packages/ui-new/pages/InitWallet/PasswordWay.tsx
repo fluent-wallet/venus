@@ -103,7 +103,7 @@ const PasswordWay: React.FC<StackScreenProps<typeof PasswordWayStackName>> = ({ 
         <Checkbox checked={confirm} pointerEvents="none" />
         <Text style={[styles.rememberText, { color: colors.textPrimary }]}>
           <Trans i18nKey={'initWallet.setPassword.check'}>
-            ePay Wallet does not store your password. Please <Text style={{ color: colors.textNotice, fontWeight: '600' }}>remember</Text> your password.
+            SwiftShield Wallet does not store your password. Please <Text style={{ color: colors.textNotice, fontWeight: '600' }}>remember</Text> your password.
           </Trans>
         </Text>
       </Pressable>

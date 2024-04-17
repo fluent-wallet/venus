@@ -92,7 +92,7 @@
   "initWallet.msg.failed" : "錢包創建失敗",
   "initWallet.msg.success" : "完成了！請確保記住密碼。",
   "initWallet.setPassword" : "設置密碼",
-  "initWallet.setPassword.check" : "SwiftShield 錢包不會存儲你的密碼\n無法找回密碼，請<1>確保記住</1>密碼。",
+  "initWallet.setPassword.check" : "SwiftShield 錢包不會存儲你的密碼，\n丟失後無法找回，請<1>務必存好</1>。",
   "initWallet.setPassword.confirm" : "確認新密碼",
   "initWallet.setPassword.create" : "創建密碼",
   "initWallet.setPassword.describe" : "添加安全驗證，確保您的資金安全。",

@@ -92,7 +92,7 @@
   "initWallet.msg.failed" : "Create wallet failed!",
   "initWallet.msg.success" : "Completed! Remember to keep your password.",
   "initWallet.setPassword" : "Set Password",
-  "initWallet.setPassword.check" : "ePay Wallet does not store your password.\nPlease <1>remember</1> your password.",
+  "initWallet.setPassword.check" : "SwiftShield Wallet does not store your password.\nPlease <1>remember</1> your password.",
   "initWallet.setPassword.confirm" : "Confirm New Password",
   "initWallet.setPassword.create" : "Create Password",
   "initWallet.setPassword.describe" : "Add security verification to ensure the safety of your funds.",
