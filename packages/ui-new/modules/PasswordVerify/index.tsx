@@ -65,7 +65,7 @@ const PasswordVerify: React.FC<StackScreenProps<typeof PasswordVerifyStackName>>
   }, [password]);
 
   return (
-    <BottomSheet ref={bottomSheetRef} snapPoints={snapPoints} onClose={handleCancel} isRoute>
+    <BottomSheet ref={bottomSheetRef} snapPoints={snapPoints} onClose={handleCancel} isRoute onOpen={() => textInputRef.current?.focus()}>
       <BottomSheetView style={styles.container}>
         <Text style={[styles.title, { color: colors.textPrimary }]}>{t('common.verifyPassword')}</Text>
         <TextInput
