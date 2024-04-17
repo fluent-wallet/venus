@@ -1,6 +1,6 @@
 import React from 'react';
 import { ImageBackground, View, ScrollView, StyleSheet } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import { Image } from 'expo-image';
 import Button from '@components/Button';
@@ -15,26 +15,29 @@ import LottieAnimation from './lottie';
 const Welcome: React.FC<StackScreenProps<typeof WelcomeStackName>> = ({ navigation }) => {
   const { t } = useTranslation();
   const lang = useLanguage();
+  const insets = useSafeAreaInsets();
 
   return (
     <ImageBackground source={WelcomeBgDark} style={styles.bg} resizeMode="cover">
       <ScrollView>
-        <SafeAreaView style={styles.container}>
-          <Image style={styles.enterWeb3} source={lang === Lang.zhHant ? EnterWeb3ZH : EnterWeb3EN} contentFit="contain" />
-          <View style={styles.lottieAnimation}>
-            <LottieAnimation />
+        <View style={{ paddingTop: insets.top, paddingRight: insets.right, paddingLeft: insets.left, paddingBottom: insets.bottom }}>
+          <View style={styles.container}>
+            <Image style={styles.enterWeb3} source={lang === Lang.zhHant ? EnterWeb3ZH : EnterWeb3EN} contentFit="contain" />
+            <View style={styles.lottieAnimation}>
+              <LottieAnimation />
+            </View>
+            <Button
+              testID="Get Started"
+              textAlign="left"
+              Icon={ArrowRight}
+              style={styles.btn}
+              onPress={() => navigation.navigate(WayToInitWalletStackName)}
+              mode="dark"
+            >
+              {t('welcome.getStarted')}
+            </Button>
           </View>
-          <Button
-            testID="Get Started"
-            textAlign="left"
-            Icon={ArrowRight}
-            style={styles.btn}
-            onPress={() => navigation.navigate(WayToInitWalletStackName)}
-            mode="dark"
-          >
-            {t('welcome.getStarted')}
-          </Button>
-        </SafeAreaView>
+        </View>
       </ScrollView>
     </ImageBackground>
   );

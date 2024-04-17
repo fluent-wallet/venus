@@ -7,6 +7,7 @@ import { type Plugin } from '../../Plugins';
 import { fetchReceiveAssets as fetchESpaceReceiveAssets } from './fetchers/eSpace';
 import methods from '../../Methods';
 import database from '../../../database';
+import { convertToChecksum } from '../../../utils/account';
 
 type Fetcher = (endpoint: string) => Promise<AssetInfo[]>;
 
@@ -52,7 +53,10 @@ class ReceiveAssetsTrackerPluginClass implements Plugin {
       fetcher(network.endpoint).then(async (assets) => {
         if (!Array.isArray(assets)) return;
         const assetsInDB = await network.assets;
-        const assetsNotInDB = assets.filter((asset) => !assetsInDB.find((dbAsset) => dbAsset.contractAddress === asset.contractAddress));
+        const assetsNotInDB = assets.filter(
+          (asset) => !assetsInDB.find((dbAsset) => convertToChecksum(dbAsset.contractAddress) === convertToChecksum(asset.contractAddress)),
+        );
+
         const preCreate: Array<Asset> = [];
         assetsNotInDB.forEach((assetInfo) => {
           preCreate.push(

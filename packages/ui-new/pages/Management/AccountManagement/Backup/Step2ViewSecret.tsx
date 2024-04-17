@@ -1,6 +1,7 @@
 import React, { useState, useCallback, useMemo } from 'react';
 import { View, Pressable, StyleSheet } from 'react-native';
 import { useTheme } from '@react-navigation/native';
+import { useTranslation } from 'react-i18next';
 import Clipboard from '@react-native-clipboard/clipboard';
 import { showMessage } from 'react-native-flash-message';
 import QRCode from 'react-native-qrcode-svg';
@@ -13,11 +14,11 @@ import Button from '@components/Button';
 import useInAsync from '@hooks/useInAsync';
 import { BackupStep2StackName, BackupStep3StackName, type BackupScreenProps } from '@router/configs';
 import { isSmallDevice } from '@utils/deviceInfo';
+import backToHome from '@utils/backToHome';
 import MaskPrivateKey from '@assets/images/mask-private-key.webp';
 import MaskSeedPhrase from '@assets/images/mask-seed-phrase.webp';
 import Copy from '@assets/icons/copy.svg';
 import BackupBottomSheet from './BackupBottomSheet';
-import { useTranslation } from 'react-i18next';
 
 const BackupStep2ViewSecret: React.FC<BackupScreenProps<typeof BackupStep2StackName>> = ({ route, navigation }) => {
   const { colors } = useTheme();
@@ -135,15 +136,7 @@ const BackupStep2ViewSecret: React.FC<BackupScreenProps<typeof BackupStep2StackN
           {t('common.next')}
         </Button>
       ) : (
-        <Button
-          testID="return"
-          style={styles.btn}
-          onPress={() => {
-            navigation.popToTop();
-            navigation.goBack();
-          }}
-          size="small"
-        >
+        <Button testID="return" style={styles.btn} onPress={() => backToHome(navigation)} size="small">
           {t('common.close')}
         </Button>
       )}

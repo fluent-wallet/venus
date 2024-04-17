@@ -17,6 +17,8 @@ const Check3DStructureLight = () => {
   return supports3DStructureLight;
 };
 
+export const brand = DeviceInfo.getBrand();
+export const isSamsungDevice = brand && brand.toLowerCase() === 'samsung';
 // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 export const statusBarHeight = Platform.OS === 'android' ? StatusBar.currentHeight! : 0;
 export const screenWidth = Dimensions.get('window').width;

@@ -1,5 +1,5 @@
 import React, { useState, useCallback } from 'react';
-import { ScrollView, Pressable, StyleSheet } from 'react-native';
+import { ScrollView, Pressable, StyleSheet, View } from 'react-native';
 import { useTheme, CommonActions } from '@react-navigation/native';
 import { showMessage } from 'react-native-flash-message';
 import { useForm, Controller } from 'react-hook-form';
@@ -60,57 +60,60 @@ const PasswordWay: React.FC<StackScreenProps<typeof PasswordWayStackName>> = ({ 
   const { inAsync, execAsync: handleCreateVault } = useInAsync(_handleCreateVault);
 
   return (
-    <ScrollView contentContainerStyle={[styles.container, { backgroundColor: colors.bgPrimary }]}>
-      <Text style={[styles.title, { color: colors.textPrimary }]}>{t('initWallet.setPassword')}</Text>
+    <ScrollView contentContainerStyle={[{ minHeight: '100%', backgroundColor: colors.bgPrimary }]}>
+      <View style={styles.container}>
+        <Text style={[styles.title, { color: colors.textPrimary }]}>{t('initWallet.setPassword')}</Text>
 
-      <Text style={[styles.description, { color: colors.textPrimary }]}>{t('initWallet.setPassword.describe')}</Text>
+        <Text style={[styles.description, { color: colors.textPrimary }]}>{t('initWallet.setPassword.describe')}</Text>
 
-      <Text style={[styles.inputTitle, { color: colors.textPrimary }]}>{t('initWallet.setPassword.new')}</Text>
-      <Controller
-        control={control}
-        rules={{
-          required: true,
-          minLength: 8,
-        }}
-        render={({ field: { onChange, onBlur, value } }) => (
-          <TextInput placeholder={t('common.password')} onBlur={onBlur} onChangeText={onChange} value={value} defaultHasValue={isDev} />
-        )}
-        name="password"
-      />
-      <Text style={[styles.inputError, { opacity: errors.password ? 1 : 0, color: colors.down }]}>{t('initWallet.setPassword.error.length')}</Text>
+        <Text style={[styles.inputTitle, { color: colors.textPrimary }]}>{t('initWallet.setPassword.new')}</Text>
+        <Controller
+          control={control}
+          rules={{
+            required: true,
+            minLength: 8,
+          }}
+          render={({ field: { onChange, onBlur, value } }) => (
+            <TextInput placeholder={t('common.password')} onBlur={onBlur} onChangeText={onChange} value={value} defaultHasValue={isDev} />
+          )}
+          name="password"
+        />
+        <Text style={[styles.inputError, { opacity: errors.password ? 1 : 0, color: colors.down }]}>{t('initWallet.setPassword.error.length')}</Text>
 
-      <Text style={[styles.inputTitle, { color: colors.textPrimary, marginTop: 32 }]}>{t('initWallet.setPassword.confirm')}</Text>
-      <Controller
-        control={control}
-        rules={{
-          required: true,
-          minLength: 8,
-          validate: (confirmValue) => {
-            const { password } = getValues();
-            return password === confirmValue;
-          },
-        }}
-        render={({ field: { onChange, onBlur, value } }) => (
-          <TextInput placeholder={t('common.password')} onBlur={onBlur} onChangeText={onChange} value={value} defaultHasValue={isDev} />
-        )}
-        name="confirm"
-      />
-      <Text style={[styles.inputError, { opacity: errors.confirm ? 1 : 0, color: colors.down }]}>
-        {errors.confirm?.type === 'validate' ? t('initWallet.setPassword.error.notMatch') : t('initWallet.setPassword.error.length')}
-      </Text>
-
-      <Pressable testID="checkbox" style={styles.rememberView} onPress={() => setConfirm((pre) => !pre)}>
-        <Checkbox checked={confirm} pointerEvents="none" />
-        <Text style={[styles.rememberText, { color: colors.textPrimary }]}>
-          <Trans i18nKey={'initWallet.setPassword.check'}>
-            SwiftShield Wallet does not store your password. Please <Text style={{ color: colors.textNotice, fontWeight: '600' }}>remember</Text> your password.
-          </Trans>
+        <Text style={[styles.inputTitle, { color: colors.textPrimary, marginTop: 32 }]}>{t('initWallet.setPassword.confirm')}</Text>
+        <Controller
+          control={control}
+          rules={{
+            required: true,
+            minLength: 8,
+            validate: (confirmValue) => {
+              const { password } = getValues();
+              return password === confirmValue;
+            },
+          }}
+          render={({ field: { onChange, onBlur, value } }) => (
+            <TextInput placeholder={t('common.password')} onBlur={onBlur} onChangeText={onChange} value={value} defaultHasValue={isDev} />
+          )}
+          name="confirm"
+        />
+        <Text style={[styles.inputError, { opacity: errors.confirm ? 1 : 0, color: colors.down }]}>
+          {errors.confirm?.type === 'validate' ? t('initWallet.setPassword.error.notMatch') : t('initWallet.setPassword.error.length')}
         </Text>
-      </Pressable>
 
-      <Button testID="createPasswordButton" style={styles.btn} onPress={handleSubmit(handleCreateVault)} disabled={!confirm} loading={inAsync}>
-        {t('initWallet.setPassword.create')}
-      </Button>
+        <Pressable testID="checkbox" style={styles.rememberView} onPress={() => setConfirm((pre) => !pre)}>
+          <Checkbox checked={confirm} pointerEvents="none" />
+          <Text style={[styles.rememberText, { color: colors.textPrimary }]}>
+            <Trans i18nKey={'initWallet.setPassword.check'}>
+              SwiftShield Wallet does not store your password. Please <Text style={{ color: colors.textNotice, fontWeight: '600' }}>remember</Text> your
+              password.
+            </Trans>
+          </Text>
+        </Pressable>
+
+        <Button testID="createPasswordButton" style={styles.btn} onPress={handleSubmit(handleCreateVault)} disabled={!confirm} loading={inAsync}>
+          {t('initWallet.setPassword.create')}
+        </Button>
+      </View>
     </ScrollView>
   );
 };

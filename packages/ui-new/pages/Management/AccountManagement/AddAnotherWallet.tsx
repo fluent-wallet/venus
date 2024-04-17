@@ -35,11 +35,11 @@ const AddAnotherWallet: React.FC<Props> = ({ navigation }) => {
   const _handleConnectBSIMCard = useCallback(async () => {
     try {
       navigation.setOptions({ gestureEnabled: false });
-      await new Promise((resolve) => setTimeout(resolve));
+      await new Promise((resolve) => setTimeout(resolve, 20));
       await plugins.BSIM.getBSIMVersion();
-      await new Promise((resolve) => setTimeout(resolve));
+      await new Promise((resolve) => setTimeout(resolve, 20));
       if (await createVault({ type: 'connectBSIM' })) {
-        setTimeout(() => bottomSheetRef.current?.close(), 25);
+        setTimeout(() => bottomSheetRef.current?.close(), 50);
         showMessage({
           message: t('account.add.another.BSIM.success'),
           type: 'success',
@@ -56,9 +56,9 @@ const AddAnotherWallet: React.FC<Props> = ({ navigation }) => {
 
   const _handleCreateNewHdWallet = useCallback(async () => {
     navigation.setOptions({ gestureEnabled: false });
-    await new Promise((resolve) => setTimeout(resolve));
+    await new Promise((resolve) => setTimeout(resolve, 20));
     if (await createVault({ type: 'createNewWallet' })) {
-      setTimeout(() => bottomSheetRef.current?.close(), 25);
+      setTimeout(() => bottomSheetRef.current?.close(), 50);
       showMessage({
         message: t('account.add.another.create.success'),
         type: 'success',
@@ -71,7 +71,7 @@ const AddAnotherWallet: React.FC<Props> = ({ navigation }) => {
 
   const _handleImportExistWallet = useCallback(async (value: string) => {
     navigation.setOptions({ gestureEnabled: false });
-    await new Promise((resolve) => setTimeout(() => resolve(null!), 20));
+    await new Promise((resolve) => setTimeout(resolve, 20));
     const res = await createVault({ type: 'importExistWallet', value });
     if (res) {
       setTimeout(() => bottomSheetRef.current?.close(), 50);

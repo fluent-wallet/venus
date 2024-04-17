@@ -1,6 +1,6 @@
 import React, { useCallback, useRef } from 'react';
 import { ImageBackground, ScrollView, Keyboard, StyleSheet, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '@react-navigation/native';
 import { showMessage } from 'react-native-flash-message';
 import { useTranslation } from 'react-i18next';
@@ -29,6 +29,7 @@ export const showNotFindBSIMCardMessage = () =>
 const WayToInitWallet: React.FC<StackScreenProps<typeof WayToInitWalletStackName>> = ({ navigation }) => {
   const { colors } = useTheme();
   const { t } = useTranslation();
+  const insets = useSafeAreaInsets();
   const lang = useLanguage();
 
   const _handleConnectBSIMCard = useCallback(async () => {
@@ -53,41 +54,43 @@ const WayToInitWallet: React.FC<StackScreenProps<typeof WayToInitWalletStackName
     <>
       <ImageBackground source={WelcomeBgDark} style={styles.bg} resizeMode="cover">
         <ScrollView>
-          <SafeAreaView style={styles.container}>
-            {/* <Image style={styles.img} source={ImgNew} contentFit="contain" /> */}
-            <View style={styles.lottieAnimation}>
-              <LottieAnimation />
+          <View style={{ paddingTop: insets.top, paddingRight: insets.right, paddingLeft: insets.left, paddingBottom: insets.bottom }}>
+            <View style={styles.container}>
+              {/* <Image style={styles.img} source={ImgNew} contentFit="contain" /> */}
+              <View style={styles.lottieAnimation}>
+                <LottieAnimation />
+              </View>
+              <Image style={styles.welcomeSwiftShield} source={lang === Lang.zhHant ? WelcomeSwiftShieldZH : WelcomeSwiftShieldEN} contentFit="contain" />
+
+              <Button
+                testID="connectBSIMWallet"
+                textAlign="left"
+                Icon={ArrowRight}
+                style={styles.btn}
+                onPress={handleConnectBSIMCard}
+                loading={inConnecting}
+                mode="dark"
+              >
+                {t('welcome.connectBSIMWallet')}
+              </Button>
+
+              <Text style={[styles.orAddWith, { color: colors.textThird }]}>{t('welcome.addWith')}:</Text>
+
+              <Button
+                testID="createNewWallet"
+                textAlign="left"
+                style={styles.btn}
+                onPress={() => navigation.navigate(BiometricsWayStackName, { type: 'createNewWallet' })}
+                mode="dark"
+              >
+                {t('welcome.createNewWallet')}
+              </Button>
+
+              <Button testID="importExistingWallet" textAlign="left" style={styles.btnLast} onPress={() => bottomSheetRef.current?.expand()} mode="dark">
+                {t('welcome.importExistingWallet')}
+              </Button>
             </View>
-            <Image style={styles.welcomeSwiftShield} source={lang === Lang.zhHant ? WelcomeSwiftShieldZH : WelcomeSwiftShieldEN} contentFit="contain" />
-
-            <Button
-              testID="connectBSIMWallet"
-              textAlign="left"
-              Icon={ArrowRight}
-              style={styles.btn}
-              onPress={handleConnectBSIMCard}
-              loading={inConnecting}
-              mode="dark"
-            >
-              {t('welcome.connectBSIMWallet')}
-            </Button>
-
-            <Text style={[styles.orAddWith, { color: colors.textThird }]}>{t('welcome.addWith')}:</Text>
-
-            <Button
-              testID="createNewWallet"
-              textAlign="left"
-              style={styles.btn}
-              onPress={() => navigation.navigate(BiometricsWayStackName, { type: 'createNewWallet' })}
-              mode="dark"
-            >
-              {t('welcome.createNewWallet')}
-            </Button>
-
-            <Button testID="importExistingWallet" textAlign="left" style={styles.btnLast} onPress={() => bottomSheetRef.current?.expand()} mode="dark">
-              {t('welcome.importExistingWallet')}
-            </Button>
-          </SafeAreaView>
+          </View>
         </ScrollView>
       </ImageBackground>
       <ImportExistingWallet

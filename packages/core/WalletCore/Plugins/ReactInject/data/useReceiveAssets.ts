@@ -1,7 +1,7 @@
 import { useAtomValue } from 'jotai';
 import { atomFamily, atomWithObservable } from 'jotai/utils';
 import { switchMap, of, Observable, map } from 'rxjs';
-import { memoize } from 'lodash-es';
+import { memoize, unionBy } from 'lodash-es';
 import { observeNetworkById } from '../../../../database/models/Network/query';
 import { useCurrentNetwork } from './useCurrentNetwork';
 import { type AssetInfo } from '../../AssetsTracker/types';
@@ -14,8 +14,9 @@ const tokenListAtomFamilyOfNetwork = atomFamily((networkId: string | undefined |
   atomWithObservable(
     () =>
       (!networkId ? of([]) : observeTokenListOfNetwork(networkId)).pipe(
-        map((tokenList) =>
-          tokenList.sort((tokenA, tokenB) => {
+        map((_tokenList) => {
+          const tokenList = unionBy(_tokenList, 'contractAddress');
+          return tokenList.sort((tokenA, tokenB) => {
             if (tokenA.type === 'Native' && tokenB.type !== 'Native') {
               return -1;
             } else if (tokenA.type !== 'Native' && tokenB.type === 'Native') {
@@ -29,8 +30,8 @@ const tokenListAtomFamilyOfNetwork = atomFamily((networkId: string | undefined |
             }
 
             return 0;
-          }),
-        ),
+          });
+        }),
       ),
     {
       initialValue: [],
