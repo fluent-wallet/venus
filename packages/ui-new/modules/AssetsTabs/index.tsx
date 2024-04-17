@@ -145,11 +145,13 @@ export const TabsContent: React.FC<Props> = ({ currentTab, setCurrentTab, pageVi
     const index = tabs.indexOf(currentTab as 'Tokens');
     return index === -1 ? 0 : index;
   }, [tabs, currentTab]);
+  
+  const shouldShowNotBackup = useShouldShowNotBackup();
 
   return (
     <PagerView
       ref={pageViewRef}
-      style={[styles.pagerView, { minHeight: screenHeight - (selectType === 'Home' ? 300 : 280) }]}
+      style={[styles.pagerView, { minHeight: screenHeight - (selectType === 'Home' ? (shouldShowNotBackup ? 450 : 340) : 300) }]}
       initialPage={0}
       onPageSelected={(evt) => setCurrentTab(tabs[evt.nativeEvent.position])}
     >
