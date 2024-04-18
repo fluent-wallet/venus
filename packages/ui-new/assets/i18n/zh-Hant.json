@@ -170,7 +170,7 @@
   },
   "receive" : {
     "clickHereToSelect" : "點擊以選擇",
-    "describe" : "此地址僅能接收 {{netName}} 網絡的資產。",
+    "describe" : "僅能接收 {{netName}} 網絡的資產",
     "selectAnAsset" : "選擇資產",
     "selectAsset" : "選擇資產",
     "title" : "收款"
@@ -245,6 +245,7 @@
     "content" : {
       "depositToken" : "快存入資產吧",
       "noActivity" : "還沒有交易",
+      "noLatestTransaction" : null,
       "noNFT" : "沒有收藏品",
       "noRecord" : "暫無記錄",
       "noToken" : "沒有代幣",

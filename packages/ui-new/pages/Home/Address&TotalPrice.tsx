@@ -33,6 +33,7 @@ export const CurrentAddress: React.FC = () => {
       }}
       disabled={!currentAddressValue}
       style={({ pressed }) => [styles.addressContainer, { backgroundColor: pressed ? colors.underlay : 'transparent' }]}
+      testID='currentAddress'
     >
       <Text style={{ color: colors.textSecondary, opacity: currentAddressValue ? 1 : 0 }}>{shortenAddress(currentAddressValue || zeroAddress)}</Text>
       <Copy color={colors.textSecondary} />
@@ -66,6 +67,7 @@ export const TotalPrice: React.FC = () => {
       onPress={() => setPriceVisible(!priceVisible)}
       disabled={priceVisible === undefined}
       style={({ pressed }) => [styles.totalPriceContainer, { backgroundColor: pressed ? colors.underlay : 'transparent' }]}
+      testID='totalPrice'
     >
       <Asterisks />
       <Text style={[styles.totalPriceText, { color: colors.textPrimary, opacity: priceVisible ? 1 : 0 }]} numberOfLines={1}>

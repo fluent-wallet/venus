@@ -227,7 +227,7 @@
       "title" : "Language"
     },
     "navigation" : {
-      "aboutUs" : "About us",
+      "aboutUs" : "About Us",
       "accountManagement" : "Account Management",
       "preferences" : "Preferences"
     },
@@ -245,6 +245,7 @@
     "content" : {
       "depositToken" : "Deposit tokens to your wallet",
       "noActivity" : "No Activity",
+      "noLatestTransaction" : null,
       "noNFT" : "No NFT",
       "noRecord" : "No Record",
       "noToken" : "No Token",

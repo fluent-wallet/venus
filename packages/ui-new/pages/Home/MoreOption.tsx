@@ -70,8 +70,8 @@ const MoreOption: React.FC<{ children: React.ReactElement }> = ({ children }) =>
       <Modal visible={visible} onRequestClose={() => setVisible(false)} transparent animationType="none">
         <Pressable onPress={() => setVisible(!visible)} style={styles.overlay} testID="more">
           <Animated.View style={[styles.options, optionStyle, { backgroundColor: reverseColors.borderThird }]}>
-            <Pressable onPress={handleOpenScan} testID="">
-              <View style={styles.optionItem} testID="view">
+            <Pressable onPress={handleOpenScan} testID="view">
+              <View style={styles.optionItem}>
                 <Text style={[{ color: reverseColors.textPrimary }, styles.optionItemText]}>{t('home.more.viewInExplorer')}</Text>
                 <Earth color={reverseColors.textPrimary} width={22} height={22} />
               </View>
