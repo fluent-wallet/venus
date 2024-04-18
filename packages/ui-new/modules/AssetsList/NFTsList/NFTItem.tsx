@@ -33,17 +33,19 @@ export const StickyNFTItem: React.FC<{ startY: number; scrollY: number; tabsType
       data={currentOpenNFT.nft}
       onPress={() => plugins.NFTDetailTracker.setCurrentOpenNFT(undefined)}
       tabsType={tabsType}
+      isCurrent
     />
   );
 };
 
-const NFTItem: React.FC<{ data: AssetInfo; onPress: () => void; isSticky?: 'hide' | 'show'; tabsType: TabsType; showTypeLabel?: boolean }> = ({
-  data,
-  onPress,
-  isSticky,
-  tabsType,
-  showTypeLabel,
-}) => {
+const NFTItem: React.FC<{
+  data: AssetInfo;
+  onPress: () => void;
+  isSticky?: 'hide' | 'show';
+  tabsType: TabsType;
+  showTypeLabel?: boolean;
+  isCurrent?: boolean;
+}> = ({ data, onPress, isSticky, tabsType, showTypeLabel, isCurrent = false }) => {
   const { colors } = useTheme();
 
   return (
@@ -63,7 +65,7 @@ const NFTItem: React.FC<{ data: AssetInfo; onPress: () => void; isSticky?: 'hide
           {data.name}
         </Text>
         {showTypeLabel && <AssetTypeLabel assetType={data.type} />}
-        <ArrowRight style={styles.arrow} width={15} height={15} color={colors.iconPrimary} />
+        <ArrowRight style={[styles.arrow, { transform: [{ rotate: isCurrent ? '90deg' : '0deg' }] }]} width={15} height={15} color={colors.iconPrimary} />
       </View>
     </Pressable>
   );
@@ -92,7 +94,13 @@ const NFTItemAndDetail: React.FC<{
 
   return (
     <>
-      <NFTItem data={data} onPress={handlePress} tabsType={tabsType} showTypeLabel={showTypeLabel} />
+      <NFTItem
+        data={data}
+        onPress={handlePress}
+        tabsType={tabsType}
+        showTypeLabel={showTypeLabel}
+        isCurrent={currentOpenNFTDetail?.nft?.contractAddress === data.contractAddress}
+      />
       {currentOpenNFTDetail?.nft?.contractAddress === data.contractAddress && (
         <View style={styles.itemsArea}>
           {!currentOpenNFTDetail?.items && <SkeletoDetail colors={colors} />}

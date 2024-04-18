@@ -41,7 +41,7 @@ const Home: React.FC<StackScreenProps<typeof HomeStackName>> = ({ navigation }) 
     <View style={{ flex: 1, paddingTop: insets.top, paddingRight: insets.right, paddingLeft: insets.left, paddingBottom: insets.bottom }}>
       <View style={[styles.container, { backgroundColor: colors.bgPrimary }]}>
         <View style={styles.header}>
-          <Account onPress={() => setShowAccountSelector(true)} navigation={navigation} />
+          <Account showAccountSelector={showAccountSelector} onPress={() => setShowAccountSelector(true)} navigation={navigation} />
           <HeaderRight
             navigation={navigation}
             onPressNetwork={() => {

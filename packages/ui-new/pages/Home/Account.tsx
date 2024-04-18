@@ -12,7 +12,11 @@ import HDWallet from '@assets/icons/wallet-hd.webp';
 import ExistWallet from '@assets/icons/wallet-Imported.webp';
 import ArrowLeft from '@assets/icons/arrow-left.svg';
 
-const Account: React.FC<{ onPress: () => void; navigation: StackScreenProps<typeof HomeStackName>['navigation'] }> = ({ navigation, onPress }) => {
+const Account: React.FC<{ showAccountSelector: boolean; onPress: () => void; navigation: StackScreenProps<typeof HomeStackName>['navigation'] }> = ({
+  showAccountSelector,
+  navigation,
+  onPress,
+}) => {
   const { colors } = useTheme();
   const account = useCurrentAccount();
   const addressValue = useCurrentAddressValueOfAccount(account?.id);
@@ -23,7 +27,7 @@ const Account: React.FC<{ onPress: () => void; navigation: StackScreenProps<type
     <Pressable
       style={({ pressed }) => [styles.accountContainer, { borderColor: colors.borderThird, backgroundColor: pressed ? colors.underlay : 'transparent' }]}
       onPress={onPress}
-      testID='account'
+      testID="account"
     >
       <View style={styles.accountImageWrapper}>
         <Image style={styles.accountImage} source={{ uri: toDataUrl(addressValue) }} />
@@ -35,7 +39,7 @@ const Account: React.FC<{ onPress: () => void; navigation: StackScreenProps<type
       <Text style={[styles.accountText, { color: colors.textPrimary }]} numberOfLines={1} ellipsizeMode="middle">
         {account?.nickname ?? 'Loading...'}
       </Text>
-      <ArrowLeft style={styles.accountArrow} color={colors.iconPrimary} />
+      <ArrowLeft style={[styles.accountArrow, { transform: [{ rotate: showAccountSelector ? '-90deg' : '-180deg' }, { translateX: -1.5 }] }]} color={colors.iconPrimary} width={14} height={14} />
     </Pressable>
   );
 };
@@ -57,7 +61,7 @@ const styles = StyleSheet.create({
     position: 'relative',
     width: 24,
     height: 24,
-    marginRight: 11,
+    marginRight: 12,
   },
   accountImage: {
     width: 24,
@@ -77,8 +81,7 @@ const styles = StyleSheet.create({
     fontWeight: '300',
   },
   accountArrow: {
-    marginLeft: 9.5,
-    transform: [{ rotate: '-90deg' }, { translateX: -3 }],
+    marginLeft: 8.5,
   },
 });
 
