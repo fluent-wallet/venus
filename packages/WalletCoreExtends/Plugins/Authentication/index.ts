@@ -45,6 +45,7 @@ class AuthenticationPluginClass implements Plugin {
   public AuthenticationType = AuthenticationType;
   private passwordRequestSubject = new BehaviorSubject<PasswordRequest | null>(null);
   private pwdCache: string | null = null;
+  private getPasswordPromise: Promise<string | null> | null = null;
   private pwdCacheTimer: NodeJS.Timeout | null = null;
 
   constructor() {
@@ -80,7 +81,8 @@ class AuthenticationPluginClass implements Plugin {
         }
       }
     } else if (this.settleAuthenticationType === AuthenticationType.Password) {
-      const getPasswordPromise = new Promise<string>((_resolve, _reject) => {
+      if (this.getPasswordPromise) return this.getPasswordPromise;
+      this.getPasswordPromise = new Promise<string>((_resolve, _reject) => {
         if (!this.pwdCache) {
           if (this.pwdCacheTimer !== null) {
             clearTimeout(this.pwdCacheTimer);
@@ -105,8 +107,10 @@ class AuthenticationPluginClass implements Plugin {
         } else {
           _resolve(this.pwdCache);
         }
+      }).finally(() => {
+        this.getPasswordPromise = null;
       });
-      return getPasswordPromise;
+      return this.getPasswordPromise;
     } else {
       throw new Error('Authentication  not set');
     }

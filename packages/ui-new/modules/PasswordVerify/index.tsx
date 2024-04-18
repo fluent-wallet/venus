@@ -33,6 +33,10 @@ const PasswordVerify: React.FC<StackScreenProps<typeof PasswordVerifyStackName>>
     });
     return () => {
       setInVerify(false);
+      // if the request is still not resolved, we should reject it
+      if (currentRequest.current) {
+        currentRequest.current.reject();
+      }
       sub.unsubscribe();
     };
   }, []);
