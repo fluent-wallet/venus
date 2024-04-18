@@ -79,7 +79,7 @@ const SendTransactionStep1Receiver: React.FC<SendTransactionScreenProps<typeof S
           onChangeText={(newNickName) => setReceiver(newNickName?.trim())}
           isInBottomSheet
           SuffixIcon={!receiver ? QrCode : undefined}
-          // todo this max length need consider network
+          // TODO: this max length need consider network
           maxLength={200}
           onPressSuffixIcon={() => {
             if (Keyboard.isVisible()) {
@@ -107,9 +107,7 @@ const SendTransactionStep1Receiver: React.FC<SendTransactionScreenProps<typeof S
         )}
         {!checkRes && inChecking && <HourglassLoading style={styles.checkLoading} />}
         {(checkRes === AddressType.EOA || checkRes === AddressType.Contract || checkRes === 'Invalid') && (
-          <Text style={[styles.checkRes, { color: checkRes === 'Invalid' ? colors.down : colors.up }]}>
-            {checkRes === 'Invalid' ? '🚫' : checkRes === AddressType.EOA ? '🎉' : '📑'}
-            {'   '}
+          <Text style={[styles.checkRes, { color: checkRes === 'Invalid' ? colors.down : colors.textPrimary }]}>
             {checkRes === 'Invalid' ? t('tx.send.address.invalid') : t('tx.send.address.valid')}
           </Text>
         )}
@@ -177,7 +175,7 @@ const styles = StyleSheet.create({
     alignSelf: 'center',
   },
   checkRes: {
-    paddingHorizontal: 32,
+    paddingHorizontal: 16,
     fontSize: 16,
     fontWeight: '600',
     lineHeight: 24,
@@ -186,8 +184,7 @@ const styles = StyleSheet.create({
   contractAddressTip: {
     marginTop: 16,
     marginBottom: 18,
-    paddingLeft: 64,
-    paddingRight: 16,
+    paddingHorizontal: 32,
     fontSize: 14,
     fontWeight: '300',
     lineHeight: 18,

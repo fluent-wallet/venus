@@ -1,13 +1,13 @@
 import React, { useState, useCallback, useMemo, useEffect, useRef } from 'react';
 import { Pressable, StyleSheet, Keyboard, type TextInput as _TextInput } from 'react-native';
 import { useTheme } from '@react-navigation/native';
+import { useTranslation } from 'react-i18next';
 import { showMessage } from 'react-native-flash-message';
 import methods from '@core/WalletCore/Methods';
 import plugins from '@core/WalletCore/Plugins';
 import { useGroupFromId, useAccountsOfGroupInManage, useVaultOfGroup, VaultType } from '@core/WalletCore/Plugins/ReactInject';
 import Text from '@components/Text';
 import TextInput from '@components/TextInput';
-import Checkbox from '@components/Checkbox';
 import HourglassLoading from '@components/Loading/Hourglass';
 import Button from '@components/Button';
 import BottomSheet, { snapPoints, BottomSheetScrollView, type BottomSheetMethods } from '@components/BottomSheet';
@@ -16,14 +16,15 @@ import { GroupSettingStackName, HDSettingStackName, BackupStackName, BackupStep1
 import useInAsync from '@hooks/useInAsync';
 import ArrowRight from '@assets/icons/arrow-right2.svg';
 import Delete from '@assets/icons/delete.svg';
+import Settings from '@assets/icons/settings.svg';
 import DeleteConfirm from './DeleteConfirm';
-import { useTranslation } from 'react-i18next';
 
 const GroupConfig: React.FC<StackScreenProps<typeof GroupSettingStackName>> = ({ navigation, route }) => {
   const { colors } = useTheme();
+  const { t } = useTranslation();
+
   const bottomSheetRef = useRef<BottomSheetMethods>(null!);
   const textinputRef = useRef<_TextInput>(null!);
-  const { t } = useTranslation();
 
   const accountGroup = useGroupFromId(route.params.groupId);
   const vault = useVaultOfGroup(route.params.groupId);
@@ -159,7 +160,7 @@ const GroupConfig: React.FC<StackScreenProps<typeof GroupSettingStackName>> = ({
           disabled={inDelete}
         >
           <Text style={[styles.HDManageText, { color: colors.textSecondary }]}>{t('common.HDWallets')}</Text>
-          <Text style={[styles.HDManageText, styles.management, { color: colors.textNotice }]}>{t('account.action.ManageMent')}</Text>
+          <Settings color={colors.textSecondary} />
         </Pressable>
 
         <BottomSheetScrollView style={styles.accountsContainer}>
@@ -172,8 +173,8 @@ const GroupConfig: React.FC<StackScreenProps<typeof GroupSettingStackName>> = ({
           testID="remove"
           disabled={inDelete}
         >
-          <Checkbox checked Icon={Delete} pointerEvents="none" />
-          <Text style={[styles.mainText, styles.removeText, { color: colors.textPrimary }]}>{t('account.group.action.remove')}</Text>
+          <Delete color={colors.textPrimary} width={24} height={24} />
+          <Text style={[styles.mainText, { color: colors.textPrimary }]}>{t('account.group.action.remove')}</Text>
           {inDelete && <HourglassLoading style={styles.deleteLoading} />}
         </Pressable>
 
@@ -225,6 +226,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '300',
     lineHeight: 18,
+    marginRight: 'auto',
   },
   accountsContainer: {
     flexGrow: 0,
@@ -261,9 +263,6 @@ const styles = StyleSheet.create({
   },
   removeContainer: {
     marginVertical: 16,
-  },
-  removeText: {
-    marginLeft: 8,
   },
   deleteLoading: {
     marginLeft: 'auto',

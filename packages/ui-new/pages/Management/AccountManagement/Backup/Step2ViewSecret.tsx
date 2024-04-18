@@ -96,7 +96,7 @@ const BackupStep2ViewSecret: React.FC<BackupScreenProps<typeof BackupStep2StackN
               testID="copy"
             >
               <Text style={[styles.privateKeyText, { color: colors.textPrimary }]}>{secretData}</Text>
-              <Copy color={colors.iconPrimary} />
+              <Copy color={colors.textPrimary} />
             </Pressable>
           </>
         )}

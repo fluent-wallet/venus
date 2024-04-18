@@ -15,9 +15,10 @@ import { toDataUrl } from '@utils/blockies';
 import BSIMCardWallet from '@assets/icons/wallet-bsim.webp';
 import HDWallet from '@assets/icons/wallet-hd.webp';
 import ExistWallet from '@assets/icons/wallet-Imported.webp';
-import More from '@assets/icons/more-circle.svg';
+import More from '@assets/icons/more.svg';
 import Add from '@assets/icons/add.svg';
 import Copy from '@assets/icons/copy.svg';
+import Settings from '@assets/icons/settings.svg';
 import { useTranslation } from 'react-i18next';
 
 type ListType = 'selector' | 'management';
@@ -41,7 +42,6 @@ interface AccountProps {
 const AccountGroup: React.FC<
   AccountGroupProps & { colors: ReturnType<typeof useTheme>['colors']; type: ListType; onPressGroup?: (groupId: string) => void }
 > = ({ id, nickname, vaultType, colors, type, onPressGroup }) => {
-  const { t } = useTranslation();
   return (
     <Pressable
       style={({ pressed }) => [
@@ -60,7 +60,7 @@ const AccountGroup: React.FC<
         {vaultType === VaultType.PrivateKey ? 'Imported Private Key' : nickname}
       </Text>
       {type === 'management' && vaultType !== VaultType.PrivateKey && vaultType !== VaultType.PublicAddress && (
-        <Text style={[styles.groupManagement, { color: colors.textNotice }]}>{t('account.action.ManageMent')}</Text>
+        <Settings style={styles.groupSettings} color={colors.textSecondary} />
       )}
     </Pressable>
   );
@@ -111,11 +111,11 @@ export const AccountItemView: React.FC<{
           >
             {shorten ? shortenAddress(addressValue) : addressValue}
           </Text>
-          {showCopy && <Copy style={styles.accountAddressCopy} color={colors.iconPrimary} />}
+          {showCopy && <Copy style={styles.accountAddressCopy} color={colors.textPrimary} />}
         </View>
       </View>
       {showSelect && <Checkbox style={styles.accountRight} checked pointerEvents="none" />}
-      {showMore && <More style={styles.accountRight} color={colors.textNotice} />}
+      {showMore && <More style={styles.accountRight} color={colors.textSecondary} />}
       {children}
     </Pressable>
   );
@@ -166,7 +166,7 @@ const AddAccount: React.FC<AccountGroupProps & { colors: ReturnType<typeof useTh
         disabled={inAdding}
         testID="addAccount"
       >
-        <Checkbox checked Icon={Add} pointerEvents="none" />
+        <Add color={colors.textPrimary} width={24} height={24} />
         <Text style={[styles.manageText, { color: colors.textPrimary }]}>{t('account.action.add')}</Text>
         {inAdding && <HourglassLoading style={styles.addAccountLoading} />}
       </Pressable>
@@ -261,11 +261,8 @@ export const styles = StyleSheet.create({
     lineHeight: 18,
     fontWeight: '300',
   },
-  groupManagement: {
+  groupSettings: {
     marginLeft: 'auto',
-    fontSize: 14,
-    lineHeight: 18,
-    fontWeight: '600',
   },
   accountImage: {
     width: 32,
@@ -300,7 +297,6 @@ export const styles = StyleSheet.create({
     marginRight: 16,
   },
   manageText: {
-    marginLeft: 8,
     fontSize: 16,
     lineHeight: 20,
     fontWeight: '600',

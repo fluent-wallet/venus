@@ -2,21 +2,16 @@ import React, { useEffect, useMemo } from 'react';
 import { View, Text, StyleSheet, type StyleProp, type ViewStyle } from 'react-native';
 import { type MessageOptions, type Message as _Message } from 'react-native-flash-message';
 import Animated, { withTiming, useSharedValue, Easing } from 'react-native-reanimated';
-import { Image } from 'expo-image';
 import { useTheme } from '@react-navigation/native';
 import { screenWidth } from '../../utils/deviceInfo';
-import Success from '../../assets/icons/message-success.webp';
-import Fail from '../../assets/icons/message-fail.webp';
-import Warning from '../../assets/icons/message-warning.webp';
-import NoNetwork from '../../assets/icons/message-network.webp';
-import Loading from '../../assets/icons/message-loading.webp';
+import Success from '../../assets/icons/message-success.svg';
+import Fail from '../../assets/icons/message-fail.svg';
+import Warning from '../../assets/icons/message-warning.svg';
 
 const iconSourceMap = {
   success: Success,
   failed: Fail,
   warning: Warning,
-  noNetwork: NoNetwork,
-  loading: Loading,
 };
 
 type Message = Omit<_Message, 'type'> & { type: keyof typeof iconSourceMap; width?: number | 'full' };
@@ -39,8 +34,9 @@ const CustomMessage: React.FC<{ message: Message; style?: StyleProp<ViewStyle> }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const progressBg = useMemo(() => (type === 'success' || type === 'loading' ? '#01C2E1' : '#FD6464'), [type]);
+  const progressBg = useMemo(() => (type === 'success' ? '#01C2E1' : '#FD6464'), [type]);
 
+  const Icon = useMemo(() => iconSourceMap[type], [type]);
   return (
     <View
       style={[
@@ -53,8 +49,7 @@ const CustomMessage: React.FC<{ message: Message; style?: StyleProp<ViewStyle> }
         style,
       ]}
     >
-      {type && iconSourceMap[type] && <Image style={styles.icon} source={iconSourceMap[type]} contentFit="contain" />}
-
+      {type && <Icon style={styles.icon} color={reverseColors.textPrimary} />}
       <View style={styles.textArea}>
         {message && <Text style={[styles.title, { color: reverseColors.textPrimary }]}>{message}</Text>}
 

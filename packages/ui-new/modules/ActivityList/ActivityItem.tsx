@@ -63,7 +63,7 @@ const styles = StyleSheet.create({
     display: 'flex',
     flexDirection: 'column',
     justifyContent: 'center',
-    paddingLeft: 32,
+    paddingLeft: 36,
     paddingRight: 16,
     height: 72,
   },
@@ -76,6 +76,7 @@ const styles = StyleSheet.create({
   typeText: {
     fontSize: 14,
     fontWeight: '600',
+    lineHeight: 18
   },
   statusText: {
     marginLeft: 12,

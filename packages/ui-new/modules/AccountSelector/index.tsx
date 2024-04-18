@@ -30,7 +30,7 @@ const AccountSelector: React.FC<Props> = ({ onClose }) => {
             style={({ pressed }) => [styles.edit, { borderColor: colors.borderThird, backgroundColor: pressed ? colors.underlay : 'transparent' }]}
             onPress={() => navigation.navigate(AccountManagementStackName)}
           >
-            <Text style={[styles.title, { color: colors.textPrimary }]}>⚙️ {t('common.edit')}</Text>
+            <Text style={[styles.title, { color: colors.textPrimary }]}>{t('common.edit')}</Text>
           </Pressable>
         </View>
         <AccountsList

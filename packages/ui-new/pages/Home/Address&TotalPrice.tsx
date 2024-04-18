@@ -35,7 +35,7 @@ export const CurrentAddress: React.FC = () => {
       style={({ pressed }) => [styles.addressContainer, { backgroundColor: pressed ? colors.underlay : 'transparent' }]}
     >
       <Text style={{ color: colors.textSecondary, opacity: currentAddressValue ? 1 : 0 }}>{shortenAddress(currentAddressValue || zeroAddress)}</Text>
-      <Copy color={colors.iconPrimary} />
+      <Copy color={colors.textSecondary} />
     </Pressable>
   );
 };

@@ -184,7 +184,7 @@ const HDManagement: React.FC<StackScreenProps<typeof HDSettingStackName>> = ({ n
                   }
                 }}
               >
-                <Checkbox checked={isInChoose} reversal={isSelected} pointerEvents="none" />
+                <Checkbox checked={isInChoose} showBorder={!isSelected} pointerEvents="none" />
                 <Text style={[styles.accountIndex, { color: colors.textPrimary }]}>{account.index + 1}</Text>
                 <Text style={[styles.accountAddress, { color: colors.textPrimary }]}>{shortenAddress(account.addressValue)}</Text>
                 <Text style={[styles.acccountPath, { color: colors.textSecondary }]}>
