@@ -23,6 +23,7 @@ const Account: React.FC<{ onPress: () => void; navigation: StackScreenProps<type
     <Pressable
       style={({ pressed }) => [styles.accountContainer, { borderColor: colors.borderThird, backgroundColor: pressed ? colors.underlay : 'transparent' }]}
       onPress={onPress}
+      testID='account'
     >
       <View style={styles.accountImageWrapper}>
         <Image style={styles.accountImage} source={{ uri: toDataUrl(addressValue) }} />
