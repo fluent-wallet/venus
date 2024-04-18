@@ -57,7 +57,7 @@ const styles = StyleSheet.create({
     position: 'relative',
     width: 24,
     height: 24,
-    marginRight: 8,
+    marginRight: 11,
   },
   accountImage: {
     width: 24,
@@ -66,10 +66,10 @@ const styles = StyleSheet.create({
   },
   acccountImageBSIMCard: {
     position: 'absolute',
-    width: 22,
-    height: 14.66,
-    right: -5,
-    bottom: -2,
+    width: 20,
+    height: 20,
+    right: -7,
+    bottom: -3,
   },
   accountText: {
     maxWidth: 132,
