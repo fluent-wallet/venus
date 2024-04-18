@@ -16,6 +16,7 @@ import Text from '@components/Text';
 import { Navigation } from '@pages/Home/Navigations';
 import { encodeETHURL } from '@utils/ETHURL';
 import { isSmallDevice } from '@utils/deviceInfo';
+import { numberWithCommas } from '@core/utils/balance'
 import Logo  from '@assets/images/swift-shield-QRCode.webp';
 import Share from '@assets/icons/share.svg';
 import PoundKey from '@assets/icons/pound-key.svg';
@@ -71,11 +72,11 @@ const Receive: React.FC<Props> = ({ navigation }) => {
           {selectedAsset && (
             <>
               <Text style={[styles.receive, { color: colors.textPrimary }]} numberOfLines={1} adjustsFontSizeToFit>
-                {amount} {selectedAsset?.symbol}{' '}
+                {numberWithCommas(amount)} {selectedAsset?.symbol}{' '}
               </Text>
               {price && price !== '0' && (
                 <Text style={[styles.price, { color: colors.textSecondary }]} numberOfLines={1}>
-                  ≈ ${price}
+                  ≈ ${numberWithCommas(price)}
                 </Text>
               )}
               {}

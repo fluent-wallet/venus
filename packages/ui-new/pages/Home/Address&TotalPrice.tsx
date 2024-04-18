@@ -5,7 +5,7 @@ import Clipboard from '@react-native-clipboard/clipboard';
 import { showMessage } from 'react-native-flash-message';
 import { useCurrentAddressValue, useAssetsTotalPriceValue } from '@core/WalletCore/Plugins/ReactInject';
 import { zeroAddress, shortenAddress } from '@core/utils/address';
-import { numberFormat } from '@core/utils/balance'
+import { numberWithCommas } from '@core/utils/balance'
 import { usePriceVisible } from '@hooks/usePriceVisible';
 import Text from '@components/Text';
 import Skeleton from '@components/Skeleton';
@@ -69,7 +69,7 @@ export const TotalPrice: React.FC = () => {
     >
       <Asterisks />
       <Text style={[styles.totalPriceText, { color: colors.textPrimary, opacity: priceVisible ? 1 : 0 }]} numberOfLines={1}>
-        ${numberFormat(totalPriceValue)}
+        ${numberWithCommas(totalPriceValue)}
       </Text>
       <EyeClose color={colors.textPrimary} width={24} height={24} style={[styles.eye, { opacity: priceVisible ? 1 : 0 }]} />
     </Pressable>
