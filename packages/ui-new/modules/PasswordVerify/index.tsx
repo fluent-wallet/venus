@@ -26,15 +26,14 @@ const PasswordVerify: React.FC<StackScreenProps<typeof PasswordVerifyStackName>>
   const currentRequest = useRef<PasswordRequest | null>(null);
 
   useEffect(() => {
-    const subscription = plugins.Authentication.passwordRequestSubject.subscribe({
-      next: (request) => {
-        if (!request) return;
-        currentRequest.current = request;
-      },
+    const sub = plugins.Authentication.subPasswordRequest().subscribe((request) => {
+      currentRequest.current = request;
+      // the request is received, so we can clear the event
+      plugins.Authentication.clearPasswordRequest();
     });
     return () => {
       setInVerify(false);
-      subscription.unsubscribe();
+      sub.unsubscribe();
     };
   }, []);
 

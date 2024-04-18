@@ -69,15 +69,11 @@ const Router: React.FC = () => {
 
   const navigation = useNavigation<StackNavigation>();
   useEffect(() => {
-    const subscription = plugins.Authentication.passwordRequestSubject.subscribe({
-      next: (request) => {
-        if (!request) return;
-        navigation.navigate(PasswordVerifyStackName);
-      },
+    const sub = plugins.Authentication.subPasswordRequest().subscribe(() => {
+      navigation.navigate(PasswordVerifyStackName);
     });
-
     return () => {
-      subscription.unsubscribe();
+      sub.unsubscribe();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
