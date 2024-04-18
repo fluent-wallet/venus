@@ -16,7 +16,7 @@ import Text from '@components/Text';
 import { Navigation } from '@pages/Home/Navigations';
 import { encodeETHURL } from '@utils/ETHURL';
 import { isSmallDevice } from '@utils/deviceInfo';
-import Logo  from '@assets/icons/swift-shield.webp';
+import Logo  from '@assets/images/swift-shield-QRCode.webp';
 import Share from '@assets/icons/share.svg';
 import PoundKey from '@assets/icons/pound-key.svg';
 import ReceiveSetAsset from './ReceiveSetAsset';
@@ -67,10 +67,10 @@ const Receive: React.FC<Props> = ({ navigation }) => {
         <Text style={[styles.tip, { color: colors.textPrimary }]}>{t('receive.describe', { netName: currentNetwork?.name })}</Text>
 
         <View style={[styles.qrcodeWrapper, { backgroundColor: colors.bgSecondary, paddingBottom: selectedAsset ? 18 : 30 }]}>
-          <QRCode value={ethUrl} size={220} logo={Logo} logoSize={60} logoBackgroundColor="transparent" />
+          <QRCode value={ethUrl} size={172} logo={Logo} logoSize={40} logoBackgroundColor="transparent" />
           {selectedAsset && (
             <>
-              <Text style={[styles.receive, { color: colors.textPrimary }]}>
+              <Text style={[styles.receive, { color: colors.textPrimary }]} numberOfLines={1} adjustsFontSizeToFit>
                 {amount} {selectedAsset?.symbol}{' '}
               </Text>
               {price && price !== '0' && (
@@ -151,7 +151,7 @@ const styles = StyleSheet.create({
   },
   tip: {
     alignSelf: 'center',
-    marginBottom: 16,
+    marginBottom: 24,
     width: 280,
     fontSize: 14,
     fontWeight: '600',
@@ -162,7 +162,7 @@ const styles = StyleSheet.create({
     display: 'flex',
     justifyContent: 'center',
     alignItems: 'center',
-    width: 280,
+    width: 220,
     borderRadius: 8,
     paddingTop: 30,
   },
@@ -171,6 +171,7 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontWeight: '700',
     lineHeight: 26,
+    maxWidth: 172
   },
   price: {
     fontSize: 14,
