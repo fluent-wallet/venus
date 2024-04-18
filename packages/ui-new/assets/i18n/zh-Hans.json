@@ -1,5 +1,354 @@
 {
+  "account" : {
+    "action" : {
+      "add" : null,
+      "addOther" : null,
+      "add.title" : null,
+      "eraseAll" : null,
+      "eraseAll.describe" : null,
+      "eraseAll.title" : null,
+      "ManageMent" : null,
+      "remove" : null,
+      "remove.describe" : null,
+      "remove.title" : null
+    },
+    "add" : {
+      "another" : {
+        "BSIM" : {
+          "success" : null
+        },
+        "create" : {
+          "success" : null
+        },
+        "import" : {
+          "success" : null
+        }
+      }
+    },
+    "detail" : {
+      "accountName" : null,
+      "address" : null,
+      "title" : null
+    },
+    "error" : {
+      "deleteAccount" : {
+        "failed" : null
+      }
+    },
+    "group" : {
+      "action" : {
+        "remove" : null
+      },
+      "inputLabel" : null,
+      "remove" : {
+        "error" : null,
+        "errorUnknown" : null,
+        "success" : null
+      },
+      "settings" : {
+        "BSIM" : null,
+        "BSIMCode" : null
+      },
+      "title" : {
+        "BSIM" : null,
+        "seed" : null
+      }
+    },
+    "HDWallet" : {
+      "select" : {
+        "noVerification" : null,
+        "pathType" : null,
+        "selected" : null,
+        "title" : null
+      }
+    },
+    "management" : {
+      "title" : null
+    },
+    "remove" : {
+      "error" : {
+        "failed" : null,
+        "removeInUse" : null
+      },
+      "successfully" : null
+    }
+  },
+  "backup" : {
+    "error" : {
+      "checkFailed" : null,
+      "viewFailed" : null
+    },
+    "notice" : {
+      "describe" : null,
+      "title" : null
+    },
+    "success" : null,
+    "title" : null,
+    "verify" : {
+      "title" : null,
+      "word" : null
+    },
+    "viewSecret" : {
+      "tips1" : null,
+      "tips2" : null,
+      "tipsForPK" : null,
+      "title" : null,
+      "view" : null,
+      "viewTips" : null
+    }
+  },
+  "common" : {
+    "account" : null,
+    "amount" : null,
+    "backup" : null,
+    "balance" : null,
+    "cancel" : null,
+    "close" : null,
+    "confirm" : null,
+    "continue" : null,
+    "copied" : null,
+    "delete" : null,
+    "dismiss" : null,
+    "edit" : null,
+    "enable" : null,
+    "HDWallets" : null,
+    "index" : null,
+    "max" : null,
+    "next" : null,
+    "ok" : null,
+    "password" : null,
+    "privateKey" : null,
+    "retry" : null,
+    "return" : null,
+    "seedPhrase" : null,
+    "send" : null,
+    "to" : null,
+    "verifyPassword" : null,
+    "view" : null
+  },
+  "home" : {
+    "backup" : {
+      "describe" : null,
+      "title" : null
+    },
+    "buy" : null,
+    "more" : null,
+    "more.copyAddress" : null,
+    "more.viewInExplorer" : null,
+    "noNetwork" : null,
+    "receive" : null,
+    "send" : null
+  },
+  "initWallet" : {
+    "biometrics" : {
+      "disable" : {
+        "error" : {
+          "description" : null,
+          "title" : null
+        }
+      }
+    },
+    "describe" : null,
+    "enableFingerprint" : null,
+    "error" : {
+      "exist" : null,
+      "invalidValue" : null,
+      "unknown" : null
+    },
+    "msg" : {
+      "failed" : null,
+      "success" : null
+    },
+    "setPassword" : null,
+    "setPassword.check" : null,
+    "setPassword.confirm" : null,
+    "setPassword.create" : null,
+    "setPassword.describe" : null,
+    "setPassword.error.length" : null,
+    "setPassword.error.notMatch" : null,
+    "setPassword.new" : null
+  },
+  "receive" : {
+    "clickHereToSelect" : null,
+    "describe" : null,
+    "selectAnAsset" : null,
+    "selectAsset" : null,
+    "title" : null
+  },
+  "scan" : {
+    "parse" : {
+      "error" : {
+        "invalidTargetAddress" : null,
+        "missChianId" : null,
+        "missChianTypes" : null
+      }
+    },
+    "permission" : {
+      "describe" : null,
+      "reject" : {
+        "describe" : null,
+        "openSettings" : null,
+        "title" : null
+      },
+      "title" : null
+    },
+    "photos" : null,
+    "QRCode" : {
+      "error" : {
+        "notRecognized" : null
+      }
+    },
+    "title" : null,
+    "walletConnect" : {
+      "error" : {
+        "connectFailed" : null,
+        "lowVersion" : null
+      }
+    }
+  },
+  "settings" : {
+    "aboutUs" : {
+      "action" : {
+        "checkUpdate" : null,
+        "feedback" : null,
+        "teamsService" : null
+      },
+      "title" : null,
+      "version" : null
+    },
+    "appearance" : {
+      "dark" : null,
+      "light" : null,
+      "system" : null,
+      "title" : null
+    },
+    "language" : {
+      "systemLang" : null,
+      "title" : null
+    },
+    "navigation" : {
+      "aboutUs" : null,
+      "accountManagement" : null,
+      "preferences" : null
+    },
+    "preferences" : {
+      "navigation" : {
+        "appearance" : null,
+        "language" : null
+      },
+      "title" : null
+    },
+    "title" : null
+  },
+  "tab" : {
+    "activity" : null,
+    "content" : {
+      "depositToken" : null,
+      "noActivity" : null,
+      "noLatestTransaction" : null,
+      "noNFT" : null,
+      "noRecord" : null,
+      "noToken" : null,
+      "receive" : null
+    },
+    "nfts" : null,
+    "tokens" : null
+  },
+  "tabs" : {
+    "mywallet" : null,
+    "recently" : null
+  },
+  "tx" : {
+    "activity" : {
+      "status" : {
+        "confirmed" : null,
+        "failed" : null,
+        "pending" : null
+      }
+    },
+    "amount" : {
+      "anyAmount" : null,
+      "error" : {
+        "estimate" : null,
+        "InsufficientBalance" : null,
+        "invalidAmount" : null
+      },
+      "estimateMax" : null
+    },
+    "asset" : {
+      "error" : {
+        "invalidERC20" : null,
+        "invalidFormat" : null,
+        "networkError" : null
+      },
+      "inputTitle" : null,
+      "placeholder" : null,
+      "zeroBalance" : null
+    },
+    "confirm" : {
+      "BSIM" : {
+        "error" : {
+          "title" : null
+        },
+        "message" : null,
+        "title" : null
+      },
+      "error" : {
+        "InsufficientBalance" : null,
+        "InsufficientBalanceForGas" : null,
+        "network" : null,
+        "unknown" : null
+      },
+      "estimatedFee" : null,
+      "failed" : null,
+      "signingWith" : null,
+      "submitted" : {
+        "description" : null,
+        "message" : null
+      },
+      "title" : null
+    },
+    "send" : {
+      "address" : {
+        "contractRisk" : null,
+        "contractRiskKnow" : null,
+        "invalid" : null,
+        "valid" : null
+      },
+      "error" : {
+        "failCheck" : null
+      },
+      "paste" : null,
+      "placeholder" : null,
+      "receiver" : null,
+      "scan" : null,
+      "title" : null
+    }
+  },
+  "wallet" : {
+    "import" : {
+      "error" : {
+        "empty" : null,
+        "unknown" : null,
+        "validPhrase" : null,
+        "validPrivateKey" : null
+      },
+      "placeholder" : null
+    }
+  },
   "welcome" : {
-    "getStarted" : "开始"
+    "addWith" : null,
+    "connectBSIMWallet" : null,
+    "createNewWallet" : null,
+    "error" : {
+      "BSIM" : {
+        "notFInd" : {
+          "describe" : null,
+          "title" : null
+        }
+      }
+    },
+    "getStarted" : "开始",
+    "importExistingWallet" : null
   }
 }
