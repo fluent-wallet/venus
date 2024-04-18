@@ -1,5 +1,5 @@
 import * as KeyChain from 'react-native-keychain';
-import { BehaviorSubject } from 'rxjs';
+import { BehaviorSubject, filter } from 'rxjs';
 import CryptoToolPlugin, { CryptoToolPluginClass } from '../CryptoTool';
 import plugins, { type Plugin } from '@core/WalletCore/Plugins';
 import database from '@core/database';
@@ -43,7 +43,7 @@ class AuthenticationPluginClass implements Plugin {
 
   private settleAuthenticationType: AuthenticationType | null = null;
   public AuthenticationType = AuthenticationType;
-  public passwordRequestSubject = new BehaviorSubject<PasswordRequest>(null!);
+  private passwordRequestSubject = new BehaviorSubject<PasswordRequest | null>(null);
   private pwdCache: string | null = null;
   private getPasswordPromise: Promise<string | null> | null = null;
   private pwdCacheTimer: NodeJS.Timeout | null = null;
@@ -53,6 +53,14 @@ class AuthenticationPluginClass implements Plugin {
       this.settleAuthenticationType = (await database.localStorage.get<AuthenticationType>('SettleAuthentication')) ?? null;
     };
     getSettleAuthentication();
+  }
+  private notNull = <T>(value: T | null): value is T => value !== null;
+
+  public subPasswordRequest() {
+    return this.passwordRequestSubject.pipe(filter(this.notNull));
+  }
+  public clearPasswordRequest() {
+    this.passwordRequestSubject.next(null);
   }
 
   public getPassword = async (options: KeyChain.Options = {}) => {

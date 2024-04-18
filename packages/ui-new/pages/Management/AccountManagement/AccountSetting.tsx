@@ -8,7 +8,6 @@ import { useAccountFromId, useCurrentAddressValueOfAccount, useVaultOfAccount, V
 import { zeroAddress } from '@core/utils/address';
 import Text from '@components/Text';
 import TextInput from '@components/TextInput';
-import Checkbox from '@components/Checkbox';
 import HourglassLoading from '@components/Loading/Hourglass';
 import Button from '@components/Button';
 import BottomSheet, { snapPoints, type BottomSheetMethods } from '@components/BottomSheet';
@@ -136,8 +135,8 @@ const AccountConfig: React.FC<StackScreenProps<typeof AccountSettingStackName>> 
             testID="removeAccount"
             disabled={inDelete}
           >
-            <Checkbox checked Icon={Delete} pointerEvents="none" />
-            <Text style={[styles.mainText, styles.removeText, { color: colors.textPrimary }]}>{t('account.action.remove')}</Text>
+            <Delete color={colors.textPrimary} width={24} height={24} />
+            <Text style={[styles.mainText, { color: colors.textPrimary }]}>{t('account.action.remove')}</Text>
             {inDelete && <HourglassLoading style={styles.deleteLoading} />}
           </Pressable>
 
@@ -206,9 +205,6 @@ const styles = StyleSheet.create({
   },
   removeContainer: {
     marginTop: 20,
-  },
-  removeText: {
-    marginLeft: 8,
   },
   deleteLoading: {
     marginLeft: 'auto',

@@ -5,7 +5,7 @@ import Clipboard from '@react-native-clipboard/clipboard';
 import { showMessage } from 'react-native-flash-message';
 import { useCurrentAddressValue, useAssetsTotalPriceValue } from '@core/WalletCore/Plugins/ReactInject';
 import { zeroAddress, shortenAddress } from '@core/utils/address';
-import { numberFormat } from '@core/utils/balance'
+import { numberWithCommas } from '@core/utils/balance'
 import { usePriceVisible } from '@hooks/usePriceVisible';
 import Text from '@components/Text';
 import Skeleton from '@components/Skeleton';
@@ -35,7 +35,7 @@ export const CurrentAddress: React.FC = () => {
       style={({ pressed }) => [styles.addressContainer, { backgroundColor: pressed ? colors.underlay : 'transparent' }]}
     >
       <Text style={{ color: colors.textSecondary, opacity: currentAddressValue ? 1 : 0 }}>{shortenAddress(currentAddressValue || zeroAddress)}</Text>
-      <Copy color={colors.iconPrimary} />
+      <Copy color={colors.textSecondary} />
     </Pressable>
   );
 };
@@ -69,7 +69,7 @@ export const TotalPrice: React.FC = () => {
     >
       <Asterisks />
       <Text style={[styles.totalPriceText, { color: colors.textPrimary, opacity: priceVisible ? 1 : 0 }]} numberOfLines={1}>
-        ${numberFormat(totalPriceValue)}
+        ${numberWithCommas(totalPriceValue)}
       </Text>
       <EyeClose color={colors.textPrimary} width={24} height={24} style={[styles.eye, { opacity: priceVisible ? 1 : 0 }]} />
     </Pressable>

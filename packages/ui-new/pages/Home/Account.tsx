@@ -7,7 +7,7 @@ import Text from '@components/Text';
 import useForceUpdateOnFocus from '@hooks/useUpdateOnFocus';
 import { HomeStackName, type StackScreenProps } from '@router/configs';
 import { toDataUrl } from '@utils/blockies';
-import BSIMCardWallet from '@assets/icons/wallet-bsim-shadow.webp';
+import BSIMCardWallet from '@assets/icons/wallet-bsim.webp';
 import HDWallet from '@assets/icons/wallet-hd.webp';
 import ExistWallet from '@assets/icons/wallet-Imported.webp';
 import ArrowLeft from '@assets/icons/arrow-left.svg';

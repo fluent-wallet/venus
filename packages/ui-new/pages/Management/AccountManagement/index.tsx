@@ -11,7 +11,6 @@ import {
   type StackScreenProps,
 } from '@router/configs';
 import AccountsList, { styles as accountListStyles } from '@modules/AccountsList';
-import Checkbox from '@components/Checkbox';
 import Add from '@assets/icons/add.svg';
 import Delete from '@assets/icons/delete.svg';
 import { useTranslation } from 'react-i18next';
@@ -33,7 +32,7 @@ const AccountManagement: React.FC<StackScreenProps<typeof AccountManagementStack
         onPress={() => navigation.navigate(AddAnotherWalletStackName)}
         testID="addAnotherWallet"
       >
-        <Checkbox checked Icon={Add} pointerEvents="none" />
+        <Add color={colors.textPrimary} width={24} height={24} />
         <Text style={[accountListStyles.manageText, { color: colors.textPrimary }]}>{t('account.action.addOther')}</Text>
       </Pressable>
 
@@ -42,7 +41,7 @@ const AccountManagement: React.FC<StackScreenProps<typeof AccountManagementStack
         onPress={() => navigation.navigate(EraseAllWalletStackName)}
         testID="eraseAllWallets"
       >
-        <Checkbox checked Icon={Delete} pointerEvents="none" />
+        <Delete color={colors.textPrimary} width={24} height={24} />
         <Text style={[accountListStyles.manageText, { color: colors.textPrimary }]}>{t('account.action.eraseAll')}</Text>
       </Pressable>
     </View>

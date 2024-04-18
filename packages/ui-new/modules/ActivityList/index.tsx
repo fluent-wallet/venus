@@ -1,5 +1,5 @@
 import React, { memo, useMemo } from 'react';
-import { StyleSheet } from 'react-native';
+import { View, StyleSheet } from 'react-native';
 import { useTheme } from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';
 import { Image } from 'expo-image';
@@ -7,6 +7,7 @@ import { useUnfinishedTxs, useFinishedTxs } from '@core/WalletCore/Plugins/React
 import { type Tx } from '@core/database/models/Tx';
 import Text from '@components/Text';
 import NoneActivity from '@assets/images/none-activity.webp';
+import Calendar from '@assets/icons/calendar.svg';
 import { styles as noneStyles } from '../AssetsList/TokensList/ReceiveFunds';
 import ActivityItem from './ActivityItem';
 
@@ -74,10 +75,13 @@ const ActivityList: React.FC<{ onPress?: (v: Tx) => void }> = memo(({ onPress })
       {finishedTxs?.length > 0 &&
         finishedTxsByDay.map((tx) =>
           tx instanceof ActivityDate ? (
-            <Text key={`${tx.day}${tx.month}${tx.year}`} style={[styles.date, { color: colors.textSecondary, borderColor: colors.borderThird }]}>
-              {MONTH_TXT[tx.month]} {tx.day},{'  '}
-              {tx.year}
-            </Text>
+            <View style={styles.dateWrapper} key={`${tx.day}${tx.month}${tx.year}`}>
+              <Calendar color={colors.textSecondary} />
+              <Text style={[styles.date, { color: colors.textSecondary, borderColor: colors.borderThird }]}>
+                {MONTH_TXT[tx.month]} {tx.day},{'  '}
+                {tx.year}
+              </Text>
+            </View>
           ) : (
             <ActivityItem key={(tx as Tx).id} tx={tx as Tx} onPress={onPress} />
           ),
@@ -87,16 +91,19 @@ const ActivityList: React.FC<{ onPress?: (v: Tx) => void }> = memo(({ onPress })
 });
 
 const styles = StyleSheet.create({
-  date: {
-    alignSelf: 'flex-start',
+  dateWrapper: {
+    display: 'flex',
+    flexDirection: 'row',
+    alignItems: 'center',
     marginTop: 16,
-    marginLeft: 16,
+    marginBottom: 4,
+    paddingHorizontal: 26,
+  },
+  date: {
     fontSize: 14,
     fontWeight: '300',
-    lineHeight: 32,
-    paddingHorizontal: 10,
-    borderWidth: 1,
-    borderRadius: 6,
+    lineHeight: 18,
+    marginLeft: 4,
   },
   img: {
     alignSelf: 'center',
