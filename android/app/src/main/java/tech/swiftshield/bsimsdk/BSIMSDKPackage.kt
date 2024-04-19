@@ -1,4 +1,4 @@
-package com.wallet.bsimsdk
+package tech.swiftshield.bsimsdk
 
 import android.view.View
 import com.facebook.react.ReactPackage

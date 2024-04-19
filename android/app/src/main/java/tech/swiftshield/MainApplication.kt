@@ -1,4 +1,4 @@
-package com.wallet
+package tech.swiftshield
 import android.content.res.Configuration
 import expo.modules.ApplicationLifecycleDispatcher
 import expo.modules.ReactNativeHostWrapper
@@ -18,7 +18,7 @@ import com.facebook.soloader.SoLoader
 import com.facebook.react.common.assets.ReactFontManager;
 
 //import com.microsoft.codepush.react.CodePush
-import com.wallet.bsimsdk.BSIMSDKPackage
+import tech.swiftshield.bsimsdk.BSIMSDKPackage
 import com.nozbe.watermelondb.jsi.WatermelonDBJSIPackage;
 
 class MainApplication : Application(), ReactApplication {

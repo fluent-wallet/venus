@@ -1,4 +1,4 @@
-package com.wallet
+package tech.swiftshield
 import expo.modules.ReactActivityDelegateWrapper
 
 import android.os.Bundle

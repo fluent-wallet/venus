@@ -1,4 +1,4 @@
-package com.wallet.bsimsdk
+package tech.swiftshield.bsimsdk
 
 import com.example.bsimlib.Sdk
 import com.example.bsimlib.CoinType
