@@ -6,13 +6,13 @@ export const APP_VERSION_FLAG_FEATURE = {
   value: getAppEnv(),
 };
 
-export const SWITCH_NETWORK_FEATURE_FULL_FEATURE = {
-  describe: 'switch network list',
+export const FULL_NETWORK_SWITCH_LIST_FEATURE = {
+  describe: 'allow full network select list',
   allow: isDev,
 };
 
-export const SWITCH_TEST_NETWORK_FEATURE = {
-  describe: 'switch test network list',
+export const ESPACE_NETWORK_SWITCH_FEATURE = {
+  describe: 'only change the test network and main network for espace',
   allow: isQA || isDev,
 };
 
