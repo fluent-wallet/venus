@@ -114,8 +114,6 @@ export const fetchESpaceServer = async ({
           } else {
             return [];
           }
-        } else if (scanRes.status === '0') {
-          throw new Error(scanRes.message);
         } else {
           throw new Error(scanRes.message || 'unknown scan error');
         }
