@@ -1,6 +1,6 @@
 {
   "name": "venus",
-  "version": "0.2.16",
+  "version": "0.3.0",
   "private": true,
   "scripts": {
     "android": "react-native run-android --tasks installDevDebug",
@@ -46,7 +46,7 @@
     "react-content-loader": "^7.0.0",
     "react-hook-form": "^7.50.0",
     "react-i18next": "^14.1.0",
-    "react-native": "0.73.6",
+    "react-native": "^0.73.7",
     "react-native-bignumber": "^0.2.2",
     "react-native-bootsplash": "^5.5.2",
     "react-native-config": "^1.5.1",

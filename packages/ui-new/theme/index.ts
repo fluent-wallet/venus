@@ -1,14 +1,4 @@
 export const palette = {
-  blue0: '#DEE6FB',
-  blue1: '#C2D2FB',
-  blue2: '#8BAAFC',
-  blue3: '#5383FD',
-  blue4: '#1C5BFE',
-  blue5: '#003FE3',
-  blue6: '#002FAA',
-  blue7: '#001855',
-  blue8: '#00081C',
-
   green0: '#F5FEFF',
   green1: '#E1FBFF',
   green2: '#CEF8FF',
@@ -26,7 +16,7 @@ export const palette = {
   gray4: '#999999',
   gray5: '#6F6F6F',
   gray6: '#535353',
-  gray7: '#383838',
+  gray7: '#2C2C2C',
   gray8: '#1E1E1E',
 
   red: '#FD6464',

@@ -87,14 +87,14 @@ android {
 
     buildToolsVersion rootProject.ext.buildToolsVersion
     compileSdk rootProject.ext.compileSdkVersion
-    namespace "com.wallet"
+    namespace "tech.swiftshield"
     defaultConfig {
-        applicationId "com.wallet"
+        applicationId "tech.swiftshield"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 23
-        versionName "0.2.16"
-        resValue "string", "build_config_package", "com.wallet"
+        versionCode 24
+        versionName "0.3.0"
+        resValue "string", "build_config_package", "tech.swiftshield"
     }
     signingConfigs {
         debug {

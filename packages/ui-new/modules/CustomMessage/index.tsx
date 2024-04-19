@@ -45,6 +45,7 @@ const CustomMessage: React.FC<{ message: Message; style?: StyleProp<ViewStyle> }
           backgroundColor: reverseColors.bgSecondary,
           width: messageWidth,
           justifyContent: !width || width === 'full' ? 'flex-start' : 'center',
+          paddingLeft: !width || width === 'full' ? 16 : 0,
         },
         style,
       ]}
@@ -63,10 +64,10 @@ const CustomMessage: React.FC<{ message: Message; style?: StyleProp<ViewStyle> }
 
 const styles = StyleSheet.create({
   wrapper: {
+    position: 'relative',
     display: 'flex',
     flexDirection: 'row',
     alignItems: 'center',
-    position: 'relative',
     alignSelf: 'center',
     padding: 16,
     borderRadius: 6,
@@ -76,7 +77,7 @@ const styles = StyleSheet.create({
     flexShrink: 0,
     width: 24,
     height: 24,
-    marginRight: 12,
+    marginRight: 8,
     alignSelf: 'flex-start',
   },
   textArea: {
