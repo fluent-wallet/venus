@@ -18,7 +18,7 @@ import NFTIcon from '@modules/AssetsList/NFTsList/NFTIcon';
 import { getDetailSymbol } from '@modules/AssetsList/NFTsList/NFTItem';
 import useFormatBalance from '@hooks/useFormatBalance';
 import useInAsync from '@hooks/useInAsync';
-
+import ProhibitIcon from '@assets/icons/prohibit.svg';
 interface Info {
   amount: string;
   isAmountValid: boolean;
@@ -198,16 +198,19 @@ const SetAssetAmount: React.FC<Props> = ({ targetAddress, asset, nftItemDetail, 
       )}
 
       {isAmountValid !== true && isAmountValid !== null && (
-        <Text style={[styles.errorTip, { color: colors.down }]}>
-          🚫{' '}
-          {isAmountValid === false
-            ? t('tx.amount.error.InsufficientBalance', { symbol })
-            : isAmountValid === 'less-than-zero'
-              ? t('tx.amount.error.invalidAmount')
-              : isAmountValid === 'nft-pure-integer'
+        <View style={styles.errorTip}>
+          <ProhibitIcon />
+          <Text style={[styles.errorTipText, { color: colors.down }]}>
+            {' '}
+            {isAmountValid === false
+              ? t('tx.amount.error.InsufficientBalance', { symbol })
+              : isAmountValid === 'less-than-zero'
                 ? t('tx.amount.error.invalidAmount')
-                : t('tx.amount.error.invalidAmount')}
-        </Text>
+                : isAmountValid === 'nft-pure-integer'
+                  ? t('tx.amount.error.invalidAmount')
+                  : t('tx.amount.error.invalidAmount')}
+          </Text>
+        </View>
       )}
       {typeof children === 'function' &&
         children({
@@ -267,9 +270,13 @@ const styles = StyleSheet.create({
     position: 'absolute',
   },
   errorTip: {
+    display: 'flex',
+    flexDirection: 'row',
     marginTop: 32,
     paddingHorizontal: 16,
-    fontSize: 16,
+  },
+  errorTipText: {
+    fontSize: 14,
     fontWeight: '600',
     lineHeight: 24,
   },

@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useEffect } from 'react';
-import { Pressable, StyleSheet, Keyboard } from 'react-native';
+import { Pressable, StyleSheet, Keyboard, View } from 'react-native';
 import { useTheme } from '@react-navigation/native';
 import { debounce } from 'lodash-es';
 import { useCurrentNetwork, getCurrentNetwork, AddressType } from '@core/WalletCore/Plugins/ReactInject';
@@ -14,8 +14,10 @@ import { SendTransactionStep1StackName, SendTransactionStep2StackName, type Send
 import { type ETHURL } from '@utils/ETHURL';
 import QrCode from '@assets/icons/qr-code.svg';
 import SendTransactionBottomSheet from '../SendTransactionBottomSheet';
+import ProhibitIcon from '@assets/icons/prohibit.svg';
 import Contract from './Contract';
 import { Trans, useTranslation } from 'react-i18next';
+import CheckIcon from '@assets/icons/check.svg';
 
 const SendTransactionStep1Receiver: React.FC<SendTransactionScreenProps<typeof SendTransactionStep1StackName>> = ({ navigation }) => {
   const { colors } = useTheme();
@@ -72,7 +74,7 @@ const SendTransactionStep1Receiver: React.FC<SendTransactionScreenProps<typeof S
       <SendTransactionBottomSheet showTitle={t('tx.send.title')}>
         <Text style={[styles.receiver, { color: colors.textSecondary }]}>{t('tx.send.receiver')}</Text>
         <TextInput
-          containerStyle={[styles.textinput, { borderColor: checkRes === 'Invalid' ? colors.down : colors.borderFourth }]}
+          containerStyle={[styles.textInput, { borderColor: checkRes === 'Invalid' ? colors.down : colors.borderFourth }]}
           showVisible={false}
           defaultHasValue={false}
           value={receiver}
@@ -106,13 +108,26 @@ const SendTransactionStep1Receiver: React.FC<SendTransactionScreenProps<typeof S
           </Pressable>
         )}
         {!checkRes && inChecking && <HourglassLoading style={styles.checkLoading} />}
-        {(checkRes === AddressType.EOA || checkRes === AddressType.Contract || checkRes === 'Invalid') && (
-          <Text style={[styles.checkRes, { color: checkRes === 'Invalid' ? colors.down : colors.textPrimary }]}>
-            {checkRes === 'Invalid' ? t('tx.send.address.invalid') : t('tx.send.address.valid')}
-          </Text>
+        {(checkRes === AddressType.EOA || checkRes === 'Invalid') && (
+          <View style={styles.checkResWarp}>
+            <Text style={[styles.checkResText, { color: checkRes === 'Invalid' ? colors.down : colors.textPrimary }]}>
+              {checkRes === 'Invalid' ? (
+                <View style={styles.checkRes}>
+                  <ProhibitIcon width={18} height={18} />
+                  <Text style={[styles.checkResText, { color: colors.down }]}> {t('tx.send.address.invalid')}</Text>
+                </View>
+              ) : (
+                <View style={styles.checkRes}>
+                  <CheckIcon color={colors.up} width={18} height={18} />
+                  <Text style={[styles.checkResText, { color: colors.up }]}> {t('tx.send.address.valid')}</Text>
+                </View>
+              )}
+            </Text>
+          </View>
         )}
         {checkRes === AddressType.Contract && (
-          <>
+          <View style={styles.contractAddress}>
+            <Text style={[styles.contractAddressValid, { color: colors.textPrimary }]}>{t('tx.send.address.valid')}</Text>
             <Text style={[styles.contractAddressTip, { color: colors.textPrimary }]}>{t('tx.send.address.contractRisk')}</Text>
             <Pressable
               style={({ pressed }) => [styles.knowRiskWrapper, { backgroundColor: pressed ? colors.underlay : 'transparent' }]}
@@ -122,7 +137,7 @@ const SendTransactionStep1Receiver: React.FC<SendTransactionScreenProps<typeof S
               <Checkbox checked={knowRisk} pointerEvents="none" />
               <Text style={(styles.contractAddressTip, { color: colors.textPrimary })}>{t('tx.send.address.contractRiskKnow')}</Text>
             </Pressable>
-          </>
+          </View>
         )}
         {/* <Contract setReceiver={setReceiver} /> */}
         <Button
@@ -154,7 +169,7 @@ const styles = StyleSheet.create({
     fontWeight: '300',
     lineHeight: 18,
   },
-  textinput: {
+  textInput: {
     marginHorizontal: 16,
     borderWidth: 1,
     backgroundColor: 'transparent',
@@ -174,23 +189,37 @@ const styles = StyleSheet.create({
     height: 60,
     alignSelf: 'center',
   },
-  checkRes: {
+  checkResWarp: {
     paddingHorizontal: 16,
-    fontSize: 16,
-    fontWeight: '600',
-    lineHeight: 24,
     marginTop: 32,
+  },
+  checkRes: {
+    display: 'flex',
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  checkResText: {
+    fontSize: 14,
+    fontWeight: '400',
+    lineHeight: 24,
+  },
+  contractAddress: {
+    marginTop: 32,
+    paddingHorizontal: 16,
+  },
+  contractAddressValid: {
+    fontWeight: '400',
+    lineHeight: 24,
+    fontSize: 16,
   },
   contractAddressTip: {
     marginTop: 16,
     marginBottom: 18,
-    paddingHorizontal: 32,
     fontSize: 14,
     fontWeight: '300',
     lineHeight: 18,
   },
   knowRiskWrapper: {
-    paddingHorizontal: 32,
     paddingVertical: 12,
     display: 'flex',
     flexDirection: 'row',

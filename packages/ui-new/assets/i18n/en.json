@@ -10,7 +10,7 @@
       "ManageMent" : "Management",
       "remove" : "Remove Account",
       "remove.describe" : "This Action will remove this wallet from the app.\n\nApp can not restore your wallet, you can restore with its seed phrase / private key.\n\nBe sure to back up your wallet, otherwise you will permanently lose it and all assets.",
-      "remove.title" : "⚠️ Delete this wallet?  "
+      "remove.title" : "Delete this wallet?  "
     },
     "add" : {
       "another" : {
@@ -89,9 +89,9 @@
       "word" : "Word"
     },
     "viewSecret" : {
-      "tips1" : "✅ Do NOT take a screenshot of this page",
-      "tips2" : "✅ Writing down on paper is recommended",
-      "tipsForPK" : "✅ Or scan the QR code directly from the trusted app you wish to import to",
+      "tips1" : "Do NOT take a screenshot of this page",
+      "tips2" : "Writing down on paper is recommended",
+      "tipsForPK" : "Or scan the QR code directly from the trusted app you wish to import to",
       "title" : "Write Down Your {{type}}",
       "view" : "Tap to view the {{type}}",
       "viewTips" : "Make sure your environment is safe"
@@ -245,14 +245,13 @@
     "content" : {
       "depositToken" : "Deposit tokens to your wallet",
       "noActivity" : "No Activity",
-      "noLatestTransaction" : null,
       "noNFT" : "No NFT",
       "noRecord" : "No Record",
       "noToken" : "No Token",
       "receive" : "Receive"
     },
-    "nfts" : "NFTs",
-    "tokens" : "Tokens"
+    "nfts" : "NFT",
+    "tokens" : "Token"
   },
   "tabs" : {
     "mywallet" : "My Wallets",
@@ -294,10 +293,10 @@
         "title" : "Transaction Confirmation"
       },
       "error" : {
-        "InsufficientBalance" : "\uD83E\uDD15 Insufficient {{symbol}} balance.",
-        "InsufficientBalanceForGas" : "\uD83E\uDD15 Insufficient {{symbol}} balance for gas.",
-        "network" : "\uD83D\uDEAB Your network is weak, trg again later.",
-        "unknown" : "\uD83D\uDEAB Send transaction Error."
+        "InsufficientBalance" : "Insufficient {{symbol}} balance.",
+        "InsufficientBalanceForGas" : "Insufficient {{symbol}} balance for gas.",
+        "network" : "Your network is weak, trg again later.",
+        "unknown" : "Send transaction Error."
       },
       "estimatedFee" : "Estimated Fee",
       "failed" : "Transaction Failed",

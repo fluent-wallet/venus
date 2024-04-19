@@ -41,6 +41,8 @@ import { SendTransactionStep4StackName, type SendTransactionScreenProps } from '
 import SendTransactionBottomSheet from '../SendTransactionBottomSheet';
 import { NFT } from '../Step3Amount';
 import BSIMVerify from '../BSIMVerify';
+import WarnIcon from '@assets/icons/warn.svg';
+import ProhibitIcon from '@assets/icons/prohibit.svg';
 
 const SendTransactionStep4Confirm: React.FC<SendTransactionScreenProps<typeof SendTransactionStep4StackName>> = ({ navigation, route }) => {
   useEffect(() => Keyboard.dismiss(), []);
@@ -144,7 +146,7 @@ const SendTransactionStep4Confirm: React.FC<SendTransactionScreenProps<typeof Se
     };
   }, []);
 
-  const [error, setError] = useState<{ type?: string; message: string } | null>(null);
+  const [error, setError] = useState<{ type?: string; message: string }>({ type: 'network errorr', message: ' ss' });
 
   const [bsimEvent, setBSIMEvent] = useState<BSIMEvent | null>(null);
   const bsimCancelRef = useRef<VoidFunction>(() => {});
@@ -304,13 +306,24 @@ const SendTransactionStep4Confirm: React.FC<SendTransactionScreenProps<typeof Se
           {error && (
             <>
               <View style={[styles.divider, { backgroundColor: colors.borderFourth }]} />
-              <Text style={[styles.errorText, { color: error.type === 'out of balance' ? colors.middle : colors.down }]}>
-                {error.type === 'out of balance'
-                  ? `${route.params.asset.type === AssetType.Native ? t('tx.confirm.error.InsufficientBalance', { symbol: nativeAsset?.symbol }) : t('tx.confirm.error.InsufficientBalanceForGas', { symbol: nativeAsset?.symbol })}`
-                  : error.type === 'network error'
-                    ? t('tx.confirm.error.network')
-                    : t('tx.confirm.error.unknown')}
-              </Text>
+
+              {error.type === 'out of balance' ? (
+                <View style={styles.errorWarp}>
+                  <WarnIcon color={colors.middle} />
+                  <Text style={[styles.errorText, { color: colors.middle }]}>
+                    {`${route.params.asset.type === AssetType.Native ? t('tx.confirm.error.InsufficientBalance', { symbol: nativeAsset?.symbol }) : t('tx.confirm.error.InsufficientBalanceForGas', { symbol: nativeAsset?.symbol })}`}
+                  </Text>
+                </View>
+              ) : (
+                <View style={styles.errorWarp}>
+                  <ProhibitIcon />
+                  {error.type === 'network error' ? (
+                    <Text style={[styles.errorText, { color: colors.down }]}>{t('tx.confirm.error.network')}</Text>
+                  ) : (
+                    <Text style={[styles.errorText, { color: colors.down }]}>{t('tx.confirm.error.unknown')}</Text>
+                  )}
+                </View>
+              )}
             </>
           )}
 
@@ -422,12 +435,17 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '300',
   },
-  errorText: {
+  errorWarp: {
+    display: 'flex',
+    flexDirection: 'row',
     marginTop: 8,
-    fontSize: 16,
+    paddingHorizontal: 16,
+  },
+
+  errorText: {
+    fontSize: 14,
     fontWeight: '600',
     lineHeight: 24,
-    paddingHorizontal: 16,
   },
   btnArea: {
     marginBottom: 32,
