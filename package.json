@@ -1,6 +1,6 @@
 {
   "name": "venus",
-  "version": "0.2.16",
+  "version": "0.3.0",
   "private": true,
   "scripts": {
     "android": "react-native run-android --tasks installDevDebug",
