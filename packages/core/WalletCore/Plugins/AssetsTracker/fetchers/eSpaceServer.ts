@@ -115,7 +115,11 @@ export const fetchESpaceServer = async ({
             return [];
           }
         } else {
-          throw new Error(scanRes.message || 'unknown scan error');
+          if (scanRes?.message?.includes('The parameter is wrong, please confirm it is correct')) {
+            return [];
+          } else {
+            throw new Error(scanRes.message || 'unknown scan error');
+          }
         }
       }),
     );
