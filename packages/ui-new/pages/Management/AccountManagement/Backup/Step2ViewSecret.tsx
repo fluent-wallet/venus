@@ -17,6 +17,7 @@ import { isSmallDevice } from '@utils/deviceInfo';
 import backToHome from '@utils/backToHome';
 import MaskPrivateKey from '@assets/images/mask-private-key.webp';
 import MaskSeedPhrase from '@assets/images/mask-seed-phrase.webp';
+import CheckIcon from '@assets/icons/check.svg';
 import Copy from '@assets/icons/copy.svg';
 import BackupBottomSheet from './BackupBottomSheet';
 
@@ -60,10 +61,19 @@ const BackupStep2ViewSecret: React.FC<BackupScreenProps<typeof BackupStep2StackN
       <Text style={[styles.largeText, styles.notice, { color: colors.textPrimary }]} numberOfLines={1}>
         {t('backup.viewSecret.title', { type: backupType === VaultType.HierarchicalDeterministic ? t('common.seedPhrase') : t('common.privateKey') })}
       </Text>
-      <Text style={[styles.description, styles.noticeDescription, { color: colors.textSecondary }]}>{t('backup.viewSecret.tips1')}</Text>
-      <Text style={[styles.description, styles.noticeDescription, { color: colors.textSecondary }]}>{t('backup.viewSecret.tips2')}</Text>
+      <View style={styles.noticeDescription}>
+        <CheckIcon color={colors.iconPrimary} width={20} height={20} />
+        <Text style={[styles.description, { color: colors.textSecondary }]}>{t('backup.viewSecret.tips1')}</Text>
+      </View>
+      <View style={styles.noticeDescription}>
+        <CheckIcon color={colors.iconPrimary} width={20} height={20} />
+        <Text style={[styles.description, { color: colors.textSecondary }]}>{t('backup.viewSecret.tips2')}</Text>
+      </View>
       {backupType === VaultType.PrivateKey && (
-        <Text style={[styles.description, styles.noticeDescription, { color: colors.textSecondary }]}>{t('backup.viewSecret.tipsForPK')}</Text>
+        <View style={styles.noticeDescription}>
+          <CheckIcon color={colors.iconPrimary} width={20} height={20} />
+          <Text style={[styles.description, { color: colors.textSecondary }]}>{t('backup.viewSecret.tipsForPK')}</Text>
+        </View>
       )}
       <View style={[styles.secretArea, { borderColor: colors.borderFourth }]}>
         {!secretData && (
@@ -154,7 +164,7 @@ const styles = StyleSheet.create({
     marginTop: isSmallDevice ? 10 : 20,
     marginBottom: 16,
     paddingHorizontal: 0,
-    textAlign: 'center',
+    paddingLeft: 16,
   },
   description: {
     fontSize: 14,
@@ -162,8 +172,12 @@ const styles = StyleSheet.create({
     lineHeight: isSmallDevice ? 16 : 18,
     marginBottom: isSmallDevice ? 6 : 8,
   },
+
   noticeDescription: {
-    paddingHorizontal: isSmallDevice ? 22 : 44,
+    display: 'flex',
+    flexDirection: 'row',
+    paddingHorizontal: 16,
+    gap: 5,
   },
   secretArea: {
     display: 'flex',

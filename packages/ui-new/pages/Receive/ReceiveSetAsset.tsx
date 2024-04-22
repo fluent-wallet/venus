@@ -3,7 +3,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { StyleSheet, Pressable, Keyboard } from 'react-native';
 import { useTheme } from '@react-navigation/native';
 import { type AssetInfo } from '@core/WalletCore/Plugins/AssetsTracker/types';
-import { useCurrentAddressValue, useCurrentNetwork } from '@core/WalletCore/Plugins/ReactInject';
+import { useCurrentAddressValue, useCurrentNetworkNativeAsset } from '@core/WalletCore/Plugins/ReactInject';
 import BottomSheet, { snapPoints, type BottomSheetMethods } from '@components/BottomSheet';
 import Text from '@components/Text';
 import Button from '@components/Button';
@@ -24,28 +24,17 @@ const ReceiveSetAsset: React.FC<Props> = ({ onConfirm, selectedAsset, amount, on
   const { colors } = useTheme();
   const { t } = useTranslation();
   const bottomSheetRef = useRef<BottomSheetMethods>(null!);
-  const [tempSelectAsset, setTempSelectAsset] = useState<AssetInfo | null>(() => selectedAsset);
+  const currentNetworkNativeAsset = useCurrentNetworkNativeAsset();
+  const [tempSelectAsset, setTempSelectAsset] = useState<AssetInfo | null>(() => selectedAsset || (currentNetworkNativeAsset as unknown as AssetInfo));
   const [showSelectAsset, setShowSelectAsset] = useState(false);
   const currentAddressValue = useCurrentAddressValue()!;
 
-  const currentNetwork = useCurrentNetwork()!;
   useEffect(() => {
-    const initNativeAsset = async () => {
-      const nativeAsset = await currentNetwork.nativeAsset;
-      if (nativeAsset) {
-        setTempSelectAsset(nativeAsset as unknown as AssetInfo);
-      }
-      return !!nativeAsset;
-    };
-
-    if (tempSelectAsset === null && !!currentNetwork) {
-      initNativeAsset().then((success) => {
-        if (!success) {
-          setTimeout(() => initNativeAsset(), 50);
-        }
-      });
+    if (!tempSelectAsset && currentNetworkNativeAsset) {
+      setTempSelectAsset(currentNetworkNativeAsset as unknown as AssetInfo);
     }
-  }, [currentNetwork?.id]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentNetworkNativeAsset?.id]);
 
   return (
     <>

@@ -1,16 +1,17 @@
 import React, { type MutableRefObject } from 'react';
 import { View, StyleSheet } from 'react-native';
 import { useTheme } from '@react-navigation/native';
+import { useTranslation } from 'react-i18next';
 import { Image } from 'expo-image';
 import { BSIMEvent, BSIMEventTypesName } from '@WalletCoreExtends/Plugins/BSIM/types';
 import BottomSheet, { type BottomSheetMethods } from '@components/BottomSheet';
 import Text from '@components/Text';
 import Button from '@components/Button';
+import Spinner from '@components/Spinner';
 import { screenHeight } from '@utils/deviceInfo';
-import BSIMCardWallet from '@assets/icons/wallet-bsim2.webp';
+import BSIMCardWallet from '@assets/icons/wallet-bsim.webp';
 import ArrowLeft from '@assets/icons/arrow-left2.svg';
-import TxErrorIcon from '@assets/icons/txError.svg';
-import { useTranslation } from 'react-i18next';
+import FailedIcon from '@assets/icons/message-fail.svg';
 
 interface Props {
   bottomSheetRef: MutableRefObject<BottomSheetMethods>;
@@ -20,22 +21,25 @@ interface Props {
 }
 
 const BSIMVerify: React.FC<Props> = ({ bottomSheetRef, bsimEvent, onClose, onRetry }) => {
-  const { colors } = useTheme();
+  const { colors, reverseColors, mode } = useTheme();
   const { t } = useTranslation();
 
   return (
     <BottomSheet ref={bottomSheetRef} snapPoints={snapPoints} onClose={onClose} index={0}>
       <View style={styles.container}>
-        {bsimEvent.type === BSIMEventTypesName.ERROR ? (
-          <View style={styles.titleContainer}>
-            <TxErrorIcon />
-            <Text style={[styles.title, { color: colors.textPrimary }]}>{t('tx.confirm.BSIM.error.title')}</Text>
-          </View>
-        ) : (
-          <View style={styles.titleContainer}>
-            <Text style={[styles.title, { color: colors.textPrimary }]}>{t('tx.confirm.BSIM.title')}</Text>
-          </View>
-        )}
+        <View style={styles.titleContainer}>
+          {bsimEvent.type !== BSIMEventTypesName.ERROR && (
+            <View style={{ width: 24, height: 24, marginRight: 4, justifyContent: 'center', alignItems: 'center', transform: [{ translateY: 1 }] }}>
+              <Spinner width={20} height={20} color={reverseColors[mode === 'light' ? 'iconPrimary' : 'textSecondary']} backgroundColor={colors.iconPrimary} />
+            </View>
+          )}
+          {bsimEvent.type === BSIMEventTypesName.ERROR && (
+            <FailedIcon style={{ marginRight: 4, transform: [{ translateY: 1 }] }} color={colors.down} width={24} height={24} />
+          )}
+          <Text style={[styles.title, { color: colors.textPrimary }]}>
+            {bsimEvent.type === BSIMEventTypesName.ERROR ? t('tx.confirm.BSIM.error.title') : t('tx.confirm.BSIM.title')}
+          </Text>
+        </View>
 
         <View style={styles.content}>
           <Image style={styles.bsimImg} source={BSIMCardWallet} />
@@ -49,7 +53,7 @@ const BSIMVerify: React.FC<Props> = ({ bottomSheetRef, bsimEvent, onClose, onRet
         <View style={styles.btnArea}>
           <Button testID="close" size="small" square Icon={ArrowLeft} onPress={() => bottomSheetRef.current?.close()} />
           <Button testID="retry" style={styles.btnRetry} size="small" onPress={onRetry} loading={bsimEvent.type !== BSIMEventTypesName.ERROR}>
-            {t('common.retry')}
+            {bsimEvent.type !== BSIMEventTypesName.ERROR ? '' : t('common.retry')}
           </Button>
         </View>
       </View>
@@ -62,6 +66,11 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: 16,
     paddingBottom: 32,
+  },
+  titleContainer: {
+    display: 'flex',
+    alignItems: 'center',
+    flexDirection: 'row',
   },
   title: {
     fontSize: 16,
@@ -80,12 +89,12 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 16,
-    marginTop: 48,
+    marginTop: 38,
     paddingRight: 16,
   },
   bsimImg: {
     width: 60,
-    height: 40,
+    height: 60,
   },
   btnArea: {
     marginTop: 'auto',
@@ -95,10 +104,6 @@ const styles = StyleSheet.create({
   },
   btnRetry: {
     flex: 1,
-  },
-  titleContainer: {
-    display: 'flex',
-    flexDirection: 'row',
   },
 });
 

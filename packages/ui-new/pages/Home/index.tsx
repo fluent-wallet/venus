@@ -10,7 +10,7 @@ import { HomeStackName, type StackScreenProps } from '@router/configs';
 import { Tabs, TabsContent, setHomeScrollY, type Tab } from '@modules/AssetsTabs';
 import AccountSelector from '@modules/AccountSelector';
 import NetworkSelector from '@modules/NetworkSelector';
-import { SWITCH_NETWORK_FEATURE_FULL_FEATURE, SWITCH_TEST_NETWORK_FEATURE } from '@utils/features';
+import { FULL_NETWORK_SWITCH_LIST_FEATURE, ESPACE_NETWORK_SWITCH_FEATURE } from '@utils/features';
 import Account from './Account';
 import HeaderRight from './HeaderRight';
 import { CurrentAddress, TotalPrice } from './Address&TotalPrice';
@@ -45,9 +45,9 @@ const Home: React.FC<StackScreenProps<typeof HomeStackName>> = ({ navigation }) 
           <HeaderRight
             navigation={navigation}
             onPressNetwork={() => {
-              if (SWITCH_NETWORK_FEATURE_FULL_FEATURE.allow) {
+              if (FULL_NETWORK_SWITCH_LIST_FEATURE.allow) {
                 setShowNetworkSelector(true);
-              } else if (SWITCH_TEST_NETWORK_FEATURE.allow) {
+              } else if (ESPACE_NETWORK_SWITCH_FEATURE.allow) {
                 const currentNetwork = getCurrentNetwork();
                 methods.switchToNetwork(currentNetwork?.netId === 1030 ? 71 : 1030);
               }

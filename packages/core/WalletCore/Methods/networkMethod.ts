@@ -44,7 +44,7 @@ export class NetworkMethod {
         symbol: params.nativeAsset?.symbol || network.name.split(' ')?.[0] || 'ETH',
         decimals: params.nativeAsset?.decimals || 18,
         icon: params.nativeAsset?.icon,
-        source: AssetSource.Official
+        source: AssetSource.Official,
       },
       true,
     );
@@ -89,9 +89,9 @@ export class NetworkMethod {
       }),
     );
 
-    if (prepareCreate) return [network, ...newAddresses, defaultAssetRule, nativeAsset];
-    return database.write(async () => {
-      await database.batch(network, ...newAddresses, defaultAssetRule, nativeAsset);
+    if (prepareCreate) return [...newAddresses, defaultAssetRule, nativeAsset, network];
+    return await database.write(async () => {
+      await database.batch(...newAddresses, defaultAssetRule, nativeAsset, network);
     });
   }
 

@@ -10,7 +10,7 @@
       "ManageMent" : "管理",
       "remove" : "刪除賬戶",
       "remove.describe" : "此操作會刪除此錢包。\n\n此應用程序無法恢復您的錢包，您可以使用其助記詞/私鑰恢復。\n\n請務必備份您的錢包，否則您將永久丟失它和所有資產。",
-      "remove.title" : "⚠️ 刪除此錢包？"
+      "remove.title" : "刪除此錢包？"
     },
     "add" : {
       "another" : {
@@ -89,9 +89,9 @@
       "word" : "單詞"
     },
     "viewSecret" : {
-      "tips1" : "✅ 不要截屏此頁面",
-      "tips2" : "✅ 最好抄寫在紙上，並保存好",
-      "tipsForPK" : "✅ 或通過掃描二維碼，導入值得信任的應用程序",
+      "tips1" : "不要截屏此頁面",
+      "tips2" : "最好抄寫在紙上，並保存好",
+      "tipsForPK" : "或通過掃描二維碼，導入值得信任的應用程序",
       "title" : "請記下你的 {{type}}",
       "view" : "點擊查看 {{type}}",
       "viewTips" : "請確保四周是安全的"
@@ -241,11 +241,10 @@
     "title" : "設置"
   },
   "tab" : {
-    "activity" : "交易記錄",
+    "activity" : "記錄",
     "content" : {
       "depositToken" : "快存入資產吧",
       "noActivity" : "還沒有交易",
-      "noLatestTransaction" : null,
       "noNFT" : "沒有收藏品",
       "noRecord" : "暫無記錄",
       "noToken" : "沒有代幣",
@@ -294,10 +293,10 @@
         "title" : "交易確認"
       },
       "error" : {
-        "InsufficientBalance" : "\uD83E\uDD15 {{symbol}} 餘額不足",
-        "InsufficientBalanceForGas" : "\uD83E\uDD15 {{symbol}} 餘額不足以支付燃氣費",
-        "network" : "\uD83D\uDEAB 網絡信號弱，請稍後重試",
-        "unknown" : "\uD83D\uDEAB 發送交易失敗"
+        "InsufficientBalance" : "{{symbol}} 餘額不足",
+        "InsufficientBalanceForGas" : "{{symbol}} 餘額不足以支付燃氣費",
+        "network" : "網絡信號弱，請稍後重試",
+        "unknown" : "發送交易失敗"
       },
       "estimatedFee" : "預估燃氣費",
       "failed" : "交易失敗",

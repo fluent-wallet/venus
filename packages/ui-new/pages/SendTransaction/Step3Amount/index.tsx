@@ -17,7 +17,7 @@ const SendTransactionStep3Amount: React.FC<SendTransactionScreenProps<typeof Sen
   const { colors } = useTheme();
   const { t } = useTranslation();
   return (
-    <SendTransactionBottomSheet>
+    <SendTransactionBottomSheet showTitle={t('tx.send.title')}>
       {route.params.nftItemDetail && (
         <>
           <Text style={[styles.text, styles.to, { color: colors.textSecondary }]}>{t('common.send')}</Text>
