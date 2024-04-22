@@ -306,7 +306,6 @@ const SendTransactionStep4Confirm: React.FC<SendTransactionScreenProps<typeof Se
           {error && (
             <>
               <View style={[styles.divider, { backgroundColor: colors.borderFourth }]} />
-
               {error.type === 'out of balance ' ? (
                 <View style={styles.errorWarp}>
                   <WarnIcon style={styles.errorIcon} color={colors.middle} width={24} height={24} />
@@ -439,7 +438,7 @@ const styles = StyleSheet.create({
     display: 'flex',
     flexDirection: 'row',
     alignItems: 'center',
-    marginTop: 12,
+    marginTop: 8,
     paddingHorizontal: 16,
   },
   errorIcon: {

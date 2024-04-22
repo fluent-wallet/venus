@@ -27,7 +27,7 @@ const BSIMVerify: React.FC<Props> = ({ bottomSheetRef, bsimEvent, onClose, onRet
     <BottomSheet ref={bottomSheetRef} snapPoints={snapPoints} onClose={onClose} index={0}>
       <View style={styles.container}>
         <View style={styles.titleContainer}>
-          <FailedIcon style={styles.titleIcon} color={colors.down} />
+          {bsimEvent.type === BSIMEventTypesName.ERROR && <FailedIcon style={styles.titleIcon} color={colors.down} />}
           <Text style={[styles.title, { color: colors.textPrimary }]}>
             {bsimEvent.type === BSIMEventTypesName.ERROR ? t('tx.confirm.BSIM.error.title') : t('tx.confirm.BSIM.title')}
           </Text>
@@ -84,12 +84,12 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 16,
-    marginTop: 48,
+    marginTop: 38,
     paddingRight: 16,
   },
   bsimImg: {
     width: 60,
-    height: 40,
+    height: 60,
   },
   btnArea: {
     marginTop: 'auto',
