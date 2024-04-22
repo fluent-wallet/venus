@@ -28,6 +28,7 @@ import { SendTransactionStep2StackName, SendTransactionStep3StackName, SendTrans
 import { Tabs, TabsContent, setSelectAssetScrollY, type Tab } from '@modules/AssetsTabs';
 import TokenItem from '@modules/AssetsList/TokensList/TokenItem';
 import NFTItem from '@modules/AssetsList/NFTsList/NFTItem';
+import ProhibitIcon from '@assets/icons/prohibit.svg';
 import SendTransactionBottomSheet from '../SendTransactionBottomSheet';
 
 interface Props {
@@ -213,12 +214,12 @@ const SendTransactionStep2Asset: React.FC<Props> = ({ navigation, route, onConfi
 
           {filterAssets.type !== 'local' && filterAssets.type !== 'remote' && (
             <Pressable
-              style={({ pressed }) => [{ backgroundColor: pressed ? colors.underlay : 'transparent' }]}
+              style={({ pressed }) => [styles.invalidWrapper, { backgroundColor: pressed ? colors.underlay : 'transparent' }]}
               disabled={filterAssets.type !== 'network-error'}
               testID="retry"
             >
-              <Text style={[styles.invalidTip, { color: colors.textPrimary }]}>
-                🚫{'   '}
+              <ProhibitIcon style={styles.invalidIcon} width={24} height={24} />
+              <Text style={[styles.invalidTip, { color: colors.down }]}>
                 {filterAssets.type === 'invalid-format' && t('tx.asset.error.invalidFormat')}
                 {filterAssets.type === 'invalid-ERC20' && t('tx.asset.error.invalidERC20')}
                 {filterAssets.type === 'network-error' && (
@@ -249,12 +250,20 @@ const styles = StyleSheet.create({
     flex: 1,
     marginVertical: 16,
   },
+  invalidWrapper: {
+    display: 'flex',
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    marginTop: 32,
+  },
+  invalidIcon: {
+    marginRight: 4,
+  },
   invalidTip: {
-    paddingHorizontal: 32,
-    fontSize: 16,
-    fontWeight: '600',
-    lineHeight: 24,
-    marginTop: 16,
+    fontSize: 14,
+    fontWeight: '300',
+    lineHeight: 18,
   },
   fetchLoading: {
     marginTop: 24,

@@ -70,7 +70,10 @@ const BackupStep2ViewSecret: React.FC<BackupScreenProps<typeof BackupStep2StackN
         <Text style={[styles.description, { color: colors.textSecondary }]}>{t('backup.viewSecret.tips2')}</Text>
       </View>
       {backupType === VaultType.PrivateKey && (
-        <Text style={[styles.description, styles.noticeDescription, { color: colors.textSecondary }]}>{t('backup.viewSecret.tipsForPK')}</Text>
+        <View style={styles.noticeDescription}>
+          <CheckIcon color={colors.iconPrimary} width={20} height={20} />
+          <Text style={[styles.description, { color: colors.textSecondary }]}>{t('backup.viewSecret.tipsForPK')}</Text>
+        </View>
       )}
       <View style={[styles.secretArea, { borderColor: colors.borderFourth }]}>
         {!secretData && (
@@ -173,7 +176,8 @@ const styles = StyleSheet.create({
   noticeDescription: {
     display: 'flex',
     flexDirection: 'row',
-    paddingLeft: 16,
+    paddingHorizontal: 16,
+    gap: 5,
   },
   secretArea: {
     display: 'flex',

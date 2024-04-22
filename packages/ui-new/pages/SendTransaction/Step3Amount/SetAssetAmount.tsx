@@ -19,6 +19,7 @@ import { getDetailSymbol } from '@modules/AssetsList/NFTsList/NFTItem';
 import useFormatBalance from '@hooks/useFormatBalance';
 import useInAsync from '@hooks/useInAsync';
 import ProhibitIcon from '@assets/icons/prohibit.svg';
+
 interface Info {
   amount: string;
   isAmountValid: boolean;
@@ -199,9 +200,8 @@ const SetAssetAmount: React.FC<Props> = ({ targetAddress, asset, nftItemDetail, 
 
       {isAmountValid !== true && isAmountValid !== null && (
         <View style={styles.errorTip}>
-          <ProhibitIcon />
+          <ProhibitIcon style={styles.errorIcon} />
           <Text style={[styles.errorTipText, { color: colors.down }]}>
-            {' '}
             {isAmountValid === false
               ? t('tx.amount.error.InsufficientBalance', { symbol })
               : isAmountValid === 'less-than-zero'
@@ -272,13 +272,17 @@ const styles = StyleSheet.create({
   errorTip: {
     display: 'flex',
     flexDirection: 'row',
+    alignItems: 'center',
     marginTop: 32,
     paddingHorizontal: 16,
   },
+  errorIcon: {
+    marginRight: 4
+  },
   errorTipText: {
     fontSize: 14,
-    fontWeight: '600',
-    lineHeight: 24,
+    fontWeight: '300',
+    lineHeight: 18,
   },
 });
 

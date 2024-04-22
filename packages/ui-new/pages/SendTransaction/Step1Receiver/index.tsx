@@ -1,6 +1,7 @@
 import React, { useState, useCallback, useEffect } from 'react';
 import { Pressable, StyleSheet, Keyboard, View } from 'react-native';
 import { useTheme } from '@react-navigation/native';
+import { Trans, useTranslation } from 'react-i18next';
 import { debounce } from 'lodash-es';
 import { useCurrentNetwork, getCurrentNetwork, AddressType } from '@core/WalletCore/Plugins/ReactInject';
 import method from '@core/WalletCore/Methods';
@@ -15,9 +16,8 @@ import { type ETHURL } from '@utils/ETHURL';
 import QrCode from '@assets/icons/qr-code.svg';
 import SendTransactionBottomSheet from '../SendTransactionBottomSheet';
 import ProhibitIcon from '@assets/icons/prohibit.svg';
+import SuccessIcon from '@assets/icons/success.svg';
 import Contract from './Contract';
-import { Trans, useTranslation } from 'react-i18next';
-import CheckIcon from '@assets/icons/check.svg';
 
 const SendTransactionStep1Receiver: React.FC<SendTransactionScreenProps<typeof SendTransactionStep1StackName>> = ({ navigation }) => {
   const { colors } = useTheme();
@@ -108,23 +108,19 @@ const SendTransactionStep1Receiver: React.FC<SendTransactionScreenProps<typeof S
           </Pressable>
         )}
         {!checkRes && inChecking && <HourglassLoading style={styles.checkLoading} />}
-        {(checkRes === AddressType.EOA || checkRes === 'Invalid') && (
+        {checkRes === AddressType.EOA && (
           <View style={styles.checkResWarp}>
-            <Text style={[styles.checkResText, { color: checkRes === 'Invalid' ? colors.down : colors.textPrimary }]}>
-              {checkRes === 'Invalid' ? (
-                <View style={styles.checkRes}>
-                  <ProhibitIcon width={18} height={18} />
-                  <Text style={[styles.checkResText, { color: colors.down }]}> {t('tx.send.address.invalid')}</Text>
-                </View>
-              ) : (
-                <View style={styles.checkRes}>
-                  <CheckIcon color={colors.up} width={18} height={18} />
-                  <Text style={[styles.checkResText, { color: colors.up }]}> {t('tx.send.address.valid')}</Text>
-                </View>
-              )}
-            </Text>
+            <SuccessIcon style={styles.checkIcon} color={colors.up} width={24} height={24} />
+            <Text style={[styles.checkResText, { color: colors.up }]}>{t('tx.send.address.valid')}</Text>
           </View>
         )}
+        {checkRes === 'Invalid' && (
+          <View style={styles.checkResWarp}>
+            <ProhibitIcon style={styles.checkIcon} width={24} height={24} />
+            <Text style={[styles.checkResText, { color: colors.down }]}>{t('tx.send.address.invalid')}</Text>
+          </View>
+        )}
+
         {checkRes === AddressType.Contract && (
           <View style={styles.contractAddress}>
             <Text style={[styles.contractAddressValid, { color: colors.textPrimary }]}>{t('tx.send.address.valid')}</Text>
@@ -180,28 +176,30 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
   },
   checkFailText: {
-    fontSize: 16,
+    fontSize: 14,
+    fontWeight: '300',
     textAlign: 'center',
   },
   checkLoading: {
     marginTop: 32,
-    width: 60,
-    height: 60,
+    width: 48,
+    height: 48,
     alignSelf: 'center',
   },
   checkResWarp: {
-    paddingHorizontal: 16,
-    marginTop: 32,
-  },
-  checkRes: {
     display: 'flex',
     flexDirection: 'row',
     alignItems: 'center',
+    paddingHorizontal: 16,
+    marginTop: 32,
+  },
+  checkIcon: {
+    marginRight: 4,
   },
   checkResText: {
     fontSize: 14,
-    fontWeight: '400',
-    lineHeight: 24,
+    fontWeight: '300',
+    lineHeight: 18,
   },
   contractAddress: {
     marginTop: 32,

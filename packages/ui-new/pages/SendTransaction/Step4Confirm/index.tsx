@@ -307,16 +307,16 @@ const SendTransactionStep4Confirm: React.FC<SendTransactionScreenProps<typeof Se
             <>
               <View style={[styles.divider, { backgroundColor: colors.borderFourth }]} />
 
-              {error.type === 'out of balance' ? (
+              {error.type === 'out of balance ' ? (
                 <View style={styles.errorWarp}>
-                  <WarnIcon color={colors.middle} />
+                  <WarnIcon style={styles.errorIcon} color={colors.middle} width={24} height={24} />
                   <Text style={[styles.errorText, { color: colors.middle }]}>
                     {`${route.params.asset.type === AssetType.Native ? t('tx.confirm.error.InsufficientBalance', { symbol: nativeAsset?.symbol }) : t('tx.confirm.error.InsufficientBalanceForGas', { symbol: nativeAsset?.symbol })}`}
                   </Text>
                 </View>
               ) : (
                 <View style={styles.errorWarp}>
-                  <ProhibitIcon />
+                  <ProhibitIcon style={styles.errorIcon} width={24} height={24} />
                   {error.type === 'network error' ? (
                     <Text style={[styles.errorText, { color: colors.down }]}>{t('tx.confirm.error.network')}</Text>
                   ) : (
@@ -438,15 +438,17 @@ const styles = StyleSheet.create({
   errorWarp: {
     display: 'flex',
     flexDirection: 'row',
-    marginTop: 8,
+    alignItems: 'center',
+    marginTop: 12,
     paddingHorizontal: 16,
   },
-
+  errorIcon: {
+    marginRight: 4,
+  },
   errorText: {
     fontSize: 14,
-    fontWeight: '600',
-    lineHeight: 24,
-    marginLeft: 2,
+    fontWeight: '300',
+    lineHeight: 18,
   },
   btnArea: {
     marginBottom: 32,
