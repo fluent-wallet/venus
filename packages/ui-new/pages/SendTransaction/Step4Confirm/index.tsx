@@ -146,7 +146,7 @@ const SendTransactionStep4Confirm: React.FC<SendTransactionScreenProps<typeof Se
     };
   }, []);
 
-  const [error, setError] = useState<{ type?: string; message: string }>({ type: 'network errorr', message: ' ss' });
+  const [error, setError] = useState<{ type?: string; message: string } | null>(null);
 
   const [bsimEvent, setBSIMEvent] = useState<BSIMEvent | null>(null);
   const bsimCancelRef = useRef<VoidFunction>(() => {});
@@ -446,6 +446,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '600',
     lineHeight: 24,
+    marginLeft: 2,
   },
   btnArea: {
     marginBottom: 32,

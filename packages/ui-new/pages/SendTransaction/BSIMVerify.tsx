@@ -7,9 +7,9 @@ import BottomSheet, { type BottomSheetMethods } from '@components/BottomSheet';
 import Text from '@components/Text';
 import Button from '@components/Button';
 import { screenHeight } from '@utils/deviceInfo';
-import BSIMCardWallet from '@assets/icons/wallet-bsim2.webp';
+import BSIMCardWallet from '@assets/icons/wallet-bsim.webp';
 import ArrowLeft from '@assets/icons/arrow-left2.svg';
-import TxErrorIcon from '@assets/icons/txError.svg';
+import FailedIcon from '@assets/icons/message-fail.svg';
 import { useTranslation } from 'react-i18next';
 
 interface Props {
@@ -26,16 +26,12 @@ const BSIMVerify: React.FC<Props> = ({ bottomSheetRef, bsimEvent, onClose, onRet
   return (
     <BottomSheet ref={bottomSheetRef} snapPoints={snapPoints} onClose={onClose} index={0}>
       <View style={styles.container}>
-        {bsimEvent.type === BSIMEventTypesName.ERROR ? (
-          <View style={styles.titleContainer}>
-            <TxErrorIcon />
-            <Text style={[styles.title, { color: colors.textPrimary }]}>{t('tx.confirm.BSIM.error.title')}</Text>
-          </View>
-        ) : (
-          <View style={styles.titleContainer}>
-            <Text style={[styles.title, { color: colors.textPrimary }]}>{t('tx.confirm.BSIM.title')}</Text>
-          </View>
-        )}
+        <View style={styles.titleContainer}>
+          <FailedIcon style={styles.titleIcon} color={colors.down} />
+          <Text style={[styles.title, { color: colors.textPrimary }]}>
+            {bsimEvent.type === BSIMEventTypesName.ERROR ? t('tx.confirm.BSIM.error.title') : t('tx.confirm.BSIM.title')}
+          </Text>
+        </View>
 
         <View style={styles.content}>
           <Image style={styles.bsimImg} source={BSIMCardWallet} />
@@ -49,7 +45,7 @@ const BSIMVerify: React.FC<Props> = ({ bottomSheetRef, bsimEvent, onClose, onRet
         <View style={styles.btnArea}>
           <Button testID="close" size="small" square Icon={ArrowLeft} onPress={() => bottomSheetRef.current?.close()} />
           <Button testID="retry" style={styles.btnRetry} size="small" onPress={onRetry} loading={bsimEvent.type !== BSIMEventTypesName.ERROR}>
-            {t('common.retry')}
+            {bsimEvent.type !== BSIMEventTypesName.ERROR ? '' : t('common.retry')}
           </Button>
         </View>
       </View>
@@ -62,6 +58,14 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: 16,
     paddingBottom: 32,
+  },
+  titleContainer: {
+    display: 'flex',
+    flexDirection: 'row',
+  },
+  titleIcon: {
+    marginRight: 2,
+    transform: [{ translateY: 1.5 }],
   },
   title: {
     fontSize: 16,
@@ -95,10 +99,6 @@ const styles = StyleSheet.create({
   },
   btnRetry: {
     flex: 1,
-  },
-  titleContainer: {
-    display: 'flex',
-    flexDirection: 'row',
   },
 });
 

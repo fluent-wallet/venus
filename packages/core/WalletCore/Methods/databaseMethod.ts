@@ -254,7 +254,6 @@ export class DatabaseMethod {
         );
         await database.batch(...hdPaths, ...(Array.isArray(networks) ? networks.flat() : []));
       });
-
       return true;
     } catch (error) {
       console.error('Init Database error', error);
