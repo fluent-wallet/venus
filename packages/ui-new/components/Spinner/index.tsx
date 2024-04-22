@@ -1,26 +1,27 @@
-import { Svg, Circle } from 'react-native-svg';
-import Animated, { withRepeat, useSharedValue, ReduceMotion, useAnimatedStyle, withTiming, Easing } from 'react-native-reanimated';
 import { useEffect } from 'react';
 import { StyleProp, ViewStyle } from 'react-native';
+import { Svg, Circle } from 'react-native-svg';
+import Animated, { withRepeat, useSharedValue, ReduceMotion, useAnimatedStyle, withTiming, Easing } from 'react-native-reanimated';
 
 const AnimatedSvg = Animated.createAnimatedComponent(Svg);
 
 interface Props {
   color: string;
-  background?: string;
+  backgroundColor?: string;
   width: number;
   height: number;
   strokeWidth?: number;
-  styles?: StyleProp<ViewStyle>;
+  style?: StyleProp<ViewStyle>;
 }
 
-const Spinner = ({ width, height, color, background, styles = {}, strokeWidth = 3 }: Props) => {
+const Spinner: React.FC<Props> = ({ width, height, color, backgroundColor, style, strokeWidth = 3 }) => {
   const sv = useSharedValue(0);
-  const style = useAnimatedStyle(() => {
+  const animateStyle = useAnimatedStyle(() => {
     return {
       transform: [{ rotate: `${sv.value}deg` }],
     };
   });
+
   useEffect(() => {
     sv.value = withRepeat(
       withTiming(360, { duration: 1500, reduceMotion: ReduceMotion.Never, easing: Easing.linear }),
@@ -32,8 +33,8 @@ const Spinner = ({ width, height, color, background, styles = {}, strokeWidth = 
   }, []);
 
   return (
-    <AnimatedSvg fill="none" viewBox="0 0 66 66" width={width} height={height} style={[style, styles]}>
-      <Circle cx="33" cy="33" fill="none" r="28" stroke={background} strokeWidth={strokeWidth} />
+    <AnimatedSvg fill="none" viewBox="0 0 66 66" width={width} height={height} style={[style, animateStyle]}>
+      <Circle cx="33" cy="33" fill="none" r="28" stroke={backgroundColor} strokeWidth={strokeWidth} />
       <Circle
         cx="33"
         cy="33"

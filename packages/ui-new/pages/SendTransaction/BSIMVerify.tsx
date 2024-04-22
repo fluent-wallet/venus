@@ -1,16 +1,17 @@
 import React, { type MutableRefObject } from 'react';
 import { View, StyleSheet } from 'react-native';
 import { useTheme } from '@react-navigation/native';
+import { useTranslation } from 'react-i18next';
 import { Image } from 'expo-image';
 import { BSIMEvent, BSIMEventTypesName } from '@WalletCoreExtends/Plugins/BSIM/types';
 import BottomSheet, { type BottomSheetMethods } from '@components/BottomSheet';
 import Text from '@components/Text';
 import Button from '@components/Button';
+import Spinner from '@components/Spinner';
 import { screenHeight } from '@utils/deviceInfo';
 import BSIMCardWallet from '@assets/icons/wallet-bsim.webp';
 import ArrowLeft from '@assets/icons/arrow-left2.svg';
 import FailedIcon from '@assets/icons/message-fail.svg';
-import { useTranslation } from 'react-i18next';
 
 interface Props {
   bottomSheetRef: MutableRefObject<BottomSheetMethods>;
@@ -20,14 +21,21 @@ interface Props {
 }
 
 const BSIMVerify: React.FC<Props> = ({ bottomSheetRef, bsimEvent, onClose, onRetry }) => {
-  const { colors } = useTheme();
+  const { colors, reverseColors, mode } = useTheme();
   const { t } = useTranslation();
 
   return (
     <BottomSheet ref={bottomSheetRef} snapPoints={snapPoints} onClose={onClose} index={0}>
       <View style={styles.container}>
         <View style={styles.titleContainer}>
-          {bsimEvent.type === BSIMEventTypesName.ERROR && <FailedIcon style={styles.titleIcon} color={colors.down} />}
+          {bsimEvent.type !== BSIMEventTypesName.ERROR && (
+            <View style={{ width: 24, height: 24, marginRight: 4, justifyContent: 'center', alignItems: 'center', transform: [{ translateY: 1 }] }}>
+              <Spinner width={20} height={20} color={reverseColors[mode === 'light' ? 'iconPrimary' : 'textSecondary']} backgroundColor={colors.iconPrimary} />
+            </View>
+          )}
+          {bsimEvent.type === BSIMEventTypesName.ERROR && (
+            <FailedIcon style={{ marginRight: 4, transform: [{ translateY: 1 }] }} color={colors.down} width={24} height={24} />
+          )}
           <Text style={[styles.title, { color: colors.textPrimary }]}>
             {bsimEvent.type === BSIMEventTypesName.ERROR ? t('tx.confirm.BSIM.error.title') : t('tx.confirm.BSIM.title')}
           </Text>
@@ -61,11 +69,8 @@ const styles = StyleSheet.create({
   },
   titleContainer: {
     display: 'flex',
+    alignItems: 'center',
     flexDirection: 'row',
-  },
-  titleIcon: {
-    marginRight: 2,
-    transform: [{ translateY: 1.5 }],
   },
   title: {
     fontSize: 16,
