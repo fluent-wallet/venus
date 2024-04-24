@@ -1,4 +1,4 @@
-name: Android build prod by release
+name: Android build prod by release AAB
 
 permissions:
   contents: write
@@ -6,10 +6,9 @@ permissions:
 on:
   push:
     tags:
-      - 'v*'
+      - 'v*-aab'
       - '!v*-qa*'
       - '!v*-hotfix'
-      - '!v*-aab'
 
 jobs:
   android-build:
