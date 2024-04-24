@@ -1,6 +1,8 @@
 import React, { useState, useCallback, useEffect } from 'react';
 import { Pressable, StyleSheet, Keyboard, View } from 'react-native';
 import { useTheme } from '@react-navigation/native';
+import Clipboard from '@react-native-clipboard/clipboard';
+import { showMessage } from 'react-native-flash-message';
 import { Trans, useTranslation } from 'react-i18next';
 import { debounce } from 'lodash-es';
 import { useCurrentNetwork, getCurrentNetwork, AddressType } from '@core/WalletCore/Plugins/ReactInject';
@@ -13,10 +15,11 @@ import HourglassLoading from '@components/Loading/Hourglass';
 import ScanQRCode from '@pages/ScanQRCode';
 import { SendTransactionStep1StackName, SendTransactionStep2StackName, type SendTransactionScreenProps } from '@router/configs';
 import { type ETHURL } from '@utils/ETHURL';
-import QrCode from '@assets/icons/qr-code.svg';
+import QrCodeIcon from '@assets/icons/qr-code.svg';
 import SendTransactionBottomSheet from '../SendTransactionBottomSheet';
 import ProhibitIcon from '@assets/icons/prohibit.svg';
 import SuccessIcon from '@assets/icons/success.svg';
+import CopyIcon from '@assets/icons/copy.svg';
 import Contract from './Contract';
 
 const SendTransactionStep1Receiver: React.FC<SendTransactionScreenProps<typeof SendTransactionStep1StackName>> = ({ navigation }) => {
@@ -69,6 +72,18 @@ const SendTransactionStep1Receiver: React.FC<SendTransactionScreenProps<typeof S
     }
   }, [receiver, checkReceiver]);
 
+  const handlePressPaste = useCallback(async () => {
+    const clipboardContent = await Clipboard.getString();
+    setReceiver(clipboardContent);
+  }, []);
+
+  const handlePressScan = useCallback(() => {
+    if (Keyboard.isVisible()) {
+      Keyboard.dismiss();
+    }
+    setShowScanQRCode(true);
+  }, []);
+
   return (
     <>
       <SendTransactionBottomSheet showTitle={t('tx.send.title')}>
@@ -80,20 +95,23 @@ const SendTransactionStep1Receiver: React.FC<SendTransactionScreenProps<typeof S
           value={receiver}
           onChangeText={(newNickName) => setReceiver(newNickName?.trim())}
           isInBottomSheet
-          SuffixIcon={!receiver ? QrCode : undefined}
           // TODO: this max length need consider network
           maxLength={200}
-          onPressSuffixIcon={() => {
-            if (Keyboard.isVisible()) {
-              Keyboard.dismiss();
-            }
-            setShowScanQRCode(true);
-          }}
           showClear={!!receiver}
           placeholder={t('tx.send.placeholder')}
           multiline
           numberOfLines={3}
         />
+        <View style={[styles.inputActionArea, { borderColor: checkRes === 'Invalid' ? colors.down : colors.borderFourth }]}>
+          <Pressable style={styles.inputAction} onPress={handlePressPaste}>
+            <CopyIcon />
+            <Text>Paste</Text>
+          </Pressable>
+          <Pressable style={styles.inputAction} onPress={handlePressScan}>
+            <QrCodeIcon />
+            <Text>Scan</Text>
+          </Pressable>
+        </View>
         {checkRes === 'NetworkError' && !inChecking && (
           <Pressable
             style={({ pressed }) => [styles.checkFail, { backgroundColor: pressed ? colors.underlay : 'transparent' }]}
@@ -170,6 +188,26 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     backgroundColor: 'transparent',
     minHeight: 88,
+    borderBottomLeftRadius: 0,
+    borderBottomRightRadius: 0,
+    borderBottomWidth: 0,
+  },
+  inputActionArea: {
+    marginHorizontal: 16,
+    display: 'flex',
+    flexDirection: 'row',
+    alignItems: 'center',
+    height: 56,
+    borderWidth: 1,
+    borderBottomLeftRadius: 6,
+    borderBottomRightRadius: 6,
+  },
+  inputAction: {
+    display: 'flex',
+    flexDirection: 'row',
+    alignItems: 'center',
+    width: '50%',
+    height: '100%',
   },
   checkFail: {
     marginTop: 26,
