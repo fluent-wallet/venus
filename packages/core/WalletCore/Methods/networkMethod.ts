@@ -89,9 +89,9 @@ export class NetworkMethod {
       }),
     );
 
-    if (prepareCreate) return [...newAddresses, defaultAssetRule, nativeAsset, network];
+    if (prepareCreate) return [network, ...newAddresses, defaultAssetRule, nativeAsset];
     return await database.write(async () => {
-      await database.batch(...newAddresses, defaultAssetRule, nativeAsset, network);
+      await database.batch(network, ...newAddresses, defaultAssetRule, nativeAsset);
     });
   }
 

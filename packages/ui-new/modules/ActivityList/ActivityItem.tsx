@@ -63,7 +63,7 @@ const styles = StyleSheet.create({
     display: 'flex',
     flexDirection: 'column',
     justifyContent: 'center',
-    paddingLeft: 36,
+    paddingLeft: 32,
     paddingRight: 16,
     height: 72,
   },
