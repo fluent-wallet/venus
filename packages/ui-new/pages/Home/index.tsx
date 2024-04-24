@@ -1,6 +1,6 @@
 import React, { useCallback, useRef, useState } from 'react';
 import { View, StyleSheet, type NativeScrollEvent } from 'react-native';
-import { useSafeAreaFrame, useSafeAreaInsets } from 'react-native-safe-area-context';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import PagerView from 'react-native-pager-view';
 import { useTheme } from '@react-navigation/native';
 import plugins from '@core/WalletCore/Plugins';
@@ -23,7 +23,6 @@ const Home: React.FC<StackScreenProps<typeof HomeStackName>> = ({ navigation }) 
   const { colors } = useTheme();
   const [currentTab, setCurrentTab] = useState<Tab>('Tokens');
   const pageViewRef = useRef<PagerView>(null);
-  const insets = useSafeAreaInsets();
 
   const handleScroll = useCallback((evt: NativeScrollEvent) => {
     setHomeScrollY(evt.contentOffset.y);
@@ -38,8 +37,8 @@ const Home: React.FC<StackScreenProps<typeof HomeStackName>> = ({ navigation }) 
   const [showNetworkSelector, setShowNetworkSelector] = useState(false);
 
   return (
-    <View style={{ flex: 1, paddingTop: insets.top, paddingRight: insets.right, paddingLeft: insets.left, paddingBottom: insets.bottom }}>
-      <View style={[styles.container, { backgroundColor: colors.bgPrimary }]}>
+    <>
+      <SafeAreaView style={[styles.container, { backgroundColor: colors.bgPrimary }]}>
         <View style={styles.header}>
           <Account showAccountSelector={showAccountSelector} onPress={() => setShowAccountSelector(true)} navigation={navigation} />
           <HeaderRight
@@ -63,10 +62,10 @@ const Home: React.FC<StackScreenProps<typeof HomeStackName>> = ({ navigation }) 
           <TabsContent currentTab={currentTab} setCurrentTab={setCurrentTab} pageViewRef={pageViewRef} type="Home" selectType="Home" />
         </RefreshScrollView>
         <NoNetworkTip />
-      </View>
+      </SafeAreaView>
       {showAccountSelector && <AccountSelector onClose={() => setShowAccountSelector(false)} />}
       {showNetworkSelector && <NetworkSelector onClose={() => setShowNetworkSelector(false)} />}
-    </View>
+    </>
   );
 };
 
