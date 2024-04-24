@@ -61,13 +61,7 @@ jobs:
           APP_ENV=prod
           PASSWORD_CRYPTO_KEY=$PASSWORD_CRYPTO_KEY
           END
-          cd android && ./gradlew app:assembleProdRelease && cd ..
-
-      - name: Release
-        uses: softprops/action-gh-release@v1
-        with:
-          files: |
-            ./android/app/build/outputs/apk/prod/release/app-prod-release.apk
+          npx react-native build-android --mode=release
 
       - name: install OSSUTIL
         run: |
@@ -86,4 +80,4 @@ jobs:
           accessKeySecret=$OSS_KEY
           END
       - name: Upload to OSS
-        run: yes | ossutil64 cp ./android/app/build/outputs/apk/prod/release/app-prod-release.apk oss://blockvenus/apks/SwiftShield.apk
+        run: yes | ossutil64 cp ./android/app/build/outputs/bundle/prodRelease/app-prod-release.aab oss://blockvenus/abbs/SwiftShield.aab
