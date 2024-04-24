@@ -1,5 +1,6 @@
 import { createContract } from '@cfx-kit/dapp-utils/dist/contract';
 import { fetchChain } from '@cfx-kit/dapp-utils/dist/fetch';
+import { AssetType } from '../../../../database/models/Asset';
 import { CFX_ESPACE_MAINNET_TOKEN_LIST_CONTRACT_ADDRESS, CFX_ESPACE_TESTNET_TOKEN_LIST_CONTRACT_ADDRESS } from '../../../../consts/network';
 import ESpaceTokenListABI from '../../../../contracts/ABI/ESpaceTokenList';
 import { eSpaceTestnetServerFetcher, eSpaceServerFetcher } from '../../AssetsTracker/fetchers/eSpaceServer';
@@ -34,7 +35,15 @@ export const fetchReceiveAssets = ({ endpoint, isTestnet }: { endpoint: string; 
       url: `token/tokeninfos?contracts=${addressList.join(',')}`,
     });
     return result?.map(
-      (item) => ({ contractAddress: item.contract, name: item.name, symbol: item.symbol, decimals: item.decimals, icon: item.iconUrl }) as AssetInfo,
+      (item) =>
+        ({
+          contractAddress: item.contract,
+          name: item.name,
+          symbol: item.symbol,
+          decimals: item.decimals,
+          icon: item.iconUrl,
+          type: AssetType.ERC20,
+        }) as AssetInfo,
     );
   });
 };
