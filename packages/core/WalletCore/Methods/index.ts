@@ -13,7 +13,6 @@ import { AccountGroupMethod } from './accountGroupMethod';
 import { VaultMethod } from './vaultMethod';
 import { NetworkMethod } from './networkMethod';
 import { DatabaseMethod } from './databaseMethod';
-import { TransactionMethod } from './transactionMethod';
 import { TxMethod } from './txMethod';
 import { AssetMethod, type AssetParams } from './assetMethod';
 import { AppMethod } from './appMethod';
@@ -97,6 +96,12 @@ export class Methods {
   public switchToNetwork(...args: Parameters<NetworkMethod['switchToNetwork']>) {
     return this.NetworkMethod.switchToNetwork(...args);
   }
+  public checkIsValidAddress(...args: Parameters<NetworkMethod['checkIsValidAddress']>) {
+    return this.NetworkMethod.checkIsValidAddress(...args);
+  }
+  public checkIsContractAddress(...args: Parameters<NetworkMethod['checkIsContractAddress']>) {
+    return this.NetworkMethod.checkIsContractAddress(...args);
+  }
 
   @inject(DatabaseMethod) private DatabaseMethod!: DatabaseMethod;
   public initDatabaseDefault(...args: Parameters<DatabaseMethod['initDatabaseDefault']>) {
@@ -122,14 +127,6 @@ export class Methods {
     return this.AssetMethod.prepareUpdateAsset(...args);
   }
 
-  @inject(TransactionMethod) private TransactionMethod!: TransactionMethod;
-  public getTransactionGasAndGasLimit(...args: Parameters<TransactionMethod['getGasPriceAndLimit']>) {
-    return this.TransactionMethod.getGasPriceAndLimit(...args);
-  }
-  public sendTransaction(...args: Parameters<TransactionMethod['sendTransaction']>) {
-    return this.TransactionMethod.sendTransaction(...args);
-  }
-
   @inject(TxMethod) private TxMethod!: TxMethod;
   public createTx(...args: Parameters<TxMethod['createTx']>) {
     return this.TxMethod.createTx(...args);
@@ -146,6 +143,9 @@ export class Methods {
   @inject(RequestMethod) private RequestMethod!: RequestMethod;
   public createRequest(...args: Parameters<RequestMethod['createRequest']>) {
     return this.RequestMethod.createRequest(...args);
+  }
+  public getRequestById(...args: Parameters<RequestMethod['getRequestById']>) {
+    return this.RequestMethod.getRequestById(...args);
   }
   public rejectAllPendingRequests(...args: Parameters<RequestMethod['rejectAllPendingRequests']>) {
     return this.RequestMethod.rejectAllPendingRequests(...args);
@@ -165,7 +165,6 @@ container.bind(AccountGroupMethod).to(AccountGroupMethod).inSingletonScope();
 container.bind(VaultMethod).to(VaultMethod).inSingletonScope();
 container.bind(NetworkMethod).to(NetworkMethod).inSingletonScope();
 container.bind(DatabaseMethod).to(DatabaseMethod).inSingletonScope();
-container.bind(TransactionMethod).to(TransactionMethod).inSingletonScope();
 container.bind(TxMethod).to(TxMethod).inSingletonScope();
 container.bind(AssetMethod).to(AssetMethod).inSingletonScope();
 container.bind(Methods).to(Methods).inSingletonScope();

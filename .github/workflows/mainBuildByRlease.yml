@@ -9,6 +9,7 @@ on:
       - 'v*'
       - '!v*-qa*'
       - '!v*-hotfix'
+      - '!v*-aab'
 
 jobs:
   android-build:

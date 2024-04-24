@@ -33,13 +33,20 @@
 	</dict>
 	<key>NSCameraUsageDescription</key>
 	<string>$(PRODUCT_NAME) needs access to your Camera.</string>
+	<key>NSFaceIDUsageDescription</key>
+	<string>$(PRODUCT_NAME) Authentication with TouchId or FaceID</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
-	<string></string>
+	<string/>
 	<key>UIAppFonts</key>
 	<array>
-		<string>sfpro_bold.ttf</string>
-		<string>sfpro_medium.ttf</string>
-		<string>sfpro_regular.ttf</string>
+		<string>sora_bold.ttf</string>
+		<string>sora_extrabold.ttf</string>
+		<string>sora_extralight.ttf</string>
+		<string>sora_light.ttf</string>
+		<string>sora_medium.ttf</string>
+		<string>sora_regular.ttf</string>
+		<string>sora_semibold.ttf</string>
+		<string>sora_thin.ttf</string>
 	</array>
 	<key>UILaunchStoryboardName</key>
 	<string>LaunchScreen</string>

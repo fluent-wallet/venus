@@ -1,0 +1,83 @@
+name: Android build prod by release
+
+permissions:
+  contents: write
+
+on:
+  push:
+    tags:
+      - 'v*'
+      - '!v*-qa*'
+      - '!v*-hotfix'
+      - '!v*-aab'
+
+jobs:
+  android-build:
+    name: Android Build
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out Git repository
+        uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: install dependencies
+        run: yarn
+
+      - name: Set up JDK envronment
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'zulu'
+          java-version: '17'
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+      - uses: actions/cache@v3
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-
+      - name: Make Gradlew Executable
+        run: cd android && chmod +x ./gradlew
+      - name: Build Android Release
+        env:
+          PASSWORD_CRYPTO_KEY: ${{ secrets.PASSWORD_CRYPTO_KEY }}
+          UPLOAD_KEYSTORE: ${{secrets.UPLOAD_KEYSTORE}}
+          SIGN_ALIAS: ${{secrets.SIGN_ALIAS}}
+          SIGN_KEY: ${{secrets.SIGN_KEY}}
+          PRODUCTION_ANDROID: ${{ secrets.PRODUCTION_ANDROID }}
+        run: |
+          echo $UPLOAD_KEYSTORE | base64 --decode > ./android/app/release.keystore.jks
+          echo "" > .env
+          cat >>.env <<END
+          APP_ENV=prod
+          PASSWORD_CRYPTO_KEY=$PASSWORD_CRYPTO_KEY
+          END
+          npx react-native build-android --mode=release
+
+      - name: install OSSUTIL
+        run: |
+          sudo -v ; curl https://gosspublic.alicdn.com/ossutil/install.sh | sudo bash
+      - name: Configure OSS
+        env:
+          OSS_KEY: ${{ secrets.OSS_KEY }}
+        run: |
+          touch ~/.ossutilconfig
+          chmod 644 ~/.ossutilconfig
+          cat >>~/.ossutilconfig <<END
+          [Credentials]
+          language=EN
+          endpoint=oss-cn-hongkong.aliyuncs.com
+          accessKeyID=LTAI5t7DymqoLptHF5Jvng3M
+          accessKeySecret=$OSS_KEY
+          END
+      - name: Upload to OSS
+        run: yes | ossutil64 cp ./android/app/build/outputs/bundle/prodRelease/app-prod-release.aab oss://blockvenus/abbs/SwiftShield.aab

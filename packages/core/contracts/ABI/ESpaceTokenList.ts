@@ -193,6 +193,6 @@ const ESpaceTokenList = [
     stateMutability: 'view',
     type: 'function',
   },
-];
+] as const;
 
 export default ESpaceTokenList;

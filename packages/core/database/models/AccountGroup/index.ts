@@ -49,7 +49,7 @@ export class AccountGroup extends Model {
       this.accounts
         .extend(Q.sortBy('index', Q.desc))
         .observe()
-        .pipe(map((accounts) => accounts?.at?.(0)?.index ?? -1))
+        .pipe(map((accounts) => accounts?.at?.(0)?.index ?? -1)),
     );
   }
 

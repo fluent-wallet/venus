@@ -29,10 +29,10 @@ export class TxMethod {
       const [txPayload, txExtra] = await Promise.all([
         this.createTxPayload(
           {
-            transaction: params.transaction,
+            tx: params.tx,
             address,
           },
-          true
+          true,
         ),
         this.createTxExtra(params.extraParams, true),
       ]);
@@ -57,7 +57,7 @@ export class TxMethod {
           txExtra,
           asset,
         },
-        true
+        true,
       );
       if (prepareCreate) return [tx, txPayload, txExtra] as const;
       return database.write(async () => {
@@ -68,26 +68,24 @@ export class TxMethod {
     }
   }
 
-  createTxPayload(params: { transaction: TransactionSubjectValue['transaction']; address?: Address }, prepareCreate: true): Promise<TxPayload>;
-  createTxPayload(params: { transaction: TransactionSubjectValue['transaction']; address?: Address }): Promise<void>;
-  async createTxPayload({ transaction, address }: { transaction: TransactionSubjectValue['transaction']; address?: Address }, prepareCreate?: true) {
-    const from = transaction.from ?? (await address?.getValue());
+  createTxPayload(params: { tx: TransactionSubjectValue['tx']; address?: Address }, prepareCreate: true): Promise<TxPayload>;
+  createTxPayload(params: { tx: TransactionSubjectValue['tx']; address?: Address }): Promise<void>;
+  async createTxPayload({ tx, address }: { tx: TransactionSubjectValue['tx']; address?: Address }, prepareCreate?: true) {
+    const from = tx.from ?? (await address?.getValue());
+    const chainId = (await address?.network)?.chainId;
     const txPayload = _createTxPayload(
       {
-        type: transaction.type?.toString(),
+        type: tx.type?.toString(),
         from,
-        to: transaction.to,
-        gasPrice: transaction.gasPrice?.toString(),
-        gas: transaction.gasLimit.toString(),
-        value: transaction.value.toString(),
-        nonce: transaction.nonce,
-        chainId: transaction.chainId.toString(),
-        data: transaction.data,
-        accessList: transaction.accessList,
-        maxFeePerGas: transaction.maxFeePerGas?.toString(),
-        maxPriorityFeePerGas: transaction.maxPriorityFeePerGas?.toString(),
+        to: tx.to,
+        gasPrice: tx.gasPrice?.toString(),
+        gas: String(tx.gasLimit),
+        value: String(tx.value),
+        nonce: String(tx.nonce),
+        chainId,
+        data: tx.data,
       },
-      true
+      true,
     );
     if (prepareCreate) return txPayload;
     return database.write(async () => {
@@ -108,7 +106,7 @@ export class TxMethod {
         address: tx.assetType === AssetType.ERC20 ? tx.to : undefined,
         method: tx.assetType === AssetType.ERC20 ? 'transfer' : undefined,
       },
-      true
+      true,
     );
     if (prepareCreate) return txExtra;
     return database.write(async () => {

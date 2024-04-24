@@ -1,10 +1,10 @@
 import * as KeyChain from 'react-native-keychain';
-import { Subject } from 'rxjs';
+import { BehaviorSubject, filter } from 'rxjs';
 import CryptoToolPlugin, { CryptoToolPluginClass } from '../CryptoTool';
 import plugins, { type Plugin } from '@core/WalletCore/Plugins';
 import database from '@core/database';
 import { getEncryptedVaultWithBSIM } from '@core/database/models/Vault/query';
-import { showBiometricsDisabledMessage } from '@pages/SetPassword/Biometrics';
+import { showBiometricsDisabledMessage } from '@pages/InitWallet/BiometricsWay';
 import { getPasswordCryptoKey } from '@utils/getEnv';
 
 declare module '@core/WalletCore/Plugins' {
@@ -37,20 +37,30 @@ export interface PasswordRequest {
 const authCryptoTool = new CryptoToolPluginClass();
 authCryptoTool.setGetPasswordMethod(getPasswordCryptoKey);
 
+const cacheTime = 750; // ms
 class AuthenticationPluginClass implements Plugin {
   name = 'Authentication' as const;
 
   private settleAuthenticationType: AuthenticationType | null = null;
   public AuthenticationType = AuthenticationType;
-  public passwordRequestSubject = new Subject<PasswordRequest>();
-  private pwdCache: { password: string; cacheTime: number } | null = null;
+  private passwordRequestSubject = new BehaviorSubject<PasswordRequest | null>(null);
+  private pwdCache: string | null = null;
   private getPasswordPromise: Promise<string | null> | null = null;
+  private pwdCacheTimer: NodeJS.Timeout | null = null;
 
   constructor() {
     const getSettleAuthentication = async () => {
       this.settleAuthenticationType = (await database.localStorage.get<AuthenticationType>('SettleAuthentication')) ?? null;
     };
     getSettleAuthentication();
+  }
+  private notNull = <T>(value: T | null): value is T => value !== null;
+
+  public subPasswordRequest() {
+    return this.passwordRequestSubject.pipe(filter(this.notNull));
+  }
+  public clearPasswordRequest() {
+    this.passwordRequestSubject.next(null);
   }
 
   public getPassword = async (options: KeyChain.Options = {}) => {
@@ -73,14 +83,20 @@ class AuthenticationPluginClass implements Plugin {
     } else if (this.settleAuthenticationType === AuthenticationType.Password) {
       if (this.getPasswordPromise) return this.getPasswordPromise;
       this.getPasswordPromise = new Promise<string>((_resolve, _reject) => {
-        if (!this.pwdCache || Date.now() - this.pwdCache.cacheTime > 0.75 * 1000) {
+        if (!this.pwdCache) {
+          if (this.pwdCacheTimer !== null) {
+            clearTimeout(this.pwdCacheTimer);
+            this.pwdCacheTimer = null;
+          }
+
           this.passwordRequestSubject.next({
             resolve: (pwd: string) => {
-              this.pwdCache = {
-                cacheTime: Date.now(),
-                password: pwd,
-              };
+              this.pwdCache = pwd;
               _resolve(pwd);
+              this.pwdCacheTimer = setTimeout(() => {
+                this.pwdCache = null;
+                this.pwdCacheTimer = null;
+              }, cacheTime);
             },
             reject: (err: any) => {
               this.pwdCache = null;
@@ -89,8 +105,7 @@ class AuthenticationPluginClass implements Plugin {
             verify: this.verifyPassword,
           });
         } else {
-          _resolve(this.pwdCache.password);
-          this.pwdCache.cacheTime = Date.now();
+          _resolve(this.pwdCache);
         }
       }).finally(() => {
         this.getPasswordPromise = null;
@@ -112,15 +127,9 @@ class AuthenticationPluginClass implements Plugin {
       await KeyChain.setGenericPassword('ePayWallet-user', encryptedPassword, {
         ...defaultOptions,
       });
-
       this.settleAuthenticationType = AuthenticationType.Biometrics;
       await database.localStorage.set('SettleAuthentication', AuthenticationType.Biometrics);
-
-      // If the user enables biometrics, we're trying to read the password immediately so we get the permission prompt.
-      await this.getPassword();
-    }
-
-    if (typeof password === 'string' && !!password) {
+    } else if (typeof password === 'string' && !!password) {
       this.settleAuthenticationType = AuthenticationType.Password;
       await database.localStorage.set('SettleAuthentication', AuthenticationType.Password);
     }
@@ -150,8 +159,7 @@ CryptoToolPlugin.setGetPasswordMethod(AuthenticationPlugin.getPassword);
 
 export default AuthenticationPlugin;
 
-
-const pattern = /cancel|\u53d6\u6d88/i; 
+const pattern = /cancel|\u53d6\u6d88/i;
 export function containsCancel(str: string): boolean {
   return pattern.test(str);
 }

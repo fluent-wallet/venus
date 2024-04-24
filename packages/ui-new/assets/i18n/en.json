@@ -1,0 +1,353 @@
+{
+  "account" : {
+    "action" : {
+      "add" : "Add Account",
+      "addOther" : "Add another wallet",
+      "add.title" : "Add Wallet",
+      "eraseAll" : "Erase all wallets",
+      "eraseAll.describe" : "Account data will be cleared.\n  \nBe sure to back up your wallet, otherwise you will permanently lose it and all assets.",
+      "eraseAll.title" : "⚠️ Erase all wallets?",
+      "ManageMent" : "Management",
+      "remove" : "Remove Account",
+      "remove.describe" : "This Action will remove this wallet from the app.\n\nApp can not restore your wallet, you can restore with its seed phrase / private key.\n\nBe sure to back up your wallet, otherwise you will permanently lose it and all assets.",
+      "remove.title" : "Delete this wallet?  "
+    },
+    "add" : {
+      "another" : {
+        "BSIM" : {
+          "success" : "Connect BSIM wallet success"
+        },
+        "create" : {
+          "success" : "Add new wallet success"
+        },
+        "import" : {
+          "success" : "Import wallet success"
+        }
+      }
+    },
+    "detail" : {
+      "accountName" : "Account Name",
+      "address" : "Address",
+      "title" : "Account"
+    },
+    "error" : {
+      "deleteAccount" : {
+        "failed" : "Clear account data failed"
+      }
+    },
+    "group" : {
+      "action" : {
+        "remove" : "Remove Group"
+      },
+      "inputLabel" : "Group Name",
+      "remove" : {
+        "error" : "The group in use cannot be removed.",
+        "errorUnknown" : "Remove group failed",
+        "success" : "Remove Group successfully"
+      },
+      "settings" : {
+        "BSIM" : "BSIM Card Settings",
+        "BSIMCode" : "Change BSIM Code"
+      },
+      "title" : {
+        "BSIM" : "BSIM Group",
+        "seed" : "Seed Phrase Group"
+      }
+    },
+    "HDWallet" : {
+      "select" : {
+        "noVerification" : "You have not completed\nthe security verification,<3> try again</3>.\n\n",
+        "pathType" : "HD Wallet Path Type",
+        "selected" : "{{accounts}} address{{es}} selected\n\n\n",
+        "title" : "Select HD Wallets"
+      }
+    },
+    "management" : {
+      "title" : "Account Management"
+    },
+    "remove" : {
+      "error" : {
+        "failed" : "Remove account failed",
+        "removeInUse" : "Selected account can't remove."
+      },
+      "successfully" : "Remove account successfully"
+    }
+  },
+  "backup" : {
+    "error" : {
+      "checkFailed" : "\uD83E\uDD14 Wrong word, please check again.",
+      "viewFailed" : "View {{backupText}} failed"
+    },
+    "notice" : {
+      "describe" : "If you lose your <1>seed phrase</1> or <3>private key</3>, you won’t be able to recover you wallet.\n\nObtaining <5>seed phrase</5> or  <7>private key</7> means owning all assets.\n\nPlease <9>protect</9> them carefully",
+      "title" : "Notice"
+    },
+    "success" : "Backuped !",
+    "title" : "Back Up",
+    "verify" : {
+      "title" : "Verify your seed phrase",
+      "word" : "Word"
+    },
+    "viewSecret" : {
+      "tips1" : "Do NOT take a screenshot of this page",
+      "tips2" : "Writing down on paper is recommended",
+      "tipsForPK" : "Or scan the QR code directly from the trusted app you wish to import to",
+      "title" : "Write Down Your {{type}}",
+      "view" : "Tap to view the {{type}}",
+      "viewTips" : "Make sure your environment is safe"
+    }
+  },
+  "common" : {
+    "account" : "Account",
+    "amount" : "Amount",
+    "backup" : "Backup",
+    "balance" : "Balance",
+    "cancel" : "Cancel",
+    "close" : "Close",
+    "confirm" : "Confirm",
+    "continue" : "Continue",
+    "copied" : "Copied",
+    "delete" : "Delete",
+    "dismiss" : "Dismiss",
+    "edit" : "Edit",
+    "enable" : "Enable",
+    "HDWallets" : "HD Wallets",
+    "index" : "Index",
+    "max" : "Max",
+    "next" : "Next",
+    "ok" : "OK",
+    "password" : "Password",
+    "privateKey" : "Private key",
+    "retry" : "Retry",
+    "return" : "Return",
+    "seedPhrase" : "Seed Phrase",
+    "send" : "Send",
+    "to" : "To",
+    "verifyPassword" : "Verify Password",
+    "view" : "View"
+  },
+  "home" : {
+    "backup" : {
+      "describe" : "Back up seed phrase to ensure the security of this wallet.  <1>Back Up ></1>",
+      "title" : "Funds at risk"
+    },
+    "buy" : "Buy",
+    "more" : "More",
+    "more.copyAddress" : "Copy address",
+    "more.viewInExplorer" : "View in explorer",
+    "noNetwork" : "Network Disconnected",
+    "receive" : "Receive",
+    "send" : "Send"
+  },
+  "initWallet" : {
+    "biometrics" : {
+      "disable" : {
+        "error" : {
+          "description" : "Please enable your biometrics in device settings.",
+          "title" : "Device biometrics not enabled"
+        }
+      }
+    },
+    "describe" : "Enable <1>Fingerprint </1> to access wallet.\n\nWhen enabled, sending transactions will verify identity via <3>Fingerprint</3> .",
+    "enableFingerprint" : "Enable Fingerprint",
+    "error" : {
+      "exist" : "This {{type}} has been added",
+      "invalidValue" : "Create vault failed: invalid value",
+      "unknown" : "Add new {{type}} account failed"
+    },
+    "msg" : {
+      "failed" : "Create wallet failed!",
+      "success" : "Completed! Remember to keep your password."
+    },
+    "setPassword" : "Set Password",
+    "setPassword.check" : "SwiftShield Wallet does not store your password.\nPlease <1>remember</1> your password.",
+    "setPassword.confirm" : "Confirm New Password",
+    "setPassword.create" : "Create Password",
+    "setPassword.describe" : "Add security verification to ensure the safety of your funds.",
+    "setPassword.error.length" : "Must be at least 8 characters.",
+    "setPassword.error.notMatch" : "Password must be match.",
+    "setPassword.new" : "New Password"
+  },
+  "receive" : {
+    "clickHereToSelect" : "Click here to select",
+    "describe" : "Only send {{netName}} network assets to this address.",
+    "selectAnAsset" : "Select an asset",
+    "selectAsset" : "Select asset",
+    "title" : "Receive"
+  },
+  "scan" : {
+    "parse" : {
+      "error" : {
+        "invalidTargetAddress" : "Invalid target address.",
+        "missChianId" : "Mismatched chain ID.",
+        "missChianTypes" : "Mismatched chain types."
+      }
+    },
+    "permission" : {
+      "describe" : "Please allow SwiftShield wallet to use camera permissions to scan the QR code.",
+      "reject" : {
+        "describe" : "Unable to scan. Please <1>open Camera</1> in the system permission.",
+        "openSettings" : "Open settings",
+        "title" : "Camera permission not granted for this app."
+      },
+      "title" : "Wallet Requires Access"
+    },
+    "photos" : "Photos",
+    "QRCode" : {
+      "error" : {
+        "notRecognized" : "Sorry, this QR code could not be recognized."
+      }
+    },
+    "title" : "Scan",
+    "walletConnect" : {
+      "error" : {
+        "connectFailed" : "Connect to wallet-connect failed",
+        "lowVersion" : "Sorry, The QR code version is to low"
+      }
+    }
+  },
+  "settings" : {
+    "aboutUs" : {
+      "action" : {
+        "checkUpdate" : "Check for updates",
+        "feedback" : "Feedback",
+        "teamsService" : "Terms of Service"
+      },
+      "title" : "SwiftShield Wallet",
+      "version" : "App version"
+    },
+    "appearance" : {
+      "dark" : "Dark",
+      "light" : "Light",
+      "system" : "System",
+      "title" : "Appearance"
+    },
+    "language" : {
+      "systemLang" : "Default Language",
+      "title" : "Language"
+    },
+    "navigation" : {
+      "aboutUs" : "About Us",
+      "accountManagement" : "Account Management",
+      "preferences" : "Preferences"
+    },
+    "preferences" : {
+      "navigation" : {
+        "appearance" : "Appearance",
+        "language" : "Language"
+      },
+      "title" : "Preferences"
+    },
+    "title" : "Settings"
+  },
+  "tab" : {
+    "activity" : "Activity",
+    "content" : {
+      "depositToken" : "Deposit tokens to your wallet",
+      "noActivity" : "No Activity",
+      "noNFT" : "No NFT",
+      "noRecord" : "No Record",
+      "noToken" : "No Token",
+      "receive" : "Receive"
+    },
+    "nfts" : "NFT",
+    "tokens" : "Token"
+  },
+  "tabs" : {
+    "mywallet" : "My Wallets",
+    "recently" : "Recently"
+  },
+  "tx" : {
+    "activity" : {
+      "status" : {
+        "confirmed" : "Confirmed",
+        "failed" : "Failed",
+        "pending" : "Pending"
+      }
+    },
+    "amount" : {
+      "anyAmount" : "Any Amount",
+      "error" : {
+        "estimate" : "Failed to estimate, please try again",
+        "InsufficientBalance" : "Insufficient {{symbol}} balance.",
+        "invalidAmount" : "Invalid amount"
+      },
+      "estimateMax" : "Estimate Max"
+    },
+    "asset" : {
+      "error" : {
+        "invalidERC20" : "Only valid ERC20 token search is supported",
+        "invalidFormat" : "Invalid contract address format",
+        "networkError" : "Your network is weak, <1>click to retry</1>"
+      },
+      "inputTitle" : "Select an asset",
+      "placeholder" : "Enter an asset name or address",
+      "zeroBalance" : "The balance of asset {{symbol}} is 0"
+    },
+    "confirm" : {
+      "BSIM" : {
+        "error" : {
+          "title" : "Signing Error"
+        },
+        "message" : "Communicating with BSIM Card",
+        "title" : "Transaction Confirmation"
+      },
+      "error" : {
+        "InsufficientBalance" : "Insufficient {{symbol}} balance.",
+        "InsufficientBalanceForGas" : "Insufficient {{symbol}} balance for gas.",
+        "network" : "Your network is weak, trg again later.",
+        "unknown" : "Send transaction Error."
+      },
+      "estimatedFee" : "Estimated Fee",
+      "failed" : "Transaction Failed",
+      "signingWith" : "Signing with",
+      "submitted" : {
+        "description" : "Waiting for execution",
+        "message" : "Transaction Submitted"
+      },
+      "title" : "Transaction Confirm"
+    },
+    "send" : {
+      "address" : {
+        "contractRisk" : "This address is a contract address, and transferring to this address may result in asset loss.",
+        "contractRiskKnow" : "Known the risks",
+        "invalid" : "Invalid Address",
+        "valid" : "Valid Address"
+      },
+      "error" : {
+        "failCheck" : "Fail to check address, <1>click to try again</1>"
+      },
+      "paste" : "Paste",
+      "placeholder" : "Enter an address",
+      "receiver" : "Receiver",
+      "scan" : "Scan",
+      "title" : "Send"
+    }
+  },
+  "wallet" : {
+    "import" : {
+      "error" : {
+        "empty" : "Input cannot be empty",
+        "unknown" : "Invalid seed phrase or private key",
+        "validPhrase" : "Valid seed phrase",
+        "validPrivateKey" : "Valid private key"
+      },
+      "placeholder" : "Enter your seed phrase which words separated by space or private key"
+    }
+  },
+  "welcome" : {
+    "addWith" : "or add with",
+    "connectBSIMWallet" : "Connect BSIM Wallet",
+    "createNewWallet" : "Create new wallet",
+    "error" : {
+      "BSIM" : {
+        "notFInd" : {
+          "describe" : "Please make sure you've inserted the BSIM Card and try again.",
+          "title" : "Can't find the BSIM Card"
+        }
+      }
+    },
+    "getStarted" : "Get Started",
+    "importExistingWallet" : "Import existing wallet"
+  }
+}

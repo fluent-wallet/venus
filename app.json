@@ -1,4 +1,7 @@
 {
   "name": "SwiftShield",
-  "displayName": "SwiftShield"
+  "displayName": "SwiftShield",
+  "plugins": [
+    "expo-localization"
+  ]
 }

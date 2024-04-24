@@ -67,6 +67,7 @@ export enum CoinTypes {
 
 export const BSIM_ERRORS: Record<string, string> = {
   default: 'BSIM error, unknown error.',
+  cancel: 'User cancel the operation.',
   A000: 'BSIM error, unknown error. Error code: A000',
   '6E00': 'Failed to call BSIM. Error code: 6E00',
   '6D00': 'Failed to call BSIM. Error code: 6D00',
@@ -157,6 +158,11 @@ interface BSIMSDKInterface {
    */
   getVersion(): Promise<string>;
   verifyBPIN(): Promise<string>;
+  /**
+   * update BPIN
+   */
+  updateBPIN(): Promise<string>;
+
 }
 
 export default BSIMSDK as BSIMSDKInterface;

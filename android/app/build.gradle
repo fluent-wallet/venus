@@ -9,8 +9,7 @@ apply plugin: "com.facebook.react"
 apply plugin: "kotlin-android"
 apply from: project(':react-native-config').projectDir.getPath() + "/dotenv.gradle"
 
-apply from: file("../../node_modules/react-native-vector-icons/fonts.gradle")
-apply from: "../../node_modules/react-native-code-push/android/codepush.gradle"
+// apply from: "../../node_modules/react-native-code-push/android/codepush.gradle"
 /**
  * This is the configuration block to customize your React Native Android app.
  * By default you don't need to apply any configuration, just uncomment the lines you need.
@@ -58,6 +57,11 @@ react {
 //
 //   The list of flags to pass to the Hermes compiler. By default is "-O", "-output-source-map"
 // hermesFlags = ["-O", "-output-source-map"]
+    //
+    // Added by install-expo-modules
+    entryFile = file(["node", "-e", "require('expo/scripts/resolveAppEntry')", rootDir.getAbsoluteFile().getParentFile().getAbsolutePath(), "android", "absolute"].execute(null, rootDir).text.trim())
+    cliFile = new File(["node", "--print", "require.resolve('@expo/cli')"].execute(null, rootDir).text.trim())
+    bundleCommand = "export:embed"
 }
 
 /**
@@ -83,14 +87,14 @@ android {
 
     buildToolsVersion rootProject.ext.buildToolsVersion
     compileSdk rootProject.ext.compileSdkVersion
-    namespace "com.wallet"
+    namespace "tech.swiftshield"
     defaultConfig {
-        applicationId "com.wallet"
+        applicationId "tech.swiftshield"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 5
-        versionName "0.1.4"
-        resValue "string", "build_config_package", "com.wallet"
+        versionCode 26
+        versionName "1.0.1"
+        resValue "string", "build_config_package", "tech.swiftshield"
     }
     signingConfigs {
         debug {
@@ -132,16 +136,12 @@ android {
             applicationIdSuffix ".qa"
             applicationId defaultConfig.applicationId
             signingConfig signingConfigs.debug
-            resValue "string", "CodePushDeploymentKey",System.getenv("STAGING_ANDROID")?: ''
-            resValue "string", "CodePushPublicKey", "-----BEGIN PUBLIC KEY-----\nMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAoDXy370b6d5TixRteLkq\nX57Wnao9xgjW6ZEr0xKsSi4khedELJ1w7aHQ4fhRZAnEiEoJTZpF+w5ir8sPLjcS\ncXA+556LRuFSzpAjTD8xE4LXN2SNyXMH3awM+EniAqjbF4KREbnANVK2Vj0B99ey\nqYKmbumu5Ne9HeRf+7LwcrApdd2JXF6MHo1argoUVkPAKeg89QASQUgButJbYqSb\n/cm1WDr+t2wez7RjEyHMb+mKiqIK/6w0P3S2JQfZd+7F+bRL5XNYrKckOUyXinaK\nwWw/OYELFFEyLKNTlY7VK9Gh+Ryoyn+Z0Of73CS7P6KjU2GxpdnqY+VE7wnOMG6W\nuwIDAQAB\n-----END PUBLIC KEY-----"
           }
           prod {
             dimension "version"
             applicationId defaultConfig.applicationId
             signingConfig signingConfigs.release
-            resValue "string", "CodePushDeploymentKey", System.getenv("PRODUCTION_ANDROID")?: ''
-            resValue "string", "CodePushPublicKey", "-----BEGIN PUBLIC KEY-----\nMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAmPCJ7nNWfj137zbh+ohU\nE1T89HcMwL94DdvqEh/Jwg09dEg/0yao5nDyuyrwWsQlDZVdNVUHfw4TNaBY47Yt\n2/QUIQ09Qb/Uiqdc4DfG239758u7B/cmIIwE/GWlh1lqipQnQIKo8AdDjFoV8Baf\noKu3vkpmwq9tVa7Ilar+puXhBrRhBvDNCfmSfmfeNm2coZdBrFNJoH3dk47x6Fxl\n+dg+vXhM/Vgx22ys+i4GNqYAV0jvNCm4PWrUeEAGxeZj6zL+wJe0qhjvy9auKq7Q\naliSAOAmHQB5htciFOqmfxNF/wU4Mg7m7cigqdEQoEXqmcO1YRJbXRMPQ1CBSS2K\niwIDAQAB\n-----END PUBLIC KEY-----"
-          }
+            }
            }
 
     //see:https://github.com/margelo/react-native-quick-crypto/issues/90

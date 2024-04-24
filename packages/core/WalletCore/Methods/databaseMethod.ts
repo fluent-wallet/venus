@@ -1,6 +1,9 @@
 import { injectable, inject } from 'inversify';
+import { Q, Query } from '@nozbe/watermelondb';
 import database, { dbRefresh$ } from '../../database';
 import TableName from '../../database/TableName';
+import { Address } from './../../database/models/Address';
+import { convertHexAddressToBase32 } from './../../database/models/Address/query';
 import { createHdPath } from '../../database/models/HdPath/query';
 import { ChainType, NetworkType } from '../../database/models/Network';
 import { NetworkParams } from '../../database/models/Network/query';
@@ -65,6 +68,8 @@ const HD_PATH_ARR = [
   { name: 'eth-default', value: DEFAULT_ETH_HDPATH },
 ] as const;
 
+const cfxIcon =
+  'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDIiIGhlaWdodD0iNDIiIHZpZXdCb3g9IjAgMCA0MiA0MiIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48Y2lyY2xlIGN4PSIyMSIgY3k9IjIxIiByPSIyMSIgZmlsbD0iI2ZmZiIvPjxwYXRoIGQ9Ik0yNi41NzUgMjMuODA3bC01LjYwMSA1LjU4OC0yLjc4Ny0yLjc3OCA1LjYwMS01LjU4OC0yLjc5Ny0yLjc4OS04LjQzIDguNDA1IDguMzc3IDguMzUyIDguNDMtOC40MDUtMi43OTMtMi43ODV6IiBmaWxsPSIjMUExQTFBIi8+PHBhdGggZD0iTTMyLjIgMTguMTI4TDIxLjAzNyA2Ljk5OCA5LjggMTguMjAybC4wMzUgNS41NSAxMS4xNTMtMTEuMTE2IDExLjE5IDExLjE2Mi4wMjItNS42N3oiIGZpbGw9IiMzOEExREIiLz48L3N2Zz4=';
 export const NETWORK_ARR: Array<NetworkParams & { hdPathIndex: number; nativeAsset: { name: string; symbol: string; decimals: number; icon: string } }> = [
   {
     name: CFX_MAINNET_NAME,
@@ -83,7 +88,7 @@ export const NETWORK_ARR: Array<NetworkParams & { hdPathIndex: number; nativeAss
       name: CFX_MAINNET_CURRENCY_NAME,
       symbol: CFX_MAINNET_CURRENCY_SYMBOL,
       decimals: DEFAULT_CURRENCY_DECIMALS,
-      icon: 'https://cdn.jsdelivr.net/gh/Conflux-Chain/helios@dev/packages/built-in-network-icons/cfx.svg',
+      icon: cfxIcon,
     },
   },
   {
@@ -103,7 +108,7 @@ export const NETWORK_ARR: Array<NetworkParams & { hdPathIndex: number; nativeAss
       name: CFX_ESPACE_MAINNET_CURRENCY_NAME,
       symbol: CFX_ESPACE_MAINNET_CURRENCY_SYMBOL,
       decimals: DEFAULT_CURRENCY_DECIMALS,
-      icon: 'https://cdn.jsdelivr.net/gh/Conflux-Chain/helios@dev/packages/built-in-network-icons/cfx.svg',
+      icon: cfxIcon,
     },
   },
   {
@@ -143,7 +148,7 @@ export const NETWORK_ARR: Array<NetworkParams & { hdPathIndex: number; nativeAss
       name: CFX_TESTNET_CURRENCY_NAME,
       symbol: CFX_TESTNET_CURRENCY_SYMBOL,
       decimals: DEFAULT_CURRENCY_DECIMALS,
-      icon: 'https://cdn.jsdelivr.net/gh/Conflux-Chain/helios@dev/packages/built-in-network-icons/cfx.svg',
+      icon: cfxIcon,
     },
   },
   {
@@ -163,7 +168,7 @@ export const NETWORK_ARR: Array<NetworkParams & { hdPathIndex: number; nativeAss
       name: CFX_ESPACE_TESTNET_CURRENCY_NAME,
       symbol: CFX_ESPACE_TESTNET_CURRENCY_SYMBOL,
       decimals: DEFAULT_CURRENCY_DECIMALS,
-      icon: 'https://cdn.jsdelivr.net/gh/Conflux-Chain/helios@dev/packages/built-in-network-icons/cfx.svg',
+      icon: cfxIcon,
     },
   },
   {
@@ -243,13 +248,12 @@ export class DatabaseMethod {
                 ...params,
                 ...(typeof hdPathIndex === 'number' ? { hdPath: hdPaths[hdPathIndex] } : null),
               },
-              true
+              true,
             );
-          })
+          }),
         );
         await database.batch(...hdPaths, ...(Array.isArray(networks) ? networks.flat() : []));
       });
-
       return true;
     } catch (error) {
       console.error('Init Database error', error);

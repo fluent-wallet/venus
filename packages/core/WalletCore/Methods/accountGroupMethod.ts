@@ -18,4 +18,8 @@ export class AccountGroupMethod {
   async getAccountGroupAccountByIndex({ accountGroup, index }: { accountGroup: AccountGroup; index: number }) {
     return accountGroup.getAccountByIndex(index);
   }
+
+  async getAccountGroup(accountGroup: AccountGroup) {
+    return accountGroup;
+  }
 }
