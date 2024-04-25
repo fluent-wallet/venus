@@ -102,11 +102,11 @@ const SendTransactionStep1Receiver: React.FC<SendTransactionScreenProps<typeof S
           numberOfLines={3}
         />
         <View style={[styles.inputActionArea, { borderColor: colors.borderFourth }]}>
-          <Pressable style={[styles.inputAction, { justifyContent: 'flex-end', paddingRight: 44 }]} onPress={handlePressPaste}>
+          <Pressable style={[styles.inputAction, { justifyContent: 'flex-end', paddingRight: 44 }]} onPress={handlePressPaste} testID="paste">
             <CopyIcon style={styles.inputActionIcon} color={colors.textPrimary} width={16} height={16} />
             <Text style={[styles.inputActionText, { color: colors.textPrimary }]}>{t('tx.send.paste')}</Text>
           </Pressable>
-          <Pressable style={[styles.inputAction, { justifyContent: 'flex-start', paddingLeft: 44 }]} onPress={handlePressScan}>
+          <Pressable style={[styles.inputAction, { justifyContent: 'flex-start', paddingLeft: 44 }]} onPress={handlePressScan} testID="scan">
             <QrCodeIcon style={styles.inputActionIcon} color={colors.textPrimary} width={16} height={16} />
             <Text style={[styles.inputActionText, { color: colors.textPrimary }]}>{t('tx.send.scan')}</Text>
           </Pressable>
