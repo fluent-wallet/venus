@@ -39,7 +39,12 @@ const Account: React.FC<{ showAccountSelector: boolean; onPress: () => void; nav
       <Text style={[styles.accountText, { color: colors.textPrimary }]} numberOfLines={1} ellipsizeMode="middle">
         {account?.nickname ?? 'Loading...'}
       </Text>
-      <ArrowLeft style={[styles.accountArrow, { transform: [{ rotate: showAccountSelector ? '-90deg' : '-180deg' }, { translateX: -1.5 }] }]} color={colors.iconPrimary} width={14} height={14} />
+      <ArrowLeft
+        style={[styles.accountArrow, { transform: [{ rotate: showAccountSelector ? '-90deg' : '-180deg' }, { translateX: -1.5 }] }]}
+        color={colors.iconPrimary}
+        width={14}
+        height={14}
+      />
     </Pressable>
   );
 };

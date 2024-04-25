@@ -1,14 +1,17 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useLayoutEffect } from 'react';
 import database from '@core/database';
 
 const useStorageState = <T>({ initState, key }: { initState: T; key: string }) => {
-  const [state, _setState] = useState<T>(undefined!);
+  const [state, _setState] = useState<T>(null!);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     const init = async () => {
       const localState = await database.localStorage.get(key);
-      if (localState !== null) _setState(localState as T);
-      _setState(initState);
+      if (localState !== null) {
+        _setState(localState as T);
+      } else {
+        _setState(initState);
+      }
     };
     init();
   }, []);

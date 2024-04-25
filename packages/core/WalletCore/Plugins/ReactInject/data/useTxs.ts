@@ -65,21 +65,26 @@ export const recentlyAddressObservable = combineLatest([unfinishedTxsObservable,
     ]),
   ),
   map(([txPayloads, txAssets]) =>
-    txPayloads.sort((a, b) => Number(BigInt(b.nonce ?? 0) - BigInt(a.nonce ?? 0))).map((txPayload, i) => formatTxData(txPayload, txAssets[i])),
+    txPayloads.sort((a, b) => Number((b.nonce ?? 0) - (a.nonce ?? 0))).map((txPayload, i) => formatTxData(txPayload, txAssets[i])),
   ),
-  map(
-    (formatedTxData) =>
-      Array.from(new Set(formatedTxData.flatMap((txPayload) => [txPayload?.to, txPayload?.from]))).filter((addressValue) => !!addressValue) as Array<string>,
-  ),
+  map((formatedTxData) => {
+    const toAddress = Array.from(new Set(formatedTxData.map((txPayload) => txPayload?.to))).filter((addressValue) => !!addressValue) as Array<string>;
+    const fromAddress = Array.from(new Set(formatedTxData.map((txPayload) => txPayload?.from))).filter((addressValue) => !!addressValue) as Array<string>;
+    return {
+      from: fromAddress.map((addressValue) => ({ addressValue, source: 'from' })),
+      to: toAddress.map((addressValue) => ({ addressValue, source: 'to' })),
+    };
+  }),
   withLatestFrom(accountsManageObservable),
   map(([latestAddressValues, accountsManage]) => {
     const allAccounts = accountsManage?.map((item) => item.data).flat();
-    return latestAddressValues.map((addressValue) => {
+    return latestAddressValues.to.map(({ addressValue, source }) => {
       const isMyAccount = allAccounts.find((account) => account.addressValue === addressValue);
       return {
         addressValue,
         nickname: isMyAccount?.nickname,
         type: isMyAccount ? 'Account' : ('Latest' as RecentlyType),
+        source,
       };
     });
   }),

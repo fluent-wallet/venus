@@ -22,7 +22,7 @@ const RecentlyList: React.FC<{
     return (
       <>
         <Image style={noneStyles.noneImg} source={NoneToken} contentFit="contain" />
-        <Text style={[noneStyles.noneText, { color: colors.textSecondary }]}>{t('tab.content.noNFT')}</Text>
+        <Text style={[noneStyles.noneText, { color: colors.textSecondary }]}>{t('tab.content.noRecord')}</Text>
       </>
     );
   }
