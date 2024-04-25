@@ -139,7 +139,6 @@ const styles = StyleSheet.create({
     height: 'auto',
     minHeight: 48,
     maxHeight: 96,
-    paddingVertical: 0,
     ...Platform.select({
       ios: {
         paddingTop: 14,
