@@ -28,6 +28,7 @@ const RecentlyList: React.FC<{
   }
   return (
     <BottomSheetFlatList
+      style={styles.container}
       data={recentlyAddress}
       keyExtractor={(item) => item.addressValue}
       renderItem={({ item }) => (
@@ -38,6 +39,9 @@ const RecentlyList: React.FC<{
 };
 
 export const styles = StyleSheet.create({
+  container: {
+    marginTop: 12,
+  },
   noRecentlyIcon: {
     marginTop: 24,
     marginBottom: 6,

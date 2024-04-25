@@ -1,26 +1,21 @@
 import { useAtomValue } from 'jotai';
 import { atomFamily, atomWithObservable } from 'jotai/utils';
-import { switchMap, startWith, of, combineLatest, map, withLatestFrom } from 'rxjs';
-import { dbRefresh$ } from '../../../../database';
+import { switchMap, of, combineLatest, map, withLatestFrom } from 'rxjs';
 import { observeTxById, observeFinishedTxWithAddress, observeUnfinishedTxWithAddress } from '../../../../database/models/Tx/query';
-import { observeSelectedAddress } from '../../../../database/models/Address/query';
+import { currentAddressObservable } from './useCurrentAddress';
 import { accountsManageObservable } from './useAccountsManage';
 import { TxPayload } from '../../../../database/models/TxPayload';
 import { formatTxData } from '../../../../utils/tx';
 
-export const unfinishedTxsObservable = dbRefresh$.pipe(
-  startWith([]),
-  switchMap(() => observeSelectedAddress()),
-  switchMap((selectedAddress) => (selectedAddress?.[0] ? observeUnfinishedTxWithAddress(selectedAddress[0].id) : of(null))),
+export const unfinishedTxsObservable = currentAddressObservable.pipe(
+  switchMap((currentAddress) => (currentAddress ? observeUnfinishedTxWithAddress(currentAddress.id) : of(null))),
 );
 
 const unfinishedTxsAtom = atomWithObservable(() => unfinishedTxsObservable, { initialValue: [] });
 export const useUnfinishedTxs = () => useAtomValue(unfinishedTxsAtom);
 
-export const finishedTxsObservable = dbRefresh$.pipe(
-  startWith([]),
-  switchMap(() => observeSelectedAddress()),
-  switchMap((selectedAddress) => (selectedAddress?.[0] ? observeFinishedTxWithAddress(selectedAddress[0].id) : of(null))),
+export const finishedTxsObservable = currentAddressObservable.pipe(
+  switchMap((currentAddress) => (currentAddress ? observeFinishedTxWithAddress(currentAddress.id) : of(null))),
 );
 
 const finishedTxsAtom = atomWithObservable(
@@ -76,9 +71,9 @@ export const recentlyAddressObservable = combineLatest([unfinishedTxsObservable,
     };
   }),
   withLatestFrom(accountsManageObservable),
-  map(([latestAddressValues, accountsManage]) => {
+  map(([latestAddresses, accountsManage]) => {
     const allAccounts = accountsManage?.map((item) => item.data).flat();
-    return latestAddressValues.to.map(({ addressValue, source }) => {
+    return latestAddresses.to.map(({ addressValue, source }) => {
       const isMyAccount = allAccounts.find((account) => account.addressValue === addressValue);
       return {
         addressValue,

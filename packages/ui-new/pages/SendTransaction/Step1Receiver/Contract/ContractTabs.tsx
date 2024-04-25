@@ -14,7 +14,7 @@ export enum Tab {
   Contacts = 'Contacts',
   MyWallets = 'My Wallets',
 }
-const TAB_WIDTH = 80;
+const TAB_WIDTH = 94;
 
 interface Props {
   currentTab: Tab;
@@ -23,7 +23,7 @@ interface Props {
   onPressReceiver: (receiver: string) => void;
 }
 
-const tabs = [Tab.Recently, Tab.Contacts, Tab.MyWallets] as const;
+const tabs = [Tab.Recently, Tab.MyWallets];
 
 export const Tabs: React.FC<Omit<Props, 'setCurrentTab' | 'onPressReceiver'>> = ({ currentTab, pageViewRef }) => {
   const { colors } = useTheme();

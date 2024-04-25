@@ -172,7 +172,6 @@ const SendTransactionStep4Confirm: React.FC<SendTransactionScreenProps<typeof Se
       });
       const nonce = await plugins.Transaction.getTransactionCount({ network: currentNetwork, addressValue: currentAddressValue });
       tx.nonce = Number(nonce);
-
       const blockNumber = await plugins.Transaction.getBlockNumber(currentNetwork);
 
       let txRaw!: string;

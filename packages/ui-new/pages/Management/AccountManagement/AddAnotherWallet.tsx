@@ -13,7 +13,7 @@ import { styles as accountListStyles } from '@modules/AccountsList';
 import { showNotFindBSIMCardMessage } from '@pages/WayToInitWallet';
 import ImportExistingWallet from '@pages/WayToInitWallet/ImportExistingWallet';
 import { AccountManagementStackName, type StackScreenProps } from '@router/configs';
-import { screenHeight } from '@utils/deviceInfo';
+import { screenHeight, OS } from '@utils/deviceInfo';
 import BSIMCardWallet from '@assets/icons/wallet-bsim.webp';
 import HDWallet from '@assets/icons/wallet-hd.webp';
 import ExistWallet from '@assets/icons/wallet-Imported.webp';
@@ -71,7 +71,7 @@ const AddAnotherWallet: React.FC<Props> = ({ navigation }) => {
 
   const _handleImportExistWallet = useCallback(async (value: string) => {
     navigation.setOptions({ gestureEnabled: false });
-    await new Promise((resolve) => setTimeout(resolve, 20));
+    await new Promise((resolve) => setTimeout(resolve, OS === 'ios' ? 150 : 20));
     const res = await createVault({ type: 'importExistWallet', value });
     if (res) {
       setTimeout(() => bottomSheetRef.current?.close(), 50);
