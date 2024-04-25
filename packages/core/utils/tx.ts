@@ -55,5 +55,6 @@ export const formatTxData = (payload: TxPayload | null, asset: Asset | null) => 
     value,
     tokenId,
     decimals,
+    nonce: payload?.nonce,
   };
 };
