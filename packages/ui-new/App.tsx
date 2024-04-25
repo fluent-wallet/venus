@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo } from 'react';
+import React, { useMemo } from 'react';
 import { useColorScheme } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import FlashMessage from 'react-native-flash-message';
@@ -15,7 +15,6 @@ import '@assets/i18n';
 
 const messagesTop = { top: statusBarHeight + 20 + (OS === 'android' ? 0 : supports3DStructureLight ? 40 : 10) };
 
-let hasInit = false;
 const App: React.FC = () => {
   const hasVault = useHasVault();
   const account = useCurrentAccount();
@@ -37,13 +36,6 @@ const App: React.FC = () => {
   );
 
   const isReady = hasVault === false || (hasVault === true && !!account?.nickname && !!currentAddressValue);
-  useEffect(() => {
-    if (hasInit) return;
-    if (isReady) {
-      hasInit = true;
-      BootSplash.hide();
-    }
-  }, [isReady]);
 
   return (
     <>
