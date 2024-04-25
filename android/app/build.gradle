@@ -92,7 +92,7 @@ android {
         applicationId "tech.swiftshield"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 26
+        versionCode 27
         versionName "1.0.0"
         resValue "string", "build_config_package", "tech.swiftshield"
     }
