@@ -2,7 +2,6 @@ import React, { useState, useCallback, useEffect } from 'react';
 import { Pressable, StyleSheet, Keyboard, View } from 'react-native';
 import { useTheme } from '@react-navigation/native';
 import Clipboard from '@react-native-clipboard/clipboard';
-import { showMessage } from 'react-native-flash-message';
 import { Trans, useTranslation } from 'react-i18next';
 import { debounce } from 'lodash-es';
 import { useCurrentNetwork, getCurrentNetwork, AddressType } from '@core/WalletCore/Plugins/ReactInject';
@@ -102,14 +101,14 @@ const SendTransactionStep1Receiver: React.FC<SendTransactionScreenProps<typeof S
           multiline
           numberOfLines={3}
         />
-        <View style={[styles.inputActionArea, { borderColor: checkRes === 'Invalid' ? colors.down : colors.borderFourth }]}>
-          <Pressable style={styles.inputAction} onPress={handlePressPaste}>
-            <CopyIcon />
-            <Text>Paste</Text>
+        <View style={[styles.inputActionArea, { borderColor: colors.borderFourth }]}>
+          <Pressable style={[styles.inputAction, { justifyContent: 'flex-end', paddingRight: 44 }]} onPress={handlePressPaste}>
+            <CopyIcon style={styles.inputActionIcon} color={colors.textPrimary} width={16} height={16} />
+            <Text style={[styles.inputActionText, { color: colors.textPrimary }]}>{t('tx.send.paste')}</Text>
           </Pressable>
-          <Pressable style={styles.inputAction} onPress={handlePressScan}>
-            <QrCodeIcon />
-            <Text>Scan</Text>
+          <Pressable style={[styles.inputAction, { justifyContent: 'flex-start', paddingLeft: 44 }]} onPress={handlePressScan}>
+            <QrCodeIcon style={styles.inputActionIcon} color={colors.textPrimary} width={16} height={16} />
+            <Text style={[styles.inputActionText, { color: colors.textPrimary }]}>{t('tx.send.scan')}</Text>
           </Pressable>
         </View>
         {checkRes === 'NetworkError' && !inChecking && (
@@ -190,7 +189,6 @@ const styles = StyleSheet.create({
     minHeight: 88,
     borderBottomLeftRadius: 0,
     borderBottomRightRadius: 0,
-    borderBottomWidth: 0,
   },
   inputActionArea: {
     marginHorizontal: 16,
@@ -199,6 +197,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     height: 56,
     borderWidth: 1,
+    borderTopWidth: 0,
     borderBottomLeftRadius: 6,
     borderBottomRightRadius: 6,
   },
@@ -208,6 +207,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     width: '50%',
     height: '100%',
+    gap: 12,
+  },
+  inputActionIcon: {
+    transform: [{ translateY: 1 }],
+  },
+  inputActionText: {
+    fontSize: 14,
+    fontWeight: '600',
   },
   checkFail: {
     marginTop: 26,

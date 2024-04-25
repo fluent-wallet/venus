@@ -81,7 +81,7 @@ export class TxMethod {
         gasPrice: tx.gasPrice?.toString(),
         gas: String(tx.gasLimit),
         value: String(tx.value),
-        nonce: String(tx.nonce),
+        nonce: Number(tx.nonce),
         chainId,
         data: tx.data,
       },

@@ -430,7 +430,7 @@ export class EthTxTrack {
 
   private async _handleDuplicateTx(tx: Tx, isReplaced = true, finalized = true) {
     try {
-      const nonce = (await tx.txPayload).nonce;
+      const nonce = (await tx.txPayload).nonce!;
       const txs = await queryDuplicateTx(tx, nonce, NOT_FINALIZED_TX_STATUSES);
       txs.forEach((_tx) => {
         _tx.updateSelf((t) => {
@@ -474,7 +474,7 @@ export class EthTxTrack {
       await tx.updateSelf((tx) => {
         tx.status = TxStatus.UNSENT;
       });
-      const nonce = (await tx.txPayload).nonce;
+      const nonce = (await tx.txPayload).nonce!;
       if (tx.resendCount && tx.resendCount >= CHECK_REPLACED_BEFORE_RESEND_COUNT) {
         replaced = await this._handleCheckReplaced(tx, nonce, endpoint);
         if (replaced) return;
@@ -515,7 +515,7 @@ export class EthTxTrack {
   private async _handleCheckReplaced(tx: Tx, nonce: number, endpoint: string) {
     try {
       const prevLatestNonce = this._latestNonceMap.get(tx.address.id);
-      if (prevLatestNonce && Number(prevLatestNonce) > nonce) {
+      if (prevLatestNonce && Number(prevLatestNonce) > Number(nonce)) {
         return true;
       }
       const address = await (await tx.address).getValue();
@@ -523,12 +523,12 @@ export class EthTxTrack {
         RPCSend<RPCResponse<string>>(endpoint, { method: 'eth_getTransactionCount', params: [address, 'latest'] }),
       );
       latestNonce && this._latestNonceMap.set(tx.address.id, latestNonce);
-      if (Number(latestNonce) > nonce) {
+      if (Number(latestNonce) > Number(nonce)) {
         return true;
       }
       return false;
     } catch (error) {
-      console.log('EthTxTrack:', error);
+      console.log('EthTxTrack error:', error);
       return false;
     }
   }
