@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
-import { of, catchError, from, take, concat, firstValueFrom, filter, throwIfEmpty } from 'rxjs';
+import { of, catchError, from, take, concatMap, defer, map, firstValueFrom, filter, throwIfEmpty } from 'rxjs';
 import { truncate } from '../../../utils/balance';
 import Decimal from 'decimal.js';
 import methods from '../../Methods';
@@ -115,18 +115,26 @@ const trackAssets = async ({
 
     if (fetchers.length > 0) {
       const balancesResult = await firstValueFrom(
-        concat(
-          ...fetchers.map((fetchAssetBalances) =>
-            from(
+        from(fetchers).pipe(
+          concatMap((fetchAssetBalances) =>
+            defer(() =>
               fetchAssetBalances({
                 key: `assetsBalanceInRules-${address.hex}-${network.chainId}`,
                 endpoint: network.endpoint,
                 accountAddress: address,
                 assets: assetsNeedFetch.map((asset) => ({ assetType: asset.type, contractAddress: asset.contractAddress })),
               }),
-            ).pipe(catchError(() => of(null))),
+            ).pipe(
+              map((results) => {
+                if (Array.isArray(results) && results.every((item) => typeof item === 'string')) {
+                  return results;
+                } else {
+                  throw new Error('Invalid data type in results');
+                }
+              }),
+              catchError(() => of(null)),
+            ),
           ),
-        ).pipe(
           filter((result) => result !== null),
           take(1),
           throwIfEmpty(() => new Error('All fetchers failed')),

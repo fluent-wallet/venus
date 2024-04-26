@@ -152,7 +152,7 @@ const SendTransactionStep1Receiver: React.FC<SendTransactionScreenProps<typeof S
             </Pressable>
           </View>
         )}
-        <Contract setReceiver={setReceiver} />
+        {!receiver && <Contract receiver={receiver} setReceiver={setReceiver} />}
         <Button
           testID="next"
           style={styles.btn}

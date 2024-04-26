@@ -125,7 +125,7 @@ const AccountConfig: React.FC<StackScreenProps<typeof AccountSettingStackName>> 
                 disabled={inDelete}
               >
                 <Text style={[styles.mainText, styles.backupText, { color: colors.textPrimary }]}>{t('common.privateKey')}</Text>
-                <ArrowRight color={colors.iconPrimary} />
+                <ArrowRight color={colors.iconPrimary} width={16} height={16} style={{ transform: [{ translateY: -1 }] }} />
               </Pressable>
             </>
           )}
@@ -201,7 +201,7 @@ const styles = StyleSheet.create({
   },
   backupText: {
     marginLeft: 16,
-    marginRight: 12,
+    marginRight: 8,
   },
   removeContainer: {
     marginTop: 20,

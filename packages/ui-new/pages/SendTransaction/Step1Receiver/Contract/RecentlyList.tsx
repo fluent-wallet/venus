@@ -26,6 +26,7 @@ const RecentlyList: React.FC<{
       </>
     );
   }
+  
   return (
     <BottomSheetFlatList
       style={styles.container}

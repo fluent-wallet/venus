@@ -95,14 +95,15 @@ export const fetchAssetsBalance = async ({
     contractAddress?: string | null;
     assetType?: Omit<AssetType, AssetType.ERC1155 | AssetType.ERC721>;
   }>;
-}) =>
-  Promise.all(
+}) => {
+  return Promise.all(
     assets.map(({ contractAddress, assetType }) =>
       assetType === AssetType.ERC20 && contractAddress
         ? fetchContractAssetBalance({ networkType, endpoint, accountAddress, contractAddress })
         : fetchNativeAssetBalance({ networkType, endpoint, accountAddress }),
     ),
   );
+};
 
 export const fetchAssetsBalanceBatch = ({
   endpoint,
@@ -135,7 +136,7 @@ export const fetchAssetsBalanceBatch = ({
               to: contractAddress,
               data: `0x70a08231000000000000000000000000${accountAddress.hex.slice(2)}`,
             },
-        // networkRpcSuffixMap[networkType],
+        networkRpcSuffixMap[networkType],
       ],
     })),
   });

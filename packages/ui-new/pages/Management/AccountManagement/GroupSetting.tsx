@@ -148,7 +148,7 @@ const GroupConfig: React.FC<StackScreenProps<typeof GroupSettingStackName>> = ({
               <Text style={[styles.mainText, styles.backupText, { color: colors.textPrimary }]}>
                 {renderByVaultType(t('common.seedPhrase'), t('account.group.settings.BSIMCode'))}
               </Text>
-              <ArrowRight color={colors.iconPrimary} />
+              <ArrowRight color={colors.iconPrimary} width={16} height={16} style={{ transform: [{ translateY: -1 }] }} />
             </Pressable>
           </>
         )}
@@ -259,7 +259,7 @@ const styles = StyleSheet.create({
   },
   backupText: {
     marginLeft: 16,
-    marginRight: 12,
+    marginRight: 8,
   },
   removeContainer: {
     marginVertical: 16,
