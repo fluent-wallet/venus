@@ -41,7 +41,12 @@ const finishedTxsAtom = atomWithObservable(
 );
 export const useFinishedTxs = () => useAtomValue(finishedTxsAtom);
 
-type RecentlyType = 'Account' | 'Contract' | 'Latest';
+export enum RecentlyType{
+  Account = 'Account',
+  Contract = 'Contract',
+  Recently = 'Recently',
+
+}
 export const recentlyAddressObservable = combineLatest([unfinishedTxsObservable, finishedTxsObservable]).pipe(
   switchMap((txs) =>
     Promise.all([
@@ -78,7 +83,7 @@ export const recentlyAddressObservable = combineLatest([unfinishedTxsObservable,
       return {
         addressValue,
         nickname: isMyAccount?.nickname,
-        type: isMyAccount ? 'Account' : ('Latest' as RecentlyType),
+        type: isMyAccount ? RecentlyType.Account : (RecentlyType.Recently as RecentlyType),
         source,
       };
     });

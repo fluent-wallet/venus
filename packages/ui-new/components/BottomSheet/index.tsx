@@ -34,6 +34,8 @@ const BottomSheet = forwardRef<BottomSheet_, Props>(
       onClose,
       onOpen,
       index,
+      activeOffsetY = 66,
+      activeOffsetX = 0,
       ...props
     },
     _forwardRef,
@@ -110,6 +112,8 @@ const BottomSheet = forwardRef<BottomSheet_, Props>(
         keyboardBlurBehavior={keyboardBlurBehavior}
         enableDynamicSizing={false}
         animateOnMount={true}
+        activeOffsetY={activeOffsetY}
+        activeOffsetX={activeOffsetX}
         {...props}
       >
         {children}

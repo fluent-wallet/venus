@@ -76,7 +76,7 @@ const SendTransactionStep2Asset: React.FC<Props> = ({ navigation, route, onConfi
       const localAssets = assets
         ?.filter((asset) =>
           [asset.name, asset.symbol, asset.type === AssetType.Native ? AssetType.Native : asset.contractAddress].some(
-            (str) => str?.search(new RegExp(escapeRegExp(value), 'i')) !== -1,
+            (str) => !str ? false : str?.search(new RegExp(escapeRegExp(value), 'i')) !== -1,
           ),
         )
         .filter((asset) => !!asset.type)
@@ -183,6 +183,7 @@ const SendTransactionStep2Asset: React.FC<Props> = ({ navigation, route, onConfi
             type="SelectAsset"
             selectType={selectType}
             onPressItem={handleClickAsset}
+            onlyToken={!navigation}
           />
         </BottomSheetScrollView>
       )}

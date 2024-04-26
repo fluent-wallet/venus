@@ -51,7 +51,7 @@ const AccountGroup: React.FC<
       ]}
       disabled={type === 'selector' || vaultType === VaultType.PrivateKey || vaultType === VaultType.PublicAddress}
       onPress={() => onPressGroup?.(id)}
-      testID='groupSetting'
+      testID="groupSetting"
     >
       <Image
         style={styles.groupTypeImage}

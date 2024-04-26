@@ -132,20 +132,23 @@ export const StickyNFT: React.FC<{ type: TabsType }> = ({ type }) => {
   return <StickyNFTItem scrollY={scrollY} startY={startY} tabsType={type} />;
 };
 
-export const TabsContent: React.FC<Props> = ({ currentTab, setCurrentTab, pageViewRef, type, selectType, onPressItem }) => {
+export const TabsContent: React.FC<Props> = ({ currentTab, setCurrentTab, pageViewRef, type, selectType, onlyToken, onPressItem }) => {
   const currentNetwork = useCurrentNetwork();
-  const tabs = useMemo(
-    () =>
-      currentNetwork && (currentNetwork.chainId === CFX_ESPACE_MAINNET_CHAINID || currentNetwork.chainId === CFX_ESPACE_TESTNET_CHAINID)
-        ? (['Tokens', 'NFTs', 'Activity'] as Tabs)
-        : (['Tokens', 'Activity'] as Tabs),
-    [currentNetwork],
-  );
+  const tabs = useMemo(() => {
+    const res =
+      !onlyToken &&
+      (!currentNetwork || (currentNetwork && (currentNetwork.chainId === CFX_ESPACE_MAINNET_CHAINID || currentNetwork.chainId === CFX_ESPACE_TESTNET_CHAINID)))
+        ? (['Tokens', 'NFTs'] as Tabs)
+        : (['Tokens'] as Tabs);
+    type === 'Home' && res.push('Activity');
+    return res;
+  }, [currentNetwork, type]);
+
   const currentTabIndex = useMemo(() => {
     const index = tabs.indexOf(currentTab as 'Tokens');
     return index === -1 ? 0 : index;
   }, [tabs, currentTab]);
-  
+
   const shouldShowNotBackup = useShouldShowNotBackup();
 
   return (
