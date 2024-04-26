@@ -126,10 +126,10 @@ const trackAssets = async ({
               }),
             ).pipe(
               map((results) => {
-                if (Array.isArray(results) && results.every((item) => typeof item === 'string')) {
-                  return results;
-                } else {
+                if (Array.isArray(results) === false || results.some((result) => typeof result !== 'string')) {
                   throw new Error('Invalid data type in results');
+                } else {
+                  return results;
                 }
               }),
               catchError(() => of(null)),
