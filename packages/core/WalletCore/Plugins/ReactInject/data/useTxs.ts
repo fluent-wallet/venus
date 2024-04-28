@@ -41,43 +41,44 @@ const finishedTxsAtom = atomWithObservable(
 );
 export const useFinishedTxs = () => useAtomValue(finishedTxsAtom);
 
-export enum RecentlyType{
+export enum RecentlyType {
   Account = 'Account',
   Contract = 'Contract',
   Recently = 'Recently',
-
 }
-export const recentlyAddressObservable = combineLatest([unfinishedTxsObservable, finishedTxsObservable]).pipe(
-  switchMap((txs) =>
+export const recentlyAddressObservable = combineLatest([unfinishedTxsObservable, finishedTxsObservable, accountsManageObservable]).pipe(
+  switchMap(([unfinishedTxs, finishedTxs, accountsManage]) =>
     Promise.all([
       Promise.all(
-        txs
+        [unfinishedTxs, finishedTxs]
           .flat()
           .filter(Boolean)
           .map((tx) => tx!.txPayload),
       ),
       Promise.all(
-        txs
+        [unfinishedTxs, finishedTxs]
           .flat()
           .filter(Boolean)
           .map((tx) => tx!.asset),
       ),
+      accountsManage,
     ]),
   ),
-  map(([txPayloads, txAssets]) =>
-    txPayloads.sort((a, b) => Number((b.nonce ?? 0) - (a.nonce ?? 0))).map((txPayload, i) => formatTxData(txPayload, txAssets[i])),
+  map(
+    ([txPayloads, txAssets, accountsManage]) =>
+      [txPayloads.sort((a, b) => Number((b.nonce ?? 0) - (a.nonce ?? 0))).map((txPayload, i) => formatTxData(txPayload, txAssets[i])), accountsManage] as const,
   ),
-  map((formatedTxData) => {
+  map(([formatedTxData, accountsManage]) => {
     const toAddress = Array.from(new Set(formatedTxData.map((txPayload) => txPayload?.to))).filter((addressValue) => !!addressValue) as Array<string>;
     const fromAddress = Array.from(new Set(formatedTxData.map((txPayload) => txPayload?.from))).filter((addressValue) => !!addressValue) as Array<string>;
     return {
       from: fromAddress.map((addressValue) => ({ addressValue, source: 'from' })),
       to: toAddress.map((addressValue) => ({ addressValue, source: 'to' })),
+      accountsManage,
     };
   }),
-  withLatestFrom(accountsManageObservable),
-  map(([latestAddresses, accountsManage]) => {
-    const allAccounts = accountsManage?.map((item) => item.data).flat();
+  map((latestAddresses) => {
+    const allAccounts = latestAddresses.accountsManage?.map((item) => item.data).flat();
     return latestAddresses.to.map(({ addressValue, source }) => {
       const isMyAccount = allAccounts.find((account) => account.addressValue === addressValue);
       return {

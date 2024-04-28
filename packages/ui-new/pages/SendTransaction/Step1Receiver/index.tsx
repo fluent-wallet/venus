@@ -57,7 +57,7 @@ const SendTransactionStep1Receiver: React.FC<SendTransactionScreenProps<typeof S
           return;
         }
         const __localAccounts = [...allAccounts, ...recentlyAddress]?.filter((account) =>
-          [account.nickname, account.addressValue].some((str) => !str ? false : str?.search(new RegExp(escapeRegExp(receiver), 'i')) !== -1),
+          [account.nickname, account.addressValue].some((str) => (!str ? false : str?.search(new RegExp(escapeRegExp(receiver), 'i')) !== -1)),
         );
         const _localAccounts = unionBy(__localAccounts, 'addressValue');
         const localAccounts = _localAccounts.map((account) => ({
@@ -118,7 +118,14 @@ const SendTransactionStep1Receiver: React.FC<SendTransactionScreenProps<typeof S
       <SendTransactionBottomSheet showTitle={t('tx.send.title')}>
         <Text style={[styles.receiver, { color: colors.textSecondary }]}>{t('tx.send.receiver')}</Text>
         <TextInput
-          containerStyle={[styles.textInput, { borderColor: filterAccounts.type === 'invalid' ? colors.down : colors.borderFourth }]}
+          containerStyle={[
+            styles.textInput,
+            {
+              borderColor: filterAccounts.type === 'invalid' ? colors.down : colors.borderFourth,
+              borderBottomLeftRadius: !receiver ? 0 : 6,
+              borderBottomRightRadius: !receiver ? 0 : 6,
+            },
+          ]}
           showVisible={false}
           defaultHasValue={false}
           value={receiver}
@@ -131,16 +138,18 @@ const SendTransactionStep1Receiver: React.FC<SendTransactionScreenProps<typeof S
           multiline
           numberOfLines={3}
         />
-        <View style={[styles.inputActionArea, { borderColor: colors.borderFourth }]}>
-          <Pressable style={[styles.inputAction, { justifyContent: 'flex-end', paddingRight: 44 }]} onPress={handlePressPaste} testID="paste">
-            <CopyIcon style={styles.inputActionIcon} color={colors.textPrimary} width={16} height={16} />
-            <Text style={[styles.inputActionText, { color: colors.textPrimary }]}>{t('tx.send.paste')}</Text>
-          </Pressable>
-          <Pressable style={[styles.inputAction, { justifyContent: 'flex-start', paddingLeft: 44 }]} onPress={handlePressScan} testID="scan">
-            <QrCodeIcon style={styles.inputActionIcon} color={colors.textPrimary} width={16} height={16} />
-            <Text style={[styles.inputActionText, { color: colors.textPrimary }]}>{t('tx.send.scan')}</Text>
-          </Pressable>
-        </View>
+        {!receiver && (
+          <View style={[styles.inputActionArea, { borderColor: colors.borderFourth }]}>
+            <Pressable style={[styles.inputAction, { justifyContent: 'flex-end', paddingRight: 44 }]} onPress={handlePressPaste} testID="paste">
+              <CopyIcon style={styles.inputActionIcon} color={colors.textPrimary} width={16} height={16} />
+              <Text style={[styles.inputActionText, { color: colors.textPrimary }]}>{t('tx.send.paste')}</Text>
+            </Pressable>
+            <Pressable style={[styles.inputAction, { justifyContent: 'flex-start', paddingLeft: 44 }]} onPress={handlePressScan} testID="scan">
+              <QrCodeIcon style={styles.inputActionIcon} color={colors.textPrimary} width={16} height={16} />
+              <Text style={[styles.inputActionText, { color: colors.textPrimary }]}>{t('tx.send.scan')}</Text>
+            </Pressable>
+          </View>
+        )}
 
         {receiver && filterAccounts.type === 'local' && filterAccounts.assets.length > 0 && (
           <>
@@ -212,23 +221,25 @@ const SendTransactionStep1Receiver: React.FC<SendTransactionScreenProps<typeof S
           </>
         )}
 
-        <Button
-          testID="next"
-          style={styles.btn}
-          onPress={() => {
-            navigation.navigate(SendTransactionStep2StackName, { targetAddress: receiver });
-            if (Keyboard.isVisible()) {
-              Keyboard.dismiss();
+        {receiver && (filterAccounts.type === AddressType.EOA || filterAccounts.type === AddressType.Contract) && (
+          <Button
+            testID="next"
+            style={styles.btn}
+            onPress={() => {
+              navigation.navigate(SendTransactionStep2StackName, { targetAddress: receiver });
+              if (Keyboard.isVisible()) {
+                Keyboard.dismiss();
+              }
+            }}
+            disabled={
+              !(filterAccounts.type === AddressType.EOA || filterAccounts.type === AddressType.Contract) ||
+              (filterAccounts.type === AddressType.Contract && !knowRisk)
             }
-          }}
-          disabled={
-            !(filterAccounts.type === AddressType.EOA || filterAccounts.type === AddressType.Contract) ||
-            (filterAccounts.type === AddressType.Contract && !knowRisk)
-          }
-          size="small"
-        >
-          {t('common.next')}
-        </Button>
+            size="small"
+          >
+            {t('common.next')}
+          </Button>
+        )}
       </SendTransactionBottomSheet>
       {showScanQRCode && <ScanQRCode onConfirm={handleCodeScan} onClose={() => setShowScanQRCode(false)} />}
     </>
@@ -249,8 +260,6 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     backgroundColor: 'transparent',
     minHeight: 88,
-    borderBottomLeftRadius: 0,
-    borderBottomRightRadius: 0,
   },
   inputActionArea: {
     marginHorizontal: 16,
