@@ -50,8 +50,12 @@ import {
   type RootStackParamList,
   type StackNavigation,
   SheetBottomOption,
+  WalletConnectLoadingStackName,
+  WalletConnectStackName,
 } from './configs';
 import Header from './Header';
+import useListenWalletConnectEvent from '@pages/WalletConnect/hooks';
+import WalletConnect from '@pages/WalletConnect';
 
 const RootStack = createNativeStackNavigator<RootStackParamList>();
 const screenOptions = {
@@ -68,6 +72,9 @@ const Router: React.FC = () => {
   const { colors } = useTheme();
 
   const navigation = useNavigation<StackNavigation>();
+  // to listen the wallet connect plugin custom subject event
+  useListenWalletConnectEvent();
+
   useEffect(() => {
     const sub = plugins.Authentication.subPasswordRequest().subscribe(() => {
       navigation.navigate(PasswordVerifyStackName);
@@ -102,6 +109,8 @@ const Router: React.FC = () => {
         <RootStack.Screen name={PreferencesStackName} component={Preferences} />
         <RootStack.Screen name={AppearanceStackName} component={Appearance} options={SheetBottomOption} />
         <RootStack.Screen name={LanguageStackName} component={Language} options={SheetBottomOption} />
+
+        <RootStack.Screen name={WalletConnectStackName} component={WalletConnect} options={SheetBottomOption}/>
       </RootStack.Navigator>
     </View>
   );

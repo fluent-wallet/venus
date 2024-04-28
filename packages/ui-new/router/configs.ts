@@ -2,6 +2,7 @@ import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { NavigationProp, NavigatorScreenParams } from '@react-navigation/native';
 import { type AssetInfo } from '@core/WalletCore/Plugins/AssetsTracker/types';
 import { type NFTItemDetail } from '@core/WalletCore/Plugins/NFTDetailTracker';
+import { type WCProposalEventType } from '@core/WalletCore/Plugins/WalletConnect';
 
 export const WelcomeStackName = 'Welcome';
 export const WayToInitWalletStackName = 'WayToInitWallet';
@@ -26,6 +27,20 @@ export const PreferencesStackName = 'Preferences';
 export const AppearanceStackName = 'Appearance';
 export const LanguageStackName = 'Language';
 
+// start Wallet connect nest stack
+
+export const WalletConnectStackName = 'WalletConnect';
+
+export const WalletConnectLoadingStackName = 'WalletConnectLoading';
+export const WalletConnectProposalStackName = 'WalletConnectProposal';
+
+export type WalletConnectParamList = {
+  [WalletConnectLoadingStackName]: undefined;
+  [WalletConnectProposalStackName]: WCProposalEventType;
+};
+
+// end Wallet connect nest stack
+
 export type RootStackParamList = {
   [WelcomeStackName]: undefined;
   [WayToInitWalletStackName]: undefined;
@@ -49,6 +64,7 @@ export type RootStackParamList = {
   [PreferencesStackName]: undefined;
   [AppearanceStackName]: undefined;
   [LanguageStackName]: undefined;
+  [WalletConnectStackName]: NavigatorScreenParams<WalletConnectParamList>;
 };
 
 export type StackScreenProps<T extends keyof RootStackParamList> = NativeStackScreenProps<RootStackParamList, T>;
