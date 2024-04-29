@@ -11,6 +11,7 @@ import { shortenAddress } from '@core/utils/address';
 import { useCallback, useState } from 'react';
 import AccountSelector from '@modules/AccountSelector';
 import Icon from '@components/Icon';
+import useInAsync from '@hooks/useInAsync';
 
 export default function WalletConnectProposal() {
   const route = useRoute<RouteProp<WalletConnectParamList, typeof WalletConnectProposalStackName>>();
@@ -29,7 +30,7 @@ export default function WalletConnectProposal() {
   } = route.params;
   const icon = icons[0];
   const isHTTPS = url.startsWith('https://');
-  const handleReject = useCallback(async () => {
+  const _handleReject = useCallback(async () => {
     try {
       await reject();
       navigation.goBack();
@@ -39,7 +40,7 @@ export default function WalletConnectProposal() {
     }
   }, [reject, navigation]);
 
-  const handleApprove = useCallback(async () => {
+  const _handleApprove = useCallback(async () => {
     try {
       await approve({
         chains: [`eip155:${currentNetwork?.netId}`],
@@ -51,6 +52,9 @@ export default function WalletConnectProposal() {
       console.log(e);
     }
   }, [approve, currentAddress?.hex, currentNetwork?.netId, navigation]);
+
+  const { inAsync: inApproving, execAsync: handleApprove } = useInAsync(_handleApprove);
+  const { inAsync: inRejecting, execAsync: handleReject } = useInAsync(_handleReject);
 
   return (
     <>
@@ -85,10 +89,16 @@ export default function WalletConnectProposal() {
           </View>
 
           <View style={styles.buttons}>
-            <Button style={[styles.button, { backgroundColor: colors.down }]} onPress={handleReject} testID="reject">
+            <Button
+              style={[styles.button, { backgroundColor: colors.down }]}
+              onPress={handleReject}
+              testID="reject"
+              disabled={inRejecting}
+              loading={inRejecting}
+            >
               {t('common.cancel')}
             </Button>
-            <Button style={styles.button} onPress={handleApprove} testID="approve">
+            <Button style={styles.button} onPress={handleApprove} testID="approve" disabled={inApproving} loading={inApproving}>
               {t('common.connect')}
             </Button>
           </View>

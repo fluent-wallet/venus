@@ -5,18 +5,20 @@ import { useWalletConnectSessions } from './hooks';
 import { Pressable, StyleSheet, View } from 'react-native';
 import Button from '@components/Button';
 import Icon from '@components/Icon';
-import { useTheme } from '@react-navigation/native';
+import { useNavigation, useTheme } from '@react-navigation/native';
 import Plugins from '@core/WalletCore/Plugins';
 import { useCallback } from 'react';
+import useInAsync from '@hooks/useInAsync';
 function WalletConnectSessions() {
   const { t } = useTranslation();
   const { sessions } = useWalletConnectSessions();
+  const navigation = useNavigation();
   const { colors } = useTheme();
-  // TODO: maybe add confirm 
-  const handleDisconnect = useCallback(async (topic: string) => {
+  // TODO: maybe add confirm
+  const _handleDisconnect = useCallback(async (topic: string) => {
     await Plugins.WalletConnect.disconnectSession({ topic });
   }, []);
-
+  const { inAsync, execAsync: handleDisconnect } = useInAsync(_handleDisconnect);
   return (
     <BottomSheet enablePanDownToClose={false} isRoute snapPoints={snapPoints.percent50} style={styles.container}>
       <Text style={styles.title}>{t('wc.dapp.connectedDApps')}</Text>
@@ -39,7 +41,7 @@ function WalletConnectSessions() {
                   <Icon rounded source={icons[0]} width={24} height={24} />
                   <Text style={{ color: colors.up }}>{url}</Text>
                 </View>
-                <Pressable testID="disconnect" onPress={() => handleDisconnect(topic)}>
+                <Pressable testID="disconnect" onPress={() => handleDisconnect(topic)} disabled={inAsync}>
                   <Text style={{ color: colors.textPrimary }}>{t('common.disconnect')}</Text>
                 </Pressable>
               </View>
@@ -47,7 +49,9 @@ function WalletConnectSessions() {
           )}
         </BottomSheetScrollView>
       </View>
-      <Button testID="ok">{t('common.ok')}</Button>
+      <Button testID="ok"  onPress={() => navigation.goBack()}>
+        {t('common.ok')}
+      </Button>
     </BottomSheet>
   );
 }
