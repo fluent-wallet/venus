@@ -1,7 +1,7 @@
 import BottomSheet, { snapPoints } from '@components/BottomSheet';
 import { Image } from 'expo-image';
 import { RouteProp, useNavigation, useRoute, useTheme } from '@react-navigation/native';
-import { WalletConnectParamList, WalletConnectProposalStackName, WalletConnectStackName } from '@router/configs';
+import { WalletConnectParamList, WalletConnectProposalStackName } from '@router/configs';
 import { Pressable, StyleSheet, View } from 'react-native';
 import Text from '@components/Text';
 import { useTranslation } from 'react-i18next';
@@ -10,8 +10,7 @@ import { useCurrentAccount, useCurrentAddress, useCurrentNetwork } from '@core/W
 import { shortenAddress } from '@core/utils/address';
 import { useCallback, useState } from 'react';
 import AccountSelector from '@modules/AccountSelector';
-import TokenIcon from '@modules/AssetsList/TokensList/TokenIcon';
-import { SvgUri } from 'react-native-svg';
+import Icon from '@components/Icon';
 
 export default function WalletConnectProposal() {
   const route = useRoute<RouteProp<WalletConnectParamList, typeof WalletConnectProposalStackName>>();
@@ -28,7 +27,6 @@ export default function WalletConnectProposal() {
     approve,
     reject,
   } = route.params;
-
   const icon = icons[0];
   const isHTTPS = url.startsWith('https://');
   const handleReject = useCallback(async () => {
@@ -44,12 +42,8 @@ export default function WalletConnectProposal() {
   const handleApprove = useCallback(async () => {
     try {
       await approve({
-        eip155: {
-          chains: [`eip155:${currentNetwork?.netId}`],
-          methods: [],
-          events: [],
-          accounts: [`eip155:${currentNetwork?.netId}:${currentAddress?.hex}`],
-        },
+        chains: [`eip155:${currentNetwork?.netId}`],
+        accounts: [`eip155:${currentNetwork?.netId}:${currentAddress?.hex}`],
       });
       navigation.goBack();
     } catch (e) {
@@ -67,7 +61,7 @@ export default function WalletConnectProposal() {
             <Text style={[styles.textStrong, styles.name, { color: colors.textPrimary }]}>{name}</Text>
             <Text style={styles.describe}>{t('wc.proposal.describe')}</Text>
             <View style={styles.url}>
-              {!isHTTPS ? <Text>{t('common.unsafe')}</Text> : null}
+              {!isHTTPS ? <Text style={[styles.urlWarning, { borderColor: colors.down }]}>{t('common.unsafe')}</Text> : null}
               <Text style={{ color: isHTTPS ? colors.up : colors.down }}>{url}</Text>
             </View>
           </View>
@@ -85,7 +79,7 @@ export default function WalletConnectProposal() {
           <View style={styles.networkWarp}>
             <Text style={styles.label}>{t('common.network')}</Text>
             <View style={styles.network}>
-              <SvgUri uri={currentNetwork?.icon || ''} width={22} height={22} />
+              <Icon source={currentNetwork?.icon || ''} width={22} height={22} style={{ borderRadius: 11 }} />
               <Text>{currentNetwork?.name}</Text>
             </View>
           </View>
@@ -128,7 +122,16 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   url: {
+    display: 'flex',
+    flexDirection: 'row',
     marginBottom: 60,
+    gap: 8,
+  },
+  urlWarning: {
+    borderWidth: 1,
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 4,
   },
   icon: {
     width: 61,

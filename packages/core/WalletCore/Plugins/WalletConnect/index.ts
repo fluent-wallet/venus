@@ -4,6 +4,7 @@ import Client, { Web3Wallet, Web3WalletTypes } from '@walletconnect/web3wallet';
 import { parseUri, getSdkError, buildApprovedNamespaces, type BuildApprovedNamespacesParams } from '@walletconnect/utils';
 import { Subject, filter } from 'rxjs';
 import { uniq } from 'lodash-es';
+import { WalletConnectRPCMethod } from './types';
 
 declare module '../../../WalletCore/Plugins' {
   interface Plugins {
@@ -11,8 +12,16 @@ declare module '../../../WalletCore/Plugins' {
   }
 }
 
-const notNull = <T>(value: T | null): value is T => value !== null;
+export const SUPPORT_SESSION_EVENTS = ['chainChanged', 'accountsChanged'];
 
+export const SUPPORT_SIGN_METHODS = [
+  WalletConnectRPCMethod.PersonalSign,
+  WalletConnectRPCMethod.SignTypedData,
+  WalletConnectRPCMethod.SignTypedDataV1,
+  WalletConnectRPCMethod.SignTypedDataV3,
+  WalletConnectRPCMethod.SignTypedDataV4,
+];
+export const SUPPORTED_TRANSACTION_METHODS = [WalletConnectRPCMethod.SendTransaction];
 export interface WalletConnectPluginParams {
   projectId: string;
   metadata: Web3WalletTypes.Options['metadata'];
@@ -20,7 +29,7 @@ export interface WalletConnectPluginParams {
 
 export interface WCProposalEventType {
   metadata: Web3WalletTypes.Metadata;
-  approve: (args: BuildApprovedNamespacesParams['supportedNamespaces']) => Promise<void>;
+  approve: (args: Omit<BuildApprovedNamespacesParams['supportedNamespaces'][string], 'methods' | 'events'>) => Promise<void>;
   reject: () => Promise<void>;
 }
 
@@ -75,24 +84,28 @@ export default class WalletConnect implements Plugin {
 
     // TODO  check requiredNamespaces is supported
 
-
     const { metadata } = proposer;
 
-    async function approveSession(args: BuildApprovedNamespacesParams['supportedNamespaces']) {
+    const approveSession: WCProposalEventType['approve'] = async (args) => {
       const approvedNamespaces = buildApprovedNamespaces({
         proposal: proposal.params,
-        supportedNamespaces: args,
+        supportedNamespaces: {
+          eip155: {
+            ...args,
+            events: [...(requiredNamespaces?.eip155?.events || SUPPORT_SESSION_EVENTS)],
+            methods: [...SUPPORT_SIGN_METHODS, ...SUPPORTED_TRANSACTION_METHODS],
+          },
+        },
       });
 
       await client.approveSession({
         id: proposal.id,
         namespaces: approvedNamespaces,
       });
-
-    }
-    async function rejectSession() {
+    };
+    const rejectSession: WCProposalEventType['reject'] = async () => {
       await client.rejectSession({ id: proposal.params.id, reason: getSdkError('USER_REJECTED') });
-    }
+    };
 
     this.addToSubscribeWCProposal({
       metadata,
