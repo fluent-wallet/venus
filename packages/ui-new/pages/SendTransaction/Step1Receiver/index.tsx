@@ -29,6 +29,7 @@ import SendTransactionBottomSheet from '../SendTransactionBottomSheet';
 import ProhibitIcon from '@assets/icons/prohibit.svg';
 import SuccessIcon from '@assets/icons/success.svg';
 import CopyIcon from '@assets/icons/copy.svg';
+import ContractIcon from '@assets/icons/contract.svg';
 import Contract from './Contract';
 
 const SendTransactionStep1Receiver: React.FC<SendTransactionScreenProps<typeof SendTransactionStep1StackName>> = ({ navigation }) => {
@@ -43,9 +44,9 @@ const SendTransactionStep1Receiver: React.FC<SendTransactionScreenProps<typeof S
   const [inFetchingRemote, setInFetchingRemote] = useState(false);
   const [knowRisk, setKnowRist] = useState(false);
   const [filterAccounts, setFilterAccounts] = useState<{
-    type: 'local' | AddressType | 'invalid' | 'network-error';
+    type: 'local-filter' | 'local-valid' | AddressType | 'invalid' | 'network-error';
     assets: Array<{ nickname?: string; addressValue: string; source?: 'from' | 'to'; type?: RecentlyType }>;
-  }>(() => ({ type: 'local', assets: [] }));
+  }>(() => ({ type: 'local-filter', assets: [] }));
 
   const searchFilterReceiver = useCallback(
     debounce(async (receiver: string) => {
@@ -53,7 +54,7 @@ const SendTransactionStep1Receiver: React.FC<SendTransactionScreenProps<typeof S
         setKnowRist(false);
         setInFetchingRemote(false);
         if (!receiver) {
-          setFilterAccounts({ type: 'local', assets: [] });
+          setFilterAccounts({ type: 'local-filter', assets: [] });
           return;
         }
         const __localAccounts = [...allAccounts, ...recentlyAddress]?.filter((account) =>
@@ -67,12 +68,21 @@ const SendTransactionStep1Receiver: React.FC<SendTransactionScreenProps<typeof S
           type: (account as { type?: RecentlyType })?.type ?? RecentlyType.Account,
         }));
 
-        if (localAccounts && localAccounts.length > 0) {
-          setFilterAccounts({ type: 'local', assets: localAccounts });
+        const currentNetwork = _currentNetwork ?? getCurrentNetwork()!;
+        const isValidAddress = method.checkIsValidAddress({ networkType: currentNetwork.networkType, addressValue: receiver });
+        if (localAccounts?.length > 0) {
+          if (isValidAddress) {
+            const isInMyAccounts = allAccounts.some((account) => account.addressValue === receiver);
+            if (!isInMyAccounts) {
+              setFilterAccounts({ type: AddressType.EOA, assets: [] });
+            } else {
+              setFilterAccounts({ type: 'local-valid', assets: localAccounts });
+            }
+          } else {
+            setFilterAccounts({ type: 'local-filter', assets: localAccounts });
+          }
         } else {
           setInFetchingRemote(true);
-          const currentNetwork = _currentNetwork ?? getCurrentNetwork()!;
-          const isValidAddress = await method.checkIsValidAddress({ networkType: currentNetwork.networkType, addressValue: receiver });
           if (!isValidAddress) {
             setFilterAccounts({ type: 'invalid', assets: [] });
           } else {
@@ -129,7 +139,7 @@ const SendTransactionStep1Receiver: React.FC<SendTransactionScreenProps<typeof S
           showVisible={false}
           defaultHasValue={false}
           value={receiver}
-          onChangeText={(newNickName) => setReceiver(newNickName?.trim())}
+          onChangeText={(val) => setReceiver(val)}
           isInBottomSheet
           // TODO: this max length need consider network
           maxLength={200}
@@ -151,7 +161,13 @@ const SendTransactionStep1Receiver: React.FC<SendTransactionScreenProps<typeof S
           </View>
         )}
 
-        {receiver && filterAccounts.type === 'local' && filterAccounts.assets.length > 0 && (
+        {receiver && filterAccounts.type === 'local-valid' && (
+          <View style={styles.checkResWarp}>
+            <ContractIcon />
+            <Text style={[styles.validMyAccount, { color: colors.textPrimary }]}>Account: {filterAccounts.assets?.[0]?.nickname}</Text>
+          </View>
+        )}
+        {receiver && filterAccounts.type === 'local-filter' && (
           <>
             <BottomSheetFlatList
               style={listStyles.container}
@@ -167,7 +183,6 @@ const SendTransactionStep1Receiver: React.FC<SendTransactionScreenProps<typeof S
                       Keyboard.dismiss();
                     }
                     setReceiver(item.addressValue);
-                    navigation.navigate(SendTransactionStep2StackName, { targetAddress: item.addressValue });
                   }}
                 />
               )}
@@ -175,7 +190,7 @@ const SendTransactionStep1Receiver: React.FC<SendTransactionScreenProps<typeof S
           </>
         )}
         {!receiver && <Contract setReceiver={setReceiver} />}
-        {receiver && filterAccounts.type !== 'local' && (
+        {receiver && !filterAccounts.type.startsWith('local') && (
           <>
             {filterAccounts.type === 'network-error' && !inFetchingRemote && (
               <Pressable
@@ -221,7 +236,7 @@ const SendTransactionStep1Receiver: React.FC<SendTransactionScreenProps<typeof S
           </>
         )}
 
-        {receiver && (filterAccounts.type === AddressType.EOA || filterAccounts.type === AddressType.Contract) && (
+        {receiver && (filterAccounts.type === 'local-valid' || filterAccounts.type === AddressType.Contract || filterAccounts.type === AddressType.EOA) && (
           <Button
             testID="next"
             style={styles.btn}
@@ -231,10 +246,7 @@ const SendTransactionStep1Receiver: React.FC<SendTransactionScreenProps<typeof S
                 Keyboard.dismiss();
               }
             }}
-            disabled={
-              !(filterAccounts.type === AddressType.EOA || filterAccounts.type === AddressType.Contract) ||
-              (filterAccounts.type === AddressType.Contract && !knowRisk)
-            }
+            disabled={filterAccounts.type === AddressType.Contract && !knowRisk}
             size="small"
           >
             {t('common.next')}
@@ -316,6 +328,12 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '300',
     lineHeight: 18,
+  },
+  validMyAccount: {
+    fontSize: 14,
+    fontWeight: '300',
+    lineHeight: 18,
+    marginLeft: 6,
   },
   contractAddress: {
     marginTop: 32,
