@@ -33,10 +33,13 @@ export const WalletConnectStackName = 'WalletConnect';
 
 export const WalletConnectLoadingStackName = 'WalletConnectLoading';
 export const WalletConnectProposalStackName = 'WalletConnectProposal';
+export const WalletConnectSessionsStackName = 'WalletConnectSessions';
+
 
 export type WalletConnectParamList = {
   [WalletConnectLoadingStackName]: undefined;
   [WalletConnectProposalStackName]: WCProposalEventType;
+  [WalletConnectSessionsStackName] : undefined
 };
 
 // end Wallet connect nest stack

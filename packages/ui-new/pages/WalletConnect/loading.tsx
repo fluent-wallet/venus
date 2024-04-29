@@ -8,7 +8,7 @@ import { Text, View } from 'react-native';
 function WalletConnectLoading() {
   const navigation = useNavigation<StackNavigation>();
   useEffect(() => {
-    const sub = Plugins.WalletConnect.subscribeLoading()
+    const sub = Plugins.WalletConnect.getWCLoadingSubscribe()
       .subscribe(() => {
         navigation.goBack();
       });

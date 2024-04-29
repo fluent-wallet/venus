@@ -65,7 +65,7 @@ export default function WalletConnectProposal() {
               <Text style={{ color: isHTTPS ? colors.up : colors.down }}>{url}</Text>
             </View>
           </View>
-          <Pressable onPress={() => setShowAccountSelector(true)}>
+          <Pressable onPress={() => setShowAccountSelector(true)} testID="account">
             <View>
               <Text style={styles.label}>{t('wc.proposal.accountSelected')}</Text>
               <View style={[styles.account, { borderColor: colors.borderFourth }]}>
@@ -85,10 +85,10 @@ export default function WalletConnectProposal() {
           </View>
 
           <View style={styles.buttons}>
-            <Button style={[styles.button, { backgroundColor: colors.down }]} onPress={handleReject}>
+            <Button style={[styles.button, { backgroundColor: colors.down }]} onPress={handleReject} testID="reject">
               {t('common.cancel')}
             </Button>
-            <Button style={styles.button} onPress={handleApprove}>
+            <Button style={styles.button} onPress={handleApprove} testID="approve">
               {t('common.connect')}
             </Button>
           </View>

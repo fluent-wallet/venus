@@ -49,9 +49,10 @@ export default class WalletConnect implements Plugin {
 
   sessionProposalSubject = new Subject<WCProposalEventType>();
 
+  sessionStateChangeSubject = new Subject<void>();
+
   constructor({ projectId, metadata }: WalletConnectPluginParams) {
     const core = new Core({ projectId });
-
     this.client = Web3Wallet.init({
       core,
       metadata,
@@ -66,11 +67,27 @@ export default class WalletConnect implements Plugin {
     client.on('session_proposal', this.onSessionProposal.bind(this));
     client.on('session_request', this.onSessionRequest.bind(this));
     client.on('session_delete', this.onSessionDelete.bind(this));
+
+    // TODO: this event to listen proposal expire
+    client.on('proposal_expire', (e) => console.log(e.id, 'proposal_expire'));
   }
-  getSubscribeWCProposal() {
+
+  /**
+   * when session create or delete
+   * @returns
+   */
+  getWCSessionChangeSubscribe() {
+    return this.sessionStateChangeSubject;
+  }
+
+  emitWCSessionChange() {
+    this.sessionStateChangeSubject.next();
+  }
+
+  getWCProposalSubscribe() {
     return this.sessionProposalSubject;
   }
-  addToSubscribeWCProposal(args: WCProposalEventType) {
+  emitWCProposal(args: WCProposalEventType) {
     this.sessionProposalSubject.next(args);
   }
   async onSessionProposal(proposal: Web3WalletTypes.SessionProposal) {
@@ -78,7 +95,7 @@ export default class WalletConnect implements Plugin {
     // TODO Check the connect
     // const { verified } = proposal.verifyContext;
 
-    this.addToSubscribeLoading(false);
+    this.emitWCLoading(false);
 
     const { proposer, requiredNamespaces, optionalNamespaces } = proposal.params;
 
@@ -102,12 +119,13 @@ export default class WalletConnect implements Plugin {
         id: proposal.id,
         namespaces: approvedNamespaces,
       });
+      this.emitWCSessionChange();
     };
     const rejectSession: WCProposalEventType['reject'] = async () => {
       await client.rejectSession({ id: proposal.params.id, reason: getSdkError('USER_REJECTED') });
     };
 
-    this.addToSubscribeWCProposal({
+    this.emitWCProposal({
       metadata,
       approve: approveSession,
       reject: rejectSession,
@@ -116,19 +134,29 @@ export default class WalletConnect implements Plugin {
 
   onSessionRequest(request: Web3WalletTypes.SessionRequest) {}
 
-  onSessionDelete(event: Web3WalletTypes.SessionDelete) {}
+  onSessionDelete(event: Web3WalletTypes.SessionDelete) {
+    this.emitWCSessionChange();
+  }
 
-  getAllSession() {}
+  async getAllSession() {
+    const client = await this.client;
+    return client.getActiveSessions();
+  }
 
-  removeSession() {}
+  async disconnectSession({ topic }: { topic: string }) {
+    const client = await this.client;
+
+    await client.disconnectSession({ topic, reason: getSdkError('USER_DISCONNECTED') });
+    this.emitWCSessionChange();
+  }
 
   removeAllSession() {}
 
-  subscribeLoading() {
+  getWCLoadingSubscribe() {
     return this.loadingSubject;
   }
 
-  addToSubscribeLoading(loading: boolean) {
+  emitWCLoading(loading: boolean) {
     this.loadingSubject.next(loading);
   }
 
@@ -143,7 +171,7 @@ export default class WalletConnect implements Plugin {
       const client = await this.client;
       await client.pair({ uri: wcURI });
     } catch (error: any) {
-      this.addToSubscribeLoading(false);
+      this.emitWCLoading(false);
       throw new WalletConnectPluginError(error?.message || 'UnknownError');
     }
   }
