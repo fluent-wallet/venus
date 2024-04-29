@@ -36,8 +36,12 @@ function DAPPConnect() {
             ) => (
               <View key={idx} style={styles.content}>
                 <Icon source={icons[0]} width={24} height={24} style={styles.icon} />
-                <Text>{t('wc.dapp.connectTo')}</Text>
-                <Text style={styles.largeText}>{url}</Text>
+                <View style={styles.content}>
+                  <Text>{t('wc.dapp.connectTo')}</Text>
+                  <Text style={[styles.largeText, { color: colors.up, flex: 1 }]} numberOfLines={1}>
+                    {url}
+                  </Text>
+                </View>
               </View>
             ),
           )
@@ -81,7 +85,9 @@ const styles = StyleSheet.create({
     display: 'flex',
     flexDirection: 'row',
     alignItems: 'center',
+    gap: 4,
   },
+
   icon: {
     borderRadius: 12,
   },
