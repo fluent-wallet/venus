@@ -90,6 +90,7 @@
     "@types/react": "^18.2.48",
     "@types/react-test-renderer": "^18.0.0",
     "@walletconnect/jsonrpc-types": "^1.0.3",
+    "@walletconnect/types": "^2.12.2",
     "babel-jest": "^29.7.0",
     "babel-plugin-module-resolver": "^5.0.0",
     "eslint": "^8.56.0",

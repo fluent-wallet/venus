@@ -105,15 +105,18 @@
     "cancel" : "Cancel",
     "close" : "Close",
     "confirm" : "Confirm",
+    "connect" : "Connect",
     "continue" : "Continue",
     "copied" : "Copied",
     "delete" : "Delete",
+    "disconnect" : "Disconnect",
     "dismiss" : "Dismiss",
     "edit" : "Edit",
     "enable" : "Enable",
     "HDWallets" : "HD Wallets",
     "index" : "Index",
     "max" : "Max",
+    "network" : "Network",
     "next" : "Next",
     "ok" : "OK",
     "password" : "Password",
@@ -123,6 +126,7 @@
     "seedPhrase" : "Seed Phrase",
     "send" : "Send",
     "to" : "To",
+    "unsafe" : "Unsafe",
     "verifyPassword" : "Verify Password",
     "view" : "View"
   },
@@ -245,6 +249,7 @@
     "content" : {
       "depositToken" : "Deposit tokens to your wallet",
       "noActivity" : "No Activity",
+      "noLatestTransaction" : null,
       "noNFT" : "No NFT",
       "noRecord" : "No Record",
       "noToken" : "No Token",
@@ -333,6 +338,16 @@
         "validPrivateKey" : "Valid private key"
       },
       "placeholder" : "Enter your seed phrase which words separated by space or private key"
+    }
+  },
+  "wc" : {
+    "dapp" : {
+      "connectedDApps" : "Connected DApps",
+      "connectTo" : "Connected to"
+    },
+    "proposal" : {
+      "accountSelected" : "Account selected",
+      "describe" : "Wants to connect to your wallet"
     }
   },
   "welcome" : {

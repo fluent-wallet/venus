@@ -1,9 +1,10 @@
 import { Plugin } from '@core/WalletCore/Plugins';
 import { Core } from '@walletconnect/core';
 import Client, { Web3Wallet, Web3WalletTypes } from '@walletconnect/web3wallet';
-import { parseUri, getSdkError, buildApprovedNamespaces, type BuildApprovedNamespacesParams } from '@walletconnect/utils';
+import { ProposalTypes } from '@walletconnect/types';
+import { parseUri, getSdkError, buildApprovedNamespaces, type BuildApprovedNamespacesParams, SdkErrorKey } from '@walletconnect/utils';
 import { Subject, filter } from 'rxjs';
-import { uniq } from 'lodash-es';
+
 import { WalletConnectRPCMethod } from './types';
 
 declare module '../../../WalletCore/Plugins' {
@@ -29,8 +30,10 @@ export interface WalletConnectPluginParams {
 
 export interface WCProposalEventType {
   metadata: Web3WalletTypes.Metadata;
+  requiredNamespaces: ProposalTypes.RequiredNamespaces;
+  optionalNamespaces: ProposalTypes.OptionalNamespaces;
   approve: (args: Omit<BuildApprovedNamespacesParams['supportedNamespaces'][string], 'methods' | 'events'>) => Promise<void>;
-  reject: () => Promise<void>;
+  reject: (reason?: SdkErrorKey) => Promise<void>;
 }
 
 export class WalletConnectPluginError extends Error {
@@ -121,11 +124,13 @@ export default class WalletConnect implements Plugin {
       });
       this.emitWCSessionChange();
     };
-    const rejectSession: WCProposalEventType['reject'] = async () => {
-      await client.rejectSession({ id: proposal.params.id, reason: getSdkError('USER_REJECTED') });
+    const rejectSession: WCProposalEventType['reject'] = async (reason) => {
+      await client.rejectSession({ id: proposal.params.id, reason: getSdkError(reason || 'USER_REJECTED') });
     };
 
     this.emitWCProposal({
+      requiredNamespaces,
+      optionalNamespaces,
       metadata,
       approve: approveSession,
       reject: rejectSession,

@@ -31,3 +31,8 @@ export const queryNetworkByNetId = async (netId: number) => {
 export const observeNetworkById = memoize(
   (networkId: string) => database.get(TableName.Network).findAndObserve(networkId) as Observable<Network>,
 );
+
+export const queryNetworks =  async () => {
+  const networks = await database.get<Network>(TableName.Network).query();
+  return networks
+}

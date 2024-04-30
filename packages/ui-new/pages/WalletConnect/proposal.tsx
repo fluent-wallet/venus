@@ -6,9 +6,9 @@ import { Pressable, StyleSheet, View } from 'react-native';
 import Text from '@components/Text';
 import { useTranslation } from 'react-i18next';
 import Button from '@components/Button';
-import { useCurrentAccount, useCurrentAddress, useCurrentNetwork } from '@core/WalletCore/Plugins/ReactInject';
+import { useCurrentAccount, useCurrentAddress, useCurrentNetwork, useNetworks } from '@core/WalletCore/Plugins/ReactInject';
 import { shortenAddress } from '@core/utils/address';
-import { useCallback, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import AccountSelector from '@modules/AccountSelector';
 import Icon from '@components/Icon';
 import useInAsync from '@hooks/useInAsync';
@@ -19,6 +19,7 @@ export default function WalletConnectProposal() {
   const currentAddress = useCurrentAddress();
   const currentNetwork = useCurrentNetwork();
   const navigation = useNavigation();
+  const networks = useNetworks();
   const { colors } = useTheme();
   const { t } = useTranslation();
 
@@ -27,7 +28,19 @@ export default function WalletConnectProposal() {
     metadata: { name = '', description = '', url = '', icons = [] },
     approve,
     reject,
+    chains,
   } = route.params;
+
+  const connectNetwork = useMemo(() => {
+    return chains.map((chain) => {
+      const dbNet = networks.find((network) => network.netId === chain);
+      return {
+        chainId: `${chain}`,
+        icon: dbNet?.icon,
+        name: dbNet?.name,
+      };
+    });
+  }, [networks, chains]);
   const icon = icons[0];
   const isHTTPS = url.startsWith('https://');
   const _handleReject = useCallback(async () => {
@@ -43,8 +56,8 @@ export default function WalletConnectProposal() {
   const _handleApprove = useCallback(async () => {
     try {
       await approve({
-        chains: [`eip155:${currentNetwork?.netId}`],
-        accounts: [`eip155:${currentNetwork?.netId}:${currentAddress?.hex}`],
+        chains: connectNetwork.map((net) => `eip155:${net.chainId}`),
+        accounts: connectNetwork.map((net) => `eip155:${net.chainId}:${currentAddress?.hex}`), //[`eip155:${currentNetwork?.netId}:${currentAddress?.hex}`],
       });
       navigation.goBack();
     } catch (e) {
@@ -83,8 +96,10 @@ export default function WalletConnectProposal() {
           <View style={styles.networkWarp}>
             <Text style={styles.label}>{t('common.network')}</Text>
             <View style={styles.network}>
-              <Icon source={currentNetwork?.icon || ''} width={22} height={22} style={{ borderRadius: 11 }} />
-              <Text>{currentNetwork?.name}</Text>
+              {connectNetwork.map((item) => (
+                <Icon source={item.icon} width={22} height={22} style={{ borderRadius: 11 }} key={item.chainId} />
+              ))}
+              {connectNetwork.length === 1 && <Text>{connectNetwork[0]?.name}</Text>}
             </View>
           </View>
 

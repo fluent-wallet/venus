@@ -6,7 +6,7 @@ import Icon from '@components/Icon';
 import { useTranslation } from 'react-i18next';
 import take from 'lodash-es/take';
 import ArrowLeft from '@assets/icons/arrow-left.svg';
-import { useCallback } from 'react';
+import { useCallback, useMemo } from 'react';
 import { StackNavigation, WalletConnectSessionsStackName, WalletConnectStackName } from '@router/configs';
 function DAPPConnect() {
   const { sessions } = useWalletConnectSessions();
@@ -16,13 +16,14 @@ function DAPPConnect() {
   const handleClick = useCallback(() => {
     navigation.navigate(WalletConnectStackName, { screen: WalletConnectSessionsStackName });
   }, [navigation]);
+  const hasUnsafeURL = useMemo(() => sessions.some(({ peer: { metadata } }) => new URL(metadata.url).protocol === 'http'), [sessions]);
 
   if (sessions.length === 0) {
     return null;
   }
 
   return (
-    <View style={[styles.container, { borderColor: colors.up }]}>
+    <View style={[styles.container, { borderColor: hasUnsafeURL ? colors.down : colors.up }]}>
       <Pressable onPress={handleClick}>
         <View style={styles.content}>
           <View style={styles.iconWarp}>
@@ -43,13 +44,13 @@ function DAPPConnect() {
           </View>
           {sessions.length > 1 ? (
             <View style={styles.content}>
-              <Text style={[styles.largeText, { color: colors.up }]}>{t('wc.dapp.connectedDApps')}</Text>
-              <ArrowLeft style={[{ transform: [{ rotate: '-180deg' }] }]} color={colors.up} width={14} height={14} />
+              <Text style={[styles.largeText, { color: hasUnsafeURL ? colors.down : colors.up }]}>{t('wc.dapp.connectedDApps')}</Text>
+              <ArrowLeft style={[{ transform: [{ rotate: '-180deg' }] }]} color={hasUnsafeURL ? colors.down : colors.up} width={14} height={14} />
             </View>
           ) : (
             <View style={styles.content}>
               <Text>{t('wc.dapp.connectTo')}</Text>
-              <Text style={[styles.largeText, { color: colors.up, flex: 1 }]} numberOfLines={1}>
+              <Text style={[styles.largeText, { color: hasUnsafeURL ? colors.down : colors.up, flex: 1 }]} numberOfLines={1}>
                 {sessions[0]?.peer?.metadata?.url}
               </Text>
             </View>

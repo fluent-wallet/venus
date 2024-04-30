@@ -19,6 +19,9 @@ function WalletConnectSessions() {
     await Plugins.WalletConnect.disconnectSession({ topic });
   }, []);
   const { inAsync, execAsync: handleDisconnect } = useInAsync(_handleDisconnect);
+
+  const isUnsafe = useCallback((url: string) => new URL(url).protocol === 'http', []);
+
   return (
     <BottomSheet enablePanDownToClose={false} isRoute snapPoints={snapPoints.percent50} style={styles.container}>
       <Text style={styles.title}>{t('wc.dapp.connectedDApps')}</Text>
@@ -39,17 +42,19 @@ function WalletConnectSessions() {
               <View key={idx} style={styles.connect}>
                 <View style={styles.connectLeft}>
                   <Icon rounded source={icons[0]} width={24} height={24} />
-                  <Text style={{ color: colors.up }}>{url}</Text>
+                  <Text style={{ color: isUnsafe(url) ? colors.down : colors.up, flex: 1 }} numberOfLines={1}>
+                    {url}
+                  </Text>
                 </View>
                 <Pressable testID="disconnect" onPress={() => handleDisconnect(topic)} disabled={inAsync}>
-                  <Text style={{ color: colors.textPrimary }}>{t('common.disconnect')}</Text>
+                  <Text style={{ color: isUnsafe(url) ? colors.down : colors.textPrimary }}>{t('common.disconnect')}</Text>
                 </Pressable>
               </View>
             ),
           )}
         </BottomSheetScrollView>
       </View>
-      <Button testID="ok"  onPress={() => navigation.goBack()}>
+      <Button testID="ok" onPress={() => navigation.goBack()}>
         {t('common.ok')}
       </Button>
     </BottomSheet>
