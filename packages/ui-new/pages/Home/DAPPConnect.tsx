@@ -24,49 +24,37 @@ function DAPPConnect() {
   return (
     <View style={[styles.container, { borderColor: colors.up }]}>
       <Pressable onPress={handleClick}>
-        {sessions.length === 1 ? (
-          sessions.map(
-            (
-              {
-                peer: {
-                  metadata: { icons = [], url = '' },
-                },
-              },
-              idx,
-            ) => (
-              <View key={idx} style={styles.content}>
-                <Icon source={icons[0]} width={24} height={24} style={styles.icon} />
-                <View style={styles.content}>
-                  <Text>{t('wc.dapp.connectTo')}</Text>
-                  <Text style={[styles.largeText, { color: colors.up, flex: 1 }]} numberOfLines={1}>
-                    {url}
-                  </Text>
-                </View>
-              </View>
-            ),
-          )
-        ) : (
-          <View style={styles.content}>
-            <View style={styles.iconWarp}>
-              {take(sessions, 3).map(
-                (
-                  {
-                    peer: {
-                      metadata: { icons = [] },
-                    },
+        <View style={styles.content}>
+          <View style={styles.iconWarp}>
+            {take(sessions, 3).map(
+              (
+                {
+                  peer: {
+                    metadata: { icons = [] },
                   },
-                  idx,
-                ) => (
-                  <View key={idx}>
-                    <Icon source={icons[0]} width={24} height={24} style={[styles.icon, idx > 0 ? styles.iconTranslate : {}]} />
-                  </View>
-                ),
-              )}
-            </View>
-            <Text style={[styles.largeText, { color: colors.up }]}>{t('wc.dapp.connectedDApps')}</Text>
-            <ArrowLeft style={[{ transform: [{ rotate: '-180deg' }] }]} color={colors.up} width={14} height={14} />
+                },
+                idx,
+              ) => (
+                <View key={idx}>
+                  <Icon source={icons[0]} width={24} height={24} style={[styles.icon, idx > 0 ? styles.iconTranslate : {}]} />
+                </View>
+              ),
+            )}
           </View>
-        )}
+          {sessions.length > 1 ? (
+            <View>
+              <Text style={[styles.largeText, { color: colors.up }]}>{t('wc.dapp.connectedDApps')}</Text>
+              <ArrowLeft style={[{ transform: [{ rotate: '-180deg' }] }]} color={colors.up} width={14} height={14} />
+            </View>
+          ) : (
+            <View style={styles.content}>
+              <Text>{t('wc.dapp.connectTo')}</Text>
+              <Text style={[styles.largeText, { color: colors.up, flex: 1 }]} numberOfLines={1}>
+                {sessions[0]?.peer?.metadata?.url}
+              </Text>
+            </View>
+          )}
+        </View>
       </Pressable>
     </View>
   );

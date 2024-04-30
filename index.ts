@@ -53,7 +53,7 @@ if (ENABLE_WALLET_CONNECT_FEATURE.allow) {
         name: 'SwiftShield Wallet',
         description: 'SwiftShield Wallet to interface with Dapps',
         url: 'https://swiftshield.tech/',
-        icons: [],
+        icons: ['https://download.swiftshield.tech/assets/logo.png'],
       },
     }),
   );
