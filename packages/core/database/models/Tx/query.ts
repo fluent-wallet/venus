@@ -24,7 +24,7 @@ export const queryTxsWithAddress = (
     inStatuses?: TxStatus[];
     notInStatuses?: TxStatus[];
     sortBy?: string | string[];
-  }
+  },
 ) => {
   const query: Q.Clause[] = [Q.where('address_id', addressId), Q.where('is_temp_replaced', Q.notEq(true)), Q.where('status', Q.oneOf(inStatuses))];
   if (notInStatuses) {
@@ -67,5 +67,5 @@ export const queryDuplicateTx = (tx: Tx, nonce: number, statuses = ALL_TX_STATUS
       Q.on(TableName.TxPayload, Q.where('nonce', nonce)),
       Q.where('status', Q.oneOf(statuses)),
       Q.where('id', Q.notEq(tx.id)),
-      Q.sortBy('created_at', Q.desc)
+      Q.sortBy('created_at', Q.desc),
     );
