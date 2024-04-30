@@ -42,7 +42,7 @@ function DAPPConnect() {
             )}
           </View>
           {sessions.length > 1 ? (
-            <View>
+            <View style={styles.content}>
               <Text style={[styles.largeText, { color: colors.up }]}>{t('wc.dapp.connectedDApps')}</Text>
               <ArrowLeft style={[{ transform: [{ rotate: '-180deg' }] }]} color={colors.up} width={14} height={14} />
             </View>
