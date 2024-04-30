@@ -64,7 +64,7 @@ const HomeRefresh: React.FC<Props> = ({ children, onRefresh, onScroll, stickyHea
   // pan gesture
   const pan = Gesture.Pan()
     .simultaneousWithExternalGesture(scrollRef)
-    .activeOffsetY([-100, 100])
+    .activeOffsetY(100)
     .onUpdate((e) => {
       if (scrollPosition.value <= 0 && e.translationY >= 0 && isRefreshing.value === false) {
         pullPosition.value = Math.max(Math.min(maxContentHeight, e.translationY), 0);

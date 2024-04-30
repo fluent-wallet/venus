@@ -1,6 +1,7 @@
 import React, { useState, useCallback, useRef } from 'react';
 import { View, Linking, StyleSheet } from 'react-native';
 import { useTheme, StackActions } from '@react-navigation/native';
+import { Trans, useTranslation } from 'react-i18next';
 import { useCameraPermission, useCameraDevice, useCameraFormat, Camera, type Code } from 'react-native-vision-camera';
 import { showMessage } from 'react-native-flash-message';
 import { scanFromURLAsync } from 'expo-barcode-scanner';
@@ -26,7 +27,6 @@ import {
 import { parseETHURL, type ETHURL } from '@utils/ETHURL';
 import { ENABLE_WALLET_CONNECT_FEATURE } from '@utils/features';
 import ScanBorder from '@assets/icons/scan-border.svg';
-import { Trans, useTranslation } from 'react-i18next';
 import { WalletConnectPluginError } from '@core/WalletCore/Plugins/WalletConnect';
 
 // has onConfirm props means open in SendTransaction with local modal way.

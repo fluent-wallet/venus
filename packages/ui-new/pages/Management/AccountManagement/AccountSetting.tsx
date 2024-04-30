@@ -34,8 +34,9 @@ const AccountConfig: React.FC<StackScreenProps<typeof AccountSettingStackName>> 
   }, [account?.nickname]);
 
   const handleUpdateAccountNickName = useCallback(async () => {
-    if (!account || !accountName) return;
-    await methods.updateAccountNickName({ account, nickname: accountName });
+    const trimedAccountName = accountName?.trim();
+    if (!account || !trimedAccountName) return;
+    await methods.updateAccountNickName({ account, nickname: trimedAccountName });
     bottomSheetRef.current?.close();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [account, accountName]);
@@ -111,7 +112,7 @@ const AccountConfig: React.FC<StackScreenProps<typeof AccountSettingStackName>> 
             showVisible={false}
             defaultHasValue
             value={accountName}
-            onChangeText={(newNickName) => setAccountName(newNickName?.trim())}
+            onChangeText={(newNickName) => setAccountName(newNickName)}
             isInBottomSheet
             disabled={inDelete}
           />
@@ -143,7 +144,7 @@ const AccountConfig: React.FC<StackScreenProps<typeof AccountSettingStackName>> 
           <Button
             testID="ok"
             style={styles.btn}
-            disabled={inDelete || !accountName || accountName === account?.nickname}
+            disabled={inDelete || !accountName?.trim() || accountName === account?.nickname}
             onPress={handleUpdateAccountNickName}
             size="small"
           >
