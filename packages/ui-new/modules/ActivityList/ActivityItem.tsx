@@ -21,7 +21,7 @@ const ActivityItem: React.FC<Props> = ({ onPress, tx }) => {
   const { colors } = useTheme();
   const payload = usePayloadOfTx(tx.id);
   const asset = useAssetOfTx(tx.id);
-  const status = formatStatus(tx.status);
+  const status = formatStatus(tx);
   const { value, to, decimals, tokenId } = useMemo(() => formatTxData(payload, asset), [payload, asset]);
   const formatBalance = useFormatBalance(value, decimals);
   const { t } = useTranslation();
