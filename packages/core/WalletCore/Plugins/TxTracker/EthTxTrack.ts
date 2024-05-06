@@ -1,6 +1,7 @@
 import { queryDuplicateTx, queryTxsWithAddress } from '@core/database/models/Tx/query';
 import type { Tx } from '@core/database/models/Tx';
 import type { Address } from '@core/database/models/Address';
+import { NetworkType } from '@core/database/models/Network';
 import { EXECUTED_NOT_FINALIZED_TX_STATUSES, ExecutedStatus, NOT_FINALIZED_TX_STATUSES, TxStatus } from '@core/database/models/Tx/type';
 import { RPCResponse, RPCSend, RPCSendFactory } from '@core/utils/send';
 import { firstValueFrom, debounceTime, Subscription } from 'rxjs';
@@ -32,6 +33,7 @@ const getMinNonceTx = async (txs: Tx[]) => {
 };
 
 export class EthTxTrack {
+  private _networkType = NetworkType.Ethereum;
   private _latestNonceMap = new Map<string, string>();
   private _currentAddress: Address | null = null;
   private _checkExecutedTimer: NodeJS.Timeout | false | null = null;
@@ -60,13 +62,15 @@ export class EthTxTrack {
   /**
    * start track && subscribe count change
    */
-  private _startup(address: Address) {
-    this._checkExecuted();
-    this._subscribeUnexecutedTxCount(address);
-    this._checkConfirmed();
-    this._subscribeUnconfirmedTxCount(address);
-    this._checkFinalized();
-    this._subscribeUnfinalizedTxCount(address);
+  private async _startup(address: Address) {
+    if ((await address.network).networkType === this._networkType) {
+      this._checkExecuted();
+      this._subscribeUnexecutedTxCount(address);
+      this._checkConfirmed();
+      this._subscribeUnconfirmedTxCount(address);
+      this._checkFinalized();
+      this._subscribeUnfinalizedTxCount(address);
+    }
   }
   /**
    * stop track && unsubscribe count change
