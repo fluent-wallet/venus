@@ -14,6 +14,7 @@ import {
   DETAULT_FINALIZED_INTERVAL,
   TX_RESEND_LIMIT,
 } from '@core/consts/transaction';
+import { ReplacedResponse } from './types';
 
 const getMinNonceTx = async (txs: Tx[]) => {
   if (!txs.length) {
@@ -373,7 +374,7 @@ export class EthTxTrack {
           executedTxs.map(async (tx, index) => {
             const { result: block, error } = getBlockByHashParamsResponses[index];
             if (error) {
-              console.log('EthTxTrack: eth_getBlockByHash error:', {
+              console.log('EthTxTrack: getBlockByHash error:', {
                 hash: tx.hash,
                 error,
               });
@@ -480,8 +481,9 @@ export class EthTxTrack {
       });
       const nonce = (await tx.txPayload).nonce!;
       if (tx.resendCount && tx.resendCount >= CHECK_REPLACED_BEFORE_RESEND_COUNT) {
-        replaced = await this._handleCheckReplaced(tx, nonce, endpoint);
-        if (replaced) return;
+        const replaceReponse = await this._handleCheckReplaced(tx, nonce, endpoint);
+        replaced = replaceReponse === ReplacedResponse.Replaced;
+        if (replaceReponse !== ReplacedResponse.NotReplaced) return;
       }
       if (tx.resendCount && tx.resendCount >= TX_RESEND_LIMIT) {
         console.log('EthTxTrack: tx resend limit reached:', tx.hash);
@@ -516,7 +518,27 @@ export class EthTxTrack {
     }
   }
 
-  private async _handleCheckReplaced(tx: Tx, nonce: number, endpoint: string) {
+  private async _handleCheckReplaced(tx: Tx, nonce: number, endpoint: string): Promise<ReplacedResponse> {
+    try {
+      const nonceUsed = await this._handleCheckNonceUsed(tx, nonce, endpoint);
+      if (!nonceUsed) {
+        return ReplacedResponse.NotReplaced;
+      } else {
+        const { result: transaction } = await firstValueFrom(
+          RPCSend<RPCResponse<ETH.eth_getTransactionByHashResponse>>(endpoint, { method: 'eth_getTransactionByHash', params: [tx.hash] }),
+        );
+        if (!transaction) {
+          return ReplacedResponse.Replaced;
+        } else {
+          return ReplacedResponse.TxInPool;
+        }
+      }
+    } catch (error) {
+      console.log('EthTxTrack error:', error);
+      return ReplacedResponse.NotReplaced;
+    }
+  }
+  private async _handleCheckNonceUsed(tx: Tx, nonce: number, endpoint: string) {
     try {
       const prevLatestNonce = this._latestNonceMap.get(tx.address.id);
       if (prevLatestNonce && Number(prevLatestNonce) > Number(nonce)) {
