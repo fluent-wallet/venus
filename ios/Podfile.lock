@@ -7,14 +7,14 @@ PODS:
     - ExpoModulesCore
     - ZXingObjC/OneD
     - ZXingObjC/PDF417
-  - EXConstants (15.4.6):
+  - EXConstants (15.4.5):
     - ExpoModulesCore
   - EXImageLoader (4.6.0):
     - ExpoModulesCore
     - React-Core
-  - Expo (50.0.17):
+  - Expo (50.0.15):
     - ExpoModulesCore
-  - ExpoFileSystem (16.0.9):
+  - ExpoFileSystem (16.0.8):
     - ExpoModulesCore
   - ExpoImage (1.10.6):
     - ExpoModulesCore
@@ -24,7 +24,7 @@ PODS:
     - SDWebImageWebPCoder (~> 0.13.0)
   - ExpoImagePicker (14.7.1):
     - ExpoModulesCore
-  - ExpoLocalization (14.8.4):
+  - ExpoLocalization (14.8.3):
     - ExpoModulesCore
   - ExpoModulesCore (1.11.13):
     - glog
@@ -1202,9 +1202,9 @@ PODS:
     - React-Core
   - RNCAsyncStorage (1.23.1):
     - React-Core
-  - RNCClipboard (1.14.0):
+  - RNCClipboard (1.13.2):
     - React-Core
-  - RNDeviceInfo (10.13.2):
+  - RNDeviceInfo (10.13.1):
     - React-Core
   - RNGestureHandler (2.16.0):
     - glog
@@ -1553,13 +1553,13 @@ SPEC CHECKSUMS:
   CocoaAsyncSocket: 065fd1e645c7abab64f7a6a2007a48038fdc6a99
   DoubleConversion: fea03f2699887d960129cc54bba7e52542b6f953
   EXBarCodeScanner: d59fd943cebee3f913ebf4ffde0d05d344da8b78
-  EXConstants: a5f6276e565d98f9eb4280f81241fc342d641590
+  EXConstants: 988aa430ca0f76b43cd46b66e7fae3287f9cc2fc
   EXImageLoader: 55080616b2fe9da19ef8c7f706afd9814e279b6b
-  Expo: 2cdb5916749a1509cf88114f1f510bd458630eb4
-  ExpoFileSystem: 74cc0fae916f9f044248433971dcfc8c3befd057
+  Expo: 0f04015e4254c8b7c74f3c4b2facdfd0b62152b0
+  ExpoFileSystem: eecaf6796aed0f4dd20042dc2ca2cac6c4bc1185
   ExpoImage: 8cf2d51de3d03b7e984e9b0ba8f19c0c22057001
   ExpoImagePicker: 66970181d1c838f444e5e1f81b804ab2d5ff49bd
-  ExpoLocalization: f94759e55802e4a4f8b7d7cecb450de11b888721
+  ExpoLocalization: f5f5d71dc0c9514d3d77b2771144f6fed6398d04
   ExpoModulesCore: 4a8928a228569301ac4fc4a1e846713e05754d05
   FBLazyVector: 9f533d5a4c75ca77c8ed774aced1a91a0701781e
   FBReactNativeSpec: 40b791f4a1df779e7e4aa12c000319f4f216d40a
@@ -1634,8 +1634,8 @@ SPEC CHECKSUMS:
   ReactCommon: 8cae78d3c3eceff20ee4bbca8bb73b675a45fd5d
   RNBootSplash: e025d4ee98d942ee6c8b495a6fe66339a6b5f6dd
   RNCAsyncStorage: 826b603ae9c0f88b5ac4e956801f755109fa4d5c
-  RNCClipboard: 090462274cc05b02628bd158baf6d73c3abe8441
-  RNDeviceInfo: 42aadf1282ffa0a88dc38a504a7be145eb010dfa
+  RNCClipboard: 60fed4b71560d7bfe40e9d35dea9762b024da86d
+  RNDeviceInfo: 4f9c7cfd6b9db1b05eb919620a001cf35b536423
   RNGestureHandler: bc2cdb2dc42facdf34992ae364b8a728e19a3686
   RNKeychain: bfe3d12bf4620fe488771c414530bf16e88f3678
   RNReanimated: 8a4d86eb951a4a99d8e86266dc71d7735c0c30a9
