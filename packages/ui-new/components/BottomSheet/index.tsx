@@ -1,4 +1,4 @@
-import { useCallback, useRef, forwardRef, useState } from 'react';
+import { useCallback, useRef, forwardRef, useState, useEffect } from 'react';
 import { BackHandler, Keyboard } from 'react-native';
 import { useFocusEffect, useTheme, useNavigation } from '@react-navigation/native';
 import { clamp } from 'lodash-es';
@@ -77,6 +77,7 @@ const BottomSheet = forwardRef<BottomSheet_, Props>(
     );
 
     const handleClose = useCallback(() => {
+      timeRef.current && clearTimeout(timeRef.current);
       onClose?.();
       if (Keyboard.isVisible()) {
         Keyboard.dismiss();
@@ -89,11 +90,27 @@ const BottomSheet = forwardRef<BottomSheet_, Props>(
       // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [onClose]);
 
+    const timeRef = useRef<NodeJS.Timeout | null>(null);
+    useEffect(() => {
+      if (isRoute) {
+        timeRef.current = setTimeout(() => {
+          if (navigation.canGoBack()) {
+            navigation.goBack();
+          }
+        }, 666);
+      }
+      return () => {
+        timeRef.current && clearTimeout(timeRef.current);
+      };
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [isRoute]);
+
     return (
       <BottomSheet_
         ref={composeRef([_forwardRef!, bottomSheetRef])}
         index={index ?? (isRoute ? 0 : -1)}
         onChange={(index, position, type) => {
+          index === 0 && timeRef.current && clearTimeout(timeRef.current);
           indexRef.current = index;
           onChange?.(index, position, type);
           if (index === 0 && typeof onOpen === 'function') {
