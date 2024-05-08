@@ -2,6 +2,7 @@ import { broadcastTransactionSubject } from '@core/WalletCore/Events/broadcastTr
 import { type Plugin } from '../';
 import Methods from '@core/WalletCore/Methods';
 import { EthTxTrack } from './EthTxTrack';
+import { CFXTxTrack } from './CFXTxTrack';
 
 declare module '../../../WalletCore/Plugins' {
   interface Plugins {
@@ -12,6 +13,7 @@ declare module '../../../WalletCore/Plugins' {
 class TxTrackerPluginClass implements Plugin {
   public name = 'TxTracker';
   private _ethTracker = new EthTxTrack();
+  private _cfxTracker = new CFXTxTrack();
 
   constructor() {
     this._setup();
