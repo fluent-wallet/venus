@@ -172,7 +172,6 @@ const SendTransactionStep4Confirm: React.FC<SendTransactionScreenProps<typeof Se
       });
       const nonce = await plugins.Transaction.getTransactionCount({ network: currentNetwork, addressValue: currentAddressValue });
       tx.nonce = Number(nonce);
-      const blockNumber = await plugins.Transaction.getBlockNumber(currentNetwork);
 
       let txRaw!: string;
       if (currentVault?.type === VaultType.BSIM) {
@@ -203,7 +202,12 @@ const SendTransactionStep4Confirm: React.FC<SendTransactionScreenProps<typeof Se
         }
       } else {
         const privateKey = await methods.getPrivateKeyOfAddress(currentAddress);
-        txRaw = await plugins.Transaction.signTransaction({ network: currentNetwork, tx, privateKey, blockNumber });
+        txRaw = await plugins.Transaction.signTransaction({
+          network: currentNetwork,
+          tx,
+          privateKey,
+          blockNumber: currentNetwork.networkType === NetworkType.Conflux ? await plugins.BlockNumberTracker.getNetworkBlockNumber(currentNetwork) : '',
+        });
       }
 
       if (txRaw) {
