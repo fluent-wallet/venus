@@ -1,4 +1,4 @@
-import { Transaction as EVMTransaction, Wallet } from 'ethers';
+import { Transaction as EVMTransaction, TypedDataDomain, TypedDataField, Wallet } from 'ethers';
 import { fetchChain } from '@cfx-kit/dapp-utils/dist/fetch';
 import { addHexPrefix } from '@core/utils/base';
 import { NetworkType } from '@core/database/models/Network';
@@ -54,6 +54,27 @@ class Transaction {
       method: 'eth_sendRawTransaction',
       params: [txRaw],
     });
+
+  public signMessage = ({ message, privateKey }: { message: string; privateKey: string }) => {
+    const wallet = new Wallet(privateKey);
+    return wallet.signMessage(message);
+  };
+  public signTypedData = ({
+    domain,
+    types: _types,
+    value,
+    privateKey,
+  }: {
+    domain: TypedDataDomain;
+    types: Record<string, TypedDataField[]>;
+    value: Record<string, any>;
+    privateKey: string;
+  }) => {
+    const wallet = new Wallet(privateKey);
+    // https://github.com/ethers-io/ethers.js/discussions/3163
+    const { EIP712Domain, ...types } = _types;
+    return wallet.signTypedData(domain, types, value);
+  };
 }
 
 export default new Transaction();

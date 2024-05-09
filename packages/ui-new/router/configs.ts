@@ -2,7 +2,7 @@ import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { NavigationProp, NavigatorScreenParams } from '@react-navigation/native';
 import { type AssetInfo } from '@core/WalletCore/Plugins/AssetsTracker/types';
 import { type NFTItemDetail } from '@core/WalletCore/Plugins/NFTDetailTracker';
-import { type WCProposalEventType } from '@core/WalletCore/Plugins/WalletConnect';
+import { WCSignMessageType, type WCProposalEventType } from '@core/WalletCore/Plugins/WalletConnect';
 
 export const WelcomeStackName = 'Welcome';
 export const WayToInitWalletStackName = 'WayToInitWallet';
@@ -34,11 +34,13 @@ export const WalletConnectStackName = 'WalletConnect';
 export const WalletConnectLoadingStackName = 'WalletConnectLoading';
 export const WalletConnectProposalStackName = 'WalletConnectProposal';
 export const WalletConnectSessionsStackName = 'WalletConnectSessions';
+export const WalletConnectSignMessageStackName = 'WalletConnectSignMessage';
 
 export type WalletConnectParamList = {
   [WalletConnectLoadingStackName]: undefined;
   [WalletConnectProposalStackName]: WCProposalEventType & { chains: number[] };
   [WalletConnectSessionsStackName]: undefined;
+  [WalletConnectSignMessageStackName]: WCSignMessageType;
 };
 
 // end Wallet connect nest stack

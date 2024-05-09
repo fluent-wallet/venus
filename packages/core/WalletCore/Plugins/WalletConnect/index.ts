@@ -4,6 +4,7 @@ import Client, { Web3Wallet, Web3WalletTypes } from '@walletconnect/web3wallet';
 import { ProposalTypes } from '@walletconnect/types';
 import { parseUri, getSdkError, buildApprovedNamespaces, type BuildApprovedNamespacesParams, SdkErrorKey } from '@walletconnect/utils';
 import { Subject, filter } from 'rxjs';
+import { formatJsonRpcResult, formatJsonRpcError } from '@json-rpc-tools/utils';
 
 import { WalletConnectRPCMethod } from './types';
 
@@ -36,6 +37,16 @@ export interface WCProposalEventType {
   reject: (reason?: SdkErrorKey) => Promise<void>;
 }
 
+export interface WCSignMessageType {
+  chainId: string;
+  method: WalletConnectRPCMethod;
+  address: string;
+  message: string;
+  metadata: Web3WalletTypes.Metadata;
+  approve: (signedMessage: string) => Promise<void>;
+  reject: (reason: string) => Promise<void>;
+}
+
 export class WalletConnectPluginError extends Error {
   constructor(message: string) {
     super(message);
@@ -52,6 +63,8 @@ export default class WalletConnect implements Plugin {
 
   sessionProposalSubject = new Subject<WCProposalEventType>();
 
+  signMessageSubject = new Subject<WCSignMessageType>();
+
   sessionStateChangeSubject = new Subject<void>();
 
   constructor({ projectId, metadata }: WalletConnectPluginParams) {
@@ -64,6 +77,8 @@ export default class WalletConnect implements Plugin {
     this.init();
   }
 
+  activeSessionMetadata: Record<string, Web3WalletTypes.Metadata> = {};
+
   async init() {
     const client = await this.client;
     console.log('WC client is init');
@@ -73,6 +88,11 @@ export default class WalletConnect implements Plugin {
 
     // TODO: this event to listen proposal expire
     client.on('proposal_expire', (e) => console.log(e.id, 'proposal_expire'));
+
+    const sessions = client.getActiveSessions();
+    Object.keys(sessions).forEach((key) => {
+      this.activeSessionMetadata[key] = sessions[key].peer.metadata;
+    });
   }
 
   /**
@@ -89,6 +109,12 @@ export default class WalletConnect implements Plugin {
 
   getWCProposalSubscribe() {
     return this.sessionProposalSubject;
+  }
+  getWCSignMessageSubscribe() {
+    return this.signMessageSubject;
+  }
+  emitWCSignMessage(args: WCSignMessageType) {
+    this.signMessageSubject.next(args);
   }
   emitWCProposal(args: WCProposalEventType) {
     this.sessionProposalSubject.next(args);
@@ -118,11 +144,13 @@ export default class WalletConnect implements Plugin {
         },
       });
 
-      await client.approveSession({
+      const activeSession = await client.approveSession({
         id: proposal.id,
         namespaces: approvedNamespaces,
       });
       this.emitWCSessionChange();
+      // save metadata
+      this.activeSessionMetadata[activeSession.topic] = activeSession.peer.metadata;
     };
     const rejectSession: WCProposalEventType['reject'] = async (reason) => {
       await client.rejectSession({ id: proposal.params.id, reason: getSdkError(reason || 'USER_REJECTED') });
@@ -137,7 +165,59 @@ export default class WalletConnect implements Plugin {
     });
   }
 
-  onSessionRequest(request: Web3WalletTypes.SessionRequest) {}
+  async onSessionRequest(request: Web3WalletTypes.SessionRequest) {
+    const client = await this.client;
+
+    const { id, topic } = request;
+    const { chainId } = request.params;
+    const { method, params } = request.params.request;
+    this.emitWCLoading(false);
+
+    // check is supported method
+    if ([...SUPPORTED_TRANSACTION_METHODS, ...SUPPORT_SIGN_METHODS].includes(method as WalletConnectRPCMethod)) {
+      const approve: WCSignMessageType['approve'] = async (signedMessage) => {
+        await client.respondSessionRequest({
+          topic,
+          response: formatJsonRpcResult(id, signedMessage),
+        });
+      };
+
+      const reject: WCSignMessageType['reject'] = async (reason) => {
+        await client.respondSessionRequest({
+          topic,
+          response: formatJsonRpcError(id, reason),
+        });
+      };
+
+      // check is sign method
+      if (SUPPORT_SIGN_METHODS.includes(method as WalletConnectRPCMethod)) {
+        let message = '';
+        let address = '';
+        if (method === WalletConnectRPCMethod.PersonalSign) {
+          message = params[0];
+          address = params[1];
+        } else if (method.startsWith(WalletConnectRPCMethod.SignTypedData)) {
+          address = params[0];
+          message = params[1];
+        }
+
+        this.emitWCSignMessage({
+          chainId,
+          address,
+          message,
+          metadata: this.activeSessionMetadata[topic],
+          method: method as WalletConnectRPCMethod,
+          approve,
+          reject,
+        });
+      }
+    } else {
+      await client.respondSessionRequest({
+        topic,
+        response: formatJsonRpcError(id, `${method} is not supported`),
+      });
+    }
+  }
 
   onSessionDelete(event: Web3WalletTypes.SessionDelete) {
     this.emitWCSessionChange();

@@ -64,7 +64,7 @@ export default function WalletConnectProposal() {
       // TODO handle error
       console.log(e);
     }
-  }, [approve, currentAddress?.hex, currentNetwork?.netId, navigation]);
+  }, [approve, currentAddress?.hex, navigation, connectNetwork]);
 
   const { inAsync: inApproving, execAsync: handleApprove } = useInAsync(_handleApprove);
   const { inAsync: inRejecting, execAsync: handleReject } = useInAsync(_handleReject);

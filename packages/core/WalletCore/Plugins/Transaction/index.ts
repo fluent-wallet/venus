@@ -1,4 +1,4 @@
-import { Transaction } from 'ethers';
+import { Transaction, TypedDataDomain, TypedDataField } from 'ethers';
 import { NetworkType, Network } from '@core/database/models/Network';
 import { type Plugin } from '../';
 import EVMTransaction from './chains/evm';
@@ -31,7 +31,7 @@ class TransactionPluginClass implements Plugin {
       (typeof ConfluxTransaction)['estimate']
     >;
   };
-  
+
   public getBlockNumber = (network: Network) => {
     const transactionInstance = getTransactionInstance(network);
     return transactionInstance.getBlockNumber(network.endpoint);
@@ -50,6 +50,26 @@ class TransactionPluginClass implements Plugin {
   public sendRawTransaction = ({ network, txRaw }: { network: Network; txRaw: string }) => {
     const transactionInstance = getTransactionInstance(network);
     return transactionInstance.sendRawTransaction({ txRaw, endpoint: network.endpoint });
+  };
+  public signMessage = ({ message, privateKey, network }: { message: string; privateKey: string, network: Network }) => {
+    const transactionInstance = getTransactionInstance(network);
+    return transactionInstance.signMessage({ message, privateKey });
+  };
+  public signTypedData = ({
+    domain,
+    types,
+    value,
+    privateKey,
+    network
+  }: {
+    domain: TypedDataDomain;
+    types: Record<string, TypedDataField[]>;
+    value: Record<string, any>;
+    privateKey: string;
+    network: Network
+  }) => {
+    const transactionInstance = getTransactionInstance(network);
+    return transactionInstance.signTypedData({ domain, types, value, privateKey });
   };
 }
 

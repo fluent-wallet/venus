@@ -1,7 +1,13 @@
 import Plugins from '@core/WalletCore/Plugins';
-import { NetworkType } from '@core/WalletCore/Plugins/ReactInject';
+import { NetworkType, useCurrentAddress, useCurrentNetwork } from '@core/WalletCore/Plugins/ReactInject';
 import { useNavigation } from '@react-navigation/native';
-import { StackNavigation, WalletConnectStackName, WalletConnectLoadingStackName, WalletConnectProposalStackName } from '@router/configs';
+import {
+  StackNavigation,
+  WalletConnectStackName,
+  WalletConnectLoadingStackName,
+  WalletConnectProposalStackName,
+  WalletConnectSignMessageStackName,
+} from '@router/configs';
 import { useCallback, useEffect, useState } from 'react';
 import { filter } from 'rxjs';
 import { uniq } from 'lodash-es';
@@ -14,17 +20,19 @@ const QA_SUPPORT_NETWORK = [CFX_ESPACE_MAINNET_NETID, CFX_ESPACE_TESTNET_NETID];
 
 export function useListenWalletConnectEvent() {
   const navigation = useNavigation<StackNavigation>();
+  const currentAddress = useCurrentAddress();
+  const currentNetwork = useCurrentNetwork();
 
   useEffect(() => {
     // show loading
-    const $loading = Plugins.WalletConnect.getWCLoadingSubscribe()
+    const loading = Plugins.WalletConnect.getWCLoadingSubscribe()
       .pipe(filter((bl) => bl === true))
       .subscribe(() => {
         navigation.navigate(WalletConnectStackName, { screen: WalletConnectLoadingStackName });
       });
 
     // show proposal
-    const $sessionProposal = Plugins.WalletConnect.getWCProposalSubscribe().subscribe(async (args) => {
+    const sessionProposal = Plugins.WalletConnect.getWCProposalSubscribe().subscribe(async (args) => {
       let requestChains = uniq([...(args.requiredNamespaces?.eip155?.chains || []), ...(args.optionalNamespaces?.eip155?.chains || [])]).map((chain) =>
         parseInt(chain.split('eip155:')[1]),
       );
@@ -45,11 +53,27 @@ export function useListenWalletConnectEvent() {
       navigation.navigate(WalletConnectStackName, { screen: WalletConnectProposalStackName, params: { ...args, chains: requestChains } });
     });
 
+    // show sign message
+
+    const signMessage = Plugins.WalletConnect.getWCSignMessageSubscribe().subscribe((args) => {
+      const { address } = args;
+      if (address !== currentAddress?.hex) {
+        return args.reject('address is not match');
+      }
+      const chainId = args.chainId.split(':')[1];
+
+      if (chainId !== currentNetwork?.netId.toString()) {
+        return args.reject('network is not match');
+      }
+      navigation.navigate(WalletConnectStackName, { screen: WalletConnectSignMessageStackName, params: args });
+    });
+
     return () => {
-      $loading.unsubscribe();
-      $sessionProposal.unsubscribe();
+      loading.unsubscribe();
+      sessionProposal.unsubscribe();
+      signMessage.unsubscribe();
     };
-  }, [navigation]);
+  }, [navigation, currentAddress, currentNetwork]);
 }
 
 export function useWalletConnectSessions() {

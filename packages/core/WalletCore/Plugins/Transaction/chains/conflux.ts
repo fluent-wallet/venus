@@ -4,6 +4,7 @@ import { addHexPrefix } from '@core/utils/base';
 import methods from '@core/WalletCore/Methods';
 import { NetworkType } from '@core/database/models/Network';
 import { type ITxEvm } from '../types';
+import { TypedDataDomain, TypedDataField, Wallet } from 'ethers';
 
 class Transaction {
   public getGasPrice = (endpoint: string) => fetchChain<string>({ url: endpoint, method: 'cfx_gasPrice' });
@@ -54,10 +55,7 @@ class Transaction {
   };
 
   public estimate = async ({ tx, endpoint, gasBuffer = 1 }: { tx: ITxEvm; endpoint: string; gasBuffer?: number }) => {
-    const [gasPrice, { gasLimit, storageLimit }] = await Promise.all([
-      this.getGasPrice(endpoint),
-      this.estimateGas({ tx, endpoint, gasBuffer }),
-    ]);
+    const [gasPrice, { gasLimit, storageLimit }] = await Promise.all([this.getGasPrice(endpoint), this.estimateGas({ tx, endpoint, gasBuffer })]);
     return { gasPrice, gasLimit, storageLimit };
   };
 
@@ -84,6 +82,27 @@ class Transaction {
 
   public sendRawTransaction = ({ txRaw, endpoint }: { txRaw: string; endpoint: string }) =>
     fetchChain<string>({ url: endpoint, method: 'cfx_sendRawTransaction', params: [txRaw] });
+
+  public signMessage = ({ message, privateKey }: { message: string; privateKey: string }) => {
+    const wallet = new Wallet(privateKey);
+    return wallet.signMessage(message);
+  };
+  public signTypedData = ({
+    domain,
+    types: _types,
+    value,
+    privateKey,
+  }: {
+    domain: TypedDataDomain;
+    types: Record<string, TypedDataField[]>;
+    value: Record<string, any>;
+    privateKey: string;
+  }) => {
+    const wallet = new Wallet(privateKey);
+    // https://github.com/ethers-io/ethers.js/discussions/3163
+    const { EIP712Domain, ...types } = _types;
+    return wallet.signTypedData(domain, types, value);
+  };
 }
 
 export default new Transaction();
