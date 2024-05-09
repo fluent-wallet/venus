@@ -20,6 +20,7 @@ import BSIMPlugin from './packages/WalletCoreExtends/Plugins/BSIM';
 import TransactionPlugin from './packages/core/WalletCore/Plugins/Transaction';
 import NFTDetailTracker from './packages/core/WalletCore/Plugins/NFTDetailTracker';
 import ReceiveAssetsTracker from './packages/core/WalletCore/Plugins/ReceiveAssetsTracker';
+import BlockNumberTracker from './packages/core/WalletCore/Plugins/BlockNumberTracker';
 import App from './packages/ui-new/App';
 import { name as appName } from './app.json';
 import { ENABLE_WALLET_CONNECT_FEATURE } from './packages/ui-new/utils/features';
@@ -44,6 +45,7 @@ const plugins = [
   TransactionPlugin,
   NFTDetailTracker,
   ReceiveAssetsTracker,
+  BlockNumberTracker,
 ];
 
 if (ENABLE_WALLET_CONNECT_FEATURE.allow) {
