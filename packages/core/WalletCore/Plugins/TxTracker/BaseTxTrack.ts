@@ -52,11 +52,10 @@ export abstract class BaseTxTrack {
   }
 
   _setup() {
-    events.currentAddressObservable.pipe(debounceTime(40)).subscribe((selectedAddress) => {
-      this._currentAddress = selectedAddress;
-      if (!selectedAddress) {
+    events.currentAddressObservable.pipe(debounceTime(40)).subscribe(async (selectedAddress) => {
+      if (!selectedAddress || (await selectedAddress.network).networkType !== this._networkType) {
         this._cleanup();
-        console.log(`${this._logPrefix}: no selected address`);
+        console.log(`${this._logPrefix}: ${!selectedAddress ? 'no selected address' : 'network not match'}`);
         return;
       }
       this._startup(selectedAddress);
@@ -67,19 +66,19 @@ export abstract class BaseTxTrack {
    * start track && subscribe count change
    */
   async _startup(address: Address) {
-    if ((await address.network).networkType === this._networkType) {
-      this._checkExecuted();
-      this._subscribeUnexecutedTxCount(address);
-      this._checkConfirmed();
-      this._subscribeUnconfirmedTxCount(address);
-      this._checkFinalized();
-      this._subscribeUnfinalizedTxCount(address);
-    }
+    this._currentAddress = address;
+    this._checkExecuted();
+    this._subscribeUnexecutedTxCount(address);
+    this._checkConfirmed();
+    this._subscribeUnconfirmedTxCount(address);
+    this._checkFinalized();
+    this._subscribeUnfinalizedTxCount(address);
   }
   /**
    * stop track && unsubscribe count change
    */
   _cleanup() {
+    this._currentAddress = null;
     this._cleanupExecutedTimer();
     this._unexecutedSubscription?.unsubscribe();
     this._unexecutedSubscription = null;
