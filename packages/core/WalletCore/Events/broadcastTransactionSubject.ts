@@ -7,7 +7,8 @@ export interface TransactionSubjectValue {
   txRaw: string;
   tx: ITxEvm;
   extraParams: Pick<WalletTransactionType, 'assetType' | 'contractAddress' | 'to'> & {
-    sendAt: Date,
+    sendAt: Date;
+    epochHeight?: string | null;
   };
 }
 

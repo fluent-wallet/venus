@@ -15,6 +15,12 @@ import { TxExtra } from '@core/database/models/TxExtra';
 import { TxStatus } from '@core/database/models/Tx/type';
 import { getAddress as toChecksumAddress } from 'ethers';
 
+interface createTxPayloadParams {
+  tx: TransactionSubjectValue['tx'];
+  address?: Address;
+  epochHeight?: string | null;
+}
+
 @injectable()
 export class TxMethod {
   createTx(params: TransactionSubjectValue, prepareCreate: true): Promise<readonly [Tx, TxPayload, TxExtra]>;
@@ -31,6 +37,7 @@ export class TxMethod {
           {
             tx: params.tx,
             address,
+            epochHeight: params.extraParams.epochHeight,
           },
           true,
         ),
@@ -68,9 +75,9 @@ export class TxMethod {
     }
   }
 
-  createTxPayload(params: { tx: TransactionSubjectValue['tx']; address?: Address }, prepareCreate: true): Promise<TxPayload>;
-  createTxPayload(params: { tx: TransactionSubjectValue['tx']; address?: Address }): Promise<void>;
-  async createTxPayload({ tx, address }: { tx: TransactionSubjectValue['tx']; address?: Address }, prepareCreate?: true) {
+  createTxPayload(params: createTxPayloadParams, prepareCreate: true): Promise<TxPayload>;
+  createTxPayload(params: createTxPayloadParams): Promise<void>;
+  async createTxPayload({ tx, address, epochHeight }: createTxPayloadParams, prepareCreate?: true) {
     const from = tx.from ?? (await address?.getValue());
     const chainId = (await address?.network)?.chainId;
     const txPayload = _createTxPayload(
@@ -84,6 +91,8 @@ export class TxMethod {
         nonce: Number(tx.nonce),
         chainId,
         data: tx.data,
+        storageLimit: tx.storageLimit,
+        epochHeight,
       },
       true,
     );
