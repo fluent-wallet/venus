@@ -150,7 +150,7 @@ export class NetworkMethod {
     endpoint,
     addressValue,
   }: {
-    networkType: Exclude<NetworkType, NetworkType.Conflux>;
+    networkType: NetworkType;
     endpoint: string;
     addressValue: string;
   }): Promise<boolean>;

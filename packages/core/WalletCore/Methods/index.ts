@@ -101,7 +101,7 @@ export class Methods {
     return this.NetworkMethod.checkIsValidAddress(...args);
   }
   public checkIsContractAddress(params: { networkType: NetworkType.Conflux; endpoint: string; addressValue: string }): boolean;
-  public checkIsContractAddress(params: { networkType: Exclude<NetworkType, NetworkType.Conflux>; endpoint: string; addressValue: string }): Promise<boolean>;
+  public checkIsContractAddress(params: { networkType: NetworkType; endpoint: string; addressValue: string }): Promise<boolean>;
   public checkIsContractAddress(params: { networkType: NetworkType; endpoint: string; addressValue: string }) {
     return this.NetworkMethod.checkIsContractAddress(params as any) as any;
   }

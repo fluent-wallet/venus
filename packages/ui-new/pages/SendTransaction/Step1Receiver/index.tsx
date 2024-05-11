@@ -88,7 +88,7 @@ const SendTransactionStep1Receiver: React.FC<SendTransactionScreenProps<typeof S
             setFilterAccounts({ type: 'invalid', assets: [] });
           } else {
             const isContractAddress = await method.checkIsContractAddress({
-              networkType: currentNetwork.networkType as unknown as NetworkType.Ethereum,
+              networkType: currentNetwork.networkType,
               addressValue: receiver,
               endpoint: currentNetwork.endpoint,
             });
