@@ -7,6 +7,8 @@ import {
   WalletConnectLoadingStackName,
   WalletConnectProposalStackName,
   WalletConnectSignMessageStackName,
+  WalletConnectEOATransactionStackName,
+  WalletCOnnectContractTransactionStackName,
 } from '@router/configs';
 import { useCallback, useEffect, useState } from 'react';
 import { filter } from 'rxjs';
@@ -14,6 +16,7 @@ import { uniq } from 'lodash-es';
 import { CFX_ESPACE_MAINNET_NETID, CFX_ESPACE_TESTNET_NETID } from '@core/utils/consts';
 import { isDev, isQA } from '@utils/getEnv';
 import { queryNetworks } from '@core/database/models/Network/query';
+import Methods from '@core/WalletCore/Methods';
 
 const SUPPORT_NETWORK = [CFX_ESPACE_MAINNET_NETID];
 const QA_SUPPORT_NETWORK = [CFX_ESPACE_MAINNET_NETID, CFX_ESPACE_TESTNET_NETID];
@@ -68,10 +71,37 @@ export function useListenWalletConnectEvent() {
       navigation.navigate(WalletConnectStackName, { screen: WalletConnectSignMessageStackName, params: args });
     });
 
+    // show send transaction
+
+    const tx = Plugins.WalletConnect.getWCSendTransactionSubscribe().subscribe(async (args) => {
+      const {
+        reject,
+        address,
+        tx: { to, data },
+      } = args;
+
+      if (address !== currentAddress?.hex) {
+        return reject('address is not match');
+      }
+      const chainId = args.chainId.split(':')[1];
+
+      if (chainId !== currentNetwork?.netId.toString()) {
+        return reject('network is not match');
+      }
+
+      const isContract = await Methods.checkIsContractAddress({ networkType: currentNetwork.networkType, endpoint: currentNetwork.endpoint, addressValue: to });
+
+      if ((!isContract && !!to) || !data || data === '0x') {
+        navigation.navigate(WalletConnectStackName, { screen: WalletConnectEOATransactionStackName, params: args });
+      } else {
+        navigation.navigate(WalletConnectStackName, { screen: WalletCOnnectContractTransactionStackName, params: args });
+      }
+    });
     return () => {
       loading.unsubscribe();
       sessionProposal.unsubscribe();
       signMessage.unsubscribe();
+      tx.unsubscribe();
     };
   }, [navigation, currentAddress, currentNetwork]);
 }

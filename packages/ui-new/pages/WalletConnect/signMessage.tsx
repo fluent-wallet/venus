@@ -5,7 +5,7 @@ import { VaultType, useCurrentAccount, useCurrentAddressOfAccount, useCurrentNet
 import { RouteProp, useNavigation, useRoute, useTheme } from '@react-navigation/native';
 import { WalletConnectParamList, WalletConnectSignMessageStackName } from '@router/configs';
 import { useTranslation } from 'react-i18next';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 import { toDataUrl } from '@utils/blockies';
 import { Image } from 'expo-image';
 import { shortenAddress } from '@core/utils/address';
@@ -19,7 +19,7 @@ import { sanitizeTypedData } from '@utils/santitizeTypedData';
 import Plugins from '@core/WalletCore/Plugins';
 import Methods from '@core/WalletCore/Methods';
 import useInAsync from '@hooks/useInAsync';
-import { ScrollView } from 'react-native-gesture-handler';
+import Text from '@components/Text';
 
 function WalletConnectSignMessage() {
   const { t } = useTranslation();
@@ -144,7 +144,7 @@ function WalletConnectSignMessage() {
           stickyHeaderIndices={[0]}
           contentContainerStyle={{ paddingBottom: 16 }}
         >
-          <Pressable onPress={() => handleCoy('')} testID="copy">
+          <Pressable onPress={() => handleCoy(signMsg)} testID="copy">
             <View style={[styles.flexWithRow, styles.scrollTitle, { backgroundColor: colors.bgFourth }]}>
               <Text style={[styles.h2, { color: colors.textPrimary }]}>{t('wc.sign.message')}</Text>
               <Copy width={18} height={18} color={colors.textSecondary} />

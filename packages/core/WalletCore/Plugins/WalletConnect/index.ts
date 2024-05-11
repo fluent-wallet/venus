@@ -47,6 +47,23 @@ export interface WCSignMessageType {
   reject: (reason: string) => Promise<void>;
 }
 
+export interface WCSendTransactionType {
+  chainId: string;
+  method: WalletConnectRPCMethod;
+  address: string;
+  tx: {
+    from: string;
+    to: string;
+    value: string;
+    data: string;
+    nonce?: number;
+    gasLimit?: string;
+    gasPrice?: string;
+  };
+  metadata: Web3WalletTypes.Metadata;
+  approve: (txhash: string) => Promise<void>;
+  reject: (reason: string) => Promise<void>;
+}
 export class WalletConnectPluginError extends Error {
   constructor(message: string) {
     super(message);
@@ -64,6 +81,8 @@ export default class WalletConnect implements Plugin {
   sessionProposalSubject = new Subject<WCProposalEventType>();
 
   signMessageSubject = new Subject<WCSignMessageType>();
+
+  sendTransactionSubject = new Subject<WCSendTransactionType>();
 
   sessionStateChangeSubject = new Subject<void>();
 
@@ -113,6 +132,13 @@ export default class WalletConnect implements Plugin {
   getWCSignMessageSubscribe() {
     return this.signMessageSubject;
   }
+
+  getWCSendTransactionSubscribe() {
+    return this.sendTransactionSubject;
+  }
+  emitWCSendTransaction(args: WCSendTransactionType) {
+    this.sendTransactionSubject.next(args);
+  }
   emitWCSignMessage(args: WCSignMessageType) {
     this.signMessageSubject.next(args);
   }
@@ -155,7 +181,6 @@ export default class WalletConnect implements Plugin {
     const rejectSession: WCProposalEventType['reject'] = async (reason) => {
       await client.rejectSession({ id: proposal.params.id, reason: getSdkError(reason || 'USER_REJECTED') });
     };
-
     this.emitWCProposal({
       requiredNamespaces,
       optionalNamespaces,
@@ -209,6 +234,42 @@ export default class WalletConnect implements Plugin {
           method: method as WalletConnectRPCMethod,
           approve,
           reject,
+        });
+      } else if (method === WalletConnectRPCMethod.SendTransaction) {
+        const transaction = params[0];
+
+        const approve: WCSendTransactionType['approve'] = async (txHash) => {
+          await client.respondSessionRequest({
+            topic,
+            response: formatJsonRpcResult(id, txHash),
+          });
+        };
+
+        const reject: WCSendTransactionType['reject'] = async (reason) => {
+          await client.respondSessionRequest({
+            topic,
+            response: formatJsonRpcError(id, reason),
+          });
+        };
+
+        const address = transaction?.from;
+
+        if (!address) reject('from is required');
+        if (!transaction.to) reject('to is required');
+
+        this.emitWCSendTransaction({
+          chainId,
+          address: transaction.to,
+          metadata: this.activeSessionMetadata[topic],
+          method: method as WalletConnectRPCMethod,
+          tx: transaction,
+          approve,
+          reject,
+        });
+      } else {
+        await client.respondSessionRequest({
+          topic,
+          response: formatJsonRpcError(id, `${method} is not supported`),
         });
       }
     } else {
