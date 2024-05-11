@@ -4,6 +4,7 @@ import { type Account } from '../../database/models/Account';
 import { type Vault } from '../../database/models/Vault';
 import { type Address } from '../../database/models/Address';
 import { type Asset } from '../../database/models/Asset';
+import { NetworkType } from '../../database/models/Network';
 import { container } from '../configs';
 import { GetDecryptedVaultDataMethod } from './getDecryptedVaultData';
 import { AddAccountMethod, type Params as AddAccountParams } from './addAccount';
@@ -99,8 +100,10 @@ export class Methods {
   public checkIsValidAddress(...args: Parameters<NetworkMethod['checkIsValidAddress']>) {
     return this.NetworkMethod.checkIsValidAddress(...args);
   }
-  public checkIsContractAddress(...args: Parameters<NetworkMethod['checkIsContractAddress']>) {
-    return this.NetworkMethod.checkIsContractAddress(...args);
+  public checkIsContractAddress(params: { networkType: NetworkType.Conflux; endpoint: string; addressValue: string }): boolean;
+  public checkIsContractAddress(params: { networkType: Exclude<NetworkType, NetworkType.Conflux>; endpoint: string; addressValue: string }): Promise<boolean>;
+  public checkIsContractAddress(params: { networkType: NetworkType; endpoint: string; addressValue: string }) {
+    return this.NetworkMethod.checkIsContractAddress(params as any) as any;
   }
 
   @inject(DatabaseMethod) private DatabaseMethod!: DatabaseMethod;

@@ -13,6 +13,7 @@ import {
   useAllAccountsInManage,
   AddressType,
   RecentlyType,
+  NetworkType,
 } from '@core/WalletCore/Plugins/ReactInject';
 import method from '@core/WalletCore/Methods';
 import Text from '@components/Text';
@@ -87,7 +88,7 @@ const SendTransactionStep1Receiver: React.FC<SendTransactionScreenProps<typeof S
             setFilterAccounts({ type: 'invalid', assets: [] });
           } else {
             const isContractAddress = await method.checkIsContractAddress({
-              networkType: currentNetwork.networkType,
+              networkType: currentNetwork.networkType as unknown as NetworkType.Ethereum,
               addressValue: receiver,
               endpoint: currentNetwork.endpoint,
             });

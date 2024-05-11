@@ -9,7 +9,7 @@ class Transaction {
   public getGasPrice = (endpoint: string) => fetchChain<string>({ url: endpoint, method: 'eth_gasPrice' });
 
   public estimateGas = async ({ tx, endpoint, gasBuffer = 1 }: { tx: ITxEvm; endpoint: string; gasBuffer?: number }) => {
-    const isToAddressContract = methods.checkIsContractAddress({ networkType: NetworkType.Ethereum, endpoint: endpoint, addressValue: tx.to });
+    const isToAddressContract = await methods.checkIsContractAddress({ networkType: NetworkType.Ethereum, endpoint: endpoint, addressValue: tx.to });
     const isSendNativeToken = (!!tx.to && !isToAddressContract) || !tx.data || tx.data === '0x';
     if (isSendNativeToken) return addHexPrefix(BigInt(21000 * gasBuffer).toString(16));
 

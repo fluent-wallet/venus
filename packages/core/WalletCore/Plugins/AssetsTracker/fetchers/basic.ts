@@ -1,11 +1,9 @@
 import { fetchChain, fetchChainBatch, fetchChainMulticall } from '@cfx-kit/dapp-utils/dist/fetch';
 import { createERC20Contract } from '@cfx-kit/dapp-utils/dist/contract';
-import { convertCfxToHex as _convertCfxToHex } from '@cfx-kit/dapp-utils/dist/address';
-import { memoize } from 'lodash-es';
+import { convertCfxToHex } from '../../../../utils/address';
 import { type Address } from './../../../../database/models/Address';
 import { NetworkType, networkRpcPrefixMap, networkRpcSuffixMap } from '../../../../database/models/Network';
 import { AssetType } from '../../../../database/models/Asset';
-const convertCfxToHex = memoize(_convertCfxToHex);
 
 export const fetchNativeAssetBalance = ({ networkType, endpoint, accountAddress }: { networkType: NetworkType; endpoint: string; accountAddress: Address }) => {
   switch (networkType) {

@@ -10,7 +10,7 @@ class Transaction {
   public getGasPrice = (endpoint: string) => fetchChain<string>({ url: endpoint, method: 'cfx_gasPrice' });
 
   public estimateGas = async ({ tx, endpoint, gasBuffer = 1 }: { tx: ITxEvm; endpoint: string; gasBuffer?: number }) => {
-    const isToAddressContract = methods.checkIsContractAddress({ networkType: NetworkType.Conflux, endpoint: endpoint, addressValue: tx.to });
+    const isToAddressContract = await methods.checkIsContractAddress({ networkType: NetworkType.Conflux, endpoint: endpoint, addressValue: tx.to });
     const isSendNativeToken = (!!tx.to && !isToAddressContract) || !tx.data || tx.data === '0x';
 
     if (isSendNativeToken) return { gasLimit: addHexPrefix(BigInt(21000 * gasBuffer).toString(16)), storageLimit: '0x0' };
@@ -33,7 +33,7 @@ class Transaction {
   };
 
   public checkPayContract = async ({ tx, endpoint }: { tx: ITxEvm; endpoint: string }) => {
-    const isToAddressContract = methods.checkIsContractAddress({ networkType: NetworkType.Conflux, endpoint: endpoint, addressValue: tx.to });
+    const isToAddressContract = await methods.checkIsContractAddress({ networkType: 'NetworkType.Conflux', endpoint: endpoint, addressValue: tx.to });
     const isSendNativeToken = (!!tx.to && !isToAddressContract) || !tx.data || tx.data === '0x';
 
     // TODO: check wether the balance is enough in sending native token
