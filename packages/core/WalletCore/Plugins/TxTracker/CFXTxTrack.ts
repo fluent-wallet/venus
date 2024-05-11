@@ -4,6 +4,7 @@ import { EXECUTED_NOT_FINALIZED_TX_STATUSES, ExecutedStatus, TxStatus } from '@c
 import { RPCResponse, RPCSend, RPCSendFactory } from '@core/utils/send';
 import { firstValueFrom } from 'rxjs';
 import { BaseTxTrack } from './BaseTxTrack';
+import BlockNumberTracker from '../BlockNumberTracker';
 
 export class CFXTxTrack extends BaseTxTrack {
   constructor() {
@@ -67,10 +68,10 @@ export class CFXTxTrack extends BaseTxTrack {
         }
         if (!receipt) return false;
         returnStatus && (status = TxStatus.EXECUTED);
-        receiptMap.set(tx.hash, receipt);
+        receiptMap.set(tx.hash!, receipt);
         return true;
       });
-      const getBlockByHashParams = hasReceiptTxs.map((tx) => ({ method: 'cfx_getBlockByHash', params: [receiptMap.get(tx.hash)!.blockHash, false] }));
+      const getBlockByHashParams = hasReceiptTxs.map((tx) => ({ method: 'cfx_getBlockByHash', params: [receiptMap.get(tx.hash!)!.blockHash, false] }));
       getBlockByHashParams.unshift({ method: 'cfx_getStatus', params: [] });
       const [statusResponse, ...getBlockByHashParamsResponses] = await firstValueFrom(
         RPCSend<[RPCResponse<CFX.cfx_getStatusResponse>, ...RPCResponse<CFX.cfx_getBlockByHashResponse>[]]>(getBlockByHashParams),
@@ -98,7 +99,7 @@ export class CFXTxTrack extends BaseTxTrack {
             return false;
           }
           let txStatus = TxStatus.EXECUTED;
-          const receipt = receiptMap.get(tx.hash)!;
+          const receipt = receiptMap.get(tx.hash!)!;
           const txBlockNumber = BigInt(receipt.epochNumber!);
           let confirmedNumber = 0;
           console.log('CFXTxTrack: blockNumber', txBlockNumber, finalizedBlockNumber, safeBlockNumber, latestBlockNumber);
@@ -151,6 +152,15 @@ export class CFXTxTrack extends BaseTxTrack {
     return status;
   }
 
+  async _checkNeedResend(tx: Tx) {
+    try {
+      const network = await (await tx.address).network;
+      const txblockNumber = (await tx.txPayload).epochHeight || '0';
+      return BlockNumberTracker.checkBlockNumberInRange(network, txblockNumber);
+    } catch (error) {
+      return true;
+    }
+  }
   async _handleResend(raw: string | null, endpoint: string) {
     return firstValueFrom(RPCSend<RPCResponse<string>>(endpoint, { method: 'cfx_sendRawTransaction', params: [raw] }));
   }

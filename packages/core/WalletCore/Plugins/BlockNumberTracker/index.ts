@@ -3,6 +3,7 @@ import { type Plugin } from '../';
 import events from '@core/WalletCore/Events';
 import { Network } from '@core/database/models/Network';
 import Transaction from '../Transaction';
+import { MAX_EPOCH_NUMBER_OFFSET } from '@core/consts/network';
 
 declare module '../../../WalletCore/Plugins' {
   interface Plugins {
@@ -51,6 +52,16 @@ class BlockNumberTracker implements Plugin {
       return this._blockNumber;
     }
     return Transaction.getBlockNumber(network);
+  }
+
+  public async checkBlockNumberInRange(
+    network: Network,
+    blockNumber: string | number | bigint,
+    range: [bigint, bigint] = [-MAX_EPOCH_NUMBER_OFFSET, MAX_EPOCH_NUMBER_OFFSET],
+  ): Promise<boolean> {
+    const networkBlockNumber = await this.getNetworkBlockNumber(network);
+    const diff = BigInt(blockNumber) - BigInt(networkBlockNumber);
+    return diff >= BigInt(range[0]) && diff <= BigInt(range[1]);
   }
 }
 

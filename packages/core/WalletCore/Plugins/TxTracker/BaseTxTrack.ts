@@ -358,6 +358,11 @@ export abstract class BaseTxTrack {
         console.log(`${this._logPrefix}: tx has speedup or canceled:`, tx.hash);
         return;
       }
+      const needResend = await this._checkNeedResend(tx);
+      if (!needResend) {
+        console.log(`${this._logPrefix}: tx needn't resend:`, tx.hash);
+        return;
+      }
       resend = true;
       const { error } = await this._handleResend(tx.raw, endpoint);
       console.log(`${this._logPrefix}: sendRawTransaction error`, error);
@@ -387,7 +392,7 @@ export abstract class BaseTxTrack {
       if (!nonceUsed) {
         return ReplacedResponse.NotReplaced;
       } else {
-        const { result: transaction } = await this._getTransactionByHash(tx.hash, endpoint);
+        const { result: transaction } = await this._getTransactionByHash(tx.hash!, endpoint);
         if (!transaction) {
           return ReplacedResponse.Replaced;
         } else {
@@ -420,6 +425,7 @@ export abstract class BaseTxTrack {
   }
 
   abstract _checkStatus(txs: Tx[], endpoint: string, returnStatus?: boolean): Promise<TxStatus | undefined>;
+  abstract _checkNeedResend(tx: Tx): Promise<boolean>;
   abstract _handleResend(raw: string | null, endpoint: string): Promise<RPCResponse<string>>;
   abstract _getTransactionByHash(
     hash: string,

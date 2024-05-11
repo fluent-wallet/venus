@@ -65,11 +65,11 @@ export class EthTxTrack extends BaseTxTrack {
           return false;
         }
         returnStatus && (status = TxStatus.EXECUTED);
-        receiptMap.set(tx.hash, receipt);
+        receiptMap.set(tx.hash!, receipt);
         return true;
       });
       if (executedTxs.length) {
-        const getBlockByHashParams = executedTxs.map((tx) => ({ method: 'eth_getBlockByHash', params: [receiptMap.get(tx.hash)!.blockHash, false] }));
+        const getBlockByHashParams = executedTxs.map((tx) => ({ method: 'eth_getBlockByHash', params: [receiptMap.get(tx.hash!)!.blockHash, false] }));
         getBlockByHashParams.unshift(
           { method: 'eth_getBlockByNumber', params: ['latest', false] },
           { method: 'eth_getBlockByNumber', params: ['safe', false] },
@@ -101,7 +101,7 @@ export class EthTxTrack extends BaseTxTrack {
               return false;
             }
             let txStatus = TxStatus.EXECUTED;
-            const receipt = receiptMap.get(tx.hash)!;
+            const receipt = receiptMap.get(tx.hash!)!;
             const txBlockNumber = BigInt(receipt.blockNumber!);
             let confirmedNumber = 0;
             console.log('EthTxTrack: blockNumber', txBlockNumber, finalizedBlockNumber, safeBlockNumber, latestBlockNumber);
@@ -153,6 +153,9 @@ export class EthTxTrack extends BaseTxTrack {
     return status;
   }
 
+  async _checkNeedResend() {
+    return true;
+  }
   async _handleResend(raw: string | null, endpoint: string) {
     return firstValueFrom(RPCSend<RPCResponse<string>>(endpoint, { method: 'eth_sendRawTransaction', params: [raw] }));
   }
