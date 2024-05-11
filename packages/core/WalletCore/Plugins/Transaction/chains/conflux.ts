@@ -33,7 +33,7 @@ class Transaction {
   };
 
   public checkPayContract = async ({ tx, endpoint }: { tx: ITxEvm; endpoint: string }) => {
-    const isToAddressContract = await methods.checkIsContractAddress({ networkType: 'NetworkType.Conflux', endpoint: endpoint, addressValue: tx.to });
+    const isToAddressContract = await methods.checkIsContractAddress({ networkType: NetworkType.Conflux, endpoint: endpoint, addressValue: tx.to });
     const isSendNativeToken = (!!tx.to && !isToAddressContract) || !tx.data || tx.data === '0x';
 
     // TODO: check wether the balance is enough in sending native token
