@@ -2,7 +2,8 @@ import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { NavigationProp, NavigatorScreenParams } from '@react-navigation/native';
 import { type AssetInfo } from '@core/WalletCore/Plugins/AssetsTracker/types';
 import { type NFTItemDetail } from '@core/WalletCore/Plugins/NFTDetailTracker';
-import { WCSendTransactionType, WCSignMessageType, type WCProposalEventType } from '@core/WalletCore/Plugins/WalletConnect';
+
+import type { IWCSendTransactionData, IWCSessionProposalEventData, IWCSignMessageEventData } from '@core/WalletCore/Plugins/WalletConnect/types';
 
 export const WelcomeStackName = 'Welcome';
 export const WayToInitWalletStackName = 'WayToInitWallet';
@@ -40,11 +41,11 @@ export const WalletCOnnectContractTransactionStackName = 'WalletCOnnectContractT
 
 export type WalletConnectParamList = {
   [WalletConnectLoadingStackName]: undefined;
-  [WalletConnectProposalStackName]: WCProposalEventType & { chains: number[] };
+  [WalletConnectProposalStackName]: IWCSessionProposalEventData & { chains: number[] };
   [WalletConnectSessionsStackName]: undefined;
-  [WalletConnectSignMessageStackName]: WCSignMessageType;
-  [WalletConnectEOATransactionStackName]: WCSendTransactionType;
-  [WalletCOnnectContractTransactionStackName]: WCSendTransactionType
+  [WalletConnectSignMessageStackName]: IWCSignMessageEventData;
+  [WalletConnectEOATransactionStackName]: IWCSendTransactionData;
+  [WalletCOnnectContractTransactionStackName]: IWCSendTransactionData;
 };
 
 // end Wallet connect nest stack
