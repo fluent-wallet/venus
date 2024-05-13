@@ -35,6 +35,7 @@ export enum ProcessErrorType {
   internalError = 'internalError',
   executeFailed = 'executeFailed',
   notEnoughCash = 'notEnoughCash',
+  replacedByAnotherTx = 'replacedByAnotherTx',
 }
 
 export const processError = (err: unknown): { errorType: ProcessErrorType; shouldDiscard: boolean } => {

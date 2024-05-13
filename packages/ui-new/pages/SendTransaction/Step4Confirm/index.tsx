@@ -174,6 +174,7 @@ const SendTransactionStep4Confirm: React.FC<SendTransactionScreenProps<typeof Se
       tx.nonce = Number(nonce);
 
       let txRaw!: string;
+      let blockNumber = '';
       if (currentVault?.type === VaultType.BSIM) {
         try {
           setBSIMEvent({ type: BSIMEventTypesName.BSIM_SIGN_START });
@@ -202,11 +203,14 @@ const SendTransactionStep4Confirm: React.FC<SendTransactionScreenProps<typeof Se
         }
       } else {
         const privateKey = await methods.getPrivateKeyOfAddress(currentAddress);
+        if (currentNetwork.networkType === NetworkType.Conflux) {
+          blockNumber = await plugins.BlockNumberTracker.getNetworkBlockNumber(currentNetwork);
+        }
         txRaw = await plugins.Transaction.signTransaction({
           network: currentNetwork,
           tx,
           privateKey,
-          blockNumber: currentNetwork.networkType === NetworkType.Conflux ? await plugins.BlockNumberTracker.getNetworkBlockNumber(currentNetwork) : '',
+          blockNumber,
         });
       }
 
@@ -221,6 +225,7 @@ const SendTransactionStep4Confirm: React.FC<SendTransactionScreenProps<typeof Se
             contractAddress: route.params.asset.contractAddress,
             to: route.params.targetAddress,
             sendAt: new Date(),
+            epochHeight: currentNetwork.networkType === NetworkType.Conflux ? blockNumber : null,
           },
         });
         setBSIMEvent(null);

@@ -15,6 +15,7 @@ import {
   TX_RESEND_LIMIT,
 } from '@core/consts/transaction';
 import { ReplacedResponse } from './types';
+import { ProcessErrorType } from '@core/utils/eth';
 
 const getMinNonceTx = async (txs: Tx[]) => {
   if (!txs.length) {
@@ -337,6 +338,7 @@ export abstract class BaseTxTrack {
   async _handleUnsent(tx: Tx, endpoint: string) {
     let resend = false;
     let replaced = false;
+    let epochHeightOutOfBound = false;
     try {
       await tx.updateSelf((tx) => {
         tx.status = TxStatus.UNSENT;
@@ -357,6 +359,11 @@ export abstract class BaseTxTrack {
         console.log(`${this._logPrefix}: tx has speedup or canceled:`, tx.hash);
         return;
       }
+      epochHeightOutOfBound = await this._checkEpochHeightOutOfBound(tx);
+      if (epochHeightOutOfBound) {
+        console.log(`${this._logPrefix}: epoch height out of bound:`, tx.hash);
+        return;
+      }
       resend = true;
       const { error } = await this._handleResend(tx.raw, endpoint);
       console.log(`${this._logPrefix}: sendRawTransaction error`, error);
@@ -364,14 +371,15 @@ export abstract class BaseTxTrack {
       console.log(`${this._logPrefix}:`, error);
     } finally {
       tx.updateSelf((tx) => {
-        tx.status = replaced ? TxStatus.REPLACED : TxStatus.PENDING;
+        tx.status = replaced ? TxStatus.REPLACED : epochHeightOutOfBound ? TxStatus.FAILED : TxStatus.PENDING;
         if (resend) {
           tx.resendCount = (tx.resendCount ?? 0) + 1;
           tx.resendAt = new Date();
         }
-        if (replaced) {
+        if (replaced || epochHeightOutOfBound) {
           tx.raw = null;
-          tx.err = 'replacedByAnotherTx';
+          tx.err = null;
+          tx.errorType = replaced ? ProcessErrorType.replacedByAnotherTx : ProcessErrorType.epochHeightOutOfBound;
         }
         tx.executedStatus = null;
         tx.receipt = null;
@@ -386,7 +394,7 @@ export abstract class BaseTxTrack {
       if (!nonceUsed) {
         return ReplacedResponse.NotReplaced;
       } else {
-        const { result: transaction } = await this._getTransactionByHash(tx.hash, endpoint);
+        const { result: transaction } = await this._getTransactionByHash(tx.hash!, endpoint);
         if (!transaction) {
           return ReplacedResponse.Replaced;
         } else {
@@ -419,6 +427,7 @@ export abstract class BaseTxTrack {
   }
 
   abstract _checkStatus(txs: Tx[], endpoint: string, returnStatus?: boolean): Promise<TxStatus | undefined>;
+  abstract _checkEpochHeightOutOfBound(tx: Tx): Promise<boolean>;
   abstract _handleResend(raw: string | null, endpoint: string): Promise<RPCResponse<string>>;
   abstract _getTransactionByHash(
     hash: string,

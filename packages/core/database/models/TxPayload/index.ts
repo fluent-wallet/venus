@@ -11,7 +11,7 @@ export class TxPayload extends Model {
   } as const;
 
   @text('type') type!: string | null; // tx type
-  @json('access_list', (json) => json) accessList!: AccessList | null; // TODO
+  @json('access_list', (json) => json) accessList!: AccessList | null; // for EIP-2930
   @text('max_fee_per_gas') maxFeePerGas!: string | null; // for EIP-1559
   @text('max_priority_fee_per_gas') maxPriorityFeePerGas!: string | null; // for EIP-1559
   @text('from') from!: string | null;
