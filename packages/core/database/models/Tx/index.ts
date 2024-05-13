@@ -8,6 +8,7 @@ import { type TxExtra } from '../TxExtra';
 import { type TxPayload } from '../TxPayload';
 import TableName from '../../TableName';
 import { ExecutedStatus, Receipt, TxStatus } from './type';
+import { ProcessErrorType } from '@core/utils/eth';
 
 export class Tx extends Model {
   static table = TableName.Tx;
@@ -22,7 +23,7 @@ export class Tx extends Model {
   /** raw tx hash */
   @text('raw') raw!: string | null;
   /** tx hash */
-  @text('hash') hash!: string;
+  @text('hash') hash?: string | null;
   @field('status') status!: TxStatus;
   @field('executed_status') executedStatus?: ExecutedStatus | null;
   /** receipt as an object */
@@ -30,7 +31,9 @@ export class Tx extends Model {
   @readonly @date('created_at') createdAt!: Date;
   /** tx execute timestamp */
   @date('executed_at') executedAt?: Date | null;
-  /** basic error type/info */
+  /** basic error type */
+  @text('error_type') errorType?: ProcessErrorType | null;
+  /** basic error info */
   @text('err') err?: string | null;
   @field('is_local') isLocal?: boolean | null;
   @date('send_at') sendAt!: Date;

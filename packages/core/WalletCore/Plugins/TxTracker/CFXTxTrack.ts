@@ -152,13 +152,21 @@ export class CFXTxTrack extends BaseTxTrack {
     return status;
   }
 
-  async _checkNeedResend(tx: Tx) {
+  async _checkEpochHeightOutOfBound(tx: Tx) {
     try {
       const network = await (await tx.address).network;
-      const txblockNumber = (await tx.txPayload).epochHeight || '0';
-      return BlockNumberTracker.checkBlockNumberInRange(network, txblockNumber);
+      const txblockNumber = (await tx.txPayload).epochHeight;
+      if (!txblockNumber) {
+        // unexpected case
+        throw new Error('epochHeight is required for core tx');
+      }
+      return !BlockNumberTracker.checkBlockNumberInRange(network, txblockNumber);
     } catch (error) {
-      return true;
+      console.log('CFXTxTrack: checkEpochHeightOutOfBound error:', {
+        hash: tx.hash,
+        error,
+      });
+      return false;
     }
   }
   async _handleResend(raw: string | null, endpoint: string) {

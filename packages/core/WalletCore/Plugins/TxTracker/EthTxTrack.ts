@@ -153,8 +153,8 @@ export class EthTxTrack extends BaseTxTrack {
     return status;
   }
 
-  async _checkNeedResend() {
-    return true;
+  async _checkEpochHeightOutOfBound() {
+    return false;
   }
   async _handleResend(raw: string | null, endpoint: string) {
     return firstValueFrom(RPCSend<RPCResponse<string>>(endpoint, { method: 'eth_sendRawTransaction', params: [raw] }));
