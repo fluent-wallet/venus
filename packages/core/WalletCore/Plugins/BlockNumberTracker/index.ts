@@ -11,6 +11,9 @@ declare module '../../../WalletCore/Plugins' {
   }
 }
 
+export const checkDiffInRange = (diff: bigint, range: [bigint, bigint] = [-MAX_EPOCH_NUMBER_OFFSET, MAX_EPOCH_NUMBER_OFFSET]) =>
+  diff >= BigInt(range[0]) && diff <= BigInt(range[1]);
+
 class BlockNumberTracker implements Plugin {
   public name = 'BlockNumberTracker';
   private _network: Network | null = null;
@@ -54,14 +57,10 @@ class BlockNumberTracker implements Plugin {
     return Transaction.getBlockNumber(network);
   }
 
-  public async checkBlockNumberInRange(
-    network: Network,
-    blockNumber: string | number | bigint,
-    range: [bigint, bigint] = [-MAX_EPOCH_NUMBER_OFFSET, MAX_EPOCH_NUMBER_OFFSET],
-  ): Promise<boolean> {
+  public async checkBlockNumberInRange(network: Network, blockNumber: string | number | bigint, range?: [bigint, bigint]): Promise<boolean> {
     const networkBlockNumber = await this.getNetworkBlockNumber(network);
-    const diff = BigInt(blockNumber) - BigInt(networkBlockNumber);
-    return diff >= BigInt(range[0]) && diff <= BigInt(range[1]);
+    const diff = BigInt(networkBlockNumber) - BigInt(blockNumber);
+    return checkDiffInRange(diff, range);
   }
 }
 
