@@ -151,7 +151,7 @@ const SendTransactionStep4Confirm: React.FC<SendTransactionScreenProps<typeof Se
 
   const [bsimEvent, setBSIMEvent] = useState<BSIMEvent | null>(null);
   const bsimCancelRef = useRef<VoidFunction>(() => {});
-  const blockNumberRef = useRef('');
+  const epochHeightRef = useRef('');
   const _handleSend = useCallback(async () => {
     setBSIMEvent(null);
     bsimCancelRef.current?.();
@@ -176,7 +176,7 @@ const SendTransactionStep4Confirm: React.FC<SendTransactionScreenProps<typeof Se
       tx.nonce = Number(nonce);
 
       let txRaw!: string;
-      let blockNumber = '';
+      let epochHeight = '';
       if (currentVault?.type === VaultType.BSIM) {
         try {
           setBSIMEvent({ type: BSIMEventTypesName.BSIM_SIGN_START });
@@ -206,17 +206,17 @@ const SendTransactionStep4Confirm: React.FC<SendTransactionScreenProps<typeof Se
       } else {
         const privateKey = await methods.getPrivateKeyOfAddress(currentAddress);
         if (currentNetwork.networkType === NetworkType.Conflux) {
-          const currentBlockNumber = await plugins.BlockNumberTracker.getNetworkBlockNumber(currentNetwork);
-          if (!blockNumberRef.current || !checkDiffInRange(BigInt(currentBlockNumber) - BigInt(blockNumberRef.current))) {
-            blockNumberRef.current = currentBlockNumber;
+          const currentEpochHeight = await plugins.BlockNumberTracker.getNetworkBlockNumber(currentNetwork);
+          if (!epochHeightRef.current || !checkDiffInRange(BigInt(currentEpochHeight) - BigInt(epochHeightRef.current))) {
+            epochHeightRef.current = currentEpochHeight;
           }
         }
-        blockNumber = blockNumberRef.current;
+        epochHeight = epochHeightRef.current;
         txRaw = await plugins.Transaction.signTransaction({
           network: currentNetwork,
           tx,
           privateKey,
-          blockNumber,
+          epochHeight,
         });
       }
 
@@ -231,7 +231,7 @@ const SendTransactionStep4Confirm: React.FC<SendTransactionScreenProps<typeof Se
             contractAddress: route.params.asset.contractAddress,
             to: route.params.targetAddress,
             sendAt: new Date(),
-            epochHeight: currentNetwork.networkType === NetworkType.Conflux ? blockNumber : null,
+            epochHeight: currentNetwork.networkType === NetworkType.Conflux ? epochHeight : null,
           },
         });
         setBSIMEvent(null);

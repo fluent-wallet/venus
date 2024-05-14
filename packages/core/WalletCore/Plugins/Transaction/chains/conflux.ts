@@ -64,7 +64,7 @@ class Transaction {
   public getTransactionCount = ({ endpoint, addressValue }: { endpoint: string; addressValue: string }) =>
     fetchChain<string>({ url: endpoint, method: 'cfx_getNextNonce', params: [addressValue] });
 
-  async signTransaction({ privateKey, tx, netId, blockNumber }: { privateKey: string; tx: ITxEvm; netId: number; blockNumber: string }) {
+  async signTransaction({ privateKey, tx, netId, epochHeight }: { privateKey: string; tx: ITxEvm; netId: number; epochHeight: string }) {
     new CoreTransaction(tx);
     const _tx = Object.create(null);
     for (const key in tx) {
@@ -76,7 +76,7 @@ class Transaction {
         _tx[key] = tx[key as 'to'];
       }
     }
-    _tx.epochHeight = blockNumber;
+    _tx.epochHeight = epochHeight;
     return new CoreTransaction(_tx).sign(addHexPrefix(privateKey), netId).serialize();
   }
 
