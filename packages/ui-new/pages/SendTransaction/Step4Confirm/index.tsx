@@ -43,6 +43,7 @@ import { NFT } from '../Step3Amount';
 import BSIMVerify from '../BSIMVerify';
 import WarnIcon from '@assets/icons/warn.svg';
 import ProhibitIcon from '@assets/icons/prohibit.svg';
+import { checkDiffInRange } from '@core/WalletCore/Plugins/BlockNumberTracker';
 
 const SendTransactionStep4Confirm: React.FC<SendTransactionScreenProps<typeof SendTransactionStep4StackName>> = ({ navigation, route }) => {
   useEffect(() => Keyboard.dismiss(), []);
@@ -150,6 +151,7 @@ const SendTransactionStep4Confirm: React.FC<SendTransactionScreenProps<typeof Se
 
   const [bsimEvent, setBSIMEvent] = useState<BSIMEvent | null>(null);
   const bsimCancelRef = useRef<VoidFunction>(() => {});
+  const blockNumberRef = useRef('');
   const _handleSend = useCallback(async () => {
     setBSIMEvent(null);
     bsimCancelRef.current?.();
@@ -204,8 +206,12 @@ const SendTransactionStep4Confirm: React.FC<SendTransactionScreenProps<typeof Se
       } else {
         const privateKey = await methods.getPrivateKeyOfAddress(currentAddress);
         if (currentNetwork.networkType === NetworkType.Conflux) {
-          blockNumber = await plugins.BlockNumberTracker.getNetworkBlockNumber(currentNetwork);
+          const currentBlockNumber = await plugins.BlockNumberTracker.getNetworkBlockNumber(currentNetwork);
+          if (!blockNumberRef.current || !checkDiffInRange(BigInt(currentBlockNumber) - BigInt(blockNumberRef.current))) {
+            blockNumberRef.current = currentBlockNumber;
+          }
         }
+        blockNumber = blockNumberRef.current;
         txRaw = await plugins.Transaction.signTransaction({
           network: currentNetwork,
           tx,
