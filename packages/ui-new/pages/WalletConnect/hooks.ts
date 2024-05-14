@@ -34,8 +34,8 @@ export function useListenWalletConnectEvent() {
       }
 
       if (type === WalletConnectPluginEventMethod.SESSION_PROPOSAL) {
-        let requestChains = uniq([...(data.requiredNamespaces?.eip155?.chains || []), ...(data.optionalNamespaces?.eip155?.chains || [])]).map((chain) =>
-          parseInt(chain.split('eip155:')[1]),
+        let requestChains = uniq([...(event.data.requiredNamespaces?.eip155?.chains || []), ...(event.data.optionalNamespaces?.eip155?.chains || [])]).map(
+          (chain) => parseInt(chain.split('eip155:')[1]),
         );
         if (isDev) {
           // dev support all network
@@ -49,9 +49,9 @@ export function useListenWalletConnectEvent() {
           requestChains = requestChains.filter((chains) => SUPPORT_NETWORK.includes(chains));
         }
         if (requestChains.length === 0) {
-          return data.reject('UNSUPPORTED_CHAINS');
+          return event.data.reject('UNSUPPORTED_CHAINS');
         }
-        navigation.navigate(WalletConnectStackName, { screen: WalletConnectProposalStackName, params: { ...data, chains: requestChains } });
+        navigation.navigate(WalletConnectStackName, { screen: WalletConnectProposalStackName, params: { ...event.data, chains: requestChains } });
       }
 
       // show sign message

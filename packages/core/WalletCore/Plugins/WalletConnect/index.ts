@@ -101,7 +101,9 @@ export default class WalletConnect implements Plugin {
     const { proposer, requiredNamespaces, optionalNamespaces } = proposal.params;
 
     // TODO  check requiredNamespaces is supported
-
+    console.log("start connect")
+    console.log(requiredNamespaces)
+    console.log(optionalNamespaces)
     const { metadata } = proposer;
 
     const approveSession: IWCSessionProposalEventData['approve'] = async (args) => {
@@ -147,7 +149,7 @@ export default class WalletConnect implements Plugin {
     const { chainId } = request.params;
     const { method, params } = request.params.request;
     this.emitWCLoading(false);
-
+    console.log("onSessionRequest", chainId, method, params)
     // check is supported method
     if ([...SUPPORTED_TRANSACTION_METHODS, ...SUPPORT_SIGN_METHODS].includes(method as WalletConnectRPCMethod)) {
       const approve: IWCSignMessageEventData['approve'] = async (signedMessage) => {
