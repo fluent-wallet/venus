@@ -5,6 +5,7 @@ enum TableName {
   AssetRule = 'asset_rule',
   Address = 'address',
   AddressBook = 'address_book',
+  Signature = 'signature',
   Tx = 'tx',
   TxExtra = 'tx_extra',
   TxPayload = 'tx_payload',

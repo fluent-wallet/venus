@@ -6,7 +6,7 @@ import TableName from '../TableName';
 // see: https://github.com/Nozbe/WatermelonDB/issues/198. https://github.com/Nozbe/WatermelonDB/issues/36
 // isIndexed: true. Indexing makes querying by a column faster.Should add later
 const schema = appSchema({
-  version: 2,
+  version: 3,
   tables: [
     tableSchema({
       name: TableName.HdPath,
@@ -53,6 +53,18 @@ const schema = appSchema({
         { name: 'name', type: 'string' },
         { name: 'index', type: 'number' },
         { name: 'network_id', type: 'string', isIndexed: true },
+      ],
+    }),
+    tableSchema({
+      name: TableName.Signature,
+      columns: [
+        { name: 'app_id', type: 'string', isIndexed: true, isOptional: true },
+        { name: 'address_id', type: 'string', isIndexed: true },
+        { name: 'tx_id', type: 'string', isIndexed: true, isOptional: true },
+        { name: 'sign_type', type: 'string' },
+        { name: 'message', type: 'string', isOptional: true },
+        { name: 'block_number', type: 'string' },
+        { name: 'created_at', type: 'number' },
       ],
     }),
     tableSchema({
