@@ -12,7 +12,7 @@ import { Tx } from '@core/database/models/Tx';
 import { Address } from '@core/database/models/Address';
 import { TxPayload } from '@core/database/models/TxPayload';
 import { TxExtra } from '@core/database/models/TxExtra';
-import { TxStatus } from '@core/database/models/Tx/type';
+import { TxSource, TxStatus } from '@core/database/models/Tx/type';
 import { getAddress as toChecksumAddress } from 'ethers';
 
 interface createTxPayloadParams {
@@ -63,6 +63,10 @@ export class TxMethod {
           txPayload,
           txExtra,
           asset,
+          // TODO: set by params
+          source: TxSource.SELF,
+          // TODO: set by params
+          method: 'Send',
         },
         true,
       );

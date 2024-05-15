@@ -1,5 +1,6 @@
-import { createTable, schemaMigrations, addColumns } from '@nozbe/watermelondb/Schema/migrations';
+import { createTable, schemaMigrations, addColumns, unsafeExecuteSql } from '@nozbe/watermelondb/Schema/migrations';
 import TableName from '../TableName';
+import { TxSource } from '../models/Tx/type';
 
 const migrations = schemaMigrations({
   migrations: [
@@ -27,6 +28,24 @@ const migrations = schemaMigrations({
             { name: 'created_at', type: 'number' },
           ],
         }),
+      ],
+    },
+    {
+      toVersion: 4,
+      steps: [
+        addColumns({
+          table: TableName.Tx,
+          columns: [
+            { name: 'source', type: 'string' },
+            { name: 'method', type: 'string' },
+          ],
+        }),
+        unsafeExecuteSql(
+          `
+          UPDATE ${TableName.Tx} SET source = '${TxSource.SELF}' WHERE is_local = true;
+          UPDATE ${TableName.Tx} SET method = 'Send' WHERE is_local = true;
+          `,
+        ),
       ],
     },
   ],

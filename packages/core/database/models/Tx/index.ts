@@ -7,7 +7,7 @@ import { type App } from '../App';
 import { type TxExtra } from '../TxExtra';
 import { type TxPayload } from '../TxPayload';
 import TableName from '../../TableName';
-import { ExecutedStatus, Receipt, TxStatus } from './type';
+import { ExecutedStatus, Receipt, TxSource, TxStatus } from './type';
 import { ProcessErrorType } from '@core/utils/eth';
 
 export class Tx extends Model {
@@ -24,8 +24,8 @@ export class Tx extends Model {
   @text('raw') raw!: string | null;
   /** tx hash */
   @text('hash') hash?: string | null;
-  @field('status') status!: TxStatus;
-  @field('executed_status') executedStatus?: ExecutedStatus | null;
+  @text('status') status!: TxStatus;
+  @text('executed_status') executedStatus?: ExecutedStatus | null;
   /** receipt as an object */
   @json('receipt', (json) => json) receipt?: Receipt | null;
   @readonly @date('created_at') createdAt!: Date;
@@ -42,6 +42,8 @@ export class Tx extends Model {
   @field('polling_count') pollingCount?: number | null;
   @field('confirmed_number') confirmedNumber?: number | null;
   @field('is_temp_replaced') isTempReplaced?: boolean | null;
+  @text('source') source!: TxSource;
+  @text('method') method!: string;
   /** optional, Relation<App | null> */
   @immutableRelation(TableName.App, 'app_id') app!: Relation<App>;
   /** optional, Relation<Asset | null> */

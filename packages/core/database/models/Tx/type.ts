@@ -39,3 +39,9 @@ export interface Receipt {
     collaterals: string | null;
   }[];
 }
+
+export enum TxSource {
+  SELF = 'self',
+  DAPP = 'dapp',
+  SCAN = 'scan',
+}
