@@ -263,7 +263,7 @@ const SendTransactionStep4Confirm: React.FC<SendTransactionScreenProps<typeof Se
 
   return (
     <>
-      <SendTransactionBottomSheet showTitle={t('tx.confirm.title')}>
+      <SendTransactionBottomSheet showTitle={t('tx.confirm.title')} enablePanDownToClose={!inSending} enableContentPanningGesture={!inSending} enableHandlePanningGesture={!inSending}>
         <BottomSheetScrollView>
           <Text style={[styles.sendTitle, { color: colors.textPrimary }]}>{t('common.send')}</Text>
           {route.params.nftItemDetail && <NFT colors={colors} asset={route.params.asset} nftItemDetail={route.params.nftItemDetail} />}
