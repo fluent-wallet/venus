@@ -16,7 +16,7 @@ import { numberWithCommas } from '@core/utils/balance';
 import { RouteProp, useNavigation, useRoute, useTheme } from '@react-navigation/native';
 import { WalletConnectEOATransactionStackName, WalletConnectParamList } from '@router/configs';
 import { toDataUrl } from '@utils/blockies';
-import { formatEther, parseEther } from 'ethers';
+import { formatEther, parseEther, parseUnits } from 'ethers';
 import { Image } from 'expo-image';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -59,12 +59,13 @@ function WalletConnectTransaction() {
   );
 
   const amount = useMemo(() => {
-    return value ? parseEther(BigInt(value).toString()).toString() : '0';
+    return value ? formatEther(BigInt(value)) : '0';
   }, [value]);
 
   const _handleReject = useCallback(async () => {
     await reject('user reject');
-  }, [reject]);
+    navigation.goBack();
+  }, [reject, navigation]);
 
   const _handleApprove = useCallback(async () => {
     if (!gasPrice && !rpcGasPrice) {
@@ -74,7 +75,7 @@ function WalletConnectTransaction() {
     const tx = {
       from: currentAddress?.hex,
       to,
-      value: value ? parseEther(amount).toString() : '0x0',
+      value: value ? value : '0x0',
       data: data || '0x',
       chainId: currentNetwork.chainId,
       ...(currentNetwork.networkType === NetworkType.Ethereum &&
@@ -129,12 +130,11 @@ function WalletConnectTransaction() {
         description: t('tx.confirm.submitted.description'),
         icon: 'loading' as unknown as undefined,
       });
-      backToHome(navigation);
       Plugins.AssetsTracker.updateCurrentTracker();
+      await approve(txHash);
+      navigation.goBack();
     }
-
-   await approve(txRaw);
-  }, [approve, amount, currentAddress, currentNetwork, data, gasLimit, gasPrice, rpcGasPrice, t, to, vault?.type, navigation, value]);
+  }, [approve, currentAddress, currentNetwork, data, gasLimit, gasPrice, rpcGasPrice, t, to, vault?.type, navigation, value]);
 
   const gasCost = useMemo(() => {
     // if dapp not give gasPrice and rpcGasPrice is null, just return null
