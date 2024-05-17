@@ -7,8 +7,7 @@ import {
   WalletConnectLoadingStackName,
   WalletConnectProposalStackName,
   WalletConnectSignMessageStackName,
-  WalletConnectEOATransactionStackName,
-  WalletCOnnectContractTransactionStackName,
+  WalletConnectTransactionStackName,
 } from '@router/configs';
 import { useCallback, useEffect, useState } from 'react';
 import { uniq } from 'lodash-es';
@@ -75,7 +74,7 @@ export function useListenWalletConnectEvent() {
           address,
           tx: { to, data },
         } = event.data;
-
+        console.log(address, currentAddress?.hex)
         if (address !== currentAddress?.hex) {
           return reject('address is not match');
         }
@@ -91,11 +90,12 @@ export function useListenWalletConnectEvent() {
           addressValue: to,
         });
 
-        if ((!isContract && !!to) || !data || data === '0x') {
-          navigation.navigate(WalletConnectStackName, { screen: WalletConnectEOATransactionStackName, params: event.data });
-        } else {
-          navigation.navigate(WalletConnectStackName, { screen: WalletCOnnectContractTransactionStackName, params: event.data });
-        }
+        const EOATx = (!isContract && !!to) || !data || data === '0x'
+        console.log("is EOA TX", EOATx)
+        navigation.navigate(WalletConnectStackName, {
+          screen: WalletConnectTransactionStackName,
+          params: { ...event.data, isContract: !EOATx },
+        });
       }
     });
 

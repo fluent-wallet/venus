@@ -36,16 +36,14 @@ export const WalletConnectLoadingStackName = 'WalletConnectLoading';
 export const WalletConnectProposalStackName = 'WalletConnectProposal';
 export const WalletConnectSessionsStackName = 'WalletConnectSessions';
 export const WalletConnectSignMessageStackName = 'WalletConnectSignMessage';
-export const WalletConnectEOATransactionStackName = 'WalletConnectEOATransaction';
-export const WalletCOnnectContractTransactionStackName = 'WalletCOnnectContractTransaction';
+export const WalletConnectTransactionStackName = 'WalletConnectTransaction';
 
 export type WalletConnectParamList = {
   [WalletConnectLoadingStackName]: undefined;
   [WalletConnectProposalStackName]: IWCSessionProposalEventData & { chains: number[] };
   [WalletConnectSessionsStackName]: undefined;
   [WalletConnectSignMessageStackName]: IWCSignMessageEventData;
-  [WalletConnectEOATransactionStackName]: IWCSendTransactionData;
-  [WalletCOnnectContractTransactionStackName]: IWCSendTransactionData;
+  [WalletConnectTransactionStackName]: IWCSendTransactionData & { isContract: boolean };
 };
 
 // end Wallet connect nest stack

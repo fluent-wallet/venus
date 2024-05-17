@@ -7,6 +7,7 @@ import { Subject } from 'rxjs';
 import { formatJsonRpcResult, formatJsonRpcError } from '@json-rpc-tools/utils';
 
 import {
+  IWCSendTransactionData,
   IWCSessionProposalEventData,
   IWCSignMessageEventData,
   WalletConnectPluginEventMethod,
@@ -101,9 +102,6 @@ export default class WalletConnect implements Plugin {
     const { proposer, requiredNamespaces, optionalNamespaces } = proposal.params;
 
     // TODO  check requiredNamespaces is supported
-    console.log("start connect")
-    console.log(requiredNamespaces)
-    console.log(optionalNamespaces)
     const { metadata } = proposer;
 
     const approveSession: IWCSessionProposalEventData['approve'] = async (args) => {
@@ -149,7 +147,6 @@ export default class WalletConnect implements Plugin {
     const { chainId } = request.params;
     const { method, params } = request.params.request;
     this.emitWCLoading(false);
-    console.log("onSessionRequest", chainId, method, params)
     // check is supported method
     if ([...SUPPORTED_TRANSACTION_METHODS, ...SUPPORT_SIGN_METHODS].includes(method as WalletConnectRPCMethod)) {
       const approve: IWCSignMessageEventData['approve'] = async (signedMessage) => {
@@ -191,16 +188,24 @@ export default class WalletConnect implements Plugin {
           },
         });
       } else if (method === WalletConnectRPCMethod.SendTransaction) {
-        const transaction = params[0];
+        const txFromParams = params[0] || {};
 
-        const approve: WCSendTransactionType['approve'] = async (txHash) => {
+        const transaction: IWCSendTransactionData['tx'] = {
+          ...txFromParams,
+          value: txFromParams.value ? BigInt(txFromParams.value) : undefined,
+          nonce: txFromParams.nonce ? Number(txFromParams.nonce) : undefined,
+          gasLimit: txFromParams.gasLimit ? BigInt(txFromParams.gasLimit) : undefined,
+          gasPrice: txFromParams.gasPrice ? BigInt(txFromParams.gasPrice) : undefined,
+        };
+
+        const approve: IWCSendTransactionData['approve'] = async (txHash) => {
           await client.respondSessionRequest({
             topic,
             response: formatJsonRpcResult(id, txHash),
           });
         };
 
-        const reject: WCSendTransactionType['reject'] = async (reason) => {
+        const reject: IWCSendTransactionData['reject'] = async (reason) => {
           await client.respondSessionRequest({
             topic,
             response: formatJsonRpcError(id, reason),
@@ -210,13 +215,12 @@ export default class WalletConnect implements Plugin {
         const address = transaction?.from;
 
         if (!address) reject('from is required');
-        if (!transaction.to) reject('to is required');
 
         this.events.next({
           type: WalletConnectPluginEventMethod.SEND_TRANSACTION,
           data: {
             chainId,
-            address: transaction.to,
+            address: address,
             metadata: this.activeSessionMetadata[topic],
             method: method as WalletConnectRPCMethod,
             tx: transaction,

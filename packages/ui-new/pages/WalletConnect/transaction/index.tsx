@@ -14,16 +14,15 @@ import {
 import { shortenAddress } from '@core/utils/address';
 import { numberWithCommas } from '@core/utils/balance';
 import { RouteProp, useNavigation, useRoute, useTheme } from '@react-navigation/native';
-import { WalletConnectEOATransactionStackName, WalletConnectParamList } from '@router/configs';
+import { WalletConnectParamList, WalletConnectTransactionStackName } from '@router/configs';
 import { toDataUrl } from '@utils/blockies';
-import { formatEther, parseEther, parseUnits } from 'ethers';
+import { formatEther } from 'ethers';
 import { Image } from 'expo-image';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, View } from 'react-native';
 import Text from '@components/Text';
-import Copy from '@assets/icons/copy.svg';
-import Clipboard from '@react-native-clipboard/clipboard';
+
 import { showMessage } from 'react-native-flash-message';
 import { interval, startWith, switchMap } from 'rxjs';
 import Plugins from '@core/WalletCore/Plugins';
@@ -32,8 +31,9 @@ import useInAsync from '@hooks/useInAsync';
 import { ITxEvm } from '@core/WalletCore/Plugins/Transaction/types';
 import Methods from '@core/WalletCore/Methods';
 import Events from '@core/WalletCore/Events';
-import backToHome from '@utils/backToHome';
+
 import { CFX_ESPACE_MAINNET_CHAINID, CFX_ESPACE_TESTNET_CHAINID } from '@core/utils/consts';
+import SendNativeToken from './nativeToken';
 
 function WalletConnectTransaction() {
   const { t } = useTranslation();
@@ -50,8 +50,9 @@ function WalletConnectTransaction() {
       reject,
       approve,
       tx: { from, to, value, data, nonce, gasLimit, gasPrice },
+      isContract,
     },
-  } = useRoute<RouteProp<WalletConnectParamList, typeof WalletConnectEOATransactionStackName>>();
+  } = useRoute<RouteProp<WalletConnectParamList, typeof WalletConnectTransactionStackName>>();
 
   const price = useMemo(
     () => (currentNativeToken?.priceInUSDT ? `$${numberWithCommas(currentNativeToken?.priceInUSDT)}` : '--'),
@@ -150,19 +151,6 @@ function WalletConnectTransaction() {
     return priceInUSDT ? (priceInUSDT.lessThan(0.01) ? '<$0.01' : `≈$${priceInUSDT.toFixed(2)}`) : null;
   }, [gasPrice, rpcGasPrice, currentNativeToken?.priceInUSDT, currentNativeToken?.decimals, gasLimit]);
 
-  const handleCoy = useCallback(
-    (value: string) => {
-      Clipboard.setString(value);
-      showMessage({
-        message: t('common.copied'),
-        type: 'success',
-        duration: 1500,
-        width: 160,
-      });
-    },
-    [t],
-  );
-
   useEffect(() => {
     if (!gasPrice) {
       const pollingGasSub = interval(15000)
@@ -192,25 +180,7 @@ function WalletConnectTransaction() {
     <BottomSheet enablePanDownToClose={false} isRoute snapPoints={snapPoints.percent75} style={styles.container}>
       <BottomSheetView>
         <Text style={[styles.title, { color: colors.textPrimary }]}>{t('wc.dapp.tx.title')}</Text>
-
-        <Text style={[styles.send, { color: colors.textPrimary }]}>{t('common.send')}</Text>
-        <Text style={[styles.secondary]}>{t('common.amount')}</Text>
-
-        <View style={[styles.flexWithRow, { marginTop: 8 }]}>
-          <Text style={styles.amount}>{amount}</Text>
-          {currentNativeToken?.icon && <Icon source={currentNativeToken?.icon} width={24} height={24} />}
-        </View>
-        <Text style={[styles.secondary, styles.secondary, { color: colors.textSecondary }]}>≈{price}</Text>
-
-        <Text style={[styles.to, { color: colors.textSecondary }]}>{t('common.to')}</Text>
-
-        <View style={[styles.flexWithRow, styles.addressInfo]}>
-          <Image source={{ uri: toDataUrl(to) }} style={styles.avatar} />
-          <View style={styles.flexWithRow}>
-            <Text style={[styles.smallText, { color: colors.textSecondary }]}>{shortenAddress(to)}</Text>
-            <Copy width={12} height={12} color={colors.textSecondary} testID="copy" onPress={() => handleCoy(to)} />
-          </View>
-        </View>
+        {isContract ? <View></View> : <SendNativeToken amount={value} price={price} tokenIcon={currentNativeToken?.icon} receiverAddress={to} />}
 
         <View style={[styles.signingWith, { borderColor: colors.borderFourth }]}>
           <Text style={[styles.secondary, { color: colors.textSecondary }]}>{t('wc.dapp.tx.signingWith')}</Text>
@@ -219,7 +189,6 @@ function WalletConnectTransaction() {
         <View style={[styles.flexWithRow, styles.sender]}>
           <View style={[styles.flexWithRow, styles.addressInfo, { alignItems: 'flex-start' }]}>
             <Image source={{ uri: toDataUrl(currentAddress?.hex) }} style={styles.avatar} />
-
             <View>
               <View style={{ marginBottom: 12 }}>
                 <Text style={[styles.senderName, { color: colors.textPrimary }]}>{currentAccount?.nickname}</Text>
@@ -261,24 +230,12 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     marginVertical: 10,
   },
-  send: {
-    fontSize: 22,
-    fontWeight: '600',
-    marginBottom: 24,
-  },
+
   secondary: {
     fontSize: 14,
     fontWeight: '300',
   },
-  amount: {
-    fontSize: 16,
-    fontWeight: '600',
-    marginRight: 8,
-  },
-  to: {
-    marginTop: 24,
-    marginBottom: 16,
-  },
+
   signingWith: {
     marginTop: 24,
     marginBottom: 16,

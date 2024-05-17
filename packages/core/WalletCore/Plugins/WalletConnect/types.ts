@@ -60,11 +60,11 @@ export interface IWCSendTransactionData {
   tx: {
     from: string;
     to: string;
-    value: string;
+    value: bigint;
     data: string;
     nonce?: number;
-    gasLimit?: string;
-    gasPrice?: string;
+    gasLimit?: bigint;
+    gasPrice?: bigint;
   };
   metadata: Web3WalletTypes.Metadata;
   approve: (txhash: string) => Promise<void>;
