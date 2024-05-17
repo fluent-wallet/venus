@@ -24,6 +24,7 @@ export interface Receipt {
   gasUsed?: string | null;
   contractCreated?: string | null;
   transactionIndex?: string | null;
+  // blockNumber in evm or epochNumber in cfx
   blockNumber?: string | null;
   // ↓↓↓↓↓↓↓↓↓↓↓ for espace ↓↓↓↓↓↓↓↓↓↓↓
   cumulativeGasUsed?: string | null;
