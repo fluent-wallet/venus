@@ -18,7 +18,7 @@ import { WalletConnectParamList, WalletConnectTransactionStackName } from '@rout
 import { toDataUrl } from '@utils/blockies';
 import { formatEther } from 'ethers';
 import { Image } from 'expo-image';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, View } from 'react-native';
 import Text from '@components/Text';
@@ -34,6 +34,11 @@ import Events from '@core/WalletCore/Events';
 
 import { CFX_ESPACE_MAINNET_CHAINID, CFX_ESPACE_TESTNET_CHAINID } from '@core/utils/consts';
 import SendNativeToken from './nativeToken';
+import { calculateTokenPrice } from '@utils/calculateTokenPrice';
+import { useGasEstimate } from '@hooks/useGasEstimate';
+import { useSignTransaction } from '@hooks/useSignTransaction';
+import { checkDiffInRange } from '@core/WalletCore/Plugins/BlockNumberTracker';
+import { BSIMError } from '@WalletCoreExtends/Plugins/BSIM/BSIMSDK';
 
 function WalletConnectTransaction() {
   const { t } = useTranslation();
@@ -43,6 +48,10 @@ function WalletConnectTransaction() {
   const currentAddress = useCurrentAddressOfAccount(currentAccount?.id)!;
   const currentNetwork = useCurrentNetwork()!;
   const [rpcGasPrice, setRpcGasPrice] = useState<string>();
+
+  const signTransaction = useSignTransaction();
+
+  const epochHeightRef = useRef('');
   const vault = useVaultOfAccount(currentAccount?.id);
   const navigation = useNavigation();
   const {
@@ -53,15 +62,13 @@ function WalletConnectTransaction() {
       isContract,
     },
   } = useRoute<RouteProp<WalletConnectParamList, typeof WalletConnectTransactionStackName>>();
-
-  const price = useMemo(
-    () => (currentNativeToken?.priceInUSDT ? `$${numberWithCommas(currentNativeToken?.priceInUSDT)}` : '--'),
-    [currentNativeToken?.priceInUSDT],
-  );
+  const gasInfo = useGasEstimate({ from, to, value: value.toString(), data, nonce });
 
   const amount = useMemo(() => {
     return value ? formatEther(BigInt(value)) : '0';
   }, [value]);
+
+  const price = useMemo(() => calculateTokenPrice({ price: currentNativeToken?.priceInUSDT, amount }), [currentNativeToken?.priceInUSDT, amount]);
 
   const _handleReject = useCallback(async () => {
     await reject('user reject');
@@ -69,109 +76,91 @@ function WalletConnectTransaction() {
   }, [reject, navigation]);
 
   const _handleApprove = useCallback(async () => {
-    if (!gasPrice && !rpcGasPrice) {
-      return;
-    }
+    if (!gasInfo) return;
 
-    const tx = {
-      from: currentAddress?.hex,
-      to,
-      value: value ? value : '0x0',
-      data: data || '0x',
-      chainId: currentNetwork.chainId,
-      ...(currentNetwork.networkType === NetworkType.Ethereum &&
-      (currentNetwork.chainId === CFX_ESPACE_MAINNET_CHAINID || currentNetwork.chainId === CFX_ESPACE_TESTNET_CHAINID)
-        ? { type: 0 }
-        : null),
-    } as ITxEvm;
+    try {
+      const tx = {
+        from: currentAddress?.hex,
+        to,
+        value: value ? value : '0x0',
+        data: data || '0x',
+        chainId: currentNetwork.chainId,
+        ...(currentNetwork.networkType === NetworkType.Ethereum &&
+        (currentNetwork.chainId === CFX_ESPACE_MAINNET_CHAINID || currentNetwork.chainId === CFX_ESPACE_TESTNET_CHAINID)
+          ? { type: 0 }
+          : null),
+      } as ITxEvm;
 
-    const nonce = await Plugins.Transaction.getTransactionCount({ network: currentNetwork, addressValue: currentAddress.hex });
-    tx.nonce = Number(nonce);
-    tx.gasLimit = gasLimit || '21000';
-    tx.gasPrice = gasPrice || rpcGasPrice;
+      const nonce = await Plugins.Transaction.getTransactionCount({ network: currentNetwork, addressValue: currentAddress.hex });
+      tx.nonce = Number(nonce);
+      tx.gasLimit = gasLimit ? gasLimit.toString() : gasInfo?.gasLimit;
+      tx.gasPrice = gasPrice ? gasPrice.toString() : gasInfo?.gasPrice;
 
-    let txRaw!: string;
-    if (vault?.type === VaultType.BSIM) {
-      try {
-        console.log(tx);
-        const [promise] = await Plugins.BSIM.signTransaction(currentAddress.hex, tx);
-        txRaw = await promise;
-        console.log('txRaw', txRaw);
-      } catch (e) {
-        // TODO
-        console.log(e);
+      if (currentNetwork.networkType === NetworkType.Conflux) {
+        const currentEpochHeight = await Plugins.BlockNumberTracker.getNetworkBlockNumber(currentNetwork);
+        if (!epochHeightRef.current || !checkDiffInRange(BigInt(currentEpochHeight) - BigInt(epochHeightRef.current))) {
+          epochHeightRef.current = currentEpochHeight;
+        }
       }
-    } else {
-      const privateKey = await Methods.getPrivateKeyOfAddress(currentAddress);
 
-      txRaw = await Plugins.Transaction.signTransaction({
-        network: currentNetwork,
-        tx,
-        privateKey,
-        blockNumber: currentNetwork.networkType === NetworkType.Conflux ? await Plugins.BlockNumberTracker.getNetworkBlockNumber(currentNetwork) : '',
-      });
+      try {
+        const { txRawPromise, cancel } = await signTransaction({ ...tx, epochHeight: epochHeightRef.current });
+
+        const txRaw = await txRawPromise;
+
+        const txHash = await Plugins.Transaction.sendRawTransaction({ txRaw, network: currentNetwork });
+
+        Events.broadcastTransactionSubjectPush.next({
+          txHash,
+          txRaw,
+          tx,
+          extraParams: {
+            assetType: isContract ? AssetType.ERC20 : AssetType.Native, // TODO update the assetType
+            contractAddress: isContract ? to : undefined,
+            to: to,
+            sendAt: new Date(),
+            epochHeight: currentNetwork.networkType === NetworkType.Conflux ? epochHeightRef.current : null,
+          },
+        });
+
+        showMessage({
+          type: 'success',
+          message: t('tx.confirm.submitted.message'),
+          description: t('tx.confirm.submitted.description'),
+          icon: 'loading' as unknown as undefined,
+        });
+        Plugins.AssetsTracker.updateCurrentTracker();
+        await approve(txHash);
+        navigation.goBack();
+      } catch (error) {
+        if (error instanceof BSIMError) {
+          if (error.code === 'cancel') {
+            // ignore cancel error
+          } else {
+            // TODO
+          }
+        }
+        // not BSIM error
+        throw error;
+      }
+    } catch (error) {
+      // TODO show error
     }
-
-    if (txRaw) {
-      const txHash = await Plugins.Transaction.sendRawTransaction({ txRaw, network: currentNetwork });
-      Events.broadcastTransactionSubjectPush.next({
-        txHash,
-        txRaw,
-        tx,
-        extraParams: {
-          assetType: AssetType.Native,
-          to: to,
-          sendAt: new Date(),
-        },
-      });
-
-      showMessage({
-        type: 'success',
-        message: t('tx.confirm.submitted.message'),
-        description: t('tx.confirm.submitted.description'),
-        icon: 'loading' as unknown as undefined,
-      });
-      Plugins.AssetsTracker.updateCurrentTracker();
-      await approve(txHash);
-      navigation.goBack();
-    }
-  }, [approve, currentAddress, currentNetwork, data, gasLimit, gasPrice, rpcGasPrice, t, to, vault?.type, navigation, value]);
+  }, [approve, currentAddress, currentNetwork, data, gasLimit, gasPrice, t, to, navigation, value, gasInfo, isContract, signTransaction]);
 
   const gasCost = useMemo(() => {
     // if dapp not give gasPrice and rpcGasPrice is null, just return null
     const gasPriceVal = gasPrice || rpcGasPrice;
-    const gasLimitVal = gasLimit || '21000';
-    if (!gasPriceVal) return null;
+    const gasLimitVal = gasLimit || gasInfo?.gasLimit;
+    if (!gasPriceVal || !gasLimitVal) return null;
 
     if (!currentNativeToken?.priceInUSDT) return null;
 
-    const cost = new Decimal(gasLimitVal).mul(new Decimal(gasPriceVal)).div(Decimal.pow(10, currentNativeToken?.decimals ?? 18));
+    const cost = new Decimal(gasLimitVal.toString()).mul(new Decimal(gasPriceVal.toString())).div(Decimal.pow(10, currentNativeToken?.decimals ?? 18));
     const priceInUSDT = currentNativeToken?.priceInUSDT ? cost.mul(new Decimal(currentNativeToken.priceInUSDT)) : null;
 
     return priceInUSDT ? (priceInUSDT.lessThan(0.01) ? '<$0.01' : `≈$${priceInUSDT.toFixed(2)}`) : null;
-  }, [gasPrice, rpcGasPrice, currentNativeToken?.priceInUSDT, currentNativeToken?.decimals, gasLimit]);
-
-  useEffect(() => {
-    if (!gasPrice) {
-      const pollingGasSub = interval(15000)
-        .pipe(
-          startWith(0),
-          switchMap(() => Plugins.Transaction.getGasPrice(currentNetwork)),
-        )
-        .subscribe({
-          next: (res) => {
-            setRpcGasPrice(res);
-          },
-          error: (err) => {
-            console.error('estimate gas error: ', err);
-          },
-        });
-
-      return () => {
-        pollingGasSub.unsubscribe();
-      };
-    }
-  }, [currentNetwork, gasPrice]);
+  }, [gasPrice, rpcGasPrice, currentNativeToken?.priceInUSDT, currentNativeToken?.decimals, gasLimit, gasInfo?.gasLimit]);
 
   const { inAsync: rejectLoading, execAsync: handleReject } = useInAsync(_handleReject);
   const { inAsync: approveLoading, execAsync: handleApprove } = useInAsync(_handleApprove);
@@ -180,7 +169,11 @@ function WalletConnectTransaction() {
     <BottomSheet enablePanDownToClose={false} isRoute snapPoints={snapPoints.percent75} style={styles.container}>
       <BottomSheetView>
         <Text style={[styles.title, { color: colors.textPrimary }]}>{t('wc.dapp.tx.title')}</Text>
-        {isContract ? <View></View> : <SendNativeToken amount={value} price={price} tokenIcon={currentNativeToken?.icon} receiverAddress={to} />}
+        {isContract ? (
+          <View></View>
+        ) : (
+          <SendNativeToken amount={value.toString()} price={price ? price.toString() : ''} tokenIcon={currentNativeToken?.icon} receiverAddress={to} />
+        )}
 
         <View style={[styles.signingWith, { borderColor: colors.borderFourth }]}>
           <Text style={[styles.secondary, { color: colors.textSecondary }]}>{t('wc.dapp.tx.signingWith')}</Text>

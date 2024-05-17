@@ -75,8 +75,8 @@ const SendTransactionStep2Asset: React.FC<Props> = ({ navigation, route, onConfi
 
       const localAssets = assets
         ?.filter((asset) =>
-          [asset.name, asset.symbol, asset.type === AssetType.Native ? AssetType.Native : asset.contractAddress].some(
-            (str) => !str ? false : str?.search(new RegExp(escapeRegExp(value), 'i')) !== -1,
+          [asset.name, asset.symbol, asset.type === AssetType.Native ? AssetType.Native : asset.contractAddress].some((str) =>
+            !str ? false : str?.search(new RegExp(escapeRegExp(value), 'i')) !== -1,
           ),
         )
         .filter((asset) => !!asset.type)
@@ -190,10 +190,10 @@ const SendTransactionStep2Asset: React.FC<Props> = ({ navigation, route, onConfi
       {searchAsset && (
         <BottomSheetScrollView style={[styles.scrollView, { marginTop: 8 }]} onScroll={handleScroll}>
           {filterAssets.assets?.length > 0 &&
-            filterAssets.assets.map((asset) =>
+            filterAssets.assets.map((asset, idx) =>
               asset.type === AssetType.ERC20 || asset.type === AssetType.Native ? (
                 <TokenItem
-                  key={asset.contractAddress ?? AssetType.Native}
+                  key={idx}
                   data={asset}
                   showTypeLabel
                   onPress={handleClickAsset}
@@ -202,14 +202,7 @@ const SendTransactionStep2Asset: React.FC<Props> = ({ navigation, route, onConfi
                   showAddress={selectType === 'Receive'}
                 />
               ) : asset.type === AssetType.ERC1155 || asset.type === AssetType.ERC721 ? (
-                <NFTItem
-                  key={asset.contractAddress}
-                  data={asset}
-                  currentOpenNFTDetail={currentOpenNFTDetail}
-                  tabsType="SelectAsset"
-                  showTypeLabel
-                  onPress={handleClickAsset}
-                />
+                <NFTItem key={idx} data={asset} currentOpenNFTDetail={currentOpenNFTDetail} tabsType="SelectAsset" showTypeLabel onPress={handleClickAsset} />
               ) : null,
             )}
 

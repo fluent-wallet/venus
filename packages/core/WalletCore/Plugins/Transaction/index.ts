@@ -4,6 +4,7 @@ import { type Plugin } from '../';
 import EVMTransaction from './chains/evm';
 import ConfluxTransaction from './chains/conflux';
 import { type ITxEvm } from './types';
+import { CFX_ESPACE_TESTNET_CHAINID, CFX_ESPACE_MAINNET_CHAINID } from '@core/consts/network';
 
 const getTransactionInstance = (network: Network) => (network.networkType === NetworkType.Conflux ? ConfluxTransaction : EVMTransaction);
 declare module '../../../WalletCore/Plugins' {
@@ -51,7 +52,7 @@ class TransactionPluginClass implements Plugin {
     const transactionInstance = getTransactionInstance(network);
     return transactionInstance.sendRawTransaction({ txRaw, endpoint: network.endpoint });
   };
-  public signMessage = ({ message, privateKey, network }: { message: string; privateKey: string, network: Network }) => {
+  public signMessage = ({ message, privateKey, network }: { message: string; privateKey: string; network: Network }) => {
     const transactionInstance = getTransactionInstance(network);
     return transactionInstance.signMessage({ message, privateKey });
   };
@@ -60,16 +61,21 @@ class TransactionPluginClass implements Plugin {
     types,
     value,
     privateKey,
-    network
+    network,
   }: {
     domain: TypedDataDomain;
     types: Record<string, TypedDataField[]>;
     value: Record<string, any>;
     privateKey: string;
-    network: Network
+    network: Network;
   }) => {
     const transactionInstance = getTransactionInstance(network);
     return transactionInstance.signTypedData({ domain, types, value, privateKey });
+  };
+  public isOnlyLegacyTxSupport = (chainId: string) => {
+    const legacyChainIds = [CFX_ESPACE_MAINNET_CHAINID, CFX_ESPACE_TESTNET_CHAINID];
+
+    return legacyChainIds.includes(chainId);
   };
 }
 

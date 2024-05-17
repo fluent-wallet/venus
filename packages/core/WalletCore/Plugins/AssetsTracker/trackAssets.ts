@@ -32,7 +32,7 @@ const trackAssets = async ({
     try {
       assets = await chainFetcher.fetchFromServer({ address, network });
       assets?.forEach((asset) => {
-        if (!asset.contractAddress) {
+        if (asset.type === AssetType.Native) {
           assetsHash[AssetType.Native] = asset;
           assetsHash[AssetType.Native].icon = nativeAsset.icon ?? undefined;
         } else {
@@ -48,47 +48,50 @@ const trackAssets = async ({
      * The token information from the AssetRule itself is already recorded locally.
      * So if there is an asset fromServer that has not been written to the DB, should write it here.
      */
-    Promise.all(assets.map((asset) => (!asset.contractAddress ? nativeAsset : network.queryAssetByAddress(asset.contractAddress)))).then((isAssetsInDB) => {
-      const preChanges: Array<Asset> = [];
+    Promise.all(assets.map((asset) => (asset.type === AssetType.Native ? nativeAsset : network.queryAssetByAddress(asset.contractAddress)))).then(
+      (isAssetsInDB) => {
+        const preChanges: Array<Asset> = [];
 
-      isAssetsInDB.forEach((inDB, index) => {
-        const contractAddress = assets[index].contractAddress;
-        if (inDB === undefined && contractAddress) {
-          preChanges.push(
-            methods.createAsset(
-              {
-                network,
-                ...assets[index],
-                source: AssetSource.Official,
-              },
-              true,
-            ),
-          );
-        }
-
-        if (typeof inDB === 'object') {
-          const assetInDB = inDB;
-          const priceChanged = assets[index].priceInUSDT && assetInDB.priceInUSDT !== assets[index].priceInUSDT;
-          const iconChanged = assets[index].icon && assetInDB.icon !== assets[index].icon;
-          if (priceChanged || iconChanged) {
+        isAssetsInDB.forEach((inDB, index) => {
+          const asset = assets[index];
+          const contractAddress = asset.type !== AssetType.Native ? asset.contractAddress : undefined;
+          if (inDB === undefined && contractAddress) {
             preChanges.push(
-              methods.prepareUpdateAsset({
-                asset: assetInDB,
-                ...(priceChanged ? { priceInUSDT: assets[index].priceInUSDT } : null),
-                ...(iconChanged ? { icon: assets[index].icon } : null),
-              }),
+              methods.createAsset(
+                {
+                  network,
+                  ...assets[index],
+                  source: AssetSource.Official,
+                },
+                true,
+              ),
             );
           }
-        }
-      });
 
-      if (preChanges.length) {
-        database.write(async () => {
-          await database.batch(...preChanges);
-          preChanges.length = 0;
+          if (typeof inDB === 'object') {
+            const assetInDB = inDB;
+            const priceChanged = assets[index].priceInUSDT && assetInDB.priceInUSDT !== assets[index].priceInUSDT;
+            const iconChanged = assets[index].icon && assetInDB.icon !== assets[index].icon;
+            if (priceChanged || iconChanged) {
+              preChanges.push(
+                methods.prepareUpdateAsset({
+                  asset: assetInDB,
+                  ...(priceChanged ? { priceInUSDT: assets[index].priceInUSDT } : null),
+                  ...(iconChanged ? { icon: assets[index].icon } : null),
+                }),
+              );
+            }
+          }
         });
-      }
-    });
+
+        if (preChanges.length) {
+          database.write(async () => {
+            await database.batch(...preChanges);
+            preChanges.length = 0;
+          });
+        }
+      },
+    );
   }
 
   /**
@@ -154,7 +157,7 @@ const trackAssets = async ({
           icon: asset.icon!,
         };
       });
-      assets?.forEach((asset) => (assetsHash[asset.contractAddress || AssetType.Native] = asset));
+      assets?.forEach((asset) => (assetsHash[asset.type === AssetType.Native ? AssetType.Native : asset.contractAddress] = asset));
     }
   }
 

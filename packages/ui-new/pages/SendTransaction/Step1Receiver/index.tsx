@@ -242,7 +242,7 @@ const SendTransactionStep1Receiver: React.FC<SendTransactionScreenProps<typeof S
             testID="next"
             style={styles.btn}
             onPress={() => {
-              navigation.navigate(SendTransactionStep2StackName, { targetAddress: receiver });
+              navigation.navigate(SendTransactionStep2StackName, { recipientAddress: receiver });
               if (Keyboard.isVisible()) {
                 Keyboard.dismiss();
               }
