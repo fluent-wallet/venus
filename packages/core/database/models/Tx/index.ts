@@ -35,7 +35,6 @@ export class Tx extends Model {
   @text('error_type') errorType?: ProcessErrorType | null;
   /** basic error info */
   @text('err') err?: string | null;
-  @field('is_local') isLocal?: boolean | null;
   @date('send_at') sendAt!: Date;
   @date('resend_at') resendAt?: Date | null;
   @field('resend_count') resendCount?: number | null;

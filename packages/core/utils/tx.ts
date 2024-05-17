@@ -1,5 +1,5 @@
 import { Asset, AssetType } from '@core/database/models/Asset';
-import { ExecutedStatus, FAILED_TX_STATUSES, PENDING_TX_STATUSES, TxStatus } from '@core/database/models/Tx/type';
+import { ExecutedStatus, FAILED_TX_STATUSES, PENDING_TX_STATUSES } from '@core/database/models/Tx/type';
 import { TxPayload } from '@core/database/models/TxPayload';
 import { iface1155, iface721, iface777 } from '@core/contracts';
 import { type Tx } from '@core/database/models/Tx';
@@ -9,7 +9,7 @@ export const formatStatus = (tx: Tx): 'failed' | 'pending' | 'confirmed' => {
   if (PENDING_TX_STATUSES.includes(status)) {
     return 'pending';
   }
-  if (FAILED_TX_STATUSES.includes(status) || (status === TxStatus.EXECUTED && executedStatus === ExecutedStatus.FAILED)) {
+  if (FAILED_TX_STATUSES.includes(status) || executedStatus === ExecutedStatus.FAILED) {
     return 'failed';
   }
   return 'confirmed';

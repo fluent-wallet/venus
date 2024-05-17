@@ -47,6 +47,7 @@ import { checkDiffInRange } from '@core/WalletCore/Plugins/BlockNumberTracker';
 import { calculateTokenPrice } from '@utils/calculateTokenPrice';
 import { useGasEstimate } from '@hooks/useGasEstimate';
 import { useSignTransaction } from '@hooks/useSignTransaction';
+import { processError } from '@core/utils/eth';
 
 const SendTransactionStep4Confirm: React.FC<SendTransactionScreenProps<typeof SendTransactionStep4StackName>> = ({ navigation, route }) => {
   useEffect(() => Keyboard.dismiss(), []);
@@ -139,6 +140,15 @@ const SendTransactionStep4Confirm: React.FC<SendTransactionScreenProps<typeof Se
     setBSIMEvent(null);
     bsimCancelRef.current?.();
 
+    let txRaw!: string;
+    let txHash!: string;
+    let epochHeight = '';
+    let tx!: ITxEvm & {
+      storageLimit?: string | undefined;
+      gasLimit: string | undefined;
+      gasPrice: string | undefined;
+    };
+    let txError!: any;
     try {
       if (asset.type === AssetType.ERC20 && asset.contractAddress) {
         const isInDB = await currentNetwork.queryAssetByAddress(asset.contractAddress);
@@ -150,7 +160,7 @@ const SendTransactionStep4Confirm: React.FC<SendTransactionScreenProps<typeof Se
           });
         }
       }
-      const tx = Object.assign({}, txHalf, {
+      tx = Object.assign({}, txHalf, {
         gasLimit: gasInfo?.gasLimit,
         gasPrice: gasInfo?.gasPrice,
         ...(currentNetwork.networkType === NetworkType.Conflux ? { storageLimit: gasInfo?.storageLimit } : null),
@@ -213,6 +223,7 @@ const SendTransactionStep4Confirm: React.FC<SendTransactionScreenProps<typeof Se
         throw error;
       }
     } catch (_err: any) {
+      txError = _err;
       setBSIMEvent(null);
       const err = String(_err.data || _err?.message || _err);
       if (err.includes('cancel')) {
@@ -227,6 +238,23 @@ const SendTransactionStep4Confirm: React.FC<SendTransactionScreenProps<typeof Se
         description: err,
         type: 'failed',
       });
+    } finally {
+      if (txRaw) {
+        events.broadcastTransactionSubjectPush.next({
+          txHash,
+          txRaw,
+          tx,
+          extraParams: {
+            assetType: route.params.asset.type,
+            contractAddress: route.params.asset.contractAddress,
+            to: route.params.targetAddress,
+            sendAt: new Date(),
+            epochHeight: currentNetwork.networkType === NetworkType.Conflux ? epochHeight : null,
+            err: txError && String(txError.data || txError?.message || txError),
+            errorType: txError && processError(txError).errorType,
+          },
+        });
+      }
     }
   }, [gasInfo, currentVault?.id, currentNetwork?.id]);
 

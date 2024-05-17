@@ -5,6 +5,7 @@ import { RPCResponse, RPCSend, RPCSendFactory } from '@core/utils/send';
 import { firstValueFrom } from 'rxjs';
 import { BaseTxTrack } from './BaseTxTrack';
 import BlockNumberTracker from '../BlockNumberTracker';
+import { ProcessErrorType } from '@core/utils/eth';
 
 export class CFXTxTrack extends BaseTxTrack {
   constructor() {
@@ -136,6 +137,7 @@ export class CFXTxTrack extends BaseTxTrack {
             }
             if (receipt.outcomeStatus !== '0x0') {
               tx.err = receipt.txExecErrorMsg ?? 'tx failed';
+              tx.errorType = ProcessErrorType.executeFailed;
             }
             tx.pollingCount = (tx.pollingCount ?? 0) + 1;
             tx.confirmedNumber = confirmedNumber;

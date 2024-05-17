@@ -1,6 +1,7 @@
 import { createTable, schemaMigrations, addColumns, unsafeExecuteSql } from '@nozbe/watermelondb/Schema/migrations';
 import TableName from '../TableName';
-import { TxSource } from '../models/Tx/type';
+import { TxSource, ExecutedStatus, TxStatus } from '../models/Tx/type';
+import { ProcessErrorType } from '@core/utils/eth';
 
 const migrations = schemaMigrations({
   migrations: [
@@ -44,6 +45,8 @@ const migrations = schemaMigrations({
           `
           UPDATE ${TableName.Tx} SET source = '${TxSource.SELF}' WHERE is_local = true;
           UPDATE ${TableName.Tx} SET method = 'Send' WHERE is_local = true;
+          UPDATE ${TableName.Tx} SET error_type = '${ProcessErrorType.executeFailed}' WHERE executed_status = '${ExecutedStatus.FAILED}';
+          UPDATE ${TableName.Tx} SET error_type = '${ProcessErrorType.replacedByAnotherTx}' WHERE status = '${TxStatus.REPLACED}';
           `,
         ),
       ],

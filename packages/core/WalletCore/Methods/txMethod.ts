@@ -3,7 +3,7 @@ import { querySelectedNetwork } from '../../database/models/Network/query';
 import { querySelectedAddress } from '../../database/models/Address/query';
 import { Asset, AssetType } from '../../database/models/Asset';
 import { queryAssetByAddress } from '../../database/models/Asset/query';
-import { createTx as _createTx } from '../../database/models/Tx/query';
+import { createTx as _createTx, queryTxsWithAddress } from '../../database/models/Tx/query';
 import { createTxPayload as _createTxPayload } from '../../database/models/TxPayload/query';
 import { createTxExtra as _createTxExtra } from '../../database/models/TxExtra/query';
 import { TransactionSubjectValue } from '../Events/broadcastTransactionSubject';
@@ -32,6 +32,8 @@ export class TxMethod {
       if (!address) {
         console.error('TX: no address selected!');
       }
+      const updated = await this.updateTx(address, params);
+      if (updated) return updated;
       const [txPayload, txExtra] = await Promise.all([
         this.createTxPayload(
           {
@@ -57,12 +59,13 @@ export class TxMethod {
           address,
           raw: params.txRaw,
           hash: params.txHash,
-          status: TxStatus.PENDING,
-          isLocal: true,
+          status: params.extraParams.err ? TxStatus.FAILED : TxStatus.PENDING,
           sendAt: params.extraParams.sendAt,
           txPayload,
           txExtra,
           asset,
+          err: params.extraParams.err,
+          errorType: params.extraParams.errorType,
           // TODO: set by params
           source: TxSource.SELF,
           // TODO: set by params
@@ -77,6 +80,36 @@ export class TxMethod {
     } catch (error) {
       console.error('createTx error: ', error);
     }
+  }
+
+  async updateTx(selectAddress: Address, params: TransactionSubjectValue) {
+    const sameTx = await queryTxsWithAddress(selectAddress.id, {
+      raw: params.txRaw,
+    });
+    console.log('sameTx', sameTx.length);
+    if (!sameTx || sameTx.length === 0) {
+      // no same tx in db
+      return false;
+    }
+    // hasSuccessTx: already success, skip create/update
+    const hasSuccessTx = sameTx.some((tx) => tx.status !== TxStatus.FAILED);
+    console.log('hasSuccessTx', hasSuccessTx);
+    const tx = sameTx[0];
+    let newTx = tx;
+    if (!hasSuccessTx) {
+      newTx = await tx.updateSelf((_tx) => {
+        _tx.hash = params.txHash;
+        _tx.status = params.extraParams.err ? TxStatus.FAILED : TxStatus.PENDING;
+        _tx.sendAt = params.extraParams.sendAt;
+        _tx.err = params.extraParams.err;
+        _tx.errorType = params.extraParams.errorType;
+        // TODO: set by params
+        _tx.source = TxSource.SELF;
+        // TODO: set by params
+        _tx.method = 'Send';
+      });
+    }
+    return [newTx, await newTx.txPayload, await newTx.txExtra] as const;
   }
 
   createTxPayload(params: createTxPayloadParams, prepareCreate: true): Promise<TxPayload>;

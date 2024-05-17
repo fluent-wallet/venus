@@ -85,6 +85,7 @@ const schema = appSchema({
         { name: 'executed_at', type: 'number', isOptional: true },
         { name: 'error_type', type: 'string', isOptional: true },
         { name: 'err', type: 'string', isOptional: true },
+        // deprecated
         { name: 'is_local', type: 'boolean', isOptional: true },
         { name: 'send_at', type: 'number', isOptional: true },
         { name: 'resend_at', type: 'number', isOptional: true },

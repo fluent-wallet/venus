@@ -19,15 +19,20 @@ export const queryTxsWithAddress = (
     inStatuses = ALL_TX_STATUSES,
     notInStatuses,
     sortBy,
+    raw,
   }: {
     inStatuses?: TxStatus[];
     notInStatuses?: TxStatus[];
     sortBy?: string | string[];
-  },
+    raw?: string;
+  } = {},
 ) => {
   const query: Q.Clause[] = [Q.where('address_id', addressId), Q.where('is_temp_replaced', Q.notEq(true)), Q.where('status', Q.oneOf(inStatuses))];
   if (notInStatuses) {
     query.push(Q.where('status', Q.notIn(notInStatuses)));
+  }
+  if (raw) {
+    query.push(Q.where('raw', raw));
   }
   if (sortBy) {
     if (!Array.isArray(sortBy)) {
