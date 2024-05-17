@@ -305,7 +305,8 @@ export abstract class BaseTxTrack {
           if (finalized) {
             t.status = TxStatus.REPLACED;
             t.raw = null;
-            t.err = 'replacedByAnotherTx';
+            t.err = null;
+            tx.errorType = ProcessErrorType.replacedByAnotherTx;
           }
           t.isTempReplaced = isReplaced;
           if (isReplaced) {

@@ -4,6 +4,7 @@ import { EXECUTED_NOT_FINALIZED_TX_STATUSES, ExecutedStatus, TxStatus } from '@c
 import { RPCResponse, RPCSend, RPCSendFactory } from '@core/utils/send';
 import { firstValueFrom } from 'rxjs';
 import { BaseTxTrack } from './BaseTxTrack';
+import { ProcessErrorType } from '@core/utils/eth';
 
 export class EthTxTrack extends BaseTxTrack {
   constructor() {
@@ -136,6 +137,7 @@ export class EthTxTrack extends BaseTxTrack {
               }
               if (receipt.status !== '0x1') {
                 tx.err = receipt.txExecErrorMsg ?? 'tx failed';
+                tx.errorType = ProcessErrorType.executeFailed;
               }
               tx.pollingCount = (tx.pollingCount ?? 0) + 1;
               tx.confirmedNumber = confirmedNumber;

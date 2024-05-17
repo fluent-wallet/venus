@@ -1,4 +1,4 @@
-import { CommonActions, StackActions, type NavigationState, type PartialState } from '@react-navigation/native';
+import { CommonActions, type NavigationState, type PartialState } from '@react-navigation/native';
 import { isSamsungDevice } from '@utils/deviceInfo';
 import { HomeStackName } from '@router/configs';
 
@@ -17,11 +17,7 @@ function getActiveRouteName(state: NavigationState | PartialState<NavigationStat
 const backToHome = (navigation: any) => {
   // navigation.dispatch(CommonActions.reset({ index: 0, routes: [{ name: HomeStackName }] }));
   if (getActiveRouteName(navigation.getState()) === HomeStackName) return;
-  
-  if (navigation.canGoBack()) {
-    navigation.goBack();
-    return;
-  }
+
   if (!isSamsungDevice) {
     navigation.popToTop();
     navigation.goBack();
