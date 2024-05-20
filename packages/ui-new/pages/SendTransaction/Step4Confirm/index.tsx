@@ -65,7 +65,7 @@ const SendTransactionStep4Confirm: React.FC<SendTransactionScreenProps<typeof Se
   const signTransaction = useSignTransaction();
 
   const {
-    params: { asset, amount: txAmount, nftItemDetail, recipientAddress},
+    params: { asset, amount: txAmount, nftItemDetail, recipientAddress },
   } = route;
 
   const formattedAmount = useFormatBalance(txAmount);
@@ -142,7 +142,6 @@ const SendTransactionStep4Confirm: React.FC<SendTransactionScreenProps<typeof Se
 
     let txRaw!: string;
     let txHash!: string;
-    let epochHeight = '';
     let tx!: ITxEvm & {
       storageLimit?: string | undefined;
       gasLimit: string | undefined;
@@ -249,7 +248,7 @@ const SendTransactionStep4Confirm: React.FC<SendTransactionScreenProps<typeof Se
             contractAddress: asset.type !== AssetType.Native ? asset.contractAddress : undefined,
             to: recipientAddress,
             sendAt: new Date(),
-            epochHeight: currentNetwork.networkType === NetworkType.Conflux ? epochHeight : null,
+            epochHeight: currentNetwork.networkType === NetworkType.Conflux ? epochHeightRef.current : null,
             err: txError && String(txError.data || txError?.message || txError),
             errorType: txError && processError(txError).errorType,
           },
