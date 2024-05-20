@@ -65,20 +65,20 @@ const SendTransactionStep4Confirm: React.FC<SendTransactionScreenProps<typeof Se
   const signTransaction = useSignTransaction();
 
   const {
-    params: { asset, amount: txAmount, nftItemDetail, recipientAddress },
+    params: { asset, amount, nftItemDetail, recipientAddress },
   } = route;
 
-  const formattedAmount = useFormatBalance(txAmount);
+  const formattedAmount = useFormatBalance(amount);
   // const price = useMemo(() => new Decimal(asset.priceInUSDT || 0).mul(new Decimal(txAmount || 0)).toFixed(2), []);
 
-  const price = useMemo(() => calculateTokenPrice({ price: asset.priceInUSDT, amount: txAmount }), [asset.priceInUSDT, txAmount]);
+  const price = useMemo(() => calculateTokenPrice({ price: asset.priceInUSDT, amount: amount }), [asset.priceInUSDT, amount]);
   const symbol = useMemo(() => {
     if (!nftItemDetail) {
       return asset.symbol;
     } else return getDetailSymbol(nftItemDetail);
   }, []);
 
-  const transferAmountHex = useMemo(() => new Decimal(txAmount || 0).mul(Decimal.pow(10, nftItemDetail ? 0 : asset.decimals || 0)).toHex(), []);
+  const transferAmountHex = useMemo(() => new Decimal(amount || 0).mul(Decimal.pow(10, nftItemDetail ? 0 : asset.decimals || 0)).toHex(), []);
 
   const txHalf = useMemo(() => {
     let data = '0x';
@@ -275,7 +275,7 @@ const SendTransactionStep4Confirm: React.FC<SendTransactionScreenProps<typeof Se
               <Text style={[styles.text, styles.to, { color: colors.textSecondary }]}>{t('common.amount')}</Text>
               <View style={styles.balanceWrapper}>
                 <Text style={[styles.balance, { color: colors.textPrimary }]} numberOfLines={1}>
-                  {nftItemDetail ? txAmount : formattedAmount} {symbol}
+                  {nftItemDetail ? amount : formattedAmount} {symbol}
                 </Text>
                 {(asset.type === AssetType.Native || asset.type === AssetType.ERC20) && <TokenIcon style={styles.assetIcon} source={asset.icon} />}
               </View>
