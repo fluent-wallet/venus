@@ -36,7 +36,7 @@ export const useGasEstimate = (tx: ITxEvm) => {
     return () => {
       pollingGasSub.unsubscribe();
     };
-  }, [currentNetwork, tx]);
+  }, [currentNetwork?.id, currentNetwork?.endpoint, tx]);
 
   return gasInfo;
 };

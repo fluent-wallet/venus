@@ -85,10 +85,7 @@ function WalletConnectTransaction() {
         value: value ? value : '0x0',
         data: data || '0x',
         chainId: currentNetwork.chainId,
-        ...(currentNetwork.networkType === NetworkType.Ethereum &&
-        (currentNetwork.chainId === CFX_ESPACE_MAINNET_CHAINID || currentNetwork.chainId === CFX_ESPACE_TESTNET_CHAINID)
-          ? { type: 0 }
-          : null),
+        type: Plugins.Transaction.isOnlyLegacyTxSupport(currentNetwork.chainId) ? 0 : undefined,
       } as ITxEvm;
 
       const nonce = await Plugins.Transaction.getTransactionCount({ network: currentNetwork, addressValue: currentAddress.hex });

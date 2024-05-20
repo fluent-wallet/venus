@@ -4,7 +4,7 @@ import { type Plugin } from '../';
 import EVMTransaction from './chains/evm';
 import ConfluxTransaction from './chains/conflux';
 import { type ITxEvm } from './types';
-import { CFX_ESPACE_TESTNET_CHAINID, CFX_ESPACE_MAINNET_CHAINID } from '@core/consts/network';
+import { CFX_ESPACE_TESTNET_CHAINID, CFX_ESPACE_MAINNET_CHAINID, CFX_MAINNET_CHAINID, CFX_TESTNET_CHAINID } from '@core/consts/network';
 
 const getTransactionInstance = (network: Network) => (network.networkType === NetworkType.Conflux ? ConfluxTransaction : EVMTransaction);
 declare module '../../../WalletCore/Plugins' {
@@ -73,8 +73,12 @@ class TransactionPluginClass implements Plugin {
     return transactionInstance.signTypedData({ domain, types, value, privateKey });
   };
   public isOnlyLegacyTxSupport = (chainId: string) => {
-    const legacyChainIds = [CFX_ESPACE_MAINNET_CHAINID, CFX_ESPACE_TESTNET_CHAINID];
 
+    //  for now conflux network only support 155
+    const eSpaceLegacyChainIds = [CFX_ESPACE_MAINNET_CHAINID, CFX_ESPACE_TESTNET_CHAINID];
+    const coreSpaceLegacyChainIds = [CFX_MAINNET_CHAINID, CFX_TESTNET_CHAINID];
+
+    const legacyChainIds = [...eSpaceLegacyChainIds, ...coreSpaceLegacyChainIds];
     return legacyChainIds.includes(chainId);
   };
 }
