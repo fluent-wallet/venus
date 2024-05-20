@@ -59,7 +59,7 @@ export class Network extends Model {
       this.assets
         .extend(Q.or(Q.where('contract_address', convertToChecksum(address)), Q.where('contract_address', address)))
         .observe()
-        .pipe(map((accounts) => accounts?.[0] as Asset | undefined)),
+        .pipe(map((assets) => assets?.[0] as Asset | undefined)),
     );
 
   @lazy nativeAssetQuery = this.assets.extend(Q.where('type', AssetType.Native));

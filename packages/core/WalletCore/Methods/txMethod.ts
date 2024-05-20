@@ -2,7 +2,6 @@ import { injectable } from 'inversify';
 import { querySelectedNetwork } from '../../database/models/Network/query';
 import { querySelectedAddress } from '../../database/models/Address/query';
 import { Asset, AssetType } from '../../database/models/Asset';
-import { queryAssetByAddress } from '../../database/models/Asset/query';
 import { createTx as _createTx, queryTxsWithAddress } from '../../database/models/Tx/query';
 import { createTxPayload as _createTxPayload } from '../../database/models/TxPayload/query';
 import { createTxExtra as _createTxExtra } from '../../database/models/TxExtra/query';
@@ -46,12 +45,12 @@ export class TxMethod {
         this.createTxExtra(params.extraParams, true),
       ]);
       let asset: Asset | undefined;
+      const networks = await querySelectedNetwork();
+      const network = networks[0];
       if (params.extraParams.assetType === AssetType.Native) {
-        const networks = await querySelectedNetwork();
-        asset = (await networks[0].assets).find((i) => i.type === AssetType.Native);
+        asset = (await network.assets).find((i) => i.type === AssetType.Native);
       } else if (params.extraParams.contractAddress) {
-        const assets = await queryAssetByAddress(toChecksumAddress(params.extraParams.contractAddress));
-        asset = assets?.[0];
+        asset = await network.queryAssetByAddress(params.extraParams.contractAddress);
       }
 
       const tx = _createTx(
