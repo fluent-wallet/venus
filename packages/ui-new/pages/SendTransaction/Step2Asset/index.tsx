@@ -190,10 +190,11 @@ const SendTransactionStep2Asset: React.FC<Props> = ({ navigation, route, onConfi
       {searchAsset && (
         <BottomSheetScrollView style={[styles.scrollView, { marginTop: 8 }]} onScroll={handleScroll}>
           {filterAssets.assets?.length > 0 &&
-            filterAssets.assets.map((asset, idx) =>
-              asset.type === AssetType.ERC20 || asset.type === AssetType.Native ? (
+            filterAssets.assets.map((asset) => {
+              const itemKey = asset.type === AssetType.Native ? AssetType.Native : asset.contractAddress;
+              return asset.type === AssetType.ERC20 || asset.type === AssetType.Native ? (
                 <TokenItem
-                  key={idx}
+                  key={itemKey}
                   data={asset}
                   showTypeLabel
                   onPress={handleClickAsset}
@@ -202,9 +203,16 @@ const SendTransactionStep2Asset: React.FC<Props> = ({ navigation, route, onConfi
                   showAddress={selectType === 'Receive'}
                 />
               ) : asset.type === AssetType.ERC1155 || asset.type === AssetType.ERC721 ? (
-                <NFTItem key={idx} data={asset} currentOpenNFTDetail={currentOpenNFTDetail} tabsType="SelectAsset" showTypeLabel onPress={handleClickAsset} />
-              ) : null,
-            )}
+                <NFTItem
+                  key={itemKey}
+                  data={asset}
+                  currentOpenNFTDetail={currentOpenNFTDetail}
+                  tabsType="SelectAsset"
+                  showTypeLabel
+                  onPress={handleClickAsset}
+                />
+              ) : null;
+            })}
 
           {filterAssets.type !== 'local' && filterAssets.type !== 'remote' && (
             <Pressable
