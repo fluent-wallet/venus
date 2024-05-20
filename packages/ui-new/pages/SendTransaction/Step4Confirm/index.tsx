@@ -181,22 +181,9 @@ const SendTransactionStep4Confirm: React.FC<SendTransactionScreenProps<typeof Se
 
         const { txRawPromise, cancel } = await signTransaction({ ...tx, epochHeight: epochHeightRef.current });
         bsimCancelRef.current = cancel;
-        const txRaw = await txRawPromise;
+        txRaw = await txRawPromise;
 
-        const txHash = await plugins.Transaction.sendRawTransaction({ txRaw, network: currentNetwork });
-
-        events.broadcastTransactionSubjectPush.next({
-          txHash,
-          txRaw,
-          tx,
-          extraParams: {
-            assetType: asset.type,
-            contractAddress: asset.type !== AssetType.Native ? asset.contractAddress : undefined,
-            to: recipientAddress,
-            sendAt: new Date(),
-            epochHeight: currentNetwork.networkType === NetworkType.Conflux ? epochHeightRef.current : null,
-          },
-        });
+        txHash = await plugins.Transaction.sendRawTransaction({ txRaw, network: currentNetwork });
 
         setBSIMEvent(null);
         showMessage({
