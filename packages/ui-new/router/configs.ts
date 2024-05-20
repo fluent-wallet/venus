@@ -103,9 +103,9 @@ export const SendTransactionStep3StackName = 'SendTransactionStep3';
 export const SendTransactionStep4StackName = 'SendTransactionStep4';
 export type SendTransactionParamList = {
   [SendTransactionStep1StackName]: undefined;
-  [SendTransactionStep2StackName]: { targetAddress: string; searchAddress?: string };
-  [SendTransactionStep3StackName]: { asset: AssetInfo; targetAddress: string; nftItemDetail?: NFTItemDetail; amount?: string };
-  [SendTransactionStep4StackName]: { asset: AssetInfo; targetAddress: string; amount: string; nftItemDetail?: NFTItemDetail };
+  [SendTransactionStep2StackName]: { recipientAddress: string; searchAddress?: string };
+  [SendTransactionStep3StackName]: { asset: AssetInfo; recipientAddress: string; nftItemDetail?: NFTItemDetail; amount?: string };
+  [SendTransactionStep4StackName]: { asset: AssetInfo; recipientAddress: string; amount: string; nftItemDetail?: NFTItemDetail };
   // navigate to home
   [HomeStackName]: undefined;
 };
