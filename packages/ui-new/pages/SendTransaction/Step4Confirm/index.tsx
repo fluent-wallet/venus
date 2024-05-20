@@ -65,7 +65,7 @@ const SendTransactionStep4Confirm: React.FC<SendTransactionScreenProps<typeof Se
   const signTransaction = useSignTransaction();
 
   const {
-    params: { asset, amount: txAmount, nftItemDetail },
+    params: { asset, amount: txAmount, nftItemDetail, recipientAddress},
   } = route;
 
   const formattedAmount = useFormatBalance(txAmount);
@@ -85,21 +85,21 @@ const SendTransactionStep4Confirm: React.FC<SendTransactionScreenProps<typeof Se
     if (asset.type === AssetType.ERC20) {
       const contract = createERC20Contract(asset.contractAddress);
       data = contract.encodeFunctionData('transfer', [
-        (currentNetwork.networkType === NetworkType.Conflux ? convertCfxToHex(route.params.recipientAddress) : route.params.recipientAddress) as `0x${string}`,
+        (currentNetwork.networkType === NetworkType.Conflux ? convertCfxToHex(recipientAddress) : recipientAddress) as `0x${string}`,
         transferAmountHex as unknown as bigint,
       ]);
     } else if (asset.type === AssetType.ERC721) {
       const contract = createERC721Contract(asset.contractAddress);
       data = contract.encodeFunctionData('transferFrom', [
         currentAddressValue as `0x${string}`,
-        route.params.recipientAddress as `0x${string}`,
+        recipientAddress as `0x${string}`,
         nftItemDetail?.tokenId as unknown as bigint,
       ]);
     } else if (asset.type === AssetType.ERC1155) {
       const contract = createERC1155Contract(asset.contractAddress);
       data = contract.encodeFunctionData('safeTransferFrom', [
         currentAddressValue as `0x${string}`,
-        route.params.recipientAddress as `0x${string}`,
+        recipientAddress as `0x${string}`,
         nftItemDetail?.tokenId as unknown as bigint,
         transferAmountHex as unknown as bigint,
         '0x',
@@ -107,7 +107,7 @@ const SendTransactionStep4Confirm: React.FC<SendTransactionScreenProps<typeof Se
     }
 
     return {
-      to: asset.type === AssetType.Native ? route.params.recipientAddress : asset.contractAddress,
+      to: asset.type === AssetType.Native ? recipientAddress : asset.contractAddress,
       value: asset.type === AssetType.Native ? transferAmountHex : '0x0',
       data,
       from: currentAddressValue,
@@ -155,7 +155,7 @@ const SendTransactionStep4Confirm: React.FC<SendTransactionScreenProps<typeof Se
         if (!isInDB) {
           await methods.createAsset({
             network: currentNetwork,
-            ...route.params.asset,
+            ...asset,
             source: AssetSource.Custom,
           });
         }
@@ -193,7 +193,7 @@ const SendTransactionStep4Confirm: React.FC<SendTransactionScreenProps<typeof Se
           extraParams: {
             assetType: asset.type,
             contractAddress: asset.type !== AssetType.Native ? asset.contractAddress : undefined,
-            to: route.params.recipientAddress,
+            to: recipientAddress,
             sendAt: new Date(),
             epochHeight: currentNetwork.networkType === NetworkType.Conflux ? epochHeightRef.current : null,
           },
@@ -245,9 +245,9 @@ const SendTransactionStep4Confirm: React.FC<SendTransactionScreenProps<typeof Se
           txRaw,
           tx,
           extraParams: {
-            assetType: route.params.asset.type,
-            contractAddress: route.params.asset.contractAddress,
-            to: route.params.targetAddress,
+            assetType: asset.type,
+            contractAddress: asset.type !== AssetType.Native ? asset.contractAddress : undefined,
+            to: recipientAddress,
             sendAt: new Date(),
             epochHeight: currentNetwork.networkType === NetworkType.Conflux ? epochHeight : null,
             err: txError && String(txError.data || txError?.message || txError),
@@ -270,7 +270,7 @@ const SendTransactionStep4Confirm: React.FC<SendTransactionScreenProps<typeof Se
       >
         <BottomSheetScrollView>
           <Text style={[styles.sendTitle, { color: colors.textPrimary }]}>{t('common.send')}</Text>
-          {nftItemDetail && <NFT colors={colors} asset={route.params.asset} nftItemDetail={nftItemDetail} />}
+          {nftItemDetail && <NFT colors={colors} asset={asset} nftItemDetail={nftItemDetail} />}
           {asset.type !== AssetType.ERC721 && (
             <>
               <Text style={[styles.text, styles.to, { color: colors.textSecondary }]}>{t('common.amount')}</Text>
@@ -285,7 +285,7 @@ const SendTransactionStep4Confirm: React.FC<SendTransactionScreenProps<typeof Se
           )}
 
           <Text style={[styles.text, styles.to, { color: colors.textSecondary }]}>{t('common.to')}</Text>
-          <AccountItemView nickname={''} addressValue={route.params.recipientAddress} colors={colors} />
+          <AccountItemView nickname={''} addressValue={recipientAddress} colors={colors} />
 
           <View style={[styles.divider, { backgroundColor: colors.borderFourth }]} />
 

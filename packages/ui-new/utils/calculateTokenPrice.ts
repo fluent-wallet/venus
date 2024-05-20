@@ -38,7 +38,7 @@ export type CalculateTokenPriceParams = {
 export type CalculateTokenPriceReturn = null | string;
 
 export function calculateTokenPrice({ price, amount, fixedDecimals: formattedDecimals = 2}: CalculateTokenPriceParams) {
-  console.log(price, amount);
+
   if (!price) return null;
   if (!amount) return null;
 
