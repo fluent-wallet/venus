@@ -1,20 +1,21 @@
 import type { Tx } from '@core/database/models/Tx';
-import { NetworkType } from '@core/database/models/Network';
 import { EXECUTED_NOT_FINALIZED_TX_STATUSES, ExecutedStatus, TxStatus } from '@core/database/models/Tx/type';
 import { RPCResponse, RPCSend, RPCSendFactory } from '@core/utils/send';
 import { firstValueFrom } from 'rxjs';
 import { BaseTxTrack } from './BaseTxTrack';
 import { ProcessErrorType } from '@core/utils/eth';
+import { Network, NetworkType } from '@core/database/models/Network';
 
-export class EthTxTrack extends BaseTxTrack {
+class EthTxTrack extends BaseTxTrack {
+  networkType = NetworkType.Ethereum as const;
   constructor() {
     super({
-      networkType: NetworkType.Ethereum,
       logPrefix: 'EthTxTrack',
     });
   }
 
-  async _checkStatus(txs: Tx[], endpoint: string, returnStatus = false): Promise<TxStatus | undefined> {
+  async _checkStatus(txs: Tx[], network: Network, returnStatus = false): Promise<TxStatus | undefined> {
+    const endpoint = network.endpoint;
     let status: TxStatus | undefined;
     const RPCSend = RPCSendFactory(endpoint);
     const getTransactionByHashParams = txs.map((tx) => ({ method: 'eth_getTransactionByHash', params: [tx.hash] }));
@@ -29,7 +30,7 @@ export class EthTxTrack extends BaseTxTrack {
         return false;
       }
       if (!transaction) {
-        this._handleUnsent(tx, endpoint);
+        this._handleUnsent(tx, network);
         if (EXECUTED_NOT_FINALIZED_TX_STATUSES.includes(tx.status)) {
           this._handleDuplicateTx(tx, false, false);
         }
@@ -158,9 +159,6 @@ export class EthTxTrack extends BaseTxTrack {
   async _checkEpochHeightOutOfBound() {
     return false;
   }
-  async _handleResend(raw: string | null, endpoint: string) {
-    return firstValueFrom(RPCSend<RPCResponse<string>>(endpoint, { method: 'eth_sendRawTransaction', params: [raw] }));
-  }
 
   async _getTransactionByHash(hash: string, endpoint: string) {
     return firstValueFrom(RPCSend<RPCResponse<ETH.eth_getTransactionByHashResponse>>(endpoint, { method: 'eth_getTransactionByHash', params: [hash] }));
@@ -170,3 +168,5 @@ export class EthTxTrack extends BaseTxTrack {
     return firstValueFrom(RPCSend<RPCResponse<string>>(endpoint, { method: 'eth_getTransactionCount', params: [address, 'latest'] }));
   }
 }
+
+export default new EthTxTrack();

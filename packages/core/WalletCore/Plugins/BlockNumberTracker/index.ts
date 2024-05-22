@@ -1,4 +1,4 @@
-import { debounceTime, interval, startWith, switchMap, Subscription } from 'rxjs';
+import { debounceTime, interval, startWith, switchMap, Subscription, retry, catchError, throwError } from 'rxjs';
 import { type Plugin } from '../';
 import events from '@core/WalletCore/Events';
 import { Network } from '@core/database/models/Network';
@@ -27,6 +27,7 @@ class BlockNumberTracker implements Plugin {
   private _setup() {
     events.currentNetworkObservable.pipe(debounceTime(40)).subscribe((currentNetwork) => {
       this._network = currentNetwork;
+      this._blockNumber = null;
       this._startup(currentNetwork);
     });
   }
@@ -38,14 +39,14 @@ class BlockNumberTracker implements Plugin {
         .pipe(
           startWith(0),
           switchMap(() => Transaction.getBlockNumber(network)),
-        )
-        .subscribe({
-          next: (res) => {
-            this._blockNumber = res;
-          },
-          error: (err) => {
+          catchError((err: { code: string; message: string }) => {
             console.error('get block number error: ', err);
-          },
+            return throwError(() => err);
+          }),
+          retry({ delay: 1000 }),
+        )
+        .subscribe((res) => {
+          this._blockNumber = res;
         });
     }
   }
