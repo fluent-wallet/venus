@@ -92,6 +92,7 @@ export type BackupStackParamList = {
   [BackupSuccessStackName]: undefined;
   // navigate to home
   [HomeStackName]: undefined;
+  [PasswordVerifyStackName]: undefined;
 };
 export type BackupScreenProps<T extends keyof BackupStackParamList> = NativeStackScreenProps<BackupStackParamList, T>;
 // end backup nest stack
@@ -108,6 +109,7 @@ export type SendTransactionParamList = {
   [SendTransactionStep4StackName]: { asset: AssetInfo; recipientAddress: string; amount: string; nftItemDetail?: NFTItemDetail };
   // navigate to home
   [HomeStackName]: undefined;
+  [PasswordVerifyStackName]: undefined;
 };
 export type SendTransactionScreenProps<T extends keyof SendTransactionParamList> = NativeStackScreenProps<SendTransactionParamList, T>;
 // end SendTransaction nest stack

@@ -1,6 +1,6 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 import React, { useRef, useState, useCallback, type RefObject } from 'react';
-import { View, Pressable, Keyboard, StyleSheet, type TextInput } from 'react-native';
+import { Pressable, Keyboard, StyleSheet, type TextInput } from 'react-native';
 import { useTheme } from '@react-navigation/native';
 import { Mnemonic } from 'ethers';
 import * as secp from '@noble/secp256k1';
@@ -8,7 +8,8 @@ import { stripHexPrefix } from '@core/utils/base';
 import useInAsync from '@hooks/useInAsync';
 import Button from '@components/Button';
 import Text from '@components/Text';
-import BottomSheet, { BottomSheetTextInput, type BottomSheetMethods } from '@components/BottomSheet';
+import BottomSheet, { BottomSheetView, BottomSheetTextInput, type BottomSheetMethods } from '@components/BottomSheet';
+// import BottomSheet, { BottomSheetView, BottomSheetTextInput, type BottomSheetMethods } from '@components/ABCTest';
 import { screenHeight, isAdjustResize } from '@utils/deviceInfo';
 import { useTranslation } from 'react-i18next';
 export { BottomSheetMethods };
@@ -89,8 +90,9 @@ const ImportExistingWallet: React.FC<Props> = ({ bottomSheetRef, inImporting, on
       enablePanDownToClose={!inAsync}
       enableContentPanningGesture={!inAsync}
       enableHandlePanningGesture={!inAsync}
+      enableDynamicSizing={true}
     >
-      <View style={{ flex: 1 }}>
+      <BottomSheetView style={{ flex: 1 }}>
         <Pressable
           onPress={() => {
             Keyboard.dismiss();
@@ -122,7 +124,7 @@ const ImportExistingWallet: React.FC<Props> = ({ bottomSheetRef, inImporting, on
             {t('common.confirm')}
           </Button>
         </Pressable>
-      </View>
+      </BottomSheetView>
     </BottomSheet>
   );
 };

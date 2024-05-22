@@ -2,6 +2,7 @@ import React, { useState, useCallback, useRef } from 'react';
 import { Pressable, StyleSheet } from 'react-native';
 import { useTheme } from '@react-navigation/native';
 import { showMessage } from 'react-native-flash-message';
+import { useTranslation } from 'react-i18next';
 import { Image } from 'expo-image';
 import plugins from '@core/WalletCore/Plugins';
 import { useHasBSIMVaultCreated } from '@core/WalletCore/Plugins/ReactInject';
@@ -18,7 +19,7 @@ import BSIMCardWallet from '@assets/icons/wallet-bsim.webp';
 import HDWallet from '@assets/icons/wallet-hd.webp';
 import ExistWallet from '@assets/icons/wallet-Imported.webp';
 import createVault from '@pages/InitWallet/createVaultWithRouterParams';
-import { useTranslation } from 'react-i18next';
+// import BottomSheet from '../../../../Test/components/BS';
 
 interface Props {
   navigation: StackScreenProps<typeof AccountManagementStackName>['navigation'];
@@ -95,7 +96,7 @@ const AddAnotherWallet: React.FC<Props> = ({ navigation }) => {
         ref={bottomSheetRef}
         snapPoints={snapPoints}
         isRoute
-        onChange={(index) => setBottomSheetIndex(index)}
+        // onChange={(index) => setBottomSheetIndex(index)}
         containerStyle={styles.container}
         enablePanDownToClose={!inAsync}
         enableContentPanningGesture={!inAsync}
@@ -107,7 +108,7 @@ const AddAnotherWallet: React.FC<Props> = ({ navigation }) => {
           <Pressable
             style={({ pressed }) => [accountListStyles.row, { backgroundColor: pressed ? colors.underlay : 'transparent' }]}
             disabled={inAsync}
-            onPress={handleConnectBSIMCard}
+            onPress={() => navigation.goBack()}
             testID="connectBSIMWallet"
           >
             <Image style={accountListStyles.groupTypeImage} source={BSIMCardWallet} />
@@ -130,7 +131,9 @@ const AddAnotherWallet: React.FC<Props> = ({ navigation }) => {
         <Pressable
           style={({ pressed }) => [accountListStyles.row, { backgroundColor: pressed ? colors.underlay : 'transparent' }]}
           disabled={inAsync}
-          onPress={() => importExistRef.current?.expand()}
+          onPress={() => {
+            importExistRef.current?.expand();
+          }}
           testID="importExistWallet"
         >
           {<Image style={accountListStyles.groupTypeImage} source={ExistWallet} />}
@@ -138,7 +141,7 @@ const AddAnotherWallet: React.FC<Props> = ({ navigation }) => {
           {inImporting && <HourglassLoading style={accountListStyles.addAccountLoading} />}
         </Pressable>
       </BottomSheet>
-      {bottomSheetIndex === 0 && <ImportExistingWallet bottomSheetRef={importExistRef} onSuccessConfirm={handleImportExistWallet} inImporting={inImporting} />}
+      {<ImportExistingWallet bottomSheetRef={importExistRef} onSuccessConfirm={handleImportExistWallet} inImporting={inImporting} />}
     </>
   );
 };

@@ -18,6 +18,8 @@ import WelcomeBgDark from '@assets/images/welcome-bg-dark.webp';
 import i18n from '@assets/i18n';
 import LottieAnimation from './lottie';
 import ImportExistingWallet, { type BottomSheetMethods } from './ImportExistingWallet';
+// import BottomSheet, { BottomSheetView } from '@components/ABCTest';
+import BottomSheet, { BottomSheetView } from '@gorhom/bottom-sheet';
 
 export const showNotFindBSIMCardMessage = () =>
   showMessage({
@@ -93,6 +95,7 @@ const WayToInitWallet: React.FC<StackScreenProps<typeof WayToInitWalletStackName
           </View>
         </ScrollView>
       </ImageBackground>
+      {/* <ABC bottomSheetRef={bottomSheetRef} /> */}
       <ImportExistingWallet
         bottomSheetRef={bottomSheetRef}
         onSuccessConfirm={(value) => {
@@ -103,6 +106,16 @@ const WayToInitWallet: React.FC<StackScreenProps<typeof WayToInitWalletStackName
         }}
       />
     </>
+  );
+};
+
+const ABC = ({ bottomSheetRef }) => {
+  return (
+    <BottomSheet ref={bottomSheetRef} snapPoints={['40%']} enablePanDownToClose index={-1} enableDynamicSizing={false}>
+      <View style={{ flex: 1 }}>
+        <Text>Awesome 🎉</Text>
+      </View>
+    </BottomSheet>
   );
 };
 

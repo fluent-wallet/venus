@@ -2,7 +2,7 @@ import { CommonActions, type NavigationState, type PartialState } from '@react-n
 import { isSamsungDevice } from '@utils/deviceInfo';
 import { HomeStackName } from '@router/configs';
 
-function getActiveRouteName(state: NavigationState | PartialState<NavigationState>) {
+export function getActiveRouteName(state: NavigationState | PartialState<NavigationState>) {
   if (state.index == null || !state.routes[state.index]) {
     return undefined;
   }

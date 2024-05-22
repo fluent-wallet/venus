@@ -22,6 +22,7 @@ import NFTDetailTracker from './packages/core/WalletCore/Plugins/NFTDetailTracke
 import ReceiveAssetsTracker from './packages/core/WalletCore/Plugins/ReceiveAssetsTracker';
 import BlockNumberTracker from './packages/core/WalletCore/Plugins/BlockNumberTracker';
 import App from './packages/ui-new/App';
+// import App from './packages/Test/App';
 import { name as appName } from './app.json';
 import { ENABLE_WALLET_CONNECT_FEATURE } from './packages/ui-new/utils/features';
 
