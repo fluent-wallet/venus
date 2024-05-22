@@ -2,11 +2,13 @@ import { BehaviorSubject, filter } from 'rxjs';
 import { ITxEvm } from './../Plugins/Transaction/types';
 import { type WalletTransactionType } from '../Plugins/Transaction/types';
 import { ProcessErrorType } from '@core/utils/eth';
+import { Address } from '@core/database/models/Address';
 
 export interface TransactionSubjectValue {
   txHash: string;
   txRaw: string;
   tx: ITxEvm;
+  address: Address;
   extraParams: Pick<WalletTransactionType, 'assetType' | 'contractAddress' | 'to'> & {
     sendAt: Date;
     epochHeight?: string | null;
