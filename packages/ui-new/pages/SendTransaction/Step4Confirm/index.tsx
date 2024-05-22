@@ -230,6 +230,7 @@ const SendTransactionStep4Confirm: React.FC<SendTransactionScreenProps<typeof Se
           txHash,
           txRaw,
           tx,
+          address: currentAddress,
           extraParams: {
             assetType: asset.type,
             contractAddress: asset.type !== AssetType.Native ? asset.contractAddress : undefined,

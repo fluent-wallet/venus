@@ -1,6 +1,4 @@
 import { injectable } from 'inversify';
-import { querySelectedNetwork } from '../../database/models/Network/query';
-import { querySelectedAddress } from '../../database/models/Address/query';
 import { Asset, AssetType } from '../../database/models/Asset';
 import { createTx as _createTx, queryTxsWithAddress } from '../../database/models/Tx/query';
 import { createTxPayload as _createTxPayload } from '../../database/models/TxPayload/query';
@@ -12,7 +10,6 @@ import { Address } from '@core/database/models/Address';
 import { TxPayload } from '@core/database/models/TxPayload';
 import { TxExtra } from '@core/database/models/TxExtra';
 import { TxSource, TxStatus } from '@core/database/models/Tx/type';
-import { getAddress as toChecksumAddress } from 'ethers';
 
 interface createTxPayloadParams {
   tx: TransactionSubjectValue['tx'];
@@ -26,27 +23,22 @@ export class TxMethod {
   createTx(params: TransactionSubjectValue): Promise<void>;
   async createTx(params: TransactionSubjectValue, prepareCreate?: true) {
     try {
-      const selectedAddressList = await querySelectedAddress();
-      const address = selectedAddressList?.[0];
-      if (!address) {
-        console.error('TX: no address selected!');
-      }
-      const updated = await this.updateTx(address, params);
+      const { address, tx: _tx, extraParams, txRaw, txHash } = params;
+      const updated = await this.updateTx(params);
       if (updated) return updated;
       const [txPayload, txExtra] = await Promise.all([
         this.createTxPayload(
           {
-            tx: params.tx,
+            tx: _tx,
             address,
-            epochHeight: params.extraParams.epochHeight,
+            epochHeight: extraParams.epochHeight,
           },
           true,
         ),
-        this.createTxExtra(params.extraParams, true),
+        this.createTxExtra(extraParams, true),
       ]);
       let asset: Asset | undefined;
-      const networks = await querySelectedNetwork();
-      const network = networks[0];
+      const network = await address.network;
       if (params.extraParams.assetType === AssetType.Native) {
         asset = (await network.assets).find((i) => i.type === AssetType.Native);
       } else if (params.extraParams.contractAddress) {
@@ -56,15 +48,15 @@ export class TxMethod {
       const tx = _createTx(
         {
           address,
-          raw: params.txRaw,
-          hash: params.txHash,
-          status: params.extraParams.err ? TxStatus.FAILED : TxStatus.PENDING,
-          sendAt: params.extraParams.sendAt,
+          raw: txRaw,
+          hash: txHash,
+          status: extraParams.err ? TxStatus.FAILED : TxStatus.PENDING,
+          sendAt: extraParams.sendAt,
           txPayload,
           txExtra,
           asset,
-          err: params.extraParams.err,
-          errorType: params.extraParams.errorType,
+          err: extraParams.err,
+          errorType: extraParams.errorType,
           // TODO: set by params
           source: TxSource.SELF,
           // TODO: set by params
@@ -81,9 +73,10 @@ export class TxMethod {
     }
   }
 
-  async updateTx(selectAddress: Address, params: TransactionSubjectValue) {
-    const sameTx = await queryTxsWithAddress(selectAddress.id, {
-      raw: params.txRaw,
+  async updateTx(params: TransactionSubjectValue) {
+    const { address, extraParams, txRaw, txHash } = params;
+    const sameTx = await queryTxsWithAddress(address.id, {
+      raw: txRaw,
     });
     console.log('sameTx', sameTx.length);
     if (!sameTx || sameTx.length === 0) {
@@ -97,11 +90,11 @@ export class TxMethod {
     let newTx = tx;
     if (!hasSuccessTx) {
       newTx = await tx.updateSelf((_tx) => {
-        _tx.hash = params.txHash;
-        _tx.status = params.extraParams.err ? TxStatus.FAILED : TxStatus.PENDING;
-        _tx.sendAt = params.extraParams.sendAt;
-        _tx.err = params.extraParams.err;
-        _tx.errorType = params.extraParams.errorType;
+        _tx.hash = txHash;
+        _tx.status = extraParams.err ? TxStatus.FAILED : TxStatus.PENDING;
+        _tx.sendAt = extraParams.sendAt;
+        _tx.err = extraParams.err;
+        _tx.errorType = extraParams.errorType;
         // TODO: set by params
         _tx.source = TxSource.SELF;
         // TODO: set by params
