@@ -1,5 +1,5 @@
 import { BSIMError, BSIM_ERRORS } from '@WalletCoreExtends/Plugins/BSIM/BSIMSDK';
-import Methods from '@core/WalletCore/Methods';
+import methods from '@core/WalletCore/Methods';
 import Plugins from '@core/WalletCore/Plugins';
 import { checkDiffInRange } from '@core/WalletCore/Plugins/BlockNumberTracker';
 import { NetworkType, VaultType, useCurrentAccount, useCurrentAddress, useCurrentNetwork, useVaultOfAccount } from '@core/WalletCore/Plugins/ReactInject';
@@ -51,7 +51,7 @@ export function useSignTransaction() {
           }
         }
       } else {
-        const privateKey = await Methods.getPrivateKeyOfAddress(currentAddress);
+        const privateKey = await methods.getPrivateKeyOfAddress(currentAddress);
         const txRawPromise = Plugins.Transaction.signTransaction({
           network: currentNetwork,
           tx,

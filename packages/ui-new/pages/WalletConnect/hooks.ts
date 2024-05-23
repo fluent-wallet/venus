@@ -14,7 +14,7 @@ import { uniq } from 'lodash-es';
 import { CFX_ESPACE_MAINNET_NETID, CFX_ESPACE_TESTNET_NETID } from '@core/utils/consts';
 import { isDev, isQA } from '@utils/getEnv';
 import { queryNetworks } from '@core/database/models/Network/query';
-import Methods from '@core/WalletCore/Methods';
+import methods from '@core/WalletCore/Methods';
 import { WalletConnectPluginEventMethod } from '@core/WalletCore/Plugins/WalletConnect/types';
 
 const SUPPORT_NETWORK = [CFX_ESPACE_MAINNET_NETID];
@@ -88,7 +88,7 @@ export function useListenWalletConnectEvent() {
         let isContract = typeof to === 'undefined';
 
         if (typeof to !== 'undefined') {
-          isContract = await Methods.checkIsContractAddress({
+          isContract = await methods.checkIsContractAddress({
             networkType: currentNetwork.networkType,
             endpoint: currentNetwork.endpoint,
             addressValue: to,

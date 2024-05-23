@@ -1,5 +1,5 @@
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import WalletConnectLoading from './loading';
+import WalletConnectLoading from './Loading';
 import {
   WalletConnectLoadingStackName,
   WalletConnectParamList,
@@ -10,10 +10,10 @@ import {
   WalletConnectTransactionStackName,
 
 } from '@router/configs';
-import WalletConnectProposal from './proposal';
-import WalletConnectSessions from './sessions';
-import WalletConnectSignMessage from './signMessage';
-import WalletConnectTransaction from './transaction';
+import WalletConnectProposal from './Proposal';
+import WalletConnectSessions from './Sessions';
+import WalletConnectSignMessage from './SignMessage';
+import WalletConnectTransaction from './Transaction';
 
 const WCStack = createNativeStackNavigator<WalletConnectParamList>();
 

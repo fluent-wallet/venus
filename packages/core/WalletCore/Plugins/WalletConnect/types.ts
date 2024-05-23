@@ -14,9 +14,7 @@ export enum WalletConnectRPCMethod {
 
 export enum WalletConnectPluginEventMethod {
   LOADING = 'loading',
-
   SESSION_PROPOSAL = 'session_proposal',
-
   SIGN_MESSAGE = 'sign_message',
   SEND_TRANSACTION = 'sendTransaction',
 }

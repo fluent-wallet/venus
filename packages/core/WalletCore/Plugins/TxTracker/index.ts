@@ -1,6 +1,6 @@
 import { broadcastTransactionSubject } from '@core/WalletCore/Events/broadcastTransactionSubject';
 import { type Plugin } from '../';
-import Methods from '@core/WalletCore/Methods';
+import methods from '@core/WalletCore/Methods';
 import EthTxTracker from './EthTxTrack';
 import CFXTxTracker from './CFXTxTrack';
 import { queryTxsWithAddress } from '@core/database/models/Tx/query';
@@ -54,7 +54,7 @@ class TxTrackerPluginClass implements Plugin {
 
   private _setup() {
     broadcastTransactionSubject.subscribe(async (value) => {
-      Methods.createTx(value);
+      methods.createTx(value);
     });
     events.currentAddressObservable.pipe(debounceTime(40)).subscribe(async (selectedAddress) => {
       if (!selectedAddress) {
