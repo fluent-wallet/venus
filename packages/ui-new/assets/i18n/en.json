@@ -1,13 +1,21 @@
 {
   "account" : {
+    "HDWallet" : {
+      "select" : {
+        "noVerification" : "You have not completed\nthe security verification,<3> try again</3>.\n\n",
+        "pathType" : "HD Wallet Path Type",
+        "selected" : "{{accounts}} address{{es}} selected\n\n\n",
+        "title" : "Select HD Wallets"
+      }
+    },
     "action" : {
+      "ManageMent" : "Management",
       "add" : "Add Account",
-      "addOther" : "Add another wallet",
       "add.title" : "Add Wallet",
+      "addOther" : "Add another wallet",
       "eraseAll" : "Erase all wallets",
       "eraseAll.describe" : "Account data will be cleared.\n  \nBe sure to back up your wallet, otherwise you will permanently lose it and all assets.",
       "eraseAll.title" : "⚠️ Erase all wallets?",
-      "ManageMent" : "Management",
       "remove" : "Remove Account",
       "remove.describe" : "This Action will remove this wallet from the app.\n\nApp can not restore your wallet, you can restore with its seed phrase / private key.\n\nBe sure to back up your wallet, otherwise you will permanently lose it and all assets.",
       "remove.title" : "Delete this wallet?  "
@@ -54,14 +62,6 @@
         "seed" : "Seed Phrase Group"
       }
     },
-    "HDWallet" : {
-      "select" : {
-        "noVerification" : "You have not completed\nthe security verification,<3> try again</3>.\n\n",
-        "pathType" : "HD Wallet Path Type",
-        "selected" : "{{accounts}} address{{es}} selected\n\n\n",
-        "title" : "Select HD Wallets"
-      }
-    },
     "management" : {
       "title" : "Account Management"
     },
@@ -98,6 +98,7 @@
     }
   },
   "common" : {
+    "HDWallets" : "HD Wallets",
     "account" : "Account",
     "amount" : "Amount",
     "backup" : "Backup",
@@ -113,7 +114,6 @@
     "dismiss" : "Dismiss",
     "edit" : "Edit",
     "enable" : "Enable",
-    "HDWallets" : "HD Wallets",
     "index" : "Index",
     "max" : "Max",
     "network" : "Network",
@@ -180,6 +180,11 @@
     "title" : "Receive"
   },
   "scan" : {
+    "QRCode" : {
+      "error" : {
+        "notRecognized" : "Sorry, this QR code could not be recognized."
+      }
+    },
     "parse" : {
       "error" : {
         "invalidTargetAddress" : "Invalid target address.",
@@ -197,11 +202,6 @@
       "title" : "Wallet Requires Access"
     },
     "photos" : "Photos",
-    "QRCode" : {
-      "error" : {
-        "notRecognized" : "Sorry, this QR code could not be recognized."
-      }
-    },
     "title" : "Scan",
     "walletConnect" : {
       "error" : {
@@ -249,7 +249,6 @@
     "content" : {
       "depositToken" : "Deposit tokens to your wallet",
       "noActivity" : "No Activity",
-      "noLatestTransaction" : null,
       "noNFT" : "No NFT",
       "noRecord" : "No Record",
       "noToken" : "No Token",
@@ -273,8 +272,8 @@
     "amount" : {
       "anyAmount" : "Any Amount",
       "error" : {
-        "estimate" : "Failed to estimate, please try again",
         "InsufficientBalance" : "Insufficient {{symbol}} balance.",
+        "estimate" : "Failed to estimate, please try again",
         "invalidAmount" : "Invalid amount"
       },
       "estimateMax" : "Estimate Max"
@@ -341,13 +340,37 @@
     }
   },
   "wc" : {
+    "daap" : {
+      "tx" : {
+        "unknown" : "unknown"
+      }
+    },
     "dapp" : {
+      "connectTo" : "Connected to",
       "connectedDApps" : "Connected DApps",
-      "connectTo" : "Connected to"
+      "tx" : {
+        "contract" : "Contract",
+        "function" : "Function",
+        "network" : "Network",
+        "nonce" : "Nonce",
+        "signingWith" : "Signing with",
+        "simulating" : "Simulating",
+        "title" : "Transaction Confirm",
+        "transactionRequest" : "Transaction Request",
+        "viewData" : "View More Details"
+      }
     },
     "proposal" : {
-      "accountSelected" : "Account selected",
+      "accountSelected" : "Account Selected",
       "describe" : "Wants to connect to your wallet"
+    },
+    "request" : {
+      "signature" : "Request Signature"
+    },
+    "sign" : {
+      "message" : "Message",
+      "network" : "on {{network}}   ",
+      "signData" : "Sign Data  "
     }
   },
   "welcome" : {

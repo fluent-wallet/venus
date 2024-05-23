@@ -1,13 +1,21 @@
 {
   "account" : {
+    "HDWallet" : {
+      "select" : {
+        "noVerification" : "你沒有完成\n安全驗證，<3>請重試</3>\n\n",
+        "pathType" : "HD 錢包路徑類型",
+        "selected" : "已選擇 {{accounts}} 個地址\n\n\n",
+        "title" : "選擇 HD 錢包"
+      }
+    },
     "action" : {
+      "ManageMent" : "管理",
       "add" : "添加賬戶",
-      "addOther" : "添加另一個錢包",
       "add.title" : "添加錢包",
+      "addOther" : "添加另一個錢包",
       "eraseAll" : "移除所有錢包",
       "eraseAll.describe" : "帳戶數據將被清除。\n\n請務必備份您的錢包，否則您將永久丟失它和所有資產。",
       "eraseAll.title" : "⚠️ 移除所有錢包？",
-      "ManageMent" : "管理",
       "remove" : "刪除賬戶",
       "remove.describe" : "此操作會刪除此錢包。\n\n此應用程序無法恢復您的錢包，您可以使用其助記詞/私鑰恢復。\n\n請務必備份您的錢包，否則您將永久丟失它和所有資產。",
       "remove.title" : "刪除此錢包？"
@@ -54,14 +62,6 @@
         "seed" : "錢包組"
       }
     },
-    "HDWallet" : {
-      "select" : {
-        "noVerification" : "你沒有完成\n安全驗證，<3>請重試</3>\n\n",
-        "pathType" : "HD 錢包路徑類型",
-        "selected" : "已選擇 {{accounts}} 個地址\n\n\n",
-        "title" : "選擇 HD 錢包"
-      }
-    },
     "management" : {
       "title" : "賬戶管理"
     },
@@ -98,6 +98,7 @@
     }
   },
   "common" : {
+    "HDWallets" : "HD 錢包",
     "account" : "賬戶",
     "amount" : "數量",
     "backup" : "備份",
@@ -105,15 +106,17 @@
     "cancel" : "取消",
     "close" : "關閉",
     "confirm" : "確認",
+    "connect" : "連接",
     "continue" : "繼續",
     "copied" : "已複製",
     "delete" : "刪除",
+    "disconnect" : "斷開連接",
     "dismiss" : "忽略",
     "edit" : "編輯",
     "enable" : "啟用",
-    "HDWallets" : "HD 錢包",
     "index" : "序號",
     "max" : "最大",
+    "network" : "網絡",
     "next" : "繼續",
     "ok" : "OK",
     "password" : "密碼",
@@ -123,6 +126,7 @@
     "seedPhrase" : "助記詞",
     "send" : "發送",
     "to" : "接收方",
+    "unsafe" : "不安全",
     "verifyPassword" : "驗證密碼",
     "view" : "查看"
   },
@@ -176,6 +180,11 @@
     "title" : "收款"
   },
   "scan" : {
+    "QRCode" : {
+      "error" : {
+        "notRecognized" : "此二維碼無效"
+      }
+    },
     "parse" : {
       "error" : {
         "invalidTargetAddress" : "無效的目標地址",
@@ -193,11 +202,6 @@
       "title" : "應用權限申請"
     },
     "photos" : "相冊",
-    "QRCode" : {
-      "error" : {
-        "notRecognized" : "此二維碼無效"
-      }
-    },
     "title" : "掃描",
     "walletConnect" : {
       "error" : {
@@ -268,8 +272,8 @@
     "amount" : {
       "anyAmount" : "任意數額",
       "error" : {
-        "estimate" : "預估失敗，請重試",
         "InsufficientBalance" : "{{symbol}} 餘額不足",
+        "estimate" : "預估失敗，請重試",
         "invalidAmount" : "無效的數量"
       },
       "estimateMax" : "預估最大值"
@@ -333,6 +337,40 @@
         "validPrivateKey" : "有效的私鑰"
       },
       "placeholder" : "請輸入助記詞（以空格分隔）或私鑰"
+    }
+  },
+  "wc" : {
+    "daap" : {
+      "tx" : {
+        "unknown" : "未知"
+      }
+    },
+    "dapp" : {
+      "connectTo" : "已連接到",
+      "connectedDApps" : "已連接的應用",
+      "tx" : {
+        "contract" : "合約地址",
+        "function" : "方法",
+        "network" : "網絡",
+        "nonce" : "隨機數",
+        "signingWith" : "以此賬戶簽名",
+        "simulating" : "模擬執行",
+        "title" : "確認交易",
+        "transactionRequest" : "交易請求",
+        "viewData" : "查看更多信息"
+      }
+    },
+    "proposal" : {
+      "accountSelected" : "已選的賬戶",
+      "describe" : "想要連接你的錢包"
+    },
+    "request" : {
+      "signature" : "簽名請求"
+    },
+    "sign" : {
+      "message" : "信息",
+      "network" : "在 {{network}}   ",
+      "signData" : "簽署信息"
     }
   },
   "welcome" : {
