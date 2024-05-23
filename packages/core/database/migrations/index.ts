@@ -8,15 +8,6 @@ const migrations = schemaMigrations({
     {
       toVersion: 2,
       steps: [
-        addColumns({
-          table: TableName.Tx,
-          columns: [{ name: 'error_type', type: 'string', isOptional: true }],
-        }),
-      ],
-    },
-    {
-      toVersion: 3,
-      steps: [
         createTable({
           name: TableName.Signature,
           columns: [
@@ -29,16 +20,13 @@ const migrations = schemaMigrations({
             { name: 'created_at', type: 'number' },
           ],
         }),
-      ],
-    },
-    {
-      toVersion: 4,
-      steps: [
         addColumns({
           table: TableName.Tx,
           columns: [
             { name: 'source', type: 'string' },
             { name: 'method', type: 'string' },
+            { name: 'error_type', type: 'string', isOptional: true },
+            { name: 'signature_id', type: 'string', isIndexed: true, isOptional: true },
           ],
         }),
         unsafeExecuteSql(
