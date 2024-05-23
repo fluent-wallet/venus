@@ -1,6 +1,6 @@
 import { Pressable, StyleSheet, View } from 'react-native';
 import Text from '@components/Text';
-import { useWalletConnectSessions } from '@pages/WalletConnect/hooks';
+import { useWalletConnectSessions } from '@pages/WalletConnect/useWalletConnectHooks';
 import { useNavigation, useTheme } from '@react-navigation/native';
 import Icon from '@components/Icon';
 import { useTranslation } from 'react-i18next';

@@ -20,7 +20,7 @@ import { WalletConnectPluginEventType } from '@core/WalletCore/Plugins/WalletCon
 const SUPPORT_NETWORK = [CFX_ESPACE_MAINNET_NETID];
 const QA_SUPPORT_NETWORK = [CFX_ESPACE_MAINNET_NETID, CFX_ESPACE_TESTNET_NETID];
 
-function useListenWalletConnectEvent() {
+export function useListenWalletConnectEvent() {
   const navigation = useNavigation<StackNavigation>();
   const currentAddressValue = useCurrentAddressValue();
   const currentNetwork = useCurrentNetwork();
@@ -140,6 +140,3 @@ export function useWalletConnectSessions() {
 
   return { sessions };
 }
-
-
-export default useListenWalletConnectEvent;

@@ -53,7 +53,7 @@ import {
   WalletConnectStackName,
 } from './configs';
 import Header from './Header';
-import useListenWalletConnectEvent from '@pages/WalletConnect/useListenWalletConnectEvent';
+import { useListenWalletConnectEvent } from '@pages/WalletConnect/useWalletConnectHooks';
 import WalletConnect from '@pages/WalletConnect';
 
 const RootStack = createNativeStackNavigator<RootStackParamList>();

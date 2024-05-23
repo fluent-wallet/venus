@@ -1,7 +1,7 @@
 import BottomSheet, { snapPoints, BottomSheetScrollView } from '@components/BottomSheet';
 import Text from '@components/Text';
 import { useTranslation } from 'react-i18next';
-import { useWalletConnectSessions } from './useListenWalletConnectEvent';
+import { useWalletConnectSessions } from './useWalletConnectHooks';
 import { Pressable, StyleSheet, View } from 'react-native';
 import Button from '@components/Button';
 import Icon from '@components/Icon';
