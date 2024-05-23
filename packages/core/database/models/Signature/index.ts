@@ -1,6 +1,6 @@
 import { of } from 'rxjs';
 import { Model, type Relation } from '@nozbe/watermelondb';
-import { text, readonly, date, immutableRelation, reader } from '@nozbe/watermelondb/decorators';
+import { text, readonly, date, immutableRelation, reader, writer } from '@nozbe/watermelondb/decorators';
 import { type Address } from '../Address';
 import { type App } from '../App';
 import { type Tx } from '../Tx';
@@ -20,29 +20,22 @@ export class Signature extends Model {
   /** current blockNumber when sign, only for sort */
   @text('block_number') blockNumber!: string;
   @readonly @date('created_at') createdAt!: Date;
-  /** optional, Relation<App | null> */
   @immutableRelation(TableName.App, 'app_id') app!: Relation<App>;
   @immutableRelation(TableName.Address, 'address_id') address!: Relation<Address>;
   /** optional, Relation<Tx | null> */
   @immutableRelation(TableName.Tx, 'tx_id') tx!: Relation<Tx>;
 
-  @reader async getAsset() {
+  @writer updateTx(tx: Tx) {
+    return this.update((s) => s.tx.set(tx));
+  }
+
+  @reader async getTx() {
     if (!this.tx.id) return null;
     const tx = await this.tx;
     return tx;
   }
-  observeAsset() {
+  observeTx() {
     if (!this.tx.id) return of(null);
     return this.tx.observe();
-  }
-
-  @reader async getApp() {
-    if (!this.app.id) return null;
-    const app = await this.app;
-    return app;
-  }
-  observeApp() {
-    if (!this.app.id) return of(null);
-    return this.app.observe();
   }
 }
