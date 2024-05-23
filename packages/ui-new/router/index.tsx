@@ -50,11 +50,10 @@ import {
   type RootStackParamList,
   type StackNavigation,
   SheetBottomOption,
-  WalletConnectLoadingStackName,
   WalletConnectStackName,
 } from './configs';
 import Header from './Header';
-import { useListenWalletConnectEvent } from '@pages/WalletConnect/hooks';
+import useListenWalletConnectEvent from '@pages/WalletConnect/useListenWalletConnectEvent';
 import WalletConnect from '@pages/WalletConnect';
 
 const RootStack = createNativeStackNavigator<RootStackParamList>();

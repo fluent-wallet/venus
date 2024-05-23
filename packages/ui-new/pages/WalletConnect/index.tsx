@@ -8,8 +8,9 @@ import {
   WalletConnectSessionsStackName,
   WalletConnectSignMessageStackName,
   WalletConnectTransactionStackName,
-
+  PasswordVerifyStackName,
 } from '@router/configs';
+import PasswordVerify from '@modules/PasswordVerify';
 import WalletConnectProposal from './Proposal';
 import WalletConnectSessions from './Sessions';
 import WalletConnectSignMessage from './SignMessage';
@@ -25,6 +26,7 @@ export default function WalletConnect() {
       <WCStack.Screen name={WalletConnectSessionsStackName} component={WalletConnectSessions} options={SheetBottomOption} />
       <WCStack.Screen name={WalletConnectSignMessageStackName} component={WalletConnectSignMessage} options={SheetBottomOption} />
       <WCStack.Screen name={WalletConnectTransactionStackName} component={WalletConnectTransaction} options={SheetBottomOption} />
+      <WCStack.Screen name={PasswordVerifyStackName} component={PasswordVerify} options={SheetBottomOption} />
     </WCStack.Navigator>
   );
 }

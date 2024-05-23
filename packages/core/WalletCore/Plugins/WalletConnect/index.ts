@@ -10,7 +10,7 @@ import {
   IWCSendTransactionData,
   IWCSessionProposalEventData,
   IWCSignMessageEventData,
-  WalletConnectPluginEventMethod,
+  WalletConnectPluginEventType,
   WalletConnectPluginEvents,
   WalletConnectRPCMethod,
 } from './types';
@@ -129,7 +129,7 @@ export default class WalletConnect implements Plugin {
     };
 
     this.events.next({
-      type: WalletConnectPluginEventMethod.SESSION_PROPOSAL,
+      type: WalletConnectPluginEventType.SESSION_PROPOSAL,
       data: {
         requiredNamespaces,
         optionalNamespaces,
@@ -176,7 +176,7 @@ export default class WalletConnect implements Plugin {
         }
 
         this.events.next({
-          type: WalletConnectPluginEventMethod.SIGN_MESSAGE,
+          type: WalletConnectPluginEventType.SIGN_MESSAGE,
           data: {
             chainId,
             address,
@@ -217,7 +217,7 @@ export default class WalletConnect implements Plugin {
         if (!address) reject('from is required');
 
         this.events.next({
-          type: WalletConnectPluginEventMethod.SEND_TRANSACTION,
+          type: WalletConnectPluginEventType.SEND_TRANSACTION,
           data: {
             chainId,
             address: address,
@@ -262,7 +262,7 @@ export default class WalletConnect implements Plugin {
 
   emitWCLoading(loading: boolean) {
     this.events.next({
-      type: WalletConnectPluginEventMethod.LOADING,
+      type: WalletConnectPluginEventType.LOADING,
       data: loading,
     });
   }

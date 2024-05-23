@@ -1,7 +1,7 @@
 import BottomSheet, { snapPoints, type BottomSheetMethods } from '@components/BottomSheet';
 import Spinner from '@components/Spinner';
 import Plugins from '@core/WalletCore/Plugins';
-import { WalletConnectPluginEventMethod } from '@core/WalletCore/Plugins/WalletConnect/types';
+import { WalletConnectPluginEventType } from '@core/WalletCore/Plugins/WalletConnect/types';
 import { useNavigation, useTheme } from '@react-navigation/native';
 import { StackNavigation } from '@router/configs';
 import { useEffect } from 'react';
@@ -12,7 +12,7 @@ function WalletConnectLoading() {
   const navigation = useNavigation<StackNavigation>();
   const { colors, reverseColors, mode } = useTheme();
   useEffect(() => {
-    const sub = Plugins.WalletConnect.events.pipe(filter((event) => event.type === WalletConnectPluginEventMethod.LOADING)).subscribe((event) => {
+    const sub = Plugins.WalletConnect.events.pipe(filter((event) => event.type === WalletConnectPluginEventType.LOADING)).subscribe((event) => {
       if (event.data === false) {
         navigation.goBack();
       }

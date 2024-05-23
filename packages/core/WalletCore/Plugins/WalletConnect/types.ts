@@ -12,14 +12,14 @@ export enum WalletConnectRPCMethod {
   SendTransaction = 'eth_sendTransaction',
 }
 
-export enum WalletConnectPluginEventMethod {
+export enum WalletConnectPluginEventType {
   LOADING = 'loading',
   SESSION_PROPOSAL = 'session_proposal',
   SIGN_MESSAGE = 'sign_message',
   SEND_TRANSACTION = 'sendTransaction',
 }
 export interface IWCLoadingEvent {
-  type: WalletConnectPluginEventMethod.LOADING;
+  type: WalletConnectPluginEventType.LOADING;
   data: boolean;
 }
 
@@ -32,7 +32,7 @@ export interface IWCSessionProposalEventData {
 }
 
 export interface IWCProposalEvent {
-  type: WalletConnectPluginEventMethod.SESSION_PROPOSAL;
+  type: WalletConnectPluginEventType.SESSION_PROPOSAL;
   data: IWCSessionProposalEventData;
 }
 
@@ -47,7 +47,7 @@ export interface IWCSignMessageEventData {
 }
 
 export interface IWCSignMessageEvent {
-  type: WalletConnectPluginEventMethod.SIGN_MESSAGE;
+  type: WalletConnectPluginEventType.SIGN_MESSAGE;
   data: IWCSignMessageEventData;
 }
 
@@ -69,7 +69,7 @@ export interface IWCSendTransactionData {
   reject: (reason: string) => Promise<void>;
 }
 export interface IWCSendTransactionEvent {
-  type: WalletConnectPluginEventMethod.SEND_TRANSACTION;
+  type: WalletConnectPluginEventType.SEND_TRANSACTION;
   data: IWCSendTransactionData;
 }
 export type WalletConnectPluginEvents = IWCProposalEvent | IWCLoadingEvent | IWCSignMessageEvent | IWCSendTransactionEvent;

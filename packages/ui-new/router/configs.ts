@@ -44,6 +44,7 @@ export type WalletConnectParamList = {
   [WalletConnectSessionsStackName]: undefined;
   [WalletConnectSignMessageStackName]: IWCSignMessageEventData;
   [WalletConnectTransactionStackName]: IWCSendTransactionData & { isContract: boolean };
+  [PasswordVerifyStackName]: undefined;
 };
 
 // end Wallet connect nest stack
