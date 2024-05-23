@@ -59,14 +59,14 @@ export interface IWCSendTransactionData {
   address: string;
   tx: {
     from: string;
-    to: string;
-    value: bigint;
-    data: string;
+    to?: string;
+    value?: bigint;
+    data?: string;
     nonce?: number;
     gasLimit?: bigint;
     gasPrice?: bigint;
   };
-  metadata: Web3WalletTypes.Metadata;
+  metadata: WalletConnectMetadata;
   approve: (txhash: string) => Promise<void>;
   reject: (reason: string) => Promise<void>;
 }
@@ -75,3 +75,5 @@ export interface IWCSendTransactionEvent {
   data: IWCSendTransactionData;
 }
 export type WalletConnectPluginEvents = IWCProposalEvent | IWCLoadingEvent | IWCSignMessageEvent | IWCSendTransactionEvent;
+
+export type WalletConnectMetadata = Web3WalletTypes.Metadata;

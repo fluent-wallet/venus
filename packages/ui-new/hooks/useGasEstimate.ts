@@ -7,7 +7,7 @@ const notNull = <T>(value: T | null): value is T => value !== null;
 /**
  * get gas estimate from RPC , use the current network config
  */
-export const useGasEstimate = (tx: ITxEvm) => {
+export const useGasEstimate = (tx: Partial<ITxEvm>) => {
   const [gasInfo, setGasInfo] = useState<Awaited<ReturnType<typeof Plugins.Transaction.estimate>> | null>(null);
   const currentNetwork = useCurrentNetwork();
 

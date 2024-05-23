@@ -74,7 +74,7 @@ export function useListenWalletConnectEvent() {
           address,
           tx: { to, data },
         } = event.data;
-        console.log(address, currentAddress?.hex)
+        console.log(address, currentAddress?.hex);
         if (address !== currentAddress?.hex) {
           return reject('address is not match');
         }
@@ -84,14 +84,19 @@ export function useListenWalletConnectEvent() {
           return reject('network is not match');
         }
 
-        const isContract = await Methods.checkIsContractAddress({
-          networkType: currentNetwork.networkType,
-          endpoint: currentNetwork.endpoint,
-          addressValue: to,
-        });
+        // if to address is undefined, it is contract create
+        let isContract = typeof to === 'undefined';
 
-        const EOATx = (!isContract && !!to) || !data || data === '0x'
-        console.log("is EOA TX", EOATx)
+        if (typeof to !== 'undefined') {
+          isContract = await Methods.checkIsContractAddress({
+            networkType: currentNetwork.networkType,
+            endpoint: currentNetwork.endpoint,
+            addressValue: to,
+          });
+        }
+
+        const EOATx = (!isContract && !!to) || !data || data === '0x';
+
         navigation.navigate(WalletConnectStackName, {
           screen: WalletConnectTransactionStackName,
           params: { ...event.data, isContract: !EOATx },

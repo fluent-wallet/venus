@@ -26,7 +26,7 @@ class TransactionPluginClass implements Plugin {
     return transactionInstance.estimateGas({ tx, endpoint: network.endpoint, gasBuffer: network.gasBuffer });
   };
 
-  public estimate = ({ tx, network }: { network: Network; tx: ITxEvm }) => {
+  public estimate = ({ tx, network }: { network: Network; tx: Partial<ITxEvm> }) => {
     const transactionInstance = getTransactionInstance(network);
     return transactionInstance.estimate({ tx, endpoint: network.endpoint, gasBuffer: network.gasBuffer }) as ReturnType<
       (typeof ConfluxTransaction)['estimate']

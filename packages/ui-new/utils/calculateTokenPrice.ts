@@ -26,7 +26,7 @@ export type CalculateTokenPriceParams = {
 
   /**
    * save formatted decimals length
-   * @default 2
+   * @default 6
    */
   fixedDecimals?: number;
   /**
@@ -37,16 +37,13 @@ export type CalculateTokenPriceParams = {
 
 export type CalculateTokenPriceReturn = null | string;
 
-export function calculateTokenPrice({ price, amount, fixedDecimals: formattedDecimals = 2}: CalculateTokenPriceParams) {
-
+export function calculateTokenPrice({ price, amount, fixedDecimals: formattedDecimals = 6 }: CalculateTokenPriceParams) {
   if (!price) return null;
   if (!amount) return null;
-
   const _price = price.toString();
   const _amount = amount.toString();
   const priceUSDT = new Decimal(_price);
   const amountDecimal = new Decimal(_amount);
   const result = priceUSDT.mul(amountDecimal);
-
   return truncate(result.toString(), formattedDecimals);
 }

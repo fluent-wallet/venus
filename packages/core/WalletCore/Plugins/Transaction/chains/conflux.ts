@@ -9,8 +9,10 @@ import { TypedDataDomain, TypedDataField, Wallet } from 'ethers';
 class Transaction {
   public getGasPrice = (endpoint: string) => fetchChain<string>({ url: endpoint, method: 'cfx_gasPrice' });
 
-  public estimateGas = async ({ tx, endpoint, gasBuffer = 1 }: { tx: ITxEvm; endpoint: string; gasBuffer?: number }) => {
-    const isToAddressContract = await methods.checkIsContractAddress({ networkType: NetworkType.Conflux, endpoint: endpoint, addressValue: tx.to });
+  public estimateGas = async ({ tx, endpoint, gasBuffer = 1 }: { tx: Partial<ITxEvm>; endpoint: string; gasBuffer?: number }) => {
+    const isToAddressContract = tx.to
+      ? await methods.checkIsContractAddress({ networkType: NetworkType.Conflux, endpoint: endpoint, addressValue: tx.to })
+      : true;
     const isSendNativeToken = (!!tx.to && !isToAddressContract) || !tx.data || tx.data === '0x';
 
     if (isSendNativeToken) return { gasLimit: addHexPrefix(BigInt(21000 * gasBuffer).toString(16)), storageLimit: '0x0' };
@@ -54,7 +56,7 @@ class Transaction {
     return rst;
   };
 
-  public estimate = async ({ tx, endpoint, gasBuffer = 1 }: { tx: ITxEvm; endpoint: string; gasBuffer?: number }) => {
+  public estimate = async ({ tx, endpoint, gasBuffer = 1 }: { tx: Partial<ITxEvm>; endpoint: string; gasBuffer?: number }) => {
     const [gasPrice, { gasLimit, storageLimit }] = await Promise.all([this.getGasPrice(endpoint), this.estimateGas({ tx, endpoint, gasBuffer })]);
     return { gasPrice, gasLimit, storageLimit };
   };

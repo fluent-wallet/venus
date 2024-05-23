@@ -8,8 +8,10 @@ import { type ITxEvm } from '../types';
 class Transaction {
   public getGasPrice = (endpoint: string) => fetchChain<string>({ url: endpoint, method: 'eth_gasPrice' });
 
-  public estimateGas = async ({ tx, endpoint, gasBuffer = 1 }: { tx: ITxEvm; endpoint: string; gasBuffer?: number }) => {
-    const isToAddressContract = await methods.checkIsContractAddress({ networkType: NetworkType.Ethereum, endpoint: endpoint, addressValue: tx.to });
+  public estimateGas = async ({ tx, endpoint, gasBuffer = 1 }: { tx: Partial<ITxEvm>; endpoint: string; gasBuffer?: number }) => {
+    const isToAddressContract = tx.to
+      ? await methods.checkIsContractAddress({ networkType: NetworkType.Ethereum, endpoint: endpoint, addressValue: tx.to })
+      : true;
     const isSendNativeToken = (!!tx.to && !isToAddressContract) || !tx.data || tx.data === '0x';
     if (isSendNativeToken) return addHexPrefix(BigInt(21000 * gasBuffer).toString(16));
 
@@ -18,9 +20,9 @@ class Transaction {
       method: 'eth_estimateGas',
       params: [
         {
-          from: addHexPrefix(tx.from),
-          to: addHexPrefix(tx.to),
-          value: tx.value,
+          from: tx.from ? addHexPrefix(tx.from) : undefined,
+          to: tx.to ? addHexPrefix(tx.to) : undefined,
+          value: tx.value ? tx.value : undefined,
           data: tx.data ? addHexPrefix(tx.data) : undefined,
         },
         'latest',
@@ -31,7 +33,7 @@ class Transaction {
 
   public getBlockNumber = (endpoint: string) => fetchChain<string>({ url: endpoint, method: 'eth_blockNumber' });
 
-  public estimate = async ({ tx, endpoint, gasBuffer = 1 }: { tx: ITxEvm; endpoint: string; gasBuffer?: number }) => {
+  public estimate = async ({ tx, endpoint, gasBuffer = 1 }: { tx: Partial<ITxEvm>; endpoint: string; gasBuffer?: number }) => {
     const [gasPrice, gasLimit] = await Promise.all([this.getGasPrice(endpoint), this.estimateGas({ tx, endpoint, gasBuffer })]);
     return { gasPrice, gasLimit };
   };
