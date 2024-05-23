@@ -5,13 +5,11 @@ import { from, catchError } from 'rxjs';
 
 const try721 = async (data: string) => {
   const result = iface721PresetMinterPauserAutoId.parseTransaction({ data: data });
-  console.log(result, '721');
   return result.name;
 };
 
-const try11155 = async (data: string) => {
+const try1155 = async (data: string) => {
   const result = iface1155PresetMinterPauser.parseTransaction({ data: data });
-  console.log(result.name, '1155');
   return result.name;
 };
 const try20 = async (data: string) => {
@@ -70,7 +68,7 @@ export const useParseTxData = ({ to, data }: ParseTxDataParameters) => {
 
       return;
     }
-    const sub = from(try11155(data))
+    const sub = from(try1155(data))
       .pipe(
         catchError((err) => {
           return from(try721(data));
