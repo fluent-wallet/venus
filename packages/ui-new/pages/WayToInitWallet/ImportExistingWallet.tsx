@@ -8,7 +8,7 @@ import { stripHexPrefix } from '@core/utils/base';
 import useInAsync from '@hooks/useInAsync';
 import Button from '@components/Button';
 import Text from '@components/Text';
-import BottomSheet, { BottomSheetTextInput, type BottomSheetMethods } from '@components/BottomSheet';
+import BottomSheet, { BottomSheetView, BottomSheetTextInput, type BottomSheetMethods } from '@components/BottomSheet';
 import { screenHeight, isAdjustResize } from '@utils/deviceInfo';
 import { useTranslation } from 'react-i18next';
 export { BottomSheetMethods };
@@ -89,8 +89,9 @@ const ImportExistingWallet: React.FC<Props> = ({ bottomSheetRef, inImporting, on
       enablePanDownToClose={!inAsync}
       enableContentPanningGesture={!inAsync}
       enableHandlePanningGesture={!inAsync}
+      enableDynamicSizing
     >
-      <View style={{ flex: 1 }}>
+      <BottomSheetView style={{ flex: 1 }}>
         <Pressable
           onPress={() => {
             Keyboard.dismiss();
@@ -122,7 +123,7 @@ const ImportExistingWallet: React.FC<Props> = ({ bottomSheetRef, inImporting, on
             {t('common.confirm')}
           </Button>
         </Pressable>
-      </View>
+      </BottomSheetView>
     </BottomSheet>
   );
 };

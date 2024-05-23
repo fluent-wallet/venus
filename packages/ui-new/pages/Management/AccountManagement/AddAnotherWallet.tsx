@@ -1,7 +1,8 @@
 import React, { useState, useCallback, useRef } from 'react';
-import { Pressable, StyleSheet } from 'react-native';
+import { Pressable, StyleSheet, Platform } from 'react-native';
 import { useTheme } from '@react-navigation/native';
 import { showMessage } from 'react-native-flash-message';
+import { useTranslation } from 'react-i18next';
 import { Image } from 'expo-image';
 import plugins from '@core/WalletCore/Plugins';
 import { useHasBSIMVaultCreated } from '@core/WalletCore/Plugins/ReactInject';
@@ -18,7 +19,6 @@ import BSIMCardWallet from '@assets/icons/wallet-bsim.webp';
 import HDWallet from '@assets/icons/wallet-hd.webp';
 import ExistWallet from '@assets/icons/wallet-Imported.webp';
 import createVault from '@pages/InitWallet/createVaultWithRouterParams';
-import { useTranslation } from 'react-i18next';
 
 interface Props {
   navigation: StackScreenProps<typeof AccountManagementStackName>['navigation'];
@@ -86,7 +86,7 @@ const AddAnotherWallet: React.FC<Props> = ({ navigation }) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
   const { inAsync: inImporting, execAsync: handleImportExistWallet } = useInAsync(_handleImportExistWallet);
-  const [bottomSheetIndex, setBottomSheetIndex] = useState(0);
+  const [showImportExistWallet, setShowImportExistWallet] = useState(true);
 
   const inAsync = inConnecting || inCreating || inImporting;
   return (
@@ -95,7 +95,7 @@ const AddAnotherWallet: React.FC<Props> = ({ navigation }) => {
         ref={bottomSheetRef}
         snapPoints={snapPoints}
         isRoute
-        onChange={(index) => setBottomSheetIndex(index)}
+        onClose={() => Platform.OS === 'android' && setShowImportExistWallet(false)}
         containerStyle={styles.container}
         enablePanDownToClose={!inAsync}
         enableContentPanningGesture={!inAsync}
@@ -138,7 +138,7 @@ const AddAnotherWallet: React.FC<Props> = ({ navigation }) => {
           {inImporting && <HourglassLoading style={accountListStyles.addAccountLoading} />}
         </Pressable>
       </BottomSheet>
-      {bottomSheetIndex === 0 && <ImportExistingWallet bottomSheetRef={importExistRef} onSuccessConfirm={handleImportExistWallet} inImporting={inImporting} />}
+      {showImportExistWallet && <ImportExistingWallet bottomSheetRef={importExistRef} onSuccessConfirm={handleImportExistWallet} inImporting={inImporting} />}
     </>
   );
 };

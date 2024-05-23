@@ -1,5 +1,5 @@
 import { useCallback, useRef, forwardRef, useState, useEffect } from 'react';
-import { BackHandler, Keyboard } from 'react-native';
+import { BackHandler, Keyboard, Platform } from 'react-native';
 import { useFocusEffect, useTheme, useNavigation } from '@react-navigation/native';
 import { clamp } from 'lodash-es';
 import BottomSheet_, { BottomSheetBackdrop, type BottomSheetBackdropProps, type BottomSheetProps } from '@gorhom/bottom-sheet';
@@ -26,6 +26,7 @@ const BottomSheet = forwardRef<BottomSheet_, Props>(
       enablePanDownToClose = true,
       enableContentPanningGesture = true,
       enableHandlePanningGesture = true,
+      enableDynamicSizing = false,
       backDropPressBehavior = 'close',
       keyboardBlurBehavior = 'restore',
       android_keyboardInputMode = isAdjustResize ? 'adjustResize' : 'adjustPan',
@@ -45,7 +46,7 @@ const BottomSheet = forwardRef<BottomSheet_, Props>(
 
     const indexRef = useRef(-1);
     const bottomSheetRef = useRef<BottomSheet_>(null);
-    const [couldPanDownToClose, setCouldPanDownToClose] = useState(() => false);
+    const [couldPanDownToClose, setCouldPanDownToClose] = useState(() => Platform.OS === 'ios');
 
     const renderBackdrop = useCallback(
       (props: BottomSheetBackdropProps) => (
@@ -76,6 +77,7 @@ const BottomSheet = forwardRef<BottomSheet_, Props>(
       }, [onBackPress]),
     );
 
+    const timeRef = useRef<NodeJS.Timeout | null>(null);
     const handleClose = useCallback(() => {
       timeRef.current && clearTimeout(timeRef.current);
       onClose?.();
@@ -90,7 +92,6 @@ const BottomSheet = forwardRef<BottomSheet_, Props>(
       // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [onClose]);
 
-    const timeRef = useRef<NodeJS.Timeout | null>(null);
     useEffect(() => {
       if (isRoute) {
         timeRef.current = setTimeout(() => {
@@ -116,7 +117,9 @@ const BottomSheet = forwardRef<BottomSheet_, Props>(
           if (index === 0 && typeof onOpen === 'function') {
             onOpen();
           }
-          setTimeout(() => setCouldPanDownToClose(index >= 0), 250);
+          if (Platform.OS === 'android') {
+            setTimeout(() => setCouldPanDownToClose(index >= 0), 250);
+          }
         }}
         onClose={handleClose}
         enablePanDownToClose={couldPanDownToClose && enablePanDownToClose}
@@ -127,7 +130,7 @@ const BottomSheet = forwardRef<BottomSheet_, Props>(
         handleIndicatorStyle={{ backgroundColor: palette.gray4 }}
         android_keyboardInputMode={android_keyboardInputMode}
         keyboardBlurBehavior={keyboardBlurBehavior}
-        enableDynamicSizing={false}
+        enableDynamicSizing={enableDynamicSizing}
         animateOnMount={true}
         activeOffsetY={activeOffsetY}
         activeOffsetX={activeOffsetX}
