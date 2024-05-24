@@ -1,6 +1,6 @@
 import { of } from 'rxjs';
-import { Model, type Relation } from '@nozbe/watermelondb';
-import { field, text, readonly, date, immutableRelation, json, writer, reader } from '@nozbe/watermelondb/decorators';
+import { Model, type Relation, type Query } from '@nozbe/watermelondb';
+import { field, text, readonly, date, immutableRelation, json, writer, reader, children } from '@nozbe/watermelondb/decorators';
 import { type Address } from '../Address';
 import { type Asset } from '../Asset';
 import { type App } from '../App';
@@ -19,7 +19,7 @@ export class Tx extends Model {
     [TableName.Address]: { type: 'belongs_to', key: 'address_id' },
     [TableName.TxExtra]: { type: 'belongs_to', key: 'tx_extra_id' },
     [TableName.TxPayload]: { type: 'belongs_to', key: 'tx_payload_id' },
-    [TableName.Signature]: { type: 'belongs_to', key: 'signature_id' },
+    [TableName.Signature]: { type: 'has_many', foreignKey: 'tx_id' },
   } as const;
 
   /** raw tx hash */
@@ -52,8 +52,8 @@ export class Tx extends Model {
   @immutableRelation(TableName.Address, 'address_id') address!: Relation<Address>;
   @immutableRelation(TableName.TxExtra, 'tx_extra_id') txExtra!: Relation<TxExtra>;
   @immutableRelation(TableName.TxPayload, 'tx_payload_id') txPayload!: Relation<TxPayload>;
-  /** optional, Relation<Signature | null> */
-  @immutableRelation(TableName.Signature, 'signature_id') signature!: Relation<Signature>;
+  /** optional, Query<Signature> | null */
+  @children(TableName.Signature) signatures!: Query<Signature>;
 
   @writer updateSelf(recordUpdater: (_: this) => void) {
     return this.update(recordUpdater);
@@ -77,15 +77,5 @@ export class Tx extends Model {
   observeApp() {
     if (!this.app.id) return of(null);
     return this.app.observe();
-  }
-
-  @reader async getSignature() {
-    if (!this.signature.id) return null;
-    const signature = await this.signature;
-    return signature;
-  }
-  observeSignature() {
-    if (!this.signature.id) return of(null);
-    return this.signature.observe();
   }
 }

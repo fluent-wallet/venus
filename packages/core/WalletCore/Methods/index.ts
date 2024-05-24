@@ -18,6 +18,7 @@ import { TxMethod } from './txMethod';
 import { AssetMethod, type AssetParams } from './assetMethod';
 import { AppMethod } from './appMethod';
 import { RequestMethod } from './requestMethod';
+import { SignatureMethod } from './signatureMethod';
 
 @injectable()
 export class Methods {
@@ -154,6 +155,11 @@ export class Methods {
     return this.RequestMethod.rejectAllPendingRequests(...args);
   }
 
+  @inject(SignatureMethod) private SignatureMethod!: SignatureMethod;
+  public createSignature(...args: Parameters<SignatureMethod['createSignature']>) {
+    return this.SignatureMethod.createSignature(...args);
+  }
+
   [methodName: string]: any;
   public register(methodName: string, method: Function) {
     this[methodName] = method;
@@ -173,5 +179,6 @@ container.bind(AssetMethod).to(AssetMethod).inSingletonScope();
 container.bind(Methods).to(Methods).inSingletonScope();
 container.bind(AppMethod).to(AppMethod).inSingletonScope();
 container.bind(RequestMethod).to(RequestMethod).inSingletonScope();
+container.bind(SignatureMethod).to(SignatureMethod).inSingletonScope();
 
 export default container.get(Methods) as Methods;

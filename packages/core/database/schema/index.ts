@@ -97,7 +97,6 @@ const schema = appSchema({
         { name: 'address_id', type: 'string', isIndexed: true },
         { name: 'tx_extra_id', type: 'string', isIndexed: true },
         { name: 'tx_payload_id', type: 'string', isIndexed: true },
-        { name: 'signature_id', type: 'string', isIndexed: true, isOptional: true },
       ],
     }),
     tableSchema({

@@ -23,7 +23,7 @@ export class TxMethod {
   createTx(params: TransactionSubjectValue): Promise<void>;
   async createTx(params: TransactionSubjectValue, prepareCreate?: true) {
     try {
-      const { address, tx: _tx, extraParams, txRaw, txHash } = params;
+      const { address, tx: _tx, extraParams, txRaw, txHash, signature } = params;
       const updated = await this.updateTx(params);
       if (updated) return updated;
       const [txPayload, txExtra] = await Promise.all([
@@ -64,6 +64,7 @@ export class TxMethod {
         },
         true,
       );
+      signature?.updateTx(tx);
       if (prepareCreate) return [tx, txPayload, txExtra] as const;
       return database.write(async () => {
         await database.batch(tx, txPayload, txExtra);
@@ -74,18 +75,16 @@ export class TxMethod {
   }
 
   async updateTx(params: TransactionSubjectValue) {
-    const { address, extraParams, txRaw, txHash } = params;
+    const { address, extraParams, txRaw, txHash, signature } = params;
     const sameTx = await queryTxsWithAddress(address.id, {
       raw: txRaw,
     });
-    console.log('sameTx', sameTx.length);
     if (!sameTx || sameTx.length === 0) {
       // no same tx in db
       return false;
     }
     // hasSuccessTx: already success, skip create/update
     const hasSuccessTx = sameTx.some((tx) => tx.status !== TxStatus.FAILED);
-    console.log('hasSuccessTx', hasSuccessTx);
     const tx = sameTx[0];
     let newTx = tx;
     if (!hasSuccessTx) {
@@ -101,6 +100,7 @@ export class TxMethod {
         _tx.method = 'Send';
       });
     }
+    signature?.updateTx(newTx);
     return [newTx, await newTx.txPayload, await newTx.txExtra] as const;
   }
 
