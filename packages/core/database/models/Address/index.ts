@@ -6,6 +6,7 @@ import { type Network, NetworkType } from '../Network';
 import { type AssetRule } from '../AssetRule';
 import { type AddressBook } from '../AddressBook';
 import TableName from '../../TableName';
+import { Signature } from '../Signature';
 
 export class Address extends Model {
   static table = TableName.Address;
@@ -15,6 +16,7 @@ export class Address extends Model {
     [TableName.AssetRule]: { type: 'belongs_to', key: 'asset_rule_id' },
     [TableName.Tx]: { type: 'has_many', foreignKey: 'address_id' },
     [TableName.AddressBook]: { type: 'has_many', foreignKey: 'address_id' },
+    [TableName.Signature]: { type: 'has_many', foreignKey: 'address_id' },
   } as const;
 
   /** cfx base32 address */
@@ -23,6 +25,7 @@ export class Address extends Model {
   @text('hex') hex!: string;
   @children(TableName.Tx) txs!: Query<Tx>;
   @children(TableName.AddressBook) addressBooks!: Query<AddressBook>;
+  @children(TableName.Signature) signatures!: Query<Signature>;
   @immutableRelation(TableName.Account, 'account_id') account!: Relation<Account>;
   @immutableRelation(TableName.Network, 'network_id') network!: Relation<Network>;
   @relation(TableName.AssetRule, 'asset_rule_id') assetRule!: Relation<AssetRule>;

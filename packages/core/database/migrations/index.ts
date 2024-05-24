@@ -26,7 +26,6 @@ const migrations = schemaMigrations({
             { name: 'source', type: 'string' },
             { name: 'method', type: 'string' },
             { name: 'error_type', type: 'string', isOptional: true },
-            { name: 'signature_id', type: 'string', isIndexed: true, isOptional: true },
           ],
         }),
         unsafeExecuteSql(

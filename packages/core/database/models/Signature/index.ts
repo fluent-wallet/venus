@@ -1,6 +1,6 @@
 import { of } from 'rxjs';
 import { Model, type Relation } from '@nozbe/watermelondb';
-import { text, readonly, date, immutableRelation, reader, writer } from '@nozbe/watermelondb/decorators';
+import { text, readonly, date, immutableRelation, reader, writer, relation } from '@nozbe/watermelondb/decorators';
 import { type Address } from '../Address';
 import { type App } from '../App';
 import { type Tx } from '../Tx';
@@ -23,7 +23,7 @@ export class Signature extends Model {
   @immutableRelation(TableName.App, 'app_id') app!: Relation<App>;
   @immutableRelation(TableName.Address, 'address_id') address!: Relation<Address>;
   /** optional, Relation<Tx | null> */
-  @immutableRelation(TableName.Tx, 'tx_id') tx!: Relation<Tx>;
+  @relation(TableName.Tx, 'tx_id') tx!: Relation<Tx>;
 
   @writer updateTx(tx: Tx) {
     return this.update((s) => s.tx.set(tx));
