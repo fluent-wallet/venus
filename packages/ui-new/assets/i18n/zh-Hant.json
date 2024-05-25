@@ -109,6 +109,7 @@
     "connect" : "連接",
     "continue" : "繼續",
     "copied" : "已複製",
+    "customize" : null,
     "delete" : "刪除",
     "disconnect" : "斷開連接",
     "dismiss" : "忽略",
@@ -116,6 +117,9 @@
     "enable" : "啟用",
     "index" : "序號",
     "max" : "最大",
+    "method" : {
+      "contractInteraction" : null
+    },
     "network" : "網絡",
     "next" : "繼續",
     "ok" : "OK",
@@ -123,10 +127,12 @@
     "privateKey" : "私鑰",
     "retry" : "重試",
     "return" : "返回",
+    "save" : null,
     "seedPhrase" : "助記詞",
     "send" : "發送",
     "to" : "接收方",
     "unsafe" : "不安全",
+    "use" : null,
     "verifyPassword" : "驗證密碼",
     "view" : "查看"
   },
@@ -138,6 +144,7 @@
     "buy" : "購買",
     "more" : "更多",
     "more.copyAddress" : "複製地址",
+    "more.signatureRecords" : null,
     "more.viewInExplorer" : "在瀏覽器中查看",
     "noNetwork" : "網絡連接已斷開",
     "receive" : "接收",
@@ -244,11 +251,21 @@
     },
     "title" : "設置"
   },
+  "signature" : {
+    "common" : {
+      "signData" : null
+    },
+    "list" : {
+      "showMore" : null,
+      "title" : null
+    }
+  },
   "tab" : {
     "activity" : "記錄",
     "content" : {
       "depositToken" : "快存入資產吧",
       "noActivity" : "還沒有交易",
+      "noLatestTransaction" : null,
       "noNFT" : "沒有收藏品",
       "noRecord" : "暫無記錄",
       "noToken" : "沒有代幣",
@@ -340,23 +357,26 @@
     }
   },
   "wc" : {
-    "daap" : {
-      "tx" : {
-        "unknown" : "未知"
-      }
-    },
     "dapp" : {
       "connectTo" : "已連接到",
       "connectedDApps" : "已連接的應用",
       "tx" : {
+        "DAppSuggestions" : null,
         "contract" : "合約地址",
+        "contractInteraction" : null,
+        "editAllowance" : null,
         "function" : "方法",
         "network" : "網絡",
         "nonce" : "隨機數",
+        "shareOfBalance" : null,
         "signingWith" : "以此賬戶簽名",
+        "simulatedResult" : null,
         "simulating" : "模擬執行",
         "title" : "確認交易",
         "transactionRequest" : "交易請求",
+        "unableSimulated" : null,
+        "unknown" : "未知",
+        "unlimited" : null,
         "viewData" : "查看更多信息"
       }
     },

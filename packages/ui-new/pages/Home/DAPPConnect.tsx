@@ -8,17 +8,35 @@ import take from 'lodash-es/take';
 import ArrowLeft from '@assets/icons/arrow-left.svg';
 import { useCallback, useMemo } from 'react';
 import { StackNavigation, WalletConnectSessionsStackName, WalletConnectStackName } from '@router/configs';
+import { useCurrentAddress } from '@core/WalletCore/Plugins/ReactInject';
 function DAPPConnect() {
   const { sessions } = useWalletConnectSessions();
   const { colors } = useTheme();
   const { t } = useTranslation();
   const navigation = useNavigation<StackNavigation>();
+  const currentAddress = useCurrentAddress();
   const handleClick = useCallback(() => {
     navigation.navigate(WalletConnectStackName, { screen: WalletConnectSessionsStackName });
   }, [navigation]);
   const hasUnsafeURL = useMemo(() => sessions.some(({ peer: { metadata } }) => new URL(metadata.url).protocol === 'http'), [sessions]);
+  const filterSession = useMemo(() => {
+    // filter the session by current address
+    if (!currentAddress?.hex) return [];
+    return sessions.filter((session) => {
+      const { namespaces } = session;
 
-  if (sessions.length === 0) {
+      return (
+        namespaces &&
+        namespaces.eip155 &&
+        namespaces.eip155.accounts.find((account) => {
+          const [eip, chainId, address] = account.split(':');
+          return address.toLowerCase() === currentAddress.hex.toLowerCase();
+        })
+      );
+    });
+  }, [sessions, currentAddress?.hex]);
+
+  if (filterSession.length === 0) {
     return null;
   }
 
@@ -27,7 +45,7 @@ function DAPPConnect() {
       <Pressable onPress={handleClick}>
         <View style={styles.content}>
           <View style={styles.iconWarp}>
-            {take(sessions, 3).map(
+            {take(filterSession, 3).map(
               (
                 {
                   peer: {
@@ -42,7 +60,7 @@ function DAPPConnect() {
               ),
             )}
           </View>
-          {sessions.length > 1 ? (
+          {filterSession.length > 1 ? (
             <View style={styles.content}>
               <Text style={[styles.largeText, { color: hasUnsafeURL ? colors.down : colors.up }]}>{t('wc.dapp.connectedDApps')}</Text>
               <ArrowLeft style={[{ transform: [{ rotate: '-180deg' }] }]} color={hasUnsafeURL ? colors.down : colors.up} width={14} height={14} />
@@ -51,7 +69,7 @@ function DAPPConnect() {
             <View style={styles.content}>
               <Text>{t('wc.dapp.connectTo')}</Text>
               <Text style={[styles.largeText, { color: hasUnsafeURL ? colors.down : colors.up, flex: 1 }]} numberOfLines={1}>
-                {sessions[0]?.peer?.metadata?.url}
+                {filterSession[0]?.peer?.metadata?.url}
               </Text>
             </View>
           )}
