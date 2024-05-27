@@ -1,38 +1,45 @@
+import { useCallback, useMemo } from 'react';
+import { Pressable, StyleSheet, View } from 'react-native';
+import { RouteProp, useRoute, useTheme } from '@react-navigation/native';
+import { showMessage } from 'react-native-flash-message';
+import Clipboard from '@react-native-clipboard/clipboard';
+import { useTranslation } from 'react-i18next';
+import { toUtf8String } from 'ethers';
+import { Image } from 'expo-image';
+import {
+  VaultType,
+  useCurrentAccount,
+  useCurrentAddressValue,
+  useCurrentNetwork,
+  useCurrentAddress,
+  useVaultOfAccount,
+} from '@core/WalletCore/Plugins/ReactInject';
+import { WalletConnectParamList, WalletConnectSignMessageStackName } from '@router/configs';
+import { type IWCSignMessageEvent } from '@core/WalletCore/Plugins/WalletConnect/types';
+import { shortenAddress } from '@core/utils/address';
+import { WalletConnectRPCMethod } from '@core/WalletCore/Plugins/WalletConnect/types';
+import plugins from '@core/WalletCore/Plugins';
+import methods from '@core/WalletCore/Methods';
+import Text from '@components/Text';
 import BottomSheet, { snapPoints, BottomSheetScrollView, BottomSheetView } from '@components/BottomSheet';
 import Button from '@components/Button';
 import Icon from '@components/Icon';
-import { VaultType, useCurrentAccount, useCurrentAddressOfAccount, useCurrentNetwork, useVaultOfAccount } from '@core/WalletCore/Plugins/ReactInject';
-import { RouteProp, useNavigation, useRoute, useTheme } from '@react-navigation/native';
-import { WalletConnectParamList, WalletConnectSignMessageStackName } from '@router/configs';
-import { useTranslation } from 'react-i18next';
-import { Pressable, StyleSheet, View } from 'react-native';
-import { toDataUrl } from '@utils/blockies';
-import { Image } from 'expo-image';
-import { shortenAddress } from '@core/utils/address';
-import Copy from '@assets/icons/copy.svg';
-import { useCallback, useMemo } from 'react';
-import Clipboard from '@react-native-clipboard/clipboard';
-import { showMessage } from 'react-native-flash-message';
-import { WalletConnectRPCMethod } from '@core/WalletCore/Plugins/WalletConnect/types';
-import { toUtf8String } from 'ethers';
 import { sanitizeTypedData } from '@utils/santitizeTypedData';
-import Plugins from '@core/WalletCore/Plugins';
-import methods from '@core/WalletCore/Methods';
+import { toDataUrl } from '@utils/blockies';
 import useInAsync from '@hooks/useInAsync';
-import Text from '@components/Text';
+import Copy from '@assets/icons/copy.svg';
 
 function WalletConnectSignMessage() {
   const { t } = useTranslation();
   const { colors } = useTheme();
-  const navigation = useNavigation();
   const currentAccount = useCurrentAccount();
-  const currentAddress = useCurrentAddressOfAccount(currentAccount?.id);
+  const currentAddress = useCurrentAddress();
+  const currentAddressValue = useCurrentAddressValue();
   const currentNetwork = useCurrentNetwork();
   const vault = useVaultOfAccount(currentAccount?.id);
+
   const {
     params: {
-      reject,
-      approve,
       metadata: { icons = [], name = '' },
       message,
       method,
@@ -76,28 +83,31 @@ function WalletConnectSignMessage() {
   );
 
   const _handleReject = useCallback(async () => {
-    reject('User rejected');
-    navigation.goBack();
-  }, [reject, navigation]);
+    try {
+      console.log('reject start');
+      await plugins.WalletConnect.currentEventSubject.getValue()?.action.reject();
+      console.log('reject end');
+    } catch (err) {
+      console.log('error', err);
+    }
+  }, []);
 
   const _handleApprove = useCallback(async () => {
     if (!message) return;
-    if (!currentAddress?.hex || !vault || !currentNetwork) return;
+    if (!currentAddressValue || !currentAddress || !vault || !currentNetwork) return;
 
     const vaultType = vault.type;
-
+    const approve = plugins.WalletConnect.currentEventSubject.getValue()?.action.approve as IWCSignMessageEvent['action']['approve'];
     if (method === WalletConnectRPCMethod.PersonalSign) {
       try {
         if (vaultType === VaultType.BSIM) {
-          const [res] = await Plugins.BSIM.signMessage(signMsg, currentAddress?.hex);
+          const [res] = await plugins.BSIM.signMessage(signMsg, currentAddressValue);
           const hex = (await res).serialized;
           await approve(hex);
-          navigation.goBack();
         } else {
           const pk = await methods.getPrivateKeyOfAddress(currentAddress);
-          const hex = await Plugins.Transaction.signMessage({ message: signMsg, privateKey: pk, network: currentNetwork });
+          const hex = await plugins.Transaction.signMessage({ message: signMsg, privateKey: pk, network: currentNetwork });
           await approve(hex);
-          navigation.goBack();
         }
       } catch (error) {
         console.log('personal_sign error', error);
@@ -107,27 +117,26 @@ function WalletConnectSignMessage() {
         const m = JSON.parse(message);
 
         if (vaultType === VaultType.BSIM) {
-          const [res] = await Plugins.BSIM.signTypedData(m.domain, m.types, m.message, currentAddress?.hex);
+          const [res] = await plugins.BSIM.signTypedData(m.domain, m.types, m.message, currentAddressValue);
           const hex = (await res).serialized;
           await approve(hex);
-          navigation.goBack();
         } else {
-          const pk = await methods.getPrivateKeyOfVault(vault);
-          const hex = await Plugins.Transaction.signTypedData({ domain: m.domain, types: m.types, value: m.message, network: currentNetwork, privateKey: pk });
+          const pk = await methods.getPrivateKeyOfAddress(currentAddress);
+          const hex = await plugins.Transaction.signTypedData({ domain: m.domain, types: m.types, value: m.message, network: currentNetwork, privateKey: pk });
           await approve(hex);
-          navigation.goBack();
         }
       } catch (error) {
         console.log('eth_signTypedData error', error);
       }
     }
-  }, [approve, currentNetwork, currentAddress?.hex, message, method, vault, signMsg, navigation]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentNetwork, currentAddress?.id, message, method, vault, signMsg]);
 
   const { inAsync: approveLoading, execAsync: handleApprove } = useInAsync(_handleApprove);
   const { inAsync: rejectLoading, execAsync: handleReject } = useInAsync(_handleReject);
 
   return (
-    <BottomSheet enablePanDownToClose={false} isRoute snapPoints={snapPoints.percent75} onClose={() => reject('user reject')}>
+    <BottomSheet enablePanDownToClose={false} isRoute snapPoints={snapPoints.percent75} onClose={handleReject}>
       <BottomSheetView style={{ flex: 1 }}>
         <Text style={[styles.title, { color: colors.textPrimary }]}>{t('wc.request.signature')}</Text>
 
@@ -156,10 +165,10 @@ function WalletConnectSignMessage() {
         <View style={[styles.footer, { borderColor: colors.borderFourth }]}>
           <View style={[styles.flexWithRow, styles.account]}>
             <View style={[styles.flexWithRow, styles.accountLeft]}>
-              <Image style={styles.accountIcon} source={{ uri: toDataUrl(currentAddress?.hex) }} />
+              <Image style={styles.accountIcon} source={{ uri: toDataUrl(currentAddressValue) }} />
               <View>
                 <Text style={[styles.h2, { color: colors.textPrimary }]}>{currentAccount?.nickname}</Text>
-                <Text>{shortenAddress(currentAddress?.hex)}</Text>
+                <Text>{shortenAddress(currentAddressValue)}</Text>
               </View>
             </View>
             <Text>{t('wc.sign.network', { network: currentNetwork?.name })}</Text>
@@ -234,7 +243,7 @@ const styles = StyleSheet.create({
   },
   buttons: {
     gap: 16,
-    marginBottom: 79
+    marginBottom: 79,
   },
   btn: {
     flex: 1,

@@ -43,7 +43,7 @@ export function useSignTransaction() {
           const code = (bsimError as { code: string })?.code;
           const message = (bsimError as { message: string })?.message;
           if (code === 'cancel') {
-            // TODO : ignore cancel error
+            // TODO: : ignore cancel error
             throw bsimError;
           } else {
             const errorMsg = BSIM_ERRORS[code?.toUpperCase()] || message || BSIM_ERRORS.default;

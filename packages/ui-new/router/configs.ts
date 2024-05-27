@@ -2,8 +2,8 @@ import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { NavigationProp, NavigatorScreenParams } from '@react-navigation/native';
 import { type AssetInfo } from '@core/WalletCore/Plugins/AssetsTracker/types';
 import { type NFTItemDetail } from '@core/WalletCore/Plugins/NFTDetailTracker';
-
-import type { IWCSendTransactionData, IWCSessionProposalEventData, IWCSignMessageEventData } from '@core/WalletCore/Plugins/WalletConnect/types';
+import { type Network } from '@core/database/models/Network';
+import type { IWCSendTransactionEventData, IWCSessionProposalEventData, IWCSignMessageEventData } from '@core/WalletCore/Plugins/WalletConnect/types';
 
 export const WelcomeStackName = 'Welcome';
 export const WayToInitWalletStackName = 'WayToInitWallet';
@@ -32,18 +32,18 @@ export const LanguageStackName = 'Language';
 
 export const WalletConnectStackName = 'WalletConnect';
 
-export const WalletConnectLoadingStackName = 'WalletConnectLoading';
+export const WalletConnectingStackName = 'WalletConnecting';
 export const WalletConnectProposalStackName = 'WalletConnectProposal';
 export const WalletConnectSessionsStackName = 'WalletConnectSessions';
 export const WalletConnectSignMessageStackName = 'WalletConnectSignMessage';
 export const WalletConnectTransactionStackName = 'WalletConnectTransaction';
 
 export type WalletConnectParamList = {
-  [WalletConnectLoadingStackName]: undefined;
-  [WalletConnectProposalStackName]: IWCSessionProposalEventData & { chains: number[] };
+  [WalletConnectingStackName]: undefined;
+  [WalletConnectProposalStackName]: IWCSessionProposalEventData & { connectedNetworks: Array<{ icon: string; name: string; netId: number; id: string }> };
   [WalletConnectSessionsStackName]: undefined;
   [WalletConnectSignMessageStackName]: IWCSignMessageEventData;
-  [WalletConnectTransactionStackName]: IWCSendTransactionData & { isContract: boolean };
+  [WalletConnectTransactionStackName]: IWCSendTransactionEventData & { isContract: boolean };
   [PasswordVerifyStackName]: undefined;
 };
 

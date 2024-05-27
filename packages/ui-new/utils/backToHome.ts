@@ -19,8 +19,12 @@ const backToHome = (navigation: any) => {
   if (getActiveRouteName(navigation.getState()) === HomeStackName) return;
 
   if (!isSamsungDevice) {
-    navigation.popToTop();
-    navigation.goBack();
+    if (typeof navigation.popToTop === 'function') {
+      navigation.popToTop();
+    }
+    if (navigation.canGoBack()) {
+      navigation.goBack();
+    }
   } else {
     navigation.dispatch(CommonActions.reset({ index: 0, routes: [{ name: HomeStackName }] }));
   }

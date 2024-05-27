@@ -1,80 +1,65 @@
-import BottomSheet, { snapPoints } from '@components/BottomSheet';
-import { Image } from 'expo-image';
-import { RouteProp, useNavigation, useRoute, useTheme } from '@react-navigation/native';
-import { WalletConnectParamList, WalletConnectProposalStackName } from '@router/configs';
+import { useCallback, useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
-import Text from '@components/Text';
+import { RouteProp, useRoute, useTheme } from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';
-import Button from '@components/Button';
-import { useCurrentAccount, useCurrentAddress, useCurrentNetwork, useNetworks } from '@core/WalletCore/Plugins/ReactInject';
+import { Image } from 'expo-image';
+import { useCurrentAccount, useCurrentAddressValue } from '@core/WalletCore/Plugins/ReactInject';
 import { shortenAddress } from '@core/utils/address';
-import { useCallback, useMemo, useState } from 'react';
+import { type IWCSessionProposalEvent } from '@core/WalletCore/Plugins/WalletConnect/types';
+import plugins from '@core/WalletCore/Plugins';
 import AccountSelector from '@modules/AccountSelector';
+import Text from '@components/Text';
+import BottomSheet, { snapPoints } from '@components/BottomSheet';
+import Button from '@components/Button';
 import Icon from '@components/Icon';
 import useInAsync from '@hooks/useInAsync';
+import { WalletConnectParamList, WalletConnectProposalStackName } from '@router/configs';
 
 export default function WalletConnectProposal() {
   const route = useRoute<RouteProp<WalletConnectParamList, typeof WalletConnectProposalStackName>>();
-  const currentAccount = useCurrentAccount();
-  const currentAddress = useCurrentAddress();
-  const currentNetwork = useCurrentNetwork();
-  const navigation = useNavigation();
-  const networks = useNetworks();
-  const { colors } = useTheme();
-  const { t } = useTranslation();
-
   const [showAccountSelector, setShowAccountSelector] = useState(false);
   const {
     metadata: { name = '', description = '', url = '', icons = [] },
-    approve,
-    reject,
-    chains,
+    connectedNetworks,
   } = route.params;
+  const { colors } = useTheme();
+  const { t } = useTranslation();
 
-  const connectNetwork = useMemo(() => {
-    return chains.map((chain) => {
-      const dbNet = networks.find((network) => network.netId === chain);
-      return {
-        chainId: `${chain}`,
-        icon: dbNet?.icon,
-        name: dbNet?.name,
-      };
-    });
-  }, [networks, chains]);
-  const icon = icons[0];
+  const currentAccount = useCurrentAccount();
+  const currentAddressValue = useCurrentAddressValue();
+
   const isHTTPS = url.startsWith('https://');
-  const _handleReject = useCallback(async () => {
-    try {
-      await reject();
-      navigation.goBack();
-    } catch (e) {
-      // TODO handle error
-      console.log(e);
-    }
-  }, [reject, navigation]);
 
   const _handleApprove = useCallback(async () => {
     try {
+      const approve = plugins.WalletConnect.currentEventSubject.getValue()?.action.approve as IWCSessionProposalEvent['action']['approve'];
       await approve({
-        chains: connectNetwork.map((net) => `eip155:${net.chainId}`),
-        accounts: connectNetwork.map((net) => `eip155:${net.chainId}:${currentAddress?.hex}`), //[`eip155:${currentNetwork?.netId}:${currentAddress?.hex}`],
+        chains: connectedNetworks.map((net) => `eip155:${net.netId}`),
+        accounts: connectedNetworks.map((net) => `eip155:${net.netId}:${currentAddressValue}`), //[`eip155:${currentNetwork?.netId}:${currentAddress?.hex}`],
       });
-      navigation.goBack();
     } catch (e) {
-      // TODO handle error
       console.log(e);
     }
-  }, [approve, currentAddress?.hex, navigation, connectNetwork]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentAddressValue]);
+
+  const _handleReject = useCallback(async () => {
+    try {
+      await plugins.WalletConnect.currentEventSubject.getValue()?.action.reject();
+    } catch (err) {
+      console.log('errr', err);
+    }
+  }, []);
 
   const { inAsync: inApproving, execAsync: handleApprove } = useInAsync(_handleApprove);
   const { inAsync: inRejecting, execAsync: handleReject } = useInAsync(_handleReject);
 
   return (
     <>
-      <BottomSheet enablePanDownToClose={false} isRoute snapPoints={snapPoints.percent75}>
+      <BottomSheet enablePanDownToClose={false} isRoute snapPoints={snapPoints.percent75} onClose={() => handleReject()}>
         <View style={styles.container}>
           <View style={styles.info}>
-            <Image source={icon} style={styles.icon} />
+            <Image source={icons[0]} style={styles.icon} />
             <Text style={[styles.textStrong, styles.name, { color: colors.textPrimary }]}>{name}</Text>
             <Text style={styles.describe}>{t('wc.proposal.describe')}</Text>
             <View style={styles.url}>
@@ -88,7 +73,7 @@ export default function WalletConnectProposal() {
               <View style={[styles.account, { borderColor: colors.borderFourth }]}>
                 <Text style={[styles.textStrong, { color: colors.textPrimary }]}>
                   {currentAccount?.nickname}
-                  {`(${shortenAddress(currentAddress?.hex)})`}
+                  {`(${shortenAddress(currentAddressValue)})`}
                 </Text>
               </View>
             </View>
@@ -96,10 +81,10 @@ export default function WalletConnectProposal() {
           <View style={styles.networkWarp}>
             <Text style={styles.label}>{t('common.network')}</Text>
             <View style={styles.network}>
-              {connectNetwork.map((item) => (
-                <Icon source={item.icon} width={22} height={22} style={{ borderRadius: 11 }} key={item.chainId} />
+              {connectedNetworks.map((network) => (
+                <Icon source={network.icon} width={22} height={22} style={{ borderRadius: 11 }} key={network.id} />
               ))}
-              {connectNetwork.length === 1 && <Text>{connectNetwork[0]?.name}</Text>}
+              {connectedNetworks.length === 1 && <Text>{connectedNetworks[0]?.name}</Text>}
             </View>
           </View>
 
