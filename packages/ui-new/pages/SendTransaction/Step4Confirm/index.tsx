@@ -48,6 +48,9 @@ import { calculateTokenPrice } from '@utils/calculateTokenPrice';
 import { useGasEstimate } from '@hooks/useGasEstimate';
 import { useSignTransaction } from '@hooks/useSignTransaction';
 import { processError } from '@core/utils/eth';
+import Methods from '@core/WalletCore/Methods';
+import { SignType } from '@core/database/models/Signature/type';
+import { Signature } from '@core/database/models/Signature';
 
 const SendTransactionStep4Confirm: React.FC<SendTransactionScreenProps<typeof SendTransactionStep4StackName>> = ({ navigation, route }) => {
   useEffect(() => Keyboard.dismiss(), []);
@@ -147,6 +150,7 @@ const SendTransactionStep4Confirm: React.FC<SendTransactionScreenProps<typeof Se
       gasLimit: string | undefined;
       gasPrice: string | undefined;
     };
+    let signature: Signature | undefined = undefined;
     let txError!: any;
     try {
       if (asset.type === AssetType.ERC20 && asset.contractAddress) {
@@ -182,6 +186,10 @@ const SendTransactionStep4Confirm: React.FC<SendTransactionScreenProps<typeof Se
         const { txRawPromise, cancel } = await signTransaction({ ...tx, epochHeight: epochHeightRef.current });
         bsimCancelRef.current = cancel;
         txRaw = await txRawPromise;
+        signature = await Methods.createSignature({
+          // TODO: set App
+          address: currentAddress, app: null!, message: '123123', signType: SignType.TX
+        })
 
         txHash = await plugins.Transaction.sendRawTransaction({ txRaw, network: currentNetwork });
 
@@ -231,6 +239,7 @@ const SendTransactionStep4Confirm: React.FC<SendTransactionScreenProps<typeof Se
           txRaw,
           tx,
           address: currentAddress,
+          signature,
           extraParams: {
             assetType: asset.type,
             contractAddress: asset.type !== AssetType.Native ? asset.contractAddress : undefined,
