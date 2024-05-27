@@ -1,7 +1,8 @@
-import BottomSheet, { BottomSheetView, snapPoints } from '@components/BottomSheet';
+import BottomSheet, { BottomSheetScrollView, BottomSheetView, snapPoints } from '@components/BottomSheet';
 import Button from '@components/Button';
 import Icon from '@components/Icon';
 import {
+  AssetSource,
   AssetType,
   NetworkType,
   VaultType,
@@ -16,14 +17,13 @@ import { numberWithCommas } from '@core/utils/balance';
 import { RouteProp, useNavigation, useRoute, useTheme } from '@react-navigation/native';
 import { WalletConnectParamList, WalletConnectTransactionStackName } from '@router/configs';
 import { toDataUrl } from '@utils/blockies';
-import { formatEther } from 'ethers';
+import { MaxUint256, formatEther } from 'ethers';
 import { Image } from 'expo-image';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { StyleSheet, View } from 'react-native';
+import { NativeSyntheticEvent, StyleSheet, TextInput, TextInputChangeEventData, View } from 'react-native';
 import Text from '@components/Text';
 
-import { showMessage } from 'react-native-flash-message';
 import Plugins from '@core/WalletCore/Plugins';
 import Decimal from 'decimal.js';
 import useInAsync from '@hooks/useInAsync';
@@ -37,6 +37,19 @@ import { BSIMError } from '@WalletCoreExtends/Plugins/BSIM/BSIMSDK';
 import { processError } from '@core/utils/eth';
 import SendContract from './Contract';
 import SendNativeToken from './NativeToken';
+import matchRPCErrorMessage from '@utils/matchRPCErrorMssage';
+import { ParseTxDataReturnType, isApproveMethod, parseTxData } from '@utils/parseTxData';
+
+import { fetchERC20AssetInfoBatchWithAccount } from '@core/WalletCore/Plugins/AssetsTracker/fetchers/basic';
+import methods from '@core/WalletCore/Methods';
+import EditAllowance from './EditAllowance';
+import { Interface } from '@ethersproject/abi';
+
+export type TxDataWithTokenInfo = ParseTxDataReturnType & {
+  symbol?: string;
+  balance?: string;
+  decimals?: number;
+};
 
 function WalletConnectTransaction() {
   const { t } = useTranslation();
@@ -46,6 +59,11 @@ function WalletConnectTransaction() {
   const currentAddress = useCurrentAddressOfAccount(currentAccount?.id)!;
   const currentNetwork = useCurrentNetwork()!;
   const [errorMsg, setError] = useState('');
+
+  const [parseData, setParseData] = useState<TxDataWithTokenInfo>();
+
+  const [showEditAllowance, setShowEditAllowance] = useState(false);
+  const [allowanceValue, setAllowanceValue] = useState('');
 
   const signTransaction = useSignTransaction();
 
@@ -61,7 +79,16 @@ function WalletConnectTransaction() {
       metadata,
     },
   } = useRoute<RouteProp<WalletConnectParamList, typeof WalletConnectTransactionStackName>>();
-  const gasInfo = useGasEstimate({ from, to, value: value?.toString(), data, nonce });
+
+  const txData = useMemo(() => {
+    if (allowanceValue && parseData?.functionName === 'approve' && isApproveMethod(parseData)) {
+      // is approve and allowance value is set , so we need to encode the date
+      const iface = new Interface([parseData.readableABI]);
+      return iface.encodeFunctionData(parseData.functionName, [from, allowanceValue]);
+    }
+    return data;
+  }, [allowanceValue, data, from, parseData]);
+  const gasInfo = useGasEstimate({ from, to, value: value?.toString(), data: txData, nonce });
 
   const amount = useMemo(() => {
     return value ? formatEther(value) : '0';
@@ -83,10 +110,11 @@ function WalletConnectTransaction() {
       from: currentAddress?.hex,
       to,
       value: value ? value : '0x0',
-      data: data || '0x',
+      data: txData || '0x',
       chainId: currentNetwork.chainId,
       type: Plugins.Transaction.isOnlyLegacyTxSupport(currentNetwork.chainId) ? 0 : undefined,
     } as ITxEvm;
+
     try {
       const nonce = await Plugins.Transaction.getTransactionCount({ network: currentNetwork, addressValue: currentAddress.hex });
       tx.nonce = Number(nonce);
@@ -129,7 +157,11 @@ function WalletConnectTransaction() {
           return; // nothing to do
         }
       }
-      const msg = String(error.data || error?.message || error);
+      if (error === 'cancel') {
+       // user cancel password verify
+       return // nothing to do
+      }
+      const msg = matchRPCErrorMessage(error);
       txError = error;
       setError(msg);
       // TODO show error
@@ -152,7 +184,7 @@ function WalletConnectTransaction() {
         });
       }
     }
-  }, [approve, currentAddress, currentNetwork, data, gasLimit, gasPrice, to, navigation, value, gasInfo, isContract, signTransaction]);
+  }, [approve, currentAddress, currentNetwork, gasLimit, gasPrice, to, navigation, value, gasInfo, isContract, signTransaction, txData]);
 
   const gasCost = useMemo(() => {
     // if dapp not give gasPrice and rpcGasPrice is null, just return null
@@ -169,61 +201,131 @@ function WalletConnectTransaction() {
     return priceInUSDT ? (priceInUSDT.lessThan(0.01) ? '<$0.01' : `≈$${priceInUSDT.toFixed(2)}`) : null;
   }, [gasPrice, currentNativeToken?.priceInUSDT, currentNativeToken?.decimals, gasLimit, gasInfo]);
 
+  useEffect(() => {
+    async function parseAndTryGetTokenInfo() {
+      if (isContract) {
+        const parseData = parseTxData({ data, to });
+        if (to && parseData.functionName === 'approve' && parseData.assetType === AssetType.ERC20) {
+          const remoteAsset = await fetchERC20AssetInfoBatchWithAccount({
+            networkType: currentNetwork.networkType,
+            endpoint: currentNetwork?.endpoint,
+            contractAddress: to,
+            accountAddress: currentAddress!,
+          });
+          const assetInfo = { ...remoteAsset, type: AssetType.ERC20, contractAddress: to };
+          setParseData({ ...parseData, symbol: remoteAsset.symbol, balance: remoteAsset.balance, decimals: remoteAsset.decimals });
+          const isInDB = await currentNetwork.queryAssetByAddress(to);
+          if (!isInDB) {
+            await methods.createAsset({
+              network: currentNetwork,
+              ...assetInfo,
+              source: AssetSource.Custom,
+            });
+          }
+        } else {
+          setParseData(parseData);
+        }
+      }
+    }
+    parseAndTryGetTokenInfo();
+  }, [data, to, isContract, currentNetwork.networkType, currentAddress, currentNetwork, value]);
+
+  const handleOpenEditAllowanceModel = useCallback(() => {
+    if (parseData?.functionName === 'approve' && parseData?.assetType === AssetType.ERC20) {
+      setShowEditAllowance(true);
+    }
+  }, [setShowEditAllowance, parseData]);
+
+  const handleCloseEditAllowanceModel = useCallback(() => {
+    setShowEditAllowance(false);
+  }, [setShowEditAllowance]);
+
+  const handleSaveEditAllowance = useCallback((value: string) => {
+    setAllowanceValue(value);
+  }, []);
+
   const { inAsync: rejectLoading, execAsync: handleReject } = useInAsync(_handleReject);
   const { inAsync: approveLoading, execAsync: handleApprove } = useInAsync(_handleApprove);
 
   return (
-    <BottomSheet enablePanDownToClose={false} isRoute snapPoints={snapPoints.percent75} style={styles.container}>
-      <BottomSheetView>
-        <Text style={[styles.title, { color: colors.textPrimary }]}>{t('wc.dapp.tx.title')}</Text>
-        {isContract ? <SendContract to={to} data={data} metadata={metadata} /> : <SendNativeToken amount={amount} receiverAddress={to} />}
+    <>
+      <BottomSheet enablePanDownToClose={false} isRoute snapPoints={snapPoints.percent75} style={styles.container}>
+        <BottomSheetView style={styles.flex1}>
+          <BottomSheetScrollView contentContainerStyle={{ flexGrow: 1 }}>
+            <Text style={[styles.title, { color: colors.textPrimary }]}>{t('wc.dapp.tx.title')}</Text>
+            {isContract ? (
+              <SendContract
+                to={to}
+                data={data}
+                metadata={metadata}
+                parseData={parseData}
+                openEditAllowance={handleOpenEditAllowanceModel}
+                customAllowance={allowanceValue}
+              />
+            ) : (
+              <SendNativeToken amount={amount} receiverAddress={to} />
+            )}
 
-        {errorMsg && (
-          <View style={[styles.error, { borderColor: colors.down }]}>
-            <Text style={{ color: colors.down, fontSize: 16 }}>22343</Text>
-          </View>
-        )}
-        <View style={[styles.signingWith, { borderColor: colors.borderFourth }]}>
-          <Text style={[styles.secondary, { color: colors.textSecondary }]}>{t('wc.dapp.tx.signingWith')}</Text>
-        </View>
-
-        <View style={[styles.flexWithRow, styles.sender]}>
-          <View style={[styles.flexWithRow, styles.addressInfo, { alignItems: 'flex-start' }]}>
-            <Image source={{ uri: toDataUrl(currentAddress?.hex) }} style={styles.avatar} />
-            <View>
-              <View style={{ marginBottom: 12 }}>
-                <Text style={[styles.senderName, { color: colors.textPrimary }]}>{currentAccount?.nickname}</Text>
-                <Text style={[styles.smallText, { color: colors.textSecondary }]}>{shortenAddress(currentAddress?.hex)}</Text>
+            {errorMsg && (
+              <View style={[styles.error, { borderColor: colors.down }]}>
+                <Text style={{ color: colors.down, fontSize: 16 }}>{errorMsg}</Text>
               </View>
+            )}
+            <View style={[styles.signingWith, { borderColor: colors.borderFourth }]}>
+              <Text style={[styles.secondary, { color: colors.textSecondary }]}>{t('wc.dapp.tx.signingWith')}</Text>
+            </View>
 
-              <View>
-                <Text>{t('tx.confirm.estimatedFee')}</Text>
-                <View style={[styles.flexWithRow, { marginTop: 8 }]}>
-                  {currentNativeToken?.icon && <Icon source={currentNativeToken?.icon} width={24} height={24} />}
-                  <Text style={[styles.gas, { color: colors.textPrimary }]}>{gasCost}</Text>
+            <View style={[styles.flexWithRow, styles.sender]}>
+              <View style={[styles.flexWithRow, styles.addressInfo, { alignItems: 'flex-start' }]}>
+                <Image source={{ uri: toDataUrl(currentAddress?.hex) }} style={styles.avatar} />
+                <View>
+                  <View style={{ marginBottom: 12 }}>
+                    <Text style={[styles.senderName, { color: colors.textPrimary }]}>{currentAccount?.nickname}</Text>
+                    <Text style={[styles.smallText, { color: colors.textSecondary }]}>{shortenAddress(currentAddress?.hex)}</Text>
+                  </View>
+
+                  <View>
+                    <Text>{t('tx.confirm.estimatedFee')}</Text>
+                    <View style={[styles.flexWithRow, { marginTop: 8 }]}>
+                      {currentNativeToken?.icon && <Icon source={currentNativeToken?.icon} width={24} height={24} />}
+                      <Text style={[styles.gas, { color: colors.textPrimary }]}>{gasCost}</Text>
+                    </View>
+                  </View>
                 </View>
               </View>
+              <Text style={styles.smallText}>{t('wc.sign.network', { network: currentNetwork?.name })}</Text>
             </View>
+          </BottomSheetScrollView>
+          <View style={[styles.flexWithRow, styles.buttons]}>
+            <Button testID="reject" onPress={handleReject} style={styles.btn} loading={rejectLoading}>
+              {t('common.cancel')}
+            </Button>
+            <Button testID="approve" style={styles.btn} onPress={handleApprove} loading={approveLoading}>
+              {t('common.confirm')}
+            </Button>
           </View>
-          <Text style={styles.smallText}>{t('wc.sign.network', { network: currentNetwork?.name })}</Text>
-        </View>
+        </BottomSheetView>
+      </BottomSheet>
 
-        <View style={[styles.flexWithRow, styles.buttons]}>
-          <Button testID="reject" onPress={handleReject} style={styles.btn} loading={rejectLoading}>
-            {t('common.cancel')}
-          </Button>
-          <Button testID="approve" style={styles.btn} onPress={handleApprove} loading={approveLoading}>
-            {t('common.confirm')}
-          </Button>
-        </View>
-      </BottomSheetView>
-    </BottomSheet>
+      {showEditAllowance && parseData && (
+        <EditAllowance
+          open={showEditAllowance}
+          parseData={parseData}
+          savedValue={allowanceValue}
+          onSave={handleSaveEditAllowance}
+          onClose={handleCloseEditAllowanceModel}
+        />
+      )}
+    </>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     paddingHorizontal: 16,
+  },
+  flex1: {
+    flex: 1,
   },
   title: {
     textAlign: 'center',

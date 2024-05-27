@@ -155,9 +155,9 @@ const trackAssets = async ({
           decimals: asset.decimals!,
           balance: typeof balance === 'string' ? balance : undefined!,
           icon: asset.icon!,
-        };
+        } as AssetInfo
       });
-      assets?.forEach((asset) => (assetsHash[asset.type === AssetType.Native ? AssetType.Native : asset.contractAddress] = asset));
+      assets?.forEach((asset) => (assetsHash[asset.contractAddress ? asset.contractAddress : AssetType.Native] = asset));
     }
   }
 

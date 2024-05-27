@@ -109,6 +109,7 @@
     "connect" : "Connect",
     "continue" : "Continue",
     "copied" : "Copied",
+    "customize" : "Customize",
     "delete" : "Delete",
     "disconnect" : "Disconnect",
     "dismiss" : "Dismiss",
@@ -116,6 +117,9 @@
     "enable" : "Enable",
     "index" : "Index",
     "max" : "Max",
+    "method" : {
+      "contractInteraction" : "Contract Interaction"
+    },
     "network" : "Network",
     "next" : "Next",
     "ok" : "OK",
@@ -123,10 +127,12 @@
     "privateKey" : "Private key",
     "retry" : "Retry",
     "return" : "Return",
+    "save" : "save",
     "seedPhrase" : "Seed Phrase",
     "send" : "Send",
     "to" : "To",
     "unsafe" : "Unsafe",
+    "use" : "Use",
     "verifyPassword" : "Verify Password",
     "view" : "View"
   },
@@ -138,6 +144,7 @@
     "buy" : "Buy",
     "more" : "More",
     "more.copyAddress" : "Copy address",
+    "more.signatureRecords" : "Signature Records",
     "more.viewInExplorer" : "View in explorer",
     "noNetwork" : "Network Disconnected",
     "receive" : "Receive",
@@ -244,11 +251,21 @@
     },
     "title" : "Settings"
   },
+  "signature" : {
+    "common" : {
+      "signData" : "Sign Data"
+    },
+    "list" : {
+      "showMore" : "more",
+      "title" : "Signature Records"
+    }
+  },
   "tab" : {
     "activity" : "Activity",
     "content" : {
       "depositToken" : "Deposit tokens to your wallet",
       "noActivity" : "No Activity",
+      "noLatestTransaction" : null,
       "noNFT" : "No NFT",
       "noRecord" : "No Record",
       "noToken" : "No Token",
@@ -340,23 +357,26 @@
     }
   },
   "wc" : {
-    "daap" : {
-      "tx" : {
-        "unknown" : "unknown"
-      }
-    },
     "dapp" : {
       "connectTo" : "Connected to",
       "connectedDApps" : "Connected DApps",
       "tx" : {
+        "DAppSuggestions" : "DApp suggestions",
         "contract" : "Contract",
+        "contractInteraction" : "Contract Interaction",
+        "editAllowance" : "Edit Allowance",
         "function" : "Function",
         "network" : "Network",
         "nonce" : "Nonce",
+        "shareOfBalance" : "A Share of balance",
         "signingWith" : "Signing with",
+        "simulatedResult" : "Simulated Result",
         "simulating" : "Simulating",
         "title" : "Transaction Confirm",
         "transactionRequest" : "Transaction Request",
+        "unableSimulated" : "Unable to simulated result.",
+        "unknown" : "unknown",
+        "unlimited" : "Unlimited",
         "viewData" : "View More Details"
       }
     },

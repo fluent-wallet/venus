@@ -19,7 +19,12 @@ export const useGasEstimate = (tx: Partial<ITxEvm>) => {
         filter(notNull),
         switchMap((net) => {
           return Plugins.Transaction.estimate({
-            tx: tx,
+            tx: {
+              from: tx.from,
+              to: tx.to,
+              value: tx.value,
+              data: tx.data,
+            },
             network: net,
           });
         }),
@@ -36,7 +41,7 @@ export const useGasEstimate = (tx: Partial<ITxEvm>) => {
     return () => {
       pollingGasSub.unsubscribe();
     };
-  }, [currentNetwork?.id, currentNetwork?.endpoint, tx]);
+  }, [currentNetwork?.id, currentNetwork?.endpoint, tx.from, tx.data, tx.to, tx.value, currentNetwork]);
 
   return gasInfo;
 };
