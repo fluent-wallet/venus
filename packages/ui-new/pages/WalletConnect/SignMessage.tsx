@@ -94,7 +94,7 @@ function WalletConnectSignMessage() {
           await approve(hex);
           navigation.goBack();
         } else {
-          const pk = await methods.getPrivateKeyOfVault(vault);
+          const pk = await methods.getPrivateKeyOfAddress(currentAddress);
           const hex = await Plugins.Transaction.signMessage({ message: signMsg, privateKey: pk, network: currentNetwork });
           await approve(hex);
           navigation.goBack();
