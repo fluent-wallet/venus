@@ -1,46 +1,45 @@
-import BottomSheet, { BottomSheetScrollView, BottomSheetView, snapPoints } from '@components/BottomSheet';
-import Button from '@components/Button';
-import Icon from '@components/Icon';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { StyleSheet, View } from 'react-native';
+import { RouteProp, useNavigation, useRoute, useTheme } from '@react-navigation/native';
+import { useTranslation } from 'react-i18next';
+import {  formatEther } from 'ethers';
+import { Interface } from '@ethersproject/abi';
+import Decimal from 'decimal.js';
+import { Image } from 'expo-image';
 import {
   AssetSource,
   AssetType,
   NetworkType,
   useCurrentAccount,
   useCurrentAddressOfAccount,
+  useCurrentAddressValue,
   useCurrentNetwork,
   useCurrentNetworkNativeAsset,
 } from '@core/WalletCore/Plugins/ReactInject';
 import { shortenAddress } from '@core/utils/address';
-import { RouteProp, useNavigation, useRoute, useTheme } from '@react-navigation/native';
-import { WalletConnectParamList, WalletConnectTransactionStackName } from '@router/configs';
-import { toDataUrl } from '@utils/blockies';
-import { formatEther } from 'ethers';
-import { Image } from 'expo-image';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { useTranslation } from 'react-i18next';
-import { StyleSheet, View } from 'react-native';
-import Text from '@components/Text';
-
-import Plugins from '@core/WalletCore/Plugins';
-import Decimal from 'decimal.js';
-import useInAsync from '@hooks/useInAsync';
+import { processError } from '@core/utils/eth';
+import { fetchERC20AssetInfoBatchWithAccount } from '@core/WalletCore/Plugins/AssetsTracker/fetchers/basic';
+import { checkDiffInRange } from '@core/WalletCore/Plugins/BlockNumberTracker';
+import methods from '@core/WalletCore/Methods';
+import plugins from '@core/WalletCore/Plugins';
 import { ITxEvm } from '@core/WalletCore/Plugins/Transaction/types';
 import Events from '@core/WalletCore/Events';
-
+import { type IWCSendTransactionEvent } from '@core/WalletCore/Plugins/WalletConnect/types';
+import { BSIMError } from '@WalletCoreExtends/Plugins/BSIM/BSIMSDK';
+import BottomSheet, { BottomSheetScrollView, BottomSheetView, snapPoints } from '@components/BottomSheet';
+import Text from '@components/Text';
+import Button from '@components/Button';
+import Icon from '@components/Icon';
+import useInAsync from '@hooks/useInAsync';
 import { useGasEstimate } from '@hooks/useGasEstimate';
 import { useSignTransaction } from '@hooks/useSignTransaction';
-import { checkDiffInRange } from '@core/WalletCore/Plugins/BlockNumberTracker';
-import { BSIMError } from '@WalletCoreExtends/Plugins/BSIM/BSIMSDK';
-import { processError } from '@core/utils/eth';
+import { toDataUrl } from '@utils/blockies';
+import { ParseTxDataReturnType, isApproveMethod, parseTxData } from '@utils/parseTxData';
+import matchRPCErrorMessage from '@utils/matchRPCErrorMssage';
+import { WalletConnectParamList, WalletConnectTransactionStackName } from '@router/configs';
+import EditAllowance from './EditAllowance';
 import SendContract from './Contract';
 import SendNativeToken from './NativeToken';
-import matchRPCErrorMessage from '@utils/matchRPCErrorMssage';
-import { ParseTxDataReturnType, isApproveMethod, parseTxData } from '@utils/parseTxData';
-
-import { fetchERC20AssetInfoBatchWithAccount } from '@core/WalletCore/Plugins/AssetsTracker/fetchers/basic';
-import methods from '@core/WalletCore/Methods';
-import EditAllowance from './EditAllowance';
-import { Interface } from '@ethersproject/abi';
 
 export type TxDataWithTokenInfo = ParseTxDataReturnType & {
   symbol?: string;
@@ -54,11 +53,11 @@ function WalletConnectTransaction() {
   const currentNativeToken = useCurrentNetworkNativeAsset();
   const currentAccount = useCurrentAccount();
   const currentAddress = useCurrentAddressOfAccount(currentAccount?.id)!;
+  const currentAddressValue = useCurrentAddressValue()!;
   const currentNetwork = useCurrentNetwork()!;
+
   const [errorMsg, setError] = useState('');
-
   const [parseData, setParseData] = useState<TxDataWithTokenInfo>();
-
   const [showEditAllowance, setShowEditAllowance] = useState(false);
   const [allowanceValue, setAllowanceValue] = useState('');
 
@@ -69,8 +68,6 @@ function WalletConnectTransaction() {
   const navigation = useNavigation();
   const {
     params: {
-      reject,
-      approve,
       tx: { from, to, value, data, nonce, gasLimit, gasPrice },
       isContract,
       metadata,
@@ -92,9 +89,12 @@ function WalletConnectTransaction() {
   }, [value]);
 
   const _handleReject = useCallback(async () => {
-    await reject('user reject');
-    navigation.goBack();
-  }, [reject, navigation]);
+    try {
+      await plugins.WalletConnect.currentEventSubject.getValue()?.action.reject();
+    } catch (e) {
+      console.log(e);
+    }
+  }, []);
 
   const _handleApprove = useCallback(async () => {
     if (!gasInfo) return;
@@ -104,22 +104,23 @@ function WalletConnectTransaction() {
     let txRaw;
     let txError;
     const tx = {
-      from: currentAddress?.hex,
+      from: currentAddressValue,
       to,
       value: value ? value : '0x0',
       data: txData || '0x',
       chainId: currentNetwork.chainId,
-      type: Plugins.Transaction.isOnlyLegacyTxSupport(currentNetwork.chainId) ? 0 : undefined,
+      type: plugins.Transaction.isOnlyLegacyTxSupport(currentNetwork.chainId) ? 0 : undefined,
     } as ITxEvm;
 
+    const approve = plugins.WalletConnect.currentEventSubject.getValue()?.action.approve as IWCSendTransactionEvent['action']['approve'];
     try {
-      const nonce = await Plugins.Transaction.getTransactionCount({ network: currentNetwork, addressValue: currentAddress.hex });
+      const nonce = await plugins.Transaction.getTransactionCount({ network: currentNetwork, addressValue: currentAddressValue });
       tx.nonce = Number(nonce);
       tx.gasLimit = gasLimit ? gasLimit.toString() : gasInfo?.gasLimit;
       tx.gasPrice = gasPrice ? gasPrice.toString() : gasInfo?.gasPrice;
 
       if (currentNetwork.networkType === NetworkType.Conflux) {
-        const currentEpochHeight = await Plugins.BlockNumberTracker.getNetworkBlockNumber(currentNetwork);
+        const currentEpochHeight = await plugins.BlockNumberTracker.getNetworkBlockNumber(currentNetwork);
         if (!epochHeightRef.current || !checkDiffInRange(BigInt(currentEpochHeight) - BigInt(epochHeightRef.current))) {
           epochHeightRef.current = currentEpochHeight;
         }
@@ -129,7 +130,7 @@ function WalletConnectTransaction() {
 
       txRaw = await txRawPromise;
 
-      txHash = await Plugins.Transaction.sendRawTransaction({ txRaw, network: currentNetwork });
+      txHash = await plugins.Transaction.sendRawTransaction({ txRaw, network: currentNetwork });
 
       Events.broadcastTransactionSubjectPush.next({
         txHash,
@@ -137,7 +138,7 @@ function WalletConnectTransaction() {
         tx,
         address: currentAddress,
         extraParams: {
-          assetType: isContract ? AssetType.ERC20 : AssetType.Native, // TODO update the assetType
+          assetType: isContract ? AssetType.ERC20 : AssetType.Native, // TODO: update the assetType
           contractAddress: isContract ? to : undefined,
           to: to,
           sendAt: new Date(),
@@ -161,7 +162,7 @@ function WalletConnectTransaction() {
       const msg = matchRPCErrorMessage(error);
       txError = error;
       setError(msg);
-      // TODO show error
+      // TODO: show error
     } finally {
       if (txRaw && txHash) {
         Events.broadcastTransactionSubjectPush.next({
@@ -181,7 +182,8 @@ function WalletConnectTransaction() {
         });
       }
     }
-  }, [approve, currentAddress, currentNetwork, gasLimit, gasPrice, to, navigation, value, gasInfo, isContract, signTransaction, txData]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentAddressValue, currentNetwork?.id, gasLimit, gasPrice, to, navigation, value, gasInfo, isContract, signTransaction, txData]);
 
   const gasCost = useMemo(() => {
     // if dapp not give gasPrice and rpcGasPrice is null, just return null
@@ -225,7 +227,8 @@ function WalletConnectTransaction() {
       }
     }
     parseAndTryGetTokenInfo();
-  }, [data, to, isContract, currentNetwork.networkType, currentAddress, currentNetwork, value]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [data, to, isContract, currentNetwork.id, currentAddress, value]);
 
   const handleOpenEditAllowanceModel = useCallback(() => {
     if (parseData?.functionName === 'approve' && parseData?.assetType === AssetType.ERC20) {
@@ -246,7 +249,7 @@ function WalletConnectTransaction() {
 
   return (
     <>
-      <BottomSheet enablePanDownToClose={false} isRoute snapPoints={snapPoints.large} style={styles.container}>
+      <BottomSheet isRoute snapPoints={snapPoints.percent75} style={styles.container} onClose={() => handleReject()}>
         <BottomSheetView style={styles.flex1}>
           <BottomSheetScrollView contentContainerStyle={{ flexGrow: 1 }}>
             <Text style={[styles.title, { color: colors.textPrimary }]}>{t('wc.dapp.tx.title')}</Text>
@@ -369,7 +372,7 @@ const styles = StyleSheet.create({
   buttons: {
     gap: 16,
     marginTop: 22,
-    marginBottom: 79
+    marginBottom: 79,
   },
   btn: {
     flex: 1,
