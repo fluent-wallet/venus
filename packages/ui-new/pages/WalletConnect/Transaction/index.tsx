@@ -246,7 +246,7 @@ function WalletConnectTransaction() {
 
   return (
     <>
-      <BottomSheet enablePanDownToClose={false} isRoute snapPoints={snapPoints.percent75} style={styles.container}>
+      <BottomSheet enablePanDownToClose={false} isRoute snapPoints={snapPoints.large} style={styles.container}>
         <BottomSheetView style={styles.flex1}>
           <BottomSheetScrollView contentContainerStyle={{ flexGrow: 1 }}>
             <Text style={[styles.title, { color: colors.textPrimary }]}>{t('wc.dapp.tx.title')}</Text>
@@ -369,6 +369,7 @@ const styles = StyleSheet.create({
   buttons: {
     gap: 16,
     marginTop: 22,
+    marginBottom: 79
   },
   btn: {
     flex: 1,

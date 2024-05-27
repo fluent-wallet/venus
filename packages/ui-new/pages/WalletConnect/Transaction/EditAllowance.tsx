@@ -61,7 +61,6 @@ export default function EditAllowance({ open, parseData, savedValue, onSave, onC
           const balance = new Decimal(parseData.balance);
           const percentValue = balance.mul(value / 100);
           const showValue = parseData.decimals ? percentValue.div(new Decimal(10).pow(parseData.decimals)) : percentValue;
-          console.log(showValue, 'show value');
           setCustomValue(showValue.toString());
         }
         setPercent(value);
@@ -71,7 +70,7 @@ export default function EditAllowance({ open, parseData, savedValue, onSave, onC
   );
 
   return (
-    <BottomSheet index={open ? 0 : -1} enablePanDownToClose={false} backDropPressBehavior={'none'} snapPoints={snapPoints.percent50} style={styles.container}>
+    <BottomSheet index={open ? 0 : -1} enablePanDownToClose={false} backDropPressBehavior={'none'} snapPoints={snapPoints.percent65} style={styles.container}>
       <Text style={[styles.title, { color: colors.textPrimary }]}>{t('wc.dapp.tx.editAllowance')}</Text>
       <View style={styles.editItem}>
         <Checkbox checked={isDappSuggestValue} onChange={() => setIsDappSuggestValue(!isDappSuggestValue)} />
@@ -83,8 +82,8 @@ export default function EditAllowance({ open, parseData, savedValue, onSave, onC
             <Text style={[styles.editSuggest, { color: colors.textNotice }]}>
               {' '}
               {parseData && isApproveMethod(parseData) ? (parseData.isUnlimited ? t('wc.dapp.tx.unlimited') : getFormatValue(parseData.value)) : ''}{' '}
-              {parseData?.symbol}
             </Text>
+            {parseData?.symbol}
           </Text>
         </View>
       </View>
@@ -164,6 +163,7 @@ const styles = StyleSheet.create({
   editSuggest: {
     fontSize: 16,
     fontWeight: '600',
+    marginBottom: 8
   },
   editInput: {
     width: '100%',
@@ -179,6 +179,7 @@ const styles = StyleSheet.create({
     display: 'flex',
     flexDirection: 'row',
     gap: 16,
+    marginBottom: 79,
   },
   balanceChoose: {
     gap: 8,

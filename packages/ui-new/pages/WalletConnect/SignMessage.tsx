@@ -224,7 +224,6 @@ const styles = StyleSheet.create({
   },
   account: {
     justifyContent: 'space-between',
-    alignItems: 'center',
     marginBottom: 40,
   },
   accountLeft: { gap: 8, alignItems: 'center' },
@@ -235,6 +234,7 @@ const styles = StyleSheet.create({
   },
   buttons: {
     gap: 16,
+    marginBottom: 79
   },
   btn: {
     flex: 1,

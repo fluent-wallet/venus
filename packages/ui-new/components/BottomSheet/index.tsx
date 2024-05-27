@@ -145,6 +145,7 @@ const BottomSheet = forwardRef<BottomSheet_, Props>(
 export const snapPoints = {
   large: [`${((clamp(screenHeight - 100, 628, screenHeight - 40) / screenHeight) * 100).toFixed(2)}%`] as string[],
   percent75: ['75%'] as string[],
+  percent65: ["65%"] as string[],
   percent50: ['50%'] as string[],
 } as const;
 

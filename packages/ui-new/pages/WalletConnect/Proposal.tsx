@@ -78,8 +78,8 @@ export default function WalletConnectProposal() {
             <Text style={[styles.textStrong, styles.name, { color: colors.textPrimary }]}>{name}</Text>
             <Text style={styles.describe}>{t('wc.proposal.describe')}</Text>
             <View style={styles.url}>
-              {!isHTTPS ? <Text style={[styles.urlWarning, { borderColor: colors.down }]}>{t('common.unsafe')}</Text> : null}
-              <Text style={{ color: isHTTPS ? colors.up : colors.down }}>{url}</Text>
+              {!isHTTPS ? <Text style={[styles.urlWarning, { borderColor: colors.down, color: colors.down }]}>{t('common.unsafe')}</Text> : null}
+              <Text style={{ color: isHTTPS ? colors.up : colors.down, textDecorationLine: isHTTPS ? 'none' : 'underline' }}>{url}</Text>
             </View>
           </View>
           <Pressable onPress={() => setShowAccountSelector(true)} testID="account">
@@ -105,7 +105,7 @@ export default function WalletConnectProposal() {
 
           <View style={styles.buttons}>
             <Button
-              style={[styles.button, { backgroundColor: colors.down }]}
+              style={[styles.button, { backgroundColor: isHTTPS ? undefined : colors.down }]}
               onPress={handleReject}
               testID="reject"
               disabled={inRejecting}
@@ -171,6 +171,7 @@ const styles = StyleSheet.create({
   account: {
     padding: 16,
     borderWidth: 1,
+    borderRadius: 6,
   },
   networkWarp: {
     marginTop: 16,
