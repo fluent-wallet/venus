@@ -109,7 +109,7 @@
     "connect" : "連接",
     "continue" : "繼續",
     "copied" : "已複製",
-    "customize" : null,
+    "customize" : "設定數值",
     "delete" : "刪除",
     "disconnect" : "斷開連接",
     "dismiss" : "忽略",
@@ -118,7 +118,7 @@
     "index" : "序號",
     "max" : "最大",
     "method" : {
-      "contractInteraction" : null
+      "contractInteraction" : "合約交互"
     },
     "network" : "網絡",
     "next" : "繼續",
@@ -127,12 +127,12 @@
     "privateKey" : "私鑰",
     "retry" : "重試",
     "return" : "返回",
-    "save" : null,
+    "save" : "保存",
     "seedPhrase" : "助記詞",
     "send" : "發送",
     "to" : "接收方",
     "unsafe" : "不安全",
-    "use" : null,
+    "use" : "使用",
     "verifyPassword" : "驗證密碼",
     "view" : "查看"
   },
@@ -144,7 +144,7 @@
     "buy" : "購買",
     "more" : "更多",
     "more.copyAddress" : "複製地址",
-    "more.signatureRecords" : null,
+    "more.signatureRecords" : "簽名記錄",
     "more.viewInExplorer" : "在瀏覽器中查看",
     "noNetwork" : "網絡連接已斷開",
     "receive" : "接收",
@@ -253,11 +253,11 @@
   },
   "signature" : {
     "common" : {
-      "signData" : null
+      "signData" : "簽署信息"
     },
     "list" : {
-      "showMore" : null,
-      "title" : null
+      "showMore" : "更多",
+      "title" : "簽名記錄"
     }
   },
   "tab" : {
@@ -361,22 +361,22 @@
       "connectTo" : "已連接到",
       "connectedDApps" : "已連接的應用",
       "tx" : {
-        "DAppSuggestions" : null,
+        "DAppSuggestions" : "DApps 的建議值",
         "contract" : "合約地址",
-        "contractInteraction" : null,
-        "editAllowance" : null,
+        "contractInteraction" : "合約交互",
+        "editAllowance" : "調整限額",
         "function" : "方法",
         "network" : "網絡",
         "nonce" : "隨機數",
-        "shareOfBalance" : null,
+        "shareOfBalance" : "部分餘額",
         "signingWith" : "以此賬戶簽名",
-        "simulatedResult" : null,
+        "simulatedResult" : "模擬結果",
         "simulating" : "模擬執行",
         "title" : "確認交易",
         "transactionRequest" : "交易請求",
-        "unableSimulated" : null,
+        "unableSimulated" : "無法模擬結果。",
         "unknown" : "未知",
-        "unlimited" : null,
+        "unlimited" : "無限額",
         "viewData" : "查看更多信息"
       }
     },
