@@ -1002,7 +1002,7 @@ PODS:
   - React-Mapbuffer (0.73.6):
     - glog
     - React-debug
-  - react-native-bignumber (0.2.2):
+  - react-native-bignumber (0.2.3):
     - OpenSSL-Universal (~> 1.1.180)
     - React
     - React-callinvoker
@@ -1612,7 +1612,7 @@ SPEC CHECKSUMS:
   React-jsinspector: 85583ef014ce53d731a98c66a0e24496f7a83066
   React-logger: 3eb80a977f0d9669468ef641a5e1fabbc50a09ec
   React-Mapbuffer: 84ea43c6c6232049135b1550b8c60b2faac19fab
-  react-native-bignumber: 986c34989c5b5adc9ba5c3a849ed33e60416a79b
+  react-native-bignumber: 835205afffc12daf6c2a047da6ab4fccb94e3004
   react-native-compat: 3438b8422ce55a39f343bbbb4a9a656184bb2217
   react-native-config: 86038147314e2e6d10ea9972022aa171e6b1d4d8
   react-native-get-random-values: a6ea6a8a65dc93e96e24a11105b1a9c8cfe1d72a
