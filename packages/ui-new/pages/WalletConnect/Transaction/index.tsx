@@ -5,23 +5,20 @@ import {
   AssetSource,
   AssetType,
   NetworkType,
-  VaultType,
   useCurrentAccount,
   useCurrentAddressOfAccount,
   useCurrentNetwork,
   useCurrentNetworkNativeAsset,
-  useVaultOfAccount,
 } from '@core/WalletCore/Plugins/ReactInject';
 import { shortenAddress } from '@core/utils/address';
-import { numberWithCommas } from '@core/utils/balance';
 import { RouteProp, useNavigation, useRoute, useTheme } from '@react-navigation/native';
 import { WalletConnectParamList, WalletConnectTransactionStackName } from '@router/configs';
 import { toDataUrl } from '@utils/blockies';
-import { MaxUint256, formatEther } from 'ethers';
+import { formatEther } from 'ethers';
 import { Image } from 'expo-image';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { NativeSyntheticEvent, StyleSheet, TextInput, TextInputChangeEventData, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import Text from '@components/Text';
 
 import Plugins from '@core/WalletCore/Plugins';
@@ -158,8 +155,8 @@ function WalletConnectTransaction() {
         }
       }
       if (error === 'cancel') {
-       // user cancel password verify
-       return // nothing to do
+        // user cancel password verify
+        return; // nothing to do
       }
       const msg = matchRPCErrorMessage(error);
       txError = error;
@@ -301,7 +298,7 @@ function WalletConnectTransaction() {
               {t('common.cancel')}
             </Button>
             <Button testID="approve" style={styles.btn} onPress={handleApprove} loading={approveLoading}>
-              {t('common.confirm')}
+              {isContract ? t('common.confirm') : t('common.send')}
             </Button>
           </View>
         </BottomSheetView>

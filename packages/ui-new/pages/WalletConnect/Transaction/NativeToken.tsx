@@ -1,5 +1,5 @@
 import { Image } from 'expo-image';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet,  View } from 'react-native';
 import Copy from '@assets/icons/copy.svg';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '@react-navigation/native';
@@ -12,6 +12,7 @@ import Clipboard from '@react-native-clipboard/clipboard';
 import { showMessage } from 'react-native-flash-message';
 import { useCurrentNetworkNativeAsset } from '@core/WalletCore/Plugins/ReactInject';
 import { calculateTokenPrice } from '@utils/calculateTokenPrice';
+import Text from '@components/Text'
 
 interface IProps {
   amount: string;
@@ -43,10 +44,12 @@ function SendNativeToken({ amount, receiverAddress }: IProps) {
       <Text style={[styles.secondary]}>{t('common.amount')}</Text>
 
       <View style={[styles.flexWithRow, { marginTop: 8 }]}>
-        <Text style={styles.amount}>{amount}</Text>
+        <Text style={[styles.amount, { color: colors.textPrimary }]}>
+          {amount} {currentNativeToken?.symbol}
+        </Text>
         {currentNativeToken?.icon && <Icon source={currentNativeToken.icon} width={24} height={24} />}
       </View>
-      <Text style={[styles.secondary, styles.secondary, { color: colors.textSecondary }]}>≈{price}</Text>
+      <Text style={[styles.secondary, styles.secondary, { color: colors.textSecondary }]}>≈${price}</Text>
 
       <Text style={[styles.to, { color: colors.textSecondary }]}>{t('common.to')}</Text>
 

@@ -2,7 +2,7 @@ import BottomSheet, { snapPoints } from '@components/BottomSheet';
 import Checkbox from '@components/Checkbox';
 
 import { useTheme } from '@react-navigation/native';
-import { ParseTxDataReturnType, isApproveMethod } from '@utils/parseTxData';
+import { isApproveMethod } from '@utils/parseTxData';
 import { NativeSyntheticEvent, Pressable, StyleSheet, Text, TextInputChangeEventData, View } from 'react-native';
 import { TxDataWithTokenInfo } from '.';
 import { useTranslation } from 'react-i18next';
@@ -21,7 +21,7 @@ interface IProps {
 }
 
 export default function EditAllowance({ open, parseData, savedValue, onSave, onClose }: IProps) {
-  const { colors, reverseColors } = useTheme();
+  const { colors } = useTheme();
   const { t } = useTranslation();
   const [isDappSuggestValue, setIsDappSuggestValue] = useState(!savedValue);
   const [customValue, setCustomValue] = useState(savedValue || '');
