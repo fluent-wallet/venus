@@ -1,9 +1,6 @@
 import { injectable } from 'inversify';
-import { querySelectedNetwork } from '../../database/models/Network/query';
-import { querySelectedAddress } from '../../database/models/Address/query';
 import { Asset, AssetType } from '../../database/models/Asset';
-import { queryAssetByAddress } from '../../database/models/Asset/query';
-import { createTx as _createTx } from '../../database/models/Tx/query';
+import { createTx as _createTx, queryTxsWithAddress } from '../../database/models/Tx/query';
 import { createTxPayload as _createTxPayload } from '../../database/models/TxPayload/query';
 import { createTxExtra as _createTxExtra } from '../../database/models/TxExtra/query';
 import { TransactionSubjectValue } from '../Events/broadcastTransactionSubject';
@@ -12,8 +9,13 @@ import { Tx } from '@core/database/models/Tx';
 import { Address } from '@core/database/models/Address';
 import { TxPayload } from '@core/database/models/TxPayload';
 import { TxExtra } from '@core/database/models/TxExtra';
-import { TxStatus } from '@core/database/models/Tx/type';
-import { getAddress as toChecksumAddress } from 'ethers';
+import { TxSource, TxStatus } from '@core/database/models/Tx/type';
+
+interface createTxPayloadParams {
+  tx: TransactionSubjectValue['tx'];
+  address?: Address;
+  epochHeight?: string | null;
+}
 
 @injectable()
 export class TxMethod {
@@ -21,44 +23,48 @@ export class TxMethod {
   createTx(params: TransactionSubjectValue): Promise<void>;
   async createTx(params: TransactionSubjectValue, prepareCreate?: true) {
     try {
-      const selectedAddressList = await querySelectedAddress();
-      const address = selectedAddressList?.[0];
-      if (!address) {
-        console.error('TX: no address selected!');
-      }
+      const { address, tx: _tx, extraParams, txRaw, txHash, signature } = params;
+      const updated = await this.updateTx(params);
+      if (updated) return updated;
       const [txPayload, txExtra] = await Promise.all([
         this.createTxPayload(
           {
-            tx: params.tx,
+            tx: _tx,
             address,
+            epochHeight: extraParams.epochHeight,
           },
           true,
         ),
-        this.createTxExtra(params.extraParams, true),
+        this.createTxExtra(extraParams, true),
       ]);
       let asset: Asset | undefined;
+      const network = await address.network;
       if (params.extraParams.assetType === AssetType.Native) {
-        const networks = await querySelectedNetwork();
-        asset = (await networks[0].assets).find((i) => i.type === AssetType.Native);
+        asset = (await network.assets).find((i) => i.type === AssetType.Native);
       } else if (params.extraParams.contractAddress) {
-        const assets = await queryAssetByAddress(toChecksumAddress(params.extraParams.contractAddress));
-        asset = assets?.[0];
+        asset = await network.queryAssetByAddress(params.extraParams.contractAddress);
       }
 
       const tx = _createTx(
         {
           address,
-          raw: params.txRaw,
-          hash: params.txHash,
-          status: TxStatus.PENDING,
-          isLocal: true,
-          sendAt: params.extraParams.sendAt,
+          raw: txRaw,
+          hash: txHash,
+          status: extraParams.err ? TxStatus.FAILED : TxStatus.PENDING,
+          sendAt: extraParams.sendAt,
           txPayload,
           txExtra,
           asset,
+          err: extraParams.err,
+          errorType: extraParams.errorType,
+          // TODO: set by params
+          source: TxSource.SELF,
+          // TODO: set by params
+          method: 'Send',
         },
         true,
       );
+      signature?.updateTx(tx);
       if (prepareCreate) return [tx, txPayload, txExtra] as const;
       return database.write(async () => {
         await database.batch(tx, txPayload, txExtra);
@@ -68,9 +74,39 @@ export class TxMethod {
     }
   }
 
-  createTxPayload(params: { tx: TransactionSubjectValue['tx']; address?: Address }, prepareCreate: true): Promise<TxPayload>;
-  createTxPayload(params: { tx: TransactionSubjectValue['tx']; address?: Address }): Promise<void>;
-  async createTxPayload({ tx, address }: { tx: TransactionSubjectValue['tx']; address?: Address }, prepareCreate?: true) {
+  async updateTx(params: TransactionSubjectValue) {
+    const { address, extraParams, txRaw, txHash, signature } = params;
+    const sameTx = await queryTxsWithAddress(address.id, {
+      raw: txRaw,
+    });
+    if (!sameTx || sameTx.length === 0) {
+      // no same tx in db
+      return false;
+    }
+    // hasSuccessTx: already success, skip create/update
+    const hasSuccessTx = sameTx.some((tx) => tx.status !== TxStatus.FAILED);
+    const tx = sameTx[0];
+    let newTx = tx;
+    if (!hasSuccessTx) {
+      newTx = await tx.updateSelf((_tx) => {
+        _tx.hash = txHash;
+        _tx.status = extraParams.err ? TxStatus.FAILED : TxStatus.PENDING;
+        _tx.sendAt = extraParams.sendAt;
+        _tx.err = extraParams.err;
+        _tx.errorType = extraParams.errorType;
+        // TODO: set by params
+        _tx.source = TxSource.SELF;
+        // TODO: set by params
+        _tx.method = 'Send';
+      });
+    }
+    signature?.updateTx(newTx);
+    return [newTx, await newTx.txPayload, await newTx.txExtra] as const;
+  }
+
+  createTxPayload(params: createTxPayloadParams, prepareCreate: true): Promise<TxPayload>;
+  createTxPayload(params: createTxPayloadParams): Promise<void>;
+  async createTxPayload({ tx, address, epochHeight }: createTxPayloadParams, prepareCreate?: true) {
     const from = tx.from ?? (await address?.getValue());
     const chainId = (await address?.network)?.chainId;
     const txPayload = _createTxPayload(
@@ -84,6 +120,8 @@ export class TxMethod {
         nonce: Number(tx.nonce),
         chainId,
         data: tx.data,
+        storageLimit: tx.storageLimit,
+        epochHeight,
       },
       true,
     );

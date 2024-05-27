@@ -10,6 +10,7 @@ import { HdPath as HdPathModel } from './models/HdPath';
 import { Network as NetworkModel } from './models/Network';
 import { Asset as AssetModel } from './models/Asset';
 import { AssetRule as AssetRuleModel } from './models/AssetRule';
+import { Signature as SignatureModel } from './models/Signature';
 import { Tx as TxModel } from './models/Tx';
 import { TxExtra as TxExtraModel } from './models/TxExtra';
 import { TxPayload as TxPayloadModel } from './models/TxPayload';
@@ -39,6 +40,7 @@ const modelClasses = [
   NetworkModel,
   AssetModel,
   AssetRuleModel,
+  SignatureModel,
   TxModel,
   TxExtraModel,
   TxPayloadModel,

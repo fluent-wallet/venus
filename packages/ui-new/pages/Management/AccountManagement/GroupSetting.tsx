@@ -41,8 +41,9 @@ const GroupConfig: React.FC<StackScreenProps<typeof GroupSettingStackName>> = ({
   }, [accountGroup?.nickname]);
 
   const handleUpdateAccountGroupNickName = useCallback(async () => {
-    if (!accountGroup || !accountGroupName) return;
-    await methods.updateAccountGroupNickName({ accountGroup, nickname: accountGroupName });
+    const trimedAccountGroupName = accountGroupName?.trim();
+    if (!accountGroup || !trimedAccountGroupName) return;
+    await methods.updateAccountGroupNickName({ accountGroup, nickname: trimedAccountGroupName });
     bottomSheetRef.current?.close();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [accountGroup, accountGroupName]);
@@ -130,7 +131,7 @@ const GroupConfig: React.FC<StackScreenProps<typeof GroupSettingStackName>> = ({
           showVisible={false}
           defaultHasValue
           value={accountGroupName}
-          onChangeText={(newNickName) => setAccountGroupName(newNickName?.trim())}
+          onChangeText={(newNickName) => setAccountGroupName(newNickName)}
           isInBottomSheet
           disabled={inDelete}
         />
@@ -148,7 +149,7 @@ const GroupConfig: React.FC<StackScreenProps<typeof GroupSettingStackName>> = ({
               <Text style={[styles.mainText, styles.backupText, { color: colors.textPrimary }]}>
                 {renderByVaultType(t('common.seedPhrase'), t('account.group.settings.BSIMCode'))}
               </Text>
-              <ArrowRight color={colors.iconPrimary} />
+              <ArrowRight color={colors.iconPrimary} width={16} height={16} style={{ transform: [{ translateY: -1 }] }} />
             </Pressable>
           </>
         )}
@@ -181,7 +182,7 @@ const GroupConfig: React.FC<StackScreenProps<typeof GroupSettingStackName>> = ({
         <Button
           testID="ok"
           style={styles.btn}
-          disabled={inDelete || !accountGroupName || accountGroupName === accountGroup?.nickname}
+          disabled={inDelete || !accountGroupName?.trim() || accountGroupName === accountGroup?.nickname}
           onPress={handleUpdateAccountGroupNickName}
           size="small"
         >
@@ -259,7 +260,7 @@ const styles = StyleSheet.create({
   },
   backupText: {
     marginLeft: 16,
-    marginRight: 12,
+    marginRight: 8,
   },
   removeContainer: {
     marginVertical: 16,

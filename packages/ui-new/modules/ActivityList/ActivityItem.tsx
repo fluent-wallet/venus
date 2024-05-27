@@ -21,7 +21,7 @@ const ActivityItem: React.FC<Props> = ({ onPress, tx }) => {
   const { colors } = useTheme();
   const payload = usePayloadOfTx(tx.id);
   const asset = useAssetOfTx(tx.id);
-  const status = formatStatus(tx.status);
+  const status = formatStatus(tx);
   const { value, to, decimals, tokenId } = useMemo(() => formatTxData(payload, asset), [payload, asset]);
   const formatBalance = useFormatBalance(value, decimals);
   const { t } = useTranslation();
@@ -31,7 +31,7 @@ const ActivityItem: React.FC<Props> = ({ onPress, tx }) => {
       <View style={styles.title}>
         <Text style={[styles.typeText, { color: colors.textPrimary }]}>
           {t('common.send')}
-          {ACTIVITY_DB_STATUS_FEATURE.allow && `  --[${tx.status}]`}
+          {ACTIVITY_DB_STATUS_FEATURE.allow && `  --[${tx.status}-${tx.source}-${tx.method}]`}
         </Text>
         {status !== 'confirmed' && (
           <Text
@@ -76,7 +76,7 @@ const styles = StyleSheet.create({
   typeText: {
     fontSize: 14,
     fontWeight: '600',
-    lineHeight: 18
+    lineHeight: 18,
   },
   statusText: {
     marginLeft: 12,

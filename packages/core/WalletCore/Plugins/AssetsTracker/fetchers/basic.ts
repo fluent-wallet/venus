@@ -1,11 +1,9 @@
 import { fetchChain, fetchChainBatch, fetchChainMulticall } from '@cfx-kit/dapp-utils/dist/fetch';
 import { createERC20Contract } from '@cfx-kit/dapp-utils/dist/contract';
-import { convertCfxToHex as _convertCfxToHex } from '@cfx-kit/dapp-utils/dist/address';
-import { memoize } from 'lodash-es';
+import { convertCfxToHex } from '../../../../utils/address';
 import { type Address } from './../../../../database/models/Address';
 import { NetworkType, networkRpcPrefixMap, networkRpcSuffixMap } from '../../../../database/models/Network';
 import { AssetType } from '../../../../database/models/Asset';
-const convertCfxToHex = memoize(_convertCfxToHex);
 
 export const fetchNativeAssetBalance = ({ networkType, endpoint, accountAddress }: { networkType: NetworkType; endpoint: string; accountAddress: Address }) => {
   switch (networkType) {
@@ -95,14 +93,15 @@ export const fetchAssetsBalance = async ({
     contractAddress?: string | null;
     assetType?: Omit<AssetType, AssetType.ERC1155 | AssetType.ERC721>;
   }>;
-}) =>
-  Promise.all(
+}) => {
+  return Promise.all(
     assets.map(({ contractAddress, assetType }) =>
       assetType === AssetType.ERC20 && contractAddress
         ? fetchContractAssetBalance({ networkType, endpoint, accountAddress, contractAddress })
         : fetchNativeAssetBalance({ networkType, endpoint, accountAddress }),
     ),
   );
+};
 
 export const fetchAssetsBalanceBatch = ({
   endpoint,
@@ -135,7 +134,7 @@ export const fetchAssetsBalanceBatch = ({
               to: contractAddress,
               data: `0x70a08231000000000000000000000000${accountAddress.hex.slice(2)}`,
             },
-        // networkRpcSuffixMap[networkType],
+        networkRpcSuffixMap[networkType],
       ],
     })),
   });

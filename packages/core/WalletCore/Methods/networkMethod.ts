@@ -21,7 +21,7 @@ import database from '../../database';
 import TableName from '../../database/TableName';
 import { getNthAccountOfHDKey } from '../../utils/hdkey';
 import { fromPrivate } from '../../utils/account';
-import { validateCfxAddress, validateHexAddress } from '../../utils/address';
+import { validateCfxAddress, validateHexAddress, convertCfxToHex } from '../../utils/address';
 import { GetDecryptedVaultDataMethod } from './getDecryptedVaultData';
 
 @injectable()
@@ -136,16 +136,46 @@ export class NetworkMethod {
     }
   }
 
-  private async _checkIsContractAddress({ networkType, endpoint, addressValue }: { networkType: NetworkType; endpoint: string; addressValue: string }) {
-    const rpcPrefix = networkRpcPrefixMap[networkType];
-    const rpcSuffix = networkRpcSuffixMap[networkType];
-
-    try {
-      await fetchChain<string>({ url: endpoint, method: `${rpcPrefix}_getCode`, params: [addressValue, rpcSuffix] });
-      return true;
-    } catch (err) {
-      if (String(err)?.includes('timed out')) throw err;
-      return false;
+  private _checkIsContractAddress({
+    networkType,
+    endpoint,
+    addressValue,
+  }: {
+    networkType: NetworkType.Conflux;
+    endpoint: string;
+    addressValue: string;
+  }): boolean;
+  private _checkIsContractAddress({
+    networkType,
+    endpoint,
+    addressValue,
+  }: {
+    networkType: NetworkType;
+    endpoint: string;
+    addressValue: string;
+  }): Promise<boolean>;
+  private _checkIsContractAddress({ networkType, endpoint, addressValue }: { networkType: NetworkType; endpoint: string; addressValue: string }) {
+    if (networkType === NetworkType.Conflux) {
+      try {
+        const hex = convertCfxToHex(addressValue);
+        return hex.startsWith('0x8');
+      } catch (_) {
+        return false;
+      }
+    } else {
+      const rpcPrefix = networkRpcPrefixMap[networkType];
+      const rpcSuffix = networkRpcSuffixMap[networkType];
+      return new Promise((resolve, reject) =>
+        fetchChain<string>({ url: endpoint, method: `${rpcPrefix}_getCode`, params: [addressValue, rpcSuffix] })
+          .then(() => resolve(true))
+          .catch((err) => {
+            if (String(err)?.includes('timed out')) {
+              reject(err);
+            } else {
+              resolve(false);
+            }
+          }),
+      );
     }
   }
 

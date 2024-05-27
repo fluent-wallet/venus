@@ -26,9 +26,9 @@ const SendTransactionStep3Amount: React.FC<SendTransactionScreenProps<typeof Sen
       )}
 
       <Text style={[styles.text, styles.to, { color: colors.textSecondary }]}>{t('common.to')}</Text>
-      <AccountItemView nickname={''} addressValue={route.params.targetAddress} colors={colors} />
+      <AccountItemView nickname={''} addressValue={route.params.recipientAddress} colors={colors} />
       <SetAssetAmount
-        targetAddress={route.params.targetAddress}
+        targetAddress={route.params.recipientAddress}
         asset={route.params.asset}
         nftItemDetail={route.params.nftItemDetail}
         defaultAmount={route.params.amount}

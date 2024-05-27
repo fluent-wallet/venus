@@ -75,8 +75,8 @@ const SendTransactionStep2Asset: React.FC<Props> = ({ navigation, route, onConfi
 
       const localAssets = assets
         ?.filter((asset) =>
-          [asset.name, asset.symbol, asset.type === AssetType.Native ? AssetType.Native : asset.contractAddress].some(
-            (str) => str?.search(new RegExp(escapeRegExp(value), 'i')) !== -1,
+          [asset.name, asset.symbol, asset.type === AssetType.Native ? AssetType.Native : asset.contractAddress].some((str) =>
+            !str ? false : str?.search(new RegExp(escapeRegExp(value), 'i')) !== -1,
           ),
         )
         .filter((asset) => !!asset.type)
@@ -183,16 +183,18 @@ const SendTransactionStep2Asset: React.FC<Props> = ({ navigation, route, onConfi
             type="SelectAsset"
             selectType={selectType}
             onPressItem={handleClickAsset}
+            onlyToken={!navigation}
           />
         </BottomSheetScrollView>
       )}
       {searchAsset && (
         <BottomSheetScrollView style={[styles.scrollView, { marginTop: 8 }]} onScroll={handleScroll}>
           {filterAssets.assets?.length > 0 &&
-            filterAssets.assets.map((asset) =>
-              asset.type === AssetType.ERC20 || asset.type === AssetType.Native ? (
+            filterAssets.assets.map((asset) => {
+              const itemKey = asset.type === AssetType.Native ? AssetType.Native : asset.contractAddress;
+              return asset.type === AssetType.ERC20 || asset.type === AssetType.Native ? (
                 <TokenItem
-                  key={asset.contractAddress ?? AssetType.Native}
+                  key={itemKey}
                   data={asset}
                   showTypeLabel
                   onPress={handleClickAsset}
@@ -202,15 +204,15 @@ const SendTransactionStep2Asset: React.FC<Props> = ({ navigation, route, onConfi
                 />
               ) : asset.type === AssetType.ERC1155 || asset.type === AssetType.ERC721 ? (
                 <NFTItem
-                  key={asset.contractAddress}
+                  key={itemKey}
                   data={asset}
                   currentOpenNFTDetail={currentOpenNFTDetail}
                   tabsType="SelectAsset"
                   showTypeLabel
                   onPress={handleClickAsset}
                 />
-              ) : null,
-            )}
+              ) : null;
+            })}
 
           {filterAssets.type !== 'local' && filterAssets.type !== 'remote' && (
             <Pressable

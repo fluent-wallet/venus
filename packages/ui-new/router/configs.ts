@@ -3,6 +3,8 @@ import type { NavigationProp, NavigatorScreenParams } from '@react-navigation/na
 import { type AssetInfo } from '@core/WalletCore/Plugins/AssetsTracker/types';
 import { type NFTItemDetail } from '@core/WalletCore/Plugins/NFTDetailTracker';
 
+import type { IWCSendTransactionData, IWCSessionProposalEventData, IWCSignMessageEventData } from '@core/WalletCore/Plugins/WalletConnect/types';
+
 export const WelcomeStackName = 'Welcome';
 export const WayToInitWalletStackName = 'WayToInitWallet';
 export const BiometricsWayStackName = 'Biometrics';
@@ -25,6 +27,27 @@ export const AboutUsStackName = 'AboutUs';
 export const PreferencesStackName = 'Preferences';
 export const AppearanceStackName = 'Appearance';
 export const LanguageStackName = 'Language';
+
+// start Wallet connect nest stack
+
+export const WalletConnectStackName = 'WalletConnect';
+
+export const WalletConnectLoadingStackName = 'WalletConnectLoading';
+export const WalletConnectProposalStackName = 'WalletConnectProposal';
+export const WalletConnectSessionsStackName = 'WalletConnectSessions';
+export const WalletConnectSignMessageStackName = 'WalletConnectSignMessage';
+export const WalletConnectTransactionStackName = 'WalletConnectTransaction';
+
+export type WalletConnectParamList = {
+  [WalletConnectLoadingStackName]: undefined;
+  [WalletConnectProposalStackName]: IWCSessionProposalEventData & { chains: number[] };
+  [WalletConnectSessionsStackName]: undefined;
+  [WalletConnectSignMessageStackName]: IWCSignMessageEventData;
+  [WalletConnectTransactionStackName]: IWCSendTransactionData & { isContract: boolean };
+  [PasswordVerifyStackName]: undefined;
+};
+
+// end Wallet connect nest stack
 
 export type RootStackParamList = {
   [WelcomeStackName]: undefined;
@@ -49,6 +72,7 @@ export type RootStackParamList = {
   [PreferencesStackName]: undefined;
   [AppearanceStackName]: undefined;
   [LanguageStackName]: undefined;
+  [WalletConnectStackName]: NavigatorScreenParams<WalletConnectParamList>;
 };
 
 export type StackScreenProps<T extends keyof RootStackParamList> = NativeStackScreenProps<RootStackParamList, T>;
@@ -69,6 +93,7 @@ export type BackupStackParamList = {
   [BackupSuccessStackName]: undefined;
   // navigate to home
   [HomeStackName]: undefined;
+  [PasswordVerifyStackName]: undefined;
 };
 export type BackupScreenProps<T extends keyof BackupStackParamList> = NativeStackScreenProps<BackupStackParamList, T>;
 // end backup nest stack
@@ -80,11 +105,12 @@ export const SendTransactionStep3StackName = 'SendTransactionStep3';
 export const SendTransactionStep4StackName = 'SendTransactionStep4';
 export type SendTransactionParamList = {
   [SendTransactionStep1StackName]: undefined;
-  [SendTransactionStep2StackName]: { targetAddress: string; searchAddress?: string };
-  [SendTransactionStep3StackName]: { asset: AssetInfo; targetAddress: string; nftItemDetail?: NFTItemDetail; amount?: string };
-  [SendTransactionStep4StackName]: { asset: AssetInfo; targetAddress: string; amount: string; nftItemDetail?: NFTItemDetail };
+  [SendTransactionStep2StackName]: { recipientAddress: string; searchAddress?: string };
+  [SendTransactionStep3StackName]: { asset: AssetInfo; recipientAddress: string; nftItemDetail?: NFTItemDetail; amount?: string };
+  [SendTransactionStep4StackName]: { asset: AssetInfo; recipientAddress: string; amount: string; nftItemDetail?: NFTItemDetail };
   // navigate to home
   [HomeStackName]: undefined;
+  [PasswordVerifyStackName]: undefined;
 };
 export type SendTransactionScreenProps<T extends keyof SendTransactionParamList> = NativeStackScreenProps<SendTransactionParamList, T>;
 // end SendTransaction nest stack

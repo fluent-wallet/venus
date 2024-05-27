@@ -5,9 +5,8 @@ import database from '../..';
 import { Q } from '@nozbe/watermelondb';
 import { ALL_TX_STATUSES, PENDING_TX_STATUSES, TxStatus } from './type';
 import { memoize } from 'lodash-es';
-import { Asset } from '../Asset';
 
-export type TxParams = Omit<ModelFields<Tx>, 'createdAt'> & { asset?: Asset };
+export type TxParams = Omit<ModelFields<Tx>, 'createdAt'>;
 export function createTx(params: TxParams, prepareCreate: true): Tx;
 export function createTx(params: TxParams): Promise<Tx>;
 export function createTx(params: TxParams, prepareCreate?: true) {
@@ -20,15 +19,20 @@ export const queryTxsWithAddress = (
     inStatuses = ALL_TX_STATUSES,
     notInStatuses,
     sortBy,
+    raw,
   }: {
     inStatuses?: TxStatus[];
     notInStatuses?: TxStatus[];
     sortBy?: string | string[];
-  }
+    raw?: string;
+  } = {},
 ) => {
   const query: Q.Clause[] = [Q.where('address_id', addressId), Q.where('is_temp_replaced', Q.notEq(true)), Q.where('status', Q.oneOf(inStatuses))];
   if (notInStatuses) {
     query.push(Q.where('status', Q.notIn(notInStatuses)));
+  }
+  if (raw) {
+    query.push(Q.where('raw', raw));
   }
   if (sortBy) {
     if (!Array.isArray(sortBy)) {
@@ -67,5 +71,5 @@ export const queryDuplicateTx = (tx: Tx, nonce: number, statuses = ALL_TX_STATUS
       Q.on(TableName.TxPayload, Q.where('nonce', nonce)),
       Q.where('status', Q.oneOf(statuses)),
       Q.where('id', Q.notEq(tx.id)),
-      Q.sortBy('created_at', Q.desc)
+      Q.sortBy('created_at', Q.desc),
     );

@@ -68,6 +68,7 @@ jobs:
       - name: Configure OSS
         env:
           OSS_KEY: ${{ secrets.OSS_KEY }}
+          OSS_ID: ${{ secrets.OSS_ID }}
         run: |
           touch ~/.ossutilconfig
           chmod 644 ~/.ossutilconfig
@@ -75,7 +76,7 @@ jobs:
           [Credentials]
           language=EN
           endpoint=oss-cn-hongkong.aliyuncs.com
-          accessKeyID=LTAI5t7DymqoLptHF5Jvng3M
+          accessKeyID=$OSS_ID
           accessKeySecret=$OSS_KEY
           END
       - name: Upload to OSS

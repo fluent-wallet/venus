@@ -18,6 +18,7 @@ import Navigations from './Navigations';
 import NotBackup from './NotBackup';
 import RefreshScrollView from './RefreshScrollView';
 import NoNetworkTip from './NoNetworkTip';
+import DAPPConnect from './DAPPConnect';
 
 const Home: React.FC<StackScreenProps<typeof HomeStackName>> = ({ navigation }) => {
   const { colors } = useTheme();
@@ -53,6 +54,7 @@ const Home: React.FC<StackScreenProps<typeof HomeStackName>> = ({ navigation }) 
             }}
           />
         </View>
+        <DAPPConnect />
         <RefreshScrollView stickyHeaderIndices={[4]} onRefresh={handleRefresh} onScroll={currentTab === 'NFTs' ? handleScroll : undefined}>
           <CurrentAddress />
           <TotalPrice />

@@ -2,6 +2,7 @@
 import React, { useMemo, useEffect, useCallback } from 'react';
 import { View, Pressable, StyleSheet } from 'react-native';
 import { useTheme } from '@react-navigation/native';
+import { useTranslation } from 'react-i18next';
 import Animated, { useSharedValue, useAnimatedStyle, withTiming } from 'react-native-reanimated';
 import PagerView from 'react-native-pager-view';
 import { useCurrentNetwork } from '@core/WalletCore/Plugins/ReactInject';
@@ -14,7 +15,7 @@ export enum Tab {
   Contacts = 'Contacts',
   MyWallets = 'My Wallets',
 }
-const TAB_WIDTH = 80;
+const TAB_WIDTH = 88;
 
 interface Props {
   currentTab: Tab;
@@ -23,9 +24,10 @@ interface Props {
   onPressReceiver: (receiver: string) => void;
 }
 
-const tabs = [Tab.Recently, Tab.Contacts, Tab.MyWallets] as const;
+const tabs = [Tab.Recently, Tab.MyWallets];
 
 export const Tabs: React.FC<Omit<Props, 'setCurrentTab' | 'onPressReceiver'>> = ({ currentTab, pageViewRef }) => {
+  const { t } = useTranslation();
   const { colors } = useTheme();
   const currentNetwork = useCurrentNetwork();
 
@@ -60,7 +62,7 @@ export const Tabs: React.FC<Omit<Props, 'setCurrentTab' | 'onPressReceiver'>> = 
           <Text
             style={[styles.tabLabel, { color: colors[currentTab === tab ? 'textPrimary' : 'textSecondary'], fontWeight: currentTab === tab ? '600' : '300' }]}
           >
-            {tab}
+            {tab === Tab.MyWallets ? t('tabs.mywallet') : tab === Tab.Recently ? t('tabs.recently') : tab}
           </Text>
         </Pressable>
       ))}

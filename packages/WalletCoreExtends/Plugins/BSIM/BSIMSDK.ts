@@ -101,6 +101,7 @@ export class BSIMError extends Error {
     super(message);
     this.name = 'BSIMError';
     this.code = code;
+    this.message = message;
   }
 }
 
@@ -162,7 +163,6 @@ interface BSIMSDKInterface {
    * update BPIN
    */
   updateBPIN(): Promise<string>;
-
 }
 
 export default BSIMSDK as BSIMSDKInterface;

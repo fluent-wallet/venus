@@ -8,6 +8,7 @@ import Text from '@components/Text';
 import TokenIcon from './TokenIcon';
 import AssetTypeLabel from '../AssetTypeLabel';
 import { shortenAddress } from '@core/utils/address';
+import { AssetType } from '@core/database/models/Asset';
 
 const TokenItem: React.FC<{
   data: AssetInfo;
@@ -38,10 +39,10 @@ const TokenItem: React.FC<{
           {showTypeLabel && <AssetTypeLabel assetType={data.type} />}
           {(hidePrice === false || hidePrice === 'encryption') && (
             <Text style={[styles.tokenName, { marginLeft: 'auto', textAlign: 'right', color: colors.textPrimary }]} numberOfLines={1}>
-              {hidePrice === 'encryption'  ? '***' : price}
+              {hidePrice === 'encryption' ? '***' : price}
             </Text>
           )}
-          {showAddress && data?.contractAddress && (
+          {showAddress && data.type !== AssetType.Native && data?.contractAddress && (
             <Text style={[styles.tokenAddress, { marginLeft: 'auto', textAlign: 'right', color: colors.textSecondary }]} numberOfLines={1}>
               {shortenAddress(data.contractAddress)}
             </Text>

@@ -214,7 +214,9 @@ export class BSIMPluginClass implements Plugin {
     return [resPromise.then((res) => Signature.from({ r: res.r, s: res.s, v: res.v })), cancel] as const;
   };
 
-  public signTypedData = async (domain: TypedDataDomain, types: Record<string, Array<TypedDataField>>, value: Record<string, any>, fromAddress: string) => {
+  public signTypedData = async (domain: TypedDataDomain, _types: Record<string, Array<TypedDataField>>, value: Record<string, any>, fromAddress: string) => {
+    // https://github.com/ethers-io/ethers.js/discussions/3163
+    const { EIP712Domain, ...types } = _types;
     const hash = TypedDataEncoder.hash(domain, types, value);
     const [resPromise, cancel] = await this.BSIMSign(hash, fromAddress);
     return [resPromise.then((res) => Signature.from({ r: res.r, s: res.s, v: res.v })), cancel] as const;

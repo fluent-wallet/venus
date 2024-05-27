@@ -1,6 +1,7 @@
 import React, { useState, useCallback, useRef } from 'react';
 import { View, Linking, StyleSheet } from 'react-native';
 import { useTheme, StackActions } from '@react-navigation/native';
+import { Trans, useTranslation } from 'react-i18next';
 import { useCameraPermission, useCameraDevice, useCameraFormat, Camera, type Code } from 'react-native-vision-camera';
 import { showMessage } from 'react-native-flash-message';
 import { scanFromURLAsync } from 'expo-barcode-scanner';
@@ -9,7 +10,7 @@ import Decimal from 'decimal.js';
 import { parseUri } from '@walletconnect/utils';
 import { useCurrentNetwork, NetworkType, getAssetsTokenList, AssetType } from '@core/WalletCore/Plugins/ReactInject';
 import methods from '@core/WalletCore/Methods';
-// import plugins from '@core/WalletCore/Plugins';
+import plugins from '@core/WalletCore/Plugins';
 import BottomSheet, { BottomSheetMethods, snapPoints } from '@components/BottomSheet';
 import Text from '@components/Text';
 import Button from '@components/Button';
@@ -19,12 +20,14 @@ import {
   SendTransactionStep2StackName,
   SendTransactionStep3StackName,
   SendTransactionStep4StackName,
+  WalletConnectStackName,
+  WalletConnectLoadingStackName,
   type StackScreenProps,
 } from '@router/configs';
 import { parseETHURL, type ETHURL } from '@utils/ETHURL';
 import { ENABLE_WALLET_CONNECT_FEATURE } from '@utils/features';
 import ScanBorder from '@assets/icons/scan-border.svg';
-import { Trans, useTranslation } from 'react-i18next';
+import { WalletConnectPluginError } from '@core/WalletCore/Plugins/WalletConnect';
 
 // has onConfirm props means open in SendTransaction with local modal way.
 interface Props {
@@ -43,7 +46,9 @@ const ScanQrCode: React.FC<Props> = ({ navigation, onConfirm, onClose }) => {
   const camera = useRef<Camera>(null);
   const device = useCameraDevice('back');
   const format = useCameraFormat(device, [{ fps: 30 }]);
-  const [scanStatus, setScanStatus] = useState<'Pending' | 'Parsing' | { errorMessage: string }>('Pending');
+  const [scanStatus, setScanStatus] = useState<{ errorMessage: string }>({ errorMessage: '' });
+
+  const isParsing = useRef(false);
 
   const { hasPermission, requestPermission } = useCameraPermission();
   const [hasRejectPermission, setHasRejectPermission] = useState(false);
@@ -130,50 +135,50 @@ const ScanQrCode: React.FC<Props> = ({ navigation, onConfirm, onClose }) => {
 
   const handleQRCode = useCallback(
     async (QRCodeString: string) => {
+      isParsing.current = true;
       let ethUrl: ETHURL;
       if (await methods.checkIsValidAddress({ networkType: currentNetwork.networkType, addressValue: QRCodeString })) {
         ethUrl = { target_address: QRCodeString, schema_prefix: currentNetwork.networkType === NetworkType.Ethereum ? 'ethereum:' : 'conflux:' } as ETHURL;
         onParseEthUrlSuccess(ethUrl);
+        isParsing.current = false;
         return;
       }
+
       try {
-        ethUrl = parseETHURL(QRCodeString);
-        onParseEthUrlSuccess(ethUrl);
-      } catch (err) {
         if (!onConfirm && QRCodeString.startsWith('wc:') && ENABLE_WALLET_CONNECT_FEATURE.allow) {
-          // try {
-          //   const { version } = parseUri(QRCodeString);
-          //   if (version === 1) {
-          //     setScanStatus({ errorMessage: t('scan.walletConnect.error.lowVersion') });
-          //   } else {
-          //     await plugins.WalletConnect.pair(QRCodeString);
-          //     // navigation.dispatch(StackActions.replace(HomeStackName, { screen: WalletStackName }));
-          //   }
-          // } catch (err) {
-          //   showMessage({
-          //     message: t('scan.walletConnect.error.connectFailed'),
-          //     description: String(err ?? ''),
-          //     duration: 3000,
-          //   });
-          //   setScanStatus({ errorMessage: `${t('scan.walletConnect.error.connectFailed')} ${String(err ?? '')}` });
-          // }
+          await plugins.WalletConnect.connect({ wcURI: QRCodeString });
+          isParsing.current = false;
+          navigation?.dispatch(StackActions.replace(WalletConnectStackName, { screen: WalletConnectLoadingStackName }));
+        } else {
+          ethUrl = parseETHURL(QRCodeString);
+          onParseEthUrlSuccess(ethUrl);
+          isParsing.current = false;
+        }
+      } catch (e) {
+        isParsing.current = false;
+        if (e instanceof WalletConnectPluginError) {
+          if (e.message === 'VersionNotSupported') {
+            setScanStatus({ errorMessage: t('scan.walletConnect.error.lowVersion') });
+          } else {
+            setScanStatus({ errorMessage: `${t('scan.walletConnect.error.connectFailed')} ${String(e ?? '')}` });
+          }
         } else {
           setScanStatus({ errorMessage: t('scan.QRCode.error.notRecognized') });
         }
       }
     },
-    [onConfirm, onParseEthUrlSuccess, currentNetwork.networkType],
+    [onConfirm, onParseEthUrlSuccess, currentNetwork.networkType, t, navigation],
   );
 
   const handleCodeScan = useCallback(
     async (codes: Code[]) => {
       const code = codes[0];
-      if (!code || scanStatus === 'Parsing') return;
+      if (!code || isParsing.current) return;
       if (!code.value) return;
 
       await handleQRCode(code.value);
     },
-    [currentNetwork?.networkType, onConfirm, onParseEthUrlSuccess, scanStatus],
+    [handleQRCode],
   );
 
   const pickImage = useCallback(async () => {
@@ -212,7 +217,6 @@ const ScanQrCode: React.FC<Props> = ({ navigation, onConfirm, onClose }) => {
   }, []);
 
   const handleOnOpen = useCallback(() => {
-    setScanStatus('Pending');
     if (!hasPermission) {
       requestCameraPermission();
     }
@@ -236,7 +240,7 @@ const ScanQrCode: React.FC<Props> = ({ navigation, onConfirm, onClose }) => {
                 <View style={styles.cameraWrapper}>
                   <Camera
                     ref={camera}
-                    isActive={scanStatus !== 'Parsing'}
+                    isActive={true}
                     device={device}
                     codeScanner={{
                       codeTypes: ['qr', 'ean-13'],

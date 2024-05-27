@@ -1,5 +1,5 @@
-import { useCallback, useRef, forwardRef, useState } from 'react';
-import { BackHandler, Keyboard } from 'react-native';
+import { useCallback, useRef, forwardRef, useState, useEffect } from 'react';
+import { BackHandler, Keyboard, Platform } from 'react-native';
 import { useFocusEffect, useTheme, useNavigation } from '@react-navigation/native';
 import { clamp } from 'lodash-es';
 import BottomSheet_, { BottomSheetBackdrop, type BottomSheetBackdropProps, type BottomSheetProps } from '@gorhom/bottom-sheet';
@@ -26,6 +26,7 @@ const BottomSheet = forwardRef<BottomSheet_, Props>(
       enablePanDownToClose = true,
       enableContentPanningGesture = true,
       enableHandlePanningGesture = true,
+      enableDynamicSizing = false,
       backDropPressBehavior = 'close',
       keyboardBlurBehavior = 'restore',
       android_keyboardInputMode = isAdjustResize ? 'adjustResize' : 'adjustPan',
@@ -34,6 +35,8 @@ const BottomSheet = forwardRef<BottomSheet_, Props>(
       onClose,
       onOpen,
       index,
+      activeOffsetY = 66,
+      activeOffsetX = 0,
       ...props
     },
     _forwardRef,
@@ -43,7 +46,7 @@ const BottomSheet = forwardRef<BottomSheet_, Props>(
 
     const indexRef = useRef(-1);
     const bottomSheetRef = useRef<BottomSheet_>(null);
-    const [couldPanDownToClose, setCouldPanDownToClose] = useState(() => false);
+    const [couldPanDownToClose, setCouldPanDownToClose] = useState(() => Platform.OS === 'ios');
 
     const renderBackdrop = useCallback(
       (props: BottomSheetBackdropProps) => (
@@ -74,7 +77,9 @@ const BottomSheet = forwardRef<BottomSheet_, Props>(
       }, [onBackPress]),
     );
 
+    const timeRef = useRef<NodeJS.Timeout | null>(null);
     const handleClose = useCallback(() => {
+      timeRef.current && clearTimeout(timeRef.current);
       onClose?.();
       if (Keyboard.isVisible()) {
         Keyboard.dismiss();
@@ -87,17 +92,34 @@ const BottomSheet = forwardRef<BottomSheet_, Props>(
       // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [onClose]);
 
+    useEffect(() => {
+      if (isRoute) {
+        timeRef.current = setTimeout(() => {
+          if (navigation.canGoBack()) {
+            navigation.goBack();
+          }
+        }, 666);
+      }
+      return () => {
+        timeRef.current && clearTimeout(timeRef.current);
+      };
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [isRoute]);
+
     return (
       <BottomSheet_
         ref={composeRef([_forwardRef!, bottomSheetRef])}
         index={index ?? (isRoute ? 0 : -1)}
         onChange={(index, position, type) => {
+          index === 0 && timeRef.current && clearTimeout(timeRef.current);
           indexRef.current = index;
           onChange?.(index, position, type);
           if (index === 0 && typeof onOpen === 'function') {
             onOpen();
           }
-          setTimeout(() => setCouldPanDownToClose(index >= 0), 250);
+          if (Platform.OS === 'android') {
+            setTimeout(() => setCouldPanDownToClose(index >= 0), 250);
+          }
         }}
         onClose={handleClose}
         enablePanDownToClose={couldPanDownToClose && enablePanDownToClose}
@@ -108,8 +130,10 @@ const BottomSheet = forwardRef<BottomSheet_, Props>(
         handleIndicatorStyle={{ backgroundColor: palette.gray4 }}
         android_keyboardInputMode={android_keyboardInputMode}
         keyboardBlurBehavior={keyboardBlurBehavior}
-        enableDynamicSizing={false}
+        enableDynamicSizing={enableDynamicSizing}
         animateOnMount={true}
+        activeOffsetY={activeOffsetY}
+        activeOffsetX={activeOffsetX}
         {...props}
       >
         {children}
@@ -121,6 +145,8 @@ const BottomSheet = forwardRef<BottomSheet_, Props>(
 export const snapPoints = {
   large: [`${((clamp(screenHeight - 100, 628, screenHeight - 40) / screenHeight) * 100).toFixed(2)}%`] as string[],
   percent75: ['75%'] as string[],
+  percent65: ["65%"] as string[],
+  percent50: ['50%'] as string[],
 } as const;
 
 export default BottomSheet;
