@@ -1,28 +1,37 @@
+import { useCallback } from 'react';
 import { useAtomValue, atom } from 'jotai';
 import { atomWithObservable } from 'jotai/utils';
-import { switchMap, of } from 'rxjs';
+import { switchMap, filter } from 'rxjs';
 import { observeSignatureRecordsCount, querySignatureRecords } from '../../../../database/models/Signature/query';
 import { currentAddressObservable } from './useCurrentAddress';
 import { Signature } from '@core/database/models/Signature';
 import { getAtom, setAtom } from '../nexus';
+import { notNull } from '@core/utils/rxjs';
 
-export const signatureRecordsCountObservable = currentAddressObservable.pipe(
-  switchMap((currentAddress) => (currentAddress ? observeSignatureRecordsCount(currentAddress.id) : of(0))),
+const signatureRecordsCountObservable = currentAddressObservable.pipe(
+  filter(notNull),
+  switchMap((currentAddress) => observeSignatureRecordsCount(currentAddress.id)),
 );
 const signatureRecordsCountAtom = atomWithObservable(() => signatureRecordsCountObservable, { initialValue: 0 });
 
 const signatureRecordsAtom = atom<Signature[]>([]);
-export const useSignatureRecords = () => useAtomValue(signatureRecordsAtom);
-export const setSignatureRecords = (data: Signature[], merge = true) => {
-  const prev = getAtom(signatureRecordsAtom);
-  if (merge) {
-    setAtom(signatureRecordsAtom, [...prev, ...data]);
-  } else {
-    setAtom(signatureRecordsAtom, data);
-  }
+export const useSignatureRecords = () => {
+  const records = useAtomValue(signatureRecordsAtom);
+  const total = useAtomValue(signatureRecordsCountAtom);
+  return {
+    total,
+    records,
+    setRecords: useCallback((data: Signature[], merge = true) => {
+      const prev = getAtom(signatureRecordsAtom);
+      if (merge) {
+        setAtom(signatureRecordsAtom, [...prev, ...data]);
+      } else {
+        setAtom(signatureRecordsAtom, data);
+      }
+    }, []),
+    resetRecords: useCallback(() => setAtom(signatureRecordsAtom, []), []),
+  };
 };
-export const useSignatureRecordsCount = () => useAtomValue(signatureRecordsCountAtom);
-export const resetSignatureRecords = () => setSignatureRecords([], false);
 
 export const fetchSignatureRecords = async (
   addressId: string,

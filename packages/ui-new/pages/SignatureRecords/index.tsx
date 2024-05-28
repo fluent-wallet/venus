@@ -5,13 +5,7 @@ import Text from '@components/Text';
 import { SignatureRecordsStackName, type StackScreenProps } from '@router/configs';
 import { useTranslation } from 'react-i18next';
 import { Signature } from '@core/database/models/Signature';
-import {
-  fetchSignatureRecords,
-  resetSignatureRecords,
-  setSignatureRecords,
-  useSignatureRecords,
-  useSignatureRecordsCount,
-} from '@core/WalletCore/Plugins/ReactInject/data/useSignature';
+import { fetchSignatureRecords, useSignatureRecords } from '@core/WalletCore/Plugins/ReactInject/data/useSignature';
 import { useCurrentAddress } from '@core/WalletCore/Plugins/ReactInject';
 
 export const SignatureItem: React.FC<{ item: Signature }> = ({ item }) => {
@@ -31,8 +25,7 @@ const SignatureRecords: React.FC<StackScreenProps<typeof SignatureRecordsStackNa
   // TODO: 监听签名记录变动，新增记录后需要偏移查询
   const [offset, setOffset] = useState(0);
   const { t } = useTranslation();
-  const list = useSignatureRecords();
-  const total = useSignatureRecordsCount();
+  const { records: list, total, setRecords, resetRecords } = useSignatureRecords();
   const address = useCurrentAddress();
 
   const handleQuery = useCallback(
@@ -46,10 +39,10 @@ const SignatureRecords: React.FC<StackScreenProps<typeof SignatureRecordsStackNa
       });
       if (data.length > 0) {
         setCurrent(page);
-        setSignatureRecords(data);
+        setRecords(data);
       }
     },
-    [address],
+    [address, setRecords],
   );
 
   const handleLoadMore = () => {
@@ -64,9 +57,9 @@ const SignatureRecords: React.FC<StackScreenProps<typeof SignatureRecordsStackNa
     handleQuery();
     // reset data when component unmounted
     return () => {
-      resetSignatureRecords();
+      resetRecords();
     };
-  }, [handleQuery]);
+  }, [handleQuery, resetRecords]);
   return (
     <View style={[styles.container, { backgroundColor: colors.bgPrimary }]}>
       <Text style={[styles.title, { color: colors.textPrimary }]}>{t('signature.list.title')}</Text>

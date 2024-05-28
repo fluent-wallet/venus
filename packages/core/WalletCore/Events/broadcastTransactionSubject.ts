@@ -5,6 +5,7 @@ import { ProcessErrorType } from '@core/utils/eth';
 import { Address } from '@core/database/models/Address';
 import { AssetType } from '../Plugins/ReactInject';
 import { Signature } from '@core/database/models/Signature';
+import { notNull } from '@core/utils/rxjs';
 
 export interface TransactionSubjectValue {
   txHash: string;
@@ -24,7 +25,5 @@ export interface TransactionSubjectValue {
 }
 
 export const broadcastTransactionSubjectPush = new BehaviorSubject<TransactionSubjectValue | null>(null);
-
-const notNull = <T>(value: T | null): value is T => value !== null;
 
 export const broadcastTransactionSubject = broadcastTransactionSubjectPush.pipe(filter(notNull));
