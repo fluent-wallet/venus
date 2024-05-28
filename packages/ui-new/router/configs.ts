@@ -27,6 +27,7 @@ export const AboutUsStackName = 'AboutUs';
 export const PreferencesStackName = 'Preferences';
 export const AppearanceStackName = 'Appearance';
 export const LanguageStackName = 'Language';
+export const SignatureRecordsStackName = 'SignatureRecords';
 
 // start Wallet connect nest stack
 
@@ -73,6 +74,7 @@ export type RootStackParamList = {
   [AppearanceStackName]: undefined;
   [LanguageStackName]: undefined;
   [WalletConnectStackName]: NavigatorScreenParams<WalletConnectParamList>;
+  [SignatureRecordsStackName]: undefined;
 };
 
 export type StackScreenProps<T extends keyof RootStackParamList> = NativeStackScreenProps<RootStackParamList, T>;

@@ -20,6 +20,7 @@ export class Signature extends Model {
   /** current blockNumber when sign, only for sort */
   @text('block_number') blockNumber!: string;
   @readonly @date('created_at') createdAt!: Date;
+  /** optional, Relation<App | null> */
   @immutableRelation(TableName.App, 'app_id') app!: Relation<App>;
   @immutableRelation(TableName.Address, 'address_id') address!: Relation<Address>;
   /** optional, Relation<Tx | null> */
@@ -27,6 +28,16 @@ export class Signature extends Model {
 
   @writer updateTx(tx: Tx) {
     return this.update((s) => s.tx.set(tx));
+  }
+
+  @reader async getApp() {
+    if (!this.app.id) return null;
+    const app = await this.app;
+    return app;
+  }
+  observeApp() {
+    if (!this.app.id) return of(null);
+    return this.app.observe();
   }
 
   @reader async getTx() {

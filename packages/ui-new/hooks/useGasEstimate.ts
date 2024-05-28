@@ -1,9 +1,9 @@
 import Plugins from '@core/WalletCore/Plugins';
 import { useCurrentNetwork } from '@core/WalletCore/Plugins/ReactInject';
 import { ITxEvm } from '@core/WalletCore/Plugins/Transaction/types';
+import { notNull } from '@core/utils/rxjs';
 import { useEffect, useState } from 'react';
 import { interval, startWith, switchMap, map, filter } from 'rxjs';
-const notNull = <T>(value: T | null): value is T => value !== null;
 /**
  * get gas estimate from RPC , use the current network config
  */

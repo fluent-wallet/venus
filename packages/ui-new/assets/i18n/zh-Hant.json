@@ -357,6 +357,11 @@
     }
   },
   "wc" : {
+    "daap" : {
+      "tx" : {
+        "unknown" : "未知"
+      }
+    },
     "dapp" : {
       "connectTo" : "已連接到",
       "connectedDApps" : "已連接的應用",
