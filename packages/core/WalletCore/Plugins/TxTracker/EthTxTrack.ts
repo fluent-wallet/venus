@@ -1,10 +1,9 @@
 import type { Tx } from '@core/database/models/Tx';
 import { EXECUTED_NOT_FINALIZED_TX_STATUSES, ExecutedStatus, TxStatus } from '@core/database/models/Tx/type';
-import { RPCResponse, RPCSend, RPCSendFactory } from '@core/utils/send';
-import { firstValueFrom } from 'rxjs';
-import { BaseTxTrack } from './BaseTxTrack';
+import { BaseTxTrack, RPCErrorResponse, isRPCError } from './BaseTxTrack';
 import { ProcessErrorType } from '@core/utils/eth';
 import { Network, NetworkType } from '@core/database/models/Network';
+import { fetchChain, fetchChainBatch } from '@cfx-kit/dapp-utils/dist/fetch';
 
 class EthTxTrack extends BaseTxTrack {
   networkType = NetworkType.Ethereum as const;
@@ -17,15 +16,17 @@ class EthTxTrack extends BaseTxTrack {
   async _checkStatus(txs: Tx[], network: Network, returnStatus = false): Promise<TxStatus | undefined> {
     const endpoint = network.endpoint;
     let status: TxStatus | undefined;
-    const RPCSend = RPCSendFactory(endpoint);
     const getTransactionByHashParams = txs.map((tx) => ({ method: 'eth_getTransactionByHash', params: [tx.hash] }));
-    const getTransactionByHashResponses = await firstValueFrom(RPCSend<RPCResponse<ETH.eth_getTransactionByHashResponse>[]>(getTransactionByHashParams));
+    const getTransactionByHashResponses = await fetchChainBatch<(ETH.eth_getTransactionByHashResponse | RPCErrorResponse)[]>({
+      url: endpoint,
+      rpcs: getTransactionByHashParams,
+    });
     const txsInPool = txs.filter((tx, index) => {
-      const { result: transaction, error } = getTransactionByHashResponses[index];
-      if (error) {
+      const transaction = getTransactionByHashResponses[index];
+      if (isRPCError(transaction)) {
         console.log('EthTxTrack: getTransactionByHash error:', {
           hash: tx.hash,
-          error,
+          error: transaction,
         });
         return false;
       }
@@ -41,14 +42,17 @@ class EthTxTrack extends BaseTxTrack {
     });
     if (txsInPool.length) {
       const getTransactionReceiptParams = txsInPool.map((tx) => ({ method: 'eth_getTransactionReceipt', params: [tx.hash] }));
-      const getTransactionReceiptResponses = await firstValueFrom(RPCSend<RPCResponse<ETH.eth_getTransactionReceiptResponse>[]>(getTransactionReceiptParams));
+      const getTransactionReceiptResponses = await fetchChainBatch<(ETH.eth_getTransactionReceiptResponse | RPCErrorResponse)[]>({
+        url: endpoint,
+        rpcs: getTransactionReceiptParams,
+      });
       const receiptMap = new Map<string, ETH.eth_getTransactionReceiptResponse>();
       const executedTxs = txsInPool.filter((tx, index) => {
-        const { result: receipt, error } = getTransactionReceiptResponses[index];
-        if (error) {
+        const receipt = getTransactionReceiptResponses[index];
+        if (isRPCError(receipt)) {
           console.log('EthTxTrack: getTransactionReceipt error:', {
             hash: tx.hash,
-            error,
+            error: receipt,
           });
           return false;
         }
@@ -77,28 +81,31 @@ class EthTxTrack extends BaseTxTrack {
           { method: 'eth_getBlockByNumber', params: ['safe', false] },
           { method: 'eth_getBlockByNumber', params: ['finalized', false] },
         );
-        const [latestBlock, safeBlock, finalizedBlock, ...getBlockByHashParamsResponses] = await firstValueFrom(
-          RPCSend<RPCResponse<ETH.eth_getBlockByHashResponse>[]>(getBlockByHashParams),
-        );
+        const [latestBlock, safeBlock, finalizedBlock, ...getBlockByHashParamsResponses] = await fetchChainBatch<
+          (ETH.eth_getBlockByHashResponse | RPCErrorResponse)[]
+        >({
+          url: endpoint,
+          rpcs: getBlockByHashParams,
+        });
         let latestBlockNumber: bigint | undefined;
         let safeBlockNumber: bigint | undefined;
         let finalizedBlockNumber: bigint | undefined;
-        if (latestBlock.result?.number) {
-          latestBlockNumber = BigInt(latestBlock.result.number);
+        if (!isRPCError(latestBlock) && latestBlock?.number) {
+          latestBlockNumber = BigInt(latestBlock.number);
         }
-        if (safeBlock.result?.number) {
-          safeBlockNumber = BigInt(safeBlock.result.number);
+        if (!isRPCError(safeBlock) && safeBlock?.number) {
+          safeBlockNumber = BigInt(safeBlock.number);
         }
-        if (finalizedBlock.result?.number) {
-          finalizedBlockNumber = BigInt(finalizedBlock.result.number);
+        if (!isRPCError(finalizedBlock) && finalizedBlock?.number) {
+          finalizedBlockNumber = BigInt(finalizedBlock.number);
         }
         await Promise.all(
           executedTxs.map(async (tx, index) => {
-            const { result: block, error } = getBlockByHashParamsResponses[index];
-            if (error) {
+            const block = getBlockByHashParamsResponses[index];
+            if (isRPCError(block)) {
               console.log('EthTxTrack: getBlockByHash error:', {
                 hash: tx.hash,
-                error,
+                error: block,
               });
               return false;
             }
@@ -161,11 +168,19 @@ class EthTxTrack extends BaseTxTrack {
   }
 
   async _getTransactionByHash(hash: string, endpoint: string) {
-    return firstValueFrom(RPCSend<RPCResponse<ETH.eth_getTransactionByHashResponse>>(endpoint, { method: 'eth_getTransactionByHash', params: [hash] }));
+    return fetchChain<ETH.eth_getTransactionByHashResponse>({
+      url: endpoint,
+      method: 'eth_getTransactionByHash',
+      params: [hash],
+    });
   }
 
   async _getNonce(address: string, endpoint: string) {
-    return firstValueFrom(RPCSend<RPCResponse<string>>(endpoint, { method: 'eth_getTransactionCount', params: [address, 'latest'] }));
+    return fetchChain<string>({
+      url: endpoint,
+      method: 'eth_getTransactionCount',
+      params: [address, 'latest'],
+    });
   }
 }
 
