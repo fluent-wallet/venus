@@ -13,6 +13,7 @@ export type FetchAssetBalance = (params: {
 }) => Promise<Array<string>>;
 
 type BaseAssetInfo = {
+  type: AssetType;
   name: string;
   symbol: string;
   decimals: number;
@@ -26,6 +27,7 @@ type BaseAssetInfo = {
 
 interface NativeAssetInfo extends BaseAssetInfo {
   type: AssetType.Native;
+  contractAddress?: never | undefined;
 }
 interface ERCAssetInfo extends BaseAssetInfo {
   type: Exclude<AssetType, AssetType.Native>;
@@ -33,7 +35,6 @@ interface ERCAssetInfo extends BaseAssetInfo {
 }
 
 export type AssetInfo = NativeAssetInfo | ERCAssetInfo;
-
 
 export interface Fetcher {
   fetchAssetsBalance?: FetchAssetBalance;

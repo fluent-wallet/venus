@@ -1,10 +1,17 @@
 import { BSIMError, BSIM_ERRORS } from '@WalletCoreExtends/Plugins/BSIM/BSIMSDK';
-import Methods from '@core/WalletCore/Methods';
+import methods from '@core/WalletCore/Methods';
 import Plugins from '@core/WalletCore/Plugins';
 import { checkDiffInRange } from '@core/WalletCore/Plugins/BlockNumberTracker';
 import { NetworkType, VaultType, useCurrentAccount, useCurrentAddress, useCurrentNetwork, useVaultOfAccount } from '@core/WalletCore/Plugins/ReactInject';
 import { ITxEvm } from '@core/WalletCore/Plugins/Transaction/types';
 import { useCallback, useRef } from 'react';
+
+export class SignTransactionCancelError extends Error {
+  constructor() {
+    super('Sign Transaction Cancel');
+    this.message = 'Sign Transaction Cancel';
+  }
+}
 
 export class AddressNotMatchCurrent extends Error {
   constructor() {
@@ -43,27 +50,35 @@ export function useSignTransaction() {
           const code = (bsimError as { code: string })?.code;
           const message = (bsimError as { message: string })?.message;
           if (code === 'cancel') {
-            // TODO : ignore cancel error
-            throw bsimError;
+            throw new SignTransactionCancelError();
           } else {
             const errorMsg = BSIM_ERRORS[code?.toUpperCase()] || message || BSIM_ERRORS.default;
             throw new BSIMError(code, errorMsg);
           }
         }
       } else {
-        const privateKey = await Methods.getPrivateKeyOfAddress(currentAddress);
-        const txRawPromise = Plugins.Transaction.signTransaction({
-          network: currentNetwork,
-          tx,
-          privateKey,
-          epochHeight: tx.epochHeight,
-        });
-        return {
-          txRawPromise,
-          cancel: () => {
-            //
-          },
-        };
+        try {
+          const privateKey = await methods.getPrivateKeyOfAddress(currentAddress);
+          const txRawPromise = Plugins.Transaction.signTransaction({
+            network: currentNetwork,
+            tx,
+            privateKey,
+            epochHeight: tx.epochHeight,
+          });
+          return {
+            txRawPromise,
+            cancel: () => {
+              //
+            },
+          };
+        } catch (e: unknown) {
+          // packages/ui-new/modules/PasswordVerify/index.tsx:45
+          if (e === 'cancel') {
+            throw new SignTransactionCancelError();
+          } else {
+            throw e;
+          }
+        }
       }
     },
     [currentAddress, currentNetwork, currentVault],

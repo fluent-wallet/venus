@@ -12,30 +12,26 @@ export enum WalletConnectRPCMethod {
   SendTransaction = 'eth_sendTransaction',
 }
 
-export enum WalletConnectPluginEventMethod {
+export enum WalletConnectPluginEventType {
   LOADING = 'loading',
-
   SESSION_PROPOSAL = 'session_proposal',
-
   SIGN_MESSAGE = 'sign_message',
   SEND_TRANSACTION = 'sendTransaction',
-}
-export interface IWCLoadingEvent {
-  type: WalletConnectPluginEventMethod.LOADING;
-  data: boolean;
 }
 
 export interface IWCSessionProposalEventData {
   metadata: Web3WalletTypes.Metadata;
   requiredNamespaces: ProposalTypes.RequiredNamespaces;
   optionalNamespaces: ProposalTypes.OptionalNamespaces;
-  approve: (args: Omit<BuildApprovedNamespacesParams['supportedNamespaces'][string], 'methods' | 'events'>) => Promise<void>;
-  reject: (reason?: SdkErrorKey) => Promise<void>;
 }
 
-export interface IWCProposalEvent {
-  type: WalletConnectPluginEventMethod.SESSION_PROPOSAL;
+export interface IWCSessionProposalEvent {
+  type: WalletConnectPluginEventType.SESSION_PROPOSAL;
   data: IWCSessionProposalEventData;
+  action: {
+    approve: (args: Omit<BuildApprovedNamespacesParams['supportedNamespaces'][string], 'methods' | 'events'>) => Promise<void>;
+    reject: (reason?: SdkErrorKey) => Promise<void>;
+  };
 }
 
 export interface IWCSignMessageEventData {
@@ -44,16 +40,18 @@ export interface IWCSignMessageEventData {
   address: string;
   message: string;
   metadata: Web3WalletTypes.Metadata;
-  approve: (signedMessage: string) => Promise<void>;
-  reject: (reason: string) => Promise<void>;
 }
 
 export interface IWCSignMessageEvent {
-  type: WalletConnectPluginEventMethod.SIGN_MESSAGE;
+  type: WalletConnectPluginEventType.SIGN_MESSAGE;
   data: IWCSignMessageEventData;
+  action: {
+    approve: (signedMessage: string) => Promise<void>;
+    reject: (reason?: string) => Promise<void>;
+  };
 }
 
-export interface IWCSendTransactionData {
+export interface IWCSendTransactionEventData {
   chainId: string;
   method: WalletConnectRPCMethod;
   address: string;
@@ -67,13 +65,15 @@ export interface IWCSendTransactionData {
     gasPrice?: bigint;
   };
   metadata: WalletConnectMetadata;
-  approve: (txhash: string) => Promise<void>;
-  reject: (reason: string) => Promise<void>;
 }
 export interface IWCSendTransactionEvent {
-  type: WalletConnectPluginEventMethod.SEND_TRANSACTION;
-  data: IWCSendTransactionData;
+  type: WalletConnectPluginEventType.SEND_TRANSACTION;
+  data: IWCSendTransactionEventData;
+  action: {
+    approve: (txhash: string) => Promise<void>;
+    reject: (reason?: string) => Promise<void>;
+  };
 }
-export type WalletConnectPluginEvents = IWCProposalEvent | IWCLoadingEvent | IWCSignMessageEvent | IWCSendTransactionEvent;
+export type WalletConnectPluginEvents = IWCSessionProposalEvent | IWCSignMessageEvent | IWCSendTransactionEvent;
 
 export type WalletConnectMetadata = Web3WalletTypes.Metadata;

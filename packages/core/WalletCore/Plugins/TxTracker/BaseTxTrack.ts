@@ -1,13 +1,22 @@
 import { queryDuplicateTx } from '@core/database/models/Tx/query';
 import type { Tx } from '@core/database/models/Tx';
 import { NOT_FINALIZED_TX_STATUSES, TxStatus } from '@core/database/models/Tx/type';
-import { RPCResponse } from '@core/utils/send';
 import plugins from '@core/WalletCore/Plugins';
 import { CHECK_REPLACED_BEFORE_RESEND_COUNT, TX_RESEND_LIMIT } from '@core/consts/transaction';
 import { ReplacedResponse } from './types';
 import { ProcessErrorType } from '@core/utils/eth';
 import Transaction from '../Transaction';
 import { Network } from '@core/database/models/Network';
+
+export interface RPCErrorResponse {
+  message: string;
+  code: number;
+  data?: unknown;
+}
+
+export const isRPCError = (response: unknown): response is RPCErrorResponse => {
+  return typeof response === 'object' && !!response && 'code' in (response as RPCErrorResponse) && 'message' in (response as RPCErrorResponse);
+};
 
 export abstract class BaseTxTrack {
   _logPrefix: string;
@@ -118,7 +127,7 @@ export abstract class BaseTxTrack {
       if (!nonceUsed) {
         return ReplacedResponse.NotReplaced;
       } else {
-        const { result: transaction } = await this._getTransactionByHash(tx.hash!, endpoint);
+        const transaction = await this._getTransactionByHash(tx.hash!, endpoint);
         if (!transaction) {
           return ReplacedResponse.Replaced;
         } else {
@@ -137,8 +146,7 @@ export abstract class BaseTxTrack {
         return true;
       }
       const address = await (await tx.address).getValue();
-      const { result: latestNonce, error } = await this._getNonce(address, endpoint);
-      if (error) throw error;
+      const latestNonce = await this._getNonce(address, endpoint);
       latestNonce && this._latestNonceMap.set(tx.address.id, latestNonce);
       if (Number(latestNonce) > Number(nonce)) {
         return true;
@@ -152,9 +160,6 @@ export abstract class BaseTxTrack {
 
   abstract _checkStatus(txs: Tx[], network: Network, returnStatus?: boolean): Promise<TxStatus | undefined>;
   abstract _checkEpochHeightOutOfBound(tx: Tx): Promise<boolean>;
-  abstract _getTransactionByHash(
-    hash: string,
-    endpoint: string,
-  ): Promise<RPCResponse<ETH.eth_getTransactionByHashResponse | CFX.cfx_getTransactionByHashResponse>>;
-  abstract _getNonce(address: string, endpoint: string): Promise<RPCResponse<string>>;
+  abstract _getTransactionByHash(hash: string, endpoint: string): Promise<ETH.eth_getTransactionByHashResponse | CFX.cfx_getTransactionByHashResponse>;
+  abstract _getNonce(address: string, endpoint: string): Promise<string>;
 }

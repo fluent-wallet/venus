@@ -1,11 +1,10 @@
 import type { Tx } from '@core/database/models/Tx';
 import { EXECUTED_NOT_FINALIZED_TX_STATUSES, ExecutedStatus, TxStatus } from '@core/database/models/Tx/type';
-import { RPCResponse, RPCSend, RPCSendFactory } from '@core/utils/send';
-import { firstValueFrom } from 'rxjs';
-import { BaseTxTrack } from './BaseTxTrack';
+import { BaseTxTrack, RPCErrorResponse, isRPCError } from './BaseTxTrack';
 import BlockNumberTracker from '../BlockNumberTracker';
 import { ProcessErrorType } from '@core/utils/eth';
 import { Network, NetworkType } from '@core/database/models/Network';
+import { fetchChain, fetchChainBatch } from '@cfx-kit/dapp-utils/dist/fetch';
 
 class CFXTxTrack extends BaseTxTrack {
   networkType = NetworkType.Conflux as const;
@@ -18,15 +17,17 @@ class CFXTxTrack extends BaseTxTrack {
   async _checkStatus(txs: Tx[], network: Network, returnStatus = false): Promise<TxStatus | undefined> {
     const endpoint = network.endpoint;
     let status: TxStatus | undefined;
-    const RPCSend = RPCSendFactory(endpoint);
     const getTransactionByHashParams = txs.map((tx) => ({ method: 'cfx_getTransactionByHash', params: [tx.hash] }));
-    const getTransactionByHashResponses = await firstValueFrom(RPCSend<RPCResponse<CFX.cfx_getTransactionByHashResponse>[]>(getTransactionByHashParams));
+    const getTransactionByHashResponses = await fetchChainBatch<(CFX.cfx_getTransactionByHashResponse | RPCErrorResponse)[]>({
+      url: endpoint,
+      rpcs: getTransactionByHashParams,
+    });
     const executedTxs = txs.filter((tx, index) => {
-      const { result: transaction, error } = getTransactionByHashResponses[index];
-      if (error) {
+      const transaction = getTransactionByHashResponses[index];
+      if (isRPCError(transaction)) {
         console.log('CFXTxTrack: getTransactionByHash error:', {
           hash: tx.hash,
-          error,
+          error: transaction,
         });
         return false;
       }
@@ -57,14 +58,17 @@ class CFXTxTrack extends BaseTxTrack {
     });
     if (executedTxs.length) {
       const getTransactionReceiptParams = executedTxs.map((tx) => ({ method: 'cfx_getTransactionReceipt', params: [tx.hash] }));
-      const getTransactionReceiptResponses = await firstValueFrom(RPCSend<RPCResponse<CFX.cfx_getTransactionReceiptResponse>[]>(getTransactionReceiptParams));
+      const getTransactionReceiptResponses = await fetchChainBatch<(CFX.cfx_getTransactionReceiptResponse | RPCErrorResponse)[]>({
+        url: endpoint,
+        rpcs: getTransactionReceiptParams,
+      });
       const receiptMap = new Map<string, CFX.cfx_getTransactionReceiptResponse>();
       const hasReceiptTxs = executedTxs.filter((tx, index) => {
-        const { result: receipt, error } = getTransactionReceiptResponses[index];
-        if (error) {
+        const receipt = getTransactionReceiptResponses[index];
+        if (isRPCError(receipt)) {
           console.log('CFXTxTrack: getTransactionReceipt error:', {
             hash: tx.hash,
-            error,
+            error: receipt,
           });
           return false;
         }
@@ -75,28 +79,33 @@ class CFXTxTrack extends BaseTxTrack {
       });
       const getBlockByHashParams = hasReceiptTxs.map((tx) => ({ method: 'cfx_getBlockByHash', params: [receiptMap.get(tx.hash!)!.blockHash, false] }));
       getBlockByHashParams.unshift({ method: 'cfx_getStatus', params: [] });
-      const [statusResponse, ...getBlockByHashParamsResponses] = await firstValueFrom(
-        RPCSend<[RPCResponse<CFX.cfx_getStatusResponse>, ...RPCResponse<CFX.cfx_getBlockByHashResponse>[]]>(getBlockByHashParams),
-      );
+      const [statusResponse, ...getBlockByHashParamsResponses] = await fetchChainBatch<
+        [CFX.cfx_getStatusResponse | RPCErrorResponse, ...(CFX.cfx_getBlockByHashResponse | RPCErrorResponse)[]]
+      >({
+        url: endpoint,
+        rpcs: getBlockByHashParams,
+      });
       let latestBlockNumber: bigint | undefined;
       let safeBlockNumber: bigint | undefined;
       let finalizedBlockNumber: bigint | undefined;
-      if (statusResponse.result?.latestState) {
-        latestBlockNumber = BigInt(statusResponse.result.latestState);
-      }
-      if (statusResponse.result?.latestConfirmed) {
-        safeBlockNumber = BigInt(statusResponse.result.latestConfirmed);
-      }
-      if (statusResponse.result?.latestFinalized) {
-        finalizedBlockNumber = BigInt(statusResponse.result.latestFinalized);
+      if (!isRPCError(statusResponse) && statusResponse) {
+        if (statusResponse.latestState) {
+          latestBlockNumber = BigInt(statusResponse.latestState);
+        }
+        if (statusResponse.latestConfirmed) {
+          safeBlockNumber = BigInt(statusResponse.latestConfirmed);
+        }
+        if (statusResponse.latestFinalized) {
+          finalizedBlockNumber = BigInt(statusResponse.latestFinalized);
+        }
       }
       await Promise.all(
         hasReceiptTxs.map(async (tx, index) => {
-          const { result: block, error } = getBlockByHashParamsResponses[index];
-          if (error) {
+          const block = getBlockByHashParamsResponses[index];
+          if (isRPCError(block)) {
             console.log('CFXTxTrack: getBlockByHash error:', {
               hash: tx.hash,
-              error,
+              error: block,
             });
             return false;
           }
@@ -174,11 +183,19 @@ class CFXTxTrack extends BaseTxTrack {
   }
 
   async _getTransactionByHash(hash: string, endpoint: string) {
-    return firstValueFrom(RPCSend<RPCResponse<CFX.cfx_getTransactionByHashResponse>>(endpoint, { method: 'cfx_getTransactionByHash', params: [hash] }));
+    return fetchChain<CFX.cfx_getTransactionByHashResponse>({
+      url: endpoint,
+      method: 'cfx_getTransactionByHash',
+      params: [hash],
+    });
   }
 
   async _getNonce(address: string, endpoint: string) {
-    return firstValueFrom(RPCSend<RPCResponse<string>>(endpoint, { method: 'cfx_getNextNonce', params: [address] }));
+    return fetchChain<string>({
+      url: endpoint,
+      method: 'cfx_getNextNonce',
+      params: [address],
+    });
   }
 }
 

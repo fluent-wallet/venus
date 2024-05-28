@@ -23,7 +23,7 @@ export const ACTIVITY_DB_STATUS_FEATURE = {
 
 export const ENABLE_WALLET_CONNECT_FEATURE = {
   describe: 'wallet connect feature',
-  allow: isDev,
+  allow: isDev || isQA,
 };
 
 export const DEVELOPER_FEATURE = {

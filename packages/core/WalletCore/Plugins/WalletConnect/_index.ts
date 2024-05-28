@@ -176,7 +176,7 @@
 //           return;
 //         }
 //         const network = await address?.network;
-//         // TODO let user to choose network and address
+//         // TODO: let user to choose network and address
 //         const client = await this.web3wallet;
 //         const { id, proposer, requiredNamespaces } = proposal.params;
 //         const supportedNamespaces = {
@@ -217,7 +217,7 @@
 //     const { id, topic } = request;
 //     const { method, params } = request.params.request;
 
-//     // todo  check chain id is current id
+//     // TODO:  check chain id is current id
 
 //     if (method === WalletConnectRPCMethod.Sign) {
 //       await client.respondSessionRequest({

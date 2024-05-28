@@ -50,12 +50,11 @@ import {
   type RootStackParamList,
   type StackNavigation,
   SheetBottomOption,
-  WalletConnectLoadingStackName,
   WalletConnectStackName,
   SignatureRecordsStackName,
 } from './configs';
 import Header from './Header';
-import { useListenWalletConnectEvent } from '@pages/WalletConnect/hooks';
+import { useListenWalletConnectEvent } from '@pages/WalletConnect/useWalletConnectHooks';
 import WalletConnect from '@pages/WalletConnect';
 import SignatureRecords from '@pages/SignatureRecords';
 

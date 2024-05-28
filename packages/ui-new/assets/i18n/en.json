@@ -1,13 +1,21 @@
 {
   "account" : {
+    "HDWallet" : {
+      "select" : {
+        "noVerification" : "You have not completed\nthe security verification,<3> try again</3>.\n\n",
+        "pathType" : "HD Wallet Path Type",
+        "selected" : "{{accounts}} address{{es}} selected\n\n\n",
+        "title" : "Select HD Wallets"
+      }
+    },
     "action" : {
+      "ManageMent" : "Management",
       "add" : "Add Account",
-      "addOther" : "Add another wallet",
       "add.title" : "Add Wallet",
+      "addOther" : "Add another wallet",
       "eraseAll" : "Erase all wallets",
       "eraseAll.describe" : "Account data will be cleared.\n  \nBe sure to back up your wallet, otherwise you will permanently lose it and all assets.",
       "eraseAll.title" : "⚠️ Erase all wallets?",
-      "ManageMent" : "Management",
       "remove" : "Remove Account",
       "remove.describe" : "This Action will remove this wallet from the app.\n\nApp can not restore your wallet, you can restore with its seed phrase / private key.\n\nBe sure to back up your wallet, otherwise you will permanently lose it and all assets.",
       "remove.title" : "Delete this wallet?  "
@@ -54,14 +62,6 @@
         "seed" : "Seed Phrase Group"
       }
     },
-    "HDWallet" : {
-      "select" : {
-        "noVerification" : "You have not completed\nthe security verification,<3> try again</3>.\n\n",
-        "pathType" : "HD Wallet Path Type",
-        "selected" : "{{accounts}} address{{es}} selected\n\n\n",
-        "title" : "Select HD Wallets"
-      }
-    },
     "management" : {
       "title" : "Account Management"
     },
@@ -98,6 +98,7 @@
     }
   },
   "common" : {
+    "HDWallets" : "HD Wallets",
     "account" : "Account",
     "amount" : "Amount",
     "backup" : "Backup",
@@ -108,12 +109,12 @@
     "connect" : "Connect",
     "continue" : "Continue",
     "copied" : "Copied",
+    "customize" : "Customize",
     "delete" : "Delete",
     "disconnect" : "Disconnect",
     "dismiss" : "Dismiss",
     "edit" : "Edit",
     "enable" : "Enable",
-    "HDWallets" : "HD Wallets",
     "index" : "Index",
     "max" : "Max",
     "method" : {
@@ -126,10 +127,12 @@
     "privateKey" : "Private key",
     "retry" : "Retry",
     "return" : "Return",
+    "save" : "Save",
     "seedPhrase" : "Seed Phrase",
     "send" : "Send",
     "to" : "To",
     "unsafe" : "Unsafe",
+    "use" : "Use",
     "verifyPassword" : "Verify Password",
     "view" : "View"
   },
@@ -184,6 +187,11 @@
     "title" : "Receive"
   },
   "scan" : {
+    "QRCode" : {
+      "error" : {
+        "notRecognized" : "Sorry, this QR code could not be recognized."
+      }
+    },
     "parse" : {
       "error" : {
         "invalidTargetAddress" : "Invalid target address.",
@@ -201,11 +209,6 @@
       "title" : "Wallet Requires Access"
     },
     "photos" : "Photos",
-    "QRCode" : {
-      "error" : {
-        "notRecognized" : "Sorry, this QR code could not be recognized."
-      }
-    },
     "title" : "Scan",
     "walletConnect" : {
       "error" : {
@@ -286,8 +289,8 @@
     "amount" : {
       "anyAmount" : "Any Amount",
       "error" : {
-        "estimate" : "Failed to estimate, please try again",
         "InsufficientBalance" : "Insufficient {{symbol}} balance.",
+        "estimate" : "Failed to estimate, please try again",
         "invalidAmount" : "Invalid amount"
       },
       "estimateMax" : "Estimate Max"
@@ -363,14 +366,22 @@
       "connectTo" : "Connected to",
       "connectedDApps" : "Connected DApps",
       "tx" : {
+        "DAppSuggestions" : "DApp suggestions",
         "contract" : "Contract",
+        "contractInteraction" : "Contract Interaction",
+        "editAllowance" : "Edit Allowance",
         "function" : "Function",
         "network" : "Network",
         "nonce" : "Nonce",
+        "shareOfBalance" : "A share of balance",
         "signingWith" : "Signing with",
+        "simulatedResult" : "Simulated Result",
         "simulating" : "Simulating",
         "title" : "Transaction Confirm",
         "transactionRequest" : "Transaction Request",
+        "unableSimulated" : "Unable to simulated result.",
+        "unknown" : "unknown",
+        "unlimited" : "Unlimited",
         "viewData" : "View More Details"
       }
     },
