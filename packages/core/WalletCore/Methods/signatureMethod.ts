@@ -12,7 +12,18 @@ export class SignatureMethod {
       const { address, app, message, signType } = params;
       const network = await address.network;
       const blockNumber = await this.plugins.BlockNumberTracker.getNetworkBlockNumber(network);
-
+      for (let i = 0; i < 10; i++) {
+        await _createSignature(
+          {
+            address,
+            app,
+            signType,
+            blockNumber,
+            message: `${message}-${i}`,
+          },
+          prepareCreate,
+        );
+      }
       // TODO: fill params
       return _createSignature(
         {

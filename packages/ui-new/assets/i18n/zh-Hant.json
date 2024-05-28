@@ -105,15 +105,18 @@
     "cancel" : "取消",
     "close" : "關閉",
     "confirm" : "確認",
+    "connect" : "連接",
     "continue" : "繼續",
     "copied" : "已複製",
     "delete" : "刪除",
+    "disconnect" : "斷開連接",
     "dismiss" : "忽略",
     "edit" : "編輯",
     "enable" : "啟用",
     "HDWallets" : "HD 錢包",
     "index" : "序號",
     "max" : "最大",
+    "network" : "網絡",
     "next" : "繼續",
     "ok" : "OK",
     "password" : "密碼",
@@ -123,6 +126,7 @@
     "seedPhrase" : "助記詞",
     "send" : "發送",
     "to" : "接收方",
+    "unsafe" : "不安全",
     "verifyPassword" : "驗證密碼",
     "view" : "查看"
   },
@@ -333,6 +337,40 @@
         "validPrivateKey" : "有效的私鑰"
       },
       "placeholder" : "請輸入助記詞（以空格分隔）或私鑰"
+    }
+  },
+  "wc" : {
+    "daap" : {
+      "tx" : {
+        "unknown" : "未知"
+      }
+    },
+    "dapp" : {
+      "connectTo" : "已連接到",
+      "connectedDApps" : "已連接的應用",
+      "tx" : {
+        "contract" : "合約地址",
+        "function" : "方法",
+        "network" : "網絡",
+        "nonce" : "隨機數",
+        "signingWith" : "以此賬戶簽名",
+        "simulating" : "模擬執行",
+        "title" : "確認交易",
+        "transactionRequest" : "交易請求",
+        "viewData" : "查看更多信息"
+      }
+    },
+    "proposal" : {
+      "accountSelected" : "已選的賬戶",
+      "describe" : "想要連接你的錢包"
+    },
+    "request" : {
+      "signature" : "簽名請求"
+    },
+    "sign" : {
+      "message" : "信息",
+      "network" : "在 {{network}}   ",
+      "signData" : "簽署信息"
     }
   },
   "welcome" : {

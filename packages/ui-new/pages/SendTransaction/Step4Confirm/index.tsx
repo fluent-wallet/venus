@@ -187,9 +187,9 @@ const SendTransactionStep4Confirm: React.FC<SendTransactionScreenProps<typeof Se
         bsimCancelRef.current = cancel;
         txRaw = await txRawPromise;
         signature = await Methods.createSignature({
-          // TODO: set App
-          address: currentAddress, app: null!, message: '123123', signType: SignType.TX
-        })
+          address: currentAddress,
+          signType: SignType.TX,
+        });
 
         txHash = await plugins.Transaction.sendRawTransaction({ txRaw, network: currentNetwork });
 

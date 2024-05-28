@@ -52,10 +52,12 @@ import {
   SheetBottomOption,
   WalletConnectLoadingStackName,
   WalletConnectStackName,
+  SignatureRecordsStackName,
 } from './configs';
 import Header from './Header';
 import { useListenWalletConnectEvent } from '@pages/WalletConnect/hooks';
 import WalletConnect from '@pages/WalletConnect';
+import SignatureRecords from '@pages/SignatureRecords';
 
 const RootStack = createNativeStackNavigator<RootStackParamList>();
 const screenOptions = {
@@ -111,6 +113,7 @@ const Router: React.FC = () => {
         <RootStack.Screen name={LanguageStackName} component={Language} options={SheetBottomOption} />
 
         <RootStack.Screen name={WalletConnectStackName} component={WalletConnect} options={SheetBottomOption} />
+        <RootStack.Screen name={SignatureRecordsStackName} component={SignatureRecords} />
       </RootStack.Navigator>
     </View>
   );

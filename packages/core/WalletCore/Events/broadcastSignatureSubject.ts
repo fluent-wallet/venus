@@ -5,7 +5,7 @@ import { BehaviorSubject, filter } from 'rxjs';
 
 export interface SignatureSubjectValue {
   address: Address;
-  app: App;
+  app?: App;
   signType: SignType;
   message?: string | null;
 }

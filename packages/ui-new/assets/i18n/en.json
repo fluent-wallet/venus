@@ -116,6 +116,9 @@
     "HDWallets" : "HD Wallets",
     "index" : "Index",
     "max" : "Max",
+    "method" : {
+      "contractInteraction" : "Contract Interaction"
+    },
     "network" : "Network",
     "next" : "Next",
     "ok" : "OK",
@@ -138,6 +141,7 @@
     "buy" : "Buy",
     "more" : "More",
     "more.copyAddress" : "Copy address",
+    "more.signatureRecords" : "Signature Records",
     "more.viewInExplorer" : "View in explorer",
     "noNetwork" : "Network Disconnected",
     "receive" : "Receive",
@@ -244,6 +248,15 @@
     },
     "title" : "Settings"
   },
+  "signature" : {
+    "common" : {
+      "signData" : "Sign Data"
+    },
+    "list" : {
+      "showMore" : "more",
+      "title" : "Signature Records"
+    }
+  },
   "tab" : {
     "activity" : "Activity",
     "content" : {
@@ -341,13 +354,37 @@
     }
   },
   "wc" : {
+    "daap" : {
+      "tx" : {
+        "unknown" : "unknown"
+      }
+    },
     "dapp" : {
+      "connectTo" : "Connected to",
       "connectedDApps" : "Connected DApps",
-      "connectTo" : "Connected to"
+      "tx" : {
+        "contract" : "Contract",
+        "function" : "Function",
+        "network" : "Network",
+        "nonce" : "Nonce",
+        "signingWith" : "Signing with",
+        "simulating" : "Simulating",
+        "title" : "Transaction Confirm",
+        "transactionRequest" : "Transaction Request",
+        "viewData" : "View More Details"
+      }
     },
     "proposal" : {
-      "accountSelected" : "Account selected",
+      "accountSelected" : "Account Selected",
       "describe" : "Wants to connect to your wallet"
+    },
+    "request" : {
+      "signature" : "Request Signature"
+    },
+    "sign" : {
+      "message" : "Message",
+      "network" : "on {{network}}   ",
+      "signData" : "Sign Data  "
     }
   },
   "welcome" : {
