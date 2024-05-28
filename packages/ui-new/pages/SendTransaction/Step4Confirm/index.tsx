@@ -46,7 +46,7 @@ import ProhibitIcon from '@assets/icons/prohibit.svg';
 import { checkDiffInRange } from '@core/WalletCore/Plugins/BlockNumberTracker';
 import { calculateTokenPrice } from '@utils/calculateTokenPrice';
 import { useGasEstimate } from '@hooks/useGasEstimate';
-import { useSignTransaction } from '@hooks/useSignTransaction';
+import { SignTransactionCancelError, useSignTransaction } from '@hooks/useSignTransaction';
 import { processError } from '@core/utils/eth';
 
 const SendTransactionStep4Confirm: React.FC<SendTransactionScreenProps<typeof SendTransactionStep4StackName>> = ({ navigation, route }) => {
@@ -199,20 +199,18 @@ const SendTransactionStep4Confirm: React.FC<SendTransactionScreenProps<typeof Se
         }
       } catch (error) {
         if (error instanceof BSIMError) {
-          if (error.code === 'cancel') {
-            // ignore cancel error
-          } else {
-            setBSIMEvent({ type: BSIMEventTypesName.ERROR, message: error.message });
-          }
+          setBSIMEvent({ type: BSIMEventTypesName.ERROR, message: error.message });
+        } else {
+          // throw error to outer catch
+          throw error;
         }
-        // throw error to outer catch
-        throw error;
       }
     } catch (_err: any) {
       txError = _err;
       setBSIMEvent(null);
       const err = String(_err.data || _err?.message || _err);
-      if (err.includes('cancel')) {
+      if (error instanceof SignTransactionCancelError) {
+        // ignore cancel error
         return;
       }
       setError({
