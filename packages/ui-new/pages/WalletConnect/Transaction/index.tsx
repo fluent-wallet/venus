@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { RouteProp, useNavigation, useRoute, useTheme } from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';
-import {  formatEther } from 'ethers';
+import { formatEther } from 'ethers';
 import { Interface } from '@ethersproject/abi';
 import Decimal from 'decimal.js';
 import { Image } from 'expo-image';
@@ -32,7 +32,7 @@ import Button from '@components/Button';
 import Icon from '@components/Icon';
 import useInAsync from '@hooks/useInAsync';
 import { useGasEstimate } from '@hooks/useGasEstimate';
-import { useSignTransaction } from '@hooks/useSignTransaction';
+import { SignTransactionCancelError, useSignTransaction } from '@hooks/useSignTransaction';
 import { toDataUrl } from '@utils/blockies';
 import { ParseTxDataReturnType, isApproveMethod, parseTxData } from '@utils/parseTxData';
 import matchRPCErrorMessage from '@utils/matchRPCErrorMssage';
@@ -149,16 +149,11 @@ function WalletConnectTransaction() {
       await approve(txHash);
       navigation.goBack();
     } catch (error: any) {
-      if (error instanceof BSIMError) {
-        if (error.code === 'cancel') {
-          // ignore cancel error
-          return; // nothing to do
-        }
+      if (error instanceof SignTransactionCancelError) {
+        // ignore cancel error
+        return;
       }
-      if (error === 'cancel') {
-        // user cancel password verify
-        return; // nothing to do
-      }
+
       const msg = matchRPCErrorMessage(error);
       txError = error;
       setError(msg);
