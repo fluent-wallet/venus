@@ -141,7 +141,6 @@ export default class WalletConnect implements Plugin {
     const { metadata } = proposer;
 
     const verifiedData = proposal.verifyContext.verified;
-    verifiedData.isScam;
 
     if (verifiedData.isScam) {
       return client.rejectSession({ id: proposal.params.id, reason: { code: -1, message: 'SCAM CONNECT' } });

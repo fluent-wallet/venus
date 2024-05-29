@@ -102,8 +102,8 @@ function WalletConnectTransaction() {
     if (!gasInfo) return;
     setError('');
 
-    let txHash;
-    let txRaw;
+    let txRaw!: string;
+    let txHash!: string;
     let txError;
     let signatureRecord: Signature | undefined;
     const tx = {
@@ -132,10 +132,12 @@ function WalletConnectTransaction() {
       const { txRawPromise, cancel } = await signTransaction({ ...tx, epochHeight: epochHeightRef.current });
 
       txRaw = await txRawPromise;
-
+      
+      const dapp = await methods.queryAppByIdentity(metadata.url);
       signatureRecord = await methods.createSignature({
         address: currentAddress,
         signType: SignType.TX,
+        app: dapp ? dapp : undefined,
       });
 
       txHash = await plugins.Transaction.sendRawTransaction({ txRaw, network: currentNetwork });
@@ -153,7 +155,7 @@ function WalletConnectTransaction() {
       setError(msg);
       // TODO: show error
     } finally {
-      if (txRaw && txHash) {
+      if (txRaw) {
         Events.broadcastTransactionSubjectPush.next({
           txHash,
           txRaw,
