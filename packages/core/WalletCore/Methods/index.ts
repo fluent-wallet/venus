@@ -140,8 +140,11 @@ export class Methods {
   public createApp(...args: Parameters<AppMethod['createApp']>) {
     return this.AppMethod.createApp(...args);
   }
-  public isAppExist(...args: Parameters<AppMethod['isAppExist']>) {
-    return this.AppMethod.isAppExist(...args);
+  public isAppExist(...args: Parameters<AppMethod['queryAppByIdentity']>) {
+    return this.AppMethod.queryAppByIdentity(...args);
+  }
+  public queryAppByIdentity(...args: Parameters<AppMethod['queryAppByIdentity']>) {
+    return this.AppMethod.queryAppByIdentity(...args);
   }
 
   @inject(RequestMethod) private RequestMethod!: RequestMethod;

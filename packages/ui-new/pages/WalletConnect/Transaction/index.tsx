@@ -40,6 +40,8 @@ import { WalletConnectParamList, WalletConnectTransactionStackName } from '@rout
 import EditAllowance from './EditAllowance';
 import SendContract from './Contract';
 import SendNativeToken from './NativeToken';
+import { Signature } from '@core/database/models/Signature';
+import { SignType } from '@core/database/models/Signature/type';
 
 export type TxDataWithTokenInfo = ParseTxDataReturnType & {
   symbol?: string;
@@ -103,6 +105,7 @@ function WalletConnectTransaction() {
     let txHash;
     let txRaw;
     let txError;
+    let signatureRecord: Signature | undefined;
     const tx = {
       from: currentAddressValue,
       to,
@@ -130,21 +133,12 @@ function WalletConnectTransaction() {
 
       txRaw = await txRawPromise;
 
-      txHash = await plugins.Transaction.sendRawTransaction({ txRaw, network: currentNetwork });
-
-      Events.broadcastTransactionSubjectPush.next({
-        txHash,
-        txRaw,
-        tx,
+      signatureRecord = await methods.createSignature({
         address: currentAddress,
-        extraParams: {
-          assetType: isContract ? AssetType.ERC20 : AssetType.Native, // TODO: update the assetType
-          contractAddress: isContract ? to : undefined,
-          to: to,
-          sendAt: new Date(),
-          epochHeight: currentNetwork.networkType === NetworkType.Conflux ? epochHeightRef.current : null,
-        },
+        signType: SignType.TX,
       });
+
+      txHash = await plugins.Transaction.sendRawTransaction({ txRaw, network: currentNetwork });
 
       await approve(txHash);
       navigation.goBack();
@@ -165,6 +159,7 @@ function WalletConnectTransaction() {
           txRaw,
           tx,
           address: currentAddress,
+          signature: signatureRecord,
           extraParams: {
             assetType: isContract ? undefined : AssetType.Native,
             contractAddress: isContract ? to : undefined,

@@ -28,19 +28,20 @@ import { sanitizeTypedData } from '@utils/santitizeTypedData';
 import { toDataUrl } from '@utils/blockies';
 import useInAsync from '@hooks/useInAsync';
 import Copy from '@assets/icons/copy.svg';
+import { SignType } from '@core/database/models/Signature/type';
 
 function WalletConnectSignMessage() {
   const { t } = useTranslation();
   const { colors } = useTheme();
   const currentAccount = useCurrentAccount();
-  const currentAddress = useCurrentAddress();
+  const currentAddress = useCurrentAddress()!;
   const currentAddressValue = useCurrentAddressValue();
   const currentNetwork = useCurrentNetwork();
   const vault = useVaultOfAccount(currentAccount?.id);
 
   const {
     params: {
-      metadata: { icons = [], name = '' },
+      metadata: { icons = [], name = '', url },
       message,
       method,
     },
@@ -92,12 +93,27 @@ function WalletConnectSignMessage() {
     }
   }, []);
 
+  const approve = useCallback<IWCSignMessageEvent['action']['approve']>(
+    async (hex) => {
+      const app = url ? await methods.queryAppByIdentity(url) : null;
+      await methods.createSignature({
+        address: currentAddress,
+        app: app ? app : undefined,
+        signType: method.startsWith(WalletConnectRPCMethod.SignTypedData) ? SignType.JSON : SignType.STR,
+        message: message,
+      });
+
+      (plugins.WalletConnect.currentEventSubject.getValue()?.action.approve as IWCSignMessageEvent['action']['approve'])(hex);
+    },
+    [currentAddress, message, method, url],
+  );
+
   const _handleApprove = useCallback(async () => {
     if (!message) return;
     if (!currentAddressValue || !currentAddress || !vault || !currentNetwork) return;
 
     const vaultType = vault.type;
-    const approve = plugins.WalletConnect.currentEventSubject.getValue()?.action.approve as IWCSignMessageEvent['action']['approve'];
+
     if (method === WalletConnectRPCMethod.PersonalSign) {
       try {
         if (vaultType === VaultType.BSIM) {
