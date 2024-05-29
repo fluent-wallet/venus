@@ -149,8 +149,8 @@ export default class WalletConnect implements Plugin {
     let dapp = await methods.isAppExist(verifiedData.origin || metadata.url);
     if (!dapp) {
       dapp = await methods.createApp({
-        identity: verifiedData.origin,
-        origin: verifiedData.origin,
+        identity: metadata.url,
+        origin: metadata.url,
         name: metadata.name,
         icon: metadata?.icons[0],
       });
