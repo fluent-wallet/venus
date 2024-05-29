@@ -40,6 +40,8 @@ import { WalletConnectParamList, WalletConnectTransactionStackName } from '@rout
 import EditAllowance from './EditAllowance';
 import SendContract from './Contract';
 import SendNativeToken from './NativeToken';
+import { Signature } from '@core/database/models/Signature';
+import { SignType } from '@core/database/models/Signature/type';
 
 export type TxDataWithTokenInfo = ParseTxDataReturnType & {
   symbol?: string;
@@ -100,9 +102,10 @@ function WalletConnectTransaction() {
     if (!gasInfo) return;
     setError('');
 
-    let txHash;
-    let txRaw;
+    let txRaw!: string;
+    let txHash!: string;
     let txError;
+    let signatureRecord: Signature | undefined;
     const tx = {
       from: currentAddressValue,
       to,
@@ -129,22 +132,15 @@ function WalletConnectTransaction() {
       const { txRawPromise, cancel } = await signTransaction({ ...tx, epochHeight: epochHeightRef.current });
 
       txRaw = await txRawPromise;
+      
+      const dapp = await methods.queryAppByIdentity(metadata.url);
+      signatureRecord = await methods.createSignature({
+        address: currentAddress,
+        signType: SignType.TX,
+        app: dapp ? dapp : undefined,
+      });
 
       txHash = await plugins.Transaction.sendRawTransaction({ txRaw, network: currentNetwork });
-
-      Events.broadcastTransactionSubjectPush.next({
-        txHash,
-        txRaw,
-        tx,
-        address: currentAddress,
-        extraParams: {
-          assetType: isContract ? AssetType.ERC20 : AssetType.Native, // TODO: update the assetType
-          contractAddress: isContract ? to : undefined,
-          to: to,
-          sendAt: new Date(),
-          epochHeight: currentNetwork.networkType === NetworkType.Conflux ? epochHeightRef.current : null,
-        },
-      });
 
       await approve(txHash);
       navigation.goBack();
@@ -159,12 +155,13 @@ function WalletConnectTransaction() {
       setError(msg);
       // TODO: show error
     } finally {
-      if (txRaw && txHash) {
+      if (txRaw) {
         Events.broadcastTransactionSubjectPush.next({
           txHash,
           txRaw,
           tx,
           address: currentAddress,
+          signature: signatureRecord,
           extraParams: {
             assetType: isContract ? undefined : AssetType.Native,
             contractAddress: isContract ? to : undefined,

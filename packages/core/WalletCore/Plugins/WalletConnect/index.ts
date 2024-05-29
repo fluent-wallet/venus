@@ -6,6 +6,7 @@ import { formatJsonRpcResult, formatJsonRpcError } from '@json-rpc-tools/utils';
 import { Plugin } from '@core/WalletCore/Plugins';
 
 import { IWCSendTransactionEvent, IWCSessionProposalEvent, WalletConnectPluginEventType, WalletConnectPluginEvents, WalletConnectRPCMethod } from './types';
+import methods from '@core/WalletCore/Methods';
 
 declare module '../../../WalletCore/Plugins' {
   interface Plugins {
@@ -138,6 +139,22 @@ export default class WalletConnect implements Plugin {
 
     // TODO: check requiredNamespaces is supported
     const { metadata } = proposer;
+
+    const verifiedData = proposal.verifyContext.verified;
+
+    if (verifiedData.isScam) {
+      return client.rejectSession({ id: proposal.params.id, reason: { code: -1, message: 'SCAM CONNECT' } });
+    }
+
+    let dapp = await methods.isAppExist(verifiedData.origin || metadata.url);
+    if (!dapp) {
+      dapp = await methods.createApp({
+        identity: metadata.url,
+        origin: metadata.url,
+        name: metadata.name,
+        icon: metadata?.icons[0],
+      });
+    }
 
     const approveSession: IWCSessionProposalEvent['action']['approve'] = async (args) => {
       const approvedNamespaces = buildApprovedNamespaces({
