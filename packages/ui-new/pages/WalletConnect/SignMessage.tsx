@@ -182,8 +182,8 @@ function WalletConnectSignMessage() {
           <View style={[styles.flexWithRow, styles.account]}>
             <View style={[styles.flexWithRow, styles.accountLeft]}>
               <Image style={styles.accountIcon} source={{ uri: toDataUrl(currentAddressValue) }} />
-              <View>
-                <Text style={[styles.h2, { color: colors.textPrimary }]}>{currentAccount?.nickname}</Text>
+              <View >
+                <Text numberOfLines={3} style={[styles.h2, { color: colors.textPrimary,maxWidth: 150 }]}>{currentAccount?.nickname}</Text>
                 <Text>{shortenAddress(currentAddressValue)}</Text>
               </View>
             </View>

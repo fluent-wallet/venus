@@ -126,7 +126,7 @@ const SendTransactionStep1Receiver: React.FC<SendTransactionScreenProps<typeof S
 
   return (
     <>
-      <SendTransactionBottomSheet showTitle={t('tx.send.title')}>
+      <SendTransactionBottomSheet showTitle={t('tx.send.title')} style={styles.container}>
         <Text style={[styles.receiver, { color: colors.textSecondary }]}>{t('tx.send.receiver')}</Text>
         <TextInput
           containerStyle={[
@@ -260,22 +260,22 @@ const SendTransactionStep1Receiver: React.FC<SendTransactionScreenProps<typeof S
 };
 
 const styles = StyleSheet.create({
+  container: {
+    paddingHorizontal: 16,
+  },
   receiver: {
     marginTop: 24,
     marginBottom: 16,
-    marginLeft: 16,
     fontSize: 14,
     fontWeight: '300',
     lineHeight: 18,
   },
   textInput: {
-    marginHorizontal: 16,
     borderWidth: 1,
     backgroundColor: 'transparent',
     minHeight: 88,
   },
   inputActionArea: {
-    marginHorizontal: 16,
     display: 'flex',
     flexDirection: 'row',
     alignItems: 'center',
@@ -319,7 +319,6 @@ const styles = StyleSheet.create({
     display: 'flex',
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 16,
     marginTop: 32,
   },
   checkIcon: {
@@ -335,10 +334,11 @@ const styles = StyleSheet.create({
     fontWeight: '300',
     lineHeight: 18,
     marginLeft: 6,
+    flexShrink: 1
+    
   },
   contractAddress: {
     marginTop: 32,
-    paddingHorizontal: 16,
   },
   contractAddressValid: {
     fontWeight: '400',
@@ -362,7 +362,6 @@ const styles = StyleSheet.create({
   btn: {
     marginTop: 'auto',
     marginBottom: 32,
-    marginHorizontal: 16,
   },
 });
 
