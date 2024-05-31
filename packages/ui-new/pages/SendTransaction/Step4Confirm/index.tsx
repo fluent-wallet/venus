@@ -45,7 +45,7 @@ import WarnIcon from '@assets/icons/warn.svg';
 import ProhibitIcon from '@assets/icons/prohibit.svg';
 import { checkDiffInRange } from '@core/WalletCore/Plugins/BlockNumberTracker';
 import { calculateTokenPrice } from '@utils/calculateTokenPrice';
-import { useGasEstimate } from '@hooks/useGasEstimate';
+import useGasEstimate from '@core/WalletCore/Plugins/Transaction/useGasEstimate';
 import { SignTransactionCancelError, useSignTransaction } from '@hooks/useSignTransaction';
 import { processError } from '@core/utils/eth';
 import Methods from '@core/WalletCore/Methods';
@@ -115,8 +115,6 @@ const SendTransactionStep4Confirm: React.FC<SendTransactionScreenProps<typeof Se
       data,
       from: currentAddressValue,
       chainId: currentNetwork.chainId,
-      // eSpace only support legacy transaction by now
-      type: plugins.Transaction.isOnlyLegacyTxSupport(currentNetwork.chainId) ? 0 : undefined,
     } as ITxEvm;
   }, []);
 
@@ -126,7 +124,8 @@ const SendTransactionStep4Confirm: React.FC<SendTransactionScreenProps<typeof Se
 
   const gasCostAndPriceInUSDT = useMemo(() => {
     if (!gasInfo || !nativeAsset?.priceInUSDT) return null;
-    const cost = new Decimal(gasInfo.gasLimit).mul(new Decimal(gasInfo.gasPrice)).div(Decimal.pow(10, nativeAsset?.decimals ?? 18));
+    const gasPrice = new Decimal(gasInfo.estimateOf1559 ? gasInfo.estimateOf1559.medium.suggestedMaxFeePerGas : gasInfo.gasPrice!);
+    const cost = new Decimal(gasInfo.gasLimit).mul(new Decimal(gasPrice)).div(Decimal.pow(10, nativeAsset?.decimals ?? 18));
     const priceInUSDT = nativeAsset?.priceInUSDT ? cost.mul(new Decimal(nativeAsset.priceInUSDT)) : null;
     return {
       cost: cost.toString(),
@@ -145,11 +144,7 @@ const SendTransactionStep4Confirm: React.FC<SendTransactionScreenProps<typeof Se
 
     let txRaw!: string;
     let txHash!: string;
-    let tx!: ITxEvm & {
-      storageLimit?: string | undefined;
-      gasLimit: string | undefined;
-      gasPrice: string | undefined;
-    };
+    let tx!: ITxEvm;
     let signature: Signature | undefined = undefined;
     let txError!: any;
     try {
@@ -165,7 +160,13 @@ const SendTransactionStep4Confirm: React.FC<SendTransactionScreenProps<typeof Se
       }
       tx = Object.assign({}, txHalf, {
         gasLimit: gasInfo?.gasLimit,
-        gasPrice: gasInfo?.gasPrice,
+        ...(gasInfo?.estimateOf1559
+          ? {
+              type: 2,
+              maxFeePerGas: gasInfo?.estimateOf1559?.medium.suggestedMaxFeePerGas,
+              maxPriorityFeePerGas: gasInfo?.estimateOf1559?.medium.suggestedMaxPriorityFeePerGas,
+            }
+          : { gasPrice: gasInfo?.gasPrice }),
         ...(currentNetwork.networkType === NetworkType.Conflux ? { storageLimit: gasInfo?.storageLimit } : null),
       });
       const nonce = await plugins.Transaction.getTransactionCount({ network: currentNetwork, addressValue: currentAddressValue });

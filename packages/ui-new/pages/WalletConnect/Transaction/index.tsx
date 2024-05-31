@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { RouteProp, useNavigation, useRoute, useTheme } from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';
+import { isNil } from 'lodash-es';
 import { formatEther } from 'ethers';
 import { Interface } from '@ethersproject/abi';
 import Decimal from 'decimal.js';
@@ -31,7 +32,7 @@ import Text from '@components/Text';
 import Button from '@components/Button';
 import Icon from '@components/Icon';
 import useInAsync from '@hooks/useInAsync';
-import { useGasEstimate } from '@hooks/useGasEstimate';
+import useGasEstimate from '@core/WalletCore/Plugins/Transaction/useGasEstimate';
 import { SignTransactionCancelError, useSignTransaction } from '@hooks/useSignTransaction';
 import { toDataUrl } from '@utils/blockies';
 import { ParseTxDataReturnType, isApproveMethod, parseTxData } from '@utils/parseTxData';
@@ -71,7 +72,7 @@ function WalletConnectTransaction() {
   const navigation = useNavigation();
   const {
     params: {
-      tx: { from, to, value, data, nonce, gasLimit, gasPrice },
+      tx: { from, to, value, data, nonce, gasLimit, gasPrice, type, maxFeePerGas, maxPriorityFeePerGas },
       isContract,
       metadata,
     },
@@ -108,21 +109,30 @@ function WalletConnectTransaction() {
     let txError;
     let signatureRecord: Signature | undefined;
     let dapp: App | undefined;
+
+    const isSupport1559 = !!gasInfo?.estimateOf1559;
     const tx = {
       from: currentAddressValue,
       to,
       value: value ? value : '0x0',
       data: txData || '0x',
       chainId: currentNetwork.chainId,
-      type: plugins.Transaction.isOnlyLegacyTxSupport(currentNetwork.chainId) ? 0 : undefined,
+      gasLimit: gasLimit ?? gasInfo?.gasLimit,
+      ...(isSupport1559 && (isNil(type) || Number(type) === 2)
+        ? {
+            maxFeePerGas: maxFeePerGas ?? gasPrice ?? gasInfo.estimateOf1559?.medium.suggestedMaxFeePerGas,
+            maxPriorityFeePerGas: maxPriorityFeePerGas ?? gasPrice ?? gasInfo.estimateOf1559?.medium.suggestedMaxPriorityFeePerGas,
+            type: 2,
+          }
+        : {
+            gasPrice: gasPrice ?? gasInfo.gasPrice,
+          }),
     } as ITxEvm;
 
     const approve = plugins.WalletConnect.currentEventSubject.getValue()?.action.approve as IWCSendTransactionEvent['action']['approve'];
     try {
       const nonce = await plugins.Transaction.getTransactionCount({ network: currentNetwork, addressValue: currentAddressValue });
       tx.nonce = Number(nonce);
-      tx.gasLimit = gasLimit ? gasLimit.toString() : gasInfo?.gasLimit;
-      tx.gasPrice = gasPrice ? gasPrice.toString() : gasInfo?.gasPrice;
 
       if (currentNetwork.networkType === NetworkType.Conflux) {
         const currentEpochHeight = await plugins.BlockNumberTracker.getNetworkBlockNumber(currentNetwork);
