@@ -66,9 +66,9 @@ function DAPPConnect() {
               <ArrowLeft style={[{ transform: [{ rotate: '-180deg' }] }]} color={hasUnsafeURL ? colors.down : colors.up} width={14} height={14} />
             </View>
           ) : (
-            <View style={styles.content}>
+            <View style={[styles.content, {paddingRight: 12}]}>
               <Text>{t('wc.dapp.connectTo')}</Text>
-              <Text style={[styles.largeText, { color: hasUnsafeURL ? colors.down : colors.up, flex: 1 }]} numberOfLines={1}>
+              <Text style={[styles.largeText, { color: hasUnsafeURL ? colors.down : colors.up, flex: 1, flexGrow: 1 }]} numberOfLines={1}>
                 {filterSession[0]?.peer?.metadata?.url}
               </Text>
             </View>

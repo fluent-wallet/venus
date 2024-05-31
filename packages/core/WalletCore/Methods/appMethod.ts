@@ -9,7 +9,7 @@ import { createApp as _createApp, queryAppByIdentity, type AppParams } from '../
 @injectable()
 export class AppMethod {
   createApp = async (params: AppParams) => {
-    const app = await this.isAppExist(params.identity);
+    const app = await this.queryAppByIdentity(params.identity);
     if (app !== null) {
       throw new Error('App already exist');
     }
@@ -17,7 +17,7 @@ export class AppMethod {
     return _createApp(params);
   };
 
-  isAppExist = async (identity: string) => {
+  queryAppByIdentity = async (identity: string) => {
     const apps = await queryAppByIdentity(identity);
     return apps?.[0] || null;
   };

@@ -1,11 +1,12 @@
 import { useAtomValue } from 'jotai';
 import { atomFamily, atomWithObservable } from 'jotai/utils';
-import { switchMap, of, combineLatest, map, withLatestFrom } from 'rxjs';
+import { switchMap, of, combineLatest, map } from 'rxjs';
 import { observeTxById, observeFinishedTxWithAddress, observeUnfinishedTxWithAddress } from '../../../../database/models/Tx/query';
 import { currentAddressObservable } from './useCurrentAddress';
 import { accountsManageObservable } from './useAccountsManage';
 import { TxPayload } from '../../../../database/models/TxPayload';
 import { formatTxData } from '../../../../utils/tx';
+import { Asset } from '@core/database/models/Asset';
 
 export const unfinishedTxsObservable = currentAddressObservable.pipe(
   switchMap((currentAddress) => (currentAddress ? observeUnfinishedTxWithAddress(currentAddress.id) : of(null))),
@@ -64,10 +65,16 @@ export const recentlyAddressObservable = combineLatest([unfinishedTxsObservable,
       accountsManage,
     ]),
   ),
-  map(
-    ([txPayloads, txAssets, accountsManage]) =>
-      [txPayloads.sort((a, b) => Number((b.nonce ?? 0) - (a.nonce ?? 0))).map((txPayload, i) => formatTxData(txPayload, txAssets[i])), accountsManage] as const,
-  ),
+  map(([txPayloads, txAssets, accountsManage]) => {
+    const assetMap = new Map<string, Asset>();
+    txPayloads.forEach((p, i) => {
+      assetMap.set(p.id, txAssets[i]);
+    });
+    return [
+      txPayloads.sort((a, b) => Number((b.nonce ?? 0) - (a.nonce ?? 0))).map((txPayload) => formatTxData(txPayload, assetMap.get(txPayload.id)!)),
+      accountsManage,
+    ] as const;
+  }),
   map(([formatedTxData, accountsManage]) => {
     const toAddress = Array.from(new Set(formatedTxData.map((txPayload) => txPayload?.to))).filter((addressValue) => !!addressValue) as Array<string>;
     const fromAddress = Array.from(new Set(formatedTxData.map((txPayload) => txPayload?.from))).filter((addressValue) => !!addressValue) as Array<string>;

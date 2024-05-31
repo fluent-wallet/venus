@@ -7,12 +7,11 @@ import { Signature } from '@core/database/models/Signature';
 @injectable()
 export class SignatureMethod {
   @inject(Plugins) plugins!: Plugins;
-  async createSignature(params: SignatureSubjectValue, prepareCreate?: true): Promise<Signature> {
+  async createSignature(params: SignatureSubjectValue): Promise<Signature> {
     try {
       const { address, app, message, signType } = params;
       const network = await address.network;
       const blockNumber = await this.plugins.BlockNumberTracker.getNetworkBlockNumber(network);
-
       // TODO: fill params
       return _createSignature(
         {
@@ -22,7 +21,6 @@ export class SignatureMethod {
           blockNumber,
           message,
         },
-        prepareCreate,
       );
     } catch (error) {
       console.error('createSignature error: ', error);

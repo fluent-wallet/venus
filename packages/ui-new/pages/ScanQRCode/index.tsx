@@ -3,11 +3,9 @@ import { View, Linking, StyleSheet } from 'react-native';
 import { useTheme, StackActions } from '@react-navigation/native';
 import { Trans, useTranslation } from 'react-i18next';
 import { useCameraPermission, useCameraDevice, useCameraFormat, Camera, type Code } from 'react-native-vision-camera';
-import { showMessage } from 'react-native-flash-message';
 import { scanFromURLAsync } from 'expo-barcode-scanner';
 import { launchImageLibraryAsync } from 'expo-image-picker';
 import Decimal from 'decimal.js';
-import { parseUri } from '@walletconnect/utils';
 import { useCurrentNetwork, NetworkType, getAssetsTokenList, AssetType } from '@core/WalletCore/Plugins/ReactInject';
 import methods from '@core/WalletCore/Methods';
 import plugins from '@core/WalletCore/Plugins';
@@ -21,7 +19,7 @@ import {
   SendTransactionStep3StackName,
   SendTransactionStep4StackName,
   WalletConnectStackName,
-  WalletConnectLoadingStackName,
+  WalletConnectingStackName,
   type StackScreenProps,
 } from '@router/configs';
 import { parseETHURL, type ETHURL } from '@utils/ETHURL';
@@ -147,8 +145,8 @@ const ScanQrCode: React.FC<Props> = ({ navigation, onConfirm, onClose }) => {
       try {
         if (!onConfirm && QRCodeString.startsWith('wc:') && ENABLE_WALLET_CONNECT_FEATURE.allow) {
           await plugins.WalletConnect.connect({ wcURI: QRCodeString });
+          navigation?.dispatch(StackActions.replace(WalletConnectStackName, { screen: WalletConnectingStackName }));
           isParsing.current = false;
-          navigation?.dispatch(StackActions.replace(WalletConnectStackName, { screen: WalletConnectLoadingStackName }));
         } else {
           ethUrl = parseETHURL(QRCodeString);
           onParseEthUrlSuccess(ethUrl);
