@@ -3,8 +3,6 @@ import Decimal from 'decimal.js';
 
 const Gwei = new Decimal(10).pow(9);
 
-type Level = 'high' | 'medium' | 'low';
-
 export const fetchGasEstimatesViaEthFeeHistory = async (query: any) =>
   _fetchGasEstimatesViaEthFeeHistory(query).then((res) => ({
     // estimatedBaseFee: new Decimal(res.estimatedBaseFee).mul(Gwei).toHex(),

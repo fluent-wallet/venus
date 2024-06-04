@@ -133,7 +133,8 @@ class Transaction {
   };
 
   public isSupport1559 = async (endpoint: string) => {
-    return false;
+    const block = await fetchChain<{ baseFeePerGas: string }>({ url: endpoint, method: 'cfx_getBlockByEpochNumber', params: ['latest_state', false] });
+    return block.baseFeePerGas !== undefined;
   };
 }
 
@@ -148,17 +149,17 @@ class QueryOf1559 {
   public sendAsync = (opts: any, callback: Function) =>
     fetchChain({
       url: this.endpoint,
-      method: opts.method,
+      method: opts.method?.startsWith('eth_') ? `cfx_${opts.method.slice(4)}` : opts.method,
       params: opts.params,
     })
       .then((res) => callback(null, res))
       .catch((err) => callback(err));
 
-  blockNumber = (callback: Function) => this.sendAsync({ method: 'eth_blockNumber' }, callback);
+  blockNumber = (callback: Function) => this.sendAsync({ method: 'cfx_epochNumber' }, callback);
 
   getBlockByNumber = (..._params: any) => {
     const params = _params;
     const callback = params.pop();
-    return this.sendAsync({ method: 'eth_getBlockByNumber', params }, callback);
+    return this.sendAsync({ method: 'cfx_getBlockByEpochNumber', params }, callback);
   };
 }

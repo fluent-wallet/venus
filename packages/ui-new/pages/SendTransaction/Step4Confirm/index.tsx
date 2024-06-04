@@ -166,7 +166,7 @@ const SendTransactionStep4Confirm: React.FC<SendTransactionScreenProps<typeof Se
               maxFeePerGas: gasInfo?.estimateOf1559?.medium.suggestedMaxFeePerGas,
               maxPriorityFeePerGas: gasInfo?.estimateOf1559?.medium.suggestedMaxPriorityFeePerGas,
             }
-          : { gasPrice: gasInfo?.gasPrice }),
+          : { gasPrice: gasInfo?.gasPrice, type: 0 }),
         ...(currentNetwork.networkType === NetworkType.Conflux ? { storageLimit: gasInfo?.storageLimit } : null),
       });
       const nonce = await plugins.Transaction.getTransactionCount({ network: currentNetwork, addressValue: currentAddressValue });

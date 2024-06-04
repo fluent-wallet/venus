@@ -126,7 +126,7 @@ function WalletConnectTransaction() {
           }
         : {
             gasPrice: gasPrice ?? gasInfo.gasPrice,
-            type:0
+            type: 0,
           }),
     } as ITxEvm;
 
