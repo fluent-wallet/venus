@@ -23,7 +23,7 @@ export class TxMethod {
   createTx(params: TransactionSubjectValue): Promise<void>;
   async createTx(params: TransactionSubjectValue, prepareCreate?: true) {
     try {
-      const { address, tx: _tx, extraParams, txRaw, txHash, signature } = params;
+      const { address, tx: _tx, extraParams, txRaw, txHash, signature, app } = params;
       const updated = await this.updateTx(params);
       if (updated) return updated;
       const [txPayload, txExtra] = await Promise.all([
@@ -48,6 +48,7 @@ export class TxMethod {
       const tx = _createTx(
         {
           address,
+          app,
           raw: txRaw,
           hash: txHash,
           status: extraParams.err ? TxStatus.FAILED : TxStatus.PENDING,
@@ -57,10 +58,8 @@ export class TxMethod {
           asset,
           err: extraParams.err,
           errorType: extraParams.errorType,
-          // TODO: set by params
-          source: TxSource.SELF,
-          // TODO: set by params
-          method: 'Send',
+          source: app ? TxSource.DAPP : TxSource.SELF,
+          method: extraParams.method,
         },
         true,
       );
@@ -75,7 +74,7 @@ export class TxMethod {
   }
 
   async updateTx(params: TransactionSubjectValue) {
-    const { address, extraParams, txRaw, txHash, signature } = params;
+    const { address, extraParams, txRaw, txHash, signature, app } = params;
     const sameTx = await queryTxsWithAddress(address.id, {
       raw: txRaw,
     });
@@ -89,15 +88,15 @@ export class TxMethod {
     let newTx = tx;
     if (!hasSuccessTx) {
       newTx = await tx.updateSelf((_tx) => {
+        // TODO: 这样可以覆盖掉原本的app吗？
+        _tx.app.id = app?.id;
         _tx.hash = txHash;
         _tx.status = extraParams.err ? TxStatus.FAILED : TxStatus.PENDING;
         _tx.sendAt = extraParams.sendAt;
         _tx.err = extraParams.err;
         _tx.errorType = extraParams.errorType;
-        // TODO: set by params
-        _tx.source = TxSource.SELF;
-        // TODO: set by params
-        _tx.method = 'Send';
+        _tx.source = app ? TxSource.DAPP : TxSource.SELF;
+        _tx.method = extraParams.method;
       });
     }
     signature?.updateTx(newTx);
