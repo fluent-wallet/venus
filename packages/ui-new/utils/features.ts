@@ -26,6 +26,11 @@ export const ENABLE_WALLET_CONNECT_FEATURE = {
   allow: isDev || isQA,
 };
 
+export const ENABLE_SMALL_SIGNATURE_RECORDS_FEATURE = {
+  describe: 'signature records with pagesize = 10 feature',
+  allow: isDev || isQA,
+};
+
 export const DEVELOPER_FEATURE = {
   describe: 'developer feature',
   allow: isDev,

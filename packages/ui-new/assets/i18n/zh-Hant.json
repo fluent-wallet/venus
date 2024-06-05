@@ -265,7 +265,6 @@
     "content" : {
       "depositToken" : "快存入資產吧",
       "noActivity" : "還沒有交易",
-      "noLatestTransaction" : null,
       "noNFT" : "沒有收藏品",
       "noRecord" : "暫無記錄",
       "noToken" : "沒有代幣",
@@ -357,11 +356,6 @@
     }
   },
   "wc" : {
-    "daap" : {
-      "tx" : {
-        "unknown" : "未知"
-      }
-    },
     "dapp" : {
       "connectTo" : "已連接到",
       "connectedDApps" : "已連接的應用",
