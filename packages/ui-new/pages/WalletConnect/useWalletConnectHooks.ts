@@ -8,7 +8,7 @@ import {
 } from '@router/configs';
 import { useCallback, useEffect, useState } from 'react';
 import { uniq } from 'lodash-es';
-import { CFX_ESPACE_MAINNET_NETID, CFX_ESPACE_TESTNET_NETID } from '@core/utils/consts';
+import { Networks } from '@core/utils/consts';
 import { queryNetworks } from '@core/database/models/Network/query';
 import methods from '@core/WalletCore/Methods';
 import Plugins from '@core/WalletCore/Plugins';
@@ -17,8 +17,8 @@ import { NetworkType, useCurrentAddressValue, useCurrentNetwork } from '@core/Wa
 import { isDev, isQA } from '@utils/getEnv';
 import backToHome from '@utils/backToHome';
 
-const SUPPORT_NETWORK = [CFX_ESPACE_MAINNET_NETID];
-const QA_SUPPORT_NETWORK = [CFX_ESPACE_MAINNET_NETID, CFX_ESPACE_TESTNET_NETID];
+const SUPPORT_NETWORK = [Networks['Conflux eSpace'].netId] as Array<number>;
+const QA_SUPPORT_NETWORK = [Networks['Conflux eSpace'].netId, Networks['eSpace Testnet'].netId] as Array<number>;
 
 export function useListenWalletConnectEvent() {
   const navigation = useNavigation<StackNavigation>();

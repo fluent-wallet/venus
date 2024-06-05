@@ -6,7 +6,6 @@ import { useTheme } from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';
 import { showMessage } from 'react-native-flash-message';
 import Decimal from 'decimal.js';
-import { interval, switchMap, startWith } from 'rxjs';
 import { createERC20Contract, createERC721Contract, createERC1155Contract } from '@cfx-kit/dapp-utils/dist/contract';
 import { convertCfxToHex } from '@cfx-kit/dapp-utils/dist/address';
 import {
@@ -21,7 +20,6 @@ import {
   VaultType,
   AssetSource,
 } from '@core/WalletCore/Plugins/ReactInject';
-import { CFX_ESPACE_MAINNET_CHAINID, CFX_ESPACE_TESTNET_CHAINID } from '@core/consts/network';
 import { type ITxEvm } from '@core/WalletCore/Plugins/Transaction/types';
 import { BSIMEventTypesName, BSIMEvent } from '@WalletCoreExtends/Plugins/BSIM/types';
 import { BSIMError, BSIM_ERRORS } from 'packages/WalletCoreExtends/Plugins/BSIM/BSIMSDK';

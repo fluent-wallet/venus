@@ -1,5 +1,5 @@
 import { createFetchServer } from '@cfx-kit/dapp-utils/dist/fetch';
-import { CFX_ESPACE_MAINNET_CHAINID, CFX_ESPACE_TESTNET_CHAINID, CFX_ESPACE_MAINNET_SCAN_OPENAPI, CFX_ESPACE_TESTNET_SCAN_OPENAPI } from '@core/consts/network';
+import { Networks } from '@core/utils/consts';
 import { type NFTItemDetail } from '..';
 
 const responseHandler = (res: {
@@ -14,15 +14,15 @@ const responseHandler = (res: {
   }
   return null;
 };
-const fetchESpaceScanTestnet = createFetchServer({ prefixUrl: CFX_ESPACE_TESTNET_SCAN_OPENAPI, responseHandler });
-const fetchESpaceScanMainnet = createFetchServer({ prefixUrl: CFX_ESPACE_MAINNET_SCAN_OPENAPI, responseHandler });
+const fetchESpaceScanTestnet = createFetchServer({ prefixUrl: Networks['eSpace Testnet'].scanOpenAPI, responseHandler });
+const fetchESpaceScanMainnet = createFetchServer({ prefixUrl: Networks['Conflux eSpace'].scanOpenAPI, responseHandler });
 
 const abortController = new AbortController();
 
 export const fetchNFTDetail = async ({ isTestnet, accountAddress, nftAddress }: { isTestnet: boolean; accountAddress: string; nftAddress: string }) => {
   abortController.abort();
   const fetchESpaceScan = !isTestnet ? fetchESpaceScanMainnet : fetchESpaceScanTestnet;
-  const fetchKey = `nftDetail-${nftAddress}-${accountAddress}-${isTestnet ? CFX_ESPACE_TESTNET_CHAINID : CFX_ESPACE_MAINNET_CHAINID}`;
+  const fetchKey = `nftDetail-${nftAddress}-${accountAddress}-${isTestnet ? Networks['eSpace Testnet'].chainId : Networks['Conflux eSpace'].chainId}`;
   return fetchESpaceScan.fetchServer<Array<NFTItemDetail>>({
     url: `nft/tokens?contract=${nftAddress}&owner=${accountAddress}&cursor=0&limit=100&sort=ASC&sortField=latest_update_time&withBrief=true&withMetadata=false&suppressMetadataError=true`,
     key: fetchKey,

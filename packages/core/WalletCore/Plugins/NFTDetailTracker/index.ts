@@ -2,7 +2,7 @@ import { BehaviorSubject } from 'rxjs';
 import { interval, switchMap, takeUntil, Subject, startWith, type Subscription } from 'rxjs';
 import { isEqual } from 'lodash-es';
 import { NetworkType } from './../../../database/models/Network';
-import { CFX_ESPACE_MAINNET_CHAINID, CFX_ESPACE_TESTNET_CHAINID } from '../../../consts/network';
+import { Networks } from '../../../utils/consts';
 import events from '../../Events';
 import { type AssetInfo } from '../../Plugins/AssetsTracker/types';
 import { type Plugin } from '../../Plugins';
@@ -41,12 +41,12 @@ class NFTDetailTrackerPluginClass implements Plugin {
   constructor() {
     this.register({
       networkType: NetworkType.Ethereum,
-      chainId: CFX_ESPACE_TESTNET_CHAINID,
+      chainId: Networks['eSpace Testnet'].chainId,
       fetcher: (params: FetcherParams) => fetchESpaceNFTDetail({ ...params, isTestnet: true }),
     });
     this.register({
       networkType: NetworkType.Ethereum,
-      chainId: CFX_ESPACE_MAINNET_CHAINID,
+      chainId: Networks['Conflux eSpace'].chainId,
       fetcher: (params: FetcherParams) => fetchESpaceNFTDetail({ ...params, isTestnet: false }),
     });
 

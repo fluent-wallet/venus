@@ -3,7 +3,7 @@ import { type Plugin } from '../';
 import events from '@core/WalletCore/Events';
 import { Network } from '@core/database/models/Network';
 import Transaction from '../Transaction';
-import { MAX_EPOCH_NUMBER_OFFSET } from '@core/consts/network';
+import { MAX_EPOCH_NUMBER_OFFSET } from '@core/utils/consts';
 
 declare module '../../../WalletCore/Plugins' {
   interface Plugins {

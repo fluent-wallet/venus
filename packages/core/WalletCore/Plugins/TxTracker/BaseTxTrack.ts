@@ -2,7 +2,7 @@ import { queryDuplicateTx } from '@core/database/models/Tx/query';
 import type { Tx } from '@core/database/models/Tx';
 import { NOT_FINALIZED_TX_STATUSES, TxStatus } from '@core/database/models/Tx/type';
 import plugins from '@core/WalletCore/Plugins';
-import { CHECK_REPLACED_BEFORE_RESEND_COUNT, TX_RESEND_LIMIT } from '@core/consts/transaction';
+import { CHECK_REPLACED_BEFORE_RESEND_COUNT, TX_RESEND_LIMIT } from '@core/utils/consts';
 import { ReplacedResponse } from './types';
 import { ProcessErrorType } from '@core/utils/eth';
 import Transaction from '../Transaction';
