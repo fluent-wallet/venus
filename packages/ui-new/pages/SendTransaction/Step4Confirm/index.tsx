@@ -246,7 +246,7 @@ const SendTransactionStep4Confirm: React.FC<SendTransactionScreenProps<typeof Se
             epochHeight: currentNetwork.networkType === NetworkType.Conflux ? epochHeightRef.current : null,
             err: txError && String(txError.data || txError?.message || txError),
             errorType: txError && processError(txError).errorType,
-            method: asset.type === AssetType.ERC20 ? 'transfer' : asset.type === AssetType.ERC721 ? 'transferFrom' : 'safeTransferFrom',
+            method: asset.type === AssetType.ERC721 ? 'transferFrom' : asset.type === AssetType.ERC1155 ? 'safeTransferFrom' : 'transfer',
           },
         });
       }
