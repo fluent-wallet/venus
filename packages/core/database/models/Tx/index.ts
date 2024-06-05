@@ -1,6 +1,6 @@
 import { of } from 'rxjs';
 import { Model, type Relation, type Query } from '@nozbe/watermelondb';
-import { field, text, readonly, date, immutableRelation, json, writer, reader, children } from '@nozbe/watermelondb/decorators';
+import { field, text, readonly, date, relation, immutableRelation, json, writer, reader, children } from '@nozbe/watermelondb/decorators';
 import { type Address } from '../Address';
 import { type Asset } from '../Asset';
 import { type App } from '../App';
@@ -46,7 +46,7 @@ export class Tx extends Model {
   @text('source') source!: TxSource;
   @text('method') method!: string;
   /** optional, Relation<App | null> */
-  @immutableRelation(TableName.App, 'app_id') app!: Relation<App>;
+  @relation(TableName.App, 'app_id') app!: Relation<App>;
   /** optional, Relation<Asset | null> */
   @immutableRelation(TableName.Asset, 'asset_id') asset!: Relation<Asset>;
   @immutableRelation(TableName.Address, 'address_id') address!: Relation<Address>;

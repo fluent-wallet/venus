@@ -88,7 +88,6 @@ export class TxMethod {
     let newTx = tx;
     if (!hasSuccessTx) {
       newTx = await tx.updateSelf((_tx) => {
-        // TODO: 这样可以覆盖掉原本的app吗？
         _tx.app.id = app?.id;
         _tx.hash = txHash;
         _tx.status = extraParams.err ? TxStatus.FAILED : TxStatus.PENDING;
