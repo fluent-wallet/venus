@@ -42,6 +42,7 @@ import SendContract from './Contract';
 import SendNativeToken from './NativeToken';
 import { Signature } from '@core/database/models/Signature';
 import { SignType } from '@core/database/models/Signature/type';
+import { App } from '@core/database/models/App';
 
 export type TxDataWithTokenInfo = ParseTxDataReturnType & {
   symbol?: string;
@@ -106,6 +107,7 @@ function WalletConnectTransaction() {
     let txHash!: string;
     let txError;
     let signatureRecord: Signature | undefined;
+    let dapp: App | undefined;
     const tx = {
       from: currentAddressValue,
       to,
@@ -132,12 +134,12 @@ function WalletConnectTransaction() {
       const { txRawPromise, cancel } = await signTransaction({ ...tx, epochHeight: epochHeightRef.current });
 
       txRaw = await txRawPromise;
-      
-      const dapp = await methods.queryAppByIdentity(metadata.url);
+
+      dapp = (await methods.queryAppByIdentity(metadata.url)) ?? undefined;
       signatureRecord = await methods.createSignature({
         address: currentAddress,
         signType: SignType.TX,
-        app: dapp ? dapp : undefined,
+        app: dapp,
       });
 
       txHash = await plugins.Transaction.sendRawTransaction({ txRaw, network: currentNetwork });
@@ -162,6 +164,7 @@ function WalletConnectTransaction() {
           tx,
           address: currentAddress,
           signature: signatureRecord,
+          app: dapp,
           extraParams: {
             assetType: isContract ? undefined : AssetType.Native,
             contractAddress: isContract ? to : undefined,
@@ -170,6 +173,7 @@ function WalletConnectTransaction() {
             epochHeight: currentNetwork.networkType === NetworkType.Conflux ? epochHeightRef.current : null,
             err: txError && String(txError.data || txError?.message || txError),
             errorType: txError ? processError(txError).errorType : undefined,
+            method: parseData ? (parseData.functionName === 'unknown' ? 'Contract Interaction' : parseData.functionName) : 'transfer',
           },
         });
       }
