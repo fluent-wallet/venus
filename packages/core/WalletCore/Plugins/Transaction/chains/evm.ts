@@ -1,9 +1,11 @@
+/* eslint-disable @typescript-eslint/ban-types */
 import { Transaction as EVMTransaction, TypedDataDomain, TypedDataField, Wallet } from 'ethers';
 import { fetchChain } from '@cfx-kit/dapp-utils/dist/fetch';
 import { addHexPrefix } from '@core/utils/base';
 import { NetworkType } from '@core/database/models/Network';
 import methods from '@core/WalletCore/Methods';
 import { type ITxEvm } from '../types';
+import { fetchGasEstimatesViaEthFeeHistory, estimateFor1559FromGasPrice } from '../fetchGasEstimatesViaEthFeeHistory';
 
 class Transaction {
   public getGasPrice = (endpoint: string) => fetchChain<string>({ url: endpoint, method: 'eth_gasPrice' });
@@ -33,9 +35,29 @@ class Transaction {
 
   public getBlockNumber = (endpoint: string) => fetchChain<string>({ url: endpoint, method: 'eth_blockNumber' });
 
-  public estimate = async ({ tx, endpoint, gasBuffer = 1 }: { tx: Partial<ITxEvm>; endpoint: string; gasBuffer?: number }) => {
-    const [gasPrice, gasLimit] = await Promise.all([this.getGasPrice(endpoint), this.estimateGas({ tx, endpoint, gasBuffer })]);
-    return { gasPrice, gasLimit };
+  public estimate = async ({
+    tx,
+    endpoint,
+    gasBuffer = 1,
+  }: {
+    tx: Partial<ITxEvm>;
+    endpoint: string;
+    gasBuffer?: number;
+  }): Promise<{
+    gasLimit: string;
+    gasPrice?: string;
+    estimateOf1559?: Awaited<ReturnType<typeof fetchGasEstimatesViaEthFeeHistory>>;
+  }> => {
+    const estimateGasLimitPromise = this.estimateGas({ tx, endpoint, gasBuffer });
+    if (await this.isSupport1559(endpoint)) {
+      // const [estimateOf1559, gasLimit] = await Promise.all([fetchGasEstimatesViaEthFeeHistory(new QueryOf1559(endpoint)), estimateGasLimitPromise]);
+      // return { estimateOf1559, gasLimit };
+      const [gasPrice, gasLimit] = await Promise.all([this.getGasPrice(endpoint), estimateGasLimitPromise]);
+      return { estimateOf1559: estimateFor1559FromGasPrice(gasPrice), gasLimit };
+    } else {
+      const [gasPrice, gasLimit] = await Promise.all([this.getGasPrice(endpoint), estimateGasLimitPromise]);
+      return { gasPrice, gasLimit };
+    }
   };
 
   public getTransactionCount = ({ endpoint, addressValue }: { endpoint: string; addressValue: string }) =>
@@ -77,6 +99,35 @@ class Transaction {
     const { EIP712Domain, ...types } = _types;
     return wallet.signTypedData(domain, types, value);
   };
+
+  public isSupport1559 = async (endpoint: string) => {
+    const block = await fetchChain<{ baseFeePerGas: string }>({ url: endpoint, method: 'eth_getBlockByNumber', params: ['latest', false] });
+    return block.baseFeePerGas !== undefined;
+  };
 }
 
 export default new Transaction();
+
+class QueryOf1559 {
+  endpoint: string;
+  constructor(endpoint: string) {
+    this.endpoint = endpoint;
+  }
+
+  public sendAsync = (opts: any, callback: Function) =>
+    fetchChain({
+      url: this.endpoint,
+      method: opts.method,
+      params: opts.params,
+    })
+      .then((res) => callback(null, res))
+      .catch((err) => callback(err));
+
+  blockNumber = (callback: Function) => this.sendAsync({ method: 'eth_blockNumber' }, callback);
+
+  getBlockByNumber = (..._params: any) => {
+    const params = _params;
+    const callback = params.pop();
+    return this.sendAsync({ method: 'eth_getBlockByNumber', params }, callback);
+  };
+}

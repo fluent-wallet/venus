@@ -8,7 +8,7 @@ import PagerView from 'react-native-pager-view';
 import { atom, useAtomValue } from 'jotai';
 import { useCurrentNetwork, setAtom, NetworkType } from '@core/WalletCore/Plugins/ReactInject';
 import { type AssetInfo } from '@core/WalletCore/Plugins/AssetsTracker/types';
-import { CFX_ESPACE_MAINNET_CHAINID, CFX_ESPACE_TESTNET_CHAINID } from '@core/consts/network';
+import { Networks } from '@core/utils/consts';
 import Text from '@components/Text';
 import TokensList from '@modules/AssetsList/TokensList';
 import NFTsList from '@modules/AssetsList/NFTsList';
@@ -45,7 +45,7 @@ export const Tabs: React.FC<Omit<Props, 'setCurrentTab' | 'onPressItem' | 'selec
   const tabs = useMemo(() => {
     const res =
       !onlyToken &&
-      (!currentNetwork || (currentNetwork && (currentNetwork.chainId === CFX_ESPACE_MAINNET_CHAINID || currentNetwork.chainId === CFX_ESPACE_TESTNET_CHAINID)))
+      (!currentNetwork || (currentNetwork && (currentNetwork.chainId === Networks['Conflux eSpace'].chainId || currentNetwork.chainId === Networks['eSpace Testnet'].chainId)))
         ? (['Tokens', 'NFTs'] as Tabs)
         : (['Tokens'] as Tabs);
     type === 'Home' && res.push('Activity');
@@ -137,7 +137,7 @@ export const TabsContent: React.FC<Props> = ({ currentTab, setCurrentTab, pageVi
   const tabs = useMemo(() => {
     const res =
       !onlyToken &&
-      (!currentNetwork || (currentNetwork && (currentNetwork.chainId === CFX_ESPACE_MAINNET_CHAINID || currentNetwork.chainId === CFX_ESPACE_TESTNET_CHAINID)))
+      (!currentNetwork || (currentNetwork && (currentNetwork.chainId === Networks['Conflux eSpace'].chainId || currentNetwork.chainId === Networks['eSpace Testnet'].chainId)))
         ? (['Tokens', 'NFTs'] as Tabs)
         : (['Tokens'] as Tabs);
     type === 'Home' && res.push('Activity');
@@ -166,7 +166,7 @@ export const TabsContent: React.FC<Props> = ({ currentTab, setCurrentTab, pageVi
               showReceiveFunds={
                 type === 'Home' &&
                 currentNetwork?.networkType === NetworkType.Ethereum &&
-                (currentNetwork.chainId === CFX_ESPACE_MAINNET_CHAINID || currentNetwork.chainId === CFX_ESPACE_TESTNET_CHAINID)
+                (currentNetwork.chainId === Networks['Conflux eSpace'].chainId || currentNetwork.chainId === Networks['eSpace Testnet'].chainId)
               }
               onPressItem={onPressItem}
             />

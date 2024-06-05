@@ -8,12 +8,13 @@ export type ITxEvm = {
 
   nonce?: number;
   type?: number;
+  chainId?: string;
 
   gasLimit?: string;
   gasPrice?: string;
   storageLimit?: string;
-  //   maxFeePerGas?: string;
-  //   maxPriorityFeePerGas?: string;
+  maxFeePerGas?: string;
+  maxPriorityFeePerGas?: string;
 };
 
 export enum IBSIMTxEventTypesName {

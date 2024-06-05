@@ -70,11 +70,13 @@ const SetAssetAmount: React.FC<Props> = ({ targetAddress, asset, nftItemDetail, 
       }
     } else {
       try {
-        const { gasLimit, gasPrice } = await plugins.Transaction.estimate({
+        const { gasLimit, gasPrice, estimateOf1559 } = await plugins.Transaction.estimate({
           tx: { to: targetAddress, value: '0x0', from: currentAddressValue },
           network: currentNetwork!,
         });
-        let res = new Decimal(asset.balance).sub(new Decimal(gasLimit).mul(new Decimal(gasPrice)));
+        let res = new Decimal(asset.balance).sub(
+          new Decimal(gasLimit).mul(new Decimal(estimateOf1559 ? estimateOf1559.medium.suggestedMaxFeePerGas : gasPrice!)),
+        );
         res = res.greaterThan(0) ? res : new Decimal(0);
         setValidMax(res);
         return res;
@@ -277,7 +279,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
   },
   errorIcon: {
-    marginRight: 4
+    marginRight: 4,
   },
   errorTipText: {
     fontSize: 14,
