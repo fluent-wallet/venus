@@ -25,6 +25,9 @@ import methods from '@core/WalletCore/Methods';
 import plugins from '@core/WalletCore/Plugins';
 import { ITxEvm } from '@core/WalletCore/Plugins/Transaction/types';
 import Events from '@core/WalletCore/Events';
+import { Signature } from '@core/database/models/Signature';
+import { SignType } from '@core/database/models/Signature/type';
+import { App } from '@core/database/models/App';
 import { type IWCSendTransactionEvent } from '@core/WalletCore/Plugins/WalletConnect/types';
 import { BSIMError } from '@WalletCoreExtends/Plugins/BSIM/BSIMSDK';
 import BottomSheet, { BottomSheetScrollView, BottomSheetView, snapPoints } from '@components/BottomSheet';
@@ -41,9 +44,6 @@ import { WalletConnectParamList, WalletConnectTransactionStackName } from '@rout
 import EditAllowance from './EditAllowance';
 import SendContract from './Contract';
 import SendNativeToken from './NativeToken';
-import { Signature } from '@core/database/models/Signature';
-import { SignType } from '@core/database/models/Signature/type';
-import { App } from '@core/database/models/App';
 
 export type TxDataWithTokenInfo = ParseTxDataReturnType & {
   symbol?: string;
@@ -156,7 +156,6 @@ function WalletConnectTransaction() {
       txHash = await plugins.Transaction.sendRawTransaction({ txRaw, network: currentNetwork });
 
       await approve(txHash);
-      navigation.goBack();
     } catch (error: any) {
       if (error instanceof SignTransactionCancelError) {
         // ignore cancel error

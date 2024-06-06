@@ -5,6 +5,7 @@ import {
   WalletConnectProposalStackName,
   WalletConnectSignMessageStackName,
   WalletConnectTransactionStackName,
+  HomeStackName,
 } from '@router/configs';
 import { useCallback, useEffect, useState } from 'react';
 import { uniq } from 'lodash-es';
@@ -15,7 +16,7 @@ import Plugins from '@core/WalletCore/Plugins';
 import { WalletConnectPluginEventType } from '@core/WalletCore/Plugins/WalletConnect/types';
 import { NetworkType, useCurrentAddressValue, useCurrentNetwork } from '@core/WalletCore/Plugins/ReactInject';
 import { isDev, isQA } from '@utils/getEnv';
-import backToHome from '@utils/backToHome';
+import backToHome, { getActiveRouteName } from '@utils/backToHome';
 
 const SUPPORT_NETWORK = [Networks['Conflux eSpace'].netId] as Array<number>;
 const QA_SUPPORT_NETWORK = [Networks['Conflux eSpace'].netId, Networks['eSpace Testnet'].netId] as Array<number>;
@@ -52,8 +53,9 @@ export function useListenWalletConnectEvent() {
           if (requestChains.length === 0) {
             return event.action.reject('UNSUPPORTED_CHAINS');
           }
-          navigation?.dispatch(
-            StackActions.replace(WalletConnectStackName, {
+
+          if (getActiveRouteName(navigation.getState()) === HomeStackName) {
+            navigation.navigate(WalletConnectStackName, {
               screen: WalletConnectProposalStackName,
               params: {
                 ...event.data,
@@ -61,8 +63,21 @@ export function useListenWalletConnectEvent() {
                   .filter((network) => requestChains.includes(network.netId))
                   .map((network) => ({ icon: network.icon!, name: network.name, netId: network.netId, id: network.id })),
               },
-            }),
-          );
+            });
+          } else {
+            navigation?.dispatch(
+              StackActions.replace(WalletConnectStackName, {
+                screen: WalletConnectProposalStackName,
+                params: {
+                  ...event.data,
+                  connectedNetworks: networks
+                    .filter((network) => requestChains.includes(network.netId))
+                    .map((network) => ({ icon: network.icon!, name: network.name, netId: network.netId, id: network.id })),
+                },
+              }),
+            );
+          }
+
           break;
         }
 
