@@ -255,7 +255,13 @@
     "common" : {
       "signData" : "Sign Data"
     },
+    "filter" : {
+      "all" : "ALL",
+      "message" : "Sign Message",
+      "transactions" : "Transactions"
+    },
     "list" : {
+      "empty" : "No signature record",
       "showMore" : "more",
       "title" : "Signature Records"
     }
@@ -265,7 +271,6 @@
     "content" : {
       "depositToken" : "Deposit tokens to your wallet",
       "noActivity" : "No Activity",
-      "noLatestTransaction" : null,
       "noNFT" : "No NFT",
       "noRecord" : "No Record",
       "noToken" : "No Token",
@@ -357,11 +362,6 @@
     }
   },
   "wc" : {
-    "daap" : {
-      "tx" : {
-        "unknown" : "unknown"
-      }
-    },
     "dapp" : {
       "connectTo" : "Connected to",
       "connectedDApps" : "Connected DApps",

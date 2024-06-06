@@ -91,7 +91,7 @@ const MoreOption: React.FC<{ children: React.ReactElement }> = ({ children }) =>
                 <Copy color={reverseColors.textPrimary} width={20} height={20} />
               </View>
             </Pressable>
-            <Pressable onPress={handleToSignatureRecords} testID="signature-records">
+            <Pressable onPress={handleToSignatureRecords} testID="signatureRecords">
               <View style={styles.optionItem}>
                 <Text style={[{ color: reverseColors.textPrimary }, styles.optionItemText]}>{t('home.more.signatureRecords')}</Text>
                 <Sign color={reverseColors.textPrimary} width={20} height={20} />
