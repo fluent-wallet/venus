@@ -27,6 +27,7 @@ const BottomSheet = forwardRef<BottomSheet_, Props>(
       enableContentPanningGesture = true,
       enableHandlePanningGesture = true,
       enableDynamicSizing = false,
+      animateOnMount = true,
       backDropPressBehavior = 'close',
       keyboardBlurBehavior = 'restore',
       android_keyboardInputMode = isAdjustResize ? 'adjustResize' : 'adjustPan',
@@ -131,7 +132,7 @@ const BottomSheet = forwardRef<BottomSheet_, Props>(
         android_keyboardInputMode={android_keyboardInputMode}
         keyboardBlurBehavior={keyboardBlurBehavior}
         enableDynamicSizing={enableDynamicSizing}
-        animateOnMount={true}
+        animateOnMount={animateOnMount}
         activeOffsetY={activeOffsetY}
         activeOffsetX={activeOffsetX}
         {...props}

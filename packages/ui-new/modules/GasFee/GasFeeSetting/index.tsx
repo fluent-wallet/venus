@@ -1,93 +1,320 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
-import React, { useEffect, useState } from 'react';
-import { StyleSheet, Pressable, Keyboard } from 'react-native';
+import React, { useCallback, useEffect, useMemo, useState, useRef } from 'react';
+import { View, Pressable, StyleSheet } from 'react-native';
 import { useTheme } from '@react-navigation/native';
-import { isEqual } from 'lodash-es';
-import BottomSheet, { snapPoints, type BottomSheetMethods } from '@components/BottomSheet';
+import { useTranslation } from 'react-i18next';
+import { Image } from 'expo-image';
+import { isEqual, pick } from 'lodash-es';
+import Decimal from 'decimal.js';
+import usePollingGasEstimateAndNonce, { type Level } from '@core/WalletCore/Plugins/Transaction/usePollingGasEstimateAndNonce';
+import { useCurrentNetworkNativeAsset } from '@core/WalletCore/Plugins/ReactInject';
+import BottomSheet, { type BottomSheetMethods } from '@components/BottomSheet';
 import Text from '@components/Text';
-import useGasEstimate, { Level } from '@core/WalletCore/Plugins/Transaction/useGasEstimate';
+import Button from '@components/Button';
+import HourglassLoading from '@components/Loading/Hourglass';
+import { calculateTokenPrice } from '@utils/calculateTokenPrice';
+import GasLow from '@assets/images/gas/gas-low.png';
+import GasMedium from '@assets/images/gas/gas-medium.png';
+import GasHigh from '@assets/images/gas/gas-high.png';
+import GasCustomizeLight from '@assets/images/gas/gas-customize-light.png';
+import GasCustomizeDark from '@assets/images/gas/gas-customize-dark.png';
+import ArrowRight from '@assets/icons/arrow-right2.svg';
+import CustomizeSetting from './CustomizeSetting';
 
-interface SelectedGasEstimate {
+export type EstimateContent = {
+  suggestedMaxFeePerGas?: string;
+  suggestedMaxPriorityFeePerGas?: string;
+  suggestedGasPrice?: string;
+  gasCost: string;
+};
+
+const MinUSDT = 0.01;
+
+export interface SelectedGasEstimate extends EstimateContent {
   gasLimit: string;
   storageLimit?: string;
   gasPrice: string;
-  suggestedGasPrice?: string;
-  suggeestedMaxFeePerGas?: string;
-  suggestedMaxPriorityFeePerGas?: string;
-  gasCost: string;
-  type: 'customize' | Level;
+  nonce: number;
+  level: 'customize' | Level;
 }
 
 interface Props {
   show: boolean;
   onClose: () => void;
-  tx: Parameters<typeof useGasEstimate>[0];
-  onChange?: (gasEstimate: SelectedGasEstimate | null) => void;
+  tx: Parameters<typeof usePollingGasEstimateAndNonce>[0];
+  onConfirm: (gasEstimate: SelectedGasEstimate) => void;
 }
 
-const GasFeeSetting: React.FC<Props> = ({ show, onClose, tx, onChange }) => {
+export const OptionLevel: React.FC<{ level: SelectedGasEstimate['level'] }> = ({ level }) => {
+  const { t } = useTranslation();
+  const { colors, mode } = useTheme();
+
+  const map = useMemo(
+    () => ({
+      low: {
+        label: 'Slow',
+        color: colors.down,
+        gasCircleSrc: GasLow,
+      },
+      medium: {
+        label: 'Average',
+        color: colors.middle,
+        gasCircleSrc: GasMedium,
+      },
+      high: {
+        label: 'Fast',
+        color: colors.up,
+        gasCircleSrc: GasHigh,
+      },
+      customize: {
+        label: 'Customize',
+        color: colors.textPrimary,
+        gasCircleSrc: mode === 'light' ? GasCustomizeLight : GasCustomizeDark,
+      },
+    }),
+    [colors, mode],
+  );
+  return (
+    <View style={styles.gasOptionLevelWrapper}>
+      <Image style={styles.gasCircle} source={map[level].gasCircleSrc} contentFit="contain" />
+      <Text style={[styles.gasOptionLevel, { color: map[level].color }]}>{map[level].label}</Text>
+    </View>
+  );
+};
+
+const defaultLevel = 'low';
+
+const GasFeeSetting: React.FC<Props> = ({ show, tx, onClose, onConfirm }) => {
+  const { t } = useTranslation();
   const { colors } = useTheme();
-  const gasEstimate = useGasEstimate(tx);
+  const bottomSheetRef = useRef<BottomSheetMethods>(null!);
+
+  const nativeAsset = useCurrentNetworkNativeAsset()!;
+  const gasEstimate = usePollingGasEstimateAndNonce(tx);
   const estimate = gasEstimate ? gasEstimate.estimateOf1559 ?? gasEstimate.estimate : null;
 
   const [selectedGasEstimate, setSelectedGasEstimate] = useState<SelectedGasEstimate | null>(null);
-  useEffect(() => onChange?.(selectedGasEstimate), [selectedGasEstimate, onChange]);
-  
+  const [tempSelectedOptionLevel, setTempSelectedOptionLevel] = useState<SelectedGasEstimate['level'] | null>(null);
+  const [customizeEstimate, setCustomizeEstimate] = useState<SelectedGasEstimate | null>(null);
+  const [showCustomizeSetting, setShowCustomizeSetting] = useState(false);
+
+  const defaultCustomizeEstimate = useMemo(() => {
+    if (!gasEstimate || !estimate) return null;
+    return {
+      ...pick(gasEstimate, ['gasLimit', 'gasPrice', 'storageLimit', 'nonce']),
+      ...estimate[defaultLevel],
+      level: 'customize',
+    } as const;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [gasEstimate]);
+
   useEffect(() => {
-    if (selectedGasEstimate === null) {
-      if (gasEstimate && estimate) {
-        setSelectedGasEstimate({
-          gasLimit: gasEstimate.gasLimit,
-          gasPrice: gasEstimate.gasPrice,
-          storageLimit: gasEstimate.storageLimit,
-          ...estimate.medium,
-          type: 'medium',
-        });
-      }
-    } else if (selectedGasEstimate.type !== 'customize') {
-      if (gasEstimate && estimate) {
-        const newGasEstimate = {
-          gasLimit: gasEstimate.gasLimit,
-          gasPrice: gasEstimate.gasPrice,
-          storageLimit: gasEstimate.storageLimit,
-          ...estimate[selectedGasEstimate.type],
-          type: selectedGasEstimate.type,
-        };
-        if (!isEqual(selectedGasEstimate, newGasEstimate)) {
-          setSelectedGasEstimate(newGasEstimate);
-        }
+    if (!gasEstimate || !estimate || selectedGasEstimate?.level === 'customize') return;
+    const level = selectedGasEstimate?.level ?? defaultLevel;
+    const newGasEstimate = {
+      ...pick(gasEstimate, ['gasLimit', 'gasPrice', 'storageLimit', 'nonce']),
+      ...estimate[level],
+      level,
+    } as const;
+    if (!isEqual(selectedGasEstimate, newGasEstimate)) {
+      setSelectedGasEstimate(newGasEstimate);
+      onConfirm?.(newGasEstimate);
+      if (selectedGasEstimate === null) {
+        setTempSelectedOptionLevel(defaultLevel);
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [gasEstimate, selectedGasEstimate]);
+  }, [gasEstimate]);
+
+  useEffect(() => {
+    if (show && selectedGasEstimate) {
+      setTempSelectedOptionLevel(selectedGasEstimate.level);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [show]);
+
+  const handleConfirm = useCallback(() => {
+    if (tempSelectedOptionLevel === null || !gasEstimate || !estimate) return;
+    const level = tempSelectedOptionLevel;
+    const newGasEstimate = {
+      ...pick(gasEstimate, ['gasLimit', 'gasPrice', 'storageLimit', 'nonce']),
+      ...(level === 'customize' ? customizeEstimate ?? estimate[defaultLevel] : estimate?.[level]),
+      level,
+    } as const;
+    setSelectedGasEstimate(newGasEstimate);
+    onConfirm?.(newGasEstimate);
+    bottomSheetRef.current?.close();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [gasEstimate, customizeEstimate, tempSelectedOptionLevel]);
 
   if (!show) return;
   return (
     <>
-      <BottomSheet snapPoints={snapPoints.large} style={styles.container} onClose={onClose}>
+      <BottomSheet ref={bottomSheetRef} snapPoints={snapPoints} style={styles.container} index={0} onClose={onClose}>
         <Text style={[styles.title, { color: colors.textPrimary }]}>Network Fee</Text>
+
+        {!estimate && <HourglassLoading style={styles.loading} />}
+        {gasEstimate && estimate && (
+          <>
+            <GasOption
+              level="low"
+              nativeAsset={nativeAsset}
+              estimateContent={estimate.low}
+              selected={tempSelectedOptionLevel === 'low'}
+              onPress={() => setTempSelectedOptionLevel('low')}
+            />
+            <GasOption
+              level="medium"
+              nativeAsset={nativeAsset}
+              estimateContent={estimate.medium}
+              selected={tempSelectedOptionLevel === 'medium'}
+              onPress={() => setTempSelectedOptionLevel('medium')}
+            />
+            <GasOption
+              level="high"
+              nativeAsset={nativeAsset}
+              estimateContent={estimate.high}
+              selected={tempSelectedOptionLevel === 'high'}
+              onPress={() => setTempSelectedOptionLevel('high')}
+            />
+            <GasOption
+              level="customize"
+              nativeAsset={nativeAsset}
+              estimateContent={customizeEstimate ?? estimate[defaultLevel]}
+              selected={tempSelectedOptionLevel === 'customize'}
+              onPress={() => setShowCustomizeSetting(true)}
+            />
+          </>
+        )}
+
+        <Button
+          testID="confirm"
+          style={[styles.btn, !estimate && styles.btnInloading]}
+          size="small"
+          disabled={!tempSelectedOptionLevel}
+          onPress={handleConfirm}
+          loading={!estimate}
+        >
+          {t('common.confirm')}
+        </Button>
       </BottomSheet>
+      {gasEstimate && showCustomizeSetting && (
+        <CustomizeSetting
+          customizeEstimate={customizeEstimate ?? defaultCustomizeEstimate!}
+          onConfirm={(newCustomizeEstimate) => {
+            setTempSelectedOptionLevel('customize');
+            setCustomizeEstimate(newCustomizeEstimate);
+          }}
+          onClose={() => setShowCustomizeSetting(false)}
+        />
+      )}
     </>
   );
 };
 
+const GasOption: React.FC<{
+  level: SelectedGasEstimate['level'];
+  selected: boolean;
+  onPress: VoidFunction;
+  nativeAsset: NonNullable<ReturnType<typeof useCurrentNetworkNativeAsset>>;
+  estimateContent: EstimateContent;
+}> = ({ level, nativeAsset, estimateContent, selected, onPress }) => {
+  const { colors } = useTheme();
+
+  const priceGwei = useMemo(
+    () => new Decimal(estimateContent.suggestedMaxFeePerGas ?? estimateContent.suggestedGasPrice!).div(1e9).toString(),
+    [estimateContent.suggestedMaxFeePerGas, estimateContent.suggestedGasPrice],
+  );
+  const gasCost = useMemo(
+    () => new Decimal(estimateContent.gasCost).div(Decimal.pow(10, nativeAsset.decimals || 18)).toString(),
+    [estimateContent.gasCost, nativeAsset.decimals],
+  );
+  const costPriceInUSDT = useMemo(() => {
+    const res = nativeAsset?.priceInUSDT && gasCost ? calculateTokenPrice({ price: nativeAsset.priceInUSDT, amount: gasCost }) : null;
+    if (res && Number(res) < MinUSDT) return ' < $0.01';
+    if (res) return ` ≈ $${res}`;
+    return null;
+  }, [gasCost, nativeAsset?.priceInUSDT]);
+
+  return (
+    <Pressable
+      style={[styles.gasOptionWrapper, { borderColor: selected ? colors.borderPrimary : colors.borderFourth }]}
+      onPress={onPress}
+      pointerEvents={selected && level !== 'customize' ? 'none' : undefined}
+    >
+      <OptionLevel level={level} />
+      <View style={styles.gasOptionCostWrapper}>
+        <Text style={[styles.gasOptionCost, { color: colors.textSecondary }]}>{priceGwei} Gwei</Text>
+        <Text style={[styles.gasOptionCost, { color: colors.textSecondary, marginLeft: 'auto' }]}>
+          {gasCost} {nativeAsset?.symbol}
+          {costPriceInUSDT}
+        </Text>
+        {level === 'customize' && <ArrowRight color={colors.textSecondary} style={styles.gasOptionArrowRight} />}
+      </View>
+    </Pressable>
+  );
+};
+
+const snapPoints = [636];
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    paddingHorizontal: 16,
   },
   title: {
     marginTop: 8,
-    marginBottom: 24,
     lineHeight: 20,
     textAlign: 'center',
     fontSize: 16,
     fontWeight: '600',
   },
-
+  loading: {
+    marginTop: 60,
+    alignSelf: 'center',
+    width: 60,
+    height: 60,
+  },
+  gasOptionWrapper: {
+    borderWidth: 1,
+    borderRadius: 6,
+    padding: 16,
+    marginTop: 24,
+  },
+  gasOptionLevelWrapper: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  gasCircle: {
+    width: 16,
+    height: 16,
+    marginRight: 6,
+    transform: [{ translateY: -1 }],
+  },
+  gasOptionLevel: {
+    fontSize: 14,
+    fontWeight: '300',
+    lineHeight: 18,
+  },
+  gasOptionCostWrapper: {
+    marginTop: 8,
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  gasOptionCost: {
+    fontSize: 14,
+    fontWeight: '400',
+    lineHeight: 18,
+  },
+  gasOptionArrowRight: {
+    marginLeft: 8,
+  },
   btn: {
+    marginTop: 40,
+  },
+  btnInloading: {
     marginTop: 'auto',
     marginBottom: 32,
-    marginHorizontal: 16,
   },
 });
 

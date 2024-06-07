@@ -21,18 +21,20 @@ export const fetchGasEstimatesViaEthFeeHistory = async (query: any) =>
 
 const levels = {
   high: {
-    baseFeePercentageMultiplier: 1.25,
-    priorityFeePercentageMultiplier: 0.98,
+    baseFeePercentageMultiplier: 1.2,
+    priorityFeePercentageMultiplier: 1.2,
   },
   medium: {
-    baseFeePercentageMultiplier: 1.2,
-    priorityFeePercentageMultiplier: 0.97,
+    baseFeePercentageMultiplier: 1.1,
+    priorityFeePercentageMultiplier: 1.1,
   },
   low: {
-    baseFeePercentageMultiplier: 1.1,
-    priorityFeePercentageMultiplier: 0.94,
+    baseFeePercentageMultiplier: 1,
+    priorityFeePercentageMultiplier: 1,
   },
 } as const;
+
+export type Level = keyof typeof levels;
 
 export const estimateFor1559FromGasPrice = (gasPrice: string) => {
   const price = new Decimal(gasPrice);
@@ -58,7 +60,7 @@ export const calcGasCostFromEstimateOf1559 = (estimate: Awaited<ReturnType<typeo
         gasCost: new Decimal(suggestedMaxFeePerGas).mul(gasLimit).toHex(),
       },
     ]),
-  ) as Record<keyof typeof levels, { suggestedMaxFeePerGas: string; suggestedMaxPriorityFeePerGas: string; gasCost: string }>;
+  ) as Record<Level, { suggestedMaxFeePerGas: string; suggestedMaxPriorityFeePerGas: string; gasCost: string }>;
 };
 
 export const estimateFromGasPrice = (gasPrice: string) => {
@@ -71,7 +73,7 @@ export const estimateFromGasPrice = (gasPrice: string) => {
         suggestedGasPrice: price.mul(value.baseFeePercentageMultiplier).toHex(),
       },
     ]),
-  ) as Record<keyof typeof levels, { suggestedGasPrice: string }>;
+  ) as Record<Level, { suggestedGasPrice: string }>;
 };
 
 export const calcGasCostFromEstimate = (estimate: ReturnType<typeof estimateFromGasPrice>, gasLimit: string) => {
@@ -83,5 +85,5 @@ export const calcGasCostFromEstimate = (estimate: ReturnType<typeof estimateFrom
         gasCost: new Decimal(suggestedGasPrice).mul(gasLimit).toHex(),
       },
     ]),
-  ) as Record<keyof typeof levels, { suggestedGasPrice: string; gasCost: string }>;
+  ) as Record<Level, { suggestedGasPrice: string; gasCost: string }>;
 };
