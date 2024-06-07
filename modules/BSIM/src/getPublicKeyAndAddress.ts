@@ -1,22 +1,22 @@
-import {BSIMError} from './errors';
-import {BSIM} from './sdk';
+import { BSIMError } from './errors';
+import { BSIM } from './sdk';
 
-export type GetPublicKeyAndAddressReturnType =
-  | {
-      coinType: 503;
-      address?: never | undefined;
-      index: number;
-      key: string;
-    }
-  | {
-      coinType: 60;
-      /**
-       * checksum address
-       */
-      address: string;
-      index: number;
-      key: string;
-    };
+export type PublicKeyAndAddress503Type = {
+  coinType: 503;
+  address?: never | undefined;
+  index: number;
+  key: string;
+};
+export type PublicKeyAndAddress60Type = {
+  coinType: 60;
+  /**
+   * checksum address
+   */
+  address: string;
+  index: number;
+  key: string;
+};
+export type GetPublicKeyAndAddressReturnType = PublicKeyAndAddress503Type | PublicKeyAndAddress60Type;
 
 /**
  * get the public key and address(only support ETH now)
@@ -34,9 +34,7 @@ export type GetPublicKeyAndAddressReturnType =
  })
  * ```
  */
-export async function getPublicKeyAndAddress(): Promise<
-  GetPublicKeyAndAddressReturnType[]
-> {
+export async function getPublicKeyAndAddress(): Promise<GetPublicKeyAndAddressReturnType[]> {
   try {
     const result = await BSIM.getPublicKeyAndAddress();
     return result;

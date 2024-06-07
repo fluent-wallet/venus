@@ -55,6 +55,7 @@
     "react-native": "0.73.6",
     "react-native-bignumber": "^0.2.3",
     "react-native-bootsplash": "^5.5.2",
+    "react-native-bsim": "link:./modules/BSIM",
     "react-native-config": "^1.5.1",
     "react-native-device-info": "^10.13.1",
     "react-native-flash-message": "^0.4.2",

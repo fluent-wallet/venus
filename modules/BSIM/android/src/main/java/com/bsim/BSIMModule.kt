@@ -104,17 +104,17 @@ class BSIMModule(private val reactContext: ReactApplicationContext) :
     fun getBSIMVersion(promise: Promise) {
         scope.launch {
             try {
-                val version = createSDK().getBSIMVersion()
-                version?.let {
-                    if (it.Code == CODE_SUCCESS) {
-                        promise.resolve(it.Message)
-                    } else {
-                        promise.reject(it.Code, it.Message)
-                    }
-
-                } ?: run {
+                val version = createSDK().getBSIMVersion() ?: run {
                     promise.reject(Errors.ErrorGetBSIMVersion.code, "get BSIM version failed")
+                    return@launch
                 }
+
+                if (version.Code == CODE_SUCCESS) {
+                    promise.resolve(version.Message)
+                } else {
+                    promise.reject(version.Code, version.Message)
+                }
+
 
             } catch (e: Exception) {
                 promise.reject(Errors.ErrorUnknown.code, "unknown error ${e.message}")
@@ -127,27 +127,34 @@ class BSIMModule(private val reactContext: ReactApplicationContext) :
     @ReactMethod
     fun genNewKey(coinTypeString: String, promise: Promise) {
         scope.launch {
-            val coin = CoinType.entries.find { it.name == coinTypeString }
-
-            coin?.let {
-                try {
-                    val result = createSDK().genNewKey(it)
-                    if (result?.Code == CODE_SUCCESS) {
-                        promise.resolve("ok")
-                    } else {
-                        promise.reject(
-                            result?.Code ?: Errors.ErrorGenerateNewKey.code,
-                            result?.Message ?: "create new key failed"
-                        )
-                    }
-                } catch (e: Exception) {
-                    promise.reject(Errors.ErrorUnknown.code, "unknown error ${e.message}")
-                }
-            } ?: run {
+            val coin = CoinType.values().find { it.name == coinTypeString } ?: run {
                 promise.reject(
                     Errors.ErrorNotSupportedCoinType.code, "the $coinTypeString is not supported"
                 )
+                return@launch
             }
+
+            try {
+                val result = createSDK().genNewKey(coin) ?: run {
+                    promise.reject(
+                        Errors.ErrorGenerateNewKey.code,
+                        "create new key failed"
+                    )
+                    return@launch
+                }
+
+                if (result.Code == CODE_SUCCESS) {
+                    promise.resolve("ok")
+                } else {
+                    promise.reject(
+                        result.Code,
+                        result.Message
+                    )
+                }
+            } catch (e: Exception) {
+                promise.reject(Errors.ErrorUnknown.code, "unknown error ${e.message}")
+            }
+
         }
     }
 
@@ -200,7 +207,7 @@ class BSIMModule(private val reactContext: ReactApplicationContext) :
     @ReactMethod
     fun signMessage(msg: String, coinTypeIndex: Int, publicKeyIndex: Int, promise: Promise) {
         scope.launch {
-            val coinType = CoinType.entries.find { it.index == coinTypeIndex }
+            val coinType = CoinType.values().find { it.index == coinTypeIndex }
                 ?: run {
                     promise.reject(Errors.ErrorSignCoinTypeNotFind.code, "error coin type index")
                     return@launch
@@ -264,16 +271,17 @@ class BSIMModule(private val reactContext: ReactApplicationContext) :
     ) {
         scope.launch {
             try {
-                val result = function()
-                result?.let {
-                    if (it.Code == CODE_SUCCESS) {
-                        promise.resolve(it.Message)
-                    } else {
-                        promise.reject(it.Code, it.Message)
-                    }
-                } ?: run {
+                val result = function() ?: run {
                     promise.reject(errorCode, errorMessage)
+                    return@launch
                 }
+
+                if (result.Code == CODE_SUCCESS) {
+                    promise.resolve(result.Message)
+                } else {
+                    promise.reject(result.Code, result.Message)
+                }
+
             } catch (e: Exception) {
                 promise.reject(Errors.ErrorUnknown.code, "unknown error ${e.message}")
             }
