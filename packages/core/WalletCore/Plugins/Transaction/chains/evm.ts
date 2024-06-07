@@ -1,11 +1,18 @@
 /* eslint-disable @typescript-eslint/ban-types */
 import { Transaction as EVMTransaction, TypedDataDomain, TypedDataField, Wallet } from 'ethers';
+import Decimal from 'decimal.js';
 import { fetchChain } from '@cfx-kit/dapp-utils/dist/fetch';
 import { addHexPrefix } from '@core/utils/base';
 import { NetworkType } from '@core/database/models/Network';
 import methods from '@core/WalletCore/Methods';
 import { type ITxEvm } from '../types';
-import { fetchGasEstimatesViaEthFeeHistory, estimateFor1559FromGasPrice } from '../fetchGasEstimatesViaEthFeeHistory';
+import {
+  fetchGasEstimatesViaEthFeeHistory,
+  estimateFromGasPrice,
+  calcGasCostFromEstimate,
+  estimateFor1559FromGasPrice,
+  calcGasCostFromEstimateOf1559,
+} from '../SuggestedGasEstimate';
 
 class Transaction {
   public getGasPrice = (endpoint: string) => fetchChain<string>({ url: endpoint, method: 'eth_gasPrice' });
@@ -45,18 +52,19 @@ class Transaction {
     gasBuffer?: number;
   }): Promise<{
     gasLimit: string;
-    gasPrice?: string;
-    estimateOf1559?: Awaited<ReturnType<typeof fetchGasEstimatesViaEthFeeHistory>>;
+    gasPrice: string;
+    estimate?: ReturnType<typeof calcGasCostFromEstimate>;
+    estimateOf1559?: ReturnType<typeof calcGasCostFromEstimateOf1559>;
   }> => {
     const estimateGasLimitPromise = this.estimateGas({ tx, endpoint, gasBuffer });
     if (await this.isSupport1559(endpoint)) {
-      // const [estimateOf1559, gasLimit] = await Promise.all([fetchGasEstimatesViaEthFeeHistory(new QueryOf1559(endpoint)), estimateGasLimitPromise]);
-      // return { estimateOf1559, gasLimit };
+      // const [_estimateOf1559, gasLimit] = await Promise.all([fetchGasEstimatesViaEthFeeHistory(new QueryOf1559(endpoint)), estimateGasLimitPromise]);
+      // return { gasLimit, gasPrice, estimateOf1559: calcGasCostFromEstimateOf1559(_estimateOf1559, gasLimit) };
       const [gasPrice, gasLimit] = await Promise.all([this.getGasPrice(endpoint), estimateGasLimitPromise]);
-      return { estimateOf1559: estimateFor1559FromGasPrice(gasPrice), gasLimit };
+      return { gasLimit, gasPrice, estimateOf1559: calcGasCostFromEstimateOf1559(estimateFor1559FromGasPrice(gasPrice), gasLimit) };
     } else {
       const [gasPrice, gasLimit] = await Promise.all([this.getGasPrice(endpoint), estimateGasLimitPromise]);
-      return { gasPrice, gasLimit };
+      return { gasLimit, gasPrice, estimate: calcGasCostFromEstimate(estimateFromGasPrice(gasPrice), gasLimit) };
     }
   };
 

@@ -26,29 +26,28 @@ import { BSIMError, BSIM_ERRORS } from 'packages/WalletCoreExtends/Plugins/BSIM/
 import plugins from '@core/WalletCore/Plugins';
 import methods from '@core/WalletCore/Methods';
 import events from '@core/WalletCore/Events';
+import { checkDiffInRange } from '@core/WalletCore/Plugins/BlockNumberTracker';
+import useGasEstimate from '@core/WalletCore/Plugins/Transaction/useGasEstimate';
+import { processError } from '@core/utils/eth';
+import { SignType } from '@core/database/models/Signature/type';
+import { Signature } from '@core/database/models/Signature';
 import Text from '@components/Text';
 import Button from '@components/Button';
 import TokenIcon from '@modules/AssetsList/TokensList/TokenIcon';
 import { BottomSheetScrollView, type BottomSheetMethods } from '@components/BottomSheet';
 import { getDetailSymbol } from '@modules/AssetsList/NFTsList/NFTItem';
 import { AccountItemView } from '@modules/AccountsList';
+import backToHome from '@utils/backToHome';
+import { calculateTokenPrice } from '@utils/calculateTokenPrice';
 import useFormatBalance from '@hooks/useFormatBalance';
 import useInAsync from '@hooks/useInAsync';
-import backToHome from '@utils/backToHome';
+import { SignTransactionCancelError, useSignTransaction } from '@hooks/useSignTransaction';
 import { SendTransactionStep4StackName, type SendTransactionScreenProps } from '@router/configs';
+import WarnIcon from '@assets/icons/warn.svg';
+import ProhibitIcon from '@assets/icons/prohibit.svg';
 import SendTransactionBottomSheet from '../SendTransactionBottomSheet';
 import { NFT } from '../Step3Amount';
 import BSIMVerify from '../BSIMVerify';
-import WarnIcon from '@assets/icons/warn.svg';
-import ProhibitIcon from '@assets/icons/prohibit.svg';
-import { checkDiffInRange } from '@core/WalletCore/Plugins/BlockNumberTracker';
-import { calculateTokenPrice } from '@utils/calculateTokenPrice';
-import useGasEstimate from '@core/WalletCore/Plugins/Transaction/useGasEstimate';
-import { SignTransactionCancelError, useSignTransaction } from '@hooks/useSignTransaction';
-import { processError } from '@core/utils/eth';
-import Methods from '@core/WalletCore/Methods';
-import { SignType } from '@core/database/models/Signature/type';
-import { Signature } from '@core/database/models/Signature';
 
 const SendTransactionStep4Confirm: React.FC<SendTransactionScreenProps<typeof SendTransactionStep4StackName>> = ({ navigation, route }) => {
   useEffect(() => Keyboard.dismiss(), []);
@@ -116,7 +115,6 @@ const SendTransactionStep4Confirm: React.FC<SendTransactionScreenProps<typeof Se
     } as ITxEvm;
   }, []);
 
-  // const [gasInfo, setGasInfo] = useState<Awaited<ReturnType<typeof plugins.Transaction.estimate>> | null>(null);
 
   const gasInfo = useGasEstimate(txHalf);
 
@@ -185,7 +183,7 @@ const SendTransactionStep4Confirm: React.FC<SendTransactionScreenProps<typeof Se
         const { txRawPromise, cancel } = await signTransaction({ ...tx, epochHeight: epochHeightRef.current });
         bsimCancelRef.current = cancel;
         txRaw = await txRawPromise;
-        signature = await Methods.createSignature({
+        signature = await methods.createSignature({
           address: currentAddress,
           signType: SignType.TX,
         });

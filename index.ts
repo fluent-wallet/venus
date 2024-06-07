@@ -26,6 +26,11 @@ import { name as appName } from './app.json';
 import { ENABLE_WALLET_CONNECT_FEATURE } from './packages/ui-new/utils/features';
 
 Decimal.set({ precision: 80 });
+Decimal.config({
+  toExpNeg: -80,
+  toExpPos: 80
+});
+
 LogBox.ignoreLogs([
   'WebSocket connection failed for host',
   'Socket stalled when trying to connect',

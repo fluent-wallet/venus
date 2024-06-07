@@ -4,6 +4,7 @@ import plugins from '@core/WalletCore/Plugins';
 import { useCurrentNetwork } from '@core/WalletCore/Plugins/ReactInject';
 import { ITxEvm } from '@core/WalletCore/Plugins/Transaction/types';
 import { notNull } from '@core/utils/rxjs';
+export type Level = 'high' | 'medium' | 'low';
 
 /**
  * get gas estimate from RPC , use the current network config
