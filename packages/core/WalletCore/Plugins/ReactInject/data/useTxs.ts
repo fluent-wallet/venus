@@ -1,12 +1,15 @@
 import { useAtomValue } from 'jotai';
 import { atomFamily, atomWithObservable } from 'jotai/utils';
 import { switchMap, of, combineLatest, map } from 'rxjs';
-import { observeTxById, observeFinishedTxWithAddress, observeUnfinishedTxWithAddress } from '../../../../database/models/Tx/query';
+import { observeTxById, observeFinishedTxWithAddress, observeUnfinishedTxWithAddress, observeTxWithAddress } from '../../../../database/models/Tx/query';
 import { currentAddressObservable } from './useCurrentAddress';
 import { accountsManageObservable } from './useAccountsManage';
 import { TxPayload } from '../../../../database/models/TxPayload';
 import { formatTxData } from '../../../../utils/tx';
 import { Asset } from '@core/database/models/Asset';
+import { Tx } from '@core/database/models/Tx';
+
+const txsObservable = currentAddressObservable.pipe(switchMap((currentAddress) => (currentAddress ? observeTxWithAddress(currentAddress.id) : of([]))));
 
 export const unfinishedTxsObservable = currentAddressObservable.pipe(
   switchMap((currentAddress) => (currentAddress ? observeUnfinishedTxWithAddress(currentAddress.id) : of(null))),
@@ -47,31 +50,22 @@ export enum RecentlyType {
   Contract = 'Contract',
   Recently = 'Recently',
 }
-export const recentlyAddressObservable = combineLatest([unfinishedTxsObservable, finishedTxsObservable, accountsManageObservable]).pipe(
-  switchMap(([unfinishedTxs, finishedTxs, accountsManage]) =>
-    Promise.all([
-      Promise.all(
-        [unfinishedTxs, finishedTxs]
-          .flat()
-          .filter(Boolean)
-          .map((tx) => tx!.txPayload),
-      ),
-      Promise.all(
-        [unfinishedTxs, finishedTxs]
-          .flat()
-          .filter(Boolean)
-          .map((tx) => tx!.asset),
-      ),
-      accountsManage,
-    ]),
+export const recentlyAddressObservable = combineLatest([txsObservable, accountsManageObservable]).pipe(
+  switchMap(([txs, accountsManage]) =>
+    Promise.all([txs, Promise.all(txs.filter(Boolean).map((tx) => tx!.txPayload)), Promise.all(txs.filter(Boolean).map((tx) => tx!.asset)), accountsManage]),
   ),
-  map(([txPayloads, txAssets, accountsManage]) => {
+  map(([txs, txPayloads, txAssets, accountsManage]) => {
+    const txMap = new Map<string, Tx>();
     const assetMap = new Map<string, Asset>();
     txPayloads.forEach((p, i) => {
+      txMap.set(p.id, txs[i]);
       assetMap.set(p.id, txAssets[i]);
     });
     return [
-      txPayloads.sort((a, b) => Number((b.nonce ?? 0) - (a.nonce ?? 0))).map((txPayload) => formatTxData(txPayload, assetMap.get(txPayload.id)!)),
+      txPayloads
+        .sort((a, b) => Number((b.nonce ?? 0) - (a.nonce ?? 0)))
+        .map((txPayload) => formatTxData(txMap.get(txPayload.id)!, txPayload, assetMap.get(txPayload.id)!))
+        .filter((formatedTxData) => formatedTxData.isTransfer),
       accountsManage,
     ] as const;
   }),
