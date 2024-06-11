@@ -24,9 +24,6 @@ declare module '@core/WalletCore/Plugins' {
 const eSpaceCoinType = 60;
 
 export class BSIMPluginClass implements Plugin {
-  constructor() {
-    setTimeout(() => this.getBSIMList(), 3000);
-  }
   name = 'BSIM' as const;
 
   chainLimitCount = 25 as const;
