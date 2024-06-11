@@ -20,10 +20,12 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlin.coroutines.resume
 import kotlin.coroutines.suspendCoroutine
 import org.web3j.crypto.Keys
 import org.web3j.utils.Numeric
+import kotlin.coroutines.resumeWithException
 
 class BSIMModule(private val reactContext: ReactApplicationContext) :
     ReactContextBaseJavaModule(reactContext), LifecycleEventListener {
@@ -49,7 +51,7 @@ class BSIMModule(private val reactContext: ReactApplicationContext) :
             return sdkInstance as Sdk
         }
 
-        return suspendCoroutine { continuation ->
+        return suspendCancellableCoroutine { continuation ->
             sdkInstance = Sdk(reactContext.applicationContext, object : SdkCallBack() {
                 override fun success() {
                     FLog.i("BSIMDebug", "create success")
@@ -58,10 +60,12 @@ class BSIMModule(private val reactContext: ReactApplicationContext) :
                             ?: throw IllegalStateException("SDK was null when success was called")
                     )
                 }
-
                 override fun failed(e: Exception) {
-                    FLog.i("BSIMDebug", "create failed")
-                    throw e
+                    if (continuation.isActive) {
+                        FLog.i("BSIMDebug", "create failed")
+                        continuation.resumeWithException(e)
+                    }
+
                 }
             })
 
