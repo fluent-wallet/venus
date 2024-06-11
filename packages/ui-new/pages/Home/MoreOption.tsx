@@ -11,6 +11,7 @@ import Copy from '@assets/icons/copy.svg';
 import Earth from '@assets/icons/earth.svg';
 import Sign from '@assets/icons/sign.svg';
 import { SignatureRecordsStackName, StackScreenProps } from '@router/configs';
+import { ENABLE_SIGNATURE_RECORDS_FEATURE } from '@utils/features';
 
 const MoreOption: React.FC<{ children: React.ReactElement }> = ({ children }) => {
   const { reverseColors } = useTheme();
@@ -65,7 +66,7 @@ const MoreOption: React.FC<{ children: React.ReactElement }> = ({ children }) =>
       width: 160,
     });
     setVisible(false);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentAddressValue]);
 
   const handleToSignatureRecords = useCallback(() => {
@@ -91,12 +92,14 @@ const MoreOption: React.FC<{ children: React.ReactElement }> = ({ children }) =>
                 <Copy color={reverseColors.textPrimary} width={20} height={20} />
               </View>
             </Pressable>
-            <Pressable onPress={handleToSignatureRecords} testID="signatureRecords">
-              <View style={styles.optionItem}>
-                <Text style={[{ color: reverseColors.textPrimary }, styles.optionItemText]}>{t('home.more.signatureRecords')}</Text>
-                <Sign color={reverseColors.textPrimary} width={20} height={20} />
-              </View>
-            </Pressable>
+            {ENABLE_SIGNATURE_RECORDS_FEATURE.allow && (
+              <Pressable onPress={handleToSignatureRecords} testID="signatureRecords">
+                <View style={styles.optionItem}>
+                  <Text style={[{ color: reverseColors.textPrimary }, styles.optionItemText]}>{t('home.more.signatureRecords')}</Text>
+                  <Sign color={reverseColors.textPrimary} width={20} height={20} />
+                </View>
+              </Pressable>
+            )}
           </Animated.View>
         </Pressable>
       </Modal>

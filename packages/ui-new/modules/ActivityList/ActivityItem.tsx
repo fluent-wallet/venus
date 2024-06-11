@@ -11,26 +11,58 @@ import useFormatBalance from '@hooks/useFormatBalance';
 import TokenIcon from '@modules/AssetsList/TokensList/TokenIcon';
 import NFTIcon from '@modules/AssetsList/NFTsList/NFTIcon';
 import { useTranslation } from 'react-i18next';
+import { TxSource } from '@core/database/models/Tx/type';
+import { Asset } from '@core/database/models/Asset';
 
 interface Props extends Omit<ComponentProps<typeof Pressable>, 'onPress'> {
   onPress?: (item: Tx) => void;
   tx: Tx;
 }
 
+const AssetInfo: React.FC<{
+  asset?: Asset | null;
+  value: string | null | undefined;
+  tokenId: string;
+  txStatus: ReturnType<typeof formatStatus>;
+  sign?: '+' | '-' | false;
+}> = ({ asset, value, tokenId, txStatus, sign = false }) => {
+  const { colors } = useTheme();
+  const decimals = asset?.decimals ?? 18;
+  const formatBalance = useFormatBalance(value, decimals);
+  return (
+    <View style={styles.assetWrapper}>
+      {asset?.type === AssetType.ERC20 || asset?.type === AssetType.Native ? (
+        <TokenIcon source={asset?.icon} style={[styles.assetIcon, { borderRadius: 40 }]} />
+      ) : (
+        <NFTIcon source={asset?.icon} style={[styles.assetIcon, { borderRadius: 2 }]} />
+      )}
+      <Text style={[styles.assetText, { color: txStatus === 'failed' ? colors.textSecondary : colors.textPrimary }]}>
+        {sign} {formatBalance} {asset?.symbol}
+        {tokenId && <>&nbsp;#{tokenId}</>}
+      </Text>
+    </View>
+  );
+};
+
 const ActivityItem: React.FC<Props> = ({ onPress, tx }) => {
   const { colors } = useTheme();
   const payload = usePayloadOfTx(tx.id);
   const asset = useAssetOfTx(tx.id);
   const status = formatStatus(tx);
-  const { value, to, decimals, tokenId } = useMemo(() => formatTxData(payload, asset), [payload, asset]);
-  const formatBalance = useFormatBalance(value, decimals);
+  const { value, to, tokenId } = useMemo(() => formatTxData(tx, payload, asset), [tx, payload, asset]);
   const { t } = useTranslation();
+  const method = useMemo(() => {
+    if (tx.source === TxSource.SELF) {
+      return t('common.send');
+    }
+    return tx.method;
+  }, [t, tx.method, tx.source]);
 
   return (
     <Pressable style={styles.container} onPress={() => onPress?.(tx)}>
       <View style={styles.title}>
         <Text style={[styles.typeText, { color: colors.textPrimary }]}>
-          {t('common.send')}
+          {method}
           {ACTIVITY_DB_STATUS_FEATURE.allow && `  --[${tx.status}-${tx.source}-${tx.method}]`}
         </Text>
         {status !== 'confirmed' && (
@@ -41,19 +73,10 @@ const ActivityItem: React.FC<Props> = ({ onPress, tx }) => {
           </Text>
         )}
 
-        <Text style={[styles.address, { color: colors.textSecondary }]}>To {shortenAddress(to)}</Text>
+        {to && <Text style={[styles.address, { color: colors.textSecondary }]}>To {shortenAddress(to)}</Text>}
       </View>
-      <View style={styles.assetWrapper}>
-        {asset?.type === AssetType.ERC20 || asset?.type === AssetType.Native ? (
-          <TokenIcon source={asset?.icon} style={[styles.assetIcon, { borderRadius: 40 }]} />
-        ) : (
-          <NFTIcon source={asset?.icon} style={[styles.assetIcon, { borderRadius: 2 }]} />
-        )}
-        <Text style={[styles.assetText, { color: status === 'failed' ? colors.textSecondary : colors.textPrimary }]}>
-          - {formatBalance} {asset?.symbol}
-          {tokenId && <>&nbsp;#{tokenId}</>}
-        </Text>
-      </View>
+      {tx.source === TxSource.SELF && <AssetInfo asset={asset} value={value} tokenId={tokenId} txStatus={status} sign="-" />}
+      {method === 'approve' && <AssetInfo asset={asset} value={value} tokenId={tokenId} txStatus={status} />}
     </Pressable>
   );
 };
