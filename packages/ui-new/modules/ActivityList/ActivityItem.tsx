@@ -61,7 +61,7 @@ const ActivityItem: React.FC<Props> = ({ onPress, tx }) => {
   return (
     <Pressable style={styles.container} onPress={() => onPress?.(tx)}>
       <View style={styles.title}>
-        <Text style={[styles.typeText, { color: colors.textPrimary }]}>
+        <Text style={[styles.typeText, { color: colors.textPrimary }]} numberOfLines={1}>
           {method}
           {ACTIVITY_DB_STATUS_FEATURE.allow && `  --[${tx.status}-${tx.source}-${tx.method}]`}
         </Text>
@@ -100,6 +100,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '600',
     lineHeight: 18,
+    flex: 1,
   },
   statusText: {
     marginLeft: 12,
@@ -113,7 +114,7 @@ const styles = StyleSheet.create({
   address: {
     fontSize: 12,
     fontWeight: '300',
-    marginLeft: 'auto',
+    marginLeft: 4,
   },
   assetTransfer: {},
   assetWrapper: {
