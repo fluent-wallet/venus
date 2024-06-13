@@ -132,6 +132,7 @@
     "send" : "發送",
     "to" : "接收方",
     "unsafe" : "不安全",
+    "update" : "更新",
     "use" : "使用",
     "verifyPassword" : "驗證密碼",
     "view" : "查看"
@@ -219,11 +220,13 @@
   },
   "settings" : {
     "aboutUs" : {
+      "UpdateToNew" : "更新至新版本",
       "action" : {
         "checkUpdate" : "檢查更新",
         "feedback" : "誠邀反饋",
         "teamsService" : "服務條款"
       },
+      "latestVersion" : "您的應用程式已經是最新版本了",
       "title" : "SwiftShield 錢包",
       "version" : "應用程序版本"
     },

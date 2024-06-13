@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-empty-function */
 /* eslint-disable react-hooks/exhaustive-deps */
 import React, { useMemo, useState, useEffect, useCallback, useRef } from 'react';
-import { View, StyleSheet, Keyboard, Pressable } from 'react-native';
+import { View, StyleSheet, Keyboard } from 'react-native';
 import { useTheme } from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';
 import { showMessage } from 'react-native-flash-message';
@@ -32,12 +32,11 @@ import { SignType } from '@core/database/models/Signature/type';
 import { Signature } from '@core/database/models/Signature';
 import Text from '@components/Text';
 import Button from '@components/Button';
-import TokenIcon from '@modules/AssetsList/TokensList/TokenIcon';
 import { BottomSheetScrollView, type BottomSheetMethods } from '@components/BottomSheet';
 import { getDetailSymbol } from '@modules/AssetsList/NFTsList/NFTItem';
 import { AccountItemView } from '@modules/AccountsList';
-import GasFeeSetting, { OptionLevel, type SelectedGasEstimate } from '@modules/GasFee/GasFeeSetting';
-import HourglassLoading from '@components/Loading/Hourglass';
+import GasFeeSetting, { type SelectedGasEstimate } from '@modules/GasFee/GasFeeSetting';
+import EstimateFee from '@modules/GasFee/GasFeeSetting/EstimateFee';
 import backToHome from '@utils/backToHome';
 import { calculateTokenPrice } from '@utils/calculateTokenPrice';
 import useFormatBalance from '@hooks/useFormatBalance';
@@ -46,10 +45,10 @@ import { SignTransactionCancelError, useSignTransaction } from '@hooks/useSignTr
 import { SendTransactionStep4StackName, type SendTransactionScreenProps } from '@router/configs';
 import WarnIcon from '@assets/icons/warn.svg';
 import ProhibitIcon from '@assets/icons/prohibit.svg';
-import SettingsIcon from '@assets/icons/settings.svg';
 import SendTransactionBottomSheet from '../SendTransactionBottomSheet';
 import { NFT } from '../Step3Amount';
 import BSIMVerify from '../BSIMVerify';
+import SendAsset from './SendAsset';
 
 const SendTransactionStep4Confirm: React.FC<SendTransactionScreenProps<typeof SendTransactionStep4StackName>> = ({ navigation, route }) => {
   useEffect(() => Keyboard.dismiss(), []);
@@ -118,16 +117,6 @@ const SendTransactionStep4Confirm: React.FC<SendTransactionScreenProps<typeof Se
   }, []);
 
   const [gasEstimateAndNonce, setGasEstimateAndNonce] = useState<SelectedGasEstimate | null>(null);
-
-  const gasCostAndPriceInUSDT = useMemo(() => {
-    if (!gasEstimateAndNonce) return null;
-    const cost = new Decimal(gasEstimateAndNonce.gasCost).div(Decimal.pow(10, nativeAsset?.decimals ?? 18));
-    const priceInUSDT = nativeAsset?.priceInUSDT ? cost.mul(new Decimal(nativeAsset.priceInUSDT)) : null;
-    return {
-      cost: cost.toString(),
-      priceInUSDT: priceInUSDT ? (priceInUSDT.lessThan(0.01) ? '<$0.01' : `≈$${priceInUSDT.toFixed(2)}`) : null,
-    };
-  }, [gasEstimateAndNonce, nativeAsset?.priceInUSDT]);
 
   const [error, setError] = useState<{ type?: string; message: string } | null>(null);
 
@@ -260,23 +249,18 @@ const SendTransactionStep4Confirm: React.FC<SendTransactionScreenProps<typeof Se
       >
         <BottomSheetScrollView>
           <Text style={[styles.sendTitle, { color: colors.textPrimary }]}>{t('common.send')}</Text>
+
           {nftItemDetail && <NFT colors={colors} asset={asset} nftItemDetail={nftItemDetail} />}
           {asset.type !== AssetType.ERC721 && (
-            <>
-              <Text style={[styles.text, styles.to, { color: colors.textSecondary }]}>{t('common.amount')}</Text>
-              <View style={styles.balanceWrapper}>
-                <Text style={[styles.balance, { color: colors.textPrimary }]} numberOfLines={1}>
-                  {nftItemDetail ? amount : formattedAmount} {symbol}
-                </Text>
-                {(asset.type === AssetType.Native || asset.type === AssetType.ERC20) && <TokenIcon style={styles.assetIcon} source={asset.icon} />}
-              </View>
-              {price && <Text style={[styles.text, styles.price, { color: colors.textSecondary }]}>≈${price}</Text>}
-            </>
+            <SendAsset
+              amount={nftItemDetail ? amount : formattedAmount}
+              symbol={symbol}
+              price={price}
+              icon={asset.type === AssetType.Native || asset.type === AssetType.ERC20 ? asset.icon : undefined}
+              recipientAddress={recipientAddress}
+            />
           )}
-
-          <Text style={[styles.text, styles.to, { color: colors.textSecondary }]}>{t('common.to')}</Text>
-          <AccountItemView nickname={''} addressValue={recipientAddress} colors={colors} />
-
+          
           <View style={[styles.divider, { backgroundColor: colors.borderFourth }]} />
 
           <AccountItemView nickname={t('tx.confirm.signingWith')} addressValue={currentAddressValue} colors={colors}>
@@ -286,29 +270,7 @@ const SendTransactionStep4Confirm: React.FC<SendTransactionScreenProps<typeof Se
           </AccountItemView>
 
           <Text style={[styles.estimateFee, { color: colors.textPrimary }]}>{t('tx.confirm.estimatedFee')}</Text>
-          <View style={styles.estimateWrapper}>
-            {gasCostAndPriceInUSDT && (
-              <>
-                <TokenIcon style={styles.assetIcon} source={nativeAsset?.icon} />
-                <Text style={[styles.gasText, { color: colors.textSecondary }]}>
-                  {'  '}
-                  {gasCostAndPriceInUSDT.cost} {nativeAsset?.symbol}
-                </Text>
-                {gasCostAndPriceInUSDT.priceInUSDT && (
-                  <Text style={[styles.gasText, { color: colors.textSecondary }]}>
-                    {'    '}
-                    {gasCostAndPriceInUSDT.priceInUSDT}
-                  </Text>
-                )}
-              </>
-            )}
-            {!gasCostAndPriceInUSDT && <HourglassLoading style={{ width: 20, height: 20 }} />}
-
-            <Pressable style={styles.gasSettingWrapper} onPress={() => setShowGasFeeSetting(true)}>
-              {gasEstimateAndNonce && <OptionLevel level={gasEstimateAndNonce.level} />}
-              <SettingsIcon color={colors.textSecondary} />
-            </Pressable>
-          </View>
+          <EstimateFee gasEstimateAndNonce={gasEstimateAndNonce} onPressSettingIcon={() => setShowGasFeeSetting(true)} />
 
           {error && (
             <>
@@ -359,7 +321,7 @@ const SendTransactionStep4Confirm: React.FC<SendTransactionScreenProps<typeof Se
   );
 };
 
-const styles = StyleSheet.create({
+export const styles = StyleSheet.create({
   sendTitle: {
     marginTop: 16,
     marginBottom: 10,
@@ -367,49 +329,6 @@ const styles = StyleSheet.create({
     fontSize: 22,
     fontWeight: '600',
     lineHeight: 28,
-  },
-  text: {
-    fontSize: 14,
-    fontWeight: '300',
-    lineHeight: 18,
-  },
-  to: {
-    marginTop: 32,
-    marginBottom: 4,
-    paddingHorizontal: 16,
-  },
-  amount: {
-    marginTop: 22,
-    marginBottom: 16,
-    paddingHorizontal: 16,
-  },
-  textInput: {
-    marginHorizontal: 16,
-    paddingRight: 10,
-    borderWidth: 1,
-    backgroundColor: 'transparent',
-  },
-  balanceWrapper: {
-    marginTop: 14,
-    display: 'flex',
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 16,
-    height: 24,
-  },
-  balance: {
-    fontSize: 16,
-    fontWeight: '600',
-    marginRight: 8,
-  },
-  price: {
-    paddingHorizontal: 16,
-    marginTop: 6,
-  },
-  assetIcon: {
-    width: 24,
-    height: 24,
-    borderRadius: 48,
   },
   divider: {
     width: '100%',
@@ -431,23 +350,6 @@ const styles = StyleSheet.create({
     lineHeight: 18,
     fontWeight: '600',
     paddingHorizontal: 56,
-  },
-  estimateWrapper: {
-    display: 'flex',
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingLeft: 56,
-    paddingRight: 16,
-  },
-  gasText: {
-    fontSize: 12,
-    fontWeight: '300',
-  },
-  gasSettingWrapper: {
-    marginLeft: 'auto',
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
   },
   errorWarp: {
     display: 'flex',

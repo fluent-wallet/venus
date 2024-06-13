@@ -132,6 +132,7 @@
     "send" : "Send",
     "to" : "To",
     "unsafe" : "Unsafe",
+    "update" : "Update",
     "use" : "Use",
     "verifyPassword" : "Verify Password",
     "view" : "View"
@@ -219,11 +220,13 @@
   },
   "settings" : {
     "aboutUs" : {
+      "UpdateToNew" : "Update to new version",
       "action" : {
         "checkUpdate" : "Check for updates",
         "feedback" : "Feedback",
         "teamsService" : "Terms of Service"
       },
+      "latestVersion" : "Your App is up to date",
       "title" : "SwiftShield Wallet",
       "version" : "App version"
     },

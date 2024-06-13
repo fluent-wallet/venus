@@ -56,7 +56,7 @@ export default function WalletConnectProposal() {
 
   return (
     <>
-      <BottomSheet enablePanDownToClose={false} isRoute snapPoints={snapPoints.percent75} onClose={() => handleReject()}>
+      <BottomSheet enablePanDownToClose={false} isRoute snapPoints={snapPoints.large} onClose={() => handleReject()}>
         <View style={styles.container}>
           <View style={styles.info}>
             <Image source={icons[0]} style={styles.icon} />

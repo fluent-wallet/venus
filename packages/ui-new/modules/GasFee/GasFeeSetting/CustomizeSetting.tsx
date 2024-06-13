@@ -19,6 +19,7 @@ interface Props {
   customizeEstimate: SelectedGasEstimate;
   onConfirm: (customizeEstimate: SelectedGasEstimate) => void;
   onClose: () => void;
+  force155?: boolean;
 }
 
 const GweiSuffix = memo(() => {
@@ -60,7 +61,7 @@ const controlRule = {
   validate: (value: string) => parseFloat(value) > 0 || 'should be greater than 0',
 };
 
-const CustomizeSetting: React.FC<Props> = ({ customizeEstimate, onClose, onConfirm }) => {
+const CustomizeSetting: React.FC<Props> = ({ customizeEstimate, onClose, onConfirm, force155 }) => {
   const { t } = useTranslation();
   const { colors } = useTheme();
   const bottomSheetRef = useRef<BottomSheetMethods>(null!);
@@ -134,7 +135,7 @@ const CustomizeSetting: React.FC<Props> = ({ customizeEstimate, onClose, onConfi
   return (
     <BottomSheet
       ref={bottomSheetRef}
-      snapPoints={customizeEstimate.suggestedMaxFeePerGas ? snapPoints1559 : snapPoints155}
+      snapPoints={customizeEstimate.suggestedMaxFeePerGas ? (!force155 ? snapPoints1559 : snapPoints155) : snapPoints155}
       style={styles.container}
       index={0}
       onChange={(index) => (bottomSheetIndexRef.current = index)}
@@ -169,7 +170,7 @@ const CustomizeSetting: React.FC<Props> = ({ customizeEstimate, onClose, onConfi
       {customizeEstimate.suggestedMaxFeePerGas && (
         <>
           <Text style={[styles.inputTitle, { color: colors.textSecondary }]}>
-            Max base fee (Current: <Text style={{ fontWeight: '600', color: colors.textPrimary }}>{currentPriceGwei}</Text> Gwei)
+            {!force155 ? 'Max base fee' : 'Gas price'} (Current: <Text style={{ fontWeight: '600', color: colors.textPrimary }}>{currentPriceGwei}</Text> Gwei)
           </Text>
           <Controller
             control={control}
@@ -186,13 +187,17 @@ const CustomizeSetting: React.FC<Props> = ({ customizeEstimate, onClose, onConfi
             </View>
           )}
 
-          <Text style={[styles.inputTitle, { color: colors.textSecondary }]}>Priority fee</Text>
-          <Controller
-            control={control}
-            rules={{ ...controlRule, validate: (value: string) => parseFloat(value) >= 0 || 'should be greater than or equal to 0' }}
-            render={({ field: { onChange, onBlur, value } }) => <TextInput colors={colors} onBlur={onBlur} onChangeText={onChange} value={value} />}
-            name="maxPriorityFeePerGas"
-          />
+          {!force155 && (
+            <>
+              <Text style={[styles.inputTitle, { color: colors.textSecondary }]}>Priority fee</Text>
+              <Controller
+                control={control}
+                rules={{ ...controlRule, validate: (value: string) => parseFloat(value) >= 0 || 'should be greater than or equal to 0' }}
+                render={({ field: { onChange, onBlur, value } }) => <TextInput colors={colors} onBlur={onBlur} onChangeText={onChange} value={value} />}
+                name="maxPriorityFeePerGas"
+              />
+            </>
+          )}
         </>
       )}
 
@@ -207,14 +212,18 @@ const CustomizeSetting: React.FC<Props> = ({ customizeEstimate, onClose, onConfi
           <Controller
             control={control}
             rules={controlRule}
-            render={({ field: { onChange, onBlur, value } }) => <TextInput colors={colors} onBlur={onBlur} onChangeText={onChange} value={value} showGweiSuffix={false} />}
+            render={({ field: { onChange, onBlur, value } }) => (
+              <TextInput colors={colors} onBlur={onBlur} onChangeText={onChange} value={value} showGweiSuffix={false} />
+            )}
             name="gasLimit"
           />
           <Text style={[styles.inputTitle, { color: colors.textSecondary }]}>Nonce</Text>
           <Controller
             control={control}
             rules={controlRule}
-            render={({ field: { onChange, onBlur, value } }) => <TextInput colors={colors} onBlur={onBlur} onChangeText={onChange} value={value} showGweiSuffix={false} />}
+            render={({ field: { onChange, onBlur, value } }) => (
+              <TextInput colors={colors} onBlur={onBlur} onChangeText={onChange} value={value} showGweiSuffix={false} />
+            )}
             name="nonce"
           />
         </>
