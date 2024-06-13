@@ -25,12 +25,12 @@ const levels = {
     priorityFeePercentageMultiplier: 1.2,
   },
   medium: {
-    baseFeePercentageMultiplier: 1.1,
-    priorityFeePercentageMultiplier: 1.1,
-  },
-  low: {
     baseFeePercentageMultiplier: 1,
     priorityFeePercentageMultiplier: 1,
+  },
+  low: {
+    baseFeePercentageMultiplier: 0.9,
+    priorityFeePercentageMultiplier: 0.9,
   },
 } as const;
 

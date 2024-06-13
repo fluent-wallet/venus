@@ -35,16 +35,19 @@ function Contract({
   const [expanded, setExpanded] = useState(false);
   const currentNetwork = useCurrentNetwork();
 
-  const getFormatValue = useCallback((value: bigint | string) => {
-    if (parseData && parseData.decimals) {
-      return formatUnits(value, parseData.decimals);
-    } else {
-      return value.toString();
-    }
-  }, [parseData]);
+  const getFormatValue = useCallback(
+    (value: bigint | string) => {
+      if (parseData && parseData.decimals) {
+        return formatUnits(value, parseData.decimals);
+      } else {
+        return value.toString();
+      }
+    },
+    [parseData],
+  );
 
   return (
-    <View>
+    <View style={{ paddingHorizontal: 16 }}>
       <View style={styles.dappInfo}>
         {icons[0] && <Icon source={icons[0]} width={32} height={32} style={{ borderRadius: 8 }} />}
         <View>

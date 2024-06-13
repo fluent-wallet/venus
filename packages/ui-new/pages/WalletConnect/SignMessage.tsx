@@ -152,7 +152,7 @@ function WalletConnectSignMessage() {
   const { inAsync: rejectLoading, execAsync: handleReject } = useInAsync(_handleReject);
 
   return (
-    <BottomSheet enablePanDownToClose={false} isRoute snapPoints={snapPoints.percent75} onClose={handleReject}>
+    <BottomSheet enablePanDownToClose={false} isRoute snapPoints={snapPoints.large} onClose={handleReject}>
       <BottomSheetView style={{ flex: 1 }}>
         <Text style={[styles.title, { color: colors.textPrimary }]}>{t('wc.request.signature')}</Text>
 

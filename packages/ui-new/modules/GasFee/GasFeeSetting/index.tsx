@@ -29,6 +29,7 @@ export type EstimateContent = {
 };
 
 const MinUSDT = 0.01;
+const defaultLevel: Level = 'medium';
 
 export interface SelectedGasEstimate extends EstimateContent {
   gasLimit: string;
@@ -43,51 +44,16 @@ interface Props {
   onClose: () => void;
   tx: Parameters<typeof usePollingGasEstimateAndNonce>[0];
   onConfirm: (gasEstimate: SelectedGasEstimate) => void;
+  defaultCustomizeEstimate?: Partial<SelectedGasEstimate>;
+  force155?: boolean;
 }
 
-export const OptionLevel: React.FC<{ level: SelectedGasEstimate['level'] }> = ({ level }) => {
-  const { t } = useTranslation();
-  const { colors, mode } = useTheme();
-
-  const map = useMemo(
-    () => ({
-      low: {
-        label: 'Slow',
-        color: colors.down,
-        gasCircleSrc: GasLow,
-      },
-      medium: {
-        label: 'Average',
-        color: colors.middle,
-        gasCircleSrc: GasMedium,
-      },
-      high: {
-        label: 'Fast',
-        color: colors.up,
-        gasCircleSrc: GasHigh,
-      },
-      customize: {
-        label: 'Customize',
-        color: colors.textPrimary,
-        gasCircleSrc: mode === 'light' ? GasCustomizeLight : GasCustomizeDark,
-      },
-    }),
-    [colors, mode],
-  );
-  return (
-    <View style={styles.gasOptionLevelWrapper}>
-      <Image style={styles.gasCircle} source={map[level].gasCircleSrc} contentFit="contain" />
-      <Text style={[styles.gasOptionLevel, { color: map[level].color }]}>{map[level].label}</Text>
-    </View>
-  );
-};
-
-const defaultLevel = 'low';
-
-const GasFeeSetting: React.FC<Props> = ({ show, tx, onClose, onConfirm }) => {
+const GasFeeSetting: React.FC<Props> = ({ show, tx, onClose, onConfirm, defaultCustomizeEstimate: _defaultCustomizeEstimate, force155 }) => {
   const { t } = useTranslation();
   const { colors } = useTheme();
   const bottomSheetRef = useRef<BottomSheetMethods>(null!);
+
+  const isDappCustomize = !!_defaultCustomizeEstimate;
 
   const nativeAsset = useCurrentNetworkNativeAsset()!;
   const gasEstimate = usePollingGasEstimateAndNonce(tx);
@@ -98,12 +64,15 @@ const GasFeeSetting: React.FC<Props> = ({ show, tx, onClose, onConfirm }) => {
   const [customizeEstimate, setCustomizeEstimate] = useState<SelectedGasEstimate | null>(null);
   const [showCustomizeSetting, setShowCustomizeSetting] = useState(false);
 
+  // const defaultLevel = useMemo(() => (_defaultCustomizeEstimate ? 'customize' : _defaultLevel), [_defaultCustomizeEstimate]);
+
   const defaultCustomizeEstimate = useMemo(() => {
     if (!gasEstimate || !estimate) return null;
     return {
       ...pick(gasEstimate, ['gasLimit', 'gasPrice', 'storageLimit', 'nonce']),
       ...estimate[defaultLevel],
       level: 'customize',
+      ..._defaultCustomizeEstimate,
     } as const;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [gasEstimate]);
@@ -111,16 +80,23 @@ const GasFeeSetting: React.FC<Props> = ({ show, tx, onClose, onConfirm }) => {
   useEffect(() => {
     if (!gasEstimate || !estimate || selectedGasEstimate?.level === 'customize') return;
     const level = selectedGasEstimate?.level ?? defaultLevel;
-    const newGasEstimate = {
-      ...pick(gasEstimate, ['gasLimit', 'gasPrice', 'storageLimit', 'nonce']),
-      ...estimate[level],
-      level,
-    } as const;
+    const newGasEstimate =
+      isDappCustomize && selectedGasEstimate === null
+        ? defaultCustomizeEstimate!
+        : ({
+            ...pick(gasEstimate, ['gasLimit', 'gasPrice', 'storageLimit', 'nonce']),
+            ...estimate[level],
+            level,
+          } as const);
     if (!isEqual(selectedGasEstimate, newGasEstimate)) {
       setSelectedGasEstimate(newGasEstimate);
       onConfirm?.(newGasEstimate);
       if (selectedGasEstimate === null) {
-        setTempSelectedOptionLevel(defaultLevel);
+        if (!_defaultCustomizeEstimate) {
+          setTempSelectedOptionLevel(defaultLevel);
+        } else {
+          setTempSelectedOptionLevel('customize');
+        }
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -138,7 +114,7 @@ const GasFeeSetting: React.FC<Props> = ({ show, tx, onClose, onConfirm }) => {
     const level = tempSelectedOptionLevel;
     const newGasEstimate = {
       ...pick(gasEstimate, ['gasLimit', 'gasPrice', 'storageLimit', 'nonce']),
-      ...(level === 'customize' ? customizeEstimate ?? estimate[defaultLevel] : estimate?.[level]),
+      ...(level === 'customize' ? customizeEstimate ?? defaultCustomizeEstimate! : estimate?.[level]),
       level,
     } as const;
     setSelectedGasEstimate(newGasEstimate);
@@ -180,7 +156,7 @@ const GasFeeSetting: React.FC<Props> = ({ show, tx, onClose, onConfirm }) => {
             <GasOption
               level="customize"
               nativeAsset={nativeAsset}
-              estimateContent={customizeEstimate ?? estimate[defaultLevel]}
+              estimateContent={customizeEstimate ?? defaultCustomizeEstimate!}
               selected={tempSelectedOptionLevel === 'customize'}
               onPress={() => setShowCustomizeSetting(true)}
             />
@@ -200,6 +176,7 @@ const GasFeeSetting: React.FC<Props> = ({ show, tx, onClose, onConfirm }) => {
       </BottomSheet>
       {gasEstimate && showCustomizeSetting && (
         <CustomizeSetting
+          force155={force155}
           customizeEstimate={customizeEstimate ?? defaultCustomizeEstimate!}
           onConfirm={(newCustomizeEstimate) => {
             setTempSelectedOptionLevel('customize');
@@ -209,6 +186,43 @@ const GasFeeSetting: React.FC<Props> = ({ show, tx, onClose, onConfirm }) => {
         />
       )}
     </>
+  );
+};
+
+export const OptionLevel: React.FC<{ level: SelectedGasEstimate['level'] }> = ({ level }) => {
+  const { t } = useTranslation();
+  const { colors, mode } = useTheme();
+
+  const map = useMemo(
+    () => ({
+      low: {
+        label: 'Slow',
+        color: colors.down,
+        gasCircleSrc: GasLow,
+      },
+      medium: {
+        label: 'Average',
+        color: colors.middle,
+        gasCircleSrc: GasMedium,
+      },
+      high: {
+        label: 'Fast',
+        color: colors.up,
+        gasCircleSrc: GasHigh,
+      },
+      customize: {
+        label: 'Customize',
+        color: colors.textPrimary,
+        gasCircleSrc: mode === 'light' ? GasCustomizeLight : GasCustomizeDark,
+      },
+    }),
+    [colors, mode],
+  );
+  return (
+    <View style={styles.gasOptionLevelWrapper}>
+      <Image style={styles.gasCircle} source={map[level].gasCircleSrc} contentFit="contain" />
+      <Text style={[styles.gasOptionLevel, { color: map[level].color }]}>{map[level].label}</Text>
+    </View>
   );
 };
 
@@ -222,7 +236,7 @@ const GasOption: React.FC<{
   const { colors } = useTheme();
 
   const priceGwei = useMemo(
-    () => new Decimal(estimateContent.suggestedMaxFeePerGas ?? estimateContent.suggestedGasPrice!).div(1e9).toString(),
+    () => new Decimal(estimateContent.suggestedMaxFeePerGas ?? estimateContent.suggestedGasPrice!).div(1e9).toFixed(4),
     [estimateContent.suggestedMaxFeePerGas, estimateContent.suggestedGasPrice],
   );
   const gasCost = useMemo(

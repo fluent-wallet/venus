@@ -6,7 +6,6 @@ import { isNil } from 'lodash-es';
 import { formatEther } from 'ethers';
 import { Interface } from '@ethersproject/abi';
 import Decimal from 'decimal.js';
-import { Image } from 'expo-image';
 import {
   AssetSource,
   AssetType,
@@ -17,7 +16,6 @@ import {
   useCurrentNetwork,
   useCurrentNetworkNativeAsset,
 } from '@core/WalletCore/Plugins/ReactInject';
-import { shortenAddress } from '@core/utils/address';
 import { processError } from '@core/utils/eth';
 import { fetchERC20AssetInfoBatchWithAccount } from '@core/WalletCore/Plugins/AssetsTracker/fetchers/basic';
 import { checkDiffInRange } from '@core/WalletCore/Plugins/BlockNumberTracker';
@@ -30,20 +28,21 @@ import { SignType } from '@core/database/models/Signature/type';
 import { App } from '@core/database/models/App';
 import { type IWCSendTransactionEvent } from '@core/WalletCore/Plugins/WalletConnect/types';
 import { BSIMError } from '@WalletCoreExtends/Plugins/BSIM/BSIMSDK';
-import BottomSheet, { BottomSheetScrollView, BottomSheetView, snapPoints } from '@components/BottomSheet';
+import { AccountItemView } from '@modules/AccountsList';
+import GasFeeSetting, { type SelectedGasEstimate } from '@modules/GasFee/GasFeeSetting';
+import EstimateFee from '@modules/GasFee/GasFeeSetting/EstimateFee';
+import BottomSheet, { BottomSheetScrollView, snapPoints } from '@components/BottomSheet';
 import Text from '@components/Text';
 import Button from '@components/Button';
-import Icon from '@components/Icon';
-import useInAsync from '@hooks/useInAsync';
-import usePollingGasEstimateAndNonce from '@core/WalletCore/Plugins/Transaction/usePollingGasEstimateAndNonce';
 import { SignTransactionCancelError, useSignTransaction } from '@hooks/useSignTransaction';
-import { toDataUrl } from '@utils/blockies';
+import useInAsync from '@hooks/useInAsync';
 import { ParseTxDataReturnType, isApproveMethod, parseTxData } from '@utils/parseTxData';
 import matchRPCErrorMessage from '@utils/matchRPCErrorMssage';
 import { WalletConnectParamList, WalletConnectTransactionStackName } from '@router/configs';
+import { styles as transactionConfirmStyle } from '@pages/SendTransaction/Step4Confirm/index';
+import SendAsset from '@pages/SendTransaction/Step4Confirm/SendAsset';
 import EditAllowance from './EditAllowance';
 import SendContract from './Contract';
-import SendNativeToken from './NativeToken';
 
 export type TxDataWithTokenInfo = ParseTxDataReturnType & {
   symbol?: string;
@@ -54,11 +53,13 @@ export type TxDataWithTokenInfo = ParseTxDataReturnType & {
 function WalletConnectTransaction() {
   const { t } = useTranslation();
   const { colors } = useTheme();
-  const currentNativeToken = useCurrentNetworkNativeAsset();
+
+  const [showGasFeeSetting, setShowGasFeeSetting] = useState(false);
   const currentAccount = useCurrentAccount();
   const currentAddress = useCurrentAddressOfAccount(currentAccount?.id)!;
   const currentAddressValue = useCurrentAddressValue()!;
   const currentNetwork = useCurrentNetwork()!;
+  const currentNativeAsset = useCurrentNetworkNativeAsset();
 
   const [errorMsg, setError] = useState('');
   const [parseData, setParseData] = useState<TxDataWithTokenInfo>();
@@ -86,7 +87,35 @@ function WalletConnectTransaction() {
     }
     return data;
   }, [allowanceValue, data, from, parseData]);
-  const gasInfo = usePollingGasEstimateAndNonce({ from, to, value: value?.toString(), data: txData, nonce });
+
+  const txHalf = useMemo(
+    () => ({
+      to,
+      value: value ? new Decimal(value.toString()).toHex() : '0x0',
+      data: txData || '0x',
+      from: currentAddressValue!,
+      chainId: currentNetwork?.chainId,
+    }),
+    [txData, currentAddressValue, currentNetwork?.chainId, to, value],
+  );
+
+  const [gasEstimateAndNonce, setGasEstimateAndNonce] = useState<SelectedGasEstimate | null>(null);
+  const defaultCustomizeEstimate = useMemo(
+    () =>
+      !isNil(gasLimit) || !isNil(nonce) || !isNil(gasPrice) || !isNil(maxFeePerGas) || !isNil(maxPriorityFeePerGas)
+        ? {
+            gasLimit,
+            nonce,
+            suggestedGasPrice: gasPrice,
+            suggestedMaxFeePerGas: maxFeePerGas,
+            suggestedMaxPriorityFeePerGas: maxPriorityFeePerGas,
+          }
+        : undefined,
+    [gasLimit, nonce, gasPrice, maxFeePerGas, maxPriorityFeePerGas],
+  );
+
+  const isSupport1559 = !!gasEstimateAndNonce?.suggestedMaxFeePerGas;
+  const shouldUse1559 = isSupport1559 && (isNil(type) || Number(type) === 2);
 
   const amount = useMemo(() => {
     return value ? formatEther(value) : '0';
@@ -101,7 +130,7 @@ function WalletConnectTransaction() {
   }, []);
 
   const _handleApprove = useCallback(async () => {
-    if (!gasInfo) return;
+    if (!gasEstimateAndNonce) return;
     setError('');
 
     let txRaw!: string;
@@ -110,30 +139,23 @@ function WalletConnectTransaction() {
     let signatureRecord: Signature | undefined;
     let dapp: App | undefined;
 
-    const isSupport1559 = !!gasInfo?.estimateOf1559;
-    const tx = {
-      from: currentAddressValue,
-      to,
-      value: value ? value : '0x0',
-      data: txData || '0x',
-      chainId: currentNetwork.chainId,
-      gasLimit: gasLimit ?? gasInfo?.gasLimit,
-      ...(isSupport1559 && (isNil(type) || Number(type) === 2)
+    const tx = Object.assign({}, txHalf, {
+      gasLimit: gasLimit ?? gasEstimateAndNonce?.gasLimit,
+      ...(shouldUse1559
         ? {
-            maxFeePerGas: maxFeePerGas ?? gasPrice ?? gasInfo.estimateOf1559?.medium.suggestedMaxFeePerGas,
-            maxPriorityFeePerGas: maxPriorityFeePerGas ?? gasPrice ?? gasInfo.estimateOf1559?.medium.suggestedMaxPriorityFeePerGas,
+            maxFeePerGas: gasEstimateAndNonce.suggestedMaxFeePerGas,
+            maxPriorityFeePerGas: gasEstimateAndNonce.suggestedMaxPriorityFeePerGas,
             type: 2,
           }
         : {
-            gasPrice: gasPrice ?? gasInfo.gasPrice,
+            gasPrice: gasEstimateAndNonce.suggestedGasPrice ?? gasEstimateAndNonce.suggestedMaxFeePerGas,
             type: 0,
           }),
-    } as ITxEvm;
+    }) as ITxEvm;
 
     const approve = plugins.WalletConnect.currentEventSubject.getValue()?.action.approve as IWCSendTransactionEvent['action']['approve'];
     try {
-      const nonce = await plugins.Transaction.getTransactionCount({ network: currentNetwork, addressValue: currentAddressValue });
-      tx.nonce = Number(nonce);
+      tx.nonce = gasEstimateAndNonce.nonce;
 
       if (currentNetwork.networkType === NetworkType.Conflux) {
         const currentEpochHeight = await plugins.BlockNumberTracker.getNetworkBlockNumber(currentNetwork);
@@ -189,22 +211,7 @@ function WalletConnectTransaction() {
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentAddressValue, currentNetwork?.id, gasLimit, gasPrice, to, navigation, value, gasInfo, isContract, signTransaction, txData]);
-
-  const gasCost = useMemo(() => {
-    // if dapp not give gasPrice and rpcGasPrice is null, just return null
-
-    const gasPriceVal = gasPrice || gasInfo?.gasPrice;
-    const gasLimitVal = gasLimit || gasInfo?.gasLimit;
-    if (!gasPriceVal || !gasLimitVal) return null;
-
-    if (!currentNativeToken?.priceInUSDT) return null;
-
-    const cost = new Decimal(gasLimitVal.toString()).mul(new Decimal(gasPriceVal.toString())).div(Decimal.pow(10, currentNativeToken?.decimals ?? 18));
-    const priceInUSDT = currentNativeToken?.priceInUSDT ? cost.mul(new Decimal(currentNativeToken.priceInUSDT)) : null;
-
-    return priceInUSDT ? (priceInUSDT.lessThan(0.01) ? '<$0.01' : `≈$${priceInUSDT.toFixed(2)}`) : null;
-  }, [gasPrice, currentNativeToken?.priceInUSDT, currentNativeToken?.decimals, gasLimit, gasInfo]);
+  }, [currentAddressValue, currentNetwork?.id, gasLimit, gasPrice, to, navigation, value, gasEstimateAndNonce, isContract, signTransaction, txData]);
 
   useEffect(() => {
     async function parseAndTryGetTokenInfo() {
@@ -255,62 +262,50 @@ function WalletConnectTransaction() {
 
   return (
     <>
-      <BottomSheet isRoute snapPoints={snapPoints.percent75} style={styles.container} onClose={() => handleReject()}>
-        <BottomSheetView style={styles.flex1}>
-          <BottomSheetScrollView contentContainerStyle={{ flexGrow: 1 }}>
-            <Text style={[styles.title, { color: colors.textPrimary }]}>{t('wc.dapp.tx.title')}</Text>
-            {isContract ? (
-              <SendContract
-                to={to}
-                data={data}
-                metadata={metadata}
-                parseData={parseData}
-                openEditAllowance={handleOpenEditAllowanceModel}
-                customAllowance={allowanceValue}
-              />
-            ) : (
-              <SendNativeToken amount={amount} receiverAddress={to} />
-            )}
+      <BottomSheet isRoute snapPoints={snapPoints.large} style={{ flex: 1 }} onClose={() => handleReject()}>
+        <BottomSheetScrollView>
+          <Text style={[styles.title, { color: colors.textPrimary }]}>{t('wc.dapp.tx.title')}</Text>
+          {isContract ? (
+            <SendContract
+              to={to}
+              data={data}
+              metadata={metadata}
+              parseData={parseData}
+              openEditAllowance={handleOpenEditAllowanceModel}
+              customAllowance={allowanceValue}
+            />
+          ) : (
+            <>
+              <Text style={[transactionConfirmStyle.sendTitle, styles.sendTitle, { color: colors.textPrimary }]}>{t('common.send')}</Text>
+              <SendAsset amount={amount} symbol={currentNativeAsset?.symbol ?? 'CFX'} icon={currentNativeAsset?.icon} recipientAddress={to ?? ''} />
+            </>
+          )}
 
-            {errorMsg && (
-              <View style={[styles.error, { borderColor: colors.down }]}>
-                <Text style={{ color: colors.down, fontSize: 16 }}>{errorMsg}</Text>
-              </View>
-            )}
-            <View style={[styles.signingWith, { borderColor: colors.borderFourth }]}>
-              <Text style={[styles.secondary, { color: colors.textSecondary }]}>{t('wc.dapp.tx.signingWith')}</Text>
+          {errorMsg && (
+            <View style={[styles.error, { borderColor: colors.down }]}>
+              <Text style={{ color: colors.down, fontSize: 16 }}>{errorMsg}</Text>
             </View>
+          )}
 
-            <View style={[styles.flexWithRow, styles.sender]}>
-              <View style={[styles.flexWithRow, styles.addressInfo, { alignItems: 'flex-start' }]}>
-                <Image source={{ uri: toDataUrl(currentAddress?.hex) }} style={styles.avatar} />
-                <View>
-                  <View style={{ marginBottom: 12 }}>
-                    <Text style={[styles.senderName, { color: colors.textPrimary }]}>{currentAccount?.nickname}</Text>
-                    <Text style={[styles.smallText, { color: colors.textSecondary }]}>{shortenAddress(currentAddress?.hex)}</Text>
-                  </View>
+          <View style={[transactionConfirmStyle.divider, { backgroundColor: colors.borderFourth }]} />
 
-                  <View>
-                    <Text style={{ color: colors.textSecondary }}>{t('tx.confirm.estimatedFee')}</Text>
-                    <View style={[styles.flexWithRow, { marginTop: 8 }]}>
-                      {currentNativeToken?.icon && <Icon source={currentNativeToken?.icon} width={24} height={24} />}
-                      <Text style={[styles.gas, { color: colors.textPrimary }]}>{gasCost}</Text>
-                    </View>
-                  </View>
-                </View>
-              </View>
-              <Text style={styles.smallText}>{t('wc.sign.network', { network: currentNetwork?.name })}</Text>
-            </View>
-          </BottomSheetScrollView>
-          <View style={[styles.flexWithRow, styles.buttons]}>
-            <Button testID="reject" onPress={handleReject} style={styles.btn} loading={rejectLoading}>
+          <AccountItemView nickname={t('tx.confirm.signingWith')} addressValue={currentAddressValue} colors={colors}>
+            <Text style={[transactionConfirmStyle.networkName, { color: colors.textSecondary }]} numberOfLines={1}>
+              on {currentNetwork?.name}
+            </Text>
+          </AccountItemView>
+
+          <Text style={[transactionConfirmStyle.estimateFee, { color: colors.textPrimary }]}>{t('tx.confirm.estimatedFee')}</Text>
+          <EstimateFee gasEstimateAndNonce={gasEstimateAndNonce} onPressSettingIcon={() => setShowGasFeeSetting(true)} />
+          <View style={[transactionConfirmStyle.btnArea, styles.btnArea]}>
+            <Button testID="reject" style={transactionConfirmStyle.btn} loading={rejectLoading} size="small" onPress={handleReject}>
               {t('common.cancel')}
             </Button>
-            <Button testID="approve" style={styles.btn} onPress={handleApprove} loading={approveLoading}>
+            <Button testID="approve" style={transactionConfirmStyle.btn} loading={approveLoading} size="small" onPress={handleApprove}>
               {isContract ? t('common.confirm') : t('common.send')}
             </Button>
           </View>
-        </BottomSheetView>
+        </BottomSheetScrollView>
       </BottomSheet>
 
       {showEditAllowance && parseData && (
@@ -322,77 +317,40 @@ function WalletConnectTransaction() {
           onClose={handleCloseEditAllowanceModel}
         />
       )}
+      <GasFeeSetting
+        show={showGasFeeSetting}
+        tx={txHalf}
+        onClose={() => setShowGasFeeSetting(false)}
+        onConfirm={setGasEstimateAndNonce}
+        defaultCustomizeEstimate={defaultCustomizeEstimate}
+        force155={!isNil(type) && (Number(type) === 0 || Number(type) === 1)}
+      />
     </>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    paddingHorizontal: 16,
-  },
-  flex1: {
-    flex: 1,
-  },
   title: {
+    marginTop: 8,
+    marginBottom: 20,
+    lineHeight: 20,
     textAlign: 'center',
     fontSize: 16,
     fontWeight: '600',
-    marginVertical: 10,
   },
-
-  secondary: {
-    fontSize: 14,
-    fontWeight: '300',
-  },
-
-  signingWith: {
-    marginTop: 24,
-    marginBottom: 16,
-    paddingTop: 24,
-    borderTopWidth: 1,
-  },
-  smallText: {
-    fontSize: 12,
-    fontWeight: '300',
-  },
-  sender: {
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-  },
-  senderName: {
-    fontSize: 14,
-    fontWeight: '600',
-  },
-  gas: {
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  flexWithRow: {
-    display: 'flex',
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  addressInfo: {
-    gap: 8,
-  },
-  buttons: {
-    gap: 16,
-    marginTop: 20,
-    marginBottom: 75,
-  },
-  btn: {
-    flex: 1,
-  },
-  avatar: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+  sendTitle: {
+    marginTop: 0,
   },
   error: {
     borderWidth: 1,
     padding: 16,
     borderRadius: 6,
-    marginTop: 24,
+    marginTop: 16,
+    marginHorizontal: 16,
+  },
+  btnArea: {
+    marginTop: 40,
+    marginBottom: 32,
   },
 });
 

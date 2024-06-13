@@ -7,7 +7,7 @@ function WalletConnectLoading() {
   const { colors, reverseColors, mode } = useTheme();
 
   return (
-    <BottomSheet enablePanDownToClose={false} isRoute snapPoints={snapPoints.percent75}>
+    <BottomSheet enablePanDownToClose={false} isRoute snapPoints={snapPoints.large}>
       <View style={styles.loading}>
         <Spinner width={50} height={50} color={reverseColors[mode === 'light' ? 'iconPrimary' : 'textSecondary']} backgroundColor={colors.iconPrimary} />
       </View>
