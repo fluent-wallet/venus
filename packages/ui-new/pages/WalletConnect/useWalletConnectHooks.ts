@@ -7,7 +7,7 @@ import {
   WalletConnectTransactionStackName,
   HomeStackName,
 } from '@router/configs';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { uniq } from 'lodash-es';
 import { Networks } from '@core/utils/consts';
 import { queryNetworks } from '@core/database/models/Network/query';
@@ -141,7 +141,7 @@ export function useListenWalletConnectEvent() {
   }, [currentAddressValue, currentNetwork?.id]);
 }
 
-export function useWalletConnectSessions() {
+export function useWalletConnectSessions(filterByAddress?: string | undefined | null) {
   const [sessions, setSessions] = useState<Awaited<ReturnType<typeof Plugins.WalletConnect.getAllSession>>[string][]>([]);
 
   const getSessions = useCallback(async () => {
@@ -162,6 +162,22 @@ export function useWalletConnectSessions() {
       sub.unsubscribe();
     };
   }, [getSessions]);
+
+  if (filterByAddress) {
+    return {
+      sessions: sessions.filter((session) => {
+        const { namespaces } = session;
+        return (
+          namespaces &&
+          namespaces.eip155 &&
+          namespaces.eip155.accounts.find((account) => {
+            const [eip, chainId, address] = account.split(':');
+            return address.toLowerCase() === filterByAddress.toLowerCase();
+          })
+        );
+      }),
+    };
+  }
 
   return { sessions };
 }

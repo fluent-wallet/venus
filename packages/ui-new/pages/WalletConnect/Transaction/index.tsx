@@ -291,7 +291,7 @@ function WalletConnectTransaction() {
                   </View>
 
                   <View>
-                    <Text>{t('tx.confirm.estimatedFee')}</Text>
+                    <Text style={{ color: colors.textSecondary }}>{t('tx.confirm.estimatedFee')}</Text>
                     <View style={[styles.flexWithRow, { marginTop: 8 }]}>
                       {currentNativeToken?.icon && <Icon source={currentNativeToken?.icon} width={24} height={24} />}
                       <Text style={[styles.gas, { color: colors.textPrimary }]}>{gasCost}</Text>
@@ -377,8 +377,8 @@ const styles = StyleSheet.create({
   },
   buttons: {
     gap: 16,
-    marginTop: 22,
-    marginBottom: 79,
+    marginTop: 20,
+    marginBottom: 75,
   },
   btn: {
     flex: 1,

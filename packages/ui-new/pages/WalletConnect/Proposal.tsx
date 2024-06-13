@@ -84,7 +84,7 @@ export default function WalletConnectProposal() {
               {connectedNetworks.map((network) => (
                 <Icon source={network.icon} width={22} height={22} style={{ borderRadius: 11 }} key={network.id} />
               ))}
-              {connectedNetworks.length === 1 && <Text>{connectedNetworks[0]?.name}</Text>}
+              {connectedNetworks.length === 1 && <Text style={{color: colors.textPrimary}}>{connectedNetworks[0]?.name}</Text>}
             </View>
           </View>
 
