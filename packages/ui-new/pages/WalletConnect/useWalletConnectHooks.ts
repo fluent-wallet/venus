@@ -28,6 +28,9 @@ export function useListenWalletConnectEvent() {
 
   useEffect(() => {
     const subject = Plugins.WalletConnect.currentEventSubject.subscribe(async (event) => {
+      if (event === undefined) {
+        return;
+      }
       if (event === null) {
         backToHome(navigation);
         return;

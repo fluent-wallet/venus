@@ -1,5 +1,7 @@
 import { BSIMError } from 'react-native-bsim';
 
+export { BSIMError };
+
 /**
  * all coin types for BSIM support
  */

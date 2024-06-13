@@ -35,7 +35,7 @@ import Text from '@components/Text';
 import Button from '@components/Button';
 import Icon from '@components/Icon';
 import useInAsync from '@hooks/useInAsync';
-import useGasEstimate from '@core/WalletCore/Plugins/Transaction/useGasEstimate';
+import usePollingGasEstimateAndNonce from '@core/WalletCore/Plugins/Transaction/usePollingGasEstimateAndNonce';
 import { SignTransactionCancelError, useSignTransaction } from '@hooks/useSignTransaction';
 import { toDataUrl } from '@utils/blockies';
 import { ParseTxDataReturnType, isApproveMethod, parseTxData } from '@utils/parseTxData';
@@ -86,7 +86,7 @@ function WalletConnectTransaction() {
     }
     return data;
   }, [allowanceValue, data, from, parseData]);
-  const gasInfo = useGasEstimate({ from, to, value: value?.toString(), data: txData, nonce });
+  const gasInfo = usePollingGasEstimateAndNonce({ from, to, value: value?.toString(), data: txData, nonce });
 
   const amount = useMemo(() => {
     return value ? formatEther(value) : '0';

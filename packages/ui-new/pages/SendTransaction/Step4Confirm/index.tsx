@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-empty-function */
 /* eslint-disable react-hooks/exhaustive-deps */
 import React, { useMemo, useState, useEffect, useCallback, useRef } from 'react';
-import { View, StyleSheet, Keyboard } from 'react-native';
+import { View, StyleSheet, Keyboard, Pressable } from 'react-native';
 import { useTheme } from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';
 import { showMessage } from 'react-native-flash-message';
@@ -22,33 +22,34 @@ import {
 } from '@core/WalletCore/Plugins/ReactInject';
 import { type ITxEvm } from '@core/WalletCore/Plugins/Transaction/types';
 import { BSIMEventTypesName, BSIMEvent } from '@WalletCoreExtends/Plugins/BSIM/types';
-import { BSIMError, BSIM_ERRORS } from 'packages/WalletCoreExtends/Plugins/BSIM/BSIMSDK';
+import { BSIMError } from 'packages/WalletCoreExtends/Plugins/BSIM/BSIMSDK';
 import plugins from '@core/WalletCore/Plugins';
 import methods from '@core/WalletCore/Methods';
 import events from '@core/WalletCore/Events';
+import { checkDiffInRange } from '@core/WalletCore/Plugins/BlockNumberTracker';
+import { processError } from '@core/utils/eth';
+import { SignType } from '@core/database/models/Signature/type';
+import { Signature } from '@core/database/models/Signature';
 import Text from '@components/Text';
 import Button from '@components/Button';
 import TokenIcon from '@modules/AssetsList/TokensList/TokenIcon';
 import { BottomSheetScrollView, type BottomSheetMethods } from '@components/BottomSheet';
 import { getDetailSymbol } from '@modules/AssetsList/NFTsList/NFTItem';
 import { AccountItemView } from '@modules/AccountsList';
+import GasFeeSetting, { OptionLevel, type SelectedGasEstimate } from '@modules/GasFee/GasFeeSetting';
+import HourglassLoading from '@components/Loading/Hourglass';
+import backToHome from '@utils/backToHome';
+import { calculateTokenPrice } from '@utils/calculateTokenPrice';
 import useFormatBalance from '@hooks/useFormatBalance';
 import useInAsync from '@hooks/useInAsync';
-import backToHome from '@utils/backToHome';
+import { SignTransactionCancelError, useSignTransaction } from '@hooks/useSignTransaction';
 import { SendTransactionStep4StackName, type SendTransactionScreenProps } from '@router/configs';
+import WarnIcon from '@assets/icons/warn.svg';
+import ProhibitIcon from '@assets/icons/prohibit.svg';
+import SettingsIcon from '@assets/icons/settings.svg';
 import SendTransactionBottomSheet from '../SendTransactionBottomSheet';
 import { NFT } from '../Step3Amount';
 import BSIMVerify from '../BSIMVerify';
-import WarnIcon from '@assets/icons/warn.svg';
-import ProhibitIcon from '@assets/icons/prohibit.svg';
-import { checkDiffInRange } from '@core/WalletCore/Plugins/BlockNumberTracker';
-import { calculateTokenPrice } from '@utils/calculateTokenPrice';
-import useGasEstimate from '@core/WalletCore/Plugins/Transaction/useGasEstimate';
-import { SignTransactionCancelError, useSignTransaction } from '@hooks/useSignTransaction';
-import { processError } from '@core/utils/eth';
-import Methods from '@core/WalletCore/Methods';
-import { SignType } from '@core/database/models/Signature/type';
-import { Signature } from '@core/database/models/Signature';
 
 const SendTransactionStep4Confirm: React.FC<SendTransactionScreenProps<typeof SendTransactionStep4StackName>> = ({ navigation, route }) => {
   useEffect(() => Keyboard.dismiss(), []);
@@ -69,9 +70,9 @@ const SendTransactionStep4Confirm: React.FC<SendTransactionScreenProps<typeof Se
     params: { asset, amount, nftItemDetail, recipientAddress },
   } = route;
 
-  const formattedAmount = useFormatBalance(amount);
-  // const price = useMemo(() => new Decimal(asset.priceInUSDT || 0).mul(new Decimal(txAmount || 0)).toFixed(2), []);
+  const [showGasFeeSetting, setShowGasFeeSetting] = useState(false);
 
+  const formattedAmount = useFormatBalance(amount);
   const price = useMemo(() => calculateTokenPrice({ price: asset.priceInUSDT, amount: amount }), [asset.priceInUSDT, amount]);
   const symbol = useMemo(() => {
     if (!nftItemDetail) {
@@ -116,20 +117,17 @@ const SendTransactionStep4Confirm: React.FC<SendTransactionScreenProps<typeof Se
     } as ITxEvm;
   }, []);
 
-  // const [gasInfo, setGasInfo] = useState<Awaited<ReturnType<typeof plugins.Transaction.estimate>> | null>(null);
-
-  const gasInfo = useGasEstimate(txHalf);
+  const [gasEstimateAndNonce, setGasEstimateAndNonce] = useState<SelectedGasEstimate | null>(null);
 
   const gasCostAndPriceInUSDT = useMemo(() => {
-    if (!gasInfo || !nativeAsset?.priceInUSDT) return null;
-    const gasPrice = new Decimal(gasInfo.estimateOf1559 ? gasInfo.estimateOf1559.medium.suggestedMaxFeePerGas : gasInfo.gasPrice!);
-    const cost = new Decimal(gasInfo.gasLimit).mul(new Decimal(gasPrice)).div(Decimal.pow(10, nativeAsset?.decimals ?? 18));
+    if (!gasEstimateAndNonce) return null;
+    const cost = new Decimal(gasEstimateAndNonce.gasCost).div(Decimal.pow(10, nativeAsset?.decimals ?? 18));
     const priceInUSDT = nativeAsset?.priceInUSDT ? cost.mul(new Decimal(nativeAsset.priceInUSDT)) : null;
     return {
       cost: cost.toString(),
       priceInUSDT: priceInUSDT ? (priceInUSDT.lessThan(0.01) ? '<$0.01' : `≈$${priceInUSDT.toFixed(2)}`) : null,
     };
-  }, [gasInfo, nativeAsset?.priceInUSDT]);
+  }, [gasEstimateAndNonce, nativeAsset?.priceInUSDT]);
 
   const [error, setError] = useState<{ type?: string; message: string } | null>(null);
 
@@ -157,18 +155,17 @@ const SendTransactionStep4Confirm: React.FC<SendTransactionScreenProps<typeof Se
         }
       }
       tx = Object.assign({}, txHalf, {
-        gasLimit: gasInfo?.gasLimit,
-        ...(gasInfo?.estimateOf1559
+        gasLimit: gasEstimateAndNonce?.gasLimit,
+        ...(gasEstimateAndNonce?.storageLimit ? { storageLimit: gasEstimateAndNonce?.storageLimit } : null),
+        ...(gasEstimateAndNonce?.suggestedMaxFeePerGas
           ? {
               type: 2,
-              maxFeePerGas: gasInfo?.estimateOf1559?.medium.suggestedMaxFeePerGas,
-              maxPriorityFeePerGas: gasInfo?.estimateOf1559?.medium.suggestedMaxPriorityFeePerGas,
+              maxFeePerGas: gasEstimateAndNonce?.suggestedMaxFeePerGas,
+              maxPriorityFeePerGas: gasEstimateAndNonce?.suggestedMaxPriorityFeePerGas,
             }
-          : { gasPrice: gasInfo?.gasPrice, type: 0 }),
-        ...(currentNetwork.networkType === NetworkType.Conflux ? { storageLimit: gasInfo?.storageLimit } : null),
+          : { gasPrice: gasEstimateAndNonce?.suggestedGasPrice, type: 0 }),
       });
-      const nonce = await plugins.Transaction.getTransactionCount({ network: currentNetwork, addressValue: currentAddressValue });
-      tx.nonce = Number(nonce);
+      tx.nonce = gasEstimateAndNonce?.nonce;
 
       if (currentNetwork.networkType === NetworkType.Conflux) {
         const currentEpochHeight = await plugins.BlockNumberTracker.getNetworkBlockNumber(currentNetwork);
@@ -185,7 +182,7 @@ const SendTransactionStep4Confirm: React.FC<SendTransactionScreenProps<typeof Se
         const { txRawPromise, cancel } = await signTransaction({ ...tx, epochHeight: epochHeightRef.current });
         bsimCancelRef.current = cancel;
         txRaw = await txRawPromise;
-        signature = await Methods.createSignature({
+        signature = await methods.createSignature({
           address: currentAddress,
           signType: SignType.TX,
         });
@@ -206,7 +203,7 @@ const SendTransactionStep4Confirm: React.FC<SendTransactionScreenProps<typeof Se
         }
       } catch (error) {
         if (error instanceof BSIMError) {
-          setBSIMEvent({ type: BSIMEventTypesName.ERROR, message: error.message });
+          setBSIMEvent({ type: BSIMEventTypesName.ERROR, message: error?.message });
         } else {
           // throw error to outer catch
           throw error;
@@ -250,10 +247,9 @@ const SendTransactionStep4Confirm: React.FC<SendTransactionScreenProps<typeof Se
         });
       }
     }
-  }, [gasInfo, currentVault?.id, currentNetwork?.id]);
+  }, [gasEstimateAndNonce, currentVault?.id, currentNetwork?.id]);
 
   const { inAsync: inSending, execAsync: handleSend } = useInAsync(_handleSend);
-
   return (
     <>
       <SendTransactionBottomSheet
@@ -291,9 +287,9 @@ const SendTransactionStep4Confirm: React.FC<SendTransactionScreenProps<typeof Se
 
           <Text style={[styles.estimateFee, { color: colors.textPrimary }]}>{t('tx.confirm.estimatedFee')}</Text>
           <View style={styles.estimateWrapper}>
-            <TokenIcon style={styles.assetIcon} source={nativeAsset?.icon} />
             {gasCostAndPriceInUSDT && (
               <>
+                <TokenIcon style={styles.assetIcon} source={nativeAsset?.icon} />
                 <Text style={[styles.gasText, { color: colors.textSecondary }]}>
                   {'  '}
                   {gasCostAndPriceInUSDT.cost} {nativeAsset?.symbol}
@@ -306,6 +302,12 @@ const SendTransactionStep4Confirm: React.FC<SendTransactionScreenProps<typeof Se
                 )}
               </>
             )}
+            {!gasCostAndPriceInUSDT && <HourglassLoading style={{ width: 20, height: 20 }} />}
+
+            <Pressable style={styles.gasSettingWrapper} onPress={() => setShowGasFeeSetting(true)}>
+              {gasEstimateAndNonce && <OptionLevel level={gasEstimateAndNonce.level} />}
+              <SettingsIcon color={colors.textSecondary} />
+            </Pressable>
           </View>
 
           {error && (
@@ -335,7 +337,7 @@ const SendTransactionStep4Confirm: React.FC<SendTransactionScreenProps<typeof Se
             <Button testID="cancel" style={styles.btn} size="small" onPress={() => backToHome(navigation)} disabled={inSending}>
               {t('common.cancel')}
             </Button>
-            <Button testID="send" style={styles.btn} size="small" disabled={!gasInfo} onPress={handleSend} loading={inSending}>
+            <Button testID="send" style={styles.btn} size="small" disabled={!gasEstimateAndNonce} onPress={handleSend} loading={inSending}>
               {error ? t('common.retry') : t('common.send')}
             </Button>
           </View>
@@ -352,6 +354,7 @@ const SendTransactionStep4Confirm: React.FC<SendTransactionScreenProps<typeof Se
           onRetry={handleSend}
         />
       )}
+      <GasFeeSetting show={showGasFeeSetting} tx={txHalf} onClose={() => setShowGasFeeSetting(false)} onConfirm={setGasEstimateAndNonce} />
     </>
   );
 };
@@ -433,11 +436,18 @@ const styles = StyleSheet.create({
     display: 'flex',
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 56,
+    paddingLeft: 56,
+    paddingRight: 16,
   },
   gasText: {
     fontSize: 12,
     fontWeight: '300',
+  },
+  gasSettingWrapper: {
+    marginLeft: 'auto',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
   },
   errorWarp: {
     display: 'flex',
