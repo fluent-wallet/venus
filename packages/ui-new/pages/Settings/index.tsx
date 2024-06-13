@@ -6,10 +6,15 @@ import { SettingsStackName, AccountManagementStackName, PreferencesStackName, Ab
 import Arrow from '@assets/icons/arrow-right2.svg';
 import { useTranslation } from 'react-i18next';
 
-export const SettingItem: React.FC<{ title: string; onPress: () => void }> = ({ title, onPress }) => {
+export const SettingItem: React.FC<{ title: string; onPress: () => void; disable?: boolean }> = ({ title, onPress, disable = false }) => {
   const { colors } = useTheme();
   return (
-    <Pressable testID={title} style={({ pressed }) => [styles.item, { backgroundColor: pressed ? colors.underlay : 'transparent' }]} onPress={onPress}>
+    <Pressable
+      testID={title}
+      style={({ pressed }) => [styles.item, { backgroundColor: pressed ? colors.underlay : 'transparent' }]}
+      onPress={onPress}
+      disabled={disable}
+    >
       <Text style={[styles.itemText, { color: colors.textPrimary }]}>{title}</Text>
       <Arrow style={styles.arrow} color={colors.iconPrimary} fontSize={32} />
     </Pressable>
