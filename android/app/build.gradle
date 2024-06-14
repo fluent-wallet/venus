@@ -87,8 +87,8 @@ android {
         applicationId "tech.swiftshield"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 30
-        versionName "1.0.2"
+        versionCode 31
+        versionName "1.0.3"
         resValue "string", "build_config_package", "tech.swiftshield"
     }
     signingConfigs {
