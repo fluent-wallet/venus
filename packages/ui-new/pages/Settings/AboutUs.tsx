@@ -55,7 +55,6 @@ const AboutUs: React.FC<StackScreenProps<typeof AboutUsStackName>> = ({ navigati
       if (semverLt(pkg.version, remoteVersion.version)) {
         // has new version , to show user
         setNewVersion(remoteVersion);
-        setLoading(false);
       } else {
         setNewVersion(null),
           showMessage({
@@ -67,6 +66,7 @@ const AboutUs: React.FC<StackScreenProps<typeof AboutUsStackName>> = ({ navigati
     } catch (error) {
       setLoading(false);
     }
+    setLoading(false);
   }, [t]);
 
   const handleOpenWebsite = useCallback(() => {

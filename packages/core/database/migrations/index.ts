@@ -2,6 +2,7 @@ import { createTable, schemaMigrations, addColumns, unsafeExecuteSql } from '@no
 import TableName from '../TableName';
 import { TxSource, ExecutedStatus, TxStatus } from '../models/Tx/type';
 import { ProcessErrorType } from '@core/utils/eth';
+import { AssetType } from '../models/Asset';
 
 const migrations = schemaMigrations({
   migrations: [
@@ -34,6 +35,18 @@ const migrations = schemaMigrations({
           UPDATE ${TableName.Tx} SET method = 'Send' WHERE is_local = true;
           UPDATE ${TableName.Tx} SET error_type = '${ProcessErrorType.executeFailed}' WHERE executed_status = '${ExecutedStatus.FAILED}';
           UPDATE ${TableName.Tx} SET error_type = '${ProcessErrorType.replacedByAnotherTx}' WHERE status = '${TxStatus.REPLACED}';
+          `,
+        ),
+      ],
+    },
+    {
+      toVersion: 3,
+      steps: [
+        unsafeExecuteSql(
+          `
+          UPDATE ${TableName.Tx} SET method = 'transfer' WHERE source = '${TxSource.SELF}' AND EXISTS (SELECT 1 FROM ${TableName.Asset} WHERE ${TableName.Tx}.asset_id = ${TableName.Asset}.id AND ${TableName.Asset}.type IN ('${AssetType.Native}', '${AssetType.ERC20}'));
+          UPDATE ${TableName.Tx} SET method = 'transferFrom' WHERE source = '${TxSource.SELF}' AND EXISTS (SELECT 1 FROM ${TableName.Asset} WHERE ${TableName.Tx}.asset_id = ${TableName.Asset}.id AND ${TableName.Asset}.type = '${AssetType.ERC721}');
+          UPDATE ${TableName.Tx} SET method = 'safeTransferFrom' WHERE source = '${TxSource.SELF}' AND EXISTS (SELECT 1 FROM ${TableName.Asset} WHERE ${TableName.Tx}.asset_id = ${TableName.Asset}.id AND ${TableName.Asset}.type = '${AssetType.ERC1155}');
           `,
         ),
       ],

@@ -3,6 +3,7 @@ import { ExecutedStatus, FAILED_TX_STATUSES, PENDING_TX_STATUSES } from '@core/d
 import { TxPayload } from '@core/database/models/TxPayload';
 import { iface1155, iface721, iface777 } from '@core/contracts';
 import { type Tx } from '@core/database/models/Tx';
+import { FunctionNameApprove, parseTxData } from '@utils/parseTxData';
 
 export const formatStatus = (tx: Tx): 'failed' | 'pending' | 'confirmed' => {
   const { status, executedStatus } = tx;
@@ -54,9 +55,15 @@ export const formatTxData = (tx: Tx, payload: TxPayload | null, asset: Asset | n
       break;
     }
     case AssetType.Native: {
-      isTransfer = true;
+      if (tx.method === 'transfer') {
+        isTransfer = true;
+      }
       break;
     }
+  }
+  if (!isTransfer && asset && payload && tx.method === 'approve') {
+    const { value: approveValue } = parseTxData({ data: payload.data, to: payload.to }) as FunctionNameApprove;
+    approveValue && (value = approveValue.toString());
   }
   return {
     to,
