@@ -168,8 +168,8 @@ const abi20methodSighash: AIBMethodSighashMapType = {
 };
 
 type ParseTxDataParameters = {
-  data?: string;
-  to?: string;
+  data?: string | null;
+  to?: string | null;
 };
 
 export interface FunctionNameGeneric {
