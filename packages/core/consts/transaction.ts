@@ -1,7 +1,0 @@
-// TODO
-export const TX_RESEND_LIMIT = Infinity;
-export const CHECK_REPLACED_BEFORE_RESEND_COUNT = 5;
-
-export const DETAULT_EXECUTED_INTERVAL = 3 * 1000;
-export const DETAULT_CONFIRMED_INTERVAL = 5 * 1000;
-export const DETAULT_FINALIZED_INTERVAL = 30 * 1000;

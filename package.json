@@ -1,6 +1,6 @@
 {
   "name": "venus",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "private": true,
   "scripts": {
     "android": "react-native run-android --tasks installDevDebug",
@@ -20,6 +20,7 @@
     "@ethersproject/shims": "^5.7.0",
     "@gorhom/bottom-sheet": "^5.0.0-alpha.9",
     "@json-rpc-tools/utils": "^1.7.6",
+    "@metamask/gas-fee-controller": "15.0.0",
     "@noble/secp256k1": "^2.1.0",
     "@nozbe/watermelondb": "^0.27.1",
     "@react-native-async-storage/async-storage": "1.21.0",
@@ -54,6 +55,7 @@
     "react-native": "0.73.6",
     "react-native-bignumber": "^0.2.3",
     "react-native-bootsplash": "^5.5.2",
+    "react-native-bsim": "link:./modules/BSIM",
     "react-native-config": "^1.5.1",
     "react-native-device-info": "^10.13.1",
     "react-native-flash-message": "^0.4.2",
@@ -72,6 +74,7 @@
     "react-native-svg": "14.1.0",
     "react-native-vision-camera": "^3.9.2",
     "reflect-metadata": "^0.2.1",
+    "semver": "^7.6.2",
     "stream-browserify": "^3.0.0"
   },
   "devDependencies": {

@@ -42,7 +42,7 @@ export default class WalletConnect implements Plugin {
   client: Promise<Client>;
   sessionStateChangeSubject = new Subject<void>();
   private eventsSubject = new Subject<WalletConnectPluginEvents>();
-  currentEventSubject = new BehaviorSubject<WalletConnectPluginEvents | null>(null);
+  currentEventSubject = new BehaviorSubject<WalletConnectPluginEvents | null | undefined>(undefined);
   eventsQueue: WalletConnectPluginEvents[] = [];
 
   constructor({ projectId, metadata }: WalletConnectPluginParams) {

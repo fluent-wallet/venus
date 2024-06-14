@@ -26,7 +26,9 @@ interface Info {
   validMax: Decimal | null;
   handleEstimateMax: () => void;
   inEstimate: boolean;
+  inMaxMode: boolean;
 }
+
 interface Props {
   targetAddress: string;
   asset: AssetInfo;
@@ -44,6 +46,10 @@ const SetAssetAmount: React.FC<Props> = ({ targetAddress, asset, nftItemDetail, 
   const currentAddressValue = useCurrentAddressValue()!;
   const [amount, setAmount] = useState(() => defaultAmount ?? '');
   const [validMax, setValidMax] = useState<Decimal | null>(() => (isReceive ? new Decimal(Infinity) : null));
+  const needMaxMode = useMemo(() => !isReceive && (asset.type === AssetType.Native || asset.type === AssetType.ERC20), [isReceive, asset.type]);
+
+  const validMaxString = useMemo(() => (needMaxMode && validMax ? validMax.div(Decimal.pow(10, asset.decimals)).toString() : null), [needMaxMode, validMax]);
+  const [inMaxMode, setInMaxMode] = useState(() => false);
 
   useEffect(() => {
     setAmount('');
@@ -70,11 +76,12 @@ const SetAssetAmount: React.FC<Props> = ({ targetAddress, asset, nftItemDetail, 
       }
     } else {
       try {
-        const { gasLimit, gasPrice } = await plugins.Transaction.estimate({
+        const { estimate, estimateOf1559 } = await plugins.Transaction.estimate({
           tx: { to: targetAddress, value: '0x0', from: currentAddressValue },
           network: currentNetwork!,
         });
-        let res = new Decimal(asset.balance).sub(new Decimal(gasLimit).mul(new Decimal(gasPrice)));
+        const usedEstimate = estimateOf1559 ?? estimate!;
+        let res = new Decimal(asset.balance).sub(new Decimal(usedEstimate.medium.gasCost));
         res = res.greaterThan(0) ? res : new Decimal(0);
         setValidMax(res);
         return res;
@@ -98,6 +105,9 @@ const SetAssetAmount: React.FC<Props> = ({ targetAddress, asset, nftItemDetail, 
     }
     if (usedMax) {
       setAmount(usedMax.div(Decimal.pow(10, nftItemDetail ? 0 : asset.decimals)).toString());
+      if (needMaxMode) {
+        setInMaxMode(true);
+      }
     }
   }, [validMax]);
 
@@ -120,7 +130,10 @@ const SetAssetAmount: React.FC<Props> = ({ targetAddress, asset, nftItemDetail, 
           <>
             <View style={[styles.divider, { backgroundColor: colors.borderPrimary }]} />
             <Pressable
-              style={({ pressed }) => [styles.maxBtn, { backgroundColor: pressed ? colors.underlay : 'transparent', borderColor: colors.textPrimary }]}
+              style={({ pressed }) => [
+                styles.maxBtn,
+                { backgroundColor: pressed ? colors.underlay : 'transparent', borderColor: inMaxMode ? colors.up : colors.textPrimary },
+              ]}
               onPress={handleClickMax}
               disabled={inEstimate}
               testID="max"
@@ -133,9 +146,8 @@ const SetAssetAmount: React.FC<Props> = ({ targetAddress, asset, nftItemDetail, 
       </View>
     ),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [],
+    [inMaxMode],
   );
-  0;
 
   const isAmountValid = useMemo(() => {
     if (!validMax || !amount) return null;
@@ -161,13 +173,14 @@ const SetAssetAmount: React.FC<Props> = ({ targetAddress, asset, nftItemDetail, 
   useEffect(() => {
     if (typeof onAmountInfoChange === 'function') {
       onAmountInfoChange({
+        inMaxMode,
         amount,
         isAmountValid: isAmountValid === true,
         validMax: validMax,
         inEstimate,
       });
     }
-  }, [amount, isAmountValid, validMax]);
+  }, [amount, isAmountValid, validMax, inMaxMode]);
 
   const price = useMemo(
     () => (isAmountValid !== true || !isReceive ? '' : trimDecimalZeros(new Decimal(asset.priceInUSDT || 0).mul(new Decimal(amount || 0)).toFixed(2))),
@@ -181,7 +194,17 @@ const SetAssetAmount: React.FC<Props> = ({ targetAddress, asset, nftItemDetail, 
         showVisible={false}
         defaultHasValue={false}
         value={amount}
-        onChangeText={(newNickName) => setAmount(newNickName?.trim())}
+        onChangeText={(_amount) => {
+          const newAmount = _amount?.trim();
+          setAmount(newAmount);
+          if (inMaxMode) {
+            setInMaxMode(false);
+          } else {
+            if (needMaxMode && newAmount === validMaxString) {
+              setInMaxMode(true);
+            }
+          }
+        }}
         isInBottomSheet
         showClear={!!amount}
         placeholder={isReceive ? t('tx.amount.anyAmount') : asset.type === AssetType.ERC1155 ? '0' : '0.00'}
@@ -218,6 +241,7 @@ const SetAssetAmount: React.FC<Props> = ({ targetAddress, asset, nftItemDetail, 
           isAmountValid: isAmountValid === true,
           validMax: validMax!,
           inEstimate,
+          inMaxMode,
           handleEstimateMax: handleEstimateMax as unknown as () => void,
         })}
     </>
@@ -277,7 +301,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
   },
   errorIcon: {
-    marginRight: 4
+    marginRight: 4,
   },
   errorTipText: {
     fontSize: 14,

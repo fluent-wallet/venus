@@ -6,16 +6,7 @@ import { NetworkType, ChainType } from './../../../database/models/Network';
 import { type Address } from './../../../database/models/Address';
 import { type Network } from './../../../database/models/Network';
 import { fetchAssetsBalance, fetchAssetsBalanceBatch, fetchAssetsBalanceMulticall } from './fetchers/basic';
-import {
-  CFX_MAINNET_RPC_ENDPOINT,
-  CFX_MAINNET_CHAINID,
-  CFX_ESPACE_MAINNET_RPC_ENDPOINT,
-  CFX_ESPACE_MAINNET_CHAINID,
-  CFX_ESPACE_TESTNET_RPC_ENDPOINT,
-  CFX_ESPACE_TESTNET_CHAINID,
-  CFX_TESTNET_RPC_ENDPOINT,
-  CFX_TESTNET_CHAINID,
-} from '../../../consts/network';
+import { Networks } from '../../../utils/consts';
 import events from '../../Events';
 import { fetchESpaceServer } from './fetchers/eSpaceServer';
 import { queryNetworkById } from '../../../database/models/Network/query';
@@ -67,7 +58,7 @@ class AssetsTrackerPluginClass implements Plugin {
     });
     this.register({
       networkType: NetworkType.Ethereum,
-      chainId: CFX_ESPACE_TESTNET_CHAINID,
+      chainId: Networks['eSpace Testnet'].chainId,
       fetcher: {
         fetchAssetsBalanceMulticall: (params: Parameters<FetchAssetBalance>[0]) =>
           fetchAssetsBalanceMulticall({ ...params, networkType: NetworkType.Ethereum, multicallContractAddress: '0xd59149a01f910c3c448e41718134baeae55fa784' }),
@@ -75,7 +66,7 @@ class AssetsTrackerPluginClass implements Plugin {
     });
     this.register({
       networkType: NetworkType.Ethereum,
-      chainId: CFX_ESPACE_MAINNET_CHAINID,
+      chainId: Networks['Conflux eSpace'].chainId,
       fetcher: {
         fetchAssetsBalanceMulticall: (params: Parameters<FetchAssetBalance>[0]) =>
           fetchAssetsBalanceMulticall({ ...params, networkType: NetworkType.Ethereum, multicallContractAddress: '0x9f208d7226f05b4f43d0d36eb21d8545c3143685' }),
@@ -197,7 +188,7 @@ const assetsTracker = new AssetsTrackerPluginClass();
 
 assetsTracker.register({
   networkType: NetworkType.Ethereum,
-  chainId: CFX_ESPACE_TESTNET_CHAINID,
+  chainId: Networks['eSpace Testnet'].chainId,
   fetcher: {
     fetchFromServer: ({ address, network }) => fetchESpaceServer({ hexAddress: address.hex, chainType: ChainType.Testnet, network }),
   },
@@ -205,7 +196,7 @@ assetsTracker.register({
 
 assetsTracker.register({
   networkType: NetworkType.Ethereum,
-  chainId: CFX_ESPACE_MAINNET_CHAINID,
+  chainId: Networks['Conflux eSpace'].chainId,
   fetcher: {
     fetchFromServer: ({ address, network }) => fetchESpaceServer({ hexAddress: address.hex, chainType: ChainType.Mainnet, network }),
   },

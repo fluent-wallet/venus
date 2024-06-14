@@ -58,6 +58,11 @@ export const observeUnfinishedTxWithAddress = (addressId: string) =>
     sortBy: 'created_at',
   }).observeWithColumns(['status', 'polling_count', 'resend_count', 'confirmed_number']);
 
+export const observeTxWithAddress = (addressId: string) =>
+  queryTxsWithAddress(addressId, {
+    sortBy: 'created_at',
+  }).observe();
+
 // find tx with
 // 1. same addr
 // 2. same nonce

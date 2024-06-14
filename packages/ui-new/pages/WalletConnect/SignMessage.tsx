@@ -152,7 +152,7 @@ function WalletConnectSignMessage() {
   const { inAsync: rejectLoading, execAsync: handleReject } = useInAsync(_handleReject);
 
   return (
-    <BottomSheet enablePanDownToClose={false} isRoute snapPoints={snapPoints.percent75} onClose={handleReject}>
+    <BottomSheet enablePanDownToClose={false} isRoute snapPoints={snapPoints.large} onClose={handleReject}>
       <BottomSheetView style={{ flex: 1 }}>
         <Text style={[styles.title, { color: colors.textPrimary }]}>{t('wc.request.signature')}</Text>
 
@@ -164,30 +164,34 @@ function WalletConnectSignMessage() {
           </View>
         </View>
 
-        <BottomSheetScrollView
-          style={[styles.content, { borderColor: colors.borderFourth }]}
-          stickyHeaderIndices={[0]}
-          contentContainerStyle={{ paddingBottom: 16 }}
-        >
-          <Pressable onPress={() => handleCoy(signMsg)} testID="copy">
-            <View style={[styles.flexWithRow, styles.scrollTitle, { backgroundColor: colors.bgFourth }]}>
-              <Text style={[styles.h2, { color: colors.textPrimary }]}>{t('wc.sign.message')}</Text>
-              <Copy width={18} height={18} color={colors.textSecondary} />
-            </View>
-          </Pressable>
-          <Text>{signMsg}</Text>
-        </BottomSheetScrollView>
+        <BottomSheetView style={styles.contentHeight}>
+          <BottomSheetScrollView
+            style={[styles.content, { borderColor: colors.borderFourth }]}
+            stickyHeaderIndices={[0]}
+            contentContainerStyle={{ paddingBottom: 16 }}
+          >
+            <Pressable onPress={() => handleCoy(signMsg)} testID="copy">
+              <View style={[styles.flexWithRow, styles.scrollTitle, { backgroundColor: colors.bgFourth }]}>
+                <Text style={[styles.h2, { color: colors.textPrimary }]}>{t('wc.sign.message')}</Text>
+                <Copy width={18} height={18} color={colors.textSecondary} />
+              </View>
+            </Pressable>
+            <Text style={{color: colors.textPrimary}}>{signMsg}</Text>
+          </BottomSheetScrollView>
+        </BottomSheetView>
 
         <View style={[styles.footer, { borderColor: colors.borderFourth }]}>
           <View style={[styles.flexWithRow, styles.account]}>
             <View style={[styles.flexWithRow, styles.accountLeft]}>
               <Image style={styles.accountIcon} source={{ uri: toDataUrl(currentAddressValue) }} />
-              <View >
-                <Text numberOfLines={3} style={[styles.h2, { color: colors.textPrimary,maxWidth: 150 }]}>{currentAccount?.nickname}</Text>
-                <Text>{shortenAddress(currentAddressValue)}</Text>
+              <View>
+                <Text numberOfLines={3} style={[styles.h2, { color: colors.textPrimary, maxWidth: 150 }]}>
+                  {currentAccount?.nickname}
+                </Text>
+                <Text style={{color: colors.textPrimary}}>{shortenAddress(currentAddressValue)}</Text>
               </View>
             </View>
-            <Text>{t('wc.sign.network', { network: currentNetwork?.name })}</Text>
+            <Text style={{color: colors.textPrimary}}>{t('wc.sign.network', { network: currentNetwork?.name })}</Text>
           </View>
           <View style={[styles.buttons, styles.flexWithRow]}>
             <Button style={styles.btn} testID="reject" onPress={handleReject} loading={rejectLoading}>
@@ -226,7 +230,9 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '300',
   },
-
+  contentHeight: {
+    height: 300,
+  },
   content: {
     marginHorizontal: 16,
     marginVertical: 24,

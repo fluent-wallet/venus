@@ -5,20 +5,21 @@ import {
   WalletConnectProposalStackName,
   WalletConnectSignMessageStackName,
   WalletConnectTransactionStackName,
+  HomeStackName,
 } from '@router/configs';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { uniq } from 'lodash-es';
-import { CFX_ESPACE_MAINNET_NETID, CFX_ESPACE_TESTNET_NETID } from '@core/utils/consts';
+import { Networks } from '@core/utils/consts';
 import { queryNetworks } from '@core/database/models/Network/query';
 import methods from '@core/WalletCore/Methods';
 import Plugins from '@core/WalletCore/Plugins';
 import { WalletConnectPluginEventType } from '@core/WalletCore/Plugins/WalletConnect/types';
 import { NetworkType, useCurrentAddressValue, useCurrentNetwork } from '@core/WalletCore/Plugins/ReactInject';
 import { isDev, isQA } from '@utils/getEnv';
-import backToHome from '@utils/backToHome';
+import backToHome, { getActiveRouteName } from '@utils/backToHome';
 
-const SUPPORT_NETWORK = [CFX_ESPACE_MAINNET_NETID];
-const QA_SUPPORT_NETWORK = [CFX_ESPACE_MAINNET_NETID, CFX_ESPACE_TESTNET_NETID];
+const SUPPORT_NETWORK = [Networks['Conflux eSpace'].netId] as Array<number>;
+const QA_SUPPORT_NETWORK = [Networks['Conflux eSpace'].netId, Networks['eSpace Testnet'].netId] as Array<number>;
 
 export function useListenWalletConnectEvent() {
   const navigation = useNavigation<StackNavigation>();
@@ -27,6 +28,9 @@ export function useListenWalletConnectEvent() {
 
   useEffect(() => {
     const subject = Plugins.WalletConnect.currentEventSubject.subscribe(async (event) => {
+      if (event === undefined) {
+        return;
+      }
       if (event === null) {
         backToHome(navigation);
         return;
@@ -52,8 +56,9 @@ export function useListenWalletConnectEvent() {
           if (requestChains.length === 0) {
             return event.action.reject('UNSUPPORTED_CHAINS');
           }
-          navigation?.dispatch(
-            StackActions.replace(WalletConnectStackName, {
+
+          if (getActiveRouteName(navigation.getState()) === HomeStackName) {
+            navigation.navigate(WalletConnectStackName, {
               screen: WalletConnectProposalStackName,
               params: {
                 ...event.data,
@@ -61,8 +66,21 @@ export function useListenWalletConnectEvent() {
                   .filter((network) => requestChains.includes(network.netId))
                   .map((network) => ({ icon: network.icon!, name: network.name, netId: network.netId, id: network.id })),
               },
-            }),
-          );
+            });
+          } else {
+            navigation?.dispatch(
+              StackActions.replace(WalletConnectStackName, {
+                screen: WalletConnectProposalStackName,
+                params: {
+                  ...event.data,
+                  connectedNetworks: networks
+                    .filter((network) => requestChains.includes(network.netId))
+                    .map((network) => ({ icon: network.icon!, name: network.name, netId: network.netId, id: network.id })),
+                },
+              }),
+            );
+          }
+
           break;
         }
 
@@ -123,7 +141,7 @@ export function useListenWalletConnectEvent() {
   }, [currentAddressValue, currentNetwork?.id]);
 }
 
-export function useWalletConnectSessions() {
+export function useWalletConnectSessions(filterByAddress?: string | undefined | null) {
   const [sessions, setSessions] = useState<Awaited<ReturnType<typeof Plugins.WalletConnect.getAllSession>>[string][]>([]);
 
   const getSessions = useCallback(async () => {
@@ -144,6 +162,22 @@ export function useWalletConnectSessions() {
       sub.unsubscribe();
     };
   }, [getSessions]);
+
+  if (filterByAddress) {
+    return {
+      sessions: sessions.filter((session) => {
+        const { namespaces } = session;
+        return (
+          namespaces &&
+          namespaces.eip155 &&
+          namespaces.eip155.accounts.find((account) => {
+            const [eip, chainId, address] = account.split(':');
+            return address.toLowerCase() === filterByAddress.toLowerCase();
+          })
+        );
+      }),
+    };
+  }
 
   return { sessions };
 }

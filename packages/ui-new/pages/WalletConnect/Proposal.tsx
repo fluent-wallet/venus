@@ -56,7 +56,7 @@ export default function WalletConnectProposal() {
 
   return (
     <>
-      <BottomSheet enablePanDownToClose={false} isRoute snapPoints={snapPoints.percent75} onClose={() => handleReject()}>
+      <BottomSheet enablePanDownToClose={false} isRoute snapPoints={snapPoints.large} onClose={() => handleReject()}>
         <View style={styles.container}>
           <View style={styles.info}>
             <Image source={icons[0]} style={styles.icon} />
@@ -84,7 +84,7 @@ export default function WalletConnectProposal() {
               {connectedNetworks.map((network) => (
                 <Icon source={network.icon} width={22} height={22} style={{ borderRadius: 11 }} key={network.id} />
               ))}
-              {connectedNetworks.length === 1 && <Text>{connectedNetworks[0]?.name}</Text>}
+              {connectedNetworks.length === 1 && <Text style={{color: colors.textPrimary}}>{connectedNetworks[0]?.name}</Text>}
             </View>
           </View>
 

@@ -1,8 +1,3 @@
-/**
- * @fileOverview consts used in extension
- * @name index.js
- */
-
 export const MAINNET = 'mainnet';
 export const TESTNET = 'testnet';
 export const LOCALHOST = 'localhost';
@@ -12,6 +7,18 @@ export const NULL_HEX_ADDRESS = '0x0000000000000000000000000000000000000000';
 export const ADMINE_CONTROL_HEX_ADDRESS = '0x0888000000000000000000000000000000000000';
 export const SPONSOR_WHITELIST_CONTROL_HEX_ADDRESS = '0x0888000000000000000000000000000000000001';
 export const STAKING_HEX_ADDRESS = '0x0888000000000000000000000000000000000002';
+export const MAX_EPOCH_NUMBER_OFFSET = 66666n; // max offset is 10w, use 66666 for code
+
+export enum NetworkType {
+  Conflux = 'Conflux',
+  Ethereum = 'Ethereum',
+}
+
+export enum ChainType {
+  Mainnet = 'Mainnet',
+  Testnet = 'Testnet',
+  Custom = 'Custom',
+}
 
 export const INTERNAL_CONTRACTS_HEX_ADDRESS = [ADMINE_CONTROL_HEX_ADDRESS, SPONSOR_WHITELIST_CONTROL_HEX_ADDRESS, STAKING_HEX_ADDRESS];
 
@@ -23,114 +30,187 @@ export enum ADDRESS_TYPES {
 }
 
 // * network setting
-export const DEFAULT_CURRENCY_DECIMALS = 18;
+const cfxIcon =
+  'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDIiIGhlaWdodD0iNDIiIHZpZXdCb3g9IjAgMCA0MiA0MiIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48Y2lyY2xlIGN4PSIyMSIgY3k9IjIxIiByPSIyMSIgZmlsbD0iI2ZmZiIvPjxwYXRoIGQ9Ik0yNi41NzUgMjMuODA3bC01LjYwMSA1LjU4OC0yLjc4Ny0yLjc3OCA1LjYwMS01LjU4OC0yLjc5Ny0yLjc4OS04LjQzIDguNDA1IDguMzc3IDguMzUyIDguNDMtOC40MDUtMi43OTMtMi43ODV6IiBmaWxsPSIjMUExQTFBIi8+PHBhdGggZD0iTTMyLjIgMTguMTI4TDIxLjAzNyA2Ljk5OCA5LjggMTguMjAybC4wMzUgNS41NSAxMS4xNTMtMTEuMTE2IDExLjE5IDExLjE2Mi4wMjItNS42N3oiIGZpbGw9IiMzOEExREIiLz48L3N2Zz4=';
+export const Networks = {
+  ['Conflux Mainnet']: {
+    name: 'Conflux Mainnet',
+    endpoint: 'https://main.confluxrpc.com/1BvViQet4km8KPALkc6Pa9',
+    networkType: NetworkType.Conflux,
+    chainId: '0x405',
+    netId: 1029,
+    selected: false,
+    icon: 'https://cdn.jsdelivr.net/gh/Conflux-Chain/helios@dev/packages/built-in-network-icons/Conflux.svg',
+    scanUrl: 'https://confluxscan.io',
+    builtin: true,
+    chainType: ChainType.Mainnet,
+    gasBuffer: 1,
+    hdPathIndex: 0,
+    nativeAsset: {
+      name: 'Conflux',
+      symbol: 'CFX',
+      decimals: 18,
+      icon: cfxIcon,
+    },
+  },
+  ['Conflux eSpace']: {
+    name: 'Conflux eSpace',
+    endpoint: 'https://evm.confluxrpc.com/1BvViQet4km8KPALkc6Pa9',
+    networkType: NetworkType.Ethereum,
+    chainId: '0x406',
+    netId: 1030,
+    selected: true,
+    icon: 'https://cdn.jsdelivr.net/gh/Conflux-Chain/helios@dev/packages/built-in-network-icons/Conflux.svg',
+    scanUrl: 'https://evm.confluxscan.net',
+    builtin: true,
+    chainType: ChainType.Mainnet,
+    gasBuffer: 1,
+    hdPathIndex: 1,
+    nativeAsset: {
+      name: 'Conflux',
+      symbol: 'CFX',
+      decimals: 18,
+      icon: cfxIcon,
+    },
+    scanOpenAPI: 'https://evmapi.confluxscan.io',
+  },
+  ['Ethereum Mainnet']: {
+    name: 'Ethereum Mainnet',
+    endpoint: 'https://mainnet.infura.io/v3/9aa3d95b3bc440fa88ea12eaa4456161',
+    networkType: NetworkType.Ethereum,
+    chainId: '0x1',
+    netId: 1,
+    selected: false,
+    icon: 'https://cdn.jsdelivr.net/gh/Conflux-Chain/helios@dev/packages/built-in-network-icons/Ethereum.svg',
+    scanUrl: 'https://etherscan.io',
+    builtin: true,
+    chainType: ChainType.Mainnet,
+    gasBuffer: 1.5,
+    hdPathIndex: 1,
+    nativeAsset: {
+      name: 'Ether',
+      symbol: 'ETH',
+      decimals: 18,
+      icon: 'https://cdn.jsdelivr.net/gh/Conflux-Chain/helios@dev/packages/built-in-network-icons/eth.svg',
+    },
+  },
+  ['Conflux Testnet']: {
+    name: 'Conflux Testnet',
+    endpoint: 'https://test.confluxrpc.com/1BvViQet4km8KPALkc6Pa9',
+    networkType: NetworkType.Conflux,
+    chainId: '0x1',
+    netId: 1,
+    selected: false,
+    icon: 'https://cdn.jsdelivr.net/gh/Conflux-Chain/helios@dev/packages/built-in-network-icons/Conflux.svg',
+    scanUrl: 'https://testnet.confluxscan.io',
+    builtin: true,
+    chainType: ChainType.Testnet,
+    gasBuffer: 1,
+    hdPathIndex: 0,
+    nativeAsset: {
+      name: 'Conflux',
+      symbol: 'CFX',
+      decimals: 18,
+      icon: cfxIcon,
+    },
+  },
+  ['eSpace Testnet']: {
+    name: 'eSpace Testnet',
+    endpoint: 'https://evmtestnet.confluxrpc.com/1BvViQet4km8KPALkc6Pa9',
+    networkType: NetworkType.Ethereum,
+    chainId: '0x47',
+    netId: 71,
+    selected: false,
+    icon: 'https://cdn.jsdelivr.net/gh/Conflux-Chain/helios@dev/packages/built-in-network-icons/Conflux.svg',
+    scanUrl: 'https://evmtestnet.confluxscan.net',
+    builtin: true,
+    chainType: ChainType.Testnet,
+    gasBuffer: 1,
+    hdPathIndex: 1,
+    nativeAsset: {
+      name: 'Conflux',
+      symbol: 'CFX',
+      decimals: 18,
+      icon: cfxIcon,
+    },
+    scanOpenAPI: 'https://evmapi-testnet.confluxscan.io',
+  },
+  ['Ethereum Sepolia']: {
+    name: 'Ethereum Sepolia',
+    endpoint: 'https://sepolia.infura.io/v3/9aa3d95b3bc440fa88ea12eaa4456161',
+    networkType: NetworkType.Ethereum,
+    chainId: '0xaa36a7',
+    netId: 11155111,
+    selected: false,
+    icon: 'https://cdn.jsdelivr.net/gh/Conflux-Chain/helios@dev/packages/built-in-network-icons/Ethereum.svg',
+    scanUrl: 'https://sepolia.etherscan.io',
+    builtin: true,
+    chainType: ChainType.Testnet,
+    gasBuffer: 1.5,
+    hdPathIndex: 1,
+    nativeAsset: {
+      name: 'Ether',
+      symbol: 'SepoliaETH',
+      decimals: 18,
+      icon: 'https://cdn.jsdelivr.net/gh/Conflux-Chain/helios@dev/packages/built-in-network-icons/eth.svg',
+    },
+  },
+  ['eSpace 8889']: {
+    name: 'eSpace 8889',
+    endpoint: 'https://net8889eth.confluxrpc.com/',
+    networkType: NetworkType.Ethereum,
+    chainId: '0x22b9',
+    netId: 8889,
+    selected: false,
+    icon: 'https://cdn.jsdelivr.net/gh/Conflux-Chain/helios@dev/packages/built-in-network-icons/Conflux.svg',
+    scanUrl: 'https://net8889eth.confluxscan.net/',
+    builtin: false,
+    chainType: ChainType.Testnet,
+    gasBuffer: 1,
+    hdPathIndex: 1,
+    nativeAsset: {
+      name: 'Conflux',
+      symbol: 'CFX',
+      decimals: 18,
+      icon: cfxIcon,
+    },
+  },
+  ['CoreSpace 8888']: {
+    name: 'CoreSpace 8888',
+    endpoint: 'https://net8888cfx.confluxrpc.com/',
+    networkType: NetworkType.Conflux,
+    chainId: '0x22b8',
+    netId: 8888,
+    selected: false,
+    icon: 'https://cdn.jsdelivr.net/gh/Conflux-Chain/helios@dev/packages/built-in-network-icons/Conflux.svg',
+    scanUrl: 'https://net8888cfx.confluxscan.net/',
+    builtin: false,
+    chainType: ChainType.Testnet,
+    gasBuffer: 1,
+    hdPathIndex: 0,
+    nativeAsset: {
+      name: 'Conflux',
+      symbol: 'CFX',
+      decimals: 18,
+      icon: cfxIcon,
+    },
+  },
+} as const;
 
-export const CFX_MAINNET_RPC_ENDPOINT = 'https://portal-main.confluxrpc.com';
-export const CFX_MAINNET_NAME = 'Conflux Hydra';
-export const CFX_MAINNET_CHAINID = '0x405';
-export const CFX_MAINNET_NETID = 1029;
-export const CFX_MAINNET_CURRENCY_SYMBOL = 'CFX';
-export const CFX_MAINNET_CURRENCY_NAME = 'Conflux';
-export const CFX_MAINNET_EXPLORER_URL = 'https://confluxscan.io';
+// * network setting
 
-export const CFX_ESPACE_MAINNET_RPC_ENDPOINT = 'https://evm.confluxrpc.com';
-export const CFX_ESPACE_MAINNET_NAME = 'Conflux eSpace';
-export const CFX_ESPACE_MAINNET_CHAINID = '0x406';
-export const CFX_ESPACE_MAINNET_NETID = 1030;
-export const CFX_ESPACE_MAINNET_CURRENCY_SYMBOL = 'CFX';
-export const CFX_ESPACE_MAINNET_CURRENCY_NAME = 'Conflux';
-export const CFX_ESPACE_MAINNET_EXPLORER_URL = 'https://evm.confluxscan.net';
+export const DEFAULT_CFX_HDPATH = "m/44'/503'/0'/0";
+export const DEFAULT_ETH_HDPATH = "m/44'/60'/0'/0";
 
-export const CFX_TESTNET_RPC_ENDPOINT = 'https://portal-test.confluxrpc.com';
-export const CFX_TESTNET_NAME = 'Conflux Testnet';
-export const CFX_TESTNET_CHAINID = '0x1';
-export const CFX_TESTNET_NETID = 1;
-export const CFX_TESTNET_CURRENCY_SYMBOL = 'CFX';
-export const CFX_TESTNET_CURRENCY_NAME = 'Conflux';
-export const CFX_TESTNET_EXPLORER_URL = 'https://testnet.confluxscan.io';
-
-export const CFX_ESPACE_TESTNET_RPC_ENDPOINT = 'https://evmtestnet.confluxrpc.com';
-export const CFX_ESPACE_TESTNET_NAME = 'Conflux espace (Testnet)';
-export const CFX_ESPACE_TESTNET_CHAINID = '0x47';
-export const CFX_ESPACE_TESTNET_NETID = 71;
-export const CFX_ESPACE_TESTNET_CURRENCY_SYMBOL = 'CFX';
-export const CFX_ESPACE_TESTNET_CURRENCY_NAME = 'Conflux';
-export const CFX_ESPACE_TESTNET_EXPLORER_URL = 'https://evmtestnet.confluxscan.net';
-
-export const ETH_MAINNET_RPC_ENDPOINT = 'https://mainnet.infura.io/v3/9aa3d95b3bc440fa88ea12eaa4456161';
-export const ETH_MAINNET_NAME = 'Ethereum Mainnet';
-export const ETH_MAINNET_CHAINID = '0x1';
-export const ETH_MAINNET_NETID = 1;
-export const ETH_MAINNET_CURRENCY_SYMBOL = 'ETH';
-export const ETH_MAINNET_CURRENCY_NAME = 'Ether';
-export const ETH_MAINNET_EXPLORER_URL = 'https://etherscan.io';
-
-export const ETH_ROPSTEN_RPC_ENDPOINT = 'https://ropsten.infura.io/v3/9aa3d95b3bc440fa88ea12eaa4456161';
-export const ETH_ROPSTEN_NAME = 'Ethereum Ropsten';
-export const ETH_ROPSTEN_CHAINID = '0x3';
-export const ETH_ROPSTEN_NETID = 3;
-export const ETH_ROPSTEN_CURRENCY_SYMBOL = 'ETH';
-export const ETH_ROPSTEN_CURRENCY_NAME = 'Ether';
-export const ETH_ROPSTEN_EXPLORER_URL = 'https://ropsten.etherscan.io';
-
-export const ETH_RINKEBY_RPC_ENDPOINT = 'https://rinkeby.infura.io/v3/9aa3d95b3bc440fa88ea12eaa4456161';
-export const ETH_RINKEBY_NAME = 'Ethereum Rinkeby';
-export const ETH_RINKEBY_CHAINID = '0x4';
-export const ETH_RINKEBY_NETID = 4;
-export const ETH_RINKEBY_CURRENCY_SYMBOL = 'ETH';
-export const ETH_RINKEBY_CURRENCY_NAME = 'Ether';
-export const ETH_RINKEBY_EXPLORER_URL = 'https://rinkeby.etherscan.io';
-
-export const ETH_GOERLI_RPC_ENDPOINT = 'https://goerli.infura.io/v3/9aa3d95b3bc440fa88ea12eaa4456161';
-export const ETH_GOERLI_NAME = 'Ethereum Goerli';
-export const ETH_GOERLI_CHAINID = '0x5';
-export const ETH_GOERLI_NETID = 5;
-export const ETH_GOERLI_CURRENCY_SYMBOL = 'ETH';
-export const ETH_GOERLI_CURRENCY_NAME = 'Ether';
-export const ETH_GOERLI_EXPLORER_URL = 'https://goerli.etherscan.io';
-
-export const ETH_KOVAN_RPC_ENDPOINT = 'https://kovan.infura.io/v3/9aa3d95b3bc440fa88ea12eaa4456161';
-export const ETH_KOVAN_NAME = 'Ethereum Kovan';
-export const ETH_KOVAN_CHAINID = '0x2a';
-export const ETH_KOVAN_NETID = 42;
-export const ETH_KOVAN_CURRENCY_SYMBOL = 'ETH';
-export const ETH_KOVAN_CURRENCY_NAME = 'Ether';
-export const ETH_KOVAN_EXPLORER_URL = 'https://kovan.etherscan.io';
-
-export const DEFAULT_CFX_HDPATH = `m/44'/503'/0'/0`;
-export const DEFAULT_ETH_HDPATH = `m/44'/60'/0'/0`;
-
-export const REGENERATE = 'REGENERATE';
-
-export const CFX_LOCALNET_RPC_ENDPOINT = 'http://localhost:12537';
-export const CFX_LOCALNET_NAME = 'CFX_LOCALNET';
-export const CFX_LOCALNET_CHAINID = '0xbb7';
-export const CFX_LOCALNET_NETID = 2999;
-export const CFX_LOCALNET_CURRENCY_SYMBOL = 'CFX';
-export const CFX_LOCALNET_CURRENCY_NAME = 'CFX';
-
-export const ETH_LOCALNET_RPC_ENDPOINT = 'http://localhost:8545';
-export const ETH_LOCALNET_NAME = 'ETH_LOCALNET';
-export const ETH_LOCALNET_CHAINID = '0x539';
-export const ETH_LOCALNET_NETID = 1337;
-export const ETH_LOCALNET_CURRENCY_SYMBOL = 'ETH';
-export const ETH_LOCALNET_CURRENCY_NAME = 'Ether';
-
-// ETH endpoints
-export const ETH_ENDPOINT = {
-  [ETH_MAINNET_NETID]: ETH_MAINNET_RPC_ENDPOINT,
-  [ETH_ROPSTEN_NETID]: ETH_ROPSTEN_RPC_ENDPOINT,
-  // Rinkeby: 'https://rinkeby.infura.io/v3/9aa3d95b3bc440fa88ea12eaa4456161',
-  // Kovan: 'https://kovan.infura.io/v3/9aa3d95b3bc440fa88ea12eaa4456161',
-  // Goerli: 'https://goerli.infura.io/v3/9aa3d95b3bc440fa88ea12eaa4456161',
+export const ETH_TX_TYPES = {
+  LEGACY: '0x0',
+  EIP2930: '0x1',
+  EIP1559: '0x2',
 };
 
-export const CFX_SCAN_DOMAINS = {
-  [CFX_MAINNET_NETID]: 'https://confluxscan.io',
-  [CFX_TESTNET_NETID]: 'https://testnet.confluxscan.io',
-};
+export const TX_RESEND_LIMIT = Infinity;
+export const CHECK_REPLACED_BEFORE_RESEND_COUNT = 5;
 
-export const ETH_SCAN_DOMAINS = {
-  [ETH_MAINNET_NETID]: 'https://etherscan.io/',
-  [ETH_ROPSTEN_NETID]: 'https://ropsten.etherscan.io/',
-};
+export const DETAULT_EXECUTED_INTERVAL = 3 * 1000;
+export const DETAULT_CONFIRMED_INTERVAL = 5 * 1000;
+export const DETAULT_FINALIZED_INTERVAL = 30 * 1000;

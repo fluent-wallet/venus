@@ -9,9 +9,11 @@ import { useNavigation, useTheme } from '@react-navigation/native';
 import Plugins from '@core/WalletCore/Plugins';
 import { useCallback } from 'react';
 import useInAsync from '@hooks/useInAsync';
+import { useCurrentAddressValue } from '@core/WalletCore/Plugins/ReactInject';
 function WalletConnectSessions() {
   const { t } = useTranslation();
-  const { sessions } = useWalletConnectSessions();
+  const currentAddress = useCurrentAddressValue();
+  const { sessions } = useWalletConnectSessions(currentAddress);
   const navigation = useNavigation();
   const { colors } = useTheme();
   // TODO: maybe add confirm

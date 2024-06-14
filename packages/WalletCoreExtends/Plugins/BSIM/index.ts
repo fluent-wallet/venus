@@ -1,10 +1,19 @@
-import BSIMSDK, { BSIMError, BSIMErrorEndTimeout, BSIM_ERRORS, BSIM_SUPPORT_ACCOUNT_LIMIT, CoinTypes } from './BSIMSDK';
-import { addHexPrefix } from '@core/utils/base';
-import { Signature, Transaction, TypedDataDomain, TypedDataEncoder, TypedDataField, computeAddress, hashMessage } from 'ethers';
+import { BSIMErrorEndTimeout, BSIM_ERRORS, BSIM_SUPPORT_ACCOUNT_LIMIT, CFXCoinTypes } from './BSIMSDK';
+import {
+  BSIMError,
+  CoinTypes,
+  PublicKeyAndAddress60Type,
+  genNewKey,
+  getBSIMVersion,
+  getPublicKeyAndAddress,
+  signMessage,
+  updateBPIN,
+  verifyBPIN,
+} from 'react-native-bsim';
+import { Signature, Transaction, TypedDataDomain, TypedDataEncoder, TypedDataField, hashMessage } from 'ethers';
 import { ITxEvm } from '@core/WalletCore/Plugins/Transaction/types';
 import { type Plugin } from '@core/WalletCore/Plugins';
 import { catchError, defer, firstValueFrom, from, retry, throwError, timeout, takeUntil, Subject } from 'rxjs';
-export { CoinTypes, CFXCoinTypes } from './BSIMSDK';
 
 declare module '@core/WalletCore/Plugins' {
   interface Plugins {
@@ -12,23 +21,12 @@ declare module '@core/WalletCore/Plugins' {
   }
 }
 
-let hasInit = false;
 const eSpaceCoinType = 60;
 
 export class BSIMPluginClass implements Plugin {
-  constructor() {
-    setTimeout(() => this.getBSIMList(), 3000);
-  }
   name = 'BSIM' as const;
 
   chainLimitCount = 25 as const;
-
-  checkIsInit = async () => {
-    if (!hasInit) {
-      await BSIMSDK.create();
-      hasInit = true;
-    }
-  };
 
   public formatBSIMPubkey = (key: string) => {
     if (key.length === 128) {
@@ -40,16 +38,15 @@ export class BSIMPluginClass implements Plugin {
     return key;
   };
 
-  public getBSIMPubkeys = () => BSIMSDK.getPubkeyList();
+  public getBSIMPublicKeys = () => getPublicKeyAndAddress();
 
   public getBSIMList = async () => {
     try {
-      await this.checkIsInit();
-      const list = await BSIMSDK.getPubkeyList();
+      const list = await this.getBSIMPublicKeys();
       return list
-        .map((item) => ({ hexAddress: computeAddress(addHexPrefix(this.formatBSIMPubkey(item.key))), index: item.index, coinType: item.coinType }))
         .filter((item) => item.index > 0)
-        .filter((item) => item.coinType === eSpaceCoinType)
+        .filter((item): item is PublicKeyAndAddress60Type => item.coinType === eSpaceCoinType)
+        .map((item) => ({ hexAddress: item.address, index: item.index, coinType: item.coinType }))
         .sort((itemA, itemB) => itemA.index - itemB.index)
         .map((item, index) => ({ ...item, index }));
     } catch (err) {
@@ -58,10 +55,8 @@ export class BSIMPluginClass implements Plugin {
   };
 
   public createNewBSIMAccount = async () => {
-    await this.checkIsInit();
-
     try {
-      await BSIMSDK.genNewKey(CoinTypes.ETHEREUM);
+      await genNewKey(CoinTypes.ETHEREUM);
 
       const list = await this.getBSIMList();
 
@@ -79,8 +74,6 @@ export class BSIMPluginClass implements Plugin {
   };
 
   public createBSIMAccountToIndex = async (targetIndex: number) => {
-    await this.checkIsInit();
-
     const list = await this.getBSIMList();
     const maxIndex = list.at(-1)?.index ?? -1;
     if (maxIndex >= targetIndex || maxIndex >= BSIM_SUPPORT_ACCOUNT_LIMIT) return;
@@ -92,8 +85,6 @@ export class BSIMPluginClass implements Plugin {
   };
 
   public connectBSIM = async () => {
-    await this.checkIsInit();
-
     const list = await this.getBSIMList();
     if (list?.length > 0) {
       return list.slice(0, 1);
@@ -103,24 +94,22 @@ export class BSIMPluginClass implements Plugin {
   };
 
   public verifyBPIN = async () => {
-    await this.checkIsInit();
-
-    return BSIMSDK.verifyBPIN();
+    return verifyBPIN();
   };
 
   public getBSIMVersion = async () => {
-    await this.checkIsInit();
-    return BSIMSDK.getBSIMVersion();
+    return getBSIMVersion();
   };
   public BSIMSignMessage = async (message: string, coinTypeIndex: number, index: number) => {
-    await this.checkIsInit();
-
-    return BSIMSDK.signMessage(message, coinTypeIndex, index);
+    return signMessage({
+      messageHash: message,
+      coinType: coinTypeIndex,
+      coinTypeIndex: index,
+    });
   };
 
   public updateBPIN = async () => {
-    await this.checkIsInit();
-    return BSIMSDK.updateBPIN();
+    return updateBPIN();
   };
 
   private BSIMSign = async (hash: string, fromAddress: string) => {
@@ -138,8 +127,8 @@ export class BSIMPluginClass implements Plugin {
     let errorMsg = '';
     let errorCode = '';
     // retrieve the R S V of the transaction through a polling mechanism
-    const pubkeyList = await this.getBSIMPubkeys();
-    const currentPubkey = pubkeyList.find((item) => computeAddress(addHexPrefix(this.formatBSIMPubkey(item.key))) === fromAddress);
+    const pubkeyList = await this.getBSIMPublicKeys();
+    const currentPubkey = pubkeyList.find((item) => item?.address === fromAddress);
 
     if (!currentPubkey) {
       throw new Error("Can't get current pubkey from BSIM card");

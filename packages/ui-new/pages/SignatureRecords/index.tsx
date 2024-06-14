@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { View, FlatList, StyleSheet } from 'react-native';
 import { useTheme } from '@react-navigation/native';
 import Text from '@components/Text';
@@ -7,6 +7,11 @@ import { useTranslation } from 'react-i18next';
 import { Signature } from '@core/database/models/Signature';
 import { fetchSignatureRecords, useSignatureRecords } from '@core/WalletCore/Plugins/ReactInject/data/useSignature';
 import { useCurrentAddress } from '@core/WalletCore/Plugins/ReactInject';
+import NoneSignature from '@assets/images/none-signature.svg';
+import TypeFilter from './TypeFilter';
+import { SignatureFilterOption } from '@core/database/models/Signature/type';
+import { ENABLE_SMALL_SIGNATURE_RECORDS_FEATURE } from '@utils/features';
+import Delay from '@components/Delay';
 
 export const SignatureItem: React.FC<{ item: Signature }> = ({ item }) => {
   const { colors } = useTheme();
@@ -17,56 +22,81 @@ export const SignatureItem: React.FC<{ item: Signature }> = ({ item }) => {
   );
 };
 
-const DEFAULT_PAGE_SIZE = 10;
+const DEFAULT_PAGE_SIZE = ENABLE_SMALL_SIGNATURE_RECORDS_FEATURE.allow ? 10 : 100;
 
 const SignatureRecords: React.FC<StackScreenProps<typeof SignatureRecordsStackName>> = () => {
+  const listRef = useRef<FlatList>(null);
   const { colors } = useTheme();
   const [current, setCurrent] = useState(0);
-  // TODO: 监听签名记录变动，新增记录后需要偏移查询
-  const [offset, setOffset] = useState(0);
+  const [filter, setFilter] = useState(SignatureFilterOption.All);
   const { t } = useTranslation();
-  const { records: list, total, setRecords, resetRecords } = useSignatureRecords();
+  const { records: list, total: _total, setRecords, resetRecords } = useSignatureRecords(filter);
   const address = useCurrentAddress();
+  const total = _total ?? 0;
+  const initialTotalRef = useRef<number | null>(null);
 
-  const handleQuery = useCallback(
-    async (page = 0) => {
-      if (!address) {
-        return null;
-      }
-      const data = await fetchSignatureRecords(address.id, {
-        current: page,
-        pageSize: DEFAULT_PAGE_SIZE,
-      });
-      if (data.length > 0) {
-        setCurrent(page);
-        setRecords(data);
-      }
-    },
-    [address, setRecords],
-  );
+  // init initialTotalRef while _total has value
+  useEffect(() => {
+    if (typeof _total === 'number' && initialTotalRef.current === null) {
+      initialTotalRef.current = _total;
+    }
+  }, [_total]);
+
+  // reset initialTotalRef while address or filter changed
+  useEffect(() => {
+    initialTotalRef.current = null;
+  }, [address, filter]);
+
+  const handleQuery = async (page = 0) => {
+    if (!address) {
+      return null;
+    }
+    const data = await fetchSignatureRecords(address.id, {
+      current: page,
+      pageSize: DEFAULT_PAGE_SIZE,
+      offset: total - (initialTotalRef.current ?? total),
+      filter,
+    });
+    if (data.length > 0) {
+      setCurrent(page);
+      setRecords(data);
+    }
+  };
 
   const handleLoadMore = () => {
     const next = current + 1;
-    if (next * DEFAULT_PAGE_SIZE < total) {
+    if (next * DEFAULT_PAGE_SIZE < (initialTotalRef.current ?? total)) {
       return handleQuery(next);
     }
   };
 
-  // fetch data while component mounted
   useEffect(() => {
     handleQuery();
-    // reset data when component unmounted
-    return () => {
-      resetRecords();
-    };
-  }, [handleQuery, resetRecords]);
+    listRef.current?.scrollToOffset({
+      offset: 1,
+      animated: false,
+    });
+    return resetRecords;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [address, filter]);
+
   return (
     <View style={[styles.container, { backgroundColor: colors.bgPrimary }]}>
-      <Text style={[styles.title, { color: colors.textPrimary }]}>{t('signature.list.title')}</Text>
+      <View style={styles.title}>
+        <Text style={{ color: colors.textPrimary }}>{t('signature.list.title')}</Text>
+        <TypeFilter onChange={setFilter} />
+      </View>
       <FlatList
+        ref={listRef}
         data={list}
-        // todo: empty
-        ListEmptyComponent={null}
+        ListEmptyComponent={
+          <Delay>
+            <View style={styles.empty}>
+              <NoneSignature />
+              <Text style={{ color: colors.textSecondary }}>{t('signature.list.empty')}</Text>
+            </View>
+          </Delay>
+        }
         onEndReached={handleLoadMore}
         renderItem={({ item }) => <SignatureItem key={item.id} item={item} />}
       />
@@ -86,6 +116,10 @@ export const styles = StyleSheet.create({
     fontSize: 22,
     fontWeight: '600',
     lineHeight: 28,
+    display: 'flex',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
   },
   item: {
     display: 'flex',
@@ -101,7 +135,11 @@ export const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '300',
   },
-  arrow: {},
+  empty: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
 });
 
 export default SignatureRecords;

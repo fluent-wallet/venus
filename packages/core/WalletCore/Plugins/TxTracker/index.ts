@@ -9,7 +9,7 @@ import type { Address } from '@core/database/models/Address';
 import { TxStatus } from '@core/database/models/Tx/type';
 import { debounceTime, Subscription } from 'rxjs';
 import events from '@core/WalletCore/Events';
-import { DETAULT_CONFIRMED_INTERVAL, DETAULT_EXECUTED_INTERVAL, DETAULT_FINALIZED_INTERVAL } from '@core/consts/transaction';
+import { DETAULT_CONFIRMED_INTERVAL, DETAULT_EXECUTED_INTERVAL, DETAULT_FINALIZED_INTERVAL } from '@core/utils/consts';
 
 const txTrackerMap = {
   [EthTxTracker.networkType]: EthTxTracker,

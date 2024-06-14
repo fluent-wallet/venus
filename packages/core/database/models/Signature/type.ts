@@ -6,3 +6,9 @@ export enum SignType {
   // eth_signTypedData
   JSON = 'json',
 }
+
+export enum SignatureFilterOption {
+  All = 'all',
+  Message = 'message',
+  Transactions = 'transactions',
+}

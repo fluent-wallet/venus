@@ -61,8 +61,11 @@ export interface IWCSendTransactionEventData {
     value?: bigint;
     data?: string;
     nonce?: number;
-    gasLimit?: bigint;
-    gasPrice?: bigint;
+    gasLimit?: string;
+    gasPrice?: string;
+    maxFeePerGas?: string;
+    maxPriorityFeePerGas?: string;
+    type?: number;
   };
   metadata: WalletConnectMetadata;
 }

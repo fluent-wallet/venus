@@ -101,7 +101,7 @@ export default function EditAllowance({ open, parseData, savedValue, onSave, onC
           />
           {parseData?.balance && (
             <View style={[styles.flexRow, { justifyContent: 'space-between' }]}>
-              <Text>{t('wc.dapp.tx.shareOfBalance')}</Text>
+              <Text style={{color: colors.textSecondary}}>{t('wc.dapp.tx.shareOfBalance')}</Text>
               <View style={[styles.flexRow, styles.balanceChoose]}>
                 {[25, 50, 100].map((p) => (
                   <Pressable

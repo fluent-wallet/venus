@@ -1,0 +1,9 @@
+{
+  "name": "react-native-bsim",
+  "version": "0.0.1",
+  "description": "the bsim library for react-native",
+  "main": "src/index",
+  "author": " <> ()",
+  "license": "UNLICENSED",
+  "homepage": "#readme"
+}

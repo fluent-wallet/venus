@@ -7,17 +7,8 @@ import { type AssetRule } from '../AssetRule';
 import { type HdPath } from '../HdPath';
 import { type Address } from '../Address';
 import TableName from '../../TableName';
-
-export enum NetworkType {
-  Conflux = 'Conflux',
-  Ethereum = 'Ethereum',
-}
-
-export enum ChainType {
-  Mainnet = 'Mainnet',
-  Testnet = 'Testnet',
-  Custom = 'Custom',
-}
+import { NetworkType, ChainType } from '../../../utils/consts';
+export { NetworkType, ChainType };
 
 export const networkRpcPrefixMap = {
   [NetworkType.Conflux]: 'cfx',
