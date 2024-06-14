@@ -365,6 +365,11 @@
     }
   },
   "wc" : {
+    "daap" : {
+      "tx" : {
+        "unknown" : "unknown"
+      }
+    },
     "dapp" : {
       "connectTo" : "Connected to",
       "connectedDApps" : "Connected DApps",
