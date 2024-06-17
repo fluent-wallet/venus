@@ -77,14 +77,14 @@ const ScanQrCode: React.FC<Props> = ({ navigation, onConfirm, onClose }) => {
         }
         if (!ethUrl.function_name) {
           navigation.dispatch(
-            StackActions.replace(SendTransactionStackName, { screen: SendTransactionStep2StackName, params: { targetAddress: ethUrl.target_address } }),
+            StackActions.replace(SendTransactionStackName, { screen: SendTransactionStep2StackName, params: { recipientAddress: ethUrl.target_address } }),
           );
           return;
         } else if (ethUrl.function_name === 'transfer') {
           const allAssetsTokens = getAssetsTokenList();
           if (!allAssetsTokens?.length) {
             navigation.dispatch(
-              StackActions.replace(SendTransactionStackName, { screen: SendTransactionStep2StackName, params: { targetAddress: ethUrl.target_address } }),
+              StackActions.replace(SendTransactionStackName, { screen: SendTransactionStep2StackName, params: { recipientAddress: ethUrl.target_address } }),
             );
             return;
           }
