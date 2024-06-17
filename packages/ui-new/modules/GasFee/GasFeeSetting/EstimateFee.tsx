@@ -7,24 +7,27 @@ import TokenIcon from '@modules/AssetsList/TokensList/TokenIcon';
 import Text from '@components/Text';
 import HourglassLoading from '@components/Loading/Hourglass';
 import SettingsIcon from '@assets/icons/settings.svg';
-import { OptionLevel, type SelectedGasEstimate } from './index';
+import { OptionLevel, type GasSettingWithLevel, type AdvanceSetting } from './index';
 
-const EstimateFee: React.FC<{ gasEstimateAndNonce: SelectedGasEstimate | null; onPressSettingIcon: () => void }> = ({
-  gasEstimateAndNonce,
+const EstimateFee: React.FC<{ gasSetting?: GasSettingWithLevel | null; advanceSetting?: AdvanceSetting; onPressSettingIcon: () => void }> = ({
+  gasSetting,
+  advanceSetting,
   onPressSettingIcon,
 }) => {
   const { colors } = useTheme();
   const currentNativeAsset = useCurrentNetworkNativeAsset();
 
   const gasCostAndPriceInUSDT = useMemo(() => {
-    if (!gasEstimateAndNonce) return null;
-    const cost = new Decimal(gasEstimateAndNonce.gasCost).div(Decimal.pow(10, currentNativeAsset?.decimals ?? 18));
+    if (!gasSetting || !advanceSetting) return null;
+    const cost = new Decimal(gasSetting.suggestedMaxFeePerGas ?? gasSetting.suggestedGasPrice!)
+      .mul(advanceSetting.gasLimit)
+      .div(Decimal.pow(10, currentNativeAsset?.decimals ?? 18));
     const priceInUSDT = currentNativeAsset?.priceInUSDT ? cost.mul(new Decimal(currentNativeAsset.priceInUSDT)) : null;
     return {
       cost: cost.toString(),
       priceInUSDT: priceInUSDT ? (priceInUSDT.lessThan(0.01) ? '<$0.01' : `≈$${priceInUSDT.toFixed(2)}`) : null,
     };
-  }, [gasEstimateAndNonce, currentNativeAsset?.priceInUSDT, currentNativeAsset?.decimals]);
+  }, [gasSetting, advanceSetting, currentNativeAsset?.priceInUSDT, currentNativeAsset?.decimals]);
 
   return (
     <View style={styles.estimateWrapper}>
@@ -46,7 +49,7 @@ const EstimateFee: React.FC<{ gasEstimateAndNonce: SelectedGasEstimate | null; o
       {!gasCostAndPriceInUSDT && <HourglassLoading style={{ width: 20, height: 20 }} />}
 
       <Pressable style={styles.gasSettingWrapper} onPress={onPressSettingIcon}>
-        {gasEstimateAndNonce && <OptionLevel level={gasEstimateAndNonce.level} />}
+        {gasSetting && <OptionLevel level={gasSetting.level} />}
         <SettingsIcon color={colors.textSecondary} />
       </Pressable>
     </View>
