@@ -58,8 +58,9 @@ export const observeUnfinishedTxWithAddress = (addressId: string) =>
     sortBy: 'created_at',
   }).observeWithColumns(['status', 'polling_count', 'resend_count', 'confirmed_number']);
 
-export const observeTxWithAddress = (addressId: string) =>
+export const observeRecentlyTxWithAddress = (addressId: string) =>
   queryTxsWithAddress(addressId, {
+    notInStatuses: [TxStatus.FAILED],
     sortBy: 'created_at',
   }).observe();
 
