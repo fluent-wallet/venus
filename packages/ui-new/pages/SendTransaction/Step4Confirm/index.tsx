@@ -251,16 +251,15 @@ const SendTransactionStep4Confirm: React.FC<SendTransactionScreenProps<typeof Se
           <Text style={[styles.sendTitle, { color: colors.textPrimary }]}>{t('common.send')}</Text>
 
           {nftItemDetail && <NFT colors={colors} asset={asset} nftItemDetail={nftItemDetail} />}
-          {asset.type !== AssetType.ERC721 && (
-            <SendAsset
-              amount={nftItemDetail ? amount : formattedAmount}
-              symbol={symbol}
-              price={price}
-              icon={asset.type === AssetType.Native || asset.type === AssetType.ERC20 ? asset.icon : undefined}
-              recipientAddress={recipientAddress}
-            />
-          )}
-          
+
+          <SendAsset
+            amount={nftItemDetail ? amount : formattedAmount}
+            symbol={symbol}
+            price={price}
+            icon={asset.type === AssetType.Native || asset.type === AssetType.ERC20 ? asset.icon : undefined}
+            recipientAddress={recipientAddress}
+          />
+
           <View style={[styles.divider, { backgroundColor: colors.borderFourth }]} />
 
           <AccountItemView nickname={t('tx.confirm.signingWith')} addressValue={currentAddressValue} colors={colors}>
