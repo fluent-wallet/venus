@@ -36,6 +36,11 @@ export const ENABLE_SIGNATURE_RECORDS_FEATURE = {
   allow: isDev || isQA,
 };
 
+export const ENABLE_CHECK_UPDATE_FEATURE = {
+  describe: 'check the app update feature',
+  allow: isDev,
+};
+
 export const DEVELOPER_FEATURE = {
   describe: 'developer feature',
   allow: isDev,
