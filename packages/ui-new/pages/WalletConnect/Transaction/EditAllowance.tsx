@@ -12,6 +12,8 @@ import Button from '@components/Button';
 import ArrowLeft from '@assets/icons/arrow-left2.svg';
 import { formatUnits, parseUnits } from 'ethers';
 import Decimal from 'decimal.js';
+import { isNumeric } from '@utils/isNumberic';
+
 interface IProps {
   open: boolean;
   parseData: TxDataWithTokenInfo;
@@ -26,23 +28,30 @@ export default function EditAllowance({ open, parseData, savedValue, onSave, onC
   const [isDappSuggestValue, setIsDappSuggestValue] = useState(!savedValue);
   const [customValue, setCustomValue] = useState(savedValue || '');
   const [percent, setPercent] = useState<null | number>(null);
-
+  const [invalidNumber, setInvalidNumber] = useState(false);
   const handleChange = (event: NativeSyntheticEvent<TextInputChangeEventData>) => {
+    if (isDappSuggestValue) return;
     const newValue = event.nativeEvent.text;
-    if (/^[0-9]*$/.test(newValue)) {
-      setCustomValue(newValue);
+    setCustomValue(newValue);
+    if (newValue !== customValue && percent !== null) {
+      setPercent(null);
     }
   };
 
   const handleSave = useCallback(() => {
+    setInvalidNumber(false);
     if (isDappSuggestValue) {
       onSave('');
+      onClose();
     } else {
-      onSave(parseData?.decimals ? parseUnits(customValue, parseData.decimals).toString() : customValue);
+      if (isNumeric(customValue)) {
+        onSave(customValue);
+        onClose();
+      } else {
+        setInvalidNumber(true);
+      }
     }
-
-    onClose();
-  }, [onClose, onSave, isDappSuggestValue, customValue, parseData.decimals]);
+  }, [onClose, onSave, isDappSuggestValue, customValue]);
   const getFormatValue = useCallback(
     (value: bigint) => {
       if (parseData && parseData.decimals) {
@@ -92,19 +101,23 @@ export default function EditAllowance({ open, parseData, savedValue, onSave, onC
         <Checkbox checked={!isDappSuggestValue} onChange={() => setIsDappSuggestValue(!isDappSuggestValue)} />
         <View style={styles.flex1}>
           <Text style={styles.secondary}>{t('common.customize')}</Text>
-          <TextInput
-            editable={!isDappSuggestValue}
-            inputMode="numeric"
-            style={[styles.editInput, { borderColor: isDappSuggestValue ? colors.borderFourth : colors.up }]}
-            value={customValue}
-            onChange={handleChange}
-          />
+          <View pointerEvents={isDappSuggestValue ? 'none' : 'auto'}>
+            <TextInput
+              readOnly={isDappSuggestValue}
+              editable={!isDappSuggestValue}
+              inputMode="numeric"
+              style={[styles.editInput, { borderColor: invalidNumber ? colors.down : isDappSuggestValue ? colors.borderFourth : colors.up }]}
+              value={customValue}
+              onChange={handleChange}
+            />
+          </View>
           {parseData?.balance && (
             <View style={[styles.flexRow, { justifyContent: 'space-between' }]}>
-              <Text style={{color: colors.textSecondary}}>{t('wc.dapp.tx.shareOfBalance')}</Text>
+              <Text style={{ color: colors.textSecondary }}>{t('wc.dapp.tx.shareOfBalance')}</Text>
               <View style={[styles.flexRow, styles.balanceChoose]}>
                 {[25, 50, 100].map((p) => (
                   <Pressable
+                    disabled={isDappSuggestValue}
                     key={p}
                     testID="25"
                     style={[
@@ -163,7 +176,7 @@ const styles = StyleSheet.create({
   editSuggest: {
     fontSize: 16,
     fontWeight: '600',
-    marginBottom: 8
+    marginBottom: 8,
   },
   editInput: {
     width: '100%',
