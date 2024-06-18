@@ -65,7 +65,7 @@ function Contract({
             <Pressable testID="edit" style={[styles.mTop16, styles.flexWithRow]} onPress={openModifyModal}>
               <Text style={[styles.font22, { color: colors.textPrimary, textTransform: 'capitalize' }]}>{parseData.functionName}</Text>
               <Text style={[styles.font22, styles.value, { color: parseData.isUnlimited ? colors.textNotice : colors.textPrimary }]} numberOfLines={1}>
-                {customAllowance ? getFormatValue(customAllowance) : parseData.isUnlimited ? t('wc.dapp.tx.unlimited') : getFormatValue(parseData.value)}
+                {customAllowance ? customAllowance.toString() : parseData.isUnlimited ? t('wc.dapp.tx.unlimited') : getFormatValue(parseData.value)}
               </Text>
               {parseData && isApproveMethod(parseData) && parseData.assetType === AssetType.ERC20 ? <ModifyIcon width={24} height={24} /> : null}
             </Pressable>
@@ -97,10 +97,12 @@ function Contract({
           </Pressable>
           {expanded && (
             <View>
-              <View style={[styles.detailItem, styles.mTop16]}>
-                <Text style={[styles.font14, { color: colors.textSecondary }]}>{t('wc.dapp.tx.contract')}</Text>
-                <Text style={[styles.detailValue, { color: colors.textPrimary }]}>{to ? to : ''}</Text>
-              </View>
+              {to && (
+                <View style={[styles.detailItem, styles.mTop16]}>
+                  <Text style={[styles.font14, { color: colors.textSecondary }]}>{t('wc.dapp.tx.contract')}</Text>
+                  <Text style={[styles.detailValue, { color: colors.textPrimary }]}>{to ? to : ''}</Text>
+                </View>
+              )}
               <View style={[styles.detailItem, styles.mTop16]}>
                 <Text style={[styles.font14, { color: colors.textSecondary }]}>{t('wc.dapp.tx.function')}</Text>
                 <Text style={[styles.detailValue, { color: colors.textPrimary }]}>{parseData.functionName || t('wc.dapp.tx.unknown')}</Text>

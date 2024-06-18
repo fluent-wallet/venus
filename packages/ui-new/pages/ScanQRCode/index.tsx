@@ -53,6 +53,7 @@ const ScanQrCode: React.FC<Props> = ({ navigation, onConfirm, onClose }) => {
 
   const onParseEthUrlSuccess = useCallback(
     async (ethUrl: ETHURL) => {
+      console.log(ethUrl)
       if (onConfirm) {
         onConfirm(ethUrl);
         bottomSheetRef?.current?.close();
@@ -98,7 +99,7 @@ const ScanQrCode: React.FC<Props> = ({ navigation, onConfirm, onClose }) => {
               navigation.dispatch(
                 StackActions.replace(SendTransactionStackName, {
                   screen: SendTransactionStep2StackName,
-                  params: { targetAddress: ethUrl.target_address, searchAddress: ethUrl.parameters?.address },
+                  params: { recipientAddress: ethUrl.target_address, searchAddress: ethUrl.parameters?.address },
                 }),
               );
             } else {
@@ -110,7 +111,7 @@ const ScanQrCode: React.FC<Props> = ({ navigation, onConfirm, onClose }) => {
                 StackActions.replace(SendTransactionStackName, {
                   screen: SendTransactionStep4StackName,
                   params: {
-                    targetAddress: ethUrl.target_address,
+                    recipientAddress: ethUrl.target_address,
                     asset: targetAsset,
                     amount: new Decimal(String(ethUrl.parameters?.value)).div(Decimal.pow(10, targetAsset.decimals ?? 18)).toString(),
                   },
@@ -120,7 +121,7 @@ const ScanQrCode: React.FC<Props> = ({ navigation, onConfirm, onClose }) => {
               navigation.dispatch(
                 StackActions.replace(SendTransactionStackName, {
                   screen: SendTransactionStep3StackName,
-                  params: { targetAddress: ethUrl.target_address, asset: targetAsset },
+                  params: { recipientAddress: ethUrl.target_address, asset: targetAsset },
                 }),
               );
             }

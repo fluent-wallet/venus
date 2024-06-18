@@ -81,9 +81,11 @@ function WalletConnectTransaction() {
 
   const txData = useMemo(() => {
     if (allowanceValue && parseData?.functionName === 'approve' && isApproveMethod(parseData)) {
+      const value = parseData.decimals ? new Decimal(allowanceValue).mul(new Decimal(10).pow(parseData.decimals)).toString() : allowanceValue;
       // is approve and allowance value is set , so we need to encode the date
+      console.log(allowanceValue, parseData.decimals, value);
       const iface = new Interface([parseData.readableABI]);
-      return iface.encodeFunctionData(parseData.functionName, [from, allowanceValue]);
+      return iface.encodeFunctionData(parseData.functionName, [from, value]);
     }
     return data;
   }, [allowanceValue, data, from, parseData]);
@@ -301,7 +303,14 @@ function WalletConnectTransaction() {
             <Button testID="reject" style={transactionConfirmStyle.btn} loading={rejectLoading} size="small" onPress={handleReject}>
               {t('common.cancel')}
             </Button>
-            <Button testID="approve" style={transactionConfirmStyle.btn} loading={approveLoading} size="small" onPress={handleApprove}>
+            <Button
+              testID="approve"
+              style={transactionConfirmStyle.btn}
+              loading={approveLoading}
+              size="small"
+              onPress={handleApprove}
+              disabled={isContract ? !parseData : false}
+            >
               {isContract ? t('common.confirm') : t('common.send')}
             </Button>
           </View>

@@ -4,7 +4,7 @@ import { useTheme } from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';
 import Text from '@components/Text';
 import { AboutUsStackName, type StackScreenProps } from '@router/configs';
-import { APP_VERSION_FLAG_FEATURE } from '@utils/features';
+import { APP_VERSION_FLAG_FEATURE, ENABLE_CHECK_UPDATE_FEATURE } from '@utils/features';
 import { Lang, useLanguage } from '@hooks/useI18n';
 import SwiftShieldLogo from '@assets/icons/swift-shield.webp';
 import { SettingItem } from './index';
@@ -85,7 +85,9 @@ const AboutUs: React.FC<StackScreenProps<typeof AboutUsStackName>> = ({ navigati
           {t('settings.aboutUs.version')}: {pkg.version} {APP_VERSION_FLAG_FEATURE.allow && APP_VERSION_FLAG_FEATURE.value}
         </Text>
 
-        <SettingItem title={t('settings.aboutUs.action.checkUpdate')} onPress={handleCheckNewVersion}  disable={loading} />
+        {ENABLE_CHECK_UPDATE_FEATURE.allow && (
+          <SettingItem title={t('settings.aboutUs.action.checkUpdate')} onPress={handleCheckNewVersion} disable={loading} />
+        )}
         <SettingItem title={t('settings.aboutUs.action.teamsService')} onPress={openTeamsService} />
         <SettingItem title={t('settings.aboutUs.action.feedback')} onPress={openFeedback} />
       </ScrollView>

@@ -12,6 +12,7 @@ export const ALL_TX_STATUSES = Object.values(TxStatus);
 export const PENDING_TX_STATUSES = [TxStatus.UNSENT, TxStatus.PENDING];
 export const FAILED_TX_STATUSES = [TxStatus.REPLACED, TxStatus.FAILED];
 export const EXECUTED_NOT_FINALIZED_TX_STATUSES = [TxStatus.EXECUTED, TxStatus.CONFIRMED];
+export const FINISHED_IN_ACTIVITY_TX_STATUSES = [TxStatus.REPLACED, TxStatus.EXECUTED, TxStatus.CONFIRMED, TxStatus.FINALIZED];
 export const NOT_FINALIZED_TX_STATUSES = [TxStatus.UNSENT, TxStatus.PENDING, TxStatus.EXECUTED, TxStatus.CONFIRMED];
 
 export enum ExecutedStatus {

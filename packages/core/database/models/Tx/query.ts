@@ -3,7 +3,7 @@ import { ModelFields, createModel } from '../../helper/modelHelper';
 import TableName from '../../TableName';
 import database from '../..';
 import { Q } from '@nozbe/watermelondb';
-import { ALL_TX_STATUSES, PENDING_TX_STATUSES, TxStatus } from './type';
+import { ALL_TX_STATUSES, FINISHED_IN_ACTIVITY_TX_STATUSES, PENDING_TX_STATUSES, TxStatus } from './type';
 import { memoize } from 'lodash-es';
 
 export type TxParams = Omit<ModelFields<Tx>, 'createdAt'>;
@@ -48,7 +48,7 @@ export const observeTxById = memoize((txId: string) => database.get<Tx>(TableNam
 
 export const observeFinishedTxWithAddress = (addressId: string) =>
   queryTxsWithAddress(addressId, {
-    notInStatuses: PENDING_TX_STATUSES,
+    inStatuses: FINISHED_IN_ACTIVITY_TX_STATUSES,
     sortBy: ['executed_at', 'created_at'],
   }).observeWithColumns(['executed_at', 'status', 'polling_count', 'resend_count', 'confirmed_number']);
 
@@ -58,8 +58,9 @@ export const observeUnfinishedTxWithAddress = (addressId: string) =>
     sortBy: 'created_at',
   }).observeWithColumns(['status', 'polling_count', 'resend_count', 'confirmed_number']);
 
-export const observeTxWithAddress = (addressId: string) =>
+export const observeRecentlyTxWithAddress = (addressId: string) =>
   queryTxsWithAddress(addressId, {
+    notInStatuses: [TxStatus.FAILED],
     sortBy: 'created_at',
   }).observe();
 
