@@ -66,6 +66,7 @@ export interface IWCSendTransactionEventData {
     maxFeePerGas?: string;
     maxPriorityFeePerGas?: string;
     type?: number;
+    storageLimit?: string;
   };
   metadata: WalletConnectMetadata;
 }

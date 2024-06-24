@@ -1,10 +1,12 @@
 import { useEffect, useState } from 'react';
 import { interval, startWith, switchMap, map, filter } from 'rxjs';
 import { isEqual } from 'lodash-es';
+import Decimal from 'decimal.js';
 import plugins from '@core/WalletCore/Plugins';
 import { useCurrentNetwork } from '@core/WalletCore/Plugins/ReactInject';
 import { ITxEvm } from '@core/WalletCore/Plugins/Transaction/types';
 import { notNull } from '@core/utils/rxjs';
+import { clampGasPrice } from '@core/WalletCore/Plugins/Transaction/SuggestedGasEstimate';
 export { type Level } from '@core/WalletCore/Plugins/Transaction/SuggestedGasEstimate';
 
 /**
@@ -15,6 +17,7 @@ const usePollingGasEstimateAndNonce = (tx: Partial<ITxEvm>) => {
   const currentNetwork = useCurrentNetwork();
 
   useEffect(() => {
+    if (!currentNetwork) return;
     const pollingGasSub = interval(15000)
       .pipe(
         startWith(0),
@@ -39,7 +42,44 @@ const usePollingGasEstimateAndNonce = (tx: Partial<ITxEvm>) => {
         }),
       )
       .subscribe({
-        next: ([gasEstimate, nonceHex]) => {
+        next: ([_gasEstimate, nonceHex]) => {
+          const gasEstimate = {
+            ..._gasEstimate,
+            ...(_gasEstimate.estimate
+              ? {
+                  estimate: Object.fromEntries(
+                    Object.entries(_gasEstimate.estimate).map(([level, res]) => {
+                      const clampedGasPrice = clampGasPrice(res.suggestedGasPrice, currentNetwork);
+                      return [
+                        level,
+                        {
+                          suggestedGasPrice: clampedGasPrice,
+                          gasCost: new Decimal(clampedGasPrice).mul(_gasEstimate.gasLimit).toHex(),
+                        },
+                      ];
+                    }),
+                  ),
+                }
+              : null),
+            ...(_gasEstimate.estimateOf1559
+              ? {
+                  estimateOf1559: Object.fromEntries(
+                    Object.entries(_gasEstimate.estimateOf1559).map(([level, res]) => {
+                      const clampedMaxFeePerGas = clampGasPrice(res.suggestedMaxFeePerGas, currentNetwork);
+                      return [
+                        level,
+                        {
+                          suggestedMaxFeePerGas: clampedMaxFeePerGas,
+                          suggestedMaxPriorityFeePerGas: clampedMaxFeePerGas,
+                          gasCost: new Decimal(clampedMaxFeePerGas).mul(_gasEstimate.gasLimit).toHex(),
+                        },
+                      ];
+                    }),
+                  ),
+                }
+              : null),
+          } as typeof _gasEstimate;
+
           const newRes = { ...gasEstimate, nonce: Number(nonceHex) };
           setGasInfo((pre) => (isEqual(pre, newRes) ? pre : newRes));
         },

@@ -35,7 +35,7 @@ import Button from '@components/Button';
 import { BottomSheetScrollView, type BottomSheetMethods } from '@components/BottomSheet';
 import { getDetailSymbol } from '@modules/AssetsList/NFTsList/NFTItem';
 import { AccountItemView } from '@modules/AccountsList';
-import GasFeeSetting, { type SelectedGasEstimate } from '@modules/GasFee/GasFeeSetting';
+import GasFeeSetting, { type GasEstimate } from '@modules/GasFee/GasFeeSetting';
 import EstimateFee from '@modules/GasFee/GasFeeSetting/EstimateFee';
 import backToHome from '@utils/backToHome';
 import { calculateTokenPrice } from '@utils/calculateTokenPrice';
@@ -116,7 +116,7 @@ const SendTransactionStep4Confirm: React.FC<SendTransactionScreenProps<typeof Se
     } as ITxEvm;
   }, []);
 
-  const [gasEstimateAndNonce, setGasEstimateAndNonce] = useState<SelectedGasEstimate | null>(null);
+  const [gasEstimate, setGasEstimate] = useState<GasEstimate | null>(null);
 
   const [error, setError] = useState<{ type?: string; message: string } | null>(null);
 
@@ -143,18 +143,19 @@ const SendTransactionStep4Confirm: React.FC<SendTransactionScreenProps<typeof Se
           });
         }
       }
+
       tx = Object.assign({}, txHalf, {
-        gasLimit: gasEstimateAndNonce?.gasLimit,
-        ...(gasEstimateAndNonce?.storageLimit ? { storageLimit: gasEstimateAndNonce?.storageLimit } : null),
-        ...(gasEstimateAndNonce?.suggestedMaxFeePerGas
+        gasLimit: gasEstimate?.advanceSetting?.gasLimit,
+        ...(gasEstimate?.advanceSetting?.storageLimit ? { storageLimit: gasEstimate?.advanceSetting?.storageLimit } : null),
+        ...(gasEstimate?.gasSetting?.suggestedMaxFeePerGas
           ? {
               type: 2,
-              maxFeePerGas: gasEstimateAndNonce?.suggestedMaxFeePerGas,
-              maxPriorityFeePerGas: gasEstimateAndNonce?.suggestedMaxPriorityFeePerGas,
+              maxFeePerGas: gasEstimate?.gasSetting?.suggestedMaxFeePerGas,
+              maxPriorityFeePerGas: gasEstimate?.gasSetting?.suggestedMaxPriorityFeePerGas,
             }
-          : { gasPrice: gasEstimateAndNonce?.suggestedGasPrice, type: 0 }),
+          : { gasPrice: gasEstimate?.gasSetting?.suggestedGasPrice, type: 0 }),
       });
-      tx.nonce = gasEstimateAndNonce?.nonce;
+      tx.nonce = gasEstimate?.advanceSetting?.nonce;
 
       if (currentNetwork.networkType === NetworkType.Conflux) {
         const currentEpochHeight = await plugins.BlockNumberTracker.getNetworkBlockNumber(currentNetwork);
@@ -236,7 +237,7 @@ const SendTransactionStep4Confirm: React.FC<SendTransactionScreenProps<typeof Se
         });
       }
     }
-  }, [gasEstimateAndNonce, currentVault?.id, currentNetwork?.id]);
+  }, [gasEstimate, currentVault?.id, currentNetwork?.id]);
 
   const { inAsync: inSending, execAsync: handleSend } = useInAsync(_handleSend);
   return (
@@ -251,10 +252,9 @@ const SendTransactionStep4Confirm: React.FC<SendTransactionScreenProps<typeof Se
           <Text style={[styles.sendTitle, { color: colors.textPrimary }]}>{t('common.send')}</Text>
 
           {nftItemDetail && <NFT colors={colors} asset={asset} nftItemDetail={nftItemDetail} />}
-
           <SendAsset
-            amount={nftItemDetail ? amount : formattedAmount}
-            symbol={symbol}
+            amount={asset.type !== AssetType.ERC721 ? (nftItemDetail ? amount : formattedAmount) : undefined}
+            symbol={asset.type !== AssetType.ERC721 ? symbol : undefined}
             price={price}
             icon={asset.type === AssetType.Native || asset.type === AssetType.ERC20 ? asset.icon : undefined}
             recipientAddress={recipientAddress}
@@ -269,7 +269,11 @@ const SendTransactionStep4Confirm: React.FC<SendTransactionScreenProps<typeof Se
           </AccountItemView>
 
           <Text style={[styles.estimateFee, { color: colors.textPrimary }]}>{t('tx.confirm.estimatedFee')}</Text>
-          <EstimateFee gasEstimateAndNonce={gasEstimateAndNonce} onPressSettingIcon={() => setShowGasFeeSetting(true)} />
+          <EstimateFee
+            gasSetting={gasEstimate?.gasSetting}
+            advanceSetting={gasEstimate?.advanceSetting ?? gasEstimate?.estimateAdvanceSetting}
+            onPressSettingIcon={() => setShowGasFeeSetting(true)}
+          />
 
           {error && (
             <>
@@ -298,7 +302,7 @@ const SendTransactionStep4Confirm: React.FC<SendTransactionScreenProps<typeof Se
             <Button testID="cancel" style={styles.btn} size="small" onPress={() => backToHome(navigation)} disabled={inSending}>
               {t('common.cancel')}
             </Button>
-            <Button testID="send" style={styles.btn} size="small" disabled={!gasEstimateAndNonce} onPress={handleSend} loading={inSending}>
+            <Button testID="send" style={styles.btn} size="small" disabled={!gasEstimate} onPress={handleSend} loading={inSending}>
               {error ? t('common.retry') : t('common.send')}
             </Button>
           </View>
@@ -315,7 +319,7 @@ const SendTransactionStep4Confirm: React.FC<SendTransactionScreenProps<typeof Se
           onRetry={handleSend}
         />
       )}
-      <GasFeeSetting show={showGasFeeSetting} tx={txHalf} onClose={() => setShowGasFeeSetting(false)} onConfirm={setGasEstimateAndNonce} />
+      <GasFeeSetting show={showGasFeeSetting} tx={txHalf} onClose={() => setShowGasFeeSetting(false)} onConfirm={setGasEstimate} />
     </>
   );
 };
