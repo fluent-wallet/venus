@@ -114,7 +114,7 @@ export function useListenWalletConnectEvent() {
 
           // if to address is undefined, it is contract create
           let isContract = typeof to === 'undefined';
-
+          
           if (typeof to !== 'undefined') {
             isContract = await methods.checkIsContractAddress({
               networkType: currentNetwork.networkType,
@@ -124,7 +124,7 @@ export function useListenWalletConnectEvent() {
           }
 
           const EOATx = (!isContract && !!to) || !data || data === '0x';
-          console.log(event.data);
+
           navigation.navigate(WalletConnectStackName, {
             screen: WalletConnectTransactionStackName,
             params: { ...event.data, isContract: !EOATx },

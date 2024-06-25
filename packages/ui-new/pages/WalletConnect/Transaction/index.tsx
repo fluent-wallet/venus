@@ -149,7 +149,7 @@ function WalletConnectTransaction() {
   const isSupport1559 = !!gasEstimate?.gasSetting?.suggestedMaxFeePerGas;
   const shouldUse1559 = isSupport1559 && (isNil(type) || (Number(type) !== 0 && Number(type) !== 1));
 
-  const amount = useFormatBalance(String(value) || '0', currentNativeAsset?.decimals ?? 18);
+  const amount = useFormatBalance(value ? value.toString() : '0', currentNativeAsset?.decimals ?? 18);
 
   const _handleReject = useCallback(async () => {
     try {
