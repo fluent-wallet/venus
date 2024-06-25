@@ -320,9 +320,13 @@ export default class WalletConnect implements Plugin {
 
     try {
       const client = await this.client;
-      await client.pair({ uri: wcURI });
+      await client.pair({ uri: wcURI, activatePairing: true });
     } catch (error: any) {
-      throw new WalletConnectPluginError(error?.message || 'UnknownError');
+      if (String(error).includes('Pairing already exists')) {
+        throw new WalletConnectPluginError('PairingAlreadyExists');
+      } else {
+        throw new WalletConnectPluginError(error?.message || 'UnknownError');
+      }
     }
   }
 }

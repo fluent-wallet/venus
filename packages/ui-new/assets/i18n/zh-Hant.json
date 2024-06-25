@@ -214,7 +214,8 @@
     "walletConnect" : {
       "error" : {
         "connectFailed" : "與 WalletConnect 連接失敗",
-        "lowVersion" : "此二維碼版本過低"
+        "lowVersion" : "此二維碼版本過低",
+        "pairingAlreadyExists" : "該二維碼已過期，請刷新頁面並重試。"
       }
     }
   },
@@ -258,7 +259,13 @@
     "common" : {
       "signData" : "簽署信息"
     },
+    "filter" : {
+      "all" : null,
+      "message" : null,
+      "transactions" : null
+    },
     "list" : {
+      "empty" : null,
       "showMore" : "更多",
       "title" : "簽名記錄"
     }
@@ -268,6 +275,7 @@
     "content" : {
       "depositToken" : "快存入資產吧",
       "noActivity" : "還沒有交易",
+      "noLatestTransaction" : null,
       "noNFT" : "沒有收藏品",
       "noRecord" : "暫無記錄",
       "noToken" : "沒有代幣",
@@ -359,11 +367,6 @@
     }
   },
   "wc" : {
-    "daap" : {
-      "tx" : {
-        "unknown" : "未知"
-      }
-    },
     "dapp" : {
       "connectTo" : "已連接到",
       "connectedDApps" : "已連接的應用",
