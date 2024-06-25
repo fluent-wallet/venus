@@ -1,7 +1,23 @@
 import { fetchGasEstimatesViaEthFeeHistory as _fetchGasEstimatesViaEthFeeHistory } from '@metamask/gas-fee-controller';
 import Decimal from 'decimal.js';
+import { Network, NetworkType } from '@core/database/models/Network';
+import { Networks } from '@core/utils/consts';
 
-const Gwei = new Decimal(10).pow(9);
+export const Gwei = new Decimal(10).pow(9);
+
+export const minGasLimit = new Decimal(21000);
+export const clampGasLimit = (gasLimit: string) => (new Decimal(gasLimit).lt(minGasLimit) ? minGasLimit.toHex() : gasLimit);
+
+const eSpaceChainIds = [Networks['Conflux eSpace'].chainId, Networks['eSpace Testnet'].chainId] as Array<string>;
+export const getMinGasPrice = (network: Network) => {
+  if (network.networkType === NetworkType.Conflux) return Gwei.mul(1).toHex();
+  if (network.networkType === NetworkType.Ethereum && eSpaceChainIds.includes(network.chainId)) return Gwei.mul(20).toHex();
+  return '0x0';
+};
+export const clampGasPrice = (gasPrice: string, network: Network) => {
+  const minGasPrice = getMinGasPrice(network);
+  return new Decimal(gasPrice).lt(minGasPrice) ? minGasPrice : gasPrice;
+};
 
 export const fetchGasEstimatesViaEthFeeHistory = async (query: any) =>
   _fetchGasEstimatesViaEthFeeHistory(query).then((res) => ({

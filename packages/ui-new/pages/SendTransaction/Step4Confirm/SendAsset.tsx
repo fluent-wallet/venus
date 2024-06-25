@@ -7,8 +7,8 @@ import TokenIcon from '@modules/AssetsList/TokensList/TokenIcon';
 import Text from '@components/Text';
 
 interface Props {
-  amount: string;
-  symbol: string;
+  amount?: string;
+  symbol?: string;
   price?: string | null;
   icon?: string | null;
   recipientAddress: string;
@@ -20,13 +20,19 @@ const SendAsset: React.FC<Props> = ({ amount, symbol, icon, price, recipientAddr
 
   return (
     <>
-      <Text style={[styles.text, styles.to, { color: colors.textSecondary }]}>{t('common.amount')}</Text>
-      <View style={styles.balanceWrapper}>
-        <Text style={[styles.balance, { color: colors.textPrimary }]} numberOfLines={1}>
-          {amount} {symbol}
-        </Text>
-        {icon && <TokenIcon style={styles.assetIcon} source={icon} />}
-      </View>
+      {(amount || symbol) && (
+        <>
+          <Text style={[styles.text, styles.to, { color: colors.textSecondary }]}>{t('common.amount')}</Text>
+          <View style={styles.balanceWrapper}>
+            <Text style={[styles.balance, { color: colors.textPrimary }]} numberOfLines={1}>
+              {amount}
+              {symbol ? ` ${symbol}` : ''}
+            </Text>
+            {icon && <TokenIcon style={styles.assetIcon} source={icon} />}
+          </View>
+        </>
+      )}
+
       {price && <Text style={[styles.text, styles.price, { color: colors.textSecondary }]}>≈${price}</Text>}
 
       <Text style={[styles.text, styles.to, { color: colors.textSecondary }]}>{t('common.to')}</Text>

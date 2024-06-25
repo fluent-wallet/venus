@@ -1,6 +1,6 @@
-# add bsim arr dependencies
+# add bsim aar dependencies
 
-add this to your build.gradle
+add this to your build.gradle 
 
 ```
 implementation files('../../node_modules/react-native-bsim/android/libs/bsimlib.aar')

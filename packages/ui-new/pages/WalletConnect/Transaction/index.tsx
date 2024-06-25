@@ -2,8 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { RouteProp, useNavigation, useRoute, useTheme } from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';
-import { isNil } from 'lodash-es';
-import { formatEther } from 'ethers';
+import { isNil, set } from 'lodash-es';
 import { Interface } from '@ethersproject/abi';
 import Decimal from 'decimal.js';
 import {
@@ -29,13 +28,15 @@ import { App } from '@core/database/models/App';
 import { type IWCSendTransactionEvent } from '@core/WalletCore/Plugins/WalletConnect/types';
 import { BSIMError } from '@WalletCoreExtends/Plugins/BSIM/BSIMSDK';
 import { AccountItemView } from '@modules/AccountsList';
-import GasFeeSetting, { type SelectedGasEstimate } from '@modules/GasFee/GasFeeSetting';
+import GasFeeSetting, { type GasEstimate, type GasFeeSettingMethods } from '@modules/GasFee/GasFeeSetting';
 import EstimateFee from '@modules/GasFee/GasFeeSetting/EstimateFee';
+import DappParamsWarning from '@modules/GasFee/GasFeeSetting/DappParamsWarning';
 import BottomSheet, { BottomSheetScrollView, snapPoints } from '@components/BottomSheet';
 import Text from '@components/Text';
 import Button from '@components/Button';
 import { SignTransactionCancelError, useSignTransaction } from '@hooks/useSignTransaction';
 import useInAsync from '@hooks/useInAsync';
+import useFormatBalance from '@hooks/useFormatBalance';
 import { ParseTxDataReturnType, isApproveMethod, parseTxData } from '@utils/parseTxData';
 import matchRPCErrorMessage from '@utils/matchRPCErrorMssage';
 import { WalletConnectParamList, WalletConnectTransactionStackName } from '@router/configs';
@@ -73,7 +74,7 @@ function WalletConnectTransaction() {
   const navigation = useNavigation();
   const {
     params: {
-      tx: { from, to, value, data, nonce, gasLimit, gasPrice, type, maxFeePerGas, maxPriorityFeePerGas },
+      tx: { from, to, value, data, nonce, gasLimit, gasPrice, storageLimit, type, maxFeePerGas, maxPriorityFeePerGas },
       isContract,
       metadata,
     },
@@ -101,27 +102,54 @@ function WalletConnectTransaction() {
     [txData, currentAddressValue, currentNetwork?.chainId, to, value],
   );
 
-  const [gasEstimateAndNonce, setGasEstimateAndNonce] = useState<SelectedGasEstimate | null>(null);
-  const defaultCustomizeEstimate = useMemo(
+  const [gasEstimate, setGasEstimate] = useState<GasEstimate | null>(null);
+  const dappCustomizeGasSetting = useMemo(
     () =>
-      !isNil(gasLimit) || !isNil(nonce) || !isNil(gasPrice) || !isNil(maxFeePerGas) || !isNil(maxPriorityFeePerGas)
+      !isNil(gasPrice) || !isNil(maxFeePerGas) || !isNil(maxPriorityFeePerGas)
         ? {
-            gasLimit,
-            nonce,
-            suggestedGasPrice: gasPrice,
-            suggestedMaxFeePerGas: maxFeePerGas,
-            suggestedMaxPriorityFeePerGas: maxPriorityFeePerGas,
+            ...(gasPrice ? { suggestedGasPrice: gasPrice } : null),
+            ...(maxFeePerGas ? { suggestedMaxFeePerGas: maxFeePerGas } : null),
+            ...(maxPriorityFeePerGas ? { suggestedMaxPriorityFeePerGas: maxPriorityFeePerGas } : null),
           }
         : undefined,
-    [gasLimit, nonce, gasPrice, maxFeePerGas, maxPriorityFeePerGas],
+    [gasPrice, maxFeePerGas, maxPriorityFeePerGas],
   );
 
-  const isSupport1559 = !!gasEstimateAndNonce?.suggestedMaxFeePerGas;
-  const shouldUse1559 = isSupport1559 && (isNil(type) || Number(type) === 2);
+  const dappCustomizeAdvanceSetting = useMemo(
+    () =>
+      !isNil(gasLimit) || !isNil(nonce) || !isNil(storageLimit)
+        ? {
+            ...(gasLimit ? { gasLimit } : null),
+            ...(storageLimit ? { storageLimit } : null),
+            ...(nonce ? { nonce: Number(nonce) } : null),
+          }
+        : undefined,
+    [gasLimit, nonce, storageLimit],
+  );
 
-  const amount = useMemo(() => {
-    return value ? formatEther(value) : '0';
-  }, [value]);
+  const gasSettingMethods = useRef<GasFeeSettingMethods>(null!);
+  const [showDappParamsWarning, setShowDappParamsWarning] = useState<boolean | null>(() => null);
+  const checkDappParamsSuitable = useCallback(
+    (_gasEstimate: GasEstimate) => {
+      if (!_gasEstimate || showDappParamsWarning !== null) return;
+      const isAdvanceSettingSuitable = dappCustomizeAdvanceSetting?.gasLimit
+        ? new Decimal(dappCustomizeAdvanceSetting.gasLimit).greaterThanOrEqualTo(_gasEstimate.estimateAdvanceSetting.gasLimit)
+        : true;
+
+      const customizePrice = dappCustomizeGasSetting?.suggestedMaxFeePerGas ?? dappCustomizeGasSetting?.suggestedGasPrice;
+      const isGasSettingSuitable = customizePrice ? new Decimal(customizePrice).greaterThanOrEqualTo(_gasEstimate.estimateCurrentGasPrice) : true;
+
+      if (!isAdvanceSettingSuitable || !isGasSettingSuitable) {
+        setShowDappParamsWarning(true);
+      }
+    },
+    [dappCustomizeAdvanceSetting, dappCustomizeGasSetting, showDappParamsWarning],
+  );
+
+  const isSupport1559 = !!gasEstimate?.gasSetting?.suggestedMaxFeePerGas;
+  const shouldUse1559 = isSupport1559 && (isNil(type) || (Number(type) !== 0 && Number(type) !== 1));
+
+  const amount = useFormatBalance(value ? value.toString() : '0', currentNativeAsset?.decimals ?? 18);
 
   const _handleReject = useCallback(async () => {
     try {
@@ -132,7 +160,7 @@ function WalletConnectTransaction() {
   }, []);
 
   const _handleApprove = useCallback(async () => {
-    if (!gasEstimateAndNonce) return;
+    if (!gasEstimate) return;
     setError('');
 
     let txRaw!: string;
@@ -142,22 +170,22 @@ function WalletConnectTransaction() {
     let dapp: App | undefined;
 
     const tx = Object.assign({}, txHalf, {
-      gasLimit: gasLimit ?? gasEstimateAndNonce?.gasLimit,
+      gasLimit: gasEstimate.advanceSetting?.gasLimit,
       ...(shouldUse1559
         ? {
-            maxFeePerGas: gasEstimateAndNonce.suggestedMaxFeePerGas,
-            maxPriorityFeePerGas: gasEstimateAndNonce.suggestedMaxPriorityFeePerGas,
+            maxFeePerGas: gasEstimate.gasSetting.suggestedMaxFeePerGas,
+            maxPriorityFeePerGas: gasEstimate.gasSetting.suggestedMaxPriorityFeePerGas,
             type: 2,
           }
         : {
-            gasPrice: gasEstimateAndNonce.suggestedGasPrice ?? gasEstimateAndNonce.suggestedMaxFeePerGas,
+            gasPrice: gasEstimate.gasSetting.suggestedGasPrice ?? gasEstimate.gasSetting.suggestedMaxFeePerGas,
             type: 0,
           }),
     }) as ITxEvm;
 
     const approve = plugins.WalletConnect.currentEventSubject.getValue()?.action.approve as IWCSendTransactionEvent['action']['approve'];
     try {
-      tx.nonce = gasEstimateAndNonce.nonce;
+      tx.nonce = gasEstimate.advanceSetting?.nonce;
 
       if (currentNetwork.networkType === NetworkType.Conflux) {
         const currentEpochHeight = await plugins.BlockNumberTracker.getNetworkBlockNumber(currentNetwork);
@@ -213,7 +241,7 @@ function WalletConnectTransaction() {
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentAddressValue, currentNetwork?.id, gasLimit, gasPrice, to, navigation, value, gasEstimateAndNonce, isContract, signTransaction, txData]);
+  }, [currentAddressValue, currentNetwork?.id, gasLimit, gasPrice, to, navigation, value, gasEstimate, isContract, signTransaction, txData]);
 
   useEffect(() => {
     async function parseAndTryGetTokenInfo() {
@@ -298,7 +326,11 @@ function WalletConnectTransaction() {
           </AccountItemView>
 
           <Text style={[transactionConfirmStyle.estimateFee, { color: colors.textPrimary }]}>{t('tx.confirm.estimatedFee')}</Text>
-          <EstimateFee gasEstimateAndNonce={gasEstimateAndNonce} onPressSettingIcon={() => setShowGasFeeSetting(true)} />
+          <EstimateFee
+            gasSetting={gasEstimate?.gasSetting}
+            advanceSetting={gasEstimate?.advanceSetting ?? gasEstimate?.estimateAdvanceSetting}
+            onPressSettingIcon={() => setShowGasFeeSetting(true)}
+          />
           <View style={[transactionConfirmStyle.btnArea, styles.btnArea]}>
             <Button testID="reject" style={transactionConfirmStyle.btn} loading={rejectLoading} size="small" onPress={handleReject}>
               {t('common.cancel')}
@@ -327,13 +359,21 @@ function WalletConnectTransaction() {
         />
       )}
       <GasFeeSetting
+        ref={gasSettingMethods}
         show={showGasFeeSetting}
         tx={txHalf}
         onClose={() => setShowGasFeeSetting(false)}
-        onConfirm={setGasEstimateAndNonce}
-        defaultCustomizeEstimate={defaultCustomizeEstimate}
+        onConfirm={(newGasEstimate) => {
+          setGasEstimate(newGasEstimate);
+          checkDappParamsSuitable(newGasEstimate);
+        }}
+        dappCustomizeGasSetting={dappCustomizeGasSetting}
+        dappCustomizeAdvanceSetting={dappCustomizeAdvanceSetting}
         force155={!isNil(type) && (Number(type) === 0 || Number(type) === 1)}
       />
+      {showDappParamsWarning && (
+        <DappParamsWarning onClose={() => setShowDappParamsWarning(false)} onPressUse={() => gasSettingMethods.current?.resetCustomizeSetting?.()} />
+      )}
     </>
   );
 }
