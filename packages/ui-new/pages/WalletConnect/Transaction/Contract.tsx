@@ -67,6 +67,7 @@ function Contract({
               <Text style={[styles.font22, styles.value, { color: parseData.isUnlimited ? colors.textNotice : colors.textPrimary }]} numberOfLines={1}>
                 {customAllowance ? customAllowance.toString() : parseData.isUnlimited ? t('wc.dapp.tx.unlimited') : getFormatValue(parseData.value)}
               </Text>
+              {parseData.symbol && <Text style={styles.font22}>{parseData.symbol}</Text>}
               {parseData && isApproveMethod(parseData) && parseData.assetType === AssetType.ERC20 ? <ModifyIcon width={24} height={24} /> : null}
             </Pressable>
           </View>
