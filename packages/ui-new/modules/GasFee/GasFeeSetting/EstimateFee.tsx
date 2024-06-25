@@ -48,10 +48,10 @@ const EstimateFee: React.FC<{ gasSetting?: GasSettingWithLevel | null; advanceSe
       )}
       {!gasCostAndPriceInUSDT && <HourglassLoading style={{ width: 20, height: 20 }} />}
 
-      <Pressable style={styles.gasSettingWrapper} onPress={onPressSettingIcon}>
+      {/* <Pressable style={styles.gasSettingWrapper} onPress={onPressSettingIcon}>
         {gasSetting && <OptionLevel level={gasSetting.level} />}
         <SettingsIcon color={colors.textSecondary} />
-      </Pressable>
+      </Pressable> */}
     </View>
   );
 };

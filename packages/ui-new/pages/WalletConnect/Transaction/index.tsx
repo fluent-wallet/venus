@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { RouteProp, useNavigation, useRoute, useTheme } from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';
-import { isNil } from 'lodash-es';
+import { isNil, set } from 'lodash-es';
 import { Interface } from '@ethersproject/abi';
 import Decimal from 'decimal.js';
 import {
@@ -28,8 +28,9 @@ import { App } from '@core/database/models/App';
 import { type IWCSendTransactionEvent } from '@core/WalletCore/Plugins/WalletConnect/types';
 import { BSIMError } from '@WalletCoreExtends/Plugins/BSIM/BSIMSDK';
 import { AccountItemView } from '@modules/AccountsList';
-import GasFeeSetting, { type GasEstimate } from '@modules/GasFee/GasFeeSetting';
+import GasFeeSetting, { type GasEstimate, type GasFeeSettingMethods } from '@modules/GasFee/GasFeeSetting';
 import EstimateFee from '@modules/GasFee/GasFeeSetting/EstimateFee';
+import DappParamsWarning from '@modules/GasFee/GasFeeSetting/DappParamsWarning';
 import BottomSheet, { BottomSheetScrollView, snapPoints } from '@components/BottomSheet';
 import Text from '@components/Text';
 import Button from '@components/Button';
@@ -124,6 +125,25 @@ function WalletConnectTransaction() {
           }
         : undefined,
     [gasLimit, nonce, storageLimit],
+  );
+
+  const gasSettingMethods = useRef<GasFeeSettingMethods>(null!);
+  const [showDappParamsWarning, setShowDappParamsWarning] = useState<boolean | null>(() => null);
+  const checkDappParamsSuitable = useCallback(
+    (_gasEstimate: GasEstimate) => {
+      if (!_gasEstimate || showDappParamsWarning !== null) return;
+      const isAdvanceSettingSuitable = dappCustomizeAdvanceSetting?.gasLimit
+        ? new Decimal(dappCustomizeAdvanceSetting.gasLimit).greaterThanOrEqualTo(_gasEstimate.estimateAdvanceSetting.gasLimit)
+        : true;
+
+      const customizePrice = dappCustomizeGasSetting?.suggestedMaxFeePerGas ?? dappCustomizeGasSetting?.suggestedGasPrice;
+      const isGasSettingSuitable = customizePrice ? new Decimal(customizePrice).greaterThanOrEqualTo(_gasEstimate.estimateCurrentGasPrice) : true;
+
+      if (!isAdvanceSettingSuitable || !isGasSettingSuitable) {
+        setShowDappParamsWarning(true);
+      }
+    },
+    [dappCustomizeAdvanceSetting, dappCustomizeGasSetting, showDappParamsWarning],
   );
 
   const isSupport1559 = !!gasEstimate?.gasSetting?.suggestedMaxFeePerGas;
@@ -339,14 +359,21 @@ function WalletConnectTransaction() {
         />
       )}
       <GasFeeSetting
+        ref={gasSettingMethods}
         show={showGasFeeSetting}
         tx={txHalf}
         onClose={() => setShowGasFeeSetting(false)}
-        onConfirm={setGasEstimate}
+        onConfirm={(newGasEstimate) => {
+          setGasEstimate(newGasEstimate);
+          checkDappParamsSuitable(newGasEstimate);
+        }}
         dappCustomizeGasSetting={dappCustomizeGasSetting}
         dappCustomizeAdvanceSetting={dappCustomizeAdvanceSetting}
         force155={!isNil(type) && (Number(type) === 0 || Number(type) === 1)}
       />
+      {showDappParamsWarning && (
+        <DappParamsWarning onClose={() => setShowDappParamsWarning(false)} onPressUse={() => gasSettingMethods.current?.resetCustomizeSetting?.()} />
+      )}
     </>
   );
 }
