@@ -57,7 +57,7 @@ function Contract({
       </View>
 
       <View style={styles.mTop24}>
-        {parseData && isApproveMethod(parseData) ? (
+        {parseData && isApproveMethod(parseData) && parseData.decimals ? (
           <View>
             <View>
               <Text style={[styles.font16, { color: colors.textPrimary }]}>{t('wc.dapp.tx.simulatedResult')}</Text>
