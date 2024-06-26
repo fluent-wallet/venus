@@ -53,7 +53,6 @@ const ScanQrCode: React.FC<Props> = ({ navigation, onConfirm, onClose }) => {
 
   const onParseEthUrlSuccess = useCallback(
     async (ethUrl: ETHURL) => {
-      console.log(ethUrl)
       if (onConfirm) {
         onConfirm(ethUrl);
         bottomSheetRef?.current?.close();
@@ -158,6 +157,8 @@ const ScanQrCode: React.FC<Props> = ({ navigation, onConfirm, onClose }) => {
         if (e instanceof WalletConnectPluginError) {
           if (e.message === 'VersionNotSupported') {
             setScanStatus({ errorMessage: t('scan.walletConnect.error.lowVersion') });
+          } else if (e.message === 'PairingAlreadyExists') {
+            setScanStatus({ errorMessage: t('scan.walletConnect.error.pairingAlreadyExists') });
           } else {
             setScanStatus({ errorMessage: `${t('scan.walletConnect.error.connectFailed')} ${String(e ?? '')}` });
           }

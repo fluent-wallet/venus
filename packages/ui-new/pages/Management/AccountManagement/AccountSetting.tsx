@@ -69,6 +69,9 @@ const AccountConfig: React.FC<StackScreenProps<typeof AccountSettingStackName>> 
         await plugins.Authentication.getPassword();
         await methods.deleteVault(vault);
       }
+      if (addressValue) {
+        await plugins.WalletConnect.removeSessionByAddress([addressValue]);
+      }
       showMessage({
         message: t('account.remove.successfully'),
         type: 'success',
@@ -86,7 +89,7 @@ const AccountConfig: React.FC<StackScreenProps<typeof AccountSettingStackName>> 
       });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [account, vault, navigation]);
+  }, [account, addressValue, vault, navigation]);
 
   const { inAsync: inDeleting, execAsync: handleConfirmDelete } = useInAsync(_handleConfirmDelete);
   const inDelete = showDeleteBottomSheet || inDeleting;

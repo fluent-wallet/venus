@@ -262,7 +262,8 @@ const SendTransactionStep4Confirm: React.FC<SendTransactionScreenProps<typeof Se
 
           <View style={[styles.divider, { backgroundColor: colors.borderFourth }]} />
 
-          <AccountItemView nickname={t('tx.confirm.signingWith')} addressValue={currentAddressValue} colors={colors}>
+          <Text style={[styles.signWith, { color: colors.textSecondary }]}>{t('tx.confirm.signingWith')}</Text>
+          <AccountItemView nickname={currentAccount?.nickname} addressValue={currentAddressValue} colors={colors}>
             <Text style={[styles.networkName, { color: colors.textSecondary }]} numberOfLines={1}>
               on {currentNetwork?.name}
             </Text>
@@ -337,6 +338,12 @@ export const styles = StyleSheet.create({
     width: '100%',
     height: 1,
     marginVertical: 24,
+  },
+  signWith: {
+    marginVertical: 4,
+    fontSize: 14,
+    fontWeight: '300',
+    paddingHorizontal: 16,
   },
   networkName: {
     fontSize: 12,

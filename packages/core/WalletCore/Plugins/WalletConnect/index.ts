@@ -307,12 +307,41 @@ export default class WalletConnect implements Plugin {
     this.emitSessionChange();
   }
 
-  removeAllSession() {
-    //
+  async removeAllSession() {
+    const sessions = await this.getAllSession();
+
+    const client = await this.client;
+    await Promise.all(
+      Object.keys(sessions).map((k) => {
+        const session = sessions[k];
+        if (session.topic) {
+          return client.disconnectSession({ topic: session.topic, reason: getSdkError('USER_DISCONNECTED') });
+        }
+      }),
+    );
+    this.emitSessionChange();
+  }
+
+  async removeSessionByAddress(address: string[]) {
+    const sessions = await this.getAllSession();
+    const client = await this.client;
+
+    const disconnectPromises = [];
+    for (const session of Object.values(sessions)) {
+      if (session.namespaces) {
+        for (const namespace of Object.values(session.namespaces)) {
+          if (namespace.accounts.some((account) => address.includes(account.split(':')[2]))) {
+            disconnectPromises.push(client.disconnectSession({ topic: session.topic, reason: getSdkError('USER_DISCONNECTED') }));
+          }
+        }
+      }
+    }
+    await Promise.all(disconnectPromises);
+    this.emitSessionChange();
   }
 
   async connect({ wcURI }: { wcURI: string }) {
-    const { version, topic } = parseUri(wcURI);
+    const { version } = parseUri(wcURI);
 
     if (version === 1) {
       throw new WalletConnectPluginError('VersionNotSupported');
@@ -320,9 +349,13 @@ export default class WalletConnect implements Plugin {
 
     try {
       const client = await this.client;
-      await client.pair({ uri: wcURI });
+      await client.pair({ uri: wcURI, activatePairing: true });
     } catch (error: any) {
-      throw new WalletConnectPluginError(error?.message || 'UnknownError');
+      if (String(error).includes('Pairing already exists')) {
+        throw new WalletConnectPluginError('PairingAlreadyExists');
+      } else {
+        throw new WalletConnectPluginError(error?.message || 'UnknownError');
+      }
     }
   }
 }

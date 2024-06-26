@@ -26,6 +26,7 @@ const EraseAllWallet: React.FC<Props> = ({ navigation }) => {
       await plugins.Authentication.getPassword();
       bottomSheetRef.current?.close();
       navigation.navigate(WelcomeStackName);
+      await plugins.WalletConnect.removeAllSession();
       await new Promise((resolve) => setTimeout(resolve, 100));
       await methods.clearAccountData();
       await RNRestart.restart();

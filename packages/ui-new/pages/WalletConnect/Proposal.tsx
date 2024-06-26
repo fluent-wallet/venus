@@ -14,6 +14,7 @@ import Button from '@components/Button';
 import Icon from '@components/Icon';
 import useInAsync from '@hooks/useInAsync';
 import { WalletConnectParamList, WalletConnectProposalStackName } from '@router/configs';
+import ArrowRight from '@assets/icons/arrow-right2.svg';
 
 export default function WalletConnectProposal() {
   const route = useRoute<RouteProp<WalletConnectParamList, typeof WalletConnectProposalStackName>>();
@@ -75,6 +76,7 @@ export default function WalletConnectProposal() {
                   {currentAccount?.nickname}
                   {`(${shortenAddress(currentAddressValue)})`}
                 </Text>
+                <ArrowRight color={colors.textPrimary} width={16} height={16} />
               </View>
             </View>
           </Pressable>
@@ -84,7 +86,7 @@ export default function WalletConnectProposal() {
               {connectedNetworks.map((network) => (
                 <Icon source={network.icon} width={22} height={22} style={{ borderRadius: 11 }} key={network.id} />
               ))}
-              {connectedNetworks.length === 1 && <Text style={{color: colors.textPrimary}}>{connectedNetworks[0]?.name}</Text>}
+              {connectedNetworks.length === 1 && <Text style={{ color: colors.textPrimary }}>{connectedNetworks[0]?.name}</Text>}
             </View>
           </View>
 
@@ -122,6 +124,7 @@ const styles = StyleSheet.create({
   textStrong: {
     fontSize: 16,
     fontWeight: '600',
+    lineHeight: 16,
   },
   name: {
     marginTop: 16,
@@ -154,6 +157,9 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   account: {
+    display: 'flex',
+    flexDirection: 'row',
+    alignItems: 'center',
     padding: 16,
     borderWidth: 1,
     borderRadius: 6,

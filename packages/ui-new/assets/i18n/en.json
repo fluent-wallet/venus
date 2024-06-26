@@ -214,7 +214,8 @@
     "walletConnect" : {
       "error" : {
         "connectFailed" : "Connect to wallet-connect failed",
-        "lowVersion" : "Sorry, The QR code version is to low"
+        "lowVersion" : "Sorry, The QR code version is to low",
+        "pairingAlreadyExists" : "This QR code has expired, please refresh the page and try again."
       }
     }
   },
@@ -274,6 +275,7 @@
     "content" : {
       "depositToken" : "Deposit tokens to your wallet",
       "noActivity" : "No Activity",
+      "noLatestTransaction" : null,
       "noNFT" : "No NFT",
       "noRecord" : "No Record",
       "noToken" : "No Token",
@@ -365,11 +367,6 @@
     }
   },
   "wc" : {
-    "daap" : {
-      "tx" : {
-        "unknown" : "unknown"
-      }
-    },
     "dapp" : {
       "connectTo" : "Connected to",
       "connectedDApps" : "Connected DApps",

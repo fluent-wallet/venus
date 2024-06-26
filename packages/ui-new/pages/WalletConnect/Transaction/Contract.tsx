@@ -11,6 +11,7 @@ import { ParseTxDataReturnType, isApproveMethod } from '@utils/parseTxData';
 import ModifyIcon from '@assets/icons/modify.svg';
 import { TxDataWithTokenInfo } from '.';
 import { formatUnits, parseUnits } from 'ethers';
+import { numberWithCommas } from '@core/utils/balance';
 
 interface IProps {
   metadata: WalletConnectMetadata;
@@ -38,9 +39,9 @@ function Contract({
   const getFormatValue = useCallback(
     (value: bigint | string) => {
       if (parseData && parseData.decimals) {
-        return formatUnits(value, parseData.decimals);
+        return numberWithCommas(formatUnits(value, parseData.decimals));
       } else {
-        return value.toString();
+        return numberWithCommas(value.toString());
       }
     },
     [parseData],
@@ -65,7 +66,11 @@ function Contract({
             <Pressable testID="edit" style={[styles.mTop16, styles.flexWithRow]} onPress={openModifyModal}>
               <Text style={[styles.font22, { color: colors.textPrimary, textTransform: 'capitalize' }]}>{parseData.functionName}</Text>
               <Text style={[styles.font22, styles.value, { color: parseData.isUnlimited ? colors.textNotice : colors.textPrimary }]} numberOfLines={1}>
-                {customAllowance ? customAllowance.toString() : parseData.isUnlimited ? t('wc.dapp.tx.unlimited') : getFormatValue(parseData.value)}
+                {customAllowance
+                  ? numberWithCommas(customAllowance.toString())
+                  : parseData.isUnlimited
+                    ? t('wc.dapp.tx.unlimited')
+                    : getFormatValue(parseData.value)}
               </Text>
               {parseData.symbol && <Text style={styles.font22}>{parseData.symbol}</Text>}
               {parseData && isApproveMethod(parseData) && parseData.assetType === AssetType.ERC20 ? <ModifyIcon width={24} height={24} /> : null}

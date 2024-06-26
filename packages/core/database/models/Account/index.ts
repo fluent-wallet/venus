@@ -3,6 +3,7 @@ import { field, text, children, date, readonly, writer, reader, lazy, immutableR
 import { map, firstValueFrom } from 'rxjs';
 import { type Address } from '../Address';
 import { type AccountGroup } from '../AccountGroup';
+import { type Permission } from '../Permission';
 import TableName from '../../TableName';
 
 export class Account extends Model {
@@ -10,6 +11,7 @@ export class Account extends Model {
   static associations = {
     [TableName.AccountGroup]: { type: 'belongs_to', key: 'account_group_id' },
     [TableName.Address]: { type: 'has_many', foreignKey: 'account_id' },
+    [TableName.Permission]: { type: 'has_many', foreignKey: 'permission_id' },
   } as const;
 
   @field('index') index!: number;
@@ -18,6 +20,7 @@ export class Account extends Model {
   @field('selected') selected!: boolean;
   @readonly @date('created_at') createdAt!: Date;
   @children(TableName.Address) addresses!: Query<Address>;
+  @children(TableName.Permission) permissions!: Query<Permission>;
   @immutableRelation(TableName.AccountGroup, 'account_group_id') accountGroup!: Relation<AccountGroup>;
 
   @lazy currentNetworkAddressObservable = this.addresses
