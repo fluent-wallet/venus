@@ -1,4 +1,4 @@
-import BottomSheet, { snapPoints } from '@components/BottomSheet';
+import BottomSheet, { BottomSheetTextInput, snapPoints } from '@components/BottomSheet';
 import Checkbox from '@components/Checkbox';
 
 import { useTheme } from '@react-navigation/native';
@@ -102,7 +102,7 @@ export default function EditAllowance({ open, parseData, savedValue, onSave, onC
         <View style={styles.flex1}>
           <Text style={styles.secondary}>{t('common.customize')}</Text>
           <View pointerEvents={isDappSuggestValue ? 'none' : 'auto'}>
-            <TextInput
+            <BottomSheetTextInput
               readOnly={isDappSuggestValue}
               editable={!isDappSuggestValue}
               inputMode="numeric"
