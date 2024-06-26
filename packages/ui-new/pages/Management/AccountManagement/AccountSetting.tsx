@@ -89,7 +89,7 @@ const AccountConfig: React.FC<StackScreenProps<typeof AccountSettingStackName>> 
       });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [account, vault, navigation]);
+  }, [account, addressValue, vault, navigation]);
 
   const { inAsync: inDeleting, execAsync: handleConfirmDelete } = useInAsync(_handleConfirmDelete);
   const inDelete = showDeleteBottomSheet || inDeleting;

@@ -311,12 +311,14 @@ export default class WalletConnect implements Plugin {
     const sessions = await this.getAllSession();
 
     const client = await this.client;
-    Object.keys(sessions).forEach((k) => {
-      const session = sessions[k];
-      if (session.topic) {
-        client.disconnectSession({ topic: session.topic, reason: getSdkError('USER_DISCONNECTED') });
-      }
-    });
+    await Promise.all(
+      Object.keys(sessions).map((k) => {
+        const session = sessions[k];
+        if (session.topic) {
+          return client.disconnectSession({ topic: session.topic, reason: getSdkError('USER_DISCONNECTED') });
+        }
+      }),
+    );
     this.emitSessionChange();
   }
 
@@ -324,25 +326,22 @@ export default class WalletConnect implements Plugin {
     const sessions = await this.getAllSession();
     const client = await this.client;
 
+    const disconnectPromises = [];
     for (const session of Object.values(sessions)) {
       if (session.namespaces) {
         for (const namespace of Object.values(session.namespaces)) {
-          if (
-            namespace.accounts.some((account) => {
-              const [_eip, _chainId, addr] = account.split(':');
-              return address.includes(addr);
-            })
-          ) {
-            client.disconnectSession({ topic: session.topic, reason: getSdkError('USER_DISCONNECTED') });
+          if (namespace.accounts.some((account) => address.includes(account.split(':')[2]))) {
+            disconnectPromises.push(client.disconnectSession({ topic: session.topic, reason: getSdkError('USER_DISCONNECTED') }));
           }
         }
       }
     }
-
+    await Promise.all(disconnectPromises);
     this.emitSessionChange();
   }
+
   async connect({ wcURI }: { wcURI: string }) {
-    const { version, topic } = parseUri(wcURI);
+    const { version } = parseUri(wcURI);
 
     if (version === 1) {
       throw new WalletConnectPluginError('VersionNotSupported');
