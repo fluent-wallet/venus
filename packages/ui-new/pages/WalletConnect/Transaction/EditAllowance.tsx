@@ -124,7 +124,7 @@ export default function EditAllowance({ open, parseData, savedValue, onSave, onC
                     testID="25"
                     style={[
                       styles.balanceBtn,
-                      { borderColor: isDappSuggestValue ? colors.borderFourth : colors.up, backgroundColor: p === percent ? colors.up : colors.bgPrimary },
+                      { borderColor: isDappSuggestValue ? colors.borderFourth : colors.up, backgroundColor: p === percent ? colors.up : colors.bgFourth },
                     ]}
                     onPress={() => handlePercent(percent === p ? null : p)}
                   >
