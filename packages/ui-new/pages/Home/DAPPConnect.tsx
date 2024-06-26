@@ -37,15 +37,28 @@ function DAPPConnect() {
                 idx,
               ) => (
                 <View key={idx}>
-                  <Icon source={icons[0]} width={24} height={24} style={[styles.icon, idx > 0 ? styles.iconTranslate : {}]} />
+                  <Icon source={icons[0]} width={24} height={24} style={[styles.icon, idx > 0 ? { transform: [{ translateX: -10 * idx }] } : {}]} />
                 </View>
               ),
             )}
           </View>
           {sessions.length > 1 ? (
             <View style={styles.content}>
-              <Text style={[styles.largeText, { color: hasUnsafeURL ? colors.down : colors.up }]}>{t('wc.dapp.connectedDApps')}</Text>
-              <ArrowLeft style={[{ transform: [{ rotate: '-180deg' }] }]} color={hasUnsafeURL ? colors.down : colors.up} width={14} height={14} />
+              <Text
+                style={[
+                  styles.largeText,
+                  { color: hasUnsafeURL ? colors.down : colors.up },
+                  { transform: [{ translateX: -10 * Math.min(sessions.length - 1, 3) }] },
+                ]}
+              >
+                {t('wc.dapp.connectedDApps')}
+              </Text>
+              <ArrowLeft
+                style={[{ transform: [{ translateX: -10 * Math.min(sessions.length - 1, 3) }, { rotate: '-180deg' }] }]}
+                color={hasUnsafeURL ? colors.down : colors.up}
+                width={14}
+                height={14}
+              />
             </View>
           ) : (
             <View style={[styles.content, { paddingRight: 12 }]}>
@@ -79,9 +92,7 @@ const styles = StyleSheet.create({
   icon: {
     borderRadius: 12,
   },
-  iconTranslate: {
-    transform: [{ translateX: -12 }],
-  },
+
   iconWarp: {
     display: 'flex',
     flexDirection: 'row',
