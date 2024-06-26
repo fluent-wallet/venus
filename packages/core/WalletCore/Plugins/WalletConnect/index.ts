@@ -307,10 +307,40 @@ export default class WalletConnect implements Plugin {
     this.emitSessionChange();
   }
 
-  removeAllSession() {
-    //
+  async removeAllSession() {
+    const sessions = await this.getAllSession();
+
+    const client = await this.client;
+    Object.keys(sessions).forEach((k) => {
+      const session = sessions[k];
+      if (session.topic) {
+        client.disconnectSession({ topic: session.topic, reason: getSdkError('USER_DISCONNECTED') });
+      }
+    });
+    this.emitSessionChange();
   }
 
+  async removeSessionByAddress(address: string[]) {
+    const sessions = await this.getAllSession();
+    const client = await this.client;
+
+    for (const session of Object.values(sessions)) {
+      if (session.namespaces) {
+        for (const namespace of Object.values(session.namespaces)) {
+          if (
+            namespace.accounts.some((account) => {
+              const [_eip, _chainId, addr] = account.split(':');
+              return address.includes(addr);
+            })
+          ) {
+            client.disconnectSession({ topic: session.topic, reason: getSdkError('USER_DISCONNECTED') });
+          }
+        }
+      }
+    }
+
+    this.emitSessionChange();
+  }
   async connect({ wcURI }: { wcURI: string }) {
     const { version, topic } = parseUri(wcURI);
 
