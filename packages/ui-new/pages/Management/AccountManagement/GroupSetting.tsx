@@ -73,6 +73,7 @@ const GroupConfig: React.FC<StackScreenProps<typeof GroupSettingStackName>> = ({
     try {
       await plugins.Authentication.getPassword();
       await methods.deleteVault(vault);
+      await plugins.WalletConnect.removeSessionByAddress(accounts.map((v) => v.addressValue));
       showMessage({
         message: t('account.group.remove.success'),
         type: 'success',

@@ -69,6 +69,9 @@ const AccountConfig: React.FC<StackScreenProps<typeof AccountSettingStackName>> 
         await plugins.Authentication.getPassword();
         await methods.deleteVault(vault);
       }
+      if (addressValue) {
+        await plugins.WalletConnect.removeSessionByAddress([addressValue]);
+      }
       showMessage({
         message: t('account.remove.successfully'),
         type: 'success',
