@@ -332,22 +332,22 @@ function WalletConnectTransaction() {
             advanceSetting={gasEstimate?.advanceSetting ?? gasEstimate?.estimateAdvanceSetting}
             onPressSettingIcon={() => setShowGasFeeSetting(true)}
           />
-          <View style={[transactionConfirmStyle.btnArea, styles.btnArea]}>
-            <Button testID="reject" style={transactionConfirmStyle.btn} loading={rejectLoading} size="small" onPress={handleReject}>
-              {t('common.cancel')}
-            </Button>
-            <Button
-              testID="approve"
-              style={transactionConfirmStyle.btn}
-              loading={approveLoading}
-              size="small"
-              onPress={handleApprove}
-              disabled={isContract ? !parseData : false}
-            >
-              {isContract ? t('common.confirm') : t('common.send')}
-            </Button>
-          </View>
         </BottomSheetScrollView>
+        <View style={[transactionConfirmStyle.btnArea, styles.btnArea]}>
+          <Button testID="reject" style={transactionConfirmStyle.btn} loading={rejectLoading} size="small" onPress={handleReject}>
+            {t('common.cancel')}
+          </Button>
+          <Button
+            testID="approve"
+            style={transactionConfirmStyle.btn}
+            loading={approveLoading}
+            size="small"
+            onPress={handleApprove}
+            disabled={isContract ? !parseData : false}
+          >
+            {isContract ? t('common.confirm') : t('common.send')}
+          </Button>
+        </View>
       </BottomSheet>
 
       {showEditAllowance && parseData && (
@@ -399,8 +399,8 @@ const styles = StyleSheet.create({
     marginHorizontal: 16,
   },
   btnArea: {
-    marginTop: 40,
-    marginBottom: 32,
+    marginTop: 'auto',
+    marginBottom: 100
   },
 });
 

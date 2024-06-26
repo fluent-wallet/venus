@@ -1,4 +1,4 @@
-import BottomSheet, { snapPoints, BottomSheetScrollView } from '@components/BottomSheet';
+import BottomSheet, { snapPoints, BottomSheetScrollView, BottomSheetView } from '@components/BottomSheet';
 import Text from '@components/Text';
 import { useTranslation } from 'react-i18next';
 import { useWalletConnectSessions } from './useWalletConnectHooks';
@@ -30,31 +30,33 @@ function WalletConnectSessions() {
 
       <View style={[styles.list, { borderBottomColor: colors.borderFourth }]}>
         <Text style={[styles.font14, { color: colors.textSecondary }]}>{t('wc.dapp.connectTo')}</Text>
-        <BottomSheetScrollView>
-          {sessions.map(
-            (
-              {
-                peer: {
-                  metadata: { url = '', icons = [] },
+        <BottomSheetView style={[{ height: 160, overflow: 'hidden' }]}>
+          <BottomSheetScrollView>
+            {sessions.map(
+              (
+                {
+                  peer: {
+                    metadata: { url = '', icons = [] },
+                  },
+                  topic,
                 },
-                topic,
-              },
-              idx,
-            ) => (
-              <View key={idx} style={styles.connect}>
-                <View style={styles.connectLeft}>
-                  <Icon rounded source={icons[0]} width={24} height={24} />
-                  <Text style={[styles.font16, { color: isUnsafe(url) ? colors.down : colors.up, flex: 1 }]} numberOfLines={1}>
-                    {url}
-                  </Text>
+                idx,
+              ) => (
+                <View key={idx} style={styles.connect}>
+                  <View style={styles.connectLeft}>
+                    <Icon rounded source={icons[0]} width={24} height={24} />
+                    <Text style={[styles.font16, { color: isUnsafe(url) ? colors.down : colors.up, flex: 1 }]} numberOfLines={1}>
+                      {url}
+                    </Text>
+                  </View>
+                  <Pressable testID="disconnect" onPress={() => handleDisconnect(topic)} disabled={inAsync}>
+                    <Text style={[styles.font14, { color: isUnsafe(url) ? colors.down : colors.textPrimary }]}>{t('common.disconnect')}</Text>
+                  </Pressable>
                 </View>
-                <Pressable testID="disconnect" onPress={() => handleDisconnect(topic)} disabled={inAsync}>
-                  <Text style={[styles.font14, { color: isUnsafe(url) ? colors.down : colors.textPrimary }]}>{t('common.disconnect')}</Text>
-                </Pressable>
-              </View>
-            ),
-          )}
-        </BottomSheetScrollView>
+              ),
+            )}
+          </BottomSheetScrollView>
+        </BottomSheetView>
       </View>
       <Button testID="ok" onPress={() => navigation.goBack()} style={styles.btn}>
         {t('common.ok')}
@@ -71,7 +73,7 @@ const styles = StyleSheet.create({
   },
   container: {},
   list: {
-    marginVertical: 40,
+    marginTop: 40,
     flex: 1,
     borderBottomWidth: 1,
     paddingHorizontal: 16,

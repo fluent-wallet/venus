@@ -176,7 +176,7 @@ function WalletConnectSignMessage() {
                 <Copy width={18} height={18} color={colors.textSecondary} />
               </View>
             </Pressable>
-            <Text style={{color: colors.textPrimary}}>{signMsg}</Text>
+            <Text style={{ color: colors.textPrimary }}>{signMsg}</Text>
           </BottomSheetScrollView>
         </BottomSheetView>
 
@@ -188,19 +188,19 @@ function WalletConnectSignMessage() {
                 <Text numberOfLines={3} style={[styles.h2, { color: colors.textPrimary, maxWidth: 150 }]}>
                   {currentAccount?.nickname}
                 </Text>
-                <Text style={{color: colors.textPrimary}}>{shortenAddress(currentAddressValue)}</Text>
+                <Text style={[styles.address, { color: colors.textSecondary }]}>{shortenAddress(currentAddressValue)}</Text>
               </View>
             </View>
-            <Text style={{color: colors.textPrimary}}>{t('wc.sign.network', { network: currentNetwork?.name })}</Text>
+            <Text style={{ color: colors.textPrimary }}>{t('wc.sign.network', { network: currentNetwork?.name })}</Text>
           </View>
-          <View style={[styles.buttons, styles.flexWithRow]}>
-            <Button style={styles.btn} testID="reject" onPress={handleReject} loading={rejectLoading}>
-              {t('common.cancel')}
-            </Button>
-            <Button style={styles.btn} testID="approve" onPress={handleApprove} loading={approveLoading}>
-              {t('common.confirm')}
-            </Button>
-          </View>
+        </View>
+        <View style={[styles.buttons, styles.flexWithRow]}>
+          <Button style={styles.btn} testID="reject" onPress={handleReject} loading={rejectLoading}>
+            {t('common.cancel')}
+          </Button>
+          <Button style={styles.btn} testID="approve" onPress={handleApprove} loading={approveLoading}>
+            {t('common.confirm')}
+          </Button>
         </View>
       </BottomSheetView>
     </BottomSheet>
@@ -263,9 +263,15 @@ const styles = StyleSheet.create({
     height: 44,
     borderRadius: 22,
   },
+  address: {
+    fontSize: 12,
+    fontWeight: '300',
+  },
   buttons: {
+    paddingHorizontal: 16,
     gap: 16,
-    marginBottom: 79,
+    marginTop: 'auto',
+    marginBottom: 100,
   },
   btn: {
     flex: 1,

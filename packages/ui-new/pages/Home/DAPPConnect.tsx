@@ -99,6 +99,7 @@ const styles = StyleSheet.create({
   },
   largeText: {
     fontSize: 16,
+    fontWeight: '300'
   },
 });
 

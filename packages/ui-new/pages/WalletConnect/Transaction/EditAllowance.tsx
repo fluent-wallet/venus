@@ -85,10 +85,12 @@ export default function EditAllowance({ open, parseData, savedValue, onSave, onC
         <Checkbox checked={isDappSuggestValue} onChange={() => setIsDappSuggestValue(!isDappSuggestValue)} />
 
         <View>
-          <Text style={[styles.editSuggest, { color: colors.textPrimary }]}>{t('wc.dapp.tx.DAppSuggestions')}</Text>
-          <Text style={[styles.editSuggest, { color: colors.textPrimary }]}>
+          <Text style={[styles.editSuggest, { color: colors.textPrimary, fontWeight: isDappSuggestValue ? '600' : '400' }]}>
+            {t('wc.dapp.tx.DAppSuggestions')}
+          </Text>
+          <Text style={[styles.editSuggest, { color: colors.textPrimary, fontWeight: isDappSuggestValue ? '600' : '400' }]}>
             {t('common.use')}
-            <Text style={[styles.editSuggest, { color: colors.textNotice }]}>
+            <Text style={[styles.editSuggest, { color: colors.textNotice, fontWeight: isDappSuggestValue ? '600' : '400' }]}>
               {' '}
               {parseData && isApproveMethod(parseData) ? (parseData.isUnlimited ? t('wc.dapp.tx.unlimited') : getFormatValue(parseData.value)) : ''}{' '}
             </Text>
@@ -100,7 +102,7 @@ export default function EditAllowance({ open, parseData, savedValue, onSave, onC
       <View style={styles.editItem}>
         <Checkbox checked={!isDappSuggestValue} onChange={() => setIsDappSuggestValue(!isDappSuggestValue)} />
         <View style={styles.flex1}>
-          <Text style={styles.secondary}>{t('common.customize')}</Text>
+          <Text style={[styles.secondary, { color: colors.textPrimary, fontWeight: !isDappSuggestValue ? '600' : '400' }]}>{t('common.customize')}</Text>
           <View pointerEvents={isDappSuggestValue ? 'none' : 'auto'}>
             <BottomSheetTextInput
               readOnly={isDappSuggestValue}
@@ -174,9 +176,8 @@ const styles = StyleSheet.create({
     marginBottom: 32,
   },
   editSuggest: {
-    fontSize: 16,
-    fontWeight: '600',
     marginBottom: 8,
+    fontSize: 14,
   },
   editInput: {
     width: '100%',
