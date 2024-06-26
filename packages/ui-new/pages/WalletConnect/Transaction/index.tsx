@@ -319,7 +319,8 @@ function WalletConnectTransaction() {
 
           <View style={[transactionConfirmStyle.divider, { backgroundColor: colors.borderFourth }]} />
 
-          <AccountItemView nickname={t('tx.confirm.signingWith')} addressValue={currentAddressValue} colors={colors}>
+          <Text style={[transactionConfirmStyle.signWith, { color: colors.textSecondary }]}>{t('tx.confirm.signingWith')}</Text>
+          <AccountItemView nickname={currentAccount?.nickname} addressValue={currentAddressValue} colors={colors}>
             <Text style={[transactionConfirmStyle.networkName, { color: colors.textSecondary }]} numberOfLines={1}>
               on {currentNetwork?.name}
             </Text>
