@@ -15,7 +15,7 @@
       "addOther" : "添加另一個錢包",
       "eraseAll" : "移除所有錢包",
       "eraseAll.describe" : "帳戶數據將被清除。\n\n請務必備份您的錢包，否則您將永久丟失它和所有資產。",
-      "eraseAll.title" : "⚠️ 移除所有錢包？",
+      "eraseAll.title" : "移除所有錢包？",
       "remove" : "刪除賬戶",
       "remove.describe" : "此操作會刪除此錢包。\n\n此應用程序無法恢復您的錢包，您可以使用其助記詞/私鑰恢復。\n\n請務必備份您的錢包，否則您將永久丟失它和所有資產。",
       "remove.title" : "刪除此錢包？"

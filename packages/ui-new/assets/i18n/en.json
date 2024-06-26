@@ -15,7 +15,7 @@
       "addOther" : "Add another wallet",
       "eraseAll" : "Erase all wallets",
       "eraseAll.describe" : "Account data will be cleared.\n  \nBe sure to back up your wallet, otherwise you will permanently lose it and all assets.",
-      "eraseAll.title" : "⚠️ Erase all wallets?",
+      "eraseAll.title" : "Erase all wallets?",
       "remove" : "Remove Account",
       "remove.describe" : "This Action will remove this wallet from the app.\n\nApp can not restore your wallet, you can restore with its seed phrase / private key.\n\nBe sure to back up your wallet, otherwise you will permanently lose it and all assets.",
       "remove.title" : "Delete this wallet?  "
