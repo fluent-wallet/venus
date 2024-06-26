@@ -12,8 +12,8 @@ import useInAsync from '@hooks/useInAsync';
 import { useCurrentAddressValue } from '@core/WalletCore/Plugins/ReactInject';
 function WalletConnectSessions() {
   const { t } = useTranslation();
-  const currentAddress = useCurrentAddressValue();
-  const { sessions } = useWalletConnectSessions(currentAddress);
+  const currentAddressValue = useCurrentAddressValue();
+  const { sessions } = useWalletConnectSessions(currentAddressValue);
   const navigation = useNavigation();
   const { colors } = useTheme();
   // TODO: maybe add confirm
