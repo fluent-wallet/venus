@@ -1,6 +1,7 @@
 import React, { type ComponentProps } from 'react';
 import { View, Pressable, StyleSheet } from 'react-native';
 import { useTheme } from '@react-navigation/native';
+import { useTranslation } from 'react-i18next';
 import { useIsTokensEmpty } from '@core/WalletCore/Plugins/ReactInject';
 import Button from '@components/Button';
 import Text from '@components/Text';
@@ -10,8 +11,6 @@ import ArrowDownward from '@assets/icons/arrow-downward.svg';
 import Buy from '@assets/icons/buy.svg';
 import More from '@assets/icons/more.svg';
 import MoreOption from './MoreOption';
-import { useTranslation } from 'react-i18next';
-import plugins from '@core/WalletCore/Plugins';
 
 export const Navigation: React.FC<{
   title: string;
@@ -44,9 +43,7 @@ const Navigations: React.FC<{ navigation: StackScreenProps<typeof HomeStackName>
         disabled={isTokenEmpty !== false}
       />
       <Navigation title={t('home.receive')} testId="receive" Icon={ArrowDownward} onPress={() => navigation.navigate(ReceiveStackName)} />
-      <Navigation title={t('home.buy')} testId="buy" Icon={Buy} onPress={() => {
-        plugins.WalletConnect.removeAllSession();
-      }} />
+      <Navigation title={t('home.buy')} testId="buy" Icon={Buy} disabled />
       <MoreOption>
         <Navigation title={t('home.more')} testId="more" Icon={More} />
       </MoreOption>

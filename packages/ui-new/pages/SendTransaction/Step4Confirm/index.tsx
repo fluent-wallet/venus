@@ -21,7 +21,7 @@ import {
   AssetSource,
 } from '@core/WalletCore/Plugins/ReactInject';
 import { type ITxEvm } from '@core/WalletCore/Plugins/Transaction/types';
-import { BSIMEventTypesName, BSIMEvent } from '@WalletCoreExtends/Plugins/BSIM/types';
+import { BSIMEventTypesName } from '@WalletCoreExtends/Plugins/BSIM/types';
 import { BSIMError } from 'packages/WalletCoreExtends/Plugins/BSIM/BSIMSDK';
 import plugins from '@core/WalletCore/Plugins';
 import methods from '@core/WalletCore/Methods';
@@ -32,7 +32,7 @@ import { SignType } from '@core/database/models/Signature/type';
 import { Signature } from '@core/database/models/Signature';
 import Text from '@components/Text';
 import Button from '@components/Button';
-import { BottomSheetScrollView, type BottomSheetMethods } from '@components/BottomSheet';
+import { BottomSheetScrollView } from '@components/BottomSheet';
 import { getDetailSymbol } from '@modules/AssetsList/NFTsList/NFTItem';
 import { AccountItemView } from '@modules/AccountsList';
 import GasFeeSetting, { type GasEstimate } from '@modules/GasFee/GasFeeSetting';
@@ -47,14 +47,13 @@ import WarnIcon from '@assets/icons/warn.svg';
 import ProhibitIcon from '@assets/icons/prohibit.svg';
 import SendTransactionBottomSheet from '../SendTransactionBottomSheet';
 import { NFT } from '../Step3Amount';
-import BSIMVerify from '../BSIMVerify';
+import BSIMVerify, { useBSIMVerify } from '../BSIMVerify';
 import SendAsset from './SendAsset';
 
 const SendTransactionStep4Confirm: React.FC<SendTransactionScreenProps<typeof SendTransactionStep4StackName>> = ({ navigation, route }) => {
   useEffect(() => Keyboard.dismiss(), []);
   const { t } = useTranslation();
   const { colors } = useTheme();
-  const BSIMVerifyRef = useRef<BottomSheetMethods>(null!);
 
   const currentNetwork = useCurrentNetwork()!;
   const nativeAsset = useCurrentNetworkNativeAsset()!;
@@ -120,12 +119,12 @@ const SendTransactionStep4Confirm: React.FC<SendTransactionScreenProps<typeof Se
 
   const [error, setError] = useState<{ type?: string; message: string } | null>(null);
 
-  const [bsimEvent, setBSIMEvent] = useState<BSIMEvent | null>(null);
-  const bsimCancelRef = useRef<VoidFunction>(() => {});
+  const { bsimEvent, setBSIMEvent, execBSIMCancel, setBSIMCancel } = useBSIMVerify();
   const epochHeightRef = useRef('');
+
   const _handleSend = useCallback(async () => {
     setBSIMEvent(null);
-    bsimCancelRef.current?.();
+    execBSIMCancel();
 
     let txRaw!: string;
     let txHash!: string;
@@ -157,26 +156,25 @@ const SendTransactionStep4Confirm: React.FC<SendTransactionScreenProps<typeof Se
       });
       tx.nonce = gasEstimate?.advanceSetting?.nonce;
 
-      if (currentNetwork.networkType === NetworkType.Conflux) {
-        const currentEpochHeight = await plugins.BlockNumberTracker.getNetworkBlockNumber(currentNetwork);
-        if (!epochHeightRef.current || !checkDiffInRange(BigInt(currentEpochHeight) - BigInt(epochHeightRef.current))) {
-          epochHeightRef.current = currentEpochHeight;
-        }
-      }
-
       try {
+        if (currentNetwork.networkType === NetworkType.Conflux) {
+          const currentEpochHeight = await plugins.BlockNumberTracker.getNetworkBlockNumber(currentNetwork);
+          if (!epochHeightRef.current || !checkDiffInRange(BigInt(currentEpochHeight) - BigInt(epochHeightRef.current))) {
+            epochHeightRef.current = currentEpochHeight;
+          }
+        }
+
         if (currentVault?.type === VaultType.BSIM) {
           setBSIMEvent({ type: BSIMEventTypesName.BSIM_SIGN_START });
         }
 
         const { txRawPromise, cancel } = await signTransaction({ ...tx, epochHeight: epochHeightRef.current });
-        bsimCancelRef.current = cancel;
+        setBSIMCancel(cancel);
         txRaw = await txRawPromise;
         signature = await methods.createSignature({
           address: currentAddress,
           signType: SignType.TX,
         });
-
         txHash = await plugins.Transaction.sendRawTransaction({ txRaw, network: currentNetwork });
 
         setBSIMEvent(null);
@@ -311,11 +309,10 @@ const SendTransactionStep4Confirm: React.FC<SendTransactionScreenProps<typeof Se
       </SendTransactionBottomSheet>
       {bsimEvent && (
         <BSIMVerify
-          bottomSheetRef={BSIMVerifyRef}
           bsimEvent={bsimEvent}
           onClose={() => {
             setBSIMEvent(null);
-            bsimCancelRef.current?.();
+            execBSIMCancel();
           }}
           onRetry={handleSend}
         />

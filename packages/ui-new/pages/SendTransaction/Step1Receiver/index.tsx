@@ -13,7 +13,6 @@ import {
   useAllAccountsInManage,
   AddressType,
   RecentlyType,
-  NetworkType,
 } from '@core/WalletCore/Plugins/ReactInject';
 import method from '@core/WalletCore/Methods';
 import Text from '@components/Text';
