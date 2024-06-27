@@ -263,7 +263,6 @@ function WalletConnectTransaction() {
           });
           const assertType = typeByInterface !== 'Unknown' ? typeByInterface : remoteAsset.decimals ? AssetType.ERC20 : AssetType.ERC721;
         
-          console.log(assertType);
           const assetInfo = { ...remoteAsset, type: assertType, contractAddress: to };
           setParseData({ ...parseData, symbol: remoteAsset.symbol, balance: remoteAsset.balance, decimals: remoteAsset.decimals, assetType: assertType });
           const isInDB = await currentNetwork.queryAssetByAddress(to);
