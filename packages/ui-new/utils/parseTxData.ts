@@ -175,12 +175,10 @@ type ParseTxDataParameters = {
 export interface FunctionNameGeneric {
   functionName: string;
   readableABI: string;
-  assetType?: AssetType;
 }
 export interface FunctionNameUnknown {
   functionName: 'unknown' | 'Contract Create';
   readableABI: string;
-  assetType?: AssetType;
 }
 export interface FunctionNameApprove {
   functionName: 'approve';
@@ -188,7 +186,6 @@ export interface FunctionNameApprove {
   value: bigint;
   readableABI: string;
   isUnlimited: boolean;
-  assetType?: AssetType;
 }
 
 export type ParseTxDataReturnType = FunctionNameGeneric | FunctionNameUnknown | FunctionNameApprove;

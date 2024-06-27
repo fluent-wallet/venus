@@ -54,6 +54,7 @@ export type TxDataWithTokenInfo = ParseTxDataReturnType & {
   symbol?: string;
   balance?: string;
   decimals?: number;
+  assetType?: AssetType;
 };
 
 function WalletConnectTransaction() {
@@ -87,10 +88,10 @@ function WalletConnectTransaction() {
   } = useRoute<RouteProp<WalletConnectParamList, typeof WalletConnectTransactionStackName>>();
 
   const txData = useMemo(() => {
-    if (allowanceValue && parseData?.functionName === 'approve' && isApproveMethod(parseData)) {
+    if (allowanceValue && parseData?.functionName === 'approve' && isApproveMethod(parseData) && parseData.assetType === AssetType.ERC20) {
       const value = parseData.decimals ? new Decimal(allowanceValue).mul(new Decimal(10).pow(parseData.decimals)).toString() : allowanceValue;
       // is approve and allowance value is set , so we need to encode the date
-      console.log(allowanceValue, parseData.decimals, value);
+
       const iface = new Interface([parseData.readableABI]);
       return iface.encodeFunctionData(parseData.functionName, [from, value]);
     }
@@ -246,7 +247,7 @@ function WalletConnectTransaction() {
           signature: signatureRecord,
           app: dapp,
           extraParams: {
-            assetType: isContract ? undefined : AssetType.Native,
+            assetType: isContract ? parseData?.assetType : AssetType.Native,
             contractAddress: isContract ? to : undefined,
             to: to,
             sendAt: new Date(),
@@ -278,10 +279,21 @@ function WalletConnectTransaction() {
             contractAddress: to,
             accountAddress: currentAddress!,
           });
-          const assertType = typeByInterface !== 'Unknown' ? typeByInterface : remoteAsset.decimals ? AssetType.ERC20 : AssetType.ERC721;
+          const assertType =
+            typeByInterface !== 'Unknown' ? typeByInterface : remoteAsset.decimals && remoteAsset.name && remoteAsset.symbol ? AssetType.ERC20 : 'Unknown';
+
+          setParseData({
+            ...parseData,
+            symbol: remoteAsset.symbol,
+            balance: remoteAsset.balance,
+            decimals: remoteAsset.decimals,
+            assetType: assertType === 'Unknown' ? undefined : assertType,
+          });
+
+          if (assertType === 'Unknown') return;
 
           const assetInfo = { ...remoteAsset, type: assertType, contractAddress: to };
-          setParseData({ ...parseData, symbol: remoteAsset.symbol, balance: remoteAsset.balance, decimals: remoteAsset.decimals, assetType: assertType });
+
           const isInDB = await currentNetwork.queryAssetByAddress(to);
           if (!isInDB) {
             await methods.createAsset({
