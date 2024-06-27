@@ -2,7 +2,7 @@ import { AssetType } from '@core/database/models/Asset';
 import { Interface, MaxUint256 } from 'ethers';
 
 type AIBMethodSighashMapType = {
-  [key: string]: { functionName: string; readableABI: string; assetType?: AssetType };
+  [key: string]: { functionName: string; readableABI: string };
 };
 
 const abi721methodSighash: AIBMethodSighashMapType = {
@@ -224,7 +224,6 @@ export function parseTxData({ data, to }: ParseTxDataParameters): ParseTxDataRet
           value,
           readableABI: nameAndABI.readableABI,
           isUnlimited: value === MaxUint256,
-          assetType: nameAndABI.assetType,
         };
       }
       default:
