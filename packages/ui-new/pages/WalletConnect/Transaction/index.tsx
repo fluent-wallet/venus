@@ -9,11 +9,13 @@ import {
   AssetSource,
   AssetType,
   NetworkType,
+  VaultType,
   useCurrentAccount,
   useCurrentAddressOfAccount,
   useCurrentAddressValue,
   useCurrentNetwork,
   useCurrentNetworkNativeAsset,
+  useVaultOfAccount,
 } from '@core/WalletCore/Plugins/ReactInject';
 import { processError } from '@core/utils/eth';
 import { fetchERC20AssetInfoBatchWithAccount } from '@core/WalletCore/Plugins/AssetsTracker/fetchers/basic';
@@ -26,6 +28,7 @@ import { Signature } from '@core/database/models/Signature';
 import { SignType } from '@core/database/models/Signature/type';
 import { App } from '@core/database/models/App';
 import { type IWCSendTransactionEvent } from '@core/WalletCore/Plugins/WalletConnect/types';
+import { BSIMEventTypesName } from '@WalletCoreExtends/Plugins/BSIM/types';
 import { BSIMError } from '@WalletCoreExtends/Plugins/BSIM/BSIMSDK';
 import { AccountItemView } from '@modules/AccountsList';
 import GasFeeSetting, { type GasEstimate, type GasFeeSettingMethods } from '@modules/GasFee/GasFeeSetting';
@@ -42,6 +45,7 @@ import matchRPCErrorMessage from '@utils/matchRPCErrorMssage';
 import { WalletConnectParamList, WalletConnectTransactionStackName } from '@router/configs';
 import { styles as transactionConfirmStyle } from '@pages/SendTransaction/Step4Confirm/index';
 import SendAsset from '@pages/SendTransaction/Step4Confirm/SendAsset';
+import BSIMVerify, { useBSIMVerify } from '@pages/SendTransaction/BSIMVerify';
 import EditAllowance from './EditAllowance';
 import SendContract from './Contract';
 
@@ -61,6 +65,7 @@ function WalletConnectTransaction() {
   const currentAddressValue = useCurrentAddressValue()!;
   const currentNetwork = useCurrentNetwork()!;
   const currentNativeAsset = useCurrentNetworkNativeAsset();
+  const currentVault = useVaultOfAccount(currentAccount?.id);
 
   const [errorMsg, setError] = useState('');
   const [parseData, setParseData] = useState<TxDataWithTokenInfo>();
@@ -159,9 +164,12 @@ function WalletConnectTransaction() {
     }
   }, []);
 
+  const { bsimEvent, setBSIMEvent, execBSIMCancel, setBSIMCancel } = useBSIMVerify();
   const _handleApprove = useCallback(async () => {
     if (!gasEstimate) return;
     setError('');
+    setBSIMEvent(null);
+    execBSIMCancel();
 
     let txRaw!: string;
     let txHash!: string;
@@ -182,11 +190,10 @@ function WalletConnectTransaction() {
             type: 0,
           }),
     }) as ITxEvm;
+    tx.nonce = gasEstimate.advanceSetting?.nonce;
 
     const approve = plugins.WalletConnect.currentEventSubject.getValue()?.action.approve as IWCSendTransactionEvent['action']['approve'];
     try {
-      tx.nonce = gasEstimate.advanceSetting?.nonce;
-
       if (currentNetwork.networkType === NetworkType.Conflux) {
         const currentEpochHeight = await plugins.BlockNumberTracker.getNetworkBlockNumber(currentNetwork);
         if (!epochHeightRef.current || !checkDiffInRange(BigInt(currentEpochHeight) - BigInt(epochHeightRef.current))) {
@@ -194,10 +201,13 @@ function WalletConnectTransaction() {
         }
       }
 
+      if (currentVault?.type === VaultType.BSIM) {
+        setBSIMEvent({ type: BSIMEventTypesName.BSIM_SIGN_START });
+      }
+
       const { txRawPromise, cancel } = await signTransaction({ ...tx, epochHeight: epochHeightRef.current });
-
+      setBSIMCancel(cancel);
       txRaw = await txRawPromise;
-
       dapp = (await methods.queryAppByIdentity(metadata.url)) ?? undefined;
       signatureRecord = await methods.createSignature({
         address: currentAddress,
@@ -208,7 +218,14 @@ function WalletConnectTransaction() {
       txHash = await plugins.Transaction.sendRawTransaction({ txRaw, network: currentNetwork });
 
       await approve(txHash);
+      setBSIMEvent(null);
     } catch (error: any) {
+      if (error instanceof BSIMError) {
+        setBSIMEvent({ type: BSIMEventTypesName.ERROR, message: error?.message });
+        return;
+      }
+      setBSIMEvent(null);
+
       if (error instanceof SignTransactionCancelError) {
         // ignore cancel error
         return;
@@ -372,6 +389,16 @@ function WalletConnectTransaction() {
         dappCustomizeAdvanceSetting={dappCustomizeAdvanceSetting}
         force155={!isNil(type) && (Number(type) === 0 || Number(type) === 1)}
       />
+      {bsimEvent && (
+        <BSIMVerify
+          bsimEvent={bsimEvent}
+          onClose={() => {
+            setBSIMEvent(null);
+            execBSIMCancel();
+          }}
+          onRetry={handleApprove}
+        />
+      )}
       {showDappParamsWarning && (
         <DappParamsWarning onClose={() => setShowDappParamsWarning(false)} onPressUse={() => gasSettingMethods.current?.resetCustomizeSetting?.()} />
       )}
