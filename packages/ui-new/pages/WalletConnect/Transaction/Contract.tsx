@@ -58,10 +58,10 @@ function Contract({
       </View>
 
       <View style={styles.mTop24}>
-        {parseData && isApproveMethod(parseData) && parseData.decimals ? (
+        {parseData && isApproveMethod(parseData) && parseData.assetType === AssetType.ERC20 ? (
           <View>
             <View>
-              <Text style={[styles.font16, { color: colors.textPrimary }]}>{t('wc.dapp.tx.simulatedResult')}</Text>
+              <Text style={[styles.font14, { color: colors.textPrimary }]}>{t('wc.dapp.tx.simulatedResult')}</Text>
             </View>
             <Pressable testID="edit" style={[styles.mTop16, styles.flexWithRow]} onPress={openModifyModal}>
               <Text style={[styles.font22, { color: colors.textPrimary, textTransform: 'capitalize' }]}>{parseData.functionName}</Text>
@@ -72,8 +72,10 @@ function Contract({
                     ? t('wc.dapp.tx.unlimited')
                     : getFormatValue(parseData.value)}
               </Text>
-              {parseData.symbol && <Text style={styles.font22}>{parseData.symbol}</Text>}
-              {parseData && isApproveMethod(parseData) && parseData.assetType === AssetType.ERC20 ? <ModifyIcon width={24} height={24} /> : null}
+              {parseData.symbol && <Text style={[styles.font22, { color: colors.textPrimary }]}>{parseData.symbol}</Text>}
+              {parseData && isApproveMethod(parseData) && parseData.assetType === AssetType.ERC20 ? (
+                <ModifyIcon width={24} height={24} color={colors.iconPrimary} />
+              ) : null}
             </Pressable>
           </View>
         ) : (

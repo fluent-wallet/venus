@@ -62,7 +62,7 @@ export default function WalletConnectProposal() {
           <View style={styles.info}>
             <Image source={icons[0]} style={styles.icon} />
             <Text style={[styles.textStrong, styles.name, { color: colors.textPrimary }]}>{name}</Text>
-            <Text style={styles.describe}>{t('wc.proposal.describe')}</Text>
+            <Text style={[styles.describe, { color: colors.textPrimary }]}>{t('wc.proposal.describe')}</Text>
             <View style={styles.url}>
               {!isHTTPS ? <Text style={[styles.urlWarning, { borderColor: colors.down, color: colors.down }]}>{t('common.unsafe')}</Text> : null}
               <Text style={{ color: isHTTPS ? colors.up : colors.down, textDecorationLine: isHTTPS ? 'none' : 'underline' }}>{url}</Text>
@@ -70,7 +70,7 @@ export default function WalletConnectProposal() {
           </View>
           <Pressable onPress={() => setShowAccountSelector(true)} testID="account">
             <View>
-              <Text style={styles.label}>{t('wc.proposal.accountSelected')}</Text>
+              <Text style={[styles.label, { color: colors.textSecondary }]}>{t('wc.proposal.accountSelected')}</Text>
               <View style={[styles.account, { borderColor: colors.borderFourth }]}>
                 <Text style={[styles.textStrong, { color: colors.textPrimary }]}>
                   {currentAccount?.nickname}
@@ -81,7 +81,7 @@ export default function WalletConnectProposal() {
             </View>
           </Pressable>
           <View style={styles.networkWarp}>
-            <Text style={styles.label}>{t('common.network')}</Text>
+            <Text style={[styles.label, { color: colors.textSecondary }]}>{t('common.network')}</Text>
             <View style={styles.network}>
               {connectedNetworks.map((network) => (
                 <Icon source={network.icon} width={22} height={22} style={{ borderRadius: 11 }} key={network.id} />
@@ -89,21 +89,20 @@ export default function WalletConnectProposal() {
               {connectedNetworks.length === 1 && <Text style={{ color: colors.textPrimary }}>{connectedNetworks[0]?.name}</Text>}
             </View>
           </View>
-
-          <View style={styles.buttons}>
-            <Button
-              style={[styles.button, { backgroundColor: isHTTPS ? undefined : colors.down }]}
-              onPress={handleReject}
-              testID="reject"
-              disabled={inRejecting}
-              loading={inRejecting}
-            >
-              {t('common.cancel')}
-            </Button>
-            <Button style={styles.button} onPress={handleApprove} testID="approve" disabled={inApproving} loading={inApproving}>
-              {t('common.connect')}
-            </Button>
-          </View>
+        </View>
+        <View style={styles.buttons}>
+          <Button
+            style={[styles.button, { backgroundColor: isHTTPS ? undefined : colors.down }]}
+            onPress={handleReject}
+            testID="reject"
+            disabled={inRejecting}
+            loading={inRejecting}
+          >
+            {t('common.cancel')}
+          </Button>
+          <Button style={styles.button} onPress={handleApprove} testID="approve" disabled={inApproving} loading={inApproving}>
+            {t('common.connect')}
+          </Button>
         </View>
       </BottomSheet>
       {showAccountSelector && <AccountSelector onClose={() => setShowAccountSelector(false)} />}
@@ -124,7 +123,6 @@ const styles = StyleSheet.create({
   textStrong: {
     fontSize: 16,
     fontWeight: '600',
-    lineHeight: 16,
   },
   name: {
     marginTop: 16,
@@ -182,7 +180,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     gap: 16,
-    marginTop: 40,
+    marginTop: 'auto',
+    marginBottom: 100,
+    paddingHorizontal: 16,
   },
   button: {
     flex: 1,

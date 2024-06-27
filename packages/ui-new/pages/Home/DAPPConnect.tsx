@@ -8,7 +8,7 @@ import Icon from '@components/Icon';
 import Text from '@components/Text';
 import { useWalletConnectSessions } from '@pages/WalletConnect/useWalletConnectHooks';
 import { StackNavigation, WalletConnectSessionsStackName, WalletConnectStackName } from '@router/configs';
-import ArrowLeft from '@assets/icons/arrow-left.svg';
+import ArrowRight from '@assets/icons/arrow-right2.svg';
 
 function DAPPConnect() {
   const { colors } = useTheme();
@@ -53,19 +53,21 @@ function DAPPConnect() {
               >
                 {t('wc.dapp.connectedDApps')}
               </Text>
-              <ArrowLeft
-                style={[{ transform: [{ translateX: -10 * Math.min(sessions.length - 1, 3) }, { rotate: '-180deg' }] }]}
+              <ArrowRight
+                style={[{ transform: [{ translateX: -10 * Math.min(sessions.length - 1, 3) }] }]}
                 color={hasUnsafeURL ? colors.down : colors.up}
                 width={14}
                 height={14}
               />
             </View>
           ) : (
-            <View style={[styles.content, { paddingRight: 12 }]}>
+            <View style={[styles.content, { paddingRight: 24 }]}>
               <Text style={{ color: colors.textPrimary }}>{t('wc.dapp.connectTo')}</Text>
+
               <Text style={[styles.largeText, { color: hasUnsafeURL ? colors.down : colors.up, flex: 1, flexGrow: 1 }]} numberOfLines={1}>
                 {sessions[0]?.peer?.metadata?.url}
               </Text>
+              <ArrowRight color={hasUnsafeURL ? colors.down : colors.up} width={14} height={14} />
             </View>
           )}
         </View>
@@ -99,6 +101,7 @@ const styles = StyleSheet.create({
   },
   largeText: {
     fontSize: 16,
+    fontWeight: '300',
   },
 });
 

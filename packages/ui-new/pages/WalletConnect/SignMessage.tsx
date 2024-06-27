@@ -16,25 +16,29 @@ import {
 } from '@core/WalletCore/Plugins/ReactInject';
 import { WalletConnectParamList, WalletConnectSignMessageStackName } from '@router/configs';
 import { type IWCSignMessageEvent } from '@core/WalletCore/Plugins/WalletConnect/types';
-import { shortenAddress } from '@core/utils/address';
 import { WalletConnectRPCMethod } from '@core/WalletCore/Plugins/WalletConnect/types';
+import { BSIMEventTypesName } from '@WalletCoreExtends/Plugins/BSIM/types';
+import { BSIMError } from '@WalletCoreExtends/Plugins/BSIM/BSIMSDK';
 import plugins from '@core/WalletCore/Plugins';
 import methods from '@core/WalletCore/Methods';
 import Text from '@components/Text';
 import BottomSheet, { snapPoints, BottomSheetScrollView, BottomSheetView } from '@components/BottomSheet';
 import Button from '@components/Button';
 import Icon from '@components/Icon';
+import { AccountItemView } from '@modules/AccountsList';
 import { sanitizeTypedData } from '@utils/santitizeTypedData';
-import { toDataUrl } from '@utils/blockies';
 import useInAsync from '@hooks/useInAsync';
+import { styles as transactionConfirmStyle } from '@pages/SendTransaction/Step4Confirm/index';
 import Copy from '@assets/icons/copy.svg';
 import { SignType } from '@core/database/models/Signature/type';
+import BSIMVerify, { useBSIMVerify } from '@pages/SendTransaction/BSIMVerify';
 
 function WalletConnectSignMessage() {
   const { t } = useTranslation();
   const { colors } = useTheme();
   const currentAccount = useCurrentAccount();
   const currentAddress = useCurrentAddress()!;
+  BSIMVerify;
   const currentAddressValue = useCurrentAddressValue();
   const currentNetwork = useCurrentNetwork();
   const vault = useVaultOfAccount(currentAccount?.id);
@@ -85,9 +89,7 @@ function WalletConnectSignMessage() {
 
   const _handleReject = useCallback(async () => {
     try {
-      console.log('reject start');
       await plugins.WalletConnect.currentEventSubject.getValue()?.action.reject();
-      console.log('reject end');
     } catch (err) {
       console.log('error', err);
     }
@@ -108,18 +110,26 @@ function WalletConnectSignMessage() {
     [currentAddress, message, method, url],
   );
 
+  const { bsimEvent, setBSIMEvent, execBSIMCancel, setBSIMCancel } = useBSIMVerify();
   const _handleApprove = useCallback(async () => {
     if (!message) return;
     if (!currentAddressValue || !currentAddress || !vault || !currentNetwork) return;
+    setBSIMEvent(null);
+    execBSIMCancel();
 
     const vaultType = vault.type;
+    if (vaultType === VaultType.BSIM) {
+      setBSIMEvent({ type: BSIMEventTypesName.BSIM_SIGN_START });
+    }
 
     if (method === WalletConnectRPCMethod.PersonalSign) {
       try {
         if (vaultType === VaultType.BSIM) {
-          const [res] = await plugins.BSIM.signMessage(signMsg, currentAddressValue);
+          const [res, cancel] = await plugins.BSIM.signMessage(signMsg, currentAddressValue);
+          setBSIMCancel(cancel);
           const hex = (await res).serialized;
           await approve(hex);
+          setBSIMEvent(null);
         } else {
           const pk = await methods.getPrivateKeyOfAddress(currentAddress);
           const hex = await plugins.Transaction.signMessage({ message: signMsg, privateKey: pk, network: currentNetwork });
@@ -127,15 +137,20 @@ function WalletConnectSignMessage() {
         }
       } catch (error) {
         console.log('personal_sign error', error);
+        if (error instanceof BSIMError) {
+          setBSIMEvent({ type: BSIMEventTypesName.ERROR, message: error?.message });
+        }
       }
     } else if (method.startsWith(WalletConnectRPCMethod.SignTypedData)) {
       try {
         const m = JSON.parse(message);
 
         if (vaultType === VaultType.BSIM) {
-          const [res] = await plugins.BSIM.signTypedData(m.domain, m.types, m.message, currentAddressValue);
+          const [res, cancel] = await plugins.BSIM.signTypedData(m.domain, m.types, m.message, currentAddressValue);
+          setBSIMCancel(cancel);
           const hex = (await res).serialized;
           await approve(hex);
+          setBSIMEvent(null);
         } else {
           const pk = await methods.getPrivateKeyOfAddress(currentAddress);
           const hex = await plugins.Transaction.signTypedData({ domain: m.domain, types: m.types, value: m.message, network: currentNetwork, privateKey: pk });
@@ -143,6 +158,11 @@ function WalletConnectSignMessage() {
         }
       } catch (error) {
         console.log('eth_signTypedData error', error);
+        if (error instanceof BSIMError) {
+          setBSIMEvent({ type: BSIMEventTypesName.ERROR, message: error?.message });
+        } else {
+          setBSIMEvent(null);
+        }
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -152,58 +172,64 @@ function WalletConnectSignMessage() {
   const { inAsync: rejectLoading, execAsync: handleReject } = useInAsync(_handleReject);
 
   return (
-    <BottomSheet enablePanDownToClose={false} isRoute snapPoints={snapPoints.large} onClose={handleReject}>
-      <BottomSheetView style={{ flex: 1 }}>
-        <Text style={[styles.title, { color: colors.textPrimary }]}>{t('wc.request.signature')}</Text>
+    <>
+      <BottomSheet enablePanDownToClose={false} isRoute snapPoints={snapPoints.large} onClose={handleReject}>
+        <BottomSheetView style={{ flex: 1 }}>
+          <Text style={[styles.title, { color: colors.textPrimary }]}>{t('wc.request.signature')}</Text>
 
-        <View style={[styles.subTitle, styles.flexWithRow]}>
-          <Icon source={icons[0]} width={32} height={32} style={{ borderRadius: 8 }} />
-          <View>
-            <Text style={styles.method}>{t('wc.sign.signData')}</Text>
-            <Text style={[styles.h2, { color: colors.textPrimary }]}>{name}</Text>
-          </View>
-        </View>
-
-        <BottomSheetView style={styles.contentHeight}>
-          <BottomSheetScrollView
-            style={[styles.content, { borderColor: colors.borderFourth }]}
-            stickyHeaderIndices={[0]}
-            contentContainerStyle={{ paddingBottom: 16 }}
-          >
-            <Pressable onPress={() => handleCoy(signMsg)} testID="copy">
-              <View style={[styles.flexWithRow, styles.scrollTitle, { backgroundColor: colors.bgFourth }]}>
-                <Text style={[styles.h2, { color: colors.textPrimary }]}>{t('wc.sign.message')}</Text>
-                <Copy width={18} height={18} color={colors.textSecondary} />
-              </View>
-            </Pressable>
-            <Text style={{color: colors.textPrimary}}>{signMsg}</Text>
-          </BottomSheetScrollView>
-        </BottomSheetView>
-
-        <View style={[styles.footer, { borderColor: colors.borderFourth }]}>
-          <View style={[styles.flexWithRow, styles.account]}>
-            <View style={[styles.flexWithRow, styles.accountLeft]}>
-              <Image style={styles.accountIcon} source={{ uri: toDataUrl(currentAddressValue) }} />
-              <View>
-                <Text numberOfLines={3} style={[styles.h2, { color: colors.textPrimary, maxWidth: 150 }]}>
-                  {currentAccount?.nickname}
-                </Text>
-                <Text style={{color: colors.textPrimary}}>{shortenAddress(currentAddressValue)}</Text>
-              </View>
+          <View style={[styles.subTitle, styles.flexWithRow]}>
+            <Icon source={icons[0]} width={32} height={32} style={{ borderRadius: 8 }} />
+            <View>
+              <Text style={styles.method}>{t('wc.sign.signData')}</Text>
+              <Text style={[styles.h2, { color: colors.textPrimary }]}>{name}</Text>
             </View>
-            <Text style={{color: colors.textPrimary}}>{t('wc.sign.network', { network: currentNetwork?.name })}</Text>
           </View>
-          <View style={[styles.buttons, styles.flexWithRow]}>
-            <Button style={styles.btn} testID="reject" onPress={handleReject} loading={rejectLoading}>
-              {t('common.cancel')}
-            </Button>
-            <Button style={styles.btn} testID="approve" onPress={handleApprove} loading={approveLoading}>
-              {t('common.confirm')}
-            </Button>
+
+          <BottomSheetView style={styles.contentHeight}>
+            <BottomSheetScrollView
+              style={[styles.content, { borderColor: colors.borderFourth }]}
+              stickyHeaderIndices={[0]}
+              contentContainerStyle={{ paddingBottom: 16 }}
+            >
+              <Pressable onPress={() => handleCoy(signMsg)} testID="copy">
+                <View style={[styles.flexWithRow, styles.scrollTitle, { backgroundColor: colors.bgFourth }]}>
+                  <Text style={[styles.h2, { color: colors.textPrimary }]}>{t('wc.sign.message')}</Text>
+                  <Copy width={18} height={18} color={colors.textSecondary} />
+                </View>
+              </Pressable>
+              <Text style={{ color: colors.textPrimary }}>{signMsg}</Text>
+            </BottomSheetScrollView>
+          </BottomSheetView>
+
+          <View style={[styles.footer, { borderColor: colors.borderFourth }]}>
+            <AccountItemView nickname={currentAccount?.nickname} addressValue={currentAddressValue ?? ''} colors={colors}>
+              <Text style={[transactionConfirmStyle.networkName, { color: colors.textSecondary }]} numberOfLines={1}>
+                on {currentNetwork?.name}
+              </Text>
+            </AccountItemView>
+
+            <View style={[styles.buttons, styles.flexWithRow]}>
+              <Button style={styles.btn} testID="reject" onPress={handleReject} loading={rejectLoading}>
+                {t('common.cancel')}
+              </Button>
+              <Button style={styles.btn} testID="approve" onPress={handleApprove} loading={approveLoading}>
+                {t('common.confirm')}
+              </Button>
+            </View>
           </View>
-        </View>
-      </BottomSheetView>
-    </BottomSheet>
+        </BottomSheetView>
+      </BottomSheet>
+      {bsimEvent && (
+        <BSIMVerify
+          bsimEvent={bsimEvent}
+          onClose={() => {
+            setBSIMEvent(null);
+            execBSIMCancel();
+          }}
+          onRetry={handleApprove}
+        />
+      )}
+    </>
   );
 }
 
@@ -227,6 +253,10 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   method: {
+    fontSize: 12,
+    fontWeight: '300',
+  },
+  address: {
     fontSize: 12,
     fontWeight: '300',
   },
@@ -265,6 +295,7 @@ const styles = StyleSheet.create({
   },
   buttons: {
     gap: 16,
+    marginTop: 24,
     marginBottom: 79,
   },
   btn: {

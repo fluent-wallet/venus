@@ -13,7 +13,6 @@ import {
   useAllAccountsInManage,
   AddressType,
   RecentlyType,
-  NetworkType,
 } from '@core/WalletCore/Plugins/ReactInject';
 import method from '@core/WalletCore/Methods';
 import Text from '@components/Text';
@@ -163,9 +162,9 @@ const SendTransactionStep1Receiver: React.FC<SendTransactionScreenProps<typeof S
         )}
 
         {receiver && filterAccounts.type === 'local-valid' && (
-          <View style={styles.checkResWarp}>
-            <ContractIcon />
-            <Text style={[styles.validMyAccount, { color: colors.textPrimary }]}>Account: {filterAccounts.assets?.[0]?.nickname}</Text>
+          <View style={[styles.checkResWarp, { marginTop: 8 }]}>
+            <ContractIcon color={colors.textPrimary}/>
+            <Text style={[styles.validMyAccount, { color: colors.textPrimary }]}>{t('common.account')}: {filterAccounts.assets?.[0]?.nickname}</Text>
           </View>
         )}
         {receiver && filterAccounts.type === 'local-filter' && (
@@ -334,8 +333,7 @@ const styles = StyleSheet.create({
     fontWeight: '300',
     lineHeight: 18,
     marginLeft: 6,
-    flexShrink: 1
-    
+    flexShrink: 1,
   },
   contractAddress: {
     marginTop: 32,
