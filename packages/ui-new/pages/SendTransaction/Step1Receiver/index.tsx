@@ -164,7 +164,7 @@ const SendTransactionStep1Receiver: React.FC<SendTransactionScreenProps<typeof S
         {receiver && filterAccounts.type === 'local-valid' && (
           <View style={[styles.checkResWarp, { marginTop: 8 }]}>
             <ContractIcon color={colors.textPrimary}/>
-            <Text style={[styles.validMyAccount, { color: colors.textPrimary }]}>Account: {filterAccounts.assets?.[0]?.nickname}</Text>
+            <Text style={[styles.validMyAccount, { color: colors.textPrimary }]}>{t('common.account')}: {filterAccounts.assets?.[0]?.nickname}</Text>
           </View>
         )}
         {receiver && filterAccounts.type === 'local-filter' && (

@@ -123,7 +123,6 @@ const styles = StyleSheet.create({
   textStrong: {
     fontSize: 16,
     fontWeight: '600',
-    lineHeight: 16,
   },
   name: {
     marginTop: 16,
