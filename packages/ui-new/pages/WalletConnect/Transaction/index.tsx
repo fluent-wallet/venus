@@ -44,6 +44,7 @@ import { styles as transactionConfirmStyle } from '@pages/SendTransaction/Step4C
 import SendAsset from '@pages/SendTransaction/Step4Confirm/SendAsset';
 import EditAllowance from './EditAllowance';
 import SendContract from './Contract';
+import { supportsInterface } from '@utils/supportsInterface';
 
 export type TxDataWithTokenInfo = ParseTxDataReturnType & {
   symbol?: string;
@@ -247,15 +248,24 @@ function WalletConnectTransaction() {
     async function parseAndTryGetTokenInfo() {
       if (isContract) {
         const parseData = parseTxData({ data, to });
-        if (to && parseData.functionName === 'approve' && parseData.assetType === AssetType.ERC20) {
+
+        if (to && parseData.functionName === 'approve') {
+          const typeByInterface = await supportsInterface(to, {
+            networkType: currentNetwork.networkType,
+            endpoint: currentNetwork?.endpoint,
+          });
+
           const remoteAsset = await fetchERC20AssetInfoBatchWithAccount({
             networkType: currentNetwork.networkType,
             endpoint: currentNetwork?.endpoint,
             contractAddress: to,
             accountAddress: currentAddress!,
           });
-          const assetInfo = { ...remoteAsset, type: AssetType.ERC20, contractAddress: to };
-          setParseData({ ...parseData, symbol: remoteAsset.symbol, balance: remoteAsset.balance, decimals: remoteAsset.decimals });
+          const assertType = typeByInterface !== 'Unknown' ? typeByInterface : remoteAsset.decimals ? AssetType.ERC20 : AssetType.ERC721;
+        
+          console.log(assertType);
+          const assetInfo = { ...remoteAsset, type: assertType, contractAddress: to };
+          setParseData({ ...parseData, symbol: remoteAsset.symbol, balance: remoteAsset.balance, decimals: remoteAsset.decimals, assetType: assertType });
           const isInDB = await currentNetwork.queryAssetByAddress(to);
           if (!isInDB) {
             await methods.createAsset({
@@ -400,7 +410,7 @@ const styles = StyleSheet.create({
   },
   btnArea: {
     marginTop: 'auto',
-    marginBottom: 100
+    marginBottom: 100,
   },
 });
 

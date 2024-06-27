@@ -58,7 +58,7 @@ function Contract({
       </View>
 
       <View style={styles.mTop24}>
-        {parseData && isApproveMethod(parseData) && parseData.decimals ? (
+        {parseData && isApproveMethod(parseData) && parseData.assetType === AssetType.ERC20 ? (
           <View>
             <View>
               <Text style={[styles.font14, { color: colors.textPrimary }]}>{t('wc.dapp.tx.simulatedResult')}</Text>
