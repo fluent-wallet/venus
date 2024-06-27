@@ -457,10 +457,10 @@ export const fetchERC20AssetInfoBatchWithAccount = async ({
     ],
   }).then((res) => {
     return {
-      name: contract.decodeFunctionResult('name', res[0])?.[0],
-      symbol: contract.decodeFunctionResult('symbol', res[1])?.[0],
-      decimals: typeof res[2] === 'string' && res[2].startsWith('0x') ? Number(contract.decodeFunctionResult('decimals', res[2])?.[0]) : 0, // if res not hex string , it maybe an error , so return 0
-      balance: contract.decodeFunctionResult('balanceOf', res[3])?.[0].toString(),
+      name: typeof res[0] === 'string' && res[0].startsWith('0x') ? contract.decodeFunctionResult('name', res[0])?.[0] : '',
+      symbol: typeof res[1] === 'string' && res[1].startsWith('0x') ? contract.decodeFunctionResult('symbol', res[1])?.[0] : '',
+      decimals: typeof res[2] === 'string' && res[2].startsWith('0x') ? Number(contract.decodeFunctionResult('decimals', res[2])?.[0]) : 0,
+      balance: typeof res[3] === 'string' && res[3].startsWith('0x') ? contract.decodeFunctionResult('balanceOf', res[3])?.[0].toString() : '0',
     };
   });
 };

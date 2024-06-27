@@ -266,7 +266,7 @@ function WalletConnectTransaction() {
       if (isContract) {
         const parseData = parseTxData({ data, to });
 
-        if (to && parseData.functionName === 'approve') {
+        if (to) {
           const typeByInterface = await supportsInterface(to, {
             networkType: currentNetwork.networkType,
             endpoint: currentNetwork?.endpoint,
@@ -279,7 +279,7 @@ function WalletConnectTransaction() {
             accountAddress: currentAddress!,
           });
           const assertType = typeByInterface !== 'Unknown' ? typeByInterface : remoteAsset.decimals ? AssetType.ERC20 : AssetType.ERC721;
-        
+
           const assetInfo = { ...remoteAsset, type: assertType, contractAddress: to };
           setParseData({ ...parseData, symbol: remoteAsset.symbol, balance: remoteAsset.balance, decimals: remoteAsset.decimals, assetType: assertType });
           const isInDB = await currentNetwork.queryAssetByAddress(to);
