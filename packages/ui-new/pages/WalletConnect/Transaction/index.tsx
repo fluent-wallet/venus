@@ -88,7 +88,7 @@ function WalletConnectTransaction() {
   } = useRoute<RouteProp<WalletConnectParamList, typeof WalletConnectTransactionStackName>>();
 
   const txData = useMemo(() => {
-    if (allowanceValue && parseData?.functionName === 'approve' && isApproveMethod(parseData) && parseData.assetType === AssetType.ERC20) {
+    if (allowanceValue && parseData && isApproveMethod(parseData) && parseData.assetType === AssetType.ERC20) {
       const value = parseData.decimals ? new Decimal(allowanceValue).mul(new Decimal(10).pow(parseData.decimals)).toString() : allowanceValue;
       // is approve and allowance value is set , so we need to encode the date
 
@@ -260,7 +260,7 @@ function WalletConnectTransaction() {
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentAddressValue, currentNetwork?.id, gasLimit, gasPrice, to, navigation, value, gasEstimate, isContract, signTransaction, txData]);
+  }, [currentAddressValue, currentNetwork?.id, gasLimit, gasPrice, to, navigation, value, gasEstimate, isContract, signTransaction, txData, parseData]);
 
   useEffect(() => {
     async function parseAndTryGetTokenInfo() {
@@ -380,7 +380,7 @@ function WalletConnectTransaction() {
             style={transactionConfirmStyle.btn}
             loading={approveLoading}
             size="small"
-            onPress={handleApprove}
+            onPress={_handleApprove}
             disabled={isContract ? !parseData : false}
           >
             {isContract ? t('common.confirm') : t('common.send')}
