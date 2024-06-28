@@ -172,7 +172,7 @@
       "success" : "完成了！請確保記住密碼。"
     },
     "setPassword" : "設置密碼",
-    "setPassword.check" : "SwiftShield 錢包不會存儲你的密碼，\n丟失後無法找回，請<1>務必存好</1>。",
+    "setPassword.check" : "BIM 錢包不會存儲你的密碼，\n丟失後無法找回，請<1>務必存好</1>。",
     "setPassword.confirm" : "確認新密碼",
     "setPassword.create" : "創建密碼",
     "setPassword.describe" : "添加安全驗證，確保您的資金安全。",
@@ -201,7 +201,7 @@
       }
     },
     "permission" : {
-      "describe" : "請准許 SwiftShield 錢包相機調用權限，用於掃描二維碼",
+      "describe" : "請准許 BIM 錢包相機調用權限，用於掃描二維碼",
       "reject" : {
         "describe" : "掃描失敗，請<1>打開相機</1>使用權限",
         "openSettings" : "去設置",
@@ -228,7 +228,7 @@
         "teamsService" : "服務條款"
       },
       "latestVersion" : "您的應用程式已經是最新版本了",
-      "title" : "SwiftShield 錢包",
+      "title" : "BIM 錢包",
       "version" : "應用程序版本"
     },
     "appearance" : {
@@ -262,7 +262,7 @@
     "filter" : {
       "all" : null,
       "message" : null,
-      "transactions" : null
+      "transactions" : "交易"
     },
     "list" : {
       "empty" : null,
@@ -336,7 +336,7 @@
         "description" : "等待執行",
         "message" : "交易已提交"
       },
-      "title" : "交易已確認"
+      "title" : "確認交易"
     },
     "send" : {
       "address" : {

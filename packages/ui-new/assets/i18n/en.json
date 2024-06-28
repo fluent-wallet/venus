@@ -172,7 +172,7 @@
       "success" : "Completed! Remember to keep your password."
     },
     "setPassword" : "Set Password",
-    "setPassword.check" : "SwiftShield Wallet does not store your password.\nPlease <1>remember</1> your password.",
+    "setPassword.check" : "BIM Wallet does not store your password.\nPlease <1>remember</1> your password.",
     "setPassword.confirm" : "Confirm New Password",
     "setPassword.create" : "Create Password",
     "setPassword.describe" : "Add security verification to ensure the safety of your funds.",
@@ -201,7 +201,7 @@
       }
     },
     "permission" : {
-      "describe" : "Please allow SwiftShield wallet to use camera permissions to scan the QR code.",
+      "describe" : "Please allow BIM wallet to use camera permissions to scan the QR code.",
       "reject" : {
         "describe" : "Unable to scan. Please <1>open Camera</1> in the system permission.",
         "openSettings" : "Open settings",
@@ -228,7 +228,7 @@
         "teamsService" : "Terms of Service"
       },
       "latestVersion" : "Your App is up to date",
-      "title" : "SwiftShield Wallet",
+      "title" : "BIM Wallet",
       "version" : "App version"
     },
     "appearance" : {
