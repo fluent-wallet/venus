@@ -1,4 +1,4 @@
-package tech.swiftshield
+package io.bimwallet
 import expo.modules.ReactActivityDelegateWrapper
 
 import android.os.Bundle
@@ -19,7 +19,7 @@ class MainActivity : ReactActivity() {
      * rendering of the component.
      */
     override fun getMainComponentName(): String? {
-        return "SwiftShield"
+        return "BIM Wallet"
     }
 
     /**

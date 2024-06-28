@@ -105,7 +105,7 @@ const PasswordWay: React.FC<StackScreenProps<typeof PasswordWayStackName>> = ({ 
           <Checkbox checked={confirm} pointerEvents="none" />
           <Text style={[styles.rememberText, { color: colors.textPrimary }]}>
             <Trans i18nKey={'initWallet.setPassword.check'}>
-              SwiftShield Wallet does not store your password. Please <Text style={{ color: colors.textNotice, fontWeight: '600' }}>remember</Text> your
+              BIM Wallet Wallet does not store your password. Please <Text style={{ color: colors.textNotice, fontWeight: '600' }}>remember</Text> your
               password.
             </Trans>
           </Text>

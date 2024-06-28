@@ -58,8 +58,8 @@ if (ENABLE_WALLET_CONNECT_FEATURE.allow) {
     new WalletConnectPlugin({
       projectId: '77ffee6a4cbf8ed25550cea82939d1fa',
       metadata: {
-        name: 'SwiftShield Wallet',
-        description: 'SwiftShield Wallet to interface with Dapps',
+        name: 'BIM Wallet Wallet',
+        description: 'BIM Wallet Wallet to interface with Dapps',
         url: 'https://swiftshield.tech/',
         icons: ['https://download.swiftshield.tech/assets/logo.png'],
       },

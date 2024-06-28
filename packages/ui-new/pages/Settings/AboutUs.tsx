@@ -1,4 +1,4 @@
-import SwiftShieldLogo from '@assets/icons/swift-shield.webp';
+import BIMWalletLogo from '@assets/icons/swift-shield.webp';
 import BottomSheet, { BottomSheetView, snapPoints, BottomSheetFlatList } from '@components/BottomSheet';
 import Button from '@components/Button';
 import Text from '@components/Text';
@@ -79,7 +79,7 @@ const AboutUs: React.FC<StackScreenProps<typeof AboutUsStackName>> = ({ navigati
   return (
     <View style={{ flex: 1 }}>
       <ScrollView contentContainerStyle={[styles.container, { backgroundColor: colors.bgPrimary }]}>
-        <Image source={SwiftShieldLogo} style={styles.logo} />
+        <Image source={BIMWalletLogo} style={styles.logo} />
 
         <Text style={[styles.swiftshield, { color: colors.textPrimary }]}>{t('settings.aboutUs.title')}</Text>
         <Text style={[styles.version, { color: colors.textSecondary }]}>
