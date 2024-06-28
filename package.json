@@ -1,6 +1,6 @@
 {
-  "name": "bimwallet",
-  "version": "1.0.10",
+  "name": "venus",
+  "version": "0.0.1",
   "private": true,
   "scripts": {
     "prepare": "husky",
