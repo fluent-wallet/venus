@@ -1,27 +1,27 @@
-/* eslint-disable @typescript-eslint/ban-types */
-import { interval, switchMap, takeUntil, Subject, startWith, from, of, catchError, type Subscription } from 'rxjs';
 import { isEqual } from 'lodash-es';
-import { type Plugin } from '../../Plugins';
-import { NetworkType, ChainType } from './../../../database/models/Network';
-import { type Address } from './../../../database/models/Address';
-import { type Network } from './../../../database/models/Network';
-import { fetchAssetsBalance, fetchAssetsBalanceBatch, fetchAssetsBalanceMulticall } from './fetchers/basic';
+/* eslint-disable @typescript-eslint/ban-types */
+import { Subject, type Subscription, catchError, from, interval, of, startWith, switchMap, takeUntil } from 'rxjs';
+import { queryAddressById } from '../../../database/models/Address/query';
+import { queryNetworkById } from '../../../database/models/Network/query';
 import { Networks } from '../../../utils/consts';
 import events from '../../Events';
-import { fetchESpaceServer } from './fetchers/eSpaceServer';
-import { queryNetworkById } from '../../../database/models/Network/query';
-import { queryAddressById } from '../../../database/models/Address/query';
-import trackAssets from './trackAssets';
-import { type FetchAssetBalance, type Fetcher } from './types';
+import type { Plugin } from '../../Plugins';
 import {
-  getAssetsHash,
-  setAssetsHash,
-  getAssetsSortedKeys,
-  setAssetsSortedKeys,
   getAssetsAtomKey,
-  setAssetsInFetch,
+  getAssetsHash,
   getAssetsInFetch,
+  getAssetsSortedKeys,
+  setAssetsHash,
+  setAssetsInFetch,
+  setAssetsSortedKeys,
 } from '../ReactInject/data/useAssets';
+import type { Address } from './../../../database/models/Address';
+import { ChainType, NetworkType } from './../../../database/models/Network';
+import type { Network } from './../../../database/models/Network';
+import { fetchAssetsBalance, fetchAssetsBalanceBatch, fetchAssetsBalanceMulticall } from './fetchers/basic';
+import { fetchESpaceServer } from './fetchers/eSpaceServer';
+import trackAssets from './trackAssets';
+import type { FetchAssetBalance, Fetcher } from './types';
 
 declare module '../../../WalletCore/Plugins' {
   interface Plugins {

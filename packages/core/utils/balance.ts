@@ -58,7 +58,7 @@ export function numAbbreviation(num: number | string, options: { truncateLength?
   // const abbreviations = ['', 'M', 'B']; // 单位缩写
   const numString = typeof num === 'number' ? num.toString() : num;
 
-  const floatValue = parseFloat(numString);
+  const floatValue = Number.parseFloat(numString);
   if (Number.isNaN(floatValue)) {
     return '';
   }

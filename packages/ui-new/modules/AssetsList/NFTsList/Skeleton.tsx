@@ -1,8 +1,8 @@
-import React from 'react';
 import { useTheme } from '@react-navigation/native';
-import ContentLoader, { Rect, Circle } from 'react-content-loader/native';
-import { random } from 'lodash-es';
 import { screenWidth } from '@utils/deviceInfo';
+import { random } from 'lodash-es';
+import type React from 'react';
+import ContentLoader, { Rect, Circle } from 'react-content-loader/native';
 
 export const SkeletonList = () => {
   const { colors } = useTheme();

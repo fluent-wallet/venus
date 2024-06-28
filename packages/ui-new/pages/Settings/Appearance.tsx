@@ -1,13 +1,14 @@
-import React, { useCallback, useRef } from 'react';
-import { Pressable, StyleSheet } from 'react-native';
-import { useTheme } from '@react-navigation/native';
-import Text from '@components/Text';
-import Checkbox from '@components/Checkbox';
 import BottomSheet, { type BottomSheetMethods } from '@components/BottomSheet';
-import { styles as bottomSheetStyle, snapPoints } from '@pages/Management/AccountManagement/AddAnotherWallet';
-import { AppearanceStackName, type StackScreenProps } from '@router/configs';
+import Checkbox from '@components/Checkbox';
+import Text from '@components/Text';
 import { setMode as _setMode, useMode } from '@hooks/useMode';
+import { styles as bottomSheetStyle, snapPoints } from '@pages/Management/AccountManagement/AddAnotherWallet';
+import { useTheme } from '@react-navigation/native';
+import type { AppearanceStackName, StackScreenProps } from '@router/configs';
+import type React from 'react';
+import { useCallback, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
+import { Pressable, StyleSheet } from 'react-native';
 
 const Appearance: React.FC<StackScreenProps<typeof AppearanceStackName>> = () => {
   const { colors } = useTheme();

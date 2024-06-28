@@ -1,8 +1,10 @@
-import { BSIMErrorEndTimeout, BSIM_ERRORS, BSIM_SUPPORT_ACCOUNT_LIMIT, CFXCoinTypes } from './BSIMSDK';
+import type { Plugin } from '@core/WalletCore/Plugins';
+import type { ITxEvm } from '@core/WalletCore/Plugins/Transaction/types';
+import { Signature, Transaction, type TypedDataDomain, TypedDataEncoder, type TypedDataField, hashMessage } from 'ethers';
 import {
   BSIMError,
   CoinTypes,
-  PublicKeyAndAddress60Type,
+  type PublicKeyAndAddress60Type,
   genNewKey,
   getBSIMVersion,
   getPublicKeyAndAddress,
@@ -10,10 +12,8 @@ import {
   updateBPIN,
   verifyBPIN,
 } from 'react-native-bsim';
-import { Signature, Transaction, TypedDataDomain, TypedDataEncoder, TypedDataField, hashMessage } from 'ethers';
-import { ITxEvm } from '@core/WalletCore/Plugins/Transaction/types';
-import { type Plugin } from '@core/WalletCore/Plugins';
-import { catchError, defer, firstValueFrom, from, retry, throwError, timeout, takeUntil, Subject } from 'rxjs';
+import { Subject, catchError, defer, firstValueFrom, from, retry, takeUntil, throwError, timeout } from 'rxjs';
+import { BSIMErrorEndTimeout, BSIM_ERRORS, BSIM_SUPPORT_ACCOUNT_LIMIT, CFXCoinTypes } from './BSIMSDK';
 
 declare module '@core/WalletCore/Plugins' {
   interface Plugins {

@@ -1,8 +1,8 @@
-import React from 'react';
-import { StyleSheet } from 'react-native';
-import { useTheme } from '@react-navigation/native';
-import { AssetType } from '@core/database/models/Asset';
 import Text from '@components/Text';
+import type { AssetType } from '@core/database/models/Asset';
+import { useTheme } from '@react-navigation/native';
+import type React from 'react';
+import { StyleSheet } from 'react-native';
 
 const AssetTypeLabel: React.FC<{ assetType: AssetType }> = ({ assetType }) => {
   const { colors } = useTheme();

@@ -1,7 +1,7 @@
-import React from 'react';
-import ContentLoader, { Rect } from 'react-content-loader/native';
-import { screenWidth } from '@utils/deviceInfo';
 import { useTheme } from '@react-navigation/native';
+import { screenWidth } from '@utils/deviceInfo';
+import type React from 'react';
+import ContentLoader, { Rect } from 'react-content-loader/native';
 
 interface Props {
   width: number;

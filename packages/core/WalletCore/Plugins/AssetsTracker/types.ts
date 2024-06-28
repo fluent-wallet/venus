@@ -1,6 +1,6 @@
-import { AssetType } from './../../../database/models/Asset';
-import { type Address } from './../../../database/models/Address';
-import { type Network } from './../../../database/models/Network';
+import type { Address } from './../../../database/models/Address';
+import type { AssetType } from './../../../database/models/Asset';
+import type { Network } from './../../../database/models/Network';
 
 export type FetchAssetBalance = (params: {
   endpoint: string;

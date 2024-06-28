@@ -1,16 +1,16 @@
-import { useMemo } from 'react';
+import Decimal from 'decimal.js';
 import { atom, useAtomValue } from 'jotai';
 import { atomFamily } from 'jotai/utils';
-import Decimal from 'decimal.js';
-import { getAtom, setAtom } from '../nexus';
-import { type Network } from '../../../../database/models/Network';
-import { type Address } from '../../../../database/models/Address';
+import { useMemo } from 'react';
+import type { Address } from '../../../../database/models/Address';
 import { AssetType } from '../../../../database/models/Asset';
-import { getCurrentNetwork, useCurrentNetwork } from './useCurrentNetwork';
-import { getCurrentAddress, useCurrentAddress } from './useCurrentAddress';
-import { type AssetInfo } from '../../AssetsTracker/types';
-import { type NFTItemDetail } from '../../NFTDetailTracker';
+import type { Network } from '../../../../database/models/Network';
 import { truncate } from '../../../../utils/balance';
+import type { AssetInfo } from '../../AssetsTracker/types';
+import type { NFTItemDetail } from '../../NFTDetailTracker';
+import { getAtom, setAtom } from '../nexus';
+import { getCurrentAddress, useCurrentAddress } from './useCurrentAddress';
+import { getCurrentNetwork, useCurrentNetwork } from './useCurrentNetwork';
 
 export const getAssetsAtomKey = ({ network, address }: { network: Network | null; address: Address | null }) =>
   network && address ? `${network.networkType}-${network.chainId}-${address.hex}` : 'null';

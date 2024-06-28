@@ -1,13 +1,13 @@
-import { NetworkType } from './../../../database/models/Network';
+import database from '../../../database';
+import { type Asset, AssetSource } from '../../../database/models/Asset';
+import { convertToChecksum } from '../../../utils/account';
 import { Networks } from '../../../utils/consts';
 import events from '../../Events';
-import { AssetSource, type Asset } from '../../../database/models/Asset';
-import { type AssetInfo } from '../../Plugins/AssetsTracker/types';
-import { type Plugin } from '../../Plugins';
-import { fetchReceiveAssets as fetchESpaceReceiveAssets } from './fetchers/eSpace';
 import methods from '../../Methods';
-import database from '../../../database';
-import { convertToChecksum } from '../../../utils/account';
+import type { Plugin } from '../../Plugins';
+import type { AssetInfo } from '../../Plugins/AssetsTracker/types';
+import { NetworkType } from './../../../database/models/Network';
+import { fetchReceiveAssets as fetchESpaceReceiveAssets } from './fetchers/eSpace';
 
 type Fetcher = (endpoint: string) => Promise<AssetInfo[]>;
 

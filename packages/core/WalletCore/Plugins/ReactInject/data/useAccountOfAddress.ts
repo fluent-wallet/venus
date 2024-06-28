@@ -1,7 +1,7 @@
 import { useAtomValue } from 'jotai';
 import { atomFamily, atomWithObservable } from 'jotai/utils';
-import { switchMap, of } from 'rxjs';
 import { memoize } from 'lodash-es';
+import { of, switchMap } from 'rxjs';
 import { observeAddressById } from '../../../../database/models/Address/query';
 
 export const observeAccountOfAddress = memoize((addressId: string) => observeAddressById(addressId).pipe(switchMap((address) => address.account.observe())));

@@ -1,11 +1,12 @@
-import React, { useRef } from 'react';
-import { View, StyleSheet } from 'react-native';
-import { useTheme } from '@react-navigation/native';
-import Text from '@components/Text';
+import BottomSheet, { type BottomSheetMethods } from '@components/BottomSheet';
 import Button from '@components/Button';
-import BottomSheet, { BottomSheetMethods } from '@components/BottomSheet';
+import Text from '@components/Text';
+import { useTheme } from '@react-navigation/native';
 import { screenHeight } from '@utils/deviceInfo';
+import type React from 'react';
+import { useRef } from 'react';
 import { useTranslation } from 'react-i18next';
+import { StyleSheet, View } from 'react-native';
 
 interface Props {
   onConfirm: () => void;

@@ -1,18 +1,19 @@
-import React, { useMemo, type ComponentProps } from 'react';
-import { Pressable, View, StyleSheet } from 'react-native';
-import { useTheme } from '@react-navigation/native';
-import { type Tx } from '@core/database/models/Tx';
-import { useAssetOfTx, usePayloadOfTx, AssetType } from '@core/WalletCore/Plugins/ReactInject';
-import { shortenAddress } from '@core/utils/address';
 import Text from '@components/Text';
-import { formatStatus, formatTxData } from '@core/utils/tx';
-import { ACTIVITY_DB_STATUS_FEATURE } from '@utils/features';
-import useFormatBalance from '@hooks/useFormatBalance';
-import TokenIcon from '@modules/AssetsList/TokensList/TokenIcon';
-import NFTIcon from '@modules/AssetsList/NFTsList/NFTIcon';
-import { useTranslation } from 'react-i18next';
+import { AssetType, useAssetOfTx, usePayloadOfTx } from '@core/WalletCore/Plugins/ReactInject';
+import type { Asset } from '@core/database/models/Asset';
+import type { Tx } from '@core/database/models/Tx';
 import { TxSource } from '@core/database/models/Tx/type';
-import { Asset } from '@core/database/models/Asset';
+import { shortenAddress } from '@core/utils/address';
+import { formatStatus, formatTxData } from '@core/utils/tx';
+import useFormatBalance from '@hooks/useFormatBalance';
+import NFTIcon from '@modules/AssetsList/NFTsList/NFTIcon';
+import TokenIcon from '@modules/AssetsList/TokensList/TokenIcon';
+import { useTheme } from '@react-navigation/native';
+import { ACTIVITY_DB_STATUS_FEATURE } from '@utils/features';
+import type React from 'react';
+import { type ComponentProps, useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
+import { Pressable, StyleSheet, View } from 'react-native';
 
 interface Props extends Omit<ComponentProps<typeof Pressable>, 'onPress'> {
   onPress?: (item: Tx) => void;

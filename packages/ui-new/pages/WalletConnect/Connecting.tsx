@@ -1,4 +1,4 @@
-import BottomSheet, { snapPoints} from '@components/BottomSheet';
+import BottomSheet, { snapPoints } from '@components/BottomSheet';
 import Spinner from '@components/Spinner';
 import { useTheme } from '@react-navigation/native';
 import { StyleSheet, View } from 'react-native';

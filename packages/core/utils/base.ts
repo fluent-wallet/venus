@@ -1,6 +1,6 @@
-import randombytes from 'randombytes';
 import { Buffer } from 'buffer';
 import BN from 'bn.js';
+import randombytes from 'randombytes';
 
 const isHexPrefixed = (str: string) => {
   if (typeof str !== 'string') {
@@ -18,20 +18,14 @@ export const stripHexPrefix = (str: string) => {
   return isHexPrefixed(str) ? str.slice(2) : str;
 };
 
-export const randomHex = function (size: number) {
-  return '0x' + randombytes(size).toString('hex');
-};
+export const randomHex = (size: number) => '0x' + randombytes(size).toString('hex');
 
-export const randomInt = function (a: number) {
-  return Math.floor(Math.random() * a);
-};
+export const randomInt = (a: number) => Math.floor(Math.random() * a);
 /**
  * Returns a buffer filled with 0s.
  * @param bytes the number of bytes the buffer should be
  */
-export const zeros = function (bytes: number) {
-  return Buffer.allocUnsafe(bytes).fill(0);
-};
+export const zeros = (bytes: number) => Buffer.allocUnsafe(bytes).fill(0);
 
 /**
  * Pads a `String` to have an even length
@@ -67,7 +61,7 @@ export function intToBuffer(i: number) {
  * Attempts to turn a value into a `Buffer`. As input it supports `Buffer`, `String`, `Number`, null/undefined, `BN` and other objects with a `toArray()` method.
  * @param v the value
  */
-export const toBuffer = function (v: string | Buffer | number | null | undefined | BN) {
+export const toBuffer = (v: string | Buffer | number | null | undefined | BN) => {
   if (!Buffer.isBuffer(v)) {
     if (Array.isArray(v)) {
       v = Buffer.from(v);
@@ -117,15 +111,13 @@ export function isHexString(value, length) {
  * Interprets a `Buffer` as a signed integer and returns a `BN`. Assumes 256-bit numbers.
  * @param num Signed integer value
  */
-export const fromSigned = function (num) {
-  return new BN(num).fromTwos(256);
-};
+export const fromSigned = (num) => new BN(num).fromTwos(256);
 
 /**
  * Converts a `Buffer` into a `0x`-prefixed hex `String`.
  * @param buf `Buffer` object to convert
  */
-export const bufferToHex = function (buf) {
+export const bufferToHex = (buf) => {
   buf = toBuffer(buf);
   return '0x' + buf.toString('hex');
 };
@@ -135,14 +127,12 @@ export const bufferToHex = function (buf) {
  * @param buf `Buffer` object to convert
  * @throws If the input number exceeds 53 bits.
  */
-export const bufferToInt = function (buf) {
-  return new BN(toBuffer(buf)).toNumber();
-};
+export const bufferToInt = (buf) => new BN(toBuffer(buf)).toNumber();
 
 /**
  * Adds "0x" to a given `String` if it does not already start with "0x".
  */
-export const addHexPrefix = function (str: string) {
+export const addHexPrefix = (str: string) => {
   if (typeof str !== 'string') {
     return str;
   }
@@ -154,9 +144,7 @@ export const addHexPrefix = function (str: string) {
  * Converts a `BN` to an unsigned integer and returns it as a `Buffer`. Assumes 256-bit numbers.
  * @param num
  */
-export const toUnsigned = function (num: number) {
-  return Buffer.from(num.toTwos(256).toArray());
-};
+export const toUnsigned = (num: number) => Buffer.from(num.toTwos(256).toArray());
 
 /**
  * Converts a `Number` into a hex `String`
@@ -176,7 +164,7 @@ export function intToHex(i: string | number) {
  * @param right whether to start padding form the left or right
  * @return (Buffer|Array)
  */
-export const setLengthLeft = function (msg: string, length: number, right = false) {
+export const setLengthLeft = (msg: string, length: number, right = false) => {
   const buf = zeros(length);
   msg = toBuffer(msg) as Buffer;
   if (right) {
@@ -203,6 +191,4 @@ export const setLength = setLengthLeft;
  * @param length the number of bytes the output should be
  * @return (Buffer|Array)
  */
-export const setLengthRight = function (msg, length) {
-  return setLength(msg, length, true);
-};
+export const setLengthRight = (msg, length) => setLength(msg, length, true);

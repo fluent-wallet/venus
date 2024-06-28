@@ -1,12 +1,13 @@
-import React, { useEffect, useMemo } from 'react';
-import { View, Text, StyleSheet, type StyleProp, type ViewStyle } from 'react-native';
-import { type MessageOptions, type Message as _Message } from 'react-native-flash-message';
-import Animated, { withTiming, useSharedValue, Easing } from 'react-native-reanimated';
 import { useTheme } from '@react-navigation/native';
-import { screenWidth } from '../../utils/deviceInfo';
-import Success from '../../assets/icons/message-success.svg';
+import type React from 'react';
+import { useEffect, useMemo } from 'react';
+import { type StyleProp, StyleSheet, Text, View, type ViewStyle } from 'react-native';
+import type { MessageOptions, Message as _Message } from 'react-native-flash-message';
+import Animated, { withTiming, useSharedValue, Easing } from 'react-native-reanimated';
 import Fail from '../../assets/icons/message-fail.svg';
+import Success from '../../assets/icons/message-success.svg';
 import Warning from '../../assets/icons/message-warning.svg';
+import { screenWidth } from '../../utils/deviceInfo';
 
 const iconSourceMap = {
   success: Success,

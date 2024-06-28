@@ -1,15 +1,15 @@
-import React from 'react';
-import { ImageBackground, View, ScrollView, StyleSheet } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { useTranslation } from 'react-i18next';
-import { Image } from 'expo-image';
-import Button from '@components/Button';
-import { WelcomeStackName, WayToInitWalletStackName, type StackScreenProps } from '@router/configs';
-import { Lang, useLanguage } from '@hooks/useI18n';
 import ArrowRight from '@assets/icons/arrow-right.svg';
 import EnterWeb3EN from '@assets/images/enter-web3-en.webp';
 import EnterWeb3ZH from '@assets/images/enter-web3-zh.webp';
 import WelcomeBgDark from '@assets/images/welcome-bg-dark.webp';
+import Button from '@components/Button';
+import { Lang, useLanguage } from '@hooks/useI18n';
+import { type StackScreenProps, WayToInitWalletStackName, type WelcomeStackName } from '@router/configs';
+import { Image } from 'expo-image';
+import type React from 'react';
+import { useTranslation } from 'react-i18next';
+import { ImageBackground, ScrollView, StyleSheet, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import LottieAnimation from './lottie';
 
 const Welcome: React.FC<StackScreenProps<typeof WelcomeStackName>> = ({ navigation }) => {

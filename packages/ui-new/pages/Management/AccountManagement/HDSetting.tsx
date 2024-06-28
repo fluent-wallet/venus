@@ -1,32 +1,33 @@
-import React, { useState, useMemo, useCallback, useEffect, useRef } from 'react';
-import { View, Pressable, StyleSheet } from 'react-native';
-import { useTheme } from '@react-navigation/native';
-import { debounce } from 'lodash-es';
+import ArrowRight from '@assets/icons/arrow-right2.svg';
+import BottomSheet, { snapPoints, type BottomSheetMethods } from '@components/BottomSheet';
+import Button from '@components/Button';
+import Checkbox from '@components/Checkbox';
+import HourglassLoading from '@components/Loading/Hourglass';
+import Text from '@components/Text';
 import methods from '@core/WalletCore/Methods';
 import plugins from '@core/WalletCore/Plugins';
 import {
+  VaultType,
   useAccountGroupFromId,
   useAccountsOfGroupInManage,
-  useVaultOfGroup,
   useCurrentAddress,
   useCurrentHdPath,
   useCurrentNetwork,
-  VaultType,
+  useVaultOfGroup,
 } from '@core/WalletCore/Plugins/ReactInject';
-import { getNthAccountOfHDKey } from '@core/utils/hdkey';
-import { getAddressValueByNetwork } from '@core/database/models/Address/query';
 import database from '@core/database';
 import { queryAccountById } from '@core/database/models/Account/query';
+import { getAddressValueByNetwork } from '@core/database/models/Address/query';
 import { shortenAddress } from '@core/utils/address';
-import Text from '@components/Text';
-import Checkbox from '@components/Checkbox';
-import Button from '@components/Button';
-import BottomSheet, { snapPoints, type BottomSheetMethods } from '@components/BottomSheet';
-import HourglassLoading from '@components/Loading/Hourglass';
-import { HDSettingStackName, type StackScreenProps } from '@router/configs';
+import { getNthAccountOfHDKey } from '@core/utils/hdkey';
+import { useTheme } from '@react-navigation/native';
+import type { HDSettingStackName, StackScreenProps } from '@router/configs';
 import { isSmallDevice } from '@utils/deviceInfo';
-import ArrowRight from '@assets/icons/arrow-right2.svg';
+import { debounce } from 'lodash-es';
+import type React from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Trans, useTranslation } from 'react-i18next';
+import { Pressable, StyleSheet, View } from 'react-native';
 
 const countPerPage = 5;
 const defaultPages = Array.from({ length: countPerPage }).map((_, index) => ({ addressValue: '', index }));

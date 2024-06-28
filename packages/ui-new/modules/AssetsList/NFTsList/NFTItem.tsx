@@ -1,17 +1,17 @@
-import { useCallback, useMemo } from 'react';
-import { Pressable, View, StyleSheet } from 'react-native';
-import { useTheme } from '@react-navigation/native';
-import plugins from '@core/WalletCore/Plugins';
-import { type AssetInfo } from '@core/WalletCore/Plugins/AssetsTracker/types';
-import { useCurrentOpenNFTDetail, AssetType } from '@core/WalletCore/Plugins/ReactInject';
-import { type NFTItemDetail } from '@core/WalletCore/Plugins/NFTDetailTracker';
-import Text from '@components/Text';
-import { screenWidth } from '@utils/deviceInfo';
-import { type TabsType } from '@modules/AssetsTabs';
 import ArrowRight from '@assets/icons/arrow-right2.svg';
+import Text from '@components/Text';
+import plugins from '@core/WalletCore/Plugins';
+import type { AssetInfo } from '@core/WalletCore/Plugins/AssetsTracker/types';
+import type { NFTItemDetail } from '@core/WalletCore/Plugins/NFTDetailTracker';
+import { AssetType, useCurrentOpenNFTDetail } from '@core/WalletCore/Plugins/ReactInject';
+import type { TabsType } from '@modules/AssetsTabs';
+import { useTheme } from '@react-navigation/native';
+import { screenWidth } from '@utils/deviceInfo';
+import { useCallback, useMemo } from 'react';
+import { Pressable, StyleSheet, View } from 'react-native';
+import AssetTypeLabel from '../AssetTypeLabel';
 import NFTIcon from './NFTIcon';
 import { SkeletoDetailItem } from './Skeleton';
-import AssetTypeLabel from '../AssetTypeLabel';
 
 export const getDetailSymbol = (detail: NFTItemDetail) => {
   const name = detail.name?.trim?.() ?? '';

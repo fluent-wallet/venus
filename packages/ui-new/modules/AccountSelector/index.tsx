@@ -1,13 +1,14 @@
-import React, { useRef } from 'react';
-import { View, Pressable, StyleSheet } from 'react-native';
-import { useTheme, useNavigation } from '@react-navigation/native';
+import BottomSheet, { snapPoints, type BottomSheetMethods } from '@components/BottomSheet';
+import Text from '@components/Text';
 import methods from '@core/WalletCore/Methods';
 import AccountsList from '@modules/AccountsList';
-import Text from '@components/Text';
-import BottomSheet, { snapPoints, type BottomSheetMethods } from '@components/BottomSheet';
-import { AccountManagementStackName, HomeStackName, type StackScreenProps } from '@router/configs';
+import { useNavigation, useTheme } from '@react-navigation/native';
+import { AccountManagementStackName, type HomeStackName, type StackScreenProps } from '@router/configs';
+import type React from 'react';
+import { useRef } from 'react';
 import { useTranslation } from 'react-i18next';
-export { type BottomSheetMethods };
+import { Pressable, StyleSheet, View } from 'react-native';
+export type { BottomSheetMethods };
 
 interface Props {
   onClose: () => void;

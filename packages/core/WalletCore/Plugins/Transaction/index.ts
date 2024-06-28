@@ -1,9 +1,9 @@
-import { TypedDataDomain, TypedDataField } from 'ethers';
-import { NetworkType, Network } from '@core/database/models/Network';
-import { type Plugin } from '../';
-import EVMTransaction from './chains/evm';
+import { type Network, NetworkType } from '@core/database/models/Network';
+import type { TypedDataDomain, TypedDataField } from 'ethers';
+import type { Plugin } from '../';
 import ConfluxTransaction from './chains/conflux';
-import { type ITxEvm } from './types';
+import EVMTransaction from './chains/evm';
+import type { ITxEvm } from './types';
 
 const getTransactionInstance = (network: Network) => (network.networkType === NetworkType.Conflux ? ConfluxTransaction : EVMTransaction);
 declare module '../../../WalletCore/Plugins' {

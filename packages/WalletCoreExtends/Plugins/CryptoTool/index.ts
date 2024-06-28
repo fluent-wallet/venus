@@ -1,5 +1,5 @@
+import type { CryptoToolPlugin } from '@core/WalletCore/Plugins';
 import crypto from 'react-native-quick-crypto';
-import { type CryptoToolPlugin } from '@core/WalletCore/Plugins';
 
 interface EncryptedData {
   cipher: string;

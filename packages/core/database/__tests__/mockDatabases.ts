@@ -1,7 +1,7 @@
-import LokiJSAdapter from '@nozbe/watermelondb/adapters/lokijs';
 import { Database } from '@nozbe/watermelondb';
-import schema from '../schema';
+import LokiJSAdapter from '@nozbe/watermelondb/adapters/lokijs';
 import migrations from '../migrations';
+import schema from '../schema';
 
 import { modelClasses } from '../index';
 

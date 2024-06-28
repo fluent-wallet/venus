@@ -1,12 +1,12 @@
-import React from 'react';
-import { Pressable, View, StyleSheet } from 'react-native';
-import { useTheme } from '@react-navigation/native';
-import { useCurrentNetwork } from '@core/WalletCore/Plugins/ReactInject';
-import Text from '@components/Text';
-import { HomeStackName, SettingsStackName, ScanQRCodeStackName, type StackScreenProps } from '@router/configs';
 import ESpaceMainnet from '@assets/chains/eSpace-mainnet.svg';
 import QrCode from '@assets/icons/qr-code.svg';
 import Settings from '@assets/icons/settings.svg';
+import Text from '@components/Text';
+import { useCurrentNetwork } from '@core/WalletCore/Plugins/ReactInject';
+import { useTheme } from '@react-navigation/native';
+import { type HomeStackName, ScanQRCodeStackName, SettingsStackName, type StackScreenProps } from '@router/configs';
+import type React from 'react';
+import { Pressable, StyleSheet, View } from 'react-native';
 
 const Network: React.FC = () => {
   const { colors } = useTheme();
@@ -36,14 +36,14 @@ const HeaderRight: React.FC<{ navigation: StackScreenProps<typeof HomeStackName>
           { borderColor: colors.borderThird, backgroundColor: pressed ? colors.underlay : 'transparent' },
         ]}
         onPress={onPressNetwork}
-        testID='network'
+        testID="network"
       >
         <Network />
       </Pressable>
       <Pressable
         style={({ pressed }) => [styles.wrapper, { borderColor: colors.borderThird, backgroundColor: pressed ? colors.underlay : 'transparent' }]}
         onPress={() => navigation.navigate(ScanQRCodeStackName)}
-        testID='scanQRCode'
+        testID="scanQRCode"
       >
         <QrCode color={colors.textSecondary} />
       </Pressable>
@@ -54,7 +54,7 @@ const HeaderRight: React.FC<{ navigation: StackScreenProps<typeof HomeStackName>
           { borderColor: colors.borderThird, backgroundColor: pressed ? colors.underlay : 'transparent' },
         ]}
         onPress={() => navigation.navigate(SettingsStackName)}
-        testID='settings'
+        testID="settings"
       >
         <Settings color={colors.textSecondary} />
       </Pressable>

@@ -1,13 +1,13 @@
-import { useCallback } from 'react';
-import { useAtomValue, atom } from 'jotai';
-import { atomFamily, atomWithObservable } from 'jotai/utils';
-import { switchMap, filter } from 'rxjs';
-import { observeSignatureRecordsCount, querySignatureRecords } from '../../../../database/models/Signature/query';
-import { currentAddressObservable } from './useCurrentAddress';
-import { Signature } from '@core/database/models/Signature';
-import { getAtom, setAtom } from '../nexus';
-import { notNull } from '@core/utils/rxjs';
+import type { Signature } from '@core/database/models/Signature';
 import { SignatureFilterOption } from '@core/database/models/Signature/type';
+import { notNull } from '@core/utils/rxjs';
+import { atom, useAtomValue } from 'jotai';
+import { atomFamily, atomWithObservable } from 'jotai/utils';
+import { useCallback } from 'react';
+import { filter, switchMap } from 'rxjs';
+import { observeSignatureRecordsCount, querySignatureRecords } from '../../../../database/models/Signature/query';
+import { getAtom, setAtom } from '../nexus';
+import { currentAddressObservable } from './useCurrentAddress';
 
 const signatureRecordsCountAtom = atomFamily((_filter: SignatureFilterOption) =>
   atomWithObservable(

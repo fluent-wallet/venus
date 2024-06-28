@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { useEffect, useState } from 'react';
 
 const useForceUpdateOnFocus = (navigation: NativeStackNavigationProp<any, any, any>) => {
   const [_, forceUpdate] = useState(true);

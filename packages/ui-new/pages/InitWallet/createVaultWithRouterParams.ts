@@ -1,9 +1,9 @@
-import { Mnemonic } from 'ethers';
-import { showMessage } from 'react-native-flash-message';
+import i18n from '@assets/i18n';
 import methods from '@core/WalletCore/Methods';
 import plugins from '@core/WalletCore/Plugins';
-import { type RootStackParamList } from '@router/configs';
-import i18n from '@assets/i18n';
+import type { RootStackParamList } from '@router/configs';
+import { Mnemonic } from 'ethers';
+import { showMessage } from 'react-native-flash-message';
 
 const createVaultWithRouterParams = async (args: RootStackParamList['Biometrics'], password?: string) => {
   const type =

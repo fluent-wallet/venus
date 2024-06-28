@@ -1,21 +1,22 @@
+import Failed from '@assets/icons/message-fail.svg';
+import Warning from '@assets/icons/warn.svg';
+import BottomSheet, { type BottomSheetMethods } from '@components/BottomSheet';
+import Button from '@components/Button';
+import Text from '@components/Text';
+import _TextInput from '@components/TextInput';
+import { useCurrentNetwork } from '@core/WalletCore/Plugins/ReactInject';
+import { Gwei, getMinGasPrice } from '@core/WalletCore/Plugins/Transaction/SuggestedGasEstimate';
+import { useTheme } from '@react-navigation/native';
+import Decimal from 'decimal.js';
 /* eslint-disable react-hooks/exhaustive-deps */
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
-import React, { memo, useMemo, useCallback, useRef, type ComponentProps } from 'react';
-import { View, StyleSheet } from 'react-native';
-import { useTheme } from '@react-navigation/native';
-import { useForm, Controller, type SubmitErrorHandler } from 'react-hook-form';
+import type React from 'react';
+import { type ComponentProps, memo, useCallback, useMemo, useRef } from 'react';
+import { Controller, type SubmitErrorHandler, useForm } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
+import { StyleSheet, View } from 'react-native';
 import { showMessage } from 'react-native-flash-message';
-import Decimal from 'decimal.js';
-import { useCurrentNetwork } from '@core/WalletCore/Plugins/ReactInject';
-import { getMinGasPrice, Gwei } from '@core/WalletCore/Plugins/Transaction/SuggestedGasEstimate';
-import BottomSheet, { type BottomSheetMethods } from '@components/BottomSheet';
-import Text from '@components/Text';
-import Button from '@components/Button';
-import _TextInput from '@components/TextInput';
-import Warning from '@assets/icons/warn.svg';
-import Failed from '@assets/icons/message-fail.svg';
-import { type GasSetting } from './index';
+import type { GasSetting } from './index';
 
 interface Props {
   customizeGasSetting: GasSetting;
@@ -54,7 +55,7 @@ type FormData = {
 export const controlRule = {
   required: true,
   pattern: /^[0-9]*\.?[0-9]+$/,
-  validate: (value: string) => parseFloat(value) >= 0 || 'should be greater than 0',
+  validate: (value: string) => Number.parseFloat(value) >= 0 || 'should be greater than 0',
 };
 
 const CustomizeGasSetting: React.FC<Props> = ({ customizeGasSetting, defaultMaxPriorityFeePerGas, estimateCurrentGasPrice, onClose, onConfirm, force155 }) => {
@@ -85,7 +86,7 @@ const CustomizeGasSetting: React.FC<Props> = ({ customizeGasSetting, defaultMaxP
   const gasPriceInputVal = watch('gasPrice');
   const maxFeePerGasInputVal = watch('maxFeePerGas');
   const isPriceLowerThanCurrent = useMemo(
-    () => parseFloat(customizeGasSetting.suggestedMaxFeePerGas ? maxFeePerGasInputVal : gasPriceInputVal) < parseFloat(currentPriceGwei),
+    () => Number.parseFloat(customizeGasSetting.suggestedMaxFeePerGas ? maxFeePerGasInputVal : gasPriceInputVal) < Number.parseFloat(currentPriceGwei),
     [maxFeePerGasInputVal, gasPriceInputVal, currentPriceGwei],
   );
 

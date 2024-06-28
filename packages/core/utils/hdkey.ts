@@ -1,7 +1,7 @@
-import { randomInt } from './base';
 import { HDNode, entropyToMnemonic } from '@ethersproject/hdnode';
 import { randomBytes } from 'ethers';
 import { memoize } from 'lodash-es';
+import { randomInt } from './base';
 
 const DEFAULT_HD_PATH = `m/44'/503'/0'/0`;
 
@@ -51,7 +51,7 @@ export const getNthAccountOfHDKey = async ({
 
   if (only0x1Prefixed) {
     let count = 0,
-    idx = 0;
+      idx = 0;
     while (count <= nth) {
       paths[5] = `${idx++}`;
       const newNode = k.derivePath(paths.join('/'));

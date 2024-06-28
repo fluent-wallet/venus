@@ -1,10 +1,10 @@
+import type { Address } from '@core/database/models/Address';
+import type { App } from '@core/database/models/App';
+import type { Signature } from '@core/database/models/Signature';
+import type { SignType } from '@core/database/models/Signature/type';
 import { inject, injectable } from 'inversify';
-import { Plugins } from '../Plugins';
 import { createSignature as _createSignature } from '../../database/models/Signature/query';
-import { Signature } from '@core/database/models/Signature';
-import { Address } from '@core/database/models/Address';
-import { App } from '@core/database/models/App';
-import { SignType } from '@core/database/models/Signature/type';
+import { Plugins } from '../Plugins';
 
 interface CreateSignatureParams {
   address: Address;

@@ -1,15 +1,16 @@
-import React, { useState, useMemo, Fragment } from 'react';
-import { View, Pressable, StyleSheet } from 'react-native';
+import Button from '@components/Button';
+import Text from '@components/Text';
+import { useVaultFromId } from '@core/WalletCore/Plugins/ReactInject';
 import { useTheme } from '@react-navigation/native';
-import { showMessage } from 'react-native-flash-message';
+import { type BackupScreenProps, type BackupStep3StackName, BackupSuccessStackName } from '@router/configs';
 import { wordlists } from 'bip39';
 import { sampleSize, shuffle } from 'lodash-es';
-import Text from '@components/Text';
-import Button from '@components/Button';
-import { BackupStep3StackName, BackupSuccessStackName, type BackupScreenProps } from '@router/configs';
-import BackupBottomSheet from './BackupBottomSheet';
-import { useVaultFromId } from '@core/WalletCore/Plugins/ReactInject';
+import type React from 'react';
+import { Fragment, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { Pressable, StyleSheet, View } from 'react-native';
+import { showMessage } from 'react-native-flash-message';
+import BackupBottomSheet from './BackupBottomSheet';
 
 type Ele = string | null;
 const BackupStep3RandomCheck: React.FC<BackupScreenProps<typeof BackupStep3StackName>> = ({ route, navigation }) => {

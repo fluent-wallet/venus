@@ -1,34 +1,40 @@
-import React, { useState, useRef, useCallback, useEffect } from 'react';
-import { Pressable, StyleSheet, type NativeScrollEvent, type NativeSyntheticEvent } from 'react-native';
-import { useTheme } from '@react-navigation/native';
-import PagerView from 'react-native-pager-view';
-import { showMessage } from 'react-native-flash-message';
-import { Trans, useTranslation } from 'react-i18next';
-import { debounce, escapeRegExp } from 'lodash-es';
-import {
-  useAssetsAllList,
-  useTokenListOfCurrentNetwork,
-  useCurrentNetwork,
-  useCurrentAddressValue,
-  useCurrentAddress,
-  useCurrentOpenNFTDetail,
-  AssetType,
-  AssetSource,
-} from '@core/WalletCore/Plugins/ReactInject';
-import { fetchERC20AssetInfoBatchWithAccount } from '@core/WalletCore/Plugins/AssetsTracker/fetchers/basic';
-import { type AssetInfo } from '@core/WalletCore/Plugins/AssetsTracker/types';
-import { type NFTItemDetail } from '@core/WalletCore/Plugins/NFTDetailTracker';
-import methods from '@core/WalletCore/Methods';
-import plugins from '@core/WalletCore/Plugins';
+import ProhibitIcon from '@assets/icons/prohibit.svg';
+import { type BottomSheetMethods, BottomSheetScrollView } from '@components/BottomSheet';
+import HourglassLoading from '@components/Loading/Hourglass';
 import Text from '@components/Text';
 import TextInput from '@components/TextInput';
-import HourglassLoading from '@components/Loading/Hourglass';
-import { BottomSheetMethods, BottomSheetScrollView } from '@components/BottomSheet';
-import { SendTransactionStep2StackName, SendTransactionStep3StackName, SendTransactionStep4StackName, type SendTransactionScreenProps } from '@router/configs';
-import { Tabs, TabsContent, setSelectAssetScrollY, type Tab } from '@modules/AssetsTabs';
-import TokenItem from '@modules/AssetsList/TokensList/TokenItem';
+import methods from '@core/WalletCore/Methods';
+import plugins from '@core/WalletCore/Plugins';
+import { fetchERC20AssetInfoBatchWithAccount } from '@core/WalletCore/Plugins/AssetsTracker/fetchers/basic';
+import type { AssetInfo } from '@core/WalletCore/Plugins/AssetsTracker/types';
+import type { NFTItemDetail } from '@core/WalletCore/Plugins/NFTDetailTracker';
+import {
+  AssetSource,
+  AssetType,
+  useAssetsAllList,
+  useCurrentAddress,
+  useCurrentAddressValue,
+  useCurrentNetwork,
+  useCurrentOpenNFTDetail,
+  useTokenListOfCurrentNetwork,
+} from '@core/WalletCore/Plugins/ReactInject';
 import NFTItem from '@modules/AssetsList/NFTsList/NFTItem';
-import ProhibitIcon from '@assets/icons/prohibit.svg';
+import TokenItem from '@modules/AssetsList/TokensList/TokenItem';
+import { type Tab, Tabs, TabsContent, setSelectAssetScrollY } from '@modules/AssetsTabs';
+import { useTheme } from '@react-navigation/native';
+import {
+  type SendTransactionScreenProps,
+  type SendTransactionStep2StackName,
+  SendTransactionStep3StackName,
+  SendTransactionStep4StackName,
+} from '@router/configs';
+import { debounce, escapeRegExp } from 'lodash-es';
+import type React from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { Trans, useTranslation } from 'react-i18next';
+import { type NativeScrollEvent, type NativeSyntheticEvent, Pressable, StyleSheet } from 'react-native';
+import { showMessage } from 'react-native-flash-message';
+import type PagerView from 'react-native-pager-view';
 import SendTransactionBottomSheet from '../SendTransactionBottomSheet';
 
 interface Props {

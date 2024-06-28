@@ -1,4 +1,4 @@
-import { type Plugin } from '../../Plugins';
+import type { Plugin } from '../../Plugins';
 
 declare module '../../../WalletCore/Plugins' {
   interface Plugins {

@@ -1,7 +1,8 @@
-import React, { useMemo } from 'react';
-import { StyleSheet, Platform } from 'react-native';
-import { SvgUri } from 'react-native-svg';
 import { Image, type ImageProps } from 'expo-image';
+import type React from 'react';
+import { useMemo } from 'react';
+import { Platform, StyleSheet } from 'react-native';
+import { SvgUri } from 'react-native-svg';
 
 const NFTIcon: React.FC<ImageProps & { isNftItem?: boolean }> = ({ style, isNftItem, ...props }) => {
   const needRenderSVG = useMemo(() => Platform.OS === 'ios' && typeof props.source === 'string' && props.source.endsWith('svg'), [props.source]);

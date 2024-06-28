@@ -208,7 +208,7 @@ export const ETH_TX_TYPES = {
   EIP1559: '0x2',
 };
 
-export const TX_RESEND_LIMIT = Infinity;
+export const TX_RESEND_LIMIT = Number.POSITIVE_INFINITY;
 export const CHECK_REPLACED_BEFORE_RESEND_COUNT = 5;
 
 export const DETAULT_EXECUTED_INTERVAL = 3 * 1000;

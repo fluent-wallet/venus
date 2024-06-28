@@ -1,6 +1,6 @@
-import { atom, useAtomValue } from 'jotai';
-import database from '@core/database';
 import { setAtom } from '@core/WalletCore/Plugins/ReactInject';
+import database from '@core/database';
+import { atom, useAtomValue } from 'jotai';
 
 type Mode = 'light' | 'dark' | 'system';
 const _modeAtom = atom<Mode>('system');

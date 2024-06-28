@@ -1,22 +1,16 @@
-import React, { useMemo } from 'react';
-import { Platform, StyleSheet } from 'react-native';
 import { useTheme } from '@react-navigation/native';
-import { SvgUri } from 'react-native-svg';
 import { Image, type ImageProps } from 'expo-image';
+import type React from 'react';
+import { useMemo } from 'react';
+import { Platform, StyleSheet } from 'react-native';
+import { SvgUri } from 'react-native-svg';
 
 const TokenIcon: React.FC<ImageProps> = ({ style, ...props }) => {
   const { colors } = useTheme();
   const needRenderSVG = useMemo(() => Platform.OS === 'ios' && typeof props.source === 'string' && props.source.endsWith('svg'), [props.source]);
 
   if (needRenderSVG) {
-    return (
-      <SvgUri
-        style={[styles.container, typeof style === 'object' && style]}
-        uri={props.source as string}
-        width={40}
-        height={40}
-      />
-    );
+    return <SvgUri style={[styles.container, typeof style === 'object' && style]} uri={props.source as string} width={40} height={40} />;
   }
 
   return (
@@ -34,7 +28,7 @@ const styles = StyleSheet.create({
   container: {
     borderRadius: 100,
     borderWidth: 1,
-    borderColor: '#E5E5E5'
+    borderColor: '#E5E5E5',
   },
 });
 

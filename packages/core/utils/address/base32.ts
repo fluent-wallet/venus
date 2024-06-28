@@ -1,5 +1,5 @@
-import JSBI from 'jsbi';
 import { Buffer } from 'buffer';
+import JSBI from 'jsbi';
 import { memoize } from 'lodash-es';
 
 const ALPHABET = 'ABCDEFGHJKMNPRSTUVWXYZ0123456789';

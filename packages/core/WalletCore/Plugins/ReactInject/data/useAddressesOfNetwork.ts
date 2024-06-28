@@ -1,6 +1,6 @@
 import { useAtomValue } from 'jotai';
 import { atomFamily, atomWithObservable } from 'jotai/utils';
-import { switchMap, of } from 'rxjs';
+import { of, switchMap } from 'rxjs';
 import { observeNetworkById } from '../../../../database/models/Network/query';
 
 const addressesAtomFamilyOfNetwork = atomFamily((networkId: string | undefined | null) =>

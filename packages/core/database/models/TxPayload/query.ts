@@ -1,6 +1,6 @@
-import { type TxPayload } from '.';
-import { ModelFields, createModel } from '../../helper/modelHelper';
+import type { TxPayload } from '.';
 import TableName from '../../TableName';
+import { type ModelFields, createModel } from '../../helper/modelHelper';
 
 type Params = Omit<ModelFields<TxPayload>, 'createdAt'>;
 export function createTxPayload(params: Params, prepareCreate: true): TxPayload;

@@ -1,17 +1,17 @@
-import React, { useCallback, useState } from 'react';
-import { LayoutChangeEvent, StyleSheet, Text, View, Modal, Pressable, Dimensions, Linking } from 'react-native';
-import Animated, { useAnimatedStyle, useSharedValue } from 'react-native-reanimated';
-import { useTheme, useNavigation } from '@react-navigation/native';
-import { useTranslation } from 'react-i18next';
-import Clipboard from '@react-native-clipboard/clipboard';
-import { showMessage } from 'react-native-flash-message';
-import { useCurrentAddressValue, useCurrentNetwork, NetworkType } from '@core/WalletCore/Plugins/ReactInject';
-import { Networks } from '@core/utils/consts';
 import Copy from '@assets/icons/copy.svg';
 import Earth from '@assets/icons/earth.svg';
 import Sign from '@assets/icons/sign.svg';
-import { SignatureRecordsStackName, StackScreenProps } from '@router/configs';
+import { NetworkType, useCurrentAddressValue, useCurrentNetwork } from '@core/WalletCore/Plugins/ReactInject';
+import { Networks } from '@core/utils/consts';
+import Clipboard from '@react-native-clipboard/clipboard';
+import { useNavigation, useTheme } from '@react-navigation/native';
+import { SignatureRecordsStackName, type StackScreenProps } from '@router/configs';
 import { ENABLE_SIGNATURE_RECORDS_FEATURE } from '@utils/features';
+import React, { useCallback, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { Dimensions, type LayoutChangeEvent, Linking, Modal, Pressable, StyleSheet, Text, View } from 'react-native';
+import { showMessage } from 'react-native-flash-message';
+import Animated, { useAnimatedStyle, useSharedValue } from 'react-native-reanimated';
 
 const MoreOption: React.FC<{ children: React.ReactElement }> = ({ children }) => {
   const { reverseColors } = useTheme();

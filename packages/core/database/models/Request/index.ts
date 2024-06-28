@@ -1,8 +1,8 @@
 import { Model, type Relation } from '@nozbe/watermelondb';
-import { text, readonly, date, writer, immutableRelation } from '@nozbe/watermelondb/decorators';
-import { type App } from '../App';
+import { date, immutableRelation, readonly, text, writer } from '@nozbe/watermelondb/decorators';
 import TableName from '../../TableName';
-import { RequestStatus, RequestType } from './RequestType';
+import type { App } from '../App';
+import type { RequestStatus, RequestType } from './RequestType';
 
 export class Request extends Model {
   static table = TableName.Request;

@@ -1,13 +1,13 @@
-import { BehaviorSubject } from 'rxjs';
-import { interval, switchMap, takeUntil, Subject, startWith, type Subscription } from 'rxjs';
 import { isEqual } from 'lodash-es';
-import { NetworkType } from './../../../database/models/Network';
+import { BehaviorSubject } from 'rxjs';
+import { Subject, type Subscription, interval, startWith, switchMap, takeUntil } from 'rxjs';
 import { Networks } from '../../../utils/consts';
 import events from '../../Events';
-import { type AssetInfo } from '../../Plugins/AssetsTracker/types';
-import { type Plugin } from '../../Plugins';
+import type { Plugin } from '../../Plugins';
+import type { AssetInfo } from '../../Plugins/AssetsTracker/types';
+import { getCurrentOpenNFTDetail, setCurrentOpenNFTDetail } from '../ReactInject/data/useAssets';
+import { NetworkType } from './../../../database/models/Network';
 import { fetchNFTDetail as fetchESpaceNFTDetail } from './fetchers/eSpace';
-import { setCurrentOpenNFTDetail, getCurrentOpenNFTDetail } from '../ReactInject/data/useAssets';
 
 export interface NFTItemDetail {
   name: string;

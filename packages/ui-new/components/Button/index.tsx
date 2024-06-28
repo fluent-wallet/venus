@@ -1,9 +1,9 @@
-import { useMemo, useCallback, type Component, type PropsWithChildren } from 'react';
-import { StyleSheet, Pressable, Platform, type PressableProps, type PressableStateCallbackType } from 'react-native';
-import { useTheme } from '@react-navigation/native';
-import { type SvgProps } from 'react-native-svg';
-import Text from '@components/Text';
 import HourglassLoading from '@components/Loading/Hourglass';
+import Text from '@components/Text';
+import { useTheme } from '@react-navigation/native';
+import { type Component, type PropsWithChildren, useCallback, useMemo } from 'react';
+import { Platform, Pressable, type PressableProps, type PressableStateCallbackType, StyleSheet } from 'react-native';
+import type { SvgProps } from 'react-native-svg';
 import { palette } from '../../theme';
 
 interface Props extends PropsWithChildren<PressableProps> {

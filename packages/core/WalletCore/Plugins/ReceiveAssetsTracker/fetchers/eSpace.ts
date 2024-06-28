@@ -1,9 +1,9 @@
 import { createContract } from '@cfx-kit/dapp-utils/dist/contract';
 import { fetchChain } from '@cfx-kit/dapp-utils/dist/fetch';
-import { AssetType } from '../../../../database/models/Asset';
 import ESpaceTokenListABI from '../../../../contracts/ABI/ESpaceTokenList';
-import { eSpaceTestnetServerFetcher, eSpaceServerFetcher } from '../../AssetsTracker/fetchers/eSpaceServer';
-import { type AssetInfo } from '../../AssetsTracker/types';
+import { AssetType } from '../../../../database/models/Asset';
+import { eSpaceServerFetcher, eSpaceTestnetServerFetcher } from '../../AssetsTracker/fetchers/eSpaceServer';
+import type { AssetInfo } from '../../AssetsTracker/types';
 
 export const eSpaceTestnetTokenListContract = createContract({ address: '0xcd54f022b0355e00db610f6b3411c76b5c61320f', ABI: ESpaceTokenListABI });
 export const eSpaceTokenListContract = createContract({ address: '0xf1a8b97ef61bf8fe3c54c94a16c57c0f7afc2277', ABI: ESpaceTokenListABI });

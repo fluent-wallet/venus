@@ -1,27 +1,27 @@
-import { injectable, inject } from 'inversify';
-import { from, concatMap, firstValueFrom, toArray } from 'rxjs';
-import { memoize } from 'lodash-es';
 import { fetchChain } from '@cfx-kit/dapp-utils/dist/fetch';
-import { networkRpcPrefixMap, networkRpcSuffixMap, NetworkType, type Network } from '../../database/models/Network';
-import VaultType from '../../database/models/Vault/VaultType';
-import {
-  createNetwork as _createNetwork,
-  querySelectedNetwork,
-  queryNetworkById,
-  queryNetworkByChainId,
-  queryNetworkByNetId,
-  type NetworkParams,
-} from '../../database/models/Network/query';
-import { type Account } from '../../database/models/Account';
-import { createAddress } from '../../database/models/Address/query';
-import { AssetType, AssetSource } from '../../database/models/Asset';
-import { createAsset } from '../../database/models/Asset/query';
-import { createAssetRule } from '../../database/models/AssetRule/query';
+import { inject, injectable } from 'inversify';
+import { memoize } from 'lodash-es';
+import { concatMap, firstValueFrom, from, toArray } from 'rxjs';
 import database from '../../database';
 import TableName from '../../database/TableName';
-import { getNthAccountOfHDKey } from '../../utils/hdkey';
+import type { Account } from '../../database/models/Account';
+import { createAddress } from '../../database/models/Address/query';
+import { AssetSource, AssetType } from '../../database/models/Asset';
+import { createAsset } from '../../database/models/Asset/query';
+import { createAssetRule } from '../../database/models/AssetRule/query';
+import { type Network, NetworkType, networkRpcPrefixMap, networkRpcSuffixMap } from '../../database/models/Network';
+import {
+  type NetworkParams,
+  createNetwork as _createNetwork,
+  queryNetworkByChainId,
+  queryNetworkById,
+  queryNetworkByNetId,
+  querySelectedNetwork,
+} from '../../database/models/Network/query';
+import VaultType from '../../database/models/Vault/VaultType';
 import { fromPrivate } from '../../utils/account';
-import { validateCfxAddress, validateHexAddress, convertCfxToHex } from '../../utils/address';
+import { convertCfxToHex, validateCfxAddress, validateHexAddress } from '../../utils/address';
+import { getNthAccountOfHDKey } from '../../utils/hdkey';
 import { GetDecryptedVaultDataMethod } from './getDecryptedVaultData';
 
 @injectable()

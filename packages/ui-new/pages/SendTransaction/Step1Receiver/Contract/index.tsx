@@ -1,7 +1,8 @@
-import React, { useState, useRef } from 'react';
-import { View, Keyboard, StyleSheet } from 'react-native';
-import PagerView from 'react-native-pager-view';
-import { Tabs, TabsContent, Tab } from './ContractTabs';
+import type React from 'react';
+import { useRef, useState } from 'react';
+import { Keyboard, StyleSheet, View } from 'react-native';
+import type PagerView from 'react-native-pager-view';
+import { Tab, Tabs, TabsContent } from './ContractTabs';
 
 const Contract: React.FC<{ setReceiver: (receiver: string) => void }> = ({ setReceiver }) => {
   const [currentTab, setCurrentTab] = useState<Tab>(Tab.Recently);

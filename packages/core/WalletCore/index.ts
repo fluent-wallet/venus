@@ -1,10 +1,10 @@
 import 'reflect-metadata';
 import { inject, injectable } from 'inversify';
-import { Plugins } from './Plugins';
-import { Methods } from './Methods';
 import { Events } from './Events';
-import { container } from './configs';
 import { LifeCycle } from './Events/lifecycleChanged';
+import { Methods } from './Methods';
+import { Plugins } from './Plugins';
+import { container } from './configs';
 
 @injectable()
 export class WalletCore {

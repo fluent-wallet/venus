@@ -1,10 +1,10 @@
-import React from 'react';
-import { View, StyleSheet } from 'react-native';
-import { useTheme } from '@react-navigation/native';
-import { useNetInfo } from '@react-native-community/netinfo';
-import { useTranslation } from 'react-i18next';
-import Text from '@components/Text';
 import NoNetwork from '@assets/icons/no-network.svg';
+import Text from '@components/Text';
+import { useNetInfo } from '@react-native-community/netinfo';
+import { useTheme } from '@react-navigation/native';
+import type React from 'react';
+import { useTranslation } from 'react-i18next';
+import { StyleSheet, View } from 'react-native';
 
 const NoNetworkTip: React.FC = () => {
   const { reverseColors } = useTheme();
