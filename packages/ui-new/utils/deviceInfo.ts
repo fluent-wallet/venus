@@ -1,4 +1,4 @@
-import { Platform, StatusBar, Dimensions } from 'react-native';
+import { Dimensions, Platform, StatusBar } from 'react-native';
 import DeviceInfo from 'react-native-device-info';
 
 const Check3DStructureLight = () => {
@@ -8,7 +8,7 @@ const Check3DStructureLight = () => {
   const model = DeviceInfo.getModel();
   let supports3DStructureLight = false;
   if (model.includes('iPhone')) {
-    const modelNumber = parseInt(model.replace(/[^\d]/g, ''), 10);
+    const modelNumber = Number.parseInt(model.replace(/[^\d]/g, ''), 10);
     if (modelNumber >= 10) {
       supports3DStructureLight = true;
     }

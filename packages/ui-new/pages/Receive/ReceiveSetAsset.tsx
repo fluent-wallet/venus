@@ -1,17 +1,18 @@
-/* eslint-disable @typescript-eslint/no-non-null-assertion */
-import React, { useState, useRef, useEffect } from 'react';
-import { StyleSheet, Pressable, Keyboard } from 'react-native';
-import { useTheme } from '@react-navigation/native';
-import { type AssetInfo } from '@core/WalletCore/Plugins/AssetsTracker/types';
-import { useCurrentAddressValue, useCurrentNetworkNativeAsset } from '@core/WalletCore/Plugins/ReactInject';
+import ArrowRigiht from '@assets/icons/arrow-right2.svg';
 import BottomSheet, { snapPoints, type BottomSheetMethods } from '@components/BottomSheet';
-import Text from '@components/Text';
 import Button from '@components/Button';
+import Text from '@components/Text';
+import type { AssetInfo } from '@core/WalletCore/Plugins/AssetsTracker/types';
+import { useCurrentAddressValue, useCurrentNetworkNativeAsset } from '@core/WalletCore/Plugins/ReactInject';
 import TokenIcon from '@modules/AssetsList/TokensList/TokenIcon';
 import SelectAsset from '@pages/SendTransaction/Step2Asset';
 import SetAssetAmount from '@pages/SendTransaction/Step3Amount/SetAssetAmount';
-import ArrowRigiht from '@assets/icons/arrow-right2.svg';
+import { useTheme } from '@react-navigation/native';
+/* eslint-disable @typescript-eslint/no-non-null-assertion */
+import type React from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { Keyboard, Pressable, StyleSheet } from 'react-native';
 
 interface Props {
   selectedAsset: AssetInfo | null;
@@ -33,7 +34,7 @@ const ReceiveSetAsset: React.FC<Props> = ({ onConfirm, selectedAsset, amount, on
     if (!tempSelectAsset && currentNetworkNativeAsset) {
       setTempSelectAsset(currentNetworkNativeAsset as unknown as AssetInfo);
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentNetworkNativeAsset?.id]);
 
   return (

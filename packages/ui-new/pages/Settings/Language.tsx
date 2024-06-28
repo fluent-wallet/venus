@@ -1,13 +1,14 @@
-import React, { useCallback, useRef } from 'react';
-import { Pressable } from 'react-native';
-import { useTheme } from '@react-navigation/native';
-import { useTranslation } from 'react-i18next';
-import Text from '@components/Text';
-import Checkbox from '@components/Checkbox';
 import BottomSheet, { type BottomSheetMethods } from '@components/BottomSheet';
-import { styles as bottomSheetStyle, snapPoints } from '@pages/Management/AccountManagement/AddAnotherWallet';
-import { LanguageStackName, type StackScreenProps } from '@router/configs';
+import Checkbox from '@components/Checkbox';
+import Text from '@components/Text';
 import { Lang, setI18nLanguage, useLang } from '@hooks/useI18n';
+import { styles as bottomSheetStyle, snapPoints } from '@pages/Management/AccountManagement/AddAnotherWallet';
+import { useTheme } from '@react-navigation/native';
+import type { LanguageStackName, StackScreenProps } from '@router/configs';
+import type React from 'react';
+import { useCallback, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
+import { Pressable } from 'react-native';
 import { styles } from './Appearance';
 
 const Language: React.FC<StackScreenProps<typeof LanguageStackName>> = () => {

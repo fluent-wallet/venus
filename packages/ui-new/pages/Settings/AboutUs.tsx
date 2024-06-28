@@ -1,19 +1,20 @@
-import React, { useCallback, useState } from 'react';
-import { Linking, ScrollView, StyleSheet, View } from 'react-native';
-import { useTheme } from '@react-navigation/native';
-import { useTranslation } from 'react-i18next';
-import Text from '@components/Text';
-import { AboutUsStackName, type StackScreenProps } from '@router/configs';
-import { APP_VERSION_FLAG_FEATURE, ENABLE_CHECK_UPDATE_FEATURE } from '@utils/features';
-import { Lang, useLanguage } from '@hooks/useI18n';
 import SwiftShieldLogo from '@assets/icons/swift-shield.webp';
-import { SettingItem } from './index';
-import pkg from '../../../../package.json';
-import { Image } from 'expo-image';
-import semverLt from 'semver/functions/lt';
-import { showMessage } from 'react-native-flash-message';
 import BottomSheet, { BottomSheetView, snapPoints, BottomSheetFlatList } from '@components/BottomSheet';
 import Button from '@components/Button';
+import Text from '@components/Text';
+import { Lang, useLanguage } from '@hooks/useI18n';
+import { useTheme } from '@react-navigation/native';
+import type { AboutUsStackName, StackScreenProps } from '@router/configs';
+import { APP_VERSION_FLAG_FEATURE, ENABLE_CHECK_UPDATE_FEATURE } from '@utils/features';
+import { Image } from 'expo-image';
+import type React from 'react';
+import { useCallback, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { Linking, ScrollView, StyleSheet, View } from 'react-native';
+import { showMessage } from 'react-native-flash-message';
+import semverLt from 'semver/functions/lt';
+import pkg from '../../../../package.json';
+import { SettingItem } from './index';
 
 type VersionJSON = {
   version: string;

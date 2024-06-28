@@ -1,8 +1,8 @@
-import { injectable, inject } from 'inversify';
-import { Plugins } from '../Plugins';
-import { type Vault } from '../../database/models/Vault';
-import { getEncryptedVault } from '../../database/models/Vault/query';
+import { inject, injectable } from 'inversify';
 import database from '../../database';
+import type { Vault } from '../../database/models/Vault';
+import { getEncryptedVault } from '../../database/models/Vault/query';
+import { Plugins } from '../Plugins';
 
 @injectable()
 export class VaultMethod {

@@ -1,22 +1,22 @@
-import { useNavigation, StackActions } from '@react-navigation/native';
-import {
-  StackNavigation,
-  WalletConnectStackName,
-  WalletConnectProposalStackName,
-  WalletConnectSignMessageStackName,
-  WalletConnectTransactionStackName,
-  HomeStackName,
-} from '@router/configs';
-import { useCallback, useEffect, useMemo, useState } from 'react';
-import { uniq } from 'lodash-es';
-import { Networks } from '@core/utils/consts';
-import { queryNetworks } from '@core/database/models/Network/query';
 import methods from '@core/WalletCore/Methods';
 import Plugins from '@core/WalletCore/Plugins';
-import { WalletConnectPluginEventType } from '@core/WalletCore/Plugins/WalletConnect/types';
 import { NetworkType, useCurrentAddressValue, useCurrentNetwork } from '@core/WalletCore/Plugins/ReactInject';
-import { isDev, isQA } from '@utils/getEnv';
+import { WalletConnectPluginEventType } from '@core/WalletCore/Plugins/WalletConnect/types';
+import { queryNetworks } from '@core/database/models/Network/query';
+import { Networks } from '@core/utils/consts';
+import { StackActions, useNavigation } from '@react-navigation/native';
+import {
+  HomeStackName,
+  type StackNavigation,
+  WalletConnectProposalStackName,
+  WalletConnectSignMessageStackName,
+  WalletConnectStackName,
+  WalletConnectTransactionStackName,
+} from '@router/configs';
 import backToHome, { getActiveRouteName } from '@utils/backToHome';
+import { isDev, isQA } from '@utils/getEnv';
+import { uniq } from 'lodash-es';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 
 const SUPPORT_NETWORK = [Networks['Conflux eSpace'].netId] as Array<number>;
 const QA_SUPPORT_NETWORK = [Networks['Conflux eSpace'].netId, Networks['eSpace Testnet'].netId] as Array<number>;
@@ -40,7 +40,7 @@ export function useListenWalletConnectEvent() {
       switch (type) {
         case WalletConnectPluginEventType.SESSION_PROPOSAL: {
           let requestChains = uniq([...(event.data.requiredNamespaces?.eip155?.chains || []), ...(event.data.optionalNamespaces?.eip155?.chains || [])]).map(
-            (chain) => parseInt(chain.split('eip155:')[1]),
+            (chain) => Number.parseInt(chain.split('eip155:')[1]),
           );
           const networks = await queryNetworks();
           if (isDev) {
@@ -114,7 +114,7 @@ export function useListenWalletConnectEvent() {
 
           // if to address is undefined, it is contract create
           let isContract = typeof to === 'undefined';
-          
+
           if (typeof to !== 'undefined') {
             isContract = await methods.checkIsContractAddress({
               networkType: currentNetwork.networkType,

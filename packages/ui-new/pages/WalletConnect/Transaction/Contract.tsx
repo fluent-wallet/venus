@@ -1,17 +1,17 @@
+import ArrowLeft from '@assets/icons/arrow-left.svg';
+import ModifyIcon from '@assets/icons/modify.svg';
 import Icon from '@components/Icon';
 import Spinner from '@components/Spinner';
-import { WalletConnectMetadata } from '@core/WalletCore/Plugins/WalletConnect/types';
+import { AssetType, useCurrentNetwork } from '@core/WalletCore/Plugins/ReactInject';
+import type { WalletConnectMetadata } from '@core/WalletCore/Plugins/WalletConnect/types';
+import { numberWithCommas } from '@core/utils/balance';
 import { useTheme } from '@react-navigation/native';
+import { ParseTxDataReturnType, isApproveMethod } from '@utils/parseTxData';
+import { formatUnits, parseUnits } from 'ethers';
+import { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
-import ArrowLeft from '@assets/icons/arrow-left.svg';
-import { useCallback, useState } from 'react';
-import { AssetType, useCurrentNetwork } from '@core/WalletCore/Plugins/ReactInject';
-import { ParseTxDataReturnType, isApproveMethod } from '@utils/parseTxData';
-import ModifyIcon from '@assets/icons/modify.svg';
-import { TxDataWithTokenInfo } from '.';
-import { formatUnits, parseUnits } from 'ethers';
-import { numberWithCommas } from '@core/utils/balance';
+import type { TxDataWithTokenInfo } from '.';
 
 interface IProps {
   metadata: WalletConnectMetadata;

@@ -1,8 +1,8 @@
 import { Q, type Query } from '@nozbe/watermelondb';
-import { type Request } from '.';
-import { ModelFields, createModel } from '../../helper/modelHelper';
-import TableName from '../../TableName';
+import type { Request } from '.';
 import database from '../..';
+import TableName from '../../TableName';
+import { type ModelFields, createModel } from '../../helper/modelHelper';
 import { RequestStatus } from './RequestType';
 
 export type RequestParams = Omit<ModelFields<Request>, 'createdAt'>;

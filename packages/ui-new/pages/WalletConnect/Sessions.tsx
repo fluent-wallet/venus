@@ -1,15 +1,15 @@
 import BottomSheet, { snapPoints, BottomSheetScrollView, BottomSheetView } from '@components/BottomSheet';
-import Text from '@components/Text';
-import { useTranslation } from 'react-i18next';
-import { useWalletConnectSessions } from './useWalletConnectHooks';
-import { Pressable, StyleSheet, View } from 'react-native';
 import Button from '@components/Button';
 import Icon from '@components/Icon';
-import { useNavigation, useTheme } from '@react-navigation/native';
+import Text from '@components/Text';
 import Plugins from '@core/WalletCore/Plugins';
-import { useCallback } from 'react';
-import useInAsync from '@hooks/useInAsync';
 import { useCurrentAddressValue } from '@core/WalletCore/Plugins/ReactInject';
+import useInAsync from '@hooks/useInAsync';
+import { useNavigation, useTheme } from '@react-navigation/native';
+import { useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
+import { Pressable, StyleSheet, View } from 'react-native';
+import { useWalletConnectSessions } from './useWalletConnectHooks';
 function WalletConnectSessions() {
   const { t } = useTranslation();
   const currentAddressValue = useCurrentAddressValue();

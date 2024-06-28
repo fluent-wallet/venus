@@ -1,8 +1,8 @@
 import { Model, type Relation } from '@nozbe/watermelondb';
-import { text, immutableRelation } from '@nozbe/watermelondb/decorators';
-import { type Address } from '../Address';
-import { type Network } from '../Network';
+import { immutableRelation, text } from '@nozbe/watermelondb/decorators';
 import TableName from '../../TableName';
+import type { Address } from '../Address';
+import type { Network } from '../Network';
 
 export enum AddressType {
   EOA = 'EOA',

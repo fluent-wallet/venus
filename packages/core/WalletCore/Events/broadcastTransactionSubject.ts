@@ -1,12 +1,12 @@
-import { BehaviorSubject, filter } from 'rxjs';
-import { ITxEvm } from './../Plugins/Transaction/types';
-import { type WalletTransactionType } from '../Plugins/Transaction/types';
-import { ProcessErrorType } from '@core/utils/eth';
-import { Address } from '@core/database/models/Address';
-import { AssetType } from '../Plugins/ReactInject';
-import { Signature } from '@core/database/models/Signature';
+import type { Address } from '@core/database/models/Address';
+import type { App } from '@core/database/models/App';
+import type { Signature } from '@core/database/models/Signature';
+import type { ProcessErrorType } from '@core/utils/eth';
 import { notNull } from '@core/utils/rxjs';
-import { App } from '@core/database/models/App';
+import { BehaviorSubject, filter } from 'rxjs';
+import type { AssetType } from '../Plugins/ReactInject';
+import type { WalletTransactionType } from '../Plugins/Transaction/types';
+import type { ITxEvm } from './../Plugins/Transaction/types';
 
 export interface TransactionSubjectValue {
   txHash: string;

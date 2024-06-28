@@ -1,16 +1,17 @@
-import React, { useCallback, useRef } from 'react';
-import { View, StyleSheet } from 'react-native';
-import { useTheme } from '@react-navigation/native';
-import { showMessage } from 'react-native-flash-message';
-import RNRestart from 'react-native-restart';
+import BottomSheet, { type BottomSheetMethods } from '@components/BottomSheet';
+import Button from '@components/Button';
+import Text from '@components/Text';
 import methods from '@core/WalletCore/Methods';
 import plugins from '@core/WalletCore/Plugins';
-import Text from '@components/Text';
-import Button from '@components/Button';
-import BottomSheet, { type BottomSheetMethods } from '@components/BottomSheet';
+import { useTheme } from '@react-navigation/native';
+import { type AccountManagementStackName, type StackScreenProps, WelcomeStackName } from '@router/configs';
 import { screenHeight } from '@utils/deviceInfo';
-import { AccountManagementStackName, WelcomeStackName, type StackScreenProps } from '@router/configs';
+import type React from 'react';
+import { useCallback, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
+import { StyleSheet, View } from 'react-native';
+import { showMessage } from 'react-native-flash-message';
+import RNRestart from 'react-native-restart';
 
 interface Props {
   navigation: StackScreenProps<typeof AccountManagementStackName>['navigation'];

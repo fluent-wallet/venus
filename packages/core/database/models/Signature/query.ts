@@ -1,8 +1,8 @@
-import { type Signature } from '.';
-import { ModelFields, createModel } from '../../helper/modelHelper';
-import TableName from '../../TableName';
 import { Q } from '@nozbe/watermelondb';
+import type { Signature } from '.';
 import database from '../..';
+import TableName from '../../TableName';
+import { type ModelFields, createModel } from '../../helper/modelHelper';
 import { SignatureFilterOption } from './type';
 
 export type SignatureParams = Omit<ModelFields<Signature>, 'createdAt'>;

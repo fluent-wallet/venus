@@ -1,7 +1,7 @@
+import { type Network, NetworkType } from '@core/database/models/Network';
+import { Networks } from '@core/utils/consts';
 import { fetchGasEstimatesViaEthFeeHistory as _fetchGasEstimatesViaEthFeeHistory } from '@metamask/gas-fee-controller';
 import Decimal from 'decimal.js';
-import { Network, NetworkType } from '@core/database/models/Network';
-import { Networks } from '@core/utils/consts';
 
 export const Gwei = new Decimal(10).pow(9);
 

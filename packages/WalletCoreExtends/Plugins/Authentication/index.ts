@@ -1,11 +1,11 @@
-import * as KeyChain from 'react-native-keychain';
-import { BehaviorSubject, filter } from 'rxjs';
-import CryptoToolPlugin, { CryptoToolPluginClass } from '../CryptoTool';
 import plugins, { type Plugin } from '@core/WalletCore/Plugins';
 import database from '@core/database';
 import { getEncryptedVaultWithBSIM } from '@core/database/models/Vault/query';
 import { showBiometricsDisabledMessage } from '@pages/InitWallet/BiometricsWay';
 import { getPasswordCryptoKey } from '@utils/getEnv';
+import * as KeyChain from 'react-native-keychain';
+import { BehaviorSubject, filter } from 'rxjs';
+import CryptoToolPlugin, { CryptoToolPluginClass } from '../CryptoTool';
 
 declare module '@core/WalletCore/Plugins' {
   interface Plugins {

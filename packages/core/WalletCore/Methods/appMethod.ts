@@ -1,5 +1,5 @@
 import { injectable } from 'inversify';
-import { createApp as _createApp, queryAppByIdentity, type AppParams } from '../../database/models/App/query';
+import { type AppParams, createApp as _createApp, queryAppByIdentity } from '../../database/models/App/query';
 
 /**
  * Currently, apps are created in two ways.

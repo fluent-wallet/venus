@@ -1,9 +1,9 @@
 import { useAtomValue } from 'jotai';
-import { atomWithObservable, atomFamily } from 'jotai/utils';
-import { switchMap, of, map, startWith } from 'rxjs';
+import { atomFamily, atomWithObservable } from 'jotai/utils';
 import { memoize } from 'lodash-es';
+import { map, of, startWith, switchMap } from 'rxjs';
 import { dbRefresh$ } from '../../../../database';
-import { querySelectedNetwork, observeNetworkById } from '../../../../database/models/Network/query';
+import { observeNetworkById, querySelectedNetwork } from '../../../../database/models/Network/query';
 import { getAtom } from '../nexus';
 
 export const currentNetworkObservable = dbRefresh$.pipe(

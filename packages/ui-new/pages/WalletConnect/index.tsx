@@ -1,16 +1,16 @@
+import PasswordVerify from '@modules/PasswordVerify';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import WalletConnecting from './Connecting';
 import {
-  WalletConnectingStackName,
-  WalletConnectParamList,
+  PasswordVerifyStackName,
   SheetBottomOption,
+  type WalletConnectParamList,
   WalletConnectProposalStackName,
   WalletConnectSessionsStackName,
   WalletConnectSignMessageStackName,
   WalletConnectTransactionStackName,
-  PasswordVerifyStackName,
+  WalletConnectingStackName,
 } from '@router/configs';
-import PasswordVerify from '@modules/PasswordVerify';
+import WalletConnecting from './Connecting';
 import WalletConnectProposal from './Proposal';
 import WalletConnectSessions from './Sessions';
 import WalletConnectSignMessage from './SignMessage';

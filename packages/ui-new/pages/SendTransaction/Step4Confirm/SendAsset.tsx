@@ -1,10 +1,10 @@
-import React from 'react';
-import { View, StyleSheet } from 'react-native';
-import { useTranslation } from 'react-i18next';
-import { useTheme } from '@react-navigation/native';
+import Text from '@components/Text';
 import { AccountItemView } from '@modules/AccountsList';
 import TokenIcon from '@modules/AssetsList/TokensList/TokenIcon';
-import Text from '@components/Text';
+import { useTheme } from '@react-navigation/native';
+import type React from 'react';
+import { useTranslation } from 'react-i18next';
+import { StyleSheet, View } from 'react-native';
 
 interface Props {
   amount?: string;

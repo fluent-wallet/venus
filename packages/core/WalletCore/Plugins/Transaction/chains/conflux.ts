@@ -1,18 +1,18 @@
-/* eslint-disable @typescript-eslint/ban-types */
-import { Transaction as CoreTransaction } from 'js-conflux-sdk';
 import { fetchChain } from '@cfx-kit/dapp-utils/dist/fetch';
-import { addHexPrefix } from '@core/utils/base';
 import methods from '@core/WalletCore/Methods';
 import { NetworkType } from '@core/database/models/Network';
-import { type ITxEvm } from '../types';
-import { TypedDataDomain, TypedDataField, Wallet } from 'ethers';
+import { addHexPrefix } from '@core/utils/base';
+import { type TypedDataDomain, type TypedDataField, Wallet } from 'ethers';
+/* eslint-disable @typescript-eslint/ban-types */
+import { Transaction as CoreTransaction } from 'js-conflux-sdk';
 import {
-  fetchGasEstimatesViaEthFeeHistory,
-  estimateFromGasPrice,
   calcGasCostFromEstimate,
-  estimateFor1559FromGasPrice,
   calcGasCostFromEstimateOf1559,
+  estimateFor1559FromGasPrice,
+  estimateFromGasPrice,
+  fetchGasEstimatesViaEthFeeHistory,
 } from '../SuggestedGasEstimate';
+import type { ITxEvm } from '../types';
 
 class Transaction {
   public getGasPrice = (endpoint: string) => fetchChain<string>({ url: endpoint, method: 'cfx_gasPrice' });

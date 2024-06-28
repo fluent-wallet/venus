@@ -1,11 +1,11 @@
-import { injectable, inject } from 'inversify';
-import { Plugins } from '../Plugins';
-import VaultType from '../../database/models/Vault/VaultType';
-import { type Vault } from '../../database/models/Vault';
-import { type Address } from '../../database/models/Address';
+import { inject, injectable } from 'inversify';
 import database from '../../database';
 import TableName from '../../database/TableName';
+import type { Address } from '../../database/models/Address';
+import type { Vault } from '../../database/models/Vault';
+import VaultType from '../../database/models/Vault/VaultType';
 import { getNthAccountOfHDKey } from '../../utils/hdkey';
+import { Plugins } from '../Plugins';
 
 @injectable()
 export class GetDecryptedVaultDataMethod {

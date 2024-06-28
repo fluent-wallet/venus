@@ -1,18 +1,18 @@
+import type { Asset } from '@core/database/models/Asset';
+import type { Tx } from '@core/database/models/Tx';
 import { useAtomValue } from 'jotai';
 import { atomFamily, atomWithObservable } from 'jotai/utils';
-import { switchMap, of, combineLatest, map } from 'rxjs';
+import { combineLatest, map, of, switchMap } from 'rxjs';
 import {
-  observeTxById,
   observeFinishedTxWithAddress,
-  observeUnfinishedTxWithAddress,
   observeRecentlyTxWithAddress,
+  observeTxById,
+  observeUnfinishedTxWithAddress,
 } from '../../../../database/models/Tx/query';
-import { currentAddressObservable } from './useCurrentAddress';
-import { accountsManageObservable } from './useAccountsManage';
-import { TxPayload } from '../../../../database/models/TxPayload';
+import type { TxPayload } from '../../../../database/models/TxPayload';
 import { formatTxData } from '../../../../utils/tx';
-import { Asset } from '@core/database/models/Asset';
-import { Tx } from '@core/database/models/Tx';
+import { accountsManageObservable } from './useAccountsManage';
+import { currentAddressObservable } from './useCurrentAddress';
 
 const recentlyTxsObservable = currentAddressObservable.pipe(
   switchMap((currentAddress) => (currentAddress ? observeRecentlyTxWithAddress(currentAddress.id) : of([]))),
@@ -86,7 +86,7 @@ export const recentlyAddressObservable = combineLatest([recentlyTxsObservable, a
     };
   }),
   map((latestAddresses) => {
-    const allAccounts = latestAddresses.accountsManage?.map((item) => item.data).flat();
+    const allAccounts = latestAddresses.accountsManage?.flatMap((item) => item.data);
     return latestAddresses.to.map(({ addressValue, source }) => {
       const isMyAccount = allAccounts.find((account) => account.addressValue === addressValue);
       return {

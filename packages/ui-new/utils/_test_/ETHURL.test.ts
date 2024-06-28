@@ -18,7 +18,7 @@ describe('ETHURL', () => {
 
   test('parse address with ', () => {
     const result = parseETHURL(
-      'ethereum:0x0000000000000000000000000000000000000000@0x405/transfer?address=0x0000000000000000000000000000000000000000&uint256=1e0'
+      'ethereum:0x0000000000000000000000000000000000000000@0x405/transfer?address=0x0000000000000000000000000000000000000000&uint256=1e0',
     );
     expect(result).toMatchObject({
       schema_prefix: 'ethereum',

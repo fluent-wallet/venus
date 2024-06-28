@@ -1,10 +1,10 @@
 import { useAtomValue } from 'jotai';
 import { atomWithObservable } from 'jotai/utils';
-import { switchMap, startWith, map, from, type Observable } from 'rxjs';
+import { type Observable, from, map, startWith, switchMap } from 'rxjs';
 import database, { dbRefresh$ } from '../../../../database';
 import TableName from '../../../../database/TableName';
+import type { AccountGroup } from '../../../../database/models/AccountGroup';
 import VaultType from '../../../../database/models/Vault/VaultType';
-import { type AccountGroup } from '../../../../database/models/AccountGroup';
 
 export const accountGroupsObservable = dbRefresh$.pipe(
   startWith(null),

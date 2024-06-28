@@ -1,10 +1,10 @@
-import { atom, useAtomValue } from 'jotai';
-import { AppState } from 'react-native';
-import database from '@core/database';
-import { setAtom, getAtom } from '@core/WalletCore/Plugins/ReactInject';
 import i18n from '@assets/i18n';
+import { getAtom, setAtom } from '@core/WalletCore/Plugins/ReactInject';
+import database from '@core/database';
 import { getLocales } from 'expo-localization';
+import { atom, useAtomValue } from 'jotai';
 import { useState } from 'react';
+import { AppState } from 'react-native';
 
 export enum Lang {
   en = 'en',
@@ -113,4 +113,4 @@ export const useLanguage = () => {
   const systemLang = useSystemLang();
 
   return lang === Lang.system ? systemLang : lang;
-}
+};

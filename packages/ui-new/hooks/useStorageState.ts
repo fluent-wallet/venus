@@ -1,5 +1,5 @@
-import { useState, useCallback, useLayoutEffect } from 'react';
 import database from '@core/database';
+import { useCallback, useLayoutEffect, useState } from 'react';
 
 const useStorageState = <T>({ initState, key }: { initState: T; key: string }) => {
   const [state, _setState] = useState<T>(null!);

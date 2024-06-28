@@ -1,26 +1,27 @@
-/* eslint-disable @typescript-eslint/no-non-null-assertion */
-import React, { useCallback, useEffect, useMemo, useState, useRef, forwardRef, useImperativeHandle } from 'react';
-import { View, Pressable, StyleSheet } from 'react-native';
-import { useTheme } from '@react-navigation/native';
-import { useTranslation } from 'react-i18next';
-import { Image } from 'expo-image';
-import { isEqual, has, omit, keys } from 'lodash-es';
-import Decimal from 'decimal.js';
-import usePollingGasEstimateAndNonce, { type Level } from '@core/WalletCore/Plugins/Transaction/usePollingGasEstimateAndNonce';
-import { useCurrentNetworkNativeAsset } from '@core/WalletCore/Plugins/ReactInject';
-import BottomSheet, { type BottomSheetMethods } from '@components/BottomSheet';
-import Text from '@components/Text';
-import Button from '@components/Button';
-import HourglassLoading from '@components/Loading/Hourglass';
-import { calculateTokenPrice } from '@utils/calculateTokenPrice';
+import ArrowRight from '@assets/icons/arrow-right2.svg';
+import GasCustomizeDark from '@assets/images/gas/gas-customize-dark.png';
+import GasCustomizeLight from '@assets/images/gas/gas-customize-light.png';
+import GasHigh from '@assets/images/gas/gas-high.png';
 import GasLow from '@assets/images/gas/gas-low.png';
 import GasMedium from '@assets/images/gas/gas-medium.png';
-import GasHigh from '@assets/images/gas/gas-high.png';
-import GasCustomizeLight from '@assets/images/gas/gas-customize-light.png';
-import GasCustomizeDark from '@assets/images/gas/gas-customize-dark.png';
-import ArrowRight from '@assets/icons/arrow-right2.svg';
-import CustomizeGasSetting from './CustomizeGasSetting';
+import BottomSheet, { type BottomSheetMethods } from '@components/BottomSheet';
+import Button from '@components/Button';
+import HourglassLoading from '@components/Loading/Hourglass';
+import Text from '@components/Text';
+import { useCurrentNetworkNativeAsset } from '@core/WalletCore/Plugins/ReactInject';
+import usePollingGasEstimateAndNonce, { type Level } from '@core/WalletCore/Plugins/Transaction/usePollingGasEstimateAndNonce';
+import { useTheme } from '@react-navigation/native';
+import { calculateTokenPrice } from '@utils/calculateTokenPrice';
+import Decimal from 'decimal.js';
+import { Image } from 'expo-image';
+import { has, isEqual, keys, omit } from 'lodash-es';
+/* eslint-disable @typescript-eslint/no-non-null-assertion */
+import type React from 'react';
+import { forwardRef, useCallback, useEffect, useImperativeHandle, useMemo, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { Pressable, StyleSheet, View } from 'react-native';
 import CustomizeAdvanceSetting from './CustomizeAdvanceSetting';
+import CustomizeGasSetting from './CustomizeGasSetting';
 
 export interface GasSetting {
   suggestedMaxFeePerGas?: string;

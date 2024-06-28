@@ -1,18 +1,18 @@
 import BottomSheet, { BottomSheetTextInput, snapPoints } from '@components/BottomSheet';
 import Checkbox from '@components/Checkbox';
 
-import { useTheme } from '@react-navigation/native';
-import { isApproveMethod } from '@utils/parseTxData';
-import { NativeSyntheticEvent, Pressable, StyleSheet, Text, TextInputChangeEventData, View } from 'react-native';
-import { TxDataWithTokenInfo } from '.';
-import { useTranslation } from 'react-i18next';
-import { useCallback, useState } from 'react';
-import { TextInput } from 'react-native-gesture-handler';
-import Button from '@components/Button';
 import ArrowLeft from '@assets/icons/arrow-left2.svg';
-import { formatUnits, parseUnits } from 'ethers';
-import Decimal from 'decimal.js';
+import Button from '@components/Button';
+import { useTheme } from '@react-navigation/native';
 import { isNumeric } from '@utils/isNumberic';
+import { isApproveMethod } from '@utils/parseTxData';
+import Decimal from 'decimal.js';
+import { formatUnits, parseUnits } from 'ethers';
+import { useCallback, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { type NativeSyntheticEvent, Pressable, StyleSheet, Text, type TextInputChangeEventData, View } from 'react-native';
+import { TextInput } from 'react-native-gesture-handler';
+import type { TxDataWithTokenInfo } from '.';
 
 interface IProps {
   open: boolean;

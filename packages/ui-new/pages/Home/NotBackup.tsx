@@ -1,13 +1,13 @@
-import React from 'react';
-import { Pressable, View, StyleSheet } from 'react-native';
-import { useTheme } from '@react-navigation/native';
-import { Image } from 'expo-image';
-import { useCurrentAccount, useGroupOfAccount, useVaultOfAccount, VaultType, VaultSourceType } from '@core/WalletCore/Plugins/ReactInject';
-import Text from '@components/Text';
-import useForceUpdateOnFocus from '@hooks/useUpdateOnFocus';
-import { HomeStackName, BackupStackName, BackupStep1StackName, type StackScreenProps } from '@router/configs';
 import Img from '@assets/images/fundsAtRisk.webp';
+import Text from '@components/Text';
+import { VaultSourceType, VaultType, useCurrentAccount, useGroupOfAccount, useVaultOfAccount } from '@core/WalletCore/Plugins/ReactInject';
+import useForceUpdateOnFocus from '@hooks/useUpdateOnFocus';
+import { useTheme } from '@react-navigation/native';
+import { BackupStackName, BackupStep1StackName, type HomeStackName, type StackScreenProps } from '@router/configs';
+import { Image } from 'expo-image';
+import type React from 'react';
 import { Trans, useTranslation } from 'react-i18next';
+import { Pressable, StyleSheet, View } from 'react-native';
 
 export const useShouldShowNotBackup = () => {
   const currentAccount = useCurrentAccount();

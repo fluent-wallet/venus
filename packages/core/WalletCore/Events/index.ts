@@ -1,15 +1,15 @@
 import { injectable } from 'inversify';
-import { combineLatest, filter, debounceTime, distinctUntilChanged } from 'rxjs';
+import { combineLatest, debounceTime, distinctUntilChanged, filter } from 'rxjs';
+import type { Address } from '../../database/models/Address';
+import type { Network } from '../../database/models/Network';
 import { container } from '../configs';
-import { lifecycleChangedSubject } from './lifecycleChanged';
+import { broadcastTransactionSubject, broadcastTransactionSubjectPush } from './broadcastTransactionSubject';
 import { currentAccountChangedSubject, currentAccountObservable } from './currentAccountChanged';
 import { currentAddressChangedSubject, currentAddressObservable } from './currentAddressChanged';
 import { currentNetworkChangedSubject, currentNetworkObservable } from './currentNetworkChanged';
+import { lifecycleChangedSubject } from './lifecycleChanged';
 import { networksChangedSubject } from './networksChanged';
 import { newestRequestSubject } from './requestSubject';
-import { broadcastTransactionSubjectPush, broadcastTransactionSubject } from './broadcastTransactionSubject';
-import { type Address } from '../../database/models/Address';
-import { type Network } from '../../database/models/Network';
 
 const compareNetworkAndAddress = ([prevNetwork, prevAddress]: [Network, Address], [currentNetwork, currentAddress]: [Network, Address]) => {
   return prevNetwork.id === currentNetwork.id && prevAddress.id === currentAddress.id;

@@ -1,13 +1,13 @@
-import React from 'react';
-import { StyleSheet } from 'react-native';
-import { useTheme } from '@react-navigation/native';
-import { useNavigation } from '@react-navigation/native';
-import { useTranslation } from 'react-i18next';
-import { Image } from 'expo-image';
+import NoneToken from '@assets/images/none-token.webp';
 import Button from '@components/Button';
 import Text from '@components/Text';
-import { HomeStackName, ReceiveStackName, type StackScreenProps } from '@router/configs';
-import NoneToken from '@assets/images/none-token.webp';
+import { useTheme } from '@react-navigation/native';
+import { useNavigation } from '@react-navigation/native';
+import { type HomeStackName, ReceiveStackName, type StackScreenProps } from '@router/configs';
+import { Image } from 'expo-image';
+import type React from 'react';
+import { useTranslation } from 'react-i18next';
+import { StyleSheet } from 'react-native';
 
 const ReceiveFunds: React.FC = () => {
   const { colors } = useTheme();

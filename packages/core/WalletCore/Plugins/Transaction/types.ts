@@ -1,4 +1,4 @@
-import { AssetType } from '@core/database/models/Asset';
+import type { AssetType } from '@core/database/models/Asset';
 
 export type ITxEvm = {
   from: string;

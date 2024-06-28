@@ -1,22 +1,23 @@
-import React, { useState, useCallback, useMemo, useEffect, useRef } from 'react';
-import { Pressable, StyleSheet, Keyboard, type TextInput as _TextInput } from 'react-native';
-import { useTheme } from '@react-navigation/native';
-import { useTranslation } from 'react-i18next';
-import { showMessage } from 'react-native-flash-message';
-import methods from '@core/WalletCore/Methods';
-import plugins from '@core/WalletCore/Plugins';
-import { useGroupFromId, useAccountsOfGroupInManage, useVaultOfGroup, VaultType } from '@core/WalletCore/Plugins/ReactInject';
-import Text from '@components/Text';
-import TextInput from '@components/TextInput';
-import HourglassLoading from '@components/Loading/Hourglass';
-import Button from '@components/Button';
-import BottomSheet, { snapPoints, BottomSheetScrollView, type BottomSheetMethods } from '@components/BottomSheet';
-import { AccountItemView } from '@modules/AccountsList';
-import { GroupSettingStackName, HDSettingStackName, BackupStackName, BackupStep1StackName, type StackScreenProps } from '@router/configs';
-import useInAsync from '@hooks/useInAsync';
 import ArrowRight from '@assets/icons/arrow-right2.svg';
 import Delete from '@assets/icons/delete.svg';
 import Settings from '@assets/icons/settings.svg';
+import BottomSheet, { snapPoints, BottomSheetScrollView, type BottomSheetMethods } from '@components/BottomSheet';
+import Button from '@components/Button';
+import HourglassLoading from '@components/Loading/Hourglass';
+import Text from '@components/Text';
+import TextInput from '@components/TextInput';
+import methods from '@core/WalletCore/Methods';
+import plugins from '@core/WalletCore/Plugins';
+import { VaultType, useAccountsOfGroupInManage, useGroupFromId, useVaultOfGroup } from '@core/WalletCore/Plugins/ReactInject';
+import useInAsync from '@hooks/useInAsync';
+import { AccountItemView } from '@modules/AccountsList';
+import { useTheme } from '@react-navigation/native';
+import { BackupStackName, BackupStep1StackName, type GroupSettingStackName, HDSettingStackName, type StackScreenProps } from '@router/configs';
+import type React from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { Keyboard, Pressable, StyleSheet, type TextInput as _TextInput } from 'react-native';
+import { showMessage } from 'react-native-flash-message';
 import DeleteConfirm from './DeleteConfirm';
 
 const GroupConfig: React.FC<StackScreenProps<typeof GroupSettingStackName>> = ({ navigation, route }) => {
@@ -166,7 +167,9 @@ const GroupConfig: React.FC<StackScreenProps<typeof GroupSettingStackName>> = ({
         </Pressable>
 
         <BottomSheetScrollView style={styles.accountsContainer}>
-          {accounts?.map((account) => <AccountItemView key={account.id} nickname={account.nickname} addressValue={account.addressValue} colors={colors} />)}
+          {accounts?.map((account) => (
+            <AccountItemView key={account.id} nickname={account.nickname} addressValue={account.addressValue} colors={colors} />
+          ))}
         </BottomSheetScrollView>
 
         <Pressable

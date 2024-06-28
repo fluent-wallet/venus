@@ -1,14 +1,15 @@
-import React, { useCallback } from 'react';
-import { View, StyleSheet } from 'react-native';
-import { useTheme, useNavigation } from '@react-navigation/native';
-import { useTranslation } from 'react-i18next';
-import { Image } from 'expo-image';
-import Text from '@components/Text';
-import Button from '@components/Button';
-import { screenHeight } from '@utils/deviceInfo';
-import backToHome from '@utils/backToHome';
-import { BackupStackName, type StackScreenProps } from '@router/configs';
 import Congratulate from '@assets/images/congratulate.webp';
+import Button from '@components/Button';
+import Text from '@components/Text';
+import { useNavigation, useTheme } from '@react-navigation/native';
+import type { BackupStackName, StackScreenProps } from '@router/configs';
+import backToHome from '@utils/backToHome';
+import { screenHeight } from '@utils/deviceInfo';
+import { Image } from 'expo-image';
+import type React from 'react';
+import { useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
+import { StyleSheet, View } from 'react-native';
 import BackupBottomSheet from './BackupBottomSheet';
 
 export const BackupSuccessStackName = 'BackupSuccess';

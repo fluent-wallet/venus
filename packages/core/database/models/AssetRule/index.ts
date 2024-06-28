@@ -1,9 +1,9 @@
 import { Model, type Query, type Relation } from '@nozbe/watermelondb';
-import { field, text, children, immutableRelation } from '@nozbe/watermelondb/decorators';
-import { type Network } from '../Network';
-import { type Address } from '../Address';
-import { type Asset } from '../Asset';
+import { children, field, immutableRelation, text } from '@nozbe/watermelondb/decorators';
 import TableName from '../../TableName';
+import type { Address } from '../Address';
+import type { Asset } from '../Asset';
+import type { Network } from '../Network';
 
 export class AssetRule extends Model {
   static table = TableName.AssetRule;

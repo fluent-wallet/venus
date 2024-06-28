@@ -1,6 +1,6 @@
-import { useMemo } from 'react';
-import Decimal from 'decimal.js';
 import { balanceFormat, convertBalanceToDecimal, numberWithCommas } from '@core/utils/balance';
+import Decimal from 'decimal.js';
+import { useMemo } from 'react';
 
 const useFormatBalance = (balance: string | undefined | null, decimals?: number | undefined) =>
   useMemo(() => {

@@ -1,31 +1,32 @@
-import React, { useState, useCallback, useRef } from 'react';
-import { View, Linking, StyleSheet } from 'react-native';
-import { useTheme, StackActions } from '@react-navigation/native';
-import { Trans, useTranslation } from 'react-i18next';
-import { useCameraPermission, useCameraDevice, useCameraFormat, Camera, type Code } from 'react-native-vision-camera';
-import { scanFromURLAsync } from 'expo-barcode-scanner';
-import { launchImageLibraryAsync } from 'expo-image-picker';
-import Decimal from 'decimal.js';
-import { useCurrentNetwork, NetworkType, getAssetsTokenList, AssetType } from '@core/WalletCore/Plugins/ReactInject';
+import ScanBorder from '@assets/icons/scan-border.svg';
+import BottomSheet, { type BottomSheetMethods, snapPoints } from '@components/BottomSheet';
+import Button from '@components/Button';
+import Text from '@components/Text';
 import methods from '@core/WalletCore/Methods';
 import plugins from '@core/WalletCore/Plugins';
-import BottomSheet, { BottomSheetMethods, snapPoints } from '@components/BottomSheet';
-import Text from '@components/Text';
-import Button from '@components/Button';
+import { AssetType, NetworkType, getAssetsTokenList, useCurrentNetwork } from '@core/WalletCore/Plugins/ReactInject';
+import { WalletConnectPluginError } from '@core/WalletCore/Plugins/WalletConnect';
+import { StackActions, useTheme } from '@react-navigation/native';
 import {
   ScanQRCodeStackName,
   SendTransactionStackName,
   SendTransactionStep2StackName,
   SendTransactionStep3StackName,
   SendTransactionStep4StackName,
+  type StackScreenProps,
   WalletConnectStackName,
   WalletConnectingStackName,
-  type StackScreenProps,
 } from '@router/configs';
-import { parseETHURL, type ETHURL } from '@utils/ETHURL';
+import { type ETHURL, parseETHURL } from '@utils/ETHURL';
 import { ENABLE_WALLET_CONNECT_FEATURE } from '@utils/features';
-import ScanBorder from '@assets/icons/scan-border.svg';
-import { WalletConnectPluginError } from '@core/WalletCore/Plugins/WalletConnect';
+import Decimal from 'decimal.js';
+import { scanFromURLAsync } from 'expo-barcode-scanner';
+import { launchImageLibraryAsync } from 'expo-image-picker';
+import type React from 'react';
+import { useCallback, useRef, useState } from 'react';
+import { Trans, useTranslation } from 'react-i18next';
+import { Linking, StyleSheet, View } from 'react-native';
+import { Camera, type Code, useCameraDevice, useCameraFormat, useCameraPermission } from 'react-native-vision-camera';
 
 // has onConfirm props means open in SendTransaction with local modal way.
 interface Props {

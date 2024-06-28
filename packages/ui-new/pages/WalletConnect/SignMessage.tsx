@@ -1,37 +1,37 @@
-import { useCallback, useMemo } from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
-import { RouteProp, useRoute, useTheme } from '@react-navigation/native';
-import { showMessage } from 'react-native-flash-message';
-import Clipboard from '@react-native-clipboard/clipboard';
-import { useTranslation } from 'react-i18next';
-import { toUtf8String } from 'ethers';
-import { Image } from 'expo-image';
-import {
-  VaultType,
-  useCurrentAccount,
-  useCurrentAddressValue,
-  useCurrentNetwork,
-  useCurrentAddress,
-  useVaultOfAccount,
-} from '@core/WalletCore/Plugins/ReactInject';
-import { WalletConnectParamList, WalletConnectSignMessageStackName } from '@router/configs';
-import { type IWCSignMessageEvent } from '@core/WalletCore/Plugins/WalletConnect/types';
-import { WalletConnectRPCMethod } from '@core/WalletCore/Plugins/WalletConnect/types';
-import { BSIMEventTypesName } from '@WalletCoreExtends/Plugins/BSIM/types';
 import { BSIMError } from '@WalletCoreExtends/Plugins/BSIM/BSIMSDK';
-import plugins from '@core/WalletCore/Plugins';
-import methods from '@core/WalletCore/Methods';
-import Text from '@components/Text';
+import { BSIMEventTypesName } from '@WalletCoreExtends/Plugins/BSIM/types';
+import Copy from '@assets/icons/copy.svg';
 import BottomSheet, { snapPoints, BottomSheetScrollView, BottomSheetView } from '@components/BottomSheet';
 import Button from '@components/Button';
 import Icon from '@components/Icon';
-import { AccountItemView } from '@modules/AccountsList';
-import { sanitizeTypedData } from '@utils/santitizeTypedData';
-import useInAsync from '@hooks/useInAsync';
-import { styles as transactionConfirmStyle } from '@pages/SendTransaction/Step4Confirm/index';
-import Copy from '@assets/icons/copy.svg';
+import Text from '@components/Text';
+import methods from '@core/WalletCore/Methods';
+import plugins from '@core/WalletCore/Plugins';
+import {
+  VaultType,
+  useCurrentAccount,
+  useCurrentAddress,
+  useCurrentAddressValue,
+  useCurrentNetwork,
+  useVaultOfAccount,
+} from '@core/WalletCore/Plugins/ReactInject';
+import type { IWCSignMessageEvent } from '@core/WalletCore/Plugins/WalletConnect/types';
+import { WalletConnectRPCMethod } from '@core/WalletCore/Plugins/WalletConnect/types';
 import { SignType } from '@core/database/models/Signature/type';
+import useInAsync from '@hooks/useInAsync';
+import { AccountItemView } from '@modules/AccountsList';
 import BSIMVerify, { useBSIMVerify } from '@pages/SendTransaction/BSIMVerify';
+import { styles as transactionConfirmStyle } from '@pages/SendTransaction/Step4Confirm/index';
+import Clipboard from '@react-native-clipboard/clipboard';
+import { type RouteProp, useRoute, useTheme } from '@react-navigation/native';
+import type { WalletConnectParamList, WalletConnectSignMessageStackName } from '@router/configs';
+import { sanitizeTypedData } from '@utils/santitizeTypedData';
+import { toUtf8String } from 'ethers';
+import { Image } from 'expo-image';
+import { useCallback, useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
+import { Pressable, StyleSheet, View } from 'react-native';
+import { showMessage } from 'react-native-flash-message';
 
 function WalletConnectSignMessage() {
   const { t } = useTranslation();

@@ -1,13 +1,14 @@
-import React, { memo, useMemo } from 'react';
-import { View, StyleSheet } from 'react-native';
-import { useTheme } from '@react-navigation/native';
-import { useTranslation } from 'react-i18next';
-import { Image } from 'expo-image';
-import { useUnfinishedTxs, useFinishedTxs } from '@core/WalletCore/Plugins/ReactInject';
-import { type Tx } from '@core/database/models/Tx';
-import Text from '@components/Text';
-import NoneActivity from '@assets/images/none-activity.webp';
 import Calendar from '@assets/icons/calendar.svg';
+import NoneActivity from '@assets/images/none-activity.webp';
+import Text from '@components/Text';
+import { useFinishedTxs, useUnfinishedTxs } from '@core/WalletCore/Plugins/ReactInject';
+import type { Tx } from '@core/database/models/Tx';
+import { useTheme } from '@react-navigation/native';
+import { Image } from 'expo-image';
+import type React from 'react';
+import { memo, useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
+import { StyleSheet, View } from 'react-native';
 import { styles as noneStyles } from '../AssetsList/TokensList/ReceiveFunds';
 import ActivityItem from './ActivityItem';
 

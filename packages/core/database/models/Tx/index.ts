@@ -1,15 +1,15 @@
+import type { ProcessErrorType } from '@core/utils/eth';
+import { Model, type Query, type Relation } from '@nozbe/watermelondb';
+import { children, date, field, immutableRelation, json, reader, readonly, relation, text, writer } from '@nozbe/watermelondb/decorators';
 import { of } from 'rxjs';
-import { Model, type Relation, type Query } from '@nozbe/watermelondb';
-import { field, text, readonly, date, relation, immutableRelation, json, writer, reader, children } from '@nozbe/watermelondb/decorators';
-import { type Address } from '../Address';
-import { type Asset } from '../Asset';
-import { type App } from '../App';
-import { type TxExtra } from '../TxExtra';
-import { type TxPayload } from '../TxPayload';
 import TableName from '../../TableName';
-import { ExecutedStatus, Receipt, TxSource, TxStatus } from './type';
-import { ProcessErrorType } from '@core/utils/eth';
-import { Signature } from '../Signature';
+import type { Address } from '../Address';
+import type { App } from '../App';
+import type { Asset } from '../Asset';
+import type { Signature } from '../Signature';
+import type { TxExtra } from '../TxExtra';
+import type { TxPayload } from '../TxPayload';
+import type { ExecutedStatus, Receipt, TxSource, TxStatus } from './type';
 
 export class Tx extends Model {
   static table = TableName.Tx;

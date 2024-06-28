@@ -1,27 +1,28 @@
-/* eslint-disable react-hooks/exhaustive-deps */
-import React, { useState, useMemo } from 'react';
-import { useTheme } from '@react-navigation/native';
-import { View, StyleSheet } from 'react-native';
-import { showMessage } from 'react-native-flash-message';
-import Clipboard from '@react-native-clipboard/clipboard';
-import QRCode from 'react-native-qrcode-svg';
-import Decimal from 'decimal.js';
-import { useCurrentAccount, useCurrentNetwork, useCurrentAddressValue, NetworkType } from '@core/WalletCore/Plugins/ReactInject';
-import { type AssetInfo } from '@core/WalletCore/Plugins/AssetsTracker/types';
-import { trimDecimalZeros } from '@core/utils/balance';
-import { ReceiveStackName, type StackScreenProps } from '@router/configs';
-import { AccountItemView } from '@modules/AccountsList';
+import PoundKey from '@assets/icons/pound-key.svg';
+import Share from '@assets/icons/share.svg';
+import Logo from '@assets/images/swift-shield-QRCode.webp';
 import BottomSheet, { snapPoints } from '@components/BottomSheet';
 import Text from '@components/Text';
+import type { AssetInfo } from '@core/WalletCore/Plugins/AssetsTracker/types';
+import { NetworkType, useCurrentAccount, useCurrentAddressValue, useCurrentNetwork } from '@core/WalletCore/Plugins/ReactInject';
+import { trimDecimalZeros } from '@core/utils/balance';
+import { numberWithCommas } from '@core/utils/balance';
+import { AccountItemView } from '@modules/AccountsList';
 import { Navigation } from '@pages/Home/Navigations';
+import Clipboard from '@react-native-clipboard/clipboard';
+import { useTheme } from '@react-navigation/native';
+import type { ReceiveStackName, StackScreenProps } from '@router/configs';
 import { encodeETHURL } from '@utils/ETHURL';
 import { isSmallDevice } from '@utils/deviceInfo';
-import { numberWithCommas } from '@core/utils/balance'
-import Logo  from '@assets/images/swift-shield-QRCode.webp';
-import Share from '@assets/icons/share.svg';
-import PoundKey from '@assets/icons/pound-key.svg';
-import ReceiveSetAsset from './ReceiveSetAsset';
+import Decimal from 'decimal.js';
+/* eslint-disable react-hooks/exhaustive-deps */
+import type React from 'react';
+import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { StyleSheet, View } from 'react-native';
+import { showMessage } from 'react-native-flash-message';
+import QRCode from 'react-native-qrcode-svg';
+import ReceiveSetAsset from './ReceiveSetAsset';
 
 interface Props {
   navigation: StackScreenProps<typeof ReceiveStackName>['navigation'];
@@ -172,7 +173,7 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontWeight: '700',
     lineHeight: 26,
-    maxWidth: 172
+    maxWidth: 172,
   },
   price: {
     fontSize: 14,

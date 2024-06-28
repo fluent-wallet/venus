@@ -1,4 +1,4 @@
-import { useState, useLayoutEffect, PropsWithChildren } from 'react';
+import { type PropsWithChildren, useLayoutEffect, useState } from 'react';
 
 interface Props {
   delay?: number;

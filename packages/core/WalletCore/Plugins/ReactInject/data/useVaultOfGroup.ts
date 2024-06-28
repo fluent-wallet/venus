@@ -1,7 +1,7 @@
 import { useAtomValue } from 'jotai';
 import { atomFamily, atomWithObservable } from 'jotai/utils';
-import { switchMap, of } from 'rxjs';
 import { memoize } from 'lodash-es';
+import { of, switchMap } from 'rxjs';
 import { observeAccountGroupById } from '../../../../database/models/AccountGroup/query';
 
 export const observeVaultOfGroup = memoize((accountGroupId: string) =>

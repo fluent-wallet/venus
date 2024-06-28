@@ -1,14 +1,14 @@
-/* eslint-disable @typescript-eslint/no-non-null-assertion */
-import { of, catchError, from, take, concatMap, defer, map, firstValueFrom, filter, throwIfEmpty } from 'rxjs';
-import { truncate } from '../../../utils/balance';
 import Decimal from 'decimal.js';
-import methods from '../../Methods';
-import database from '../../../database';
-import { AssetType, AssetSource, type Asset } from './../../../database/models/Asset';
-import { type Address } from './../../../database/models/Address';
-import { type Network } from './../../../database/models/Network';
-import { priorityFetcher, type Fetcher, type FetchAssetBalance, type AssetInfo } from './types';
 import { formatUnits } from 'ethers';
+/* eslint-disable @typescript-eslint/no-non-null-assertion */
+import { catchError, concatMap, defer, filter, firstValueFrom, from, map, of, take, throwIfEmpty } from 'rxjs';
+import database from '../../../database';
+import { truncate } from '../../../utils/balance';
+import methods from '../../Methods';
+import type { Address } from './../../../database/models/Address';
+import { type Asset, AssetSource, AssetType } from './../../../database/models/Asset';
+import type { Network } from './../../../database/models/Network';
+import { type AssetInfo, type FetchAssetBalance, type Fetcher, priorityFetcher } from './types';
 
 const trackAssets = async ({
   chainFetcher,
@@ -155,7 +155,7 @@ const trackAssets = async ({
           decimals: asset.decimals!,
           balance: typeof balance === 'string' ? balance : undefined!,
           icon: asset.icon!,
-        } as AssetInfo
+        } as AssetInfo;
       });
       assets?.forEach((asset) => (assetsHash[asset.contractAddress ? asset.contractAddress : AssetType.Native] = asset));
     }

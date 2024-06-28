@@ -1,9 +1,9 @@
 import { isAddress } from 'ethers';
 
 export function toPlainString(num: string | number) {
-  return ('' + +num).replace(/(-?)(\d*)\.?(\d*)e([+-]\d+)/, function (a, b, c, d, e) {
-    return e < 0 ? b + '0.' + Array(1 - e - c.length).join(0) + c + d : b + c + d + Array(e - d.length + 1).join(0);
-  });
+  return ('' + +num).replace(/(-?)(\d*)\.?(\d*)e([+-]\d+)/, (a, b, c, d, e) =>
+    e < 0 ? b + '0.' + Array(1 - e - c.length).join(0) + c + d : b + c + d + Array(e - d.length + 1).join(0),
+  );
 }
 
 export interface ETHURL {
@@ -113,13 +113,15 @@ export const encodeETHURL = (params: ETHURL) => {
   const queryString = new URLSearchParams();
 
   if (parameters) {
-    Object.entries(parameters).sort().forEach(([key, value]) => {
-      if (key === 'uint256' || key === 'value') {
-        queryString.set(key, bigIntToExponential(BigInt(value)));
-      } else {
-        queryString.set(key, value.toString());
-      }
-    });
+    Object.entries(parameters)
+      .sort()
+      .forEach(([key, value]) => {
+        if (key === 'uint256' || key === 'value') {
+          queryString.set(key, bigIntToExponential(BigInt(value)));
+        } else {
+          queryString.set(key, value.toString());
+        }
+      });
     query = queryString.toString();
   }
   return `${schema_prefix}:${target_address}${chain_id ? `@${chain_id}` : ''}${function_name ? `/${function_name}` : ''}${query ? `?${query}` : ''}`;

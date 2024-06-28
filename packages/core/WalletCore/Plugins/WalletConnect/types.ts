@@ -1,6 +1,6 @@
-import type { Web3WalletTypes } from '@walletconnect/web3wallet';
 import type { ProposalTypes } from '@walletconnect/types';
 import type { BuildApprovedNamespacesParams, SdkErrorKey } from '@walletconnect/utils';
+import type { Web3WalletTypes } from '@walletconnect/web3wallet';
 
 export enum WalletConnectRPCMethod {
   //   Sign = 'eth_sign',

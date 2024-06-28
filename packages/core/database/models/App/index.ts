@@ -1,8 +1,8 @@
 import { Model, type Query } from '@nozbe/watermelondb';
-import { text, children } from '@nozbe/watermelondb/decorators';
-import { type Permission } from '../Permission';
+import { children, text } from '@nozbe/watermelondb/decorators';
 import TableName from '../../TableName';
-import { Signature } from '../Signature';
+import type { Permission } from '../Permission';
+import type { Signature } from '../Signature';
 
 export class App extends Model {
   static table = TableName.App;

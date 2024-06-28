@@ -9,25 +9,25 @@
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const sanitizeTypedData = (data: any) => {
-    if (data.types[data.primaryType].length > 0) {
-      // Extract all the valid permit types for the primary type
-      const permitPrimaryTypes: string[] = data.types[data.primaryType].map((type: { name: string; type: string }) => type.name);
-  
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const sanitizedMessage: any = {};
-      // Extract all the message keys that matches the valid permit types
-      Object.keys(data.message).forEach((key) => {
-        if (permitPrimaryTypes.includes(key)) {
-          sanitizedMessage[key] = data.message[key];
-        }
-      });
-  
-      const sanitizedData = {
-        ...data,
-        message: sanitizedMessage,
-      };
-  
-      return sanitizedData;
-    }
-    return data;
-  };
+  if (data.types[data.primaryType].length > 0) {
+    // Extract all the valid permit types for the primary type
+    const permitPrimaryTypes: string[] = data.types[data.primaryType].map((type: { name: string; type: string }) => type.name);
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const sanitizedMessage: any = {};
+    // Extract all the message keys that matches the valid permit types
+    Object.keys(data.message).forEach((key) => {
+      if (permitPrimaryTypes.includes(key)) {
+        sanitizedMessage[key] = data.message[key];
+      }
+    });
+
+    const sanitizedData = {
+      ...data,
+      message: sanitizedMessage,
+    };
+
+    return sanitizedData;
+  }
+  return data;
+};

@@ -1,17 +1,18 @@
-import React, { useEffect, useRef, useState } from 'react';
-import { View, FlatList, StyleSheet } from 'react-native';
-import { useTheme } from '@react-navigation/native';
-import Text from '@components/Text';
-import { SignatureRecordsStackName, type StackScreenProps } from '@router/configs';
-import { useTranslation } from 'react-i18next';
-import { Signature } from '@core/database/models/Signature';
-import { fetchSignatureRecords, useSignatureRecords } from '@core/WalletCore/Plugins/ReactInject/data/useSignature';
-import { useCurrentAddress } from '@core/WalletCore/Plugins/ReactInject';
 import NoneSignature from '@assets/images/none-signature.svg';
-import TypeFilter from './TypeFilter';
-import { SignatureFilterOption } from '@core/database/models/Signature/type';
-import { ENABLE_SMALL_SIGNATURE_RECORDS_FEATURE } from '@utils/features';
 import Delay from '@components/Delay';
+import Text from '@components/Text';
+import { useCurrentAddress } from '@core/WalletCore/Plugins/ReactInject';
+import { fetchSignatureRecords, useSignatureRecords } from '@core/WalletCore/Plugins/ReactInject/data/useSignature';
+import type { Signature } from '@core/database/models/Signature';
+import { SignatureFilterOption } from '@core/database/models/Signature/type';
+import { useTheme } from '@react-navigation/native';
+import type { SignatureRecordsStackName, StackScreenProps } from '@router/configs';
+import { ENABLE_SMALL_SIGNATURE_RECORDS_FEATURE } from '@utils/features';
+import type React from 'react';
+import { useEffect, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { FlatList, StyleSheet, View } from 'react-native';
+import TypeFilter from './TypeFilter';
 
 export const SignatureItem: React.FC<{ item: Signature }> = ({ item }) => {
   const { colors } = useTheme();

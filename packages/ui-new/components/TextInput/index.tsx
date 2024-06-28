@@ -1,13 +1,13 @@
-import { useState, useMemo, useCallback, useRef, forwardRef, useEffect, isValidElement, type Component } from 'react';
-import { View, TextInput, StyleSheet, Pressable, Platform, Keyboard, type TextInputProps, type ViewStyle, type StyleProp } from 'react-native';
-import { useTheme } from '@react-navigation/native';
-import { type SvgProps } from 'react-native-svg';
+import Clear from '@assets/icons/clear.svg';
+import EyeClose from '@assets/icons/eye-close.svg';
+import EyeOpen from '@assets/icons/eye-open.svg';
 import composeRef from '@cfx-kit/react-utils/dist/composeRef';
 import { BottomSheetTextInput } from '@components/BottomSheet';
+import { useTheme } from '@react-navigation/native';
 import { isDev } from '@utils/getEnv';
-import EyeOpen from '@assets/icons/eye-open.svg';
-import EyeClose from '@assets/icons/eye-close.svg';
-import Clear from '@assets/icons/clear.svg';
+import { type Component, forwardRef, isValidElement, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { Keyboard, Platform, Pressable, type StyleProp, StyleSheet, TextInput, type TextInputProps, View, type ViewStyle } from 'react-native';
+import type { SvgProps } from 'react-native-svg';
 
 interface Props extends TextInputProps {
   containerStyle?: StyleProp<ViewStyle>;

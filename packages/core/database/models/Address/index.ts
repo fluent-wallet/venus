@@ -1,12 +1,12 @@
 import { Model, type Query, type Relation } from '@nozbe/watermelondb';
-import { text, children, relation, immutableRelation, reader } from '@nozbe/watermelondb/decorators';
-import { type Tx } from '../Tx';
-import { type Account } from '../Account';
-import { type Network, NetworkType } from '../Network';
-import { type AssetRule } from '../AssetRule';
-import { type AddressBook } from '../AddressBook';
+import { children, immutableRelation, reader, relation, text } from '@nozbe/watermelondb/decorators';
 import TableName from '../../TableName';
-import { Signature } from '../Signature';
+import type { Account } from '../Account';
+import type { AddressBook } from '../AddressBook';
+import type { AssetRule } from '../AssetRule';
+import { type Network, NetworkType } from '../Network';
+import type { Signature } from '../Signature';
+import type { Tx } from '../Tx';
 
 export class Address extends Model {
   static table = TableName.Address;

@@ -5,7 +5,8 @@
   "scripts": {
     "android": "react-native run-android --tasks installDevDebug",
     "ios": "react-native run-ios",
-    "lint": "eslint .",
+    "lint": "biome check --fix",
+    "format": "biome format --write",
     "start": "react-native start",
     "test": "jest",
     "pod:install": "command -v pod && (cd ios/ && pod install --verbose && cd ..) || echo \"Skipping pod install\"",

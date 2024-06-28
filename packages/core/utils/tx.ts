@@ -1,9 +1,9 @@
-import { Asset, AssetType } from '@core/database/models/Asset';
+import { iface721, iface777, iface1155 } from '@core/contracts';
+import { type Asset, AssetType } from '@core/database/models/Asset';
+import type { Tx } from '@core/database/models/Tx';
 import { ExecutedStatus, FAILED_TX_STATUSES, PENDING_TX_STATUSES } from '@core/database/models/Tx/type';
-import { TxPayload } from '@core/database/models/TxPayload';
-import { iface1155, iface721, iface777 } from '@core/contracts';
-import { type Tx } from '@core/database/models/Tx';
-import { FunctionNameApprove, parseTxData } from '@utils/parseTxData';
+import type { TxPayload } from '@core/database/models/TxPayload';
+import { type FunctionNameApprove, parseTxData } from '@utils/parseTxData';
 
 export const formatStatus = (tx: Tx): 'failed' | 'pending' | 'confirmed' => {
   const { status, executedStatus } = tx;

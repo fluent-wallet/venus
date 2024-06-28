@@ -1,16 +1,16 @@
 import { useAtomValue } from 'jotai';
 import { atomWithObservable } from 'jotai/utils';
-import { switchMap, from, filter, of, catchError } from 'rxjs';
-import { currentAccountObservable } from './useCurrentAccount';
+import { catchError, filter, from, of, switchMap } from 'rxjs';
 import { getAtom } from '../nexus';
+import { currentAccountObservable } from './useCurrentAccount';
 
 export const currentAddressObservable = currentAccountObservable.pipe(
   filter((account) => !!account),
-  switchMap((account) => account?.currentNetworkAddressObservable.pipe(catchError(() => of(null))))
+  switchMap((account) => account?.currentNetworkAddressObservable.pipe(catchError(() => of(null)))),
 );
 
 export const currentAddressValueObservable = currentAddressObservable.pipe(
-  switchMap((currentAddress) => (currentAddress ? from(currentAddress.getValue()).pipe(catchError(() => of(null))) : of(null)))
+  switchMap((currentAddress) => (currentAddress ? from(currentAddress.getValue()).pipe(catchError(() => of(null))) : of(null))),
 );
 export const currentAddressAtom = atomWithObservable(() => currentAddressObservable, { initialValue: null });
 export const useCurrentAddress = () => useAtomValue(currentAddressAtom);

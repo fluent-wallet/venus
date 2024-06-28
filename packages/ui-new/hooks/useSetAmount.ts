@@ -1,9 +1,9 @@
-import { atom } from 'jotai';
+import type { AssetInfo } from '@core/WalletCore/Plugins/AssetsTracker/types';
 import { getAssetsAtomKey, getAssetsHash } from '@core/WalletCore/Plugins/ReactInject/data/useAssets';
-import { AssetType } from '@core/database/models/Asset';
-import { AssetInfo } from '@core/WalletCore/Plugins/AssetsTracker/types';
-import { getCurrentNetwork } from '@core/WalletCore/Plugins/ReactInject/data/useCurrentNetwork';
 import { getCurrentAddress } from '@core/WalletCore/Plugins/ReactInject/data/useCurrentAddress';
+import { getCurrentNetwork } from '@core/WalletCore/Plugins/ReactInject/data/useCurrentNetwork';
+import { AssetType } from '@core/database/models/Asset';
+import { atom } from 'jotai';
 
 interface TokenQRInfo extends AssetInfo {
   parameters?: {
@@ -32,7 +32,7 @@ const setTokenQRInfoAtom = atom(
   },
   (get, set, update: TokenQRInfo | null) => {
     set(_TokenQRInfoAtom, update);
-  }
+  },
 );
 
 export default setTokenQRInfoAtom;
