@@ -1012,13 +1012,13 @@ PODS:
     - glog
     - RCT-Folly (= 2022.05.16.00)
     - React-Core
-  - react-native-compat (2.13.3):
+  - react-native-compat (2.13.1):
     - glog
     - RCT-Folly (= 2022.05.16.00)
     - React-Core
-  - react-native-config (1.5.2):
-    - react-native-config/App (= 1.5.2)
-  - react-native-config/App (1.5.2):
+  - react-native-config (1.5.1):
+    - react-native-config/App (= 1.5.1)
+  - react-native-config/App (1.5.1):
     - React-Core
   - react-native-get-random-values (1.8.0):
     - React-Core
@@ -1229,7 +1229,7 @@ PODS:
     - glog
     - RCT-Folly (= 2022.05.16.00)
     - React-Core
-  - RNScreenshotPrevent (1.2.1):
+  - RNScreenshotPrevent (1.2.0):
     - React
   - RNSVG (14.1.0):
     - React-Core
@@ -1619,8 +1619,8 @@ SPEC CHECKSUMS:
   React-Mapbuffer: 84ea43c6c6232049135b1550b8c60b2faac19fab
   react-native-bignumber: 835205afffc12daf6c2a047da6ab4fccb94e3004
   react-native-bsim: 6f67d9d404840e32c313b2b43e145e89518b29f4
-  react-native-compat: b770968205a7e199e0cdfb99b0c1979144dccc43
-  react-native-config: d7d8a0c65f7fa523197879f6b777997abbfc987e
+  react-native-compat: fbd5624224151b74ab912e0379374286adfb2e26
+  react-native-config: 86038147314e2e6d10ea9972022aa171e6b1d4d8
   react-native-get-random-values: a6ea6a8a65dc93e96e24a11105b1a9c8cfe1d72a
   react-native-netinfo: 3aa5637c18834966e0c932de8ae1ae56fea20a97
   react-native-pager-view: 4e115a6da23fba4b12321cafe8fa69184f44580e
@@ -1656,7 +1656,7 @@ SPEC CHECKSUMS:
   RNKeychain: 4f63aada75ebafd26f4bc2c670199461eab85d94
   RNReanimated: f6b02d8f5eaa2830296411d4ec3b8ef5442dd13d
   RNScreens: 17e2f657f1b09a71ec3c821368a04acbb7ebcb46
-  RNScreenshotPrevent: 105cddf74799cbd81aac76e56a4025a345db8967
+  RNScreenshotPrevent: dc9741e416ba80c3739418f112ac4093188315e9
   RNSVG: ba3e7232f45e34b7b47e74472386cf4e1a676d0a
   SDWebImage: 750adf017a315a280c60fde706ab1e552a3ae4e9
   SDWebImageAVIFCoder: 8348fef6d0ec69e129c66c9fe4d74fbfbf366112

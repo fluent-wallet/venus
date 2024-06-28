@@ -3,6 +3,7 @@ import type { NFTItemDetail } from '@core/WalletCore/Plugins/NFTDetailTracker';
 import type { IWCSendTransactionEventData, IWCSessionProposalEventData, IWCSignMessageEventData } from '@core/WalletCore/Plugins/WalletConnect/types';
 import type { NavigationProp, NavigatorScreenParams } from '@react-navigation/native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
+import type { VersionJSON } from '@pages/Settings/AboutUs';
 
 export const WelcomeStackName = 'Welcome';
 export const WayToInitWalletStackName = 'WayToInitWallet';
@@ -23,6 +24,7 @@ export const EraseAllWalletStackName = 'EraseAllWallet';
 export const AddAnotherWalletStackName = 'AddAnotherWallet';
 export const SettingsStackName = 'Settings';
 export const AboutUsStackName = 'AboutUs';
+export const UpdateVersionStackName = 'UpdateVersion';
 export const PreferencesStackName = 'Preferences';
 export const AppearanceStackName = 'Appearance';
 export const LanguageStackName = 'Language';
@@ -32,14 +34,12 @@ export const SignatureRecordsStackName = 'SignatureRecords';
 
 export const WalletConnectStackName = 'WalletConnect';
 
-export const WalletConnectingStackName = 'WalletConnecting';
 export const WalletConnectProposalStackName = 'WalletConnectProposal';
 export const WalletConnectSessionsStackName = 'WalletConnectSessions';
 export const WalletConnectSignMessageStackName = 'WalletConnectSignMessage';
 export const WalletConnectTransactionStackName = 'WalletConnectTransaction';
 
 export type WalletConnectParamList = {
-  [WalletConnectingStackName]: undefined;
   [WalletConnectProposalStackName]: IWCSessionProposalEventData & { connectedNetworks: Array<{ icon: string; name: string; netId: number; id: string }> };
   [WalletConnectSessionsStackName]: undefined;
   [WalletConnectSignMessageStackName]: IWCSignMessageEventData;
@@ -69,6 +69,7 @@ export type RootStackParamList = {
   [AddAnotherWalletStackName]: undefined;
   [SettingsStackName]: undefined;
   [AboutUsStackName]: undefined;
+  [UpdateVersionStackName]: { newVersion: VersionJSON };
   [PreferencesStackName]: undefined;
   [AppearanceStackName]: undefined;
   [LanguageStackName]: undefined;

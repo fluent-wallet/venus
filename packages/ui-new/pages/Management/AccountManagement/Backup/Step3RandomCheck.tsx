@@ -1,5 +1,6 @@
 import Button from '@components/Button';
 import Text from '@components/Text';
+import { BottomSheetScrollContent, BottomSheetFooter } from '@components/BottomSheet';
 import { useVaultFromId } from '@core/WalletCore/Plugins/ReactInject';
 import { useTheme } from '@react-navigation/native';
 import { type BackupScreenProps, type BackupStep3StackName, BackupSuccessStackName } from '@router/configs';
@@ -41,53 +42,60 @@ const BackupStep3RandomCheck: React.FC<BackupScreenProps<typeof BackupStep3Stack
 
   return (
     <BackupBottomSheet>
-      <Text style={[styles.title, { color: colors.textPrimary }]}>{t('backup.verify.title')}</Text>
-      {mixers.map(({ originIndex, mixer }, index) => (
-        <Fragment key={index}>
-          <Text style={[styles.text, { marginHorizontal: 16, color: colors.textPrimary }]}>
-            {t('backup.verify.word')} #{originIndex + 1}
-          </Text>
-          <View style={styles.wordsWrapper}>
-            {mixer.map((word) => (
-              <Pressable
-                key={word}
-                onPress={() =>
-                  setSelectedWords((pre) => {
-                    pre[index] = pre[index] === word ? null : word;
-                    return [pre[0], pre[1], pre[2]];
-                  })
-                }
-                style={({ pressed }) => [
-                  styles.word,
-                  { backgroundColor: selectedWords[index] === word ? colors.bgSelect : pressed ? colors.bgSelect : 'transparent', opacity: pressed ? 0.75 : 1 },
-                ]}
-                testID="word"
-              >
-                <Text style={[styles.text, { color: colors.textPrimary }]}>{word}</Text>
-              </Pressable>
-            ))}
-          </View>
-        </Fragment>
-      ))}
-      <Button
-        testID="confirm"
-        style={styles.btn}
-        disabled={!isAllSelected}
-        onPress={() => {
-          if (isAllCorrect) {
-            vault?.finishBackup?.();
-            navigation.navigate(BackupSuccessStackName);
-          } else {
-            showMessage({
-              message: '🤔 Wrong word, please check again.',
-              type: 'warning',
-            });
-          }
-        }}
-        size="small"
-      >
-        {t('common.confirm')}
-      </Button>
+      <BottomSheetScrollContent>
+        <Text style={[styles.title, { color: colors.textPrimary }]}>{t('backup.verify.title')}</Text>
+        {mixers.map(({ originIndex, mixer }, index) => (
+          // biome-ignore lint/suspicious/noArrayIndexKey: <explanation>
+          <Fragment key={index}>
+            <Text style={[styles.text, { color: colors.textPrimary }]}>
+              {t('backup.verify.word')} #{originIndex + 1}
+            </Text>
+            <View style={styles.wordsWrapper}>
+              {mixer.map((word) => (
+                <Pressable
+                  key={word}
+                  onPress={() =>
+                    setSelectedWords((pre) => {
+                      pre[index] = pre[index] === word ? null : word;
+                      return [pre[0], pre[1], pre[2]];
+                    })
+                  }
+                  style={({ pressed }) => [
+                    styles.word,
+                    {
+                      backgroundColor: selectedWords[index] === word ? colors.bgSelect : pressed ? colors.bgSelect : 'transparent',
+                      opacity: pressed ? 0.75 : 1,
+                    },
+                  ]}
+                  testID="word"
+                >
+                  <Text style={[styles.text, { color: colors.textPrimary }]}>{word}</Text>
+                </Pressable>
+              ))}
+            </View>
+          </Fragment>
+        ))}
+      </BottomSheetScrollContent>
+      <BottomSheetFooter>
+        <Button
+          testID="confirm"
+          disabled={!isAllSelected}
+          onPress={() => {
+            if (isAllCorrect) {
+              vault?.finishBackup?.();
+              navigation.navigate(BackupSuccessStackName);
+            } else {
+              showMessage({
+                message: '🤔 Wrong word, please check again.',
+                type: 'warning',
+              });
+            }
+          }}
+          size="small"
+        >
+          {t('common.confirm')}
+        </Button>
+      </BottomSheetFooter>
     </BackupBottomSheet>
   );
 };
@@ -99,17 +107,15 @@ const styles = StyleSheet.create({
     lineHeight: 28,
     marginTop: 20,
     marginBottom: 32,
-    paddingHorizontal: 16,
   },
   wordsWrapper: {
     display: 'flex',
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    gap: 8,
+    gap: 12,
     marginTop: 8,
     marginBottom: 24,
-    marginHorizontal: 16,
   },
   word: {
     flexShrink: 1,
@@ -125,11 +131,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
     lineHeight: 24,
-  },
-  btn: {
-    marginTop: 'auto',
-    marginBottom: 32,
-    marginHorizontal: 16,
   },
 });
 

@@ -1,7 +1,14 @@
 import ArrowRight from '@assets/icons/arrow-right2.svg';
 import Delete from '@assets/icons/delete.svg';
 import Settings from '@assets/icons/settings.svg';
-import BottomSheet, { snapPoints, BottomSheetScrollView, type BottomSheetMethods } from '@components/BottomSheet';
+import BottomSheet, {
+  snapPoints,
+  BottomSheetWrapper,
+  BottomSheetScrollContent,
+  BottomSheetHeader,
+  BottomSheetFooter,
+  type BottomSheetMethods,
+} from '@components/BottomSheet';
 import Button from '@components/Button';
 import HourglassLoading from '@components/Loading/Hourglass';
 import Text from '@components/Text';
@@ -73,11 +80,8 @@ const GroupConfig: React.FC<StackScreenProps<typeof GroupSettingStackName>> = ({
     if (!vault) return;
     try {
       await plugins.Authentication.getPassword();
-      console.log('1');
       await methods.deleteVault(vault);
-      console.log('2');
       await plugins.WalletConnect.removeSessionByAddress(accounts.map((v) => v.addressValue));
-      console.log('3');
       showMessage({
         message: t('account.group.remove.success'),
         type: 'success',
@@ -127,75 +131,76 @@ const GroupConfig: React.FC<StackScreenProps<typeof GroupSettingStackName>> = ({
         enablePanDownToClose={!inDelete}
         enableContentPanningGesture={!inDelete}
         enableHandlePanningGesture={!inDelete}
-        style={styles.container}
       >
-        <Text style={[styles.title, styles.mainText, { color: colors.textPrimary }]}>{GroupTitle}</Text>
-        <Text style={[styles.description, { color: colors.textSecondary }]}>{t('account.group.inputLabel')}</Text>
-        <TextInput
-          ref={textinputRef}
-          containerStyle={[styles.textinput, { borderColor: colors.borderFourth }]}
-          showVisible={false}
-          defaultHasValue
-          value={accountGroupName}
-          onChangeText={(newNickName) => setAccountGroupName(newNickName)}
-          isInBottomSheet
-          disabled={inDelete}
-        />
-        {(vault?.type === VaultType.HierarchicalDeterministic || vault?.type === VaultType.BSIM) && (
-          <>
-            <Text style={[styles.description, styles.backupDescription, { color: colors.textSecondary }]}>
-              {renderByVaultType(t('common.backup'), t('account.group.settings.BSIM'))}
-            </Text>
+        <BottomSheetWrapper innerPaddingHorizontal>
+          <BottomSheetHeader title={GroupTitle}>
+            <Text style={[styles.description, { marginTop: 22, color: colors.textSecondary }]}>{t('account.group.inputLabel')}</Text>
+            <TextInput
+              ref={textinputRef}
+              containerStyle={[styles.textinput, { borderColor: colors.borderFourth }]}
+              showVisible={false}
+              defaultHasValue
+              value={accountGroupName}
+              onChangeText={(newNickName) => setAccountGroupName(newNickName)}
+              isInBottomSheet
+              disabled={inDelete}
+            />
+            {(vault?.type === VaultType.HierarchicalDeterministic || vault?.type === VaultType.BSIM) && (
+              <>
+                <Text style={[styles.description, styles.backupDescription, { color: colors.textSecondary }]}>
+                  {renderByVaultType(t('common.backup'), t('account.group.settings.BSIM'))}
+                </Text>
+                <Pressable
+                  style={({ pressed }) => [styles.row, { backgroundColor: pressed ? colors.underlay : 'transparent' }]}
+                  onPress={renderByVaultType(handleBackupSeedPhrase, handleChangeBSIMPin)}
+                  testID="action"
+                  disabled={inDelete}
+                >
+                  <Text style={[styles.mainText, styles.backupText, { color: colors.textPrimary }]}>
+                    {renderByVaultType(t('common.seedPhrase'), t('account.group.settings.BSIMCode'))}
+                  </Text>
+                  <ArrowRight color={colors.iconPrimary} width={16} height={16} style={{ transform: [{ translateY: -1 }] }} />
+                </Pressable>
+              </>
+            )}
+
             <Pressable
-              style={({ pressed }) => [styles.row, { backgroundColor: pressed ? colors.underlay : 'transparent' }]}
-              onPress={renderByVaultType(handleBackupSeedPhrase, handleChangeBSIMPin)}
-              testID="action"
+              style={({ pressed }) => [styles.HDManage, { backgroundColor: pressed ? colors.underlay : 'transparent' }]}
+              onPress={() => navigation.navigate(HDSettingStackName, { groupId: route.params.groupId })}
+              testID="HDManage"
               disabled={inDelete}
             >
-              <Text style={[styles.mainText, styles.backupText, { color: colors.textPrimary }]}>
-                {renderByVaultType(t('common.seedPhrase'), t('account.group.settings.BSIMCode'))}
-              </Text>
-              <ArrowRight color={colors.iconPrimary} width={16} height={16} style={{ transform: [{ translateY: -1 }] }} />
+              <Text style={[styles.HDManageText, { color: colors.textSecondary }]}>{t('common.HDWallets')}</Text>
+              <Settings color={colors.textSecondary} />
             </Pressable>
-          </>
-        )}
+          </BottomSheetHeader>
+          <BottomSheetScrollContent>
+            {accounts?.map((account) => (
+              <AccountItemView key={account.id} nickname={account.nickname} addressValue={account.addressValue} colors={colors} />
+            ))}
+          </BottomSheetScrollContent>
+          <BottomSheetFooter>
+            <Pressable
+              style={({ pressed }) => [styles.row, styles.removeContainer, { backgroundColor: pressed ? colors.underlay : 'transparent' }]}
+              onPress={handlePressDelete}
+              testID="remove"
+              disabled={inDelete}
+            >
+              <Delete color={colors.textPrimary} width={24} height={24} />
+              <Text style={[styles.mainText, { color: colors.textPrimary }]}>{t('account.group.action.remove')}</Text>
+              {inDelete && <HourglassLoading style={styles.deleteLoading} />}
+            </Pressable>
 
-        <Pressable
-          style={({ pressed }) => [styles.HDManage, { backgroundColor: pressed ? colors.underlay : 'transparent' }]}
-          onPress={() => navigation.navigate(HDSettingStackName, { groupId: route.params.groupId })}
-          testID="HDManage"
-          disabled={inDelete}
-        >
-          <Text style={[styles.HDManageText, { color: colors.textSecondary }]}>{t('common.HDWallets')}</Text>
-          <Settings color={colors.textSecondary} />
-        </Pressable>
-
-        <BottomSheetScrollView style={styles.accountsContainer}>
-          {accounts?.map((account) => (
-            <AccountItemView key={account.id} nickname={account.nickname} addressValue={account.addressValue} colors={colors} />
-          ))}
-        </BottomSheetScrollView>
-
-        <Pressable
-          style={({ pressed }) => [styles.row, styles.removeContainer, { backgroundColor: pressed ? colors.underlay : 'transparent' }]}
-          onPress={handlePressDelete}
-          testID="remove"
-          disabled={inDelete}
-        >
-          <Delete color={colors.textPrimary} width={24} height={24} />
-          <Text style={[styles.mainText, { color: colors.textPrimary }]}>{t('account.group.action.remove')}</Text>
-          {inDelete && <HourglassLoading style={styles.deleteLoading} />}
-        </Pressable>
-
-        <Button
-          testID="ok"
-          style={styles.btn}
-          disabled={inDelete || !accountGroupName?.trim() || accountGroupName === accountGroup?.nickname}
-          onPress={handleUpdateAccountGroupNickName}
-          size="small"
-        >
-          {t('common.ok')}
-        </Button>
+            <Button
+              testID="ok"
+              disabled={inDelete || !accountGroupName?.trim() || accountGroupName === accountGroup?.nickname}
+              onPress={handleUpdateAccountGroupNickName}
+              size="small"
+            >
+              {t('common.ok')}
+            </Button>
+          </BottomSheetFooter>
+        </BottomSheetWrapper>
       </BottomSheet>
       {showDeleteBottomSheet && <DeleteConfirm onConfirm={handleConfirmDelete} onClose={() => setShowDeleteBottomSheet(false)} />}
     </>
@@ -203,14 +208,6 @@ const GroupConfig: React.FC<StackScreenProps<typeof GroupSettingStackName>> = ({
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  title: {
-    marginTop: 8,
-    marginBottom: 24,
-    textAlign: 'center',
-  },
   mainText: {
     fontSize: 16,
     fontWeight: '600',
@@ -218,7 +215,6 @@ const styles = StyleSheet.create({
   },
   description: {
     marginBottom: 16,
-    marginHorizontal: 16,
     fontSize: 14,
     fontWeight: '300',
     lineHeight: 18,
@@ -228,7 +224,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     height: 48,
-    paddingHorizontal: 16,
     marginTop: 10,
   },
   HDManageText: {
@@ -248,11 +243,9 @@ const styles = StyleSheet.create({
     marginBottom: 32,
     marginHorizontal: 16,
     paddingVertical: 12,
-    paddingHorizontal: 16,
   },
   textinput: {
     marginBottom: 32,
-    marginHorizontal: 16,
     borderWidth: 1,
     backgroundColor: 'transparent',
   },
@@ -261,7 +254,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     height: 48,
-    paddingHorizontal: 16,
   },
   backupDescription: {
     marginBottom: 10,
@@ -271,17 +263,12 @@ const styles = StyleSheet.create({
     marginRight: 8,
   },
   removeContainer: {
-    marginVertical: 16,
+    marginBottom: 16,
   },
   deleteLoading: {
     marginLeft: 'auto',
     width: 20,
     height: 20,
-  },
-  btn: {
-    marginTop: 'auto',
-    marginBottom: 40,
-    marginHorizontal: 16,
   },
 });
 

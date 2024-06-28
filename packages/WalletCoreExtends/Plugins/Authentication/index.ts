@@ -14,10 +14,11 @@ declare module '@core/WalletCore/Plugins' {
 }
 
 const defaultOptions: KeyChain.Options = {
-  service: 'com.fluent',
+  service: 'com.bimwallet',
   authenticationPrompt: { title: 'Please authenticate in order to use', description: '' },
-  accessControl: KeyChain.ACCESS_CONTROL.BIOMETRY_ANY_OR_DEVICE_PASSCODE,
-  accessible: KeyChain.ACCESSIBLE.WHEN_PASSCODE_SET_THIS_DEVICE_ONLY,
+  accessControl: KeyChain.ACCESS_CONTROL.BIOMETRY_ANY,
+  accessible: KeyChain.ACCESSIBLE.WHEN_UNLOCKED_THIS_DEVICE_ONLY,
+  securityLevel: KeyChain.SECURITY_LEVEL.SECURE_HARDWARE,
 };
 
 export enum AuthenticationType {
@@ -63,10 +64,10 @@ class AuthenticationPluginClass implements Plugin {
     this.passwordRequestSubject.next(null);
   }
 
-  public getPassword = async (options: KeyChain.Options = {}) => {
+  public getPassword = async () => {
     if (this.settleAuthenticationType === AuthenticationType.Biometrics) {
       try {
-        const keyChainObject = await KeyChain.getGenericPassword({ ...defaultOptions, ...options });
+        const keyChainObject = await KeyChain.getGenericPassword(defaultOptions);
         if (keyChainObject && keyChainObject.password) {
           return await authCryptoTool.decrypt<string>(keyChainObject.password);
         }
@@ -124,9 +125,7 @@ class AuthenticationPluginClass implements Plugin {
     if (authType === AuthenticationType.Biometrics) {
       const encryptedPassword = await authCryptoTool.encrypt(`${authCryptoTool.generateRandomString()}${new Date().getTime()}`);
 
-      await KeyChain.setGenericPassword('ePayWallet-user', encryptedPassword, {
-        ...defaultOptions,
-      });
+      await KeyChain.setGenericPassword('bim-wallet-user', encryptedPassword, defaultOptions);
       this.settleAuthenticationType = AuthenticationType.Biometrics;
       await database.localStorage.set('SettleAuthentication', AuthenticationType.Biometrics);
     } else if (typeof password === 'string' && !!password) {

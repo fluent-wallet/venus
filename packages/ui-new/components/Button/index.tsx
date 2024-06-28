@@ -81,26 +81,26 @@ const styles = StyleSheet.create({
     borderRightWidth: 2,
     borderLeftWidth: 2,
   },
-  ['button-left']: {
+  'button-left': {
     justifyContent: 'flex-start',
     paddingHorizontal: 16,
   },
-  ['button-center']: {
+  'button-center': {
     justifyContent: 'center',
   },
-  ['button-right']: {
+  'button-right': {
     flexDirection: 'row-reverse',
     paddingHorizontal: 16,
   },
-  ['button-not-pressed']: {
+  'button-not-pressed': {
     borderTopWidth: 1,
     borderBottomWidth: 4,
   },
-  ['button-pressed']: {
+  'button-pressed': {
     borderTopWidth: 4,
     borderBottomWidth: 1,
   },
-  ['button-small']: {
+  'button-small': {
     ...Platform.select({
       android: {
         height: 48,
@@ -110,7 +110,7 @@ const styles = StyleSheet.create({
       },
     }),
   },
-  ['button-small-square']: {
+  'button-small-square': {
     ...Platform.select({
       android: {
         width: 48,
@@ -120,7 +120,7 @@ const styles = StyleSheet.create({
       },
     }),
   },
-  ['button-medium']: {
+  'button-medium': {
     ...Platform.select({
       android: {
         height: 56,
@@ -130,7 +130,7 @@ const styles = StyleSheet.create({
       },
     }),
   },
-  ['button-medium-square']: {
+  'button-medium-square': {
     ...Platform.select({
       android: {
         width: 56,
@@ -140,7 +140,7 @@ const styles = StyleSheet.create({
       },
     }),
   },
-  ['button-large']: {
+  'button-large': {
     ...Platform.select({
       android: {
         height: 64,
@@ -150,7 +150,7 @@ const styles = StyleSheet.create({
       },
     }),
   },
-  ['button-large-square']: {
+  'button-large-square': {
     ...Platform.select({
       android: {
         width: 64,
@@ -160,25 +160,25 @@ const styles = StyleSheet.create({
       },
     }),
   },
-  ['button-light']: {
+  'button-light': {
     borderColor: palette.gray1,
     backgroundColor: palette.gray8,
   },
-  ['button-light-pressed']: {
+  'button-light-pressed': {
     backgroundColor: palette.gray7,
   },
-  ['button-light-disabled']: {
+  'button-light-disabled': {
     borderColor: palette.gray4,
     backgroundColor: palette.gray8,
   },
-  ['button-dark']: {
+  'button-dark': {
     borderColor: palette.gray8,
     backgroundColor: palette.gray0,
   },
-  ['button-dark-pressed']: {
+  'button-dark-pressed': {
     backgroundColor: palette.gray2,
   },
-  ['button-dark-disabled']: {
+  'button-dark-disabled': {
     borderColor: palette.gray3,
     backgroundColor: palette.gray0,
   },
@@ -186,16 +186,16 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
   },
-  ['text-light']: {
+  'text-light': {
     color: palette.gray1,
   },
-  ['text-light-disabled']: {
+  'text-light-disabled': {
     color: palette.gray4,
   },
-  ['text-dark']: {
+  'text-dark': {
     color: palette.gray8,
   },
-  ['text-dark-disabled']: {
+  'text-dark-disabled': {
     color: palette.gray3,
   },
 });

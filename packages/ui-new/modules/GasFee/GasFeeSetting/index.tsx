@@ -88,11 +88,7 @@ const GasFeeSetting = forwardRef<GasFeeSettingMethods, Props>(
     const isDappCustomizeGasSettomg = !estimateRes
       ? false
       : !!dappCustomizeGasSetting &&
-        (estimateRes.estimateOf1559
-          ? true
-          : keys(dappCustomizeGasSetting).length === 1 && has(dappCustomizeGasSetting, 'suggestedMaxPriorityFeePerGas')
-            ? false
-            : true);
+        (estimateRes.estimateOf1559 ? true : !(keys(dappCustomizeGasSetting).length === 1 && has(dappCustomizeGasSetting, 'suggestedMaxPriorityFeePerGas')));
 
     const defaultCustomizeGasSetting = useMemo(() => {
       if (!estimateRes || !estimateGasSettings) return null;
@@ -196,11 +192,9 @@ const GasFeeSetting = forwardRef<GasFeeSettingMethods, Props>(
 
     useImperativeHandle(
       ref,
-      () => {
-        return {
-          resetCustomizeSetting,
-        };
-      },
+      () => ({
+        resetCustomizeSetting,
+      }),
       [resetCustomizeSetting],
     );
 

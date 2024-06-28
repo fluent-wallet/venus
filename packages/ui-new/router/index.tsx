@@ -15,7 +15,7 @@ import Receive from '@pages/Receive';
 import ScanQRCode from '@pages/ScanQRCode';
 import SendTransaction from '@pages/SendTransaction';
 import Settings from '@pages/Settings';
-import AboutUs from '@pages/Settings/AboutUs';
+import AboutUs, { UpdateVersion } from '@pages/Settings/AboutUs';
 import Appearance from '@pages/Settings/Appearance';
 import Language from '@pages/Settings/Language';
 import Preferences from '@pages/Settings/Preferences';
@@ -32,6 +32,7 @@ import { View } from 'react-native';
 import Header from './Header';
 import {
   AboutUsStackName,
+  UpdateVersionStackName,
   AccountManagementStackName,
   AccountSettingStackName,
   AddAnotherWalletStackName,
@@ -108,6 +109,7 @@ const Router: React.FC = () => {
         <RootStack.Screen name={PasswordVerifyStackName} component={PasswordVerify} options={SheetBottomOption} />
         <RootStack.Screen name={SettingsStackName} component={Settings} />
         <RootStack.Screen name={AboutUsStackName} component={AboutUs} />
+        <RootStack.Screen name={UpdateVersionStackName} component={UpdateVersion} options={SheetBottomOption} />
         <RootStack.Screen name={PreferencesStackName} component={Preferences} />
         <RootStack.Screen name={AppearanceStackName} component={Appearance} options={SheetBottomOption} />
         <RootStack.Screen name={LanguageStackName} component={Language} options={SheetBottomOption} />

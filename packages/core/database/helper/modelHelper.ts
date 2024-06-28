@@ -24,9 +24,8 @@ export function createModel<T extends Model>({ name, params, prepareCreate }: { 
 
   if (prepareCreate) {
     return create();
-  } else {
-    return database.write(async () => await (create() as Promise<T>));
   }
+  return database.write(async () => await (create() as Promise<T>));
 }
 
 type ExtractOwnProperties<B> = Pick<B, Exclude<keyof B, keyof Model>>;

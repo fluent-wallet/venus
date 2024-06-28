@@ -1,35 +1,36 @@
-import ContractIcon from '@assets/icons/contract.svg';
-import CopyIcon from '@assets/icons/copy.svg';
-import ProhibitIcon from '@assets/icons/prohibit.svg';
-import QrCodeIcon from '@assets/icons/qr-code.svg';
-import SuccessIcon from '@assets/icons/success.svg';
+import type React from 'react';
+import { useState, useCallback, useEffect } from 'react';
+import { Pressable, StyleSheet, Keyboard, View } from 'react-native';
+import { useTheme } from '@react-navigation/native';
+import Clipboard from '@react-native-clipboard/clipboard';
+import { Trans, useTranslation } from 'react-i18next';
+import { debounce, unionBy, escapeRegExp } from 'lodash-es';
+import { BottomSheetFlatList } from '@gorhom/bottom-sheet';
+import {
+  useCurrentNetwork,
+  getCurrentNetwork,
+  useRecentlyAddress,
+  useAllAccountsInManage,
+  AddressType,
+  RecentlyType,
+} from '@core/WalletCore/Plugins/ReactInject';
+import method from '@core/WalletCore/Methods';
+import Text from '@components/Text';
+import TextInput from '@components/TextInput';
 import Button from '@components/Button';
 import Checkbox from '@components/Checkbox';
 import HourglassLoading from '@components/Loading/Hourglass';
-import Text from '@components/Text';
-import TextInput from '@components/TextInput';
-import method from '@core/WalletCore/Methods';
-import {
-  AddressType,
-  RecentlyType,
-  getCurrentNetwork,
-  useAllAccountsInManage,
-  useCurrentNetwork,
-  useRecentlyAddress,
-} from '@core/WalletCore/Plugins/ReactInject';
-import { BottomSheetFlatList } from '@gorhom/bottom-sheet';
+import { BottomSheetContent, BottomSheetFooter } from '@components/BottomSheet';
 import { AccountItemView } from '@modules/AccountsList';
 import ScanQRCode from '@pages/ScanQRCode';
-import Clipboard from '@react-native-clipboard/clipboard';
-import { useTheme } from '@react-navigation/native';
-import { type SendTransactionScreenProps, type SendTransactionStep1StackName, SendTransactionStep2StackName } from '@router/configs';
+import { SendTransactionStep2StackName, type SendTransactionScreenProps, type SendTransactionStep1StackName } from '@router/configs';
 import type { ETHURL } from '@utils/ETHURL';
-import { debounce, escapeRegExp, unionBy } from 'lodash-es';
-import type React from 'react';
-import { useCallback, useEffect, useState } from 'react';
-import { Trans, useTranslation } from 'react-i18next';
-import { Keyboard, Pressable, StyleSheet, View } from 'react-native';
+import QrCodeIcon from '@assets/icons/qr-code.svg';
 import SendTransactionBottomSheet from '../SendTransactionBottomSheet';
+import ProhibitIcon from '@assets/icons/prohibit.svg';
+import SuccessIcon from '@assets/icons/success.svg';
+import CopyIcon from '@assets/icons/copy.svg';
+import ContractIcon from '@assets/icons/contract.svg';
 import Contract from './Contract';
 import { styles as listStyles } from './Contract/RecentlyList';
 
@@ -126,134 +127,135 @@ const SendTransactionStep1Receiver: React.FC<SendTransactionScreenProps<typeof S
 
   return (
     <>
-      <SendTransactionBottomSheet showTitle={t('tx.send.title')} style={styles.container}>
-        <Text style={[styles.receiver, { color: colors.textSecondary }]}>{t('tx.send.receiver')}</Text>
-        <TextInput
-          containerStyle={[
-            styles.textInput,
-            {
-              borderColor: filterAccounts.type === 'invalid' ? colors.down : colors.borderFourth,
-              borderBottomLeftRadius: !receiver ? 0 : 6,
-              borderBottomRightRadius: !receiver ? 0 : 6,
-            },
-          ]}
-          showVisible={false}
-          defaultHasValue={false}
-          value={receiver}
-          onChangeText={(val) => setReceiver(val)}
-          isInBottomSheet
-          // TODO: this max length need consider network
-          maxLength={200}
-          showClear={!!receiver}
-          placeholder={t('tx.send.placeholder')}
-          multiline
-          numberOfLines={3}
-        />
-        {!receiver && (
-          <View style={[styles.inputActionArea, { borderColor: colors.borderFourth }]}>
-            <Pressable style={[styles.inputAction, { justifyContent: 'flex-end', paddingRight: 44 }]} onPress={handlePressPaste} testID="paste">
-              <CopyIcon style={styles.inputActionIcon} color={colors.textPrimary} width={16} height={16} />
-              <Text style={[styles.inputActionText, { color: colors.textPrimary }]}>{t('tx.send.paste')}</Text>
-            </Pressable>
-            <Pressable style={[styles.inputAction, { justifyContent: 'flex-start', paddingLeft: 44 }]} onPress={handlePressScan} testID="scan">
-              <QrCodeIcon style={styles.inputActionIcon} color={colors.textPrimary} width={16} height={16} />
-              <Text style={[styles.inputActionText, { color: colors.textPrimary }]}>{t('tx.send.scan')}</Text>
-            </Pressable>
-          </View>
-        )}
-
-        {receiver && filterAccounts.type === 'local-valid' && (
-          <View style={[styles.checkResWarp, { marginTop: 8 }]}>
-            <ContractIcon color={colors.textPrimary} />
-            <Text style={[styles.validMyAccount, { color: colors.textPrimary }]}>
-              {t('common.account')}: {filterAccounts.assets?.[0]?.nickname}
-            </Text>
-          </View>
-        )}
-        {receiver && filterAccounts.type === 'local-filter' && (
-          <>
-            <BottomSheetFlatList
-              style={listStyles.container}
-              data={filterAccounts.assets}
-              keyExtractor={(item) => item.addressValue}
-              renderItem={({ item }) => (
-                <AccountItemView
-                  colors={colors}
-                  nickname={item.nickname}
-                  addressValue={item.addressValue}
-                  onPress={() => {
-                    if (Keyboard.isVisible()) {
-                      Keyboard.dismiss();
-                    }
-                    setReceiver(item.addressValue);
-                  }}
-                />
-              )}
-            />
-          </>
-        )}
-        {!receiver && <Contract setReceiver={setReceiver} />}
-        {receiver && !filterAccounts.type.startsWith('local') && (
-          <>
-            {filterAccounts.type === 'network-error' && !inFetchingRemote && (
-              <Pressable
-                style={({ pressed }) => [styles.checkFail, { backgroundColor: pressed ? colors.underlay : 'transparent' }]}
-                onPress={() => searchFilterReceiver(receiver)}
-                testID="tryAgain"
-              >
-                <Text style={[styles.checkFailText, { color: colors.down }]}>
-                  <Trans i18nKey={'tx.send.error.failCheck'}>
-                    Fail to check address, <Text style={{ textDecorationLine: 'underline' }}>click to try again</Text>.
-                  </Trans>
-                </Text>
+      <SendTransactionBottomSheet title={t('tx.send.title')}>
+        <BottomSheetContent>
+          <Text style={[styles.receiver, { color: colors.textSecondary }]}>{t('tx.send.receiver')}</Text>
+          <TextInput
+            containerStyle={[
+              styles.textInput,
+              {
+                borderColor: filterAccounts.type === 'invalid' ? colors.down : colors.borderFourth,
+                borderBottomLeftRadius: !receiver ? 0 : 6,
+                borderBottomRightRadius: !receiver ? 0 : 6,
+              },
+            ]}
+            showVisible={false}
+            defaultHasValue={false}
+            value={receiver}
+            onChangeText={(val) => setReceiver(val)}
+            isInBottomSheet
+            // TODO: this max length need consider network
+            maxLength={200}
+            showClear={!!receiver}
+            placeholder={t('tx.send.placeholder')}
+            multiline
+            numberOfLines={3}
+          />
+          {!receiver && (
+            <View style={[styles.inputActionArea, { borderColor: colors.borderFourth }]}>
+              <Pressable style={[styles.inputAction, { justifyContent: 'flex-end', paddingRight: 44 }]} onPress={handlePressPaste} testID="paste">
+                <CopyIcon style={styles.inputActionIcon} color={colors.textPrimary} width={16} height={16} />
+                <Text style={[styles.inputActionText, { color: colors.textPrimary }]}>{t('tx.send.paste')}</Text>
               </Pressable>
-            )}
-            {inFetchingRemote && <HourglassLoading style={styles.checkLoading} />}
-            {filterAccounts.type === AddressType.EOA && !inFetchingRemote && (
-              <View style={styles.checkResWarp}>
-                <SuccessIcon style={styles.checkIcon} color={colors.up} width={24} height={24} />
-                <Text style={[styles.checkResText, { color: colors.up }]}>{t('tx.send.address.valid')}</Text>
-              </View>
-            )}
-            {filterAccounts.type === 'invalid' && !inFetchingRemote && (
-              <View style={styles.checkResWarp}>
-                <ProhibitIcon style={styles.checkIcon} width={24} height={24} />
-                <Text style={[styles.checkResText, { color: colors.down }]}>{t('tx.send.address.invalid')}</Text>
-              </View>
-            )}
+              <Pressable style={[styles.inputAction, { justifyContent: 'flex-start', paddingLeft: 44 }]} onPress={handlePressScan} testID="scan">
+                <QrCodeIcon style={styles.inputActionIcon} color={colors.textPrimary} width={16} height={16} />
+                <Text style={[styles.inputActionText, { color: colors.textPrimary }]}>{t('tx.send.scan')}</Text>
+              </Pressable>
+            </View>
+          )}
 
-            {filterAccounts.type === AddressType.Contract && !inFetchingRemote && (
-              <View style={styles.contractAddress}>
-                <Text style={[styles.contractAddressValid, { color: colors.textPrimary }]}>{t('tx.send.address.valid')}</Text>
-                <Text style={[styles.contractAddressTip, { color: colors.textPrimary }]}>{t('tx.send.address.contractRisk')}</Text>
+          {receiver && filterAccounts.type === 'local-valid' && (
+            <View style={[styles.checkResWarp, { marginTop: 8 }]}>
+              <ContractIcon color={colors.textPrimary} />
+              <Text style={[styles.validMyAccount, { color: colors.textPrimary }]}>Account: {filterAccounts.assets?.[0]?.nickname}</Text>
+            </View>
+          )}
+          {receiver && filterAccounts.type === 'local-filter' && (
+            <>
+              <BottomSheetFlatList
+                style={listStyles.container}
+                data={filterAccounts.assets}
+                keyExtractor={(item) => item.addressValue}
+                renderItem={({ item }) => (
+                  <AccountItemView
+                    colors={colors}
+                    nickname={item.nickname}
+                    addressValue={item.addressValue}
+                    onPress={() => {
+                      if (Keyboard.isVisible()) {
+                        Keyboard.dismiss();
+                      }
+                      setReceiver(item.addressValue);
+                    }}
+                  />
+                )}
+              />
+            </>
+          )}
+          {!receiver && <Contract setReceiver={setReceiver} />}
+          {receiver && !filterAccounts.type.startsWith('local') && (
+            <>
+              {filterAccounts.type === 'network-error' && !inFetchingRemote && (
                 <Pressable
-                  style={({ pressed }) => [styles.knowRiskWrapper, { backgroundColor: pressed ? colors.underlay : 'transparent' }]}
-                  onPress={() => setKnowRist((pre) => !pre)}
-                  testID="knowRisk"
+                  style={({ pressed }) => [styles.checkFail, { backgroundColor: pressed ? colors.underlay : 'transparent' }]}
+                  onPress={() => searchFilterReceiver(receiver)}
+                  testID="tryAgain"
                 >
-                  <Checkbox checked={knowRisk} pointerEvents="none" />
-                  <Text style={(styles.contractAddressTip, { color: colors.textPrimary })}>{t('tx.send.address.contractRiskKnow')}</Text>
+                  <Text style={[styles.checkFailText, { color: colors.down }]}>
+                    <Trans i18nKey={'tx.send.error.failCheck'}>
+                      Fail to check address, <Text style={{ textDecorationLine: 'underline' }}>click to try again</Text>.
+                    </Trans>
+                  </Text>
                 </Pressable>
-              </View>
-            )}
-          </>
-        )}
+              )}
+              {inFetchingRemote && <HourglassLoading style={styles.checkLoading} />}
+              {filterAccounts.type === AddressType.EOA && !inFetchingRemote && (
+                <View style={styles.checkResWarp}>
+                  <SuccessIcon style={styles.checkIcon} color={colors.up} width={24} height={24} />
+                  <Text style={[styles.checkResText, { color: colors.up }]}>{t('tx.send.address.valid')}</Text>
+                </View>
+              )}
+              {filterAccounts.type === 'invalid' && !inFetchingRemote && (
+                <View style={styles.checkResWarp}>
+                  <ProhibitIcon style={styles.checkIcon} width={24} height={24} />
+                  <Text style={[styles.checkResText, { color: colors.down }]}>{t('tx.send.address.invalid')}</Text>
+                </View>
+              )}
+
+              {filterAccounts.type === AddressType.Contract && !inFetchingRemote && (
+                <View style={styles.contractAddress}>
+                  <Text style={[styles.contractAddressValid, { color: colors.textPrimary }]}>{t('tx.send.address.valid')}</Text>
+                  <Text style={[styles.contractAddressTip, { color: colors.textPrimary }]}>{t('tx.send.address.contractRisk')}</Text>
+                  <Pressable
+                    style={({ pressed }) => [styles.knowRiskWrapper, { backgroundColor: pressed ? colors.underlay : 'transparent' }]}
+                    onPress={() => setKnowRist((pre) => !pre)}
+                    testID="knowRisk"
+                  >
+                    <Checkbox checked={knowRisk} pointerEvents="none" />
+                    <Text style={(styles.contractAddressTip, { color: colors.textPrimary })}>{t('tx.send.address.contractRiskKnow')}</Text>
+                  </Pressable>
+                </View>
+              )}
+            </>
+          )}
+        </BottomSheetContent>
 
         {receiver && (filterAccounts.type === 'local-valid' || filterAccounts.type === AddressType.Contract || filterAccounts.type === AddressType.EOA) && (
-          <Button
-            testID="next"
-            style={styles.btn}
-            onPress={() => {
-              navigation.navigate(SendTransactionStep2StackName, { recipientAddress: receiver });
-              if (Keyboard.isVisible()) {
-                Keyboard.dismiss();
-              }
-            }}
-            disabled={filterAccounts.type === AddressType.Contract && !knowRisk}
-            size="small"
-          >
-            {t('common.next')}
-          </Button>
+          <BottomSheetFooter innerPaddingHorizontal>
+            <Button
+              testID="next"
+              onPress={() => {
+                navigation.navigate(SendTransactionStep2StackName, { recipientAddress: receiver });
+                if (Keyboard.isVisible()) {
+                  Keyboard.dismiss();
+                }
+              }}
+              disabled={filterAccounts.type === AddressType.Contract && !knowRisk}
+              size="small"
+            >
+              {t('common.next')}
+            </Button>
+          </BottomSheetFooter>
         )}
       </SendTransactionBottomSheet>
       {showScanQRCode && <ScanQRCode onConfirm={handleCodeScan} onClose={() => setShowScanQRCode(false)} />}
@@ -262,22 +264,21 @@ const SendTransactionStep1Receiver: React.FC<SendTransactionScreenProps<typeof S
 };
 
 const styles = StyleSheet.create({
-  container: {
-    paddingHorizontal: 16,
-  },
   receiver: {
-    marginTop: 24,
-    marginBottom: 16,
+    marginVertical: 16,
     fontSize: 14,
     fontWeight: '300',
     lineHeight: 18,
+    paddingHorizontal: 16,
   },
   textInput: {
     borderWidth: 1,
     backgroundColor: 'transparent',
     minHeight: 88,
+    marginHorizontal: 16,
   },
   inputActionArea: {
+    marginHorizontal: 16,
     display: 'flex',
     flexDirection: 'row',
     alignItems: 'center',
@@ -318,6 +319,7 @@ const styles = StyleSheet.create({
     alignSelf: 'center',
   },
   checkResWarp: {
+    paddingHorizontal: 16,
     display: 'flex',
     flexDirection: 'row',
     alignItems: 'center',
@@ -359,10 +361,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
-  },
-  btn: {
-    marginTop: 'auto',
-    marginBottom: 32,
   },
 });
 

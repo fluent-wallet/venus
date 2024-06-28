@@ -16,7 +16,7 @@ import {
 import backToHome, { getActiveRouteName } from '@utils/backToHome';
 import { isDev, isQA } from '@utils/getEnv';
 import { uniq } from 'lodash-es';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
 const SUPPORT_NETWORK = [Networks['Conflux eSpace'].netId] as Array<number>;
 const QA_SUPPORT_NETWORK = [Networks['Conflux eSpace'].netId, Networks['eSpace Testnet'].netId] as Array<number>;
@@ -167,14 +167,10 @@ export function useWalletConnectSessions(filterByAddress?: string | undefined | 
     return {
       sessions: sessions.filter((session) => {
         const { namespaces } = session;
-        return (
-          namespaces &&
-          namespaces.eip155 &&
-          namespaces.eip155.accounts.find((account) => {
-            const [eip, chainId, address] = account.split(':');
-            return address.toLowerCase() === filterByAddress.toLowerCase();
-          })
-        );
+        return namespaces?.eip155?.accounts.find((account) => {
+          const [eip, chainId, address] = account.split(':');
+          return address.toLowerCase() === filterByAddress.toLowerCase();
+        });
       }),
     };
   }
