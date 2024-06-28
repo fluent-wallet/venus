@@ -73,8 +73,11 @@ const GroupConfig: React.FC<StackScreenProps<typeof GroupSettingStackName>> = ({
     if (!vault) return;
     try {
       await plugins.Authentication.getPassword();
+      console.log('1');
       await methods.deleteVault(vault);
+      console.log('2');
       await plugins.WalletConnect.removeSessionByAddress(accounts.map((v) => v.addressValue));
+      console.log('3');
       showMessage({
         message: t('account.group.remove.success'),
         type: 'success',
@@ -82,6 +85,7 @@ const GroupConfig: React.FC<StackScreenProps<typeof GroupSettingStackName>> = ({
       setShowDeleteBottomSheet(false);
       setTimeout(() => bottomSheetRef.current?.close());
     } catch (err) {
+      console.log(err);
       if (plugins.Authentication.containsCancel(String(err))) {
         return;
       }

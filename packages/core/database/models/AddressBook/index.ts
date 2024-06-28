@@ -10,7 +10,7 @@ export enum AddressType {
 }
 
 export class AddressBook extends Model {
-  static table = TableName.Address;
+  static table = TableName.AddressBook;
   static associations = {
     [TableName.Address]: { type: 'belongs_to', key: 'address_id' },
     [TableName.Network]: { type: 'belongs_to', key: 'network_id' },

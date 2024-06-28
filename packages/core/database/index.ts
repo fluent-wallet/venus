@@ -18,6 +18,7 @@ import { TxExtra as TxExtraModel } from './models/TxExtra';
 import { TxPayload as TxPayloadModel } from './models/TxPayload';
 import { Vault as VaultModel } from './models/Vault';
 import schema from './schema';
+import { AddressBook } from './models/AddressBook';
 export const dbRefresh$ = new Subject();
 
 const adapter = new SQLiteAdapter({
@@ -47,6 +48,7 @@ const modelClasses = [
   AppModel,
   PermissionModel,
   RequestModel,
+  AddressBook,
 ];
 
 const database = new _Database({
