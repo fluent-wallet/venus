@@ -26,7 +26,7 @@ function DAPPConnect() {
     <View style={[styles.container, { borderColor: hasUnsafeURL ? colors.down : colors.up }]}>
       <Pressable onPress={() => navigation.navigate(WalletConnectStackName, { screen: WalletConnectSessionsStackName })}>
         <View style={styles.content}>
-          <View style={styles.iconWarp}>
+          <View style={[styles.iconWarp, { width: 14 * Math.min(sessions.length - 1, 3) + 24 }]}>
             {take(sessions, 3).map(
               (
                 {
@@ -44,21 +44,8 @@ function DAPPConnect() {
           </View>
           {sessions.length > 1 ? (
             <View style={styles.content}>
-              <Text
-                style={[
-                  styles.largeText,
-                  { color: hasUnsafeURL ? colors.down : colors.up },
-                  { transform: [{ translateX: -10 * Math.min(sessions.length - 1, 3) }] },
-                ]}
-              >
-                {t('wc.dapp.connectedDApps')}
-              </Text>
-              <ArrowRight
-                style={[{ transform: [{ translateX: -10 * Math.min(sessions.length - 1, 3) }] }]}
-                color={hasUnsafeURL ? colors.down : colors.up}
-                width={14}
-                height={14}
-              />
+              <Text style={[styles.largeText, { color: hasUnsafeURL ? colors.down : colors.up }]}>{t('wc.dapp.connectedDApps')}</Text>
+              <ArrowRight color={hasUnsafeURL ? colors.down : colors.up} width={14} height={14} />
             </View>
           ) : (
             <View style={[styles.content, { paddingRight: 24 }]}>

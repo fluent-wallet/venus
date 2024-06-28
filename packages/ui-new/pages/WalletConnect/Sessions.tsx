@@ -25,12 +25,12 @@ function WalletConnectSessions() {
   const isUnsafe = useCallback((url: string) => new URL(url).protocol === 'http', []);
 
   return (
-    <BottomSheet enablePanDownToClose={false} isRoute snapPoints={snapPoints.percent50} style={styles.container}>
+    <BottomSheet enablePanDownToClose={false} isRoute snapPoints={snapPoints.percent55} style={styles.container}>
       <Text style={[styles.title, { color: colors.textPrimary }]}>{t('wc.dapp.connectedDApps')}</Text>
 
       <View style={[styles.list, { borderBottomColor: colors.borderFourth }]}>
         <Text style={[styles.font14, { color: colors.textSecondary }]}>{t('wc.dapp.connectTo')}</Text>
-        <BottomSheetView style={[{ height: 160, overflow: 'hidden' }]}>
+        <BottomSheetView style={[{ height: 160, overflow: 'hidden', marginBottom: 40 }]}>
           <BottomSheetScrollView>
             {sessions.map(
               (

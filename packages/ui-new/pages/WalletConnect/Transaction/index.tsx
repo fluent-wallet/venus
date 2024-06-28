@@ -49,6 +49,7 @@ import BSIMVerify, { useBSIMVerify } from '@pages/SendTransaction/BSIMVerify';
 import EditAllowance from './EditAllowance';
 import SendContract from './Contract';
 import { supportsInterface } from '@utils/supportsInterface';
+import MessageFail from '@assets/icons/message-fail.svg';
 
 export type TxDataWithTokenInfo = ParseTxDataReturnType & {
   symbol?: string;
@@ -351,7 +352,7 @@ function WalletConnectTransaction() {
 
           {errorMsg && (
             <View style={[styles.error, { borderColor: colors.down }]}>
-              <Text style={{ color: colors.down, fontSize: 16 }}>{errorMsg}</Text>
+              <MessageFail color={colors.down} width={24} height={24} /><Text style={{ color: colors.down, fontSize: 16 }}>{errorMsg}</Text>
             </View>
           )}
 
@@ -445,6 +446,8 @@ const styles = StyleSheet.create({
     borderRadius: 6,
     marginTop: 16,
     marginHorizontal: 16,
+    display: 'flex',
+    flexDirection: 'row'
   },
   btnArea: {
     marginTop: 'auto',
