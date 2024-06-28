@@ -1,8 +1,8 @@
 import { Model, type Relation } from '@nozbe/watermelondb';
-import { text, immutableRelation } from '@nozbe/watermelondb/decorators';
-import { type Address } from '../Address';
-import { type Network } from '../Network';
+import { immutableRelation, text } from '@nozbe/watermelondb/decorators';
 import TableName from '../../TableName';
+import type { Address } from '../Address';
+import type { Network } from '../Network';
 
 export enum AddressType {
   EOA = 'EOA',
@@ -10,7 +10,7 @@ export enum AddressType {
 }
 
 export class AddressBook extends Model {
-  static table = TableName.Address;
+  static table = TableName.AddressBook;
   static associations = {
     [TableName.Address]: { type: 'belongs_to', key: 'address_id' },
     [TableName.Network]: { type: 'belongs_to', key: 'network_id' },

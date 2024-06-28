@@ -1,13 +1,14 @@
-import React, { useMemo } from 'react';
-import { View, Pressable, StyleSheet } from 'react-native';
-import { useTheme } from '@react-navigation/native';
-import Decimal from 'decimal.js';
+import SettingsIcon from '@assets/icons/settings.svg';
+import HourglassLoading from '@components/Loading/Hourglass';
+import Text from '@components/Text';
 import { useCurrentNetworkNativeAsset } from '@core/WalletCore/Plugins/ReactInject';
 import TokenIcon from '@modules/AssetsList/TokensList/TokenIcon';
-import Text from '@components/Text';
-import HourglassLoading from '@components/Loading/Hourglass';
-import SettingsIcon from '@assets/icons/settings.svg';
-import { OptionLevel, type GasSettingWithLevel, type AdvanceSetting } from './index';
+import { useTheme } from '@react-navigation/native';
+import Decimal from 'decimal.js';
+import type React from 'react';
+import { useMemo } from 'react';
+import { Pressable, StyleSheet, View } from 'react-native';
+import { type AdvanceSetting, type GasSettingWithLevel, OptionLevel } from './index';
 
 const EstimateFee: React.FC<{ gasSetting?: GasSettingWithLevel | null; advanceSetting?: AdvanceSetting; onPressSettingIcon: () => void }> = ({
   gasSetting,

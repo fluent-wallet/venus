@@ -1,9 +1,9 @@
-import { debounceTime, interval, startWith, switchMap, Subscription, retry, catchError, throwError } from 'rxjs';
-import { type Plugin } from '../';
 import events from '@core/WalletCore/Events';
-import { Network } from '@core/database/models/Network';
-import Transaction from '../Transaction';
+import type { Network } from '@core/database/models/Network';
 import { MAX_EPOCH_NUMBER_OFFSET } from '@core/utils/consts';
+import { type Subscription, catchError, debounceTime, interval, retry, startWith, switchMap, throwError } from 'rxjs';
+import type { Plugin } from '../';
+import Transaction from '../Transaction';
 
 declare module '../../../WalletCore/Plugins' {
   interface Plugins {

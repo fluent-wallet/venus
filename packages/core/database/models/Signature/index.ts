@@ -1,11 +1,11 @@
-import { of } from 'rxjs';
 import { Model, type Relation } from '@nozbe/watermelondb';
-import { text, readonly, date, immutableRelation, reader, writer, relation } from '@nozbe/watermelondb/decorators';
-import { type Address } from '../Address';
-import { type App } from '../App';
-import { type Tx } from '../Tx';
+import { date, immutableRelation, reader, readonly, relation, text, writer } from '@nozbe/watermelondb/decorators';
+import { of } from 'rxjs';
 import TableName from '../../TableName';
-import { SignType } from './type';
+import type { Address } from '../Address';
+import type { App } from '../App';
+import type { Tx } from '../Tx';
+import type { SignType } from './type';
 
 export class Signature extends Model {
   static table = TableName.Signature;

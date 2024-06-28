@@ -1,17 +1,17 @@
-import { Q, Model, type Query, type Relation } from '@nozbe/watermelondb';
-import { field, text, children, date, readonly, writer, reader, lazy, immutableRelation } from '@nozbe/watermelondb/decorators';
-import { map, firstValueFrom } from 'rxjs';
-import { type Address } from '../Address';
-import { type AccountGroup } from '../AccountGroup';
-import { type Permission } from '../Permission';
+import { Model, Q, type Query, type Relation } from '@nozbe/watermelondb';
+import { children, date, field, immutableRelation, lazy, reader, readonly, text, writer } from '@nozbe/watermelondb/decorators';
+import { firstValueFrom, map } from 'rxjs';
 import TableName from '../../TableName';
+import type { AccountGroup } from '../AccountGroup';
+import type { Address } from '../Address';
+import type { Permission } from '../Permission';
 
 export class Account extends Model {
   static table = TableName.Account;
   static associations = {
     [TableName.AccountGroup]: { type: 'belongs_to', key: 'account_group_id' },
     [TableName.Address]: { type: 'has_many', foreignKey: 'account_id' },
-    [TableName.Permission]: { type: 'has_many', foreignKey: 'permission_id' },
+    [TableName.Permission]: { type: 'has_many', foreignKey: 'account_id' },
   } as const;
 
   @field('index') index!: number;

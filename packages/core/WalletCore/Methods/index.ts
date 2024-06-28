@@ -1,24 +1,24 @@
 /* eslint-disable @typescript-eslint/ban-types */
-import { injectable, inject } from 'inversify';
-import { type Account } from '../../database/models/Account';
-import { type Vault } from '../../database/models/Vault';
-import { type Address } from '../../database/models/Address';
-import { type Asset } from '../../database/models/Asset';
-import { NetworkType } from '../../database/models/Network';
+import { inject, injectable } from 'inversify';
+import type { Account } from '../../database/models/Account';
+import type { Address } from '../../database/models/Address';
+import type { Asset } from '../../database/models/Asset';
+import type { NetworkType } from '../../database/models/Network';
+import type { Vault } from '../../database/models/Vault';
 import { container } from '../configs';
-import { GetDecryptedVaultDataMethod } from './getDecryptedVaultData';
-import { AddAccountMethod, type Params as AddAccountParams } from './addAccount';
-import { CreateVaultMethod } from './createVault';
-import { AccountMethod } from './accountMethod';
 import { AccountGroupMethod } from './accountGroupMethod';
-import { VaultMethod } from './vaultMethod';
-import { NetworkMethod } from './networkMethod';
-import { DatabaseMethod } from './databaseMethod';
-import { TxMethod } from './txMethod';
-import { AssetMethod, type AssetParams } from './assetMethod';
+import { AccountMethod } from './accountMethod';
+import { AddAccountMethod, type Params as AddAccountParams } from './addAccount';
 import { AppMethod } from './appMethod';
+import { AssetMethod, type AssetParams } from './assetMethod';
+import { CreateVaultMethod } from './createVault';
+import { DatabaseMethod } from './databaseMethod';
+import { GetDecryptedVaultDataMethod } from './getDecryptedVaultData';
+import { NetworkMethod } from './networkMethod';
 import { RequestMethod } from './requestMethod';
 import { SignatureMethod } from './signatureMethod';
+import { TxMethod } from './txMethod';
+import { VaultMethod } from './vaultMethod';
 
 @injectable()
 export class Methods {

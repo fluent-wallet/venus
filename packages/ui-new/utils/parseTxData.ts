@@ -148,7 +148,6 @@ const abi20methodSighash: AIBMethodSighashMapType = {
   '0x095ea7b3': {
     functionName: 'approve',
     readableABI: 'function approve(address spender, uint256 value) returns (bool)',
-    assetType: AssetType.ERC20,
   },
 
   '0x556f0dc7': {
@@ -175,12 +174,10 @@ type ParseTxDataParameters = {
 export interface FunctionNameGeneric {
   functionName: string;
   readableABI: string;
-  assetType?: AssetType;
 }
 export interface FunctionNameUnknown {
   functionName: 'unknown' | 'Contract Create';
   readableABI: string;
-  assetType?: AssetType;
 }
 export interface FunctionNameApprove {
   functionName: 'approve';
@@ -188,7 +185,6 @@ export interface FunctionNameApprove {
   value: bigint;
   readableABI: string;
   isUnlimited: boolean;
-  assetType?: AssetType;
 }
 
 export type ParseTxDataReturnType = FunctionNameGeneric | FunctionNameUnknown | FunctionNameApprove;
@@ -207,7 +203,6 @@ export function parseTxData({ data, to }: ParseTxDataParameters): ParseTxDataRet
       readableABI: '',
     };
   }
-
   const methodId = data.slice(0, 10); // 0x.....
 
   const nameAndABI = abi20methodSighash[methodId] || abi1155methodSighash[methodId] || abi721methodSighash[methodId];

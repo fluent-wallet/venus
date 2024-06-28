@@ -1,14 +1,14 @@
-import React from 'react';
-import { StyleSheet } from 'react-native';
-import { useTheme } from '@react-navigation/native';
-import { Image } from 'expo-image';
-import Text from '@components/Text';
-import Button from '@components/Button';
-import { isSmallDevice } from '@utils/deviceInfo';
 import Img from '@assets/images/backup.webp';
-import BackupBottomSheet from './BackupBottomSheet';
-import { BackupStep1StackName, BackupStep2StackName, type BackupScreenProps } from '@router/configs';
+import Button from '@components/Button';
+import Text from '@components/Text';
+import { useTheme } from '@react-navigation/native';
+import { type BackupScreenProps, type BackupStep1StackName, BackupStep2StackName } from '@router/configs';
+import { isSmallDevice } from '@utils/deviceInfo';
+import { Image } from 'expo-image';
+import type React from 'react';
 import { Trans, useTranslation } from 'react-i18next';
+import { StyleSheet } from 'react-native';
+import BackupBottomSheet from './BackupBottomSheet';
 
 const BackupStep1Notice: React.FC<BackupScreenProps<typeof BackupStep1StackName>> = ({ navigation, route }) => {
   const { colors } = useTheme();

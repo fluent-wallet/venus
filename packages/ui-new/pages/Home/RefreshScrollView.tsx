@@ -1,10 +1,10 @@
-import { useCallback, useRef, type ComponentProps } from 'react';
-import { StyleSheet, View, type NativeScrollEvent } from 'react-native';
-import { Gesture, GestureDetector, ScrollView } from 'react-native-gesture-handler';
-import Animated, { ReduceMotion, runOnJS, useAnimatedScrollHandler, useAnimatedStyle, useSharedValue, withRepeat, withTiming } from 'react-native-reanimated';
 import RefreshIconDark from '@assets/icons/refreshLogoDark.webp';
 import RefreshIconLight from '@assets/icons/refreshLogoLight.webp';
 import { useTheme } from '@react-navigation/native';
+import { type ComponentProps, useCallback, useRef } from 'react';
+import { type NativeScrollEvent, StyleSheet, View } from 'react-native';
+import { Gesture, GestureDetector, ScrollView } from 'react-native-gesture-handler';
+import Animated, { ReduceMotion, runOnJS, useAnimatedScrollHandler, useAnimatedStyle, useSharedValue, withRepeat, withTiming } from 'react-native-reanimated';
 
 const AnimatedScroll = Animated.createAnimatedComponent(ScrollView);
 const maxContentHeight = 150;

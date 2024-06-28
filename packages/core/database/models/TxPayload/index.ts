@@ -1,8 +1,8 @@
 import { Model, type Query } from '@nozbe/watermelondb';
-import { text, children, json, field } from '@nozbe/watermelondb/decorators';
-import { type Tx } from '../Tx';
+import { children, field, json, text } from '@nozbe/watermelondb/decorators';
+import type { AccessList } from 'ethers';
 import TableName from '../../TableName';
-import { type AccessList } from 'ethers';
+import type { Tx } from '../Tx';
 
 export class TxPayload extends Model {
   static table = TableName.TxPayload;

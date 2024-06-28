@@ -1,20 +1,20 @@
-import { useCallback, useState } from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
-import { RouteProp, useRoute, useTheme } from '@react-navigation/native';
-import { useTranslation } from 'react-i18next';
-import { Image } from 'expo-image';
-import { useCurrentAccount, useCurrentAddressValue } from '@core/WalletCore/Plugins/ReactInject';
-import { shortenAddress } from '@core/utils/address';
-import { type IWCSessionProposalEvent } from '@core/WalletCore/Plugins/WalletConnect/types';
-import plugins from '@core/WalletCore/Plugins';
-import AccountSelector from '@modules/AccountSelector';
-import Text from '@components/Text';
+import ArrowRight from '@assets/icons/arrow-right2.svg';
 import BottomSheet, { snapPoints } from '@components/BottomSheet';
 import Button from '@components/Button';
 import Icon from '@components/Icon';
+import Text from '@components/Text';
+import plugins from '@core/WalletCore/Plugins';
+import { useCurrentAccount, useCurrentAddressValue } from '@core/WalletCore/Plugins/ReactInject';
+import type { IWCSessionProposalEvent } from '@core/WalletCore/Plugins/WalletConnect/types';
+import { shortenAddress } from '@core/utils/address';
 import useInAsync from '@hooks/useInAsync';
-import { WalletConnectParamList, WalletConnectProposalStackName } from '@router/configs';
-import ArrowRight from '@assets/icons/arrow-right2.svg';
+import AccountSelector from '@modules/AccountSelector';
+import { type RouteProp, useRoute, useTheme } from '@react-navigation/native';
+import type { WalletConnectParamList, WalletConnectProposalStackName } from '@router/configs';
+import { Image } from 'expo-image';
+import { useCallback, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { Pressable, StyleSheet, View } from 'react-native';
 
 export default function WalletConnectProposal() {
   const route = useRoute<RouteProp<WalletConnectParamList, typeof WalletConnectProposalStackName>>();

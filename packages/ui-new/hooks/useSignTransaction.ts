@@ -3,7 +3,7 @@ import methods from '@core/WalletCore/Methods';
 import Plugins from '@core/WalletCore/Plugins';
 import { checkDiffInRange } from '@core/WalletCore/Plugins/BlockNumberTracker';
 import { NetworkType, VaultType, useCurrentAccount, useCurrentAddress, useCurrentNetwork, useVaultOfAccount } from '@core/WalletCore/Plugins/ReactInject';
-import { ITxEvm } from '@core/WalletCore/Plugins/Transaction/types';
+import type { ITxEvm } from '@core/WalletCore/Plugins/Transaction/types';
 import { useCallback, useRef } from 'react';
 
 export class SignTransactionCancelError extends Error {

@@ -1,7 +1,7 @@
 import { Model, type Query } from '@nozbe/watermelondb';
-import { text, children } from '@nozbe/watermelondb/decorators';
-import { type Network } from '../Network';
+import { children, text } from '@nozbe/watermelondb/decorators';
 import TableName from '../../TableName';
+import type { Network } from '../Network';
 
 /** Paths for mnemonic generation */
 export class HdPath extends Model {

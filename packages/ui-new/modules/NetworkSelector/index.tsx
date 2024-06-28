@@ -1,10 +1,11 @@
-import React, { useCallback, useRef } from 'react';
-import { View, Pressable, StyleSheet } from 'react-native';
-import { useTheme } from '@react-navigation/native';
-import NetworksList from '@modules/NetworksList';
-import Text from '@components/Text';
 import BottomSheet, { snapPoints, type BottomSheetMethods } from '@components/BottomSheet';
-export { type BottomSheetMethods };
+import Text from '@components/Text';
+import NetworksList from '@modules/NetworksList';
+import { useTheme } from '@react-navigation/native';
+import type React from 'react';
+import { useCallback, useRef } from 'react';
+import { Pressable, StyleSheet, View } from 'react-native';
+export type { BottomSheetMethods };
 
 interface Props {
   onClose: () => void;
@@ -23,7 +24,10 @@ const NetworkSelector: React.FC<Props> = ({ onClose }) => {
       <View style={styles.container}>
         <View style={styles.header}>
           <Text style={[styles.title, { color: colors.textPrimary }]}>Network</Text>
-          <Pressable testID='edit' style={({ pressed }) => [styles.edit, { borderColor: colors.borderThird, backgroundColor: pressed ? colors.underlay : 'transparent' }]}>
+          <Pressable
+            testID="edit"
+            style={({ pressed }) => [styles.edit, { borderColor: colors.borderThird, backgroundColor: pressed ? colors.underlay : 'transparent' }]}
+          >
             <Text style={[styles.title, { color: colors.textPrimary }]}>⚙️ Edit</Text>
           </Pressable>
         </View>

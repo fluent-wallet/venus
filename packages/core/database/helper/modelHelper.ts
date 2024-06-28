@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { Model, type Relation, type Query } from '@nozbe/watermelondb';
+import type { Model, Query, Relation } from '@nozbe/watermelondb';
+import type TableName from '../TableName';
 import database from '../index';
-import TableName from '../TableName';
 
 export function createModel<T extends Model>({ name, params, prepareCreate }: { name: TableName; params: object; prepareCreate?: true }) {
   const create = () => {
@@ -32,11 +32,14 @@ export function createModel<T extends Model>({ name, params, prepareCreate }: { 
 type ExtractOwnProperties<B> = Pick<B, Exclude<keyof B, keyof Model>>;
 
 type ExtractProperties<T> = {
-  [K in keyof T as Exclude<T[K], null | undefined> extends Relation<any> ? K : T[K] extends Query<any> ? K : never]?: Exclude<T[K], null | undefined> extends Relation<infer U>
+  [K in keyof T as Exclude<T[K], null | undefined> extends Relation<any> ? K : T[K] extends Query<any> ? K : never]?: Exclude<
+    T[K],
+    null | undefined
+  > extends Relation<infer U>
     ? U
     : T[K] extends Query<infer U>
-    ? U
-    : never;
+      ? U
+      : never;
 };
 
 type OmitProperties<T> = {

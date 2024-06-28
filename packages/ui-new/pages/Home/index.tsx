@@ -1,24 +1,25 @@
-import React, { useCallback, useRef, useState } from 'react';
-import { View, StyleSheet, type NativeScrollEvent } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import PagerView from 'react-native-pager-view';
-import { useTheme } from '@react-navigation/native';
-import plugins from '@core/WalletCore/Plugins';
 import methods from '@core/WalletCore/Methods';
+import plugins from '@core/WalletCore/Plugins';
 import { getCurrentNetwork } from '@core/WalletCore/Plugins/ReactInject/data/useCurrentNetwork';
-import { HomeStackName, type StackScreenProps } from '@router/configs';
-import { Tabs, TabsContent, setHomeScrollY, type Tab } from '@modules/AssetsTabs';
 import AccountSelector from '@modules/AccountSelector';
+import { type Tab, Tabs, TabsContent, setHomeScrollY } from '@modules/AssetsTabs';
 import NetworkSelector from '@modules/NetworkSelector';
-import { FULL_NETWORK_SWITCH_LIST_FEATURE, ESPACE_NETWORK_SWITCH_FEATURE } from '@utils/features';
+import { useTheme } from '@react-navigation/native';
+import type { HomeStackName, StackScreenProps } from '@router/configs';
+import { ESPACE_NETWORK_SWITCH_FEATURE, FULL_NETWORK_SWITCH_LIST_FEATURE } from '@utils/features';
+import type React from 'react';
+import { useCallback, useRef, useState } from 'react';
+import { type NativeScrollEvent, StyleSheet, View } from 'react-native';
+import type PagerView from 'react-native-pager-view';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import Account from './Account';
-import HeaderRight from './HeaderRight';
 import { CurrentAddress, TotalPrice } from './Address&TotalPrice';
+import DAPPConnect from './DAPPConnect';
+import HeaderRight from './HeaderRight';
 import Navigations from './Navigations';
+import NoNetworkTip from './NoNetworkTip';
 import NotBackup from './NotBackup';
 import RefreshScrollView from './RefreshScrollView';
-import NoNetworkTip from './NoNetworkTip';
-import DAPPConnect from './DAPPConnect';
 
 const Home: React.FC<StackScreenProps<typeof HomeStackName>> = ({ navigation }) => {
   const { colors } = useTheme();

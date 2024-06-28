@@ -1,10 +1,10 @@
-import { useCallback, useRef, forwardRef, useState, useEffect } from 'react';
-import { BackHandler, Keyboard, Platform } from 'react-native';
-import { useFocusEffect, useTheme, useNavigation } from '@react-navigation/native';
-import { clamp } from 'lodash-es';
-import BottomSheet_, { BottomSheetBackdrop, type BottomSheetBackdropProps, type BottomSheetProps } from '@gorhom/bottom-sheet';
 import composeRef from '@cfx-kit/react-utils/dist/composeRef';
-import { screenHeight, isAdjustResize } from '@utils/deviceInfo';
+import BottomSheet_, { BottomSheetBackdrop, type BottomSheetBackdropProps, type BottomSheetProps } from '@gorhom/bottom-sheet';
+import { useFocusEffect, useNavigation, useTheme } from '@react-navigation/native';
+import { isAdjustResize, screenHeight } from '@utils/deviceInfo';
+import { clamp } from 'lodash-es';
+import { forwardRef, useCallback, useEffect, useRef, useState } from 'react';
+import { BackHandler, Keyboard, Platform } from 'react-native';
 export * from '@gorhom/bottom-sheet';
 export { default as BottomSheetMethods } from '@gorhom/bottom-sheet';
 
@@ -146,7 +146,8 @@ const BottomSheet = forwardRef<BottomSheet_, Props>(
 export const snapPoints = {
   large: [`${((clamp(screenHeight - 100, 628, screenHeight - 40) / screenHeight) * 100).toFixed(2)}%`] as string[],
   percent75: ['75%'] as string[],
-  percent65: ["65%"] as string[],
+  percent65: ['65%'] as string[],
+  percent55: ['55%'] as string[],
   percent50: ['50%'] as string[],
 } as const;
 

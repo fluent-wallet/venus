@@ -1,15 +1,15 @@
-import { injectable } from 'inversify';
-import { Asset, AssetType } from '../../database/models/Asset';
-import { createTx as _createTx, queryTxsWithAddress } from '../../database/models/Tx/query';
-import { createTxPayload as _createTxPayload } from '../../database/models/TxPayload/query';
-import { createTxExtra as _createTxExtra } from '../../database/models/TxExtra/query';
-import { TransactionSubjectValue } from '../Events/broadcastTransactionSubject';
-import database from '../../database';
-import { Tx } from '@core/database/models/Tx';
-import { Address } from '@core/database/models/Address';
-import { TxPayload } from '@core/database/models/TxPayload';
-import { TxExtra } from '@core/database/models/TxExtra';
+import type { Address } from '@core/database/models/Address';
+import type { Tx } from '@core/database/models/Tx';
 import { TxSource, TxStatus } from '@core/database/models/Tx/type';
+import type { TxExtra } from '@core/database/models/TxExtra';
+import type { TxPayload } from '@core/database/models/TxPayload';
+import { injectable } from 'inversify';
+import database from '../../database';
+import { type Asset, AssetType } from '../../database/models/Asset';
+import { createTx as _createTx, queryTxsWithAddress } from '../../database/models/Tx/query';
+import { createTxExtra as _createTxExtra } from '../../database/models/TxExtra/query';
+import { createTxPayload as _createTxPayload } from '../../database/models/TxPayload/query';
+import type { TransactionSubjectValue } from '../Events/broadcastTransactionSubject';
 
 interface createTxPayloadParams {
   tx: TransactionSubjectValue['tx'];

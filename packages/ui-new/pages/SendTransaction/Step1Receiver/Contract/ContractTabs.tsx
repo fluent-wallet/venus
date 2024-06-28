@@ -1,13 +1,14 @@
-/* eslint-disable react-hooks/exhaustive-deps */
-import React, { useMemo, useEffect, useCallback } from 'react';
-import { View, Pressable, StyleSheet } from 'react-native';
-import { useTheme } from '@react-navigation/native';
-import { useTranslation } from 'react-i18next';
-import Animated, { useSharedValue, useAnimatedStyle, withTiming } from 'react-native-reanimated';
-import PagerView from 'react-native-pager-view';
-import { useCurrentNetwork } from '@core/WalletCore/Plugins/ReactInject';
 import Text from '@components/Text';
+import { useCurrentNetwork } from '@core/WalletCore/Plugins/ReactInject';
 import AccountsList from '@modules/AccountsList';
+import { useTheme } from '@react-navigation/native';
+/* eslint-disable react-hooks/exhaustive-deps */
+import type React from 'react';
+import { useCallback, useEffect, useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
+import { Pressable, StyleSheet, View } from 'react-native';
+import PagerView from 'react-native-pager-view';
+import Animated, { useSharedValue, useAnimatedStyle, withTiming } from 'react-native-reanimated';
 import RecentlyList from './RecentlyList';
 
 export enum Tab {

@@ -1,12 +1,12 @@
-import { useEffect, useState } from 'react';
-import { interval, startWith, switchMap, map, filter } from 'rxjs';
-import { isEqual } from 'lodash-es';
-import Decimal from 'decimal.js';
 import plugins from '@core/WalletCore/Plugins';
 import { useCurrentNetwork } from '@core/WalletCore/Plugins/ReactInject';
-import { ITxEvm } from '@core/WalletCore/Plugins/Transaction/types';
-import { notNull } from '@core/utils/rxjs';
 import { clampGasPrice } from '@core/WalletCore/Plugins/Transaction/SuggestedGasEstimate';
+import type { ITxEvm } from '@core/WalletCore/Plugins/Transaction/types';
+import { notNull } from '@core/utils/rxjs';
+import Decimal from 'decimal.js';
+import { isEqual } from 'lodash-es';
+import { useEffect, useState } from 'react';
+import { filter, interval, map, startWith, switchMap } from 'rxjs';
 export { type Level } from '@core/WalletCore/Plugins/Transaction/SuggestedGasEstimate';
 
 /**

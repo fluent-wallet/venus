@@ -1,10 +1,14 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { StyleSheet, View } from 'react-native';
-import { RouteProp, useNavigation, useRoute, useTheme } from '@react-navigation/native';
-import { useTranslation } from 'react-i18next';
-import { isNil, set } from 'lodash-es';
-import { Interface } from '@ethersproject/abi';
-import Decimal from 'decimal.js';
+import { BSIMError } from '@WalletCoreExtends/Plugins/BSIM/BSIMSDK';
+import { BSIMEventTypesName } from '@WalletCoreExtends/Plugins/BSIM/types';
+import MessageFail from '@assets/icons/message-fail.svg';
+import BottomSheet, { BottomSheetScrollView, snapPoints } from '@components/BottomSheet';
+import Button from '@components/Button';
+import Text from '@components/Text';
+import Events from '@core/WalletCore/Events';
+import methods from '@core/WalletCore/Methods';
+import plugins from '@core/WalletCore/Plugins';
+import { fetchERC20AssetInfoBatchWithAccount } from '@core/WalletCore/Plugins/AssetsTracker/fetchers/basic';
+import { checkDiffInRange } from '@core/WalletCore/Plugins/BlockNumberTracker';
 import {
   AssetSource,
   AssetType,
@@ -17,43 +21,41 @@ import {
   useCurrentNetworkNativeAsset,
   useVaultOfAccount,
 } from '@core/WalletCore/Plugins/ReactInject';
-import { processError } from '@core/utils/eth';
-import { fetchERC20AssetInfoBatchWithAccount } from '@core/WalletCore/Plugins/AssetsTracker/fetchers/basic';
-import { checkDiffInRange } from '@core/WalletCore/Plugins/BlockNumberTracker';
-import methods from '@core/WalletCore/Methods';
-import plugins from '@core/WalletCore/Plugins';
-import { ITxEvm } from '@core/WalletCore/Plugins/Transaction/types';
-import Events from '@core/WalletCore/Events';
-import { Signature } from '@core/database/models/Signature';
+import type { ITxEvm } from '@core/WalletCore/Plugins/Transaction/types';
+import type { IWCSendTransactionEvent } from '@core/WalletCore/Plugins/WalletConnect/types';
+import type { App } from '@core/database/models/App';
+import type { Signature } from '@core/database/models/Signature';
 import { SignType } from '@core/database/models/Signature/type';
-import { App } from '@core/database/models/App';
-import { type IWCSendTransactionEvent } from '@core/WalletCore/Plugins/WalletConnect/types';
-import { BSIMEventTypesName } from '@WalletCoreExtends/Plugins/BSIM/types';
-import { BSIMError } from '@WalletCoreExtends/Plugins/BSIM/BSIMSDK';
+import { processError } from '@core/utils/eth';
+import { Interface } from '@ethersproject/abi';
+import useFormatBalance from '@hooks/useFormatBalance';
+import useInAsync from '@hooks/useInAsync';
+import { SignTransactionCancelError, useSignTransaction } from '@hooks/useSignTransaction';
 import { AccountItemView } from '@modules/AccountsList';
 import GasFeeSetting, { type GasEstimate, type GasFeeSettingMethods } from '@modules/GasFee/GasFeeSetting';
-import EstimateFee from '@modules/GasFee/GasFeeSetting/EstimateFee';
 import DappParamsWarning from '@modules/GasFee/GasFeeSetting/DappParamsWarning';
-import BottomSheet, { BottomSheetScrollView, snapPoints } from '@components/BottomSheet';
-import Text from '@components/Text';
-import Button from '@components/Button';
-import { SignTransactionCancelError, useSignTransaction } from '@hooks/useSignTransaction';
-import useInAsync from '@hooks/useInAsync';
-import useFormatBalance from '@hooks/useFormatBalance';
-import { ParseTxDataReturnType, isApproveMethod, parseTxData } from '@utils/parseTxData';
-import matchRPCErrorMessage from '@utils/matchRPCErrorMssage';
-import { WalletConnectParamList, WalletConnectTransactionStackName } from '@router/configs';
-import { styles as transactionConfirmStyle } from '@pages/SendTransaction/Step4Confirm/index';
-import SendAsset from '@pages/SendTransaction/Step4Confirm/SendAsset';
+import EstimateFee from '@modules/GasFee/GasFeeSetting/EstimateFee';
 import BSIMVerify, { useBSIMVerify } from '@pages/SendTransaction/BSIMVerify';
-import EditAllowance from './EditAllowance';
-import SendContract from './Contract';
+import SendAsset from '@pages/SendTransaction/Step4Confirm/SendAsset';
+import { styles as transactionConfirmStyle } from '@pages/SendTransaction/Step4Confirm/index';
+import { type RouteProp, useNavigation, useRoute, useTheme } from '@react-navigation/native';
+import type { WalletConnectParamList, WalletConnectTransactionStackName } from '@router/configs';
+import matchRPCErrorMessage from '@utils/matchRPCErrorMssage';
+import { type ParseTxDataReturnType, isApproveMethod, parseTxData } from '@utils/parseTxData';
 import { supportsInterface } from '@utils/supportsInterface';
+import Decimal from 'decimal.js';
+import { isNil, set } from 'lodash-es';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { StyleSheet, View } from 'react-native';
+import SendContract from './Contract';
+import EditAllowance from './EditAllowance';
 
 export type TxDataWithTokenInfo = ParseTxDataReturnType & {
   symbol?: string;
   balance?: string;
   decimals?: number;
+  assetType?: AssetType;
 };
 
 function WalletConnectTransaction() {
@@ -87,10 +89,10 @@ function WalletConnectTransaction() {
   } = useRoute<RouteProp<WalletConnectParamList, typeof WalletConnectTransactionStackName>>();
 
   const txData = useMemo(() => {
-    if (allowanceValue && parseData?.functionName === 'approve' && isApproveMethod(parseData)) {
+    if (allowanceValue && parseData && isApproveMethod(parseData) && parseData.assetType === AssetType.ERC20) {
       const value = parseData.decimals ? new Decimal(allowanceValue).mul(new Decimal(10).pow(parseData.decimals)).toString() : allowanceValue;
       // is approve and allowance value is set , so we need to encode the date
-      console.log(allowanceValue, parseData.decimals, value);
+
       const iface = new Interface([parseData.readableABI]);
       return iface.encodeFunctionData(parseData.functionName, [from, value]);
     }
@@ -246,7 +248,7 @@ function WalletConnectTransaction() {
           signature: signatureRecord,
           app: dapp,
           extraParams: {
-            assetType: isContract ? undefined : AssetType.Native,
+            assetType: isContract ? parseData?.assetType : AssetType.Native,
             contractAddress: isContract ? to : undefined,
             to: to,
             sendAt: new Date(),
@@ -259,14 +261,14 @@ function WalletConnectTransaction() {
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentAddressValue, currentNetwork?.id, gasLimit, gasPrice, to, navigation, value, gasEstimate, isContract, signTransaction, txData]);
+  }, [currentAddressValue, currentNetwork?.id, gasLimit, gasPrice, to, navigation, value, gasEstimate, isContract, signTransaction, txData, parseData]);
 
   useEffect(() => {
     async function parseAndTryGetTokenInfo() {
       if (isContract) {
         const parseData = parseTxData({ data, to });
 
-        if (to && parseData.functionName === 'approve') {
+        if (to) {
           const typeByInterface = await supportsInterface(to, {
             networkType: currentNetwork.networkType,
             endpoint: currentNetwork?.endpoint,
@@ -278,10 +280,21 @@ function WalletConnectTransaction() {
             contractAddress: to,
             accountAddress: currentAddress!,
           });
-          const assertType = typeByInterface !== 'Unknown' ? typeByInterface : remoteAsset.decimals ? AssetType.ERC20 : AssetType.ERC721;
-        
+          const assertType =
+            typeByInterface !== 'Unknown' ? typeByInterface : remoteAsset.decimals && remoteAsset.name && remoteAsset.symbol ? AssetType.ERC20 : 'Unknown';
+
+          setParseData({
+            ...parseData,
+            symbol: remoteAsset.symbol,
+            balance: remoteAsset.balance,
+            decimals: remoteAsset.decimals,
+            assetType: assertType === 'Unknown' ? undefined : assertType,
+          });
+
+          if (assertType === 'Unknown') return;
+
           const assetInfo = { ...remoteAsset, type: assertType, contractAddress: to };
-          setParseData({ ...parseData, symbol: remoteAsset.symbol, balance: remoteAsset.balance, decimals: remoteAsset.decimals, assetType: assertType });
+
           const isInDB = await currentNetwork.queryAssetByAddress(to);
           if (!isInDB) {
             await methods.createAsset({
@@ -339,6 +352,7 @@ function WalletConnectTransaction() {
 
           {errorMsg && (
             <View style={[styles.error, { borderColor: colors.down }]}>
+              <MessageFail color={colors.down} width={24} height={24} />
               <Text style={{ color: colors.down, fontSize: 16 }}>{errorMsg}</Text>
             </View>
           )}
@@ -368,7 +382,7 @@ function WalletConnectTransaction() {
             style={transactionConfirmStyle.btn}
             loading={approveLoading}
             size="small"
-            onPress={handleApprove}
+            onPress={_handleApprove}
             disabled={isContract ? !parseData : false}
           >
             {isContract ? t('common.confirm') : t('common.send')}
@@ -433,6 +447,8 @@ const styles = StyleSheet.create({
     borderRadius: 6,
     marginTop: 16,
     marginHorizontal: 16,
+    display: 'flex',
+    flexDirection: 'row',
   },
   btnArea: {
     marginTop: 'auto',

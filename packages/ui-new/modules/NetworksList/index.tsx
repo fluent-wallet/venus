@@ -1,13 +1,14 @@
-import React, { useMemo } from 'react';
-import { View, FlatList, Pressable, StyleSheet } from 'react-native';
-import { useTheme } from '@react-navigation/native';
-import { BottomSheetFlatList } from '@gorhom/bottom-sheet';
-import { Image } from 'expo-image';
-import { useNetworks, useCurrentNetwork, NetworkType, ChainType } from '@core/WalletCore/Plugins/ReactInject';
-import methods from '@core/WalletCore/Methods';
-import Text from '@components/Text';
 import Checkbox from '@components/Checkbox';
+import Text from '@components/Text';
+import methods from '@core/WalletCore/Methods';
+import { type ChainType, type NetworkType, useCurrentNetwork, useNetworks } from '@core/WalletCore/Plugins/ReactInject';
+import { BottomSheetFlatList } from '@gorhom/bottom-sheet';
+import { useTheme } from '@react-navigation/native';
 import { toDataUrl } from '@utils/blockies';
+import { Image } from 'expo-image';
+import type React from 'react';
+import { useMemo } from 'react';
+import { FlatList, Pressable, StyleSheet, View } from 'react-native';
 
 type ListType = 'selector' | 'manage';
 

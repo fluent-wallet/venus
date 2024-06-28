@@ -1,9 +1,9 @@
-import { type Observable } from 'rxjs';
 import { memoize } from 'lodash-es';
-import { ModelFields, createModel } from '../../helper/modelHelper';
-import { AccountGroup } from '.';
-import TableName from '../../TableName';
+import type { Observable } from 'rxjs';
+import type { AccountGroup } from '.';
 import database from '../..';
+import TableName from '../../TableName';
+import { type ModelFields, createModel } from '../../helper/modelHelper';
 
 type Params = Omit<ModelFields<AccountGroup>, 'hiddenAccounts' | 'visibleAccounts' | 'observeSelectedAccount'>;
 export function createAccountGroup(params: Params, prepareCreate: true): AccountGroup;

@@ -1,9 +1,9 @@
 import { Model, type Relation } from '@nozbe/watermelondb';
-import { text, readonly, date, immutableRelation } from '@nozbe/watermelondb/decorators';
-import { type Network } from '../Network';
-import { type Account } from '../Account';
-import { type App } from '../App';
+import { date, immutableRelation, readonly, text } from '@nozbe/watermelondb/decorators';
 import TableName from '../../TableName';
+import type { Account } from '../Account';
+import type { App } from '../App';
+import type { Network } from '../Network';
 
 export enum Permissions {
   Disable = 'disable',

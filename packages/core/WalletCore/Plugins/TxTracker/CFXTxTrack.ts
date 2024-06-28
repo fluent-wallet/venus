@@ -1,10 +1,10 @@
+import { fetchChain, fetchChainBatch } from '@cfx-kit/dapp-utils/dist/fetch';
+import { type Network, NetworkType } from '@core/database/models/Network';
 import type { Tx } from '@core/database/models/Tx';
 import { EXECUTED_NOT_FINALIZED_TX_STATUSES, ExecutedStatus, TxStatus } from '@core/database/models/Tx/type';
-import { BaseTxTrack, RPCErrorResponse, isRPCError } from './BaseTxTrack';
-import BlockNumberTracker from '../BlockNumberTracker';
 import { ProcessErrorType } from '@core/utils/eth';
-import { Network, NetworkType } from '@core/database/models/Network';
-import { fetchChain, fetchChainBatch } from '@cfx-kit/dapp-utils/dist/fetch';
+import BlockNumberTracker from '../BlockNumberTracker';
+import { BaseTxTrack, type RPCErrorResponse, isRPCError } from './BaseTxTrack';
 
 class CFXTxTrack extends BaseTxTrack {
   networkType = NetworkType.Conflux as const;

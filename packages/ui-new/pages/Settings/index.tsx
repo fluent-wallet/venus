@@ -1,10 +1,10 @@
-import React from 'react';
-import { ScrollView, Pressable, StyleSheet } from 'react-native';
-import { useTheme } from '@react-navigation/native';
-import Text from '@components/Text';
-import { SettingsStackName, AccountManagementStackName, PreferencesStackName, AboutUsStackName, type StackScreenProps } from '@router/configs';
 import Arrow from '@assets/icons/arrow-right2.svg';
+import Text from '@components/Text';
+import { useTheme } from '@react-navigation/native';
+import { AboutUsStackName, AccountManagementStackName, PreferencesStackName, type SettingsStackName, type StackScreenProps } from '@router/configs';
+import type React from 'react';
 import { useTranslation } from 'react-i18next';
+import { Pressable, ScrollView, StyleSheet } from 'react-native';
 
 export const SettingItem: React.FC<{ title: string; onPress: () => void; disable?: boolean }> = ({ title, onPress, disable = false }) => {
   const { colors } = useTheme();

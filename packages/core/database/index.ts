@@ -1,23 +1,24 @@
 import { Database as _Database } from '@nozbe/watermelondb';
 import SQLiteAdapter from '@nozbe/watermelondb/adapters/sqlite';
 import { Subject } from 'rxjs';
-import schema from './schema';
 import migrations from './migrations';
 import { Account as AccountModel } from './models/Account';
 import { AccountGroup as AccountGroupModel } from './models/AccountGroup';
 import { Address as AddressModel } from './models/Address';
-import { HdPath as HdPathModel } from './models/HdPath';
-import { Network as NetworkModel } from './models/Network';
+import { App as AppModel } from './models/App';
 import { Asset as AssetModel } from './models/Asset';
 import { AssetRule as AssetRuleModel } from './models/AssetRule';
+import { HdPath as HdPathModel } from './models/HdPath';
+import { Network as NetworkModel } from './models/Network';
+import { Permission as PermissionModel } from './models/Permission';
+import { Request as RequestModel } from './models/Request';
 import { Signature as SignatureModel } from './models/Signature';
 import { Tx as TxModel } from './models/Tx';
 import { TxExtra as TxExtraModel } from './models/TxExtra';
 import { TxPayload as TxPayloadModel } from './models/TxPayload';
 import { Vault as VaultModel } from './models/Vault';
-import { App as AppModel } from './models/App';
-import { Permission as PermissionModel } from './models/Permission';
-import { Request as RequestModel } from './models/Request';
+import schema from './schema';
+import { AddressBook } from './models/AddressBook';
 export const dbRefresh$ = new Subject();
 
 const adapter = new SQLiteAdapter({
@@ -47,6 +48,7 @@ const modelClasses = [
   AppModel,
   PermissionModel,
   RequestModel,
+  AddressBook,
 ];
 
 const database = new _Database({

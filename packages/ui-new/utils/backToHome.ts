@@ -1,6 +1,6 @@
 import { CommonActions, type NavigationState, type PartialState } from '@react-navigation/native';
-import { isSamsungDevice } from '@utils/deviceInfo';
 import { HomeStackName } from '@router/configs';
+import { isSamsungDevice } from '@utils/deviceInfo';
 
 export function getActiveRouteName(state: NavigationState | PartialState<NavigationState>) {
   if (state.index == null || !state.routes[state.index]) {

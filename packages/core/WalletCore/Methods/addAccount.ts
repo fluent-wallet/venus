@@ -1,17 +1,17 @@
-import { injectable, inject } from 'inversify';
-import { Plugins } from '../Plugins';
-import { type Network } from '../../database/models/Network';
-import { type AccountGroup } from '../../database/models/AccountGroup';
-import { type Account } from '../../database/models/Account';
-import { type Vault } from '../../database/models/Vault';
-import { type Address } from '../../database/models/Address';
-import { createAddress } from '../../database/models/Address/query';
-import { createModel } from '../../database/helper/modelHelper';
-import VaultType from '../../database/models/Vault/VaultType';
+import { inject, injectable } from 'inversify';
 import database from '../../database';
 import TableName from '../../database/TableName';
-import { getNthAccountOfHDKey } from '../../utils/hdkey';
+import { createModel } from '../../database/helper/modelHelper';
+import type { Account } from '../../database/models/Account';
+import type { AccountGroup } from '../../database/models/AccountGroup';
+import type { Address } from '../../database/models/Address';
+import { createAddress } from '../../database/models/Address/query';
+import type { Network } from '../../database/models/Network';
+import type { Vault } from '../../database/models/Vault';
+import VaultType from '../../database/models/Vault/VaultType';
 import { fromPrivate, toChecksum } from '../../utils/account';
+import { getNthAccountOfHDKey } from '../../utils/hdkey';
+import { Plugins } from '../Plugins';
 
 export interface Params {
   accountGroup: AccountGroup;

@@ -1,7 +1,7 @@
 import { useAtomValue } from 'jotai';
 import { atomFamily, atomWithObservable } from 'jotai/utils';
-import { switchMap, from, of } from 'rxjs';
 import { memoize } from 'lodash-es';
+import { from, of, switchMap } from 'rxjs';
 import { observeAccountById } from '../../../../database/models/Account/query';
 
 const addressesAtomFamilyOfAccount = atomFamily((accountId: string | null | undefined) =>

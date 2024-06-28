@@ -1,7 +1,7 @@
-import React from 'react';
-import { Pressable, StyleSheet, type PressableProps } from 'react-native';
-import { useTheme } from '@react-navigation/native';
 import Check from '@assets/icons/check.svg';
+import { useTheme } from '@react-navigation/native';
+import type React from 'react';
+import { Pressable, type PressableProps, StyleSheet } from 'react-native';
 
 interface Props extends PressableProps {
   checked: boolean;

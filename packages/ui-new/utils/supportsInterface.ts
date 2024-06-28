@@ -1,8 +1,8 @@
 import { fetchChain } from '@cfx-kit/dapp-utils/dist/fetch';
-import { iface1155, iface721 } from '@core/contracts';
+import { iface721, iface1155 } from '@core/contracts';
 import { AssetType } from '@core/database/models/Asset';
 import { networkRpcPrefixMap, networkRpcSuffixMap } from '@core/database/models/Network';
-import { NetworkType } from '@core/utils/consts';
+import type { NetworkType } from '@core/utils/consts';
 
 const ERC1155InterfaceId = '0xd9b67a26'; //https://eips.ethereum.org/EIPS/eip-1155
 const ERC721InterfaceId = '0x80ac58cd'; // https://eips.ethereum.org/EIPS/eip-721

@@ -1,19 +1,20 @@
-import React, { useCallback } from 'react';
-import { View, Pressable, StyleSheet } from 'react-native';
-import { useTheme } from '@react-navigation/native';
-import Clipboard from '@react-native-clipboard/clipboard';
-import { showMessage } from 'react-native-flash-message';
-import { useCurrentAddressValue, useAssetsTotalPriceValue } from '@core/WalletCore/Plugins/ReactInject';
-import { zeroAddress, shortenAddress } from '@core/utils/address';
-import { numberWithCommas } from '@core/utils/balance'
-import { usePriceVisible } from '@hooks/usePriceVisible';
-import Text from '@components/Text';
-import Skeleton from '@components/Skeleton';
-import Copy from '@assets/icons/copy.svg';
-import EyeOpen from '@assets/icons/eye-open.svg';
-import EyeClose from '@assets/icons/eye-close.svg';
 import Asterisk from '@assets/icons/asterisk.svg';
+import Copy from '@assets/icons/copy.svg';
+import EyeClose from '@assets/icons/eye-close.svg';
+import EyeOpen from '@assets/icons/eye-open.svg';
+import Skeleton from '@components/Skeleton';
+import Text from '@components/Text';
+import { useAssetsTotalPriceValue, useCurrentAddressValue } from '@core/WalletCore/Plugins/ReactInject';
+import { shortenAddress, zeroAddress } from '@core/utils/address';
+import { numberWithCommas } from '@core/utils/balance';
+import { usePriceVisible } from '@hooks/usePriceVisible';
+import Clipboard from '@react-native-clipboard/clipboard';
+import { useTheme } from '@react-navigation/native';
+import type React from 'react';
+import { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
+import { Pressable, StyleSheet, View } from 'react-native';
+import { showMessage } from 'react-native-flash-message';
 
 export const CurrentAddress: React.FC = () => {
   const { colors } = useTheme();
@@ -33,7 +34,7 @@ export const CurrentAddress: React.FC = () => {
       }}
       disabled={!currentAddressValue}
       style={({ pressed }) => [styles.addressContainer, { backgroundColor: pressed ? colors.underlay : 'transparent' }]}
-      testID='currentAddress'
+      testID="currentAddress"
     >
       <Text style={{ color: colors.textSecondary, opacity: currentAddressValue ? 1 : 0 }}>{shortenAddress(currentAddressValue || zeroAddress)}</Text>
       <Copy color={colors.textSecondary} />
@@ -67,7 +68,7 @@ export const TotalPrice: React.FC = () => {
       onPress={() => setPriceVisible(!priceVisible)}
       disabled={priceVisible === undefined}
       style={({ pressed }) => [styles.totalPriceContainer, { backgroundColor: pressed ? colors.underlay : 'transparent' }]}
-      testID='totalPrice'
+      testID="totalPrice"
     >
       <Asterisks />
       <Text style={[styles.totalPriceText, { color: colors.textPrimary, opacity: priceVisible ? 1 : 0 }]} numberOfLines={1}>

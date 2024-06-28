@@ -1,10 +1,10 @@
 import { useAtomValue } from 'jotai';
 import { atomFamily, atomWithObservable } from 'jotai/utils';
-import { switchMap, of, Observable, map } from 'rxjs';
 import { memoize, unionBy } from 'lodash-es';
+import { type Observable, map, of, switchMap } from 'rxjs';
 import { observeNetworkById } from '../../../../database/models/Network/query';
+import type { AssetInfo } from '../../AssetsTracker/types';
 import { useCurrentNetwork } from './useCurrentNetwork';
-import { type AssetInfo } from '../../AssetsTracker/types';
 
 export const observeTokenListOfNetwork = memoize((networkId: string) =>
   observeNetworkById(networkId).pipe(switchMap((network) => network.tokenList.observe() as unknown as Observable<AssetInfo[]>)),

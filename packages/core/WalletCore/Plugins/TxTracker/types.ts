@@ -1,6 +1,5 @@
-
 export enum ReplacedResponse {
-  Replaced,
-  NotReplaced,
-  TxInPool,
+  Replaced = 0,
+  NotReplaced = 1,
+  TxInPool = 2,
 }

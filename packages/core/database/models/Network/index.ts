@@ -1,13 +1,13 @@
 import { Model, Q, type Query, type Relation } from '@nozbe/watermelondb';
-import { field, text, children, relation, lazy } from '@nozbe/watermelondb/decorators';
+import { children, field, lazy, relation, text } from '@nozbe/watermelondb/decorators';
 import { firstValueFrom, map } from 'rxjs';
 import { convertToChecksum } from '../../../utils/account';
-import { type Asset, AssetType } from '../Asset';
-import { type AssetRule } from '../AssetRule';
-import { type HdPath } from '../HdPath';
-import { type Address } from '../Address';
+import { ChainType, NetworkType } from '../../../utils/consts';
 import TableName from '../../TableName';
-import { NetworkType, ChainType } from '../../../utils/consts';
+import type { Address } from '../Address';
+import { type Asset, AssetType } from '../Asset';
+import type { AssetRule } from '../AssetRule';
+import type { HdPath } from '../HdPath';
 export { NetworkType, ChainType };
 
 export const networkRpcPrefixMap = {

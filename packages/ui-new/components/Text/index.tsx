@@ -1,4 +1,4 @@
-import { type PropsWithChildren } from 'react';
+import type { PropsWithChildren } from 'react';
 import { Text as NativeText, StyleSheet, type TextProps } from 'react-native';
 
 const CustomText = ({ children, style, ...props }: PropsWithChildren<TextProps>) => {
@@ -12,7 +12,7 @@ const CustomText = ({ children, style, ...props }: PropsWithChildren<TextProps>)
 const styles = StyleSheet.create({
   defaultStyle: {
     fontFamily: 'Sora',
-    letterSpacing: undefined
+    letterSpacing: undefined,
   },
 });
 

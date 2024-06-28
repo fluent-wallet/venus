@@ -1,8 +1,8 @@
 import { injectable } from 'inversify';
-import { type Account } from '../../database/models/Account';
-import { querySelectedAccount } from '../../database/models/Account/query';
 import database from '../../database';
 import TableName from '../../database/TableName';
+import type { Account } from '../../database/models/Account';
+import { querySelectedAccount } from '../../database/models/Account/query';
 
 @injectable()
 export class AccountMethod {
@@ -30,12 +30,12 @@ export class AccountMethod {
         .map((account) =>
           account.prepareUpdate((_account) => {
             _account.selected = false;
-          })
+          }),
         )
         .concat(
           targetAccount.prepareUpdate((_account) => {
             _account.selected = true;
-          })
+          }),
         );
       return database.batch(...updates);
     });

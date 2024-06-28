@@ -1,24 +1,25 @@
-/* eslint-disable react-hooks/exhaustive-deps */
-import React, { useState, useMemo, useCallback, useEffect } from 'react';
-import { View, Pressable, StyleSheet } from 'react-native';
-import { useTheme } from '@react-navigation/native';
-import { useTranslation } from 'react-i18next';
-import { showMessage } from 'react-native-flash-message';
-import Decimal from 'decimal.js';
-import { type AssetInfo } from '@core/WalletCore/Plugins/AssetsTracker/types';
-import { type NFTItemDetail } from '@core/WalletCore/Plugins/NFTDetailTracker';
-import { useCurrentNetwork, useCurrentAddressValue, AssetType } from '@core/WalletCore/Plugins/ReactInject';
-import plugins from '@core/WalletCore/Plugins';
-import { trimDecimalZeros } from '@core/utils/balance';
+import ProhibitIcon from '@assets/icons/prohibit.svg';
+import HourglassLoading from '@components/Loading/Hourglass';
 import Text from '@components/Text';
 import TextInput from '@components/TextInput';
-import HourglassLoading from '@components/Loading/Hourglass';
-import TokenIcon from '@modules/AssetsList/TokensList/TokenIcon';
-import NFTIcon from '@modules/AssetsList/NFTsList/NFTIcon';
-import { getDetailSymbol } from '@modules/AssetsList/NFTsList/NFTItem';
+import plugins from '@core/WalletCore/Plugins';
+import type { AssetInfo } from '@core/WalletCore/Plugins/AssetsTracker/types';
+import type { NFTItemDetail } from '@core/WalletCore/Plugins/NFTDetailTracker';
+import { AssetType, useCurrentAddressValue, useCurrentNetwork } from '@core/WalletCore/Plugins/ReactInject';
+import { trimDecimalZeros } from '@core/utils/balance';
 import useFormatBalance from '@hooks/useFormatBalance';
 import useInAsync from '@hooks/useInAsync';
-import ProhibitIcon from '@assets/icons/prohibit.svg';
+import NFTIcon from '@modules/AssetsList/NFTsList/NFTIcon';
+import { getDetailSymbol } from '@modules/AssetsList/NFTsList/NFTItem';
+import TokenIcon from '@modules/AssetsList/TokensList/TokenIcon';
+import { useTheme } from '@react-navigation/native';
+import Decimal from 'decimal.js';
+/* eslint-disable react-hooks/exhaustive-deps */
+import type React from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { Pressable, StyleSheet, View } from 'react-native';
+import { showMessage } from 'react-native-flash-message';
 
 interface Info {
   amount: string;
@@ -45,7 +46,7 @@ const SetAssetAmount: React.FC<Props> = ({ targetAddress, asset, nftItemDetail, 
   const currentNetwork = useCurrentNetwork()!;
   const currentAddressValue = useCurrentAddressValue()!;
   const [amount, setAmount] = useState(() => defaultAmount ?? '');
-  const [validMax, setValidMax] = useState<Decimal | null>(() => (isReceive ? new Decimal(Infinity) : null));
+  const [validMax, setValidMax] = useState<Decimal | null>(() => (isReceive ? new Decimal(Number.POSITIVE_INFINITY) : null));
   const needMaxMode = useMemo(() => !isReceive && (asset.type === AssetType.Native || asset.type === AssetType.ERC20), [isReceive, asset.type]);
 
   const validMaxString = useMemo(() => (needMaxMode && validMax ? validMax.div(Decimal.pow(10, asset.decimals)).toString() : null), [needMaxMode, validMax]);

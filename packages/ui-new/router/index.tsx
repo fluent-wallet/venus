@@ -1,62 +1,63 @@
-import React, { useEffect } from 'react';
-import { View } from 'react-native';
-import { useTheme, useNavigation } from '@react-navigation/native';
-import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import { useHasVault } from '@core/WalletCore/Plugins/ReactInject';
 import plugins from '@core/WalletCore/Plugins';
-import Welcome from '@pages/Welcome';
-import WayToInitWallet from '@pages/WayToInitWallet';
+import { useHasVault } from '@core/WalletCore/Plugins/ReactInject';
+import PasswordVerify from '@modules/PasswordVerify';
+import Home from '@pages/Home';
 import BiometricsWay from '@pages/InitWallet/BiometricsWay';
 import PasswordWay from '@pages/InitWallet/PasswordWay';
-import Home from '@pages/Home';
 import AccountManagement from '@pages/Management/AccountManagement';
 import AccountSetting from '@pages/Management/AccountManagement/AccountSetting';
+import AddAnotherWallet from '@pages/Management/AccountManagement/AddAnotherWallet';
+import Backup from '@pages/Management/AccountManagement/Backup';
+import EraseAllWallet from '@pages/Management/AccountManagement/EraseAllWallet';
 import GroupSetting from '@pages/Management/AccountManagement/GroupSetting';
 import HDSetting from '@pages/Management/AccountManagement/HDSetting';
-import Backup from '@pages/Management/AccountManagement/Backup';
-import AddAnotherWallet from '@pages/Management/AccountManagement/AddAnotherWallet';
-import EraseAllWallet from '@pages/Management/AccountManagement/EraseAllWallet';
-import SendTransaction from '@pages/SendTransaction';
-import ScanQRCode from '@pages/ScanQRCode';
 import Receive from '@pages/Receive';
-import PasswordVerify from '@modules/PasswordVerify';
+import ScanQRCode from '@pages/ScanQRCode';
+import SendTransaction from '@pages/SendTransaction';
 import Settings from '@pages/Settings';
 import AboutUs from '@pages/Settings/AboutUs';
-import Preferences from '@pages/Settings/Preferences';
 import Appearance from '@pages/Settings/Appearance';
 import Language from '@pages/Settings/Language';
+import Preferences from '@pages/Settings/Preferences';
+import SignatureRecords from '@pages/SignatureRecords';
+import WalletConnect from '@pages/WalletConnect';
+import { useListenWalletConnectEvent } from '@pages/WalletConnect/useWalletConnectHooks';
+import WayToInitWallet from '@pages/WayToInitWallet';
+import Welcome from '@pages/Welcome';
+import { useNavigation, useTheme } from '@react-navigation/native';
+import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import type React from 'react';
+import { useEffect } from 'react';
+import { View } from 'react-native';
+import Header from './Header';
 import {
-  WelcomeStackName,
-  WayToInitWalletStackName,
-  HomeStackName,
-  BiometricsWayStackName,
-  PasswordWayStackName,
+  AboutUsStackName,
   AccountManagementStackName,
   AccountSettingStackName,
+  AddAnotherWalletStackName,
+  AppearanceStackName,
+  BackupStackName,
+  BiometricsWayStackName,
+  EraseAllWalletStackName,
   GroupSettingStackName,
   HDSettingStackName,
-  PasswordVerifyStackName,
-  BackupStackName,
-  EraseAllWalletStackName,
-  AddAnotherWalletStackName,
-  SendTransactionStackName,
-  ScanQRCodeStackName,
-  ReceiveStackName,
-  SettingsStackName,
-  AboutUsStackName,
-  PreferencesStackName,
-  AppearanceStackName,
+  HomeStackName,
   LanguageStackName,
+  PasswordVerifyStackName,
+  PasswordWayStackName,
+  PreferencesStackName,
+  ReceiveStackName,
   type RootStackParamList,
-  type StackNavigation,
+  ScanQRCodeStackName,
+  SendTransactionStackName,
+  SettingsStackName,
   SheetBottomOption,
-  WalletConnectStackName,
   SignatureRecordsStackName,
+  type StackNavigation,
+  WalletConnectStackName,
+  WayToInitWalletStackName,
+  WelcomeStackName,
 } from './configs';
-import Header from './Header';
-import { useListenWalletConnectEvent } from '@pages/WalletConnect/useWalletConnectHooks';
-import WalletConnect from '@pages/WalletConnect';
-import SignatureRecords from '@pages/SignatureRecords';
 
 const RootStack = createNativeStackNavigator<RootStackParamList>();
 const screenOptions = {

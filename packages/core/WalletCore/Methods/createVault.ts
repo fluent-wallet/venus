@@ -1,15 +1,15 @@
-import { injectable, inject } from 'inversify';
-import { Plugins } from '../Plugins';
-import { Vault } from '../../database/models/Vault';
-import { type Account } from '../../database/models/Account';
-import { type Address } from '../../database/models/Address';
-import VaultType from '../../database/models/Vault/VaultType';
-import { createVault, checkIsFirstVault, getVaultTypeCount } from '../../database/models/Vault/query';
-import { createAccountGroup } from '../../database/models/AccountGroup/query';
-import { generateMnemonic } from '../../utils/hdkey';
-import { AddAccountMethod, type Params as AddAccountParams } from './addAccount';
-import database from '../../database';
 import VaultSourceType from '@core/database/models/Vault/VaultSourceType';
+import { inject, injectable } from 'inversify';
+import database from '../../database';
+import type { Account } from '../../database/models/Account';
+import { createAccountGroup } from '../../database/models/AccountGroup/query';
+import type { Address } from '../../database/models/Address';
+import type { Vault } from '../../database/models/Vault';
+import VaultType from '../../database/models/Vault/VaultType';
+import { checkIsFirstVault, createVault, getVaultTypeCount } from '../../database/models/Vault/query';
+import { generateMnemonic } from '../../utils/hdkey';
+import { Plugins } from '../Plugins';
+import { AddAccountMethod, type Params as AddAccountParams } from './addAccount';
 
 const defaultGroupNameMap = {
   [VaultType.HierarchicalDeterministic]: 'Seed Phrase',

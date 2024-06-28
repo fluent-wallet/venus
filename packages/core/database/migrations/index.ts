@@ -1,8 +1,8 @@
-import { createTable, schemaMigrations, addColumns, unsafeExecuteSql } from '@nozbe/watermelondb/Schema/migrations';
-import TableName from '../TableName';
-import { TxSource, ExecutedStatus, TxStatus } from '../models/Tx/type';
 import { ProcessErrorType } from '@core/utils/eth';
+import { addColumns, createTable, schemaMigrations, unsafeExecuteSql } from '@nozbe/watermelondb/Schema/migrations';
+import TableName from '../TableName';
 import { AssetType } from '../models/Asset';
+import { ExecutedStatus, TxSource, TxStatus } from '../models/Tx/type';
 
 const migrations = schemaMigrations({
   migrations: [

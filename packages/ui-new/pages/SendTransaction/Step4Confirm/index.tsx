@@ -1,53 +1,54 @@
-/* eslint-disable @typescript-eslint/no-empty-function */
-/* eslint-disable react-hooks/exhaustive-deps */
-import React, { useMemo, useState, useEffect, useCallback, useRef } from 'react';
-import { View, StyleSheet, Keyboard } from 'react-native';
-import { useTheme } from '@react-navigation/native';
-import { useTranslation } from 'react-i18next';
-import { showMessage } from 'react-native-flash-message';
-import Decimal from 'decimal.js';
-import { createERC20Contract, createERC721Contract, createERC1155Contract } from '@cfx-kit/dapp-utils/dist/contract';
+import { BSIMEventTypesName } from '@WalletCoreExtends/Plugins/BSIM/types';
+import ProhibitIcon from '@assets/icons/prohibit.svg';
+import WarnIcon from '@assets/icons/warn.svg';
 import { convertCfxToHex } from '@cfx-kit/dapp-utils/dist/address';
+import { createERC20Contract, createERC721Contract, createERC1155Contract } from '@cfx-kit/dapp-utils/dist/contract';
+import { BottomSheetScrollView } from '@components/BottomSheet';
+import Button from '@components/Button';
+import Text from '@components/Text';
+import events from '@core/WalletCore/Events';
+import methods from '@core/WalletCore/Methods';
+import plugins from '@core/WalletCore/Plugins';
+import { checkDiffInRange } from '@core/WalletCore/Plugins/BlockNumberTracker';
 import {
-  useCurrentNetwork,
-  useCurrentNetworkNativeAsset,
-  useCurrentAddressValue,
-  useCurrentAccount,
-  useCurrentAddress,
-  useVaultOfAccount,
+  AssetSource,
   AssetType,
   NetworkType,
   VaultType,
-  AssetSource,
+  useCurrentAccount,
+  useCurrentAddress,
+  useCurrentAddressValue,
+  useCurrentNetwork,
+  useCurrentNetworkNativeAsset,
+  useVaultOfAccount,
 } from '@core/WalletCore/Plugins/ReactInject';
-import { type ITxEvm } from '@core/WalletCore/Plugins/Transaction/types';
-import { BSIMEventTypesName } from '@WalletCoreExtends/Plugins/BSIM/types';
-import { BSIMError } from 'packages/WalletCoreExtends/Plugins/BSIM/BSIMSDK';
-import plugins from '@core/WalletCore/Plugins';
-import methods from '@core/WalletCore/Methods';
-import events from '@core/WalletCore/Events';
-import { checkDiffInRange } from '@core/WalletCore/Plugins/BlockNumberTracker';
-import { processError } from '@core/utils/eth';
+import type { ITxEvm } from '@core/WalletCore/Plugins/Transaction/types';
+import type { Signature } from '@core/database/models/Signature';
 import { SignType } from '@core/database/models/Signature/type';
-import { Signature } from '@core/database/models/Signature';
-import Text from '@components/Text';
-import Button from '@components/Button';
-import { BottomSheetScrollView } from '@components/BottomSheet';
-import { getDetailSymbol } from '@modules/AssetsList/NFTsList/NFTItem';
-import { AccountItemView } from '@modules/AccountsList';
-import GasFeeSetting, { type GasEstimate } from '@modules/GasFee/GasFeeSetting';
-import EstimateFee from '@modules/GasFee/GasFeeSetting/EstimateFee';
-import backToHome from '@utils/backToHome';
-import { calculateTokenPrice } from '@utils/calculateTokenPrice';
+import { processError } from '@core/utils/eth';
 import useFormatBalance from '@hooks/useFormatBalance';
 import useInAsync from '@hooks/useInAsync';
 import { SignTransactionCancelError, useSignTransaction } from '@hooks/useSignTransaction';
-import { SendTransactionStep4StackName, type SendTransactionScreenProps } from '@router/configs';
-import WarnIcon from '@assets/icons/warn.svg';
-import ProhibitIcon from '@assets/icons/prohibit.svg';
+import { AccountItemView } from '@modules/AccountsList';
+import { getDetailSymbol } from '@modules/AssetsList/NFTsList/NFTItem';
+import GasFeeSetting, { type GasEstimate } from '@modules/GasFee/GasFeeSetting';
+import EstimateFee from '@modules/GasFee/GasFeeSetting/EstimateFee';
+import { useTheme } from '@react-navigation/native';
+import type { SendTransactionScreenProps, SendTransactionStep4StackName } from '@router/configs';
+import backToHome from '@utils/backToHome';
+import { calculateTokenPrice } from '@utils/calculateTokenPrice';
+import Decimal from 'decimal.js';
+import { BSIMError } from 'packages/WalletCoreExtends/Plugins/BSIM/BSIMSDK';
+/* eslint-disable @typescript-eslint/no-empty-function */
+/* eslint-disable react-hooks/exhaustive-deps */
+import type React from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { Keyboard, StyleSheet, View } from 'react-native';
+import { showMessage } from 'react-native-flash-message';
+import BSIMVerify, { useBSIMVerify } from '../BSIMVerify';
 import SendTransactionBottomSheet from '../SendTransactionBottomSheet';
 import { NFT } from '../Step3Amount';
-import BSIMVerify, { useBSIMVerify } from '../BSIMVerify';
 import SendAsset from './SendAsset';
 
 const SendTransactionStep4Confirm: React.FC<SendTransactionScreenProps<typeof SendTransactionStep4StackName>> = ({ navigation, route }) => {

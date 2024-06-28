@@ -1,12 +1,19 @@
+import type { Plugin } from '@core/WalletCore/Plugins';
+import { formatJsonRpcError, formatJsonRpcResult } from '@json-rpc-tools/utils';
 import { Core } from '@walletconnect/core';
-import Client, { Web3Wallet, Web3WalletTypes } from '@walletconnect/web3wallet';
-import { parseUri, getSdkError, buildApprovedNamespaces } from '@walletconnect/utils';
-import { Subject, BehaviorSubject, tap, concatMap, of, switchMap, catchError } from 'rxjs';
-import { formatJsonRpcResult, formatJsonRpcError } from '@json-rpc-tools/utils';
-import { Plugin } from '@core/WalletCore/Plugins';
+import { buildApprovedNamespaces, getSdkError, parseUri } from '@walletconnect/utils';
+import type Client from '@walletconnect/web3wallet';
+import { Web3Wallet, type Web3WalletTypes } from '@walletconnect/web3wallet';
+import { BehaviorSubject, Subject, catchError, concatMap, of, switchMap, tap } from 'rxjs';
 
-import { IWCSendTransactionEvent, IWCSessionProposalEvent, WalletConnectPluginEventType, WalletConnectPluginEvents, WalletConnectRPCMethod } from './types';
 import methods from '@core/WalletCore/Methods';
+import {
+  type IWCSendTransactionEvent,
+  type IWCSessionProposalEvent,
+  WalletConnectPluginEventType,
+  type WalletConnectPluginEvents,
+  WalletConnectRPCMethod,
+} from './types';
 
 declare module '../../../WalletCore/Plugins' {
   interface Plugins {

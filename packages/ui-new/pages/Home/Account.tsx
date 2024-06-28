@@ -1,16 +1,16 @@
-import React from 'react';
-import { Pressable, View, StyleSheet } from 'react-native';
-import { useTheme } from '@react-navigation/native';
-import { Image } from 'expo-image';
-import { useCurrentAccount, useCurrentAddressValueOfAccount, useVaultOfAccount, VaultType } from '@core/WalletCore/Plugins/ReactInject';
-import Text from '@components/Text';
-import useForceUpdateOnFocus from '@hooks/useUpdateOnFocus';
-import { HomeStackName, type StackScreenProps } from '@router/configs';
-import { toDataUrl } from '@utils/blockies';
+import ArrowLeft from '@assets/icons/arrow-left.svg';
+import ExistWallet from '@assets/icons/wallet-Imported.webp';
 import BSIMCardWallet from '@assets/icons/wallet-bsim.webp';
 import HDWallet from '@assets/icons/wallet-hd.webp';
-import ExistWallet from '@assets/icons/wallet-Imported.webp';
-import ArrowLeft from '@assets/icons/arrow-left.svg';
+import Text from '@components/Text';
+import { VaultType, useCurrentAccount, useCurrentAddressValueOfAccount, useVaultOfAccount } from '@core/WalletCore/Plugins/ReactInject';
+import useForceUpdateOnFocus from '@hooks/useUpdateOnFocus';
+import { useTheme } from '@react-navigation/native';
+import type { HomeStackName, StackScreenProps } from '@router/configs';
+import { toDataUrl } from '@utils/blockies';
+import { Image } from 'expo-image';
+import type React from 'react';
+import { Pressable, StyleSheet, View } from 'react-native';
 
 const Account: React.FC<{ showAccountSelector: boolean; onPress: () => void; navigation: StackScreenProps<typeof HomeStackName>['navigation'] }> = ({
   showAccountSelector,

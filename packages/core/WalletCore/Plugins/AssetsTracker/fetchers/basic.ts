@@ -1,9 +1,9 @@
-import { fetchChain, fetchChainBatch, fetchChainMulticall } from '@cfx-kit/dapp-utils/dist/fetch';
 import { createERC20Contract } from '@cfx-kit/dapp-utils/dist/contract';
-import { convertCfxToHex } from '../../../../utils/address';
-import { type Address } from './../../../../database/models/Address';
-import { NetworkType, networkRpcPrefixMap, networkRpcSuffixMap } from '../../../../database/models/Network';
+import { fetchChain, fetchChainBatch, fetchChainMulticall } from '@cfx-kit/dapp-utils/dist/fetch';
 import { AssetType } from '../../../../database/models/Asset';
+import { NetworkType, networkRpcPrefixMap, networkRpcSuffixMap } from '../../../../database/models/Network';
+import { convertCfxToHex } from '../../../../utils/address';
+import type { Address } from './../../../../database/models/Address';
 
 export const fetchNativeAssetBalance = ({ networkType, endpoint, accountAddress }: { networkType: NetworkType; endpoint: string; accountAddress: Address }) => {
   switch (networkType) {
@@ -328,25 +328,23 @@ export const fetchERC20AssetsInfoBatch = async ({ networkType, endpoint, assets 
 
   return fetchChainBatch<Array<string>>({
     url: endpoint,
-    rpcs: assets
-      .map((contractAddress) => {
-        const contract = createERC20Contract(contractAddress);
-        return [
-          {
-            method: `${rpcPrefix}_call`,
-            params: [{ to: contractAddress, data: contract.encodeFunctionData('name', []) }, rpcSuffix],
-          },
-          {
-            method: `${rpcPrefix}_call`,
-            params: [{ to: contractAddress, data: contract.encodeFunctionData('symbol', []) }, rpcSuffix],
-          },
-          {
-            method: `${rpcPrefix}_call`,
-            params: [{ to: contractAddress, data: contract.encodeFunctionData('decimals', []) }, rpcSuffix],
-          },
-        ];
-      })
-      .flat(),
+    rpcs: assets.flatMap((contractAddress) => {
+      const contract = createERC20Contract(contractAddress);
+      return [
+        {
+          method: `${rpcPrefix}_call`,
+          params: [{ to: contractAddress, data: contract.encodeFunctionData('name', []) }, rpcSuffix],
+        },
+        {
+          method: `${rpcPrefix}_call`,
+          params: [{ to: contractAddress, data: contract.encodeFunctionData('symbol', []) }, rpcSuffix],
+        },
+        {
+          method: `${rpcPrefix}_call`,
+          params: [{ to: contractAddress, data: contract.encodeFunctionData('decimals', []) }, rpcSuffix],
+        },
+      ];
+    }),
   }).then((res) => {
     const result: Array<{ name: string; symbol: string; decimals: number }> = [];
     for (let i = 0; i < res.length; i += 3) {
@@ -377,28 +375,26 @@ export const fetchERC20AssetsInfoMulticall = async ({
     url: endpoint,
     multicallContractAddress,
     method: `${rpcPrefix}_call`,
-    data: assets
-      .map((contractAddress) => {
-        const contract = createERC20Contract(contractAddress);
-        return [
-          {
-            contractAddress,
-            encodedData: contract.encodeFunctionData('name', []),
-            decodeFunc: (res: string) => contract.decodeFunctionResult('name', res),
-          },
-          {
-            contractAddress,
-            encodedData: contract.encodeFunctionData('symbol', []),
-            decodeFunc: (res: string) => contract.decodeFunctionResult('symbol', res),
-          },
-          {
-            contractAddress,
-            encodedData: contract.encodeFunctionData('decimals', []),
-            decodeFunc: (res: string) => contract.decodeFunctionResult('decimals', res),
-          },
-        ];
-      })
-      .flat(),
+    data: assets.flatMap((contractAddress) => {
+      const contract = createERC20Contract(contractAddress);
+      return [
+        {
+          contractAddress,
+          encodedData: contract.encodeFunctionData('name', []),
+          decodeFunc: (res: string) => contract.decodeFunctionResult('name', res),
+        },
+        {
+          contractAddress,
+          encodedData: contract.encodeFunctionData('symbol', []),
+          decodeFunc: (res: string) => contract.decodeFunctionResult('symbol', res),
+        },
+        {
+          contractAddress,
+          encodedData: contract.encodeFunctionData('decimals', []),
+          decodeFunc: (res: string) => contract.decodeFunctionResult('decimals', res),
+        },
+      ];
+    }),
   }).then((res) => {
     const result: Array<{ name: string; symbol: string; decimals: number }> = [];
     for (let i = 0; i < res.length; i += 3) {
@@ -457,10 +453,10 @@ export const fetchERC20AssetInfoBatchWithAccount = async ({
     ],
   }).then((res) => {
     return {
-      name: contract.decodeFunctionResult('name', res[0])?.[0],
-      symbol: contract.decodeFunctionResult('symbol', res[1])?.[0],
-      decimals: typeof res[2] === 'string' && res[2].startsWith('0x') ? Number(contract.decodeFunctionResult('decimals', res[2])?.[0]) : 0, // if res not hex string , it maybe an error , so return 0
-      balance: contract.decodeFunctionResult('balanceOf', res[3])?.[0].toString(),
+      name: typeof res[0] === 'string' && res[0].startsWith('0x') ? contract.decodeFunctionResult('name', res[0])?.[0] : '',
+      symbol: typeof res[1] === 'string' && res[1].startsWith('0x') ? contract.decodeFunctionResult('symbol', res[1])?.[0] : '',
+      decimals: typeof res[2] === 'string' && res[2].startsWith('0x') ? Number(contract.decodeFunctionResult('decimals', res[2])?.[0]) : 0,
+      balance: typeof res[3] === 'string' && res[3].startsWith('0x') ? contract.decodeFunctionResult('balanceOf', res[3])?.[0].toString() : '0',
     };
   });
 };

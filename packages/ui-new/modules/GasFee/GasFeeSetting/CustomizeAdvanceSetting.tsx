@@ -1,20 +1,21 @@
-/* eslint-disable react-hooks/exhaustive-deps */
-/* eslint-disable @typescript-eslint/no-non-null-assertion */
-import React, { useCallback, useRef } from 'react';
-import { View } from 'react-native';
-import { useTheme } from '@react-navigation/native';
-import { useForm, Controller } from 'react-hook-form';
-import { useTranslation } from 'react-i18next';
-import Decimal from 'decimal.js';
+import Failed from '@assets/icons/message-fail.svg';
+import Warning from '@assets/icons/message-warning.svg';
+import BottomSheet, { type BottomSheetMethods } from '@components/BottomSheet';
+import Button from '@components/Button';
+import Text from '@components/Text';
 import { useCurrentNetwork } from '@core/WalletCore/Plugins/ReactInject';
 import { minGasLimit } from '@core/WalletCore/Plugins/Transaction/SuggestedGasEstimate';
-import BottomSheet, { type BottomSheetMethods } from '@components/BottomSheet';
-import Text from '@components/Text';
-import Button from '@components/Button';
-import Warning from '@assets/icons/message-warning.svg';
-import Failed from '@assets/icons/message-fail.svg';
+import { useTheme } from '@react-navigation/native';
+import Decimal from 'decimal.js';
+/* eslint-disable react-hooks/exhaustive-deps */
+/* eslint-disable @typescript-eslint/no-non-null-assertion */
+import type React from 'react';
+import { useCallback, useRef } from 'react';
+import { Controller, useForm } from 'react-hook-form';
+import { useTranslation } from 'react-i18next';
+import { View } from 'react-native';
 import { TextInput, controlRule, styles } from './CustomizeGasSetting';
-import { type AdvanceSetting } from './index';
+import type { AdvanceSetting } from './index';
 
 interface Props {
   customizeAdvanceSetting: AdvanceSetting | null;

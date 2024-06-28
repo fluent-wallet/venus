@@ -1,15 +1,15 @@
-import { broadcastTransactionSubject } from '@core/WalletCore/Events/broadcastTransactionSubject';
-import { type Plugin } from '../';
-import methods from '@core/WalletCore/Methods';
-import EthTxTracker from './EthTxTrack';
-import CFXTxTracker from './CFXTxTrack';
-import { queryTxsWithAddress } from '@core/database/models/Tx/query';
-import type { Tx } from '@core/database/models/Tx';
-import type { Address } from '@core/database/models/Address';
-import { TxStatus } from '@core/database/models/Tx/type';
-import { debounceTime, Subscription } from 'rxjs';
 import events from '@core/WalletCore/Events';
+import { broadcastTransactionSubject } from '@core/WalletCore/Events/broadcastTransactionSubject';
+import methods from '@core/WalletCore/Methods';
+import type { Address } from '@core/database/models/Address';
+import type { Tx } from '@core/database/models/Tx';
+import { queryTxsWithAddress } from '@core/database/models/Tx/query';
+import { TxStatus } from '@core/database/models/Tx/type';
 import { DETAULT_CONFIRMED_INTERVAL, DETAULT_EXECUTED_INTERVAL, DETAULT_FINALIZED_INTERVAL } from '@core/utils/consts';
+import { type Subscription, debounceTime } from 'rxjs';
+import type { Plugin } from '../';
+import CFXTxTracker from './CFXTxTrack';
+import EthTxTracker from './EthTxTrack';
 
 const txTrackerMap = {
   [EthTxTracker.networkType]: EthTxTracker,

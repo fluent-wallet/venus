@@ -1,4 +1,4 @@
-import { type Plugin } from '../';
+import type { Plugin } from '../';
 export { useAccountGroups } from './data/useAccountGroups';
 export { useNetworks } from './data/useNetworks';
 export { useCurrentNetwork, getCurrentNetwork, useCurrentNetworkNativeAsset, getCurrentNetworkNativeAsset } from './data/useCurrentNetwork';

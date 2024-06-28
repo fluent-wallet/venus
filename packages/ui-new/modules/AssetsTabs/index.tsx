@@ -1,21 +1,22 @@
-/* eslint-disable react-hooks/exhaustive-deps */
-import React, { useMemo, useEffect, useCallback } from 'react';
-import { View, Pressable, StyleSheet } from 'react-native';
-import { useTheme } from '@react-navigation/native';
-import { useTranslation } from 'react-i18next';
-import Animated, { useSharedValue, useAnimatedStyle, withTiming } from 'react-native-reanimated';
-import PagerView from 'react-native-pager-view';
-import { atom, useAtomValue } from 'jotai';
-import { useCurrentNetwork, setAtom, NetworkType } from '@core/WalletCore/Plugins/ReactInject';
-import { type AssetInfo } from '@core/WalletCore/Plugins/AssetsTracker/types';
-import { Networks } from '@core/utils/consts';
 import Text from '@components/Text';
-import TokensList from '@modules/AssetsList/TokensList';
-import NFTsList from '@modules/AssetsList/NFTsList';
+import type { AssetInfo } from '@core/WalletCore/Plugins/AssetsTracker/types';
+import { NetworkType, setAtom, useCurrentNetwork } from '@core/WalletCore/Plugins/ReactInject';
+import { Networks } from '@core/utils/consts';
 import ActivityList from '@modules/ActivityList';
+import NFTsList from '@modules/AssetsList/NFTsList';
 import { StickyNFTItem } from '@modules/AssetsList/NFTsList/NFTItem';
-import { screenHeight } from '@utils/deviceInfo';
+import TokensList from '@modules/AssetsList/TokensList';
 import { useShouldShowNotBackup } from '@pages/Home/NotBackup';
+import { useTheme } from '@react-navigation/native';
+import { screenHeight } from '@utils/deviceInfo';
+import { atom, useAtomValue } from 'jotai';
+/* eslint-disable react-hooks/exhaustive-deps */
+import type React from 'react';
+import { useCallback, useEffect, useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
+import { Pressable, StyleSheet, View } from 'react-native';
+import PagerView from 'react-native-pager-view';
+import Animated, { useSharedValue, useAnimatedStyle, withTiming } from 'react-native-reanimated';
 
 export type Tab = 'Tokens' | 'NFTs' | 'Activity';
 const TabI18nMap = {
@@ -45,7 +46,8 @@ export const Tabs: React.FC<Omit<Props, 'setCurrentTab' | 'onPressItem' | 'selec
   const tabs = useMemo(() => {
     const res =
       !onlyToken &&
-      (!currentNetwork || (currentNetwork && (currentNetwork.chainId === Networks['Conflux eSpace'].chainId || currentNetwork.chainId === Networks['eSpace Testnet'].chainId)))
+      (!currentNetwork ||
+        (currentNetwork && (currentNetwork.chainId === Networks['Conflux eSpace'].chainId || currentNetwork.chainId === Networks['eSpace Testnet'].chainId)))
         ? (['Tokens', 'NFTs'] as Tabs)
         : (['Tokens'] as Tabs);
     type === 'Home' && res.push('Activity');
@@ -137,7 +139,8 @@ export const TabsContent: React.FC<Props> = ({ currentTab, setCurrentTab, pageVi
   const tabs = useMemo(() => {
     const res =
       !onlyToken &&
-      (!currentNetwork || (currentNetwork && (currentNetwork.chainId === Networks['Conflux eSpace'].chainId || currentNetwork.chainId === Networks['eSpace Testnet'].chainId)))
+      (!currentNetwork ||
+        (currentNetwork && (currentNetwork.chainId === Networks['Conflux eSpace'].chainId || currentNetwork.chainId === Networks['eSpace Testnet'].chainId)))
         ? (['Tokens', 'NFTs'] as Tabs)
         : (['Tokens'] as Tabs);
     type === 'Home' && res.push('Activity');

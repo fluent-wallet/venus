@@ -1,14 +1,14 @@
-import { useMemo } from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
-import { useTranslation } from 'react-i18next';
-import { useNavigation, useTheme } from '@react-navigation/native';
-import take from 'lodash-es/take';
-import { useCurrentAddressValue } from '@core/WalletCore/Plugins/ReactInject';
+import ArrowRight from '@assets/icons/arrow-right2.svg';
 import Icon from '@components/Icon';
 import Text from '@components/Text';
+import { useCurrentAddressValue } from '@core/WalletCore/Plugins/ReactInject';
 import { useWalletConnectSessions } from '@pages/WalletConnect/useWalletConnectHooks';
-import { StackNavigation, WalletConnectSessionsStackName, WalletConnectStackName } from '@router/configs';
-import ArrowRight from '@assets/icons/arrow-right2.svg';
+import { useNavigation, useTheme } from '@react-navigation/native';
+import { type StackNavigation, WalletConnectSessionsStackName, WalletConnectStackName } from '@router/configs';
+import take from 'lodash-es/take';
+import { useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
+import { Pressable, StyleSheet, View } from 'react-native';
 
 function DAPPConnect() {
   const { colors } = useTheme();
@@ -26,7 +26,7 @@ function DAPPConnect() {
     <View style={[styles.container, { borderColor: hasUnsafeURL ? colors.down : colors.up }]}>
       <Pressable onPress={() => navigation.navigate(WalletConnectStackName, { screen: WalletConnectSessionsStackName })}>
         <View style={styles.content}>
-          <View style={styles.iconWarp}>
+          <View style={[styles.iconWarp, { width: 14 * Math.min(sessions.length - 1, 3) + 24 }]}>
             {take(sessions, 3).map(
               (
                 {
@@ -44,21 +44,8 @@ function DAPPConnect() {
           </View>
           {sessions.length > 1 ? (
             <View style={styles.content}>
-              <Text
-                style={[
-                  styles.largeText,
-                  { color: hasUnsafeURL ? colors.down : colors.up },
-                  { transform: [{ translateX: -10 * Math.min(sessions.length - 1, 3) }] },
-                ]}
-              >
-                {t('wc.dapp.connectedDApps')}
-              </Text>
-              <ArrowRight
-                style={[{ transform: [{ translateX: -10 * Math.min(sessions.length - 1, 3) }] }]}
-                color={hasUnsafeURL ? colors.down : colors.up}
-                width={14}
-                height={14}
-              />
+              <Text style={[styles.largeText, { color: hasUnsafeURL ? colors.down : colors.up }]}>{t('wc.dapp.connectedDApps')}</Text>
+              <ArrowRight color={hasUnsafeURL ? colors.down : colors.up} width={14} height={14} />
             </View>
           ) : (
             <View style={[styles.content, { paddingRight: 24 }]}>

@@ -1,8 +1,8 @@
 import { useAtomValue } from 'jotai';
 import { atomWithObservable } from 'jotai/utils';
-import { switchMap, startWith } from 'rxjs';
-import { queryAllAddresses } from '../../../../database/models/Address/query';
+import { startWith, switchMap } from 'rxjs';
 import { dbRefresh$ } from '../../../../database';
+import { queryAllAddresses } from '../../../../database/models/Address/query';
 
 export const addressesObservable = dbRefresh$.pipe(
   startWith(null),

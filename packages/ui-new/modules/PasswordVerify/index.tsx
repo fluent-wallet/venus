@@ -1,16 +1,17 @@
-import React, { useCallback, useRef, useEffect, useState } from 'react';
-import { StyleSheet, Keyboard, type TextInput as TextInputRef } from 'react-native';
-import plugins from '@core/WalletCore/Plugins';
-import { useTheme } from '@react-navigation/native';
+import type { PasswordRequest } from '@WalletCoreExtends/Plugins/Authentication';
+import BottomSheet, { BottomSheetView, type BottomSheetMethods } from '@components/BottomSheet';
 import Button from '@components/Button';
 import Text from '@components/Text';
 import TextInput from '@components/TextInput';
-import BottomSheet, { BottomSheetView, type BottomSheetMethods } from '@components/BottomSheet';
-import { PasswordVerifyStackName, type StackScreenProps } from '@router/configs';
-import { isDev } from '@utils/getEnv';
+import plugins from '@core/WalletCore/Plugins';
+import { useTheme } from '@react-navigation/native';
+import type { PasswordVerifyStackName, StackScreenProps } from '@router/configs';
 import { screenHeight } from '@utils/deviceInfo';
-import { type PasswordRequest } from '@WalletCoreExtends/Plugins/Authentication';
+import { isDev } from '@utils/getEnv';
+import type React from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { Keyboard, StyleSheet, type TextInput as TextInputRef } from 'react-native';
 
 const defaultPassword = isDev ? '12345678' : '';
 

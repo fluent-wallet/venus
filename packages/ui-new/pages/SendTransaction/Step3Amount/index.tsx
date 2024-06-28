@@ -1,15 +1,15 @@
-import React from 'react';
-import { View, StyleSheet } from 'react-native';
-import { useTheme } from '@react-navigation/native';
-import { useTranslation } from 'react-i18next';
-import { type AssetInfo } from '@core/WalletCore/Plugins/AssetsTracker/types';
-import { type NFTItemDetail } from '@core/WalletCore/Plugins/NFTDetailTracker';
-import Text from '@components/Text';
 import Button from '@components/Button';
+import Text from '@components/Text';
+import type { AssetInfo } from '@core/WalletCore/Plugins/AssetsTracker/types';
+import type { NFTItemDetail } from '@core/WalletCore/Plugins/NFTDetailTracker';
+import { AccountItemView } from '@modules/AccountsList';
 import NFTIcon from '@modules/AssetsList/NFTsList/NFTIcon';
 import { getDetailSymbol } from '@modules/AssetsList/NFTsList/NFTItem';
-import { AccountItemView } from '@modules/AccountsList';
-import { SendTransactionStep3StackName, SendTransactionStep4StackName, type SendTransactionScreenProps } from '@router/configs';
+import { useTheme } from '@react-navigation/native';
+import { type SendTransactionScreenProps, type SendTransactionStep3StackName, SendTransactionStep4StackName } from '@router/configs';
+import type React from 'react';
+import { useTranslation } from 'react-i18next';
+import { StyleSheet, View } from 'react-native';
 import SendTransactionBottomSheet from '../SendTransactionBottomSheet';
 import SetAssetAmount from './SetAssetAmount';
 

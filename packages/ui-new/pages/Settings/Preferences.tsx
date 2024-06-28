@@ -1,10 +1,10 @@
-import React from 'react';
-import { ScrollView } from 'react-native';
-import { useTheme } from '@react-navigation/native';
 import Text from '@components/Text';
-import { PreferencesStackName, AppearanceStackName, LanguageStackName, type StackScreenProps } from '@router/configs';
-import { SettingItem, styles } from './index';
+import { useTheme } from '@react-navigation/native';
+import { AppearanceStackName, LanguageStackName, type PreferencesStackName, type StackScreenProps } from '@router/configs';
+import type React from 'react';
 import { useTranslation } from 'react-i18next';
+import { ScrollView } from 'react-native';
+import { SettingItem, styles } from './index';
 
 const Preferences: React.FC<StackScreenProps<typeof PreferencesStackName>> = ({ navigation }) => {
   const { colors } = useTheme();

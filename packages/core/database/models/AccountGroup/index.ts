@@ -1,9 +1,9 @@
 import { Model, Q, type Query, type Relation } from '@nozbe/watermelondb';
-import { field, text, children, immutableRelation, writer, reader, lazy } from '@nozbe/watermelondb/decorators';
-import { map, firstValueFrom } from 'rxjs';
-import { type Vault } from '../Vault';
-import { type Account } from '../Account';
+import { children, field, immutableRelation, lazy, reader, text, writer } from '@nozbe/watermelondb/decorators';
+import { firstValueFrom, map } from 'rxjs';
 import TableName from '../../TableName';
+import type { Account } from '../Account';
+import type { Vault } from '../Vault';
 
 export class AccountGroup extends Model {
   static table = TableName.AccountGroup;

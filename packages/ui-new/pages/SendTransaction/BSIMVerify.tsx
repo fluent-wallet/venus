@@ -1,18 +1,19 @@
-import React, { useState, useRef, useCallback } from 'react';
-import { View, StyleSheet } from 'react-native';
-import { useTheme } from '@react-navigation/native';
-import { useTranslation } from 'react-i18next';
-import { Image } from 'expo-image';
-import { BSIMEvent, BSIMEventTypesName } from '@WalletCoreExtends/Plugins/BSIM/types';
 import { BSIM_ERRORS } from '@WalletCoreExtends/Plugins/BSIM/BSIMSDK';
-import BottomSheet, { type BottomSheetMethods } from '@components/BottomSheet';
-import Text from '@components/Text';
-import Button from '@components/Button';
-import Spinner from '@components/Spinner';
-import { screenHeight } from '@utils/deviceInfo';
-import BSIMCardWallet from '@assets/icons/wallet-bsim.webp';
+import { type BSIMEvent, BSIMEventTypesName } from '@WalletCoreExtends/Plugins/BSIM/types';
 import ArrowLeft from '@assets/icons/arrow-left2.svg';
 import FailedIcon from '@assets/icons/message-fail.svg';
+import BSIMCardWallet from '@assets/icons/wallet-bsim.webp';
+import BottomSheet, { type BottomSheetMethods } from '@components/BottomSheet';
+import Button from '@components/Button';
+import Spinner from '@components/Spinner';
+import Text from '@components/Text';
+import { useTheme } from '@react-navigation/native';
+import { screenHeight } from '@utils/deviceInfo';
+import { Image } from 'expo-image';
+import type React from 'react';
+import { useCallback, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { StyleSheet, View } from 'react-native';
 
 interface Props {
   bsimEvent: BSIMEvent;

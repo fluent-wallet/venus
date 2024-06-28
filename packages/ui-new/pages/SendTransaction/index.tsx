@@ -1,17 +1,17 @@
-import React from 'react';
+import PasswordVerify from '@modules/PasswordVerify';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import {
-  SendTransactionStackName,
+  PasswordVerifyStackName,
+  type SendTransactionParamList,
+  type SendTransactionStackName,
   SendTransactionStep1StackName,
   SendTransactionStep2StackName,
   SendTransactionStep3StackName,
   SendTransactionStep4StackName,
-  SendTransactionParamList,
   SheetBottomOption,
-  PasswordVerifyStackName,
   type StackScreenProps,
 } from '@router/configs';
-import PasswordVerify from '@modules/PasswordVerify';
+import type React from 'react';
 import SendTransactionStep1Receiver from './Step1Receiver';
 import SendTransactionStep2Asset from './Step2Asset';
 import SendTransactionStep3Amount from './Step3Amount';

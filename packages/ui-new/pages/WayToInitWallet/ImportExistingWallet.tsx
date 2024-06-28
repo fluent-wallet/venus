@@ -1,17 +1,18 @@
-/* eslint-disable react-hooks/exhaustive-deps */
-import React, { useRef, useState, useCallback, type RefObject } from 'react';
-import { View, Pressable, Keyboard, StyleSheet, type TextInput } from 'react-native';
-import { useTheme } from '@react-navigation/native';
-import { Mnemonic } from 'ethers';
-import * as secp from '@noble/secp256k1';
-import { stripHexPrefix } from '@core/utils/base';
-import useInAsync from '@hooks/useInAsync';
+import BottomSheet, { BottomSheetView, BottomSheetTextInput, type BottomSheetMethods } from '@components/BottomSheet';
 import Button from '@components/Button';
 import Text from '@components/Text';
-import BottomSheet, { BottomSheetView, BottomSheetTextInput, type BottomSheetMethods } from '@components/BottomSheet';
-import { screenHeight, isAdjustResize } from '@utils/deviceInfo';
+import { stripHexPrefix } from '@core/utils/base';
+import useInAsync from '@hooks/useInAsync';
+import * as secp from '@noble/secp256k1';
+import { useTheme } from '@react-navigation/native';
+import { isAdjustResize, screenHeight } from '@utils/deviceInfo';
+import { Mnemonic } from 'ethers';
+/* eslint-disable react-hooks/exhaustive-deps */
+import type React from 'react';
+import { type RefObject, useCallback, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-export { BottomSheetMethods };
+import { Keyboard, Pressable, StyleSheet, type TextInput, View } from 'react-native';
+export type { BottomSheetMethods };
 
 interface Props {
   bottomSheetRef: RefObject<BottomSheetMethods>;

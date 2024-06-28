@@ -1,9 +1,9 @@
 import { useAtomValue } from 'jotai';
 import { atomWithObservable } from 'jotai/utils';
-import { switchMap, startWith, type Observable } from 'rxjs';
+import { type Observable, startWith, switchMap } from 'rxjs';
 import database, { dbRefresh$ } from '../../../../database';
 import TableName from '../../../../database/TableName';
-import { type Vault } from '../../../../database/models/Vault';
+import type { Vault } from '../../../../database/models/Vault';
 
 export const vaultsObservable = dbRefresh$.pipe(
   startWith(null),

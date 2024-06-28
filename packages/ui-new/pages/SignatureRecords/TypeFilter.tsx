@@ -1,11 +1,12 @@
-import React, { useCallback, useState } from 'react';
-import { LayoutChangeEvent, View, StyleSheet, Modal, Pressable, Dimensions } from 'react-native';
-import { useTheme } from '@react-navigation/native';
-import Text from '@components/Text';
-import { useTranslation } from 'react-i18next';
 import FilterIcon from '@assets/icons/filter.svg';
-import Animated, { useAnimatedStyle, useSharedValue } from 'react-native-reanimated';
+import Text from '@components/Text';
 import { SignatureFilterOption } from '@core/database/models/Signature/type';
+import { useTheme } from '@react-navigation/native';
+import type React from 'react';
+import { useCallback, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { Dimensions, type LayoutChangeEvent, Modal, Pressable, StyleSheet, View } from 'react-native';
+import Animated, { useAnimatedStyle, useSharedValue } from 'react-native-reanimated';
 
 const TypeFilter: React.FC<{
   onChange: (type: SignatureFilterOption) => void;
@@ -37,7 +38,7 @@ const TypeFilter: React.FC<{
   const handleChange = (type: SignatureFilterOption) => {
     onChange(type);
     setVisible(false);
-  }
+  };
   return (
     <View style={styles.container}>
       <View onLayout={handleLayout}>

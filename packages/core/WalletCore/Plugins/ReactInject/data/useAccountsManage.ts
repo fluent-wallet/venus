@@ -1,14 +1,14 @@
 import { atom, useAtomValue } from 'jotai';
-import { atomWithObservable, atomFamily } from 'jotai/utils';
-import { switchMap, startWith, map, combineLatest, withLatestFrom, from, type Observable } from 'rxjs';
-import { groupBy, toPairs, sortBy } from 'lodash-es';
+import { atomFamily, atomWithObservable } from 'jotai/utils';
+import { groupBy, sortBy, toPairs } from 'lodash-es';
+import { type Observable, combineLatest, from, map, startWith, switchMap, withLatestFrom } from 'rxjs';
 import database, { dbRefresh$ } from '../../../../database';
 import TableName from '../../../../database/TableName';
+import type { Account } from '../../../../database/models/Account';
 import VaultType from '../../../../database/models/Vault/VaultType';
-import { type Account } from '../../../../database/models/Account';
-import { currentNetworkObservable } from './useCurrentNetwork';
-import { accountGroupsObservable } from './useAccountGroups';
 import { zeroAddress } from '../../../../utils/address';
+import { accountGroupsObservable } from './useAccountGroups';
+import { currentNetworkObservable } from './useCurrentNetwork';
 
 export const accountsManageObservable = combineLatest([dbRefresh$.pipe(startWith(null)), currentNetworkObservable, accountGroupsObservable]).pipe(
   switchMap(() => database.collections.get(TableName.Account).query().observeWithColumns(['nickname', 'hidden', 'selected']) as Observable<Array<Account>>),
@@ -91,7 +91,7 @@ const accountsOfGroupInManageAtomFamily = atomFamily((groupId: string | null | u
 
 const allAccountsInManageAtom = atom((get) => {
   const accountsManage = get(accountsManageAtom);
-  return accountsManage?.map((item) => item.data).flat();
+  return accountsManage?.flatMap((item) => item.data);
 });
 
 export const useAccountsManage = () => useAtomValue(accountsManageAtom);
