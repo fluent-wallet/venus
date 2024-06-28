@@ -36,7 +36,7 @@ if linkage != nil
   use_frameworks! :linkage => linkage.to_sym
 end
 
-target 'SwiftShield' do
+target 'BIMWallet' do
   use_expo_modules!
   post_integrate do |installer|
     begin
@@ -63,7 +63,7 @@ target 'SwiftShield' do
     :app_path => "#{Pod::Config.instance.installation_root}/.."
   )
 
-  target 'SwiftShieldTests' do
+  target 'BIMWalletTests' do
     inherit! :complete
     # Pods for testing
   end

@@ -7,10 +7,10 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		00E356F31AD99517003FC87E /* SwiftShieldTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 00E356F21AD99517003FC87E /* SwiftShieldTests.m */; };
+		00E356F31AD99517003FC87E /* BIMWalletTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 00E356F21AD99517003FC87E /* BIMWalletTests.m */; };
 		01914D9A98DF4F80B0B1D07A /* sora_bold.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 048A7B2BE3E44341B8A0853E /* sora_bold.ttf */; };
 		098B4310205D428D8A821F53 /* sora_extrabold.ttf in Resources */ = {isa = PBXBuildFile; fileRef = A32E2BBAD30B4F259AA50314 /* sora_extrabold.ttf */; };
-		0C80B921A6F3F58F76C31292 /* libPods-SwiftShield.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 5DCACB8F33CDC322A6C60F78 /* libPods-SwiftShield.a */; };
+		0C80B921A6F3F58F76C31292 /* libPods-BIMWallet.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 5DCACB8F33CDC322A6C60F78 /* libPods-BIMWallet.a */; };
 		0C9AA192E1324316B7B1FD60 /* enter_8.webp in Resources */ = {isa = PBXBuildFile; fileRef = A4A15A944D374A48BDD7AFFF /* enter_8.webp */; };
 		11A2AABDC0C642768CB5AA2D /* welcome_5.webp in Resources */ = {isa = PBXBuildFile; fileRef = BD084EC1E77E411284E73FE2 /* welcome_5.webp */; };
 		13B07FBC1A68108700A75B9A /* AppDelegate.mm in Sources */ = {isa = PBXBuildFile; fileRef = 13B07FB01A68108700A75B9A /* AppDelegate.mm */; };
@@ -25,7 +25,7 @@
 		4EF6DE06DF68432B9964EE10 /* sora_regular.ttf in Resources */ = {isa = PBXBuildFile; fileRef = D3DB6B345CD84D139B020F34 /* sora_regular.ttf */; };
 		6177086B716B4340A8444179 /* enter_3.webp in Resources */ = {isa = PBXBuildFile; fileRef = AF8BEC9698284E7F97B7B23E /* enter_3.webp */; };
 		74B860FA08AC44AB9C9011C0 /* enter_1.webp in Resources */ = {isa = PBXBuildFile; fileRef = 51688542F1144B468802E04B /* enter_1.webp */; };
-		7699B88040F8A987B510C191 /* libPods-SwiftShield-SwiftShieldTests.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 19F6CBCC0A4E27FBF8BF4A61 /* libPods-SwiftShield-SwiftShieldTests.a */; };
+		7699B88040F8A987B510C191 /* libPods-BIMWallet-BIMWalletTests.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 19F6CBCC0A4E27FBF8BF4A61 /* libPods-BIMWallet-BIMWalletTests.a */; };
 		8165C5EF34BFC587CF2EE958 /* ExpoModulesProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = A34A62E4EB3A57DC2BE80935 /* ExpoModulesProvider.swift */; };
 		81AB9BB82411601600AC10FF /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 81AB9BB72411601600AC10FF /* LaunchScreen.storyboard */; };
 		8D26E04C47AC4B669C72242B /* enter_5.webp in Resources */ = {isa = PBXBuildFile; fileRef = E50E780AA07242DC875C4B2C /* enter_5.webp */; };
@@ -47,45 +47,45 @@
 			containerPortal = 83CBB9F71A601CBA00E9B192 /* Project object */;
 			proxyType = 1;
 			remoteGlobalIDString = 13B07F861A680F5B00A75B9A;
-			remoteInfo = SwiftShield;
+			remoteInfo = BIMWallet;
 		};
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
-		00E356EE1AD99517003FC87E /* SwiftShieldTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = SwiftShieldTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		00E356EE1AD99517003FC87E /* BIMWalletTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = BIMWalletTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		00E356F11AD99517003FC87E /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
-		00E356F21AD99517003FC87E /* SwiftShieldTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = SwiftShieldTests.m; sourceTree = "<group>"; };
+		00E356F21AD99517003FC87E /* BIMWalletTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = BIMWalletTests.m; sourceTree = "<group>"; };
 		015C89CC8D4949F8B00AB939 /* sora_semibold.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = sora_semibold.ttf; path = "../packages/ui-new/assets/fonts/sora_semibold.ttf"; sourceTree = "<group>"; };
 		048A7B2BE3E44341B8A0853E /* sora_bold.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = sora_bold.ttf; path = "../packages/ui-new/assets/fonts/sora_bold.ttf"; sourceTree = "<group>"; };
 		055DA28FFE37457EB79D4372 /* sora_medium.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = sora_medium.ttf; path = "../packages/ui-new/assets/fonts/sora_medium.ttf"; sourceTree = "<group>"; };
-		13B07F961A680F5B00A75B9A /* SwiftShield.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = SwiftShield.app; sourceTree = BUILT_PRODUCTS_DIR; };
-		13B07FAF1A68108700A75B9A /* AppDelegate.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = AppDelegate.h; path = SwiftShield/AppDelegate.h; sourceTree = "<group>"; };
-		13B07FB01A68108700A75B9A /* AppDelegate.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; name = AppDelegate.mm; path = SwiftShield/AppDelegate.mm; sourceTree = "<group>"; };
-		13B07FB51A68108700A75B9A /* Images.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; name = Images.xcassets; path = SwiftShield/Images.xcassets; sourceTree = "<group>"; };
-		13B07FB61A68108700A75B9A /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = Info.plist; path = SwiftShield/Info.plist; sourceTree = "<group>"; };
-		13B07FB71A68108700A75B9A /* main.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = main.m; path = SwiftShield/main.m; sourceTree = "<group>"; };
-		15839C861ED2C69156BA28E5 /* ExpoModulesProvider.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = ExpoModulesProvider.swift; path = "Pods/Target Support Files/Pods-SwiftShield/ExpoModulesProvider.swift"; sourceTree = "<group>"; };
-		19F6CBCC0A4E27FBF8BF4A61 /* libPods-SwiftShield-SwiftShieldTests.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-SwiftShield-SwiftShieldTests.a"; sourceTree = BUILT_PRODUCTS_DIR; };
+		13B07F961A680F5B00A75B9A /* BIMWallet.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = BIMWallet.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		13B07FAF1A68108700A75B9A /* AppDelegate.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = AppDelegate.h; path = BIMWallet/AppDelegate.h; sourceTree = "<group>"; };
+		13B07FB01A68108700A75B9A /* AppDelegate.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; name = AppDelegate.mm; path = BIMWallet/AppDelegate.mm; sourceTree = "<group>"; };
+		13B07FB51A68108700A75B9A /* Images.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; name = Images.xcassets; path = BIMWallet/Images.xcassets; sourceTree = "<group>"; };
+		13B07FB61A68108700A75B9A /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = Info.plist; path = BIMWallet/Info.plist; sourceTree = "<group>"; };
+		13B07FB71A68108700A75B9A /* main.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = main.m; path = BIMWallet/main.m; sourceTree = "<group>"; };
+		15839C861ED2C69156BA28E5 /* ExpoModulesProvider.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = ExpoModulesProvider.swift; path = "Pods/Target Support Files/Pods-BIMWallet/ExpoModulesProvider.swift"; sourceTree = "<group>"; };
+		19F6CBCC0A4E27FBF8BF4A61 /* libPods-BIMWallet-BIMWalletTests.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-BIMWallet-BIMWalletTests.a"; sourceTree = BUILT_PRODUCTS_DIR; };
 		2B5C9E58062C406CB7B2BD2F /* welcome_1.webp */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = undefined; includeInIndex = 0; lastKnownFileType = unknown; name = welcome_1.webp; path = "../packages/ui-new/assets/lottie/welcome_1.webp"; sourceTree = "<group>"; };
 		3A5607AEDB2E4BA290E35366 /* enter_0.webp */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = undefined; includeInIndex = 0; lastKnownFileType = unknown; name = enter_0.webp; path = "../packages/ui-new/assets/lottie/enter_0.webp"; sourceTree = "<group>"; };
-		3B4392A12AC88292D35C810B /* Pods-SwiftShield.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-SwiftShield.debug.xcconfig"; path = "Target Support Files/Pods-SwiftShield/Pods-SwiftShield.debug.xcconfig"; sourceTree = "<group>"; };
+		3B4392A12AC88292D35C810B /* Pods-BIMWallet.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-BIMWallet.debug.xcconfig"; path = "Target Support Files/Pods-BIMWallet/Pods-BIMWallet.debug.xcconfig"; sourceTree = "<group>"; };
 		438A56FB065C444887E9AB28 /* enter_4.webp */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = undefined; includeInIndex = 0; lastKnownFileType = unknown; name = enter_4.webp; path = "../packages/ui-new/assets/lottie/enter_4.webp"; sourceTree = "<group>"; };
 		48961D6245DB458089C87F65 /* enter_7.webp */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = undefined; includeInIndex = 0; lastKnownFileType = unknown; name = enter_7.webp; path = "../packages/ui-new/assets/lottie/enter_7.webp"; sourceTree = "<group>"; };
 		51688542F1144B468802E04B /* enter_1.webp */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = undefined; includeInIndex = 0; lastKnownFileType = unknown; name = enter_1.webp; path = "../packages/ui-new/assets/lottie/enter_1.webp"; sourceTree = "<group>"; };
-		5709B34CF0A7D63546082F79 /* Pods-SwiftShield.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-SwiftShield.release.xcconfig"; path = "Target Support Files/Pods-SwiftShield/Pods-SwiftShield.release.xcconfig"; sourceTree = "<group>"; };
-		5B7EB9410499542E8C5724F5 /* Pods-SwiftShield-SwiftShieldTests.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-SwiftShield-SwiftShieldTests.debug.xcconfig"; path = "Target Support Files/Pods-SwiftShield-SwiftShieldTests/Pods-SwiftShield-SwiftShieldTests.debug.xcconfig"; sourceTree = "<group>"; };
+		5709B34CF0A7D63546082F79 /* Pods-BIMWallet.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-BIMWallet.release.xcconfig"; path = "Target Support Files/Pods-BIMWallet/Pods-BIMWallet.release.xcconfig"; sourceTree = "<group>"; };
+		5B7EB9410499542E8C5724F5 /* Pods-BIMWallet-BIMWalletTests.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-BIMWallet-BIMWalletTests.debug.xcconfig"; path = "Target Support Files/Pods-BIMWallet-BIMWalletTests/Pods-BIMWallet-BIMWalletTests.debug.xcconfig"; sourceTree = "<group>"; };
 		5BF10BE33E6345A490E5EDB8 /* sora_light.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = sora_light.ttf; path = "../packages/ui-new/assets/fonts/sora_light.ttf"; sourceTree = "<group>"; };
-		5DCACB8F33CDC322A6C60F78 /* libPods-SwiftShield.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-SwiftShield.a"; sourceTree = BUILT_PRODUCTS_DIR; };
+		5DCACB8F33CDC322A6C60F78 /* libPods-BIMWallet.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-BIMWallet.a"; sourceTree = BUILT_PRODUCTS_DIR; };
 		648F0F7CF8C0472EB1D9686A /* welcome_3.webp */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = undefined; includeInIndex = 0; lastKnownFileType = unknown; name = welcome_3.webp; path = "../packages/ui-new/assets/lottie/welcome_3.webp"; sourceTree = "<group>"; };
 		6C7F38D1D04C48598A458CE8 /* sora_extralight.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = sora_extralight.ttf; path = "../packages/ui-new/assets/fonts/sora_extralight.ttf"; sourceTree = "<group>"; };
 		723DE82ED3604C19A4D8D77A /* enter_2.webp */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = undefined; includeInIndex = 0; lastKnownFileType = unknown; name = enter_2.webp; path = "../packages/ui-new/assets/lottie/enter_2.webp"; sourceTree = "<group>"; };
 		72E299B9A749496C827D43E5 /* welcome_2.webp */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = undefined; includeInIndex = 0; lastKnownFileType = unknown; name = welcome_2.webp; path = "../packages/ui-new/assets/lottie/welcome_2.webp"; sourceTree = "<group>"; };
-		81AB9BB72411601600AC10FF /* LaunchScreen.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; name = LaunchScreen.storyboard; path = SwiftShield/LaunchScreen.storyboard; sourceTree = "<group>"; };
-		89C6BE57DB24E9ADA2F236DE /* Pods-SwiftShield-SwiftShieldTests.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-SwiftShield-SwiftShieldTests.release.xcconfig"; path = "Target Support Files/Pods-SwiftShield-SwiftShieldTests/Pods-SwiftShield-SwiftShieldTests.release.xcconfig"; sourceTree = "<group>"; };
+		81AB9BB72411601600AC10FF /* LaunchScreen.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; name = LaunchScreen.storyboard; path = BIMWallet/LaunchScreen.storyboard; sourceTree = "<group>"; };
+		89C6BE57DB24E9ADA2F236DE /* Pods-BIMWallet-BIMWalletTests.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-BIMWallet-BIMWalletTests.release.xcconfig"; path = "Target Support Files/Pods-BIMWallet-BIMWalletTests/Pods-BIMWallet-BIMWalletTests.release.xcconfig"; sourceTree = "<group>"; };
 		9A9D4CCD69FE4098A1B72443 /* welcome_0.webp */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = undefined; includeInIndex = 0; lastKnownFileType = unknown; name = welcome_0.webp; path = "../packages/ui-new/assets/lottie/welcome_0.webp"; sourceTree = "<group>"; };
 		9EACEA7913C64F0BAF3D6288 /* sora_thin.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = sora_thin.ttf; path = "../packages/ui-new/assets/fonts/sora_thin.ttf"; sourceTree = "<group>"; };
 		A32E2BBAD30B4F259AA50314 /* sora_extrabold.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = sora_extrabold.ttf; path = "../packages/ui-new/assets/fonts/sora_extrabold.ttf"; sourceTree = "<group>"; };
-		A34A62E4EB3A57DC2BE80935 /* ExpoModulesProvider.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = ExpoModulesProvider.swift; path = "Pods/Target Support Files/Pods-SwiftShield-SwiftShieldTests/ExpoModulesProvider.swift"; sourceTree = "<group>"; };
+		A34A62E4EB3A57DC2BE80935 /* ExpoModulesProvider.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = ExpoModulesProvider.swift; path = "Pods/Target Support Files/Pods-BIMWallet-BIMWalletTests/ExpoModulesProvider.swift"; sourceTree = "<group>"; };
 		A4A15A944D374A48BDD7AFFF /* enter_8.webp */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = undefined; includeInIndex = 0; lastKnownFileType = unknown; name = enter_8.webp; path = "../packages/ui-new/assets/lottie/enter_8.webp"; sourceTree = "<group>"; };
 		AF8BEC9698284E7F97B7B23E /* enter_3.webp */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = undefined; includeInIndex = 0; lastKnownFileType = unknown; name = enter_3.webp; path = "../packages/ui-new/assets/lottie/enter_3.webp"; sourceTree = "<group>"; };
 		BD084EC1E77E411284E73FE2 /* welcome_5.webp */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = undefined; includeInIndex = 0; lastKnownFileType = unknown; name = welcome_5.webp; path = "../packages/ui-new/assets/lottie/welcome_5.webp"; sourceTree = "<group>"; };
@@ -101,7 +101,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				7699B88040F8A987B510C191 /* libPods-SwiftShield-SwiftShieldTests.a in Frameworks */,
+				7699B88040F8A987B510C191 /* libPods-BIMWallet-BIMWalletTests.a in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -109,20 +109,20 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				0C80B921A6F3F58F76C31292 /* libPods-SwiftShield.a in Frameworks */,
+				0C80B921A6F3F58F76C31292 /* libPods-BIMWallet.a in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
-		00E356EF1AD99517003FC87E /* SwiftShieldTests */ = {
+		00E356EF1AD99517003FC87E /* BIMWalletTests */ = {
 			isa = PBXGroup;
 			children = (
-				00E356F21AD99517003FC87E /* SwiftShieldTests.m */,
+				00E356F21AD99517003FC87E /* BIMWalletTests.m */,
 				00E356F01AD99517003FC87E /* Supporting Files */,
 			);
-			path = SwiftShieldTests;
+			path = BIMWalletTests;
 			sourceTree = "<group>";
 		};
 		00E356F01AD99517003FC87E /* Supporting Files */ = {
@@ -133,7 +133,7 @@
 			name = "Supporting Files";
 			sourceTree = "<group>";
 		};
-		13B07FAE1A68108700A75B9A /* SwiftShield */ = {
+		13B07FAE1A68108700A75B9A /* BIMWallet */ = {
 			isa = PBXGroup;
 			children = (
 				13B07FAF1A68108700A75B9A /* AppDelegate.h */,
@@ -143,25 +143,25 @@
 				81AB9BB72411601600AC10FF /* LaunchScreen.storyboard */,
 				13B07FB71A68108700A75B9A /* main.m */,
 			);
-			name = SwiftShield;
+			name = BIMWallet;
 			sourceTree = "<group>";
 		};
 		2D16E6871FA4F8E400B85C8A /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
 				ED297162215061F000B7C4FE /* JavaScriptCore.framework */,
-				5DCACB8F33CDC322A6C60F78 /* libPods-SwiftShield.a */,
-				19F6CBCC0A4E27FBF8BF4A61 /* libPods-SwiftShield-SwiftShieldTests.a */,
+				5DCACB8F33CDC322A6C60F78 /* libPods-BIMWallet.a */,
+				19F6CBCC0A4E27FBF8BF4A61 /* libPods-BIMWallet-BIMWalletTests.a */,
 			);
 			name = Frameworks;
 			sourceTree = "<group>";
 		};
-		6E37D5AF9F0669F80133F74B /* SwiftShield */ = {
+		6E37D5AF9F0669F80133F74B /* BIMWallet */ = {
 			isa = PBXGroup;
 			children = (
 				15839C861ED2C69156BA28E5 /* ExpoModulesProvider.swift */,
 			);
-			name = SwiftShield;
+			name = BIMWallet;
 			sourceTree = "<group>";
 		};
 		832341AE1AAA6A7D00B99B32 /* Libraries */ = {
@@ -174,9 +174,9 @@
 		83CBB9F61A601CBA00E9B192 = {
 			isa = PBXGroup;
 			children = (
-				13B07FAE1A68108700A75B9A /* SwiftShield */,
+				13B07FAE1A68108700A75B9A /* BIMWallet */,
 				832341AE1AAA6A7D00B99B32 /* Libraries */,
-				00E356EF1AD99517003FC87E /* SwiftShieldTests */,
+				00E356EF1AD99517003FC87E /* BIMWalletTests */,
 				83CBBA001A601CBA00E9B192 /* Products */,
 				2D16E6871FA4F8E400B85C8A /* Frameworks */,
 				BBD78D7AC51CEA395F1C20DB /* Pods */,
@@ -191,8 +191,8 @@
 		83CBBA001A601CBA00E9B192 /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				13B07F961A680F5B00A75B9A /* SwiftShield.app */,
-				00E356EE1AD99517003FC87E /* SwiftShieldTests.xctest */,
+				13B07F961A680F5B00A75B9A /* BIMWallet.app */,
+				00E356EE1AD99517003FC87E /* BIMWalletTests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -230,27 +230,27 @@
 		BBD78D7AC51CEA395F1C20DB /* Pods */ = {
 			isa = PBXGroup;
 			children = (
-				3B4392A12AC88292D35C810B /* Pods-SwiftShield.debug.xcconfig */,
-				5709B34CF0A7D63546082F79 /* Pods-SwiftShield.release.xcconfig */,
-				5B7EB9410499542E8C5724F5 /* Pods-SwiftShield-SwiftShieldTests.debug.xcconfig */,
-				89C6BE57DB24E9ADA2F236DE /* Pods-SwiftShield-SwiftShieldTests.release.xcconfig */,
+				3B4392A12AC88292D35C810B /* Pods-BIMWallet.debug.xcconfig */,
+				5709B34CF0A7D63546082F79 /* Pods-BIMWallet.release.xcconfig */,
+				5B7EB9410499542E8C5724F5 /* Pods-BIMWallet-BIMWalletTests.debug.xcconfig */,
+				89C6BE57DB24E9ADA2F236DE /* Pods-BIMWallet-BIMWalletTests.release.xcconfig */,
 			);
 			path = Pods;
 			sourceTree = "<group>";
 		};
-		C40C929C19FC0FD01D5EE4BA /* SwiftShieldTests */ = {
+		C40C929C19FC0FD01D5EE4BA /* BIMWalletTests */ = {
 			isa = PBXGroup;
 			children = (
 				A34A62E4EB3A57DC2BE80935 /* ExpoModulesProvider.swift */,
 			);
-			name = SwiftShieldTests;
+			name = BIMWalletTests;
 			sourceTree = "<group>";
 		};
 		EB8B5252A42152C62A547B57 /* ExpoModulesProviders */ = {
 			isa = PBXGroup;
 			children = (
-				6E37D5AF9F0669F80133F74B /* SwiftShield */,
-				C40C929C19FC0FD01D5EE4BA /* SwiftShieldTests */,
+				6E37D5AF9F0669F80133F74B /* BIMWallet */,
+				C40C929C19FC0FD01D5EE4BA /* BIMWalletTests */,
 			);
 			name = ExpoModulesProviders;
 			sourceTree = "<group>";
@@ -258,9 +258,9 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
-		00E356ED1AD99517003FC87E /* SwiftShieldTests */ = {
+		00E356ED1AD99517003FC87E /* BIMWalletTests */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 00E357021AD99517003FC87E /* Build configuration list for PBXNativeTarget "SwiftShieldTests" */;
+			buildConfigurationList = 00E357021AD99517003FC87E /* Build configuration list for PBXNativeTarget "BIMWalletTests" */;
 			buildPhases = (
 				A55EABD7B0C7F3A422A6CC61 /* [CP] Check Pods Manifest.lock */,
 				9219BF88F0E4E1EEC803782F /* [Expo] Configure project */,
@@ -275,14 +275,14 @@
 			dependencies = (
 				00E356F51AD99517003FC87E /* PBXTargetDependency */,
 			);
-			name = SwiftShieldTests;
-			productName = SwiftShieldTests;
-			productReference = 00E356EE1AD99517003FC87E /* SwiftShieldTests.xctest */;
+			name = BIMWalletTests;
+			productName = BIMWalletTests;
+			productReference = 00E356EE1AD99517003FC87E /* BIMWalletTests.xctest */;
 			productType = "com.apple.product-type.bundle.unit-test";
 		};
-		13B07F861A680F5B00A75B9A /* SwiftShield */ = {
+		13B07F861A680F5B00A75B9A /* BIMWallet */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 13B07F931A680F5B00A75B9A /* Build configuration list for PBXNativeTarget "SwiftShield" */;
+			buildConfigurationList = 13B07F931A680F5B00A75B9A /* Build configuration list for PBXNativeTarget "BIMWallet" */;
 			buildPhases = (
 				C38B50BA6285516D6DCD4F65 /* [CP] Check Pods Manifest.lock */,
 				C049C21CD27938056F5F39D6 /* [Expo] Configure project */,
@@ -297,9 +297,9 @@
 			);
 			dependencies = (
 			);
-			name = SwiftShield;
-			productName = SwiftShield;
-			productReference = 13B07F961A680F5B00A75B9A /* SwiftShield.app */;
+			name = BIMWallet;
+			productName = BIMWallet;
+			productReference = 13B07F961A680F5B00A75B9A /* BIMWallet.app */;
 			productType = "com.apple.product-type.application";
 		};
 /* End PBXNativeTarget section */
@@ -319,7 +319,7 @@
 					};
 				};
 			};
-			buildConfigurationList = 83CBB9FA1A601CBA00E9B192 /* Build configuration list for PBXProject "SwiftShield" */;
+			buildConfigurationList = 83CBB9FA1A601CBA00E9B192 /* Build configuration list for PBXProject "BIMWallet" */;
 			compatibilityVersion = "Xcode 12.0";
 			developmentRegion = en;
 			hasScannedForEncodings = 0;
@@ -332,8 +332,8 @@
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
-				13B07F861A680F5B00A75B9A /* SwiftShield */,
-				00E356ED1AD99517003FC87E /* SwiftShieldTests */,
+				13B07F861A680F5B00A75B9A /* BIMWallet */,
+				00E356ED1AD99517003FC87E /* BIMWalletTests */,
 			);
 		};
 /* End PBXProject section */
@@ -403,15 +403,15 @@
 			files = (
 			);
 			inputFileListPaths = (
-				"${PODS_ROOT}/Target Support Files/Pods-SwiftShield/Pods-SwiftShield-frameworks-${CONFIGURATION}-input-files.xcfilelist",
+				"${PODS_ROOT}/Target Support Files/Pods-BIMWallet/Pods-BIMWallet-frameworks-${CONFIGURATION}-input-files.xcfilelist",
 			);
 			name = "[CP] Embed Pods Frameworks";
 			outputFileListPaths = (
-				"${PODS_ROOT}/Target Support Files/Pods-SwiftShield/Pods-SwiftShield-frameworks-${CONFIGURATION}-output-files.xcfilelist",
+				"${PODS_ROOT}/Target Support Files/Pods-BIMWallet/Pods-BIMWallet-frameworks-${CONFIGURATION}-output-files.xcfilelist",
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-SwiftShield/Pods-SwiftShield-frameworks.sh\"\n";
+			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-BIMWallet/Pods-BIMWallet-frameworks.sh\"\n";
 			showEnvVarsInLog = 0;
 		};
 		9219BF88F0E4E1EEC803782F /* [Expo] Configure project */ = {
@@ -431,7 +431,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "# This script configures Expo modules and generates the modules provider file.\nbash -l -c \"./Pods/Target\\ Support\\ Files/Pods-SwiftShield-SwiftShieldTests/expo-configure-project.sh\"\n";
+			shellScript = "# This script configures Expo modules and generates the modules provider file.\nbash -l -c \"./Pods/Target\\ Support\\ Files/Pods-BIMWallet-BIMWalletTests/expo-configure-project.sh\"\n";
 		};
 		A55EABD7B0C7F3A422A6CC61 /* [CP] Check Pods Manifest.lock */ = {
 			isa = PBXShellScriptBuildPhase;
@@ -448,7 +448,7 @@
 			outputFileListPaths = (
 			);
 			outputPaths = (
-				"$(DERIVED_FILE_DIR)/Pods-SwiftShield-SwiftShieldTests-checkManifestLockResult.txt",
+				"$(DERIVED_FILE_DIR)/Pods-BIMWallet-BIMWalletTests-checkManifestLockResult.txt",
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
@@ -472,7 +472,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "# This script configures Expo modules and generates the modules provider file.\nbash -l -c \"./Pods/Target\\ Support\\ Files/Pods-SwiftShield/expo-configure-project.sh\"\n";
+			shellScript = "# This script configures Expo modules and generates the modules provider file.\nbash -l -c \"./Pods/Target\\ Support\\ Files/Pods-BIMWallet/expo-configure-project.sh\"\n";
 		};
 		C38B50BA6285516D6DCD4F65 /* [CP] Check Pods Manifest.lock */ = {
 			isa = PBXShellScriptBuildPhase;
@@ -489,7 +489,7 @@
 			outputFileListPaths = (
 			);
 			outputPaths = (
-				"$(DERIVED_FILE_DIR)/Pods-SwiftShield-checkManifestLockResult.txt",
+				"$(DERIVED_FILE_DIR)/Pods-BIMWallet-checkManifestLockResult.txt",
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
@@ -502,15 +502,15 @@
 			files = (
 			);
 			inputFileListPaths = (
-				"${PODS_ROOT}/Target Support Files/Pods-SwiftShield-SwiftShieldTests/Pods-SwiftShield-SwiftShieldTests-frameworks-${CONFIGURATION}-input-files.xcfilelist",
+				"${PODS_ROOT}/Target Support Files/Pods-BIMWallet-BIMWalletTests/Pods-BIMWallet-BIMWalletTests-frameworks-${CONFIGURATION}-input-files.xcfilelist",
 			);
 			name = "[CP] Embed Pods Frameworks";
 			outputFileListPaths = (
-				"${PODS_ROOT}/Target Support Files/Pods-SwiftShield-SwiftShieldTests/Pods-SwiftShield-SwiftShieldTests-frameworks-${CONFIGURATION}-output-files.xcfilelist",
+				"${PODS_ROOT}/Target Support Files/Pods-BIMWallet-BIMWalletTests/Pods-BIMWallet-BIMWalletTests-frameworks-${CONFIGURATION}-output-files.xcfilelist",
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-SwiftShield-SwiftShieldTests/Pods-SwiftShield-SwiftShieldTests-frameworks.sh\"\n";
+			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-BIMWallet-BIMWalletTests/Pods-BIMWallet-BIMWalletTests-frameworks.sh\"\n";
 			showEnvVarsInLog = 0;
 		};
 		E235C05ADACE081382539298 /* [CP] Copy Pods Resources */ = {
@@ -519,15 +519,15 @@
 			files = (
 			);
 			inputFileListPaths = (
-				"${PODS_ROOT}/Target Support Files/Pods-SwiftShield/Pods-SwiftShield-resources-${CONFIGURATION}-input-files.xcfilelist",
+				"${PODS_ROOT}/Target Support Files/Pods-BIMWallet/Pods-BIMWallet-resources-${CONFIGURATION}-input-files.xcfilelist",
 			);
 			name = "[CP] Copy Pods Resources";
 			outputFileListPaths = (
-				"${PODS_ROOT}/Target Support Files/Pods-SwiftShield/Pods-SwiftShield-resources-${CONFIGURATION}-output-files.xcfilelist",
+				"${PODS_ROOT}/Target Support Files/Pods-BIMWallet/Pods-BIMWallet-resources-${CONFIGURATION}-output-files.xcfilelist",
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-SwiftShield/Pods-SwiftShield-resources.sh\"\n";
+			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-BIMWallet/Pods-BIMWallet-resources.sh\"\n";
 			showEnvVarsInLog = 0;
 		};
 		F6A41C54EA430FDDC6A6ED99 /* [CP] Copy Pods Resources */ = {
@@ -536,15 +536,15 @@
 			files = (
 			);
 			inputFileListPaths = (
-				"${PODS_ROOT}/Target Support Files/Pods-SwiftShield-SwiftShieldTests/Pods-SwiftShield-SwiftShieldTests-resources-${CONFIGURATION}-input-files.xcfilelist",
+				"${PODS_ROOT}/Target Support Files/Pods-BIMWallet-BIMWalletTests/Pods-BIMWallet-BIMWalletTests-resources-${CONFIGURATION}-input-files.xcfilelist",
 			);
 			name = "[CP] Copy Pods Resources";
 			outputFileListPaths = (
-				"${PODS_ROOT}/Target Support Files/Pods-SwiftShield-SwiftShieldTests/Pods-SwiftShield-SwiftShieldTests-resources-${CONFIGURATION}-output-files.xcfilelist",
+				"${PODS_ROOT}/Target Support Files/Pods-BIMWallet-BIMWalletTests/Pods-BIMWallet-BIMWalletTests-resources-${CONFIGURATION}-output-files.xcfilelist",
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-SwiftShield-SwiftShieldTests/Pods-SwiftShield-SwiftShieldTests-resources.sh\"\n";
+			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-BIMWallet-BIMWalletTests/Pods-BIMWallet-BIMWalletTests-resources.sh\"\n";
 			showEnvVarsInLog = 0;
 		};
 /* End PBXShellScriptBuildPhase section */
@@ -554,7 +554,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				00E356F31AD99517003FC87E /* SwiftShieldTests.m in Sources */,
+				00E356F31AD99517003FC87E /* BIMWalletTests.m in Sources */,
 				8165C5EF34BFC587CF2EE958 /* ExpoModulesProvider.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -574,7 +574,7 @@
 /* Begin PBXTargetDependency section */
 		00E356F51AD99517003FC87E /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
-			target = 13B07F861A680F5B00A75B9A /* SwiftShield */;
+			target = 13B07F861A680F5B00A75B9A /* BIMWallet */;
 			targetProxy = 00E356F41AD99517003FC87E /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
@@ -582,14 +582,14 @@
 /* Begin XCBuildConfiguration section */
 		00E356F61AD99517003FC87E /* Debug */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = 5B7EB9410499542E8C5724F5 /* Pods-SwiftShield-SwiftShieldTests.debug.xcconfig */;
+			baseConfigurationReference = 5B7EB9410499542E8C5724F5 /* Pods-BIMWallet-BIMWalletTests.debug.xcconfig */;
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				GCC_PREPROCESSOR_DEFINITIONS = (
 					"DEBUG=1",
 					"$(inherited)",
 				);
-				INFOPLIST_FILE = SwiftShieldTests/Info.plist;
+				INFOPLIST_FILE = BIMWalletTests/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 13.4;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -602,19 +602,19 @@
 					"$(inherited)",
 				);
 				OTHER_SWIFT_FLAGS = "$(inherited) -D EXPO_CONFIGURATION_DEBUG";
-				PRODUCT_BUNDLE_IDENTIFIER = "org.reactjs.native.example.$(PRODUCT_NAME:rfc1034identifier)";
+				PRODUCT_BUNDLE_IDENTIFIER = io.bimwallet;
 				PRODUCT_NAME = "$(TARGET_NAME)";
-				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/SwiftShield.app/SwiftShield";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/BIMWallet.app/BIMWallet";
 			};
 			name = Debug;
 		};
 		00E356F71AD99517003FC87E /* Release */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = 89C6BE57DB24E9ADA2F236DE /* Pods-SwiftShield-SwiftShieldTests.release.xcconfig */;
+			baseConfigurationReference = 89C6BE57DB24E9ADA2F236DE /* Pods-BIMWallet-BIMWalletTests.release.xcconfig */;
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				COPY_PHASE_STRIP = NO;
-				INFOPLIST_FILE = SwiftShieldTests/Info.plist;
+				INFOPLIST_FILE = BIMWalletTests/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 13.4;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -627,22 +627,22 @@
 					"$(inherited)",
 				);
 				OTHER_SWIFT_FLAGS = "$(inherited) -D EXPO_CONFIGURATION_RELEASE";
-				PRODUCT_BUNDLE_IDENTIFIER = "org.reactjs.native.example.$(PRODUCT_NAME:rfc1034identifier)";
+				PRODUCT_BUNDLE_IDENTIFIER = io.bimwallet;
 				PRODUCT_NAME = "$(TARGET_NAME)";
-				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/SwiftShield.app/SwiftShield";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/BIMWallet.app/BIMWallet";
 			};
 			name = Release;
 		};
 		13B07F941A680F5B00A75B9A /* Debug */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = 3B4392A12AC88292D35C810B /* Pods-SwiftShield.debug.xcconfig */;
+			baseConfigurationReference = 3B4392A12AC88292D35C810B /* Pods-BIMWallet.debug.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;
 				CURRENT_PROJECT_VERSION = 1;
 				ENABLE_BITCODE = NO;
-				INFOPLIST_FILE = SwiftShield/Info.plist;
-				INFOPLIST_KEY_CFBundleDisplayName = SwiftShield;
+				INFOPLIST_FILE = BIMWallet/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = BIMWallet;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -654,8 +654,8 @@
 					"-lc++",
 				);
 				OTHER_SWIFT_FLAGS = "$(inherited) -D EXPO_CONFIGURATION_DEBUG";
-				PRODUCT_BUNDLE_IDENTIFIER = "org.reactjs.native.example.$(PRODUCT_NAME:rfc1034identifier)";
-				PRODUCT_NAME = SwiftShield;
+				PRODUCT_BUNDLE_IDENTIFIER = io.bimwallet;
+				PRODUCT_NAME = BIMWallet;
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = 1;
@@ -665,13 +665,13 @@
 		};
 		13B07F951A680F5B00A75B9A /* Release */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = 5709B34CF0A7D63546082F79 /* Pods-SwiftShield.release.xcconfig */;
+			baseConfigurationReference = 5709B34CF0A7D63546082F79 /* Pods-BIMWallet.release.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;
 				CURRENT_PROJECT_VERSION = 1;
-				INFOPLIST_FILE = SwiftShield/Info.plist;
-				INFOPLIST_KEY_CFBundleDisplayName = SwiftShield;
+				INFOPLIST_FILE = BIMWallet/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = BIMWallet;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -683,8 +683,8 @@
 					"-lc++",
 				);
 				OTHER_SWIFT_FLAGS = "$(inherited) -D EXPO_CONFIGURATION_RELEASE";
-				PRODUCT_BUNDLE_IDENTIFIER = "org.reactjs.native.example.$(PRODUCT_NAME:rfc1034identifier)";
-				PRODUCT_NAME = SwiftShield;
+				PRODUCT_BUNDLE_IDENTIFIER = io.bimwallet;
+				PRODUCT_NAME = BIMWallet;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = 1;
 				VERSIONING_SYSTEM = "apple-generic";
@@ -844,7 +844,7 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		00E357021AD99517003FC87E /* Build configuration list for PBXNativeTarget "SwiftShieldTests" */ = {
+		00E357021AD99517003FC87E /* Build configuration list for PBXNativeTarget "BIMWalletTests" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				00E356F61AD99517003FC87E /* Debug */,
@@ -853,7 +853,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		13B07F931A680F5B00A75B9A /* Build configuration list for PBXNativeTarget "SwiftShield" */ = {
+		13B07F931A680F5B00A75B9A /* Build configuration list for PBXNativeTarget "BIMWallet" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				13B07F941A680F5B00A75B9A /* Debug */,
@@ -862,7 +862,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		83CBB9FA1A601CBA00E9B192 /* Build configuration list for PBXProject "SwiftShield" */ = {
+		83CBB9FA1A601CBA00E9B192 /* Build configuration list for PBXProject "BIMWallet" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				83CBBA201A601CBA00E9B192 /* Debug */,
