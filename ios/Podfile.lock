@@ -1218,7 +1218,7 @@ PODS:
     - glog
     - RCT-Folly (= 2022.05.16.00)
     - React-Core
-  - RNKeychain (8.2.0):
+  - RNKeychain (8.0.0):
     - React-Core
   - RNReanimated (3.6.3):
     - glog
@@ -1653,7 +1653,7 @@ SPEC CHECKSUMS:
   RNCClipboard: 0a720adef5ec193aa0e3de24c3977222c7e52a37
   RNDeviceInfo: 59344c19152c4b2b32283005f9737c5c64b42fba
   RNGestureHandler: 15c6ef51acba34c49ff03003806cf5dd6098f383
-  RNKeychain: bfe3d12bf4620fe488771c414530bf16e88f3678
+  RNKeychain: 4f63aada75ebafd26f4bc2c670199461eab85d94
   RNReanimated: f6b02d8f5eaa2830296411d4ec3b8ef5442dd13d
   RNScreens: 17e2f657f1b09a71ec3c821368a04acbb7ebcb46
   RNScreenshotPrevent: dc9741e416ba80c3739418f112ac4093188315e9
