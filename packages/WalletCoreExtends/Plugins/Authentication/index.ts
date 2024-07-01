@@ -6,6 +6,7 @@ import { getPasswordCryptoKey } from '@utils/getEnv';
 import * as KeyChain from 'react-native-keychain';
 import { BehaviorSubject, filter } from 'rxjs';
 import CryptoToolPlugin, { CryptoToolPluginClass } from '../CryptoTool';
+import { getI18n } from '@hooks/useI18n';
 
 declare module '@core/WalletCore/Plugins' {
   interface Plugins {
@@ -15,7 +16,6 @@ declare module '@core/WalletCore/Plugins' {
 
 const defaultOptions: KeyChain.Options = {
   service: 'com.bimwallet',
-  authenticationPrompt: { title: 'Please authenticate in order to use', description: '' },
   accessControl: KeyChain.ACCESS_CONTROL.BIOMETRY_ANY,
   accessible: KeyChain.ACCESSIBLE.WHEN_UNLOCKED_THIS_DEVICE_ONLY,
   securityLevel: KeyChain.SECURITY_LEVEL.SECURE_HARDWARE,
@@ -67,7 +67,10 @@ class AuthenticationPluginClass implements Plugin {
   public getPassword = async () => {
     if (this.settleAuthenticationType === AuthenticationType.Biometrics) {
       try {
-        const keyChainObject = await KeyChain.getGenericPassword(defaultOptions);
+        const keyChainObject = await KeyChain.getGenericPassword({
+          ...defaultOptions,
+          authenticationPrompt: { title: getI18n().translation.authentication.title },
+        });
         if (keyChainObject && keyChainObject.password) {
           return await authCryptoTool.decrypt<string>(keyChainObject.password);
         }
@@ -125,7 +128,10 @@ class AuthenticationPluginClass implements Plugin {
     if (authType === AuthenticationType.Biometrics) {
       const encryptedPassword = await authCryptoTool.encrypt(`${authCryptoTool.generateRandomString()}${new Date().getTime()}`);
 
-      await KeyChain.setGenericPassword('bim-wallet-user', encryptedPassword, defaultOptions);
+      await KeyChain.setGenericPassword('bim-wallet-user', encryptedPassword, {
+        ...defaultOptions,
+        authenticationPrompt: { title: getI18n().translation.authentication.title },
+      });
       this.settleAuthenticationType = AuthenticationType.Biometrics;
       await database.localStorage.set('SettleAuthentication', AuthenticationType.Biometrics);
     } else if (typeof password === 'string' && !!password) {

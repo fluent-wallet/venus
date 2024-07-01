@@ -156,22 +156,22 @@ const ScanQrCode: React.FC<Props> = ({ navigation, onConfirm, onClose }) => {
 
       try {
         if (!onConfirm && QRCodeString.startsWith('wc:') && ENABLE_WALLET_CONNECT_FEATURE.allow) {
+          setScanStatus({ type: ScanStatusType.ConnectingWC, message: t('wc.connecting') });
           await plugins.WalletConnect.connect({ wcURI: QRCodeString });
-          setScanStatus({ type: ScanStatusType.ConnectingWC, message: 'Connecting to Wallet-Connect...' });
         } else {
           ethUrl = parseETHURL(QRCodeString);
           onParseEthUrlSuccess(ethUrl);
           isParsing.current = false;
         }
-      } catch (e) {
+      } catch (err) {
         isParsing.current = false;
-        if (e instanceof WalletConnectPluginError) {
-          if (e.message === 'VersionNotSupported') {
+        if (err instanceof WalletConnectPluginError) {
+          if (err.message === 'VersionNotSupported') {
             setScanStatus({ message: t('scan.walletConnect.error.lowVersion') });
-          } else if (e.message === 'PairingAlreadyExists') {
+          } else if (err.message === 'PairingAlreadyExists') {
             setScanStatus({ message: t('scan.walletConnect.error.pairingAlreadyExists') });
           } else {
-            setScanStatus({ message: `${t('scan.walletConnect.error.connectFailed')} ${String(e ?? '')}` });
+            setScanStatus({ message: `${t('scan.walletConnect.error.connectFailed')} ${String(err ?? '')}` });
           }
         } else {
           setScanStatus({ message: t('scan.QRCode.error.notRecognized') });
