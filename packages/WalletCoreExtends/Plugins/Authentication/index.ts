@@ -15,7 +15,7 @@ declare module '@core/WalletCore/Plugins' {
 }
 
 const defaultOptions: KeyChain.Options = {
-  service: 'com.bimwallet',
+  service: 'io.bimwallet',
   accessControl: KeyChain.ACCESS_CONTROL.BIOMETRY_ANY,
   accessible: KeyChain.ACCESSIBLE.WHEN_UNLOCKED_THIS_DEVICE_ONLY,
   securityLevel: KeyChain.SECURITY_LEVEL.SECURE_HARDWARE,
