@@ -1,82 +1,85 @@
-import BottomSheet, { snapPoints, BottomSheetScrollView, BottomSheetView } from '@components/BottomSheet';
+import BottomSheet, {
+  snapPoints,
+  BottomSheetWrapper,
+  BottomSheetScrollContent,
+  BottomSheetFooter,
+  BottomSheetHeader,
+  type BottomSheetMethods,
+} from '@components/BottomSheet';
 import Button from '@components/Button';
 import Icon from '@components/Icon';
 import Text from '@components/Text';
+import HourglassLoading from '@components/Loading/Hourglass';
 import Plugins from '@core/WalletCore/Plugins';
 import { useCurrentAddressValue } from '@core/WalletCore/Plugins/ReactInject';
-import useInAsync from '@hooks/useInAsync';
-import { useNavigation, useTheme } from '@react-navigation/native';
-import { useCallback } from 'react';
+import { useTheme } from '@react-navigation/native';
+import { useCallback, useState, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { useWalletConnectSessions } from './useWalletConnectHooks';
+
 function WalletConnectSessions() {
+  const { colors } = useTheme();
   const { t } = useTranslation();
+  const bottomSheetRef = useRef<BottomSheetMethods>(null!);
+
   const currentAddressValue = useCurrentAddressValue();
   const { sessions } = useWalletConnectSessions(currentAddressValue);
-  const navigation = useNavigation();
-  const { colors } = useTheme();
-  // TODO: maybe add confirm
-  const _handleDisconnect = useCallback(async (topic: string) => {
+
+  const [inDisconnect, setInDesconnect] = useState<Record<string, boolean>>({});
+  const handleDisconnect = useCallback(async (topic: string) => {
+    setInDesconnect((prev) => ({ ...prev, [topic]: true }));
     await Plugins.WalletConnect.disconnectSession({ topic });
+    setInDesconnect((prev) => ({ ...prev, [topic]: false }));
   }, []);
-  const { inAsync, execAsync: handleDisconnect } = useInAsync(_handleDisconnect);
 
   const isUnsafe = useCallback((url: string) => new URL(url).protocol === 'http', []);
 
   return (
-    <BottomSheet enablePanDownToClose={false} isRoute snapPoints={snapPoints.percent55} style={styles.container}>
-      <Text style={[styles.title, { color: colors.textPrimary }]}>{t('wc.dapp.connectedDApps')}</Text>
-
-      <View style={[styles.list, { borderBottomColor: colors.borderFourth }]}>
-        <Text style={[styles.font14, { color: colors.textSecondary }]}>{t('wc.dapp.connectTo')}</Text>
-        <BottomSheetView style={[{ height: 160, overflow: 'hidden', marginBottom: 40 }]}>
-          <BottomSheetScrollView>
-            {sessions.map(
-              (
-                {
-                  peer: {
-                    metadata: { url = '', icons = [] },
-                  },
-                  topic,
-                },
-                idx,
-              ) => (
-                <View key={idx} style={styles.connect}>
-                  <View style={styles.connectLeft}>
-                    <Icon rounded source={icons[0]} width={24} height={24} />
-                    <Text style={[styles.font16, { color: isUnsafe(url) ? colors.down : colors.up, flex: 1 }]} numberOfLines={1}>
-                      {url}
-                    </Text>
-                  </View>
-                  <Pressable testID="disconnect" onPress={() => handleDisconnect(topic)} disabled={inAsync}>
+    <BottomSheet ref={bottomSheetRef} isRoute snapPoints={snapPoints.percent55}>
+      <BottomSheetWrapper innerPaddingHorizontal>
+        <BottomSheetHeader title={t('wc.dapp.connectedDApps')}>
+          <Text style={[styles.title, styles.font14, { color: colors.textSecondary }]}>{t('wc.dapp.connectTo')}</Text>
+        </BottomSheetHeader>
+        <BottomSheetScrollContent>
+          {sessions?.map(
+            ({
+              peer: {
+                metadata: { url = '', icons = [] },
+              },
+              topic,
+            }) => (
+              <View key={topic} style={styles.connect}>
+                <View style={styles.connectLeft}>
+                  <Icon rounded source={icons[0]} width={24} height={24} />
+                  <Text style={[styles.font16, { color: isUnsafe(url) ? colors.down : colors.up, flex: 1 }]} numberOfLines={1}>
+                    {url}
+                  </Text>
+                </View>
+                {inDisconnect[topic] && <HourglassLoading style={styles.inDisconnectLoading} />}
+                {!inDisconnect[topic] && (
+                  <Pressable testID="disconnect" onPress={() => handleDisconnect(topic)} disabled={inDisconnect[topic]}>
                     <Text style={[styles.font14, { color: isUnsafe(url) ? colors.down : colors.textPrimary }]}>{t('common.disconnect')}</Text>
                   </Pressable>
-                </View>
-              ),
-            )}
-          </BottomSheetScrollView>
-        </BottomSheetView>
-      </View>
-      <Button testID="ok" onPress={() => navigation.goBack()} style={styles.btn}>
-        {t('common.ok')}
-      </Button>
+                )}
+              </View>
+            ),
+          )}
+        </BottomSheetScrollContent>
+
+        <BottomSheetFooter style={[styles.footer, { borderColor: colors.borderFourth }]}>
+          <Button testID="ok" onPress={() => bottomSheetRef.current?.close()}>
+            {t('common.ok')}
+          </Button>
+        </BottomSheetFooter>
+      </BottomSheetWrapper>
     </BottomSheet>
   );
 }
 
 const styles = StyleSheet.create({
   title: {
-    textAlign: 'center',
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  container: {},
-  list: {
     marginTop: 40,
-    flex: 1,
-    borderBottomWidth: 1,
-    paddingHorizontal: 16,
   },
   font14: {
     fontSize: 14,
@@ -86,11 +89,15 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '300',
   },
+  inDisconnectLoading: {
+    width: 20,
+    height: 20,
+  },
   connect: {
     marginTop: 16,
     display: 'flex',
-    flexDirection: 'row',
     justifyContent: 'space-between',
+    flexDirection: 'row',
     alignItems: 'center',
   },
   connectLeft: {
@@ -100,10 +107,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 10,
   },
-  btn: {
-    marginTop: 24,
-    marginBottom: 78,
-    marginHorizontal: 16,
+  footer: {
+    borderTopWidth: 1,
+    paddingTop: 24,
   },
 });
 

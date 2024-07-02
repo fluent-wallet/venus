@@ -1,7 +1,7 @@
 import PoundKey from '@assets/icons/pound-key.svg';
-import Share from '@assets/icons/share.svg';
+// import Share from '@assets/icons/share.svg';
 import Logo from '@assets/images/swift-shield-QRCode.webp';
-import BottomSheet, { snapPoints } from '@components/BottomSheet';
+import BottomSheet, { snapPoints, BottomSheetWrapper, BottomSheetScrollContent, BottomSheetHeader } from '@components/BottomSheet';
 import Text from '@components/Text';
 import type { AssetInfo } from '@core/WalletCore/Plugins/AssetsTracker/types';
 import { NetworkType, useCurrentAccount, useCurrentAddressValue, useCurrentNetwork } from '@core/WalletCore/Plugins/ReactInject';
@@ -64,49 +64,50 @@ const Receive: React.FC<Props> = ({ navigation }) => {
 
   return (
     <>
-      <BottomSheet snapPoints={snapPoints.large} isRoute style={styles.container}>
-        <Text style={[styles.title, { color: colors.textPrimary }]}>{t('receive.title')}</Text>
-        <Text style={[styles.tip, { color: colors.textPrimary }]}>{t('receive.describe', { netName: currentNetwork?.name })}</Text>
+      <BottomSheet snapPoints={snapPoints.large} isRoute>
+        <BottomSheetWrapper>
+          <BottomSheetHeader title={t('receive.title')} />
+          <BottomSheetScrollContent>
+            <Text style={[styles.tip, { color: colors.textPrimary }]}>{t('receive.describe', { netName: currentNetwork?.name })}</Text>
 
-        <View style={[styles.qrcodeWrapper, { backgroundColor: colors.bgSecondary, paddingBottom: selectedAsset ? 18 : 30 }]}>
-          <QRCode value={ethUrl} size={172} logo={Logo} logoSize={40} logoBackgroundColor="transparent" />
-          {selectedAsset && (
-            <>
-              <Text style={[styles.receive, { color: colors.textPrimary }]} numberOfLines={1} adjustsFontSizeToFit>
-                {numberWithCommas(amount)} {selectedAsset?.symbol}{' '}
-              </Text>
-              {price && price !== '0' && (
-                <Text style={[styles.price, { color: colors.textSecondary }]} numberOfLines={1}>
-                  ≈ ${numberWithCommas(price)}
-                </Text>
+            <View style={[styles.qrcodeWrapper, { backgroundColor: colors.bgSecondary, paddingBottom: selectedAsset ? 18 : 30 }]}>
+              <QRCode value={ethUrl} size={172} logo={Logo} logoSize={40} logoBackgroundColor="transparent" />
+              {selectedAsset && (
+                <>
+                  <Text style={[styles.receive, { color: colors.textPrimary }]} numberOfLines={1} adjustsFontSizeToFit>
+                    {numberWithCommas(amount)} {selectedAsset?.symbol}{' '}
+                  </Text>
+                  {price && price !== '0' && (
+                    <Text style={[styles.price, { color: colors.textSecondary }]} numberOfLines={1}>
+                      ≈ ${numberWithCommas(price)}
+                    </Text>
+                  )}
+                  {}
+                </>
               )}
-              {}
-            </>
-          )}
-        </View>
+            </View>
 
-        <View style={styles.accountWrapper}>
-          <AccountItemView
-            nickname={currentAccount?.nickname}
-            addressValue={currentAddressValue}
-            colors={colors}
-            shorten={false}
-            showCopy
-            showUnderlay={false}
-            onPress={() => {
-              Clipboard.setString(currentAddressValue);
-              showMessage({
-                message: t('common.copied'),
-                type: 'success',
-                duration: 1500,
-                width: 160,
-              });
-            }}
-          />
-        </View>
-
-        <View style={styles.btnWrapper}>
-          {/* <Navigation
+            <View style={styles.accountWrapper}>
+              <AccountItemView
+                nickname={currentAccount?.nickname}
+                addressValue={currentAddressValue}
+                colors={colors}
+                shorten={false}
+                showCopy
+                showUnderlay={false}
+                onPress={() => {
+                  Clipboard.setString(currentAddressValue);
+                  showMessage({
+                    message: t('common.copied'),
+                    type: 'success',
+                    duration: 1500,
+                    width: 160,
+                  });
+                }}
+              />
+            </View>
+            <View style={styles.btnArea}>
+              {/* <Navigation
               title="Share"
               Icon={Share}
               onPress={() => {
@@ -119,8 +120,10 @@ const Receive: React.FC<Props> = ({ navigation }) => {
                 });
               }}
             /> */}
-          <Navigation title={t('receive.selectAsset')} Icon={PoundKey} onPress={() => setShowSetAsset(true)} />
-        </View>
+              <Navigation title={t('receive.selectAsset')} Icon={PoundKey} onPress={() => setShowSetAsset(true)} />
+            </View>
+          </BottomSheetScrollContent>
+        </BottomSheetWrapper>
       </BottomSheet>
       {showSetAsset && (
         <ReceiveSetAsset
@@ -140,19 +143,9 @@ const Receive: React.FC<Props> = ({ navigation }) => {
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  title: {
-    marginTop: 8,
-    marginBottom: 24,
-    lineHeight: 20,
-    textAlign: 'center',
-    fontSize: 16,
-    fontWeight: '600',
-  },
   tip: {
     alignSelf: 'center',
+    marginTop: 14,
     marginBottom: 24,
     width: 280,
     fontSize: 14,
@@ -184,7 +177,7 @@ const styles = StyleSheet.create({
     marginTop: 24,
     width: 280,
   },
-  btnWrapper: {
+  btnArea: {
     marginTop: isSmallDevice ? 'auto' : 102,
     marginBottom: isSmallDevice ? 48 : 0,
     display: 'flex',

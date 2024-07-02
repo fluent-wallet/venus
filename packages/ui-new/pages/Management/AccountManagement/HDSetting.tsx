@@ -1,5 +1,12 @@
 import ArrowRight from '@assets/icons/arrow-right2.svg';
-import BottomSheet, { snapPoints, type BottomSheetMethods } from '@components/BottomSheet';
+import BottomSheet, {
+  snapPoints,
+  BottomSheetWrapper,
+  BottomSheetScrollContent,
+  BottomSheetHeader,
+  BottomSheetFooter,
+  type BottomSheetMethods,
+} from '@components/BottomSheet';
 import Button from '@components/Button';
 import Checkbox from '@components/Checkbox';
 import HourglassLoading from '@components/Loading/Hourglass';
@@ -98,12 +105,11 @@ const HDManagement: React.FC<StackScreenProps<typeof HDSettingStackName>> = ({ n
               //   return { hexAddress, index: newIndex };
               // }
               throw new Error('Unexpected errors.');
-            } else {
-              return getNthAccountOfHDKey({ mnemonic, hdPath: currentHdPath.value, nth: pageIndex * countPerPage + index }).then((res) => ({
-                addressValue: getAddressValueByNetwork(res.hexAddress, currentNetwork),
-                index: res.index,
-              }));
             }
+            return getNthAccountOfHDKey({ mnemonic, hdPath: currentHdPath.value, nth: pageIndex * countPerPage + index }).then((res) => ({
+              addressValue: getAddressValueByNetwork(res.hexAddress, currentNetwork),
+              index: res.index,
+            }));
           }),
         );
         setPageAccounts(newPageAccounts);
@@ -157,124 +163,118 @@ const HDManagement: React.FC<StackScreenProps<typeof HDSettingStackName>> = ({ n
 
   return (
     <BottomSheet ref={bottomSheetRef} snapPoints={snapPoints.large} isRoute>
-      <View style={styles.container}>
-        <Text style={[styles.title, styles.mainText, { color: colors.textPrimary }]}>{t('account.HDWallet.select.title')}</Text>
-        <Text style={[styles.description, { color: colors.textSecondary }]}>{t('account.HDWallet.select.pathType')}</Text>
-        <Text style={[styles.contentText, styles.mainText, { color: colors.textPrimary }]}>BIP44</Text>
-        <Text style={[styles.description, { color: colors.textSecondary }]}>{t('common.index')}</Text>
-        <Text style={[styles.contentText, styles.mainText, { color: colors.textPrimary }]}>{currentHdPath?.value}</Text>
+      <BottomSheetWrapper innerPaddingHorizontal>
+        <BottomSheetHeader title={t('account.HDWallet.select.title')} />
+        <BottomSheetScrollContent>
+          <Text style={[styles.description, { marginTop: 14, color: colors.textSecondary }]}>{t('account.HDWallet.select.pathType')}</Text>
+          <Text style={[styles.contentText, styles.mainText, { color: colors.textPrimary }]}>BIP44</Text>
+          <Text style={[styles.description, { color: colors.textSecondary }]}>{t('common.index')}</Text>
+          <Text style={[styles.contentText, styles.mainText, { color: colors.textPrimary }]}>{currentHdPath?.value}</Text>
 
-        <View style={styles.selectArea}>
-          {pageAccounts.map((account) => {
-            const isSelected =
-              pageAccounts !== defaultPages &&
-              !!currentAddress &&
-              (currentAddress.hex === account.addressValue || currentAddress.base32 === account.addressValue);
-            const isInChoose = pageAccounts !== defaultPages && !!chooseAccounts?.find((_account) => _account.index === account.index);
-            return (
-              <Pressable
-                key={account.index}
-                testID="addressItem"
-                style={({ pressed }) => [styles.selectItem, { backgroundColor: pressed ? colors.underlay : 'transparent' }]}
-                disabled={isSelected}
-                onPress={() => {
-                  if (chooseAccounts.find((_account) => _account.index === account.index)) {
-                    setChooseAccounts(chooseAccounts.filter((_account) => _account.index !== account.index));
-                  } else {
-                    setChooseAccounts([...chooseAccounts, account]);
-                  }
-                }}
-              >
-                <Checkbox checked={isInChoose} showBorder={!isSelected} pointerEvents="none" />
-                <Text style={[styles.accountIndex, { color: colors.textPrimary }]}>{account.index + 1}</Text>
-                <Text style={[styles.accountAddress, { color: colors.textPrimary }]}>{shortenAddress(account.addressValue)}</Text>
-                <Text style={[styles.acccountPath, { color: colors.textSecondary }]}>
-                  {currentHdPath?.value.slice(0, -1)}
-                  {account.index}
-                </Text>
-              </Pressable>
-            );
-          })}
-          {inCalc && (
-            <View style={styles.selectAbsolute}>
-              {inCalc === true && (
-                <>
-                  <View style={[styles.selectAbsolute, { backgroundColor: colors.bgFourth, opacity: 0.75 }]} pointerEvents="none" />
-                  <HourglassLoading style={styles.calcLoading} />
-                </>
-              )}
+          <View style={styles.selectArea}>
+            {pageAccounts.map((account) => {
+              const isSelected =
+                pageAccounts !== defaultPages &&
+                !!currentAddress &&
+                (currentAddress.hex === account.addressValue || currentAddress.base32 === account.addressValue);
+              const isInChoose = pageAccounts !== defaultPages && !!chooseAccounts?.find((_account) => _account.index === account.index);
+              return (
+                <Pressable
+                  key={account.index}
+                  testID="addressItem"
+                  style={({ pressed }) => [styles.selectItem, { backgroundColor: pressed ? colors.underlay : 'transparent' }]}
+                  disabled={isSelected}
+                  onPress={() => {
+                    if (chooseAccounts.find((_account) => _account.index === account.index)) {
+                      setChooseAccounts(chooseAccounts.filter((_account) => _account.index !== account.index));
+                    } else {
+                      setChooseAccounts([...chooseAccounts, account]);
+                    }
+                  }}
+                >
+                  <Checkbox checked={isInChoose} showBorder={!isSelected} pointerEvents="none" />
+                  <Text style={[styles.accountIndex, { color: colors.textPrimary }]}>{account.index + 1}</Text>
+                  <Text style={[styles.accountAddress, { color: colors.textPrimary }]}>{shortenAddress(account.addressValue)}</Text>
+                  <Text style={[styles.acccountPath, { color: colors.textSecondary }]}>
+                    {currentHdPath?.value.slice(0, -1)}
+                    {account.index}
+                  </Text>
+                </Pressable>
+              );
+            })}
+            {inCalc && (
+              <View style={styles.selectAbsolute}>
+                {inCalc === true && (
+                  <>
+                    <View style={[styles.selectAbsolute, { backgroundColor: colors.bgFourth, opacity: 0.75 }]} pointerEvents="none" />
+                    <HourglassLoading style={styles.calcLoading} />
+                  </>
+                )}
 
-              {typeof inCalc === 'string' && (
-                <>
-                  <View style={[styles.selectAbsolute, { backgroundColor: colors.bgFourth }]} />
-                  {plugins.Authentication.containsCancel(String(inCalc)) ? (
-                    <Pressable
-                      onPress={() => forceAuth((pre) => !pre)}
-                      style={({ pressed }) => [{ backgroundColor: pressed ? colors.underlay : 'transparent' }]}
-                      testID="tryAgain"
-                    >
-                      <Text style={[styles.selectText, { color: colors.textPrimary }]}>
-                        <Trans i18nKey={'account.HDWallet.select.noVerification'}>
-                          You have not completed{'\n'}the security verification,
-                          <Text style={styles.underline}> try again</Text>.
-                        </Trans>
-                      </Text>
-                    </Pressable>
-                  ) : (
-                    <Text style={[styles.selectText, { color: colors.textPrimary }]}>{inCalc}</Text>
-                  )}
-                </>
-              )}
-            </View>
-          )}
-        </View>
-
-        <View style={styles.pagination}>
-          <Pressable
-            onPress={() => setPageIndex((pre) => Math.max(pre - 1, 0))}
-            style={({ pressed }) => [
-              styles.paginationArrow,
-              styles.arrowLeft,
-              { backgroundColor: pressed ? colors.underlay : 'transparent', opacity: pageIndex <= 0 ? 0 : 1 },
-            ]}
-            disabled={inNext || pageIndex <= 0}
-            testID="previous"
-          >
-            <ArrowRight color={pageIndex === 0 || inNext ? colors.up : colors.iconPrimary} width={12} height={12} />
-          </Pressable>
-          <Text style={[styles.paginationText, { color: colors.textPrimary }]}>
-            {t('account.HDWallet.select.selected', { accounts: chooseAccounts.length, es: chooseAccounts.length > 0 ? `(es)` : '' })}
-          </Text>
-          <Pressable
-            onPress={() => setPageIndex((pre) => Math.min(pre + 1, Math.floor(maxCountLimit / countPerPage) - 1))}
-            style={({ pressed }) => [
-              styles.paginationArrow,
-              { backgroundColor: pressed ? colors.underlay : 'transparent', opacity: (pageIndex + 1) * countPerPage >= maxCountLimit ? 0 : 1 },
-            ]}
-            disabled={inNext || (pageIndex + 1) * countPerPage >= maxCountLimit}
-            testID="next"
-          >
-            <ArrowRight color={inNext ? colors.up : colors.iconPrimary} width={12} height={12} />
-          </Pressable>
-        </View>
-
-        <Button testID="next" style={styles.btn} disabled={chooseAccounts.length === 0} onPress={handleClickNext} loading={inNext} size="small">
-          {t('common.next')}
-        </Button>
-      </View>
+                {typeof inCalc === 'string' && (
+                  <>
+                    <View style={[styles.selectAbsolute, { backgroundColor: colors.bgFourth }]} />
+                    {plugins.Authentication.containsCancel(String(inCalc)) ? (
+                      <Pressable
+                        onPress={() => forceAuth((pre) => !pre)}
+                        style={({ pressed }) => [{ backgroundColor: pressed ? colors.underlay : 'transparent' }]}
+                        testID="tryAgain"
+                      >
+                        <Text style={[styles.selectText, { color: colors.textPrimary }]}>
+                          <Trans i18nKey={'account.HDWallet.select.noVerification'}>
+                            You have not completed{'\n'}the security verification,
+                            <Text style={styles.underline}> try again</Text>.
+                          </Trans>
+                        </Text>
+                      </Pressable>
+                    ) : (
+                      <Text style={[styles.selectText, { color: colors.textPrimary }]}>{inCalc}</Text>
+                    )}
+                  </>
+                )}
+              </View>
+            )}
+          </View>
+          <View style={styles.pagination}>
+            <Pressable
+              onPress={() => setPageIndex((pre) => Math.max(pre - 1, 0))}
+              style={({ pressed }) => [
+                styles.paginationArrow,
+                styles.arrowLeft,
+                { backgroundColor: pressed ? colors.underlay : 'transparent', opacity: pageIndex <= 0 ? 0 : 1 },
+              ]}
+              disabled={inNext || pageIndex <= 0}
+              testID="previous"
+            >
+              <ArrowRight color={pageIndex === 0 || inNext ? colors.up : colors.iconPrimary} width={12} height={12} />
+            </Pressable>
+            <Text style={[styles.paginationText, { color: colors.textPrimary }]}>
+              {t('account.HDWallet.select.selected', { accounts: chooseAccounts.length, es: chooseAccounts.length > 0 ? '(es)' : '' })}
+            </Text>
+            <Pressable
+              onPress={() => setPageIndex((pre) => Math.min(pre + 1, Math.floor(maxCountLimit / countPerPage) - 1))}
+              style={({ pressed }) => [
+                styles.paginationArrow,
+                { backgroundColor: pressed ? colors.underlay : 'transparent', opacity: (pageIndex + 1) * countPerPage >= maxCountLimit ? 0 : 1 },
+              ]}
+              disabled={inNext || (pageIndex + 1) * countPerPage >= maxCountLimit}
+              testID="next"
+            >
+              <ArrowRight color={inNext ? colors.up : colors.iconPrimary} width={12} height={12} />
+            </Pressable>
+          </View>
+        </BottomSheetScrollContent>
+        <BottomSheetFooter>
+          <Button testID="next" disabled={chooseAccounts.length === 0} onPress={handleClickNext} loading={inNext} size="small">
+            {t('common.next')}
+          </Button>
+        </BottomSheetFooter>
+      </BottomSheetWrapper>
     </BottomSheet>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    paddingTop: 8,
-  },
-  title: {
-    marginBottom: isSmallDevice ? 12 : 24,
-    textAlign: 'center',
-  },
   mainText: {
     fontSize: 16,
     fontWeight: '600',
@@ -282,14 +282,12 @@ const styles = StyleSheet.create({
   },
   description: {
     marginBottom: isSmallDevice ? 8 : 16,
-    marginHorizontal: 16,
     fontSize: 14,
     fontWeight: '300',
     lineHeight: isSmallDevice ? 14 : 18,
   },
   contentText: {
     marginBottom: 8,
-    marginHorizontal: 16,
     paddingVertical: 12,
     paddingHorizontal: 16,
   },
@@ -313,7 +311,6 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     lineHeight: 28,
     textAlign: 'center',
-    paddingVertical: 16,
   },
   underline: {
     textDecorationLine: 'underline',
@@ -323,7 +320,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     height: 48,
-    paddingHorizontal: 32,
+    paddingHorizontal: 16,
   },
   calcLoading: {
     width: 48,
@@ -369,11 +366,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
     lineHeight: 44,
-  },
-  btn: {
-    marginTop: 'auto',
-    marginBottom: 40,
-    marginHorizontal: 16,
   },
 });
 

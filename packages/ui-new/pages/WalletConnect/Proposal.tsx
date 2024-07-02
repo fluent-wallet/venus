@@ -1,5 +1,5 @@
 import ArrowRight from '@assets/icons/arrow-right2.svg';
-import BottomSheet, { snapPoints } from '@components/BottomSheet';
+import BottomSheet, { snapPoints, BottomSheetWrapper, BottomSheetScrollContent, BottomSheetFooter } from '@components/BottomSheet';
 import Button from '@components/Button';
 import Icon from '@components/Icon';
 import Text from '@components/Text';
@@ -57,53 +57,63 @@ export default function WalletConnectProposal() {
 
   return (
     <>
-      <BottomSheet enablePanDownToClose={false} isRoute snapPoints={snapPoints.large} onClose={() => handleReject()}>
-        <View style={styles.container}>
-          <View style={styles.info}>
-            <Image source={icons[0]} style={styles.icon} />
-            <Text style={[styles.textStrong, styles.name, { color: colors.textPrimary }]}>{name}</Text>
-            <Text style={[styles.describe, { color: colors.textPrimary }]}>{t('wc.proposal.describe')}</Text>
-            <View style={styles.url}>
-              {!isHTTPS ? <Text style={[styles.urlWarning, { borderColor: colors.down, color: colors.down }]}>{t('common.unsafe')}</Text> : null}
-              <Text style={{ color: isHTTPS ? colors.up : colors.down, textDecorationLine: isHTTPS ? 'none' : 'underline' }}>{url}</Text>
-            </View>
-          </View>
-          <Pressable onPress={() => setShowAccountSelector(true)} testID="account">
-            <View>
-              <Text style={[styles.label, { color: colors.textSecondary }]}>{t('wc.proposal.accountSelected')}</Text>
-              <View style={[styles.account, { borderColor: colors.borderFourth }]}>
-                <Text style={[styles.textStrong, { color: colors.textPrimary }]}>
-                  {currentAccount?.nickname}
-                  {`(${shortenAddress(currentAddressValue)})`}
-                </Text>
-                <ArrowRight color={colors.textPrimary} width={16} height={16} />
+      <BottomSheet
+        enablePanDownToClose={!inApproving}
+        enableContentPanningGesture={!inApproving}
+        isRoute
+        snapPoints={snapPoints.large}
+        onClose={() => handleReject()}
+      >
+        <BottomSheetWrapper innerPaddingHorizontal>
+          <BottomSheetScrollContent>
+            <View style={styles.info}>
+              <Image source={icons[0]} style={styles.icon} />
+              <Text style={[styles.textStrong, styles.name, { color: colors.textPrimary }]}>{name}</Text>
+              <Text style={[styles.describe, { color: colors.textPrimary }]}>{t('wc.proposal.describe')}</Text>
+              <View style={styles.url}>
+                {!isHTTPS ? <Text style={[styles.urlWarning, { borderColor: colors.down, color: colors.down }]}>{t('common.unsafe')}</Text> : null}
+                <Text style={{ color: isHTTPS ? colors.up : colors.down, textDecorationLine: isHTTPS ? 'none' : 'underline' }}>{url}</Text>
               </View>
             </View>
-          </Pressable>
-          <View style={styles.networkWarp}>
-            <Text style={[styles.label, { color: colors.textSecondary }]}>{t('common.network')}</Text>
-            <View style={styles.network}>
-              {connectedNetworks.map((network) => (
-                <Icon source={network.icon} width={22} height={22} style={{ borderRadius: 11 }} key={network.id} />
-              ))}
-              {connectedNetworks.length === 1 && <Text style={{ color: colors.textPrimary }}>{connectedNetworks[0]?.name}</Text>}
+            <Pressable onPress={() => setShowAccountSelector(true)} testID="account">
+              <View>
+                <Text style={[styles.label, { color: colors.textSecondary }]}>{t('wc.proposal.accountSelected')}</Text>
+                <View style={[styles.account, { borderColor: colors.borderFourth }]}>
+                  <Text style={[styles.textStrong, { color: colors.textPrimary }]}>
+                    {currentAccount?.nickname}
+                    {`(${shortenAddress(currentAddressValue)})`}
+                  </Text>
+                  <ArrowRight color={colors.textPrimary} width={16} height={16} />
+                </View>
+              </View>
+            </Pressable>
+            <View style={styles.networkWarp}>
+              <Text style={[styles.label, { color: colors.textSecondary }]}>{t('common.network')}</Text>
+              <View style={styles.network}>
+                {connectedNetworks.map((network) => (
+                  <Icon source={network.icon} width={22} height={22} style={{ borderRadius: 11 }} key={network.id} />
+                ))}
+                {connectedNetworks.length === 1 && <Text style={{ color: colors.textPrimary }}>{connectedNetworks[0]?.name}</Text>}
+              </View>
             </View>
-          </View>
-        </View>
-        <View style={styles.buttons}>
-          <Button
-            style={[styles.button, { backgroundColor: isHTTPS ? undefined : colors.down }]}
-            onPress={handleReject}
-            testID="reject"
-            disabled={inRejecting}
-            loading={inRejecting}
-          >
-            {t('common.cancel')}
-          </Button>
-          <Button style={styles.button} onPress={handleApprove} testID="approve" disabled={inApproving} loading={inApproving}>
-            {t('common.connect')}
-          </Button>
-        </View>
+          </BottomSheetScrollContent>
+          <BottomSheetFooter>
+            <View style={styles.btnArea}>
+              <Button
+                style={[styles.btn, { backgroundColor: isHTTPS ? undefined : colors.down }]}
+                onPress={handleReject}
+                testID="reject"
+                disabled={inRejecting}
+                loading={inRejecting}
+              >
+                {t('common.cancel')}
+              </Button>
+              <Button style={styles.btn} onPress={handleApprove} testID="approve" disabled={inApproving} loading={inApproving}>
+                {t('common.connect')}
+              </Button>
+            </View>
+          </BottomSheetFooter>
+        </BottomSheetWrapper>
       </BottomSheet>
       {showAccountSelector && <AccountSelector onClose={() => setShowAccountSelector(false)} />}
     </>
@@ -111,10 +121,6 @@ export default function WalletConnectProposal() {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    paddingHorizontal: 16,
-  },
   info: {
     marginTop: 80,
     display: 'flex',
@@ -175,16 +181,13 @@ const styles = StyleSheet.create({
     height: 22,
     borderRadius: 11,
   },
-  buttons: {
+  btnArea: {
     display: 'flex',
     flexDirection: 'row',
-    justifyContent: 'space-between',
     gap: 16,
-    marginTop: 'auto',
-    marginBottom: 100,
-    paddingHorizontal: 16,
   },
-  button: {
-    flex: 1,
+  btn: {
+    width: '50%',
+    flexShrink: 1,
   },
 });

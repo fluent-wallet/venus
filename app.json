@@ -1,6 +1,6 @@
 {
-  "name": "SwiftShield",
-  "displayName": "SwiftShield",
+  "name": "BIM Wallet",
+  "displayName": "BIM Wallet",
   "plugins": [
     "expo-localization"
   ]

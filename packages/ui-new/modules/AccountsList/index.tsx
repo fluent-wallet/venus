@@ -80,12 +80,31 @@ export const AccountItemView: React.FC<{
   children?: React.ReactNode;
   disabled?: boolean;
   showUnderlay?: boolean;
-}> = ({ colors, showSelect, showMore, addressValue, nickname, children, shorten = true, showUnderlay = true, disabled, showCopy, onPress }) => {
+  innerPaddingHorizontal?: boolean;
+}> = ({
+  colors,
+  showSelect,
+  showMore,
+  addressValue,
+  nickname,
+  children,
+  shorten = true,
+  showUnderlay = true,
+  disabled,
+  showCopy,
+  onPress,
+  innerPaddingHorizontal = true,
+}) => {
   return (
     <Pressable
       style={({ pressed }) => [
         styles.row,
-        { backgroundColor: showUnderlay && pressed ? colors.underlay : 'transparent', position: 'relative', paddingRight: 0 },
+        {
+          backgroundColor: showUnderlay && pressed ? colors.underlay : 'transparent',
+          position: 'relative',
+          paddingLeft: innerPaddingHorizontal ? 16 : 0,
+          paddingRight: 0,
+        },
       ]}
       pointerEvents={!onPress ? 'none' : 'auto'}
       onPress={onPress}
@@ -200,7 +219,8 @@ const AccountsList: React.FC<{
       }
       if (vaultType === VaultType.HierarchicalDeterministic) {
         return await methods.addAccount({ accountGroup });
-      } else if (vaultType === VaultType.BSIM) {
+      }
+      if (vaultType === VaultType.BSIM) {
         const list = await plugins.BSIM.getBSIMList();
         const newIndex = (await methods.getAccountGroupLastAccountIndex(accountGroup)) + 1;
         const alreadyCreateAccount = list?.find((item) => item.index === newIndex);

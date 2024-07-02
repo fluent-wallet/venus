@@ -1,9 +1,11 @@
+/* eslint-disable @typescript-eslint/no-empty-function */
+/* eslint-disable react-hooks/exhaustive-deps */
 import { BSIMEventTypesName } from '@WalletCoreExtends/Plugins/BSIM/types';
 import ProhibitIcon from '@assets/icons/prohibit.svg';
 import WarnIcon from '@assets/icons/warn.svg';
 import { convertCfxToHex } from '@cfx-kit/dapp-utils/dist/address';
 import { createERC20Contract, createERC721Contract, createERC1155Contract } from '@cfx-kit/dapp-utils/dist/contract';
-import { BottomSheetScrollView } from '@components/BottomSheet';
+import { BottomSheetScrollContent, BottomSheetFooter } from '@components/BottomSheet';
 import Button from '@components/Button';
 import Text from '@components/Text';
 import events from '@core/WalletCore/Events';
@@ -39,8 +41,6 @@ import backToHome from '@utils/backToHome';
 import { calculateTokenPrice } from '@utils/calculateTokenPrice';
 import Decimal from 'decimal.js';
 import { BSIMError } from 'packages/WalletCoreExtends/Plugins/BSIM/BSIMSDK';
-/* eslint-disable @typescript-eslint/no-empty-function */
-/* eslint-disable react-hooks/exhaustive-deps */
 import type React from 'react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -76,7 +76,8 @@ const SendTransactionStep4Confirm: React.FC<SendTransactionScreenProps<typeof Se
   const symbol = useMemo(() => {
     if (!nftItemDetail) {
       return asset.symbol;
-    } else return getDetailSymbol(nftItemDetail);
+    }
+    return getDetailSymbol(nftItemDetail);
   }, []);
 
   const transferAmountHex = useMemo(() => new Decimal(amount || 0).mul(Decimal.pow(10, nftItemDetail ? 0 : asset.decimals || 0)).toHex(), []);
@@ -242,12 +243,12 @@ const SendTransactionStep4Confirm: React.FC<SendTransactionScreenProps<typeof Se
   return (
     <>
       <SendTransactionBottomSheet
-        showTitle={t('tx.confirm.title')}
+        title={t('tx.confirm.title')}
         enablePanDownToClose={!inSending}
         enableContentPanningGesture={!inSending}
         enableHandlePanningGesture={!inSending}
       >
-        <BottomSheetScrollView>
+        <BottomSheetScrollContent>
           <Text style={[styles.sendTitle, { color: colors.textPrimary }]}>{t('common.send')}</Text>
 
           {nftItemDetail && <NFT colors={colors} asset={asset} nftItemDetail={nftItemDetail} />}
@@ -258,7 +259,8 @@ const SendTransactionStep4Confirm: React.FC<SendTransactionScreenProps<typeof Se
             icon={asset.type === AssetType.Native || asset.type === AssetType.ERC20 ? asset.icon : undefined}
             recipientAddress={recipientAddress}
           />
-
+        </BottomSheetScrollContent>
+        <BottomSheetFooter>
           <View style={[styles.divider, { backgroundColor: colors.borderFourth }]} />
 
           <Text style={[styles.signWith, { color: colors.textSecondary }]}>{t('tx.confirm.signingWith')}</Text>
@@ -306,7 +308,7 @@ const SendTransactionStep4Confirm: React.FC<SendTransactionScreenProps<typeof Se
               {error ? t('common.retry') : t('common.send')}
             </Button>
           </View>
-        </BottomSheetScrollView>
+        </BottomSheetFooter>
       </SendTransactionBottomSheet>
       {bsimEvent && (
         <BSIMVerify
@@ -375,7 +377,6 @@ export const styles = StyleSheet.create({
     lineHeight: 18,
   },
   btnArea: {
-    marginBottom: 32,
     display: 'flex',
     flexDirection: 'row',
     gap: 16,

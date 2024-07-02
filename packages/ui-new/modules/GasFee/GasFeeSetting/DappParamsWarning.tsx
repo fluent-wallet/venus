@@ -24,7 +24,7 @@ const DappParamsWarning: React.FC<Props> = ({ onClose, onPressUse }) => {
       <Text style={[styles2.text, { color: colors.textPrimary }]}>The gas parameters used by the DApp may cause the transaction to fail.</Text>
 
       <Text style={[styles2.text, { color: colors.textPrimary }]}>
-        Whether to use the <Text style={{ color: colors.up, fontWeight: '600' }}>gas parameters</Text> recommended by SwiftShield Wallet?
+        Whether to use the <Text style={{ color: colors.up, fontWeight: '600' }}>gas parameters</Text> recommended by BIM Wallet Wallet?
       </Text>
 
       <View style={[styles.btnArea, styles2.btnArea]}>

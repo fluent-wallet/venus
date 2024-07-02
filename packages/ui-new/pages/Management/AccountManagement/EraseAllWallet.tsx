@@ -1,4 +1,4 @@
-import BottomSheet, { type BottomSheetMethods } from '@components/BottomSheet';
+import BottomSheet, { BottomSheetWrapper, BottomSheetHeader, BottomSheetContent, BottomSheetFooter, type BottomSheetMethods } from '@components/BottomSheet';
 import Button from '@components/Button';
 import Text from '@components/Text';
 import methods from '@core/WalletCore/Methods';
@@ -45,36 +45,27 @@ const EraseAllWallet: React.FC<Props> = ({ navigation }) => {
 
   return (
     <BottomSheet ref={bottomSheetRef} snapPoints={snapPoints} isRoute>
-      <View style={styles.container}>
-        <Text style={[styles.title, { color: colors.textPrimary }]}>{t('account.action.eraseAll.title')}</Text>
-        <Text style={[styles.description, { color: colors.textSecondary }]}>{t('account.action.eraseAll.describe')}</Text>
-
-        <View style={styles.btnArea}>
-          <Button testID="cancel" style={styles.btn} onPress={() => bottomSheetRef.current?.close()} size="small">
-            {t('common.cancel')}
-          </Button>
-          <Button testID="delete" style={[styles.btn, { backgroundColor: colors.down }]} onPress={handleDelete} size="small">
-            {t('common.delete')}
-          </Button>
-        </View>
-      </View>
+      <BottomSheetWrapper innerPaddingHorizontal>
+        <BottomSheetHeader title={t('account.action.eraseAll.title')} />
+        <BottomSheetContent>
+          <Text style={[styles.description, { color: colors.textSecondary }]}>{t('account.action.eraseAll.describe')}</Text>
+        </BottomSheetContent>
+        <BottomSheetFooter>
+          <View style={styles.btnArea}>
+            <Button testID="cancel" style={styles.btn} onPress={() => bottomSheetRef.current?.close()} size="small">
+              {t('common.cancel')}
+            </Button>
+            <Button testID="delete" textColor="#fff" style={[styles.btn, { backgroundColor: colors.down }]} onPress={handleDelete} size="small">
+              {t('common.delete')}
+            </Button>
+          </View>
+        </BottomSheetFooter>
+      </BottomSheetWrapper>
     </BottomSheet>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    paddingTop: 8,
-    paddingHorizontal: 16,
-    paddingBottom: 32,
-  },
-  title: {
-    fontSize: 20,
-    fontWeight: '600',
-    lineHeight: 26,
-    textAlign: 'center',
-  },
   description: {
     marginTop: 16,
     marginBottom: 32,
@@ -83,7 +74,6 @@ const styles = StyleSheet.create({
     lineHeight: 20,
   },
   btnArea: {
-    marginTop: 'auto',
     display: 'flex',
     flexDirection: 'row',
     justifyContent: 'space-between',
