@@ -30,6 +30,7 @@ const schema = appSchema({
         { name: 'scan_url', type: 'string', isOptional: true },
         { name: 'selected', type: 'boolean' },
         { name: 'hd_path_id', type: 'string', isIndexed: true },
+        { name: 'endpoints_list', type: 'string' },
       ],
     }),
     tableSchema({

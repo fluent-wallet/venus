@@ -45,3 +45,8 @@ export const DEVELOPER_FEATURE = {
   describe: 'developer feature',
   allow: isDev,
 };
+
+export const NETWORK_MANAGEMENT_FEATURE = {
+  describe: 'network management feature',
+  allow: isDev,
+};

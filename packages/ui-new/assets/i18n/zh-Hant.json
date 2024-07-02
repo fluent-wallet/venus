@@ -103,6 +103,7 @@
   "common" : {
     "HDWallets" : "HD 錢包",
     "account" : "賬戶",
+    "add" : null,
     "amount" : "數量",
     "backup" : "備份",
     "balance" : "餘額",
@@ -251,6 +252,16 @@
       "preferences" : "偏好設置"
     },
     "network" : {
+      "RPCList" : null,
+      "add" : {
+        "invalidChainId" : null,
+        "invalidURL" : null,
+        "placeholder" : null,
+        "subTitle" : null,
+        "title" : null
+      },
+      "chainId" : null,
+      "networkName" : null,
       "title" : "網路"
     },
     "preferences" : {
@@ -267,9 +278,12 @@
       "signData" : "簽署信息"
     },
     "filter" : {
+      "all" : null,
+      "message" : null,
       "transactions" : "交易"
     },
     "list" : {
+      "empty" : null,
       "showMore" : "更多",
       "title" : "簽名記錄"
     }
@@ -279,6 +293,7 @@
     "content" : {
       "depositToken" : "快存入資產吧",
       "noActivity" : "還沒有交易",
+      "noLatestTransaction" : null,
       "noNFT" : "沒有收藏品",
       "noRecord" : "暫無記錄",
       "noToken" : "沒有代幣",

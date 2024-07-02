@@ -28,6 +28,7 @@ export const UpdateVersionStackName = 'UpdateVersion';
 export const PreferencesStackName = 'Preferences';
 export const AppearanceStackName = 'Appearance';
 export const LanguageStackName = 'Language';
+export const AddNewRPCStackName = 'AddNewRPC';
 export const SignatureRecordsStackName = 'SignatureRecords';
 
 // start Wallet connect nest stack
@@ -74,6 +75,7 @@ export type RootStackParamList = {
   [AppearanceStackName]: undefined;
   [LanguageStackName]: undefined;
   [WalletConnectStackName]: NavigatorScreenParams<WalletConnectParamList>;
+  [AddNewRPCStackName]: undefined;
   [SignatureRecordsStackName]: undefined;
 };
 

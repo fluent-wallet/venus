@@ -58,7 +58,11 @@ import {
   WalletConnectStackName,
   WayToInitWalletStackName,
   WelcomeStackName,
+  NetworkManagementStackName,
+  AddNewRPCStackName,
 } from './configs';
+import NetworkManagement from '@pages/Settings/Network';
+import AddNewRPC from '@pages/Settings/AddNewRPC';
 
 const RootStack = createNativeStackNavigator<RootStackParamList>();
 const screenOptions = {
@@ -97,6 +101,8 @@ const Router: React.FC = () => {
         <RootStack.Screen name={BiometricsWayStackName} component={BiometricsWay} options={{ animation: 'fade' }} />
         <RootStack.Screen name={PasswordWayStackName} component={PasswordWay} />
         <RootStack.Screen name={AccountManagementStackName} component={AccountManagement} />
+        <RootStack.Screen name={NetworkManagementStackName} component={NetworkManagement} />
+        <RootStack.Screen name={AddNewRPCStackName} component={AddNewRPC} options={SheetBottomOption} />
         <RootStack.Screen name={AccountSettingStackName} component={AccountSetting} options={SheetBottomOption} />
         <RootStack.Screen name={GroupSettingStackName} component={GroupSetting} options={SheetBottomOption} />
         <RootStack.Screen name={HDSettingStackName} component={HDSetting} options={SheetBottomOption} />

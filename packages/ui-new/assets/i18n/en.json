@@ -103,6 +103,7 @@
   "common" : {
     "HDWallets" : "HD Wallets",
     "account" : "Account",
+    "add" : "Add",
     "amount" : "Amount",
     "backup" : "Backup",
     "balance" : "Balance",
@@ -252,6 +253,13 @@
     },
     "network" : {
       "RPCList" : "RPC List",
+      "add" : {
+        "invalidChainId" : "Wrong Chain ID",
+        "invalidURL" : "Invalid RPC URL",
+        "placeholder" : "Enter the RPC URL",
+        "subTitle" : "RPC URL",
+        "title" : "Add a new RPC"
+      },
       "chainId" : "Chain ID",
       "networkName" : "Network Name",
       "title" : "network"
@@ -285,6 +293,7 @@
     "content" : {
       "depositToken" : "Deposit tokens to your wallet",
       "noActivity" : "No Activity",
+      "noLatestTransaction" : null,
       "noNFT" : "No NFT",
       "noRecord" : "No Record",
       "noToken" : "No Token",
