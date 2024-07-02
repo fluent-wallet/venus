@@ -1,8 +1,8 @@
-import BottomSheet, { type BottomSheetMethods } from '@components/BottomSheet';
+import BottomSheet, { BottomSheetWrapper, BottomSheetHeader, BottomSheetContent, type BottomSheetMethods } from '@components/BottomSheet';
 import Checkbox from '@components/Checkbox';
 import Text from '@components/Text';
 import { Lang, setI18nLanguage, useLang } from '@hooks/useI18n';
-import { styles as bottomSheetStyle, snapPoints } from '@pages/Management/AccountManagement/AddAnotherWallet';
+import { snapPoints } from '@pages/Management/AccountManagement/AddAnotherWallet';
 import { useTheme } from '@react-navigation/native';
 import type { LanguageStackName, StackScreenProps } from '@router/configs';
 import type React from 'react';
@@ -23,33 +23,36 @@ const Language: React.FC<StackScreenProps<typeof LanguageStackName>> = () => {
   }, []);
 
   return (
-    <BottomSheet ref={bottomSheetRef} snapPoints={snapPoints} isRoute containerStyle={bottomSheetStyle.container}>
-      <Text style={[bottomSheetStyle.title, { color: colors.textPrimary }]}>{t('settings.language.title')}</Text>
-
-      <Pressable
-        style={({ pressed }) => [styles.item, { backgroundColor: pressed ? colors.underlay : 'transparent' }]}
-        onPress={() => setLanguage(Lang.system)}
-        testID="system"
-      >
-        <Text style={[styles.itemText, { color: colors.textPrimary }]}>{t('settings.language.systemLang')}</Text>
-        {lang === Lang.system && <Checkbox checked pointerEvents="none" />}
-      </Pressable>
-      <Pressable
-        style={({ pressed }) => [styles.item, { backgroundColor: pressed ? colors.underlay : 'transparent' }]}
-        onPress={() => setLanguage(Lang.en)}
-        testID="english"
-      >
-        <Text style={[styles.itemText, { color: colors.textPrimary }]}>English</Text>
-        {lang === Lang.en && <Checkbox checked pointerEvents="none" />}
-      </Pressable>
-      <Pressable
-        style={({ pressed }) => [styles.item, { backgroundColor: pressed ? colors.underlay : 'transparent' }]}
-        testID="traditionalChinese"
-        onPress={() => setLanguage(Lang.zhHant)}
-      >
-        <Text style={[styles.itemText, { color: colors.textPrimary }]}>繁体中文</Text>
-        {lang === Lang.zhHant && <Checkbox checked pointerEvents="none" />}
-      </Pressable>
+    <BottomSheet ref={bottomSheetRef} snapPoints={snapPoints} isRoute>
+      <BottomSheetWrapper>
+        <BottomSheetHeader title={t('settings.language.title')} />
+        <BottomSheetContent>
+          <Pressable
+            style={({ pressed }) => [styles.item, { marginTop: 20, backgroundColor: pressed ? colors.underlay : 'transparent' }]}
+            onPress={() => setLanguage(Lang.system)}
+            testID="system"
+          >
+            <Text style={[styles.itemText, { color: colors.textPrimary }]}>{t('settings.language.systemLang')}</Text>
+            {lang === Lang.system && <Checkbox checked pointerEvents="none" />}
+          </Pressable>
+          <Pressable
+            style={({ pressed }) => [styles.item, { backgroundColor: pressed ? colors.underlay : 'transparent' }]}
+            onPress={() => setLanguage(Lang.en)}
+            testID="english"
+          >
+            <Text style={[styles.itemText, { color: colors.textPrimary }]}>English</Text>
+            {lang === Lang.en && <Checkbox checked pointerEvents="none" />}
+          </Pressable>
+          <Pressable
+            style={({ pressed }) => [styles.item, { backgroundColor: pressed ? colors.underlay : 'transparent' }]}
+            testID="traditionalChinese"
+            onPress={() => setLanguage(Lang.zhHant)}
+          >
+            <Text style={[styles.itemText, { color: colors.textPrimary }]}>繁体中文</Text>
+            {lang === Lang.zhHant && <Checkbox checked pointerEvents="none" />}
+          </Pressable>
+        </BottomSheetContent>
+      </BottomSheetWrapper>
     </BottomSheet>
   );
 };

@@ -1,4 +1,10 @@
-import BottomSheet, { type BottomSheetMethods } from '@components/BottomSheet';
+import BottomSheet, {
+  BottomSheetWrapper,
+  BottomSheetScrollContent,
+  BottomSheetHeader,
+  BottomSheetFooter,
+  type BottomSheetMethods,
+} from '@components/BottomSheet';
 import Button from '@components/Button';
 import Text from '@components/Text';
 import { useTheme } from '@react-navigation/native';
@@ -20,28 +26,31 @@ const DeleteConfirm: React.FC<Props> = ({ onConfirm, onClose }) => {
 
   return (
     <BottomSheet ref={bottomSheetRef} snapPoints={snapPoints} index={0} onClose={onClose}>
-      <View style={styles.container}>
-        <Text style={[styles.title, { color: colors.textPrimary }]}>{t('account.action.remove.title')}</Text>
-        <Text style={[styles.description, { color: colors.textSecondary }]}>{t('account.action.remove.describe')}</Text>
-
-        <View style={styles.btnArea}>
-          <Button testID="cancel" style={styles.btn} size="small" onPress={() => bottomSheetRef.current?.close()}>
-            {t('common.cancel')}
-          </Button>
-          <Button
-            testID="delete"
-            style={[styles.btn, { backgroundColor: colors.down }]}
-            textColor="#fff"
-            size="small"
-            onPress={() => {
-              bottomSheetRef.current?.close();
-              onConfirm();
-            }}
-          >
-            {t('common.delete')}
-          </Button>
-        </View>
-      </View>
+      <BottomSheetWrapper innerPaddingHorizontal>
+        <BottomSheetHeader title={t('account.action.remove.title')} />
+        <BottomSheetScrollContent>
+          <Text style={[styles.description, { color: colors.textSecondary }]}>{t('account.action.remove.describe')}</Text>
+        </BottomSheetScrollContent>
+        <BottomSheetFooter>
+          <View style={styles.btnArea}>
+            <Button testID="cancel" style={styles.btn} size="small" onPress={() => bottomSheetRef.current?.close()}>
+              {t('common.cancel')}
+            </Button>
+            <Button
+              testID="delete"
+              style={[styles.btn, { backgroundColor: colors.down }]}
+              textColor="#fff"
+              size="small"
+              onPress={() => {
+                bottomSheetRef.current?.close();
+                onConfirm();
+              }}
+            >
+              {t('common.delete')}
+            </Button>
+          </View>
+        </BottomSheetFooter>
+      </BottomSheetWrapper>
     </BottomSheet>
   );
 };
@@ -67,7 +76,6 @@ const styles = StyleSheet.create({
     lineHeight: 20,
   },
   btnArea: {
-    marginTop: 'auto',
     display: 'flex',
     flexDirection: 'row',
     justifyContent: 'space-between',

@@ -1,4 +1,4 @@
-import BottomSheet, { BottomSheetView, BottomSheetTextInput, type BottomSheetMethods } from '@components/BottomSheet';
+import BottomSheet, { BottomSheetWrapper, BottomSheetContent, BottomSheetFooter, BottomSheetTextInput, type BottomSheetMethods } from '@components/BottomSheet';
 import Button from '@components/Button';
 import Text from '@components/Text';
 import { stripHexPrefix } from '@core/utils/base';
@@ -92,51 +92,52 @@ const ImportExistingWallet: React.FC<Props> = ({ bottomSheetRef, inImporting, on
       enableHandlePanningGesture={!inAsync}
       enableDynamicSizing
     >
-      <BottomSheetView style={{ flex: 1 }}>
-        <Pressable
-          onPress={() => {
-            Keyboard.dismiss();
-          }}
-          style={styles.bottomSheetContainer}
-          disabled={inAsync}
-        >
-          <BottomSheetTextInput
-            ref={textInputRef as any}
-            style={[styles.input, { color: colors.textPrimary, borderColor: colors.borderFourth }]}
-            placeholderTextColor={colors.textSecondary}
-            testID="existingWalletInput"
-            underlineColorAndroid="transparent"
-            secureTextEntry={true}
-            multiline
-            numberOfLines={6}
-            placeholder={t('wallet.import.placeholder')}
-            onChangeText={(value) => {
-              setStatus(null);
-              existWalletValueRef.current = value;
+      <BottomSheetWrapper>
+        <BottomSheetContent>
+          <Pressable
+            onPress={() => {
+              Keyboard.dismiss();
             }}
-            onBlur={handleCheckInput}
-            pointerEvents={inAsync ? 'none' : 'auto'}
-          />
-          <Text style={[styles.tipText, { color: status?.type === 'error' ? colors.down : colors.up, opacity: status === null ? 0 : 1 }]}>
-            {status?.message || 'placeholder'}
-          </Text>
-          <Button testID="confirmImportExistingWallet" style={styles.btn} onPress={handleConfirm} loading={inAsync}>
+            style={styles.pressable}
+            disabled={inAsync}
+          >
+            <BottomSheetTextInput
+              ref={textInputRef as any}
+              style={[styles.input, { color: colors.textPrimary, borderColor: colors.borderFourth }]}
+              placeholderTextColor={colors.textSecondary}
+              testID="existingWalletInput"
+              underlineColorAndroid="transparent"
+              secureTextEntry={true}
+              multiline
+              numberOfLines={6}
+              placeholder={t('wallet.import.placeholder')}
+              onChangeText={(value) => {
+                setStatus(null);
+                existWalletValueRef.current = value;
+              }}
+              onBlur={handleCheckInput}
+              pointerEvents={inAsync ? 'none' : 'auto'}
+            />
+            <Text style={[styles.tipText, { color: status?.type === 'error' ? colors.down : colors.up, opacity: status === null ? 0 : 1 }]}>
+              {status?.message || 'placeholder'}
+            </Text>
+          </Pressable>
+        </BottomSheetContent>
+        <BottomSheetFooter innerPaddingHorizontal>
+          <Button testID="confirmImportExistingWallet" onPress={handleConfirm} loading={inAsync}>
             {t('common.confirm')}
           </Button>
-        </Pressable>
-      </BottomSheetView>
+        </BottomSheetFooter>
+      </BottomSheetWrapper>
     </BottomSheet>
   );
 };
 
 const styles = StyleSheet.create({
-  bottomSheetContainer: {
+  pressable: {
     flex: 1,
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: 16,
-    paddingBottom: 32,
+    paddingHorizontal: 16,
+    paddingTop: 12,
   },
   input: {
     width: '100%',
@@ -151,9 +152,6 @@ const styles = StyleSheet.create({
     marginBottom: 'auto',
     fontSize: 12,
     textAlign: 'left',
-  },
-  btn: {
-    width: '100%',
   },
 });
 

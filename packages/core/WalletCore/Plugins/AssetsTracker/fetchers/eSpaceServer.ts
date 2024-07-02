@@ -103,7 +103,7 @@ export const fetchESpaceServer = async ({
                   },
                   ...assets.filter((asset) => asset.contractAddress !== '0x0000000000000000000000000000000000000000'),
                 ];
-                return assetsWithCFX;
+                return assetsWithCFX as AssetInfo[];
               }),
             );
           } else {
@@ -167,7 +167,7 @@ export const fetchESpaceServer = async ({
           },
           ...assets,
         ];
-        return assetsWithCFX;
+        return assetsWithCFX as AssetInfo[];
       }),
     );
   };

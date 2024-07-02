@@ -1,34 +1,42 @@
-import BottomSheet, { BottomSheetTextInput, snapPoints } from '@components/BottomSheet';
+import BottomSheet, {
+  BottomSheetTextInput,
+  BottomSheetWrapper,
+  BottomSheetScrollContent,
+  BottomSheetHeader,
+  BottomSheetFooter,
+  type BottomSheetMethods,
+} from '@components/BottomSheet';
 import Checkbox from '@components/Checkbox';
-
 import ArrowLeft from '@assets/icons/arrow-left2.svg';
 import Button from '@components/Button';
+import { styles as transactionConfirmStyle } from '@pages/SendTransaction/Step4Confirm/index';
 import { useTheme } from '@react-navigation/native';
 import { isNumeric } from '@utils/isNumberic';
 import { isApproveMethod } from '@utils/parseTxData';
 import Decimal from 'decimal.js';
-import { formatUnits, parseUnits } from 'ethers';
-import { useCallback, useState } from 'react';
+import { formatUnits } from 'ethers';
+import { useCallback, useState, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { type NativeSyntheticEvent, Pressable, StyleSheet, Text, type TextInputChangeEventData, View } from 'react-native';
-import { TextInput } from 'react-native-gesture-handler';
 import type { TxDataWithTokenInfo } from '.';
 
 interface IProps {
-  open: boolean;
   parseData: TxDataWithTokenInfo;
   savedValue?: string;
   onSave: (value: string) => void;
   onClose: () => void;
 }
 
-export default function EditAllowance({ open, parseData, savedValue, onSave, onClose }: IProps) {
+export default function EditAllowance({ parseData, savedValue, onSave, onClose }: IProps) {
   const { colors } = useTheme();
   const { t } = useTranslation();
+  const bottomSheetRef = useRef<BottomSheetMethods>(null!);
+
   const [isDappSuggestValue, setIsDappSuggestValue] = useState(!savedValue);
   const [customValue, setCustomValue] = useState(savedValue || '');
   const [percent, setPercent] = useState<null | number>(null);
   const [invalidNumber, setInvalidNumber] = useState(false);
+
   const handleChange = (event: NativeSyntheticEvent<TextInputChangeEventData>) => {
     if (isDappSuggestValue) return;
     const newValue = event.nativeEvent.text;
@@ -42,23 +50,23 @@ export default function EditAllowance({ open, parseData, savedValue, onSave, onC
     setInvalidNumber(false);
     if (isDappSuggestValue) {
       onSave('');
-      onClose();
+      bottomSheetRef.current?.close();
     } else {
       if (isNumeric(customValue)) {
         onSave(customValue);
-        onClose();
+        bottomSheetRef.current?.close();
       } else {
         setInvalidNumber(true);
       }
     }
-  }, [onClose, onSave, isDappSuggestValue, customValue]);
+  }, [onSave, isDappSuggestValue, customValue]);
+
   const getFormatValue = useCallback(
     (value: bigint) => {
-      if (parseData && parseData.decimals) {
+      if (parseData?.decimals) {
         return formatUnits(value, parseData.decimals);
-      } else {
-        return value.toString();
       }
+      return value.toString();
     },
     [parseData],
   );
@@ -79,73 +87,80 @@ export default function EditAllowance({ open, parseData, savedValue, onSave, onC
   );
 
   return (
-    <BottomSheet index={open ? 0 : -1} enablePanDownToClose={false} backDropPressBehavior={'none'} snapPoints={snapPoints.percent65} style={styles.container}>
-      <Text style={[styles.title, { color: colors.textPrimary }]}>{t('wc.dapp.tx.editAllowance')}</Text>
-      <View style={styles.editItem}>
-        <Checkbox checked={isDappSuggestValue} onChange={() => setIsDappSuggestValue(!isDappSuggestValue)} />
+    <BottomSheet ref={bottomSheetRef} index={0} snapPoints={snapPoints} onClose={onClose}>
+      <BottomSheetWrapper>
+        <BottomSheetHeader title={t('wc.dapp.tx.editAllowance')} />
+        <BottomSheetScrollContent innerPaddingHorizontal>
+          <View style={styles.editItem}>
+            <Checkbox checked={isDappSuggestValue} onChange={() => setIsDappSuggestValue(!isDappSuggestValue)} />
 
-        <View>
-          <Text style={[styles.editSuggest, { color: colors.textPrimary, fontWeight: isDappSuggestValue ? '600' : '400' }]}>
-            {t('wc.dapp.tx.DAppSuggestions')}
-          </Text>
-          <Text style={[styles.editSuggest, { color: colors.textPrimary, fontWeight: isDappSuggestValue ? '600' : '400' }]}>
-            {t('common.use')}
-            <Text style={[styles.editSuggest, { color: colors.textNotice, fontWeight: isDappSuggestValue ? '600' : '400' }]}>
-              {' '}
-              {parseData && isApproveMethod(parseData) ? (parseData.isUnlimited ? t('wc.dapp.tx.unlimited') : getFormatValue(parseData.value)) : ''}{' '}
-            </Text>
-            {parseData?.symbol}
-          </Text>
-        </View>
-      </View>
-
-      <View style={styles.editItem}>
-        <Checkbox checked={!isDappSuggestValue} onChange={() => setIsDappSuggestValue(!isDappSuggestValue)} />
-        <View style={styles.flex1}>
-          <Text style={[styles.secondary, { color: colors.textPrimary, fontWeight: !isDappSuggestValue ? '600' : '400' }]}>{t('common.customize')}</Text>
-          <View pointerEvents={isDappSuggestValue ? 'none' : 'auto'}>
-            <BottomSheetTextInput
-              readOnly={isDappSuggestValue}
-              editable={!isDappSuggestValue}
-              inputMode="numeric"
-              style={[styles.editInput, { borderColor: invalidNumber ? colors.down : isDappSuggestValue ? colors.borderFourth : colors.up }]}
-              value={customValue}
-              onChange={handleChange}
-            />
-          </View>
-          {parseData?.balance && (
-            <View style={[styles.flexRow, { justifyContent: 'space-between' }]}>
-              <Text style={{ color: colors.textSecondary }}>{t('wc.dapp.tx.shareOfBalance')}</Text>
-              <View style={[styles.flexRow, styles.balanceChoose]}>
-                {[25, 50, 100].map((p) => (
-                  <Pressable
-                    disabled={isDappSuggestValue}
-                    key={p}
-                    testID="25"
-                    style={[
-                      styles.balanceBtn,
-                      { borderColor: isDappSuggestValue ? colors.borderFourth : colors.up, backgroundColor: p === percent ? colors.up : colors.bgFourth },
-                    ]}
-                    onPress={() => handlePercent(percent === p ? null : p)}
-                  >
-                    <Text style={{ color: p === percent ? colors.textFifth : isDappSuggestValue ? colors.borderFourth : colors.up }}>{p}%</Text>
-                  </Pressable>
-                ))}
-              </View>
+            <View>
+              <Text style={[styles.editSuggest, { color: colors.textPrimary, fontWeight: isDappSuggestValue ? '600' : '400' }]}>
+                {t('wc.dapp.tx.DAppSuggestions')}
+              </Text>
+              <Text style={[styles.editSuggest, { color: colors.textPrimary, fontWeight: isDappSuggestValue ? '600' : '400' }]}>
+                {t('common.use')}
+                <Text style={[styles.editSuggest, { color: colors.textNotice, fontWeight: isDappSuggestValue ? '600' : '400' }]}>
+                  {' '}
+                  {parseData && isApproveMethod(parseData) ? (parseData.isUnlimited ? t('wc.dapp.tx.unlimited') : getFormatValue(parseData.value)) : ''}{' '}
+                </Text>
+                {parseData?.symbol}
+              </Text>
             </View>
-          )}
-        </View>
-      </View>
+          </View>
 
-      <View style={styles.btnArea}>
-        <Button testID="close" square Icon={ArrowLeft} onPress={onClose} />
-        <Button testID="save" style={styles.flex1} onPress={handleSave}>
-          {t('common.save')}
-        </Button>
-      </View>
+          <View style={styles.editItem}>
+            <Checkbox checked={!isDappSuggestValue} onChange={() => setIsDappSuggestValue(!isDappSuggestValue)} />
+            <View style={styles.flex1}>
+              <Text style={[styles.secondary, { color: colors.textPrimary, fontWeight: !isDappSuggestValue ? '600' : '400' }]}>{t('common.customize')}</Text>
+              <View pointerEvents={isDappSuggestValue ? 'none' : 'auto'}>
+                <BottomSheetTextInput
+                  readOnly={isDappSuggestValue}
+                  editable={!isDappSuggestValue}
+                  inputMode="numeric"
+                  style={[styles.editInput, { borderColor: invalidNumber ? colors.down : isDappSuggestValue ? colors.borderFourth : colors.up }]}
+                  value={customValue}
+                  onChange={handleChange}
+                />
+              </View>
+              {parseData?.balance && (
+                <View style={[styles.flexRow, { justifyContent: 'space-between' }]}>
+                  <Text style={{ color: colors.textSecondary }}>{t('wc.dapp.tx.shareOfBalance')}</Text>
+                  <View style={[styles.flexRow, styles.balanceChoose]}>
+                    {[25, 50, 100].map((p) => (
+                      <Pressable
+                        disabled={isDappSuggestValue}
+                        key={p}
+                        testID="25"
+                        style={[
+                          styles.balanceBtn,
+                          { borderColor: isDappSuggestValue ? colors.borderFourth : colors.up, backgroundColor: p === percent ? colors.up : colors.bgFourth },
+                        ]}
+                        onPress={() => handlePercent(percent === p ? null : p)}
+                      >
+                        <Text style={{ color: p === percent ? colors.textFifth : isDappSuggestValue ? colors.borderFourth : colors.up }}>{p}%</Text>
+                      </Pressable>
+                    ))}
+                  </View>
+                </View>
+              )}
+            </View>
+          </View>
+        </BottomSheetScrollContent>
+        <BottomSheetFooter>
+          <View style={transactionConfirmStyle.btnArea}>
+            <Button testID="close" square Icon={ArrowLeft} onPress={() => bottomSheetRef?.current?.close()} />
+            <Button testID="save" style={styles.flex1} onPress={handleSave}>
+              {t('common.save')}
+            </Button>
+          </View>
+        </BottomSheetFooter>
+      </BottomSheetWrapper>
     </BottomSheet>
   );
 }
+
+const snapPoints = [480];
 
 const styles = StyleSheet.create({
   flex1: {
@@ -159,9 +174,6 @@ const styles = StyleSheet.create({
     display: 'flex',
     flexDirection: 'row',
   },
-  container: {
-    paddingHorizontal: 16,
-  },
   title: {
     textAlign: 'center',
     fontSize: 16,
@@ -173,7 +185,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'flex-start',
     gap: 8,
-    marginBottom: 32,
+    marginTop: 12,
+    marginBottom: 20,
   },
   editSuggest: {
     marginBottom: 8,

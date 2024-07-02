@@ -6,6 +6,7 @@ import { getPasswordCryptoKey } from '@utils/getEnv';
 import * as KeyChain from 'react-native-keychain';
 import { BehaviorSubject, filter } from 'rxjs';
 import CryptoToolPlugin, { CryptoToolPluginClass } from '../CryptoTool';
+import { getI18n } from '@hooks/useI18n';
 
 declare module '@core/WalletCore/Plugins' {
   interface Plugins {
@@ -14,10 +15,10 @@ declare module '@core/WalletCore/Plugins' {
 }
 
 const defaultOptions: KeyChain.Options = {
-  service: 'com.fluent',
-  authenticationPrompt: { title: 'Please authenticate in order to use', description: '' },
-  accessControl: KeyChain.ACCESS_CONTROL.BIOMETRY_ANY_OR_DEVICE_PASSCODE,
-  accessible: KeyChain.ACCESSIBLE.WHEN_PASSCODE_SET_THIS_DEVICE_ONLY,
+  service: 'io.bimwallet',
+  accessControl: KeyChain.ACCESS_CONTROL.BIOMETRY_ANY,
+  accessible: KeyChain.ACCESSIBLE.WHEN_UNLOCKED_THIS_DEVICE_ONLY,
+  securityLevel: KeyChain.SECURITY_LEVEL.SECURE_HARDWARE,
 };
 
 export enum AuthenticationType {
@@ -63,10 +64,13 @@ class AuthenticationPluginClass implements Plugin {
     this.passwordRequestSubject.next(null);
   }
 
-  public getPassword = async (options: KeyChain.Options = {}) => {
+  public getPassword = async () => {
     if (this.settleAuthenticationType === AuthenticationType.Biometrics) {
       try {
-        const keyChainObject = await KeyChain.getGenericPassword({ ...defaultOptions, ...options });
+        const keyChainObject = await KeyChain.getGenericPassword({
+          ...defaultOptions,
+          authenticationPrompt: { title: getI18n().translation.authentication.title },
+        });
         if (keyChainObject && keyChainObject.password) {
           return await authCryptoTool.decrypt<string>(keyChainObject.password);
         }
@@ -124,8 +128,9 @@ class AuthenticationPluginClass implements Plugin {
     if (authType === AuthenticationType.Biometrics) {
       const encryptedPassword = await authCryptoTool.encrypt(`${authCryptoTool.generateRandomString()}${new Date().getTime()}`);
 
-      await KeyChain.setGenericPassword('ePayWallet-user', encryptedPassword, {
+      await KeyChain.setGenericPassword('bim-wallet-user', encryptedPassword, {
         ...defaultOptions,
+        authenticationPrompt: { title: getI18n().translation.authentication.title },
       });
       this.settleAuthenticationType = AuthenticationType.Biometrics;
       await database.localStorage.set('SettleAuthentication', AuthenticationType.Biometrics);

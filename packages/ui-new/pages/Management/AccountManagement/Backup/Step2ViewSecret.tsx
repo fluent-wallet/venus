@@ -4,6 +4,7 @@ import MaskPrivateKey from '@assets/images/mask-private-key.webp';
 import MaskSeedPhrase from '@assets/images/mask-seed-phrase.webp';
 import Button from '@components/Button';
 import Text from '@components/Text';
+import { BottomSheetScrollContent, BottomSheetFooter } from '@components/BottomSheet';
 import methods from '@core/WalletCore/Methods';
 import plugins from '@core/WalletCore/Plugins';
 import { VaultSourceType, VaultType, useCurrentAddressOfAccount, useVaultOfGroup } from '@core/WalletCore/Plugins/ReactInject';
@@ -59,98 +60,102 @@ const BackupStep2ViewSecret: React.FC<BackupScreenProps<typeof BackupStep2StackN
 
   return (
     <BackupBottomSheet>
-      <Text style={[styles.largeText, styles.notice, { color: colors.textPrimary }]} numberOfLines={1}>
-        {t('backup.viewSecret.title', { type: backupType === VaultType.HierarchicalDeterministic ? t('common.seedPhrase') : t('common.privateKey') })}
-      </Text>
-      <View style={styles.noticeDescription}>
-        <CheckIcon color={colors.iconPrimary} width={20} height={20} />
-        <Text style={[styles.description, { color: colors.textSecondary }]}>{t('backup.viewSecret.tips1')}</Text>
-      </View>
-      <View style={styles.noticeDescription}>
-        <CheckIcon color={colors.iconPrimary} width={20} height={20} />
-        <Text style={[styles.description, { color: colors.textSecondary }]}>{t('backup.viewSecret.tips2')}</Text>
-      </View>
-      {backupType === VaultType.PrivateKey && (
+      <BottomSheetScrollContent>
+        <Text style={[styles.largeText, styles.notice, { color: colors.textPrimary }]} numberOfLines={1}>
+          {t('backup.viewSecret.title', { type: backupType === VaultType.HierarchicalDeterministic ? t('common.seedPhrase') : t('common.privateKey') })}
+        </Text>
         <View style={styles.noticeDescription}>
           <CheckIcon color={colors.iconPrimary} width={20} height={20} />
-          <Text style={[styles.description, { color: colors.textSecondary }]}>{t('backup.viewSecret.tipsForPK')}</Text>
+          <Text style={[styles.description, { color: colors.textSecondary }]}>{t('backup.viewSecret.tips1')}</Text>
         </View>
-      )}
-      <View style={[styles.secretArea, { borderColor: colors.borderFourth }]}>
-        {!secretData && (
-          <>
-            <Image style={styles.mask} source={backupType === VaultType.HierarchicalDeterministic ? MaskSeedPhrase : MaskPrivateKey} contentFit="contain" />
-
-            <Text style={[styles.largeText, { color: colors.textPrimary, textAlign: 'center' }]}>{t('backup.viewSecret.view', { type: backupText })}</Text>
-            <Text style={[styles.description, { color: colors.textSecondary, textAlign: 'center', marginTop: 8 }]}>{t('backup.viewSecret.viewTips')}</Text>
-            <Button testID="view" style={styles.viewBtn} onPress={handleClickView} loading={inAsync}>
-              {t('common.view')}
-            </Button>
-          </>
-        )}
-        {secretData && backupType === VaultType.PrivateKey && (
-          <>
-            <View style={styles.qrcode}>
-              <QRCode value={secretData} size={isSmallDevice ? 220 : 240} />
-            </View>
-            <Pressable
-              onPress={() => {
-                Clipboard.setString(secretData);
-                showMessage({
-                  message: t('common.copied'),
-                  type: 'success',
-                  duration: 1500,
-                  width: 160,
-                });
-              }}
-              style={({ pressed }) => [styles.privateKey, { backgroundColor: pressed ? colors.underlay : 'transparent' }]}
-              testID="copy"
-            >
-              <Text style={[styles.privateKeyText, { color: colors.textPrimary }]}>{secretData}</Text>
-              <Copy color={colors.textPrimary} />
-            </Pressable>
-          </>
-        )}
-        {secretData && backupType === VaultType.HierarchicalDeterministic && (
-          <View style={styles.phraseContainer}>
-            <View style={styles.phraseColumn}>
-              {phrases?.slice(0, 6).map((phrase, index) => (
-                <Text key={index} style={[styles.phrase, { color: colors.textPrimary, backgroundColor: colors.bgPrimary }]}>
-                  {index + 1}. {phrase}
-                </Text>
-              ))}
-            </View>
-            <View style={styles.phraseColumn}>
-              {phrases?.slice(6).map((phrase, index) => (
-                <Text key={index} style={[styles.phrase, { color: colors.textPrimary, backgroundColor: colors.bgPrimary }]}>
-                  {index + 7}. {phrase}
-                </Text>
-              ))}
-            </View>
+        <View style={styles.noticeDescription}>
+          <CheckIcon color={colors.iconPrimary} width={20} height={20} />
+          <Text style={[styles.description, { color: colors.textSecondary }]}>{t('backup.viewSecret.tips2')}</Text>
+        </View>
+        {backupType === VaultType.PrivateKey && (
+          <View style={styles.noticeDescription}>
+            <CheckIcon color={colors.iconPrimary} width={20} height={20} />
+            <Text style={[styles.description, { color: colors.textSecondary }]}>{t('backup.viewSecret.tipsForPK')}</Text>
           </View>
         )}
-      </View>
+        <View style={[styles.secretArea, { borderColor: colors.borderFourth }]}>
+          {!secretData && (
+            <>
+              <Image style={styles.mask} source={backupType === VaultType.HierarchicalDeterministic ? MaskSeedPhrase : MaskPrivateKey} contentFit="contain" />
 
-      {vault?.source === VaultSourceType.CREATE_BY_WALLET &&
-      vault?.type === VaultType.HierarchicalDeterministic &&
-      !vault.isBackup &&
-      backupType === VaultType.HierarchicalDeterministic ? (
-        <Button
-          style={styles.btn}
-          disabled={!secretData}
-          onPress={() => {
-            setSecretData(null);
-            navigation.navigate(BackupStep3StackName, { phrases: phrases || [], vaultId: vault.id });
-          }}
-          size="small"
-        >
-          {t('common.next')}
-        </Button>
-      ) : (
-        <Button testID="return" style={styles.btn} onPress={() => backToHome(navigation)} size="small">
-          {t('common.close')}
-        </Button>
-      )}
+              <Text style={[styles.largeText, { color: colors.textPrimary, textAlign: 'center' }]}>{t('backup.viewSecret.view', { type: backupText })}</Text>
+              <Text style={[styles.description, { color: colors.textSecondary, textAlign: 'center', marginTop: 8 }]}>{t('backup.viewSecret.viewTips')}</Text>
+              <Button testID="view" style={styles.viewBtn} onPress={handleClickView} loading={inAsync}>
+                {t('common.view')}
+              </Button>
+            </>
+          )}
+          {secretData && backupType === VaultType.PrivateKey && (
+            <>
+              <View style={styles.qrcode}>
+                <QRCode value={secretData} size={isSmallDevice ? 220 : 240} />
+              </View>
+              <Pressable
+                onPress={() => {
+                  Clipboard.setString(secretData);
+                  showMessage({
+                    message: t('common.copied'),
+                    type: 'success',
+                    duration: 1500,
+                    width: 160,
+                  });
+                }}
+                style={({ pressed }) => [styles.privateKey, { backgroundColor: pressed ? colors.underlay : 'transparent' }]}
+                testID="copy"
+              >
+                <Text style={[styles.privateKeyText, { color: colors.textPrimary }]}>{secretData}</Text>
+                <Copy color={colors.textPrimary} />
+              </Pressable>
+            </>
+          )}
+          {secretData && backupType === VaultType.HierarchicalDeterministic && (
+            <View style={styles.phraseContainer}>
+              <View style={styles.phraseColumn}>
+                {phrases?.slice(0, 6).map((phrase, index) => (
+                  // biome-ignore lint/suspicious/noArrayIndexKey: <explanation>
+                  <Text key={index} style={[styles.phrase, { color: colors.textPrimary, backgroundColor: colors.bgPrimary }]}>
+                    {index + 1}. {phrase}
+                  </Text>
+                ))}
+              </View>
+              <View style={styles.phraseColumn}>
+                {phrases?.slice(6).map((phrase, index) => (
+                  // biome-ignore lint/suspicious/noArrayIndexKey: <explanation>
+                  <Text key={index} style={[styles.phrase, { color: colors.textPrimary, backgroundColor: colors.bgPrimary }]}>
+                    {index + 7}. {phrase}
+                  </Text>
+                ))}
+              </View>
+            </View>
+          )}
+        </View>
+      </BottomSheetScrollContent>
+      <BottomSheetFooter>
+        {vault?.source === VaultSourceType.CREATE_BY_WALLET &&
+        vault?.type === VaultType.HierarchicalDeterministic &&
+        !vault.isBackup &&
+        backupType === VaultType.HierarchicalDeterministic ? (
+          <Button
+            disabled={!secretData}
+            onPress={() => {
+              setSecretData(null);
+              navigation.navigate(BackupStep3StackName, { phrases: phrases || [], vaultId: vault.id });
+            }}
+            size="small"
+          >
+            {t('common.next')}
+          </Button>
+        ) : (
+          <Button testID="return" onPress={() => backToHome(navigation)} size="small">
+            {t('common.close')}
+          </Button>
+        )}
+      </BottomSheetFooter>
     </BackupBottomSheet>
   );
 };
@@ -165,7 +170,6 @@ const styles = StyleSheet.create({
     marginTop: isSmallDevice ? 10 : 20,
     marginBottom: 16,
     paddingHorizontal: 0,
-    paddingLeft: 16,
   },
   description: {
     fontSize: 14,
@@ -173,11 +177,9 @@ const styles = StyleSheet.create({
     lineHeight: isSmallDevice ? 16 : 18,
     marginBottom: isSmallDevice ? 6 : 8,
   },
-
   noticeDescription: {
     display: 'flex',
     flexDirection: 'row',
-    paddingHorizontal: 16,
     gap: 5,
   },
   secretArea: {
@@ -187,7 +189,7 @@ const styles = StyleSheet.create({
     alignContent: 'center',
     marginTop: isSmallDevice ? 8 : 16,
     position: 'relative',
-    marginHorizontal: 24,
+    marginHorizontal: 8,
     borderWidth: 1,
     borderRadius: 6,
     overflow: 'hidden',
@@ -201,7 +203,6 @@ const styles = StyleSheet.create({
     display: 'flex',
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: isSmallDevice ? 12 : 16,
   },
   privateKeyText: {
     width: '92%',
@@ -240,11 +241,6 @@ const styles = StyleSheet.create({
     width: 184,
     alignSelf: 'center',
     marginTop: 20,
-  },
-  btn: {
-    marginTop: 'auto',
-    marginBottom: isSmallDevice ? 16 : 32,
-    marginHorizontal: 16,
   },
 });
 

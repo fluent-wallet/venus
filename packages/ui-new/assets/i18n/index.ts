@@ -5,14 +5,16 @@ import en from './en.json';
 import zhHans from './zh-Hans.json';
 import zhHant from './zh-Hant.json';
 
+export const resources = {
+  en: { translation: en },
+  'zh-Hans': { translation: zhHans },
+  'zh-Hant': { translation: zhHant },
+};
+
 i18n.use(initReactI18next).init({
   lng: 'en',
   fallbackLng: 'en',
-  resources: {
-    en: { translation: en },
-    'zh-Hans': { translation: zhHans },
-    'zh-Hant': { translation: zhHant },
-  },
+  resources,
   interpolation: {
     escapeValue: false, // react already safes from xss => https://www.i18next.com/translation-function/interpolation#unescape
   },

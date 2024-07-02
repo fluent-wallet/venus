@@ -1,7 +1,7 @@
 import { BSIMError } from '@WalletCoreExtends/Plugins/BSIM/BSIMSDK';
 import { BSIMEventTypesName } from '@WalletCoreExtends/Plugins/BSIM/types';
 import MessageFail from '@assets/icons/message-fail.svg';
-import BottomSheet, { BottomSheetScrollView, snapPoints } from '@components/BottomSheet';
+import BottomSheet, { snapPoints, BottomSheetWrapper, BottomSheetHeader, BottomSheetScrollContent, BottomSheetFooter } from '@components/BottomSheet';
 import Button from '@components/Button';
 import Text from '@components/Text';
 import Events from '@core/WalletCore/Events';
@@ -44,7 +44,7 @@ import matchRPCErrorMessage from '@utils/matchRPCErrorMssage';
 import { type ParseTxDataReturnType, isApproveMethod, parseTxData } from '@utils/parseTxData';
 import { supportsInterface } from '@utils/supportsInterface';
 import Decimal from 'decimal.js';
-import { isNil, set } from 'lodash-es';
+import { isNil } from 'lodash-es';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, View } from 'react-native';
@@ -176,7 +176,7 @@ function WalletConnectTransaction() {
 
     let txRaw!: string;
     let txHash!: string;
-    let txError;
+    let txError: any;
     let signatureRecord: Signature | undefined;
     let dapp: App | undefined;
 
@@ -318,10 +318,6 @@ function WalletConnectTransaction() {
     }
   }, [setShowEditAllowance, parseData]);
 
-  const handleCloseEditAllowanceModel = useCallback(() => {
-    setShowEditAllowance(false);
-  }, [setShowEditAllowance]);
-
   const handleSaveEditAllowance = useCallback((value: string) => {
     setAllowanceValue(value);
   }, []);
@@ -331,32 +327,35 @@ function WalletConnectTransaction() {
 
   return (
     <>
-      <BottomSheet isRoute snapPoints={snapPoints.large} style={{ flex: 1 }} onClose={() => handleReject()}>
-        <BottomSheetScrollView>
-          <Text style={[styles.title, { color: colors.textPrimary }]}>{t('wc.dapp.tx.title')}</Text>
-          {isContract ? (
-            <SendContract
-              to={to}
-              data={data}
-              metadata={metadata}
-              parseData={parseData}
-              openEditAllowance={handleOpenEditAllowanceModel}
-              customAllowance={allowanceValue}
-            />
-          ) : (
-            <>
-              <Text style={[transactionConfirmStyle.sendTitle, styles.sendTitle, { color: colors.textPrimary }]}>{t('common.send')}</Text>
-              <SendAsset amount={amount} symbol={currentNativeAsset?.symbol ?? 'CFX'} icon={currentNativeAsset?.icon} recipientAddress={to ?? ''} />
-            </>
-          )}
+      <BottomSheet isRoute snapPoints={snapPoints.large} onClose={() => handleReject()}>
+        <BottomSheetWrapper>
+          <BottomSheetHeader title={t('wc.dapp.tx.title')} />
+          <BottomSheetScrollContent>
+            {isContract ? (
+              <SendContract
+                to={to}
+                data={data}
+                metadata={metadata}
+                parseData={parseData}
+                openEditAllowance={handleOpenEditAllowanceModel}
+                customAllowance={allowanceValue}
+              />
+            ) : (
+              <>
+                <Text style={[transactionConfirmStyle.sendTitle, styles.sendTitle, { color: colors.textPrimary }]}>{t('common.send')}</Text>
+                <SendAsset amount={amount} symbol={currentNativeAsset?.symbol ?? 'CFX'} icon={currentNativeAsset?.icon} recipientAddress={to ?? ''} />
+              </>
+            )}
 
-          {errorMsg && (
-            <View style={[styles.error, { borderColor: colors.down }]}>
-              <MessageFail color={colors.down} width={24} height={24} />
-              <Text style={{ color: colors.down, fontSize: 16 }}>{errorMsg}</Text>
-            </View>
-          )}
-
+            {errorMsg && (
+              <View style={[styles.error, { borderColor: colors.down }]}>
+                <MessageFail color={colors.down} width={24} height={24} />
+                <Text style={{ color: colors.down, fontSize: 16 }}>{errorMsg}</Text>
+              </View>
+            )}
+          </BottomSheetScrollContent>
+        </BottomSheetWrapper>
+        <BottomSheetFooter>
           <View style={[transactionConfirmStyle.divider, { backgroundColor: colors.borderFourth }]} />
 
           <Text style={[transactionConfirmStyle.signWith, { color: colors.textSecondary }]}>{t('tx.confirm.signingWith')}</Text>
@@ -372,32 +371,27 @@ function WalletConnectTransaction() {
             advanceSetting={gasEstimate?.advanceSetting ?? gasEstimate?.estimateAdvanceSetting}
             onPressSettingIcon={() => setShowGasFeeSetting(true)}
           />
-        </BottomSheetScrollView>
-        <View style={[transactionConfirmStyle.btnArea, styles.btnArea]}>
-          <Button testID="reject" style={transactionConfirmStyle.btn} loading={rejectLoading} size="small" onPress={handleReject}>
-            {t('common.cancel')}
-          </Button>
-          <Button
-            testID="approve"
-            style={transactionConfirmStyle.btn}
-            loading={approveLoading}
-            size="small"
-            onPress={_handleApprove}
-            disabled={isContract ? !parseData : false}
-          >
-            {isContract ? t('common.confirm') : t('common.send')}
-          </Button>
-        </View>
+
+          <View style={[transactionConfirmStyle.btnArea, styles.btnArea]}>
+            <Button testID="reject" style={transactionConfirmStyle.btn} loading={rejectLoading} size="small" onPress={handleReject}>
+              {t('common.cancel')}
+            </Button>
+            <Button
+              testID="approve"
+              style={transactionConfirmStyle.btn}
+              loading={approveLoading}
+              size="small"
+              onPress={_handleApprove}
+              disabled={isContract ? !parseData : false}
+            >
+              {isContract ? t('common.confirm') : t('common.send')}
+            </Button>
+          </View>
+        </BottomSheetFooter>
       </BottomSheet>
 
       {showEditAllowance && parseData && (
-        <EditAllowance
-          open={showEditAllowance}
-          parseData={parseData}
-          savedValue={allowanceValue}
-          onSave={handleSaveEditAllowance}
-          onClose={handleCloseEditAllowanceModel}
-        />
+        <EditAllowance parseData={parseData} savedValue={allowanceValue} onSave={handleSaveEditAllowance} onClose={() => setShowEditAllowance(false)} />
       )}
       <GasFeeSetting
         ref={gasSettingMethods}
@@ -451,8 +445,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
   },
   btnArea: {
-    marginTop: 'auto',
-    marginBottom: 100,
+    marginTop: 40,
   },
 });
 

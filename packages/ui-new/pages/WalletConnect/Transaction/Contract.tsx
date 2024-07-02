@@ -6,8 +6,8 @@ import { AssetType, useCurrentNetwork } from '@core/WalletCore/Plugins/ReactInje
 import type { WalletConnectMetadata } from '@core/WalletCore/Plugins/WalletConnect/types';
 import { numberWithCommas } from '@core/utils/balance';
 import { useTheme } from '@react-navigation/native';
-import { ParseTxDataReturnType, isApproveMethod } from '@utils/parseTxData';
-import { formatUnits, parseUnits } from 'ethers';
+import { isApproveMethod } from '@utils/parseTxData';
+import { formatUnits } from 'ethers';
 import { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
@@ -38,11 +38,10 @@ function Contract({
 
   const getFormatValue = useCallback(
     (value: bigint | string) => {
-      if (parseData && parseData.decimals) {
+      if (parseData?.decimals) {
         return numberWithCommas(formatUnits(value, parseData.decimals));
-      } else {
-        return numberWithCommas(value.toString());
       }
+      return numberWithCommas(value.toString());
     },
     [parseData],
   );

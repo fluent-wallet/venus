@@ -1,10 +1,17 @@
-import composeRef from '@cfx-kit/react-utils/dist/composeRef';
-import BottomSheet_, { BottomSheetBackdrop, type BottomSheetBackdropProps, type BottomSheetProps } from '@gorhom/bottom-sheet';
-import { useFocusEffect, useNavigation, useTheme } from '@react-navigation/native';
-import { isAdjustResize, screenHeight } from '@utils/deviceInfo';
+import { useCallback, useRef, forwardRef, useState, useEffect, type ComponentProps } from 'react';
+import { BackHandler, Keyboard, Platform, StyleSheet } from 'react-native';
+import { useFocusEffect, useTheme, useNavigation } from '@react-navigation/native';
 import { clamp } from 'lodash-es';
-import { forwardRef, useCallback, useEffect, useRef, useState } from 'react';
-import { BackHandler, Keyboard, Platform } from 'react-native';
+import BottomSheet_, {
+  BottomSheetBackdrop,
+  BottomSheetView,
+  BottomSheetScrollView,
+  type BottomSheetBackdropProps,
+  type BottomSheetProps,
+} from '@gorhom/bottom-sheet';
+import composeRef from '@cfx-kit/react-utils/dist/composeRef';
+import { screenHeight, isAdjustResize } from '@utils/deviceInfo';
+import Text from '@components/Text';
 export * from '@gorhom/bottom-sheet';
 export { default as BottomSheetMethods } from '@gorhom/bottom-sheet';
 
@@ -142,6 +149,80 @@ const BottomSheet = forwardRef<BottomSheet_, Props>(
     );
   },
 );
+
+interface ContentProps extends Omit<ComponentProps<typeof BottomSheetView>, 'children'> {
+  children?: ComponentProps<typeof BottomSheetView>['children'];
+  innerPaddingHorizontal?: boolean;
+}
+
+export const BottomSheetWrapper = ({ children, innerPaddingHorizontal = false, style, ...props }: ContentProps) => (
+  <BottomSheetView style={[styles.wrapper, { paddingHorizontal: innerPaddingHorizontal ? 16 : 0 }, style]} {...props}>
+    {children}
+  </BottomSheetView>
+);
+
+export const BottomSheetHeader = ({ children, title, innerPaddingHorizontal = false, style, ...props }: ContentProps & { title?: string }) => {
+  const { colors } = useTheme();
+
+  return (
+    <BottomSheetView style={[styles.headerWrapper, innerPaddingHorizontal && styles.paddingH16, StyleSheet.flatten(style)]} {...props}>
+      {title && <Text style={[styles.title, { color: colors.textPrimary }]}>{title}</Text>}
+      {children}
+    </BottomSheetView>
+  );
+};
+
+export const BottomSheetScrollContent = ({
+  children,
+  innerPaddingHorizontal = false,
+  style,
+  ...props
+}: ComponentProps<typeof BottomSheetScrollView> & { innerPaddingHorizontal?: boolean }) => (
+  <BottomSheetScrollView style={[styles.scrollContentWrapper, innerPaddingHorizontal && styles.paddingH16, StyleSheet.flatten(style)]} {...props}>
+    {children}
+  </BottomSheetScrollView>
+);
+export const BottomSheetContent = ({ children, innerPaddingHorizontal = false, style, ...props }: ContentProps) => (
+  <BottomSheetView style={[styles.contentWrapper, innerPaddingHorizontal && styles.paddingH16, StyleSheet.flatten(style)]} {...props}>
+    {children}
+  </BottomSheetView>
+);
+export const BottomSheetFooter = ({ children, innerPaddingHorizontal = false, style, ...props }: ContentProps) => (
+  <BottomSheetView style={[styles.footerWrapper, innerPaddingHorizontal && styles.paddingH16, StyleSheet.flatten(style)]} {...props}>
+    {children}
+  </BottomSheetView>
+);
+
+const styles = StyleSheet.create({
+  wrapper: {
+    flex: 1,
+    maxHeight: '100%',
+  },
+  headerWrapper: {
+    flex: 0,
+    paddingTop: 8,
+    paddingBottom: 8,
+  },
+  title: {
+    fontSize: 16,
+    fontWeight: '600',
+    textAlign: 'center',
+  },
+  contentWrapper: {
+    flex: 1,
+  },
+  scrollContentWrapper: {
+    flex: 1,
+  },
+  footerWrapper: {
+    flex: 0,
+    marginTop: 16,
+    marginBottom: 48,
+  },
+  paddingH16: {
+    paddingHorizontal: 16,
+  },
+});
 
 export const snapPoints = {
   large: [`${((clamp(screenHeight - 100, 628, screenHeight - 40) / screenHeight) * 100).toFixed(2)}%`] as string[],

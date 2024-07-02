@@ -1,5 +1,5 @@
 import type { PasswordRequest } from '@WalletCoreExtends/Plugins/Authentication';
-import BottomSheet, { BottomSheetView, type BottomSheetMethods } from '@components/BottomSheet';
+import BottomSheet, { BottomSheetWrapper, BottomSheetHeader, BottomSheetContent, BottomSheetFooter, type BottomSheetMethods } from '@components/BottomSheet';
 import Button from '@components/Button';
 import Text from '@components/Text';
 import TextInput from '@components/TextInput';
@@ -82,52 +82,41 @@ const PasswordVerify: React.FC<StackScreenProps<typeof PasswordVerifyStackName>>
 
   return (
     <BottomSheet ref={bottomSheetRef} snapPoints={snapPoints} onClose={handleCancel} isRoute onOpen={() => textInputRef.current?.focus()}>
-      <BottomSheetView style={styles.container}>
-        <Text style={[styles.title, { color: colors.textPrimary }]}>{t('common.verifyPassword')}</Text>
-        <TextInput
-          containerStyle={{ borderWidth: mode === 'dark' ? 1 : 0, borderColor: colors.borderFourth }}
-          ref={textInputRef}
-          value={password}
-          onChangeText={(value) => {
-            setPassword(value);
-            setError('');
-          }}
-          onSubmitEditing={handleConfirm}
-          isInBottomSheet
-        />
-        <Text style={[styles.error, { color: colors.down, opacity: !error ? 0 : 1 }]}>{error || 'placeholder'}</Text>
-        <Button testID="confirm" loading={inVerify} onPress={handleConfirm} disabled={!password} style={styles.btn}>
-          {t('common.confirm')}
-        </Button>
-      </BottomSheetView>
+      <BottomSheetWrapper innerPaddingHorizontal>
+        <BottomSheetHeader title={t('common.verifyPassword')} />
+        <BottomSheetContent>
+          <TextInput
+            containerStyle={{ marginTop: 16, borderWidth: mode === 'dark' ? 1 : 0, borderColor: colors.borderFourth }}
+            ref={textInputRef}
+            value={password}
+            onChangeText={(value) => {
+              setPassword(value);
+              setError('');
+            }}
+            onSubmitEditing={handleConfirm}
+            isInBottomSheet
+          />
+          <Text style={[styles.error, { color: colors.down, opacity: !error ? 0 : 1 }]}>{error || 'placeholder'}</Text>
+        </BottomSheetContent>
+        <BottomSheetFooter>
+          <Button testID="confirm" loading={inVerify} onPress={handleConfirm} disabled={!password}>
+            {t('common.confirm')}
+          </Button>
+        </BottomSheetFooter>
+      </BottomSheetWrapper>
     </BottomSheet>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    padding: 16,
-    paddingBottom: 32,
-  },
-  title: {
-    marginBottom: 16,
-    fontSize: 16,
-    lineHeight: 20,
-    fontWeight: '600',
-    textAlign: 'center',
-  },
   error: {
     width: '100%',
     marginTop: 8,
     fontSize: 12,
     textAlign: 'left',
   },
-  btn: {
-    marginTop: 'auto',
-  },
 });
 
-const snapPoints = [`${((360 / screenHeight) * 100).toFixed(2)}%`];
+const snapPoints = [`${((348 / screenHeight) * 100).toFixed(2)}%`];
 
 export default PasswordVerify;

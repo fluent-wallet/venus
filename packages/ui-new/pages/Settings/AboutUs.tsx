@@ -1,22 +1,29 @@
 import BIMWalletLogo from '@assets/icons/swift-shield.webp';
-import BottomSheet, { BottomSheetView, snapPoints, BottomSheetFlatList } from '@components/BottomSheet';
+import BottomSheet, {
+  BottomSheetWrapper,
+  BottomSheetHeader,
+  BottomSheetFooter,
+  BottomSheetContent,
+  snapPoints,
+  BottomSheetFlatList,
+} from '@components/BottomSheet';
 import Button from '@components/Button';
 import Text from '@components/Text';
 import { Lang, useLanguage } from '@hooks/useI18n';
 import { useTheme } from '@react-navigation/native';
-import type { AboutUsStackName, StackScreenProps } from '@router/configs';
+import { UpdateVersionStackName, type AboutUsStackName, type StackScreenProps } from '@router/configs';
 import { APP_VERSION_FLAG_FEATURE, ENABLE_CHECK_UPDATE_FEATURE } from '@utils/features';
 import { Image } from 'expo-image';
 import type React from 'react';
 import { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Linking, ScrollView, StyleSheet, View } from 'react-native';
+import { Linking, ScrollView, StyleSheet } from 'react-native';
 import { showMessage } from 'react-native-flash-message';
 import semverLt from 'semver/functions/lt';
 import pkg from '../../../../package.json';
 import { SettingItem } from './index';
 
-type VersionJSON = {
+export interface VersionJSON {
   version: string;
   force: boolean;
   en: {
@@ -27,7 +34,7 @@ type VersionJSON = {
     description: string;
     messageList: string[];
   };
-};
+}
 
 const AboutUs: React.FC<StackScreenProps<typeof AboutUsStackName>> = ({ navigation }) => {
   const { colors } = useTheme();
@@ -35,7 +42,6 @@ const AboutUs: React.FC<StackScreenProps<typeof AboutUsStackName>> = ({ navigati
   const lang = useLanguage();
 
   const [loading, setLoading] = useState(false);
-  const [newVersion, setNewVersion] = useState<null | VersionJSON>(null);
   const openTeamsService = useCallback(() => {
     Linking.openURL('https://swiftshield.tech/terms.html');
   }, []);
@@ -55,14 +61,13 @@ const AboutUs: React.FC<StackScreenProps<typeof AboutUsStackName>> = ({ navigati
 
       if (semverLt(pkg.version, remoteVersion.version)) {
         // has new version , to show user
-        setNewVersion(remoteVersion);
+        navigation.navigate(UpdateVersionStackName, { newVersion: remoteVersion });
       } else {
-        setNewVersion(null),
-          showMessage({
-            message: t('settings.aboutUs.latestVersion'),
-            type: 'success',
-            duration: 1500,
-          });
+        showMessage({
+          message: t('settings.aboutUs.latestVersion'),
+          type: 'success',
+          duration: 1500,
+        });
       }
     } catch (error) {
       setLoading(false);
@@ -70,54 +75,53 @@ const AboutUs: React.FC<StackScreenProps<typeof AboutUsStackName>> = ({ navigati
     setLoading(false);
   }, [t]);
 
-  const handleOpenWebsite = useCallback(() => {
-    Linking.openURL('https://swiftshield.tech');
-  }, []);
+  return (
+    <ScrollView contentContainerStyle={[styles.container, { backgroundColor: colors.bgPrimary }]}>
+      <Image source={BIMWalletLogo} style={styles.logo} />
 
+      <Text style={[styles.swiftshield, { color: colors.textPrimary }]}>{t('settings.aboutUs.title')}</Text>
+      <Text style={[styles.version, { color: colors.textSecondary }]}>
+        {t('settings.aboutUs.version')}: {pkg.version} {APP_VERSION_FLAG_FEATURE.allow && APP_VERSION_FLAG_FEATURE.value}
+      </Text>
+
+      {ENABLE_CHECK_UPDATE_FEATURE.allow && <SettingItem title={t('settings.aboutUs.action.checkUpdate')} onPress={handleCheckNewVersion} disable={loading} />}
+      <SettingItem title={t('settings.aboutUs.action.teamsService')} onPress={openTeamsService} />
+      <SettingItem title={t('settings.aboutUs.action.feedback')} onPress={openFeedback} />
+    </ScrollView>
+  );
+};
+
+export const UpdateVersion: React.FC<StackScreenProps<typeof UpdateVersionStackName>> = ({ route }) => {
+  const { colors } = useTheme();
+  const { t } = useTranslation();
+  const lang = useLanguage();
   const UILang = lang === Lang.system ? 'en' : lang;
 
+  const { newVersion } = route.params;
+
   return (
-    <View style={{ flex: 1 }}>
-      <ScrollView contentContainerStyle={[styles.container, { backgroundColor: colors.bgPrimary }]}>
-        <Image source={BIMWalletLogo} style={styles.logo} />
-
-        <Text style={[styles.swiftshield, { color: colors.textPrimary }]}>{t('settings.aboutUs.title')}</Text>
-        <Text style={[styles.version, { color: colors.textSecondary }]}>
-          {t('settings.aboutUs.version')}: {pkg.version} {APP_VERSION_FLAG_FEATURE.allow && APP_VERSION_FLAG_FEATURE.value}
-        </Text>
-
-        {ENABLE_CHECK_UPDATE_FEATURE.allow && (
-          <SettingItem title={t('settings.aboutUs.action.checkUpdate')} onPress={handleCheckNewVersion} disable={loading} />
-        )}
-        <SettingItem title={t('settings.aboutUs.action.teamsService')} onPress={openTeamsService} />
-        <SettingItem title={t('settings.aboutUs.action.feedback')} onPress={openFeedback} />
-      </ScrollView>
-      {newVersion && (
-        <BottomSheet
-          style={styles.bottomSheet}
-          snapPoints={snapPoints.percent75}
-          index={0}
-          onClose={() => setNewVersion(null)}
-          showBackDrop={false}
-          enablePanDownToClose
-        >
-          <Text style={[styles.versionTitle, { color: colors.textPrimary }]}>{t('settings.aboutUs.UpdateToNew')}</Text>
+    <BottomSheet snapPoints={snapPoints.percent75} isRoute enablePanDownToClose={!newVersion.force} enableContentPanningGesture={!newVersion.force}>
+      <BottomSheetWrapper innerPaddingHorizontal>
+        <BottomSheetHeader title={t('settings.aboutUs.UpdateToNew')}>
           {newVersion[UILang]?.description && (
             <Text style={[styles.versionDescription, { color: colors.textSecondary }]}>{newVersion[UILang].description}</Text>
           )}
+        </BottomSheetHeader>
+        <BottomSheetContent>
           {newVersion[UILang]?.messageList && (
             <BottomSheetFlatList
               data={newVersion[UILang].messageList}
               renderItem={(item) => <Text style={{ color: colors.textPrimary }}> - {item.item}</Text>}
             />
           )}
-
-          <Button onPress={handleOpenWebsite} style={styles.button}>
+        </BottomSheetContent>
+        <BottomSheetFooter>
+          <Button size="small" onPress={() => Linking.openURL('https://swiftshield.tech')}>
             {t('common.update')}
           </Button>
-        </BottomSheet>
-      )}
-    </View>
+        </BottomSheetFooter>
+      </BottomSheetWrapper>
+    </BottomSheet>
   );
 };
 

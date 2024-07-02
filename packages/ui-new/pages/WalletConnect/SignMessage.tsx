@@ -1,7 +1,7 @@
 import { BSIMError } from '@WalletCoreExtends/Plugins/BSIM/BSIMSDK';
 import { BSIMEventTypesName } from '@WalletCoreExtends/Plugins/BSIM/types';
 import Copy from '@assets/icons/copy.svg';
-import BottomSheet, { snapPoints, BottomSheetScrollView, BottomSheetView } from '@components/BottomSheet';
+import BottomSheet, { snapPoints, BottomSheetWrapper, BottomSheetHeader, BottomSheetScrollContent, BottomSheetFooter } from '@components/BottomSheet';
 import Button from '@components/Button';
 import Icon from '@components/Icon';
 import Text from '@components/Text';
@@ -27,7 +27,6 @@ import { type RouteProp, useRoute, useTheme } from '@react-navigation/native';
 import type { WalletConnectParamList, WalletConnectSignMessageStackName } from '@router/configs';
 import { sanitizeTypedData } from '@utils/santitizeTypedData';
 import { toUtf8String } from 'ethers';
-import { Image } from 'expo-image';
 import { useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Pressable, StyleSheet, View } from 'react-native';
@@ -173,42 +172,41 @@ function WalletConnectSignMessage() {
 
   return (
     <>
-      <BottomSheet enablePanDownToClose={false} isRoute snapPoints={snapPoints.large} onClose={handleReject}>
-        <BottomSheetView style={{ flex: 1 }}>
-          <Text style={[styles.title, { color: colors.textPrimary }]}>{t('wc.request.signature')}</Text>
-
-          <View style={[styles.subTitle, styles.flexWithRow]}>
-            <Icon source={icons[0]} width={32} height={32} style={{ borderRadius: 8 }} />
-            <View>
-              <Text style={styles.method}>{t('wc.sign.signData')}</Text>
-              <Text style={[styles.h2, { color: colors.textPrimary }]}>{name}</Text>
+      <BottomSheet
+        enablePanDownToClose={!approveLoading}
+        enableContentPanningGesture={!approveLoading}
+        isRoute
+        snapPoints={snapPoints.large}
+        onClose={handleReject}
+      >
+        <BottomSheetWrapper>
+          <BottomSheetHeader title={t('wc.request.signature')}>
+            <View style={[styles.subTitle, styles.flexWithRow]}>
+              <Icon source={icons[0]} width={32} height={32} style={{ borderRadius: 8 }} />
+              <View>
+                <Text style={styles.method}>{t('wc.sign.signData')}</Text>
+                <Text style={[styles.h2, { color: colors.textPrimary }]}>{name}</Text>
+              </View>
             </View>
-          </View>
+          </BottomSheetHeader>
+          <BottomSheetScrollContent style={[styles.content, { borderColor: colors.borderFourth }]} stickyHeaderIndices={[0]}>
+            <Pressable onPress={() => handleCoy(signMsg)} testID="copy">
+              <View style={[styles.flexWithRow, styles.scrollTitle, { backgroundColor: colors.bgFourth }]}>
+                <Text style={[styles.h2, { color: colors.textPrimary }]}>{t('wc.sign.message')}</Text>
+                <Copy width={18} height={18} color={colors.textSecondary} />
+              </View>
+            </Pressable>
+            <Text style={{ color: colors.textPrimary }}>{signMsg}</Text>
+          </BottomSheetScrollContent>
 
-          <BottomSheetView style={styles.contentHeight}>
-            <BottomSheetScrollView
-              style={[styles.content, { borderColor: colors.borderFourth }]}
-              stickyHeaderIndices={[0]}
-              contentContainerStyle={{ paddingBottom: 16 }}
-            >
-              <Pressable onPress={() => handleCoy(signMsg)} testID="copy">
-                <View style={[styles.flexWithRow, styles.scrollTitle, { backgroundColor: colors.bgFourth }]}>
-                  <Text style={[styles.h2, { color: colors.textPrimary }]}>{t('wc.sign.message')}</Text>
-                  <Copy width={18} height={18} color={colors.textSecondary} />
-                </View>
-              </Pressable>
-              <Text style={{ color: colors.textPrimary }}>{signMsg}</Text>
-            </BottomSheetScrollView>
-          </BottomSheetView>
-
-          <View style={[styles.footer, { borderColor: colors.borderFourth }]}>
+          <BottomSheetFooter style={[styles.footer, { borderColor: colors.borderFourth }]}>
             <AccountItemView nickname={currentAccount?.nickname} addressValue={currentAddressValue ?? ''} colors={colors}>
               <Text style={[transactionConfirmStyle.networkName, { color: colors.textSecondary }]} numberOfLines={1}>
                 on {currentNetwork?.name}
               </Text>
             </AccountItemView>
 
-            <View style={[styles.buttons, styles.flexWithRow]}>
+            <View style={styles.btnArea}>
               <Button style={styles.btn} testID="reject" onPress={handleReject} loading={rejectLoading}>
                 {t('common.cancel')}
               </Button>
@@ -216,8 +214,8 @@ function WalletConnectSignMessage() {
                 {t('common.confirm')}
               </Button>
             </View>
-          </View>
-        </BottomSheetView>
+          </BottomSheetFooter>
+        </BottomSheetWrapper>
       </BottomSheet>
       {bsimEvent && (
         <BSIMVerify
@@ -242,64 +240,38 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '600',
   },
-  title: {
-    textAlign: 'center',
-    fontSize: 16,
-    fontWeight: '600',
-    marginVertical: 10,
-  },
   subTitle: {
     paddingHorizontal: 16,
     gap: 8,
+    marginBottom: 24,
   },
   method: {
     fontSize: 12,
     fontWeight: '300',
   },
-  address: {
-    fontSize: 12,
-    fontWeight: '300',
-  },
-  contentHeight: {
-    height: 300,
-  },
   content: {
     marginHorizontal: 16,
-    marginVertical: 24,
     paddingHorizontal: 16,
     borderWidth: 1,
     borderRadius: 8,
-    height: 300,
   },
   scrollTitle: {
     paddingVertical: 16,
     gap: 8,
   },
-  scroll: {
-    flex: 1,
-  },
   footer: {
     borderTopWidth: 1,
-    paddingHorizontal: 16,
     paddingTop: 24,
   },
-  account: {
-    justifyContent: 'space-between',
-    marginBottom: 40,
-  },
-  accountLeft: { gap: 8, alignItems: 'center' },
-  accountIcon: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-  },
-  buttons: {
+  btnArea: {
+    display: 'flex',
+    flexDirection: 'row',
     gap: 16,
-    marginTop: 24,
-    marginBottom: 79,
+    paddingHorizontal: 16,
   },
   btn: {
-    flex: 1,
+    width: '50%',
+    flexShrink: 1,
   },
 });
 

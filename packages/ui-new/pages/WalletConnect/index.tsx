@@ -3,14 +3,12 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import {
   PasswordVerifyStackName,
   SheetBottomOption,
-  type WalletConnectParamList,
   WalletConnectProposalStackName,
   WalletConnectSessionsStackName,
   WalletConnectSignMessageStackName,
   WalletConnectTransactionStackName,
-  WalletConnectingStackName,
+  type WalletConnectParamList,
 } from '@router/configs';
-import WalletConnecting from './Connecting';
 import WalletConnectProposal from './Proposal';
 import WalletConnectSessions from './Sessions';
 import WalletConnectSignMessage from './SignMessage';
@@ -21,7 +19,6 @@ const WCStack = createNativeStackNavigator<WalletConnectParamList>();
 export default function WalletConnect() {
   return (
     <WCStack.Navigator>
-      <WCStack.Screen name={WalletConnectingStackName} component={WalletConnecting} options={SheetBottomOption} />
       <WCStack.Screen name={WalletConnectProposalStackName} component={WalletConnectProposal} options={SheetBottomOption} />
       <WCStack.Screen name={WalletConnectSessionsStackName} component={WalletConnectSessions} options={SheetBottomOption} />
       <WCStack.Screen name={WalletConnectSignMessageStackName} component={WalletConnectSignMessage} options={SheetBottomOption} />

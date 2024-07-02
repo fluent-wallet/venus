@@ -1,5 +1,5 @@
 import { Model, Q, type Query, type Relation } from '@nozbe/watermelondb';
-import { children, field, lazy, relation, text } from '@nozbe/watermelondb/decorators';
+import { children, field, json, lazy, relation, text } from '@nozbe/watermelondb/decorators';
 import { firstValueFrom, map } from 'rxjs';
 import { convertToChecksum } from '../../../utils/account';
 import { ChainType, NetworkType } from '../../../utils/consts';
