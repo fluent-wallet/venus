@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import type { Model, Query, Relation } from '@nozbe/watermelondb';
-import type TableName from '../TableName';
 import database from '../index';
+import type TableName from '../TableName';
 
 export function createModel<T extends Model>({ name, params, prepareCreate }: { name: TableName; params: object; prepareCreate?: true }) {
   const create = () => {
@@ -9,10 +9,8 @@ export function createModel<T extends Model>({ name, params, prepareCreate }: { 
       const entries = Object.entries(params);
       for (const [key, value] of entries) {
         if (value !== undefined) {
-          if (typeof model[key as '_raw'] === 'object' && model[key as '_raw'] !== null) {
-            if (typeof (model[key as '_raw'] as any)?.set === 'function') {
-              (model[key as '_raw'] as any).set(value);
-            }
+          if (typeof model[key as '_raw'] === 'object' && model[key as '_raw'] !== null && typeof (model[key as '_raw'] as any)?.set === 'function') {
+            (model[key as '_raw'] as any).set(value);
           } else {
             model[key as '_raw'] = value;
           }

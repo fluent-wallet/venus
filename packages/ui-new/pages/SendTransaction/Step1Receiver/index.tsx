@@ -166,7 +166,7 @@ const SendTransactionStep1Receiver: React.FC<SendTransactionScreenProps<typeof S
 
           {receiver && filterAccounts.type === 'local-valid' && (
             <View style={[styles.checkResWarp, { marginTop: 8 }]}>
-              <ContractIcon color={colors.textPrimary} />
+              <ContractIcon color={colors.iconPrimary} />
               <Text style={[styles.validMyAccount, { color: colors.textPrimary }]}>Account: {filterAccounts.assets?.[0]?.nickname}</Text>
             </View>
           )}
@@ -210,13 +210,13 @@ const SendTransactionStep1Receiver: React.FC<SendTransactionScreenProps<typeof S
               )}
               {inFetchingRemote && <HourglassLoading style={styles.checkLoading} />}
               {filterAccounts.type === AddressType.EOA && !inFetchingRemote && (
-                <View style={styles.checkResWarp}>
+                <View style={[styles.checkResWarp, { marginTop: 8 }]}>
                   <SuccessIcon style={styles.checkIcon} color={colors.up} width={24} height={24} />
                   <Text style={[styles.checkResText, { color: colors.up }]}>{t('tx.send.address.valid')}</Text>
                 </View>
               )}
               {filterAccounts.type === 'invalid' && !inFetchingRemote && (
-                <View style={styles.checkResWarp}>
+                <View style={[styles.checkResWarp, { marginTop: 8 }]}>
                   <ProhibitIcon style={styles.checkIcon} width={24} height={24} />
                   <Text style={[styles.checkResText, { color: colors.down }]}>{t('tx.send.address.invalid')}</Text>
                 </View>
@@ -232,7 +232,7 @@ const SendTransactionStep1Receiver: React.FC<SendTransactionScreenProps<typeof S
                     testID="knowRisk"
                   >
                     <Checkbox checked={knowRisk} pointerEvents="none" />
-                    <Text style={(styles.contractAddressTip, { color: colors.textPrimary })}>{t('tx.send.address.contractRiskKnow')}</Text>
+                    <Text style={[styles.contractAddressTip, { color: colors.textPrimary }]}>{t('tx.send.address.contractRiskKnow')}</Text>
                   </Pressable>
                 </View>
               )}
@@ -341,6 +341,7 @@ const styles = StyleSheet.create({
     flexShrink: 1,
   },
   contractAddress: {
+    paddingHorizontal: 16,
     marginTop: 32,
   },
   contractAddressValid: {

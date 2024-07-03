@@ -87,6 +87,7 @@ const PasswordVerify: React.FC<StackScreenProps<typeof PasswordVerifyStackName>>
         <BottomSheetContent>
           <TextInput
             containerStyle={{ marginTop: 16, borderWidth: mode === 'dark' ? 1 : 0, borderColor: colors.borderFourth }}
+            testID="password"
             ref={textInputRef}
             value={password}
             onChangeText={(value) => {

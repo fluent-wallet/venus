@@ -118,7 +118,10 @@ export default function EditAllowance({ parseData, savedValue, onSave, onClose }
                   readOnly={isDappSuggestValue}
                   editable={!isDappSuggestValue}
                   inputMode="numeric"
-                  style={[styles.editInput, { borderColor: invalidNumber ? colors.down : isDappSuggestValue ? colors.borderFourth : colors.up }]}
+                  style={[
+                    styles.editInput,
+                    { borderColor: invalidNumber ? colors.down : isDappSuggestValue ? colors.borderFourth : colors.up, color: colors.textPrimary },
+                  ]}
                   value={customValue}
                   onChange={handleChange}
                 />
@@ -138,7 +141,7 @@ export default function EditAllowance({ parseData, savedValue, onSave, onClose }
                         ]}
                         onPress={() => handlePercent(percent === p ? null : p)}
                       >
-                        <Text style={{ color: p === percent ? colors.textFifth : isDappSuggestValue ? colors.borderFourth : colors.up }}>{p}%</Text>
+                        <Text style={{ color: p === percent ? colors.textFifth : isDappSuggestValue ? colors.textSecondary : colors.up }}>{`${p}%`}</Text>
                       </Pressable>
                     ))}
                   </View>
@@ -146,6 +149,7 @@ export default function EditAllowance({ parseData, savedValue, onSave, onClose }
               )}
             </View>
           </View>
+          
         </BottomSheetScrollContent>
         <BottomSheetFooter>
           <View style={transactionConfirmStyle.btnArea}>

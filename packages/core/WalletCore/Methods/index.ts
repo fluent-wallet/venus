@@ -98,6 +98,18 @@ export class Methods {
   public switchToNetwork(...args: Parameters<NetworkMethod['switchToNetwork']>) {
     return this.NetworkMethod.switchToNetwork(...args);
   }
+  public updateCurrentEndpoint(...args: Parameters<NetworkMethod['updateCurrentEndpoint']>) {
+    return this.NetworkMethod.updateCurrentEndpoint(...args);
+  }
+  public removeEndpoints(...args: Parameters<NetworkMethod['removeEndpoint']>) {
+    return this.NetworkMethod.removeEndpoint(...args);
+  }
+  public addEndpoint(...args: Parameters<NetworkMethod['addEndpoint']>) {
+    return this.NetworkMethod.addEndpoint(...args);
+  }
+  public queryAssetByAddress(...args: Parameters<NetworkMethod['queryAssetByAddress']>) {
+    return this.NetworkMethod.queryAssetByAddress(...args);
+  }
   public checkIsValidAddress(...args: Parameters<NetworkMethod['checkIsValidAddress']>) {
     return this.NetworkMethod.checkIsValidAddress(...args);
   }
@@ -164,6 +176,7 @@ export class Methods {
   }
 
   [methodName: string]: any;
+  // biome-ignore lint/complexity/noBannedTypes: <explanation>
   public register(methodName: string, method: Function) {
     this[methodName] = method;
   }

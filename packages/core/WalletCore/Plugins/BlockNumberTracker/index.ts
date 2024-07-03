@@ -32,7 +32,7 @@ class BlockNumberTracker implements Plugin {
     });
   }
 
-  private _startup(network: Network | null) {
+  private _startup(network: Pick<Network, 'id' | 'endpoint' | 'networkType'> | null) {
     this._pollingSub?.unsubscribe();
     if (network) {
       this._pollingSub = interval(15000)
@@ -51,14 +51,18 @@ class BlockNumberTracker implements Plugin {
     }
   }
 
-  public async getNetworkBlockNumber(network: Network): Promise<string> {
+  public async getNetworkBlockNumber(network: Pick<Network, 'id' | 'endpoint' | 'networkType'>): Promise<string> {
     if (this._network?.id === network.id && this._blockNumber) {
       return this._blockNumber;
     }
     return Transaction.getBlockNumber(network);
   }
 
-  public async checkBlockNumberInRange(network: Network, blockNumber: string | number | bigint, range?: [bigint, bigint]): Promise<boolean> {
+  public async checkBlockNumberInRange(
+    network: Pick<Network, 'id' | 'endpoint' | 'networkType'>,
+    blockNumber: string | number | bigint,
+    range?: [bigint, bigint],
+  ): Promise<boolean> {
     const networkBlockNumber = await this.getNetworkBlockNumber(network);
     const diff = BigInt(networkBlockNumber) - BigInt(blockNumber);
     return checkDiffInRange(diff, range);

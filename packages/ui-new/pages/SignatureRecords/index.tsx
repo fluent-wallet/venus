@@ -1,4 +1,4 @@
-import NoneSignature from '@assets/images/none-signature.svg';
+import NoneSignature from '@assets/images/none-signature.webp';
 import Delay from '@components/Delay';
 import Text from '@components/Text';
 import { useCurrentAddress } from '@core/WalletCore/Plugins/ReactInject';
@@ -13,6 +13,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { FlatList, StyleSheet, View } from 'react-native';
 import TypeFilter from './TypeFilter';
+import { Image } from 'expo-image';
 
 export const SignatureItem: React.FC<{ item: Signature }> = ({ item }) => {
   const { colors } = useTheme();
@@ -84,7 +85,7 @@ const SignatureRecords: React.FC<StackScreenProps<typeof SignatureRecordsStackNa
   return (
     <View style={[styles.container, { backgroundColor: colors.bgPrimary }]}>
       <View style={styles.title}>
-        <Text style={{ color: colors.textPrimary }}>{t('signature.list.title')}</Text>
+        <Text style={{ color: colors.textPrimary, fontSize: 22, fontWeight: '600' }}>{t('signature.list.title')}</Text>
         <TypeFilter onChange={setFilter} />
       </View>
       <FlatList
@@ -93,8 +94,8 @@ const SignatureRecords: React.FC<StackScreenProps<typeof SignatureRecordsStackNa
         ListEmptyComponent={
           <Delay>
             <View style={styles.empty}>
-              <NoneSignature />
-              <Text style={{ color: colors.textSecondary }}>{t('signature.list.empty')}</Text>
+              <Image source={NoneSignature} style={{ width: 160, height: 160 }} />
+              <Text style={{ color: colors.textSecondary, marginTop: 16, fontSize: 16, fontWeight: '300' }}>{t('signature.list.empty')}</Text>
             </View>
           </Delay>
         }

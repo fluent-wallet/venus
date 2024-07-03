@@ -135,7 +135,7 @@ const SendTransactionStep4Confirm: React.FC<SendTransactionScreenProps<typeof Se
     let txError!: any;
     try {
       if (asset.type === AssetType.ERC20 && asset.contractAddress) {
-        const isInDB = await currentNetwork.queryAssetByAddress(asset.contractAddress);
+        const isInDB = await methods.queryAssetByAddress(currentNetwork.id, asset.contractAddress);
         if (!isInDB) {
           await methods.createAsset({
             network: currentNetwork,

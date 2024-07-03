@@ -107,7 +107,7 @@ const SendTransactionStep2Asset: React.FC<Props> = ({ navigation, route, onConfi
             });
             const assetInfo = { ...remoteAsset, type: AssetType.ERC20, contractAddress: value };
             setFilterAssets({ type: 'remote', assets: [assetInfo] as Array<AssetInfo> });
-            const isInDB = await currentNetwork.queryAssetByAddress(value);
+            const isInDB = await methods.queryAssetByAddress(currentNetwork.id, value);
             if (!isInDB) {
               await methods.createAsset({
                 network: currentNetwork,

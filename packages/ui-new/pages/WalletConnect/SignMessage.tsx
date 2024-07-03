@@ -184,7 +184,7 @@ function WalletConnectSignMessage() {
             <View style={[styles.subTitle, styles.flexWithRow]}>
               <Icon source={icons[0]} width={32} height={32} style={{ borderRadius: 8 }} />
               <View>
-                <Text style={styles.method}>{t('wc.sign.signData')}</Text>
+                <Text style={[styles.method, { color: colors.textSecondary }]}>{t('wc.sign.signData')}</Text>
                 <Text style={[styles.h2, { color: colors.textPrimary }]}>{name}</Text>
               </View>
             </View>

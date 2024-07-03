@@ -24,6 +24,19 @@ import { convertCfxToHex, validateCfxAddress, validateHexAddress } from '../../u
 import { getNthAccountOfHDKey } from '../../utils/hdkey';
 import { GetDecryptedVaultDataMethod } from './getDecryptedVaultData';
 
+const getNetwork = async (targetNetworkOrIdOrChainIdOrNetId: Network | string | number): Promise<Network | undefined> => {
+  let targetNetwork: Network | undefined;
+  if (typeof targetNetworkOrIdOrChainIdOrNetId === 'string') {
+    targetNetwork = await queryNetworkById(targetNetworkOrIdOrChainIdOrNetId);
+    if (!targetNetwork) targetNetwork = await queryNetworkByChainId(targetNetworkOrIdOrChainIdOrNetId);
+  } else if (typeof targetNetworkOrIdOrChainIdOrNetId === 'number') {
+    targetNetwork = await queryNetworkByNetId(targetNetworkOrIdOrChainIdOrNetId);
+  } else {
+    targetNetwork = targetNetworkOrIdOrChainIdOrNetId;
+  }
+  return targetNetwork;
+};
+
 @injectable()
 export class NetworkMethod {
   @inject(GetDecryptedVaultDataMethod) private getDecryptedVaultDataMethod!: GetDecryptedVaultDataMethod;
@@ -96,15 +109,7 @@ export class NetworkMethod {
   }
 
   async switchToNetwork(targetNetworkOrIdOrChainIdOrNetId: Network | string | number) {
-    let targetNetwork: Network | undefined;
-    if (typeof targetNetworkOrIdOrChainIdOrNetId === 'string') {
-      targetNetwork = await queryNetworkById(targetNetworkOrIdOrChainIdOrNetId);
-      if (!targetNetwork) targetNetwork = await queryNetworkByChainId(targetNetworkOrIdOrChainIdOrNetId);
-    } else if (typeof targetNetworkOrIdOrChainIdOrNetId === 'number') {
-      targetNetwork = await queryNetworkByNetId(targetNetworkOrIdOrChainIdOrNetId);
-    } else {
-      targetNetwork = targetNetworkOrIdOrChainIdOrNetId;
-    }
+    const targetNetwork = await getNetwork(targetNetworkOrIdOrChainIdOrNetId);
 
     if (!targetNetwork) throw new Error('Network not found.');
     return database.write(async () => {
@@ -125,15 +130,39 @@ export class NetworkMethod {
     });
   }
 
+  async updateCurrentEndpoint({ network, endpoint }: { network: Network | string | number; endpoint: string }) {
+    const targetNetwork = await getNetwork(network);
+    if (!targetNetwork) throw new Error('Network not found.');
+    return targetNetwork.updateEndpoint(endpoint);
+  }
+
+  async removeEndpoint({ network, endpoint }: { network: Network | string | number; endpoint: string }) {
+    const targetNetwork = await getNetwork(network);
+    if (!targetNetwork) throw new Error('Network not found.');
+    return targetNetwork.removeEndpoint(endpoint);
+  }
+
+  async queryAssetByAddress(networkId: string, address: string) {
+    const targetNetwork = await getNetwork(networkId);
+    if (!targetNetwork) throw new Error('Network not found.');
+    return targetNetwork.queryAssetByAddress(address);
+  }
+
+  async addEndpoint({ network, endpointParams }: { network: Network | string | number; endpointParams: Network['endpointsList']['0'] }) {
+    const targetNetwork = await getNetwork(network);
+    if (!targetNetwork) throw new Error('Network not found.');
+    return targetNetwork.addEndpoint(endpointParams);
+  }
+
   _checkIsValidAddress({ networkType, addressValue }: { networkType: NetworkType; addressValue: string }) {
     if (!addressValue) return false;
     if (networkType === NetworkType.Conflux) {
       return validateCfxAddress(addressValue);
-    } else if (networkType === NetworkType.Ethereum) {
-      return validateHexAddress(addressValue);
-    } else {
-      return false;
     }
+    if (networkType === NetworkType.Ethereum) {
+      return validateHexAddress(addressValue);
+    }
+    return false;
   }
 
   private _checkIsContractAddress({

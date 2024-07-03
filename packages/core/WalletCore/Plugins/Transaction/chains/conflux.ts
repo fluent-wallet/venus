@@ -88,10 +88,9 @@ class Transaction {
       // return { gasLimit, storageLimit, gasPrice, estimateOf1559: calcGasCostFromEstimateOf1559(_estimateOf1559, gasLimit) };
       const [gasPrice, { gasLimit, storageLimit }] = await Promise.all([this.getGasPrice(endpoint), estimateGasLimitPromise]);
       return { gasLimit, storageLimit, gasPrice, estimateOf1559: calcGasCostFromEstimateOf1559(estimateFor1559FromGasPrice(gasPrice), gasLimit) };
-    } else {
-      const [gasPrice, { gasLimit, storageLimit }] = await Promise.all([this.getGasPrice(endpoint), estimateGasLimitPromise]);
-      return { gasLimit, storageLimit, gasPrice, estimate: calcGasCostFromEstimate(estimateFromGasPrice(gasPrice), gasLimit) };
     }
+    const [gasPrice, { gasLimit, storageLimit }] = await Promise.all([this.getGasPrice(endpoint), estimateGasLimitPromise]);
+    return { gasLimit, storageLimit, gasPrice, estimate: calcGasCostFromEstimate(estimateFromGasPrice(gasPrice), gasLimit) };
   };
 
   public getBlockNumber = (endpoint: string) => fetchChain<string>({ url: endpoint, method: 'cfx_epochNumber' });
