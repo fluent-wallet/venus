@@ -1,7 +1,8 @@
 {
   "$schema": "https://biomejs.dev/schemas/1.8.3/schema.json",
   "files": {
-    "include": ["packages/*"]
+    "include": ["packages/*"],
+    "ignore": ["welcome.json", "enter.json", "en.json", "zh-Hans.json", "zh-Hant.json"]
   },
   "formatter": {
     "enabled": true,
