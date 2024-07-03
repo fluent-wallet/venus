@@ -13,6 +13,7 @@ import Text from '@components/Text';
 import { Pressable, StyleSheet, View, type NativeSyntheticEvent, type TextInputChangeEventData } from 'react-native';
 import Button from '@components/Button';
 import { useCallback, useState } from 'react';
+import methods from '@core/WalletCore/Methods';
 import { NetworkType, useCurrentNetwork } from '@core/WalletCore/Plugins/ReactInject';
 import { fetchChain } from '@cfx-kit/dapp-utils/dist/fetch';
 import ClearIcon from '@assets/icons/clear.svg';
@@ -23,7 +24,7 @@ const getChainIdMap = {
   [NetworkType.Ethereum]: (endpoint: string) => fetchChain<string>({ url: endpoint, method: 'eth_chainId' }),
 };
 
-const AddNewRPC = () => {
+const AddNewEndpoint = () => {
   const { colors } = useTheme();
   const { t } = useTranslation();
   const [netUrl, setNetUrl] = useState('');
@@ -49,7 +50,7 @@ const AddNewRPC = () => {
         if (Number(chainId) !== Number(currentNetwork.chainId)) {
           setError(t('settings.network.add.invalidChainId'));
         } else {
-          currentNetwork.addEndpoints([{ endpoint: endpoint.href, type: 'outer' }]);
+          methods.addEndpoint({ network: currentNetwork.id, endpointParams: { endpoint: endpoint.href, type: 'outer' } });
           navigation.goBack();
         }
       } catch (error) {
@@ -68,10 +69,10 @@ const AddNewRPC = () => {
 
   return (
     <BottomSheet snapPoints={snapPoints.percent40} index={0} isRoute>
-      <BottomSheetWrapper>
+      <BottomSheetWrapper innerPaddingHorizontal>
         <BottomSheetHeader title={t('settings.network.add.title')} />
 
-        <BottomSheetContent innerPaddingHorizontal>
+        <BottomSheetContent>
           <Text>{t('settings.network.add.subTitle')}</Text>
 
           <View style={[styles.flexRow, styles.inputContainer, { borderColor: error ? colors.down : colors.borderFourth }]}>
@@ -99,7 +100,7 @@ const AddNewRPC = () => {
           )}
         </BottomSheetContent>
 
-        <BottomSheetFooter innerPaddingHorizontal>
+        <BottomSheetFooter>
           <Button loading={loading} disabled={!!error} testID="add" onPress={handleAdd}>
             {t('common.add')}
           </Button>
@@ -133,4 +134,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default AddNewRPC;
+export default AddNewEndpoint;

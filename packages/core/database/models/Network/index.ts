@@ -52,29 +52,29 @@ export class Network extends Model {
     });
   }
 
-  @writer async addEndpoints(endpoints: { endpoint: string; type: 'inner' | 'outer' }[]) {
-    if (this.endpointsList.some((endpoint) => endpoints.includes(endpoint))) {
-      // can not add same endpoint
+  @writer async addEndpoint(params: { endpoint: string; type: 'inner' | 'outer' }) {
+    const { endpoint, type } = params;
+    if (this.endpointsList.some(({ endpoint: innerEndpoint }) => innerEndpoint === endpoint)) {
       return false;
     }
 
     await this.update((network) => {
-      network.endpointsList = [...network.endpointsList, ...endpoints];
+      network.endpointsList = [...network.endpointsList, params];
     });
 
     return true;
   }
 
-  @writer async removeEndpoints(endpoints: { endpoint: string }[]) {
-    const needRemoveEndpoints = this.endpointsList.filter((endpoint) => endpoints.includes(endpoint));
+  @writer async removeEndpoint(targetEndpoint: string) {
+    const endPointInList = this.endpointsList?.find((endpoint) => endpoint.endpoint === targetEndpoint);
 
-    if (needRemoveEndpoints.some((endpoint) => endpoint.type === 'inner' || endpoint.endpoint === this.endpoint)) {
-      // can not remove current endpoint or inner endpoint
+    if (!endPointInList || endPointInList.type === 'inner') {
+      // can not remove endpoint not in list
       return false;
     }
 
     await this.update((network) => {
-      network.endpointsList = needRemoveEndpoints;
+      network.endpointsList = network.endpointsList.filter((endpoint) => endpoint.endpoint !== targetEndpoint);
     });
     return true;
   }

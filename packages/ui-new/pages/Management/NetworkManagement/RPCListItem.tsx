@@ -1,26 +1,29 @@
 import { Pressable, StyleSheet, View } from 'react-native';
+import { interval, startWith, switchMap, catchError, throwError, retry } from 'rxjs';
 import Text from '@components/Text';
 import type { Network } from '@core/database/models/Network';
-import { useCurrentNetwork } from '@core/WalletCore/Plugins/ReactInject';
+import type { useCurrentNetwork } from '@core/WalletCore/Plugins/ReactInject';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '@react-navigation/native';
 import SuccessIcon from '@assets/icons/success.svg';
 import DeleteIcon from '@assets/icons/delete.svg';
 import { useCallback, useEffect, useState } from 'react';
 import plugins from '@core/WalletCore/Plugins';
+import methods from '@core/WalletCore/Methods';
+
 export interface Props {
   rpc: Network['endpointsList'][number];
+  currentNetwork: NonNullable<ReturnType<typeof useCurrentNetwork>>;
 }
-const RPCListItem = ({ rpc }: Props) => {
+const RPCListItem = ({ rpc, currentNetwork }: Props) => {
   const { t } = useTranslation();
   const { colors } = useTheme();
-  const currentNetwork = useCurrentNetwork()!;
   const [latency, setLatency] = useState<number | null>(null);
   const [blockNumber, setBlockNumber] = useState<bigint | null>(null);
 
   const testLatency = useCallback(() => {
     const startTime = new Date().getTime();
-    fetch(rpc.endpoint)
+    return fetch(rpc.endpoint)
       .then(() => {
         const endTime = new Date().getTime();
         const latency = endTime - startTime;
@@ -29,6 +32,29 @@ const RPCListItem = ({ rpc }: Props) => {
       .catch(() => {
         setLatency(-1);
       });
+  }, []);
+
+  // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
+  useEffect(() => {
+    const subscription = interval(25000)
+      .pipe(
+        startWith(0),
+        switchMap(() =>
+          Promise.all([
+            plugins.BlockNumberTracker.getNetworkBlockNumber({ ...currentNetwork, endpoint: rpc.endpoint }).then((res) => setBlockNumber(BigInt(res))),
+            testLatency(),
+          ]),
+        ),
+        catchError((err: { code: string; message: string }) => {
+          return throwError(() => err);
+        }),
+        retry({ delay: 1000 }),
+      )
+      .subscribe();
+
+    return () => {
+      subscription.unsubscribe();
+    };
   }, []);
 
   const renderLatency = useCallback(() => {
@@ -40,16 +66,14 @@ const RPCListItem = ({ rpc }: Props) => {
   }, [latency, colors.down, colors.iconThird, colors.up]);
 
   const handleDelete = useCallback(async () => {
-    console.log(await currentNetwork.removeEndpoints([{ endpoint: rpc.endpoint }]));
-  }, []);
+    await methods.removeEndpoints({ network: currentNetwork.id, endpoint: rpc.endpoint });
+  }, [currentNetwork.id, rpc.endpoint]);
 
   const handleSelect = useCallback(async () => {
-    await currentNetwork.updateEndpoint(rpc.endpoint);
-  }, []);
-  useEffect(() => {
+    await methods.updateCurrentEndpoint({ network: currentNetwork.id, endpoint: rpc.endpoint });
     testLatency();
-    plugins.BlockNumberTracker.getNetworkBlockNumber(currentNetwork).then((res) => setBlockNumber(BigInt(res)));
-  }, [testLatency, currentNetwork]);
+  }, [currentNetwork.id, rpc.endpoint]);
+
   return (
     <View style={[styles.flex, styles.flexRow]}>
       <View style={[styles.icon, { marginRight: 8 }]}>{currentNetwork?.endpoint === rpc.endpoint && <SuccessIcon color={colors.up} />}</View>

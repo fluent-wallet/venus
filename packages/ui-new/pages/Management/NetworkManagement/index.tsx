@@ -1,12 +1,11 @@
-import { FlatList, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { FlatList, Pressable, StyleSheet, View } from 'react-native';
 import Text from '@components/Text';
 import { useNavigation, useTheme } from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';
 import { useCurrentNetwork } from '@core/WalletCore/Plugins/ReactInject';
 import RPCListItem from './RPCListItem';
 import AddIcon from '@assets/icons/add.svg';
-import { useState } from 'react';
-import { AddNewRPCStackName, type StackNavigation } from '@router/configs';
+import { NetworkAddNewEndpointStackName, type StackNavigation } from '@router/configs';
 
 const NetworkManagement = () => {
   const { colors } = useTheme();
@@ -30,16 +29,16 @@ const NetworkManagement = () => {
       <View style={styles.warp}>
         <View style={[styles.mb16, styles.flex, styles.flexRow, styles.justifyBetween]}>
           <Text style={[styles.font14, styles.fontWeight300, { color: colors.textSecondary }]}>{t('settings.network.RPCList')}</Text>
-          <Pressable testID="add" onPress={() => navigation.navigate(AddNewRPCStackName)}>
+          <Pressable testID="add" onPress={() => navigation.navigate(NetworkAddNewEndpointStackName)}>
             <AddIcon width={24} height={24} color={colors.iconPrimary} />
           </Pressable>
         </View>
 
         <FlatList
           contentContainerStyle={{ gap: 10 }}
-          data={currentNetwork.endpointsList || []}
+          data={currentNetwork?.endpointsList || []}
           keyExtractor={(item) => item.endpoint}
-          renderItem={({ item }) => <RPCListItem rpc={item} />}
+          renderItem={({ item }) => <RPCListItem rpc={item} currentNetwork={currentNetwork} />}
         />
       </View>
     </View>
