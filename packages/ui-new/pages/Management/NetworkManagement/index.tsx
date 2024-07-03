@@ -36,8 +36,8 @@ const NetworkManagement = () => {
 
         <FlatList
           contentContainerStyle={{ gap: 10 }}
+          extraData={currentNetwork?.endpointsList.length}
           data={currentNetwork?.endpointsList || []}
-          keyExtractor={(item) => item.endpoint}
           renderItem={({ item }) => <RPCListItem rpc={item} currentNetwork={currentNetwork} />}
         />
       </View>

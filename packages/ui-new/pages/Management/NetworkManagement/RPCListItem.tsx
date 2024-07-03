@@ -32,9 +32,8 @@ const RPCListItem = ({ rpc, currentNetwork }: Props) => {
       .catch(() => {
         setLatency(-1);
       });
-  }, []);
+  }, [rpc.endpoint]);
 
-  // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
   useEffect(() => {
     const subscription = interval(25000)
       .pipe(
@@ -55,7 +54,7 @@ const RPCListItem = ({ rpc, currentNetwork }: Props) => {
     return () => {
       subscription.unsubscribe();
     };
-  }, []);
+  }, [currentNetwork, rpc.endpoint, testLatency]);
 
   const renderLatency = useCallback(() => {
     const textStyle = [styles.font14, styles.fontWeight400];
