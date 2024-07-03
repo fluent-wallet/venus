@@ -24,6 +24,8 @@ import WalletConnect from '@pages/WalletConnect';
 import { useListenWalletConnectEvent } from '@pages/WalletConnect/useWalletConnectHooks';
 import WayToInitWallet from '@pages/WayToInitWallet';
 import Welcome from '@pages/Welcome';
+import NetworkManagement from '@pages/Management/NetworkManagement';
+import NetworkAddNewEndpoint from '@pages/Management/NetworkManagement/AddNewEndpoint';
 import { useNavigation, useTheme } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import type React from 'react';
@@ -58,6 +60,8 @@ import {
   WalletConnectStackName,
   WayToInitWalletStackName,
   WelcomeStackName,
+  NetworkManagementStackName,
+  NetworkAddNewEndpointStackName,
 } from './configs';
 
 const RootStack = createNativeStackNavigator<RootStackParamList>();
@@ -97,6 +101,8 @@ const Router: React.FC = () => {
         <RootStack.Screen name={BiometricsWayStackName} component={BiometricsWay} options={{ animation: 'fade' }} />
         <RootStack.Screen name={PasswordWayStackName} component={PasswordWay} />
         <RootStack.Screen name={AccountManagementStackName} component={AccountManagement} />
+        <RootStack.Screen name={NetworkManagementStackName} component={NetworkManagement} />
+        <RootStack.Screen name={NetworkAddNewEndpointStackName} component={NetworkAddNewEndpoint} options={SheetBottomOption} />
         <RootStack.Screen name={AccountSettingStackName} component={AccountSetting} options={SheetBottomOption} />
         <RootStack.Screen name={GroupSettingStackName} component={GroupSetting} options={SheetBottomOption} />
         <RootStack.Screen name={HDSettingStackName} component={HDSetting} options={SheetBottomOption} />
@@ -113,7 +119,6 @@ const Router: React.FC = () => {
         <RootStack.Screen name={PreferencesStackName} component={Preferences} />
         <RootStack.Screen name={AppearanceStackName} component={Appearance} options={SheetBottomOption} />
         <RootStack.Screen name={LanguageStackName} component={Language} options={SheetBottomOption} />
-
         <RootStack.Screen name={WalletConnectStackName} component={WalletConnect} options={SheetBottomOption} />
         <RootStack.Screen name={SignatureRecordsStackName} component={SignatureRecords} />
       </RootStack.Navigator>

@@ -45,6 +45,7 @@ export class DatabaseMethod {
               {
                 ...params,
                 ...(typeof hdPathIndex === 'number' ? { hdPath: hdPaths[hdPathIndex] } : null),
+                endpointsList: [{ endpoint: params.endpoint, type: 'inner' }],
               },
               true,
             );

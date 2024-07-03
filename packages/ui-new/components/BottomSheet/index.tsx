@@ -230,6 +230,11 @@ export const snapPoints = {
   percent65: ['65%'] as string[],
   percent55: ['55%'] as string[],
   percent50: ['50%'] as string[],
+  percent45: ['45%'] as string[],
+  percent40: ['40%'] as string[],
+  percent35: ['35%'] as string[],
+  percent30: ['30%'] as string[],
+  percent25: ['25%'] as string[],
 } as const;
 
 export default BottomSheet;

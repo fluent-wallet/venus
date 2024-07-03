@@ -9,12 +9,12 @@ export const minGasLimit = new Decimal(21000);
 export const clampGasLimit = (gasLimit: string) => (new Decimal(gasLimit).lt(minGasLimit) ? minGasLimit.toHex() : gasLimit);
 
 const eSpaceChainIds = [Networks['Conflux eSpace'].chainId, Networks['eSpace Testnet'].chainId] as Array<string>;
-export const getMinGasPrice = (network: Network) => {
+export const getMinGasPrice = (network: Pick<Network, 'chainId' | 'networkType'>) => {
   if (network.networkType === NetworkType.Conflux) return Gwei.mul(1).toHex();
   if (network.networkType === NetworkType.Ethereum && eSpaceChainIds.includes(network.chainId)) return Gwei.mul(20).toHex();
   return '0x0';
 };
-export const clampGasPrice = (gasPrice: string, network: Network) => {
+export const clampGasPrice = (gasPrice: string, network: Pick<Network, 'chainId' | 'networkType'>) => {
   const minGasPrice = getMinGasPrice(network);
   return new Decimal(gasPrice).lt(minGasPrice) ? minGasPrice : gasPrice;
 };

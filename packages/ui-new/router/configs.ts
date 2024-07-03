@@ -16,6 +16,7 @@ export const GroupSettingStackName = 'GroupSettin';
 export const HDSettingStackName = 'HDSetting';
 export const BackupStackName = 'Backup';
 export const NetworkManagementStackName = 'NetworkManagement';
+export const NetworkAddNewEndpointStackName = 'NetworkAddNewEndpoint';
 export const PasswordVerifyStackName = 'PasswordVerify';
 export const SendTransactionStackName = 'SendTransaction';
 export const ScanQRCodeStackName = 'ScanQRCode';
@@ -74,6 +75,7 @@ export type RootStackParamList = {
   [AppearanceStackName]: undefined;
   [LanguageStackName]: undefined;
   [WalletConnectStackName]: NavigatorScreenParams<WalletConnectParamList>;
+  [NetworkAddNewEndpointStackName]: undefined;
   [SignatureRecordsStackName]: undefined;
 };
 

@@ -1,5 +1,5 @@
 import { Model, Q, type Query, type Relation } from '@nozbe/watermelondb';
-import { children, field, json, lazy, relation, text } from '@nozbe/watermelondb/decorators';
+import { children, field, json, lazy, relation, text, writer } from '@nozbe/watermelondb/decorators';
 import { firstValueFrom, map } from 'rxjs';
 import { convertToChecksum } from '../../../utils/account';
 import { ChainType, NetworkType } from '../../../utils/consts';
@@ -40,10 +40,44 @@ export class Network extends Model {
   @text('scan_url') scanUrl!: string | null;
   @field('selected') selected!: boolean;
   @field('builtin') builtin!: boolean | null;
+  @json('endpoints_list', (json) => (Array.isArray(json) ? json : [])) endpointsList!: { endpoint: string; type: 'inner' | 'outer' }[];
   @children(TableName.Asset) assets!: Query<Asset>;
   @children(TableName.Address) addresses!: Query<Address>;
   @children(TableName.AssetRule) assetRules!: Query<AssetRule>;
   @relation(TableName.HdPath, 'hd_path_id') hdPath!: Relation<HdPath>;
+
+  @writer async updateEndpoint(endpoint: string) {
+    await this.update((network) => {
+      network.endpoint = endpoint;
+    });
+  }
+
+  @writer async addEndpoint(params: { endpoint: string; type: 'inner' | 'outer' }) {
+    const { endpoint, type } = params;
+    if (this.endpointsList.some(({ endpoint: innerEndpoint }) => innerEndpoint === endpoint)) {
+      return false;
+    }
+
+    await this.update((network) => {
+      network.endpointsList = [...network.endpointsList, params];
+    });
+
+    return true;
+  }
+
+  @writer async removeEndpoint(targetEndpoint: string) {
+    const endPointInList = this.endpointsList?.find((endpoint) => endpoint.endpoint === targetEndpoint);
+
+    if (!endPointInList || endPointInList.type === 'inner') {
+      // can not remove endpoint not in list
+      return false;
+    }
+
+    await this.update((network) => {
+      network.endpointsList = network.endpointsList.filter((endpoint) => endpoint.endpoint !== targetEndpoint);
+    });
+    return true;
+  }
 
   queryAssetByAddress = (address: string) =>
     firstValueFrom(
