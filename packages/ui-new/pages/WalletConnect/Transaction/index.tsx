@@ -295,7 +295,7 @@ function WalletConnectTransaction() {
 
           const assetInfo = { ...remoteAsset, type: assertType, contractAddress: to };
 
-          const isInDB = await currentNetwork.queryAssetByAddress(to);
+          const isInDB = await methods.queryAssetByAddress(currentNetwork.id, to);
           if (!isInDB) {
             await methods.createAsset({
               network: currentNetwork,

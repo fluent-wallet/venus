@@ -142,6 +142,12 @@ export class NetworkMethod {
     return targetNetwork.removeEndpoint(endpoint);
   }
 
+  async queryAssetByAddress(networkId: string, address: string) {
+    const targetNetwork = await getNetwork(networkId);
+    if (!targetNetwork) throw new Error('Network not found.');
+    return targetNetwork.queryAssetByAddress(address);
+  }
+
   async addEndpoint({ network, endpointParams }: { network: Network | string | number; endpointParams: Network['endpointsList']['0'] }) {
     const targetNetwork = await getNetwork(network);
     if (!targetNetwork) throw new Error('Network not found.');

@@ -107,6 +107,9 @@ export class Methods {
   public addEndpoint(...args: Parameters<NetworkMethod['addEndpoint']>) {
     return this.NetworkMethod.addEndpoint(...args);
   }
+  public queryAssetByAddress(...args: Parameters<NetworkMethod['queryAssetByAddress']>) {
+    return this.NetworkMethod.queryAssetByAddress(...args);
+  }
   public checkIsValidAddress(...args: Parameters<NetworkMethod['checkIsValidAddress']>) {
     return this.NetworkMethod.checkIsValidAddress(...args);
   }

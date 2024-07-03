@@ -30,13 +30,14 @@ function DAPPConnect() {
             {take(sessions, 3).map(
               (
                 {
+                  topic,
                   peer: {
                     metadata: { icons = [] },
                   },
                 },
                 idx,
               ) => (
-                <View key={idx}>
+                <View key={topic}>
                   <Icon source={icons[0]} width={24} height={24} style={[styles.icon, idx > 0 ? { transform: [{ translateX: -10 * idx }] } : {}]} />
                 </View>
               ),
@@ -89,6 +90,7 @@ const styles = StyleSheet.create({
   largeText: {
     fontSize: 16,
     fontWeight: '300',
+    lineHeight: 18
   },
 });
 

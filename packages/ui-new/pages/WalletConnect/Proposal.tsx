@@ -79,7 +79,7 @@ export default function WalletConnectProposal() {
               <View>
                 <Text style={[styles.label, { color: colors.textSecondary }]}>{t('wc.proposal.accountSelected')}</Text>
                 <View style={[styles.account, { borderColor: colors.borderFourth }]}>
-                  <Text style={[styles.textStrong, { color: colors.textPrimary }]}>
+                  <Text style={[styles.textStrong, { color: colors.textPrimary, marginRight: 4 }]}>
                     {currentAccount?.nickname}
                     {`(${shortenAddress(currentAddressValue)})`}
                   </Text>
@@ -129,6 +129,7 @@ const styles = StyleSheet.create({
   textStrong: {
     fontSize: 16,
     fontWeight: '600',
+    lineHeight: 18,
   },
   name: {
     marginTop: 16,

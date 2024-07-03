@@ -68,8 +68,8 @@ export class Network extends Model {
   @writer async removeEndpoint(targetEndpoint: string) {
     const endPointInList = this.endpointsList?.find((endpoint) => endpoint.endpoint === targetEndpoint);
 
-    if (!endPointInList || endPointInList.type === 'inner') {
-      // can not remove endpoint not in list
+    if (!endPointInList || endPointInList.type === 'inner' || this.endpoint === targetEndpoint) {
+      // can not remove endpoint not in list or it is current endpoint or endpoint it is inner
       return false;
     }
 
