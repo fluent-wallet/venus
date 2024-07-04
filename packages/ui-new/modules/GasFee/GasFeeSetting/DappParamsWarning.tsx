@@ -1,4 +1,4 @@
-import BottomSheet, { type BottomSheetMethods } from '@components/BottomSheet';
+import BottomSheet, { BottomSheetWrapper, BottomSheetHeader, BottomSheetContent, BottomSheetFooter, type BottomSheetMethods } from '@components/BottomSheet';
 import Button from '@components/Button';
 import Text from '@components/Text';
 import { useTheme } from '@react-navigation/native';
@@ -19,30 +19,35 @@ const DappParamsWarning: React.FC<Props> = ({ onClose, onPressUse }) => {
   const bottomSheetRef = useRef<BottomSheetMethods>(null!);
 
   return (
-    <BottomSheet ref={bottomSheetRef} snapPoints={snapPoints} style={styles.container} index={0} onClose={onClose}>
-      <Text style={[styles.title, { color: colors.textPrimary }]}>Tips</Text>
-      <Text style={[styles2.text, { color: colors.textPrimary }]}>The gas parameters used by the DApp may cause the transaction to fail.</Text>
+    <BottomSheet ref={bottomSheetRef} snapPoints={snapPoints} index={0} onClose={onClose}>
+      <BottomSheetWrapper innerPaddingHorizontal>
+        <BottomSheetHeader title="Tips" />
+        <BottomSheetContent>
+          <Text style={[styles2.text, { color: colors.textPrimary }]}>The gas parameters used by the DApp may cause the transaction to fail.</Text>
 
-      <Text style={[styles2.text, { color: colors.textPrimary }]}>
-        Whether to use the <Text style={{ color: colors.up, fontWeight: '600' }}>gas parameters</Text> recommended by BIM Wallet Wallet?
-      </Text>
-
-      <View style={[styles.btnArea, styles2.btnArea]}>
-        <Button
-          testID="cancel"
-          style={styles.btn}
-          size="small"
-          onPress={() => {
-            onPressUse();
-            bottomSheetRef.current?.close();
-          }}
-        >
-          Use
-        </Button>
-        <Button testID="confirm" style={styles.btn} size="small" onPress={() => bottomSheetRef.current?.close()}>
-          Dismiss
-        </Button>
-      </View>
+          <Text style={[styles2.text, { color: colors.textPrimary }]}>
+            Whether to use the <Text style={{ color: colors.up, fontWeight: '600' }}>gas parameters</Text> recommended by BIM Wallet Wallet?
+          </Text>
+        </BottomSheetContent>
+        <BottomSheetFooter>
+          <View style={[styles.btnArea, styles2.btnArea]}>
+            <Button
+              testID="cancel"
+              style={styles.btn}
+              size="small"
+              onPress={() => {
+                onPressUse();
+                bottomSheetRef.current?.close();
+              }}
+            >
+              Use
+            </Button>
+            <Button testID="confirm" style={styles.btn} size="small" onPress={() => bottomSheetRef.current?.close()}>
+              Dismiss
+            </Button>
+          </View>
+        </BottomSheetFooter>
+      </BottomSheetWrapper>
     </BottomSheet>
   );
 };

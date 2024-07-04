@@ -1,6 +1,6 @@
 import Failed from '@assets/icons/message-fail.svg';
 import Warning from '@assets/icons/warn.svg';
-import BottomSheet, { type BottomSheetMethods } from '@components/BottomSheet';
+import BottomSheet, { BottomSheetWrapper, BottomSheetHeader, BottomSheetContent, BottomSheetFooter, type BottomSheetMethods } from '@components/BottomSheet';
 import Button from '@components/Button';
 import Text from '@components/Text';
 import _TextInput from '@components/TextInput';
@@ -77,7 +77,7 @@ const CustomizeGasSetting: React.FC<Props> = ({ customizeGasSetting, defaultMaxP
         ? { maxFeePerGas: new Decimal(customizeGasSetting.suggestedMaxFeePerGas ?? 0).div(Gwei).toString() }
         : null),
       ...(customizeGasSetting.suggestedMaxPriorityFeePerGas
-        ? { maxPriorityFeePerGas: new Decimal(defaultMaxPriorityFeePerGas ?? '0').div(Gwei).toString() }
+        ? { maxPriorityFeePerGas: new Decimal(defaultMaxPriorityFeePerGas ?? 0).div(Gwei).toString() }
         : null),
     },
   });
@@ -131,76 +131,80 @@ const CustomizeGasSetting: React.FC<Props> = ({ customizeGasSetting, defaultMaxP
     <BottomSheet
       ref={bottomSheetRef}
       snapPoints={customizeGasSetting.suggestedMaxFeePerGas ? (!force155 ? snapPoints1559 : snapPoints155) : snapPoints155}
-      style={styles.container}
       index={0}
       onClose={onClose}
     >
-      <Text style={[styles.title, { color: colors.textPrimary }]}>Customize Gas</Text>
-
-      {customizeGasSetting.suggestedGasPrice && (
-        <>
-          <Text style={[styles.inputTitle, { color: colors.textSecondary }]}>
-            Gas price (Current: <Text style={{ fontWeight: '600', color: colors.textPrimary }}>{currentPriceGwei}</Text> Gwei)
-          </Text>
-          <Controller
-            control={control}
-            rules={{
-              ...controlRule,
-              validate: (newGasPrice) => new Decimal(newGasPrice ?? '0').mul(Gwei).greaterThanOrEqualTo(new Decimal(minGasPrice)) || 'less-than-min',
-            }}
-            render={({ field: { onChange, onBlur, value } }) => (
-              <TextInput error={!!errors?.gasPrice} colors={colors} onBlur={onBlur} onChangeText={onChange} value={value} />
-            )}
-            name="gasPrice"
-          />
-          {errors?.gasPrice?.type === 'validate' && LessThanMinTip}
-          {!errors?.gasPrice && isPriceLowerThanCurrent && LowerTip}
-        </>
-      )}
-
-      {customizeGasSetting.suggestedMaxFeePerGas && (
-        <>
-          <Text style={[styles.inputTitle, { color: colors.textSecondary }]}>
-            {!force155 ? 'Max base fee' : 'Gas price'} (Current: <Text style={{ fontWeight: '600', color: colors.textPrimary }}>{currentPriceGwei}</Text> Gwei)
-          </Text>
-          <Controller
-            control={control}
-            rules={{
-              ...controlRule,
-              validate: (newMaxFeePerGas) => new Decimal(newMaxFeePerGas ?? '0').mul(Gwei).greaterThanOrEqualTo(minGasPrice) || 'less-than-min',
-            }}
-            render={({ field: { onChange, onBlur, value } }) => (
-              <TextInput error={!!errors?.maxFeePerGas} colors={colors} onBlur={onBlur} onChangeText={onChange} value={value} />
-            )}
-            name="maxFeePerGas"
-          />
-          {errors?.maxFeePerGas?.type === 'validate' && LessThanMinTip}
-          {!errors?.maxFeePerGas && isPriceLowerThanCurrent && LowerTip}
-
-          {!force155 && (
+      <BottomSheetWrapper innerPaddingHorizontal>
+        <BottomSheetHeader title="Customize Gas" />
+        <BottomSheetContent style={styles.contentStyle}>
+          {customizeGasSetting.suggestedGasPrice && (
             <>
-              <Text style={[styles.inputTitle, { color: colors.textSecondary }]}>Priority fee</Text>
+              <Text style={[styles.inputTitle, { color: colors.textSecondary }]}>
+                Gas price (Current: <Text style={{ fontWeight: '600', color: colors.textPrimary }}>{currentPriceGwei}</Text> Gwei)
+              </Text>
               <Controller
                 control={control}
-                rules={controlRule}
+                rules={{
+                  ...controlRule,
+                  validate: (newGasPrice) => new Decimal(newGasPrice ?? '0').mul(Gwei).greaterThanOrEqualTo(new Decimal(minGasPrice)) || 'less-than-min',
+                }}
                 render={({ field: { onChange, onBlur, value } }) => (
-                  <TextInput error={!!errors?.maxPriorityFeePerGas} colors={colors} onBlur={onBlur} onChangeText={onChange} value={value} />
+                  <TextInput error={!!errors?.gasPrice} colors={colors} onBlur={onBlur} onChangeText={onChange} value={value} />
                 )}
-                name="maxPriorityFeePerGas"
+                name="gasPrice"
               />
+              {errors?.gasPrice?.type === 'validate' && LessThanMinTip}
+              {!errors?.gasPrice && isPriceLowerThanCurrent && LowerTip}
             </>
           )}
-        </>
-      )}
 
-      <View style={styles.btnArea}>
-        <Button testID="cancel" style={styles.btn} size="small" onPress={() => bottomSheetRef.current?.close()}>
-          {t('common.cancel')}
-        </Button>
-        <Button testID="confirm" style={styles.btn} size="small" onPress={handleSubmit(handleConfirm)}>
-          {t('common.confirm')}
-        </Button>
-      </View>
+          {customizeGasSetting.suggestedMaxFeePerGas && (
+            <>
+              <Text style={[styles.inputTitle, { color: colors.textSecondary }]}>
+                {!force155 ? 'Max base fee' : 'Gas price'} (Current: <Text style={{ fontWeight: '600', color: colors.textPrimary }}>{currentPriceGwei}</Text>{' '}
+                Gwei)
+              </Text>
+              <Controller
+                control={control}
+                rules={{
+                  ...controlRule,
+                  validate: (newMaxFeePerGas) => new Decimal(newMaxFeePerGas ?? '0').mul(Gwei).greaterThanOrEqualTo(minGasPrice) || 'less-than-min',
+                }}
+                render={({ field: { onChange, onBlur, value } }) => (
+                  <TextInput error={!!errors?.maxFeePerGas} colors={colors} onBlur={onBlur} onChangeText={onChange} value={value} />
+                )}
+                name="maxFeePerGas"
+              />
+              {errors?.maxFeePerGas?.type === 'validate' && LessThanMinTip}
+              {!errors?.maxFeePerGas && isPriceLowerThanCurrent && LowerTip}
+
+              {!force155 && (
+                <>
+                  <Text style={[styles.inputTitle, { color: colors.textSecondary }]}>Priority fee</Text>
+                  <Controller
+                    control={control}
+                    rules={controlRule}
+                    render={({ field: { onChange, onBlur, value } }) => (
+                      <TextInput error={!!errors?.maxPriorityFeePerGas} colors={colors} onBlur={onBlur} onChangeText={onChange} value={value} />
+                    )}
+                    name="maxPriorityFeePerGas"
+                  />
+                </>
+              )}
+            </>
+          )}
+        </BottomSheetContent>
+        <BottomSheetFooter>
+          <View style={styles.btnArea}>
+            <Button testID="cancel" style={styles.btn} size="small" onPress={() => bottomSheetRef.current?.close()}>
+              {t('common.cancel')}
+            </Button>
+            <Button testID="confirm" style={styles.btn} size="small" onPress={handleSubmit(handleConfirm)}>
+              {t('common.confirm')}
+            </Button>
+          </View>
+        </BottomSheetFooter>
+      </BottomSheetWrapper>
     </BottomSheet>
   );
 };
@@ -209,17 +213,8 @@ const snapPoints1559 = [420];
 const snapPoints155 = [368];
 
 export const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    paddingHorizontal: 16,
-  },
-  title: {
-    marginTop: 8,
-    marginBottom: 20,
-    lineHeight: 20,
-    textAlign: 'center',
-    fontSize: 16,
-    fontWeight: '600',
+  contentStyle: {
+    paddingTop: 14,
   },
   inputTitle: {
     fontSize: 14,
@@ -254,7 +249,6 @@ export const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     gap: 16,
-    marginTop: 16,
   },
   btn: {
     width: '50%',
