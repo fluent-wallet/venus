@@ -25,10 +25,10 @@ const AssetInfo: React.FC<{
   value: string | null | undefined;
   tokenId: string;
   txStatus: ReturnType<typeof formatStatus>;
-  sign?: '+' | '-' | false;
-}> = ({ asset, value, tokenId, txStatus, sign = false }) => {
+  sign?: '+' | '-';
+}> = ({ asset, value, tokenId, txStatus, sign }) => {
   const { colors } = useTheme();
-  const decimals = asset?.decimals ?? 18;
+  const decimals = asset?.decimals ?? 0;
   const formatBalance = useFormatBalance(value, decimals);
   return (
     <View style={styles.assetWrapper}>
@@ -37,8 +37,11 @@ const AssetInfo: React.FC<{
       ) : (
         <NFTIcon source={asset?.icon} style={[styles.assetIcon, { borderRadius: 2 }]} />
       )}
+      <Text style={[styles.assetText, { color: txStatus === 'failed' ? colors.textSecondary : colors.textPrimary, flex: 1 }]} numberOfLines={1}>
+        {sign} {formatBalance}
+      </Text>
       <Text style={[styles.assetText, { color: txStatus === 'failed' ? colors.textSecondary : colors.textPrimary }]}>
-        {sign} {formatBalance} {asset?.symbol}
+        {asset?.symbol}
         {tokenId && <>&nbsp;#{tokenId}</>}
       </Text>
     </View>
@@ -127,11 +130,11 @@ const styles = StyleSheet.create({
   assetIcon: {
     width: 20,
     height: 20,
-    marginRight: 4,
   },
   assetText: {
     fontSize: 12,
     fontWeight: '300',
+    marginLeft: 4,
   },
 });
 
