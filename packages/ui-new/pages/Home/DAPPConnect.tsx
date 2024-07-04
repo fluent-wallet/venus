@@ -90,7 +90,7 @@ const styles = StyleSheet.create({
   largeText: {
     fontSize: 16,
     fontWeight: '300',
-    lineHeight: 18
+    lineHeight: 18,
   },
 });
 
