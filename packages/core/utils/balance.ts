@@ -50,50 +50,61 @@ export const truncate = (number: string | number, decimals = 6) => {
   return truncatedString;
 };
 
-export function numAbbreviation(num: number | string, options: { truncateLength?: number } = {}): string {
-  const { truncateLength } = options;
+export function numAbbreviation(
+  num: number | string | bigint,
+  options: { truncateLength?: number; toPrecision?: number; toExpPos?: number; precision?: number } = {},
+): string {
+  const { truncateLength, toExpPos, toPrecision, precision } = options;
   const carry = 3;
   const abbreviations = ['', '', 'M', 'B']; // 单位缩写
   // const carry = 6;
   // const abbreviations = ['', 'M', 'B']; // 单位缩写
-  const numString = typeof num === 'number' ? num.toString() : num;
+  const numString = num.toString();
 
-  const floatValue = Number.parseFloat(numString);
-  if (Number.isNaN(floatValue)) {
-    return '';
+  const value = new Decimal(numString);
+
+  const defaultExpPos = Decimal.toExpPos;
+  const defaultPrecision = Decimal.precision;
+
+  if (precision) {
+    Decimal.set({
+      precision,
+    });
   }
 
-  const absoluteValue = Math.abs(floatValue);
-  // console.log(absoluteValue);
-  if (absoluteValue === 0) {
+  if (toExpPos) {
+    Decimal.set({
+      toExpPos,
+    });
+  }
+
+  if (value.isZero()) {
     return '0';
   }
 
-  // if (truncateLength) {
-  //   // check is less minimum value
-  //   const miniValue = 1 / Math.pow(10, truncateLength);
-  //   if (absoluteValue < miniValue) {
-  //     return `<${miniValue}`;
-  //   }
-  // }
-
-  if (absoluteValue < Math.pow(10, carry + 3)) {
+  if (value.lessThan(new Decimal(10).pow(carry + 3))) {
     // less than 1_000_000 (1M)
-    if (truncateLength && new Decimal(numString).greaterThan(new Decimal(10).pow(-truncateLength))) {
+
+    if (truncateLength && value.greaterThan(new Decimal(10).pow(-truncateLength))) {
       return truncate(numString, truncateLength);
-    } else {
-      return numString;
     }
+    return numString;
   }
+  const sign = value.isNegative() ? '-' : '';
+  const absoluteValue = value.abs();
+  let abbreviationIndex = Decimal.floor(absoluteValue.logarithm(10).div(carry));
 
-  const sign = floatValue >= 0 ? '' : '-';
+  // let abbreviationIndex = Math.floor(Math.log10(absoluteValue) / carry);
+  abbreviationIndex = Decimal.max(0, Decimal.min(abbreviationIndex, abbreviations.length - 1));
+  // abbreviationIndex = Math.max(0, Math.min(abbreviationIndex, abbreviations.length - 1));
+  // const formattedNumber = absoluteValue / Math.pow(10, abbreviationIndex * carry);
+  const formattedNumber = absoluteValue.div(new Decimal(10).pow(abbreviationIndex.times(carry)));
 
-  let abbreviationIndex = Math.floor(Math.log10(absoluteValue) / carry);
-  abbreviationIndex = Math.max(0, Math.min(abbreviationIndex, abbreviations.length - 1));
+  const result = `${sign}${truncateLength ? truncate(formattedNumber.toPrecision(toPrecision || undefined), options.truncateLength) : formattedNumber.toPrecision(toPrecision || undefined)}${abbreviations[abbreviationIndex.toNumber()]}`;
 
-  const formattedNumber = absoluteValue / Math.pow(10, abbreviationIndex * carry);
+  Decimal.set({ toExpPos: defaultExpPos, precision: defaultPrecision });
 
-  return `${sign}${truncateLength ? truncate(formattedNumber, options.truncateLength) : formattedNumber}${abbreviations[abbreviationIndex]}`;
+  return result;
 }
 
 const ten = new Decimal(10);

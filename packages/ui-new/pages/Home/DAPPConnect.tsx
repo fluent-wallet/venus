@@ -50,7 +50,7 @@ function DAPPConnect() {
             </View>
           ) : (
             <View style={[styles.content, { paddingRight: 24 }]}>
-              <Text style={{ color: colors.textPrimary }}>{t('wc.dapp.connectTo')}</Text>
+              <Text style={[styles.baseSize, { color: colors.textPrimary }]}>{t('wc.dapp.connectTo')}</Text>
 
               <Text style={[styles.largeText, { color: hasUnsafeURL ? colors.down : colors.up, flex: 1, flexGrow: 1 }]} numberOfLines={1}>
                 {sessions[0]?.peer?.metadata?.url}
@@ -87,10 +87,15 @@ const styles = StyleSheet.create({
     display: 'flex',
     flexDirection: 'row',
   },
+  baseSize: {
+    fontSize: 14,
+    fontWeight: '300',
+    lineHeight: 16,
+  },
   largeText: {
     fontSize: 16,
     fontWeight: '300',
-    lineHeight: 18
+    lineHeight: 18,
   },
 });
 
