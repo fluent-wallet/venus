@@ -149,7 +149,6 @@ export default function EditAllowance({ parseData, savedValue, onSave, onClose }
               )}
             </View>
           </View>
-          
         </BottomSheetScrollContent>
         <BottomSheetFooter>
           <View style={transactionConfirmStyle.btnArea}>
