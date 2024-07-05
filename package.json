@@ -1,6 +1,6 @@
 {
   "name": "venus",
-  "version": "0.0.5",
+  "version": "0.0.6",
   "private": true,
   "scripts": {
     "prepare": "husky",
@@ -25,7 +25,7 @@
     "@ethersproject/abi": "^5.7.0",
     "@ethersproject/hdnode": "^5.7.0",
     "@ethersproject/shims": "^5.7.0",
-    "@gorhom/bottom-sheet": "^5.0.0-alpha.9",
+    "@gorhom/bottom-sheet": "^5.0.0-alpha.10",
     "@json-rpc-tools/utils": "^1.7.6",
     "@metamask/gas-fee-controller": "15.0.0",
     "@noble/secp256k1": "^2.1.0",
@@ -39,6 +39,7 @@
     "@walletconnect/web3wallet": "^1.11.2",
     "bip39": "^3.1.0",
     "clsx": "^2.1.0",
+    "dayjs": "^1.11.11",
     "decimal.js": "^10.4.3",
     "ethers": "^6.10.0",
     "expo": "^50.0.15",
@@ -79,7 +80,7 @@
     "react-native-screens": "~3.29.0",
     "react-native-screenshot-prevent": "^1.1.9",
     "react-native-svg": "14.1.0",
-    "react-native-vision-camera": "^3.9.2",
+    "react-native-vision-camera": "^4.4.1",
     "reflect-metadata": "^0.2.1",
     "semver": "^7.6.2",
     "stream-browserify": "^3.0.0"

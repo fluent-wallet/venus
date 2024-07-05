@@ -10,7 +10,7 @@ import BottomSheet_, {
   type BottomSheetProps,
 } from '@gorhom/bottom-sheet';
 import composeRef from '@cfx-kit/react-utils/dist/composeRef';
-import { screenHeight, isAdjustResize } from '@utils/deviceInfo';
+import { screenHeight, isAdjustResize, isSamsungDevice } from '@utils/deviceInfo';
 import Text from '@components/Text';
 export * from '@gorhom/bottom-sheet';
 export { default as BottomSheetMethods } from '@gorhom/bottom-sheet';
@@ -102,11 +102,14 @@ const BottomSheet = forwardRef<BottomSheet_, Props>(
 
     useEffect(() => {
       if (isRoute) {
-        timeRef.current = setTimeout(() => {
-          if (navigation.canGoBack()) {
-            navigation.goBack();
-          }
-        }, 666);
+        timeRef.current = setTimeout(
+          () => {
+            if (navigation.canGoBack()) {
+              navigation.goBack();
+            }
+          },
+          isSamsungDevice ? 1666 : 1000,
+        );
       }
       return () => {
         timeRef.current && clearTimeout(timeRef.current);

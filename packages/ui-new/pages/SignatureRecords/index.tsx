@@ -3,7 +3,6 @@ import Delay from '@components/Delay';
 import Text from '@components/Text';
 import { useCurrentAddress } from '@core/WalletCore/Plugins/ReactInject';
 import { fetchSignatureRecords, useSignatureRecords } from '@core/WalletCore/Plugins/ReactInject/data/useSignature';
-import type { Signature } from '@core/database/models/Signature';
 import { SignatureFilterOption } from '@core/database/models/Signature/type';
 import { useTheme } from '@react-navigation/native';
 import type { SignatureRecordsStackName, StackScreenProps } from '@router/configs';
@@ -14,15 +13,7 @@ import { useTranslation } from 'react-i18next';
 import { FlatList, StyleSheet, View } from 'react-native';
 import TypeFilter from './TypeFilter';
 import { Image } from 'expo-image';
-
-export const SignatureItem: React.FC<{ item: Signature }> = ({ item }) => {
-  const { colors } = useTheme();
-  return (
-    <View style={[styles.item, { borderColor: colors.borderThird }]}>
-      <Text style={[styles.itemText, { color: colors.textPrimary }]}>{item.message}</Text>
-    </View>
-  );
-};
+import { SignatureItem } from './SignatureItem';
 
 const DEFAULT_PAGE_SIZE = ENABLE_SMALL_SIGNATURE_RECORDS_FEATURE.allow ? 10 : 100;
 
@@ -122,20 +113,6 @@ export const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-  },
-  item: {
-    display: 'flex',
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: 32,
-    borderRadius: 6,
-    borderWidth: 1,
-    height: 90,
-  },
-  itemText: {
-    fontSize: 16,
-    fontWeight: '300',
   },
   empty: {
     display: 'flex',

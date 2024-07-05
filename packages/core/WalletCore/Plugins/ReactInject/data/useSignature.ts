@@ -53,3 +53,9 @@ export const fetchSignatureRecords = async (
   });
   return data;
 };
+
+const appAtomFamilyOfSignature = atomFamily((s: Signature) => atomWithObservable(() => s.observeApp(), { initialValue: null }));
+export const useAppOfSignature = (s: Signature) => useAtomValue(appAtomFamilyOfSignature(s));
+
+const txAtomFamilyOfSignature = atomFamily((s: Signature) => atomWithObservable(() => s.observeTx(), { initialValue: null }));
+export const useTxOfSignature = (s: Signature) => useAtomValue(txAtomFamilyOfSignature(s));
