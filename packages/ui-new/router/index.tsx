@@ -26,6 +26,7 @@ import WayToInitWallet from '@pages/WayToInitWallet';
 import Welcome from '@pages/Welcome';
 import NetworkManagement from '@pages/Management/NetworkManagement';
 import NetworkAddNewEndpoint from '@pages/Management/NetworkManagement/AddNewEndpoint';
+import SpeedUp from '@modules/GasFee/SpeedUp';
 import { useNavigation, useTheme } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import type React from 'react';
@@ -62,6 +63,7 @@ import {
   WelcomeStackName,
   NetworkManagementStackName,
   NetworkAddNewEndpointStackName,
+  SpeedUpStackName,
 } from './configs';
 
 const RootStack = createNativeStackNavigator<RootStackParamList>();
@@ -121,6 +123,7 @@ const Router: React.FC = () => {
         <RootStack.Screen name={LanguageStackName} component={Language} options={SheetBottomOption} />
         <RootStack.Screen name={WalletConnectStackName} component={WalletConnect} options={SheetBottomOption} />
         <RootStack.Screen name={SignatureRecordsStackName} component={SignatureRecords} />
+        <RootStack.Screen name={SpeedUpStackName} component={SpeedUp} options={SheetBottomOption} />
       </RootStack.Navigator>
     </View>
   );

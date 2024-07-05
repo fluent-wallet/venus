@@ -3,6 +3,7 @@ import HourglassLoading from '@components/Loading/Hourglass';
 import Text from '@components/Text';
 import { useCurrentNetworkNativeAsset } from '@core/WalletCore/Plugins/ReactInject';
 import TokenIcon from '@modules/AssetsList/TokensList/TokenIcon';
+import { GAS_FEE_FEATURE } from '@utils/features';
 import { useTheme } from '@react-navigation/native';
 import Decimal from 'decimal.js';
 import type React from 'react';
@@ -49,10 +50,12 @@ const EstimateFee: React.FC<{ gasSetting?: GasSettingWithLevel | null; advanceSe
       )}
       {!gasCostAndPriceInUSDT && <HourglassLoading style={{ width: 20, height: 20 }} />}
 
-      {/* <Pressable style={styles.gasSettingWrapper} onPress={onPressSettingIcon}>
-        {gasSetting && <OptionLevel level={gasSetting.level} />}
-        <SettingsIcon color={colors.textSecondary} />
-      </Pressable> */}
+      {GAS_FEE_FEATURE.allow && (
+        <Pressable style={styles.gasSettingWrapper} onPress={onPressSettingIcon}>
+          {gasSetting && <OptionLevel level={gasSetting.level} />}
+          <SettingsIcon color={colors.textSecondary} />
+        </Pressable>
+      )}
     </View>
   );
 };

@@ -50,3 +50,13 @@ export const NETWORK_MANAGEMENT_FEATURE = {
   describe: 'network management feature',
   allow: isDev,
 };
+
+export const GAS_FEE_FEATURE = {
+  describe: 'Gas fee setting feature',
+  allow: isDev,
+};
+
+export const SPEED_UP_FEATURE = {
+  describe: 'speed up',
+  allow: isDev,
+};
