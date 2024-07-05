@@ -323,6 +323,7 @@ function WalletConnectTransaction() {
   }, []);
 
   const { inAsync: rejectLoading, execAsync: handleReject } = useInAsync(_handleReject);
+
   const { inAsync: approveLoading, execAsync: handleApprove } = useInAsync(_handleApprove);
 
   return (
