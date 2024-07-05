@@ -25,7 +25,7 @@
     "@ethersproject/abi": "^5.7.0",
     "@ethersproject/hdnode": "^5.7.0",
     "@ethersproject/shims": "^5.7.0",
-    "@gorhom/bottom-sheet": "^5.0.0-alpha.9",
+    "@gorhom/bottom-sheet": "^5.0.0-alpha.10",
     "@json-rpc-tools/utils": "^1.7.6",
     "@metamask/gas-fee-controller": "15.0.0",
     "@noble/secp256k1": "^2.1.0",
