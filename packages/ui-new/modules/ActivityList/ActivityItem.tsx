@@ -105,15 +105,17 @@ const ActivityItem: React.FC<Props> = ({ onPress, tx }) => {
 
       {isPending && (
         <View style={styles.btnArea}>
-          <Pressable style={({ pressed }) => [styles.btn, { backgroundColor: pressed ? colors.underlay : 'transparent', borderColor: colors.borderPrimary }]}>
-            <Text style={[styles.btnText, { color: colors.textPrimary }]} onPress={handlePressCancel}>
-              {t('common.cancel')}
-            </Text>
+          <Pressable
+            style={({ pressed }) => [styles.btn, { backgroundColor: pressed ? colors.underlay : 'transparent', borderColor: colors.borderPrimary }]}
+            onPress={handlePressCancel}
+          >
+            <Text style={[styles.btnText, { color: colors.textPrimary }]}>{t('common.cancel')}</Text>
           </Pressable>
-          <Pressable style={({ pressed }) => [styles.btn, { backgroundColor: pressed ? colors.underlay : 'transparent', borderColor: colors.borderPrimary }]}>
-            <Text style={[styles.btnText, { color: colors.textPrimary }]} onPress={handlePressSpeedUp}>
-              Speed Up
-            </Text>
+          <Pressable
+            style={({ pressed }) => [styles.btn, { backgroundColor: pressed ? colors.underlay : 'transparent', borderColor: colors.borderPrimary }]}
+            onPress={handlePressSpeedUp}
+          >
+            <Text style={[styles.btnText, { color: colors.textPrimary }]}>Speed Up</Text>
             <RocketIcon style={styles.rocket} />
           </Pressable>
         </View>
