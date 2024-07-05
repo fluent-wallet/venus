@@ -2,7 +2,6 @@ import plugins from '@core/WalletCore/Plugins';
 import { useCurrentNetwork } from '@core/WalletCore/Plugins/ReactInject';
 import { clampGasPrice } from '@core/WalletCore/Plugins/Transaction/SuggestedGasEstimate';
 import type { ITxEvm } from '@core/WalletCore/Plugins/Transaction/types';
-import { notNull } from '@core/utils/rxjs';
 import Decimal from 'decimal.js';
 import { isEqual } from 'lodash-es';
 import { useEffect, useState } from 'react';
@@ -22,7 +21,7 @@ const usePollingGasEstimateAndNonce = (tx: Partial<ITxEvm>) => {
       .pipe(
         startWith(0),
         map(() => currentNetwork),
-        filter(notNull),
+        filter((v) => v !== null),
         switchMap((net) => {
           return Promise.all([
             plugins.Transaction.estimate({

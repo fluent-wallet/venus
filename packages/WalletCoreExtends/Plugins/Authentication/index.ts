@@ -55,10 +55,9 @@ class AuthenticationPluginClass implements Plugin {
     };
     getSettleAuthentication();
   }
-  private notNull = <T>(value: T | null): value is T => value !== null;
 
   public subPasswordRequest() {
-    return this.passwordRequestSubject.pipe(filter(this.notNull));
+    return this.passwordRequestSubject.pipe(filter((v) => v !== null));
   }
   public clearPasswordRequest() {
     this.passwordRequestSubject.next(null);

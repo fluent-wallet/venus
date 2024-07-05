@@ -28,4 +28,4 @@ export interface TransactionSubjectValue {
 
 export const broadcastTransactionSubjectPush = new BehaviorSubject<TransactionSubjectValue | null>(null);
 
-export const broadcastTransactionSubject = broadcastTransactionSubjectPush.pipe(filter(notNull));
+export const broadcastTransactionSubject = broadcastTransactionSubjectPush.pipe(filter((v) => v !== null));
