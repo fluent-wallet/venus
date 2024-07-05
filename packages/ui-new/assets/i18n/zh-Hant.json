@@ -105,6 +105,9 @@
     "account" : "賬戶",
     "add" : "添加",
     "amount" : "數量",
+    "approve" : {
+      "unlimited" : "Unlimited"
+    },
     "backup" : "備份",
     "balance" : "餘額",
     "cancel" : "取消",

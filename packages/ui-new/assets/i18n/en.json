@@ -105,6 +105,9 @@
     "account" : "Account",
     "add" : "Add",
     "amount" : "Amount",
+    "approve" : {
+      "unlimited" : "Unlimited"
+    },
     "backup" : "Backup",
     "balance" : "Balance",
     "cancel" : "Cancel",

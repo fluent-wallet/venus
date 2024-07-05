@@ -4,6 +4,7 @@ import type { Asset } from '@core/database/models/Asset';
 import type { Tx } from '@core/database/models/Tx';
 import { TxSource } from '@core/database/models/Tx/type';
 import { shortenAddress } from '@core/utils/address';
+import { maxUint256 } from '@core/utils/number';
 import { formatStatus, formatTxData } from '@core/utils/tx';
 import useFormatBalance from '@hooks/useFormatBalance';
 import NFTIcon from '@modules/AssetsList/NFTsList/NFTIcon';
@@ -26,12 +27,15 @@ const AssetInfo: React.FC<{
   asset?: Asset | null;
   value: string | null | undefined;
   tokenId: string;
+  method: string;
   txStatus: ReturnType<typeof formatStatus>;
   sign?: '+' | '-';
-}> = ({ asset, value, tokenId, txStatus, sign }) => {
+}> = ({ asset, value, tokenId, txStatus, sign, method }) => {
+  const { t } = useTranslation();
   const { colors } = useTheme();
   const decimals = asset?.decimals ?? 0;
   const formatBalance = useFormatBalance(value, decimals);
+  const isUnlimited = method === 'approve' && BigInt(value ?? 0) === maxUint256;
   return (
     <View style={styles.assetWrapper}>
       {asset?.type === AssetType.ERC20 || asset?.type === AssetType.Native ? (
@@ -39,8 +43,8 @@ const AssetInfo: React.FC<{
       ) : (
         <NFTIcon source={asset?.icon} style={[styles.assetIcon, { borderRadius: 2 }]} />
       )}
-      <Text style={[styles.assetText, { color: txStatus === 'failed' ? colors.textSecondary : colors.textPrimary, flex: 1 }]} numberOfLines={1}>
-        {sign} {formatBalance}
+      <Text style={[styles.assetText, { color: txStatus === 'failed' ? colors.textSecondary : colors.textPrimary }]} numberOfLines={1}>
+        {sign} {isUnlimited ? t('common.approve.unlimited') : formatBalance}
       </Text>
       <Text style={[styles.assetText, { color: txStatus === 'failed' ? colors.textSecondary : colors.textPrimary }]}>
         {asset?.symbol}
@@ -96,8 +100,8 @@ const ActivityItem: React.FC<Props> = ({ onPress, tx }) => {
 
         {to && <Text style={[styles.address, { color: colors.textSecondary }]}>To {shortenAddress(to)}</Text>}
       </View>
-      {tx.source === TxSource.SELF && <AssetInfo asset={asset} value={value} tokenId={tokenId} txStatus={status} sign="-" />}
-      {method === 'approve' && <AssetInfo asset={asset} value={value} tokenId={tokenId} txStatus={status} />}
+      {tx.source === TxSource.SELF && <AssetInfo asset={asset} value={value} tokenId={tokenId} txStatus={status} sign="-" method={method} />}
+      {method === 'approve' && <AssetInfo asset={asset} value={value} tokenId={tokenId} txStatus={status} method={method} />}
 
       {isPending && (
         <View style={styles.btnArea}>
@@ -164,6 +168,7 @@ const styles = StyleSheet.create({
     display: 'flex',
     flexDirection: 'row',
     alignItems: 'center',
+    paddingRight: 100,
   },
   assetIcon: {
     width: 20,
