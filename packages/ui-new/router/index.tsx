@@ -64,7 +64,9 @@ import {
   NetworkManagementStackName,
   NetworkAddNewEndpointStackName,
   SpeedUpStackName,
+  TransactionDetailStackName,
 } from './configs';
+import TransactionDetail from '@pages/TransactionDetail';
 
 const RootStack = createNativeStackNavigator<RootStackParamList>();
 const screenOptions = {
@@ -124,6 +126,8 @@ const Router: React.FC = () => {
         <RootStack.Screen name={WalletConnectStackName} component={WalletConnect} options={SheetBottomOption} />
         <RootStack.Screen name={SignatureRecordsStackName} component={SignatureRecords} />
         <RootStack.Screen name={SpeedUpStackName} component={SpeedUp} options={SheetBottomOption} />
+        {/* TODO: i18n */}
+        <RootStack.Screen name={TransactionDetailStackName} component={TransactionDetail} options={{ title: 'Transaction Detail' }} />
       </RootStack.Navigator>
     </View>
   );

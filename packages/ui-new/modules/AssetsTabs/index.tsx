@@ -1,13 +1,15 @@
 import Text from '@components/Text';
 import type { AssetInfo } from '@core/WalletCore/Plugins/AssetsTracker/types';
 import { NetworkType, setAtom, useCurrentNetwork } from '@core/WalletCore/Plugins/ReactInject';
+import type { Tx } from '@core/database/models/Tx';
 import { Networks } from '@core/utils/consts';
 import ActivityList from '@modules/ActivityList';
 import NFTsList from '@modules/AssetsList/NFTsList';
 import { StickyNFTItem } from '@modules/AssetsList/NFTsList/NFTItem';
 import TokensList from '@modules/AssetsList/TokensList';
 import { useShouldShowNotBackup } from '@pages/Home/NotBackup';
-import { useTheme } from '@react-navigation/native';
+import { useNavigation, useTheme } from '@react-navigation/native';
+import { TransactionDetailStackName, type HomeStackName, type StackScreenProps } from '@router/configs';
 import { screenHeight } from '@utils/deviceInfo';
 import { atom, useAtomValue } from 'jotai';
 /* eslint-disable react-hooks/exhaustive-deps */
@@ -135,6 +137,7 @@ export const StickyNFT: React.FC<{ type: TabsType }> = ({ type }) => {
 };
 
 export const TabsContent: React.FC<Props> = ({ currentTab, setCurrentTab, pageViewRef, type, selectType, onlyToken, onPressItem }) => {
+  const navigation = useNavigation<StackScreenProps<typeof HomeStackName>['navigation']>();
   const currentNetwork = useCurrentNetwork();
   const tabs = useMemo(() => {
     const res =
@@ -153,6 +156,13 @@ export const TabsContent: React.FC<Props> = ({ currentTab, setCurrentTab, pageVi
   }, [tabs, currentTab]);
 
   const shouldShowNotBackup = useShouldShowNotBackup();
+
+  const handleTxPress = useCallback(
+    (tx: Tx) => {
+      navigation.navigate(TransactionDetailStackName, { txId: tx.id });
+    },
+    [navigation.navigate],
+  );
 
   return (
     <PagerView
@@ -175,7 +185,7 @@ export const TabsContent: React.FC<Props> = ({ currentTab, setCurrentTab, pageVi
             />
           )}
           {tab === 'NFTs' && index === currentTabIndex && <NFTsList tabsType={type} onPressItem={onPressItem} />}
-          {tab === 'Activity' && index === currentTabIndex && <ActivityList />}
+          {tab === 'Activity' && index === currentTabIndex && <ActivityList onPress={handleTxPress} />}
         </View>
       ))}
     </PagerView>
