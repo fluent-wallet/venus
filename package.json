@@ -39,6 +39,7 @@
     "@walletconnect/web3wallet": "^1.11.2",
     "bip39": "^3.1.0",
     "clsx": "^2.1.0",
+    "dayjs": "^1.11.11",
     "decimal.js": "^10.4.3",
     "ethers": "^6.10.0",
     "expo": "^50.0.15",
