@@ -30,6 +30,7 @@ export const PreferencesStackName = 'Preferences';
 export const AppearanceStackName = 'Appearance';
 export const LanguageStackName = 'Language';
 export const SignatureRecordsStackName = 'SignatureRecords';
+export const SpeedUpStackName = 'SpeedUp';
 
 // start Wallet connect nest stack
 
@@ -77,6 +78,7 @@ export type RootStackParamList = {
   [WalletConnectStackName]: NavigatorScreenParams<WalletConnectParamList>;
   [NetworkAddNewEndpointStackName]: undefined;
   [SignatureRecordsStackName]: undefined;
+  [SpeedUpStackName]: { txId: string; type: 'SpeedUp' | 'Cancel' };
 };
 
 export type StackScreenProps<T extends keyof RootStackParamList> = NativeStackScreenProps<RootStackParamList, T>;

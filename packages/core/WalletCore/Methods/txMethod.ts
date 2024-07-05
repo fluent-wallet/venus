@@ -109,16 +109,18 @@ export class TxMethod {
     const chainId = (await address?.network)?.chainId;
     const txPayload = _createTxPayload(
       {
-        type: tx.type?.toString(),
+        type: String(tx.type),
         from,
         to: tx.to,
-        gasPrice: tx.gasPrice?.toString(),
+        gasPrice: String(tx.gasPrice || ''),
+        maxFeePerGas: String(tx.maxFeePerGas || ''),
+        maxPriorityFeePerGas: String(tx.maxPriorityFeePerGas || ''),
         gas: String(tx.gasLimit),
         value: String(tx.value),
         nonce: Number(tx.nonce),
         chainId,
         data: tx.data,
-        storageLimit: tx.storageLimit,
+        storageLimit: String(tx.storageLimit || ''),
         epochHeight,
       },
       true,

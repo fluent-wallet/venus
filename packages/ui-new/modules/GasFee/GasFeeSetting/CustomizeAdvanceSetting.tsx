@@ -1,6 +1,6 @@
 import Failed from '@assets/icons/message-fail.svg';
 import Warning from '@assets/icons/message-warning.svg';
-import BottomSheet, { type BottomSheetMethods } from '@components/BottomSheet';
+import BottomSheet, { BottomSheetWrapper, BottomSheetHeader, BottomSheetContent, BottomSheetFooter, type BottomSheetMethods } from '@components/BottomSheet';
 import Button from '@components/Button';
 import Text from '@components/Text';
 import { useCurrentNetwork } from '@core/WalletCore/Plugins/ReactInject';
@@ -55,44 +55,49 @@ const CustomizeAdvanceSetting: React.FC<Props> = ({ customizeAdvanceSetting, est
   }, []);
 
   return (
-    <BottomSheet ref={bottomSheetRef} snapPoints={snapPoints} style={styles.container} index={0} onClose={onClose}>
-      <Text style={[styles.title, { color: colors.textPrimary }]}>Advance Setting</Text>
-      <Text style={[styles.inputTitle, { color: colors.textSecondary }]}>Gas Limit</Text>
-      <Controller
-        control={control}
-        rules={{ required: true, validate: (newGasLimit) => new Decimal(newGasLimit ?? '0').greaterThanOrEqualTo(minGasLimit) || 'less-than-min' }}
-        render={({ field: { onChange, onBlur, value } }) => (
-          <TextInput error={!!errors.gasLimit} colors={colors} onBlur={onBlur} onChangeText={onChange} value={value} showGweiSuffix={false} />
-        )}
-        name="gasLimit"
-      />
-      {errors.gasLimit?.type === 'validate' && (
-        <View style={styles.tooLowTipWrapper}>
-          <Failed color={colors.down} />
-          <Text style={[styles.tooLowTip, { color: colors.down }]}>
-            {currentNetwork?.name} requires a minimum gasLimit of {minGasLimit.toString()}.
-          </Text>
-        </View>
-      )}
+    <BottomSheet ref={bottomSheetRef} snapPoints={snapPoints} index={0} onClose={onClose}>
+      <BottomSheetWrapper innerPaddingHorizontal>
+        <BottomSheetHeader title="Advance Setting" />
+        <BottomSheetContent style={styles.contentStyle}>
+          <Text style={[styles.inputTitle, { color: colors.textSecondary }]}>Gas Limit</Text>
+          <Controller
+            control={control}
+            rules={{ required: true, validate: (newGasLimit) => new Decimal(newGasLimit ?? '0').greaterThanOrEqualTo(minGasLimit) || 'less-than-min' }}
+            render={({ field: { onChange, onBlur, value } }) => (
+              <TextInput error={!!errors.gasLimit} colors={colors} onBlur={onBlur} onChangeText={onChange} value={value} showGweiSuffix={false} />
+            )}
+            name="gasLimit"
+          />
+          {errors.gasLimit?.type === 'validate' && (
+            <View style={styles.tooLowTipWrapper}>
+              <Failed color={colors.down} />
+              <Text style={[styles.tooLowTip, { color: colors.down }]}>
+                {currentNetwork?.name} requires a minimum gasLimit of {minGasLimit.toString()}.
+              </Text>
+            </View>
+          )}
 
-      <Text style={[styles.inputTitle, { color: colors.textSecondary }]}>Nonce</Text>
-      <Controller
-        control={control}
-        rules={controlRule}
-        render={({ field: { onChange, onBlur, value } }) => (
-          <TextInput error={!!errors.nonce} colors={colors} onBlur={onBlur} onChangeText={onChange} value={value} showGweiSuffix={false} />
-        )}
-        name="nonce"
-      />
-
-      <View style={styles.btnArea}>
-        <Button testID="cancel" style={styles.btn} size="small" onPress={() => bottomSheetRef.current?.close()}>
-          {t('common.cancel')}
-        </Button>
-        <Button testID="confirm" style={styles.btn} size="small" onPress={handleSubmit(handleConfirm)}>
-          {t('common.confirm')}
-        </Button>
-      </View>
+          <Text style={[styles.inputTitle, { color: colors.textSecondary }]}>Nonce</Text>
+          <Controller
+            control={control}
+            rules={controlRule}
+            render={({ field: { onChange, onBlur, value } }) => (
+              <TextInput error={!!errors.nonce} colors={colors} onBlur={onBlur} onChangeText={onChange} value={value} showGweiSuffix={false} />
+            )}
+            name="nonce"
+          />
+        </BottomSheetContent>
+        <BottomSheetFooter>
+          <View style={styles.btnArea}>
+            <Button testID="cancel" style={styles.btn} size="small" onPress={() => bottomSheetRef.current?.close()}>
+              {t('common.cancel')}
+            </Button>
+            <Button testID="confirm" style={styles.btn} size="small" onPress={handleSubmit(handleConfirm)}>
+              {t('common.confirm')}
+            </Button>
+          </View>
+        </BottomSheetFooter>
+      </BottomSheetWrapper>
     </BottomSheet>
   );
 };

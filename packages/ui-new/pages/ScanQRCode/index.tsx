@@ -197,7 +197,6 @@ const ScanQrCode: React.FC<Props> = ({ navigation, onConfirm, onClose }) => {
     const result = await launchImageLibraryAsync({
       allowsEditing: true,
       allowsMultipleSelection: false,
-      aspect: [4, 3],
       quality: 1,
     });
     // check is user cancel choose image

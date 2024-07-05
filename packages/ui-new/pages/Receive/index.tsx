@@ -29,7 +29,7 @@ interface Props {
 }
 
 const Receive: React.FC<Props> = ({ navigation }) => {
-  const { colors } = useTheme();
+  const { colors, mode } = useTheme();
   const { t } = useTranslation();
   const [showSetAsset, setShowSetAsset] = useState(false);
 
@@ -70,8 +70,16 @@ const Receive: React.FC<Props> = ({ navigation }) => {
           <BottomSheetScrollContent>
             <Text style={[styles.tip, { color: colors.textPrimary }]}>{t('receive.describe', { netName: currentNetwork?.name })}</Text>
 
-            <View style={[styles.qrcodeWrapper, { backgroundColor: colors.bgSecondary, paddingBottom: selectedAsset ? 18 : 30 }]}>
-              <QRCode value={ethUrl} size={172} logo={Logo} logoSize={40} logoBackgroundColor="transparent" />
+            <View style={[styles.qrcodeWrapper, { paddingBottom: selectedAsset ? 18 : 30, borderColor: colors.borderFourth }]}>
+              <QRCode
+                value={ethUrl}
+                size={172}
+                logo={Logo}
+                logoSize={40}
+                logoBackgroundColor="transparent"
+                backgroundColor={mode === 'light' ? 'white' : 'black'}
+                color={mode === 'light' ? 'black' : 'white'}
+              />
               {selectedAsset && (
                 <>
                   <Text style={[styles.receive, { color: colors.textPrimary }]} numberOfLines={1} adjustsFontSizeToFit>
@@ -160,6 +168,7 @@ const styles = StyleSheet.create({
     width: 220,
     borderRadius: 8,
     paddingTop: 30,
+    borderWidth: 1,
   },
   receive: {
     marginTop: 16,
