@@ -43,19 +43,10 @@ const MoreOption: React.FC<{ children: React.ReactElement }> = ({ children }) =>
   });
 
   const handleOpenScan = useCallback(() => {
-    if (currentNetwork?.networkType === NetworkType.Ethereum) {
-      if (currentNetwork.chainId === Networks['Conflux eSpace'].chainId) {
-        Linking.openURL(`https://evm.confluxscan.io/address/${currentAddressValue}`);
-      } else if (currentNetwork.chainId === Networks['eSpace Testnet'].chainId) {
-        Linking.openURL(`https://evmtestnet.confluxscan.io/address/${currentAddressValue}`);
-      } else {
-        Linking.openURL(currentNetwork?.scanUrl ?? '');
-      }
-    } else {
-      Linking.openURL(currentNetwork?.scanUrl ?? '');
-    }
+    if (!currentNetwork?.scanUrl) return;
+    Linking.openURL(`${currentNetwork.scanUrl}/address/${currentAddressValue}`);
     setVisible(false);
-  }, [currentNetwork?.scanUrl, currentNetwork?.chainId, currentNetwork?.networkType, currentAddressValue]);
+  }, [currentNetwork?.scanUrl, currentAddressValue]);
 
   const handleCoy = useCallback(() => {
     Clipboard.setString(currentAddressValue ?? '');
@@ -80,12 +71,14 @@ const MoreOption: React.FC<{ children: React.ReactElement }> = ({ children }) =>
       <Modal visible={visible} onRequestClose={() => setVisible(false)} transparent animationType="none">
         <Pressable onPress={() => setVisible(!visible)} style={styles.overlay} testID="more">
           <Animated.View style={[styles.options, optionStyle, { backgroundColor: reverseColors.borderThird }]}>
-            <Pressable onPress={handleOpenScan} testID="view">
-              <View style={styles.optionItem}>
-                <Text style={[{ color: reverseColors.textPrimary }, styles.optionItemText]}>{t('home.more.viewInExplorer')}</Text>
-                <Earth color={reverseColors.textPrimary} width={22} height={22} />
-              </View>
-            </Pressable>
+            {currentNetwork?.scanUrl && (
+              <Pressable onPress={handleOpenScan} testID="view">
+                <View style={styles.optionItem}>
+                  <Text style={[{ color: reverseColors.textPrimary }, styles.optionItemText]}>{t('home.more.viewInExplorer')}</Text>
+                  <Earth color={reverseColors.textPrimary} width={22} height={22} />
+                </View>
+              </Pressable>
+            )}
             <Pressable onPress={handleCoy} testID="copy">
               <View style={styles.optionItem}>
                 <Text style={[{ color: reverseColors.textPrimary }, styles.optionItemText]}>{t('home.more.copyAddress')}</Text>
