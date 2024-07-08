@@ -14,7 +14,7 @@ const NetworkManagement = () => {
   const navigation = useNavigation<StackNavigation>();
 
   return (
-    <View>
+    <View style={[{ backgroundColor: colors.bgPrimary }]}>
       <View style={[styles.warp, { borderColor: colors.borderFourth, borderBottomWidth: 1 }]}>
         <Text style={[styles.title, { color: colors.textPrimary }]}>{t('settings.network.title')}</Text>
 
