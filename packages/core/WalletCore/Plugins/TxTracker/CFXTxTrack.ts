@@ -131,11 +131,13 @@ class CFXTxTrack extends BaseTxTrack {
             tx.status = txStatus;
             tx.executedStatus = receipt.outcomeStatus === '0x0' ? ExecutedStatus.SUCCEEDED : ExecutedStatus.FAILED;
             tx.receipt = {
+              type: receipt.type || '0x0',
               blockHash: receipt.blockHash,
               transactionIndex: receipt.index,
               blockNumber: receipt.epochNumber,
               gasUsed: receipt.gasUsed,
               gasFee: receipt.gasFee,
+              effectiveGasPrice: receipt.effectiveGasPrice,
               storageCollateralized: receipt.storageCollateralized,
               gasCoveredBySponsor: receipt.gasCoveredBySponsor,
               storageCoveredBySponsor: receipt.storageCoveredBySponsor,

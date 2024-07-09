@@ -25,17 +25,21 @@ export interface Receipt {
   gasUsed?: string | null;
   contractCreated?: string | null;
   transactionIndex?: string | null;
-  // blockNumber in evm or epochNumber in cfx
-  blockNumber?: string | null;
-  // ↓↓↓↓↓↓↓↓↓↓↓ for espace ↓↓↓↓↓↓↓↓↓↓↓
-  cumulativeGasUsed?: string | null;
   effectiveGasPrice?: string | null;
   type?: string | null;
-  // ↓↓↓↓↓↓↓↓↓↓↓ for core space ↓↓↓↓↓↓↓↓↓↓↓
+  /** blockNumber in evm or epochNumber in cfx */
+  blockNumber?: string | null;
+  /** for espace */
+  cumulativeGasUsed?: string | null;
+  /** for core space */
   gasFee?: string | null;
+  /** for core space */
   storageCollateralized?: string | null;
+  /** for core space */
   gasCoveredBySponsor?: boolean | null;
+  /** for core space */
   storageCoveredBySponsor?: boolean | null;
+  /** for core space */
   storageReleased?: {
     address: string | null;
     collaterals: string | null;
