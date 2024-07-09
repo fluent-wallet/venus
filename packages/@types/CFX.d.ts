@@ -24,7 +24,9 @@ declare namespace CFX {
   // https://doc.confluxnetwork.org/zh-CN/docs/core/build/json-rpc/cfx-namespace#cfx_gettransactionreceipt
   export interface cfx_getTransactionReceiptResponse {
     blockHash?: string | null;
+    burntGasFee?: string | null;
     contractCreated?: string | null;
+    effectiveGasPrice?: string | null;
     epochNumber?: string | null;
     from?: string | null;
     gasCoveredBySponsor?: boolean | null;
@@ -41,6 +43,7 @@ declare namespace CFX {
     to?: string | null;
     transactionHash?: string | null;
     txExecErrorMsg?: string | null;
+    type?: string | null;
   }
 
   // https://doc.confluxnetwork.org/zh-CN/docs/core/build/json-rpc/cfx-namespace#cfx_getblockbyhash
