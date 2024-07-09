@@ -72,12 +72,18 @@ const ActivityList: React.FC<{ onPress?: (v: Tx) => void }> = memo(({ onPress })
   }
 
   return (
-    <>
-      {!!unfinishedTxs?.length && unfinishedTxs.map((tx) => <ActivityItem key={(tx as Tx).id} tx={tx} onPress={onPress} />)}
+    <View style={styles.container}>
+      {!!unfinishedTxs?.length && (
+        <View style={[styles.pendingContainer, { borderColor: colors.borderFourth }]}>
+          {unfinishedTxs.map((tx) => (
+            <ActivityItem key={(tx as Tx).id} tx={tx} onPress={onPress} />
+          ))}
+        </View>
+      )}
       {finishedTxs?.length > 0 &&
-        finishedTxsByDay.map((tx) =>
+        finishedTxsByDay.map((tx, i) =>
           tx instanceof ActivityDate ? (
-            <View style={styles.dateWrapper} key={`${tx.day}${tx.month}${tx.year}`}>
+            <View style={[styles.dateWrapper, i !== 0 && { marginTop: 24 }]} key={`${tx.day}${tx.month}${tx.year}`}>
               <Calendar color={colors.textSecondary} />
               <Text style={[styles.date, { color: colors.textSecondary, borderColor: colors.borderThird }]}>
                 {MONTH_TXT[tx.month]} {tx.day},{'  '}
@@ -88,18 +94,23 @@ const ActivityList: React.FC<{ onPress?: (v: Tx) => void }> = memo(({ onPress })
             <ActivityItem key={(tx as Tx).id} tx={tx as Tx} onPress={onPress} />
           ),
         )}
-    </>
+    </View>
   );
 });
 
 const styles = StyleSheet.create({
+  container: {
+    padding: 16,
+  },
+  pendingContainer: {
+    borderWidth: 1,
+    borderRadius: 6,
+    marginBottom: 24,
+  },
   dateWrapper: {
     display: 'flex',
     flexDirection: 'row',
     alignItems: 'center',
-    marginTop: 16,
-    marginBottom: 4,
-    paddingHorizontal: 26,
   },
   date: {
     fontSize: 14,
