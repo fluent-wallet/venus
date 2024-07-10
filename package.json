@@ -43,7 +43,7 @@
     "decimal.js": "^10.4.3",
     "ethers": "^6.10.0",
     "expo": "51",
-    "expo-barcode-scanner": "~13.0.1",
+    "expo-camera": "~15.0.13",
     "expo-image": "~1.12.12",
     "expo-image-picker": "~15.0.7",
     "expo-localization": "~15.0.3",

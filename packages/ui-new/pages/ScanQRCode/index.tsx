@@ -25,13 +25,13 @@ import {
 } from '@router/configs';
 import { type ETHURL, parseETHURL } from '@utils/ETHURL';
 import Decimal from 'decimal.js';
-import { scanFromURLAsync } from 'expo-barcode-scanner';
 import { launchImageLibraryAsync } from 'expo-image-picker';
 import type React from 'react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Trans, useTranslation } from 'react-i18next';
 import { Linking, StyleSheet, View } from 'react-native';
-import { Camera, type Code, useCameraDevice, useCameraFormat, useCameraPermission } from 'react-native-vision-camera';
+
+import { CameraView, useCameraPermissions, type BarcodeScanningResult, Camera } from 'expo-camera';
 
 // has onConfirm props means open in SendTransaction with local modal way.
 interface Props extends Partial<StackScreenProps<typeof ScanQRCodeStackName>> {
@@ -50,14 +50,11 @@ const ScanQrCode: React.FC<Props> = ({ navigation, onConfirm, onClose, route }) 
   const bottomSheetRef = useRef<BottomSheetMethods>(null!);
   const currentNetwork = useCurrentNetwork()!;
 
-  const camera = useRef<Camera>(null);
-  const device = useCameraDevice('back');
-  const format = useCameraFormat(device, [{ fps: 30 }]);
   const [scanStatus, setScanStatus] = useState<{ type?: string; message: string }>({ message: '' });
 
   const isParsing = useRef(false);
 
-  const { hasPermission, requestPermission } = useCameraPermission();
+  const [hasPermission, requestPermission] = useCameraPermissions();
   const [hasRejectPermission, setHasRejectPermission] = useState(false);
 
   const onParseEthUrlSuccess = useCallback(
@@ -181,12 +178,10 @@ const ScanQrCode: React.FC<Props> = ({ navigation, onConfirm, onClose, route }) 
   );
 
   const handleCodeScan = useCallback(
-    async (codes: Code[]) => {
-      const code = codes[0];
+    async (scanningResult: BarcodeScanningResult) => {
+      const code = scanningResult.data;
       if (!code || isParsing.current) return;
-      if (!code.value) return;
-
-      await handleQRCode(code.value);
+      await handleQRCode(code);
     },
     [handleQRCode],
   );
@@ -203,8 +198,7 @@ const ScanQrCode: React.FC<Props> = ({ navigation, onConfirm, onClose, route }) 
       try {
         const [assets] = result.assets;
         if (!assets || !assets.uri) return;
-        // TODO: update and remove BarCodeScanner package  see : https://docs.expo.dev/versions/latest/sdk/bar-code-scanner/
-        const [codeRes] = await scanFromURLAsync(assets.uri);
+        const [codeRes] = await Camera.scanFromURLAsync(assets.uri);
         if (!codeRes) {
           setScanStatus({ message: t('scan.QRCode.error.notRecognized') });
         }
@@ -230,7 +224,7 @@ const ScanQrCode: React.FC<Props> = ({ navigation, onConfirm, onClose, route }) 
       requestCameraPermission();
     }
   }, []);
-
+  console.log('hasPermission --------------', hasPermission);
   return (
     <BottomSheet
       ref={bottomSheetRef}
@@ -243,23 +237,12 @@ const ScanQrCode: React.FC<Props> = ({ navigation, onConfirm, onClose, route }) 
       <BottomSheetWrapper innerPaddingHorizontal>
         <BottomSheetHeader title={t('scan.title')} />
         <BottomSheetContent>
-          {hasPermission && (
+          {hasPermission?.granted && (
             <>
-              {device && (
+              {
                 <>
                   <View style={styles.cameraWrapper}>
-                    <Camera
-                      ref={camera}
-                      isActive={scanStatus?.type !== ScanStatusType.ConnectingWC}
-                      device={device}
-                      codeScanner={{
-                        codeTypes: ['qr', 'ean-13'],
-                        onCodeScanned: handleCodeScan,
-                      }}
-                      style={styles.camera}
-                      format={format}
-                      enableZoomGesture
-                    />
+                    <CameraView facing="back" style={styles.camera} barcodeScannerSettings={{ barcodeTypes: ['qr'] }} onBarcodeScanned={handleCodeScan} />
                     {scanStatus?.type === ScanStatusType.ConnectingWC && (
                       <>
                         <View style={styles.cameraMask} />
@@ -280,10 +263,10 @@ const ScanQrCode: React.FC<Props> = ({ navigation, onConfirm, onClose, route }) 
                     </Text>
                   )}
                 </>
-              )}
+              }
             </>
           )}
-          {!hasPermission && (
+          {!hasPermission?.granted && (
             <>
               {!hasRejectPermission && (
                 <>
@@ -305,12 +288,12 @@ const ScanQrCode: React.FC<Props> = ({ navigation, onConfirm, onClose, route }) 
           )}
         </BottomSheetContent>
         <BottomSheetFooter>
-          {hasPermission && (
+          {hasPermission?.granted && (
             <Button testID="photos" style={styles.photos} onPress={pickImage}>
               {t('scan.photos')}
             </Button>
           )}
-          {!hasPermission && hasRejectPermission && (
+          {!hasPermission?.granted && hasRejectPermission && (
             <View style={styles.btnArea}>
               <Button
                 testID="dismiss"
