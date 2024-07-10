@@ -25,6 +25,7 @@ import SpeedUpButton from '@modules/SpeedUpButton';
 import { SPEED_UP_FEATURE } from '@utils/features';
 
 const TxStatus: React.FC<{ tx: Tx }> = ({ tx }) => {
+  const { t } = useTranslation();
   const { colors } = useTheme();
   const status = formatStatus(tx);
   const statusInfo = StatusMap[status];
@@ -32,7 +33,7 @@ const TxStatus: React.FC<{ tx: Tx }> = ({ tx }) => {
     <View style={[styles.statusContainer, { backgroundColor: colors.bgFourth }]}>
       {statusInfo.icon}
       <View style={styles.statusTextContainer}>
-        <Text style={[styles.statusText, { color: colors[statusInfo.color] }]}>{statusInfo.text}</Text>
+        <Text style={[styles.statusText, { color: colors[statusInfo.color] }]}>{t(`tx.detail.status.${statusInfo.text}`)}</Text>
         {status !== 'pending' && <Text style={[styles.time, { color: colors.textSecondary }]}>{dayjs(tx.createdAt).format('MMM DD YYYY, HH:mm')}</Text>}
       </View>
     </View>
@@ -69,10 +70,10 @@ const TransactionDetail: React.FC<StackScreenProps<typeof TransactionDetailStack
     <View style={[styles.container, { backgroundColor: colors.bgPrimary }]}>
       <View style={styles.content}>
         <TxStatus tx={tx} />
-        <Text style={[styles.functionName, { color: colors.textPrimary }]}>Function Name / {tx.method}</Text>
+        <Text style={[styles.functionName, { color: colors.textPrimary }]}>{t('tx.detail.functionName', { name: tx.method })}</Text>
         {isPending && (
           <>
-            <Text style={[styles.action, { color: colors.textSecondary }]}>Action</Text>
+            <Text style={[styles.action, { color: colors.textSecondary }]}>{t('tx.action.buttonTitle')}</Text>
             <SpeedUpButton txId={txId} containerStyle={styles.speedUp} />
           </>
         )}
@@ -80,7 +81,7 @@ const TransactionDetail: React.FC<StackScreenProps<typeof TransactionDetailStack
       <View style={[styles.line, { backgroundColor: colors.borderFourth }]} />
       <View style={[styles.content, styles.detail]}>
         <View style={styles.row}>
-          <Text style={[styles.label, { color: colors.textSecondary }]}>Transaction Hash</Text>
+          <Text style={[styles.label, { color: colors.textSecondary }]}>{t('tx.detail.txHash')}</Text>
           <Pressable
             onPress={() => {
               Clipboard.setString(tx.hash ?? '');
@@ -114,7 +115,7 @@ const TransactionDetail: React.FC<StackScreenProps<typeof TransactionDetailStack
           )}
         </View>
         <View style={styles.row}>
-          <Text style={[styles.label, { color: colors.textSecondary }]}>From</Text>
+          <Text style={[styles.label, { color: colors.textSecondary }]}>{t('tx.detail.from')}</Text>
           <Pressable
             onPress={() => {
               Clipboard.setString(payload?.from ?? '');
@@ -136,7 +137,7 @@ const TransactionDetail: React.FC<StackScreenProps<typeof TransactionDetailStack
           </Pressable>
         </View>
         <View style={styles.row}>
-          <Text style={[styles.label, { color: colors.textSecondary }]}>To</Text>
+          <Text style={[styles.label, { color: colors.textSecondary }]}>{t('tx.detail.to')}</Text>
           <Pressable
             onPress={() => {
               Clipboard.setString(to ?? '');
@@ -158,7 +159,7 @@ const TransactionDetail: React.FC<StackScreenProps<typeof TransactionDetailStack
           </Pressable>
         </View>
         <View style={styles.row}>
-          <Text style={[styles.label, { color: colors.textSecondary }]}>Fee</Text>
+          <Text style={[styles.label, { color: colors.textSecondary }]}>{t('tx.detail.fee')}</Text>
           {gasCostAndPriceInUSDT && (
             <>
               <Text style={[styles.info, { color: colors.textPrimary }]}>
@@ -169,11 +170,11 @@ const TransactionDetail: React.FC<StackScreenProps<typeof TransactionDetailStack
           )}
         </View>
         <View style={styles.row}>
-          <Text style={[styles.label, { color: colors.textSecondary }]}>Nonce</Text>
+          <Text style={[styles.label, { color: colors.textSecondary }]}>{t('tx.detail.nonce')}</Text>
           <Text style={[styles.info, { color: colors.textPrimary }]}>{payload?.nonce}</Text>
         </View>
         <View style={styles.row}>
-          <Text style={[styles.label, { color: colors.textSecondary }]}>Network</Text>
+          <Text style={[styles.label, { color: colors.textSecondary }]}>{t('tx.detail.network')}</Text>
           <Image style={styles.networkImage} source={{ uri: toDataUrl(currentNetwork?.chainId) }} />
           <Text style={[styles.info, { color: colors.textPrimary, opacity: currentNetwork?.name ? 1 : 0 }]}>{currentNetwork?.name || 'placeholder'}</Text>
         </View>
@@ -278,17 +279,17 @@ const PendingIcon = () => (
 const StatusMap = {
   pending: {
     icon: <PendingIcon />,
-    text: 'Pending',
+    text: 'pending',
     color: 'textPrimary',
   },
   confirmed: {
     icon: <SuccessIcon style={styles.statusIcon} color="#48E6FF" width={40} height={40} />,
-    text: 'Success',
+    text: 'confirmed',
     color: 'up',
   },
   failed: {
     icon: <ProhibitIcon style={styles.statusIcon} width={40} height={40} />,
-    text: 'Failed',
+    text: 'failed',
     color: 'down',
   },
 } as const;

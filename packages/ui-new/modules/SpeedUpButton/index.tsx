@@ -30,7 +30,7 @@ const SpeedUpButton: React.FC<{ txId: string; containerStyle?: StyleProp<ViewSty
         style={({ pressed }) => [styles.btn, { backgroundColor: pressed ? colors.underlay : 'transparent', borderColor: colors.borderPrimary }]}
         onPress={handlePressSpeedUp}
       >
-        <Text style={[styles.btnText, { color: colors.textPrimary }]}>Speed Up</Text>
+        <Text style={[styles.btnText, { color: colors.textPrimary }]}>{t('tx.action.speedUpBtn')}</Text>
         <RocketIcon style={styles.rocket} color={colors.iconPrimary} />
       </Pressable>
     </View>

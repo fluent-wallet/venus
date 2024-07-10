@@ -96,12 +96,10 @@ const SpeedUp: React.FC<StackScreenProps<typeof SpeedUpStackName>> = ({ route })
     <>
       <BottomSheet ref={bottomSheetRef} snapPoints={snapPoints} isRoute>
         <BottomSheetWrapper innerPaddingHorizontal>
-          <BottomSheetHeader title={type === 'SpeedUp' ? 'Speed up transaction' : 'Cancel transaction'} />
+          <BottomSheetHeader title={type === 'SpeedUp' ? t('tx.action.speedUp.title') : t('tx.action.cancel.title')} />
           <BottomSheetContent>
             <Text style={[styles.description, { color: colors.textPrimary }]}>
-              {type === 'SpeedUp'
-                ? 'Add security verification to ensure the safety of your funds.'
-                : 'Try to cancel this transaction. If it has already started to execute, the cancellation will fail.'}
+              {type === 'SpeedUp' ? t('tx.action.speedUp.desc') : t('tx.action.cancel.desc')}
             </Text>
             {(!txPayload || !nativeAsset || !estimateCurrentGasPrice) && <HourglassLoading style={styles.loading} />}
             {txPayload && nativeAsset && estimateCurrentGasPrice && (
@@ -139,7 +137,7 @@ const SpeedUp: React.FC<StackScreenProps<typeof SpeedUpStackName>> = ({ route })
                 {t('common.cancel')}
               </Button>
               <Button testID="speed-up" style={styles.btn} size="small" onPress={handlePressConfirm} Icon={type === 'SpeedUp' ? RocketIcon : undefined}>
-                {type === 'SpeedUp' ? 'Speed Up' : 'Proceed'}
+                {type === 'SpeedUp' ? t('tx.action.speedUpBtn') : t('tx.action.proceedBtn')}
               </Button>
             </View>
           </BottomSheetFooter>
