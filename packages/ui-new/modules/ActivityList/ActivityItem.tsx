@@ -12,10 +12,33 @@ import TokenIcon from '@modules/AssetsList/TokensList/TokenIcon';
 import { useTheme } from '@react-navigation/native';
 import { ACTIVITY_DB_STATUS_FEATURE, SPEED_UP_FEATURE } from '@utils/features';
 import type React from 'react';
-import { type ComponentProps, useMemo } from 'react';
+import { type ComponentProps, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { Pressable, StyleSheet, View, type LayoutChangeEvent, type ViewProps } from 'react-native';
 import SpeedUpButton from '@modules/SpeedUpButton';
+import Spinner from '@components/Spinner';
+
+const TextEllipsisWithSuffix: React.FC<{
+  defaultSuffixWidth?: number;
+  style?: ViewProps['style'];
+  text: JSX.Element;
+  suffix: React.ReactNode;
+  suffixStyle?: ViewProps['style'];
+}> = ({ style, text, defaultSuffixWidth = 0, suffix, suffixStyle }) => {
+  const [suffixWidth, setSuffixWidth] = useState(0);
+  const onSuffixLayout = (e: LayoutChangeEvent) => {
+    if (suffixWidth) return;
+    setSuffixWidth(e.nativeEvent.layout.width);
+  };
+  return (
+    <View style={[styles.textEllipsisWrapper, { paddingRight: suffixWidth || defaultSuffixWidth }, style]}>
+      {text}
+      <View onLayout={onSuffixLayout} style={[suffixStyle, !!suffixWidth && { width: suffixWidth }]}>
+        {suffix}
+      </View>
+    </View>
+  );
+};
 
 interface Props extends Omit<ComponentProps<typeof Pressable>, 'onPress'> {
   onPress?: (item: Tx) => void;
@@ -42,15 +65,27 @@ const AssetInfo: React.FC<{
       ) : (
         <NFTIcon source={asset?.icon} style={[styles.assetIcon, { borderRadius: 2 }]} />
       )}
-      <Text style={[styles.assetText, { color: txStatus === 'failed' ? colors.textSecondary : colors.textPrimary }]} numberOfLines={1}>
-        {sign} {isUnlimited ? t('common.approve.unlimited') : formatBalance}
-      </Text>
-      <Text style={[styles.assetText, { color: txStatus === 'failed' ? colors.textSecondary : colors.textPrimary }]}>
-        {asset?.symbol}
-        {tokenId && <>&nbsp;#{tokenId}</>}
-      </Text>
+      <TextEllipsisWithSuffix
+        text={
+          <Text style={[styles.assetText, { color: txStatus === 'failed' ? colors.textSecondary : colors.textPrimary }]} numberOfLines={1}>
+            {sign}&nbsp;{isUnlimited ? t('common.approve.unlimited') : formatBalance}
+          </Text>
+        }
+        suffix={
+          <Text style={[styles.assetText, { color: txStatus === 'failed' ? colors.textSecondary : colors.textPrimary }]} numberOfLines={1}>
+            {asset?.symbol}
+            {tokenId && <>&nbsp;#{tokenId}</>}
+          </Text>
+        }
+        defaultSuffixWidth={50}
+      />
     </View>
   );
+};
+
+const PendingIcon = () => {
+  const { colors, mode } = useTheme();
+  return <Spinner color={mode === 'dark' ? '#00000080' : '#FFFFFFB2'} backgroundColor={colors.iconPrimary} width={24} height={24} strokeWidth={5} />;
 };
 
 const ActivityItem: React.FC<Props> = ({ onPress, tx }) => {
@@ -71,20 +106,29 @@ const ActivityItem: React.FC<Props> = ({ onPress, tx }) => {
   const isPending = SPEED_UP_FEATURE.allow && status === 'pending';
 
   return (
-    <Pressable style={[styles.container]} onPress={() => onPress?.(tx)} testID="activityItem">
+    <Pressable
+      style={[styles.container, isPending && styles.pendingContainer, isPending && { borderColor: colors.borderFourth }]}
+      onPress={() => onPress?.(tx)}
+      testID="activityItem"
+    >
       <View style={styles.title}>
-        <Text style={[styles.typeText, { color: colors.textPrimary }]} numberOfLines={1}>
-          {method}
-          {ACTIVITY_DB_STATUS_FEATURE.allow && `  --[${tx.status}-${tx.source}-${tx.method}]`}
-        </Text>
-        {status !== 'confirmed' && (
-          <Text
-            style={[styles.statusText, { color: status === 'failed' ? colors.down : colors.up, borderColor: status === 'failed' ? colors.down : colors.up }]}
-          >
-            {status && t(`tx.activity.status.${status}`)}
-          </Text>
-        )}
-
+        <TextEllipsisWithSuffix
+          text={
+            <Text style={[styles.typeText, { color: colors.textPrimary }]} numberOfLines={1}>
+              {method}
+              {ACTIVITY_DB_STATUS_FEATURE.allow && `--[${tx.status}-${tx.source}-${tx.method}]`}
+            </Text>
+          }
+          suffix={
+            <>
+              {status === 'pending' && <PendingIcon />}
+              {status === 'failed' && (
+                <Text style={[styles.statusText, { color: colors.down, borderColor: colors.down }]}>{t('tx.activity.status.failed')}</Text>
+              )}
+            </>
+          }
+          defaultSuffixWidth={50}
+        />
         {to && <Text style={[styles.address, { color: colors.textSecondary }]}>To {shortenAddress(to)}</Text>}
       </View>
       {tx.source === TxSource.SELF && <AssetInfo asset={asset} value={value} tokenId={tokenId} txStatus={status} sign="-" method={method} />}
@@ -102,17 +146,21 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     padding: 16,
   },
+  pendingContainer: {
+    borderWidth: 1,
+    borderRadius: 6,
+    marginBottom: 24,
+  },
   title: {
     display: 'flex',
     flexDirection: 'row',
     alignItems: 'center',
-    height: 20,
+    height: 24,
   },
   typeText: {
     fontSize: 14,
     fontWeight: '600',
-    lineHeight: 18,
-    flex: 1,
+    marginRight: 4,
   },
   statusText: {
     marginLeft: 12,
@@ -133,7 +181,6 @@ const styles = StyleSheet.create({
     display: 'flex',
     flexDirection: 'row',
     alignItems: 'center',
-    paddingRight: 100,
   },
   assetIcon: {
     width: 20,
@@ -146,6 +193,12 @@ const styles = StyleSheet.create({
   },
   speedUp: {
     marginTop: 16,
+  },
+  textEllipsisWrapper: {
+    flex: 1,
+    display: 'flex',
+    flexDirection: 'row',
+    alignItems: 'center',
   },
 });
 

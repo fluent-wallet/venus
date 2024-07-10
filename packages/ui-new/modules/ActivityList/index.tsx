@@ -42,14 +42,7 @@ const ActivityList: React.FC<{ onPress?: (v: Tx) => void }> = memo(({ onPress })
 
   const finishedTxsByDay = useMemo(() => {
     let day = 0;
-    const txs: (
-      | Tx
-      | {
-          year: number;
-          month: number;
-          day: number;
-        }
-    )[] = [];
+    const txs: (Tx | ActivityDate)[] = [];
     for (let i = 0; i < finishedTxs.length; i++) {
       const tx = finishedTxs[i];
       const time = Math.floor((tx.executedAt || tx.createdAt).valueOf() / DAY_MILLISECONDS) * DAY_MILLISECONDS;
@@ -73,13 +66,7 @@ const ActivityList: React.FC<{ onPress?: (v: Tx) => void }> = memo(({ onPress })
 
   return (
     <View style={styles.container}>
-      {!!unfinishedTxs?.length && (
-        <View style={[styles.pendingContainer, { borderColor: colors.borderFourth }]}>
-          {unfinishedTxs.map((tx) => (
-            <ActivityItem key={(tx as Tx).id} tx={tx} onPress={onPress} />
-          ))}
-        </View>
-      )}
+      {!!unfinishedTxs?.length && unfinishedTxs.map((tx) => <ActivityItem key={tx.id} tx={tx} onPress={onPress} />)}
       {finishedTxs?.length > 0 &&
         finishedTxsByDay.map((tx, i) =>
           tx instanceof ActivityDate ? (
@@ -91,7 +78,7 @@ const ActivityList: React.FC<{ onPress?: (v: Tx) => void }> = memo(({ onPress })
               </Text>
             </View>
           ) : (
-            <ActivityItem key={(tx as Tx).id} tx={tx as Tx} onPress={onPress} />
+            <ActivityItem key={tx.id} tx={tx} onPress={onPress} />
           ),
         )}
     </View>
@@ -101,11 +88,6 @@ const ActivityList: React.FC<{ onPress?: (v: Tx) => void }> = memo(({ onPress })
 const styles = StyleSheet.create({
   container: {
     padding: 16,
-  },
-  pendingContainer: {
-    borderWidth: 1,
-    borderRadius: 6,
-    marginBottom: 24,
   },
   dateWrapper: {
     display: 'flex',

@@ -221,11 +221,11 @@ export const styles = StyleSheet.create({
   functionName: {
     fontSize: 16,
     fontWeight: '600',
+    marginBottom: 16,
   },
   action: {
     fontSize: 14,
     fontWeight: '300',
-    marginTop: 16,
   },
   speedUp: {
     paddingVertical: 16,
