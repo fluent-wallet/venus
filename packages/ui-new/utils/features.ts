@@ -1,4 +1,10 @@
 import { getAppEnv, isDev, isQA } from './getEnv';
+import { Platform } from 'react-native';
+
+export const SUPPORT_BSIM_FEATURE = {
+  describe: 'support bsim',
+  allow: Platform.OS === 'android',
+};
 
 export const APP_VERSION_FLAG_FEATURE = {
   describe: 'add dev or qa flag to app version',
