@@ -43,7 +43,7 @@ const AboutUs: React.FC<StackScreenProps<typeof AboutUsStackName>> = ({ navigati
 
   const [loading, setLoading] = useState(false);
   const openTeamsService = useCallback(() => {
-    Linking.openURL('https://swiftshield.tech/terms.html');
+    Linking.openURL('https://bimwallet.io/terms.html');
   }, []);
 
   const openFeedback = useCallback(() => {
@@ -57,7 +57,7 @@ const AboutUs: React.FC<StackScreenProps<typeof AboutUsStackName>> = ({ navigati
   const handleCheckNewVersion = useCallback(async () => {
     setLoading(true);
     try {
-      const remoteVersion = await fetch('https://download.swiftshield.tech/version.json', { method: 'GET' }).then<VersionJSON>((res) => res.json());
+      const remoteVersion = await fetch('https://download.bimwallet.io/version.json', { method: 'GET' }).then<VersionJSON>((res) => res.json());
 
       if (semverLt(pkg.version, remoteVersion.version)) {
         // has new version , to show user
@@ -116,7 +116,7 @@ export const UpdateVersion: React.FC<StackScreenProps<typeof UpdateVersionStackN
           )}
         </BottomSheetContent>
         <BottomSheetFooter>
-          <Button size="small" onPress={() => Linking.openURL('https://swiftshield.tech')}>
+          <Button size="small" onPress={() => Linking.openURL('https://bimwallet.io')}>
             {t('common.update')}
           </Button>
         </BottomSheetFooter>
