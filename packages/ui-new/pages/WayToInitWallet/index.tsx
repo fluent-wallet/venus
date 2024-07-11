@@ -1,23 +1,24 @@
-import React, { useCallback, useRef } from 'react';
-import { ImageBackground, ScrollView, Keyboard, StyleSheet, View } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useTheme } from '@react-navigation/native';
-import { showMessage } from 'react-native-flash-message';
-import { useTranslation } from 'react-i18next';
-import { Image } from 'expo-image';
-import Text from '@components/Text';
-import Button from '@components/Button';
-import plugins from '@core/WalletCore/Plugins';
-import { WayToInitWalletStackName, BiometricsWayStackName, type StackScreenProps } from '@router/configs';
-import useInAsync from '@hooks/useInAsync';
-import { Lang, useLanguage } from '@hooks/useI18n';
+import i18n from '@assets/i18n';
 import ArrowRight from '@assets/icons/arrow-right.svg';
 import WelcomeSwiftShieldEN from '@assets/images/welcome-SwiftShield-en.webp';
 import WelcomeSwiftShieldZH from '@assets/images/welcome-SwiftShield-zh.webp';
 import WelcomeBgDark from '@assets/images/welcome-bg-dark.webp';
-import i18n from '@assets/i18n';
-import LottieAnimation from './lottie';
+import Button from '@components/Button';
+import Text from '@components/Text';
+import plugins from '@core/WalletCore/Plugins';
+import { Lang, useLanguage } from '@hooks/useI18n';
+import useInAsync from '@hooks/useInAsync';
+import { useTheme } from '@react-navigation/native';
+import { BiometricsWayStackName, type StackScreenProps, type WayToInitWalletStackName } from '@router/configs';
+import { Image } from 'expo-image';
+import type React from 'react';
+import { useCallback, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
+import { ImageBackground, Keyboard, ScrollView, StyleSheet, View } from 'react-native';
+import { showMessage } from 'react-native-flash-message';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import ImportExistingWallet, { type BottomSheetMethods } from './ImportExistingWallet';
+import LottieAnimation from './lottie';
 
 export const showNotFindBSIMCardMessage = () =>
   showMessage({

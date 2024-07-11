@@ -1,7 +1,7 @@
 import 'i18next';
-import en from '../ui-new/assets/i18n/en.json';
-import zhHans from '../ui-new/assets/i18n/zh-Hans.json';
-import zhHant from '../ui-new/assets/i18n/zh-Hant.json';
+import type en from '../ui-new/assets/i18n/en.json';
+import type zhHans from '../ui-new/assets/i18n/zh-Hans.json';
+import type zhHant from '../ui-new/assets/i18n/zh-Hant.json';
 declare module 'i18next' {
   interface CustomTypeOptions {
     defaultNS: 'en';

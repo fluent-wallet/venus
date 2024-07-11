@@ -1,15 +1,15 @@
-import React from 'react';
-import { useTheme } from '@react-navigation/native';
-import { useTranslation } from 'react-i18next';
-import { Image } from 'expo-image';
-import { useAssetsTokenList, useIsTokensEmpty, useTokenListOfCurrentNetwork } from '@core/WalletCore/Plugins/ReactInject';
-import { type AssetInfo } from '@core/WalletCore/Plugins/AssetsTracker/types';
-import Text from '@components/Text';
-import { usePriceVisibleValue } from '@hooks/usePriceVisible';
 import NoneToken from '@assets/images/none-token.webp';
-import TokenItem from './TokenItem';
+import Text from '@components/Text';
+import type { AssetInfo } from '@core/WalletCore/Plugins/AssetsTracker/types';
+import { useAssetsTokenList, useIsTokensEmpty, useTokenListOfCurrentNetwork } from '@core/WalletCore/Plugins/ReactInject';
+import { usePriceVisibleValue } from '@hooks/usePriceVisible';
+import { useTheme } from '@react-navigation/native';
+import { Image } from 'expo-image';
+import type React from 'react';
+import { useTranslation } from 'react-i18next';
 import ReceiveFunds, { styles } from './ReceiveFunds';
 import Skeleton from './Skeleton';
+import TokenItem from './TokenItem';
 
 interface Props {
   onPressItem?: (v: AssetInfo) => void;

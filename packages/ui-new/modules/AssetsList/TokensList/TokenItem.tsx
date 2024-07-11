@@ -1,13 +1,14 @@
-import { useCallback, useMemo } from 'react';
-import { Pressable, View, StyleSheet } from 'react-native';
-import { useTheme } from '@react-navigation/native';
-import { type AssetInfo } from '@core/WalletCore/Plugins/AssetsTracker/types';
+import Text from '@components/Text';
+import type { AssetInfo } from '@core/WalletCore/Plugins/AssetsTracker/types';
+import { AssetType } from '@core/database/models/Asset';
+import { shortenAddress } from '@core/utils/address';
 import { numberWithCommas } from '@core/utils/balance';
 import useFormatBalance from '@hooks/useFormatBalance';
-import Text from '@components/Text';
-import TokenIcon from './TokenIcon';
+import { useTheme } from '@react-navigation/native';
+import { useCallback, useMemo } from 'react';
+import { Pressable, StyleSheet, View } from 'react-native';
 import AssetTypeLabel from '../AssetTypeLabel';
-import { shortenAddress } from '@core/utils/address';
+import TokenIcon from './TokenIcon';
 
 const TokenItem: React.FC<{
   data: AssetInfo;
@@ -38,10 +39,10 @@ const TokenItem: React.FC<{
           {showTypeLabel && <AssetTypeLabel assetType={data.type} />}
           {(hidePrice === false || hidePrice === 'encryption') && (
             <Text style={[styles.tokenName, { marginLeft: 'auto', textAlign: 'right', color: colors.textPrimary }]} numberOfLines={1}>
-              {hidePrice === 'encryption'  ? '***' : price}
+              {hidePrice === 'encryption' ? '***' : price}
             </Text>
           )}
-          {showAddress && data?.contractAddress && (
+          {showAddress && data.type !== AssetType.Native && data?.contractAddress && (
             <Text style={[styles.tokenAddress, { marginLeft: 'auto', textAlign: 'right', color: colors.textSecondary }]} numberOfLines={1}>
               {shortenAddress(data.contractAddress)}
             </Text>

@@ -1,9 +1,9 @@
 import { isAddress } from 'ethers';
 
 export function toPlainString(num: string | number) {
-  return ('' + +num).replace(/(-?)(\d*)\.?(\d*)e([+-]\d+)/, function (a, b, c, d, e) {
-    return e < 0 ? b + '0.' + Array(1 - e - c.length).join(0) + c + d : b + c + d + Array(e - d.length + 1).join(0);
-  });
+  return ('' + +num).replace(/(-?)(\d*)\.?(\d*)e([+-]\d+)/, (a, b, c, d, e) =>
+    e < 0 ? b + '0.' + Array(1 - e - c.length).join(0) + c + d : b + c + d + Array(e - d.length + 1).join(0),
+  );
 }
 
 export interface ETHURL {
@@ -90,56 +90,39 @@ export const parseETHURL = (ETHURL: string) => {
   if (function_name) {
     result.function_name = function_name;
   }
-  const params = parameters.split('&').reduce(
-    (acc, cur) => {
-      const [key, value] = cur.split('=');
-      acc[key] = value;
-      return acc;
-    },
-    {} as Record<string, string>,
-  );
+  const params = new URLSearchParams(parameters);
 
-  Object.entries(params).forEach(([key, value]) => {
+  for (const [key, value] of params.entries()) {
     if (!result.parameters) {
       result.parameters = {};
     }
-    if (value && key) {
-      if (result.parameters) {
-        if (key === 'value' || key === 'uint256') {
-          result.parameters[key] = BigInt(toPlainString(value));
-        } else {
-          result.parameters[key] = value;
-        }
-      }
+    if (key === 'value' || key === 'uint256') {
+      result.parameters[key] = BigInt(toPlainString(value));
+    } else {
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+      // @ts-ignore
+      result.parameters[key] = value;
     }
-  });
+  }
   return result;
 };
 
 export const encodeETHURL = (params: ETHURL) => {
   const { parameters, function_name, target_address, chain_id, schema_prefix } = params;
   let query = '';
-  const queryString: Record<string, string> = {};
+  const queryString = new URLSearchParams();
 
   if (parameters) {
-    Object.keys(parameters)
+    Object.entries(parameters)
       .sort()
-      .forEach((key) => {
-        if (key === 'uint256') {
-          if (parameters.uint256)
-            queryString.uint256 = bigIntToExponential(BigInt(parameters.uint256));
-        } else if (key === 'value') {
-          if (parameters.value)
-            queryString.value = bigIntToExponential(BigInt(parameters.value));
+      .forEach(([key, value]) => {
+        if (key === 'uint256' || key === 'value') {
+          queryString.set(key, bigIntToExponential(BigInt(value)));
         } else {
-          queryString[key] = String(parameters[key]);
-
+          queryString.set(key, value.toString());
         }
       });
-
-    query = Object.entries(queryString)
-      .map(([key, value]) => `${key}=${value}`)
-      .join('&');
+    query = queryString.toString();
   }
   return `${schema_prefix}:${target_address}${chain_id ? `@${chain_id}` : ''}${function_name ? `/${function_name}` : ''}${query ? `?${query}` : ''}`;
 };

@@ -1,7 +1,8 @@
-import React, { useState, useRef, useCallback, useEffect } from 'react';
+import type React from 'react';
+import { useState, useRef, useCallback, useEffect } from 'react';
 import { Pressable, StyleSheet, type NativeScrollEvent, type NativeSyntheticEvent } from 'react-native';
 import { useTheme } from '@react-navigation/native';
-import PagerView from 'react-native-pager-view';
+import type PagerView from 'react-native-pager-view';
 import { showMessage } from 'react-native-flash-message';
 import { Trans, useTranslation } from 'react-i18next';
 import { debounce, escapeRegExp } from 'lodash-es';
@@ -16,15 +17,20 @@ import {
   AssetSource,
 } from '@core/WalletCore/Plugins/ReactInject';
 import { fetchERC20AssetInfoBatchWithAccount } from '@core/WalletCore/Plugins/AssetsTracker/fetchers/basic';
-import { type AssetInfo } from '@core/WalletCore/Plugins/AssetsTracker/types';
-import { type NFTItemDetail } from '@core/WalletCore/Plugins/NFTDetailTracker';
+import type { AssetInfo } from '@core/WalletCore/Plugins/AssetsTracker/types';
+import type { NFTItemDetail } from '@core/WalletCore/Plugins/NFTDetailTracker';
 import methods from '@core/WalletCore/Methods';
 import plugins from '@core/WalletCore/Plugins';
 import Text from '@components/Text';
 import TextInput from '@components/TextInput';
 import HourglassLoading from '@components/Loading/Hourglass';
-import { BottomSheetMethods, BottomSheetScrollView } from '@components/BottomSheet';
-import { SendTransactionStep2StackName, SendTransactionStep3StackName, SendTransactionStep4StackName, type SendTransactionScreenProps } from '@router/configs';
+import { BottomSheetScrollContent, BottomSheetHeader, type BottomSheetMethods } from '@components/BottomSheet';
+import {
+  type SendTransactionStep2StackName,
+  SendTransactionStep3StackName,
+  SendTransactionStep4StackName,
+  type SendTransactionScreenProps,
+} from '@router/configs';
 import { Tabs, TabsContent, setSelectAssetScrollY, type Tab } from '@modules/AssetsTabs';
 import TokenItem from '@modules/AssetsList/TokensList/TokenItem';
 import NFTItem from '@modules/AssetsList/NFTsList/NFTItem';
@@ -75,8 +81,8 @@ const SendTransactionStep2Asset: React.FC<Props> = ({ navigation, route, onConfi
 
       const localAssets = assets
         ?.filter((asset) =>
-          [asset.name, asset.symbol, asset.type === AssetType.Native ? AssetType.Native : asset.contractAddress].some(
-            (str) => str?.search(new RegExp(escapeRegExp(value), 'i')) !== -1,
+          [asset.name, asset.symbol, asset.type === AssetType.Native ? AssetType.Native : asset.contractAddress].some((str) =>
+            !str ? false : str?.search(new RegExp(escapeRegExp(value), 'i')) !== -1,
           ),
         )
         .filter((asset) => !!asset.type)
@@ -100,8 +106,8 @@ const SendTransactionStep2Asset: React.FC<Props> = ({ navigation, route, onConfi
               accountAddress: currentAddress!,
             });
             const assetInfo = { ...remoteAsset, type: AssetType.ERC20, contractAddress: value };
-            setFilterAssets({ type: 'remote', assets: [assetInfo] });
-            const isInDB = await currentNetwork.queryAssetByAddress(value);
+            setFilterAssets({ type: 'remote', assets: [assetInfo] as Array<AssetInfo> });
+            const isInDB = await methods.queryAssetByAddress(currentNetwork.id, value);
             if (!isInDB) {
               await methods.createAsset({
                 network: currentNetwork,
@@ -151,30 +157,26 @@ const SendTransactionStep2Asset: React.FC<Props> = ({ navigation, route, onConfi
   }, []);
 
   return (
-    <SendTransactionBottomSheet
-      ref={bottomSheetRef}
-      isRoute={!onConfirm}
-      index={!onConfirm ? undefined : 0}
-      onClose={onClose}
-      showTitle={selectType === 'Receive' ? t('receive.title') : t('tx.send.title')}
-    >
-      <Text style={[styles.selectAsset, { color: colors.textSecondary }]}>{t('tx.asset.inputTitle')}</Text>
-      <TextInput
-        containerStyle={[
-          styles.textinput,
-          { borderColor: !!searchAsset && filterAssets?.type && filterAssets.type.startsWith('invalid') ? colors.down : colors.borderFourth },
-        ]}
-        showVisible={false}
-        defaultHasValue={false}
-        value={searchAsset}
-        onChangeText={(newNickName) => setSearchAsset(newNickName?.trim())}
-        isInBottomSheet
-        placeholder={t('tx.asset.placeholder')}
-        multiline
-      />
+    <SendTransactionBottomSheet ref={bottomSheetRef} isRoute={!onConfirm} index={!onConfirm ? undefined : 0} onClose={onClose}>
+      <BottomSheetHeader title={selectType === 'Receive' ? t('receive.title') : t('tx.send.title')}>
+        <Text style={[styles.selectAsset, { color: colors.textSecondary }]}>{t('tx.asset.inputTitle')}</Text>
+        <TextInput
+          containerStyle={[
+            styles.textinput,
+            { borderColor: !!searchAsset && filterAssets?.type && filterAssets.type.startsWith('invalid') ? colors.down : colors.borderFourth },
+          ]}
+          showVisible={false}
+          defaultHasValue={false}
+          value={searchAsset}
+          onChangeText={(newNickName) => setSearchAsset(newNickName?.trim())}
+          isInBottomSheet
+          placeholder={t('tx.asset.placeholder')}
+          multiline
+        />
+      </BottomSheetHeader>
 
       {!searchAsset && (
-        <BottomSheetScrollView style={styles.scrollView} stickyHeaderIndices={[0]} onScroll={handleScroll}>
+        <BottomSheetScrollContent style={styles.scrollView} stickyHeaderIndices={[0]} onScroll={handleScroll}>
           <Tabs currentTab={currentTab} pageViewRef={pageViewRef} type="SelectAsset" onlyToken={!navigation} />
           <TabsContent
             currentTab={currentTab}
@@ -183,16 +185,18 @@ const SendTransactionStep2Asset: React.FC<Props> = ({ navigation, route, onConfi
             type="SelectAsset"
             selectType={selectType}
             onPressItem={handleClickAsset}
+            onlyToken={!navigation}
           />
-        </BottomSheetScrollView>
+        </BottomSheetScrollContent>
       )}
       {searchAsset && (
-        <BottomSheetScrollView style={[styles.scrollView, { marginTop: 8 }]} onScroll={handleScroll}>
+        <BottomSheetScrollContent style={[styles.scrollView, { marginTop: 8 }]} onScroll={handleScroll}>
           {filterAssets.assets?.length > 0 &&
-            filterAssets.assets.map((asset) =>
-              asset.type === AssetType.ERC20 || asset.type === AssetType.Native ? (
+            filterAssets.assets.map((asset) => {
+              const itemKey = asset.type === AssetType.Native ? AssetType.Native : asset.contractAddress;
+              return asset.type === AssetType.ERC20 || asset.type === AssetType.Native ? (
                 <TokenItem
-                  key={asset.contractAddress ?? AssetType.Native}
+                  key={itemKey}
                   data={asset}
                   showTypeLabel
                   onPress={handleClickAsset}
@@ -202,15 +206,15 @@ const SendTransactionStep2Asset: React.FC<Props> = ({ navigation, route, onConfi
                 />
               ) : asset.type === AssetType.ERC1155 || asset.type === AssetType.ERC721 ? (
                 <NFTItem
-                  key={asset.contractAddress}
+                  key={itemKey}
                   data={asset}
                   currentOpenNFTDetail={currentOpenNFTDetail}
                   tabsType="SelectAsset"
                   showTypeLabel
                   onPress={handleClickAsset}
                 />
-              ) : null,
-            )}
+              ) : null;
+            })}
 
           {filterAssets.type !== 'local' && filterAssets.type !== 'remote' && (
             <Pressable
@@ -231,7 +235,7 @@ const SendTransactionStep2Asset: React.FC<Props> = ({ navigation, route, onConfi
             </Pressable>
           )}
           {inFetchingRemote && <HourglassLoading style={styles.fetchLoading} />}
-        </BottomSheetScrollView>
+        </BottomSheetScrollContent>
       )}
     </SendTransactionBottomSheet>
   );
@@ -239,12 +243,16 @@ const SendTransactionStep2Asset: React.FC<Props> = ({ navigation, route, onConfi
 
 const styles = StyleSheet.create({
   selectAsset: {
-    marginTop: 24,
-    marginBottom: 16,
-    marginLeft: 16,
+    marginVertical: 16,
+    paddingHorizontal: 16,
     fontSize: 14,
     fontWeight: '300',
     lineHeight: 18,
+  },
+  textinput: {
+    marginHorizontal: 16,
+    borderWidth: 1,
+    backgroundColor: 'transparent',
   },
   scrollView: {
     flex: 1,
@@ -254,7 +262,6 @@ const styles = StyleSheet.create({
     display: 'flex',
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 16,
     marginTop: 32,
   },
   invalidIcon: {
@@ -270,11 +277,6 @@ const styles = StyleSheet.create({
     width: 60,
     height: 60,
     alignSelf: 'center',
-  },
-  textinput: {
-    marginHorizontal: 16,
-    borderWidth: 1,
-    backgroundColor: 'transparent',
   },
 });
 

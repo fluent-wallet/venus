@@ -1,13 +1,14 @@
-import React, { useCallback, useRef } from 'react';
-import { Pressable, StyleSheet } from 'react-native';
-import { useTheme } from '@react-navigation/native';
-import Text from '@components/Text';
+import BottomSheet, { BottomSheetWrapper, BottomSheetHeader, BottomSheetContent, type BottomSheetMethods } from '@components/BottomSheet';
 import Checkbox from '@components/Checkbox';
-import BottomSheet, { type BottomSheetMethods } from '@components/BottomSheet';
-import { styles as bottomSheetStyle, snapPoints } from '@pages/Management/AccountManagement/AddAnotherWallet';
-import { AppearanceStackName, type StackScreenProps } from '@router/configs';
+import Text from '@components/Text';
 import { setMode as _setMode, useMode } from '@hooks/useMode';
+import { snapPoints } from '@pages/Management/AccountManagement/AddAnotherWallet';
+import { useTheme } from '@react-navigation/native';
+import type { AppearanceStackName, StackScreenProps } from '@router/configs';
+import type React from 'react';
+import { useCallback, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
+import { Pressable, StyleSheet } from 'react-native';
 
 const Appearance: React.FC<StackScreenProps<typeof AppearanceStackName>> = () => {
   const { colors } = useTheme();
@@ -21,36 +22,39 @@ const Appearance: React.FC<StackScreenProps<typeof AppearanceStackName>> = () =>
   }, []);
 
   return (
-    <BottomSheet ref={bottomSheetRef} snapPoints={snapPoints} isRoute containerStyle={bottomSheetStyle.container}>
-      <Text style={[bottomSheetStyle.title, { color: colors.textPrimary }]}>{t('settings.appearance.title')}</Text>
-
-      <Pressable
-        style={({ pressed }) => [styles.item, { backgroundColor: pressed ? colors.underlay : 'transparent' }]}
-        disabled={mode === 'system'}
-        onPress={() => setMode('system')}
-        testID="system"
-      >
-        <Text style={[styles.itemText, { color: colors.textPrimary }]}>{t('settings.appearance.system')}</Text>
-        {mode === 'system' && <Checkbox checked pointerEvents="none" />}
-      </Pressable>
-      <Pressable
-        style={({ pressed }) => [styles.item, { backgroundColor: pressed ? colors.underlay : 'transparent' }]}
-        disabled={mode === 'light'}
-        onPress={() => setMode('light')}
-        testID="light"
-      >
-        <Text style={[styles.itemText, { color: colors.textPrimary }]}>{t('settings.appearance.light')}</Text>
-        {mode === 'light' && <Checkbox checked pointerEvents="none" />}
-      </Pressable>
-      <Pressable
-        style={({ pressed }) => [styles.item, { backgroundColor: pressed ? colors.underlay : 'transparent' }]}
-        disabled={mode === 'dark'}
-        onPress={() => setMode('dark')}
-        testID="dark"
-      >
-        <Text style={[styles.itemText, { color: colors.textPrimary }]}>{t('settings.appearance.dark')}</Text>
-        {mode === 'dark' && <Checkbox checked pointerEvents="none" />}
-      </Pressable>
+    <BottomSheet ref={bottomSheetRef} snapPoints={snapPoints} isRoute>
+      <BottomSheetWrapper>
+        <BottomSheetHeader title={t('settings.appearance.title')} />
+        <BottomSheetContent>
+          <Pressable
+            style={({ pressed }) => [styles.item, { marginTop: 20, backgroundColor: pressed ? colors.underlay : 'transparent' }]}
+            disabled={mode === 'system'}
+            onPress={() => setMode('system')}
+            testID="system"
+          >
+            <Text style={[styles.itemText, { color: colors.textPrimary }]}>{t('settings.appearance.system')}</Text>
+            {mode === 'system' && <Checkbox checked pointerEvents="none" />}
+          </Pressable>
+          <Pressable
+            style={({ pressed }) => [styles.item, { backgroundColor: pressed ? colors.underlay : 'transparent' }]}
+            disabled={mode === 'light'}
+            onPress={() => setMode('light')}
+            testID="light"
+          >
+            <Text style={[styles.itemText, { color: colors.textPrimary }]}>{t('settings.appearance.light')}</Text>
+            {mode === 'light' && <Checkbox checked pointerEvents="none" />}
+          </Pressable>
+          <Pressable
+            style={({ pressed }) => [styles.item, { backgroundColor: pressed ? colors.underlay : 'transparent' }]}
+            disabled={mode === 'dark'}
+            onPress={() => setMode('dark')}
+            testID="dark"
+          >
+            <Text style={[styles.itemText, { color: colors.textPrimary }]}>{t('settings.appearance.dark')}</Text>
+            {mode === 'dark' && <Checkbox checked pointerEvents="none" />}
+          </Pressable>
+        </BottomSheetContent>
+      </BottomSheetWrapper>
     </BottomSheet>
   );
 };

@@ -1,13 +1,21 @@
 {
   "account" : {
+    "HDWallet" : {
+      "select" : {
+        "noVerification" : "You have not completed\nthe security verification,<3> try again</3>.\n\n",
+        "pathType" : "HD Wallet Path Type",
+        "selected" : "{{accounts}} address{{es}} selected\n\n\n",
+        "title" : "Select HD Wallets"
+      }
+    },
     "action" : {
+      "ManageMent" : "Management",
       "add" : "Add Account",
-      "addOther" : "Add another wallet",
       "add.title" : "Add Wallet",
+      "addOther" : "Add another wallet",
       "eraseAll" : "Erase all wallets",
       "eraseAll.describe" : "Account data will be cleared.\n  \nBe sure to back up your wallet, otherwise you will permanently lose it and all assets.",
-      "eraseAll.title" : "⚠️ Erase all wallets?",
-      "ManageMent" : "Management",
+      "eraseAll.title" : "Erase all wallets?",
       "remove" : "Remove Account",
       "remove.describe" : "This Action will remove this wallet from the app.\n\nApp can not restore your wallet, you can restore with its seed phrase / private key.\n\nBe sure to back up your wallet, otherwise you will permanently lose it and all assets.",
       "remove.title" : "Delete this wallet?  "
@@ -54,14 +62,6 @@
         "seed" : "Seed Phrase Group"
       }
     },
-    "HDWallet" : {
-      "select" : {
-        "noVerification" : "You have not completed\nthe security verification,<3> try again</3>.\n\n",
-        "pathType" : "HD Wallet Path Type",
-        "selected" : "{{accounts}} address{{es}} selected\n\n\n",
-        "title" : "Select HD Wallets"
-      }
-    },
     "management" : {
       "title" : "Account Management"
     },
@@ -72,6 +72,9 @@
       },
       "successfully" : "Remove account successfully"
     }
+  },
+  "authentication" : {
+    "title" : "Authenticate to signature"
   },
   "backup" : {
     "error" : {
@@ -98,31 +101,46 @@
     }
   },
   "common" : {
+    "HDWallets" : "HD Wallets",
     "account" : "Account",
+    "add" : "Add",
     "amount" : "Amount",
+    "approve" : {
+      "unlimited" : "Unlimited"
+    },
     "backup" : "Backup",
     "balance" : "Balance",
     "cancel" : "Cancel",
     "close" : "Close",
     "confirm" : "Confirm",
+    "connect" : "Connect",
     "continue" : "Continue",
     "copied" : "Copied",
+    "customize" : "Customize",
     "delete" : "Delete",
+    "disconnect" : "Disconnect",
     "dismiss" : "Dismiss",
     "edit" : "Edit",
     "enable" : "Enable",
-    "HDWallets" : "HD Wallets",
     "index" : "Index",
     "max" : "Max",
+    "method" : {
+      "contractInteraction" : "Contract Interaction"
+    },
+    "network" : "Network",
     "next" : "Next",
     "ok" : "OK",
     "password" : "Password",
     "privateKey" : "Private key",
     "retry" : "Retry",
     "return" : "Return",
+    "save" : "Save",
     "seedPhrase" : "Seed Phrase",
     "send" : "Send",
     "to" : "To",
+    "unsafe" : "Unsafe",
+    "update" : "Update",
+    "use" : "Use",
     "verifyPassword" : "Verify Password",
     "view" : "View"
   },
@@ -134,6 +152,7 @@
     "buy" : "Buy",
     "more" : "More",
     "more.copyAddress" : "Copy address",
+    "more.signatureRecords" : "Signature Records",
     "more.viewInExplorer" : "View in explorer",
     "noNetwork" : "Network Disconnected",
     "receive" : "Receive",
@@ -160,7 +179,7 @@
       "success" : "Completed! Remember to keep your password."
     },
     "setPassword" : "Set Password",
-    "setPassword.check" : "SwiftShield Wallet does not store your password.\nPlease <1>remember</1> your password.",
+    "setPassword.check" : "BIM Wallet does not store your password.\nPlease <1>remember</1> your password.",
     "setPassword.confirm" : "Confirm New Password",
     "setPassword.create" : "Create Password",
     "setPassword.describe" : "Add security verification to ensure the safety of your funds.",
@@ -176,6 +195,11 @@
     "title" : "Receive"
   },
   "scan" : {
+    "QRCode" : {
+      "error" : {
+        "notRecognized" : "Sorry, this QR code could not be recognized."
+      }
+    },
     "parse" : {
       "error" : {
         "invalidTargetAddress" : "Invalid target address.",
@@ -184,7 +208,7 @@
       }
     },
     "permission" : {
-      "describe" : "Please allow SwiftShield wallet to use camera permissions to scan the QR code.",
+      "describe" : "Please allow BIM wallet to use camera permissions to scan the QR code.",
       "reject" : {
         "describe" : "Unable to scan. Please <1>open Camera</1> in the system permission.",
         "openSettings" : "Open settings",
@@ -193,27 +217,25 @@
       "title" : "Wallet Requires Access"
     },
     "photos" : "Photos",
-    "QRCode" : {
-      "error" : {
-        "notRecognized" : "Sorry, this QR code could not be recognized."
-      }
-    },
     "title" : "Scan",
     "walletConnect" : {
       "error" : {
         "connectFailed" : "Connect to wallet-connect failed",
-        "lowVersion" : "Sorry, The QR code version is to low"
+        "lowVersion" : "Sorry, The QR code version is to low",
+        "pairingAlreadyExists" : "This QR code has expired, please refresh the page and try again."
       }
     }
   },
   "settings" : {
     "aboutUs" : {
+      "UpdateToNew" : "Update to new version",
       "action" : {
         "checkUpdate" : "Check for updates",
         "feedback" : "Feedback",
         "teamsService" : "Terms of Service"
       },
-      "title" : "SwiftShield Wallet",
+      "latestVersion" : "Your App is up to date",
+      "title" : "BIM Wallet",
       "version" : "App version"
     },
     "appearance" : {
@@ -229,7 +251,21 @@
     "navigation" : {
       "aboutUs" : "About Us",
       "accountManagement" : "Account Management",
+      "networkManagement" : "Network Management",
       "preferences" : "Preferences"
+    },
+    "network" : {
+      "RPCList" : "RPC List",
+      "add" : {
+        "invalidChainId" : "Wrong Chain ID",
+        "invalidURL" : "Invalid RPC URL",
+        "placeholder" : "Enter the RPC URL",
+        "subTitle" : "RPC URL",
+        "title" : "Add a new RPC"
+      },
+      "chainId" : "Chain ID",
+      "networkName" : "Network Name",
+      "title" : "Network  "
     },
     "preferences" : {
       "navigation" : {
@@ -240,11 +276,27 @@
     },
     "title" : "Settings"
   },
+  "signature" : {
+    "common" : {
+      "signData" : "Sign Data"
+    },
+    "filter" : {
+      "all" : "ALL",
+      "message" : "Sign Message",
+      "transactions" : "Transactions"
+    },
+    "list" : {
+      "empty" : "No signature record",
+      "showMore" : "more",
+      "title" : "Signature Records"
+    }
+  },
   "tab" : {
     "activity" : "Activity",
     "content" : {
       "depositToken" : "Deposit tokens to your wallet",
       "noActivity" : "No Activity",
+      "noLatestTransaction" : null,
       "noNFT" : "No NFT",
       "noRecord" : "No Record",
       "noToken" : "No Token",
@@ -268,8 +320,8 @@
     "amount" : {
       "anyAmount" : "Any Amount",
       "error" : {
-        "estimate" : "Failed to estimate, please try again",
         "InsufficientBalance" : "Insufficient {{symbol}} balance.",
+        "estimate" : "Failed to estimate, please try again",
         "invalidAmount" : "Invalid amount"
       },
       "estimateMax" : "Estimate Max"
@@ -333,6 +385,44 @@
         "validPrivateKey" : "Valid private key"
       },
       "placeholder" : "Enter your seed phrase which words separated by space or private key"
+    }
+  },
+  "wc" : {
+    "connecting" : "Connecting to application...",
+    "dapp" : {
+      "connectTo" : "Connected to",
+      "connectedDApps" : "Connected DApps",
+      "tx" : {
+        "DAppSuggestions" : "DApp suggestions",
+        "contract" : "Contract",
+        "contractInteraction" : "Contract Interaction",
+        "editAllowance" : "Edit Allowance",
+        "function" : "Function",
+        "network" : "Network",
+        "nonce" : "Nonce",
+        "shareOfBalance" : "A share of balance",
+        "signingWith" : "Signing with",
+        "simulatedResult" : "Simulated Result",
+        "simulating" : "Simulating",
+        "title" : "Transaction Confirm",
+        "transactionRequest" : "Transaction Request",
+        "unableSimulated" : "Unable to simulated result.",
+        "unknown" : "unknown",
+        "unlimited" : "Unlimited",
+        "viewData" : "View More Details"
+      }
+    },
+    "proposal" : {
+      "accountSelected" : "Account Selected",
+      "describe" : "Wants to connect to your wallet"
+    },
+    "request" : {
+      "signature" : "Request Signature"
+    },
+    "sign" : {
+      "message" : "Message",
+      "network" : "on {{network}}   ",
+      "signData" : "Sign Data  "
     }
   },
   "welcome" : {

@@ -1,7 +1,13 @@
-import { type Plugin } from '../';
+import type { Plugin } from '../';
 export { useAccountGroups } from './data/useAccountGroups';
 export { useNetworks } from './data/useNetworks';
-export { useCurrentNetwork, getCurrentNetwork, useCurrentNetworkNativeAsset, getCurrentNetworkNativeAsset } from './data/useCurrentNetwork';
+export {
+  useCurrentNetwork,
+  getCurrentNetwork,
+  useNativeAssetOfCurrentNetwork,
+  useCurrentNetworkNativeAsset,
+  getCurrentNetworkNativeAsset,
+} from './data/useCurrentNetwork';
 export { useCurrentAccount } from './data/useCurrentAccount';
 export { useCurrentAddress, useCurrentAddressValue } from './data/useCurrentAddress';
 export { useAccountsOfGroup } from './data/useAccountsOfGroup';
@@ -16,7 +22,7 @@ export { useVaultOfAccount } from './data/useVaultOfAccount';
 export { useVaults } from './data/useVaults';
 export { useHasVault } from './data/useHasVault';
 export { useCurrentHdPath } from './data/useCurrentHdPath';
-export { useFinishedTxs, usePayloadOfTx, useUnfinishedTxs, useAssetOfTx, useRecentlyAddress } from './data/useTxs';
+export { useFinishedTxs, usePayloadOfTx, useUnfinishedTxs, useAssetOfTx, useRecentlyAddress, RecentlyType } from './data/useTxs';
 export {
   useAssetsAllList,
   useAssetsNFTList,
@@ -34,11 +40,13 @@ export { useAccountsManage, useAccountsOfGroupInManage, useAllAccountsInManage }
 export { useGroupFromId } from './data/useGroupFromId';
 export { useAddressesOfNetwork } from './data/useAddressesOfNetwork';
 export { useAccountOfAddress } from './data/useAccountOfAddress';
+export { useTxFromId } from './data/useTxFromId';
 export { default as VaultType } from '../../../database/models/Vault/VaultType';
 export { default as VaultSourceType } from '../../../database/models/Vault/VaultSourceType';
 export { NetworkType, ChainType } from '../../../database/models/Network';
 export { AddressType } from '../../../database/models/AddressBook';
 export { AssetType, AssetSource } from '../../../database/models/Asset';
+export { TxStatus } from '../../../database/models/Tx/type';
 
 declare module '../../../WalletCore/Plugins' {
   interface Plugins {

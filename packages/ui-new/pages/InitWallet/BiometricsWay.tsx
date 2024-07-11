@@ -1,17 +1,18 @@
-import React, { useCallback } from 'react';
-import { ScrollView, StyleSheet, Pressable } from 'react-native';
-import { useTheme, CommonActions } from '@react-navigation/native';
-import { showMessage } from 'react-native-flash-message';
-import { Image } from 'expo-image';
+import i18n from '@assets/i18n';
+import Img from '@assets/images/fingerPrint.webp';
+import Button from '@components/Button';
+import Text from '@components/Text';
 import plugins from '@core/WalletCore/Plugins';
 import useInAsync from '@hooks/useInAsync';
-import Text from '@components/Text';
-import Button from '@components/Button';
-import { BiometricsWayStackName, PasswordWayStackName, HomeStackName, type StackScreenProps } from '@router/configs';
-import Img from '@assets/images/fingerPrint.webp';
-import createVault from './createVaultWithRouterParams';
+import { CommonActions, useTheme } from '@react-navigation/native';
+import { type BiometricsWayStackName, HomeStackName, PasswordWayStackName, type StackScreenProps } from '@router/configs';
+import { Image } from 'expo-image';
+import type React from 'react';
+import { useCallback } from 'react';
 import { Trans, useTranslation } from 'react-i18next';
-import i18n from '@assets/i18n';
+import { Pressable, ScrollView, StyleSheet } from 'react-native';
+import { showMessage } from 'react-native-flash-message';
+import createVault from './createVaultWithRouterParams';
 
 export const showBiometricsDisabledMessage = () => {
   showMessage({
@@ -50,7 +51,7 @@ const BiometricsWay: React.FC<StackScreenProps<typeof BiometricsWayStackName>> =
   const { inAsync, execAsync: handleCreateVault } = useInAsync(_handleCreateVault);
 
   return (
-    <ScrollView style={[styles.container, { backgroundColor: colors.bgPrimary}]}>
+    <ScrollView style={[styles.container, { backgroundColor: colors.bgPrimary }]}>
       <Text style={[styles.title, { color: colors.textPrimary }]} numberOfLines={1}>
         {t('initWallet.enableFingerprint')}
       </Text>
@@ -58,7 +59,8 @@ const BiometricsWay: React.FC<StackScreenProps<typeof BiometricsWayStackName>> =
 
       <Text style={[styles.description, { color: colors.textPrimary }]}>
         <Trans i18nKey={'initWallet.describe'}>
-          Enable <Text style={{ color: colors.textNotice, fontWeight: '600' }}>Fingerprint</Text> to access wallet. After enabled, you can unlock wallets or make transactions by verifying your
+          Enable <Text style={{ color: colors.textNotice, fontWeight: '600' }}>Fingerprint</Text> to access wallet. After enabled, you can unlock wallets or
+          make transactions by verifying your
           <Text style={{ color: colors.textNotice, fontWeight: '600' }}>Fingerprint</Text>.
         </Trans>
       </Text>

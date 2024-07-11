@@ -1,57 +1,70 @@
-import React, { useEffect } from 'react';
-import { View } from 'react-native';
-import { useTheme, useNavigation } from '@react-navigation/native';
-import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import { useHasVault } from '@core/WalletCore/Plugins/ReactInject';
 import plugins from '@core/WalletCore/Plugins';
-import Welcome from '@pages/Welcome';
-import WayToInitWallet from '@pages/WayToInitWallet';
+import { useHasVault } from '@core/WalletCore/Plugins/ReactInject';
+import PasswordVerify from '@modules/PasswordVerify';
+import Home from '@pages/Home';
 import BiometricsWay from '@pages/InitWallet/BiometricsWay';
 import PasswordWay from '@pages/InitWallet/PasswordWay';
-import Home from '@pages/Home';
 import AccountManagement from '@pages/Management/AccountManagement';
 import AccountSetting from '@pages/Management/AccountManagement/AccountSetting';
+import AddAnotherWallet from '@pages/Management/AccountManagement/AddAnotherWallet';
+import Backup from '@pages/Management/AccountManagement/Backup';
+import EraseAllWallet from '@pages/Management/AccountManagement/EraseAllWallet';
 import GroupSetting from '@pages/Management/AccountManagement/GroupSetting';
 import HDSetting from '@pages/Management/AccountManagement/HDSetting';
-import Backup from '@pages/Management/AccountManagement/Backup';
-import AddAnotherWallet from '@pages/Management/AccountManagement/AddAnotherWallet';
-import EraseAllWallet from '@pages/Management/AccountManagement/EraseAllWallet';
-import SendTransaction from '@pages/SendTransaction';
-import ScanQRCode from '@pages/ScanQRCode';
 import Receive from '@pages/Receive';
-import PasswordVerify from '@modules/PasswordVerify';
+import ScanQRCode from '@pages/ScanQRCode';
+import SendTransaction from '@pages/SendTransaction';
 import Settings from '@pages/Settings';
-import AboutUs from '@pages/Settings/AboutUs';
-import Preferences from '@pages/Settings/Preferences';
+import AboutUs, { UpdateVersion } from '@pages/Settings/AboutUs';
 import Appearance from '@pages/Settings/Appearance';
 import Language from '@pages/Settings/Language';
+import Preferences from '@pages/Settings/Preferences';
+import SignatureRecords from '@pages/SignatureRecords';
+import WalletConnect from '@pages/WalletConnect';
+import { useListenWalletConnectEvent } from '@pages/WalletConnect/useWalletConnectHooks';
+import WayToInitWallet from '@pages/WayToInitWallet';
+import Welcome from '@pages/Welcome';
+import NetworkManagement from '@pages/Management/NetworkManagement';
+import NetworkAddNewEndpoint from '@pages/Management/NetworkManagement/AddNewEndpoint';
+import SpeedUp from '@modules/GasFee/SpeedUp';
+import { useNavigation, useTheme } from '@react-navigation/native';
+import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import type React from 'react';
+import { useEffect } from 'react';
+import { View } from 'react-native';
+import Header from './Header';
 import {
-  WelcomeStackName,
-  WayToInitWalletStackName,
-  HomeStackName,
-  BiometricsWayStackName,
-  PasswordWayStackName,
+  AboutUsStackName,
+  UpdateVersionStackName,
   AccountManagementStackName,
   AccountSettingStackName,
+  AddAnotherWalletStackName,
+  AppearanceStackName,
+  BackupStackName,
+  BiometricsWayStackName,
+  EraseAllWalletStackName,
   GroupSettingStackName,
   HDSettingStackName,
-  PasswordVerifyStackName,
-  BackupStackName,
-  EraseAllWalletStackName,
-  AddAnotherWalletStackName,
-  SendTransactionStackName,
-  ScanQRCodeStackName,
-  ReceiveStackName,
-  SettingsStackName,
-  AboutUsStackName,
-  PreferencesStackName,
-  AppearanceStackName,
+  HomeStackName,
   LanguageStackName,
+  PasswordVerifyStackName,
+  PasswordWayStackName,
+  PreferencesStackName,
+  ReceiveStackName,
   type RootStackParamList,
-  type StackNavigation,
+  ScanQRCodeStackName,
+  SendTransactionStackName,
+  SettingsStackName,
   SheetBottomOption,
+  SignatureRecordsStackName,
+  type StackNavigation,
+  WalletConnectStackName,
+  WayToInitWalletStackName,
+  WelcomeStackName,
+  NetworkManagementStackName,
+  NetworkAddNewEndpointStackName,
+  SpeedUpStackName,
 } from './configs';
-import Header from './Header';
 
 const RootStack = createNativeStackNavigator<RootStackParamList>();
 const screenOptions = {
@@ -68,6 +81,9 @@ const Router: React.FC = () => {
   const { colors } = useTheme();
 
   const navigation = useNavigation<StackNavigation>();
+  // to listen the wallet connect plugin custom subject event
+  useListenWalletConnectEvent();
+
   useEffect(() => {
     const sub = plugins.Authentication.subPasswordRequest().subscribe(() => {
       navigation.navigate(PasswordVerifyStackName);
@@ -87,6 +103,8 @@ const Router: React.FC = () => {
         <RootStack.Screen name={BiometricsWayStackName} component={BiometricsWay} options={{ animation: 'fade' }} />
         <RootStack.Screen name={PasswordWayStackName} component={PasswordWay} />
         <RootStack.Screen name={AccountManagementStackName} component={AccountManagement} />
+        <RootStack.Screen name={NetworkManagementStackName} component={NetworkManagement} />
+        <RootStack.Screen name={NetworkAddNewEndpointStackName} component={NetworkAddNewEndpoint} options={SheetBottomOption} />
         <RootStack.Screen name={AccountSettingStackName} component={AccountSetting} options={SheetBottomOption} />
         <RootStack.Screen name={GroupSettingStackName} component={GroupSetting} options={SheetBottomOption} />
         <RootStack.Screen name={HDSettingStackName} component={HDSetting} options={SheetBottomOption} />
@@ -99,9 +117,13 @@ const Router: React.FC = () => {
         <RootStack.Screen name={PasswordVerifyStackName} component={PasswordVerify} options={SheetBottomOption} />
         <RootStack.Screen name={SettingsStackName} component={Settings} />
         <RootStack.Screen name={AboutUsStackName} component={AboutUs} />
+        <RootStack.Screen name={UpdateVersionStackName} component={UpdateVersion} options={SheetBottomOption} />
         <RootStack.Screen name={PreferencesStackName} component={Preferences} />
         <RootStack.Screen name={AppearanceStackName} component={Appearance} options={SheetBottomOption} />
         <RootStack.Screen name={LanguageStackName} component={Language} options={SheetBottomOption} />
+        <RootStack.Screen name={WalletConnectStackName} component={WalletConnect} options={SheetBottomOption} />
+        <RootStack.Screen name={SignatureRecordsStackName} component={SignatureRecords} />
+        <RootStack.Screen name={SpeedUpStackName} component={SpeedUp} options={SheetBottomOption} />
       </RootStack.Navigator>
     </View>
   );

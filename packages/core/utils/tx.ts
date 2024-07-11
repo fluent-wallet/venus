@@ -1,60 +1,76 @@
-import { Asset, AssetType } from '@core/database/models/Asset';
-import { FAILED_TX_STATUSES, PENDING_TX_STATUSES, TxStatus } from '@core/database/models/Tx/type';
-import { TxPayload } from '@core/database/models/TxPayload';
-import { iface1155, iface721, iface777 } from '@core/contracts';
+import { iface721, iface777, iface1155 } from '@core/contracts';
+import { type Asset, AssetType } from '@core/database/models/Asset';
+import type { Tx } from '@core/database/models/Tx';
+import { ExecutedStatus, FAILED_TX_STATUSES, PENDING_TX_STATUSES } from '@core/database/models/Tx/type';
+import type { TxPayload } from '@core/database/models/TxPayload';
+import { type FunctionNameApprove, parseTxData } from '@utils/parseTxData';
 
-export const formatStatus = (status: TxStatus): 'failed' | 'pending' | 'confirmed' => {
+export const formatStatus = (tx: Tx): 'failed' | 'pending' | 'confirmed' => {
+  const { status, executedStatus } = tx;
   if (PENDING_TX_STATUSES.includes(status)) {
     return 'pending';
   }
-  if (FAILED_TX_STATUSES.includes(status)) {
+  if (FAILED_TX_STATUSES.includes(status) || executedStatus === ExecutedStatus.FAILED) {
     return 'failed';
   }
   return 'confirmed';
 };
 
-export const formatTxData = (payload: TxPayload | null, asset: Asset | null) => {
+export const formatTxData = (tx: Tx, payload: TxPayload | null, asset: Asset | null) => {
   let value = payload?.value;
   let to = payload?.to;
   let from = payload?.from;
   let tokenId = '';
-  const decimals = asset?.decimals ?? 18;
+  let isTransfer = false;
   switch (asset?.type) {
     case AssetType.ERC20: {
-      if (payload?.data) {
+      if (tx.method === 'transfer' && payload?.data) {
         const params = iface777.decodeFunctionData('transfer', payload.data);
         to = params[0];
         value = params[1].toString();
+        isTransfer = true;
       }
       break;
     }
     case AssetType.ERC721: {
-      if (payload?.data) {
+      if (tx.method === 'transferFrom' && payload?.data) {
         const params = iface721.decodeFunctionData('transferFrom', payload.data);
         from = params[0];
         to = params[1];
         tokenId = params[2].toString();
         value = '1';
+        isTransfer = true;
       }
       break;
     }
     case AssetType.ERC1155: {
-      if (payload?.data) {
+      if (tx.method === 'safeTransferFrom' && payload?.data) {
         const params = iface1155.decodeFunctionData('safeTransferFrom', payload.data);
         from = params[0];
         to = params[1];
         tokenId = params[2].toString();
         value = params[3].toString();
+        isTransfer = true;
       }
       break;
     }
+    case AssetType.Native: {
+      if (tx.method === 'transfer') {
+        isTransfer = true;
+      }
+      break;
+    }
+  }
+  if (!isTransfer && asset && payload && tx.method === 'approve') {
+    const { value: approveValue } = parseTxData({ data: payload.data, to: payload.to }) as FunctionNameApprove;
+    approveValue && (value = approveValue.toString());
   }
   return {
     to,
     from,
     value,
     tokenId,
-    decimals,
     nonce: payload?.nonce,
+    isTransfer,
   };
 };

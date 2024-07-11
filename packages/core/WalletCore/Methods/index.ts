@@ -1,22 +1,24 @@
 /* eslint-disable @typescript-eslint/ban-types */
-import { injectable, inject } from 'inversify';
-import { type Account } from '../../database/models/Account';
-import { type Vault } from '../../database/models/Vault';
-import { type Address } from '../../database/models/Address';
-import { type Asset } from '../../database/models/Asset';
+import { inject, injectable } from 'inversify';
+import type { Account } from '../../database/models/Account';
+import type { Address } from '../../database/models/Address';
+import type { Asset } from '../../database/models/Asset';
+import type { NetworkType } from '../../database/models/Network';
+import type { Vault } from '../../database/models/Vault';
 import { container } from '../configs';
-import { GetDecryptedVaultDataMethod } from './getDecryptedVaultData';
-import { AddAccountMethod, type Params as AddAccountParams } from './addAccount';
-import { CreateVaultMethod } from './createVault';
-import { AccountMethod } from './accountMethod';
 import { AccountGroupMethod } from './accountGroupMethod';
-import { VaultMethod } from './vaultMethod';
-import { NetworkMethod } from './networkMethod';
-import { DatabaseMethod } from './databaseMethod';
-import { TxMethod } from './txMethod';
-import { AssetMethod, type AssetParams } from './assetMethod';
+import { AccountMethod } from './accountMethod';
+import { AddAccountMethod, type Params as AddAccountParams } from './addAccount';
 import { AppMethod } from './appMethod';
+import { AssetMethod, type AssetParams } from './assetMethod';
+import { CreateVaultMethod } from './createVault';
+import { DatabaseMethod } from './databaseMethod';
+import { GetDecryptedVaultDataMethod } from './getDecryptedVaultData';
+import { NetworkMethod } from './networkMethod';
 import { RequestMethod } from './requestMethod';
+import { SignatureMethod } from './signatureMethod';
+import { TxMethod } from './txMethod';
+import { VaultMethod } from './vaultMethod';
 
 @injectable()
 export class Methods {
@@ -96,11 +98,25 @@ export class Methods {
   public switchToNetwork(...args: Parameters<NetworkMethod['switchToNetwork']>) {
     return this.NetworkMethod.switchToNetwork(...args);
   }
+  public updateCurrentEndpoint(...args: Parameters<NetworkMethod['updateCurrentEndpoint']>) {
+    return this.NetworkMethod.updateCurrentEndpoint(...args);
+  }
+  public removeEndpoints(...args: Parameters<NetworkMethod['removeEndpoint']>) {
+    return this.NetworkMethod.removeEndpoint(...args);
+  }
+  public addEndpoint(...args: Parameters<NetworkMethod['addEndpoint']>) {
+    return this.NetworkMethod.addEndpoint(...args);
+  }
+  public queryAssetByAddress(...args: Parameters<NetworkMethod['queryAssetByAddress']>) {
+    return this.NetworkMethod.queryAssetByAddress(...args);
+  }
   public checkIsValidAddress(...args: Parameters<NetworkMethod['checkIsValidAddress']>) {
     return this.NetworkMethod.checkIsValidAddress(...args);
   }
-  public checkIsContractAddress(...args: Parameters<NetworkMethod['checkIsContractAddress']>) {
-    return this.NetworkMethod.checkIsContractAddress(...args);
+  public checkIsContractAddress(params: { networkType: NetworkType.Conflux; endpoint: string; addressValue: string }): boolean;
+  public checkIsContractAddress(params: { networkType: NetworkType; endpoint: string; addressValue: string }): Promise<boolean>;
+  public checkIsContractAddress(params: { networkType: NetworkType; endpoint: string; addressValue: string }) {
+    return this.NetworkMethod.checkIsContractAddress(params as any) as any;
   }
 
   @inject(DatabaseMethod) private DatabaseMethod!: DatabaseMethod;
@@ -136,8 +152,11 @@ export class Methods {
   public createApp(...args: Parameters<AppMethod['createApp']>) {
     return this.AppMethod.createApp(...args);
   }
-  public isAppExist(...args: Parameters<AppMethod['isAppExist']>) {
-    return this.AppMethod.isAppExist(...args);
+  public isAppExist(...args: Parameters<AppMethod['queryAppByIdentity']>) {
+    return this.AppMethod.queryAppByIdentity(...args);
+  }
+  public queryAppByIdentity(...args: Parameters<AppMethod['queryAppByIdentity']>) {
+    return this.AppMethod.queryAppByIdentity(...args);
   }
 
   @inject(RequestMethod) private RequestMethod!: RequestMethod;
@@ -151,7 +170,13 @@ export class Methods {
     return this.RequestMethod.rejectAllPendingRequests(...args);
   }
 
+  @inject(SignatureMethod) private SignatureMethod!: SignatureMethod;
+  public createSignature(...args: Parameters<SignatureMethod['createSignature']>) {
+    return this.SignatureMethod.createSignature(...args);
+  }
+
   [methodName: string]: any;
+  // biome-ignore lint/complexity/noBannedTypes: <explanation>
   public register(methodName: string, method: Function) {
     this[methodName] = method;
   }
@@ -170,5 +195,6 @@ container.bind(AssetMethod).to(AssetMethod).inSingletonScope();
 container.bind(Methods).to(Methods).inSingletonScope();
 container.bind(AppMethod).to(AppMethod).inSingletonScope();
 container.bind(RequestMethod).to(RequestMethod).inSingletonScope();
+container.bind(SignatureMethod).to(SignatureMethod).inSingletonScope();
 
 export default container.get(Methods) as Methods;

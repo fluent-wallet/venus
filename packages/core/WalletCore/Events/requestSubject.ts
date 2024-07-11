@@ -1,6 +1,6 @@
 import { Subject } from 'rxjs';
-import { type Request } from '../../database/models/Request';
-import { type App } from '../../database/models/App';
+import type { App } from '../../database/models/App';
+import type { Request } from '../../database/models/Request';
 
 export interface RequestSubject {
   resolve: (...args: any[]) => Promise<void>;

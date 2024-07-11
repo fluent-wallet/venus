@@ -1,7 +1,7 @@
-import React from 'react';
-import { View, Pressable, StyleSheet, Platform } from 'react-native';
-import { useNavigation, useTheme } from '@react-navigation/native';
 import ArrowLeft from '@assets/icons/arrow-left.svg';
+import { useNavigation, useTheme } from '@react-navigation/native';
+import type React from 'react';
+import { Platform, Pressable, StyleSheet, View } from 'react-native';
 import { statusBarHeight, supports3DStructureLight } from '../utils/deviceInfo';
 
 const BackButton: React.FC = () => {
@@ -13,7 +13,7 @@ const BackButton: React.FC = () => {
     <Pressable
       style={({ pressed }) => [styles.backButton, { borderColor: colors.borderThird, backgroundColor: pressed ? colors.underlay : 'transparent' }]}
       onPress={() => navigation.goBack()}
-      testID='backButton'
+      testID="backButton"
     >
       <ArrowLeft color={colors.iconPrimary} />
     </Pressable>

@@ -1,4 +1,4 @@
-import { AssetType } from '@core/database/models/Asset';
+import type { AssetType } from '@core/database/models/Asset';
 
 export type ITxEvm = {
   from: string;
@@ -8,12 +8,13 @@ export type ITxEvm = {
 
   nonce?: number;
   type?: number;
+  chainId?: string;
 
   gasLimit?: string;
   gasPrice?: string;
   storageLimit?: string;
-  //   maxFeePerGas?: string;
-  //   maxPriorityFeePerGas?: string;
+  maxFeePerGas?: string;
+  maxPriorityFeePerGas?: string;
 };
 
 export enum IBSIMTxEventTypesName {

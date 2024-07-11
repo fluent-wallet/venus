@@ -1,7 +1,7 @@
+import { useTheme } from '@react-navigation/native';
+import { screenWidth } from '@utils/deviceInfo';
 import { random } from 'lodash-es';
 import ContentLoader, { Rect, Circle } from 'react-content-loader/native';
-import { screenWidth } from '@utils/deviceInfo';
-import { useTheme } from '@react-navigation/native';
 
 const Skeleton = () => {
   const { colors } = useTheme();

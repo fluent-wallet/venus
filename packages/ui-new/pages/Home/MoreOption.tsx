@@ -1,18 +1,22 @@
-import React, { useCallback, useState } from 'react';
-import { LayoutChangeEvent, StyleSheet, Text, View, Modal, Pressable, Dimensions, Linking } from 'react-native';
-import Animated, { useAnimatedStyle, useSharedValue } from 'react-native-reanimated';
-import { useTheme } from '@react-navigation/native';
-import { useTranslation } from 'react-i18next';
-import Clipboard from '@react-native-clipboard/clipboard';
-import { showMessage } from 'react-native-flash-message';
-import { useCurrentAddressValue, useCurrentNetwork, NetworkType } from '@core/WalletCore/Plugins/ReactInject';
-import { CFX_ESPACE_MAINNET_CHAINID, CFX_ESPACE_TESTNET_CHAINID } from '@core/consts/network';
 import Copy from '@assets/icons/copy.svg';
 import Earth from '@assets/icons/earth.svg';
+import Sign from '@assets/icons/sign.svg';
+import { NetworkType, useCurrentAddressValue, useCurrentNetwork } from '@core/WalletCore/Plugins/ReactInject';
+import { Networks } from '@core/utils/consts';
+import Clipboard from '@react-native-clipboard/clipboard';
+import { useNavigation, useTheme } from '@react-navigation/native';
+import { SignatureRecordsStackName, type StackScreenProps } from '@router/configs';
+import { ENABLE_SIGNATURE_RECORDS_FEATURE } from '@utils/features';
+import React, { useCallback, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { Dimensions, type LayoutChangeEvent, Linking, Modal, Pressable, StyleSheet, Text, View } from 'react-native';
+import { showMessage } from 'react-native-flash-message';
+import Animated, { useAnimatedStyle, useSharedValue } from 'react-native-reanimated';
 
 const MoreOption: React.FC<{ children: React.ReactElement }> = ({ children }) => {
   const { reverseColors } = useTheme();
   const { t } = useTranslation();
+  const navigation = useNavigation<StackScreenProps<typeof SignatureRecordsStackName>['navigation']>();
 
   const currentAddressValue = useCurrentAddressValue();
   const currentNetwork = useCurrentNetwork();
@@ -39,19 +43,10 @@ const MoreOption: React.FC<{ children: React.ReactElement }> = ({ children }) =>
   });
 
   const handleOpenScan = useCallback(() => {
-    if (currentNetwork?.networkType === NetworkType.Ethereum) {
-      if (currentNetwork.chainId === CFX_ESPACE_MAINNET_CHAINID) {
-        Linking.openURL(`https://evm.confluxscan.io/address/${currentAddressValue}`);
-      } else if (currentNetwork.chainId === CFX_ESPACE_TESTNET_CHAINID) {
-        Linking.openURL(`https://evmtestnet.confluxscan.io/address/${currentAddressValue}`);
-      } else {
-        Linking.openURL(currentNetwork?.scanUrl ?? '');
-      }
-    } else {
-      Linking.openURL(currentNetwork?.scanUrl ?? '');
-    }
+    if (!currentNetwork?.scanUrl) return;
+    Linking.openURL(`${currentNetwork.scanUrl}/address/${currentAddressValue}`);
     setVisible(false);
-  }, [currentNetwork?.scanUrl, currentNetwork?.chainId, currentNetwork?.networkType, currentAddressValue]);
+  }, [currentNetwork?.scanUrl, currentAddressValue]);
 
   const handleCoy = useCallback(() => {
     Clipboard.setString(currentAddressValue ?? '');
@@ -62,7 +57,13 @@ const MoreOption: React.FC<{ children: React.ReactElement }> = ({ children }) =>
       width: 160,
     });
     setVisible(false);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentAddressValue]);
+
+  const handleToSignatureRecords = useCallback(() => {
+    navigation.navigate(SignatureRecordsStackName);
+    setVisible(false);
+  }, [navigation]);
 
   return (
     <View style={styles.container}>
@@ -70,18 +71,28 @@ const MoreOption: React.FC<{ children: React.ReactElement }> = ({ children }) =>
       <Modal visible={visible} onRequestClose={() => setVisible(false)} transparent animationType="none">
         <Pressable onPress={() => setVisible(!visible)} style={styles.overlay} testID="more">
           <Animated.View style={[styles.options, optionStyle, { backgroundColor: reverseColors.borderThird }]}>
-            <Pressable onPress={handleOpenScan} testID="view">
-              <View style={styles.optionItem}>
-                <Text style={[{ color: reverseColors.textPrimary }, styles.optionItemText]}>{t('home.more.viewInExplorer')}</Text>
-                <Earth color={reverseColors.textPrimary} width={22} height={22} />
-              </View>
-            </Pressable>
+            {currentNetwork?.scanUrl && (
+              <Pressable onPress={handleOpenScan} testID="view">
+                <View style={styles.optionItem}>
+                  <Text style={[{ color: reverseColors.textPrimary }, styles.optionItemText]}>{t('home.more.viewInExplorer')}</Text>
+                  <Earth color={reverseColors.textPrimary} width={22} height={22} />
+                </View>
+              </Pressable>
+            )}
             <Pressable onPress={handleCoy} testID="copy">
               <View style={styles.optionItem}>
                 <Text style={[{ color: reverseColors.textPrimary }, styles.optionItemText]}>{t('home.more.copyAddress')}</Text>
                 <Copy color={reverseColors.textPrimary} width={20} height={20} />
               </View>
             </Pressable>
+            {ENABLE_SIGNATURE_RECORDS_FEATURE.allow && (
+              <Pressable onPress={handleToSignatureRecords} testID="signatureRecords">
+                <View style={styles.optionItem}>
+                  <Text style={[{ color: reverseColors.textPrimary }, styles.optionItemText]}>{t('home.more.signatureRecords')}</Text>
+                  <Sign color={reverseColors.textPrimary} width={20} height={20} />
+                </View>
+              </Pressable>
+            )}
           </Animated.View>
         </Pressable>
       </Modal>

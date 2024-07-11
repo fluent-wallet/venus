@@ -30,6 +30,7 @@ const schema = appSchema({
         { name: 'scan_url', type: 'string', isOptional: true },
         { name: 'selected', type: 'boolean' },
         { name: 'hd_path_id', type: 'string', isIndexed: true },
+        { name: 'endpoints_list', type: 'string' },
       ],
     }),
     tableSchema({
@@ -56,12 +57,26 @@ const schema = appSchema({
       ],
     }),
     tableSchema({
+      name: TableName.Signature,
+      columns: [
+        { name: 'app_id', type: 'string', isIndexed: true, isOptional: true },
+        { name: 'address_id', type: 'string', isIndexed: true },
+        { name: 'tx_id', type: 'string', isIndexed: true, isOptional: true },
+        { name: 'sign_type', type: 'string' },
+        { name: 'message', type: 'string', isOptional: true },
+        { name: 'block_number', type: 'string' },
+        { name: 'created_at', type: 'number' },
+      ],
+    }),
+    tableSchema({
       name: TableName.Tx,
       columns: [
         { name: 'raw', type: 'string', isOptional: true },
         { name: 'hash', type: 'string' },
         // tx status
         { name: 'status', type: 'string' },
+        { name: 'source', type: 'string' },
+        { name: 'method', type: 'string' },
         // executed status
         { name: 'executed_status', type: 'string', isOptional: true },
         // @json
@@ -69,7 +84,9 @@ const schema = appSchema({
         { name: 'confirmed_number', type: 'number', isOptional: true },
         { name: 'created_at', type: 'number' },
         { name: 'executed_at', type: 'number', isOptional: true },
+        { name: 'error_type', type: 'string', isOptional: true },
         { name: 'err', type: 'string', isOptional: true },
+        // deprecated
         { name: 'is_local', type: 'boolean', isOptional: true },
         { name: 'send_at', type: 'number', isOptional: true },
         { name: 'resend_at', type: 'number', isOptional: true },
@@ -170,7 +187,7 @@ const schema = appSchema({
         { name: 'network_id', type: 'string', isIndexed: true },
         { name: 'name', type: 'string' },
         { name: 'address_value', type: 'string' },
-        { name: 'type', type: 'string'}
+        { name: 'type', type: 'string' },
       ],
     }),
     tableSchema({

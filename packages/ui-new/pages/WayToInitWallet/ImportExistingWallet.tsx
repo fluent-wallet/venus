@@ -1,17 +1,18 @@
-/* eslint-disable react-hooks/exhaustive-deps */
-import React, { useRef, useState, useCallback, type RefObject } from 'react';
-import { View, Pressable, Keyboard, StyleSheet, type TextInput } from 'react-native';
-import { useTheme } from '@react-navigation/native';
-import { Mnemonic } from 'ethers';
-import * as secp from '@noble/secp256k1';
-import { stripHexPrefix } from '@core/utils/base';
-import useInAsync from '@hooks/useInAsync';
+import BottomSheet, { BottomSheetWrapper, BottomSheetContent, BottomSheetFooter, BottomSheetTextInput, type BottomSheetMethods } from '@components/BottomSheet';
 import Button from '@components/Button';
 import Text from '@components/Text';
-import BottomSheet, { BottomSheetTextInput, type BottomSheetMethods } from '@components/BottomSheet';
-import { screenHeight, isAdjustResize } from '@utils/deviceInfo';
+import { stripHexPrefix } from '@core/utils/base';
+import useInAsync from '@hooks/useInAsync';
+import * as secp from '@noble/secp256k1';
+import { useTheme } from '@react-navigation/native';
+import { isAdjustResize, screenHeight } from '@utils/deviceInfo';
+import { Mnemonic } from 'ethers';
+/* eslint-disable react-hooks/exhaustive-deps */
+import type React from 'react';
+import { type RefObject, useCallback, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-export { BottomSheetMethods };
+import { Keyboard, Pressable, StyleSheet, type TextInput, View } from 'react-native';
+export type { BottomSheetMethods };
 
 interface Props {
   bottomSheetRef: RefObject<BottomSheetMethods>;
@@ -89,52 +90,54 @@ const ImportExistingWallet: React.FC<Props> = ({ bottomSheetRef, inImporting, on
       enablePanDownToClose={!inAsync}
       enableContentPanningGesture={!inAsync}
       enableHandlePanningGesture={!inAsync}
+      enableDynamicSizing
     >
-      <View style={{ flex: 1 }}>
-        <Pressable
-          onPress={() => {
-            Keyboard.dismiss();
-          }}
-          style={styles.bottomSheetContainer}
-          disabled={inAsync}
-        >
-          <BottomSheetTextInput
-            ref={textInputRef as any}
-            style={[styles.input, { color: colors.textPrimary, borderColor: colors.borderFourth }]}
-            placeholderTextColor={colors.textSecondary}
-            testID="existingWalletInput"
-            underlineColorAndroid="transparent"
-            secureTextEntry={true}
-            multiline
-            numberOfLines={6}
-            placeholder={t('wallet.import.placeholder')}
-            onChangeText={(value) => {
-              setStatus(null);
-              existWalletValueRef.current = value;
+      <BottomSheetWrapper>
+        <BottomSheetContent>
+          <Pressable
+            onPress={() => {
+              Keyboard.dismiss();
             }}
-            onBlur={handleCheckInput}
-            pointerEvents={inAsync ? 'none' : 'auto'}
-          />
-          <Text style={[styles.tipText, { color: status?.type === 'error' ? colors.down : colors.up, opacity: status === null ? 0 : 1 }]}>
-            {status?.message || 'placeholder'}
-          </Text>
-          <Button testID="confirmImportExistingWallet" style={styles.btn} onPress={handleConfirm} loading={inAsync}>
+            style={styles.pressable}
+            disabled={inAsync}
+          >
+            <BottomSheetTextInput
+              ref={textInputRef as any}
+              style={[styles.input, { color: colors.textPrimary, borderColor: colors.borderFourth }]}
+              placeholderTextColor={colors.textSecondary}
+              testID="existingWalletInput"
+              underlineColorAndroid="transparent"
+              secureTextEntry={true}
+              multiline
+              numberOfLines={6}
+              placeholder={t('wallet.import.placeholder')}
+              onChangeText={(value) => {
+                setStatus(null);
+                existWalletValueRef.current = value;
+              }}
+              onBlur={handleCheckInput}
+              pointerEvents={inAsync ? 'none' : 'auto'}
+            />
+            <Text style={[styles.tipText, { color: status?.type === 'error' ? colors.down : colors.up, opacity: status === null ? 0 : 1 }]}>
+              {status?.message || 'placeholder'}
+            </Text>
+          </Pressable>
+        </BottomSheetContent>
+        <BottomSheetFooter innerPaddingHorizontal>
+          <Button testID="confirmImportExistingWallet" onPress={handleConfirm} loading={inAsync}>
             {t('common.confirm')}
           </Button>
-        </Pressable>
-      </View>
+        </BottomSheetFooter>
+      </BottomSheetWrapper>
     </BottomSheet>
   );
 };
 
 const styles = StyleSheet.create({
-  bottomSheetContainer: {
+  pressable: {
     flex: 1,
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: 16,
-    paddingBottom: 32,
+    paddingHorizontal: 16,
+    paddingTop: 12,
   },
   input: {
     width: '100%',
@@ -149,9 +152,6 @@ const styles = StyleSheet.create({
     marginBottom: 'auto',
     fontSize: 12,
     textAlign: 'left',
-  },
-  btn: {
-    width: '100%',
   },
 });
 

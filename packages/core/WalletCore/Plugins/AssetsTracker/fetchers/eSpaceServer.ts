@@ -1,22 +1,17 @@
-import { lastValueFrom, from, concatMap, map, catchError, EMPTY } from 'rxjs';
-import { createFetchServer, fetchChainBatch } from '@cfx-kit/dapp-utils/dist/fetch';
 import { createContract } from '@cfx-kit/dapp-utils/dist/contract';
+import { createFetchServer, fetchChainBatch } from '@cfx-kit/dapp-utils/dist/fetch';
 import { getAddress as toChecksumAddress } from 'ethers';
+import { EMPTY, catchError, concatMap, from, lastValueFrom, map } from 'rxjs';
 import ESpaceWalletABI from '../../../../contracts/ABI/ESpaceWallet';
-import { ChainType, type Network } from './../../../../database/models/Network/index';
 import { AssetType } from '../../../../database/models/Asset';
-import { type AssetInfo } from '../types';
-import {
-  CFX_ESPACE_MAINNET_SCAN_OPENAPI,
-  CFX_ESPACE_MAINNET_WALLET_CONTRACT_ADDRESS,
-  CFX_ESPACE_TESTNET_SCAN_OPENAPI,
-  CFX_ESPACE_TESTNET_WALLET_CONTRACT_ADDRESS,
-} from '../../../../consts/network';
+import { Networks } from '../../../../utils/consts';
+import type { AssetInfo } from '../types';
+import { ChainType, type Network } from './../../../../database/models/Network/index';
 
-export const eSpaceTestnetWalletContract = createContract({ address: CFX_ESPACE_TESTNET_WALLET_CONTRACT_ADDRESS, ABI: ESpaceWalletABI });
-export const eSpaceTestnetServerFetcher = createFetchServer({ prefixUrl: CFX_ESPACE_TESTNET_SCAN_OPENAPI });
-export const eSpaceWalletContract = createContract({ address: CFX_ESPACE_MAINNET_WALLET_CONTRACT_ADDRESS, ABI: ESpaceWalletABI });
-export const eSpaceServerFetcher = createFetchServer({ prefixUrl: CFX_ESPACE_MAINNET_SCAN_OPENAPI });
+export const eSpaceTestnetWalletContract = createContract({ address: '0xce2104aa7233b27b0ba2e98ede59b6f78c06ae05', ABI: ESpaceWalletABI });
+export const eSpaceTestnetServerFetcher = createFetchServer({ prefixUrl: Networks['eSpace Testnet'].scanOpenAPI });
+export const eSpaceWalletContract = createContract({ address: '0x2c7e015328f37f00f9b16e4adc9cedb1f8742069', ABI: ESpaceWalletABI });
+export const eSpaceServerFetcher = createFetchServer({ prefixUrl: Networks['Conflux eSpace'].scanOpenAPI });
 
 interface AssetInfoFromScan {
   type: Omit<AssetType, AssetType.Native> & 'native';
@@ -108,7 +103,7 @@ export const fetchESpaceServer = async ({
                   },
                   ...assets.filter((asset) => asset.contractAddress !== '0x0000000000000000000000000000000000000000'),
                 ];
-                return assetsWithCFX;
+                return assetsWithCFX as AssetInfo[];
               }),
             );
           } else {
@@ -172,7 +167,7 @@ export const fetchESpaceServer = async ({
           },
           ...assets,
         ];
-        return assetsWithCFX;
+        return assetsWithCFX as AssetInfo[];
       }),
     );
   };

@@ -1,23 +1,14 @@
 import { Model, Q, type Query, type Relation } from '@nozbe/watermelondb';
-import { field, text, children, relation, lazy } from '@nozbe/watermelondb/decorators';
+import { children, field, json, lazy, relation, text, writer } from '@nozbe/watermelondb/decorators';
 import { firstValueFrom, map } from 'rxjs';
 import { convertToChecksum } from '../../../utils/account';
-import { type Asset, AssetType } from '../Asset';
-import { type AssetRule } from '../AssetRule';
-import { type HdPath } from '../HdPath';
-import { type Address } from '../Address';
+import { ChainType, NetworkType } from '../../../utils/consts';
 import TableName from '../../TableName';
-
-export enum NetworkType {
-  Conflux = 'Conflux',
-  Ethereum = 'Ethereum',
-}
-
-export enum ChainType {
-  Mainnet = 'Mainnet',
-  Testnet = 'Testnet',
-  Custom = 'Custom',
-}
+import type { Address } from '../Address';
+import { type Asset, AssetType } from '../Asset';
+import type { AssetRule } from '../AssetRule';
+import type { HdPath } from '../HdPath';
+export { NetworkType, ChainType };
 
 export const networkRpcPrefixMap = {
   [NetworkType.Conflux]: 'cfx',
@@ -49,17 +40,51 @@ export class Network extends Model {
   @text('scan_url') scanUrl!: string | null;
   @field('selected') selected!: boolean;
   @field('builtin') builtin!: boolean | null;
+  @json('endpoints_list', (json) => (Array.isArray(json) ? json : [])) endpointsList!: { endpoint: string; type: 'inner' | 'outer' }[];
   @children(TableName.Asset) assets!: Query<Asset>;
   @children(TableName.Address) addresses!: Query<Address>;
   @children(TableName.AssetRule) assetRules!: Query<AssetRule>;
   @relation(TableName.HdPath, 'hd_path_id') hdPath!: Relation<HdPath>;
+
+  @writer async updateEndpoint(endpoint: string) {
+    await this.update((network) => {
+      network.endpoint = endpoint;
+    });
+  }
+
+  @writer async addEndpoint(params: { endpoint: string; type: 'inner' | 'outer' }) {
+    const { endpoint, type } = params;
+    if (this.endpointsList.some(({ endpoint: innerEndpoint }) => innerEndpoint === endpoint)) {
+      return false;
+    }
+
+    await this.update((network) => {
+      network.endpointsList = [...network.endpointsList, params];
+    });
+
+    return true;
+  }
+
+  @writer async removeEndpoint(targetEndpoint: string) {
+    const endPointInList = this.endpointsList?.find((endpoint) => endpoint.endpoint === targetEndpoint);
+
+    if (!endPointInList || endPointInList.type === 'inner' || this.endpoint === targetEndpoint) {
+      // can not remove endpoint not in list or it is current endpoint or endpoint it is inner
+      return false;
+    }
+
+    await this.update((network) => {
+      network.endpointsList = network.endpointsList.filter((endpoint) => endpoint.endpoint !== targetEndpoint);
+    });
+    return true;
+  }
 
   queryAssetByAddress = (address: string) =>
     firstValueFrom(
       this.assets
         .extend(Q.or(Q.where('contract_address', convertToChecksum(address)), Q.where('contract_address', address)))
         .observe()
-        .pipe(map((accounts) => accounts?.[0] as Asset | undefined)),
+        .pipe(map((assets) => assets?.[0] as Asset | undefined)),
     );
 
   @lazy nativeAssetQuery = this.assets.extend(Q.where('type', AssetType.Native));

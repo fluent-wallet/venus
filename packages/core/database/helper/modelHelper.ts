@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { Model, type Relation, type Query } from '@nozbe/watermelondb';
+import type { Model, Query, Relation } from '@nozbe/watermelondb';
 import database from '../index';
-import TableName from '../TableName';
+import type TableName from '../TableName';
 
 export function createModel<T extends Model>({ name, params, prepareCreate }: { name: TableName; params: object; prepareCreate?: true }) {
   const create = () => {
@@ -9,10 +9,8 @@ export function createModel<T extends Model>({ name, params, prepareCreate }: { 
       const entries = Object.entries(params);
       for (const [key, value] of entries) {
         if (value !== undefined) {
-          if (typeof model[key as '_raw'] === 'object' && model[key as '_raw'] !== null) {
-            if (typeof (model[key as '_raw'] as any)?.set === 'function') {
-              (model[key as '_raw'] as any).set(value);
-            }
+          if (typeof model[key as '_raw'] === 'object' && model[key as '_raw'] !== null && typeof (model[key as '_raw'] as any)?.set === 'function') {
+            (model[key as '_raw'] as any).set(value);
           } else {
             model[key as '_raw'] = value;
           }
@@ -24,19 +22,21 @@ export function createModel<T extends Model>({ name, params, prepareCreate }: { 
 
   if (prepareCreate) {
     return create();
-  } else {
-    return database.write(async () => await (create() as Promise<T>));
   }
+  return database.write(async () => await (create() as Promise<T>));
 }
 
 type ExtractOwnProperties<B> = Pick<B, Exclude<keyof B, keyof Model>>;
 
 type ExtractProperties<T> = {
-  [K in keyof T as Exclude<T[K], null | undefined> extends Relation<any> ? K : T[K] extends Query<any> ? K : never]?: Exclude<T[K], null | undefined> extends Relation<infer U>
+  [K in keyof T as Exclude<T[K], null | undefined> extends Relation<any> ? K : T[K] extends Query<any> ? K : never]?: Exclude<
+    T[K],
+    null | undefined
+  > extends Relation<infer U>
     ? U
     : T[K] extends Query<infer U>
-    ? U
-    : never;
+      ? U
+      : never;
 };
 
 type OmitProperties<T> = {

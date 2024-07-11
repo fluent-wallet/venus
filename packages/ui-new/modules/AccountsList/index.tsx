@@ -1,25 +1,26 @@
-import React, { useState, useCallback, useMemo } from 'react';
-import { View, SectionList, Pressable, StyleSheet } from 'react-native';
-import { useTheme } from '@react-navigation/native';
-import { BottomSheetSectionList } from '@gorhom/bottom-sheet';
-import { Image } from 'expo-image';
-import { useAccountsManage, useCurrentAccount, VaultType } from '@core/WalletCore/Plugins/ReactInject';
-import methods from '@core/WalletCore/Methods';
-import plugins from '@core/WalletCore/Plugins';
-import { queryAccountGroupById } from '@core/database/models/AccountGroup/query';
-import { shortenAddress } from '@core/utils/address';
-import Text from '@components/Text';
-import Checkbox from '@components/Checkbox';
-import HourglassLoading from '@components/Loading/Hourglass';
-import { toDataUrl } from '@utils/blockies';
-import BSIMCardWallet from '@assets/icons/wallet-bsim.webp';
-import HDWallet from '@assets/icons/wallet-hd.webp';
-import ExistWallet from '@assets/icons/wallet-Imported.webp';
-import More from '@assets/icons/more.svg';
 import Add from '@assets/icons/add.svg';
 import Copy from '@assets/icons/copy.svg';
+import More from '@assets/icons/more.svg';
 import Settings from '@assets/icons/settings.svg';
+import ExistWallet from '@assets/icons/wallet-Imported.webp';
+import BSIMCardWallet from '@assets/icons/wallet-bsim.webp';
+import HDWallet from '@assets/icons/wallet-hd.webp';
+import Checkbox from '@components/Checkbox';
+import HourglassLoading from '@components/Loading/Hourglass';
+import Text from '@components/Text';
+import methods from '@core/WalletCore/Methods';
+import plugins from '@core/WalletCore/Plugins';
+import { VaultType, useAccountsManage, useCurrentAccount } from '@core/WalletCore/Plugins/ReactInject';
+import { queryAccountGroupById } from '@core/database/models/AccountGroup/query';
+import { shortenAddress } from '@core/utils/address';
+import { BottomSheetSectionList } from '@gorhom/bottom-sheet';
+import { useTheme } from '@react-navigation/native';
+import { toDataUrl } from '@utils/blockies';
+import { Image } from 'expo-image';
+import type React from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { Pressable, SectionList, StyleSheet, View } from 'react-native';
 
 type ListType = 'selector' | 'management';
 
@@ -51,7 +52,7 @@ const AccountGroup: React.FC<
       ]}
       disabled={type === 'selector' || vaultType === VaultType.PrivateKey || vaultType === VaultType.PublicAddress}
       onPress={() => onPressGroup?.(id)}
-      testID='groupSetting'
+      testID="groupSetting"
     >
       <Image
         style={styles.groupTypeImage}
@@ -79,12 +80,31 @@ export const AccountItemView: React.FC<{
   children?: React.ReactNode;
   disabled?: boolean;
   showUnderlay?: boolean;
-}> = ({ colors, showSelect, showMore, addressValue, nickname, children, shorten = true, showUnderlay = true, disabled, showCopy, onPress }) => {
+  innerPaddingHorizontal?: boolean;
+}> = ({
+  colors,
+  showSelect,
+  showMore,
+  addressValue,
+  nickname,
+  children,
+  shorten = true,
+  showUnderlay = true,
+  disabled,
+  showCopy,
+  onPress,
+  innerPaddingHorizontal = true,
+}) => {
   return (
     <Pressable
       style={({ pressed }) => [
         styles.row,
-        { backgroundColor: showUnderlay && pressed ? colors.underlay : 'transparent', position: 'relative', paddingRight: 0 },
+        {
+          backgroundColor: showUnderlay && pressed ? colors.underlay : 'transparent',
+          position: 'relative',
+          paddingLeft: innerPaddingHorizontal ? 16 : 0,
+          paddingRight: 0,
+        },
       ]}
       pointerEvents={!onPress ? 'none' : 'auto'}
       onPress={onPress}
@@ -199,7 +219,8 @@ const AccountsList: React.FC<{
       }
       if (vaultType === VaultType.HierarchicalDeterministic) {
         return await methods.addAccount({ accountGroup });
-      } else if (vaultType === VaultType.BSIM) {
+      }
+      if (vaultType === VaultType.BSIM) {
         const list = await plugins.BSIM.getBSIMList();
         const newIndex = (await methods.getAccountGroupLastAccountIndex(accountGroup)) + 1;
         const alreadyCreateAccount = list?.find((item) => item.index === newIndex);

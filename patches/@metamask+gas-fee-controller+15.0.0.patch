@@ -1,0 +1,38 @@
+diff --git a/node_modules/@metamask/gas-fee-controller/dist/chunk-SINQOHIN.mjs b/node_modules/@metamask/gas-fee-controller/dist/chunk-SINQOHIN.mjs
+index 58dfd46..f9616f6 100644
+--- a/node_modules/@metamask/gas-fee-controller/dist/chunk-SINQOHIN.mjs
++++ b/node_modules/@metamask/gas-fee-controller/dist/chunk-SINQOHIN.mjs
+@@ -8,7 +8,7 @@ async function fetchLatestBlock(ethQuery, includeFullTransactionData = false) {
+   ]);
+   return {
+     ...block,
+-    number: fromHex(block.number),
++    number: fromHex(block.number ?? block.epochNumber),
+     baseFeePerGas: fromHex(block.baseFeePerGas)
+   };
+ }
+diff --git a/node_modules/@metamask/gas-fee-controller/dist/index.mjs b/node_modules/@metamask/gas-fee-controller/dist/index.mjs
+index e8f3abf..21e662d 100644
+--- a/node_modules/@metamask/gas-fee-controller/dist/index.mjs
++++ b/node_modules/@metamask/gas-fee-controller/dist/index.mjs
+@@ -3,7 +3,9 @@ import {
+   GAS_ESTIMATE_TYPES,
+   GasFeeController
+ } from "./chunk-G2HAZY5F.mjs";
+-import "./chunk-EXCWMMNV.mjs";
++import {
++  fetchGasEstimatesViaEthFeeHistory
++} from "./chunk-EXCWMMNV.mjs";
+ import "./chunk-AQN4AQEF.mjs";
+ import "./chunk-QVES4OOM.mjs";
+ import "./chunk-GUWY6WP6.mjs";
+@@ -13,6 +15,7 @@ import "./chunk-XUI43LEZ.mjs";
+ export {
+   GAS_API_BASE_URL,
+   GAS_ESTIMATE_TYPES,
+-  GasFeeController
++  GasFeeController,
++  fetchGasEstimatesViaEthFeeHistory
+ };
+ //# sourceMappingURL=index.mjs.map
+\ No newline at end of file

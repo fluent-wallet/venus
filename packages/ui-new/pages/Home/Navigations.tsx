@@ -1,16 +1,17 @@
-import React, { type ComponentProps } from 'react';
-import { View, Pressable, StyleSheet } from 'react-native';
-import { useTheme } from '@react-navigation/native';
-import { useIsTokensEmpty } from '@core/WalletCore/Plugins/ReactInject';
-import Button from '@components/Button';
-import Text from '@components/Text';
-import { HomeStackName, SendTransactionStackName, SendTransactionStep1StackName, ReceiveStackName, type StackScreenProps } from '@router/configs';
-import ArrowUpward from '@assets/icons/arrow-upward.svg';
 import ArrowDownward from '@assets/icons/arrow-downward.svg';
+import ArrowUpward from '@assets/icons/arrow-upward.svg';
 import Buy from '@assets/icons/buy.svg';
 import More from '@assets/icons/more.svg';
-import MoreOption from './MoreOption';
+import Button from '@components/Button';
+import Text from '@components/Text';
+import { useIsTokensEmpty } from '@core/WalletCore/Plugins/ReactInject';
+import { useTheme } from '@react-navigation/native';
+import { type HomeStackName, ReceiveStackName, SendTransactionStackName, SendTransactionStep1StackName, type StackScreenProps } from '@router/configs';
+import type React from 'react';
+import type { ComponentProps } from 'react';
 import { useTranslation } from 'react-i18next';
+import { Pressable, StyleSheet, View } from 'react-native';
+import MoreOption from './MoreOption';
 
 export const Navigation: React.FC<{
   title: string;

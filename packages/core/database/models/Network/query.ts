@@ -1,10 +1,10 @@
 import { Q, type Query } from '@nozbe/watermelondb';
-import { type Observable } from 'rxjs';
 import { memoize } from 'lodash-es';
-import { type Network } from '.';
-import TableName from '../../TableName';
-import { createModel, type ModelFields } from '../../helper/modelHelper';
+import type { Observable } from 'rxjs';
+import type { Network } from '.';
 import database from '../..';
+import TableName from '../../TableName';
+import { type ModelFields, createModel } from '../../helper/modelHelper';
 
 export type NetworkParams = Omit<
   ModelFields<Network>,
@@ -27,7 +27,9 @@ export const queryNetworkByNetId = async (netId: number) => {
   return networks?.[0] as Network;
 };
 
+export const observeNetworkById = memoize((networkId: string) => database.get(TableName.Network).findAndObserve(networkId) as Observable<Network>);
 
-export const observeNetworkById = memoize(
-  (networkId: string) => database.get(TableName.Network).findAndObserve(networkId) as Observable<Network>,
-);
+export const queryNetworks = async () => {
+  const networks = await database.get<Network>(TableName.Network).query();
+  return networks;
+};

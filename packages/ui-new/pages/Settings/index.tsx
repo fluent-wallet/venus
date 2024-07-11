@@ -1,15 +1,28 @@
-import React from 'react';
-import { ScrollView, Pressable, StyleSheet } from 'react-native';
-import { useTheme } from '@react-navigation/native';
-import Text from '@components/Text';
-import { SettingsStackName, AccountManagementStackName, PreferencesStackName, AboutUsStackName, type StackScreenProps } from '@router/configs';
 import Arrow from '@assets/icons/arrow-right2.svg';
+import Text from '@components/Text';
+import { useTheme } from '@react-navigation/native';
+import {
+  AboutUsStackName,
+  AccountManagementStackName,
+  NetworkManagementStackName,
+  PreferencesStackName,
+  type SettingsStackName,
+  type StackScreenProps,
+} from '@router/configs';
+import { NETWORK_MANAGEMENT_FEATURE } from '@utils/features';
+import type React from 'react';
 import { useTranslation } from 'react-i18next';
+import { Pressable, ScrollView, StyleSheet } from 'react-native';
 
-export const SettingItem: React.FC<{ title: string; onPress: () => void }> = ({ title, onPress }) => {
+export const SettingItem: React.FC<{ title: string; onPress: () => void; disable?: boolean }> = ({ title, onPress, disable = false }) => {
   const { colors } = useTheme();
   return (
-    <Pressable testID={title} style={({ pressed }) => [styles.item, { backgroundColor: pressed ? colors.underlay : 'transparent' }]} onPress={onPress}>
+    <Pressable
+      testID={title}
+      style={({ pressed }) => [styles.item, { backgroundColor: pressed ? colors.underlay : 'transparent' }]}
+      onPress={onPress}
+      disabled={disable}
+    >
       <Text style={[styles.itemText, { color: colors.textPrimary }]}>{title}</Text>
       <Arrow style={styles.arrow} color={colors.iconPrimary} fontSize={32} />
     </Pressable>
@@ -27,6 +40,9 @@ const Settings: React.FC<StackScreenProps<typeof SettingsStackName>> = ({ naviga
       <SettingItem title={t('settings.navigation.preferences')} onPress={() => navigation.navigate(PreferencesStackName)} />
       <SettingItem title={t('settings.navigation.accountManagement')} onPress={() => navigation.navigate(AccountManagementStackName)} />
       {/* <SettingItem title="Network Management" onPress={() => {}} /> */}
+      {NETWORK_MANAGEMENT_FEATURE.allow && (
+        <SettingItem title={t('settings.navigation.networkManagement')} onPress={() => navigation.navigate(NetworkManagementStackName)} />
+      )}
       <SettingItem title={t('settings.navigation.aboutUs')} onPress={() => navigation.navigate(AboutUsStackName)} />
     </ScrollView>
   );

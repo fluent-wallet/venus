@@ -1,9 +1,9 @@
-import { useAtomValue, atom } from 'jotai';
+import { atom, useAtomValue } from 'jotai';
 import { atomWithObservable } from 'jotai/utils';
-import { switchMap, startWith } from 'rxjs';
+import { startWith, switchMap } from 'rxjs';
+import { dbRefresh$ } from '../../../../database';
 import { RequestStatus } from '../../../../database/models/Request/RequestType';
 import { queryAllRequests } from '../../../../database/models/Request/query';
-import { dbRefresh$ } from '../../../../database';
 
 export const requestsObservable = dbRefresh$.pipe(
   startWith(null),

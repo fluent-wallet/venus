@@ -1,0 +1,48 @@
+diff --git a/node_modules/react-native-pager-view/src/LEGACY_PagerViewNativeComponent/LEGACY_PagerViewNativeComponent.ts b/node_modules/react-native-pager-view/src/LEGACY_PagerViewNativeComponent/LEGACY_PagerViewNativeComponent.ts
+index 4770da9..326fe5f 100644
+--- a/node_modules/react-native-pager-view/src/LEGACY_PagerViewNativeComponent/LEGACY_PagerViewNativeComponent.ts
++++ b/node_modules/react-native-pager-view/src/LEGACY_PagerViewNativeComponent/LEGACY_PagerViewNativeComponent.ts
+@@ -67,7 +67,7 @@ interface NativeCommands {
+   ) => void;
+ }
+ 
+-export const LEGACY_PagerViewNativeCommands: NativeCommands =
++export const Commands: NativeCommands =
+   codegenNativeCommands<NativeCommands>({
+     supportedCommands: [
+       'setPage',
+diff --git a/node_modules/react-native-pager-view/src/PagerView.tsx b/node_modules/react-native-pager-view/src/PagerView.tsx
+index d2bfec5..5e44bcc 100644
+--- a/node_modules/react-native-pager-view/src/PagerView.tsx
++++ b/node_modules/react-native-pager-view/src/PagerView.tsx
+@@ -9,7 +9,7 @@ import {
+ } from './utils';
+ 
+ import PagerViewNativeComponent, {
+-  PagerViewNativeCommands,
++  Commands as PagerViewNativeCommands,
+   OnPageScrollEventData,
+   OnPageScrollStateChangedEventData,
+   OnPageSelectedEventData,
+@@ -17,7 +17,7 @@ import PagerViewNativeComponent, {
+ } from './PagerViewNativeComponent/PagerViewNativeComponent';
+ 
+ import LEGACY_PagerViewNativeComponent, {
+-  LEGACY_PagerViewNativeCommands,
++  Commands as LEGACY_PagerViewNativeCommands,
+ } from './LEGACY_PagerViewNativeComponent/LEGACY_PagerViewNativeComponent';
+ 
+ /**
+diff --git a/node_modules/react-native-pager-view/src/PagerViewNativeComponent/PagerViewNativeComponent.ts b/node_modules/react-native-pager-view/src/PagerViewNativeComponent/PagerViewNativeComponent.ts
+index 9017e53..7d520b0 100644
+--- a/node_modules/react-native-pager-view/src/PagerViewNativeComponent/PagerViewNativeComponent.ts
++++ b/node_modules/react-native-pager-view/src/PagerViewNativeComponent/PagerViewNativeComponent.ts
+@@ -56,7 +56,7 @@ export interface NativeCommands {
+   ) => void;
+ }
+ 
+-export const PagerViewNativeCommands: NativeCommands =
++export const Commands: NativeCommands =
+   codegenNativeCommands<NativeCommands>({
+     supportedCommands: [
+       'setPage',

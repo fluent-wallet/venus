@@ -33,8 +33,10 @@ export enum ProcessErrorType {
   signatureError = 'signatureError',
   nodeInCatchUp = 'nodeInCatchUp',
   internalError = 'internalError',
-  executeFailed = 'executeFailed',
+  contractExecuteFailed = 'contractExecuteFailed',
   notEnoughCash = 'notEnoughCash',
+  replacedByAnotherTx = 'replacedByAnotherTx',
+  executeFailed = 'executeFailed',
 }
 
 export const processError = (err: unknown): { errorType: ProcessErrorType; shouldDiscard: boolean } => {
@@ -87,7 +89,7 @@ export const processError = (err: unknown): { errorType: ProcessErrorType; shoul
 
     if (/Failed to read account_cache from storage: {}/i.test(errStr)) return { errorType: ProcessErrorType.internalError, shouldDiscard: true };
 
-    if (/Vm reverted./i.test(errStr)) return { errorType: ProcessErrorType.executeFailed, shouldDiscard: true };
+    if (/Vm reverted./i.test(errStr)) return { errorType: ProcessErrorType.contractExecuteFailed, shouldDiscard: true };
 
     if (/NotEnoughCash/i.test(errStr)) return { errorType: ProcessErrorType.notEnoughCash, shouldDiscard: true };
   }

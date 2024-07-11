@@ -1,19 +1,19 @@
-import React from 'react';
-import { View, Pressable, StyleSheet } from 'react-native';
-import { useTheme } from '@react-navigation/native';
-import Text from '@components/Text';
-import {
-  AccountManagementStackName,
-  AccountSettingStackName,
-  GroupSettingStackName,
-  EraseAllWalletStackName,
-  AddAnotherWalletStackName,
-  type StackScreenProps,
-} from '@router/configs';
-import AccountsList, { styles as accountListStyles } from '@modules/AccountsList';
 import Add from '@assets/icons/add.svg';
 import Delete from '@assets/icons/delete.svg';
+import Text from '@components/Text';
+import AccountsList, { styles as accountListStyles } from '@modules/AccountsList';
+import { useTheme } from '@react-navigation/native';
+import {
+  type AccountManagementStackName,
+  AccountSettingStackName,
+  AddAnotherWalletStackName,
+  EraseAllWalletStackName,
+  GroupSettingStackName,
+  type StackScreenProps,
+} from '@router/configs';
+import type React from 'react';
 import { useTranslation } from 'react-i18next';
+import { Pressable, StyleSheet, View } from 'react-native';
 
 const AccountManagement: React.FC<StackScreenProps<typeof AccountManagementStackName>> = ({ navigation }) => {
   const { colors } = useTheme();

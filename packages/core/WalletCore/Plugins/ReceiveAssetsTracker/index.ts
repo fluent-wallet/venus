@@ -1,13 +1,13 @@
-import { NetworkType } from './../../../database/models/Network';
-import { CFX_ESPACE_MAINNET_CHAINID, CFX_ESPACE_TESTNET_CHAINID } from '../../../consts/network';
-import events from '../../Events';
-import { AssetSource, type Asset } from '../../../database/models/Asset';
-import { type AssetInfo } from '../../Plugins/AssetsTracker/types';
-import { type Plugin } from '../../Plugins';
-import { fetchReceiveAssets as fetchESpaceReceiveAssets } from './fetchers/eSpace';
-import methods from '../../Methods';
 import database from '../../../database';
+import { type Asset, AssetSource } from '../../../database/models/Asset';
 import { convertToChecksum } from '../../../utils/account';
+import { Networks } from '../../../utils/consts';
+import events from '../../Events';
+import methods from '../../Methods';
+import type { Plugin } from '../../Plugins';
+import type { AssetInfo } from '../../Plugins/AssetsTracker/types';
+import { NetworkType } from './../../../database/models/Network';
+import { fetchReceiveAssets as fetchESpaceReceiveAssets } from './fetchers/eSpace';
 
 type Fetcher = (endpoint: string) => Promise<AssetInfo[]>;
 
@@ -26,12 +26,12 @@ class ReceiveAssetsTrackerPluginClass implements Plugin {
   constructor() {
     this.register({
       networkType: NetworkType.Ethereum,
-      chainId: CFX_ESPACE_TESTNET_CHAINID,
+      chainId: Networks['eSpace Testnet'].chainId,
       fetcher: (endpoint: string) => fetchESpaceReceiveAssets({ endpoint, isTestnet: true }),
     });
     this.register({
       networkType: NetworkType.Ethereum,
-      chainId: CFX_ESPACE_MAINNET_CHAINID,
+      chainId: Networks['Conflux eSpace'].chainId,
       fetcher: (endpoint: string) => fetchESpaceReceiveAssets({ endpoint, isTestnet: false }),
     });
     this.setup();

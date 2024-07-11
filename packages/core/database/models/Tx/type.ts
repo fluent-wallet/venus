@@ -12,6 +12,7 @@ export const ALL_TX_STATUSES = Object.values(TxStatus);
 export const PENDING_TX_STATUSES = [TxStatus.UNSENT, TxStatus.PENDING];
 export const FAILED_TX_STATUSES = [TxStatus.REPLACED, TxStatus.FAILED];
 export const EXECUTED_NOT_FINALIZED_TX_STATUSES = [TxStatus.EXECUTED, TxStatus.CONFIRMED];
+export const FINISHED_IN_ACTIVITY_TX_STATUSES = [TxStatus.REPLACED, TxStatus.EXECUTED, TxStatus.CONFIRMED, TxStatus.FINALIZED];
 export const NOT_FINALIZED_TX_STATUSES = [TxStatus.UNSENT, TxStatus.PENDING, TxStatus.EXECUTED, TxStatus.CONFIRMED];
 
 export enum ExecutedStatus {
@@ -23,21 +24,30 @@ export interface Receipt {
   blockHash?: string | null;
   gasUsed?: string | null;
   contractCreated?: string | null;
-  // ↓↓↓↓↓↓↓↓↓↓↓ for espace ↓↓↓↓↓↓↓↓↓↓↓
-  cumulativeGasUsed?: string | null;
+  transactionIndex?: string | null;
   effectiveGasPrice?: string | null;
   type?: string | null;
+  /** blockNumber in evm or epochNumber in cfx */
   blockNumber?: string | null;
-  transactionIndex?: string | null;
-  // ↓↓↓↓↓↓↓↓↓↓↓ for core space ↓↓↓↓↓↓↓↓↓↓↓
-  index?: string | null;
-  epochNumber?: string | null;
+  /** for espace */
+  cumulativeGasUsed?: string | null;
+  /** for core space */
   gasFee?: string | null;
+  /** for core space */
   storageCollateralized?: string | null;
+  /** for core space */
   gasCoveredBySponsor?: boolean | null;
+  /** for core space */
   storageCoveredBySponsor?: boolean | null;
+  /** for core space */
   storageReleased?: {
     address: string | null;
     collaterals: string | null;
   }[];
+}
+
+export enum TxSource {
+  SELF = 'self',
+  DAPP = 'dapp',
+  SCAN = 'scan',
 }

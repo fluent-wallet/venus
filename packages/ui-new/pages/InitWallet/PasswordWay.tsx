@@ -1,18 +1,19 @@
-import React, { useState, useCallback } from 'react';
-import { ScrollView, Pressable, StyleSheet, View } from 'react-native';
-import { useTheme, CommonActions } from '@react-navigation/native';
-import { showMessage } from 'react-native-flash-message';
-import { useForm, Controller } from 'react-hook-form';
+import Button from '@components/Button';
+import Checkbox from '@components/Checkbox';
+import Text from '@components/Text';
+import TextInput from '@components/TextInput';
 import plugins from '@core/WalletCore/Plugins';
 import useInAsync from '@hooks/useInAsync';
-import Text from '@components/Text';
-import Button from '@components/Button';
-import TextInput from '@components/TextInput';
-import Checkbox from '@components/Checkbox';
+import { CommonActions, useTheme } from '@react-navigation/native';
+import { HomeStackName, type PasswordWayStackName, type StackScreenProps } from '@router/configs';
 import { isDev } from '@utils/getEnv';
-import { PasswordWayStackName, HomeStackName, type StackScreenProps } from '@router/configs';
-import createVault from './createVaultWithRouterParams';
+import type React from 'react';
+import { useCallback, useState } from 'react';
+import { Controller, useForm } from 'react-hook-form';
 import { Trans, useTranslation } from 'react-i18next';
+import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { showMessage } from 'react-native-flash-message';
+import createVault from './createVaultWithRouterParams';
 
 type FormData = {
   password: string;
@@ -104,7 +105,7 @@ const PasswordWay: React.FC<StackScreenProps<typeof PasswordWayStackName>> = ({ 
           <Checkbox checked={confirm} pointerEvents="none" />
           <Text style={[styles.rememberText, { color: colors.textPrimary }]}>
             <Trans i18nKey={'initWallet.setPassword.check'}>
-              SwiftShield Wallet does not store your password. Please <Text style={{ color: colors.textNotice, fontWeight: '600' }}>remember</Text> your
+              BIM Wallet Wallet does not store your password. Please <Text style={{ color: colors.textNotice, fontWeight: '600' }}>remember</Text> your
               password.
             </Trans>
           </Text>

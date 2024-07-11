@@ -23,10 +23,40 @@ export const ACTIVITY_DB_STATUS_FEATURE = {
 
 export const ENABLE_WALLET_CONNECT_FEATURE = {
   describe: 'wallet connect feature',
+  allow: isDev || isQA,
+};
+
+export const ENABLE_SMALL_SIGNATURE_RECORDS_FEATURE = {
+  describe: 'signature records with pagesize = 10 feature',
+  allow: isDev || isQA,
+};
+
+export const ENABLE_SIGNATURE_RECORDS_FEATURE = {
+  describe: 'signature records with pagesize = 10 feature',
+  allow: isDev || isQA,
+};
+
+export const ENABLE_CHECK_UPDATE_FEATURE = {
+  describe: 'check the app update feature',
   allow: isDev,
 };
 
 export const DEVELOPER_FEATURE = {
   describe: 'developer feature',
+  allow: isDev,
+};
+
+export const NETWORK_MANAGEMENT_FEATURE = {
+  describe: 'network management feature',
+  allow: isDev,
+};
+
+export const GAS_FEE_FEATURE = {
+  describe: 'Gas fee setting feature',
+  allow: isDev,
+};
+
+export const SPEED_UP_FEATURE = {
+  describe: 'speed up',
   allow: isDev,
 };

@@ -1,13 +1,14 @@
-import React, { memo, useMemo } from 'react';
-import { View, StyleSheet } from 'react-native';
-import { useTheme } from '@react-navigation/native';
-import { useTranslation } from 'react-i18next';
-import { Image } from 'expo-image';
-import { useUnfinishedTxs, useFinishedTxs } from '@core/WalletCore/Plugins/ReactInject';
-import { type Tx } from '@core/database/models/Tx';
-import Text from '@components/Text';
-import NoneActivity from '@assets/images/none-activity.webp';
 import Calendar from '@assets/icons/calendar.svg';
+import NoneActivity from '@assets/images/none-activity.webp';
+import Text from '@components/Text';
+import { useFinishedTxs, useUnfinishedTxs } from '@core/WalletCore/Plugins/ReactInject';
+import type { Tx } from '@core/database/models/Tx';
+import { useTheme } from '@react-navigation/native';
+import { Image } from 'expo-image';
+import type React from 'react';
+import { memo, useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
+import { StyleSheet, View } from 'react-native';
 import { styles as noneStyles } from '../AssetsList/TokensList/ReceiveFunds';
 import ActivityItem from './ActivityItem';
 
@@ -40,7 +41,7 @@ const ActivityList: React.FC<{ onPress?: (v: Tx) => void }> = memo(({ onPress })
   const { t } = useTranslation();
 
   const finishedTxsByDay = useMemo(() => {
-    let day: number;
+    let day = 0;
     const txs: (
       | Tx
       | {
@@ -49,14 +50,15 @@ const ActivityList: React.FC<{ onPress?: (v: Tx) => void }> = memo(({ onPress })
           day: number;
         }
     )[] = [];
-    finishedTxs?.forEach((tx) => {
+    for (let i = 0; i < finishedTxs.length; i++) {
+      const tx = finishedTxs[i];
       const time = Math.floor((tx.executedAt || tx.createdAt).valueOf() / DAY_MILLISECONDS) * DAY_MILLISECONDS;
       if (day !== time) {
         day = time;
         txs.push(formatDate(time));
       }
       txs.push(tx);
-    });
+    }
     return txs;
   }, [finishedTxs]);
 

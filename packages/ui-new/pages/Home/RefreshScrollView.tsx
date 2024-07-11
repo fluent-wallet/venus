@@ -1,10 +1,10 @@
-import { useCallback, useRef, type ComponentProps } from 'react';
-import { StyleSheet, View, type NativeScrollEvent } from 'react-native';
-import { Gesture, GestureDetector, ScrollView } from 'react-native-gesture-handler';
-import Animated, { ReduceMotion, runOnJS, useAnimatedScrollHandler, useAnimatedStyle, useSharedValue, withRepeat, withTiming } from 'react-native-reanimated';
 import RefreshIconDark from '@assets/icons/refreshLogoDark.webp';
 import RefreshIconLight from '@assets/icons/refreshLogoLight.webp';
 import { useTheme } from '@react-navigation/native';
+import { type ComponentProps, useCallback, useRef } from 'react';
+import { type NativeScrollEvent, StyleSheet, View } from 'react-native';
+import { Gesture, GestureDetector, ScrollView } from 'react-native-gesture-handler';
+import Animated, { ReduceMotion, runOnJS, useAnimatedScrollHandler, useAnimatedStyle, useSharedValue, withRepeat, withTiming } from 'react-native-reanimated';
 
 const AnimatedScroll = Animated.createAnimatedComponent(ScrollView);
 const maxContentHeight = 150;
@@ -64,7 +64,7 @@ const HomeRefresh: React.FC<Props> = ({ children, onRefresh, onScroll, stickyHea
   // pan gesture
   const pan = Gesture.Pan()
     .simultaneousWithExternalGesture(scrollRef)
-    .activeOffsetY([-100, 100])
+    .activeOffsetY(100)
     .onUpdate((e) => {
       if (scrollPosition.value <= 0 && e.translationY >= 0 && isRefreshing.value === false) {
         pullPosition.value = Math.max(Math.min(maxContentHeight, e.translationY), 0);

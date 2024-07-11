@@ -1,28 +1,41 @@
-import { injectable, inject } from 'inversify';
-import { from, concatMap, firstValueFrom, toArray } from 'rxjs';
-import { memoize } from 'lodash-es';
 import { fetchChain } from '@cfx-kit/dapp-utils/dist/fetch';
-import { networkRpcPrefixMap, networkRpcSuffixMap, NetworkType, type Network } from '../../database/models/Network';
-import VaultType from '../../database/models/Vault/VaultType';
-import {
-  createNetwork as _createNetwork,
-  querySelectedNetwork,
-  queryNetworkById,
-  queryNetworkByChainId,
-  queryNetworkByNetId,
-  type NetworkParams,
-} from '../../database/models/Network/query';
-import { type Account } from '../../database/models/Account';
-import { createAddress } from '../../database/models/Address/query';
-import { AssetType, AssetSource } from '../../database/models/Asset';
-import { createAsset } from '../../database/models/Asset/query';
-import { createAssetRule } from '../../database/models/AssetRule/query';
+import { inject, injectable } from 'inversify';
+import { memoize } from 'lodash-es';
+import { concatMap, firstValueFrom, from, toArray } from 'rxjs';
 import database from '../../database';
 import TableName from '../../database/TableName';
-import { getNthAccountOfHDKey } from '../../utils/hdkey';
+import type { Account } from '../../database/models/Account';
+import { createAddress } from '../../database/models/Address/query';
+import { AssetSource, AssetType } from '../../database/models/Asset';
+import { createAsset } from '../../database/models/Asset/query';
+import { createAssetRule } from '../../database/models/AssetRule/query';
+import { type Network, NetworkType, networkRpcPrefixMap, networkRpcSuffixMap } from '../../database/models/Network';
+import {
+  type NetworkParams,
+  createNetwork as _createNetwork,
+  queryNetworkByChainId,
+  queryNetworkById,
+  queryNetworkByNetId,
+  querySelectedNetwork,
+} from '../../database/models/Network/query';
+import VaultType from '../../database/models/Vault/VaultType';
 import { fromPrivate } from '../../utils/account';
-import { validateCfxAddress, validateHexAddress } from '../../utils/address';
+import { convertCfxToHex, validateCfxAddress, validateHexAddress } from '../../utils/address';
+import { getNthAccountOfHDKey } from '../../utils/hdkey';
 import { GetDecryptedVaultDataMethod } from './getDecryptedVaultData';
+
+const getNetwork = async (targetNetworkOrIdOrChainIdOrNetId: Network | string | number): Promise<Network | undefined> => {
+  let targetNetwork: Network | undefined;
+  if (typeof targetNetworkOrIdOrChainIdOrNetId === 'string') {
+    targetNetwork = await queryNetworkById(targetNetworkOrIdOrChainIdOrNetId);
+    if (!targetNetwork) targetNetwork = await queryNetworkByChainId(targetNetworkOrIdOrChainIdOrNetId);
+  } else if (typeof targetNetworkOrIdOrChainIdOrNetId === 'number') {
+    targetNetwork = await queryNetworkByNetId(targetNetworkOrIdOrChainIdOrNetId);
+  } else {
+    targetNetwork = targetNetworkOrIdOrChainIdOrNetId;
+  }
+  return targetNetwork;
+};
 
 @injectable()
 export class NetworkMethod {
@@ -96,15 +109,7 @@ export class NetworkMethod {
   }
 
   async switchToNetwork(targetNetworkOrIdOrChainIdOrNetId: Network | string | number) {
-    let targetNetwork: Network | undefined;
-    if (typeof targetNetworkOrIdOrChainIdOrNetId === 'string') {
-      targetNetwork = await queryNetworkById(targetNetworkOrIdOrChainIdOrNetId);
-      if (!targetNetwork) targetNetwork = await queryNetworkByChainId(targetNetworkOrIdOrChainIdOrNetId);
-    } else if (typeof targetNetworkOrIdOrChainIdOrNetId === 'number') {
-      targetNetwork = await queryNetworkByNetId(targetNetworkOrIdOrChainIdOrNetId);
-    } else {
-      targetNetwork = targetNetworkOrIdOrChainIdOrNetId;
-    }
+    const targetNetwork = await getNetwork(targetNetworkOrIdOrChainIdOrNetId);
 
     if (!targetNetwork) throw new Error('Network not found.');
     return database.write(async () => {
@@ -125,27 +130,81 @@ export class NetworkMethod {
     });
   }
 
+  async updateCurrentEndpoint({ network, endpoint }: { network: Network | string | number; endpoint: string }) {
+    const targetNetwork = await getNetwork(network);
+    if (!targetNetwork) throw new Error('Network not found.');
+    return targetNetwork.updateEndpoint(endpoint);
+  }
+
+  async removeEndpoint({ network, endpoint }: { network: Network | string | number; endpoint: string }) {
+    const targetNetwork = await getNetwork(network);
+    if (!targetNetwork) throw new Error('Network not found.');
+    return targetNetwork.removeEndpoint(endpoint);
+  }
+
+  async queryAssetByAddress(networkId: string, address: string) {
+    const targetNetwork = await getNetwork(networkId);
+    if (!targetNetwork) throw new Error('Network not found.');
+    return targetNetwork.queryAssetByAddress(address);
+  }
+
+  async addEndpoint({ network, endpointParams }: { network: Network | string | number; endpointParams: Network['endpointsList']['0'] }) {
+    const targetNetwork = await getNetwork(network);
+    if (!targetNetwork) throw new Error('Network not found.');
+    return targetNetwork.addEndpoint(endpointParams);
+  }
+
   _checkIsValidAddress({ networkType, addressValue }: { networkType: NetworkType; addressValue: string }) {
     if (!addressValue) return false;
     if (networkType === NetworkType.Conflux) {
       return validateCfxAddress(addressValue);
-    } else if (networkType === NetworkType.Ethereum) {
-      return validateHexAddress(addressValue);
-    } else {
-      return false;
     }
+    if (networkType === NetworkType.Ethereum) {
+      return validateHexAddress(addressValue);
+    }
+    return false;
   }
 
-  private async _checkIsContractAddress({ networkType, endpoint, addressValue }: { networkType: NetworkType; endpoint: string; addressValue: string }) {
-    const rpcPrefix = networkRpcPrefixMap[networkType];
-    const rpcSuffix = networkRpcSuffixMap[networkType];
-
-    try {
-      await fetchChain<string>({ url: endpoint, method: `${rpcPrefix}_getCode`, params: [addressValue, rpcSuffix] });
-      return true;
-    } catch (err) {
-      if (String(err)?.includes('timed out')) throw err;
-      return false;
+  private _checkIsContractAddress({
+    networkType,
+    endpoint,
+    addressValue,
+  }: {
+    networkType: NetworkType.Conflux;
+    endpoint: string;
+    addressValue: string;
+  }): boolean;
+  private _checkIsContractAddress({
+    networkType,
+    endpoint,
+    addressValue,
+  }: {
+    networkType: NetworkType;
+    endpoint: string;
+    addressValue: string;
+  }): Promise<boolean>;
+  private _checkIsContractAddress({ networkType, endpoint, addressValue }: { networkType: NetworkType; endpoint: string; addressValue: string }) {
+    if (networkType === NetworkType.Conflux) {
+      try {
+        const hex = convertCfxToHex(addressValue);
+        return hex.startsWith('0x8');
+      } catch (_) {
+        return false;
+      }
+    } else {
+      const rpcPrefix = networkRpcPrefixMap[networkType];
+      const rpcSuffix = networkRpcSuffixMap[networkType];
+      return new Promise((resolve, reject) =>
+        fetchChain<string>({ url: endpoint, method: `${rpcPrefix}_getCode`, params: [addressValue, rpcSuffix] })
+          .then(() => resolve(true))
+          .catch((err) => {
+            if (String(err)?.includes('timed out')) {
+              reject(err);
+            } else {
+              resolve(false);
+            }
+          }),
+      );
     }
   }
 

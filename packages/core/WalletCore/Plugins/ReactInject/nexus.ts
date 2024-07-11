@@ -1,6 +1,6 @@
-import { useCallback, useEffect } from 'react';
-import { type Getter, type Setter } from 'jotai';
+import type { Getter, Setter } from 'jotai';
 import { useAtomCallback } from 'jotai/utils';
+import { useCallback, useEffect } from 'react';
 
 const delayQueue: Array<Parameters<Setter>> = [];
 export let getAtom = ((atom: any) => {
@@ -22,7 +22,7 @@ export const JotaiNexus = () => {
         delayQueue.forEach((args) => setAtom(...args));
         delayQueue.length = 0;
       }
-    }, [])
+    }, []),
   );
 
   useEffect(() => {

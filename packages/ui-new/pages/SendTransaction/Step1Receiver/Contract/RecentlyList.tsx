@@ -1,14 +1,14 @@
-import React from 'react';
-import { StyleSheet } from 'react-native';
-import { useTranslation } from 'react-i18next';
+import NoRecord from '@assets/images/noRecord.webp';
+import Text from '@components/Text';
+import { useRecentlyAddress } from '@core/WalletCore/Plugins/ReactInject';
 import { BottomSheetFlatList } from '@gorhom/bottom-sheet';
+import { AccountItemView } from '@modules/AccountsList';
+import { styles as noneStyles } from '@modules/AssetsList/TokensList/ReceiveFunds';
 import { useTheme } from '@react-navigation/native';
 import { Image } from 'expo-image';
-import { useRecentlyAddress } from '@core/WalletCore/Plugins/ReactInject';
-import Text from '@components/Text';
-import { AccountItemView } from '@modules/AccountsList';
-import NoneToken from '@assets/images/none-token.webp';
-import { styles as noneStyles } from '@modules/AssetsList/TokensList/ReceiveFunds';
+import type React from 'react';
+import { useTranslation } from 'react-i18next';
+import { StyleSheet } from 'react-native';
 
 const RecentlyList: React.FC<{
   onPressAddress: (addressValue: string) => void;
@@ -21,13 +21,15 @@ const RecentlyList: React.FC<{
   if (!recentlyAddress?.length) {
     return (
       <>
-        <Image style={noneStyles.noneImg} source={NoneToken} contentFit="contain" />
+        <Image style={noneStyles.noneImg} source={NoRecord} contentFit="contain" />
         <Text style={[noneStyles.noneText, { color: colors.textSecondary }]}>{t('tab.content.noRecord')}</Text>
       </>
     );
   }
+
   return (
     <BottomSheetFlatList
+      style={styles.container}
       data={recentlyAddress}
       keyExtractor={(item) => item.addressValue}
       renderItem={({ item }) => (
@@ -38,6 +40,9 @@ const RecentlyList: React.FC<{
 };
 
 export const styles = StyleSheet.create({
+  container: {
+    marginTop: 12,
+  },
   noRecentlyIcon: {
     marginTop: 24,
     marginBottom: 6,

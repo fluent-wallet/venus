@@ -1,9 +1,9 @@
 import { Model, type Query, type Relation } from '@nozbe/watermelondb';
-import { field, text, children, immutableRelation, writer } from '@nozbe/watermelondb/decorators';
-import { type Network } from '../Network';
-import { type AssetRule } from '../AssetRule';
-import { type Tx } from '../Tx';
+import { children, field, immutableRelation, text, writer } from '@nozbe/watermelondb/decorators';
 import TableName from '../../TableName';
+import type { AssetRule } from '../AssetRule';
+import type { Network } from '../Network';
+import type { Tx } from '../Tx';
 
 export enum AssetSource {
   Custom = 'Custom',

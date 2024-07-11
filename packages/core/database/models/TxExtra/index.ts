@@ -1,7 +1,7 @@
 import { Model, type Query } from '@nozbe/watermelondb';
-import { field, text, children } from '@nozbe/watermelondb/decorators';
-import { type Tx } from '../Tx';
+import { children, field, text } from '@nozbe/watermelondb/decorators';
 import TableName from '../../TableName';
+import type { Tx } from '../Tx';
 
 export class TxExtra extends Model {
   static table = TableName.TxExtra;

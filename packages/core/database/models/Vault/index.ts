@@ -1,10 +1,10 @@
 import { Model, type Query } from '@nozbe/watermelondb';
-import { text, field, children, writer, lazy, reader } from '@nozbe/watermelondb/decorators';
-import { map, firstValueFrom } from 'rxjs';
-import { type AccountGroup } from '../AccountGroup';
+import { children, field, lazy, reader, text, writer } from '@nozbe/watermelondb/decorators';
+import { firstValueFrom, map } from 'rxjs';
 import TableName from '../../TableName';
+import type { AccountGroup } from '../AccountGroup';
+import type VaultSourceType from './VaultSourceType';
 import VaultType from './VaultType';
-import VaultSourceType from './VaultSourceType';
 
 export class Vault extends Model {
   static table = TableName.Vault;

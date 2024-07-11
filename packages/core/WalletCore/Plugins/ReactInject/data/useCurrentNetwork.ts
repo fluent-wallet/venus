@@ -1,20 +1,47 @@
 import { useAtomValue } from 'jotai';
-import { atomWithObservable, atomFamily } from 'jotai/utils';
-import { switchMap, of, map, startWith } from 'rxjs';
-import { memoize } from 'lodash-es';
+import { atomFamily, atomWithObservable } from 'jotai/utils';
+import { memoize, pick } from 'lodash-es';
+import { map, of, startWith, switchMap } from 'rxjs';
 import { dbRefresh$ } from '../../../../database';
-import { querySelectedNetwork, observeNetworkById } from '../../../../database/models/Network/query';
+import { observeNetworkById, querySelectedNetwork } from '../../../../database/models/Network/query';
 import { getAtom } from '../nexus';
 
-export const currentNetworkObservable = dbRefresh$.pipe(
+const selectedNetworkObservable = dbRefresh$.pipe(
   startWith(null),
-  switchMap(() => querySelectedNetwork().observe()),
+  switchMap(() => querySelectedNetwork().observeWithColumns(['endpoint', 'endpoints_list'])),
+);
+
+export const currentNetworkObservable = selectedNetworkObservable.pipe(
   switchMap((selectedNetworks) => {
     return selectedNetworks?.[0] ? of(selectedNetworks[0]) : of(null);
   }),
 );
 
-export const currentNetworkAtom = atomWithObservable(() => currentNetworkObservable, { initialValue: null });
+const currentNetworkAtomObservable = selectedNetworkObservable.pipe(
+  switchMap((selectedNetworks) => {
+    return selectedNetworks?.[0]
+      ? of(
+          pick(selectedNetworks[0], [
+            'id',
+            'name',
+            'endpoint',
+            'endpointsList',
+            'netId',
+            'chainId',
+            'gasBuffer',
+            'networkType',
+            'chainType',
+            'icon',
+            'scanUrl',
+            'selected',
+            'builtin',
+          ]),
+        )
+      : of(null);
+  }),
+);
+
+export const currentNetworkAtom = atomWithObservable(() => currentNetworkAtomObservable, { initialValue: null });
 export const useCurrentNetwork = () => useAtomValue(currentNetworkAtom);
 export const getCurrentNetwork = () => getAtom(currentNetworkAtom);
 
@@ -27,6 +54,9 @@ const nativeAssetAtomFamilyOfNetwork = atomFamily((networkId: string | undefined
   }),
 );
 
+export const useNativeAssetOfCurrentNetwork = (currentNetwork: ReturnType<typeof useCurrentNetwork>) => {
+  return useAtomValue(nativeAssetAtomFamilyOfNetwork(currentNetwork?.id));
+};
 export const useCurrentNetworkNativeAsset = () => {
   const currentNetwork = useCurrentNetwork();
   return useAtomValue(nativeAssetAtomFamilyOfNetwork(currentNetwork?.id));

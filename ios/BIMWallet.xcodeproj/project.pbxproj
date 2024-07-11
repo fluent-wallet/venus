@@ -1,0 +1,883 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 54;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		00E356F31AD99517003FC87E /* BIMWalletTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 00E356F21AD99517003FC87E /* BIMWalletTests.m */; };
+		01914D9A98DF4F80B0B1D07A /* sora_bold.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 048A7B2BE3E44341B8A0853E /* sora_bold.ttf */; };
+		098B4310205D428D8A821F53 /* sora_extrabold.ttf in Resources */ = {isa = PBXBuildFile; fileRef = A32E2BBAD30B4F259AA50314 /* sora_extrabold.ttf */; };
+		0C80B921A6F3F58F76C31292 /* libPods-BIMWallet.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 5DCACB8F33CDC322A6C60F78 /* libPods-BIMWallet.a */; };
+		13B07FBC1A68108700A75B9A /* AppDelegate.mm in Sources */ = {isa = PBXBuildFile; fileRef = 13B07FB01A68108700A75B9A /* AppDelegate.mm */; };
+		13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 13B07FB51A68108700A75B9A /* Images.xcassets */; };
+		13B07FC11A68108700A75B9A /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 13B07FB71A68108700A75B9A /* main.m */; };
+		198B2BA7EDD7401195243359 /* sora_medium.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 055DA28FFE37457EB79D4372 /* sora_medium.ttf */; };
+		1B967BF5B5E8464D93E45D6E /* welcome_2.webp in Resources */ = {isa = PBXBuildFile; fileRef = 4B8899849FCE4778A765F89D /* welcome_2.webp */; };
+		3888170ED47F4FC9A1787042 /* sora_extralight.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 6C7F38D1D04C48598A458CE8 /* sora_extralight.ttf */; };
+		3DCCBAC42B464ABEA9D5BD0A /* welcome_3.webp in Resources */ = {isa = PBXBuildFile; fileRef = D8A5C3DF581240F0B58BCACA /* welcome_3.webp */; };
+		3DEBE963B0DF48B49EB9E155 /* welcome_1.webp in Resources */ = {isa = PBXBuildFile; fileRef = DD0CE01EA53743C79A2C543B /* welcome_1.webp */; };
+		42D89D88AD4C489584291BD3 /* enter_1.webp in Resources */ = {isa = PBXBuildFile; fileRef = 7D19A8FFA27E4D84B615A19E /* enter_1.webp */; };
+		4EF6DE06DF68432B9964EE10 /* sora_regular.ttf in Resources */ = {isa = PBXBuildFile; fileRef = D3DB6B345CD84D139B020F34 /* sora_regular.ttf */; };
+		5E8429D7F72845CFBADB5F74 /* enter_5.webp in Resources */ = {isa = PBXBuildFile; fileRef = 989CBB81C2C047C8ABDD3483 /* enter_5.webp */; };
+		6D8DA9E1BAC04DA6A687D4EC /* enter_2.webp in Resources */ = {isa = PBXBuildFile; fileRef = ED3F2AA10C9E4D0A91C8F57F /* enter_2.webp */; };
+		7699B88040F8A987B510C191 /* libPods-BIMWallet-BIMWalletTests.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 19F6CBCC0A4E27FBF8BF4A61 /* libPods-BIMWallet-BIMWalletTests.a */; };
+		76F880C57A3E4F4EB91BD736 /* enter_4.webp in Resources */ = {isa = PBXBuildFile; fileRef = 4A141FF09C374FFA8FD828E1 /* enter_4.webp */; };
+		7D2C3C81CE1E4CB791B16858 /* enter_8.webp in Resources */ = {isa = PBXBuildFile; fileRef = 46C73B2EC8424C26A1628DD8 /* enter_8.webp */; };
+		8165C5EF34BFC587CF2EE958 /* ExpoModulesProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = A34A62E4EB3A57DC2BE80935 /* ExpoModulesProvider.swift */; };
+		81AB9BB82411601600AC10FF /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 81AB9BB72411601600AC10FF /* LaunchScreen.storyboard */; };
+		891800157F574EA4B713177E /* welcome_4.webp in Resources */ = {isa = PBXBuildFile; fileRef = DAF8A82D4C9D4981A3B36909 /* welcome_4.webp */; };
+		9170F0E27166414EA1B1AE7E /* sora_light.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 5BF10BE33E6345A490E5EDB8 /* sora_light.ttf */; };
+		94CEB07ADBB74CD68A33648D /* enter_3.webp in Resources */ = {isa = PBXBuildFile; fileRef = 3004AC8228FE423E83FF2AC7 /* enter_3.webp */; };
+		961ECAE09264488EAFA4D49F /* enter_7.webp in Resources */ = {isa = PBXBuildFile; fileRef = DDA5013C45D64B5F96F478AE /* enter_7.webp */; };
+		9E991DD99192420588F330DC /* sora_semibold.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 015C89CC8D4949F8B00AB939 /* sora_semibold.ttf */; };
+		B433EC097F2548F99E84A4DC /* sora_thin.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 9EACEA7913C64F0BAF3D6288 /* sora_thin.ttf */; };
+		C8A1E705AEA64E4388DD551C /* enter_6.webp in Resources */ = {isa = PBXBuildFile; fileRef = BAA4E776C21D481ABA3F098B /* enter_6.webp */; };
+		D420C3640F9E761865A36E9A /* ExpoModulesProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 15839C861ED2C69156BA28E5 /* ExpoModulesProvider.swift */; };
+		D9AC5375D22F4F4FB55CE771 /* welcome_5.webp in Resources */ = {isa = PBXBuildFile; fileRef = 70BD36136DD34389A61BB441 /* welcome_5.webp */; };
+		F38EDADF8EAF4E6FADC703AA /* enter_0.webp in Resources */ = {isa = PBXBuildFile; fileRef = 2FE0F886BF3644C18C38970A /* enter_0.webp */; };
+		FB7AFF9CF4E541C1B8FAF03E /* welcome_0.webp in Resources */ = {isa = PBXBuildFile; fileRef = 093D2E081D3F460F967448C9 /* welcome_0.webp */; };
+		939BF763257A41B694F8E178 /* BootSplash.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 8F753FA1E98A4D66A5392FB1 /* BootSplash.storyboard */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		00E356F41AD99517003FC87E /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 83CBB9F71A601CBA00E9B192 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 13B07F861A680F5B00A75B9A;
+			remoteInfo = BIMWallet;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXFileReference section */
+		00E356EE1AD99517003FC87E /* BIMWalletTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = BIMWalletTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		00E356F11AD99517003FC87E /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		00E356F21AD99517003FC87E /* BIMWalletTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = BIMWalletTests.m; sourceTree = "<group>"; };
+		015C89CC8D4949F8B00AB939 /* sora_semibold.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = sora_semibold.ttf; path = "../packages/ui-new/assets/fonts/sora_semibold.ttf"; sourceTree = "<group>"; };
+		048A7B2BE3E44341B8A0853E /* sora_bold.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = sora_bold.ttf; path = "../packages/ui-new/assets/fonts/sora_bold.ttf"; sourceTree = "<group>"; };
+		055DA28FFE37457EB79D4372 /* sora_medium.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = sora_medium.ttf; path = "../packages/ui-new/assets/fonts/sora_medium.ttf"; sourceTree = "<group>"; };
+		093D2E081D3F460F967448C9 /* welcome_0.webp */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = welcome_0.webp; path = "../packages/ui-new/assets/lottie/welcome_0.webp"; sourceTree = "<group>"; };
+		13B07F961A680F5B00A75B9A /* BIMWallet.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = BIMWallet.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		13B07FAF1A68108700A75B9A /* AppDelegate.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = AppDelegate.h; path = BIMWallet/AppDelegate.h; sourceTree = "<group>"; };
+		13B07FB01A68108700A75B9A /* AppDelegate.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; name = AppDelegate.mm; path = BIMWallet/AppDelegate.mm; sourceTree = "<group>"; };
+		13B07FB51A68108700A75B9A /* Images.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; name = Images.xcassets; path = BIMWallet/Images.xcassets; sourceTree = "<group>"; };
+		13B07FB61A68108700A75B9A /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = Info.plist; path = BIMWallet/Info.plist; sourceTree = "<group>"; };
+		13B07FB71A68108700A75B9A /* main.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = main.m; path = BIMWallet/main.m; sourceTree = "<group>"; };
+		15839C861ED2C69156BA28E5 /* ExpoModulesProvider.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = ExpoModulesProvider.swift; path = "Pods/Target Support Files/Pods-BIMWallet/ExpoModulesProvider.swift"; sourceTree = "<group>"; };
+		19F6CBCC0A4E27FBF8BF4A61 /* libPods-BIMWallet-BIMWalletTests.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-BIMWallet-BIMWalletTests.a"; sourceTree = BUILT_PRODUCTS_DIR; };
+		2FE0F886BF3644C18C38970A /* enter_0.webp */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = enter_0.webp; path = "../packages/ui-new/assets/lottie/enter_0.webp"; sourceTree = "<group>"; };
+		3004AC8228FE423E83FF2AC7 /* enter_3.webp */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = enter_3.webp; path = "../packages/ui-new/assets/lottie/enter_3.webp"; sourceTree = "<group>"; };
+		3B4392A12AC88292D35C810B /* Pods-BIMWallet.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-BIMWallet.debug.xcconfig"; path = "Target Support Files/Pods-BIMWallet/Pods-BIMWallet.debug.xcconfig"; sourceTree = "<group>"; };
+		46C73B2EC8424C26A1628DD8 /* enter_8.webp */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = enter_8.webp; path = "../packages/ui-new/assets/lottie/enter_8.webp"; sourceTree = "<group>"; };
+		4A141FF09C374FFA8FD828E1 /* enter_4.webp */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = enter_4.webp; path = "../packages/ui-new/assets/lottie/enter_4.webp"; sourceTree = "<group>"; };
+		4B8899849FCE4778A765F89D /* welcome_2.webp */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = welcome_2.webp; path = "../packages/ui-new/assets/lottie/welcome_2.webp"; sourceTree = "<group>"; };
+		5709B34CF0A7D63546082F79 /* Pods-BIMWallet.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-BIMWallet.release.xcconfig"; path = "Target Support Files/Pods-BIMWallet/Pods-BIMWallet.release.xcconfig"; sourceTree = "<group>"; };
+		5B7EB9410499542E8C5724F5 /* Pods-BIMWallet-BIMWalletTests.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-BIMWallet-BIMWalletTests.debug.xcconfig"; path = "Target Support Files/Pods-BIMWallet-BIMWalletTests/Pods-BIMWallet-BIMWalletTests.debug.xcconfig"; sourceTree = "<group>"; };
+		5BF10BE33E6345A490E5EDB8 /* sora_light.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = sora_light.ttf; path = "../packages/ui-new/assets/fonts/sora_light.ttf"; sourceTree = "<group>"; };
+		5DCACB8F33CDC322A6C60F78 /* libPods-BIMWallet.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-BIMWallet.a"; sourceTree = BUILT_PRODUCTS_DIR; };
+		6C7F38D1D04C48598A458CE8 /* sora_extralight.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = sora_extralight.ttf; path = "../packages/ui-new/assets/fonts/sora_extralight.ttf"; sourceTree = "<group>"; };
+		70BD36136DD34389A61BB441 /* welcome_5.webp */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = welcome_5.webp; path = "../packages/ui-new/assets/lottie/welcome_5.webp"; sourceTree = "<group>"; };
+		7D19A8FFA27E4D84B615A19E /* enter_1.webp */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = enter_1.webp; path = "../packages/ui-new/assets/lottie/enter_1.webp"; sourceTree = "<group>"; };
+		81AB9BB72411601600AC10FF /* LaunchScreen.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; name = LaunchScreen.storyboard; path = BIMWallet/LaunchScreen.storyboard; sourceTree = "<group>"; };
+		89C6BE57DB24E9ADA2F236DE /* Pods-BIMWallet-BIMWalletTests.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-BIMWallet-BIMWalletTests.release.xcconfig"; path = "Target Support Files/Pods-BIMWallet-BIMWalletTests/Pods-BIMWallet-BIMWalletTests.release.xcconfig"; sourceTree = "<group>"; };
+		989CBB81C2C047C8ABDD3483 /* enter_5.webp */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = enter_5.webp; path = "../packages/ui-new/assets/lottie/enter_5.webp"; sourceTree = "<group>"; };
+		9EACEA7913C64F0BAF3D6288 /* sora_thin.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = sora_thin.ttf; path = "../packages/ui-new/assets/fonts/sora_thin.ttf"; sourceTree = "<group>"; };
+		A32E2BBAD30B4F259AA50314 /* sora_extrabold.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = sora_extrabold.ttf; path = "../packages/ui-new/assets/fonts/sora_extrabold.ttf"; sourceTree = "<group>"; };
+		A34A62E4EB3A57DC2BE80935 /* ExpoModulesProvider.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = ExpoModulesProvider.swift; path = "Pods/Target Support Files/Pods-BIMWallet-BIMWalletTests/ExpoModulesProvider.swift"; sourceTree = "<group>"; };
+		BAA4E776C21D481ABA3F098B /* enter_6.webp */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = enter_6.webp; path = "../packages/ui-new/assets/lottie/enter_6.webp"; sourceTree = "<group>"; };
+		D3DB6B345CD84D139B020F34 /* sora_regular.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = sora_regular.ttf; path = "../packages/ui-new/assets/fonts/sora_regular.ttf"; sourceTree = "<group>"; };
+		D8A5C3DF581240F0B58BCACA /* welcome_3.webp */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = welcome_3.webp; path = "../packages/ui-new/assets/lottie/welcome_3.webp"; sourceTree = "<group>"; };
+		DAF8A82D4C9D4981A3B36909 /* welcome_4.webp */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = welcome_4.webp; path = "../packages/ui-new/assets/lottie/welcome_4.webp"; sourceTree = "<group>"; };
+		DD0CE01EA53743C79A2C543B /* welcome_1.webp */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = welcome_1.webp; path = "../packages/ui-new/assets/lottie/welcome_1.webp"; sourceTree = "<group>"; };
+		DDA5013C45D64B5F96F478AE /* enter_7.webp */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = enter_7.webp; path = "../packages/ui-new/assets/lottie/enter_7.webp"; sourceTree = "<group>"; };
+		ED297162215061F000B7C4FE /* JavaScriptCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = JavaScriptCore.framework; path = System/Library/Frameworks/JavaScriptCore.framework; sourceTree = SDKROOT; };
+		ED3F2AA10C9E4D0A91C8F57F /* enter_2.webp */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = enter_2.webp; path = "../packages/ui-new/assets/lottie/enter_2.webp"; sourceTree = "<group>"; };
+		8F753FA1E98A4D66A5392FB1 /* BootSplash.storyboard */ = {isa = PBXFileReference; name = "BootSplash.storyboard"; path = "BIMWallet/BootSplash.storyboard"; sourceTree = "<group>"; fileEncoding = undefined; lastKnownFileType = unknown; explicitFileType = undefined; includeInIndex = 0; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		00E356EB1AD99517003FC87E /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				7699B88040F8A987B510C191 /* libPods-BIMWallet-BIMWalletTests.a in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		13B07F8C1A680F5B00A75B9A /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				0C80B921A6F3F58F76C31292 /* libPods-BIMWallet.a in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		00E356EF1AD99517003FC87E /* BIMWalletTests */ = {
+			isa = PBXGroup;
+			children = (
+				00E356F21AD99517003FC87E /* BIMWalletTests.m */,
+				00E356F01AD99517003FC87E /* Supporting Files */,
+			);
+			path = BIMWalletTests;
+			sourceTree = "<group>";
+		};
+		00E356F01AD99517003FC87E /* Supporting Files */ = {
+			isa = PBXGroup;
+			children = (
+				00E356F11AD99517003FC87E /* Info.plist */,
+			);
+			name = "Supporting Files";
+			sourceTree = "<group>";
+		};
+		13B07FAE1A68108700A75B9A /* BIMWallet */ = {
+			isa = PBXGroup;
+			children = (
+				13B07FAF1A68108700A75B9A /* AppDelegate.h */,
+				13B07FB01A68108700A75B9A /* AppDelegate.mm */,
+				13B07FB51A68108700A75B9A /* Images.xcassets */,
+				13B07FB61A68108700A75B9A /* Info.plist */,
+				81AB9BB72411601600AC10FF /* LaunchScreen.storyboard */,
+				13B07FB71A68108700A75B9A /* main.m */,
+				8F753FA1E98A4D66A5392FB1 /* BootSplash.storyboard */,
+			);
+			name = BIMWallet;
+			sourceTree = "<group>";
+		};
+		2D16E6871FA4F8E400B85C8A /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				ED297162215061F000B7C4FE /* JavaScriptCore.framework */,
+				5DCACB8F33CDC322A6C60F78 /* libPods-BIMWallet.a */,
+				19F6CBCC0A4E27FBF8BF4A61 /* libPods-BIMWallet-BIMWalletTests.a */,
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
+		6E37D5AF9F0669F80133F74B /* BIMWallet */ = {
+			isa = PBXGroup;
+			children = (
+				15839C861ED2C69156BA28E5 /* ExpoModulesProvider.swift */,
+			);
+			name = BIMWallet;
+			sourceTree = "<group>";
+		};
+		832341AE1AAA6A7D00B99B32 /* Libraries */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Libraries;
+			sourceTree = "<group>";
+		};
+		83CBB9F61A601CBA00E9B192 = {
+			isa = PBXGroup;
+			children = (
+				13B07FAE1A68108700A75B9A /* BIMWallet */,
+				832341AE1AAA6A7D00B99B32 /* Libraries */,
+				00E356EF1AD99517003FC87E /* BIMWalletTests */,
+				83CBBA001A601CBA00E9B192 /* Products */,
+				2D16E6871FA4F8E400B85C8A /* Frameworks */,
+				BBD78D7AC51CEA395F1C20DB /* Pods */,
+				86520ED5FFDC4761AF1DCF5A /* Resources */,
+				EB8B5252A42152C62A547B57 /* ExpoModulesProviders */,
+			);
+			indentWidth = 2;
+			sourceTree = "<group>";
+			tabWidth = 2;
+			usesTabs = 0;
+		};
+		83CBBA001A601CBA00E9B192 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				13B07F961A680F5B00A75B9A /* BIMWallet.app */,
+				00E356EE1AD99517003FC87E /* BIMWalletTests.xctest */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		86520ED5FFDC4761AF1DCF5A /* Resources */ = {
+			isa = PBXGroup;
+			children = (
+				048A7B2BE3E44341B8A0853E /* sora_bold.ttf */,
+				A32E2BBAD30B4F259AA50314 /* sora_extrabold.ttf */,
+				6C7F38D1D04C48598A458CE8 /* sora_extralight.ttf */,
+				5BF10BE33E6345A490E5EDB8 /* sora_light.ttf */,
+				055DA28FFE37457EB79D4372 /* sora_medium.ttf */,
+				D3DB6B345CD84D139B020F34 /* sora_regular.ttf */,
+				015C89CC8D4949F8B00AB939 /* sora_semibold.ttf */,
+				9EACEA7913C64F0BAF3D6288 /* sora_thin.ttf */,
+				2FE0F886BF3644C18C38970A /* enter_0.webp */,
+				7D19A8FFA27E4D84B615A19E /* enter_1.webp */,
+				ED3F2AA10C9E4D0A91C8F57F /* enter_2.webp */,
+				3004AC8228FE423E83FF2AC7 /* enter_3.webp */,
+				4A141FF09C374FFA8FD828E1 /* enter_4.webp */,
+				989CBB81C2C047C8ABDD3483 /* enter_5.webp */,
+				BAA4E776C21D481ABA3F098B /* enter_6.webp */,
+				DDA5013C45D64B5F96F478AE /* enter_7.webp */,
+				46C73B2EC8424C26A1628DD8 /* enter_8.webp */,
+				093D2E081D3F460F967448C9 /* welcome_0.webp */,
+				DD0CE01EA53743C79A2C543B /* welcome_1.webp */,
+				4B8899849FCE4778A765F89D /* welcome_2.webp */,
+				D8A5C3DF581240F0B58BCACA /* welcome_3.webp */,
+				DAF8A82D4C9D4981A3B36909 /* welcome_4.webp */,
+				70BD36136DD34389A61BB441 /* welcome_5.webp */,
+			);
+			name = Resources;
+			sourceTree = "<group>";
+		};
+		BBD78D7AC51CEA395F1C20DB /* Pods */ = {
+			isa = PBXGroup;
+			children = (
+				3B4392A12AC88292D35C810B /* Pods-BIMWallet.debug.xcconfig */,
+				5709B34CF0A7D63546082F79 /* Pods-BIMWallet.release.xcconfig */,
+				5B7EB9410499542E8C5724F5 /* Pods-BIMWallet-BIMWalletTests.debug.xcconfig */,
+				89C6BE57DB24E9ADA2F236DE /* Pods-BIMWallet-BIMWalletTests.release.xcconfig */,
+			);
+			path = Pods;
+			sourceTree = "<group>";
+		};
+		C40C929C19FC0FD01D5EE4BA /* BIMWalletTests */ = {
+			isa = PBXGroup;
+			children = (
+				A34A62E4EB3A57DC2BE80935 /* ExpoModulesProvider.swift */,
+			);
+			name = BIMWalletTests;
+			sourceTree = "<group>";
+		};
+		EB8B5252A42152C62A547B57 /* ExpoModulesProviders */ = {
+			isa = PBXGroup;
+			children = (
+				6E37D5AF9F0669F80133F74B /* BIMWallet */,
+				C40C929C19FC0FD01D5EE4BA /* BIMWalletTests */,
+			);
+			name = ExpoModulesProviders;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		00E356ED1AD99517003FC87E /* BIMWalletTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 00E357021AD99517003FC87E /* Build configuration list for PBXNativeTarget "BIMWalletTests" */;
+			buildPhases = (
+				A55EABD7B0C7F3A422A6CC61 /* [CP] Check Pods Manifest.lock */,
+				9219BF88F0E4E1EEC803782F /* [Expo] Configure project */,
+				00E356EA1AD99517003FC87E /* Sources */,
+				00E356EB1AD99517003FC87E /* Frameworks */,
+				00E356EC1AD99517003FC87E /* Resources */,
+				C59DA0FBD6956966B86A3779 /* [CP] Embed Pods Frameworks */,
+				F6A41C54EA430FDDC6A6ED99 /* [CP] Copy Pods Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				00E356F51AD99517003FC87E /* PBXTargetDependency */,
+			);
+			name = BIMWalletTests;
+			productName = BIMWalletTests;
+			productReference = 00E356EE1AD99517003FC87E /* BIMWalletTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
+		13B07F861A680F5B00A75B9A /* BIMWallet */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 13B07F931A680F5B00A75B9A /* Build configuration list for PBXNativeTarget "BIMWallet" */;
+			buildPhases = (
+				C38B50BA6285516D6DCD4F65 /* [CP] Check Pods Manifest.lock */,
+				C049C21CD27938056F5F39D6 /* [Expo] Configure project */,
+				13B07F871A680F5B00A75B9A /* Sources */,
+				13B07F8C1A680F5B00A75B9A /* Frameworks */,
+				13B07F8E1A680F5B00A75B9A /* Resources */,
+				00DD1BFF1BD5951E006B06BC /* Bundle React Native code and images */,
+				00EEFC60759A1932668264C0 /* [CP] Embed Pods Frameworks */,
+				E235C05ADACE081382539298 /* [CP] Copy Pods Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = BIMWallet;
+			productName = BIMWallet;
+			productReference = 13B07F961A680F5B00A75B9A /* BIMWallet.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		83CBB9F71A601CBA00E9B192 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				LastUpgradeCheck = 1210;
+				TargetAttributes = {
+					00E356ED1AD99517003FC87E = {
+						CreatedOnToolsVersion = 6.2;
+						TestTargetID = 13B07F861A680F5B00A75B9A;
+					};
+					13B07F861A680F5B00A75B9A = {
+						LastSwiftMigration = 1120;
+					};
+				};
+			};
+			buildConfigurationList = 83CBB9FA1A601CBA00E9B192 /* Build configuration list for PBXProject "BIMWallet" */;
+			compatibilityVersion = "Xcode 12.0";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = 83CBB9F61A601CBA00E9B192;
+			productRefGroup = 83CBBA001A601CBA00E9B192 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				13B07F861A680F5B00A75B9A /* BIMWallet */,
+				00E356ED1AD99517003FC87E /* BIMWalletTests */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		00E356EC1AD99517003FC87E /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		13B07F8E1A680F5B00A75B9A /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				81AB9BB82411601600AC10FF /* LaunchScreen.storyboard in Resources */,
+				13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */,
+				01914D9A98DF4F80B0B1D07A /* sora_bold.ttf in Resources */,
+				098B4310205D428D8A821F53 /* sora_extrabold.ttf in Resources */,
+				3888170ED47F4FC9A1787042 /* sora_extralight.ttf in Resources */,
+				9170F0E27166414EA1B1AE7E /* sora_light.ttf in Resources */,
+				198B2BA7EDD7401195243359 /* sora_medium.ttf in Resources */,
+				4EF6DE06DF68432B9964EE10 /* sora_regular.ttf in Resources */,
+				9E991DD99192420588F330DC /* sora_semibold.ttf in Resources */,
+				B433EC097F2548F99E84A4DC /* sora_thin.ttf in Resources */,
+				F38EDADF8EAF4E6FADC703AA /* enter_0.webp in Resources */,
+				42D89D88AD4C489584291BD3 /* enter_1.webp in Resources */,
+				6D8DA9E1BAC04DA6A687D4EC /* enter_2.webp in Resources */,
+				94CEB07ADBB74CD68A33648D /* enter_3.webp in Resources */,
+				76F880C57A3E4F4EB91BD736 /* enter_4.webp in Resources */,
+				5E8429D7F72845CFBADB5F74 /* enter_5.webp in Resources */,
+				C8A1E705AEA64E4388DD551C /* enter_6.webp in Resources */,
+				961ECAE09264488EAFA4D49F /* enter_7.webp in Resources */,
+				7D2C3C81CE1E4CB791B16858 /* enter_8.webp in Resources */,
+				FB7AFF9CF4E541C1B8FAF03E /* welcome_0.webp in Resources */,
+				3DEBE963B0DF48B49EB9E155 /* welcome_1.webp in Resources */,
+				1B967BF5B5E8464D93E45D6E /* welcome_2.webp in Resources */,
+				3DCCBAC42B464ABEA9D5BD0A /* welcome_3.webp in Resources */,
+				891800157F574EA4B713177E /* welcome_4.webp in Resources */,
+				D9AC5375D22F4F4FB55CE771 /* welcome_5.webp in Resources */,
+				939BF763257A41B694F8E178 /* BootSplash.storyboard in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXShellScriptBuildPhase section */
+		00DD1BFF1BD5951E006B06BC /* Bundle React Native code and images */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+				"$(SRCROOT)/.xcode.env.local",
+				"$(SRCROOT)/.xcode.env",
+			);
+			name = "Bundle React Native code and images";
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "if [[ -f \"$PODS_ROOT/../.xcode.env\" ]]; then\n  source \"$PODS_ROOT/../.xcode.env\"\nfi\nif [[ -f \"$PODS_ROOT/../.xcode.env.local\" ]]; then\n  source \"$PODS_ROOT/../.xcode.env.local\"\nfi\n\n# The project root by default is one level up from the ios directory\nexport PROJECT_ROOT=\"$PROJECT_DIR\"/..\n\nif [[ \"$CONFIGURATION\" = *Debug* ]]; then\n  export SKIP_BUNDLING=1\nfi\nif [[ -z \"$ENTRY_FILE\" ]]; then\n  # Set the entry JS file using the bundler's entry resolution.\n  export ENTRY_FILE=\"$(\"$NODE_BINARY\" -e \"require('expo/scripts/resolveAppEntry')\" \"$PROJECT_ROOT\" ios relative | tail -n 1)\"\nfi\n\nif [[ -z \"$CLI_PATH\" ]]; then\n  # Use Expo CLI\n  export CLI_PATH=\"$(\"$NODE_BINARY\" --print \"require.resolve('@expo/cli')\")\"\nfi\nif [[ -z \"$BUNDLE_COMMAND\" ]]; then\n  # Default Expo CLI command for bundling\n  export BUNDLE_COMMAND=\"export:embed\"\nfi\n\n`\"$NODE_BINARY\" --print \"require('path').dirname(require.resolve('react-native/package.json')) + '/scripts/react-native-xcode.sh'\"`\n";
+		};
+		00EEFC60759A1932668264C0 /* [CP] Embed Pods Frameworks */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+				"${PODS_ROOT}/Target Support Files/Pods-BIMWallet/Pods-BIMWallet-frameworks-${CONFIGURATION}-input-files.xcfilelist",
+			);
+			name = "[CP] Embed Pods Frameworks";
+			outputFileListPaths = (
+				"${PODS_ROOT}/Target Support Files/Pods-BIMWallet/Pods-BIMWallet-frameworks-${CONFIGURATION}-output-files.xcfilelist",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-BIMWallet/Pods-BIMWallet-frameworks.sh\"\n";
+			showEnvVarsInLog = 0;
+		};
+		9219BF88F0E4E1EEC803782F /* [Expo] Configure project */ = {
+			isa = PBXShellScriptBuildPhase;
+			alwaysOutOfDate = 1;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+			);
+			name = "[Expo] Configure project";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "# This script configures Expo modules and generates the modules provider file.\nbash -l -c \"./Pods/Target\\ Support\\ Files/Pods-BIMWallet-BIMWalletTests/expo-configure-project.sh\"\n";
+		};
+		A55EABD7B0C7F3A422A6CC61 /* [CP] Check Pods Manifest.lock */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+				"${PODS_PODFILE_DIR_PATH}/Podfile.lock",
+				"${PODS_ROOT}/Manifest.lock",
+			);
+			name = "[CP] Check Pods Manifest.lock";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+				"$(DERIVED_FILE_DIR)/Pods-BIMWallet-BIMWalletTests-checkManifestLockResult.txt",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "diff \"${PODS_PODFILE_DIR_PATH}/Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n# This output is used by Xcode 'outputs' to avoid re-running this script phase.\necho \"SUCCESS\" > \"${SCRIPT_OUTPUT_FILE_0}\"\n";
+			showEnvVarsInLog = 0;
+		};
+		C049C21CD27938056F5F39D6 /* [Expo] Configure project */ = {
+			isa = PBXShellScriptBuildPhase;
+			alwaysOutOfDate = 1;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+			);
+			name = "[Expo] Configure project";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "# This script configures Expo modules and generates the modules provider file.\nbash -l -c \"./Pods/Target\\ Support\\ Files/Pods-BIMWallet/expo-configure-project.sh\"\n";
+		};
+		C38B50BA6285516D6DCD4F65 /* [CP] Check Pods Manifest.lock */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+				"${PODS_PODFILE_DIR_PATH}/Podfile.lock",
+				"${PODS_ROOT}/Manifest.lock",
+			);
+			name = "[CP] Check Pods Manifest.lock";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+				"$(DERIVED_FILE_DIR)/Pods-BIMWallet-checkManifestLockResult.txt",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "diff \"${PODS_PODFILE_DIR_PATH}/Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n# This output is used by Xcode 'outputs' to avoid re-running this script phase.\necho \"SUCCESS\" > \"${SCRIPT_OUTPUT_FILE_0}\"\n";
+			showEnvVarsInLog = 0;
+		};
+		C59DA0FBD6956966B86A3779 /* [CP] Embed Pods Frameworks */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+				"${PODS_ROOT}/Target Support Files/Pods-BIMWallet-BIMWalletTests/Pods-BIMWallet-BIMWalletTests-frameworks-${CONFIGURATION}-input-files.xcfilelist",
+			);
+			name = "[CP] Embed Pods Frameworks";
+			outputFileListPaths = (
+				"${PODS_ROOT}/Target Support Files/Pods-BIMWallet-BIMWalletTests/Pods-BIMWallet-BIMWalletTests-frameworks-${CONFIGURATION}-output-files.xcfilelist",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-BIMWallet-BIMWalletTests/Pods-BIMWallet-BIMWalletTests-frameworks.sh\"\n";
+			showEnvVarsInLog = 0;
+		};
+		E235C05ADACE081382539298 /* [CP] Copy Pods Resources */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+				"${PODS_ROOT}/Target Support Files/Pods-BIMWallet/Pods-BIMWallet-resources-${CONFIGURATION}-input-files.xcfilelist",
+			);
+			name = "[CP] Copy Pods Resources";
+			outputFileListPaths = (
+				"${PODS_ROOT}/Target Support Files/Pods-BIMWallet/Pods-BIMWallet-resources-${CONFIGURATION}-output-files.xcfilelist",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-BIMWallet/Pods-BIMWallet-resources.sh\"\n";
+			showEnvVarsInLog = 0;
+		};
+		F6A41C54EA430FDDC6A6ED99 /* [CP] Copy Pods Resources */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+				"${PODS_ROOT}/Target Support Files/Pods-BIMWallet-BIMWalletTests/Pods-BIMWallet-BIMWalletTests-resources-${CONFIGURATION}-input-files.xcfilelist",
+			);
+			name = "[CP] Copy Pods Resources";
+			outputFileListPaths = (
+				"${PODS_ROOT}/Target Support Files/Pods-BIMWallet-BIMWalletTests/Pods-BIMWallet-BIMWalletTests-resources-${CONFIGURATION}-output-files.xcfilelist",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-BIMWallet-BIMWalletTests/Pods-BIMWallet-BIMWalletTests-resources.sh\"\n";
+			showEnvVarsInLog = 0;
+		};
+/* End PBXShellScriptBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		00E356EA1AD99517003FC87E /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				00E356F31AD99517003FC87E /* BIMWalletTests.m in Sources */,
+				8165C5EF34BFC587CF2EE958 /* ExpoModulesProvider.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		13B07F871A680F5B00A75B9A /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				13B07FBC1A68108700A75B9A /* AppDelegate.mm in Sources */,
+				13B07FC11A68108700A75B9A /* main.m in Sources */,
+				D420C3640F9E761865A36E9A /* ExpoModulesProvider.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		00E356F51AD99517003FC87E /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 13B07F861A680F5B00A75B9A /* BIMWallet */;
+			targetProxy = 00E356F41AD99517003FC87E /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin XCBuildConfiguration section */
+		00E356F61AD99517003FC87E /* Debug */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = 5B7EB9410499542E8C5724F5 /* Pods-BIMWallet-BIMWalletTests.debug.xcconfig */;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				INFOPLIST_FILE = BIMWalletTests/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				OTHER_LDFLAGS = (
+					"-ObjC",
+					"-lc++",
+					"$(inherited)",
+				);
+				OTHER_SWIFT_FLAGS = "$(inherited) -D EXPO_CONFIGURATION_DEBUG";
+				PRODUCT_BUNDLE_IDENTIFIER = io.bimwallet;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/BIMWallet.app/BIMWallet";
+			};
+			name = Debug;
+		};
+		00E356F71AD99517003FC87E /* Release */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = 89C6BE57DB24E9ADA2F236DE /* Pods-BIMWallet-BIMWalletTests.release.xcconfig */;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				COPY_PHASE_STRIP = NO;
+				INFOPLIST_FILE = BIMWalletTests/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				OTHER_LDFLAGS = (
+					"-ObjC",
+					"-lc++",
+					"$(inherited)",
+				);
+				OTHER_SWIFT_FLAGS = "$(inherited) -D EXPO_CONFIGURATION_RELEASE";
+				PRODUCT_BUNDLE_IDENTIFIER = io.bimwallet;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/BIMWallet.app/BIMWallet";
+			};
+			name = Release;
+		};
+		13B07F941A680F5B00A75B9A /* Debug */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = 3B4392A12AC88292D35C810B /* Pods-BIMWallet.debug.xcconfig */;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CLANG_ENABLE_MODULES = YES;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 3NUM7LCDK3;
+				ENABLE_BITCODE = NO;
+				INFOPLIST_FILE = BIMWallet/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = BIMWallet;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				OTHER_LDFLAGS = (
+					"$(inherited)",
+					"-ObjC",
+					"-lc++",
+				);
+				OTHER_SWIFT_FLAGS = "$(inherited) -D EXPO_CONFIGURATION_DEBUG";
+				PRODUCT_BUNDLE_IDENTIFIER = io.bimwallet;
+				PRODUCT_NAME = BIMWallet;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 1;
+				VERSIONING_SYSTEM = "apple-generic";
+			};
+			name = Debug;
+		};
+		13B07F951A680F5B00A75B9A /* Release */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = 5709B34CF0A7D63546082F79 /* Pods-BIMWallet.release.xcconfig */;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CLANG_ENABLE_MODULES = YES;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 3NUM7LCDK3;
+				INFOPLIST_FILE = BIMWallet/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = BIMWallet;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				OTHER_LDFLAGS = (
+					"$(inherited)",
+					"-ObjC",
+					"-lc++",
+				);
+				OTHER_SWIFT_FLAGS = "$(inherited) -D EXPO_CONFIGURATION_RELEASE";
+				PRODUCT_BUNDLE_IDENTIFIER = io.bimwallet;
+				PRODUCT_NAME = BIMWallet;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 1;
+				VERSIONING_SYSTEM = "apple-generic";
+			};
+			name = Release;
+		};
+		83CBBA201A601CBA00E9B192 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_LOCALIZABILITY_NONLOCALIZED = YES;
+				CLANG_CXX_LANGUAGE_STANDARD = "c++20";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
+				COPY_PHASE_STRIP = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				"EXCLUDED_ARCHS[sdk=iphonesimulator*]" = i386;
+				GCC_C_LANGUAGE_STANDARD = gnu99;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+					_LIBCPP_ENABLE_CXX17_REMOVED_UNARY_BINARY_FUNCTION,
+				);
+				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					/usr/lib/swift,
+					"$(inherited)",
+				);
+				LIBRARY_SEARCH_PATHS = (
+					"\"$(SDKROOT)/usr/lib/swift\"",
+					"\"$(TOOLCHAIN_DIR)/usr/lib/swift/$(PLATFORM_NAME)\"",
+					"\"$(inherited)\"",
+				);
+				MTL_ENABLE_DEBUG_INFO = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				OTHER_CFLAGS = "$(inherited)";
+				OTHER_CPLUSPLUSFLAGS = (
+					"$(OTHER_CFLAGS)",
+					"-DFOLLY_NO_CONFIG",
+					"-DFOLLY_MOBILE=1",
+					"-DFOLLY_USE_LIBCPP=1",
+					"-DFOLLY_CFG_NO_COROUTINES=1",
+				);
+				OTHER_LDFLAGS = "$(inherited)";
+				REACT_NATIVE_PATH = "${PODS_ROOT}/../../node_modules/react-native";
+				SDKROOT = iphoneos;
+				USE_HERMES = true;
+			};
+			name = Debug;
+		};
+		83CBBA211A601CBA00E9B192 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_LOCALIZABILITY_NONLOCALIZED = YES;
+				CLANG_CXX_LANGUAGE_STANDARD = "c++20";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
+				COPY_PHASE_STRIP = YES;
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				"EXCLUDED_ARCHS[sdk=iphonesimulator*]" = i386;
+				GCC_C_LANGUAGE_STANDARD = gnu99;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"$(inherited)",
+					_LIBCPP_ENABLE_CXX17_REMOVED_UNARY_BINARY_FUNCTION,
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					/usr/lib/swift,
+					"$(inherited)",
+				);
+				LIBRARY_SEARCH_PATHS = (
+					"\"$(SDKROOT)/usr/lib/swift\"",
+					"\"$(TOOLCHAIN_DIR)/usr/lib/swift/$(PLATFORM_NAME)\"",
+					"\"$(inherited)\"",
+				);
+				MTL_ENABLE_DEBUG_INFO = NO;
+				OTHER_CFLAGS = "$(inherited)";
+				OTHER_CPLUSPLUSFLAGS = (
+					"$(OTHER_CFLAGS)",
+					"-DFOLLY_NO_CONFIG",
+					"-DFOLLY_MOBILE=1",
+					"-DFOLLY_USE_LIBCPP=1",
+					"-DFOLLY_CFG_NO_COROUTINES=1",
+				);
+				OTHER_LDFLAGS = "$(inherited)";
+				REACT_NATIVE_PATH = "${PODS_ROOT}/../../node_modules/react-native";
+				SDKROOT = iphoneos;
+				USE_HERMES = true;
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		00E357021AD99517003FC87E /* Build configuration list for PBXNativeTarget "BIMWalletTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				00E356F61AD99517003FC87E /* Debug */,
+				00E356F71AD99517003FC87E /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		13B07F931A680F5B00A75B9A /* Build configuration list for PBXNativeTarget "BIMWallet" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				13B07F941A680F5B00A75B9A /* Debug */,
+				13B07F951A680F5B00A75B9A /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		83CBB9FA1A601CBA00E9B192 /* Build configuration list for PBXProject "BIMWallet" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				83CBBA201A601CBA00E9B192 /* Debug */,
+				83CBBA211A601CBA00E9B192 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = 83CBB9F71A601CBA00E9B192 /* Project object */;
+}

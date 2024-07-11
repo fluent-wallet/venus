@@ -1,8 +1,6 @@
-import React, { type ComponentProps } from 'react';
-import { View, StyleSheet } from 'react-native';
-import { useTheme } from '@react-navigation/native';
-import BottomSheet, { snapPoints as defaultSnapPoints } from '@components/BottomSheet';
-import Text from '@components/Text';
+import BottomSheet, { snapPoints as defaultSnapPoints, BottomSheetWrapper, BottomSheetHeader } from '@components/BottomSheet';
+import type React from 'react';
+import type { ComponentProps } from 'react';
 import { useTranslation } from 'react-i18next';
 
 interface Props extends ComponentProps<typeof BottomSheet> {
@@ -11,31 +9,16 @@ interface Props extends ComponentProps<typeof BottomSheet> {
 }
 
 const BackupBottomSheet: React.FC<Props> = ({ children, snapPoints, showTitle = true, ...props }) => {
-  const { colors } = useTheme();
-  const {t} = useTranslation()
+  const { t } = useTranslation();
 
   return (
     <BottomSheet snapPoints={snapPoints || defaultSnapPoints.large} isRoute {...props}>
-      <View style={styles.container}>
-        {showTitle && <Text style={[styles.title, { color: colors.textPrimary }]}>{t('backup.title')}</Text>}
+      <BottomSheetWrapper innerPaddingHorizontal>
+        {showTitle && <BottomSheetHeader title={t('backup.title')} />}
         {children}
-      </View>
+      </BottomSheetWrapper>
     </BottomSheet>
   );
 };
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    paddingTop: 8,
-  },
-  title: {
-    marginBottom: 0,
-    lineHeight: 20,
-    textAlign: 'center',
-    fontSize: 16,
-    fontWeight: '600',
-  },
-});
 
 export default BackupBottomSheet;

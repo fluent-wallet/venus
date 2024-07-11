@@ -1,6 +1,6 @@
 import { injectable } from 'inversify';
-import { type Asset } from '../../database/models/Asset';
-import { createAsset as _createAsset, type AssetParams } from '../../database/models/Asset/query';
+import type { Asset } from '../../database/models/Asset';
+import { type AssetParams, createAsset as _createAsset } from '../../database/models/Asset/query';
 export { type AssetParams } from '../../database/models/Asset/query';
 
 @injectable()

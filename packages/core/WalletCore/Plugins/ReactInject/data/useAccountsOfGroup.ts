@@ -1,6 +1,6 @@
 import { useAtomValue } from 'jotai';
 import { atomFamily, atomWithObservable } from 'jotai/utils';
-import { switchMap, of } from 'rxjs';
+import { of, switchMap } from 'rxjs';
 import { observeAccountGroupById } from '../../../../database/models/AccountGroup/query';
 
 const accountsAtomFamilyOfGroup = atomFamily((accountGroupId: string | undefined | null) =>

@@ -1,5 +1,5 @@
 import { injectable } from 'inversify';
-import { type AccountGroup } from '../../database/models/AccountGroup';
+import type { AccountGroup } from '../../database/models/AccountGroup';
 
 @injectable()
 export class AccountGroupMethod {

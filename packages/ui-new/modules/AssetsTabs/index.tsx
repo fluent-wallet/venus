@@ -1,21 +1,22 @@
-/* eslint-disable react-hooks/exhaustive-deps */
-import React, { useMemo, useEffect, useCallback } from 'react';
-import { View, Pressable, StyleSheet } from 'react-native';
-import { useTheme } from '@react-navigation/native';
-import { useTranslation } from 'react-i18next';
-import Animated, { useSharedValue, useAnimatedStyle, withTiming } from 'react-native-reanimated';
-import PagerView from 'react-native-pager-view';
-import { atom, useAtomValue } from 'jotai';
-import { useCurrentNetwork, setAtom, NetworkType } from '@core/WalletCore/Plugins/ReactInject';
-import { type AssetInfo } from '@core/WalletCore/Plugins/AssetsTracker/types';
-import { CFX_ESPACE_MAINNET_CHAINID, CFX_ESPACE_TESTNET_CHAINID } from '@core/consts/network';
 import Text from '@components/Text';
-import TokensList from '@modules/AssetsList/TokensList';
-import NFTsList from '@modules/AssetsList/NFTsList';
+import type { AssetInfo } from '@core/WalletCore/Plugins/AssetsTracker/types';
+import { NetworkType, setAtom, useCurrentNetwork } from '@core/WalletCore/Plugins/ReactInject';
+import { Networks } from '@core/utils/consts';
 import ActivityList from '@modules/ActivityList';
+import NFTsList from '@modules/AssetsList/NFTsList';
 import { StickyNFTItem } from '@modules/AssetsList/NFTsList/NFTItem';
-import { screenHeight } from '@utils/deviceInfo';
+import TokensList from '@modules/AssetsList/TokensList';
 import { useShouldShowNotBackup } from '@pages/Home/NotBackup';
+import { useTheme } from '@react-navigation/native';
+import { screenHeight } from '@utils/deviceInfo';
+import { atom, useAtomValue } from 'jotai';
+/* eslint-disable react-hooks/exhaustive-deps */
+import type React from 'react';
+import { useCallback, useEffect, useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
+import { Pressable, StyleSheet, View } from 'react-native';
+import PagerView from 'react-native-pager-view';
+import Animated, { useSharedValue, useAnimatedStyle, withTiming } from 'react-native-reanimated';
 
 export type Tab = 'Tokens' | 'NFTs' | 'Activity';
 const TabI18nMap = {
@@ -45,7 +46,8 @@ export const Tabs: React.FC<Omit<Props, 'setCurrentTab' | 'onPressItem' | 'selec
   const tabs = useMemo(() => {
     const res =
       !onlyToken &&
-      (!currentNetwork || (currentNetwork && (currentNetwork.chainId === CFX_ESPACE_MAINNET_CHAINID || currentNetwork.chainId === CFX_ESPACE_TESTNET_CHAINID)))
+      (!currentNetwork ||
+        (currentNetwork && (currentNetwork.chainId === Networks['Conflux eSpace'].chainId || currentNetwork.chainId === Networks['eSpace Testnet'].chainId)))
         ? (['Tokens', 'NFTs'] as Tabs)
         : (['Tokens'] as Tabs);
     type === 'Home' && res.push('Activity');
@@ -132,20 +134,24 @@ export const StickyNFT: React.FC<{ type: TabsType }> = ({ type }) => {
   return <StickyNFTItem scrollY={scrollY} startY={startY} tabsType={type} />;
 };
 
-export const TabsContent: React.FC<Props> = ({ currentTab, setCurrentTab, pageViewRef, type, selectType, onPressItem }) => {
+export const TabsContent: React.FC<Props> = ({ currentTab, setCurrentTab, pageViewRef, type, selectType, onlyToken, onPressItem }) => {
   const currentNetwork = useCurrentNetwork();
-  const tabs = useMemo(
-    () =>
-      currentNetwork && (currentNetwork.chainId === CFX_ESPACE_MAINNET_CHAINID || currentNetwork.chainId === CFX_ESPACE_TESTNET_CHAINID)
-        ? (['Tokens', 'NFTs', 'Activity'] as Tabs)
-        : (['Tokens', 'Activity'] as Tabs),
-    [currentNetwork],
-  );
+  const tabs = useMemo(() => {
+    const res =
+      !onlyToken &&
+      (!currentNetwork ||
+        (currentNetwork && (currentNetwork.chainId === Networks['Conflux eSpace'].chainId || currentNetwork.chainId === Networks['eSpace Testnet'].chainId)))
+        ? (['Tokens', 'NFTs'] as Tabs)
+        : (['Tokens'] as Tabs);
+    type === 'Home' && res.push('Activity');
+    return res;
+  }, [currentNetwork, type]);
+
   const currentTabIndex = useMemo(() => {
     const index = tabs.indexOf(currentTab as 'Tokens');
     return index === -1 ? 0 : index;
   }, [tabs, currentTab]);
-  
+
   const shouldShowNotBackup = useShouldShowNotBackup();
 
   return (
@@ -163,7 +169,7 @@ export const TabsContent: React.FC<Props> = ({ currentTab, setCurrentTab, pageVi
               showReceiveFunds={
                 type === 'Home' &&
                 currentNetwork?.networkType === NetworkType.Ethereum &&
-                (currentNetwork.chainId === CFX_ESPACE_MAINNET_CHAINID || currentNetwork.chainId === CFX_ESPACE_TESTNET_CHAINID)
+                (currentNetwork.chainId === Networks['Conflux eSpace'].chainId || currentNetwork.chainId === Networks['eSpace Testnet'].chainId)
               }
               onPressItem={onPressItem}
             />

@@ -1,5 +1,5 @@
 import * as ethers from 'ethers';
-import crypto  from 'react-native-quick-crypto';
+import crypto from 'react-native-quick-crypto';
 
 ethers.randomBytes.register((length) => {
   return new Uint8Array(crypto.randomBytes(length));

@@ -1,293 +1,368 @@
-// import { Core } from '@walletconnect/core';
-// import { Web3Wallet, type Web3WalletTypes } from '@walletconnect/web3wallet';
-// import { buildApprovedNamespaces, getSdkError, type BuildApprovedNamespacesParams } from '@walletconnect/utils';
-// import { mergeMap, map, combineLatest, from, scan, distinctUntilChanged, filter, debounceTime, firstValueFrom } from 'rxjs';
-// import { isEqual } from 'lodash-es';
-// import { NetworkType } from './../../../database/models/Network';
-// import { RequestType } from './../../../database/models/Request/RequestType';
-// import { addressesObservable } from '../../Plugins/ReactInject/data/useAddresses';
-// import { networksObservable } from '../../Plugins/ReactInject/data/useNetworks';
-// import { type Plugin } from '../../Plugins';
-// import methods from '../../Methods';
-// import { currentAddressObservable, getCurrentAddress } from '../ReactInject/data/useCurrentAddress';
-// import { currentAccountObservable } from '../ReactInject/data/useCurrentAccount';
-// import { isAddress } from 'ethers';
+import type { Plugin } from '@core/WalletCore/Plugins';
+import { formatJsonRpcError, formatJsonRpcResult } from '@json-rpc-tools/utils';
+import { Core } from '@walletconnect/core';
+import { buildApprovedNamespaces, getSdkError, parseUri } from '@walletconnect/utils';
+import type Client from '@walletconnect/web3wallet';
+import { Web3Wallet, type Web3WalletTypes } from '@walletconnect/web3wallet';
+import { BehaviorSubject, Subject, catchError, concatMap, of, switchMap, tap } from 'rxjs';
 
-// declare module '../../../WalletCore/Plugins' {
-//   interface Plugins {
-//     WalletConnect: WalletConnectPluginClass;
-//   }
-// }
+import methods from '@core/WalletCore/Methods';
+import {
+  type IWCSendTransactionEvent,
+  type IWCSessionProposalEvent,
+  WalletConnectPluginEventType,
+  type WalletConnectPluginEvents,
+  WalletConnectRPCMethod,
+} from './types';
 
-// export enum WalletConnectRPCMethod {
-//   Sign = 'eth_sign',
-//   PersonalSign = 'personal_sign',
-//   SignTypedData = 'eth_signTypedData',
-//   SendTransaction = 'eth_sendTransaction',
-//   SignTransaction = 'eth_signTransaction',
-//   SignTypedDataV4 = 'eth_signTypedData_v4',
-// }
+declare module '../../../WalletCore/Plugins' {
+  interface Plugins {
+    WalletConnect: WalletConnect;
+  }
+}
 
-// class WalletConnectPluginClass implements Plugin {
-//   public name = 'WalletConnect';
+export const SUPPORT_SESSION_EVENTS = ['chainChanged', 'accountsChanged'];
 
-//   walletConnectCore = new Core({
-//     projectId: '77ffee6a4cbf8ed25550cea82939d1fa',
-//   });
+export const SUPPORT_SIGN_METHODS = [
+  WalletConnectRPCMethod.PersonalSign,
+  WalletConnectRPCMethod.SignTypedData,
+  WalletConnectRPCMethod.SignTypedDataV1,
+  WalletConnectRPCMethod.SignTypedDataV3,
+  WalletConnectRPCMethod.SignTypedDataV4,
+];
+export const SUPPORTED_TRANSACTION_METHODS = [WalletConnectRPCMethod.SendTransaction];
+export interface WalletConnectPluginParams {
+  projectId: string;
+  metadata: Web3WalletTypes.Options['metadata'];
+}
 
-//   web3wallet = Web3Wallet.init({
-//     core: this.walletConnectCore, // <- pass the shared `core` instance
-//     metadata: {
-//       name: 'SwiftShield Wallet',
-//       description: 'SwiftShield Wallet to interface with Dapps',
-//       url: 'https://swiftshield.tech/',
-//       icons: [],
-//     },
-//   });
+export class WalletConnectPluginError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'WalletConnectPluginError';
+  }
+}
 
-//   supportedSigningMethods = [
-//     // WalletConnectRPCMethod.Sign, // see : https://support.metamask.io/hc/en-us/articles/14764161421467-What-is-eth-sign-and-why-is-it-a-risk
-//     WalletConnectRPCMethod.PersonalSign,
-//     WalletConnectRPCMethod.SignTypedData,
-//     WalletConnectRPCMethod.SignTypedDataV4,
-//   ];
-//   supportedTransactionMethods = [WalletConnectRPCMethod.SendTransaction];
+export default class WalletConnect implements Plugin {
+  public name = 'WalletConnect';
 
-//   supportedRPCMethods = [...this.supportedSigningMethods, ...this.supportedTransactionMethods];
+  client: Promise<Client>;
+  sessionStateChangeSubject = new Subject<void>();
+  private eventsSubject = new Subject<WalletConnectPluginEvents>();
+  currentEventSubject = new BehaviorSubject<WalletConnectPluginEvents | null | undefined>(undefined);
+  eventsQueue: WalletConnectPluginEvents[] = [];
 
-//   constructor() {
-//     this.initListeners();
+  constructor({ projectId, metadata }: WalletConnectPluginParams) {
+    this.eventsSubject
+      .pipe(
+        // tap((evt) => {
+        //   console.log('tap: ', evt);
+        // }),
+        tap((event) => this.eventsQueue.push(event)),
+        concatMap((event) =>
+          of(event).pipe(
+            switchMap(
+              (event) =>
+                new Promise<void>((_resolve) => {
+                  this.currentEventSubject.next({
+                    type: event.type,
+                    data: event.data,
+                    action: {
+                      approve: async (...params: any) => {
+                        try {
+                          await event.action.approve(...params);
+                          _resolve();
+                        } catch (_) {
+                          _resolve();
+                        } finally {
+                          this.currentEventSubject.next(null);
+                        }
+                      },
+                      reject: async (...reason: any) => {
+                        try {
+                          await event.action.reject(...reason);
+                          _resolve();
+                        } catch (_) {
+                          _resolve();
+                        } finally {
+                          this.currentEventSubject.next(null);
+                        }
+                      },
+                    },
+                  } as any);
+                }),
+            ),
+            tap(() => {
+              this.eventsQueue.shift();
+            }),
+          ),
+        ),
+      )
+      .subscribe();
 
-//     // const hexAddressObservable = addressesObservable.pipe(
-//     //   mergeMap((addresses) => from(addresses)),
-//     //   map((address) => address.hex),
-//     //   scan((acc, hex) => {
-//     //     if (!acc.includes(hex)) {
-//     //       return [...acc, hex];
-//     //     }
-//     //     return acc;
-//     //   }, [] as Array<string>),
-//     //   distinctUntilChanged((prev, curr) => isEqual(prev, curr)),
-//     // );
+    const core = new Core({ projectId });
+    this.client = Web3Wallet.init({
+      core,
+      metadata,
+    });
 
-//     // const netIdsObservable = networksObservable.pipe(
-//     //   mergeMap((networks) => from(networks)),
-//     //   filter((network) => network.networkType === NetworkType.Ethereum),
-//     //   map((network) => network.netId),
-//     //   scan((acc, netId) => {
-//     //     if (!acc.includes(netId)) {
-//     //       return [...acc, netId];
-//     //     }
-//     //     return acc;
-//     //   }, [] as Array<number>),
-//     //   distinctUntilChanged((prev, curr) => isEqual(prev, curr)),
-//     // );
+    this.init();
+  }
 
-//     // Web3Wallet.init({
-//     //   core: this.walletConnectCore, // <- pass the shared `core` instance
-//     //   metadata: {
-//     //     name: 'SwiftShield Wallet',
-//     //     description: 'SwiftShield Wallet to interface with Dapps',
-//     //     url: 'https://swiftshield.tech/',
-//     //     icons: [],
-//     //   },
-//     // })
-//     //   .then((web3Wallet) => {
-//     //     this.web3wallet = web3Wallet;
-//     //     console.log('init success');
+  activeSessionMetadata: Record<string, Web3WalletTypes.Metadata> = {};
 
-//     //     combineLatest([hexAddressObservable, netIdsObservable])
-//     //       .pipe(
-//     //         filter((tuple) => tuple.every((ele) => ele?.length > 0)),
-//     //         debounceTime(40),
-//     //       )
-//     //       .subscribe(([hexAddresses, netIds]) => {
-//     //         const supportedNamespaces = {
-//     //           eip155: {
-//     //             chains: netIds.map((netId) => `eip155:${netId}`),
-//     //             methods: ['eth_sendTransaction', 'personal_sign'],
-//     //             events: ['accountsChanged', 'chainChanged'],
-//     //             accounts: netIds.map((netId) => hexAddresses.map((hexAddress) => `eip155:${netId}:${hexAddress}`)).flat(),
-//     //           },
-//     //         };
-//     //         this.web3wallet.on('session_proposal', (proposal) => this._onSessionProposal({ ...proposal, supportedNamespaces }));
-//     //       });
-//     //   })
-//     //   .catch((err) => {
-//     //     console.log('init error', err);
-//     //   });
-//   }
+  async init() {
+    const client = await this.client;
+    client.on('session_proposal', this.onSessionProposal.bind(this));
+    client.on('session_request', this.onSessionRequest.bind(this));
+    client.on('session_delete', this.onSessionDelete.bind(this));
 
-//   private getAPP = async (proposer: Web3WalletTypes.SessionProposal['params']['proposer']) => {
-//     let app = await methods.isAppExist(proposer.publicKey);
-//     if (!app) {
-//       app = await methods.createApp({
-//         identity: proposer.publicKey,
-//         name: proposer.metadata.name,
-//         ...(proposer.metadata.icons?.[0] ? { icon: proposer.metadata.icons[0] } : null),
-//         ...(proposer.metadata.url ? { origin: proposer.metadata.url } : null),
-//       });
-//     }
+    // TODO: this event to listen proposal expire
+    client.on('proposal_expire', (e) => console.log(e.id, 'proposal_expire'));
 
-//     return app;
-//   };
+    const sessions = client.getActiveSessions();
+    Object.keys(sessions).forEach((key) => {
+      this.activeSessionMetadata[key] = sessions[key].peer.metadata;
+    });
+  }
 
-//   private formatRPCError = (
-//     id: number,
-//     error:
-//       | ReturnType<typeof getSdkError>
-//       | {
-//           message: string;
-//           code: number;
-//         },
-//   ) => {
-//     return {
-//       id,
-//       jsonrpc: '2.0',
-//       error: error,
-//     };
-//   };
+  /**
+   * when session create or delete
+   * @returns
+   */
+  getWCSessionChangeSubscribe() {
+    return this.sessionStateChangeSubject;
+  }
 
-//   private initListeners = async () => {
-//     const client = await this.web3wallet;
-//     console.log('get client then init listeners');
-//     client.on('session_proposal', this.onSessionProposal);
-//     client.on('session_request', this.onSessionRequest);
-//     client.on('auth_request', (e) => console.log('auth_request'));
-//     client.on('session_delete', () => {
-//       console.log('session_delete');
-//       // TOOD: Notify APP connection is deleted
-//     });
-//   };
+  emitSessionChange() {
+    this.sessionStateChangeSubject.next();
+  }
 
-//   private onSessionProposal = async (proposal: Web3WalletTypes.SessionProposal) => {
-//     const proposer = proposal.params.proposer;
+  async onSessionProposal(proposal: Web3WalletTypes.SessionProposal) {
+    const client = await this.client;
+    // TODO: Check the connect
+    // const { verified } = proposal.verifyContext;
+    const { proposer, requiredNamespaces, optionalNamespaces } = proposal.params;
 
-//     if (!proposer.publicKey) return;
-//     const app = await this.getAPP(proposer);
+    // TODO: check requiredNamespaces is supported
+    const { metadata } = proposer;
 
-//     await methods.createRequest({
-//       app,
-//       type: RequestType.WalletConnectProposal,
-//       resolve: async () => {
-//         const address = await firstValueFrom(currentAddressObservable);
-//         if (!address) {
-//           console.log('no address');
-//           return;
-//         }
-//         const network = await address?.network;
-//         // TODO let user to choose network and address
-//         const client = await this.web3wallet;
-//         const { id, proposer, requiredNamespaces } = proposal.params;
-//         const supportedNamespaces = {
-//           eip155: {
-//             chains: [`eip155:${network.netId}`],
-//             methods: requiredNamespaces?.eip155?.methods || ['eth_sendTransaction', 'personal_sign'],
-//             events: requiredNamespaces?.eip155?.events || ['accountsChanged', 'chainChanged'],
-//             accounts: [`eip155:${network.netId}:${address.hex}`],
-//           },
-//         };
-//         // ------- namespaces builder util ------------ //
-//         const approvedNamespaces = buildApprovedNamespaces({
-//           proposal: proposal.params,
-//           supportedNamespaces,
-//         });
-//         // ------- end namespaces builder util ------------ //
-//         await client.approveSession({
-//           id: proposal.id,
-//           namespaces: approvedNamespaces,
-//         });
-//       },
-//       reject: async () => {
-//         await this.rejectProposal(proposal, 'USER_REJECTED');
-//       },
-//     });
-//   };
+    const verifiedData = proposal.verifyContext.verified;
 
-//   public rejectProposal = async (proposal: Web3WalletTypes.SessionProposal, reason: Parameters<typeof getSdkError>[0]) => {
-//     const client = await this.web3wallet;
-//     const { id, proposer } = proposal.params;
-//     await client.rejectSession({ id, reason: getSdkError(reason) });
-//   };
+    if (verifiedData.isScam) {
+      return client.rejectSession({ id: proposal.params.id, reason: { code: -1, message: 'SCAM CONNECT' } });
+    }
 
-//   public onSessionRequest = async (request: Web3WalletTypes.SessionRequest) => {
-//     const client = await this.web3wallet;
-//     console.log('wallet connect session request', request);
+    let dapp = await methods.isAppExist(verifiedData.origin || metadata.url);
+    if (!dapp) {
+      dapp = await methods.createApp({
+        identity: metadata.url,
+        origin: metadata.url,
+        name: metadata.name,
+        icon: metadata?.icons[0],
+      });
+    }
 
-//     const { id, topic } = request;
-//     const { method, params } = request.params.request;
+    const approveSession: IWCSessionProposalEvent['action']['approve'] = async (args) => {
+      const approvedNamespaces = buildApprovedNamespaces({
+        proposal: proposal.params,
+        supportedNamespaces: {
+          eip155: {
+            ...args,
+            events: [...(requiredNamespaces?.eip155?.events || SUPPORT_SESSION_EVENTS)],
+            methods: [...SUPPORT_SIGN_METHODS, ...SUPPORTED_TRANSACTION_METHODS],
+          },
+        },
+      });
 
-//     // todo  check chain id is current id
+      const activeSession = await client.approveSession({
+        id: proposal.id,
+        namespaces: approvedNamespaces,
+      });
+      this.emitSessionChange();
+      // save metadata
+      this.activeSessionMetadata[activeSession.topic] = activeSession.peer.metadata;
+    };
 
-//     if (method === WalletConnectRPCMethod.Sign) {
-//       await client.respondSessionRequest({
-//         topic,
-//         response: this.formatRPCError(id, getSdkError('UNSUPPORTED_METHODS')),
-//       });
-//       return;
-//     }
+    const rejectSession: IWCSessionProposalEvent['action']['reject'] = async (reason) =>
+      await client.rejectSession({ id: proposal.params.id, reason: getSdkError(reason || 'USER_REJECTED') });
 
-//     if (this.supportedRPCMethods.includes(method as WalletConnectRPCMethod)) {
-//       if (this.supportedSigningMethods.includes(method as WalletConnectRPCMethod)) {
-//         // if is sign message request check address and message
-//         const [address, message] = params.sort((a: any) => (isAddress(a) ? -1 : 1));
-//         if (!address || !message) {
-//           await client.respondSessionRequest({
-//             topic,
-//             response: this.formatRPCError(id, { message: 'Invalid params', code: 1 }),
-//           });
-//           return;
-//         }
-//       }
+    this.eventsSubject.next({
+      type: WalletConnectPluginEventType.SESSION_PROPOSAL,
+      data: {
+        requiredNamespaces,
+        optionalNamespaces,
+        metadata,
+      },
+      action: {
+        approve: approveSession,
+        reject: rejectSession,
+      },
+    });
+  }
 
-//       // get current session
-//       const session = Object.values(client.getActiveSessions()).find((s) => s.topic === topic);
+  async onSessionRequest(request: Web3WalletTypes.SessionRequest) {
+    const client = await this.client;
 
-//       if (!session) {
-//         console.log('wallet session request get no session');
-//         await client.respondSessionRequest({
-//           topic,
-//           response: this.formatRPCError(id, { message: 'No session', code: 1 }),
-//         });
-//         return;
-//       }
-//       const app = await this.getAPP(session.peer);
+    const { id, topic } = request;
+    const { chainId } = request.params;
+    const { method, params } = request.params.request;
 
-//       await methods.createRequest({
-//         app,
-//         type: RequestType.WalletRequest,
-//         resolve: async (result: string) => {
-//           await client.respondSessionRequest({
-//             topic,
-//             response: {
-//               id,
-//               jsonrpc: '2.0',
-//               result,
-//             },
-//           });
-//         },
-//         reject: async (...args) => {
-//           await client.respondSessionRequest({
-//             topic,
-//             response: this.formatRPCError(id, getSdkError('USER_REJECTED')),
-//           });
-//         },
-//         payload: request.params,
-//       });
-//     } else {
-//       console.log('wallet session request get unsupported method', method);
+    const isSupportSignMethods = SUPPORT_SIGN_METHODS.includes(method as WalletConnectRPCMethod);
+    const isSupportTransactionMethods = SUPPORTED_TRANSACTION_METHODS.includes(method as WalletConnectRPCMethod);
+    if (!isSupportSignMethods && !isSupportTransactionMethods) {
+      await client.respondSessionRequest({
+        topic,
+        response: formatJsonRpcError(id, `${method} is not supported`),
+      });
+      return;
+    }
 
-//       await client.respondSessionRequest({
-//         topic,
-//         response: this.formatRPCError(id, getSdkError('UNSUPPORTED_METHODS')),
-//       });
-//     }
-//   };
+    if (isSupportSignMethods) {
+      let message = '';
+      let address = '';
+      if (method === WalletConnectRPCMethod.PersonalSign) {
+        message = params[0];
+        address = params[1];
+      } else if (method.startsWith(WalletConnectRPCMethod.SignTypedData)) {
+        address = params[0];
+        message = params[1];
+      }
 
-//   public pair = async (uri: string) => {
-//     const client = await this.web3wallet;
-//     return client.core.pairing.pair({ uri });
-//   };
-// }
+      const approve: IWCSendTransactionEvent['action']['approve'] = async (signedMessage) => {
+        await client.respondSessionRequest({
+          topic,
+          response: formatJsonRpcResult(id, signedMessage),
+        });
+      };
 
-// export default WalletConnectPluginClass;
+      const reject: IWCSendTransactionEvent['action']['reject'] = async (reason) =>
+        await client.respondSessionRequest({
+          topic,
+          response: formatJsonRpcError(id, reason || 'USER_REJECTED'),
+        });
+
+      this.eventsSubject.next({
+        type: WalletConnectPluginEventType.SIGN_MESSAGE,
+        data: {
+          chainId,
+          address,
+          message,
+          metadata: this.activeSessionMetadata[topic],
+          method: method as WalletConnectRPCMethod,
+        },
+        action: {
+          approve,
+          reject,
+        },
+      });
+    } else if (isSupportTransactionMethods) {
+      const txFromParams = params[0] || {};
+
+      const transaction: IWCSendTransactionEvent['data']['tx'] = {
+        ...txFromParams,
+        nonce: txFromParams.nonce ? Number(txFromParams.nonce) : undefined,
+      };
+
+      const approve: IWCSendTransactionEvent['action']['approve'] = async (txHash) => {
+        await client.respondSessionRequest({
+          topic,
+          response: formatJsonRpcResult(id, txHash),
+        });
+      };
+
+      const reject: IWCSendTransactionEvent['action']['reject'] = async (reason) =>
+        await client.respondSessionRequest({
+          topic,
+          response: formatJsonRpcError(id, reason || 'USER_REJECTED'),
+        });
+
+      const address = transaction?.from;
+
+      if (!address) reject('from is required');
+
+      this.eventsSubject.next({
+        type: WalletConnectPluginEventType.SEND_TRANSACTION,
+        data: {
+          chainId,
+          address: address,
+          metadata: this.activeSessionMetadata[topic],
+          method: method as WalletConnectRPCMethod,
+          tx: transaction,
+        },
+        action: {
+          approve,
+          reject,
+        },
+      });
+    }
+  }
+
+  onSessionDelete(event: Web3WalletTypes.SessionDelete) {
+    this.emitSessionChange();
+  }
+
+  async getAllSession() {
+    const client = await this.client;
+    return client.getActiveSessions();
+  }
+
+  async disconnectSession({ topic }: { topic: string }) {
+    const client = await this.client;
+
+    await client.disconnectSession({ topic, reason: getSdkError('USER_DISCONNECTED') });
+    this.emitSessionChange();
+  }
+
+  async removeAllSession() {
+    const sessions = await this.getAllSession();
+
+    const client = await this.client;
+    await Promise.all(
+      Object.keys(sessions).map((k) => {
+        const session = sessions[k];
+        if (session.topic) {
+          return client.disconnectSession({ topic: session.topic, reason: getSdkError('USER_DISCONNECTED') });
+        }
+      }),
+    );
+    this.emitSessionChange();
+  }
+
+  async removeSessionByAddress(address: string[]) {
+    const sessions = await this.getAllSession();
+    const client = await this.client;
+
+    const disconnectPromises = [];
+    for (const session of Object.values(sessions)) {
+      if (session.namespaces) {
+        for (const namespace of Object.values(session.namespaces)) {
+          if (namespace.accounts.some((account) => address.includes(account.split(':')[2]))) {
+            disconnectPromises.push(client.disconnectSession({ topic: session.topic, reason: getSdkError('USER_DISCONNECTED') }));
+          }
+        }
+      }
+    }
+    await Promise.all(disconnectPromises);
+    this.emitSessionChange();
+  }
+
+  async connect({ wcURI }: { wcURI: string }) {
+    const { version } = parseUri(wcURI);
+
+    if (version === 1) {
+      throw new WalletConnectPluginError('VersionNotSupported');
+    }
+
+    try {
+      const client = await this.client;
+      await client.pair({ uri: wcURI, activatePairing: true });
+    } catch (error: any) {
+      if (String(error).includes('Pairing already exists')) {
+        throw new WalletConnectPluginError('PairingAlreadyExists');
+      } else {
+        throw new WalletConnectPluginError(error?.message || 'UnknownError');
+      }
+    }
+  }
+}

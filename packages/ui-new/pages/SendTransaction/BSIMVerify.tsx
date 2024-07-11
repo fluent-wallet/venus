@@ -1,26 +1,28 @@
-import React, { type MutableRefObject } from 'react';
-import { View, StyleSheet } from 'react-native';
-import { useTheme } from '@react-navigation/native';
-import { useTranslation } from 'react-i18next';
-import { Image } from 'expo-image';
-import { BSIMEvent, BSIMEventTypesName } from '@WalletCoreExtends/Plugins/BSIM/types';
-import BottomSheet, { type BottomSheetMethods } from '@components/BottomSheet';
-import Text from '@components/Text';
-import Button from '@components/Button';
-import Spinner from '@components/Spinner';
-import { screenHeight } from '@utils/deviceInfo';
-import BSIMCardWallet from '@assets/icons/wallet-bsim.webp';
+import { BSIM_ERRORS } from '@WalletCoreExtends/Plugins/BSIM/BSIMSDK';
+import { type BSIMEvent, BSIMEventTypesName } from '@WalletCoreExtends/Plugins/BSIM/types';
 import ArrowLeft from '@assets/icons/arrow-left2.svg';
 import FailedIcon from '@assets/icons/message-fail.svg';
+import BSIMCardWallet from '@assets/icons/wallet-bsim.webp';
+import BottomSheet, { type BottomSheetMethods } from '@components/BottomSheet';
+import Button from '@components/Button';
+import Spinner from '@components/Spinner';
+import Text from '@components/Text';
+import { useTheme } from '@react-navigation/native';
+import { screenHeight } from '@utils/deviceInfo';
+import { Image } from 'expo-image';
+import type React from 'react';
+import { useCallback, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { StyleSheet, View } from 'react-native';
 
 interface Props {
-  bottomSheetRef: MutableRefObject<BottomSheetMethods>;
   bsimEvent: BSIMEvent;
   onClose: () => void;
   onRetry: () => void;
 }
 
-const BSIMVerify: React.FC<Props> = ({ bottomSheetRef, bsimEvent, onClose, onRetry }) => {
+const BSIMVerify: React.FC<Props> = ({ bsimEvent, onClose, onRetry }) => {
+  const bottomSheetRef = useRef<BottomSheetMethods>(null!);
   const { colors, reverseColors, mode } = useTheme();
   const { t } = useTranslation();
 
@@ -59,6 +61,31 @@ const BSIMVerify: React.FC<Props> = ({ bottomSheetRef, bsimEvent, onClose, onRet
       </View>
     </BottomSheet>
   );
+};
+
+export const useBSIMVerify = () => {
+  const [bsimEvent, _setBSIMEvent] = useState<BSIMEvent | null>(null);
+  // eslint-disable-next-line @typescript-eslint/no-empty-function
+  const bsimCancelRef = useRef<VoidFunction | null>(null);
+
+  const execBSIMCancel = useCallback(() => {
+    bsimCancelRef.current?.();
+  }, []);
+  const setBSIMCancel = useCallback((cancelFunc: VoidFunction | null) => {
+    bsimCancelRef.current = cancelFunc;
+  }, []);
+
+  const setBSIMEvent = useCallback((event: BSIMEvent | null) => {
+    if (event && typeof event.message === 'string' && event.message.includes(BSIM_ERRORS.cancel)) return;
+    _setBSIMEvent(event);
+  }, []);
+
+  return {
+    execBSIMCancel,
+    setBSIMCancel,
+    bsimEvent,
+    setBSIMEvent,
+  };
 };
 
 const styles = StyleSheet.create({

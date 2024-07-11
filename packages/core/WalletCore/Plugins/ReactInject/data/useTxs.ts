@@ -1,26 +1,32 @@
+import type { Asset } from '@core/database/models/Asset';
+import type { Tx } from '@core/database/models/Tx';
 import { useAtomValue } from 'jotai';
 import { atomFamily, atomWithObservable } from 'jotai/utils';
-import { switchMap, startWith, of, combineLatest, map, withLatestFrom } from 'rxjs';
-import { dbRefresh$ } from '../../../../database';
-import { observeTxById, observeFinishedTxWithAddress, observeUnfinishedTxWithAddress } from '../../../../database/models/Tx/query';
-import { observeSelectedAddress } from '../../../../database/models/Address/query';
-import { accountsManageObservable } from './useAccountsManage';
-import { TxPayload } from '../../../../database/models/TxPayload';
+import { combineLatest, map, of, switchMap } from 'rxjs';
+import {
+  observeFinishedTxWithAddress,
+  observeRecentlyTxWithAddress,
+  observeTxById,
+  observeUnfinishedTxWithAddress,
+} from '../../../../database/models/Tx/query';
+import type { TxPayload } from '../../../../database/models/TxPayload';
 import { formatTxData } from '../../../../utils/tx';
+import { accountsManageObservable } from './useAccountsManage';
+import { currentAddressObservable } from './useCurrentAddress';
 
-export const unfinishedTxsObservable = dbRefresh$.pipe(
-  startWith([]),
-  switchMap(() => observeSelectedAddress()),
-  switchMap((selectedAddress) => (selectedAddress?.[0] ? observeUnfinishedTxWithAddress(selectedAddress[0].id) : of(null))),
+const recentlyTxsObservable = currentAddressObservable.pipe(
+  switchMap((currentAddress) => (currentAddress ? observeRecentlyTxWithAddress(currentAddress.id) : of([]))),
+);
+
+export const unfinishedTxsObservable = currentAddressObservable.pipe(
+  switchMap((currentAddress) => (currentAddress ? observeUnfinishedTxWithAddress(currentAddress.id) : of(null))),
 );
 
 const unfinishedTxsAtom = atomWithObservable(() => unfinishedTxsObservable, { initialValue: [] });
 export const useUnfinishedTxs = () => useAtomValue(unfinishedTxsAtom);
 
-export const finishedTxsObservable = dbRefresh$.pipe(
-  startWith([]),
-  switchMap(() => observeSelectedAddress()),
-  switchMap((selectedAddress) => (selectedAddress?.[0] ? observeFinishedTxWithAddress(selectedAddress[0].id) : of(null))),
+export const finishedTxsObservable = currentAddressObservable.pipe(
+  switchMap((currentAddress) => (currentAddress ? observeFinishedTxWithAddress(currentAddress.id) : of(null))),
 );
 
 const finishedTxsAtom = atomWithObservable(
@@ -46,44 +52,47 @@ const finishedTxsAtom = atomWithObservable(
 );
 export const useFinishedTxs = () => useAtomValue(finishedTxsAtom);
 
-type RecentlyType = 'Account' | 'Contract' | 'Latest';
-export const recentlyAddressObservable = combineLatest([unfinishedTxsObservable, finishedTxsObservable]).pipe(
-  switchMap((txs) =>
-    Promise.all([
-      Promise.all(
-        txs
-          .flat()
-          .filter(Boolean)
-          .map((tx) => tx!.txPayload),
-      ),
-      Promise.all(
-        txs
-          .flat()
-          .filter(Boolean)
-          .map((tx) => tx!.asset),
-      ),
-    ]),
+export enum RecentlyType {
+  Account = 'Account',
+  Contract = 'Contract',
+  Recently = 'Recently',
+}
+export const recentlyAddressObservable = combineLatest([recentlyTxsObservable, accountsManageObservable]).pipe(
+  switchMap(([txs, accountsManage]) =>
+    Promise.all([txs, Promise.all(txs.filter(Boolean).map((tx) => tx!.txPayload)), Promise.all(txs.filter(Boolean).map((tx) => tx!.asset)), accountsManage]),
   ),
-  map(([txPayloads, txAssets]) =>
-    txPayloads.sort((a, b) => Number((b.nonce ?? 0) - (a.nonce ?? 0))).map((txPayload, i) => formatTxData(txPayload, txAssets[i])),
-  ),
-  map((formatedTxData) => {
+  map(([txs, txPayloads, txAssets, accountsManage]) => {
+    const txMap = new Map<string, Tx>();
+    const assetMap = new Map<string, Asset>();
+    txPayloads.forEach((p, i) => {
+      txMap.set(p.id, txs[i]);
+      assetMap.set(p.id, txAssets[i]);
+    });
+    return [
+      txPayloads
+        .sort((a, b) => Number((b.nonce ?? 0) - (a.nonce ?? 0)))
+        .map((txPayload) => formatTxData(txMap.get(txPayload.id)!, txPayload, assetMap.get(txPayload.id)!))
+        .filter((formatedTxData) => formatedTxData.isTransfer),
+      accountsManage,
+    ] as const;
+  }),
+  map(([formatedTxData, accountsManage]) => {
     const toAddress = Array.from(new Set(formatedTxData.map((txPayload) => txPayload?.to))).filter((addressValue) => !!addressValue) as Array<string>;
     const fromAddress = Array.from(new Set(formatedTxData.map((txPayload) => txPayload?.from))).filter((addressValue) => !!addressValue) as Array<string>;
     return {
       from: fromAddress.map((addressValue) => ({ addressValue, source: 'from' })),
       to: toAddress.map((addressValue) => ({ addressValue, source: 'to' })),
+      accountsManage,
     };
   }),
-  withLatestFrom(accountsManageObservable),
-  map(([latestAddressValues, accountsManage]) => {
-    const allAccounts = accountsManage?.map((item) => item.data).flat();
-    return latestAddressValues.to.map(({ addressValue, source }) => {
+  map((latestAddresses) => {
+    const allAccounts = latestAddresses.accountsManage?.flatMap((item) => item.data);
+    return latestAddresses.to.map(({ addressValue, source }) => {
       const isMyAccount = allAccounts.find((account) => account.addressValue === addressValue);
       return {
         addressValue,
         nickname: isMyAccount?.nickname,
-        type: isMyAccount ? 'Account' : ('Latest' as RecentlyType),
+        type: isMyAccount ? RecentlyType.Account : (RecentlyType.Recently as RecentlyType),
         source,
       };
     });
