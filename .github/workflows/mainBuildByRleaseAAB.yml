@@ -30,13 +30,13 @@ jobs:
         run: yarn
 
       - name: Set up JDK envronment
-        uses: actions/setup-java@v3
+        uses: actions/setup-java@v4
         with:
           distribution: 'zulu'
           java-version: '17'
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
-      - uses: actions/cache@v3
+      - uses: actions/cache@v4
         with:
           path: |
             ~/.gradle/caches
