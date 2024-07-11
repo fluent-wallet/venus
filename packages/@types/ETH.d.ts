@@ -24,15 +24,15 @@ declare namespace ETH {
     effectiveGasPrice?: string | null;
     from?: string | null;
     gasUsed?: string | null;
+    logs?: unknown[];
+    logsBloom?: string | null;
     status?: string | null;
     to?: string | null;
     transactionHash?: string | null;
     transactionIndex?: string | null;
-    type?: string | null;
-    logs?: unknown[];
-    logsBloom?: string | null;
-    // ↓↓↓↓↓↓↓↓↓↓↓ only for espace ↓↓↓↓↓↓↓↓↓↓↓
+    /** only for espace */
     txExecErrorMsg?: string | null;
+    type?: string | null;
   }
 
   export interface eth_getBlockByHashResponse {

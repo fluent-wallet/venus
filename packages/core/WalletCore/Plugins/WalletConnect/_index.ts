@@ -40,7 +40,7 @@
 //     metadata: {
 //       name: 'SwiftShield Wallet',
 //       description: 'SwiftShield Wallet to interface with Dapps',
-//       url: 'https://swiftshield.tech/',
+//       url: 'https://bimwallet.io/',
 //       icons: [],
 //     },
 //   });
@@ -88,7 +88,7 @@
 //     //   metadata: {
 //     //     name: 'SwiftShield Wallet',
 //     //     description: 'SwiftShield Wallet to interface with Dapps',
-//     //     url: 'https://swiftshield.tech/',
+//     //     url: 'https://bimwallet.io/',
 //     //     icons: [],
 //     //   },
 //     // })

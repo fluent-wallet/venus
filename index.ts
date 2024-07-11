@@ -60,8 +60,8 @@ if (ENABLE_WALLET_CONNECT_FEATURE.allow) {
       metadata: {
         name: 'BIM Wallet Wallet',
         description: 'BIM Wallet Wallet to interface with Dapps',
-        url: 'https://swiftshield.tech/',
-        icons: ['https://download.swiftshield.tech/assets/logo.png'],
+        url: 'https://bimwallet.io/',
+        icons: ['https://download.bimwallet.io/assets/logo.png'],
       },
     }),
   );

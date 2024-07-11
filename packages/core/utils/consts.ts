@@ -33,7 +33,7 @@ export enum ADDRESS_TYPES {
 const cfxIcon =
   'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDIiIGhlaWdodD0iNDIiIHZpZXdCb3g9IjAgMCA0MiA0MiIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48Y2lyY2xlIGN4PSIyMSIgY3k9IjIxIiByPSIyMSIgZmlsbD0iI2ZmZiIvPjxwYXRoIGQ9Ik0yNi41NzUgMjMuODA3bC01LjYwMSA1LjU4OC0yLjc4Ny0yLjc3OCA1LjYwMS01LjU4OC0yLjc5Ny0yLjc4OS04LjQzIDguNDA1IDguMzc3IDguMzUyIDguNDMtOC40MDUtMi43OTMtMi43ODV6IiBmaWxsPSIjMUExQTFBIi8+PHBhdGggZD0iTTMyLjIgMTguMTI4TDIxLjAzNyA2Ljk5OCA5LjggMTguMjAybC4wMzUgNS41NSAxMS4xNTMtMTEuMTE2IDExLjE5IDExLjE2Mi4wMjItNS42N3oiIGZpbGw9IiMzOEExREIiLz48L3N2Zz4=';
 export const Networks = {
-  ['Conflux Mainnet']: {
+  'Conflux Mainnet': {
     name: 'Conflux Mainnet',
     endpoint: 'https://main.confluxrpc.com/1BvViQet4km8KPALkc6Pa9',
     networkType: NetworkType.Conflux,
@@ -53,7 +53,7 @@ export const Networks = {
       icon: cfxIcon,
     },
   },
-  ['Conflux eSpace']: {
+  'Conflux eSpace': {
     name: 'Conflux eSpace',
     endpoint: 'https://evm.confluxrpc.com/1BvViQet4km8KPALkc6Pa9',
     networkType: NetworkType.Ethereum,
@@ -61,7 +61,7 @@ export const Networks = {
     netId: 1030,
     selected: true,
     icon: 'https://cdn.jsdelivr.net/gh/Conflux-Chain/helios@dev/packages/built-in-network-icons/Conflux.svg',
-    scanUrl: 'https://evm.confluxscan.net',
+    scanUrl: 'https://evm.confluxscan.io',
     builtin: true,
     chainType: ChainType.Mainnet,
     gasBuffer: 1,
@@ -74,7 +74,7 @@ export const Networks = {
     },
     scanOpenAPI: 'https://evmapi.confluxscan.io',
   },
-  ['Ethereum Mainnet']: {
+  'Ethereum Mainnet': {
     name: 'Ethereum Mainnet',
     endpoint: 'https://mainnet.infura.io/v3/9aa3d95b3bc440fa88ea12eaa4456161',
     networkType: NetworkType.Ethereum,
@@ -94,7 +94,7 @@ export const Networks = {
       icon: 'https://cdn.jsdelivr.net/gh/Conflux-Chain/helios@dev/packages/built-in-network-icons/eth.svg',
     },
   },
-  ['Conflux Testnet']: {
+  'Conflux Testnet': {
     name: 'Conflux Testnet',
     endpoint: 'https://test.confluxrpc.com/1BvViQet4km8KPALkc6Pa9',
     networkType: NetworkType.Conflux,
@@ -114,7 +114,7 @@ export const Networks = {
       icon: cfxIcon,
     },
   },
-  ['eSpace Testnet']: {
+  'eSpace Testnet': {
     name: 'eSpace Testnet',
     endpoint: 'https://evmtestnet.confluxrpc.com/1BvViQet4km8KPALkc6Pa9',
     networkType: NetworkType.Ethereum,
@@ -122,7 +122,7 @@ export const Networks = {
     netId: 71,
     selected: false,
     icon: 'https://cdn.jsdelivr.net/gh/Conflux-Chain/helios@dev/packages/built-in-network-icons/Conflux.svg',
-    scanUrl: 'https://evmtestnet.confluxscan.net',
+    scanUrl: 'https://evmtestnet.confluxscan.io',
     builtin: true,
     chainType: ChainType.Testnet,
     gasBuffer: 1,
@@ -135,7 +135,7 @@ export const Networks = {
     },
     scanOpenAPI: 'https://evmapi-testnet.confluxscan.io',
   },
-  ['Ethereum Sepolia']: {
+  'Ethereum Sepolia': {
     name: 'Ethereum Sepolia',
     endpoint: 'https://sepolia.infura.io/v3/9aa3d95b3bc440fa88ea12eaa4456161',
     networkType: NetworkType.Ethereum,
@@ -163,7 +163,7 @@ export const Networks = {
   //   netId: 8889,
   //   selected: false,
   //   icon: 'https://cdn.jsdelivr.net/gh/Conflux-Chain/helios@dev/packages/built-in-network-icons/Conflux.svg',
-  //   scanUrl: 'https://net8889eth.confluxscan.net/',
+  //   scanUrl: 'https://net8889eth.confluxscan.net',
   //   builtin: false,
   //   chainType: ChainType.Testnet,
   //   gasBuffer: 1,
@@ -183,7 +183,7 @@ export const Networks = {
   //   netId: 8888,
   //   selected: false,
   //   icon: 'https://cdn.jsdelivr.net/gh/Conflux-Chain/helios@dev/packages/built-in-network-icons/Conflux.svg',
-  //   scanUrl: 'https://net8888cfx.confluxscan.net/',
+  //   scanUrl: 'https://net8888cfx.confluxscan.net',
   //   builtin: false,
   //   chainType: ChainType.Testnet,
   //   gasBuffer: 1,

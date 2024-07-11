@@ -39,6 +39,7 @@
 		D9AC5375D22F4F4FB55CE771 /* welcome_5.webp in Resources */ = {isa = PBXBuildFile; fileRef = 70BD36136DD34389A61BB441 /* welcome_5.webp */; };
 		F38EDADF8EAF4E6FADC703AA /* enter_0.webp in Resources */ = {isa = PBXBuildFile; fileRef = 2FE0F886BF3644C18C38970A /* enter_0.webp */; };
 		FB7AFF9CF4E541C1B8FAF03E /* welcome_0.webp in Resources */ = {isa = PBXBuildFile; fileRef = 093D2E081D3F460F967448C9 /* welcome_0.webp */; };
+		939BF763257A41B694F8E178 /* BootSplash.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 8F753FA1E98A4D66A5392FB1 /* BootSplash.storyboard */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -58,7 +59,7 @@
 		015C89CC8D4949F8B00AB939 /* sora_semibold.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = sora_semibold.ttf; path = "../packages/ui-new/assets/fonts/sora_semibold.ttf"; sourceTree = "<group>"; };
 		048A7B2BE3E44341B8A0853E /* sora_bold.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = sora_bold.ttf; path = "../packages/ui-new/assets/fonts/sora_bold.ttf"; sourceTree = "<group>"; };
 		055DA28FFE37457EB79D4372 /* sora_medium.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = sora_medium.ttf; path = "../packages/ui-new/assets/fonts/sora_medium.ttf"; sourceTree = "<group>"; };
-		093D2E081D3F460F967448C9 /* welcome_0.webp */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = undefined; includeInIndex = 0; lastKnownFileType = unknown; name = welcome_0.webp; path = "../packages/ui-new/assets/lottie/welcome_0.webp"; sourceTree = "<group>"; };
+		093D2E081D3F460F967448C9 /* welcome_0.webp */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = welcome_0.webp; path = "../packages/ui-new/assets/lottie/welcome_0.webp"; sourceTree = "<group>"; };
 		13B07F961A680F5B00A75B9A /* BIMWallet.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = BIMWallet.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		13B07FAF1A68108700A75B9A /* AppDelegate.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = AppDelegate.h; path = BIMWallet/AppDelegate.h; sourceTree = "<group>"; };
 		13B07FB01A68108700A75B9A /* AppDelegate.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; name = AppDelegate.mm; path = BIMWallet/AppDelegate.mm; sourceTree = "<group>"; };
@@ -67,33 +68,34 @@
 		13B07FB71A68108700A75B9A /* main.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = main.m; path = BIMWallet/main.m; sourceTree = "<group>"; };
 		15839C861ED2C69156BA28E5 /* ExpoModulesProvider.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = ExpoModulesProvider.swift; path = "Pods/Target Support Files/Pods-BIMWallet/ExpoModulesProvider.swift"; sourceTree = "<group>"; };
 		19F6CBCC0A4E27FBF8BF4A61 /* libPods-BIMWallet-BIMWalletTests.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-BIMWallet-BIMWalletTests.a"; sourceTree = BUILT_PRODUCTS_DIR; };
-		2FE0F886BF3644C18C38970A /* enter_0.webp */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = undefined; includeInIndex = 0; lastKnownFileType = unknown; name = enter_0.webp; path = "../packages/ui-new/assets/lottie/enter_0.webp"; sourceTree = "<group>"; };
-		3004AC8228FE423E83FF2AC7 /* enter_3.webp */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = undefined; includeInIndex = 0; lastKnownFileType = unknown; name = enter_3.webp; path = "../packages/ui-new/assets/lottie/enter_3.webp"; sourceTree = "<group>"; };
+		2FE0F886BF3644C18C38970A /* enter_0.webp */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = enter_0.webp; path = "../packages/ui-new/assets/lottie/enter_0.webp"; sourceTree = "<group>"; };
+		3004AC8228FE423E83FF2AC7 /* enter_3.webp */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = enter_3.webp; path = "../packages/ui-new/assets/lottie/enter_3.webp"; sourceTree = "<group>"; };
 		3B4392A12AC88292D35C810B /* Pods-BIMWallet.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-BIMWallet.debug.xcconfig"; path = "Target Support Files/Pods-BIMWallet/Pods-BIMWallet.debug.xcconfig"; sourceTree = "<group>"; };
-		46C73B2EC8424C26A1628DD8 /* enter_8.webp */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = undefined; includeInIndex = 0; lastKnownFileType = unknown; name = enter_8.webp; path = "../packages/ui-new/assets/lottie/enter_8.webp"; sourceTree = "<group>"; };
-		4A141FF09C374FFA8FD828E1 /* enter_4.webp */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = undefined; includeInIndex = 0; lastKnownFileType = unknown; name = enter_4.webp; path = "../packages/ui-new/assets/lottie/enter_4.webp"; sourceTree = "<group>"; };
-		4B8899849FCE4778A765F89D /* welcome_2.webp */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = undefined; includeInIndex = 0; lastKnownFileType = unknown; name = welcome_2.webp; path = "../packages/ui-new/assets/lottie/welcome_2.webp"; sourceTree = "<group>"; };
+		46C73B2EC8424C26A1628DD8 /* enter_8.webp */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = enter_8.webp; path = "../packages/ui-new/assets/lottie/enter_8.webp"; sourceTree = "<group>"; };
+		4A141FF09C374FFA8FD828E1 /* enter_4.webp */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = enter_4.webp; path = "../packages/ui-new/assets/lottie/enter_4.webp"; sourceTree = "<group>"; };
+		4B8899849FCE4778A765F89D /* welcome_2.webp */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = welcome_2.webp; path = "../packages/ui-new/assets/lottie/welcome_2.webp"; sourceTree = "<group>"; };
 		5709B34CF0A7D63546082F79 /* Pods-BIMWallet.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-BIMWallet.release.xcconfig"; path = "Target Support Files/Pods-BIMWallet/Pods-BIMWallet.release.xcconfig"; sourceTree = "<group>"; };
 		5B7EB9410499542E8C5724F5 /* Pods-BIMWallet-BIMWalletTests.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-BIMWallet-BIMWalletTests.debug.xcconfig"; path = "Target Support Files/Pods-BIMWallet-BIMWalletTests/Pods-BIMWallet-BIMWalletTests.debug.xcconfig"; sourceTree = "<group>"; };
 		5BF10BE33E6345A490E5EDB8 /* sora_light.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = sora_light.ttf; path = "../packages/ui-new/assets/fonts/sora_light.ttf"; sourceTree = "<group>"; };
 		5DCACB8F33CDC322A6C60F78 /* libPods-BIMWallet.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-BIMWallet.a"; sourceTree = BUILT_PRODUCTS_DIR; };
 		6C7F38D1D04C48598A458CE8 /* sora_extralight.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = sora_extralight.ttf; path = "../packages/ui-new/assets/fonts/sora_extralight.ttf"; sourceTree = "<group>"; };
-		70BD36136DD34389A61BB441 /* welcome_5.webp */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = undefined; includeInIndex = 0; lastKnownFileType = unknown; name = welcome_5.webp; path = "../packages/ui-new/assets/lottie/welcome_5.webp"; sourceTree = "<group>"; };
-		7D19A8FFA27E4D84B615A19E /* enter_1.webp */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = undefined; includeInIndex = 0; lastKnownFileType = unknown; name = enter_1.webp; path = "../packages/ui-new/assets/lottie/enter_1.webp"; sourceTree = "<group>"; };
+		70BD36136DD34389A61BB441 /* welcome_5.webp */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = welcome_5.webp; path = "../packages/ui-new/assets/lottie/welcome_5.webp"; sourceTree = "<group>"; };
+		7D19A8FFA27E4D84B615A19E /* enter_1.webp */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = enter_1.webp; path = "../packages/ui-new/assets/lottie/enter_1.webp"; sourceTree = "<group>"; };
 		81AB9BB72411601600AC10FF /* LaunchScreen.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; name = LaunchScreen.storyboard; path = BIMWallet/LaunchScreen.storyboard; sourceTree = "<group>"; };
 		89C6BE57DB24E9ADA2F236DE /* Pods-BIMWallet-BIMWalletTests.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-BIMWallet-BIMWalletTests.release.xcconfig"; path = "Target Support Files/Pods-BIMWallet-BIMWalletTests/Pods-BIMWallet-BIMWalletTests.release.xcconfig"; sourceTree = "<group>"; };
-		989CBB81C2C047C8ABDD3483 /* enter_5.webp */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = undefined; includeInIndex = 0; lastKnownFileType = unknown; name = enter_5.webp; path = "../packages/ui-new/assets/lottie/enter_5.webp"; sourceTree = "<group>"; };
+		989CBB81C2C047C8ABDD3483 /* enter_5.webp */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = enter_5.webp; path = "../packages/ui-new/assets/lottie/enter_5.webp"; sourceTree = "<group>"; };
 		9EACEA7913C64F0BAF3D6288 /* sora_thin.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = sora_thin.ttf; path = "../packages/ui-new/assets/fonts/sora_thin.ttf"; sourceTree = "<group>"; };
 		A32E2BBAD30B4F259AA50314 /* sora_extrabold.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = sora_extrabold.ttf; path = "../packages/ui-new/assets/fonts/sora_extrabold.ttf"; sourceTree = "<group>"; };
 		A34A62E4EB3A57DC2BE80935 /* ExpoModulesProvider.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = ExpoModulesProvider.swift; path = "Pods/Target Support Files/Pods-BIMWallet-BIMWalletTests/ExpoModulesProvider.swift"; sourceTree = "<group>"; };
-		BAA4E776C21D481ABA3F098B /* enter_6.webp */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = undefined; includeInIndex = 0; lastKnownFileType = unknown; name = enter_6.webp; path = "../packages/ui-new/assets/lottie/enter_6.webp"; sourceTree = "<group>"; };
+		BAA4E776C21D481ABA3F098B /* enter_6.webp */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = enter_6.webp; path = "../packages/ui-new/assets/lottie/enter_6.webp"; sourceTree = "<group>"; };
 		D3DB6B345CD84D139B020F34 /* sora_regular.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = sora_regular.ttf; path = "../packages/ui-new/assets/fonts/sora_regular.ttf"; sourceTree = "<group>"; };
-		D8A5C3DF581240F0B58BCACA /* welcome_3.webp */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = undefined; includeInIndex = 0; lastKnownFileType = unknown; name = welcome_3.webp; path = "../packages/ui-new/assets/lottie/welcome_3.webp"; sourceTree = "<group>"; };
-		DAF8A82D4C9D4981A3B36909 /* welcome_4.webp */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = undefined; includeInIndex = 0; lastKnownFileType = unknown; name = welcome_4.webp; path = "../packages/ui-new/assets/lottie/welcome_4.webp"; sourceTree = "<group>"; };
-		DD0CE01EA53743C79A2C543B /* welcome_1.webp */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = undefined; includeInIndex = 0; lastKnownFileType = unknown; name = welcome_1.webp; path = "../packages/ui-new/assets/lottie/welcome_1.webp"; sourceTree = "<group>"; };
-		DDA5013C45D64B5F96F478AE /* enter_7.webp */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = undefined; includeInIndex = 0; lastKnownFileType = unknown; name = enter_7.webp; path = "../packages/ui-new/assets/lottie/enter_7.webp"; sourceTree = "<group>"; };
+		D8A5C3DF581240F0B58BCACA /* welcome_3.webp */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = welcome_3.webp; path = "../packages/ui-new/assets/lottie/welcome_3.webp"; sourceTree = "<group>"; };
+		DAF8A82D4C9D4981A3B36909 /* welcome_4.webp */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = welcome_4.webp; path = "../packages/ui-new/assets/lottie/welcome_4.webp"; sourceTree = "<group>"; };
+		DD0CE01EA53743C79A2C543B /* welcome_1.webp */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = welcome_1.webp; path = "../packages/ui-new/assets/lottie/welcome_1.webp"; sourceTree = "<group>"; };
+		DDA5013C45D64B5F96F478AE /* enter_7.webp */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = enter_7.webp; path = "../packages/ui-new/assets/lottie/enter_7.webp"; sourceTree = "<group>"; };
 		ED297162215061F000B7C4FE /* JavaScriptCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = JavaScriptCore.framework; path = System/Library/Frameworks/JavaScriptCore.framework; sourceTree = SDKROOT; };
-		ED3F2AA10C9E4D0A91C8F57F /* enter_2.webp */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = undefined; includeInIndex = 0; lastKnownFileType = unknown; name = enter_2.webp; path = "../packages/ui-new/assets/lottie/enter_2.webp"; sourceTree = "<group>"; };
+		ED3F2AA10C9E4D0A91C8F57F /* enter_2.webp */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = enter_2.webp; path = "../packages/ui-new/assets/lottie/enter_2.webp"; sourceTree = "<group>"; };
+		8F753FA1E98A4D66A5392FB1 /* BootSplash.storyboard */ = {isa = PBXFileReference; name = "BootSplash.storyboard"; path = "BIMWallet/BootSplash.storyboard"; sourceTree = "<group>"; fileEncoding = undefined; lastKnownFileType = unknown; explicitFileType = undefined; includeInIndex = 0; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -142,6 +144,7 @@
 				13B07FB61A68108700A75B9A /* Info.plist */,
 				81AB9BB72411601600AC10FF /* LaunchScreen.storyboard */,
 				13B07FB71A68108700A75B9A /* main.m */,
+				8F753FA1E98A4D66A5392FB1 /* BootSplash.storyboard */,
 			);
 			name = BIMWallet;
 			sourceTree = "<group>";
@@ -375,6 +378,7 @@
 				3DCCBAC42B464ABEA9D5BD0A /* welcome_3.webp in Resources */,
 				891800157F574EA4B713177E /* welcome_4.webp in Resources */,
 				D9AC5375D22F4F4FB55CE771 /* welcome_5.webp in Resources */,
+				939BF763257A41B694F8E178 /* BootSplash.storyboard in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -590,7 +594,7 @@
 					"$(inherited)",
 				);
 				INFOPLIST_FILE = BIMWalletTests/Info.plist;
-				IPHONEOS_DEPLOYMENT_TARGET = 13.4;
+				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -615,7 +619,7 @@
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				COPY_PHASE_STRIP = NO;
 				INFOPLIST_FILE = BIMWalletTests/Info.plist;
-				IPHONEOS_DEPLOYMENT_TARGET = 13.4;
+				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -640,6 +644,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;
 				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 3NUM7LCDK3;
 				ENABLE_BITCODE = NO;
 				INFOPLIST_FILE = BIMWallet/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = BIMWallet;
@@ -670,6 +675,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;
 				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 3NUM7LCDK3;
 				INFOPLIST_FILE = BIMWallet/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = BIMWallet;
 				LD_RUNPATH_SEARCH_PATHS = (
