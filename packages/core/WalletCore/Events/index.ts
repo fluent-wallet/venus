@@ -1,5 +1,7 @@
 import { injectable } from 'inversify';
 import { combineLatest, debounceTime, distinctUntilChanged, filter } from 'rxjs';
+import { useAtomValue } from 'jotai';
+import { atomWithObservable } from 'jotai/utils';
 import type { Address } from '../../database/models/Address';
 import type { Network } from '../../database/models/Network';
 import { container } from '../configs';
@@ -10,6 +12,7 @@ import { currentNetworkChangedSubject, currentNetworkObservable } from './curren
 import { lifecycleChangedSubject } from './lifecycleChanged';
 import { networksChangedSubject } from './networksChanged';
 import { newestRequestSubject } from './requestSubject';
+export { LifeCycle } from './lifecycleChanged';
 
 const compareNetworkAndAddress = ([prevNetwork, prevAddress]: [Network, Address], [currentNetwork, currentAddress]: [Network, Address]) => {
   return prevNetwork.id === currentNetwork.id && prevAddress.id === currentAddress.id;
@@ -33,6 +36,9 @@ export class Events {
     debounceTime(25),
     distinctUntilChanged(compareNetworkAndAddress),
   );
+
+  private lifeCycleAtom = atomWithObservable(() => lifecycleChangedSubject, { initialValue: null });
+  public useLifeCycle = () => useAtomValue(this.lifeCycleAtom);
 }
 
 container.bind(Events).to(Events).inSingletonScope();

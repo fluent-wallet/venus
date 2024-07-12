@@ -1,5 +1,5 @@
 import methods from '@core/WalletCore/Methods';
-import Plugins from '@core/WalletCore/Plugins';
+import plugins from '@core/WalletCore/Plugins';
 import { NetworkType, useCurrentAddressValue, useCurrentNetwork } from '@core/WalletCore/Plugins/ReactInject';
 import { WalletConnectPluginEventType } from '@core/WalletCore/Plugins/WalletConnect/types';
 import { queryNetworks } from '@core/database/models/Network/query';
@@ -27,7 +27,7 @@ export function useListenWalletConnectEvent() {
   const currentNetwork = useCurrentNetwork()!;
 
   useEffect(() => {
-    const subject = Plugins.WalletConnect.currentEventSubject.subscribe(async (event) => {
+    const subject = plugins.WalletConnect.currentEventSubject.subscribe(async (event) => {
       if (event === undefined) {
         return;
       }
@@ -142,21 +142,21 @@ export function useListenWalletConnectEvent() {
 }
 
 export function useWalletConnectSessions(filterByAddress?: string | undefined | null) {
-  const [sessions, setSessions] = useState<Awaited<ReturnType<typeof Plugins.WalletConnect.getAllSession>>[string][]>([]);
+  const [sessions, setSessions] = useState<Awaited<ReturnType<typeof plugins.WalletConnect.getAllSession>>[string][]>([]);
 
   const getSessions = useCallback(async () => {
-    const sessions = await Plugins.WalletConnect.getAllSession();
+    const sessions = await plugins.WalletConnect.getAllSession();
     setSessions(Object.values(sessions));
   }, []);
 
   useEffect(() => {
-    Plugins.WalletConnect.getAllSession().then((res) => {
+    plugins.WalletConnect.getAllSession().then((res) => {
       setSessions(Object.values(res));
     });
   }, []);
 
   useEffect(() => {
-    const sub = Plugins.WalletConnect.getWCSessionChangeSubscribe().subscribe(getSessions);
+    const sub = plugins.WalletConnect.getWCSessionChangeSubscribe().subscribe(getSessions);
 
     return () => {
       sub.unsubscribe();
