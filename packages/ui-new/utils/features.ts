@@ -21,11 +21,6 @@ export const ACTIVITY_DB_STATUS_FEATURE = {
   allow: isQA || isDev,
 };
 
-export const ENABLE_WALLET_CONNECT_FEATURE = {
-  describe: 'wallet connect feature',
-  allow: isDev || isQA,
-};
-
 export const ENABLE_SMALL_SIGNATURE_RECORDS_FEATURE = {
   describe: 'signature records with pagesize = 10 feature',
   allow: isDev || isQA,

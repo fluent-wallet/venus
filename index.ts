@@ -23,7 +23,6 @@ import ReceiveAssetsTracker from './packages/core/WalletCore/Plugins/ReceiveAsse
 import BlockNumberTracker from './packages/core/WalletCore/Plugins/BlockNumberTracker';
 import App from './packages/ui-new/App';
 import { name as appName } from './app.json';
-import { ENABLE_WALLET_CONNECT_FEATURE } from './packages/ui-new/utils/features';
 
 Decimal.set({ precision: 80 });
 Decimal.config({
@@ -51,10 +50,7 @@ const plugins = [
   NFTDetailTracker,
   ReceiveAssetsTracker,
   BlockNumberTracker,
-];
 
-if (ENABLE_WALLET_CONNECT_FEATURE.allow) {
-  plugins.push(
     new WalletConnectPlugin({
       projectId: '77ffee6a4cbf8ed25550cea82939d1fa',
       metadata: {
@@ -64,8 +60,10 @@ if (ENABLE_WALLET_CONNECT_FEATURE.allow) {
         icons: ['https://download.bimwallet.io/assets/logo.png'],
       },
     }),
-  );
-}
+  
+];
+
+
 
 WalletCore.plugins.use(plugins);
 WalletCore.setup();
