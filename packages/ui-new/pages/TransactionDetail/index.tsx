@@ -66,6 +66,15 @@ const TransactionDetail: React.FC<StackScreenProps<typeof TransactionDetailStack
   const { to } = useMemo(() => formatTxData(tx, payload, asset), [tx, payload, asset]);
   if (!tx) return null;
   const isPending = status === 'pending';
+  const handleCopy = (text: string) => {
+    Clipboard.setString(text);
+    showMessage({
+      message: t('common.copied'),
+      type: 'success',
+      duration: 1500,
+      width: 160,
+    });
+  };
   return (
     <View style={[styles.container, { backgroundColor: colors.bgPrimary }]}>
       <View style={styles.content}>
@@ -84,22 +93,14 @@ const TransactionDetail: React.FC<StackScreenProps<typeof TransactionDetailStack
           <Text style={[styles.label, { color: colors.textSecondary }]}>{t('tx.detail.txHash')}</Text>
           <Pressable
             onPress={() => {
-              Clipboard.setString(tx.hash ?? '');
-              showMessage({
-                message: t('common.copied'),
-                type: 'success',
-                duration: 1500,
-                width: 160,
-              });
+              handleCopy(tx.hash ?? '');
             }}
             disabled={!tx.hash}
             testID="hash"
             style={styles.row}
           >
             <Text style={[styles.info, { color: colors.textPrimary }]}>{truncate(tx.hash ?? '', { prefixLength: 6 })}</Text>
-            <View style={styles.iconWrapper}>
-              <Copy color={colors.textSecondary} width={15} height={15} />
-            </View>
+            <Copy color={colors.textSecondary} />
           </Pressable>
           {currentNetwork?.scanUrl && (
             <Pressable
@@ -108,9 +109,9 @@ const TransactionDetail: React.FC<StackScreenProps<typeof TransactionDetailStack
               }}
               disabled={!tx.hash}
               testID="scan"
-              style={[styles.iconWrapper, { marginLeft: -4 }]}
+              style={[{ marginLeft: -4 }]}
             >
-              <Earth color={colors.textSecondary} width={15} height={15} />
+              <Earth color={colors.textSecondary} />
             </Pressable>
           )}
         </View>
@@ -118,44 +119,28 @@ const TransactionDetail: React.FC<StackScreenProps<typeof TransactionDetailStack
           <Text style={[styles.label, { color: colors.textSecondary }]}>{t('tx.detail.from')}</Text>
           <Pressable
             onPress={() => {
-              Clipboard.setString(payload?.from ?? '');
-              showMessage({
-                message: t('common.copied'),
-                type: 'success',
-                duration: 1500,
-                width: 160,
-              });
+              handleCopy(payload?.from ?? '');
             }}
             disabled={!tx.hash}
             testID="from"
             style={styles.row}
           >
             <Text style={[styles.info, { color: colors.textPrimary }]}>{shortenAddress(payload?.from)}</Text>
-            <View style={styles.iconWrapper}>
-              <Copy color={colors.textSecondary} width={15} height={15} />
-            </View>
+            <Copy color={colors.textSecondary} />
           </Pressable>
         </View>
         <View style={styles.row}>
           <Text style={[styles.label, { color: colors.textSecondary }]}>{t('tx.detail.to')}</Text>
           <Pressable
             onPress={() => {
-              Clipboard.setString(to ?? '');
-              showMessage({
-                message: t('common.copied'),
-                type: 'success',
-                duration: 1500,
-                width: 160,
-              });
+              handleCopy(to ?? '');
             }}
             disabled={!tx.hash}
             testID="to"
             style={styles.row}
           >
             <Text style={[styles.info, { color: colors.textPrimary }]}>{shortenAddress(to)}</Text>
-            <View style={styles.iconWrapper}>
-              <Copy color={colors.textSecondary} width={15} height={15} />
-            </View>
+            <Copy color={colors.textSecondary} />
           </Pressable>
         </View>
         <View style={styles.row}>
