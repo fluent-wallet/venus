@@ -23,7 +23,6 @@ import {
   type StackScreenProps,
 } from '@router/configs';
 import { type ETHURL, parseETHURL } from '@utils/ETHURL';
-import { ENABLE_WALLET_CONNECT_FEATURE } from '@utils/features';
 import Decimal from 'decimal.js';
 import { scanFromURLAsync } from 'expo-barcode-scanner';
 import { launchImageLibraryAsync } from 'expo-image-picker';
@@ -155,7 +154,7 @@ const ScanQrCode: React.FC<Props> = ({ navigation, onConfirm, onClose }) => {
       }
 
       try {
-        if (!onConfirm && QRCodeString.startsWith('wc:') && ENABLE_WALLET_CONNECT_FEATURE.allow) {
+        if (!onConfirm && QRCodeString.startsWith('wc:')) {
           setScanStatus({ type: ScanStatusType.ConnectingWC, message: t('wc.connecting') });
           await plugins.WalletConnect.connect({ wcURI: QRCodeString });
         } else {
