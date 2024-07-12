@@ -19,7 +19,6 @@ import CustomizeGasSetting from '../GasFeeSetting/CustomizeGasSetting';
 
 const higherRatio = 1.1;
 const fasterRatio = 1.2;
-const defaultLevel: SpeedUpLevel = 'faster';
 
 const createGasSetting = (txPayload: ReturnType<typeof usePayloadOfTx>, ratio: number) => {
   if (!txPayload) return null;
@@ -35,7 +34,7 @@ const createGasSetting = (txPayload: ReturnType<typeof usePayloadOfTx>, ratio: n
 };
 
 const SpeedUp: React.FC<StackScreenProps<typeof SpeedUpStackName>> = ({ route }) => {
-  const { txId, type } = route.params;
+  const { txId, type, level: defaultLevel } = route.params;
   const { colors } = useTheme();
   const { t } = useTranslation();
 
@@ -72,7 +71,7 @@ const SpeedUp: React.FC<StackScreenProps<typeof SpeedUpStackName>> = ({ route })
     }
   }, [txPayload]);
 
-  const [tempSelectedOptionLevel, setTempSelectedOptionLevel] = useState<SpeedUpLevel>(defaultLevel);
+  const [tempSelectedOptionLevel, setTempSelectedOptionLevel] = useState<SpeedUpLevel | undefined>(defaultLevel);
   const bottomSheetRef = useRef<BottomSheetMethods>(null!);
 
   useEffect(() => {
@@ -136,7 +135,14 @@ const SpeedUp: React.FC<StackScreenProps<typeof SpeedUpStackName>> = ({ route })
               <Button testID="cancel" style={styles.btn} size="small" onPress={() => bottomSheetRef.current?.close()}>
                 {t('common.cancel')}
               </Button>
-              <Button testID="speed-up" style={styles.btn} size="small" onPress={handlePressConfirm} Icon={type === 'SpeedUp' ? RocketIcon : undefined}>
+              <Button
+                testID="speed-up"
+                style={styles.btn}
+                size="small"
+                onPress={handlePressConfirm}
+                disabled={!tempSelectedOptionLevel}
+                Icon={type === 'SpeedUp' ? RocketIcon : undefined}
+              >
                 {type === 'SpeedUp' ? t('tx.action.speedUpBtn') : t('tx.action.proceedBtn')}
               </Button>
             </View>

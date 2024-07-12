@@ -65,13 +65,13 @@ const TransactionDetail: React.FC<StackScreenProps<typeof TransactionDetailStack
   }, [tx?.receipt, currentNativeAsset?.priceInUSDT, currentNativeAsset?.decimals]);
   const { to } = useMemo(() => formatTxData(tx, payload, asset), [tx, payload, asset]);
   if (!tx) return null;
-  const isPending = SPEED_UP_FEATURE.allow && status === 'pending';
+  const isPending = status === 'pending';
   return (
     <View style={[styles.container, { backgroundColor: colors.bgPrimary }]}>
       <View style={styles.content}>
         <TxStatus tx={tx} />
         <Text style={[styles.functionName, { color: colors.textPrimary }]}>{t('tx.detail.functionName', { name: tx.method })}</Text>
-        {isPending && (
+        {SPEED_UP_FEATURE.allow && isPending && (
           <>
             <Text style={[styles.action, { color: colors.textSecondary }]}>{t('tx.action.buttonTitle')}</Text>
             <SpeedUpButton txId={txId} containerStyle={styles.speedUp} />
@@ -160,13 +160,17 @@ const TransactionDetail: React.FC<StackScreenProps<typeof TransactionDetailStack
         </View>
         <View style={styles.row}>
           <Text style={[styles.label, { color: colors.textSecondary }]}>{t('tx.detail.fee')}</Text>
-          {gasCostAndPriceInUSDT && (
-            <>
-              <Text style={[styles.info, { color: colors.textPrimary }]}>
-                {gasCostAndPriceInUSDT.cost} {currentNativeAsset?.symbol}
-                {gasCostAndPriceInUSDT.priceInUSDT && ` (${gasCostAndPriceInUSDT.priceInUSDT})`}
-              </Text>
-            </>
+          {!isPending ? (
+            gasCostAndPriceInUSDT && (
+              <>
+                <Text style={[styles.info, { color: colors.textPrimary }]}>
+                  {gasCostAndPriceInUSDT.cost} {currentNativeAsset?.symbol}
+                  {gasCostAndPriceInUSDT.priceInUSDT && ` (${gasCostAndPriceInUSDT.priceInUSDT})`}
+                </Text>
+              </>
+            )
+          ) : (
+            <PendingIcon size="small" />
           )}
         </View>
         <View style={styles.row}>
@@ -270,11 +274,15 @@ export const styles = StyleSheet.create({
   },
 });
 
-const PendingIcon = () => (
-  <View style={[styles.statusIcon]}>
-    <Spinner color="rgba(0, 0, 0, 0.50)" backgroundColor="#EDEDED" width={28} height={28} strokeWidth={5} />
-  </View>
-);
+const PendingIcon: React.FC<{ size?: 'default' | 'small' }> = ({ size = 'default' }) => {
+  const { colors, mode } = useTheme();
+  const iconSize = size === 'default' ? 28 : 16;
+  return (
+    <View style={size === 'default' ? styles.statusIcon : styles.iconWrapper}>
+      <Spinner color={mode === 'dark' ? '#00000080' : '#FFFFFFB2'} backgroundColor={colors.iconPrimary} width={iconSize} height={iconSize} strokeWidth={5} />
+    </View>
+  );
+};
 
 const StatusMap = {
   pending: {
