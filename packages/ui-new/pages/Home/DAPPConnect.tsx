@@ -16,7 +16,17 @@ function DAPPConnect() {
   const navigation = useNavigation<StackNavigation>();
   const currentAddressValue = useCurrentAddressValue();
   const { sessions } = useWalletConnectSessions(currentAddressValue);
-  const hasUnsafeURL = useMemo(() => sessions.some(({ peer: { metadata } }) => new URL(metadata.url).protocol === 'http'), [sessions]);
+  const hasUnsafeURL = useMemo(
+    () =>
+      sessions.some(({ peer: { metadata } }) => {
+        try {
+          return new URL(metadata.url).protocol === 'http';
+        } catch (error) {
+          return true;
+        }
+      }),
+    [sessions],
+  );
 
   if (sessions.length === 0) {
     return null;

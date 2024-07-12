@@ -33,7 +33,13 @@ function WalletConnectSessions() {
     setInDesconnect((prev) => ({ ...prev, [topic]: false }));
   }, []);
 
-  const isUnsafe = useCallback((url: string) => new URL(url).protocol === 'http', []);
+  const isUnsafe = useCallback((url: string) => {
+    try {
+      return new URL(url).protocol === 'http';
+    } catch (error) {
+      return true;
+    }
+  }, []);
 
   return (
     <BottomSheet ref={bottomSheetRef} isRoute snapPoints={snapPoints.percent55}>
