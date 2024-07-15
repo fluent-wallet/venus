@@ -198,6 +198,7 @@ class TxTrackerPluginClass implements Plugin {
 
   async _checkExecuted() {
     let stopTrack = false;
+    let status: TxStatus | undefined;
     this._cleanupExecutedTimer();
     try {
       const currentAddress = this._currentAddress;
@@ -213,11 +214,12 @@ class TxTrackerPluginClass implements Plugin {
         }),
         currentAddress.network,
       ]);
-      // stop track when no pending tx
-      stopTrack = txs.length === 0;
       const tracker = txTrackerMap[currentNetwork.networkType];
-      if (txs.length) {
-        await tracker._checkStatus(txs, currentNetwork);
+      const minNonceTx = await getMinNonceTx(txs);
+      // stop track when no pending tx
+      stopTrack = !minNonceTx;
+      if (minNonceTx) {
+        status = await tracker._checkStatus([minNonceTx], currentNetwork);
       }
     } catch (error) {
       console.log('TxTracker: ', error);
@@ -226,7 +228,7 @@ class TxTrackerPluginClass implements Plugin {
         console.log('TxTracker: stop executed track');
         this._checkExecutedTimer = false;
       } else {
-        this._resetExecutedTimer();
+        status === TxStatus.EXECUTED || status === TxStatus.CONFIRMED || status === TxStatus.FINALIZED ? this._checkExecuted() : this._resetExecutedTimer();
       }
     }
   }
