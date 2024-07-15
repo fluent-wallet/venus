@@ -39,8 +39,8 @@ export const SignatureItem: React.FC<{ item: Signature; maxMessageLength: number
   const [folded, setFolded] = useState(true);
   const { t } = useTranslation();
   const { colors } = useTheme();
-  const app = useAppOfSignature(item);
-  const tx = useTxOfSignature(item);
+  const app = useAppOfSignature(item.id);
+  const tx = useTxOfSignature(item.id);
   const time = dayjs(item.createdAt).format('YYYY/MM/DD HH:mm:ss');
   const isTxSignature = item.signType === SignType.TX;
   const ellipsisMessage = useMemo(() => {
