@@ -3,7 +3,7 @@ import Button from '@components/Button';
 import HourglassLoading from '@components/Loading/Hourglass';
 import Text from '@components/Text';
 import { GasOption, type GasSetting, type SpeedUpLevel } from '../GasFeeSetting';
-import { useTxFromId, usePayloadOfTx, TxStatus, useCurrentNetwork, useNativeAssetOfCurrentNetwork } from '@core/WalletCore/Plugins/ReactInject';
+import { useTxFromId, usePayloadOfTx, TxStatus, useCurrentNetwork, useNativeAssetOfNetwork } from '@core/WalletCore/Plugins/ReactInject';
 import plugins from '@core/WalletCore/Plugins';
 import { showMessage } from 'react-native-flash-message';
 import { useTheme } from '@react-navigation/native';
@@ -39,7 +39,7 @@ const SpeedUp: React.FC<StackScreenProps<typeof SpeedUpStackName>> = ({ route })
   const { t } = useTranslation();
 
   const currentNetwork = useCurrentNetwork();
-  const nativeAsset = useNativeAssetOfCurrentNetwork(currentNetwork)!;
+  const nativeAsset = useNativeAssetOfNetwork(currentNetwork?.id)!;
   const tx = useTxFromId(txId);
   const txPayload = usePayloadOfTx(txId);
 

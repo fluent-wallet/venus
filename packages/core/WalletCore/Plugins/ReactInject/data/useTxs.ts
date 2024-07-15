@@ -111,3 +111,15 @@ const assetAtomFamilyOfTx = atomFamily((txId: string) =>
   atomWithObservable(() => observeTxById(txId).pipe(switchMap((txs) => txs[0].observeAsset())), { initialValue: null }),
 );
 export const useAssetOfTx = (txId: string) => useAtomValue(assetAtomFamilyOfTx(txId));
+
+const networkAtomFamilyOfTx = atomFamily((txId: string) =>
+  atomWithObservable(
+    () =>
+      observeTxById(txId).pipe(
+        switchMap((txs) => txs[0].address.observe()),
+        switchMap((address) => address.network.observe()),
+      ),
+    { initialValue: null },
+  ),
+);
+export const useNetworkOfTx = (txId: string) => useAtomValue(networkAtomFamilyOfTx(txId));

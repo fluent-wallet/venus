@@ -1,5 +1,5 @@
 import Text from '@components/Text';
-import { useAssetOfTx, useCurrentNetwork, useCurrentNetworkNativeAsset, usePayloadOfTx, useTxFromId } from '@core/WalletCore/Plugins/ReactInject';
+import { useAssetOfTx, useNativeAssetOfNetwork, usePayloadOfTx, useTxFromId } from '@core/WalletCore/Plugins/ReactInject';
 import type { Tx } from '@core/database/models/Tx';
 import { formatStatus, formatTxData } from '@core/utils/tx';
 import { useTheme } from '@react-navigation/native';
@@ -23,6 +23,7 @@ import { useMemo } from 'react';
 import Decimal from 'decimal.js';
 import SpeedUpButton from '@modules/SpeedUpButton';
 import { SPEED_UP_FEATURE } from '@utils/features';
+import { useNetworkOfTx } from '@core/WalletCore/Plugins/ReactInject/data/useTxs';
 
 const TxStatus: React.FC<{ tx: Tx }> = ({ tx }) => {
   const { t } = useTranslation();
@@ -48,21 +49,21 @@ const TransactionDetail: React.FC<StackScreenProps<typeof TransactionDetailStack
   const payload = usePayloadOfTx(txId);
   const asset = useAssetOfTx(txId);
   const status = tx && formatStatus(tx);
-  const currentNetwork = useCurrentNetwork();
-  const currentNativeAsset = useCurrentNetworkNativeAsset();
+  const network = useNetworkOfTx(txId);
+  const nativeAsset = useNativeAssetOfNetwork(network?.id);
   const gasCostAndPriceInUSDT = useMemo(() => {
     if (!tx?.receipt) return null;
     const gasPrice = tx.receipt.effectiveGasPrice;
     const gasUsed = tx.receipt.cumulativeGasUsed ?? tx.receipt.gasUsed;
     const cost = (tx.receipt.gasFee ? new Decimal(tx.receipt.gasFee) : new Decimal(gasPrice ?? '0').mul(gasUsed ?? '0')).div(
-      Decimal.pow(10, currentNativeAsset?.decimals ?? 18),
+      Decimal.pow(10, nativeAsset?.decimals ?? 18),
     );
-    const priceInUSDT = currentNativeAsset?.priceInUSDT ? cost.mul(new Decimal(currentNativeAsset.priceInUSDT)) : null;
+    const priceInUSDT = nativeAsset?.priceInUSDT ? cost.mul(new Decimal(nativeAsset.priceInUSDT)) : null;
     return {
       cost: cost.toString(),
       priceInUSDT: priceInUSDT ? (priceInUSDT.lessThan(0.01) ? '<$0.01' : `≈$${priceInUSDT.toFixed(2)}`) : null,
     };
-  }, [tx?.receipt, currentNativeAsset?.priceInUSDT, currentNativeAsset?.decimals]);
+  }, [tx?.receipt, nativeAsset?.priceInUSDT, nativeAsset?.decimals]);
   const { to } = useMemo(() => formatTxData(tx, payload, asset), [tx, payload, asset]);
   if (!tx) return null;
   const isPending = status === 'pending';
@@ -102,10 +103,10 @@ const TransactionDetail: React.FC<StackScreenProps<typeof TransactionDetailStack
             <Text style={[styles.info, { color: colors.textPrimary }]}>{truncate(tx.hash ?? '', { prefixLength: 6 })}</Text>
             <Copy color={colors.textSecondary} />
           </Pressable>
-          {currentNetwork?.scanUrl && (
+          {network?.scanUrl && (
             <Pressable
               onPress={() => {
-                Linking.openURL(`${currentNetwork.scanUrl}/tx/${tx.hash}`);
+                Linking.openURL(`${network.scanUrl}/tx/${tx.hash}`);
               }}
               disabled={!tx.hash}
               testID="scan"
@@ -149,7 +150,7 @@ const TransactionDetail: React.FC<StackScreenProps<typeof TransactionDetailStack
             gasCostAndPriceInUSDT && (
               <>
                 <Text style={[styles.info, { color: colors.textPrimary }]}>
-                  {gasCostAndPriceInUSDT.cost} {currentNativeAsset?.symbol}
+                  {gasCostAndPriceInUSDT.cost} {nativeAsset?.symbol}
                   {gasCostAndPriceInUSDT.priceInUSDT && ` (${gasCostAndPriceInUSDT.priceInUSDT})`}
                 </Text>
               </>
@@ -164,8 +165,8 @@ const TransactionDetail: React.FC<StackScreenProps<typeof TransactionDetailStack
         </View>
         <View style={styles.row}>
           <Text style={[styles.label, { color: colors.textSecondary }]}>{t('tx.detail.network')}</Text>
-          <Image style={styles.networkImage} source={{ uri: toDataUrl(currentNetwork?.chainId) }} />
-          <Text style={[styles.info, { color: colors.textPrimary, opacity: currentNetwork?.name ? 1 : 0 }]}>{currentNetwork?.name || 'placeholder'}</Text>
+          <Image style={styles.networkImage} source={{ uri: toDataUrl(network?.chainId) }} />
+          <Text style={[styles.info, { color: colors.textPrimary, opacity: network?.name ? 1 : 0 }]}>{network?.name || 'placeholder'}</Text>
         </View>
       </View>
     </View>
