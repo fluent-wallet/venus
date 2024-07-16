@@ -2,13 +2,13 @@ import { createERC20Contract } from '@cfx-kit/dapp-utils/dist/contract';
 import { fetchChain, fetchChainBatch, fetchChainMulticall } from '@cfx-kit/dapp-utils/dist/fetch';
 import { AssetType } from '../../../../database/models/Asset';
 import { NetworkType, networkRpcPrefixMap, networkRpcSuffixMap } from '../../../../database/models/Network';
-import { convertCfxToHex } from '../../../../utils/address';
+import { convertBase32ToHex, type Base32Address } from '../../../../utils/address';
 import type { Address } from './../../../../database/models/Address';
 
 export const fetchNativeAssetBalance = ({ networkType, endpoint, accountAddress }: { networkType: NetworkType; endpoint: string; accountAddress: Address }) => {
   switch (networkType) {
-    case NetworkType.Conflux:
-    case NetworkType.Ethereum:
+    // case NetworkType.Conflux:
+    // case NetworkType.Ethereum:
     default: {
       const rpcPrefix = networkRpcPrefixMap[networkType];
       const rpcSuffix = networkRpcSuffixMap[networkType];
@@ -40,8 +40,8 @@ export function fetchContractAssetBalance({
   contractAddress: string;
 }) {
   switch (networkType) {
-    case NetworkType.Conflux:
-    case NetworkType.Ethereum:
+    // case NetworkType.Conflux:
+    // case NetworkType.Ethereum:
     default: {
       const rpcPrefix = networkRpcPrefixMap[networkType];
       const rpcSuffix = networkRpcSuffixMap[networkType];
@@ -444,7 +444,7 @@ export const fetchERC20AssetInfoBatchWithAccount = async ({
           {
             to: contractAddress,
             data: contract.encodeFunctionData('balanceOf', [
-              (networkType === NetworkType.Conflux ? convertCfxToHex(accountAddress.base32) : accountAddress.hex) as `0x${string}`,
+              (networkType === NetworkType.Conflux ? convertBase32ToHex(accountAddress.base32 as Base32Address) : accountAddress.hex) as `0x${string}`,
             ]),
           },
           rpcSuffix,

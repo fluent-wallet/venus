@@ -72,7 +72,22 @@ class AssetsTrackerPluginClass implements Plugin {
           fetchAssetsBalanceMulticall({ ...params, networkType: NetworkType.Ethereum, multicallContractAddress: '0x9f208d7226f05b4f43d0d36eb21d8545c3143685' }),
       },
     });
-
+    this.register({
+      networkType: NetworkType.Ethereum,
+      chainId: Networks['Ethereum Mainnet'].chainId,
+      fetcher: {
+        fetchAssetsBalanceMulticall: (params: Parameters<FetchAssetBalance>[0]) =>
+          fetchAssetsBalanceMulticall({ ...params, networkType: NetworkType.Ethereum, multicallContractAddress: '0x5ba1e12693dc8f9c48aad8770482f4739beed696' }),
+      },
+    });
+    this.register({
+      networkType: NetworkType.Ethereum,
+      chainId: Networks['Ethereum Sepolia'].chainId,
+      fetcher: {
+        fetchAssetsBalanceMulticall: (params: Parameters<FetchAssetBalance>[0]) =>
+          fetchAssetsBalanceMulticall({ ...params, networkType: NetworkType.Ethereum, multicallContractAddress: '0x25Eef291876194AeFAd0D60Dff89e268b90754Bb' }),
+      },
+    });
     this.setup();
   }
 
@@ -104,11 +119,7 @@ class AssetsTrackerPluginClass implements Plugin {
 
     this.cancel$ = new Subject<void>();
 
-    let resolve!: (value: boolean | PromiseLike<boolean>) => void, reject!: (reason?: any) => void;
-    const firstFetchPromise = new Promise<boolean>((_resolve, _reject) => {
-      resolve = _resolve;
-      reject = _reject;
-    });
+    const { resolve, reject, promise: firstFetchPromise } = Promise.withResolvers<boolean>();
 
     try {
       /** This subscribe may be triggered after resetData. */

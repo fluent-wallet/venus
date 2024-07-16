@@ -138,7 +138,7 @@ const SendTransactionStep2Asset: React.FC<Props> = ({ navigation, route, onConfi
 
   const handleClickAsset = useCallback((asset: AssetInfo, nftItemDetail?: NFTItemDetail) => {
     if (navigation) {
-      if ((asset.type === AssetType.ERC20 || asset.type === AssetType.Native) && (Number(asset.balance) === 0 || isNaN(Number(asset.balance)))) {
+      if ((asset.type === AssetType.ERC20 || asset.type === AssetType.Native) && (Number(asset.balance) === 0 || Number.isNaN(Number(asset.balance)))) {
         return showMessage({
           message: t('tx.asset.zeroBalance', { symbol: asset.symbol }),
           type: 'warning',
@@ -176,7 +176,7 @@ const SendTransactionStep2Asset: React.FC<Props> = ({ navigation, route, onConfi
       </BottomSheetHeader>
 
       {!searchAsset && (
-        <BottomSheetScrollContent style={styles.scrollView} stickyHeaderIndices={[0]} onScroll={handleScroll}>
+        <BottomSheetScrollContent style={[styles.scrollView, { marginVertical: 16 }]} stickyHeaderIndices={[0]} onScroll={handleScroll}>
           <Tabs currentTab={currentTab} pageViewRef={pageViewRef} type="SelectAsset" onlyToken={!navigation} />
           <TabsContent
             currentTab={currentTab}
@@ -190,7 +190,7 @@ const SendTransactionStep2Asset: React.FC<Props> = ({ navigation, route, onConfi
         </BottomSheetScrollContent>
       )}
       {searchAsset && (
-        <BottomSheetScrollContent style={[styles.scrollView, { marginTop: 8 }]} onScroll={handleScroll}>
+        <BottomSheetScrollContent style={styles.scrollView} onScroll={handleScroll}>
           {filterAssets.assets?.length > 0 &&
             filterAssets.assets.map((asset) => {
               const itemKey = asset.type === AssetType.Native ? AssetType.Native : asset.contractAddress;
@@ -256,13 +256,12 @@ const styles = StyleSheet.create({
   },
   scrollView: {
     flex: 1,
-    marginVertical: 16,
   },
   invalidWrapper: {
     display: 'flex',
     flexDirection: 'row',
     alignItems: 'center',
-    marginTop: 32,
+    paddingHorizontal: 16,
   },
   invalidIcon: {
     marginRight: 4,

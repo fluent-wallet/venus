@@ -31,7 +31,7 @@ import { useNavigation, useTheme } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import type React from 'react';
 import { useEffect } from 'react';
-import { View } from 'react-native';
+import { View, Linking } from 'react-native';
 import Header from './Header';
 import {
   AboutUsStackName,
@@ -92,6 +92,21 @@ const Router: React.FC = () => {
       sub.unsubscribe();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => {
+    const handleDeepLink = (event: { url: string }) => {
+      const url = event.url;
+      console.log('deepLink:', event);
+      navigation.navigate(ScanQRCodeStackName, { deepLinkUrl: url });
+    };
+
+    Linking.getInitialURL().then((url) => url && handleDeepLink({ url }));
+    const urlListener = Linking.addEventListener('url', handleDeepLink);
+
+    return () => {
+      urlListener.remove();
+    };
   }, []);
 
   return (

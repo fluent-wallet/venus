@@ -3,7 +3,7 @@
 import { BSIMEventTypesName } from '@WalletCoreExtends/Plugins/BSIM/types';
 import ProhibitIcon from '@assets/icons/prohibit.svg';
 import WarnIcon from '@assets/icons/warn.svg';
-import { convertCfxToHex } from '@cfx-kit/dapp-utils/dist/address';
+import { convertBase32ToHex, type Base32Address } from '@core/utils/address';
 import { createERC20Contract, createERC721Contract, createERC1155Contract } from '@cfx-kit/dapp-utils/dist/contract';
 import { BottomSheetScrollContent, BottomSheetFooter } from '@components/BottomSheet';
 import Button from '@components/Button';
@@ -87,7 +87,7 @@ const SendTransactionStep4Confirm: React.FC<SendTransactionScreenProps<typeof Se
     if (asset.type === AssetType.ERC20) {
       const contract = createERC20Contract(asset.contractAddress);
       data = contract.encodeFunctionData('transfer', [
-        (currentNetwork.networkType === NetworkType.Conflux ? convertCfxToHex(recipientAddress) : recipientAddress) as `0x${string}`,
+        (currentNetwork.networkType === NetworkType.Conflux ? convertBase32ToHex(recipientAddress as Base32Address) : recipientAddress) as `0x${string}`,
         transferAmountHex as unknown as bigint,
       ]);
     } else if (asset.type === AssetType.ERC721) {
@@ -202,18 +202,18 @@ const SendTransactionStep4Confirm: React.FC<SendTransactionScreenProps<typeof Se
     } catch (_err: any) {
       txError = _err;
       setBSIMEvent(null);
-      const err = String(_err.data || _err?.message || _err);
-      if (error instanceof SignTransactionCancelError) {
+      if (txError instanceof SignTransactionCancelError) {
         // ignore cancel error
         return;
       }
+      const errString = String(txError.data || txError?.message || txError);
       setError({
-        message: err,
-        ...(err.includes('out of balance') ? { type: 'out of balance' } : err.includes('timed out') ? { type: 'network error' } : null),
+        message: errString,
+        ...(errString.includes('out of balance') ? { type: 'out of balance' } : errString.includes('timed out') ? { type: 'network error' } : null),
       });
       showMessage({
         message: t('tx.confirm.failed'),
-        description: err,
+        description: errString,
         type: 'failed',
       });
     } finally {

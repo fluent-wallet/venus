@@ -19,7 +19,7 @@
     ]
   },
   "dependencies": {
-    "@cfx-kit/dapp-utils": "^0.1.1",
+    "@cfx-kit/dapp-utils": "^0.2.0",
     "@cfx-kit/react-utils": "^0.0.22",
     "@craftzdog/react-native-buffer": "^6.0.5",
     "@ethersproject/abi": "^5.7.0",
@@ -80,12 +80,14 @@
     "react-native-screens": "~3.29.0",
     "react-native-screenshot-prevent": "^1.1.9",
     "react-native-svg": "14.1.0",
+    "react-native-url-polyfill": "^2.0.0",
     "react-native-vision-camera": "^4.4.1",
     "reflect-metadata": "^0.2.1",
     "semver": "^7.6.2",
     "stream-browserify": "^3.0.0"
   },
   "devDependencies": {
+    "core-js": "^3.37.1",
     "@babel/core": "^7.23.7",
     "@babel/plugin-proposal-decorators": "^7.23.7",
     "@babel/plugin-transform-private-methods": "^7.23.3",

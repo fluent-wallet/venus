@@ -20,6 +20,7 @@ import {
   SendTransactionStep2StackName,
   SendTransactionStep3StackName,
   SendTransactionStep4StackName,
+  type ScanQRCodeStackName,
   type StackScreenProps,
 } from '@router/configs';
 import { type ETHURL, parseETHURL } from '@utils/ETHURL';
@@ -27,15 +28,14 @@ import Decimal from 'decimal.js';
 import { scanFromURLAsync } from 'expo-barcode-scanner';
 import { launchImageLibraryAsync } from 'expo-image-picker';
 import type React from 'react';
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Trans, useTranslation } from 'react-i18next';
 import { Linking, StyleSheet, View } from 'react-native';
 import { Camera, type Code, useCameraDevice, useCameraFormat, useCameraPermission } from 'react-native-vision-camera';
 
 // has onConfirm props means open in SendTransaction with local modal way.
-interface Props {
+interface Props extends Partial<StackScreenProps<typeof ScanQRCodeStackName>> {
   onConfirm?: (ethUrl: ETHURL) => void;
-  navigation?: StackScreenProps<any>['navigation'];
   onClose?: () => void;
 }
 
@@ -44,11 +44,12 @@ enum ScanStatusType {
 }
 
 const scanAreaWidth = 220;
-const ScanQrCode: React.FC<Props> = ({ navigation, onConfirm, onClose }) => {
+const ScanQrCode: React.FC<Props> = ({ navigation, onConfirm, onClose, route }) => {
   const { colors, reverseColors } = useTheme();
   const { t } = useTranslation();
   const bottomSheetRef = useRef<BottomSheetMethods>(null!);
   const currentNetwork = useCurrentNetwork()!;
+  const deepLinkUrl = route?.params?.deepLinkUrl;
 
   const camera = useRef<Camera>(null);
   const device = useCameraDevice('back');
@@ -218,6 +219,12 @@ const ScanQrCode: React.FC<Props> = ({ navigation, onConfirm, onClose }) => {
     }
   }, [handleQRCode]);
 
+  useEffect(() => {
+    if (deepLinkUrl) {
+      handleQRCode(deepLinkUrl);
+    }
+  }, []);
+
   const requestCameraPermission = useCallback(async () => {
     const isSuccess = await requestPermission();
     if (!isSuccess) {
@@ -226,7 +233,7 @@ const ScanQrCode: React.FC<Props> = ({ navigation, onConfirm, onClose }) => {
   }, []);
 
   const handleOnOpen = useCallback(() => {
-    if (!hasPermission) {
+    if (!hasPermission && !deepLinkUrl) {
       requestCameraPermission();
     }
   }, []);
@@ -241,16 +248,16 @@ const ScanQrCode: React.FC<Props> = ({ navigation, onConfirm, onClose }) => {
       onClose={onClose}
     >
       <BottomSheetWrapper innerPaddingHorizontal>
-        <BottomSheetHeader title={t('scan.title')} />
+        <BottomSheetHeader title={deepLinkUrl ? 'Linking' : t('scan.title')} />
         <BottomSheetContent>
-          {hasPermission && (
+          {(hasPermission || !!deepLinkUrl) && (
             <>
               {device && (
                 <>
                   <View style={styles.cameraWrapper}>
                     <Camera
                       ref={camera}
-                      isActive={scanStatus?.type !== ScanStatusType.ConnectingWC}
+                      isActive={!deepLinkUrl && scanStatus?.type !== ScanStatusType.ConnectingWC}
                       device={device}
                       codeScanner={{
                         codeTypes: ['qr', 'ean-13'],
@@ -283,7 +290,7 @@ const ScanQrCode: React.FC<Props> = ({ navigation, onConfirm, onClose }) => {
               )}
             </>
           )}
-          {!hasPermission && (
+          {!hasPermission && !deepLinkUrl && (
             <>
               {!hasRejectPermission && (
                 <>
@@ -305,12 +312,12 @@ const ScanQrCode: React.FC<Props> = ({ navigation, onConfirm, onClose }) => {
           )}
         </BottomSheetContent>
         <BottomSheetFooter>
-          {hasPermission && (
+          {hasPermission && !deepLinkUrl && (
             <Button testID="photos" style={styles.photos} onPress={pickImage}>
               {t('scan.photos')}
             </Button>
           )}
-          {!hasPermission && hasRejectPermission && (
+          {!hasPermission && hasRejectPermission && !deepLinkUrl && (
             <View style={styles.btnArea}>
               <Button
                 testID="dismiss"
@@ -331,6 +338,16 @@ const ScanQrCode: React.FC<Props> = ({ navigation, onConfirm, onClose }) => {
                 {t('scan.permission.reject.openSettings')}
               </Button>
             </View>
+          )}
+          {deepLinkUrl && scanStatus?.type !== ScanStatusType.ConnectingWC && (
+            <Button
+              testID="dismiss"
+              style={styles.btn}
+              onPress={() => (bottomSheetRef?.current ? bottomSheetRef.current.close() : navigation?.goBack())}
+              size="small"
+            >
+              {t('common.dismiss')}
+            </Button>
           )}
         </BottomSheetFooter>
       </BottomSheetWrapper>
