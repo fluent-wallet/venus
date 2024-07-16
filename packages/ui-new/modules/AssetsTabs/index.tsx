@@ -11,6 +11,7 @@ import { useShouldShowNotBackup } from '@pages/Home/NotBackup';
 import { useNavigation, useTheme } from '@react-navigation/native';
 import { TransactionDetailStackName, type HomeStackName, type StackScreenProps } from '@router/configs';
 import { screenHeight } from '@utils/deviceInfo';
+import { TX_DETAIL_FEATURE } from '@utils/features';
 import { atom, useAtomValue } from 'jotai';
 /* eslint-disable react-hooks/exhaustive-deps */
 import type React from 'react';
@@ -159,7 +160,9 @@ export const TabsContent: React.FC<Props> = ({ currentTab, setCurrentTab, pageVi
 
   const handleTxPress = useCallback(
     (tx: Tx) => {
-      navigation.navigate(TransactionDetailStackName, { txId: tx.id });
+      if (TX_DETAIL_FEATURE.allow) {
+        navigation.navigate(TransactionDetailStackName, { txId: tx.id });
+      }
     },
     [navigation.navigate],
   );
