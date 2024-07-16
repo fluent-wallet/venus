@@ -50,6 +50,7 @@ import BSIMVerify, { useBSIMVerify } from '../BSIMVerify';
 import SendTransactionBottomSheet from '../SendTransactionBottomSheet';
 import { NFT } from '../Step3Amount';
 import SendAsset from './SendAsset';
+import { TransactionActionType } from '@core/WalletCore/Events/broadcastTransactionSubject';
 
 const SendTransactionStep4Confirm: React.FC<SendTransactionScreenProps<typeof SendTransactionStep4StackName>> = ({ navigation, route }) => {
   useEffect(() => Keyboard.dismiss(), []);
@@ -243,20 +244,23 @@ const SendTransactionStep4Confirm: React.FC<SendTransactionScreenProps<typeof Se
     } finally {
       if (txRaw) {
         events.broadcastTransactionSubjectPush.next({
-          txHash,
-          txRaw,
-          tx,
-          address: currentAddress,
-          signature,
-          extraParams: {
-            assetType: asset.type,
-            contractAddress: asset.type !== AssetType.Native ? asset.contractAddress : undefined,
-            to: recipientAddress,
-            sendAt: new Date(),
-            epochHeight: currentNetwork.networkType === NetworkType.Conflux ? epochHeightRef.current : null,
-            err: txError && String(txError.data || txError?.message || txError),
-            errorType: txError && processError(txError).errorType,
-            method: asset.type === AssetType.ERC721 ? 'transferFrom' : asset.type === AssetType.ERC1155 ? 'safeTransferFrom' : 'transfer',
+          transactionType: TransactionActionType.Send,
+          params: {
+            txHash,
+            txRaw,
+            tx,
+            address: currentAddress,
+            signature,
+            extraParams: {
+              assetType: asset.type,
+              contractAddress: asset.type !== AssetType.Native ? asset.contractAddress : undefined,
+              to: recipientAddress,
+              sendAt: new Date(),
+              epochHeight: currentNetwork.networkType === NetworkType.Conflux ? epochHeightRef.current : null,
+              err: txError && String(txError.data || txError?.message || txError),
+              errorType: txError && processError(txError).errorType,
+              method: asset.type === AssetType.ERC721 ? 'transferFrom' : asset.type === AssetType.ERC1155 ? 'safeTransferFrom' : 'transfer',
+            },
           },
         });
       }

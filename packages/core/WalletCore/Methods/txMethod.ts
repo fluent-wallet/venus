@@ -9,11 +9,11 @@ import { type Asset, AssetType } from '../../database/models/Asset';
 import { createTx as _createTx, queryTxsWithAddress } from '../../database/models/Tx/query';
 import { createTxExtra as _createTxExtra } from '../../database/models/TxExtra/query';
 import { createTxPayload as _createTxPayload } from '../../database/models/TxPayload/query';
-import type { TransactionSubjectValue } from '../Events/broadcastTransactionSubject';
 import { Plugins } from '@core/WalletCore/Plugins';
+import type { SendTransactionParams } from '../Events/broadcastTransactionSubject';
 
 interface createTxPayloadParams {
-  tx: TransactionSubjectValue['tx'];
+  tx: SendTransactionParams['tx'];
   address?: Address;
   epochHeight?: string | null;
 }
@@ -27,9 +27,9 @@ export class TxMethod {
     return BigInt(nextNonce) < BigInt(txNonce ?? 0);
   }
 
-  createTx(params: TransactionSubjectValue, prepareCreate: true): Promise<readonly [Tx, TxPayload, TxExtra]>;
-  createTx(params: TransactionSubjectValue): Promise<void>;
-  async createTx(params: TransactionSubjectValue, prepareCreate?: true) {
+  createTx(params: SendTransactionParams, prepareCreate: true): Promise<readonly [Tx, TxPayload, TxExtra]>;
+  createTx(params: SendTransactionParams): Promise<void>;
+  async createTx(params: SendTransactionParams, prepareCreate?: true) {
     try {
       const { address, tx: txData, extraParams, txRaw, txHash, signature, app } = params;
       const updated = await this.updateTx(params);
@@ -82,7 +82,7 @@ export class TxMethod {
     }
   }
 
-  async updateTx(params: TransactionSubjectValue) {
+  async updateTx(params: SendTransactionParams) {
     const { address, extraParams, txRaw, txHash, signature, app, tx: txData } = params;
     const sameTx = await queryTxsWithAddress(address.id, {
       raw: txRaw,
@@ -141,9 +141,9 @@ export class TxMethod {
     });
   }
 
-  createTxExtra(tx: TransactionSubjectValue['extraParams'], prepareCreate: true): Promise<TxExtra>;
-  createTxExtra(tx: TransactionSubjectValue['extraParams']): Promise<void>;
-  async createTxExtra(tx: TransactionSubjectValue['extraParams'], prepareCreate?: true) {
+  createTxExtra(tx: SendTransactionParams['extraParams'], prepareCreate: true): Promise<TxExtra>;
+  createTxExtra(tx: SendTransactionParams['extraParams']): Promise<void>;
+  async createTxExtra(tx: SendTransactionParams['extraParams'], prepareCreate?: true) {
     const txExtra = _createTxExtra(
       {
         ok: true,

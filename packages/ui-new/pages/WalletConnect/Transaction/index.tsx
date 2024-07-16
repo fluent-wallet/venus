@@ -50,6 +50,7 @@ import { useTranslation } from 'react-i18next';
 import { StyleSheet, View } from 'react-native';
 import SendContract from './Contract';
 import EditAllowance from './EditAllowance';
+import { TransactionActionType } from '@core/WalletCore/Events/broadcastTransactionSubject';
 
 export type TxDataWithTokenInfo = ParseTxDataReturnType & {
   symbol?: string;
@@ -242,21 +243,24 @@ function WalletConnectTransaction() {
     } finally {
       if (txRaw) {
         Events.broadcastTransactionSubjectPush.next({
-          txHash,
-          txRaw,
-          tx,
-          address: currentAddress,
-          signature: signatureRecord,
-          app: dapp,
-          extraParams: {
-            assetType: isContract ? parseData?.assetType : AssetType.Native,
-            contractAddress: isContract ? to : undefined,
-            to: to,
-            sendAt: new Date(),
-            epochHeight: currentNetwork.networkType === NetworkType.Conflux ? epochHeightRef.current : null,
-            err: txError && String(txError.data || txError?.message || txError),
-            errorType: txError ? processError(txError).errorType : undefined,
-            method: parseData ? (parseData.functionName === 'unknown' ? 'Contract Interaction' : parseData.functionName) : 'transfer',
+          transactionType: TransactionActionType.Send,
+          params: {
+            txHash,
+            txRaw,
+            tx,
+            address: currentAddress,
+            signature: signatureRecord,
+            app: dapp,
+            extraParams: {
+              assetType: isContract ? parseData?.assetType : AssetType.Native,
+              contractAddress: isContract ? to : undefined,
+              to: to,
+              sendAt: new Date(),
+              epochHeight: currentNetwork.networkType === NetworkType.Conflux ? epochHeightRef.current : null,
+              err: txError && String(txError.data || txError?.message || txError),
+              errorType: txError ? processError(txError).errorType : undefined,
+              method: parseData ? (parseData.functionName === 'unknown' ? 'Contract Interaction' : parseData.functionName) : 'transfer',
+            },
           },
         });
       }
