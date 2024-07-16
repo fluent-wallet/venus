@@ -19,7 +19,7 @@
     ]
   },
   "dependencies": {
-    "@cfx-kit/dapp-utils": "^0.1.1",
+    "@cfx-kit/dapp-utils": "^0.2.0",
     "@cfx-kit/react-utils": "^0.0.22",
     "@craftzdog/react-native-buffer": "^6.0.5",
     "@ethersproject/abi": "^5.7.0",

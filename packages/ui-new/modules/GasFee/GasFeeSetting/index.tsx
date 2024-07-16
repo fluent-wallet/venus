@@ -297,32 +297,32 @@ export const OptionLevel: React.FC<{ level: GasSettingWithLevel['level'] | Speed
   const map = useMemo(
     () => ({
       low: {
-        label: 'Slow',
+        label: t('tx.gasFee.level.low'),
         color: colors.down,
         gasCircleSrc: GasLow,
       },
       medium: {
-        label: 'Average',
+        label: t('tx.gasFee.level.medium'),
         color: colors.middle,
         gasCircleSrc: GasMedium,
       },
       high: {
-        label: 'Fast',
+        label: t('tx.gasFee.level.high'),
         color: colors.up,
         gasCircleSrc: GasHigh,
       },
       customize: {
-        label: 'Customize',
+        label: t('tx.gasFee.level.customize'),
         color: colors.textPrimary,
         gasCircleSrc: mode === 'light' ? GasCustomizeLight : GasCustomizeDark,
       },
       higher: {
-        label: 'Higher',
+        label: t('tx.action.level.higher'),
         color: '#7FFF5F',
         gasCircleSrc: GasHigher,
       },
       faster: {
-        label: 'Fast',
+        label: t('tx.action.level.faster'),
         color: colors.up,
         gasCircleSrc: GasHigh,
       },

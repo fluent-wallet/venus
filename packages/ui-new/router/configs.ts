@@ -4,6 +4,7 @@ import type { IWCSendTransactionEventData, IWCSessionProposalEventData, IWCSignM
 import type { NavigationProp, NavigatorScreenParams } from '@react-navigation/native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { VersionJSON } from '@pages/Settings/AboutUs';
+import type { SpeedUpLevel } from '@modules/GasFee/GasFeeSetting';
 
 export const WelcomeStackName = 'Welcome';
 export const WayToInitWalletStackName = 'WayToInitWallet';
@@ -31,6 +32,7 @@ export const AppearanceStackName = 'Appearance';
 export const LanguageStackName = 'Language';
 export const SignatureRecordsStackName = 'SignatureRecords';
 export const SpeedUpStackName = 'SpeedUp';
+export const TransactionDetailStackName = 'TransactionDetail';
 
 // start Wallet connect nest stack
 
@@ -78,7 +80,8 @@ export type RootStackParamList = {
   [WalletConnectStackName]: NavigatorScreenParams<WalletConnectParamList>;
   [NetworkAddNewEndpointStackName]: undefined;
   [SignatureRecordsStackName]: undefined;
-  [SpeedUpStackName]: { txId: string; type: 'SpeedUp' | 'Cancel' };
+  [SpeedUpStackName]: { txId: string; type: 'SpeedUp' | 'Cancel'; level?: SpeedUpLevel };
+  [TransactionDetailStackName]: { txId: string };
 };
 
 export type StackScreenProps<T extends keyof RootStackParamList> = NativeStackScreenProps<RootStackParamList, T>;
