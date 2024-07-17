@@ -1,6 +1,5 @@
 import './packages/setup/process';
 import 'react-native-gesture-handler';
-import 'react-native-url-polyfill/auto';
 // this package is polyfill  TextEncode / TextDecode crypto.getRandomvalues URL() Buffer
 import '@walletconnect/react-native-compat';
 import { AppRegistry, LogBox } from 'react-native';

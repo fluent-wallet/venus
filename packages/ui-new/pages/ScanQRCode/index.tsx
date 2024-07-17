@@ -49,7 +49,6 @@ const ScanQrCode: React.FC<Props> = ({ navigation, onConfirm, onClose, route }) 
   const { t } = useTranslation();
   const bottomSheetRef = useRef<BottomSheetMethods>(null!);
   const currentNetwork = useCurrentNetwork()!;
-  const deepLinkUrl = route?.params?.deepLinkUrl;
 
   const camera = useRef<Camera>(null);
   const device = useCameraDevice('back');
@@ -219,12 +218,6 @@ const ScanQrCode: React.FC<Props> = ({ navigation, onConfirm, onClose, route }) 
     }
   }, [handleQRCode]);
 
-  useEffect(() => {
-    if (deepLinkUrl) {
-      handleQRCode(deepLinkUrl);
-    }
-  }, []);
-
   const requestCameraPermission = useCallback(async () => {
     const isSuccess = await requestPermission();
     if (!isSuccess) {
@@ -233,7 +226,7 @@ const ScanQrCode: React.FC<Props> = ({ navigation, onConfirm, onClose, route }) 
   }, []);
 
   const handleOnOpen = useCallback(() => {
-    if (!hasPermission && !deepLinkUrl) {
+    if (!hasPermission) {
       requestCameraPermission();
     }
   }, []);
@@ -248,16 +241,16 @@ const ScanQrCode: React.FC<Props> = ({ navigation, onConfirm, onClose, route }) 
       onClose={onClose}
     >
       <BottomSheetWrapper innerPaddingHorizontal>
-        <BottomSheetHeader title={deepLinkUrl ? 'Linking' : t('scan.title')} />
+        <BottomSheetHeader title={t('scan.title')} />
         <BottomSheetContent>
-          {(hasPermission || !!deepLinkUrl) && (
+          {hasPermission && (
             <>
               {device && (
                 <>
                   <View style={styles.cameraWrapper}>
                     <Camera
                       ref={camera}
-                      isActive={!deepLinkUrl && scanStatus?.type !== ScanStatusType.ConnectingWC}
+                      isActive={scanStatus?.type !== ScanStatusType.ConnectingWC}
                       device={device}
                       codeScanner={{
                         codeTypes: ['qr', 'ean-13'],
@@ -290,7 +283,7 @@ const ScanQrCode: React.FC<Props> = ({ navigation, onConfirm, onClose, route }) 
               )}
             </>
           )}
-          {!hasPermission && !deepLinkUrl && (
+          {!hasPermission && (
             <>
               {!hasRejectPermission && (
                 <>
@@ -312,12 +305,12 @@ const ScanQrCode: React.FC<Props> = ({ navigation, onConfirm, onClose, route }) 
           )}
         </BottomSheetContent>
         <BottomSheetFooter>
-          {hasPermission && !deepLinkUrl && (
+          {hasPermission && (
             <Button testID="photos" style={styles.photos} onPress={pickImage}>
               {t('scan.photos')}
             </Button>
           )}
-          {!hasPermission && hasRejectPermission && !deepLinkUrl && (
+          {!hasPermission && hasRejectPermission && (
             <View style={styles.btnArea}>
               <Button
                 testID="dismiss"
@@ -339,7 +332,7 @@ const ScanQrCode: React.FC<Props> = ({ navigation, onConfirm, onClose, route }) 
               </Button>
             </View>
           )}
-          {deepLinkUrl && scanStatus?.type !== ScanStatusType.ConnectingWC && (
+          {scanStatus?.type !== ScanStatusType.ConnectingWC && (
             <Button
               testID="dismiss"
               style={styles.btn}

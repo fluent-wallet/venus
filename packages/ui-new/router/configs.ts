@@ -65,7 +65,7 @@ export type RootStackParamList = {
   [SendTransactionStackName]: NavigatorScreenParams<SendTransactionParamList>;
   [NetworkManagementStackName]: undefined;
   [PasswordVerifyStackName]: undefined;
-  [ScanQRCodeStackName]: { deepLinkUrl?: string };
+  [ScanQRCodeStackName]: undefined;
   [ReceiveStackName]: undefined;
   [EraseAllWalletStackName]: undefined;
   [AddAnotherWalletStackName]: undefined;

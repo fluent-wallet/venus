@@ -356,13 +356,20 @@ export default class WalletConnect implements Plugin {
 
     try {
       const client = await this.client;
+      const url = new URL(wcURI);
+      const sessionTopic = url.searchParams.get('sessionTopic');
+      const actionSessions = await this.getAllSession();
+      if (sessionTopic && actionSessions[sessionTopic]) {
+        // session is exist
+        console.log("sessionTopic is exist, so don't connect again");
+        return;
+      }
       await client.pair({ uri: wcURI, activatePairing: true });
     } catch (error: any) {
       if (String(error).includes('Pairing already exists')) {
         throw new WalletConnectPluginError('PairingAlreadyExists');
-      } else {
-        throw new WalletConnectPluginError(error?.message || 'UnknownError');
       }
+      throw new WalletConnectPluginError(error?.message || 'UnknownError');
     }
   }
 }

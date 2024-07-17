@@ -65,6 +65,7 @@ import {
   NetworkAddNewEndpointStackName,
   SpeedUpStackName,
 } from './configs';
+import { parseDeepLink } from '@utils/deeplink';
 
 const RootStack = createNativeStackNavigator<RootStackParamList>();
 const screenOptions = {
@@ -97,10 +98,8 @@ const Router: React.FC = () => {
   useEffect(() => {
     const handleDeepLink = (event: { url: string }) => {
       const url = event.url;
-      console.log('deepLink:', event);
-      navigation.navigate(ScanQRCodeStackName, { deepLinkUrl: url });
+      parseDeepLink(url);
     };
-
     Linking.getInitialURL().then((url) => url && handleDeepLink({ url }));
     const urlListener = Linking.addEventListener('url', handleDeepLink);
 
