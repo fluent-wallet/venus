@@ -30,8 +30,7 @@ export abstract class BaseTxTrack {
     try {
       const nonce = (await tx.txPayload).nonce!;
       const txs = await queryDuplicateTx(tx, nonce, NOT_FINALIZED_TX_STATUSES);
-      for (let i = 0; i < txs.length; i++) {
-        const _tx = txs[i];
+      for (const _tx of txs) {
         _tx.updateSelf((t) => {
           if (finalized) {
             t.status = TxStatus.REPLACED;

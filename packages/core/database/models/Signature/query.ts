@@ -30,8 +30,7 @@ export const querySignatureRecords = (
     if (!Array.isArray(sortBy)) {
       query.push(Q.sortBy(sortBy, Q.desc));
     } else {
-      for (let i = 0; i < sortBy.length; i++) {
-        const s = sortBy[i];
+      for (const s of sortBy) {
         query.push(Q.sortBy(s, Q.desc));
       }
     }
