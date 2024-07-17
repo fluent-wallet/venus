@@ -14,7 +14,7 @@ class CFXTxTrack extends BaseTxTrack {
     });
   }
 
-  async _checkStatus(txs: Tx[], network: Network, returnStatus = false): Promise<TxStatus | undefined> {
+  async _checkStatus(txs: Tx[], network: Network): Promise<TxStatus | undefined> {
     const endpoint = network.endpoint;
     let status: TxStatus | undefined;
     const getTransactionByHashParams = txs.map((tx) => ({ method: 'cfx_getTransactionByHash', params: [tx.hash] }));
@@ -36,17 +36,16 @@ class CFXTxTrack extends BaseTxTrack {
         if (EXECUTED_NOT_FINALIZED_TX_STATUSES.includes(tx.status)) {
           this._handleDuplicateTx(tx, false, false);
         }
-        returnStatus && (status = TxStatus.UNSENT);
+        status = TxStatus.UNSENT;
         return false;
       }
       //  the transaction is skipped or not packed
       if (transaction.status !== '0x1' && transaction.status !== '0x0') {
-        returnStatus && (status = TxStatus.PENDING);
+        status = TxStatus.PENDING;
         tx.updateSelf((tx) => {
           tx.status = TxStatus.PENDING;
           tx.executedStatus = null;
           tx.receipt = null;
-          tx.pollingCount = (tx.pollingCount ?? 0) + 1;
         }).then(() => {
           if (EXECUTED_NOT_FINALIZED_TX_STATUSES.includes(tx.status)) {
             this._handleDuplicateTx(tx, false, false);
@@ -73,7 +72,7 @@ class CFXTxTrack extends BaseTxTrack {
           return false;
         }
         if (!receipt) return false;
-        returnStatus && (status = TxStatus.EXECUTED);
+        status = TxStatus.EXECUTED;
         receiptMap.set(tx.hash!, receipt);
         return true;
       });
@@ -112,17 +111,13 @@ class CFXTxTrack extends BaseTxTrack {
           let txStatus = TxStatus.EXECUTED;
           const receipt = receiptMap.get(tx.hash!)!;
           const txBlockNumber = BigInt(receipt.epochNumber!);
-          let confirmedNumber = 0;
           console.log('CFXTxTrack: blockNumber', txBlockNumber, finalizedBlockNumber, safeBlockNumber, latestBlockNumber);
           if (finalizedBlockNumber && txBlockNumber <= finalizedBlockNumber) {
             txStatus = TxStatus.FINALIZED;
-            returnStatus && (status = TxStatus.FINALIZED);
+            status = TxStatus.FINALIZED;
           } else if (safeBlockNumber && txBlockNumber <= safeBlockNumber) {
             txStatus = TxStatus.CONFIRMED;
-            returnStatus && (status = TxStatus.CONFIRMED);
-          }
-          if (latestBlockNumber) {
-            confirmedNumber = Math.max(0, Number(latestBlockNumber - txBlockNumber));
+            status = TxStatus.CONFIRMED;
           }
           await tx.updateSelf((tx) => {
             if (txStatus === TxStatus.FINALIZED) {
@@ -151,8 +146,6 @@ class CFXTxTrack extends BaseTxTrack {
               tx.err = receipt.txExecErrorMsg ?? 'tx failed';
               tx.errorType = ProcessErrorType.executeFailed;
             }
-            tx.pollingCount = (tx.pollingCount ?? 0) + 1;
-            tx.confirmedNumber = confirmedNumber;
           });
           if (tx.status !== txStatus) {
             this._handleDuplicateTx(tx, true, txStatus === TxStatus.FINALIZED);

@@ -43,8 +43,7 @@ const ActivityList: React.FC<{ onPress?: (v: Tx) => void }> = memo(({ onPress })
   const finishedTxsByDay = useMemo(() => {
     let day = 0;
     const txs: (Tx | ActivityDate)[] = [];
-    for (let i = 0; i < finishedTxs.length; i++) {
-      const tx = finishedTxs[i];
+    for (const tx of finishedTxs) {
       const time = Math.floor((tx.executedAt || tx.createdAt).valueOf() / DAY_MILLISECONDS) * DAY_MILLISECONDS;
       if (day !== time) {
         day = time;

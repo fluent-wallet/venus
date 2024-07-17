@@ -40,7 +40,9 @@ export class Tx extends Model {
   @date('send_at') sendAt!: Date;
   @date('resend_at') resendAt?: Date | null;
   @field('resend_count') resendCount?: number | null;
+  /** @deprecated */
   @field('polling_count') pollingCount?: number | null;
+  /** @deprecated */
   @field('confirmed_number') confirmedNumber?: number | null;
   @field('is_temp_replaced') isTempReplaced?: boolean | null;
   @text('source') source!: TxSource;
