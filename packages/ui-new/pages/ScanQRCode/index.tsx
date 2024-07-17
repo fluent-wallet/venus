@@ -20,6 +20,7 @@ import {
   SendTransactionStep2StackName,
   SendTransactionStep3StackName,
   SendTransactionStep4StackName,
+  type ScanQRCodeStackName,
   type StackScreenProps,
 } from '@router/configs';
 import { type ETHURL, parseETHURL } from '@utils/ETHURL';
@@ -27,15 +28,14 @@ import Decimal from 'decimal.js';
 import { scanFromURLAsync } from 'expo-barcode-scanner';
 import { launchImageLibraryAsync } from 'expo-image-picker';
 import type React from 'react';
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Trans, useTranslation } from 'react-i18next';
 import { Linking, StyleSheet, View } from 'react-native';
 import { Camera, type Code, useCameraDevice, useCameraFormat, useCameraPermission } from 'react-native-vision-camera';
 
 // has onConfirm props means open in SendTransaction with local modal way.
-interface Props {
+interface Props extends Partial<StackScreenProps<typeof ScanQRCodeStackName>> {
   onConfirm?: (ethUrl: ETHURL) => void;
-  navigation?: StackScreenProps<any>['navigation'];
   onClose?: () => void;
 }
 
@@ -44,7 +44,7 @@ enum ScanStatusType {
 }
 
 const scanAreaWidth = 220;
-const ScanQrCode: React.FC<Props> = ({ navigation, onConfirm, onClose }) => {
+const ScanQrCode: React.FC<Props> = ({ navigation, onConfirm, onClose, route }) => {
   const { colors, reverseColors } = useTheme();
   const { t } = useTranslation();
   const bottomSheetRef = useRef<BottomSheetMethods>(null!);
@@ -331,6 +331,16 @@ const ScanQrCode: React.FC<Props> = ({ navigation, onConfirm, onClose }) => {
                 {t('scan.permission.reject.openSettings')}
               </Button>
             </View>
+          )}
+          {scanStatus?.type !== ScanStatusType.ConnectingWC && (
+            <Button
+              testID="dismiss"
+              style={styles.btn}
+              onPress={() => (bottomSheetRef?.current ? bottomSheetRef.current.close() : navigation?.goBack())}
+              size="small"
+            >
+              {t('common.dismiss')}
+            </Button>
           )}
         </BottomSheetFooter>
       </BottomSheetWrapper>

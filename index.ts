@@ -8,6 +8,7 @@ import { AppRegistry, LogBox } from 'react-native';
 
 import '@ethersproject/shims';
 import './packages/setup/ethers';
+import './packages/setup/polyfill';
 import Decimal from 'decimal.js';
 import WalletCore from './packages/core/WalletCore';
 import TxTrackerPlugin from './packages/core/WalletCore/Plugins/TxTracker';

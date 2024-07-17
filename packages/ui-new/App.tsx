@@ -1,4 +1,5 @@
 import { JotaiNexus, useCurrentAccount, useCurrentAddressValue, useHasVault } from '@core/WalletCore/Plugins/ReactInject';
+import events, { LifeCycle } from '@core/WalletCore/Events';
 import { useMode } from '@hooks/useMode';
 import CustomMessage from '@modules/CustomMessage';
 import { NavigationContainer, type Theme } from '@react-navigation/native';
@@ -20,6 +21,7 @@ const App: React.FC = () => {
   const hasVault = useHasVault();
   const account = useCurrentAccount();
   const currentAddressValue = useCurrentAddressValue();
+  const lifeCycle = events.useLifeCycle();
 
   const systemMode = useColorScheme();
   const innerMode = useMode();
@@ -36,7 +38,7 @@ const App: React.FC = () => {
     [mode],
   );
 
-  const isReady = hasVault === false || (hasVault === true && !!account?.nickname && !!currentAddressValue);
+  const isReady = (hasVault === false || (hasVault === true && !!account?.nickname && !!currentAddressValue)) && lifeCycle === LifeCycle.Ready;
 
   return (
     <>

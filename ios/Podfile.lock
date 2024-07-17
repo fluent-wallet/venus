@@ -1246,11 +1246,11 @@ PODS:
     - SDWebImage/Core (~> 5.17)
   - simdjson (3.1.0-wmelon1)
   - SocketRocket (0.6.1)
-  - VisionCamera (4.4.1):
-    - VisionCamera/Core (= 4.4.1)
-    - VisionCamera/React (= 4.4.1)
-  - VisionCamera/Core (4.4.1)
-  - VisionCamera/React (4.4.1):
+  - VisionCamera (4.5.0):
+    - VisionCamera/Core (= 4.5.0)
+    - VisionCamera/React (= 4.5.0)
+  - VisionCamera/Core (4.5.0)
+  - VisionCamera/React (4.5.0):
     - React-Core
   - WatermelonDB (0.27.1):
     - React
@@ -1666,7 +1666,7 @@ SPEC CHECKSUMS:
   SDWebImageWebPCoder: af09429398d99d524cae2fe00f6f0f6e491ed102
   simdjson: e6bfae9ce4bcdc80452d388d593816f1ca2106f3
   SocketRocket: f32cd54efbe0f095c4d7594881e52619cfe80b17
-  VisionCamera: 21e2ec4cda0955d40589e939042af275e149dbf9
+  VisionCamera: 412fec057156eb5fe84a44351e8ed71a072c1228
   WatermelonDB: 842d22ba555425aa9f3ce551239a001200c539bc
   Yoga: 805bf71192903b20fc14babe48080582fee65a80
   ZXingObjC: 8898711ab495761b2dbbdec76d90164a6d7e14c5

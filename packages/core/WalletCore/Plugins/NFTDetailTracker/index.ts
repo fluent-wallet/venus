@@ -85,10 +85,9 @@ class NFTDetailTrackerPluginClass implements Plugin {
           this.cancelCurrentPollingTracker();
           setCurrentOpenNFTDetail(undefined);
           return;
-        } else {
-          setCurrentOpenNFTDetail(params);
-          this.startPolling({ params, accountAddress: address.hex, fetcher });
         }
+        setCurrentOpenNFTDetail(params);
+        this.startPolling({ params, accountAddress: address.hex, fetcher });
       });
     });
   }
@@ -106,11 +105,7 @@ class NFTDetailTrackerPluginClass implements Plugin {
 
     this.cancel$ = new Subject<void>();
 
-    let resolve!: (value: boolean | PromiseLike<boolean>) => void, reject!: (reason?: any) => void;
-    const firstFetchPromise = new Promise<boolean>((_resolve, _reject) => {
-      resolve = _resolve;
-      reject = _reject;
-    });
+    const { resolve, reject, promise: firstFetchPromise } = Promise.withResolvers<boolean>();
 
     try {
       this.currentPollingSubscription = interval(7777)

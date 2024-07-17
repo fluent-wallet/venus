@@ -20,7 +20,7 @@ import {
 } from '../../database/models/Network/query';
 import VaultType from '../../database/models/Vault/VaultType';
 import { fromPrivate } from '../../utils/account';
-import { convertCfxToHex, validateCfxAddress, validateHexAddress } from '../../utils/address';
+import { convertBase32ToHex, validateCfxAddress, validateHexAddress, type Base32Address } from '../../utils/address';
 import { getNthAccountOfHDKey } from '../../utils/hdkey';
 import { GetDecryptedVaultDataMethod } from './getDecryptedVaultData';
 
@@ -186,7 +186,7 @@ export class NetworkMethod {
   private _checkIsContractAddress({ networkType, endpoint, addressValue }: { networkType: NetworkType; endpoint: string; addressValue: string }) {
     if (networkType === NetworkType.Conflux) {
       try {
-        const hex = convertCfxToHex(addressValue);
+        const hex = convertBase32ToHex(addressValue as Base32Address);
         return hex.startsWith('0x8');
       } catch (_) {
         return false;
