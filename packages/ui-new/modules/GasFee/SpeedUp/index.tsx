@@ -3,7 +3,7 @@ import Button from '@components/Button';
 import HourglassLoading from '@components/Loading/Hourglass';
 import Text from '@components/Text';
 import { GasOption, type GasSetting, type SpeedUpLevel } from '../GasFeeSetting';
-import { useTxFromId, usePayloadOfTx, TxStatus, useCurrentNetwork, useNativeAssetOfCurrentNetwork } from '@core/WalletCore/Plugins/ReactInject';
+import { useTxFromId, usePayloadOfTx, TxStatus, useCurrentNetwork, useNativeAssetOfNetwork } from '@core/WalletCore/Plugins/ReactInject';
 import plugins from '@core/WalletCore/Plugins';
 import { showMessage } from 'react-native-flash-message';
 import { useTheme } from '@react-navigation/native';
@@ -19,7 +19,6 @@ import CustomizeGasSetting from '../GasFeeSetting/CustomizeGasSetting';
 
 const higherRatio = 1.1;
 const fasterRatio = 1.2;
-const defaultLevel: SpeedUpLevel = 'faster';
 
 const createGasSetting = (txPayload: ReturnType<typeof usePayloadOfTx>, ratio: number) => {
   if (!txPayload) return null;
@@ -35,12 +34,12 @@ const createGasSetting = (txPayload: ReturnType<typeof usePayloadOfTx>, ratio: n
 };
 
 const SpeedUp: React.FC<StackScreenProps<typeof SpeedUpStackName>> = ({ route }) => {
-  const { txId, type } = route.params;
+  const { txId, type, level: defaultLevel } = route.params;
   const { colors } = useTheme();
   const { t } = useTranslation();
 
   const currentNetwork = useCurrentNetwork();
-  const nativeAsset = useNativeAssetOfCurrentNetwork(currentNetwork)!;
+  const nativeAsset = useNativeAssetOfNetwork(currentNetwork?.id)!;
   const tx = useTxFromId(txId);
   const txPayload = usePayloadOfTx(txId);
 
@@ -72,7 +71,7 @@ const SpeedUp: React.FC<StackScreenProps<typeof SpeedUpStackName>> = ({ route })
     }
   }, [txPayload]);
 
-  const [tempSelectedOptionLevel, setTempSelectedOptionLevel] = useState<SpeedUpLevel>(defaultLevel);
+  const [tempSelectedOptionLevel, setTempSelectedOptionLevel] = useState<SpeedUpLevel | undefined>(defaultLevel);
   const bottomSheetRef = useRef<BottomSheetMethods>(null!);
 
   useEffect(() => {
@@ -96,12 +95,10 @@ const SpeedUp: React.FC<StackScreenProps<typeof SpeedUpStackName>> = ({ route })
     <>
       <BottomSheet ref={bottomSheetRef} snapPoints={snapPoints} isRoute>
         <BottomSheetWrapper innerPaddingHorizontal>
-          <BottomSheetHeader title={type === 'SpeedUp' ? 'Speed up transaction' : 'Cancel transaction'} />
+          <BottomSheetHeader title={type === 'SpeedUp' ? t('tx.action.speedUp.title') : t('tx.action.cancel.title')} />
           <BottomSheetContent>
             <Text style={[styles.description, { color: colors.textPrimary }]}>
-              {type === 'SpeedUp'
-                ? 'Add security verification to ensure the safety of your funds.'
-                : 'Try to cancel this transaction. If it has already started to execute, the cancellation will fail.'}
+              {type === 'SpeedUp' ? t('tx.action.speedUp.desc') : t('tx.action.cancel.desc')}
             </Text>
             {(!txPayload || !nativeAsset || !estimateCurrentGasPrice) && <HourglassLoading style={styles.loading} />}
             {txPayload && nativeAsset && estimateCurrentGasPrice && (
@@ -138,8 +135,15 @@ const SpeedUp: React.FC<StackScreenProps<typeof SpeedUpStackName>> = ({ route })
               <Button testID="cancel" style={styles.btn} size="small" onPress={() => bottomSheetRef.current?.close()}>
                 {t('common.cancel')}
               </Button>
-              <Button testID="speed-up" style={styles.btn} size="small" onPress={handlePressConfirm} Icon={type === 'SpeedUp' ? RocketIcon : undefined}>
-                {type === 'SpeedUp' ? 'Speed Up' : 'Proceed'}
+              <Button
+                testID="speed-up"
+                style={styles.btn}
+                size="small"
+                onPress={handlePressConfirm}
+                disabled={!tempSelectedOptionLevel}
+                Icon={type === 'SpeedUp' ? RocketIcon : undefined}
+              >
+                {type === 'SpeedUp' ? t('tx.action.speedUpBtn') : t('tx.action.proceedBtn')}
               </Button>
             </View>
           </BottomSheetFooter>

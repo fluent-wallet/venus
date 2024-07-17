@@ -10,7 +10,7 @@ import { ENABLE_SMALL_SIGNATURE_RECORDS_FEATURE } from '@utils/features';
 import type React from 'react';
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { FlatList, StyleSheet, View } from 'react-native';
+import { FlatList, StyleSheet, View, type LayoutChangeEvent } from 'react-native';
 import TypeFilter from './TypeFilter';
 import { Image } from 'expo-image';
 import { SignatureItem } from './SignatureItem';
@@ -21,6 +21,7 @@ const SignatureRecords: React.FC<StackScreenProps<typeof SignatureRecordsStackNa
   const listRef = useRef<FlatList>(null);
   const { colors } = useTheme();
   const [current, setCurrent] = useState(0);
+  const [maxMessageLength, setMaxMessageLength] = useState(50);
   const [filter, setFilter] = useState(SignatureFilterOption.All);
   const { t } = useTranslation();
   const { records: list, total: _total, setRecords, resetRecords } = useSignatureRecords(filter);
@@ -73,6 +74,12 @@ const SignatureRecords: React.FC<StackScreenProps<typeof SignatureRecordsStackNa
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [address, filter]);
 
+  const handleContainerLayout = (e: LayoutChangeEvent) => {
+    const containerWidth = e.nativeEvent.layout.width;
+    // 7 is for ... and more
+    setMaxMessageLength(Math.floor(containerWidth / 5) - 7);
+  };
+
   return (
     <View style={[styles.container, { backgroundColor: colors.bgPrimary }]}>
       <View style={styles.title}>
@@ -91,7 +98,8 @@ const SignatureRecords: React.FC<StackScreenProps<typeof SignatureRecordsStackNa
           </Delay>
         }
         onEndReached={handleLoadMore}
-        renderItem={({ item }) => <SignatureItem key={item.id} item={item} />}
+        renderItem={({ item }) => <SignatureItem key={item.id} item={item} maxMessageLength={maxMessageLength} />}
+        onLayout={handleContainerLayout}
       />
     </View>
   );

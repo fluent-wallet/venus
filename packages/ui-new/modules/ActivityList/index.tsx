@@ -42,14 +42,7 @@ const ActivityList: React.FC<{ onPress?: (v: Tx) => void }> = memo(({ onPress })
 
   const finishedTxsByDay = useMemo(() => {
     let day = 0;
-    const txs: (
-      | Tx
-      | {
-          year: number;
-          month: number;
-          day: number;
-        }
-    )[] = [];
+    const txs: (Tx | ActivityDate)[] = [];
     for (let i = 0; i < finishedTxs.length; i++) {
       const tx = finishedTxs[i];
       const time = Math.floor((tx.executedAt || tx.createdAt).valueOf() / DAY_MILLISECONDS) * DAY_MILLISECONDS;
@@ -72,12 +65,12 @@ const ActivityList: React.FC<{ onPress?: (v: Tx) => void }> = memo(({ onPress })
   }
 
   return (
-    <>
-      {!!unfinishedTxs?.length && unfinishedTxs.map((tx) => <ActivityItem key={(tx as Tx).id} tx={tx} onPress={onPress} />)}
+    <View style={styles.container}>
+      {!!unfinishedTxs?.length && unfinishedTxs.map((tx) => <ActivityItem key={tx.id} tx={tx} onPress={onPress} />)}
       {finishedTxs?.length > 0 &&
-        finishedTxsByDay.map((tx) =>
+        finishedTxsByDay.map((tx, i) =>
           tx instanceof ActivityDate ? (
-            <View style={styles.dateWrapper} key={`${tx.day}${tx.month}${tx.year}`}>
+            <View style={[styles.dateWrapper, i !== 0 && { marginTop: 24 }]} key={`${tx.day}${tx.month}${tx.year}`}>
               <Calendar color={colors.textSecondary} />
               <Text style={[styles.date, { color: colors.textSecondary, borderColor: colors.borderThird }]}>
                 {MONTH_TXT[tx.month]} {tx.day},{'  '}
@@ -85,21 +78,21 @@ const ActivityList: React.FC<{ onPress?: (v: Tx) => void }> = memo(({ onPress })
               </Text>
             </View>
           ) : (
-            <ActivityItem key={(tx as Tx).id} tx={tx as Tx} onPress={onPress} />
+            <ActivityItem key={tx.id} tx={tx} onPress={onPress} />
           ),
         )}
-    </>
+    </View>
   );
 });
 
 const styles = StyleSheet.create({
+  container: {
+    padding: 16,
+  },
   dateWrapper: {
     display: 'flex',
     flexDirection: 'row',
     alignItems: 'center',
-    marginTop: 16,
-    marginBottom: 4,
-    paddingHorizontal: 26,
   },
   date: {
     fontSize: 14,

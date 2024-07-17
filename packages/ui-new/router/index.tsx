@@ -64,8 +64,12 @@ import {
   NetworkManagementStackName,
   NetworkAddNewEndpointStackName,
   SpeedUpStackName,
+  TransactionDetailStackName,
 } from './configs';
 import { parseDeepLink } from '@utils/deeplink';
+import TransactionDetail from '@pages/TransactionDetail';
+import { useTranslation } from 'react-i18next';
+
 
 const RootStack = createNativeStackNavigator<RootStackParamList>();
 const screenOptions = {
@@ -78,6 +82,7 @@ const screenOptions = {
 } as const;
 
 const Router: React.FC = () => {
+  const { t } = useTranslation();
   const hasVault = useHasVault();
   const { colors } = useTheme();
 
@@ -138,6 +143,7 @@ const Router: React.FC = () => {
         <RootStack.Screen name={WalletConnectStackName} component={WalletConnect} options={SheetBottomOption} />
         <RootStack.Screen name={SignatureRecordsStackName} component={SignatureRecords} />
         <RootStack.Screen name={SpeedUpStackName} component={SpeedUp} options={SheetBottomOption} />
+        <RootStack.Screen name={TransactionDetailStackName} component={TransactionDetail} options={{ title: t('tx.detail.title') }} />
       </RootStack.Navigator>
     </View>
   );

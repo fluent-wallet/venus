@@ -54,7 +54,7 @@ class TxTrackerPluginClass implements Plugin {
 
   private _setup() {
     broadcastTransactionSubject.subscribe(async (value) => {
-      methods.createTx(value);
+      value && methods.createTx(value);
     });
     events.currentAddressObservable.pipe(debounceTime(40)).subscribe(async (selectedAddress) => {
       if (!selectedAddress) {
@@ -104,7 +104,7 @@ class TxTrackerPluginClass implements Plugin {
     })
       .observeCount(false)
       .subscribe((count) => {
-        console.log(`TxTracker: unexecuted-count`, count);
+        console.log('TxTracker: unexecuted-count', count);
         if (count > 0 && this._checkExecutedTimer === false) {
           this._resetExecutedTimer();
         }
@@ -120,7 +120,7 @@ class TxTrackerPluginClass implements Plugin {
     })
       .observeCount(false)
       .subscribe((count) => {
-        console.log(`TxTracker: unconfirmed-count`, count);
+        console.log('TxTracker: unconfirmed-count', count);
         if (count > 0 && this._checkConfirmedTimer === false) {
           this._resetConfirmedTimer();
         }
@@ -136,7 +136,7 @@ class TxTrackerPluginClass implements Plugin {
     })
       .observeCount(false)
       .subscribe((count) => {
-        console.log(`TxTracker: unfinalized-count`, count);
+        console.log('TxTracker: unfinalized-count', count);
         if (count > 0 && this._checkFinalizedTimer === false) {
           this._resetFinalizedTimer();
         }
@@ -169,7 +169,7 @@ class TxTrackerPluginClass implements Plugin {
    * reset checkExecuted timer
    */
   _resetExecutedTimer() {
-    console.log(`TxTracker: check executed timer is running`);
+    console.log('TxTracker: check executed timer is running');
     this._cleanupExecutedTimer();
     this._checkExecutedTimer = setTimeout(() => {
       this._checkExecuted();
@@ -179,7 +179,7 @@ class TxTrackerPluginClass implements Plugin {
    * reset checkConfirmed timer
    */
   _resetConfirmedTimer() {
-    console.log(`TxTracker: check confirmed timer is running`);
+    console.log('TxTracker: check confirmed timer is running');
     this._cleanupConfirmedTimer();
     this._checkConfirmedTimer = setTimeout(() => {
       this._checkConfirmed();
@@ -189,7 +189,7 @@ class TxTrackerPluginClass implements Plugin {
    * reset checkFinalized timer
    */
   _resetFinalizedTimer() {
-    console.log(`TxTracker: check finalized timer is running`);
+    console.log('TxTracker: check finalized timer is running');
     this._cleanupFinalizedTimer();
     this._checkFinalizedTimer = setTimeout(() => {
       this._checkFinalized();
@@ -220,10 +220,10 @@ class TxTrackerPluginClass implements Plugin {
         await tracker._checkStatus(txs, currentNetwork);
       }
     } catch (error) {
-      console.log(`TxTracker: `, error);
+      console.log('TxTracker: ', error);
     } finally {
       if (stopTrack) {
-        console.log(`TxTracker: stop executed track`);
+        console.log('TxTracker: stop executed track');
         this._checkExecutedTimer = false;
       } else {
         this._resetExecutedTimer();
@@ -257,10 +257,10 @@ class TxTrackerPluginClass implements Plugin {
         status = await tracker._checkStatus([minNonceTx], currentNetwork);
       }
     } catch (error) {
-      console.log(`TxTracker: `, error);
+      console.log('TxTracker: ', error);
     } finally {
       if (stopTrack) {
-        console.log(`TxTracker: stop confirmed track`);
+        console.log('TxTracker: stop confirmed track');
         this._checkConfirmedTimer = false;
       } else {
         status === TxStatus.CONFIRMED || status === TxStatus.FINALIZED ? this._checkConfirmed() : this._resetConfirmedTimer();
@@ -294,10 +294,10 @@ class TxTrackerPluginClass implements Plugin {
         status = await tracker._checkStatus([minNonceTx], currentNetwork);
       }
     } catch (error) {
-      console.log(`TxTracker: `, error);
+      console.log('TxTracker: ', error);
     } finally {
       if (stopTrack) {
-        console.log(`TxTracker: stop finalized track`);
+        console.log('TxTracker: stop finalized track');
         this._checkFinalizedTimer = false;
       } else {
         status === TxStatus.FINALIZED ? this._checkFinalized() : this._resetFinalizedTimer();

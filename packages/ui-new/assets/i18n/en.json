@@ -310,6 +310,23 @@
     "recently" : "Recently"
   },
   "tx" : {
+    "action" : {
+      "buttonTitle" : "Action",
+      "cancel" : {
+        "desc" : "Try to cancel this transaction. If it has already started to execute, the cancellation will fail.",
+        "title" : "Cancel transaction"
+      },
+      "level" : {
+        "faster" : "Fast",
+        "higher" : "Higher"
+      },
+      "proceedBtn" : "Proceed",
+      "speedUp" : {
+        "desc" : "Add security verification to ensure the safety of your funds.",
+        "title" : "Speed up transaction"
+      },
+      "speedUpBtn" : "Speed Up"
+    },
     "activity" : {
       "status" : {
         "confirmed" : "Confirmed",
@@ -358,6 +375,29 @@
         "message" : "Transaction Submitted"
       },
       "title" : "Transaction Confirm"
+    },
+    "detail" : {
+      "fee" : "Fee",
+      "from" : "From",
+      "functionName" : "Function Name  / {{name}}",
+      "network" : "Network",
+      "nonce" : "Nonce",
+      "status" : {
+        "confirmed" : "Success",
+        "failed" : "Failed",
+        "pending" : "Pending"
+      },
+      "title" : "Transaction Detail",
+      "to" : "To",
+      "txHash" : "Transaction Hash"
+    },
+    "gasFee" : {
+      "level" : {
+        "customize" : "Customize",
+        "high" : "Fast",
+        "low" : "Slow",
+        "medium" : "Average"
+      }
     },
     "send" : {
       "address" : {

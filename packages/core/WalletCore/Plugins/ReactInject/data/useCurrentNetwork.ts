@@ -55,8 +55,8 @@ const nativeAssetAtomFamilyOfNetwork = atomFamily((networkId: string | undefined
   }),
 );
 
-export const useNativeAssetOfCurrentNetwork = (currentNetwork: ReturnType<typeof useCurrentNetwork>) => {
-  return useAtomValue(nativeAssetAtomFamilyOfNetwork(currentNetwork?.id));
+export const useNativeAssetOfNetwork = (networkId: string | undefined | null) => {
+  return useAtomValue(nativeAssetAtomFamilyOfNetwork(networkId));
 };
 export const useCurrentNetworkNativeAsset = () => {
   const currentNetwork = useCurrentNetwork();

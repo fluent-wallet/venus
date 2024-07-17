@@ -193,7 +193,7 @@ function WalletConnectSignMessage() {
             <Pressable onPress={() => handleCoy(signMsg)} testID="copy">
               <View style={[styles.flexWithRow, styles.scrollTitle, { backgroundColor: colors.bgFourth }]}>
                 <Text style={[styles.h2, { color: colors.textPrimary }]}>{t('wc.sign.message')}</Text>
-                <Copy width={18} height={18} color={colors.textSecondary} />
+                <Copy color={colors.textSecondary} />
               </View>
             </Pressable>
             <Text style={{ color: colors.textPrimary }}>{signMsg}</Text>

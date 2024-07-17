@@ -310,6 +310,23 @@
     "recently" : "最近交易"
   },
   "tx" : {
+    "action" : {
+      "buttonTitle" : null,
+      "cancel" : {
+        "desc" : null,
+        "title" : null
+      },
+      "level" : {
+        "faster" : null,
+        "higher" : null
+      },
+      "proceedBtn" : null,
+      "speedUp" : {
+        "desc" : null,
+        "title" : null
+      },
+      "speedUpBtn" : null
+    },
     "activity" : {
       "status" : {
         "confirmed" : "已確認",
@@ -358,6 +375,29 @@
         "message" : "交易已提交"
       },
       "title" : "確認交易"
+    },
+    "detail" : {
+      "fee" : null,
+      "from" : null,
+      "functionName" : null,
+      "network" : null,
+      "nonce" : null,
+      "status" : {
+        "confirmed" : null,
+        "failed" : null,
+        "pending" : null
+      },
+      "title" : null,
+      "to" : null,
+      "txHash" : null
+    },
+    "gasFee" : {
+      "level" : {
+        "customize" : null,
+        "high" : null,
+        "low" : null,
+        "medium" : null
+      }
     },
     "send" : {
       "address" : {
