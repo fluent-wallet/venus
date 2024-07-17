@@ -10,13 +10,13 @@ import useFormatBalance from '@hooks/useFormatBalance';
 import NFTIcon from '@modules/AssetsList/NFTsList/NFTIcon';
 import TokenIcon from '@modules/AssetsList/TokensList/TokenIcon';
 import { useTheme } from '@react-navigation/native';
-import { SPEED_UP_FEATURE } from '@utils/features';
 import type React from 'react';
 import { type ComponentProps, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Pressable, StyleSheet, View, type LayoutChangeEvent, type ViewProps } from 'react-native';
 import SpeedUpButton from '@modules/SpeedUpButton';
 import Spinner from '@components/Spinner';
+import { useShowSpeedUp } from '@hooks/useShowSpeedUp';
 
 const TextEllipsisWithSuffix: React.FC<{
   defaultSuffixWidth?: number;
@@ -94,12 +94,13 @@ const PendingIcon = () => {
 
 const ActivityItem: React.FC<Props> = ({ onPress, tx }) => {
   const { colors } = useTheme();
+  const { t } = useTranslation();
 
   const payload = usePayloadOfTx(tx.id);
   const asset = useAssetOfTx(tx.id);
   const status = formatStatus(tx);
+
   const { value, to, tokenId } = useMemo(() => formatTxData(tx, payload, asset), [tx, payload, asset]);
-  const { t } = useTranslation();
   const method = useMemo(() => {
     if (tx.source === TxSource.SELF) {
       return t('common.send');
@@ -107,8 +108,9 @@ const ActivityItem: React.FC<Props> = ({ onPress, tx }) => {
     return tx.method;
   }, [t, tx.method, tx.source]);
 
-  const isPending = SPEED_UP_FEATURE.allow && status === 'pending';
-  console.log('asset', asset?.id, asset?.symbol);
+  const isPending = status === 'pending';
+  const showSpeedUp = useShowSpeedUp(isPending, tx.createdAt);
+
   return (
     <Pressable
       style={[styles.container, isPending && styles.pendingContainer, isPending && { borderColor: colors.borderFourth }]}
@@ -136,7 +138,7 @@ const ActivityItem: React.FC<Props> = ({ onPress, tx }) => {
       {tx.source === TxSource.SELF && <AssetInfo asset={asset} value={value} tokenId={tokenId} txStatus={status} sign="-" method={method} />}
       {method === 'approve' && <AssetInfo asset={asset} value={value} tokenId={tokenId} txStatus={status} method={method} />}
 
-      {isPending && <SpeedUpButton txId={tx.id} containerStyle={styles.speedUp} />}
+      {showSpeedUp && <SpeedUpButton txId={tx.id} containerStyle={styles.speedUp} />}
     </Pressable>
   );
 };
