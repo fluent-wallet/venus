@@ -125,6 +125,13 @@ const SendTransactionStep4Confirm: React.FC<SendTransactionScreenProps<typeof Se
   const epochHeightRef = useRef('');
 
   const _handleSend = useCallback(async () => {
+    if (currentVault?.type === VaultType.BSIM && currentNetwork.networkType === NetworkType.Conflux) {
+      showMessage({
+        message: 'BSIM not support Conflux Core',
+        type: 'warning',
+      });
+      return;
+    }
     setBSIMEvent(null);
     execBSIMCancel();
 
