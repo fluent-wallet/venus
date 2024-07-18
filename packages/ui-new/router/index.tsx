@@ -12,7 +12,7 @@ import EraseAllWallet from '@pages/Management/AccountManagement/EraseAllWallet';
 import GroupSetting from '@pages/Management/AccountManagement/GroupSetting';
 import HDSetting from '@pages/Management/AccountManagement/HDSetting';
 import Receive from '@pages/Receive';
-import ScanQRCode from '@pages/ScanQRCode';
+import ExternalInputHandler, { useListenDeepLink } from '@pages/ExternalInputHandler';
 import SendTransaction from '@pages/SendTransaction';
 import Settings from '@pages/Settings';
 import AboutUs, { UpdateVersion } from '@pages/Settings/AboutUs';
@@ -31,7 +31,7 @@ import { useNavigation, useTheme } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import type React from 'react';
 import { useEffect } from 'react';
-import { View, Linking } from 'react-native';
+import { View } from 'react-native';
 import Header from './Header';
 import {
   AboutUsStackName,
@@ -52,7 +52,7 @@ import {
   PreferencesStackName,
   ReceiveStackName,
   type RootStackParamList,
-  ScanQRCodeStackName,
+  ExternalInputHandlerStackName,
   SendTransactionStackName,
   SettingsStackName,
   SheetBottomOption,
@@ -66,10 +66,8 @@ import {
   SpeedUpStackName,
   TransactionDetailStackName,
 } from './configs';
-import { parseDeepLink } from '@utils/deeplink';
 import TransactionDetail from '@pages/TransactionDetail';
 import { useTranslation } from 'react-i18next';
-
 
 const RootStack = createNativeStackNavigator<RootStackParamList>();
 const screenOptions = {
@@ -100,18 +98,7 @@ const Router: React.FC = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  useEffect(() => {
-    const handleDeepLink = (event: { url: string }) => {
-      const url = event.url;
-      parseDeepLink(url);
-    };
-    Linking.getInitialURL().then((url) => url && handleDeepLink({ url }));
-    const urlListener = Linking.addEventListener('url', handleDeepLink);
-
-    return () => {
-      urlListener.remove();
-    };
-  }, []);
+  useListenDeepLink(navigation);
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.bgPrimary }}>
@@ -131,7 +118,7 @@ const Router: React.FC = () => {
         <RootStack.Screen name={EraseAllWalletStackName} component={EraseAllWallet} options={SheetBottomOption} />
         <RootStack.Screen name={AddAnotherWalletStackName} component={AddAnotherWallet} options={SheetBottomOption} />
         <RootStack.Screen name={SendTransactionStackName} component={SendTransaction} options={SheetBottomOption} />
-        <RootStack.Screen name={ScanQRCodeStackName} component={ScanQRCode} options={SheetBottomOption} />
+        <RootStack.Screen name={ExternalInputHandlerStackName} component={ExternalInputHandler} options={SheetBottomOption} />
         <RootStack.Screen name={ReceiveStackName} component={Receive} options={SheetBottomOption} />
         <RootStack.Screen name={PasswordVerifyStackName} component={PasswordVerify} options={SheetBottomOption} />
         <RootStack.Screen name={SettingsStackName} component={Settings} />
