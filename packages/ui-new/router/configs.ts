@@ -6,6 +6,7 @@ import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { VersionJSON } from '@pages/Settings/AboutUs';
 import type { SpeedUpLevel } from '@modules/GasFee/GasFeeSetting';
 import type { NetworkType } from '@core/utils/consts';
+import type { SpeedUpAction } from '@core/WalletCore/Events/broadcastTransactionSubject';
 
 export const WelcomeStackName = 'Welcome';
 export const WayToInitWalletStackName = 'WayToInitWallet';
@@ -83,7 +84,7 @@ export type RootStackParamList = {
   [WalletConnectStackName]: NavigatorScreenParams<WalletConnectParamList>;
   [NetworkAddNewEndpointStackName]: undefined;
   [SignatureRecordsStackName]: undefined;
-  [SpeedUpStackName]: { txId: string; type: 'SpeedUp' | 'Cancel'; level?: SpeedUpLevel };
+  [SpeedUpStackName]: { txId: string; type: SpeedUpAction; level?: SpeedUpLevel };
   [TransactionDetailStackName]: { txId: string };
   [ExternalInputHandlerStackName]: { data: string } | undefined;
   [TooManyPendingStackName]: undefined;

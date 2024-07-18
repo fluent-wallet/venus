@@ -49,8 +49,16 @@ class TxTrackerPluginClass implements Plugin {
 
   private _setup() {
     events.broadcastTransactionSubject.subscribe(async (value) => {
-      if (value.transactionType === TransactionActionType.Send) {
-        methods.createTx(value.params);
+      switch (value.transactionType) {
+        case TransactionActionType.Send:
+          methods.createTx(value.params);
+          break;
+        case TransactionActionType.SpeedUp:
+          methods.speedUpTx(value.params);
+          break;
+
+        default:
+          break;
       }
     });
     events.currentAddressObservable.pipe(debounceTime(40)).subscribe(async (selectedAddress) => {

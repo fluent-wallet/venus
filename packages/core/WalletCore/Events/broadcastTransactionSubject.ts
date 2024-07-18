@@ -6,6 +6,7 @@ import { BehaviorSubject, filter } from 'rxjs';
 import type { AssetType } from '../Plugins/ReactInject';
 import type { WalletTransactionType } from '../Plugins/Transaction/types';
 import type { ITxEvm } from './../Plugins/Transaction/types';
+import type { Tx } from '@core/database/models/Tx';
 
 export interface SendTransactionParams {
   txHash: string;
@@ -29,13 +30,17 @@ export interface SpeedUpTransactionParams {
   txHash: string;
   txRaw: string;
   tx: ITxEvm;
-  signature?: Signature;
-  extraParams: {
-    sendAt: Date;
-    epochHeight?: string | null;
-  };
+  signature: Signature;
+  originTx: Tx;
+  speedupAction: SpeedUpAction;
+  sendAt: Date;
+  epochHeight?: string | null;
 }
 
+export enum SpeedUpAction {
+  SpeedUp = 'SpeedUp',
+  Cancel = 'Cancel',
+}
 export enum TransactionActionType {
   Send = 'send',
   SpeedUp = 'speedUp',

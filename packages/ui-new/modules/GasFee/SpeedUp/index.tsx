@@ -15,7 +15,7 @@ import {
 } from '@core/WalletCore/Plugins/ReactInject';
 import plugins from '@core/WalletCore/Plugins';
 import { showMessage } from 'react-native-flash-message';
-import { useNavigation, useTheme } from '@react-navigation/native';
+import { useTheme } from '@react-navigation/native';
 import type { SpeedUpStackName, StackScreenProps } from '@router/configs';
 import RocketIcon from '@assets/icons/rocket.svg';
 import { from, of, catchError, delay, switchMap } from 'rxjs';
@@ -37,7 +37,8 @@ import { SignType } from '@core/database/models/Signature/type';
 import { BSIMError } from 'modules/BSIM/src';
 import WarnIcon from '@assets/icons/warn.svg';
 import ProhibitIcon from '@assets/icons/prohibit.svg';
-import { TransactionActionType } from '@core/WalletCore/Events/broadcastTransactionSubject';
+import { SpeedUpAction, TransactionActionType } from '@core/WalletCore/Events/broadcastTransactionSubject';
+import useInAsync from '@hooks/useInAsync';
 
 const higherRatio = 1.1;
 const fasterRatio = 1.2;
@@ -68,7 +69,6 @@ const SpeedUp: React.FC<StackScreenProps<typeof SpeedUpStackName>> = ({ route })
   const { txId, type, level: defaultLevel } = route.params;
   const { colors } = useTheme();
   const { t } = useTranslation();
-  const navigation = useNavigation();
 
   const signTransaction = useSignTransaction();
   const { bsimEvent, setBSIMEvent, execBSIMCancel, setBSIMCancel } = useBSIMVerify();
@@ -113,18 +113,20 @@ const SpeedUp: React.FC<StackScreenProps<typeof SpeedUpStackName>> = ({ route })
   const [tempSelectedOptionLevel, setTempSelectedOptionLevel] = useState<SpeedUpLevel | undefined>(defaultLevel);
   const bottomSheetRef = useRef<BottomSheetMethods>(null!);
 
+  const isSpeedUp = type === SpeedUpAction.SpeedUp;
+
   useEffect(() => {
     if (tx?.status && tx.status !== TxStatus.PENDING) {
       bottomSheetRef.current?.close();
       showMessage({
         type: 'warning',
-        message: `${type === 'SpeedUp' ? 'Speed up transaction' : 'Cancel transaction'} expire`,
+        message: `${isSpeedUp ? 'Speed up transaction' : 'Cancel transaction'} expire`,
         description: 'Current transaction is onChain',
       });
     }
-  }, [tx?.status]);
+  }, [tx?.status, isSpeedUp]);
 
-  const handleSend = useCallback(async () => {
+  const _handleSend = useCallback(async () => {
     const newGasSetting =
       tempSelectedOptionLevel === 'customize' ? customizeGasSetting : tempSelectedOptionLevel === 'faster' ? fasterGasSetting : higherGasSetting;
     if (!network || !tx || !txPayload || !newGasSetting) return;
@@ -174,9 +176,6 @@ const SpeedUp: React.FC<StackScreenProps<typeof SpeedUpStackName>> = ({ route })
           description: t('tx.confirm.submitted.description'),
           icon: 'loading' as unknown as undefined,
         });
-        if (navigation.canGoBack()) {
-          navigation.goBack();
-        }
         if (txRaw) {
           events.broadcastTransactionSubjectPush.next({
             transactionType: TransactionActionType.SpeedUp,
@@ -185,13 +184,14 @@ const SpeedUp: React.FC<StackScreenProps<typeof SpeedUpStackName>> = ({ route })
               txRaw,
               tx: txData,
               signature,
-              extraParams: {
-                sendAt: new Date(),
-                epochHeight: network.networkType === NetworkType.Conflux ? txEpochHeight : null,
-              },
+              originTx: tx,
+              sendAt: new Date(),
+              epochHeight: network.networkType === NetworkType.Conflux ? txEpochHeight : null,
+              speedupAction: type,
             },
           });
         }
+        bottomSheetRef.current?.close();
       } catch (error) {
         if (error instanceof BSIMError) {
           setBSIMEvent({ type: BSIMEventTypesName.ERROR, message: error?.message });
@@ -218,16 +218,22 @@ const SpeedUp: React.FC<StackScreenProps<typeof SpeedUpStackName>> = ({ route })
       });
     }
   }, [tempSelectedOptionLevel, customizeGasSetting, higherGasSetting, fasterGasSetting]);
+  const { inAsync: inSending, execAsync: handleSend } = useInAsync(_handleSend);
 
   return (
     <>
-      <BottomSheet ref={bottomSheetRef} snapPoints={snapPoints} isRoute>
+      <BottomSheet
+        ref={bottomSheetRef}
+        snapPoints={snapPoints}
+        isRoute
+        enablePanDownToClose={!inSending}
+        enableContentPanningGesture={!inSending}
+        enableHandlePanningGesture={!inSending}
+      >
         <BottomSheetWrapper innerPaddingHorizontal>
-          <BottomSheetHeader title={type === 'SpeedUp' ? t('tx.action.speedUp.title') : t('tx.action.cancel.title')} />
+          <BottomSheetHeader title={isSpeedUp ? t('tx.action.speedUp.title') : t('tx.action.cancel.title')} />
           <BottomSheetContent>
-            <Text style={[styles.description, { color: colors.textPrimary }]}>
-              {type === 'SpeedUp' ? t('tx.action.speedUp.desc') : t('tx.action.cancel.desc')}
-            </Text>
+            <Text style={[styles.description, { color: colors.textPrimary }]}>{isSpeedUp ? t('tx.action.speedUp.desc') : t('tx.action.cancel.desc')}</Text>
             {(!txPayload || !nativeAsset || !estimateCurrentGasPrice) && <HourglassLoading style={styles.loading} />}
             {txPayload && nativeAsset && estimateCurrentGasPrice && (
               <>
@@ -263,32 +269,31 @@ const SpeedUp: React.FC<StackScreenProps<typeof SpeedUpStackName>> = ({ route })
                 )}
               </>
             )}
+            {error && (
+              <>
+                {error.type === 'out of balance ' ? (
+                  <View style={styles.errorWarp}>
+                    <WarnIcon style={styles.errorIcon} color={colors.middle} width={24} height={24} />
+                    <Text style={[styles.errorText, { color: colors.middle }]}>
+                      {`${txAsset?.type === AssetType.Native ? t('tx.confirm.error.InsufficientBalance', { symbol: nativeAsset?.symbol }) : t('tx.confirm.error.InsufficientBalanceForGas', { symbol: nativeAsset?.symbol })}`}
+                    </Text>
+                  </View>
+                ) : (
+                  <View style={styles.errorWarp}>
+                    <ProhibitIcon style={styles.errorIcon} width={24} height={24} />
+                    {error.type === 'network error' ? (
+                      <Text style={[styles.errorText, { color: colors.down }]}>{t('tx.confirm.error.network')}</Text>
+                    ) : (
+                      <Text style={[styles.errorText, { color: colors.down }]}>{t('tx.confirm.error.unknown')}</Text>
+                    )}
+                  </View>
+                )}
+              </>
+            )}
           </BottomSheetContent>
-          {error && (
-            <>
-              <View style={[styles.divider, { backgroundColor: colors.borderFourth }]} />
-              {error.type === 'out of balance ' ? (
-                <View style={styles.errorWarp}>
-                  <WarnIcon style={styles.errorIcon} color={colors.middle} width={24} height={24} />
-                  <Text style={[styles.errorText, { color: colors.middle }]}>
-                    {`${txAsset?.type === AssetType.Native ? t('tx.confirm.error.InsufficientBalance', { symbol: nativeAsset?.symbol }) : t('tx.confirm.error.InsufficientBalanceForGas', { symbol: nativeAsset?.symbol })}`}
-                  </Text>
-                </View>
-              ) : (
-                <View style={styles.errorWarp}>
-                  <ProhibitIcon style={styles.errorIcon} width={24} height={24} />
-                  {error.type === 'network error' ? (
-                    <Text style={[styles.errorText, { color: colors.down }]}>{t('tx.confirm.error.network')}</Text>
-                  ) : (
-                    <Text style={[styles.errorText, { color: colors.down }]}>{t('tx.confirm.error.unknown')}</Text>
-                  )}
-                </View>
-              )}
-            </>
-          )}
           <BottomSheetFooter>
             <View style={styles.btnArea}>
-              <Button testID="cancel" style={styles.btn} size="small" onPress={() => bottomSheetRef.current?.close()}>
+              <Button testID="cancel" style={styles.btn} size="small" onPress={() => bottomSheetRef.current?.close()} disabled={inSending}>
                 {t('common.cancel')}
               </Button>
               <Button
@@ -296,10 +301,10 @@ const SpeedUp: React.FC<StackScreenProps<typeof SpeedUpStackName>> = ({ route })
                 style={styles.btn}
                 size="small"
                 onPress={handleSend}
-                disabled={!tempSelectedOptionLevel}
-                Icon={type === 'SpeedUp' ? RocketIcon : undefined}
+                disabled={!tempSelectedOptionLevel || inSending}
+                Icon={isSpeedUp ? RocketIcon : undefined}
               >
-                {type === 'SpeedUp' ? t('tx.action.speedUpBtn') : t('tx.action.proceedBtn')}
+                {isSpeedUp ? t('tx.action.speedUpBtn') : t('tx.action.proceedBtn')}
               </Button>
             </View>
           </BottomSheetFooter>
@@ -359,17 +364,11 @@ const styles = StyleSheet.create({
     marginLeft: 2,
     transform: [{ translateY: 1 }],
   },
-  divider: {
-    width: '100%',
-    height: 1,
-    marginVertical: 24,
-  },
   errorWarp: {
     display: 'flex',
     flexDirection: 'row',
     alignItems: 'center',
-    marginTop: 8,
-    paddingHorizontal: 16,
+    marginTop: 16,
   },
   errorIcon: {
     marginRight: 4,
@@ -381,6 +380,6 @@ const styles = StyleSheet.create({
   },
 });
 
-const snapPoints = [580];
+const snapPoints = [600];
 
 export default SpeedUp;
