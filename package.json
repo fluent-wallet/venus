@@ -44,7 +44,7 @@
     "ethers": "^6.10.0",
     "expo": "51",
     "expo-camera": "~15.0.13",
-    "expo-image": "~1.12.12",
+    "expo-image": "~1.12.13",
     "expo-image-picker": "~15.0.7",
     "expo-localization": "~15.0.3",
     "fast-text-encoding": "^1.0.6",

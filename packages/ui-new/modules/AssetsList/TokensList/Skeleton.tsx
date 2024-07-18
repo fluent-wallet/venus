@@ -2,8 +2,9 @@ import { useTheme } from '@react-navigation/native';
 import { screenWidth } from '@utils/deviceInfo';
 import { random } from 'lodash-es';
 import ContentLoader, { Rect, Circle } from 'react-content-loader/native';
+import { memo } from 'react';
 
-const Skeleton = () => {
+const Skeleton = memo(() => {
   const { colors } = useTheme();
   return Array.from({ length: 6 }).map((_, index) => (
     <ContentLoader
@@ -20,6 +21,6 @@ const Skeleton = () => {
       <Rect x="64" y="39" rx="4" ry="4" width={random(80, 140)} height={18} />
     </ContentLoader>
   ));
-};
+});
 
 export default Skeleton;

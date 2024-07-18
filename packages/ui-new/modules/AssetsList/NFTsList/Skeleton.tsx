@@ -2,9 +2,10 @@ import { useTheme } from '@react-navigation/native';
 import { screenWidth } from '@utils/deviceInfo';
 import { random } from 'lodash-es';
 import type React from 'react';
+import { memo } from 'react';
 import ContentLoader, { Rect, Circle } from 'react-content-loader/native';
 
-export const SkeletonList = () => {
+export const SkeletonList = memo(() => {
   const { colors } = useTheme();
   return Array.from({ length: 6 }).map((_, index) => (
     <ContentLoader
@@ -20,7 +21,7 @@ export const SkeletonList = () => {
       <Rect x="64" y="26" rx="4" ry="4" width={random(140, 200)} height={18} />
     </ContentLoader>
   ));
-};
+});
 
 const detailImgSize = (screenWidth - 56 - 16 - 16) / 2 - 16;
 const detailWidth = detailImgSize;
