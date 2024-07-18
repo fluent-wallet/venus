@@ -122,7 +122,7 @@ const Router: React.FC = () => {
         <RootStack.Screen name={BiometricsWayStackName} component={BiometricsWay} options={{ animation: 'fade' }} />
         <RootStack.Screen name={PasswordWayStackName} component={PasswordWay} />
         <RootStack.Screen name={AccountManagementStackName} component={AccountManagement} />
-        <RootStack.Screen name={NetworkManagementStackName} component={NetworkManagement} />
+        <RootStack.Screen name={NetworkManagementStackName} component={NetworkManagement} options={{ animation: 'fade' }} />
         <RootStack.Screen name={NetworkAddNewEndpointStackName} component={NetworkAddNewEndpoint} options={SheetBottomOption} />
         <RootStack.Screen name={AccountSettingStackName} component={AccountSetting} options={SheetBottomOption} />
         <RootStack.Screen name={GroupSettingStackName} component={GroupSetting} options={SheetBottomOption} />

@@ -38,6 +38,8 @@ LogBox.ignoreLogs([
   'Request timed out',
   'RCTBridge required dispatch_sync to load',
   'network does not support ENS',
+    // TODO: Remove when https://github.com/gorhom/react-native-bottom-sheet/issues/1854 is fixed.
+  /^\[Reanimated\] Tried to modify key `reduceMotion` of an object which has been already passed to a worklet/,
 ]);
 
 const plugins = [

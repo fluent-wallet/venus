@@ -38,6 +38,7 @@
 		C8A1E705AEA64E4388DD551C /* enter_6.webp in Resources */ = {isa = PBXBuildFile; fileRef = BAA4E776C21D481ABA3F098B /* enter_6.webp */; };
 		D420C3640F9E761865A36E9A /* ExpoModulesProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 15839C861ED2C69156BA28E5 /* ExpoModulesProvider.swift */; };
 		D9AC5375D22F4F4FB55CE771 /* welcome_5.webp in Resources */ = {isa = PBXBuildFile; fileRef = 70BD36136DD34389A61BB441 /* welcome_5.webp */; };
+		E75395245A92CB37544A980C /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 4028767C001FD9880A493B29 /* PrivacyInfo.xcprivacy */; };
 		F38EDADF8EAF4E6FADC703AA /* enter_0.webp in Resources */ = {isa = PBXBuildFile; fileRef = 2FE0F886BF3644C18C38970A /* enter_0.webp */; };
 		FB7AFF9CF4E541C1B8FAF03E /* welcome_0.webp in Resources */ = {isa = PBXBuildFile; fileRef = 093D2E081D3F460F967448C9 /* welcome_0.webp */; };
 /* End PBXBuildFile section */
@@ -71,6 +72,7 @@
 		2FE0F886BF3644C18C38970A /* enter_0.webp */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = enter_0.webp; path = "../packages/ui-new/assets/lottie/enter_0.webp"; sourceTree = "<group>"; };
 		3004AC8228FE423E83FF2AC7 /* enter_3.webp */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = enter_3.webp; path = "../packages/ui-new/assets/lottie/enter_3.webp"; sourceTree = "<group>"; };
 		3B4392A12AC88292D35C810B /* Pods-BIMWallet.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-BIMWallet.debug.xcconfig"; path = "Target Support Files/Pods-BIMWallet/Pods-BIMWallet.debug.xcconfig"; sourceTree = "<group>"; };
+		4028767C001FD9880A493B29 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; includeInIndex = 1; name = PrivacyInfo.xcprivacy; path = BIMWallet/PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 		46C73B2EC8424C26A1628DD8 /* enter_8.webp */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = enter_8.webp; path = "../packages/ui-new/assets/lottie/enter_8.webp"; sourceTree = "<group>"; };
 		4A141FF09C374FFA8FD828E1 /* enter_4.webp */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = enter_4.webp; path = "../packages/ui-new/assets/lottie/enter_4.webp"; sourceTree = "<group>"; };
 		4B8899849FCE4778A765F89D /* welcome_2.webp */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = welcome_2.webp; path = "../packages/ui-new/assets/lottie/welcome_2.webp"; sourceTree = "<group>"; };
@@ -145,6 +147,7 @@
 				81AB9BB72411601600AC10FF /* LaunchScreen.storyboard */,
 				13B07FB71A68108700A75B9A /* main.m */,
 				8F753FA1E98A4D66A5392FB1 /* BootSplash.storyboard */,
+				4028767C001FD9880A493B29 /* PrivacyInfo.xcprivacy */,
 			);
 			name = BIMWallet;
 			sourceTree = "<group>";
@@ -379,6 +382,7 @@
 				891800157F574EA4B713177E /* welcome_4.webp in Resources */,
 				D9AC5375D22F4F4FB55CE771 /* welcome_5.webp in Resources */,
 				939BF763257A41B694F8E178 /* BootSplash.storyboard in Resources */,
+				E75395245A92CB37544A980C /* PrivacyInfo.xcprivacy in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -701,6 +705,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
+				CC = "";
 				CLANG_ANALYZER_LOCALIZABILITY_NONLOCALIZED = YES;
 				CLANG_CXX_LANGUAGE_STANDARD = "c++20";
 				CLANG_CXX_LIBRARY = "libc++";
@@ -728,6 +733,7 @@
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
 				COPY_PHASE_STRIP = NO;
+				CXX = "";
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_TESTABILITY = YES;
 				"EXCLUDED_ARCHS[sdk=iphonesimulator*]" = i386;
@@ -748,6 +754,8 @@
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
+				LD = "";
+				LDPLUSPLUS = "";
 				LD_RUNPATH_SEARCH_PATHS = (
 					/usr/lib/swift,
 					"$(inherited)",
@@ -778,6 +786,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
+				CC = "";
 				CLANG_ANALYZER_LOCALIZABILITY_NONLOCALIZED = YES;
 				CLANG_CXX_LANGUAGE_STANDARD = "c++20";
 				CLANG_CXX_LIBRARY = "libc++";
@@ -805,6 +814,7 @@
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
 				COPY_PHASE_STRIP = YES;
+				CXX = "";
 				ENABLE_NS_ASSERTIONS = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				"EXCLUDED_ARCHS[sdk=iphonesimulator*]" = i386;
@@ -821,6 +831,8 @@
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
+				LD = "";
+				LDPLUSPLUS = "";
 				LD_RUNPATH_SEARCH_PATHS = (
 					/usr/lib/swift,
 					"$(inherited)",
