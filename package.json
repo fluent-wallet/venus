@@ -81,7 +81,6 @@
     "react-native-screens": "^3.32.0",
     "react-native-screenshot-prevent": "^1.1.9",
     "react-native-svg": "14.1.0",
-    "react-native-vision-camera": "^4.4.1",
     "reflect-metadata": "^0.2.1",
     "semver": "^7.6.2",
     "stream-browserify": "^3.0.0"
