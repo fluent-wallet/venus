@@ -51,7 +51,9 @@ const AddNewEndpoint = () => {
           setError(t('settings.network.add.invalidChainId'));
         } else {
           methods.addEndpoint({ network: currentNetwork.id, endpointParams: { endpoint: endpoint.href, type: 'outer' } });
-          navigation.goBack();
+          if (navigation.canGoBack()) {
+            navigation.goBack();
+          }
         }
       } catch (error) {
         console.log('request error', error);

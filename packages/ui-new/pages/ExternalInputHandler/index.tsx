@@ -47,6 +47,8 @@ export const useListenDeepLink = (navigation: StackNavigation) => {
   useEffect(() => {
     const handleDeepLink = (event: { url: string }) => {
       const data = event.url;
+      const hasCurrentWCEvent = plugins.WalletConnect.currentEventSubject.getValue() !== undefined;
+      if (hasCurrentWCEvent) return;
       navigation.navigate(ExternalInputHandlerStackName, { data });
     };
 
@@ -216,14 +218,15 @@ const ExternalInputHandler: React.FC<Props> = ({ navigation, onConfirm, onClose,
     }
   }, []);
 
+  const isRoute = !onConfirm;
   return (
     <BottomSheet
       ref={bottomSheetRef}
       snapPoints={externalData ? snapPoints.percent40 : snapPoints.large}
       isRoute={!onConfirm}
-      index={!onConfirm ? undefined : 0}
+      index={isRoute ? undefined : 0}
       onOpen={onBottomSheetOpen}
-      onClose={onClose}
+      onClose={isRoute ? undefined : onClose}
     >
       <BottomSheetWrapper innerPaddingHorizontal>
         <BottomSheetHeader title={externalData ? 'Linking' : t('scan.title')} />
@@ -278,7 +281,15 @@ const ExternalInputHandler: React.FC<Props> = ({ navigation, onConfirm, onClose,
               <Button
                 testID="dismiss"
                 style={styles.btn}
-                onPress={() => (bottomSheetRef?.current ? bottomSheetRef.current.close() : navigation?.goBack())}
+                onPress={() => {
+                  if (bottomSheetRef?.current) {
+                    bottomSheetRef.current.close();
+                  } else {
+                    if (navigation?.canGoBack()) {
+                      navigation.goBack();
+                    }
+                  }
+                }}
                 size="small"
               >
                 {t('common.dismiss')}
@@ -300,7 +311,15 @@ const ExternalInputHandler: React.FC<Props> = ({ navigation, onConfirm, onClose,
               <Button
                 testID="dismiss"
                 style={styles.btn}
-                onPress={() => (bottomSheetRef?.current ? bottomSheetRef.current.close() : navigation?.goBack())}
+                onPress={() => {
+                  if (bottomSheetRef?.current) {
+                    bottomSheetRef.current.close();
+                  } else {
+                    if (navigation?.canGoBack()) {
+                      navigation.goBack();
+                    }
+                  }
+                }}
                 size="small"
               >
                 {t('common.dismiss')}
