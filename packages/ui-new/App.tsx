@@ -5,7 +5,7 @@ import CustomMessage from '@modules/CustomMessage';
 import { NavigationContainer, type Theme } from '@react-navigation/native';
 import type React from 'react';
 import { useMemo } from 'react';
-import { useColorScheme } from 'react-native';
+import { useColorScheme, Platform } from 'react-native';
 import BootSplash from 'react-native-bootsplash';
 import FlashMessage from 'react-native-flash-message';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
@@ -39,6 +39,18 @@ const App: React.FC = () => {
     [mode],
   );
 
+  const Message = useMemo(
+    () =>
+      Platform.OS === 'ios' ? (
+        <FullWindowOverlay>
+          <FlashMessage position={messagesTop} MessageComponent={CustomMessage} duration={3000} />
+        </FullWindowOverlay>
+      ) : (
+        <FlashMessage position={messagesTop} MessageComponent={CustomMessage} duration={3000} />
+      ),
+    [],
+  );
+
   const isReady = (hasVault === false || (hasVault === true && !!account?.nickname && !!currentAddressValue)) && lifeCycle === LifeCycle.Ready;
 
   return (
@@ -47,9 +59,7 @@ const App: React.FC = () => {
         <NavigationContainer theme={theme as unknown as Theme} onReady={BootSplash.hide}>
           <SafeAreaProvider>
             {isReady && <Router />}
-            <FullWindowOverlay>
-              <FlashMessage position={messagesTop} MessageComponent={CustomMessage} duration={3000} />
-            </FullWindowOverlay>
+            {Message}
           </SafeAreaProvider>
         </NavigationContainer>
       </GestureHandlerRootView>

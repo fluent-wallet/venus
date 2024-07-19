@@ -6,12 +6,13 @@ import { queryNetworks } from '@core/database/models/Network/query';
 import { Networks } from '@core/utils/consts';
 import { StackActions, useNavigation } from '@react-navigation/native';
 import {
+  ExternalInputHandlerStackName,
   HomeStackName,
-  type StackNavigation,
   WalletConnectProposalStackName,
   WalletConnectSignMessageStackName,
   WalletConnectStackName,
   WalletConnectTransactionStackName,
+  type StackNavigation,
 } from '@router/configs';
 import backToHome, { getActiveRouteName } from '@utils/backToHome';
 import { isDev, isQA } from '@utils/getEnv';
@@ -36,6 +37,13 @@ export function useListenWalletConnectEvent() {
         return;
       }
 
+      const activeRouterName = getActiveRouteName(navigation.getState());
+      const needDispatch = activeRouterName === HomeStackName || activeRouterName === ExternalInputHandlerStackName;
+      console.log('activeRouterName', activeRouterName, needDispatch);
+      const navigateMethod = !needDispatch
+        ? navigation.navigate
+        : (stackName: string, params: any) => navigation?.dispatch(StackActions.replace(stackName, params));
+
       const { type } = event;
       switch (type) {
         case WalletConnectPluginEventType.SESSION_PROPOSAL: {
@@ -56,31 +64,15 @@ export function useListenWalletConnectEvent() {
           if (requestChains.length === 0) {
             return event.action.reject('UNSUPPORTED_CHAINS');
           }
-
-          if (getActiveRouteName(navigation.getState()) === HomeStackName) {
-            navigation.navigate(WalletConnectStackName, {
-              screen: WalletConnectProposalStackName,
-              params: {
-                ...event.data,
-                connectedNetworks: networks
-                  .filter((network) => requestChains.includes(network.netId))
-                  .map((network) => ({ icon: network.icon!, name: network.name, netId: network.netId, id: network.id })),
-              },
-            });
-          } else {
-            navigation?.dispatch(
-              StackActions.replace(WalletConnectStackName, {
-                screen: WalletConnectProposalStackName,
-                params: {
-                  ...event.data,
-                  connectedNetworks: networks
-                    .filter((network) => requestChains.includes(network.netId))
-                    .map((network) => ({ icon: network.icon!, name: network.name, netId: network.netId, id: network.id })),
-                },
-              }),
-            );
-          }
-
+          navigateMethod(WalletConnectStackName, {
+            screen: WalletConnectProposalStackName,
+            params: {
+              ...event.data,
+              connectedNetworks: networks
+                .filter((network) => requestChains.includes(network.netId))
+                .map((network) => ({ icon: network.icon!, name: network.name, netId: network.netId, id: network.id })),
+            },
+          });
           break;
         }
 
@@ -94,7 +86,7 @@ export function useListenWalletConnectEvent() {
           if (chainId !== currentNetwork?.netId.toString()) {
             return event.action.reject('network is not match');
           }
-          navigation.navigate(WalletConnectStackName, { screen: WalletConnectSignMessageStackName, params: event.data });
+          navigateMethod(WalletConnectStackName, { screen: WalletConnectSignMessageStackName, params: event.data });
           break;
         }
 
@@ -103,6 +95,7 @@ export function useListenWalletConnectEvent() {
             address,
             tx: { to, data },
           } = event.data;
+
           if (address !== currentAddressValue) {
             return event.action.reject('address is not match');
           }
@@ -125,7 +118,7 @@ export function useListenWalletConnectEvent() {
 
           const EOATx = (!isContract && !!to) || !data || data === '0x';
 
-          navigation.navigate(WalletConnectStackName, {
+          navigateMethod(WalletConnectStackName, {
             screen: WalletConnectTransactionStackName,
             params: { ...event.data, isContract: !EOATx },
           });

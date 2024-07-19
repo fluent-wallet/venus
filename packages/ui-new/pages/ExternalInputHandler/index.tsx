@@ -20,21 +20,20 @@ import {
   SendTransactionStep2StackName,
   SendTransactionStep3StackName,
   SendTransactionStep4StackName,
-  type ScanQRCodeStackName,
+  ExternalInputHandlerStackName,
   type StackScreenProps,
+  type StackNavigation,
 } from '@router/configs';
 import { type ETHURL, parseETHURL } from '@utils/ETHURL';
 import Decimal from 'decimal.js';
-import { launchImageLibraryAsync } from 'expo-image-picker';
 import type React from 'react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Trans, useTranslation } from 'react-i18next';
 import { Linking, StyleSheet, View } from 'react-native';
-
-import { CameraView, useCameraPermissions, type BarcodeScanningResult, Camera } from 'expo-camera';
+import useQRCodeScan from './useQRCodeScan';
 
 // has onConfirm props means open in SendTransaction with local modal way.
-interface Props extends Partial<StackScreenProps<typeof ScanQRCodeStackName>> {
+interface Props extends Partial<StackScreenProps<typeof ExternalInputHandlerStackName>> {
   onConfirm?: (ethUrl: ETHURL) => void;
   onClose?: () => void;
 }
@@ -43,20 +42,34 @@ enum ScanStatusType {
   ConnectingWC = 'connecting-wc',
 }
 
+export const useListenDeepLink = (navigation: StackNavigation) => {
+  // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
+  useEffect(() => {
+    const handleDeepLink = (event: { url: string }) => {
+      const data = event.url;
+      navigation.navigate(ExternalInputHandlerStackName, { data });
+    };
+
+    Linking.getInitialURL().then((url) => url && handleDeepLink({ url }));
+    const urlListener = Linking.addEventListener('url', handleDeepLink);
+
+    return () => {
+      urlListener.remove();
+    };
+  }, []);
+};
+
 const scanAreaWidth = 220;
-const ScanQrCode: React.FC<Props> = ({ navigation, onConfirm, onClose, route }) => {
+const ExternalInputHandler: React.FC<Props> = ({ navigation, onConfirm, onClose, route }) => {
   const { colors, reverseColors } = useTheme();
   const { t } = useTranslation();
   const bottomSheetRef = useRef<BottomSheetMethods>(null!);
   const currentNetwork = useCurrentNetwork()!;
+  const isParsingRef = useRef(false);
 
-  const [scanStatus, setScanStatus] = useState<{ type?: string; message: string }>({ message: '' });
+  const [parseStatus, setParseStatus] = useState<{ type?: string; message: string } | null>(null);
 
-  const isParsing = useRef(false);
-
-  const [hasPermission, requestPermission] = useCameraPermissions();
-  const [hasRejectPermission, setHasRejectPermission] = useState(false);
-
+  // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
   const onParseEthUrlSuccess = useCallback(
     async (ethUrl: ETHURL) => {
       if (onConfirm) {
@@ -69,17 +82,17 @@ const ScanQrCode: React.FC<Props> = ({ navigation, onConfirm, onClose, route }) 
           (currentNetwork.networkType === NetworkType.Conflux && ethUrl.schema_prefix === 'ethereum:') ||
           (currentNetwork.networkType === NetworkType.Ethereum && ethUrl.schema_prefix === 'conflux:')
         ) {
-          setScanStatus({ message: t('scan.parse.error.missChianTypes') });
+          setParseStatus({ message: t('scan.parse.error.missChianTypes') });
           return;
         }
 
         if (ethUrl.chain_id && ethUrl.parameters && ethUrl.chain_id !== currentNetwork.chainId) {
-          setScanStatus({ message: t('scan.parse.error.missChianId') });
+          setParseStatus({ message: t('scan.parse.error.missChianId') });
           return;
         }
 
         if (!(await methods.checkIsValidAddress({ networkType: currentNetwork.networkType, addressValue: ethUrl.target_address }))) {
-          setScanStatus({ message: t('scan.parse.error.invalidTargetAddress') });
+          setParseStatus({ message: t('scan.parse.error.invalidTargetAddress') });
           return;
         }
         if (!ethUrl.function_name) {
@@ -110,7 +123,7 @@ const ScanQrCode: React.FC<Props> = ({ navigation, onConfirm, onClose, route }) 
                 }),
               );
             } else {
-              setScanStatus({ message: 'Unvalid ETHURL.' });
+              setParseStatus({ message: 'Unvalid ETHURL.' });
             }
           } else {
             if (ethUrl.parameters?.value) {
@@ -136,145 +149,112 @@ const ScanQrCode: React.FC<Props> = ({ navigation, onConfirm, onClose, route }) 
         }
       }
     },
-    [onConfirm, navigation, currentNetwork],
+    [onConfirm, currentNetwork?.id],
   );
 
-  const handleQRCode = useCallback(
-    async (QRCodeString: string) => {
-      isParsing.current = true;
+  // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
+  const handleParse = useCallback(
+    async (dataString: string) => {
+      isParsingRef.current = true;
       let ethUrl: ETHURL;
-      if (await methods.checkIsValidAddress({ networkType: currentNetwork.networkType, addressValue: QRCodeString })) {
-        ethUrl = { target_address: QRCodeString, schema_prefix: currentNetwork.networkType === NetworkType.Ethereum ? 'ethereum:' : 'conflux:' } as ETHURL;
+      if (await methods.checkIsValidAddress({ networkType: currentNetwork.networkType, addressValue: dataString })) {
+        ethUrl = { target_address: dataString, schema_prefix: currentNetwork.networkType === NetworkType.Ethereum ? 'ethereum:' : 'conflux:' } as ETHURL;
         onParseEthUrlSuccess(ethUrl);
-        isParsing.current = false;
+        isParsingRef.current = false;
         return;
       }
 
       try {
-        if (!onConfirm && QRCodeString.startsWith('wc:')) {
-          setScanStatus({ type: ScanStatusType.ConnectingWC, message: t('wc.connecting') });
-          await plugins.WalletConnect.connect({ wcURI: QRCodeString });
+        if (!onConfirm && dataString.startsWith('wc:')) {
+          setParseStatus({ type: ScanStatusType.ConnectingWC, message: t('wc.connecting') });
+          await plugins.WalletConnect.connect({ wcURI: dataString });
         } else {
-          ethUrl = parseETHURL(QRCodeString);
+          ethUrl = parseETHURL(dataString);
           onParseEthUrlSuccess(ethUrl);
-          isParsing.current = false;
+          isParsingRef.current = false;
         }
       } catch (err) {
-        isParsing.current = false;
+        isParsingRef.current = false;
         if (err instanceof WalletConnectPluginError) {
           if (err.message === 'VersionNotSupported') {
-            setScanStatus({ message: t('scan.walletConnect.error.lowVersion') });
+            setParseStatus({ message: t('scan.walletConnect.error.lowVersion') });
           } else if (err.message === 'PairingAlreadyExists') {
-            setScanStatus({ message: t('scan.walletConnect.error.pairingAlreadyExists') });
+            setParseStatus({ message: t('scan.walletConnect.error.pairingAlreadyExists') });
           } else {
-            setScanStatus({ message: `${t('scan.walletConnect.error.connectFailed')} ${String(err ?? '')}` });
+            setParseStatus({ message: `${t('scan.walletConnect.error.connectFailed')} ${String(err ?? '')}` });
           }
         } else {
-          setScanStatus({ message: t('scan.QRCode.error.notRecognized') });
+          setParseStatus({ message: t('scan.QRCode.error.notRecognized') });
         }
       }
     },
-    [onConfirm, onParseEthUrlSuccess, currentNetwork.networkType, t, navigation],
+    [onConfirm, onParseEthUrlSuccess, currentNetwork?.id],
   );
 
-  const handleCodeScan = useCallback(
-    async (scanningResult: BarcodeScanningResult) => {
-      const code = scanningResult.data;
-      if (!code || isParsing.current) return;
-      await handleQRCode(code);
-    },
-    [handleQRCode],
-  );
+  // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
+  const onScanQrCodeFailed = useCallback(() => setParseStatus({ message: t('scan.QRCode.error.notRecognized') }), []);
+  const { hasCameraPermission, hasRejectCameraPermission, checkCameraPermission, pickImage, Camera } = useQRCodeScan({
+    style: styles.camera,
+    onSuccess: handleParse,
+    onFailed: onScanQrCodeFailed,
+    isParsingRef,
+  });
 
-  const pickImage = useCallback(async () => {
-    // No permissions request is necessary for launching the image library
-    const result = await launchImageLibraryAsync({
-      allowsEditing: true,
-      allowsMultipleSelection: false,
-      quality: 1,
-    });
-    // check is user cancel choose image
-    if (!result.canceled) {
-      try {
-        const [assets] = result.assets;
-        if (!assets || !assets.uri) return;
-        const [codeRes] = await Camera.scanFromURLAsync(assets.uri);
-        if (!codeRes) {
-          setScanStatus({ message: t('scan.QRCode.error.notRecognized') });
-        }
+  const externalData = route?.params?.data;
 
-        if (codeRes.data) {
-          await handleQRCode(codeRes.data);
-        }
-      } catch (error) {
-        console.log('scan image error: ', error);
-      }
-    }
-  }, [handleQRCode]);
-
-  const requestCameraPermission = useCallback(async () => {
-    const isSuccess = await requestPermission();
-    if (!isSuccess) {
-      setHasRejectPermission(true);
+  // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
+  useEffect(() => {
+    if (externalData) {
+      handleParse(externalData);
     }
   }, []);
 
-  const handleOnOpen = useCallback(() => {
-    if (!hasPermission) {
-      requestCameraPermission();
+  // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
+  const onBottomSheetOpen = useCallback(() => {
+    if (!externalData) {
+      checkCameraPermission();
     }
   }, []);
-  console.log('hasPermission --------------', hasPermission);
+
   return (
     <BottomSheet
       ref={bottomSheetRef}
-      snapPoints={snapPoints.large}
+      snapPoints={externalData ? snapPoints.percent40 : snapPoints.large}
       isRoute={!onConfirm}
       index={!onConfirm ? undefined : 0}
-      onOpen={handleOnOpen}
+      onOpen={onBottomSheetOpen}
       onClose={onClose}
     >
       <BottomSheetWrapper innerPaddingHorizontal>
-        <BottomSheetHeader title={t('scan.title')} />
+        <BottomSheetHeader title={externalData ? 'Linking' : t('scan.title')} />
         <BottomSheetContent>
-          {hasPermission?.granted && (
+          {!externalData && hasCameraPermission && (
             <>
-              {
-                <>
-                  <View style={styles.cameraWrapper}>
-                    <CameraView facing="back" style={styles.camera} barcodeScannerSettings={{ barcodeTypes: ['qr'] }} onBarcodeScanned={handleCodeScan} />
-                    {scanStatus?.type === ScanStatusType.ConnectingWC && (
-                      <>
-                        <View style={styles.cameraMask} />
-                        <Spinner
-                          style={{ position: 'absolute' }}
-                          width={68}
-                          height={68}
-                          color={reverseColors.iconPrimary}
-                          backgroundColor={colors.iconPrimary}
-                        />
-                      </>
-                    )}
-                  </View>
-                  <ScanBorder style={styles.scanBorder} color={colors.borderFourth} pointerEvents="none" />
-                  {typeof scanStatus === 'object' && scanStatus.message && (
-                    <Text style={[styles.message, { color: scanStatus?.type === ScanStatusType.ConnectingWC ? colors.up : colors.down }]}>
-                      {scanStatus.message}
-                    </Text>
-                  )}
-                </>
-              }
+              <View style={styles.cameraWrapper}>
+                {parseStatus?.type !== ScanStatusType.ConnectingWC && Camera}
+                {parseStatus?.type === ScanStatusType.ConnectingWC && (
+                  <>
+                    <View style={styles.cameraMask} />
+                    <Spinner style={{ position: 'absolute' }} width={68} height={68} color={reverseColors.iconPrimary} backgroundColor={colors.iconPrimary} />
+                  </>
+                )}
+              </View>
+              <ScanBorder style={styles.scanBorder} color={colors.borderFourth} pointerEvents="none" />
             </>
           )}
-          {!hasPermission?.granted && (
+          {(externalData || hasCameraPermission) && parseStatus?.message && (
+            <Text style={[styles.message, { color: parseStatus?.type === ScanStatusType.ConnectingWC ? colors.up : colors.down }]}>{parseStatus.message}</Text>
+          )}
+
+          {!externalData && !hasCameraPermission && (
             <>
-              {!hasRejectPermission && (
+              {!hasRejectCameraPermission && (
                 <>
                   <Text style={[styles.tip, { color: colors.down, marginBottom: 8 }]}>{t('scan.permission.title')}</Text>
                   <Text style={[styles.tip, { color: colors.textPrimary }]}>{t('scan.permission.describe')}</Text>
                 </>
               )}
-              {hasRejectPermission && (
+              {hasRejectCameraPermission && (
                 <>
                   <Text style={[styles.tip, { color: colors.textPrimary, marginBottom: 8 }]}>{t('scan.permission.reject.title')}</Text>
                   <Text style={[styles.tip, { color: colors.textPrimary }]}>
@@ -288,12 +268,12 @@ const ScanQrCode: React.FC<Props> = ({ navigation, onConfirm, onClose, route }) 
           )}
         </BottomSheetContent>
         <BottomSheetFooter>
-          {hasPermission?.granted && (
+          {!externalData && hasCameraPermission && (
             <Button testID="photos" style={styles.photos} onPress={pickImage}>
               {t('scan.photos')}
             </Button>
           )}
-          {!hasPermission?.granted && hasRejectPermission && (
+          {!externalData && !hasCameraPermission && hasRejectCameraPermission && (
             <View style={styles.btnArea}>
               <Button
                 testID="dismiss"
@@ -315,15 +295,17 @@ const ScanQrCode: React.FC<Props> = ({ navigation, onConfirm, onClose, route }) 
               </Button>
             </View>
           )}
-          {scanStatus?.type !== ScanStatusType.ConnectingWC && (
-            <Button
-              testID="dismiss"
-              style={styles.btn}
-              onPress={() => (bottomSheetRef?.current ? bottomSheetRef.current.close() : navigation?.goBack())}
-              size="small"
-            >
-              {t('common.dismiss')}
-            </Button>
+          {externalData && parseStatus && parseStatus?.type !== ScanStatusType.ConnectingWC && (
+            <View style={styles.btnArea}>
+              <Button
+                testID="dismiss"
+                style={styles.btn}
+                onPress={() => (bottomSheetRef?.current ? bottomSheetRef.current.close() : navigation?.goBack())}
+                size="small"
+              >
+                {t('common.dismiss')}
+              </Button>
+            </View>
           )}
         </BottomSheetFooter>
       </BottomSheetWrapper>
@@ -379,6 +361,7 @@ const styles = StyleSheet.create({
   btnArea: {
     display: 'flex',
     flexDirection: 'row',
+    justifyContent: 'center',
     gap: 16,
   },
   btn: {
@@ -387,4 +370,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default ScanQrCode;
+export default ExternalInputHandler;

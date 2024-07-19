@@ -20,7 +20,6 @@ export const NetworkManagementStackName = 'NetworkManagement';
 export const NetworkAddNewEndpointStackName = 'NetworkAddNewEndpoint';
 export const PasswordVerifyStackName = 'PasswordVerify';
 export const SendTransactionStackName = 'SendTransaction';
-export const ScanQRCodeStackName = 'ScanQRCode';
 export const ReceiveStackName = 'Receive';
 export const EraseAllWalletStackName = 'EraseAllWallet';
 export const AddAnotherWalletStackName = 'AddAnotherWallet';
@@ -33,6 +32,7 @@ export const LanguageStackName = 'Language';
 export const SignatureRecordsStackName = 'SignatureRecords';
 export const SpeedUpStackName = 'SpeedUp';
 export const TransactionDetailStackName = 'TransactionDetail';
+export const ExternalInputHandlerStackName = 'ExternalInputHandler';
 
 // start Wallet connect nest stack
 
@@ -67,7 +67,6 @@ export type RootStackParamList = {
   [SendTransactionStackName]: NavigatorScreenParams<SendTransactionParamList>;
   [NetworkManagementStackName]: undefined;
   [PasswordVerifyStackName]: undefined;
-  [ScanQRCodeStackName]: undefined;
   [ReceiveStackName]: undefined;
   [EraseAllWalletStackName]: undefined;
   [AddAnotherWalletStackName]: undefined;
@@ -82,6 +81,7 @@ export type RootStackParamList = {
   [SignatureRecordsStackName]: undefined;
   [SpeedUpStackName]: { txId: string; type: 'SpeedUp' | 'Cancel'; level?: SpeedUpLevel };
   [TransactionDetailStackName]: { txId: string };
+  [ExternalInputHandlerStackName]: { data: string } | undefined;
 };
 
 export type StackScreenProps<T extends keyof RootStackParamList> = NativeStackScreenProps<RootStackParamList, T>;
