@@ -6,7 +6,6 @@ import { queryNetworks } from '@core/database/models/Network/query';
 import { Networks } from '@core/utils/consts';
 import { StackActions, useNavigation } from '@react-navigation/native';
 import {
-  ExternalInputHandlerStackName,
   HomeStackName,
   WalletConnectProposalStackName,
   WalletConnectSignMessageStackName,
@@ -38,8 +37,8 @@ export function useListenWalletConnectEvent() {
       }
 
       const activeRouterName = getActiveRouteName(navigation.getState());
-      const needDispatch = activeRouterName === HomeStackName || activeRouterName === ExternalInputHandlerStackName;
-      console.log('activeRouterName', activeRouterName, needDispatch);
+      const needDispatch = activeRouterName !== HomeStackName;
+
       const navigateMethod = !needDispatch
         ? navigation.navigate
         : (stackName: string, params: any) => navigation?.dispatch(StackActions.replace(stackName, params));

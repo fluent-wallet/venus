@@ -162,7 +162,7 @@ export const TabsContent: React.FC<Props> = ({ currentTab, setCurrentTab, pageVi
       const childNumber = findNodeHandle(parentRefs[position].current);
       if (childNumber === null) return;
       childRefs[position].current?.measureLayout(childNumber, (_, __, ___, height) => {
-        setPageViewHeight(height);
+        setPageViewHeight(Math.max(height, minHeight));
       });
     },
     [tabs],

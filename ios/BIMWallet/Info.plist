@@ -20,6 +20,25 @@
 	<string>$(MARKETING_VERSION)</string>
 	<key>CFBundleSignature</key>
 	<string>????</string>
+	<key>branch_universal_link_domains</key>
+	<array>
+		<string>bimwallet.app.link</string>
+		<string>bimwallet-alternate.app.link</string>
+		<string>bimwallet.test.app.link</string>
+		<string>bimwallet-alternate.test.app.link</string>
+	</array>
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>ethereum</string>
+				<string>metamask</string>
+				<string>dapp</string>
+				<string>wc</string>
+			</array>
+		</dict>
+	</array>
 	<key>CFBundleVersion</key>
 	<string>$(CURRENT_PROJECT_VERSION)</string>
 	<key>LSRequiresIPhoneOS</key>
