@@ -3,13 +3,14 @@ import type { Tx } from '@core/database/models/Tx';
 import { TxSource, TxStatus } from '@core/database/models/Tx/type';
 import type { TxExtra } from '@core/database/models/TxExtra';
 import type { TxPayload } from '@core/database/models/TxPayload';
-import { injectable } from 'inversify';
+import { inject, injectable } from 'inversify';
 import database from '../../database';
 import { type Asset, AssetType } from '../../database/models/Asset';
 import { createTx as _createTx, queryTxsWithAddress } from '../../database/models/Tx/query';
 import { createTxExtra as _createTxExtra } from '../../database/models/TxExtra/query';
 import { createTxPayload as _createTxPayload } from '../../database/models/TxPayload/query';
 import type { TransactionSubjectValue } from '../Events/broadcastTransactionSubject';
+import { Plugins } from '@core/WalletCore/Plugins';
 
 interface createTxPayloadParams {
   tx: TransactionSubjectValue['tx'];
@@ -19,17 +20,24 @@ interface createTxPayloadParams {
 
 @injectable()
 export class TxMethod {
+  @inject(Plugins) plugins!: Plugins;
+
+  private async isWaitting(address: Address, txNonce: number | undefined) {
+    const nextNonce = await this.plugins.NextNonceTracker.getNextNonce(address, true);
+    return BigInt(nextNonce) < BigInt(txNonce ?? 0);
+  }
+
   createTx(params: TransactionSubjectValue, prepareCreate: true): Promise<readonly [Tx, TxPayload, TxExtra]>;
   createTx(params: TransactionSubjectValue): Promise<void>;
   async createTx(params: TransactionSubjectValue, prepareCreate?: true) {
     try {
-      const { address, tx: _tx, extraParams, txRaw, txHash, signature, app } = params;
+      const { address, tx: txData, extraParams, txRaw, txHash, signature, app } = params;
       const updated = await this.updateTx(params);
       if (updated) return updated;
       const [txPayload, txExtra] = await Promise.all([
         this.createTxPayload(
           {
-            tx: _tx,
+            tx: txData,
             address,
             epochHeight: extraParams.epochHeight,
           },
@@ -44,6 +52,7 @@ export class TxMethod {
       } else if (params.extraParams.contractAddress) {
         asset = await network.queryAssetByAddress(params.extraParams.contractAddress);
       }
+      const isWaitting = await this.isWaitting(address, txData.nonce);
 
       const tx = _createTx(
         {
@@ -51,7 +60,7 @@ export class TxMethod {
           app,
           raw: txRaw,
           hash: txHash,
-          status: extraParams.err ? TxStatus.FAILED : TxStatus.PENDING,
+          status: extraParams.err ? TxStatus.FAILED : isWaitting ? TxStatus.WAITTING : TxStatus.PENDING,
           sendAt: extraParams.sendAt,
           txPayload,
           txExtra,
@@ -74,7 +83,7 @@ export class TxMethod {
   }
 
   async updateTx(params: TransactionSubjectValue) {
-    const { address, extraParams, txRaw, txHash, signature, app } = params;
+    const { address, extraParams, txRaw, txHash, signature, app, tx: txData } = params;
     const sameTx = await queryTxsWithAddress(address.id, {
       raw: txRaw,
     });
@@ -86,11 +95,12 @@ export class TxMethod {
     const hasSuccessTx = sameTx.some((tx) => tx.status !== TxStatus.FAILED);
     const tx = sameTx[0];
     let newTx = tx;
+    const isWaitting = await this.isWaitting(address, txData.nonce);
     if (!hasSuccessTx) {
       newTx = await tx.updateSelf((_tx) => {
         _tx.app.id = app?.id;
         _tx.hash = txHash;
-        _tx.status = extraParams.err ? TxStatus.FAILED : TxStatus.PENDING;
+        _tx.status = extraParams.err ? TxStatus.FAILED : isWaitting ? TxStatus.WAITTING : TxStatus.PENDING;
         _tx.sendAt = extraParams.sendAt;
         _tx.err = extraParams.err;
         _tx.errorType = extraParams.errorType;

@@ -64,6 +64,9 @@ class TxTrackerPluginClass implements Plugin {
       }
       this._startup(selectedAddress);
     });
+    events.nextNonceSubject.subscribe(async (nextNonce) => {
+      this._handleWaittingTx(nextNonce);
+    });
   }
 
   /**
@@ -304,6 +307,30 @@ class TxTrackerPluginClass implements Plugin {
       } else {
         status === TxStatus.FINALIZED ? this._checkFinalized() : this._resetFinalizedTimer();
       }
+    }
+  }
+
+  async _handleWaittingTx(_nextNonce: string) {
+    try {
+      const currentAddress = this._currentAddress;
+      if (!currentAddress) {
+        throw new Error('No selected address');
+      }
+      // query all waitting txs with selectedAddress
+      const txs = await queryTxsWithAddress(currentAddress.id, {
+        inStatuses: [TxStatus.WAITTING],
+      });
+      const nextNonce = BigInt(_nextNonce);
+      for (const tx of txs) {
+        const payload = await tx.txPayload;
+        if (BigInt(payload.nonce!) <= nextNonce) {
+          tx.updateSelf((_tx) => {
+            _tx.status = TxStatus.PENDING;
+          });
+        }
+      }
+    } catch (error) {
+      console.log('TxTracker: ', error);
     }
   }
 }

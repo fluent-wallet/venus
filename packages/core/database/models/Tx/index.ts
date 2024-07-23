@@ -9,7 +9,7 @@ import type { Asset } from '../Asset';
 import type { Signature } from '../Signature';
 import type { TxExtra } from '../TxExtra';
 import type { TxPayload } from '../TxPayload';
-import type { ExecutedStatus, Receipt, TxSource, TxStatus } from './type';
+import { FINALIZED_TX_STATUSES, type TxStatus, type ExecutedStatus, type Receipt, type TxSource } from './type';
 
 export class Tx extends Model {
   static table = TableName.Tx;
@@ -58,6 +58,7 @@ export class Tx extends Model {
   @children(TableName.Signature) signatures!: Query<Signature>;
 
   @writer updateSelf(recordUpdater: (_: this) => void) {
+    if (FINALIZED_TX_STATUSES.includes(this.status)) return Promise.resolve();
     return this.update(recordUpdater);
   }
 

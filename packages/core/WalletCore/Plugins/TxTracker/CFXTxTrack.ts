@@ -2,9 +2,9 @@ import { fetchChain, fetchChainBatch } from '@cfx-kit/dapp-utils/dist/fetch';
 import { type Network, NetworkType } from '@core/database/models/Network';
 import type { Tx } from '@core/database/models/Tx';
 import { EXECUTED_NOT_FINALIZED_TX_STATUSES, ExecutedStatus, TxStatus } from '@core/database/models/Tx/type';
-import { ProcessErrorType } from '@core/utils/eth';
 import BlockNumberTracker from '../BlockNumberTracker';
 import { BaseTxTrack, type RPCErrorResponse, isRPCError } from './BaseTxTrack';
+import { ReplacedResponse } from './types';
 
 class CFXTxTrack extends BaseTxTrack {
   networkType = NetworkType.Conflux as const;
@@ -22,39 +22,46 @@ class CFXTxTrack extends BaseTxTrack {
       url: endpoint,
       rpcs: getTransactionByHashParams,
     });
-    const executedTxs = txs.filter((tx, index) => {
-      const transaction = getTransactionByHashResponses[index];
-      if (isRPCError(transaction)) {
-        console.log('CFXTxTrack: getTransactionByHash error:', {
-          hash: tx.hash,
-          error: transaction,
-        });
-        return false;
-      }
-      if (!transaction) {
-        this._handleUnsent(tx, network);
-        if (EXECUTED_NOT_FINALIZED_TX_STATUSES.includes(tx.status)) {
-          this._handleDuplicateTx(tx, false, false);
-        }
-        status = TxStatus.UNSENT;
-        return false;
-      }
-      //  the transaction is skipped or not packed
-      if (transaction.status !== '0x1' && transaction.status !== '0x0') {
-        status = TxStatus.PENDING;
-        tx.updateSelf((tx) => {
-          tx.status = TxStatus.PENDING;
-          tx.executedStatus = null;
-          tx.receipt = null;
-        }).then(() => {
-          if (EXECUTED_NOT_FINALIZED_TX_STATUSES.includes(tx.status)) {
-            this._handleDuplicateTx(tx, false, false);
+    const executedTxs = (
+      await Promise.all(
+        txs.map(async (tx, index) => {
+          const transaction = getTransactionByHashResponses[index];
+          if (isRPCError(transaction)) {
+            console.log('CFXTxTrack: getTransactionByHash error:', {
+              hash: tx.hash,
+              error: transaction,
+            });
+            return false;
           }
-        });
-        return false;
-      }
-      return true;
-    });
+          if (!transaction) {
+            await this._handleUnsent(tx, network);
+            status = TxStatus.UNSENT;
+            return false;
+          }
+          //  the transaction is skipped or not packed
+          if (transaction.status !== '0x1' && transaction.status !== '0x0') {
+            const replaceReponse = await this._handleCheckReplaced(tx, endpoint);
+            switch (replaceReponse) {
+              case ReplacedResponse.NotReplaced:
+                status = TxStatus.PENDING;
+                this._setPending(tx);
+                break;
+              case ReplacedResponse.Replaced:
+                status = TxStatus.REPLACED;
+                if (EXECUTED_NOT_FINALIZED_TX_STATUSES.includes(tx.status)) {
+                  this._handleDuplicateTx(tx, false, false);
+                }
+                this._setReplaced(tx, true, true);
+                break;
+              default:
+                break;
+            }
+            return false;
+          }
+          return tx;
+        }),
+      )
+    ).filter((tx) => !!tx);
     if (executedTxs.length) {
       const getTransactionReceiptParams = executedTxs.map((tx) => ({ method: 'cfx_getTransactionReceipt', params: [tx.hash] }));
       const getTransactionReceiptResponses = await fetchChainBatch<(CFX.cfx_getTransactionReceiptResponse | RPCErrorResponse)[]>({
@@ -84,13 +91,9 @@ class CFXTxTrack extends BaseTxTrack {
         url: endpoint,
         rpcs: getBlockByHashParams,
       });
-      let latestBlockNumber: bigint | undefined;
       let safeBlockNumber: bigint | undefined;
       let finalizedBlockNumber: bigint | undefined;
       if (!isRPCError(statusResponse) && statusResponse) {
-        if (statusResponse.latestState) {
-          latestBlockNumber = BigInt(statusResponse.latestState);
-        }
         if (statusResponse.latestConfirmed) {
           safeBlockNumber = BigInt(statusResponse.latestConfirmed);
         }
@@ -108,10 +111,13 @@ class CFXTxTrack extends BaseTxTrack {
             });
             return false;
           }
+          if (!block) {
+            return false;
+          }
           let txStatus = TxStatus.EXECUTED;
           const receipt = receiptMap.get(tx.hash!)!;
           const txBlockNumber = BigInt(receipt.epochNumber!);
-          console.log('CFXTxTrack: blockNumber', txBlockNumber, finalizedBlockNumber, safeBlockNumber, latestBlockNumber);
+          console.log('CFXTxTrack: blockNumber', txBlockNumber, finalizedBlockNumber, safeBlockNumber);
           if (finalizedBlockNumber && txBlockNumber <= finalizedBlockNumber) {
             txStatus = TxStatus.FINALIZED;
             status = TxStatus.FINALIZED;
@@ -119,13 +125,10 @@ class CFXTxTrack extends BaseTxTrack {
             txStatus = TxStatus.CONFIRMED;
             status = TxStatus.CONFIRMED;
           }
-          await tx.updateSelf((tx) => {
-            if (txStatus === TxStatus.FINALIZED) {
-              tx.raw = null;
-            }
-            tx.status = txStatus;
-            tx.executedStatus = receipt.outcomeStatus === '0x0' ? ExecutedStatus.SUCCEEDED : ExecutedStatus.FAILED;
-            tx.receipt = {
+          this._setFinailzed(tx, {
+            txStatus,
+            executedStatus: receipt.outcomeStatus === '0x0' ? ExecutedStatus.SUCCEEDED : ExecutedStatus.FAILED,
+            receipt: {
               type: receipt.type || '0x0',
               blockHash: receipt.blockHash,
               transactionIndex: receipt.index,
@@ -138,21 +141,10 @@ class CFXTxTrack extends BaseTxTrack {
               storageCoveredBySponsor: receipt.storageCoveredBySponsor,
               storageReleased: receipt.storageReleased?.length ? receipt.storageReleased : undefined,
               contractCreated: receipt.contractCreated,
-            };
-            if (block.timestamp) {
-              tx.executedAt = new Date(Number(BigInt(block.timestamp)) * 1000);
-            }
-            if (receipt.outcomeStatus !== '0x0') {
-              tx.err = receipt.txExecErrorMsg ?? 'tx failed';
-              tx.errorType = ProcessErrorType.executeFailed;
-            }
+            },
+            txExecErrorMsg: receipt.outcomeStatus !== '0x0' ? receipt.txExecErrorMsg ?? 'tx failed' : undefined,
+            executedAt: block.timestamp ? new Date(Number(BigInt(block.timestamp)) * 1000) : undefined,
           });
-          if (tx.status !== txStatus) {
-            this._handleDuplicateTx(tx, true, txStatus === TxStatus.FINALIZED);
-            if (txStatus === TxStatus.EXECUTED) {
-              this._updateTokenBalance(tx);
-            }
-          }
         }),
       );
     }
@@ -177,10 +169,10 @@ class CFXTxTrack extends BaseTxTrack {
     }
   }
 
-  async _getTransactionByHash(hash: string, endpoint: string) {
-    return fetchChain<CFX.cfx_getTransactionByHashResponse>({
+  async _getTransactionReceipt(hash: string, endpoint: string) {
+    return fetchChain<CFX.cfx_getTransactionReceiptResponse>({
       url: endpoint,
-      method: 'cfx_getTransactionByHash',
+      method: 'cfx_getTransactionReceipt',
       params: [hash],
     });
   }
