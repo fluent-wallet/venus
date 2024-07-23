@@ -11,7 +11,8 @@
     "start": "react-native start",
     "test": "jest",
     "pod:install": "command -v pod && (cd ios/ && pod install --verbose && cd ..) || echo \"Skipping pod install\"",
-    "postinstall": "patch-package && yarn pod:install"
+    "postinstall": "yarn patch && yarn pod:install",
+    "patch": "patch-package"
   },
   "lint-staged": {
     "*.{js,ts,cjs,mjs,d.cts,d.mts,jsx,tsx,json,jsonc}": [
