@@ -32,6 +32,7 @@
 		<dict>
 			<key>CFBundleURLSchemes</key>
 			<array>
+				<string>bimwallet</string>
 				<string>ethereum</string>
 				<string>metamask</string>
 				<string>dapp</string>
