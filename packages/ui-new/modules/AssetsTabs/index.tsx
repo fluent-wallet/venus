@@ -12,9 +12,9 @@ import { screenHeight } from '@utils/deviceInfo';
 import { atom, useAtomValue } from 'jotai';
 /* eslint-disable react-hooks/exhaustive-deps */
 import type React from 'react';
-import { useCallback, useEffect, useMemo } from 'react';
+import { useCallback, useEffect, useMemo, useState, createRef, type RefObject } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { Pressable, StyleSheet, View, findNodeHandle, Platform } from 'react-native';
 import PagerView from 'react-native-pager-view';
 import Animated, { useSharedValue, useAnimatedStyle, withTiming } from 'react-native-reanimated';
 
@@ -80,6 +80,7 @@ export const Tabs: React.FC<Omit<Props, 'setCurrentTab' | 'onPressItem' | 'selec
   useEffect(() => {
     mapOfSetScrollY[type](0);
   }, [currentTab]);
+
   useEffect(() => {
     return () => {
       mapOfSetScrollY[type](0);
@@ -146,36 +147,60 @@ export const TabsContent: React.FC<Props> = ({ currentTab, setCurrentTab, pageVi
     type === 'Home' && res.push('Activity');
     return res;
   }, [currentNetwork, type]);
-
-  const currentTabIndex = useMemo(() => {
-    const index = tabs.indexOf(currentTab as 'Tokens');
-    return index === -1 ? 0 : index;
-  }, [tabs, currentTab]);
-
   const shouldShowNotBackup = useShouldShowNotBackup();
+
+  const minHeight = useMemo(() => screenHeight - (selectType === 'Home' ? (shouldShowNotBackup ? 450 : 340) : 300), [shouldShowNotBackup, selectType]);
+  const [pageViewHeight, setPageViewHeight] = useState<number | undefined>(() => undefined);
+  const parentRefs = useMemo<RefObject<View>[]>(() => Array.from({ length: tabs.length }).map(() => createRef()), [tabs]);
+  const childRefs = useMemo<RefObject<View>[]>(() => Array.from({ length: tabs.length }).map(() => createRef()), [tabs]);
+
+  // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
+  const recalculateHeight = useCallback(
+    (tab: Tab) => {
+      const position = tabs.indexOf(tab);
+      if (position === -1) return;
+      const childNumber = findNodeHandle(parentRefs[position].current);
+      if (childNumber === null) return;
+      childRefs[position].current?.measureLayout(childNumber, (_, __, ___, height) => {
+        setPageViewHeight(Math.max(height, minHeight));
+      });
+    },
+    [tabs],
+  );
 
   return (
     <PagerView
       ref={pageViewRef}
-      style={[styles.pagerView, { minHeight: screenHeight - (selectType === 'Home' ? (shouldShowNotBackup ? 450 : 340) : 300) }]}
+      style={[styles.pagerView, { minHeight, height: pageViewHeight }]}
       initialPage={0}
-      onPageSelected={(evt) => setCurrentTab(tabs[evt.nativeEvent.position])}
+      onPageSelected={(evt) => {
+        const { position } = evt.nativeEvent;
+        setCurrentTab(tabs[position]);
+        recalculateHeight(tabs[position]);
+      }}
+      useLegacy={type === 'SelectAsset' && Platform.OS === 'ios'}
     >
-      {tabs?.map((tab, index) => (
+      {tabs.map((tab, index) => (
         <View key={tab} style={styles.pagerView}>
-          {tab === 'Tokens' && index === currentTabIndex && (
-            <TokensList
-              selectType={selectType}
-              showReceiveFunds={
-                type === 'Home' &&
-                currentNetwork?.networkType === NetworkType.Ethereum &&
-                (currentNetwork.chainId === Networks['Conflux eSpace'].chainId || currentNetwork.chainId === Networks['eSpace Testnet'].chainId)
-              }
-              onPressItem={onPressItem}
-            />
-          )}
-          {tab === 'NFTs' && index === currentTabIndex && <NFTsList tabsType={type} onPressItem={onPressItem} />}
-          {tab === 'Activity' && index === currentTabIndex && <ActivityList />}
+          <View ref={parentRefs[index]}>
+            <View ref={childRefs[index]} onLayout={currentTab === tab ? () => recalculateHeight(tab) : undefined}>
+              {tab === 'Tokens' ? (
+                <TokensList
+                  selectType={selectType}
+                  showReceiveFunds={
+                    type === 'Home' &&
+                    currentNetwork?.networkType === NetworkType.Ethereum &&
+                    (currentNetwork.chainId === Networks['Conflux eSpace'].chainId || currentNetwork.chainId === Networks['eSpace Testnet'].chainId)
+                  }
+                  onPressItem={onPressItem}
+                />
+              ) : tab === 'NFTs' ? (
+                <NFTsList tabsType={type} onPressItem={onPressItem} />
+              ) : tab === 'Activity' ? (
+                <ActivityList />
+              ) : null}
+            </View>
+          </View>
         </View>
       ))}
     </PagerView>

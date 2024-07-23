@@ -38,25 +38,32 @@ export const queryTxsWithAddress = (
     if (!Array.isArray(sortBy)) {
       query.push(Q.sortBy(sortBy, Q.desc));
     } else {
-      sortBy.forEach((s) => query.push(Q.sortBy(s, Q.desc)));
+      for (const s of sortBy) {
+        query.push(Q.sortBy(s, Q.desc));
+      }
     }
   }
   return database.get<Tx>(TableName.Tx).query(...query);
 };
 
-export const observeTxById = memoize((txId: string) => database.get<Tx>(TableName.Tx).findAndObserve(txId));
+export const observeTxById = memoize((txId: string) =>
+  database
+    .get<Tx>(TableName.Tx)
+    .query(Q.where('id', txId))
+    .observeWithColumns(['executed_at', 'status', 'executed_status', 'polling_count', 'resend_count', 'confirmed_number', 'receipt']),
+);
 
 export const observeFinishedTxWithAddress = (addressId: string) =>
   queryTxsWithAddress(addressId, {
     inStatuses: FINISHED_IN_ACTIVITY_TX_STATUSES,
     sortBy: ['executed_at', 'created_at'],
-  }).observeWithColumns(['executed_at', 'status', 'polling_count', 'resend_count', 'confirmed_number']);
+  }).observeWithColumns(['executed_at', 'status', 'executed_status', 'polling_count', 'resend_count', 'confirmed_number']);
 
 export const observeUnfinishedTxWithAddress = (addressId: string) =>
   queryTxsWithAddress(addressId, {
     inStatuses: PENDING_TX_STATUSES,
     sortBy: 'created_at',
-  }).observeWithColumns(['status', 'polling_count', 'resend_count', 'confirmed_number']);
+  }).observeWithColumns(['status', 'executed_status', 'polling_count', 'resend_count', 'confirmed_number']);
 
 export const observeRecentlyTxWithAddress = (addressId: string) =>
   queryTxsWithAddress(addressId, {

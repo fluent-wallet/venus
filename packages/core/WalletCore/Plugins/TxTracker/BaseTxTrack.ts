@@ -30,7 +30,7 @@ export abstract class BaseTxTrack {
     try {
       const nonce = (await tx.txPayload).nonce!;
       const txs = await queryDuplicateTx(tx, nonce, NOT_FINALIZED_TX_STATUSES);
-      txs.forEach((_tx) => {
+      for (const _tx of txs) {
         _tx.updateSelf((t) => {
           if (finalized) {
             t.status = TxStatus.REPLACED;
@@ -43,10 +43,9 @@ export abstract class BaseTxTrack {
             t.executedStatus = null;
             t.receipt = null;
             t.executedAt = null;
-            t.confirmedNumber = null;
           }
         });
-      });
+      }
     } catch (error) {
       console.log(`${this._logPrefix}: `, error);
     }
@@ -116,7 +115,6 @@ export abstract class BaseTxTrack {
         }
         tx.executedStatus = null;
         tx.receipt = null;
-        tx.pollingCount = (tx.pollingCount ?? 0) + 1;
       });
     }
   }
@@ -126,14 +124,12 @@ export abstract class BaseTxTrack {
       const nonceUsed = await this._handleCheckNonceUsed(tx, nonce, endpoint);
       if (!nonceUsed) {
         return ReplacedResponse.NotReplaced;
-      } else {
-        const transaction = await this._getTransactionByHash(tx.hash!, endpoint);
-        if (!transaction) {
-          return ReplacedResponse.Replaced;
-        } else {
-          return ReplacedResponse.TxInPool;
-        }
       }
+      const transaction = await this._getTransactionByHash(tx.hash!, endpoint);
+      if (!transaction) {
+        return ReplacedResponse.Replaced;
+      }
+      return ReplacedResponse.TxInPool;
     } catch (error) {
       console.log('EthTxTrack error:', error);
       return ReplacedResponse.NotReplaced;

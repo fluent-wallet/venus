@@ -22,7 +22,7 @@ import Checkbox from '@components/Checkbox';
 import HourglassLoading from '@components/Loading/Hourglass';
 import { BottomSheetContent, BottomSheetFooter } from '@components/BottomSheet';
 import { AccountItemView } from '@modules/AccountsList';
-import ScanQRCode from '@pages/ScanQRCode';
+import ExternalInputHandler from '@pages/ExternalInputHandler';
 import { SendTransactionStep2StackName, type SendTransactionScreenProps, type SendTransactionStep1StackName } from '@router/configs';
 import type { ETHURL } from '@utils/ETHURL';
 import QrCodeIcon from '@assets/icons/qr-code.svg';
@@ -258,7 +258,7 @@ const SendTransactionStep1Receiver: React.FC<SendTransactionScreenProps<typeof S
           </BottomSheetFooter>
         )}
       </SendTransactionBottomSheet>
-      {showScanQRCode && <ScanQRCode onConfirm={handleCodeScan} onClose={() => setShowScanQRCode(false)} />}
+      {showScanQRCode && <ExternalInputHandler onConfirm={handleCodeScan} onClose={() => setShowScanQRCode(false)} />}
     </>
   );
 };

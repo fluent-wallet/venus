@@ -12,7 +12,7 @@ import EraseAllWallet from '@pages/Management/AccountManagement/EraseAllWallet';
 import GroupSetting from '@pages/Management/AccountManagement/GroupSetting';
 import HDSetting from '@pages/Management/AccountManagement/HDSetting';
 import Receive from '@pages/Receive';
-import ScanQRCode from '@pages/ScanQRCode';
+import ExternalInputHandler, { useListenDeepLink } from '@pages/ExternalInputHandler';
 import SendTransaction from '@pages/SendTransaction';
 import Settings from '@pages/Settings';
 import AboutUs, { UpdateVersion } from '@pages/Settings/AboutUs';
@@ -52,7 +52,7 @@ import {
   PreferencesStackName,
   ReceiveStackName,
   type RootStackParamList,
-  ScanQRCodeStackName,
+  ExternalInputHandlerStackName,
   SendTransactionStackName,
   SettingsStackName,
   SheetBottomOption,
@@ -64,7 +64,10 @@ import {
   NetworkManagementStackName,
   NetworkAddNewEndpointStackName,
   SpeedUpStackName,
+  TransactionDetailStackName,
 } from './configs';
+import TransactionDetail from '@pages/TransactionDetail';
+import { useTranslation } from 'react-i18next';
 
 const RootStack = createNativeStackNavigator<RootStackParamList>();
 const screenOptions = {
@@ -77,6 +80,7 @@ const screenOptions = {
 } as const;
 
 const Router: React.FC = () => {
+  const { t } = useTranslation();
   const hasVault = useHasVault();
   const { colors } = useTheme();
 
@@ -94,6 +98,8 @@ const Router: React.FC = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  useListenDeepLink(navigation);
+
   return (
     <View style={{ flex: 1, backgroundColor: colors.bgPrimary }}>
       <RootStack.Navigator initialRouteName={hasVault ? HomeStackName : WelcomeStackName} screenOptions={screenOptions}>
@@ -103,7 +109,7 @@ const Router: React.FC = () => {
         <RootStack.Screen name={BiometricsWayStackName} component={BiometricsWay} options={{ animation: 'fade' }} />
         <RootStack.Screen name={PasswordWayStackName} component={PasswordWay} />
         <RootStack.Screen name={AccountManagementStackName} component={AccountManagement} />
-        <RootStack.Screen name={NetworkManagementStackName} component={NetworkManagement} />
+        <RootStack.Screen name={NetworkManagementStackName} component={NetworkManagement} options={{ animation: 'fade' }} />
         <RootStack.Screen name={NetworkAddNewEndpointStackName} component={NetworkAddNewEndpoint} options={SheetBottomOption} />
         <RootStack.Screen name={AccountSettingStackName} component={AccountSetting} options={SheetBottomOption} />
         <RootStack.Screen name={GroupSettingStackName} component={GroupSetting} options={SheetBottomOption} />
@@ -112,7 +118,7 @@ const Router: React.FC = () => {
         <RootStack.Screen name={EraseAllWalletStackName} component={EraseAllWallet} options={SheetBottomOption} />
         <RootStack.Screen name={AddAnotherWalletStackName} component={AddAnotherWallet} options={SheetBottomOption} />
         <RootStack.Screen name={SendTransactionStackName} component={SendTransaction} options={SheetBottomOption} />
-        <RootStack.Screen name={ScanQRCodeStackName} component={ScanQRCode} options={SheetBottomOption} />
+        <RootStack.Screen name={ExternalInputHandlerStackName} component={ExternalInputHandler} options={SheetBottomOption} />
         <RootStack.Screen name={ReceiveStackName} component={Receive} options={SheetBottomOption} />
         <RootStack.Screen name={PasswordVerifyStackName} component={PasswordVerify} options={SheetBottomOption} />
         <RootStack.Screen name={SettingsStackName} component={Settings} />
@@ -124,6 +130,7 @@ const Router: React.FC = () => {
         <RootStack.Screen name={WalletConnectStackName} component={WalletConnect} options={SheetBottomOption} />
         <RootStack.Screen name={SignatureRecordsStackName} component={SignatureRecords} />
         <RootStack.Screen name={SpeedUpStackName} component={SpeedUp} options={SheetBottomOption} />
+        <RootStack.Screen name={TransactionDetailStackName} component={TransactionDetail} options={{ title: t('tx.detail.title') }} />
       </RootStack.Navigator>
     </View>
   );

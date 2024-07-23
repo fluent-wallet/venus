@@ -5,7 +5,7 @@ import { atom, useAtomValue } from 'jotai';
 import { atomFamily, atomWithObservable } from 'jotai/utils';
 import { useCallback } from 'react';
 import { filter, switchMap } from 'rxjs';
-import { observeSignatureRecordsCount, querySignatureRecords } from '../../../../database/models/Signature/query';
+import { observeSignatureById, observeSignatureRecordsCount, querySignatureRecords } from '../../../../database/models/Signature/query';
 import { getAtom, setAtom } from '../nexus';
 import { currentAddressObservable } from './useCurrentAddress';
 
@@ -54,8 +54,12 @@ export const fetchSignatureRecords = async (
   return data;
 };
 
-const appAtomFamilyOfSignature = atomFamily((s: Signature) => atomWithObservable(() => s.observeApp(), { initialValue: null }));
-export const useAppOfSignature = (s: Signature) => useAtomValue(appAtomFamilyOfSignature(s));
+const appAtomFamilyOfSignature = atomFamily((signatureId: string) =>
+  atomWithObservable(() => observeSignatureById(signatureId).pipe(switchMap((s) => s.observeApp())), { initialValue: null }),
+);
+export const useAppOfSignature = (signatureId: string) => useAtomValue(appAtomFamilyOfSignature(signatureId));
 
-const txAtomFamilyOfSignature = atomFamily((s: Signature) => atomWithObservable(() => s.observeTx(), { initialValue: null }));
-export const useTxOfSignature = (s: Signature) => useAtomValue(txAtomFamilyOfSignature(s));
+const txAtomFamilyOfSignature = atomFamily((signatureId: string) =>
+  atomWithObservable(() => observeSignatureById(signatureId).pipe(switchMap((s) => s.observeTx())), { initialValue: null }),
+);
+export const useTxOfSignature = (signatureId: string) => useAtomValue(txAtomFamilyOfSignature(signatureId));

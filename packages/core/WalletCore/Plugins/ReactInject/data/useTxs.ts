@@ -103,11 +103,23 @@ const recentlyAddressAtom = atomWithObservable(() => recentlyAddressObservable, 
 export const useRecentlyAddress = () => useAtomValue(recentlyAddressAtom);
 
 const payloadsAtomFamilyOfTx = atomFamily((txId: string) =>
-  atomWithObservable(() => observeTxById(txId).pipe(switchMap((tx) => tx.txPayload.observe())), { initialValue: null }),
+  atomWithObservable(() => observeTxById(txId).pipe(switchMap((txs) => txs[0].txPayload.observe())), { initialValue: null }),
 );
 export const usePayloadOfTx = (txId: string) => useAtomValue(payloadsAtomFamilyOfTx(txId));
 
 const assetAtomFamilyOfTx = atomFamily((txId: string) =>
-  atomWithObservable(() => observeTxById(txId).pipe(switchMap((tx) => tx.observeAsset())), { initialValue: null }),
+  atomWithObservable(() => observeTxById(txId).pipe(switchMap((txs) => txs[0].observeAsset())), { initialValue: null }),
 );
 export const useAssetOfTx = (txId: string) => useAtomValue(assetAtomFamilyOfTx(txId));
+
+const networkAtomFamilyOfTx = atomFamily((txId: string) =>
+  atomWithObservable(
+    () =>
+      observeTxById(txId).pipe(
+        switchMap((txs) => txs[0].address.observe()),
+        switchMap((address) => address.network.observe()),
+      ),
+    { initialValue: null },
+  ),
+);
+export const useNetworkOfTx = (txId: string) => useAtomValue(networkAtomFamilyOfTx(txId));

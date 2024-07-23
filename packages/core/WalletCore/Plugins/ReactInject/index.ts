@@ -4,7 +4,7 @@ export { useNetworks } from './data/useNetworks';
 export {
   useCurrentNetwork,
   getCurrentNetwork,
-  useNativeAssetOfCurrentNetwork,
+  useNativeAssetOfNetwork,
   useCurrentNetworkNativeAsset,
   getCurrentNetworkNativeAsset,
 } from './data/useCurrentNetwork';

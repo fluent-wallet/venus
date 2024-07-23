@@ -46,7 +46,7 @@ const BSIMVerify: React.FC<Props> = ({ bsimEvent, onClose, onRetry }) => {
         <View style={styles.content}>
           <Image style={styles.bsimImg} source={BSIMCardWallet} />
           <View style={{ flex: 1 }}>
-            <Text style={(styles.tip, { color: colors.textPrimary })}>
+            <Text style={[styles.tip, { color: colors.textPrimary }]}>
               {bsimEvent.type === BSIMEventTypesName.ERROR ? bsimEvent.message : `${t('tx.confirm.BSIM.message')}...`}
             </Text>
           </View>

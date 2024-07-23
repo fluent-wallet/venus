@@ -4,7 +4,7 @@ export const palette = {
   green2: '#CEF8FF',
   green3: '#A6F3FF',
   green4: '#48E6FF',
-  green5: '#00CAEA',
+  green5: '#01C2E1',
   green6: '#00798C',
   green7: '#00515E',
   green8: '#00282F',

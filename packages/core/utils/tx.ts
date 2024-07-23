@@ -16,7 +16,7 @@ export const formatStatus = (tx: Tx): 'failed' | 'pending' | 'confirmed' => {
   return 'confirmed';
 };
 
-export const formatTxData = (tx: Tx, payload: TxPayload | null, asset: Asset | null) => {
+export const formatTxData = (tx: Tx | null, payload: TxPayload | null, asset: Asset | null) => {
   let value = payload?.value;
   let to = payload?.to;
   let from = payload?.from;
@@ -24,7 +24,7 @@ export const formatTxData = (tx: Tx, payload: TxPayload | null, asset: Asset | n
   let isTransfer = false;
   switch (asset?.type) {
     case AssetType.ERC20: {
-      if (tx.method === 'transfer' && payload?.data) {
+      if (tx?.method === 'transfer' && payload?.data) {
         const params = iface777.decodeFunctionData('transfer', payload.data);
         to = params[0];
         value = params[1].toString();
@@ -33,7 +33,7 @@ export const formatTxData = (tx: Tx, payload: TxPayload | null, asset: Asset | n
       break;
     }
     case AssetType.ERC721: {
-      if (tx.method === 'transferFrom' && payload?.data) {
+      if (tx?.method === 'transferFrom' && payload?.data) {
         const params = iface721.decodeFunctionData('transferFrom', payload.data);
         from = params[0];
         to = params[1];
@@ -44,7 +44,7 @@ export const formatTxData = (tx: Tx, payload: TxPayload | null, asset: Asset | n
       break;
     }
     case AssetType.ERC1155: {
-      if (tx.method === 'safeTransferFrom' && payload?.data) {
+      if (tx?.method === 'safeTransferFrom' && payload?.data) {
         const params = iface1155.decodeFunctionData('safeTransferFrom', payload.data);
         from = params[0];
         to = params[1];
@@ -55,15 +55,17 @@ export const formatTxData = (tx: Tx, payload: TxPayload | null, asset: Asset | n
       break;
     }
     case AssetType.Native: {
-      if (tx.method === 'transfer') {
+      if (tx?.method === 'transfer') {
         isTransfer = true;
       }
       break;
     }
   }
-  if (!isTransfer && asset && payload && tx.method === 'approve') {
+  if (!isTransfer && asset && payload && tx?.method === 'approve') {
     const { value: approveValue } = parseTxData({ data: payload.data, to: payload.to }) as FunctionNameApprove;
-    approveValue && (value = approveValue.toString());
+    if (approveValue) {
+      value = approveValue.toString();
+    }
   }
   return {
     to,

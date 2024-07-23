@@ -1,4 +1,4 @@
-name: Android build
+name: build QA
 
 permissions:
   contents: write
@@ -15,13 +15,14 @@ jobs:
     steps:
       - name: Check out Git repository
         uses: actions/checkout@v4
-        with: 
+        with:
           ref: qa
 
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 20
+          cache: "yarn"
 
       - name: install dependencies
         run: yarn
@@ -29,21 +30,15 @@ jobs:
       - name: Set up JDK envronment
         uses: actions/setup-java@v4
         with:
-          distribution: 'zulu'
-          java-version: '17'
+          distribution: "zulu"
+          java-version: "17"
+          cache: "gradle"
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
-      - uses: actions/cache@v4
-        with:
-          path: |
-            ~/.gradle/caches
-            ~/.gradle/wrapper
-          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
-          restore-keys: |
-            ${{ runner.os }}-gradle-
+
       - name: Make Gradlew Executable
         run: cd android && chmod +x ./gradlew
-      - name: Build Android qa Release
+      - name: Set env and Build Android Release
         env:
           PASSWORD_CRYPTO_KEY: ${{ secrets.PASSWORD_CRYPTO_KEY }}
           STAGING_ANDROID: ${{ secrets.STAGING_ANDROID }}
@@ -54,9 +49,59 @@ jobs:
           PASSWORD_CRYPTO_KEY=$PASSWORD_CRYPTO_KEY
           END
           cd android && ./gradlew app:assembleQaRelease && cd ..
-
-      - name: Release
+      - name: rename apk
+        run: mv ./android/app/build/outputs/apk/qa/release/app-qa-release.apk ./android/app/build/outputs/apk/qa/release/BIMWallet-$GITHUB_REF_NAME.apk
+      - name: push to github
         uses: softprops/action-gh-release@v2
         with:
-            files: |
-             ./android/app/build/outputs/apk/qa/release/app-qa-release.apk
+          files: |
+            ./android/app/build/outputs/apk/qa/release/BIMWallet-$GITHUB_REF_NAME.apk
+  ios-build:
+    name: IOS Build
+    runs-on: macos-latest
+    steps:
+      - name: Check out Git repository
+        uses: actions/checkout@v4
+        with:
+          ref: qa
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: "yarn"
+
+      - name: install dependencies
+        run: yarn
+
+
+      - name: patch and install pod
+        env:
+          PASSWORD_CRYPTO_KEY: ${{ secrets.PASSWORD_CRYPTO_KEY }}
+          STAGING_ANDROID: ${{ secrets.STAGING_ANDROID }}
+        run: |
+          echo "" > .env
+          cat >>.env <<END
+          APP_ENV=qa
+          PASSWORD_CRYPTO_KEY=$PASSWORD_CRYPTO_KEY
+          END
+          yarn patch && cd ios && pod install --repo-update && cd ..
+
+      - name: Build IOS App
+        uses: yukiarrr/ios-build-action@v1.12.0
+        with:
+          project-path: ios/BIMWallet.xcodeproj
+          p12-base64: ${{ secrets.IOS_P12_BASE64 }}
+          mobileprovision-base64: ${{ secrets.IOS_MOBILE_PROVISION_BASE64 }}
+          team-id: ${{ secrets.IOS_TEAM_ID }}
+          certificate-password: ${{ secrets.IOS_CERTIFICATE_PASSWORD }}
+          workspace-path: ios/BIMWallet.xcworkspace
+          code-signing-identity: 'iPhone Distribution'
+
+      - name: "Upload app to TestFlight"
+        uses: apple-actions/upload-testflight-build@v1
+        with:
+          app-path: "output.ipa"
+          issuer-id: ${{ secrets.APPSTORE_ISSUER_ID }}
+          api-key-id: ${{ secrets.APPSTORE_API_KEY_ID }}
+          api-private-key: ${{ secrets.APPSTORE_API_PRIVATE_KEY }}

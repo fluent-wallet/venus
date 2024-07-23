@@ -1,5 +1,5 @@
 import methods from '@core/WalletCore/Methods';
-import Plugins from '@core/WalletCore/Plugins';
+import plugins from '@core/WalletCore/Plugins';
 import { NetworkType, useCurrentAddressValue, useCurrentNetwork } from '@core/WalletCore/Plugins/ReactInject';
 import { WalletConnectPluginEventType } from '@core/WalletCore/Plugins/WalletConnect/types';
 import { queryNetworks } from '@core/database/models/Network/query';
@@ -7,11 +7,11 @@ import { Networks } from '@core/utils/consts';
 import { StackActions, useNavigation } from '@react-navigation/native';
 import {
   HomeStackName,
-  type StackNavigation,
   WalletConnectProposalStackName,
   WalletConnectSignMessageStackName,
   WalletConnectStackName,
   WalletConnectTransactionStackName,
+  type StackNavigation,
 } from '@router/configs';
 import backToHome, { getActiveRouteName } from '@utils/backToHome';
 import { isDev, isQA } from '@utils/getEnv';
@@ -27,7 +27,7 @@ export function useListenWalletConnectEvent() {
   const currentNetwork = useCurrentNetwork()!;
 
   useEffect(() => {
-    const subject = Plugins.WalletConnect.currentEventSubject.subscribe(async (event) => {
+    const subject = plugins.WalletConnect.currentEventSubject.subscribe(async (event) => {
       if (event === undefined) {
         return;
       }
@@ -35,6 +35,13 @@ export function useListenWalletConnectEvent() {
         backToHome(navigation);
         return;
       }
+
+      const activeRouterName = getActiveRouteName(navigation.getState());
+      const needDispatch = activeRouterName !== HomeStackName;
+
+      const navigateMethod = !needDispatch
+        ? navigation.navigate
+        : (stackName: string, params: any) => navigation?.dispatch(StackActions.replace(stackName, params));
 
       const { type } = event;
       switch (type) {
@@ -56,31 +63,15 @@ export function useListenWalletConnectEvent() {
           if (requestChains.length === 0) {
             return event.action.reject('UNSUPPORTED_CHAINS');
           }
-
-          if (getActiveRouteName(navigation.getState()) === HomeStackName) {
-            navigation.navigate(WalletConnectStackName, {
-              screen: WalletConnectProposalStackName,
-              params: {
-                ...event.data,
-                connectedNetworks: networks
-                  .filter((network) => requestChains.includes(network.netId))
-                  .map((network) => ({ icon: network.icon!, name: network.name, netId: network.netId, id: network.id })),
-              },
-            });
-          } else {
-            navigation?.dispatch(
-              StackActions.replace(WalletConnectStackName, {
-                screen: WalletConnectProposalStackName,
-                params: {
-                  ...event.data,
-                  connectedNetworks: networks
-                    .filter((network) => requestChains.includes(network.netId))
-                    .map((network) => ({ icon: network.icon!, name: network.name, netId: network.netId, id: network.id })),
-                },
-              }),
-            );
-          }
-
+          navigateMethod(WalletConnectStackName, {
+            screen: WalletConnectProposalStackName,
+            params: {
+              ...event.data,
+              connectedNetworks: networks
+                .filter((network) => requestChains.includes(network.netId))
+                .map((network) => ({ icon: network.icon!, name: network.name, netId: network.netId, id: network.id })),
+            },
+          });
           break;
         }
 
@@ -94,7 +85,7 @@ export function useListenWalletConnectEvent() {
           if (chainId !== currentNetwork?.netId.toString()) {
             return event.action.reject('network is not match');
           }
-          navigation.navigate(WalletConnectStackName, { screen: WalletConnectSignMessageStackName, params: event.data });
+          navigateMethod(WalletConnectStackName, { screen: WalletConnectSignMessageStackName, params: event.data });
           break;
         }
 
@@ -103,6 +94,7 @@ export function useListenWalletConnectEvent() {
             address,
             tx: { to, data },
           } = event.data;
+
           if (address !== currentAddressValue) {
             return event.action.reject('address is not match');
           }
@@ -125,7 +117,7 @@ export function useListenWalletConnectEvent() {
 
           const EOATx = (!isContract && !!to) || !data || data === '0x';
 
-          navigation.navigate(WalletConnectStackName, {
+          navigateMethod(WalletConnectStackName, {
             screen: WalletConnectTransactionStackName,
             params: { ...event.data, isContract: !EOATx },
           });
@@ -142,21 +134,21 @@ export function useListenWalletConnectEvent() {
 }
 
 export function useWalletConnectSessions(filterByAddress?: string | undefined | null) {
-  const [sessions, setSessions] = useState<Awaited<ReturnType<typeof Plugins.WalletConnect.getAllSession>>[string][]>([]);
+  const [sessions, setSessions] = useState<Awaited<ReturnType<typeof plugins.WalletConnect.getAllSession>>[string][]>([]);
 
   const getSessions = useCallback(async () => {
-    const sessions = await Plugins.WalletConnect.getAllSession();
+    const sessions = await plugins.WalletConnect.getAllSession();
     setSessions(Object.values(sessions));
   }, []);
 
   useEffect(() => {
-    Plugins.WalletConnect.getAllSession().then((res) => {
+    plugins.WalletConnect.getAllSession().then((res) => {
       setSessions(Object.values(res));
     });
   }, []);
 
   useEffect(() => {
-    const sub = Plugins.WalletConnect.getWCSessionChangeSubscribe().subscribe(getSessions);
+    const sub = plugins.WalletConnect.getWCSessionChangeSubscribe().subscribe(getSessions);
 
     return () => {
       sub.unsubscribe();

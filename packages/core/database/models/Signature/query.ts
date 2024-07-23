@@ -4,6 +4,7 @@ import database from '../..';
 import TableName from '../../TableName';
 import { type ModelFields, createModel } from '../../helper/modelHelper';
 import { SignatureFilterOption } from './type';
+import { memoize } from 'lodash-es';
 
 export type SignatureParams = Omit<ModelFields<Signature>, 'createdAt'>;
 export function createSignature(params: SignatureParams, prepareCreate?: true) {
@@ -29,7 +30,9 @@ export const querySignatureRecords = (
     if (!Array.isArray(sortBy)) {
       query.push(Q.sortBy(sortBy, Q.desc));
     } else {
-      sortBy.forEach((s) => query.push(Q.sortBy(s, Q.desc)));
+      for (const s of sortBy) {
+        query.push(Q.sortBy(s, Q.desc));
+      }
     }
   }
   if (count) {
@@ -60,3 +63,5 @@ export const observeSignatureRecordsCount = (addressId: string, filter?: Signatu
   querySignatureRecords(addressId, {
     filter,
   }).observeCount(false);
+
+export const observeSignatureById = memoize((signatureId: string) => database.get<Signature>(TableName.Signature).findAndObserve(signatureId));

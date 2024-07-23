@@ -4,7 +4,7 @@ import Settings from '@assets/icons/settings.svg';
 import Text from '@components/Text';
 import { useCurrentNetwork } from '@core/WalletCore/Plugins/ReactInject';
 import { useTheme } from '@react-navigation/native';
-import { type HomeStackName, ScanQRCodeStackName, SettingsStackName, type StackScreenProps } from '@router/configs';
+import { type HomeStackName, ExternalInputHandlerStackName, SettingsStackName, type StackScreenProps } from '@router/configs';
 import type React from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 
@@ -42,7 +42,7 @@ const HeaderRight: React.FC<{ navigation: StackScreenProps<typeof HomeStackName>
       </Pressable>
       <Pressable
         style={({ pressed }) => [styles.wrapper, { borderColor: colors.borderThird, backgroundColor: pressed ? colors.underlay : 'transparent' }]}
-        onPress={() => navigation.navigate(ScanQRCodeStackName)}
+        onPress={() => navigation.navigate(ExternalInputHandlerStackName)}
         testID="scanQRCode"
       >
         <QrCode color={colors.textSecondary} />
