@@ -104,7 +104,7 @@ const ActivityItem: React.FC<Props> = ({ onPress, tx }) => {
   }, [t, tx.method, tx.source]);
 
   const isPending = SPEED_UP_FEATURE.allow && status === 'pending';
-
+  console.log('asset', asset?.id, asset?.symbol);
   return (
     <Pressable
       style={[styles.container, isPending && styles.pendingContainer, isPending && { borderColor: colors.borderFourth }]}
