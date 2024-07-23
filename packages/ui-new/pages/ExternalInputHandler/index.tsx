@@ -25,6 +25,7 @@ import {
   type StackNavigation,
 } from '@router/configs';
 import { type ETHURL, parseETHURL } from '@utils/ETHURL';
+import { getActiveRouteName } from '@utils/backToHome';
 import Decimal from 'decimal.js';
 import type React from 'react';
 import { useCallback, useEffect, useRef, useState } from 'react';
@@ -40,16 +41,45 @@ interface Props extends Partial<StackScreenProps<typeof ExternalInputHandlerStac
 
 enum ScanStatusType {
   ConnectingWC = 'connecting-wc',
+  WCTimeout = 'wc-timeout',
 }
 
+// const androidConnect =
+//   'wc:8b70043955f70c3eef1c04efc854ca7c1bd42b41c42b87d7112518c683e950d5@2?expiryTimestamp=1721704750&relay-protocol=irn&symKey=6b8e12fe050eae590570b3f6f28987f4a9c6b4b18b69858085cbba3400d026c7';
+// const androidSendTransaction =
+//   'wc:8b70043955f70c3eef1c04efc854ca7c1bd42b41c42b87d7112518c683e950d5@2/wc?requestId=1721704596360950&sessionTopic=a518679d7b0f1441582cdb0cbbece5c575673b61b0a45f872684523140e7a963';
+
+// const iosConnect =
+//   'bimwallet://wc?uri=wc%3A3c615d3c27be4f4f5d99c7feffd1b2f9b0c00b47c35012982731b0b4dc0f0a57%402%3FexpiryTimestamp%3D1721705128%26relay-protocol%3Dirn%26symKey%3De3a235cd0bb7fe7e43f6f6fc8afb5a3dcfc3e379a74f3df66d63eac97225f9dd';
+// const iosTransaction = 'bimwallet://wc?requestId=1721705752290724&sessionTopic=52a21f0eacd6c9593eb4f7b3e8dfdc881f18608204c1d443db0c9f99600bf8a0';
 export const useListenDeepLink = (navigation: StackNavigation) => {
   // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
   useEffect(() => {
     const handleDeepLink = (event: { url: string }) => {
-      const data = event.url;
-      const hasCurrentWCEvent = plugins.WalletConnect.currentEventSubject.getValue() !== undefined;
-      if (hasCurrentWCEvent) return;
-      navigation.navigate(ExternalInputHandlerStackName, { data });
+      try {
+        const url = decodeURIComponent(event.url);
+
+        let data: string | null = null;
+        if (url.startsWith('bimwallet://')) {
+          if (url.startsWith('bimwallet://wc?uri=')) {
+            data = url.slice(19);
+          } else if (url.startsWith('bimwallet://wc?')) {
+            data = url.slice(12);
+          }
+        } else {
+          data = url;
+        }
+        const hasCurrentWCEvent = plugins.WalletConnect.currentEventSubject.getValue();
+        if (!data || hasCurrentWCEvent) return;
+        const activeRouterName = getActiveRouteName(navigation.getState());
+        if (activeRouterName === ExternalInputHandlerStackName) {
+          navigation.dispatch(StackActions.replace(ExternalInputHandlerStackName, { params: { data } }));
+        } else {
+          navigation.navigate(ExternalInputHandlerStackName, { data });
+        }
+      } catch (error) {
+        console.log('handleDeepLinking error', error);
+      }
     };
 
     Linking.getInitialURL().then((url) => url && handleDeepLink({ url }));
@@ -167,9 +197,15 @@ const ExternalInputHandler: React.FC<Props> = ({ navigation, onConfirm, onClose,
       }
 
       try {
-        if (!onConfirm && dataString.startsWith('wc:')) {
+        if (!onConfirm && (dataString.startsWith('wc:') || dataString.startsWith('wc?'))) {
           setParseStatus({ type: ScanStatusType.ConnectingWC, message: t('wc.connecting') });
-          await plugins.WalletConnect.connect({ wcURI: dataString });
+          if (dataString.startsWith('wc:')) {
+            await plugins.WalletConnect.connect({ wcURI: dataString });
+          }
+
+          setTimeout(() => {
+            setParseStatus({ type: ScanStatusType.WCTimeout, message: '等待Wallet-Connect 响应超时' });
+          }, 8888);
         } else {
           ethUrl = parseETHURL(dataString);
           onParseEthUrlSuccess(ethUrl);
