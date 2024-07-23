@@ -84,6 +84,7 @@ jobs:
           PASSWORD_CRYPTO_KEY=$PASSWORD_CRYPTO_KEY
           END
           yarn patchPackage && cd ios && pod install --repo-update && cd ..
+          rm ./ios/.xcode.env.local
 
       - name: Build IOS App
         uses: yukiarrr/ios-build-action@v1.12.0
