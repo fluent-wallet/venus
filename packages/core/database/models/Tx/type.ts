@@ -1,8 +1,7 @@
 export enum TxStatus {
   REPLACED = '-2',
   FAILED = '-1',
-  UNSENT = '0',
-  WAITTING = '5',
+  WAITTING = '0',
   PENDING = '1',
   EXECUTED = '2',
   CONFIRMED = '3',
@@ -10,12 +9,12 @@ export enum TxStatus {
 }
 
 export const ALL_TX_STATUSES = Object.values(TxStatus);
-export const PENDING_TX_STATUSES = [TxStatus.WAITTING, TxStatus.UNSENT, TxStatus.PENDING];
+export const PENDING_TX_STATUSES = [TxStatus.WAITTING, TxStatus.PENDING];
 export const FAILED_TX_STATUSES = [TxStatus.REPLACED, TxStatus.FAILED];
 export const FINALIZED_TX_STATUSES = [TxStatus.REPLACED, TxStatus.FAILED, TxStatus.FINALIZED];
 export const EXECUTED_NOT_FINALIZED_TX_STATUSES = [TxStatus.EXECUTED, TxStatus.CONFIRMED];
 export const FINISHED_IN_ACTIVITY_TX_STATUSES = [TxStatus.REPLACED, TxStatus.EXECUTED, TxStatus.CONFIRMED, TxStatus.FINALIZED];
-export const NOT_FINALIZED_TX_STATUSES = [TxStatus.WAITTING, TxStatus.UNSENT, TxStatus.PENDING, TxStatus.EXECUTED, TxStatus.CONFIRMED];
+export const NOT_FINALIZED_TX_STATUSES = [TxStatus.WAITTING, TxStatus.PENDING, TxStatus.EXECUTED, TxStatus.CONFIRMED];
 
 export enum ExecutedStatus {
   FAILED = '0',

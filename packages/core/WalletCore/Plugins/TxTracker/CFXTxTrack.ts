@@ -35,7 +35,6 @@ class CFXTxTrack extends BaseTxTrack {
           }
           if (!transaction) {
             await this._handleUnsent(tx, network);
-            status = TxStatus.UNSENT;
             return false;
           }
           //  the transaction is skipped or not packed
@@ -46,7 +45,7 @@ class CFXTxTrack extends BaseTxTrack {
                 status = TxStatus.PENDING;
                 this._setPending(tx);
                 break;
-              case ReplacedResponse.Replaced:
+              case ReplacedResponse.FinalizedReplaced:
                 status = TxStatus.REPLACED;
                 if (EXECUTED_NOT_FINALIZED_TX_STATUSES.includes(tx.status)) {
                   this._handleDuplicateTx(tx, false, false);
@@ -125,7 +124,7 @@ class CFXTxTrack extends BaseTxTrack {
             txStatus = TxStatus.CONFIRMED;
             status = TxStatus.CONFIRMED;
           }
-          this._setFinailzed(tx, {
+          this._setExecuted(tx, {
             txStatus,
             executedStatus: receipt.outcomeStatus === '0x0' ? ExecutedStatus.SUCCEEDED : ExecutedStatus.FAILED,
             receipt: {
@@ -178,11 +177,23 @@ class CFXTxTrack extends BaseTxTrack {
   }
 
   async _getNonce(address: string, endpoint: string) {
-    return fetchChain<string>({
+    let [latestNonce, finalizedNonce] = await fetchChainBatch<(string | RPCErrorResponse)[]>({
       url: endpoint,
-      method: 'cfx_getNextNonce',
-      params: [address],
+      rpcs: [
+        { method: 'cfx_getNextNonce', params: [address, 'latest_state'] },
+        { method: 'cfx_getNextNonce', params: [address, 'latest_finalized'] },
+      ],
     });
+    if (isRPCError(finalizedNonce)) {
+      finalizedNonce = '0';
+    }
+    if (isRPCError(latestNonce)) {
+      latestNonce = finalizedNonce;
+    }
+    return {
+      latestNonce,
+      finalizedNonce,
+    };
   }
 }
 
