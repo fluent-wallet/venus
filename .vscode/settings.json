@@ -17,6 +17,9 @@
     },
     "[xml]": {
       "editor.defaultFormatter": "fabianlauer.vs-code-xml-format"
+    },
+    "[github-actions-workflow]": {
+      "editor.defaultFormatter": "esbenp.prettier-vscode"
     }
   }
   
