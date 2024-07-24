@@ -100,8 +100,8 @@ jobs:
 
       - name: "Upload app to TestFlight"
         env:
-          APPLE_ID: ${{ secrets.APPSTORE_ISSUER_ID }}
-          APPLE_TEAM_ID: ${{ secrets.APPSTORE_API_KEY_ID }}
-          APPLE_PASSWORD: ${{ secrets.APPSTORE_API_PRIVATE_KEY }}
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APP_SPECIFIC_PASSWORD: ${{ secrets.APP_SPECIFIC_PASSWORD }}
+          TEAM_ID: ${{ secrets.IOS_TEAM_ID }}
         run:
-          xcrun notarytool submit ./bimwallet.ipa --apple-id ${{env.APPLE_ID}} --team-id ${{env.IOS_TEAM_ID}} --password ${{env.APPLE_PASSWORD}} --wait
+          xcrun notarytool submit ./bimwallet.ipa --apple-id ${{env.APPLE_ID}} --team-id ${{env.TEAM_ID}} --password ${{env.APP_SPECIFIC_PASSWORD}} --wait
