@@ -96,11 +96,12 @@ jobs:
           certificate-password: ${{ secrets.IOS_CERTIFICATE_PASSWORD }}
           workspace-path: ios/BIMWallet.xcworkspace
           code-signing-identity: 'iPhone Distribution'
+          output-path: 'bimwallet.ipa'
 
       - name: "Upload app to TestFlight"
-        uses: apple-actions/upload-testflight-build@v1
-        with:
-          app-path: "output.ipa"
-          issuer-id: ${{ secrets.APPSTORE_ISSUER_ID }}
-          api-key-id: ${{ secrets.APPSTORE_API_KEY_ID }}
-          api-private-key: ${{ secrets.APPSTORE_API_PRIVATE_KEY }}
+        env:
+          APPLE_ID: ${{ secrets.APPSTORE_ISSUER_ID }}
+          APPLE_TEAM_ID: ${{ secrets.APPSTORE_API_KEY_ID }}
+          APPLE_PASSWORD: ${{ secrets.APPSTORE_API_PRIVATE_KEY }}
+        run:
+          xcrun notarytool submit ./bimwallet.ipa --apple-id ${{env.APPLE_ID}} --team-id ${{env.IOS_TEAM_ID}} --password ${{env.APPLE_PASSWORD}} --wait
