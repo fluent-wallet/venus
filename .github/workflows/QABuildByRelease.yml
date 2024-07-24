@@ -49,12 +49,16 @@ jobs:
           END
           cd android && ./gradlew app:assembleQaRelease && cd ..
       - name: rename apk
-        run: mv ./android/app/build/outputs/apk/qa/release/app-qa-release.apk ./android/app/build/outputs/apk/qa/release/BIMWallet-$GITHUB_REF_NAME.apk
+        env:
+          GITHUB_REF_NAME: ${{ github.ref_name }}
+        run: mv ./android/app/build/outputs/apk/qa/release/app-qa-release.apk ./android/app/build/outputs/apk/qa/release/BIMWallet-${{env.GITHUB_REF_NAME}}.apk
       - name: push to github
         uses: softprops/action-gh-release@v2
+        env:
+          GITHUB_REF_NAME: ${{ github.ref_name }}
         with:
           files: |
-            ./android/app/build/outputs/apk/qa/release/BIMWallet-$GITHUB_REF_NAME.apk
+            ./android/app/build/outputs/apk/qa/release/BIMWallet-${{env.GITHUB_REF_NAME}}.apk
   ios-build:
     name: IOS Build
     runs-on: macos-latest
@@ -71,7 +75,6 @@ jobs:
 
       - name: install dependencies
         run: yarn
-
 
       - name: patch and install pod
         env:
@@ -95,13 +98,20 @@ jobs:
           team-id: ${{ secrets.IOS_TEAM_ID }}
           certificate-password: ${{ secrets.IOS_CERTIFICATE_PASSWORD }}
           workspace-path: ios/BIMWallet.xcworkspace
-          code-signing-identity: 'iPhone Distribution'
-          output-path: 'bimwallet.ipa'
+          code-signing-identity: "iPhone Distribution"
+          output-path: "bimwallet.ipa"
+
+      - name: Install private API key P8
+        env:
+          PRIVATE_API_KEY_BASE64: ${{ secrets.IOS_PRIVATE_API_KEY_BASE64 }}
+          API_KEY: ${{ secrets.IOS_API_KEY }}
+        run: |
+          mkdir -p ~/private_keys
+          echo -n "$PRIVATE_API_KEY_BASE64" | base64 --decode --output ~/private_keys/AuthKey_$API_KEY.p8
 
       - name: "Upload app to TestFlight"
         env:
-          APPLE_ID: ${{ secrets.APPLE_ID }}
-          APP_SPECIFIC_PASSWORD: ${{ secrets.APP_SPECIFIC_PASSWORD }}
-          TEAM_ID: ${{ secrets.IOS_TEAM_ID }}
-        run:
-          xcrun notarytool submit ./bimwallet.ipa --apple-id ${{env.APPLE_ID}} --team-id ${{env.TEAM_ID}} --password ${{env.APP_SPECIFIC_PASSWORD}} --wait
+          API_KEY: ${{ secrets.IOS_API_KEY }}
+          API_ISSUER: ${{ secrets.IOS_API_ISSUER  }}
+        run: |
+          xcrun altool --output-format xml --upload-app -f ./bimwallet.ipa -t ios --apiKey $API_KEY --apiIssuer $API_ISSUER
