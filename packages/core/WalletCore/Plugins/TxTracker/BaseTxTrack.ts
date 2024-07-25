@@ -3,7 +3,7 @@ import type { Network } from '@core/database/models/Network';
 import type { Tx } from '@core/database/models/Tx';
 import { queryDuplicateTx } from '@core/database/models/Tx/query';
 import { EXECUTED_NOT_FINALIZED_TX_STATUSES, ExecutedStatus, NOT_FINALIZED_TX_STATUSES, TxStatus, type Receipt } from '@core/database/models/Tx/type';
-import { CHECK_REPLACED_BEFORE_RESEND_COUNT, TX_RESEND_LIMIT } from '@core/utils/consts';
+import { TX_RESEND_LIMIT } from '@core/utils/consts';
 import { ProcessErrorType } from '@core/utils/eth';
 import Transaction from '../Transaction';
 import { NonceUsedState, ReplacedResponse } from './types';
@@ -57,10 +57,8 @@ export abstract class BaseTxTrack {
     let replaceReponse = ReplacedResponse.NotReplaced;
     try {
       const nonce = (await tx.txPayload).nonce!;
-      if (tx.resendCount && tx.resendCount >= CHECK_REPLACED_BEFORE_RESEND_COUNT) {
-        replaceReponse = await this._handleCheckReplaced(tx, network.endpoint);
-        if (replaceReponse !== ReplacedResponse.NotReplaced) return;
-      }
+      replaceReponse = await this._handleCheckReplaced(tx, network.endpoint);
+      if (replaceReponse !== ReplacedResponse.NotReplaced) return;
       if (tx.resendCount && tx.resendCount >= TX_RESEND_LIMIT) {
         console.log(`${this._logPrefix}: tx resend limit reached:`, tx.hash);
         return;
@@ -86,7 +84,8 @@ export abstract class BaseTxTrack {
     } finally {
       tx.updateSelf((tx) => {
         const replaced = replaceReponse === ReplacedResponse.FinalizedReplaced;
-        tx.status = replaced ? TxStatus.REPLACED : epochHeightOutOfBound ? TxStatus.FAILED : TxStatus.PENDING;
+        const tempReplaced = replaceReponse === ReplacedResponse.TempReplaced;
+        tx.status = replaced ? TxStatus.REPLACED : tempReplaced ? TxStatus.TEMP_REPLACED : epochHeightOutOfBound ? TxStatus.FAILED : TxStatus.PENDING;
         if (resend) {
           tx.resendCount = (tx.resendCount ?? 0) + 1;
           tx.resendAt = new Date();
@@ -180,10 +179,8 @@ export abstract class BaseTxTrack {
         _tx.raw = null;
         _tx.err = null;
         _tx.errorType = ProcessErrorType.replacedByAnotherTx;
-        _tx.isTempReplaced = true;
-      } else {
-        _tx.isTempReplaced = isReplaced;
       }
+      _tx.isReplacedByInner = isReplaced;
       if (isReplaced) {
         _tx.executedStatus = null;
         _tx.receipt = null;
@@ -191,14 +188,27 @@ export abstract class BaseTxTrack {
       }
     });
   }
+  async _setTempReplaced(tx: Tx) {
+    const prevStatus = tx.status;
+    await tx.updateSelf((_tx) => {
+      _tx.status = TxStatus.TEMP_REPLACED;
+      _tx.executedStatus = null;
+      _tx.receipt = null;
+      _tx.executedAt = null;
+    });
+    if (EXECUTED_NOT_FINALIZED_TX_STATUSES.includes(prevStatus)) {
+      this._handleDuplicateTx(tx, false, false);
+    }
+  }
   async _setPending(tx: Tx) {
+    const prevStatus = tx.status;
     await tx.updateSelf((_tx) => {
       _tx.status = TxStatus.PENDING;
       _tx.executedStatus = null;
       _tx.receipt = null;
       _tx.executedAt = null;
     });
-    if (EXECUTED_NOT_FINALIZED_TX_STATUSES.includes(tx.status)) {
+    if (EXECUTED_NOT_FINALIZED_TX_STATUSES.includes(prevStatus)) {
       this._handleDuplicateTx(tx, false, false);
     }
   }

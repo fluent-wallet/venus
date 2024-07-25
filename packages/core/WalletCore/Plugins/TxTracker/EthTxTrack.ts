@@ -65,6 +65,10 @@ class EthTxTrack extends BaseTxTrack {
                   status = TxStatus.PENDING;
                   this._setPending(tx);
                   break;
+                case ReplacedResponse.TempReplaced:
+                  status = TxStatus.TEMP_REPLACED;
+                  this._setTempReplaced(tx);
+                  break;
                 case ReplacedResponse.FinalizedReplaced:
                   status = TxStatus.REPLACED;
                   if (EXECUTED_NOT_FINALIZED_TX_STATUSES.includes(tx.status)) {

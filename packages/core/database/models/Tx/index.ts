@@ -44,7 +44,8 @@ export class Tx extends Model {
   @field('polling_count') pollingCount?: number | null;
   /** @deprecated */
   @field('confirmed_number') confirmedNumber?: number | null;
-  @field('is_temp_replaced') isTempReplaced?: boolean | null;
+  /** replaced by inner tx */
+  @field('is_temp_replaced') isReplacedByInner?: boolean | null;
   @text('source') source!: TxSource;
   @text('method') method!: string;
   /** optional, Relation<App | null> */

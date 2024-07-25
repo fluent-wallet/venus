@@ -37,13 +37,17 @@ class CFXTxTrack extends BaseTxTrack {
             await this._handleUnsent(tx, network);
             return false;
           }
-          //  the transaction is skipped or not packed
+          //  the transaction is skipped / not packed / replaced
           if (transaction.status !== '0x1' && transaction.status !== '0x0') {
             const replaceReponse = await this._handleCheckReplaced(tx, endpoint);
             switch (replaceReponse) {
               case ReplacedResponse.NotReplaced:
                 status = TxStatus.PENDING;
                 this._setPending(tx);
+                break;
+              case ReplacedResponse.TempReplaced:
+                status = TxStatus.TEMP_REPLACED;
+                this._setTempReplaced(tx);
                 break;
               case ReplacedResponse.FinalizedReplaced:
                 status = TxStatus.REPLACED;
