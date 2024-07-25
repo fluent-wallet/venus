@@ -39,6 +39,7 @@ import WarnIcon from '@assets/icons/warn.svg';
 import ProhibitIcon from '@assets/icons/prohibit.svg';
 import { SpeedUpAction, TransactionActionType } from '@core/WalletCore/Events/broadcastTransactionSubject';
 import useInAsync from '@hooks/useInAsync';
+import { formatStatus } from '@core/utils/tx';
 
 const higherRatio = 1.1;
 const fasterRatio = 1.2;
@@ -80,6 +81,7 @@ const SpeedUp: React.FC<StackScreenProps<typeof SpeedUpStackName>> = ({ route })
   const account = useAccountOfTx(txId);
   const vault = useVaultOfAccount(account?.id);
   const nativeAsset = useNativeAssetOfNetwork(network?.id)!;
+  const txStatus = tx && formatStatus(tx);
 
   const [error, setError] = useState<{ type?: string; message: string } | null>(null);
 
@@ -116,7 +118,7 @@ const SpeedUp: React.FC<StackScreenProps<typeof SpeedUpStackName>> = ({ route })
   const isSpeedUp = type === SpeedUpAction.SpeedUp;
 
   useEffect(() => {
-    if (tx?.status && tx.status !== TxStatus.PENDING) {
+    if (txStatus && txStatus === 'pending') {
       bottomSheetRef.current?.close();
       showMessage({
         type: 'warning',
@@ -124,7 +126,7 @@ const SpeedUp: React.FC<StackScreenProps<typeof SpeedUpStackName>> = ({ route })
         description: 'Current transaction is onChain',
       });
     }
-  }, [tx?.status, isSpeedUp]);
+  }, [txStatus, isSpeedUp]);
 
   const _handleSend = useCallback(async () => {
     const newGasSetting =
@@ -132,7 +134,6 @@ const SpeedUp: React.FC<StackScreenProps<typeof SpeedUpStackName>> = ({ route })
     if (!network || !tx || !txPayload || !newGasSetting) return;
     const address = await tx.address;
     try {
-      // TODO:
       let txEpochHeight = txPayload.epochHeight;
       if (network.networkType === NetworkType.Conflux) {
         const currentEpochHeight = await plugins.BlockNumberTracker.getNetworkBlockNumber(network);
