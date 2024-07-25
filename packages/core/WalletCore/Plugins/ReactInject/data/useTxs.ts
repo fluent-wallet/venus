@@ -15,6 +15,27 @@ import { accountsManageObservable } from './useAccountsManage';
 import { currentAddressObservable } from './useCurrentAddress';
 import { getAtom } from '../nexus';
 
+const uniqSortByNonce = async (_txs: Tx[] | null) => {
+  if (!_txs) return [];
+  const payloads = await Promise.all(_txs.map((tx) => tx.txPayload.fetch()));
+  const txMap = new Map<string, TxPayload>();
+  const nonceMap = new Set<number>();
+  // uniq by nonce
+  const txs = _txs.filter((tx, i) => {
+    if (nonceMap.has(payloads[i].nonce ?? 0)) return false;
+    nonceMap.add(payloads[i].nonce ?? 0);
+    txMap.set(tx.id, payloads[i]);
+    return true;
+  });
+  // sort by nonce
+  txs.sort((a, b) => {
+    const aPayload = txMap.get(a.id)!;
+    const bPayload = txMap.get(b.id)!;
+    return Number(BigInt(bPayload.nonce ?? 0) - BigInt(aPayload.nonce ?? 0));
+  });
+  return txs;
+};
+
 const recentlyTxsObservable = currentAddressObservable.pipe(
   switchMap((currentAddress) => (currentAddress ? observeRecentlyTxWithAddress(currentAddress.id) : of([]))),
 );
@@ -23,34 +44,14 @@ export const unfinishedTxsObservable = currentAddressObservable.pipe(
   switchMap((currentAddress) => (currentAddress ? observeUnfinishedTxWithAddress(currentAddress.id) : of(null))),
 );
 
-const unfinishedTxsAtom = atomWithObservable(() => unfinishedTxsObservable, { initialValue: [] });
+const unfinishedTxsAtom = atomWithObservable(() => unfinishedTxsObservable.pipe(switchMap(uniqSortByNonce)), { initialValue: [] });
 export const useUnfinishedTxs = () => useAtomValue(unfinishedTxsAtom);
 
 export const finishedTxsObservable = currentAddressObservable.pipe(
   switchMap((currentAddress) => (currentAddress ? observeFinishedTxWithAddress(currentAddress.id) : of(null))),
 );
 
-const finishedTxsAtom = atomWithObservable(
-  () =>
-    finishedTxsObservable.pipe(
-      switchMap(async (txs) => {
-        if (!txs) return [];
-        const payloads = await Promise.all(txs.map((tx) => tx.txPayload.fetch()));
-        const txMap = new Map<string, TxPayload>();
-        txs.forEach((tx, i) => {
-          txMap.set(tx.id, payloads[i]);
-        });
-        // sort by nonce
-        txs.sort((a, b) => {
-          const aPayload = txMap.get(a.id)!;
-          const bPayload = txMap.get(b.id)!;
-          return Number(BigInt(bPayload.nonce ?? 0) - BigInt(aPayload.nonce ?? 0));
-        });
-        return txs;
-      }),
-    ),
-  { initialValue: [] },
-);
+const finishedTxsAtom = atomWithObservable(() => finishedTxsObservable.pipe(switchMap(uniqSortByNonce)), { initialValue: [] });
 export const useFinishedTxs = () => useAtomValue(finishedTxsAtom);
 
 export enum RecentlyType {
