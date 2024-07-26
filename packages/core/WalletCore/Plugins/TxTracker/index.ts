@@ -30,7 +30,7 @@ class TxTrackerPluginClass implements Plugin {
     inStatuses: [TxStatus.PENDING],
     pollingInterval: DETAULT_POLLING_PENDING_INTERVAL,
     key: 'pending',
-    startNextPollingImmediately: (status) => status === TxStatus.EXECUTED || status === TxStatus.CONFIRMED || status === TxStatus.FINALIZED,
+    startNextPollingImmediately: (status) => status !== TxStatus.PENDING && status !== TxStatus.FAILED,
   });
   _executedPolling = new Polling({
     inStatuses: [TxStatus.EXECUTED],

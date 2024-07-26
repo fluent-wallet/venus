@@ -8,6 +8,8 @@ import { ProcessErrorType } from '@core/utils/eth';
 import Transaction from '../Transaction';
 import { NonceUsedState, ReplacedResponse } from './types';
 
+export type UpdaterMap = Map<Tx, () => Tx>;
+
 export interface RPCErrorResponse {
   message: string;
   code: number;
@@ -25,12 +27,12 @@ export abstract class BaseTxTrack {
     this._logPrefix = logPrefix;
   }
 
-  async _handleDuplicateTx(tx: Tx, isReplaced = true, finalized = true) {
+  async _handleDuplicateTx(tx: Tx, isReplaced: boolean, finalized: boolean, updaterMap: UpdaterMap) {
     try {
       const nonce = (await tx.txPayload).nonce!;
       const txs = await queryDuplicateTx(tx, nonce, NOT_FINALIZED_TX_STATUSES);
       for (const _tx of txs) {
-        this._setReplaced(_tx, isReplaced, finalized);
+        this._setReplaced(_tx, isReplaced, finalized, updaterMap);
       }
     } catch (error) {
       console.log(`${this._logPrefix}: `, error);
@@ -51,13 +53,21 @@ export abstract class BaseTxTrack {
     }
   }
 
-  async _handleUnsent(tx: Tx, network: Network) {
+  async _handleUnsent(tx: Tx, network: Network, updaterMap: UpdaterMap) {
     let resend = false;
     let epochHeightOutOfBound = false;
     let replaceReponse = ReplacedResponse.NotReplaced;
+    let txStatus = TxStatus.PENDING;
     try {
       const nonce = (await tx.txPayload).nonce!;
       replaceReponse = await this._handleCheckReplaced(tx, network.endpoint);
+      if (
+        EXECUTED_NOT_FINALIZED_TX_STATUSES.includes(tx.status) &&
+        replaceReponse !== ReplacedResponse.FinalizedExecuted &&
+        replaceReponse !== ReplacedResponse.TempExecuted
+      ) {
+        await this._handleDuplicateTx(tx, false, false, updaterMap);
+      }
       if (replaceReponse !== ReplacedResponse.NotReplaced) return;
       if (tx.resendCount && tx.resendCount >= TX_RESEND_LIMIT) {
         console.log(`${this._logPrefix}: tx resend limit reached:`, tx.hash);
@@ -82,25 +92,27 @@ export abstract class BaseTxTrack {
     } catch (error) {
       console.log(`${this._logPrefix}:`, error);
     } finally {
-      tx.updateSelf((tx) => {
-        const replaced = replaceReponse === ReplacedResponse.FinalizedReplaced;
-        const tempReplaced = replaceReponse === ReplacedResponse.TempReplaced;
-        tx.status = replaced ? TxStatus.REPLACED : tempReplaced ? TxStatus.TEMP_REPLACED : epochHeightOutOfBound ? TxStatus.FAILED : TxStatus.PENDING;
-        if (resend) {
-          tx.resendCount = (tx.resendCount ?? 0) + 1;
-          tx.resendAt = new Date();
-        }
-        if (replaced || epochHeightOutOfBound) {
-          tx.raw = null;
-          tx.err = null;
-          tx.errorType = replaced ? ProcessErrorType.replacedByAnotherTx : ProcessErrorType.epochHeightOutOfBound;
-        }
-        tx.executedStatus = null;
-        tx.receipt = null;
-      });
-      if (EXECUTED_NOT_FINALIZED_TX_STATUSES.includes(tx.status)) {
-        this._handleDuplicateTx(tx, false, false);
-      }
+      const replaced = replaceReponse === ReplacedResponse.FinalizedReplaced;
+      const tempReplaced = replaceReponse === ReplacedResponse.TempReplaced;
+      txStatus = replaced ? TxStatus.REPLACED : tempReplaced ? TxStatus.TEMP_REPLACED : epochHeightOutOfBound ? TxStatus.FAILED : TxStatus.PENDING;
+      updaterMap.set(tx, () =>
+        tx.prepareUpdate((tx) => {
+          tx.status = txStatus;
+          if (resend) {
+            tx.resendCount = (tx.resendCount ?? 0) + 1;
+            tx.resendAt = new Date();
+          }
+          if (replaced || epochHeightOutOfBound) {
+            tx.raw = null;
+            tx.err = null;
+            tx.errorType = replaced ? ProcessErrorType.replacedByAnotherTx : ProcessErrorType.epochHeightOutOfBound;
+          }
+          tx.executedStatus = null;
+          tx.receipt = null;
+        }),
+      );
+      // biome-ignore lint/correctness/noUnsafeFinally: <explanation>
+      return txStatus;
     }
   }
 
@@ -147,73 +159,80 @@ export abstract class BaseTxTrack {
       txExecErrorMsg?: string;
       executedAt?: Date;
     },
+    updaterMap: UpdaterMap,
   ) {
     const { txStatus, executedStatus, receipt, txExecErrorMsg, executedAt } = params;
-    const prevStatus = tx.status;
-    await tx.updateSelf((_tx) => {
-      if (txStatus === TxStatus.FINALIZED) {
-        _tx.raw = null;
-      }
-      _tx.status = txStatus;
-      _tx.executedStatus = executedStatus;
-      _tx.receipt = receipt;
-      if (executedAt) {
-        _tx.executedAt = executedAt;
-      }
-      if (executedStatus === ExecutedStatus.FAILED) {
-        _tx.err = txExecErrorMsg ?? 'tx failed';
-        _tx.errorType = ProcessErrorType.executeFailed;
-      }
-    });
-    if (prevStatus !== txStatus) {
-      this._handleDuplicateTx(tx, true, txStatus === TxStatus.FINALIZED);
-      if (txStatus === TxStatus.EXECUTED) {
+    updaterMap.set(tx, () =>
+      tx.prepareUpdate((_tx) => {
+        if (txStatus === TxStatus.FINALIZED) {
+          _tx.raw = null;
+        }
+        _tx.status = txStatus;
+        _tx.executedStatus = executedStatus;
+        _tx.receipt = receipt;
+        if (executedAt) {
+          _tx.executedAt = executedAt;
+        }
+        if (executedStatus === ExecutedStatus.FAILED) {
+          _tx.err = txExecErrorMsg ?? 'tx failed';
+          _tx.errorType = ProcessErrorType.executeFailed;
+        }
+      }),
+    );
+    if (tx.status !== txStatus) {
+      await this._handleDuplicateTx(tx, true, txStatus === TxStatus.FINALIZED, updaterMap);
+      if (!EXECUTED_NOT_FINALIZED_TX_STATUSES.includes(tx.status)) {
         this._updateTokenBalance(tx);
       }
     }
   }
-  async _setReplaced(tx: Tx, isReplaced = true, finalized = true) {
-    await tx.updateSelf((_tx) => {
-      if (finalized) {
-        _tx.status = TxStatus.REPLACED;
-        _tx.raw = null;
-        _tx.err = null;
-        _tx.errorType = ProcessErrorType.replacedByAnotherTx;
-      }
-      _tx.isReplacedByInner = isReplaced;
-      if (isReplaced) {
+  _setReplaced(tx: Tx, isReplaced: boolean, finalized: boolean, updaterMap: UpdaterMap) {
+    updaterMap.set(tx, () =>
+      tx.prepareUpdate((_tx) => {
+        if (finalized) {
+          _tx.status = TxStatus.REPLACED;
+          _tx.raw = null;
+          _tx.err = null;
+          _tx.errorType = ProcessErrorType.replacedByAnotherTx;
+        }
+        _tx.isReplacedByInner = isReplaced;
+        if (isReplaced) {
+          _tx.executedStatus = null;
+          _tx.receipt = null;
+          _tx.executedAt = null;
+        }
+      }),
+    );
+  }
+  async _setTempReplaced(tx: Tx, updaterMap: UpdaterMap) {
+    const prevStatus = tx.status;
+    updaterMap.set(tx, () =>
+      tx.prepareUpdate((_tx) => {
+        _tx.status = TxStatus.TEMP_REPLACED;
         _tx.executedStatus = null;
         _tx.receipt = null;
         _tx.executedAt = null;
-      }
-    });
-  }
-  async _setTempReplaced(tx: Tx) {
-    const prevStatus = tx.status;
-    await tx.updateSelf((_tx) => {
-      _tx.status = TxStatus.TEMP_REPLACED;
-      _tx.executedStatus = null;
-      _tx.receipt = null;
-      _tx.executedAt = null;
-    });
+      }),
+    );
     if (EXECUTED_NOT_FINALIZED_TX_STATUSES.includes(prevStatus)) {
-      this._handleDuplicateTx(tx, false, false);
+      await this._handleDuplicateTx(tx, false, false, updaterMap);
     }
   }
-  async _setPending(tx: Tx) {
-    const prevStatus = tx.status;
-    await tx.updateSelf((_tx) => {
-      _tx.status = TxStatus.PENDING;
-      _tx.executedStatus = null;
-      _tx.receipt = null;
-      _tx.executedAt = null;
-    });
-    if (EXECUTED_NOT_FINALIZED_TX_STATUSES.includes(prevStatus)) {
-      this._handleDuplicateTx(tx, false, false);
+  async _setPending(tx: Tx, updaterMap: UpdaterMap) {
+    updaterMap.set(tx, () =>
+      tx.prepareUpdate((_tx) => {
+        _tx.status = TxStatus.PENDING;
+        _tx.executedStatus = null;
+        _tx.receipt = null;
+        _tx.executedAt = null;
+      }),
+    );
+    if (EXECUTED_NOT_FINALIZED_TX_STATUSES.includes(tx.status)) {
+      await this._handleDuplicateTx(tx, false, false, updaterMap);
     }
   }
 
-  abstract _checkStatus(txs: Tx[], network: Network, returnStatus?: boolean): Promise<TxStatus | undefined>;
+  abstract _checkStatus(txs: Tx[], network: Network, updaterMap: UpdaterMap): Promise<TxStatus | undefined>;
   abstract _checkEpochHeightOutOfBound(tx: Tx): Promise<boolean>;
   abstract _getTransactionReceipt(hash: string, endpoint: string): Promise<ETH.eth_getTransactionReceiptResponse | CFX.cfx_getTransactionReceiptResponse>;
   abstract _getNonce(

@@ -2,7 +2,7 @@ import { fetchChain, fetchChainBatch } from '@cfx-kit/dapp-utils/dist/fetch';
 import { type Network, NetworkType } from '@core/database/models/Network';
 import type { Tx } from '@core/database/models/Tx';
 import { EXECUTED_NOT_FINALIZED_TX_STATUSES, ExecutedStatus, TxStatus } from '@core/database/models/Tx/type';
-import { BaseTxTrack, type RPCErrorResponse, isRPCError } from './BaseTxTrack';
+import { BaseTxTrack, type RPCErrorResponse, type UpdaterMap, isRPCError } from './BaseTxTrack';
 import { ReplacedResponse } from './types';
 
 class EthTxTrack extends BaseTxTrack {
@@ -13,7 +13,7 @@ class EthTxTrack extends BaseTxTrack {
     });
   }
 
-  async _checkStatus(txs: Tx[], network: Network): Promise<TxStatus | undefined> {
+  async _checkStatus(txs: Tx[], network: Network, updaterMap: UpdaterMap): Promise<TxStatus | undefined> {
     const endpoint = network.endpoint;
     let status: TxStatus | undefined;
     const getTransactionByHashParams = txs.map((tx) => ({ method: 'eth_getTransactionByHash', params: [tx.hash] }));
@@ -33,7 +33,7 @@ class EthTxTrack extends BaseTxTrack {
             return false;
           }
           if (!transaction) {
-            await this._handleUnsent(tx, network);
+            status = await this._handleUnsent(tx, network, updaterMap);
             return false;
           }
           return tx;
@@ -63,18 +63,18 @@ class EthTxTrack extends BaseTxTrack {
               switch (replaceReponse) {
                 case ReplacedResponse.NotReplaced:
                   status = TxStatus.PENDING;
-                  this._setPending(tx);
+                  await this._setPending(tx, updaterMap);
                   break;
                 case ReplacedResponse.TempReplaced:
                   status = TxStatus.TEMP_REPLACED;
-                  this._setTempReplaced(tx);
+                  await this._setTempReplaced(tx, updaterMap);
                   break;
                 case ReplacedResponse.FinalizedReplaced:
                   status = TxStatus.REPLACED;
                   if (EXECUTED_NOT_FINALIZED_TX_STATUSES.includes(tx.status)) {
-                    this._handleDuplicateTx(tx, false, false);
+                    await this._handleDuplicateTx(tx, false, false, updaterMap);
                   }
-                  this._setReplaced(tx, true, true);
+                  this._setReplaced(tx, true, true, updaterMap);
                   break;
                 default:
                   break;
@@ -83,7 +83,7 @@ class EthTxTrack extends BaseTxTrack {
             }
             if (!receipt.status) {
               status = TxStatus.PENDING;
-              this._setPending(tx);
+              await this._setPending(tx, updaterMap);
               return false;
             }
             receiptMap.set(tx.hash!, receipt);
@@ -134,22 +134,26 @@ class EthTxTrack extends BaseTxTrack {
               txStatus = TxStatus.CONFIRMED;
               status = TxStatus.CONFIRMED;
             }
-            this._setExecuted(tx, {
-              txStatus,
-              executedStatus: receipt.status === '0x1' ? ExecutedStatus.SUCCEEDED : ExecutedStatus.FAILED,
-              receipt: {
-                cumulativeGasUsed: receipt.cumulativeGasUsed,
-                effectiveGasPrice: receipt.effectiveGasPrice,
-                type: receipt.type || '0x0',
-                blockHash: receipt.blockHash,
-                transactionIndex: receipt.transactionIndex,
-                blockNumber: receipt.blockNumber,
-                gasUsed: receipt.gasUsed,
-                contractCreated: receipt.contractAddress,
+            await this._setExecuted(
+              tx,
+              {
+                txStatus,
+                executedStatus: receipt.status === '0x1' ? ExecutedStatus.SUCCEEDED : ExecutedStatus.FAILED,
+                receipt: {
+                  cumulativeGasUsed: receipt.cumulativeGasUsed,
+                  effectiveGasPrice: receipt.effectiveGasPrice,
+                  type: receipt.type || '0x0',
+                  blockHash: receipt.blockHash,
+                  transactionIndex: receipt.transactionIndex,
+                  blockNumber: receipt.blockNumber,
+                  gasUsed: receipt.gasUsed,
+                  contractCreated: receipt.contractAddress,
+                },
+                txExecErrorMsg: receipt.status !== '0x1' ? receipt.txExecErrorMsg ?? 'tx failed' : undefined,
+                executedAt: block.timestamp ? new Date(Number(BigInt(block.timestamp)) * 1000) : undefined,
               },
-              txExecErrorMsg: receipt.status !== '0x1' ? receipt.txExecErrorMsg ?? 'tx failed' : undefined,
-              executedAt: block.timestamp ? new Date(Number(BigInt(block.timestamp)) * 1000) : undefined,
-            });
+              updaterMap,
+            );
           }),
         );
       }

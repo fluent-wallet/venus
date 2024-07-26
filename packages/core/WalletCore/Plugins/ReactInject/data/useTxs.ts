@@ -3,56 +3,62 @@ import type { Tx } from '@core/database/models/Tx';
 import { useAtomValue } from 'jotai';
 import { atomFamily, atomWithObservable } from 'jotai/utils';
 import { combineLatest, map, of, switchMap } from 'rxjs';
-import {
-  observeFinishedTxWithAddress,
-  observeRecentlyTxWithAddress,
-  observeTxById,
-  observeUnfinishedTxWithAddress,
-} from '../../../../database/models/Tx/query';
+import { observeTxById, observeActivityListWithAddress } from '../../../../database/models/Tx/query';
 import type { TxPayload } from '../../../../database/models/TxPayload';
 import { formatTxData } from '../../../../utils/tx';
 import { accountsManageObservable } from './useAccountsManage';
 import { currentAddressObservable } from './useCurrentAddress';
 import { getAtom } from '../nexus';
+import { PENDING_TX_STATUSES, FINISHED_IN_ACTIVITY_TX_STATUSES, EXECUTED_TX_STATUSES } from '@core/database/models/Tx/type';
 
 const uniqSortByNonce = async (_txs: Tx[] | null) => {
   if (!_txs) return [];
   const payloads = await Promise.all(_txs.map((tx) => tx.txPayload.fetch()));
-  const txMap = new Map<string, TxPayload>();
-  const nonceMap = new Set<number>();
+  const payloadMap = new Map<string, TxPayload>();
+  const nonceMap = new Map<number, Tx>();
   // uniq by nonce
-  const txs = _txs.filter((tx, i) => {
-    if (nonceMap.has(payloads[i].nonce ?? 0)) return false;
-    nonceMap.add(payloads[i].nonce ?? 0);
-    txMap.set(tx.id, payloads[i]);
+  _txs.forEach((tx, i) => {
+    const prevTx = nonceMap.get(payloads[i].nonce ?? 0);
+    if (!prevTx) {
+      // first tx of payloads[i].nonce
+      nonceMap.set(payloads[i].nonce ?? 0, tx);
+      payloadMap.set(tx.id, payloads[i]);
+    } else if (EXECUTED_TX_STATUSES.includes(tx.status)) {
+      // already has tx of payloads[i].nonce
+      // and this tx is executed, replace prevTx
+      nonceMap.set(payloads[i].nonce ?? 0, tx);
+      payloadMap.delete(prevTx.id);
+      payloadMap.set(tx.id, payloads[i]);
+    }
     return true;
   });
+  const txs = Array.from(nonceMap.values());
   // sort by nonce
   txs.sort((a, b) => {
-    const aPayload = txMap.get(a.id)!;
-    const bPayload = txMap.get(b.id)!;
+    const aPayload = payloadMap.get(a.id)!;
+    const bPayload = payloadMap.get(b.id)!;
     return Number(BigInt(bPayload.nonce ?? 0) - BigInt(aPayload.nonce ?? 0));
   });
   return txs;
 };
 
 const recentlyTxsObservable = currentAddressObservable.pipe(
-  switchMap((currentAddress) => (currentAddress ? observeRecentlyTxWithAddress(currentAddress.id) : of([]))),
+  switchMap((currentAddress) => (currentAddress ? observeActivityListWithAddress(currentAddress.id) : of([]))),
 );
 
-export const unfinishedTxsObservable = currentAddressObservable.pipe(
-  switchMap((currentAddress) => (currentAddress ? observeUnfinishedTxWithAddress(currentAddress.id) : of(null))),
+const activityListObservable = currentAddressObservable.pipe(
+  switchMap((currentAddress) => (currentAddress ? observeActivityListWithAddress(currentAddress.id) : of(null))),
 );
+const activityListAtom = atomWithObservable(() => activityListObservable.pipe(switchMap(uniqSortByNonce)), { initialValue: [] });
 
-const unfinishedTxsAtom = atomWithObservable(() => unfinishedTxsObservable.pipe(switchMap(uniqSortByNonce)), { initialValue: [] });
-export const useUnfinishedTxs = () => useAtomValue(unfinishedTxsAtom);
-
-export const finishedTxsObservable = currentAddressObservable.pipe(
-  switchMap((currentAddress) => (currentAddress ? observeFinishedTxWithAddress(currentAddress.id) : of(null))),
-);
-
-const finishedTxsAtom = atomWithObservable(() => finishedTxsObservable.pipe(switchMap(uniqSortByNonce)), { initialValue: [] });
-export const useFinishedTxs = () => useAtomValue(finishedTxsAtom);
+export const useUnfinishedTxs = () => {
+  const activityList = useAtomValue(activityListAtom);
+  return activityList.filter((tx) => PENDING_TX_STATUSES.includes(tx.status));
+};
+export const useFinishedTxs = () => {
+  const activityList = useAtomValue(activityListAtom);
+  return activityList.filter((tx) => FINISHED_IN_ACTIVITY_TX_STATUSES.includes(tx.status));
+};
 
 export enum RecentlyType {
   Account = 'Account',

@@ -5,23 +5,27 @@ import type { TxStatus } from '@core/database/models/Tx/type';
 import type { Subscription } from 'rxjs';
 import CFXTxTracker from './CFXTxTrack';
 import EthTxTracker from './EthTxTrack';
+import database from '@core/database';
+import type { UpdaterMap } from './BaseTxTrack';
 
 const txTrackerMap = {
   [EthTxTracker.networkType]: EthTxTracker,
   [CFXTxTracker.networkType]: CFXTxTracker,
 };
-const getMinNonceTx = async (txs: Tx[]) => {
+const getMinNonceTxs = async (txs: Tx[]) => {
   if (!txs.length) {
     return;
   }
   const payloads = await Promise.all(txs.map((tx) => tx.txPayload));
   let minNonce = payloads[0].nonce!;
-  let minNonceTx = txs[0];
+  let minNonceTx = [txs[0]];
   for (let i = 1; i < txs.length; i++) {
     const payload = payloads[i];
     if (payload.nonce! < minNonce) {
-      minNonceTx = txs[i];
+      minNonceTx = [txs[i]];
       minNonce = payload.nonce!;
+    } else if (payload.nonce! === minNonce) {
+      minNonceTx.push(txs[i]);
     }
   }
   return minNonceTx;
@@ -50,15 +54,16 @@ export class Polling {
   }
 
   /**
-   * start track && subscribe count change
+   * start polling && subscribe count change
    */
   startup(address: Address) {
     this._currentAddress = address;
+    this._pollingTimer = null;
     this._polling();
     this._subscribeTxCount(address);
   }
   /**
-   * stop track && unsubscribe count change
+   * stop polling && unsubscribe count change
    */
   cleanup() {
     this._currentAddress = null;
@@ -110,7 +115,7 @@ export class Polling {
     try {
       const currentAddress = this._currentAddress;
       if (!currentAddress) {
-        // stop track when no selected address
+        // stop polling when no selected address
         stopTrack = true;
         throw new Error(`${this._key} polling: No selected address`);
       }
@@ -122,17 +127,28 @@ export class Polling {
         currentAddress.network,
       ]);
       const tracker = txTrackerMap[currentNetwork.networkType];
-      const minNonceTx = await getMinNonceTx(txs);
-      // stop track when no tx
-      stopTrack = !minNonceTx;
-      if (minNonceTx) {
-        status = await tracker._checkStatus([minNonceTx], currentNetwork);
+      const minNonceTxs = await getMinNonceTxs(txs);
+      if (minNonceTxs?.length) {
+        const updaterMap: UpdaterMap = new Map();
+        status = await tracker._checkStatus(minNonceTxs, currentNetwork, updaterMap);
+        if (updaterMap.size > 0) {
+          await database.write(() => {
+            const updates: Tx[] = [];
+            for (const updater of updaterMap.values()) {
+              updates.push(updater());
+            }
+            return database.batch(updates);
+          });
+        }
+      } else {
+        // stop polling when no tx
+        stopTrack = true;
       }
     } catch (error) {
       console.log(`${this._key} polling: `, error);
     } finally {
       if (stopTrack) {
-        console.log(`${this._key} polling: stop polling track`);
+        console.log(`${this._key} polling: stop polling`);
         this._pollingTimer = false;
       } else {
         this.startNextPollingImmediately(status) ? this._polling() : this._resetPollingTimer();

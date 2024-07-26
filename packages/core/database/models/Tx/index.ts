@@ -59,7 +59,7 @@ export class Tx extends Model {
   @children(TableName.Signature) signatures!: Query<Signature>;
 
   @writer updateSelf(recordUpdater: (_: this) => void) {
-    if (FINALIZED_TX_STATUSES.includes(this.status)) return Promise.resolve();
+    if (FINALIZED_TX_STATUSES.includes(this.status)) return Promise.resolve(this);
     return this.update(recordUpdater);
   }
 

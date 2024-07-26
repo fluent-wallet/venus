@@ -13,6 +13,7 @@ export const ALL_TX_STATUSES = Object.values(TxStatus);
 export const PENDING_TX_STATUSES = [TxStatus.WAITTING, TxStatus.PENDING];
 export const FAILED_TX_STATUSES = [TxStatus.REPLACED, TxStatus.TEMP_REPLACED, TxStatus.FAILED];
 export const FINALIZED_TX_STATUSES = [TxStatus.REPLACED, TxStatus.FAILED, TxStatus.FINALIZED];
+export const EXECUTED_TX_STATUSES = [TxStatus.EXECUTED, TxStatus.CONFIRMED, TxStatus.FINALIZED];
 export const EXECUTED_NOT_FINALIZED_TX_STATUSES = [TxStatus.EXECUTED, TxStatus.CONFIRMED];
 export const FINISHED_IN_ACTIVITY_TX_STATUSES = [TxStatus.REPLACED, TxStatus.TEMP_REPLACED, TxStatus.EXECUTED, TxStatus.CONFIRMED, TxStatus.FINALIZED];
 export const NOT_FINALIZED_TX_STATUSES = [TxStatus.WAITTING, TxStatus.PENDING, TxStatus.EXECUTED, TxStatus.CONFIRMED];

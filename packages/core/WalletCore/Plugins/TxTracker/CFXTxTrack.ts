@@ -3,7 +3,7 @@ import { type Network, NetworkType } from '@core/database/models/Network';
 import type { Tx } from '@core/database/models/Tx';
 import { EXECUTED_NOT_FINALIZED_TX_STATUSES, ExecutedStatus, TxStatus } from '@core/database/models/Tx/type';
 import BlockNumberTracker from '../BlockNumberTracker';
-import { BaseTxTrack, type RPCErrorResponse, isRPCError } from './BaseTxTrack';
+import { BaseTxTrack, type UpdaterMap, type RPCErrorResponse, isRPCError } from './BaseTxTrack';
 import { ReplacedResponse } from './types';
 
 class CFXTxTrack extends BaseTxTrack {
@@ -14,7 +14,7 @@ class CFXTxTrack extends BaseTxTrack {
     });
   }
 
-  async _checkStatus(txs: Tx[], network: Network): Promise<TxStatus | undefined> {
+  async _checkStatus(txs: Tx[], network: Network, updaterMap: UpdaterMap): Promise<TxStatus | undefined> {
     const endpoint = network.endpoint;
     let status: TxStatus | undefined;
     const getTransactionByHashParams = txs.map((tx) => ({ method: 'cfx_getTransactionByHash', params: [tx.hash] }));
@@ -34,7 +34,7 @@ class CFXTxTrack extends BaseTxTrack {
             return false;
           }
           if (!transaction) {
-            await this._handleUnsent(tx, network);
+            status = await this._handleUnsent(tx, network, updaterMap);
             return false;
           }
           //  the transaction is skipped / not packed / replaced
@@ -43,18 +43,18 @@ class CFXTxTrack extends BaseTxTrack {
             switch (replaceReponse) {
               case ReplacedResponse.NotReplaced:
                 status = TxStatus.PENDING;
-                this._setPending(tx);
+                await this._setPending(tx, updaterMap);
                 break;
               case ReplacedResponse.TempReplaced:
                 status = TxStatus.TEMP_REPLACED;
-                this._setTempReplaced(tx);
+                await this._setTempReplaced(tx, updaterMap);
                 break;
               case ReplacedResponse.FinalizedReplaced:
                 status = TxStatus.REPLACED;
                 if (EXECUTED_NOT_FINALIZED_TX_STATUSES.includes(tx.status)) {
-                  this._handleDuplicateTx(tx, false, false);
+                  await this._handleDuplicateTx(tx, false, false, updaterMap);
                 }
-                this._setReplaced(tx, true, true);
+                this._setReplaced(tx, true, true, updaterMap);
                 break;
               default:
                 break;
@@ -128,26 +128,30 @@ class CFXTxTrack extends BaseTxTrack {
             txStatus = TxStatus.CONFIRMED;
             status = TxStatus.CONFIRMED;
           }
-          this._setExecuted(tx, {
-            txStatus,
-            executedStatus: receipt.outcomeStatus === '0x0' ? ExecutedStatus.SUCCEEDED : ExecutedStatus.FAILED,
-            receipt: {
-              type: receipt.type || '0x0',
-              blockHash: receipt.blockHash,
-              transactionIndex: receipt.index,
-              blockNumber: receipt.epochNumber,
-              gasUsed: receipt.gasUsed,
-              gasFee: receipt.gasFee,
-              effectiveGasPrice: receipt.effectiveGasPrice,
-              storageCollateralized: receipt.storageCollateralized,
-              gasCoveredBySponsor: receipt.gasCoveredBySponsor,
-              storageCoveredBySponsor: receipt.storageCoveredBySponsor,
-              storageReleased: receipt.storageReleased?.length ? receipt.storageReleased : undefined,
-              contractCreated: receipt.contractCreated,
+          await this._setExecuted(
+            tx,
+            {
+              txStatus,
+              executedStatus: receipt.outcomeStatus === '0x0' ? ExecutedStatus.SUCCEEDED : ExecutedStatus.FAILED,
+              receipt: {
+                type: receipt.type || '0x0',
+                blockHash: receipt.blockHash,
+                transactionIndex: receipt.index,
+                blockNumber: receipt.epochNumber,
+                gasUsed: receipt.gasUsed,
+                gasFee: receipt.gasFee,
+                effectiveGasPrice: receipt.effectiveGasPrice,
+                storageCollateralized: receipt.storageCollateralized,
+                gasCoveredBySponsor: receipt.gasCoveredBySponsor,
+                storageCoveredBySponsor: receipt.storageCoveredBySponsor,
+                storageReleased: receipt.storageReleased?.length ? receipt.storageReleased : undefined,
+                contractCreated: receipt.contractCreated,
+              },
+              txExecErrorMsg: receipt.outcomeStatus !== '0x0' ? receipt.txExecErrorMsg ?? 'tx failed' : undefined,
+              executedAt: block.timestamp ? new Date(Number(BigInt(block.timestamp)) * 1000) : undefined,
             },
-            txExecErrorMsg: receipt.outcomeStatus !== '0x0' ? receipt.txExecErrorMsg ?? 'tx failed' : undefined,
-            executedAt: block.timestamp ? new Date(Number(BigInt(block.timestamp)) * 1000) : undefined,
-          });
+            updaterMap,
+          );
         }),
       );
     }

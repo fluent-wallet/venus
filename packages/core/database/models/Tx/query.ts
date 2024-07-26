@@ -53,23 +53,11 @@ export const observeTxById = memoize((txId: string) =>
     .observeWithColumns(['executed_at', 'status', 'executed_status', 'polling_count', 'resend_count', 'confirmed_number', 'receipt']),
 );
 
-export const observeFinishedTxWithAddress = (addressId: string) =>
-  queryTxsWithAddress(addressId, {
-    inStatuses: FINISHED_IN_ACTIVITY_TX_STATUSES,
-    sortBy: ['executed_at', 'created_at'],
-  }).observeWithColumns(['executed_at', 'status', 'executed_status', 'polling_count', 'resend_count', 'confirmed_number']);
-
-export const observeUnfinishedTxWithAddress = (addressId: string) =>
-  queryTxsWithAddress(addressId, {
-    inStatuses: PENDING_TX_STATUSES,
-    sortBy: 'created_at',
-  }).observeWithColumns(['status', 'executed_status', 'polling_count', 'resend_count', 'confirmed_number']);
-
-export const observeRecentlyTxWithAddress = (addressId: string) =>
+export const observeActivityListWithAddress = (addressId: string) =>
   queryTxsWithAddress(addressId, {
     notInStatuses: [TxStatus.FAILED],
-    sortBy: 'created_at',
-  }).observe();
+    sortBy: ['executed_at', 'created_at'],
+  }).observeWithColumns(['executed_at', 'status', 'executed_status', 'polling_count', 'resend_count', 'confirmed_number']);
 
 // find tx with
 // 1. same addr
