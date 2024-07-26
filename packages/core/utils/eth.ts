@@ -47,7 +47,7 @@ export const processError = (err: unknown): { errorType: ProcessErrorType; shoul
       /tx already exist/i.test(errStr) ||
       /already known/i.test(errStr) ||
       /transaction with the same hash was already imported/i.test(errStr) ||
-      /Tx with same nonce already inserted. to replace it, you need to specify a gas price/.test(errStr)
+      /Tx with same nonce already inserted. to replace it, you need to specify a gas price/i.test(errStr)
     )
       return { errorType: ProcessErrorType.duplicateTx, shouldDiscard: false };
     if (/replacement transaction underpriced/i.test(errStr) || /gas price too low to replace/i.test(errStr))
@@ -62,23 +62,23 @@ export const processError = (err: unknown): { errorType: ProcessErrorType; shoul
     if (/gas limit reached/i.test(errStr)) return { errorType: ProcessErrorType.gasLimitReached, shouldDiscard: false };
     if (/oversized data/i.test(errStr)) return { errorType: ProcessErrorType.oversizedData, shouldDiscard: true };
     if (/nonce too low/i.test(errStr) || /too stale nonce/i.test(errStr)) return { errorType: ProcessErrorType.tooStaleNonce, shouldDiscard: true };
-    if (/nonce too high/i.test(errStr) || /is discarded due to in too distant futur/.test(errStr))
+    if (/nonce too high/i.test(errStr) || /is discarded due to in too distant futur/i.test(errStr))
       return { errorType: ProcessErrorType.nonceTooHigh, shouldDiscard: true };
     if (/nonce has max value/i.test(errStr)) return { errorType: ProcessErrorType.nonceMax, shouldDiscard: true };
     if (/insufficient funds/i.test(errStr)) return { errorType: ProcessErrorType.insufficientFunds, shouldDiscard: true };
-    if (/ZeroGasPrice/.test(errStr)) return { errorType: ProcessErrorType.zeroGasPrice, shouldDiscard: true };
-    if (/gas price.*less than the minimum value/.test(errStr)) return { errorType: ProcessErrorType.gasPriceTooLow, shouldDiscard: true };
+    if (/ZeroGasPrice/i.test(errStr)) return { errorType: ProcessErrorType.zeroGasPrice, shouldDiscard: true };
+    if (/gas price.*less than the minimum value/i.test(errStr)) return { errorType: ProcessErrorType.gasPriceTooLow, shouldDiscard: true };
     if (/intrinsic gas too low/i.test(errStr)) return { errorType: ProcessErrorType.intrinsicGas, shouldDiscard: true };
     if (/transaction type not supported/i.test(errStr)) return { errorType: ProcessErrorType.txTypeNotSupported, shouldDiscard: true };
     if (/max fee per gas higher than/i.test(errStr)) return { errorType: ProcessErrorType.feeCapVeryHigh, shouldDiscard: true };
     if (/max fee per gas less than block base fee/i.test(errStr)) return { errorType: ProcessErrorType.feeCapTooLow, shouldDiscard: true };
     if (/max priority fee per gas higher than max fee per gas/i.test(errStr)) return { errorType: ProcessErrorType.tipAboveFeeCap, shouldDiscard: true };
     if (/max priority fee per gas higher than/i.test(errStr)) return { errorType: ProcessErrorType.tipVeryHigh, shouldDiscard: true };
-    if (/EpochHeightOutOfBound/.test(errStr)) return { errorType: ProcessErrorType.epochHeightOutOfBound, shouldDiscard: true };
-    if (/exceeds the maximum value/.test(errStr)) return { errorType: ProcessErrorType.gasExceedsLimit, shouldDiscard: true };
-    if (/NotEnoughBaseGas/.test(errStr)) return { errorType: ProcessErrorType.notEnoughBaseGas, shouldDiscard: true };
+    if (/EpochHeightOutOfBound/i.test(errStr)) return { errorType: ProcessErrorType.epochHeightOutOfBound, shouldDiscard: true };
+    if (/exceeds the maximum value/i.test(errStr)) return { errorType: ProcessErrorType.gasExceedsLimit, shouldDiscard: true };
+    if (/NotEnoughBaseGas/i.test(errStr)) return { errorType: ProcessErrorType.notEnoughBaseGas, shouldDiscard: true };
     // can't find this error in geth
-    if (/invalid chainid/i.test(errStr) || /ChainIdMismatch/.test(errStr)) return { errorType: ProcessErrorType.chainIdMismatch, shouldDiscard: true };
+    if (/invalid chainid/i.test(errStr) || /ChainIdMismatch/i.test(errStr)) return { errorType: ProcessErrorType.chainIdMismatch, shouldDiscard: true };
 
     if (/is discarded due to out of balance/i.test(errStr)) return { errorType: ProcessErrorType.balanceNotEnough, shouldDiscard: true };
 

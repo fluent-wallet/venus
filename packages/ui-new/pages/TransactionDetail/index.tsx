@@ -54,7 +54,7 @@ const TransactionDetail: React.FC<StackScreenProps<typeof TransactionDetailStack
   const gasCostAndPriceInUSDT = useMemo(() => {
     if (!tx?.receipt) return null;
     const gasPrice = tx.receipt.effectiveGasPrice;
-    const gasUsed = tx.receipt.cumulativeGasUsed ?? tx.receipt.gasUsed;
+    const gasUsed = tx.receipt.gasUsed;
     const cost = (tx.receipt.gasFee ? new Decimal(tx.receipt.gasFee) : new Decimal(gasPrice ?? '0').mul(gasUsed ?? '0')).div(
       Decimal.pow(10, nativeAsset?.decimals ?? 18),
     );
