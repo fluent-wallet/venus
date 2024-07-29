@@ -4,7 +4,7 @@ import methods from '@core/WalletCore/Methods';
 import type { Address } from '@core/database/models/Address';
 import { queryTxsWithAddress } from '@core/database/models/Tx/query';
 import { TxStatus } from '@core/database/models/Tx/type';
-import { DETAULT_POLLING_PENDING_INTERVAL, DETAULT_POLLING_EXECUTED_INTERVAL, DETAULT_POLLING_CONFIRMED_INTERVAL } from '@core/utils/consts';
+import { DETAULT_PENDING_POLLING_INTERVAL, DETAULT_EXECUTED_POLLING_INTERVAL, DETAULT_CONFIRMED_POLLING_INTERVAL } from '@core/utils/consts';
 import { type Subscription, debounceTime } from 'rxjs';
 import type { Plugin } from '../';
 import { Polling } from './polling';
@@ -28,25 +28,25 @@ class TxTrackerPluginClass implements Plugin {
   _tempReplacedCountSubscription: Subscription | null = null;
   _pendingPolling = new Polling({
     inStatuses: [TxStatus.PENDING],
-    pollingInterval: DETAULT_POLLING_PENDING_INTERVAL,
+    pollingInterval: DETAULT_PENDING_POLLING_INTERVAL,
     key: 'pending',
     startNextPollingImmediately: (status) => status !== TxStatus.PENDING && status !== TxStatus.FAILED,
   });
   _executedPolling = new Polling({
     inStatuses: [TxStatus.EXECUTED],
-    pollingInterval: DETAULT_POLLING_EXECUTED_INTERVAL,
+    pollingInterval: DETAULT_EXECUTED_POLLING_INTERVAL,
     key: 'executed',
     startNextPollingImmediately: (status) => status === TxStatus.CONFIRMED || status === TxStatus.FINALIZED,
   });
   _confirmedPolling = new Polling({
     inStatuses: [TxStatus.CONFIRMED],
-    pollingInterval: DETAULT_POLLING_CONFIRMED_INTERVAL,
+    pollingInterval: DETAULT_CONFIRMED_POLLING_INTERVAL,
     key: 'confirmed',
     startNextPollingImmediately: (status) => status === TxStatus.FINALIZED,
   });
   _tempReplacedPolling = new Polling({
     inStatuses: [TxStatus.TEMP_REPLACED],
-    pollingInterval: DETAULT_POLLING_CONFIRMED_INTERVAL,
+    pollingInterval: DETAULT_CONFIRMED_POLLING_INTERVAL,
     key: 'tempReplaced',
     startNextPollingImmediately: (status) => status !== TxStatus.TEMP_REPLACED,
   });
