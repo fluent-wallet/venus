@@ -1,11 +1,10 @@
 import events from '@core/WalletCore/Events';
-import { broadcastTransactionSubject } from '@core/WalletCore/Events/broadcastTransactionSubject';
 import methods from '@core/WalletCore/Methods';
 import type { Address } from '@core/database/models/Address';
 import { queryTxsWithAddress } from '@core/database/models/Tx/query';
 import { TxStatus } from '@core/database/models/Tx/type';
 import { DETAULT_PENDING_POLLING_INTERVAL, DETAULT_EXECUTED_POLLING_INTERVAL, DETAULT_CONFIRMED_POLLING_INTERVAL } from '@core/utils/consts';
-import { type Subscription, debounceTime } from 'rxjs';
+import { debounceTime } from 'rxjs';
 import type { Plugin } from '../';
 import { Polling } from './polling';
 
@@ -18,14 +17,6 @@ declare module '../../../WalletCore/Plugins' {
 class TxTrackerPluginClass implements Plugin {
   public name = 'TxTracker';
   _currentAddress: Address | null = null;
-  _pollingPendingTimer: NodeJS.Timeout | false | null = null;
-  _pendingCountSubscription: Subscription | null = null;
-  _pollingExecutedTimer: NodeJS.Timeout | false | null = null;
-  _executedCountSubscription: Subscription | null = null;
-  _pollingConfirmedTimer: NodeJS.Timeout | false | null = null;
-  _confirmedCountSubscription: Subscription | null = null;
-  _pollingTempReplacedTimer: NodeJS.Timeout | false | null = null;
-  _tempReplacedCountSubscription: Subscription | null = null;
   _pendingPolling = new Polling({
     inStatuses: [TxStatus.PENDING],
     pollingInterval: DETAULT_PENDING_POLLING_INTERVAL,
@@ -56,7 +47,7 @@ class TxTrackerPluginClass implements Plugin {
   }
 
   private _setup() {
-    broadcastTransactionSubject.subscribe(async (value) => {
+    events.broadcastTransactionSubject.subscribe(async (value) => {
       value && methods.createTx(value);
     });
     events.currentAddressObservable.pipe(debounceTime(40)).subscribe(async (selectedAddress) => {

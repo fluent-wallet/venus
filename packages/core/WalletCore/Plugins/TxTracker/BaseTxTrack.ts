@@ -116,7 +116,7 @@ export abstract class BaseTxTrack {
     }
   }
 
-  async _handleCheckReplaced(tx: Tx, endpoint: string): Promise<ReplacedResponse> {
+  async _handleCheckReplaced(tx: Tx, endpoint: string) {
     try {
       const nonceUsed = await this._handleCheckNonceUsed(tx, endpoint);
       if (nonceUsed === NonceUsedState.NotUsed) {
@@ -132,7 +132,7 @@ export abstract class BaseTxTrack {
       return ReplacedResponse.NotReplaced;
     }
   }
-  async _handleCheckNonceUsed(tx: Tx, endpoint: string): Promise<NonceUsedState> {
+  async _handleCheckNonceUsed(tx: Tx, endpoint: string) {
     try {
       const nonce = (await tx.txPayload).nonce!;
       const address = await (await tx.address).getValue();
@@ -195,7 +195,7 @@ export abstract class BaseTxTrack {
           _tx.err = null;
           _tx.errorType = ProcessErrorType.replacedByAnotherTx;
         }
-        _tx.isReplacedByInner = isReplaced;
+        _tx.isTempReplacedByInner = isReplaced;
         if (isReplaced) {
           _tx.executedStatus = null;
           _tx.receipt = null;

@@ -3,13 +3,13 @@ import type { Tx } from '@core/database/models/Tx';
 import { useAtomValue } from 'jotai';
 import { atomFamily, atomWithObservable } from 'jotai/utils';
 import { combineLatest, map, of, switchMap } from 'rxjs';
-import { observeTxById, observeActivityListWithAddress } from '../../../../database/models/Tx/query';
+import { observeTxById, observeTxsWithAddress } from '../../../../database/models/Tx/query';
 import type { TxPayload } from '../../../../database/models/TxPayload';
 import { formatTxData } from '../../../../utils/tx';
 import { accountsManageObservable } from './useAccountsManage';
 import { currentAddressObservable } from './useCurrentAddress';
 import { getAtom } from '../nexus';
-import { PENDING_TX_STATUSES, FINISHED_IN_ACTIVITY_TX_STATUSES, EXECUTED_TX_STATUSES } from '@core/database/models/Tx/type';
+import { PENDING_TX_STATUSES, FINISHED_IN_ACTIVITY_TX_STATUSES, EXECUTED_TX_STATUSES, TxStatus } from '@core/database/models/Tx/type';
 
 const uniqSortByNonce = async (_txs: Tx[] | null) => {
   if (!_txs) return [];
@@ -42,12 +42,14 @@ const uniqSortByNonce = async (_txs: Tx[] | null) => {
   return txs;
 };
 
-const recentlyTxsObservable = currentAddressObservable.pipe(
-  switchMap((currentAddress) => (currentAddress ? observeActivityListWithAddress(currentAddress.id) : of([]))),
-);
-
 const activityListObservable = currentAddressObservable.pipe(
-  switchMap((currentAddress) => (currentAddress ? observeActivityListWithAddress(currentAddress.id) : of(null))),
+  switchMap((currentAddress) =>
+    currentAddress
+      ? observeTxsWithAddress(currentAddress.id, {
+          notInStatuses: [TxStatus.FAILED],
+        })
+      : of([]),
+  ),
 );
 const activityListAtom = atomWithObservable(() => activityListObservable.pipe(switchMap(uniqSortByNonce)), { initialValue: [] });
 
@@ -65,7 +67,7 @@ export enum RecentlyType {
   Contract = 'Contract',
   Recently = 'Recently',
 }
-export const recentlyAddressObservable = combineLatest([recentlyTxsObservable, accountsManageObservable]).pipe(
+export const recentlyAddressObservable = combineLatest([activityListObservable, accountsManageObservable]).pipe(
   switchMap(([txs, accountsManage]) =>
     Promise.all([txs, Promise.all(txs.filter(Boolean).map((tx) => tx!.txPayload)), Promise.all(txs.filter(Boolean).map((tx) => tx!.asset)), accountsManage]),
   ),
