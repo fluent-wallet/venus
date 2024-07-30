@@ -296,7 +296,6 @@
     "content" : {
       "depositToken" : "Deposit tokens to your wallet",
       "noActivity" : "No Activity",
-      "noLatestTransaction" : null,
       "noNFT" : "No NFT",
       "noRecord" : "No Record",
       "noToken" : "No Token",
@@ -395,7 +394,7 @@
       "level" : {
         "customize" : "Customize",
         "high" : "Fast",
-        "low" : "Slow",
+        "low" : "Economical",
         "medium" : "Average"
       }
     },

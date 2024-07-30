@@ -106,7 +106,7 @@
     "add" : "添加",
     "amount" : "數量",
     "approve" : {
-      "unlimited" : "Unlimited"
+      "unlimited" : "無限制"
     },
     "backup" : "備份",
     "balance" : "餘額",
@@ -296,7 +296,6 @@
     "content" : {
       "depositToken" : "快存入資產吧",
       "noActivity" : "還沒有交易",
-      "noLatestTransaction" : null,
       "noNFT" : "沒有收藏品",
       "noRecord" : "暫無記錄",
       "noToken" : "沒有代幣",
@@ -311,21 +310,21 @@
   },
   "tx" : {
     "action" : {
-      "buttonTitle" : null,
+      "buttonTitle" : "行為",
       "cancel" : {
-        "desc" : null,
-        "title" : null
+        "desc" : "嘗試取消交易，如果此交易已執行，會取消失敗。",
+        "title" : "取消交易"
       },
       "level" : {
-        "faster" : null,
-        "higher" : null
+        "faster" : "最快",
+        "higher" : "加速"
       },
-      "proceedBtn" : null,
+      "proceedBtn" : "繼續",
       "speedUp" : {
-        "desc" : null,
-        "title" : null
+        "desc" : "添加安全驗證，確保您的資金安全。",
+        "title" : "交易加速"
       },
-      "speedUpBtn" : null
+      "speedUpBtn" : "加速"
     },
     "activity" : {
       "status" : {
@@ -377,26 +376,26 @@
       "title" : "確認交易"
     },
     "detail" : {
-      "fee" : null,
-      "from" : null,
-      "functionName" : null,
-      "network" : null,
-      "nonce" : null,
+      "fee" : "交易費",
+      "from" : "發送方",
+      "functionName" : "函数名  / {{name}}",
+      "network" : "網絡",
+      "nonce" : "隨機數",
       "status" : {
-        "confirmed" : null,
-        "failed" : null,
-        "pending" : null
+        "confirmed" : "成功",
+        "failed" : "失敗",
+        "pending" : "處理中"
       },
-      "title" : null,
-      "to" : null,
-      "txHash" : null
+      "title" : "交易詳情",
+      "to" : "接收方",
+      "txHash" : "交易哈希"
     },
     "gasFee" : {
       "level" : {
-        "customize" : null,
-        "high" : null,
-        "low" : null,
-        "medium" : null
+        "customize" : "自定義",
+        "high" : "快速",
+        "low" : "經濟的",
+        "medium" : "平均"
       }
     },
     "send" : {
