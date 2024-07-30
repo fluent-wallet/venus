@@ -376,17 +376,19 @@ export const GasOption: React.FC<{
       <OptionLevel level={level} />
       <View style={styles.gasOptionCostWrapper}>
         <Text style={[styles.gasOptionCost, { color: colors.textSecondary }]}>{priceGwei} Gwei</Text>
-        <Text style={[styles.gasOptionCost, { color: colors.textSecondary, marginLeft: 'auto' }]}>
-          {gasCost} {nativeAsset?.symbol}
-          {costPriceInUSDT}
-        </Text>
-        {level === 'customize' && <ArrowRight color={colors.textSecondary} style={styles.gasOptionArrowRight} />}
+        <View style={styles.customize}>
+          <Text style={[styles.gasOptionCost, { color: colors.textSecondary }]}>
+            {gasCost} {nativeAsset?.symbol}
+            {costPriceInUSDT}
+          </Text>
+          {level === 'customize' && <ArrowRight color={colors.textSecondary} style={styles.gasOptionArrowRight} />}
+        </View>
       </View>
     </Pressable>
   );
 };
 
-const snapPoints = [660];
+const snapPoints = [700];
 
 const styles = StyleSheet.create({
   loading: {
@@ -417,22 +419,27 @@ const styles = StyleSheet.create({
     lineHeight: 18,
   },
   gasOptionCostWrapper: {
-    marginTop: 8,
-    flexDirection: 'row',
-    alignItems: 'center',
+    paddingLeft: 24,
   },
   gasOptionCost: {
     fontSize: 14,
     fontWeight: '400',
-    lineHeight: 18,
+    lineHeight: 16,
+    marginTop: 8,
   },
   gasOptionArrowRight: {
+    marginTop: 4,
     marginLeft: 8,
   },
   advanceWrapper: {
     marginTop: 24,
     flexDirection: 'row',
     gap: 12,
+  },
+  customize: {
+    display: 'flex',
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   advance: {
     fontSize: 14,

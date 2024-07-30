@@ -32,30 +32,31 @@ const EstimateFee: React.FC<{ gasSetting?: GasSettingWithLevel | null; advanceSe
   }, [gasSetting, advanceSetting, currentNativeAsset?.priceInUSDT, currentNativeAsset?.decimals]);
 
   return (
-    <View style={styles.estimateWrapper}>
-      {gasCostAndPriceInUSDT && (
-        <>
-          <TokenIcon style={styles.assetIcon} source={currentNativeAsset?.icon} />
-          <Text style={[styles.gasText, { color: colors.textSecondary }]}>
-            {'  '}
-            {gasCostAndPriceInUSDT.cost} {currentNativeAsset?.symbol}
-          </Text>
-          {gasCostAndPriceInUSDT.priceInUSDT && (
-            <Text style={[styles.gasText, { color: colors.textSecondary }]}>
-              {'    '}
-              {gasCostAndPriceInUSDT.priceInUSDT}
-            </Text>
-          )}
-        </>
-      )}
-      {!gasCostAndPriceInUSDT && <HourglassLoading style={{ width: 20, height: 20 }} />}
-
+    <View>
       {GAS_FEE_FEATURE.allow && (
         <Pressable style={styles.gasSettingWrapper} onPress={onPressSettingIcon}>
           {gasSetting && <OptionLevel level={gasSetting.level} />}
           <SettingsIcon color={colors.textSecondary} />
         </Pressable>
       )}
+      <View style={styles.estimateWrapper}>
+        {gasCostAndPriceInUSDT && (
+          <>
+            <TokenIcon style={styles.assetIcon} source={currentNativeAsset?.icon} />
+            <Text style={[styles.gasText, { color: colors.textSecondary }]}>
+              {'  '}
+              {gasCostAndPriceInUSDT.cost} {currentNativeAsset?.symbol}
+            </Text>
+            {gasCostAndPriceInUSDT.priceInUSDT && (
+              <Text style={[styles.gasText, { color: colors.textSecondary }]}>
+                {'    '}
+                {gasCostAndPriceInUSDT.priceInUSDT}
+              </Text>
+            )}
+          </>
+        )}
+        {!gasCostAndPriceInUSDT && <HourglassLoading style={{ width: 20, height: 20 }} />}
+      </View>
     </View>
   );
 };
@@ -75,10 +76,11 @@ const styles = StyleSheet.create({
     fontWeight: '300',
   },
   gasSettingWrapper: {
-    marginLeft: 'auto',
+    display: 'flex',
     flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
+    justifyContent: 'space-between',
+    paddingLeft: 56,
+    paddingRight: 16,
   },
   assetIcon: {
     width: 24,

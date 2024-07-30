@@ -335,7 +335,7 @@ const SendTransactionStep4Confirm: React.FC<SendTransactionScreenProps<typeof Se
 export const styles = StyleSheet.create({
   sendTitle: {
     marginTop: 16,
-    marginBottom: 10,
+    marginBottom: 24,
     paddingHorizontal: 16,
     fontSize: 22,
     fontWeight: '600',
