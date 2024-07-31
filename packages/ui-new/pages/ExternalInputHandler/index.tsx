@@ -205,7 +205,7 @@ const ExternalInputHandler: React.FC<Props> = ({ navigation, onConfirm, onClose,
 
           setTimeout(() => {
             setParseStatus({ type: ScanStatusType.WCTimeout, message: '等待Wallet-Connect 响应超时' });
-          }, 8888);
+          }, 12888);
         } else {
           ethUrl = parseETHURL(dataString);
           onParseEthUrlSuccess(ethUrl);

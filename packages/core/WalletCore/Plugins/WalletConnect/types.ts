@@ -1,5 +1,6 @@
 import type { ProposalTypes } from '@walletconnect/types';
-import type { BuildApprovedNamespacesParams, SdkErrorKey } from '@walletconnect/utils';
+import type { NetworkType } from '../ReactInject';
+import type { SdkErrorKey } from '@walletconnect/utils';
 import type { Web3WalletTypes } from '@walletconnect/web3wallet';
 
 export enum WalletConnectRPCMethod {
@@ -10,12 +11,14 @@ export enum WalletConnectRPCMethod {
   SignTypedDataV3 = 'eth_signTypedData_v3',
   SignTypedDataV4 = 'eth_signTypedData_v4',
   SendTransaction = 'eth_sendTransaction',
+  ConfluxSendTransaction = 'cfx_sendTransaction',
+  ConfluxSignTypedData = 'cfx_signTypedData',
 }
 
 export enum WalletConnectPluginEventType {
   LOADING = 'loading',
-  SESSION_PROPOSAL = 'session_proposal',
-  SIGN_MESSAGE = 'sign_message',
+  SESSION_PROPOSAL = 'sessionProposal',
+  SIGN_MESSAGE = 'signMessage',
   SEND_TRANSACTION = 'sendTransaction',
 }
 
@@ -23,13 +26,20 @@ export interface IWCSessionProposalEventData {
   metadata: Web3WalletTypes.Metadata;
   requiredNamespaces: ProposalTypes.RequiredNamespaces;
   optionalNamespaces: ProposalTypes.OptionalNamespaces;
+  connectedNetworks: Array<{
+    icon: string;
+    name: string;
+    netId: number;
+    id: string;
+    networkType: NetworkType;
+  }>;
 }
 
 export interface IWCSessionProposalEvent {
   type: WalletConnectPluginEventType.SESSION_PROPOSAL;
   data: IWCSessionProposalEventData;
   action: {
-    approve: (args: Omit<BuildApprovedNamespacesParams['supportedNamespaces'][string], 'methods' | 'events'>) => Promise<void>;
+    approve: () => Promise<void>;
     reject: (reason?: SdkErrorKey) => Promise<void>;
   };
 }
@@ -37,7 +47,6 @@ export interface IWCSessionProposalEvent {
 export interface IWCSignMessageEventData {
   chainId: string;
   method: WalletConnectRPCMethod;
-  address: string;
   message: string;
   metadata: Web3WalletTypes.Metadata;
 }
@@ -54,7 +63,6 @@ export interface IWCSignMessageEvent {
 export interface IWCSendTransactionEventData {
   chainId: string;
   method: WalletConnectRPCMethod;
-  address: string;
   tx: {
     from: string;
     to?: string;

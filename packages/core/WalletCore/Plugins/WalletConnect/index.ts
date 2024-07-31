@@ -1,12 +1,14 @@
+import { NetworkType, getCurrentAddress, getCurrentAddressValue } from '@core/WalletCore/Plugins/ReactInject';
 import type { Plugin } from '@core/WalletCore/Plugins';
 import { formatJsonRpcError, formatJsonRpcResult } from '@json-rpc-tools/utils';
 import { Core } from '@walletconnect/core';
+import { queryNetworks } from '@core/database/models/Network/query';
 import { buildApprovedNamespaces, getSdkError, parseUri } from '@walletconnect/utils';
 import type Client from '@walletconnect/web3wallet';
 import { Web3Wallet, type Web3WalletTypes } from '@walletconnect/web3wallet';
 import { BehaviorSubject, Subject, concatMap, of, switchMap, tap } from 'rxjs';
-import { toChecksum } from '@core/utils/account';
-
+import { uniq } from 'lodash-es';
+import { convertHexToBase32 } from '@core/utils/address';
 import methods from '@core/WalletCore/Methods';
 import {
   type IWCSendTransactionEvent,
@@ -15,6 +17,15 @@ import {
   type WalletConnectPluginEvents,
   WalletConnectRPCMethod,
 } from './types';
+import {
+  ChainPrefix,
+  ExtractCip155Namespace,
+  mergeCIPNamespaceToEIP,
+  isCIPData,
+  convertEipDataToCip,
+  convertEipMethodToCip,
+  type Namespace,
+} from '@cfx-kit/react-utils/dist/AccountManagePlugins';
 
 declare module '../../../WalletCore/Plugins' {
   interface Plugins {
@@ -30,9 +41,13 @@ export const SUPPORT_SIGN_METHODS = [
   WalletConnectRPCMethod.SignTypedDataV1,
   WalletConnectRPCMethod.SignTypedDataV3,
   WalletConnectRPCMethod.SignTypedDataV4,
+  WalletConnectRPCMethod.ConfluxSignTypedData,
 ];
 
-export const SUPPORTED_TRANSACTION_METHODS = [WalletConnectRPCMethod.SendTransaction];
+export const SUPPORTED_TRANSACTION_METHODS = [WalletConnectRPCMethod.SendTransaction, WalletConnectRPCMethod.ConfluxSendTransaction];
+
+export const CIPPlaceHolder = '201029';
+
 export interface WalletConnectPluginParams {
   projectId: string;
   metadata: Web3WalletTypes.Options['metadata'];
@@ -120,7 +135,9 @@ export default class WalletConnect implements Plugin {
     client.on('session_delete', this.onSessionDelete.bind(this));
 
     // TODO: this event to listen proposal expire
-    client.on('proposal_expire', (e) => console.log(e.id, 'proposal_expire'));
+    client.on('proposal_expire', (e) => {
+      console.log(e.id, 'proposal_expire');
+    });
 
     const sessions = client.getActiveSessions();
     Object.keys(sessions).forEach((key) => {
@@ -144,7 +161,26 @@ export default class WalletConnect implements Plugin {
     const client = await this.client;
     // TODO: Check the connect
     // const { verified } = proposal.verifyContext;
-    const { proposer, requiredNamespaces, optionalNamespaces } = proposal.params;
+    const { proposer, requiredNamespaces: _requiredNamespaces, optionalNamespaces: _optionalNamespaces } = proposal.params;
+    const requiredNamespaces = ExtractCip155Namespace(_requiredNamespaces as Record<string, Namespace>);
+    const optionalNamespaces = ExtractCip155Namespace(_optionalNamespaces as Record<string, Namespace>);
+
+    const allNetworks = await queryNetworks();
+    const requestedEVMChainsId = uniq([...(requiredNamespaces?.[ChainPrefix.EIP]?.chains || []), ...(optionalNamespaces?.[ChainPrefix.EIP]?.chains || [])]).map(
+      (chain) => Number.parseInt(chain.split(':')[1]),
+    );
+    const requestedConfluxChainsId = uniq([
+      ...(requiredNamespaces?.[ChainPrefix.CIP]?.chains || []),
+      ...(optionalNamespaces?.[ChainPrefix.CIP]?.chains || []),
+    ]).map((chain) => Number.parseInt(chain.split(':')[1]));
+
+    const connectedNetworks = allNetworks
+      .filter((network) =>
+        network.networkType === NetworkType.Ethereum ? requestedEVMChainsId.includes(network.netId) : requestedConfluxChainsId.includes(network.netId),
+      )
+      .map((network) => ({ icon: network.icon!, name: network.name, netId: network.netId, id: network.id, networkType: network.networkType }));
+    const evmConnectedNetworks = connectedNetworks.filter((network) => network.networkType === NetworkType.Ethereum);
+    const confluxConnectedNetworks = connectedNetworks.filter((network) => network.networkType === NetworkType.Conflux);
 
     // TODO: check requiredNamespaces is supported
     const { metadata } = proposer;
@@ -165,28 +201,55 @@ export default class WalletConnect implements Plugin {
       });
     }
 
-    const approveSession: IWCSessionProposalEvent['action']['approve'] = async (args) => {
-      const approvedNamespaces = buildApprovedNamespaces({
-        proposal: proposal.params,
-        supportedNamespaces: {
-          eip155: {
-            ...args,
-            events: [...(requiredNamespaces?.eip155?.events || SUPPORT_SESSION_EVENTS)],
-            methods: [...SUPPORT_SIGN_METHODS, ...SUPPORTED_TRANSACTION_METHODS],
-          },
-        },
-      });
-      const activeSession = await client.approveSession({
-        id: proposal.id,
-        namespaces: approvedNamespaces,
-      });
-      this.emitSessionChange();
-      // save metadata
-      this.activeSessionMetadata[activeSession.topic] = activeSession.peer.metadata;
-    };
-
     const rejectSession: IWCSessionProposalEvent['action']['reject'] = async (reason) =>
       await client.rejectSession({ id: proposal.params.id, reason: getSdkError(reason || 'USER_REJECTED') });
+
+    const approveSession: IWCSessionProposalEvent['action']['approve'] = async () => {
+      try {
+        const currentAddress = await getCurrentAddress()!;
+        const evmSupportedNamespaces = !requiredNamespaces[ChainPrefix.EIP]
+          ? null
+          : {
+              ...requiredNamespaces[ChainPrefix.EIP],
+              chains: evmConnectedNetworks.map((network) => `${ChainPrefix.EIP}:${network.netId}`),
+              accounts: evmConnectedNetworks.map((network) => `${ChainPrefix.EIP}:${network.netId}:${currentAddress.hex!}`),
+            };
+        const confluxSupportedNamespaces = !requiredNamespaces[ChainPrefix.CIP]
+          ? null
+          : {
+              ...requiredNamespaces[ChainPrefix.CIP],
+              chains: confluxConnectedNetworks.map((network) => `${ChainPrefix.CIP}:${network.netId}`),
+              accounts: confluxConnectedNetworks.map(
+                (network) => `${ChainPrefix.CIP}:${network.netId}:${convertHexToBase32(currentAddress.hex!, network.netId)}`,
+              ),
+            };
+
+        const namespaces = mergeCIPNamespaceToEIP(evmSupportedNamespaces!, confluxSupportedNamespaces);
+
+        const approvedNamespaces = buildApprovedNamespaces({
+          proposal: proposal.params,
+          supportedNamespaces: {
+            [ChainPrefix.EIP]: namespaces as Required<Namespace>,
+          },
+        });
+
+        const activeSession = await client.approveSession({
+          id: proposal.id,
+          namespaces: approvedNamespaces,
+        });
+
+        this.emitSessionChange();
+        // save metadata
+        this.activeSessionMetadata[activeSession.topic] = activeSession.peer.metadata;
+      } catch (err) {
+        console.log('approve error', err);
+        rejectSession();
+      }
+    };
+
+    if (connectedNetworks.length === 0) {
+      return rejectSession('UNSUPPORTED_CHAINS');
+    }
 
     this.eventsSubject.next({
       type: WalletConnectPluginEventType.SESSION_PROPOSAL,
@@ -194,6 +257,7 @@ export default class WalletConnect implements Plugin {
         requiredNamespaces,
         optionalNamespaces,
         metadata,
+        connectedNetworks,
       },
       action: {
         approve: approveSession,
@@ -204,10 +268,14 @@ export default class WalletConnect implements Plugin {
 
   async onSessionRequest(request: Web3WalletTypes.SessionRequest) {
     const client = await this.client;
+    const currentAddressValue = await getCurrentAddressValue()!;
 
     const { id, topic } = request;
-    const { chainId } = request.params;
-    const { method, params } = request.params.request;
+    const { chainId: _chainId } = request.params;
+    const { method: _method, params } = request.params.request;
+    const isCip = isCIPData(_chainId);
+    const chainId = isCip ? convertEipDataToCip(_chainId) : _chainId;
+    const method = isCip ? convertEipMethodToCip(_method) : _method;
 
     const isSupportSignMethods = SUPPORT_SIGN_METHODS.includes(method as WalletConnectRPCMethod);
     const isSupportTransactionMethods = SUPPORTED_TRANSACTION_METHODS.includes(method as WalletConnectRPCMethod);
@@ -225,12 +293,9 @@ export default class WalletConnect implements Plugin {
       if (method === WalletConnectRPCMethod.PersonalSign) {
         message = params[0];
         address = params[1];
-      } else if (method.startsWith(WalletConnectRPCMethod.SignTypedData)) {
+      } else if (method.includes('signTypedData')) {
         address = params[0];
         message = params[1];
-      }
-      if (address) {
-        address = toChecksum(address);
       }
 
       const approve: IWCSendTransactionEvent['action']['approve'] = async (signedMessage) => {
@@ -246,11 +311,14 @@ export default class WalletConnect implements Plugin {
           response: formatJsonRpcError(id, reason || 'USER_REJECTED'),
         });
 
+      if (address.toLowerCase() !== currentAddressValue.toLowerCase()) {
+        return reject('address is not match');
+      }
+
       this.eventsSubject.next({
         type: WalletConnectPluginEventType.SIGN_MESSAGE,
         data: {
           chainId,
-          address,
           message,
           metadata: this.activeSessionMetadata[topic],
           method: method as WalletConnectRPCMethod,
@@ -262,7 +330,6 @@ export default class WalletConnect implements Plugin {
       });
     } else if (isSupportTransactionMethods) {
       const txFromParams = params[0] || {};
-
       const transaction: IWCSendTransactionEvent['data']['tx'] = {
         ...txFromParams,
         nonce: txFromParams.nonce ? Number(txFromParams.nonce) : undefined,
@@ -281,16 +348,17 @@ export default class WalletConnect implements Plugin {
           response: formatJsonRpcError(id, reason || 'USER_REJECTED'),
         });
 
-      let address = transaction?.from;
+      const address = transaction?.from;
 
       if (!address) reject('from is required');
-      else address = toChecksum(address);
+      if (address.toLowerCase() !== currentAddressValue.toLowerCase()) {
+        return reject('address is not match');
+      }
 
       this.eventsSubject.next({
         type: WalletConnectPluginEventType.SEND_TRANSACTION,
         data: {
           chainId,
-          address,
           metadata: this.activeSessionMetadata[topic],
           method: method as WalletConnectRPCMethod,
           tx: transaction,

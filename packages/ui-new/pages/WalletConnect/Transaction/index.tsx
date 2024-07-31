@@ -182,6 +182,7 @@ function WalletConnectTransaction() {
 
     const tx = Object.assign({}, txHalf, {
       gasLimit: gasEstimate.advanceSetting?.gasLimit,
+      ...(gasEstimate?.advanceSetting?.storageLimit ? { storageLimit: gasEstimate?.advanceSetting?.storageLimit } : null),
       ...(shouldUse1559
         ? {
             maxFeePerGas: gasEstimate.gasSetting.suggestedMaxFeePerGas,

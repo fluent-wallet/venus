@@ -5,6 +5,7 @@ import type { NavigationProp, NavigatorScreenParams } from '@react-navigation/na
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { VersionJSON } from '@pages/Settings/AboutUs';
 import type { SpeedUpLevel } from '@modules/GasFee/GasFeeSetting';
+import type { NetworkType } from '@core/utils/consts';
 
 export const WelcomeStackName = 'Welcome';
 export const WayToInitWalletStackName = 'WayToInitWallet';
@@ -44,7 +45,9 @@ export const WalletConnectSignMessageStackName = 'WalletConnectSignMessage';
 export const WalletConnectTransactionStackName = 'WalletConnectTransaction';
 
 export type WalletConnectParamList = {
-  [WalletConnectProposalStackName]: IWCSessionProposalEventData & { connectedNetworks: Array<{ icon: string; name: string; netId: number; id: string }> };
+  [WalletConnectProposalStackName]: IWCSessionProposalEventData & {
+    connectedNetworks: Array<{ icon: string; name: string; netId: number; id: string; networkType: NetworkType }>;
+  };
   [WalletConnectSessionsStackName]: undefined;
   [WalletConnectSignMessageStackName]: IWCSignMessageEventData;
   [WalletConnectTransactionStackName]: IWCSendTransactionEventData & { isContract: boolean };

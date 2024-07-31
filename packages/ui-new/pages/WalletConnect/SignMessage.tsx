@@ -140,7 +140,7 @@ function WalletConnectSignMessage() {
           setBSIMEvent({ type: BSIMEventTypesName.ERROR, message: error?.message });
         }
       }
-    } else if (method.startsWith(WalletConnectRPCMethod.SignTypedData)) {
+    } else if (method.includes('signTypedData')) {
       try {
         const m = JSON.parse(message);
 

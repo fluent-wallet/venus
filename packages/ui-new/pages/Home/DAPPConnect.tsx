@@ -15,7 +15,7 @@ function DAPPConnect() {
   const { t } = useTranslation();
   const navigation = useNavigation<StackNavigation>();
   const currentAddressValue = useCurrentAddressValue();
-  const { sessions } = useWalletConnectSessions(currentAddressValue);
+  const sessions = useWalletConnectSessions(currentAddressValue);
   const hasUnsafeURL = useMemo(
     () =>
       sessions.some(({ peer: { metadata } }) => {
