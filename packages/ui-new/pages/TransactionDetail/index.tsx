@@ -22,7 +22,7 @@ import { toDataUrl } from '@utils/blockies';
 import { useMemo } from 'react';
 import Decimal from 'decimal.js';
 import SpeedUpButton from '@modules/SpeedUpButton';
-import { SPEED_UP_FEATURE } from '@utils/features';
+import { ACTIVITY_DEV_INFO_FEATURE, SPEED_UP_FEATURE } from '@utils/features';
 import { useNetworkOfTx } from '@core/WalletCore/Plugins/ReactInject/data/useTxs';
 
 const getGasCostFromError = (err: string | null | undefined) => {
@@ -185,6 +185,14 @@ const TransactionDetail: React.FC<StackScreenProps<typeof TransactionDetailStack
           <Image style={styles.networkImage} source={{ uri: toDataUrl(network?.chainId) }} />
           <Text style={[styles.info, { color: colors.textPrimary, opacity: network?.name ? 1 : 0 }]}>{network?.name || 'placeholder'}</Text>
         </View>
+        {ACTIVITY_DEV_INFO_FEATURE.allow && (
+          <>
+            <View style={styles.row}>
+              <Text style={[styles.label, { color: colors.textSecondary }]}>status</Text>
+              <Text style={[styles.info, { color: colors.textPrimary }]}>{tx.status}</Text>
+            </View>
+          </>
+        )}
       </View>
     </View>
   );

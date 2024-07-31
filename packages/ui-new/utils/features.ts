@@ -23,8 +23,8 @@ export const ESPACE_NETWORK_SWITCH_FEATURE = {
 };
 
 /** standing */
-export const ACTIVITY_DB_STATUS_FEATURE = {
-  describe: 'show activity db status after action',
+export const ACTIVITY_DEV_INFO_FEATURE = {
+  describe: 'show activity dev info',
   allow: isQA || isDev,
 };
 

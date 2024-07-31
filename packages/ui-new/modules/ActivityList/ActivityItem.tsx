@@ -10,7 +10,7 @@ import useFormatBalance from '@hooks/useFormatBalance';
 import NFTIcon from '@modules/AssetsList/NFTsList/NFTIcon';
 import TokenIcon from '@modules/AssetsList/TokensList/TokenIcon';
 import { useTheme } from '@react-navigation/native';
-import { ACTIVITY_DB_STATUS_FEATURE, SPEED_UP_FEATURE } from '@utils/features';
+import { SPEED_UP_FEATURE } from '@utils/features';
 import type React from 'react';
 import { type ComponentProps, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -120,7 +120,6 @@ const ActivityItem: React.FC<Props> = ({ onPress, tx }) => {
           text={
             <Text style={[styles.typeText, { color: colors.textPrimary }]} numberOfLines={1}>
               {method}
-              {ACTIVITY_DB_STATUS_FEATURE.allow && `--[${tx.status}-${tx.source}-${tx.method}]`}
             </Text>
           }
           suffix={
