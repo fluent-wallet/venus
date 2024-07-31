@@ -3,6 +3,7 @@ import { useState, useRef } from 'react';
 import { View, StyleSheet } from 'react-native';
 import { useTheme } from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';
+import Decimal from 'decimal.js';
 import type { AssetInfo } from '@core/WalletCore/Plugins/AssetsTracker/types';
 import type { NFTItemDetail } from '@core/WalletCore/Plugins/NFTDetailTracker';
 import Text from '@components/Text';
@@ -20,6 +21,7 @@ const SendTransactionStep3Amount: React.FC<SendTransactionScreenProps<typeof Sen
   const { t } = useTranslation();
   const setAssetAmountMethodsRef = useRef<SetAssetAmountMethods>(null);
   const [amountInfo, setAmountInfo] = useState<null | AmountInfo>(null);
+  const asset = route.params.asset;
 
   return (
     <SendTransactionBottomSheet title={t('tx.send.title')}>
@@ -51,7 +53,12 @@ const SendTransactionStep3Amount: React.FC<SendTransactionScreenProps<typeof Sen
           onPress={
             !amountInfo || amountInfo.validMax === null
               ? () => setAssetAmountMethodsRef.current?.handleEstimateMax?.()
-              : () => navigation.navigate(SendTransactionStep4StackName, { ...route.params, amount: amountInfo.amount })
+              : () =>
+                  navigation.navigate(SendTransactionStep4StackName, {
+                    ...route.params,
+                    amount: amountInfo.inMaxMode ? new Decimal(asset.balance).div(Decimal.pow(10, asset.decimals)).toString() : amountInfo.amount,
+                    inMaxMode: amountInfo.inMaxMode,
+                  })
           }
           size="small"
           loading={amountInfo?.inEstimate}
@@ -63,11 +70,11 @@ const SendTransactionStep3Amount: React.FC<SendTransactionScreenProps<typeof Sen
   );
 };
 
-export const NFT: React.FC<{ colors: ReturnType<typeof useTheme>['colors']; asset: AssetInfo; nftItemDetail: NFTItemDetail }> = ({
-  colors,
-  asset,
-  nftItemDetail,
-}) => (
+export const NFT: React.FC<{
+  colors: ReturnType<typeof useTheme>['colors'];
+  asset: AssetInfo;
+  nftItemDetail: NFTItemDetail;
+}> = ({ colors, asset, nftItemDetail }) => (
   <View style={styles.nftItem}>
     <NFTIcon style={styles.nftItemImg} source={nftItemDetail.icon} isNftItem placeholderContentFit="cover" contentFit="cover" />
     <Text style={[styles.nftAssetName, { color: colors.textSecondary }]}>{asset.name}</Text>

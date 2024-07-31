@@ -1,10 +1,11 @@
 import ArrowRight from '@assets/icons/arrow-right2.svg';
+import Warning from '@assets/icons/message-warning.svg';
 import GasCustomizeDark from '@assets/images/gas/gas-customize-dark.png';
 import GasCustomizeLight from '@assets/images/gas/gas-customize-light.png';
 import GasHigh from '@assets/images/gas/gas-high.png';
 import GasLow from '@assets/images/gas/gas-low.png';
 import GasMedium from '@assets/images/gas/gas-medium.png';
-import GasHigher from '@assets/images/gas/gas-higher.png';
+import { trimDecimalZeros, numberFormat } from '@core/utils/balance';
 import BottomSheet, {
   BottomSheetWrapper,
   BottomSheetHeader,
@@ -114,7 +115,9 @@ const GasFeeSetting = forwardRef<GasFeeSettingMethods, Props>(
             }
           : null),
         ...(estimateRes.estimateOf1559 && has(dappCustomizeGasSetting, 'suggestedMaxPriorityFeePerGas')
-          ? { suggestedMaxPriorityFeePerGas: dappCustomizeGasSetting.suggestedMaxPriorityFeePerGas }
+          ? {
+              suggestedMaxPriorityFeePerGas: dappCustomizeGasSetting.suggestedMaxPriorityFeePerGas,
+            }
           : null),
       } as GasSettingWithLevel;
       // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -148,7 +151,10 @@ const GasFeeSetting = forwardRef<GasFeeSettingMethods, Props>(
         setSelectedGasSetting(newGasSetting);
         onConfirm?.({
           gasSetting: newGasSetting,
-          advanceSetting: { ...estimateAdvanceSetting, ...customizeAdvanceSetting } as AdvanceSetting,
+          advanceSetting: {
+            ...estimateAdvanceSetting,
+            ...customizeAdvanceSetting,
+          } as AdvanceSetting,
           estimateAdvanceSetting: estimateAdvanceSetting!,
           estimateCurrentGasPrice: estimateCurrentGasPrice!,
         });
@@ -181,7 +187,10 @@ const GasFeeSetting = forwardRef<GasFeeSettingMethods, Props>(
         setSelectedGasSetting(newGasSetting);
         onConfirm?.({
           gasSetting: newGasSetting,
-          advanceSetting: { ...estimateAdvanceSetting, ...(isReset ? null : customizeAdvanceSetting) } as AdvanceSetting,
+          advanceSetting: {
+            ...estimateAdvanceSetting,
+            ...(isReset ? null : customizeAdvanceSetting),
+          } as AdvanceSetting,
           estimateAdvanceSetting: estimateAdvanceSetting!,
           estimateCurrentGasPrice: estimateCurrentGasPrice!,
         });
@@ -199,6 +208,14 @@ const GasFeeSetting = forwardRef<GasFeeSettingMethods, Props>(
       handleConfirm(true);
     }, [handleConfirm]);
 
+    const showLongTime = useMemo(
+      () =>
+        tempSelectedOptionLevel === 'customize' && estimateCurrentGasPrice && customizeGasSetting
+          ? new Decimal(customizeGasSetting.suggestedMaxFeePerGas ?? customizeGasSetting.suggestedGasPrice!).lessThan(estimateCurrentGasPrice)
+          : false,
+      [tempSelectedOptionLevel, estimateCurrentGasPrice, customizeGasSetting],
+    );
+
     useImperativeHandle(
       ref,
       () => ({
@@ -212,7 +229,7 @@ const GasFeeSetting = forwardRef<GasFeeSettingMethods, Props>(
       <>
         <BottomSheet ref={bottomSheetRef} snapPoints={snapPoints} index={0} onClose={onClose}>
           <BottomSheetWrapper innerPaddingHorizontal>
-            <BottomSheetHeader title="Network Fee" />
+            <BottomSheetHeader title={t('tx.gasFee.title')} />
             <BottomSheetScrollContent>
               {!estimateRes && <HourglassLoading style={styles.loading} />}
               {estimateRes && estimateGasSettings && (
@@ -243,6 +260,7 @@ const GasFeeSetting = forwardRef<GasFeeSettingMethods, Props>(
                   />
                   <GasOption
                     level="customize"
+                    showLongTime={showLongTime}
                     nativeAsset={nativeAsset}
                     gasSetting={customizeGasSetting ?? defaultCustomizeGasSetting!}
                     gasLimit={currentGasLimit!}
@@ -250,7 +268,7 @@ const GasFeeSetting = forwardRef<GasFeeSettingMethods, Props>(
                     onPress={() => setShowCustomizeSetting(true)}
                   />
                   <Pressable style={styles.advanceWrapper} onPress={() => setShowCustomizeAdvanceSetting(true)}>
-                    <Text style={[styles.advance, { color: colors.textPrimary }]}>Advance</Text>
+                    <Text style={[styles.advance, { color: colors.textPrimary }]}>{t('tx.gasFee.advance')}</Text>
                     <ArrowRight color={colors.iconPrimary} />
                   </Pressable>
                 </>
@@ -290,7 +308,9 @@ const GasFeeSetting = forwardRef<GasFeeSettingMethods, Props>(
   },
 );
 
-export const OptionLevel: React.FC<{ level: GasSettingWithLevel['level'] | SpeedUpLevel }> = ({ level }) => {
+export const OptionLevel: React.FC<{
+  level: GasSettingWithLevel['level'] | SpeedUpLevel;
+}> = ({ level }) => {
   const { t } = useTranslation();
   const { colors, mode } = useTheme();
 
@@ -298,17 +318,17 @@ export const OptionLevel: React.FC<{ level: GasSettingWithLevel['level'] | Speed
     () => ({
       low: {
         label: t('tx.gasFee.level.low'),
-        color: colors.down,
+        color: '#FFB763',
         gasCircleSrc: GasLow,
       },
       medium: {
         label: t('tx.gasFee.level.medium'),
-        color: colors.middle,
+        color: '#64AEFF',
         gasCircleSrc: GasMedium,
       },
       high: {
         label: t('tx.gasFee.level.high'),
-        color: colors.up,
+        color: '#36C4C4',
         gasCircleSrc: GasHigh,
       },
       customize: {
@@ -318,12 +338,12 @@ export const OptionLevel: React.FC<{ level: GasSettingWithLevel['level'] | Speed
       },
       higher: {
         label: t('tx.action.level.higher'),
-        color: '#7FFF5F',
-        gasCircleSrc: GasHigher,
+        color: '#64AEFF',
+        gasCircleSrc: GasMedium,
       },
       faster: {
         label: t('tx.action.level.faster'),
-        color: colors.up,
+        color: '#36C4C4',
         gasCircleSrc: GasHigh,
       },
     }),
@@ -345,11 +365,13 @@ export const GasOption: React.FC<{
   nativeAsset: NonNullable<ReturnType<typeof useCurrentNetworkNativeAsset>>;
   gasSetting: GasSetting;
   gasLimit: string;
-}> = ({ level, nativeAsset, gasSetting, gasLimit, selected, onPress }) => {
+  showLongTime?: boolean;
+}> = ({ level, nativeAsset, gasSetting, gasLimit, selected, onPress, showLongTime }) => {
+  const { t } = useTranslation();
   const { colors } = useTheme();
 
   const priceGwei = useMemo(
-    () => new Decimal(gasSetting.suggestedMaxFeePerGas ?? gasSetting.suggestedGasPrice!).div(1e9).toFixed(4),
+    () => trimDecimalZeros(new Decimal(gasSetting.suggestedMaxFeePerGas ?? gasSetting.suggestedGasPrice!).div(1e9).toString()),
     [gasSetting.suggestedMaxFeePerGas, gasSetting.suggestedGasPrice],
   );
   const gasCost = useMemo(
@@ -361,9 +383,15 @@ export const GasOption: React.FC<{
     [nativeAsset?.decimals, gasLimit, gasSetting],
   );
   const costPriceInUSDT = useMemo(() => {
-    const res = nativeAsset?.priceInUSDT && gasCost ? calculateTokenPrice({ price: nativeAsset.priceInUSDT, amount: gasCost }) : null;
+    const res =
+      nativeAsset?.priceInUSDT && gasCost
+        ? calculateTokenPrice({
+            price: nativeAsset.priceInUSDT,
+            amount: gasCost,
+          })
+        : null;
     if (res && Number(res) < MinUSDT) return ' < $0.01';
-    if (res) return ` ≈ $${res}`;
+    if (res) return ` ≈ $${numberFormat(res, 2)}`;
     return null;
   }, [gasCost, nativeAsset?.priceInUSDT]);
 
@@ -373,9 +401,8 @@ export const GasOption: React.FC<{
       onPress={onPress}
       pointerEvents={selected && level !== 'customize' ? 'none' : undefined}
     >
-      <OptionLevel level={level} />
-      <View style={styles.gasOptionCostWrapper}>
-        <Text style={[styles.gasOptionCost, { color: colors.textSecondary }]}>{priceGwei} Gwei</Text>
+      <View style={styles.gasOptionHeader}>
+        <OptionLevel level={level} />
         <View style={styles.customize}>
           <Text style={[styles.gasOptionCost, { color: colors.textSecondary }]}>
             {gasCost} {nativeAsset?.symbol}
@@ -383,6 +410,16 @@ export const GasOption: React.FC<{
           </Text>
           {level === 'customize' && <ArrowRight color={colors.textSecondary} style={styles.gasOptionArrowRight} />}
         </View>
+      </View>
+      <View style={styles.gasOptionFooter}>
+        <Text style={[styles.gasOptionCost, { color: colors.textSecondary }]}>{priceGwei} Gwei</Text>
+
+        {level === 'customize' && showLongTime && (
+          <View style={styles.longTimeWrapper}>
+            <Warning color={colors.middle} style={{ transform: [{ translateY: -1 }] }} />
+            <Text style={[styles.gasOptionCost, { color: colors.textPrimary, fontWeight: '300' }]}>{t('tx.gasFee.longTime')}</Text>
+          </View>
+        )}
       </View>
     </Pressable>
   );
@@ -418,18 +455,32 @@ const styles = StyleSheet.create({
     fontWeight: '300',
     lineHeight: 18,
   },
-  gasOptionCostWrapper: {
-    paddingLeft: 24,
+  gasOptionHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  gasOptionFooter: {
+    marginTop: 12,
+    paddingLeft: 21,
+    height: 20,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
   },
   gasOptionCost: {
     fontSize: 14,
-    fontWeight: '400',
     lineHeight: 16,
-    marginTop: 8,
   },
   gasOptionArrowRight: {
-    marginTop: 4,
     marginLeft: 8,
+    transform: [{ translateY: -1 }],
+  },
+  longTimeWrapper: {
+    display: 'flex',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
   },
   advanceWrapper: {
     marginTop: 24,

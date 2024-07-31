@@ -1,5 +1,4 @@
 import Failed from '@assets/icons/message-fail.svg';
-import Warning from '@assets/icons/message-warning.svg';
 import BottomSheet, { BottomSheetWrapper, BottomSheetHeader, BottomSheetContent, BottomSheetFooter, type BottomSheetMethods } from '@components/BottomSheet';
 import Button from '@components/Button';
 import Text from '@components/Text';
@@ -50,19 +49,26 @@ const CustomizeAdvanceSetting: React.FC<Props> = ({ customizeAdvanceSetting, est
   });
 
   const handleConfirm = useCallback((data: FormData) => {
-    onConfirm({ gasLimit: new Decimal(data.gasLimit).toHex(), nonce: Number(data.nonce), storageLimit: new Decimal(data.storageLimit).toHex() });
+    onConfirm({
+      gasLimit: new Decimal(data.gasLimit).toHex(),
+      nonce: Number(data.nonce),
+      storageLimit: new Decimal(data.storageLimit).toHex(),
+    });
     bottomSheetRef.current?.close();
   }, []);
 
   return (
     <BottomSheet ref={bottomSheetRef} snapPoints={snapPoints} index={0} onClose={onClose}>
       <BottomSheetWrapper innerPaddingHorizontal>
-        <BottomSheetHeader title="Advance Setting" />
+        <BottomSheetHeader title={t('tx.gasFee.advanceSetting.title')} />
         <BottomSheetContent style={styles.contentStyle}>
           <Text style={[styles.inputTitle, { color: colors.textSecondary }]}>Gas Limit</Text>
           <Controller
             control={control}
-            rules={{ required: true, validate: (newGasLimit) => new Decimal(newGasLimit ?? '0').greaterThanOrEqualTo(minGasLimit) || 'less-than-min' }}
+            rules={{
+              required: true,
+              validate: (newGasLimit) => new Decimal(newGasLimit ?? '0').greaterThanOrEqualTo(minGasLimit) || 'less-than-min',
+            }}
             render={({ field: { onChange, onBlur, value } }) => (
               <TextInput error={!!errors.gasLimit} colors={colors} onBlur={onBlur} onChangeText={onChange} value={value} showGweiSuffix={false} />
             )}
@@ -72,7 +78,10 @@ const CustomizeAdvanceSetting: React.FC<Props> = ({ customizeAdvanceSetting, est
             <View style={styles.tooLowTipWrapper}>
               <Failed color={colors.down} />
               <Text style={[styles.tooLowTip, { color: colors.down }]}>
-                {currentNetwork?.name} requires a minimum gasLimit of {minGasLimit.toString()}.
+                {t('tx.gasFee.advanceSetting.miniumGasLimit', {
+                  network: currentNetwork?.name,
+                  gasLimit: minGasLimit.toString(),
+                })}
               </Text>
             </View>
           )}
