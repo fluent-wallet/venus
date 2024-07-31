@@ -15,7 +15,7 @@ import {
 import backToHome, { getActiveRouteName } from '@utils/backToHome';
 import { isProd, isQA } from '@utils/getEnv';
 import { useCallback, useEffect, useState, useMemo } from 'react';
-import { parseNamespaceData, ChainPrefix, ExtractCip155Namespace, type Namespace } from '@cfx-kit/react-utils/dist/AccountManagePlugins';
+import { parseNamespaceData, ChainPrefix, ExtractCip155Namespace, type Namespace } from '@cfx-kit/react-utils/dist/WalletConnectorHelper';
 
 const openNetworks = isProd ? ([Networks['Conflux eSpace']] as const) : isQA ? ([Networks['Conflux eSpace'], Networks['eSpace Testnet']] as const) : null;
 

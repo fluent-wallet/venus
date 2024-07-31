@@ -1872,9 +1872,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@cfx-kit/react-utils@npm:^0.0.34":
-  version: 0.0.34
-  resolution: "@cfx-kit/react-utils@npm:0.0.34"
+"@cfx-kit/react-utils@npm:^0.0.35":
+  version: 0.0.35
+  resolution: "@cfx-kit/react-utils@npm:0.0.35"
   dependencies:
     "@cfx-kit/dapp-utils": 0.2.1
     "@cfx-kit/utils": 0.0.5
@@ -1890,7 +1890,7 @@ __metadata:
   peerDependencies:
     ethers: ^6.6.4
     react: ^18.0.0
-  checksum: 2aee21e98268df2f8f90f4cb381a581b563c3f845d7a219755a765bf5020d8de14ae637eb93a27eaca820bc0b73fb24a0c5b1cccc1e1de0e2ff474f7b1a18feb
+  checksum: 19a3ba7398de5b5e7d96d18929a5cd18bf72139435c46dfbd52e9acf0c87ab6fec0cb2ee8a0b01354020c27d2b43203c6681290e04bf87ce78494a114b7273c3
   languageName: node
   linkType: hard
 
@@ -16886,7 +16886,7 @@ __metadata:
     "@babel/runtime": ^7.23.8
     "@biomejs/biome": 1.8.3
     "@cfx-kit/dapp-utils": ^0.2.1
-    "@cfx-kit/react-utils": ^0.0.34
+    "@cfx-kit/react-utils": ^0.0.35
     "@craftzdog/react-native-buffer": ^6.0.5
     "@ethersproject/abi": ^5.7.0
     "@ethersproject/hdnode": ^5.7.0
