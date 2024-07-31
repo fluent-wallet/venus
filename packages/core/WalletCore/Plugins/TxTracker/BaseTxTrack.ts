@@ -96,19 +96,20 @@ export abstract class BaseTxTrack {
       const tempReplaced = replaceReponse === ReplacedResponse.TempReplaced;
       txStatus = replaced ? TxStatus.REPLACED : tempReplaced ? TxStatus.TEMP_REPLACED : epochHeightOutOfBound ? TxStatus.FAILED : TxStatus.PENDING;
       updaterMap.set(tx, () =>
-        tx.prepareUpdate((tx) => {
-          tx.status = txStatus;
+        tx.prepareUpdate((_tx) => {
+          _tx.status = txStatus;
+          _tx.executedStatus = null;
+          _tx.receipt = null;
+          _tx.err = null;
+          _tx.errorType = null;
           if (resend) {
-            tx.resendCount = (tx.resendCount ?? 0) + 1;
-            tx.resendAt = new Date();
+            _tx.resendCount = (_tx.resendCount ?? 0) + 1;
+            _tx.resendAt = new Date();
           }
           if (replaced || epochHeightOutOfBound) {
-            tx.raw = null;
-            tx.err = null;
-            tx.errorType = replaced ? ProcessErrorType.replacedByAnotherTx : ProcessErrorType.epochHeightOutOfBound;
+            _tx.raw = null;
+            _tx.errorType = replaced ? ProcessErrorType.replacedByAnotherTx : ProcessErrorType.epochHeightOutOfBound;
           }
-          tx.executedStatus = null;
-          tx.receipt = null;
         }),
       );
       // biome-ignore lint/correctness/noUnsafeFinally: <explanation>
@@ -176,6 +177,9 @@ export abstract class BaseTxTrack {
         if (executedStatus === ExecutedStatus.FAILED) {
           _tx.err = txExecErrorMsg ?? 'tx failed';
           _tx.errorType = ProcessErrorType.executeFailed;
+        } else {
+          _tx.err = null;
+          _tx.errorType = null;
         }
       }),
     );
@@ -200,6 +204,9 @@ export abstract class BaseTxTrack {
           _tx.executedStatus = null;
           _tx.receipt = null;
           _tx.executedAt = null;
+        } else {
+          _tx.err = null;
+          _tx.errorType = null;
         }
       }),
     );
@@ -225,6 +232,8 @@ export abstract class BaseTxTrack {
         _tx.executedStatus = null;
         _tx.receipt = null;
         _tx.executedAt = null;
+        _tx.err = null;
+        _tx.errorType = null;
       }),
     );
     if (EXECUTED_NOT_FINALIZED_TX_STATUSES.includes(tx.status)) {
