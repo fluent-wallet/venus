@@ -25,7 +25,7 @@ import {
   convertEipDataToCip,
   convertEipMethodToCip,
   type Namespace,
-} from '@cfx-kit/react-utils/dist/AccountManagePlugins';
+} from '@cfx-kit/react-utils/dist/WalletConnectorHelper';
 
 declare module '../../../WalletCore/Plugins' {
   interface Plugins {
