@@ -1,6 +1,7 @@
 import Text from '@components/Text';
 import type { AssetInfo } from '@core/WalletCore/Plugins/AssetsTracker/types';
 import { NetworkType, setAtom, useCurrentNetwork } from '@core/WalletCore/Plugins/ReactInject';
+import type { Tx } from '@core/database/models/Tx';
 import { Networks } from '@core/utils/consts';
 import ActivityList from '@modules/ActivityList';
 import NFTsList from '@modules/AssetsList/NFTsList';
@@ -28,15 +29,23 @@ export type TabsType = 'Home' | 'SelectAsset';
 type Tabs = Array<Tab>;
 const TAB_WIDTH = 64;
 
-interface Props {
+interface BaseProps {
   type: TabsType;
-  selectType: 'Home' | 'Send' | 'Receive';
   currentTab: Tab;
   pageViewRef: React.RefObject<PagerView>;
   setCurrentTab: (tab: Tab) => void;
-  onPressItem?: (v: AssetInfo) => void;
   onlyToken?: boolean;
 }
+
+type Props =
+  | (BaseProps & {
+      selectType: 'Send' | 'Receive';
+      onPressItem?: (v: AssetInfo) => void;
+    })
+  | (BaseProps & {
+      selectType: 'Home';
+      onPressItem?: (v: AssetInfo | Tx) => void;
+    });
 
 export const Tabs: React.FC<Omit<Props, 'setCurrentTab' | 'onPressItem' | 'selectType'>> = ({ type, currentTab, pageViewRef, onlyToken }) => {
   const { colors } = useTheme();
@@ -197,7 +206,7 @@ export const TabsContent: React.FC<Props> = ({ currentTab, setCurrentTab, pageVi
               ) : tab === 'NFTs' ? (
                 <NFTsList tabsType={type} onPressItem={onPressItem} />
               ) : tab === 'Activity' ? (
-                <ActivityList />
+                <ActivityList onPress={onPressItem as (v: Tx) => void} />
               ) : null}
             </View>
           </View>
