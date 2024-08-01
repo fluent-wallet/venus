@@ -22,8 +22,38 @@ import { toDataUrl } from '@utils/blockies';
 import { useMemo } from 'react';
 import Decimal from 'decimal.js';
 import SpeedUpButton from '@modules/SpeedUpButton';
-import { SPEED_UP_FEATURE } from '@utils/features';
+import { ACTIVITY_DEV_INFO_FEATURE, SPEED_UP_FEATURE } from '@utils/features';
 import { useNetworkOfTx } from '@core/WalletCore/Plugins/ReactInject/data/useTxs';
+
+const getGasCostFromError = (err: string | null | undefined) => {
+  if (!err) {
+    return null;
+  }
+  // "NotEnoughCash { required: 10000000000000000000, got: 0, actual_gas_cost: 0, max_storage_limit_cost: 0 }"
+  const notEnoughCashError = /^NotEnoughCash/.test(err);
+  return notEnoughCashError ? err.replace(/.+actual_gas_cost:[\s]?([\d.]+)[\s]?[,}].+/g, '$1').trim() : null;
+};
+
+const useGasFeeOfTx = (tx: Tx | null) => {
+  const network = useNetworkOfTx(tx?.id ?? '');
+  const nativeAsset = useNativeAssetOfNetwork(network?.id);
+  const gasCostAndPriceInUSDT = useMemo(() => {
+    if (!tx?.receipt) return null;
+    const gasPrice = tx.receipt.effectiveGasPrice ?? '0';
+    const gasUsed = tx.receipt.gasUsed ?? '0';
+    const gasCostInError = getGasCostFromError(tx.err);
+    const costInDrip = tx.receipt.gasFee ? new Decimal(tx.receipt.gasFee) : gasCostInError ? new Decimal(gasCostInError) : new Decimal(gasPrice).mul(gasUsed);
+    const cost = costInDrip.div(Decimal.pow(10, nativeAsset?.decimals ?? 18));
+    const priceInUSDT = nativeAsset?.priceInUSDT ? cost.mul(new Decimal(nativeAsset.priceInUSDT)) : null;
+
+    return {
+      value: cost.toString(),
+      cost: `${cost.toString()} ${nativeAsset?.symbol}`,
+      priceInUSDT: cost.equals(0) ? '$0' : priceInUSDT ? (priceInUSDT.lessThan(0.01) ? '<$0.01' : `≈$${priceInUSDT.toFixed(2)}`) : null,
+    };
+  }, [tx?.receipt, tx?.err, nativeAsset?.priceInUSDT, nativeAsset?.decimals]);
+  return gasCostAndPriceInUSDT;
+};
 
 const TxStatus: React.FC<{ tx: Tx }> = ({ tx }) => {
   const { t } = useTranslation();
@@ -50,20 +80,7 @@ const TransactionDetail: React.FC<StackScreenProps<typeof TransactionDetailStack
   const asset = useAssetOfTx(txId);
   const status = tx && formatStatus(tx);
   const network = useNetworkOfTx(txId);
-  const nativeAsset = useNativeAssetOfNetwork(network?.id);
-  const gasCostAndPriceInUSDT = useMemo(() => {
-    if (!tx?.receipt) return null;
-    const gasPrice = tx.receipt.effectiveGasPrice;
-    const gasUsed = tx.receipt.gasUsed;
-    const cost = (tx.receipt.gasFee ? new Decimal(tx.receipt.gasFee) : new Decimal(gasPrice ?? '0').mul(gasUsed ?? '0')).div(
-      Decimal.pow(10, nativeAsset?.decimals ?? 18),
-    );
-    const priceInUSDT = nativeAsset?.priceInUSDT ? cost.mul(new Decimal(nativeAsset.priceInUSDT)) : null;
-    return {
-      cost: cost.toString(),
-      priceInUSDT: priceInUSDT ? (priceInUSDT.lessThan(0.01) ? '<$0.01' : `≈$${priceInUSDT.toFixed(2)}`) : null,
-    };
-  }, [tx?.receipt, nativeAsset?.priceInUSDT, nativeAsset?.decimals]);
+  const gasCostAndPriceInUSDT = useGasFeeOfTx(tx);
   const { to } = useMemo(() => formatTxData(tx, payload, asset), [tx, payload, asset]);
   if (!tx) return null;
   const isPending = status === 'pending';
@@ -144,21 +161,21 @@ const TransactionDetail: React.FC<StackScreenProps<typeof TransactionDetailStack
             <Copy color={colors.textSecondary} />
           </Pressable>
         </View>
-        <View style={styles.row}>
-          <Text style={[styles.label, { color: colors.textSecondary }]}>{t('tx.detail.fee')}</Text>
-          {!isPending ? (
-            gasCostAndPriceInUSDT && (
-              <>
+        {(isPending || gasCostAndPriceInUSDT) && (
+          <View style={styles.row}>
+            <Text style={[styles.label, { color: colors.textSecondary }]}>{t('tx.detail.fee')}</Text>
+            {!isPending ? (
+              gasCostAndPriceInUSDT && (
                 <Text style={[styles.info, { color: colors.textPrimary }]}>
-                  {gasCostAndPriceInUSDT.cost} {nativeAsset?.symbol}
+                  {gasCostAndPriceInUSDT.cost}
                   {gasCostAndPriceInUSDT.priceInUSDT && ` (${gasCostAndPriceInUSDT.priceInUSDT})`}
                 </Text>
-              </>
-            )
-          ) : (
-            <PendingIcon size="small" />
-          )}
-        </View>
+              )
+            ) : (
+              <PendingIcon size="small" />
+            )}
+          </View>
+        )}
         <View style={styles.row}>
           <Text style={[styles.label, { color: colors.textSecondary }]}>{t('tx.detail.nonce')}</Text>
           <Text style={[styles.info, { color: colors.textPrimary }]}>{payload?.nonce}</Text>
@@ -168,6 +185,14 @@ const TransactionDetail: React.FC<StackScreenProps<typeof TransactionDetailStack
           <Image style={styles.networkImage} source={{ uri: toDataUrl(network?.chainId) }} />
           <Text style={[styles.info, { color: colors.textPrimary, opacity: network?.name ? 1 : 0 }]}>{network?.name || 'placeholder'}</Text>
         </View>
+        {ACTIVITY_DEV_INFO_FEATURE.allow && (
+          <>
+            <View style={styles.row}>
+              <Text style={[styles.label, { color: colors.textSecondary }]}>status</Text>
+              <Text style={[styles.info, { color: colors.textPrimary }]}>{tx.status}</Text>
+            </View>
+          </>
+        )}
       </View>
     </View>
   );

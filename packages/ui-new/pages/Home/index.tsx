@@ -5,8 +5,8 @@ import AccountSelector from '@modules/AccountSelector';
 import { type Tab, Tabs, TabsContent, setHomeScrollY } from '@modules/AssetsTabs';
 import NetworkSelector from '@modules/NetworkSelector';
 import { useTheme } from '@react-navigation/native';
-import type { HomeStackName, StackScreenProps } from '@router/configs';
-import { ESPACE_NETWORK_SWITCH_FEATURE, FULL_NETWORK_SWITCH_LIST_FEATURE } from '@utils/features';
+import { TransactionDetailStackName, type HomeStackName, type StackScreenProps } from '@router/configs';
+import { ESPACE_NETWORK_SWITCH_FEATURE, FULL_NETWORK_SWITCH_LIST_FEATURE, TX_DETAIL_FEATURE } from '@utils/features';
 import type React from 'react';
 import { useCallback, useRef, useState } from 'react';
 import { type NativeScrollEvent, StyleSheet, View } from 'react-native';
@@ -20,6 +20,8 @@ import Navigations from './Navigations';
 import NoNetworkTip from './NoNetworkTip';
 import NotBackup from './NotBackup';
 import RefreshScrollView from './RefreshScrollView';
+import { Tx } from '@core/database/models/Tx';
+import type { AssetInfo } from '@core/WalletCore/Plugins/AssetsTracker/types';
 
 const Home: React.FC<StackScreenProps<typeof HomeStackName>> = ({ navigation }) => {
   const { colors } = useTheme();
@@ -38,6 +40,17 @@ const Home: React.FC<StackScreenProps<typeof HomeStackName>> = ({ navigation }) 
   const [showAccountSelector, setShowAccountSelector] = useState(false);
   const [showNetworkSelector, setShowNetworkSelector] = useState(false);
 
+  const handleTxPress = useCallback(
+    (data: Tx | AssetInfo) => {
+      if (data instanceof Tx) {
+        // press activity item
+        if (TX_DETAIL_FEATURE.allow) {
+          navigation.navigate(TransactionDetailStackName, { txId: data.id });
+        }
+      }
+    },
+    [navigation.navigate],
+  );
   return (
     <>
       <SafeAreaView style={[styles.container, { backgroundColor: colors.bgPrimary }]}>
@@ -62,7 +75,14 @@ const Home: React.FC<StackScreenProps<typeof HomeStackName>> = ({ navigation }) 
           <Navigations navigation={navigation} />
           <NotBackup navigation={navigation} />
           <Tabs currentTab={currentTab} pageViewRef={pageViewRef} type="Home" />
-          <TabsContent currentTab={currentTab} setCurrentTab={setCurrentTab} pageViewRef={pageViewRef} type="Home" selectType="Home" />
+          <TabsContent
+            currentTab={currentTab}
+            setCurrentTab={setCurrentTab}
+            pageViewRef={pageViewRef}
+            type="Home"
+            selectType="Home"
+            onPressItem={handleTxPress}
+          />
         </RefreshScrollView>
         <NoNetworkTip />
       </SafeAreaView>

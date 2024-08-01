@@ -10,7 +10,7 @@ import useFormatBalance from '@hooks/useFormatBalance';
 import NFTIcon from '@modules/AssetsList/NFTsList/NFTIcon';
 import TokenIcon from '@modules/AssetsList/TokensList/TokenIcon';
 import { useTheme } from '@react-navigation/native';
-import { ACTIVITY_DB_STATUS_FEATURE, SPEED_UP_FEATURE } from '@utils/features';
+import { SPEED_UP_FEATURE } from '@utils/features';
 import type React from 'react';
 import { type ComponentProps, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -22,7 +22,7 @@ const TextEllipsisWithSuffix: React.FC<{
   defaultSuffixWidth?: number;
   style?: ViewProps['style'];
   text: JSX.Element;
-  suffix: React.ReactNode;
+  suffix?: React.ReactNode;
   suffixStyle?: ViewProps['style'];
 }> = ({ style, text, defaultSuffixWidth = 0, suffix, suffixStyle }) => {
   const [suffixWidth, setSuffixWidth] = useState(0);
@@ -33,9 +33,11 @@ const TextEllipsisWithSuffix: React.FC<{
   return (
     <View style={[styles.textEllipsisWrapper, { paddingRight: suffixWidth || defaultSuffixWidth }, style]}>
       {text}
-      <View onLayout={onSuffixLayout} style={[suffixStyle, !!suffixWidth && { width: suffixWidth }]}>
-        {suffix}
-      </View>
+      {suffix && (
+        <View onLayout={onSuffixLayout} style={[suffixStyle, !!suffixWidth && { width: suffixWidth }]}>
+          {suffix}
+        </View>
+      )}
     </View>
   );
 };
@@ -72,10 +74,12 @@ const AssetInfo: React.FC<{
           </Text>
         }
         suffix={
-          <Text style={[styles.assetText, { color: txStatus === 'failed' ? colors.textSecondary : colors.textPrimary }]} numberOfLines={1}>
-            {asset?.symbol}
-            {tokenId && <>&nbsp;#{tokenId}</>}
-          </Text>
+          (asset || tokenId) && (
+            <Text style={[styles.assetText, { color: txStatus === 'failed' ? colors.textSecondary : colors.textPrimary }]} numberOfLines={1}>
+              {asset?.symbol}
+              {tokenId && <>&nbsp;#{tokenId}</>}
+            </Text>
+          )
         }
         defaultSuffixWidth={50}
       />
@@ -116,16 +120,14 @@ const ActivityItem: React.FC<Props> = ({ onPress, tx }) => {
           text={
             <Text style={[styles.typeText, { color: colors.textPrimary }]} numberOfLines={1}>
               {method}
-              {ACTIVITY_DB_STATUS_FEATURE.allow && `--[${tx.status}-${tx.source}-${tx.method}]`}
             </Text>
           }
           suffix={
-            <>
-              {status === 'pending' && <PendingIcon />}
-              {status === 'failed' && (
-                <Text style={[styles.statusText, { color: colors.down, borderColor: colors.down }]}>{t('tx.activity.status.failed')}</Text>
-              )}
-            </>
+            status === 'pending' ? (
+              <PendingIcon />
+            ) : status === 'failed' ? (
+              <Text style={[styles.statusText, { color: colors.down, borderColor: colors.down }]}>{t('tx.activity.status.failed')}</Text>
+            ) : undefined
           }
           defaultSuffixWidth={50}
         />
