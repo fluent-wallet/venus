@@ -18,10 +18,10 @@ class TxTrackerPluginClass implements Plugin {
   public name = 'TxTracker';
   _currentAddress: Address | null = null;
   _pendingPolling = new Polling({
-    inStatuses: [TxStatus.PENDING],
+    inStatuses: [TxStatus.DISCARDED, TxStatus.PENDING],
     pollingInterval: DETAULT_PENDING_POLLING_INTERVAL,
     key: 'pending',
-    startNextPollingImmediately: (status) => status !== TxStatus.PENDING && status !== TxStatus.FAILED,
+    startNextPollingImmediately: (status) => status !== TxStatus.DISCARDED && status !== TxStatus.PENDING && status !== TxStatus.FAILED,
   });
   _executedPolling = new Polling({
     inStatuses: [TxStatus.EXECUTED],

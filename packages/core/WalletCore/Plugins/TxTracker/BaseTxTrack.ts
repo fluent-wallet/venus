@@ -55,12 +55,16 @@ export abstract class BaseTxTrack {
 
   async _handleUnsent(tx: Tx, network: Network, updaterMap: UpdaterMap) {
     let resend = false;
-    let epochHeightOutOfBound = false;
-    let replaceReponse = ReplacedResponse.NotReplaced;
     let txStatus = TxStatus.PENDING;
     try {
       const nonce = (await tx.txPayload).nonce!;
-      replaceReponse = await this._handleCheckReplaced(tx, network.endpoint);
+      const replaceReponse = await this._handleCheckReplaced(tx, network.endpoint);
+      txStatus =
+        replaceReponse === ReplacedResponse.FinalizedReplaced
+          ? TxStatus.REPLACED
+          : replaceReponse === ReplacedResponse.TempReplaced
+            ? TxStatus.TEMP_REPLACED
+            : TxStatus.PENDING;
       if (
         EXECUTED_NOT_FINALIZED_TX_STATUSES.includes(tx.status) &&
         replaceReponse !== ReplacedResponse.FinalizedExecuted &&
@@ -70,18 +74,22 @@ export abstract class BaseTxTrack {
       }
       if (replaceReponse !== ReplacedResponse.NotReplaced) return;
       if (tx.resendCount && tx.resendCount >= TX_RESEND_LIMIT) {
+        txStatus = TxStatus.DISCARDED;
         console.log(`${this._logPrefix}: tx resend limit reached:`, tx.hash);
         return;
       }
-      const duplicateTxs = await queryDuplicateTx(tx, nonce, [TxStatus.WAITTING, TxStatus.PENDING, TxStatus.EXECUTED, TxStatus.CONFIRMED, TxStatus.FINALIZED]);
+      const duplicateTxs = await queryDuplicateTx(tx, nonce, [
+        TxStatus.WAITTING,
+        TxStatus.DISCARDED,
+        TxStatus.PENDING,
+        TxStatus.EXECUTED,
+        TxStatus.CONFIRMED,
+        TxStatus.FINALIZED,
+      ]);
       const latestDuplicateTx = duplicateTxs?.[0];
       if (latestDuplicateTx && latestDuplicateTx.createdAt > tx.createdAt) {
+        txStatus = TxStatus.DISCARDED;
         console.log(`${this._logPrefix}: tx has speedup or canceled:`, tx.hash);
-        return;
-      }
-      epochHeightOutOfBound = await this._checkEpochHeightOutOfBound(tx);
-      if (epochHeightOutOfBound) {
-        console.log(`${this._logPrefix}: epoch height out of bound:`, tx.hash);
         return;
       }
       resend = true;
@@ -89,12 +97,11 @@ export abstract class BaseTxTrack {
         network,
         txRaw: tx.raw!,
       });
+      txStatus = TxStatus.DISCARDED;
     } catch (error) {
       console.log(`${this._logPrefix}:`, error);
+      // TODO: handle error
     } finally {
-      const replaced = replaceReponse === ReplacedResponse.FinalizedReplaced;
-      const tempReplaced = replaceReponse === ReplacedResponse.TempReplaced;
-      txStatus = replaced ? TxStatus.REPLACED : tempReplaced ? TxStatus.TEMP_REPLACED : epochHeightOutOfBound ? TxStatus.FAILED : TxStatus.PENDING;
       updaterMap.set(tx, () =>
         tx.prepareUpdate((_tx) => {
           _tx.status = txStatus;
@@ -106,9 +113,9 @@ export abstract class BaseTxTrack {
             _tx.resendCount = (_tx.resendCount ?? 0) + 1;
             _tx.resendAt = new Date();
           }
-          if (replaced || epochHeightOutOfBound) {
+          if (txStatus === TxStatus.REPLACED) {
             _tx.raw = null;
-            _tx.errorType = replaced ? ProcessErrorType.replacedByAnotherTx : ProcessErrorType.epochHeightOutOfBound;
+            _tx.errorType = ProcessErrorType.replacedByAnotherTx;
           }
         }),
       );
