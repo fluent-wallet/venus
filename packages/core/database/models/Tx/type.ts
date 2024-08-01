@@ -1,13 +1,13 @@
 /** executed not mean success, remember check executedStatus */
 export enum TxStatus {
-  REPLACED = '-2',
-  TEMP_REPLACED = '-2.1',
-  FAILED = '-1',
-  WAITTING = '0',
-  PENDING = '1',
-  EXECUTED = '2',
-  CONFIRMED = '3',
-  FINALIZED = '4',
+  REPLACED = 'REPLACED',
+  TEMP_REPLACED = 'TEMP_REPLACED',
+  FAILED = 'FAILED',
+  WAITTING = 'WAITTING',
+  PENDING = 'PENDING',
+  EXECUTED = 'EXECUTED',
+  CONFIRMED = 'CONFIRMED',
+  FINALIZED = 'FINALIZED',
 }
 
 export const ALL_TX_STATUSES = Object.values(TxStatus);
