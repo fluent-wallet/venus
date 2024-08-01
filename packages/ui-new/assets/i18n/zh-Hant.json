@@ -403,9 +403,9 @@
         "title" : "自訂燃氣費\n"
       },
       "dappParams" : {
-        "ask" : "Whether to use the <1>gas parameters</1> recommended by BIM Wallet Wallet?",
-        "description" : "The gas parameters used by the DApp may cause the transaction to fail.",
-        "title" : "Tips"
+        "ask" : "採用 BIM Wallet 錢包推薦的<1>Gas 參數</1>？",
+        "description" : "DApp採用的gas參數可能會導致交易失敗。",
+        "title" : "提示"
       },
       "level" : {
         "customize" : "自定義",
