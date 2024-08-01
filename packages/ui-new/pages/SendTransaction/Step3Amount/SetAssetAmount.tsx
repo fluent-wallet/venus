@@ -48,7 +48,7 @@ export interface SetAssetAmountMethods {
 
 const SetAssetAmount = forwardRef<SetAssetAmountMethods, Props>(
   ({ targetAddress, asset, nftItemDetail, onAmountInfoChange, children, defaultAmount, isReceive }, ref) => {
-    const { colors } = useTheme();
+    const { colors, reverseColors } = useTheme();
     const { t } = useTranslation();
     const currentNetwork = useCurrentNetwork()!;
     const currentAddressValue = useCurrentAddressValue()!;
@@ -56,7 +56,6 @@ const SetAssetAmount = forwardRef<SetAssetAmountMethods, Props>(
     const [validMax, setValidMax] = useState<Decimal | null>(() => (isReceive ? new Decimal(Number.POSITIVE_INFINITY) : null));
     const needMaxMode = useMemo(() => !isReceive && (asset.type === AssetType.Native || asset.type === AssetType.ERC20), [isReceive, asset.type]);
 
-    const validMaxString = useMemo(() => (needMaxMode && validMax ? validMax.div(Decimal.pow(10, asset.decimals)).toString() : null), [needMaxMode, validMax]);
     const [inMaxMode, setInMaxMode] = useState(() => false);
 
     useEffect(() => {
@@ -132,7 +131,7 @@ const SetAssetAmount = forwardRef<SetAssetAmountMethods, Props>(
       [handleEstimateMax],
     );
 
-    const Suffix = useCallback(
+    const Suffix = useMemo(
       () => (
         <View style={styles.suffix}>
           {nftItemDetail ? (
@@ -145,15 +144,18 @@ const SetAssetAmount = forwardRef<SetAssetAmountMethods, Props>(
             <>
               <View style={[styles.divider, { backgroundColor: colors.borderPrimary }]} />
               <Pressable
-                style={({ pressed }) => [
+                style={[
                   styles.maxBtn,
-                  { backgroundColor: pressed ? colors.underlay : 'transparent', borderColor: inMaxMode ? colors.up : colors.textPrimary },
+                  {
+                    backgroundColor: inMaxMode ? colors.textPrimary : 'transparent',
+                    borderColor: inMaxMode ? 'transparent' : colors.textPrimary,
+                  },
                 ]}
                 onPress={handleClickMax}
                 disabled={inEstimate}
                 testID="max"
               >
-                <Text style={[styles.text, { color: colors.textPrimary, borderColor: colors.textPrimary, opacity: inEstimate ? 0 : 1 }]}>
+                <Text style={[styles.text, { color: inMaxMode ? reverseColors.textPrimary : colors.textPrimary, opacity: inEstimate ? 0 : 1 }]}>
                   {t('common.max')}
                 </Text>
                 {inEstimate && <HourglassLoading style={styles.maxLoading} />}
@@ -216,16 +218,12 @@ const SetAssetAmount = forwardRef<SetAssetAmountMethods, Props>(
             setAmount(newAmount);
             if (inMaxMode) {
               setInMaxMode(false);
-            } else {
-              if (needMaxMode && newAmount === validMaxString) {
-                setInMaxMode(true);
-              }
             }
           }}
           isInBottomSheet
           showClear={!!amount}
           placeholder={isReceive ? t('tx.amount.anyAmount') : asset.type === AssetType.ERC1155 ? '0' : '0.00'}
-          SuffixIcon={<Suffix />}
+          SuffixIcon={Suffix}
         />
         {!isReceive && (
           <Text style={[styles.text, styles.balance, { color: colors.textPrimary }]} numberOfLines={3}>

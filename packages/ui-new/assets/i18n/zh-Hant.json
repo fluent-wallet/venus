@@ -391,12 +391,30 @@
       "txHash" : "交易哈希"
     },
     "gasFee" : {
+      "advance" : "進階",
+      "advanceSetting" : {
+        "miniumGasLimit" : "{{network}} 需要的最低 gasLimit 值為 {{gasLimit}}",
+        "title" : "進階設定"
+      },
+      "customizeGasSetting" : {
+        "current" : "目前\n",
+        "lowWarning" : "您的出價低於目前的基本費用，可能需要等待很長的時間",
+        "minimumGasPrice" : "{{network}} 需要的最低 {{gasPriceType}} 值為 {{gasPrice}} Gwei",
+        "title" : "自訂燃氣費\n"
+      },
+      "dappParams" : {
+        "ask" : "Whether to use the <1>gas parameters</1> recommended by BIM Wallet Wallet?",
+        "description" : "The gas parameters used by the DApp may cause the transaction to fail.",
+        "title" : "Tips"
+      },
       "level" : {
         "customize" : "自定義",
         "high" : "快速",
         "low" : "經濟的",
         "medium" : "平均"
-      }
+      },
+      "longTime" : "需要很長時間",
+      "title" : "網絡費用"
     },
     "send" : {
       "address" : {

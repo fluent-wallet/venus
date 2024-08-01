@@ -21,13 +21,11 @@ const DappParamsWarning: React.FC<Props> = ({ onClose, onPressUse }) => {
   return (
     <BottomSheet ref={bottomSheetRef} snapPoints={snapPoints} index={0} onClose={onClose}>
       <BottomSheetWrapper innerPaddingHorizontal>
-        <BottomSheetHeader title="Tips" />
+        <BottomSheetHeader title={t('tx.gasFee.dappParams.title')} />
         <BottomSheetContent>
-          <Text style={[styles2.text, { color: colors.textPrimary }]}>The gas parameters used by the DApp may cause the transaction to fail.</Text>
+          <Text style={[styles2.text, { color: colors.textPrimary }]}>{t('tx.gasFee.dappParams.description')}</Text>
 
-          <Text style={[styles2.text, { color: colors.textPrimary }]}>
-            Whether to use the <Text style={{ color: colors.up, fontWeight: '600' }}>gas parameters</Text> recommended by BIM Wallet Wallet?
-          </Text>
+          <Text style={[styles2.text, { color: colors.textPrimary }]}>{t('tx.gasFee.dappParams.ask')}</Text>
         </BottomSheetContent>
         <BottomSheetFooter>
           <View style={[styles.btnArea, styles2.btnArea]}>
@@ -40,10 +38,10 @@ const DappParamsWarning: React.FC<Props> = ({ onClose, onPressUse }) => {
                 bottomSheetRef.current?.close();
               }}
             >
-              Use
+              {t('common.use')}
             </Button>
             <Button testID="confirm" style={styles.btn} size="small" onPress={() => bottomSheetRef.current?.close()}>
-              Dismiss
+              {t('common.dismiss')}
             </Button>
           </View>
         </BottomSheetFooter>

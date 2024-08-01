@@ -66,12 +66,24 @@ const SendTransactionStep4Confirm: React.FC<SendTransactionScreenProps<typeof Se
   const signTransaction = useSignTransaction();
 
   const {
-    params: { asset, amount, nftItemDetail, recipientAddress },
+    params: { asset, amount: _amount, nftItemDetail, recipientAddress, inMaxMode },
   } = route;
 
   const [showGasFeeSetting, setShowGasFeeSetting] = useState(false);
+  const [gasEstimate, setGasEstimate] = useState<GasEstimate | null>(null);
+  const [gasCost, setGasCost] = useState<string | null>(null);
 
+  const amount = useMemo(() => {
+    if (!inMaxMode || asset.type !== AssetType.Native) {
+      return _amount;
+    }
+    if (!gasCost) return _amount;
+    return new Decimal(_amount).sub(gasCost).toString();
+  }, [_amount, gasCost, inMaxMode]);
+
+  const transferAmountHex = useMemo(() => new Decimal(amount || 0).mul(Decimal.pow(10, nftItemDetail ? 0 : asset.decimals || 0)).toHex(), [amount]);
   const formattedAmount = useFormatBalance(amount);
+
   const price = useMemo(() => calculateTokenPrice({ price: asset.priceInUSDT, amount: amount }), [asset.priceInUSDT, amount]);
   const symbol = useMemo(() => {
     if (!nftItemDetail) {
@@ -79,8 +91,6 @@ const SendTransactionStep4Confirm: React.FC<SendTransactionScreenProps<typeof Se
     }
     return getDetailSymbol(nftItemDetail);
   }, []);
-
-  const transferAmountHex = useMemo(() => new Decimal(amount || 0).mul(Decimal.pow(10, nftItemDetail ? 0 : asset.decimals || 0)).toHex(), []);
 
   const txHalf = useMemo(() => {
     let data = '0x';
@@ -115,9 +125,7 @@ const SendTransactionStep4Confirm: React.FC<SendTransactionScreenProps<typeof Se
       from: currentAddressValue,
       chainId: currentNetwork.chainId,
     } as ITxEvm;
-  }, []);
-
-  const [gasEstimate, setGasEstimate] = useState<GasEstimate | null>(null);
+  }, [transferAmountHex]);
 
   const [error, setError] = useState<{ type?: string; message: string } | null>(null);
 
@@ -177,14 +185,20 @@ const SendTransactionStep4Confirm: React.FC<SendTransactionScreenProps<typeof Se
           setBSIMEvent({ type: BSIMEventTypesName.BSIM_SIGN_START });
         }
 
-        const { txRawPromise, cancel } = await signTransaction({ ...tx, epochHeight: epochHeightRef.current });
+        const { txRawPromise, cancel } = await signTransaction({
+          ...tx,
+          epochHeight: epochHeightRef.current,
+        });
         setBSIMCancel(cancel);
         txRaw = await txRawPromise;
         signature = await methods.createSignature({
           address: currentAddress,
           signType: SignType.TX,
         });
-        txHash = await plugins.Transaction.sendRawTransaction({ txRaw, network: currentNetwork });
+        txHash = await plugins.Transaction.sendRawTransaction({
+          txRaw,
+          network: currentNetwork,
+        });
 
         setBSIMEvent(null);
         showMessage({
@@ -200,7 +214,10 @@ const SendTransactionStep4Confirm: React.FC<SendTransactionScreenProps<typeof Se
         }
       } catch (error) {
         if (error instanceof BSIMError) {
-          setBSIMEvent({ type: BSIMEventTypesName.ERROR, message: error?.message });
+          setBSIMEvent({
+            type: BSIMEventTypesName.ERROR,
+            message: error?.message,
+          });
         } else {
           // throw error to outer catch
           throw error;
@@ -244,7 +261,7 @@ const SendTransactionStep4Confirm: React.FC<SendTransactionScreenProps<typeof Se
         });
       }
     }
-  }, [gasEstimate, currentVault?.id, currentNetwork?.id]);
+  }, [txHalf, gasEstimate, currentVault?.id, currentNetwork?.id]);
 
   const { inAsync: inSending, execAsync: handleSend } = useInAsync(_handleSend);
   return (
@@ -277,11 +294,12 @@ const SendTransactionStep4Confirm: React.FC<SendTransactionScreenProps<typeof Se
             </Text>
           </AccountItemView>
 
-          <Text style={[styles.estimateFee, { color: colors.textPrimary }]}>{t('tx.confirm.estimatedFee')}</Text>
+          <Text style={[styles.estimateFee, { color: colors.textSecondary }]}>{t('tx.confirm.estimatedFee')}</Text>
           <EstimateFee
             gasSetting={gasEstimate?.gasSetting}
             advanceSetting={gasEstimate?.advanceSetting ?? gasEstimate?.estimateAdvanceSetting}
             onPressSettingIcon={() => setShowGasFeeSetting(true)}
+            onGasCostChange={(newGasCost) => setGasCost(newGasCost)}
           />
 
           {error && (
@@ -362,10 +380,10 @@ export const styles = StyleSheet.create({
   },
   estimateFee: {
     marginTop: 16,
-    marginBottom: 5,
+    marginBottom: 10,
     fontSize: 14,
     lineHeight: 18,
-    fontWeight: '600',
+    fontWeight: '300',
     paddingHorizontal: 56,
   },
   errorWarp: {

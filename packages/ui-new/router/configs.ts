@@ -119,7 +119,7 @@ export type SendTransactionParamList = {
   [SendTransactionStep1StackName]: undefined;
   [SendTransactionStep2StackName]: { recipientAddress: string; searchAddress?: string };
   [SendTransactionStep3StackName]: { asset: AssetInfo; recipientAddress: string; nftItemDetail?: NFTItemDetail; amount?: string };
-  [SendTransactionStep4StackName]: { asset: AssetInfo; recipientAddress: string; amount: string; nftItemDetail?: NFTItemDetail };
+  [SendTransactionStep4StackName]: { asset: AssetInfo; recipientAddress: string; amount: string; nftItemDetail?: NFTItemDetail; inMaxMode?: boolean };
   // navigate to home
   [HomeStackName]: undefined;
   [PasswordVerifyStackName]: undefined;
