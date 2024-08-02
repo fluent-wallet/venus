@@ -27,6 +27,7 @@ import Welcome from '@pages/Welcome';
 import NetworkManagement from '@pages/Management/NetworkManagement';
 import NetworkAddNewEndpoint from '@pages/Management/NetworkManagement/AddNewEndpoint';
 import SpeedUp from '@modules/GasFee/SpeedUp';
+import TooManyPending from '@pages/TooManyPending';
 import { useNavigation, useTheme } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import type React from 'react';
@@ -65,6 +66,7 @@ import {
   NetworkAddNewEndpointStackName,
   SpeedUpStackName,
   TransactionDetailStackName,
+  TooManyPendingStackName,
 } from './configs';
 import TransactionDetail from '@pages/TransactionDetail';
 import { useTranslation } from 'react-i18next';
@@ -130,6 +132,7 @@ const Router: React.FC = () => {
         <RootStack.Screen name={WalletConnectStackName} component={WalletConnect} options={SheetBottomOption} />
         <RootStack.Screen name={SignatureRecordsStackName} component={SignatureRecords} />
         <RootStack.Screen name={SpeedUpStackName} component={SpeedUp} options={SheetBottomOption} />
+        <RootStack.Screen name={TooManyPendingStackName} component={TooManyPending} options={SheetBottomOption} />
         <RootStack.Screen name={TransactionDetailStackName} component={TransactionDetail} options={{ title: t('tx.detail.title') }} />
       </RootStack.Navigator>
     </View>

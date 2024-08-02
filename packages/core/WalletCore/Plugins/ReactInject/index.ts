@@ -22,7 +22,7 @@ export { useVaultOfAccount } from './data/useVaultOfAccount';
 export { useVaults } from './data/useVaults';
 export { useHasVault } from './data/useHasVault';
 export { useCurrentHdPath } from './data/useCurrentHdPath';
-export { useFinishedTxs, usePayloadOfTx, useUnfinishedTxs, useAssetOfTx, useRecentlyAddress, RecentlyType } from './data/useTxs';
+export { useFinishedTxs, usePayloadOfTx, useUnfinishedTxs, useAssetOfTx, useRecentlyAddress, isPendingTxsFull, RecentlyType } from './data/useTxs';
 export {
   useAssetsAllList,
   useAssetsNFTList,

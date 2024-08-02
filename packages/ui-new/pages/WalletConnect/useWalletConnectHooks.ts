@@ -1,6 +1,6 @@
 import methods from '@core/WalletCore/Methods';
 import plugins from '@core/WalletCore/Plugins';
-import { useCurrentAddressValue, useCurrentNetwork, NetworkType } from '@core/WalletCore/Plugins/ReactInject';
+import { useCurrentAddressValue, useCurrentNetwork, isPendingTxsFull, NetworkType } from '@core/WalletCore/Plugins/ReactInject';
 import { WalletConnectPluginEventType } from '@core/WalletCore/Plugins/WalletConnect/types';
 import { Networks } from '@core/utils/consts';
 import { StackActions, useNavigation } from '@react-navigation/native';
@@ -10,6 +10,7 @@ import {
   WalletConnectSignMessageStackName,
   WalletConnectStackName,
   WalletConnectTransactionStackName,
+  TooManyPendingStackName,
   type StackNavigation,
 } from '@router/configs';
 import backToHome, { getActiveRouteName } from '@utils/backToHome';
@@ -39,7 +40,7 @@ export function useListenWalletConnectEvent() {
 
       const navigateMethod = !needDispatch
         ? navigation.navigate
-        : (stackName: string, params: any) => navigation?.dispatch(StackActions.replace(stackName, params));
+        : (stackName: string, params?: any) => navigation?.dispatch(StackActions.replace(stackName, params));
 
       const { type } = event;
 
@@ -76,6 +77,10 @@ export function useListenWalletConnectEvent() {
         }
 
         case WalletConnectPluginEventType.SEND_TRANSACTION: {
+          if (isPendingTxsFull()) {
+            return navigateMethod(TooManyPendingStackName);
+          }
+
           const {
             tx: { to, data },
           } = event.data;

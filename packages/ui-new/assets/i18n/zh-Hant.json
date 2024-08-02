@@ -431,6 +431,10 @@
       "receiver" : "接收方",
       "scan" : "掃描",
       "title" : "發送"
+    },
+    "tooManyPending" : {
+      "description" : "此帳戶在{{network}}上有太多未完成的交易。\n\n為了保護您的資產安全，請先加快或取消這些交易。",
+      "title" : "注意"
     }
   },
   "wallet" : {

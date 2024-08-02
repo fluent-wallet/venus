@@ -13,6 +13,7 @@ import type { TxPayload } from '../../../../database/models/TxPayload';
 import { formatTxData } from '../../../../utils/tx';
 import { accountsManageObservable } from './useAccountsManage';
 import { currentAddressObservable } from './useCurrentAddress';
+import { getAtom } from '../nexus';
 
 const recentlyTxsObservable = currentAddressObservable.pipe(
   switchMap((currentAddress) => (currentAddress ? observeRecentlyTxWithAddress(currentAddress.id) : of([]))),
@@ -123,3 +124,10 @@ const networkAtomFamilyOfTx = atomFamily((txId: string) =>
   ),
 );
 export const useNetworkOfTx = (txId: string) => useAtomValue(networkAtomFamilyOfTx(txId));
+
+const getPendingTxs = () => getAtom(unfinishedTxsAtom);
+const maxPendingLimit = 5;
+export const isPendingTxsFull = () => {
+  const pendingTxs = getPendingTxs();
+  return pendingTxs && pendingTxs.length >= maxPendingLimit;
+};
