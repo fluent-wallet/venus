@@ -431,6 +431,10 @@
       "receiver" : "Receiver",
       "scan" : "Scan",
       "title" : "Send"
+    },
+    "tooManyPending" : {
+      "description" : "This account have too many pending transactlons on {{network}}.\n\nTo protect the security of your assets, please speed up or cancel these transactions first.",
+      "title" : "Notice"
     }
   },
   "wallet" : {

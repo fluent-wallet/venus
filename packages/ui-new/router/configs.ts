@@ -34,6 +34,7 @@ export const SignatureRecordsStackName = 'SignatureRecords';
 export const SpeedUpStackName = 'SpeedUp';
 export const TransactionDetailStackName = 'TransactionDetail';
 export const ExternalInputHandlerStackName = 'ExternalInputHandler';
+export const TooManyPendingStackName = 'TooManyPending';
 
 // start Wallet connect nest stack
 
@@ -85,6 +86,7 @@ export type RootStackParamList = {
   [SpeedUpStackName]: { txId: string; type: 'SpeedUp' | 'Cancel'; level?: SpeedUpLevel };
   [TransactionDetailStackName]: { txId: string };
   [ExternalInputHandlerStackName]: { data: string } | undefined;
+  [TooManyPendingStackName]: undefined;
 };
 
 export type StackScreenProps<T extends keyof RootStackParamList> = NativeStackScreenProps<RootStackParamList, T>;

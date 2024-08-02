@@ -10,7 +10,7 @@ const _convertHexToBase32 = (hexAddress: string, netId: number) => encode(toAcco
 
 export { type Base32Address } from '@cfx-kit/dapp-utils/dist/address';
 export const convertBase32ToHex = memoize(_convertBase32ToHex);
-export const convertHexToBase32 = memoize(_convertHexToBase32);
-export const convertHexToBase32WithoutReplace = memoize(_convertHexToBase32WithoutReplace);
+export const convertHexToBase32 = memoize(_convertHexToBase32, (...args) => JSON.stringify(args));
+export const convertHexToBase32WithoutReplace = memoize(_convertHexToBase32WithoutReplace, (...args) => JSON.stringify(args));
 export const shortenAddress = memoize(_shortenAddress);
 export const zeroAddress = '0x0000000000000000000000000000000000000000';

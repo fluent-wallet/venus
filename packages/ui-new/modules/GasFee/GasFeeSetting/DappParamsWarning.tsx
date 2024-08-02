@@ -60,7 +60,6 @@ const styles2 = StyleSheet.create({
     lineHeight: 20,
   },
   btnArea: {
-    marginTop: 'auto',
     marginBottom: 48,
   },
 });
