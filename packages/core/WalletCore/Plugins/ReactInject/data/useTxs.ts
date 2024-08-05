@@ -9,7 +9,7 @@ import { formatTxData } from '../../../../utils/tx';
 import { accountsManageObservable } from './useAccountsManage';
 import { currentAddressObservable } from './useCurrentAddress';
 import { getAtom } from '../nexus';
-import { PENDING_TX_STATUSES, FINISHED_IN_ACTIVITY_TX_STATUSES, EXECUTED_TX_STATUSES, TxStatus } from '@core/database/models/Tx/type';
+import { PENDING_TX_STATUSES, FINISHED_IN_ACTIVITY_TX_STATUSES, EXECUTED_TX_STATUSES, TxStatus, PENDING_COUNT_STATUSES } from '@core/database/models/Tx/type';
 
 const uniqSortByNonce = async (_txs: Tx[] | null) => {
   if (!_txs) return [];
@@ -133,6 +133,17 @@ const networkAtomFamilyOfTx = atomFamily((txId: string) =>
   ),
 );
 export const useNetworkOfTx = (txId: string) => useAtomValue(networkAtomFamilyOfTx(txId));
+
+const txsOfPendingCountObservable = currentAddressObservable.pipe(
+  switchMap((currentAddress) =>
+    currentAddress
+      ? observeTxsWithAddress(currentAddress.id, {
+          inStatuses: PENDING_COUNT_STATUSES,
+        })
+      : of([]),
+  ),
+);
+const txsOfPendingCountAtom = atomWithObservable(() => txsOfPendingCountObservable.pipe(switchMap(uniqSortByNonce)), { initialValue: [] });
 
 const getPendingTxs = () => getAtom(unfinishedTxsAtom);
 const maxPendingLimit = 5;
