@@ -36,6 +36,7 @@ export enum ProcessErrorType {
   contractExecuteFailed = 'contractExecuteFailed',
   notEnoughCash = 'notEnoughCash',
   replacedByAnotherTx = 'replacedByAnotherTx',
+  /** for tx tracker, not from error message */
   executeFailed = 'executeFailed',
 }
 

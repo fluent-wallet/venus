@@ -29,7 +29,7 @@ const matchRPCErrorMessage = (error: { message?: string; data?: string }) => {
       return 'Node is not working, change the node or waiting.';
     case ProcessErrorType.notEnoughCash:
       return 'Insufficient CFX for gas fee.';
-    case ProcessErrorType.executeFailed:
+    case ProcessErrorType.contractExecuteFailed:
       return `Contract execution failed, info:${msg}`;
 
     default:
