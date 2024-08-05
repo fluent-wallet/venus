@@ -60,7 +60,7 @@ export class TxMethod {
           app,
           raw: txRaw,
           hash: txHash,
-          status: extraParams.err ? TxStatus.FAILED : isWaitting ? TxStatus.WAITTING : TxStatus.PENDING,
+          status: extraParams.err ? TxStatus.SEND_FAILED : isWaitting ? TxStatus.WAITTING : TxStatus.PENDING,
           sendAt: extraParams.sendAt,
           txPayload,
           txExtra,
@@ -92,7 +92,7 @@ export class TxMethod {
       return false;
     }
     // hasSuccessTx: already success, skip create/update
-    const hasSuccessTx = sameTx.some((tx) => tx.status !== TxStatus.FAILED);
+    const hasSuccessTx = sameTx.some((tx) => tx.status !== TxStatus.SEND_FAILED);
     const tx = sameTx[0];
     let newTx = tx;
     const isWaitting = await this.isWaitting(address, txData.nonce);
@@ -100,7 +100,7 @@ export class TxMethod {
       newTx = await tx.updateSelf((_tx) => {
         _tx.app.id = app?.id;
         _tx.hash = txHash;
-        _tx.status = extraParams.err ? TxStatus.FAILED : isWaitting ? TxStatus.WAITTING : TxStatus.PENDING;
+        _tx.status = extraParams.err ? TxStatus.SEND_FAILED : isWaitting ? TxStatus.WAITTING : TxStatus.PENDING;
         _tx.sendAt = extraParams.sendAt;
         _tx.err = extraParams.err;
         _tx.errorType = extraParams.errorType;

@@ -46,7 +46,7 @@ const activityListObservable = currentAddressObservable.pipe(
   switchMap((currentAddress) =>
     currentAddress
       ? observeTxsWithAddress(currentAddress.id, {
-          notInStatuses: [TxStatus.FAILED],
+          notInStatuses: [TxStatus.SEND_FAILED],
         })
       : of([]),
   ),
