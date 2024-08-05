@@ -250,7 +250,7 @@ describe('contract errors', () => {
     };
 
     const parseError = processError(res.error);
-    expect(parseError.errorType).toBe(ProcessErrorType.executeFailed);
+    expect(parseError.errorType).toBe(ProcessErrorType.contractExecuteFailed);
   });
 
   test('notEnoughCash', () => {
