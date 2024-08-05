@@ -44,7 +44,7 @@ export class TxMethod {
           },
           true,
         ),
-        this.createTxExtra(extraParams, _tx, true),
+        this.createTxExtra(extraParams, txData, true),
       ]);
       let asset: Asset | undefined;
       const network = await address.network;
@@ -167,12 +167,12 @@ export class TxMethod {
 
   async speedUpTx(params: SpeedUpTransactionParams, prepareCreate?: true) {
     try {
-      const { originTx, tx: _tx, epochHeight, txRaw, txHash, sendAt, signature, speedupAction } = params;
+      const { originTx, tx: txData, epochHeight, txRaw, txHash, sendAt, signature, speedupAction } = params;
       const [address, app, asset, originTxExtra] = await Promise.all([originTx.address, originTx.app, originTx.asset, originTx.txExtra]);
       const [txPayload, txExtra] = await Promise.all([
         this.createTxPayload(
           {
-            tx: _tx,
+            tx: txData,
             address,
             epochHeight,
           },
@@ -180,6 +180,7 @@ export class TxMethod {
         ),
         this.createSpeedUpTxExtra(originTxExtra, speedupAction),
       ]);
+      const isWaitting = await this.isWaitting(address, txData.nonce);
 
       const tx = _createTx(
         {
@@ -187,7 +188,7 @@ export class TxMethod {
           app,
           raw: txRaw,
           hash: txHash,
-          status: TxStatus.PENDING,
+          status: isWaitting ? TxStatus.WAITTING : TxStatus.PENDING,
           sendAt,
           txPayload,
           txExtra,
@@ -203,11 +204,11 @@ export class TxMethod {
         await database.batch(tx, txPayload, txExtra);
       });
     } catch (error) {
-      console.error('createTx error: ', error);
+      console.error('speedUpTx error: ', error);
     }
   }
   async createSpeedUpTxExtra(originTxExtra: TxExtra, action: SpeedUpAction) {
-    const txExtra = _createTxExtra(
+    return _createTxExtra(
       {
         ok: true,
         simple: originTxExtra.simple,
@@ -221,6 +222,5 @@ export class TxMethod {
       },
       true,
     );
-    return txExtra;
   }
 }

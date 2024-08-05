@@ -118,7 +118,7 @@ const SpeedUp: React.FC<StackScreenProps<typeof SpeedUpStackName>> = ({ route })
   const isSpeedUp = type === SpeedUpAction.SpeedUp;
 
   useEffect(() => {
-    if (txStatus && txStatus === 'pending') {
+    if (txStatus === 'pending') {
       bottomSheetRef.current?.close();
       showMessage({
         type: 'warning',
