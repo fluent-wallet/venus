@@ -48,7 +48,7 @@ class NextNonceTracker implements Plugin {
           retry({ delay: 1000 }),
         )
         .subscribe((res) => {
-          if (BigInt(this._nextNonce ?? 0) < BigInt(res)) {
+          if (this._nextNonce === null || BigInt(this._nextNonce) < BigInt(res)) {
             this._nextNonce = res;
             events.nextNonceSubjectPush.next(res);
           }
@@ -65,7 +65,7 @@ class NextNonceTracker implements Plugin {
       network,
       addressValue,
     });
-    if (this._address?.id === address.id && BigInt(this._nextNonce ?? 0) < BigInt(nextNonce)) {
+    if (this._address?.id === address.id && (this._nextNonce === null || BigInt(this._nextNonce) < BigInt(nextNonce))) {
       this._nextNonce = nextNonce;
       events.nextNonceSubjectPush.next(nextNonce);
     }
