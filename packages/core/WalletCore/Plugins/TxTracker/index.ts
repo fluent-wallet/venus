@@ -59,7 +59,7 @@ class TxTrackerPluginClass implements Plugin {
       this._startup(selectedAddress);
     });
     events.nextNonceSubject.subscribe(async (nextNonce) => {
-      nextNonce && this._handleWaittingTx(nextNonce);
+      this._handleWaittingTx(nextNonce);
     });
   }
 
