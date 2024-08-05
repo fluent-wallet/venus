@@ -22,6 +22,7 @@ import TransactionPlugin from './packages/core/WalletCore/Plugins/Transaction';
 import NFTDetailTracker from './packages/core/WalletCore/Plugins/NFTDetailTracker';
 import ReceiveAssetsTracker from './packages/core/WalletCore/Plugins/ReceiveAssetsTracker';
 import BlockNumberTracker from './packages/core/WalletCore/Plugins/BlockNumberTracker';
+import NextNonceTracker from './packages/core/WalletCore/Plugins/NextNonceTracker';
 import App from './packages/ui-new/App';
 import { name as appName } from './app.json';
 
@@ -54,6 +55,7 @@ const plugins = [
   NFTDetailTracker,
   ReceiveAssetsTracker,
   BlockNumberTracker,
+  NextNonceTracker,
 
     new WalletConnectPlugin({
       projectId: '77ffee6a4cbf8ed25550cea82939d1fa',

@@ -3,62 +3,71 @@ import type { Tx } from '@core/database/models/Tx';
 import { useAtomValue } from 'jotai';
 import { atomFamily, atomWithObservable } from 'jotai/utils';
 import { combineLatest, map, of, switchMap } from 'rxjs';
-import {
-  observeFinishedTxWithAddress,
-  observeRecentlyTxWithAddress,
-  observeTxById,
-  observeUnfinishedTxWithAddress,
-} from '../../../../database/models/Tx/query';
+import { observeTxById, observeTxsWithAddress } from '../../../../database/models/Tx/query';
 import type { TxPayload } from '../../../../database/models/TxPayload';
 import { formatTxData } from '../../../../utils/tx';
 import { accountsManageObservable } from './useAccountsManage';
 import { currentAddressObservable } from './useCurrentAddress';
 import { getAtom } from '../nexus';
+import { PENDING_TX_STATUSES, FINISHED_IN_ACTIVITY_TX_STATUSES, EXECUTED_TX_STATUSES, TxStatus, PENDING_COUNT_STATUSES } from '@core/database/models/Tx/type';
 
-const recentlyTxsObservable = currentAddressObservable.pipe(
-  switchMap((currentAddress) => (currentAddress ? observeRecentlyTxWithAddress(currentAddress.id) : of([]))),
+const uniqSortByNonce = async (_txs: Tx[] | null) => {
+  if (!_txs) return [];
+  const payloads = await Promise.all(_txs.map((tx) => tx.txPayload.fetch()));
+  const payloadMap = new Map<string, TxPayload>();
+  const nonceMap = new Map<number, Tx>();
+  // uniq by nonce
+  _txs.forEach((tx, i) => {
+    const prevTx = nonceMap.get(payloads[i].nonce ?? 0);
+    if (!prevTx) {
+      // first tx of payloads[i].nonce
+      nonceMap.set(payloads[i].nonce ?? 0, tx);
+      payloadMap.set(tx.id, payloads[i]);
+    } else if (EXECUTED_TX_STATUSES.includes(tx.status)) {
+      // already has tx of payloads[i].nonce
+      // and this tx is executed, replace prevTx
+      nonceMap.set(payloads[i].nonce ?? 0, tx);
+      payloadMap.delete(prevTx.id);
+      payloadMap.set(tx.id, payloads[i]);
+    }
+    return true;
+  });
+  const txs = Array.from(nonceMap.values());
+  // sort by nonce
+  txs.sort((a, b) => {
+    const aPayload = payloadMap.get(a.id)!;
+    const bPayload = payloadMap.get(b.id)!;
+    return Number(BigInt(bPayload.nonce ?? 0) - BigInt(aPayload.nonce ?? 0));
+  });
+  return txs;
+};
+
+const activityListObservable = currentAddressObservable.pipe(
+  switchMap((currentAddress) =>
+    currentAddress
+      ? observeTxsWithAddress(currentAddress.id, {
+          notInStatuses: [TxStatus.SEND_FAILED],
+        })
+      : of([]),
+  ),
 );
+const activityListAtom = atomWithObservable(() => activityListObservable.pipe(switchMap(uniqSortByNonce)), { initialValue: [] });
 
-export const unfinishedTxsObservable = currentAddressObservable.pipe(
-  switchMap((currentAddress) => (currentAddress ? observeUnfinishedTxWithAddress(currentAddress.id) : of(null))),
-);
-
-const unfinishedTxsAtom = atomWithObservable(() => unfinishedTxsObservable, { initialValue: [] });
-export const useUnfinishedTxs = () => useAtomValue(unfinishedTxsAtom);
-
-export const finishedTxsObservable = currentAddressObservable.pipe(
-  switchMap((currentAddress) => (currentAddress ? observeFinishedTxWithAddress(currentAddress.id) : of(null))),
-);
-
-const finishedTxsAtom = atomWithObservable(
-  () =>
-    finishedTxsObservable.pipe(
-      switchMap(async (txs) => {
-        if (!txs) return [];
-        const payloads = await Promise.all(txs.map((tx) => tx.txPayload.fetch()));
-        const txMap = new Map<string, TxPayload>();
-        txs.forEach((tx, i) => {
-          txMap.set(tx.id, payloads[i]);
-        });
-        // sort by nonce
-        txs.sort((a, b) => {
-          const aPayload = txMap.get(a.id)!;
-          const bPayload = txMap.get(b.id)!;
-          return Number(BigInt(bPayload.nonce ?? 0) - BigInt(aPayload.nonce ?? 0));
-        });
-        return txs;
-      }),
-    ),
-  { initialValue: [] },
-);
-export const useFinishedTxs = () => useAtomValue(finishedTxsAtom);
+export const useUnfinishedTxs = () => {
+  const activityList = useAtomValue(activityListAtom);
+  return activityList.filter((tx) => PENDING_TX_STATUSES.includes(tx.status));
+};
+export const useFinishedTxs = () => {
+  const activityList = useAtomValue(activityListAtom);
+  return activityList.filter((tx) => FINISHED_IN_ACTIVITY_TX_STATUSES.includes(tx.status));
+};
 
 export enum RecentlyType {
   Account = 'Account',
   Contract = 'Contract',
   Recently = 'Recently',
 }
-export const recentlyAddressObservable = combineLatest([recentlyTxsObservable, accountsManageObservable]).pipe(
+export const recentlyAddressObservable = combineLatest([activityListObservable, accountsManageObservable]).pipe(
   switchMap(([txs, accountsManage]) =>
     Promise.all([txs, Promise.all(txs.filter(Boolean).map((tx) => tx!.txPayload)), Promise.all(txs.filter(Boolean).map((tx) => tx!.asset)), accountsManage]),
   ),
@@ -125,7 +134,18 @@ const networkAtomFamilyOfTx = atomFamily((txId: string) =>
 );
 export const useNetworkOfTx = (txId: string) => useAtomValue(networkAtomFamilyOfTx(txId));
 
-const getPendingTxs = () => getAtom(unfinishedTxsAtom);
+const txsOfPendingCountObservable = currentAddressObservable.pipe(
+  switchMap((currentAddress) =>
+    currentAddress
+      ? observeTxsWithAddress(currentAddress.id, {
+          inStatuses: PENDING_COUNT_STATUSES,
+        })
+      : of([]),
+  ),
+);
+const txsOfPendingCountAtom = atomWithObservable(() => txsOfPendingCountObservable.pipe(switchMap(uniqSortByNonce)), { initialValue: [] });
+
+const getPendingTxs = () => getAtom(txsOfPendingCountAtom);
 const maxPendingLimit = 5;
 export const isPendingTxsFull = () => {
   const pendingTxs = getPendingTxs();
