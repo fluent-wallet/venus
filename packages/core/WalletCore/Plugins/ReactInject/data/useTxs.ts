@@ -145,7 +145,7 @@ const txsOfPendingCountObservable = currentAddressObservable.pipe(
 );
 const txsOfPendingCountAtom = atomWithObservable(() => txsOfPendingCountObservable.pipe(switchMap(uniqSortByNonce)), { initialValue: [] });
 
-const getPendingTxs = () => getAtom(unfinishedTxsAtom);
+const getPendingTxs = () => getAtom(txsOfPendingCountAtom);
 const maxPendingLimit = 5;
 export const isPendingTxsFull = () => {
   const pendingTxs = getPendingTxs();
