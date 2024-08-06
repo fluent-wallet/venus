@@ -189,6 +189,7 @@ const TransactionDetail: React.FC<StackScreenProps<typeof TransactionDetailStack
         </View>
         {ACTIVITY_DEV_INFO_FEATURE.allow && (
           <>
+            <View style={[styles.line, { backgroundColor: colors.borderFourth }]} />
             <View style={styles.row}>
               <Text style={[styles.label, { color: colors.textSecondary }]}>status</Text>
               <Text style={[styles.info, { color: colors.textPrimary }]}>{tx.status.toLowerCase()}</Text>
@@ -250,12 +251,12 @@ export const styles = StyleSheet.create({
   },
   line: {
     height: 1,
-    marginTop: 8,
-    marginBottom: 24,
+    marginVertical: 8,
   },
   detail: {
     display: 'flex',
     gap: 16,
+    marginTop: 16,
   },
   row: {
     display: 'flex',

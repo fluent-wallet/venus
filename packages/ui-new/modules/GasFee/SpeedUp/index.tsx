@@ -47,13 +47,12 @@ const createGasSetting = (txPayload: ReturnType<typeof usePayloadOfTx>, ratio: n
   if (!txPayload || !currentGasPrice) return null;
   if (txPayload.maxFeePerGas) {
     let suggestedMaxFeePerGas = new Decimal(txPayload.maxFeePerGas || 0).mul(ratio);
-    let suggestedMaxPriorityFeePerGas = new Decimal(txPayload.maxPriorityFeePerGas || 0).mul(ratio);
     if (suggestedMaxFeePerGas.lessThanOrEqualTo(currentGasPrice)) {
-      suggestedMaxPriorityFeePerGas = suggestedMaxFeePerGas = new Decimal(currentGasPrice || 0).mul(ratio);
+      suggestedMaxFeePerGas = new Decimal(currentGasPrice || 0).mul(ratio);
     }
     return {
       suggestedMaxFeePerGas: suggestedMaxFeePerGas.toHex(),
-      suggestedMaxPriorityFeePerGas: suggestedMaxPriorityFeePerGas.toHex(),
+      suggestedMaxPriorityFeePerGas: suggestedMaxFeePerGas.toHex(),
     };
   }
   let suggestedGasPrice = new Decimal(txPayload.gasPrice || 0).mul(ratio);
