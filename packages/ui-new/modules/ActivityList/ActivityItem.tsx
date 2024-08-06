@@ -109,7 +109,7 @@ const ActivityItem: React.FC<Props> = ({ onPress, tx }) => {
   }, [t, tx.method, tx.source]);
 
   const isPending = status === 'pending';
-  const showSpeedUp = useShowSpeedUp(isPending, tx.createdAt);
+  const showSpeedUp = useShowSpeedUp(tx);
 
   return (
     <Pressable

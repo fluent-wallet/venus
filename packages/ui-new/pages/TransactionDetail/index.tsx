@@ -52,7 +52,7 @@ const useGasFeeOfTx = (tx: Tx | null) => {
       cost: `${cost.toString()} ${nativeAsset?.symbol}`,
       priceInUSDT: cost.equals(0) ? '$0' : priceInUSDT ? (priceInUSDT.lessThan(0.01) ? '<$0.01' : `≈$${priceInUSDT.toFixed(2)}`) : null,
     };
-  }, [tx?.receipt, tx?.err, nativeAsset?.priceInUSDT, nativeAsset?.decimals]);
+  }, [tx?.receipt, tx?.err, nativeAsset?.priceInUSDT, nativeAsset?.decimals, nativeAsset?.symbol]);
   return gasCostAndPriceInUSDT;
 };
 
@@ -84,7 +84,7 @@ const TransactionDetail: React.FC<StackScreenProps<typeof TransactionDetailStack
   const gasCostAndPriceInUSDT = useGasFeeOfTx(tx);
   const { to } = useMemo(() => formatTxData(tx, payload, asset), [tx, payload, asset]);
   const isPending = status === 'pending';
-  const showSpeedUp = useShowSpeedUp(isPending, tx?.createdAt);
+  const showSpeedUp = useShowSpeedUp(tx);
   if (!tx) return null;
   const handleCopy = (text: string) => {
     Clipboard.setString(text);
@@ -191,7 +191,7 @@ const TransactionDetail: React.FC<StackScreenProps<typeof TransactionDetailStack
           <>
             <View style={styles.row}>
               <Text style={[styles.label, { color: colors.textSecondary }]}>status</Text>
-              <Text style={[styles.info, { color: colors.textPrimary }]}>{tx.status}</Text>
+              <Text style={[styles.info, { color: colors.textPrimary }]}>{tx.status.toLowerCase()}</Text>
             </View>
           </>
         )}

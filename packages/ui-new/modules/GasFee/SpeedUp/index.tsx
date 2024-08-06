@@ -6,7 +6,6 @@ import { GasOption, type GasSetting, type SpeedUpLevel } from '../GasFeeSetting'
 import {
   useTxFromId,
   usePayloadOfTx,
-  TxStatus,
   useNativeAssetOfNetwork,
   NetworkType,
   useVaultOfAccount,
@@ -80,7 +79,7 @@ const SpeedUp: React.FC<StackScreenProps<typeof SpeedUpStackName>> = ({ route })
   const network = useNetworkOfTx(txId);
   const account = useAccountOfTx(txId);
   const vault = useVaultOfAccount(account?.id);
-  const nativeAsset = useNativeAssetOfNetwork(network?.id)!;
+  const nativeAsset = useNativeAssetOfNetwork(network?.id);
   const txStatus = tx && formatStatus(tx);
 
   const [error, setError] = useState<{ type?: string; message: string } | null>(null);
@@ -118,7 +117,7 @@ const SpeedUp: React.FC<StackScreenProps<typeof SpeedUpStackName>> = ({ route })
   const isSpeedUp = type === SpeedUpAction.SpeedUp;
 
   useEffect(() => {
-    if (txStatus === 'pending') {
+    if (txStatus && txStatus !== 'pending') {
       bottomSheetRef.current?.close();
       showMessage({
         type: 'warning',
@@ -128,9 +127,10 @@ const SpeedUp: React.FC<StackScreenProps<typeof SpeedUpStackName>> = ({ route })
     }
   }, [txStatus, isSpeedUp]);
 
+  const newGasSetting =
+    tempSelectedOptionLevel === 'customize' ? customizeGasSetting : tempSelectedOptionLevel === 'faster' ? fasterGasSetting : higherGasSetting;
+
   const _handleSend = useCallback(async () => {
-    const newGasSetting =
-      tempSelectedOptionLevel === 'customize' ? customizeGasSetting : tempSelectedOptionLevel === 'faster' ? fasterGasSetting : higherGasSetting;
     if (!network || !tx || !txPayload || !newGasSetting) return;
     const address = await tx.address;
     try {
@@ -142,14 +142,14 @@ const SpeedUp: React.FC<StackScreenProps<typeof SpeedUpStackName>> = ({ route })
         }
       }
       const txData: ITxEvm = {
-        to: txPayload.to!,
+        to: isSpeedUp ? txPayload.to! : await address.getValue(),
+        value: isSpeedUp ? txPayload.value! : '0x0',
+        data: isSpeedUp ? txPayload.data! : '0x',
         from: txPayload.from!,
-        value: txPayload.value!,
-        data: txPayload.data ?? undefined,
-        nonce: txPayload.nonce ?? undefined,
-        gasLimit: txPayload.gas ?? undefined,
-        chainId: txPayload.chainId ?? undefined,
-        storageLimit: txPayload.storageLimit ?? undefined,
+        nonce: txPayload.nonce!,
+        gasLimit: txPayload.gas!,
+        chainId: txPayload.chainId!,
+        storageLimit: txPayload.storageLimit!,
         ...(newGasSetting.suggestedMaxFeePerGas
           ? {
               type: 2,
@@ -218,7 +218,7 @@ const SpeedUp: React.FC<StackScreenProps<typeof SpeedUpStackName>> = ({ route })
         type: 'failed',
       });
     }
-  }, [tempSelectedOptionLevel, customizeGasSetting, higherGasSetting, fasterGasSetting]);
+  }, [newGasSetting, network, tx, txPayload, vault?.type, signTransaction]);
   const { inAsync: inSending, execAsync: handleSend } = useInAsync(_handleSend);
 
   return (
