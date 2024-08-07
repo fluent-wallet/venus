@@ -183,7 +183,7 @@ const CustomizeGasSetting: React.FC<Props> = ({ customizeGasSetting, defaultMaxP
           {customizeGasSetting.suggestedMaxFeePerGas && (
             <>
               <Text style={[styles.inputTitle, { color: colors.textSecondary }]}>
-                {!force155 ? 'Max base fee' : 'Gas price'} ({t('tx.gasFee.customizeGasSetting.current')}:{' '}
+                {!force155 ? 'Max fee' : 'Gas price'} ({t('tx.gasFee.customizeGasSetting.current')}:{' '}
                 <Text style={{ fontWeight: '600', color: colors.textPrimary }}>{currentPriceGwei}</Text> Gwei)
               </Text>
               <Controller

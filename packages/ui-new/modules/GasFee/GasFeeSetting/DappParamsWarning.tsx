@@ -4,7 +4,7 @@ import Text from '@components/Text';
 import { useTheme } from '@react-navigation/native';
 import type React from 'react';
 import { useRef } from 'react';
-import { useTranslation } from 'react-i18next';
+import { Trans, useTranslation } from 'react-i18next';
 import { StyleSheet, View } from 'react-native';
 import { styles } from './CustomizeGasSetting';
 
@@ -25,7 +25,11 @@ const DappParamsWarning: React.FC<Props> = ({ onClose, onPressUse }) => {
         <BottomSheetContent>
           <Text style={[styles2.text, { color: colors.textPrimary }]}>{t('tx.gasFee.dappParams.description')}</Text>
 
-          <Text style={[styles2.text, { color: colors.textPrimary }]}>{t('tx.gasFee.dappParams.ask')}</Text>
+          <Text style={[styles2.text, { color: colors.textPrimary }]}>
+            <Trans i18nKey={'tx.gasFee.dappParams.ask'}>
+              Whether to use the <Text style={{ fontWeight: '600' }}>gas parameters</Text> recommended by BIM Wallet Wallet?
+            </Trans>
+          </Text>
         </BottomSheetContent>
         <BottomSheetFooter>
           <View style={[styles.btnArea, styles2.btnArea]}>
