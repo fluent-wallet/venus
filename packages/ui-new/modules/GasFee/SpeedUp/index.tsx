@@ -17,7 +17,6 @@ import { showMessage } from 'react-native-flash-message';
 import { useTheme } from '@react-navigation/native';
 import type { SpeedUpStackName, StackScreenProps } from '@router/configs';
 import RocketIcon from '@assets/icons/rocket.svg';
-import { from, of, catchError, delay, switchMap } from 'rxjs';
 import Decimal from 'decimal.js';
 import type React from 'react';
 import { useEffect, useRef, useState, useMemo, useCallback } from 'react';
@@ -39,6 +38,8 @@ import ProhibitIcon from '@assets/icons/prohibit.svg';
 import { SpeedUpAction, TransactionActionType } from '@core/WalletCore/Events/broadcastTransactionSubject';
 import useInAsync from '@hooks/useInAsync';
 import { formatStatus } from '@core/utils/tx';
+import usePollingGasPrice from '@core/WalletCore/Plugins/Transaction/usePollingGasPrice';
+import backToHome from '@utils/backToHome';
 
 const higherRatio = 1.1;
 const fasterRatio = 1.2;
@@ -64,7 +65,7 @@ const createGasSetting = (txPayload: ReturnType<typeof usePayloadOfTx>, ratio: n
   };
 };
 
-const SpeedUp: React.FC<StackScreenProps<typeof SpeedUpStackName>> = ({ route }) => {
+const SpeedUp: React.FC<StackScreenProps<typeof SpeedUpStackName>> = ({ navigation, route }) => {
   const { txId, type, level: defaultLevel } = route.params;
   const { colors } = useTheme();
   const { t } = useTranslation();
@@ -83,21 +84,7 @@ const SpeedUp: React.FC<StackScreenProps<typeof SpeedUpStackName>> = ({ route })
 
   const [error, setError] = useState<{ type?: string; message: string } | null>(null);
 
-  const [estimateCurrentGasPrice, setCurrentEstimateCurrentGasPrice] = useState<string | null>(null);
-  useEffect(() => {
-    if (!network) return;
-    from(plugins.Transaction.getGasPrice(network))
-      .pipe(
-        catchError((error) => {
-          console.log('Error:', error);
-          return of(error).pipe(
-            delay(1000),
-            switchMap(() => from(plugins.Transaction.getGasPrice(network))),
-          );
-        }),
-      )
-      .subscribe((gasPrice) => setCurrentEstimateCurrentGasPrice(gasPrice));
-  }, [network?.id]);
+  const estimateCurrentGasPrice = usePollingGasPrice();
 
   const higherGasSetting = useMemo(() => createGasSetting(txPayload, higherRatio, estimateCurrentGasPrice), [txPayload, estimateCurrentGasPrice]);
   const fasterGasSetting = useMemo(() => createGasSetting(txPayload, fasterRatio, estimateCurrentGasPrice), [txPayload, estimateCurrentGasPrice]);
@@ -191,7 +178,7 @@ const SpeedUp: React.FC<StackScreenProps<typeof SpeedUpStackName>> = ({ route })
             },
           });
         }
-        bottomSheetRef.current?.close();
+        backToHome(navigation);
       } catch (error) {
         if (error instanceof BSIMError) {
           setBSIMEvent({ type: BSIMEventTypesName.ERROR, message: error?.message });
