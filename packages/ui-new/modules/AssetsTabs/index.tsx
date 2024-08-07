@@ -187,7 +187,7 @@ export const TabsContent: React.FC<Props> = ({ currentTab, setCurrentTab, pageVi
         setCurrentTab(tabs[position]);
         recalculateHeight(tabs[position]);
       }}
-      useLegacy={type === 'SelectAsset' && Platform.OS === 'ios'}
+      useLegacy={Platform.OS === 'ios'}
     >
       {tabs.map((tab, index) => (
         <View key={tab} style={styles.pagerView}>
