@@ -23,8 +23,8 @@ export const ESPACE_NETWORK_SWITCH_FEATURE = {
 };
 
 /** standing */
-export const ACTIVITY_DB_STATUS_FEATURE = {
-  describe: 'show activity db status after action',
+export const ACTIVITY_DEV_INFO_FEATURE = {
+  describe: 'show activity dev info',
   allow: isQA || isDev,
 };
 
@@ -49,9 +49,10 @@ export const DEVELOPER_FEATURE = {
   allow: isDev,
 };
 
+// next release
 export const NETWORK_MANAGEMENT_FEATURE = {
   describe: 'network management feature',
-  allow: isDev,
+  allow: isDev || isQA,
 };
 
 export const GAS_FEE_FEATURE = {

@@ -9,7 +9,7 @@ import type { Asset } from '../Asset';
 import type { Signature } from '../Signature';
 import type { TxExtra } from '../TxExtra';
 import type { TxPayload } from '../TxPayload';
-import type { ExecutedStatus, Receipt, TxSource, TxStatus } from './type';
+import type { TxStatus, ExecutedStatus, Receipt, TxSource } from './type';
 
 export class Tx extends Model {
   static table = TableName.Tx;
@@ -26,6 +26,7 @@ export class Tx extends Model {
   @text('raw') raw!: string | null;
   /** tx hash */
   @text('hash') hash?: string | null;
+  /** executed not mean success, remember check executedStatus */
   @text('status') status!: TxStatus;
   @text('executed_status') executedStatus?: ExecutedStatus | null;
   /** receipt as an object */
@@ -44,7 +45,8 @@ export class Tx extends Model {
   @field('polling_count') pollingCount?: number | null;
   /** @deprecated */
   @field('confirmed_number') confirmedNumber?: number | null;
-  @field('is_temp_replaced') isTempReplaced?: boolean | null;
+  /** temp replaced by inner tx */
+  @field('is_temp_replaced') isTempReplacedByInner?: boolean | null;
   @text('source') source!: TxSource;
   @text('method') method!: string;
   /** optional, Relation<App | null> */

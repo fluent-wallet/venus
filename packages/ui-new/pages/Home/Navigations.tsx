@@ -4,9 +4,16 @@ import Buy from '@assets/icons/buy.svg';
 import More from '@assets/icons/more.svg';
 import Button from '@components/Button';
 import Text from '@components/Text';
-import { useIsTokensEmpty } from '@core/WalletCore/Plugins/ReactInject';
+import { useIsTokensEmpty, isPendingTxsFull } from '@core/WalletCore/Plugins/ReactInject';
 import { useTheme } from '@react-navigation/native';
-import { type HomeStackName, ReceiveStackName, SendTransactionStackName, SendTransactionStep1StackName, type StackScreenProps } from '@router/configs';
+import {
+  type HomeStackName,
+  TooManyPendingStackName,
+  ReceiveStackName,
+  SendTransactionStackName,
+  SendTransactionStep1StackName,
+  type StackScreenProps,
+} from '@router/configs';
 import type React from 'react';
 import type { ComponentProps } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -30,7 +37,9 @@ export const Navigation: React.FC<{
   );
 };
 
-const Navigations: React.FC<{ navigation: StackScreenProps<typeof HomeStackName>['navigation'] }> = ({ navigation }) => {
+const Navigations: React.FC<{
+  navigation: StackScreenProps<typeof HomeStackName>['navigation'];
+}> = ({ navigation }) => {
   const { t } = useTranslation();
   const isTokenEmpty = useIsTokensEmpty();
 
@@ -40,7 +49,15 @@ const Navigations: React.FC<{ navigation: StackScreenProps<typeof HomeStackName>
         title={t('home.send')}
         testId="send"
         Icon={ArrowUpward}
-        onPress={() => navigation.navigate(SendTransactionStackName, { screen: SendTransactionStep1StackName })}
+        onPress={() => {
+          if (isPendingTxsFull()) {
+            navigation.navigate(TooManyPendingStackName);
+            return;
+          }
+          navigation.navigate(SendTransactionStackName, {
+            screen: SendTransactionStep1StackName,
+          });
+        }}
         disabled={isTokenEmpty !== false}
       />
       <Navigation title={t('home.receive')} testId="receive" Icon={ArrowDownward} onPress={() => navigation.navigate(ReceiveStackName)} />

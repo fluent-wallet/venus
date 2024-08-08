@@ -1853,27 +1853,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@cfx-kit/dapp-utils@npm:0.1.1":
-  version: 0.1.1
-  resolution: "@cfx-kit/dapp-utils@npm:0.1.1"
-  dependencies:
-    "@cfx-kit/utils": 0.0.5
-    "@ethersproject/abi": ^5.7.0
-    "@ethersproject/bignumber": ^5.7.0
-    "@ethersproject/units": ^5.7.0
-    abitype: ^0.9.5
-    ethers: ^6.6.4
-    jsbi: ^4.3.0
-    ky: ^0.33.3
-    localstorage-enhance: ^1.0.8
-    lodash-es: ^4.17.21
-  checksum: d92665c8f572558d083face58f8b30c0e6caf1fc435578d10f7b4e164f581cf6eca7f0b8c19eb7e3b5c2c382f3cb20bb26c8da5dba84d86fb0fb3b3adda8b33c
-  languageName: node
-  linkType: hard
-
-"@cfx-kit/dapp-utils@npm:^0.2.0":
-  version: 0.2.0
-  resolution: "@cfx-kit/dapp-utils@npm:0.2.0"
+"@cfx-kit/dapp-utils@npm:0.2.1, @cfx-kit/dapp-utils@npm:^0.2.1":
+  version: 0.2.1
+  resolution: "@cfx-kit/dapp-utils@npm:0.2.1"
   dependencies:
     "@cfx-kit/utils": 0.0.5
     "@ethersproject/abi": ^5.7.0
@@ -1886,19 +1868,19 @@ __metadata:
     ky: ^0.33.3
     localstorage-enhance: ^1.0.8
     lodash-es: ^4.17.21
-  checksum: 9f172785bb0c62a809286c61473339c4c9805315ab3e725ffe36be599feb0254c232a159ccc044b5724ffc7259b85f25ce5bb668d0c44b4ca3e8f6d7a9a97b3c
+  checksum: 49a674ff33154e5d71fcf266bb18e9ae616493487323d7a96af9480317d52c02e02a8c5952b8b983c427b0f8fcc0ee4bf9c0b43f67fa59a729269ddaf6dd27bf
   languageName: node
   linkType: hard
 
-"@cfx-kit/react-utils@npm:^0.0.22":
-  version: 0.0.22
-  resolution: "@cfx-kit/react-utils@npm:0.0.22"
+"@cfx-kit/react-utils@npm:^0.0.35":
+  version: 0.0.35
+  resolution: "@cfx-kit/react-utils@npm:0.0.35"
   dependencies:
-    "@cfx-kit/dapp-utils": 0.1.1
+    "@cfx-kit/dapp-utils": 0.2.1
     "@cfx-kit/utils": 0.0.5
     "@cfxjs/use-wallet-react": 0.0.2-5
+    "@walletconnect/modal": ^2.6.2
     "@walletconnect/sign-client": ^2.9.0
-    "@web3modal/standalone": ^2.4.3
     decimal.js: ^10.4.3
     localstorage-enhance: ^1.0.8
     lodash-es: ^4.17.21
@@ -1908,7 +1890,7 @@ __metadata:
   peerDependencies:
     ethers: ^6.6.4
     react: ^18.0.0
-  checksum: d07a77b8880fe5d3b7debc053076a8f9a2cbc2b299ed8a43233fd6aaa7cd18da0d303eb352b2a432c6beb742db9f85f2632c887b7a9af0f4d375c7b181b2901e
+  checksum: 19a3ba7398de5b5e7d96d18929a5cd18bf72139435c46dfbd52e9acf0c87ab6fec0cb2ee8a0b01354020c27d2b43203c6681290e04bf87ce78494a114b7273c3
   languageName: node
   linkType: hard
 
@@ -5511,6 +5493,37 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@walletconnect/modal-core@npm:2.6.2":
+  version: 2.6.2
+  resolution: "@walletconnect/modal-core@npm:2.6.2"
+  dependencies:
+    valtio: 1.11.2
+  checksum: 94daceba50c323b06ecbeac2968d9f0972f327359c6118887c6526cd64006249b12f64322d71bc6c4a2b928436ecc89cf3d3af706511fcdc264c1f4b34a2dd5d
+  languageName: node
+  linkType: hard
+
+"@walletconnect/modal-ui@npm:2.6.2":
+  version: 2.6.2
+  resolution: "@walletconnect/modal-ui@npm:2.6.2"
+  dependencies:
+    "@walletconnect/modal-core": 2.6.2
+    lit: 2.8.0
+    motion: 10.16.2
+    qrcode: 1.5.3
+  checksum: cd1ec0205eb491e529670599d3dd26f6782d7c5a99d5594bf6949a8c760c1c5f4eb6ed72b8662450774fe4e2dd47678f2c05145c8f2494bd7153446ddf4bd7ed
+  languageName: node
+  linkType: hard
+
+"@walletconnect/modal@npm:^2.6.2":
+  version: 2.6.2
+  resolution: "@walletconnect/modal@npm:2.6.2"
+  dependencies:
+    "@walletconnect/modal-core": 2.6.2
+    "@walletconnect/modal-ui": 2.6.2
+  checksum: 68b354d49960b96d22de0e47a3801df27c01a3e96ec5fbde3ca6df1344ca2b20668b0c4d58fe1803f5670ac7b7b4c6f5b7b405e354f5f9eaff5cca147c13de9c
+  languageName: node
+  linkType: hard
+
 "@walletconnect/react-native-compat@npm:^2.12.2":
   version: 2.14.0
   resolution: "@walletconnect/react-native-compat@npm:2.14.0"
@@ -5656,38 +5669,6 @@ __metadata:
     "@walletconnect/window-getters": ^1.0.1
     tslib: 1.14.1
   checksum: e82aea7195c6fe95c00e87bb38051c5549838c2e8302da94f1afa48206f79f0b620166c9820f847494505d282d1568e2086a1561b0493d2d0a1fa115f9106aef
-  languageName: node
-  linkType: hard
-
-"@web3modal/core@npm:2.4.3":
-  version: 2.4.3
-  resolution: "@web3modal/core@npm:2.4.3"
-  dependencies:
-    buffer: 6.0.3
-    valtio: 1.10.5
-  checksum: af18f7c44266ed767830091e542eac69726a6f6c535024ad1b050bf5f406169bbea4a7f5e5e10f3415b08b4937e5a10f48d7c7f9f3e98742b84493753dfbc5b9
-  languageName: node
-  linkType: hard
-
-"@web3modal/standalone@npm:^2.4.3":
-  version: 2.4.3
-  resolution: "@web3modal/standalone@npm:2.4.3"
-  dependencies:
-    "@web3modal/core": 2.4.3
-    "@web3modal/ui": 2.4.3
-  checksum: 3a5c6b93522f9c888979141f785f760aa27511be7b1a2de30bf3be5a4ee934dd0273b9e161aca5c4e10d6fe47c43cb66ef391a370e5bce7530ef1014867e4bb8
-  languageName: node
-  linkType: hard
-
-"@web3modal/ui@npm:2.4.3":
-  version: 2.4.3
-  resolution: "@web3modal/ui@npm:2.4.3"
-  dependencies:
-    "@web3modal/core": 2.4.3
-    lit: 2.7.5
-    motion: 10.16.2
-    qrcode: 1.5.3
-  checksum: 2198229f88b4242b5346ce0b2d3806e74c8014e21416f50ef4d7dc17a9d91485fd2146610dba7f9ff507b7b590342b66eddc70915a4b49a646d7bcab0e9b7859
   languageName: node
   linkType: hard
 
@@ -6607,16 +6588,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"buffer@npm:6.0.3, buffer@npm:^6.0.3":
-  version: 6.0.3
-  resolution: "buffer@npm:6.0.3"
-  dependencies:
-    base64-js: ^1.3.1
-    ieee754: ^1.2.1
-  checksum: 5ad23293d9a731e4318e420025800b42bf0d264004c0286c8cc010af7a270c7a0f6522e84f54b9ad65cbd6db20b8badbfd8d2ebf4f80fa03dab093b89e68c3f9
-  languageName: node
-  linkType: hard
-
 "buffer@npm:^5.4.3, buffer@npm:^5.5.0":
   version: 5.7.1
   resolution: "buffer@npm:5.7.1"
@@ -6624,6 +6595,16 @@ __metadata:
     base64-js: ^1.3.1
     ieee754: ^1.1.13
   checksum: e2cf8429e1c4c7b8cbd30834ac09bd61da46ce35f5c22a78e6c2f04497d6d25541b16881e30a019c6fd3154150650ccee27a308eff3e26229d788bbdeb08ab84
+  languageName: node
+  linkType: hard
+
+"buffer@npm:^6.0.3":
+  version: 6.0.3
+  resolution: "buffer@npm:6.0.3"
+  dependencies:
+    base64-js: ^1.3.1
+    ieee754: ^1.2.1
+  checksum: 5ad23293d9a731e4318e420025800b42bf0d264004c0286c8cc010af7a270c7a0f6522e84f54b9ad65cbd6db20b8badbfd8d2ebf4f80fa03dab093b89e68c3f9
   languageName: node
   linkType: hard
 
@@ -11760,7 +11741,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"lit-html@npm:^2.7.0, lit-html@npm:^2.8.0":
+"lit-html@npm:^2.8.0":
   version: 2.8.0
   resolution: "lit-html@npm:2.8.0"
   dependencies:
@@ -11769,14 +11750,14 @@ __metadata:
   languageName: node
   linkType: hard
 
-"lit@npm:2.7.5":
-  version: 2.7.5
-  resolution: "lit@npm:2.7.5"
+"lit@npm:2.8.0":
+  version: 2.8.0
+  resolution: "lit@npm:2.8.0"
   dependencies:
     "@lit/reactive-element": ^1.6.0
     lit-element: ^3.3.0
-    lit-html: ^2.7.0
-  checksum: 61a3f87c57136618f47a30b36cdfb592fcba42dcfbdb104d2b5ca291148c2d9a32fcb713bb91090bd08d6897a00e73f8425da6e3626aa080eaf410a32397ae69
+    lit-html: ^2.8.0
+  checksum: 2480e733f7d022d3ecba91abc58a20968f0ca8f5fa30b3341ecf4bcf4845e674ad27b721a5ae53529cafc6ca603c015b80d0979ceb7a711e268ef20bb6bc7527
   languageName: node
   linkType: hard
 
@@ -16869,18 +16850,21 @@ __metadata:
   languageName: node
   linkType: hard
 
-"valtio@npm:1.10.5":
-  version: 1.10.5
-  resolution: "valtio@npm:1.10.5"
+"valtio@npm:1.11.2":
+  version: 1.11.2
+  resolution: "valtio@npm:1.11.2"
   dependencies:
     proxy-compare: 2.5.1
     use-sync-external-store: 1.2.0
   peerDependencies:
+    "@types/react": ">=16.8"
     react: ">=16.8"
   peerDependenciesMeta:
+    "@types/react":
+      optional: true
     react:
       optional: true
-  checksum: a01d7cca44b3ff60213aa40470c42083f7522d8e2c2f2d9f696b0aa3eec4c3dba7393831d5ff47db1ad025904860d2788ce4d9654963ff3555481deb25376851
+  checksum: cce2d9212aac9fc4bdeba2d381188cc831cfe8d2d03039024cfcd58ba1801f2a5b14d01c2bb21a2c9f12046d2ede64f1dd887175185f39bee553677a35592c30
   languageName: node
   linkType: hard
 
@@ -16901,8 +16885,8 @@ __metadata:
     "@babel/preset-env": ^7.23.8
     "@babel/runtime": ^7.23.8
     "@biomejs/biome": 1.8.3
-    "@cfx-kit/dapp-utils": ^0.2.0
-    "@cfx-kit/react-utils": ^0.0.22
+    "@cfx-kit/dapp-utils": ^0.2.1
+    "@cfx-kit/react-utils": ^0.0.35
     "@craftzdog/react-native-buffer": ^6.0.5
     "@ethersproject/abi": ^5.7.0
     "@ethersproject/hdnode": ^5.7.0

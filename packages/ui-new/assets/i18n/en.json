@@ -296,7 +296,6 @@
     "content" : {
       "depositToken" : "Deposit tokens to your wallet",
       "noActivity" : "No Activity",
-      "noLatestTransaction" : null,
       "noNFT" : "No NFT",
       "noRecord" : "No Record",
       "noToken" : "No Token",
@@ -392,12 +391,30 @@
       "txHash" : "Transaction Hash"
     },
     "gasFee" : {
+      "advance" : "Advance",
+      "advanceSetting" : {
+        "miniumGasLimit" : "{{network}} requires a minimum gasLimit of {{gasLimit}}.",
+        "title" : "Advance Setting"
+      },
+      "customizeGasSetting" : {
+        "current" : "Current",
+        "lowWarning" : "Your offer is lower than the current base fee and may take a long time to wait.",
+        "minimumGasPrice" : "{{network}} requires a minimum {{gasPriceType}} of {{gasPrice}} Gwei.",
+        "title" : "Customize Gas"
+      },
+      "dappParams" : {
+        "ask" : "Whether to use the <1>gas parameters</1> recommended by BIM Wallet Wallet?",
+        "description" : "The gas parameters used by the DApp may cause the transaction to fail.",
+        "title" : "Tips"
+      },
       "level" : {
         "customize" : "Customize",
         "high" : "Fast",
-        "low" : "Slow",
+        "low" : "Economical",
         "medium" : "Average"
-      }
+      },
+      "longTime" : "Take a long time.",
+      "title" : "Network Fee"
     },
     "send" : {
       "address" : {
@@ -414,6 +431,10 @@
       "receiver" : "Receiver",
       "scan" : "Scan",
       "title" : "Send"
+    },
+    "tooManyPending" : {
+      "description" : "This account have too many pending transactlons on {{network}}.\n\nTo protect the security of your assets, please speed up or cancel these transactions first.",
+      "title" : "Notice"
     }
   },
   "wallet" : {

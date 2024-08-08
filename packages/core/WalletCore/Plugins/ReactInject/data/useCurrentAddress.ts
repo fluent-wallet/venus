@@ -17,3 +17,4 @@ export const useCurrentAddress = () => useAtomValue(currentAddressAtom);
 export const currentAddressValueAtom = atomWithObservable(() => currentAddressValueObservable, { initialValue: null });
 export const useCurrentAddressValue = () => useAtomValue(currentAddressValueAtom);
 export const getCurrentAddress = () => getAtom(currentAddressAtom);
+export const getCurrentAddressValue = () => getAtom(currentAddressValueAtom);

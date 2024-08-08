@@ -24,7 +24,7 @@ function WalletConnectSessions() {
   const bottomSheetRef = useRef<BottomSheetMethods>(null!);
 
   const currentAddressValue = useCurrentAddressValue();
-  const { sessions } = useWalletConnectSessions(currentAddressValue);
+  const sessions = useWalletConnectSessions(currentAddressValue);
 
   const [inDisconnect, setInDesconnect] = useState<Record<string, boolean>>({});
   const handleDisconnect = useCallback(async (topic: string) => {

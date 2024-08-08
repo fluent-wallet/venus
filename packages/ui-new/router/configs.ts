@@ -5,6 +5,8 @@ import type { NavigationProp, NavigatorScreenParams } from '@react-navigation/na
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { VersionJSON } from '@pages/Settings/AboutUs';
 import type { SpeedUpLevel } from '@modules/GasFee/GasFeeSetting';
+import type { NetworkType } from '@core/utils/consts';
+import type { SpeedUpAction } from '@core/WalletCore/Events/broadcastTransactionSubject';
 
 export const WelcomeStackName = 'Welcome';
 export const WayToInitWalletStackName = 'WayToInitWallet';
@@ -33,6 +35,7 @@ export const SignatureRecordsStackName = 'SignatureRecords';
 export const SpeedUpStackName = 'SpeedUp';
 export const TransactionDetailStackName = 'TransactionDetail';
 export const ExternalInputHandlerStackName = 'ExternalInputHandler';
+export const TooManyPendingStackName = 'TooManyPending';
 
 // start Wallet connect nest stack
 
@@ -44,7 +47,9 @@ export const WalletConnectSignMessageStackName = 'WalletConnectSignMessage';
 export const WalletConnectTransactionStackName = 'WalletConnectTransaction';
 
 export type WalletConnectParamList = {
-  [WalletConnectProposalStackName]: IWCSessionProposalEventData & { connectedNetworks: Array<{ icon: string; name: string; netId: number; id: string }> };
+  [WalletConnectProposalStackName]: IWCSessionProposalEventData & {
+    connectedNetworks: Array<{ icon: string; name: string; netId: number; id: string; networkType: NetworkType }>;
+  };
   [WalletConnectSessionsStackName]: undefined;
   [WalletConnectSignMessageStackName]: IWCSignMessageEventData;
   [WalletConnectTransactionStackName]: IWCSendTransactionEventData & { isContract: boolean };
@@ -79,9 +84,10 @@ export type RootStackParamList = {
   [WalletConnectStackName]: NavigatorScreenParams<WalletConnectParamList>;
   [NetworkAddNewEndpointStackName]: undefined;
   [SignatureRecordsStackName]: undefined;
-  [SpeedUpStackName]: { txId: string; type: 'SpeedUp' | 'Cancel'; level?: SpeedUpLevel };
+  [SpeedUpStackName]: { txId: string; type: SpeedUpAction; level?: SpeedUpLevel };
   [TransactionDetailStackName]: { txId: string };
   [ExternalInputHandlerStackName]: { data: string } | undefined;
+  [TooManyPendingStackName]: undefined;
 };
 
 export type StackScreenProps<T extends keyof RootStackParamList> = NativeStackScreenProps<RootStackParamList, T>;
@@ -116,7 +122,7 @@ export type SendTransactionParamList = {
   [SendTransactionStep1StackName]: undefined;
   [SendTransactionStep2StackName]: { recipientAddress: string; searchAddress?: string };
   [SendTransactionStep3StackName]: { asset: AssetInfo; recipientAddress: string; nftItemDetail?: NFTItemDetail; amount?: string };
-  [SendTransactionStep4StackName]: { asset: AssetInfo; recipientAddress: string; amount: string; nftItemDetail?: NFTItemDetail };
+  [SendTransactionStep4StackName]: { asset: AssetInfo; recipientAddress: string; amount: string; nftItemDetail?: NFTItemDetail; inMaxMode?: boolean };
   // navigate to home
   [HomeStackName]: undefined;
   [PasswordVerifyStackName]: undefined;

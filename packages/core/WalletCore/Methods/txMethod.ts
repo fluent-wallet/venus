@@ -3,39 +3,48 @@ import type { Tx } from '@core/database/models/Tx';
 import { TxSource, TxStatus } from '@core/database/models/Tx/type';
 import type { TxExtra } from '@core/database/models/TxExtra';
 import type { TxPayload } from '@core/database/models/TxPayload';
-import { injectable } from 'inversify';
+import { inject, injectable } from 'inversify';
 import database from '../../database';
 import { type Asset, AssetType } from '../../database/models/Asset';
 import { createTx as _createTx, queryTxsWithAddress } from '../../database/models/Tx/query';
 import { createTxExtra as _createTxExtra } from '../../database/models/TxExtra/query';
 import { createTxPayload as _createTxPayload } from '../../database/models/TxPayload/query';
-import type { TransactionSubjectValue } from '../Events/broadcastTransactionSubject';
+import { Plugins } from '@core/WalletCore/Plugins';
+import type { SendTransactionParams, SpeedUpAction, SpeedUpTransactionParams } from '../Events/broadcastTransactionSubject';
+import type { ITxEvm } from '../Plugins/Transaction/types';
 
 interface createTxPayloadParams {
-  tx: TransactionSubjectValue['tx'];
+  tx: SendTransactionParams['tx'];
   address?: Address;
   epochHeight?: string | null;
 }
 
 @injectable()
 export class TxMethod {
-  createTx(params: TransactionSubjectValue, prepareCreate: true): Promise<readonly [Tx, TxPayload, TxExtra]>;
-  createTx(params: TransactionSubjectValue): Promise<void>;
-  async createTx(params: TransactionSubjectValue, prepareCreate?: true) {
+  @inject(Plugins) plugins!: Plugins;
+
+  private async isWaitting(address: Address, txNonce: number | undefined) {
+    const nextNonce = await this.plugins.NextNonceTracker.getNextNonce(address, true);
+    return BigInt(nextNonce) < BigInt(txNonce ?? 0);
+  }
+
+  createTx(params: SendTransactionParams, prepareCreate: true): Promise<readonly [Tx, TxPayload, TxExtra]>;
+  createTx(params: SendTransactionParams): Promise<void>;
+  async createTx(params: SendTransactionParams, prepareCreate?: true) {
     try {
-      const { address, tx: _tx, extraParams, txRaw, txHash, signature, app } = params;
+      const { address, tx: txData, extraParams, txRaw, txHash, signature, app } = params;
       const updated = await this.updateTx(params);
       if (updated) return updated;
       const [txPayload, txExtra] = await Promise.all([
         this.createTxPayload(
           {
-            tx: _tx,
+            tx: txData,
             address,
             epochHeight: extraParams.epochHeight,
           },
           true,
         ),
-        this.createTxExtra(extraParams, true),
+        this.createTxExtra(extraParams, txData, true),
       ]);
       let asset: Asset | undefined;
       const network = await address.network;
@@ -44,6 +53,7 @@ export class TxMethod {
       } else if (params.extraParams.contractAddress) {
         asset = await network.queryAssetByAddress(params.extraParams.contractAddress);
       }
+      const isWaitting = await this.isWaitting(address, txData.nonce);
 
       const tx = _createTx(
         {
@@ -51,7 +61,7 @@ export class TxMethod {
           app,
           raw: txRaw,
           hash: txHash,
-          status: extraParams.err ? TxStatus.FAILED : TxStatus.PENDING,
+          status: extraParams.err ? TxStatus.SEND_FAILED : isWaitting ? TxStatus.WAITTING : TxStatus.PENDING,
           sendAt: extraParams.sendAt,
           txPayload,
           txExtra,
@@ -73,8 +83,8 @@ export class TxMethod {
     }
   }
 
-  async updateTx(params: TransactionSubjectValue) {
-    const { address, extraParams, txRaw, txHash, signature, app } = params;
+  async updateTx(params: SendTransactionParams) {
+    const { address, extraParams, txRaw, txHash, signature, app, tx: txData } = params;
     const sameTx = await queryTxsWithAddress(address.id, {
       raw: txRaw,
     });
@@ -83,14 +93,15 @@ export class TxMethod {
       return false;
     }
     // hasSuccessTx: already success, skip create/update
-    const hasSuccessTx = sameTx.some((tx) => tx.status !== TxStatus.FAILED);
+    const hasSuccessTx = sameTx.some((tx) => tx.status !== TxStatus.SEND_FAILED);
     const tx = sameTx[0];
     let newTx = tx;
+    const isWaitting = await this.isWaitting(address, txData.nonce);
     if (!hasSuccessTx) {
       newTx = await tx.updateSelf((_tx) => {
         _tx.app.id = app?.id;
         _tx.hash = txHash;
-        _tx.status = extraParams.err ? TxStatus.FAILED : TxStatus.PENDING;
+        _tx.status = extraParams.err ? TxStatus.SEND_FAILED : isWaitting ? TxStatus.WAITTING : TxStatus.PENDING;
         _tx.sendAt = extraParams.sendAt;
         _tx.err = extraParams.err;
         _tx.errorType = extraParams.errorType;
@@ -131,18 +142,20 @@ export class TxMethod {
     });
   }
 
-  createTxExtra(tx: TransactionSubjectValue['extraParams'], prepareCreate: true): Promise<TxExtra>;
-  createTxExtra(tx: TransactionSubjectValue['extraParams']): Promise<void>;
-  async createTxExtra(tx: TransactionSubjectValue['extraParams'], prepareCreate?: true) {
+  createTxExtra(params: SendTransactionParams['extraParams'], tx: ITxEvm, prepareCreate: true): Promise<TxExtra>;
+  createTxExtra(params: SendTransactionParams['extraParams'], tx: ITxEvm): Promise<void>;
+  async createTxExtra(params: SendTransactionParams['extraParams'], tx: ITxEvm, prepareCreate?: true) {
+    const { to, data } = tx;
     const txExtra = _createTxExtra(
       {
         ok: true,
-        simple: tx.assetType === AssetType.Native,
-        contractInteraction: tx.assetType !== AssetType.Native,
-        token20: tx.assetType === AssetType.ERC20,
-        tokenNft: tx.assetType === AssetType.ERC721 || tx.assetType === AssetType.ERC1155,
-        address: tx.assetType === AssetType.ERC20 ? tx.to : undefined,
-        method: tx.assetType === AssetType.ERC20 ? 'transfer' : undefined,
+        simple: params.assetType === AssetType.Native,
+        contractInteraction: params.assetType !== AssetType.Native,
+        token20: params.assetType === AssetType.ERC20,
+        tokenNft: params.assetType === AssetType.ERC721 || params.assetType === AssetType.ERC1155,
+        address: params.assetType === AssetType.ERC20 ? params.to : undefined,
+        method: params.assetType === AssetType.ERC20 ? 'transfer' : undefined,
+        contractCreation: !to && !!data,
       },
       true,
     );
@@ -150,5 +163,64 @@ export class TxMethod {
     return database.write(async () => {
       await database.batch(txExtra);
     });
+  }
+
+  async speedUpTx(params: SpeedUpTransactionParams, prepareCreate?: true) {
+    try {
+      const { originTx, tx: txData, epochHeight, txRaw, txHash, sendAt, signature, speedupAction } = params;
+      const [address, app, asset, originTxExtra] = await Promise.all([originTx.address, originTx.app, originTx.asset, originTx.txExtra]);
+      const [txPayload, txExtra] = await Promise.all([
+        this.createTxPayload(
+          {
+            tx: txData,
+            address,
+            epochHeight,
+          },
+          true,
+        ),
+        this.createSpeedUpTxExtra(originTxExtra, speedupAction),
+      ]);
+      const isWaitting = await this.isWaitting(address, txData.nonce);
+
+      const tx = _createTx(
+        {
+          address,
+          app,
+          raw: txRaw,
+          hash: txHash,
+          status: isWaitting ? TxStatus.WAITTING : TxStatus.PENDING,
+          sendAt,
+          txPayload,
+          txExtra,
+          asset,
+          source: originTx.source,
+          method: originTx.method,
+        },
+        true,
+      );
+      signature.updateTx(tx);
+      if (prepareCreate) return [tx, txPayload, txExtra] as const;
+      return database.write(async () => {
+        await database.batch(tx, txPayload, txExtra);
+      });
+    } catch (error) {
+      console.error('speedUpTx error: ', error);
+    }
+  }
+  async createSpeedUpTxExtra(originTxExtra: TxExtra, action: SpeedUpAction) {
+    return _createTxExtra(
+      {
+        ok: true,
+        simple: originTxExtra.simple,
+        contractInteraction: originTxExtra.contractInteraction,
+        token20: originTxExtra.token20,
+        tokenNft: originTxExtra.tokenNft,
+        address: originTxExtra.address,
+        method: originTxExtra.method,
+        contractCreation: originTxExtra.contractCreation,
+        sendAction: action,
+      },
+      true,
+    );
   }
 }

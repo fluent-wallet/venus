@@ -10,19 +10,19 @@ import useFormatBalance from '@hooks/useFormatBalance';
 import NFTIcon from '@modules/AssetsList/NFTsList/NFTIcon';
 import TokenIcon from '@modules/AssetsList/TokensList/TokenIcon';
 import { useTheme } from '@react-navigation/native';
-import { ACTIVITY_DB_STATUS_FEATURE, SPEED_UP_FEATURE } from '@utils/features';
 import type React from 'react';
 import { type ComponentProps, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Pressable, StyleSheet, View, type LayoutChangeEvent, type ViewProps } from 'react-native';
 import SpeedUpButton from '@modules/SpeedUpButton';
 import Spinner from '@components/Spinner';
+import { useShowSpeedUp } from '@hooks/useShowSpeedUp';
 
 const TextEllipsisWithSuffix: React.FC<{
   defaultSuffixWidth?: number;
   style?: ViewProps['style'];
   text: JSX.Element;
-  suffix: React.ReactNode;
+  suffix?: React.ReactNode;
   suffixStyle?: ViewProps['style'];
 }> = ({ style, text, defaultSuffixWidth = 0, suffix, suffixStyle }) => {
   const [suffixWidth, setSuffixWidth] = useState(0);
@@ -33,9 +33,11 @@ const TextEllipsisWithSuffix: React.FC<{
   return (
     <View style={[styles.textEllipsisWrapper, { paddingRight: suffixWidth || defaultSuffixWidth }, style]}>
       {text}
-      <View onLayout={onSuffixLayout} style={[suffixStyle, !!suffixWidth && { width: suffixWidth }]}>
-        {suffix}
-      </View>
+      {suffix && (
+        <View onLayout={onSuffixLayout} style={[suffixStyle, !!suffixWidth && { width: suffixWidth }]}>
+          {suffix}
+        </View>
+      )}
     </View>
   );
 };
@@ -72,10 +74,12 @@ const AssetInfo: React.FC<{
           </Text>
         }
         suffix={
-          <Text style={[styles.assetText, { color: txStatus === 'failed' ? colors.textSecondary : colors.textPrimary }]} numberOfLines={1}>
-            {asset?.symbol}
-            {tokenId && <>&nbsp;#{tokenId}</>}
-          </Text>
+          (asset || tokenId) && (
+            <Text style={[styles.assetText, { color: txStatus === 'failed' ? colors.textSecondary : colors.textPrimary }]} numberOfLines={1}>
+              {asset?.symbol}
+              {tokenId && <>&nbsp;#{tokenId}</>}
+            </Text>
+          )
         }
         defaultSuffixWidth={50}
       />
@@ -90,12 +94,13 @@ const PendingIcon = () => {
 
 const ActivityItem: React.FC<Props> = ({ onPress, tx }) => {
   const { colors } = useTheme();
+  const { t } = useTranslation();
 
   const payload = usePayloadOfTx(tx.id);
   const asset = useAssetOfTx(tx.id);
   const status = formatStatus(tx);
+
   const { value, to, tokenId } = useMemo(() => formatTxData(tx, payload, asset), [tx, payload, asset]);
-  const { t } = useTranslation();
   const method = useMemo(() => {
     if (tx.source === TxSource.SELF) {
       return t('common.send');
@@ -103,7 +108,8 @@ const ActivityItem: React.FC<Props> = ({ onPress, tx }) => {
     return tx.method;
   }, [t, tx.method, tx.source]);
 
-  const isPending = SPEED_UP_FEATURE.allow && status === 'pending';
+  const isPending = status === 'pending';
+  const showSpeedUp = useShowSpeedUp(tx);
 
   return (
     <Pressable
@@ -116,16 +122,14 @@ const ActivityItem: React.FC<Props> = ({ onPress, tx }) => {
           text={
             <Text style={[styles.typeText, { color: colors.textPrimary }]} numberOfLines={1}>
               {method}
-              {ACTIVITY_DB_STATUS_FEATURE.allow && `--[${tx.status}-${tx.source}-${tx.method}]`}
             </Text>
           }
           suffix={
-            <>
-              {status === 'pending' && <PendingIcon />}
-              {status === 'failed' && (
-                <Text style={[styles.statusText, { color: colors.down, borderColor: colors.down }]}>{t('tx.activity.status.failed')}</Text>
-              )}
-            </>
+            status === 'pending' ? (
+              <PendingIcon />
+            ) : status === 'failed' ? (
+              <Text style={[styles.statusText, { color: colors.down, borderColor: colors.down }]}>{t('tx.activity.status.failed')}</Text>
+            ) : undefined
           }
           defaultSuffixWidth={50}
         />
@@ -134,7 +138,7 @@ const ActivityItem: React.FC<Props> = ({ onPress, tx }) => {
       {tx.source === TxSource.SELF && <AssetInfo asset={asset} value={value} tokenId={tokenId} txStatus={status} sign="-" method={method} />}
       {method === 'approve' && <AssetInfo asset={asset} value={value} tokenId={tokenId} txStatus={status} method={method} />}
 
-      {isPending && <SpeedUpButton txId={tx.id} containerStyle={styles.speedUp} />}
+      {showSpeedUp && <SpeedUpButton txId={tx.id} containerStyle={styles.speedUp} />}
     </Pressable>
   );
 };

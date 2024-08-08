@@ -6,7 +6,7 @@ import TableName from '../TableName';
 // see: https://github.com/Nozbe/WatermelonDB/issues/198. https://github.com/Nozbe/WatermelonDB/issues/36
 // isIndexed: true. Indexing makes querying by a column faster.Should add later
 const schema = appSchema({
-  version: 1,
+  version: 2,
   tables: [
     tableSchema({
       name: TableName.HdPath,

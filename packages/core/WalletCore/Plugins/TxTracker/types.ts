@@ -1,5 +1,13 @@
 export enum ReplacedResponse {
-  Replaced = 0,
-  NotReplaced = 1,
-  TxInPool = 2,
+  NotReplaced = 'NotReplaced',
+  TempReplaced = 'TempReplaced',
+  FinalizedReplaced = 'FinalizedReplaced',
+  TempExecuted = 'TempExecuted',
+  FinalizedExecuted = 'FinalizedExecuted',
+}
+
+export enum NonceUsedState {
+  NotUsed = 'NotUsed',
+  TempUsed = 'TempUsed',
+  FinalizedUsed = 'FinalizedUsed',
 }
