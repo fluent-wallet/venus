@@ -290,7 +290,6 @@ const GasFeeSetting = forwardRef<GasFeeSettingMethods, Props>(
               setCustomizeGasSetting(customGasSetting);
             }}
             onClose={() => setShowCustomizeSetting(false)}
-            defaultMaxPriorityFeePerGas={dappCustomizeGasSetting?.suggestedMaxPriorityFeePerGas ?? '0'}
             estimateCurrentGasPrice={estimateCurrentGasPrice!}
           />
         )}
