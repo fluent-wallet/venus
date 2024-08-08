@@ -20,7 +20,6 @@ import type { GasSetting } from './index';
 interface Props {
   customizeGasSetting: GasSetting;
   estimateCurrentGasPrice: string;
-  defaultMaxPriorityFeePerGas?: string;
   onConfirm: (customizeGasSetting: GasSetting) => void;
   onClose: () => void;
   force155?: boolean;
@@ -61,7 +60,7 @@ export const controlRule = {
   validate: (value: string) => Number.parseFloat(value) >= 0 || 'should be greater than 0',
 };
 
-const CustomizeGasSetting: React.FC<Props> = ({ customizeGasSetting, defaultMaxPriorityFeePerGas, estimateCurrentGasPrice, onClose, onConfirm, force155 }) => {
+const CustomizeGasSetting: React.FC<Props> = ({ customizeGasSetting, estimateCurrentGasPrice, onClose, onConfirm, force155 }) => {
   const { t } = useTranslation();
   const { colors } = useTheme();
   const bottomSheetRef = useRef<BottomSheetMethods>(null!);
@@ -87,7 +86,7 @@ const CustomizeGasSetting: React.FC<Props> = ({ customizeGasSetting, defaultMaxP
         : null),
       ...(customizeGasSetting.suggestedMaxPriorityFeePerGas
         ? {
-            maxPriorityFeePerGas: new Decimal(defaultMaxPriorityFeePerGas ?? 0).div(Gwei).toString(),
+            maxPriorityFeePerGas: new Decimal(customizeGasSetting.suggestedMaxPriorityFeePerGas ?? 0).div(Gwei).toString(),
           }
         : null),
     },

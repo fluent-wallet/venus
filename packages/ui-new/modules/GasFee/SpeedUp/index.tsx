@@ -306,7 +306,6 @@ const SpeedUp: React.FC<StackScreenProps<typeof SpeedUpStackName>> = ({ navigati
           }}
           onClose={() => setShowCustomizeSetting(false)}
           estimateCurrentGasPrice={estimateCurrentGasPrice}
-          defaultMaxPriorityFeePerGas={customizeGasSetting.suggestedMaxPriorityFeePerGas}
         />
       )}
       {bsimEvent && (

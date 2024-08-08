@@ -6,18 +6,20 @@ import type React from 'react';
 import { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Pressable, StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
+import { SpeedUpAction } from '@core/WalletCore/Events/broadcastTransactionSubject';
 
 const SpeedUpButton: React.FC<{ txId: string; containerStyle?: StyleProp<ViewStyle> }> = ({ txId, containerStyle }) => {
   const { t } = useTranslation();
   const { colors } = useTheme();
   const navigation = useNavigation<StackScreenProps<typeof HomeStackName>['navigation']>();
   const handlePressCancel = useCallback(() => {
-    navigation.navigate(SpeedUpStackName, { txId: txId, type: 'Cancel' });
+    navigation.navigate(SpeedUpStackName, { txId: txId, type: SpeedUpAction.Cancel });
   }, [txId]);
 
   const handlePressSpeedUp = useCallback(() => {
-    navigation.navigate(SpeedUpStackName, { txId: txId, type: 'SpeedUp' });
+    navigation.navigate(SpeedUpStackName, { txId: txId, type: SpeedUpAction.SpeedUp });
   }, [txId]);
+
   return (
     <View style={[styles.btnArea, containerStyle]}>
       <Pressable
