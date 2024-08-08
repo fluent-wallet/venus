@@ -1,4 +1,5 @@
 import events from '@core/WalletCore/Events';
+import { TransactionActionType } from '@core/WalletCore/Events/broadcastTransactionSubject';
 import methods from '@core/WalletCore/Methods';
 import type { Address } from '@core/database/models/Address';
 import { queryTxsWithAddress } from '@core/database/models/Tx/query';
@@ -48,7 +49,17 @@ class TxTrackerPluginClass implements Plugin {
 
   private _setup() {
     events.broadcastTransactionSubject.subscribe(async (value) => {
-      value && methods.createTx(value);
+      switch (value.transactionType) {
+        case TransactionActionType.Send:
+          methods.createTx(value.params);
+          break;
+        case TransactionActionType.SpeedUp:
+          methods.speedUpTx(value.params);
+          break;
+
+        default:
+          break;
+      }
     });
     events.currentAddressObservable.pipe(debounceTime(40)).subscribe(async (selectedAddress) => {
       if (!selectedAddress) {

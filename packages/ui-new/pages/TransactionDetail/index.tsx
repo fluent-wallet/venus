@@ -22,8 +22,9 @@ import { toDataUrl } from '@utils/blockies';
 import { useMemo } from 'react';
 import Decimal from 'decimal.js';
 import SpeedUpButton from '@modules/SpeedUpButton';
-import { ACTIVITY_DEV_INFO_FEATURE, SPEED_UP_FEATURE } from '@utils/features';
+import { ACTIVITY_DEV_INFO_FEATURE } from '@utils/features';
 import { useNetworkOfTx } from '@core/WalletCore/Plugins/ReactInject/data/useTxs';
+import { useShowSpeedUp } from '@hooks/useShowSpeedUp';
 
 const getGasCostFromError = (err: string | null | undefined) => {
   if (!err) {
@@ -51,7 +52,7 @@ const useGasFeeOfTx = (tx: Tx | null) => {
       cost: `${cost.toString()} ${nativeAsset?.symbol}`,
       priceInUSDT: cost.equals(0) ? '$0' : priceInUSDT ? (priceInUSDT.lessThan(0.01) ? '<$0.01' : `≈$${priceInUSDT.toFixed(2)}`) : null,
     };
-  }, [tx?.receipt, tx?.err, nativeAsset?.priceInUSDT, nativeAsset?.decimals]);
+  }, [tx?.receipt, tx?.err, nativeAsset?.priceInUSDT, nativeAsset?.decimals, nativeAsset?.symbol]);
   return gasCostAndPriceInUSDT;
 };
 
@@ -82,8 +83,9 @@ const TransactionDetail: React.FC<StackScreenProps<typeof TransactionDetailStack
   const network = useNetworkOfTx(txId);
   const gasCostAndPriceInUSDT = useGasFeeOfTx(tx);
   const { to } = useMemo(() => formatTxData(tx, payload, asset), [tx, payload, asset]);
-  if (!tx) return null;
   const isPending = status === 'pending';
+  const showSpeedUp = useShowSpeedUp(tx);
+  if (!tx) return null;
   const handleCopy = (text: string) => {
     Clipboard.setString(text);
     showMessage({
@@ -98,7 +100,7 @@ const TransactionDetail: React.FC<StackScreenProps<typeof TransactionDetailStack
       <View style={styles.content}>
         <TxStatus tx={tx} />
         <Text style={[styles.functionName, { color: colors.textPrimary }]}>{t('tx.detail.functionName', { name: tx.method })}</Text>
-        {SPEED_UP_FEATURE.allow && isPending && (
+        {showSpeedUp && (
           <>
             <Text style={[styles.action, { color: colors.textSecondary }]}>{t('tx.action.buttonTitle')}</Text>
             <SpeedUpButton txId={txId} containerStyle={styles.speedUp} />
@@ -187,9 +189,10 @@ const TransactionDetail: React.FC<StackScreenProps<typeof TransactionDetailStack
         </View>
         {ACTIVITY_DEV_INFO_FEATURE.allow && (
           <>
+            <View style={[styles.line, { backgroundColor: colors.borderFourth }]} />
             <View style={styles.row}>
               <Text style={[styles.label, { color: colors.textSecondary }]}>status</Text>
-              <Text style={[styles.info, { color: colors.textPrimary }]}>{tx.status}</Text>
+              <Text style={[styles.info, { color: colors.textPrimary }]}>{tx.status.toLowerCase()}</Text>
             </View>
           </>
         )}
@@ -248,12 +251,12 @@ export const styles = StyleSheet.create({
   },
   line: {
     height: 1,
-    marginTop: 8,
-    marginBottom: 24,
+    marginVertical: 8,
   },
   detail: {
     display: 'flex',
     gap: 16,
+    marginTop: 16,
   },
   row: {
     display: 'flex',

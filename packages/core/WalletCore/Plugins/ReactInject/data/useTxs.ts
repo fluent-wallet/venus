@@ -134,6 +134,18 @@ const networkAtomFamilyOfTx = atomFamily((txId: string) =>
 );
 export const useNetworkOfTx = (txId: string) => useAtomValue(networkAtomFamilyOfTx(txId));
 
+const accountAtomFamilyOfTx = atomFamily((txId: string) =>
+  atomWithObservable(
+    () =>
+      observeTxById(txId).pipe(
+        switchMap((txs) => txs[0].address.observe()),
+        switchMap((address) => address.account.observe()),
+      ),
+    { initialValue: null },
+  ),
+);
+export const useAccountOfTx = (txId: string) => useAtomValue(accountAtomFamilyOfTx(txId));
+
 const txsOfPendingCountObservable = currentAddressObservable.pipe(
   switchMap((currentAddress) =>
     currentAddress

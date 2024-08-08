@@ -147,6 +147,9 @@ export class Methods {
   public createTx(...args: Parameters<TxMethod['createTx']>) {
     return this.TxMethod.createTx(...args);
   }
+  public speedUpTx(...args: Parameters<TxMethod['speedUpTx']>) {
+    return this.TxMethod.speedUpTx(...args);
+  }
 
   @inject(AppMethod) private AppMethod!: AppMethod;
   public createApp(...args: Parameters<AppMethod['createApp']>) {
