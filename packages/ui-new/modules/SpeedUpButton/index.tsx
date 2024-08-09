@@ -13,11 +13,11 @@ const SpeedUpButton: React.FC<{ txId: string; containerStyle?: StyleProp<ViewSty
   const { colors } = useTheme();
   const navigation = useNavigation<StackScreenProps<typeof HomeStackName>['navigation']>();
   const handlePressCancel = useCallback(() => {
-    navigation.navigate(SpeedUpStackName, { txId: txId, type: SpeedUpAction.Cancel });
+    navigation.navigate(SpeedUpStackName, { txId: txId, type: SpeedUpAction.Cancel, level: 'higher' });
   }, [txId]);
 
   const handlePressSpeedUp = useCallback(() => {
-    navigation.navigate(SpeedUpStackName, { txId: txId, type: SpeedUpAction.SpeedUp });
+    navigation.navigate(SpeedUpStackName, { txId: txId, type: SpeedUpAction.SpeedUp, level: 'higher' });
   }, [txId]);
 
   return (
