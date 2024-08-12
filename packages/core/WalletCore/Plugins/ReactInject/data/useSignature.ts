@@ -1,6 +1,5 @@
 import type { Signature } from '@core/database/models/Signature';
 import { SignatureFilterOption } from '@core/database/models/Signature/type';
-import { notNull } from '@core/utils/rxjs';
 import { atom, useAtomValue } from 'jotai';
 import { atomFamily, atomWithObservable } from 'jotai/utils';
 import { useCallback } from 'react';
@@ -13,7 +12,7 @@ const signatureRecordsCountAtom = atomFamily((_filter: SignatureFilterOption) =>
   atomWithObservable(
     () =>
       currentAddressObservable.pipe(
-        filter(notNull),
+        filter((value) => value !== null),
         switchMap((currentAddress) => observeSignatureRecordsCount(currentAddress.id, _filter)),
       ),
     { initialValue: null },

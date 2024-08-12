@@ -7,7 +7,7 @@ export const NULL_HEX_ADDRESS = '0x0000000000000000000000000000000000000000';
 export const ADMINE_CONTROL_HEX_ADDRESS = '0x0888000000000000000000000000000000000000';
 export const SPONSOR_WHITELIST_CONTROL_HEX_ADDRESS = '0x0888000000000000000000000000000000000001';
 export const STAKING_HEX_ADDRESS = '0x0888000000000000000000000000000000000002';
-export const MAX_EPOCH_NUMBER_OFFSET = 66666n; // max offset is 10w, use 66666 for code
+export const MAX_EPOCH_NUMBER_OFFSET_IN_CORE = 66666n; // max offset is 10w in core, use 66666 for code
 
 export enum NetworkType {
   Conflux = 'Conflux',
@@ -66,6 +66,7 @@ export const Networks = {
     chainType: ChainType.Mainnet,
     gasBuffer: 1,
     hdPathIndex: 1,
+    multicallContractAddress: '0x9f208d7226f05b4f43d0d36eb21d8545c3143685',
     nativeAsset: {
       name: 'Conflux',
       symbol: 'CFX',
@@ -107,6 +108,8 @@ export const Networks = {
     chainType: ChainType.Testnet,
     gasBuffer: 1,
     hdPathIndex: 1,
+    multicallContractAddress: '0xd59149a01f910c3c448e41718134baeae55fa784',
+    configContractAddress: '0xda7b3890a4196330216a749a410e14a316c87489',
     nativeAsset: {
       name: 'Conflux',
       symbol: 'CFX',
@@ -128,6 +131,7 @@ export const Networks = {
     chainType: ChainType.Mainnet,
     gasBuffer: 1.5,
     hdPathIndex: 1,
+    multicallContractAddress: '0x5ba1e12693dc8f9c48aad8770482f4739beed696',
     nativeAsset: {
       name: 'Ether',
       symbol: 'ETH',
@@ -148,6 +152,7 @@ export const Networks = {
     chainType: ChainType.Testnet,
     gasBuffer: 1.5,
     hdPathIndex: 1,
+    multicallContractAddress: '0x25Eef291876194AeFAd0D60Dff89e268b90754Bb',
     nativeAsset: {
       name: 'Ether',
       symbol: 'SepoliaETH',
@@ -196,6 +201,7 @@ export const Networks = {
   //   },
   // },
 } as const;
+export const NetworksWithChainIdKey = Object.fromEntries(Object.values(Networks).map((network) => [`${network.networkType}_${network.chainId}`, network]));
 
 // * network setting
 
@@ -209,8 +215,3 @@ export const ETH_TX_TYPES = {
 };
 
 export const TX_RESEND_LIMIT = Number.POSITIVE_INFINITY;
-export const CHECK_REPLACED_BEFORE_RESEND_COUNT = 5;
-
-export const DETAULT_PENDING_POLLING_INTERVAL = 3 * 1000;
-export const DETAULT_EXECUTED_POLLING_INTERVAL = 5 * 1000;
-export const DETAULT_CONFIRMED_POLLING_INTERVAL = 30 * 1000;
