@@ -12,7 +12,7 @@ import Text from '@components/Text';
 import { Lang, useLanguage } from '@hooks/useI18n';
 import { useTheme } from '@react-navigation/native';
 import { UpdateVersionStackName, type AboutUsStackName, type StackScreenProps } from '@router/configs';
-import { APP_VERSION_FLAG_FEATURE, ENABLE_CHECK_UPDATE_FEATURE } from '@utils/features';
+import { APP_VERSION_FLAG_FEATURE } from '@utils/features';
 import { Image } from 'expo-image';
 import type React from 'react';
 import { useCallback, useState } from 'react';
@@ -84,7 +84,7 @@ const AboutUs: React.FC<StackScreenProps<typeof AboutUsStackName>> = ({ navigati
         {t('settings.aboutUs.version')}: {pkg.version} {APP_VERSION_FLAG_FEATURE.allow && APP_VERSION_FLAG_FEATURE.value}
       </Text>
 
-      {ENABLE_CHECK_UPDATE_FEATURE.allow && <SettingItem title={t('settings.aboutUs.action.checkUpdate')} onPress={handleCheckNewVersion} disable={loading} />}
+      <SettingItem title={t('settings.aboutUs.action.checkUpdate')} onPress={handleCheckNewVersion} disable={loading} />
       <SettingItem title={t('settings.aboutUs.action.teamsService')} onPress={openTeamsService} />
       <SettingItem title={t('settings.aboutUs.action.feedback')} onPress={openFeedback} />
     </ScrollView>
