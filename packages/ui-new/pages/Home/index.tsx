@@ -6,7 +6,7 @@ import { type Tab, Tabs, TabsContent, setHomeScrollY } from '@modules/AssetsTabs
 import NetworkSelector from '@modules/NetworkSelector';
 import { useTheme } from '@react-navigation/native';
 import { TransactionDetailStackName, type HomeStackName, type StackScreenProps } from '@router/configs';
-import { ESPACE_NETWORK_SWITCH_FEATURE, FULL_NETWORK_SWITCH_LIST_FEATURE, TX_DETAIL_FEATURE } from '@utils/features';
+import { ESPACE_NETWORK_SWITCH_FEATURE, FULL_NETWORK_SWITCH_LIST_FEATURE } from '@utils/features';
 import type React from 'react';
 import { useCallback, useRef, useState } from 'react';
 import { type NativeScrollEvent, StyleSheet, View } from 'react-native';
@@ -44,9 +44,7 @@ const Home: React.FC<StackScreenProps<typeof HomeStackName>> = ({ navigation }) 
     (data: Tx | AssetInfo) => {
       if (data instanceof Tx) {
         // press activity item
-        if (TX_DETAIL_FEATURE.allow) {
-          navigation.navigate(TransactionDetailStackName, { txId: data.id });
-        }
+        navigation.navigate(TransactionDetailStackName, { txId: data.id });
       }
     },
     [navigation.navigate],
