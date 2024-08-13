@@ -34,11 +34,6 @@ export const ENABLE_SMALL_SIGNATURE_RECORDS_FEATURE = {
   allow: isDev || isQA,
 };
 
-export const ENABLE_SIGNATURE_RECORDS_FEATURE = {
-  describe: 'show signature records',
-  allow: isDev || isQA,
-};
-
 export const ENABLE_CHECK_UPDATE_FEATURE = {
   describe: 'check the app update feature',
   allow: isDev,
@@ -58,14 +53,4 @@ export const NETWORK_MANAGEMENT_FEATURE = {
 export const GAS_FEE_FEATURE = {
   describe: 'Gas fee setting feature',
   allow: isDev,
-};
-
-export const SPEED_UP_FEATURE = {
-  describe: 'speed up',
-  allow: isDev || isQA,
-};
-
-export const TX_DETAIL_FEATURE = {
-  describe: 'tx detail',
-  allow: isDev || isQA,
 };
