@@ -43,14 +43,3 @@ export const DEVELOPER_FEATURE = {
   describe: 'developer feature',
   allow: isDev,
 };
-
-// next release
-export const NETWORK_MANAGEMENT_FEATURE = {
-  describe: 'network management feature',
-  allow: isDev || isQA,
-};
-
-export const GAS_FEE_FEATURE = {
-  describe: 'Gas fee setting feature',
-  allow: isDev,
-};
