@@ -207,22 +207,24 @@ export default class WalletConnect implements Plugin {
     const approveSession: IWCSessionProposalEvent['action']['approve'] = async () => {
       try {
         const currentAddress = await getCurrentAddress()!;
-        const evmSupportedNamespaces = !requiredNamespaces[ChainPrefix.EIP]
-          ? null
-          : {
-              ...requiredNamespaces[ChainPrefix.EIP],
-              chains: evmConnectedNetworks.map((network) => `${ChainPrefix.EIP}:${network.netId}`),
-              accounts: evmConnectedNetworks.map((network) => `${ChainPrefix.EIP}:${network.netId}:${currentAddress.hex!}`),
-            };
-        const confluxSupportedNamespaces = !requiredNamespaces[ChainPrefix.CIP]
-          ? null
-          : {
-              ...requiredNamespaces[ChainPrefix.CIP],
-              chains: confluxConnectedNetworks.map((network) => `${ChainPrefix.CIP}:${network.netId}`),
-              accounts: confluxConnectedNetworks.map(
-                (network) => `${ChainPrefix.CIP}:${network.netId}:${convertHexToBase32(currentAddress.hex!, network.netId)}`,
-              ),
-            };
+        const evmSupportedNamespaces =
+          !requiredNamespaces[ChainPrefix.EIP] && !optionalNamespaces[ChainPrefix.EIP]
+            ? null
+            : {
+                ...(requiredNamespaces[ChainPrefix.EIP] ?? optionalNamespaces[ChainPrefix.EIP]),
+                chains: evmConnectedNetworks.map((network) => `${ChainPrefix.EIP}:${network.netId}`),
+                accounts: evmConnectedNetworks.map((network) => `${ChainPrefix.EIP}:${network.netId}:${currentAddress.hex!}`),
+              };
+        const confluxSupportedNamespaces =
+          !requiredNamespaces[ChainPrefix.CIP] && !optionalNamespaces[ChainPrefix.CIP]
+            ? null
+            : {
+                ...(requiredNamespaces[ChainPrefix.CIP] ?? optionalNamespaces[ChainPrefix.CIP]),
+                chains: confluxConnectedNetworks.map((network) => `${ChainPrefix.CIP}:${network.netId}`),
+                accounts: confluxConnectedNetworks.map(
+                  (network) => `${ChainPrefix.CIP}:${network.netId}:${convertHexToBase32(currentAddress.hex!, network.netId)}`,
+                ),
+              };
 
         const namespaces = mergeCIPNamespaceToEIP(evmSupportedNamespaces!, confluxSupportedNamespaces);
 
