@@ -9,7 +9,6 @@ import {
   type SettingsStackName,
   type StackScreenProps,
 } from '@router/configs';
-import { NETWORK_MANAGEMENT_FEATURE } from '@utils/features';
 import type React from 'react';
 import { useTranslation } from 'react-i18next';
 import { Pressable, ScrollView, StyleSheet } from 'react-native';
@@ -39,10 +38,7 @@ const Settings: React.FC<StackScreenProps<typeof SettingsStackName>> = ({ naviga
 
       <SettingItem title={t('settings.navigation.preferences')} onPress={() => navigation.navigate(PreferencesStackName)} />
       <SettingItem title={t('settings.navigation.accountManagement')} onPress={() => navigation.navigate(AccountManagementStackName)} />
-      {/* <SettingItem title="Network Management" onPress={() => {}} /> */}
-      {NETWORK_MANAGEMENT_FEATURE.allow && (
-        <SettingItem title={t('settings.navigation.networkManagement')} onPress={() => navigation.navigate(NetworkManagementStackName)} />
-      )}
+      <SettingItem title={t('settings.navigation.networkManagement')} onPress={() => navigation.navigate(NetworkManagementStackName)} />
       <SettingItem title={t('settings.navigation.aboutUs')} onPress={() => navigation.navigate(AboutUsStackName)} />
     </ScrollView>
   );

@@ -15,6 +15,7 @@ import { newestRequestSubject } from './requestSubject';
 import { nextNonceSubject, nextNonceSubjectPush } from './nextNonceSubject';
 export { LifeCycle } from './lifecycleChanged';
 import { globalIntervalSubject } from './globalIntervalSubject';
+import { walletConfigSubject, walletConfigSubjectPush } from './walletConfigSubject';
 
 const compareNetworkAndAddress = ([prevNetwork, prevAddress]: [Network, Address], [currentNetwork, currentAddress]: [Network, Address]) => {
   return prevNetwork.id === currentNetwork.id && prevAddress.id === currentAddress.id;
@@ -36,6 +37,8 @@ export class Events {
   public nextNonceSubject = nextNonceSubject;
   public nextNonceSubjectPush = nextNonceSubjectPush;
   public globalIntervalSubject = globalIntervalSubject;
+  public walletConfigSubject = walletConfigSubject;
+  public walletConfigSubjectPush = walletConfigSubjectPush;
   public combineNetworkAndAddressChangedSubject = combineLatest([this.currentNetworkObservable, this.currentAddressObservable]).pipe(
     filter((tuple): tuple is [Network, Address] => tuple.every((ele) => !!ele)),
     debounceTime(25),

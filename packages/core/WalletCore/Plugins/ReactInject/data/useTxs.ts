@@ -10,6 +10,7 @@ import { accountsManageObservable } from './useAccountsManage';
 import { currentAddressObservable } from './useCurrentAddress';
 import { getAtom } from '../nexus';
 import { PENDING_TX_STATUSES, FINISHED_IN_ACTIVITY_TX_STATUSES, EXECUTED_TX_STATUSES, TxStatus, PENDING_COUNT_STATUSES } from '@core/database/models/Tx/type';
+import { getWalletConfig } from './useWalletConfig';
 
 const uniqSortByNonce = async (_txs: Tx[] | null) => {
   if (!_txs) return [];
@@ -158,8 +159,8 @@ const txsOfPendingCountObservable = currentAddressObservable.pipe(
 const txsOfPendingCountAtom = atomWithObservable(() => txsOfPendingCountObservable.pipe(switchMap(uniqSortByNonce)), { initialValue: [] });
 
 const getPendingTxs = () => getAtom(txsOfPendingCountAtom);
-const maxPendingLimit = 5;
 export const isPendingTxsFull = () => {
   const pendingTxs = getPendingTxs();
-  return pendingTxs && pendingTxs.length >= maxPendingLimit;
+  const walletConfig = getWalletConfig();
+  return pendingTxs && pendingTxs.length >= walletConfig.pendingCountLimit;
 };

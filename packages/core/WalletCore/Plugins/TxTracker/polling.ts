@@ -53,6 +53,10 @@ export class Polling {
     this.startNextPollingImmediately = startNextPollingImmediately;
   }
 
+  updatePollingInterval(interval: number) {
+    this._pollingInterval = interval;
+  }
+
   /**
    * start polling && subscribe count change
    */
