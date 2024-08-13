@@ -4,10 +4,10 @@ import methods from '@core/WalletCore/Methods';
 import type { Address } from '@core/database/models/Address';
 import { queryTxsWithAddress } from '@core/database/models/Tx/query';
 import { TxStatus } from '@core/database/models/Tx/type';
-import { DETAULT_PENDING_POLLING_INTERVAL, DETAULT_EXECUTED_POLLING_INTERVAL, DETAULT_CONFIRMED_POLLING_INTERVAL } from '@core/utils/consts';
 import { debounceTime } from 'rxjs';
 import type { Plugin } from '../';
 import { Polling } from './polling';
+import { getWalletConfig } from '../ReactInject/data/useWalletConfig';
 
 declare module '../../../WalletCore/Plugins' {
   interface Plugins {
@@ -18,32 +18,37 @@ declare module '../../../WalletCore/Plugins' {
 class TxTrackerPluginClass implements Plugin {
   public name = 'TxTracker';
   _currentAddress: Address | null = null;
-  _pendingPolling = new Polling({
-    inStatuses: [TxStatus.DISCARDED, TxStatus.PENDING],
-    pollingInterval: DETAULT_PENDING_POLLING_INTERVAL,
-    key: 'pending',
-    startNextPollingImmediately: (status) => status !== TxStatus.DISCARDED && status !== TxStatus.PENDING,
-  });
-  _executedPolling = new Polling({
-    inStatuses: [TxStatus.EXECUTED],
-    pollingInterval: DETAULT_EXECUTED_POLLING_INTERVAL,
-    key: 'executed',
-    startNextPollingImmediately: (status) => status === TxStatus.CONFIRMED || status === TxStatus.FINALIZED,
-  });
-  _confirmedPolling = new Polling({
-    inStatuses: [TxStatus.CONFIRMED],
-    pollingInterval: DETAULT_CONFIRMED_POLLING_INTERVAL,
-    key: 'confirmed',
-    startNextPollingImmediately: (status) => status === TxStatus.FINALIZED,
-  });
-  _tempReplacedPolling = new Polling({
-    inStatuses: [TxStatus.TEMP_REPLACED],
-    pollingInterval: DETAULT_CONFIRMED_POLLING_INTERVAL,
-    key: 'tempReplaced',
-    startNextPollingImmediately: (status) => status !== TxStatus.TEMP_REPLACED,
-  });
+  _pendingPolling: Polling;
+  _executedPolling: Polling;
+  _confirmedPolling: Polling;
+  _tempReplacedPolling: Polling;
 
   constructor() {
+    const walletConfig = getWalletConfig();
+    this._pendingPolling = new Polling({
+      inStatuses: [TxStatus.DISCARDED, TxStatus.PENDING],
+      pollingInterval: walletConfig.pendingPollingInterval,
+      key: 'pending',
+      startNextPollingImmediately: (status) => status !== TxStatus.DISCARDED && status !== TxStatus.PENDING,
+    });
+    this._executedPolling = new Polling({
+      inStatuses: [TxStatus.EXECUTED],
+      pollingInterval: walletConfig.executedPollingInterval,
+      key: 'executed',
+      startNextPollingImmediately: (status) => status === TxStatus.CONFIRMED || status === TxStatus.FINALIZED,
+    });
+    this._confirmedPolling = new Polling({
+      inStatuses: [TxStatus.CONFIRMED],
+      pollingInterval: walletConfig.confirmedPollingInterval,
+      key: 'confirmed',
+      startNextPollingImmediately: (status) => status === TxStatus.FINALIZED,
+    });
+    this._tempReplacedPolling = new Polling({
+      inStatuses: [TxStatus.TEMP_REPLACED],
+      pollingInterval: walletConfig.confirmedPollingInterval,
+      key: 'tempReplaced',
+      startNextPollingImmediately: (status) => status !== TxStatus.TEMP_REPLACED,
+    });
     this._setup();
   }
 
@@ -71,6 +76,12 @@ class TxTrackerPluginClass implements Plugin {
     });
     events.nextNonceSubject.subscribe(async (nextNonce) => {
       this._handleWaittingTx(nextNonce);
+    });
+    events.walletConfigSubject.subscribe((walletConfig) => {
+      this._pendingPolling.updatePollingInterval(walletConfig.pendingPollingInterval);
+      this._executedPolling.updatePollingInterval(walletConfig.executedPollingInterval);
+      this._confirmedPolling.updatePollingInterval(walletConfig.confirmedPollingInterval);
+      this._tempReplacedPolling.updatePollingInterval(walletConfig.confirmedPollingInterval);
     });
   }
 
