@@ -22,6 +22,7 @@ interface Props {
   estimateNonce: number;
   onConfirm: (customizeAdvanceSetting: AdvanceSetting) => void;
   onClose: () => void;
+  nonceDisabled?: boolean;
 }
 
 type FormData = {
@@ -30,7 +31,7 @@ type FormData = {
   storageLimit: string;
 };
 
-const CustomizeAdvanceSetting: React.FC<Props> = ({ customizeAdvanceSetting, estimateGasLimit, estimateNonce, onClose, onConfirm }) => {
+const CustomizeAdvanceSetting: React.FC<Props> = ({ customizeAdvanceSetting, estimateGasLimit, estimateNonce, nonceDisabled, onClose, onConfirm }) => {
   const { t } = useTranslation();
   const { colors } = useTheme();
   const bottomSheetRef = useRef<BottomSheetMethods>(null!);
@@ -91,7 +92,16 @@ const CustomizeAdvanceSetting: React.FC<Props> = ({ customizeAdvanceSetting, est
             control={control}
             rules={controlRule}
             render={({ field: { onChange, onBlur, value } }) => (
-              <TextInput error={!!errors.nonce} colors={colors} onBlur={onBlur} onChangeText={onChange} value={value} showGweiSuffix={false} />
+              <TextInput
+                error={!!errors.nonce}
+                colors={colors}
+                onBlur={onBlur}
+                onChangeText={onChange}
+                value={value}
+                showGweiSuffix={false}
+                readOnly={nonceDisabled}
+                disabled={nonceDisabled}
+              />
             )}
             name="nonce"
           />

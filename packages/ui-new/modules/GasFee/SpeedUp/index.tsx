@@ -2,7 +2,7 @@ import BottomSheet, { BottomSheetWrapper, BottomSheetHeader, BottomSheetContent,
 import Button from '@components/Button';
 import HourglassLoading from '@components/Loading/Hourglass';
 import Text from '@components/Text';
-import { GasOption, type GasSetting, type SpeedUpLevel } from '../GasFeeSetting';
+import { GasOption, type AdvanceSetting, type GasSetting, type SpeedUpLevel } from '../GasFeeSetting';
 import {
   useTxFromId,
   usePayloadOfTx,
@@ -11,6 +11,7 @@ import {
   useVaultOfAccount,
   VaultType,
   AssetType,
+  useCurrentAddressValue,
 } from '@core/WalletCore/Plugins/ReactInject';
 import plugins from '@core/WalletCore/Plugins';
 import { showMessage } from 'react-native-flash-message';
@@ -21,7 +22,7 @@ import Decimal from 'decimal.js';
 import type React from 'react';
 import { useEffect, useRef, useState, useMemo, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
-import { View, StyleSheet } from 'react-native';
+import { Pressable, View, StyleSheet } from 'react-native';
 import CustomizeGasSetting from '../GasFeeSetting/CustomizeGasSetting';
 import { SignTransactionCancelError, useSignTransaction } from '@hooks/useSignTransaction';
 import { useAccountOfTx, useAssetOfTx, useNetworkOfTx } from '@core/WalletCore/Plugins/ReactInject/data/useTxs';
@@ -38,8 +39,10 @@ import ProhibitIcon from '@assets/icons/prohibit.svg';
 import { SpeedUpAction, TransactionActionType } from '@core/WalletCore/Events/broadcastTransactionSubject';
 import useInAsync from '@hooks/useInAsync';
 import { formatStatus } from '@core/utils/tx';
-import usePollingGasPrice from '@core/WalletCore/Plugins/Transaction/usePollingGasPrice';
 import backToHome from '@utils/backToHome';
+import ArrowRight from '@assets/icons/arrow-right2.svg';
+import CustomizeAdvanceSetting from '../GasFeeSetting/CustomizeAdvanceSetting';
+import usePollingGasEstimateAndNonce from '@core/WalletCore/Plugins/Transaction/usePollingGasEstimateAndNonce';
 
 const higherRatio = 1.1;
 const fasterRatio = 1.2;
@@ -67,12 +70,14 @@ const createGasSetting = (txPayload: ReturnType<typeof usePayloadOfTx>, ratio: n
 
 const SpeedUp: React.FC<StackScreenProps<typeof SpeedUpStackName>> = ({ navigation, route }) => {
   const { txId, type, level: defaultLevel } = route.params;
+  const isSpeedUp = type === SpeedUpAction.SpeedUp;
   const { colors } = useTheme();
   const { t } = useTranslation();
 
   const signTransaction = useSignTransaction();
   const { bsimEvent, setBSIMEvent, execBSIMCancel, setBSIMCancel } = useBSIMVerify();
 
+  const currentAddressValue = useCurrentAddressValue();
   const tx = useTxFromId(txId);
   const txPayload = usePayloadOfTx(txId);
   const txAsset = useAssetOfTx(txId);
@@ -82,14 +87,29 @@ const SpeedUp: React.FC<StackScreenProps<typeof SpeedUpStackName>> = ({ navigati
   const nativeAsset = useNativeAssetOfNetwork(network?.id);
   const txStatus = tx && formatStatus(tx);
 
+  const txHalf: ITxEvm | null = useMemo(() => {
+    if (!txPayload || !currentAddressValue) return null;
+    return {
+      from: isSpeedUp ? txPayload.from! : currentAddressValue,
+      to: isSpeedUp ? txPayload.to! : currentAddressValue,
+      value: isSpeedUp ? txPayload.value! : '0x0',
+      data: isSpeedUp ? txPayload.data! : '0x',
+      nonce: txPayload.nonce!,
+      chainId: txPayload.chainId!,
+    };
+  }, [txPayload, currentAddressValue, isSpeedUp]);
+
   const [error, setError] = useState<{ type?: string; message: string } | null>(null);
 
-  const estimateCurrentGasPrice = usePollingGasPrice();
+  const estimateRes = usePollingGasEstimateAndNonce(txHalf);
+  const estimateCurrentGasPrice = estimateRes?.gasPrice ?? null;
 
   const higherGasSetting = useMemo(() => createGasSetting(txPayload, higherRatio, estimateCurrentGasPrice), [txPayload, estimateCurrentGasPrice]);
   const fasterGasSetting = useMemo(() => createGasSetting(txPayload, fasterRatio, estimateCurrentGasPrice), [txPayload, estimateCurrentGasPrice]);
   const [customizeGasSetting, setCustomizeGasSetting] = useState<GasSetting | null>(null);
   const [showCustomizeSetting, setShowCustomizeSetting] = useState(false);
+  const [showCustomizeAdvanceSetting, setShowCustomizeAdvanceSetting] = useState(false);
+  const [customizeAdvanceSetting, setCustomizeAdvanceSetting] = useState<AdvanceSetting | null>(null);
 
   useEffect(() => {
     if (customizeGasSetting === null && fasterGasSetting && higherGasSetting) {
@@ -99,8 +119,6 @@ const SpeedUp: React.FC<StackScreenProps<typeof SpeedUpStackName>> = ({ navigati
 
   const [tempSelectedOptionLevel, setTempSelectedOptionLevel] = useState<SpeedUpLevel | undefined>(defaultLevel);
   const bottomSheetRef = useRef<BottomSheetMethods>(null!);
-
-  const isSpeedUp = type === SpeedUpAction.SpeedUp;
 
   useEffect(() => {
     if (txStatus && txStatus !== 'pending') {
@@ -117,7 +135,7 @@ const SpeedUp: React.FC<StackScreenProps<typeof SpeedUpStackName>> = ({ navigati
     tempSelectedOptionLevel === 'customize' ? customizeGasSetting : tempSelectedOptionLevel === 'faster' ? fasterGasSetting : higherGasSetting;
 
   const _handleSend = useCallback(async () => {
-    if (!network || !tx || !txPayload || !newGasSetting) return;
+    if (!network || !tx || !txPayload || !newGasSetting || !txHalf || !estimateRes) return;
     const address = await tx.address;
     try {
       let txEpochHeight = txPayload.epochHeight;
@@ -127,15 +145,11 @@ const SpeedUp: React.FC<StackScreenProps<typeof SpeedUpStackName>> = ({ navigati
           txEpochHeight = currentEpochHeight;
         }
       }
+      const { gasLimit, storageLimit } = customizeAdvanceSetting || estimateRes;
       const txData: ITxEvm = {
-        to: isSpeedUp ? txPayload.to! : await address.getValue(),
-        value: isSpeedUp ? txPayload.value! : '0x0',
-        data: isSpeedUp ? txPayload.data! : '0x',
-        from: txPayload.from!,
-        nonce: txPayload.nonce!,
-        gasLimit: txPayload.gas!,
-        chainId: txPayload.chainId!,
-        storageLimit: txPayload.storageLimit!,
+        ...txHalf,
+        gasLimit,
+        storageLimit,
         ...(newGasSetting.suggestedMaxFeePerGas
           ? {
               type: 2,
@@ -204,7 +218,22 @@ const SpeedUp: React.FC<StackScreenProps<typeof SpeedUpStackName>> = ({ navigati
         type: 'failed',
       });
     }
-  }, [newGasSetting, network, tx, txPayload, vault?.type, signTransaction]);
+  }, [
+    newGasSetting,
+    network,
+    tx,
+    txPayload,
+    vault?.type,
+    customizeAdvanceSetting,
+    txHalf,
+    estimateRes,
+    navigation,
+    type,
+    setBSIMCancel,
+    setBSIMEvent,
+    t,
+    signTransaction,
+  ]);
   const { inAsync: inSending, execAsync: handleSend } = useInAsync(_handleSend);
 
   return (
@@ -254,6 +283,10 @@ const SpeedUp: React.FC<StackScreenProps<typeof SpeedUpStackName>> = ({ navigati
                     onPress={() => setShowCustomizeSetting(true)}
                   />
                 )}
+                <Pressable style={styles.advanceWrapper} onPress={() => setShowCustomizeAdvanceSetting(true)}>
+                  <Text style={[styles.advance, { color: colors.textPrimary }]}>{t('tx.gasFee.advance')}</Text>
+                  <ArrowRight color={colors.iconPrimary} />
+                </Pressable>
               </>
             )}
             {error && (
@@ -306,6 +339,16 @@ const SpeedUp: React.FC<StackScreenProps<typeof SpeedUpStackName>> = ({ navigati
           }}
           onClose={() => setShowCustomizeSetting(false)}
           estimateCurrentGasPrice={estimateCurrentGasPrice}
+        />
+      )}
+      {estimateRes && showCustomizeAdvanceSetting && (
+        <CustomizeAdvanceSetting
+          customizeAdvanceSetting={customizeAdvanceSetting}
+          estimateNonce={txPayload?.nonce ?? 0}
+          estimateGasLimit={estimateRes.gasLimit}
+          onConfirm={setCustomizeAdvanceSetting}
+          onClose={() => setShowCustomizeAdvanceSetting(false)}
+          nonceDisabled
         />
       )}
       {bsimEvent && (
@@ -363,6 +406,16 @@ const styles = StyleSheet.create({
   errorText: {
     fontSize: 14,
     fontWeight: '300',
+    lineHeight: 18,
+  },
+  advanceWrapper: {
+    marginTop: 24,
+    flexDirection: 'row',
+    gap: 12,
+  },
+  advance: {
+    fontSize: 14,
+    fontWeight: '600',
     lineHeight: 18,
   },
 });
