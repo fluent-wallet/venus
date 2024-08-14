@@ -254,7 +254,6 @@ const SendTransactionStep4Confirm: React.FC<SendTransactionScreenProps<typeof Se
             extraParams: {
               assetType: asset.type,
               contractAddress: asset.type !== AssetType.Native ? asset.contractAddress : undefined,
-              to: recipientAddress,
               sendAt: new Date(),
               epochHeight: currentNetwork.networkType === NetworkType.Conflux ? epochHeightRef.current : null,
               err: txError && String(txError.data || txError?.message || txError),

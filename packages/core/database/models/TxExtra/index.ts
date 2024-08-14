@@ -17,6 +17,7 @@ export class TxExtra extends Model {
   @field('contract_interaction') contractInteraction!: boolean | null; // contract interaction tx
   @field('token20') token20!: boolean | null; // 20 contract
   @field('token_nft') tokenNft!: boolean | null; // nft contract
+  /** temp deprecated */
   @text('address') address!: string | null; // intresting address of this tx, usually recipient
   @text('method') method!: string | null; // contract call method name
   @children(TableName.Tx) txs!: Query<Tx>;

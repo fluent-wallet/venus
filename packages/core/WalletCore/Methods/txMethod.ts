@@ -10,7 +10,7 @@ import { createTx as _createTx, queryTxsWithAddress } from '../../database/model
 import { createTxExtra as _createTxExtra } from '../../database/models/TxExtra/query';
 import { createTxPayload as _createTxPayload } from '../../database/models/TxPayload/query';
 import { Plugins } from '@core/WalletCore/Plugins';
-import type { SendTransactionParams, SpeedUpAction, SpeedUpTransactionParams } from '../Events/broadcastTransactionSubject';
+import { SpeedUpAction, type SendTransactionParams, type SpeedUpTransactionParams } from '../Events/broadcastTransactionSubject';
 import type { ITxEvm } from '../Plugins/Transaction/types';
 
 interface createTxPayloadParams {
@@ -44,7 +44,13 @@ export class TxMethod {
           },
           true,
         ),
-        this.createTxExtra(extraParams, txData, true),
+        this.createTxExtra(
+          {
+            assetType: extraParams.assetType,
+          },
+          txData,
+          true,
+        ),
       ]);
       let asset: Asset | undefined;
       const network = await address.network;
@@ -142,9 +148,9 @@ export class TxMethod {
     });
   }
 
-  createTxExtra(params: SendTransactionParams['extraParams'], tx: ITxEvm, prepareCreate: true): Promise<TxExtra>;
-  createTxExtra(params: SendTransactionParams['extraParams'], tx: ITxEvm): Promise<void>;
-  async createTxExtra(params: SendTransactionParams['extraParams'], tx: ITxEvm, prepareCreate?: true) {
+  createTxExtra(params: { assetType?: AssetType; action?: SpeedUpAction }, tx: ITxEvm, prepareCreate: true): Promise<TxExtra>;
+  createTxExtra(params: { assetType?: AssetType; action?: SpeedUpAction }, tx: ITxEvm): Promise<void>;
+  async createTxExtra(params: { assetType?: AssetType; action?: SpeedUpAction }, tx: ITxEvm, prepareCreate?: true) {
     const { to, data } = tx;
     const txExtra = _createTxExtra(
       {
@@ -153,9 +159,9 @@ export class TxMethod {
         contractInteraction: params.assetType !== AssetType.Native,
         token20: params.assetType === AssetType.ERC20,
         tokenNft: params.assetType === AssetType.ERC721 || params.assetType === AssetType.ERC1155,
-        address: params.assetType === AssetType.ERC20 ? params.to : undefined,
         method: params.assetType === AssetType.ERC20 ? 'transfer' : undefined,
         contractCreation: !to && !!data,
+        sendAction: params.action,
       },
       true,
     );
@@ -168,7 +174,9 @@ export class TxMethod {
   async speedUpTx(params: SpeedUpTransactionParams, prepareCreate?: true) {
     try {
       const { originTx, tx: txData, epochHeight, txRaw, txHash, sendAt, signature, speedupAction } = params;
-      const [address, app, asset, originTxExtra] = await Promise.all([originTx.address, originTx.app, originTx.asset, originTx.txExtra]);
+      const [address, app] = await Promise.all([originTx.address, originTx.app]);
+      const network = await address.network;
+      const asset = speedupAction === SpeedUpAction.Cancel ? (await network.assets).find((i) => i.type === AssetType.Native) : await originTx.asset;
       const [txPayload, txExtra] = await Promise.all([
         this.createTxPayload(
           {
@@ -178,14 +186,20 @@ export class TxMethod {
           },
           true,
         ),
-        this.createSpeedUpTxExtra(originTxExtra, speedupAction),
+        this.createTxExtra(
+          {
+            action: speedupAction,
+            assetType: asset?.type,
+          },
+          txData,
+          true,
+        ),
       ]);
       const isWaitting = await this.isWaitting(address, txData.nonce);
 
       const tx = _createTx(
         {
           address,
-          app,
           raw: txRaw,
           hash: txHash,
           status: isWaitting ? TxStatus.WAITTING : TxStatus.PENDING,
@@ -193,8 +207,9 @@ export class TxMethod {
           txPayload,
           txExtra,
           asset,
-          source: originTx.source,
-          method: originTx.method,
+          ...(speedupAction === SpeedUpAction.Cancel
+            ? { source: TxSource.SELF, method: 'transfer' }
+            : { app, source: originTx.source, method: originTx.method }),
         },
         true,
       );
@@ -206,21 +221,5 @@ export class TxMethod {
     } catch (error) {
       console.error('speedUpTx error: ', error);
     }
-  }
-  async createSpeedUpTxExtra(originTxExtra: TxExtra, action: SpeedUpAction) {
-    return _createTxExtra(
-      {
-        ok: true,
-        simple: originTxExtra.simple,
-        contractInteraction: originTxExtra.contractInteraction,
-        token20: originTxExtra.token20,
-        tokenNft: originTxExtra.tokenNft,
-        address: originTxExtra.address,
-        method: originTxExtra.method,
-        contractCreation: originTxExtra.contractCreation,
-        sendAction: action,
-      },
-      true,
-    );
   }
 }
