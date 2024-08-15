@@ -192,7 +192,8 @@ const SpeedUp: React.FC<StackScreenProps<typeof SpeedUpStackName>> = ({ navigati
               originTx: tx,
               sendAt: new Date(),
               epochHeight: network.networkType === NetworkType.Conflux ? txEpochHeight : null,
-              speedupAction: type,
+              // only cancel action while origin tx is cancel
+              speedupAction: (await tx.txExtra).sendAction === SpeedUpAction.Cancel ? SpeedUpAction.Cancel : type,
             },
           });
         }

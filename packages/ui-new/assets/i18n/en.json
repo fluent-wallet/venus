@@ -331,6 +331,7 @@
       "speedUpBtn" : "Speed Up"
     },
     "activity" : {
+      "canceling" : "Cancelling..",
       "status" : {
         "confirmed" : "Confirmed",
         "failed" : "Failed",

@@ -331,6 +331,7 @@
       "speedUpBtn" : "加速"
     },
     "activity" : {
+      "canceling" : null,
       "status" : {
         "confirmed" : "已確認",
         "failed" : "失敗",
