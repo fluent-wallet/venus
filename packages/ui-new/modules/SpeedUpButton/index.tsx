@@ -8,25 +8,36 @@ import { useTranslation } from 'react-i18next';
 import { Pressable, StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
 import { SpeedUpAction } from '@core/WalletCore/Events/broadcastTransactionSubject';
 
-const SpeedUpButton: React.FC<{ txId: string; containerStyle?: StyleProp<ViewStyle> }> = ({ txId, containerStyle }) => {
+const SpeedUpButton: React.FC<{ txId: string; containerStyle?: StyleProp<ViewStyle>; cancelDisabled?: boolean }> = ({
+  txId,
+  containerStyle,
+  cancelDisabled,
+}) => {
   const { t } = useTranslation();
   const { colors } = useTheme();
   const navigation = useNavigation<StackScreenProps<typeof HomeStackName>['navigation']>();
   const handlePressCancel = useCallback(() => {
+    if (cancelDisabled) return;
     navigation.navigate(SpeedUpStackName, { txId: txId, type: SpeedUpAction.Cancel, level: 'higher' });
-  }, [txId]);
+  }, [txId, navigation.navigate, cancelDisabled]);
 
   const handlePressSpeedUp = useCallback(() => {
     navigation.navigate(SpeedUpStackName, { txId: txId, type: SpeedUpAction.SpeedUp, level: 'higher' });
-  }, [txId]);
+  }, [txId, navigation.navigate]);
 
   return (
     <View style={[styles.btnArea, containerStyle]}>
       <Pressable
-        style={({ pressed }) => [styles.btn, { backgroundColor: pressed ? colors.underlay : 'transparent', borderColor: colors.borderPrimary }]}
+        style={({ pressed }) => [
+          styles.btn,
+          {
+            backgroundColor: cancelDisabled ? colors.buttonFourth : pressed ? colors.underlay : 'transparent',
+            borderColor: cancelDisabled ? colors.buttonLineThird : colors.borderPrimary,
+          },
+        ]}
         onPress={handlePressCancel}
       >
-        <Text style={[styles.btnText, { color: colors.textPrimary }]}>{t('common.cancel')}</Text>
+        <Text style={[styles.btnText, { color: cancelDisabled ? colors.textSecondary : colors.textPrimary }]}>{t('common.cancel')}</Text>
       </Pressable>
       <Pressable
         style={({ pressed }) => [styles.btn, { backgroundColor: pressed ? colors.underlay : 'transparent', borderColor: colors.borderPrimary }]}

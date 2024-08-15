@@ -17,6 +17,8 @@ import { Pressable, StyleSheet, View, type LayoutChangeEvent, type ViewProps } f
 import SpeedUpButton from '@modules/SpeedUpButton';
 import Spinner from '@components/Spinner';
 import { useShowSpeedUp } from '@hooks/useShowSpeedUp';
+import { useExtraOfTx } from '@core/WalletCore/Plugins/ReactInject/data/useTxs';
+import { SpeedUpAction } from '@core/WalletCore/Events/broadcastTransactionSubject';
 
 const TextEllipsisWithSuffix: React.FC<{
   defaultSuffixWidth?: number;
@@ -97,6 +99,7 @@ const ActivityItem: React.FC<Props> = ({ onPress, tx }) => {
   const { t } = useTranslation();
 
   const payload = usePayloadOfTx(tx.id);
+  const extra = useExtraOfTx(tx.id);
   const asset = useAssetOfTx(tx.id);
   const status = formatStatus(tx);
 
@@ -109,6 +112,7 @@ const ActivityItem: React.FC<Props> = ({ onPress, tx }) => {
   }, [t, tx.method, tx.source]);
 
   const isPending = status === 'pending';
+  const isCanceling = isPending && extra?.sendAction === SpeedUpAction.Cancel;
   const showSpeedUp = useShowSpeedUp(tx);
 
   return (
@@ -117,28 +121,35 @@ const ActivityItem: React.FC<Props> = ({ onPress, tx }) => {
       onPress={() => onPress?.(tx)}
       testID="activityItem"
     >
-      <View style={styles.title}>
-        <TextEllipsisWithSuffix
-          text={
-            <Text style={[styles.typeText, { color: colors.textPrimary }]} numberOfLines={1}>
-              {method}
-            </Text>
-          }
-          suffix={
-            status === 'pending' ? (
-              <PendingIcon />
-            ) : status === 'failed' ? (
-              <Text style={[styles.statusText, { color: colors.down, borderColor: colors.down }]}>{t('tx.activity.status.failed')}</Text>
-            ) : undefined
-          }
-          defaultSuffixWidth={50}
-        />
-        {to && <Text style={[styles.address, { color: colors.textSecondary }]}>To {shortenAddress(to)}</Text>}
-      </View>
-      {tx.source === TxSource.SELF && <AssetInfo asset={asset} value={value} tokenId={tokenId} txStatus={status} sign="-" method={method} />}
-      {method === 'approve' && <AssetInfo asset={asset} value={value} tokenId={tokenId} txStatus={status} method={method} />}
+      {isCanceling && (
+        <View style={[styles.canceling, { backgroundColor: colors.borderFourth }]}>
+          <Text style={[styles.cancelingText, { color: colors.textPrimary }]}>{t('tx.activity.canceling')}</Text>
+        </View>
+      )}
+      <View style={[styles.content, isCanceling && { paddingTop: 8 }]}>
+        <View style={styles.title}>
+          <TextEllipsisWithSuffix
+            text={
+              <Text style={[styles.typeText, { color: colors.textPrimary }]} numberOfLines={1}>
+                {method}
+              </Text>
+            }
+            suffix={
+              status === 'pending' ? (
+                <PendingIcon />
+              ) : status === 'failed' ? (
+                <Text style={[styles.statusText, { color: colors.down, borderColor: colors.down }]}>{t('tx.activity.status.failed')}</Text>
+              ) : undefined
+            }
+            defaultSuffixWidth={50}
+          />
+          {to && <Text style={[styles.address, { color: colors.textSecondary }]}>To {shortenAddress(to)}</Text>}
+        </View>
+        {tx.source === TxSource.SELF && <AssetInfo asset={asset} value={value} tokenId={tokenId} txStatus={status} sign="-" method={method} />}
+        {method === 'approve' && <AssetInfo asset={asset} value={value} tokenId={tokenId} txStatus={status} method={method} />}
 
-      {showSpeedUp && <SpeedUpButton txId={tx.id} containerStyle={styles.speedUp} />}
+        {showSpeedUp && <SpeedUpButton txId={tx.id} containerStyle={styles.speedUp} cancelDisabled={isCanceling} />}
+      </View>
     </Pressable>
   );
 };
@@ -148,12 +159,14 @@ const styles = StyleSheet.create({
     display: 'flex',
     flexDirection: 'column',
     justifyContent: 'center',
-    padding: 16,
   },
   pendingContainer: {
     borderWidth: 1,
     borderRadius: 6,
     marginBottom: 24,
+  },
+  content: {
+    padding: 16,
   },
   title: {
     display: 'flex',
@@ -203,6 +216,16 @@ const styles = StyleSheet.create({
     display: 'flex',
     flexDirection: 'row',
     alignItems: 'center',
+  },
+  canceling: {
+    padding: 8,
+    borderTopRightRadius: 6,
+    borderTopLeftRadius: 6,
+  },
+  cancelingText: {
+    textAlign: 'center',
+    fontSize: 12,
+    fontWeight: '300',
   },
 });
 
