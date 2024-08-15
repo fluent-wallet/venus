@@ -120,16 +120,20 @@ const SpeedUp: React.FC<StackScreenProps<typeof SpeedUpStackName>> = ({ navigati
   const [tempSelectedOptionLevel, setTempSelectedOptionLevel] = useState<SpeedUpLevel | undefined>(defaultLevel);
   const bottomSheetRef = useRef<BottomSheetMethods>(null!);
 
-  useEffect(() => {
+  const handleTxExpire = useCallback(() => {
     if (txStatus && txStatus !== 'pending') {
       bottomSheetRef.current?.close();
       showMessage({
         type: 'warning',
-        message: `${isSpeedUp ? 'Speed up transaction' : 'Cancel transaction'} expire`,
-        description: 'Current transaction is onChain',
+        message: t('tx.action.expiredTitle'),
+        description: txStatus === 'confirmed' ? t('tx.action.alreadyExecuted') : t('tx.action.alreadyFailed'),
       });
     }
-  }, [txStatus, isSpeedUp]);
+  }, [txStatus, t]);
+
+  useEffect(() => {
+    handleTxExpire();
+  }, [handleTxExpire]);
 
   const newGasSetting =
     tempSelectedOptionLevel === 'customize' ? customizeGasSetting : tempSelectedOptionLevel === 'faster' ? fasterGasSetting : higherGasSetting;
@@ -245,6 +249,7 @@ const SpeedUp: React.FC<StackScreenProps<typeof SpeedUpStackName>> = ({ navigati
         enablePanDownToClose={!inSending}
         enableContentPanningGesture={!inSending}
         enableHandlePanningGesture={!inSending}
+        onOpen={handleTxExpire}
       >
         <BottomSheetWrapper innerPaddingHorizontal>
           <BottomSheetHeader title={isSpeedUp ? t('tx.action.speedUp.title') : t('tx.action.cancel.title')} />

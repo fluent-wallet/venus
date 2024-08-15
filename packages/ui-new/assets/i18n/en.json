@@ -296,6 +296,7 @@
     "content" : {
       "depositToken" : "Deposit tokens to your wallet",
       "noActivity" : "No Activity",
+      "noLatestTransaction" : null,
       "noNFT" : "No NFT",
       "noRecord" : "No Record",
       "noToken" : "No Token",
@@ -310,11 +311,14 @@
   },
   "tx" : {
     "action" : {
+      "alreadyExecuted" : "Current transaction is onChain",
+      "alreadyFailed" : "Current transaction is failed",
       "buttonTitle" : "Action",
       "cancel" : {
         "desc" : "Try to cancel this transaction. If it has already started to execute, the cancellation will fail.",
         "title" : "Cancel transaction"
       },
+      "expiredTitle" : "transaction expired",
       "level" : {
         "faster" : "Fast",
         "higher" : "Higher"
