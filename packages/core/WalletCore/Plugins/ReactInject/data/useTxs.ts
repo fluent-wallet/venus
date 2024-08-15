@@ -1,6 +1,6 @@
 import type { Asset } from '@core/database/models/Asset';
 import type { Tx } from '@core/database/models/Tx';
-import { useAtomValue } from 'jotai';
+import { atom, useAtomValue } from 'jotai';
 import { atomFamily, atomWithObservable } from 'jotai/utils';
 import { combineLatest, map, of, switchMap } from 'rxjs';
 import { observeTxById, observeTxsWithAddress } from '../../../../database/models/Tx/query';
@@ -8,7 +8,7 @@ import type { TxPayload } from '../../../../database/models/TxPayload';
 import { formatTxData } from '../../../../utils/tx';
 import { accountsManageObservable } from './useAccountsManage';
 import { currentAddressObservable } from './useCurrentAddress';
-import { getAtom } from '../nexus';
+import { getAtom, setAtom } from '../nexus';
 import { PENDING_TX_STATUSES, FINISHED_IN_ACTIVITY_TX_STATUSES, EXECUTED_TX_STATUSES, TxStatus, PENDING_COUNT_STATUSES } from '@core/database/models/Tx/type';
 import { getWalletConfig } from './useWalletConfig';
 
@@ -156,11 +156,14 @@ const txsOfPendingCountObservable = currentAddressObservable.pipe(
       : of([]),
   ),
 );
-const txsOfPendingCountAtom = atomWithObservable(() => txsOfPendingCountObservable.pipe(switchMap(uniqSortByNonce)), { initialValue: [] });
+const txsOfPendingCountAtom = atom<Tx[]>([]);
+txsOfPendingCountObservable.pipe(switchMap(uniqSortByNonce)).subscribe((txs) => {
+  setAtom(txsOfPendingCountAtom, txs);
+});
 
-const getPendingTxs = () => getAtom(txsOfPendingCountAtom);
+const getPendingTxs = () => getAtom(txsOfPendingCountAtom) ?? [];
 export const isPendingTxsFull = () => {
   const pendingTxs = getPendingTxs();
   const walletConfig = getWalletConfig();
-  return pendingTxs && pendingTxs.length >= walletConfig.pendingCountLimit;
+  return pendingTxs.length >= walletConfig.pendingCountLimit;
 };
