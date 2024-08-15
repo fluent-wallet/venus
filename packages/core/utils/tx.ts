@@ -22,50 +22,54 @@ export const formatTxData = (tx: Tx | null, payload: TxPayload | null, asset: As
   let from = payload?.from;
   let tokenId = '';
   let isTransfer = false;
-  switch (asset?.type) {
-    case AssetType.ERC20: {
-      if (tx?.method === 'transfer' && payload?.data) {
-        const params = iface777.decodeFunctionData('transfer', payload.data);
-        to = params[0];
-        value = params[1].toString();
-        isTransfer = true;
+  try {
+    switch (asset?.type) {
+      case AssetType.ERC20: {
+        if (tx?.method === 'transfer' && payload?.data) {
+          const params = iface777.decodeFunctionData('transfer', payload.data);
+          to = params[0];
+          value = params[1].toString();
+          isTransfer = true;
+        }
+        break;
       }
-      break;
-    }
-    case AssetType.ERC721: {
-      if (tx?.method === 'transferFrom' && payload?.data) {
-        const params = iface721.decodeFunctionData('transferFrom', payload.data);
-        from = params[0];
-        to = params[1];
-        tokenId = params[2].toString();
-        value = '1';
-        isTransfer = true;
+      case AssetType.ERC721: {
+        if (tx?.method === 'transferFrom' && payload?.data) {
+          const params = iface721.decodeFunctionData('transferFrom', payload.data);
+          from = params[0];
+          to = params[1];
+          tokenId = params[2].toString();
+          value = '1';
+          isTransfer = true;
+        }
+        break;
       }
-      break;
-    }
-    case AssetType.ERC1155: {
-      if (tx?.method === 'safeTransferFrom' && payload?.data) {
-        const params = iface1155.decodeFunctionData('safeTransferFrom', payload.data);
-        from = params[0];
-        to = params[1];
-        tokenId = params[2].toString();
-        value = params[3].toString();
-        isTransfer = true;
+      case AssetType.ERC1155: {
+        if (tx?.method === 'safeTransferFrom' && payload?.data) {
+          const params = iface1155.decodeFunctionData('safeTransferFrom', payload.data);
+          from = params[0];
+          to = params[1];
+          tokenId = params[2].toString();
+          value = params[3].toString();
+          isTransfer = true;
+        }
+        break;
       }
-      break;
-    }
-    case AssetType.Native: {
-      if (tx?.method === 'transfer') {
-        isTransfer = true;
+      case AssetType.Native: {
+        if (tx?.method === 'transfer') {
+          isTransfer = true;
+        }
+        break;
       }
-      break;
     }
-  }
-  if (!isTransfer && asset && payload && tx?.method === 'approve') {
-    const { value: approveValue } = parseTxData({ data: payload.data, to: payload.to }) as FunctionNameApprove;
-    if (approveValue) {
-      value = approveValue.toString();
+    if (!isTransfer && asset && payload && tx?.method === 'approve') {
+      const { value: approveValue } = parseTxData({ data: payload.data, to: payload.to }) as FunctionNameApprove;
+      if (approveValue) {
+        value = approveValue.toString();
+      }
     }
+  } catch (error) {
+    console.log('parse tx data error', error);
   }
   return {
     to,

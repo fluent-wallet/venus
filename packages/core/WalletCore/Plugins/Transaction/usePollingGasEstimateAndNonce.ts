@@ -11,12 +11,12 @@ export { type Level } from '@core/WalletCore/Plugins/Transaction/SuggestedGasEst
 /**
  * get gas estimate from RPC , use the current network config
  */
-const usePollingGasEstimateAndNonce = (tx: Partial<ITxEvm>) => {
+const usePollingGasEstimateAndNonce = (tx: Partial<ITxEvm> | null, withNonce = true) => {
   const [gasInfo, setGasInfo] = useState<(Awaited<ReturnType<typeof plugins.Transaction.estimate>> & { nonce: number }) | null>(null);
   const currentNetwork = useCurrentNetwork();
 
   useEffect(() => {
-    if (!currentNetwork) return;
+    if (!currentNetwork || !tx) return;
     const pollingGasSub = interval(15000)
       .pipe(
         startWith(0),
@@ -33,10 +33,12 @@ const usePollingGasEstimateAndNonce = (tx: Partial<ITxEvm>) => {
               },
               network: net,
             }),
-            plugins.Transaction.getTransactionCount({
-              network: net,
-              addressValue: tx.from!,
-            }),
+            !withNonce
+              ? '0'
+              : plugins.Transaction.getTransactionCount({
+                  network: net,
+                  addressValue: tx.from!,
+                }),
           ]);
         }),
       )
@@ -90,8 +92,7 @@ const usePollingGasEstimateAndNonce = (tx: Partial<ITxEvm>) => {
     return () => {
       pollingGasSub.unsubscribe();
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentNetwork?.id, currentNetwork?.endpoint, tx.from, tx.data, tx.to, tx.value]);
+  }, [currentNetwork?.id, currentNetwork?.endpoint, tx]);
 
   return gasInfo;
 };

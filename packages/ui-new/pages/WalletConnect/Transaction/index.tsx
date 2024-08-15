@@ -254,7 +254,6 @@ function WalletConnectTransaction() {
             extraParams: {
               assetType: isContract ? parseData?.assetType : AssetType.Native,
               contractAddress: isContract ? to : undefined,
-              to: to,
               sendAt: new Date(),
               epochHeight: currentNetwork.networkType === NetworkType.Conflux ? epochHeightRef.current : null,
               err: txError && String(txError.data || txError?.message || txError),

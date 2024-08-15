@@ -16,7 +16,6 @@ export interface SendTransactionParams {
   signature?: Signature;
   app?: App;
   extraParams: Pick<WalletTransactionType, 'contractAddress'> & {
-    to?: string;
     sendAt: Date;
     epochHeight?: string | null;
     errorType?: ProcessErrorType;
