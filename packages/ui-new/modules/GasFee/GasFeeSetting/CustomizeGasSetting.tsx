@@ -97,7 +97,7 @@ const CustomizeGasSetting: React.FC<Props> = ({ customizeGasSetting, estimateCur
   const maxFeePerGasInputVal = watch('maxFeePerGas');
   const isPriceLowerThanCurrent = useMemo(
     () => Number.parseFloat(customizeGasSetting.suggestedMaxFeePerGas ? maxFeePerGasInputVal : gasPriceInputVal) < Number.parseFloat(currentPriceGwei),
-    [maxFeePerGasInputVal, gasPriceInputVal, currentPriceGwei],
+    [maxFeePerGasInputVal, gasPriceInputVal, currentPriceGwei, customizeGasSetting.suggestedMaxFeePerGas],
   );
 
   const handleConfirm = useCallback(
@@ -118,7 +118,7 @@ const CustomizeGasSetting: React.FC<Props> = ({ customizeGasSetting, estimateCur
       onConfirm(res);
       bottomSheetRef.current?.close();
     },
-    [customizeGasSetting],
+    [customizeGasSetting, onConfirm],
   );
 
   const LessThanMinTip = useMemo(
@@ -134,7 +134,17 @@ const CustomizeGasSetting: React.FC<Props> = ({ customizeGasSetting, estimateCur
         </Text>
       </View>
     ),
-    [colors, currentNetwork?.name, minGasPrice, customizeGasSetting, force155],
+    [colors, currentNetwork?.name, minGasPrice, customizeGasSetting, force155, t],
+  );
+
+  const GreatThanMaxFeeTip = useMemo(
+    () => (
+      <View style={styles.tooLowTipWrapper}>
+        <Failed color={colors.down} />
+        <Text style={[styles.tooLowTip, { color: colors.down }]}>{t('tx.gasFee.customizeGasSetting.greatThenMaxFeeError')}</Text>
+      </View>
+    ),
+    [colors, t],
   );
 
   const LowerTip = useMemo(
@@ -144,7 +154,7 @@ const CustomizeGasSetting: React.FC<Props> = ({ customizeGasSetting, estimateCur
         <Text style={[styles.tooLowTip, { color: colors.textPrimary }]}>{t('tx.gasFee.customizeGasSetting.lowWarning')}</Text>
       </View>
     ),
-    [],
+    [colors, t],
   );
 
   return (
@@ -204,12 +214,17 @@ const CustomizeGasSetting: React.FC<Props> = ({ customizeGasSetting, estimateCur
                   <Text style={[styles.inputTitle, { color: colors.textSecondary }]}>Priority fee</Text>
                   <Controller
                     control={control}
-                    rules={controlRule}
+                    rules={{
+                      ...controlRule,
+                      validate: (newMaxPriorityFeePerGas, value) =>
+                        new Decimal(newMaxPriorityFeePerGas ?? '0').lessThanOrEqualTo(value.maxFeePerGas ?? '0') || 'great-than-max-fee',
+                    }}
                     render={({ field: { onChange, onBlur, value } }) => (
                       <TextInput error={!!errors?.maxPriorityFeePerGas} colors={colors} onBlur={onBlur} onChangeText={onChange} value={value} />
                     )}
                     name="maxPriorityFeePerGas"
                   />
+                  {errors?.maxPriorityFeePerGas?.type === 'validate' && GreatThanMaxFeeTip}
                 </>
               )}
             </>
@@ -230,7 +245,7 @@ const CustomizeGasSetting: React.FC<Props> = ({ customizeGasSetting, estimateCur
   );
 };
 
-const snapPoints1559 = [420];
+const snapPoints1559 = [500];
 const snapPoints155 = [368];
 
 export const styles = StyleSheet.create({

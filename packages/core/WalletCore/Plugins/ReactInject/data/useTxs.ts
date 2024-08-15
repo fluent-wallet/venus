@@ -118,6 +118,11 @@ const payloadsAtomFamilyOfTx = atomFamily((txId: string) =>
 );
 export const usePayloadOfTx = (txId: string) => useAtomValue(payloadsAtomFamilyOfTx(txId));
 
+const txExtraAtomFamilyOfTx = atomFamily((txId: string) =>
+  atomWithObservable(() => observeTxById(txId).pipe(switchMap((txs) => txs[0].txExtra.observe())), { initialValue: null }),
+);
+export const useExtraOfTx = (txId: string) => useAtomValue(txExtraAtomFamilyOfTx(txId));
+
 const assetAtomFamilyOfTx = atomFamily((txId: string) =>
   atomWithObservable(() => observeTxById(txId).pipe(switchMap((txs) => txs[0].observeAsset())), { initialValue: null }),
 );
