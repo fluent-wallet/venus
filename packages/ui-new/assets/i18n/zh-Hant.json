@@ -403,6 +403,7 @@
       },
       "customizeGasSetting" : {
         "current" : "目前\n",
+        "greatThenMaxFeeError" : null,
         "lowWarning" : "您的出價低於目前的基本費用，可能需要等待很長的時間",
         "minimumGasPrice" : "{{network}} 需要的最低 {{gasPriceType}} 值為 {{gasPrice}} Gwei",
         "title" : "自訂燃氣費\n"

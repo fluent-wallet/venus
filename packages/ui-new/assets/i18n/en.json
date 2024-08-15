@@ -403,6 +403,7 @@
       },
       "customizeGasSetting" : {
         "current" : "Current",
+        "greatThenMaxFeeError" : "priority fee needs to be less than or equal to max fee",
         "lowWarning" : "Your offer is lower than the current base fee and may take a long time to wait.",
         "minimumGasPrice" : "{{network}} requires a minimum {{gasPriceType}} of {{gasPrice}} Gwei.",
         "title" : "Customize Gas"
