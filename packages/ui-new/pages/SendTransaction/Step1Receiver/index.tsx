@@ -1,5 +1,5 @@
 import type React from 'react';
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useMemo } from 'react';
 import { Pressable, StyleSheet, Keyboard, View } from 'react-native';
 import { useTheme } from '@react-navigation/native';
 import Clipboard from '@react-native-clipboard/clipboard';
@@ -20,7 +20,7 @@ import TextInput from '@components/TextInput';
 import Button from '@components/Button';
 import Checkbox from '@components/Checkbox';
 import HourglassLoading from '@components/Loading/Hourglass';
-import { BottomSheetContent, BottomSheetFooter } from '@components/BottomSheet';
+import { BottomSheetHeader, BottomSheetContent, BottomSheetFooter } from '@components/BottomSheet';
 import { AccountItemView } from '@modules/AccountsList';
 import ExternalInputHandler from '@pages/ExternalInputHandler';
 import { SendTransactionStep2StackName, type SendTransactionScreenProps, type SendTransactionStep1StackName } from '@router/configs';
@@ -47,7 +47,12 @@ const SendTransactionStep1Receiver: React.FC<SendTransactionScreenProps<typeof S
   const [knowRisk, setKnowRist] = useState(false);
   const [filterAccounts, setFilterAccounts] = useState<{
     type: 'local-filter' | 'local-valid' | AddressType | 'invalid' | 'network-error';
-    assets: Array<{ nickname?: string; addressValue: string; source?: 'from' | 'to'; type?: RecentlyType }>;
+    assets: Array<{
+      nickname?: string;
+      addressValue: string;
+      source?: 'from' | 'to';
+      type?: RecentlyType;
+    }>;
   }>(() => ({ type: 'local-filter', assets: [] }));
 
   const searchFilterReceiver = useCallback(
@@ -71,7 +76,10 @@ const SendTransactionStep1Receiver: React.FC<SendTransactionScreenProps<typeof S
         }));
 
         const currentNetwork = _currentNetwork ?? getCurrentNetwork()!;
-        const isValidAddress = method.checkIsValidAddress({ networkType: currentNetwork.networkType, addressValue: receiver });
+        const isValidAddress = method.checkIsValidAddress({
+          networkType: currentNetwork.networkType,
+          addressValue: receiver,
+        });
         if (localAccounts?.length > 0) {
           if (isValidAddress) {
             const isInMyAccounts = allAccounts.some((account) => account.addressValue === receiver);
@@ -93,7 +101,10 @@ const SendTransactionStep1Receiver: React.FC<SendTransactionScreenProps<typeof S
               addressValue: receiver,
               endpoint: currentNetwork.endpoint,
             });
-            setFilterAccounts({ type: isContractAddress ? AddressType.Contract : AddressType.EOA, assets: [] });
+            setFilterAccounts({
+              type: isContractAddress ? AddressType.Contract : AddressType.EOA,
+              assets: [],
+            });
           }
         }
       } catch (err) {
@@ -127,8 +138,8 @@ const SendTransactionStep1Receiver: React.FC<SendTransactionScreenProps<typeof S
 
   return (
     <>
-      <SendTransactionBottomSheet title={t('tx.send.title')}>
-        <BottomSheetContent>
+      <SendTransactionBottomSheet>
+        <BottomSheetHeader title={t('tx.send.title')}>
           <Text style={[styles.receiver, { color: colors.textSecondary }]}>{t('tx.send.receiver')}</Text>
           <TextInput
             containerStyle={[
@@ -149,103 +160,119 @@ const SendTransactionStep1Receiver: React.FC<SendTransactionScreenProps<typeof S
             showClear={!!receiver}
             placeholder={t('tx.send.placeholder')}
             multiline
-            numberOfLines={3}
           />
-          {!receiver && (
-            <View style={[styles.inputActionArea, { borderColor: colors.borderFourth }]}>
-              <Pressable style={[styles.inputAction, { justifyContent: 'flex-end', paddingRight: 44 }]} onPress={handlePressPaste} testID="paste">
-                <CopyIcon style={styles.inputActionIcon} color={colors.textPrimary} width={16} height={16} />
-                <Text style={[styles.inputActionText, { color: colors.textPrimary }]}>{t('tx.send.paste')}</Text>
-              </Pressable>
-              <Pressable style={[styles.inputAction, { justifyContent: 'flex-start', paddingLeft: 44 }]} onPress={handlePressScan} testID="scan">
-                <QrCodeIcon style={styles.inputActionIcon} color={colors.textPrimary} width={16} height={16} />
-                <Text style={[styles.inputActionText, { color: colors.textPrimary }]}>{t('tx.send.scan')}</Text>
-              </Pressable>
-            </View>
-          )}
-
-          {receiver && filterAccounts.type === 'local-valid' && (
-            <View style={[styles.checkResWarp, { marginTop: 8 }]}>
-              <ContractIcon color={colors.iconPrimary} />
-              <Text style={[styles.validMyAccount, { color: colors.textPrimary }]}>Account: {filterAccounts.assets?.[0]?.nickname}</Text>
-            </View>
-          )}
-          {receiver && filterAccounts.type === 'local-filter' && (
-            <>
-              <BottomSheetFlatList
-                style={listStyles.container}
-                data={filterAccounts.assets}
-                keyExtractor={(item) => item.addressValue}
-                renderItem={({ item }) => (
-                  <AccountItemView
-                    colors={colors}
-                    nickname={item.nickname}
-                    addressValue={item.addressValue}
-                    onPress={() => {
-                      if (Keyboard.isVisible()) {
-                        Keyboard.dismiss();
-                      }
-                      setReceiver(item.addressValue);
-                    }}
-                  />
-                )}
-              />
-            </>
-          )}
-          {!receiver && <Contract setReceiver={setReceiver} />}
-          {receiver && !filterAccounts.type.startsWith('local') && (
-            <>
-              {filterAccounts.type === 'network-error' && !inFetchingRemote && (
-                <Pressable
-                  style={({ pressed }) => [styles.checkFail, { backgroundColor: pressed ? colors.underlay : 'transparent' }]}
-                  onPress={() => searchFilterReceiver(receiver)}
-                  testID="tryAgain"
-                >
-                  <Text style={[styles.checkFailText, { color: colors.down }]}>
-                    <Trans i18nKey={'tx.send.error.failCheck'}>
-                      Fail to check address, <Text style={{ textDecorationLine: 'underline' }}>click to try again</Text>.
-                    </Trans>
-                  </Text>
-                </Pressable>
-              )}
-              {inFetchingRemote && <HourglassLoading style={styles.checkLoading} />}
-              {filterAccounts.type === AddressType.EOA && !inFetchingRemote && (
-                <View style={[styles.checkResWarp, { marginTop: 8 }]}>
-                  <SuccessIcon style={styles.checkIcon} color={colors.up} width={24} height={24} />
-                  <Text style={[styles.checkResText, { color: colors.up }]}>{t('tx.send.address.valid')}</Text>
-                </View>
-              )}
-              {filterAccounts.type === 'invalid' && !inFetchingRemote && (
-                <View style={[styles.checkResWarp, { marginTop: 8 }]}>
-                  <ProhibitIcon style={styles.checkIcon} width={24} height={24} />
-                  <Text style={[styles.checkResText, { color: colors.down }]}>{t('tx.send.address.invalid')}</Text>
-                </View>
-              )}
-
-              {filterAccounts.type === AddressType.Contract && !inFetchingRemote && (
-                <View style={styles.contractAddress}>
-                  <Text style={[styles.contractAddressValid, { color: colors.textPrimary }]}>{t('tx.send.address.valid')}</Text>
-                  <Text style={[styles.contractAddressTip, { color: colors.textPrimary }]}>{t('tx.send.address.contractRisk')}</Text>
+          <View style={[styles.inputActionArea, { borderColor: colors.borderFourth }]}>
+            <Pressable style={[styles.inputAction, { justifyContent: 'flex-end', paddingRight: 44 }]} onPress={handlePressPaste} testID="paste">
+              <CopyIcon style={styles.inputActionIcon} color={colors.textPrimary} width={16} height={16} />
+              <Text style={[styles.inputActionText, { color: colors.textPrimary }]}>{t('tx.send.paste')}</Text>
+            </Pressable>
+            <Pressable style={[styles.inputAction, { justifyContent: 'flex-start', paddingLeft: 44 }]} onPress={handlePressScan} testID="scan">
+              <QrCodeIcon style={styles.inputActionIcon} color={colors.textPrimary} width={16} height={16} />
+              <Text style={[styles.inputActionText, { color: colors.textPrimary }]}>{t('tx.send.scan')}</Text>
+            </Pressable>
+          </View>
+        </BottomSheetHeader>
+        {!receiver && (
+          <BottomSheetContent>
+            <Contract setReceiver={setReceiver} />
+          </BottomSheetContent>
+        )}
+        {receiver && (
+          <BottomSheetContent>
+            {filterAccounts.type === 'local-valid' && (
+              <View style={[styles.checkResWarp, { marginTop: 8 }]}>
+                <ContractIcon color={colors.iconPrimary} />
+                <Text style={[styles.validMyAccount, { color: colors.textPrimary }]}>Account: {filterAccounts.assets?.[0]?.nickname}</Text>
+              </View>
+            )}
+            {filterAccounts.type === 'local-filter' && (
+              <>
+                <BottomSheetFlatList
+                  style={listStyles.container}
+                  data={filterAccounts.assets}
+                  keyExtractor={(item) => item.addressValue}
+                  renderItem={({ item }) => (
+                    <AccountItemView
+                      colors={colors}
+                      nickname={item.nickname}
+                      addressValue={item.addressValue}
+                      onPress={() => {
+                        if (Keyboard.isVisible()) {
+                          Keyboard.dismiss();
+                        }
+                        setReceiver(item.addressValue);
+                      }}
+                    />
+                  )}
+                />
+              </>
+            )}
+            {!filterAccounts.type.startsWith('local') && (
+              <>
+                {filterAccounts.type === 'network-error' && !inFetchingRemote && (
                   <Pressable
-                    style={({ pressed }) => [styles.knowRiskWrapper, { backgroundColor: pressed ? colors.underlay : 'transparent' }]}
-                    onPress={() => setKnowRist((pre) => !pre)}
-                    testID="knowRisk"
+                    style={({ pressed }) => [
+                      styles.checkFail,
+                      {
+                        backgroundColor: pressed ? colors.underlay : 'transparent',
+                      },
+                    ]}
+                    onPress={() => searchFilterReceiver(receiver)}
+                    testID="tryAgain"
                   >
-                    <Checkbox checked={knowRisk} pointerEvents="none" />
-                    <Text style={[styles.contractAddressTip, { color: colors.textPrimary }]}>{t('tx.send.address.contractRiskKnow')}</Text>
+                    <Text style={[styles.checkFailText, { color: colors.down }]}>
+                      <Trans i18nKey={'tx.send.error.failCheck'}>
+                        Fail to check address, <Text style={{ textDecorationLine: 'underline' }}>click to try again</Text>.
+                      </Trans>
+                    </Text>
                   </Pressable>
-                </View>
-              )}
-            </>
-          )}
-        </BottomSheetContent>
+                )}
+                {inFetchingRemote && <HourglassLoading style={styles.checkLoading} />}
+                {filterAccounts.type === AddressType.EOA && !inFetchingRemote && (
+                  <View style={[styles.checkResWarp, { marginTop: 8 }]}>
+                    <SuccessIcon style={styles.checkIcon} color={colors.up} width={24} height={24} />
+                    <Text style={[styles.checkResText, { color: colors.up }]}>{t('tx.send.address.valid')}</Text>
+                  </View>
+                )}
+                {filterAccounts.type === 'invalid' && !inFetchingRemote && (
+                  <View style={[styles.checkResWarp, { marginTop: 8 }]}>
+                    <ProhibitIcon style={styles.checkIcon} width={24} height={24} />
+                    <Text style={[styles.checkResText, { color: colors.down }]}>{t('tx.send.address.invalid')}</Text>
+                  </View>
+                )}
 
-        {receiver && (filterAccounts.type === 'local-valid' || filterAccounts.type === AddressType.Contract || filterAccounts.type === AddressType.EOA) && (
+                {filterAccounts.type === AddressType.Contract && !inFetchingRemote && (
+                  <View style={styles.contractAddress}>
+                    <Text style={[styles.contractAddressValid, { color: colors.textPrimary }]}>{t('tx.send.address.valid')}</Text>
+                    <Text style={[styles.contractAddressTip, { color: colors.textPrimary }]}>{t('tx.send.address.contractRisk')}</Text>
+                    <Pressable
+                      style={({ pressed }) => [
+                        styles.knowRiskWrapper,
+                        {
+                          backgroundColor: pressed ? colors.underlay : 'transparent',
+                        },
+                      ]}
+                      onPress={() => setKnowRist((pre) => !pre)}
+                      testID="knowRisk"
+                    >
+                      <Checkbox checked={knowRisk} pointerEvents="none" />
+                      <Text style={[styles.contractAddressTip, { color: colors.textPrimary }]}>{t('tx.send.address.contractRiskKnow')}</Text>
+                    </Pressable>
+                  </View>
+                )}
+              </>
+            )}
+          </BottomSheetContent>
+        )}
+
+        {(filterAccounts.type === 'local-valid' || filterAccounts.type === AddressType.Contract || filterAccounts.type === AddressType.EOA) && (
           <BottomSheetFooter innerPaddingHorizontal>
             <Button
               testID="next"
               onPress={() => {
-                navigation.navigate(SendTransactionStep2StackName, { recipientAddress: receiver });
+                navigation.navigate(SendTransactionStep2StackName, {
+                  recipientAddress: receiver,
+                });
                 if (Keyboard.isVisible()) {
                   Keyboard.dismiss();
                 }
