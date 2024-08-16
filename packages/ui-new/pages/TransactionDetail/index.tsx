@@ -23,8 +23,9 @@ import { useMemo } from 'react';
 import Decimal from 'decimal.js';
 import SpeedUpButton from '@modules/SpeedUpButton';
 import { ACTIVITY_DEV_INFO_FEATURE } from '@utils/features';
-import { useNetworkOfTx } from '@core/WalletCore/Plugins/ReactInject/data/useTxs';
+import { useExtraOfTx, useNetworkOfTx } from '@core/WalletCore/Plugins/ReactInject/data/useTxs';
 import { useShowSpeedUp } from '@hooks/useShowSpeedUp';
+import { SpeedUpAction } from '@core/WalletCore/Events/broadcastTransactionSubject';
 
 const getGasCostFromError = (err: string | null | undefined) => {
   if (!err) {
@@ -78,12 +79,14 @@ const TransactionDetail: React.FC<StackScreenProps<typeof TransactionDetailStack
   const { colors } = useTheme();
   const tx = useTxFromId(txId);
   const payload = usePayloadOfTx(txId);
+  const extra = useExtraOfTx(txId);
   const asset = useAssetOfTx(txId);
   const status = tx && formatStatus(tx);
   const network = useNetworkOfTx(txId);
   const gasCostAndPriceInUSDT = useGasFeeOfTx(tx);
   const { to } = useMemo(() => formatTxData(tx, payload, asset), [tx, payload, asset]);
   const isPending = status === 'pending';
+  const isCanceling = isPending && extra?.sendAction === SpeedUpAction.Cancel;
   const showSpeedUp = useShowSpeedUp(tx);
   if (!tx) return null;
   const handleCopy = (text: string) => {
@@ -103,7 +106,7 @@ const TransactionDetail: React.FC<StackScreenProps<typeof TransactionDetailStack
         {showSpeedUp && (
           <>
             <Text style={[styles.action, { color: colors.textSecondary }]}>{t('tx.action.buttonTitle')}</Text>
-            <SpeedUpButton txId={txId} containerStyle={styles.speedUp} />
+            <SpeedUpButton txId={txId} containerStyle={styles.speedUp} cancelDisabled={isCanceling} />
           </>
         )}
       </View>
