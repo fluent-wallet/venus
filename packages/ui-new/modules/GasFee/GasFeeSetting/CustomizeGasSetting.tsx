@@ -36,15 +36,31 @@ export const TextInput: React.FC<
     showGweiSuffix?: boolean;
     error?: boolean;
   }
-> = ({ colors, keyboardType = 'numeric', defaultHasValue = true, showVisible = false, isInBottomSheet = true, showGweiSuffix = true, error, ...props }) => (
+> = ({
+  colors,
+  keyboardType = 'numeric',
+  defaultHasValue = true,
+  showVisible = false,
+  isInBottomSheet = true,
+  showGweiSuffix = true,
+  error,
+  disabled,
+  ...props
+}) => (
   <_TextInput
     {...props}
-    containerStyle={[styles.textinput, { borderColor: colors[error ? 'down' : 'borderFourth'] }]}
+    containerStyle={[
+      styles.textinput,
+      { borderColor: colors[error ? 'down' : 'borderFourth'] },
+      disabled && { backgroundColor: colors.bgPrimary, borderColor: colors.borderFourth },
+    ]}
+    style={disabled && { color: colors.textSecondary }}
     keyboardType={keyboardType}
     defaultHasValue={defaultHasValue}
     showVisible={showVisible}
     isInBottomSheet={isInBottomSheet}
     SuffixIcon={showGweiSuffix ? <GweiSuffix /> : undefined}
+    disabled={disabled}
   />
 );
 

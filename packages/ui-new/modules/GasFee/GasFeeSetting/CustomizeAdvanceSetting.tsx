@@ -99,7 +99,6 @@ const CustomizeAdvanceSetting: React.FC<Props> = ({ customizeAdvanceSetting, est
                 onChangeText={onChange}
                 value={value}
                 showGweiSuffix={false}
-                readOnly={nonceDisabled}
                 disabled={nonceDisabled}
               />
             )}

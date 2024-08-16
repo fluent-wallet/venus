@@ -426,6 +426,6 @@ const styles = StyleSheet.create({
   },
 });
 
-const snapPoints = [600];
+const snapPoints = [650];
 
 export default SpeedUp;
