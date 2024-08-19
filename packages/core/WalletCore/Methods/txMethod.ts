@@ -132,7 +132,7 @@ export class TxMethod {
         gasPrice: String(tx.gasPrice || ''),
         maxFeePerGas: String(tx.maxFeePerGas || ''),
         maxPriorityFeePerGas: String(tx.maxPriorityFeePerGas || ''),
-        gas: String(tx.gasLimit),
+        gas: String(tx.gasLimit ?? (tx as any).gas),
         value: String(tx.value),
         nonce: Number(tx.nonce),
         chainId,
