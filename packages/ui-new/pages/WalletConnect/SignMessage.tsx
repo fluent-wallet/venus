@@ -26,7 +26,7 @@ import Clipboard from '@react-native-clipboard/clipboard';
 import { type RouteProp, useRoute, useTheme } from '@react-navigation/native';
 import type { WalletConnectParamList, WalletConnectSignMessageStackName } from '@router/configs';
 import { sanitizeTypedData } from '@utils/santitizeTypedData';
-import { toUtf8String } from 'ethers';
+import { isHexString, toUtf8String } from 'ethers';
 import { useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Pressable, StyleSheet, View } from 'react-native';
@@ -49,28 +49,31 @@ function WalletConnectSignMessage() {
       method,
     },
   } = useRoute<RouteProp<WalletConnectParamList, typeof WalletConnectSignMessageStackName>>();
-
   const signMsg = useMemo(() => {
-    let m = message;
+    let decodeMsg = message;
     if (method === WalletConnectRPCMethod.PersonalSign) {
-      try {
-        m = toUtf8String(message);
-      } catch {
-        return '';
+      const isHex = isHexString(decodeMsg);
+      if (isHex) {
+        try {
+          decodeMsg = toUtf8String(message);
+        } catch (e) {
+          console.log('error:', e);
+        }
       }
+      return decodeMsg;
     }
 
     if (method.startsWith(WalletConnectRPCMethod.SignTypedData)) {
       try {
-        const parsedMessage = JSON.parse(m);
+        const parsedMessage = JSON.parse(decodeMsg);
         const sanitizedMessage = sanitizeTypedData(parsedMessage);
-        m = JSON.stringify(sanitizedMessage, null, 4);
+        decodeMsg = JSON.stringify(sanitizedMessage, null, 4);
       } catch (error) {
         return '';
       }
     }
 
-    return m;
+    return decodeMsg;
   }, [message, method]);
 
   const handleCoy = useCallback(
