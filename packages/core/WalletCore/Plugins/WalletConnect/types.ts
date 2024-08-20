@@ -69,7 +69,7 @@ export interface IWCSendTransactionEventData {
     value?: bigint;
     data?: string;
     nonce?: number;
-    gasLimit?: string;
+    gas?: string;
     gasPrice?: string;
     maxFeePerGas?: string;
     maxPriorityFeePerGas?: string;
