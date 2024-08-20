@@ -278,7 +278,6 @@ export default class WalletConnect implements Plugin {
     const isCip = isCIPData(_chainId);
     const chainId = isCip ? convertEipDataToCip(_chainId) : _chainId;
     const method = isCip ? convertEipMethodToCip(_method) : _method;
-
     const isSupportSignMethods = SUPPORT_SIGN_METHODS.includes(method as WalletConnectRPCMethod);
     const isSupportTransactionMethods = SUPPORTED_TRANSACTION_METHODS.includes(method as WalletConnectRPCMethod);
     if (!isSupportSignMethods && !isSupportTransactionMethods) {
