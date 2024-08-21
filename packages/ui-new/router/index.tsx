@@ -32,7 +32,7 @@ import { useNavigation, useTheme } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import type React from 'react';
 import { useEffect } from 'react';
-import { View } from 'react-native';
+import { View, StatusBar } from 'react-native';
 import Header from './Header';
 import {
   AboutUsStackName,
@@ -77,14 +77,13 @@ const screenOptions = {
   header: Header,
   headerBackVisible: false,
   statusBarTranslucent: true,
-  statusBarBackgroundColor: 'transparent',
   // animation: 'fade',
 } as const;
 
 const Router: React.FC = () => {
   const { t } = useTranslation();
   const hasVault = useHasVault();
-  const { colors } = useTheme();
+  const { colors, mode } = useTheme();
 
   const navigation = useNavigation<StackNavigation>();
   // to listen the wallet connect plugin custom subject event
@@ -104,6 +103,7 @@ const Router: React.FC = () => {
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.bgPrimary }}>
+      <StatusBar translucent backgroundColor="transparent" barStyle={mode === 'light' ? 'dark-content' : 'light-content'} />
       <RootStack.Navigator initialRouteName={hasVault ? HomeStackName : WelcomeStackName} screenOptions={screenOptions}>
         <RootStack.Screen name={WelcomeStackName} component={Welcome} options={{ headerShown: false, animation: 'none' }} />
         <RootStack.Screen name={WayToInitWalletStackName} component={WayToInitWallet} options={{ headerShown: false, animation: 'none' }} />
@@ -111,7 +111,7 @@ const Router: React.FC = () => {
         <RootStack.Screen name={BiometricsWayStackName} component={BiometricsWay} options={{ animation: 'fade' }} />
         <RootStack.Screen name={PasswordWayStackName} component={PasswordWay} />
         <RootStack.Screen name={AccountManagementStackName} component={AccountManagement} />
-        <RootStack.Screen name={NetworkManagementStackName} component={NetworkManagement} options={{ animation: 'fade' }} />
+        <RootStack.Screen name={NetworkManagementStackName} component={NetworkManagement} />
         <RootStack.Screen name={NetworkAddNewEndpointStackName} component={NetworkAddNewEndpoint} options={SheetBottomOption} />
         <RootStack.Screen name={AccountSettingStackName} component={AccountSetting} options={SheetBottomOption} />
         <RootStack.Screen name={GroupSettingStackName} component={GroupSetting} options={SheetBottomOption} />

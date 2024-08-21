@@ -264,7 +264,7 @@ const SpeedUp: React.FC<StackScreenProps<typeof SpeedUpStackName>> = ({ navigati
                     level="higher"
                     nativeAsset={nativeAsset}
                     gasSetting={higherGasSetting}
-                    gasLimit={txPayload.gas ?? '0x0'}
+                    gasLimit={customizeAdvanceSetting?.gasLimit ?? estimateRes!.gasLimit}
                     selected={tempSelectedOptionLevel === 'higher'}
                     onPress={() => setTempSelectedOptionLevel('higher')}
                   />
@@ -274,7 +274,7 @@ const SpeedUp: React.FC<StackScreenProps<typeof SpeedUpStackName>> = ({ navigati
                     level="faster"
                     nativeAsset={nativeAsset}
                     gasSetting={fasterGasSetting}
-                    gasLimit={txPayload.gas ?? '0x0'}
+                    gasLimit={customizeAdvanceSetting?.gasLimit ?? estimateRes!.gasLimit}
                     selected={tempSelectedOptionLevel === 'faster'}
                     onPress={() => setTempSelectedOptionLevel('faster')}
                   />
@@ -284,7 +284,7 @@ const SpeedUp: React.FC<StackScreenProps<typeof SpeedUpStackName>> = ({ navigati
                     level="customize"
                     nativeAsset={nativeAsset}
                     gasSetting={customizeGasSetting}
-                    gasLimit={txPayload.gas ?? '0x0'}
+                    gasLimit={customizeAdvanceSetting?.gasLimit ?? estimateRes!.gasLimit}
                     selected={tempSelectedOptionLevel === 'customize'}
                     onPress={() => setShowCustomizeSetting(true)}
                   />
@@ -426,6 +426,6 @@ const styles = StyleSheet.create({
   },
 });
 
-const snapPoints = [600];
+const snapPoints = [650];
 
 export default SpeedUp;

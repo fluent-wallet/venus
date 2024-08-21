@@ -29,8 +29,7 @@ const Contract: React.FC<{ setReceiver: (receiver: string) => void }> = ({ setRe
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    marginTop: 32,
-    marginBottom: 16,
+    marginVertical: 16,
   },
 });
 

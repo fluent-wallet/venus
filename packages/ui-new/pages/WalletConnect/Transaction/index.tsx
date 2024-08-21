@@ -83,7 +83,7 @@ function WalletConnectTransaction() {
   const navigation = useNavigation();
   const {
     params: {
-      tx: { from, to, value, data, nonce, gasLimit, gasPrice, storageLimit, type, maxFeePerGas, maxPriorityFeePerGas },
+      tx: { from, to, value, data, nonce, gas, gasPrice, storageLimit, type, maxFeePerGas, maxPriorityFeePerGas },
       isContract,
       metadata,
     },
@@ -126,14 +126,14 @@ function WalletConnectTransaction() {
 
   const dappCustomizeAdvanceSetting = useMemo(
     () =>
-      !isNil(gasLimit) || !isNil(nonce) || !isNil(storageLimit)
+      !isNil(gas) || !isNil(nonce) || !isNil(storageLimit)
         ? {
-            ...(gasLimit ? { gasLimit } : null),
+            ...(gas ? { gas } : null),
             ...(storageLimit ? { storageLimit } : null),
             ...(nonce ? { nonce: Number(nonce) } : null),
           }
         : undefined,
-    [gasLimit, nonce, storageLimit],
+    [gas, nonce, storageLimit],
   );
 
   const gasSettingMethods = useRef<GasFeeSettingMethods>(null!);
@@ -141,8 +141,8 @@ function WalletConnectTransaction() {
   const checkDappParamsSuitable = useCallback(
     (_gasEstimate: GasEstimate) => {
       if (!_gasEstimate || showDappParamsWarning !== null) return;
-      const isAdvanceSettingSuitable = dappCustomizeAdvanceSetting?.gasLimit
-        ? new Decimal(dappCustomizeAdvanceSetting.gasLimit).greaterThanOrEqualTo(_gasEstimate.estimateAdvanceSetting.gasLimit)
+      const isAdvanceSettingSuitable = dappCustomizeAdvanceSetting?.gas
+        ? new Decimal(dappCustomizeAdvanceSetting.gas).greaterThanOrEqualTo(_gasEstimate.estimateAdvanceSetting.gasLimit)
         : true;
 
       const customizePrice = dappCustomizeGasSetting?.suggestedMaxFeePerGas ?? dappCustomizeGasSetting?.suggestedGasPrice;
@@ -265,7 +265,7 @@ function WalletConnectTransaction() {
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentAddressValue, currentNetwork?.id, gasLimit, gasPrice, to, navigation, value, gasEstimate, isContract, signTransaction, txData, parseData]);
+  }, [currentAddressValue, currentNetwork?.id, gas, gasPrice, to, navigation, value, gasEstimate, isContract, signTransaction, txData, parseData]);
 
   useEffect(() => {
     async function parseAndTryGetTokenInfo() {

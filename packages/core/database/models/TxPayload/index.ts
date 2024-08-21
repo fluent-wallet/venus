@@ -17,7 +17,7 @@ export class TxPayload extends Model {
   @text('from') from!: string | null;
   @text('to') to!: string | null;
   @text('gas_price') gasPrice!: string | null;
-  @text('gas') gas!: string | null;
+  @text('gas') gasLimit!: string | null;
   @text('storage_limit') storageLimit!: string | null; // for core space
   @text('data') data!: string | null;
   @text('value') value!: string | null;

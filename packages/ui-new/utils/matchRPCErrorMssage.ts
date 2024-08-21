@@ -11,8 +11,16 @@ const matchRPCErrorMessage = (error: { message?: string; data?: string }) => {
       return 'The nonce transaction has been executed, change it to the latest one.';
     case ProcessErrorType.nonceTooHigh:
       return 'Nonce is too large, change it to the latest one';
-    case ProcessErrorType.notEnoughBaseGas:
+    case ProcessErrorType.notEnoughBaseGas: {
+      if (error.data) {
+        const regex = /required: (\d+)/;
+        const match = error.data.match(regex);
+        if (match && match?.length > 1) {
+          return `Gas limit is invalid, reset to >= ${match[1]}`;
+        }
+      }
       return 'Gas limit is invalid, reset to >= 21000';
+    }
     case ProcessErrorType.gasExceedsLimit:
       return 'Gas limit is too large, reset to < 15000000';
     case ProcessErrorType.zeroGasPrice:
