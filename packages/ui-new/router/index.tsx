@@ -76,6 +76,7 @@ const screenOptions = {
   orientation: 'portrait',
   header: Header,
   headerBackVisible: false,
+  statusBarTranslucent: true,
   // animation: 'fade',
 } as const;
 
