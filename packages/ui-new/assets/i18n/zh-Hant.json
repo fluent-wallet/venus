@@ -296,7 +296,6 @@
     "content" : {
       "depositToken" : "快存入資產吧",
       "noActivity" : "還沒有交易",
-      "noLatestTransaction" : null,
       "noNFT" : "沒有收藏品",
       "noRecord" : "暫無記錄",
       "noToken" : "沒有代幣",
@@ -311,14 +310,11 @@
   },
   "tx" : {
     "action" : {
-      "alreadyExecuted" : null,
-      "alreadyFailed" : null,
       "buttonTitle" : "行為",
       "cancel" : {
         "desc" : "嘗試取消交易，如果此交易已執行，會取消失敗。",
         "title" : "取消交易"
       },
-      "expiredTitle" : null,
       "level" : {
         "faster" : "最快",
         "higher" : "加速"
@@ -331,7 +327,6 @@
       "speedUpBtn" : "加速"
     },
     "activity" : {
-      "canceling" : null,
       "status" : {
         "confirmed" : "已確認",
         "failed" : "失敗",
@@ -398,12 +393,12 @@
     "gasFee" : {
       "advance" : "進階",
       "advanceSetting" : {
+        "lowWarning" : "您填寫的 gas limit 低於預估值，可能會導致交易失敗",
         "miniumGasLimit" : "{{network}} 需要的最低 gasLimit 值為 {{gasLimit}}",
         "title" : "進階設定"
       },
       "customizeGasSetting" : {
         "current" : "目前\n",
-        "greatThenMaxFeeError" : null,
         "lowWarning" : "您的出價低於目前的基本費用，可能需要等待很長的時間",
         "minimumGasPrice" : "{{network}} 需要的最低 {{gasPriceType}} 值為 {{gasPrice}} Gwei",
         "title" : "自訂燃氣費\n"

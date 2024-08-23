@@ -296,7 +296,6 @@
     "content" : {
       "depositToken" : "Deposit tokens to your wallet",
       "noActivity" : "No Activity",
-      "noLatestTransaction" : null,
       "noNFT" : "No NFT",
       "noRecord" : "No Record",
       "noToken" : "No Token",
@@ -398,6 +397,7 @@
     "gasFee" : {
       "advance" : "Advance",
       "advanceSetting" : {
+        "lowWarning" : "Your offer is lower than the estimated gas limit and may cause a transaction failure.",
         "miniumGasLimit" : "{{network}} requires a minimum gasLimit of {{gasLimit}}.",
         "title" : "Advance Setting"
       },
