@@ -1,4 +1,5 @@
 import Failed from '@assets/icons/message-fail.svg';
+import Warning from '@assets/icons/warn.svg';
 import BottomSheet, { BottomSheetWrapper, BottomSheetHeader, BottomSheetContent, BottomSheetFooter, type BottomSheetMethods } from '@components/BottomSheet';
 import Button from '@components/Button';
 import Text from '@components/Text';
@@ -9,7 +10,7 @@ import Decimal from 'decimal.js';
 /* eslint-disable react-hooks/exhaustive-deps */
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 import type React from 'react';
-import { useCallback, useRef } from 'react';
+import { useCallback, useRef, useMemo } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
 import { View } from 'react-native';
@@ -40,6 +41,7 @@ const CustomizeAdvanceSetting: React.FC<Props> = ({ customizeAdvanceSetting, est
   const {
     control,
     handleSubmit,
+    watch,
     formState: { errors },
   } = useForm<FormData>({
     defaultValues: {
@@ -58,6 +60,33 @@ const CustomizeAdvanceSetting: React.FC<Props> = ({ customizeAdvanceSetting, est
     bottomSheetRef.current?.close();
   }, []);
 
+  const gasLimitInputVal = watch('gasLimit');
+  const isGasLimitLowerThanEstimate = useMemo(() => Number(gasLimitInputVal ?? 0) < Number(estimateGasLimit ?? 0), [gasLimitInputVal, estimateGasLimit]);
+  const LowerTip = useMemo(
+    () => (
+      <View style={styles.tooLowTipWrapper}>
+        <Warning color={colors.middle} />
+        <Text style={[styles.tooLowTip, { color: colors.textPrimary }]}>{t('tx.gasFee.advanceSetting.lowWarning')}</Text>
+      </View>
+    ),
+    [colors, t],
+  );
+
+  const LessThanMinTip = useMemo(
+    () => (
+      <View style={styles.tooLowTipWrapper}>
+        <Failed color={colors.down} />
+        <Text style={[styles.tooLowTip, { color: colors.down }]}>
+          {t('tx.gasFee.advanceSetting.miniumGasLimit', {
+            network: currentNetwork?.name,
+            gasLimit: minGasLimit.toString(),
+          })}
+        </Text>
+      </View>
+    ),
+    [colors, currentNetwork?.name, t],
+  );
+
   return (
     <BottomSheet ref={bottomSheetRef} snapPoints={snapPoints} index={0} onClose={onClose}>
       <BottomSheetWrapper innerPaddingHorizontal>
@@ -75,17 +104,8 @@ const CustomizeAdvanceSetting: React.FC<Props> = ({ customizeAdvanceSetting, est
             )}
             name="gasLimit"
           />
-          {errors.gasLimit?.type === 'validate' && (
-            <View style={styles.tooLowTipWrapper}>
-              <Failed color={colors.down} />
-              <Text style={[styles.tooLowTip, { color: colors.down }]}>
-                {t('tx.gasFee.advanceSetting.miniumGasLimit', {
-                  network: currentNetwork?.name,
-                  gasLimit: minGasLimit.toString(),
-                })}
-              </Text>
-            </View>
-          )}
+          {errors.gasLimit?.type === 'validate' && LessThanMinTip}
+          {!errors.gasLimit && isGasLimitLowerThanEstimate && LowerTip}
 
           <Text style={[styles.inputTitle, { color: colors.textSecondary }]}>Nonce</Text>
           <Controller
@@ -120,6 +140,6 @@ const CustomizeAdvanceSetting: React.FC<Props> = ({ customizeAdvanceSetting, est
   );
 };
 
-const snapPoints = [420];
+const snapPoints = [448];
 
 export default CustomizeAdvanceSetting;
