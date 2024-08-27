@@ -176,7 +176,7 @@ export interface FunctionNameGeneric {
   readableABI: string;
 }
 export interface FunctionNameUnknown {
-  functionName: 'unknown' | 'Contract Create';
+  functionName: 'unknown' | 'Contract Creation';
   readableABI: string;
 }
 export interface FunctionNameApprove {
@@ -192,7 +192,7 @@ export type ParseTxDataReturnType = FunctionNameGeneric | FunctionNameUnknown | 
 export function parseTxData({ data, to }: ParseTxDataParameters): ParseTxDataReturnType {
   if (!to) {
     return {
-      functionName: 'Contract Create',
+      functionName: 'Contract Creation',
       readableABI: '',
     };
   }
