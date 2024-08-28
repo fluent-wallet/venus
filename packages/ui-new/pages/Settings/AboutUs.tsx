@@ -10,14 +10,14 @@ import BottomSheet, {
 import Button from '@components/Button';
 import Text from '@components/Text';
 import { Lang, useLanguage } from '@hooks/useI18n';
-import { useTheme } from '@react-navigation/native';
+import { useNavigation, useTheme } from '@react-navigation/native';
 import { UpdateVersionStackName, type AboutUsStackName, type StackScreenProps } from '@router/configs';
 import { APP_VERSION_FLAG_FEATURE } from '@utils/features';
 import { Image } from 'expo-image';
 import type React from 'react';
 import { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Linking, ScrollView, StyleSheet } from 'react-native';
+import { Linking, ScrollView, StyleSheet, View } from 'react-native';
 import { showMessage } from 'react-native-flash-message';
 import semverLt from 'semver/functions/lt';
 import pkg from '../../../../package.json';
@@ -95,12 +95,19 @@ export const UpdateVersion: React.FC<StackScreenProps<typeof UpdateVersionStackN
   const { colors } = useTheme();
   const { t } = useTranslation();
   const lang = useLanguage();
+  const navigation = useNavigation();
   const UILang = lang === Lang.system ? 'en' : lang;
 
   const { newVersion } = route.params;
-
+  console.log('newVersion', newVersion);
   return (
-    <BottomSheet snapPoints={snapPoints.percent75} isRoute enablePanDownToClose={!newVersion.force} enableContentPanningGesture={!newVersion.force}>
+    <BottomSheet
+      snapPoints={snapPoints.percent75}
+      isRoute
+      backDropPressBehavior={newVersion.force ? 'none' : 'close'}
+      enablePanDownToClose={!newVersion.force}
+      enableContentPanningGesture={!newVersion.force}
+    >
       <BottomSheetWrapper innerPaddingHorizontal>
         <BottomSheetHeader title={t('settings.aboutUs.UpdateToNew')}>
           {newVersion[UILang]?.description && (
@@ -116,9 +123,17 @@ export const UpdateVersion: React.FC<StackScreenProps<typeof UpdateVersionStackN
           )}
         </BottomSheetContent>
         <BottomSheetFooter>
-          <Button size="small" onPress={() => Linking.openURL('https://bimwallet.io')}>
-            {t('common.update')}
-          </Button>
+          <View style={styles.btnArea}>
+            {!newVersion.force && (
+              <Button size="small" testID="later" style={[styles.btn]} onPress={navigation.goBack}>
+                {t('common.later')}
+              </Button>
+            )}
+
+            <Button size="small" testID="update" style={[styles.btn]} onPress={() => Linking.openURL('https://bimwallet.io')}>
+              {t('common.update')}
+            </Button>
+          </View>
         </BottomSheetFooter>
       </BottomSheetWrapper>
     </BottomSheet>
@@ -169,6 +184,17 @@ const styles = StyleSheet.create({
   },
   button: {
     marginBottom: 79,
+  },
+  btnArea: {
+    display: 'flex',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    gap: 16,
+  },
+  btn: {
+    width: '50%',
+    flexShrink: 1,
   },
 });
 

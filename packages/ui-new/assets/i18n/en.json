@@ -123,6 +123,7 @@
     "edit" : "Edit",
     "enable" : "Enable",
     "index" : "Index",
+    "later" : "later",
     "max" : "Max",
     "method" : {
       "contractInteraction" : "Contract Interaction"
@@ -310,14 +311,14 @@
   },
   "tx" : {
     "action" : {
-      "alreadyExecuted" : "Current transaction is onChain",
-      "alreadyFailed" : "Current transaction is failed",
+      "alreadyExecuted" : "This transaction has already been executed on the chain.",
+      "alreadyFailed" : "This transaction has already failed.",
       "buttonTitle" : "Action",
       "cancel" : {
         "desc" : "Try to cancel this transaction. If it has already started to execute, the cancellation will fail.",
         "title" : "Cancel transaction"
       },
-      "expiredTitle" : "transaction expired",
+      "expiredTitle" : "Transaction Expired",
       "level" : {
         "faster" : "Fast",
         "higher" : "Higher"
@@ -403,7 +404,7 @@
       },
       "customizeGasSetting" : {
         "current" : "Current",
-        "greatThenMaxFeeError" : "priority fee needs to be less than or equal to max fee",
+        "greatThenMaxFeeError" : "The priority fee must be less than or equal to the max fee.",
         "lowWarning" : "Your offer is lower than the current base fee and may take a long time to wait.",
         "minimumGasPrice" : "{{network}} requires a minimum {{gasPriceType}} of {{gasPrice}} Gwei.",
         "title" : "Customize Gas"
