@@ -19,6 +19,8 @@ module.exports = async ({ github, context, core, exec }) => {
 
   if (stdout.length > 0) {
     // need to commit
+    await exec.exec("git",["config", "user.name", `"github-actions[bot]"`]);
+    await exec.exec("git", ["config", "user.email", `"github-actions[bot]@users.noreply.github.com"`]);
     await exec.exec("git", ["add", "."]);
     await exec.exec("git", ["commit", "-m", "update version"]);
   }
