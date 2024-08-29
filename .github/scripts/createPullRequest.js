@@ -18,7 +18,7 @@ module.exports = async ({ github, context, core, exec }) => {
 
   // exist pull request
 
-  const finalPrTitle = `Release QA version ${process.env.VERSION}`;
+  const finalPrTitle = `Release QA version`;
   const prBody = `This PR is created by github action.
   It update the Android versionCode (increment 1) and versionName(read from package.json).
   And it also update the IOS CURRENT_PROJECT_VERSION (increment 1). but is not update the IOS MARKETING_VERSION
