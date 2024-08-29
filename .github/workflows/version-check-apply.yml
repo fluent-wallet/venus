@@ -18,4 +18,6 @@ jobs:
           cache: "yarn"
           node-version: ${{ matrix.node-version }}
       - name: version check
-        run: yarn version check
+        run: |
+          yarn install
+          yarn version check

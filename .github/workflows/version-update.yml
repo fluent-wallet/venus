@@ -30,7 +30,7 @@ jobs:
           VERSION: ${{ steps.apply-version.outputs.PACKAGE_VERSION }}
         with:
           script: |
-            const vupdateAndroidVersion = require('./.github/scripts/vupdateAndroidVersion.js')
+            const vupdateAndroidVersion = require('./.github/scripts/updateAndroidVersion.js')
             await vupdateAndroidVersion()
 
       - name: update ios CURRENT_PROJECT_VERSION
