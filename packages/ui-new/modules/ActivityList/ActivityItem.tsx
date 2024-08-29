@@ -11,7 +11,7 @@ import NFTIcon from '@modules/AssetsList/NFTsList/NFTIcon';
 import TokenIcon from '@modules/AssetsList/TokensList/TokenIcon';
 import { useTheme } from '@react-navigation/native';
 import type React from 'react';
-import { type ComponentProps, useMemo, useState } from 'react';
+import { type ComponentProps, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Pressable, StyleSheet, View, type LayoutChangeEvent, type ViewProps } from 'react-native';
 import SpeedUpButton from '@modules/SpeedUpButton';
@@ -32,6 +32,9 @@ const TextEllipsisWithSuffix: React.FC<{
     if (suffixWidth) return;
     setSuffixWidth(e.nativeEvent.layout.width);
   };
+  useEffect(() => {
+    setSuffixWidth(0);
+  }, [suffix]);
   return (
     <View style={[styles.textEllipsisWrapper, { paddingRight: suffixWidth || defaultSuffixWidth }, style]}>
       {text}
@@ -62,6 +65,16 @@ const AssetInfo: React.FC<{
   const decimals = asset?.decimals ?? 0;
   const formatBalance = useFormatBalance(value, decimals);
   const isUnlimited = method === 'approve' && BigInt(value ?? 0) === maxUint256;
+  const symbolSuffix = useMemo(() => {
+    if (asset || tokenId) {
+      return (
+        <Text style={[styles.assetText, { color: txStatus === 'failed' ? colors.textSecondary : colors.textPrimary }]} numberOfLines={1}>
+          {asset?.symbol}
+          {tokenId && <>&nbsp;#{tokenId}</>}
+        </Text>
+      );
+    }
+  }, [colors.textSecondary, colors.textPrimary, asset, tokenId, txStatus]);
   return (
     <View style={styles.assetWrapper}>
       {asset?.type === AssetType.ERC20 || asset?.type === AssetType.Native ? (
@@ -75,14 +88,7 @@ const AssetInfo: React.FC<{
             {sign}&nbsp;{isUnlimited ? t('common.approve.unlimited') : formatBalance}
           </Text>
         }
-        suffix={
-          (asset || tokenId) && (
-            <Text style={[styles.assetText, { color: txStatus === 'failed' ? colors.textSecondary : colors.textPrimary }]} numberOfLines={1}>
-              {asset?.symbol}
-              {tokenId && <>&nbsp;#{tokenId}</>}
-            </Text>
-          )
-        }
+        suffix={symbolSuffix}
         defaultSuffixWidth={50}
       />
     </View>
@@ -114,6 +120,14 @@ const ActivityItem: React.FC<Props> = ({ onPress, tx }) => {
   const isPending = status === 'pending';
   const isCanceling = isPending && extra?.sendAction === SpeedUpAction.Cancel;
   const showSpeedUp = useShowSpeedUp(tx);
+  const statusSuffix = useMemo(() => {
+    if (status === 'pending') {
+      return <PendingIcon />;
+    }
+    if (status === 'failed') {
+      return <Text style={[styles.statusText, { color: colors.down, borderColor: colors.down }]}>{t('tx.activity.status.failed')}</Text>;
+    }
+  }, [status, colors.down, t]);
 
   return (
     <Pressable
@@ -134,13 +148,7 @@ const ActivityItem: React.FC<Props> = ({ onPress, tx }) => {
                 {method}
               </Text>
             }
-            suffix={
-              status === 'pending' ? (
-                <PendingIcon />
-              ) : status === 'failed' ? (
-                <Text style={[styles.statusText, { color: colors.down, borderColor: colors.down }]}>{t('tx.activity.status.failed')}</Text>
-              ) : undefined
-            }
+            suffix={statusSuffix}
             defaultSuffixWidth={50}
           />
           {to && <Text style={[styles.address, { color: colors.textSecondary }]}>To {shortenAddress(to)}</Text>}

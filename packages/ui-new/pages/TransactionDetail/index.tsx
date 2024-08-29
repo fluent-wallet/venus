@@ -152,20 +152,22 @@ const TransactionDetail: React.FC<StackScreenProps<typeof TransactionDetailStack
             <Copy color={colors.textSecondary} />
           </Pressable>
         </View>
-        <View style={styles.row}>
-          <Text style={[styles.label, { color: colors.textSecondary }]}>{t('tx.detail.to')}</Text>
-          <Pressable
-            onPress={() => {
-              handleCopy(to ?? '');
-            }}
-            disabled={!tx.hash}
-            testID="to"
-            style={styles.row}
-          >
-            <Text style={[styles.info, { color: colors.textPrimary }]}>{shortenAddress(to)}</Text>
-            <Copy color={colors.textSecondary} />
-          </Pressable>
-        </View>
+        {to && (
+          <View style={styles.row}>
+            <Text style={[styles.label, { color: colors.textSecondary }]}>{t('tx.detail.to')}</Text>
+            <Pressable
+              onPress={() => {
+                handleCopy(to);
+              }}
+              disabled={!tx.hash}
+              testID="to"
+              style={styles.row}
+            >
+              <Text style={[styles.info, { color: colors.textPrimary }]}>{shortenAddress(to)}</Text>
+              <Copy color={colors.textSecondary} />
+            </Pressable>
+          </View>
+        )}
         {(isPending || gasCostAndPriceInUSDT) && (
           <View style={styles.row}>
             <Text style={[styles.label, { color: colors.textSecondary }]}>{t('tx.detail.fee')}</Text>
