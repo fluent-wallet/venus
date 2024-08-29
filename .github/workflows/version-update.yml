@@ -30,7 +30,7 @@ jobs:
           VERSION: ${{ steps.apply-version.outputs.PACKAGE_VERSION }}
         with:
           script: |
-            const vupdateAndroidVersion = require('./.github/scripts/updateAndroidVersion.js')
+            const vupdateAndroidVersion = require('./.github/scripts/updateVersion.js')
             await vupdateAndroidVersion()
 
       - name: Create Pull Request
