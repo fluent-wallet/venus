@@ -25,9 +25,9 @@ module.exports = async ({ github, context, core, exec }) => {
   `;
 
   let { data: pullRequests } = await github.rest.pulls.list({
-    ...github.context.repo,
+    ...context.repo,
     state: "open",
-    head: `${github.context.repo.owner}:${versionBranch}`,
+    head: `${context.repo.owner}:${versionBranch}`,
     base: "dev",
   });
 
