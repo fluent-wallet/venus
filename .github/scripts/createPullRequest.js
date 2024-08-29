@@ -41,7 +41,7 @@ module.exports = async ({ github, context, core, exec }) => {
     ...context.repo,
     state: "open",
     head: `${context.repo.owner}:${versionBranch}`,
-    base: "dev",
+    base: "qa",
   });
 
   if (pullRequests.length > 0) {
@@ -55,7 +55,7 @@ module.exports = async ({ github, context, core, exec }) => {
     });
   } else {
     await github.rest.pulls.create({
-      base: "dev",
+      base: "qa",
       head: versionBranch,
       title: finalPrTitle,
       body: prBody,
