@@ -16,6 +16,19 @@ module.exports = async ({ github, context, core, exec }) => {
 
   await exec.exec("git", ["reset", `--hard`, context.sha]);
 
+  const {stdout} = await exec.getExecOutput("git", ["status", "--porcelain"])
+
+  if (stdout.length > 0) {
+    // need to commit
+    await exec.exec("git", ["add", "."]);
+    await exec.exec("git", ["commit", "-m", "update version"]);
+  }
+
+  // force push
+  await exec.exec("git", ["push", "--force", "origin", `HEAD:${versionBranch}`]);
+
+
+
   // exist pull request
 
   const finalPrTitle = `Release QA version`;
