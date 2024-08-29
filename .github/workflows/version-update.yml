@@ -21,26 +21,9 @@ jobs:
         with:
           node-version: 20
 
-      - name: apply verison
-        id: apply-version
-        run: |
-          yarn version apply
-          rm -rf .yarn/versions
-          echo "PACKAGE_VERSION=$(cat package.json | jq -r '.version')" >>  "$GITHUB_OUTPUT"
-
-      - uses: actions/github-script@v7
-        env:
-          VERSION: ${{ steps.apply-version.outputs.PACKAGE_VERSION }}
-        with:
-          script: |
-            const vupdateAndroidVersion = require('./.github/scripts/updateVersion.js')
-            await vupdateAndroidVersion()
-
-      - name: Create Pull Request
+      - name: Update Version and Create Pull Request
         uses: actions/github-script@v7
-        env:
-          VERSION: ${{ steps.apply-version.outputs.PACKAGE_VERSION }}
         with:
           script: |
-            const createPullRequest = require('./.github/scripts/createPullRequest.js')
-            await createPullRequest({github, context, core, exec})
+            const script = require('./.github/scripts/versionAndPR.js')
+            await script({github, context, core, exec})
