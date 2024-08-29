@@ -14,7 +14,6 @@ module.exports = async ({ github, context, core, exec }) => {
     await exec.exec("git", ["checkout", "-b", versionBranch]);
   }
 
-  await exec.exec("git", ["reset", `--hard`, context.sha]);
 
   const {stdout} = await exec.getExecOutput("git", ["status", "--porcelain"])
 
