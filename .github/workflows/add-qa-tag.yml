@@ -33,6 +33,6 @@ jobs:
             github.rest.git.createRef({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              ref: `refs/tags/${process.env.PACKAGE_VERSION}-qa`,
+              ref: `refs/tags/v${process.env.PACKAGE_VERSION}-qa`,
               sha: context.sha
             })

@@ -16,7 +16,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           ref: main
-          
+
       - name: get package version
         id: get-package-version
         run: |
@@ -31,6 +31,6 @@ jobs:
             github.rest.git.createRef({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              ref: `refs/tags/${process.env.PACKAGE_VERSION}`,
+              ref: `refs/tags/v${process.env.PACKAGE_VERSION}`,
               sha: context.sha
             })
