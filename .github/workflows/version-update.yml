@@ -35,7 +35,7 @@ jobs:
 
       - name: update ios CURRENT_PROJECT_VERSION
         run: |
-          currentVersion=`sed -n '/CURRENT_PROJECT_VERSION/{s/CURRENT_PROJECT_VERSION = //;s/;//;s/^[[:space:]]*//;p;q;}' ios/BIMWallet.xcodeproj/project.pbxproj`
+          currentVersion=`sed -n '/CURRENT_PROJECT_VERSION/{s/CURRENT_PROJECT_VERSION = //;s/;//;s/^[[:space:]]*//;p;q;}' ./ios/BIMWallet.xcodeproj/project.pbxproj`
 
           newVersion=$((currentVersion + 1))
           
