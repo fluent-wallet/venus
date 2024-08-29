@@ -47,10 +47,10 @@ module.exports = async ({ github, context, core, exec }) => {
   await exec.exec("yarn", ["version", "apply"])
   
   // remove the version 
-  await exec.exec("rm", ["-rf", path.join(path.resolve(), "../../.yarn/versions")])
+  await exec.exec("rm", ["-rf", path.join(__dirname, "../../.yarn/versions")])
 
   // get current package.json version
-  const pkg = require(path.join(path.resolve(), "../../package.json"));
+  const pkg = require(path.join(__dirname, "../../package.json"));
   
   // update android and ios version
 
@@ -79,7 +79,7 @@ module.exports = async ({ github, context, core, exec }) => {
   It update the Android versionCode (increment 1) and versionName(read from package.json).
 
   And it also update the IOS CURRENT_PROJECT_VERSION (increment 1). but is not update the IOS MARKETING_VERSION
-  
+
   `;
 
   let { data: pullRequests } = await github.rest.pulls.list({
