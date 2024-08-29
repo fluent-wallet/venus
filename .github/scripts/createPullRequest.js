@@ -1,11 +1,10 @@
 module.exports = async ({ github, context, core, exec }) => {
 
-   const branch =  "dev";
-  let versionBranch = `qa-release/${branch}`;
+  let versionBranch = `qa-release/dev`;
 
   // switch to branch
 
-  let { stderr } = await exec.getExecOutput("git", ["checkout", branch], {
+  let { stderr } = await exec.getExecOutput("git", ["checkout", versionBranch], {
     ignoreReturnCode: true,
   });
   let isCreatingBranch = !stderr
