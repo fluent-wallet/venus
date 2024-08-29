@@ -14,7 +14,7 @@ module.exports = async ({ github, context, core, exec }) => {
     await exec.exec("git", ["checkout", "-b", versionBranch]);
   }
 
-  await exec.exec("git", ["reset", `--hard`, github.context.sha]);
+  await exec.exec("git", ["reset", `--hard`, context.sha]);
 
   // exist pull request
 
@@ -37,7 +37,7 @@ module.exports = async ({ github, context, core, exec }) => {
       pull_number: pullRequest.number,
       title: finalPrTitle,
       body: prBody,
-      ...github.context.repo,
+      ...context.repo,
       state: "open",
     });
   } else {
@@ -46,7 +46,7 @@ module.exports = async ({ github, context, core, exec }) => {
       head: versionBranch,
       title: finalPrTitle,
       body: prBody,
-      ...github.context.repo,
+      ...context.repo,
     });
   }
 };
