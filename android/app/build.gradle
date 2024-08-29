@@ -87,8 +87,8 @@ android {
         applicationId "io.bimwallet"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 14
-        versionName "2.0.7"
+        versionCode 15
+        versionName "2.0.8"
         resValue "string", "build_config_package", "io.bimwallet"
     }
     signingConfigs {

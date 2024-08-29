@@ -71,10 +71,10 @@ module.exports = async ({ github, context, core, exec }) => {
   await exec.exec("git", ["push", "--force", "origin", `HEAD:${versionBranch}`]);
 
 
-  // exist pull request
 
-  const finalPrTitle = `Release QA version`;
-  const prBody = `This PR is created by github action.
+  // start PR to QA
+  const QAPrTitle = `Release QA version`;
+  const QAPrBody = `This PR is created by github action.
 
   It update the Android versionCode (increment 1) and versionName(read from package.json).
 
@@ -88,19 +88,19 @@ module.exports = async ({ github, context, core, exec }) => {
   [ ] 4. Please check that the version.json is correct.
   `;
 
-  let { data: pullRequests } = await github.rest.pulls.list({
+  let { data: releaseQAPullRequests } = await github.rest.pulls.list({
     ...context.repo,
     state: "open",
     head: `${context.repo.owner}:${versionBranch}`,
     base: "qa",
   });
 
-  if (pullRequests.length > 0) {
-    const [pullRequest] = pullRequests;
+  if (releaseQAPullRequests.length > 0) {
+    const [pullRequest] = releaseQAPullRequests;
     await github.rest.pulls.update({
       pull_number: pullRequest.number,
-      title: finalPrTitle,
-      body: prBody,
+      title: QAPrTitle,
+      body: QAPrBody,
       ...context.repo,
       state: "open",
     });
@@ -108,8 +108,44 @@ module.exports = async ({ github, context, core, exec }) => {
     await github.rest.pulls.create({
       base: "qa",
       head: versionBranch,
-      title: finalPrTitle,
-      body: prBody,
+      title: QAPrTitle,
+      body: QAPrBody,
+      ...context.repo,
+    });
+  }
+
+  // end PR to QA
+
+
+  // start PR to dev
+
+  const devPrTitle = `Version Change`; 
+  const devPrBody = `PR the version change to dev branch.`
+
+  
+
+  let { data: mergeToDevPullRequests } = await github.rest.pulls.list({
+    ...context.repo,
+    state: "open",
+    head: `${context.repo.owner}:${versionBranch}`,
+    base: "dev",
+  });
+
+  if (mergeToDevPullRequests.length > 0) {
+    const [pullRequest] = mergeToDevPullRequests;
+    await github.rest.pulls.update({
+      pull_number: pullRequest.number,
+      title: devPrTitle,
+      body: devPrBody,
+      ...context.repo,
+      state: "open",
+    });
+  } else {
+    await github.rest.pulls.create({
+      base: "dev",
+      head: versionBranch,
+      title: devPrTitle,
+      body: devPrBody,
       ...context.repo,
     });
   }

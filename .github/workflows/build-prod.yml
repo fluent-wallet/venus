@@ -5,41 +5,15 @@ permissions:
 
 on:
   push:
-    branches:
-      - main
+    tags:
+      - 'v*'
+      - '!v*-qa*'
+      - '!v*-aab'
+
 jobs:
-  createTag:
-    name: Create Tag
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Check out Git repository
-        uses: actions/checkout@v4
-        with:
-          ref: qa
-
-      - name: get package version
-        id: get-package-version
-        run: |
-          echo "PACKAGE_VERSION=$(cat package.json | jq -r '.version')" >> "$GITHUB_OUTPUT"
-
-      - name: Create tag
-        uses: actions/github-script@v5
-        env:
-          PACKAGE_VERSION: ${{ steps.get-package-version.outputs.PACKAGE_VERSION }}
-        with:
-          script: |
-            github.rest.git.createRef({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              ref: `refs/tags/${process.env.PACKAGE_VERSION}`,
-              sha: context.sha
-            })
-
   android-build:
     name: Android Build
     runs-on: ubuntu-latest
-    needs:  [createTag]
     steps:
       - name: Check out Git repository
         uses: actions/checkout@v4
