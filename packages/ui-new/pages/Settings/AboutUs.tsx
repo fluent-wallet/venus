@@ -57,10 +57,18 @@ const AboutUs: React.FC<StackScreenProps<typeof AboutUsStackName>> = ({ navigati
   const handleCheckNewVersion = useCallback(async () => {
     setLoading(true);
     try {
-      const remoteVersion = await fetch('https://download.bimwallet.io/version.json', { method: 'GET' }).then<VersionJSON>((res) => res.json());
-
+      const remoteVersion = await fetch('https://download.bimwallet.io/version.json', {
+        method: 'GET',
+        headers: {
+          'Cache-Control': 'no-cache',
+        },
+      }).then<VersionJSON>((res) => {
+        return res.json();
+      });
+      console.log(remoteVersion);
       if (semverLt(pkg.version, remoteVersion.version)) {
         // has new version , to show user
+
         navigation.navigate(UpdateVersionStackName, { newVersion: remoteVersion });
       } else {
         showMessage({
@@ -73,7 +81,7 @@ const AboutUs: React.FC<StackScreenProps<typeof AboutUsStackName>> = ({ navigati
       setLoading(false);
     }
     setLoading(false);
-  }, [t]);
+  }, [t, navigation.navigate]);
 
   return (
     <ScrollView contentContainerStyle={[styles.container, { backgroundColor: colors.bgPrimary }]}>
@@ -99,7 +107,6 @@ export const UpdateVersion: React.FC<StackScreenProps<typeof UpdateVersionStackN
   const UILang = lang === Lang.system ? 'en' : lang;
 
   const { newVersion } = route.params;
-  console.log('newVersion', newVersion);
   return (
     <BottomSheet
       snapPoints={snapPoints.percent75}
@@ -193,7 +200,7 @@ const styles = StyleSheet.create({
     gap: 16,
   },
   btn: {
-    width: '50%',
+    flex: 1,
     flexShrink: 1,
   },
 });
