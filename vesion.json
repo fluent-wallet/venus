@@ -1,0 +1,36 @@
+{
+    "version": "2.1.0",
+    "force": false,
+    "en": {
+      "description": "BIM Wallet new version is released, new features:",
+      "messageList": [
+        "support 1559 transaction type",
+        "support custom rpc fullnode url",
+        "support transaction acceleration and cancellation",
+        "history transaction details",
+        "signature record",
+        "Prompts for version updates",
+        "Amount support max mode",
+        "Gas station",
+        "Pending number exceeds the limit to prevent sending transactions, the current limit is 5.",
+        "transaction status update optimisation",
+        "transaction history nonce de-duplication"
+      ]
+    },
+    "zh-Hant": {
+      "description": "BIM Wallet 新版本已發佈，新增功能包括:",
+      "messageList": [
+        "支援 1559 交易類型",
+        "支援自訂 RPC fullnode 網址",
+        "支援交易加速和取消",
+        "歷史交易詳情",
+        "簽名記錄",
+        "提示版本更新",
+        "Amount 支援最大模式",
+        "Gas station",
+        "Pending 個數超過限制將無法發送交易，目前限制為 5",
+        "交易狀態更新優化",
+        "交易歷史 nonce 去重"
+      ]
+    }
+  }

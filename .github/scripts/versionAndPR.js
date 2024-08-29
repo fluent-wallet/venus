@@ -80,6 +80,12 @@ module.exports = async ({ github, context, core, exec }) => {
 
   And it also update the IOS CURRENT_PROJECT_VERSION (increment 1). but is not update the IOS MARKETING_VERSION
 
+  **Note**: Check the PR before merge.
+
+  [ ] 1. Please check that the version name is correct.
+  [ ] 2. Please check that the version code is correct.
+  [ ] 3. Please check that the CURRENT_PROJECT_VERSION is correct.
+  [ ] 4. Please check that the version.json is correct.
   `;
 
   let { data: pullRequests } = await github.rest.pulls.list({
