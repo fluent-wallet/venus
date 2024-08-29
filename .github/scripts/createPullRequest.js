@@ -9,9 +9,9 @@ module.exports = async ({ github, context, core, exec }) => {
   });
   let isCreatingBranch = !stderr
     .toString()
-    .includes(`Switched to a new branch '${branch}'`);
+    .includes(`Switched to a new branch '${versionBranch}'`);
   if (isCreatingBranch) {
-    await exec.exec("git", ["checkout", "-b", branch]);
+    await exec.exec("git", ["checkout", "-b", versionBranch]);
   }
 
   await exec.exec("git", ["reset", `--hard`, github.context.sha]);
@@ -28,7 +28,7 @@ module.exports = async ({ github, context, core, exec }) => {
     ...github.context.repo,
     state: "open",
     head: `${github.context.repo.owner}:${versionBranch}`,
-    base: branch,
+    base: "dev",
   });
 
   if (pullRequests.length > 0) {
@@ -42,7 +42,7 @@ module.exports = async ({ github, context, core, exec }) => {
     });
   } else {
     await github.rest.pulls.create({
-      base: branch,
+      base: "dev",
       head: versionBranch,
       title: finalPrTitle,
       body: prBody,
