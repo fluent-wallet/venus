@@ -100,7 +100,14 @@ const CustomizeAdvanceSetting: React.FC<Props> = ({ customizeAdvanceSetting, est
               validate: (newGasLimit) => new Decimal(newGasLimit ?? '0').greaterThanOrEqualTo(minGasLimit) || 'less-than-min',
             }}
             render={({ field: { onChange, onBlur, value } }) => (
-              <TextInput error={!!errors.gasLimit} colors={colors} onBlur={onBlur} onChangeText={onChange} value={value} showGweiSuffix={false} />
+              <TextInput
+                error={!!errors.gasLimit}
+                colors={colors}
+                onBlur={onBlur}
+                onChangeText={(v) => onChange((v || '').replace(/[^0-9]/g, ''))}
+                value={value}
+                showGweiSuffix={false}
+              />
             )}
             name="gasLimit"
           />
