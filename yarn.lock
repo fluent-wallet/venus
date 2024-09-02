@@ -8701,14 +8701,14 @@ __metadata:
   languageName: node
   linkType: hard
 
-"expo-camera@npm:~15.0.13":
-  version: 15.0.14
-  resolution: "expo-camera@npm:15.0.14"
+"expo-camera@npm:^15.0.15":
+  version: 15.0.15
+  resolution: "expo-camera@npm:15.0.15"
   dependencies:
     invariant: ^2.2.4
   peerDependencies:
     expo: "*"
-  checksum: 97dba413893b47de490dc6716a507f175d68b58be38d0f62037d08d7b0af02d2ad048916570f275d23f0c765883b45a0cc868f58bec277eb88f3064912ad0675
+  checksum: 5cdd04cef971770f92f665f6389c12f9b4d732db8b25131f44d7585ffb20273fa91d376d4a15355c1aefe70bf9e908ff25e24428a9f3228c1e79f48af1f7a846
   languageName: node
   linkType: hard
 
@@ -16924,7 +16924,7 @@ __metadata:
     eslint: ^8.56.0
     ethers: ^6.10.0
     expo: 51
-    expo-camera: ~15.0.13
+    expo-camera: ^15.0.15
     expo-image: ~1.12.13
     expo-image-picker: ~15.0.7
     expo-localization: ~15.0.3
