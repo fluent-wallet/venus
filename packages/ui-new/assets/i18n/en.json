@@ -410,7 +410,7 @@
         "title" : "Customize Gas"
       },
       "dappParams" : {
-        "ask" : "Whether to use the <1>gas parameters</1> recommended by BIM Wallet Wallet?",
+        "ask" : "Whether to use the <1>gas parameters</1> recommended by BIM Wallet?",
         "description" : "The gas parameters used by the DApp may cause the transaction to fail.",
         "title" : "Tips"
       },
