@@ -1,16 +1,14 @@
 import { launchImageLibraryAsync } from 'expo-image-picker';
-import { useCallback, useMemo, useState } from 'react';
-import type { StyleProp, ViewStyle } from 'react-native';
-import { CameraView, useCameraPermissions, type BarcodeScanningResult, Camera } from 'expo-camera';
+import { useCallback, useState } from 'react';
+import { useCameraPermissions, type BarcodeScanningResult, Camera } from 'expo-camera';
 
 interface Params {
-  style: StyleProp<ViewStyle>;
   onSuccess: (data: string) => void;
   onFailed: () => void;
   isParsingRef: React.MutableRefObject<boolean>;
 }
 
-const useQRCodeScan = ({ style, onSuccess, onFailed, isParsingRef }: Params) => {
+const useQRCodeScan = ({ onSuccess, onFailed, isParsingRef }: Params) => {
   const [hasPermission, requestPermission] = useCameraPermissions();
   const [hasRejectCameraPermission, setHasRejectCameraPermission] = useState(false);
 
@@ -64,17 +62,12 @@ const useQRCodeScan = ({ style, onSuccess, onFailed, isParsingRef }: Params) => 
     }
   }, [hasPermission]);
 
-  const CameraComponent = useMemo(
-    () => <CameraView facing="back" style={style} barcodeScannerSettings={{ barcodeTypes: ['qr'] }} onBarcodeScanned={handleCodeScan} />,
-    [style, handleCodeScan],
-  );
-
   return {
     checkCameraPermission,
     hasRejectCameraPermission,
     hasCameraPermission: hasPermission?.granted,
     pickImage,
-    Camera: CameraComponent,
+    handleCodeScan,
   };
 };
 

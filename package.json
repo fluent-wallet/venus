@@ -1,6 +1,6 @@
 {
   "name": "venus",
-  "version": "2.0.11",
+  "version": "2.0.12",
   "private": true,
   "scripts": {
     "prepare": "husky",
@@ -44,7 +44,7 @@
     "decimal.js": "^10.4.3",
     "ethers": "^6.10.0",
     "expo": "51",
-    "expo-camera": "~15.0.13",
+    "expo-camera": "^15.0.15",
     "expo-image": "~1.12.13",
     "expo-image-picker": "~15.0.7",
     "expo-localization": "~15.0.3",

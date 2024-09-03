@@ -32,6 +32,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { Trans, useTranslation } from 'react-i18next';
 import { Linking, StyleSheet, View } from 'react-native';
 import useQRCodeScan from './useQRCodeScan';
+import { CameraView } from 'expo-camera';
 
 // has onConfirm props means open in SendTransaction with local modal way.
 interface Props extends Partial<StackScreenProps<typeof ExternalInputHandlerStackName>> {
@@ -100,6 +101,8 @@ const ExternalInputHandler: React.FC<Props> = ({ navigation, onConfirm, onClose,
   const isParsingRef = useRef(false);
 
   const [parseStatus, setParseStatus] = useState<{ type?: string; message: string } | null>(null);
+
+  const cameraRef = useRef<CameraView | null>(null);
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
   const onParseEthUrlSuccess = useCallback(
@@ -188,6 +191,8 @@ const ExternalInputHandler: React.FC<Props> = ({ navigation, onConfirm, onClose,
   const handleParse = useCallback(
     async (dataString: string) => {
       isParsingRef.current = true;
+      // stop preview
+      cameraRef.current?.pausePreview();
       let ethUrl: ETHURL;
       if (await methods.checkIsValidAddress({ networkType: currentNetwork.networkType, addressValue: dataString })) {
         ethUrl = { target_address: dataString, schema_prefix: currentNetwork.networkType === NetworkType.Ethereum ? 'ethereum:' : 'conflux:' } as ETHURL;
@@ -213,6 +218,8 @@ const ExternalInputHandler: React.FC<Props> = ({ navigation, onConfirm, onClose,
         }
       } catch (err) {
         isParsingRef.current = false;
+        // error resume preview,  maybe we can delay resume preview with some time
+        cameraRef.current?.resumePreview();
         if (err instanceof WalletConnectPluginError) {
           if (err.message === 'VersionNotSupported') {
             setParseStatus({ message: t('scan.walletConnect.error.lowVersion') });
@@ -231,8 +238,7 @@ const ExternalInputHandler: React.FC<Props> = ({ navigation, onConfirm, onClose,
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
   const onScanQrCodeFailed = useCallback(() => setParseStatus({ message: t('scan.QRCode.error.notRecognized') }), []);
-  const { hasCameraPermission, hasRejectCameraPermission, checkCameraPermission, pickImage, Camera } = useQRCodeScan({
-    style: styles.camera,
+  const { hasCameraPermission, hasRejectCameraPermission, checkCameraPermission, pickImage, handleCodeScan } = useQRCodeScan({
     onSuccess: handleParse,
     onFailed: onScanQrCodeFailed,
     isParsingRef,
@@ -255,6 +261,7 @@ const ExternalInputHandler: React.FC<Props> = ({ navigation, onConfirm, onClose,
   }, []);
 
   const isRoute = !onConfirm;
+
   return (
     <BottomSheet
       ref={bottomSheetRef}
@@ -270,7 +277,14 @@ const ExternalInputHandler: React.FC<Props> = ({ navigation, onConfirm, onClose,
           {!externalData && hasCameraPermission && (
             <>
               <View style={styles.cameraWrapper}>
-                {parseStatus?.type !== ScanStatusType.ConnectingWC && Camera}
+                <CameraView
+                  ref={cameraRef}
+                  facing="back"
+                  style={styles.camera}
+                  barcodeScannerSettings={{ barcodeTypes: ['qr'] }}
+                  onBarcodeScanned={handleCodeScan}
+                />
+
                 {parseStatus?.type === ScanStatusType.ConnectingWC && (
                   <>
                     <View style={styles.cameraMask} />

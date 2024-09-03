@@ -172,6 +172,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 0,
   },
   description: {
+    flex: 1,
     fontSize: 14,
     fontWeight: '300',
     lineHeight: isSmallDevice ? 16 : 18,
@@ -203,9 +204,10 @@ const styles = StyleSheet.create({
     display: 'flex',
     flexDirection: 'row',
     alignItems: 'center',
+    paddingHorizontal: 10,
   },
   privateKeyText: {
-    width: '92%',
+    flex: 1,
     fontSize: 12,
     fontWeight: '600',
     marginRight: 'auto',

@@ -320,8 +320,8 @@
       },
       "expiredTitle" : "這筆交易已過期",
       "level" : {
-        "faster" : "最快",
-        "higher" : "加速"
+        "faster" : "快更多",
+        "higher" : "更快"
       },
       "proceedBtn" : "繼續",
       "speedUp" : {
@@ -403,11 +403,14 @@
         "title" : "進階設定"
       },
       "customizeGasSetting" : {
-        "current" : "目前\n",
+        "current" : "目前",
+        "gasPrice" : "燃氣價格 (Gas Price)",
         "greatThenMaxFeeError" : "小費必須小於等於最大費用",
         "lowWarning" : "您的出價低於目前的基本費用，可能需要等待很長的時間",
+        "maxFee" : "最多花費 (Max Fee)",
         "minimumGasPrice" : "{{network}} 需要的最低 {{gasPriceType}} 值為 {{gasPrice}} Gwei",
-        "title" : "自訂燃氣費\n"
+        "priorityFee" : "小費 (Priority Fee)",
+        "title" : "自訂燃氣費"
       },
       "dappParams" : {
         "ask" : "採用 BIM Wallet 錢包推薦的<1>Gas 參數</1>？",

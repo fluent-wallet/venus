@@ -186,7 +186,7 @@ const CustomizeGasSetting: React.FC<Props> = ({ customizeGasSetting, estimateCur
           {customizeGasSetting.suggestedGasPrice && (
             <>
               <Text style={[styles.inputTitle, { color: colors.textSecondary }]}>
-                Gas price ({t('tx.gasFee.customizeGasSetting.current')}:{' '}
+                {t('tx.gasFee.customizeGasSetting.gasPrice')} ({t('tx.gasFee.customizeGasSetting.current')}:{' '}
                 <Text style={{ fontWeight: '600', color: colors.textPrimary }}>{currentPriceGwei}</Text> Gwei)
               </Text>
               <Controller
@@ -208,8 +208,8 @@ const CustomizeGasSetting: React.FC<Props> = ({ customizeGasSetting, estimateCur
           {customizeGasSetting.suggestedMaxFeePerGas && (
             <>
               <Text style={[styles.inputTitle, { color: colors.textSecondary }]}>
-                {!force155 ? 'Max fee' : 'Gas price'} ({t('tx.gasFee.customizeGasSetting.current')}:{' '}
-                <Text style={{ fontWeight: '600', color: colors.textPrimary }}>{currentPriceGwei}</Text> Gwei)
+                {!force155 ? t('tx.gasFee.customizeGasSetting.maxFee') : t('tx.gasFee.customizeGasSetting.gasPrice')} (
+                {t('tx.gasFee.customizeGasSetting.current')}: <Text style={{ fontWeight: '600', color: colors.textPrimary }}>{currentPriceGwei}</Text> Gwei)
               </Text>
               <Controller
                 control={control}
@@ -227,7 +227,7 @@ const CustomizeGasSetting: React.FC<Props> = ({ customizeGasSetting, estimateCur
 
               {!force155 && (
                 <>
-                  <Text style={[styles.inputTitle, { color: colors.textSecondary }]}>Priority fee</Text>
+                  <Text style={[styles.inputTitle, { color: colors.textSecondary }]}>{t('tx.gasFee.customizeGasSetting.priorityFee')}</Text>
                   <Controller
                     control={control}
                     rules={{
