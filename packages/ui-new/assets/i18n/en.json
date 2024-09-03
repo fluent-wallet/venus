@@ -320,8 +320,8 @@
       },
       "expiredTitle" : "Transaction Expired",
       "level" : {
-        "faster" : "Fast",
-        "higher" : "Higher"
+        "faster" : "2× Higher",
+        "higher" : "1× Higher"
       },
       "proceedBtn" : "Proceed",
       "speedUp" : {
@@ -404,9 +404,12 @@
       },
       "customizeGasSetting" : {
         "current" : "Current",
+        "gasPrice" : "Gas Price",
         "greatThenMaxFeeError" : "The priority fee must be less than or equal to the max fee.",
         "lowWarning" : "Your offer is lower than the current base fee and may take a long time to wait.",
+        "maxFee" : "Max Fee",
         "minimumGasPrice" : "{{network}} requires a minimum {{gasPriceType}} of {{gasPrice}} Gwei.",
+        "priorityFee" : "Priority Fee",
         "title" : "Customize Gas"
       },
       "dappParams" : {
