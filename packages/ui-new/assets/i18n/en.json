@@ -320,8 +320,8 @@
       },
       "expiredTitle" : "Transaction Expired",
       "level" : {
-        "faster" : "2× Higher",
-        "higher" : "1× Higher"
+        "faster" : "Much Faster",
+        "higher" : "Faster"
       },
       "proceedBtn" : "Proceed",
       "speedUp" : {

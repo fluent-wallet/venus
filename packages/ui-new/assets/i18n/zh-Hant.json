@@ -320,8 +320,8 @@
       },
       "expiredTitle" : "這筆交易已過期",
       "level" : {
-        "faster" : "最快",
-        "higher" : "加速"
+        "faster" : "快更多",
+        "higher" : "更快"
       },
       "proceedBtn" : "繼續",
       "speedUp" : {
