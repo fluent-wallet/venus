@@ -193,7 +193,7 @@ const CustomizeGasSetting: React.FC<Props> = ({ customizeGasSetting, estimateCur
                 control={control}
                 rules={{
                   ...controlRule,
-                  validate: (newGasPrice) => new Decimal(newGasPrice ?? '0').mul(Gwei).greaterThanOrEqualTo(new Decimal(minGasPrice)) || 'less-than-min',
+                  validate: (newGasPrice) => new Decimal(newGasPrice || '0').mul(Gwei).greaterThanOrEqualTo(new Decimal(minGasPrice)) || 'less-than-min',
                 }}
                 render={({ field: { onChange, onBlur, value } }) => (
                   <TextInput error={!!errors?.gasPrice} colors={colors} onBlur={onBlur} onChangeText={onChange} value={value} />
@@ -215,7 +215,7 @@ const CustomizeGasSetting: React.FC<Props> = ({ customizeGasSetting, estimateCur
                 control={control}
                 rules={{
                   ...controlRule,
-                  validate: (newMaxFeePerGas) => new Decimal(newMaxFeePerGas ?? '0').mul(Gwei).greaterThanOrEqualTo(minGasPrice) || 'less-than-min',
+                  validate: (newMaxFeePerGas) => new Decimal(newMaxFeePerGas || '0').mul(Gwei).greaterThanOrEqualTo(minGasPrice) || 'less-than-min',
                 }}
                 render={({ field: { onChange, onBlur, value } }) => (
                   <TextInput error={!!errors?.maxFeePerGas} colors={colors} onBlur={onBlur} onChangeText={onChange} value={value} />
@@ -233,7 +233,7 @@ const CustomizeGasSetting: React.FC<Props> = ({ customizeGasSetting, estimateCur
                     rules={{
                       ...controlRule,
                       validate: (newMaxPriorityFeePerGas, value) =>
-                        new Decimal(newMaxPriorityFeePerGas ?? '0').lessThanOrEqualTo(value.maxFeePerGas ?? '0') || 'great-than-max-fee',
+                        new Decimal(newMaxPriorityFeePerGas || '0').lessThanOrEqualTo(value.maxFeePerGas || '0') || 'great-than-max-fee',
                     }}
                     render={({ field: { onChange, onBlur, value } }) => (
                       <TextInput error={!!errors?.maxPriorityFeePerGas} colors={colors} onBlur={onBlur} onChangeText={onChange} value={value} />
