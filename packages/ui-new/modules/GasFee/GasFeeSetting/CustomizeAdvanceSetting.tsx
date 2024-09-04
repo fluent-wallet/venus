@@ -97,7 +97,7 @@ const CustomizeAdvanceSetting: React.FC<Props> = ({ customizeAdvanceSetting, est
             control={control}
             rules={{
               required: true,
-              validate: (newGasLimit) => new Decimal(newGasLimit ?? '0').greaterThanOrEqualTo(minGasLimit) || 'less-than-min',
+              validate: (newGasLimit) => new Decimal(newGasLimit || '0').greaterThanOrEqualTo(minGasLimit) || 'less-than-min',
             }}
             render={({ field: { onChange, onBlur, value } }) => (
               <TextInput
