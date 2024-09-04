@@ -355,7 +355,7 @@ function WalletConnectTransaction() {
             {errorMsg && (
               <View style={[styles.error, { borderColor: colors.down }]}>
                 <MessageFail color={colors.down} width={24} height={24} />
-                <Text style={{ color: colors.down, fontSize: 16 }}>{errorMsg}</Text>
+                <Text style={{ color: colors.down, fontSize: 16, flexShrink: 1 }}>{errorMsg}</Text>
               </View>
             )}
           </BottomSheetScrollContent>
