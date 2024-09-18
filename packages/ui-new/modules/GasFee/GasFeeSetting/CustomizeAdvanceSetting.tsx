@@ -49,6 +49,7 @@ const CustomizeAdvanceSetting: React.FC<Props> = ({ customizeAdvanceSetting, est
       nonce: String(customizeAdvanceSetting?.nonce ?? estimateNonce),
       storageLimit: new Decimal(customizeAdvanceSetting?.storageLimit ?? '0').toString(),
     },
+    mode: 'onChange',
   });
 
   const handleConfirm = useCallback((data: FormData) => {
