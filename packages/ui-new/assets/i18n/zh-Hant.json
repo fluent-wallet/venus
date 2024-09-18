@@ -395,11 +395,28 @@
       "to" : "接收方",
       "txHash" : "交易哈希"
     },
+    "error" : {
+      "balanceNotEnough" : null,
+      "chainIdMismatch" : null,
+      "contractExecuteFailed" : null,
+      "gasExceedsLimit" : null,
+      "gasPriceTooLow" : null,
+      "nodeInCatchUp" : null,
+      "nonceTooHigh" : null,
+      "notEnoughBaseGas" : null,
+      "signatureError" : null,
+      "tooStaleNonce" : null,
+      "txPoolFull" : null,
+      "unknownError" : null,
+      "zeroGasPrice" : null
+    },
     "gasFee" : {
       "advance" : "進階",
       "advanceSetting" : {
+        "gasLimit" : null,
         "lowWarning" : "您填寫的 gas limit 低於預估值，可能會導致交易失敗",
         "miniumGasLimit" : "{{network}} 需要的最低 gasLimit 值為 {{gasLimit}}",
+        "nonce" : null,
         "title" : "進階設定"
       },
       "customizeGasSetting" : {

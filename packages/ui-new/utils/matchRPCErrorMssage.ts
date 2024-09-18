@@ -1,4 +1,5 @@
 import { ProcessErrorType, processError } from '@core/utils/eth';
+import { t } from 'i18next';
 
 const matchRPCErrorMessage = (error: { message?: string; data?: string }) => {
   const msg = error.data || error.message;
@@ -6,42 +7,41 @@ const matchRPCErrorMessage = (error: { message?: string; data?: string }) => {
   const parseError = processError(error);
   switch (parseError.errorType) {
     case ProcessErrorType.balanceNotEnough:
-      return 'Insufficient CFX for gas fee';
+      return t('tx.error.balanceNotEnough');
     case ProcessErrorType.tooStaleNonce:
-      return 'The nonce transaction has been executed, change it to the latest one.';
+      return t('tx.error.tooStaleNonce');
     case ProcessErrorType.nonceTooHigh:
-      return 'Nonce is too large, change it to the latest one';
+      return t('tx.error.nonceTooHigh');
     case ProcessErrorType.notEnoughBaseGas: {
+      let gasLimit = '21000';
       if (error.data) {
         const regex = /required: (\d+)/;
         const match = error.data.match(regex);
         if (match && match?.length > 1) {
-          return `Gas limit is invalid, reset to >= ${match[1]}`;
+          gasLimit = match[1];
         }
       }
-      return 'Gas limit is invalid, reset to >= 21000';
+      return t('tx.error.notEnoughBaseGas', { gasLimit });
     }
     case ProcessErrorType.gasExceedsLimit:
-      return 'Gas limit is too large, reset to < 15000000';
+      return t('tx.error.gasExceedsLimit');
     case ProcessErrorType.zeroGasPrice:
-      return 'Gas price is invalid, reset it.';
+      return t('tx.error.zeroGasPrice');
     case ProcessErrorType.gasPriceTooLow:
-      return 'Gas price is too low.';
+      return t('tx.error.gasPriceTooLow');
     case ProcessErrorType.chainIdMismatch:
-      return 'Unable to find chain information.';
+      return t('tx.error.chainIdMismatch');
     case ProcessErrorType.signatureError:
-      return 'Signature Error.';
+      return t('tx.error.signatureError');
     case ProcessErrorType.txPoolFull:
-      return 'Transactions are too crowded, please increase gas price.';
+      return t('tx.error.txPoolFull');
     case ProcessErrorType.nodeInCatchUp:
-      return 'Node is not working, change the node or waiting.';
-    case ProcessErrorType.notEnoughCash:
-      return 'Insufficient CFX for gas fee.';
+      return t('tx.error.nodeInCatchUp');
     case ProcessErrorType.contractExecuteFailed:
-      return `Contract execution failed, info:${msg}`;
+      return t('tx.error.contractExecuteFailed', { msg });
 
     default:
-      return `Unknown error: ${msg}`;
+      return t('tx.error.unknownError', { msg });
   }
 };
 
