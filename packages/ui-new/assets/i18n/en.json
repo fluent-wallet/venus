@@ -396,13 +396,13 @@
       "txHash" : "Transaction Hash"
     },
     "error" : {
-      "balanceNotEnough" : "Insufficient CFX for gas fee",
+      "balanceNotEnough" : "Insufficient CFX for gas fee.",
       "chainIdMismatch" : "Unable to find chain information.",
       "contractExecuteFailed" : "Contract execution failed, info: {{msg}}",
       "gasExceedsLimit" : "Gas limit is too large, reset to < 15000000",
       "gasPriceTooLow" : "Gas price is too low.",
       "nodeInCatchUp" : "Node is not working, change the node or waiting.",
-      "nonceTooHigh" : "Nonce is too large, change it to the latest one",
+      "nonceTooHigh" : "Nonce is too large, change it to the latest one.",
       "notEnoughBaseGas" : "Gas limit is invalid, reset to >= {{gasLimit}}",
       "signatureError" : "Signature Error.",
       "tooStaleNonce" : "The nonce transaction has been executed, change it to the latest one.",

@@ -396,27 +396,27 @@
       "txHash" : "交易哈希"
     },
     "error" : {
-      "balanceNotEnough" : null,
-      "chainIdMismatch" : null,
-      "contractExecuteFailed" : null,
-      "gasExceedsLimit" : null,
-      "gasPriceTooLow" : null,
-      "nodeInCatchUp" : null,
-      "nonceTooHigh" : null,
-      "notEnoughBaseGas" : null,
-      "signatureError" : null,
-      "tooStaleNonce" : null,
-      "txPoolFull" : null,
-      "unknownError" : null,
-      "zeroGasPrice" : null
+      "balanceNotEnough" : "CFX 餘額不足以支付燃氣費",
+      "chainIdMismatch" : "無法檢索到鏈信息",
+      "contractExecuteFailed" : "合約執行失敗，詳情：",
+      "gasExceedsLimit" : "燃氣限制過大，請重新設置為 < 15000000",
+      "gasPriceTooLow" : "燃气价格太低",
+      "nodeInCatchUp" : "此節點不在工作，等待或換一個節點",
+      "nonceTooHigh" : "使用的隨機數過大，請設置為最新的數值",
+      "notEnoughBaseGas" : "燃氣限制無效，建議重置為 >= {{gasLimit}}",
+      "signatureError" : "簽名錯誤",
+      "tooStaleNonce" : "此隨機數 (Nonce) 的交易已被執行，請切換至最新的",
+      "txPoolFull" : "交易擁堵，請嘗試提高燃氣價格",
+      "unknownError" : "未知錯誤： {{msg}}",
+      "zeroGasPrice" : "無效的燃氣價格，請重新設置"
     },
     "gasFee" : {
       "advance" : "進階",
       "advanceSetting" : {
-        "gasLimit" : null,
+        "gasLimit" : "燃氣限制 (Gas Limit)",
         "lowWarning" : "您填寫的 gas limit 低於預估值，可能會導致交易失敗",
         "miniumGasLimit" : "{{network}} 需要的最低 gasLimit 值為 {{gasLimit}}",
-        "nonce" : null,
+        "nonce" : "隨機數 (Nonce)",
         "title" : "進階設定"
       },
       "customizeGasSetting" : {
