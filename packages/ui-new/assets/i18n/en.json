@@ -395,11 +395,28 @@
       "to" : "To",
       "txHash" : "Transaction Hash"
     },
+    "error" : {
+      "balanceNotEnough" : "Insufficient CFX for gas fee.",
+      "chainIdMismatch" : "Unable to find chain information.",
+      "contractExecuteFailed" : "Contract execution failed, info: {{msg}}",
+      "gasExceedsLimit" : "Gas limit is too large, reset to < 15000000",
+      "gasPriceTooLow" : "Gas price is too low.",
+      "nodeInCatchUp" : "Node is not working, change the node or waiting.",
+      "nonceTooHigh" : "Nonce is too large, change it to the latest one.",
+      "notEnoughBaseGas" : "Gas limit is invalid, reset to >= {{gasLimit}}",
+      "signatureError" : "Signature Error.",
+      "tooStaleNonce" : "The nonce transaction has been executed, change it to the latest one.",
+      "txPoolFull" : "Transactions are too crowded, please increase gas price.",
+      "unknownError" : "Unknown error: {{msg}}",
+      "zeroGasPrice" : "Gas price is invalid, reset it."
+    },
     "gasFee" : {
       "advance" : "Advance",
       "advanceSetting" : {
+        "gasLimit" : "Gas Limit",
         "lowWarning" : "Your offer is lower than the estimated gas limit and may cause a transaction failure.",
         "miniumGasLimit" : "{{network}} requires a minimum gasLimit of {{gasLimit}}.",
+        "nonce" : "Nonce",
         "title" : "Advance Setting"
       },
       "customizeGasSetting" : {

@@ -49,6 +49,7 @@ const CustomizeAdvanceSetting: React.FC<Props> = ({ customizeAdvanceSetting, est
       nonce: String(customizeAdvanceSetting?.nonce ?? estimateNonce),
       storageLimit: new Decimal(customizeAdvanceSetting?.storageLimit ?? '0').toString(),
     },
+    mode: 'onChange',
   });
 
   const handleConfirm = useCallback((data: FormData) => {
@@ -92,12 +93,12 @@ const CustomizeAdvanceSetting: React.FC<Props> = ({ customizeAdvanceSetting, est
       <BottomSheetWrapper innerPaddingHorizontal>
         <BottomSheetHeader title={t('tx.gasFee.advanceSetting.title')} />
         <BottomSheetContent style={styles.contentStyle}>
-          <Text style={[styles.inputTitle, { color: colors.textSecondary }]}>Gas Limit</Text>
+          <Text style={[styles.inputTitle, { color: colors.textSecondary }]}>{t('tx.gasFee.advanceSetting.gasLimit')}</Text>
           <Controller
             control={control}
             rules={{
               required: true,
-              validate: (newGasLimit) => new Decimal(newGasLimit ?? '0').greaterThanOrEqualTo(minGasLimit) || 'less-than-min',
+              validate: (newGasLimit) => new Decimal(newGasLimit || '0').greaterThanOrEqualTo(minGasLimit) || 'less-than-min',
             }}
             render={({ field: { onChange, onBlur, value } }) => (
               <TextInput
@@ -114,7 +115,7 @@ const CustomizeAdvanceSetting: React.FC<Props> = ({ customizeAdvanceSetting, est
           {errors.gasLimit?.type === 'validate' && LessThanMinTip}
           {!errors.gasLimit && isGasLimitLowerThanEstimate && LowerTip}
 
-          <Text style={[styles.inputTitle, { color: colors.textSecondary }]}>Nonce</Text>
+          <Text style={[styles.inputTitle, { color: colors.textSecondary }]}>{t('tx.gasFee.advanceSetting.nonce')}</Text>
           <Controller
             control={control}
             rules={controlRule}

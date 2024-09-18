@@ -67,7 +67,8 @@ function WalletConnectSignMessage() {
       try {
         const parsedMessage = JSON.parse(decodeMsg);
         const sanitizedMessage = sanitizeTypedData(parsedMessage);
-        decodeMsg = JSON.stringify(sanitizedMessage, null, 4);
+
+        decodeMsg = JSON.stringify(sanitizedMessage?.message || {}, null, 4);
       } catch (error) {
         return '';
       }
@@ -75,7 +76,6 @@ function WalletConnectSignMessage() {
 
     return decodeMsg;
   }, [message, method]);
-
   const handleCoy = useCallback(
     (value: string) => {
       Clipboard.setString(value);
