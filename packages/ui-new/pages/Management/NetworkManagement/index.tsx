@@ -23,7 +23,9 @@ const NetworkManagement = () => {
         <Text style={[styles.font14, styles.fontWeight400, styles.mb24, { color: colors.textPrimary }]}>{currentNetwork?.name}</Text>
 
         <Text style={[styles.font14, styles.fontWeight300, styles.mb16, { color: colors.textSecondary }]}>{t('settings.network.chainId')}</Text>
-        <Text style={[styles.font14, styles.fontWeight400, { color: colors.textPrimary }]}>{currentNetwork?.chainId}</Text>
+        <Text style={[styles.font14, styles.fontWeight400, { color: colors.textPrimary }]}>
+          {Number(currentNetwork?.chainId)} ({currentNetwork?.chainId})
+        </Text>
       </View>
 
       <View style={styles.warp}>
