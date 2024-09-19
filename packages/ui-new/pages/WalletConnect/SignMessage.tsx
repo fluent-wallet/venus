@@ -176,13 +176,13 @@ function WalletConnectSignMessage() {
 
   const renderMessage = useCallback(() => {
     if (method === WalletConnectRPCMethod.PersonalSign) {
-      return <Text>{signMsg}</Text>;
+      return <Text style={{ color: colors.textPrimary }}>{signMsg}</Text>;
     }
     if (method.includes('signTypedData')) {
       return <PlaintextMessage data={JSON.parse(signMsg)?.message || {}} />;
     }
     return '';
-  }, [signMsg, method]);
+  }, [signMsg, method, colors.textPrimary]);
 
   return (
     <>
