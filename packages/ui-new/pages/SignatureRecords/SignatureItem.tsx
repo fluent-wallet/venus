@@ -11,6 +11,7 @@ import { useTranslation } from 'react-i18next';
 import Clipboard from '@react-native-clipboard/clipboard';
 import Copy from '@assets/icons/copy.svg';
 import { showMessage } from 'react-native-flash-message';
+import { PlaintextMessage } from '@components/PlaintextMessage';
 
 const substrWithChinese = (str: string, start: number, n: number, suffix = '...') => {
   if (str.replace(/[\u4e00-\u9fa5]/g, '**').length <= n) {
@@ -43,34 +44,61 @@ export const SignatureItem: React.FC<{ item: Signature; maxMessageLength: number
   const tx = useTxOfSignature(item.id);
   const time = dayjs(item.createdAt).format('YYYY/MM/DD HH:mm:ss');
   const isTxSignature = item.signType === SignType.TX;
+  const { shownMessage, jsonMessage } = useMemo(() => {
+    let jsonMessage: any = {};
+    let shownMessage = item.message ?? '';
+    try {
+      if (item.signType === SignType.TX) {
+        shownMessage = '';
+      } else if (item.signType === SignType.JSON) {
+        jsonMessage = JSON.parse(shownMessage).message || {};
+        shownMessage = JSON.stringify(jsonMessage) ?? '';
+      }
+      return {
+        shownMessage,
+        jsonMessage,
+      };
+    } catch (error) {
+      console.log('parse message error:', error);
+      return {
+        shownMessage,
+        jsonMessage,
+      };
+    }
+  }, [item]);
   const ellipsisMessage = useMemo(() => {
-    if (isTxSignature) return '';
-    return substrWithChinese(item.message ?? '', 0, maxMessageLength);
-  }, [isTxSignature, item.message, maxMessageLength]);
-  const isFolded = folded && ellipsisMessage && ellipsisMessage !== item.message;
+    return substrWithChinese(shownMessage, 0, maxMessageLength);
+  }, [shownMessage, maxMessageLength]);
+  const isFolded = folded && ellipsisMessage && ellipsisMessage !== shownMessage;
   const handleCopy = useCallback(() => {
-    Clipboard.setString(item.message ?? '');
+    Clipboard.setString(shownMessage);
     showMessage({
       message: t('common.copied'),
       type: 'success',
       duration: 1500,
       width: 160,
     });
-  }, [item.message, t]);
+  }, [shownMessage, t]);
   return (
     <View style={[styles.item, { borderColor: colors.borderThird }]}>
       <Text style={[styles.time, { color: colors.textSecondary }]}>{time}</Text>
       <Text style={[styles.title, { color: colors.textPrimary }]}>{!isTxSignature ? 'Sign Data' : tx?.method}</Text>
       {!isTxSignature && (
         <View style={styles.messageContainer}>
-          <Text style={[styles.message, { color: colors.textPrimary, flex: 1 }]}>
-            {isFolded ? ellipsisMessage : item.message}
+          <View style={[styles.message, isFolded ? { display: 'flex', flexDirection: 'row', alignItems: 'flex-end' } : {}]}>
+            {isFolded ? (
+              <Text style={[styles.messageText, { color: colors.textPrimary }]}>{ellipsisMessage}</Text>
+            ) : item.signType === SignType.JSON ? (
+              <PlaintextMessage data={jsonMessage} />
+            ) : (
+              <Text style={[styles.messageText, { color: colors.textPrimary }]}>{shownMessage}</Text>
+            )}
             {isFolded && (
               <Text onPress={() => setFolded(false)} testID="more" style={[styles.action, { color: colors.up }]}>
                 {t('signature.list.showMore')}
               </Text>
             )}
-          </Text>
+          </View>
           {!isFolded && (
             <Pressable style={styles.copy} onPress={handleCopy} testID="copy">
               <Copy color={colors.textSecondary} />
@@ -113,9 +141,11 @@ export const styles = StyleSheet.create({
     paddingTop: 16,
   },
   message: {
+    flex: 1,
+  },
+  messageText: {
     fontSize: 14,
     fontWeight: '300',
-    flex: 1,
   },
   action: {
     fontSize: 14,

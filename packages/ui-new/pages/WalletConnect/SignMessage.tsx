@@ -31,7 +31,7 @@ import { useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { showMessage } from 'react-native-flash-message';
-import { PlaintextMessage } from './PlaintextMessage';
+import { PlaintextMessage } from '@components/PlaintextMessage';
 
 function WalletConnectSignMessage() {
   const { t } = useTranslation();
@@ -174,15 +174,36 @@ function WalletConnectSignMessage() {
   const { inAsync: approveLoading, execAsync: handleApprove } = useInAsync(_handleApprove);
   const { inAsync: rejectLoading, execAsync: handleReject } = useInAsync(_handleReject);
 
+  const { shownMessage, jsonMessage } = useMemo(() => {
+    let jsonMessage: any = {};
+    let shownMessage = signMsg ?? '';
+    try {
+      if (method.includes('signTypedData')) {
+        jsonMessage = JSON.parse(shownMessage).message || {};
+        shownMessage = JSON.stringify(jsonMessage) ?? '';
+      }
+      return {
+        shownMessage,
+        jsonMessage,
+      };
+    } catch (error) {
+      console.log('parse message error:', error);
+      return {
+        shownMessage,
+        jsonMessage,
+      };
+    }
+  }, [signMsg, method]);
+
   const renderMessage = useCallback(() => {
     if (method === WalletConnectRPCMethod.PersonalSign) {
-      return <Text style={{ color: colors.textPrimary }}>{signMsg}</Text>;
+      return <Text style={{ color: colors.textPrimary }}>{shownMessage}</Text>;
     }
     if (method.includes('signTypedData')) {
-      return <PlaintextMessage data={JSON.parse(signMsg)?.message || {}} />;
+      return <PlaintextMessage data={jsonMessage} />;
     }
     return '';
-  }, [signMsg, method, colors.textPrimary]);
+  }, [shownMessage, jsonMessage, method, colors.textPrimary]);
 
   return (
     <>
@@ -204,7 +225,7 @@ function WalletConnectSignMessage() {
             </View>
           </BottomSheetHeader>
           <BottomSheetScrollContent style={[styles.content, { borderColor: colors.borderFourth }]} stickyHeaderIndices={[0]}>
-            <Pressable onPress={() => handleCoy(signMsg)} testID="copy">
+            <Pressable onPress={() => handleCoy(shownMessage)} testID="copy">
               <View style={[styles.flexWithRow, styles.scrollTitle, { backgroundColor: colors.bgFourth }]}>
                 <Text style={[styles.h2, { color: colors.textPrimary }]}>{t('wc.sign.message')}</Text>
                 <Copy color={colors.textSecondary} />
