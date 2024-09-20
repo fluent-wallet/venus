@@ -146,6 +146,7 @@ export const styles = StyleSheet.create({
   messageText: {
     fontSize: 14,
     fontWeight: '300',
+    flex: 1,
   },
   action: {
     fontSize: 14,

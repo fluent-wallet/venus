@@ -76,8 +76,8 @@ const SignatureRecords: React.FC<StackScreenProps<typeof SignatureRecordsStackNa
 
   const handleContainerLayout = (e: LayoutChangeEvent) => {
     const containerWidth = e.nativeEvent.layout.width;
-    // 7 is for ... and more
-    setMaxMessageLength(Math.floor(containerWidth / 5) - 7);
+    // 10 is for ... and more
+    setMaxMessageLength(Math.floor(containerWidth / 5) - 10);
   };
 
   return (
