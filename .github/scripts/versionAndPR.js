@@ -115,38 +115,4 @@ module.exports = async ({ github, context, core, exec }) => {
   }
 
   // end PR to QA
-
-
-  // start PR to dev
-
-  const devPrTitle = `Version Change`; 
-  const devPrBody = `PR the version change to dev branch.`
-
-  
-
-  let { data: mergeToDevPullRequests } = await github.rest.pulls.list({
-    ...context.repo,
-    state: "open",
-    head: `${context.repo.owner}:${versionBranch}`,
-    base: "dev",
-  });
-
-  if (mergeToDevPullRequests.length > 0) {
-    const [pullRequest] = mergeToDevPullRequests;
-    await github.rest.pulls.update({
-      pull_number: pullRequest.number,
-      title: devPrTitle,
-      body: devPrBody,
-      ...context.repo,
-      state: "open",
-    });
-  } else {
-    await github.rest.pulls.create({
-      base: "dev",
-      head: versionBranch,
-      title: devPrTitle,
-      body: devPrBody,
-      ...context.repo,
-    });
-  }
 };

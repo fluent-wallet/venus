@@ -31,6 +31,7 @@ import { useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { showMessage } from 'react-native-flash-message';
+import { PlaintextMessage } from './PlaintextMessage';
 
 function WalletConnectSignMessage() {
   const { t } = useTranslation();
@@ -68,7 +69,7 @@ function WalletConnectSignMessage() {
         const parsedMessage = JSON.parse(decodeMsg);
         const sanitizedMessage = sanitizeTypedData(parsedMessage);
 
-        decodeMsg = JSON.stringify(sanitizedMessage?.message || {}, null, 4);
+        decodeMsg = JSON.stringify(sanitizedMessage, null, 4);
       } catch (error) {
         return '';
       }
@@ -173,6 +174,16 @@ function WalletConnectSignMessage() {
   const { inAsync: approveLoading, execAsync: handleApprove } = useInAsync(_handleApprove);
   const { inAsync: rejectLoading, execAsync: handleReject } = useInAsync(_handleReject);
 
+  const renderMessage = useCallback(() => {
+    if (method === WalletConnectRPCMethod.PersonalSign) {
+      return <Text style={{ color: colors.textPrimary }}>{signMsg}</Text>;
+    }
+    if (method.includes('signTypedData')) {
+      return <PlaintextMessage data={JSON.parse(signMsg)?.message || {}} />;
+    }
+    return '';
+  }, [signMsg, method, colors.textPrimary]);
+
   return (
     <>
       <BottomSheet
@@ -199,7 +210,7 @@ function WalletConnectSignMessage() {
                 <Copy color={colors.textSecondary} />
               </View>
             </Pressable>
-            <Text style={{ color: colors.textPrimary }}>{signMsg}</Text>
+            <View style={{ marginBottom: 16 }}>{renderMessage()}</View>
           </BottomSheetScrollContent>
 
           <BottomSheetFooter style={[styles.footer, { borderColor: colors.borderFourth }]}>
