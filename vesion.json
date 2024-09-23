@@ -1,36 +1,34 @@
 {
-    "version": "2.1.0",
-    "force": false,
-    "en": {
-      "description": "BIM Wallet new version is released, new features:",
-      "messageList": [
-        "support 1559 transaction type",
-        "support custom rpc fullnode url",
-        "support transaction acceleration and cancellation",
-        "history transaction details",
-        "signature record",
-        "Prompts for version updates",
-        "Amount support max mode",
-        "Gas station",
-        "Pending number exceeds the limit to prevent sending transactions, the current limit is 5.",
-        "transaction status update optimisation",
-        "transaction history nonce de-duplication"
-      ]
-    },
-    "zh-Hant": {
-      "description": "BIM Wallet 新版本已發佈，新增功能包括:",
-      "messageList": [
-        "支援 1559 交易類型",
-        "支援自訂 RPC fullnode 網址",
-        "支援交易加速和取消",
-        "歷史交易詳情",
-        "簽名記錄",
-        "提示版本更新",
-        "Amount 支援最大模式",
-        "Gas station",
-        "Pending 個數超過限制將無法發送交易，目前限制為 5",
-        "交易狀態更新優化",
-        "交易歷史 nonce 去重"
-      ]
-    }
+  "version": "2.1.0",
+  "force": false,
+  "en": {
+    "description": "🎉 BIM Wallet New Version v2.1.0",
+    "messageList": [
+      "✨ New Features",
+      "Added support for CIP-1559 transaction types",
+      "Added gas price recommendation option",
+      "Added transaction acceleration and cancellation features",
+      "Added custom RPC URL support",
+      "Added transaction history log",
+      "Added signature log",
+      "Added optimized transaction experience strategies",
+      "💎 Improvements",
+      "Fixed some known issues"
+    ]
+  },
+  "zh-Hant": {
+    "description": "🎉 BIM Wallet 新版本 v2.1.0",
+    "messageList": [
+      "✨ 新功能",
+      "新增對 CIP-1559 交易類型的支持",
+      "新增燃氣價格推薦選項",
+      "新增交易加速和取消功能",
+      "新增自定義 RPC URL",
+      "新增交易發送記錄",
+      "新增簽名記錄",
+      "新增交易體驗優化策略",
+      "💎 優化",
+      "修復一些已知問題"
+    ]
   }
+}
