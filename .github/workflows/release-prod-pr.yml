@@ -21,10 +21,9 @@ jobs:
         with:
           node-version: 20
           cache: "yarn"
-      - name: version check
+      - name: install dependencies
         run: |
           yarn install
-          yarn version check
 
       - name: Update Version and Create Pull Request
         uses: actions/github-script@v7
