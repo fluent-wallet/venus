@@ -3,8 +3,7 @@ name: Version Update
 on:
   push:
     branches:
-      - dev
-      - '!qa-release/dev'
+      - qa
 
 jobs:
   createPullRequest:
@@ -32,4 +31,4 @@ jobs:
         with:
           script: |
             const script = require('./.github/scripts/versionAndPR.js')
-            await script({github, context, core, exec})
+            await script({github, context, core, exec, release: 'prod'})
