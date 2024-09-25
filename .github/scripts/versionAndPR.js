@@ -26,8 +26,12 @@ async function updateVersion(pkgVersion) {
   await fs.writeFile(iosFilePath, updatedIosData);
 }
 
-module.exports = async ({ github, context, core, exec }) => {
-  const versionBranch = `qa-release/dev`;
+module.exports = async ({ github, context, core, exec, release }) => {
+
+  
+
+
+  const versionBranch = release === 'prod' ?"prod-release/qa" : `qa-release/dev`;
 
   // switch to branch
 
@@ -73,8 +77,8 @@ module.exports = async ({ github, context, core, exec }) => {
 
 
   // start PR to QA
-  const QAPrTitle = `Release QA version`;
-  const QAPrBody = `This PR is created by github action.
+  const PRTitle = release === 'prod' ? `Release prod version`: `Release QA version`;
+  const PRBody = `This PR is created by github action.
 
   It update the Android versionCode (increment 1) and versionName(read from package.json).
 
@@ -82,34 +86,34 @@ module.exports = async ({ github, context, core, exec }) => {
 
   **Note**: Check the PR before merge.
 
-  [ ] 1. Please check that the version name is correct.
-  [ ] 2. Please check that the version code is correct.
-  [ ] 3. Please check that the CURRENT_PROJECT_VERSION is correct.
-  [ ] 4. Please check that the version.json is correct.
+  - [ ] 1. Please check that the version name is correct.
+  - [ ] 2. Please check that the version code is correct.
+  - [ ] 3. Please check that the CURRENT_PROJECT_VERSION is correct.
+  - [ ] 4. Please check that the version.json is correct.
   `;
 
   let { data: releaseQAPullRequests } = await github.rest.pulls.list({
     ...context.repo,
     state: "open",
     head: `${context.repo.owner}:${versionBranch}`,
-    base: "qa",
+    base: release === 'prod' ? "main" : "qa",
   });
 
   if (releaseQAPullRequests.length > 0) {
     const [pullRequest] = releaseQAPullRequests;
     await github.rest.pulls.update({
       pull_number: pullRequest.number,
-      title: QAPrTitle,
-      body: QAPrBody,
+      title: PRTitle,
+      body: PRBody,
       ...context.repo,
       state: "open",
     });
   } else {
     await github.rest.pulls.create({
-      base: "qa",
+      base: release === 'prod' ? "main" : "qa",
       head: versionBranch,
-      title: QAPrTitle,
-      body: QAPrBody,
+      title: PRTitle,
+      body: PRBody,
       ...context.repo,
     });
   }
