@@ -124,6 +124,9 @@ jobs:
     needs: [android-build]
     runs-on: ubuntu-latest
     steps:
+      - name: install OSSUTIL
+        run: |
+          sudo -v ; curl https://gosspublic.alicdn.com/ossutil/install.sh | sudo bash
       - name: Configure OSS
         env:
           OSS_KEY: ${{ secrets.OSS_KEY }}
