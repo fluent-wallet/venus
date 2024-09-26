@@ -147,7 +147,7 @@ const ExternalInputHandler: React.FC<Props> = ({ navigation, onConfirm, onClose,
 
           const targetAsset = !ethUrl.parameters?.address
             ? allAssetsTokens?.find((asset) => asset.type === AssetType.Native)
-            : allAssetsTokens?.find((asset) => asset.contractAddress === ethUrl.parameters?.address);
+            : allAssetsTokens?.find((asset) => asset.contractAddress?.toLowerCase() === ethUrl.parameters?.address?.toLowerCase());
 
           if (!targetAsset) {
             if (ethUrl.parameters?.address) {
@@ -161,14 +161,16 @@ const ExternalInputHandler: React.FC<Props> = ({ navigation, onConfirm, onClose,
               setParseStatus({ message: 'Unvalid ETHURL.' });
             }
           } else {
-            if (ethUrl.parameters?.value) {
+            if (ethUrl.parameters?.uint256 || ethUrl.parameters?.value) {
               navigation.dispatch(
                 StackActions.replace(SendTransactionStackName, {
                   screen: SendTransactionStep4StackName,
                   params: {
                     recipientAddress: ethUrl.target_address,
                     asset: targetAsset,
-                    amount: new Decimal(String(ethUrl.parameters?.value)).div(Decimal.pow(10, targetAsset.decimals ?? 18)).toString(),
+                    amount: new Decimal(String(ethUrl.parameters?.uint256 || ethUrl.parameters?.value))
+                      .div(Decimal.pow(10, targetAsset.decimals ?? 18))
+                      .toString(),
                   },
                 }),
               );
