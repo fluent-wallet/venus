@@ -1,0 +1,147 @@
+name: build QA
+
+permissions:
+  contents: write
+
+on:
+  push:
+    branches:
+      - qa
+
+jobs:
+  createTag:
+    name: Create Tag
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out Git repository
+        uses: actions/checkout@v4
+        with:
+          ref: qa
+
+      - name: get package version
+        id: get-package-version
+        run: |
+          echo "PACKAGE_VERSION=$(cat package.json | jq -r '.version')" >> "$GITHUB_OUTPUT"
+
+      - name: Create tag
+        uses: actions/github-script@v7
+        env:
+          PACKAGE_VERSION: ${{ steps.get-package-version.outputs.PACKAGE_VERSION }}
+        with:
+          script: |
+            github.rest.git.createRef({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              ref: `refs/tags/v${process.env.PACKAGE_VERSION}-qa`,
+              sha: context.sha
+            })
+
+  android-build:
+    name: Android Build
+    runs-on: ubuntu-latest
+    needs: [createTag]
+    steps:
+      - name: Check out Git repository
+        uses: actions/checkout@v4
+        with:
+          ref: qa
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: install dependencies
+        run: yarn
+
+      - name: get package version
+        id: get-package-version
+        run: |
+          echo "PACKAGE_VERSION=$(cat package.json | jq -r '.version')" >> "$GITHUB_OUTPUT"
+      - name: Set up JDK envronment
+        uses: actions/setup-java@v4
+        with:
+          distribution: "zulu"
+          java-version: "17"
+          cache: "gradle"
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Make Gradlew Executable
+        run: cd android && chmod +x ./gradlew
+      - name: Set env and Build Android Release
+        env:
+          PASSWORD_CRYPTO_KEY: ${{ secrets.PASSWORD_CRYPTO_KEY }}
+          STAGING_ANDROID: ${{ secrets.STAGING_ANDROID }}
+        run: |
+          echo "" > .env
+          cat >>.env <<END
+          APP_ENV=qa
+          PASSWORD_CRYPTO_KEY=$PASSWORD_CRYPTO_KEY
+          END
+          cd android && ./gradlew app:assembleQaRelease && cd ..
+      - name: push to github
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ steps.get-package-version.outputs.PACKAGE_VERSION }}-qa
+          name: v${{ steps.get-package-version.outputs.PACKAGE_VERSION }}-qa
+          files: |
+            ./android/app/build/outputs/apk/qa/release/app-qa-release.apk
+  ios-build:
+    name: IOS Build
+    runs-on: macos-latest
+    needs: [createTag]
+    steps:
+      - name: Check out Git repository
+        uses: actions/checkout@v4
+        with:
+          ref: qa
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: install dependencies
+        run: yarn
+
+      - name: patch and install pod
+        env:
+          PASSWORD_CRYPTO_KEY: ${{ secrets.PASSWORD_CRYPTO_KEY }}
+          STAGING_ANDROID: ${{ secrets.STAGING_ANDROID }}
+        run: |
+          echo "" > .env
+          cat >>.env <<END
+          APP_ENV=qa
+          PASSWORD_CRYPTO_KEY=$PASSWORD_CRYPTO_KEY
+          END
+          yarn patchPackage && cd ios && pod install --repo-update && cd ..
+          rm ./ios/.xcode.env.local
+
+      - name: Build IOS App
+        uses: yukiarrr/ios-build-action@v1.12.0
+        with:
+          project-path: ios/BIMWallet.xcodeproj
+          p12-base64: ${{ secrets.IOS_P12_BASE64 }}
+          mobileprovision-base64: ${{ secrets.IOS_MOBILE_PROVISION_BASE64 }}
+          team-id: ${{ secrets.IOS_TEAM_ID }}
+          certificate-password: ${{ secrets.IOS_CERTIFICATE_PASSWORD }}
+          workspace-path: ios/BIMWallet.xcworkspace
+          code-signing-identity: "iPhone Distribution"
+          output-path: "bimwallet.ipa"
+
+      - name: Install private API key P8
+        env:
+          PRIVATE_API_KEY_BASE64: ${{ secrets.APPSTORE_API_PRIVATE_KEY_BASE64 }}
+          API_KEY: ${{ secrets.APPSTORE_API_KEY_ID }}
+        run: |
+          mkdir -p ~/private_keys
+          echo -n "$PRIVATE_API_KEY_BASE64" | base64 --decode --output ~/private_keys/AuthKey_$API_KEY.p8
+
+      - name: "Upload app to TestFlight"
+        env:
+          API_KEY: ${{ secrets.APPSTORE_API_KEY_ID }}
+          API_ISSUER: ${{ secrets.APPSTORE_ISSUER_ID  }}
+        run: |
+          xcrun altool --output-format xml --upload-app -f ./bimwallet.ipa -t ios --apiKey $API_KEY --apiIssuer $API_ISSUER

@@ -1,0 +1,34 @@
+name: Version Update
+
+on:
+  push:
+    branches:
+      - dev
+
+jobs:
+  createPullRequest:
+    name: Create QA pull request
+    runs-on: ubuntu-latest
+    permissions: 
+      pull-requests: write
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Use Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: "yarn"
+      - name: version check
+        run: |
+          yarn install
+          yarn version check
+
+      - name: Update Version and Create Pull Request
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const script = require('./.github/scripts/versionAndPR.js')
+            await script({github, context, core, exec, release: 'qa'})

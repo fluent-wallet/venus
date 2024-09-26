@@ -4,7 +4,7 @@ import Text from '@components/Text';
 import { useTheme } from '@react-navigation/native';
 import type React from 'react';
 import { useRef } from 'react';
-import { useTranslation } from 'react-i18next';
+import { Trans, useTranslation } from 'react-i18next';
 import { StyleSheet, View } from 'react-native';
 import { styles } from './CustomizeGasSetting';
 
@@ -21,12 +21,14 @@ const DappParamsWarning: React.FC<Props> = ({ onClose, onPressUse }) => {
   return (
     <BottomSheet ref={bottomSheetRef} snapPoints={snapPoints} index={0} onClose={onClose}>
       <BottomSheetWrapper innerPaddingHorizontal>
-        <BottomSheetHeader title="Tips" />
+        <BottomSheetHeader title={t('tx.gasFee.dappParams.title')} />
         <BottomSheetContent>
-          <Text style={[styles2.text, { color: colors.textPrimary }]}>The gas parameters used by the DApp may cause the transaction to fail.</Text>
+          <Text style={[styles2.text, { color: colors.textPrimary }]}>{t('tx.gasFee.dappParams.description')}</Text>
 
           <Text style={[styles2.text, { color: colors.textPrimary }]}>
-            Whether to use the <Text style={{ color: colors.up, fontWeight: '600' }}>gas parameters</Text> recommended by BIM Wallet Wallet?
+            <Trans i18nKey={'tx.gasFee.dappParams.ask'}>
+              Whether to use the <Text style={{ fontWeight: '600' }}>gas parameters</Text> recommended by BIM Wallet Wallet?
+            </Trans>
           </Text>
         </BottomSheetContent>
         <BottomSheetFooter>
@@ -40,10 +42,10 @@ const DappParamsWarning: React.FC<Props> = ({ onClose, onPressUse }) => {
                 bottomSheetRef.current?.close();
               }}
             >
-              Use
+              {t('common.use')}
             </Button>
             <Button testID="confirm" style={styles.btn} size="small" onPress={() => bottomSheetRef.current?.close()}>
-              Dismiss
+              {t('common.dismiss')}
             </Button>
           </View>
         </BottomSheetFooter>
@@ -62,7 +64,6 @@ const styles2 = StyleSheet.create({
     lineHeight: 20,
   },
   btnArea: {
-    marginTop: 'auto',
     marginBottom: 48,
   },
 });

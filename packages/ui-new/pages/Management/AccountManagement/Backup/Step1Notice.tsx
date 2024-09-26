@@ -43,8 +43,8 @@ const BackupStep1Notice: React.FC<BackupScreenProps<typeof BackupStep1StackName>
 const styles = StyleSheet.create({
   img: {
     alignSelf: 'center',
-    width: isSmallDevice ? '85%' : '90%',
-    aspectRatio: 1.285,
+    width: 260,
+    aspectRatio: 1,
     marginTop: isSmallDevice ? 16 : 20,
   },
   notice: {

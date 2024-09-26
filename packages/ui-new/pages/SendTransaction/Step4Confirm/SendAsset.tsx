@@ -22,8 +22,8 @@ const SendAsset: React.FC<Props> = ({ amount, symbol, icon, price, recipientAddr
     <>
       {(amount || symbol) && (
         <>
-          <Text style={[styles.text, styles.to, { color: colors.textSecondary }]}>{t('common.amount')}</Text>
-          <View style={styles.balanceWrapper}>
+          <Text style={[styles.text, styles.ph16, { color: colors.textSecondary }]}>{t('common.amount')}</Text>
+          <View style={[styles.balanceWrapper, styles.ph16]}>
             <Text style={[styles.balance, { color: colors.textPrimary }]} numberOfLines={1}>
               {amount}
               {symbol ? ` ${symbol}` : ''}
@@ -42,8 +42,11 @@ const SendAsset: React.FC<Props> = ({ amount, symbol, icon, price, recipientAddr
 };
 
 const styles = StyleSheet.create({
+  ph16: {
+    paddingHorizontal: 16,
+  },
   to: {
-    marginTop: 32,
+    marginTop: 24,
     marginBottom: 4,
     paddingHorizontal: 16,
   },

@@ -4,7 +4,7 @@ export const palette = {
   green2: '#CEF8FF',
   green3: '#A6F3FF',
   green4: '#48E6FF',
-  green5: '#00CAEA',
+  green5: '#01C2E1',
   green6: '#00798C',
   green7: '#00515E',
   green8: '#00282F',
@@ -54,6 +54,8 @@ export const lightColors = {
   foreg: '#f3f3f3',
   middle: '#FFD31A',
   actionPrimary: palette.blue0,
+  buttonFourth: palette.gray2,
+  buttonLineThird: palette.gray3,
 };
 
 export const darkColors: typeof lightColors = {
@@ -83,6 +85,8 @@ export const darkColors: typeof lightColors = {
   foreg: palette.gray6,
   middle: '#FFD31A',
   actionPrimary: palette.blue1,
+  buttonFourth: palette.gray7,
+  buttonLineThird: palette.gray4,
 };
 
 const defaultFont = {

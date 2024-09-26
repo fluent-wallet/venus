@@ -4,7 +4,7 @@ import Button from '@components/Button';
 import Icon from '@components/Icon';
 import Text from '@components/Text';
 import plugins from '@core/WalletCore/Plugins';
-import { useCurrentAccount, useCurrentAddressValue } from '@core/WalletCore/Plugins/ReactInject';
+import { useCurrentAccount, useCurrentAddressOfAccount, useCurrentAddressValue } from '@core/WalletCore/Plugins/ReactInject';
 import type { IWCSessionProposalEvent } from '@core/WalletCore/Plugins/WalletConnect/types';
 import { shortenAddress } from '@core/utils/address';
 import useInAsync from '@hooks/useInAsync';
@@ -27,6 +27,7 @@ export default function WalletConnectProposal() {
   const { t } = useTranslation();
 
   const currentAccount = useCurrentAccount();
+  const currentAddress = useCurrentAddressOfAccount(currentAccount?.id);
   const currentAddressValue = useCurrentAddressValue();
 
   const isHTTPS = url.startsWith('https://');
@@ -34,15 +35,12 @@ export default function WalletConnectProposal() {
   const _handleApprove = useCallback(async () => {
     try {
       const approve = plugins.WalletConnect.currentEventSubject.getValue()?.action.approve as IWCSessionProposalEvent['action']['approve'];
-      await approve({
-        chains: connectedNetworks.map((net) => `eip155:${net.netId}`),
-        accounts: connectedNetworks.map((net) => `eip155:${net.netId}:${currentAddressValue}`), //[`eip155:${currentNetwork?.netId}:${currentAddress?.hex}`],
-      });
+      await approve();
     } catch (e) {
       console.log(e);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentAddressValue]);
+  }, [currentAddress?.id]);
 
   const _handleReject = useCallback(async () => {
     try {

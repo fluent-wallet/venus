@@ -3,7 +3,13 @@ import { type BSIMEvent, BSIMEventTypesName } from '@WalletCoreExtends/Plugins/B
 import ArrowLeft from '@assets/icons/arrow-left2.svg';
 import FailedIcon from '@assets/icons/message-fail.svg';
 import BSIMCardWallet from '@assets/icons/wallet-bsim.webp';
-import BottomSheet, { type BottomSheetMethods } from '@components/BottomSheet';
+import BottomSheet, {
+  BottomSheetWrapper,
+  BottomSheetScrollContent,
+  BottomSheetFooter,
+  type BottomSheetMethods,
+  BottomSheetHeader,
+} from '@components/BottomSheet';
 import Button from '@components/Button';
 import Spinner from '@components/Spinner';
 import Text from '@components/Text';
@@ -28,37 +34,45 @@ const BSIMVerify: React.FC<Props> = ({ bsimEvent, onClose, onRetry }) => {
 
   return (
     <BottomSheet ref={bottomSheetRef} snapPoints={snapPoints} onClose={onClose} index={0}>
-      <View style={styles.container}>
-        <View style={styles.titleContainer}>
-          {bsimEvent.type !== BSIMEventTypesName.ERROR && (
-            <View style={{ width: 24, height: 24, marginRight: 4, justifyContent: 'center', alignItems: 'center', transform: [{ translateY: 1 }] }}>
-              <Spinner width={20} height={20} color={reverseColors[mode === 'light' ? 'iconPrimary' : 'textSecondary']} backgroundColor={colors.iconPrimary} />
-            </View>
-          )}
-          {bsimEvent.type === BSIMEventTypesName.ERROR && (
-            <FailedIcon style={{ marginRight: 4, transform: [{ translateY: 1 }] }} color={colors.down} width={24} height={24} />
-          )}
-          <Text style={[styles.title, { color: colors.textPrimary }]}>
-            {bsimEvent.type === BSIMEventTypesName.ERROR ? t('tx.confirm.BSIM.error.title') : t('tx.confirm.BSIM.title')}
-          </Text>
-        </View>
-
-        <View style={styles.content}>
-          <Image style={styles.bsimImg} source={BSIMCardWallet} />
-          <View style={{ flex: 1 }}>
-            <Text style={(styles.tip, { color: colors.textPrimary })}>
-              {bsimEvent.type === BSIMEventTypesName.ERROR ? bsimEvent.message : `${t('tx.confirm.BSIM.message')}...`}
+      <BottomSheetWrapper innerPaddingHorizontal style={styles.container}>
+        <BottomSheetHeader>
+          <View style={styles.titleContainer}>
+            {bsimEvent.type !== BSIMEventTypesName.ERROR && (
+              <View style={{ width: 24, height: 24, marginRight: 4, justifyContent: 'center', alignItems: 'center', transform: [{ translateY: 1 }] }}>
+                <Spinner
+                  width={20}
+                  height={20}
+                  color={reverseColors[mode === 'light' ? 'iconPrimary' : 'textSecondary']}
+                  backgroundColor={colors.iconPrimary}
+                />
+              </View>
+            )}
+            {bsimEvent.type === BSIMEventTypesName.ERROR && (
+              <FailedIcon style={{ marginRight: 4, transform: [{ translateY: 1 }] }} color={colors.down} width={24} height={24} />
+            )}
+            <Text style={[styles.title, { color: colors.textPrimary }]}>
+              {bsimEvent.type === BSIMEventTypesName.ERROR ? t('tx.confirm.BSIM.error.title') : t('tx.confirm.BSIM.title')}
             </Text>
           </View>
-        </View>
+        </BottomSheetHeader>
+        <BottomSheetScrollContent>
+          <View style={styles.content}>
+            <Image style={styles.bsimImg} source={BSIMCardWallet} />
+            <View style={{ flex: 1 }}>
+              <Text style={[styles.tip, { color: colors.textPrimary }]}>
+                {bsimEvent.type === BSIMEventTypesName.ERROR ? bsimEvent.message : `${t('tx.confirm.BSIM.message')}...`}
+              </Text>
+            </View>
+          </View>
+        </BottomSheetScrollContent>
 
-        <View style={styles.btnArea}>
+        <BottomSheetFooter style={styles.btnArea}>
           <Button testID="close" size="small" square Icon={ArrowLeft} onPress={() => bottomSheetRef.current?.close()} />
           <Button testID="retry" style={styles.btnRetry} size="small" onPress={onRetry} loading={bsimEvent.type !== BSIMEventTypesName.ERROR}>
             {bsimEvent.type !== BSIMEventTypesName.ERROR ? '' : t('common.retry')}
           </Button>
-        </View>
-      </View>
+        </BottomSheetFooter>
+      </BottomSheetWrapper>
     </BottomSheet>
   );
 };
@@ -134,6 +148,6 @@ const styles = StyleSheet.create({
   },
 });
 
-const snapPoints = [`${((260 / screenHeight) * 100).toFixed(2)}%`];
+const snapPoints = [`${((360 / screenHeight) * 100).toFixed(2)}%`];
 
 export default BSIMVerify;

@@ -14,6 +14,7 @@ import ImportExistingWallet from '@pages/WayToInitWallet/ImportExistingWallet';
 import { useTheme } from '@react-navigation/native';
 import type { AccountManagementStackName, StackScreenProps } from '@router/configs';
 import { OS, screenHeight } from '@utils/deviceInfo';
+import { SUPPORT_BSIM_FEATURE } from '@utils/features';
 import { Image } from 'expo-image';
 import type React from 'react';
 import { useCallback, useRef, useState } from 'react';
@@ -108,7 +109,7 @@ const AddAnotherWallet: React.FC<Props> = ({ navigation }) => {
         <BottomSheetWrapper>
           <BottomSheetHeader title={t('account.action.add.title')} />
           <BottomSheetContent>
-            {!hasBSIMVaultCreated && (
+            {SUPPORT_BSIM_FEATURE.allow && !hasBSIMVaultCreated && (
               <Pressable
                 style={({ pressed }) => [accountListStyles.row, { marginTop: 16, backgroundColor: pressed ? colors.underlay : 'transparent' }]}
                 disabled={inAsync}

@@ -9,14 +9,43 @@ import { formatStatus, formatTxData } from '@core/utils/tx';
 import useFormatBalance from '@hooks/useFormatBalance';
 import NFTIcon from '@modules/AssetsList/NFTsList/NFTIcon';
 import TokenIcon from '@modules/AssetsList/TokensList/TokenIcon';
-import { type HomeStackName, SpeedUpStackName, type StackScreenProps } from '@router/configs';
-import { useTheme, useNavigation } from '@react-navigation/native';
-import { ACTIVITY_DB_STATUS_FEATURE, SPEED_UP_FEATURE } from '@utils/features';
-import RocketIcon from '@assets/icons/rocket.svg';
+import { useTheme } from '@react-navigation/native';
 import type React from 'react';
-import { type ComponentProps, useMemo, useCallback } from 'react';
+import { type ComponentProps, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { Pressable, StyleSheet, View, type LayoutChangeEvent, type ViewProps } from 'react-native';
+import SpeedUpButton from '@modules/SpeedUpButton';
+import Spinner from '@components/Spinner';
+import { useShowSpeedUp } from '@hooks/useShowSpeedUp';
+import { useExtraOfTx } from '@core/WalletCore/Plugins/ReactInject/data/useTxs';
+import { SpeedUpAction } from '@core/WalletCore/Events/broadcastTransactionSubject';
+
+const TextEllipsisWithSuffix: React.FC<{
+  defaultSuffixWidth?: number;
+  style?: ViewProps['style'];
+  text: JSX.Element;
+  suffix?: React.ReactNode;
+  suffixStyle?: ViewProps['style'];
+}> = ({ style, text, defaultSuffixWidth = 0, suffix, suffixStyle }) => {
+  const [suffixWidth, setSuffixWidth] = useState(0);
+  const onSuffixLayout = (e: LayoutChangeEvent) => {
+    if (suffixWidth) return;
+    setSuffixWidth(e.nativeEvent.layout.width);
+  };
+  useEffect(() => {
+    setSuffixWidth(0);
+  }, [suffix]);
+  return (
+    <View style={[styles.textEllipsisWrapper, { paddingRight: suffixWidth || defaultSuffixWidth }, style]}>
+      {text}
+      {suffix && (
+        <View onLayout={onSuffixLayout} style={[suffixStyle, !!suffixWidth && { width: suffixWidth }]}>
+          {suffix}
+        </View>
+      )}
+    </View>
+  );
+};
 
 interface Props extends Omit<ComponentProps<typeof Pressable>, 'onPress'> {
   onPress?: (item: Tx) => void;
@@ -36,6 +65,16 @@ const AssetInfo: React.FC<{
   const decimals = asset?.decimals ?? 0;
   const formatBalance = useFormatBalance(value, decimals);
   const isUnlimited = method === 'approve' && BigInt(value ?? 0) === maxUint256;
+  const symbolSuffix = useMemo(() => {
+    if (asset || tokenId) {
+      return (
+        <Text style={[styles.assetText, { color: txStatus === 'failed' ? colors.textSecondary : colors.textPrimary }]} numberOfLines={1}>
+          {asset?.symbol}
+          {tokenId && <>&nbsp;#{tokenId}</>}
+        </Text>
+      );
+    }
+  }, [colors.textSecondary, colors.textPrimary, asset, tokenId, txStatus]);
   return (
     <View style={styles.assetWrapper}>
       {asset?.type === AssetType.ERC20 || asset?.type === AssetType.Native ? (
@@ -43,26 +82,34 @@ const AssetInfo: React.FC<{
       ) : (
         <NFTIcon source={asset?.icon} style={[styles.assetIcon, { borderRadius: 2 }]} />
       )}
-      <Text style={[styles.assetText, { color: txStatus === 'failed' ? colors.textSecondary : colors.textPrimary }]} numberOfLines={1}>
-        {sign} {isUnlimited ? t('common.approve.unlimited') : formatBalance}
-      </Text>
-      <Text style={[styles.assetText, { color: txStatus === 'failed' ? colors.textSecondary : colors.textPrimary }]}>
-        {asset?.symbol}
-        {tokenId && <>&nbsp;#{tokenId}</>}
-      </Text>
+      <TextEllipsisWithSuffix
+        text={
+          <Text style={[styles.assetText, { color: txStatus === 'failed' ? colors.textSecondary : colors.textPrimary }]} numberOfLines={1}>
+            {sign}&nbsp;{isUnlimited ? t('common.approve.unlimited') : formatBalance}
+          </Text>
+        }
+        suffix={symbolSuffix}
+        defaultSuffixWidth={50}
+      />
     </View>
   );
 };
 
+const PendingIcon = () => {
+  const { colors, mode } = useTheme();
+  return <Spinner color={mode === 'dark' ? '#00000080' : '#FFFFFFB2'} backgroundColor={colors.iconPrimary} width={24} height={24} strokeWidth={5} />;
+};
+
 const ActivityItem: React.FC<Props> = ({ onPress, tx }) => {
-  const navigation = useNavigation<StackScreenProps<typeof HomeStackName>['navigation']>();
   const { colors } = useTheme();
+  const { t } = useTranslation();
 
   const payload = usePayloadOfTx(tx.id);
+  const extra = useExtraOfTx(tx.id);
   const asset = useAssetOfTx(tx.id);
   const status = formatStatus(tx);
+
   const { value, to, tokenId } = useMemo(() => formatTxData(tx, payload, asset), [tx, payload, asset]);
-  const { t } = useTranslation();
   const method = useMemo(() => {
     if (tx.source === TxSource.SELF) {
       return t('common.send');
@@ -70,56 +117,47 @@ const ActivityItem: React.FC<Props> = ({ onPress, tx }) => {
     return tx.method;
   }, [t, tx.method, tx.source]);
 
-  const isPending = SPEED_UP_FEATURE.allow && status === 'pending';
-
-  const handlePressCancel = useCallback(() => {
-    navigation.navigate(SpeedUpStackName, { txId: tx.id, type: 'Cancel' });
-  }, [tx?.id]);
-
-  const handlePressSpeedUp = useCallback(() => {
-    navigation.navigate(SpeedUpStackName, { txId: tx.id, type: 'SpeedUp' });
-  }, [tx?.id]);
+  const isPending = status === 'pending';
+  const isCanceling = isPending && extra?.sendAction === SpeedUpAction.Cancel;
+  const showSpeedUp = useShowSpeedUp(tx);
+  const statusSuffix = useMemo(() => {
+    if (status === 'pending') {
+      return <PendingIcon />;
+    }
+    if (status === 'failed') {
+      return <Text style={[styles.statusText, { color: colors.down, borderColor: colors.down }]}>{t('tx.activity.status.failed')}</Text>;
+    }
+  }, [status, colors.down, t]);
 
   return (
     <Pressable
       style={[styles.container, isPending && styles.pendingContainer, isPending && { borderColor: colors.borderFourth }]}
       onPress={() => onPress?.(tx)}
+      testID="activityItem"
     >
-      <View style={styles.title}>
-        <Text style={[styles.typeText, { color: colors.textPrimary }]} numberOfLines={1}>
-          {method}
-          {ACTIVITY_DB_STATUS_FEATURE.allow && `  --[${tx.status}-${tx.source}-${tx.method}]`}
-        </Text>
-        {status !== 'confirmed' && (
-          <Text
-            style={[styles.statusText, { color: status === 'failed' ? colors.down : colors.up, borderColor: status === 'failed' ? colors.down : colors.up }]}
-          >
-            {status && t(`tx.activity.status.${status}`)}
-          </Text>
-        )}
-
-        {to && <Text style={[styles.address, { color: colors.textSecondary }]}>To {shortenAddress(to)}</Text>}
-      </View>
-      {tx.source === TxSource.SELF && <AssetInfo asset={asset} value={value} tokenId={tokenId} txStatus={status} sign="-" method={method} />}
-      {method === 'approve' && <AssetInfo asset={asset} value={value} tokenId={tokenId} txStatus={status} method={method} />}
-
-      {isPending && (
-        <View style={styles.btnArea}>
-          <Pressable
-            style={({ pressed }) => [styles.btn, { backgroundColor: pressed ? colors.underlay : 'transparent', borderColor: colors.borderPrimary }]}
-            onPress={handlePressCancel}
-          >
-            <Text style={[styles.btnText, { color: colors.textPrimary }]}>{t('common.cancel')}</Text>
-          </Pressable>
-          <Pressable
-            style={({ pressed }) => [styles.btn, { backgroundColor: pressed ? colors.underlay : 'transparent', borderColor: colors.borderPrimary }]}
-            onPress={handlePressSpeedUp}
-          >
-            <Text style={[styles.btnText, { color: colors.textPrimary }]}>Speed Up</Text>
-            <RocketIcon style={styles.rocket} />
-          </Pressable>
+      {isCanceling && (
+        <View style={[styles.canceling, { backgroundColor: colors.borderFourth }]}>
+          <Text style={[styles.cancelingText, { color: colors.textPrimary }]}>{t('tx.activity.canceling')}</Text>
         </View>
       )}
+      <View style={[styles.content, isCanceling && { paddingTop: 8 }]}>
+        <View style={styles.title}>
+          <TextEllipsisWithSuffix
+            text={
+              <Text style={[styles.typeText, { color: colors.textPrimary }]} numberOfLines={1}>
+                {method}
+              </Text>
+            }
+            suffix={statusSuffix}
+            defaultSuffixWidth={50}
+          />
+          {to && <Text style={[styles.address, { color: colors.textSecondary }]}>To {shortenAddress(to)}</Text>}
+        </View>
+        {tx.source === TxSource.SELF && <AssetInfo asset={asset} value={value} tokenId={tokenId} txStatus={status} sign="-" method={method} />}
+        {method === 'approve' && <AssetInfo asset={asset} value={value} tokenId={tokenId} txStatus={status} method={method} />}
+
+        {showSpeedUp && <SpeedUpButton txId={tx.id} containerStyle={styles.speedUp} cancelDisabled={isCanceling} />}
+      </View>
     </Pressable>
   );
 };
@@ -129,27 +167,25 @@ const styles = StyleSheet.create({
     display: 'flex',
     flexDirection: 'column',
     justifyContent: 'center',
-    minHeight: 72,
-    marginHorizontal: 16,
-    paddingHorizontal: 16,
   },
   pendingContainer: {
     borderWidth: 1,
     borderRadius: 6,
-    paddingVertical: 14,
-    paddingHorizontal: 15,
+    marginBottom: 24,
+  },
+  content: {
+    padding: 16,
   },
   title: {
     display: 'flex',
     flexDirection: 'row',
     alignItems: 'center',
-    height: 20,
+    height: 24,
   },
   typeText: {
     fontSize: 14,
     fontWeight: '600',
-    lineHeight: 18,
-    flex: 1,
+    marginRight: 4,
   },
   statusText: {
     marginLeft: 12,
@@ -170,7 +206,6 @@ const styles = StyleSheet.create({
     display: 'flex',
     flexDirection: 'row',
     alignItems: 'center',
-    paddingRight: 100,
   },
   assetIcon: {
     width: 20,
@@ -181,34 +216,24 @@ const styles = StyleSheet.create({
     fontWeight: '300',
     marginLeft: 4,
   },
-  btnArea: {
-    display: 'flex',
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    gap: 16,
+  speedUp: {
     marginTop: 16,
   },
-  btn: {
-    width: '50%',
-    maxWidth: 172,
-    flexShrink: 1,
+  textEllipsisWrapper: {
+    flex: 1,
     display: 'flex',
     flexDirection: 'row',
-    justifyContent: 'center',
     alignItems: 'center',
-    height: 34,
-    borderWidth: 1,
-    borderRadius: 4,
   },
-  btnText: {
-    fontSize: 14,
-    fontWeight: '600',
-    lineHeight: 22,
+  canceling: {
+    padding: 8,
+    borderTopRightRadius: 6,
+    borderTopLeftRadius: 6,
   },
-  rocket: {
-    marginLeft: 2,
-    transform: [{ translateY: 1 }],
+  cancelingText: {
+    textAlign: 'center',
+    fontSize: 12,
+    fontWeight: '300',
   },
 });
 

@@ -18,7 +18,7 @@ const defaultOptions: KeyChain.Options = {
   service: 'io.bimwallet',
   accessControl: KeyChain.ACCESS_CONTROL.BIOMETRY_ANY,
   accessible: KeyChain.ACCESSIBLE.WHEN_UNLOCKED_THIS_DEVICE_ONLY,
-  securityLevel: KeyChain.SECURITY_LEVEL.SECURE_HARDWARE,
+  // securityLevel: KeyChain.SECURITY_LEVEL.SECURE_HARDWARE,
 };
 
 export enum AuthenticationType {

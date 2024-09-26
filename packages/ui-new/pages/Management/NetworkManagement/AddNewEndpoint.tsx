@@ -51,7 +51,9 @@ const AddNewEndpoint = () => {
           setError(t('settings.network.add.invalidChainId'));
         } else {
           methods.addEndpoint({ network: currentNetwork.id, endpointParams: { endpoint: endpoint.href, type: 'outer' } });
-          navigation.goBack();
+          if (navigation.canGoBack()) {
+            navigation.goBack();
+          }
         }
       } catch (error) {
         console.log('request error', error);
@@ -73,7 +75,7 @@ const AddNewEndpoint = () => {
         <BottomSheetHeader title={t('settings.network.add.title')} />
 
         <BottomSheetContent>
-          <Text>{t('settings.network.add.subTitle')}</Text>
+          <Text style={[styles.text, { color: colors.textSecondary }]}>{t('settings.network.add.subTitle')}</Text>
 
           <View style={[styles.flexRow, styles.inputContainer, { borderColor: error ? colors.down : colors.borderFourth }]}>
             <BottomSheetTextInput
@@ -116,7 +118,10 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
   },
-
+  text: {
+    fontSize: 14,
+    fontWeight: '300',
+  },
   inputContainer: {
     marginTop: 16,
     paddingHorizontal: 16,
@@ -124,6 +129,7 @@ const styles = StyleSheet.create({
     borderRadius: 6,
   },
   input: {
+    height: 52,
     fontSize: 16,
     fontWeight: '300',
     flex: 1,

@@ -14,7 +14,7 @@ const NetworkManagement = () => {
   const navigation = useNavigation<StackNavigation>();
 
   return (
-    <View style={[{ backgroundColor: colors.bgPrimary }]}>
+    <View style={[{ flex: 1, backgroundColor: colors.bgPrimary }]}>
       <View style={[styles.warp, { borderColor: colors.borderFourth, borderBottomWidth: 1 }]}>
         <Text style={[styles.title, { color: colors.textPrimary }]}>{t('settings.network.title')}</Text>
 
@@ -23,7 +23,9 @@ const NetworkManagement = () => {
         <Text style={[styles.font14, styles.fontWeight400, styles.mb24, { color: colors.textPrimary }]}>{currentNetwork?.name}</Text>
 
         <Text style={[styles.font14, styles.fontWeight300, styles.mb16, { color: colors.textSecondary }]}>{t('settings.network.chainId')}</Text>
-        <Text style={[styles.font14, styles.fontWeight400, { color: colors.textPrimary }]}>{currentNetwork?.chainId}</Text>
+        <Text style={[styles.font14, styles.fontWeight400, { color: colors.textPrimary }]}>
+          {Number(currentNetwork?.chainId)} ({currentNetwork?.chainId})
+        </Text>
       </View>
 
       <View style={styles.warp}>

@@ -26,11 +26,12 @@ import Clipboard from '@react-native-clipboard/clipboard';
 import { type RouteProp, useRoute, useTheme } from '@react-navigation/native';
 import type { WalletConnectParamList, WalletConnectSignMessageStackName } from '@router/configs';
 import { sanitizeTypedData } from '@utils/santitizeTypedData';
-import { toUtf8String } from 'ethers';
+import { isHexString, toUtf8String } from 'ethers';
 import { useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { showMessage } from 'react-native-flash-message';
+import { PlaintextMessage } from '@components/PlaintextMessage';
 
 function WalletConnectSignMessage() {
   const { t } = useTranslation();
@@ -49,30 +50,33 @@ function WalletConnectSignMessage() {
       method,
     },
   } = useRoute<RouteProp<WalletConnectParamList, typeof WalletConnectSignMessageStackName>>();
-
   const signMsg = useMemo(() => {
-    let m = message;
+    let decodeMsg = message;
     if (method === WalletConnectRPCMethod.PersonalSign) {
-      try {
-        m = toUtf8String(message);
-      } catch {
-        return '';
+      const isHex = isHexString(decodeMsg);
+      if (isHex) {
+        try {
+          decodeMsg = toUtf8String(message);
+        } catch (e) {
+          console.log('error:', e);
+        }
       }
+      return decodeMsg;
     }
 
     if (method.startsWith(WalletConnectRPCMethod.SignTypedData)) {
       try {
-        const parsedMessage = JSON.parse(m);
+        const parsedMessage = JSON.parse(decodeMsg);
         const sanitizedMessage = sanitizeTypedData(parsedMessage);
-        m = JSON.stringify(sanitizedMessage, null, 4);
+
+        decodeMsg = JSON.stringify(sanitizedMessage, null, 4);
       } catch (error) {
         return '';
       }
     }
 
-    return m;
+    return decodeMsg;
   }, [message, method]);
-
   const handleCoy = useCallback(
     (value: string) => {
       Clipboard.setString(value);
@@ -140,7 +144,7 @@ function WalletConnectSignMessage() {
           setBSIMEvent({ type: BSIMEventTypesName.ERROR, message: error?.message });
         }
       }
-    } else if (method.startsWith(WalletConnectRPCMethod.SignTypedData)) {
+    } else if (method.includes('signTypedData')) {
       try {
         const m = JSON.parse(message);
 
@@ -170,6 +174,37 @@ function WalletConnectSignMessage() {
   const { inAsync: approveLoading, execAsync: handleApprove } = useInAsync(_handleApprove);
   const { inAsync: rejectLoading, execAsync: handleReject } = useInAsync(_handleReject);
 
+  const { shownMessage, jsonMessage } = useMemo(() => {
+    let jsonMessage: any = {};
+    let shownMessage = signMsg ?? '';
+    try {
+      if (method.includes('signTypedData')) {
+        jsonMessage = JSON.parse(shownMessage).message || {};
+        shownMessage = JSON.stringify(jsonMessage) ?? '';
+      }
+      return {
+        shownMessage,
+        jsonMessage,
+      };
+    } catch (error) {
+      console.log('parse message error:', error);
+      return {
+        shownMessage,
+        jsonMessage,
+      };
+    }
+  }, [signMsg, method]);
+
+  const renderMessage = useCallback(() => {
+    if (method === WalletConnectRPCMethod.PersonalSign) {
+      return <Text style={{ color: colors.textPrimary }}>{shownMessage}</Text>;
+    }
+    if (method.includes('signTypedData')) {
+      return <PlaintextMessage data={jsonMessage} />;
+    }
+    return '';
+  }, [shownMessage, jsonMessage, method, colors.textPrimary]);
+
   return (
     <>
       <BottomSheet
@@ -190,13 +225,13 @@ function WalletConnectSignMessage() {
             </View>
           </BottomSheetHeader>
           <BottomSheetScrollContent style={[styles.content, { borderColor: colors.borderFourth }]} stickyHeaderIndices={[0]}>
-            <Pressable onPress={() => handleCoy(signMsg)} testID="copy">
+            <Pressable onPress={() => handleCoy(shownMessage)} testID="copy">
               <View style={[styles.flexWithRow, styles.scrollTitle, { backgroundColor: colors.bgFourth }]}>
                 <Text style={[styles.h2, { color: colors.textPrimary }]}>{t('wc.sign.message')}</Text>
-                <Copy width={18} height={18} color={colors.textSecondary} />
+                <Copy color={colors.textSecondary} />
               </View>
             </Pressable>
-            <Text style={{ color: colors.textPrimary }}>{signMsg}</Text>
+            <View style={{ marginBottom: 16 }}>{renderMessage()}</View>
           </BottomSheetScrollContent>
 
           <BottomSheetFooter style={[styles.footer, { borderColor: colors.borderFourth }]}>

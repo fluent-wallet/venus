@@ -106,7 +106,7 @@
     "add" : "添加",
     "amount" : "數量",
     "approve" : {
-      "unlimited" : "Unlimited"
+      "unlimited" : "無限制"
     },
     "backup" : "備份",
     "balance" : "餘額",
@@ -123,6 +123,7 @@
     "edit" : "編輯",
     "enable" : "啟用",
     "index" : "序號",
+    "later" : "稍後",
     "max" : "最大",
     "method" : {
       "contractInteraction" : "合約交互"
@@ -296,7 +297,6 @@
     "content" : {
       "depositToken" : "快存入資產吧",
       "noActivity" : "還沒有交易",
-      "noLatestTransaction" : null,
       "noNFT" : "沒有收藏品",
       "noRecord" : "暫無記錄",
       "noToken" : "沒有代幣",
@@ -310,7 +310,28 @@
     "recently" : "最近交易"
   },
   "tx" : {
+    "action" : {
+      "alreadyExecuted" : "這筆交易已經在鏈上執行了",
+      "alreadyFailed" : "這筆交易已經失敗了",
+      "buttonTitle" : "行為",
+      "cancel" : {
+        "desc" : "嘗試取消交易，如果此交易已執行，會取消失敗。",
+        "title" : "取消交易"
+      },
+      "expiredTitle" : "這筆交易已過期",
+      "level" : {
+        "faster" : "快更多",
+        "higher" : "更快"
+      },
+      "proceedBtn" : "繼續",
+      "speedUp" : {
+        "desc" : "添加安全驗證，確保您的資金安全。",
+        "title" : "交易加速"
+      },
+      "speedUpBtn" : "加速"
+    },
     "activity" : {
+      "canceling" : "取消中...",
       "status" : {
         "confirmed" : "已確認",
         "failed" : "失敗",
@@ -359,6 +380,69 @@
       },
       "title" : "確認交易"
     },
+    "detail" : {
+      "fee" : "交易費",
+      "from" : "發送方",
+      "functionName" : "函数名  / {{name}}",
+      "network" : "網絡",
+      "nonce" : "隨機數",
+      "status" : {
+        "confirmed" : "成功",
+        "failed" : "失敗",
+        "pending" : "處理中"
+      },
+      "title" : "交易詳情",
+      "to" : "接收方",
+      "txHash" : "交易哈希"
+    },
+    "error" : {
+      "balanceNotEnough" : "CFX 餘額不足以支付燃氣費",
+      "chainIdMismatch" : "無法檢索到鏈信息",
+      "contractExecuteFailed" : "合約執行失敗，詳情：",
+      "gasExceedsLimit" : "燃氣限制過大，請重新設置為 < 15000000",
+      "gasPriceTooLow" : "燃气价格太低",
+      "nodeInCatchUp" : "此節點不在工作，等待或換一個節點",
+      "nonceTooHigh" : "使用的隨機數過大，請設置為最新的數值",
+      "notEnoughBaseGas" : "燃氣限制無效，建議重置為 >= {{gasLimit}}",
+      "signatureError" : "簽名錯誤",
+      "tooStaleNonce" : "此隨機數 (Nonce) 的交易已被執行，請切換至最新的",
+      "txPoolFull" : "交易擁堵，請嘗試提高燃氣價格",
+      "unknownError" : "未知錯誤： {{msg}}",
+      "zeroGasPrice" : "無效的燃氣價格，請重新設置"
+    },
+    "gasFee" : {
+      "advance" : "進階",
+      "advanceSetting" : {
+        "gasLimit" : "燃氣限制 (Gas Limit)",
+        "lowWarning" : "您填寫的 gas limit 低於預估值，可能會導致交易失敗",
+        "miniumGasLimit" : "{{network}} 需要的最低 gasLimit 值為 {{gasLimit}}",
+        "nonce" : "隨機數 (Nonce)",
+        "title" : "進階設定"
+      },
+      "customizeGasSetting" : {
+        "current" : "目前",
+        "gasPrice" : "燃氣價格 (Gas Price)",
+        "greatThenMaxFeeError" : "小費必須小於等於最大費用",
+        "lowWarning" : "您的出價低於目前的基本費用，可能需要等待很長的時間",
+        "maxFee" : "最多花費 (Max Fee)",
+        "minimumGasPrice" : "{{network}} 需要的最低 {{gasPriceType}} 值為 {{gasPrice}} Gwei",
+        "priorityFee" : "小費 (Priority Fee)",
+        "title" : "自訂燃氣費"
+      },
+      "dappParams" : {
+        "ask" : "採用 BIM Wallet 錢包推薦的<1>Gas 參數</1>？",
+        "description" : "DApp採用的gas參數可能會導致交易失敗。",
+        "title" : "提示"
+      },
+      "level" : {
+        "customize" : "自定義",
+        "high" : "快速",
+        "low" : "經濟的",
+        "medium" : "平均"
+      },
+      "longTime" : "需要很長時間",
+      "title" : "網絡費用"
+    },
     "send" : {
       "address" : {
         "contractRisk" : "接收方是智能合約地址，轉入此地址有可能導致資產丟失",
@@ -374,6 +458,10 @@
       "receiver" : "接收方",
       "scan" : "掃描",
       "title" : "發送"
+    },
+    "tooManyPending" : {
+      "description" : "此帳戶在{{network}}上有太多未完成的交易。\n\n為了保護您的資產安全，請先加快或取消這些交易。",
+      "title" : "注意"
     }
   },
   "wallet" : {

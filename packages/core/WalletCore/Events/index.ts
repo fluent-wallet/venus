@@ -1,5 +1,7 @@
 import { injectable } from 'inversify';
 import { combineLatest, debounceTime, distinctUntilChanged, filter } from 'rxjs';
+import { useAtomValue } from 'jotai';
+import { atomWithObservable } from 'jotai/utils';
 import type { Address } from '../../database/models/Address';
 import type { Network } from '../../database/models/Network';
 import { container } from '../configs';
@@ -10,6 +12,10 @@ import { currentNetworkChangedSubject, currentNetworkObservable } from './curren
 import { lifecycleChangedSubject } from './lifecycleChanged';
 import { networksChangedSubject } from './networksChanged';
 import { newestRequestSubject } from './requestSubject';
+import { nextNonceSubject, nextNonceSubjectPush } from './nextNonceSubject';
+export { LifeCycle } from './lifecycleChanged';
+import { globalIntervalSubject } from './globalIntervalSubject';
+import { walletConfigSubject, walletConfigSubjectPush } from './walletConfigSubject';
 
 const compareNetworkAndAddress = ([prevNetwork, prevAddress]: [Network, Address], [currentNetwork, currentAddress]: [Network, Address]) => {
   return prevNetwork.id === currentNetwork.id && prevAddress.id === currentAddress.id;
@@ -28,11 +34,19 @@ export class Events {
   public broadcastTransactionSubjectPush = broadcastTransactionSubjectPush;
   public broadcastTransactionSubject = broadcastTransactionSubject;
   public newestRequestSubject = newestRequestSubject;
+  public nextNonceSubject = nextNonceSubject;
+  public nextNonceSubjectPush = nextNonceSubjectPush;
+  public globalIntervalSubject = globalIntervalSubject;
+  public walletConfigSubject = walletConfigSubject;
+  public walletConfigSubjectPush = walletConfigSubjectPush;
   public combineNetworkAndAddressChangedSubject = combineLatest([this.currentNetworkObservable, this.currentAddressObservable]).pipe(
     filter((tuple): tuple is [Network, Address] => tuple.every((ele) => !!ele)),
     debounceTime(25),
     distinctUntilChanged(compareNetworkAndAddress),
   );
+
+  private lifeCycleAtom = atomWithObservable(() => lifecycleChangedSubject, { initialValue: null });
+  public useLifeCycle = () => useAtomValue(this.lifeCycleAtom);
 }
 
 container.bind(Events).to(Events).inSingletonScope();

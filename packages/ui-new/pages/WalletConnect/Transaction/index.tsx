@@ -50,6 +50,7 @@ import { useTranslation } from 'react-i18next';
 import { StyleSheet, View } from 'react-native';
 import SendContract from './Contract';
 import EditAllowance from './EditAllowance';
+import { TransactionActionType } from '@core/WalletCore/Events/broadcastTransactionSubject';
 
 export type TxDataWithTokenInfo = ParseTxDataReturnType & {
   symbol?: string;
@@ -82,7 +83,7 @@ function WalletConnectTransaction() {
   const navigation = useNavigation();
   const {
     params: {
-      tx: { from, to, value, data, nonce, gasLimit, gasPrice, storageLimit, type, maxFeePerGas, maxPriorityFeePerGas },
+      tx: { from, to, value, data, nonce, gas, gasPrice, storageLimit, type, maxFeePerGas, maxPriorityFeePerGas },
       isContract,
       metadata,
     },
@@ -125,14 +126,14 @@ function WalletConnectTransaction() {
 
   const dappCustomizeAdvanceSetting = useMemo(
     () =>
-      !isNil(gasLimit) || !isNil(nonce) || !isNil(storageLimit)
+      !isNil(gas) || !isNil(nonce) || !isNil(storageLimit)
         ? {
-            ...(gasLimit ? { gasLimit } : null),
+            ...(gas ? { gas } : null),
             ...(storageLimit ? { storageLimit } : null),
             ...(nonce ? { nonce: Number(nonce) } : null),
           }
         : undefined,
-    [gasLimit, nonce, storageLimit],
+    [gas, nonce, storageLimit],
   );
 
   const gasSettingMethods = useRef<GasFeeSettingMethods>(null!);
@@ -140,8 +141,8 @@ function WalletConnectTransaction() {
   const checkDappParamsSuitable = useCallback(
     (_gasEstimate: GasEstimate) => {
       if (!_gasEstimate || showDappParamsWarning !== null) return;
-      const isAdvanceSettingSuitable = dappCustomizeAdvanceSetting?.gasLimit
-        ? new Decimal(dappCustomizeAdvanceSetting.gasLimit).greaterThanOrEqualTo(_gasEstimate.estimateAdvanceSetting.gasLimit)
+      const isAdvanceSettingSuitable = dappCustomizeAdvanceSetting?.gas
+        ? new Decimal(dappCustomizeAdvanceSetting.gas).greaterThanOrEqualTo(_gasEstimate.estimateAdvanceSetting.gasLimit)
         : true;
 
       const customizePrice = dappCustomizeGasSetting?.suggestedMaxFeePerGas ?? dappCustomizeGasSetting?.suggestedGasPrice;
@@ -182,6 +183,7 @@ function WalletConnectTransaction() {
 
     const tx = Object.assign({}, txHalf, {
       gasLimit: gasEstimate.advanceSetting?.gasLimit,
+      ...(gasEstimate?.advanceSetting?.storageLimit ? { storageLimit: gasEstimate?.advanceSetting?.storageLimit } : null),
       ...(shouldUse1559
         ? {
             maxFeePerGas: gasEstimate.gasSetting.suggestedMaxFeePerGas,
@@ -241,27 +243,29 @@ function WalletConnectTransaction() {
     } finally {
       if (txRaw) {
         Events.broadcastTransactionSubjectPush.next({
-          txHash,
-          txRaw,
-          tx,
-          address: currentAddress,
-          signature: signatureRecord,
-          app: dapp,
-          extraParams: {
-            assetType: isContract ? parseData?.assetType : AssetType.Native,
-            contractAddress: isContract ? to : undefined,
-            to: to,
-            sendAt: new Date(),
-            epochHeight: currentNetwork.networkType === NetworkType.Conflux ? epochHeightRef.current : null,
-            err: txError && String(txError.data || txError?.message || txError),
-            errorType: txError ? processError(txError).errorType : undefined,
-            method: parseData ? (parseData.functionName === 'unknown' ? 'Contract Interaction' : parseData.functionName) : 'transfer',
+          transactionType: TransactionActionType.Send,
+          params: {
+            txHash,
+            txRaw,
+            tx,
+            address: currentAddress,
+            signature: signatureRecord,
+            app: dapp,
+            extraParams: {
+              assetType: isContract ? parseData?.assetType : AssetType.Native,
+              contractAddress: isContract ? to : undefined,
+              sendAt: new Date(),
+              epochHeight: currentNetwork.networkType === NetworkType.Conflux ? epochHeightRef.current : null,
+              err: txError && String(txError.data || txError?.message || txError),
+              errorType: txError ? processError(txError).errorType : undefined,
+              method: parseData ? (parseData.functionName === 'unknown' ? 'Contract Interaction' : parseData.functionName) : 'transfer',
+            },
           },
         });
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentAddressValue, currentNetwork?.id, gasLimit, gasPrice, to, navigation, value, gasEstimate, isContract, signTransaction, txData, parseData]);
+  }, [currentAddressValue, currentNetwork?.id, gas, gasPrice, to, navigation, value, gasEstimate, isContract, signTransaction, txData, parseData]);
 
   useEffect(() => {
     async function parseAndTryGetTokenInfo() {
@@ -351,7 +355,7 @@ function WalletConnectTransaction() {
             {errorMsg && (
               <View style={[styles.error, { borderColor: colors.down }]}>
                 <MessageFail color={colors.down} width={24} height={24} />
-                <Text style={{ color: colors.down, fontSize: 16 }}>{errorMsg}</Text>
+                <Text style={{ color: colors.down, fontSize: 16, flexShrink: 1 }}>{errorMsg}</Text>
               </View>
             )}
           </BottomSheetScrollContent>

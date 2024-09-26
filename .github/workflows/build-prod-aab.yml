@@ -9,7 +9,7 @@ on:
       - 'v*-aab'
       - '!v*-qa*'
       - '!v*-hotfix'
-
+      
 jobs:
   android-build:
     name: Android Build
@@ -32,8 +32,8 @@ jobs:
       - name: Set up JDK envronment
         uses: actions/setup-java@v4
         with:
-          distribution: 'zulu'
-          java-version: '17'
+          distribution: "zulu"
+          java-version: "17"
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
       - uses: actions/cache@v4
@@ -80,4 +80,4 @@ jobs:
           accessKeySecret=$OSS_KEY
           END
       - name: Upload to OSS
-        run: yes | ossutil64 cp ./android/app/build/outputs/bundle/prodRelease/app-prod-release.aab oss://blockvenus/abbs/BIMWallet.aab
+        run: yes | ossutil64 cp ./android/app/build/outputs/bundle/prodRelease/app-prod-release.aab oss://blockvenus-hk/abbs/BIMWallet.aab

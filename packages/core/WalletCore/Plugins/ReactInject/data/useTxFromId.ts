@@ -7,4 +7,7 @@ const txAtomFromId = atomFamily((txId: string | undefined | null) =>
   atomWithObservable(() => (txId ? observeTxById(txId) : of(null)), { initialValue: null! }),
 );
 
-export const useTxFromId = (txId: string | undefined | null) => useAtomValue(txAtomFromId(txId));
+export const useTxFromId = (txId: string | undefined | null) => {
+  const txs = useAtomValue(txAtomFromId(txId));
+  return txs ? txs[0] : null;
+};

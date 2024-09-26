@@ -20,7 +20,9 @@ const backToHome = (navigation: any) => {
 
   if (!isSamsungDevice) {
     if (typeof navigation.popToTop === 'function') {
-      navigation.popToTop();
+      if (navigation.canGoBack()) {
+        navigation.popToTop();
+      }
     }
     if (navigation.canGoBack()) {
       navigation.goBack();

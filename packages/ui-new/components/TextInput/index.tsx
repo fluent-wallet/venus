@@ -83,6 +83,7 @@ const CustomTextInput = forwardRef<TextInput, Props>(
           value={value}
           {...props}
           onChangeText={handleChangeText}
+          readOnly={disabled}
         />
         {showClear && !disabled && (
           <Pressable onPress={() => handlePressClear()} style={styles.iconPressable}>

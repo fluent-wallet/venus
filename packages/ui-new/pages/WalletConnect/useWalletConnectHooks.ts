@@ -1,25 +1,24 @@
 import methods from '@core/WalletCore/Methods';
-import Plugins from '@core/WalletCore/Plugins';
-import { NetworkType, useCurrentAddressValue, useCurrentNetwork } from '@core/WalletCore/Plugins/ReactInject';
+import plugins from '@core/WalletCore/Plugins';
+import { useCurrentAddressValue, useCurrentNetwork, isPendingTxsFull, NetworkType } from '@core/WalletCore/Plugins/ReactInject';
 import { WalletConnectPluginEventType } from '@core/WalletCore/Plugins/WalletConnect/types';
-import { queryNetworks } from '@core/database/models/Network/query';
 import { Networks } from '@core/utils/consts';
 import { StackActions, useNavigation } from '@react-navigation/native';
 import {
   HomeStackName,
-  type StackNavigation,
   WalletConnectProposalStackName,
   WalletConnectSignMessageStackName,
   WalletConnectStackName,
   WalletConnectTransactionStackName,
+  TooManyPendingStackName,
+  type StackNavigation,
 } from '@router/configs';
 import backToHome, { getActiveRouteName } from '@utils/backToHome';
-import { isDev, isQA } from '@utils/getEnv';
-import { uniq } from 'lodash-es';
-import { useCallback, useEffect, useState } from 'react';
+import { isProd, isQA } from '@utils/getEnv';
+import { useCallback, useEffect, useState, useMemo } from 'react';
+import { parseNamespaceData, ChainPrefix, ExtractCip155Namespace, type Namespace } from '@cfx-kit/react-utils/dist/WalletConnectorHelper';
 
-const SUPPORT_NETWORK = [Networks['Conflux eSpace'].netId] as Array<number>;
-const QA_SUPPORT_NETWORK = [Networks['Conflux eSpace'].netId, Networks['eSpace Testnet'].netId] as Array<number>;
+const openNetworks = isProd ? ([Networks['Conflux eSpace']] as const) : isQA ? ([Networks['Conflux eSpace'], Networks['eSpace Testnet']] as const) : null;
 
 export function useListenWalletConnectEvent() {
   const navigation = useNavigation<StackNavigation>();
@@ -27,7 +26,7 @@ export function useListenWalletConnectEvent() {
   const currentNetwork = useCurrentNetwork()!;
 
   useEffect(() => {
-    const subject = Plugins.WalletConnect.currentEventSubject.subscribe(async (event) => {
+    const subject = plugins.WalletConnect.currentEventSubject.subscribe(async (event) => {
       if (event === undefined) {
         return;
       }
@@ -36,76 +35,55 @@ export function useListenWalletConnectEvent() {
         return;
       }
 
+      const activeRouterName = getActiveRouteName(navigation.getState());
+      const needDispatch = activeRouterName !== HomeStackName;
+
+      const navigateMethod = !needDispatch
+        ? navigation.navigate
+        : (stackName: string, params?: any) => navigation?.dispatch(StackActions.replace(stackName, params));
+
       const { type } = event;
+
       switch (type) {
         case WalletConnectPluginEventType.SESSION_PROPOSAL: {
-          let requestChains = uniq([...(event.data.requiredNamespaces?.eip155?.chains || []), ...(event.data.optionalNamespaces?.eip155?.chains || [])]).map(
-            (chain) => Number.parseInt(chain.split('eip155:')[1]),
-          );
-          const networks = await queryNetworks();
-          if (isDev) {
-            // dev support all network
-            const EVMNetwork = networks.filter((net) => net.networkType === NetworkType.Ethereum);
+          const connectedNetworks = openNetworks
+            ? event.data?.connectedNetworks?.filter((network) =>
+                openNetworks?.some((net) => net.netId === network.netId && net.networkType === network.networkType),
+              )
+            : event.data.connectedNetworks;
 
-            requestChains = requestChains.filter((chain) => EVMNetwork.find((net) => net.netId === chain));
-          } else if (isQA) {
-            requestChains = requestChains.filter((chains) => QA_SUPPORT_NETWORK.includes(chains));
-          } else {
-            requestChains = requestChains.filter((chains) => SUPPORT_NETWORK.includes(chains));
-          }
-          if (requestChains.length === 0) {
+          if (connectedNetworks.length === 0) {
             return event.action.reject('UNSUPPORTED_CHAINS');
           }
 
-          if (getActiveRouteName(navigation.getState()) === HomeStackName) {
-            navigation.navigate(WalletConnectStackName, {
-              screen: WalletConnectProposalStackName,
-              params: {
-                ...event.data,
-                connectedNetworks: networks
-                  .filter((network) => requestChains.includes(network.netId))
-                  .map((network) => ({ icon: network.icon!, name: network.name, netId: network.netId, id: network.id })),
-              },
-            });
-          } else {
-            navigation?.dispatch(
-              StackActions.replace(WalletConnectStackName, {
-                screen: WalletConnectProposalStackName,
-                params: {
-                  ...event.data,
-                  connectedNetworks: networks
-                    .filter((network) => requestChains.includes(network.netId))
-                    .map((network) => ({ icon: network.icon!, name: network.name, netId: network.netId, id: network.id })),
-                },
-              }),
-            );
-          }
-
+          navigateMethod(WalletConnectStackName, {
+            screen: WalletConnectProposalStackName,
+            params: {
+              ...event.data,
+              connectedNetworks,
+            },
+          });
           break;
         }
 
         case WalletConnectPluginEventType.SIGN_MESSAGE: {
-          const { address } = event.data;
-          if (address !== currentAddressValue) {
-            return event.action.reject('address is not match');
-          }
           const chainId = event.data.chainId.split(':')[1];
 
           if (chainId !== currentNetwork?.netId.toString()) {
             return event.action.reject('network is not match');
           }
-          navigation.navigate(WalletConnectStackName, { screen: WalletConnectSignMessageStackName, params: event.data });
+          navigateMethod(WalletConnectStackName, { screen: WalletConnectSignMessageStackName, params: event.data });
           break;
         }
 
         case WalletConnectPluginEventType.SEND_TRANSACTION: {
+          if (isPendingTxsFull()) {
+            return navigateMethod(TooManyPendingStackName);
+          }
+
           const {
-            address,
             tx: { to, data },
           } = event.data;
-          if (address !== currentAddressValue) {
-            return event.action.reject('address is not match');
-          }
           const chainId = event.data.chainId.split(':')[1];
 
           if (chainId !== currentNetwork?.netId.toString()) {
@@ -125,7 +103,7 @@ export function useListenWalletConnectEvent() {
 
           const EOATx = (!isContract && !!to) || !data || data === '0x';
 
-          navigation.navigate(WalletConnectStackName, {
+          navigateMethod(WalletConnectStackName, {
             screen: WalletConnectTransactionStackName,
             params: { ...event.data, isContract: !EOATx },
           });
@@ -142,38 +120,63 @@ export function useListenWalletConnectEvent() {
 }
 
 export function useWalletConnectSessions(filterByAddress?: string | undefined | null) {
-  const [sessions, setSessions] = useState<Awaited<ReturnType<typeof Plugins.WalletConnect.getAllSession>>[string][]>([]);
+  const [sessions, setSessions] = useState<Awaited<ReturnType<typeof plugins.WalletConnect.getAllSession>>[string][]>([]);
+  const currentNetwork = useCurrentNetwork()!;
 
   const getSessions = useCallback(async () => {
-    const sessions = await Plugins.WalletConnect.getAllSession();
-    setSessions(Object.values(sessions));
+    const sessions = await plugins.WalletConnect.getAllSession();
+    setSessions(
+      Object.values(sessions).map((session) => ({
+        ...session,
+        namespaces: ExtractCip155Namespace(session.namespaces as Record<string, Namespace>) as unknown as typeof session.namespaces,
+      })),
+    );
   }, []);
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
   useEffect(() => {
-    Plugins.WalletConnect.getAllSession().then((res) => {
-      setSessions(Object.values(res));
-    });
-  }, []);
-
-  useEffect(() => {
-    const sub = Plugins.WalletConnect.getWCSessionChangeSubscribe().subscribe(getSessions);
+    getSessions();
+    const sub = plugins.WalletConnect.getWCSessionChangeSubscribe().subscribe(getSessions);
 
     return () => {
       sub.unsubscribe();
     };
-  }, [getSessions]);
+  }, []);
 
-  if (filterByAddress) {
-    return {
-      sessions: sessions.filter((session) => {
-        const { namespaces } = session;
-        return namespaces?.eip155?.accounts.find((account) => {
-          const [eip, chainId, address] = account.split(':');
-          return address.toLowerCase() === filterByAddress.toLowerCase();
-        });
-      }),
-    };
-  }
+  return useMemo(() => {
+    const res = sessions?.map?.((session) => ({
+      ...session,
+      namespaces: {
+        ...session.namespaces,
+        ...(session.namespaces[ChainPrefix.EIP]
+          ? {
+              [ChainPrefix.EIP]: {
+                ...session.namespaces[ChainPrefix.EIP],
+                accounts: session.namespaces[ChainPrefix.EIP].accounts?.map(parseNamespaceData),
+                chains: session.namespaces[ChainPrefix.EIP].chains?.map(parseNamespaceData),
+              },
+            }
+          : null),
+        ...(session.namespaces[ChainPrefix.CIP]
+          ? {
+              [ChainPrefix.CIP]: {
+                ...session.namespaces[ChainPrefix.CIP],
+                accounts: session.namespaces[ChainPrefix.CIP].accounts?.map(parseNamespaceData),
+                chains: session.namespaces[ChainPrefix.CIP].chains?.map(parseNamespaceData),
+              },
+            }
+          : null),
+      },
+    }));
+    if (!currentNetwork) return [];
 
-  return { sessions };
+    if (filterByAddress) {
+      return res.filter((session) =>
+        session.namespaces[currentNetwork.networkType === NetworkType.Ethereum ? ChainPrefix.EIP : ChainPrefix.CIP]?.accounts.find(
+          (account) => account.address.toLowerCase() === filterByAddress.toLowerCase() && Number(account.chainId) === currentNetwork.netId,
+        ),
+      );
+    }
+    return res;
+  }, [filterByAddress, sessions, currentNetwork?.id]);
 }

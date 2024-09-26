@@ -10,14 +10,14 @@ import BottomSheet, {
 import Button from '@components/Button';
 import Text from '@components/Text';
 import { Lang, useLanguage } from '@hooks/useI18n';
-import { useTheme } from '@react-navigation/native';
+import { useNavigation, useTheme } from '@react-navigation/native';
 import { UpdateVersionStackName, type AboutUsStackName, type StackScreenProps } from '@router/configs';
-import { APP_VERSION_FLAG_FEATURE, ENABLE_CHECK_UPDATE_FEATURE } from '@utils/features';
+import { APP_VERSION_FLAG_FEATURE } from '@utils/features';
 import { Image } from 'expo-image';
 import type React from 'react';
 import { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Linking, ScrollView, StyleSheet } from 'react-native';
+import { Linking, ScrollView, StyleSheet, View } from 'react-native';
 import { showMessage } from 'react-native-flash-message';
 import semverLt from 'semver/functions/lt';
 import pkg from '../../../../package.json';
@@ -57,10 +57,18 @@ const AboutUs: React.FC<StackScreenProps<typeof AboutUsStackName>> = ({ navigati
   const handleCheckNewVersion = useCallback(async () => {
     setLoading(true);
     try {
-      const remoteVersion = await fetch('https://download.bimwallet.io/version.json', { method: 'GET' }).then<VersionJSON>((res) => res.json());
-
+      const remoteVersion = await fetch('https://download.bimwallet.io/version.json', {
+        method: 'GET',
+        headers: {
+          'Cache-Control': 'no-cache',
+        },
+      }).then<VersionJSON>((res) => {
+        return res.json();
+      });
+      console.log(remoteVersion);
       if (semverLt(pkg.version, remoteVersion.version)) {
         // has new version , to show user
+
         navigation.navigate(UpdateVersionStackName, { newVersion: remoteVersion });
       } else {
         showMessage({
@@ -73,7 +81,7 @@ const AboutUs: React.FC<StackScreenProps<typeof AboutUsStackName>> = ({ navigati
       setLoading(false);
     }
     setLoading(false);
-  }, [t]);
+  }, [t, navigation.navigate]);
 
   return (
     <ScrollView contentContainerStyle={[styles.container, { backgroundColor: colors.bgPrimary }]}>
@@ -84,7 +92,7 @@ const AboutUs: React.FC<StackScreenProps<typeof AboutUsStackName>> = ({ navigati
         {t('settings.aboutUs.version')}: {pkg.version} {APP_VERSION_FLAG_FEATURE.allow && APP_VERSION_FLAG_FEATURE.value}
       </Text>
 
-      {ENABLE_CHECK_UPDATE_FEATURE.allow && <SettingItem title={t('settings.aboutUs.action.checkUpdate')} onPress={handleCheckNewVersion} disable={loading} />}
+      <SettingItem title={t('settings.aboutUs.action.checkUpdate')} onPress={handleCheckNewVersion} disable={loading} />
       <SettingItem title={t('settings.aboutUs.action.teamsService')} onPress={openTeamsService} />
       <SettingItem title={t('settings.aboutUs.action.feedback')} onPress={openFeedback} />
     </ScrollView>
@@ -95,12 +103,18 @@ export const UpdateVersion: React.FC<StackScreenProps<typeof UpdateVersionStackN
   const { colors } = useTheme();
   const { t } = useTranslation();
   const lang = useLanguage();
+  const navigation = useNavigation();
   const UILang = lang === Lang.system ? 'en' : lang;
 
   const { newVersion } = route.params;
-
   return (
-    <BottomSheet snapPoints={snapPoints.percent75} isRoute enablePanDownToClose={!newVersion.force} enableContentPanningGesture={!newVersion.force}>
+    <BottomSheet
+      snapPoints={snapPoints.percent75}
+      isRoute
+      backDropPressBehavior={newVersion.force ? 'none' : 'close'}
+      enablePanDownToClose={!newVersion.force}
+      enableContentPanningGesture={!newVersion.force}
+    >
       <BottomSheetWrapper innerPaddingHorizontal>
         <BottomSheetHeader title={t('settings.aboutUs.UpdateToNew')}>
           {newVersion[UILang]?.description && (
@@ -116,9 +130,17 @@ export const UpdateVersion: React.FC<StackScreenProps<typeof UpdateVersionStackN
           )}
         </BottomSheetContent>
         <BottomSheetFooter>
-          <Button size="small" onPress={() => Linking.openURL('https://bimwallet.io')}>
-            {t('common.update')}
-          </Button>
+          <View style={styles.btnArea}>
+            {!newVersion.force && (
+              <Button size="small" testID="later" style={[styles.btn]} onPress={navigation.goBack}>
+                {t('common.later')}
+              </Button>
+            )}
+
+            <Button size="small" testID="update" style={[styles.btn]} onPress={() => Linking.openURL('https://bimwallet.io')}>
+              {t('common.update')}
+            </Button>
+          </View>
         </BottomSheetFooter>
       </BottomSheetWrapper>
     </BottomSheet>
@@ -169,6 +191,17 @@ const styles = StyleSheet.create({
   },
   button: {
     marginBottom: 79,
+  },
+  btnArea: {
+    display: 'flex',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    gap: 16,
+  },
+  btn: {
+    flex: 1,
+    flexShrink: 1,
   },
 });
 

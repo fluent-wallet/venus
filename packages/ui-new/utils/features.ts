@@ -1,4 +1,10 @@
 import { getAppEnv, isDev, isQA } from './getEnv';
+import { Platform } from 'react-native';
+
+export const SUPPORT_BSIM_FEATURE = {
+  describe: 'support bsim',
+  allow: Platform.OS === 'android',
+};
 
 export const APP_VERSION_FLAG_FEATURE = {
   describe: 'add dev or qa flag to app version',
@@ -16,42 +22,19 @@ export const ESPACE_NETWORK_SWITCH_FEATURE = {
   allow: isQA || isDev,
 };
 
-export const ACTIVITY_DB_STATUS_FEATURE = {
-  describe: 'show activity db status after action',
+/** standing */
+export const ACTIVITY_DEV_INFO_FEATURE = {
+  describe: 'show activity dev info',
   allow: isQA || isDev,
 };
 
+/** standing */
 export const ENABLE_SMALL_SIGNATURE_RECORDS_FEATURE = {
   describe: 'signature records with pagesize = 10 feature',
   allow: isDev || isQA,
 };
 
-export const ENABLE_SIGNATURE_RECORDS_FEATURE = {
-  describe: 'signature records with pagesize = 10 feature',
-  allow: isDev || isQA,
-};
-
-export const ENABLE_CHECK_UPDATE_FEATURE = {
-  describe: 'check the app update feature',
-  allow: isDev,
-};
-
 export const DEVELOPER_FEATURE = {
   describe: 'developer feature',
-  allow: isDev,
-};
-
-export const NETWORK_MANAGEMENT_FEATURE = {
-  describe: 'network management feature',
-  allow: isDev,
-};
-
-export const GAS_FEE_FEATURE = {
-  describe: 'Gas fee setting feature',
-  allow: isDev,
-};
-
-export const SPEED_UP_FEATURE = {
-  describe: 'speed up',
   allow: isDev,
 };

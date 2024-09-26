@@ -4,12 +4,12 @@ export { useNetworks } from './data/useNetworks';
 export {
   useCurrentNetwork,
   getCurrentNetwork,
-  useNativeAssetOfCurrentNetwork,
+  useNativeAssetOfNetwork,
   useCurrentNetworkNativeAsset,
   getCurrentNetworkNativeAsset,
 } from './data/useCurrentNetwork';
 export { useCurrentAccount } from './data/useCurrentAccount';
-export { useCurrentAddress, useCurrentAddressValue } from './data/useCurrentAddress';
+export { useCurrentAddress, useCurrentAddressValue, getCurrentAddress, getCurrentAddressValue } from './data/useCurrentAddress';
 export { useAccountsOfGroup } from './data/useAccountsOfGroup';
 export { useVaultOfGroup } from './data/useVaultOfGroup';
 export { useAddressesOfAccount, useCurrentAddressOfAccount, useCurrentAddressValueOfAccount } from './data/useAddressesOfAccount';
@@ -22,7 +22,7 @@ export { useVaultOfAccount } from './data/useVaultOfAccount';
 export { useVaults } from './data/useVaults';
 export { useHasVault } from './data/useHasVault';
 export { useCurrentHdPath } from './data/useCurrentHdPath';
-export { useFinishedTxs, usePayloadOfTx, useUnfinishedTxs, useAssetOfTx, useRecentlyAddress, RecentlyType } from './data/useTxs';
+export { useFinishedTxs, usePayloadOfTx, useUnfinishedTxs, useAssetOfTx, useRecentlyAddress, isPendingTxsFull, RecentlyType } from './data/useTxs';
 export {
   useAssetsAllList,
   useAssetsNFTList,

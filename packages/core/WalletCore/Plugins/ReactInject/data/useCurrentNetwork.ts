@@ -1,8 +1,9 @@
 import { useAtomValue } from 'jotai';
 import { atomFamily, atomWithObservable } from 'jotai/utils';
 import { memoize, pick } from 'lodash-es';
-import { map, of, startWith, switchMap } from 'rxjs';
+import { map, of, startWith, switchMap, type Observable } from 'rxjs';
 import { dbRefresh$ } from '../../../../database';
+import type { Network } from '../../../../database/models/Network';
 import { observeNetworkById, querySelectedNetwork } from '../../../../database/models/Network/query';
 import { getAtom } from '../nexus';
 
@@ -41,7 +42,7 @@ const currentNetworkAtomObservable = selectedNetworkObservable.pipe(
   }),
 );
 
-export const currentNetworkAtom = atomWithObservable(() => currentNetworkAtomObservable, { initialValue: null });
+export const currentNetworkAtom = atomWithObservable(() => currentNetworkAtomObservable as Observable<Network>, { initialValue: null });
 export const useCurrentNetwork = () => useAtomValue(currentNetworkAtom);
 export const getCurrentNetwork = () => getAtom(currentNetworkAtom);
 
@@ -54,8 +55,8 @@ const nativeAssetAtomFamilyOfNetwork = atomFamily((networkId: string | undefined
   }),
 );
 
-export const useNativeAssetOfCurrentNetwork = (currentNetwork: ReturnType<typeof useCurrentNetwork>) => {
-  return useAtomValue(nativeAssetAtomFamilyOfNetwork(currentNetwork?.id));
+export const useNativeAssetOfNetwork = (networkId: string | undefined | null) => {
+  return useAtomValue(nativeAssetAtomFamilyOfNetwork(networkId));
 };
 export const useCurrentNetworkNativeAsset = () => {
   const currentNetwork = useCurrentNetwork();

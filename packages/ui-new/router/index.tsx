@@ -12,7 +12,7 @@ import EraseAllWallet from '@pages/Management/AccountManagement/EraseAllWallet';
 import GroupSetting from '@pages/Management/AccountManagement/GroupSetting';
 import HDSetting from '@pages/Management/AccountManagement/HDSetting';
 import Receive from '@pages/Receive';
-import ScanQRCode from '@pages/ScanQRCode';
+import ExternalInputHandler, { useListenDeepLink } from '@pages/ExternalInputHandler';
 import SendTransaction from '@pages/SendTransaction';
 import Settings from '@pages/Settings';
 import AboutUs, { UpdateVersion } from '@pages/Settings/AboutUs';
@@ -27,11 +27,12 @@ import Welcome from '@pages/Welcome';
 import NetworkManagement from '@pages/Management/NetworkManagement';
 import NetworkAddNewEndpoint from '@pages/Management/NetworkManagement/AddNewEndpoint';
 import SpeedUp from '@modules/GasFee/SpeedUp';
+import TooManyPending from '@pages/TooManyPending';
 import { useNavigation, useTheme } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import type React from 'react';
 import { useEffect } from 'react';
-import { View } from 'react-native';
+import { View, StatusBar } from 'react-native';
 import Header from './Header';
 import {
   AboutUsStackName,
@@ -52,7 +53,7 @@ import {
   PreferencesStackName,
   ReceiveStackName,
   type RootStackParamList,
-  ScanQRCodeStackName,
+  ExternalInputHandlerStackName,
   SendTransactionStackName,
   SettingsStackName,
   SheetBottomOption,
@@ -64,7 +65,11 @@ import {
   NetworkManagementStackName,
   NetworkAddNewEndpointStackName,
   SpeedUpStackName,
+  TransactionDetailStackName,
+  TooManyPendingStackName,
 } from './configs';
+import TransactionDetail from '@pages/TransactionDetail';
+import { useTranslation } from 'react-i18next';
 
 const RootStack = createNativeStackNavigator<RootStackParamList>();
 const screenOptions = {
@@ -72,13 +77,13 @@ const screenOptions = {
   header: Header,
   headerBackVisible: false,
   statusBarTranslucent: true,
-  statusBarBackgroundColor: 'transparent',
   // animation: 'fade',
 } as const;
 
 const Router: React.FC = () => {
+  const { t } = useTranslation();
   const hasVault = useHasVault();
-  const { colors } = useTheme();
+  const { colors, mode } = useTheme();
 
   const navigation = useNavigation<StackNavigation>();
   // to listen the wallet connect plugin custom subject event
@@ -94,8 +99,11 @@ const Router: React.FC = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  useListenDeepLink(navigation);
+
   return (
     <View style={{ flex: 1, backgroundColor: colors.bgPrimary }}>
+      <StatusBar translucent backgroundColor="transparent" barStyle={mode === 'light' ? 'dark-content' : 'light-content'} />
       <RootStack.Navigator initialRouteName={hasVault ? HomeStackName : WelcomeStackName} screenOptions={screenOptions}>
         <RootStack.Screen name={WelcomeStackName} component={Welcome} options={{ headerShown: false, animation: 'none' }} />
         <RootStack.Screen name={WayToInitWalletStackName} component={WayToInitWallet} options={{ headerShown: false, animation: 'none' }} />
@@ -112,7 +120,7 @@ const Router: React.FC = () => {
         <RootStack.Screen name={EraseAllWalletStackName} component={EraseAllWallet} options={SheetBottomOption} />
         <RootStack.Screen name={AddAnotherWalletStackName} component={AddAnotherWallet} options={SheetBottomOption} />
         <RootStack.Screen name={SendTransactionStackName} component={SendTransaction} options={SheetBottomOption} />
-        <RootStack.Screen name={ScanQRCodeStackName} component={ScanQRCode} options={SheetBottomOption} />
+        <RootStack.Screen name={ExternalInputHandlerStackName} component={ExternalInputHandler} options={SheetBottomOption} />
         <RootStack.Screen name={ReceiveStackName} component={Receive} options={SheetBottomOption} />
         <RootStack.Screen name={PasswordVerifyStackName} component={PasswordVerify} options={SheetBottomOption} />
         <RootStack.Screen name={SettingsStackName} component={Settings} />
@@ -124,6 +132,8 @@ const Router: React.FC = () => {
         <RootStack.Screen name={WalletConnectStackName} component={WalletConnect} options={SheetBottomOption} />
         <RootStack.Screen name={SignatureRecordsStackName} component={SignatureRecords} />
         <RootStack.Screen name={SpeedUpStackName} component={SpeedUp} options={SheetBottomOption} />
+        <RootStack.Screen name={TooManyPendingStackName} component={TooManyPending} options={SheetBottomOption} />
+        <RootStack.Screen name={TransactionDetailStackName} component={TransactionDetail} options={{ title: t('tx.detail.title') }} />
       </RootStack.Navigator>
     </View>
   );

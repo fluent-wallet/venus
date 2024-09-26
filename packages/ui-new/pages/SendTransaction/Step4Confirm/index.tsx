@@ -3,7 +3,7 @@
 import { BSIMEventTypesName } from '@WalletCoreExtends/Plugins/BSIM/types';
 import ProhibitIcon from '@assets/icons/prohibit.svg';
 import WarnIcon from '@assets/icons/warn.svg';
-import { convertCfxToHex } from '@cfx-kit/dapp-utils/dist/address';
+import { convertBase32ToHex, type Base32Address } from '@core/utils/address';
 import { createERC20Contract, createERC721Contract, createERC1155Contract } from '@cfx-kit/dapp-utils/dist/contract';
 import { BottomSheetScrollContent, BottomSheetFooter } from '@components/BottomSheet';
 import Button from '@components/Button';
@@ -50,6 +50,7 @@ import BSIMVerify, { useBSIMVerify } from '../BSIMVerify';
 import SendTransactionBottomSheet from '../SendTransactionBottomSheet';
 import { NFT } from '../Step3Amount';
 import SendAsset from './SendAsset';
+import { TransactionActionType } from '@core/WalletCore/Events/broadcastTransactionSubject';
 
 const SendTransactionStep4Confirm: React.FC<SendTransactionScreenProps<typeof SendTransactionStep4StackName>> = ({ navigation, route }) => {
   useEffect(() => Keyboard.dismiss(), []);
@@ -66,12 +67,24 @@ const SendTransactionStep4Confirm: React.FC<SendTransactionScreenProps<typeof Se
   const signTransaction = useSignTransaction();
 
   const {
-    params: { asset, amount, nftItemDetail, recipientAddress },
+    params: { asset, amount: _amount, nftItemDetail, recipientAddress, inMaxMode },
   } = route;
 
   const [showGasFeeSetting, setShowGasFeeSetting] = useState(false);
+  const [gasEstimate, setGasEstimate] = useState<GasEstimate | null>(null);
+  const [gasCost, setGasCost] = useState<string | null>(null);
 
+  const amount = useMemo(() => {
+    if (!inMaxMode || asset.type !== AssetType.Native) {
+      return _amount;
+    }
+    if (!gasCost) return _amount;
+    return new Decimal(_amount).sub(gasCost).toString();
+  }, [_amount, gasCost, inMaxMode]);
+
+  const transferAmountHex = useMemo(() => new Decimal(amount || 0).mul(Decimal.pow(10, nftItemDetail ? 0 : asset.decimals || 0)).toHex(), [amount]);
   const formattedAmount = useFormatBalance(amount);
+
   const price = useMemo(() => calculateTokenPrice({ price: asset.priceInUSDT, amount: amount }), [asset.priceInUSDT, amount]);
   const symbol = useMemo(() => {
     if (!nftItemDetail) {
@@ -80,14 +93,12 @@ const SendTransactionStep4Confirm: React.FC<SendTransactionScreenProps<typeof Se
     return getDetailSymbol(nftItemDetail);
   }, []);
 
-  const transferAmountHex = useMemo(() => new Decimal(amount || 0).mul(Decimal.pow(10, nftItemDetail ? 0 : asset.decimals || 0)).toHex(), []);
-
   const txHalf = useMemo(() => {
     let data = '0x';
     if (asset.type === AssetType.ERC20) {
       const contract = createERC20Contract(asset.contractAddress);
       data = contract.encodeFunctionData('transfer', [
-        (currentNetwork.networkType === NetworkType.Conflux ? convertCfxToHex(recipientAddress) : recipientAddress) as `0x${string}`,
+        (currentNetwork.networkType === NetworkType.Conflux ? convertBase32ToHex(recipientAddress as Base32Address) : recipientAddress) as `0x${string}`,
         transferAmountHex as unknown as bigint,
       ]);
     } else if (asset.type === AssetType.ERC721) {
@@ -115,9 +126,7 @@ const SendTransactionStep4Confirm: React.FC<SendTransactionScreenProps<typeof Se
       from: currentAddressValue,
       chainId: currentNetwork.chainId,
     } as ITxEvm;
-  }, []);
-
-  const [gasEstimate, setGasEstimate] = useState<GasEstimate | null>(null);
+  }, [transferAmountHex]);
 
   const [error, setError] = useState<{ type?: string; message: string } | null>(null);
 
@@ -125,6 +134,13 @@ const SendTransactionStep4Confirm: React.FC<SendTransactionScreenProps<typeof Se
   const epochHeightRef = useRef('');
 
   const _handleSend = useCallback(async () => {
+    if (currentVault?.type === VaultType.BSIM && currentNetwork.networkType === NetworkType.Conflux) {
+      showMessage({
+        message: 'BSIM not support Conflux Core',
+        type: 'warning',
+      });
+      return;
+    }
     setBSIMEvent(null);
     execBSIMCancel();
 
@@ -170,14 +186,20 @@ const SendTransactionStep4Confirm: React.FC<SendTransactionScreenProps<typeof Se
           setBSIMEvent({ type: BSIMEventTypesName.BSIM_SIGN_START });
         }
 
-        const { txRawPromise, cancel } = await signTransaction({ ...tx, epochHeight: epochHeightRef.current });
+        const { txRawPromise, cancel } = await signTransaction({
+          ...tx,
+          epochHeight: epochHeightRef.current,
+        });
         setBSIMCancel(cancel);
         txRaw = await txRawPromise;
         signature = await methods.createSignature({
           address: currentAddress,
           signType: SignType.TX,
         });
-        txHash = await plugins.Transaction.sendRawTransaction({ txRaw, network: currentNetwork });
+        txHash = await plugins.Transaction.sendRawTransaction({
+          txRaw,
+          network: currentNetwork,
+        });
 
         setBSIMEvent(null);
         showMessage({
@@ -193,7 +215,10 @@ const SendTransactionStep4Confirm: React.FC<SendTransactionScreenProps<typeof Se
         }
       } catch (error) {
         if (error instanceof BSIMError) {
-          setBSIMEvent({ type: BSIMEventTypesName.ERROR, message: error?.message });
+          setBSIMEvent({
+            type: BSIMEventTypesName.ERROR,
+            message: error?.message,
+          });
         } else {
           // throw error to outer catch
           throw error;
@@ -202,42 +227,44 @@ const SendTransactionStep4Confirm: React.FC<SendTransactionScreenProps<typeof Se
     } catch (_err: any) {
       txError = _err;
       setBSIMEvent(null);
-      const err = String(_err.data || _err?.message || _err);
-      if (error instanceof SignTransactionCancelError) {
+      if (txError instanceof SignTransactionCancelError) {
         // ignore cancel error
         return;
       }
+      const errString = String(txError.data || txError?.message || txError);
       setError({
-        message: err,
-        ...(err.includes('out of balance') ? { type: 'out of balance' } : err.includes('timed out') ? { type: 'network error' } : null),
+        message: errString,
+        ...(errString.includes('out of balance') ? { type: 'out of balance' } : errString.includes('timed out') ? { type: 'network error' } : null),
       });
       showMessage({
         message: t('tx.confirm.failed'),
-        description: err,
+        description: errString,
         type: 'failed',
       });
     } finally {
       if (txRaw) {
         events.broadcastTransactionSubjectPush.next({
-          txHash,
-          txRaw,
-          tx,
-          address: currentAddress,
-          signature,
-          extraParams: {
-            assetType: asset.type,
-            contractAddress: asset.type !== AssetType.Native ? asset.contractAddress : undefined,
-            to: recipientAddress,
-            sendAt: new Date(),
-            epochHeight: currentNetwork.networkType === NetworkType.Conflux ? epochHeightRef.current : null,
-            err: txError && String(txError.data || txError?.message || txError),
-            errorType: txError && processError(txError).errorType,
-            method: asset.type === AssetType.ERC721 ? 'transferFrom' : asset.type === AssetType.ERC1155 ? 'safeTransferFrom' : 'transfer',
+          transactionType: TransactionActionType.Send,
+          params: {
+            txHash,
+            txRaw,
+            tx,
+            address: currentAddress,
+            signature,
+            extraParams: {
+              assetType: asset.type,
+              contractAddress: asset.type !== AssetType.Native ? asset.contractAddress : undefined,
+              sendAt: new Date(),
+              epochHeight: currentNetwork.networkType === NetworkType.Conflux ? epochHeightRef.current : null,
+              err: txError && String(txError.data || txError?.message || txError),
+              errorType: txError && processError(txError).errorType,
+              method: asset.type === AssetType.ERC721 ? 'transferFrom' : asset.type === AssetType.ERC1155 ? 'safeTransferFrom' : 'transfer',
+            },
           },
         });
       }
     }
-  }, [gasEstimate, currentVault?.id, currentNetwork?.id]);
+  }, [txHalf, gasEstimate, currentVault?.id, currentNetwork?.id]);
 
   const { inAsync: inSending, execAsync: handleSend } = useInAsync(_handleSend);
   return (
@@ -270,11 +297,12 @@ const SendTransactionStep4Confirm: React.FC<SendTransactionScreenProps<typeof Se
             </Text>
           </AccountItemView>
 
-          <Text style={[styles.estimateFee, { color: colors.textPrimary }]}>{t('tx.confirm.estimatedFee')}</Text>
+          <Text style={[styles.estimateFee, { color: colors.textSecondary }]}>{t('tx.confirm.estimatedFee')}</Text>
           <EstimateFee
             gasSetting={gasEstimate?.gasSetting}
             advanceSetting={gasEstimate?.advanceSetting ?? gasEstimate?.estimateAdvanceSetting}
             onPressSettingIcon={() => setShowGasFeeSetting(true)}
+            onGasCostChange={(newGasCost) => setGasCost(newGasCost)}
           />
 
           {error && (
@@ -328,7 +356,7 @@ const SendTransactionStep4Confirm: React.FC<SendTransactionScreenProps<typeof Se
 export const styles = StyleSheet.create({
   sendTitle: {
     marginTop: 16,
-    marginBottom: 10,
+    marginBottom: 24,
     paddingHorizontal: 16,
     fontSize: 22,
     fontWeight: '600',
@@ -355,10 +383,10 @@ export const styles = StyleSheet.create({
   },
   estimateFee: {
     marginTop: 16,
-    marginBottom: 5,
+    marginBottom: 10,
     fontSize: 14,
     lineHeight: 18,
-    fontWeight: '600',
+    fontWeight: '300',
     paddingHorizontal: 56,
   },
   errorWarp: {

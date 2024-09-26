@@ -1,12 +1,10 @@
 import Copy from '@assets/icons/copy.svg';
 import Earth from '@assets/icons/earth.svg';
 import Sign from '@assets/icons/sign.svg';
-import { NetworkType, useCurrentAddressValue, useCurrentNetwork } from '@core/WalletCore/Plugins/ReactInject';
-import { Networks } from '@core/utils/consts';
+import { useCurrentAddressValue, useCurrentNetwork } from '@core/WalletCore/Plugins/ReactInject';
 import Clipboard from '@react-native-clipboard/clipboard';
 import { useNavigation, useTheme } from '@react-navigation/native';
 import { SignatureRecordsStackName, type StackScreenProps } from '@router/configs';
-import { ENABLE_SIGNATURE_RECORDS_FEATURE } from '@utils/features';
 import React, { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Dimensions, type LayoutChangeEvent, Linking, Modal, Pressable, StyleSheet, Text, View } from 'react-native';
@@ -75,24 +73,22 @@ const MoreOption: React.FC<{ children: React.ReactElement }> = ({ children }) =>
               <Pressable onPress={handleOpenScan} testID="view">
                 <View style={styles.optionItem}>
                   <Text style={[{ color: reverseColors.textPrimary }, styles.optionItemText]}>{t('home.more.viewInExplorer')}</Text>
-                  <Earth color={reverseColors.textPrimary} width={22} height={22} />
+                  <Earth color={reverseColors.textPrimary} />
                 </View>
               </Pressable>
             )}
             <Pressable onPress={handleCoy} testID="copy">
               <View style={styles.optionItem}>
                 <Text style={[{ color: reverseColors.textPrimary }, styles.optionItemText]}>{t('home.more.copyAddress')}</Text>
-                <Copy color={reverseColors.textPrimary} width={20} height={20} />
+                <Copy color={reverseColors.textPrimary} />
               </View>
             </Pressable>
-            {ENABLE_SIGNATURE_RECORDS_FEATURE.allow && (
-              <Pressable onPress={handleToSignatureRecords} testID="signatureRecords">
-                <View style={styles.optionItem}>
-                  <Text style={[{ color: reverseColors.textPrimary }, styles.optionItemText]}>{t('home.more.signatureRecords')}</Text>
-                  <Sign color={reverseColors.textPrimary} width={20} height={20} />
-                </View>
-              </Pressable>
-            )}
+            <Pressable onPress={handleToSignatureRecords} testID="signatureRecords">
+              <View style={styles.optionItem}>
+                <Text style={[{ color: reverseColors.textPrimary }, styles.optionItemText]}>{t('home.more.signatureRecords')}</Text>
+                <Sign color={reverseColors.textPrimary} />
+              </View>
+            </Pressable>
           </Animated.View>
         </Pressable>
       </Modal>
