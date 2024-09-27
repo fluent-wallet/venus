@@ -131,8 +131,28 @@ const ExternalInputHandler: React.FC<Props> = ({ navigation, onConfirm, onClose,
           return;
         }
         if (!ethUrl.function_name) {
+          // if no function name, then it's a native token transfer
+          const nativeAsset = getAssetsTokenList()?.find((asset) => asset.type === AssetType.Native);
+          if (nativeAsset && ethUrl.parameters?.value) {
+            // if there has native asset and value we can go to the step 4
+            navigation.dispatch(
+              StackActions.replace(SendTransactionStackName, {
+                screen: SendTransactionStep4StackName,
+                params: {
+                  recipientAddress: ethUrl.target_address,
+                  asset: nativeAsset,
+                  amount: new Decimal(String(ethUrl.parameters?.value)).div(Decimal.pow(10, nativeAsset.decimals ?? 18)).toString(),
+                },
+              }),
+            );
+            return;
+          }
+          // else go to the step 3 let user input the amount
           navigation.dispatch(
-            StackActions.replace(SendTransactionStackName, { screen: SendTransactionStep2StackName, params: { recipientAddress: ethUrl.target_address } }),
+            StackActions.replace(SendTransactionStackName, {
+              screen: SendTransactionStep3StackName,
+              params: { recipientAddress: ethUrl.target_address, asset: nativeAsset },
+            }),
           );
           return;
         }
