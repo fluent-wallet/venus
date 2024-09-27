@@ -1,8 +1,8 @@
 {
-  "version": "2.1.1",
+  "version": "2.1.2",
   "force": false,
   "en": {
-    "description": "🎉 BIM Wallet New Version v2.1.0",
+    "description": "🎉 BIM Wallet New Version v2.1.2",
     "messageList": [
       "✨ New Features",
       "Added support for CIP-1559 transaction types",
@@ -17,7 +17,7 @@
     ]
   },
   "zh-Hant": {
-    "description": "🎉 BIM Wallet 新版本 v2.1.0",
+    "description": "🎉 BIM Wallet 新版本 v2.1.2",
     "messageList": [
       "✨ 新功能",
       "新增對 CIP-1559 交易類型的支持",
