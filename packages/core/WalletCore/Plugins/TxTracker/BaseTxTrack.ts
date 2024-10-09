@@ -72,11 +72,11 @@ export abstract class BaseTxTrack {
       ) {
         await this._handleDuplicateTx(tx, false, false, updaterMap);
       }
-      if (replaceReponse !== ReplacedResponse.NotReplaced) return;
+      if (replaceReponse !== ReplacedResponse.NotReplaced) return txStatus;
       if (tx.resendCount && tx.resendCount >= TX_RESEND_LIMIT) {
         txStatus = TxStatus.DISCARDED;
         console.log(`${this._logPrefix}: tx resend limit reached:`, tx.hash);
-        return;
+        return txStatus;
       }
       const duplicateTxs = await queryDuplicateTx(tx, nonce, [
         TxStatus.WAITTING,
@@ -90,14 +90,13 @@ export abstract class BaseTxTrack {
       if (latestDuplicateTx && latestDuplicateTx.createdAt > tx.createdAt) {
         txStatus = TxStatus.DISCARDED;
         console.log(`${this._logPrefix}: tx has speedup or canceled:`, tx.hash);
-        return;
+        return txStatus;
       }
       resend = true;
       await Transaction.sendRawTransaction({
         network,
         txRaw: tx.raw!,
       });
-      txStatus = TxStatus.DISCARDED;
     } catch (error) {
       console.log(`${this._logPrefix}:`, error);
       // TODO: handle error
@@ -119,8 +118,6 @@ export abstract class BaseTxTrack {
           }
         }),
       );
-      // biome-ignore lint/correctness/noUnsafeFinally: <explanation>
-      return txStatus;
     }
   }
 
