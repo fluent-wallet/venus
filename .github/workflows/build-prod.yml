@@ -120,10 +120,13 @@ jobs:
       - name: Upload to OSS
         run: yes | ossutil64 cp ./android/app/build/outputs/apk/prod/release/app-prod-release.apk oss://blockvenus-hk/apks/BIMWallet.apk
 
-  uoloadUpdateNote:
+  uploadUpdateNote:
     needs: [android-build]
     runs-on: ubuntu-latest
     steps:
+      - name: install OSSUTIL
+        run: |
+          sudo -v ; curl https://gosspublic.alicdn.com/ossutil/install.sh | sudo bash
       - name: Configure OSS
         env:
           OSS_KEY: ${{ secrets.OSS_KEY }}
