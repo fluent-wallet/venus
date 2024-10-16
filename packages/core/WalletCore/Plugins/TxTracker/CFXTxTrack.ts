@@ -167,7 +167,7 @@ class CFXTxTrack extends BaseTxTrack {
         // unexpected case
         throw new Error('epochHeight is required for core tx');
       }
-      return !BlockNumberTracker.checkBlockNumberInRange(network, txblockNumber, [MAX_EPOCH_NUMBER_OFFSET_IN_CORE, MAX_EPOCH_NUMBER_OFFSET_IN_CORE]);
+      return !BlockNumberTracker.checkBlockNumberInRange(network, txblockNumber, [-MAX_EPOCH_NUMBER_OFFSET_IN_CORE, MAX_EPOCH_NUMBER_OFFSET_IN_CORE]);
     } catch (error) {
       console.log('CFXTxTrack: checkEpochHeightOutOfBound error:', {
         hash: tx.hash,
