@@ -143,7 +143,7 @@ jobs:
           END
 
       - name: Upload Update Note
-        run: yes | ossutil64 cp ./vesion.json oss://blockvenus-hk/vesion.json
+        run: yes | ossutil64 cp ./version.json oss://blockvenus-hk/version.json
 
   ios-build:
     name: IOS Build

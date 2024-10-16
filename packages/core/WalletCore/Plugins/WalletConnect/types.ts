@@ -1,7 +1,7 @@
 import type { ProposalTypes } from '@walletconnect/types';
 import type { NetworkType } from '../ReactInject';
 import type { SdkErrorKey } from '@walletconnect/utils';
-import type { Web3WalletTypes } from '@walletconnect/web3wallet';
+import type { WalletKitTypes } from '@reown/walletkit'
 
 export enum WalletConnectRPCMethod {
   //   Sign = 'eth_sign',
@@ -23,7 +23,7 @@ export enum WalletConnectPluginEventType {
 }
 
 export interface IWCSessionProposalEventData {
-  metadata: Web3WalletTypes.Metadata;
+  metadata: WalletKitTypes.Metadata;
   requiredNamespaces: ProposalTypes.RequiredNamespaces;
   optionalNamespaces: ProposalTypes.OptionalNamespaces;
   connectedNetworks: Array<{
@@ -48,7 +48,7 @@ export interface IWCSignMessageEventData {
   chainId: string;
   method: WalletConnectRPCMethod;
   message: string;
-  metadata: Web3WalletTypes.Metadata;
+  metadata: WalletKitTypes.Metadata;
 }
 
 export interface IWCSignMessageEvent {
@@ -88,4 +88,4 @@ export interface IWCSendTransactionEvent {
 }
 export type WalletConnectPluginEvents = IWCSessionProposalEvent | IWCSignMessageEvent | IWCSendTransactionEvent;
 
-export type WalletConnectMetadata = Web3WalletTypes.Metadata;
+export type WalletConnectMetadata = WalletKitTypes.Metadata;

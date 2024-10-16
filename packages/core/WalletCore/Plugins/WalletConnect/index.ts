@@ -4,8 +4,8 @@ import { formatJsonRpcError, formatJsonRpcResult } from '@json-rpc-tools/utils';
 import { Core } from '@walletconnect/core';
 import { queryNetworks } from '@core/database/models/Network/query';
 import { buildApprovedNamespaces, getSdkError, parseUri } from '@walletconnect/utils';
-import type Client from '@walletconnect/web3wallet';
-import { Web3Wallet, type Web3WalletTypes } from '@walletconnect/web3wallet';
+import type Client from '@reown/walletkit';
+import { WalletKit, type WalletKitTypes } from '@reown/walletkit';
 import { BehaviorSubject, Subject, concatMap, of, switchMap, tap } from 'rxjs';
 import { uniq } from 'lodash-es';
 import { convertHexToBase32 } from '@core/utils/address';
@@ -50,7 +50,7 @@ export const CIPPlaceHolder = '201029';
 
 export interface WalletConnectPluginParams {
   projectId: string;
-  metadata: Web3WalletTypes.Options['metadata'];
+  metadata: WalletKitTypes.Options['metadata'];
 }
 
 export class WalletConnectPluginError extends Error {
@@ -118,7 +118,7 @@ export default class WalletConnect implements Plugin {
       .subscribe();
 
     const core = new Core({ projectId });
-    this.client = Web3Wallet.init({
+    this.client = WalletKit.init({
       core,
       metadata,
     });
@@ -126,7 +126,7 @@ export default class WalletConnect implements Plugin {
     this.init();
   }
 
-  activeSessionMetadata: Record<string, Web3WalletTypes.Metadata> = {};
+  activeSessionMetadata: Record<string, WalletKitTypes.Metadata> = {};
 
   async init() {
     const client = await this.client;
@@ -157,7 +157,7 @@ export default class WalletConnect implements Plugin {
     this.sessionStateChangeSubject.next();
   }
 
-  async onSessionProposal(proposal: Web3WalletTypes.SessionProposal) {
+  async onSessionProposal(proposal: WalletKitTypes.SessionProposal) {
     const client = await this.client;
     // TODO: Check the connect
     // const { verified } = proposal.verifyContext;
@@ -268,7 +268,7 @@ export default class WalletConnect implements Plugin {
     });
   }
 
-  async onSessionRequest(request: Web3WalletTypes.SessionRequest) {
+  async onSessionRequest(request: WalletKitTypes.SessionRequest) {
     const client = await this.client;
     const currentAddressValue = await getCurrentAddressValue()!;
 
@@ -372,7 +372,7 @@ export default class WalletConnect implements Plugin {
     }
   }
 
-  onSessionDelete(event: Web3WalletTypes.SessionDelete) {
+  onSessionDelete(event: WalletKitTypes.SessionDelete) {
     this.emitSessionChange();
   }
 
