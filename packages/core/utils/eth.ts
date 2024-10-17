@@ -31,10 +31,13 @@ export enum ProcessErrorType {
   signatureError = 'signatureError',
   nodeInCatchUp = 'nodeInCatchUp',
   internalError = 'internalError',
+  /** from executed result or estimateGas */
   contractExecuteFailed = 'contractExecuteFailed',
+  /** from executed result */
   notEnoughCash = 'notEnoughCash',
+  /** from tx tracker, not from send error message */
   replacedByAnotherTx = 'replacedByAnotherTx',
-  /** for tx tracker, not from error message */
+  /** from tx tracker, not from send error message */
   executeFailed = 'executeFailed',
 }
 
