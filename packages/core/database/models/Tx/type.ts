@@ -1,13 +1,22 @@
 /** executed not mean success, remember check executedStatus */
 export enum TxStatus {
+  /** tx is finalized replaced */
   REPLACED = 'REPLACED',
+  /** tx is temp replaced, maybe changed to REPLACED or EXECUTED */
   TEMP_REPLACED = 'TEMP_REPLACED',
+  /** initial send failed, hidden in Activity */
   SEND_FAILED = 'SEND_FAILED',
+  /** tx send success but nonce is in future */
   WAITTING = 'WAITTING',
+  /** tx is discarded by tx pool, changed to PENDING until tx is found in poll */
   DISCARDED = 'DISCARDED',
+  /** after send or tx is in tx pool but not executed yet */
   PENDING = 'PENDING',
+  /** tx is executed but not confirmed */
   EXECUTED = 'EXECUTED',
+  /** tx is executed and confirmed, waitting finalized confirmed */
   CONFIRMED = 'CONFIRMED',
+  /** tx is finalized confirmed */
   FINALIZED = 'FINALIZED',
 }
 

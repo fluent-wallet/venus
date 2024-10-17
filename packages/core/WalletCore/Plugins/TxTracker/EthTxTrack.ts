@@ -161,8 +161,8 @@ class EthTxTrack extends BaseTxTrack {
     return status;
   }
 
-  async _checkEpochHeightOutOfBound() {
-    return false;
+  async _precheckBeforeResend() {
+    return true;
   }
 
   async _getTransactionReceipt(hash: string, endpoint: string) {

@@ -1,6 +1,6 @@
 import events from '@core/WalletCore/Events';
 import type { Network } from '@core/database/models/Network';
-import { MAX_EPOCH_NUMBER_OFFSET_IN_CORE } from '@core/utils/consts';
+import { SUGGESTED_EPOCH_NUMBER_OFFSET_IN_CORE } from '@core/utils/consts';
 import { type Subscription, catchError, debounceTime, interval, retry, startWith, switchMap, throwError } from 'rxjs';
 import type { Plugin } from '../';
 import Transaction from '../Transaction';
@@ -11,7 +11,7 @@ declare module '../../../WalletCore/Plugins' {
   }
 }
 
-export const checkDiffInRange = (diff: bigint, range: [bigint, bigint] = [-MAX_EPOCH_NUMBER_OFFSET_IN_CORE, MAX_EPOCH_NUMBER_OFFSET_IN_CORE]) =>
+export const checkDiffInRange = (diff: bigint, range: [bigint, bigint] = [-SUGGESTED_EPOCH_NUMBER_OFFSET_IN_CORE, SUGGESTED_EPOCH_NUMBER_OFFSET_IN_CORE]) =>
   diff >= BigInt(range[0]) && diff <= BigInt(range[1]);
 
 class BlockNumberTracker implements Plugin {

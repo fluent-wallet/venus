@@ -55,16 +55,17 @@ export abstract class BaseTxTrack {
 
   async _handleUnsent(tx: Tx, network: Network, updaterMap: UpdaterMap) {
     let resend = false;
-    let txStatus = TxStatus.PENDING;
+    let txStatus = TxStatus.DISCARDED;
     try {
-      const nonce = (await tx.txPayload).nonce!;
       const replaceReponse = await this._handleCheckReplaced(tx, network.endpoint);
       txStatus =
         replaceReponse === ReplacedResponse.FinalizedReplaced
           ? TxStatus.REPLACED
           : replaceReponse === ReplacedResponse.TempReplaced
             ? TxStatus.TEMP_REPLACED
-            : TxStatus.PENDING;
+            : replaceReponse === ReplacedResponse.NotReplaced
+              ? TxStatus.DISCARDED
+              : TxStatus.PENDING;
       if (
         EXECUTED_NOT_FINALIZED_TX_STATUSES.includes(tx.status) &&
         replaceReponse !== ReplacedResponse.FinalizedExecuted &&
@@ -72,35 +73,24 @@ export abstract class BaseTxTrack {
       ) {
         await this._handleDuplicateTx(tx, false, false, updaterMap);
       }
-      if (replaceReponse !== ReplacedResponse.NotReplaced) return;
+      if (replaceReponse !== ReplacedResponse.NotReplaced) return txStatus;
       if (tx.resendCount && tx.resendCount >= TX_RESEND_LIMIT) {
-        txStatus = TxStatus.DISCARDED;
         console.log(`${this._logPrefix}: tx resend limit reached:`, tx.hash);
-        return;
+        return txStatus;
       }
-      const duplicateTxs = await queryDuplicateTx(tx, nonce, [
-        TxStatus.WAITTING,
-        TxStatus.DISCARDED,
-        TxStatus.PENDING,
-        TxStatus.EXECUTED,
-        TxStatus.CONFIRMED,
-        TxStatus.FINALIZED,
-      ]);
-      const latestDuplicateTx = duplicateTxs?.[0];
-      if (latestDuplicateTx && latestDuplicateTx.createdAt > tx.createdAt) {
-        txStatus = TxStatus.DISCARDED;
-        console.log(`${this._logPrefix}: tx has speedup or canceled:`, tx.hash);
-        return;
+      resend = await this._precheckBeforeResend(tx);
+      if (!resend) {
+        console.log(`${this._logPrefix}: cancel resend by precheck:`, tx.hash);
+        return txStatus;
       }
-      resend = true;
       await Transaction.sendRawTransaction({
         network,
         txRaw: tx.raw!,
       });
-      txStatus = TxStatus.DISCARDED;
+      return txStatus;
     } catch (error) {
       console.log(`${this._logPrefix}:`, error);
-      // TODO: handle error
+      return txStatus;
     } finally {
       updaterMap.set(tx, () =>
         tx.prepareUpdate((_tx) => {
@@ -119,8 +109,6 @@ export abstract class BaseTxTrack {
           }
         }),
       );
-      // biome-ignore lint/correctness/noUnsafeFinally: <explanation>
-      return txStatus;
     }
   }
 
@@ -249,7 +237,7 @@ export abstract class BaseTxTrack {
   }
 
   abstract _checkStatus(txs: Tx[], network: Network, updaterMap: UpdaterMap): Promise<TxStatus | undefined>;
-  abstract _checkEpochHeightOutOfBound(tx: Tx): Promise<boolean>;
+  abstract _precheckBeforeResend(tx: Tx): Promise<boolean>;
   abstract _getTransactionReceipt(hash: string, endpoint: string): Promise<ETH.eth_getTransactionReceiptResponse | CFX.cfx_getTransactionReceiptResponse>;
   abstract _getNonce(
     address: string,
