@@ -51,6 +51,7 @@ import SendTransactionBottomSheet from '../SendTransactionBottomSheet';
 import { NFT } from '../Step3Amount';
 import SendAsset from './SendAsset';
 import { TransactionActionType } from '@core/WalletCore/Events/broadcastTransactionSubject';
+import matchRPCErrorMessage from '@utils/matchRPCErrorMssage';
 
 const SendTransactionStep4Confirm: React.FC<SendTransactionScreenProps<typeof SendTransactionStep4StackName>> = ({ navigation, route }) => {
   useEffect(() => Keyboard.dismiss(), []);
@@ -232,13 +233,14 @@ const SendTransactionStep4Confirm: React.FC<SendTransactionScreenProps<typeof Se
         return;
       }
       const errString = String(txError.data || txError?.message || txError);
+      const msg = matchRPCErrorMessage(txError);
       setError({
         message: errString,
         ...(errString.includes('out of balance') ? { type: 'out of balance' } : errString.includes('timed out') ? { type: 'network error' } : null),
       });
       showMessage({
         message: t('tx.confirm.failed'),
-        description: errString,
+        description: msg,
         type: 'failed',
       });
     } finally {

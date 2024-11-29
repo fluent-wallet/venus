@@ -5,6 +5,7 @@ import { EXECUTED_NOT_FINALIZED_TX_STATUSES, ExecutedStatus, TxStatus } from '@c
 import BlockNumberTracker from '../BlockNumberTracker';
 import { BaseTxTrack, type UpdaterMap, type RPCErrorResponse, isRPCError } from './BaseTxTrack';
 import { ReplacedResponse } from './types';
+import { MAX_EPOCH_NUMBER_OFFSET_IN_CORE } from '@core/utils/consts';
 
 class CFXTxTrack extends BaseTxTrack {
   networkType = NetworkType.Conflux as const;
@@ -166,7 +167,7 @@ class CFXTxTrack extends BaseTxTrack {
         // unexpected case
         throw new Error('epochHeight is required for core tx');
       }
-      return !BlockNumberTracker.checkBlockNumberInRange(network, txblockNumber);
+      return !BlockNumberTracker.checkBlockNumberInRange(network, txblockNumber, [-MAX_EPOCH_NUMBER_OFFSET_IN_CORE, MAX_EPOCH_NUMBER_OFFSET_IN_CORE]);
     } catch (error) {
       console.log('CFXTxTrack: checkEpochHeightOutOfBound error:', {
         hash: tx.hash,
@@ -174,6 +175,11 @@ class CFXTxTrack extends BaseTxTrack {
       });
       return false;
     }
+  }
+
+  async _precheckBeforeResend(tx: Tx) {
+    const outOfBound = await this._checkEpochHeightOutOfBound(tx);
+    return !outOfBound;
   }
 
   async _getTransactionReceipt(hash: string, endpoint: string) {
