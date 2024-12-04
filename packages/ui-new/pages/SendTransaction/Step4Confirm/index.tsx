@@ -52,6 +52,7 @@ import { NFT } from '../Step3Amount';
 import SendAsset from './SendAsset';
 import { TransactionActionType } from '@core/WalletCore/Events/broadcastTransactionSubject';
 import matchRPCErrorMessage from '@utils/matchRPCErrorMssage';
+import { isSmallDevice } from '@utils/deviceInfo';
 
 const SendTransactionStep4Confirm: React.FC<SendTransactionScreenProps<typeof SendTransactionStep4StackName>> = ({ navigation, route }) => {
   useEffect(() => Keyboard.dismiss(), []);
@@ -277,8 +278,11 @@ const SendTransactionStep4Confirm: React.FC<SendTransactionScreenProps<typeof Se
         enableContentPanningGesture={!inSending}
         enableHandlePanningGesture={!inSending}
       >
-        <BottomSheetScrollContent>
-          <Text style={[styles.sendTitle, { color: colors.textPrimary }]}>{t('common.send')}</Text>
+        <BottomSheetScrollContent
+          // only support android: https://reactnative.dev/docs/scrollview#persistentscrollbar-android
+          persistentScrollbar
+        >
+          <Text style={[styles.sendTitle, { color: colors.textPrimary, marginBottom: isSmallDevice ? 16 : 24 }]}>{t('common.send')}</Text>
 
           {nftItemDetail && <NFT colors={colors} asset={asset} nftItemDetail={nftItemDetail} />}
           <SendAsset
@@ -290,7 +294,7 @@ const SendTransactionStep4Confirm: React.FC<SendTransactionScreenProps<typeof Se
           />
         </BottomSheetScrollContent>
         <BottomSheetFooter>
-          <View style={[styles.divider, { backgroundColor: colors.borderFourth }]} />
+          <View style={[styles.divider, { backgroundColor: colors.borderFourth, marginVertical: isSmallDevice ? 16 : 24 }]} />
 
           <Text style={[styles.signWith, { color: colors.textSecondary }]}>{t('tx.confirm.signingWith')}</Text>
           <AccountItemView nickname={currentAccount?.nickname} addressValue={currentAddressValue} colors={colors}>
@@ -309,7 +313,7 @@ const SendTransactionStep4Confirm: React.FC<SendTransactionScreenProps<typeof Se
 
           {error && (
             <>
-              <View style={[styles.divider, { backgroundColor: colors.borderFourth }]} />
+              <View style={[styles.divider, { backgroundColor: colors.borderFourth, marginVertical: isSmallDevice ? 16 : 24 }]} />
               {error.type === 'out of balance ' ? (
                 <View style={styles.errorWarp}>
                   <WarnIcon style={styles.errorIcon} color={colors.middle} width={24} height={24} />
@@ -358,7 +362,6 @@ const SendTransactionStep4Confirm: React.FC<SendTransactionScreenProps<typeof Se
 export const styles = StyleSheet.create({
   sendTitle: {
     marginTop: 16,
-    marginBottom: 24,
     paddingHorizontal: 16,
     fontSize: 22,
     fontWeight: '600',
@@ -367,7 +370,6 @@ export const styles = StyleSheet.create({
   divider: {
     width: '100%',
     height: 1,
-    marginVertical: 24,
   },
   signWith: {
     marginVertical: 4,
