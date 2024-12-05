@@ -143,11 +143,11 @@ const HDManagement: React.FC<StackScreenProps<typeof HDSettingStackName>> = ({ n
       );
 
       await database.write(async () => {
-        await database.batch(
+        await database.batch([
           ...oldAccountsNeedHidden.map((account) => methods.prepareChangeAccountHidden({ account, hidden: true })),
           ...oldAccountsNeedShow.map((account) => methods.prepareChangeAccountHidden({ account, hidden: false })),
           ...batchNews.flat().flat(),
-        );
+        ]);
       });
 
       bottomSheetRef.current?.close();
