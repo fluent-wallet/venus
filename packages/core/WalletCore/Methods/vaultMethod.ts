@@ -24,7 +24,7 @@ export class VaultMethod {
     const txExtras = (await Promise.all(txs.map(async (tx) => await tx.txExtra))).flat();
 
     await database.write(async () => {
-      await database.batch(
+      await database.batch([
         ...signatures.map((signature) => signature.prepareDestroyPermanently()),
         ...addressBooks.map((addressBook) => addressBook.prepareDestroyPermanently()),
         ...txExtras.map((txExtra) => txExtra.prepareDestroyPermanently()),
@@ -35,7 +35,7 @@ export class VaultMethod {
         ...permissions.map((permission) => permission.prepareDestroyPermanently()),
         accountGroup.prepareDestroyPermanently(),
         vault.prepareDestroyPermanently(),
-      );
+      ]);
     });
   }
 
