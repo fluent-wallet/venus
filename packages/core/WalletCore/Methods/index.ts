@@ -35,6 +35,7 @@ export class Methods {
 
   @inject(AddAccountMethod) private AddAccountMethod!: AddAccountMethod;
   public addAccount(params: AddAccountParams & { vault: Vault }, prepareCreate: true): Promise<(Account | Address)[]>;
+  public addAccount(params: AddAccountParams, prepareCreate: true): Promise<(Account | Address)[]>;
   public addAccount(params: AddAccountParams): Promise<Account>;
   public addAccount(...args: Parameters<AddAccountMethod['addAccount']>) {
     return this.AddAccountMethod.addAccount(...args) as any;
