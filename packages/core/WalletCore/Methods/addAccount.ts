@@ -28,6 +28,7 @@ export class AddAccountMethod {
   @inject(Plugins) plugins!: Plugins;
 
   async addAccount(params: Params & { vault: Vault }, prepareCreate: true): Promise<(Account | Address)[]>;
+  async addAccount(params: Params, prepareCreate: true): Promise<(Account | Address)[]>;
   async addAccount(params: Params): Promise<Account>;
   async addAccount(
     { accountGroup, nickname, hidden, selected, hexAddress, index, vault, vaultData: _vaultData }: Params & { vault?: Vault },
