@@ -139,7 +139,7 @@ const HDManagement: React.FC<StackScreenProps<typeof HDSettingStackName>> = ({ n
       const oldAccountsNeedShow = await Promise.all(_oldAccountsNeedShow.map((account) => queryAccountById(account.id)));
 
       const batchNews = await Promise.all(
-        newAccountsInChoose.map((account) => methods.addAccount({ accountGroup, index: account.index, hexAddress: account.addressValue }, true)),
+        newAccountsInChoose.map((account) => methods.addAccount({ accountGroup, index: account.index, vaultData: mnemonic }, true)),
       );
 
       await database.write(async () => {
