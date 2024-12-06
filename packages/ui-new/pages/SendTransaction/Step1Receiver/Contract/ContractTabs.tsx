@@ -1,12 +1,11 @@
 import Text from '@components/Text';
-import { useCurrentNetwork } from '@core/WalletCore/Plugins/ReactInject';
 import AccountsList from '@modules/AccountsList';
 import { useTheme } from '@react-navigation/native';
 /* eslint-disable react-hooks/exhaustive-deps */
 import type React from 'react';
 import { useCallback, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { Platform, Pressable, StyleSheet, View } from 'react-native';
 import PagerView from 'react-native-pager-view';
 import Animated, { useSharedValue, useAnimatedStyle, withTiming } from 'react-native-reanimated';
 import RecentlyList from './RecentlyList';
@@ -30,12 +29,11 @@ const tabs = [Tab.Recently, Tab.MyWallets];
 export const Tabs: React.FC<Omit<Props, 'setCurrentTab' | 'onPressReceiver'>> = ({ currentTab, pageViewRef }) => {
   const { t } = useTranslation();
   const { colors } = useTheme();
-  const currentNetwork = useCurrentNetwork();
 
   const currentTabIndex = useMemo(() => {
     const index = tabs.indexOf(currentTab);
     return index === -1 ? 0 : index;
-  }, [tabs, currentTab]);
+  }, [currentTab]);
 
   const handleClickTabLabel = useCallback(
     (tab: Tab) => {
@@ -73,14 +71,19 @@ export const Tabs: React.FC<Omit<Props, 'setCurrentTab' | 'onPressReceiver'>> = 
 };
 
 export const TabsContent: React.FC<Props> = ({ currentTab, setCurrentTab, pageViewRef, onPressReceiver }) => {
-  const currentNetwork = useCurrentNetwork();
   const currentTabIndex = useMemo(() => {
     const index = tabs.indexOf(currentTab);
     return index === -1 ? 0 : index;
-  }, [tabs, currentTab]);
+  }, [currentTab]);
 
   return (
-    <PagerView ref={pageViewRef} style={styles.pagerView} initialPage={0} onPageSelected={(evt) => setCurrentTab(tabs[evt.nativeEvent.position])}>
+    <PagerView
+      ref={pageViewRef}
+      style={styles.pagerView}
+      initialPage={0}
+      onPageSelected={(evt) => setCurrentTab(tabs[evt.nativeEvent.position])}
+      useLegacy={Platform.OS === 'ios'}
+    >
       {tabs?.map((tab, index) => (
         <View key={tab}>
           {tab === Tab.MyWallets && index === currentTabIndex && (
