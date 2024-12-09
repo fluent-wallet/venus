@@ -12,7 +12,8 @@ jobs:
   createTag:
     name: Create Tag
     runs-on: ubuntu-latest
-
+    outputs:
+      tag: ${{ steps.get-qa-version.outputs.tag }}
     steps:
       - name: Check out Git repository
         uses: actions/checkout@v4
@@ -24,10 +25,20 @@ jobs:
         run: |
           echo "PACKAGE_VERSION=$(cat package.json | jq -r '.version')" >> "$GITHUB_OUTPUT"
 
-      - name: Create tag
+      - name: get QA version
+        id: get-qa-version
         uses: actions/github-script@v7
         env:
           PACKAGE_VERSION: ${{ steps.get-package-version.outputs.PACKAGE_VERSION }}
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            return await require('.github/scripts/getQaReleaseVersion.js')({github, context, core,PACKAGE_VERSION})
+
+      - name: Create tag
+        uses: actions/github-script@v7
+        env:
+          PACKAGE_VERSION: ${{ steps.get-qa-version.outputs.tag }}
         with:
           script: |
             github.rest.git.createRef({
@@ -55,10 +66,6 @@ jobs:
       - name: install dependencies
         run: yarn
 
-      - name: get package version
-        id: get-package-version
-        run: |
-          echo "PACKAGE_VERSION=$(cat package.json | jq -r '.version')" >> "$GITHUB_OUTPUT"
       - name: Set up JDK envronment
         uses: actions/setup-java@v4
         with:
@@ -84,8 +91,8 @@ jobs:
       - name: push to github
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: v${{ steps.get-package-version.outputs.PACKAGE_VERSION }}-qa
-          name: v${{ steps.get-package-version.outputs.PACKAGE_VERSION }}-qa
+          tag_name: ${{ needs.createTag.outputs.tag }}
+          name: ${{  needs.createTag.outputs.tag }}
           files: |
             ./android/app/build/outputs/apk/qa/release/app-qa-release.apk
   ios-build:

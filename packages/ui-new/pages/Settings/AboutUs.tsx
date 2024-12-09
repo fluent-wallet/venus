@@ -65,7 +65,6 @@ const AboutUs: React.FC<StackScreenProps<typeof AboutUsStackName>> = ({ navigati
       }).then<VersionJSON>((res) => {
         return res.json();
       });
-      console.log(remoteVersion);
       if (semverLt(pkg.version, remoteVersion.version)) {
         // has new version , to show user
 
