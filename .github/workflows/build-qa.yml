@@ -33,7 +33,7 @@ jobs:
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
-            return await require('.github/scripts/getQaReleaseVersion.js')({github, context, core,PACKAGE_VERSION})
+            return await require('.github/scripts/getQaReleaseVersion.js')({github, context, core})
 
       - name: Create tag
         uses: actions/github-script@v7

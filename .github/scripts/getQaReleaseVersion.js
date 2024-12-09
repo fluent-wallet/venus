@@ -1,8 +1,8 @@
-module.exports = async ({github, context, PACKAGE_VERSION}) => {
+module.exports = async ({github, context}) => {
     const {
       repo: {owner, repo},
     } = context
-    const version = PACKAGE_VERSION
+    const version = process.env.PACKAGE_VERSION
     let tags = await github.rest.repos.listTags({owner, repo})
     tags = (tags && tags.data) || []
     const re = new RegExp(`v${version}-qa\.`)
