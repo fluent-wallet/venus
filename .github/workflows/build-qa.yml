@@ -13,7 +13,8 @@ jobs:
     name: Create Tag
     runs-on: ubuntu-latest
     outputs:
-      tag: ${{ steps.get-qa-version.outputs.tag }}
+      tag: ${{ fromJson(steps.get-qa-version.outputs.result).tag }}
+      version: ${{ fromJson(steps.get-qa-version.outputs.result).version }}
     steps:
       - name: Check out Git repository
         uses: actions/checkout@v4
@@ -93,6 +94,7 @@ jobs:
         with:
           tag_name: ${{ needs.createTag.outputs.tag }}
           name: ${{  needs.createTag.outputs.tag }}
+          prerelease: true
           files: |
             ./android/app/build/outputs/apk/qa/release/app-qa-release.apk
   ios-build:
