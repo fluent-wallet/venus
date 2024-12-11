@@ -20,7 +20,7 @@ jobs:
       tag: ${{ needs.versions.outputs.PROD_TAG }}
 
   android-build:
-    needs: [createTag]
+    needs: [versions, createTag]
     uses: ./.github/workflows/build-android-and-upload.yml
     secrets: inherit
     with:
@@ -31,9 +31,9 @@ jobs:
       appVersion: ${{ needs.versions.outputs.PROD_VERSION }}
 
   upload-to-release:
-    name:  upload to release
+    name: upload to release
     runs-on: ubuntu-latest
-    needs: [createTag]
+    needs: [versions, createTag]
     steps:
       - name: Download artifacts
         uses: actions/download-artifact@v4
@@ -100,7 +100,10 @@ jobs:
 
   ios-build:
     name: IOS Build
+    needs: [versions, createTag]
     uses: ./.github/workflows/build-ios-and-upload.yml
     secrets: inherit
     with:
       environment: prod
+      branch: prod
+      appVersion: ${{ needs.versions.outputs.PROD_VERSION }}
