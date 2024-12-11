@@ -6,11 +6,6 @@ export const SUPPORT_BSIM_FEATURE = {
   allow: Platform.OS === 'android',
 };
 
-export const APP_VERSION_FLAG_FEATURE = {
-  describe: 'add dev or qa flag to app version',
-  allow: isQA || isDev,
-  value: getAppEnv(),
-};
 
 export const FULL_NETWORK_SWITCH_LIST_FEATURE = {
   describe: 'allow full network select list',
