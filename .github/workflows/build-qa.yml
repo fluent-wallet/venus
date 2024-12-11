@@ -21,7 +21,7 @@ jobs:
       tag: ${{ needs.versions.outputs.QA_TAG }}
 
   android-build:
-    needs: [create-qa-tag]
+    needs: [versions, create-qa-tag]
     uses: ./.github/workflows/build-android-and-upload.yml
     secrets: inherit
     with:
@@ -52,7 +52,7 @@ jobs:
 
   ios-build:
     name: IOS Build
-    needs: [create-qa-tag]
+    needs: [versions, create-qa-tag]
     uses: ./.github/workflows/build-ios-and-upload.yml
     secrets: inherit
     with:
