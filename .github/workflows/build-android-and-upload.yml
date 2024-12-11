@@ -90,7 +90,7 @@ jobs:
         run: |
           cd android && ./gradlew app:assembleQaRelease && cd ..
           mkdir ./artifact
-          mv ./android/app/build/outputs/apk/qa/release/app-qa-release.apk ./artifact/app.apk
+          mv ./android/app/build/outputs/apk/qa/release/app-qa-release.apk ./artifact/${{ inputs.artifactName}}
 
       - name: Build PROD Android Release
         if: ${{ inputs.environment == 'prod' }}
@@ -98,17 +98,17 @@ jobs:
         run: |
           cd android && ./gradlew app:assembleProdRelease && cd ..
           mkdir ./artifact
-          mv  ./android/app/build/outputs/apk/prod/release/app-prod-release.apk ./artifact/app.apk
+          mv  ./android/app/build/outputs/apk/prod/release/app-prod-release.apk ./artifact/${{ inputs.artifactName }}
 
       - name: Build aab Android Release
         if: ${{ inputs.buildAAB }}
         run: |
           npx react-native build-android --mode=release
           mkdir ./artifact
-          mv ./android/app/build/outputs/bundle/prodRelease/app-prod-release.aab ./artifact/app.aab
+          mv ./android/app/build/outputs/bundle/prodRelease/app-prod-release.aab ./artifact/${{ inputs.artifactName }}
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
           name: ${{inputs.artifactName}}
-          path: ./artifact/app.*
+          path: ./artifact/${{ inputs.artifactName }}
