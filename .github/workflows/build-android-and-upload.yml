@@ -25,18 +25,6 @@ on:
         type: string
         description: "The app version"
 
-    secrets:
-      PASSWORD_CRYPTO_KEY:
-        required: true
-      STAGING_ANDROID:
-        required: false
-      UPLOAD_KEYSTORE:
-        required: false
-      SIGN_ALIAS:
-        required: false
-      SIGN_KEY:
-        required: false
-
 jobs:
   android-build:
     name: Android Build

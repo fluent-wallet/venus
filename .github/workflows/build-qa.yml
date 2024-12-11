@@ -23,6 +23,7 @@ jobs:
   android-build:
     needs: [create-qa-tag]
     uses: ./.github/workflows/build-android-and-upload.yml
+    secrets: inherit
     with:
       environment: qa
       branch: qa
@@ -53,6 +54,7 @@ jobs:
     name: IOS Build
     needs: [create-qa-tag]
     uses: ./.github/workflows/build-ios-and-upload.yml
+    secrets: inherit
     with:
       environment: qa
       branch: qa
