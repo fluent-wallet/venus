@@ -1,0 +1,78 @@
+name: Ios Build Workflow
+
+on:
+  workflow_call:
+    inputs:
+      environment:
+        required: true
+        type: string
+        description: "Environment to build (qa/prod)"
+      appVersion:
+        required: true
+        type: string
+        description: "The app version"
+      branch:
+        required: true
+        type: string
+        description: "Git branch to checkout"
+
+jobs:
+  ios-build:
+    name: IOS Build
+    runs-on: macos-latest
+    steps:
+      - name: Check out Git repository
+        uses: actions/checkout@v4
+        with:
+          ref: ${{inputs.branch}}
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: install dependencies
+        run: yarn
+
+      - name: patch and install pod
+        env:
+          PASSWORD_CRYPTO_KEY: ${{ secrets.PASSWORD_CRYPTO_KEY }}
+          STAGING_ANDROID: ${{ secrets.STAGING_ANDROID }}
+          APP_ENV: ${{ inputs.environment }}
+          APP_VERSION: ${{ inputs.appVersion }}
+        run: |
+          echo "" > .env
+          cat >>.env <<END
+          APP_ENV=$APP_ENV
+          PASSWORD_CRYPTO_KEY=$PASSWORD_CRYPTO_KEY
+          APP_VERSION=$APP_VERSION
+          END
+          yarn patchPackage && cd ios && pod install --repo-update && cd ..
+          rm ./ios/.xcode.env.local
+
+      - name: Build IOS App
+        uses: yukiarrr/ios-build-action@v1.12.0
+        with:
+          project-path: ios/BIMWallet.xcodeproj
+          p12-base64: ${{ secrets.IOS_P12_BASE64 }}
+          mobileprovision-base64: ${{ secrets.IOS_MOBILE_PROVISION_BASE64 }}
+          team-id: ${{ secrets.IOS_TEAM_ID }}
+          certificate-password: ${{ secrets.IOS_CERTIFICATE_PASSWORD }}
+          workspace-path: ios/BIMWallet.xcworkspace
+          code-signing-identity: "iPhone Distribution"
+          output-path: "bimwallet.ipa"
+
+      - name: Install private API key P8
+        env:
+          PRIVATE_API_KEY_BASE64: ${{ secrets.APPSTORE_API_PRIVATE_KEY_BASE64 }}
+          API_KEY: ${{ secrets.APPSTORE_API_KEY_ID }}
+        run: |
+          mkdir -p ~/private_keys
+          echo -n "$PRIVATE_API_KEY_BASE64" | base64 --decode --output ~/private_keys/AuthKey_$API_KEY.p8
+
+      - name: "Upload app to TestFlight"
+        env:
+          API_KEY: ${{ secrets.APPSTORE_API_KEY_ID }}
+          API_ISSUER: ${{ secrets.APPSTORE_ISSUER_ID  }}
+        run: |
+          xcrun altool --output-format xml --upload-app -f ./bimwallet.ipa -t ios --apiKey $API_KEY --apiIssuer $API_ISSUER

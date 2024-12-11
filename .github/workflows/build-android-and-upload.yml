@@ -1,0 +1,126 @@
+# this workflows will build an
+
+name: Android Build Workflow
+on:
+  workflow_call:
+    inputs:
+      environment:
+        required: true
+        type: string
+        description: "Environment to build (qa/prod)"
+      branch:
+        required: true
+        type: string
+        description: "Git branch to checkout"
+      artifactName:
+        required: true
+        type: string
+        description: "The artifact name"
+      buildAAB:
+        required: true
+        type: boolean
+        description: "To build the aab"
+      appVersion:
+        required: true
+        type: string
+        description: "The app version"
+
+    secrets:
+      PASSWORD_CRYPTO_KEY:
+        required: true
+      STAGING_ANDROID:
+        required: false
+      UPLOAD_KEYSTORE:
+        required: false
+      SIGN_ALIAS:
+        required: false
+      SIGN_KEY:
+        required: false
+
+jobs:
+  android-build:
+    name: Android Build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out Git repository
+        uses: actions/checkout@v4
+        with:
+          ref: ${{inputs.branch}}
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: install dependencies
+        run: yarn
+
+      - name: Set up JDK envronment
+        uses: actions/setup-java@v4
+        with:
+          distribution: "zulu"
+          java-version: "17"
+          cache: "gradle"
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Make Gradlew Executable
+        run: cd android && chmod +x ./gradlew
+
+      - name: write QA env to file
+        env:
+          PASSWORD_CRYPTO_KEY: ${{ secrets.PASSWORD_CRYPTO_KEY }}
+          APP_VERSION: ${{ inputs.appVersion }}
+        run: |
+          echo "" > .env
+          cat >>.env <<END
+          APP_ENV=qa
+          APP_VERSION=$APP_VERSION
+          PASSWORD_CRYPTO_KEY=$PASSWORD_CRYPTO_KEY
+          END
+
+      - name: write Prod env to file
+        env:
+          PASSWORD_CRYPTO_KEY: ${{ secrets.PASSWORD_CRYPTO_KEY }}
+          UPLOAD_KEYSTORE: ${{secrets.UPLOAD_KEYSTORE}}
+          SIGN_ALIAS: ${{secrets.SIGN_ALIAS}}
+          SIGN_KEY: ${{secrets.SIGN_KEY}}
+          APP_VERSION: ${{ inputs.appVersion }}
+        run: |
+          echo $UPLOAD_KEYSTORE | base64 --decode > ./android/app/release.keystore.jks
+          echo "" > .env
+          APP_VERSION=$APP_VERSION
+          cat >>.env <<END
+          APP_ENV=prod
+          PASSWORD_CRYPTO_KEY=$PASSWORD_CRYPTO_KEY
+          END
+
+      - name: Build QA Android Release
+        if: ${{ inputs.environment == 'qa' }}
+        run: |
+          cd android && ./gradlew app:assembleQaRelease && cd ..
+          mkdir ./artifact
+          mv ./android/app/build/outputs/apk/qa/release/app-qa-release.apk ./artifact/app.apk
+
+      - name: Build PROD Android Release
+        if: ${{ inputs.environment == 'prod' }}
+
+        run: |
+          cd android && ./gradlew app:assembleProdRelease && cd ..
+          mkdir ./artifact
+          mv  ./android/app/build/outputs/apk/prod/release/app-prod-release.apk ./artifact/app.apk
+
+      - name: Build aab Android Release
+        if: ${{ inputs.buildAAB }}
+        run: |
+          npx react-native build-android --mode=release
+          mkdir ./artifact
+          mv ./android/app/build/outputs/bundle/prodRelease/app-prod-release.aab ./artifact/app.aab
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{inputs.artifactName}}
+          path:
+             ./artifact/app.*
+
