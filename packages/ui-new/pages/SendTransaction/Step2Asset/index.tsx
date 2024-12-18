@@ -168,7 +168,7 @@ const SendTransactionStep2Asset: React.FC<Props> = ({ navigation, route, onConfi
           showVisible={false}
           defaultHasValue={false}
           value={searchAsset}
-          onChangeText={(newNickName) => setSearchAsset(newNickName?.trim())}
+          onChangeText={(newNickName) => setSearchAsset(newNickName)}
           isInBottomSheet
           placeholder={t('tx.asset.placeholder')}
           multiline
