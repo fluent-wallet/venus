@@ -33,7 +33,7 @@ jobs:
   upload-to-release:
     name: upload to release
     runs-on: ubuntu-latest
-    needs: [versions, createTag]
+    needs: [android-build]
     steps:
       - name: Download artifacts
         uses: actions/download-artifact@v4
