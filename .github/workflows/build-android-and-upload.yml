@@ -69,7 +69,7 @@ jobs:
           END
 
       - name: write Prod env to file
-        if: ${{ inputs.environment == 'prod' }}
+        if: ${{ inputs.environment == 'prod' || inputs.buildAAB == true }}
         env:
           PASSWORD_CRYPTO_KEY: ${{ secrets.PASSWORD_CRYPTO_KEY }}
           UPLOAD_KEYSTORE: ${{secrets.UPLOAD_KEYSTORE}}
@@ -79,9 +79,9 @@ jobs:
         run: |
           echo $UPLOAD_KEYSTORE | base64 --decode > ./android/app/release.keystore.jks
           echo "" > .env
-          APP_VERSION=$APP_VERSION
           cat >>.env <<END
           APP_ENV=prod
+          APP_VERSION=$APP_VERSION
           PASSWORD_CRYPTO_KEY=$PASSWORD_CRYPTO_KEY
           END
 
@@ -93,7 +93,7 @@ jobs:
           mv ./android/app/build/outputs/apk/qa/release/app-qa-release.apk ./artifact/${{ inputs.artifactName}}
 
       - name: Build PROD Android Release
-        if: ${{ inputs.environment == 'prod' }}
+        if: ${{ inputs.environment == 'prod' && inputs.buildAAB != true }}
         env:
           SIGN_ALIAS: ${{secrets.SIGN_ALIAS}}
           SIGN_KEY: ${{secrets.SIGN_KEY}}
@@ -104,7 +104,7 @@ jobs:
           mv  ./android/app/build/outputs/apk/prod/release/app-prod-release.apk ./artifact/${{ inputs.artifactName }}
 
       - name: Build aab Android Release
-        if: ${{ inputs.buildAAB }}
+        if: ${{ inputs.environment == 'prod' && inputs.buildAAB == true }}
         env:
           SIGN_ALIAS: ${{secrets.SIGN_ALIAS}}
           SIGN_KEY: ${{secrets.SIGN_KEY}}
