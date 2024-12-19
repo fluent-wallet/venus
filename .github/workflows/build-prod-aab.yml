@@ -29,6 +29,7 @@ jobs:
 
   upload-artifacts:
     name: upload artifacts
+    needs: [android-build]
     runs-on: ubuntu-latest
     steps:
       - name: Download artifacts
