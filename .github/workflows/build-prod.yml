@@ -25,7 +25,7 @@ jobs:
     secrets: inherit
     with:
       environment: prod
-      branch: prod
+      branch: main
       artifactName: app-prod-release.apk
       buildAAB: false
       appVersion: ${{ needs.versions.outputs.PROD_VERSION }}
@@ -105,5 +105,5 @@ jobs:
     secrets: inherit
     with:
       environment: prod
-      branch: prod
+      branch: main
       appVersion: ${{ needs.versions.outputs.PROD_VERSION }}

@@ -14,7 +14,7 @@ jobs:
   versions:
     uses: ./.github/workflows/versions.yml
     with:
-      branch: prod
+      branch: main
 
   android-build:
     uses: ./.github/workflows/build-android-and-upload.yml
@@ -22,7 +22,7 @@ jobs:
     needs: [versions]
     with:
       environment: prod
-      branch: prod
+      branch: main
       artifactName: app-prod-release.aab
       buildAAB: true
       appVersion: ${{ needs.versions.outputs.PROD_VERSION }}
