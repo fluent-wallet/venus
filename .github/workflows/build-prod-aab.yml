@@ -6,62 +6,36 @@ permissions:
 on:
   push:
     tags:
-      - 'v*-aab'
-      - '!v*-qa*'
-      - '!v*-hotfix'
-      
+      - "v*-aab"
+      - "!v*-qa*"
+      - "!v*-hotfix"
+
 jobs:
+  versions:
+    uses: ./.github/workflows/versions.yml
+    with:
+      branch: prod
+
   android-build:
-    name: Android Build
+    uses: ./.github/workflows/build-android-and-upload.yml
+    secrets: inherit
+    needs: [versions]
+    with:
+      environment: prod
+      branch: prod
+      artifactName: app-prod-release.aab
+      buildAAB: true
+      appVersion: ${{ needs.versions.outputs.PROD_VERSION }}
+
+  upload-artifacts:
+    name: upload artifacts
     runs-on: ubuntu-latest
-
     steps:
-      - name: Check out Git repository
-        uses: actions/checkout@v4
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
         with:
-          ref: main
-
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 20
-
-      - name: install dependencies
-        run: yarn
-
-      - name: Set up JDK envronment
-        uses: actions/setup-java@v4
-        with:
-          distribution: "zulu"
-          java-version: "17"
-      - name: Setup Android SDK
-        uses: android-actions/setup-android@v3
-      - uses: actions/cache@v4
-        with:
-          path: |
-            ~/.gradle/caches
-            ~/.gradle/wrapper
-          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
-          restore-keys: |
-            ${{ runner.os }}-gradle-
-      - name: Make Gradlew Executable
-        run: cd android && chmod +x ./gradlew
-      - name: Build Android Release
-        env:
-          PASSWORD_CRYPTO_KEY: ${{ secrets.PASSWORD_CRYPTO_KEY }}
-          UPLOAD_KEYSTORE: ${{secrets.UPLOAD_KEYSTORE}}
-          SIGN_ALIAS: ${{secrets.SIGN_ALIAS}}
-          SIGN_KEY: ${{secrets.SIGN_KEY}}
-          PRODUCTION_ANDROID: ${{ secrets.PRODUCTION_ANDROID }}
-        run: |
-          echo $UPLOAD_KEYSTORE | base64 --decode > ./android/app/release.keystore.jks
-          echo "" > .env
-          cat >>.env <<END
-          APP_ENV=prod
-          PASSWORD_CRYPTO_KEY=$PASSWORD_CRYPTO_KEY
-          END
-          npx react-native build-android --mode=release
-
+          name: app-prod-release.aab
+          path: .
       - name: install OSSUTIL
         run: |
           sudo -v ; curl https://gosspublic.alicdn.com/ossutil/install.sh | sudo bash
@@ -80,4 +54,4 @@ jobs:
           accessKeySecret=$OSS_KEY
           END
       - name: Upload to OSS
-        run: yes | ossutil64 cp ./android/app/build/outputs/bundle/prodRelease/app-prod-release.aab oss://blockvenus-hk/abbs/BIMWallet.aab
+        run: yes | ossutil64 cp ./app-prod-release.aab oss://blockvenus-hk/abbs/BIMWallet.aab

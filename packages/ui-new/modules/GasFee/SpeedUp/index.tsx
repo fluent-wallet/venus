@@ -43,6 +43,7 @@ import backToHome from '@utils/backToHome';
 import ArrowRight from '@assets/icons/arrow-right2.svg';
 import CustomizeAdvanceSetting from '../GasFeeSetting/CustomizeAdvanceSetting';
 import usePollingGasEstimateAndNonce from '@core/WalletCore/Plugins/Transaction/usePollingGasEstimateAndNonce';
+import matchRPCErrorMessage from '@utils/matchRPCErrorMssage';
 
 const higherRatio = 1.1;
 const fasterRatio = 1.2;
@@ -213,13 +214,14 @@ const SpeedUp: React.FC<StackScreenProps<typeof SpeedUpStackName>> = ({ navigati
         // ignore cancel error
         return;
       }
+      const msg = matchRPCErrorMessage(_err);
       setError({
         message: err,
         ...(err.includes('out of balance') ? { type: 'out of balance' } : err.includes('timed out') ? { type: 'network error' } : null),
       });
       showMessage({
         message: t('tx.confirm.failed'),
-        description: err,
+        description: msg,
         type: 'failed',
       });
     }

@@ -9,7 +9,6 @@ export enum ProcessErrorType {
   unknownError = 'unknownError',
   duplicateTx = 'duplicateTx',
   replaceUnderpriced = 'replaceUnderpriced',
-  gasTooLow = 'gasTooLow',
   txPoolFull = 'txPoolFull',
   gasExceedsLimit = 'gasExceedsLimit',
   gasLimitReached = 'gasLimitReached',
@@ -17,7 +16,6 @@ export enum ProcessErrorType {
   tooStaleNonce = 'tooStaleNonce',
   nonceTooHigh = 'nonceTooHigh',
   nonceMax = 'nonceMax',
-  insufficientFunds = 'insufficientFunds',
   zeroGasPrice = 'zeroGasPrice',
   gasPriceTooLow = 'gasPriceTooLow',
   intrinsicGas = 'intrinsicGas',
@@ -33,10 +31,13 @@ export enum ProcessErrorType {
   signatureError = 'signatureError',
   nodeInCatchUp = 'nodeInCatchUp',
   internalError = 'internalError',
+  /** from executed result or estimateGas */
   contractExecuteFailed = 'contractExecuteFailed',
+  /** from executed result */
   notEnoughCash = 'notEnoughCash',
+  /** from tx tracker, not from send error message */
   replacedByAnotherTx = 'replacedByAnotherTx',
-  /** for tx tracker, not from error message */
+  /** from tx tracker, not from send error message */
   executeFailed = 'executeFailed',
 }
 
@@ -47,15 +48,19 @@ export const processError = (err: unknown): { errorType: ProcessErrorType; shoul
       /known transaction/i.test(errStr) ||
       /tx already exist/i.test(errStr) ||
       /already known/i.test(errStr) ||
-      /transaction with the same hash was already imported/i.test(errStr) ||
-      /Tx with same nonce already inserted. to replace it, you need to specify a gas price/i.test(errStr)
+      /transaction with the same hash was already imported/i.test(errStr)
     )
       return { errorType: ProcessErrorType.duplicateTx, shouldDiscard: false };
-    if (/replacement transaction underpriced/i.test(errStr) || /gas price too low to replace/i.test(errStr))
+    if (
+      /replacement transaction underpriced/i.test(errStr) ||
+      /gas price too low to replace/i.test(errStr) ||
+      /Tx with same nonce already inserted. to replace it, you need to specify a gas price/i.test(errStr)
+    )
       return { errorType: ProcessErrorType.replaceUnderpriced, shouldDiscard: true };
 
     // ErrUnderpriced is returned if a transaction's gas price is below the minimum
-    if (/transaction underpriced/i.test(errStr)) return { errorType: ProcessErrorType.gasTooLow, shouldDiscard: true };
+    if (/transaction underpriced/i.test(errStr) || /gas price.*less than the minimum value/i.test(errStr))
+      return { errorType: ProcessErrorType.gasPriceTooLow, shouldDiscard: true };
 
     if (/pool is full/i.test(errStr)) return { errorType: ProcessErrorType.txPoolFull, shouldDiscard: true };
     if (/exceeds block gas limit/i.test(errStr)) return { errorType: ProcessErrorType.gasExceedsLimit, shouldDiscard: true };
@@ -66,9 +71,9 @@ export const processError = (err: unknown): { errorType: ProcessErrorType; shoul
     if (/nonce too high/i.test(errStr) || /is discarded due to in too distant futur/i.test(errStr))
       return { errorType: ProcessErrorType.nonceTooHigh, shouldDiscard: true };
     if (/nonce has max value/i.test(errStr)) return { errorType: ProcessErrorType.nonceMax, shouldDiscard: true };
-    if (/insufficient funds/i.test(errStr)) return { errorType: ProcessErrorType.insufficientFunds, shouldDiscard: true };
+    if (/insufficient funds/i.test(errStr) || /is discarded due to out of balance/i.test(errStr))
+      return { errorType: ProcessErrorType.balanceNotEnough, shouldDiscard: true };
     if (/ZeroGasPrice/i.test(errStr)) return { errorType: ProcessErrorType.zeroGasPrice, shouldDiscard: true };
-    if (/gas price.*less than the minimum value/i.test(errStr)) return { errorType: ProcessErrorType.gasPriceTooLow, shouldDiscard: true };
     if (/intrinsic gas too low/i.test(errStr)) return { errorType: ProcessErrorType.intrinsicGas, shouldDiscard: true };
     if (/transaction type not supported/i.test(errStr)) return { errorType: ProcessErrorType.txTypeNotSupported, shouldDiscard: true };
     if (/max fee per gas higher than/i.test(errStr)) return { errorType: ProcessErrorType.feeCapVeryHigh, shouldDiscard: true };
@@ -80,8 +85,6 @@ export const processError = (err: unknown): { errorType: ProcessErrorType; shoul
     if (/NotEnoughBaseGas/i.test(errStr)) return { errorType: ProcessErrorType.notEnoughBaseGas, shouldDiscard: true };
     // can't find this error in geth
     if (/invalid chainid/i.test(errStr) || /ChainIdMismatch/i.test(errStr)) return { errorType: ProcessErrorType.chainIdMismatch, shouldDiscard: true };
-
-    if (/is discarded due to out of balance/i.test(errStr)) return { errorType: ProcessErrorType.balanceNotEnough, shouldDiscard: true };
 
     if (/RlpIncorrectListLen/i.test(errStr) || /RlpExpectedToBeList/i.test(errStr) || /Can not recover pubkey for Ethereum like tx/i.test(errStr))
       return { errorType: ProcessErrorType.signatureError, shouldDiscard: true };

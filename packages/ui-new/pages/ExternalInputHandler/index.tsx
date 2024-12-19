@@ -74,7 +74,7 @@ export const useListenDeepLink = (navigation: StackNavigation) => {
         if (!data || hasCurrentWCEvent) return;
         const activeRouterName = getActiveRouteName(navigation.getState());
         if (activeRouterName === ExternalInputHandlerStackName) {
-          navigation.dispatch(StackActions.replace(ExternalInputHandlerStackName, { params: { data } }));
+          navigation.dispatch(StackActions.replace(ExternalInputHandlerStackName, { data }));
         } else {
           navigation.navigate(ExternalInputHandlerStackName, { data });
         }

@@ -12,7 +12,6 @@ import Text from '@components/Text';
 import { Lang, useLanguage } from '@hooks/useI18n';
 import { useNavigation, useTheme } from '@react-navigation/native';
 import { UpdateVersionStackName, type AboutUsStackName, type StackScreenProps } from '@router/configs';
-import { APP_VERSION_FLAG_FEATURE } from '@utils/features';
 import { Image } from 'expo-image';
 import type React from 'react';
 import { useCallback, useState } from 'react';
@@ -22,6 +21,7 @@ import { showMessage } from 'react-native-flash-message';
 import semverLt from 'semver/functions/lt';
 import pkg from '../../../../package.json';
 import { SettingItem } from './index';
+import { getAPPVersion } from '@utils/getEnv';
 
 export interface VersionJSON {
   version: string;
@@ -65,7 +65,6 @@ const AboutUs: React.FC<StackScreenProps<typeof AboutUsStackName>> = ({ navigati
       }).then<VersionJSON>((res) => {
         return res.json();
       });
-      console.log(remoteVersion);
       if (semverLt(pkg.version, remoteVersion.version)) {
         // has new version , to show user
 
@@ -89,7 +88,7 @@ const AboutUs: React.FC<StackScreenProps<typeof AboutUsStackName>> = ({ navigati
 
       <Text style={[styles.swiftshield, { color: colors.textPrimary }]}>{t('settings.aboutUs.title')}</Text>
       <Text style={[styles.version, { color: colors.textSecondary }]}>
-        {t('settings.aboutUs.version')}: {pkg.version} {APP_VERSION_FLAG_FEATURE.allow && APP_VERSION_FLAG_FEATURE.value}
+        {t('settings.aboutUs.version')}: {getAPPVersion()}
       </Text>
 
       <SettingItem title={t('settings.aboutUs.action.checkUpdate')} onPress={handleCheckNewVersion} disable={loading} />

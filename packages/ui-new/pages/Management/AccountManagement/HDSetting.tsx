@@ -137,27 +137,26 @@ const HDManagement: React.FC<StackScreenProps<typeof HDSettingStackName>> = ({ n
       const _oldAccountsNeedShow = accounts.filter((account) => !!chooseAccounts.find((_account) => _account.index === account.index));
       const oldAccountsNeedHidden = await Promise.all(_oldAccountsNeedHidden.map((account) => queryAccountById(account.id)));
       const oldAccountsNeedShow = await Promise.all(_oldAccountsNeedShow.map((account) => queryAccountById(account.id)));
-      await database.write(async () => {
-        await database.batch(
-          ...oldAccountsNeedHidden.map((account) => methods.prepareChangeAccountHidden({ account, hidden: true })),
-          ...oldAccountsNeedShow.map((account) => methods.prepareChangeAccountHidden({ account, hidden: false })),
-        );
-      });
 
-      await Promise.all(
+      const batchNews = await Promise.all(
         newAccountsInChoose.map((account) =>
-          methods.addAccount({
-            accountGroup,
-            index: account.index,
-            hexAddress: account.addressValue,
-          }),
+          methods.addAccount({ accountGroup, index: account.index, vaultData: mnemonic, hexAddress: account.addressValue }, true),
         ),
       );
 
-      setInNext(false);
+      await database.write(async () => {
+        await database.batch([
+          ...oldAccountsNeedHidden.map((account) => methods.prepareChangeAccountHidden({ account, hidden: true })),
+          ...oldAccountsNeedShow.map((account) => methods.prepareChangeAccountHidden({ account, hidden: false })),
+          ...batchNews.flat().flat(),
+        ]);
+      });
+
       bottomSheetRef.current?.close();
     } catch (err) {
       console.error(err);
+    } finally {
+      setInNext(false);
     }
   };
 

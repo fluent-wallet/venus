@@ -1052,7 +1052,7 @@ PODS:
     - ReactCommon/turbomodule/bridging
     - ReactCommon/turbomodule/core
     - Yoga
-  - react-native-compat (2.14.0):
+  - react-native-compat (2.17.1):
     - DoubleConversion
     - glog
     - hermes-engine
@@ -1795,7 +1795,7 @@ SPEC CHECKSUMS:
   React-Mapbuffer: 9f68550e7c6839d01411ac8896aea5c868eff63a
   react-native-bignumber: 835205afffc12daf6c2a047da6ab4fccb94e3004
   react-native-bsim: 4a4fd0e3079c65bcc9fb36f688043dc30fd7a6e5
-  react-native-compat: e9d177f588d14bf4233ddfdd7a5b6aa87481c93d
+  react-native-compat: 37f1802bbb8217ef01bccb2c261e2455362ed9f4
   react-native-config: d7d8a0c65f7fa523197879f6b777997abbfc987e
   react-native-get-random-values: 21325b2244dfa6b58878f51f9aa42821e7ba3d06
   react-native-netinfo: bdb108d340cdb41875c9ced535977cac6d2ff321
