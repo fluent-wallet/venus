@@ -94,7 +94,10 @@ jobs:
 
       - name: Build PROD Android Release
         if: ${{ inputs.environment == 'prod' }}
-
+        env:
+          SIGN_ALIAS: ${{secrets.SIGN_ALIAS}}
+          SIGN_KEY: ${{secrets.SIGN_KEY}}
+          APP_VERSION: ${{ inputs.appVersion }}
         run: |
           cd android && ./gradlew app:assembleProdRelease && cd ..
           mkdir ./artifact
@@ -102,6 +105,10 @@ jobs:
 
       - name: Build aab Android Release
         if: ${{ inputs.buildAAB }}
+        env:
+          SIGN_ALIAS: ${{secrets.SIGN_ALIAS}}
+          SIGN_KEY: ${{secrets.SIGN_KEY}}
+          APP_VERSION: ${{ inputs.appVersion }}
         run: |
           npx react-native build-android --mode=release
           mkdir ./artifact
