@@ -170,7 +170,7 @@ export const TabsContent: React.FC<Props> = ({ currentTab, setCurrentTab, pageVi
       if (position === -1) return;
       const childNumber = findNodeHandle(parentRefs[position].current);
       if (childNumber === null) return;
-      childRefs[position].current?.measureLayout(childNumber, (_, __, ___, height) => {
+      childRefs[position].current?.measure((_x, _y, _width, height, _pageX, _pageY) => {
         setPageViewHeight(Math.max(height, minHeight));
       });
     },
@@ -187,7 +187,6 @@ export const TabsContent: React.FC<Props> = ({ currentTab, setCurrentTab, pageVi
         setCurrentTab(tabs[position]);
         recalculateHeight(tabs[position]);
       }}
-      useLegacy={Platform.OS === 'ios'}
     >
       {tabs.map((tab, index) => (
         <View key={tab} style={styles.pagerView}>
