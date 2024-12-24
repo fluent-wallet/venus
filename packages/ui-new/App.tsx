@@ -22,7 +22,6 @@ const App: React.FC = () => {
   const hasVault = useHasVault();
   const account = useCurrentAccount();
   const currentAddressValue = useCurrentAddressValue();
-  const lifeCycle = events.useLifeCycle();
 
   const systemMode = useColorScheme();
   const innerMode = useMode();
@@ -50,8 +49,7 @@ const App: React.FC = () => {
       ),
     [],
   );
-
-  const isReady = (hasVault === false || (hasVault === true && !!account?.nickname && !!currentAddressValue)) && lifeCycle === LifeCycle.Ready;
+  const isReady = hasVault === false || (hasVault === true && !!account?.nickname && !!currentAddressValue);
 
   return (
     <>
