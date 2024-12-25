@@ -187,6 +187,7 @@ export const TabsContent: React.FC<Props> = ({ currentTab, setCurrentTab, pageVi
         setCurrentTab(tabs[position]);
         recalculateHeight(tabs[position]);
       }}
+      useNext
     >
       {tabs.map((tab, index) => (
         <View key={tab} style={styles.pagerView}>

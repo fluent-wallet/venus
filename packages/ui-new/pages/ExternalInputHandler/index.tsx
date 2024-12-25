@@ -214,7 +214,7 @@ const ExternalInputHandler: React.FC<Props> = ({ navigation, onConfirm, onClose,
     async (dataString: string) => {
       isParsingRef.current = true;
       // stop preview
-      // cameraRef.current?.pausePreview();
+      cameraRef.current?.pausePreview();
       let ethUrl: ETHURL;
       if (await methods.checkIsValidAddress({ networkType: currentNetwork.networkType, addressValue: dataString })) {
         ethUrl = { target_address: dataString, schema_prefix: currentNetwork.networkType === NetworkType.Ethereum ? 'ethereum:' : 'conflux:' } as ETHURL;
@@ -241,7 +241,7 @@ const ExternalInputHandler: React.FC<Props> = ({ navigation, onConfirm, onClose,
       } catch (err) {
         isParsingRef.current = false;
         // error resume preview,  maybe we can delay resume preview with some time
-        // cameraRef.current?.resumePreview();
+        cameraRef.current?.resumePreview();
         if (err instanceof WalletConnectPluginError) {
           if (err.message === 'VersionNotSupported') {
             setParseStatus({ message: t('scan.walletConnect.error.lowVersion') });
@@ -301,7 +301,7 @@ const ExternalInputHandler: React.FC<Props> = ({ navigation, onConfirm, onClose,
               <View style={styles.cameraWrapper}>
                 <CameraView
                   ref={cameraRef}
-                  active={true}
+                  active
                   facing="back"
                   style={styles.camera}
                   barcodeScannerSettings={{ barcodeTypes: ['qr'] }}

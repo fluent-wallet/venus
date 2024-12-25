@@ -82,7 +82,7 @@ export const TabsContent: React.FC<Props> = ({ currentTab, setCurrentTab, pageVi
       style={styles.pagerView}
       initialPage={0}
       onPageSelected={(evt) => setCurrentTab(tabs[evt.nativeEvent.position])}
-      useLegacy={Platform.OS === 'ios'}
+      useNext={Platform.OS === 'android'}
     >
       {tabs?.map((tab, index) => (
         <View key={tab}>
