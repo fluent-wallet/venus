@@ -14852,13 +14852,13 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-native-pager-view@npm:6.5.1":
-  version: 6.5.1
-  resolution: "react-native-pager-view@npm:6.5.1"
+"react-native-pager-view@npm:6.6.1":
+  version: 6.6.1
+  resolution: "react-native-pager-view@npm:6.6.1"
   peerDependencies:
     react: "*"
     react-native: "*"
-  checksum: 9c8a9bb5f69d0dbc4dcf4826b2d319c0fd926fa60dd7c0dddc765aeb775c070d516b189fab575773f902c924ecb6db6ae8fdb67d6e879890ac82e094a4d2b930
+  checksum: 85488c464c58fc4420ac626169754f50aeaa6f9a4d4964c4d8a73352057827540a5108914f9b031c737e6d83e35223a353c7e3b0557a6151c4a48bf6f7a8b395
   languageName: node
   linkType: hard
 
@@ -14975,9 +14975,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-native-svg@npm:15.8.0":
-  version: 15.8.0
-  resolution: "react-native-svg@npm:15.8.0"
+"react-native-svg@npm:15.10.1":
+  version: 15.10.1
+  resolution: "react-native-svg@npm:15.10.1"
   dependencies:
     css-select: ^5.1.0
     css-tree: ^1.1.3
@@ -14985,7 +14985,7 @@ __metadata:
   peerDependencies:
     react: "*"
     react-native: "*"
-  checksum: ad9d6093f3aef0d53c5e2a562afb7805009f2bf50fd4ec6e77f8c18a6cb7e06a7793d55cc66d523c7d30c77cae170ee26767c72ad5b1a1f07032420ccf4162fe
+  checksum: c210426b424e99730ba35d6bbf18335a99f04f2f234cb5bb578ac685c31cfca5e39d48ebf05f9189edd61c028405f4ff242b5edc98ee3e3f41c8bfa960f5bff4
   languageName: node
   linkType: hard
 
@@ -17663,7 +17663,7 @@ __metadata:
     react-native-gesture-handler: 2.21.2
     react-native-get-random-values: ~1.11.0
     react-native-keychain: 8.0.0
-    react-native-pager-view: 6.5.1
+    react-native-pager-view: 6.6.1
     react-native-qrcode-svg: ^6.2.0
     react-native-quick-base64: ^2.1.1
     react-native-quick-crypto: 0.7.10
@@ -17671,7 +17671,7 @@ __metadata:
     react-native-restart: ^0.0.27
     react-native-safe-area-context: 4.12.0
     react-native-screens: 4.4.0
-    react-native-svg: 15.8.0
+    react-native-svg: 15.10.1
     react-native-svg-transformer: ^1.3.0
     react-test-renderer: ^18.2.0
     reflect-metadata: ^0.2.1

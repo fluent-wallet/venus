@@ -1369,29 +1369,7 @@ PODS:
     - React-Core
   - react-native-netinfo (11.4.1):
     - React-Core
-  - react-native-pager-view (6.5.1):
-    - DoubleConversion
-    - glog
-    - hermes-engine
-    - RCT-Folly (= 2024.01.01.00)
-    - RCTRequired
-    - RCTTypeSafety
-    - React-Core
-    - React-debug
-    - React-Fabric
-    - React-featureflags
-    - React-graphics
-    - React-ImageManager
-    - react-native-pager-view/common (= 6.5.1)
-    - React-NativeModulesApple
-    - React-RCTFabric
-    - React-rendererdebug
-    - React-utils
-    - ReactCodegen
-    - ReactCommon/turbomodule/bridging
-    - ReactCommon/turbomodule/core
-    - Yoga
-  - react-native-pager-view/common (6.5.1):
+  - react-native-pager-view (6.6.1):
     - DoubleConversion
     - glog
     - hermes-engine
@@ -2011,7 +1989,7 @@ PODS:
     - ReactCommon/turbomodule/bridging
     - ReactCommon/turbomodule/core
     - Yoga
-  - RNSVG (15.8.0):
+  - RNSVG (15.10.1):
     - DoubleConversion
     - glog
     - hermes-engine
@@ -2031,9 +2009,9 @@ PODS:
     - ReactCodegen
     - ReactCommon/turbomodule/bridging
     - ReactCommon/turbomodule/core
-    - RNSVG/common (= 15.8.0)
+    - RNSVG/common (= 15.10.1)
     - Yoga
-  - RNSVG/common (15.8.0):
+  - RNSVG/common (15.10.1):
     - DoubleConversion
     - glog
     - hermes-engine
@@ -2434,7 +2412,7 @@ SPEC CHECKSUMS:
   react-native-config: d7d8a0c65f7fa523197879f6b777997abbfc987e
   react-native-get-random-values: 21325b2244dfa6b58878f51f9aa42821e7ba3d06
   react-native-netinfo: f0a9899081c185db1de5bb2fdc1c88c202a059ac
-  react-native-pager-view: abc5ef92699233eb726442c7f452cac82f73d0cb
+  react-native-pager-view: 9dbdfdc85d9409c054ee2581c6837c193fbadccc
   react-native-quick-base64: 6ddd4121d8dcb412ad32ca5fa67633dbea8d3761
   react-native-quick-crypto: 1c64985a5f854e5f61f57134166f6cf634c838af
   react-native-restart: 7595693413fe3ca15893702f2c8306c62a708162
@@ -2474,7 +2452,7 @@ SPEC CHECKSUMS:
   RNKeychain: 4f63aada75ebafd26f4bc2c670199461eab85d94
   RNReanimated: 56fffbede49b5bddb327616096e822f342978794
   RNScreens: d022507f2b6d76c73335e9e35aedcf7bb2f791b0
-  RNSVG: 536cd3c866c878faf72beaba166c8b02fe2b762b
+  RNSVG: ec2e9d524612ee95db5df143a54518c5404d93f0
   SDWebImage: 8a6b7b160b4d710e2a22b6900e25301075c34cb3
   SDWebImageAVIFCoder: 00310d246aab3232ce77f1d8f0076f8c4b021d90
   SDWebImageSVGCoder: 15a300a97ec1c8ac958f009c02220ac0402e936c
@@ -2486,4 +2464,4 @@ SPEC CHECKSUMS:
 
 PODFILE CHECKSUM: 8203158340be6d64a968be4fb15e91137adba038
 
-COCOAPODS: 1.15.2
+COCOAPODS: 1.16.2
