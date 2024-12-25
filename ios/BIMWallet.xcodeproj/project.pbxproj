@@ -654,6 +654,7 @@
 				ENABLE_BITCODE = NO;
 				INFOPLIST_FILE = BIMWallet/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = BIMWallet;
+				IPHONEOS_DEPLOYMENT_TARGET = 15.6;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -684,6 +685,7 @@
 				DEVELOPMENT_TEAM = 3NUM7LCDK3;
 				INFOPLIST_FILE = BIMWallet/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = BIMWallet;
+				IPHONEOS_DEPLOYMENT_TARGET = 15.6;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -780,6 +782,7 @@
 				OTHER_LDFLAGS = "$(inherited)";
 				REACT_NATIVE_PATH = "${PODS_ROOT}/../../node_modules/react-native";
 				SDKROOT = iphoneos;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "$(inherited) DEBUG";
 				USE_HERMES = true;
 			};
 			name = Debug;
