@@ -61,7 +61,7 @@ const PasswordWay: React.FC<StackScreenProps<typeof PasswordWayStackName>> = ({ 
   const { inAsync, execAsync: handleCreateVault } = useInAsync(_handleCreateVault);
 
   return (
-    <ScrollView contentContainerStyle={[{ minHeight: '100%', backgroundColor: colors.bgPrimary }]}>
+    <ScrollView contentContainerStyle={[{ flex: 1, backgroundColor: colors.bgPrimary }]}>
       <View style={styles.container}>
         <Text style={[styles.title, { color: colors.textPrimary }]}>{t('initWallet.setPassword')}</Text>
 
