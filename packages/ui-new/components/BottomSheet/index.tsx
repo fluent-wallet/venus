@@ -134,7 +134,7 @@ const BottomSheet = forwardRef<BottomSheet_, Props>(
         }}
         onClose={handleClose}
         enablePanDownToClose={couldPanDownToClose && enablePanDownToClose}
-        enableContentPanningGesture={couldPanDownToClose && enableContentPanningGesture}
+        enableContentPanningGesture={enableContentPanningGesture}
         enableHandlePanningGesture={couldPanDownToClose && enableHandlePanningGesture}
         backdropComponent={showBackDrop ? renderBackdrop : undefined}
         backgroundStyle={{ backgroundColor: colors.bgFourth }}

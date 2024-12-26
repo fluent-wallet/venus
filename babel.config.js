@@ -1,6 +1,6 @@
 // eslint-disable-next-line no-undef
 module.exports = {
-  presets: ['module:@react-native/babel-preset'],
+  presets: ['babel-preset-expo'],
   plugins: [
     ['@babel/plugin-proposal-decorators', { version: 'legacy' }],
     [
@@ -20,7 +20,7 @@ module.exports = {
           '@service': './packages/ui-new/service',
           '@utils': './packages/ui-new/utils',
           //see: https://github.com/margelo/react-native-quick-crypto#replace-crypto-browserify
-          'bn.js': './node_modules/react-native-bignumber',
+          // 'bn.js': './node_modules/react-native-bignumber',
           crypto: './node_modules/react-native-quick-crypto',
           stream: './node_modules/stream-browserify',
           buffer: './node_modules/@craftzdog/react-native-buffer',

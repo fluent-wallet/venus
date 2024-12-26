@@ -3,7 +3,9 @@
 // eslint-disable-next-line no-undef
 const { getDefaultConfig } = require('expo/metro-config');
 const { mergeConfig } = require('@react-native/metro-config');
-
+const {
+  wrapWithReanimatedMetroConfig,
+} = require('react-native-reanimated/metro-config');
 const defaultConfig = getDefaultConfig(__dirname);
 const { assetExts, sourceExts } = defaultConfig.resolver;
 
@@ -30,4 +32,4 @@ const config1 = {
 };
 
 // eslint-disable-next-line no-undef
-module.exports = mergeConfig(defaultConfig, config1);
+module.exports = wrapWithReanimatedMetroConfig(mergeConfig(defaultConfig, config1));

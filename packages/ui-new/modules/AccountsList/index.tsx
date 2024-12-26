@@ -241,15 +241,15 @@ const AccountsList: React.FC<{
   return (
     <ListComponent
       sections={accountsManage}
-      renderSectionHeader={({ section: { title } }) => <AccountGroup {...title} colors={colors} type={type} onPressGroup={onPressGroup} />}
+      renderSectionHeader={({ section: { title } }) => <AccountGroup {...title} key={title.id} colors={colors} type={type} onPressGroup={onPressGroup} />}
       renderItem={({ item }) => (
-        <Account {...item} colors={colors} type={type} isCurrent={currentAccount?.id === item.id} onPress={onPressAccount} disabledCurrent={disabledCurrent} />
+        <Account {...item} colors={colors} type={type} isCurrent={currentAccount?.id === item.id} onPress={onPressAccount} disabledCurrent={disabledCurrent}  key={item.id}/>
       )}
       renderSectionFooter={
         type === 'selector'
           ? () => <View pointerEvents="none" style={styles.placeholder} />
           : ({ section: { title } }) => (
-              <AddAccount {...title} colors={colors} type={type} inAdding={inAddingId === title.id} onPress={() => addAccount(title)} />
+              <AddAccount {...title} key={title.id} colors={colors} type={type} inAdding={inAddingId === title.id} onPress={() => addAccount(title)} />
             )
       }
     />
