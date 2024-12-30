@@ -64,72 +64,92 @@ class AuthenticationPluginClass implements Plugin {
   }
 
   public getPassword = async () => {
-    if (this.settleAuthenticationType === AuthenticationType.Biometrics) {
-      try {
-        const keyChainObject = await KeyChain.getGenericPassword({
-          ...defaultOptions,
-          authenticationPrompt: { title: getI18n().translation.authentication.title },
-        });
-        if (keyChainObject && keyChainObject.password) {
-          return await authCryptoTool.decrypt<string>(keyChainObject.password);
-        }
-        throw new Error('Biometrics getPassword failed.');
-      } catch (err) {
-        const errString = JSON.stringify((err as any)?.message ?? err);
-        if (containsCancel(errString)) {
-          throw new Error('User canceled biometrics.');
-        } else {
-          showBiometricsDisabledMessage();
-          throw new Error('Biometrics not enable.');
-        }
+    if (this.getPasswordPromise) return this.getPasswordPromise;
+    this.getPasswordPromise = new Promise<string>(async (_resolve, _reject) => {
+      if (this.pwdCache) {
+        _resolve(this.pwdCache);
+        return;
       }
-    } else if (this.settleAuthenticationType === AuthenticationType.Password) {
-      if (this.getPasswordPromise) return this.getPasswordPromise;
-      this.getPasswordPromise = new Promise<string>((_resolve, _reject) => {
-        if (!this.pwdCache) {
-          if (this.pwdCacheTimer !== null) {
-            clearTimeout(this.pwdCacheTimer);
-            this.pwdCacheTimer = null;
-          }
 
-          this.passwordRequestSubject.next({
-            resolve: (pwd: string) => {
-              this.pwdCache = pwd;
-              _resolve(pwd);
-              this.pwdCacheTimer = setTimeout(() => {
-                this.pwdCache = null;
-                this.pwdCacheTimer = null;
-              }, cacheTime);
+      if (this.pwdCacheTimer !== null) {
+        clearTimeout(this.pwdCacheTimer);
+        this.pwdCacheTimer = null;
+      }
+
+      if (this.settleAuthenticationType === AuthenticationType.Biometrics) {
+        try {
+          const keyChainObject = await KeyChain.getGenericPassword({
+            ...defaultOptions,
+            authenticationPrompt: {
+              title: getI18n().translation.authentication.title,
             },
-            reject: (err: any) => {
-              this.pwdCache = null;
-              _reject(err);
-            },
-            verify: this.verifyPassword,
           });
-        } else {
-          _resolve(this.pwdCache);
+          if (keyChainObject && keyChainObject.password) {
+            const decryptedPassword = await authCryptoTool.decrypt<string>(keyChainObject.password);
+            this.pwdCache = decryptedPassword;
+            _resolve(decryptedPassword);
+            this.pwdCacheTimer = setTimeout(() => {
+              this.pwdCache = null;
+              this.pwdCacheTimer = null;
+            }, cacheTime);
+          } else {
+            this.pwdCache = null;
+            _reject(new Error('Biometrics getPassword failed.'));
+          }
+        } catch (err) {
+          const errString = JSON.stringify((err as any)?.message ?? err);
+          this.pwdCache = null;
+          if (containsCancel(errString)) {
+            _reject(new Error('User canceled biometrics.'));
+          } else {
+            showBiometricsDisabledMessage();
+            _reject(new Error('Biometrics not enable.'));
+          }
         }
-      }).finally(() => {
-        this.getPasswordPromise = null;
-      });
-      return this.getPasswordPromise;
-    } else {
-      throw new Error('Authentication  not set');
-    }
+      } else if (this.settleAuthenticationType === AuthenticationType.Password) {
+        this.passwordRequestSubject.next({
+          resolve: (pwd: string) => {
+            this.pwdCache = pwd;
+            _resolve(pwd);
+            this.pwdCacheTimer = setTimeout(() => {
+              this.pwdCache = null;
+              this.pwdCacheTimer = null;
+            }, cacheTime);
+          },
+          reject: (err: any) => {
+            this.pwdCache = null;
+            _reject(err);
+          },
+          verify: this.verifyPassword,
+        });
+      } else {
+        _reject(new Error('Authentication  not set'));
+      }
+    }).finally(() => {
+      this.getPasswordPromise = null;
+    });
+    return this.getPasswordPromise;
   };
 
   // stores a user password in the secure keyChain with a specific auth type
   public setPassword: {
     (params: { authType: AuthenticationType.Biometrics }): Promise<void>;
     (params: { password: string }): Promise<void>;
-  } = async ({ password, authType }: { password?: string; authType?: AuthenticationType }) => {
+  } = async ({
+    password,
+    authType,
+  }: {
+    password?: string;
+    authType?: AuthenticationType;
+  }) => {
     if (authType === AuthenticationType.Biometrics) {
       const encryptedPassword = await authCryptoTool.encrypt(`${authCryptoTool.generateRandomString()}${new Date().getTime()}`);
 
       await KeyChain.setGenericPassword('bim-wallet-user', encryptedPassword, {
         ...defaultOptions,
-        authenticationPrompt: { title: getI18n().translation.authentication.title },
+        authenticationPrompt: {
+          title: getI18n().translation.authentication.title,
+        },
       });
       this.settleAuthenticationType = AuthenticationType.Biometrics;
       await database.localStorage.set('SettleAuthentication', AuthenticationType.Biometrics);
