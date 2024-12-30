@@ -17,7 +17,7 @@
             android:label="@string/app_name"
             android:launchMode="singleTask"
             android:theme="@style/BootTheme"
-            android:windowSoftInputMode="adjustResize"> <!-- Apply @style/BootTheme on .MainActivity -->
+            android:windowSoftInputMode="adjustResize|adjustPan">
 
 
             <intent-filter>
