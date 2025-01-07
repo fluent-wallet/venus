@@ -1,7 +1,7 @@
 import { Image, type ImageProps } from 'expo-image';
 import type React from 'react';
 import { useMemo } from 'react';
-import { Platform, StyleSheet } from 'react-native';
+import { Platform } from 'react-native';
 import { SvgUri } from 'react-native-svg';
 
 interface IconProps extends ImageProps {
