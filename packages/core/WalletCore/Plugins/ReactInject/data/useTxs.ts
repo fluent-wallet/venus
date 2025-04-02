@@ -2,7 +2,7 @@ import type { Asset } from '@core/database/models/Asset';
 import type { Tx } from '@core/database/models/Tx';
 import { atom, useAtomValue } from 'jotai';
 import { atomFamily, atomWithObservable } from 'jotai/utils';
-import { combineLatest, map, of, switchMap } from 'rxjs';
+import { combineLatest, filter, map, of, switchMap, tap } from 'rxjs';
 import { observeTxById, observeTxsWithAddress } from '../../../../database/models/Tx/query';
 import type { TxPayload } from '../../../../database/models/TxPayload';
 import { formatTxData } from '../../../../utils/tx';
@@ -132,6 +132,7 @@ const networkAtomFamilyOfTx = atomFamily((txId: string) =>
   atomWithObservable(
     () =>
       observeTxById(txId).pipe(
+        filter((txs) => txs && txs.length > 0),
         switchMap((txs) => txs[0].address.observe()),
         switchMap((address) => address.network.observe()),
       ),
@@ -144,6 +145,7 @@ const accountAtomFamilyOfTx = atomFamily((txId: string) =>
   atomWithObservable(
     () =>
       observeTxById(txId).pipe(
+        filter((txs) => txs && txs.length > 0),
         switchMap((txs) => txs[0].address.observe()),
         switchMap((address) => address.account.observe()),
       ),
