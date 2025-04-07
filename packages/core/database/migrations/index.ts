@@ -20,6 +20,14 @@ const migrations = schemaMigrations({
         ),
       ],
     },
+    {
+      toVersion: 3,
+      steps: [
+        unsafeExecuteSql(
+          `UPDATE ${TableName.Network} SET scan_url = REPLACE(scan_url, 'confluxscan.io', 'confluxscan.org') WHERE scan_url LIKE '%confluxscan.io%';`,
+        )
+      ],
+    },
   ],
 });
 
