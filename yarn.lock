@@ -2465,6 +2465,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@cfxjs/rpc-errors@npm:^0.0.5":
+  version: 0.0.5
+  resolution: "@cfxjs/rpc-errors@npm:0.0.5"
+  checksum: ed93b50069b8208170572cdb03d6976cb8aee0bd0c0fae6345e5f343245025d8091b7a211a8e307431a70d9b06b5568fd1b778598badcde83adf20d20bb75052
+  languageName: node
+  linkType: hard
+
 "@cfxjs/use-wallet-react@npm:0.0.2-5":
   version: 0.0.2-5
   resolution: "@cfxjs/use-wallet-react@npm:0.0.2-5"
@@ -17590,6 +17597,7 @@ __metadata:
     "@biomejs/biome": 1.8.3
     "@cfx-kit/dapp-utils": ^0.2.1
     "@cfx-kit/react-utils": ^0.0.35
+    "@cfxjs/rpc-errors": ^0.0.5
     "@craftzdog/react-native-buffer": ^6.0.5
     "@ethersproject/abi": ^5.7.0
     "@ethersproject/hdnode": ^5.7.0
