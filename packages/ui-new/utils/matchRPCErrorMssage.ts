@@ -14,6 +14,7 @@ import {
   coreSpaceErrors,
   eSpaceErrors,
 } from '@cfxjs/rpc-errors';
+import { TxPoolFullError } from 'node_modules/@cfxjs/rpc-errors/_esm/coreSpace/invalidParamsErrors/transaction';
 const rpcError = new RPCError();
 rpcError.registerError(coreSpaceErrors);
 rpcError.registerError(eSpaceErrors);
@@ -64,6 +65,10 @@ const matchRPCErrorMessage = (error: { message?: string; data?: string; code?: n
 
     if (parsedError instanceof UnrecoverablePubkeyError) {
       return t('tx.error.signatureError');
+    }
+
+    if (parsedError instanceof TxPoolFullError) {
+      return t('tx.error.txPoolFull');
     }
   }
 
