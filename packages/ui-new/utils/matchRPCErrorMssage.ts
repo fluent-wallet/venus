@@ -10,11 +10,11 @@ import {
   TransactionNotEnoughBaseGasError,
   TransactionUnderpricedError,
   TransactionZeroGasPriceError,
+  TxPoolFullError,
   UnrecoverablePubkeyError,
   coreSpaceErrors,
   eSpaceErrors,
 } from '@cfxjs/rpc-errors';
-import { TxPoolFullError } from 'node_modules/@cfxjs/rpc-errors/_esm/coreSpace/invalidParamsErrors/transaction';
 const rpcError = new RPCError();
 rpcError.registerError(coreSpaceErrors);
 rpcError.registerError(eSpaceErrors);
