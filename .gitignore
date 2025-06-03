@@ -81,3 +81,5 @@ web-build/
 !.yarn/releases
 !.yarn/sdks
 !.yarn/versions
+# react-native-config codegen
+ios/tmp.xcconfig
