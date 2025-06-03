@@ -10,9 +10,7 @@
 		01914D9A98DF4F80B0B1D07A /* sora_bold.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 048A7B2BE3E44341B8A0853E /* sora_bold.ttf */; };
 		098B4310205D428D8A821F53 /* sora_extrabold.ttf in Resources */ = {isa = PBXBuildFile; fileRef = A32E2BBAD30B4F259AA50314 /* sora_extrabold.ttf */; };
 		0C80B921A6F3F58F76C31292 /* libPods-BIMWallet.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 5DCACB8F33CDC322A6C60F78 /* libPods-BIMWallet.a */; };
-		13B07FBC1A68108700A75B9A /* AppDelegate.mm in Sources */ = {isa = PBXBuildFile; fileRef = 13B07FB01A68108700A75B9A /* AppDelegate.mm */; };
 		13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 13B07FB51A68108700A75B9A /* Images.xcassets */; };
-		761780ED2CA45674006654EE /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 761780EC2CA45674006654EE /* AppDelegate.swift */; };
 		198B2BA7EDD7401195243359 /* sora_medium.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 055DA28FFE37457EB79D4372 /* sora_medium.ttf */; };
 		1B967BF5B5E8464D93E45D6E /* welcome_2.webp in Resources */ = {isa = PBXBuildFile; fileRef = 4B8899849FCE4778A765F89D /* welcome_2.webp */; };
 		3888170ED47F4FC9A1787042 /* sora_extralight.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 6C7F38D1D04C48598A458CE8 /* sora_extralight.ttf */; };
@@ -22,9 +20,9 @@
 		4EF6DE06DF68432B9964EE10 /* sora_regular.ttf in Resources */ = {isa = PBXBuildFile; fileRef = D3DB6B345CD84D139B020F34 /* sora_regular.ttf */; };
 		5E8429D7F72845CFBADB5F74 /* enter_5.webp in Resources */ = {isa = PBXBuildFile; fileRef = 989CBB81C2C047C8ABDD3483 /* enter_5.webp */; };
 		6D8DA9E1BAC04DA6A687D4EC /* enter_2.webp in Resources */ = {isa = PBXBuildFile; fileRef = ED3F2AA10C9E4D0A91C8F57F /* enter_2.webp */; };
+		761780ED2CA45674006654EE /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 761780EC2CA45674006654EE /* AppDelegate.swift */; };
 		76F880C57A3E4F4EB91BD736 /* enter_4.webp in Resources */ = {isa = PBXBuildFile; fileRef = 4A141FF09C374FFA8FD828E1 /* enter_4.webp */; };
 		7D2C3C81CE1E4CB791B16858 /* enter_8.webp in Resources */ = {isa = PBXBuildFile; fileRef = 46C73B2EC8424C26A1628DD8 /* enter_8.webp */; };
-		8165C5EF34BFC587CF2EE958 /* ExpoModulesProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = A34A62E4EB3A57DC2BE80935 /* ExpoModulesProvider.swift */; };
 		81AB9BB82411601600AC10FF /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 81AB9BB72411601600AC10FF /* LaunchScreen.storyboard */; };
 		891800157F574EA4B713177E /* welcome_4.webp in Resources */ = {isa = PBXBuildFile; fileRef = DAF8A82D4C9D4981A3B36909 /* welcome_4.webp */; };
 		9170F0E27166414EA1B1AE7E /* sora_light.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 5BF10BE33E6345A490E5EDB8 /* sora_light.ttf */; };
@@ -41,24 +39,12 @@
 		FB7AFF9CF4E541C1B8FAF03E /* welcome_0.webp in Resources */ = {isa = PBXBuildFile; fileRef = 093D2E081D3F460F967448C9 /* welcome_0.webp */; };
 /* End PBXBuildFile section */
 
-/* Begin PBXContainerItemProxy section */
-		00E356F41AD99517003FC87E /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = 83CBB9F71A601CBA00E9B192 /* Project object */;
-			proxyType = 1;
-			remoteGlobalIDString = 13B07F861A680F5B00A75B9A;
-			remoteInfo = BIMWallet;
-		};
-/* End PBXContainerItemProxy section */
-
 /* Begin PBXFileReference section */
-		00E356F11AD99517003FC87E /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
-		00E356F21AD99517003FC87E /* BIMWalletTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = BIMWalletTests.m; sourceTree = "<group>"; };
 		015C89CC8D4949F8B00AB939 /* sora_semibold.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = sora_semibold.ttf; path = "../packages/ui-new/assets/fonts/sora_semibold.ttf"; sourceTree = "<group>"; };
 		048A7B2BE3E44341B8A0853E /* sora_bold.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = sora_bold.ttf; path = "../packages/ui-new/assets/fonts/sora_bold.ttf"; sourceTree = "<group>"; };
 		055DA28FFE37457EB79D4372 /* sora_medium.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = sora_medium.ttf; path = "../packages/ui-new/assets/fonts/sora_medium.ttf"; sourceTree = "<group>"; };
 		093D2E081D3F460F967448C9 /* welcome_0.webp */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = welcome_0.webp; path = "../packages/ui-new/assets/lottie/welcome_0.webp"; sourceTree = "<group>"; };
-		13B07F961A680F5B00A75B9A /* BIMWallet.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = BIMWallet.app; sourceTree = BUILT_PRODUCTS_DIR; };`
+		13B07F961A680F5B00A75B9A /* BIMWallet.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = BIMWallet.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		13B07FB51A68108700A75B9A /* Images.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; name = Images.xcassets; path = BIMWallet/Images.xcassets; sourceTree = "<group>"; };
 		13B07FB61A68108700A75B9A /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = Info.plist; path = BIMWallet/Info.plist; sourceTree = "<group>"; };
 		15839C861ED2C69156BA28E5 /* ExpoModulesProvider.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = ExpoModulesProvider.swift; path = "Pods/Target Support Files/Pods-BIMWallet/ExpoModulesProvider.swift"; sourceTree = "<group>"; };
@@ -72,16 +58,15 @@
 		5709B34CF0A7D63546082F79 /* Pods-BIMWallet.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-BIMWallet.release.xcconfig"; path = "Target Support Files/Pods-BIMWallet/Pods-BIMWallet.release.xcconfig"; sourceTree = "<group>"; };
 		5BF10BE33E6345A490E5EDB8 /* sora_light.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = sora_light.ttf; path = "../packages/ui-new/assets/fonts/sora_light.ttf"; sourceTree = "<group>"; };
 		5DCACB8F33CDC322A6C60F78 /* libPods-BIMWallet.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-BIMWallet.a"; sourceTree = BUILT_PRODUCTS_DIR; };
-		761780EC2CA45674006654EE /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = AppDelegate.swift; path = RnDiffApp/AppDelegate.swift; sourceTree = "<group>"; };
 		6C7F38D1D04C48598A458CE8 /* sora_extralight.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = sora_extralight.ttf; path = "../packages/ui-new/assets/fonts/sora_extralight.ttf"; sourceTree = "<group>"; };
 		70BD36136DD34389A61BB441 /* welcome_5.webp */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = welcome_5.webp; path = "../packages/ui-new/assets/lottie/welcome_5.webp"; sourceTree = "<group>"; };
+		761780EC2CA45674006654EE /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = AppDelegate.swift; path = BIMWallet/AppDelegate.swift; sourceTree = "<group>"; };
 		7D19A8FFA27E4D84B615A19E /* enter_1.webp */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = enter_1.webp; path = "../packages/ui-new/assets/lottie/enter_1.webp"; sourceTree = "<group>"; };
 		81AB9BB72411601600AC10FF /* LaunchScreen.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; name = LaunchScreen.storyboard; path = BIMWallet/LaunchScreen.storyboard; sourceTree = "<group>"; };
 		8F753FA1E98A4D66A5392FB1 /* BootSplash.storyboard */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = BootSplash.storyboard; path = BIMWallet/BootSplash.storyboard; sourceTree = "<group>"; };
 		989CBB81C2C047C8ABDD3483 /* enter_5.webp */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = enter_5.webp; path = "../packages/ui-new/assets/lottie/enter_5.webp"; sourceTree = "<group>"; };
 		9EACEA7913C64F0BAF3D6288 /* sora_thin.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = sora_thin.ttf; path = "../packages/ui-new/assets/fonts/sora_thin.ttf"; sourceTree = "<group>"; };
 		A32E2BBAD30B4F259AA50314 /* sora_extrabold.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = sora_extrabold.ttf; path = "../packages/ui-new/assets/fonts/sora_extrabold.ttf"; sourceTree = "<group>"; };
-		A34A62E4EB3A57DC2BE80935 /* ExpoModulesProvider.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = ExpoModulesProvider.swift; path = "Pods/Target Support Files/Pods-BIMWallet-BIMWalletTests/ExpoModulesProvider.swift"; sourceTree = "<group>"; };
 		BAA4E776C21D481ABA3F098B /* enter_6.webp */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = enter_6.webp; path = "../packages/ui-new/assets/lottie/enter_6.webp"; sourceTree = "<group>"; };
 		D3DB6B345CD84D139B020F34 /* sora_regular.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = sora_regular.ttf; path = "../packages/ui-new/assets/fonts/sora_regular.ttf"; sourceTree = "<group>"; };
 		D8A5C3DF581240F0B58BCACA /* welcome_3.webp */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = welcome_3.webp; path = "../packages/ui-new/assets/lottie/welcome_3.webp"; sourceTree = "<group>"; };
@@ -104,14 +89,6 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
-		00E356F01AD99517003FC87E /* Supporting Files */ = {
-			isa = PBXGroup;
-			children = (
-				00E356F11AD99517003FC87E /* Info.plist */,
-			);
-			name = "Supporting Files";
-			sourceTree = "<group>";
-		};
 		13B07FAE1A68108700A75B9A /* BIMWallet */ = {
 			isa = PBXGroup;
 			children = (
@@ -212,19 +189,10 @@
 			path = Pods;
 			sourceTree = "<group>";
 		};
-		C40C929C19FC0FD01D5EE4BA /* BIMWalletTests */ = {
-			isa = PBXGroup;
-			children = (
-				A34A62E4EB3A57DC2BE80935 /* ExpoModulesProvider.swift */,
-			);
-			name = BIMWalletTests;
-			sourceTree = "<group>";
-		};
 		EB8B5252A42152C62A547B57 /* ExpoModulesProviders */ = {
 			isa = PBXGroup;
 			children = (
 				6E37D5AF9F0669F80133F74B /* BIMWallet */,
-				C40C929C19FC0FD01D5EE4BA /* BIMWalletTests */,
 			);
 			name = ExpoModulesProviders;
 			sourceTree = "<group>";
@@ -286,13 +254,6 @@
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
-		00E356EC1AD99517003FC87E /* Resources */ = {
-			isa = PBXResourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
 		13B07F8E1A680F5B00A75B9A /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -362,25 +323,6 @@
 			shellPath = /bin/sh;
 			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-BIMWallet/Pods-BIMWallet-frameworks.sh\"\n";
 			showEnvVarsInLog = 0;
-		};
-		9219BF88F0E4E1EEC803782F /* [Expo] Configure project */ = {
-			isa = PBXShellScriptBuildPhase;
-			alwaysOutOfDate = 1;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			inputFileListPaths = (
-			);
-			inputPaths = (
-			);
-			name = "[Expo] Configure project";
-			outputFileListPaths = (
-			);
-			outputPaths = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-			shellPath = /bin/sh;
-			shellScript = "# This script configures Expo modules and generates the modules provider file.\nbash -l -c \"./Pods/Target\\ Support\\ Files/Pods-BIMWallet-BIMWalletTests/expo-configure-project.sh\"\n";
 		};
 		C049C21CD27938056F5F39D6 /* [Expo] Configure project */ = {
 			isa = PBXShellScriptBuildPhase;
@@ -453,14 +395,6 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXSourcesBuildPhase section */
-
-/* Begin PBXTargetDependency section */
-		00E356F51AD99517003FC87E /* PBXTargetDependency */ = {
-			isa = PBXTargetDependency;
-			target = 13B07F861A680F5B00A75B9A /* BIMWallet */;
-			targetProxy = 00E356F41AD99517003FC87E /* PBXContainerItemProxy */;
-		};
-/* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
 		13B07F941A680F5B00A75B9A /* Debug */ = {
