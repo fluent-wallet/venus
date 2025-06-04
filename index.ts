@@ -24,8 +24,8 @@ import ReceiveAssetsTracker from './packages/core/WalletCore/Plugins/ReceiveAsse
 import BlockNumberTracker from './packages/core/WalletCore/Plugins/BlockNumberTracker';
 import NextNonceTracker from './packages/core/WalletCore/Plugins/NextNonceTracker';
 import WalletConfigPlugin from './packages/core/WalletCore/Plugins/WalletConfig';
-import App from './packages/ui-new/App';
 import { name as appName } from './app.json';
+import RootProvider from './packages/ui-new/RootProvider'
 
 Decimal.set({ precision: 80 });
 Decimal.config({
@@ -76,4 +76,4 @@ const plugins = [
 WalletCore.plugins.use(plugins);
 WalletCore.setup();
 
-AppRegistry.registerComponent(appName, () => App);
+AppRegistry.registerComponent(appName, () => RootProvider);
