@@ -2,7 +2,7 @@ import methods from '@core/WalletCore/Methods';
 import plugins from '@core/WalletCore/Plugins';
 import { getCurrentNetwork } from '@core/WalletCore/Plugins/ReactInject/data/useCurrentNetwork';
 import AccountSelector from '@modules/AccountSelector';
-import { type Tab, Tabs, TabsContent, setHomeScrollY } from '@modules/AssetsTabs';
+import { type TabType, Tabs, TabsContent, setHomeScrollY } from '@modules/AssetsTabs';
 import NetworkSelector from '@modules/NetworkSelector';
 import { useTheme } from '@react-navigation/native';
 import { TransactionDetailStackName, type HomeStackName, type StackScreenProps } from '@router/configs';
@@ -25,7 +25,7 @@ import type { AssetInfo } from '@core/WalletCore/Plugins/AssetsTracker/types';
 
 const Home: React.FC<StackScreenProps<typeof HomeStackName>> = ({ navigation }) => {
   const { colors } = useTheme();
-  const [currentTab, setCurrentTab] = useState<Tab>('Tokens');
+  const [currentTab, setCurrentTab] = useState<TabType>('Tokens');
   const pageViewRef = useRef<PagerView>(null);
 
   const handleScroll = useCallback((evt: NativeScrollEvent) => {

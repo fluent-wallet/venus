@@ -44,7 +44,7 @@ const CustomTextInput = forwardRef<TextInput, Props>(
     const UsedTextInput = useMemo(() => (isInBottomSheet ? BottomSheetTextInput : TextInput), [isInBottomSheet]);
 
     const [visible, setVisible] = useState(isDev);
-    const [hasValue, setHasValue] = useState(() => (value !== undefined ? !!value : defaultHasValue ?? isDev));
+    const [hasValue, setHasValue] = useState(() => (value !== undefined ? !!value : (defaultHasValue ?? isDev)));
     const handleChangeText = useCallback(
       (text: string) => {
         const filterText = text.replace(/[^\w\s.:,\-;?!@#$%^&*() \u4e00-\u9fff]+/gi, '');

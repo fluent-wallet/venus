@@ -82,7 +82,7 @@ const GasFeeSetting = forwardRef<GasFeeSettingMethods, Props>(
     const nativeAsset = useCurrentNetworkNativeAsset()!;
 
     const estimateRes = usePollingGasEstimateAndNonce(tx);
-    const estimateGasSettings = estimateRes ? estimateRes.estimateOf1559 ?? estimateRes.estimate : null;
+    const estimateGasSettings = estimateRes ? (estimateRes.estimateOf1559 ?? estimateRes.estimate) : null;
     const estimateCurrentGasPrice = estimateRes?.gasPrice ?? null;
     const estimateAdvanceSetting = useMemo(
       () =>
@@ -110,8 +110,8 @@ const GasFeeSetting = forwardRef<GasFeeSettingMethods, Props>(
         ...(has(dappCustomizeGasSetting, 'suggestedMaxFeePerGas') || has(dappCustomizeGasSetting, 'suggestedGasPrice')
           ? {
               [estimateRes.estimateOf1559 ? 'suggestedMaxFeePerGas' : 'suggestedGasPrice']: estimateRes.estimateOf1559
-                ? dappCustomizeGasSetting?.suggestedMaxFeePerGas ?? dappCustomizeGasSetting?.suggestedGasPrice
-                : dappCustomizeGasSetting?.suggestedGasPrice ?? dappCustomizeGasSetting?.suggestedMaxFeePerGas,
+                ? (dappCustomizeGasSetting?.suggestedMaxFeePerGas ?? dappCustomizeGasSetting?.suggestedGasPrice)
+                : (dappCustomizeGasSetting?.suggestedGasPrice ?? dappCustomizeGasSetting?.suggestedMaxFeePerGas),
             }
           : null),
         ...(estimateRes.estimateOf1559 && has(dappCustomizeGasSetting, 'suggestedMaxPriorityFeePerGas')
@@ -181,7 +181,7 @@ const GasFeeSetting = forwardRef<GasFeeSettingMethods, Props>(
         if ((!isReset && tempSelectedOptionLevel === null) || !estimateRes || !estimateGasSettings) return;
         const level = isReset ? 'medium' : tempSelectedOptionLevel!;
         const newGasSetting = {
-          ...(level === 'customize' ? customizeGasSetting ?? defaultCustomizeGasSetting! : estimateGasSettings?.[level]),
+          ...(level === 'customize' ? (customizeGasSetting ?? defaultCustomizeGasSetting!) : estimateGasSettings?.[level]),
           level,
         } as const;
         setSelectedGasSetting(newGasSetting);

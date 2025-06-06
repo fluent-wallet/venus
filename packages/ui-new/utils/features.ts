@@ -6,7 +6,6 @@ export const SUPPORT_BSIM_FEATURE = {
   allow: Platform.OS === 'android',
 };
 
-
 export const FULL_NETWORK_SWITCH_LIST_FEATURE = {
   describe: 'allow full network select list',
   allow: isDev,
