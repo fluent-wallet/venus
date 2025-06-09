@@ -31,11 +31,12 @@ import {
   SendTransactionStep4StackName,
   type SendTransactionScreenProps,
 } from '@router/configs';
-import { Tabs, TabsContent, setSelectAssetScrollY, type TabType } from '@modules/AssetsTabs';
+import { Tabs, TabsContent, type TabType } from '@modules/AssetsTabs';
 import TokenItem from '@modules/AssetsList/TokensList/TokenItem';
 import NFTItem from '@modules/AssetsList/NFTsList/NFTItem';
 import ProhibitIcon from '@assets/icons/prohibit.svg';
 import SendTransactionBottomSheet from '../SendTransactionBottomSheet';
+import { useSharedValue } from 'react-native-reanimated';
 
 interface Props {
   navigation?: SendTransactionScreenProps<typeof SendTransactionStep2StackName>['navigation'];
@@ -51,13 +52,10 @@ const SendTransactionStep2Asset: React.FC<Props> = ({ navigation, route, onConfi
   const { t } = useTranslation();
   const [currentTab, setCurrentTab] = useState<TabType>('Tokens');
   const pageViewRef = useRef<PagerView>(null);
+  const sharedScrollY = useSharedValue(0);
+
   const handleScroll = useCallback((evt: NativeSyntheticEvent<NativeScrollEvent>) => {
-    setSelectAssetScrollY(evt.nativeEvent.contentOffset.y);
-  }, []);
-  useEffect(() => {
-    return () => {
-      setSelectAssetScrollY(0);
-    };
+    sharedScrollY.set(evt.nativeEvent.contentOffset.y);
   }, []);
 
   const currentNetwork = useCurrentNetwork()!;
@@ -177,7 +175,7 @@ const SendTransactionStep2Asset: React.FC<Props> = ({ navigation, route, onConfi
 
       {!searchAsset && (
         <BottomSheetScrollContent style={[styles.scrollView, { marginVertical: 16 }]} stickyHeaderIndices={[0]} onScroll={handleScroll}>
-          <Tabs currentTab={currentTab} pageViewRef={pageViewRef} type="SelectAsset" onlyToken={!navigation} />
+          <Tabs currentTab={currentTab} pageViewRef={pageViewRef} type="SelectAsset" onlyToken={!navigation} sharedScrollY={sharedScrollY} />
           <TabsContent
             currentTab={currentTab}
             setCurrentTab={setCurrentTab}
