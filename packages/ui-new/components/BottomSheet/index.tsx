@@ -80,7 +80,7 @@ const BottomSheet = forwardRef<BottomSheet_, Props>(
 
     useFocusEffect(
       useCallback(() => {
-       const subscription =  BackHandler.addEventListener('hardwareBackPress', onBackPress);
+        const subscription = BackHandler.addEventListener('hardwareBackPress', onBackPress);
         return () => subscription.remove();
       }, [onBackPress]),
     );

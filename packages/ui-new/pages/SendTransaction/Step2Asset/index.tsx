@@ -31,7 +31,7 @@ import {
   SendTransactionStep4StackName,
   type SendTransactionScreenProps,
 } from '@router/configs';
-import { Tabs, TabsContent, setSelectAssetScrollY, type Tab } from '@modules/AssetsTabs';
+import { Tabs, TabsContent, setSelectAssetScrollY, type TabType } from '@modules/AssetsTabs';
 import TokenItem from '@modules/AssetsList/TokensList/TokenItem';
 import NFTItem from '@modules/AssetsList/NFTsList/NFTItem';
 import ProhibitIcon from '@assets/icons/prohibit.svg';
@@ -49,7 +49,7 @@ const SendTransactionStep2Asset: React.FC<Props> = ({ navigation, route, onConfi
   const { colors } = useTheme();
   const bottomSheetRef = useRef<BottomSheetMethods>(null!);
   const { t } = useTranslation();
-  const [currentTab, setCurrentTab] = useState<Tab>('Tokens');
+  const [currentTab, setCurrentTab] = useState<TabType>('Tokens');
   const pageViewRef = useRef<PagerView>(null);
   const handleScroll = useCallback((evt: NativeSyntheticEvent<NativeScrollEvent>) => {
     setSelectAssetScrollY(evt.nativeEvent.contentOffset.y);

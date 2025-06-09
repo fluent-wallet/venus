@@ -243,7 +243,15 @@ const AccountsList: React.FC<{
       sections={accountsManage}
       renderSectionHeader={({ section: { title } }) => <AccountGroup {...title} key={title.id} colors={colors} type={type} onPressGroup={onPressGroup} />}
       renderItem={({ item }) => (
-        <Account {...item} colors={colors} type={type} isCurrent={currentAccount?.id === item.id} onPress={onPressAccount} disabledCurrent={disabledCurrent}  key={item.id}/>
+        <Account
+          {...item}
+          colors={colors}
+          type={type}
+          isCurrent={currentAccount?.id === item.id}
+          onPress={onPressAccount}
+          disabledCurrent={disabledCurrent}
+          key={item.id}
+        />
       )}
       renderSectionFooter={
         type === 'selector'

@@ -37,7 +37,6 @@ const App: React.FC = () => {
     [mode],
   );
 
-  console.log(hasVault)
   const Message = useMemo(
     () =>
       Platform.OS === 'ios' ? (

@@ -1,7 +1,7 @@
 import type { ProposalTypes } from '@walletconnect/types';
 import type { NetworkType } from '../ReactInject';
 import type { SdkErrorKey } from '@walletconnect/utils';
-import type { WalletKitTypes } from '@reown/walletkit'
+import type { WalletKitTypes } from '@reown/walletkit';
 
 export enum WalletConnectRPCMethod {
   //   Sign = 'eth_sign',
