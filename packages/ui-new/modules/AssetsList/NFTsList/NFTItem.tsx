@@ -3,11 +3,11 @@ import Text from '@components/Text';
 import plugins from '@core/WalletCore/Plugins';
 import type { AssetInfo } from '@core/WalletCore/Plugins/AssetsTracker/types';
 import type { NFTItemDetail } from '@core/WalletCore/Plugins/NFTDetailTracker';
-import { AssetType, useCurrentOpenNFTDetail } from '@core/WalletCore/Plugins/ReactInject';
+import { AssetType, type useCurrentOpenNFTDetail } from '@core/WalletCore/Plugins/ReactInject';
 import type { TabsType } from '@modules/AssetsTabs';
 import { useTheme } from '@react-navigation/native';
 import { screenWidth } from '@utils/deviceInfo';
-import { useCallback, useMemo } from 'react';
+import { useCallback } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import AssetTypeLabel from '../AssetTypeLabel';
 import NFTIcon from './NFTIcon';
@@ -22,41 +22,18 @@ export const getDetailSymbol = (detail: NFTItemDetail) => {
   return `${name} #${tokenId}`;
 };
 
-export const StickyNFTItem: React.FC<{ startY: number; scrollY: number; tabsType: TabsType }> = ({ startY, scrollY, tabsType }) => {
-  const currentOpenNFT = useCurrentOpenNFTDetail();
-  const showY = useMemo(() => startY + (currentOpenNFT?.index ?? 0) * 70, [startY, currentOpenNFT?.index]);
-
-  if (!currentOpenNFT || currentOpenNFT?.index === undefined) return null;
-  return (
-    <NFTItem
-      isSticky={scrollY < showY ? 'hide' : 'show'}
-      data={currentOpenNFT.nft}
-      onPress={() => plugins.NFTDetailTracker.setCurrentOpenNFT(undefined)}
-      tabsType={tabsType}
-      isCurrent
-    />
-  );
-};
-
-const NFTItem: React.FC<{
+export const NFTItem: React.FC<{
   data: AssetInfo;
   onPress: () => void;
-  isSticky?: 'hide' | 'show';
   tabsType: TabsType;
   showTypeLabel?: boolean;
   isCurrent?: boolean;
-}> = ({ data, onPress, isSticky, tabsType, showTypeLabel, isCurrent = false }) => {
+}> = ({ data, onPress, tabsType, showTypeLabel, isCurrent = false }) => {
   const { colors } = useTheme();
-
   return (
     <Pressable
       testID="tokenItem"
-      style={({ pressed }) => [
-        styles.container,
-        isSticky && styles.sticky,
-        { backgroundColor: pressed ? colors.underlay : tabsType === 'Home' ? colors.bgPrimary : colors.bgFourth, opacity: isSticky === 'hide' ? 0 : 1 },
-      ]}
-      pointerEvents={isSticky === 'hide' ? 'none' : 'auto'}
+      style={({ pressed }) => [styles.container, { backgroundColor: pressed ? colors.underlay : tabsType === 'Home' ? colors.bgPrimary : colors.bgFourth }]}
       onPress={onPress}
     >
       <NFTIcon style={styles.nftIcon} source={data.icon} />
@@ -146,12 +123,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 16,
     height: 70,
-  },
-  sticky: {
-    position: 'absolute',
-    left: 0,
-    right: 0,
-    top: 0,
   },
   nftIcon: {
     width: 40,

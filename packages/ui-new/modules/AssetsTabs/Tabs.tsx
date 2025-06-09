@@ -8,9 +8,8 @@ import { useCallback, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Pressable, StyleSheet, View } from 'react-native';
 
-import Animated, { useSharedValue, useAnimatedStyle, withTiming } from 'react-native-reanimated';
+import Animated, { useSharedValue, useAnimatedStyle, withTiming, type SharedValue } from 'react-native-reanimated';
 import type { Props, TabsArrayType, TabType } from './types';
-import { mapOfSetScrollY } from './atoms';
 import { StickyNFT } from './StickyNFT';
 
 const TabI18nMap = {
@@ -20,7 +19,13 @@ const TabI18nMap = {
 };
 const TAB_WIDTH = 64;
 
-export const Tabs: React.FC<Omit<Props, 'setCurrentTab' | 'onPressItem' | 'selectType'>> = ({ type, currentTab, pageViewRef, onlyToken }) => {
+export const Tabs: React.FC<Omit<Props, 'setCurrentTab' | 'onPressItem' | 'selectType'> & { sharedScrollY: SharedValue<number> }> = ({
+  type,
+  currentTab,
+  pageViewRef,
+  onlyToken,
+  sharedScrollY,
+}) => {
   const { colors } = useTheme();
   const { t } = useTranslation();
 
@@ -56,18 +61,18 @@ export const Tabs: React.FC<Omit<Props, 'setCurrentTab' | 'onPressItem' | 'selec
   }));
 
   useEffect(() => {
-    offset.value = withTiming(TAB_WIDTH * currentTabIndex);
-  }, [currentTabIndex]);
+    offset.set(() => withTiming(TAB_WIDTH * currentTabIndex));
+  }, [currentTabIndex, offset.set]);
 
   useEffect(() => {
-    mapOfSetScrollY[type](0);
-  }, [currentTab]);
+    sharedScrollY?.set(0);
+  }, [currentTab, sharedScrollY?.set]);
 
   useEffect(() => {
     return () => {
-      mapOfSetScrollY[type](0);
+      sharedScrollY?.set(0);
     };
-  }, []);
+  }, [sharedScrollY?.set]);
 
   return (
     <>
@@ -84,7 +89,7 @@ export const Tabs: React.FC<Omit<Props, 'setCurrentTab' | 'onPressItem' | 'selec
         <Animated.View style={[styles.animatedBorder, animatedStyles, { backgroundColor: colors.borderPrimary }]} />
       </View>
       <View style={[styles.divider, { backgroundColor: type !== 'Home' ? colors.borderFourth : colors.borderThird }]}>
-        {currentTab === 'NFTs' && <StickyNFT type={type} />}
+        {currentTab === 'NFTs' && <StickyNFT sharedScrollY={sharedScrollY} type={type} />}
       </View>
     </>
   );
