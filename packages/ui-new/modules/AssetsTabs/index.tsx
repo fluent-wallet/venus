@@ -1,3 +1,3 @@
 export { TabsContent } from './TabsContent';
-export { Tabs } from './Tabs';
+export { TabsHeader } from './TabsHeader';
 export * from './types';
