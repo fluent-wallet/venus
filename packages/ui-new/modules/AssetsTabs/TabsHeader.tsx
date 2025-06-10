@@ -1,7 +1,4 @@
 import Text from '@components/Text';
-import { useCurrentNetwork } from '@core/WalletCore/Plugins/ReactInject';
-
-import { Networks } from '@core/utils/consts';
 import { useTheme } from '@react-navigation/native';
 import type React from 'react';
 import { useCallback, useEffect, useMemo } from 'react';
@@ -9,8 +6,9 @@ import { useTranslation } from 'react-i18next';
 import { Pressable, StyleSheet, View } from 'react-native';
 
 import Animated, { useSharedValue, useAnimatedStyle, withTiming, type SharedValue } from 'react-native-reanimated';
-import type { Props, TabsArrayType, TabType } from './types';
+import type { TabsType, TabType } from './types';
 import { StickyNFT } from './StickyNFT';
+import { useTabs } from './hooks';
 
 const TabI18nMap = {
   Tokens: 'tab.tokens' as const,
@@ -19,27 +17,19 @@ const TabI18nMap = {
 };
 const TAB_WIDTH = 64;
 
-export const Tabs: React.FC<Omit<Props, 'setCurrentTab' | 'onPressItem' | 'selectType'> & { sharedScrollY: SharedValue<number> }> = ({
-  type,
-  currentTab,
-  pageViewRef,
-  onlyToken,
-  sharedScrollY,
-}) => {
+interface TabsHeaderProps {
+  type: TabsType;
+  currentTab: TabType;
+  onlyToken?: boolean;
+  sharedScrollY: SharedValue<number>;
+  onTabChange?: (tab: TabType) => void;
+  resetScrollY?: () => void;
+}
+
+export const TabsHeader: React.FC<TabsHeaderProps> = ({ type, currentTab, onlyToken, sharedScrollY, onTabChange, resetScrollY }) => {
   const { colors } = useTheme();
   const { t } = useTranslation();
-
-  const currentNetwork = useCurrentNetwork();
-  const tabs = useMemo(() => {
-    const res =
-      !onlyToken &&
-      (!currentNetwork ||
-        (currentNetwork && (currentNetwork.chainId === Networks['Conflux eSpace'].chainId || currentNetwork.chainId === Networks['eSpace Testnet'].chainId)))
-        ? (['Tokens', 'NFTs'] as TabsArrayType)
-        : (['Tokens'] as TabsArrayType);
-    type === 'Home' && res.push('Activity');
-    return res;
-  }, [currentNetwork, type]);
+  const tabs = useTabs(type, onlyToken);
 
   const currentTabIndex = useMemo(() => {
     const index = tabs.indexOf(currentTab as 'Tokens');
@@ -48,11 +38,11 @@ export const Tabs: React.FC<Omit<Props, 'setCurrentTab' | 'onPressItem' | 'selec
 
   const handleClickTabLabel = useCallback(
     (tab: TabType) => {
-      let index = tabs.indexOf(tab);
-      index = index === -1 ? 0 : index;
-      pageViewRef?.current?.setPage(index);
+      if (onTabChange) {
+        onTabChange(tab);
+      }
     },
-    [tabs],
+    [onTabChange],
   );
 
   const offset = useSharedValue(0);
@@ -65,14 +55,18 @@ export const Tabs: React.FC<Omit<Props, 'setCurrentTab' | 'onPressItem' | 'selec
   }, [currentTabIndex, offset.set]);
 
   useEffect(() => {
-    sharedScrollY?.set(0);
-  }, [currentTab, sharedScrollY?.set]);
+    if (resetScrollY) {
+      resetScrollY();
+    }
+  }, [currentTab, resetScrollY]);
 
   useEffect(() => {
     return () => {
-      sharedScrollY?.set(0);
+      if (resetScrollY) {
+        resetScrollY();
+      }
     };
-  }, [sharedScrollY?.set]);
+  }, [resetScrollY]);
 
   return (
     <>

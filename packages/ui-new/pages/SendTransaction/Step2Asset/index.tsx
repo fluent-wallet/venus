@@ -2,7 +2,6 @@ import type React from 'react';
 import { useState, useRef, useCallback, useEffect } from 'react';
 import { Pressable, StyleSheet, type NativeScrollEvent, type NativeSyntheticEvent } from 'react-native';
 import { useTheme } from '@react-navigation/native';
-import type PagerView from 'react-native-pager-view';
 import { showMessage } from 'react-native-flash-message';
 import { Trans, useTranslation } from 'react-i18next';
 import { debounce, escapeRegExp } from 'lodash-es';
@@ -31,12 +30,12 @@ import {
   SendTransactionStep4StackName,
   type SendTransactionScreenProps,
 } from '@router/configs';
-import { Tabs, TabsContent, type TabType } from '@modules/AssetsTabs';
+import { TabsHeader, TabsContent } from '@modules/AssetsTabs';
 import TokenItem from '@modules/AssetsList/TokensList/TokenItem';
 import NFTItem from '@modules/AssetsList/NFTsList/NFTItem';
 import ProhibitIcon from '@assets/icons/prohibit.svg';
 import SendTransactionBottomSheet from '../SendTransactionBottomSheet';
-import { useSharedValue } from 'react-native-reanimated';
+import { useTabsController } from '@modules/AssetsTabs/hooks';
 
 interface Props {
   navigation?: SendTransactionScreenProps<typeof SendTransactionStep2StackName>['navigation'];
@@ -50,13 +49,15 @@ const SendTransactionStep2Asset: React.FC<Props> = ({ navigation, route, onConfi
   const { colors } = useTheme();
   const bottomSheetRef = useRef<BottomSheetMethods>(null!);
   const { t } = useTranslation();
-  const [currentTab, setCurrentTab] = useState<TabType>('Tokens');
-  const pageViewRef = useRef<PagerView>(null);
-  const sharedScrollY = useSharedValue(0);
 
-  const handleScroll = useCallback((evt: NativeSyntheticEvent<NativeScrollEvent>) => {
-    sharedScrollY.set(evt.nativeEvent.contentOffset.y);
-  }, []);
+  const { currentTab, setCurrentTab, sharedScrollY, handleScroll: _handleScroll, resetScrollY } = useTabsController('Tokens');
+
+  const handleScroll = useCallback(
+    (evt: NativeSyntheticEvent<NativeScrollEvent>) => {
+      _handleScroll(evt.nativeEvent.contentOffset.y);
+    },
+    [_handleScroll],
+  );
 
   const currentNetwork = useCurrentNetwork()!;
   const currentAddress = useCurrentAddress();
@@ -175,12 +176,19 @@ const SendTransactionStep2Asset: React.FC<Props> = ({ navigation, route, onConfi
 
       {!searchAsset && (
         <BottomSheetScrollContent style={[styles.scrollView, { marginVertical: 16 }]} stickyHeaderIndices={[0]} onScroll={handleScroll}>
-          <Tabs currentTab={currentTab} pageViewRef={pageViewRef} type="SelectAsset" onlyToken={!navigation} sharedScrollY={sharedScrollY} />
-          <TabsContent
-            currentTab={currentTab}
-            setCurrentTab={setCurrentTab}
-            pageViewRef={pageViewRef}
+          <TabsHeader
             type="SelectAsset"
+            currentTab={currentTab}
+            onlyToken={!navigation}
+            sharedScrollY={sharedScrollY}
+            onTabChange={setCurrentTab}
+            resetScrollY={resetScrollY}
+          />
+
+          <TabsContent
+            type="SelectAsset"
+            currentTab={currentTab}
+            onTabChange={setCurrentTab}
             selectType={selectType}
             onPressItem={handleClickAsset}
             onlyToken={!navigation}
