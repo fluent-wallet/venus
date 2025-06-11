@@ -1,5 +1,5 @@
 import { useCallback, useRef, forwardRef, useState, useEffect, type ComponentProps } from 'react';
-import { BackHandler, Keyboard, Platform, StyleSheet } from 'react-native';
+import { BackHandler, Keyboard, Platform, StyleSheet, View } from 'react-native';
 import { useFocusEffect, useTheme, useNavigation } from '@react-navigation/native';
 import { clamp } from 'lodash-es';
 import BottomSheet_, {
@@ -168,10 +168,10 @@ export const BottomSheetHeader = ({ children, title, innerPaddingHorizontal = fa
   const { colors } = useTheme();
 
   return (
-    <BottomSheetView style={[styles.headerWrapper, innerPaddingHorizontal && styles.paddingH16, StyleSheet.flatten(style)]} {...props}>
+    <View style={[styles.headerWrapper, innerPaddingHorizontal && styles.paddingH16, StyleSheet.flatten(style)]} {...props}>
       {title && <Text style={[styles.title, { color: colors.textPrimary }]}>{title}</Text>}
       {children}
-    </BottomSheetView>
+    </View>
   );
 };
 
@@ -186,14 +186,14 @@ export const BottomSheetScrollContent = ({
   </BottomSheetScrollView>
 );
 export const BottomSheetContent = ({ children, innerPaddingHorizontal = false, style, ...props }: ContentProps) => (
-  <BottomSheetView style={[styles.contentWrapper, innerPaddingHorizontal && styles.paddingH16, StyleSheet.flatten(style)]} {...props}>
+  <View style={[styles.contentWrapper, innerPaddingHorizontal && styles.paddingH16, StyleSheet.flatten(style)]} {...props}>
     {children}
-  </BottomSheetView>
+  </View>
 );
 export const BottomSheetFooter = ({ children, innerPaddingHorizontal = false, style, ...props }: ContentProps) => (
-  <BottomSheetView style={[styles.footerWrapper, innerPaddingHorizontal && styles.paddingH16, StyleSheet.flatten(style)]} {...props}>
+  <View style={[styles.footerWrapper, innerPaddingHorizontal && styles.paddingH16, StyleSheet.flatten(style)]} {...props}>
     {children}
-  </BottomSheetView>
+  </View>
 );
 
 const styles = StyleSheet.create({
