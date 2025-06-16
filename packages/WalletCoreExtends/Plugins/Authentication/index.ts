@@ -4,7 +4,7 @@ import { getEncryptedVaultWithBSIM } from '@core/database/models/Vault/query';
 import { showBiometricsDisabledMessage } from '@pages/InitWallet/BiometricsWay';
 import { getPasswordCryptoKey } from '@utils/getEnv';
 import * as KeyChain from 'react-native-keychain';
-import { BehaviorSubject, filter } from 'rxjs';
+import { BehaviorSubject, catchError, filter, firstValueFrom, from, Observable, of, switchMap, tap, throwError } from 'rxjs';
 import CryptoToolPlugin, { CryptoToolPluginClass } from '../CryptoTool';
 import { getI18n } from '@hooks/useI18n';
 
@@ -47,7 +47,7 @@ class AuthenticationPluginClass implements Plugin {
   private passwordRequestSubject = new BehaviorSubject<PasswordRequest | null>(null);
   private pwdCache: string | null = null;
   private getPasswordPromise: Promise<string | null> | null = null;
-  private pwdCacheTimer: NodeJS.Timeout | null = null;
+  private pwdCacheTimer: number | null = null;
 
   constructor() {
     const getSettleAuthentication = async () => {
@@ -65,70 +65,100 @@ class AuthenticationPluginClass implements Plugin {
 
   public getPassword = async () => {
     if (this.getPasswordPromise) return this.getPasswordPromise;
-    this.getPasswordPromise = new Promise<string>(async (_resolve, _reject) => {
-      if (this.pwdCache) {
-        _resolve(this.pwdCache);
-        return;
-      }
 
-      if (this.pwdCacheTimer !== null) {
-        clearTimeout(this.pwdCacheTimer);
-        this.pwdCacheTimer = null;
-      }
-
-      if (this.settleAuthenticationType === AuthenticationType.Biometrics) {
-        try {
-          const keyChainObject = await KeyChain.getGenericPassword({
-            ...defaultOptions,
-            authenticationPrompt: {
-              title: getI18n().translation.authentication.title,
-            },
-          });
-          if (keyChainObject && keyChainObject.password) {
-            const decryptedPassword = await authCryptoTool.decrypt<string>(keyChainObject.password);
-            this.pwdCache = decryptedPassword;
-            _resolve(decryptedPassword);
-            this.pwdCacheTimer = setTimeout(() => {
-              this.pwdCache = null;
-              this.pwdCacheTimer = null;
-            }, cacheTime);
-          } else {
-            this.pwdCache = null;
-            _reject(new Error('Biometrics getPassword failed.'));
-          }
-        } catch (err) {
-          const errString = JSON.stringify((err as any)?.message ?? err);
-          this.pwdCache = null;
-          if (containsCancel(errString)) {
-            _reject(new Error('User canceled biometrics.'));
-          } else {
-            showBiometricsDisabledMessage();
-            _reject(new Error('Biometrics not enable.'));
-          }
-        }
-      } else if (this.settleAuthenticationType === AuthenticationType.Password) {
-        this.passwordRequestSubject.next({
-          resolve: (pwd: string) => {
-            this.pwdCache = pwd;
-            _resolve(pwd);
-            this.pwdCacheTimer = setTimeout(() => {
-              this.pwdCache = null;
-              this.pwdCacheTimer = null;
-            }, cacheTime);
-          },
-          reject: (err: any) => {
-            this.pwdCache = null;
-            _reject(err);
-          },
-          verify: this.verifyPassword,
-        });
-      } else {
-        _reject(new Error('Authentication  not set'));
-      }
-    }).finally(() => {
+    this.getPasswordPromise = firstValueFrom(this.createPasswordStream()).finally(() => {
       this.getPasswordPromise = null;
     });
+
     return this.getPasswordPromise;
+  };
+
+  private createPasswordStream = () => {
+    if (this.pwdCache) {
+      return of(this.pwdCache);
+    }
+
+    this.clearCacheTimer();
+
+    return of(this.settleAuthenticationType).pipe(
+      switchMap((type) => {
+        switch (type) {
+          case AuthenticationType.Biometrics:
+            return this.getBiometricsPasswordStream();
+          case AuthenticationType.Password:
+            return this.getPasswordStream();
+          default:
+            return throwError(() => new Error('Authentication type not set or unsupported.'));
+        }
+      }),
+    );
+  };
+
+  private getBiometricsPasswordStream = () => {
+    return from(
+      KeyChain.getGenericPassword({
+        ...defaultOptions,
+        authenticationPrompt: {
+          title: getI18n().translation.authentication.title,
+        },
+      }),
+    ).pipe(
+      tap(() => this.clearCacheTimer()),
+      switchMap((keyChainObject) => {
+        if (!keyChainObject || !keyChainObject.password) {
+          this.pwdCache = null;
+          return throwError(() => new Error('Biometrics getPassword failed.'));
+        }
+
+        return from(authCryptoTool.decrypt<string>(keyChainObject.password)).pipe(
+          tap((decryptedPassword) => {
+            this.setCacheWithTimer(decryptedPassword);
+          }),
+        );
+      }),
+
+      catchError((err) => {
+        const errString = JSON.stringify((err as any)?.message ?? err);
+        this.pwdCache = null;
+
+        if (containsCancel(errString)) {
+          return throwError(() => new Error('User canceled biometrics.'));
+        }
+        showBiometricsDisabledMessage();
+        return throwError(() => new Error('Biometrics not enable.'));
+      }),
+    );
+  };
+
+  private getPasswordStream = () => {
+    return new Observable<string>((subscriber) => {
+      this.passwordRequestSubject.next({
+        resolve: (pwd: string) => {
+          subscriber.next(pwd);
+          subscriber.complete();
+        },
+        reject: (err: any) => {
+          this.pwdCache = null;
+          subscriber.error(err);
+        },
+        verify: this.verifyPassword,
+      });
+    });
+  };
+
+  private clearCacheTimer() {
+    if (this.pwdCacheTimer !== null) {
+      clearTimeout(this.pwdCacheTimer);
+      this.pwdCacheTimer = null;
+    }
+  }
+
+  private setCacheWithTimer = (password: string) => {
+    this.pwdCache = password;
+    this.pwdCacheTimer = setTimeout(() => {
+      this.pwdCache = null;
+      this.pwdCacheTimer = null;
+    }, cacheTime);
   };
 
   // stores a user password in the secure keyChain with a specific auth type
