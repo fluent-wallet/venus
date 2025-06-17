@@ -15,7 +15,9 @@ interface EncryptedData {
 export class CryptoToolPluginClass implements CryptoToolPlugin {
   name = 'CryptoTool' as const;
   private getPasswordMethod: (() => string | null) | (() => Promise<string | null>) | null = null;
-  public setGetPasswordMethod = (getPasswordMethod: (() => string | null) | (() => Promise<string | null>)) => (this.getPasswordMethod = getPasswordMethod);
+  public setGetPasswordMethod = (getPasswordMethod: (() => string | null) | (() => Promise<string | null>)) => {
+    this.getPasswordMethod = getPasswordMethod;
+  };
 
   public getPassword = async () => {
     if (!this.getPasswordMethod) throw Error('CryptoTool: getPasswordMethod is not set.');

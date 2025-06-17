@@ -4,9 +4,10 @@ import { getEncryptedVaultWithBSIM } from '@core/database/models/Vault/query';
 import { showBiometricsDisabledMessage } from '@pages/InitWallet/BiometricsWay';
 import { getPasswordCryptoKey } from '@utils/getEnv';
 import * as KeyChain from 'react-native-keychain';
-import { BehaviorSubject, catchError, filter, firstValueFrom, from, Observable, of, switchMap, tap, throwError } from 'rxjs';
+import { catchError, firstValueFrom, from, Observable, of, Subject, switchMap, tap, throwError } from 'rxjs';
 import CryptoToolPlugin, { CryptoToolPluginClass } from '../CryptoTool';
 import { getI18n } from '@hooks/useI18n';
+import { authTypeError, biometricsCanceledError, biometricsFailedError, biometricsUnknownError } from './errors';
 
 declare module '@core/WalletCore/Plugins' {
   interface Plugins {
@@ -25,10 +26,15 @@ export enum AuthenticationType {
   Biometrics = 'Biometrics',
   Password = 'Password',
 }
+
 export interface PasswordRequest {
   resolve: (value: string) => void;
-  reject: (reason?: any) => void;
+  reject: (error?: Error) => void;
   verify: (password: string) => Promise<boolean>;
+}
+
+export interface PasswordRequestInfo {
+  id: string;
 }
 
 /**
@@ -44,7 +50,9 @@ class AuthenticationPluginClass implements Plugin {
 
   private settleAuthenticationType: AuthenticationType | null = null;
   public AuthenticationType = AuthenticationType;
-  private passwordRequestSubject = new BehaviorSubject<PasswordRequest | null>(null);
+  private passwordRequestSubject = new Subject<PasswordRequestInfo>();
+  private pendingRequests = new Map<string, PasswordRequest>();
+
   private pwdCache: string | null = null;
   private getPasswordPromise: Promise<string | null> | null = null;
   private pwdCacheTimer: number | null = null;
@@ -57,10 +65,7 @@ class AuthenticationPluginClass implements Plugin {
   }
 
   public subPasswordRequest() {
-    return this.passwordRequestSubject.pipe(filter((v) => v !== null));
-  }
-  public clearPasswordRequest() {
-    this.passwordRequestSubject.next(null);
+    return this.passwordRequestSubject.asObservable();
   }
 
   public getPassword = async () => {
@@ -88,7 +93,7 @@ class AuthenticationPluginClass implements Plugin {
           case AuthenticationType.Password:
             return this.getPasswordStream();
           default:
-            return throwError(() => new Error('Authentication type not set or unsupported.'));
+            return throwError(() => authTypeError());
         }
       }),
     );
@@ -104,47 +109,67 @@ class AuthenticationPluginClass implements Plugin {
       }),
     ).pipe(
       tap(() => this.clearCacheTimer()),
+      catchError((keychainError: Error) => {
+        const message = keychainError.message;
+        if (message.includes('Cancel')) {
+          return throwError(() => biometricsCanceledError());
+        }
+        // maybe we can match more specific errors here
+        showBiometricsDisabledMessage();
+        return throwError(() => biometricsUnknownError(message));
+      }),
+
       switchMap((keyChainObject) => {
         if (!keyChainObject || !keyChainObject.password) {
           this.pwdCache = null;
-          return throwError(() => new Error('Biometrics getPassword failed.'));
+          return throwError(() => biometricsFailedError());
         }
-
         return from(authCryptoTool.decrypt<string>(keyChainObject.password)).pipe(
           tap((decryptedPassword) => {
             this.setCacheWithTimer(decryptedPassword);
           }),
         );
       }),
-
-      catchError((err) => {
-        const errString = JSON.stringify((err as any)?.message ?? err);
-        this.pwdCache = null;
-
-        if (containsCancel(errString)) {
-          return throwError(() => new Error('User canceled biometrics.'));
-        }
-        showBiometricsDisabledMessage();
-        return throwError(() => new Error('Biometrics not enable.'));
-      }),
     );
   };
 
   private getPasswordStream = () => {
     return new Observable<string>((subscriber) => {
-      this.passwordRequestSubject.next({
+      const request: PasswordRequest = {
         resolve: (pwd: string) => {
           subscriber.next(pwd);
           subscriber.complete();
         },
-        reject: (err: any) => {
-          this.pwdCache = null;
-          subscriber.error(err);
+        reject: (error?: Error) => {
+          subscriber.error(error);
         },
         verify: this.verifyPassword,
+      };
+      const id = this.generateRequestId();
+      this.pendingRequests.set(id, request);
+      this.passwordRequestSubject.next({
+        id,
       });
     });
   };
+
+  public resolve({ id, password }: { id: string; password: string }) {
+    const request = this.pendingRequests.get(id);
+    if (request) {
+      this.setCacheWithTimer(password);
+      request.resolve(password);
+      this.pendingRequests.delete(id);
+    }
+  }
+
+  public reject({ id, error }: { id: string; error?: Error }) {
+    const request = this.pendingRequests.get(id);
+    if (request) {
+      this.pwdCache = null;
+      request.reject(error);
+      this.pendingRequests.delete(id);
+    }
+  }
 
   private clearCacheTimer() {
     if (this.pwdCacheTimer !== null) {
@@ -161,6 +186,9 @@ class AuthenticationPluginClass implements Plugin {
     }, cacheTime);
   };
 
+  private generateRequestId(): string {
+    return `pwd_req_${Date.now()}_${Math.random().toString(36)}`;
+  }
   // stores a user password in the secure keyChain with a specific auth type
   public setPassword: {
     (params: { authType: AuthenticationType.Biometrics }): Promise<void>;
@@ -204,16 +232,9 @@ class AuthenticationPluginClass implements Plugin {
       return false;
     }
   };
-
-  public containsCancel = containsCancel;
 }
 
 const AuthenticationPlugin = new AuthenticationPluginClass();
 CryptoToolPlugin.setGetPasswordMethod(AuthenticationPlugin.getPassword);
 
 export default AuthenticationPlugin;
-
-const pattern = /cancel|\u53d6\u6d88/i;
-export function containsCancel(str: string): boolean {
-  return pattern.test(str);
-}

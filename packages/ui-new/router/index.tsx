@@ -90,14 +90,13 @@ const Router: React.FC = () => {
   useListenWalletConnectEvent();
 
   useEffect(() => {
-    const sub = plugins.Authentication.subPasswordRequest().subscribe(() => {
-      navigation.navigate(PasswordVerifyStackName);
+    const sub = plugins.Authentication.subPasswordRequest().subscribe(({ id }) => {
+      navigation.navigate(PasswordVerifyStackName, { id });
     });
     return () => {
       sub.unsubscribe();
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [navigation]);
 
   useListenDeepLink(navigation);
 
