@@ -53,6 +53,7 @@ import SendAsset from './SendAsset';
 import { TransactionActionType } from '@core/WalletCore/Events/broadcastTransactionSubject';
 import matchRPCErrorMessage from '@utils/matchRPCErrorMssage';
 import { isSmallDevice } from '@utils/deviceInfo';
+import { isAuthenticationCanceledError, isAuthenticationError } from '@WalletCoreExtends/Plugins/Authentication/errors';
 
 const SendTransactionStep4Confirm: React.FC<SendTransactionScreenProps<typeof SendTransactionStep4StackName>> = ({ navigation, route }) => {
   useEffect(() => Keyboard.dismiss(), []);
@@ -227,6 +228,10 @@ const SendTransactionStep4Confirm: React.FC<SendTransactionScreenProps<typeof Se
         }
       }
     } catch (_err: any) {
+      if (isAuthenticationError(_err) && isAuthenticationCanceledError(_err)) {
+        return;
+      }
+
       txError = _err;
       setBSIMEvent(null);
       if (txError instanceof SignTransactionCancelError) {

@@ -96,8 +96,7 @@ const Router: React.FC = () => {
     return () => {
       sub.unsubscribe();
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [navigation]);
 
   useListenDeepLink(navigation);
 

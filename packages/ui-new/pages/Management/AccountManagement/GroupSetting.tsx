@@ -26,6 +26,7 @@ import { useTranslation } from 'react-i18next';
 import { Keyboard, Pressable, StyleSheet, type TextInput as _TextInput } from 'react-native';
 import { showMessage } from 'react-native-flash-message';
 import DeleteConfirm from './DeleteConfirm';
+import { isAuthenticationCanceledError, isAuthenticationError } from '@WalletCoreExtends/Plugins/Authentication/errors';
 
 const GroupConfig: React.FC<StackScreenProps<typeof GroupSettingStackName>> = ({ navigation, route }) => {
   const { colors } = useTheme();
@@ -89,8 +90,7 @@ const GroupConfig: React.FC<StackScreenProps<typeof GroupSettingStackName>> = ({
       setShowDeleteBottomSheet(false);
       setTimeout(() => bottomSheetRef.current?.close());
     } catch (err) {
-      console.log(err);
-      if (plugins.Authentication.containsCancel(String(err))) {
+      if (isAuthenticationError(err) && isAuthenticationCanceledError(err)) {
         return;
       }
       showMessage({
