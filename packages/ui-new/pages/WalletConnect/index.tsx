@@ -1,5 +1,7 @@
+import PasswordVerify from '@modules/PasswordVerify';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import {
+  PasswordVerifyStackName,
   SheetBottomOption,
   WalletConnectProposalStackName,
   WalletConnectSessionsStackName,
@@ -21,6 +23,7 @@ export default function WalletConnect() {
       <WCStack.Screen name={WalletConnectSessionsStackName} component={WalletConnectSessions} options={SheetBottomOption} />
       <WCStack.Screen name={WalletConnectSignMessageStackName} component={WalletConnectSignMessage} options={SheetBottomOption} />
       <WCStack.Screen name={WalletConnectTransactionStackName} component={WalletConnectTransaction} options={SheetBottomOption} />
+      <WCStack.Screen name={PasswordVerifyStackName} component={PasswordVerify} options={SheetBottomOption} />
     </WCStack.Navigator>
   );
 }

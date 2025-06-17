@@ -26,6 +26,7 @@ const Backup: React.FC<StackScreenProps<typeof BackupStackName>> = () => {
       <BackupStack.Screen name={BackupStep2StackName} component={BackupStep2ViewSecret} options={SheetBottomOption} />
       <BackupStack.Screen name={BackupStep3StackName} component={BackupStep3RandomCheck} options={SheetBottomOption} />
       <BackupStack.Screen name={BackupSuccessStackName} component={BackupSuccess} options={SheetBottomOption} />
+      <BackupStack.Screen name={PasswordVerifyStackName} component={PasswordVerify} options={SheetBottomOption} />
     </BackupStack.Navigator>
   );
 };

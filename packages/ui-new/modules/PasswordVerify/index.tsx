@@ -15,7 +15,7 @@ import { Keyboard, StyleSheet, type TextInput as TextInputRef } from 'react-nati
 
 const defaultPassword = isDev ? '12345678' : '';
 
-const PasswordVerify: React.FC<StackScreenProps<typeof PasswordVerifyStackName>> = ({ navigation, route }) => {
+const PasswordVerify: React.FC<StackScreenProps<typeof PasswordVerifyStackName>> = ({ navigation }) => {
   const { colors, mode } = useTheme();
   const { t } = useTranslation();
   const textInputRef = useRef<TextInputRef>(null!);
@@ -25,7 +25,7 @@ const PasswordVerify: React.FC<StackScreenProps<typeof PasswordVerifyStackName>>
   const [error, setError] = useState('');
 
   const handleCancel = useCallback(() => {
-    plugins.Authentication.reject({ id: route.params.id, error: passwordRequestCanceledError() });
+    plugins.Authentication.reject({ error: passwordRequestCanceledError() });
     setInVerify(false);
     setPassword(defaultPassword);
     setError('');
@@ -34,17 +34,18 @@ const PasswordVerify: React.FC<StackScreenProps<typeof PasswordVerifyStackName>>
         Keyboard.dismiss();
       }
     });
-  }, [route.params.id]);
+  }, []);
 
   const handleConfirm = useCallback(async () => {
     setInVerify(true);
+    await new Promise((resolve) => setTimeout(resolve, 25));
     const isCorrectPassword = await plugins.Authentication.verifyPassword(password);
     if (isCorrectPassword) {
       if (navigation.canGoBack()) {
         navigation.goBack();
       }
       bottomSheetRef.current?.close();
-      plugins.Authentication.resolve({ id: route.params.id, password });
+      plugins.Authentication.resolve({ password });
 
       setPassword(defaultPassword);
       setError('');
@@ -57,14 +58,14 @@ const PasswordVerify: React.FC<StackScreenProps<typeof PasswordVerifyStackName>>
       setError('Wrong password.');
     }
     setInVerify(false);
-  }, [password, route.params.id, navigation]);
+  }, [password, navigation]);
 
   useEffect(() => {
     return () => {
       // reject the request if the component is unmounted or id changes
-      plugins.Authentication.reject({ id: route.params.id, error: passwordRequestCanceledError() });
+      plugins.Authentication.reject({ error: passwordRequestCanceledError() });
     };
-  }, [route.params.id]);
+  }, []);
 
   return (
     <BottomSheet ref={bottomSheetRef} snapPoints={snapPoints} onClose={handleCancel} isRoute onOpen={() => textInputRef.current?.focus()}>

@@ -34,7 +34,7 @@ export interface PasswordRequest {
 }
 
 export interface PasswordRequestInfo {
-  id: string;
+  type: 'PASSWORD_REQUEST';
 }
 
 /**
@@ -51,7 +51,7 @@ class AuthenticationPluginClass implements Plugin {
   private settleAuthenticationType: AuthenticationType | null = null;
   public AuthenticationType = AuthenticationType;
   private passwordRequestSubject = new Subject<PasswordRequestInfo>();
-  private pendingRequests = new Map<string, PasswordRequest>();
+  private pendingRequest: PasswordRequest | null = null;
 
   private pwdCache: string | null = null;
   private getPasswordPromise: Promise<string | null> | null = null;
@@ -145,29 +145,27 @@ class AuthenticationPluginClass implements Plugin {
         },
         verify: this.verifyPassword,
       };
-      const id = this.generateRequestId();
-      this.pendingRequests.set(id, request);
-      this.passwordRequestSubject.next({
-        id,
-      });
+
+      this.pendingRequest = request;
+      this.passwordRequestSubject.next({ type: 'PASSWORD_REQUEST' });
     });
   };
 
-  public resolve({ id, password }: { id: string; password: string }) {
-    const request = this.pendingRequests.get(id);
+  public resolve({ password }: { password: string }) {
+    const request = this.pendingRequest;
     if (request) {
       this.setCacheWithTimer(password);
       request.resolve(password);
-      this.pendingRequests.delete(id);
+      this.pendingRequest = null;
     }
   }
 
-  public reject({ id, error }: { id: string; error?: Error }) {
-    const request = this.pendingRequests.get(id);
+  public reject({ error }: { error?: Error }) {
+    const request = this.pendingRequest;
     if (request) {
       this.pwdCache = null;
       request.reject(error);
-      this.pendingRequests.delete(id);
+      this.pendingRequest = null;
     }
   }
 
@@ -186,9 +184,6 @@ class AuthenticationPluginClass implements Plugin {
     }, cacheTime);
   };
 
-  private generateRequestId(): string {
-    return `pwd_req_${Date.now()}_${Math.random().toString(36)}`;
-  }
   // stores a user password in the secure keyChain with a specific auth type
   public setPassword: {
     (params: { authType: AuthenticationType.Biometrics }): Promise<void>;

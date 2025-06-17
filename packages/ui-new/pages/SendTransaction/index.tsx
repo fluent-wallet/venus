@@ -26,7 +26,7 @@ const SendTransaction: React.FC<StackScreenProps<typeof SendTransactionStackName
       <SendTransactionStack.Screen name={SendTransactionStep2StackName} component={SendTransactionStep2Asset} options={SheetBottomOption} />
       <SendTransactionStack.Screen name={SendTransactionStep3StackName} component={SendTransactionStep3Amount} options={SheetBottomOption} />
       <SendTransactionStack.Screen name={SendTransactionStep4StackName} component={SendTransactionStep4Confirm} options={SheetBottomOption} />
-      {/* <SendTransactionStack.Screen name={PasswordVerifyStackName} component={PasswordVerify} options={SheetBottomOption} /> */}
+      <SendTransactionStack.Screen name={PasswordVerifyStackName} component={PasswordVerify} options={SheetBottomOption} />
     </SendTransactionStack.Navigator>
   );
 };

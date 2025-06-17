@@ -90,8 +90,8 @@ const Router: React.FC = () => {
   useListenWalletConnectEvent();
 
   useEffect(() => {
-    const sub = plugins.Authentication.subPasswordRequest().subscribe(({ id }) => {
-      navigation.navigate(PasswordVerifyStackName, { id });
+    const sub = plugins.Authentication.subPasswordRequest().subscribe(() => {
+      navigation.navigate(PasswordVerifyStackName);
     });
     return () => {
       sub.unsubscribe();
