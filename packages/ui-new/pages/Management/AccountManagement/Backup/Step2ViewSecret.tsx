@@ -6,7 +6,6 @@ import Button from '@components/Button';
 import Text from '@components/Text';
 import { BottomSheetScrollContent, BottomSheetFooter } from '@components/BottomSheet';
 import methods from '@core/WalletCore/Methods';
-import plugins from '@core/WalletCore/Plugins';
 import { VaultSourceType, VaultType, useCurrentAddressOfAccount, useVaultOfGroup } from '@core/WalletCore/Plugins/ReactInject';
 import useInAsync from '@hooks/useInAsync';
 import Clipboard from '@react-native-clipboard/clipboard';
@@ -22,6 +21,7 @@ import { Pressable, StyleSheet, View } from 'react-native';
 import { showMessage } from 'react-native-flash-message';
 import QRCode from 'react-native-qrcode-svg';
 import BackupBottomSheet from './BackupBottomSheet';
+import { isAuthenticationCanceledError, isAuthenticationError } from '@WalletCoreExtends/Plugins/Authentication/errors';
 
 const BackupStep2ViewSecret: React.FC<BackupScreenProps<typeof BackupStep2StackName>> = ({ route, navigation }) => {
   const { colors } = useTheme();
@@ -46,7 +46,7 @@ const BackupStep2ViewSecret: React.FC<BackupScreenProps<typeof BackupStep2StackN
         setSecretData(await methods.getPrivateKeyOfAddress(address));
       }
     } catch (err) {
-      if (plugins.Authentication.containsCancel(String(err))) {
+      if (isAuthenticationError(err) && isAuthenticationCanceledError(err)) {
         return;
       }
       showMessage({
