@@ -1,4 +1,4 @@
-import type { EventBusServer } from './Events/eventServer';
+import type { EventBus, EventSchema } from './Events/eventTypes';
 
 export const SERVICE_IDENTIFIER = {
   /**
@@ -8,7 +8,7 @@ export const SERVICE_IDENTIFIER = {
 } as const;
 
 export interface ServiceMap {
-  [SERVICE_IDENTIFIER.EVENT_BUS]: EventBusServer;
+  [SERVICE_IDENTIFIER.EVENT_BUS]: EventBus<EventSchema>;
 }
 
 export type ServiceKey = keyof typeof SERVICE_IDENTIFIER;

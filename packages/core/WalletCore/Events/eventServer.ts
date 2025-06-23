@@ -1,10 +1,10 @@
 import { Subject, type Observable } from 'rxjs';
 import { filter, map } from 'rxjs/operators';
 import { injectable } from 'inversify';
-import type { AllEventTypes, EventObject, EventSchema, GetEvent, GetPayload } from './eventTypes';
+import type { AllEventTypes, EventBus, EventObject, EventSchema, GetEvent, GetPayload } from './eventTypes';
 
 @injectable()
-export class EventBusServer<TSchema extends EventSchema = EventSchema> {
+export class EventBusServer<TSchema extends EventSchema = EventSchema> implements EventBus<TSchema> {
   private eventSubject = new Subject<EventObject<TSchema>>();
 
   public dispatch<T extends AllEventTypes<TSchema>>(
