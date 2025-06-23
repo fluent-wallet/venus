@@ -27,6 +27,10 @@ import WalletConfigPlugin from './packages/core/WalletCore/Plugins/WalletConfig'
 import { name as appName } from './app.json';
 import RootProvider from './packages/ui-new/RootProvider'
 
+import { core } from './packages/core/WalletCore/index.new'
+import { EventPlugin } from './packages/core/WalletCore/Events/EventPlugin';
+import { SERVICE_IDENTIFIER } from './packages/core/WalletCore/service';
+
 Decimal.set({ precision: 80 });
 Decimal.config({
   toExpNeg: -80,
@@ -72,8 +76,11 @@ const plugins = [
 ];
 
 
-
+  
 WalletCore.plugins.use(plugins);
 WalletCore.setup();
+
+core.use(new EventPlugin());
+core.bootstrap()
 
 AppRegistry.registerComponent(appName, () => RootProvider);
