@@ -15,8 +15,6 @@ import TxTrackerPlugin from './packages/core/WalletCore/Plugins/TxTracker';
 import ReactInjectPlugin from './packages/core/WalletCore/Plugins/ReactInject';
 import WalletConnectPlugin from './packages/core/WalletCore/Plugins/WalletConnect';
 import AssetsTracker from './packages/core/WalletCore/Plugins/AssetsTracker';
-import CryptoToolPlugin from './packages/WalletCoreExtends/Plugins/CryptoTool';
-import AuthenticationPlugin from './packages/WalletCoreExtends/Plugins/Authentication';
 import BSIMPlugin from './packages/WalletCoreExtends/Plugins/BSIM';
 import TransactionPlugin from './packages/core/WalletCore/Plugins/Transaction';
 import NFTDetailTracker from './packages/core/WalletCore/Plugins/NFTDetailTracker';
@@ -28,7 +26,10 @@ import { name as appName } from './app.json';
 import RootProvider from './packages/ui-new/RootProvider';
 
 import { EventPlugin } from './packages/core/WalletCore/Events/EventPlugin';
-import { core } from './packages/WalletCoreExtends/index';
+import { getCore, initCore } from './packages/WalletCoreExtends/index';
+
+import { AuthenticationPlugin } from './packages/WalletCoreExtends/Plugins/Authentication';
+import { CryptoToolPlugin } from './packages/WalletCoreExtends/Plugins/CryptoTool';
 
 Decimal.set({ precision: 80 });
 Decimal.config({
@@ -47,10 +48,11 @@ LogBox.ignoreLogs([
   // TODO: Remove when https://github.com/gorhom/react-native-bottom-sheet/issues/1854 is fixed.
   /^\[Reanimated\] Tried to modify key `reduceMotion` of an object which has been already passed to a worklet/,
 ]);
+initCore(EventPlugin, AuthenticationPlugin, CryptoToolPlugin).bootstrap();
 
+const core = getCore();
 const plugins = [
-  CryptoToolPlugin,
-  AuthenticationPlugin,
+  { name: 'CryptoTool', encrypt: core.cryptoTool.encrypt, decrypt: core.cryptoTool.decrypt },
   BSIMPlugin,
   ReactInjectPlugin,
   AssetsTracker,
@@ -76,8 +78,4 @@ const plugins = [
 WalletCore.plugins.use(plugins);
 WalletCore.setup();
 
-core.use(new EventPlugin());
-
-core.bootstrap().then(() => {
-  AppRegistry.registerComponent(appName, () => RootProvider);
-});
+AppRegistry.registerComponent(appName, () => RootProvider);

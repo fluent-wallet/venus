@@ -1,46 +1,38 @@
 import 'reflect-metadata';
-import { Container, injectable } from 'inversify';
+import { Container, inject, injectable } from 'inversify';
 import type { IPlugin, PluginContext } from './plugin';
-import { SERVICE_IDENTIFIER, type ServiceKey, type ServiceType } from './service';
+import { SERVICE_IDENTIFIER } from './service';
 import type { EventBus } from './Events/eventTypes';
 
 @injectable()
 export class NewWalletCore {
-  private container: Container;
-  private context: PluginContext;
-  private plugins: IPlugin[] = [];
-
-  public constructor() {
-    this.container = new Container({ defaultScope: 'Singleton' });
-    this.context = { container: this.container };
-  }
-
-  private _eventBus: EventBus | null = null;
-  get eventBus(): EventBus {
-    if (!this._eventBus) {
-      this._eventBus = this.getService(SERVICE_IDENTIFIER.EVENT_BUS);
-    }
-    return this._eventBus;
-  }
-
-  public use(plugin: IPlugin): this {
-    console.log(`Using plugin: ${plugin.name}`);
-    this.plugins.push(plugin);
-    plugin.install(this.context);
-    return this;
-  }
-
-  public async bootstrap(): Promise<void> {
-    console.log('Bootstrapping WalletCore...');
-    for (const plugin of this.plugins) {
-      if (plugin.afterInstall) {
-        await plugin.afterInstall(this.context);
-      }
-    }
-    console.log('WalletCore bootstrapped successfully!');
-  }
-
-  public getService<K extends ServiceKey>(serviceKey: K): ServiceType<K> {
-    return this.container.get(serviceKey) as ServiceType<K>;
-  }
+  @inject(SERVICE_IDENTIFIER.EVENT_BUS)
+  public eventBus!: EventBus;
 }
+
+export const createCore = (...plugins: IPlugin[]) => {
+  const container = new Container({ defaultScope: 'Singleton' });
+
+  const context: PluginContext = { container };
+
+  container.bind(SERVICE_IDENTIFIER.CORE).to(NewWalletCore).inSingletonScope();
+
+  for (const plugin of plugins) {
+    console.log(`Using plugin: ${plugin.name}`);
+    plugin.install(context);
+  }
+
+  return {
+    bootstrap: async () => {
+      console.log('Bootstrapping WalletCore...');
+      for (const plugin of plugins) {
+        if (plugin.afterInstall) {
+          await plugin.afterInstall(context);
+        }
+      }
+      console.log('WalletCore bootstrapped successfully!');
+
+      return container.get<NewWalletCore>(SERVICE_IDENTIFIER.CORE);
+    },
+  };
+};

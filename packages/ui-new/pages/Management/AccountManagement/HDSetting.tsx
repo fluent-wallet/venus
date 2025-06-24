@@ -1,4 +1,4 @@
-import { isAuthenticationCanceledError, isAuthenticationError } from '@WalletCoreExtends/Plugins/Authentication/errors';
+import { AuthenticationErrorCode, isAuthenticationCanceledError, isAuthenticationError } from '@WalletCoreExtends/Plugins/Authentication/errors';
 import ArrowRight from '@assets/icons/arrow-right2.svg';
 import BottomSheet, {
   snapPoints,

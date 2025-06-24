@@ -14,6 +14,7 @@ import { Trans, useTranslation } from 'react-i18next';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { showMessage } from 'react-native-flash-message';
 import createVault from './createVaultWithRouterParams';
+import { useAuthentication } from '@hooks/useCore';
 
 type FormData = {
   password: string;
@@ -23,6 +24,8 @@ type FormData = {
 const PasswordWay: React.FC<StackScreenProps<typeof PasswordWayStackName>> = ({ navigation, route }) => {
   const { colors } = useTheme();
   const { t } = useTranslation();
+
+  const authentication = useAuthentication();
 
   const {
     control,
@@ -41,7 +44,7 @@ const PasswordWay: React.FC<StackScreenProps<typeof PasswordWayStackName>> = ({ 
   const _handleCreateVault = useCallback(async (data: FormData) => {
     try {
       navigation.setOptions({ gestureEnabled: false });
-      await plugins.Authentication.setPassword({ password: data.confirm });
+      await authentication.setPassword({ password: data.confirm });
       await new Promise((resolve) => setTimeout(() => resolve(null!), 20));
       if (await createVault(route.params, data.confirm)) {
         showMessage({ type: 'success', message: t('initWallet.msg.success') });

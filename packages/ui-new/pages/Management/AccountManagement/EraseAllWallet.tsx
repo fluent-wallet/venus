@@ -3,6 +3,7 @@ import Button from '@components/Button';
 import Text from '@components/Text';
 import methods from '@core/WalletCore/Methods';
 import plugins from '@core/WalletCore/Plugins';
+import { useAuthentication } from '@hooks/useCore';
 import { useTheme } from '@react-navigation/native';
 import { type AccountManagementStackName, type StackScreenProps, WelcomeStackName } from '@router/configs';
 import { screenHeight } from '@utils/deviceInfo';
@@ -22,10 +23,11 @@ const EraseAllWallet: React.FC<Props> = ({ navigation }) => {
   const { colors } = useTheme();
   const { t } = useTranslation();
   const bottomSheetRef = useRef<BottomSheetMethods>(null!);
+  const authentication = useAuthentication();
 
   const handleDelete = useCallback(async () => {
     try {
-      await plugins.Authentication.getPassword();
+      await authentication.getPassword();
       bottomSheetRef.current?.close();
       navigation.navigate(WelcomeStackName);
       await plugins.WalletConnect.removeAllSession();
