@@ -1,7 +1,7 @@
 {
   "$schema": "https://biomejs.dev/schemas/1.8.3/schema.json",
   "files": {
-    "include": ["packages/*"],
+    "include": ["packages/*", "index.ts"],
     "ignore": ["welcome.json", "enter.json", "en.json", "zh-Hans.json", "zh-Hant.json"]
   },
   "formatter": {
@@ -102,6 +102,9 @@
       "bracketSameLine": false,
       "quoteStyle": "single",
       "attributePosition": "auto"
+    },
+    "parser": {
+      "unsafeParameterDecoratorsEnabled": true
     }
   },
   "overrides": [

@@ -25,16 +25,15 @@ import BlockNumberTracker from './packages/core/WalletCore/Plugins/BlockNumberTr
 import NextNonceTracker from './packages/core/WalletCore/Plugins/NextNonceTracker';
 import WalletConfigPlugin from './packages/core/WalletCore/Plugins/WalletConfig';
 import { name as appName } from './app.json';
-import RootProvider from './packages/ui-new/RootProvider'
+import RootProvider from './packages/ui-new/RootProvider';
 
-import { core } from './packages/core/WalletCore/index.new'
 import { EventPlugin } from './packages/core/WalletCore/Events/EventPlugin';
-import { SERVICE_IDENTIFIER } from './packages/core/WalletCore/service';
+import { core } from './packages/WalletCoreExtends/index';
 
 Decimal.set({ precision: 80 });
 Decimal.config({
   toExpNeg: -80,
-  toExpPos: 80
+  toExpPos: 80,
 });
 
 LogBox.ignoreLogs([
@@ -45,7 +44,7 @@ LogBox.ignoreLogs([
   'RCTBridge required dispatch_sync to load',
   'network does not support ENS',
   '[Reanimated]',
-    // TODO: Remove when https://github.com/gorhom/react-native-bottom-sheet/issues/1854 is fixed.
+  // TODO: Remove when https://github.com/gorhom/react-native-bottom-sheet/issues/1854 is fixed.
   /^\[Reanimated\] Tried to modify key `reduceMotion` of an object which has been already passed to a worklet/,
 ]);
 
@@ -63,24 +62,22 @@ const plugins = [
   NextNonceTracker,
   WalletConfigPlugin,
 
-    new WalletConnectPlugin({
-      projectId: '77ffee6a4cbf8ed25550cea82939d1fa',
-      metadata: {
-        name: 'BIM Wallet Wallet',
-        description: 'BIM Wallet Wallet to interface with Dapps',
-        url: 'https://bimwallet.io/',
-        icons: ['https://download.bimwallet.io/assets/logo.png'],
-      },
-    }),
-  
+  new WalletConnectPlugin({
+    projectId: '77ffee6a4cbf8ed25550cea82939d1fa',
+    metadata: {
+      name: 'BIM Wallet Wallet',
+      description: 'BIM Wallet Wallet to interface with Dapps',
+      url: 'https://bimwallet.io/',
+      icons: ['https://download.bimwallet.io/assets/logo.png'],
+    },
+  }),
 ];
 
-
-  
 WalletCore.plugins.use(plugins);
 WalletCore.setup();
 
 core.use(new EventPlugin());
-core.bootstrap()
 
-AppRegistry.registerComponent(appName, () => RootProvider);
+core.bootstrap().then(() => {
+  AppRegistry.registerComponent(appName, () => RootProvider);
+});

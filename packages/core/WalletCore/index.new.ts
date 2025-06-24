@@ -1,7 +1,8 @@
 import 'reflect-metadata';
 import { Container, injectable } from 'inversify';
 import type { IPlugin, PluginContext } from './plugin';
-import type { ServiceKey, ServiceType } from './service';
+import { SERVICE_IDENTIFIER, type ServiceKey, type ServiceType } from './service';
+import type { EventBus } from './Events/eventTypes';
 
 @injectable()
 export class NewWalletCore {
@@ -9,9 +10,17 @@ export class NewWalletCore {
   private context: PluginContext;
   private plugins: IPlugin[] = [];
 
-  constructor() {
+  public constructor() {
     this.container = new Container({ defaultScope: 'Singleton' });
     this.context = { container: this.container };
+  }
+
+  private _eventBus: EventBus | null = null;
+  get eventBus(): EventBus {
+    if (!this._eventBus) {
+      this._eventBus = this.getService(SERVICE_IDENTIFIER.EVENT_BUS);
+    }
+    return this._eventBus;
   }
 
   public use(plugin: IPlugin): this {
@@ -35,7 +44,3 @@ export class NewWalletCore {
     return this.container.get(serviceKey) as ServiceType<K>;
   }
 }
-
-const core = new NewWalletCore();
-
-export { core };
