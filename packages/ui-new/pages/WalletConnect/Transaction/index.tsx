@@ -51,6 +51,8 @@ import { StyleSheet, View } from 'react-native';
 import SendContract from './Contract';
 import EditAllowance from './EditAllowance';
 import { TransactionActionType } from '@core/WalletCore/Events/broadcastTransactionSubject';
+import { getEventBus } from '@WalletCoreExtends/index';
+import { BROADCAST_TRANSACTION } from '@core/WalletCore/Events/eventTypes';
 
 export type TxDataWithTokenInfo = ParseTxDataReturnType & {
   symbol?: string;
@@ -242,7 +244,7 @@ function WalletConnectTransaction() {
       // TODO: show error
     } finally {
       if (txRaw) {
-        Events.broadcastTransactionSubjectPush.next({
+        getEventBus().dispatch(BROADCAST_TRANSACTION, {
           transactionType: TransactionActionType.Send,
           params: {
             txHash,

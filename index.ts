@@ -11,7 +11,7 @@ import './packages/setup/ethers';
 import './packages/setup/polyfill';
 import Decimal from 'decimal.js';
 import WalletCore from './packages/core/WalletCore';
-import TxTrackerPlugin from './packages/core/WalletCore/Plugins/TxTracker';
+import { TxTrackerPlugin } from './packages/core/WalletCore/Plugins/TxTracker';
 import ReactInjectPlugin from './packages/core/WalletCore/Plugins/ReactInject';
 import WalletConnectPlugin from './packages/core/WalletCore/Plugins/WalletConnect';
 import AssetsTracker from './packages/core/WalletCore/Plugins/AssetsTracker';
@@ -48,7 +48,7 @@ LogBox.ignoreLogs([
   // TODO: Remove when https://github.com/gorhom/react-native-bottom-sheet/issues/1854 is fixed.
   /^\[Reanimated\] Tried to modify key `reduceMotion` of an object which has been already passed to a worklet/,
 ]);
-initCore(EventPlugin, AuthenticationPlugin, CryptoToolPlugin)
+initCore(EventPlugin, AuthenticationPlugin, CryptoToolPlugin, TxTrackerPlugin)
   .bootstrap()
   .then((core) => {
     const plugins = [
@@ -56,7 +56,6 @@ initCore(EventPlugin, AuthenticationPlugin, CryptoToolPlugin)
       BSIMPlugin,
       ReactInjectPlugin,
       AssetsTracker,
-      TxTrackerPlugin,
       TransactionPlugin,
       NFTDetailTracker,
       ReceiveAssetsTracker,

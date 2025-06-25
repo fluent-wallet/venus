@@ -5,7 +5,6 @@ import { atomWithObservable } from 'jotai/utils';
 import type { Address } from '../../database/models/Address';
 import type { Network } from '../../database/models/Network';
 import { container } from '../configs';
-import { broadcastTransactionSubject, broadcastTransactionSubjectPush } from './broadcastTransactionSubject';
 import { currentAccountChangedSubject, currentAccountObservable } from './currentAccountChanged';
 import { currentAddressChangedSubject, currentAddressObservable } from './currentAddressChanged';
 import { currentNetworkChangedSubject, currentNetworkObservable } from './currentNetworkChanged';
@@ -31,8 +30,6 @@ export class Events {
   public currentNetworkChangedSubject = currentNetworkChangedSubject;
   public currentNetworkObservable = currentNetworkObservable;
   public networksChangedSubject = networksChangedSubject;
-  public broadcastTransactionSubjectPush = broadcastTransactionSubjectPush;
-  public broadcastTransactionSubject = broadcastTransactionSubject;
   public newestRequestSubject = newestRequestSubject;
   public nextNonceSubject = nextNonceSubject;
   public nextNonceSubjectPush = nextNonceSubjectPush;

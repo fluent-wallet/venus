@@ -18,7 +18,7 @@ export class EventBusServer implements EventBus {
     return this.eventSubject.asObservable().pipe(
       filter((event): event is Extract<EventObject, { type: T }> => event.type === type),
 
-      map((event) => event.payload),
+      map((event) => event.payload as GetPayload<T>),
     );
   }
 }
