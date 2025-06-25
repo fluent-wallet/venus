@@ -13,6 +13,7 @@ import { Trans, useTranslation } from 'react-i18next';
 import { Pressable, ScrollView, StyleSheet } from 'react-native';
 import { showMessage } from 'react-native-flash-message';
 import createVault from './createVaultWithRouterParams';
+import { useAuthentication } from '@hooks/useCore';
 
 export const showBiometricsDisabledMessage = () => {
   showMessage({
@@ -25,16 +26,17 @@ export const showBiometricsDisabledMessage = () => {
 const BiometricsWay: React.FC<StackScreenProps<typeof BiometricsWayStackName>> = ({ navigation, route }) => {
   const { colors } = useTheme();
   const { t } = useTranslation();
+  const authentication = useAuthentication();
 
   const _handleCreateVault = useCallback(async () => {
     try {
       navigation.setOptions({ gestureEnabled: false });
-      const supportedBiometryType = await plugins.Authentication.getSupportedBiometryType();
+      const supportedBiometryType = await authentication.getSupportedBiometryType();
       if (supportedBiometryType === null) {
         showBiometricsDisabledMessage();
         return;
       }
-      await plugins.Authentication.setPassword({ authType: plugins.Authentication.AuthenticationType.Biometrics });
+      await authentication.setPassword({ authType: authentication.AuthenticationType.Biometrics });
       await new Promise((resolve) => setTimeout(() => resolve(null!), 20));
       if (await createVault(route.params)) {
         navigation.navigate(HomeStackName);

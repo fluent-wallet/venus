@@ -70,6 +70,7 @@ import {
 } from './configs';
 import TransactionDetail from '@pages/TransactionDetail';
 import { useTranslation } from 'react-i18next';
+import { useAuthentication } from '@hooks/useCore';
 
 const RootStack = createNativeStackNavigator<RootStackParamList>();
 const screenOptions = {
@@ -85,18 +86,19 @@ const Router: React.FC = () => {
   const hasVault = useHasVault();
   const { colors, mode } = useTheme();
 
+  const authentication = useAuthentication();
   const navigation = useNavigation<StackNavigation>();
   // to listen the wallet connect plugin custom subject event
   useListenWalletConnectEvent();
 
   useEffect(() => {
-    const sub = plugins.Authentication.subPasswordRequest().subscribe(() => {
+    const sub = authentication.subPasswordRequest().subscribe(() => {
       navigation.navigate(PasswordVerifyStackName);
     });
     return () => {
       sub.unsubscribe();
     };
-  }, [navigation]);
+  }, [navigation, authentication]);
 
   useListenDeepLink(navigation);
 
