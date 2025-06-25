@@ -26,14 +26,13 @@ import { Keyboard, Pressable, StyleSheet, View, type TextInput as _TextInput } f
 import { showMessage } from 'react-native-flash-message';
 import DeleteConfirm from './DeleteConfirm';
 import { isAuthenticationCanceledError, isAuthenticationError } from '@WalletCoreExtends/Plugins/Authentication/errors';
-import { useAuthentication } from '@hooks/useCore';
+import { getAuthentication } from '@WalletCoreExtends/index';
 
 const AccountConfig: React.FC<StackScreenProps<typeof AccountSettingStackName>> = ({ navigation, route }) => {
   const { colors } = useTheme();
   const { t } = useTranslation();
   const bottomSheetRef = useRef<BottomSheetMethods>(null!);
   const textinputRef = useRef<_TextInput>(null!);
-  const authentication = useAuthentication();
 
   const account = useAccountFromId(route.params.accountId);
   const vault = useVaultOfAccount(route.params.accountId);
@@ -77,7 +76,7 @@ const AccountConfig: React.FC<StackScreenProps<typeof AccountSettingStackName>> 
       if (vault.isGroup) {
         await methods.changeAccountHidden({ account, hidden: true });
       } else {
-        await authentication.getPassword();
+        await getAuthentication().getPassword();
         await methods.deleteVault(vault);
       }
       if (addressValue) {

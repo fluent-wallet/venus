@@ -6,11 +6,7 @@ import type { IAuthenticationServer } from './Plugins/Authentication/authenticat
 import { container } from '../core/WalletCore/configs';
 import type { ICryptoTool } from '../core/WalletCore/Plugins/CryptoTool/interface';
 import { SERVICE_IDENTIFIER } from '../core/WalletCore/service';
-import { EventPlugin } from '../core/WalletCore/Events/EventPlugin';
-import { AuthenticationPlugin } from './Plugins/Authentication';
-import { CryptoToolPlugin } from './Plugins/CryptoTool';
-console.log('Loading WalletCoreExtends...');
-
+import type { EventBus } from '@core/WalletCore/Events/eventTypes';
 @injectable()
 export class WalletCoreExtends extends NewWalletCore {
   @inject(EXTENDS_SERVICE_IDENTIFIER.AUTHENTICATION)
@@ -44,4 +40,26 @@ export const initCore = (...plugins: IPlugin[]) => {
   };
 };
 
-export const getCore = () => container.get<WalletCoreExtends>(EXTENDS_SERVICE_IDENTIFIER.EXTENDS_CORE);
+let _core: WalletCoreExtends | null = null;
+export const getCore = () => {
+  if (!_core) {
+    _core = container.get<WalletCoreExtends>(EXTENDS_SERVICE_IDENTIFIER.EXTENDS_CORE);
+  }
+  return _core;
+};
+
+let _eventBus: EventBus | null = null;
+export const getEventBus = () => {
+  if (!_eventBus) {
+    _eventBus = getCore().eventBus;
+  }
+  return _eventBus;
+};
+
+let _authentication: IAuthenticationServer | null = null;
+export const getAuthentication = () => {
+  if (!_authentication) {
+    _authentication = getCore().authentication;
+  }
+  return _authentication;
+};
