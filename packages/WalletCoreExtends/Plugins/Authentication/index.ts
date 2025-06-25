@@ -4,6 +4,8 @@ import { AuthenticationServer, type IAuthenticationServer } from './authenticati
 import { SERVICE_IDENTIFIER } from '@core/WalletCore/service';
 import type { ICryptoTool } from '@core/WalletCore/Plugins/CryptoTool/interface';
 
+export { AUTHENTICATION_PASSWORD_REQUEST, type PasswordRequest, AuthenticationType } from './authenticationServer';
+
 const AuthenticationPlugin: IPlugin = {
   name: EXTENDS_SERVICE_IDENTIFIER.AUTHENTICATION,
   install(context) {

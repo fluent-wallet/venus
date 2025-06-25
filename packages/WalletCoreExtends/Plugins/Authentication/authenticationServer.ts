@@ -5,10 +5,18 @@ import * as KeyChain from 'react-native-keychain';
 import { catchError, firstValueFrom, from, Observable, of, Subject, switchMap, tap, throwError } from 'rxjs';
 import { getI18n } from '@hooks/useI18n';
 import { authTypeError, biometricsCanceledError, biometricsFailedError, biometricsUnknownError } from './errors';
-import type { ICryptoTool } from '../CryptoTool/cryptoToolServer';
 import { inject, injectable } from 'inversify';
-import { EXTENDS_SERVICE_IDENTIFIER } from '@WalletCoreExtends/service';
 import { SERVICE_IDENTIFIER } from '@core/WalletCore/service';
+import type { ICryptoTool } from '@core/WalletCore/Plugins/CryptoTool/interface';
+import type { EventBus } from '@core/WalletCore/Events/eventTypes';
+
+export const AUTHENTICATION_PASSWORD_REQUEST = 'auth/password-request';
+
+declare module '../../../core/WalletCore/Events/eventTypes.ts' {
+  interface EventMap {
+    [AUTHENTICATION_PASSWORD_REQUEST]: undefined;
+  }
+}
 
 const defaultOptions: KeyChain.Options = {
   service: 'io.bimwallet',
@@ -28,12 +36,7 @@ export interface PasswordRequest {
   verify: (password: string) => Promise<boolean>;
 }
 
-export interface PasswordRequestInfo {
-  type: 'PASSWORD_REQUEST';
-}
-
 export interface IAuthenticationServer {
-  subPasswordRequest: () => Observable<PasswordRequestInfo>;
   getPassword: () => Promise<string | null>;
   resolve: (params: { password: string }) => void;
   reject: (params: { error?: Error }) => void;
@@ -49,9 +52,10 @@ const cacheTime = 750; // ms
 export class AuthenticationServer implements IAuthenticationServer {
   name = 'Authentication' as const;
 
+  @inject(SERVICE_IDENTIFIER.EVENT_BUS)
+  private eventBus!: EventBus;
   private settleAuthenticationType: AuthenticationType | null = null;
   public AuthenticationType = AuthenticationType;
-  private passwordRequestSubject = new Subject<PasswordRequestInfo>();
   private pendingRequest: PasswordRequest | null = null;
 
   private pwdCache: string | null = null;
@@ -66,10 +70,6 @@ export class AuthenticationServer implements IAuthenticationServer {
       this.settleAuthenticationType = (await database.localStorage.get<AuthenticationType>('SettleAuthentication')) ?? null;
     };
     getSettleAuthentication();
-  }
-
-  public subPasswordRequest() {
-    return this.passwordRequestSubject.asObservable();
   }
 
   public getPassword = async () => {
@@ -151,7 +151,7 @@ export class AuthenticationServer implements IAuthenticationServer {
       };
 
       this.pendingRequest = request;
-      this.passwordRequestSubject.next({ type: 'PASSWORD_REQUEST' });
+      this.eventBus.dispatch(AUTHENTICATION_PASSWORD_REQUEST);
     });
   };
 

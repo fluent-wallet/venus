@@ -1,22 +1,23 @@
 import { Subject, type Observable } from 'rxjs';
 import { filter, map } from 'rxjs/operators';
 import { injectable } from 'inversify';
-import type { AllEventTypes, EventBus, EventObject, EventSchema, GetEvent, GetPayload } from './eventTypes';
+import type { AllEventTypes, EventBus, EventObject, GetPayload } from './eventTypes';
 
 @injectable()
-export class EventBusServer<TSchema extends EventSchema = EventSchema> implements EventBus<TSchema> {
-  private eventSubject = new Subject<EventObject<TSchema>>();
+export class EventBusServer implements EventBus {
+  private eventSubject = new Subject<EventObject>();
 
-  public dispatch<T extends AllEventTypes<TSchema>>(
-    ...args: GetPayload<TSchema, T> extends undefined ? [type: T, payload?: undefined] : [type: T, payload: GetPayload<TSchema, T>]
+  public dispatch<T extends AllEventTypes>(
+    ...args: GetPayload<T> extends undefined ? [type: T, payload?: GetPayload<T>] : [type: T, payload: GetPayload<T>]
   ): void {
     const [type, payload] = args;
-    this.eventSubject.next({ type, payload } as EventObject<TSchema>);
+    this.eventSubject.next({ type, payload } as EventObject);
   }
 
-  public on<T extends AllEventTypes<TSchema>>(type: T): Observable<GetPayload<TSchema, T>> {
+  public on<T extends AllEventTypes>(type: T): Observable<GetPayload<T>> {
     return this.eventSubject.asObservable().pipe(
-      filter((event): event is GetEvent<TSchema, T> => event.type === type),
+      filter((event): event is Extract<EventObject, { type: T }> => event.type === type),
+
       map((event) => event.payload),
     );
   }

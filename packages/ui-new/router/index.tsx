@@ -70,7 +70,8 @@ import {
 } from './configs';
 import TransactionDetail from '@pages/TransactionDetail';
 import { useTranslation } from 'react-i18next';
-import { getAuthentication } from '@WalletCoreExtends/index';
+import { getEventBus } from '@WalletCoreExtends/index';
+import { AUTHENTICATION_PASSWORD_REQUEST } from '@WalletCoreExtends/Plugins/Authentication';
 
 const RootStack = createNativeStackNavigator<RootStackParamList>();
 const screenOptions = {
@@ -91,8 +92,8 @@ const Router: React.FC = () => {
   useListenWalletConnectEvent();
 
   useEffect(() => {
-    const sub = getAuthentication()
-      .subPasswordRequest()
+    const sub = getEventBus()
+      .on(AUTHENTICATION_PASSWORD_REQUEST)
       .subscribe(() => {
         navigation.navigate(PasswordVerifyStackName);
       });
