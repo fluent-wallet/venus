@@ -54,6 +54,8 @@ import { TransactionActionType } from '@core/WalletCore/Events/broadcastTransact
 import matchRPCErrorMessage from '@utils/matchRPCErrorMssage';
 import { isSmallDevice } from '@utils/deviceInfo';
 import { isAuthenticationCanceledError, isAuthenticationError } from '@WalletCoreExtends/Plugins/Authentication/errors';
+import { getEventBus } from '@WalletCoreExtends/index';
+import { BROADCAST_TRANSACTION } from '@core/WalletCore/Events/eventTypes';
 
 const SendTransactionStep4Confirm: React.FC<SendTransactionScreenProps<typeof SendTransactionStep4StackName>> = ({ navigation, route }) => {
   useEffect(() => Keyboard.dismiss(), []);
@@ -251,7 +253,7 @@ const SendTransactionStep4Confirm: React.FC<SendTransactionScreenProps<typeof Se
       });
     } finally {
       if (txRaw) {
-        events.broadcastTransactionSubjectPush.next({
+        getEventBus().dispatch(BROADCAST_TRANSACTION, {
           transactionType: TransactionActionType.Send,
           params: {
             txHash,

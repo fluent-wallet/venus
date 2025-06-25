@@ -1,4 +1,4 @@
-import type { EventBus, EventSchema } from './Events/eventTypes';
+import type { EventBus } from './Events/eventTypes';
 import type { ICryptoTool } from './Plugins/CryptoTool/interface';
 
 export const SERVICE_IDENTIFIER = {
@@ -13,9 +13,15 @@ export const SERVICE_IDENTIFIER = {
    * CryptoTool
    */
   CRYPTO_TOOL: 'CRYPTO_TOOL',
+
+
+  /**
+   * TxTrackerPlugin
+   */
+  TX_TRACKER: 'TX_TRACKER',
 } as const;
 
 export interface ServiceMap {
-  [SERVICE_IDENTIFIER.EVENT_BUS]: EventBus<EventSchema>;
+  [SERVICE_IDENTIFIER.EVENT_BUS]: EventBus;
   [SERVICE_IDENTIFIER.CORE]: ICryptoTool;
 }

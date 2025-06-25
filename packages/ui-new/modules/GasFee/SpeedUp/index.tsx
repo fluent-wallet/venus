@@ -31,7 +31,6 @@ import BSIMVerify, { useBSIMVerify } from '@pages/SendTransaction/BSIMVerify';
 import { BSIMEventTypesName } from '@WalletCoreExtends/Plugins/BSIM/types';
 import type { ITxEvm } from '@core/WalletCore/Plugins/Transaction/types';
 import methods from '@core/WalletCore/Methods';
-import events from '@core/WalletCore/Events';
 import { SignType } from '@core/database/models/Signature/type';
 import { BSIMError } from 'modules/BSIM/src';
 import WarnIcon from '@assets/icons/warn.svg';
@@ -44,6 +43,8 @@ import ArrowRight from '@assets/icons/arrow-right2.svg';
 import CustomizeAdvanceSetting from '../GasFeeSetting/CustomizeAdvanceSetting';
 import usePollingGasEstimateAndNonce from '@core/WalletCore/Plugins/Transaction/usePollingGasEstimateAndNonce';
 import matchRPCErrorMessage from '@utils/matchRPCErrorMssage';
+import { getEventBus } from '@WalletCoreExtends/index';
+import { BROADCAST_TRANSACTION } from '@core/WalletCore/Events/eventTypes';
 
 const higherRatio = 1.1;
 const fasterRatio = 1.2;
@@ -183,7 +184,7 @@ const SpeedUp: React.FC<StackScreenProps<typeof SpeedUpStackName>> = ({ navigati
           icon: 'loading' as unknown as undefined,
         });
         if (txRaw) {
-          events.broadcastTransactionSubjectPush.next({
+          getEventBus().dispatch(BROADCAST_TRANSACTION, {
             transactionType: TransactionActionType.SpeedUp,
             params: {
               txHash,

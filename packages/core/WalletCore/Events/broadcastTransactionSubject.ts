@@ -54,7 +54,3 @@ export type TransactionSubjectValue =
       transactionType: TransactionActionType.SpeedUp;
       params: SpeedUpTransactionParams;
     };
-
-export const broadcastTransactionSubjectPush = new BehaviorSubject<TransactionSubjectValue | null>(null);
-
-export const broadcastTransactionSubject = broadcastTransactionSubjectPush.pipe(filter((v) => v !== null));
