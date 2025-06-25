@@ -1,11 +1,9 @@
 import type { Observable } from 'rxjs';
 import type { TransactionSubjectValue } from './broadcastTransactionSubject';
 
-export const EVENT_BUS = 'core/event-bus';
 export const BROADCAST_TRANSACTION = 'core/broadcast-transaction';
 
 export interface EventMap {
-  'core/event-bus': undefined;
   [BROADCAST_TRANSACTION]: TransactionSubjectValue;
 }
 

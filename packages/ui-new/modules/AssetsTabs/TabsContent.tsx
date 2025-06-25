@@ -34,8 +34,6 @@ export const TabsContent: React.FC<TabsHeaderProps> = ({ currentTab, onTabChange
   const shouldShowNotBackup = useShouldShowNotBackup();
   const pageViewRef = useRef<PagerView>(null);
 
-  const isUserSwiping = useRef(false);
-
   const minHeight = useMemo(() => screenHeight - (selectType === 'Home' ? (shouldShowNotBackup ? 450 : 340) : 300), [shouldShowNotBackup, selectType]);
   const [pageViewHeight, setPageViewHeight] = useState<number | undefined>(() => undefined);
   const parentRefs = useMemo<RefObject<View>[]>(() => Array.from({ length: tabs.length }).map(() => createRef()), [tabs]);
@@ -82,13 +80,9 @@ export const TabsContent: React.FC<TabsHeaderProps> = ({ currentTab, onTabChange
   );
 
   useEffect(() => {
-    // if currentTab changed by user swiping, we should not call setPage
-    if (!isUserSwiping.current) {
-      let index = tabs.indexOf(currentTab);
-      index = index === -1 ? 0 : index;
-      pageViewRef?.current?.setPage(index);
-    }
-    isUserSwiping.current = false;
+    let index = tabs.indexOf(currentTab);
+    index = index === -1 ? 0 : index;
+    pageViewRef?.current?.setPage(index);
   }, [currentTab, tabs]);
 
   return (
@@ -100,7 +94,6 @@ export const TabsContent: React.FC<TabsHeaderProps> = ({ currentTab, onTabChange
         const { position } = evt.nativeEvent;
         onTabChange(tabs[position]);
         recalculateHeight(tabs[position]);
-        isUserSwiping.current = true;
       }}
     >
       {tabs.map((tab, index) => (
