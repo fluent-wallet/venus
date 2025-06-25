@@ -39,6 +39,7 @@ export const initCore = (...plugins: IPlugin[]) => {
         }
       }
       console.log('WalletCore bootstrapped successfully!');
+      return container.get<WalletCoreExtends>(EXTENDS_SERVICE_IDENTIFIER.EXTENDS_CORE);
     },
   };
 };

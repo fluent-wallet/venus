@@ -48,34 +48,38 @@ LogBox.ignoreLogs([
   // TODO: Remove when https://github.com/gorhom/react-native-bottom-sheet/issues/1854 is fixed.
   /^\[Reanimated\] Tried to modify key `reduceMotion` of an object which has been already passed to a worklet/,
 ]);
-initCore(EventPlugin, AuthenticationPlugin, CryptoToolPlugin).bootstrap();
+initCore(EventPlugin, AuthenticationPlugin, CryptoToolPlugin)
+  .bootstrap()
+  .then((core) => {
+    const plugins = [
+      { name: 'CryptoTool', encrypt: core.cryptoTool.encrypt, decrypt: core.cryptoTool.decrypt },
+      BSIMPlugin,
+      ReactInjectPlugin,
+      AssetsTracker,
+      TxTrackerPlugin,
+      TransactionPlugin,
+      NFTDetailTracker,
+      ReceiveAssetsTracker,
+      BlockNumberTracker,
+      NextNonceTracker,
+      WalletConfigPlugin,
 
-const core = getCore();
-const plugins = [
-  { name: 'CryptoTool', encrypt: core.cryptoTool.encrypt, decrypt: core.cryptoTool.decrypt },
-  BSIMPlugin,
-  ReactInjectPlugin,
-  AssetsTracker,
-  TxTrackerPlugin,
-  TransactionPlugin,
-  NFTDetailTracker,
-  ReceiveAssetsTracker,
-  BlockNumberTracker,
-  NextNonceTracker,
-  WalletConfigPlugin,
+      new WalletConnectPlugin({
+        projectId: '77ffee6a4cbf8ed25550cea82939d1fa',
+        metadata: {
+          name: 'BIM Wallet Wallet',
+          description: 'BIM Wallet Wallet to interface with Dapps',
+          url: 'https://bimwallet.io/',
+          icons: ['https://download.bimwallet.io/assets/logo.png'],
+        },
+      }),
+    ];
 
-  new WalletConnectPlugin({
-    projectId: '77ffee6a4cbf8ed25550cea82939d1fa',
-    metadata: {
-      name: 'BIM Wallet Wallet',
-      description: 'BIM Wallet Wallet to interface with Dapps',
-      url: 'https://bimwallet.io/',
-      icons: ['https://download.bimwallet.io/assets/logo.png'],
-    },
-  }),
-];
+    WalletCore.plugins.use(plugins);
+    WalletCore.setup();
 
-WalletCore.plugins.use(plugins);
-WalletCore.setup();
-
-AppRegistry.registerComponent(appName, () => RootProvider);
+    AppRegistry.registerComponent(appName, () => RootProvider);
+  })
+  .catch((error) => {
+    console.error('Error during WalletCore initialization:', error);
+  });
