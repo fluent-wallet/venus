@@ -1,9 +1,9 @@
-import events from '@core/WalletCore/Events';
 import type { Network } from '@core/database/models/Network';
 import { SUGGESTED_EPOCH_NUMBER_OFFSET_IN_CORE } from '@core/utils/consts';
 import { type Subscription, catchError, debounceTime, interval, retry, startWith, switchMap, throwError } from 'rxjs';
 import type { Plugin } from '../';
 import Transaction from '../Transaction';
+import { currentNetworkObservable } from '../ReactInject/data/useCurrentNetwork';
 
 declare module '../../../WalletCore/Plugins' {
   interface Plugins {
@@ -25,7 +25,7 @@ class BlockNumberTracker implements Plugin {
   }
 
   private _setup() {
-    events.currentNetworkObservable.pipe(debounceTime(40)).subscribe((currentNetwork) => {
+    currentNetworkObservable.pipe(debounceTime(40)).subscribe((currentNetwork) => {
       this._network = currentNetwork;
       this._blockNumber = null;
       this._startup(currentNetwork);

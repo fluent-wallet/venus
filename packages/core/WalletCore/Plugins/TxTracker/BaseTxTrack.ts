@@ -1,4 +1,3 @@
-import plugins from '@core/WalletCore/Plugins';
 import type { Network } from '@core/database/models/Network';
 import type { Tx } from '@core/database/models/Tx';
 import { queryDuplicateTx } from '@core/database/models/Tx/query';
@@ -7,6 +6,8 @@ import { TX_RESEND_LIMIT } from '@core/utils/consts';
 import { ProcessErrorType } from '@core/utils/eth';
 import Transaction from '../Transaction';
 import { NonceUsedState, ReplacedResponse } from './types';
+import { currentOpenNFTSubject } from '../NFTDetailTracker/server';
+import { updateCurrentTrackerSubject } from '../AssetsTracker/server';
 
 export type UpdaterMap = Map<Tx, () => Tx>;
 
@@ -43,10 +44,16 @@ export abstract class BaseTxTrack {
     try {
       const [txExtra, txPayload] = await Promise.all([tx.txExtra, tx.txPayload]);
       if (txExtra.tokenNft) {
-        plugins.NFTDetailTracker.updateCurrentOpenNFT(txPayload.to);
+        // copy from NFTDetailTracker updateCurrentOpenNFT method
+        const targetNftAddress = txPayload.to;
+        const current = currentOpenNFTSubject.getValue();
+        if ((current && !targetNftAddress) || (current && targetNftAddress && current.nft.contractAddress === targetNftAddress)) {
+          currentOpenNFTSubject.next(current);
+        }
       }
+      // TODO Update this!
       if (txExtra.simple || txExtra.token20) {
-        plugins.AssetsTracker.updateCurrentTracker().catch((err) => console.log(`${this._logPrefix}: `, err));
+        updateCurrentTrackerSubject.next();
       }
     } catch (error) {
       console.log(`${this._logPrefix}: `, error);

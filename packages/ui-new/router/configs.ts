@@ -1,5 +1,5 @@
 import type { AssetInfo } from '@core/WalletCore/Plugins/AssetsTracker/types';
-import type { NFTItemDetail } from '@core/WalletCore/Plugins/NFTDetailTracker';
+
 import type { IWCSendTransactionEventData, IWCSessionProposalEventData, IWCSignMessageEventData } from '@core/WalletCore/Plugins/WalletConnect/types';
 import type { NavigationProp, NavigatorScreenParams } from '@react-navigation/native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
@@ -7,6 +7,7 @@ import type { VersionJSON } from '@pages/Settings/AboutUs';
 import type { SpeedUpLevel } from '@modules/GasFee/GasFeeSetting';
 import type { NetworkType } from '@core/utils/consts';
 import type { SpeedUpAction } from '@core/WalletCore/Events/broadcastTransactionSubject';
+import type { NFTItemDetail } from '@core/WalletCore/Plugins/NFTDetailTracker/server';
 
 export const WelcomeStackName = 'Welcome';
 export const WayToInitWalletStackName = 'WayToInitWallet';

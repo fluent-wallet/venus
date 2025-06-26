@@ -1,5 +1,4 @@
 import { NFTItem } from '@modules/AssetsList/NFTsList/NFTItem';
-import plugins from '@core/WalletCore/Plugins';
 import { useShouldShowNotBackup } from '@pages/Home/NotBackup';
 /* eslint-disable react-hooks/exhaustive-deps */
 import type React from 'react';
@@ -7,6 +6,7 @@ import { useMemo } from 'react';
 import type { TabsType } from './types';
 import Animated, { useAnimatedStyle, interpolate, type SharedValue } from 'react-native-reanimated';
 import { useCurrentOpenNFTDetail } from '@core/WalletCore/Plugins/ReactInject';
+import { getNFTDetailTracker } from '@WalletCoreExtends/index';
 
 export const StickyNFT: React.FC<{ type: TabsType; sharedScrollY: SharedValue<number> }> = ({ type, sharedScrollY }) => {
   const shouldShowNotBackup = useShouldShowNotBackup();
@@ -34,7 +34,7 @@ export const StickyNFT: React.FC<{ type: TabsType; sharedScrollY: SharedValue<nu
 
   return (
     <Animated.View style={[animatedStyle]}>
-      <NFTItem data={currentOpenNFT.nft} onPress={() => plugins.NFTDetailTracker.setCurrentOpenNFT(undefined)} tabsType={type} isCurrent />
+      <NFTItem data={currentOpenNFT.nft} onPress={() => getNFTDetailTracker().setCurrentOpenNFT(undefined)} tabsType={type} isCurrent />
     </Animated.View>
   );
 };

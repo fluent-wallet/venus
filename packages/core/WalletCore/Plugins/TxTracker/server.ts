@@ -1,6 +1,4 @@
-import events from '@core/WalletCore/Events';
 import { TransactionActionType } from '@core/WalletCore/Events/broadcastTransactionSubject';
-import methods from '@core/WalletCore/Methods';
 import type { Address } from '@core/database/models/Address';
 import { queryTxsWithAddress } from '@core/database/models/Tx/query';
 import { TxStatus } from '@core/database/models/Tx/type';
@@ -9,7 +7,11 @@ import { Polling } from './polling';
 import { getWalletConfig } from '../ReactInject/data/useWalletConfig';
 import { inject, injectable } from 'inversify';
 import { SERVICE_IDENTIFIER } from '@core/WalletCore/service';
-import { BROADCAST_TRANSACTION, type EventBus } from '@core/WalletCore/Events/eventTypes';
+import { BROADCAST_TRANSACTION_EVENT, type EventBus } from '@core/WalletCore/Events/eventTypes';
+import { currentAddressObservable } from '../ReactInject/data/useCurrentAddress';
+import { NEXT_NONCE_TRACKER_EVENT } from '../NextNonceTracker/server';
+import { WALLET_CONFIG_EVENT } from '../WalletConfig/server';
+import type { ItxMethodServerInterface } from '@core/WalletCore/Methods/txMethod';
 
 @injectable()
 export class TxTrackerServer {
@@ -22,6 +24,9 @@ export class TxTrackerServer {
 
   @inject(SERVICE_IDENTIFIER.EVENT_BUS)
   eventBus!: EventBus;
+
+  @inject(SERVICE_IDENTIFIER.TX_METHOD)
+  txMethod!: ItxMethodServerInterface;
 
   subscribe: Subscription | null = null;
 
@@ -54,13 +59,13 @@ export class TxTrackerServer {
   }
 
   public _setup() {
-    this.subscribe = this.eventBus.on(BROADCAST_TRANSACTION).subscribe(async (value) => {
+    this.subscribe = this.eventBus.on(BROADCAST_TRANSACTION_EVENT).subscribe(async (value) => {
       switch (value.transactionType) {
         case TransactionActionType.Send:
-          methods.createTx(value.params);
+          this.txMethod.createTx(value.params);
           break;
         case TransactionActionType.SpeedUp:
-          methods.speedUpTx(value.params);
+          this.txMethod.speedUpTx(value.params);
           break;
 
         default:
@@ -68,7 +73,7 @@ export class TxTrackerServer {
       }
     });
 
-    events.currentAddressObservable.pipe(debounceTime(40)).subscribe(async (selectedAddress) => {
+    currentAddressObservable.pipe(debounceTime(40)).subscribe(async (selectedAddress) => {
       if (!selectedAddress) {
         this._cleanup();
         console.log('TxTracker: no selected address');
@@ -76,10 +81,10 @@ export class TxTrackerServer {
       }
       this._startup(selectedAddress);
     });
-    events.nextNonceSubject.subscribe(async (nextNonce) => {
+    this.eventBus.on(NEXT_NONCE_TRACKER_EVENT).subscribe(async (nextNonce) => {
       this._handleWaittingTx(nextNonce);
     });
-    events.walletConfigSubject.subscribe((walletConfig) => {
+    this.eventBus.on(WALLET_CONFIG_EVENT).subscribe((walletConfig) => {
       this._pendingPolling.updatePollingInterval(walletConfig.pendingPollingInterval);
       this._executedPolling.updatePollingInterval(walletConfig.executedPollingInterval);
       this._confirmedPolling.updatePollingInterval(walletConfig.confirmedPollingInterval);

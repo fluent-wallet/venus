@@ -8,7 +8,6 @@ import { createERC20Contract, createERC721Contract, createERC1155Contract } from
 import { BottomSheetScrollContent, BottomSheetFooter } from '@components/BottomSheet';
 import Button from '@components/Button';
 import Text from '@components/Text';
-import events from '@core/WalletCore/Events';
 import methods from '@core/WalletCore/Methods';
 import plugins from '@core/WalletCore/Plugins';
 import { checkDiffInRange } from '@core/WalletCore/Plugins/BlockNumberTracker';
@@ -54,8 +53,8 @@ import { TransactionActionType } from '@core/WalletCore/Events/broadcastTransact
 import matchRPCErrorMessage from '@utils/matchRPCErrorMssage';
 import { isSmallDevice } from '@utils/deviceInfo';
 import { isAuthenticationCanceledError, isAuthenticationError } from '@WalletCoreExtends/Plugins/Authentication/errors';
-import { getEventBus } from '@WalletCoreExtends/index';
-import { BROADCAST_TRANSACTION } from '@core/WalletCore/Events/eventTypes';
+import { getAssetsTracker, getEventBus, getNFTDetailTracker } from '@WalletCoreExtends/index';
+import { BROADCAST_TRANSACTION_EVENT } from '@core/WalletCore/Events/eventTypes';
 
 const SendTransactionStep4Confirm: React.FC<SendTransactionScreenProps<typeof SendTransactionStep4StackName>> = ({ navigation, route }) => {
   useEffect(() => Keyboard.dismiss(), []);
@@ -214,9 +213,9 @@ const SendTransactionStep4Confirm: React.FC<SendTransactionScreenProps<typeof Se
           icon: 'loading' as unknown as undefined,
         });
         backToHome(navigation);
-        plugins.AssetsTracker.updateCurrentTracker();
+        getAssetsTracker().updateCurrentTracker();
         if (nftItemDetail) {
-          plugins.NFTDetailTracker.updateCurrentOpenNFT();
+          getNFTDetailTracker().updateCurrentOpenNFT();
         }
       } catch (error) {
         if (error instanceof BSIMError) {
@@ -253,7 +252,7 @@ const SendTransactionStep4Confirm: React.FC<SendTransactionScreenProps<typeof Se
       });
     } finally {
       if (txRaw) {
-        getEventBus().dispatch(BROADCAST_TRANSACTION, {
+        getEventBus().dispatch(BROADCAST_TRANSACTION_EVENT, {
           transactionType: TransactionActionType.Send,
           params: {
             txHash,

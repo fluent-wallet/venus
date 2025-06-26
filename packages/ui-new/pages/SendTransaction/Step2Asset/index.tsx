@@ -17,9 +17,7 @@ import {
 } from '@core/WalletCore/Plugins/ReactInject';
 import { fetchERC20AssetInfoBatchWithAccount } from '@core/WalletCore/Plugins/AssetsTracker/fetchers/basic';
 import type { AssetInfo } from '@core/WalletCore/Plugins/AssetsTracker/types';
-import type { NFTItemDetail } from '@core/WalletCore/Plugins/NFTDetailTracker';
 import methods from '@core/WalletCore/Methods';
-import plugins from '@core/WalletCore/Plugins';
 import Text from '@components/Text';
 import TextInput from '@components/TextInput';
 import HourglassLoading from '@components/Loading/Hourglass';
@@ -36,6 +34,8 @@ import NFTItem from '@modules/AssetsList/NFTsList/NFTItem';
 import ProhibitIcon from '@assets/icons/prohibit.svg';
 import SendTransactionBottomSheet from '../SendTransactionBottomSheet';
 import { useTabsController } from '@modules/AssetsTabs/hooks';
+import { getNFTDetailTracker } from '@WalletCoreExtends/index';
+import type { NFTItemDetail } from '@core/WalletCore/Plugins/NFTDetailTracker/server';
 
 interface Props {
   navigation?: SendTransactionScreenProps<typeof SendTransactionStep2StackName>['navigation'];
@@ -75,7 +75,7 @@ const SendTransactionStep2Asset: React.FC<Props> = ({ navigation, route, onConfi
   const searchFilterAssets = useCallback(
     debounce(async (value: string) => {
       if (value) {
-        plugins.NFTDetailTracker.setCurrentOpenNFT(undefined);
+        getNFTDetailTracker().setCurrentOpenNFT(undefined);
       }
 
       const localAssets = assets
