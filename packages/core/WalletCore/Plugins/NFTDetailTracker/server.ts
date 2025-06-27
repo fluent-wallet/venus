@@ -5,8 +5,9 @@ import type { AssetInfo } from '../../Plugins/AssetsTracker/types';
 import { getCurrentOpenNFTDetail, setCurrentOpenNFTDetail } from '../ReactInject/data/useAssets';
 import type { NetworkType } from './../../../database/models/Network';
 import { inject, injectable } from 'inversify';
-import { CURRENT_ACCOUNT_CHANGED_EVENT, CURRENT_NETWORK_AND_ADDRESS_CHANGED_EVENT, type EventBus } from '@core/WalletCore/Events/eventTypes';
+
 import { SERVICE_IDENTIFIER } from '@core/WalletCore/service';
+import { CURRENT_ACCOUNT_CHANGED_EVENT, CURRENT_NETWORK_AND_ADDRESS_CHANGED_EVENT, type EventBus } from '@core/WalletCore/Events';
 
 export interface NFTItemDetail {
   name: string;

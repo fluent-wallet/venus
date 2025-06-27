@@ -5,8 +5,8 @@ import { convertToChecksum } from '../../../utils/account';
 import methods from '../../Methods';
 import type { AssetInfo } from '../../Plugins/AssetsTracker/types';
 import type { NetworkType } from './../../../database/models/Network';
-import { CURRENT_NETWORK_CHANGED_EVENT, type EventBus } from '@core/WalletCore/Events/eventTypes';
 import { SERVICE_IDENTIFIER } from '@core/WalletCore/service';
+import { CURRENT_NETWORK_CHANGED_EVENT, type EventBus } from '@core/WalletCore/Events';
 
 export type Fetcher = (endpoint: string) => Promise<AssetInfo[]>;
 

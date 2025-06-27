@@ -2,9 +2,9 @@ import { type Subscription, catchError, debounceTime, interval, retry, startWith
 import Transaction from '../Transaction';
 import type { Address } from '@core/database/models/Address';
 import { inject, injectable } from 'inversify';
-import type { EventBus } from '@core/WalletCore/Events/eventTypes';
 import { SERVICE_IDENTIFIER } from '@core/WalletCore/service';
 import { currentAddressObservable } from '../ReactInject/data/useCurrentAddress';
+import type { EventBus } from '@core/WalletCore/Events';
 
 export const NEXT_NONCE_TRACKER_EVENT = 'NextNonceTracker';
 

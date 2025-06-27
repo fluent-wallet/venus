@@ -7,11 +7,11 @@ import { Polling } from './polling';
 import { getWalletConfig } from '../ReactInject/data/useWalletConfig';
 import { inject, injectable } from 'inversify';
 import { SERVICE_IDENTIFIER } from '@core/WalletCore/service';
-import { BROADCAST_TRANSACTION_EVENT, type EventBus } from '@core/WalletCore/Events/eventTypes';
 import { currentAddressObservable } from '../ReactInject/data/useCurrentAddress';
 import { NEXT_NONCE_TRACKER_EVENT } from '../NextNonceTracker/server';
 import { WALLET_CONFIG_EVENT } from '../WalletConfig/server';
 import type { ItxMethodServerInterface } from '@core/WalletCore/Methods/txMethod';
+import { BROADCAST_TRANSACTION_EVENT, type EventBus } from '@core/WalletCore/Events';
 
 @injectable()
 export class TxTrackerServer {

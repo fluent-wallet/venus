@@ -6,10 +6,10 @@ import type { IAuthenticationServer } from './Plugins/Authentication/authenticat
 import { container } from '../core/WalletCore/configs';
 import type { ICryptoTool } from '../core/WalletCore/Plugins/CryptoTool/interface';
 import { SERVICE_IDENTIFIER } from '../core/WalletCore/service';
-import type { EventBus } from '@core/WalletCore/Events/eventTypes';
 import type { INFTDetailTrackerServerInterface } from '@core/WalletCore/Plugins/NFTDetailTracker/server';
 import type { IAssetsTrackerServerInterface } from '@core/WalletCore/Plugins/AssetsTracker/server';
 import type { ItxMethodServerInterface } from '@core/WalletCore/Methods/txMethod';
+import type { EventBus } from '@core/WalletCore/Events';
 @injectable()
 export class WalletCoreExtends extends NewWalletCore {
   @inject(EXTENDS_SERVICE_IDENTIFIER.AUTHENTICATION)

@@ -1,9 +1,8 @@
-import { N } from 'ethers';
-import type { EventBus } from './Events/eventTypes';
 import type { ICryptoTool } from './Plugins/CryptoTool/interface';
 import type { INFTDetailTrackerServerInterface } from './Plugins/NFTDetailTracker/server';
 import type { IAssetsTrackerServerInterface } from './Plugins/AssetsTracker/server';
 import type { INextNonceTrackerServerInterface } from './Plugins/NextNonceTracker/server';
+import type { EventBus } from './Events';
 
 export const SERVICE_IDENTIFIER = {
   CORE: 'CORE',
@@ -47,7 +46,6 @@ export const SERVICE_IDENTIFIER = {
    * WalletConfigPlugin
    */
   WALLET_CONFIG: 'WALLET_CONFIG',
-
 
   /**
    * TxMethod

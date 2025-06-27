@@ -8,7 +8,7 @@ import { authTypeError, biometricsCanceledError, biometricsFailedError, biometri
 import { inject, injectable } from 'inversify';
 import { SERVICE_IDENTIFIER } from '@core/WalletCore/service';
 import type { ICryptoTool } from '@core/WalletCore/Plugins/CryptoTool/interface';
-import type { EventBus } from '@core/WalletCore/Events/eventTypes';
+import type { EventBus } from '@core/WalletCore/Events';
 
 export const AUTHENTICATION_PASSWORD_REQUEST = 'auth/password-request';
 

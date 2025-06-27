@@ -17,8 +17,8 @@ import type { Network } from './../../../database/models/Network';
 import trackAssets from './trackAssets';
 import type { Fetcher } from './types';
 import { inject, injectable } from 'inversify';
-import { CURRENT_NETWORK_AND_ADDRESS_CHANGED_EVENT, type EventBus } from '@core/WalletCore/Events/eventTypes';
 import { SERVICE_IDENTIFIER } from '@core/WalletCore/service';
+import { CURRENT_NETWORK_AND_ADDRESS_CHANGED_EVENT, type EventBus } from '@core/WalletCore/Events';
 
 export const getFetcherKey = ({ networkType, chainId }: { networkType: NetworkType; chainId?: string }) => {
   return typeof chainId === 'undefined' ? networkType : `${networkType}-${chainId}`;

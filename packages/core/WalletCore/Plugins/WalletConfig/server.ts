@@ -9,7 +9,7 @@ import WalletConfigABI from '@core/contracts/ABI/WalletConfig';
 import { currentNetworkObservable } from '../ReactInject/data/useCurrentNetwork';
 import { inject, injectable } from 'inversify';
 import { SERVICE_IDENTIFIER } from '@core/WalletCore/service';
-import type { EventBus } from '@core/WalletCore/Events/eventTypes';
+import type { EventBus } from '@core/WalletCore/Events';
 
 const ONE_SECONDS = 1000;
 const ONE_HOUR = 60 * 60 * ONE_SECONDS;
