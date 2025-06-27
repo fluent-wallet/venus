@@ -1,4 +1,3 @@
-import plugins from '@core/WalletCore/Plugins';
 import { useHasVault } from '@core/WalletCore/Plugins/ReactInject';
 import PasswordVerify from '@modules/PasswordVerify';
 import Home from '@pages/Home';

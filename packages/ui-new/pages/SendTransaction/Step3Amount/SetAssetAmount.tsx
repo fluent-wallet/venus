@@ -7,7 +7,6 @@ import { useTranslation } from 'react-i18next';
 import { showMessage } from 'react-native-flash-message';
 import Decimal from 'decimal.js';
 import type { AssetInfo } from '@core/WalletCore/Plugins/AssetsTracker/types';
-import type { NFTItemDetail } from '@core/WalletCore/Plugins/NFTDetailTracker';
 import { useCurrentNetwork, useCurrentAddressValue, AssetType } from '@core/WalletCore/Plugins/ReactInject';
 import plugins from '@core/WalletCore/Plugins';
 import { trimDecimalZeros } from '@core/utils/balance';
@@ -20,6 +19,7 @@ import { getDetailSymbol } from '@modules/AssetsList/NFTsList/NFTItem';
 import useFormatBalance from '@hooks/useFormatBalance';
 import useInAsync from '@hooks/useInAsync';
 import ProhibitIcon from '@assets/icons/prohibit.svg';
+import type { NFTItemDetail } from '@core/WalletCore/Plugins/NFTDetailTracker/server';
 
 interface Info {
   amount: string;

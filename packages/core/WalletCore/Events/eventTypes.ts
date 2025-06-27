@@ -1,10 +1,20 @@
 import type { Observable } from 'rxjs';
 import type { TransactionSubjectValue } from './broadcastTransactionSubject';
+import type { Account } from '@core/database/models/Account';
+import type { Network } from '@core/database/models/Network';
+import type { Address } from '@core/database/models/Address';
 
-export const BROADCAST_TRANSACTION = 'core/broadcast-transaction';
+export const BROADCAST_TRANSACTION_EVENT = 'core/broadcast-transaction';
+
+export const CURRENT_ACCOUNT_CHANGED_EVENT = 'core/current-account-changed';
+export const CURRENT_NETWORK_CHANGED_EVENT = 'core/current-network-changed';
+export const CURRENT_NETWORK_AND_ADDRESS_CHANGED_EVENT = 'core/current-network-and-address-changed';
 
 export interface EventMap {
-  [BROADCAST_TRANSACTION]: TransactionSubjectValue;
+  [BROADCAST_TRANSACTION_EVENT]: TransactionSubjectValue;
+  [CURRENT_ACCOUNT_CHANGED_EVENT]: Account;
+  [CURRENT_NETWORK_CHANGED_EVENT]: Network;
+  [CURRENT_NETWORK_AND_ADDRESS_CHANGED_EVENT]: { network: Network; address: Address };
 }
 
 export type AllEventTypes = keyof EventMap;

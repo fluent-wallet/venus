@@ -1,6 +1,6 @@
 import { createFetchServer } from '@cfx-kit/dapp-utils/dist/fetch';
 import { Networks } from '@core/utils/consts';
-import type { NFTItemDetail } from '..';
+import type { NFTItemDetail } from '../server';
 
 const responseHandler = (res: {
   status: '0' | '1';

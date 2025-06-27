@@ -44,7 +44,7 @@ import CustomizeAdvanceSetting from '../GasFeeSetting/CustomizeAdvanceSetting';
 import usePollingGasEstimateAndNonce from '@core/WalletCore/Plugins/Transaction/usePollingGasEstimateAndNonce';
 import matchRPCErrorMessage from '@utils/matchRPCErrorMssage';
 import { getEventBus } from '@WalletCoreExtends/index';
-import { BROADCAST_TRANSACTION } from '@core/WalletCore/Events/eventTypes';
+import { BROADCAST_TRANSACTION_EVENT } from '@core/WalletCore/Events/eventTypes';
 
 const higherRatio = 1.1;
 const fasterRatio = 1.2;
@@ -184,7 +184,7 @@ const SpeedUp: React.FC<StackScreenProps<typeof SpeedUpStackName>> = ({ navigati
           icon: 'loading' as unknown as undefined,
         });
         if (txRaw) {
-          getEventBus().dispatch(BROADCAST_TRANSACTION, {
+          getEventBus().dispatch(BROADCAST_TRANSACTION_EVENT, {
             transactionType: TransactionActionType.SpeedUp,
             params: {
               txHash,

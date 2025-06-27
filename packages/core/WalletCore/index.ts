@@ -1,7 +1,6 @@
 import 'reflect-metadata';
 import { inject, injectable } from 'inversify';
-import { Events } from './Events';
-import { LifeCycle } from './Events/lifecycleChanged';
+
 import { Methods } from './Methods';
 import { Plugins } from './Plugins';
 import { container } from './configs';
@@ -10,8 +9,6 @@ import { container } from './configs';
 export class WalletCore {
   @inject(Plugins) plugins!: Plugins;
   @inject(Methods) methods!: Methods;
-  @inject(Events) events!: Events;
-  public LifeCycle = LifeCycle;
 
   async setup() {
     try {
@@ -21,7 +18,6 @@ export class WalletCore {
         await this.methods.initDatabaseDefault();
       }
       await this.methods.rejectAllPendingRequests();
-      await this.events.lifecycleChangedSubject.next(LifeCycle.Ready);
     } catch (error) {
       console.log('WalletCore setup error: ', error);
     }

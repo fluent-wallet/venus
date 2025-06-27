@@ -14,22 +14,23 @@ import WalletCore from './packages/core/WalletCore';
 import { TxTrackerPlugin } from './packages/core/WalletCore/Plugins/TxTracker';
 import ReactInjectPlugin from './packages/core/WalletCore/Plugins/ReactInject';
 import WalletConnectPlugin from './packages/core/WalletCore/Plugins/WalletConnect';
-import AssetsTracker from './packages/core/WalletCore/Plugins/AssetsTracker';
+import { AssetsTrackerPlugin } from './packages/core/WalletCore/Plugins/AssetsTracker';
 import BSIMPlugin from './packages/WalletCoreExtends/Plugins/BSIM';
 import TransactionPlugin from './packages/core/WalletCore/Plugins/Transaction';
-import NFTDetailTracker from './packages/core/WalletCore/Plugins/NFTDetailTracker';
-import ReceiveAssetsTracker from './packages/core/WalletCore/Plugins/ReceiveAssetsTracker';
+import { NFTDetailTrackerPlugin } from './packages/core/WalletCore/Plugins/NFTDetailTracker';
+import { ReceiveAssetsTrackerPlugin } from './packages/core/WalletCore/Plugins/ReceiveAssetsTracker';
 import BlockNumberTracker from './packages/core/WalletCore/Plugins/BlockNumberTracker';
-import NextNonceTracker from './packages/core/WalletCore/Plugins/NextNonceTracker';
-import WalletConfigPlugin from './packages/core/WalletCore/Plugins/WalletConfig';
+import { NextNonceTrackerPlugin } from './packages/core/WalletCore/Plugins/NextNonceTracker';
+import { WalletConfigPlugin } from './packages/core/WalletCore/Plugins/WalletConfig';
 import { name as appName } from './app.json';
 import RootProvider from './packages/ui-new/RootProvider';
 
 import { EventPlugin } from './packages/core/WalletCore/Events/EventPlugin';
-import { getCore, initCore } from './packages/WalletCoreExtends/index';
+import { initCore } from './packages/WalletCoreExtends/index';
 
 import { AuthenticationPlugin } from './packages/WalletCoreExtends/Plugins/Authentication';
 import { CryptoToolPlugin } from './packages/WalletCoreExtends/Plugins/CryptoTool';
+import { methodPlugins } from './packages/core/WalletCore/Methods';
 
 Decimal.set({ precision: 80 });
 Decimal.config({
@@ -48,21 +49,29 @@ LogBox.ignoreLogs([
   // TODO: Remove when https://github.com/gorhom/react-native-bottom-sheet/issues/1854 is fixed.
   /^\[Reanimated\] Tried to modify key `reduceMotion` of an object which has been already passed to a worklet/,
 ]);
-initCore(EventPlugin, AuthenticationPlugin, CryptoToolPlugin, TxTrackerPlugin)
+initCore(
+  EventPlugin,
+  AuthenticationPlugin,
+  CryptoToolPlugin,
+  TxTrackerPlugin,
+  NFTDetailTrackerPlugin,
+  ReceiveAssetsTrackerPlugin,
+  AssetsTrackerPlugin,
+  NextNonceTrackerPlugin,
+  WalletConfigPlugin,
+
+  // Temporary Plugins
+
+  methodPlugins,
+)
   .bootstrap()
   .then((core) => {
     const plugins = [
       { name: 'CryptoTool', encrypt: core.cryptoTool.encrypt, decrypt: core.cryptoTool.decrypt },
       BSIMPlugin,
       ReactInjectPlugin,
-      AssetsTracker,
       TransactionPlugin,
-      NFTDetailTracker,
-      ReceiveAssetsTracker,
       BlockNumberTracker,
-      NextNonceTracker,
-      WalletConfigPlugin,
-
       new WalletConnectPlugin({
         projectId: '77ffee6a4cbf8ed25550cea82939d1fa',
         metadata: {

@@ -2,7 +2,6 @@ import i18n from '@assets/i18n';
 import Img from '@assets/images/fingerPrint.webp';
 import Button from '@components/Button';
 import Text from '@components/Text';
-import plugins from '@core/WalletCore/Plugins';
 import useInAsync from '@hooks/useInAsync';
 import { CommonActions, useTheme } from '@react-navigation/native';
 import { type BiometricsWayStackName, HomeStackName, PasswordWayStackName, type StackScreenProps } from '@router/configs';

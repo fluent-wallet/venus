@@ -7,6 +7,10 @@ const EventPlugin: IPlugin = {
   install(context: PluginContext): void {
     context.container.bind(SERVICE_IDENTIFIER.EVENT_BUS).to(EventBusServer).inSingletonScope();
   },
+  afterInstall(context: PluginContext): void {
+    const eventBus: EventBusServer = context.container.get(SERVICE_IDENTIFIER.EVENT_BUS);
+    eventBus.initializeSubscriptions();
+  },
 };
 
 export { EventPlugin };

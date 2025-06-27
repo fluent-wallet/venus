@@ -1,5 +1,4 @@
 import methods from '@core/WalletCore/Methods';
-import plugins from '@core/WalletCore/Plugins';
 import { getCurrentNetwork } from '@core/WalletCore/Plugins/ReactInject/data/useCurrentNetwork';
 import AccountSelector from '@modules/AccountSelector';
 import { TabsHeader, TabsContent } from '@modules/AssetsTabs';
@@ -22,6 +21,7 @@ import RefreshScrollView from './RefreshScrollView';
 import { Tx } from '@core/database/models/Tx';
 import type { AssetInfo } from '@core/WalletCore/Plugins/AssetsTracker/types';
 import { useTabsController } from '@modules/AssetsTabs/hooks';
+import { getAssetsTracker, getNFTDetailTracker } from '@WalletCoreExtends/index';
 
 const Home: React.FC<StackScreenProps<typeof HomeStackName>> = ({ navigation }) => {
   const { colors } = useTheme();
@@ -35,8 +35,10 @@ const Home: React.FC<StackScreenProps<typeof HomeStackName>> = ({ navigation }) 
   );
 
   const handleRefresh = useCallback((closeRefresh: VoidFunction) => {
-    plugins.NFTDetailTracker.updateCurrentOpenNFT();
-    plugins.AssetsTracker.updateCurrentTracker().finally(() => closeRefresh());
+    getNFTDetailTracker().updateCurrentOpenNFT();
+    getAssetsTracker()
+      .updateCurrentTracker()
+      .finally(() => closeRefresh());
   }, []);
 
   const [showAccountSelector, setShowAccountSelector] = useState(false);

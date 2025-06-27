@@ -4,7 +4,6 @@ import MessageFail from '@assets/icons/message-fail.svg';
 import BottomSheet, { snapPoints, BottomSheetWrapper, BottomSheetHeader, BottomSheetScrollContent, BottomSheetFooter } from '@components/BottomSheet';
 import Button from '@components/Button';
 import Text from '@components/Text';
-import Events from '@core/WalletCore/Events';
 import methods from '@core/WalletCore/Methods';
 import plugins from '@core/WalletCore/Plugins';
 import { fetchERC20AssetInfoBatchWithAccount } from '@core/WalletCore/Plugins/AssetsTracker/fetchers/basic';
@@ -52,7 +51,7 @@ import SendContract from './Contract';
 import EditAllowance from './EditAllowance';
 import { TransactionActionType } from '@core/WalletCore/Events/broadcastTransactionSubject';
 import { getEventBus } from '@WalletCoreExtends/index';
-import { BROADCAST_TRANSACTION } from '@core/WalletCore/Events/eventTypes';
+import { BROADCAST_TRANSACTION_EVENT } from '@core/WalletCore/Events/eventTypes';
 
 export type TxDataWithTokenInfo = ParseTxDataReturnType & {
   symbol?: string;
@@ -244,7 +243,7 @@ function WalletConnectTransaction() {
       // TODO: show error
     } finally {
       if (txRaw) {
-        getEventBus().dispatch(BROADCAST_TRANSACTION, {
+        getEventBus().dispatch(BROADCAST_TRANSACTION_EVENT, {
           transactionType: TransactionActionType.Send,
           params: {
             txHash,

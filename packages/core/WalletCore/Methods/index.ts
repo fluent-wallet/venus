@@ -19,6 +19,8 @@ import { RequestMethod } from './requestMethod';
 import { SignatureMethod } from './signatureMethod';
 import { TxMethod } from './txMethod';
 import { VaultMethod } from './vaultMethod';
+import type { IPlugin } from '../plugin';
+import { SERVICE_IDENTIFIER } from '../service';
 
 @injectable()
 export class Methods {
@@ -144,14 +146,6 @@ export class Methods {
     return this.AssetMethod.prepareUpdateAsset(...args);
   }
 
-  @inject(TxMethod) private TxMethod!: TxMethod;
-  public createTx(...args: Parameters<TxMethod['createTx']>) {
-    return this.TxMethod.createTx(...args);
-  }
-  public speedUpTx(...args: Parameters<TxMethod['speedUpTx']>) {
-    return this.TxMethod.speedUpTx(...args);
-  }
-
   @inject(AppMethod) private AppMethod!: AppMethod;
   public createApp(...args: Parameters<AppMethod['createApp']>) {
     return this.AppMethod.createApp(...args);
@@ -194,7 +188,7 @@ container.bind(AccountGroupMethod).to(AccountGroupMethod).inSingletonScope();
 container.bind(VaultMethod).to(VaultMethod).inSingletonScope();
 container.bind(NetworkMethod).to(NetworkMethod).inSingletonScope();
 container.bind(DatabaseMethod).to(DatabaseMethod).inSingletonScope();
-container.bind(TxMethod).to(TxMethod).inSingletonScope();
+
 container.bind(AssetMethod).to(AssetMethod).inSingletonScope();
 container.bind(Methods).to(Methods).inSingletonScope();
 container.bind(AppMethod).to(AppMethod).inSingletonScope();
@@ -202,3 +196,10 @@ container.bind(RequestMethod).to(RequestMethod).inSingletonScope();
 container.bind(SignatureMethod).to(SignatureMethod).inSingletonScope();
 
 export default container.get(Methods) as Methods;
+
+export const methodPlugins: IPlugin = {
+  name: SERVICE_IDENTIFIER.TX_METHOD,
+  install(context) {
+    context.container.bind(SERVICE_IDENTIFIER.TX_METHOD).to(TxMethod).inSingletonScope();
+  },
+};

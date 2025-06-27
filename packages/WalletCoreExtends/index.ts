@@ -7,6 +7,9 @@ import { container } from '../core/WalletCore/configs';
 import type { ICryptoTool } from '../core/WalletCore/Plugins/CryptoTool/interface';
 import { SERVICE_IDENTIFIER } from '../core/WalletCore/service';
 import type { EventBus } from '@core/WalletCore/Events/eventTypes';
+import type { INFTDetailTrackerServerInterface } from '@core/WalletCore/Plugins/NFTDetailTracker/server';
+import type { IAssetsTrackerServerInterface } from '@core/WalletCore/Plugins/AssetsTracker/server';
+import type { ItxMethodServerInterface } from '@core/WalletCore/Methods/txMethod';
 @injectable()
 export class WalletCoreExtends extends NewWalletCore {
   @inject(EXTENDS_SERVICE_IDENTIFIER.AUTHENTICATION)
@@ -14,6 +17,15 @@ export class WalletCoreExtends extends NewWalletCore {
 
   @inject(SERVICE_IDENTIFIER.CRYPTO_TOOL)
   cryptoTool!: ICryptoTool;
+
+  @inject(SERVICE_IDENTIFIER.NFT_DETAIL_TRACKER)
+  NFTDetailTracker!: INFTDetailTrackerServerInterface;
+
+  @inject(SERVICE_IDENTIFIER.ASSETS_TRACKER)
+  assetsTracker!: IAssetsTrackerServerInterface;
+
+  @inject(SERVICE_IDENTIFIER.TX_METHOD)
+  txMethod!: ItxMethodServerInterface;
 }
 
 export const initCore = (...plugins: IPlugin[]) => {
@@ -62,4 +74,20 @@ export const getAuthentication = () => {
     _authentication = getCore().authentication;
   }
   return _authentication;
+};
+
+let _NFTDetailTracker: INFTDetailTrackerServerInterface | null = null;
+export const getNFTDetailTracker = () => {
+  if (!_NFTDetailTracker) {
+    _NFTDetailTracker = getCore().NFTDetailTracker;
+  }
+  return _NFTDetailTracker;
+};
+
+let _AssetsTracker: IAssetsTrackerServerInterface | null = null;
+export const getAssetsTracker = () => {
+  if (!_AssetsTracker) {
+    _AssetsTracker = getCore().assetsTracker;
+  }
+  return _AssetsTracker;
 };

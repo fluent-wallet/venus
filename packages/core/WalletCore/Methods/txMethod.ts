@@ -9,9 +9,10 @@ import { type Asset, AssetType } from '../../database/models/Asset';
 import { createTx as _createTx, queryTxsWithAddress } from '../../database/models/Tx/query';
 import { createTxExtra as _createTxExtra } from '../../database/models/TxExtra/query';
 import { createTxPayload as _createTxPayload } from '../../database/models/TxPayload/query';
-import { Plugins } from '@core/WalletCore/Plugins';
 import { SpeedUpAction, type SendTransactionParams, type SpeedUpTransactionParams } from '../Events/broadcastTransactionSubject';
 import type { ITxEvm } from '../Plugins/Transaction/types';
+import { SERVICE_IDENTIFIER } from '../service';
+import type { INextNonceTrackerServerInterface } from '../Plugins/NextNonceTracker/server';
 
 interface createTxPayloadParams {
   tx: SendTransactionParams['tx'];
@@ -19,12 +20,20 @@ interface createTxPayloadParams {
   epochHeight?: string | null;
 }
 
+export interface ItxMethodServerInterface {
+  createTx(params: SendTransactionParams, prepareCreate: true): Promise<readonly [Tx, TxPayload, TxExtra]>;
+  createTx(params: SendTransactionParams): Promise<void>;
+  speedUpTx(params: SpeedUpTransactionParams, prepareCreate?: true): Promise<undefined | readonly [Tx, TxPayload, TxExtra]>;
+}
+
 @injectable()
 export class TxMethod {
-  @inject(Plugins) plugins!: Plugins;
+  
+  @inject(SERVICE_IDENTIFIER.NEXT_NONCE_TRACKER)
+  nextNonceTracker!: INextNonceTrackerServerInterface;
 
   private async isWaitting(address: Address, txNonce: number | undefined) {
-    const nextNonce = await this.plugins.NextNonceTracker.getNextNonce(address, true);
+    const nextNonce = await this.nextNonceTracker.getNextNonce(address, true);
     return BigInt(nextNonce) < BigInt(txNonce ?? 0);
   }
 

@@ -1,5 +1,4 @@
 import { useEffect, useState } from 'react';
-import events from '@core/WalletCore/Events';
 import type { Tx } from '@core/database/models/Tx';
 import { formatStatus } from '@core/utils/tx';
 import { useWalletConfig } from '@core/WalletCore/Plugins/ReactInject/data/useWalletConfig';
@@ -12,17 +11,25 @@ export const useShowSpeedUp = (tx: Tx | null) => {
 
   useEffect(() => {
     if (!isPending || !tx || showSpeedUp) return;
-    const checkShowSpeedUp = () => {
-      const show = new Date().valueOf() - tx.createdAt.valueOf() > walletConfig.pendingTimeBeforeSpeedUp;
-      if (show) {
+
+    const threshold = walletConfig.pendingTimeBeforeSpeedUp;
+
+    const timeEnd = new Date().valueOf() - tx.createdAt.valueOf();
+
+    // if the transaction is older than the threshold, show the speed up option
+    if (timeEnd >= threshold) {
+      setShowSpeedUp(true);
+    } else {
+      const timeLeft = threshold - timeEnd;
+
+      const timerId = setTimeout(() => {
         setShowSpeedUp(true);
-      }
-      return show;
-    };
-    const _showSpeedUp = checkShowSpeedUp();
-    if (_showSpeedUp) return;
-    const subscription = events.globalIntervalSubject.subscribe(checkShowSpeedUp);
-    return () => subscription.unsubscribe();
+      }, timeLeft);
+
+      return () => {
+        clearTimeout(timerId);
+      };
+    }
   }, [isPending, showSpeedUp, tx, walletConfig.pendingTimeBeforeSpeedUp]);
   return isPending && showSpeedUp;
 };
