@@ -23,6 +23,11 @@ export const SERVICE_IDENTIFIER = {
   // DB end // ---------------------------------------------------------
 
   /**
+   * KeyringPlugin
+   */
+  KEYRING: 'KEYRING',
+
+  /**
    * CryptoTool
    */
   CRYPTO_TOOL: 'CRYPTO_TOOL',

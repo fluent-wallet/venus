@@ -5,4 +5,5 @@ enum VaultType {
   Hardware = 'hardware',
   BSIM = 'BSIM',
 }
+export { VaultType };
 export default VaultType;

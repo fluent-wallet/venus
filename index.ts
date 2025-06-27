@@ -26,6 +26,7 @@ import { name as appName } from './app.json';
 import RootProvider from './packages/ui-new/RootProvider';
 
 import { DbPlugin } from './packages/core/WalletCore/DB';
+import { KeyringPlugin } from './packages/core/WalletCore/Keyring';
 import { EventPlugin } from './packages/core/WalletCore/Events/EventPlugin';
 import { initCore } from './packages/WalletCoreExtends';
 
@@ -53,7 +54,7 @@ LogBox.ignoreLogs([
 initCore(
   EventPlugin,
   DbPlugin,
-
+  KeyringPlugin,
   AuthenticationPlugin,
   CryptoToolPlugin,
   TxTrackerPlugin,
