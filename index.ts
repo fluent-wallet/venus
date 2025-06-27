@@ -25,8 +25,9 @@ import { WalletConfigPlugin } from './packages/core/WalletCore/Plugins/WalletCon
 import { name as appName } from './app.json';
 import RootProvider from './packages/ui-new/RootProvider';
 
+import { DbPlugin } from './packages/core/WalletCore/DB';
 import { EventPlugin } from './packages/core/WalletCore/Events/EventPlugin';
-import { initCore } from './packages/WalletCoreExtends/index';
+import { initCore } from './packages/WalletCoreExtends';
 
 import { AuthenticationPlugin } from './packages/WalletCoreExtends/Plugins/Authentication';
 import { CryptoToolPlugin } from './packages/WalletCoreExtends/Plugins/CryptoTool';
@@ -51,6 +52,8 @@ LogBox.ignoreLogs([
 ]);
 initCore(
   EventPlugin,
+  DbPlugin,
+
   AuthenticationPlugin,
   CryptoToolPlugin,
   TxTrackerPlugin,
