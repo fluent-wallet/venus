@@ -4667,6 +4667,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@noble/curves@npm:~1.9.0":
+  version: 1.9.2
+  resolution: "@noble/curves@npm:1.9.2"
+  dependencies:
+    "@noble/hashes": 1.8.0
+  checksum: bac582aefe951032cb04ed7627f139c3351ddfefd2625a25fe7f7a8043e7d781be4fad320d4ae75e31fa5d7e05ba643f16139877375130fd3cff86d81512e0f2
+  languageName: node
+  linkType: hard
+
 "@noble/hashes@npm:1.3.2":
   version: 1.3.2
   resolution: "@noble/hashes@npm:1.3.2"
@@ -4681,10 +4690,17 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@noble/secp256k1@npm:^2.1.0":
-  version: 2.1.0
-  resolution: "@noble/secp256k1@npm:2.1.0"
-  checksum: 447b7a04673b93e8182cb2c3f06fbdf2dd6792c22092b42715af01cb7aacbffdbe7e6319ecf3d9d44be7dac6085a603853e97252602f6bac8fba146163b5bb15
+"@noble/hashes@npm:1.8.0, @noble/hashes@npm:~1.8.0":
+  version: 1.8.0
+  resolution: "@noble/hashes@npm:1.8.0"
+  checksum: c94e98b941963676feaba62475b1ccfa8341e3f572adbb3b684ee38b658df44100187fa0ef4220da580b13f8d27e87d5492623c8a02ecc61f23fb9960c7918f5
+  languageName: node
+  linkType: hard
+
+"@noble/secp256k1@npm:^2.3.0":
+  version: 2.3.0
+  resolution: "@noble/secp256k1@npm:2.3.0"
+  checksum: 423c7242203fe843f630b48eb3188ca73fffdc81dc29ce8b2579db850c381fb32cda82a8e721623007762241547527c0d5d76d56aa6570bfe077e71dcfbbd583
   languageName: node
   linkType: hard
 
@@ -5560,6 +5576,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@scure/base@npm:~1.2.5":
+  version: 1.2.6
+  resolution: "@scure/base@npm:1.2.6"
+  checksum: 1058cb26d5e4c1c46c9cc0ae0b67cc66d306733baf35d6ebdd8ddaba242b80c3807b726e3b48cb0411bb95ec10d37764969063ea62188f86ae9315df8ea6b325
+  languageName: node
+  linkType: hard
+
 "@scure/bip32@npm:1.4.0":
   version: 1.4.0
   resolution: "@scure/bip32@npm:1.4.0"
@@ -5571,6 +5594,17 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@scure/bip32@npm:^1.7.0":
+  version: 1.7.0
+  resolution: "@scure/bip32@npm:1.7.0"
+  dependencies:
+    "@noble/curves": ~1.9.0
+    "@noble/hashes": ~1.8.0
+    "@scure/base": ~1.2.5
+  checksum: c83adca5a74ec5c4ded8ba93900d0065e4767c4759cf24c2674923aef01d45ba56f171574e3519f2341be99f53a333f01b674eb6cfeb6fa8379607c6d1bc90b5
+  languageName: node
+  linkType: hard
+
 "@scure/bip39@npm:1.3.0":
   version: 1.3.0
   resolution: "@scure/bip39@npm:1.3.0"
@@ -5578,6 +5612,16 @@ __metadata:
     "@noble/hashes": ~1.4.0
     "@scure/base": ~1.1.6
   checksum: dbb0b27df753eb6c6380010b25cc9a9ea31f9cb08864fc51e69e5880ff7e2b8f85b72caea1f1f28af165e83b72c48dd38617e43fc632779d025b50ba32ea759e
+  languageName: node
+  linkType: hard
+
+"@scure/bip39@npm:^1.6.0":
+  version: 1.6.0
+  resolution: "@scure/bip39@npm:1.6.0"
+  dependencies:
+    "@noble/hashes": ~1.8.0
+    "@scure/base": ~1.2.5
+  checksum: 96d46420780473d6c6c9700254a0eceec60302f61d7f9d7f29024e90c7acff3e8e40a5ee52dfaf104db539a10462e531996aaf9e69f082b8540b0a25870545fc
   languageName: node
   linkType: hard
 
@@ -17637,7 +17681,7 @@ __metadata:
     "@gorhom/bottom-sheet": ^5.1.6
     "@json-rpc-tools/utils": ^1.7.6
     "@metamask/gas-fee-controller": 15.0.0
-    "@noble/secp256k1": ^2.1.0
+    "@noble/secp256k1": ^2.3.0
     "@nozbe/watermelondb": ^0.28.0
     "@react-native-async-storage/async-storage": ^2.1.2
     "@react-native-clipboard/clipboard": ^1.16.2
@@ -17652,6 +17696,8 @@ __metadata:
     "@react-navigation/native": ^7.1.10
     "@react-navigation/native-stack": ^7.3.14
     "@reown/walletkit": ^1.1.1
+    "@scure/bip32": ^1.7.0
+    "@scure/bip39": ^1.6.0
     "@types/jest": ^29.5.13
     "@types/lodash-es": ^4.17.12
     "@types/randombytes": ^2.0.3
