@@ -1,10 +1,6 @@
 import type { Vault } from '@core/database/models/Vault';
 import type { IKeyring } from '../Keyring/types';
-
-export enum ChainFamily {
-  EVM = 'evm',
-  CFX = 'cfx',
-}
+import type { ChainFamily, IEncodedTxMap } from '../Chains/types';
 
 export interface SoftwareSignerFactoryParams {
   vault: Vault;
@@ -21,7 +17,7 @@ export interface ISigner {
   signMessageHash(messageHash: Uint8Array, chain: ChainFamily): Promise<any>;
 
   // TODO update this type
-  signTransaction(tx: any, chain: ChainFamily): Promise<any>;
+  signTransaction<T extends ChainFamily>(tx: IEncodedTxMap[T], chain: T): Promise<any>;
 }
 
 export type SoftwareSignerFactory = (params: SoftwareSignerFactoryParams) => Promise<ISigner>;
