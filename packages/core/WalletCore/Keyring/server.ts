@@ -4,6 +4,8 @@ import { mnemonicToSeed } from '@scure/bip39';
 import { getPublicKey, sign } from '@noble/secp256k1';
 import { SigningAlgorithm, type GetPublicKeyParams, type IKeyring, type SignParams } from './types';
 import { VaultType } from '../../../core/database/models/Vault/VaultType';
+import type { Hex } from 'ox/Hex';
+import { toHex } from 'ox/Bytes';
 
 @injectable()
 export class KeyringServer implements IKeyring {
@@ -18,8 +20,8 @@ export class KeyringServer implements IKeyring {
     return rootNode.derive(fullPath);
   };
 
-  private async _getKeys(params: GetPublicKeyParams | SignParams): Promise<{ privateKey: Uint8Array; publicKey: Uint8Array }> {
-    let privateKey: Uint8Array;
+  private async _getKeys(params: GetPublicKeyParams | SignParams): Promise<{ privateKey: Hex; publicKey: Hex }> {
+    let privateKey: Hex;
     const { type } = params;
     if (type === VaultType.PrivateKey) {
       privateKey = params.privateKey;
@@ -28,12 +30,12 @@ export class KeyringServer implements IKeyring {
       if (!childNode.privateKey) {
         throw new Error('Key derivation failed: HDNode does not have a private key');
       }
-      privateKey = childNode.privateKey;
+      privateKey = toHex(childNode.privateKey);
     } else {
       throw new Error(`Unsupported vault type: ${type}`);
     }
     const publicKey = getPublicKey(privateKey);
-    return { privateKey, publicKey };
+    return { privateKey, publicKey: toHex(publicKey) };
   }
 
   getPublicKey = async (params: GetPublicKeyParams) => {
