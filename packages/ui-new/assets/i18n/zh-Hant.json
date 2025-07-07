@@ -362,7 +362,7 @@
         "error" : {
           "title" : "簽名錯誤"
         },
-        "message" : "正在調用 BISM 卡",
+        "message" : "正在調用 BSIM 卡",
         "title" : "交易確認"
       },
       "error" : {
