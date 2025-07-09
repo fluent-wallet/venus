@@ -24,6 +24,7 @@ export type SignParams =
   | { type: VaultType.HierarchicalDeterministic; mnemonic: string; basePath: string; index: number; payload: Uint8Array; algorithm?: SigningAlgorithm };
 
 export interface IKeyring {
+  derivePrivateKey(mnemonic: string, basePath: string, index: number): Promise<Hex>;
   getPublicKey(params: GetPublicKeyParams): Promise<Hex>;
   sign(params: SignParams): Promise<Signature>;
 }

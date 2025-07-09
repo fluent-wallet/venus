@@ -38,6 +38,14 @@ export class KeyringServer implements IKeyring {
     return { privateKey, publicKey: toHex(publicKey) };
   }
 
+  async derivePrivateKey(mnemonic: string, basePath: string, index: number): Promise<Hex> {
+    const node = await this._getHDNode(mnemonic, basePath, index);
+    if (!node.privateKey) {
+      throw new Error('Key derivation failed: HDNode does not have a private key');
+    }
+    return toHex(node.privateKey);
+  }
+
   getPublicKey = async (params: GetPublicKeyParams) => {
     if (params.algorithm && params.algorithm !== SigningAlgorithm.SECP256K1) {
       throw new Error(`getPublicKey: Unsupported signing algorithm: ${params.algorithm}`);

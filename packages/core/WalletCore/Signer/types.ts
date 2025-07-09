@@ -1,23 +1,19 @@
-import type { Vault } from '@core/database/models/Vault';
-import type { IKeyring } from '../Keyring/types';
-import type { ChainFamily, IEncodedTxMap } from '../Chains/types';
+import type { Hex } from 'ox/Hex';
+import type { IEncodedTxEvm } from '../Chains/evm/types';
+import type { IEncodedTxCfx } from '../Chains/cfx/types';
 
-export interface SoftwareSignerFactoryParams {
-  vault: Vault;
-  password: string;
-  path?: string;
-  index?: number;
-  keyring: IKeyring;
+export interface ISigner<Address, Pubkey> {
+  getAddress(): Promise<Address>;
+
+  getPublicKey(): Promise<Pubkey>;
 }
 
-export interface ISigner {
-  getAddress(chain: ChainFamily): Promise<string>;
-
-  // TODO update this type
-  signMessageHash(messageHash: Uint8Array, chain: ChainFamily): Promise<any>;
-
-  // TODO update this type
-  signTransaction<T extends ChainFamily>(tx: IEncodedTxMap[T], chain: T): Promise<any>;
+export interface IEvmSoftwareSigner extends ISigner<Hex, Hex> {
+  signTransaction(tx: IEncodedTxEvm): Promise<Hex>;
+  signMessage(message: Hex): Promise<Hex>;
 }
 
-export type SoftwareSignerFactory = (params: SoftwareSignerFactoryParams) => Promise<ISigner>;
+export interface ICfxSoftwareSigner extends ISigner<Hex, Hex> {
+  signTransaction(tx: IEncodedTxCfx): Promise<Hex>;
+  signMessage(message: Hex): Promise<Hex>;
+}
