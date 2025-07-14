@@ -6,6 +6,11 @@ import type { IEncodedTxCfx } from '../Chains/cfx/types';
 
 @injectable()
 export class CfxSoftwareSigner implements ICfxSoftwareSigner {
+  readonly #privateKey: Hex;
+
+  constructor(privateKey: Hex) {
+    this.#privateKey = privateKey;
+  }
   getAddress(): Promise<Hex> {
     // TODO
     throw new Error('Method not implemented.');
