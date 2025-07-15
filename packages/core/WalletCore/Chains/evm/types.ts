@@ -20,3 +20,7 @@ export type IEncodedTxEvm = {
     storageKeys: string[];
   }[];
 };
+
+export interface IEvmChain {
+  buildTransaction(tx: IEncodedTxEvm): Promise<IEncodedTxEvm>;
+}

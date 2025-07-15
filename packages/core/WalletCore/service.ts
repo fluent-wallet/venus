@@ -68,6 +68,11 @@ export const SERVICE_IDENTIFIER = {
   TX_METHOD: 'TX_METHOD',
 
   /**
+   * Signer
+   * ---------------------------------------------------------
+   */
+
+  /**
    * Signer Factory
    */
 
@@ -83,6 +88,20 @@ export const SERVICE_IDENTIFIER = {
    * CFX Signer
    */
   CFX_SOFTWARE_SIGNER: 'CFX_SOFTWARE_SIGNER',
+
+  /**
+   * Signer end // ---------------------------------------------------------
+   */
+
+  /**
+   * Chain
+   * ---------------------------------------------------------
+   */
+  CONFLUX_CHAIN: 'CONFLUX_CHAIN',
+  EVM_CHAIN: 'EVM_CHAIN',
+  /**
+   * Chain end // ---------------------------------------------------------
+   */
 } as const;
 
 export interface ServiceMap {

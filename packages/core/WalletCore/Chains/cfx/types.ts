@@ -14,3 +14,7 @@ export type IEncodedTxCfx = {
   epochHeight?: number;
   contract?: string;
 };
+
+export interface IConfluxChain {
+  buildTransaction(tx: IEncodedTxCfx): Promise<IEncodedTxCfx>;
+}
