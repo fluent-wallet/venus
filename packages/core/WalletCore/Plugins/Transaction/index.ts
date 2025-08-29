@@ -4,6 +4,7 @@ import type { Plugin } from '../';
 import ConfluxTransaction from './chains/conflux';
 import EVMTransaction from './chains/evm';
 import type { ITxEvm } from './types';
+import { buildTransaction, type TransactionBuildParams } from './TransactionBuilder';
 
 const getTransactionInstance = (network: Pick<Network, 'networkType'>) => (network.networkType === NetworkType.Conflux ? ConfluxTransaction : EVMTransaction);
 declare module '../../../WalletCore/Plugins' {
@@ -76,6 +77,10 @@ class TransactionPluginClass implements Plugin {
     const transactionInstance = getTransactionInstance(network);
     return transactionInstance.signTypedData({ domain, types, value, privateKey });
   };
+
+  public buildTransaction(params: TransactionBuildParams){
+    return buildTransaction(params)
+  }
 }
 
 export default new TransactionPluginClass();
