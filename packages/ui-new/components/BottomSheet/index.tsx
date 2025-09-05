@@ -159,9 +159,9 @@ interface ContentProps extends Omit<ComponentProps<typeof BottomSheetView>, 'chi
 }
 
 export const BottomSheetWrapper = ({ children, innerPaddingHorizontal = false, style, ...props }: ContentProps) => (
-  <BottomSheetView style={[styles.wrapper, { paddingHorizontal: innerPaddingHorizontal ? 16 : 0 }, style]} {...props}>
+  <View style={[styles.wrapper, { paddingHorizontal: innerPaddingHorizontal ? 16 : 0 }, style]} {...props}>
     {children}
-  </BottomSheetView>
+  </View>
 );
 
 export const BottomSheetHeader = ({ children, title, innerPaddingHorizontal = false, style, ...props }: ContentProps & { title?: string }) => {
