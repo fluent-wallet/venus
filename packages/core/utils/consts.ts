@@ -53,6 +53,7 @@ export const Networks = {
       decimals: 18,
       icon: cfxIcon,
     },
+    scanOpenAPI: 'https://api.confluxscan.org',
   },
   'Conflux eSpace': {
     name: 'Conflux eSpace',
@@ -95,6 +96,7 @@ export const Networks = {
       decimals: 18,
       icon: cfxIcon,
     },
+    scanOpenAPI: 'https://api-testnet.confluxscan.org',
   },
   'eSpace Testnet': {
     name: 'eSpace Testnet',

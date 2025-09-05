@@ -40,7 +40,7 @@ import { styles as transactionConfirmStyle } from '@pages/SendTransaction/Step4C
 import { type RouteProp, useNavigation, useRoute, useTheme } from '@react-navigation/native';
 import type { WalletConnectParamList, WalletConnectTransactionStackName } from '@router/configs';
 import matchRPCErrorMessage from '@utils/matchRPCErrorMssage';
-import { type ParseTxDataReturnType, isApproveMethod, parseTxData } from '@utils/parseTxData';
+import { type ParseTxDataReturnType, isApproveMethod, parseTxDataAsync } from '@utils/parseTxData';
 import { supportsInterface } from '@utils/supportsInterface';
 import Decimal from 'decimal.js';
 import { isNil } from 'lodash-es';
@@ -271,7 +271,7 @@ function WalletConnectTransaction() {
   useEffect(() => {
     async function parseAndTryGetTokenInfo() {
       if (isContract) {
-        const parseData = parseTxData({ data, to });
+        const parseData = await parseTxDataAsync({ data, to, netId: currentNetwork.netId });
 
         if (to) {
           const typeByInterface = await supportsInterface(to, {
@@ -315,7 +315,7 @@ function WalletConnectTransaction() {
     }
     parseAndTryGetTokenInfo();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [data, to, isContract, currentNetwork.id, currentAddress, value]);
+  }, [data, to, isContract, currentNetwork.id, currentAddress, value, currentNetwork.netId]);
 
   const handleOpenEditAllowanceModel = useCallback(() => {
     if (parseData?.functionName === 'approve' && parseData?.assetType === AssetType.ERC20) {
