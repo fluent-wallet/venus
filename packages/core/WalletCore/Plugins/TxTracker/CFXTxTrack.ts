@@ -148,7 +148,7 @@ class CFXTxTrack extends BaseTxTrack {
                 storageReleased: receipt.storageReleased?.length ? receipt.storageReleased : undefined,
                 contractCreated: receipt.contractCreated,
               },
-              txExecErrorMsg: receipt.outcomeStatus !== '0x0' ? receipt.txExecErrorMsg ?? 'tx failed' : undefined,
+              txExecErrorMsg: receipt.outcomeStatus !== '0x0' ? (receipt.txExecErrorMsg ?? 'tx failed') : undefined,
               executedAt: block.timestamp ? new Date(Number(BigInt(block.timestamp)) * 1000) : undefined,
             },
             updaterMap,

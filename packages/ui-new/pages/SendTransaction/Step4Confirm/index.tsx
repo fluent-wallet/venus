@@ -1,14 +1,9 @@
-/* eslint-disable @typescript-eslint/no-empty-function */
-/* eslint-disable react-hooks/exhaustive-deps */
 import { BSIMEventTypesName } from '@WalletCoreExtends/Plugins/BSIM/types';
 import ProhibitIcon from '@assets/icons/prohibit.svg';
 import WarnIcon from '@assets/icons/warn.svg';
-import { convertBase32ToHex, type Base32Address } from '@core/utils/address';
-import { createERC20Contract, createERC721Contract, createERC1155Contract } from '@cfx-kit/dapp-utils/dist/contract';
 import { BottomSheetScrollContent, BottomSheetFooter } from '@components/BottomSheet';
 import Button from '@components/Button';
 import Text from '@components/Text';
-import events from '@core/WalletCore/Events';
 import methods from '@core/WalletCore/Methods';
 import plugins from '@core/WalletCore/Plugins';
 import { checkDiffInRange } from '@core/WalletCore/Plugins/BlockNumberTracker';
@@ -53,6 +48,9 @@ import SendAsset from './SendAsset';
 import { TransactionActionType } from '@core/WalletCore/Events/broadcastTransactionSubject';
 import matchRPCErrorMessage from '@utils/matchRPCErrorMssage';
 import { isSmallDevice } from '@utils/deviceInfo';
+import { isAuthenticationCanceledError, isAuthenticationError } from '@WalletCoreExtends/Plugins/Authentication/errors';
+import { getAssetsTracker, getEventBus, getNFTDetailTracker } from '@WalletCoreExtends/index';
+import { BROADCAST_TRANSACTION_EVENT } from '@core/WalletCore/Events/eventTypes';
 
 const SendTransactionStep4Confirm: React.FC<SendTransactionScreenProps<typeof SendTransactionStep4StackName>> = ({ navigation, route }) => {
   useEffect(() => Keyboard.dismiss(), []);
@@ -84,7 +82,6 @@ const SendTransactionStep4Confirm: React.FC<SendTransactionScreenProps<typeof Se
     return new Decimal(_amount).sub(gasCost).toString();
   }, [_amount, gasCost, inMaxMode]);
 
-  const transferAmountHex = useMemo(() => new Decimal(amount || 0).mul(Decimal.pow(10, nftItemDetail ? 0 : asset.decimals || 0)).toHex(), [amount]);
   const formattedAmount = useFormatBalance(amount);
 
   const price = useMemo(() => calculateTokenPrice({ price: asset.priceInUSDT, amount: amount }), [asset.priceInUSDT, amount]);
@@ -96,39 +93,15 @@ const SendTransactionStep4Confirm: React.FC<SendTransactionScreenProps<typeof Se
   }, []);
 
   const txHalf = useMemo(() => {
-    let data = '0x';
-    if (asset.type === AssetType.ERC20) {
-      const contract = createERC20Contract(asset.contractAddress);
-      data = contract.encodeFunctionData('transfer', [
-        (currentNetwork.networkType === NetworkType.Conflux ? convertBase32ToHex(recipientAddress as Base32Address) : recipientAddress) as `0x${string}`,
-        transferAmountHex as unknown as bigint,
-      ]);
-    } else if (asset.type === AssetType.ERC721) {
-      const contract = createERC721Contract(asset.contractAddress);
-      data = contract.encodeFunctionData('transferFrom', [
-        currentAddressValue as `0x${string}`,
-        recipientAddress as `0x${string}`,
-        nftItemDetail?.tokenId as unknown as bigint,
-      ]);
-    } else if (asset.type === AssetType.ERC1155) {
-      const contract = createERC1155Contract(asset.contractAddress);
-      data = contract.encodeFunctionData('safeTransferFrom', [
-        currentAddressValue as `0x${string}`,
-        recipientAddress as `0x${string}`,
-        nftItemDetail?.tokenId as unknown as bigint,
-        transferAmountHex as unknown as bigint,
-        '0x',
-      ]);
-    }
-
-    return {
-      to: asset.type === AssetType.Native ? recipientAddress : asset.contractAddress,
-      value: asset.type === AssetType.Native ? transferAmountHex : '0x0',
-      data,
-      from: currentAddressValue,
-      chainId: currentNetwork.chainId,
-    } as ITxEvm;
-  }, [transferAmountHex]);
+    return plugins.Transaction.buildTransaction({
+      asset,
+      amount: amount || '0',
+      recipientAddress,
+      currentAddressValue,
+      currentNetwork,
+      nftTokenId: nftItemDetail?.tokenId,
+    });
+  }, [asset, amount, recipientAddress, currentAddressValue, currentNetwork, nftItemDetail?.tokenId]);
 
   const [error, setError] = useState<{ type?: string; message: string } | null>(null);
 
@@ -163,18 +136,30 @@ const SendTransactionStep4Confirm: React.FC<SendTransactionScreenProps<typeof Se
         }
       }
 
-      tx = Object.assign({}, txHalf, {
-        gasLimit: gasEstimate?.advanceSetting?.gasLimit,
-        ...(gasEstimate?.advanceSetting?.storageLimit ? { storageLimit: gasEstimate?.advanceSetting?.storageLimit } : null),
-        ...(gasEstimate?.gasSetting?.suggestedMaxFeePerGas
-          ? {
-              type: 2,
-              maxFeePerGas: gasEstimate?.gasSetting?.suggestedMaxFeePerGas,
-              maxPriorityFeePerGas: gasEstimate?.gasSetting?.suggestedMaxPriorityFeePerGas,
-            }
-          : { gasPrice: gasEstimate?.gasSetting?.suggestedGasPrice, type: 0 }),
-      });
-      tx.nonce = gasEstimate?.advanceSetting?.nonce;
+      tx = { ...txHalf };
+
+      if (gasEstimate?.advanceSetting?.gasLimit) {
+        tx.gasLimit = gasEstimate.advanceSetting.gasLimit;
+      }
+
+      if (gasEstimate?.advanceSetting?.storageLimit) {
+        tx.storageLimit = gasEstimate.advanceSetting.storageLimit;
+      }
+
+      if (gasEstimate?.gasSetting?.suggestedMaxFeePerGas) {
+        // EIP-1559 transaction
+        tx.type = 2;
+        tx.maxFeePerGas = gasEstimate.gasSetting.suggestedMaxFeePerGas;
+        tx.maxPriorityFeePerGas = gasEstimate.gasSetting.suggestedMaxPriorityFeePerGas;
+      } else if (gasEstimate?.gasSetting?.suggestedGasPrice) {
+        // Legacy transaction
+        tx.type = 0;
+        tx.gasPrice = gasEstimate.gasSetting.suggestedGasPrice;
+      }
+
+      if (gasEstimate?.advanceSetting?.nonce) {
+        tx.nonce = gasEstimate.advanceSetting.nonce;
+      }
 
       try {
         if (currentNetwork.networkType === NetworkType.Conflux) {
@@ -211,9 +196,9 @@ const SendTransactionStep4Confirm: React.FC<SendTransactionScreenProps<typeof Se
           icon: 'loading' as unknown as undefined,
         });
         backToHome(navigation);
-        plugins.AssetsTracker.updateCurrentTracker();
+        getAssetsTracker().updateCurrentTracker();
         if (nftItemDetail) {
-          plugins.NFTDetailTracker.updateCurrentOpenNFT();
+          getNFTDetailTracker().updateCurrentOpenNFT();
         }
       } catch (error) {
         if (error instanceof BSIMError) {
@@ -227,6 +212,10 @@ const SendTransactionStep4Confirm: React.FC<SendTransactionScreenProps<typeof Se
         }
       }
     } catch (_err: any) {
+      if (isAuthenticationError(_err) && isAuthenticationCanceledError(_err)) {
+        return;
+      }
+
       txError = _err;
       setBSIMEvent(null);
       if (txError instanceof SignTransactionCancelError) {
@@ -246,7 +235,7 @@ const SendTransactionStep4Confirm: React.FC<SendTransactionScreenProps<typeof Se
       });
     } finally {
       if (txRaw) {
-        events.broadcastTransactionSubjectPush.next({
+        getEventBus().dispatch(BROADCAST_TRANSACTION_EVENT, {
           transactionType: TransactionActionType.Send,
           params: {
             txHash,

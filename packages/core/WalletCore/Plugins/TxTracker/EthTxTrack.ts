@@ -149,7 +149,7 @@ class EthTxTrack extends BaseTxTrack {
                   gasUsed: receipt.gasUsed,
                   contractCreated: receipt.contractAddress,
                 },
-                txExecErrorMsg: receipt.status !== '0x1' ? receipt.txExecErrorMsg ?? 'tx failed' : undefined,
+                txExecErrorMsg: receipt.status !== '0x1' ? (receipt.txExecErrorMsg ?? 'tx failed') : undefined,
                 executedAt: block.timestamp ? new Date(Number(BigInt(block.timestamp)) * 1000) : undefined,
               },
               updaterMap,

@@ -38,9 +38,9 @@ export class AddAccountMethod {
     const _vault = vault ?? (await (await accountGroup).vault);
     const [networks, lastAccountIndex, vaultData] = await Promise.all([
       database.get<Network>(TableName.Network).query().fetch(),
-      _vault.type === VaultType.HierarchicalDeterministic ? index ?? accountGroup.getLastAccountIndex() : -1,
+      _vault.type === VaultType.HierarchicalDeterministic ? (index ?? accountGroup.getLastAccountIndex()) : -1,
       _vault.type === VaultType.PrivateKey || _vault.type === VaultType.HierarchicalDeterministic
-        ? _vaultData ?? this.plugins.CryptoTool.decrypt<string>(_vault.data!)
+        ? (_vaultData ?? this.plugins.CryptoTool.decrypt<string>(_vault.data!))
         : _vault.data,
     ]);
     const newAccountIndex = index ?? lastAccountIndex + 1;

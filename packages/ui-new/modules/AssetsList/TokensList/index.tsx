@@ -32,19 +32,18 @@ const TokensList: React.FC<Props> = ({ onPressItem, selectType, showReceiveFunds
   if (selectType !== 'Receive' && isEmpty) {
     if (showReceiveFunds) {
       return <ReceiveFunds />;
-    } else {
-      return (
-        <>
-          <Image style={styles.noneImg} source={NoneToken} contentFit="contain" />
-          <Text style={[styles.noneText, { color: colors.textSecondary }]}>{t('tab.content.noToken')}</Text>
-        </>
-      );
     }
+    return (
+      <>
+        <Image style={styles.noneImg} source={NoneToken} contentFit="contain" />
+        <Text style={[styles.noneText, { color: colors.textSecondary }]}>{t('tab.content.noToken')}</Text>
+      </>
+    );
   }
 
   return tokens.map((token, index) => (
     <TokenItem
-      key={index}
+      key={token.contractAddress || index}
       hidePrice={selectType === 'Receive' ? true : selectType === 'Home' ? (!priceVisible ? 'encryption' : false) : false}
       hideBalance={selectType === 'Receive' ? true : selectType === 'Home' ? (!priceVisible ? 'encryption' : false) : false}
       showAddress={selectType === 'Receive'}

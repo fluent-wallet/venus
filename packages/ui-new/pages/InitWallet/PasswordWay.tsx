@@ -2,7 +2,6 @@ import Button from '@components/Button';
 import Checkbox from '@components/Checkbox';
 import Text from '@components/Text';
 import TextInput from '@components/TextInput';
-import plugins from '@core/WalletCore/Plugins';
 import useInAsync from '@hooks/useInAsync';
 import { CommonActions, useTheme } from '@react-navigation/native';
 import { HomeStackName, type PasswordWayStackName, type StackScreenProps } from '@router/configs';
@@ -14,6 +13,7 @@ import { Trans, useTranslation } from 'react-i18next';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { showMessage } from 'react-native-flash-message';
 import createVault from './createVaultWithRouterParams';
+import { getAuthentication } from '@WalletCoreExtends/index';
 
 type FormData = {
   password: string;
@@ -40,8 +40,9 @@ const PasswordWay: React.FC<StackScreenProps<typeof PasswordWayStackName>> = ({ 
 
   const _handleCreateVault = useCallback(async (data: FormData) => {
     try {
+      const authentication = getAuthentication();
       navigation.setOptions({ gestureEnabled: false });
-      await plugins.Authentication.setPassword({ password: data.confirm });
+      await authentication.setPassword({ password: data.confirm });
       await new Promise((resolve) => setTimeout(() => resolve(null!), 20));
       if (await createVault(route.params, data.confirm)) {
         showMessage({ type: 'success', message: t('initWallet.msg.success') });

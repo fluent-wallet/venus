@@ -4,7 +4,6 @@ import { container } from '../configs';
 export interface Plugin {
   name: string;
 }
-
 export interface CryptoToolPlugin extends Plugin {
   name: 'CryptoTool';
   encrypt(data: unknown, password?: string): Promise<string>;
@@ -15,7 +14,6 @@ export interface CryptoToolPlugin extends Plugin {
 export class Plugins {
   [pluginName: string]: Plugin;
   CryptoTool!: CryptoToolPlugin;
-
   public use(plugin: Plugin): void;
   public use(plugins: Array<Plugin>): void;
   public use(_plugins: Plugin | Array<Plugin>) {

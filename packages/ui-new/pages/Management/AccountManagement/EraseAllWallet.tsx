@@ -6,6 +6,8 @@ import plugins from '@core/WalletCore/Plugins';
 import { useTheme } from '@react-navigation/native';
 import { type AccountManagementStackName, type StackScreenProps, WelcomeStackName } from '@router/configs';
 import { screenHeight } from '@utils/deviceInfo';
+import { getAuthentication } from '@WalletCoreExtends/index';
+import { isAuthenticationCanceledError, isAuthenticationError } from '@WalletCoreExtends/Plugins/Authentication/errors';
 import type React from 'react';
 import { useCallback, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -24,7 +26,7 @@ const EraseAllWallet: React.FC<Props> = ({ navigation }) => {
 
   const handleDelete = useCallback(async () => {
     try {
-      await plugins.Authentication.getPassword();
+      await getAuthentication().getPassword();
       bottomSheetRef.current?.close();
       navigation.navigate(WelcomeStackName);
       await plugins.WalletConnect.removeAllSession();
@@ -32,9 +34,10 @@ const EraseAllWallet: React.FC<Props> = ({ navigation }) => {
       await methods.clearAccountData();
       await RNRestart.restart();
     } catch (err) {
-      if (String(err)?.includes('cancel')) {
+      if (isAuthenticationError(err) && isAuthenticationCanceledError(err)) {
         return;
       }
+
       showMessage({
         message: t('account.error.deleteAccount.failed'),
         description: String(err ?? ''),

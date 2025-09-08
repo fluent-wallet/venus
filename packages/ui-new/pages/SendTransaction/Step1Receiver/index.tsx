@@ -186,26 +186,24 @@ const SendTransactionStep1Receiver: React.FC<SendTransactionScreenProps<typeof S
               </View>
             )}
             {filterAccounts.type === 'local-filter' && (
-              <>
-                <BottomSheetFlatList
-                  style={listStyles.container}
-                  data={filterAccounts.assets}
-                  keyExtractor={(item) => item.addressValue}
-                  renderItem={({ item }) => (
-                    <AccountItemView
-                      colors={colors}
-                      nickname={item.nickname}
-                      addressValue={item.addressValue}
-                      onPress={() => {
-                        if (Keyboard.isVisible()) {
-                          Keyboard.dismiss();
-                        }
-                        setReceiver(item.addressValue);
-                      }}
-                    />
-                  )}
-                />
-              </>
+              <BottomSheetFlatList
+                style={listStyles.container}
+                data={filterAccounts.assets}
+                keyExtractor={(item) => item.addressValue}
+                renderItem={({ item }) => (
+                  <AccountItemView
+                    colors={colors}
+                    nickname={item.nickname}
+                    addressValue={item.addressValue}
+                    onPress={() => {
+                      if (Keyboard.isVisible()) {
+                        Keyboard.dismiss();
+                      }
+                      setReceiver(item.addressValue);
+                    }}
+                  />
+                )}
+              />
             )}
             {!filterAccounts.type.startsWith('local') && (
               <>

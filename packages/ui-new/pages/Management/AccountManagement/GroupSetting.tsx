@@ -26,11 +26,12 @@ import { useTranslation } from 'react-i18next';
 import { Keyboard, Pressable, StyleSheet, type TextInput as _TextInput } from 'react-native';
 import { showMessage } from 'react-native-flash-message';
 import DeleteConfirm from './DeleteConfirm';
+import { isAuthenticationCanceledError, isAuthenticationError } from '@WalletCoreExtends/Plugins/Authentication/errors';
+import { getAuthentication } from '@WalletCoreExtends/index';
 
 const GroupConfig: React.FC<StackScreenProps<typeof GroupSettingStackName>> = ({ navigation, route }) => {
   const { colors } = useTheme();
   const { t } = useTranslation();
-
   const bottomSheetRef = useRef<BottomSheetMethods>(null!);
   const textinputRef = useRef<_TextInput>(null!);
 
@@ -79,7 +80,7 @@ const GroupConfig: React.FC<StackScreenProps<typeof GroupSettingStackName>> = ({
   const _handleConfirmDelete = useCallback(async () => {
     if (!vault) return;
     try {
-      await plugins.Authentication.getPassword();
+      await getAuthentication().getPassword();
       await methods.deleteVault(vault);
       await plugins.WalletConnect.removeSessionByAddress(accounts.map((v) => v.addressValue));
       showMessage({
@@ -89,8 +90,7 @@ const GroupConfig: React.FC<StackScreenProps<typeof GroupSettingStackName>> = ({
       setShowDeleteBottomSheet(false);
       setTimeout(() => bottomSheetRef.current?.close());
     } catch (err) {
-      console.log(err);
-      if (plugins.Authentication.containsCancel(String(err))) {
+      if (isAuthenticationError(err) && isAuthenticationCanceledError(err)) {
         return;
       }
       showMessage({

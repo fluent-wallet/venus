@@ -1,5 +1,4 @@
-import { JotaiNexus, useCurrentAccount, useCurrentAddressValue, useHasVault } from '@core/WalletCore/Plugins/ReactInject';
-import events, { LifeCycle } from '@core/WalletCore/Events';
+import { useCurrentAccount, useCurrentAddressValue, useHasVault } from '@core/WalletCore/Plugins/ReactInject';
 import { useMode } from '@hooks/useMode';
 import CustomMessage from '@modules/CustomMessage';
 import { NavigationContainer, type Theme } from '@react-navigation/native';
@@ -61,7 +60,6 @@ const App: React.FC = () => {
           </SafeAreaProvider>
         </NavigationContainer>
       </GestureHandlerRootView>
-      <JotaiNexus />
     </>
   );
 };
