@@ -35,7 +35,6 @@ const Network: React.FC<
         if (type === 'selector') {
           methods.switchToNetwork(id);
           onSelect?.();
-        } else {
         }
       }}
     >

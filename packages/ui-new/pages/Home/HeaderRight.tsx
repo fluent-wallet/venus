@@ -1,6 +1,7 @@
 import ESpaceMainnet from '@assets/chains/eSpace-mainnet.svg';
 import QrCode from '@assets/icons/qr-code.svg';
 import Settings from '@assets/icons/settings.svg';
+import Icon from '@components/Icon';
 import Text from '@components/Text';
 import { useCurrentNetwork } from '@core/WalletCore/Plugins/ReactInject';
 import { useTheme } from '@react-navigation/native';
@@ -9,16 +10,9 @@ import type React from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 
 const Network: React.FC = () => {
-  const { colors } = useTheme();
   const currentNetwork = useCurrentNetwork();
-
   if (!currentNetwork) return null;
-  if (currentNetwork.netId === 1030) return <ESpaceMainnet />;
-  return (
-    <Text style={[styles.networkText, { color: colors.textPrimary }]} numberOfLines={3}>
-      {currentNetwork.name}
-    </Text>
-  );
+  return <Icon source={currentNetwork.icon} width={24} height={24} />;
 };
 
 const HeaderRight: React.FC<{ navigation: StackScreenProps<typeof HomeStackName>['navigation']; onPressNetwork: () => void }> = ({
