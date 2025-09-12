@@ -57,16 +57,21 @@ const BottomSheet = forwardRef<BottomSheet_, Props>(
     const [couldPanDownToClose, setCouldPanDownToClose] = useState(() => Platform.OS === 'ios');
 
     const renderBackdrop = useCallback(
-      (props: BottomSheetBackdropProps) => (
-        <BottomSheetBackdrop
-          {...props}
-          disappearsOnIndex={-1}
-          appearsOnIndex={0}
-          pressBehavior={couldPanDownToClose ? backDropPressBehavior : 'none'}
-          enableTouchThrough={false}
-          onPress={handlePressBackdrop}
-        />
-      ),
+      (_props: BottomSheetBackdropProps) => {
+        if (indexRef.current === -1) {
+          return null;
+        }
+        return (
+          <BottomSheetBackdrop
+            {..._props}
+            disappearsOnIndex={-1}
+            appearsOnIndex={0}
+            pressBehavior={couldPanDownToClose ? backDropPressBehavior : 'none'}
+            enableTouchThrough={false}
+            onPress={handlePressBackdrop}
+          />
+        );
+      },
       [couldPanDownToClose, backDropPressBehavior, handlePressBackdrop],
     );
 
@@ -159,9 +164,9 @@ interface ContentProps extends Omit<ComponentProps<typeof BottomSheetView>, 'chi
 }
 
 export const BottomSheetWrapper = ({ children, innerPaddingHorizontal = false, style, ...props }: ContentProps) => (
-  <View style={[styles.wrapper, { paddingHorizontal: innerPaddingHorizontal ? 16 : 0 }, style]} {...props}>
+  <BottomSheetView style={[styles.wrapper, { paddingHorizontal: innerPaddingHorizontal ? 16 : 0 }, style]} {...props}>
     {children}
-  </View>
+  </BottomSheetView>
 );
 
 export const BottomSheetHeader = ({ children, title, innerPaddingHorizontal = false, style, ...props }: ContentProps & { title?: string }) => {

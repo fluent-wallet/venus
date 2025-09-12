@@ -1,4 +1,10 @@
-import BottomSheet, { BottomSheetWrapper, BottomSheetContent, BottomSheetFooter, BottomSheetTextInput, type BottomSheetMethods } from '@components/BottomSheet';
+import BottomSheet, {
+  BottomSheetWrapper,
+  BottomSheetContent,
+  BottomSheetFooter,
+  BottomSheetTextInput,
+  type BottomSheetMethods,
+} from '@components/BottomSheet';
 import Button from '@components/Button';
 import Text from '@components/Text';
 import { stripHexPrefix } from '@core/utils/base';
