@@ -5,7 +5,6 @@ import { TabsHeader, TabsContent } from '@modules/AssetsTabs';
 import NetworkSelector from '@modules/NetworkSelector';
 import { useTheme } from '@react-navigation/native';
 import { TransactionDetailStackName, type HomeStackName, type StackScreenProps } from '@router/configs';
-import { ESPACE_NETWORK_SWITCH_FEATURE, FULL_NETWORK_SWITCH_LIST_FEATURE } from '@utils/features';
 import type React from 'react';
 import { useCallback, useState } from 'react';
 import { type NativeScrollEvent, StyleSheet, View } from 'react-native';
@@ -61,12 +60,7 @@ const Home: React.FC<StackScreenProps<typeof HomeStackName>> = ({ navigation }) 
           <HeaderRight
             navigation={navigation}
             onPressNetwork={() => {
-              if (FULL_NETWORK_SWITCH_LIST_FEATURE.allow) {
-                setShowNetworkSelector(true);
-              } else if (ESPACE_NETWORK_SWITCH_FEATURE.allow) {
-                const currentNetwork = getCurrentNetwork();
-                methods.switchToNetwork(currentNetwork?.netId === 1030 ? 71 : 1030);
-              }
+              setShowNetworkSelector(true);
             }}
           />
         </View>

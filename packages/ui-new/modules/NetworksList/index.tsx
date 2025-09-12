@@ -35,7 +35,6 @@ const Network: React.FC<
         if (type === 'selector') {
           methods.switchToNetwork(id);
           onSelect?.();
-        } else {
         }
       }}
     >
@@ -59,9 +58,18 @@ const NetworksList: React.FC<{ type: ListType; onSelect?: () => void }> = ({ typ
   const ListComponent = useMemo(() => (type === 'selector' ? BottomSheetFlatList : FlatList), [type]);
 
   if (!networks?.length) return null;
+
+  const filteredNetwork = networks.filter(
+    (n) =>
+      (n.netId === 1029 && n.networkType === 'Conflux') ||
+      (n.netId === 1 && n.networkType === 'Conflux') ||
+      (n.netId === 1030 && n.networkType === 'Ethereum') ||
+      (n.netId === 71 && n.networkType === 'Ethereum'),
+  );
+
   return (
     <ListComponent
-      data={networks}
+      data={filteredNetwork}
       renderItem={({ item }) => (
         <Network
           id={item.id}
