@@ -43,6 +43,12 @@ jobs:
       - name: install dependencies
         run: yarn
 
+      - name: Update versions
+        run: |
+          BUILD_NUMBER=$(git rev-list --count HEAD)
+          MARKETING_VERSION=$(node -p "require('./package.json').version")
+          ./.github/scripts/update-versions.sh "$MARKETING_VERSION" "$BUILD_NUMBER"
+
       - name: Set up JDK envronment
         uses: actions/setup-java@v4
         with:
