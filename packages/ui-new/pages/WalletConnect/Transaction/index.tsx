@@ -396,9 +396,14 @@ function WalletConnectTransaction() {
         </BottomSheetFooter>
       </BottomSheet>
 
-      {showEditAllowance && parseData && (
-        <EditAllowance parseData={parseData} savedValue={allowanceValue} onSave={handleSaveEditAllowance} onClose={() => setShowEditAllowance(false)} />
-      )}
+      <EditAllowance
+        isOpen={!!(showEditAllowance && parseData)}
+        parseData={parseData}
+        savedValue={allowanceValue}
+        onSave={handleSaveEditAllowance}
+        onClose={() => setShowEditAllowance(false)}
+      />
+
       <GasFeeSetting
         ref={gasSettingMethods}
         show={showGasFeeSetting}

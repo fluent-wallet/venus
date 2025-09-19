@@ -1,9 +1,10 @@
-import BottomSheet, {
+import {
   BottomSheetWrapper,
   BottomSheetScrollContent,
   BottomSheetHeader,
   BottomSheetFooter,
   type BottomSheetMethods,
+  InlineBottomSheet,
 } from '@components/BottomSheet';
 import Button from '@components/Button';
 import Text from '@components/Text';
@@ -17,15 +18,16 @@ import { StyleSheet, View } from 'react-native';
 interface Props {
   onConfirm: () => void;
   onClose: () => void;
+  isOpen: boolean;
 }
 
-const DeleteConfirm: React.FC<Props> = ({ onConfirm, onClose }) => {
+const DeleteConfirm: React.FC<Props> = ({ onConfirm, onClose, isOpen }) => {
   const { colors } = useTheme();
   const { t } = useTranslation();
   const bottomSheetRef = useRef<BottomSheetMethods>(null!);
 
   return (
-    <BottomSheet ref={bottomSheetRef} snapPoints={snapPoints} index={0} onClose={onClose}>
+    <InlineBottomSheet ref={bottomSheetRef} snapPoints={snapPoints} index={isOpen ? 0 : -1} onClose={onClose}>
       <BottomSheetWrapper innerPaddingHorizontal>
         <BottomSheetHeader title={t('account.action.remove.title')} />
         <BottomSheetScrollContent>
@@ -51,7 +53,7 @@ const DeleteConfirm: React.FC<Props> = ({ onConfirm, onClose }) => {
           </View>
         </BottomSheetFooter>
       </BottomSheetWrapper>
-    </BottomSheet>
+    </InlineBottomSheet>
   );
 };
 

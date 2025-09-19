@@ -133,19 +133,19 @@ const Receive: React.FC<Props> = ({ navigation }) => {
           </BottomSheetScrollContent>
         </BottomSheetWrapper>
       </BottomSheet>
-      {showSetAsset && (
-        <ReceiveSetAsset
-          selectedAsset={selectedAsset}
-          amount={amount}
-          onConfirm={({ asset, amount }) => {
-            setSelectedAsset(asset);
-            if (amount) {
-              setAmount(amount);
-            }
-          }}
-          onClose={() => setShowSetAsset(false)}
-        />
-      )}
+
+      <ReceiveSetAsset
+        isOpen={showSetAsset}
+        selectedAsset={selectedAsset}
+        amount={amount}
+        onConfirm={({ asset, amount }) => {
+          setSelectedAsset(asset);
+          if (amount) {
+            setAmount(amount);
+          }
+        }}
+        onClose={() => setShowSetAsset(false)}
+      />
     </>
   );
 };

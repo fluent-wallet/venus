@@ -167,7 +167,7 @@ const AccountConfig: React.FC<StackScreenProps<typeof AccountSettingStackName>> 
           </BottomSheetFooter>
         </BottomSheetWrapper>
       </BottomSheet>
-      {showDeleteBottomSheet && <DeleteConfirm onConfirm={handleConfirmDelete} onClose={() => setShowDeleteBottomSheet(false)} />}
+      <DeleteConfirm onConfirm={handleConfirmDelete} onClose={() => setShowDeleteBottomSheet(false)} isOpen={showDeleteBottomSheet} />
     </>
   );
 };
