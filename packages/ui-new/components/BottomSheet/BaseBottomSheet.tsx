@@ -29,6 +29,8 @@ export function BaseBottomSheet({
   onOpen,
   onAfterClose,
   enableDynamicSizing = false,
+  activeOffsetY = 66,
+  activeOffsetX = 0,
   ...rest
 }: BaseBottomSheetProps) {
   const { colors, palette } = useTheme();
@@ -116,6 +118,8 @@ export function BaseBottomSheet({
       backgroundStyle={{ backgroundColor: colors.bgFourth }}
       handleIndicatorStyle={{ backgroundColor: palette.gray4 }}
       enableDynamicSizing={enableDynamicSizing}
+      activeOffsetY={activeOffsetY}
+      activeOffsetX={activeOffsetX}
       {...rest}
     >
       {children}

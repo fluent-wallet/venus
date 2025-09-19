@@ -1,4 +1,4 @@
-import { BottomSheetScrollView, BottomSheetView } from '@gorhom/bottom-sheet';
+import { BottomSheetView } from '@gorhom/bottom-sheet';
 import { useTheme } from '@react-navigation/native';
 import { screenHeight } from '@utils/deviceInfo';
 import { clamp } from 'lodash-es';
@@ -10,11 +10,20 @@ interface ContentProps extends Omit<ComponentProps<typeof BottomSheetView>, 'chi
   innerPaddingHorizontal?: boolean;
 }
 
-export const BottomSheetWrapper = ({ children, innerPaddingHorizontal = false, style, ...props }: ContentProps) => (
-  <BottomSheetView style={[styles.wrapper, innerPaddingHorizontal && styles.paddingH16, style]} {...props}>
-    {children}
-  </BottomSheetView>
-);
+export const BottomSheetWrapper = ({
+  children,
+  innerPaddingHorizontal = false,
+  style,
+  useBottomSheetView = true,
+  ...props
+}: ContentProps & { useBottomSheetView?: boolean }) => {
+  const Container = useBottomSheetView ? BottomSheetView : View;
+  return (
+    <Container style={[styles.wrapper, innerPaddingHorizontal && styles.paddingH16, style]} {...props}>
+      {children}
+    </Container>
+  );
+};
 
 export const BottomSheetHeader = ({ children, title, innerPaddingHorizontal = false, style, ...props }: ContentProps & { title?: string }) => {
   const { colors } = useTheme();
