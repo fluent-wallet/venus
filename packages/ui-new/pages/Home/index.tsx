@@ -23,9 +23,8 @@ import { getAssetsTracker, getNFTDetailTracker } from '@WalletCoreExtends/index'
 const Home: React.FC<StackScreenProps<typeof HomeStackName>> = ({ navigation }) => {
   const { colors } = useTheme();
 
-  const [accountSelectorIndex, setAccountSelectorIndex] = useState(-1);
+  const [showAccountSelector, setShowAccountSelector] = useState(false);
   const [showNetworkSelector, setShowNetworkSelector] = useState(false);
-  const [networkSelectorIndex, setNetworkSelectorIndex] = useState(-1);
   const { currentTab, setCurrentTab, sharedScrollY, handleScroll: _handleScroll, resetScrollY } = useTabsController('Tokens');
   const handleScroll = useCallback(
     (evt: NativeScrollEvent) => {
@@ -52,17 +51,17 @@ const Home: React.FC<StackScreenProps<typeof HomeStackName>> = ({ navigation }) 
   );
 
   const handleOpenAccountSelector = () => {
-    setAccountSelectorIndex(0);
+    setShowAccountSelector(true);
   };
 
   const handleOpenNetworkSelector = () => {
-    setNetworkSelectorIndex(0);
+    setShowNetworkSelector(true);
   };
   return (
     <>
       <SafeAreaView style={[styles.container, { backgroundColor: colors.bgPrimary }]}>
         <View style={styles.header}>
-          <Account showAccountSelector={accountSelectorIndex > -1} onPress={handleOpenAccountSelector} navigation={navigation} />
+          <Account showAccountSelector={showAccountSelector} onPress={handleOpenAccountSelector} navigation={navigation} />
           <HeaderRight navigation={navigation} onPressNetwork={handleOpenNetworkSelector} />
         </View>
         <DAPPConnect />
@@ -77,8 +76,8 @@ const Home: React.FC<StackScreenProps<typeof HomeStackName>> = ({ navigation }) 
         </RefreshScrollView>
         <NoNetworkTip />
       </SafeAreaView>
-      <AccountSelector index={accountSelectorIndex} onClose={() => setAccountSelectorIndex(-1)} />
-      <NetworkSelector index={networkSelectorIndex} onClose={() => setNetworkSelectorIndex(-1)} />
+      <AccountSelector isOpen={showAccountSelector} onClose={() => setShowAccountSelector(false)} />
+      <NetworkSelector isOpen={showNetworkSelector} onClose={() => setShowNetworkSelector(false)} />
     </>
   );
 };

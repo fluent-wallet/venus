@@ -422,9 +422,12 @@ function WalletConnectTransaction() {
           onRetry={handleApprove}
         />
       )}
-      {showDappParamsWarning && (
-        <DappParamsWarning onClose={() => setShowDappParamsWarning(false)} onPressUse={() => gasSettingMethods.current?.resetCustomizeSetting?.()} />
-      )}
+
+      <DappParamsWarning
+        isOpen={!!showDappParamsWarning}
+        onClose={() => setShowDappParamsWarning(false)}
+        onPressUse={() => gasSettingMethods.current?.resetCustomizeSetting?.()}
+      />
     </>
   );
 }

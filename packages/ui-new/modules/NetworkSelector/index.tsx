@@ -12,10 +12,10 @@ export type { BottomSheetMethods };
 
 interface Props {
   onClose: () => void;
-  index?: number;
+  isOpen?: boolean;
 }
 
-const NetworkSelector: React.FC<Props> = ({ onClose, index }) => {
+const NetworkSelector: React.FC<Props> = ({ onClose, isOpen }) => {
   const { colors } = useTheme();
   const { t } = useTranslation();
   const bottomSheetRef = useRef<BottomSheetMethods>(null!);
@@ -23,7 +23,7 @@ const NetworkSelector: React.FC<Props> = ({ onClose, index }) => {
     bottomSheetRef?.current?.close();
   }, []);
   return (
-    <InlineBottomSheet ref={bottomSheetRef} snapPoints={snapPoints.percent75} index={index} onClose={onClose}>
+    <InlineBottomSheet ref={bottomSheetRef} snapPoints={snapPoints.percent75} index={isOpen ? 0 : -1} onClose={onClose}>
       <BottomSheetWrapper>
         <BottomSheetHeader title={t('common.network')}>
           <Pressable

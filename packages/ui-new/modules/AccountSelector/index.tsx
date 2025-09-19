@@ -19,17 +19,17 @@ export type { BottomSheetMethods };
 
 interface Props {
   onClose: () => void;
-  index?: number;
+  isOpen?: boolean;
 }
 
-const AccountSelector: React.FC<Props> = ({ onClose, index }) => {
+const AccountSelector: React.FC<Props> = ({ onClose, isOpen }) => {
   const { colors } = useTheme();
   const { t } = useTranslation();
   const navigation = useNavigation<StackScreenProps<typeof HomeStackName>['navigation']>();
   const bottomSheetRef = useRef<BottomSheetMethods>(null!);
 
   return (
-    <InlineBottomSheet ref={bottomSheetRef} snapPoints={snapPoints.percent75} index={index} onClose={onClose}>
+    <InlineBottomSheet ref={bottomSheetRef} snapPoints={snapPoints.percent75} index={isOpen ? 0 : -1} onClose={onClose}>
       <BottomSheetWrapper useBottomSheetView={false}>
         <BottomSheetHeader title={t('common.account')}>
           <Pressable

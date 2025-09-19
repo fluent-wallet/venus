@@ -6,12 +6,13 @@ import GasHigh from '@assets/images/gas/gas-high.png';
 import GasLow from '@assets/images/gas/gas-low.png';
 import GasMedium from '@assets/images/gas/gas-medium.png';
 import { trimDecimalZeros, numberFormat } from '@core/utils/balance';
-import BottomSheet, {
+import {
   BottomSheetWrapper,
   BottomSheetHeader,
   BottomSheetScrollContent,
   BottomSheetFooter,
   type BottomSheetMethods,
+  InlineBottomSheet,
 } from '@components/BottomSheet';
 import Button from '@components/Button';
 import HourglassLoading from '@components/Loading/Hourglass';
@@ -227,7 +228,7 @@ const GasFeeSetting = forwardRef<GasFeeSettingMethods, Props>(
     if (!show) return;
     return (
       <>
-        <BottomSheet ref={bottomSheetRef} snapPoints={snapPoints} index={0} onClose={onClose}>
+        <InlineBottomSheet ref={bottomSheetRef} snapPoints={snapPoints} index={0} onClose={onClose}>
           <BottomSheetWrapper innerPaddingHorizontal>
             <BottomSheetHeader title={t('tx.gasFee.title')} />
             <BottomSheetScrollContent>
@@ -280,7 +281,7 @@ const GasFeeSetting = forwardRef<GasFeeSettingMethods, Props>(
               </Button>
             </BottomSheetFooter>
           </BottomSheetWrapper>
-        </BottomSheet>
+        </InlineBottomSheet>
         {estimateRes && showCustomizeSetting && (
           <CustomizeGasSetting
             force155={force155}

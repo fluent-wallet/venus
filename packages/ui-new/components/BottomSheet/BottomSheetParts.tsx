@@ -1,4 +1,4 @@
-import { BottomSheetView } from '@gorhom/bottom-sheet';
+import { BottomSheetScrollView, BottomSheetView } from '@gorhom/bottom-sheet';
 import { useTheme } from '@react-navigation/native';
 import { screenHeight } from '@utils/deviceInfo';
 import { clamp } from 'lodash-es';
@@ -48,6 +48,11 @@ export const BottomSheetFooter = ({ children, innerPaddingHorizontal = false, st
   </View>
 );
 
+export const BottomSheetScrollContent = ({ children, innerPaddingHorizontal = false, style, ...props }: ContentProps) => (
+  <BottomSheetScrollView style={[styles.scrollContentWrapper, innerPaddingHorizontal && styles.paddingH16, style]} {...props}>
+    {children}
+  </BottomSheetScrollView>
+);
 export const snapPoints = {
   large: [`${((clamp(screenHeight - 100, 628, screenHeight - 40) / screenHeight) * 100).toFixed(2)}%`] as string[],
   percent75: ['75%'] as string[],
