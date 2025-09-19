@@ -1,19 +1,16 @@
-import { useCallback, useRef, forwardRef, useState, useEffect, type ComponentProps } from 'react';
-import { BackHandler, Keyboard, Platform, StyleSheet, View } from 'react-native';
+import { useCallback, useRef, forwardRef, useState, useEffect } from 'react';
+import { BackHandler, Keyboard, Platform } from 'react-native';
 import { useFocusEffect, useTheme, useNavigation } from '@react-navigation/native';
-import { clamp } from 'lodash-es';
-import BottomSheet_, {
-  BottomSheetBackdrop,
-  BottomSheetView,
-  BottomSheetScrollView,
-  type BottomSheetBackdropProps,
-  type BottomSheetProps,
-} from '@gorhom/bottom-sheet';
+import BottomSheet_, { BottomSheetBackdrop, type BottomSheetBackdropProps, type BottomSheetProps } from '@gorhom/bottom-sheet';
 import composeRef from '@cfx-kit/react-utils/dist/composeRef';
-import { screenHeight, isAdjustResize, isSamsungDevice } from '@utils/deviceInfo';
-import Text from '@components/Text';
+import { isAdjustResize, isSamsungDevice } from '@utils/deviceInfo';
 export * from '@gorhom/bottom-sheet';
 export { default as BottomSheetMethods } from '@gorhom/bottom-sheet';
+export { BottomSheetWrapper, BottomSheetHeader, BottomSheetContent, BottomSheetFooter, snapPoints } from './BottomSheetParts';
+
+export { InlineBottomSheet } from './InlineBottomSheet';
+
+export { BottomSheetRoute } from './BottomSheetRoute';
 
 interface Props extends BottomSheetProps {
   showBackDrop?: boolean;
@@ -158,91 +155,91 @@ const BottomSheet = forwardRef<BottomSheet_, Props>(
   },
 );
 
-interface ContentProps extends Omit<ComponentProps<typeof BottomSheetView>, 'children'> {
-  children?: ComponentProps<typeof BottomSheetView>['children'];
-  innerPaddingHorizontal?: boolean;
-}
+// interface ContentProps extends Omit<ComponentProps<typeof BottomSheetView>, 'children'> {
+//   children?: ComponentProps<typeof BottomSheetView>['children'];
+//   innerPaddingHorizontal?: boolean;
+// }
 
-export const BottomSheetWrapper = ({ children, innerPaddingHorizontal = false, style, ...props }: ContentProps) => (
-  <BottomSheetView style={[styles.wrapper, { paddingHorizontal: innerPaddingHorizontal ? 16 : 0 }, style]} {...props}>
-    {children}
-  </BottomSheetView>
-);
+// export const BottomSheetWrapper = ({ children, innerPaddingHorizontal = false, style, ...props }: ContentProps) => (
+//   <BottomSheetView style={[styles.wrapper, { paddingHorizontal: innerPaddingHorizontal ? 16 : 0 }, style]} {...props}>
+//     {children}
+//   </BottomSheetView>
+// );
 
-export const BottomSheetHeader = ({ children, title, innerPaddingHorizontal = false, style, ...props }: ContentProps & { title?: string }) => {
-  const { colors } = useTheme();
+// export const BottomSheetHeader = ({ children, title, innerPaddingHorizontal = false, style, ...props }: ContentProps & { title?: string }) => {
+//   const { colors } = useTheme();
 
-  return (
-    <View style={[styles.headerWrapper, innerPaddingHorizontal && styles.paddingH16, StyleSheet.flatten(style)]} {...props}>
-      {title && <Text style={[styles.title, { color: colors.textPrimary }]}>{title}</Text>}
-      {children}
-    </View>
-  );
-};
+//   return (
+//     <View style={[styles.headerWrapper, innerPaddingHorizontal && styles.paddingH16, StyleSheet.flatten(style)]} {...props}>
+//       {title && <Text style={[styles.title, { color: colors.textPrimary }]}>{title}</Text>}
+//       {children}
+//     </View>
+//   );
+// };
 
-export const BottomSheetScrollContent = ({
-  children,
-  innerPaddingHorizontal = false,
-  style,
-  ...props
-}: ComponentProps<typeof BottomSheetScrollView> & { innerPaddingHorizontal?: boolean }) => (
-  <BottomSheetScrollView style={[styles.scrollContentWrapper, innerPaddingHorizontal && styles.paddingH16, StyleSheet.flatten(style)]} {...props}>
-    {children}
-  </BottomSheetScrollView>
-);
-export const BottomSheetContent = ({ children, innerPaddingHorizontal = false, style, ...props }: ContentProps) => (
-  <View style={[styles.contentWrapper, innerPaddingHorizontal && styles.paddingH16, StyleSheet.flatten(style)]} {...props}>
-    {children}
-  </View>
-);
-export const BottomSheetFooter = ({ children, innerPaddingHorizontal = false, style, ...props }: ContentProps) => (
-  <View style={[styles.footerWrapper, innerPaddingHorizontal && styles.paddingH16, StyleSheet.flatten(style)]} {...props}>
-    {children}
-  </View>
-);
+// export const BottomSheetScrollContent = ({
+//   children,
+//   innerPaddingHorizontal = false,
+//   style,
+//   ...props
+// }: ComponentProps<typeof BottomSheetScrollView> & { innerPaddingHorizontal?: boolean }) => (
+//   <BottomSheetScrollView style={[styles.scrollContentWrapper, innerPaddingHorizontal && styles.paddingH16, StyleSheet.flatten(style)]} {...props}>
+//     {children}
+//   </BottomSheetScrollView>
+// );
+// export const BottomSheetContent = ({ children, innerPaddingHorizontal = false, style, ...props }: ContentProps) => (
+//   <View style={[styles.contentWrapper, innerPaddingHorizontal && styles.paddingH16, StyleSheet.flatten(style)]} {...props}>
+//     {children}
+//   </View>
+// );
+// export const BottomSheetFooter = ({ children, innerPaddingHorizontal = false, style, ...props }: ContentProps) => (
+//   <View style={[styles.footerWrapper, innerPaddingHorizontal && styles.paddingH16, StyleSheet.flatten(style)]} {...props}>
+//     {children}
+//   </View>
+// );
 
-const styles = StyleSheet.create({
-  wrapper: {
-    flex: 1,
-    maxHeight: '100%',
-  },
-  headerWrapper: {
-    flex: 0,
-    paddingTop: 8,
-    paddingBottom: 8,
-  },
-  title: {
-    fontSize: 16,
-    fontWeight: '600',
-    textAlign: 'center',
-  },
-  contentWrapper: {
-    flex: 1,
-  },
-  scrollContentWrapper: {
-    flex: 1,
-  },
-  footerWrapper: {
-    flex: 0,
-    marginTop: 16,
-    marginBottom: 48,
-  },
-  paddingH16: {
-    paddingHorizontal: 16,
-  },
-});
+// const styles = StyleSheet.create({
+//   wrapper: {
+//     flex: 1,
+//     maxHeight: '100%',
+//   },
+//   headerWrapper: {
+//     flex: 0,
+//     paddingTop: 8,
+//     paddingBottom: 8,
+//   },
+//   title: {
+//     fontSize: 16,
+//     fontWeight: '600',
+//     textAlign: 'center',
+//   },
+//   contentWrapper: {
+//     flex: 1,
+//   },
+//   scrollContentWrapper: {
+//     flex: 1,
+//   },
+//   footerWrapper: {
+//     flex: 0,
+//     marginTop: 16,
+//     marginBottom: 48,
+//   },
+//   paddingH16: {
+//     paddingHorizontal: 16,
+//   },
+// });
 
-export const snapPoints = {
-  large: [`${((clamp(screenHeight - 100, 628, screenHeight - 40) / screenHeight) * 100).toFixed(2)}%`] as string[],
-  percent75: ['75%'] as string[],
-  percent65: ['65%'] as string[],
-  percent55: ['55%'] as string[],
-  percent50: ['50%'] as string[],
-  percent45: ['45%'] as string[],
-  percent40: ['40%'] as string[],
-  percent35: ['35%'] as string[],
-  percent30: ['30%'] as string[],
-  percent25: ['25%'] as string[],
-} as const;
+// export const snapPoints = {
+//   large: [`${((clamp(screenHeight - 100, 628, screenHeight - 40) / screenHeight) * 100).toFixed(2)}%`] as string[],
+//   percent75: ['75%'] as string[],
+//   percent65: ['65%'] as string[],
+//   percent55: ['55%'] as string[],
+//   percent50: ['50%'] as string[],
+//   percent45: ['45%'] as string[],
+//   percent40: ['40%'] as string[],
+//   percent35: ['35%'] as string[],
+//   percent30: ['30%'] as string[],
+//   percent25: ['25%'] as string[],
+// } as const;
 
 export default BottomSheet;
