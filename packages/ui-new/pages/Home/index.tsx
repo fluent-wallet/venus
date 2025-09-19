@@ -1,5 +1,3 @@
-import methods from '@core/WalletCore/Methods';
-import { getCurrentNetwork } from '@core/WalletCore/Plugins/ReactInject/data/useCurrentNetwork';
 import AccountSelector from '@modules/AccountSelector';
 import { TabsHeader, TabsContent } from '@modules/AssetsTabs';
 import NetworkSelector from '@modules/NetworkSelector';
@@ -25,6 +23,9 @@ import { getAssetsTracker, getNFTDetailTracker } from '@WalletCoreExtends/index'
 const Home: React.FC<StackScreenProps<typeof HomeStackName>> = ({ navigation }) => {
   const { colors } = useTheme();
 
+  const [accountSelectorIndex, setAccountSelectorIndex] = useState(-1);
+  const [showNetworkSelector, setShowNetworkSelector] = useState(false);
+  const [networkSelectorIndex, setNetworkSelectorIndex] = useState(-1);
   const { currentTab, setCurrentTab, sharedScrollY, handleScroll: _handleScroll, resetScrollY } = useTabsController('Tokens');
   const handleScroll = useCallback(
     (evt: NativeScrollEvent) => {
@@ -40,9 +41,6 @@ const Home: React.FC<StackScreenProps<typeof HomeStackName>> = ({ navigation }) 
       .finally(() => closeRefresh());
   }, []);
 
-  const [showAccountSelector, setShowAccountSelector] = useState(false);
-  const [showNetworkSelector, setShowNetworkSelector] = useState(false);
-
   const handleTxPress = useCallback(
     (data: Tx | AssetInfo) => {
       if (data instanceof Tx) {
@@ -52,17 +50,20 @@ const Home: React.FC<StackScreenProps<typeof HomeStackName>> = ({ navigation }) 
     },
     [navigation.navigate],
   );
+
+  const handleOpenAccountSelector = () => {
+    setAccountSelectorIndex(0);
+  };
+
+  const handleOpenNetworkSelector = () => {
+    setNetworkSelectorIndex(0);
+  };
   return (
     <>
       <SafeAreaView style={[styles.container, { backgroundColor: colors.bgPrimary }]}>
         <View style={styles.header}>
-          <Account showAccountSelector={showAccountSelector} onPress={() => setShowAccountSelector(true)} navigation={navigation} />
-          <HeaderRight
-            navigation={navigation}
-            onPressNetwork={() => {
-              setShowNetworkSelector(true);
-            }}
-          />
+          <Account showAccountSelector={accountSelectorIndex > -1} onPress={handleOpenAccountSelector} navigation={navigation} />
+          <HeaderRight navigation={navigation} onPressNetwork={handleOpenNetworkSelector} />
         </View>
         <DAPPConnect />
         <RefreshScrollView stickyHeaderIndices={[4]} onRefresh={handleRefresh} onScroll={currentTab === 'NFTs' ? handleScroll : undefined}>
@@ -76,8 +77,8 @@ const Home: React.FC<StackScreenProps<typeof HomeStackName>> = ({ navigation }) 
         </RefreshScrollView>
         <NoNetworkTip />
       </SafeAreaView>
-      {showAccountSelector && <AccountSelector onClose={() => setShowAccountSelector(false)} />}
-      {showNetworkSelector && <NetworkSelector onClose={() => setShowNetworkSelector(false)} />}
+      <AccountSelector index={accountSelectorIndex} onClose={() => setAccountSelectorIndex(-1)} />
+      <NetworkSelector index={networkSelectorIndex} onClose={() => setNetworkSelectorIndex(-1)} />
     </>
   );
 };

@@ -6,11 +6,8 @@ type InlineBottomSheetProps = Omit<BaseBottomSheetProps, 'controlledIndex' | 'de
 };
 
 export function InlineBottomSheet({
-  ref,
-  index,
   showBackDrop = true,
   backDropPressBehavior = 'close',
-  handlePressBackdrop,
   enablePanDownToClose = true,
   enableContentPanningGesture = true,
   enableHandlePanningGesture = true,
@@ -20,12 +17,8 @@ export function InlineBottomSheet({
 }: InlineBottomSheetProps) {
   return (
     <BaseBottomSheet
-      ref={ref}
-      controlledIndex={typeof index === 'number' ? index : undefined}
-      defaultIndex={-1}
       showBackDrop={showBackDrop}
       backDropPressBehavior={backDropPressBehavior}
-      handlePressBackdrop={handlePressBackdrop}
       enablePanDownToClose={enablePanDownToClose}
       enableContentPanningGesture={enableContentPanningGesture}
       enableHandlePanningGesture={enableHandlePanningGesture}

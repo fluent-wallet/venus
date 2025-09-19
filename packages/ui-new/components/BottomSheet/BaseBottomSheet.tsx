@@ -18,6 +18,7 @@ export function BaseBottomSheet({
   ref,
   children,
   showBackDrop = true,
+  index = -1,
   enablePanDownToClose = true,
   enableContentPanningGesture = true,
   enableHandlePanningGesture = true,
@@ -26,21 +27,18 @@ export function BaseBottomSheet({
   onChange,
   onClose,
   onOpen,
-  controlledIndex,
-  defaultIndex = -1,
   onAfterClose,
+  enableDynamicSizing = false,
   ...rest
 }: BaseBottomSheetProps) {
   const { colors, palette } = useTheme();
   const sheetRef = useRef<BottomSheet>(null);
   useImperativeHandle(ref, () => sheetRef.current as BottomSheet, []);
 
-  const [uncontrolledIndex, setUncontrolledIndex] = useState(defaultIndex);
-  const currentIndex = controlledIndex ?? uncontrolledIndex;
-  const indexRef = useRef(currentIndex);
-  indexRef.current = currentIndex;
   const [canPanDownToClose, setCanPanDownToClose] = useState(() => Platform.OS === 'ios');
   const hasOpenedRef = useRef(false);
+  const indexRef = useRef(index);
+  indexRef.current = index;
 
   const renderBackdrop = useCallback(
     (props: BottomSheetBackdropProps) => {
@@ -78,9 +76,6 @@ export function BaseBottomSheet({
 
   const handleChange = useCallback(
     (nextIndex: number, position: number, type: SNAP_POINT_TYPE) => {
-      if (controlledIndex === undefined) {
-        setUncontrolledIndex(nextIndex);
-      }
       indexRef.current = nextIndex;
 
       if (nextIndex >= 0 && !hasOpenedRef.current) {
@@ -94,14 +89,9 @@ export function BaseBottomSheet({
       onChange?.(nextIndex, position, type);
 
       const updatePan = () => setCanPanDownToClose(nextIndex >= 0);
-
-      if (Platform.OS === 'android') {
-        setTimeout(updatePan, 250);
-      } else {
-        updatePan();
-      }
+      updatePan();
     },
-    [controlledIndex, onChange, onOpen],
+    [onChange, onOpen],
   );
 
   const handleClose = useCallback(() => {
@@ -116,7 +106,7 @@ export function BaseBottomSheet({
   return (
     <BottomSheet
       ref={sheetRef}
-      index={currentIndex}
+      index={index}
       onChange={handleChange}
       onClose={handleClose}
       enablePanDownToClose={canPanDownToClose && enablePanDownToClose}
@@ -125,6 +115,7 @@ export function BaseBottomSheet({
       backdropComponent={renderBackdrop}
       backgroundStyle={{ backgroundColor: colors.bgFourth }}
       handleIndicatorStyle={{ backgroundColor: palette.gray4 }}
+      enableDynamicSizing={enableDynamicSizing}
       {...rest}
     >
       {children}

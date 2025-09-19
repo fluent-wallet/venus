@@ -1,4 +1,11 @@
-import BottomSheet, { snapPoints, BottomSheetWrapper, BottomSheetContent, BottomSheetHeader, type BottomSheetMethods } from '@components/BottomSheet';
+import BottomSheet, {
+  snapPoints,
+  BottomSheetWrapper,
+  BottomSheetContent,
+  BottomSheetHeader,
+  type BottomSheetMethods,
+  InlineBottomSheet,
+} from '@components/BottomSheet';
 import Text from '@components/Text';
 import methods from '@core/WalletCore/Methods';
 import AccountsList from '@modules/AccountsList';
@@ -12,16 +19,17 @@ export type { BottomSheetMethods };
 
 interface Props {
   onClose: () => void;
+  index?: number;
 }
 
-const AccountSelector: React.FC<Props> = ({ onClose }) => {
+const AccountSelector: React.FC<Props> = ({ onClose, index }) => {
   const { colors } = useTheme();
   const { t } = useTranslation();
   const navigation = useNavigation<StackScreenProps<typeof HomeStackName>['navigation']>();
   const bottomSheetRef = useRef<BottomSheetMethods>(null!);
 
   return (
-    <BottomSheet ref={bottomSheetRef} snapPoints={snapPoints.percent75} index={0} onClose={onClose}>
+    <InlineBottomSheet ref={bottomSheetRef} snapPoints={snapPoints.percent75} index={index} onClose={onClose}>
       <BottomSheetWrapper>
         <BottomSheetHeader title={t('common.account')}>
           <Pressable
@@ -44,7 +52,7 @@ const AccountSelector: React.FC<Props> = ({ onClose }) => {
           />
         </BottomSheetContent>
       </BottomSheetWrapper>
-    </BottomSheet>
+    </InlineBottomSheet>
   );
 };
 

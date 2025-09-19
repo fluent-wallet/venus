@@ -5,7 +5,7 @@ import { isAdjustResize } from '@utils/deviceInfo';
 import type BottomSheet from '@gorhom/bottom-sheet';
 import type { SNAP_POINT_TYPE } from '@gorhom/bottom-sheet';
 
-type BottomSheetRouteProps = Omit<BaseBottomSheetProps, 'controlledIndex' | 'defaultIndex' | 'onAfterClose'>;
+type BottomSheetRouteProps = Omit<BaseBottomSheetProps, 'index' | 'onAfterClose'>;
 
 export function BottomSheetRoute({
   showBackDrop = true,
@@ -31,6 +31,12 @@ export function BottomSheetRoute({
     [onChange],
   );
 
+  const handleAfterClose = useCallback(() => {
+    if (navigation.canGoBack()) {
+      navigation.goBack();
+    }
+  }, [navigation]);
+
   useEffect(() => {
     const unsubscribe = navigation.addListener('beforeRemove', (event) => {
       if (currentIndex === -1) {
@@ -45,7 +51,7 @@ export function BottomSheetRoute({
   return (
     <BaseBottomSheet
       ref={sheetRef}
-      defaultIndex={0}
+      index={0}
       showBackDrop={showBackDrop}
       backDropPressBehavior={backDropPressBehavior}
       handlePressBackdrop={handlePressBackdrop}
@@ -55,11 +61,7 @@ export function BottomSheetRoute({
       keyboardBlurBehavior={keyboardBlurBehavior}
       android_keyboardInputMode={android_keyboardInputMode}
       onChange={handleChange}
-      onAfterClose={() => {
-        if (navigation.canGoBack()) {
-          navigation.goBack();
-        }
-      }}
+      onAfterClose={handleAfterClose}
       {...rest}
     />
   );
