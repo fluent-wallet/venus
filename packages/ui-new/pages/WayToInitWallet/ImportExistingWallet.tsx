@@ -92,7 +92,7 @@ const ImportExistingWallet: React.FC<Props> = ({ bottomSheetRef, inImporting, on
       enableHandlePanningGesture={!inAsync}
       enableDynamicSizing
     >
-      <BottomSheetWrapper>
+      <BottomSheetWrapper useBottomSheetView={true}>
         <BottomSheetContent>
           <Pressable
             onPress={() => {

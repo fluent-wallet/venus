@@ -5,18 +5,21 @@ import { clamp } from 'lodash-es';
 import type { ComponentProps } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 
-interface ContentProps extends Omit<ComponentProps<typeof BottomSheetView>, 'children'> {
-  children?: ComponentProps<typeof BottomSheetView>['children'];
+type WithInnerPadding<T extends React.ComponentType<any>> = {
   innerPaddingHorizontal?: boolean;
-}
-
+} & Omit<ComponentProps<T>, 'children'> & {
+    children?: ComponentProps<T>['children'];
+  };
+type WrapperProps = WithInnerPadding<typeof BottomSheetView> & { useBottomSheetView?: boolean };
+type SectionProps = WithInnerPadding<typeof View>;
+type ScrollSectionProps = WithInnerPadding<typeof BottomSheetScrollView>;
 export const BottomSheetWrapper = ({
   children,
   innerPaddingHorizontal = false,
   style,
-  useBottomSheetView = true,
+  useBottomSheetView = false,
   ...props
-}: ContentProps & { useBottomSheetView?: boolean }) => {
+}: WrapperProps & { useBottomSheetView?: boolean }) => {
   const Container = useBottomSheetView ? BottomSheetView : View;
   return (
     <Container style={[styles.wrapper, innerPaddingHorizontal && styles.paddingH16, style]} {...props}>
@@ -25,7 +28,7 @@ export const BottomSheetWrapper = ({
   );
 };
 
-export const BottomSheetHeader = ({ children, title, innerPaddingHorizontal = false, style, ...props }: ContentProps & { title?: string }) => {
+export const BottomSheetHeader = ({ children, title, innerPaddingHorizontal = false, style, ...props }: SectionProps & { title?: string }) => {
   const { colors } = useTheme();
 
   return (
@@ -36,19 +39,19 @@ export const BottomSheetHeader = ({ children, title, innerPaddingHorizontal = fa
   );
 };
 
-export const BottomSheetContent = ({ children, innerPaddingHorizontal = false, style, ...props }: ContentProps) => (
+export const BottomSheetContent = ({ children, innerPaddingHorizontal = false, style, ...props }: SectionProps) => (
   <View style={[styles.contentWrapper, innerPaddingHorizontal && styles.paddingH16, style]} {...props}>
     {children}
   </View>
 );
 
-export const BottomSheetFooter = ({ children, innerPaddingHorizontal = false, style, ...props }: ContentProps) => (
+export const BottomSheetFooter = ({ children, innerPaddingHorizontal = false, style, ...props }: SectionProps) => (
   <View style={[styles.footerWrapper, innerPaddingHorizontal && styles.paddingH16, style]} {...props}>
     {children}
   </View>
 );
 
-export const BottomSheetScrollContent = ({ children, innerPaddingHorizontal = false, style, ...props }: ContentProps) => (
+export const BottomSheetScrollContent = ({ children, innerPaddingHorizontal = false, style, ...props }: ScrollSectionProps) => (
   <BottomSheetScrollView style={[styles.scrollContentWrapper, innerPaddingHorizontal && styles.paddingH16, style]} {...props}>
     {children}
   </BottomSheetScrollView>

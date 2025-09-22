@@ -21,11 +21,11 @@ export function BottomSheetRoute({
 }: BottomSheetRouteProps) {
   const navigation = useNavigation();
   const sheetRef = useRef<BottomSheet>(null);
-  const [currentIndex, setCurrentIndex] = useState(0);
+  const currentIndexRef = useRef(0);
 
   const handleChange = useCallback(
     (nextIndex: number, position: number, type: SNAP_POINT_TYPE) => {
-      setCurrentIndex(nextIndex);
+      currentIndexRef.current = nextIndex;
       onChange?.(nextIndex, position, type);
     },
     [onChange],
@@ -39,14 +39,14 @@ export function BottomSheetRoute({
 
   useEffect(() => {
     const unsubscribe = navigation.addListener('beforeRemove', (event) => {
-      if (currentIndex === -1) {
+      if (currentIndexRef.current === -1) {
         return;
       }
       event.preventDefault();
       sheetRef.current?.close();
     });
     return unsubscribe;
-  }, [navigation, currentIndex]);
+  }, [navigation]);
 
   return (
     <BaseBottomSheet
