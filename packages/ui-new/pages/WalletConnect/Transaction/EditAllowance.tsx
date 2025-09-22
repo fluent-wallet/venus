@@ -1,4 +1,4 @@
-import BottomSheet, {
+import {
   BottomSheetTextInput,
   BottomSheetWrapper,
   BottomSheetScrollContent,

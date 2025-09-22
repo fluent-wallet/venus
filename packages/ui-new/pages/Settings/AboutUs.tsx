@@ -1,11 +1,12 @@
 import BIMWalletLogo from '@assets/icons/swift-shield.webp';
-import BottomSheet, {
+import {
   BottomSheetWrapper,
   BottomSheetHeader,
   BottomSheetFooter,
   BottomSheetContent,
   snapPoints,
   BottomSheetFlatList,
+  BottomSheetRoute,
 } from '@components/BottomSheet';
 import Button from '@components/Button';
 import Text from '@components/Text';
@@ -107,9 +108,8 @@ export const UpdateVersion: React.FC<StackScreenProps<typeof UpdateVersionStackN
 
   const { newVersion } = route.params;
   return (
-    <BottomSheet
+    <BottomSheetRoute
       snapPoints={snapPoints.percent75}
-      isRoute
       backDropPressBehavior={newVersion.force ? 'none' : 'close'}
       enablePanDownToClose={!newVersion.force}
       enableContentPanningGesture={!newVersion.force}
@@ -142,7 +142,7 @@ export const UpdateVersion: React.FC<StackScreenProps<typeof UpdateVersionStackN
           </View>
         </BottomSheetFooter>
       </BottomSheetWrapper>
-    </BottomSheet>
+    </BottomSheetRoute>
   );
 };
 

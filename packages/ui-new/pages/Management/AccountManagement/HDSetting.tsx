@@ -1,12 +1,13 @@
 import { AuthenticationErrorCode, isAuthenticationCanceledError, isAuthenticationError } from '@WalletCoreExtends/Plugins/Authentication/errors';
 import ArrowRight from '@assets/icons/arrow-right2.svg';
-import BottomSheet, {
+import {
   snapPoints,
   BottomSheetWrapper,
   BottomSheetScrollContent,
   BottomSheetHeader,
   BottomSheetFooter,
   type BottomSheetMethods,
+  BottomSheetRoute,
 } from '@components/BottomSheet';
 import Button from '@components/Button';
 import Checkbox from '@components/Checkbox';
@@ -167,7 +168,7 @@ const HDManagement: React.FC<StackScreenProps<typeof HDSettingStackName>> = ({ n
   };
 
   return (
-    <BottomSheet ref={bottomSheetRef} snapPoints={snapPoints.large} isRoute>
+    <BottomSheetRoute ref={bottomSheetRef} snapPoints={snapPoints.large}>
       <BottomSheetWrapper innerPaddingHorizontal>
         <BottomSheetHeader title={t('account.HDWallet.select.title')} />
         <BottomSheetScrollContent>
@@ -275,7 +276,7 @@ const HDManagement: React.FC<StackScreenProps<typeof HDSettingStackName>> = ({ n
           </Button>
         </BottomSheetFooter>
       </BottomSheetWrapper>
-    </BottomSheet>
+    </BottomSheetRoute>
   );
 };
 

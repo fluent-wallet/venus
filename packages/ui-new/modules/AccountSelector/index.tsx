@@ -1,11 +1,4 @@
-import BottomSheet, {
-  snapPoints,
-  BottomSheetWrapper,
-  BottomSheetContent,
-  BottomSheetHeader,
-  type BottomSheetMethods,
-  InlineBottomSheet,
-} from '@components/BottomSheet';
+import { snapPoints, BottomSheetWrapper, BottomSheetContent, BottomSheetHeader, type BottomSheetMethods, InlineBottomSheet } from '@components/BottomSheet';
 import Text from '@components/Text';
 import methods from '@core/WalletCore/Methods';
 import AccountsList from '@modules/AccountsList';

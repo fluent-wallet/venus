@@ -1,11 +1,13 @@
 import ScanBorder from '@assets/icons/scan-border.svg';
-import BottomSheet, {
+import {
   type BottomSheetMethods,
   snapPoints,
   BottomSheetWrapper,
   BottomSheetHeader,
   BottomSheetContent,
   BottomSheetFooter,
+  BottomSheetRoute,
+  InlineBottomSheet,
 } from '@components/BottomSheet';
 import Button from '@components/Button';
 import Spinner from '@components/Spinner';
@@ -282,125 +284,134 @@ const ExternalInputHandler: React.FC<Props> = ({ navigation, onConfirm, onClose,
     }
   }, []);
 
-  const isRoute = !onConfirm;
+  const sheetBody = (
+    <BottomSheetWrapper innerPaddingHorizontal>
+      <BottomSheetHeader title={externalData ? 'Linking' : t('scan.title')} />
+      <BottomSheetContent>
+        {!externalData && hasCameraPermission && (
+          <>
+            <View style={styles.cameraWrapper}>
+              <CameraView
+                ref={cameraRef}
+                facing="back"
+                style={styles.camera}
+                barcodeScannerSettings={{ barcodeTypes: ['qr'] }}
+                onBarcodeScanned={handleCodeScan}
+              />
+
+              {parseStatus?.type === ScanStatusType.ConnectingWC && (
+                <>
+                  <View style={styles.cameraMask} />
+                  <Spinner style={{ position: 'absolute' }} width={68} height={68} color={reverseColors.iconPrimary} backgroundColor={colors.iconPrimary} />
+                </>
+              )}
+            </View>
+            <ScanBorder style={styles.scanBorder} color={colors.borderFourth} pointerEvents="none" />
+          </>
+        )}
+        {(externalData || hasCameraPermission) && parseStatus?.message && (
+          <Text style={[styles.message, { color: parseStatus?.type === ScanStatusType.ConnectingWC ? colors.up : colors.down }]}>{parseStatus.message}</Text>
+        )}
+
+        {!externalData && !hasCameraPermission && (
+          <>
+            {!hasRejectCameraPermission && (
+              <>
+                <Text style={[styles.tip, { color: colors.down, marginBottom: 8 }]}>{t('scan.permission.title')}</Text>
+                <Text style={[styles.tip, { color: colors.textPrimary }]}>{t('scan.permission.describe')}</Text>
+              </>
+            )}
+            {hasRejectCameraPermission && (
+              <>
+                <Text style={[styles.tip, { color: colors.textPrimary, marginBottom: 8 }]}>{t('scan.permission.reject.title')}</Text>
+                <Text style={[styles.tip, { color: colors.textPrimary }]}>
+                  <Trans i18nKey={'scan.permission.reject.describe'}>
+                    Unable to scan. Please <Text style={{ color: colors.down }}>open Camera</Text> in the system permission.
+                  </Trans>
+                </Text>
+              </>
+            )}
+          </>
+        )}
+      </BottomSheetContent>
+      <BottomSheetFooter>
+        {!externalData && hasCameraPermission && (
+          <Button testID="photos" style={styles.photos} onPress={pickImage}>
+            {t('scan.photos')}
+          </Button>
+        )}
+        {!externalData && !hasCameraPermission && hasRejectCameraPermission && (
+          <View style={styles.btnArea}>
+            <Button
+              testID="dismiss"
+              style={styles.btn}
+              onPress={() => {
+                if (bottomSheetRef?.current) {
+                  bottomSheetRef.current.close();
+                } else {
+                  if (navigation?.canGoBack()) {
+                    navigation.goBack();
+                  }
+                }
+              }}
+              size="small"
+            >
+              {t('common.dismiss')}
+            </Button>
+            <Button
+              testID="openSettings"
+              style={styles.btn}
+              onPress={() => {
+                Linking.openSettings();
+              }}
+              size="small"
+            >
+              {t('scan.permission.reject.openSettings')}
+            </Button>
+          </View>
+        )}
+        {externalData && parseStatus && parseStatus?.type !== ScanStatusType.ConnectingWC && (
+          <View style={styles.btnArea}>
+            <Button
+              testID="dismiss"
+              style={styles.btn}
+              onPress={() => {
+                if (bottomSheetRef?.current) {
+                  bottomSheetRef.current.close();
+                } else {
+                  if (navigation?.canGoBack()) {
+                    navigation.goBack();
+                  }
+                }
+              }}
+              size="small"
+            >
+              {t('common.dismiss')}
+            </Button>
+          </View>
+        )}
+      </BottomSheetFooter>
+    </BottomSheetWrapper>
+  );
+
+  if (onConfirm) {
+    return (
+      <InlineBottomSheet
+        ref={bottomSheetRef}
+        snapPoints={externalData ? snapPoints.percent40 : snapPoints.large}
+        index={0}
+        onOpen={onBottomSheetOpen}
+        onClose={onClose}
+      >
+        {sheetBody}
+      </InlineBottomSheet>
+    );
+  }
 
   return (
-    <BottomSheet
-      ref={bottomSheetRef}
-      snapPoints={externalData ? snapPoints.percent40 : snapPoints.large}
-      isRoute={!onConfirm}
-      index={isRoute ? undefined : 0}
-      onOpen={onBottomSheetOpen}
-      onClose={isRoute ? undefined : onClose}
-    >
-      <BottomSheetWrapper innerPaddingHorizontal>
-        <BottomSheetHeader title={externalData ? 'Linking' : t('scan.title')} />
-        <BottomSheetContent>
-          {!externalData && hasCameraPermission && (
-            <>
-              <View style={styles.cameraWrapper}>
-                <CameraView
-                  ref={cameraRef}
-                  facing="back"
-                  style={styles.camera}
-                  barcodeScannerSettings={{ barcodeTypes: ['qr'] }}
-                  onBarcodeScanned={handleCodeScan}
-                />
-
-                {parseStatus?.type === ScanStatusType.ConnectingWC && (
-                  <>
-                    <View style={styles.cameraMask} />
-                    <Spinner style={{ position: 'absolute' }} width={68} height={68} color={reverseColors.iconPrimary} backgroundColor={colors.iconPrimary} />
-                  </>
-                )}
-              </View>
-              <ScanBorder style={styles.scanBorder} color={colors.borderFourth} pointerEvents="none" />
-            </>
-          )}
-          {(externalData || hasCameraPermission) && parseStatus?.message && (
-            <Text style={[styles.message, { color: parseStatus?.type === ScanStatusType.ConnectingWC ? colors.up : colors.down }]}>{parseStatus.message}</Text>
-          )}
-
-          {!externalData && !hasCameraPermission && (
-            <>
-              {!hasRejectCameraPermission && (
-                <>
-                  <Text style={[styles.tip, { color: colors.down, marginBottom: 8 }]}>{t('scan.permission.title')}</Text>
-                  <Text style={[styles.tip, { color: colors.textPrimary }]}>{t('scan.permission.describe')}</Text>
-                </>
-              )}
-              {hasRejectCameraPermission && (
-                <>
-                  <Text style={[styles.tip, { color: colors.textPrimary, marginBottom: 8 }]}>{t('scan.permission.reject.title')}</Text>
-                  <Text style={[styles.tip, { color: colors.textPrimary }]}>
-                    <Trans i18nKey={'scan.permission.reject.describe'}>
-                      Unable to scan. Please <Text style={{ color: colors.down }}>open Camera</Text> in the system permission.
-                    </Trans>
-                  </Text>
-                </>
-              )}
-            </>
-          )}
-        </BottomSheetContent>
-        <BottomSheetFooter>
-          {!externalData && hasCameraPermission && (
-            <Button testID="photos" style={styles.photos} onPress={pickImage}>
-              {t('scan.photos')}
-            </Button>
-          )}
-          {!externalData && !hasCameraPermission && hasRejectCameraPermission && (
-            <View style={styles.btnArea}>
-              <Button
-                testID="dismiss"
-                style={styles.btn}
-                onPress={() => {
-                  if (bottomSheetRef?.current) {
-                    bottomSheetRef.current.close();
-                  } else {
-                    if (navigation?.canGoBack()) {
-                      navigation.goBack();
-                    }
-                  }
-                }}
-                size="small"
-              >
-                {t('common.dismiss')}
-              </Button>
-              <Button
-                testID="openSettings"
-                style={styles.btn}
-                onPress={() => {
-                  Linking.openSettings();
-                }}
-                size="small"
-              >
-                {t('scan.permission.reject.openSettings')}
-              </Button>
-            </View>
-          )}
-          {externalData && parseStatus && parseStatus?.type !== ScanStatusType.ConnectingWC && (
-            <View style={styles.btnArea}>
-              <Button
-                testID="dismiss"
-                style={styles.btn}
-                onPress={() => {
-                  if (bottomSheetRef?.current) {
-                    bottomSheetRef.current.close();
-                  } else {
-                    if (navigation?.canGoBack()) {
-                      navigation.goBack();
-                    }
-                  }
-                }}
-                size="small"
-              >
-                {t('common.dismiss')}
-              </Button>
-            </View>
-          )}
-        </BottomSheetFooter>
-      </BottomSheetWrapper>
-    </BottomSheet>
+    <BottomSheetRoute ref={bottomSheetRef} snapPoints={externalData ? snapPoints.percent40 : snapPoints.large} onOpen={onBottomSheetOpen}>
+      {sheetBody}
+    </BottomSheetRoute>
   );
 };
 

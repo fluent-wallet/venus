@@ -1,4 +1,11 @@
-import BottomSheet, { BottomSheetWrapper, BottomSheetHeader, BottomSheetContent, BottomSheetFooter, type BottomSheetMethods } from '@components/BottomSheet';
+import {
+  BottomSheetWrapper,
+  BottomSheetHeader,
+  BottomSheetContent,
+  BottomSheetFooter,
+  type BottomSheetMethods,
+  BottomSheetRoute,
+} from '@components/BottomSheet';
 import Button from '@components/Button';
 import HourglassLoading from '@components/Loading/Hourglass';
 import Text from '@components/Text';
@@ -246,10 +253,9 @@ const SpeedUp: React.FC<StackScreenProps<typeof SpeedUpStackName>> = ({ navigati
 
   return (
     <>
-      <BottomSheet
+      <BottomSheetRoute
         ref={bottomSheetRef}
         snapPoints={snapPoints}
-        isRoute
         enablePanDownToClose={!inSending}
         enableContentPanningGesture={!inSending}
         enableHandlePanningGesture={!inSending}
@@ -338,7 +344,7 @@ const SpeedUp: React.FC<StackScreenProps<typeof SpeedUpStackName>> = ({ navigati
             </View>
           </BottomSheetFooter>
         </BottomSheetWrapper>
-      </BottomSheet>
+      </BottomSheetRoute>
       {customizeGasSetting && showCustomizeSetting && estimateCurrentGasPrice && (
         <CustomizeGasSetting
           customizeGasSetting={customizeGasSetting}

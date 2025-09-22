@@ -1,5 +1,5 @@
 import ArrowRight from '@assets/icons/arrow-right2.svg';
-import BottomSheet, { snapPoints, BottomSheetWrapper, BottomSheetScrollContent, BottomSheetFooter } from '@components/BottomSheet';
+import { snapPoints, BottomSheetWrapper, BottomSheetScrollContent, BottomSheetFooter, BottomSheetRoute } from '@components/BottomSheet';
 import Button from '@components/Button';
 import Icon from '@components/Icon';
 import Text from '@components/Text';
@@ -55,10 +55,9 @@ export default function WalletConnectProposal() {
 
   return (
     <>
-      <BottomSheet
+      <BottomSheetRoute
         enablePanDownToClose={!inApproving}
         enableContentPanningGesture={!inApproving}
-        isRoute
         snapPoints={snapPoints.large}
         onClose={() => handleReject()}
       >
@@ -112,7 +111,7 @@ export default function WalletConnectProposal() {
             </View>
           </BottomSheetFooter>
         </BottomSheetWrapper>
-      </BottomSheet>
+      </BottomSheetRoute>
       {showAccountSelector && <AccountSelector onClose={() => setShowAccountSelector(false)} />}
     </>
   );

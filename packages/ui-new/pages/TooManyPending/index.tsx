@@ -1,5 +1,5 @@
 import Img from '@assets/images/backup.webp';
-import BottomSheet, {
+import {
   BottomSheetWrapper,
   BottomSheetHeader,
   BottomSheetContent,
