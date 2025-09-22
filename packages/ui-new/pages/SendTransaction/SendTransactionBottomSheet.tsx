@@ -45,8 +45,8 @@ const SendTransactionBottomSheet = ({ ref, ...props }: Props) => {
 
   const { snapPoints, isRoute: _ignored, index: _index, ...rest } = props;
   return (
-    <BottomSheetRoute ref={ref} snapPoints={snapPoints || defaultSnapPoints.large} {...rest}>
-      <BottomSheetWrapper>
+    <BottomSheetRoute ref={ref} snapPoints={snapPoints || defaultSnapPoints.percent80} {...rest}>
+      <BottomSheetWrapper useBottomSheetView={true}>
         {title && <BottomSheetHeader title={title} />}
         {children}
       </BottomSheetWrapper>

@@ -3786,9 +3786,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@gorhom/bottom-sheet@npm:^5.1.6":
-  version: 5.1.6
-  resolution: "@gorhom/bottom-sheet@npm:5.1.6"
+"@gorhom/bottom-sheet@npm:5.2.6":
+  version: 5.2.6
+  resolution: "@gorhom/bottom-sheet@npm:5.2.6"
   dependencies:
     "@gorhom/portal": 1.0.14
     invariant: ^2.2.4
@@ -3798,13 +3798,13 @@ __metadata:
     react: "*"
     react-native: "*"
     react-native-gesture-handler: ">=2.16.1"
-    react-native-reanimated: ">=3.16.0"
+    react-native-reanimated: "*"
   peerDependenciesMeta:
     "@types/react":
       optional: true
     "@types/react-native":
       optional: true
-  checksum: 7217501a8688a560b2d7be673ba51edeb4489e13184e7510706ce2b3e52c225cbc254922de23ac40fdd18f1df5a7c41b3ec20ac0700a55314fad0ed8a7b19a26
+  checksum: 1afdb8a11024dda72b67d2358d907a0241478ad0ee8aebedc6ef4413ed0571af3eec678229ba5f8cbe15dbfc8fd508dfbd64e5685b68209a68fca85cd848d34f
   languageName: node
   linkType: hard
 
@@ -17728,7 +17728,7 @@ __metadata:
     "@ethersproject/abi": ^5.8.0
     "@ethersproject/hdnode": ^5.8.0
     "@ethersproject/shims": ^5.8.0
-    "@gorhom/bottom-sheet": ^5.1.6
+    "@gorhom/bottom-sheet": 5.2.6
     "@json-rpc-tools/utils": ^1.7.6
     "@metamask/gas-fee-controller": 15.0.0
     "@noble/secp256k1": ^2.3.0

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 import { useNavigation } from '@react-navigation/native';
 import { BaseBottomSheet, type BaseBottomSheetProps } from './BaseBottomSheet';
 import { isAdjustResize } from '@utils/deviceInfo';
@@ -39,9 +39,9 @@ export function BottomSheetRoute({
 
   useEffect(() => {
     const unsubscribe = navigation.addListener('beforeRemove', (event) => {
-      if (currentIndexRef.current === -1) {
-        return;
-      }
+      if (currentIndexRef.current === -1) return;
+      const actionType = event.data?.action?.type;
+      if (actionType === 'RESET' || actionType === 'NAVIGATE') return;
       event.preventDefault();
       sheetRef.current?.close();
     });

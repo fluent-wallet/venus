@@ -24,7 +24,7 @@ const SendTransactionStep3Amount: React.FC<SendTransactionScreenProps<typeof Sen
   const asset = route.params.asset;
 
   return (
-    <SendTransactionBottomSheet title={t('tx.send.title')}>
+    <SendTransactionBottomSheet title={t('tx.send.title')} isRoute snapPoints={['75%']}>
       <BottomSheetScrollContent innerPaddingHorizontal>
         {route.params.nftItemDetail && (
           <>
