@@ -23,7 +23,7 @@ const AccountSelector: React.FC<Props> = ({ onClose, isOpen }) => {
 
   return (
     <InlineBottomSheet ref={bottomSheetRef} snapPoints={snapPoints.percent75} index={isOpen ? 0 : -1} onClose={onClose}>
-      <BottomSheetWrapper useBottomSheetView={false}>
+      <BottomSheetWrapper>
         <BottomSheetHeader title={t('common.account')}>
           <Pressable
             testID="edit"
