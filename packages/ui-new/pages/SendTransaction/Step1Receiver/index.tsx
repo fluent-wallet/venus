@@ -138,7 +138,7 @@ const SendTransactionStep1Receiver: React.FC<SendTransactionScreenProps<typeof S
 
   return (
     <>
-      <SendTransactionBottomSheet>
+      <SendTransactionBottomSheet isRoute>
         <BottomSheetHeader title={t('tx.send.title')}>
           <Text style={[styles.receiver, { color: colors.textSecondary }]}>{t('tx.send.receiver')}</Text>
           <TextInput

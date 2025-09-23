@@ -1,6 +1,13 @@
 import Failed from '@assets/icons/message-fail.svg';
 import Warning from '@assets/icons/warn.svg';
-import BottomSheet, { BottomSheetWrapper, BottomSheetHeader, BottomSheetContent, BottomSheetFooter, type BottomSheetMethods } from '@components/BottomSheet';
+import {
+  BottomSheetWrapper,
+  BottomSheetHeader,
+  BottomSheetContent,
+  BottomSheetFooter,
+  type BottomSheetMethods,
+  InlineBottomSheet,
+} from '@components/BottomSheet';
 import Button from '@components/Button';
 import Text from '@components/Text';
 import { useCurrentNetwork } from '@core/WalletCore/Plugins/ReactInject';
@@ -89,7 +96,7 @@ const CustomizeAdvanceSetting: React.FC<Props> = ({ customizeAdvanceSetting, est
   );
 
   return (
-    <BottomSheet ref={bottomSheetRef} snapPoints={snapPoints} index={0} onClose={onClose}>
+    <InlineBottomSheet ref={bottomSheetRef} snapPoints={snapPoints} index={0} onClose={onClose}>
       <BottomSheetWrapper innerPaddingHorizontal>
         <BottomSheetHeader title={t('tx.gasFee.advanceSetting.title')} />
         <BottomSheetContent style={styles.contentStyle}>
@@ -144,7 +151,7 @@ const CustomizeAdvanceSetting: React.FC<Props> = ({ customizeAdvanceSetting, est
           </View>
         </BottomSheetFooter>
       </BottomSheetWrapper>
-    </BottomSheet>
+    </InlineBottomSheet>
   );
 };
 

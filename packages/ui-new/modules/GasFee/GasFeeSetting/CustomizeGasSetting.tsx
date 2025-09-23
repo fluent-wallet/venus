@@ -1,6 +1,13 @@
 import Failed from '@assets/icons/message-fail.svg';
 import Warning from '@assets/icons/warn.svg';
-import BottomSheet, { BottomSheetWrapper, BottomSheetHeader, BottomSheetContent, BottomSheetFooter, type BottomSheetMethods } from '@components/BottomSheet';
+import {
+  BottomSheetWrapper,
+  BottomSheetHeader,
+  BottomSheetContent,
+  BottomSheetFooter,
+  type BottomSheetMethods,
+  InlineBottomSheet,
+} from '@components/BottomSheet';
 import Button from '@components/Button';
 import Text from '@components/Text';
 import _TextInput from '@components/TextInput';
@@ -174,7 +181,7 @@ const CustomizeGasSetting: React.FC<Props> = ({ customizeGasSetting, estimateCur
   );
 
   return (
-    <BottomSheet
+    <InlineBottomSheet
       ref={bottomSheetRef}
       snapPoints={customizeGasSetting.suggestedMaxFeePerGas ? (!force155 ? snapPoints1559 : snapPoints155) : snapPoints155}
       index={0}
@@ -257,7 +264,7 @@ const CustomizeGasSetting: React.FC<Props> = ({ customizeGasSetting, estimateCur
           </View>
         </BottomSheetFooter>
       </BottomSheetWrapper>
-    </BottomSheet>
+    </InlineBottomSheet>
   );
 };
 

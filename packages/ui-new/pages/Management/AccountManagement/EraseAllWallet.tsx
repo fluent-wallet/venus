@@ -1,4 +1,11 @@
-import BottomSheet, { BottomSheetWrapper, BottomSheetHeader, BottomSheetContent, BottomSheetFooter, type BottomSheetMethods } from '@components/BottomSheet';
+import {
+  BottomSheetWrapper,
+  BottomSheetHeader,
+  BottomSheetContent,
+  BottomSheetFooter,
+  type BottomSheetMethods,
+  BottomSheetRoute,
+} from '@components/BottomSheet';
 import Button from '@components/Button';
 import Text from '@components/Text';
 import methods from '@core/WalletCore/Methods';
@@ -47,7 +54,7 @@ const EraseAllWallet: React.FC<Props> = ({ navigation }) => {
   }, []);
 
   return (
-    <BottomSheet ref={bottomSheetRef} snapPoints={snapPoints} isRoute>
+    <BottomSheetRoute ref={bottomSheetRef} snapPoints={snapPoints}>
       <BottomSheetWrapper innerPaddingHorizontal>
         <BottomSheetHeader title={t('account.action.eraseAll.title')} />
         <BottomSheetContent>
@@ -64,7 +71,7 @@ const EraseAllWallet: React.FC<Props> = ({ navigation }) => {
           </View>
         </BottomSheetFooter>
       </BottomSheetWrapper>
-    </BottomSheet>
+    </BottomSheetRoute>
   );
 };
 

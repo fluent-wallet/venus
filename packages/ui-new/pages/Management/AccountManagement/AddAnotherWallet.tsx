@@ -1,7 +1,7 @@
 import ExistWallet from '@assets/icons/wallet-Imported.webp';
 import BSIMCardWallet from '@assets/icons/wallet-bsim.webp';
 import HDWallet from '@assets/icons/wallet-hd.webp';
-import BottomSheet, { BottomSheetWrapper, BottomSheetContent, BottomSheetHeader, type BottomSheetMethods } from '@components/BottomSheet';
+import { BottomSheetWrapper, BottomSheetContent, BottomSheetHeader, type BottomSheetMethods, BottomSheetRoute } from '@components/BottomSheet';
 import HourglassLoading from '@components/Loading/Hourglass';
 import Text from '@components/Text';
 import plugins from '@core/WalletCore/Plugins';
@@ -96,10 +96,9 @@ const AddAnotherWallet: React.FC<Props> = ({ navigation }) => {
   const inAsync = inConnecting || inCreating || inImporting;
   return (
     <>
-      <BottomSheet
+      <BottomSheetRoute
         ref={bottomSheetRef}
         snapPoints={snapPoints}
-        isRoute
         onClose={() => Platform.OS === 'android' && setShowImportExistWallet(false)}
         enablePanDownToClose={!inAsync}
         enableContentPanningGesture={!inAsync}
@@ -145,7 +144,7 @@ const AddAnotherWallet: React.FC<Props> = ({ navigation }) => {
             </Pressable>
           </BottomSheetContent>
         </BottomSheetWrapper>
-      </BottomSheet>
+      </BottomSheetRoute>
       {showImportExistWallet && <ImportExistingWallet bottomSheetRef={importExistRef} onSuccessConfirm={handleImportExistWallet} inImporting={inImporting} />}
     </>
   );

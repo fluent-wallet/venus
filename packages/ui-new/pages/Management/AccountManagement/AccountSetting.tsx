@@ -1,12 +1,13 @@
 import ArrowRight from '@assets/icons/arrow-right2.svg';
 import Delete from '@assets/icons/delete.svg';
-import BottomSheet, {
+import {
   snapPoints,
   BottomSheetWrapper,
   BottomSheetScrollContent,
   BottomSheetHeader,
   BottomSheetFooter,
   type BottomSheetMethods,
+  BottomSheetRoute,
 } from '@components/BottomSheet';
 import Button from '@components/Button';
 import HourglassLoading from '@components/Loading/Hourglass';
@@ -106,10 +107,9 @@ const AccountConfig: React.FC<StackScreenProps<typeof AccountSettingStackName>> 
 
   return (
     <>
-      <BottomSheet
+      <BottomSheetRoute
         ref={bottomSheetRef}
         snapPoints={snapPoints.large}
-        isRoute
         enablePanDownToClose={!inDelete}
         enableContentPanningGesture={!inDelete}
         enableHandlePanningGesture={!inDelete}
@@ -166,8 +166,8 @@ const AccountConfig: React.FC<StackScreenProps<typeof AccountSettingStackName>> 
             </Button>
           </BottomSheetFooter>
         </BottomSheetWrapper>
-      </BottomSheet>
-      {showDeleteBottomSheet && <DeleteConfirm onConfirm={handleConfirmDelete} onClose={() => setShowDeleteBottomSheet(false)} />}
+      </BottomSheetRoute>
+      <DeleteConfirm onConfirm={handleConfirmDelete} onClose={() => setShowDeleteBottomSheet(false)} isOpen={showDeleteBottomSheet} />
     </>
   );
 };

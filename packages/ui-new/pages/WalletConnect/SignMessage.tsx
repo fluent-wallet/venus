@@ -1,7 +1,14 @@
 import { BSIMError } from '@WalletCoreExtends/Plugins/BSIM/BSIMSDK';
 import { BSIMEventTypesName } from '@WalletCoreExtends/Plugins/BSIM/types';
 import Copy from '@assets/icons/copy.svg';
-import BottomSheet, { snapPoints, BottomSheetWrapper, BottomSheetHeader, BottomSheetScrollContent, BottomSheetFooter } from '@components/BottomSheet';
+import {
+  snapPoints,
+  BottomSheetWrapper,
+  BottomSheetHeader,
+  BottomSheetScrollContent,
+  BottomSheetFooter,
+  BottomSheetRoute,
+} from '@components/BottomSheet';
 import Button from '@components/Button';
 import Icon from '@components/Icon';
 import Text from '@components/Text';
@@ -207,10 +214,9 @@ function WalletConnectSignMessage() {
 
   return (
     <>
-      <BottomSheet
+      <BottomSheetRoute
         enablePanDownToClose={!approveLoading}
         enableContentPanningGesture={!approveLoading}
-        isRoute
         snapPoints={snapPoints.large}
         onClose={handleReject}
       >
@@ -251,7 +257,7 @@ function WalletConnectSignMessage() {
             </View>
           </BottomSheetFooter>
         </BottomSheetWrapper>
-      </BottomSheet>
+      </BottomSheetRoute>
       {bsimEvent && (
         <BSIMVerify
           bsimEvent={bsimEvent}

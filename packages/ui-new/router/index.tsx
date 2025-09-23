@@ -71,6 +71,7 @@ import TransactionDetail from '@pages/TransactionDetail';
 import { useTranslation } from 'react-i18next';
 import { getEventBus } from '@WalletCoreExtends/index';
 import { AUTHENTICATION_PASSWORD_REQUEST } from '@WalletCoreExtends/Plugins/Authentication';
+import Button from '@components/Button';
 
 const RootStack = createNativeStackNavigator<RootStackParamList>();
 const screenOptions = {

@@ -1,4 +1,11 @@
-import BottomSheet, { BottomSheetWrapper, BottomSheetHeader, BottomSheetContent, BottomSheetFooter, type BottomSheetMethods } from '@components/BottomSheet';
+import {
+  BottomSheetWrapper,
+  BottomSheetHeader,
+  BottomSheetContent,
+  BottomSheetFooter,
+  type BottomSheetMethods,
+  InlineBottomSheet,
+} from '@components/BottomSheet';
 import Button from '@components/Button';
 import Text from '@components/Text';
 import { useTheme } from '@react-navigation/native';
@@ -11,15 +18,16 @@ import { styles } from './CustomizeGasSetting';
 interface Props {
   onPressUse: () => void;
   onClose: () => void;
+  isOpen: boolean;
 }
 
-const DappParamsWarning: React.FC<Props> = ({ onClose, onPressUse }) => {
+const DappParamsWarning: React.FC<Props> = ({ onClose, onPressUse, isOpen }) => {
   const { t } = useTranslation();
   const { colors } = useTheme();
   const bottomSheetRef = useRef<BottomSheetMethods>(null!);
 
   return (
-    <BottomSheet ref={bottomSheetRef} snapPoints={snapPoints} index={0} onClose={onClose}>
+    <InlineBottomSheet ref={bottomSheetRef} snapPoints={snapPoints} index={isOpen ? 0 : -1} onClose={onClose}>
       <BottomSheetWrapper innerPaddingHorizontal>
         <BottomSheetHeader title={t('tx.gasFee.dappParams.title')} />
         <BottomSheetContent>
@@ -50,7 +58,7 @@ const DappParamsWarning: React.FC<Props> = ({ onClose, onPressUse }) => {
           </View>
         </BottomSheetFooter>
       </BottomSheetWrapper>
-    </BottomSheet>
+    </InlineBottomSheet>
   );
 };
 

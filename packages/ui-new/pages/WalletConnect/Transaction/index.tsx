@@ -1,7 +1,14 @@
 import { BSIMError } from '@WalletCoreExtends/Plugins/BSIM/BSIMSDK';
 import { BSIMEventTypesName } from '@WalletCoreExtends/Plugins/BSIM/types';
 import MessageFail from '@assets/icons/message-fail.svg';
-import BottomSheet, { snapPoints, BottomSheetWrapper, BottomSheetHeader, BottomSheetScrollContent, BottomSheetFooter } from '@components/BottomSheet';
+import {
+  snapPoints,
+  BottomSheetWrapper,
+  BottomSheetHeader,
+  BottomSheetScrollContent,
+  BottomSheetFooter,
+  BottomSheetRoute,
+} from '@components/BottomSheet';
 import Button from '@components/Button';
 import Text from '@components/Text';
 import methods from '@core/WalletCore/Methods';
@@ -333,7 +340,7 @@ function WalletConnectTransaction() {
 
   return (
     <>
-      <BottomSheet isRoute snapPoints={snapPoints.large} onClose={() => handleReject()}>
+      <BottomSheetRoute snapPoints={snapPoints.large} onClose={() => handleReject()}>
         <BottomSheetWrapper>
           <BottomSheetHeader title={t('wc.dapp.tx.title')} />
           <BottomSheetScrollContent>
@@ -394,11 +401,16 @@ function WalletConnectTransaction() {
             </Button>
           </View>
         </BottomSheetFooter>
-      </BottomSheet>
+      </BottomSheetRoute>
 
-      {showEditAllowance && parseData && (
-        <EditAllowance parseData={parseData} savedValue={allowanceValue} onSave={handleSaveEditAllowance} onClose={() => setShowEditAllowance(false)} />
-      )}
+      <EditAllowance
+        isOpen={!!(showEditAllowance && parseData)}
+        parseData={parseData}
+        savedValue={allowanceValue}
+        onSave={handleSaveEditAllowance}
+        onClose={() => setShowEditAllowance(false)}
+      />
+
       <GasFeeSetting
         ref={gasSettingMethods}
         show={showGasFeeSetting}
@@ -422,9 +434,12 @@ function WalletConnectTransaction() {
           onRetry={handleApprove}
         />
       )}
-      {showDappParamsWarning && (
-        <DappParamsWarning onClose={() => setShowDappParamsWarning(false)} onPressUse={() => gasSettingMethods.current?.resetCustomizeSetting?.()} />
-      )}
+
+      <DappParamsWarning
+        isOpen={!!showDappParamsWarning}
+        onClose={() => setShowDappParamsWarning(false)}
+        onPressUse={() => gasSettingMethods.current?.resetCustomizeSetting?.()}
+      />
     </>
   );
 }

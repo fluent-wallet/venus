@@ -1,7 +1,7 @@
 import PoundKey from '@assets/icons/pound-key.svg';
 // import Share from '@assets/icons/share.svg';
 import Logo from '@assets/images/swift-shield-QRCode.webp';
-import BottomSheet, { snapPoints, BottomSheetWrapper, BottomSheetScrollContent, BottomSheetHeader } from '@components/BottomSheet';
+import { snapPoints, BottomSheetWrapper, BottomSheetScrollContent, BottomSheetHeader, BottomSheetRoute } from '@components/BottomSheet';
 import Text from '@components/Text';
 import type { AssetInfo } from '@core/WalletCore/Plugins/AssetsTracker/types';
 import { NetworkType, useCurrentAccount, useCurrentAddressValue, useCurrentNetwork } from '@core/WalletCore/Plugins/ReactInject';
@@ -64,7 +64,7 @@ const Receive: React.FC<Props> = ({ navigation }) => {
 
   return (
     <>
-      <BottomSheet snapPoints={snapPoints.large} isRoute>
+      <BottomSheetRoute snapPoints={snapPoints.large}>
         <BottomSheetWrapper>
           <BottomSheetHeader title={t('receive.title')} />
           <BottomSheetScrollContent>
@@ -132,20 +132,20 @@ const Receive: React.FC<Props> = ({ navigation }) => {
             </View>
           </BottomSheetScrollContent>
         </BottomSheetWrapper>
-      </BottomSheet>
-      {showSetAsset && (
-        <ReceiveSetAsset
-          selectedAsset={selectedAsset}
-          amount={amount}
-          onConfirm={({ asset, amount }) => {
-            setSelectedAsset(asset);
-            if (amount) {
-              setAmount(amount);
-            }
-          }}
-          onClose={() => setShowSetAsset(false)}
-        />
-      )}
+      </BottomSheetRoute>
+
+      <ReceiveSetAsset
+        isOpen={showSetAsset}
+        selectedAsset={selectedAsset}
+        amount={amount}
+        onConfirm={({ asset, amount }) => {
+          setSelectedAsset(asset);
+          if (amount) {
+            setAmount(amount);
+          }
+        }}
+        onClose={() => setShowSetAsset(false)}
+      />
     </>
   );
 };

@@ -1,4 +1,4 @@
-import BottomSheet, { BottomSheetWrapper, BottomSheetHeader, BottomSheetContent, type BottomSheetMethods } from '@components/BottomSheet';
+import { BottomSheetWrapper, BottomSheetHeader, BottomSheetContent, type BottomSheetMethods, BottomSheetRoute } from '@components/BottomSheet';
 import Checkbox from '@components/Checkbox';
 import Text from '@components/Text';
 import { Lang, setI18nLanguage, useLang } from '@hooks/useI18n';
@@ -23,7 +23,7 @@ const Language: React.FC<StackScreenProps<typeof LanguageStackName>> = () => {
   }, []);
 
   return (
-    <BottomSheet ref={bottomSheetRef} snapPoints={snapPoints} isRoute>
+    <BottomSheetRoute ref={bottomSheetRef} snapPoints={snapPoints}>
       <BottomSheetWrapper>
         <BottomSheetHeader title={t('settings.language.title')} />
         <BottomSheetContent>
@@ -53,7 +53,7 @@ const Language: React.FC<StackScreenProps<typeof LanguageStackName>> = () => {
           </Pressable>
         </BottomSheetContent>
       </BottomSheetWrapper>
-    </BottomSheet>
+    </BottomSheetRoute>
   );
 };
 

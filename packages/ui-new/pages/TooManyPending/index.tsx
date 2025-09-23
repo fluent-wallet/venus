@@ -1,10 +1,17 @@
 import Img from '@assets/images/backup.webp';
-import BottomSheet, { BottomSheetWrapper, BottomSheetHeader, BottomSheetContent, BottomSheetFooter, type BottomSheetMethods } from '@components/BottomSheet';
+import {
+  BottomSheetWrapper,
+  BottomSheetHeader,
+  BottomSheetContent,
+  BottomSheetFooter,
+  type BottomSheetMethods,
+  BottomSheetRoute,
+} from '@components/BottomSheet';
 import Button from '@components/Button';
 import Text from '@components/Text';
 import plugins from '@core/WalletCore/Plugins';
 import { useCurrentNetwork } from '@core/WalletCore/Plugins/ReactInject';
-import { type IWCSendTransactionEvent } from '@core/WalletCore/Plugins/WalletConnect/types';
+import type { IWCSendTransactionEvent } from '@core/WalletCore/Plugins/WalletConnect/types';
 import type { TooManyPendingStackName, StackScreenProps } from '@router/configs';
 import { Image } from 'expo-image';
 import { useTheme } from '@react-navigation/native';
@@ -20,10 +27,9 @@ const TooManyPending: React.FC<StackScreenProps<typeof TooManyPendingStackName>>
   const currentNetwork = useCurrentNetwork();
 
   return (
-    <BottomSheet
+    <BottomSheetRoute
       ref={bottomSheetRef}
       snapPoints={snapPoints}
-      isRoute
       onClose={() => {
         const currentEvent = plugins.WalletConnect.currentEventSubject.getValue() as IWCSendTransactionEvent;
         if (!currentEvent) return;
@@ -46,7 +52,7 @@ const TooManyPending: React.FC<StackScreenProps<typeof TooManyPendingStackName>>
           </Button>
         </BottomSheetFooter>
       </BottomSheetWrapper>
-    </BottomSheet>
+    </BottomSheetRoute>
   );
 };
 

@@ -1,6 +1,12 @@
 import { CommonActions, type NavigationState, type PartialState } from '@react-navigation/native';
 import { HomeStackName } from '@router/configs';
-import { isSamsungDevice } from '@utils/deviceInfo';
+
+const logBackToHome = (...args: unknown[]) => {
+  if (typeof __DEV__ !== 'undefined' && __DEV__) {
+    // eslint-disable-next-line no-console
+    console.log('[backToHome]', ...args);
+  }
+};
 
 export function getActiveRouteName(state: NavigationState | PartialState<NavigationState>) {
   if (state.index == null || !state.routes[state.index]) {
@@ -14,22 +20,20 @@ export function getActiveRouteName(state: NavigationState | PartialState<Navigat
   return route.name;
 }
 
-const backToHome = (navigation: any) => {
-  // navigation.dispatch(CommonActions.reset({ index: 0, routes: [{ name: HomeStackName }] }));
-  if (getActiveRouteName(navigation.getState()) === HomeStackName) return;
-
-  if (!isSamsungDevice) {
-    if (typeof navigation.popToTop === 'function') {
-      if (navigation.canGoBack()) {
-        navigation.popToTop();
-      }
-    }
-    if (navigation.canGoBack()) {
-      navigation.goBack();
-    }
-  } else {
-    navigation.dispatch(CommonActions.reset({ index: 0, routes: [{ name: HomeStackName }] }));
+const findRootNavigation = (navigation: any) => {
+  let current = navigation;
+  while (current?.getParent?.()) {
+    current = current.getParent();
   }
+  return current ?? navigation;
+};
+
+const backToHome = (navigation: any) => {
+  const active = getActiveRouteName(navigation.getState?.());
+  if (active === HomeStackName) return;
+
+  const rootNavigation = findRootNavigation(navigation);
+  rootNavigation?.dispatch?.(CommonActions.reset({ index: 0, routes: [{ name: HomeStackName }] }));
 };
 
 export default backToHome;
