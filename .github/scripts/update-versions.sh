@@ -20,16 +20,24 @@ echo "   Updating versions..."
 echo "   Version: $MARKETING_VERSION"
 echo "   Build number: $BUILD_NUMBER"
 
+if [[ "$OSTYPE" == "darwin"* ]]; then
+    # macOS
+    SED_INPLACE=(-i '')
+else
+    # Linux
+    SED_INPLACE=(-i)
+fi
+
 # Android
 echo "   Updating Android..."
-sed -i '' "s/versionCode 999/versionCode $BUILD_NUMBER/" android/app/build.gradle
-sed -i '' 's/versionName "dev"/versionName "'"$MARKETING_VERSION"'"/' android/app/build.gradle
+sed "${SED_INPLACE[@]}" "s/versionCode 999/versionCode $BUILD_NUMBER/" android/app/build.gradle
+sed "${SED_INPLACE[@]}" 's/versionName "dev"/versionName "'"$MARKETING_VERSION"'"/' android/app/build.gradle
 echo "Android updated"
 
 # iOS
 echo "   Updating iOS..."
-sed -i '' "s/CURRENT_PROJECT_VERSION = 999;/CURRENT_PROJECT_VERSION = $BUILD_NUMBER;/g" ios/BIMWallet.xcodeproj/project.pbxproj
-sed -i '' "s/MARKETING_VERSION = dev;/MARKETING_VERSION = $MARKETING_VERSION;/g" ios/BIMWallet.xcodeproj/project.pbxproj
+sed "${SED_INPLACE[@]}" "s/CURRENT_PROJECT_VERSION = 999;/CURRENT_PROJECT_VERSION = $BUILD_NUMBER;/g" ios/BIMWallet.xcodeproj/project.pbxproj
+sed "${SED_INPLACE[@]}" "s/MARKETING_VERSION = dev;/MARKETING_VERSION = $MARKETING_VERSION;/g" ios/BIMWallet.xcodeproj/project.pbxproj
 echo "iOS updated"
 
 
