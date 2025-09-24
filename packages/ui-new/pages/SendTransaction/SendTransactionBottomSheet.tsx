@@ -22,20 +22,21 @@ type Props = (RouteProps | InlineProps) & {
   children: React.ReactNode;
   title?: string;
   index?: number;
+  useBottomSheetView?: boolean;
 };
 
 const isInlineProps = (props: Props): props is InlineProps => {
   return props.isRoute === false;
 };
 
-const SendTransactionBottomSheet = ({ ref, ...props }: Props) => {
+const SendTransactionBottomSheet = ({ ref, useBottomSheetView = true, ...props }: Props) => {
   const { children, title } = props;
 
   if (isInlineProps(props)) {
     const { snapPoints, isRoute: _ignored, ...rest } = props;
     return (
       <InlineBottomSheet ref={ref} snapPoints={snapPoints || defaultSnapPoints.large} {...rest}>
-        <BottomSheetWrapper>
+        <BottomSheetWrapper useBottomSheetView={useBottomSheetView}>
           {title && <BottomSheetHeader title={title} />}
           {children}
         </BottomSheetWrapper>
@@ -46,7 +47,7 @@ const SendTransactionBottomSheet = ({ ref, ...props }: Props) => {
   const { snapPoints, isRoute: _ignored, index: _index, ...rest } = props;
   return (
     <BottomSheetRoute ref={ref} snapPoints={snapPoints || defaultSnapPoints.percent80} {...rest}>
-      <BottomSheetWrapper useBottomSheetView={true}>
+      <BottomSheetWrapper useBottomSheetView={useBottomSheetView}>
         {title && <BottomSheetHeader title={title} />}
         {children}
       </BottomSheetWrapper>

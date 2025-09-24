@@ -41,7 +41,8 @@ export function BottomSheetRoute({
     const unsubscribe = navigation.addListener('beforeRemove', (event) => {
       if (currentIndexRef.current === -1) return;
       const actionType = event.data?.action?.type;
-      if (actionType === 'RESET' || actionType === 'NAVIGATE') return;
+      if (['RESET', 'NAVIGATE', 'REPLACE'].includes(actionType)) return;
+      console.log('BottomSheetRoute beforeRemove event', { actionType });
       event.preventDefault();
       sheetRef.current?.close();
     });

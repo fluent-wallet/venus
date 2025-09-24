@@ -19,7 +19,7 @@ on:
 jobs:
   ios-build:
     name: IOS Build
-    runs-on: macos-latest
+    runs-on: macos-15
     steps:
       - name: Check out Git repository
         uses: actions/checkout@v4
@@ -34,6 +34,9 @@ jobs:
 
       - name: install dependencies
         run: yarn
+
+      - name: Select Xcode 16.2
+        run: sudo xcode-select -s /Applications/Xcode_16.2.app #https://github.com/yukiarrr/ios-build-action/issues/126
 
       - name: Update versions
         run: |
