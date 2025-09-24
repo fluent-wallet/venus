@@ -138,7 +138,7 @@ const SendTransactionStep1Receiver: React.FC<SendTransactionScreenProps<typeof S
 
   return (
     <>
-      <SendTransactionBottomSheet isRoute>
+      <SendTransactionBottomSheet isRoute useBottomSheetView={false}>
         <BottomSheetHeader title={t('tx.send.title')}>
           <Text style={[styles.receiver, { color: colors.textSecondary }]}>{t('tx.send.receiver')}</Text>
           <TextInput
@@ -387,6 +387,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
+  },
+  BottomSheetContent: {
+    flex: 1,
   },
 });
 
