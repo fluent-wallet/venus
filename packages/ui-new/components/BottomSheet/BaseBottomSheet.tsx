@@ -168,11 +168,17 @@ export function BaseBottomSheet({
     });
 
     const hideSub = Keyboard.addListener(hideEvent, () => {
+      const wasKeyboardVisible = keyboardVisibleRef.current;
       keyboardVisibleRef.current = false;
       const currentIndex = indexRef.current;
       const inRange = Number.isInteger(currentIndex) && currentIndex >= MIN_KEYBOARD_INDEX && currentIndex <= maxAllowedIndex;
 
       if (!inRange || currentIndex < -1) {
+        restoreToStableIndex();
+        return;
+      }
+
+      if (wasKeyboardVisible && currentIndex === lastStableIndexRef.current && currentIndex >= 0) {
         restoreToStableIndex();
       }
     });
