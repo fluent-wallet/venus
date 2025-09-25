@@ -17,14 +17,25 @@ const getMaxDetentIndex = (snapPoints: BaseBottomSheetProps['snapPoints']) => {
   return extractLength(snapPoints) + 2;
 };
 
-export interface BaseBottomSheetProps extends BottomSheetProps {
-  ref?: ForwardedRef<BottomSheet>;
+export type BottomSheetCloseReason = 'confirm' | 'cancel' | 'external';
+
+export type BottomSheetController = {
+  close: (reason?: BottomSheetCloseReason) => Promise<void>;
+  snapToIndex: (index: number) => Promise<void>;
+  expand: () => Promise<void>;
+};
+
+type NativeBottomSheetProps = Omit<BottomSheetProps, 'ref' | 'onClose' | 'onAfterClose'>;
+
+export interface BaseBottomSheetProps extends NativeBottomSheetProps {
+  ref?: ForwardedRef<BottomSheetController>;
+  onClose?: (reason: BottomSheetCloseReason) => void;
+  onAfterClose?: (reason: BottomSheetCloseReason) => void;
   showBackDrop?: boolean;
   backDropPressBehavior?: 'none' | 'close' | 'collapse' | number;
   handlePressBackdrop?: () => void;
   controlledIndex?: number;
   defaultIndex?: number;
-  onAfterClose?: () => void;
   onOpen?: () => void;
 }
 
@@ -50,7 +61,6 @@ export function BaseBottomSheet({
 }: BaseBottomSheetProps) {
   const { colors, palette } = useTheme();
   const sheetRef = useRef<BottomSheet>(null);
-  useImperativeHandle(ref, () => sheetRef.current as BottomSheet, []);
 
   const [canPanDownToClose, setCanPanDownToClose] = useState(() => Platform.OS === 'ios');
   const hasOpenedRef = useRef(false);
@@ -63,6 +73,30 @@ export function BaseBottomSheet({
   const MIN_KEYBOARD_INDEX = -1000;
   const keyboardVisibleRef = useRef(false);
 
+  const closeReasonRef = useRef<BottomSheetCloseReason | undefined>(undefined);
+  const pendingCloseResolverRef = useRef<(() => void) | null>(null);
+
+  const makeAwaitable = useCallback((executor: () => void, reason: BottomSheetCloseReason) => {
+    if (pendingCloseResolverRef.current) {
+      pendingCloseResolverRef.current();
+      pendingCloseResolverRef.current = null;
+    }
+    closeReasonRef.current = reason;
+    return new Promise<void>((resolve) => {
+      pendingCloseResolverRef.current = resolve;
+      executor();
+    });
+  }, []);
+
+  useImperativeHandle(
+    ref,
+    () => ({
+      close: (reason = 'external') => makeAwaitable(() => sheetRef.current?.close(), reason),
+      snapToIndex: (targetIndex: number) => makeAwaitable(() => sheetRef.current?.snapToIndex(targetIndex), 'external'),
+      expand: () => makeAwaitable(() => sheetRef.current?.expand(), 'external'),
+    }),
+    [makeAwaitable],
+  );
   const renderBackdrop = useCallback(
     (props: BottomSheetBackdropProps) => {
       if (!showBackDrop) return null;
@@ -152,11 +186,17 @@ export function BaseBottomSheet({
   const handleClose = useCallback(() => {
     hasOpenedRef.current = false;
     lastStableIndexRef.current = -1;
-    onClose?.();
-    if (Keyboard.isVisible()) {
-      Keyboard.dismiss();
-    }
-    onAfterClose?.();
+
+    const reason = closeReasonRef.current ?? 'external';
+    closeReasonRef.current = undefined;
+
+    pendingCloseResolverRef.current?.();
+    pendingCloseResolverRef.current = null;
+
+    onClose?.(reason);
+    onAfterClose?.(reason);
+
+    if (Keyboard.isVisible()) Keyboard.dismiss();
   }, [onClose, onAfterClose]);
 
   useEffect(() => {

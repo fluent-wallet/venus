@@ -1,6 +1,6 @@
-import { useCallback, useEffect, useRef } from 'react';
-import { useNavigation } from '@react-navigation/native';
-import { BaseBottomSheet, type BaseBottomSheetProps } from './BaseBottomSheet';
+import React, { useCallback, useEffect, useRef } from 'react';
+import { useNavigation, type NavigationAction } from '@react-navigation/native';
+import { BaseBottomSheet, type BaseBottomSheetProps, type BottomSheetCloseReason, type BottomSheetController } from './BaseBottomSheet';
 import { isAdjustResize } from '@utils/deviceInfo';
 import type BottomSheet from '@gorhom/bottom-sheet';
 import type { SNAP_POINT_TYPE } from '@gorhom/bottom-sheet';
@@ -20,8 +20,10 @@ export function BottomSheetRoute({
   ...rest
 }: BottomSheetRouteProps) {
   const navigation = useNavigation();
-  const sheetRef = useRef<BottomSheet>(null);
+  const sheetRef = useRef<BottomSheetController>(null);
   const currentIndexRef = useRef(0);
+  const pendingActionRef = useRef<NavigationAction | null>(null);
+  const isClosingRef = useRef(false);
 
   const handleChange = useCallback(
     (nextIndex: number, position: number, type: SNAP_POINT_TYPE) => {
@@ -31,20 +33,31 @@ export function BottomSheetRoute({
     [onChange],
   );
 
-  const handleAfterClose = useCallback(() => {
-    if (navigation.canGoBack()) {
-      navigation.goBack();
-    }
-  }, [navigation]);
+  const handleAfterClose = useCallback(
+    (reason: BottomSheetCloseReason) => {
+      const action = pendingActionRef.current;
+      pendingActionRef.current = null;
+
+      isClosingRef.current = false;
+      if (reason === 'confirm' || !action) {
+        if (navigation.canGoBack()) navigation.goBack();
+        return;
+      }
+      navigation.dispatch(action);
+    },
+    [navigation],
+  );
 
   useEffect(() => {
     const unsubscribe = navigation.addListener('beforeRemove', (event) => {
       if (currentIndexRef.current === -1) return;
-      const actionType = event.data?.action?.type;
-      if (['RESET', 'NAVIGATE', 'REPLACE'].includes(actionType)) return;
-      console.log('BottomSheetRoute beforeRemove event', { actionType });
       event.preventDefault();
-      sheetRef.current?.close();
+
+      if (isClosingRef.current) return;
+      isClosingRef.current = true;
+
+      pendingActionRef.current = event.data.action;
+      sheetRef.current?.close('cancel');
     });
     return unsubscribe;
   }, [navigation]);
