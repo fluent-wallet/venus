@@ -1,13 +1,6 @@
 import { CommonActions, type NavigationState, type PartialState } from '@react-navigation/native';
 import { HomeStackName } from '@router/configs';
 
-const logBackToHome = (...args: unknown[]) => {
-  if (typeof __DEV__ !== 'undefined' && __DEV__) {
-    // eslint-disable-next-line no-console
-    console.log('[backToHome]', ...args);
-  }
-};
-
 export function getActiveRouteName(state: NavigationState | PartialState<NavigationState>) {
   if (state.index == null || !state.routes[state.index]) {
     return undefined;

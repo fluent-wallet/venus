@@ -1,8 +1,7 @@
-import React, { useCallback, useEffect, useRef } from 'react';
+import React, { useCallback, useEffect, useImperativeHandle, useRef } from 'react';
 import { useNavigation, type NavigationAction } from '@react-navigation/native';
 import { BaseBottomSheet, type BaseBottomSheetProps, type BottomSheetCloseReason, type BottomSheetController } from './BaseBottomSheet';
 import { isAdjustResize } from '@utils/deviceInfo';
-import type BottomSheet from '@gorhom/bottom-sheet';
 import type { SNAP_POINT_TYPE } from '@gorhom/bottom-sheet';
 
 type BottomSheetRouteProps = Omit<BaseBottomSheetProps, 'index' | 'onAfterClose'>;
@@ -17,6 +16,7 @@ export function BottomSheetRoute({
   keyboardBlurBehavior = 'restore',
   android_keyboardInputMode = isAdjustResize ? 'adjustResize' : 'adjustPan',
   onChange,
+  ref,
   ...rest
 }: BottomSheetRouteProps) {
   const navigation = useNavigation();
@@ -25,6 +25,7 @@ export function BottomSheetRoute({
   const pendingActionRef = useRef<NavigationAction | null>(null);
   const isClosingRef = useRef(false);
 
+  useImperativeHandle(ref, () => sheetRef.current as BottomSheetController, []);
   const handleChange = useCallback(
     (nextIndex: number, position: number, type: SNAP_POINT_TYPE) => {
       currentIndexRef.current = nextIndex;
@@ -40,16 +41,34 @@ export function BottomSheetRoute({
 
       isClosingRef.current = false;
       if (reason === 'confirm' || !action) {
-        if (navigation.canGoBack()) navigation.goBack();
+        if (navigation.canGoBack()) {
+          navigation.goBack();
+        }
         return;
       }
-      navigation.dispatch(action);
+      let targetNavigation: any = navigation;
+      while (targetNavigation?.getParent?.()) {
+        targetNavigation = targetNavigation.getParent();
+      }
+
+      const navToUse = targetNavigation ?? navigation;
+      const currentKey = navToUse?.getState?.()?.key;
+      if ('target' in action && action.target && currentKey && action.target !== currentKey) {
+        navToUse.dispatch({ ...action, target: currentKey });
+        return;
+      }
+      navToUse.dispatch(action);
     },
     [navigation],
   );
 
   useEffect(() => {
     const unsubscribe = navigation.addListener('beforeRemove', (event) => {
+      const actionType = event.data.action?.type;
+      if (actionType === 'RESET') {
+        return;
+      }
+
       if (currentIndexRef.current === -1) return;
       event.preventDefault();
 
