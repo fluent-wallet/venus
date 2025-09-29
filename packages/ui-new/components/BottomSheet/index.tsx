@@ -5,4 +5,3 @@ export { BottomSheetWrapper, BottomSheetHeader, BottomSheetContent, BottomSheetF
 export { InlineBottomSheet } from './InlineBottomSheet';
 
 export { BottomSheetRoute } from './BottomSheetRoute';
-export type { BottomSheetController, BottomSheetCloseReason } from './BaseBottomSheet';

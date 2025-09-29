@@ -33,9 +33,9 @@ const SendTransactionBottomSheet = ({ ref, useBottomSheetView = true, ...props }
   const { children, title } = props;
 
   if (isInlineProps(props)) {
-    const { snapPoints, isRoute: _ignored, ...rest } = props;
+    const { snapPoints, isRoute: _ignored, index = 0, ...rest } = props;
     return (
-      <InlineBottomSheet ref={ref} snapPoints={snapPoints || defaultSnapPoints.large} {...rest}>
+      <InlineBottomSheet ref={ref} snapPoints={snapPoints || defaultSnapPoints.large} index={index} {...rest}>
         <BottomSheetWrapper useBottomSheetView={useBottomSheetView}>
           {title && <BottomSheetHeader title={title} />}
           {children}

@@ -1,10 +1,10 @@
-import React, { useCallback, useEffect, useImperativeHandle, useRef } from 'react';
-import { useNavigation, type NavigationAction } from '@react-navigation/native';
-import { BaseBottomSheet, type BaseBottomSheetProps, type BottomSheetCloseReason, type BottomSheetController } from './BaseBottomSheet';
+import React, { useCallback, useImperativeHandle, useRef } from 'react';
+import { useNavigation } from '@react-navigation/native';
+import type BottomSheet from '@gorhom/bottom-sheet';
+import { BaseBottomSheet, type BaseBottomSheetProps } from './BaseBottomSheet';
 import { isAdjustResize } from '@utils/deviceInfo';
-import type { SNAP_POINT_TYPE } from '@gorhom/bottom-sheet';
 
-type BottomSheetRouteProps = Omit<BaseBottomSheetProps, 'index' | 'onAfterClose'>;
+type BottomSheetRouteProps = Omit<BaseBottomSheetProps, 'index'>;
 
 export function BottomSheetRoute({
   showBackDrop = true,
@@ -15,71 +15,25 @@ export function BottomSheetRoute({
   enableHandlePanningGesture = true,
   keyboardBlurBehavior = 'restore',
   android_keyboardInputMode = isAdjustResize ? 'adjustResize' : 'adjustPan',
+  onClose,
+  onAfterClose,
   onChange,
   ref,
   ...rest
 }: BottomSheetRouteProps) {
   const navigation = useNavigation();
-  const sheetRef = useRef<BottomSheetController>(null);
-  const currentIndexRef = useRef(0);
-  const pendingActionRef = useRef<NavigationAction | null>(null);
-  const isClosingRef = useRef(false);
+  const sheetRef = useRef<BottomSheet | null>(null);
 
-  useImperativeHandle(ref, () => sheetRef.current as BottomSheetController, []);
-  const handleChange = useCallback(
-    (nextIndex: number, position: number, type: SNAP_POINT_TYPE) => {
-      currentIndexRef.current = nextIndex;
-      onChange?.(nextIndex, position, type);
-    },
-    [onChange],
-  );
+  useImperativeHandle(ref, () => sheetRef.current as BottomSheet, []);
 
-  const handleAfterClose = useCallback(
-    (reason: BottomSheetCloseReason) => {
-      const action = pendingActionRef.current;
-      pendingActionRef.current = null;
+  const handleClose = useCallback(() => {
+    onClose?.();
+    onAfterClose?.();
 
-      isClosingRef.current = false;
-      if (reason === 'confirm' || !action) {
-        if (navigation.canGoBack()) {
-          navigation.goBack();
-        }
-        return;
-      }
-      let targetNavigation: any = navigation;
-      while (targetNavigation?.getParent?.()) {
-        targetNavigation = targetNavigation.getParent();
-      }
-
-      const navToUse = targetNavigation ?? navigation;
-      const currentKey = navToUse?.getState?.()?.key;
-      if ('target' in action && action.target && currentKey && action.target !== currentKey) {
-        navToUse.dispatch({ ...action, target: currentKey });
-        return;
-      }
-      navToUse.dispatch(action);
-    },
-    [navigation],
-  );
-
-  useEffect(() => {
-    const unsubscribe = navigation.addListener('beforeRemove', (event) => {
-      const actionType = event.data.action?.type;
-      if (actionType === 'RESET') {
-        return;
-      }
-
-      if (currentIndexRef.current === -1) return;
-      event.preventDefault();
-
-      if (isClosingRef.current) return;
-      isClosingRef.current = true;
-
-      pendingActionRef.current = event.data.action;
-      sheetRef.current?.close('cancel');
-    });
-    return unsubscribe;
-  }, [navigation]);
+    if (navigation.canGoBack()) {
+      navigation.goBack();
+    }
+  }, [navigation, onClose, onAfterClose]);
 
   return (
     <BaseBottomSheet
@@ -93,8 +47,8 @@ export function BottomSheetRoute({
       enableHandlePanningGesture={enableHandlePanningGesture}
       keyboardBlurBehavior={keyboardBlurBehavior}
       android_keyboardInputMode={android_keyboardInputMode}
-      onChange={handleChange}
-      onAfterClose={handleAfterClose}
+      onClose={handleClose}
+      onChange={onChange}
       {...rest}
     />
   );
