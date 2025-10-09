@@ -1,7 +1,7 @@
 import { isAdjustResize } from '@utils/deviceInfo';
 import { BaseBottomSheet, type BaseBottomSheetProps } from './BaseBottomSheet';
 
-type InlineBottomSheetProps = Omit<BaseBottomSheetProps, 'controlledIndex' | 'defaultIndex' | 'onAfterClose'> & {
+type InlineBottomSheetProps = Omit<BaseBottomSheetProps, 'onAfterClose'> & {
   index?: number;
 };
 

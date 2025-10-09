@@ -1,11 +1,10 @@
-import { useCallback, useEffect, useRef } from 'react';
+import React, { useCallback, useImperativeHandle, useRef } from 'react';
 import { useNavigation } from '@react-navigation/native';
+import type BottomSheet from '@gorhom/bottom-sheet';
 import { BaseBottomSheet, type BaseBottomSheetProps } from './BaseBottomSheet';
 import { isAdjustResize } from '@utils/deviceInfo';
-import type BottomSheet from '@gorhom/bottom-sheet';
-import type { SNAP_POINT_TYPE } from '@gorhom/bottom-sheet';
 
-type BottomSheetRouteProps = Omit<BaseBottomSheetProps, 'index' | 'onAfterClose'>;
+type BottomSheetRouteProps = Omit<BaseBottomSheetProps, 'index'>;
 
 export function BottomSheetRoute({
   showBackDrop = true,
@@ -16,38 +15,25 @@ export function BottomSheetRoute({
   enableHandlePanningGesture = true,
   keyboardBlurBehavior = 'restore',
   android_keyboardInputMode = isAdjustResize ? 'adjustResize' : 'adjustPan',
+  onClose,
+  onAfterClose,
   onChange,
+  ref,
   ...rest
 }: BottomSheetRouteProps) {
   const navigation = useNavigation();
-  const sheetRef = useRef<BottomSheet>(null);
-  const currentIndexRef = useRef(0);
+  const sheetRef = useRef<BottomSheet | null>(null);
 
-  const handleChange = useCallback(
-    (nextIndex: number, position: number, type: SNAP_POINT_TYPE) => {
-      currentIndexRef.current = nextIndex;
-      onChange?.(nextIndex, position, type);
-    },
-    [onChange],
-  );
+  useImperativeHandle(ref, () => sheetRef.current as BottomSheet, []);
 
-  const handleAfterClose = useCallback(() => {
+  const handleClose = useCallback(() => {
+    onClose?.();
+    onAfterClose?.();
+
     if (navigation.canGoBack()) {
       navigation.goBack();
     }
-  }, [navigation]);
-
-  useEffect(() => {
-    const unsubscribe = navigation.addListener('beforeRemove', (event) => {
-      if (currentIndexRef.current === -1) return;
-      const actionType = event.data?.action?.type;
-      if (['RESET', 'NAVIGATE', 'REPLACE'].includes(actionType)) return;
-      console.log('BottomSheetRoute beforeRemove event', { actionType });
-      event.preventDefault();
-      sheetRef.current?.close();
-    });
-    return unsubscribe;
-  }, [navigation]);
+  }, [navigation, onClose, onAfterClose]);
 
   return (
     <BaseBottomSheet
@@ -61,8 +47,8 @@ export function BottomSheetRoute({
       enableHandlePanningGesture={enableHandlePanningGesture}
       keyboardBlurBehavior={keyboardBlurBehavior}
       android_keyboardInputMode={android_keyboardInputMode}
-      onChange={handleChange}
-      onAfterClose={handleAfterClose}
+      onClose={handleClose}
+      onChange={onChange}
       {...rest}
     />
   );
