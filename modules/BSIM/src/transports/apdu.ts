@@ -1,10 +1,10 @@
 import { NativeModules, Platform } from 'react-native';
 import { DEFAULT_BSIM_AID, buildSelectAid, serializeCommand } from '../core/params';
 import { parseApduResponse } from '../core/response';
-import { normalizeHex } from '../core/utils';
 import type { HexString } from '../core/types';
-import type { Transport, TransportSession } from './types';
+import { normalizeHex } from '../core/utils';
 import { TransportError, TransportErrorCode, wrapNativeError } from './errors';
+import type { Transport, TransportSession } from './types';
 
 type NativeApduModule = {
   openApduChannel: () => Promise<void>;

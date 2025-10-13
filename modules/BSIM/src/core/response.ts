@@ -1,12 +1,11 @@
 import { isPendingStatus, isSuccessStatus, resolveStatusMessage } from './errors';
-import { normalizeHex } from './utils';
 import type { HexString } from './types';
+import { normalizeHex } from './utils';
 
 export type ParsedApduResponse =
   | { status: 'success'; payload: HexString }
   | { status: 'pending'; payload: HexString }
   | { status: 'error'; code: string; message?: string };
-
 
 /**
  * split raw APDU response into payload + status word

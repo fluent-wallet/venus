@@ -71,7 +71,7 @@ describe('createApduTransport', () => {
 
     const firstTransmit = session.transmit('AA');
     await Promise.resolve(); // let transmitApdu be called
-    
+
     expect(native.transmitApdu).toHaveBeenCalledTimes(2);
     expect(native.transmitApdu.mock.calls[1][0]).toBe('AA');
 

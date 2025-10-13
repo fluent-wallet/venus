@@ -7,12 +7,22 @@ export const TransportErrorCode = {
   TRANSMIT_FAILED: 'TRANSMIT_FAILED',
   INVALID_APDU_PAYLOAD: 'INVALID_APDU_PAYLOAD',
   SELECT_AID_FAILED: 'SELECT_AID_FAILED',
+  SCAN_FAILED: 'SCAN_FAILED',
+  DEVICE_NOT_FOUND: 'DEVICE_NOT_FOUND',
+  SERVICE_NOT_FOUND: 'SERVICE_NOT_FOUND',
+  CHARACTERISTIC_NOT_FOUND: 'CHARACTERISTIC_NOT_FOUND',
+  ENABLE_NOTIFICATIONS_FAILED: 'ENABLE_NOTIFICATIONS_FAILED',
+  WRITE_FAILED: 'WRITE_FAILED',
+  READ_TIMEOUT: 'READ_TIMEOUT',
+  SESSION_BUSY: 'SESSION_BUSY',
 } as const;
-
 export type TransportErrorCode = (typeof TransportErrorCode)[keyof typeof TransportErrorCode];
 
 export type TransportErrorDetails = {
   nativeCode?: string;
+  deviceId?: string;
+  serviceUuid?: string;
+  characteristicUuid?: string;
 };
 
 export class TransportError extends Error {
