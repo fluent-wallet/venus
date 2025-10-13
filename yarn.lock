@@ -15025,6 +15025,16 @@ __metadata:
   languageName: node
   linkType: hard
 
+"react-native-ble-plx@npm:^3.5.0":
+  version: 3.5.0
+  resolution: "react-native-ble-plx@npm:3.5.0"
+  peerDependencies:
+    react: "*"
+    react-native: "*"
+  checksum: d84ce1eefdc584c8a4891266941f5951b31c8a800d0993659d7f87ba57cb8c23c4ba09dc3d4d8bfbc1d16f64dbd7405fad2b5fd2cf79fa7578d001a22aee47ae
+  languageName: node
+  linkType: hard
+
 "react-native-bootsplash@npm:^6.3.7":
   version: 6.3.8
   resolution: "react-native-bootsplash@npm:6.3.8"
@@ -17793,6 +17803,7 @@ __metadata:
     react-hook-form: ^7.50.0
     react-i18next: ^14.1.0
     react-native: 0.79.2
+    react-native-ble-plx: ^3.5.0
     react-native-bootsplash: ^6.3.7
     react-native-bsim: "link:./modules/BSIM"
     react-native-config: ^1.5.5
