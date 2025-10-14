@@ -19,3 +19,11 @@ export { verifyBPIN, type VerifyBPINErrorType } from './verifyBPIN';
 export { updateBPIN, type UpdateBPINErrorType } from './updateBPIN';
 
 export { signMessage, type SignMessageReturnType, type SignMessageErrorType } from './signMessage';
+
+export {
+  createWallet,
+  type Wallet,
+  type WalletOptions,
+  type WalletSessionRunner,
+  type SignMessageParams,
+} from './wallet';

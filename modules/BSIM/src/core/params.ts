@@ -125,9 +125,9 @@ export const buildGetVersion = (): ApduCommand => ({
   ins: 'CA',
   p1: '00',
   p2: '00',
-  lc: '02',
+  lc: '00',
   data: '',
-  le: '',
+  le: '02',
 });
 
 export const serializeCommand = (command: ApduCommand): string => {

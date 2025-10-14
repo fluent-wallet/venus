@@ -1,7 +1,7 @@
 import { APDU_STATUS } from './errors';
-import { buildExportPubkey, buildSignMessage, buildVerifyBpin, serializeCommand } from './params';
+import { buildExportPubkey, buildGetVersion, buildSignMessage, buildVerifyBpin, serializeCommand } from './params';
 import { parseApduResponse } from './response';
-import type { ApduCommand, ApduTransmit, PubkeyRecord, SignatureComponents } from './types';
+import type { ApduCommand, ApduTransmit, HexString, PubkeyRecord, SignatureComponents } from './types';
 import { extractSignature, normalizeHex, parsePubkeyChunk } from './utils';
 
 export class ApduFlowError extends Error {
@@ -139,4 +139,14 @@ export const exportPubkeysFlow = async (transmit: ApduTransmit): Promise<PubkeyR
 
     response = await dispatchApdu(transmit, buildExportPubkey(true));
   }
+};
+
+export const getVersionFlow = async (transmit: ApduTransmit): Promise<HexString> => {
+  const response = await dispatchApdu(transmit, buildGetVersion());
+
+  if (response.status !== 'success') {
+    throw new ApduFlowError(APDU_STATUS.PENDING, 'Unexpected status while reading version');
+  }
+
+  return response.payload;
 };
