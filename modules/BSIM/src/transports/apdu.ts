@@ -112,7 +112,7 @@ export const createApduTransport = (deps: CreateApduTransportDeps = {}): Transpo
       }
 
       native = ensureNativeModule(deps.nativeModule);
-      const { autoSelectAid = true, aid = DEFAULT_BSIM_AID } = options ?? {};
+      const { autoSelectAid = false, aid = DEFAULT_BSIM_AID } = options ?? {};
       chain = Promise.resolve();
 
       try {

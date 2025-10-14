@@ -20,6 +20,7 @@ import com.facebook.react.bridge.ReactContextBaseJavaModule
 import com.facebook.react.bridge.ReactMethod
 import com.facebook.react.bridge.WritableNativeArray
 import com.facebook.react.bridge.WritableNativeMap
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -64,29 +65,53 @@ class BSIMModule(private val reactContext: ReactApplicationContext) :
 
     private val apduMutex = Mutex()
     private var apduService: ApduService? = null
+    private var apduInitState: CompletableDeferred<Unit>? = null
     private var apduChannelOpen = false
 
-    private fun ensureApduService(): ApduService {
-
+    private suspend fun ensureApduService(): ApduService {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.P) {
             throw UnsupportedOperationException("APDU channel requires Android 9 (API 28) or higher")
         }
-        val cached = apduService
 
-        if (cached != null) {
-            return cached
+        val cachedService = apduService
+        val cachedInit = apduInitState
+        if (cachedService != null && cachedInit != null) {
+            try {
+                cachedInit.await()
+                return cachedService
+            } catch (error: Exception) {
+                resetApduState(releaseService = true)
+                throw error
+            }
         }
+
         val service = ApduService()
+        val initState = CompletableDeferred<Unit>()
+        apduService = service
+        apduInitState = initState
+
         service.init(reactContext.applicationContext, object : ChannelImpl.CallBack {
             override fun success() {
                 FLog.i(TAG_APDU, "OMA channel init success")
+                if (!initState.isCompleted) {
+                    initState.complete(Unit)
+                }
             }
 
             override fun failed(e: Exception) {
                 FLog.e(TAG_APDU, "OMA channel init failed", e)
+                if (!initState.isCompleted) {
+                    initState.completeExceptionally(e)
+                }
             }
         })
-        apduService = service
+
+        try {
+            initState.await()
+        } catch (error: Exception) {
+            resetApduState(releaseService = true)
+            throw error
+        }
 
         return service
     }
@@ -101,8 +126,17 @@ class BSIMModule(private val reactContext: ReactApplicationContext) :
                         return@withLock
                     }
 
-                    val service = ensureApduService()
-                    val opend = try {
+                    val service = try {
+                        ensureApduService()
+                    } catch (error: Exception) {
+                        promise.reject(
+                            ERROR_APDU_OPEN_FAILED,
+                            error.message ?: "Failed to initialise APDU service"
+                        )
+                        return@withLock
+                    }
+
+                    val opened = try {
                         service.openChannel()
                     } catch (error: Exception) {
                         FLog.e(TAG_APDU, "openChannel threw", error)
@@ -110,12 +144,13 @@ class BSIMModule(private val reactContext: ReactApplicationContext) :
                         return@withLock
                     }
 
-                    if (!opend) {
+                    if (!opened) {
                         promise.reject(ERROR_APDU_OPEN_FAILED, "APDU channel did not open")
                         return@withLock
                     }
+
                     apduChannelOpen = true
-                    FLog.i(TAG_APDU, "APDU channel opend")
+                    FLog.i(TAG_APDU, "APDU channel opened")
                     promise.resolve(null)
                 }
             } catch (error: UnsupportedOperationException) {
@@ -129,10 +164,8 @@ class BSIMModule(private val reactContext: ReactApplicationContext) :
                     "Unexpected error opening APDU channel:${error.message}"
                 )
             }
-
         }
     }
-
 
     @ReactMethod
     fun transmitApdu(payload: String, promise: Promise) {
@@ -265,12 +298,19 @@ class BSIMModule(private val reactContext: ReactApplicationContext) :
         val dataByteLength = lc.toInt(16)
         val dataStart = 10
         val dataEnd = dataStart + dataByteLength * 2
-        if (apdu.length < dataEnd) {
-            throw IllegalArgumentException("APDU payload is truncated compared to LC")
+
+        val hasCompleteData = apdu.length >= dataEnd
+        val data = if (hasCompleteData) {
+            apdu.substring(dataStart, dataEnd)
+        } else {
+            if (dataByteLength > 0 && apdu.length > dataStart) {
+                throw IllegalArgumentException("APDU payload is truncated compared to LC")
+            }
+            ""
         }
 
-        val data = apdu.substring(dataStart, dataEnd)
-        val le = apdu.substring(dataEnd)
+        val leStart = if (hasCompleteData) dataEnd else apdu.length
+        val le = apdu.substring(leStart)
 
         if (le.isNotEmpty() && !isEvenLengthHex(le)) {
             throw IllegalArgumentException("APDU LE field must be hexadecimal")
@@ -288,6 +328,8 @@ class BSIMModule(private val reactContext: ReactApplicationContext) :
         if (releaseService) {
             apduService = null
         }
+        apduInitState?.cancel()
+        apduInitState = null
         apduChannelOpen = false
     }
 

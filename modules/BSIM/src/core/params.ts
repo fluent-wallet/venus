@@ -125,7 +125,7 @@ export const buildGetVersion = (): ApduCommand => ({
   ins: 'CA',
   p1: '00',
   p2: '00',
-  lc: '00',
+  lc: '',
   data: '',
   le: '02',
 });
@@ -155,13 +155,23 @@ export const serializeCommand = (command: ApduCommand): string => {
   const p1 = ensureByte(command.p1, 'P1');
   const p2 = ensureByte(command.p2, 'P2');
   const data = normalizeHex(command.data);
-  const lc = ensureByte(command.lc, 'LC');
-  const le = ensureOptionalField(command.le, 'LE');
 
-  const expectedLength = Number.parseInt(lc, 16);
-  if (expectedLength !== data.length / 2) {
-    throw new Error(`LC ${lc} does not match data length ${data.length / 2}`);
+  const normalizedLc = normalizeHex(command.lc);
+  let lc = '';
+  if (normalizedLc.length > 0) {
+    if (normalizedLc.length !== 2) {
+      throw new Error('LC must be a single byte');
+    }
+    lc = normalizedLc;
+    const expectedLength = Number.parseInt(lc, 16);
+    if (expectedLength !== data.length / 2) {
+      throw new Error(`LC ${lc} does not match data length ${data.length / 2}`);
+    }
+  } else if (data.length > 0) {
+    throw new Error('APDU command contains data but LC is missing');
   }
+
+  const le = ensureOptionalField(command.le, 'LE');
 
   return `${cla}${ins}${p1}${p2}${lc}${data}${le}`;
 };

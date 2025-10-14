@@ -46,7 +46,7 @@ const noopLogger: WalletLogger = () => undefined;
 
 const buildDefaultTransports = (platform: typeof Platform.OS): TransportKindConfig[] => {
   if (platform === 'android') {
-    return [{ kind: 'apdu' }, { kind: 'ble' }];
+    return [{ kind: 'apdu' }];
   }
   return [{ kind: 'ble' }];
 };
