@@ -96,7 +96,7 @@
     "@babel/plugin-transform-private-methods": "^7.27.1",
     "@babel/preset-env": "^7.27.2",
     "@babel/runtime": "^7.27.4",
-    "@biomejs/biome": "^1.9.4",
+    "@biomejs/biome": "^2.2.6",
     "@react-native-community/cli": "^18.0.0",
     "@react-native-community/cli-platform-android": "^18.0.0",
     "@react-native-community/cli-platform-ios": "^18.0.0",
