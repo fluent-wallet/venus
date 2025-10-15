@@ -6,7 +6,10 @@ export const normalizeHex = (hex: string): string => {
   if (!hex) {
     return '';
   }
-  const compact = hex.replace(/\s+/g, '');
+  let compact = hex.replace(/\s+/g, '');
+  if (compact.startsWith('0x') || compact.startsWith('0X')) {
+    compact = compact.slice(2);
+  }
   if (compact.length % 2 !== 0) {
     throw new Error(`Hex string must have even length: ${hex}`);
   }
@@ -164,18 +167,28 @@ export const parsePubkeyChunk = (hex: string): PubkeyRecord => {
   if (tag !== 'C2') {
     throw new Error(`Unexpected TLV tag ${tag}, expected C2`);
   }
-  if (value.length < 14) {
+  if (value.length < 12) {
     throw new Error('Pubkey TLV payload is too short');
   }
 
   const coinType = Number.parseInt(value.slice(0, 8), 16) >>> 0;
   const index = Number.parseInt(value.slice(8, 10), 16);
   const alg = Number.parseInt(value.slice(10, 12), 16);
-  const reportedKeyLength = Number.parseInt(value.slice(12, 14), 16);
-  const key = value.slice(14);
 
-  if (reportedKeyLength !== 0 && reportedKeyLength * 2 !== key.length) {
-    throw new Error(`Pubkey length mismatch: expected ${reportedKeyLength} bytes, got ${key.length / 2}`);
+  let keyStart = 12;
+
+  if (value.length > 14) {
+    const candidateLength = Number.parseInt(value.slice(12, 14), 16);
+    const remaining = value.length - 14;
+    if (Number.isFinite(candidateLength) && candidateLength > 0 && candidateLength * 2 === remaining) {
+      keyStart = 14;
+    }
+  }
+
+  const key = value.slice(keyStart);
+
+  if (key.length === 0 || key.length % 2 !== 0) {
+    throw new Error('Invalid pubkey payload length');
   }
 
   return {

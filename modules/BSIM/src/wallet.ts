@@ -176,8 +176,13 @@ export const createWallet = (options: WalletOptions = {}): Wallet => {
           return result;
         } catch (error) {
           lastError = error;
+
           if (isTransportError(error)) {
-            await closeCandidateSession(candidate, logger);
+            if (error.code === TransportErrorCode.TRANSMIT_FAILED) {
+              scheduleIdleClose(candidate, logger, idleTimeout);
+            } else {
+              await closeCandidateSession(candidate, logger);
+            }
           } else {
             scheduleIdleClose(candidate, logger, idleTimeout);
           }
