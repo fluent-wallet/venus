@@ -35,7 +35,7 @@ describe('createApduTransport', () => {
     native.transmitApdu.mockResolvedValueOnce('BEFF9000');
 
     const transport = createApduTransport({ nativeModule: native, platform: 'android' });
-    const session = await transport.open();
+    const session = await transport.open({ autoSelectAid: true });
 
     expect(native.openApduChannel).toHaveBeenCalledTimes(1);
     expect(native.transmitApdu).toHaveBeenCalledTimes(1);
@@ -65,7 +65,7 @@ describe('createApduTransport', () => {
     native.transmitApdu.mockImplementationOnce(async () => 'BBFF9000');
 
     const transport = createApduTransport({ nativeModule: native, platform: 'android' });
-    const session = await transport.open();
+    const session = await transport.open({ autoSelectAid: true });
 
     expect(native.transmitApdu).toHaveBeenCalledTimes(1);
 

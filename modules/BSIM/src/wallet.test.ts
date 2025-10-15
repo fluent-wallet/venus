@@ -43,11 +43,11 @@ describe('wallet', () => {
   it('verifies BPIN through the primary transport', async () => {
     const session = createScriptSession([{ expect: serializeCommand(buildVerifyBpin()), reply: '9000' }]);
     const transport = createApduMockTransport(async () => session);
-    const wallet = createWallet({ transports: [{ kind: 'apdu', transport }] });
+    const wallet = createWallet({ transports: [{ kind: 'apdu', transport }], idleTimeoutMs: 0 });
 
     await expect(wallet.verifyBpin()).resolves.toBeUndefined();
     expect(session.transmit).toHaveBeenCalledTimes(1);
-    expect(session.close).toHaveBeenCalledTimes(1);
+    expect(session.close).not.toHaveBeenCalled();
   });
 
   it('falls back to next transport when the first one fails to open', async () => {
@@ -62,19 +62,20 @@ describe('wallet', () => {
         { kind: 'apdu', transport: failingTransport },
         { kind: 'ble', transport: fallbackTransport },
       ],
+      idleTimeoutMs: 0,
     });
 
     await expect(wallet.verifyBpin()).resolves.toBeUndefined();
 
     expect(failingTransport.open).toHaveBeenCalledTimes(1);
     expect(fallbackTransport.open).toHaveBeenCalledTimes(1);
-    expect(session.close).toHaveBeenCalledTimes(1);
+    expect(session.close).not.toHaveBeenCalled();
   });
 
   it('rejects concurrent sessions with SESSION_BUSY', async () => {
     const session = createScriptSession([{ expect: serializeCommand(buildVerifyBpin()), reply: '9000' }]);
     const transport = createApduMockTransport(async () => session);
-    const wallet = createWallet({ transports: [{ kind: 'apdu', transport }] });
+    const wallet = createWallet({ transports: [{ kind: 'apdu', transport }], idleTimeoutMs: 0 });
 
     let release!: () => void;
     const first = wallet.runSession(
@@ -102,6 +103,7 @@ describe('wallet', () => {
         { kind: 'apdu', transport: t1 },
         { kind: 'ble', transport: t2 },
       ],
+      idleTimeoutMs: 0,
     });
 
     await expect(wallet.verifyBpin()).rejects.toMatchObject({ code: TransportErrorCode.CHANNEL_OPEN_FAILED });
@@ -118,6 +120,7 @@ describe('wallet', () => {
         { kind: 'apdu', transport: primary },
         { kind: 'ble', transport: secondary },
       ],
+      idleTimeoutMs: 0,
     });
 
     await expect(wallet.verifyBpin()).rejects.toBeInstanceOf(ApduFlowError);
@@ -129,11 +132,33 @@ describe('wallet', () => {
     const logger = jest.fn();
     const session = createScriptSession([{ expect: serializeCommand(buildVerifyBpin()), reply: '9000' }]);
     const transport = createApduMockTransport(async () => session);
-    const wallet = createWallet({ transports: [{ kind: 'apdu', transport }], logger });
+    const wallet = createWallet({ transports: [{ kind: 'apdu', transport }], logger, idleTimeoutMs: 0 });
 
     await wallet.verifyBpin();
 
     expect(logger).toHaveBeenCalledWith('wallet.transport.opened', { kind: 'apdu' });
     expect(logger).toHaveBeenCalledWith('wallet.operation.success', expect.objectContaining({ label: 'verifyBpin' }));
+  });
+
+  it('closes idle session after the configured timeout', async () => {
+    jest.useFakeTimers();
+    try {
+      const session = createScriptSession([{ expect: serializeCommand(buildVerifyBpin()), reply: '9000' }]);
+      const transport = createApduMockTransport(async () => session);
+      const wallet = createWallet({ transports: [{ kind: 'apdu', transport }], idleTimeoutMs: 100 });
+
+      await wallet.verifyBpin();
+      expect(session.close).not.toHaveBeenCalled();
+
+      jest.advanceTimersByTime(90);
+      await Promise.resolve();
+      expect(session.close).not.toHaveBeenCalled();
+
+      jest.advanceTimersByTime(20);
+
+      expect(session.close).toHaveBeenCalledTimes(1);
+    } finally {
+      jest.useRealTimers();
+    }
   });
 });

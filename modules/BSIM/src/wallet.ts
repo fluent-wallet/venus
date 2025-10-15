@@ -16,10 +16,51 @@ export type WalletOptions = {
   platform?: typeof Platform.OS;
   transports?: TransportKindConfig[];
   logger?: WalletLogger;
+  idleTimeoutMs?: number;
 };
 
 type ResolvedTransport = TransportKindConfig & {
   transport: Transport<ApduTransportOptions | BleTransportOptions>;
+  session?: TransportSession;
+  idleTimer?: ReturnType<typeof setTimeout>;
+};
+
+const DEFAULT_IDLE_TIMEOUT_MS = 60_000;
+
+const clearIdleTimer = (candidate: ResolvedTransport) => {
+  if (candidate.idleTimer) {
+    clearTimeout(candidate.idleTimer);
+    candidate.idleTimer = undefined;
+  }
+};
+
+const closeCandidateSession = async (candidate: ResolvedTransport, logger: WalletLogger) => {
+  const { session, kind } = candidate;
+  if (!session) {
+    return;
+  }
+
+  candidate.session = undefined;
+  clearIdleTimer(candidate);
+
+  try {
+    await session.close();
+    logger('wallet.transport.closed', { kind });
+  } catch (error) {
+    logger('wallet.transport.close_failed', { kind, error });
+  }
+};
+
+const scheduleIdleClose = (candidate: ResolvedTransport, logger: WalletLogger, timeout: number) => {
+  clearIdleTimer(candidate);
+
+  if (timeout <= 0) {
+    return;
+  }
+
+  candidate.idleTimer = setTimeout(() => {
+    closeCandidateSession(candidate, logger).catch(() => undefined);
+  }, timeout);
 };
 
 type SessionContext = {
@@ -86,6 +127,7 @@ const runOperation = async <T>(
 export const createWallet = (options: WalletOptions = {}): Wallet => {
   const platform = options.platform ?? Platform.OS;
   const logger = options.logger ?? noopLogger;
+  const idleTimeout = options.idleTimeoutMs ?? DEFAULT_IDLE_TIMEOUT_MS;
 
   const candidates = resolveTransports(options.transports ?? buildDefaultTransports(platform));
 
@@ -112,26 +154,35 @@ export const createWallet = (options: WalletOptions = {}): Wallet => {
       let lastError: unknown;
 
       for (const candidate of candidates) {
-        let session: TransportSession | undefined;
+        let session = candidate.session;
 
-        try {
-          session = await candidate.transport.open(candidate.options);
-          logger('wallet.transport.opened', { kind: candidate.kind });
-        } catch (error) {
-          lastError = error;
-          logger('wallet.transport.open_failed', { kind: candidate.kind, error });
-          continue;
+        if (!session) {
+          try {
+            session = await candidate.transport.open(candidate.options);
+            candidate.session = session;
+            logger('wallet.transport.opened', { kind: candidate.kind });
+          } catch (error) {
+            lastError = error;
+            logger('wallet.transport.open_failed', { kind: candidate.kind, error });
+            continue;
+          }
         }
 
+        clearIdleTimer(candidate);
+
         try {
-          return await operation(session, { kind: candidate.kind });
-        } finally {
-          try {
-            await session.close();
-            logger('wallet.transport.closed', { kind: candidate.kind });
-          } catch (closeError) {
-            logger('wallet.transport.close_failed', { kind: candidate.kind, error: closeError });
+          const result = await operation(session, { kind: candidate.kind });
+          scheduleIdleClose(candidate, logger, idleTimeout);
+          return result;
+        } catch (error) {
+          lastError = error;
+          if (isTransportError(error)) {
+            await closeCandidateSession(candidate, logger);
+          } else {
+            scheduleIdleClose(candidate, logger, idleTimeout);
           }
+          logger('wallet.operation.failed', { label: operation.name ?? 'anonymous', transport: candidate.kind, error });
+          throw error;
         }
       }
 
