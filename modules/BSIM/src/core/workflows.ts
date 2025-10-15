@@ -1,5 +1,5 @@
 import { APDU_STATUS } from './errors';
-import { buildExportPubkey, buildGetVersion, buildSignMessage, buildVerifyBpin, serializeCommand } from './params';
+import { buildDerivePrivateKey, buildExportPubkey, buildGetVersion, buildSignMessage, buildUpdateBpin, buildVerifyBpin, serializeCommand } from './params';
 import { parseApduResponse } from './response';
 import type { ApduCommand, ApduTransmit, HexString, PubkeyRecord, SignatureComponents } from './types';
 import { extractSignature, normalizeHex, parsePubkeyChunk } from './utils';
@@ -149,4 +149,28 @@ export const getVersionFlow = async (transmit: ApduTransmit): Promise<HexString>
   }
 
   return response.payload;
+};
+
+/**
+ * 0x80A8 DERIVE KEY and ensure completion.
+ */
+export const deriveKeyFlow = async (transmit: ApduTransmit, coinType: number, algorithm: number): Promise<void> => {
+  const response = await dispatchApdu(transmit, buildDerivePrivateKey(coinType, algorithm));
+
+  if (response.status !== 'success') {
+    throw new ApduFlowError(APDU_STATUS.PENDING, 'Key derivation requires additional APDU exchange');
+  }
+};
+
+/**
+ * 0x807E UPDATE BPIN and return success flag.
+ */
+export const updateBpinFlow = async (transmit: ApduTransmit): Promise<'ok'> => {
+  const response = await dispatchApdu(transmit, buildUpdateBpin());
+
+  if (response.status === 'success') {
+    return 'ok';
+  }
+
+  throw new ApduFlowError(APDU_STATUS.PENDING, 'BPIN update requires additional APDU exchange');
 };

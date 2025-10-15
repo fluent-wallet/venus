@@ -5,12 +5,13 @@ jest.mock('react-native-ble-plx', () => {
 });
 
 import { createWallet } from './wallet';
-import { buildVerifyBpin, serializeCommand } from './core/params';
 import { TransportError, TransportErrorCode } from './transports/errors';
 import type { Transport, TransportSession } from './transports/types';
 import type { ApduTransportOptions } from './transports/apdu';
 import type { BleTransportOptions } from './transports/ble';
 import { ApduFlowError } from './core/workflows';
+import { DEFAULT_SIGNATURE_ALGORITHM } from './constants';
+import { buildDerivePrivateKey, buildGetVersion, buildUpdateBpin, buildVerifyBpin, serializeCommand } from './core/params';
 
 type ScriptStep = { expect: string; reply: string };
 
@@ -160,5 +161,33 @@ describe('wallet', () => {
     } finally {
       jest.useRealTimers();
     }
+  });
+
+  it('derives a new key using the default algorithm', async () => {
+    const command = serializeCommand(buildDerivePrivateKey(60, DEFAULT_SIGNATURE_ALGORITHM));
+    const session = createScriptSession([{ expect: command, reply: '9000' }]);
+    const transport = createApduMockTransport(async () => session);
+    const wallet = createWallet({ transports: [{ kind: 'apdu', transport }], idleTimeoutMs: 0 });
+
+    await expect(wallet.deriveKey({ coinType: 60 })).resolves.toBeUndefined();
+  });
+
+  it('updates BPIN and returns ok on success', async () => {
+    const command = serializeCommand(buildUpdateBpin());
+    const session = createScriptSession([{ expect: command, reply: '9000' }]);
+    const transport = createApduMockTransport(async () => session);
+    const wallet = createWallet({ transports: [{ kind: 'apdu', transport }], idleTimeoutMs: 0 });
+
+    await expect(wallet.updateBpin()).resolves.toBe('ok');
+  });
+
+  it('decodes version payload as ASCII text', async () => {
+    const command = serializeCommand(buildGetVersion());
+    const payload = '313233'; // "123"
+    const session = createScriptSession([{ expect: command, reply: `${payload}9000` }]);
+    const transport = createApduMockTransport(async () => session);
+    const wallet = createWallet({ transports: [{ kind: 'apdu', transport }], idleTimeoutMs: 0 });
+
+    await expect(wallet.getVersion()).resolves.toBe('123');
   });
 });

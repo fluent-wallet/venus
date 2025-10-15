@@ -1,32 +1,136 @@
 import type { Plugin } from '@core/WalletCore/Plugins';
 import type { ITxEvm } from '@core/WalletCore/Plugins/Transaction/types';
-import { Signature, Transaction, type TypedDataDomain, TypedDataEncoder, type TypedDataField, hashMessage } from 'ethers';
 import {
-  BSIMError,
-  CoinTypes,
-  type PublicKeyAndAddress60Type,
-  genNewKey,
-  getBSIMVersion,
-  getPublicKeyAndAddress,
-  signMessage,
-  updateBPIN,
-  verifyBPIN,
-} from 'react-native-bsim';
+  Signature,
+  SigningKey,
+  Transaction,
+  type TypedDataDomain,
+  TypedDataEncoder,
+  type TypedDataField,
+  getAddress,
+  hashMessage,
+  keccak256,
+  hexlify,
+  toBeHex,
+} from 'ethers';
+import { BSIMError, CoinTypes, createWallet, getDefaultSignatureAlgorithm } from 'react-native-bsim';
 import { Subject, catchError, defer, firstValueFrom, from, retry, takeUntil, throwError, timeout } from 'rxjs';
 import { BSIMErrorEndTimeout, BSIM_ERRORS, BSIM_SUPPORT_ACCOUNT_LIMIT, CFXCoinTypes } from './BSIMSDK';
 
+const ETHEREUM_COIN_TYPE = 60;
+
+const HEX_PATTERN = /^[0-9A-F]*$/i;
+
+const ensureHex = (value: string): string => {
+  const compact = value.replace(/\s+/g, '').replace(/^0x/i, '');
+  if (compact.length === 0) {
+    throw new BSIMError('A000', 'Hex value must not be empty.');
+  }
+  if (compact.length % 2 !== 0) {
+    throw new BSIMError('A000', 'Hex value must contain whole bytes.');
+  }
+  if (!HEX_PATTERN.test(compact)) {
+    throw new BSIMError('A000', 'Hex value contains invalid characters.');
+  }
+  return compact.toUpperCase();
+};
+
+const addHexPrefix = (value: string): string => (value.startsWith('0x') || value.startsWith('0X') ? value : `0x${value}`);
+
+const ensureUncompressedPublicKey = (publicKey: string): string => {
+  const normalized = ensureHex(publicKey);
+  if (normalized.length === 128) {
+    return addHexPrefix(`04${normalized}`);
+  }
+  if (normalized.length === 130 && normalized.startsWith('04')) {
+    return addHexPrefix(normalized);
+  }
+  throw new BSIMError('1008', 'Unsupported public key format from BSIM.');
+};
+
+const normalizePublicKey = (publicKey: string): string => ensureHex(publicKey);
+
+const resolveRecoveryParam = (digest: string, r: string, s: string, publicKey: string): number => {
+  const normalizedTarget = normalizePublicKey(publicKey);
+  const candidates = [27, 28, 0, 1];
+  for (const candidate of candidates) {
+    try {
+      const recovered = SigningKey.recoverPublicKey(digest, { r: addHexPrefix(r), s: addHexPrefix(s), v: candidate });
+      const normalizedRecovered = normalizePublicKey(recovered);
+      if (normalizedRecovered === normalizedTarget) {
+        return candidate >= 27 ? candidate : candidate + 27;
+      }
+    } catch {
+      // ignore candidate
+    }
+  }
+  throw new BSIMError('1008', 'Failed to recover BSIM public key from signature.');
+};
+
+const computeEthereumAddress = (publicKey: string): string => {
+  const normalized = ensureHex(publicKey);
+  const body = normalized.length === 130 ? normalized.slice(2) : normalized;
+  const hash = keccak256(addHexPrefix(body));
+  return getAddress(`0x${hash.slice(-40)}`);
+};
+
+const isEthereumPublicKey = (record: BSIMPublicKey): record is EthereumPublicKey =>
+  record.coinType === ETHEREUM_COIN_TYPE && typeof record.address === 'string';
+
+type BSIMPublicKey = {
+  coinType: number;
+  index: number;
+  key: string;
+  address?: string;
+};
+
+type EthereumPublicKey = BSIMPublicKey & { address: string };
+
+type SignResult = {
+  code: string;
+  message: string;
+  r: string;
+  s: string;
+  v: string;
+};
 declare module '@core/WalletCore/Plugins' {
   interface Plugins {
     BSIM: BSIMPluginClass;
   }
 }
 
-const eSpaceCoinType = 60;
-
 export class BSIMPluginClass implements Plugin {
   name = 'BSIM' as const;
 
   chainLimitCount = 25 as const;
+
+  private queue: Promise<unknown> = Promise.resolve();
+
+  private enqueue<T>(task: () => Promise<T>): Promise<T> {
+    const job = this.queue.then(
+      () => task(),
+      () => task(),
+    );
+    this.queue = job.then(
+      () => undefined,
+      () => undefined,
+    );
+    return job;
+  }
+
+  private async handleWalletCall<T>(operation: () => Promise<T>): Promise<T> {
+    try {
+      return await this.enqueue(operation);
+    } catch (error) {
+      const code = typeof (error as { code?: unknown })?.code === 'string' ? String((error as { code?: unknown }).code).toUpperCase() : undefined;
+      if (code) {
+        const message = BSIM_ERRORS[code] ?? (error as Error)?.message ?? 'BSIM error, unknown error.';
+        throw new BSIMError(code, message);
+      }
+      throw error;
+    }
+  }
+  private wallet = createWallet();
 
   public formatBSIMPubkey = (key: string) => {
     if (key.length === 128) {
@@ -38,25 +142,44 @@ export class BSIMPluginClass implements Plugin {
     return key;
   };
 
-  public getBSIMPublicKeys = () => getPublicKeyAndAddress();
+  private async loadPubkeys(): Promise<BSIMPublicKey[]> {
+    const records = await this.handleWalletCall(() => this.wallet.exportPubkeys());
+    return records.map((record) => {
+      const base: BSIMPublicKey = {
+        coinType: record.coinType,
+        index: record.index,
+        key: record.key,
+      };
+      if (record.coinType === ETHEREUM_COIN_TYPE) {
+        try {
+          return { ...base, address: computeEthereumAddress(record.key) };
+        } catch {
+          return base;
+        }
+      }
+      return base;
+    });
+  }
+
+  public getBSIMPublicKeys = async () => this.loadPubkeys();
 
   public getBSIMList = async () => {
     try {
       const list = await this.getBSIMPublicKeys();
       return list
         .filter((item) => item.index > 0)
-        .filter((item): item is PublicKeyAndAddress60Type => item.coinType === eSpaceCoinType)
+        .filter(isEthereumPublicKey)
         .map((item) => ({ hexAddress: item.address, index: item.index, coinType: item.coinType }))
         .sort((itemA, itemB) => itemA.index - itemB.index)
         .map((item, index) => ({ ...item, index }));
-    } catch (err) {
+    } catch {
       return [];
     }
   };
 
   public createNewBSIMAccount = async () => {
     try {
-      await genNewKey(CoinTypes.ETHEREUM);
+      await this.handleWalletCall(() => this.wallet.deriveKey({ coinType: ETHEREUM_COIN_TYPE, algorithm: getDefaultSignatureAlgorithm(CoinTypes.ETHEREUM) }));
 
       const list = await this.getBSIMList();
 
@@ -65,8 +188,8 @@ export class BSIMPluginClass implements Plugin {
 
       return { hexAddress: BSIMKey.hexAddress, index: BSIMKey.index };
     } catch (error: any) {
-      if (error?.code) {
-        const errorMsg = BSIM_ERRORS[error.code?.toUpperCase()] || error.message;
+      if (error instanceof BSIMError) {
+        const errorMsg = BSIM_ERRORS[error.code.toUpperCase()] || error.message;
         throw new Error(errorMsg);
       }
       throw error;
@@ -93,23 +216,32 @@ export class BSIMPluginClass implements Plugin {
     }
   };
 
-  public verifyBPIN = async () => {
-    return verifyBPIN();
-  };
+  public verifyBPIN = async () => this.handleWalletCall(() => this.wallet.verifyBpin());
 
-  public getBSIMVersion = async () => {
-    return getBSIMVersion();
-  };
-  public BSIMSignMessage = async (message: string, coinTypeIndex: number, index: number) => {
-    return signMessage({
-      messageHash: message,
-      coinType: coinTypeIndex,
-      coinTypeIndex: index,
-    });
-  };
+  public getBSIMVersion = async () => this.handleWalletCall(() => this.wallet.getVersion());
 
-  public updateBPIN = async () => {
-    return updateBPIN();
+  public updateBPIN = async () => this.handleWalletCall(() => this.wallet.updateBpin());
+
+  public BSIMSignMessage = async (message: string, coinTypeIndex: number, index: number, pubkey?: BSIMPublicKey): Promise<SignResult> => {
+    const record = pubkey ?? (await this.loadPubkeys()).find((item) => item.coinType === coinTypeIndex && item.index === index);
+
+    if (!record) {
+      throw new Error("Can't get current pubkey from BSIM card");
+    }
+
+    const normalizedHash = ensureHex(message);
+    const digest = addHexPrefix(normalizedHash);
+    const { r, s } = await this.handleWalletCall(() => this.wallet.signMessage({ hash: digest, coinType: record.coinType, index: record.index }));
+    const uncompressedKey = ensureUncompressedPublicKey(record.key);
+    const v = resolveRecoveryParam(digest, r, s, uncompressedKey);
+
+    return {
+      code: '9000',
+      message: '',
+      r: hexlify(addHexPrefix(r)),
+      s: hexlify(addHexPrefix(s)),
+      v: toBeHex(v),
+    };
   };
 
   private BSIMSign = async (hash: string, fromAddress: string) => {
@@ -118,7 +250,6 @@ export class BSIMPluginClass implements Plugin {
     } catch (error: any) {
       if (error?.code && error.code === 'A000') {
         console.log("get error code A000, it's ok");
-        // ignore A000 error by verifyBPIN function
       } else {
         throw new BSIMError(error.code, error.message);
       }
@@ -126,9 +257,9 @@ export class BSIMPluginClass implements Plugin {
 
     let errorMsg = '';
     let errorCode = '';
-    // retrieve the R S V of the transaction through a polling mechanism
+
     const pubkeyList = await this.getBSIMPublicKeys();
-    const currentPubkey = pubkeyList.find((item) => item?.address === fromAddress);
+    const currentPubkey = pubkeyList.find((item) => isEthereumPublicKey(item) && item.address === fromAddress);
 
     if (!currentPubkey) {
       throw new Error("Can't get current pubkey from BSIM card");
@@ -136,17 +267,17 @@ export class BSIMPluginClass implements Plugin {
 
     const cancelSignal = new Subject<void>();
     let cancel!: () => void;
-    const cancelPromise = new Promise(
-      (_, reject) =>
-        (cancel = () => {
-          cancelSignal.next();
-          cancelSignal.complete();
-          reject(new BSIMError('cancel', BSIM_ERRORS.cancel));
-        }),
-    );
+
+    const cancelPromise = new Promise<never>((_, reject) => {
+      cancel = () => {
+        cancelSignal.next();
+        cancelSignal.complete();
+        reject(new BSIMError('cancel', BSIM_ERRORS.cancel));
+      };
+    });
 
     const polling = firstValueFrom(
-      defer(() => from(this.BSIMSignMessage(hash, currentPubkey.coinType, currentPubkey.index))).pipe(
+      defer(() => from(this.BSIMSignMessage(hash, currentPubkey.coinType, currentPubkey.index, currentPubkey))).pipe(
         catchError((err: { code: string; message: string }) => {
           errorMsg = err.message;
           errorCode = err.code;
@@ -157,17 +288,9 @@ export class BSIMPluginClass implements Plugin {
         takeUntil(cancelSignal),
       ),
     );
+
     const resPromise = Promise.race([polling, cancelPromise] as const)
-      .then(
-        (res) =>
-          res as {
-            code: string;
-            message: string;
-            r: string;
-            s: string;
-            v: string;
-          },
-      )
+      .then((res) => res as SignResult)
       .catch((err) => {
         if (String(err).includes('no elements in sequence')) {
           throw new BSIMError('cancel', BSIM_ERRORS.cancel);
@@ -175,6 +298,7 @@ export class BSIMPluginClass implements Plugin {
           throw err;
         }
       });
+
     return [resPromise, cancel] as const;
   };
 

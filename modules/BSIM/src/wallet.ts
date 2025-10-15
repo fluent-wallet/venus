@@ -4,7 +4,11 @@ import { createBleTransport, type BleTransportOptions } from './transports/ble';
 import { TransportError, TransportErrorCode, isTransportError } from './transports/errors';
 import type { Transport, TransportSession } from './transports/types';
 import type { HexString, PubkeyRecord, SignatureComponents } from './core/types';
-import { exportPubkeysFlow, getVersionFlow, signMessageFlow, verifyBpinFlow } from './core/workflows';
+import { deriveKeyFlow, exportPubkeysFlow, getVersionFlow, signMessageFlow, updateBpinFlow, verifyBpinFlow } from './core/workflows';
+import { fromHex } from './core/utils';
+import { DEFAULT_SIGNATURE_ALGORITHM } from './constants';
+
+const DEFAULT_IDLE_TIMEOUT_MS = 60_000;
 
 export type WalletLogger = (event: string, context?: Record<string, unknown>) => void;
 
@@ -24,8 +28,6 @@ type ResolvedTransport = TransportKindConfig & {
   session?: TransportSession;
   idleTimer?: ReturnType<typeof setTimeout>;
 };
-
-const DEFAULT_IDLE_TIMEOUT_MS = 60_000;
 
 const clearIdleTimer = (candidate: ResolvedTransport) => {
   if (candidate.idleTimer) {
@@ -75,14 +77,20 @@ export type SignMessageParams = {
   index: number;
 };
 
+export type DeriveKeyParams = {
+  coinType: number;
+  algorithm?: number;
+};
+
 export type Wallet = {
   runSession: WalletSessionRunner;
   verifyBpin(): Promise<void>;
   exportPubkeys(): Promise<PubkeyRecord[]>;
   signMessage(params: SignMessageParams): Promise<SignatureComponents>;
+  deriveKey(params: DeriveKeyParams): Promise<void>;
+  updateBpin(): Promise<'ok'>;
   getVersion(): Promise<string>;
 };
-
 const noopLogger: WalletLogger = () => undefined;
 
 const buildDefaultTransports = (platform: typeof Platform.OS): TransportKindConfig[] => {
@@ -122,6 +130,17 @@ const runOperation = async <T>(
         throw error;
       });
   });
+};
+
+const decodeAscii = (hex: HexString): string => {
+  const bytes = fromHex(hex);
+  const chars: string[] = [];
+  for (const byte of bytes) {
+    if (byte !== 0) {
+      chars.push(String.fromCharCode(byte));
+    }
+  }
+  return chars.join('');
 };
 
 export const createWallet = (options: WalletOptions = {}): Wallet => {
@@ -208,6 +227,9 @@ export const createWallet = (options: WalletOptions = {}): Wallet => {
     exportPubkeys: () => runOperation('exportPubkeys', runSession, logger, (transmit) => exportPubkeysFlow(transmit)),
     signMessage: (params) =>
       runOperation('signMessage', runSession, logger, (transmit) => signMessageFlow(transmit, params.hash, params.coinType, params.index)),
-    getVersion: () => runOperation('getVersion', runSession, logger, (transmit) => getVersionFlow(transmit)),
+    deriveKey: (params) =>
+      runOperation('deriveKey', runSession, logger, (transmit) => deriveKeyFlow(transmit, params.coinType, params.algorithm ?? DEFAULT_SIGNATURE_ALGORITHM)),
+    updateBpin: () => runOperation('updateBpin', runSession, logger, (transmit) => updateBpinFlow(transmit)),
+    getVersion: () => runOperation('getVersion', runSession, logger, async (transmit) => decodeAscii(await getVersionFlow(transmit))),
   };
 };
