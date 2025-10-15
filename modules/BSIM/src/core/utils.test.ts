@@ -1,19 +1,21 @@
 import { extractSignature, normalizeHex, parsePubkeyChunk } from './utils';
 
 const DER_SIGNATURE =
-  '3045022100F3949D7B92917A23C54D76FAA6DDD4D41E25385443F078DAC3F88FC5BE6FD7F002205550E2C1A28FDB1A698E6AD1F1B12D3093387DA71903C0CC1AA7DC21D2997D0D';
+  '304402207F0F265E3F4FC52AE1A86410DA5C8BDAEB7C0B1032EB42B1E23FC326439BAFC502204A9AEE904027C3188D8F9C56F8EBAB223B7E555265F7C204E4290339F30B698B';
 const PUBKEY_TLV = `C2470000003C020140${'EE'.repeat(64)}`;
 
 describe('utlis', () => {
   it('normalizes hex strings', () => {
     expect(normalizeHex('aa bb cc')).toBe('AABBCC');
+    expect(normalizeHex('0x0123')).toBe('0123');
     expect(() => normalizeHex('abc')).toThrow('Hex string must have even length');
+    expect(() => normalizeHex('0x123')).toThrow('Hex string must have even length');
   });
 
   it('extracts signature components from DER payload', () => {
     expect(extractSignature(DER_SIGNATURE)).toEqual({
-      r: 'F3949D7B92917A23C54D76FAA6DDD4D41E25385443F078DAC3F88FC5BE6FD7F0',
-      s: '5550E2C1A28FDB1A698E6AD1F1B12D3093387DA71903C0CC1AA7DC21D2997D0D',
+      r: '7F0F265E3F4FC52AE1A86410DA5C8BDAEB7C0B1032EB42B1E23FC326439BAFC5',
+      s: '4A9AEE904027C3188D8F9C56F8EBAB223B7E555265F7C204E4290339F30B698B',
     });
   });
 
