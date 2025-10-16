@@ -11,9 +11,26 @@ jest.mock('react-native-ble-plx', () => {
     __esModule: true,
     BleError,
     BleManager,
+    State: {
+      Unknown: 'Unknown',
+      Resetting: 'Resetting',
+      Unsupported: 'Unsupported',
+      Unauthorized: 'Unauthorized',
+      PoweredOff: 'PoweredOff',
+      PoweredOn: 'PoweredOn',
+    },
+    BleErrorCode: {
+      CharacteristicWriteFailed: 401,
+    },
+    BleATTErrorCode: {
+      InsufficientAuthentication: 5,
+      InsufficientEncryption: 15,
+      InsufficientEncryptionKeySize: 12,
+    },
   };
 });
 
+import { BleATTErrorCode, BleErrorCode, State } from 'react-native-ble-plx';
 import { toHex } from '../core/utils';
 import { createBleTransport } from './ble';
 import { TransportErrorCode } from './errors';
@@ -22,50 +39,50 @@ type MonitorCallback = (error: unknown, characteristic: { value?: string | null 
 type DisconnectCallback = (error: unknown) => void;
 type ScanCallback = (error: unknown, device: { id: string; name?: string } | null) => void;
 
-const createFakeTimers = () => {
-  let nextId = 1;
-  const pending = new Map<number, () => void>();
-
-  const fakeSetTimeout = ((callback: (...args: unknown[]) => void) => {
-    const id = nextId;
-    nextId += 1;
-    pending.set(id, () => callback());
-    return id as unknown as ReturnType<typeof setTimeout>;
-  }) as typeof setTimeout;
-
-  if ('__promisify__' in setTimeout) {
-    (fakeSetTimeout as typeof setTimeout & { __promisify__?: typeof setTimeout.__promisify__ }).__promisify__ = setTimeout.__promisify__;
+const flushMicrotasks = async (iterations = 2) => {
+  for (let index = 0; index < iterations; index += 1) {
+    await Promise.resolve();
   }
-
-  const fakeClearTimeout = ((handle: ReturnType<typeof setTimeout>) => {
-    pending.delete(handle as unknown as number);
-  }) as typeof clearTimeout;
-
-  const flushAll = () => {
-    const callbacks = Array.from(pending.values());
-    pending.clear();
-    for (const callback of callbacks) {
-      callback();
-    }
-  };
-
-  return { timers: { setTimeout: fakeSetTimeout, clearTimeout: fakeClearTimeout }, flushAll };
 };
+
+const buildTransport = (mock: ReturnType<typeof createMockManager>, overrides: Parameters<typeof createBleTransport>[0] = {}) => {
+  return createBleTransport({ manager: mock.manager, timers: { setTimeout, clearTimeout }, ...overrides });
+};
+
+beforeEach(() => {
+  jest.useFakeTimers();
+});
+
+afterEach(() => {
+  jest.clearAllTimers();
+  jest.useRealTimers();
+});
 
 type MockConfig = {
   serviceUuid?: string;
   characteristics?: string[];
   services?: Array<{ uuid: string }>;
+  initialState?: State;
 };
 
 const createMockManager = (config: MockConfig = {}) => {
   let monitorCallback: MonitorCallback | null = null;
   let disconnectCallback: DisconnectCallback | null = null;
   let scanCallback: ScanCallback | null = null;
+  const stateListeners = new Set<(state: State) => void>();
   const writtenFrames: string[] = [];
-  let pendingWriteError: unknown | null = null;
+  const pendingWriteErrors: unknown[] = [];
+  const pendingStateEmits: State[] = [];
 
   const manager = {
+    state: jest.fn(async () => config.initialState ?? State.PoweredOn),
+    onStateChange: jest.fn((callback: (state: State) => void) => {
+      stateListeners.add(callback);
+      while (pendingStateEmits.length) {
+        callback(pendingStateEmits.shift()!);
+      }
+      return { remove: jest.fn(() => stateListeners.delete(callback)) };
+    }),
     connectToDevice: jest.fn(async (deviceId: string) => ({ id: deviceId, name: 'MockDevice' })),
     discoverAllServicesAndCharacteristicsForDevice: jest.fn(async () => undefined),
     servicesForDevice: jest.fn(async () => config.services ?? [{ uuid: config.serviceUuid ?? 'FF10' }]),
@@ -78,10 +95,8 @@ const createMockManager = (config: MockConfig = {}) => {
       return { remove: jest.fn() };
     }),
     writeCharacteristicWithResponseForDevice: jest.fn(async (_deviceId, _serviceUuid, _charUuid, base64: string) => {
-      if (pendingWriteError) {
-        const error = pendingWriteError;
-        pendingWriteError = null;
-        throw error;
+      if (pendingWriteErrors.length > 0) {
+        throw pendingWriteErrors.shift();
       }
       writtenFrames.push(base64);
       return { value: base64 };
@@ -119,7 +134,17 @@ const createMockManager = (config: MockConfig = {}) => {
   };
 
   const failNextWrite = (error: unknown) => {
-    pendingWriteError = error;
+    pendingWriteErrors.push(error);
+  };
+
+  const emitStateChange = (state: State) => {
+    if (stateListeners.size === 0) {
+      pendingStateEmits.push(state);
+      return;
+    }
+    stateListeners.forEach((listener) => {
+      listener(state);
+    });
   };
 
   return {
@@ -130,6 +155,7 @@ const createMockManager = (config: MockConfig = {}) => {
     emitScanError,
     triggerDisconnect,
     failNextWrite,
+    emitStateChange,
   };
 };
 
@@ -143,8 +169,7 @@ const xorCipherFactory = (mask: number) => ({
 describe('createBleTransport', () => {
   it('transmits APDU frames and resolves response', async () => {
     const mock = createMockManager();
-    const timers = createFakeTimers();
-    const transport = createBleTransport({ manager: mock.manager, timers: timers.timers });
+    const transport = buildTransport(mock);
 
     const session = await transport.open({ deviceId: 'mock-device', responseTimeoutMs: 5_000 });
 
@@ -162,8 +187,7 @@ describe('createBleTransport', () => {
 
   it('reassembles multi-frame responses', async () => {
     const mock = createMockManager();
-    const timers = createFakeTimers();
-    const transport = createBleTransport({ manager: mock.manager, timers: timers.timers });
+    const transport = buildTransport(mock);
 
     const session = await transport.open({ deviceId: 'mock-device' });
 
@@ -173,7 +197,7 @@ describe('createBleTransport', () => {
     const secondFrame = [0x21, ...body.slice(19)];
 
     const pending = session.transmit('80AC000000');
-    await Promise.resolve();
+    await flushMicrotasks();
 
     mock.emitNotification(firstFrame);
     mock.emitNotification(secondFrame);
@@ -185,8 +209,7 @@ describe('createBleTransport', () => {
 
   it('rejects when frame sequence is invalid', async () => {
     const mock = createMockManager();
-    const timers = createFakeTimers();
-    const transport = createBleTransport({ manager: mock.manager, timers: timers.timers });
+    const transport = buildTransport(mock);
 
     const session = await transport.open({ deviceId: 'mock-device' });
 
@@ -207,10 +230,7 @@ describe('createBleTransport', () => {
 
   it('uses provided encryptionFactory for request/response', async () => {
     const mock = createMockManager();
-    const timers = createFakeTimers();
-    const transport = createBleTransport({
-      manager: mock.manager,
-      timers: timers.timers,
+    const transport = buildTransport(mock, {
       encryptionFactory: (key) => xorCipherFactory(key[0] ?? 0x00),
     });
 
@@ -234,8 +254,7 @@ describe('createBleTransport', () => {
 
   it('throws when notify characteristic is missing', async () => {
     const mock = createMockManager({ characteristics: ['FF11'] });
-    const timers = createFakeTimers();
-    const transport = createBleTransport({ manager: mock.manager, timers: timers.timers });
+    const transport = buildTransport(mock);
 
     await expect(transport.open({ deviceId: 'mock-device' })).rejects.toMatchObject({
       code: TransportErrorCode.CHARACTERISTIC_NOT_FOUND,
@@ -248,10 +267,7 @@ describe('createBleTransport', () => {
       services: [{ uuid: serviceUuid }],
       characteristics: ['0000ff11-0000-1000-8000-00805f9b34fb', '0000FF12-0000-1000-8000-00805F9B34FB'],
     });
-    const timers = createFakeTimers();
-    const transport = createBleTransport({
-      manager: mock.manager,
-      timers: timers.timers,
+    const transport = buildTransport(mock, {
       identifiers: {
         serviceUuid: 'FF10',
         writeCharacteristicUuid: 'FF11',
@@ -267,8 +283,7 @@ describe('createBleTransport', () => {
 
   it('queues transmit calls sequentially', async () => {
     const mock = createMockManager();
-    const timers = createFakeTimers();
-    const transport = createBleTransport({ manager: mock.manager, timers: timers.timers });
+    const transport = buildTransport(mock);
 
     const session = await transport.open({ deviceId: 'mock-device', responseTimeoutMs: 5_000 });
 
@@ -297,8 +312,7 @@ describe('createBleTransport', () => {
 
   it('propagates write errors as TransportError WRITE_FAILED', async () => {
     const mock = createMockManager();
-    const timers = createFakeTimers();
-    const transport = createBleTransport({ manager: mock.manager, timers: timers.timers });
+    const transport = buildTransport(mock);
 
     const session = await transport.open({ deviceId: 'mock-device' });
 
@@ -312,8 +326,7 @@ describe('createBleTransport', () => {
 
   it('rejects pending transmit when device disconnects', async () => {
     const mock = createMockManager();
-    const timers = createFakeTimers();
-    const transport = createBleTransport({ manager: mock.manager, timers: timers.timers });
+    const transport = buildTransport(mock);
 
     const session = await transport.open({ deviceId: 'mock-device', responseTimeoutMs: 5_000 });
 
@@ -331,50 +344,72 @@ describe('createBleTransport', () => {
 
   it('rejects when no response arrives before timeout', async () => {
     const mock = createMockManager();
-    const timers = createFakeTimers();
-    const transport = createBleTransport({ manager: mock.manager, timers: timers.timers });
+    const transport = buildTransport(mock);
 
     const session = await transport.open({ deviceId: 'mock-device', responseTimeoutMs: 1 });
 
     const pending = session.transmit('80AC000000');
-    await Promise.resolve();
-
-    timers.flushAll();
-
-    await expect(pending).rejects.toMatchObject({
+    const expectation = expect(pending).rejects.toMatchObject({
       code: TransportErrorCode.READ_TIMEOUT,
     });
+
+    await flushMicrotasks();
+    await jest.advanceTimersByTimeAsync(1);
+    await flushMicrotasks();
+    await expectation;
 
     await session.close();
   });
 
   it('fails to open when scan times out', async () => {
     const mock = createMockManager();
-    const timers = createFakeTimers();
-    const transport = createBleTransport({ manager: mock.manager, timers: timers.timers });
+    const transport = buildTransport(mock);
 
     const openPromise = transport.open({ scanTimeoutMs: 1, responseTimeoutMs: 5_000 });
-    await Promise.resolve();
-
-    timers.flushAll();
-
-    await expect(openPromise).rejects.toMatchObject({
-      code: TransportErrorCode.SCAN_FAILED,
-    });
+    const expectation = expect(openPromise).rejects.toMatchObject({ code: TransportErrorCode.SCAN_FAILED });
+    await jest.advanceTimersByTimeAsync(1);
+    await flushMicrotasks();
+    await expectation;
   });
 
   it('fails to open when scan returns error', async () => {
     const mock = createMockManager();
-    const timers = createFakeTimers();
-    const transport = createBleTransport({ manager: mock.manager, timers: timers.timers });
+    const transport = buildTransport(mock);
 
     const openPromise = transport.open({});
-    await Promise.resolve();
-
+    await flushMicrotasks();
     mock.emitScanError(new Error('scan fail'));
+    await flushMicrotasks();
+    await expect(openPromise).rejects.toMatchObject({ code: TransportErrorCode.SCAN_FAILED });
+  });
 
-    await expect(openPromise).rejects.toMatchObject({
-      code: TransportErrorCode.SCAN_FAILED,
+  it('retries characteristic write while pairing completes', async () => {
+    const mock = createMockManager();
+    const transport = buildTransport(mock);
+
+    const session = await transport.open({ deviceId: 'mock-device', responseTimeoutMs: 5_000 });
+
+    mock.failNextWrite({
+      errorCode: BleErrorCode.CharacteristicWriteFailed,
+      attErrorCode: BleATTErrorCode.InsufficientAuthentication,
+      iosErrorCode: null,
+      androidErrorCode: null,
+      reason: 'Authentication required',
     });
+
+    const pending = session.transmit('80AC000000');
+    const expectation = expect(pending).resolves.toBe('9000');
+    await flushMicrotasks();
+    expect(mock.manager.writeCharacteristicWithResponseForDevice).toHaveBeenCalledTimes(1);
+
+    await jest.advanceTimersByTimeAsync(1_000);
+    await flushMicrotasks();
+
+    mock.emitNotification([0x10, 0x12, 0x00, 0x02, 0x90, 0x00]);
+    await flushMicrotasks();
+    await expectation;
+    expect(mock.manager.writeCharacteristicWithResponseForDevice).toHaveBeenCalledTimes(2);
+
+    await session.close();
   });
 });
