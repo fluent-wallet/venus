@@ -23,6 +23,8 @@ export type TransportErrorDetails = {
   deviceId?: string;
   serviceUuid?: string;
   characteristicUuid?: string;
+  code?: string;
+  status?: string;
 };
 
 export class TransportError extends Error {

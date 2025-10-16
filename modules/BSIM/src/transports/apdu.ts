@@ -5,6 +5,7 @@ import type { HexString } from '../core/types';
 import { normalizeHex } from '../core/utils';
 import { TransportError, TransportErrorCode, wrapNativeError } from './errors';
 import type { Transport, TransportSession } from './types';
+import { createAsyncQueue } from './utils';
 
 type NativeApduModule = {
   openApduChannel: () => Promise<void>;
@@ -51,16 +52,7 @@ export const createApduTransport = (deps: CreateApduTransportDeps = {}): Transpo
 
   let native: NativeApduModule | undefined;
   let isOpen = false;
-  let chain: Promise<void> = Promise.resolve();
-
-  const enqueue = <T>(operation: () => Promise<T>): Promise<T> => {
-    const job = chain.then(operation, operation);
-    chain = job.then(
-      () => undefined,
-      () => undefined,
-    );
-    return job;
-  };
+  const queue = createAsyncQueue();
 
   const getNative = (): NativeApduModule => {
     if (!native || !isOpen) {
@@ -73,7 +65,7 @@ export const createApduTransport = (deps: CreateApduTransportDeps = {}): Transpo
     const module = getNative();
     const normalizedPayload = ensureHex(payload, TransportErrorCode.INVALID_APDU_PAYLOAD);
 
-    return enqueue(async () => {
+    return queue.enqueue(async () => {
       try {
         const response = await module.transmitApdu(normalizedPayload);
         return ensureHex(response, TransportErrorCode.TRANSMIT_FAILED);
@@ -88,7 +80,7 @@ export const createApduTransport = (deps: CreateApduTransportDeps = {}): Transpo
       return;
     }
 
-    await chain.catch(() => undefined);
+    await queue.flush();
     const module = native;
 
     try {
@@ -96,7 +88,7 @@ export const createApduTransport = (deps: CreateApduTransportDeps = {}): Transpo
     } finally {
       isOpen = false;
       native = undefined;
-      chain = Promise.resolve();
+      queue.reset();
     }
   };
 
@@ -113,7 +105,6 @@ export const createApduTransport = (deps: CreateApduTransportDeps = {}): Transpo
 
       native = ensureNativeModule(deps.nativeModule);
       const { autoSelectAid = false, aid = DEFAULT_BSIM_AID } = options ?? {};
-      chain = Promise.resolve();
 
       try {
         await native.openApduChannel();
