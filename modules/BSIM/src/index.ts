@@ -28,3 +28,5 @@ export {
   getCoinTypeIndex,
   getDefaultSignatureAlgorithm,
 } from './constants';
+
+export { createAsyncQueue } from './transports/utils';

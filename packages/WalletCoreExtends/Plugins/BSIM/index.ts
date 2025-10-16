@@ -13,7 +13,7 @@ import {
   hexlify,
   toBeHex,
 } from 'ethers';
-import { BSIMError, CoinTypes, createWallet, getDefaultSignatureAlgorithm } from 'react-native-bsim';
+import { BSIMError, CoinTypes, createAsyncQueue, createWallet, getDefaultSignatureAlgorithm } from 'react-native-bsim';
 import { Subject, catchError, defer, firstValueFrom, from, retry, takeUntil, throwError, timeout } from 'rxjs';
 import { BSIMErrorEndTimeout, BSIM_ERRORS, BSIM_SUPPORT_ACCOUNT_LIMIT, CFXCoinTypes } from './BSIMSDK';
 
@@ -104,18 +104,10 @@ export class BSIMPluginClass implements Plugin {
 
   chainLimitCount = 25 as const;
 
-  private queue: Promise<unknown> = Promise.resolve();
+  private queue = createAsyncQueue();
 
   private enqueue<T>(task: () => Promise<T>): Promise<T> {
-    const job = this.queue.then(
-      () => task(),
-      () => task(),
-    );
-    this.queue = job.then(
-      () => undefined,
-      () => undefined,
-    );
-    return job;
+    return this.queue.enqueue(task);
   }
 
   private async handleWalletCall<T>(operation: () => Promise<T>): Promise<T> {
@@ -130,7 +122,7 @@ export class BSIMPluginClass implements Plugin {
       throw error;
     }
   }
-  private wallet = createWallet();
+  private wallet = createWallet({ logger: console.log });
 
   public formatBSIMPubkey = (key: string) => {
     if (key.length === 128) {
