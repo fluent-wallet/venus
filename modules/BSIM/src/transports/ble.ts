@@ -638,53 +638,61 @@ export const createBleTransport = (deps: CreateBleTransportDeps = {}): Transport
 
       const transmit = (payload: string) => {
         const normalized = normalizeHex(payload);
+
         return queue.enqueue(async () => {
           if (!isOpen || !connectedDeviceId || !serviceUuid || !writeUuid) {
             throw new TransportError(TransportErrorCode.CHANNEL_NOT_OPEN, 'BLE channel is not open');
           }
-
           if (pendingResponse) {
             throw new TransportError(TransportErrorCode.SESSION_BUSY, 'Another BLE operation is still pending');
           }
 
           const frames = buildOutgoingFrames(normalized, encryption);
 
-          let resolvePending: (value: Uint8Array) => void;
-          let rejectPending: (error: unknown) => void;
+          const timeoutMs = responseTimeoutMs > 0 ? responseTimeoutMs : DEFAULT_RESPONSE_TIMEOUT_MS;
 
-          const responsePromise = new Promise<Uint8Array>((resolve, reject) => {
-            resolvePending = resolve;
-            rejectPending = reject;
-          });
+          const createPendingResponse = (timeout: number) => {
+            let resolvePending: (value: Uint8Array) => void;
+            let rejectPending: (error: unknown) => void;
 
-          pendingResponse = {
-            resolve: (value) => {
-              if (pendingResponse?.timeoutId) {
-                timers.clearTimeout(pendingResponse.timeoutId);
+            const promise = new Promise<Uint8Array>((resolve, reject) => {
+              resolvePending = resolve;
+              rejectPending = reject;
+            });
+
+            pendingResponse = {
+              resolve: (value) => {
+                if (pendingResponse?.timeoutId) {
+                  timers.clearTimeout(pendingResponse.timeoutId);
+                }
+                pendingResponse = undefined;
+                resolvePending(value);
+              },
+              reject: (error) => {
+                if (pendingResponse?.timeoutId) {
+                  timers.clearTimeout(pendingResponse.timeoutId);
+                }
+                pendingResponse = undefined;
+                rejectPending(error);
+              },
+              buffer: new Uint8Array(0),
+              expectedFrames: 0,
+              lastSequence: -1,
+              timeoutId: undefined,
+            };
+            const startTimer = () => {
+              if (!pendingResponse || pendingResponse.timeoutId || timeout <= 0) {
+                return;
               }
-              pendingResponse = undefined;
-              resolvePending(value);
-            },
-            reject: (error) => {
-              if (pendingResponse?.timeoutId) {
-                timers.clearTimeout(pendingResponse.timeoutId);
-              }
-              pendingResponse = undefined;
-              rejectPending(error);
-            },
-            buffer: new Uint8Array(0),
-            expectedFrames: 0,
-            lastSequence: -1,
-            timeoutId: undefined,
+              pendingResponse.timeoutId = timers.setTimeout(() => {
+                cleanupPending(new TransportError(TransportErrorCode.READ_TIMEOUT, 'BLE response timeout'));
+              }, timeout);
+            };
+
+            return { promise, startTimer };
           };
 
-          const startResponseTimer = () => {
-            if (!pendingResponse || pendingResponse.timeoutId) return;
-            const timeoutValue = responseTimeoutMs > 0 ? responseTimeoutMs : DEFAULT_RESPONSE_TIMEOUT_MS;
-            pendingResponse.timeoutId = timers.setTimeout(() => {
-              cleanupPending(new TransportError(TransportErrorCode.READ_TIMEOUT, 'BLE response timeout'));
-            }, timeoutValue);
-          };
+          const pending = createPendingResponse(timeoutMs);
 
           const writeFrame = async (frame: Uint8Array) => {
             const base64 = toBase64(frame);
@@ -720,7 +728,6 @@ export const createBleTransport = (deps: CreateBleTransportDeps = {}): Transport
             for (const frame of frames) {
               await writeFrame(frame);
             }
-            startResponseTimer();
           } catch (error) {
             cleanupPending(
               wrapBleError(TransportErrorCode.WRITE_FAILED, error, 'Failed to write BLE frame', {
@@ -731,7 +738,9 @@ export const createBleTransport = (deps: CreateBleTransportDeps = {}): Transport
             );
           }
 
-          const rawResponse = await responsePromise;
+          pending.startTimer();
+
+          const rawResponse = await pending.promise;
           return decodeIncomingPayload(rawResponse, encryption);
         });
       };
@@ -753,30 +762,20 @@ export const createBleTransport = (deps: CreateBleTransportDeps = {}): Transport
           }
 
           if (parsed.status === 'pending') {
-            throw new TransportError(
-              TransportErrorCode.SELECT_AID_FAILED,
-              'BSIM required additional APDU exchange during AID selection',
-              {
-                details: { status: APDU_STATUS.PENDING },
-              },
-            );
+            throw new TransportError(TransportErrorCode.SELECT_AID_FAILED, 'BSIM required additional APDU exchange during AID selection', {
+              details: { status: APDU_STATUS.PENDING },
+            });
           }
 
-          throw new TransportError(
-            TransportErrorCode.SELECT_AID_FAILED,
-            parsed.message ?? `AID selection failed with status ${parsed.code}`,
-            {
-              details: { code: parsed.code },
-            },
-          );
+          throw new TransportError(TransportErrorCode.SELECT_AID_FAILED, parsed.message ?? `AID selection failed with status ${parsed.code}`, {
+            details: { code: parsed.code },
+          });
         } catch (error) {
           const transportError = isTransportError(error)
             ? error
-            : new TransportError(
-                TransportErrorCode.SELECT_AID_FAILED,
-                (error as { message?: string })?.message ?? 'Failed to select BSIM AID',
-                { cause: error },
-              );
+            : new TransportError(TransportErrorCode.SELECT_AID_FAILED, (error as { message?: string })?.message ?? 'Failed to select BSIM AID', {
+                cause: error,
+              });
           logger('ble.select_aid.error', { ...context, error: transportError });
           throw transportError;
         }
