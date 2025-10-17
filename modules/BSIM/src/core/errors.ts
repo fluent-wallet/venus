@@ -42,3 +42,5 @@ export const resolveStatusMessage = (status: string): string | undefined => {
 export const isSuccessStatus = (status: string): boolean => status?.toUpperCase() === APDU_STATUS.SUCCESS;
 
 export const isPendingStatus = (status: string): boolean => status?.toUpperCase() === APDU_STATUS.PENDING;
+
+export const isProactiveStatus = (status: string): boolean => status?.toUpperCase().startsWith('91');

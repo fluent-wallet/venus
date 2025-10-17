@@ -1,4 +1,4 @@
-import { isPendingStatus, isSuccessStatus, resolveStatusMessage } from './errors';
+import { isPendingStatus, isProactiveStatus, isSuccessStatus, resolveStatusMessage } from './errors';
 import type { HexString } from './types';
 import { normalizeHex } from './utils';
 
@@ -21,6 +21,11 @@ export const parseApduResponse = (rawResponse: HexString): ParsedApduResponse =>
   const payload = normalized.slice(0, -4); // Remainder is the response payload.
 
   if (isSuccessStatus(statusWord)) {
+    return { status: 'success', payload };
+  }
+
+  if (isProactiveStatus(statusWord)) {
+    // Mirror current native demo behaviour: treat 0x91xx proactive responses as a completed operation.
     return { status: 'success', payload };
   }
 
