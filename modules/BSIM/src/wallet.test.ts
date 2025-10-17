@@ -181,13 +181,13 @@ describe('wallet', () => {
     await expect(wallet.updateBpin()).resolves.toBe('ok');
   });
 
-  it('decodes version payload as ASCII text', async () => {
+  it('returns raw version payload', async () => {
     const command = serializeCommand(buildGetVersion());
     const payload = '313233'; // "123"
     const session = createScriptSession([{ expect: command, reply: `${payload}9000` }]);
     const transport = createApduMockTransport(async () => session);
     const wallet = createWallet({ transports: [{ kind: 'apdu', transport }], idleTimeoutMs: 0 });
 
-    await expect(wallet.getVersion()).resolves.toBe('123');
+    await expect(wallet.getVersion()).resolves.toBe(payload);
   });
 });

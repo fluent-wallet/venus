@@ -234,6 +234,6 @@ export const createWallet = (options: WalletOptions = {}): Wallet => {
     deriveKey: (params) =>
       runOperation('deriveKey', runSession, logger, (transmit) => deriveKeyFlow(transmit, params.coinType, params.algorithm ?? DEFAULT_SIGNATURE_ALGORITHM)),
     updateBpin: () => runOperation('updateBpin', runSession, logger, (transmit) => updateBpinFlow(transmit)),
-    getVersion: () => runOperation('getVersion', runSession, logger, async (transmit) => decodeAscii(await getVersionFlow(transmit))),
+    getVersion: () => runOperation('getVersion', runSession, logger, async (transmit) => getVersionFlow(transmit)),
   };
 };
