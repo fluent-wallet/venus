@@ -6,9 +6,6 @@ import type { Transport, TransportSession } from './transports/types';
 import type { HexString, PubkeyRecord, SignatureComponents } from './core/types';
 import { deriveKeyFlow, exportPubkeysFlow, getVersionFlow, signMessageFlow, updateBpinFlow, verifyBpinFlow } from './core/workflows';
 import { fromHex } from './core/utils';
-import { buildSelectAid, serializeCommand } from './core/params';
-import { parseApduResponse } from './core/response';
-import { APDU_STATUS } from './core/errors';
 import { DEFAULT_SIGNATURE_ALGORITHM } from './constants';
 
 const DEFAULT_IDLE_TIMEOUT_MS = 60_000;
@@ -30,7 +27,6 @@ type ResolvedTransport = TransportKindConfig & {
   transport: Transport<ApduTransportOptions | BleTransportOptions>;
   session?: TransportSession;
   idleTimer?: ReturnType<typeof setTimeout>;
-  aidSelected?: boolean;
 };
 
 const clearIdleTimer = (candidate: ResolvedTransport) => {
@@ -47,7 +43,6 @@ const closeCandidateSession = async (candidate: ResolvedTransport, logger: Walle
   }
 
   candidate.session = undefined;
-  candidate.aidSelected = false;
   clearIdleTimer(candidate);
 
   await session.close();
@@ -113,7 +108,6 @@ const resolveTransports = (configs: TransportKindConfig[], logger: WalletLogger)
     } else {
       resolved = { ...config, transport: createBleTransport({ logger }) } as ResolvedTransport;
     }
-    resolved.aidSelected = false;
     return resolved;
   });
 };
@@ -147,48 +141,6 @@ const decodeAscii = (hex: HexString): string => {
     }
   }
   return chars.join('');
-};
-
-const SELECT_AID_COMMAND = serializeCommand(buildSelectAid());
-
-const ensureAidSelected = async (candidate: ResolvedTransport, session: TransportSession, logger: WalletLogger) => {
-  if (candidate.aidSelected) {
-    return;
-  }
-
-  logger('wallet.transport.select_aid.start', { kind: candidate.kind });
-
-  try {
-    const rawResponse = await session.transmit(SELECT_AID_COMMAND);
-    const parsed = parseApduResponse(rawResponse);
-
-    if (parsed.status === 'success') {
-      candidate.aidSelected = true;
-      logger('wallet.transport.select_aid.success', { kind: candidate.kind });
-      return;
-    }
-
-    if (parsed.status === 'pending') {
-      throw new TransportError(TransportErrorCode.SELECT_AID_FAILED, 'BSIM required additional APDU exchange during AID selection', {
-        details: { status: APDU_STATUS.PENDING },
-      });
-    }
-
-    throw new TransportError(TransportErrorCode.SELECT_AID_FAILED, parsed.message ?? `AID selection failed with status ${parsed.code}`, {
-      details: { code: parsed.code },
-    });
-  } catch (error) {
-    candidate.aidSelected = false;
-    logger('wallet.transport.select_aid.error', { kind: candidate.kind, error });
-
-    if (isTransportError(error)) {
-      throw error;
-    }
-
-    throw new TransportError(TransportErrorCode.SELECT_AID_FAILED, (error as Error)?.message ?? 'Failed to select BSIM AID', {
-      cause: error,
-    });
-  }
 };
 
 export const createWallet = (options: WalletOptions = {}): Wallet => {
@@ -227,7 +179,6 @@ export const createWallet = (options: WalletOptions = {}): Wallet => {
           try {
             session = await candidate.transport.open(candidate.options);
             candidate.session = session;
-            candidate.aidSelected = false;
             logger('wallet.transport.opened', { kind: candidate.kind });
           } catch (error) {
             lastError = error;
@@ -239,7 +190,6 @@ export const createWallet = (options: WalletOptions = {}): Wallet => {
         clearIdleTimer(candidate);
 
         try {
-          await ensureAidSelected(candidate, session, logger);
           const result = await operation(session, { kind: candidate.kind });
           scheduleIdleClose(candidate, logger, idleTimeout);
           return result;
