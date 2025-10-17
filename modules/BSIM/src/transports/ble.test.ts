@@ -32,7 +32,7 @@ jest.mock('react-native-ble-plx', () => {
 
 import { BleATTErrorCode, BleErrorCode, State } from 'react-native-ble-plx';
 import { toHex } from '../core/utils';
-import { createBleTransport } from './ble';
+import { createBleTransport, type BleTransportOptions } from './ble';
 import { TransportErrorCode } from './errors';
 
 type MonitorCallback = (error: unknown, characteristic: { value?: string | null } | null) => void;
@@ -44,6 +44,16 @@ const flushMicrotasks = async (iterations = 2) => {
     await Promise.resolve();
   }
 };
+
+const HANDSHAKE_SELECT_AID_HEX = '00A4040010A000000533C000FF860000000000054D';
+const buildSelectAidResponseFrame = (status: Uint8Array): number[] => [
+  0x10,
+  0x12,
+  (status.length >> 8) & 0xff,
+  status.length & 0xff,
+  ...status,
+];
+const SELECT_AID_RESPONSE_FRAME = buildSelectAidResponseFrame(Uint8Array.of(0x90, 0x00));
 
 const buildTransport = (mock: ReturnType<typeof createMockManager>, overrides: Parameters<typeof createBleTransport>[0] = {}) => {
   return createBleTransport({ manager: mock.manager, timers: { setTimeout, clearTimeout }, ...overrides });
@@ -161,6 +171,68 @@ const createMockManager = (config: MockConfig = {}) => {
 
 const decodeBase64 = (base64: string) => Uint8Array.from(Buffer.from(base64, 'base64'));
 
+const readCommandFromFrames = (frames: string[], startIndex = 0) => {
+  if (startIndex >= frames.length) {
+    throw new Error('Incomplete BLE command frames');
+  }
+
+  const buffer: number[] = [];
+  const firstChunk = decodeBase64(frames[startIndex]);
+  const totalFrames = firstChunk[0] >> 4;
+
+  for (let offset = 0; offset < totalFrames; offset += 1) {
+    const index = startIndex + offset;
+    if (index >= frames.length) {
+      throw new Error('Incomplete BLE command frames');
+    }
+    const chunk = decodeBase64(frames[index]);
+    buffer.push(...chunk.slice(1));
+  }
+
+  const body = Uint8Array.from(buffer);
+  if (body.length < 3) {
+    throw new Error('BLE command body too short');
+  }
+  const declaredLength = (body[1] << 8) | body[2];
+  const payload = body.slice(3, 3 + declaredLength);
+
+  return {
+    hex: toHex(payload),
+    nextIndex: startIndex + totalFrames,
+  };
+};
+
+const waitForFrames = async (mock: ReturnType<typeof createMockManager>, minimumCount: number, attempts = 20) => {
+  let remaining = attempts;
+  while (mock.writtenFrames.length < minimumCount && remaining > 0) {
+    await flushMicrotasks(4);
+    remaining -= 1;
+  }
+};
+
+const openSessionWithHandshake = async (
+  transport: ReturnType<typeof createBleTransport>,
+  mock: ReturnType<typeof createMockManager>,
+  options: BleTransportOptions = {},
+  handshakeResponse: number[] = SELECT_AID_RESPONSE_FRAME,
+) => {
+  const fullOptions: BleTransportOptions = { deviceId: 'mock-device', ...options };
+  const openPromise = transport.open(fullOptions);
+
+  await flushMicrotasks(4);
+  await waitForFrames(mock, 1);
+
+  mock.emitNotification(handshakeResponse);
+  await flushMicrotasks(4);
+
+  const session = await openPromise;
+  await waitForFrames(mock, 1);
+
+  const handshake = readCommandFromFrames(mock.writtenFrames, 0);
+
+  return { session, handshakeFrameCount: handshake.nextIndex, handshakeCommandHex: handshake.hex };
+};
+
 const xorCipherFactory = (mask: number) => ({
   encrypt: (payload: Uint8Array) => Uint8Array.from(payload.map((byte) => byte ^ mask)),
   decrypt: (payload: Uint8Array) => Uint8Array.from(payload.map((byte) => byte ^ mask)),
@@ -171,12 +243,12 @@ describe('createBleTransport', () => {
     const mock = createMockManager();
     const transport = buildTransport(mock);
 
-    const session = await transport.open({ deviceId: 'mock-device', responseTimeoutMs: 5_000 });
+    const { session, handshakeFrameCount } = await openSessionWithHandshake(transport, mock, { responseTimeoutMs: 5_000 });
 
     const transmitPromise = session.transmit('80AC000000');
 
     await Promise.resolve();
-    expect(mock.writtenFrames.length).toBeGreaterThan(0);
+    expect(mock.writtenFrames.length).toBeGreaterThan(handshakeFrameCount);
 
     mock.emitNotification([0x10, 0x12, 0x00, 0x02, 0x90, 0x00]);
 
@@ -189,7 +261,7 @@ describe('createBleTransport', () => {
     const mock = createMockManager();
     const transport = buildTransport(mock);
 
-    const session = await transport.open({ deviceId: 'mock-device' });
+    const { session } = await openSessionWithHandshake(transport, mock);
 
     const payload = Uint8Array.from({ length: 20 }, (_, index) => index);
     const body = Uint8Array.of(0x12, 0x00, payload.length, ...payload);
@@ -211,7 +283,7 @@ describe('createBleTransport', () => {
     const mock = createMockManager();
     const transport = buildTransport(mock);
 
-    const session = await transport.open({ deviceId: 'mock-device' });
+    const { session } = await openSessionWithHandshake(transport, mock);
 
     const body = Uint8Array.of(0x12, 0x00, 0x02, 0x90, 0x00);
     const firstFrame = [0x20, ...body.slice(0, 4)];
@@ -228,18 +300,37 @@ describe('createBleTransport', () => {
     await session.close();
   });
 
+  it('selects BSIM AID during open', async () => {
+    const mock = createMockManager();
+    const transport = buildTransport(mock);
+
+    const { session, handshakeCommandHex, handshakeFrameCount } = await openSessionWithHandshake(transport, mock);
+    expect(handshakeFrameCount).toBeGreaterThan(0);
+    expect(handshakeCommandHex).toBe(HANDSHAKE_SELECT_AID_HEX);
+    await session.close();
+  });
+
   it('uses provided encryptionFactory for request/response', async () => {
     const mock = createMockManager();
     const transport = buildTransport(mock, {
       encryptionFactory: (key) => xorCipherFactory(key[0] ?? 0x00),
     });
 
-    const session = await transport.open({ deviceId: 'mock-device', encryptionKey: 'AA', responseTimeoutMs: 5_000 });
+    const encryptedSelectResponse = buildSelectAidResponseFrame(xorCipherFactory(0xaa).encrypt(Uint8Array.of(0x90, 0x00)));
+    const { session, handshakeFrameCount } = await openSessionWithHandshake(
+      transport,
+      mock,
+      {
+        encryptionKey: 'AA',
+        responseTimeoutMs: 5_000,
+      },
+      encryptedSelectResponse,
+    );
 
     const pending = session.transmit('0102');
     await Promise.resolve();
 
-    const written = decodeBase64(mock.writtenFrames[0]);
+    const written = decodeBase64(mock.writtenFrames[handshakeFrameCount]);
     // header byte, frame type 0x02, length 0x0002, then encrypted payload
     expect(written.slice(1, 6)).toEqual(Uint8Array.of(0x02, 0x00, 0x02, 0xab, 0xa8));
 
@@ -275,7 +366,7 @@ describe('createBleTransport', () => {
       },
     });
 
-    const session = await transport.open({ deviceId: 'mock-device' });
+    const { session } = await openSessionWithHandshake(transport, mock);
     await session.close();
 
     expect(mock.manager.characteristicsForDevice).toHaveBeenCalled();
@@ -285,13 +376,13 @@ describe('createBleTransport', () => {
     const mock = createMockManager();
     const transport = buildTransport(mock);
 
-    const session = await transport.open({ deviceId: 'mock-device', responseTimeoutMs: 5_000 });
+    const { session, handshakeFrameCount } = await openSessionWithHandshake(transport, mock, { responseTimeoutMs: 5_000 });
 
     const first = session.transmit('80AC000000');
     await Promise.resolve();
 
     const writesAfterFirst = mock.writtenFrames.length;
-    expect(writesAfterFirst).toBeGreaterThan(0);
+    expect(writesAfterFirst).toBeGreaterThan(handshakeFrameCount);
 
     const second = session.transmit('80AC000000');
     await Promise.resolve();
@@ -314,7 +405,7 @@ describe('createBleTransport', () => {
     const mock = createMockManager();
     const transport = buildTransport(mock);
 
-    const session = await transport.open({ deviceId: 'mock-device' });
+    const { session } = await openSessionWithHandshake(transport, mock);
 
     mock.failNextWrite(new Error('write boom'));
     await expect(session.transmit('80AC000000')).rejects.toMatchObject({
@@ -328,7 +419,7 @@ describe('createBleTransport', () => {
     const mock = createMockManager();
     const transport = buildTransport(mock);
 
-    const session = await transport.open({ deviceId: 'mock-device', responseTimeoutMs: 5_000 });
+    const { session } = await openSessionWithHandshake(transport, mock, { responseTimeoutMs: 5_000 });
 
     const pending = session.transmit('80AC000000');
     await Promise.resolve();
@@ -346,7 +437,7 @@ describe('createBleTransport', () => {
     const mock = createMockManager();
     const transport = buildTransport(mock);
 
-    const session = await transport.open({ deviceId: 'mock-device', responseTimeoutMs: 1 });
+    const { session } = await openSessionWithHandshake(transport, mock, { responseTimeoutMs: 1 });
 
     const pending = session.transmit('80AC000000');
     const expectation = expect(pending).rejects.toMatchObject({
@@ -387,7 +478,9 @@ describe('createBleTransport', () => {
     const mock = createMockManager();
     const transport = buildTransport(mock);
 
-    const session = await transport.open({ deviceId: 'mock-device', responseTimeoutMs: 5_000 });
+    const { session } = await openSessionWithHandshake(transport, mock, { responseTimeoutMs: 5_000 });
+    const writeMock = mock.manager.writeCharacteristicWithResponseForDevice as unknown as jest.Mock;
+    const initialCalls = writeMock.mock.calls.length;
 
     mock.failNextWrite({
       errorCode: BleErrorCode.CharacteristicWriteFailed,
@@ -400,7 +493,7 @@ describe('createBleTransport', () => {
     const pending = session.transmit('80AC000000');
     const expectation = expect(pending).resolves.toBe('9000');
     await flushMicrotasks();
-    expect(mock.manager.writeCharacteristicWithResponseForDevice).toHaveBeenCalledTimes(1);
+    expect(writeMock).toHaveBeenCalledTimes(initialCalls + 1);
 
     await jest.advanceTimersByTimeAsync(1_000);
     await flushMicrotasks();
@@ -408,7 +501,7 @@ describe('createBleTransport', () => {
     mock.emitNotification([0x10, 0x12, 0x00, 0x02, 0x90, 0x00]);
     await flushMicrotasks();
     await expectation;
-    expect(mock.manager.writeCharacteristicWithResponseForDevice).toHaveBeenCalledTimes(2);
+    expect(writeMock).toHaveBeenCalledTimes(initialCalls + 2);
 
     await session.close();
   });

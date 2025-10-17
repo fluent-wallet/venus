@@ -1,10 +1,14 @@
 import { Buffer } from '@craftzdog/react-native-buffer';
 import { Platform } from 'react-native';
-import { BleError, BleManager, type Device, type Subscription } from 'react-native-ble-plx';
+import { BleManager, State, BleATTErrorCode, BleErrorCode, type Device, type Subscription } from 'react-native-ble-plx';
+import { buildSelectAid, serializeCommand } from '../core/params';
 import type { HexString } from '../core/types';
 import { fromHex, normalizeHex, toHex } from '../core/utils';
-import { TransportError, TransportErrorCode, wrapNativeError } from './errors';
+import { parseApduResponse } from '../core/response';
+import { APDU_STATUS } from '../core/errors';
+import { TransportError, TransportErrorCode, wrapNativeError, isTransportError } from './errors';
 import type { Transport, TransportSession } from './types';
+import { createAsyncQueue } from './utils';
 
 const MAX_CHUNK_BYTES = 19;
 const OUTBOUND_FRAME_TYPE = 0x02;
@@ -19,6 +23,9 @@ const DEFAULT_IDENTIFIERS = {
 const DEFAULT_SCAN_TIMEOUT_MS = 10_000;
 const DEFAULT_CONNECT_TIMEOUT_MS = 10_000;
 const DEFAULT_RESPONSE_TIMEOUT_MS = 5_000;
+const PAIRING_RETRY_DELAY_MS = 1_000;
+const MAX_PAIRING_RETRIES = 30;
+const SELECT_AID_COMMAND = serializeCommand(buildSelectAid());
 
 type TimerRef = ReturnType<typeof setTimeout>;
 
@@ -41,7 +48,7 @@ const passthroughEncryption: BleEncryption = {
 type PendingResponse = {
   resolve: (value: Uint8Array) => void;
   reject: (error: unknown) => void;
-  timeout?: TimerRef;
+  timeoutId?: TimerRef;
   buffer: Uint8Array;
   expectedFrames: number;
   lastSequence: number;
@@ -92,7 +99,22 @@ const concatBytes = (head: Uint8Array, tail: Uint8Array) => {
 
 const toBase64 = (bytes: Uint8Array) => Buffer.from(bytes).toString('base64');
 
-const fromBase64 = (value: string) => Uint8Array.from(Buffer.from(value, 'base64').values());
+const fromBase64 = (value: string) => {
+  if (typeof globalThis.atob === 'function') {
+    try {
+      const ascii = globalThis.atob(value);
+      const bytes = new Uint8Array(ascii.length);
+      for (let index = 0; index < ascii.length; index += 1) {
+        bytes[index] = ascii.charCodeAt(index);
+      }
+      return bytes;
+    } catch {
+      // fallback to Buffer implementation
+    }
+  }
+
+  return Uint8Array.from(Buffer.from(value, 'base64').values());
+};
 
 const wrapBleError = (
   code: TransportErrorCode,
@@ -145,13 +167,19 @@ const decodeIncomingPayload = (payload: Uint8Array, encryption: BleEncryption) =
     throw new TransportError(TransportErrorCode.TRANSMIT_FAILED, `Unexpected BLE response type 0x${payload[0].toString(16)}`);
   }
 
-  const length = (payload[1] << 8) | payload[2];
-  const ciphertext = payload.subarray(3, 3 + length);
-  if (ciphertext.length !== length) {
+  const declaredLength = (payload[1] << 8) | payload[2];
+  const body = payload.subarray(3, 3 + declaredLength);
+  if (body.length !== declaredLength) {
     throw new TransportError(TransportErrorCode.TRANSMIT_FAILED, 'BLE response length mismatch');
   }
 
-  const decrypted = encryption.decrypt(ciphertext);
+  if (declaredLength === 2 && body[0] === 0x67 && body[1] === 0x00) {
+    // Swift demo (BleDemoAppWithBond/BleDemoAPP/BsimMiddleware.swift) returns the raw status
+    // when FF12 sends only two bytes (e.g. 0x67 0x00 during pairing), so we mirror that behaviour.
+    return toHex(body);
+  }
+
+  const decrypted = encryption.decrypt(body);
   return toHex(decrypted);
 };
 
@@ -264,6 +292,122 @@ const ensureCharacteristics = async (manager: BleManager, deviceId: string, iden
   };
 };
 
+const waitForAdapterReady = async (
+  manager: BleManager,
+  timeoutMs: number,
+  timers: { setTimeout: typeof setTimeout; clearTimeout: typeof clearTimeout },
+  logger: (event: string, context?: Record<string, unknown>) => void,
+) => {
+  const mapStateToError = (state: State) => {
+    if (state === State.PoweredOff) {
+      return new TransportError(TransportErrorCode.SCAN_FAILED, 'Please enable Bluetooth before trying again.');
+    }
+    if (state === State.Unauthorized) {
+      return new TransportError(TransportErrorCode.SCAN_FAILED, 'Bluetooth permission is required to continue.');
+    }
+    if (state === State.Unsupported) {
+      return new TransportError(TransportErrorCode.UNSUPPORTED_PLATFORM, 'Bluetooth LE is not supported on this device.');
+    }
+    return null;
+  };
+
+  const initialState = await manager.state();
+  logger('ble.state.current', { state: initialState });
+
+  const initialError = mapStateToError(initialState);
+  if (initialError) throw initialError;
+  if (initialState === State.PoweredOn) return;
+
+  await new Promise<void>((resolve, reject) => {
+    let settled = false;
+    let timeoutHandle: ReturnType<typeof setTimeout> | undefined;
+    let subscription: Subscription | undefined;
+
+    const finish = (settler: () => void) => {
+      if (settled) return;
+      settled = true;
+      if (timeoutHandle) timers.clearTimeout(timeoutHandle);
+      subscription?.remove();
+      settler();
+    };
+
+    if (timeoutMs > 0) {
+      timeoutHandle = timers.setTimeout(() => {
+        finish(() => reject(new TransportError(TransportErrorCode.SCAN_FAILED, 'Timed out while waiting for Bluetooth to power on.')));
+      }, timeoutMs);
+    }
+
+    subscription = manager.onStateChange((nextState) => {
+      logger('ble.state.change', { state: nextState });
+      const mappedError = mapStateToError(nextState);
+      if (mappedError) {
+        finish(() => reject(mappedError));
+        return;
+      }
+      if (nextState === State.PoweredOn) {
+        finish(resolve);
+      }
+    });
+  });
+};
+const shouldRetryPairing = (error: unknown) => {
+  const candidate = error as { errorCode?: unknown; attErrorCode?: unknown; reason?: unknown; message?: unknown };
+  if (candidate?.errorCode !== BleErrorCode.CharacteristicWriteFailed) {
+    return false;
+  }
+
+  const attError = candidate.attErrorCode;
+  if (
+    attError === BleATTErrorCode.InsufficientAuthentication ||
+    attError === BleATTErrorCode.InsufficientEncryption ||
+    attError === BleATTErrorCode.InsufficientEncryptionKeySize
+  ) {
+    return true;
+  }
+
+  const lower = (value: unknown) => (typeof value === 'string' ? value.toLowerCase() : '');
+  const reason = lower(candidate.reason);
+  const message = lower(candidate.message);
+  const hasPairingHint =
+    reason.includes('authentication') ||
+    reason.includes('encryption') ||
+    reason.includes('pair') ||
+    reason.includes('bond') ||
+    message.includes('authentication') ||
+    message.includes('encryption') ||
+    message.includes('pair') ||
+    message.includes('bond');
+  if (hasPairingHint) {
+    return true;
+  }
+
+  const isUnknownAtt = attError === 128 || reason.includes('unknown att error') || message.includes('unknown att error');
+  return isUnknownAtt;
+};
+const delay = (timers: { setTimeout: typeof setTimeout; clearTimeout: typeof clearTimeout }, ms: number) => {
+  return new Promise<void>((resolve) => {
+    timers.setTimeout(resolve, ms);
+  });
+};
+
+const isBenignWriteError = (error: unknown) => {
+  const candidate = error as { errorCode?: unknown; attErrorCode?: unknown; reason?: unknown; message?: unknown };
+  if (candidate?.errorCode !== BleErrorCode.CharacteristicWriteFailed) {
+    return false;
+  }
+  const lower = (value: unknown) => (typeof value === 'string' ? value.toLowerCase() : '');
+
+  if (candidate.attErrorCode === 128) {
+    // Swift demo (BluetoothManager.didWriteValueFor) logs CBATTErrorDomain code=128 during pairing,
+    // then still receives FF12 notifications, so we treat it as benign.
+    return true;
+  }
+
+  const reason = lower(candidate.reason);
+  const message = lower(candidate.message);
+  return reason.includes('unknown att error') || message.includes('unknown att error');
+};
+
 export type BleTransportOptions = {
   deviceId?: string;
   scanTimeoutMs?: number;
@@ -304,6 +448,7 @@ export const createBleTransport = (deps: CreateBleTransportDeps = {}): Transport
   };
 
   const logger = deps.logger ?? noopLogger;
+  const queue = createAsyncQueue();
 
   let isOpen = false;
   let connectedDeviceId: string | undefined;
@@ -314,17 +459,6 @@ export const createBleTransport = (deps: CreateBleTransportDeps = {}): Transport
   let disconnectSubscription: Subscription | undefined;
   let pendingResponse: PendingResponse | undefined;
   let encryption: BleEncryption = passthroughEncryption;
-
-  let chain: Promise<void> = Promise.resolve();
-
-  const enqueue = <T>(operation: () => Promise<T>) => {
-    const job = chain.then(operation, operation);
-    chain = job.then(
-      () => undefined,
-      () => undefined,
-    );
-    return job;
-  };
 
   const ensureManager = () => {
     if (!manager) {
@@ -340,8 +474,8 @@ export const createBleTransport = (deps: CreateBleTransportDeps = {}): Transport
     }
     const current = pendingResponse;
     pendingResponse = undefined;
-    if (current.timeout) {
-      timers.clearTimeout(current.timeout);
+    if (current.timeoutId) {
+      timers.clearTimeout(current.timeoutId);
     }
     if (error) {
       current.reject(error);
@@ -382,12 +516,10 @@ export const createBleTransport = (deps: CreateBleTransportDeps = {}): Transport
       return;
     }
 
+    const controller = pendingResponse;
     if (frame.length === 0) {
-      pendingResponse.reject(new TransportError(TransportErrorCode.TRANSMIT_FAILED, 'Received empty BLE frame'));
       return;
     }
-
-    const controller = pendingResponse;
     const totalFrames = frame[0] >> 4;
     const sequence = frame[0] & 0x0f;
 
@@ -432,6 +564,8 @@ export const createBleTransport = (deps: CreateBleTransportDeps = {}): Transport
       const scanTimeoutMs = options?.scanTimeoutMs ?? DEFAULT_SCAN_TIMEOUT_MS;
       const connectTimeoutMs = options?.connectTimeoutMs ?? DEFAULT_CONNECT_TIMEOUT_MS;
       const responseTimeoutMs = options?.responseTimeoutMs ?? DEFAULT_RESPONSE_TIMEOUT_MS;
+
+      await waitForAdapterReady(managerInstance, scanTimeoutMs, timers, logger);
 
       const encryptionKey = options?.encryptionKey ? fromHex(options.encryptionKey) : undefined;
       if (encryptionKey && !deps.encryptionFactory) {
@@ -492,8 +626,9 @@ export const createBleTransport = (deps: CreateBleTransportDeps = {}): Transport
         if (!characteristic?.value) {
           return;
         }
+        const decoded = fromBase64(characteristic.value);
         try {
-          handleIncomingFrame(fromBase64(characteristic.value));
+          handleIncomingFrame(decoded);
         } catch (err) {
           cleanupPending(err);
         }
@@ -503,7 +638,7 @@ export const createBleTransport = (deps: CreateBleTransportDeps = {}): Transport
 
       const transmit = (payload: string) => {
         const normalized = normalizeHex(payload);
-        return enqueue(async () => {
+        return queue.enqueue(async () => {
           if (!isOpen || !connectedDeviceId || !serviceUuid || !writeUuid) {
             throw new TransportError(TransportErrorCode.CHANNEL_NOT_OPEN, 'BLE channel is not open');
           }
@@ -524,15 +659,15 @@ export const createBleTransport = (deps: CreateBleTransportDeps = {}): Transport
 
           pendingResponse = {
             resolve: (value) => {
-              if (pendingResponse?.timeout) {
-                timers.clearTimeout(pendingResponse.timeout);
+              if (pendingResponse?.timeoutId) {
+                timers.clearTimeout(pendingResponse.timeoutId);
               }
               pendingResponse = undefined;
               resolvePending(value);
             },
             reject: (error) => {
-              if (pendingResponse?.timeout) {
-                timers.clearTimeout(pendingResponse.timeout);
+              if (pendingResponse?.timeoutId) {
+                timers.clearTimeout(pendingResponse.timeoutId);
               }
               pendingResponse = undefined;
               rejectPending(error);
@@ -540,17 +675,52 @@ export const createBleTransport = (deps: CreateBleTransportDeps = {}): Transport
             buffer: new Uint8Array(0),
             expectedFrames: 0,
             lastSequence: -1,
+            timeoutId: undefined,
           };
 
-          pendingResponse.timeout = timers.setTimeout(() => {
-            cleanupPending(new TransportError(TransportErrorCode.READ_TIMEOUT, 'BLE response timeout'));
-          }, responseTimeoutMs);
+          const startResponseTimer = () => {
+            if (!pendingResponse || pendingResponse.timeoutId) return;
+            const timeoutValue = responseTimeoutMs > 0 ? responseTimeoutMs : DEFAULT_RESPONSE_TIMEOUT_MS;
+            pendingResponse.timeoutId = timers.setTimeout(() => {
+              cleanupPending(new TransportError(TransportErrorCode.READ_TIMEOUT, 'BLE response timeout'));
+            }, timeoutValue);
+          };
+
+          const writeFrame = async (frame: Uint8Array) => {
+            const base64 = toBase64(frame);
+            for (let attempt = 0; attempt <= MAX_PAIRING_RETRIES; attempt += 1) {
+              try {
+                await managerInstance.writeCharacteristicWithResponseForDevice(connectedDeviceId!, serviceUuid!, writeUuid!, base64);
+                return;
+              } catch (error) {
+                const benign = isBenignWriteError(error);
+                const retryable = !benign && shouldRetryPairing(error);
+                if (benign) {
+                  return;
+                }
+                if (!retryable || attempt === MAX_PAIRING_RETRIES) {
+                  throw error;
+                }
+                logger('ble.write.retry_pairing', { attempt: attempt + 1, deviceId: connectedDeviceId, error });
+                try {
+                  await managerInstance.discoverAllServicesAndCharacteristicsForDevice(connectedDeviceId!);
+                  const refreshed = await ensureCharacteristics(managerInstance, connectedDeviceId!, identifiers);
+                  serviceUuid = refreshed.serviceUuid;
+                  writeUuid = refreshed.writeUuid;
+                  notifyUuid = refreshed.notifyUuid;
+                } catch (refreshError) {
+                  logger('ble.write.refresh_failed', { deviceId: connectedDeviceId, error: refreshError });
+                }
+                await delay(timers, PAIRING_RETRY_DELAY_MS);
+              }
+            }
+          };
 
           try {
             for (const frame of frames) {
-              const base64 = toBase64(frame);
-              await managerInstance.writeCharacteristicWithResponseForDevice(connectedDeviceId!, serviceUuid!, writeUuid!, base64);
+              await writeFrame(frame);
             }
+            startResponseTimer();
           } catch (error) {
             cleanupPending(
               wrapBleError(TransportErrorCode.WRITE_FAILED, error, 'Failed to write BLE frame', {
@@ -566,16 +736,72 @@ export const createBleTransport = (deps: CreateBleTransportDeps = {}): Transport
         });
       };
 
+      const performSelectAid = async () => {
+        const context = {
+          deviceId: connectedDeviceId,
+          serviceUuid,
+          writeUuid,
+        };
+        logger('ble.select_aid.start', context);
+        try {
+          const rawResponse = await transmit(SELECT_AID_COMMAND);
+          const parsed = parseApduResponse(rawResponse);
+
+          if (parsed.status === 'success') {
+            logger('ble.select_aid.success', context);
+            return;
+          }
+
+          if (parsed.status === 'pending') {
+            throw new TransportError(
+              TransportErrorCode.SELECT_AID_FAILED,
+              'BSIM required additional APDU exchange during AID selection',
+              {
+                details: { status: APDU_STATUS.PENDING },
+              },
+            );
+          }
+
+          throw new TransportError(
+            TransportErrorCode.SELECT_AID_FAILED,
+            parsed.message ?? `AID selection failed with status ${parsed.code}`,
+            {
+              details: { code: parsed.code },
+            },
+          );
+        } catch (error) {
+          const transportError = isTransportError(error)
+            ? error
+            : new TransportError(
+                TransportErrorCode.SELECT_AID_FAILED,
+                (error as { message?: string })?.message ?? 'Failed to select BSIM AID',
+                { cause: error },
+              );
+          logger('ble.select_aid.error', { ...context, error: transportError });
+          throw transportError;
+        }
+      };
+
+      try {
+        await performSelectAid();
+      } catch (error) {
+        isOpen = false;
+        await queue.flush();
+        await teardown();
+        queue.reset();
+        throw error;
+      }
+
       const close = async () => {
         if (!isOpen) {
           return;
         }
         isOpen = false;
 
-        await chain.catch(() => undefined);
+        await queue.flush();
         await teardown();
+        queue.reset();
       };
-
       return {
         transmit,
         close,
