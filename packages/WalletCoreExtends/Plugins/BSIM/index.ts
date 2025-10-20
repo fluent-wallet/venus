@@ -16,6 +16,7 @@ import {
 import { BSIMError, CoinTypes, createAsyncQueue, createWallet, getDefaultSignatureAlgorithm } from 'react-native-bsim';
 import { Subject, catchError, defer, firstValueFrom, from, retry, takeUntil, throwError, timeout } from 'rxjs';
 import { BSIMErrorEndTimeout, BSIM_ERRORS, BSIM_SUPPORT_ACCOUNT_LIMIT, CFXCoinTypes } from './BSIMSDK';
+import { getAppEnv } from '@utils/getEnv';
 
 const ETHEREUM_COIN_TYPE = 60;
 
@@ -93,6 +94,25 @@ type SignResult = {
   s: string;
   v: string;
 };
+
+const toHexString = (bytes: ArrayLike<number>) => `0x${Array.from(bytes, (b) => b.toString(16).padStart(2, '0')).join('')}`;
+
+const sanitizeLogValue = (value: unknown): unknown => {
+  if (value instanceof Uint8Array) {
+    return toHexString(value).slice(0, 70) + (value.length > 32 ? '…' : '');
+  }
+  if (value instanceof ArrayBuffer) {
+    return sanitizeLogValue(new Uint8Array(value));
+  }
+  if (value && typeof value === 'object' && 'data' in (value as any) && Array.isArray((value as any).data)) {
+    return sanitizeLogValue(new Uint8Array((value as any).data));
+  }
+  if (value instanceof Error) {
+    return { name: value.name, message: value.message, code: (value as { code?: unknown }).code };
+  }
+  return value;
+};
+
 declare module '@core/WalletCore/Plugins' {
   interface Plugins {
     BSIM: BSIMPluginClass;
@@ -122,7 +142,19 @@ export class BSIMPluginClass implements Plugin {
       throw error;
     }
   }
-  private wallet = createWallet({ logger: console.log });
+  private wallet = createWallet({
+    logger: (event, context) => {
+      if (getAppEnv() !== 'dev') return;
+
+      const sanitized = context ? Object.fromEntries(Object.entries(context).map(([key, v]) => [key, sanitizeLogValue(v)])) : undefined;
+
+      if (sanitized) {
+        console.log(event, sanitized);
+      } else {
+        console.log(event);
+      }
+    },
+  });
 
   public formatBSIMPubkey = (key: string) => {
     if (key.length === 128) {
