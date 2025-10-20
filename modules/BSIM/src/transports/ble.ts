@@ -347,7 +347,7 @@ const waitForAdapterReady = async (
       if (nextState === State.PoweredOn) {
         finish(resolve);
       }
-    });
+    }, true);
   });
 };
 const shouldRetryPairing = (error: unknown) => {

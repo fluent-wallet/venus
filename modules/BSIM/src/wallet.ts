@@ -91,11 +91,17 @@ export type Wallet = {
 };
 const noopLogger: WalletLogger = () => undefined;
 
+const BLE_DEFAULTS: BleTransportOptions = {
+  scanTimeoutMs: 20_000,
+  connectTimeoutMs: 15_000,
+  responseTimeoutMs: 8_000,
+};
+
 const buildDefaultTransports = (platform: typeof Platform.OS): TransportKindConfig[] => {
   if (platform === 'android') {
     return [{ kind: 'apdu' }];
   }
-  return [{ kind: 'ble' }];
+  return [{ kind: 'ble', options: BLE_DEFAULTS }];
 };
 
 const resolveTransports = (configs: TransportKindConfig[], logger: WalletLogger): ResolvedTransport[] => {
@@ -130,17 +136,6 @@ const runOperation = async <T>(
         throw error;
       });
   });
-};
-
-const decodeAscii = (hex: HexString): string => {
-  const bytes = fromHex(hex);
-  const chars: string[] = [];
-  for (const byte of bytes) {
-    if (byte !== 0) {
-      chars.push(String.fromCharCode(byte));
-    }
-  }
-  return chars.join('');
 };
 
 export const createWallet = (options: WalletOptions = {}): Wallet => {
