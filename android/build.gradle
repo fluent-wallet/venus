@@ -18,6 +18,7 @@ buildscript {
                 // expo-camera bundles a custom com.google.android:cameraview
                 url "$rootDir/../node_modules/expo-camera/android/maven"
             }
+            maven { url 'https://www.jitpack.io' } // for react-native-ble-plx see: https://github.com/dotintent/react-native-ble-plx?tab=readme-ov-file#android-example-setup
         }
     }
     dependencies {

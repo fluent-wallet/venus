@@ -1,11 +1,4 @@
 import { getAppEnv, isDev, isQA } from './getEnv';
-import { Platform } from 'react-native';
-
-export const SUPPORT_BSIM_FEATURE = {
-  describe: 'support bsim',
-  allow: Platform.OS === 'android',
-};
-
 /** standing */
 export const ACTIVITY_DEV_INFO_FEATURE = {
   describe: 'show activity dev info',

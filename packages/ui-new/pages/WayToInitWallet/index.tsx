@@ -64,22 +64,18 @@ const WayToInitWallet: React.FC<StackScreenProps<typeof WayToInitWalletStackName
               </View>
               <Image style={styles.welcomeSwiftShield} source={lang === Lang.zhHant ? WelcomeSwiftShieldZH : WelcomeSwiftShieldEN} contentFit="contain" />
 
-              {SUPPORT_BSIM_FEATURE.allow && (
-                <>
-                  <Button
-                    testID="connectBSIMWallet"
-                    textAlign="left"
-                    Icon={ArrowRight}
-                    style={styles.btn}
-                    onPress={handleConnectBSIMCard}
-                    loading={inConnecting}
-                    mode="dark"
-                  >
-                    {t('welcome.connectBSIMWallet')}
-                  </Button>
-                  <Text style={[styles.orAddWith, { color: colors.textThird }]}>{t('welcome.addWith')}:</Text>
-                </>
-              )}
+              <Button
+                testID="connectBSIMWallet"
+                textAlign="left"
+                Icon={ArrowRight}
+                style={styles.btn}
+                onPress={handleConnectBSIMCard}
+                loading={inConnecting}
+                mode="dark"
+              >
+                {t('welcome.connectBSIMWallet')}
+              </Button>
+              <Text style={[styles.orAddWith, { color: colors.textThird }]}>{t('welcome.addWith')}:</Text>
 
               <Button
                 testID="createNewWallet"
