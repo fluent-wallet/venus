@@ -1,6 +1,6 @@
 import methods from '@core/WalletCore/Methods';
 import plugins from '@core/WalletCore/Plugins';
-import { useCurrentAddressValue, useCurrentNetwork, isPendingTxsFull, NetworkType } from '@core/WalletCore/Plugins/ReactInject';
+import { useCurrentNetwork, isPendingTxsFull, NetworkType } from '@core/WalletCore/Plugins/ReactInject';
 import { WalletConnectPluginEventType } from '@core/WalletCore/Plugins/WalletConnect/types';
 import { Networks } from '@core/utils/consts';
 import { StackActions, useNavigation } from '@react-navigation/native';
@@ -15,18 +15,22 @@ import {
 } from '@router/configs';
 import backToHome, { getActiveRouteName } from '@utils/backToHome';
 import { isProd, isQA } from '@utils/getEnv';
-import { useCallback, useEffect, useState, useMemo } from 'react';
+import { useCallback, useEffect, useState, useMemo, useRef } from 'react';
 import { parseNamespaceData, ChainPrefix, ExtractCip155Namespace, type Namespace } from '@cfx-kit/react-utils/dist/WalletConnectorHelper';
 
 const openNetworks = isProd ? ([Networks['Conflux eSpace']] as const) : isQA ? ([Networks['Conflux eSpace'], Networks['eSpace Testnet']] as const) : null;
 
 export function useListenWalletConnectEvent() {
   const navigation = useNavigation<StackNavigation>();
-  const currentAddressValue = useCurrentAddressValue();
   const currentNetwork = useCurrentNetwork()!;
+  const currentNetworkRef = useRef(currentNetwork);
+  useEffect(() => {
+    currentNetworkRef.current = currentNetwork;
+  }, [currentNetwork?.id]);
 
   useEffect(() => {
     const subject = plugins.WalletConnect.currentEventSubject.subscribe(async (event) => {
+      const latestNetwork = currentNetworkRef.current!;
       if (event === undefined) {
         return;
       }
@@ -69,7 +73,7 @@ export function useListenWalletConnectEvent() {
         case WalletConnectPluginEventType.SIGN_MESSAGE: {
           const chainId = event.data.chainId.split(':')[1];
 
-          if (chainId !== currentNetwork?.netId.toString()) {
+          if (chainId !== latestNetwork?.netId.toString()) {
             return event.action.reject('network is not match');
           }
           navigateMethod(WalletConnectStackName, { screen: WalletConnectSignMessageStackName, params: event.data });
@@ -86,7 +90,7 @@ export function useListenWalletConnectEvent() {
           } = event.data;
           const chainId = event.data.chainId.split(':')[1];
 
-          if (chainId !== currentNetwork?.netId.toString()) {
+          if (chainId !== latestNetwork?.netId.toString()) {
             return event.action.reject('network is not match');
           }
 
@@ -95,8 +99,8 @@ export function useListenWalletConnectEvent() {
 
           if (typeof to !== 'undefined') {
             isContract = await methods.checkIsContractAddress({
-              networkType: currentNetwork.networkType,
-              endpoint: currentNetwork.endpoint,
+              networkType: latestNetwork.networkType,
+              endpoint: latestNetwork.endpoint,
               addressValue: to,
             });
           }
@@ -115,8 +119,7 @@ export function useListenWalletConnectEvent() {
     return () => {
       subject.unsubscribe();
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentAddressValue, currentNetwork?.id]);
+  }, [navigation]);
 }
 
 export function useWalletConnectSessions(filterByAddress?: string | undefined | null) {
