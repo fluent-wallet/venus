@@ -32,7 +32,8 @@ const parseConfluxUri = (raw: string): PaymentUriCodecParseResult => {
   }
 
   const [pathPart, queryString] = splitOnce(trimmed.slice(offset), '?');
-  const base32Address = `${trimmed.slice(0, offset)}${pathPart}`;
+  const [addressSegment, methodSegment] = splitOnce(pathPart, '/');
+  const base32Address = `${trimmed.slice(0, offset)}${addressSegment}`;
 
   if (!validateCfxAddress(base32Address)) {
     throw new PaymentUriError('INVALID_URI', 'Address is not a valid Conflux Core Space base32 address.');
@@ -40,13 +41,14 @@ const parseConfluxUri = (raw: string): PaymentUriCodecParseResult => {
 
   const networkPrefix = prefixFromAddress(base32Address);
   const network = deriveNetworkHint(networkPrefix);
+  const method = methodSegment ? decodeURIComponent(methodSegment) : undefined;
 
   const params = queryString ? new URLSearchParams(queryString) : undefined;
   let normalizedParams: PaymentUriCodecParseResult['params'];
 
   params?.forEach((value, key) => {
     if (!normalizedParams) normalizedParams = {};
-    if (key === 'value') {
+    if (key === 'value' || key === 'uint256') {
       normalizedParams[key] = BigInt(toPlainString(value));
     } else {
       normalizedParams[key] = value;
@@ -57,6 +59,7 @@ const parseConfluxUri = (raw: string): PaymentUriCodecParseResult => {
     protocol: 'conflux',
     address: base32Address,
     network,
+    method,
     params: normalizedParams,
   };
 };
@@ -86,7 +89,8 @@ const encodeConfluxUri = (payload: PaymentUriCodecParseResult): string => {
   }
 
   const queryString = query.toString();
-  return `${normalizedAddress}${queryString ? `?${queryString}` : ''}`;
+  const methodPart = payload.method ? `/${encodeURIComponent(payload.method)}` : '';
+  return `${normalizedAddress}${methodPart}${queryString ? `?${queryString}` : ''}`;
 };
 
 export const confluxCorePaymentUriCodec: PaymentUriCodec = {
