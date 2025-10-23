@@ -205,7 +205,8 @@
       "error" : {
         "invalidTargetAddress" : "無效的目標地址",
         "missChianId" : "無法匹配鏈編號",
-        "missChianTypes" : "無法匹配鏈類型"
+        "missChianTypes" : "無法匹配鏈類型",
+        "networkMismatch" : "此二維碼屬於其他網路"
       }
     },
     "permission" : {

@@ -106,6 +106,147 @@ const ExternalInputHandler: React.FC<Props> = ({ navigation, onConfirm, onClose,
 
   const cameraRef = useRef<CameraView | null>(null);
 
+  const ensureProtocolCompatibility = useCallback(
+    (paymentUri: PaymentUriPayload) => {
+      const expectedProtocol = currentNetwork.networkType === NetworkType.Conflux ? 'conflux' : 'ethereum';
+      if (paymentUri.protocol !== expectedProtocol) {
+        setParseStatus({ message: t('scan.parse.error.networkMismatch') });
+        return false;
+      }
+      return true;
+    },
+    [currentNetwork.networkType, t],
+  );
+
+  const ensureChainCompatibility = useCallback(
+    (paymentUri: PaymentUriPayload) => {
+      if (currentNetwork.networkType === NetworkType.Ethereum) {
+        const requestChainId = paymentUri.network?.chainId?.toLowerCase();
+        const currentChainId = currentNetwork.chainId?.toLowerCase();
+        if (requestChainId && currentChainId && requestChainId !== currentChainId) {
+          setParseStatus({ message: t('scan.parse.error.missChianId') });
+          return false;
+        }
+      } else if (currentNetwork.networkType === NetworkType.Conflux) {
+        const expectedNetId = currentNetwork.netId ? String(currentNetwork.netId) : undefined;
+        const requestNetId = paymentUri.network?.netId;
+        if (expectedNetId && requestNetId && requestNetId !== expectedNetId) {
+          setParseStatus({ message: t('scan.parse.error.missChianId') });
+          return false;
+        }
+        const expectedNamespace = (() => {
+          if (!expectedNetId) return undefined;
+          if (expectedNetId === '1029') return 'cfx';
+          if (expectedNetId === '1') return 'cfxtest';
+          return `net${expectedNetId}`;
+        })();
+        const requestNamespace = paymentUri.network?.namespace?.toLowerCase();
+        if (expectedNamespace && requestNamespace && requestNamespace !== expectedNamespace.toLowerCase()) {
+          setParseStatus({ message: t('scan.parse.error.missChianId') });
+          return false;
+        }
+      }
+      return true;
+    },
+    [currentNetwork.chainId, currentNetwork.netId, currentNetwork.networkType, t],
+  );
+
+  const validateTargetAddress = useCallback(
+    async (address: string) => {
+      const isValid = await methods.checkIsValidAddress({ networkType: currentNetwork.networkType, addressValue: address });
+      if (!isValid) {
+        setParseStatus({ message: t('scan.parse.error.invalidTargetAddress') });
+      }
+      return isValid;
+    },
+    [currentNetwork.networkType, t],
+  );
+
+  const handleNativeTransfer = useCallback(
+    (paymentUri: PaymentUriPayload) => {
+      const nativeAsset = getAssetsTokenList()?.find((asset) => asset.type === AssetType.Native);
+      const rawValue = paymentUri.params?.value ?? paymentUri.params?.uint256;
+      if (!navigation) return;
+
+      if (nativeAsset && rawValue !== undefined) {
+        navigation.dispatch(
+          StackActions.replace(SendTransactionStackName, {
+            screen: SendTransactionStep4StackName,
+            params: {
+              recipientAddress: paymentUri.address,
+              asset: nativeAsset,
+              amount: new Decimal(String(rawValue)).div(Decimal.pow(10, nativeAsset.decimals ?? 18)).toString(),
+            },
+          }),
+        );
+        return;
+      }
+
+      navigation.dispatch(
+        StackActions.replace(SendTransactionStackName, {
+          screen: SendTransactionStep3StackName,
+          params: { recipientAddress: paymentUri.address, asset: nativeAsset },
+        }),
+      );
+    },
+    [navigation],
+  );
+
+  const handleTokenTransfer = useCallback(
+    (paymentUri: PaymentUriPayload) => {
+      const allAssetsTokens = getAssetsTokenList();
+      if (!navigation) return;
+      if (!allAssetsTokens?.length) {
+        navigation.dispatch(
+          StackActions.replace(SendTransactionStackName, { screen: SendTransactionStep2StackName, params: { recipientAddress: paymentUri.address } }),
+        );
+        return;
+      }
+
+      const paramAddress = typeof paymentUri.params?.address === 'string' ? paymentUri.params.address : undefined;
+      const targetAsset = !paramAddress
+        ? allAssetsTokens.find((asset) => asset.type === AssetType.Native)
+        : allAssetsTokens.find((asset) => asset.contractAddress?.toLowerCase() === paramAddress.toLowerCase());
+
+      if (!targetAsset) {
+        if (paramAddress) {
+          navigation.dispatch(
+            StackActions.replace(SendTransactionStackName, {
+              screen: SendTransactionStep2StackName,
+              params: { recipientAddress: paymentUri.address, searchAddress: paramAddress },
+            }),
+          );
+        } else {
+          setParseStatus({ message: t('scan.QRCode.error.notRecognized') });
+        }
+        return;
+      }
+
+      const transferValue = paymentUri.params?.uint256 ?? paymentUri.params?.value;
+      if (transferValue !== undefined) {
+        navigation.dispatch(
+          StackActions.replace(SendTransactionStackName, {
+            screen: SendTransactionStep4StackName,
+            params: {
+              recipientAddress: paymentUri.address,
+              asset: targetAsset,
+              amount: new Decimal(String(transferValue)).div(Decimal.pow(10, targetAsset.decimals ?? 18)).toString(),
+            },
+          }),
+        );
+        return;
+      }
+
+      navigation.dispatch(
+        StackActions.replace(SendTransactionStackName, {
+          screen: SendTransactionStep3StackName,
+          params: { recipientAddress: paymentUri.address, asset: targetAsset },
+        }),
+      );
+    },
+    [navigation, t],
+  );
+
   // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
   const onParsePaymentUriSuccess = useCallback(
     async (paymentUri: PaymentUriPayload) => {
@@ -114,119 +255,26 @@ const ExternalInputHandler: React.FC<Props> = ({ navigation, onConfirm, onClose,
         bottomSheetRef?.current?.close();
         return;
       }
-      if (navigation) {
-        if (
-          (currentNetwork.networkType === NetworkType.Conflux && paymentUri.protocol === 'ethereum') ||
-          (currentNetwork.networkType === NetworkType.Ethereum && paymentUri.protocol === 'conflux')
-        ) {
-          setParseStatus({ message: t('scan.parse.error.missChianTypes') });
-          return;
-        }
 
-        if (
-          currentNetwork.networkType === NetworkType.Ethereum &&
-          paymentUri.network?.chainId &&
-          paymentUri.params &&
-          paymentUri.network.chainId !== currentNetwork.chainId
-        ) {
-          setParseStatus({ message: t('scan.parse.error.missChianId') });
-          return;
-        }
+      if (!navigation) return;
 
-        if (
-          currentNetwork.networkType === NetworkType.Conflux &&
-          paymentUri.network?.netId &&
-          paymentUri.params &&
-          paymentUri.network.netId !== String(currentNetwork.netId)
-        ) {
-          setParseStatus({ message: t('scan.parse.error.missChianId') });
-          return;
-        }
+      if (!ensureProtocolCompatibility(paymentUri)) return;
+      if (!ensureChainCompatibility(paymentUri)) return;
+      if (!(await validateTargetAddress(paymentUri.address))) return;
 
-        if (!(await methods.checkIsValidAddress({ networkType: currentNetwork.networkType, addressValue: paymentUri.address }))) {
-          setParseStatus({ message: t('scan.parse.error.invalidTargetAddress') });
-          return;
-        }
-        if (!paymentUri.method) {
-          // if no function name, then it's a native token transfer
-          const nativeAsset = getAssetsTokenList()?.find((asset) => asset.type === AssetType.Native);
-          const rawValue = paymentUri.params?.value;
-          if (nativeAsset && rawValue !== undefined) {
-            // if there has native asset and value we can go to the step 4
-            navigation.dispatch(
-              StackActions.replace(SendTransactionStackName, {
-                screen: SendTransactionStep4StackName,
-                params: {
-                  recipientAddress: paymentUri.address,
-                  asset: nativeAsset,
-                  amount: new Decimal(String(rawValue)).div(Decimal.pow(10, nativeAsset.decimals ?? 18)).toString(),
-                },
-              }),
-            );
-            return;
-          }
-          // else go to the step 3 let user input the amount
-          navigation.dispatch(
-            StackActions.replace(SendTransactionStackName, {
-              screen: SendTransactionStep3StackName,
-              params: { recipientAddress: paymentUri.address, asset: nativeAsset },
-            }),
-          );
-          return;
-        }
-        if (paymentUri.method === 'transfer') {
-          const allAssetsTokens = getAssetsTokenList();
-          if (!allAssetsTokens?.length) {
-            navigation.dispatch(
-              StackActions.replace(SendTransactionStackName, { screen: SendTransactionStep2StackName, params: { recipientAddress: paymentUri.address } }),
-            );
-            return;
-          }
-
-          const paramAddress = typeof paymentUri.params?.address === 'string' ? paymentUri.params?.address : undefined;
-          const targetAsset = !paramAddress
-            ? allAssetsTokens?.find((asset) => asset.type === AssetType.Native)
-            : allAssetsTokens?.find((asset) => asset.contractAddress?.toLowerCase() === paramAddress?.toLowerCase());
-
-          if (!targetAsset) {
-            if (paramAddress) {
-              navigation.dispatch(
-                StackActions.replace(SendTransactionStackName, {
-                  screen: SendTransactionStep2StackName,
-                  params: { recipientAddress: paymentUri.address, searchAddress: paramAddress },
-                }),
-              );
-            } else {
-              setParseStatus({ message: t('scan.QRCode.error.notRecognized') });
-            }
-          } else {
-            const transferValue = paymentUri.params?.uint256 ?? paymentUri.params?.value;
-            if (transferValue !== undefined) {
-              navigation.dispatch(
-                StackActions.replace(SendTransactionStackName, {
-                  screen: SendTransactionStep4StackName,
-                  params: {
-                    recipientAddress: paymentUri.address,
-                    asset: targetAsset,
-                    amount: new Decimal(String(transferValue))
-                      .div(Decimal.pow(10, targetAsset.decimals ?? 18))
-                      .toString(),
-                  },
-                }),
-              );
-            } else {
-              navigation.dispatch(
-                StackActions.replace(SendTransactionStackName, {
-                  screen: SendTransactionStep3StackName,
-                  params: { recipientAddress: paymentUri.address, asset: targetAsset },
-                }),
-              );
-            }
-          }
-        }
+      if (!paymentUri.method) {
+        handleNativeTransfer(paymentUri);
+        return;
       }
+
+      if (paymentUri.method === 'transfer') {
+        handleTokenTransfer(paymentUri);
+        return;
+      }
+
+      setParseStatus({ message: t('scan.QRCode.error.notRecognized') });
     },
-    [onConfirm, currentNetwork?.id],
+    [onConfirm, navigation, ensureProtocolCompatibility, ensureChainCompatibility, validateTargetAddress, handleNativeTransfer, handleTokenTransfer, t],
   );
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
