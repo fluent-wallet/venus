@@ -26,7 +26,7 @@ import {
   type StackScreenProps,
   type StackNavigation,
 } from '@router/configs';
-import { type ETHURL, parseETHURL } from '@utils/ETHURL';
+import { parsePaymentUri, type PaymentUriPayload, PaymentUriError } from '@utils/payment-uri';
 import { getActiveRouteName } from '@utils/backToHome';
 import Decimal from 'decimal.js';
 import type React from 'react';
@@ -38,7 +38,7 @@ import { CameraView } from 'expo-camera';
 
 // has onConfirm props means open in SendTransaction with local modal way.
 interface Props extends Partial<StackScreenProps<typeof ExternalInputHandlerStackName>> {
-  onConfirm?: (ethUrl: ETHURL) => void;
+  onConfirm?: (paymentUri: PaymentUriPayload) => void;
   onClose?: () => void;
 }
 
@@ -107,43 +107,59 @@ const ExternalInputHandler: React.FC<Props> = ({ navigation, onConfirm, onClose,
   const cameraRef = useRef<CameraView | null>(null);
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
-  const onParseEthUrlSuccess = useCallback(
-    async (ethUrl: ETHURL) => {
+  const onParsePaymentUriSuccess = useCallback(
+    async (paymentUri: PaymentUriPayload) => {
       if (onConfirm) {
-        onConfirm(ethUrl);
+        onConfirm(paymentUri);
         bottomSheetRef?.current?.close();
         return;
       }
       if (navigation) {
         if (
-          (currentNetwork.networkType === NetworkType.Conflux && ethUrl.schema_prefix === 'ethereum:') ||
-          (currentNetwork.networkType === NetworkType.Ethereum && ethUrl.schema_prefix === 'conflux:')
+          (currentNetwork.networkType === NetworkType.Conflux && paymentUri.protocol === 'ethereum') ||
+          (currentNetwork.networkType === NetworkType.Ethereum && paymentUri.protocol === 'conflux')
         ) {
           setParseStatus({ message: t('scan.parse.error.missChianTypes') });
           return;
         }
 
-        if (ethUrl.chain_id && ethUrl.parameters && ethUrl.chain_id !== currentNetwork.chainId) {
+        if (
+          currentNetwork.networkType === NetworkType.Ethereum &&
+          paymentUri.network?.chainId &&
+          paymentUri.params &&
+          paymentUri.network.chainId !== currentNetwork.chainId
+        ) {
           setParseStatus({ message: t('scan.parse.error.missChianId') });
           return;
         }
 
-        if (!(await methods.checkIsValidAddress({ networkType: currentNetwork.networkType, addressValue: ethUrl.target_address }))) {
+        if (
+          currentNetwork.networkType === NetworkType.Conflux &&
+          paymentUri.network?.netId &&
+          paymentUri.params &&
+          paymentUri.network.netId !== String(currentNetwork.netId)
+        ) {
+          setParseStatus({ message: t('scan.parse.error.missChianId') });
+          return;
+        }
+
+        if (!(await methods.checkIsValidAddress({ networkType: currentNetwork.networkType, addressValue: paymentUri.address }))) {
           setParseStatus({ message: t('scan.parse.error.invalidTargetAddress') });
           return;
         }
-        if (!ethUrl.function_name) {
+        if (!paymentUri.method) {
           // if no function name, then it's a native token transfer
           const nativeAsset = getAssetsTokenList()?.find((asset) => asset.type === AssetType.Native);
-          if (nativeAsset && ethUrl.parameters?.value) {
+          const rawValue = paymentUri.params?.value;
+          if (nativeAsset && rawValue !== undefined) {
             // if there has native asset and value we can go to the step 4
             navigation.dispatch(
               StackActions.replace(SendTransactionStackName, {
                 screen: SendTransactionStep4StackName,
                 params: {
-                  recipientAddress: ethUrl.target_address,
+                  recipientAddress: paymentUri.address,
                   asset: nativeAsset,
-                  amount: new Decimal(String(ethUrl.parameters?.value)).div(Decimal.pow(10, nativeAsset.decimals ?? 18)).toString(),
+                  amount: new Decimal(String(rawValue)).div(Decimal.pow(10, nativeAsset.decimals ?? 18)).toString(),
                 },
               }),
             );
@@ -153,44 +169,46 @@ const ExternalInputHandler: React.FC<Props> = ({ navigation, onConfirm, onClose,
           navigation.dispatch(
             StackActions.replace(SendTransactionStackName, {
               screen: SendTransactionStep3StackName,
-              params: { recipientAddress: ethUrl.target_address, asset: nativeAsset },
+              params: { recipientAddress: paymentUri.address, asset: nativeAsset },
             }),
           );
           return;
         }
-        if (ethUrl.function_name === 'transfer') {
+        if (paymentUri.method === 'transfer') {
           const allAssetsTokens = getAssetsTokenList();
           if (!allAssetsTokens?.length) {
             navigation.dispatch(
-              StackActions.replace(SendTransactionStackName, { screen: SendTransactionStep2StackName, params: { recipientAddress: ethUrl.target_address } }),
+              StackActions.replace(SendTransactionStackName, { screen: SendTransactionStep2StackName, params: { recipientAddress: paymentUri.address } }),
             );
             return;
           }
 
-          const targetAsset = !ethUrl.parameters?.address
+          const paramAddress = typeof paymentUri.params?.address === 'string' ? paymentUri.params?.address : undefined;
+          const targetAsset = !paramAddress
             ? allAssetsTokens?.find((asset) => asset.type === AssetType.Native)
-            : allAssetsTokens?.find((asset) => asset.contractAddress?.toLowerCase() === ethUrl.parameters?.address?.toLowerCase());
+            : allAssetsTokens?.find((asset) => asset.contractAddress?.toLowerCase() === paramAddress?.toLowerCase());
 
           if (!targetAsset) {
-            if (ethUrl.parameters?.address) {
+            if (paramAddress) {
               navigation.dispatch(
                 StackActions.replace(SendTransactionStackName, {
                   screen: SendTransactionStep2StackName,
-                  params: { recipientAddress: ethUrl.target_address, searchAddress: ethUrl.parameters?.address },
+                  params: { recipientAddress: paymentUri.address, searchAddress: paramAddress },
                 }),
               );
             } else {
-              setParseStatus({ message: 'Unvalid ETHURL.' });
+              setParseStatus({ message: t('scan.QRCode.error.notRecognized') });
             }
           } else {
-            if (ethUrl.parameters?.uint256 || ethUrl.parameters?.value) {
+            const transferValue = paymentUri.params?.uint256 ?? paymentUri.params?.value;
+            if (transferValue !== undefined) {
               navigation.dispatch(
                 StackActions.replace(SendTransactionStackName, {
                   screen: SendTransactionStep4StackName,
                   params: {
-                    recipientAddress: ethUrl.target_address,
+                    recipientAddress: paymentUri.address,
                     asset: targetAsset,
-                    amount: new Decimal(String(ethUrl.parameters?.uint256 || ethUrl.parameters?.value))
+                    amount: new Decimal(String(transferValue))
                       .div(Decimal.pow(10, targetAsset.decimals ?? 18))
                       .toString(),
                   },
@@ -200,7 +218,7 @@ const ExternalInputHandler: React.FC<Props> = ({ navigation, onConfirm, onClose,
               navigation.dispatch(
                 StackActions.replace(SendTransactionStackName, {
                   screen: SendTransactionStep3StackName,
-                  params: { recipientAddress: ethUrl.target_address, asset: targetAsset },
+                  params: { recipientAddress: paymentUri.address, asset: targetAsset },
                 }),
               );
             }
@@ -217,10 +235,13 @@ const ExternalInputHandler: React.FC<Props> = ({ navigation, onConfirm, onClose,
       isParsingRef.current = true;
       // stop preview
       cameraRef.current?.pausePreview();
-      let ethUrl: ETHURL;
+      let paymentUri: PaymentUriPayload;
       if (await methods.checkIsValidAddress({ networkType: currentNetwork.networkType, addressValue: dataString })) {
-        ethUrl = { target_address: dataString, schema_prefix: currentNetwork.networkType === NetworkType.Ethereum ? 'ethereum:' : 'conflux:' } as ETHURL;
-        onParseEthUrlSuccess(ethUrl);
+        paymentUri = {
+          protocol: currentNetwork.networkType === NetworkType.Ethereum ? 'ethereum' : 'conflux',
+          address: dataString,
+        };
+        onParsePaymentUriSuccess(paymentUri);
         isParsingRef.current = false;
         return;
       }
@@ -236,8 +257,8 @@ const ExternalInputHandler: React.FC<Props> = ({ navigation, onConfirm, onClose,
             setParseStatus({ type: ScanStatusType.WCTimeout, message: '等待Wallet-Connect 响应超时' });
           }, 12888);
         } else {
-          ethUrl = parseETHURL(dataString);
-          onParseEthUrlSuccess(ethUrl);
+          paymentUri = parsePaymentUri(dataString);
+          onParsePaymentUriSuccess(paymentUri);
           isParsingRef.current = false;
         }
       } catch (err) {
@@ -252,12 +273,14 @@ const ExternalInputHandler: React.FC<Props> = ({ navigation, onConfirm, onClose,
           } else {
             setParseStatus({ message: `${t('scan.walletConnect.error.connectFailed')} ${String(err ?? '')}` });
           }
+        } else if (err instanceof PaymentUriError) {
+          setParseStatus({ message: err.message });
         } else {
           setParseStatus({ message: t('scan.QRCode.error.notRecognized') });
         }
       }
     },
-    [onConfirm, onParseEthUrlSuccess, currentNetwork?.id],
+    [onConfirm, onParsePaymentUriSuccess, currentNetwork?.id],
   );
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
