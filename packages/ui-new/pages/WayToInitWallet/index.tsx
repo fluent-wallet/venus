@@ -19,7 +19,6 @@ import { showMessage } from 'react-native-flash-message';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import ImportExistingWallet, { type BottomSheetMethods } from './ImportExistingWallet';
 import LottieAnimation from './lottie';
-import { SUPPORT_BSIM_FEATURE } from '@utils/features';
 
 export const showNotFindBSIMCardMessage = () =>
   showMessage({
