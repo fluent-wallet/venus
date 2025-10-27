@@ -76,8 +76,8 @@ const Home: React.FC<StackScreenProps<typeof HomeStackName>> = ({ navigation }) 
         </RefreshScrollView>
         <NoNetworkTip />
       </SafeAreaView>
-      <AccountSelector isOpen={showAccountSelector} onClose={() => setShowAccountSelector(false)} />
-      <NetworkSelector isOpen={showNetworkSelector} onClose={() => setShowNetworkSelector(false)} />
+      {showAccountSelector && <AccountSelector isOpen={showAccountSelector} onClose={() => setShowAccountSelector(false)} />}
+      {showNetworkSelector && <NetworkSelector isOpen={showNetworkSelector} onClose={() => setShowNetworkSelector(false)} />}
     </>
   );
 };

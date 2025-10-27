@@ -1,14 +1,7 @@
 import { BSIMError } from '@WalletCoreExtends/Plugins/BSIM/BSIMSDK';
 import { BSIMEventTypesName } from '@WalletCoreExtends/Plugins/BSIM/types';
 import MessageFail from '@assets/icons/message-fail.svg';
-import {
-  snapPoints,
-  BottomSheetWrapper,
-  BottomSheetHeader,
-  BottomSheetScrollContent,
-  BottomSheetFooter,
-  BottomSheetRoute,
-} from '@components/BottomSheet';
+import { snapPoints, BottomSheetWrapper, BottomSheetHeader, BottomSheetScrollContent, BottomSheetFooter, BottomSheetRoute } from '@components/BottomSheet';
 import Button from '@components/Button';
 import Text from '@components/Text';
 import methods from '@core/WalletCore/Methods';
@@ -403,13 +396,15 @@ function WalletConnectTransaction() {
         </BottomSheetFooter>
       </BottomSheetRoute>
 
-      <EditAllowance
-        isOpen={!!(showEditAllowance && parseData)}
-        parseData={parseData}
-        savedValue={allowanceValue}
-        onSave={handleSaveEditAllowance}
-        onClose={() => setShowEditAllowance(false)}
-      />
+      {!!(showEditAllowance && parseData) && (
+        <EditAllowance
+          isOpen={!!(showEditAllowance && parseData)}
+          parseData={parseData}
+          savedValue={allowanceValue}
+          onSave={handleSaveEditAllowance}
+          onClose={() => setShowEditAllowance(false)}
+        />
+      )}
 
       <GasFeeSetting
         ref={gasSettingMethods}
@@ -435,11 +430,13 @@ function WalletConnectTransaction() {
         />
       )}
 
-      <DappParamsWarning
-        isOpen={!!showDappParamsWarning}
-        onClose={() => setShowDappParamsWarning(false)}
-        onPressUse={() => gasSettingMethods.current?.resetCustomizeSetting?.()}
-      />
+      {!!showDappParamsWarning && (
+        <DappParamsWarning
+          isOpen={!!showDappParamsWarning}
+          onClose={() => setShowDappParamsWarning(false)}
+          onPressUse={() => gasSettingMethods.current?.resetCustomizeSetting?.()}
+        />
+      )}
     </>
   );
 }

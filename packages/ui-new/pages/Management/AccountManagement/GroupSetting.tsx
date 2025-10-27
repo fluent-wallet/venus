@@ -203,7 +203,9 @@ const GroupConfig: React.FC<StackScreenProps<typeof GroupSettingStackName>> = ({
         </BottomSheetWrapper>
       </BottomSheetRoute>
 
-      <DeleteConfirm isOpen={showDeleteBottomSheet} onConfirm={handleConfirmDelete} onClose={() => setShowDeleteBottomSheet(false)} />
+      {showDeleteBottomSheet && (
+        <DeleteConfirm isOpen={showDeleteBottomSheet} onConfirm={handleConfirmDelete} onClose={() => setShowDeleteBottomSheet(false)} />
+      )}
     </>
   );
 };
