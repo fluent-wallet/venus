@@ -1,8 +1,15 @@
+import { getAssetsTracker, getNFTDetailTracker } from '@WalletCoreExtends/index';
+import { Tx } from '@core/database/models/Tx';
+import methods from '@core/WalletCore/Methods';
+import type { AssetInfo } from '@core/WalletCore/Plugins/AssetsTracker/types';
+import { getCurrentNetwork } from '@core/WalletCore/Plugins/ReactInject';
 import AccountSelector from '@modules/AccountSelector';
-import { TabsHeader, TabsContent } from '@modules/AssetsTabs';
+import { TabsContent, TabsHeader } from '@modules/AssetsTabs';
+import { useTabsController } from '@modules/AssetsTabs/hooks';
 import NetworkSelector from '@modules/NetworkSelector';
 import { useTheme } from '@react-navigation/native';
-import { TransactionDetailStackName, type HomeStackName, type StackScreenProps } from '@router/configs';
+import { type HomeStackName, type StackScreenProps, TransactionDetailStackName } from '@router/configs';
+import { ESPACE_NETWORK_SWITCH_FEATURE, FULL_NETWORK_SWITCH_LIST_FEATURE } from '@utils/features';
 import type React from 'react';
 import { useCallback, useState } from 'react';
 import { type NativeScrollEvent, StyleSheet, View } from 'react-native';
@@ -15,10 +22,6 @@ import Navigations from './Navigations';
 import NoNetworkTip from './NoNetworkTip';
 import NotBackup from './NotBackup';
 import RefreshScrollView from './RefreshScrollView';
-import { Tx } from '@core/database/models/Tx';
-import type { AssetInfo } from '@core/WalletCore/Plugins/AssetsTracker/types';
-import { useTabsController } from '@modules/AssetsTabs/hooks';
-import { getAssetsTracker, getNFTDetailTracker } from '@WalletCoreExtends/index';
 
 const Home: React.FC<StackScreenProps<typeof HomeStackName>> = ({ navigation }) => {
   const { colors } = useTheme();
@@ -55,7 +58,14 @@ const Home: React.FC<StackScreenProps<typeof HomeStackName>> = ({ navigation }) 
   };
 
   const handleOpenNetworkSelector = () => {
-    setShowNetworkSelector(true);
+    // setShowNetworkSelector(true);
+
+    if (FULL_NETWORK_SWITCH_LIST_FEATURE.allow) {
+      setShowNetworkSelector(true);
+    } else if (ESPACE_NETWORK_SWITCH_FEATURE.allow) {
+      const currentNetwork = getCurrentNetwork();
+      methods.switchToNetwork(currentNetwork?.netId === 1030 ? 71 : 1030);
+    }
   };
   return (
     <>
