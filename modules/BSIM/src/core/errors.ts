@@ -5,7 +5,7 @@ export const APDU_STATUS = {
 
 export type ApduStatusCode = (typeof APDU_STATUS)[keyof typeof APDU_STATUS];
 
-export const ERROR_MESSAGES: Record<string, string> = {
+export const CARD_ERROR_MESSAGES = {
   '9000': 'Execution success',
   A000: 'Unknown error',
   '6E00': 'Failed to call BSIM. Error code: 6E00',
@@ -30,17 +30,23 @@ export const ERROR_MESSAGES: Record<string, string> = {
   '63C8': 'Authentication failed, 8 attempts remaining.',
   '63C9': 'Authentication failed, 9 attempts remaining.',
   '63CA': 'Authentication failed, 10 attempts remaining.',
+} as const;
+
+export type CardErrorCode = keyof typeof CARD_ERROR_MESSAGES;
+
+export const isCardErrorCode = (value: string): value is CardErrorCode => {
+  if (!value) return false;
+  return Object.hasOwn(CARD_ERROR_MESSAGES, value.toUpperCase());
 };
 
 export const resolveStatusMessage = (status: string): string | undefined => {
   if (!status) {
     return undefined;
   }
-  return ERROR_MESSAGES[status.toUpperCase()];
+  const key = status.toUpperCase();
+  return (CARD_ERROR_MESSAGES as Record<string, string>)[key];
 };
 
 export const isSuccessStatus = (status: string): boolean => status?.toUpperCase() === APDU_STATUS.SUCCESS;
-
 export const isPendingStatus = (status: string): boolean => status?.toUpperCase() === APDU_STATUS.PENDING;
-
 export const isProactiveStatus = (status: string): boolean => status?.toUpperCase().startsWith('91');

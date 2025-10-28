@@ -112,7 +112,7 @@ export default function WalletConnectProposal() {
           </BottomSheetFooter>
         </BottomSheetWrapper>
       </BottomSheetRoute>
-      {showAccountSelector && <AccountSelector onClose={() => setShowAccountSelector(false)} />}
+      {showAccountSelector && <AccountSelector isOpen={showAccountSelector} onClose={() => setShowAccountSelector(false)} />}
     </>
   );
 }
