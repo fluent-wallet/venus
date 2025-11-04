@@ -12,8 +12,8 @@ import VaultSourceType from '@core/database/models/Vault/VaultSourceType';
 import VaultType from '@core/database/models/Vault/VaultType';
 import { NetworkType, Networks } from '@core/utils/consts';
 
-export const DEFAULT_ACCOUNTS_FIXTURE_BASE32 = 'cfxtest:aak6r7c76s000000000000000000000000000000';
-export const DEFAULT_ACCOUNTS_FIXTURE_HEX = '0x1b9f6d6a0db39c032f0000000000000000000000';
+export const DEFAULT_ACCOUNTS_FIXTURE_BASE32 = 'cfx:aap7rugsfdnj0dyy3f8766mme2dhf62136u8gkm4fg';
+export const DEFAULT_ACCOUNTS_FIXTURE_HEX = '0x19D6c0CE28d68B0e94C97Dde714a260672f317cF'; // 64ce5801197a5e99e4f378a8cf5454f323b4b4553e16a5b7d75567991feee4df
 
 type NetworkDefinitionKey = keyof typeof Networks;
 
