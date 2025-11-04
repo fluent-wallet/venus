@@ -1,0 +1,43 @@
+import type { FeeEstimate, SignedTransaction, TransactionParams, TxStatus, UnsignedTransaction } from './transaction';
+import { NetworkType as CoreNetworkType } from '@core/utils/consts';
+
+export type ChainType = CoreNetworkType;
+export type Hex = `0x${string}`;
+export type Address = string;
+export type Hash = string;
+
+/**
+ * Abstraction for chain-specific operations
+ */
+export interface IChainProvider {
+  readonly chainId: string;
+  readonly networkType: ChainType;
+
+  deriveAddress(publicKey: Hex, params?: unknown): string;
+  validateAddress(address: Address): boolean;
+  prepareAddressForAbi(address: Address): string;
+
+  buildTransaction(params: TransactionParams): Promise<UnsignedTransaction>;
+  estimateFee(tx: UnsignedTransaction): Promise<FeeEstimate>;
+  signTransaction(tx: UnsignedTransaction, signer: unknown): Promise<SignedTransaction>;
+  broadcastTransaction(signedTx: SignedTransaction): Promise<Hash>;
+
+  getBalance(address: Address): Promise<string>;
+  getTransactionStatus(txHash: Hash): Promise<TxStatus>;
+  getNonce(address: Address): Promise<number>;
+
+  signMessage(message: string, signer: unknown): Promise<string>;
+  verifyMessage(message: string, signature: string, address: Address): boolean;
+}
+
+/**
+ * Registry for chain providers.
+ */
+export interface IChainRegistry {
+  register(provider: IChainProvider): void;
+  get(chainType: ChainType): IChainProvider | undefined;
+  has(chainType: ChainType): boolean;
+  getAll(): IChainProvider[];
+}
+
+export const NetworkType = CoreNetworkType;

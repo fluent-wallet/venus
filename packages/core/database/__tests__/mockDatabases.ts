@@ -3,13 +3,19 @@ import LokiJSAdapter from '@nozbe/watermelondb/adapters/lokijs';
 import migrations from '../migrations';
 import schema from '../schema';
 
-import { modelClasses } from '../index';
+import { modelClasses } from '../models';
 
 export const mockDatabase = () => {
   const adapter = new LokiJSAdapter({
     dbName: 'testdb',
     schema,
     migrations,
+    useWebWorker: false,
+    useIncrementalIndexedDB: true,
+    extraLokiOptions: {
+      autosave: false,
+      autosaveInterval: 0,
+    },
   });
 
   const database = new Database({
