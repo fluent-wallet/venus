@@ -1,20 +1,83 @@
 import type { ChainType, FeeEstimate, IChainProvider, SignedTransaction, UnsignedTransaction } from '@core/types';
-import { TxStatus } from '@core/types';
 import { NetworkType } from '@core/utils/consts';
 import { ChainRegistry } from './ChainRegistry';
 
-const defaultUnsignedTx: UnsignedTransaction = { chainType: NetworkType.Conflux, data: {} };
-const defaultFeeEstimate: FeeEstimate = {
-  gasLimit: '0x5208',
-  maxFeePerGas: '0x1',
-  maxPriorityFeePerGas: '0x1',
-  estimatedTotal: '0x5208',
-};
-const defaultSignedTx: SignedTransaction = {
+const CONFLUX_ADDRESS = '0x1000000000000000000000000000000000000000';
+const EVM_ADDRESS = '0x2000000000000000000000000000000000000000';
+
+const createConfluxUnsignedTx = (): UnsignedTransaction => ({
   chainType: NetworkType.Conflux,
+  payload: {
+    from: CONFLUX_ADDRESS,
+    to: CONFLUX_ADDRESS,
+    chainId: '0x1',
+    value: '0x0',
+    data: '0x',
+    gasLimit: '0x5208',
+    gasPrice: '0x1',
+    storageLimit: '0x0',
+    nonce: 0,
+    epochHeight: 0,
+  },
+});
+
+const createEvmUnsignedTx = (): UnsignedTransaction => ({
+  chainType: NetworkType.Ethereum,
+  payload: {
+    from: EVM_ADDRESS,
+    to: EVM_ADDRESS,
+    chainId: '0x1',
+    value: '0x0',
+    data: '0x',
+    gasLimit: '0x5208',
+    gasPrice: '0x1',
+    maxFeePerGas: '0x1',
+    maxPriorityFeePerGas: '0x1',
+    nonce: 0,
+    type: 2,
+  },
+});
+
+const createUnsignedTx = (chainType: ChainType): UnsignedTransaction => {
+  if (chainType === NetworkType.Conflux) return createConfluxUnsignedTx();
+  if (chainType === NetworkType.Ethereum) return createEvmUnsignedTx();
+  return { chainType, payload: {}, context: {} };
+};
+
+const createFeeEstimate = (chainType: ChainType): FeeEstimate => {
+  if (chainType === NetworkType.Conflux) {
+    return {
+      chainType,
+      estimatedTotal: '0x5208',
+      gasLimit: '0x5208',
+      gasPrice: '0x1',
+      storageLimit: '0x0',
+    };
+  }
+
+  if (chainType === NetworkType.Ethereum) {
+    return {
+      chainType,
+      estimatedTotal: '0x5208',
+      gasLimit: '0x5208',
+      gasPrice: '0x1',
+      maxFeePerGas: '0x1',
+      maxPriorityFeePerGas: '0x1',
+    };
+  }
+
+  return {
+    chainType,
+    estimatedTotal: '0x0',
+    gasLimit: '0x0',
+  };
+};
+
+const createSignedTx = (chainType: ChainType): SignedTransaction => ({
+  chainType,
   rawTransaction: '0x',
   hash: '0x',
-};
+});
 
 const stubProvider = (overrides: Partial<IChainProvider> & { chainId?: string; networkType?: ChainType } = {}): IChainProvider => {
   const chainId = overrides.chainId ?? '0x1';
@@ -25,13 +88,11 @@ const stubProvider = (overrides: Partial<IChainProvider> & { chainId?: string; n
     networkType,
     deriveAddress: overrides.deriveAddress ?? (() => '0x'),
     validateAddress: overrides.validateAddress ?? (() => true),
-    prepareAddressForAbi: overrides.prepareAddressForAbi ?? ((value) => value),
-    buildTransaction: overrides.buildTransaction ?? (async () => ({ ...defaultUnsignedTx, chainType: networkType })),
-    estimateFee: overrides.estimateFee ?? (async () => defaultFeeEstimate),
-    signTransaction: overrides.signTransaction ?? (async () => ({ ...defaultSignedTx, chainType: networkType })),
+    buildTransaction: overrides.buildTransaction ?? (async () => createUnsignedTx(networkType)),
+    estimateFee: overrides.estimateFee ?? (async () => createFeeEstimate(networkType)),
+    signTransaction: overrides.signTransaction ?? (async () => createSignedTx(networkType)),
     broadcastTransaction: overrides.broadcastTransaction ?? (async () => '0x'),
     getBalance: overrides.getBalance ?? (async () => '0'),
-    getTransactionStatus: overrides.getTransactionStatus ?? (async () => TxStatus.Pending),
     getNonce: overrides.getNonce ?? (async () => 0),
     signMessage: overrides.signMessage ?? (async () => '0x'),
     verifyMessage: overrides.verifyMessage ?? (() => true),

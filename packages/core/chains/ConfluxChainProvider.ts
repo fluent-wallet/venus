@@ -1,28 +1,19 @@
-import { fetchChain } from '@cfx-kit/dapp-utils/dist/fetch';
-import type { Address, ChainType, FeeEstimate, Hash, Hex, IChainProvider, SignedTransaction, TransactionParams, UnsignedTransaction } from '@core/types';
-import { TxStatus } from '@core/types';
-import { NetworkType } from '@core/utils/consts';
-import { computeAddress, isCfxHexAddress, toAccountAddress } from '@core/utils/account';
-import { convertBase32ToHex, convertHexToBase32, decode, validateHexAddress, type Base32Address } from '@core/utils/address';
-import { checksum } from 'ox/Address';
-
-export function hexToNumber(value: string): number {
-  if (typeof value !== 'string' || value.length === 0) {
-    throw new Error('Expected non-empty string');
-  }
-
-  if (value.startsWith('0x') || value.startsWith('0X')) {
-    return Number(BigInt(value));
-  }
-
-  const parsed = Number(value);
-  if (Number.isNaN(parsed)) {
-    throw new Error(`Unable to convert value '${value}' to number`);
-  }
-  return parsed;
-}
-
-type DeriveAddressFormat = 'hex' | 'base32';
+import { Conflux, PrivateKeyAccount } from 'js-conflux-sdk';
+import type {
+  Address,
+  ConfluxFeeEstimate,
+  ConfluxUnsignedTransaction,
+  ConfluxUnsignedTransactionPayload,
+  Hash,
+  IChainProvider,
+  SignedTransaction,
+  TransactionParams,
+} from '@core/types';
+import { buildTransactionPayload } from './utils/transactionBuilder';
+import { NetworkType } from '@core/types';
+import { convertHexToBase32, decode } from '@core/utils/address';
+import type { Hex } from 'ox/Hex';
+import { computeAddress, toAccountAddress } from '@core/utils/account';
 
 export interface ConfluxChainProviderOptions {
   chainId: string;
@@ -30,12 +21,23 @@ export interface ConfluxChainProviderOptions {
   netId: number;
 }
 
+type ConfluxRpcClient = {
+  getBalance(address: string, epochNumber?: string | number): Promise<bigint>;
+  getNextNonce(address: string, epochNumber?: string | number): Promise<bigint>;
+  getEpochNumber(epochNumber?: string | number): Promise<number>;
+  estimateGasAndCollateral(
+    params: { from: string; to?: string; data?: string; value?: string },
+    epochNumber?: string | number,
+  ): Promise<{ gasUsed: bigint; gasLimit: bigint; storageCollateralized: bigint }>;
+  getGasPrice(): Promise<bigint>;
+};
+
 export class ConfluxChainProvider implements IChainProvider {
   readonly chainId: string;
-  readonly networkType: ChainType = NetworkType.Conflux;
+  readonly networkType = NetworkType.Conflux;
   readonly netId: number;
-
-  private readonly endpoint: string;
+  private readonly cfx: Conflux;
+  private readonly rpc: ConfluxRpcClient;
 
   constructor({ chainId, endpoint, netId }: ConfluxChainProviderOptions) {
     if (!chainId) {
@@ -51,81 +53,97 @@ export class ConfluxChainProvider implements IChainProvider {
     }
 
     this.chainId = chainId;
-    this.endpoint = endpoint;
     this.netId = netId;
+    this.cfx = new Conflux({ url: endpoint, networkId: netId });
+    this.rpc = this.cfx.cfx as ConfluxRpcClient;
   }
 
-  deriveAddress(publicKey: Hex, params?: { format?: DeriveAddressFormat }): string {
-    const accountHex = this.ensureConfluxHex(toAccountAddress(computeAddress(publicKey)));
-
-    if (params?.format === 'hex') {
-      return checksum(accountHex);
-    }
-
+  deriveAddress(publicKey: Hex): string {
+    const accountHex = toAccountAddress(computeAddress(publicKey));
     return convertHexToBase32(accountHex, this.netId);
   }
 
   validateAddress(address: Address): boolean {
-    return this.tryDecodeBase32(address) !== null;
-  }
+    try {
+      const decoded = decode(address);
+      if (decoded.netId !== this.netId) {
+        throw new Error(`Address netId ${decoded.netId} does not match provider netId ${this.netId}`);
+      }
 
-  prepareAddressForAbi(address: Address): string {
-    const decoded = this.tryDecodeBase32(address);
-    if (decoded) {
-      return checksum(decoded.hex);
+      return true;
+    } catch {
+      return false;
     }
-
-    return this.ensureConfluxHex(address);
   }
 
-  async buildTransaction(_params: TransactionParams): Promise<UnsignedTransaction> {
-    throw new Error('ConfluxChainProvider.buildTransaction is not implemented yet');
-  }
-
-  async estimateFee(_tx: UnsignedTransaction): Promise<FeeEstimate> {
-    throw new Error('ConfluxChainProvider.estimateFee is not implemented yet');
-  }
-
-  async signTransaction(_tx: UnsignedTransaction, _signer: unknown): Promise<SignedTransaction> {
-    throw new Error('ConfluxChainProvider.signTransaction is not implemented yet');
-  }
-
-  async broadcastTransaction(_signedTx: SignedTransaction): Promise<Hash> {
-    throw new Error('ConfluxChainProvider.broadcastTransaction is not implemented yet');
-  }
-
-  async getBalance(address: Address): Promise<string> {
-    const base32 = this.toBase32(address);
-    return fetchChain<string>({
-      url: this.endpoint,
-      method: 'cfx_getBalance',
-      params: [base32, 'latest_state'],
-    });
-  }
-
-  async getTransactionStatus(txHash: Hash): Promise<TxStatus> {
-    const receipt = await fetchChain<{ outcomeStatus?: string } | null>({
-      url: this.endpoint,
-      method: 'cfx_getTransactionReceipt',
-      params: [txHash],
+  async buildTransaction(params: TransactionParams): Promise<ConfluxUnsignedTransaction> {
+    const basePayload = buildTransactionPayload({
+      from: params.from,
+      to: params.to,
+      amount: params.amount,
+      assetType: params.assetType,
+      assetDecimals: params.assetDecimals,
+      chainId: params.chainId,
+      contractAddress: params.contractAddress,
+      nftTokenId: params.nftTokenId,
     });
 
-    if (!receipt || typeof receipt.outcomeStatus !== 'string') {
-      return TxStatus.Pending;
+    const payload: ConfluxUnsignedTransactionPayload = {
+      ...basePayload,
+      gasLimit: params.gasLimit,
+      gasPrice: params.gasPrice,
+      storageLimit: params.storageLimit,
+      nonce: await this.resolveNonce(params.from, params.nonce),
+      epochHeight: await this.resolveEpochHeight(params.epochHeight),
+    };
+
+    return this.toUnsignedTransaction(payload);
+  }
+
+  async estimateFee(tx: ConfluxUnsignedTransaction): Promise<ConfluxFeeEstimate> {
+    const { payload } = tx;
+    const { gasUsed, storageCollateralized } = await this.rpc.estimateGasAndCollateral({
+      from: payload.from,
+      to: payload.to,
+      data: payload.data,
+      value: payload.value,
+    });
+
+    const gasPrice = payload.gasPrice ? BigInt(payload.gasPrice) : await this.rpc.getGasPrice();
+
+    return this.toFeeEstimate(payload, this.toBigInt(gasUsed), this.toBigInt(storageCollateralized), this.toBigInt(gasPrice));
+  }
+
+  async signTransaction(tx: ConfluxUnsignedTransaction, signer: { privateKey?: string }): Promise<SignedTransaction> {
+    if (!signer?.privateKey) {
+      throw new Error('Conflux signing requires privateKey');
     }
 
-    return receipt.outcomeStatus === '0x0' ? TxStatus.Confirmed : TxStatus.Failed;
+    const account = new PrivateKeyAccount(signer.privateKey, this.netId);
+    const signed = await account.signTransaction({
+      ...tx.payload,
+      gas: tx.payload.gasLimit,
+    });
+
+    return {
+      chainType: tx.chainType,
+      rawTransaction: signed.serialize(),
+      hash: signed.hash ?? '',
+    };
+  }
+
+  async broadcastTransaction(signedTx: SignedTransaction): Promise<Hash> {
+    return this.cfx.sendRawTransaction(signedTx.rawTransaction);
+  }
+
+  async getBalance(address: Address): Promise<Hex> {
+    const result = await this.rpc.getBalance(address, 'latest_state');
+    return this.formatHex(result);
   }
 
   async getNonce(address: Address): Promise<number> {
-    const base32 = this.toBase32(address);
-    const value = await fetchChain<string>({
-      url: this.endpoint,
-      method: 'cfx_getNextNonce',
-      params: [base32, 'latest_state'],
-    });
-
-    return hexToNumber(value);
+    const result = await this.rpc.getNextNonce(address, 'latest_state');
+    return this.toNumber(result);
   }
 
   async signMessage(_message: string, _signer: unknown): Promise<string> {
@@ -136,60 +154,66 @@ export class ConfluxChainProvider implements IChainProvider {
     throw new Error('ConfluxChainProvider.verifyMessage is not implemented yet');
   }
 
-  async getEpochNumber(): Promise<number> {
-    const epoch = await fetchChain<string>({
-      url: this.endpoint,
-      method: 'cfx_epochNumber',
-      params: ['latest_state'],
-    });
-
-    return hexToNumber(epoch);
+  private async resolveNonce(address: Address, override?: number): Promise<number> {
+    if (typeof override === 'number') return override;
+    return this.getNonce(address);
   }
 
-  async isSupport1559(): Promise<boolean> {
-    const block = await fetchChain<{ baseFeePerGas?: string } | null>({
-      url: this.endpoint,
-      method: 'cfx_getBlockByEpochNumber',
-      params: ['latest_state', false],
-    });
-
-    return Boolean(block?.baseFeePerGas);
+  private async resolveEpochHeight(override?: number): Promise<number> {
+    if (typeof override === 'number') return override;
+    const epoch = await this.rpc.getEpochNumber('latest_state');
+    return this.toNumber(epoch);
   }
 
-  private tryDecodeBase32(address: string): { hex: `0x${string}` } | null {
-    try {
-      const decoded = decode(address);
-      if (decoded.netId !== this.netId) {
-        throw new Error(`Address netId ${decoded.netId} does not match provider netId ${this.netId}`);
-      }
+  private toUnsignedTransaction(payload: ConfluxUnsignedTransactionPayload): ConfluxUnsignedTransaction {
+    return {
+      chainType: this.networkType,
+      payload,
+    };
+  }
+  private toFeeEstimate(payload: ConfluxUnsignedTransactionPayload, gasUsed: bigint, storageCollateralized: bigint, gasPrice: bigint): ConfluxFeeEstimate {
+    const gasLimit = payload.gasLimit ? BigInt(payload.gasLimit) : gasUsed;
+    const storageLimit = payload.storageLimit ? BigInt(payload.storageLimit) : storageCollateralized;
+    const estimatedTotal = gasLimit * gasPrice + storageLimit;
 
-      const hex = convertBase32ToHex(address as Base32Address);
-      return { hex: this.ensureConfluxHex(hex) };
-    } catch {
-      return null;
-    }
+    return {
+      chainType: this.networkType,
+      gasLimit: `0x${gasLimit.toString(16)}`,
+      gasPrice: `0x${gasPrice.toString(16)}`,
+      storageLimit: `0x${storageLimit.toString(16)}`,
+      estimatedTotal: `0x${estimatedTotal.toString(16)}`,
+    };
   }
 
-  private ensureConfluxHex(address: string): Hex {
-    if (!validateHexAddress(address)) {
-      throw new Error(`Invalid hex address: ${address}`);
-    }
-
-    const normalized = `0x${address.slice(2).toLowerCase()}` as Hex;
-    if (!isCfxHexAddress(normalized)) {
-      throw new Error(`Address ${normalized} is not a valid Conflux hex address`);
-    }
-
-    return checksum(normalized);
+  /**
+   * conflux sdk returns bigint is JSBI not native bigint so we need to format it
+   * @param value
+   * @returns
+   */
+  private formatHex(value: unknown): Hex {
+    const normalized = this.toBigInt(value);
+    return `0x${normalized.toString(16)}` as Hex;
   }
 
-  private toBase32(address: Address): string {
-    const decoded = this.tryDecodeBase32(address);
-    if (decoded) {
-      return address;
+  private toBigInt(value: unknown): bigint {
+    if (typeof value === 'bigint') return value;
+    if (typeof value === 'number') return BigInt(value);
+    if (typeof value === 'string') return BigInt(value);
+    if (value && typeof (value as { toString(): string }).toString === 'function') {
+      return BigInt((value as { toString(): string }).toString());
     }
+    throw new Error(`Unable to convert value '${String(value)}' to bigint`);
+  }
 
-    const hex = this.ensureConfluxHex(address);
-    return convertHexToBase32(hex, this.netId);
+  private toNumber(value: unknown): number {
+    if (typeof value === 'number') return value;
+    if (typeof value === 'bigint') return Number(value);
+    if (typeof value === 'string') {
+      return value.startsWith('0x') ? Number(BigInt(value)) : Number(value);
+    }
+    if (value && typeof (value as { toString(): string }).toString === 'function') {
+      return this.toNumber((value as { toString(): string }).toString());
+    }
+    throw new Error(`Unable to convert value '${String(value)}' to number`);
   }
 }

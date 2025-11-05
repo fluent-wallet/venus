@@ -15,7 +15,6 @@ export interface IChainProvider {
 
   deriveAddress(publicKey: Hex, params?: unknown): string;
   validateAddress(address: Address): boolean;
-  prepareAddressForAbi(address: Address): string;
 
   buildTransaction(params: TransactionParams): Promise<UnsignedTransaction>;
   estimateFee(tx: UnsignedTransaction): Promise<FeeEstimate>;
@@ -23,7 +22,6 @@ export interface IChainProvider {
   broadcastTransaction(signedTx: SignedTransaction): Promise<Hash>;
 
   getBalance(address: Address): Promise<string>;
-  getTransactionStatus(txHash: Hash): Promise<TxStatus>;
   getNonce(address: Address): Promise<number>;
 
   signMessage(message: string, signer: unknown): Promise<string>;
@@ -35,8 +33,9 @@ export interface IChainProvider {
  */
 export interface IChainRegistry {
   register(provider: IChainProvider): void;
-  get(chainType: ChainType): IChainProvider | undefined;
-  has(chainType: ChainType): boolean;
+  get(chainId: string, networkType?: ChainType): IChainProvider | undefined;
+  getByType(chainType: ChainType): IChainProvider[];
+  has(chainId: string, networkType?: ChainType): boolean;
   getAll(): IChainProvider[];
 }
 

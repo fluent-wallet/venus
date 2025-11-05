@@ -1,15 +1,41 @@
-import { fetchChain } from '@cfx-kit/dapp-utils/dist/fetch';
-import { ConfluxChainProvider, type ConfluxChainProviderOptions, hexToNumber } from './ConfluxChainProvider';
-import { TxStatus } from '@core/types';
+import { ConfluxChainProvider, type ConfluxChainProviderOptions } from './ConfluxChainProvider';
+import { AssetType, NetworkType } from '@core/types';
 import { computeAddress, toAccountAddress } from '@core/utils/account';
-import { convertBase32ToHex, convertHexToBase32 } from '@core/utils/address';
+import { convertHexToBase32 } from '@core/utils/address';
+
 import { checksum } from 'ox/Address';
 
-jest.mock('@cfx-kit/dapp-utils/dist/fetch', () => ({
-  fetchChain: jest.fn(),
-}));
+const mockRpc = {
+  getBalance: jest.fn(),
+  getNextNonce: jest.fn(),
+  getTransactionReceipt: jest.fn(),
+  getEpochNumber: jest.fn(),
+  getBlockByEpochNumber: jest.fn(),
+  estimateGasAndCollateral: jest.fn(),
+  getGasPrice: jest.fn(),
+};
 
-const mockedFetchChain = fetchChain as jest.MockedFunction<typeof fetchChain>;
+const mockSendRawTransaction = jest.fn();
+const mockSignTransaction = jest.fn();
+
+jest.mock('js-conflux-sdk', () => {
+  const actual = jest.requireActual('js-conflux-sdk');
+
+  const mockPrivateKeyAccountConstructor = jest.fn().mockImplementation(() => ({
+    signTransaction: mockSignTransaction,
+  }));
+
+  return {
+    ...actual,
+    Conflux: jest.fn().mockImplementation(() => ({
+      cfx: mockRpc,
+      sendRawTransaction: mockSendRawTransaction,
+    })),
+    PrivateKeyAccount: mockPrivateKeyAccountConstructor,
+  };
+});
+
+const { PrivateKeyAccount: MockedPrivateKeyAccount } = jest.requireMock('js-conflux-sdk');
 
 const TEST_ENDPOINT = 'https://rpc.example/conflux';
 const TEST_CHAIN_ID = '1029';
@@ -29,7 +55,18 @@ const createProvider = (overrides: Partial<ConfluxChainProviderOptions> = {}) =>
 
 describe('ConfluxChainProvider', () => {
   beforeEach(() => {
-    mockedFetchChain.mockReset();
+    jest.clearAllMocks();
+    mockRpc.getNextNonce.mockResolvedValue('0x1');
+    mockRpc.getEpochNumber.mockResolvedValue('0x64'); // 100
+    mockRpc.getGasPrice.mockResolvedValue('0x1');
+    mockRpc.getBalance.mockResolvedValue('0x0');
+    mockRpc.estimateGasAndCollateral.mockResolvedValue({
+      gasUsed: '0x5208',
+      storageCollateralized: '0x0',
+    });
+    mockSendRawTransaction.mockReset();
+    mockSignTransaction.mockReset();
+    (MockedPrivateKeyAccount as jest.Mock).mockClear();
   });
 
   it('requires chainId, endpoint, and positive netId', () => {
@@ -38,14 +75,10 @@ describe('ConfluxChainProvider', () => {
     expect(() => createProvider({ netId: 0 })).toThrow('netId must be a positive integer');
   });
 
-  it('derives base32 address by default and hex when requested', () => {
+  it('derives base32 address from public key', () => {
     const provider = createProvider();
-
-    const base32 = provider.deriveAddress(SAMPLE_PRIVATE_KEY);
-    expect(base32).toBe(SAMPLE_ACCOUNT_BASE32);
-
-    const hex = provider.deriveAddress(SAMPLE_PRIVATE_KEY, { format: 'hex' });
-    expect(hex).toBe(SAMPLE_ACCOUNT_HEX);
+    const derived = provider.deriveAddress(SAMPLE_PRIVATE_KEY);
+    expect(derived).toBe(SAMPLE_ACCOUNT_BASE32);
   });
 
   it('validates only base32 Conflux addresses', () => {
@@ -58,93 +91,125 @@ describe('ConfluxChainProvider', () => {
     expect(provider.validateAddress('cfx:invalid-address')).toBe(false);
   });
 
-  it('normalizes addresses for ABI use', () => {
-    const provider = createProvider();
-
-    expect(provider.prepareAddressForAbi(SAMPLE_ACCOUNT_BASE32)).toBe(SAMPLE_ACCOUNT_HEX);
-    expect(provider.prepareAddressForAbi(SAMPLE_ACCOUNT_HEX)).toBe(SAMPLE_ACCOUNT_HEX);
-  });
-
   it('fetches balances using base32 formatting', async () => {
     const provider = createProvider();
-    mockedFetchChain.mockResolvedValueOnce('0x10');
-
-    const balance = await provider.getBalance(SAMPLE_ACCOUNT_HEX);
-
+    mockRpc.getBalance.mockResolvedValueOnce(16n);
+    const balance = await provider.getBalance(SAMPLE_ACCOUNT_BASE32);
     expect(balance).toBe('0x10');
-    expect(mockedFetchChain).toHaveBeenCalledWith({
-      url: TEST_ENDPOINT,
-      method: 'cfx_getBalance',
-      params: [SAMPLE_ACCOUNT_BASE32, 'latest_state'],
-    });
+    expect(mockRpc.getBalance).toHaveBeenCalledWith(SAMPLE_ACCOUNT_BASE32, 'latest_state');
   });
 
   it('fetches nonce and converts response to number', async () => {
     const provider = createProvider();
-    mockedFetchChain.mockResolvedValueOnce('0x1a');
-
+    mockRpc.getNextNonce.mockResolvedValueOnce(26n);
     const nonce = await provider.getNonce(SAMPLE_ACCOUNT_BASE32);
-
     expect(nonce).toBe(26);
-    expect(mockedFetchChain).toHaveBeenCalledWith({
-      url: TEST_ENDPOINT,
-      method: 'cfx_getNextNonce',
-      params: [SAMPLE_ACCOUNT_BASE32, 'latest_state'],
+    expect(mockRpc.getNextNonce).toHaveBeenCalledWith(SAMPLE_ACCOUNT_BASE32, 'latest_state');
+  });
+
+  it('builds native transfer transactions with auto-filled nonce and epoch height', async () => {
+    const provider = createProvider();
+    mockRpc.getNextNonce.mockResolvedValueOnce(1n);
+    mockRpc.getEpochNumber.mockResolvedValueOnce(100n);
+
+    const tx = await provider.buildTransaction({
+      from: SAMPLE_ACCOUNT_BASE32,
+      to: SAMPLE_ACCOUNT_BASE32,
+      chainId: TEST_CHAIN_ID,
+      amount: '1',
+      assetType: AssetType.Native,
+      assetDecimals: 18,
+    });
+
+    expect(tx.chainType).toBe(NetworkType.Conflux);
+    expect(tx.payload.from).toBe(SAMPLE_ACCOUNT_BASE32);
+    expect(tx.payload.value).toBe('0xde0b6b3a7640000');
+    expect(tx.payload.data).toBe('0x');
+    expect(tx.payload.nonce).toBe(1);
+    expect(tx.payload.epochHeight).toBe(100);
+  });
+
+  it('estimates fee using sdk helpers when gas values missing', async () => {
+    const provider = createProvider();
+    const unsigned = await provider.buildTransaction({
+      from: SAMPLE_ACCOUNT_BASE32,
+      to: SAMPLE_ACCOUNT_BASE32,
+      chainId: TEST_CHAIN_ID,
+      amount: '1',
+      assetType: AssetType.Native,
+      assetDecimals: 18,
+    });
+
+    mockRpc.estimateGasAndCollateral.mockResolvedValueOnce({
+      gasUsed: 0x5208n,
+      storageCollateralized: 0n,
+    });
+    mockRpc.getGasPrice.mockResolvedValueOnce(1n);
+
+    const estimate = await provider.estimateFee(unsigned);
+
+    expect(estimate).toEqual({
+      chainType: NetworkType.Conflux,
+      gasLimit: '0x5208',
+      gasPrice: '0x1',
+      storageLimit: '0x0',
+      estimatedTotal: '0x5208',
+    });
+    expect(mockRpc.estimateGasAndCollateral).toHaveBeenCalledWith({
+      from: SAMPLE_ACCOUNT_BASE32,
+      to: SAMPLE_ACCOUNT_BASE32,
+      data: '0x',
+      value: '0xde0b6b3a7640000',
     });
   });
 
-  it('returns transaction status based on receipt outcome', async () => {
+  it('signs transactions with PrivateKeyAccount and returns raw payload', async () => {
     const provider = createProvider();
+    const unsigned = await provider.buildTransaction({
+      from: SAMPLE_ACCOUNT_BASE32,
+      to: SAMPLE_ACCOUNT_BASE32,
+      chainId: TEST_CHAIN_ID,
+      amount: '1',
+      assetType: AssetType.Native,
+      assetDecimals: 18,
+    });
 
-    mockedFetchChain.mockResolvedValueOnce({ outcomeStatus: '0x0' });
-    await expect(provider.getTransactionStatus(SAMPLE_TX_HASH)).resolves.toBe(TxStatus.Confirmed);
+    mockSignTransaction.mockResolvedValueOnce({
+      serialize: () => '0xdeadbeef',
+      hash: '0xabcd',
+    });
 
-    mockedFetchChain.mockResolvedValueOnce({ outcomeStatus: '0x1' });
-    await expect(provider.getTransactionStatus(SAMPLE_TX_HASH)).resolves.toBe(TxStatus.Failed);
+    const signed = await provider.signTransaction(unsigned, { privateKey: SAMPLE_PRIVATE_KEY });
 
-    mockedFetchChain.mockResolvedValueOnce(null);
-    await expect(provider.getTransactionStatus(SAMPLE_TX_HASH)).resolves.toBe(TxStatus.Pending);
+    expect(MockedPrivateKeyAccount).toHaveBeenCalledWith(SAMPLE_PRIVATE_KEY, TEST_NET_ID);
+    expect(mockSignTransaction).toHaveBeenCalledWith(
+      expect.objectContaining({
+        from: SAMPLE_ACCOUNT_BASE32,
+        gas: unsigned.payload.gasLimit,
+        gasPrice: unsigned.payload.gasPrice,
+        storageLimit: unsigned.payload.storageLimit,
+      }),
+    );
 
-    mockedFetchChain.mockResolvedValueOnce({});
-    await expect(provider.getTransactionStatus(SAMPLE_TX_HASH)).resolves.toBe(TxStatus.Pending);
+    expect(signed).toEqual({
+      chainType: NetworkType.Conflux,
+      rawTransaction: '0xdeadbeef',
+      hash: '0xabcd',
+    });
   });
 
-  it('retrieves epoch number and supports 1559 detection', async () => {
+  it('broadcasts signed transactions via SDK client', async () => {
     const provider = createProvider();
+    mockSendRawTransaction.mockResolvedValueOnce('0xhash');
 
-    mockedFetchChain.mockResolvedValueOnce('0x100');
-    await expect(provider.getEpochNumber()).resolves.toBe(256);
+    await expect(
+      provider.broadcastTransaction({
+        chainType: NetworkType.Conflux,
+        rawTransaction: '0xdeadbeef',
+        hash: '0xabcd',
+      }),
+    ).resolves.toBe('0xhash');
 
-    mockedFetchChain.mockResolvedValueOnce({ baseFeePerGas: '0x1' });
-    await expect(provider.isSupport1559()).resolves.toBe(true);
-
-    mockedFetchChain.mockResolvedValueOnce(null);
-    await expect(provider.isSupport1559()).resolves.toBe(false);
-  });
-
-  it('throws when RPC call fails', async () => {
-    const provider = createProvider();
-    mockedFetchChain.mockRejectedValueOnce(new Error('rpc down'));
-
-    await expect(provider.getBalance(SAMPLE_ACCOUNT_HEX)).rejects.toThrow('rpc down');
-  });
-});
-
-describe('hexToNumber', () => {
-  it('converts hex and decimal strings', () => {
-    expect(hexToNumber('0x1a')).toBe(26);
-    expect(hexToNumber('42')).toBe(42);
-  });
-
-  it('rejects invalid values', () => {
-    expect(() => hexToNumber('')).toThrow('Expected non-empty string');
-    expect(() => hexToNumber('foo')).toThrow("Unable to convert value 'foo' to number");
-  });
-});
-
-describe('ConfluxChainProvider integration helpers', () => {
-  it('roundtrips base32 addresses via convertBase32ToHex', () => {
-    const hex = convertBase32ToHex(SAMPLE_ACCOUNT_BASE32 as any);
-    expect(checksum(hex)).toBe(SAMPLE_ACCOUNT_HEX);
+    expect(mockSendRawTransaction).toHaveBeenCalledWith('0xdeadbeef');
   });
 });
