@@ -4,6 +4,7 @@ import { computeAddress, toAccountAddress } from '@core/utils/account';
 import { convertHexToBase32 } from '@core/utils/address';
 import { checksum } from 'ox/Address';
 import { PersonalMessage } from 'js-conflux-sdk';
+import { DEFAULT_TEST_NET_1155_CONTRACT, DEFAULT_TEST_NET_20_TOKEN_CONTRACT, DEFAULT_TEST_NFT_721_CONTRACT } from '@core/__tests__/mocks';
 
 const mockRpc = {
   getBalance: jest.fn(),
@@ -48,10 +49,9 @@ const OTHER_ACCOUNT_HEX = checksum(toAccountAddress(computeAddress(OTHER_PRIVATE
 const OTHER_ACCOUNT_BASE32 = convertHexToBase32(OTHER_ACCOUNT_HEX, TEST_NET_ID);
 const MESSAGE = 'Venus rocks Conflux!';
 
-
-const TOKEN_CONTRACT = 'cfxtest:acepe88unk7fvs18436178up33hb4zkuf62a9dk1gv';
-const NFT_CONTRACT = 'cfxtest:acepe88unk7fvs18436178up33hb4zkuf62a9dk1gv';
-const ERC1155_CONTRACT = 'cfxtest:acc8mtwgyrv97rf2ycvg9tee93a7gxs3ea1vb05d31';
+const TOKEN_CONTRACT = DEFAULT_TEST_NET_20_TOKEN_CONTRACT;
+const NFT_CONTRACT = DEFAULT_TEST_NFT_721_CONTRACT;
+const ERC1155_CONTRACT = DEFAULT_TEST_NET_1155_CONTRACT;
 const NFT_TOKEN_ID = '12345';
 const ERC1155_TOKEN_ID = '67890';
 
