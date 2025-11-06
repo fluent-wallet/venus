@@ -1,4 +1,4 @@
-import { Conflux, PrivateKeyAccount } from 'js-conflux-sdk';
+import { Conflux, PersonalMessage, PrivateKeyAccount } from 'js-conflux-sdk';
 import type {
   Address,
   ConfluxFeeEstimate,
@@ -11,7 +11,7 @@ import type {
 } from '@core/types';
 import { buildTransactionPayload } from './utils/transactionBuilder';
 import { NetworkType } from '@core/types';
-import { convertHexToBase32, decode } from '@core/utils/address';
+import { convertBase32ToHex, convertHexToBase32, decode, type Base32Address } from '@core/utils/address';
 import type { Hex } from 'ox/Hex';
 import { computeAddress, toAccountAddress } from '@core/utils/account';
 
@@ -69,7 +69,6 @@ export class ConfluxChainProvider implements IChainProvider {
       if (decoded.netId !== this.netId) {
         throw new Error(`Address netId ${decoded.netId} does not match provider netId ${this.netId}`);
       }
-
       return true;
     } catch {
       return false;
@@ -114,12 +113,13 @@ export class ConfluxChainProvider implements IChainProvider {
     return this.toFeeEstimate(payload, this.toBigInt(gasUsed), this.toBigInt(storageCollateralized), this.toBigInt(gasPrice));
   }
 
+  /**
+   * Signs a transaction using a private key.
+   * @todo Update signer
+   */
   async signTransaction(tx: ConfluxUnsignedTransaction, signer: { privateKey?: string }): Promise<SignedTransaction> {
-    if (!signer?.privateKey) {
-      throw new Error('Conflux signing requires privateKey');
-    }
-
-    const account = new PrivateKeyAccount(signer.privateKey, this.netId);
+    const privateKey = this.requirePrivateKey(signer);
+    const account = new PrivateKeyAccount(privateKey, this.netId);
     const signed = await account.signTransaction({
       ...tx.payload,
       gas: tx.payload.gasLimit,
@@ -146,12 +146,27 @@ export class ConfluxChainProvider implements IChainProvider {
     return this.toNumber(result);
   }
 
-  async signMessage(_message: string, _signer: unknown): Promise<string> {
-    throw new Error('ConfluxChainProvider.signMessage is not implemented yet');
+  /**
+   * Signs a personal message using Conflux's PersonalMessage format.
+   * @todo Update signer
+   */
+  async signMessage(message: string, signer: { privateKey?: string }): Promise<string> {
+    const privateKey = this.requirePrivateKey(signer);
+    return PersonalMessage.sign(privateKey, message);
   }
 
-  verifyMessage(): boolean {
-    throw new Error('ConfluxChainProvider.verifyMessage is not implemented yet');
+  verifyMessage(message: string, signature: string, address: Address): boolean {
+    try {
+      const decoded = decode(address);
+      if (decoded.netId !== this.netId) return false;
+      const recoveredPubKey = PersonalMessage.recover(signature, message);
+      const recoveredHex = toAccountAddress(computeAddress(recoveredPubKey));
+      const expectedHex = toAccountAddress(convertBase32ToHex(address as Base32Address));
+
+      return recoveredHex.toLowerCase() === expectedHex.toLowerCase();
+    } catch {
+      return false;
+    }
   }
 
   private async resolveNonce(address: Address, override?: number): Promise<number> {
@@ -171,6 +186,7 @@ export class ConfluxChainProvider implements IChainProvider {
       payload,
     };
   }
+
   private toFeeEstimate(payload: ConfluxUnsignedTransactionPayload, gasUsed: bigint, storageCollateralized: bigint, gasPrice: bigint): ConfluxFeeEstimate {
     const gasLimit = payload.gasLimit ? BigInt(payload.gasLimit) : gasUsed;
     const storageLimit = payload.storageLimit ? BigInt(payload.storageLimit) : storageCollateralized;
@@ -215,5 +231,12 @@ export class ConfluxChainProvider implements IChainProvider {
       return this.toNumber((value as { toString(): string }).toString());
     }
     throw new Error(`Unable to convert value '${String(value)}' to number`);
+  }
+
+  private requirePrivateKey(signer: { privateKey?: string } | undefined): string {
+    if (!signer?.privateKey) {
+      throw new Error('Conflux signing requires privateKey');
+    }
+    return signer.privateKey;
   }
 }
