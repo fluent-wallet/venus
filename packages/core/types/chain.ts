@@ -21,7 +21,7 @@ export interface IChainProvider {
   signTransaction(tx: UnsignedTransaction, signer: unknown): Promise<SignedTransaction>;
   broadcastTransaction(signedTx: SignedTransaction): Promise<Hash>;
 
-  getBalance(address: Address): Promise<string>;
+  getBalance(address: Address): Promise<bigint>;
   getNonce(address: Address): Promise<number>;
 
   signMessage(message: string, signer: unknown): Promise<string>;

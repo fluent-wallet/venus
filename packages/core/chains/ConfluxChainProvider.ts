@@ -136,9 +136,9 @@ export class ConfluxChainProvider implements IChainProvider {
     return this.cfx.sendRawTransaction(signedTx.rawTransaction);
   }
 
-  async getBalance(address: Address): Promise<Hex> {
+  async getBalance(address: Address): Promise<bigint> {
     const result = await this.rpc.getBalance(address, 'latest_state');
-    return this.formatHex(result);
+    return this.toBigInt(result);
   }
 
   async getNonce(address: Address): Promise<number> {

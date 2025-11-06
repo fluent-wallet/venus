@@ -105,7 +105,7 @@ describe('ConfluxChainProvider', () => {
     const provider = createProvider();
     mockRpc.getBalance.mockResolvedValueOnce(16n);
     const balance = await provider.getBalance(SAMPLE_ACCOUNT_BASE32);
-    expect(balance).toBe('0x10');
+    expect(balance).toBe(16n);
     expect(mockRpc.getBalance).toHaveBeenCalledWith(SAMPLE_ACCOUNT_BASE32, 'latest_state');
   });
 
