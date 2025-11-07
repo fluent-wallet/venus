@@ -8,15 +8,15 @@ import VaultSourceType from '@core/database/models/Vault/VaultSourceType';
 import VaultType from '@core/database/models/Vault/VaultType';
 import TableName from '@core/database/TableName';
 import { NetworkType } from '@core/types';
-import { toChecksum } from '@core/utils/account';
+import { fromPrivate, toChecksum } from '@core/utils/account';
 import { convertHexToBase32 } from '@core/utils/address';
 import { generateMnemonic, getNthAccountOfHDKey } from '@core/utils/hdkey';
 import type { ICryptoTool } from '@core/WalletCore/Plugins/CryptoTool/interface';
 import { SERVICE_IDENTIFIER } from '@core/WalletCore/service';
 import { Q } from '@nozbe/watermelondb';
 import { inject, injectable } from 'inversify';
-import { VAULT_DEFAULTS } from './constants';
-import type { CreateHDVaultInput, IVault } from './types';
+import { VAULT_ACCOUNT_PREFIX, VAULT_DEFAULTS, VAULT_GROUP_LABEL } from './constants';
+import type { CreateBSIMVaultInput, CreateHDVaultInput, CreatePrivateKeyVaultInput, CreatePublicAddressVaultInput, IVault } from './types';
 
 @injectable()
 export class VaultService {
@@ -26,15 +26,9 @@ export class VaultService {
   @inject(SERVICE_IDENTIFIER.CRYPTO_TOOL)
   private readonly cryptoTool!: ICryptoTool;
 
-  private async resolveAccountGroup(vault: Vault, existingAccountGroupId?: string): Promise<AccountGroup> {
-    if (existingAccountGroupId) {
-      return this.database.get<AccountGroup>(TableName.AccountGroup).find(existingAccountGroupId);
-    }
-    return vault.getAccountGroup();
-  }
-
   private async toInterface(vault: Vault, accountGroupId?: string): Promise<IVault> {
-    const group = await this.resolveAccountGroup(vault, accountGroupId);
+    const group = accountGroupId ? await this.database.get<AccountGroup>(TableName.AccountGroup).find(accountGroupId) : await vault.getAccountGroup();
+
     return {
       id: vault.id,
       type: vault.type,
@@ -55,17 +49,59 @@ export class VaultService {
     return this.database.get<Vault>(TableName.Vault).query(Q.where('type', type)).fetchCount();
   }
 
-  /**
-   * Create or import an HD wallet.
-   * Creates a vault, account group, first account, and addresses for all networks.
-   */
-  async createHDVault(input: CreateHDVaultInput): Promise<IVault> {
+  private async fetchNetworks(): Promise<Network[]> {
     const networks = await this.database.get<Network>(TableName.Network).query().fetch();
-    if (networks.length === 0) {
+    if (!networks.length) {
       throw new Error('No networks configured for vault creation.');
     }
+    return networks;
+  }
 
-    const mnemonic = input.mnemonic ?? (await generateMnemonic());
+  private createAccountGroupRecord(vaultRecord: Vault, type: VaultType, index: number) {
+    return this.database.get<AccountGroup>(TableName.AccountGroup).prepareCreate((record) => {
+      record.nickname = `${VAULT_GROUP_LABEL[type]} - ${index + 1}`;
+      record.hidden = false;
+      record.vault.set(vaultRecord);
+    });
+  }
+
+  private createAccountRecord(accountGroup: AccountGroup, nickname: string, params: { index: number; hidden?: boolean; selected?: boolean }) {
+    const { index, hidden = false, selected = false } = params;
+    return this.database.get<Account>(TableName.Account).prepareCreate((record) => {
+      record.nickname = nickname;
+      record.index = index;
+      record.hidden = hidden;
+      record.selected = selected;
+      record.accountGroup.set(accountGroup);
+    });
+  }
+
+  private async prepareAddresses(account: Account, networks: Network[], resolveHex: (network: Network) => Promise<string>): Promise<Address[]> {
+    return Promise.all(
+      networks.map(async (network) => {
+        const assetRule = await network.defaultAssetRule;
+        if (!assetRule) {
+          throw new Error(`Missing default asset rule for network ${network.id}`);
+        }
+        const checksum = toChecksum(await resolveHex(network));
+        return this.database.get<Address>(TableName.Address).prepareCreate((record) => {
+          record.account.set(account);
+          record.network.set(network);
+          record.assetRule.set(assetRule);
+          record.hex = checksum;
+          record.base32 = network.networkType === NetworkType.Conflux ? convertHexToBase32(checksum, network.netId) : checksum;
+        });
+      }),
+    );
+  }
+
+  /**
+   * Create or import an HD wallet.
+   */
+  async createHDVault(input: CreateHDVaultInput): Promise<IVault> {
+    const networks = await this.fetchNetworks();
+
+    const mnemonic = input.mnemonic ?? generateMnemonic();
     const isImport = Boolean(input.mnemonic);
 
     const [encryptedMnemonic, isFirstVault, sameTypeCount] = await Promise.all([
@@ -83,44 +119,23 @@ export class VaultService {
       record.source = isImport ? VaultSourceType.IMPORT_BY_USER : VaultSourceType.CREATE_BY_WALLET;
     });
 
-    const accountGroup = this.database.get<AccountGroup>(TableName.AccountGroup).prepareCreate((record) => {
-      record.nickname = `${VAULT_DEFAULTS.HD_GROUP_LABEL} - ${sameTypeCount + 1}`;
-      record.hidden = false;
-      record.vault.set(vaultRecord);
+    const accountGroup = this.createAccountGroupRecord(vaultRecord, VaultType.HierarchicalDeterministic, sameTypeCount);
+
+    const defaultNickname = `${VAULT_ACCOUNT_PREFIX[VaultType.HierarchicalDeterministic]} - 1`;
+    const account = this.createAccountRecord(accountGroup, input.accountNickname ?? defaultNickname, {
+      index: 0,
+      selected: isFirstVault,
     });
 
-    const account = this.database.get<Account>(TableName.Account).prepareCreate((record) => {
-      record.nickname = input.accountNickname ?? 'Account - 1';
-      record.index = 0;
-      record.hidden = false;
-      record.selected = isFirstVault;
-      record.accountGroup.set(accountGroup);
+    const addresses = await this.prepareAddresses(account, networks, async (network) => {
+      const hdPath = await network.hdPath.fetch();
+      const { hexAddress } = await getNthAccountOfHDKey({
+        mnemonic,
+        hdPath: hdPath.value,
+        nth: 0,
+      });
+      return hexAddress;
     });
-
-    const addresses = await Promise.all(
-      networks.map(async (network) => {
-        const hdPath = await network.hdPath.fetch();
-        const assetRule = await network.defaultAssetRule;
-        if (!assetRule) {
-          throw new Error(`Missing default asset rule for network ${network.id}`);
-        }
-
-        const { hexAddress } = await getNthAccountOfHDKey({
-          mnemonic,
-          hdPath: hdPath.value,
-          nth: 0,
-        });
-        const checksum = toChecksum(hexAddress);
-
-        return this.database.get<Address>(TableName.Address).prepareCreate((record) => {
-          record.account.set(account);
-          record.network.set(network);
-          record.assetRule.set(assetRule);
-          record.hex = checksum;
-          record.base32 = network.networkType === NetworkType.Conflux ? convertHexToBase32(checksum, network.netId) : checksum;
-        });
-      }),
-    );
 
     await this.database.write(async () => {
       await this.database.batch(vaultRecord, accountGroup, account, ...addresses);
@@ -128,14 +143,123 @@ export class VaultService {
 
     return this.toInterface(vaultRecord, accountGroup.id);
   }
-  private async getDecryptedMnemonic(vault: Vault, password?: string): Promise<string> {
-    if (vault.type !== VaultType.HierarchicalDeterministic) {
-      throw new Error('Mnemonic is only available for HD vaults.');
+
+  /**
+   * import a private key vault.
+   */
+  async createPrivateKeyVault(input: CreatePrivateKeyVaultInput): Promise<IVault> {
+    const networks = await this.fetchNetworks();
+
+    const [encryptedKey, isFirstVault, sameTypeCount] = await Promise.all([
+      this.cryptoTool.encrypt(input.privateKey, input.password),
+      this.isFirstVault(),
+      this.countVaultsOfType(VaultType.PrivateKey),
+    ]);
+
+    const vaultRecord = this.database.get<Vault>(TableName.Vault).prepareCreate((record) => {
+      record.type = VaultType.PrivateKey;
+      record.device = VAULT_DEFAULTS.DEVICE;
+      record.data = encryptedKey;
+      record.cfxOnly = false;
+      record.isBackup = true;
+      record.source = VaultSourceType.IMPORT_BY_USER;
+    });
+
+    const accountGroup = this.createAccountGroupRecord(vaultRecord, VaultType.PrivateKey, sameTypeCount);
+
+    const defaultNickname = `${VAULT_ACCOUNT_PREFIX[VaultType.PrivateKey]} - ${sameTypeCount + 1}`;
+    const account = this.createAccountRecord(accountGroup, input.accountNickname ?? defaultNickname, {
+      index: 0,
+      selected: isFirstVault,
+    });
+
+    const addresses = await this.prepareAddresses(account, networks, async () => fromPrivate(input.privateKey).address);
+
+    await this.database.write(async () => {
+      await this.database.batch(vaultRecord, accountGroup, account, ...addresses);
+    });
+
+    return this.toInterface(vaultRecord, accountGroup.id);
+  }
+
+  /**
+   * Import a BSIM wallet
+   */
+  async createBSIMVault(input: CreateBSIMVaultInput): Promise<IVault> {
+    if (!input.accounts.length) {
+      throw new Error('BSIM vault requires at least one account.');
     }
-    if (!vault.data) {
-      throw new Error('Vault data is missing.');
+
+    const networks = await this.fetchNetworks();
+    const [isFirstVault, sameTypeCount] = await Promise.all([this.isFirstVault(), this.countVaultsOfType(VaultType.BSIM)]);
+
+    const vaultRecord = this.database.get<Vault>(TableName.Vault).prepareCreate((record) => {
+      record.type = VaultType.BSIM;
+      record.device = VAULT_DEFAULTS.DEVICE;
+      record.data = 'BSIM Wallet';
+      record.cfxOnly = false;
+      record.isBackup = false;
+      record.source = VaultSourceType.CREATE_BY_WALLET;
+    });
+
+    const accountGroup = this.createAccountGroupRecord(vaultRecord, VaultType.BSIM, sameTypeCount);
+
+    const accountRecords: Account[] = [];
+    const addressRecords: Address[] = [];
+
+    for (let idx = 0; idx < input.accounts.length; idx += 1) {
+      const { index, hexAddress } = input.accounts[idx];
+
+      const nickname = `${VAULT_ACCOUNT_PREFIX[VaultType.BSIM]} - ${idx + 1}`;
+      const account = this.createAccountRecord(accountGroup, nickname, {
+        index,
+        selected: isFirstVault && idx === 0,
+      });
+
+      const addresses = await this.prepareAddresses(account, networks, async () => hexAddress);
+
+      accountRecords.push(account);
+      addressRecords.push(...addresses);
     }
-    return this.cryptoTool.decrypt<string>(vault.data, password);
+
+    await this.database.write(async () => {
+      await this.database.batch(vaultRecord, accountGroup, ...accountRecords, ...addressRecords);
+    });
+
+    return this.toInterface(vaultRecord, accountGroup.id);
+  }
+
+  /**
+   * Import a public address
+   */
+  async createPublicAddressVault(input: CreatePublicAddressVaultInput): Promise<IVault> {
+    const networks = await this.fetchNetworks();
+    const [isFirstVault, sameTypeCount] = await Promise.all([this.isFirstVault(), this.countVaultsOfType(VaultType.PublicAddress)]);
+
+    const vaultRecord = this.database.get<Vault>(TableName.Vault).prepareCreate((record) => {
+      record.type = VaultType.PublicAddress;
+      record.device = VAULT_DEFAULTS.DEVICE;
+      record.data = input.hexAddress;
+      record.cfxOnly = false;
+      record.isBackup = false;
+      record.source = VaultSourceType.IMPORT_BY_USER;
+    });
+
+    const accountGroup = this.createAccountGroupRecord(vaultRecord, VaultType.PublicAddress, sameTypeCount);
+
+    const defaultNickname = `${VAULT_ACCOUNT_PREFIX[VaultType.PublicAddress]} - ${sameTypeCount + 1}`;
+    const account = this.createAccountRecord(accountGroup, input.accountNickname ?? defaultNickname, {
+      index: 0,
+      selected: isFirstVault,
+    });
+
+    const addresses = await this.prepareAddresses(account, networks, async () => input.hexAddress);
+
+    await this.database.write(async () => {
+      await this.database.batch(vaultRecord, accountGroup, account, ...addresses);
+    });
+
+    return this.toInterface(vaultRecord, accountGroup.id);
   }
 
   /**
@@ -185,5 +309,15 @@ export class VaultService {
     }
 
     throw new Error(`Vault type ${vault.type} does not expose a private key.`);
+  }
+
+  private async getDecryptedMnemonic(vault: Vault, password?: string): Promise<string> {
+    if (vault.type !== VaultType.HierarchicalDeterministic) {
+      throw new Error('Mnemonic is only available for HD vaults.');
+    }
+    if (!vault.data) {
+      throw new Error('Vault data is missing.');
+    }
+    return this.cryptoTool.decrypt<string>(vault.data, password);
   }
 }

@@ -1,5 +1,5 @@
 import 'reflect-metadata';
-import { createTestAccount, seedNetwork } from '@core/__tests__/fixtures';
+import { seedNetwork } from '@core/__tests__/fixtures';
 import { mockDatabase } from '@core/__tests__/mocks';
 import type { Database } from '@core/database';
 import type { AccountGroup } from '@core/database/models/AccountGroup';
@@ -10,7 +10,6 @@ import { getNthAccountOfHDKey } from '@core/utils/hdkey';
 import type { ICryptoTool } from '@core/WalletCore/Plugins/CryptoTool/interface';
 import { SERVICE_IDENTIFIER } from '@core/WalletCore/service';
 import { Container } from 'inversify';
-
 import { VaultService } from './VaultService';
 
 const TEST_PASSWORD = 'test-password';
@@ -75,6 +74,20 @@ describe('VaultService', () => {
     return records[0];
   };
 
+  const fetchFirstAddressByGroup = async (accountGroupId: string) => {
+    const group = await database.get<AccountGroup>(TableName.AccountGroup).find(accountGroupId);
+    const accounts = await group.accounts.fetch();
+    const firstAccount = accounts[0];
+    if (!firstAccount) {
+      throw new Error('No account found');
+    }
+    const addresses = await firstAccount.addresses.fetch();
+    if (!addresses[0]) {
+      throw new Error('No address found');
+    }
+    return addresses[0];
+  };
+
   it('creates HD vault and handles mnemonic/private key', async () => {
     await seedNetwork(database, { selected: true });
 
@@ -103,17 +116,16 @@ describe('VaultService', () => {
   });
 
   it('handles PrivateKey vault', async () => {
-    const { vault, address } = await createTestAccount(database, { vaultType: VaultType.PrivateKey });
-    const encrypted = await container.get<ICryptoTool>(SERVICE_IDENTIFIER.CRYPTO_TOOL).encrypt('0xabcdef', TEST_PASSWORD);
-
-    await database.write(async () => {
-      await vault.update((record) => {
-        record.data = encrypted;
-      });
+    await seedNetwork(database, { selected: true });
+    const privateKey = '0x0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef';
+    const vault = await service.createPrivateKeyVault({
+      privateKey,
+      password: TEST_PASSWORD,
     });
 
-    const privateKey = await service.getPrivateKey(vault.id, address.id, TEST_PASSWORD);
-    expect(privateKey).toBe('0xabcdef');
+    const address = await fetchFirstAddress();
+    const decrypted = await service.getPrivateKey(vault.id, address.id, TEST_PASSWORD);
+    expect(decrypted).toBe(privateKey);
   });
 
   it('validates vault operations', async () => {
@@ -122,24 +134,33 @@ describe('VaultService', () => {
 
     // Setup network for remaining tests
     await seedNetwork(database, { selected: true });
-    const vault = await service.createHDVault({ mnemonic: FIXED_MNEMONIC, password: TEST_PASSWORD });
+    const hdVault = await service.createHDVault({ mnemonic: FIXED_MNEMONIC, password: TEST_PASSWORD });
 
     // Wrong password
-    await expect(service.getMnemonic(vault.id, 'wrong-password')).rejects.toThrow('Invalid password');
+    await expect(service.getMnemonic(hdVault.id, 'wrong-password')).rejects.toThrow('Invalid password');
 
     // Non-HD vault mnemonic access
-    const { vault: pkVault } = await createTestAccount(database, { vaultType: VaultType.PrivateKey });
-    await expect(service.getMnemonic(pkVault.id, TEST_PASSWORD)).rejects.toThrow('only available for HD vaults');
+    const privateKeyVault = await service.createPrivateKeyVault({
+      privateKey: '0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
+      password: TEST_PASSWORD,
+    });
+    await expect(service.getMnemonic(privateKeyVault.id, TEST_PASSWORD)).rejects.toThrow('only available for HD vaults');
 
     // Cross-vault private key access
-    const { address: pkAddress } = await createTestAccount(database, { vaultType: VaultType.PrivateKey });
-    await expect(service.getPrivateKey(vault.id, pkAddress.id, TEST_PASSWORD)).rejects.toThrow('does not belong to the provided vault');
+    const otherPkVault = await service.createPrivateKeyVault({
+      privateKey: '0xbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb',
+      password: TEST_PASSWORD,
+    });
+    const otherPkAddress = await fetchFirstAddressByGroup(otherPkVault.accountGroupId);
+    await expect(service.getPrivateKey(hdVault.id, otherPkAddress.id, TEST_PASSWORD)).rejects.toThrow('does not belong to the provided vault');
 
     // Hardware wallet private key export
-    const { vault: bsimVault, address: bsimAddress } = await createTestAccount(database, { vaultType: VaultType.BSIM });
+    const bsimVault = await service.createBSIMVault({
+      accounts: [{ index: 0, hexAddress: '0x50bb3047BA3E60Ca750728de9F737085F2Ac2aCD' }],
+    });
+    const bsimAddress = await fetchFirstAddressByGroup(bsimVault.accountGroupId);
     await expect(service.getPrivateKey(bsimVault.id, bsimAddress.id, TEST_PASSWORD)).rejects.toThrow(/does not expose a private key/i);
   });
-
   it('handles vault and account naming', async () => {
     await seedNetwork(database, { selected: true });
 
@@ -162,5 +183,51 @@ describe('VaultService', () => {
 
     expect(group2.nickname).toBe('Seed Phrase - 2');
     expect(accounts2[0].nickname).toBe('My Custom Account');
+  });
+
+  it('creates BSIM vault with multiple accounts', async () => {
+    await seedNetwork(database, { selected: true });
+
+    const accountsInput = [
+      { index: 0, hexAddress: '0x50bb3047BA3E60Ca750728de9F737085F2Ac2aCD' },
+      { index: 5, hexAddress: '0x763d0F4D817e65ec6ac7224AeA281F1282Edc3B7' },
+    ];
+
+    const vault = await service.createBSIMVault({ accounts: accountsInput });
+    expect(vault.type).toBe(VaultType.BSIM);
+
+    const group = await database.get<AccountGroup>(TableName.AccountGroup).find(vault.accountGroupId);
+    const accounts = await group.accounts.fetch();
+    const sorted = [...accounts].sort((a, b) => a.index - b.index);
+
+    expect(sorted).toHaveLength(2);
+    expect(sorted[0].nickname).toBe('BSIM Account - 1');
+    expect(sorted[0].index).toBe(0);
+    expect(sorted[1].nickname).toBe('BSIM Account - 2');
+    expect(sorted[1].index).toBe(5);
+    expect(sorted[0].selected).toBe(true);
+    expect(sorted[1].selected).toBe(false);
+
+    const firstAddress = await fetchFirstAddress();
+    await expect(service.getPrivateKey(vault.id, firstAddress.id, TEST_PASSWORD)).rejects.toThrow(/does not expose/i);
+  });
+
+  it('rejects BSIM vault without accounts', async () => {
+    await expect(service.createBSIMVault({ accounts: [] })).rejects.toThrow('BSIM vault requires at least one account.');
+  });
+
+  it('creates PublicAddress vault and blocks private key export', async () => {
+    await seedNetwork(database, { selected: true });
+
+    const watchAddress = '0x50bb3047BA3E60Ca750728de9F737085F2Ac2aCD';
+    const vault = await service.createPublicAddressVault({ hexAddress: watchAddress });
+
+    expect(vault.type).toBe(VaultType.PublicAddress);
+    const group = await database.get<AccountGroup>(TableName.AccountGroup).find(vault.accountGroupId);
+    const accounts = await group.accounts.fetch();
+    expect(accounts[0]?.nickname).toBe('Watch Account - 1');
+
+    const address = await fetchFirstAddress();
+    await expect(service.getPrivateKey(vault.id, address.id, TEST_PASSWORD)).rejects.toThrow(/does not expose/i);
   });
 });

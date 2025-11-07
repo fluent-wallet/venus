@@ -28,3 +28,27 @@ export interface CreateHDVaultInput {
   /** Custom name for the first account */
   accountNickname?: string;
 }
+
+/**
+ * Options for creating a new PrivateKey vault.
+ */
+export interface CreatePrivateKeyVaultInput {
+  privateKey: string;
+  password?: string;
+  accountNickname?: string;
+}
+
+/**
+ * Options for creating a new BSIM vault.
+ */
+export interface CreateBSIMVaultInput {
+  accounts: Array<{ index: number; hexAddress: string }>;
+}
+
+/**
+ * Options for creating a new PublicAddress vault.
+ */
+export interface CreatePublicAddressVaultInput {
+  hexAddress: string;
+  accountNickname?: string;
+}
