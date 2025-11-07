@@ -1,15 +1,14 @@
 import 'reflect-metadata';
-import { Container } from 'inversify';
-
-import { SERVICE_IDENTIFIER } from '@core/WalletCore/service';
-import { createTestAccount, seedNetwork, DEFAULT_ACCOUNTS_FIXTURE_BASE32 } from '@core/__tests__/fixtures';
+import { createTestAccount, DEFAULT_ACCOUNTS_FIXTURE_BASE32, seedNetwork } from '@core/__tests__/fixtures';
 import { mockDatabase } from '@core/__tests__/mocks';
 import type { Database } from '@core/database';
-import TableName from '@core/database/TableName';
 import type { Account } from '@core/database/models/Account';
 import type { AssetRule } from '@core/database/models/AssetRule';
 import type { Network } from '@core/database/models/Network';
 import VaultType from '@core/database/models/Vault/VaultType';
+import TableName from '@core/database/TableName';
+import { SERVICE_IDENTIFIER } from '@core/WalletCore/service';
+import { Container } from 'inversify';
 
 import { AccountService } from './AccountService';
 

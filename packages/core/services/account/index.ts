@@ -1,2 +1,2 @@
-export * from './types';
 export { AccountService } from './AccountService';
+export * from './types';

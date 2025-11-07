@@ -1,5 +1,5 @@
+import type VaultType from '@core/database/models/Vault/VaultType';
 import type { Address } from '@core/types';
-import VaultType from '@core/database/models/Vault/VaultType';
 
 /**
  * Lightweight account shape exposed to the UI layer.

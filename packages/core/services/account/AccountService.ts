@@ -1,14 +1,13 @@
-import { inject, injectable } from 'inversify';
-import { Q } from '@nozbe/watermelondb';
-
-import { SERVICE_IDENTIFIER } from '@core/WalletCore/service';
 import type { Database } from '@core/database';
-import TableName from '@core/database/TableName';
 import type { Account } from '@core/database/models/Account';
 import type { Address as AddressModel } from '@core/database/models/Address';
 import type { Network } from '@core/database/models/Network';
 import VaultType from '@core/database/models/Vault/VaultType';
+import TableName from '@core/database/TableName';
 import type { Address } from '@core/types';
+import { SERVICE_IDENTIFIER } from '@core/WalletCore/service';
+import { Q } from '@nozbe/watermelondb';
+import { inject, injectable } from 'inversify';
 
 import type { IAccount } from './types';
 

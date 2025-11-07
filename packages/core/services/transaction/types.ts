@@ -1,5 +1,4 @@
-import type { Address, Hex } from '@core/types';
-import { AssetType, TxStatus } from '@core/types';
+import type { Address, AssetType, Hex, TxStatus } from '@core/types';
 
 export interface SendTransactionInput {
   addressId: string;
