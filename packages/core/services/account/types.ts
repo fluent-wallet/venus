@@ -7,13 +7,15 @@ import VaultType from '@core/database/models/Vault/VaultType';
 export interface IAccount {
   id: string;
   nickname: string;
-  address: Address | null;
+  address: Address;
   balance: string;
   formattedBalance: string;
   isHardwareWallet: boolean;
   vaultType: VaultType;
-  selected: boolean;
+  accountGroupId: string;
+  index: number;
   hidden: boolean;
+  selected: boolean;
 }
 
 /**

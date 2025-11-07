@@ -59,6 +59,8 @@ describe('AccountService', () => {
     expect(account?.nickname).toBe('Primary');
     expect(account?.address).toBe(DEFAULT_ACCOUNTS_FIXTURE_BASE32);
     expect(account?.isHardwareWallet).toBe(false);
+    expect(account?.accountGroupId).toBe(created.accountGroup.id);
+    expect(account?.index).toBe(created.index);
     expect(account?.vaultType).toBe(VaultType.HierarchicalDeterministic);
     expect(account?.balance).toBe('0');
     expect(account?.formattedBalance).toBe('0');

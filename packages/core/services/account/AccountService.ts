@@ -58,8 +58,8 @@ export class AccountService {
     return accounts[0] ?? null;
   }
   private async toInterface(account: Account): Promise<IAccount> {
-    const [addressValue, vaultType] = await Promise.all([this.resolveCurrentAddress(account), account.getVaultType()]);
-    const isHardwareWallet = vaultType === VaultType.Hardware || vaultType === VaultType.BSIM;
+    const [accountGroup, vault, addressValue] = await Promise.all([account.accountGroup.fetch(), account.getVaultType(), this.resolveCurrentAddress(account)]);
+    const isHardwareWallet = vault === VaultType.Hardware || vault === VaultType.BSIM;
 
     return {
       id: account.id,
@@ -68,24 +68,26 @@ export class AccountService {
       balance: '0', //  TODO: integrate AssetService to provide actual balances
       formattedBalance: '0', //  TODO: integrate AssetService to provide actual balances
       isHardwareWallet,
-      vaultType,
-      selected: account.selected,
+      vaultType: vault,
+      accountGroupId: accountGroup.id,
+      index: account.index,
       hidden: account.hidden,
+      selected: account.selected,
     };
   }
 
-  private async resolveCurrentAddress(account: Account): Promise<Address | null> {
+  private async resolveCurrentAddress(account: Account): Promise<Address> {
     const network = await this.getSelectedNetwork();
     if (!network) {
-      return null;
+      return '';
     }
 
     const address = await this.findAddressForNetwork(account, network);
     if (!address) {
-      return null;
+      return '';
     }
 
-    return (await address.getValue()) as Address;
+    return ((await address.getValue()) as Address) ?? '';
   }
 
   private async findAddressForNetwork(account: Account, network: Network): Promise<AddressModel | undefined> {
