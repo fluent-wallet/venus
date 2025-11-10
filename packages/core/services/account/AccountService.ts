@@ -1,7 +1,5 @@
 import type { Database } from '@core/database';
-import type { Account } from '@core/database/models/Account';
-import type { Address as AddressModel } from '@core/database/models/Address';
-import type { Network } from '@core/database/models/Network';
+import { Account } from '@core/database/models/Account';
 import VaultType from '@core/database/models/Vault/VaultType';
 import TableName from '@core/database/TableName';
 import type { Address } from '@core/types';
@@ -51,52 +49,131 @@ export class AccountService {
     });
   }
 
+  async getAccountById(accountId: string): Promise<IAccount | null> {
+    try {
+      const account = await this.database.get<Account>(TableName.Account).find(accountId);
+      return this.toInterface(account);
+    } catch {
+      return null;
+    }
+  }
+
+  async listAccounts(options: { includeHidden?: boolean } = {}): Promise<IAccount[]> {
+    const conditions = options.includeHidden ? [] : [Q.where('hidden', false)];
+    const accounts = await this.database
+      .get<Account>(TableName.Account)
+      .query(...conditions)
+      .fetch();
+
+    return Promise.all(accounts.map((item) => this.toInterface(item)));
+  }
+
+  async getAccountsByGroup(accountGroupId: string, options: { includeHidden?: boolean } = {}): Promise<IAccount[]> {
+    const conditions = [Q.where('account_group_id', accountGroupId)];
+    if (!options.includeHidden) {
+      conditions.push(Q.where('hidden', false));
+    }
+    const accounts = await this.database
+      .get<Account>(TableName.Account)
+      .query(...conditions)
+      .fetch();
+    return Promise.all(accounts.map((item) => this.toInterface(item)));
+  }
+
+  async updateAccountNickName(accountId: string, nickname: string): Promise<IAccount> {
+    const trimmed = nickname.trim();
+    if (trimmed === '') {
+      throw new Error('Nickname cannot be empty.');
+    }
+    const account = await this.findAccountOrThrow(accountId);
+    await account.updateName(trimmed);
+
+    return this.toInterface(account);
+  }
+
+  async setAccountHidden(accountId: string, hidden: boolean): Promise<IAccount> {
+    const account = await this.findAccountOrThrow(accountId);
+    await account.changeHidden(hidden);
+    return this.toInterface(account);
+  }
+
+  private async findAccountOrThrow(accountId: string): Promise<Account> {
+    try {
+      return await this.database.get<Account>(TableName.Account).find(accountId);
+    } catch {
+      throw new Error(`Account ${accountId} not found.`);
+    }
+  }
+
+  async batchSetVisibility(changes: Array<{ accountId: string; hidden: boolean }>): Promise<IAccount[]> {
+    if (!changes.length) {
+      return [];
+    }
+
+    const accounts = await Promise.all(changes.map(({ accountId }) => this.findAccountOrThrow(accountId)));
+    const operations: Array<{ account: Account; hidden: boolean }> = [];
+    const groupStats = new Map<string, { initial: number; delta: number }>();
+
+    for (let i = 0; i < accounts.length; i += 1) {
+      const account = accounts[i];
+      const nextHidden = changes[i].hidden;
+
+      if (account.hidden === nextHidden) {
+        continue;
+      }
+
+      const accountGroup = await account.accountGroup.fetch();
+      let stats = groupStats.get(accountGroup.id);
+      if (!stats) {
+        stats = { initial: await accountGroup.visibleAccounts.count, delta: 0 };
+        groupStats.set(accountGroup.id, stats);
+      }
+
+      stats.delta += nextHidden ? -1 : 1;
+      operations.push({ account, hidden: nextHidden });
+    }
+
+    for (const { initial, delta } of groupStats.values()) {
+      if (initial + delta <= 0) {
+        throw new Error('Keep at least one account.');
+      }
+    }
+
+    if (!operations.length) {
+      return Promise.all(accounts.map((account) => this.toInterface(account)));
+    }
+
+    await this.database.write(async () => {
+      const writes = operations.map(({ account, hidden }) => account.prepareChangeHidden(hidden));
+      await this.database.batch(...writes);
+    });
+
+    return Promise.all(accounts.map((account) => this.toInterface(account)));
+  }
+  
   private async getCurrentAccountModel(): Promise<Account | null> {
     const accounts = await this.database.get<Account>(TableName.Account).query(Q.where('selected', true)).fetch();
 
     return accounts[0] ?? null;
   }
   private async toInterface(account: Account): Promise<IAccount> {
-    const [accountGroup, vault, addressValue] = await Promise.all([account.accountGroup.fetch(), account.getVaultType(), this.resolveCurrentAddress(account)]);
-    const isHardwareWallet = vault === VaultType.Hardware || vault === VaultType.BSIM;
+    const accountGroup = await account.accountGroup.fetch();
+    const vault = await accountGroup.vault.fetch();
+    const currentAddress = await account.currentNetworkAddress;
+    const addressValue = currentAddress ? await currentAddress.getValue() : '';
 
     return {
       id: account.id,
       nickname: account.nickname,
       address: addressValue,
-      balance: '0', //  TODO: integrate AssetService to provide actual balances
-      formattedBalance: '0', //  TODO: integrate AssetService to provide actual balances
-      isHardwareWallet,
-      vaultType: vault,
+      balance: '0', // TODO: integrate AssetService to provide actual balances
+      formattedBalance: '0.00', // TODO: integrate AssetService to provide actual balances
+      isHardwareWallet: vault.type === VaultType.BSIM,
+      vaultType: vault.type,
       accountGroupId: accountGroup.id,
       index: account.index,
       hidden: account.hidden,
       selected: account.selected,
     };
-  }
-
-  private async resolveCurrentAddress(account: Account): Promise<Address> {
-    const network = await this.getSelectedNetwork();
-    if (!network) {
-      return '';
-    }
-
-    const address = await this.findAddressForNetwork(account, network);
-    if (!address) {
-      return '';
-    }
-
-    return ((await address.getValue()) as Address) ?? '';
-  }
-
-  private async findAddressForNetwork(account: Account, network: Network): Promise<AddressModel | undefined> {
-    const addresses = await account.addresses.extend(Q.where('network_id', network.id)).fetch();
-    return addresses[0];
-  }
-
-  private async getSelectedNetwork(): Promise<Network | undefined> {
-    const networks = await this.database.get<Network>(TableName.Network).query(Q.where('selected', true)).fetch();
-
-    return networks[0];
   }
 }
