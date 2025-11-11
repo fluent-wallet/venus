@@ -1,5 +1,5 @@
 import type { Database } from '@core/database';
-import { Account } from '@core/database/models/Account';
+import type { Account } from '@core/database/models/Account';
 import VaultType from '@core/database/models/Vault/VaultType';
 import TableName from '@core/database/TableName';
 import type { Address } from '@core/types';
@@ -150,7 +150,7 @@ export class AccountService {
 
     return Promise.all(accounts.map((account) => this.toInterface(account)));
   }
-  
+
   private async getCurrentAccountModel(): Promise<Account | null> {
     const accounts = await this.database.get<Account>(TableName.Account).query(Q.where('selected', true)).fetch();
 
