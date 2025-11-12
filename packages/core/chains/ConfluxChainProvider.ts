@@ -1,6 +1,7 @@
 import { Conflux, PersonalMessage, PrivateKeyAccount } from 'js-conflux-sdk';
 import type {
   Address,
+  ChainCallParams,
   ConfluxFeeEstimate,
   ConfluxUnsignedTransaction,
   ConfluxUnsignedTransactionPayload,
@@ -136,14 +137,20 @@ export class ConfluxChainProvider implements IChainProvider {
     return this.cfx.sendRawTransaction(signedTx.rawTransaction);
   }
 
-  async getBalance(address: Address): Promise<bigint> {
-    const result = await this.rpc.getBalance(address, 'latest_state');
-    return this.toBigInt(result);
+  async getBalance(address: Address): Promise<Hex> {
+    const raw = await this.rpc.getBalance(address, 'latest_state');
+    return this.formatHex(raw);
   }
 
   async getNonce(address: Address): Promise<number> {
     const result = await this.rpc.getNextNonce(address, 'latest_state');
     return this.toNumber(result);
+  }
+
+  async call(params: ChainCallParams): Promise<Hex> {
+    const { to, data } = params;
+    const result = await this.cfx.call({ to, data });
+    return this.formatHex(result);
   }
 
   /**

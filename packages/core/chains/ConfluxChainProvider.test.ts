@@ -4,19 +4,18 @@ import { computeAddress, toAccountAddress } from '@core/utils/account';
 import { convertHexToBase32 } from '@core/utils/address';
 import { checksum } from 'ox/Address';
 import { PersonalMessage } from 'js-conflux-sdk';
-import { DEFAULT_TEST_NET_1155_CONTRACT, DEFAULT_TEST_NET_20_TOKEN_CONTRACT, DEFAULT_TEST_NFT_721_CONTRACT } from '@core/__tests__/mocks';
+import {
+  createMockConfluxSdk,
+  DEFAULT_PRIVATE_KEY,
+  DEFAULT_TEST_NET_1155_CONTRACT,
+  DEFAULT_TEST_NET_20_TOKEN_CONTRACT,
+  DEFAULT_TEST_NFT_721_CONTRACT,
+} from '@core/__tests__/mocks';
 
-const mockRpc = {
-  getBalance: jest.fn(),
-  getNextNonce: jest.fn(),
-  getTransactionReceipt: jest.fn(),
-  getEpochNumber: jest.fn(),
-  getBlockByEpochNumber: jest.fn(),
-  estimateGasAndCollateral: jest.fn(),
-  getGasPrice: jest.fn(),
-};
-
-const mockSendRawTransaction = jest.fn();
+const {
+  rpc: mockRpc,
+  sdk: { sendRawTransaction: mockSendRawTransaction },
+} = createMockConfluxSdk();
 const mockSignTransaction = jest.fn();
 
 jest.mock('js-conflux-sdk', () => {
@@ -30,6 +29,7 @@ jest.mock('js-conflux-sdk', () => {
     ...actual,
     Conflux: jest.fn().mockImplementation(() => ({
       cfx: mockRpc,
+      call: mockRpc.call,
       sendRawTransaction: mockSendRawTransaction,
     })),
     PrivateKeyAccount: mockPrivateKeyAccountConstructor,
@@ -41,7 +41,7 @@ const { PrivateKeyAccount: MockedPrivateKeyAccount } = jest.requireMock('js-conf
 const TEST_ENDPOINT = 'https://rpc.example/conflux';
 const TEST_CHAIN_ID = '1029';
 const TEST_NET_ID = 1029;
-const SAMPLE_PRIVATE_KEY = '0x0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef';
+const SAMPLE_PRIVATE_KEY = DEFAULT_PRIVATE_KEY;
 const SAMPLE_ACCOUNT_HEX = checksum(toAccountAddress(computeAddress(SAMPLE_PRIVATE_KEY)));
 const SAMPLE_ACCOUNT_BASE32 = convertHexToBase32(SAMPLE_ACCOUNT_HEX, TEST_NET_ID);
 const OTHER_PRIVATE_KEY = '0xabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcd';
@@ -103,10 +103,18 @@ describe('ConfluxChainProvider', () => {
 
   it('fetches balances using base32 formatting', async () => {
     const provider = createProvider();
-    mockRpc.getBalance.mockResolvedValueOnce(16n);
+    mockRpc.getBalance.mockResolvedValueOnce('0x10');
     const balance = await provider.getBalance(SAMPLE_ACCOUNT_BASE32);
-    expect(balance).toBe(16n);
+    expect(balance).toBe('0x10');
     expect(mockRpc.getBalance).toHaveBeenCalledWith(SAMPLE_ACCOUNT_BASE32, 'latest_state');
+  });
+
+  it('performs generic call and normalizes result to hex', async () => {
+    const provider = createProvider();
+    mockRpc.call.mockResolvedValueOnce(255n);
+    const result = await provider.call({ to: SAMPLE_ACCOUNT_BASE32, data: '0xdeadbeef' });
+    expect(result).toBe('0xff');
+    expect(mockRpc.call).toHaveBeenCalledWith({ to: SAMPLE_ACCOUNT_BASE32, data: '0xdeadbeef' });
   });
 
   it('fetches nonce and converts response to number', async () => {

@@ -1,5 +1,5 @@
 import { JsonRpcProvider, Wallet, computeAddress, getAddress, isAddress, keccak256, verifyMessage as verifyEthersMessage } from 'ethers';
-import type { Address, EvmFeeEstimate, EvmUnsignedTransaction, IChainProvider, SignedTransaction, TransactionParams } from '@core/types';
+import type { Address, ChainCallParams, EvmFeeEstimate, EvmUnsignedTransaction, Hex, IChainProvider, SignedTransaction, TransactionParams } from '@core/types';
 import { NetworkType } from '@core/types';
 import { buildTransactionPayload } from './utils/transactionBuilder';
 
@@ -107,9 +107,9 @@ export class EthereumChainProvider implements IChainProvider {
     return undefined;
   }
 
-  async getBalance(address: Address): Promise<bigint> {
+  async getBalance(address: Address): Promise<Hex> {
     const balance = await this.provider.getBalance(address);
-    return balance;
+    return this.formatHex(balance);
   }
 
   async getNonce(address: Address): Promise<number> {
@@ -117,6 +117,11 @@ export class EthereumChainProvider implements IChainProvider {
     return nonce;
   }
 
+  async call(params: ChainCallParams): Promise<Hex> {
+    const { to, data } = params;
+    const raw = await this.provider.call({ to, data });
+    return raw as Hex;
+  }
   private async resolveNonce(address: Address, override?: number): Promise<number> {
     if (typeof override === 'number') {
       return override;
@@ -173,7 +178,7 @@ export class EthereumChainProvider implements IChainProvider {
     return BigInt(value);
   }
 
-  private formatHex(value: bigint): string {
+  private formatHex(value: bigint): Hex {
     return `0x${value.toString(16)}`;
   }
 

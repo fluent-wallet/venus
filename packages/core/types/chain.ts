@@ -7,6 +7,14 @@ export type Address = string;
 export type Hash = string;
 
 /**
+ * Parameters for the `call` method
+ */
+export interface ChainCallParams {
+  to: Address;
+  data: Hex;
+}
+
+/**
  * Abstraction for chain-specific operations
  */
 export interface IChainProvider {
@@ -21,7 +29,8 @@ export interface IChainProvider {
   signTransaction(tx: UnsignedTransaction, signer: unknown): Promise<SignedTransaction>;
   broadcastTransaction(signedTx: SignedTransaction): Promise<Hash>;
 
-  getBalance(address: Address): Promise<bigint>;
+  getBalance(address: Address): Promise<Hex>;
+  call(params: ChainCallParams): Promise<Hex>;
   getNonce(address: Address): Promise<number>;
 
   signMessage(message: string, signer: unknown): Promise<string>;

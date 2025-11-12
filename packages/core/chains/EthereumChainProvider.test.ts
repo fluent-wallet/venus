@@ -1,6 +1,7 @@
 import { EthereumChainProvider, type EthereumChainProviderOptions } from './EthereumChainProvider';
 import { AssetType, NetworkType } from '@core/types';
 import { JsonRpcProvider, Wallet } from 'ethers';
+import { createMockEthersProvider, DEFAULT_HEX_ADDRESS, DEFAULT_PRIVATE_KEY } from '@core/__tests__/mocks';
 
 jest.mock('ethers', () => {
   const actual = jest.requireActual('ethers');
@@ -17,23 +18,18 @@ const MockedWallet = Wallet as unknown as jest.Mock;
 
 const SAMPLE_ENDPOINT = 'https://rpc.example/ethereum';
 const SAMPLE_CHAIN_ID = '1';
-const SAMPLE_ACCOUNT = '0x1111111111111111111111111111111111111111';
+const SAMPLE_ACCOUNT = DEFAULT_HEX_ADDRESS;
 
 const SAMPLE_PUBLIC_KEY =
   '0x040a25e77cb5b4922947ccc3bc4b6b410a9ea48c9af3fb81cfeb388c55f05c40d41e53259a6224c2cd41db70370601d59d16ab0f580d68807adcc484f3c18caff1';
-const SAMPLE_PRIVATE_KEY = '169c15f185394116fa9b8909dd4edd22ce6629aad061fcb6c4348ff57988fa8d';
-const EXPECTED_ADDRESS = "0x6DF223015040A93Ce17c591837aa308BCFc6A10c";
-const providerStub = {
-  getBalance: jest.fn(),
-  getTransactionCount: jest.fn(),
-  estimateGas: jest.fn(),
-  getFeeData: jest.fn(),
-  broadcastTransaction: jest.fn(),
-};
-const walletStub = {
+const SAMPLE_PRIVATE_KEY = DEFAULT_PRIVATE_KEY;
+const EXPECTED_ADDRESS = '0x6DF223015040A93Ce17c591837aa308BCFc6A10c';
+let mockProvider: ReturnType<typeof createMockEthersProvider>['provider'];
+const createWalletStub = () => ({
   signTransaction: jest.fn(),
   signMessage: jest.fn(),
-};
+});
+let walletStub: ReturnType<typeof createWalletStub>;
 
 const createProvider = (overrides: Partial<EthereumChainProviderOptions> = {}) =>
   new EthereumChainProvider({
@@ -46,20 +42,24 @@ describe('EthereumChainProvider', () => {
   beforeEach(() => {
     jest.clearAllMocks();
 
-    providerStub.getBalance.mockReset().mockResolvedValue(16n);
-    providerStub.getTransactionCount.mockReset().mockResolvedValue(7);
-    providerStub.estimateGas.mockReset().mockResolvedValue(21_000n);
-    providerStub.getFeeData.mockReset().mockResolvedValue({
+    ({ provider: mockProvider } = createMockEthersProvider());
+    walletStub = createWalletStub();
+
+    mockProvider.getBalance.mockResolvedValue(16n);
+    mockProvider.getTransactionCount.mockResolvedValue(7);
+    mockProvider.estimateGas.mockResolvedValue(21_000n);
+    mockProvider.getFeeData.mockResolvedValue({
       gasPrice: 1n,
       maxFeePerGas: 2n,
       maxPriorityFeePerGas: 1n,
     });
-    providerStub.broadcastTransaction.mockReset().mockResolvedValue({ hash: '0xhash' });
+    mockProvider.broadcastTransaction.mockResolvedValue({ hash: '0xhash' });
+    mockProvider.call.mockResolvedValue('0x1234');
 
     walletStub.signTransaction.mockReset().mockResolvedValue('0xdeadbeef');
     walletStub.signMessage.mockReset().mockResolvedValue('0xsigned');
 
-    MockedJsonRpcProvider.mockImplementation(() => providerStub);
+    MockedJsonRpcProvider.mockImplementation(() => mockProvider);
     MockedWallet.mockImplementation(() => walletStub);
   });
 
@@ -93,7 +93,7 @@ describe('EthereumChainProvider', () => {
       assetDecimals: 18,
     });
 
-    expect(providerStub.getTransactionCount).toHaveBeenCalledWith(SAMPLE_ACCOUNT, 'pending');
+    expect(mockProvider.getTransactionCount).toHaveBeenCalledWith(SAMPLE_ACCOUNT, 'pending');
     expect(tx.payload.value).toBe('0xde0b6b3a7640000');
     expect(tx.payload.nonce).toBe(7);
     expect(tx.payload.type).toBeUndefined();
@@ -124,10 +124,17 @@ describe('EthereumChainProvider', () => {
     const balance = await provider.getBalance(SAMPLE_ACCOUNT);
     const nonce = await provider.getNonce(SAMPLE_ACCOUNT);
 
-    expect(balance).toBe(16n);
+    expect(balance).toBe('0x10');
     expect(nonce).toBe(7);
-    expect(providerStub.getBalance).toHaveBeenCalledWith(SAMPLE_ACCOUNT);
-    expect(providerStub.getTransactionCount).toHaveBeenCalledWith(SAMPLE_ACCOUNT, 'pending');
+    expect(mockProvider.getBalance).toHaveBeenCalledWith(SAMPLE_ACCOUNT);
+    expect(mockProvider.getTransactionCount).toHaveBeenCalledWith(SAMPLE_ACCOUNT, 'pending');
+  });
+
+  it('performs generic call and returns hex response', async () => {
+    const provider = createProvider();
+    const result = await provider.call({ to: '0x2222222222222222222222222222222222222222', data: '0xdeadbeef' });
+    expect(result).toBe('0x1234');
+    expect(mockProvider.call).toHaveBeenCalledWith({ to: '0x2222222222222222222222222222222222222222', data: '0xdeadbeef' });
   });
 
   it('estimates fee with EIP-1559 fields when available', async () => {
@@ -146,7 +153,7 @@ describe('EthereumChainProvider', () => {
 
     const estimate = await provider.estimateFee(unsigned);
 
-    expect(providerStub.estimateGas).toHaveBeenCalled();
+    expect(mockProvider.estimateGas).toHaveBeenCalled();
     expect(estimate.gasLimit).toBe('0x5208');
     expect(estimate.maxFeePerGas).toBe('0x2');
     expect(estimate.maxPriorityFeePerGas).toBe('0x1');
@@ -166,7 +173,7 @@ describe('EthereumChainProvider', () => {
 
     const signed = await provider.signTransaction(unsigned, { privateKey: SAMPLE_PRIVATE_KEY });
 
-    expect(MockedWallet).toHaveBeenCalledWith(SAMPLE_PRIVATE_KEY, providerStub);
+    expect(MockedWallet).toHaveBeenCalledWith(SAMPLE_PRIVATE_KEY, mockProvider);
     expect(walletStub.signTransaction).toHaveBeenCalledWith(unsigned.payload);
     expect(signed.rawTransaction).toBe('0xdeadbeef');
     expect(signed.hash).toMatch(/^0x[0-9a-f]{64}$/i);
@@ -180,7 +187,7 @@ describe('EthereumChainProvider', () => {
       hash: '0xhash',
     });
 
-    expect(providerStub.broadcastTransaction).toHaveBeenCalledWith('0xraw');
+    expect(mockProvider.broadcastTransaction).toHaveBeenCalledWith('0xraw');
     expect(hash).toBe('0xhash');
   });
 
@@ -188,7 +195,7 @@ describe('EthereumChainProvider', () => {
     const provider = createProvider();
     const signature = await provider.signMessage('hello', { privateKey: SAMPLE_PRIVATE_KEY });
 
-    expect(MockedWallet).toHaveBeenCalledWith(SAMPLE_PRIVATE_KEY, providerStub);
+    expect(MockedWallet).toHaveBeenCalledWith(SAMPLE_PRIVATE_KEY, mockProvider);
     expect(walletStub.signMessage).toHaveBeenCalledWith('hello');
     expect(signature).toBe('0xsigned');
   });
@@ -246,7 +253,7 @@ describe('EthereumChainProvider', () => {
   it('falls back to legacy gas when no 1559 fields provided', async () => {
     const provider = createProvider();
 
-    providerStub.getFeeData.mockResolvedValueOnce({
+    mockProvider.getFeeData.mockResolvedValueOnce({
       gasPrice: 3n,
       maxFeePerGas: null,
       maxPriorityFeePerGas: null,

@@ -92,10 +92,11 @@ const stubProvider = (overrides: Partial<IChainProvider> & { chainId?: string; n
     estimateFee: overrides.estimateFee ?? (async () => createFeeEstimate(networkType)),
     signTransaction: overrides.signTransaction ?? (async () => createSignedTx(networkType)),
     broadcastTransaction: overrides.broadcastTransaction ?? (async () => '0x'),
-    getBalance: overrides.getBalance ?? (async () => 0n),
+    getBalance: overrides.getBalance ?? (async () => '0x0'),
     getNonce: overrides.getNonce ?? (async () => 0),
     signMessage: overrides.signMessage ?? (async () => '0x'),
     verifyMessage: overrides.verifyMessage ?? (() => true),
+    call: overrides.call ?? (async () => '0x'),
   };
 };
 

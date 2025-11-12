@@ -64,7 +64,7 @@ export class SigningService {
     try {
       return await this.database.get<Address>(TableName.Address).find(addressId);
     } catch {
-      throw new Error(`Address ${addressId} not found.`);
+      throw new Error(`[AssetService] Address ${addressId} not found in database.`);
     }
   }
 

@@ -1,3 +1,4 @@
+import { injectable } from 'inversify';
 import type { ChainType, IChainProvider, IChainRegistry } from '@core/types';
 
 type RegistryKey = `${ChainType}:${string}`;
@@ -6,6 +7,7 @@ function toRegistryKey(networkType: ChainType, chainId: string): RegistryKey {
   return `${networkType}:${chainId.toLowerCase()}`;
 }
 
+@injectable()
 export class ChainRegistry implements IChainRegistry {
   private readonly providers = new Map<RegistryKey, IChainProvider>();
 
