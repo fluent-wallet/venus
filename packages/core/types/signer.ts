@@ -1,16 +1,27 @@
 import type { Address, ChainType, Hex } from './chain';
 
-/**
- * Represents a generic signer instance.
- */
-export interface ISigner {
-  type: 'software' | 'hardware';
-  sign(data: unknown): Promise<string>;
+export type SignerType = 'software' | 'hardware';
+
+export interface ISoftwareSigner {
+  readonly type: 'software';
+  getPrivateKey(): string;
 }
 
-/**
- * Describes an account exposed by a hardware wallet.
- */
+export interface IHardwareSigner {
+  readonly type: 'hardware';
+  getDerivationPath(): string;
+  getChainType(): ChainType;
+  signWithHardware(context: SigningContext): Promise<string>;
+}
+
+export type ISigner = ISoftwareSigner | IHardwareSigner;
+
+export interface SigningContext {
+  data: unknown;
+  derivationPath: string;
+  chainType: ChainType;
+}
+
 export interface HardwareAccount {
   index: number;
   address: Address;
@@ -18,18 +29,6 @@ export interface HardwareAccount {
   publicKey?: Hex;
 }
 
-/**
- * Context information required to sign via a hardware wallet.
- */
-export interface SigningContext {
-  data: unknown;
-  derivationPath: string;
-  chainType: ChainType;
-}
-
-/**
- * Hardware wallet abstraction used by the signer layer.
- */
 export interface IHardwareWallet {
   readonly id: string;
   readonly type: string;

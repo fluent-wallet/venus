@@ -1,6 +1,6 @@
-import type { ISigner } from '@core/types';
+import type { ISoftwareSigner } from '@core/types';
 
-export class SoftwareSigner implements ISigner {
+export class SoftwareSigner implements ISoftwareSigner {
   readonly type = 'software' as const;
 
   constructor(private readonly privateKey: string) {
@@ -8,11 +8,8 @@ export class SoftwareSigner implements ISigner {
       throw new Error('SoftwareSigner requires a private key.');
     }
   }
+
   getPrivateKey(): string {
     return this.privateKey;
-  }
-
-  async sign(data: unknown): Promise<string> {
-    throw new Error('Not implemented');
   }
 }

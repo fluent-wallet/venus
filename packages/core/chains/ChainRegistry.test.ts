@@ -1,3 +1,4 @@
+import 'reflect-metadata';
 import type { ChainType, FeeEstimate, IChainProvider, SignedTransaction, UnsignedTransaction } from '@core/types';
 import { NetworkType } from '@core/utils/consts';
 import { ChainRegistry } from './ChainRegistry';

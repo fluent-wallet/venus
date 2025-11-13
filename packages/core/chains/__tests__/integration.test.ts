@@ -1,9 +1,11 @@
+import 'reflect-metadata';
 import { ChainRegistry, ConfluxChainProvider, EthereumChainProvider } from '..';
 import { AssetType, NetworkType, type ConfluxUnsignedTransaction, type EvmUnsignedTransaction } from '@core/types';
 import { createMockConfluxSdk, createMockEthersProvider, DEFAULT_BASE32_ADDRESS_TEST, DEFAULT_HEX_ADDRESS, DEFAULT_PRIVATE_KEY } from '@core/__tests__/mocks';
 import { convertHexToBase32 } from '@core/utils/address';
 import { computeAddress as computeAccountAddress, toAccountAddress } from '@core/utils/account';
 import { HDNode } from '@ethersproject/hdnode';
+import { SoftwareSigner } from '@core/signers';
 
 jest.mock('js-conflux-sdk', () => {
   const actual = jest.requireActual('js-conflux-sdk');
@@ -123,7 +125,8 @@ describe('chain integration', () => {
       value: '0xde0b6b3a7640000',
     });
 
-    const signed = await provider.signTransaction(unsigned, { privateKey: ETH_PRIVATE_KEY });
+    const signer = new SoftwareSigner(ETH_PRIVATE_KEY);
+    const signed = await provider.signTransaction(unsigned, signer);
     expect(MockedPrivateKeyAccount).toHaveBeenCalledWith(ETH_PRIVATE_KEY, CONFLUX_OPTIONS.netId);
     expect(confluxSignTransaction).toHaveBeenCalled();
 
@@ -162,7 +165,8 @@ describe('chain integration', () => {
     expect(fee.maxFeePerGas).toBe('0x4');
     expect(ethersProvider.provider.estimateGas).toHaveBeenCalledWith(expect.objectContaining({ from: ETHEREUM_ADDRESS }));
 
-    const signed = await provider.signTransaction(unsigned, { privateKey: ETH_PRIVATE_KEY });
+    const signer = new SoftwareSigner(ETH_PRIVATE_KEY);
+    const signed = await provider.signTransaction(unsigned, signer);
     expect(lastWalletArgs?.[0]).toBe(ETH_PRIVATE_KEY);
     expect(lastWalletArgs?.[1]).toBe(ethersProvider.provider);
     expect(ethereumSignTransaction).toHaveBeenCalledWith(unsigned.payload);
@@ -195,7 +199,8 @@ describe('chain integration', () => {
     const message = 'Venus wallet integration';
     const confluxProvider = new ConfluxChainProvider(CONFLUX_OPTIONS);
 
-    const confluxSignature = await confluxProvider.signMessage(message, { privateKey: ETH_PRIVATE_KEY });
+    const confluxSigner = new SoftwareSigner(ETH_PRIVATE_KEY);
+    const confluxSignature = await confluxProvider.signMessage(message, confluxSigner);
     expect(confluxProvider.verifyMessage(message, confluxSignature, CONFLUX_ADDRESS)).toBe(true);
 
     const ethereumProvider = new EthereumChainProvider(ETHEREUM_OPTIONS);
@@ -203,7 +208,8 @@ describe('chain integration', () => {
     const expectedSignature = await actualWallet.signMessage(message);
     ethereumSignMessage.mockResolvedValueOnce(expectedSignature);
 
-    const ethereumSignature = await ethereumProvider.signMessage(message, { privateKey: ETH_PRIVATE_KEY });
+    const ethereumSigner = new SoftwareSigner(ETH_PRIVATE_KEY);
+    const ethereumSignature = await ethereumProvider.signMessage(message, ethereumSigner);
     expect(ethereumSignature).toBe(expectedSignature);
     expect(ethereumProvider.verifyMessage(message, ethereumSignature, actualWallet.address)).toBe(true);
   });

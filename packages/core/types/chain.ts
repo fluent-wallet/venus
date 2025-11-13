@@ -1,4 +1,5 @@
 import type { FeeEstimate, SignedTransaction, TransactionParams, TxStatus, UnsignedTransaction } from './transaction';
+import type { ISigner } from './signer';
 import { NetworkType as CoreNetworkType } from '@core/utils/consts';
 
 export type ChainType = CoreNetworkType;
@@ -14,9 +15,6 @@ export interface ChainCallParams {
   data: Hex;
 }
 
-/**
- * Abstraction for chain-specific operations
- */
 export interface IChainProvider {
   readonly chainId: string;
   readonly networkType: ChainType;
@@ -26,14 +24,14 @@ export interface IChainProvider {
 
   buildTransaction(params: TransactionParams): Promise<UnsignedTransaction>;
   estimateFee(tx: UnsignedTransaction): Promise<FeeEstimate>;
-  signTransaction(tx: UnsignedTransaction, signer: unknown): Promise<SignedTransaction>;
+  signTransaction(tx: UnsignedTransaction, signer: ISigner): Promise<SignedTransaction>;
   broadcastTransaction(signedTx: SignedTransaction): Promise<Hash>;
 
   getBalance(address: Address): Promise<Hex>;
   call(params: ChainCallParams): Promise<Hex>;
   getNonce(address: Address): Promise<number>;
 
-  signMessage(message: string, signer: unknown): Promise<string>;
+  signMessage(message: string, signer: ISigner): Promise<string>;
   verifyMessage(message: string, signature: string, address: Address): boolean;
 }
 

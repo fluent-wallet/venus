@@ -1,2 +1,2 @@
-export { SoftwareSigner } from './SoftwareSigner';
 export { HardwareSigner } from './HardwareSigner';
+export { SoftwareSigner } from './SoftwareSigner';

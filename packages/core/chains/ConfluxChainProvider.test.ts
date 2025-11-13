@@ -4,6 +4,7 @@ import { computeAddress, toAccountAddress } from '@core/utils/account';
 import { convertHexToBase32 } from '@core/utils/address';
 import { checksum } from 'ox/Address';
 import { PersonalMessage } from 'js-conflux-sdk';
+import { SoftwareSigner } from '@core/signers';
 import {
   createMockConfluxSdk,
   DEFAULT_PRIVATE_KEY,
@@ -197,7 +198,8 @@ describe('ConfluxChainProvider', () => {
       hash: '0xabcd',
     });
 
-    const signed = await provider.signTransaction(unsigned, { privateKey: SAMPLE_PRIVATE_KEY });
+    const signer = new SoftwareSigner(SAMPLE_PRIVATE_KEY);
+    const signed = await provider.signTransaction(unsigned, signer);
 
     expect(MockedPrivateKeyAccount).toHaveBeenCalledWith(SAMPLE_PRIVATE_KEY, TEST_NET_ID);
     expect(mockSignTransaction).toHaveBeenCalledWith(
@@ -218,14 +220,14 @@ describe('ConfluxChainProvider', () => {
 
   it('signs personal messages with Conflux prefix', async () => {
     const provider = createProvider();
-    const signature = await provider.signMessage(MESSAGE, { privateKey: SAMPLE_PRIVATE_KEY });
+    const signer = new SoftwareSigner(SAMPLE_PRIVATE_KEY);
+    const signature = await provider.signMessage(MESSAGE, signer);
     const expected = PersonalMessage.sign(SAMPLE_PRIVATE_KEY, MESSAGE);
     expect(signature).toBe(expected);
   });
 
-  it('throws when signing personal message without private key', async () => {
-    const provider = createProvider();
-    await expect(provider.signMessage(MESSAGE, {} as never)).rejects.toThrow('Conflux signing requires privateKey');
+  it('throws when creating SoftwareSigner without private key', () => {
+    expect(() => new SoftwareSigner('')).toThrow('SoftwareSigner requires a private key');
   });
 
   it('verifies personal message signatures for base32 addresses', () => {
@@ -434,7 +436,8 @@ describe('ConfluxChainProvider', () => {
         hash: '0xtxhash',
       });
 
-      const signed = await provider.signTransaction(unsigned, { privateKey: SAMPLE_PRIVATE_KEY });
+      const signer = new SoftwareSigner(SAMPLE_PRIVATE_KEY);
+      const signed = await provider.signTransaction(unsigned, signer);
       expect(signed.rawTransaction).toBe('0xsignedtx');
       expect(signed.hash).toBe('0xtxhash');
 

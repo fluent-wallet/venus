@@ -1,6 +1,18 @@
-import { JsonRpcProvider, Wallet, computeAddress, getAddress, isAddress, keccak256, verifyMessage as verifyEthersMessage } from 'ethers';
-import type { Address, ChainCallParams, EvmFeeEstimate, EvmUnsignedTransaction, Hex, IChainProvider, SignedTransaction, TransactionParams } from '@core/types';
+import type {
+  Address,
+  ChainCallParams,
+  EvmFeeEstimate,
+  EvmUnsignedTransaction,
+  Hex,
+  IChainProvider,
+  IHardwareSigner,
+  ISigner,
+  ISoftwareSigner,
+  SignedTransaction,
+  TransactionParams,
+} from '@core/types';
 import { NetworkType } from '@core/types';
+import { computeAddress, getAddress, isAddress, JsonRpcProvider, keccak256, verifyMessage as verifyEthersMessage, Wallet } from 'ethers';
 import { buildTransactionPayload } from './utils/transactionBuilder';
 
 export interface EthereumChainProviderOptions {
@@ -39,8 +51,16 @@ export class EthereumChainProvider implements IChainProvider {
   validateAddress(address: Address): boolean {
     return isAddress(address);
   }
-  async signTransaction(tx: EvmUnsignedTransaction, signer: { privateKey?: string }): Promise<SignedTransaction> {
-    const privateKey = this.requirePrivateKey(signer);
+  async signTransaction(tx: EvmUnsignedTransaction, signer: ISigner): Promise<SignedTransaction> {
+    if (signer.type === 'software') {
+      return this.signWithSoftware(tx, signer);
+    } else {
+      return this.signWithHardware(tx, signer);
+    }
+  }
+
+  private async signWithSoftware(tx: EvmUnsignedTransaction, signer: ISoftwareSigner): Promise<SignedTransaction> {
+    const privateKey = signer.getPrivateKey();
     const wallet = new Wallet(privateKey, this.provider);
     const raw = await wallet.signTransaction(tx.payload);
     const hash = keccak256(raw);
@@ -52,10 +72,33 @@ export class EthereumChainProvider implements IChainProvider {
     };
   }
 
-  async signMessage(message: string, signer: { privateKey?: string }): Promise<string> {
-    const privateKey = this.requirePrivateKey(signer);
-    const wallet = new Wallet(privateKey, this.provider);
-    return wallet.signMessage(message);
+  private async signWithHardware(tx: EvmUnsignedTransaction, signer: IHardwareSigner): Promise<SignedTransaction> {
+    const signature = await signer.signWithHardware({
+      data: tx.payload,
+      derivationPath: signer.getDerivationPath(),
+      chainType: signer.getChainType(),
+    });
+
+    return this.assembleHardwareSignedTransaction(tx, signature);
+  }
+
+  private assembleHardwareSignedTransaction(tx: EvmUnsignedTransaction, signature: string): SignedTransaction {
+    // TODO: implement hardware transaction assembly based on BSIM signature format
+    throw new Error('Hardware transaction assembly not implemented');
+  }
+
+  async signMessage(message: string, signer: ISigner): Promise<string> {
+    if (signer.type === 'software') {
+      const privateKey = signer.getPrivateKey();
+      const wallet = new Wallet(privateKey, this.provider);
+      return wallet.signMessage(message);
+    } else {
+      return signer.signWithHardware({
+        data: message,
+        derivationPath: signer.getDerivationPath(),
+        chainType: this.networkType,
+      });
+    }
   }
 
   verifyMessage(message: string, signature: string, address: Address): boolean {
@@ -180,12 +223,5 @@ export class EthereumChainProvider implements IChainProvider {
 
   private formatHex(value: bigint): Hex {
     return `0x${value.toString(16)}`;
-  }
-
-  private requirePrivateKey(signer: { privateKey?: string }): string {
-    if (!signer.privateKey) {
-      throw new Error('Signer must provide a privateKey');
-    }
-    return signer.privateKey;
   }
 }

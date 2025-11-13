@@ -1,3 +1,6 @@
+import 'reflect-metadata';
+import { SoftwareSigner } from '@core/signers';
+
 const mockFetchChain = jest.fn();
 const mockCheckIsContractAddress = jest.fn();
 
@@ -371,7 +374,8 @@ describe('chain compatibility', () => {
         storageLimit: '0x0',
       })) as ConfluxUnsignedTransaction;
 
-      const signed = await provider.signTransaction(unsigned, { privateKey: DEFAULT_PRIVATE_KEY });
+      const signer = new SoftwareSigner(DEFAULT_PRIVATE_KEY);
+      const signed = await provider.signTransaction(unsigned, signer);
 
       const legacyRaw = await ConfluxLegacy.signTransaction({
         privateKey: DEFAULT_PRIVATE_KEY,
@@ -399,7 +403,8 @@ describe('chain compatibility', () => {
         gasPrice: '0x1',
       })) as EvmUnsignedTransaction;
 
-      const signed = await provider.signTransaction(unsigned, { privateKey: DEFAULT_PRIVATE_KEY });
+      const signer = new SoftwareSigner(DEFAULT_PRIVATE_KEY);
+      const signed = await provider.signTransaction(unsigned, signer);
 
     const legacyRaw = await EVMLegacy.signTransaction({
       privateKey: DEFAULT_PRIVATE_KEY,

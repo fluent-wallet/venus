@@ -1,4 +1,3 @@
-import { Conflux, PersonalMessage, PrivateKeyAccount } from 'js-conflux-sdk';
 import type {
   Address,
   ChainCallParams,
@@ -7,14 +6,18 @@ import type {
   ConfluxUnsignedTransactionPayload,
   Hash,
   IChainProvider,
+  IHardwareSigner,
+  ISigner,
+  ISoftwareSigner,
   SignedTransaction,
   TransactionParams,
 } from '@core/types';
-import { buildTransactionPayload } from './utils/transactionBuilder';
 import { NetworkType } from '@core/types';
-import { convertBase32ToHex, convertHexToBase32, decode, type Base32Address } from '@core/utils/address';
-import type { Hex } from 'ox/Hex';
 import { computeAddress, toAccountAddress } from '@core/utils/account';
+import { type Base32Address, convertBase32ToHex, convertHexToBase32, decode } from '@core/utils/address';
+import { Conflux, PersonalMessage, PrivateKeyAccount } from 'js-conflux-sdk';
+import type { Hex } from 'ox/Hex';
+import { buildTransactionPayload } from './utils/transactionBuilder';
 
 export interface ConfluxChainProviderOptions {
   chainId: string;
@@ -114,12 +117,16 @@ export class ConfluxChainProvider implements IChainProvider {
     return this.toFeeEstimate(payload, this.toBigInt(gasUsed), this.toBigInt(storageCollateralized), this.toBigInt(gasPrice));
   }
 
-  /**
-   * Signs a transaction using a private key.
-   * @todo Update signer
-   */
-  async signTransaction(tx: ConfluxUnsignedTransaction, signer: { privateKey?: string }): Promise<SignedTransaction> {
-    const privateKey = this.requirePrivateKey(signer);
+  async signTransaction(tx: ConfluxUnsignedTransaction, signer: ISigner): Promise<SignedTransaction> {
+    if (signer.type === 'software') {
+      return this.signWithSoftware(tx, signer);
+    } else {
+      return this.signWithHardware(tx, signer);
+    }
+  }
+
+  private async signWithSoftware(tx: ConfluxUnsignedTransaction, signer: ISoftwareSigner): Promise<SignedTransaction> {
+    const privateKey = signer.getPrivateKey();
     const account = new PrivateKeyAccount(privateKey, this.netId);
     const signed = await account.signTransaction({
       ...tx.payload,
@@ -131,6 +138,21 @@ export class ConfluxChainProvider implements IChainProvider {
       rawTransaction: signed.serialize(),
       hash: signed.hash ?? '',
     };
+  }
+
+  private async signWithHardware(tx: ConfluxUnsignedTransaction, signer: IHardwareSigner): Promise<SignedTransaction> {
+    const signature = await signer.signWithHardware({
+      data: tx.payload,
+      derivationPath: signer.getDerivationPath(),
+      chainType: signer.getChainType(),
+    });
+
+    return this.assembleHardwareSignedTransaction(tx, signature);
+  }
+
+  private assembleHardwareSignedTransaction(tx: ConfluxUnsignedTransaction, signature: string): SignedTransaction {
+    // TODO: implement hardware transaction assembly based on BSIM signature format
+    throw new Error('Hardware transaction assembly not implemented');
   }
 
   async broadcastTransaction(signedTx: SignedTransaction): Promise<Hash> {
@@ -153,13 +175,17 @@ export class ConfluxChainProvider implements IChainProvider {
     return this.formatHex(result);
   }
 
-  /**
-   * Signs a personal message using Conflux's PersonalMessage format.
-   * @todo Update signer
-   */
-  async signMessage(message: string, signer: { privateKey?: string }): Promise<string> {
-    const privateKey = this.requirePrivateKey(signer);
-    return PersonalMessage.sign(privateKey, message);
+  async signMessage(message: string, signer: ISigner): Promise<string> {
+    if (signer.type === 'software') {
+      const privateKey = signer.getPrivateKey();
+      return PersonalMessage.sign(privateKey, message);
+    } else {
+      return signer.signWithHardware({
+        data: message,
+        derivationPath: signer.getDerivationPath(),
+        chainType: this.networkType,
+      });
+    }
   }
 
   verifyMessage(message: string, signature: string, address: Address): boolean {
@@ -238,12 +264,5 @@ export class ConfluxChainProvider implements IChainProvider {
       return this.toNumber((value as { toString(): string }).toString());
     }
     throw new Error(`Unable to convert value '${String(value)}' to number`);
-  }
-
-  private requirePrivateKey(signer: { privateKey?: string } | undefined): string {
-    if (!signer?.privateKey) {
-      throw new Error('Conflux signing requires privateKey');
-    }
-    return signer.privateKey;
   }
 }

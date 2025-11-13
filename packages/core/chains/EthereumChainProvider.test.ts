@@ -2,6 +2,7 @@ import { EthereumChainProvider, type EthereumChainProviderOptions } from './Ethe
 import { AssetType, NetworkType } from '@core/types';
 import { JsonRpcProvider, Wallet } from 'ethers';
 import { createMockEthersProvider, DEFAULT_HEX_ADDRESS, DEFAULT_PRIVATE_KEY } from '@core/__tests__/mocks';
+import { SoftwareSigner } from '@core/signers';
 
 jest.mock('ethers', () => {
   const actual = jest.requireActual('ethers');
@@ -171,7 +172,8 @@ describe('EthereumChainProvider', () => {
       assetDecimals: 18,
     });
 
-    const signed = await provider.signTransaction(unsigned, { privateKey: SAMPLE_PRIVATE_KEY });
+    const signer = new SoftwareSigner(SAMPLE_PRIVATE_KEY);
+    const signed = await provider.signTransaction(unsigned, signer);
 
     expect(MockedWallet).toHaveBeenCalledWith(SAMPLE_PRIVATE_KEY, mockProvider);
     expect(walletStub.signTransaction).toHaveBeenCalledWith(unsigned.payload);
@@ -193,7 +195,8 @@ describe('EthereumChainProvider', () => {
 
   it('signs messages with wallet private key', async () => {
     const provider = createProvider();
-    const signature = await provider.signMessage('hello', { privateKey: SAMPLE_PRIVATE_KEY });
+    const signer = new SoftwareSigner(SAMPLE_PRIVATE_KEY);
+    const signature = await provider.signMessage('hello', signer);
 
     expect(MockedWallet).toHaveBeenCalledWith(SAMPLE_PRIVATE_KEY, mockProvider);
     expect(walletStub.signMessage).toHaveBeenCalledWith('hello');
@@ -276,18 +279,8 @@ describe('EthereumChainProvider', () => {
     expect(estimate.maxPriorityFeePerGas).toBeUndefined();
   });
 
-  it('throws when signing without private key', async () => {
-    const provider = createProvider();
-    const unsigned = await provider.buildTransaction({
-      from: SAMPLE_ACCOUNT,
-      to: SAMPLE_ACCOUNT,
-      chainId: SAMPLE_CHAIN_ID,
-      amount: '1',
-      assetType: AssetType.Native,
-      assetDecimals: 18,
-    });
-
-    await expect(provider.signTransaction(unsigned, {})).rejects.toThrow('Signer must provide a privateKey');
+  it('throws when signing without private key', () => {
+    expect(() => new SoftwareSigner('')).toThrow('SoftwareSigner requires a private key');
   });
 
   it('prefers EIP-1559 type when both gasPrice and maxFeePerGas provided', async () => {
