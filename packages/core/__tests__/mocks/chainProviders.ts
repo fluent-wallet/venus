@@ -1,12 +1,14 @@
-import type {
-  ChainCallParams,
-  ConfluxUnsignedTransactionPayload,
-  EvmUnsignedTransactionPayload,
-  Hex,
-  IChainProvider,
-  SignedTransaction,
-  TransactionParams,
-  UnsignedTransaction,
+import {
+  AssetType,
+  type ChainCallParams,
+  type ConfluxUnsignedTransactionPayload,
+  type EvmUnsignedTransactionPayload,
+  type Hex,
+  type IChainProvider,
+  type ISigner,
+  type SignedTransaction,
+  type TransactionParams,
+  type UnsignedTransaction,
 } from '@core/types';
 
 import { NetworkType } from '@core/utils/consts';
@@ -108,20 +110,52 @@ export class StubChainProvider implements IChainProvider {
     return true;
   }
 
-  async buildTransaction(_params: TransactionParams): Promise<UnsignedTransaction> {
-    throw new Error('StubChainProvider.buildTransaction not implemented');
+  async buildTransaction(params: TransactionParams): Promise<UnsignedTransaction> {
+    const payload: any = {
+      from: params.from,
+      to: params.to,
+      value: '0x1',
+      data: params.data ?? '0x',
+      gasPrice: params.gasPrice,
+      gasLimit: params.gasLimit,
+      maxFeePerGas: params.maxFeePerGas,
+      maxPriorityFeePerGas: params.maxPriorityFeePerGas,
+      storageLimit: params.storageLimit,
+      nonce: params.nonce ?? 0,
+      chainId: params.chainId,
+      epochHeight: params.epochHeight,
+    };
+
+    // For ERC20 we treat "to" as contract address and force value to 0
+    if (params.assetType === AssetType.ERC20 && params.contractAddress) {
+      payload.to = params.contractAddress;
+      payload.value = '0x0';
+    }
+
+    return {
+      chainType: this.networkType,
+      payload,
+    } as UnsignedTransaction;
   }
 
-  async estimateFee(): Promise<any> {
-    throw new Error('StubChainProvider.estimateFee not implemented');
+  async estimateFee(tx: UnsignedTransaction): Promise<any> {
+    return {
+      chainType: tx.chainType,
+      estimatedTotal: '0x1',
+      gasLimit: '0x5208',
+    };
   }
 
-  async signTransaction(): Promise<SignedTransaction> {
-    throw new Error('StubChainProvider.signTransaction not implemented');
+  async signTransaction(tx: UnsignedTransaction, _signer: ISigner): Promise<SignedTransaction> {
+    return {
+      chainType: tx.chainType,
+      rawTransaction: '0xraw',
+      hash: '0xhash',
+    } as SignedTransaction;
   }
 
-  async broadcastTransaction(): Promise<string> {
-    throw new Error('StubChainProvider.broadcastTransaction not implemented');
+  async broadcastTransaction(signedTx: SignedTransaction): Promise<string> {
+    return signedTx.hash;
   }
 
   async getBalance(address: string): Promise<Hex> {
