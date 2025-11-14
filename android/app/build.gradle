@@ -93,6 +93,7 @@ android {
         versionCode 999
         versionName "dev"
 
+
         resValue "string", "build_config_package", "io.bimwallet"
     }
     signingConfigs {
