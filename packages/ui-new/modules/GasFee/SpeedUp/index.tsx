@@ -1,4 +1,11 @@
-import BottomSheet, { BottomSheetWrapper, BottomSheetHeader, BottomSheetContent, BottomSheetFooter, type BottomSheetMethods } from '@components/BottomSheet';
+import {
+  BottomSheetWrapper,
+  BottomSheetHeader,
+  BottomSheetContent,
+  BottomSheetFooter,
+  type BottomSheetMethods,
+  BottomSheetRoute,
+} from '@components/BottomSheet';
 import Button from '@components/Button';
 import HourglassLoading from '@components/Loading/Hourglass';
 import Text from '@components/Text';
@@ -31,7 +38,6 @@ import BSIMVerify, { useBSIMVerify } from '@pages/SendTransaction/BSIMVerify';
 import { BSIMEventTypesName } from '@WalletCoreExtends/Plugins/BSIM/types';
 import type { ITxEvm } from '@core/WalletCore/Plugins/Transaction/types';
 import methods from '@core/WalletCore/Methods';
-import events from '@core/WalletCore/Events';
 import { SignType } from '@core/database/models/Signature/type';
 import { BSIMError } from 'modules/BSIM/src';
 import WarnIcon from '@assets/icons/warn.svg';
@@ -44,6 +50,8 @@ import ArrowRight from '@assets/icons/arrow-right2.svg';
 import CustomizeAdvanceSetting from '../GasFeeSetting/CustomizeAdvanceSetting';
 import usePollingGasEstimateAndNonce from '@core/WalletCore/Plugins/Transaction/usePollingGasEstimateAndNonce';
 import matchRPCErrorMessage from '@utils/matchRPCErrorMssage';
+import { getEventBus } from '@WalletCoreExtends/index';
+import { BROADCAST_TRANSACTION_EVENT } from '@core/WalletCore/Events/eventTypes';
 
 const higherRatio = 1.1;
 const fasterRatio = 1.2;
@@ -183,7 +191,7 @@ const SpeedUp: React.FC<StackScreenProps<typeof SpeedUpStackName>> = ({ navigati
           icon: 'loading' as unknown as undefined,
         });
         if (txRaw) {
-          events.broadcastTransactionSubjectPush.next({
+          getEventBus().dispatch(BROADCAST_TRANSACTION_EVENT, {
             transactionType: TransactionActionType.SpeedUp,
             params: {
               txHash,
@@ -245,10 +253,9 @@ const SpeedUp: React.FC<StackScreenProps<typeof SpeedUpStackName>> = ({ navigati
 
   return (
     <>
-      <BottomSheet
+      <BottomSheetRoute
         ref={bottomSheetRef}
         snapPoints={snapPoints}
-        isRoute
         enablePanDownToClose={!inSending}
         enableContentPanningGesture={!inSending}
         enableHandlePanningGesture={!inSending}
@@ -337,7 +344,7 @@ const SpeedUp: React.FC<StackScreenProps<typeof SpeedUpStackName>> = ({ navigati
             </View>
           </BottomSheetFooter>
         </BottomSheetWrapper>
-      </BottomSheet>
+      </BottomSheetRoute>
       {customizeGasSetting && showCustomizeSetting && estimateCurrentGasPrice && (
         <CustomizeGasSetting
           customizeGasSetting={customizeGasSetting}

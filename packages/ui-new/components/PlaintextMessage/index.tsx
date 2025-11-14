@@ -39,7 +39,7 @@ export const PlaintextMessage = ({ data }: Props) => {
         ) : (
           <View style={styles.flex}>
             <Text style={{ color: colors.textPrimary }}>{key}: </Text>
-            <Text style={{ color: colors.textPrimary, flex:1, flexWrap: 'wrap' }}>{value?.toString()}</Text>
+            <Text style={{ color: colors.textPrimary, flex: 1, flexWrap: 'wrap' }}>{value?.toString()}</Text>
           </View>
         )}
       </View>

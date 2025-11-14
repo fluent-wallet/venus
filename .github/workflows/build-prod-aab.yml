@@ -55,4 +55,4 @@ jobs:
           accessKeySecret=$OSS_KEY
           END
       - name: Upload to OSS
-        run: yes | ossutil64 cp ./app-prod-release.aab oss://blockvenus-hk/abbs/BIMWallet.aab
+        run: yes | ossutil64 cp ./app-prod-release.aab oss://blockvenus-hk/aabs/BIMWallet.aab

@@ -5,7 +5,6 @@ import { useTheme } from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';
 import Decimal from 'decimal.js';
 import type { AssetInfo } from '@core/WalletCore/Plugins/AssetsTracker/types';
-import type { NFTItemDetail } from '@core/WalletCore/Plugins/NFTDetailTracker';
 import Text from '@components/Text';
 import Button from '@components/Button';
 import { BottomSheetScrollContent, BottomSheetFooter } from '@components/BottomSheet';
@@ -15,6 +14,7 @@ import { AccountItemView } from '@modules/AccountsList';
 import { type SendTransactionStep3StackName, SendTransactionStep4StackName, type SendTransactionScreenProps } from '@router/configs';
 import SendTransactionBottomSheet from '../SendTransactionBottomSheet';
 import SetAssetAmount, { type AmountInfo, type SetAssetAmountMethods } from './SetAssetAmount';
+import type { NFTItemDetail } from '@core/WalletCore/Plugins/NFTDetailTracker/server';
 
 const SendTransactionStep3Amount: React.FC<SendTransactionScreenProps<typeof SendTransactionStep3StackName>> = ({ navigation, route }) => {
   const { colors } = useTheme();
@@ -24,7 +24,7 @@ const SendTransactionStep3Amount: React.FC<SendTransactionScreenProps<typeof Sen
   const asset = route.params.asset;
 
   return (
-    <SendTransactionBottomSheet title={t('tx.send.title')}>
+    <SendTransactionBottomSheet title={t('tx.send.title')} isRoute snapPoints={['75%']}>
       <BottomSheetScrollContent innerPaddingHorizontal>
         {route.params.nftItemDetail && (
           <>

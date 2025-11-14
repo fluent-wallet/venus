@@ -2,6 +2,7 @@
   "name": "BIM Wallet",
   "displayName": "BIM Wallet",
   "plugins": [
-    "expo-localization"
+    "expo-localization",
+    "react-native-bootsplash"
   ]
 }

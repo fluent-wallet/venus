@@ -3,12 +3,13 @@ import { type BSIMEvent, BSIMEventTypesName } from '@WalletCoreExtends/Plugins/B
 import ArrowLeft from '@assets/icons/arrow-left2.svg';
 import FailedIcon from '@assets/icons/message-fail.svg';
 import BSIMCardWallet from '@assets/icons/wallet-bsim.webp';
-import BottomSheet, {
+import {
   BottomSheetWrapper,
   BottomSheetScrollContent,
   BottomSheetFooter,
   type BottomSheetMethods,
   BottomSheetHeader,
+  InlineBottomSheet,
 } from '@components/BottomSheet';
 import Button from '@components/Button';
 import Spinner from '@components/Spinner';
@@ -33,7 +34,7 @@ const BSIMVerify: React.FC<Props> = ({ bsimEvent, onClose, onRetry }) => {
   const { t } = useTranslation();
 
   return (
-    <BottomSheet ref={bottomSheetRef} snapPoints={snapPoints} onClose={onClose} index={0}>
+    <InlineBottomSheet ref={bottomSheetRef} snapPoints={snapPoints} onClose={onClose} index={0}>
       <BottomSheetWrapper innerPaddingHorizontal style={styles.container}>
         <BottomSheetHeader>
           <View style={styles.titleContainer}>
@@ -73,7 +74,7 @@ const BSIMVerify: React.FC<Props> = ({ bsimEvent, onClose, onRetry }) => {
           </Button>
         </BottomSheetFooter>
       </BottomSheetWrapper>
-    </BottomSheet>
+    </InlineBottomSheet>
   );
 };
 

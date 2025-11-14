@@ -19,12 +19,13 @@ on:
 jobs:
   ios-build:
     name: IOS Build
-    runs-on: macos-latest
+    runs-on: macos-15
     steps:
       - name: Check out Git repository
         uses: actions/checkout@v4
         with:
           ref: ${{inputs.branch}}
+          fetch-depth: 0
 
       - name: Set up Node.js
         uses: actions/setup-node@v4
@@ -33,6 +34,12 @@ jobs:
 
       - name: install dependencies
         run: yarn
+
+      - name: Update versions
+        run: |
+          BUILD_NUMBER=$(git rev-list --count HEAD)
+          MARKETING_VERSION=$(node -p "require('./package.json').version")
+          ./.github/scripts/update-versions.sh "$MARKETING_VERSION" "$BUILD_NUMBER"
 
       - name: patch and install pod
         env:

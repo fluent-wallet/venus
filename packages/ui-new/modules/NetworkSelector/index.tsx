@@ -1,4 +1,4 @@
-import BottomSheet, { snapPoints, BottomSheetWrapper, BottomSheetContent, BottomSheetHeader, type BottomSheetMethods } from '@components/BottomSheet';
+import { InlineBottomSheet, snapPoints, BottomSheetWrapper, BottomSheetContent, BottomSheetHeader, type BottomSheetMethods } from '@components/BottomSheet';
 import Text from '@components/Text';
 import NetworksList from '@modules/NetworksList';
 import { useTheme } from '@react-navigation/native';
@@ -7,22 +7,23 @@ import { useCallback, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Pressable } from 'react-native';
 import { styles } from '../AccountSelector';
+
 export type { BottomSheetMethods };
 
 interface Props {
   onClose: () => void;
+  isOpen?: boolean;
 }
 
-const NetworkSelector: React.FC<Props> = ({ onClose }) => {
+const NetworkSelector: React.FC<Props> = ({ onClose, isOpen }) => {
   const { colors } = useTheme();
   const { t } = useTranslation();
   const bottomSheetRef = useRef<BottomSheetMethods>(null!);
   const handleSelect = useCallback(() => {
     bottomSheetRef?.current?.close();
   }, []);
-
   return (
-    <BottomSheet ref={bottomSheetRef} snapPoints={snapPoints.percent75} index={0} onClose={onClose}>
+    <InlineBottomSheet ref={bottomSheetRef} snapPoints={snapPoints.percent75} index={isOpen ? 0 : -1} onClose={onClose}>
       <BottomSheetWrapper>
         <BottomSheetHeader title={t('common.network')}>
           <Pressable
@@ -36,7 +37,7 @@ const NetworkSelector: React.FC<Props> = ({ onClose }) => {
           <NetworksList type="selector" onSelect={handleSelect} />
         </BottomSheetContent>
       </BottomSheetWrapper>
-    </BottomSheet>
+    </InlineBottomSheet>
   );
 };
 

@@ -1,12 +1,13 @@
 import ArrowRight from '@assets/icons/arrow-right2.svg';
 import Delete from '@assets/icons/delete.svg';
-import BottomSheet, {
+import {
   snapPoints,
   BottomSheetWrapper,
   BottomSheetScrollContent,
   BottomSheetHeader,
   BottomSheetFooter,
   type BottomSheetMethods,
+  BottomSheetRoute,
 } from '@components/BottomSheet';
 import Button from '@components/Button';
 import HourglassLoading from '@components/Loading/Hourglass';
@@ -25,6 +26,8 @@ import { useTranslation } from 'react-i18next';
 import { Keyboard, Pressable, StyleSheet, View, type TextInput as _TextInput } from 'react-native';
 import { showMessage } from 'react-native-flash-message';
 import DeleteConfirm from './DeleteConfirm';
+import { isAuthenticationCanceledError, isAuthenticationError } from '@WalletCoreExtends/Plugins/Authentication/errors';
+import { getAuthentication } from '@WalletCoreExtends/index';
 
 const AccountConfig: React.FC<StackScreenProps<typeof AccountSettingStackName>> = ({ navigation, route }) => {
   const { colors } = useTheme();
@@ -74,7 +77,7 @@ const AccountConfig: React.FC<StackScreenProps<typeof AccountSettingStackName>> 
       if (vault.isGroup) {
         await methods.changeAccountHidden({ account, hidden: true });
       } else {
-        await plugins.Authentication.getPassword();
+        await getAuthentication().getPassword();
         await methods.deleteVault(vault);
       }
       if (addressValue) {
@@ -86,8 +89,8 @@ const AccountConfig: React.FC<StackScreenProps<typeof AccountSettingStackName>> 
       });
       setTimeout(() => bottomSheetRef.current?.close());
       setShowDeleteBottomSheet(false);
-    } catch (err) {
-      if (plugins.Authentication.containsCancel(String(err))) {
+    } catch (err: unknown) {
+      if (isAuthenticationError(err) && isAuthenticationCanceledError(err)) {
         return;
       }
       showMessage({
@@ -104,10 +107,9 @@ const AccountConfig: React.FC<StackScreenProps<typeof AccountSettingStackName>> 
 
   return (
     <>
-      <BottomSheet
+      <BottomSheetRoute
         ref={bottomSheetRef}
         snapPoints={snapPoints.large}
-        isRoute
         enablePanDownToClose={!inDelete}
         enableContentPanningGesture={!inDelete}
         enableHandlePanningGesture={!inDelete}
@@ -164,8 +166,10 @@ const AccountConfig: React.FC<StackScreenProps<typeof AccountSettingStackName>> 
             </Button>
           </BottomSheetFooter>
         </BottomSheetWrapper>
-      </BottomSheet>
-      {showDeleteBottomSheet && <DeleteConfirm onConfirm={handleConfirmDelete} onClose={() => setShowDeleteBottomSheet(false)} />}
+      </BottomSheetRoute>
+      {showDeleteBottomSheet && (
+        <DeleteConfirm onConfirm={handleConfirmDelete} onClose={() => setShowDeleteBottomSheet(false)} isOpen={showDeleteBottomSheet} />
+      )}
     </>
   );
 };

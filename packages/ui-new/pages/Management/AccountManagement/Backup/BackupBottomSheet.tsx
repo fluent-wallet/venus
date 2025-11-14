@@ -1,9 +1,9 @@
-import BottomSheet, { snapPoints as defaultSnapPoints, BottomSheetWrapper, BottomSheetHeader } from '@components/BottomSheet';
+import { snapPoints as defaultSnapPoints, BottomSheetWrapper, BottomSheetHeader, BottomSheetRoute } from '@components/BottomSheet';
 import type React from 'react';
 import type { ComponentProps } from 'react';
 import { useTranslation } from 'react-i18next';
 
-interface Props extends ComponentProps<typeof BottomSheet> {
+interface Props extends ComponentProps<typeof BottomSheetRoute> {
   children: React.ReactNode;
   showTitle?: boolean;
 }
@@ -12,12 +12,12 @@ const BackupBottomSheet: React.FC<Props> = ({ children, snapPoints, showTitle = 
   const { t } = useTranslation();
 
   return (
-    <BottomSheet snapPoints={snapPoints || defaultSnapPoints.large} isRoute {...props}>
+    <BottomSheetRoute snapPoints={snapPoints || defaultSnapPoints.large} {...props}>
       <BottomSheetWrapper innerPaddingHorizontal>
         {showTitle && <BottomSheetHeader title={t('backup.title')} />}
         {children}
       </BottomSheetWrapper>
-    </BottomSheet>
+    </BottomSheetRoute>
   );
 };
 

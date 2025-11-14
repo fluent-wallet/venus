@@ -193,12 +193,21 @@ export default class WalletConnect implements Plugin {
 
     let dapp = await methods.isAppExist(verifiedData.origin || metadata.url);
     if (!dapp) {
-      dapp = await methods.createApp({
-        identity: metadata.url,
-        origin: metadata.url,
-        name: metadata.name,
-        icon: metadata?.icons[0],
-      });
+      try {
+        dapp = await methods.createApp({
+          identity: metadata.url,
+          origin: metadata.url,
+          name: metadata.name,
+          icon: metadata?.icons[0],
+        });
+      } catch (error: any) {
+        const message = typeof error?.message === 'string' ? error.message : String(error ?? 'Unknown error');
+        if (message.includes('App already exist')) {
+          dapp = await methods.isAppExist(metadata.url);
+        } else {
+          throw error;
+        }
+      }
     }
 
     const rejectSession: IWCSessionProposalEvent['action']['reject'] = async (reason) =>

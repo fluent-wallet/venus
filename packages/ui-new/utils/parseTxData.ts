@@ -1,4 +1,4 @@
-import { AssetType } from '@core/database/models/Asset';
+import { Networks } from '@core/utils/consts';
 import { Interface, MaxUint256 } from 'ethers';
 
 type AIBMethodSighashMapType = {
@@ -234,4 +234,47 @@ export function parseTxData({ data, to }: ParseTxDataParameters): ParseTxDataRet
 
 export function isApproveMethod(args: ParseTxDataReturnType): args is FunctionNameApprove {
   return args.functionName === 'approve';
+}
+
+export async function parseTxDataAsync(data: ParseTxDataParameters & { netId: number }): Promise<ParseTxDataReturnType> {
+  const parseResult = parseTxData(data);
+
+  if (!data.data) return parseResult;
+  const supportNetwork = [Networks['Conflux Mainnet'], Networks['Conflux Testnet'], Networks['Conflux eSpace'], Networks['eSpace Testnet']];
+
+  const network = supportNetwork.find((n) => n.netId === data.netId);
+
+  if (network && parseResult.functionName === 'unknown') {
+    try {
+      const response = await fetch(`${network.scanOpenAPI}/util/decode/method/raw?contracts=${data.to}&inputs=${data.data}`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      }).then((res) => res.json());
+
+      if (response?.result && Array.isArray(response?.result) && response.result.length > 0) {
+        const responseData = response.result[0];
+        if (responseData?.abi) {
+          const abi = JSON.parse(responseData.abi);
+          const methodId = data.data.slice(0, 10); // 0x.....
+          const iFace = new Interface([abi]);
+          const fn = iFace.getFunction(methodId);
+          const parsed = iFace.decodeFunctionData(methodId, data.data);
+          console.log('fetch parse tx data', parsed);
+          if (parsed && fn) {
+            return {
+              functionName: fn.name,
+              readableABI: fn.format(),
+            };
+          }
+        }
+      }
+    } catch (error) {
+      console.log('fetch parse tx data error', error);
+      return parseResult;
+    }
+  }
+
+  return parseResult;
 }

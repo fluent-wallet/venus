@@ -1,6 +1,5 @@
-import { CommonActions, type NavigationState, type PartialState } from '@react-navigation/native';
-import { HomeStackName } from '@router/configs';
-import { isSamsungDevice } from '@utils/deviceInfo';
+import { CommonActions, StackActions, type NavigationProp, type NavigationState, type PartialState } from '@react-navigation/native';
+import { HomeStackName, type RootStackParamList } from '@router/configs';
 
 export function getActiveRouteName(state: NavigationState | PartialState<NavigationState>) {
   if (state.index == null || !state.routes[state.index]) {
@@ -14,21 +13,28 @@ export function getActiveRouteName(state: NavigationState | PartialState<Navigat
   return route.name;
 }
 
-const backToHome = (navigation: any) => {
-  // navigation.dispatch(CommonActions.reset({ index: 0, routes: [{ name: HomeStackName }] }));
-  if (getActiveRouteName(navigation.getState()) === HomeStackName) return;
+const findRootNavigation = (navigation: NavigationProp<RootStackParamList>) => {
+  let current = navigation;
+  while (current?.getParent?.()) current = current.getParent();
+  return current ?? navigation;
+};
 
-  if (!isSamsungDevice) {
-    if (typeof navigation.popToTop === 'function') {
-      if (navigation.canGoBack()) {
-        navigation.popToTop();
-      }
-    }
-    if (navigation.canGoBack()) {
-      navigation.goBack();
-    }
-  } else {
-    navigation.dispatch(CommonActions.reset({ index: 0, routes: [{ name: HomeStackName }] }));
+const backToHome = (navigation: NavigationProp<RootStackParamList>) => {
+  const rootNavigation = findRootNavigation(navigation);
+  const state = rootNavigation.getState?.();
+  if (!state || getActiveRouteName(state) === HomeStackName) return;
+
+  const homeIndex = state.routes.findIndex((route) => route.name === HomeStackName);
+  if (homeIndex === -1) {
+    rootNavigation.dispatch(CommonActions.navigate({ name: HomeStackName }));
+    return;
+  }
+
+  const pops = state.index - homeIndex;
+  if (pops > 0) {
+    rootNavigation.dispatch(StackActions.pop(pops));
+  } else if (state.routes[state.index]?.name !== HomeStackName) {
+    rootNavigation.dispatch(CommonActions.navigate({ name: HomeStackName }));
   }
 };
 

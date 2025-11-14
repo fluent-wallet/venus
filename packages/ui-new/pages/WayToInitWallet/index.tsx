@@ -19,7 +19,6 @@ import { showMessage } from 'react-native-flash-message';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import ImportExistingWallet, { type BottomSheetMethods } from './ImportExistingWallet';
 import LottieAnimation from './lottie';
-import { SUPPORT_BSIM_FEATURE } from '@utils/features';
 
 export const showNotFindBSIMCardMessage = () =>
   showMessage({
@@ -64,22 +63,18 @@ const WayToInitWallet: React.FC<StackScreenProps<typeof WayToInitWalletStackName
               </View>
               <Image style={styles.welcomeSwiftShield} source={lang === Lang.zhHant ? WelcomeSwiftShieldZH : WelcomeSwiftShieldEN} contentFit="contain" />
 
-              {SUPPORT_BSIM_FEATURE.allow && (
-                <>
-                  <Button
-                    testID="connectBSIMWallet"
-                    textAlign="left"
-                    Icon={ArrowRight}
-                    style={styles.btn}
-                    onPress={handleConnectBSIMCard}
-                    loading={inConnecting}
-                    mode="dark"
-                  >
-                    {t('welcome.connectBSIMWallet')}
-                  </Button>
-                  <Text style={[styles.orAddWith, { color: colors.textThird }]}>{t('welcome.addWith')}:</Text>
-                </>
-              )}
+              <Button
+                testID="connectBSIMWallet"
+                textAlign="left"
+                Icon={ArrowRight}
+                style={styles.btn}
+                onPress={handleConnectBSIMCard}
+                loading={inConnecting}
+                mode="dark"
+              >
+                {t('welcome.connectBSIMWallet')}
+              </Button>
+              <Text style={[styles.orAddWith, { color: colors.textThird }]}>{t('welcome.addWith')}:</Text>
 
               <Button
                 testID="createNewWallet"

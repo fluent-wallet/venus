@@ -1,7 +1,8 @@
 // eslint-disable-next-line no-undef
 module.exports = {
-  presets: ['babel-preset-expo'],
+  presets: [["babel-preset-expo"]],
   plugins: [
+    ['babel-plugin-react-compiler', {target: "19"}],
     ['@babel/plugin-proposal-decorators', { version: 'legacy' }],
     [
       'module-resolver',

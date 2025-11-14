@@ -1,7 +1,8 @@
-import BottomSheet, { BottomSheetWrapper, BottomSheetContent, BottomSheetFooter, BottomSheetTextInput, type BottomSheetMethods } from '@components/BottomSheet';
+import { BottomSheetContent, BottomSheetFooter, BottomSheetTextInput, BottomSheetWrapper, InlineBottomSheet } from '@components/BottomSheet';
 import Button from '@components/Button';
 import Text from '@components/Text';
 import { stripHexPrefix } from '@core/utils/base';
+import type BottomSheet from '@gorhom/bottom-sheet';
 import useInAsync from '@hooks/useInAsync';
 import * as secp from '@noble/secp256k1';
 import { useTheme } from '@react-navigation/native';
@@ -11,11 +12,10 @@ import { Mnemonic } from 'ethers';
 import type React from 'react';
 import { type RefObject, useCallback, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Keyboard, Pressable, StyleSheet, type TextInput, View } from 'react-native';
-export type { BottomSheetMethods };
+import { Keyboard, Pressable, StyleSheet, type TextInput } from 'react-native';
 
 interface Props {
-  bottomSheetRef: RefObject<BottomSheetMethods>;
+  bottomSheetRef: RefObject<BottomSheet>;
   onSuccessConfirm?: (value: string) => void;
   inImporting?: boolean;
 }
@@ -81,7 +81,7 @@ const ImportExistingWallet: React.FC<Props> = ({ bottomSheetRef, inImporting, on
 
   const inAsync = inChecking || inImporting;
   return (
-    <BottomSheet
+    <InlineBottomSheet
       ref={bottomSheetRef}
       onChange={handleOnChange}
       backDropPressBehavior="collapse"
@@ -92,7 +92,7 @@ const ImportExistingWallet: React.FC<Props> = ({ bottomSheetRef, inImporting, on
       enableHandlePanningGesture={!inAsync}
       enableDynamicSizing
     >
-      <BottomSheetWrapper>
+      <BottomSheetWrapper useBottomSheetView={true}>
         <BottomSheetContent>
           <Pressable
             onPress={() => {
@@ -129,7 +129,7 @@ const ImportExistingWallet: React.FC<Props> = ({ bottomSheetRef, inImporting, on
           </Button>
         </BottomSheetFooter>
       </BottomSheetWrapper>
-    </BottomSheet>
+    </InlineBottomSheet>
   );
 };
 

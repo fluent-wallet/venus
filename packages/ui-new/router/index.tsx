@@ -1,4 +1,3 @@
-import plugins from '@core/WalletCore/Plugins';
 import { useHasVault } from '@core/WalletCore/Plugins/ReactInject';
 import PasswordVerify from '@modules/PasswordVerify';
 import Home from '@pages/Home';
@@ -70,6 +69,9 @@ import {
 } from './configs';
 import TransactionDetail from '@pages/TransactionDetail';
 import { useTranslation } from 'react-i18next';
+import { getEventBus } from '@WalletCoreExtends/index';
+import { AUTHENTICATION_PASSWORD_REQUEST } from '@WalletCoreExtends/Plugins/Authentication';
+import Button from '@components/Button';
 
 const RootStack = createNativeStackNavigator<RootStackParamList>();
 const screenOptions = {
@@ -90,14 +92,15 @@ const Router: React.FC = () => {
   useListenWalletConnectEvent();
 
   useEffect(() => {
-    const sub = plugins.Authentication.subPasswordRequest().subscribe(() => {
-      navigation.navigate(PasswordVerifyStackName);
-    });
+    const sub = getEventBus()
+      .on(AUTHENTICATION_PASSWORD_REQUEST)
+      .subscribe(() => {
+        navigation.navigate(PasswordVerifyStackName);
+      });
     return () => {
       sub.unsubscribe();
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [navigation]);
 
   useListenDeepLink(navigation);
 

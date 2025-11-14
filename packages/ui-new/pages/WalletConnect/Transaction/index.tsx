@@ -1,10 +1,9 @@
 import { BSIMError } from '@WalletCoreExtends/Plugins/BSIM/BSIMSDK';
 import { BSIMEventTypesName } from '@WalletCoreExtends/Plugins/BSIM/types';
 import MessageFail from '@assets/icons/message-fail.svg';
-import BottomSheet, { snapPoints, BottomSheetWrapper, BottomSheetHeader, BottomSheetScrollContent, BottomSheetFooter } from '@components/BottomSheet';
+import { snapPoints, BottomSheetWrapper, BottomSheetHeader, BottomSheetScrollContent, BottomSheetFooter, BottomSheetRoute } from '@components/BottomSheet';
 import Button from '@components/Button';
 import Text from '@components/Text';
-import Events from '@core/WalletCore/Events';
 import methods from '@core/WalletCore/Methods';
 import plugins from '@core/WalletCore/Plugins';
 import { fetchERC20AssetInfoBatchWithAccount } from '@core/WalletCore/Plugins/AssetsTracker/fetchers/basic';
@@ -41,7 +40,7 @@ import { styles as transactionConfirmStyle } from '@pages/SendTransaction/Step4C
 import { type RouteProp, useNavigation, useRoute, useTheme } from '@react-navigation/native';
 import type { WalletConnectParamList, WalletConnectTransactionStackName } from '@router/configs';
 import matchRPCErrorMessage from '@utils/matchRPCErrorMssage';
-import { type ParseTxDataReturnType, isApproveMethod, parseTxData } from '@utils/parseTxData';
+import { type ParseTxDataReturnType, isApproveMethod, parseTxDataAsync } from '@utils/parseTxData';
 import { supportsInterface } from '@utils/supportsInterface';
 import Decimal from 'decimal.js';
 import { isNil } from 'lodash-es';
@@ -51,6 +50,8 @@ import { StyleSheet, View } from 'react-native';
 import SendContract from './Contract';
 import EditAllowance from './EditAllowance';
 import { TransactionActionType } from '@core/WalletCore/Events/broadcastTransactionSubject';
+import { getEventBus } from '@WalletCoreExtends/index';
+import { BROADCAST_TRANSACTION_EVENT } from '@core/WalletCore/Events/eventTypes';
 
 export type TxDataWithTokenInfo = ParseTxDataReturnType & {
   symbol?: string;
@@ -242,7 +243,7 @@ function WalletConnectTransaction() {
       // TODO: show error
     } finally {
       if (txRaw) {
-        Events.broadcastTransactionSubjectPush.next({
+        getEventBus().dispatch(BROADCAST_TRANSACTION_EVENT, {
           transactionType: TransactionActionType.Send,
           params: {
             txHash,
@@ -270,7 +271,7 @@ function WalletConnectTransaction() {
   useEffect(() => {
     async function parseAndTryGetTokenInfo() {
       if (isContract) {
-        const parseData = parseTxData({ data, to });
+        const parseData = await parseTxDataAsync({ data, to, netId: currentNetwork.netId });
 
         if (to) {
           const typeByInterface = await supportsInterface(to, {
@@ -314,7 +315,7 @@ function WalletConnectTransaction() {
     }
     parseAndTryGetTokenInfo();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [data, to, isContract, currentNetwork.id, currentAddress, value]);
+  }, [data, to, isContract, currentNetwork.id, currentAddress, value, currentNetwork.netId]);
 
   const handleOpenEditAllowanceModel = useCallback(() => {
     if (parseData?.functionName === 'approve' && parseData?.assetType === AssetType.ERC20) {
@@ -332,7 +333,7 @@ function WalletConnectTransaction() {
 
   return (
     <>
-      <BottomSheet isRoute snapPoints={snapPoints.large} onClose={() => handleReject()}>
+      <BottomSheetRoute snapPoints={snapPoints.large} onClose={() => handleReject()}>
         <BottomSheetWrapper>
           <BottomSheetHeader title={t('wc.dapp.tx.title')} />
           <BottomSheetScrollContent>
@@ -393,11 +394,18 @@ function WalletConnectTransaction() {
             </Button>
           </View>
         </BottomSheetFooter>
-      </BottomSheet>
+      </BottomSheetRoute>
 
-      {showEditAllowance && parseData && (
-        <EditAllowance parseData={parseData} savedValue={allowanceValue} onSave={handleSaveEditAllowance} onClose={() => setShowEditAllowance(false)} />
+      {!!(showEditAllowance && parseData) && (
+        <EditAllowance
+          isOpen={!!(showEditAllowance && parseData)}
+          parseData={parseData}
+          savedValue={allowanceValue}
+          onSave={handleSaveEditAllowance}
+          onClose={() => setShowEditAllowance(false)}
+        />
       )}
+
       <GasFeeSetting
         ref={gasSettingMethods}
         show={showGasFeeSetting}
@@ -421,8 +429,13 @@ function WalletConnectTransaction() {
           onRetry={handleApprove}
         />
       )}
-      {showDappParamsWarning && (
-        <DappParamsWarning onClose={() => setShowDappParamsWarning(false)} onPressUse={() => gasSettingMethods.current?.resetCustomizeSetting?.()} />
+
+      {!!showDappParamsWarning && (
+        <DappParamsWarning
+          isOpen={!!showDappParamsWarning}
+          onClose={() => setShowDappParamsWarning(false)}
+          onPressUse={() => gasSettingMethods.current?.resetCustomizeSetting?.()}
+        />
       )}
     </>
   );

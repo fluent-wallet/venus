@@ -10,7 +10,11 @@ import type { HomeStackName, StackScreenProps } from '@router/configs';
 import { toDataUrl } from '@utils/blockies';
 import { Image } from 'expo-image';
 import type React from 'react';
+import { useEffect } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
+import Animated, { useSharedValue, useAnimatedStyle, withTiming } from 'react-native-reanimated';
+
+const AnimatedArrowLeft = Animated.createAnimatedComponent(ArrowLeft);
 
 const Account: React.FC<{ showAccountSelector: boolean; onPress: () => void; navigation: StackScreenProps<typeof HomeStackName>['navigation'] }> = ({
   showAccountSelector,
@@ -23,9 +27,29 @@ const Account: React.FC<{ showAccountSelector: boolean; onPress: () => void; nav
   const vault = useVaultOfAccount(account?.id);
   useForceUpdateOnFocus(navigation);
 
+  const rotation = useSharedValue(-180);
+
+  useEffect(() => {
+    rotation.value = withTiming(showAccountSelector ? -90 : -180, {
+      duration: 200,
+    });
+  }, [showAccountSelector, rotation]);
+
+  const animatedArrowStyle = useAnimatedStyle(() => {
+    return {
+      transform: [{ rotate: `${rotation.value}deg` }, { translateX: -1.5 }],
+    };
+  });
+
   return (
     <Pressable
-      style={({ pressed }) => [styles.accountContainer, { borderColor: colors.borderThird, backgroundColor: pressed ? colors.underlay : 'transparent' }]}
+      style={({ pressed }) => [
+        styles.accountContainer,
+        {
+          borderColor: colors.borderThird,
+          backgroundColor: pressed ? colors.underlay : 'transparent',
+        },
+      ]}
       onPress={onPress}
       testID="account"
     >
@@ -39,12 +63,7 @@ const Account: React.FC<{ showAccountSelector: boolean; onPress: () => void; nav
       <Text style={[styles.accountText, { color: colors.textPrimary }]} numberOfLines={1} ellipsizeMode="middle">
         {account?.nickname ?? 'Loading...'}
       </Text>
-      <ArrowLeft
-        style={[styles.accountArrow, { transform: [{ rotate: showAccountSelector ? '-90deg' : '-180deg' }, { translateX: -1.5 }] }]}
-        color={colors.iconPrimary}
-        width={14}
-        height={14}
-      />
+      <AnimatedArrowLeft style={[styles.accountArrow, animatedArrowStyle]} color={colors.iconPrimary} width={14} height={14} />
     </Pressable>
   );
 };

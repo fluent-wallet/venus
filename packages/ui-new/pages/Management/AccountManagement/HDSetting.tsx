@@ -1,11 +1,13 @@
+import { AuthenticationErrorCode, isAuthenticationCanceledError, isAuthenticationError } from '@WalletCoreExtends/Plugins/Authentication/errors';
 import ArrowRight from '@assets/icons/arrow-right2.svg';
-import BottomSheet, {
+import {
   snapPoints,
   BottomSheetWrapper,
   BottomSheetScrollContent,
   BottomSheetHeader,
   BottomSheetFooter,
   type BottomSheetMethods,
+  BottomSheetRoute,
 } from '@components/BottomSheet';
 import Button from '@components/Button';
 import Checkbox from '@components/Checkbox';
@@ -115,7 +117,12 @@ const HDManagement: React.FC<StackScreenProps<typeof HDSettingStackName>> = ({ n
         setPageAccounts(newPageAccounts);
         setInCalc(false);
       } catch (err) {
-        setInCalc(String(err));
+        if (isAuthenticationError(err) && isAuthenticationCanceledError(err)) {
+          setInCalc(err.code);
+        } else {
+          setInCalc(String(err));
+        }
+
         if (pageAccounts === defaultPages) {
           setPageAccounts([]);
         }
@@ -161,7 +168,7 @@ const HDManagement: React.FC<StackScreenProps<typeof HDSettingStackName>> = ({ n
   };
 
   return (
-    <BottomSheet ref={bottomSheetRef} snapPoints={snapPoints.large} isRoute>
+    <BottomSheetRoute ref={bottomSheetRef} snapPoints={snapPoints.large}>
       <BottomSheetWrapper innerPaddingHorizontal>
         <BottomSheetHeader title={t('account.HDWallet.select.title')} />
         <BottomSheetScrollContent>
@@ -213,7 +220,7 @@ const HDManagement: React.FC<StackScreenProps<typeof HDSettingStackName>> = ({ n
                 {typeof inCalc === 'string' && (
                   <>
                     <View style={[styles.selectAbsolute, { backgroundColor: colors.bgFourth }]} />
-                    {plugins.Authentication.containsCancel(String(inCalc)) ? (
+                    {inCalc === AuthenticationErrorCode.BIOMETRICS_CANCELED || inCalc === AuthenticationErrorCode.PASSWORD_REQUEST_CANCELED ? (
                       <Pressable
                         onPress={() => forceAuth((pre) => !pre)}
                         style={({ pressed }) => [{ backgroundColor: pressed ? colors.underlay : 'transparent' }]}
@@ -269,7 +276,7 @@ const HDManagement: React.FC<StackScreenProps<typeof HDSettingStackName>> = ({ n
           </Button>
         </BottomSheetFooter>
       </BottomSheetWrapper>
-    </BottomSheet>
+    </BottomSheetRoute>
   );
 };
 

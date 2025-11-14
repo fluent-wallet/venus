@@ -1,10 +1,11 @@
-import BottomSheet, {
+import {
   BottomSheetTextInput,
   BottomSheetWrapper,
   BottomSheetScrollContent,
   BottomSheetHeader,
   BottomSheetFooter,
   type BottomSheetMethods,
+  InlineBottomSheet,
 } from '@components/BottomSheet';
 import Checkbox from '@components/Checkbox';
 import ArrowLeft from '@assets/icons/arrow-left2.svg';
@@ -21,13 +22,14 @@ import { type NativeSyntheticEvent, Pressable, StyleSheet, Text, type TextInputC
 import type { TxDataWithTokenInfo } from '.';
 
 interface IProps {
-  parseData: TxDataWithTokenInfo;
+  parseData?: TxDataWithTokenInfo;
   savedValue?: string;
   onSave: (value: string) => void;
   onClose: () => void;
+  isOpen: boolean;
 }
 
-export default function EditAllowance({ parseData, savedValue, onSave, onClose }: IProps) {
+export default function EditAllowance({ parseData, savedValue, onSave, onClose, isOpen }: IProps) {
   const { colors } = useTheme();
   const { t } = useTranslation();
   const bottomSheetRef = useRef<BottomSheetMethods>(null!);
@@ -73,7 +75,7 @@ export default function EditAllowance({ parseData, savedValue, onSave, onClose }
 
   const handlePercent = useCallback(
     (value: number | null) => {
-      if (parseData.balance) {
+      if (parseData?.balance) {
         if (value) {
           const balance = new Decimal(parseData.balance);
           const percentValue = balance.mul(value / 100);
@@ -83,11 +85,11 @@ export default function EditAllowance({ parseData, savedValue, onSave, onClose }
         setPercent(value);
       }
     },
-    [parseData.balance, parseData.decimals],
+    [parseData?.balance, parseData?.decimals],
   );
 
   return (
-    <BottomSheet ref={bottomSheetRef} index={0} snapPoints={snapPoints} onClose={onClose}>
+    <InlineBottomSheet ref={bottomSheetRef} index={isOpen ? 0 : -1} snapPoints={snapPoints} onClose={onClose}>
       <BottomSheetWrapper>
         <BottomSheetHeader title={t('wc.dapp.tx.editAllowance')} />
         <BottomSheetScrollContent innerPaddingHorizontal>
@@ -159,7 +161,7 @@ export default function EditAllowance({ parseData, savedValue, onSave, onClose }
           </View>
         </BottomSheetFooter>
       </BottomSheetWrapper>
-    </BottomSheet>
+    </InlineBottomSheet>
   );
 }
 

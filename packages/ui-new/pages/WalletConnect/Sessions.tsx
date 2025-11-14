@@ -1,10 +1,11 @@
-import BottomSheet, {
+import {
   snapPoints,
   BottomSheetWrapper,
   BottomSheetScrollContent,
   BottomSheetFooter,
   BottomSheetHeader,
   type BottomSheetMethods,
+  BottomSheetRoute,
 } from '@components/BottomSheet';
 import Button from '@components/Button';
 import Icon from '@components/Icon';
@@ -42,7 +43,7 @@ function WalletConnectSessions() {
   }, []);
 
   return (
-    <BottomSheet ref={bottomSheetRef} isRoute snapPoints={snapPoints.percent55}>
+    <BottomSheetRoute ref={bottomSheetRef} snapPoints={snapPoints.percent55}>
       <BottomSheetWrapper innerPaddingHorizontal>
         <BottomSheetHeader title={t('wc.dapp.connectedDApps')}>
           <Text style={[styles.title, styles.font14, { color: colors.textSecondary }]}>{t('wc.dapp.connectTo')}</Text>
@@ -79,7 +80,7 @@ function WalletConnectSessions() {
           </Button>
         </BottomSheetFooter>
       </BottomSheetWrapper>
-    </BottomSheet>
+    </BottomSheetRoute>
   );
 }
 

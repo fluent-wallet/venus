@@ -205,7 +205,8 @@
       "error" : {
         "invalidTargetAddress" : "Invalid target address.",
         "missChianId" : "Mismatched chain ID.",
-        "missChianTypes" : "Mismatched chain types."
+        "missChianTypes" : "Mismatched chain types.",
+        "networkMismatch" : "This QR code belongs to another network."
       }
     },
     "permission" : {

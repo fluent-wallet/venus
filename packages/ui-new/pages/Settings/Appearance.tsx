@@ -1,4 +1,4 @@
-import BottomSheet, { BottomSheetWrapper, BottomSheetHeader, BottomSheetContent, type BottomSheetMethods } from '@components/BottomSheet';
+import { BottomSheetWrapper, BottomSheetHeader, BottomSheetContent, type BottomSheetMethods, BottomSheetRoute } from '@components/BottomSheet';
 import Checkbox from '@components/Checkbox';
 import Text from '@components/Text';
 import { setMode as _setMode, useMode } from '@hooks/useMode';
@@ -22,7 +22,7 @@ const Appearance: React.FC<StackScreenProps<typeof AppearanceStackName>> = () =>
   }, []);
 
   return (
-    <BottomSheet ref={bottomSheetRef} snapPoints={snapPoints} isRoute>
+    <BottomSheetRoute ref={bottomSheetRef} snapPoints={snapPoints}>
       <BottomSheetWrapper>
         <BottomSheetHeader title={t('settings.appearance.title')} />
         <BottomSheetContent>
@@ -55,7 +55,7 @@ const Appearance: React.FC<StackScreenProps<typeof AppearanceStackName>> = () =>
           </Pressable>
         </BottomSheetContent>
       </BottomSheetWrapper>
-    </BottomSheet>
+    </BottomSheetRoute>
   );
 };
 

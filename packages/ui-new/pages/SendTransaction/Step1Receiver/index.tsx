@@ -24,7 +24,7 @@ import { BottomSheetHeader, BottomSheetContent, BottomSheetFooter } from '@compo
 import { AccountItemView } from '@modules/AccountsList';
 import ExternalInputHandler from '@pages/ExternalInputHandler';
 import { SendTransactionStep2StackName, type SendTransactionScreenProps, type SendTransactionStep1StackName } from '@router/configs';
-import type { ETHURL } from '@utils/ETHURL';
+import type { PaymentUriPayload } from '@utils/payment-uri';
 import QrCodeIcon from '@assets/icons/qr-code.svg';
 import SendTransactionBottomSheet from '../SendTransactionBottomSheet';
 import ProhibitIcon from '@assets/icons/prohibit.svg';
@@ -116,8 +116,8 @@ const SendTransactionStep1Receiver: React.FC<SendTransactionScreenProps<typeof S
     [recentlyAddress, allAccounts],
   );
 
-  const handleCodeScan = useCallback(({ target_address }: ETHURL) => {
-    setReceiver(target_address);
+  const handleCodeScan = useCallback(({ address }: PaymentUriPayload) => {
+    setReceiver(address);
   }, []);
 
   useEffect(() => {
@@ -138,7 +138,7 @@ const SendTransactionStep1Receiver: React.FC<SendTransactionScreenProps<typeof S
 
   return (
     <>
-      <SendTransactionBottomSheet>
+      <SendTransactionBottomSheet isRoute useBottomSheetView={false}>
         <BottomSheetHeader title={t('tx.send.title')}>
           <Text style={[styles.receiver, { color: colors.textSecondary }]}>{t('tx.send.receiver')}</Text>
           <TextInput
@@ -186,26 +186,24 @@ const SendTransactionStep1Receiver: React.FC<SendTransactionScreenProps<typeof S
               </View>
             )}
             {filterAccounts.type === 'local-filter' && (
-              <>
-                <BottomSheetFlatList
-                  style={listStyles.container}
-                  data={filterAccounts.assets}
-                  keyExtractor={(item) => item.addressValue}
-                  renderItem={({ item }) => (
-                    <AccountItemView
-                      colors={colors}
-                      nickname={item.nickname}
-                      addressValue={item.addressValue}
-                      onPress={() => {
-                        if (Keyboard.isVisible()) {
-                          Keyboard.dismiss();
-                        }
-                        setReceiver(item.addressValue);
-                      }}
-                    />
-                  )}
-                />
-              </>
+              <BottomSheetFlatList
+                style={listStyles.container}
+                data={filterAccounts.assets}
+                keyExtractor={(item) => item.addressValue}
+                renderItem={({ item }) => (
+                  <AccountItemView
+                    colors={colors}
+                    nickname={item.nickname}
+                    addressValue={item.addressValue}
+                    onPress={() => {
+                      if (Keyboard.isVisible()) {
+                        Keyboard.dismiss();
+                      }
+                      setReceiver(item.addressValue);
+                    }}
+                  />
+                )}
+              />
             )}
             {!filterAccounts.type.startsWith('local') && (
               <>
@@ -389,6 +387,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
+  },
+  BottomSheetContent: {
+    flex: 1,
   },
 });
 

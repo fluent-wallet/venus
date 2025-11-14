@@ -43,8 +43,8 @@ jobs:
       - name: Release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: v${{ needs.versions.outputs.PROD_TAG }}
-          name: v${{ needs.versions.outputs.PROD_TAG }}
+          tag_name: ${{ needs.versions.outputs.PROD_TAG }}
+          name: ${{ needs.versions.outputs.PROD_TAG }}
           files: |
             ./app-prod-release.apk
 

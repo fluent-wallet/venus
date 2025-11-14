@@ -3,9 +3,9 @@ buildscript {
         buildToolsVersion = "35.0.0"
         minSdkVersion = 28
         compileSdkVersion = 35
-        targetSdkVersion = 34
-        ndkVersion = "26.1.10909125"
-        kotlinVersion = "1.9.24"
+        targetSdkVersion = 35
+        ndkVersion = "27.1.12297006"
+        kotlinVersion = "2.0.21"
     }
     repositories {
         google()
@@ -18,6 +18,7 @@ buildscript {
                 // expo-camera bundles a custom com.google.android:cameraview
                 url "$rootDir/../node_modules/expo-camera/android/maven"
             }
+            maven { url 'https://www.jitpack.io' } // for react-native-ble-plx see: https://github.com/dotintent/react-native-ble-plx?tab=readme-ov-file#android-example-setup
         }
     }
     dependencies {

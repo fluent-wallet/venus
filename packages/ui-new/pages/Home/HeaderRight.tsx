@@ -1,23 +1,50 @@
 import ESpaceMainnet from '@assets/chains/eSpace-mainnet.svg';
 import QrCode from '@assets/icons/qr-code.svg';
 import Settings from '@assets/icons/settings.svg';
+import Icon from '@components/Icon';
 import Text from '@components/Text';
-import { useCurrentNetwork } from '@core/WalletCore/Plugins/ReactInject';
+import { NetworkType, useCurrentNetwork } from '@core/WalletCore/Plugins/ReactInject';
 import { useTheme } from '@react-navigation/native';
 import { type HomeStackName, ExternalInputHandlerStackName, SettingsStackName, type StackScreenProps } from '@router/configs';
 import type React from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 
-const Network: React.FC = () => {
-  const { colors } = useTheme();
-  const currentNetwork = useCurrentNetwork();
+const NETWORK_TAG_MAP: Record<NetworkType, { color: string; labels: Record<number | string, string> }> = {
+  Conflux: {
+    color: '#38A1DB',
+    labels: {
+      1: 'C Test',
+      1029: 'Core',
+    },
+  },
+  Ethereum: {
+    color: '#17B38A',
+    labels: {
+      1030: 'eSpace',
+      71: 'E Test',
+    },
+  },
+};
 
+const Network: React.FC = () => {
+  const currentNetwork = useCurrentNetwork();
+  const { colors } = useTheme();
   if (!currentNetwork) return null;
-  if (currentNetwork.netId === 1030) return <ESpaceMainnet />;
+
+  const config = NETWORK_TAG_MAP[currentNetwork.networkType];
+  const networkTagName = config?.labels[currentNetwork.netId];
+
   return (
-    <Text style={[styles.networkText, { color: colors.textPrimary }]} numberOfLines={3}>
-      {currentNetwork.name}
-    </Text>
+    <>
+      <Icon source={currentNetwork.icon} width={24} height={24} />
+      {config?.color && networkTagName && (
+        <View style={[styles.networkTag, { backgroundColor: config.color }]}>
+          <Text style={[styles.networkTagText, { color: colors.textFourth }]} numberOfLines={1} ellipsizeMode="tail">
+            {networkTagName}
+          </Text>
+        </View>
+      )}
+    </>
   );
 };
 
@@ -28,7 +55,7 @@ const HeaderRight: React.FC<{ navigation: StackScreenProps<typeof HomeStackName>
   const { colors } = useTheme();
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { position: 'relative' }]}>
       <Pressable
         style={({ pressed }) => [
           styles.wrapper,
@@ -88,6 +115,23 @@ const styles = StyleSheet.create({
   networkText: {
     fontSize: 8,
     fontWeight: '300',
+  },
+  networkIconWrapper: {
+    position: 'relative',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  networkTag: {
+    position: 'absolute',
+    bottom: 2,
+    paddingHorizontal: 4,
+    borderRadius: 4,
+    maxWidth: 32,
+    overflow: 'hidden',
+  },
+  networkTagText: {
+    fontSize: 6,
+    lineHeight: 8,
   },
 });
 

@@ -1,7 +1,8 @@
-import BottomSheet, {
+import {
   BottomSheetContent,
   BottomSheetFooter,
   BottomSheetHeader,
+  BottomSheetRoute,
   BottomSheetTextInput,
   BottomSheetWrapper,
   snapPoints,
@@ -70,7 +71,7 @@ const AddNewEndpoint = () => {
   }, [netUrl, currentNetwork, t]);
 
   return (
-    <BottomSheet snapPoints={snapPoints.percent40} index={0} isRoute>
+    <BottomSheetRoute snapPoints={snapPoints.percent40}>
       <BottomSheetWrapper innerPaddingHorizontal>
         <BottomSheetHeader title={t('settings.network.add.title')} />
 
@@ -108,7 +109,7 @@ const AddNewEndpoint = () => {
           </Button>
         </BottomSheetFooter>
       </BottomSheetWrapper>
-    </BottomSheet>
+    </BottomSheetRoute>
   );
 };
 

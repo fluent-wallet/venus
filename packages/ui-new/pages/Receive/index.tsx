@@ -1,7 +1,7 @@
 import PoundKey from '@assets/icons/pound-key.svg';
 // import Share from '@assets/icons/share.svg';
 import Logo from '@assets/images/swift-shield-QRCode.webp';
-import BottomSheet, { snapPoints, BottomSheetWrapper, BottomSheetScrollContent, BottomSheetHeader } from '@components/BottomSheet';
+import { snapPoints, BottomSheetWrapper, BottomSheetScrollContent, BottomSheetHeader, BottomSheetRoute } from '@components/BottomSheet';
 import Text from '@components/Text';
 import type { AssetInfo } from '@core/WalletCore/Plugins/AssetsTracker/types';
 import { NetworkType, useCurrentAccount, useCurrentAddressValue, useCurrentNetwork } from '@core/WalletCore/Plugins/ReactInject';
@@ -12,7 +12,7 @@ import { Navigation } from '@pages/Home/Navigations';
 import Clipboard from '@react-native-clipboard/clipboard';
 import { useTheme } from '@react-navigation/native';
 import type { ReceiveStackName, StackScreenProps } from '@router/configs';
-import { encodeETHURL } from '@utils/ETHURL';
+import { encodePaymentUri, type PaymentUriParams } from '@utils/payment-uri';
 import { isSmallDevice } from '@utils/deviceInfo';
 import Decimal from 'decimal.js';
 /* eslint-disable react-hooks/exhaustive-deps */
@@ -45,26 +45,45 @@ const Receive: React.FC<Props> = ({ navigation }) => {
     [selectedAsset?.priceInUSDT, amount],
   );
 
-  const ethUrl = useMemo(
-    () =>
-      encodeETHURL({
-        target_address: currentAddressValue,
-        schema_prefix: currentNetwork.networkType === NetworkType.Conflux ? 'conflux' : 'ethereum',
-        chain_id: currentNetwork.chainId,
-        ...(selectedAsset && {
-          function_name: 'transfer',
-          parameters: {
-            ...(selectedAsset?.contractAddress && { address: selectedAsset?.contractAddress }),
-            ...(amount && amount !== '0' && { value: new Decimal(amount || 0).mul(Decimal.pow(10, selectedAsset.decimals ?? 0)).toHex() }),
-          },
-        }),
-      }),
-    [selectedAsset?.contractAddress, amount, currentAddressValue, currentNetwork.chainId, selectedAsset?.decimals, currentNetwork.networkType],
-  );
+  const paymentUri = useMemo(() => {
+    const protocol = currentNetwork.networkType === NetworkType.Conflux ? 'conflux' : 'ethereum';
+    const networkHint =
+      currentNetwork.networkType === NetworkType.Conflux
+        ? currentNetwork.netId
+          ? { netId: String(currentNetwork.netId) }
+          : undefined
+        : currentNetwork.chainId
+          ? { chainId: currentNetwork.chainId }
+          : undefined;
+
+    let params: PaymentUriParams | undefined;
+    if (selectedAsset) {
+      const paramEntries: PaymentUriParams = {};
+      if (selectedAsset.contractAddress) {
+        paramEntries.address = selectedAsset.contractAddress;
+      }
+      if (amount && amount !== '0') {
+        const decimals = selectedAsset.decimals ?? 0;
+        const valueStr = new Decimal(amount || 0).mul(Decimal.pow(10, decimals)).toFixed(0);
+        paramEntries.value = BigInt(valueStr);
+      }
+      if (Object.keys(paramEntries).length > 0) {
+        params = paramEntries;
+      }
+    }
+
+    return encodePaymentUri({
+      protocol,
+      address: currentAddressValue,
+      ...(networkHint ? { network: networkHint } : {}),
+      ...(selectedAsset ? { method: 'transfer' } : {}),
+      ...(params ? { params } : {}),
+    });
+  }, [amount, currentAddressValue, currentNetwork.chainId, currentNetwork.netId, currentNetwork.networkType, selectedAsset]);
 
   return (
     <>
-      <BottomSheet snapPoints={snapPoints.large} isRoute>
+      <BottomSheetRoute snapPoints={snapPoints.large}>
         <BottomSheetWrapper>
           <BottomSheetHeader title={t('receive.title')} />
           <BottomSheetScrollContent>
@@ -72,7 +91,7 @@ const Receive: React.FC<Props> = ({ navigation }) => {
 
             <View style={[styles.qrcodeWrapper, { paddingBottom: selectedAsset ? 18 : 30, borderColor: colors.borderFourth }]}>
               <QRCode
-                value={ethUrl}
+                value={paymentUri}
                 size={172}
                 logo={Logo}
                 logoSize={40}
@@ -119,7 +138,7 @@ const Receive: React.FC<Props> = ({ navigation }) => {
               title="Share"
               Icon={Share}
               onPress={() => {
-                Clipboard.setString(ethUrl);
+                Clipboard.setString(paymentUri);
                 showMessage({
                   message: 'Copied!',
                   type: 'success',
@@ -132,9 +151,11 @@ const Receive: React.FC<Props> = ({ navigation }) => {
             </View>
           </BottomSheetScrollContent>
         </BottomSheetWrapper>
-      </BottomSheet>
+      </BottomSheetRoute>
+
       {showSetAsset && (
         <ReceiveSetAsset
+          isOpen={showSetAsset}
           selectedAsset={selectedAsset}
           amount={amount}
           onConfirm={({ asset, amount }) => {

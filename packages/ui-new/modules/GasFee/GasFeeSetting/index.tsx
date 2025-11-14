@@ -6,12 +6,13 @@ import GasHigh from '@assets/images/gas/gas-high.png';
 import GasLow from '@assets/images/gas/gas-low.png';
 import GasMedium from '@assets/images/gas/gas-medium.png';
 import { trimDecimalZeros, numberFormat } from '@core/utils/balance';
-import BottomSheet, {
+import {
   BottomSheetWrapper,
   BottomSheetHeader,
   BottomSheetScrollContent,
   BottomSheetFooter,
   type BottomSheetMethods,
+  InlineBottomSheet,
 } from '@components/BottomSheet';
 import Button from '@components/Button';
 import HourglassLoading from '@components/Loading/Hourglass';
@@ -82,7 +83,7 @@ const GasFeeSetting = forwardRef<GasFeeSettingMethods, Props>(
     const nativeAsset = useCurrentNetworkNativeAsset()!;
 
     const estimateRes = usePollingGasEstimateAndNonce(tx);
-    const estimateGasSettings = estimateRes ? estimateRes.estimateOf1559 ?? estimateRes.estimate : null;
+    const estimateGasSettings = estimateRes ? (estimateRes.estimateOf1559 ?? estimateRes.estimate) : null;
     const estimateCurrentGasPrice = estimateRes?.gasPrice ?? null;
     const estimateAdvanceSetting = useMemo(
       () =>
@@ -110,8 +111,8 @@ const GasFeeSetting = forwardRef<GasFeeSettingMethods, Props>(
         ...(has(dappCustomizeGasSetting, 'suggestedMaxFeePerGas') || has(dappCustomizeGasSetting, 'suggestedGasPrice')
           ? {
               [estimateRes.estimateOf1559 ? 'suggestedMaxFeePerGas' : 'suggestedGasPrice']: estimateRes.estimateOf1559
-                ? dappCustomizeGasSetting?.suggestedMaxFeePerGas ?? dappCustomizeGasSetting?.suggestedGasPrice
-                : dappCustomizeGasSetting?.suggestedGasPrice ?? dappCustomizeGasSetting?.suggestedMaxFeePerGas,
+                ? (dappCustomizeGasSetting?.suggestedMaxFeePerGas ?? dappCustomizeGasSetting?.suggestedGasPrice)
+                : (dappCustomizeGasSetting?.suggestedGasPrice ?? dappCustomizeGasSetting?.suggestedMaxFeePerGas),
             }
           : null),
         ...(estimateRes.estimateOf1559 && has(dappCustomizeGasSetting, 'suggestedMaxPriorityFeePerGas')
@@ -181,7 +182,7 @@ const GasFeeSetting = forwardRef<GasFeeSettingMethods, Props>(
         if ((!isReset && tempSelectedOptionLevel === null) || !estimateRes || !estimateGasSettings) return;
         const level = isReset ? 'medium' : tempSelectedOptionLevel!;
         const newGasSetting = {
-          ...(level === 'customize' ? customizeGasSetting ?? defaultCustomizeGasSetting! : estimateGasSettings?.[level]),
+          ...(level === 'customize' ? (customizeGasSetting ?? defaultCustomizeGasSetting!) : estimateGasSettings?.[level]),
           level,
         } as const;
         setSelectedGasSetting(newGasSetting);
@@ -227,7 +228,7 @@ const GasFeeSetting = forwardRef<GasFeeSettingMethods, Props>(
     if (!show) return;
     return (
       <>
-        <BottomSheet ref={bottomSheetRef} snapPoints={snapPoints} index={0} onClose={onClose}>
+        <InlineBottomSheet ref={bottomSheetRef} snapPoints={snapPoints} index={0} onClose={onClose}>
           <BottomSheetWrapper innerPaddingHorizontal>
             <BottomSheetHeader title={t('tx.gasFee.title')} />
             <BottomSheetScrollContent>
@@ -280,7 +281,7 @@ const GasFeeSetting = forwardRef<GasFeeSettingMethods, Props>(
               </Button>
             </BottomSheetFooter>
           </BottomSheetWrapper>
-        </BottomSheet>
+        </InlineBottomSheet>
         {estimateRes && showCustomizeSetting && (
           <CustomizeGasSetting
             force155={force155}

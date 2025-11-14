@@ -1,11 +1,12 @@
 import ArrowRigiht from '@assets/icons/arrow-right2.svg';
-import BottomSheet, {
+import {
   snapPoints,
   BottomSheetWrapper,
   BottomSheetScrollContent,
   BottomSheetHeader,
   BottomSheetFooter,
   type BottomSheetMethods,
+  InlineBottomSheet,
 } from '@components/BottomSheet';
 import Button from '@components/Button';
 import Text from '@components/Text';
@@ -26,9 +27,10 @@ interface Props {
   amount: string;
   onConfirm: (params: { asset: AssetInfo; amount?: string }) => void;
   onClose: () => void;
+  isOpen?: boolean;
 }
 
-const ReceiveSetAsset: React.FC<Props> = ({ onConfirm, selectedAsset, amount, onClose }) => {
+const ReceiveSetAsset: React.FC<Props> = ({ onConfirm, selectedAsset, amount, onClose, isOpen }) => {
   const { colors } = useTheme();
   const { t } = useTranslation();
   const bottomSheetRef = useRef<BottomSheetMethods>(null!);
@@ -49,7 +51,7 @@ const ReceiveSetAsset: React.FC<Props> = ({ onConfirm, selectedAsset, amount, on
 
   return (
     <>
-      <BottomSheet ref={bottomSheetRef} snapPoints={snapPoints.large} index={0} onClose={onClose}>
+      <InlineBottomSheet ref={bottomSheetRef} snapPoints={snapPoints.large} index={isOpen ? 0 : -1} onClose={onClose}>
         <BottomSheetWrapper innerPaddingHorizontal>
           <BottomSheetHeader title={t('receive.title')} />
           <BottomSheetScrollContent>
@@ -112,7 +114,7 @@ const ReceiveSetAsset: React.FC<Props> = ({ onConfirm, selectedAsset, amount, on
             )}
           </BottomSheetFooter>
         </BottomSheetWrapper>
-      </BottomSheet>
+      </InlineBottomSheet>
       {showSelectAsset && <SelectAsset selectType="Receive" onConfirm={(asset) => setTempSelectAsset(asset)} onClose={() => setShowSelectAsset(false)} />}
     </>
   );

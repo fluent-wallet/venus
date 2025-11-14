@@ -1,8 +1,16 @@
 {
-  "$schema": "https://biomejs.dev/schemas/1.8.3/schema.json",
+  "$schema": "https://biomejs.dev/schemas/2.2.6/schema.json",
   "files": {
-    "include": ["packages/*"],
-    "ignore": ["welcome.json", "enter.json", "en.json", "zh-Hans.json", "zh-Hant.json"]
+    "includes": [
+      "**/packages/**/*",
+      "**/index.ts",
+      "modules/BSIM/src/**",
+      "!**/welcome.json",
+      "!**/enter.json",
+      "!**/en.json",
+      "!**/zh-Hans.json",
+      "!**/zh-Hant.json"
+    ]
   },
   "formatter": {
     "enabled": true,
@@ -13,7 +21,7 @@
     "lineWidth": 160,
     "attributePosition": "auto"
   },
-  "organizeImports": { "enabled": true },
+  "assist": { "actions": { "source": { "organizeImports": "on" } } },
   "linter": {
     "enabled": true,
     "rules": {
@@ -21,10 +29,9 @@
       "complexity": {
         "noBannedTypes": "error",
         "noExtraBooleanCast": "error",
-        "noMultipleSpacesInRegularExpressionLiterals": "error",
         "noUselessCatch": "error",
         "noUselessTypeConstraint": "error",
-        "noWith": "error"
+        "noAdjacentSpacesInRegex": "error"
       },
       "correctness": {
         "noConstAssign": "error",
@@ -34,7 +41,6 @@
         "noGlobalObjectCalls": "error",
         "noInnerDeclarations": "error",
         "noInvalidConstructorSuper": "error",
-        "noNewSymbol": "error",
         "noNonoctalDecimalEscape": "error",
         "noPrecisionLoss": "error",
         "noSelfAssign": "error",
@@ -47,18 +53,20 @@
         "noUnsafeOptionalChaining": "error",
         "noUnusedLabels": "error",
         "noUnusedVariables": "warn",
-        "useArrayLiterals": "off",
         "useExhaustiveDependencies": "warn",
         "useHookAtTopLevel": "error",
         "useIsNan": "error",
         "useValidForDirection": "error",
-        "useYield": "error"
+        "useYield": "error",
+        "noInvalidBuiltinInstantiation": "error",
+        "useValidTypeof": "error"
       },
       "style": {
         "noInferrableTypes": "error",
         "noNamespace": "error",
         "noNonNullAssertion": "warn",
-        "useAsConstAssertion": "error"
+        "useAsConstAssertion": "error",
+        "useArrayLiterals": "off"
       },
       "suspicious": {
         "noAsyncPromiseExecutor": "error",
@@ -86,10 +94,10 @@
         "noUnsafeNegation": "error",
         "useGetterReturn": "error",
         "useNamespaceKeyword": "error",
-        "useValidTypeof": "error"
+        "noWith": "error"
       }
     },
-    "ignore": ["**/dist", "**/.eslintrc.cjs"]
+    "includes": ["**", "!**/dist", "!**/.eslintrc.cjs"]
   },
   "javascript": {
     "formatter": {
@@ -102,26 +110,28 @@
       "bracketSameLine": false,
       "quoteStyle": "single",
       "attributePosition": "auto"
+    },
+    "parser": {
+      "unsafeParameterDecoratorsEnabled": true
     }
   },
   "overrides": [
     {
-      "include": ["*.ts", "*.tsx", "*.mts", "*.cts"],
+      "includes": ["**/*.ts", "**/*.tsx", "**/*.mts", "**/*.cts"],
       "linter": {
         "rules": {
           "correctness": {
             "noConstAssign": "off",
             "noGlobalObjectCalls": "off",
             "noInvalidConstructorSuper": "off",
-            "noNewSymbol": "off",
             "noSetterReturn": "off",
             "noUndeclaredVariables": "off",
             "noUnreachable": "off",
-            "noUnreachableSuper": "off"
+            "noUnreachableSuper": "off",
+            "noInvalidBuiltinInstantiation": "off",
+            "useValidTypeof": "off"
           },
           "style": {
-            "noArguments": "error",
-            "noVar": "error",
             "useConst": "error"
           },
           "suspicious": {
@@ -133,7 +143,10 @@
             "noRedeclare": "off",
             "noUnsafeNegation": "off",
             "useGetterReturn": "off",
-            "useValidTypeof": "off"
+            "noVar": "error"
+          },
+          "complexity": {
+            "noArguments": "error"
           }
         }
       }

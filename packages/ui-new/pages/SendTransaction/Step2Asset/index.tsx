@@ -2,7 +2,6 @@ import type React from 'react';
 import { useState, useRef, useCallback, useEffect } from 'react';
 import { Pressable, StyleSheet, type NativeScrollEvent, type NativeSyntheticEvent } from 'react-native';
 import { useTheme } from '@react-navigation/native';
-import type PagerView from 'react-native-pager-view';
 import { showMessage } from 'react-native-flash-message';
 import { Trans, useTranslation } from 'react-i18next';
 import { debounce, escapeRegExp } from 'lodash-es';
@@ -18,9 +17,7 @@ import {
 } from '@core/WalletCore/Plugins/ReactInject';
 import { fetchERC20AssetInfoBatchWithAccount } from '@core/WalletCore/Plugins/AssetsTracker/fetchers/basic';
 import type { AssetInfo } from '@core/WalletCore/Plugins/AssetsTracker/types';
-import type { NFTItemDetail } from '@core/WalletCore/Plugins/NFTDetailTracker';
 import methods from '@core/WalletCore/Methods';
-import plugins from '@core/WalletCore/Plugins';
 import Text from '@components/Text';
 import TextInput from '@components/TextInput';
 import HourglassLoading from '@components/Loading/Hourglass';
@@ -31,11 +28,14 @@ import {
   SendTransactionStep4StackName,
   type SendTransactionScreenProps,
 } from '@router/configs';
-import { Tabs, TabsContent, setSelectAssetScrollY, type Tab } from '@modules/AssetsTabs';
+import { TabsHeader, TabsContent } from '@modules/AssetsTabs';
 import TokenItem from '@modules/AssetsList/TokensList/TokenItem';
 import NFTItem from '@modules/AssetsList/NFTsList/NFTItem';
 import ProhibitIcon from '@assets/icons/prohibit.svg';
 import SendTransactionBottomSheet from '../SendTransactionBottomSheet';
+import { useTabsController } from '@modules/AssetsTabs/hooks';
+import { getNFTDetailTracker } from '@WalletCoreExtends/index';
+import type { NFTItemDetail } from '@core/WalletCore/Plugins/NFTDetailTracker/server';
 
 interface Props {
   navigation?: SendTransactionScreenProps<typeof SendTransactionStep2StackName>['navigation'];
@@ -49,16 +49,15 @@ const SendTransactionStep2Asset: React.FC<Props> = ({ navigation, route, onConfi
   const { colors } = useTheme();
   const bottomSheetRef = useRef<BottomSheetMethods>(null!);
   const { t } = useTranslation();
-  const [currentTab, setCurrentTab] = useState<Tab>('Tokens');
-  const pageViewRef = useRef<PagerView>(null);
-  const handleScroll = useCallback((evt: NativeSyntheticEvent<NativeScrollEvent>) => {
-    setSelectAssetScrollY(evt.nativeEvent.contentOffset.y);
-  }, []);
-  useEffect(() => {
-    return () => {
-      setSelectAssetScrollY(0);
-    };
-  }, []);
+
+  const { currentTab, setCurrentTab, sharedScrollY, handleScroll: _handleScroll, resetScrollY } = useTabsController('Tokens');
+
+  const handleScroll = useCallback(
+    (evt: NativeSyntheticEvent<NativeScrollEvent>) => {
+      _handleScroll(evt.nativeEvent.contentOffset.y);
+    },
+    [_handleScroll],
+  );
 
   const currentNetwork = useCurrentNetwork()!;
   const currentAddress = useCurrentAddress();
@@ -76,7 +75,7 @@ const SendTransactionStep2Asset: React.FC<Props> = ({ navigation, route, onConfi
   const searchFilterAssets = useCallback(
     debounce(async (value: string) => {
       if (value) {
-        plugins.NFTDetailTracker.setCurrentOpenNFT(undefined);
+        getNFTDetailTracker().setCurrentOpenNFT(undefined);
       }
 
       const localAssets = assets
@@ -157,7 +156,7 @@ const SendTransactionStep2Asset: React.FC<Props> = ({ navigation, route, onConfi
   }, []);
 
   return (
-    <SendTransactionBottomSheet ref={bottomSheetRef} isRoute={!onConfirm} index={!onConfirm ? undefined : 0} onClose={onClose}>
+    <SendTransactionBottomSheet ref={bottomSheetRef} isRoute={!onConfirm} onClose={onClose}>
       <BottomSheetHeader title={selectType === 'Receive' ? t('receive.title') : t('tx.send.title')}>
         <Text style={[styles.selectAsset, { color: colors.textSecondary }]}>{t('tx.asset.inputTitle')}</Text>
         <TextInput
@@ -177,12 +176,19 @@ const SendTransactionStep2Asset: React.FC<Props> = ({ navigation, route, onConfi
 
       {!searchAsset && (
         <BottomSheetScrollContent style={[styles.scrollView, { marginVertical: 16 }]} stickyHeaderIndices={[0]} onScroll={handleScroll}>
-          <Tabs currentTab={currentTab} pageViewRef={pageViewRef} type="SelectAsset" onlyToken={!navigation} />
-          <TabsContent
-            currentTab={currentTab}
-            setCurrentTab={setCurrentTab}
-            pageViewRef={pageViewRef}
+          <TabsHeader
             type="SelectAsset"
+            currentTab={currentTab}
+            onlyToken={!navigation}
+            sharedScrollY={sharedScrollY}
+            onTabChange={setCurrentTab}
+            resetScrollY={resetScrollY}
+          />
+
+          <TabsContent
+            type="SelectAsset"
+            currentTab={currentTab}
+            onTabChange={setCurrentTab}
             selectType={selectType}
             onPressItem={handleClickAsset}
             onlyToken={!navigation}
