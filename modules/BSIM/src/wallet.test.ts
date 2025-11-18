@@ -11,7 +11,7 @@ import type { ApduTransportOptions } from './transports/apdu';
 import type { BleTransportOptions } from './transports/ble';
 import { ApduFlowError } from './core/workflows';
 import { DEFAULT_SIGNATURE_ALGORITHM } from './constants';
-import { buildDerivePrivateKey, buildGetVersion, buildUpdateBpin, buildVerifyBpin, serializeCommand } from './core/params';
+import { buildDerivePrivateKey, buildGetIccid, buildGetVersion, buildUpdateBpin, buildVerifyBpin, serializeCommand } from './core/params';
 
 type ScriptStep = { expect: string; reply: string };
 
@@ -189,5 +189,15 @@ describe('wallet', () => {
     const wallet = createWallet({ transports: [{ kind: 'apdu', transport }], idleTimeoutMs: 0 });
 
     await expect(wallet.getVersion()).resolves.toBe(payload);
+  });
+
+  it('returns raw ICCID payload', async () => {
+    const command = serializeCommand(buildGetIccid());
+    const payload = '89860123456789012345';
+    const session = createScriptSession([{ expect: command, reply: `${payload}9000` }]);
+    const transport = createApduMockTransport(async () => session);
+    const wallet = createWallet({ transports: [{ kind: 'apdu', transport }], idleTimeoutMs: 0 });
+
+    await expect(wallet.getIccid()).resolves.toBe(payload);
   });
 });

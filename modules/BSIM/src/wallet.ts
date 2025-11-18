@@ -4,8 +4,7 @@ import { createBleTransport, type BleTransportOptions } from './transports/ble';
 import { TransportError, TransportErrorCode, isTransportError } from './transports/errors';
 import type { Transport, TransportSession } from './transports/types';
 import type { HexString, PubkeyRecord, SignatureComponents } from './core/types';
-import { deriveKeyFlow, exportPubkeysFlow, getVersionFlow, signMessageFlow, updateBpinFlow, verifyBpinFlow } from './core/workflows';
-import { fromHex } from './core/utils';
+import { deriveKeyFlow, exportPubkeysFlow, getIccidFlow, getVersionFlow, signMessageFlow, updateBpinFlow, verifyBpinFlow } from './core/workflows';
 import { DEFAULT_SIGNATURE_ALGORITHM } from './constants';
 
 const DEFAULT_IDLE_TIMEOUT_MS = 60_000;
@@ -88,6 +87,7 @@ export type Wallet = {
   deriveKey(params: DeriveKeyParams): Promise<void>;
   updateBpin(): Promise<'ok'>;
   getVersion(): Promise<string>;
+  getIccid(): Promise<string>;
 };
 const noopLogger: WalletLogger = () => undefined;
 
@@ -230,5 +230,6 @@ export const createWallet = (options: WalletOptions = {}): Wallet => {
       runOperation('deriveKey', runSession, logger, (transmit) => deriveKeyFlow(transmit, params.coinType, params.algorithm ?? DEFAULT_SIGNATURE_ALGORITHM)),
     updateBpin: () => runOperation('updateBpin', runSession, logger, (transmit) => updateBpinFlow(transmit)),
     getVersion: () => runOperation('getVersion', runSession, logger, async (transmit) => getVersionFlow(transmit)),
+    getIccid: () => runOperation('getIccid', runSession, logger, async (transmit) => getIccidFlow(transmit)),
   };
 };

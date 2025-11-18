@@ -130,6 +130,16 @@ export const buildGetVersion = (): ApduCommand => ({
   le: '02',
 });
 
+export const buildGetIccid = (): ApduCommand => ({
+  cla: '80',
+  ins: 'CA',
+  p1: '00',
+  p2: '11',
+  lc: '00',
+  data: '',
+  le: '',
+});
+
 export const serializeCommand = (command: ApduCommand): string => {
   const ensureByte = (value: string, label: string) => {
     const normalized = normalizeHex(value);

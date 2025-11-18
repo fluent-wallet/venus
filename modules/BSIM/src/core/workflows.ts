@@ -1,5 +1,14 @@
 import { APDU_STATUS } from './errors';
-import { buildDerivePrivateKey, buildExportPubkey, buildGetVersion, buildSignMessage, buildUpdateBpin, buildVerifyBpin, serializeCommand } from './params';
+import {
+  buildDerivePrivateKey,
+  buildExportPubkey,
+  buildGetIccid,
+  buildGetVersion,
+  buildSignMessage,
+  buildUpdateBpin,
+  buildVerifyBpin,
+  serializeCommand,
+} from './params';
 import { parseApduResponse } from './response';
 import type { ApduCommand, ApduTransmit, HexString, PubkeyRecord, SignatureComponents } from './types';
 import { extractSignature, normalizeHex, parsePubkeyChunk } from './utils';
@@ -148,6 +157,15 @@ export const getVersionFlow = async (transmit: ApduTransmit): Promise<HexString>
     throw new ApduFlowError(APDU_STATUS.PENDING, 'Unexpected status while reading version');
   }
 
+  return response.payload;
+};
+
+export const getIccidFlow = async (transmit: ApduTransmit): Promise<HexString> => {
+  const response = await dispatchApdu(transmit, buildGetIccid());
+
+  if (response.status !== 'success') {
+    throw new ApduFlowError(APDU_STATUS.PENDING, 'Unexpected status while reading ICCID');
+  }
   return response.payload;
 };
 

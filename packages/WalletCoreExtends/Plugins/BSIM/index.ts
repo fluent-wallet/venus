@@ -343,6 +343,8 @@ export class BSIMPluginClass implements Plugin {
   public verifyBPIN = async () => this.handleWalletCall(() => this.wallet.verifyBpin());
 
   public getBSIMVersion = async () => this.handleWalletCall(() => this.wallet.getVersion());
+  
+  public getBSIMICCID = async () => this.handleWalletCall(() => this.wallet.getIccid());
 
   public updateBPIN = async () => this.handleWalletCall(() => this.wallet.updateBpin());
 
