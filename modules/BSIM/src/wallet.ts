@@ -1,11 +1,12 @@
 import { Platform } from 'react-native';
-import { createApduTransport, type ApduTransportOptions } from './transports/apdu';
-import { createBleTransport, type BleTransportOptions } from './transports/ble';
-import { TransportError, TransportErrorCode, isTransportError } from './transports/errors';
-import type { Transport, TransportSession } from './transports/types';
+import { DEFAULT_SIGNATURE_ALGORITHM } from './constants';
+import { BSIM_AID, ICCID_AID } from './core/params';
 import type { HexString, PubkeyRecord, SignatureComponents } from './core/types';
 import { deriveKeyFlow, exportPubkeysFlow, getIccidFlow, getVersionFlow, signMessageFlow, updateBpinFlow, verifyBpinFlow } from './core/workflows';
-import { DEFAULT_SIGNATURE_ALGORITHM } from './constants';
+import { type ApduTransportOptions, createApduTransport } from './transports/apdu';
+import { type BleTransportOptions, createBleTransport } from './transports/ble';
+import { isTransportError, TransportError, TransportErrorCode } from './transports/errors';
+import type { Transport, TransportSession } from './transports/types';
 
 const DEFAULT_IDLE_TIMEOUT_MS = 60_000;
 
@@ -95,11 +96,13 @@ const BLE_DEFAULTS: BleTransportOptions = {
   scanTimeoutMs: 20_000,
   connectTimeoutMs: 15_000,
   responseTimeoutMs: 8_000,
+  aid: BSIM_AID,
+  selectAid: true,
 };
 
 const buildDefaultTransports = (platform: typeof Platform.OS): TransportKindConfig[] => {
   if (platform === 'android') {
-    return [{ kind: 'apdu' }];
+    return [{ kind: 'apdu', options: { aid: BSIM_AID } }];
   }
   return [{ kind: 'ble', options: BLE_DEFAULTS }];
 };
@@ -163,62 +166,105 @@ export const createWallet = (options: WalletOptions = {}): Wallet => {
     }
   };
 
-  const runSession: WalletSessionRunner = async (operation) => {
-    return runExclusive(async () => {
-      let lastError: unknown;
+  const createSessionRunner = (transportCandidates: ResolvedTransport[]): WalletSessionRunner => {
+    return async (operation) => {
+      return runExclusive(async () => {
+        let lastError: unknown;
 
-      for (const candidate of candidates) {
-        let session = candidate.session;
+        for (const candidate of transportCandidates) {
+          let session = candidate.session;
 
-        if (!session) {
-          try {
-            session = await candidate.transport.open(candidate.options);
-            candidate.session = session;
-            logger('wallet.transport.opened', { kind: candidate.kind });
-          } catch (error) {
-            lastError = error;
-            logger('wallet.transport.open_failed', { kind: candidate.kind, error });
-            continue;
+          if (!session) {
+            try {
+              session = await candidate.transport.open(candidate.options);
+              candidate.session = session;
+              logger('wallet.transport.opened', { kind: candidate.kind });
+            } catch (error) {
+              lastError = error;
+              logger('wallet.transport.open_failed', { kind: candidate.kind, error });
+              continue;
+            }
           }
-        }
 
-        clearIdleTimer(candidate);
+          clearIdleTimer(candidate);
 
-        try {
-          const result = await operation(session, { kind: candidate.kind });
-          scheduleIdleClose(candidate, logger, idleTimeout);
-          return result;
-        } catch (error) {
-          lastError = error;
-
-          if (isTransportError(error)) {
-            if (error.code === TransportErrorCode.TRANSMIT_FAILED) {
-              scheduleIdleClose(candidate, logger, idleTimeout);
-            } else {
+          try {
+            const result = await operation(session, { kind: candidate.kind });
+            if (candidate.kind === 'apdu') {
+              // APDU：close session
               try {
                 await closeCandidateSession(candidate, logger);
               } catch (closeError) {
                 logger('wallet.transport.close_failed', { kind: candidate.kind, error: closeError });
               }
+            } else {
+              // BLE：keep session alive until idle
+              scheduleIdleClose(candidate, logger, idleTimeout);
             }
-          } else {
-            scheduleIdleClose(candidate, logger, idleTimeout);
+            return result;
+          } catch (error) {
+            lastError = error;
+
+            if (isTransportError(error)) {
+              if (candidate.kind === 'apdu') {
+                // APDU：close session immediately
+                try {
+                  await closeCandidateSession(candidate, logger);
+                } catch (closeError) {
+                  logger('wallet.transport.close_failed', { kind: candidate.kind, error: closeError });
+                }
+              } else {
+                // BLE：keep session alive until idle
+                if (error.code === TransportErrorCode.TRANSMIT_FAILED) {
+                  scheduleIdleClose(candidate, logger, idleTimeout);
+                } else {
+                  try {
+                    await closeCandidateSession(candidate, logger);
+                  } catch (closeError) {
+                    logger('wallet.transport.close_failed', { kind: candidate.kind, error: closeError });
+                  }
+                }
+              }
+            } else {
+              if (candidate.kind === 'apdu') {
+                try {
+                  await closeCandidateSession(candidate, logger);
+                } catch (closeError) {
+                  logger('wallet.transport.close_failed', { kind: candidate.kind, error: closeError });
+                }
+              } else {
+                scheduleIdleClose(candidate, logger, idleTimeout);
+              }
+            }
+
+            logger('wallet.operation.failed', { label: operation.name ?? 'anonymous', transport: candidate.kind, error });
+            throw error;
           }
-          logger('wallet.operation.failed', { label: operation.name ?? 'anonymous', transport: candidate.kind, error });
-          throw error;
         }
-      }
 
-      if (lastError) {
-        if (isTransportError(lastError)) {
-          throw lastError;
+        if (lastError) {
+          if (isTransportError(lastError)) {
+            throw lastError;
+          }
+          throw new TransportError(TransportErrorCode.CHANNEL_OPEN_FAILED, 'Failed to open any BSIM transport', { cause: lastError });
         }
-        throw new TransportError(TransportErrorCode.CHANNEL_OPEN_FAILED, 'Failed to open any BSIM transport', { cause: lastError });
-      }
 
-      throw new TransportError(TransportErrorCode.CHANNEL_OPEN_FAILED, 'No transport candidates were attempted');
-    });
+        throw new TransportError(TransportErrorCode.CHANNEL_OPEN_FAILED, 'No transport candidates were attempted');
+      });
+    };
   };
+
+  const runSession = createSessionRunner(candidates);
+
+  const iccidCandidates: ResolvedTransport[] = candidates.map((candidate) => {
+    const baseOptions = candidate.options ?? {};
+
+    const iccidOptions = candidate.kind === 'apdu' ? { ...baseOptions, aid: ICCID_AID } : { ...baseOptions, aid: ICCID_AID, selectAid: true };
+
+    return { ...candidate, options: iccidOptions, session: undefined, idleTimer: undefined };
+  });
+
+  const runIccidSession = createSessionRunner(iccidCandidates);
 
   return {
     runSession,
@@ -230,6 +276,6 @@ export const createWallet = (options: WalletOptions = {}): Wallet => {
       runOperation('deriveKey', runSession, logger, (transmit) => deriveKeyFlow(transmit, params.coinType, params.algorithm ?? DEFAULT_SIGNATURE_ALGORITHM)),
     updateBpin: () => runOperation('updateBpin', runSession, logger, (transmit) => updateBpinFlow(transmit)),
     getVersion: () => runOperation('getVersion', runSession, logger, async (transmit) => getVersionFlow(transmit)),
-    getIccid: () => runOperation('getIccid', runSession, logger, async (transmit) => getIccidFlow(transmit)),
+    getIccid: () => runOperation('getIccid', runIccidSession, logger, async (transmit) => getIccidFlow(transmit)),
   };
 };

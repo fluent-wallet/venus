@@ -1,12 +1,12 @@
 import { Buffer } from '@craftzdog/react-native-buffer';
 import { Platform } from 'react-native';
-import { BleManager, State, BleATTErrorCode, BleErrorCode, type Device, type Subscription } from 'react-native-ble-plx';
-import { buildSelectAid, serializeCommand } from '../core/params';
+import { BleATTErrorCode, BleErrorCode, BleManager, type Device, State, type Subscription } from 'react-native-ble-plx';
+import { APDU_STATUS } from '../core/errors';
+import { BSIM_AID, buildSelectAid, serializeCommand } from '../core/params';
+import { parseApduResponse } from '../core/response';
 import type { HexString } from '../core/types';
 import { fromHex, normalizeHex, toHex } from '../core/utils';
-import { parseApduResponse } from '../core/response';
-import { APDU_STATUS } from '../core/errors';
-import { TransportError, TransportErrorCode, wrapNativeError, isTransportError } from './errors';
+import { isTransportError, TransportError, TransportErrorCode, wrapNativeError } from './errors';
 import type { Transport, TransportSession } from './types';
 import { createAsyncQueue } from './utils';
 
@@ -25,7 +25,7 @@ const DEFAULT_CONNECT_TIMEOUT_MS = 10_000;
 const DEFAULT_RESPONSE_TIMEOUT_MS = 5_000;
 const PAIRING_RETRY_DELAY_MS = 1_000;
 const MAX_PAIRING_RETRIES = 30;
-const SELECT_AID_COMMAND = serializeCommand(buildSelectAid());
+const buildSelectCommand = (aid: HexString) => serializeCommand(buildSelectAid(aid));
 
 type TimerRef = ReturnType<typeof setTimeout>;
 
@@ -418,6 +418,8 @@ export type BleTransportOptions = {
     localNamePrefix?: string;
   };
   encryptionKey?: HexString;
+  aid?: HexString;
+  selectAid?: boolean;
 };
 
 type CreateBleTransportDeps = {
@@ -459,6 +461,8 @@ export const createBleTransport = (deps: CreateBleTransportDeps = {}): Transport
   let disconnectSubscription: Subscription | undefined;
   let pendingResponse: PendingResponse | undefined;
   let encryption: BleEncryption = passthroughEncryption;
+
+  let currentAid: HexString | undefined;
 
   const ensureManager = () => {
     if (!manager) {
@@ -556,87 +560,110 @@ export const createBleTransport = (deps: CreateBleTransportDeps = {}): Transport
       if (Platform.OS !== 'ios' && Platform.OS !== 'android') {
         throw new TransportError(TransportErrorCode.UNSUPPORTED_PLATFORM, 'BLE transport requires iOS or Android');
       }
-      if (isOpen) {
-        throw new TransportError(TransportErrorCode.CHANNEL_ALREADY_OPEN, 'BLE channel already open');
-      }
 
       const managerInstance = ensureManager();
-      const scanTimeoutMs = options?.scanTimeoutMs ?? DEFAULT_SCAN_TIMEOUT_MS;
-      const connectTimeoutMs = options?.connectTimeoutMs ?? DEFAULT_CONNECT_TIMEOUT_MS;
-      const responseTimeoutMs = options?.responseTimeoutMs ?? DEFAULT_RESPONSE_TIMEOUT_MS;
 
-      await waitForAdapterReady(managerInstance, scanTimeoutMs, timers, logger);
+      const {
+        deviceId,
+        scanTimeoutMs = DEFAULT_SCAN_TIMEOUT_MS,
+        connectTimeoutMs = DEFAULT_CONNECT_TIMEOUT_MS,
+        responseTimeoutMs = DEFAULT_RESPONSE_TIMEOUT_MS,
+        filter,
+        encryptionKey,
+        aid = BSIM_AID,
+        selectAid = true,
+      } = options ?? {};
 
-      const encryptionKey = options?.encryptionKey ? fromHex(options.encryptionKey) : undefined;
-      if (encryptionKey && !deps.encryptionFactory) {
-        throw new TransportError(TransportErrorCode.UNSUPPORTED_PLATFORM, 'BLE encryption key provided but no encryptionFactory was configured');
-      }
-      encryption = encryptionKey ? deps.encryptionFactory!(encryptionKey) : passthroughEncryption;
-
-      let device: Device;
-      if (options?.deviceId) {
-        device = await withTimeout(
-          timers,
-          connectTimeoutMs,
-          () => managerInstance.connectToDevice(options.deviceId!, { autoConnect: false }),
-          () => new TransportError(TransportErrorCode.CHANNEL_OPEN_FAILED, 'BLE connection timeout'),
-        );
-      } else {
-        device = await scanForDevice(managerInstance, scanTimeoutMs, identifiers, timers, options?.filter, logger);
-        device = await withTimeout(
-          timers,
-          connectTimeoutMs,
-          () => managerInstance.connectToDevice(device.id, { autoConnect: false }),
-          () => new TransportError(TransportErrorCode.CHANNEL_OPEN_FAILED, 'BLE connection timeout'),
-        );
+      let normalizedAid: HexString;
+      try {
+        normalizedAid = normalizeHex(aid);
+      } catch (error) {
+        throw new TransportError(TransportErrorCode.INVALID_APDU_PAYLOAD, (error as Error).message ?? 'Invalid AID', {
+          cause: error,
+        });
       }
 
-      connectedDeviceId = device.id;
+      if (!isOpen) {
+        await waitForAdapterReady(managerInstance, scanTimeoutMs, timers, logger);
 
-      disconnectSubscription = managerInstance.onDeviceDisconnected(device.id, (error) => {
-        logger('ble.disconnected', { deviceId: device.id, error });
-        cleanupPending(
-          error
-            ? wrapBleError(TransportErrorCode.CHANNEL_NOT_OPEN, error, 'BLE device disconnected', {
-                deviceId: device.id,
-              })
-            : new TransportError(TransportErrorCode.CHANNEL_NOT_OPEN, 'BLE device disconnected'),
-        );
-        isOpen = false;
-      });
+        if (encryptionKey && !deps.encryptionFactory) {
+          throw new TransportError(TransportErrorCode.UNSUPPORTED_PLATFORM, 'BLE encryption key provided but no encryptionFactory was configured');
+        }
+        encryption = encryptionKey ? deps.encryptionFactory!(fromHex(encryptionKey)) : passthroughEncryption;
 
-      await managerInstance.discoverAllServicesAndCharacteristicsForDevice(device.id);
-
-      const resolved = await ensureCharacteristics(managerInstance, device.id, identifiers);
-      serviceUuid = resolved.serviceUuid;
-      writeUuid = resolved.writeUuid;
-      notifyUuid = resolved.notifyUuid;
-
-      monitorSubscription = managerInstance.monitorCharacteristicForDevice(device.id, serviceUuid, notifyUuid, (error, characteristic) => {
-        if (error) {
-          cleanupPending(
-            wrapBleError(TransportErrorCode.ENABLE_NOTIFICATIONS_FAILED, error, 'BLE notification error', {
-              deviceId: device.id,
-              serviceUuid,
-              characteristicUuid: notifyUuid,
-            }),
+        let device: Device;
+        if (deviceId) {
+          device = await withTimeout(
+            timers,
+            connectTimeoutMs,
+            () => managerInstance.connectToDevice(deviceId, { autoConnect: false }),
+            () => new TransportError(TransportErrorCode.CHANNEL_OPEN_FAILED, 'BLE connection timeout'),
           );
-          return;
+        } else {
+          device = await scanForDevice(managerInstance, scanTimeoutMs, identifiers, timers, filter, logger);
+          device = await withTimeout(
+            timers,
+            connectTimeoutMs,
+            () => managerInstance.connectToDevice(device.id, { autoConnect: false }),
+            () => new TransportError(TransportErrorCode.CHANNEL_OPEN_FAILED, 'BLE connection timeout'),
+          );
         }
-        if (!characteristic?.value) {
-          return;
-        }
-        const decoded = fromBase64(characteristic.value);
-        try {
-          handleIncomingFrame(decoded);
-        } catch (err) {
-          cleanupPending(err);
-        }
-      });
 
-      isOpen = true;
+        connectedDeviceId = device.id;
 
-      const transmit = (payload: string) => {
+        disconnectSubscription = managerInstance.onDeviceDisconnected(device.id, (error) => {
+          logger('ble.disconnected', { deviceId: device.id, error });
+          cleanupPending(
+            error
+              ? wrapBleError(TransportErrorCode.CHANNEL_NOT_OPEN, error, 'BLE device disconnected', {
+                  deviceId: device.id,
+                })
+              : new TransportError(TransportErrorCode.CHANNEL_NOT_OPEN, 'BLE device disconnected'),
+          );
+          isOpen = false;
+          currentAid = undefined;
+        });
+
+        await managerInstance.discoverAllServicesAndCharacteristicsForDevice(device.id);
+
+        const resolved = await ensureCharacteristics(managerInstance, device.id, identifiers);
+        serviceUuid = resolved.serviceUuid;
+        writeUuid = resolved.writeUuid;
+        notifyUuid = resolved.notifyUuid;
+
+        monitorSubscription = managerInstance.monitorCharacteristicForDevice(device.id, serviceUuid, notifyUuid, (error, characteristic) => {
+          if (error) {
+            cleanupPending(
+              wrapBleError(TransportErrorCode.ENABLE_NOTIFICATIONS_FAILED, error, 'BLE notification error', {
+                deviceId: device.id,
+                serviceUuid,
+                characteristicUuid: notifyUuid,
+              }),
+            );
+            return;
+          }
+          if (!characteristic?.value) {
+            return;
+          }
+          const decoded = fromBase64(characteristic.value);
+          try {
+            handleIncomingFrame(decoded);
+          } catch (err) {
+            cleanupPending(err);
+          }
+        });
+
+        isOpen = true;
+      } else {
+        if (deviceId && deviceId !== connectedDeviceId) {
+          throw new TransportError(TransportErrorCode.CHANNEL_ALREADY_OPEN, 'BLE channel already open for a different device');
+        }
+        if (encryptionKey && !deps.encryptionFactory) {
+          throw new TransportError(TransportErrorCode.UNSUPPORTED_PLATFORM, 'BLE encryption key provided but no encryptionFactory was configured');
+        }
+      }
+
+      const rawTransmit = (payload: string) => {
         const normalized = normalizeHex(payload);
 
         return queue.enqueue(async () => {
@@ -745,15 +772,11 @@ export const createBleTransport = (deps: CreateBleTransportDeps = {}): Transport
         });
       };
 
-      const performSelectAid = async () => {
-        const context = {
-          deviceId: connectedDeviceId,
-          serviceUuid,
-          writeUuid,
-        };
+      const performSelectAid = async (aidToSelect: HexString) => {
+        const context = { deviceId: connectedDeviceId, serviceUuid, writeUuid, aid: aidToSelect };
         logger('ble.select_aid.start', context);
         try {
-          const rawResponse = await transmit(SELECT_AID_COMMAND);
+          const rawResponse = await rawTransmit(buildSelectCommand(aidToSelect));
           const parsed = parseApduResponse(rawResponse);
 
           if (parsed.status === 'success') {
@@ -780,26 +803,47 @@ export const createBleTransport = (deps: CreateBleTransportDeps = {}): Transport
           throw transportError;
         }
       };
+      const sessionAid = normalizedAid;
 
-      try {
-        await performSelectAid();
-      } catch (error) {
-        isOpen = false;
-        await queue.flush();
-        await teardown();
-        queue.reset();
-        throw error;
-      }
+      const ensureAidSelectedForSession = async () => {
+        if (!selectAid) {
+          return;
+        }
+
+        if (currentAid && currentAid === sessionAid) {
+          return;
+        }
+
+        try {
+          await performSelectAid(sessionAid);
+          currentAid = sessionAid;
+        } catch (error) {
+          isOpen = false;
+          currentAid = undefined;
+          await queue.flush();
+          await teardown();
+          queue.reset();
+          throw error;
+        }
+      };
+
+      await ensureAidSelectedForSession();
 
       const close = async () => {
         if (!isOpen) {
           return;
         }
         isOpen = false;
+        currentAid = undefined;
 
         await queue.flush();
         await teardown();
         queue.reset();
+      };
+
+      const transmit = async (payload: string) => {
+        await ensureAidSelectedForSession();
+        return rawTransmit(payload);
       };
       return {
         transmit,

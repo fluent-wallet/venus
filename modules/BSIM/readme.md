@@ -36,8 +36,7 @@ implementation files('../../node_modules/react-native-bsim/android/libs/omachann
 import { createWallet } from 'react-native-bsim';
 
 const wallet = createWallet({
-  transports: [{ kind: 'apdu', options: { autoSelectAid: true } }],
-  idleTimeoutMs: 60_000,
+  transports: [{ kind: 'apdu' }],
   logger: (event, ctx) => console.log(event, ctx),
 });
 

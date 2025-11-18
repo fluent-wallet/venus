@@ -1,7 +1,8 @@
 import type { ApduCommand } from './types';
 import { asciiToHex, normalizeHex } from './utils';
 
-export const DEFAULT_BSIM_AID = 'A000000533C000FF860000000000054D';
+export const BSIM_AID = 'A000000533C000FF860000000000054D';
+export const ICCID_AID = 'A0000001510000';
 
 const toHexByte = (value: number) => {
   if (!Number.isInteger(value) || value < 0 || value > 0xff) {
@@ -32,7 +33,7 @@ const ensureAid = (hex: string) => {
   return normalized;
 };
 
-export const buildSelectAid = (aid: string = DEFAULT_BSIM_AID): ApduCommand => {
+export const buildSelectAid = (aid: string = BSIM_AID): ApduCommand => {
   const normalizedAid = ensureAid(aid);
   return {
     cla: '00',

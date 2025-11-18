@@ -31,8 +31,9 @@ jest.mock('react-native-ble-plx', () => {
 });
 
 import { BleATTErrorCode, BleErrorCode, State } from 'react-native-ble-plx';
+import { BSIM_AID, ICCID_AID } from '../core/params';
 import { toHex } from '../core/utils';
-import { createBleTransport, type BleTransportOptions } from './ble';
+import { type BleTransportOptions, createBleTransport } from './ble';
 import { TransportErrorCode } from './errors';
 
 type MonitorCallback = (error: unknown, characteristic: { value?: string | null } | null) => void;
@@ -45,14 +46,9 @@ const flushMicrotasks = async (iterations = 2) => {
   }
 };
 
-const HANDSHAKE_SELECT_AID_HEX = '00A4040010A000000533C000FF860000000000054D';
-const buildSelectAidResponseFrame = (status: Uint8Array): number[] => [
-  0x10,
-  0x12,
-  (status.length >> 8) & 0xff,
-  status.length & 0xff,
-  ...status,
-];
+const HANDSHAKE_SELECT_AID_HEX = `00A4040010${BSIM_AID}`;
+const HANDSHAKE_SELECT_ICCID_HEX = `00A4040007${ICCID_AID}`;
+const buildSelectAidResponseFrame = (status: Uint8Array): number[] => [0x10, 0x12, (status.length >> 8) & 0xff, status.length & 0xff, ...status];
 const SELECT_AID_RESPONSE_FRAME = buildSelectAidResponseFrame(Uint8Array.of(0x90, 0x00));
 
 const buildTransport = (mock: ReturnType<typeof createMockManager>, overrides: Parameters<typeof createBleTransport>[0] = {}) => {
@@ -310,6 +306,20 @@ describe('createBleTransport', () => {
     await session.close();
   });
 
+  it('selects provided AID during open when aid is overridden', async () => {
+    const mock = createMockManager();
+    const transport = buildTransport(mock);
+
+    const { session, handshakeCommandHex, handshakeFrameCount } = await openSessionWithHandshake(transport, mock, {
+      deviceId: 'mock-device',
+      responseTimeoutMs: 5_000,
+      aid: ICCID_AID,
+    });
+
+    expect(handshakeFrameCount).toBeGreaterThan(0);
+    expect(handshakeCommandHex).toBe(HANDSHAKE_SELECT_ICCID_HEX);
+    await session.close();
+  });
   it('uses provided encryptionFactory for request/response', async () => {
     const mock = createMockManager();
     const transport = buildTransport(mock, {
@@ -397,6 +407,20 @@ describe('createBleTransport', () => {
 
     mock.emitNotification([0x10, 0x12, 0x00, 0x02, 0x90, 0x00]);
     await expect(second).resolves.toBe('9000');
+
+    await session.close();
+  });
+
+  it('can skip AID selection when selectAid is false', async () => {
+    const mock = createMockManager();
+    const transport = buildTransport(mock);
+
+    const session = await transport.open({
+      deviceId: 'mock-device',
+      selectAid: false,
+      responseTimeoutMs: 5_000,
+    });
+    expect(mock.writtenFrames.length).toBe(0);
 
     await session.close();
   });

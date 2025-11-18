@@ -4,14 +4,14 @@ jest.mock('react-native-ble-plx', () => {
   return { BleError, BleManager };
 });
 
-import { createWallet } from './wallet';
-import { TransportError, TransportErrorCode } from './transports/errors';
-import type { Transport, TransportSession } from './transports/types';
-import type { ApduTransportOptions } from './transports/apdu';
-import type { BleTransportOptions } from './transports/ble';
-import { ApduFlowError } from './core/workflows';
 import { DEFAULT_SIGNATURE_ALGORITHM } from './constants';
 import { buildDerivePrivateKey, buildGetIccid, buildGetVersion, buildUpdateBpin, buildVerifyBpin, serializeCommand } from './core/params';
+import { ApduFlowError } from './core/workflows';
+import type { ApduTransportOptions } from './transports/apdu';
+import type { BleTransportOptions } from './transports/ble';
+import { TransportError, TransportErrorCode } from './transports/errors';
+import type { Transport, TransportSession } from './transports/types';
+import { createWallet } from './wallet';
 
 type ScriptStep = { expect: string; reply: string };
 
@@ -48,7 +48,7 @@ describe('wallet', () => {
 
     await expect(wallet.verifyBpin()).resolves.toBeUndefined();
     expect(session.transmit).toHaveBeenCalledTimes(1);
-    expect(session.close).not.toHaveBeenCalled();
+    expect(session.close).toHaveBeenCalledTimes(1);
   });
 
   it('falls back to next transport when the first one fails to open', async () => {
@@ -145,8 +145,8 @@ describe('wallet', () => {
     jest.useFakeTimers();
     try {
       const session = createScriptSession([{ expect: serializeCommand(buildVerifyBpin()), reply: '9000' }]);
-      const transport = createApduMockTransport(async () => session);
-      const wallet = createWallet({ transports: [{ kind: 'apdu', transport }], idleTimeoutMs: 100 });
+      const transport = createBleMockTransport(async () => session);
+      const wallet = createWallet({ transports: [{ kind: 'ble', transport }], idleTimeoutMs: 100 });
 
       await wallet.verifyBpin();
       expect(session.close).not.toHaveBeenCalled();
@@ -156,6 +156,7 @@ describe('wallet', () => {
       expect(session.close).not.toHaveBeenCalled();
 
       jest.advanceTimersByTime(20);
+      await Promise.resolve();
 
       expect(session.close).toHaveBeenCalledTimes(1);
     } finally {
