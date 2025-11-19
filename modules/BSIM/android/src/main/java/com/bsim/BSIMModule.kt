@@ -41,17 +41,24 @@ class BSIMModule(private val reactContext: ReactApplicationContext) :
         private const val ERROR_APDU_CLOSE_FAILED = "APDU_CLOSE_FAILED"
     }
 
-    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
+    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
     private val apduMutex = Mutex()
-    private var omaChannel: ChannelImpl? = null
-    private var apduInitState: CompletableDeferred<Unit>? = null
-    private var apduChannelOpen = false
+
+    private data class ApduContext(
+        val aid: String,
+        var channel: ChannelImpl? = null,
+        var initState: CompletableDeferred<Unit>? = null,
+        var channelOpen: Boolean = false,
+    )
+
+    private val apduContexts = mutableMapOf<String, ApduContext>()
     private var currentAid: String? = null
 
     init {
         reactContext.addLifecycleEventListener(this)
         FLog.setMinimumLoggingLevel(FLog.VERBOSE)
+        ELog.setLog(ELogImpl())
     }
 
     override fun getName(): String = NAME
@@ -62,47 +69,36 @@ class BSIMModule(private val reactContext: ReactApplicationContext) :
             throw UnsupportedOperationException("APDU channel requires Android 9 (API 28) or higher")
         }
 
-
         val compactAid = aid.filterNot(Char::isWhitespace).uppercase(Locale.ROOT)
         if (compactAid.isEmpty()) {
             throw IllegalArgumentException("AID must not be empty")
         }
-
         if (compactAid.length % 2 != 0) {
             throw IllegalArgumentException("AID must contain whole bytes")
         }
-
-
         if (!compactAid.all(::isHexChar)) {
             throw IllegalArgumentException("AID must be hexadecimal")
         }
 
+        val context = apduContexts.getOrPut(compactAid) { ApduContext(compactAid) }
+        val cachedChannel = context.channel
+        val cachedInit = context.initState
 
-        val cachedChannel = omaChannel
-        val cachedInit = apduInitState
-
-
-        if (cachedChannel != null && cachedInit != null && currentAid == compactAid) {
+        if (cachedChannel != null && cachedInit != null) {
             try {
                 cachedInit.await()
                 return cachedChannel
             } catch (error: Exception) {
-                resetApduState(true)
+                resetApduContext(context, releaseChannel = true)
                 throw error
             }
         }
 
-        ELog.setLog(ELogImpl())
-
-        val channel = OmaApduService
-            .getInstance(reactContext.applicationContext)
-            .aid(compactAid)
+        val channel = OmaApduService(reactContext.applicationContext).aid(compactAid)
 
         val initState = CompletableDeferred<Unit>()
-        omaChannel = channel
-        apduInitState = initState
-        currentAid = compactAid
-
+        context.channel = channel
+        context.initState = initState
 
         channel.init(object : ChannelImpl.CallBack {
             override fun success() {
@@ -123,12 +119,11 @@ class BSIMModule(private val reactContext: ReactApplicationContext) :
         try {
             initState.await()
         } catch (error: Exception) {
-            resetApduState(true)
+            resetApduContext(context, releaseChannel = true)
             throw error
         }
 
         return channel
-
     }
 
 
@@ -144,27 +139,18 @@ class BSIMModule(private val reactContext: ReactApplicationContext) :
                     }
                     if (compactAid.length % 2 != 0 || !compactAid.all(::isHexChar)) {
                         promise.reject(
-                            ERROR_APDU_OPEN_FAILED,
-                            "AID must be even-length hexadecimal"
+                            ERROR_APDU_OPEN_FAILED, "AID must be even-length hexadecimal"
                         )
                         return@withLock
                     }
 
-                    if (apduChannelOpen && currentAid == compactAid) {
+                    val context = apduContexts.getOrPut(compactAid) { ApduContext(compactAid) }
+
+                    if (context.channelOpen) {
                         FLog.i(TAG_APDU, "APDU channel already open for AID $compactAid, reusing")
+                        currentAid = compactAid
                         promise.resolve(null)
                         return@withLock
-                    }
-
-                    if (apduChannelOpen && currentAid != compactAid) {
-                        try {
-                            omaChannel?.closeChannel()
-                            FLog.i(TAG_APDU, "Closed previous APDU channel for AID $currentAid")
-                        } catch (error: Exception) {
-                            FLog.e(TAG_APDU, "closeChannel before AID switch failed", error)
-                        } finally {
-                            resetApduState(true)
-                        }
                     }
 
                     val channel = try {
@@ -196,7 +182,7 @@ class BSIMModule(private val reactContext: ReactApplicationContext) :
                         return@withLock
                     }
 
-                    apduChannelOpen = true
+                    context.channelOpen = true
                     currentAid = compactAid
                     FLog.i(TAG_APDU, "APDU channel opened for AID $compactAid")
                     promise.resolve(null)
@@ -219,12 +205,19 @@ class BSIMModule(private val reactContext: ReactApplicationContext) :
     fun transmitApdu(payload: String, promise: Promise) {
         scope.launch {
             apduMutex.withLock {
-                if (!apduChannelOpen) {
+                val activeAid = currentAid
+                if (activeAid == null) {
                     promise.reject(ERROR_APDU_NOT_OPEN, "APDU channel is not open")
                     return@withLock
                 }
 
-                val channel = omaChannel ?: run {
+                val context = apduContexts[activeAid]
+                if (context == null || !context.channelOpen) {
+                    promise.reject(ERROR_APDU_NOT_OPEN, "APDU channel is not open")
+                    return@withLock
+                }
+
+                val channel = context.channel ?: run {
                     promise.reject(ERROR_APDU_NOT_OPEN, "APDU channel is unavailable")
                     return@withLock
                 }
@@ -292,26 +285,35 @@ class BSIMModule(private val reactContext: ReactApplicationContext) :
                         "APDU command failed with status $status: ${response.Message}",
                     )
                 }
-
-
             }
         }
     }
+
 
     @ReactMethod
     fun closeApduChannel(promise: Promise) {
         scope.launch {
             apduMutex.withLock {
-                val channel = omaChannel
-                if (!apduChannelOpen || channel == null) {
-                    apduChannelOpen = false
+                val activeAid = currentAid
+                if (activeAid == null) {
+                    promise.resolve(null)
+                    return@withLock
+                }
+
+                val context = apduContexts[activeAid]
+                val channel = context?.channel
+                if (context == null || !context.channelOpen || channel == null) {
+                    context?.channelOpen = false
+                    if (currentAid == activeAid) {
+                        currentAid = null
+                    }
                     promise.resolve(null)
                     return@withLock
                 }
 
                 try {
                     channel.closeChannel()
-                    FLog.i(TAG_APDU, "APDU channel closed")
+                    FLog.i(TAG_APDU, "APDU channel closed for AID $activeAid")
                 } catch (error: Exception) {
                     FLog.e(TAG_APDU, "closeChannel failed", error)
                     promise.reject(
@@ -320,13 +322,17 @@ class BSIMModule(private val reactContext: ReactApplicationContext) :
                     )
                     return@withLock
                 } finally {
-                    resetApduState(true)
+                    resetApduContext(context, releaseChannel = true)
+                    if (currentAid == activeAid) {
+                        currentAid = null
+                    }
                 }
 
                 promise.resolve(null)
             }
         }
     }
+
 
     private fun normalizeApduPayload(raw: String): String {
         val compact = raw.filterNot(Char::isWhitespace)
@@ -384,34 +390,55 @@ class BSIMModule(private val reactContext: ReactApplicationContext) :
     private fun isEvenLengthHex(value: String): Boolean =
         value.isEmpty() || (value.length % 2 == 0 && value.all(::isHexChar))
 
-    private fun resetApduState(releaseChannel: Boolean) {
+
+    private fun resetApduContext(context: ApduContext, releaseChannel: Boolean) {
         if (releaseChannel) {
-            omaChannel = null
-            currentAid = null
+            try {
+                (context.channel as? OmaApduService)?.close()
+            } catch (error: Exception) {
+                FLog.e(
+                    TAG_APDU, "close during resetApduContext failed for AID ${context.aid}", error
+                )
+            }
         }
-        apduInitState?.cancel()
-        apduInitState = null
-        apduChannelOpen = false
+
+        context.channel = null
+        apduContexts.remove(context.aid)
+
+        context.initState?.cancel()
+        context.initState = null
+        context.channelOpen = false
     }
+
+
+    private fun resetAllApduContexts() {
+        apduContexts.values.forEach { ctx ->
+            try {
+                ctx.channel?.close()
+            } catch (error: Exception) {
+                FLog.e(
+                    TAG_APDU, "close during resetAllApduContexts failed for AID ${ctx.aid}", error
+                )
+            } finally {
+                ctx.initState?.cancel()
+            }
+        }
+        apduContexts.clear()
+        currentAid = null
+    }
+
 
     override fun onHostResume() {}
 
     override fun onHostPause() {}
 
+
     override fun onHostDestroy() {
         val shutdownJob = scope.launch {
             apduMutex.withLock {
-                if (apduChannelOpen) {
-                    try {
-                        omaChannel?.closeChannel()
-                    } catch (error: Exception) {
-                        FLog.e(TAG_APDU, "closeChannel during destroy failed", error)
-                    }
-                }
-                resetApduState(true)
+                resetAllApduContexts()
             }
         }
-
         shutdownJob.invokeOnCompletion { scope.cancel() }
     }
 }
