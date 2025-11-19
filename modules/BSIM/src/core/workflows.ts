@@ -2,8 +2,10 @@ import { APDU_STATUS } from './errors';
 import {
   buildDerivePrivateKey,
   buildExportPubkey,
+  buildExportSeed,
   buildGetIccid,
   buildGetVersion,
+  buildRestoreSeed,
   buildSignMessage,
   buildUpdateBpin,
   buildVerifyBpin,
@@ -191,4 +193,35 @@ export const updateBpinFlow = async (transmit: ApduTransmit): Promise<'ok'> => {
   }
 
   throw new ApduFlowError(APDU_STATUS.PENDING, 'BPIN update requires additional APDU exchange');
+};
+
+/**
+ * 0x8074 EXPORT SEED and return encrypted payload.
+ */
+
+export const exportSeedFlow = async (transmit: ApduTransmit, key2Hex: string): Promise<HexString> => {
+  const response = await dispatchApdu(transmit, buildExportSeed(key2Hex));
+
+  if (response.status !== 'success') {
+    throw new ApduFlowError(APDU_STATUS.PENDING, 'Seed export requires additional APDU exchange');
+  }
+
+  if (!response.payload) {
+    throw new ApduFlowError('A000', 'Seed export payload is empty');
+  }
+
+  return response.payload;
+};
+
+/**
+ * 0x8076 RESTORE SEED and ensure completion.
+ */
+export const restoreSeedFlow = async (transmit: ApduTransmit, key2Hex: string, cipherHex: string): Promise<'ok'> => {
+  const response = await dispatchApdu(transmit, buildRestoreSeed(key2Hex, cipherHex));
+
+  if (response.status === 'success') {
+    return 'ok';
+  }
+
+  throw new ApduFlowError(APDU_STATUS.PENDING, 'Seed restore requires additional APDU exchange');
 };

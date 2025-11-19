@@ -141,6 +141,52 @@ export const buildGetIccid = (): ApduCommand => ({
   le: '',
 });
 
+export const buildExportSeed = (key2Hex: string): ApduCommand => {
+  const data = normalizeHex(key2Hex);
+  if (!data) {
+    throw new Error('Key2 must not be empty');
+  }
+
+  return {
+    cla: '80',
+    ins: '74',
+    p1: '00',
+    p2: '01', // 01 = AES
+    lc: encodeLc(data),
+    data,
+    le: '',
+  };
+};
+
+export const buildRestoreSeed = (key2Hex: string, cipherHex: string): ApduCommand => {
+  const key = normalizeHex(key2Hex);
+  const cipher = normalizeHex(cipherHex);
+
+  if (!key) {
+    throw new Error('Key2 must not be empty');
+  }
+  if (!cipher) {
+    throw new Error('Cipher must not be empty');
+  }
+
+  const encodeTlv = (tag: string, value: string) => {
+    const length = toHexByte(value.length / 2);
+    return `${tag}${length}${value}`;
+  };
+
+  const data = `${encodeTlv('B1', key)}${encodeTlv('B2', cipher)}`;
+
+  return {
+    cla: '80',
+    ins: '76',
+    p1: '00',
+    p2: '01',
+    lc: encodeLc(data),
+    data,
+    le: '',
+  };
+};
+
 export const serializeCommand = (command: ApduCommand): string => {
   const ensureByte = (value: string, label: string) => {
     const normalized = normalizeHex(value);

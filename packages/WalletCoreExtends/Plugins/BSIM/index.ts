@@ -203,6 +203,8 @@ const resolveCardStatus = (error: unknown): ResolvedCardStatus | undefined => {
   return { code: candidate, message: CARD_ERROR_MESSAGES[candidate] };
 };
 
+const delay = (ms: number): Promise<void> => new Promise((resolve) => setTimeout(resolve, ms));
+
 declare module '@core/WalletCore/Plugins' {
   interface Plugins {
     BSIM: BSIMPluginClass;
@@ -224,6 +226,10 @@ export class BSIMPluginClass implements Plugin {
     try {
       return await this.enqueue(operation);
     } catch (error) {
+      if (error instanceof BSIMErrorEndTimeout) {
+        throw error;
+      }
+
       if (isTransportError(error)) {
         const status = resolveCardStatus(error);
         if (status) {
@@ -340,14 +346,65 @@ export class BSIMPluginClass implements Plugin {
     }
   };
 
+  private async verifyBpinGracefully(): Promise<void> {
+    try {
+      await this.verifyBPIN();
+    } catch (error: any) {
+      const code = typeof error?.code === 'string' ? error.code.toUpperCase() : undefined;
+      if (code !== 'A000') {
+        throw error;
+      }
+    }
+  }
+
   public verifyBPIN = async () => this.handleWalletCall(() => this.wallet.verifyBpin());
 
   public getBSIMVersion = async () => this.handleWalletCall(() => this.wallet.getVersion());
-  
+
   public getBSIMICCID = async () => this.handleWalletCall(() => this.wallet.getIccid());
 
   public updateBPIN = async () => this.handleWalletCall(() => this.wallet.updateBpin());
 
+  public restoreSeed = async (key2: string, cipherHex: string) => this.handleWalletCall(() => this.wallet.restoreSeed({ key2, cipherHex }));
+
+  public backupSeed = async (key2: string) => {
+    let cancelled = false;
+    const cancel = () => {
+      cancelled = true;
+    };
+
+    const runBackup = async () => {
+      await this.verifyBpinGracefully();
+
+      const timeoutMs = 30 * 1000;
+      const retryDelayMs = 1000;
+      const deadline = Date.now() + timeoutMs;
+
+      let lastError: unknown;
+
+      while (Date.now() <= deadline) {
+        if (cancelled) {
+          throw new BSIMError('cancel', BSIM_ERRORS.cancel);
+        }
+
+        try {
+          return await this.handleWalletCall(() => this.wallet.backupSeed({ key2 }));
+        } catch (error) {
+          lastError = error;
+          await delay(retryDelayMs);
+        }
+      }
+
+      const error = lastError as { code?: string; message?: string } | undefined;
+      const code = error?.code?.toUpperCase() ?? 'A000';
+      const message = error?.message ?? BSIM_ERRORS[code] ?? BSIM_ERRORS.default;
+      throw new BSIMErrorEndTimeout(code, message);
+    };
+
+    const promise = runBackup();
+    return [promise, cancel] as const;
+  };
+  
   public BSIMSignMessage = async (message: string, coinTypeIndex: number, index: number, pubkey?: BSIMPublicKey): Promise<SignResult> => {
     const record = pubkey ?? (await this.loadPubkeys()).find((item) => item.coinType === coinTypeIndex && item.index === index);
 
@@ -372,15 +429,7 @@ export class BSIMPluginClass implements Plugin {
   };
 
   private BSIMSign = async (hash: string, fromAddress: string) => {
-    try {
-      await this.verifyBPIN();
-    } catch (error: any) {
-      if (error?.code && error.code === 'A000') {
-        console.log("get error code A000, it's ok");
-      } else {
-        throw new BSIMError(error.code, error.message);
-      }
-    }
+    await this.verifyBpinGracefully();
 
     let errorMsg = '';
     let errorCode = '';
