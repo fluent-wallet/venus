@@ -102,10 +102,14 @@ export const BackupStep1StackName = 'BackupStep1';
 export const BackupStep2StackName = 'BackupStep2';
 export const BackupStep3StackName = 'BackupStep3';
 export const BackupSuccessStackName = 'BackupSuccess';
+export const BackupBSIM1PasswordStackName = 'BackupBSIMPassword';
+export const BackupBSIMQ2RCodeStackName = 'BackupBSIMQRCode';
 export type BackupStackParamList = {
   [BackupStep1StackName]: { accountId?: string; groupId?: string };
   [BackupStep2StackName]: { accountId?: string; groupId?: string };
   [BackupStep3StackName]: { phrases: string[]; vaultId: string };
+  [BackupBSIM1PasswordStackName]: undefined;
+  [BackupBSIMQ2RCodeStackName]: undefined;
   [BackupSuccessStackName]: undefined;
   // navigate to home
   [HomeStackName]: undefined;

@@ -98,6 +98,16 @@
       "title" : "請記下你的 {{type}}",
       "view" : "點擊查看 {{type}}",
       "viewTips" : "請確保四周是安全的"
+    },
+    "BSIM": {
+      "title": "備份 BSIM",
+      "describe": "您需要設置備份密碼。如果您的 BSIM 卡遺失或更換，您將需要此密碼來恢復您的錢包。",
+      "password": "備份密碼",
+      "confirmPassword": "確認備份密碼",
+      "ruleLength": "8 個字符",
+      "ruleLowerCase": "小寫字母",
+      "ruleUpperCase": "大寫字母",
+      "ruleNumber": "數字"
     }
   },
   "common" : {

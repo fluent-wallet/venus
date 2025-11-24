@@ -98,6 +98,16 @@
       "title" : "Write Down Your {{type}}",
       "view" : "Tap to view the {{type}}",
       "viewTips" : "Make sure your environment is safe"
+    },
+    "BSIM": {
+      "title": "Back Up BSIM",
+      "describe": "You need to set a backup password. You will need this password to recover your wallet if your BSIM card is lost or replaced.",
+      "password": "Backup password",
+      "confirmPassword": "Confirm Backup password",
+      "ruleLength": "8 Symbol",
+      "ruleLowerCase": "Lower Case",
+      "ruleUpperCase": "Upper Case",
+      "ruleNumber": "Number"
     }
   },
   "common" : {

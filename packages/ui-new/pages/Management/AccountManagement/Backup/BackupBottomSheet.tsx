@@ -6,15 +6,16 @@ import { useTranslation } from 'react-i18next';
 interface Props extends ComponentProps<typeof BottomSheetRoute> {
   children: React.ReactNode;
   showTitle?: boolean;
+  title?: string;
 }
 
-const BackupBottomSheet: React.FC<Props> = ({ children, snapPoints, showTitle = true, ...props }) => {
+const BackupBottomSheet: React.FC<Props> = ({ children, snapPoints, showTitle = true, title, ...props }) => {
   const { t } = useTranslation();
 
   return (
     <BottomSheetRoute snapPoints={snapPoints || defaultSnapPoints.large} {...props}>
       <BottomSheetWrapper innerPaddingHorizontal>
-        {showTitle && <BottomSheetHeader title={t('backup.title')} />}
+        {showTitle && <BottomSheetHeader title={title || t('backup.title')} />}
         {children}
       </BottomSheetWrapper>
     </BottomSheetRoute>
