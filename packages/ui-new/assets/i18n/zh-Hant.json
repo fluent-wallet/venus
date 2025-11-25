@@ -55,7 +55,8 @@
       },
       "settings" : {
         "BSIM" : "設置 BSIM 卡",
-        "BSIMCode" : "修改 BSIM 卡密碼"
+        "BSIMBpin": "修改 BSIM 卡密碼",
+        "BSIMBackup": "備份 BSIM 卡"
       },
       "title" : {
         "BSIM" : "BSIM 錢包組",
@@ -107,7 +108,14 @@
       "ruleLength": "8 個字符",
       "ruleLowerCase": "小寫字母",
       "ruleUpperCase": "大寫字母",
-      "ruleNumber": "數字"
+      "ruleNumber": "數字",
+      "QRCodeDescribe": "備份二維碼包含敏感數據，請妥善保管並保密。",
+      "QRCodeBackupConfirm": "請<1>妥善保存</1>您的二維碼。如果您的 BSIM 卡遺失或更換，您將需要<3>二維碼和備份密碼</3>來恢復您的錢包。",
+      "generateFailed": "生成二維碼失敗",
+      "permissionDenied": "訪問相冊的權限被拒絕",
+      "savedToPhotos": "二維碼已成功保存到相冊",
+      "saveFailed": "保存二維碼失敗",
+      "saveSuccess": "備份二維碼已成功保存到您的相冊。<1>請記住</1>保管好您的備份密碼和二維碼，這是您的責任！"
     }
   },
   "common" : {
@@ -153,7 +161,10 @@
     "update" : "更新",
     "use" : "使用",
     "verifyPassword" : "驗證密碼",
-    "view" : "查看"
+    "view" : "查看",
+    "photos" : "相冊",
+    "saving" : "保存中...",
+    "successfully" : "成功"
   },
   "home" : {
     "backup" : {

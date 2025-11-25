@@ -55,7 +55,8 @@
       },
       "settings" : {
         "BSIM" : "BSIM Card Settings",
-        "BSIMCode" : "Change BSIM Code"
+        "BSIMBpin": "Change BPIN",
+        "BSIMBackup": "Back Up BSIM"
       },
       "title" : {
         "BSIM" : "BSIM Group",
@@ -107,7 +108,14 @@
       "ruleLength": "8 Symbol",
       "ruleLowerCase": "Lower Case",
       "ruleUpperCase": "Upper Case",
-      "ruleNumber": "Number"
+      "ruleNumber": "Number",
+      "QRCodeDescribe": "The backup QR Code contains sensitive data. keep it safe and private.",
+      "QRCodeBackupConfirm": "Please <1>save</1> your QR code carefully. You will need <3>both this QR code and backup password </3> to recover your wallet if your BSIM card is lost or replaced.",
+      "generateFailed": "Failed to generate QR code",
+      "permissionDenied": "Permission to access photos was denied",
+      "savedToPhotos": "QR code saved to Photos successfully",
+      "saveFailed": "Failed to save QR code",
+      "saveSuccess": "The backup QR code has been saved to your album successfully. <1>Remember</1> to keep your backup password and QR code, it’s your responsibility!"
     }
   },
   "common" : {
@@ -153,7 +161,10 @@
     "update" : "Update",
     "use" : "Use",
     "verifyPassword" : "Verify Password",
-    "view" : "View"
+    "view" : "View",
+    "photos" : "Photos",
+    "saving" : "Saving...",
+    "successfully" : "Successfully"
   },
   "home" : {
     "backup" : {

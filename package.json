@@ -52,6 +52,7 @@
     "expo-image": "~2.1.7",
     "expo-image-picker": "~16.1.4",
     "expo-localization": "~16.1.5",
+    "expo-media-library": "~17.1.7",
     "fast-text-encoding": "^1.0.6",
     "i18next": "^23.11.1",
     "intl-pluralrules": "^2.0.1",
@@ -86,6 +87,7 @@
     "react-native-safe-area-context": "^5.4.1",
     "react-native-screens": "^4.11.1",
     "react-native-svg": "^15.12.0",
+    "react-native-view-shot": "4.0.3",
     "reflect-metadata": "^0.2.2",
     "semver": "^7.6.2",
     "stream-browserify": "^3.0.0"

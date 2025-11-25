@@ -1,12 +1,16 @@
+import BSIM from '@WalletCoreExtends/Plugins/BSIM';
 import { BottomSheetFooter } from '@components/BottomSheet';
 import Button from '@components/Button';
 import Checkbox from '@components/Checkbox';
+import HourglassLoading from '@components/Loading/Hourglass';
 import TextInput from '@components/TextInput';
 import { useTheme } from '@react-navigation/native';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { type BackupBSIM1PasswordStackName, BackupBSIMQ2RCodeStackName, type BackupScreenProps } from '@router/configs';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { Trans, useTranslation } from 'react-i18next';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { showMessage } from 'react-native-flash-message';
 import BackupBottomSheet from './BackupBottomSheet';
 
 type FormData = {
@@ -30,14 +34,15 @@ const validatePassword = (password: string): PasswordValidation => {
   };
 };
 
-export const BackupBsim1Password = () => {
+export const BSIMStep1Password: React.FC<BackupScreenProps<typeof BackupBSIM1PasswordStackName>> = ({ route, navigation }) => {
   const { t } = useTranslation();
   const { colors } = useTheme();
   const [password, setPassword] = useState('');
-
   const validation = useMemo(() => validatePassword(password), [password]);
   const [confirm, setConfirm] = useState(false);
 
+  const [loading, setLoading] = useState(false);
+  const cancelRequestRef = useRef<(() => void) | null>(null);
   const {
     control,
     handleSubmit,
@@ -62,9 +67,34 @@ export const BackupBsim1Password = () => {
     }
   }, [passwordValue, confirmValue, trigger]);
 
-  const handleSubmitForm = useCallback(async (data: FormData) => {
-    console.log(data);
+  const handleCancel = useCallback(() => {
+    if (cancelRequestRef.current) {
+      cancelRequestRef.current();
+      cancelRequestRef.current = null;
+      setLoading(false);
+    }
   }, []);
+
+  const handleSubmitForm = useCallback(
+    async (data: FormData) => {
+      try {
+        const { confirm } = data;
+        setLoading(true);
+        await BSIM.verifyBPIN();
+        const [request, cancelRequest] = await BSIM.backupSeed(confirm);
+        cancelRequestRef.current = cancelRequest;
+        const seedData = await request;
+
+        navigation.navigate(BackupBSIMQ2RCodeStackName, { backupPassword: confirm, seedData, vaultId: route.params.vaultId });
+      } catch (error: any) {
+        showMessage({ type: 'failed', message: error.message });
+      } finally {
+        setLoading(false);
+        cancelRequestRef.current = null;
+      }
+    },
+    [navigation, route.params.vaultId],
+  );
 
   return (
     <BackupBottomSheet showTitle title={t('backup.BSIM.title')} style={{ flex: 1 }}>
@@ -140,8 +170,13 @@ export const BackupBsim1Password = () => {
         </Pressable>
 
         <BottomSheetFooter>
-          <Button testID="createPasswordButton" onPress={handleSubmit(handleSubmitForm)} disabled={!confirm || !isValid} loading={false}>
-            {t('initWallet.setPassword.create')}
+          <Button
+            testID="createPasswordButton"
+            onPress={loading ? handleCancel : handleSubmit(handleSubmitForm)}
+            disabled={!confirm || !isValid}
+            Icon={loading ? (HourglassLoading as any) : undefined}
+          >
+            {loading ? t('common.cancel') : t('initWallet.setPassword.create')}
           </Button>
         </BottomSheetFooter>
       </View>

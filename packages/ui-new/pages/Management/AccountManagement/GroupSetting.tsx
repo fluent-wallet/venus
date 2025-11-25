@@ -20,7 +20,14 @@ import { VaultType, useAccountsOfGroupInManage, useGroupFromId, useVaultOfGroup 
 import useInAsync from '@hooks/useInAsync';
 import { AccountItemView } from '@modules/AccountsList';
 import { useTheme } from '@react-navigation/native';
-import { BackupStackName, BackupStep1StackName, type GroupSettingStackName, HDSettingStackName, type StackScreenProps } from '@router/configs';
+import {
+  BackupBSIM1PasswordStackName,
+  BackupStackName,
+  BackupStep1StackName,
+  type GroupSettingStackName,
+  HDSettingStackName,
+  type StackScreenProps,
+} from '@router/configs';
 import type React from 'react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -157,10 +164,22 @@ const GroupConfig: React.FC<StackScreenProps<typeof GroupSettingStackName>> = ({
                   disabled={inDelete}
                 >
                   <Text style={[styles.mainText, styles.backupText, { color: colors.textPrimary }]}>
-                    {renderByVaultType(t('common.seedPhrase'), t('account.group.settings.BSIMCode'))}
+                    {renderByVaultType(t('common.seedPhrase'), t('account.group.settings.BSIMBpin'))}
                   </Text>
                   <ArrowRight color={colors.iconPrimary} width={16} height={16} style={{ transform: [{ translateY: -1 }] }} />
                 </Pressable>
+
+                {vault?.type === VaultType.BSIM && (
+                  <Pressable
+                    style={({ pressed }) => [styles.row, { backgroundColor: pressed ? colors.underlay : 'transparent' }]}
+                    onPress={() => navigation.navigate(BackupStackName, { screen: BackupBSIM1PasswordStackName, params: { vaultId: vault?.id } })}
+                    testID="backupBSIM"
+                    disabled={inDelete}
+                  >
+                    <Text style={[styles.mainText, styles.backupText, { color: colors.textPrimary }]}>{t('account.group.settings.BSIMBackup')}</Text>
+                    <ArrowRight color={colors.iconPrimary} width={16} height={16} style={{ transform: [{ translateY: -1 }] }} />
+                  </Pressable>
+                )}
               </>
             )}
 

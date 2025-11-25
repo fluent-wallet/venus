@@ -108,8 +108,8 @@ export type BackupStackParamList = {
   [BackupStep1StackName]: { accountId?: string; groupId?: string };
   [BackupStep2StackName]: { accountId?: string; groupId?: string };
   [BackupStep3StackName]: { phrases: string[]; vaultId: string };
-  [BackupBSIM1PasswordStackName]: undefined;
-  [BackupBSIMQ2RCodeStackName]: undefined;
+  [BackupBSIM1PasswordStackName]: { vaultId: string };
+  [BackupBSIMQ2RCodeStackName]: { backupPassword: string; seedData: string; vaultId: string };
   [BackupSuccessStackName]: undefined;
   // navigate to home
   [HomeStackName]: undefined;

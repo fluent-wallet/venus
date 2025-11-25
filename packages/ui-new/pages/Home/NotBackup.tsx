@@ -40,11 +40,11 @@ const NotBackup: React.FC<{ navigation: StackScreenProps<typeof HomeStackName>['
 
   const handleBackup = useCallback(() => {
     if (vault?.type === VaultType.BSIM) {
-      navigation.navigate(BackupStackName, { screen: BackupBSIM1PasswordStackName });
+      navigation.navigate(BackupStackName, { screen: BackupBSIM1PasswordStackName, params: { vaultId: vault?.id } });
     } else {
       navigation.navigate(BackupStackName, { screen: BackupStep1StackName, params: { groupId: accountGroup?.id } });
     }
-  }, [vault?.type]);
+  }, [vault?.type, vault?.id, navigation, accountGroup?.id]);
 
   if (!shouldShowNotBackup) return null;
   return (
