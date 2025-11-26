@@ -100,7 +100,7 @@ export const BSIMStep1Password: React.FC<BackupScreenProps<typeof BackupBSIM1Pas
     <BackupBottomSheet showTitle title={t('backup.BSIM.title')} style={{ flex: 1 }}>
       <Text style={[styles.describe, { color: colors.textSecondary }]}>{t('backup.BSIM.describe')}</Text>
 
-      <Text style={styles.label}>{t('backup.BSIM.password')}</Text>
+      <Text style={[styles.label, { color: colors.textPrimary }]}>{t('backup.BSIM.password')}</Text>
 
       <Controller
         control={control}
@@ -134,7 +134,7 @@ export const BSIMStep1Password: React.FC<BackupScreenProps<typeof BackupBSIM1Pas
         name="password"
       />
 
-      <Text style={styles.label}>{t('backup.BSIM.confirmPassword')}</Text>
+      <Text style={[styles.label, { color: colors.textPrimary }]}>{t('backup.BSIM.confirmPassword')}</Text>
       <Controller
         control={control}
         rules={{

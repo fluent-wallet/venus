@@ -164,7 +164,8 @@
     "view" : "View",
     "photos" : "Photos",
     "saving" : "Saving...",
-    "successfully" : "Successfully"
+    "successfully" : "Successfully",
+    "skip" : "Skip"
   },
   "home" : {
     "backup" : {
@@ -207,7 +208,10 @@
     "setPassword.describe" : "Add security verification to ensure the safety of your funds.",
     "setPassword.error.length" : "Must be at least 8 characters.",
     "setPassword.error.notMatch" : "Password must be match.",
-    "setPassword.new" : "New Password"
+    "setPassword.new" : "New Password",
+    "changeBPin.title": "Security Notice",
+    "changeBPin.describe": "This BSIM card is using the default PIN. For your asset security, you <1>must set a new BPIN</1> before using the wallet.",
+    "changeBPin.button": "Change BPIN"
   },
   "receive" : {
     "clickHereToSelect" : "Click here to select",

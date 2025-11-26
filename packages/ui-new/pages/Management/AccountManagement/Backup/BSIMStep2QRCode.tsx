@@ -128,8 +128,8 @@ export const BSIMStep2QRCode: React.FC<BackupScreenProps<typeof BackupBSIMQ2RCod
         ) : (
           <>
             <ViewShot ref={qrCodeRef} options={{ format: 'png', quality: 1.0 }} style={styles.viewShot}>
-              <View style={[styles.qrCodeContainer, { backgroundColor: mode === 'light' ? 'white' : 'black' }]}>
-                <Text style={[styles.describeText, { color: mode === 'light' ? 'black' : 'white' }]}>{t('backup.BSIM.QRCodeDescribe')}</Text>
+              <View style={[styles.qrCodeContainer, { backgroundColor: colors.bgPrimary }]}>
+                <Text style={[styles.describeText, { color: colors.textPrimary }]}>{t('backup.BSIM.QRCodeDescribe')}</Text>
 
                 <View style={styles.qrCodeWrapper}>
                   <QRCode
@@ -138,8 +138,8 @@ export const BSIMStep2QRCode: React.FC<BackupScreenProps<typeof BackupBSIMQ2RCod
                     logo={Logo}
                     logoSize={40}
                     logoBackgroundColor="transparent"
-                    backgroundColor={mode === 'light' ? 'white' : 'black'}
-                    color={mode === 'light' ? 'black' : 'white'}
+                    backgroundColor={colors.bgPrimary}
+                    color={colors.textPrimary}
                   />
                 </View>
               </View>

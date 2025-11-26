@@ -9,7 +9,7 @@ import plugins from '@core/WalletCore/Plugins';
 import { Lang, useLanguage } from '@hooks/useI18n';
 import useInAsync from '@hooks/useInAsync';
 import { useTheme } from '@react-navigation/native';
-import { BiometricsWayStackName, type StackScreenProps, type WayToInitWalletStackName } from '@router/configs';
+import { BiometricsWayStackName, ChangeBPinStackName, type StackScreenProps, type WayToInitWalletStackName } from '@router/configs';
 import { Image } from 'expo-image';
 import type React from 'react';
 import { useCallback, useRef } from 'react';
@@ -38,7 +38,7 @@ const WayToInitWallet: React.FC<StackScreenProps<typeof WayToInitWalletStackName
       navigation.setOptions({ gestureEnabled: false });
       await new Promise((resolve) => setTimeout(resolve));
       await plugins.BSIM.getBSIMVersion();
-      navigation.navigate(BiometricsWayStackName, { type: 'connectBSIM' });
+      navigation.navigate(ChangeBPinStackName);
     } catch (error) {
       showNotFindBSIMCardMessage();
     } finally {

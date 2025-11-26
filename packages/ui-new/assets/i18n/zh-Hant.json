@@ -164,7 +164,8 @@
     "view" : "查看",
     "photos" : "相冊",
     "saving" : "保存中...",
-    "successfully" : "成功"
+    "successfully" : "成功",
+    "skip" : "跳過"
   },
   "home" : {
     "backup" : {
@@ -207,7 +208,10 @@
     "setPassword.describe" : "添加安全驗證，確保您的資金安全。",
     "setPassword.error.length" : "至少 8 個字符",
     "setPassword.error.notMatch" : "密碼不匹配",
-    "setPassword.new" : "新密碼"
+    "setPassword.new" : "新密碼",
+    "changeBPin.title": "安全提示",
+    "changeBPin.describe": "此 BSIM 卡正在使用預設密碼。為了您的資產安全，您<1>必須設定新的 BPIN</1>才能使用錢包。",
+    "changeBPin.button": "更改 BPIN"
   },
   "receive" : {
     "clickHereToSelect" : "點擊以選擇",

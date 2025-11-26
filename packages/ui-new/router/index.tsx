@@ -66,12 +66,14 @@ import {
   SpeedUpStackName,
   TransactionDetailStackName,
   TooManyPendingStackName,
+  ChangeBPinStackName,
 } from './configs';
 import TransactionDetail from '@pages/TransactionDetail';
 import { useTranslation } from 'react-i18next';
 import { getEventBus } from '@WalletCoreExtends/index';
 import { AUTHENTICATION_PASSWORD_REQUEST } from '@WalletCoreExtends/Plugins/Authentication';
 import Button from '@components/Button';
+import { ChangeBPin } from '@pages/InitWallet/ChangeBPIN';
 
 const RootStack = createNativeStackNavigator<RootStackParamList>();
 const screenOptions = {
@@ -111,6 +113,7 @@ const Router: React.FC = () => {
         <RootStack.Screen name={WelcomeStackName} component={Welcome} options={{ headerShown: false, animation: 'none' }} />
         <RootStack.Screen name={WayToInitWalletStackName} component={WayToInitWallet} options={{ headerShown: false, animation: 'none' }} />
         <RootStack.Screen name={HomeStackName} component={Home} options={{ headerShown: false }} />
+        <RootStack.Screen name={ChangeBPinStackName} component={ChangeBPin} />
         <RootStack.Screen name={BiometricsWayStackName} component={BiometricsWay} options={{ animation: 'fade' }} />
         <RootStack.Screen name={PasswordWayStackName} component={PasswordWay} />
         <RootStack.Screen name={AccountManagementStackName} component={AccountManagement} />

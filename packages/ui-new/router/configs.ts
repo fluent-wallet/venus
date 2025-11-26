@@ -11,6 +11,7 @@ import type { NFTItemDetail } from '@core/WalletCore/Plugins/NFTDetailTracker/se
 
 export const WelcomeStackName = 'Welcome';
 export const WayToInitWalletStackName = 'WayToInitWallet';
+export const ChangeBPinStackName = 'ChangeBPin';
 export const BiometricsWayStackName = 'Biometrics';
 export const PasswordWayStackName = 'PasswordWay';
 export const HomeStackName = 'Home';
@@ -62,6 +63,7 @@ export type WalletConnectParamList = {
 export type RootStackParamList = {
   [WelcomeStackName]: undefined;
   [WayToInitWalletStackName]: undefined;
+  [ChangeBPinStackName]: undefined;
   [PasswordWayStackName]?: { type?: 'importExistWallet' | 'createNewWallet' | 'connectBSIM'; value?: string };
   [BiometricsWayStackName]?: { type?: 'importExistWallet' | 'createNewWallet' | 'connectBSIM'; value?: string };
   [HomeStackName]: undefined;
