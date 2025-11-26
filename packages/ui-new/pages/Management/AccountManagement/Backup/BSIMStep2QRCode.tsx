@@ -21,6 +21,7 @@ import { showMessage } from 'react-native-flash-message';
 import QRCode from 'react-native-qrcode-svg';
 import ViewShot from 'react-native-view-shot';
 import BackupBottomSheet from './BackupBottomSheet';
+import type { BsimQrPayload } from '@utils/BSIMTypes';
 
 export const BSIMStep2QRCode: React.FC<BackupScreenProps<typeof BackupBSIMQ2RCodeStackName>> = ({ route, navigation }) => {
   const { t } = useTranslation();
@@ -57,7 +58,7 @@ export const BSIMStep2QRCode: React.FC<BackupScreenProps<typeof BackupBSIMQ2RCod
         ensure(isHex(iccidHex) && iccidHex.length > 0 && iccidHex.length % 2 === 0);
         ensure(isHex(pwdTagHex) && pwdTagHex.length === 4); // 2 bytes
 
-        const payload = {
+        const payload: BsimQrPayload = {
           v: BSIM_QR_VERSION,
           version,
           seed_ct: seedData,

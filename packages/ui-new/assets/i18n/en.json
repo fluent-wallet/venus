@@ -215,7 +215,8 @@
     "recoverBSIM.title": "Notice",
     "recoverBSIM.describe.part1": "This operation will restore your wallet to this BSIM card using your backup <1>QR code</1> and <3>backup password</3>. ",
     "recoverBSIM.describe.part2": "Please make sure your new BSIM card is properly inserted. Ensure that both your QR code and backup password are <1>correct</1>.",
-     "recoverBSIM.warning": "Each BSIM card can only be restored once. "
+     "recoverBSIM.warning": "Each BSIM card can only be restored once.",
+     "recoverBSIM.invalidQRData": "Invalid QR code"
   },
   "receive" : {
     "clickHereToSelect" : "Click here to select",

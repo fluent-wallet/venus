@@ -24,7 +24,7 @@ const useQRCodeScan = ({ onSuccess, onFailed, isParsingRef }: Params) => {
   const pickImage = useCallback(async () => {
     // No permissions request is necessary for launching the image library
     const result = await launchImageLibraryAsync({
-      allowsEditing: true,
+      allowsEditing: false,
       allowsMultipleSelection: false,
       quality: 1,
     });

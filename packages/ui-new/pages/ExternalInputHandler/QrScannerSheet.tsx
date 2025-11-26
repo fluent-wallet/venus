@@ -75,6 +75,7 @@ function QrScannerSheet<T>({
   const cameraRef = useRef<CameraView | null>(null);
   const isParsingRef = useRef(false);
   const isMountedRef = useRef(true);
+  const permissionRequestedRef = useRef(false);
   const hasProcessedExternalDataRef = useRef(false);
 
   const [parseStatus, setParseStatus] = useState<ParseResult<T> | null>(null);
@@ -128,6 +129,13 @@ function QrScannerSheet<T>({
       handleParse(externalData);
     }
   }, [externalData, handleParse]);
+
+  useEffect(() => {
+    if (!externalData && enableCamera && !permissionRequestedRef.current) {
+      permissionRequestedRef.current = true;
+      checkCameraPermission();
+    }
+  }, [externalData, enableCamera, checkCameraPermission]);
 
   const onBottomSheetOpen = useCallback(() => {
     if (!externalData && enableCamera) {
