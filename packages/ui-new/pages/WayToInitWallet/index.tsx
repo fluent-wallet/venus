@@ -9,7 +9,7 @@ import plugins from '@core/WalletCore/Plugins';
 import { Lang, useLanguage } from '@hooks/useI18n';
 import useInAsync from '@hooks/useInAsync';
 import { useTheme } from '@react-navigation/native';
-import { BiometricsWayStackName, ChangeBPinStackName, type StackScreenProps, type WayToInitWalletStackName } from '@router/configs';
+import { BiometricsWayStackName, ChangeBPinStackName, RecoverBsimStackName, type StackScreenProps, type WayToInitWalletStackName } from '@router/configs';
 import { Image } from 'expo-image';
 import type React from 'react';
 import { useCallback, useRef } from 'react';
@@ -38,6 +38,14 @@ const WayToInitWallet: React.FC<StackScreenProps<typeof WayToInitWalletStackName
       navigation.setOptions({ gestureEnabled: false });
       await new Promise((resolve) => setTimeout(resolve));
       await plugins.BSIM.getBSIMVersion();
+
+      try {
+        // try to get bsim public key list
+        await plugins.BSIM.getBSIMPublicKeys();
+      } catch (_error) {
+        // get the public key list failed. it means this bsim card need to restore first
+        return navigation.navigate(RecoverBsimStackName);
+      }
       navigation.navigate(ChangeBPinStackName);
     } catch (error) {
       showNotFindBSIMCardMessage();

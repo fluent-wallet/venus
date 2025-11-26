@@ -211,7 +211,11 @@
     "setPassword.new" : "New Password",
     "changeBPin.title": "Security Notice",
     "changeBPin.describe": "This BSIM card is using the default PIN. For your asset security, you <1>must set a new BPIN</1> before using the wallet.",
-    "changeBPin.button": "Change BPIN"
+    "changeBPin.button": "Change BPIN",
+    "recoverBSIM.title": "Notice",
+    "recoverBSIM.describe.part1": "This operation will restore your wallet to this BSIM card using your backup <1>QR code</1> and <3>backup password</3>. ",
+    "recoverBSIM.describe.part2": "Please make sure your new BSIM card is properly inserted. Ensure that both your QR code and backup password are <1>correct</1>.",
+     "recoverBSIM.warning": "Each BSIM card can only be restored once. "
   },
   "receive" : {
     "clickHereToSelect" : "Click here to select",
