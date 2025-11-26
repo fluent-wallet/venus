@@ -253,7 +253,8 @@
       "error" : {
         "connectFailed" : "與 WalletConnect 連接失敗",
         "lowVersion" : "此二維碼版本過低",
-        "pairingAlreadyExists" : "該二維碼已過期，請刷新頁面並重試。"
+        "pairingAlreadyExists" : "該二維碼已過期，請刷新頁面並重試。",
+        "timeout" : "等待 WalletConnect 響應超時"
       }
     }
   },

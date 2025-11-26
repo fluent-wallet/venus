@@ -253,7 +253,8 @@
       "error" : {
         "connectFailed" : "Connect to wallet-connect failed",
         "lowVersion" : "Sorry, The QR code version is to low",
-        "pairingAlreadyExists" : "This QR code has expired, please refresh the page and try again."
+        "pairingAlreadyExists" : "This QR code has expired, please refresh the page and try again.",
+        "timeout" : "Waiting for WalletConnect response timed out"
       }
     }
   },
