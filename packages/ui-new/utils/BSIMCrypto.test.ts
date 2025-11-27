@@ -1,6 +1,7 @@
-import { generateIV, encryptICCID, generatePasswordTag } from './BSIMCrypto';
+import { generateIV, encryptICCID, generatePasswordTag, verifyPasswordTag } from './BSIMCrypto';
 import { BSIM_DEV_KEY } from './BSIMConstants';
 import { Hex } from 'ox';
+import { stripHexPrefix } from '@core/utils/base';
 
 describe('BSIMCrypto', () => {
   describe('generateIV', () => {
@@ -134,5 +135,48 @@ describe('BSIMCrypto', () => {
       expect(BSIM_DEV_KEY.length).toBe(64);
       expect(BSIM_DEV_KEY).toMatch(/^[0-9a-fA-F]{64}$/);
     });
+  });
+});
+
+describe('verifyPasswordTag', () => {
+  test('returns true when password/tag match', () => {
+    const password = 'MyPassword123!';
+    const iv = new Uint8Array(16).fill(0x00);
+    const payload = {
+      iv: stripHexPrefix(Hex.from(iv)).toLowerCase(),
+      pwd_tag: stripHexPrefix(generatePasswordTag(password, iv)).toLowerCase(),
+    };
+
+    expect(verifyPasswordTag(password, payload)).toBe(true);
+  });
+
+  test('returns false when password is wrong', () => {
+    const iv = new Uint8Array(16).fill(0x00);
+    const payload = {
+      iv: stripHexPrefix(Hex.from(iv)).toLowerCase(),
+      pwd_tag: stripHexPrefix(generatePasswordTag('correctPass123', iv)).toLowerCase(),
+    };
+
+    expect(verifyPasswordTag('wrongPass123', payload)).toBe(false);
+  });
+
+  test('handles mixed-case tag and iv', () => {
+    const password = 'TestPassword123!';
+    const iv = new Uint8Array(16).fill(0x01);
+    const payload = {
+      iv: stripHexPrefix(Hex.from(iv)).toUpperCase(), // intentionally upper
+      pwd_tag: stripHexPrefix(generatePasswordTag(password, iv)).toUpperCase(),
+    };
+
+    expect(verifyPasswordTag(password, payload)).toBe(true);
+  });
+
+  test('returns false on invalid iv payload', () => {
+    const payload = {
+      iv: 'zzzz', // invalid hex
+      pwd_tag: 'dead',
+    };
+
+    expect(verifyPasswordTag('anything', payload)).toBe(false);
   });
 });

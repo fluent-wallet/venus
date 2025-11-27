@@ -1,4 +1,4 @@
-import { useTheme } from '@react-navigation/native';
+import { StackActions, useNavigation, useTheme } from '@react-navigation/native';
 import { Trans, useTranslation } from 'react-i18next';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import RecoverBSIMImg from '@assets/images/recoverBSIM.svg';
@@ -7,19 +7,74 @@ import Button from '@components/Button';
 import { useCallback, useState } from 'react';
 import QrScannerSheet, { type ParseResult } from '@pages/ExternalInputHandler/QrScannerSheet';
 import type { BsimQrPayload } from '@utils/BSIMTypes';
+import { BottomSheetContent, BottomSheetFooter, BottomSheetHeader, BottomSheetWrapper, InlineBottomSheet, snapPoints } from '@components/BottomSheet';
+import { Controller, useForm } from 'react-hook-form';
+import CustomTextInput from '@components/TextInput';
+import SuccessfullyIcon from '@assets/icons/successful.svg';
+import { verifyPasswordTag } from '@utils/BSIMCrypto';
+import { showMessage } from 'react-native-flash-message';
+import Plugins from '@core/WalletCore/Plugins';
+import { ChangeBPinStackName } from '@router/configs';
+import { validateKey2Password } from '@utils/BSIMKey2PasswordValidation';
 
+type RecoverFormData = {
+  password: string;
+};
 export const RecoverBSIM = () => {
   const { colors } = useTheme();
   const { t } = useTranslation();
 
   const [showScan, setShowScan] = useState(false);
 
-  const handleScanQrCode = useCallback((data: string) => {
+  const [showPassword, setShowPassword] = useState(false);
+
+  const [showSuccess, setShowSuccess] = useState(false);
+
+  const [bsimQrPayload, setBsimQrPayload] = useState<BsimQrPayload | null>(null);
+
+  const navigation = useNavigation();
+
+  const {
+    control,
+    handleSubmit,
+    formState: { errors, isValid },
+  } = useForm<RecoverFormData>({
+    mode: 'all',
+    defaultValues: {
+      password: '',
+    },
+  });
+
+  const handleScanQrCode = useCallback((data: BsimQrPayload) => {
     setShowScan(false);
-    // TODO: navigate to the next page
+    setShowPassword(true);
+    setBsimQrPayload(data);
   }, []);
 
-  const handleParseInput = (raw: string): ParseResult<string> => {
+  const handleNext = async (data: RecoverFormData) => {
+    if (!bsimQrPayload || !verifyPasswordTag(data.password, bsimQrPayload)) {
+      showMessage({ type: 'failed', message: t('initWallet.recoverBSIM.invalidPassword') });
+      return;
+    }
+
+    try {
+      await Plugins.BSIM.restoreSeed(data.password, bsimQrPayload.seed_ct);
+    } catch (error: any) {
+      showMessage({ type: 'failed', message: error.message });
+      return;
+    }
+
+    setShowSuccess(true);
+  };
+
+  const handleSuccessClose = () => {
+    setShowSuccess(false);
+    setShowPassword(false);
+    setBsimQrPayload(null);
+    navigation.dispatch(StackActions.replace(ChangeBPinStackName));
+  };
+
+  const handleParseInput = (raw: string): ParseResult<BsimQrPayload> => {
     try {
       const parsedData = JSON.parse(atob(raw)) as Partial<BsimQrPayload>;
       // check the validity of the data
@@ -28,7 +83,7 @@ export const RecoverBSIM = () => {
       }
       return {
         ok: true,
-        data: raw,
+        data: parsedData as BsimQrPayload,
       };
     } catch {
       return { ok: false, message: t('initWallet.recoverBSIM.invalidQRData') };
@@ -44,7 +99,7 @@ export const RecoverBSIM = () => {
 
         <RecoverBSIMImg style={styles.img} />
 
-        <Text style={[styles.title, { color: colors.textPrimary }]}>{t('initWallet.recoverBSIM.title')}</Text>
+        <Text style={[styles.title, { color: colors.textPrimary }]}>{t('common.notice')}</Text>
 
         <Text style={[styles.description, { color: colors.textPrimary }]}>
           <Trans i18nKey={'initWallet.recoverBSIM.describe.part1'}>
@@ -77,6 +132,65 @@ export const RecoverBSIM = () => {
           onClose={() => setShowScan(false)}
           parseInput={handleParseInput}
         />
+      )}
+
+      {showPassword && (
+        <InlineBottomSheet snapPoints={snapPoints.percent85} index={0}>
+          <BottomSheetWrapper innerPaddingHorizontal>
+            <BottomSheetHeader title={t('initWallet.recoverBSIM.title')} />
+
+            <BottomSheetContent>
+              <Text style={[styles.labelText, { color: colors.textPrimary }]}>{t('backup.BSIM.password')}</Text>
+
+              <Controller
+                control={control}
+                rules={{
+                  required: true,
+                  validate: (value) => {
+                    const v = validateKey2Password(value);
+                    return v.hasLength && v.hasLowerCase && v.hasUpperCase && v.hasNumber;
+                  },
+                }}
+                render={({ field: { onChange, onBlur, value } }) => (
+                  <View>
+                    <CustomTextInput
+                      placeholder={t('common.password')}
+                      secureTextEntry
+                      onBlur={onBlur}
+                      onChangeText={(text) => {
+                        onChange(text);
+                      }}
+                      value={value}
+                      containerStyle={errors.password && [{ borderColor: colors.down, borderWidth: 1 }]}
+                    />
+                  </View>
+                )}
+                name="password"
+              />
+
+              <Text style={[styles.ruleText, { color: colors.textPrimary }]}>{t('initWallet.recoverBSIM.pwdRule')}</Text>
+            </BottomSheetContent>
+
+            <BottomSheetFooter>
+              <Button testID="createPasswordButton" onPress={handleSubmit(handleNext)} disabled={!isValid}>
+                {t('common.next')}
+              </Button>
+            </BottomSheetFooter>
+          </BottomSheetWrapper>
+        </InlineBottomSheet>
+      )}
+
+      {showSuccess && (
+        <InlineBottomSheet snapPoints={snapPoints.percent45} index={showSuccess ? 0 : -1} onClose={handleSuccessClose}>
+          <BottomSheetWrapper innerPaddingHorizontal>
+            <BottomSheetHeader title={t('common.successfully')} />
+
+            <View style={styles.successIconContainer}>
+              <SuccessfullyIcon width={100} height={100} />
+            </View>
+            <Text style={[styles.successText, { color: colors.textPrimary }]}>{t('initWallet.recoverBSIM.success')}</Text>
+          </BottomSheetWrapper>
+        </InlineBottomSheet>
       )}
     </>
   );
@@ -115,5 +229,26 @@ const styles = StyleSheet.create({
   },
   warningText: {
     fontSize: 16,
+  },
+  successIconContainer: {
+    alignItems: 'center',
+    marginTop: 20,
+    marginBottom: 15,
+  },
+  labelText: {
+    fontSize: 14,
+    fontWeight: '300',
+    marginBottom: 16,
+  },
+  ruleText: {
+    fontSize: 14,
+    fontWeight: '300',
+    marginBottom: 16,
+    marginTop: 8,
+  },
+  successText: {
+    fontSize: 16,
+    fontWeight: '300',
+    lineHeight: 24,
   },
 });

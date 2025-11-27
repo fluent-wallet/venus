@@ -12,33 +12,18 @@ import { Trans, useTranslation } from 'react-i18next';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { showMessage } from 'react-native-flash-message';
 import BackupBottomSheet from './BackupBottomSheet';
+import { validateKey2Password } from '@utils/BSIMKey2PasswordValidation';
 
 type FormData = {
   password: string;
   confirm: string;
 };
 
-type PasswordValidation = {
-  hasLength: boolean;
-  hasLowerCase: boolean;
-  hasUpperCase: boolean;
-  hasNumber: boolean;
-};
-
-const validatePassword = (password: string): PasswordValidation => {
-  return {
-    hasLength: password.length >= 8,
-    hasLowerCase: /[a-z]/.test(password),
-    hasUpperCase: /[A-Z]/.test(password),
-    hasNumber: /[0-9]/.test(password),
-  };
-};
-
 export const BSIMStep1Password: React.FC<BackupScreenProps<typeof BackupBSIM1PasswordStackName>> = ({ route, navigation }) => {
   const { t } = useTranslation();
   const { colors } = useTheme();
   const [password, setPassword] = useState('');
-  const validation = useMemo(() => validatePassword(password), [password]);
+  const validation = useMemo(() => validateKey2Password(password), [password]);
   const [confirm, setConfirm] = useState(false);
 
   const [loading, setLoading] = useState(false);
@@ -107,7 +92,7 @@ export const BSIMStep1Password: React.FC<BackupScreenProps<typeof BackupBSIM1Pas
         rules={{
           required: true,
           validate: (value) => {
-            const v = validatePassword(value);
+            const v = validateKey2Password(value);
             return v.hasLength && v.hasLowerCase && v.hasUpperCase && v.hasNumber;
           },
         }}

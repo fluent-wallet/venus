@@ -1,6 +1,8 @@
 import { computeHmac, randomBytes } from 'ethers';
 import { BSIM_DEV_KEY } from './BSIMConstants';
 import * as Hex from 'ox/Hex';
+import { stripHexPrefix } from '@core/utils/base';
+import type { BsimQrPayload } from './BSIMTypes';
 function stringToBytes(str: string): Uint8Array {
   return new TextEncoder().encode(str);
 }
@@ -78,3 +80,19 @@ export function generatePasswordTag(password: string, iv: Uint8Array): Hex.Hex {
   // Return first 2 bytes as hex
   return Hex.from(hmacResult.slice(0, 2));
 }
+
+/**
+ * verify password
+ * @param password User password (key2)
+ * @param payload payload containing iv and pwd_tag
+ * @returns boolean
+ */
+export const verifyPasswordTag = (password: string, payload: Pick<BsimQrPayload, 'iv' | 'pwd_tag'>) => {
+  try {
+    const ivBytes = Hex.toBytes(`0x${payload.iv}`);
+    const expected = stripHexPrefix(generatePasswordTag(password, ivBytes)).toLowerCase();
+    return expected === payload.pwd_tag.toLowerCase();
+  } catch {
+    return false;
+  }
+};

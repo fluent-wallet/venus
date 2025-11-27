@@ -165,7 +165,8 @@
     "photos" : "相冊",
     "saving" : "保存中...",
     "successfully" : "成功",
-    "skip" : "跳過"
+    "skip" : "跳過",
+    "notice" : "提醒"
   },
   "home" : {
     "backup" : {
@@ -212,11 +213,14 @@
     "changeBPin.title": "安全提示",
     "changeBPin.describe": "此 BSIM 卡正在使用預設密碼。為了您的資產安全，您<1>必須設定新的 BPIN</1>才能使用錢包。",
     "changeBPin.button": "更改 BPIN",
-    "recoverBSIM.title": "提醒",
+    "recoverBSIM.title": "恢復 BSIM",
     "recoverBSIM.describe.part1": "此操作將使用您的備份<1>二維碼</1>和<3>備份密碼</3>將錢包恢復到此 BSIM 卡。",
     "recoverBSIM.describe.part2": "請確保您的新 BSIM 卡已正確插入。請確保您的二維碼和備份密碼是<1>正確的</1>。",
     "recoverBSIM.warning": "每張 BSIM 卡只能恢復一次。",
-    "recoverBSIM.invalidQRData": "無效的二維碼"
+    "recoverBSIM.invalidQRData": "無效的二維碼",
+    "recoverBSIM.pwdRule": "輸入8個字符，包括字母、數字和符號。",
+    "recoverBSIM.success": "恭喜！您已成功恢復 BSIM 錢包。在開始之前，我們建議您更改 BPIN 以確保資產安全。",
+    "recoverBSIM.invalidPassword": "密碼無效"
   },
   "receive" : {
     "clickHereToSelect" : "點擊以選擇",
