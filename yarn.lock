@@ -6280,6 +6280,24 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@tanstack/query-core@npm:5.90.11":
+  version: 5.90.11
+  resolution: "@tanstack/query-core@npm:5.90.11"
+  checksum: 4f8806c3d73e7d62bd66f43a175c45e0a3f099bec531aa40a4d9488e16b71b65d8c63b21955970fc780f0135d95ba515f0230832d664e17d93695db13510e015
+  languageName: node
+  linkType: hard
+
+"@tanstack/react-query@npm:^5.90.11":
+  version: 5.90.11
+  resolution: "@tanstack/react-query@npm:5.90.11"
+  dependencies:
+    "@tanstack/query-core": 5.90.11
+  peerDependencies:
+    react: ^18 || ^19
+  checksum: 95283fbe4d74f5defd7f92d35ce0bf208f6f4f6989dc80564baf4f771facc748e6d42169bed5939c0adf4622dafc48c547e58f38d7bec97936d13b138cb30dfe
+  languageName: node
+  linkType: hard
+
 "@trysound/sax@npm:0.2.0":
   version: 0.2.0
   resolution: "@trysound/sax@npm:0.2.0"
@@ -18555,6 +18573,7 @@ __metadata:
     "@reown/walletkit": ^1.1.1
     "@scure/bip32": ^1.7.0
     "@scure/bip39": ^1.6.0
+    "@tanstack/react-query": ^5.90.11
     "@types/jest": ^30.0.0
     "@types/lodash-es": ^4.17.12
     "@types/randombytes": ^2.0.3
