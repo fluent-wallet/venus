@@ -320,4 +320,21 @@ export class VaultService {
     }
     return this.cryptoTool.decrypt<string>(vault.data, password);
   }
+
+  async listVaults(): Promise<IVault[]> {
+    const vaults = await this.database.get<Vault>(TableName.Vault).query().fetch();
+    return Promise.all(vaults.map((vault) => this.toInterface(vault)));
+  }
+
+  async hasAnyVault(): Promise<boolean> {
+    const count = await this.database.get<Vault>(TableName.Vault).query().fetchCount();
+    return count > 0;
+  }
+
+  async deleteVault(vaultId: string): Promise<void> {
+    const vault = await this.database.get<Vault>(TableName.Vault).find(vaultId);
+    await this.database.write(async () => {
+      await vault.delete();
+    });
+  }
 }
