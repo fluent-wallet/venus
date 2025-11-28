@@ -1,17 +1,17 @@
-import type { Container } from 'inversify';
-import { container as coreContainer } from '@core/WalletCore/configs';
 import {
   AccountService,
-  NetworkService,
   AssetService,
+  type IAccount,
+  type IAsset,
+  type INetwork,
+  type ITransaction,
+  NetworkService,
   TransactionService,
   VaultService,
-  type IAccount,
-  type INetwork,
-  type IAsset,
-  type ITransaction,
 } from '@core/services';
+import { container as coreContainer } from '@core/WalletCore/configs';
 import { QueryClient } from '@tanstack/react-query';
+import type { Container } from 'inversify';
 
 let uiServiceContainer: Container | null = null;
 let uiQueryClient: QueryClient | null = null;

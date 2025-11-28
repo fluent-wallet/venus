@@ -16,6 +16,7 @@ export interface IAccount {
   index: number;
   hidden: boolean;
   selected: boolean;
+  currentAddressId: string | null;
 }
 
 /**

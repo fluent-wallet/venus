@@ -162,6 +162,8 @@ export class AccountService {
     const currentAddress = await account.currentNetworkAddress;
     const addressValue = currentAddress ? await currentAddress.getValue() : '';
 
+    const currentAddressId = currentAddress ? currentAddress.id : null;
+
     return {
       id: account.id,
       nickname: account.nickname,
@@ -174,6 +176,7 @@ export class AccountService {
       index: account.index,
       hidden: account.hidden,
       selected: account.selected,
+      currentAddressId,
     };
   }
 }
