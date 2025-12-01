@@ -107,6 +107,7 @@
     "@react-native/eslint-config": "0.79.2",
     "@react-native/metro-config": "^0.79.3",
     "@react-native/typescript-config": "0.79.2",
+    "@testing-library/react-native": "^13.3.3",
     "@types/jest": "^30.0.0",
     "@types/lodash-es": "^4.17.12",
     "@types/randombytes": "^2.0.3",

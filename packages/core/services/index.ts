@@ -5,15 +5,14 @@ export * from './signing';
 export * from './transaction';
 export * from './vault';
 
-import type { Container } from 'inversify';
 import { container as defaultContainer } from '@core/WalletCore/configs';
-
-import { VaultService } from './vault';
+import type { Container } from 'inversify';
 import { AccountService } from './account';
 import { AssetService } from './asset';
+import { NetworkService } from './network';
 import { SigningService } from './signing';
 import { TransactionService } from './transaction';
-import { NetworkService } from './network';
+import { VaultService } from './vault';
 
 export function registerServices(target: Container = defaultContainer): void {
   target.bind(VaultService).toSelf().inSingletonScope();
