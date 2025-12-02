@@ -1,20 +1,28 @@
-import { useTheme } from '@react-navigation/native';
-import { BiometricsWayStackName, type ChangeBPinStackName, type StackScreenProps } from '@router/configs';
 import BSIM from '@WalletCoreExtends/Plugins/BSIM';
-import { Image } from 'expo-image';
-import { Trans, useTranslation } from 'react-i18next';
-import { Pressable, ScrollView, StyleSheet, Text } from 'react-native';
 import SecurityNoticeImg from '@assets/images/securityNotice.webp';
 import Button from '@components/Button';
+import { useTheme } from '@react-navigation/native';
+import { BiometricsWayStackName, type ChangeBPinStackName, type StackScreenProps } from '@router/configs';
+import { handleBSIMHardwareUnavailable } from '@utils/handleBSIMHardwareUnavailable';
+import { Image } from 'expo-image';
 import { useCallback } from 'react';
+import { Trans, useTranslation } from 'react-i18next';
+import { Pressable, ScrollView, StyleSheet, Text } from 'react-native';
 
 export const ChangeBPin: React.FC<StackScreenProps<typeof ChangeBPinStackName>> = ({ navigation }) => {
   const { colors } = useTheme();
   const { t } = useTranslation();
 
   const handleChange = useCallback(async () => {
-    await BSIM.updateBPIN();
-    navigation.navigate(BiometricsWayStackName, { type: 'connectBSIM' });
+    try {
+      await BSIM.updateBPIN();
+      navigation.navigate(BiometricsWayStackName, { type: 'connectBSIM' });
+    } catch (error) {
+      if (handleBSIMHardwareUnavailable(error, navigation)) {
+        return;
+      }
+      throw error;
+    }
   }, [navigation]);
   const handleSkip = useCallback(() => {
     navigation.navigate(BiometricsWayStackName, { type: 'connectBSIM' });

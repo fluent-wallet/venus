@@ -1,11 +1,21 @@
+export type BSIMErrorMetadata = {
+  reason?: string;
+};
+
 export class BSIMError extends Error {
+  public readonly reason?: string;
+
   constructor(
     public code: string,
     public message: string,
+    metadata?: BSIMErrorMetadata,
   ) {
     super(message);
     this.code = code;
     this.message = message;
+    if (metadata?.reason) {
+      this.reason = metadata.reason;
+    }
   }
 }
 

@@ -1,37 +1,38 @@
 import { AuthenticationErrorCode, isAuthenticationCanceledError, isAuthenticationError } from '@WalletCoreExtends/Plugins/Authentication/errors';
 import ArrowRight from '@assets/icons/arrow-right2.svg';
 import {
-  snapPoints,
-  BottomSheetWrapper,
-  BottomSheetScrollContent,
-  BottomSheetHeader,
   BottomSheetFooter,
+  BottomSheetHeader,
   type BottomSheetMethods,
   BottomSheetRoute,
+  BottomSheetScrollContent,
+  BottomSheetWrapper,
+  snapPoints,
 } from '@components/BottomSheet';
 import Button from '@components/Button';
 import Checkbox from '@components/Checkbox';
 import HourglassLoading from '@components/Loading/Hourglass';
 import Text from '@components/Text';
+import database from '@core/database';
+import { queryAccountById } from '@core/database/models/Account/query';
+import { getAddressValueByNetwork } from '@core/database/models/Address/query';
+import { shortenAddress } from '@core/utils/address';
+import { getNthAccountOfHDKey } from '@core/utils/hdkey';
 import methods from '@core/WalletCore/Methods';
 import plugins from '@core/WalletCore/Plugins';
 import {
-  VaultType,
   useAccountGroupFromId,
   useAccountsOfGroupInManage,
   useCurrentAddress,
   useCurrentHdPath,
   useCurrentNetwork,
   useVaultOfGroup,
+  VaultType,
 } from '@core/WalletCore/Plugins/ReactInject';
-import database from '@core/database';
-import { queryAccountById } from '@core/database/models/Account/query';
-import { getAddressValueByNetwork } from '@core/database/models/Address/query';
-import { shortenAddress } from '@core/utils/address';
-import { getNthAccountOfHDKey } from '@core/utils/hdkey';
 import { useTheme } from '@react-navigation/native';
 import type { HDSettingStackName, StackScreenProps } from '@router/configs';
 import { isSmallDevice } from '@utils/deviceInfo';
+import { handleBSIMHardwareUnavailable } from '@utils/handleBSIMHardwareUnavailable';
 import { debounce } from 'lodash-es';
 import type React from 'react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -116,7 +117,11 @@ const HDManagement: React.FC<StackScreenProps<typeof HDSettingStackName>> = ({ n
         );
         setPageAccounts(newPageAccounts);
         setInCalc(false);
-      } catch (err) {
+      } catch (err: any) {
+        if (handleBSIMHardwareUnavailable(err, navigation)) {
+          return;
+        }
+
         if (isAuthenticationError(err) && isAuthenticationCanceledError(err)) {
           setInCalc(err.code);
         } else {

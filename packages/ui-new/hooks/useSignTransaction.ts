@@ -1,8 +1,8 @@
-import { BSIMError, BSIM_ERRORS } from '@WalletCoreExtends/Plugins/BSIM/BSIMSDK';
+import { BSIM_ERRORS, BSIMError } from '@WalletCoreExtends/Plugins/BSIM/BSIMSDK';
 import methods from '@core/WalletCore/Methods';
 import Plugins from '@core/WalletCore/Plugins';
 import { checkDiffInRange } from '@core/WalletCore/Plugins/BlockNumberTracker';
-import { NetworkType, VaultType, useCurrentAccount, useCurrentAddress, useCurrentNetwork, useVaultOfAccount } from '@core/WalletCore/Plugins/ReactInject';
+import { NetworkType, useCurrentAccount, useCurrentAddress, useCurrentNetwork, useVaultOfAccount, VaultType } from '@core/WalletCore/Plugins/ReactInject';
 import type { ITxEvm } from '@core/WalletCore/Plugins/Transaction/types';
 import { useCallback, useRef } from 'react';
 
@@ -47,14 +47,21 @@ export function useSignTransaction() {
           const [txRawPromise, cancel] = await Plugins.BSIM.signTransaction(tx.from, tx);
           return { txRawPromise, cancel };
         } catch (bsimError) {
-          const code = (bsimError as { code: string })?.code;
-          const message = (bsimError as { message: string })?.message;
+          if (bsimError instanceof BSIMError) {
+            if (bsimError.code === 'cancel') {
+              throw new SignTransactionCancelError();
+            }
+            throw bsimError;
+          }
+
+          // Fallback for unknown error types
+          const code = (bsimError as { code?: string })?.code;
+          const message = (bsimError as { message?: string })?.message;
           if (code === 'cancel') {
             throw new SignTransactionCancelError();
-          } else {
-            const errorMsg = BSIM_ERRORS[code?.toUpperCase()] || message || BSIM_ERRORS.default;
-            throw new BSIMError(code, errorMsg);
           }
+          const errorMsg = BSIM_ERRORS[code?.toUpperCase() ?? ''] || message || BSIM_ERRORS.DEFAULT;
+          throw new BSIMError(code ?? 'unknown', errorMsg);
         }
       } else {
         try {

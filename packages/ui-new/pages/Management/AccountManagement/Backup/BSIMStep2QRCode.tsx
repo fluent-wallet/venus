@@ -7,11 +7,13 @@ import Checkbox from '@components/Checkbox';
 import HourglassLoading from '@components/Loading/Hourglass';
 import { stripHexPrefix } from '@core/utils/base';
 import { useVaultFromId } from '@core/WalletCore/Plugins/ReactInject';
-import { useTheme } from '@react-navigation/native';
-import type { BackupBSIMQ2RCodeStackName, BackupScreenProps } from '@router/configs';
+import { useNavigation, useTheme } from '@react-navigation/native';
+import type { BackupBSIMQ2RCodeStackName, BackupScreenProps, StackNavigation } from '@router/configs';
 import { BSIM_QR_VERSION } from '@utils/BSIMConstants';
 import { encryptICCID, generateIV, generatePasswordTag } from '@utils/BSIMCrypto';
+import type { BsimQrPayload } from '@utils/BSIMTypes';
 import backToHome from '@utils/backToHome';
+import { handleBSIMHardwareUnavailable } from '@utils/handleBSIMHardwareUnavailable';
 import * as MediaLibrary from 'expo-media-library';
 import { Hex } from 'ox';
 import { useCallback, useEffect, useRef, useState } from 'react';
@@ -21,7 +23,6 @@ import { showMessage } from 'react-native-flash-message';
 import QRCode from 'react-native-qrcode-svg';
 import ViewShot from 'react-native-view-shot';
 import BackupBottomSheet from './BackupBottomSheet';
-import type { BsimQrPayload } from '@utils/BSIMTypes';
 
 export const BSIMStep2QRCode: React.FC<BackupScreenProps<typeof BackupBSIMQ2RCodeStackName>> = ({ route, navigation }) => {
   const { t } = useTranslation();
@@ -34,6 +35,7 @@ export const BSIMStep2QRCode: React.FC<BackupScreenProps<typeof BackupBSIMQ2RCod
   const qrCodeRef = useRef<ViewShot>(null);
   const [showSuccess, setShowSuccess] = useState(false);
 
+  const rootNavigation = useNavigation<StackNavigation>();
   useEffect(() => {
     (async () => {
       try {
@@ -72,6 +74,9 @@ export const BSIMStep2QRCode: React.FC<BackupScreenProps<typeof BackupBSIMQ2RCod
         setQrData(qrDataBase64);
       } catch (error: any) {
         console.error('Failed to generate QR code:', error);
+        if (handleBSIMHardwareUnavailable(error, rootNavigation)) {
+          return;
+        }
         showMessage({
           type: 'failed',
           message: error?.message,

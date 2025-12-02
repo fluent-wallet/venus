@@ -1,14 +1,16 @@
+import { getAuthentication } from '@WalletCoreExtends/index';
+import { isAuthenticationCanceledError, isAuthenticationError } from '@WalletCoreExtends/Plugins/Authentication/errors';
 import ArrowRight from '@assets/icons/arrow-right2.svg';
 import Delete from '@assets/icons/delete.svg';
 import Settings from '@assets/icons/settings.svg';
 import {
-  snapPoints,
-  BottomSheetWrapper,
-  BottomSheetScrollContent,
-  BottomSheetHeader,
   BottomSheetFooter,
+  BottomSheetHeader,
   type BottomSheetMethods,
   BottomSheetRoute,
+  BottomSheetScrollContent,
+  BottomSheetWrapper,
+  snapPoints,
 } from '@components/BottomSheet';
 import Button from '@components/Button';
 import HourglassLoading from '@components/Loading/Hourglass';
@@ -16,26 +18,26 @@ import Text from '@components/Text';
 import TextInput from '@components/TextInput';
 import methods from '@core/WalletCore/Methods';
 import plugins from '@core/WalletCore/Plugins';
-import { VaultType, useAccountsOfGroupInManage, useGroupFromId, useVaultOfGroup } from '@core/WalletCore/Plugins/ReactInject';
+import { useAccountsOfGroupInManage, useGroupFromId, useVaultOfGroup, VaultType } from '@core/WalletCore/Plugins/ReactInject';
 import useInAsync from '@hooks/useInAsync';
 import { AccountItemView } from '@modules/AccountsList';
-import { useTheme } from '@react-navigation/native';
+import { useNavigation, useTheme } from '@react-navigation/native';
 import {
   BackupBSIM1PasswordStackName,
   BackupStackName,
   BackupStep1StackName,
   type GroupSettingStackName,
   HDSettingStackName,
+  type StackNavigation,
   type StackScreenProps,
 } from '@router/configs';
+import { handleBSIMHardwareUnavailable } from '@utils/handleBSIMHardwareUnavailable';
 import type React from 'react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Keyboard, Pressable, StyleSheet, type TextInput as _TextInput } from 'react-native';
+import { type TextInput as _TextInput, Keyboard, Pressable, StyleSheet } from 'react-native';
 import { showMessage } from 'react-native-flash-message';
 import DeleteConfirm from './DeleteConfirm';
-import { isAuthenticationCanceledError, isAuthenticationError } from '@WalletCoreExtends/Plugins/Authentication/errors';
-import { getAuthentication } from '@WalletCoreExtends/index';
 
 const GroupConfig: React.FC<StackScreenProps<typeof GroupSettingStackName>> = ({ navigation, route }) => {
   const { colors } = useTheme();
@@ -46,6 +48,7 @@ const GroupConfig: React.FC<StackScreenProps<typeof GroupSettingStackName>> = ({
   const accountGroup = useGroupFromId(route.params.groupId);
   const vault = useVaultOfGroup(route.params.groupId);
   const accounts = useAccountsOfGroupInManage(route.params.groupId);
+  const rootNavigation = useNavigation<StackNavigation>();
 
   const GroupTitle = useMemo(
     () => (!vault?.type ? 'Group' : vault?.type === VaultType.HierarchicalDeterministic ? t('account.group.title.seed') : t('account.group.title.BSIM')),
@@ -114,9 +117,16 @@ const GroupConfig: React.FC<StackScreenProps<typeof GroupSettingStackName>> = ({
     navigation.navigate(BackupStackName, { screen: BackupStep1StackName, params: { groupId: route.params.groupId } });
   }, [navigation, route.params.groupId]);
 
-  const handleChangeBSIMPin = useCallback(() => {
-    plugins.BSIM.updateBPIN();
-  }, []);
+  const handleChangeBSIMPin = useCallback(async () => {
+    try {
+      await plugins.BSIM.updateBPIN();
+    } catch (error) {
+      if (handleBSIMHardwareUnavailable(error, rootNavigation)) {
+        return;
+      }
+      throw error;
+    }
+  }, [rootNavigation]);
 
   const renderByVaultType = useCallback(
     <A, B>(HD: A, BSIM: B): A | B => {

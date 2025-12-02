@@ -4,15 +4,16 @@ import Button from '@components/Button';
 import Checkbox from '@components/Checkbox';
 import HourglassLoading from '@components/Loading/Hourglass';
 import TextInput from '@components/TextInput';
-import { useTheme } from '@react-navigation/native';
-import { type BackupBSIM1PasswordStackName, BackupBSIMQ2RCodeStackName, type BackupScreenProps } from '@router/configs';
+import { useNavigation, useTheme } from '@react-navigation/native';
+import { type BackupBSIM1PasswordStackName, BackupBSIMQ2RCodeStackName, type BackupScreenProps, type StackNavigation } from '@router/configs';
+import { validateKey2Password } from '@utils/BSIMKey2PasswordValidation';
+import { handleBSIMHardwareUnavailable } from '@utils/handleBSIMHardwareUnavailable';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { Trans, useTranslation } from 'react-i18next';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { showMessage } from 'react-native-flash-message';
 import BackupBottomSheet from './BackupBottomSheet';
-import { validateKey2Password } from '@utils/BSIMKey2PasswordValidation';
 
 type FormData = {
   password: string;
@@ -25,7 +26,7 @@ export const BSIMStep1Password: React.FC<BackupScreenProps<typeof BackupBSIM1Pas
   const [password, setPassword] = useState('');
   const validation = useMemo(() => validateKey2Password(password), [password]);
   const [confirm, setConfirm] = useState(false);
-
+  const rootNavigation = useNavigation<StackNavigation>();
   const [loading, setLoading] = useState(false);
   const cancelRequestRef = useRef<(() => void) | null>(null);
   const {
@@ -72,13 +73,16 @@ export const BSIMStep1Password: React.FC<BackupScreenProps<typeof BackupBSIM1Pas
 
         navigation.navigate(BackupBSIMQ2RCodeStackName, { backupPassword: confirm, seedData, vaultId: route.params.vaultId });
       } catch (error: any) {
+        if (handleBSIMHardwareUnavailable(error, rootNavigation)) {
+          return;
+        }
         showMessage({ type: 'failed', message: error.message });
       } finally {
         setLoading(false);
         cancelRequestRef.current = null;
       }
     },
-    [navigation, route.params.vaultId],
+    [navigation, rootNavigation, route.params.vaultId],
   );
 
   return (

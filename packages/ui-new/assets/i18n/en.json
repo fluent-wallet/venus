@@ -563,5 +563,12 @@
     },
     "getStarted" : "Get Started",
     "importExistingWallet" : "Import existing wallet"
+  },
+  "bsim": {
+    "availability": {
+      "title": "No BSIM card detected!",
+      "androidCardMissing": "No BSIM card detected. Please make sure the card is inserted in SIM Slot 1.",
+      "iosNoCardBluetooth": "No BSIM card detected. Please make sure your Bluetooth is turned on."
+    }
   }
 }

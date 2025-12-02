@@ -1,7 +1,7 @@
-import ExistWallet from '@assets/icons/wallet-Imported.webp';
 import BSIMCardWallet from '@assets/icons/wallet-bsim.webp';
 import HDWallet from '@assets/icons/wallet-hd.webp';
-import { BottomSheetWrapper, BottomSheetContent, BottomSheetHeader, type BottomSheetMethods, BottomSheetRoute } from '@components/BottomSheet';
+import ExistWallet from '@assets/icons/wallet-Imported.webp';
+import { BottomSheetContent, BottomSheetHeader, type BottomSheetMethods, BottomSheetRoute, BottomSheetWrapper } from '@components/BottomSheet';
 import HourglassLoading from '@components/Loading/Hourglass';
 import Text from '@components/Text';
 import plugins from '@core/WalletCore/Plugins';
@@ -14,6 +14,7 @@ import ImportExistingWallet from '@pages/WayToInitWallet/ImportExistingWallet';
 import { useTheme } from '@react-navigation/native';
 import type { AccountManagementStackName, StackScreenProps } from '@router/configs';
 import { OS, screenHeight } from '@utils/deviceInfo';
+import { handleBSIMHardwareUnavailable } from '@utils/handleBSIMHardwareUnavailable';
 import { Image } from 'expo-image';
 import type React from 'react';
 import { useCallback, useRef, useState } from 'react';
@@ -47,13 +48,15 @@ const AddAnotherWallet: React.FC<Props> = ({ navigation }) => {
           duration: 1500,
         });
       }
-    } catch (error) {
+    } catch (error: any) {
+      if (handleBSIMHardwareUnavailable(error, navigation)) {
+        return;
+      }
       showNotFindBSIMCardMessage();
     } finally {
       navigation.setOptions({ gestureEnabled: false });
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [navigation, t]);
   const { inAsync: inConnecting, execAsync: handleConnectBSIMCard } = useInAsync(_handleConnectBSIMCard);
 
   const _handleCreateNewHdWallet = useCallback(async () => {

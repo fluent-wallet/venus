@@ -4,11 +4,11 @@ import ArrowLeft from '@assets/icons/arrow-left2.svg';
 import FailedIcon from '@assets/icons/message-fail.svg';
 import BSIMCardWallet from '@assets/icons/wallet-bsim.webp';
 import {
-  BottomSheetWrapper,
-  BottomSheetScrollContent,
   BottomSheetFooter,
-  type BottomSheetMethods,
   BottomSheetHeader,
+  type BottomSheetMethods,
+  BottomSheetScrollContent,
+  BottomSheetWrapper,
   InlineBottomSheet,
 } from '@components/BottomSheet';
 import Button from '@components/Button';
@@ -91,7 +91,7 @@ export const useBSIMVerify = () => {
   }, []);
 
   const setBSIMEvent = useCallback((event: BSIMEvent | null) => {
-    if (event && typeof event.message === 'string' && event.message.includes(BSIM_ERRORS.cancel)) return;
+    if (event && typeof event.message === 'string' && event.message.includes(BSIM_ERRORS.CANCEL)) return;
     _setBSIMEvent(event);
   }, []);
 

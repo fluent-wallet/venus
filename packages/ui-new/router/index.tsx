@@ -1,8 +1,16 @@
+import { getEventBus } from '@WalletCoreExtends/index';
+import { AUTHENTICATION_PASSWORD_REQUEST } from '@WalletCoreExtends/Plugins/Authentication';
+import Button from '@components/Button';
 import { useHasVault } from '@core/WalletCore/Plugins/ReactInject';
+import SpeedUp from '@modules/GasFee/SpeedUp';
 import PasswordVerify from '@modules/PasswordVerify';
+import { BSIMAvailability } from '@pages/BSIMAvailability';
+import ExternalInputHandler, { useListenDeepLink } from '@pages/ExternalInputHandler';
 import Home from '@pages/Home';
 import BiometricsWay from '@pages/InitWallet/BiometricsWay';
+import { ChangeBPin } from '@pages/InitWallet/ChangeBPIN';
 import PasswordWay from '@pages/InitWallet/PasswordWay';
+import { RecoverBSIM } from '@pages/InitWallet/RecoverBSIM';
 import AccountManagement from '@pages/Management/AccountManagement';
 import AccountSetting from '@pages/Management/AccountManagement/AccountSetting';
 import AddAnotherWallet from '@pages/Management/AccountManagement/AddAnotherWallet';
@@ -10,8 +18,9 @@ import Backup from '@pages/Management/AccountManagement/Backup';
 import EraseAllWallet from '@pages/Management/AccountManagement/EraseAllWallet';
 import GroupSetting from '@pages/Management/AccountManagement/GroupSetting';
 import HDSetting from '@pages/Management/AccountManagement/HDSetting';
+import NetworkManagement from '@pages/Management/NetworkManagement';
+import NetworkAddNewEndpoint from '@pages/Management/NetworkManagement/AddNewEndpoint';
 import Receive from '@pages/Receive';
-import ExternalInputHandler, { useListenDeepLink } from '@pages/ExternalInputHandler';
 import SendTransaction from '@pages/SendTransaction';
 import Settings from '@pages/Settings';
 import AboutUs, { UpdateVersion } from '@pages/Settings/AboutUs';
@@ -19,63 +28,56 @@ import Appearance from '@pages/Settings/Appearance';
 import Language from '@pages/Settings/Language';
 import Preferences from '@pages/Settings/Preferences';
 import SignatureRecords from '@pages/SignatureRecords';
+import TooManyPending from '@pages/TooManyPending';
+import TransactionDetail from '@pages/TransactionDetail';
 import WalletConnect from '@pages/WalletConnect';
 import { useListenWalletConnectEvent } from '@pages/WalletConnect/useWalletConnectHooks';
 import WayToInitWallet from '@pages/WayToInitWallet';
 import Welcome from '@pages/Welcome';
-import NetworkManagement from '@pages/Management/NetworkManagement';
-import NetworkAddNewEndpoint from '@pages/Management/NetworkManagement/AddNewEndpoint';
-import SpeedUp from '@modules/GasFee/SpeedUp';
-import TooManyPending from '@pages/TooManyPending';
 import { useNavigation, useTheme } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import type React from 'react';
 import { useEffect } from 'react';
-import { View, StatusBar } from 'react-native';
-import Header from './Header';
+import { useTranslation } from 'react-i18next';
+import { StatusBar, View } from 'react-native';
 import {
   AboutUsStackName,
-  UpdateVersionStackName,
   AccountManagementStackName,
   AccountSettingStackName,
   AddAnotherWalletStackName,
   AppearanceStackName,
   BackupStackName,
   BiometricsWayStackName,
+  BSIMAvailabilityStackName,
+  ChangeBPinStackName,
   EraseAllWalletStackName,
+  ExternalInputHandlerStackName,
   GroupSettingStackName,
   HDSettingStackName,
   HomeStackName,
   LanguageStackName,
+  NetworkAddNewEndpointStackName,
+  NetworkManagementStackName,
   PasswordVerifyStackName,
   PasswordWayStackName,
   PreferencesStackName,
   ReceiveStackName,
+  RecoverBsimStackName,
   type RootStackParamList,
-  ExternalInputHandlerStackName,
   SendTransactionStackName,
   SettingsStackName,
   SheetBottomOption,
   SignatureRecordsStackName,
+  SpeedUpStackName,
   type StackNavigation,
+  TooManyPendingStackName,
+  TransactionDetailStackName,
+  UpdateVersionStackName,
   WalletConnectStackName,
   WayToInitWalletStackName,
   WelcomeStackName,
-  NetworkManagementStackName,
-  NetworkAddNewEndpointStackName,
-  SpeedUpStackName,
-  TransactionDetailStackName,
-  TooManyPendingStackName,
-  ChangeBPinStackName,
-  RecoverBsimStackName,
 } from './configs';
-import TransactionDetail from '@pages/TransactionDetail';
-import { useTranslation } from 'react-i18next';
-import { getEventBus } from '@WalletCoreExtends/index';
-import { AUTHENTICATION_PASSWORD_REQUEST } from '@WalletCoreExtends/Plugins/Authentication';
-import Button from '@components/Button';
-import { ChangeBPin } from '@pages/InitWallet/ChangeBPIN';
-import { RecoverBSIM } from '@pages/InitWallet/RecoverBSIM';
+import Header from './Header';
 
 const RootStack = createNativeStackNavigator<RootStackParamList>();
 const screenOptions = {
@@ -143,6 +145,7 @@ const Router: React.FC = () => {
         <RootStack.Screen name={SpeedUpStackName} component={SpeedUp} options={SheetBottomOption} />
         <RootStack.Screen name={TooManyPendingStackName} component={TooManyPending} options={SheetBottomOption} />
         <RootStack.Screen name={TransactionDetailStackName} component={TransactionDetail} options={{ title: t('tx.detail.title') }} />
+        <RootStack.Screen name={BSIMAvailabilityStackName} component={BSIMAvailability} options={SheetBottomOption} />
       </RootStack.Navigator>
     </View>
   );

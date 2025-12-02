@@ -563,5 +563,12 @@
     },
     "getStarted" : "開始使用",
     "importExistingWallet" : "導入已有錢包"
+  },
+   "bsim": {
+    "availability": {
+      "title": "未偵測到 BSIM 卡!",
+      "androidCardMissing": "未偵測到 BSIM 卡。請確認卡片已插入 SIM 卡槽 1。",
+      "iosNoCardBluetooth": "未偵測到 BSIM 卡。請確認您的藍牙已開啟。"
+    }
   }
 }

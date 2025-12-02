@@ -1,8 +1,8 @@
 import i18n from '@assets/i18n';
 import ArrowRight from '@assets/icons/arrow-right.svg';
+import WelcomeBgDark from '@assets/images/welcome-bg-dark.webp';
 import WelcomeSwiftShieldEN from '@assets/images/welcome-SwiftShield-en.webp';
 import WelcomeSwiftShieldZH from '@assets/images/welcome-SwiftShield-zh.webp';
-import WelcomeBgDark from '@assets/images/welcome-bg-dark.webp';
 import Button from '@components/Button';
 import Text from '@components/Text';
 import plugins from '@core/WalletCore/Plugins';
@@ -10,6 +10,7 @@ import { Lang, useLanguage } from '@hooks/useI18n';
 import useInAsync from '@hooks/useInAsync';
 import { useTheme } from '@react-navigation/native';
 import { BiometricsWayStackName, ChangeBPinStackName, RecoverBsimStackName, type StackScreenProps, type WayToInitWalletStackName } from '@router/configs';
+import { handleBSIMHardwareUnavailable } from '@utils/handleBSIMHardwareUnavailable';
 import { Image } from 'expo-image';
 import type React from 'react';
 import { useCallback, useRef } from 'react';
@@ -47,7 +48,10 @@ const WayToInitWallet: React.FC<StackScreenProps<typeof WayToInitWalletStackName
         return navigation.navigate(RecoverBsimStackName);
       }
       navigation.navigate(ChangeBPinStackName);
-    } catch (error) {
+    } catch (error: any) {
+      if (handleBSIMHardwareUnavailable(error, navigation)) {
+        return;
+      }
       showNotFindBSIMCardMessage();
     } finally {
       navigation.setOptions({ gestureEnabled: false });

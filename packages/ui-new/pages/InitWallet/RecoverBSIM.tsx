@@ -1,21 +1,22 @@
+import SuccessfullyIcon from '@assets/icons/successful.svg';
+import WarnIcon from '@assets/icons/warn.svg';
+import RecoverBSIMImg from '@assets/images/recoverBSIM.svg';
+import { BottomSheetContent, BottomSheetFooter, BottomSheetHeader, BottomSheetWrapper, InlineBottomSheet, snapPoints } from '@components/BottomSheet';
+import Button from '@components/Button';
+import CustomTextInput from '@components/TextInput';
+import Plugins from '@core/WalletCore/Plugins';
+import QrScannerSheet, { type ParseResult } from '@pages/ExternalInputHandler/QrScannerSheet';
 import { StackActions, useNavigation, useTheme } from '@react-navigation/native';
+import { ChangeBPinStackName, type StackNavigation } from '@router/configs';
+import { verifyPasswordTag } from '@utils/BSIMCrypto';
+import { validateKey2Password } from '@utils/BSIMKey2PasswordValidation';
+import type { BsimQrPayload } from '@utils/BSIMTypes';
+import { handleBSIMHardwareUnavailable } from '@utils/handleBSIMHardwareUnavailable';
+import { useCallback, useState } from 'react';
+import { Controller, useForm } from 'react-hook-form';
 import { Trans, useTranslation } from 'react-i18next';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
-import RecoverBSIMImg from '@assets/images/recoverBSIM.svg';
-import WarnIcon from '@assets/icons/warn.svg';
-import Button from '@components/Button';
-import { useCallback, useState } from 'react';
-import QrScannerSheet, { type ParseResult } from '@pages/ExternalInputHandler/QrScannerSheet';
-import type { BsimQrPayload } from '@utils/BSIMTypes';
-import { BottomSheetContent, BottomSheetFooter, BottomSheetHeader, BottomSheetWrapper, InlineBottomSheet, snapPoints } from '@components/BottomSheet';
-import { Controller, useForm } from 'react-hook-form';
-import CustomTextInput from '@components/TextInput';
-import SuccessfullyIcon from '@assets/icons/successful.svg';
-import { verifyPasswordTag } from '@utils/BSIMCrypto';
 import { showMessage } from 'react-native-flash-message';
-import Plugins from '@core/WalletCore/Plugins';
-import { ChangeBPinStackName } from '@router/configs';
-import { validateKey2Password } from '@utils/BSIMKey2PasswordValidation';
 
 type RecoverFormData = {
   password: string;
@@ -32,7 +33,7 @@ export const RecoverBSIM = () => {
 
   const [bsimQrPayload, setBsimQrPayload] = useState<BsimQrPayload | null>(null);
 
-  const navigation = useNavigation();
+  const navigation = useNavigation<StackNavigation>();
 
   const {
     control,
@@ -60,6 +61,9 @@ export const RecoverBSIM = () => {
     try {
       await Plugins.BSIM.restoreSeed(data.password, bsimQrPayload.seed_ct);
     } catch (error: any) {
+      if (handleBSIMHardwareUnavailable(error, navigation)) {
+        return;
+      }
       showMessage({ type: 'failed', message: error.message });
       return;
     }
