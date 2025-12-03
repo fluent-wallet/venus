@@ -31,7 +31,7 @@ import {
   TransportErrorCode,
 } from 'react-native-bsim';
 import { catchError, defer, firstValueFrom, from, retry, Subject, takeUntil, throwError, timeout, timer } from 'rxjs';
-import { BSIM_ERRORS, BSIM_SUPPORT_ACCOUNT_LIMIT, BSIMErrorEndTimeout } from './BSIMSDK';
+import { BSIM_ERRORS, BSIM_SUPPORT_ACCOUNT_LIMIT, BSIMErrorEndTimeout, isCardNotCertification } from './BSIMSDK';
 
 const ETHEREUM_COIN_TYPE = COIN_TYPE_CONFIG.ETHEREUM.index;
 
@@ -404,12 +404,22 @@ export class BSIMPluginClass implements Plugin {
   };
 
   public connectBSIM = async () => {
-    const list = await this.getBSIMList();
-    if (list?.length > 0) {
-      return list.slice(0, 1);
-    } else {
-      const created = await this.createNewBSIMAccount();
-      return [created];
+    try {
+      const list = await this.getBSIMList();
+      if (list?.length > 0) {
+        return list.slice(0, 1);
+      } else {
+        const created = await this.createNewBSIMAccount();
+        return [created];
+      }
+    } catch (error: unknown) {
+      if (error instanceof BSIMError && isCardNotCertification(error)) {
+        // in recovery mode need to create new account
+        const created = await this.createNewBSIMAccount();
+        return [created];
+      }
+
+      throw error;
     }
   };
 

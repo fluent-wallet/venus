@@ -2,7 +2,7 @@ import { BSIMError, CARD_ERROR_MESSAGES } from 'react-native-bsim';
 
 export { BSIMError };
 
-const CARD_ERROR_LOOKUP: Record<string, string> = { ...CARD_ERROR_MESSAGES };
+const CARD_ERROR_LOOKUP = { ...CARD_ERROR_MESSAGES };
 
 export const BSIM_ERRORS: Record<string, string> = {
   ...CARD_ERROR_LOOKUP,
@@ -10,6 +10,8 @@ export const BSIM_ERRORS: Record<string, string> = {
   DEFAULT: 'BSIM error, unknown error.',
   CANCEL: 'User canceled the operation.',
 };
+
+export const isCardNotCertification = (error: BSIMError) => error.code?.toUpperCase() === '6A88';
 
 export const BSIM_SUPPORT_ACCOUNT_LIMIT = 127; // by now bism only support 127 accounts;
 
