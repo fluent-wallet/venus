@@ -4,7 +4,7 @@ import type { Address } from '@core/database/models/Address';
 import type { Asset } from '@core/database/models/Asset';
 import type { Network } from '@core/database/models/Network';
 import type { Tx } from '@core/database/models/Tx';
-import { TxStatus as DbTxStatus, TxSource } from '@core/database/models/Tx/type';
+import { TxStatus as DbTxStatus, FINISHED_IN_ACTIVITY_TX_STATUSES, PENDING_TX_STATUSES, TxSource } from '@core/database/models/Tx/type';
 import type { TxExtra } from '@core/database/models/TxExtra';
 import type { TxPayload } from '@core/database/models/TxPayload';
 import TableName from '@core/database/TableName';
@@ -12,8 +12,9 @@ import { SigningService } from '@core/services/signing';
 import { AssetType, type IChainProvider, TxStatus as ServiceTxStatus, type TransactionParams, type UnsignedTransaction } from '@core/types';
 import type { ProcessErrorType } from '@core/utils/eth';
 import { SERVICE_IDENTIFIER } from '@core/WalletCore/service';
+import { Q } from '@nozbe/watermelondb';
 import { inject, injectable } from 'inversify';
-import type { ITransaction, SendERC20Input, SendTransactionInput } from './types';
+import type { ITransaction, RecentlyAddress, SendERC20Input, SendTransactionInput, TransactionFilter } from './types';
 
 @injectable()
 export class TransactionService {
@@ -249,6 +250,144 @@ export class TransactionService {
     return tx;
   }
 
+  // get transactions list by filters
+  async listTransactions(filter: TransactionFilter): Promise<ITransaction[]> {
+    const { addressId, status = 'all', limit } = filter;
+    const query = this.createTxQuery(addressId, status);
+    const txs = await query.fetch();
+    const sliced = typeof limit === 'number' && limit >= 0 ? txs.slice(0, limit) : txs;
+    return Promise.all(sliced.map((tx) => this.toInterface(tx)));
+  }
+
+  async getTransactionById(txId: string): Promise<ITransaction | null> {
+    try {
+      const tx = await this.database.get<Tx>(TableName.Tx).find(txId);
+      return this.toInterface(tx);
+    } catch {
+      return null;
+    }
+  }
+
+  // get recently addresses
+  async getRecentlyAddresses(addressId: string, limit = 20): Promise<RecentlyAddress[]> {
+    if (limit <= 0) {
+      return [];
+    }
+
+    const ownerAddress = await this.findAddress(addressId);
+    const ownerVariants = await this.buildAddressVariants(ownerAddress);
+    const localAddressSet = await this.buildLocalAddressSet();
+    const txs = await this.createTxQuery(addressId, 'all').fetch();
+
+    const peers = new Map<string, RecentlyAddress>();
+    for (const tx of txs) {
+      const payload = await tx.txPayload.fetch();
+      const peer = await this.resolvePeerAddress(tx, payload, ownerVariants);
+      if (!peer) {
+        continue;
+      }
+
+      const normalized = peer.valueNormalized;
+      const isLocal = localAddressSet.has(normalized);
+      const snapshot: RecentlyAddress = {
+        addressValue: peer.addressValue,
+        direction: peer.direction,
+        isLocalAccount: isLocal,
+        lastUsedAt: peer.lastUsedAt,
+      };
+
+      const existing = peers.get(normalized);
+      if (!existing || snapshot.lastUsedAt > existing.lastUsedAt) {
+        peers.set(normalized, snapshot);
+      }
+    }
+
+    return Array.from(peers.values())
+      .sort((a, b) => b.lastUsedAt - a.lastUsedAt)
+      .slice(0, limit);
+  }
+
+  private createTxQuery(addressId: string, status: TransactionFilter['status'] = 'all') {
+    const clauses: Q.Clause[] = [
+      Q.where('address_id', addressId),
+      Q.where('is_temp_replaced', Q.notEq(true)),
+      ...this.buildStatusClauses(status),
+      Q.sortBy('send_at', Q.desc),
+      Q.sortBy('created_at', Q.desc),
+    ];
+
+    return this.database.get<Tx>(TableName.Tx).query(...clauses);
+  }
+
+  // build status clauses
+  private buildStatusClauses(status: TransactionFilter['status']): Q.Clause[] {
+    if (status === 'pending') {
+      return [Q.where('status', Q.oneOf(PENDING_TX_STATUSES))];
+    }
+    if (status === 'finished') {
+      return [Q.where('status', Q.oneOf(FINISHED_IN_ACTIVITY_TX_STATUSES))];
+    }
+    return [Q.where('status', Q.notEq(DbTxStatus.SEND_FAILED))];
+  }
+
+  // build address variants
+  private async buildAddressVariants(address: Address): Promise<Set<string>> {
+    const variants = new Set<string>();
+    const networkValue = await address.getValue();
+    variants.add(networkValue.toLowerCase());
+    variants.add(address.hex.toLowerCase());
+    variants.add(address.base32.toLowerCase());
+    return variants;
+  }
+
+  // build local address set
+  private async buildLocalAddressSet(): Promise<Set<string>> {
+    const addresses = await this.database.get<Address>(TableName.Address).query().fetch();
+    const values = new Set<string>();
+    for (const item of addresses) {
+      if (item.hex) values.add(item.hex.toLowerCase());
+      if (item.base32) values.add(item.base32.toLowerCase());
+    }
+    return values;
+  }
+
+  // get peer address by tx
+  private async resolvePeerAddress(
+    tx: Tx,
+    payload: TxPayload,
+    ownerVariants: Set<string>,
+  ): Promise<{ addressValue: string; valueNormalized: string; direction: 'inbound' | 'outbound'; lastUsedAt: number } | null> {
+    const lowerCaseFrom = this.toLowerCaseAddress(payload.from);
+    const lowerCaseTo = this.toLowerCaseAddress(payload.to);
+
+    if (lowerCaseFrom && ownerVariants.has(lowerCaseFrom)) {
+      const peerValue = payload.to ?? null;
+      if (!peerValue) return null;
+      return {
+        addressValue: peerValue,
+        valueNormalized: peerValue.toLowerCase(),
+        direction: 'outbound',
+        lastUsedAt: tx.sendAt?.getTime() ?? tx.createdAt.getTime(),
+      };
+    }
+
+    if (lowerCaseTo && ownerVariants.has(lowerCaseTo)) {
+      const peerValue = payload.from ?? null;
+      if (!peerValue) return null;
+      return {
+        addressValue: peerValue,
+        valueNormalized: peerValue.toLowerCase(),
+        direction: 'inbound',
+        lastUsedAt: tx.sendAt?.getTime() ?? tx.createdAt.getTime(),
+      };
+    }
+
+    return null;
+  }
+
+  private toLowerCaseAddress(value?: string | null): string | null {
+    return value ? value.toLowerCase() : null;
+  }
   private async toInterface(tx: Tx): Promise<ITransaction> {
     const address = await tx.address.fetch();
     const network = await address.network.fetch();

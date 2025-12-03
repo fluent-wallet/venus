@@ -7,6 +7,7 @@ import {
   type ITransaction,
   type IVault,
   NetworkService,
+  type RecentlyAddress,
   TransactionService,
   VaultService,
 } from '@core/services';
@@ -17,7 +18,7 @@ import type { Container } from 'inversify';
 let uiServiceContainer: Container | null = null;
 let uiQueryClient: QueryClient | null = null;
 
-export type { IAccount, INetwork, IAsset, ITransaction, IVault };
+export type { IAccount, INetwork, IAsset, ITransaction, IVault, RecentlyAddress };
 
 export function setUiServiceContainer(container: Container) {
   uiServiceContainer = container;

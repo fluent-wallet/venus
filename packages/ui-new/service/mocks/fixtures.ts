@@ -1,8 +1,8 @@
 import { AssetSource } from '@core/database/models/Asset';
 import { ChainType, NetworkType } from '@core/database/models/Network';
 import VaultType from '@core/database/models/Vault/VaultType';
-import { AssetType } from '@core/types';
-import type { IAccount, IAsset, INetwork, IVault } from '../core';
+import { AssetType, TxStatus } from '@core/types';
+import type { IAccount, IAsset, INetwork, ITransaction, IVault, RecentlyAddress } from '../core';
 
 export const mockAccount: IAccount = {
   id: 'acc_1',
@@ -60,4 +60,22 @@ export const mockVault: IVault = {
   source: 'create' as never,
   isGroup: false,
   accountGroupId: 'group_1',
+};
+
+export const mockTransaction: ITransaction = {
+  id: 'tx_1',
+  hash: '0xhash',
+  from: '0xaaa',
+  to: '0xbbb',
+  value: '1',
+  status: TxStatus.Pending,
+  timestamp: 1_700_000_000_000,
+  networkId: 'net_1',
+};
+
+export const mockRecentlyAddress: RecentlyAddress = {
+  addressValue: '0xccc',
+  direction: 'inbound',
+  isLocalAccount: true,
+  lastUsedAt: 1_700_000_100_000,
 };

@@ -1,5 +1,18 @@
 import type { Address, AssetType, Hex, TxStatus } from '@core/types';
 
+export interface TransactionFilter {
+  addressId: string;
+  status?: 'pending' | 'finished' | 'all';
+  limit?: number;
+}
+
+export interface RecentlyAddress {
+  addressValue: Address;
+  direction: 'inbound' | 'outbound';
+  isLocalAccount: boolean;
+  lastUsedAt: number;
+}
+
 export interface SendTransactionInput {
   addressId: string;
   to: Address;
