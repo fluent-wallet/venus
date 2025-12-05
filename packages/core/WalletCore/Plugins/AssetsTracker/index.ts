@@ -1,11 +1,11 @@
-import { Networks } from '../../../utils/consts';
-import { ChainType, NetworkType } from './../../../database/models/Network';
-import { fetchAssetsBalance, fetchAssetsBalanceBatch, fetchAssetsBalanceMulticall } from './fetchers/basic';
-import { fetchESpaceServer } from './fetchers/eSpaceServer';
-import type { FetchAssetBalance } from './types';
 import type { IPlugin } from '@core/WalletCore/plugin';
 import { SERVICE_IDENTIFIER } from '@core/WalletCore/service';
+import { ChainType, NetworkType } from './../../../database/models/Network';
+import { Networks } from '../../../utils/consts';
+import { fetchAssetsBalance, fetchAssetsBalanceBatch, fetchAssetsBalanceMulticall } from './fetchers/basic';
+import { fetchESpaceServer } from './fetchers/eSpaceServer';
 import { AssetsTrackerServer } from './server';
+import type { FetchAssetBalance } from './types';
 
 export const AssetsTrackerPlugin: IPlugin = {
   name: SERVICE_IDENTIFIER.ASSETS_TRACKER,

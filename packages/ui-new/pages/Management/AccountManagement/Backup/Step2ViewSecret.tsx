@@ -1,12 +1,13 @@
+import { isAuthenticationCanceledError, isAuthenticationError } from '@WalletCoreExtends/Plugins/Authentication/errors';
 import CheckIcon from '@assets/icons/check.svg';
 import Copy from '@assets/icons/copy.svg';
 import MaskPrivateKey from '@assets/images/mask-private-key.webp';
 import MaskSeedPhrase from '@assets/images/mask-seed-phrase.webp';
+import { BottomSheetFooter, BottomSheetScrollContent } from '@components/BottomSheet';
 import Button from '@components/Button';
 import Text from '@components/Text';
-import { BottomSheetScrollContent, BottomSheetFooter } from '@components/BottomSheet';
 import methods from '@core/WalletCore/Methods';
-import { VaultSourceType, VaultType, useCurrentAddressOfAccount, useVaultOfGroup } from '@core/WalletCore/Plugins/ReactInject';
+import { useCurrentAddressOfAccount, useVaultOfGroup, VaultSourceType, VaultType } from '@core/WalletCore/Plugins/ReactInject';
 import useInAsync from '@hooks/useInAsync';
 import Clipboard from '@react-native-clipboard/clipboard';
 import { useTheme } from '@react-navigation/native';
@@ -21,7 +22,6 @@ import { Pressable, StyleSheet, View } from 'react-native';
 import { showMessage } from 'react-native-flash-message';
 import QRCode from 'react-native-qrcode-svg';
 import BackupBottomSheet from './BackupBottomSheet';
-import { isAuthenticationCanceledError, isAuthenticationError } from '@WalletCoreExtends/Plugins/Authentication/errors';
 
 const BackupStep2ViewSecret: React.FC<BackupScreenProps<typeof BackupStep2StackName>> = ({ route, navigation }) => {
   const { colors } = useTheme();

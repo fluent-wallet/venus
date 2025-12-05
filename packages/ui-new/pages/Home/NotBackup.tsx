@@ -1,6 +1,6 @@
 import Img from '@assets/images/fundsAtRisk.webp';
 import Text from '@components/Text';
-import { VaultSourceType, VaultType, useCurrentAccount, useGroupOfAccount, useVaultOfAccount } from '@core/WalletCore/Plugins/ReactInject';
+import { useCurrentAccount, useGroupOfAccount, useVaultOfAccount, VaultSourceType, VaultType } from '@core/WalletCore/Plugins/ReactInject';
 import useForceUpdateOnFocus from '@hooks/useUpdateOnFocus';
 import { useTheme } from '@react-navigation/native';
 import { BackupBSIM1PasswordStackName, BackupStackName, BackupStep1StackName, type HomeStackName, type StackScreenProps } from '@router/configs';

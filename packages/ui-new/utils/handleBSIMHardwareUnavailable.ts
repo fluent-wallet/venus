@@ -1,6 +1,6 @@
+import { BSIM_HARDWARE_UNAVAILABLE, type BSIMHardwareReason, type BSIMHardwareUnavailableError } from '@WalletCoreExtends/Plugins/BSIM';
 import type { StackNavigation } from '@router/configs';
 import { BSIMAvailabilityStackName } from '@router/configs';
-import { BSIM_HARDWARE_UNAVAILABLE, type BSIMHardwareReason, type BSIMHardwareUnavailableError } from '@WalletCoreExtends/Plugins/BSIM';
 
 type NavigationLike = Pick<StackNavigation, 'navigate'>;
 

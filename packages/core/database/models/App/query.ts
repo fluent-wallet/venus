@@ -1,8 +1,8 @@
 import { Q, type Query } from '@nozbe/watermelondb';
-import type { App } from '.';
 import database from '../..';
+import { createModel, type ModelFields } from '../../helper/modelHelper';
 import TableName from '../../TableName';
-import { type ModelFields, createModel } from '../../helper/modelHelper';
+import type { App } from '.';
 
 export type AppParams = ModelFields<App>;
 export function createApp(params: AppParams, prepareCreate: true): App;

@@ -1,15 +1,15 @@
-import { NewWalletCore } from '../core/WalletCore/index.new';
-import { inject, injectable } from 'inversify';
-import { EXTENDS_SERVICE_IDENTIFIER } from './service';
-import type { IPlugin, PluginContext } from '../core/WalletCore/plugin';
-import type { IAuthenticationServer } from './Plugins/Authentication/authenticationServer';
-import { container } from '../core/WalletCore/configs';
-import type { ICryptoTool } from '../core/WalletCore/Plugins/CryptoTool/interface';
-import { SERVICE_IDENTIFIER } from '../core/WalletCore/service';
-import type { INFTDetailTrackerServerInterface } from '@core/WalletCore/Plugins/NFTDetailTracker/server';
-import type { IAssetsTrackerServerInterface } from '@core/WalletCore/Plugins/AssetsTracker/server';
-import type { ItxMethodServerInterface } from '@core/WalletCore/Methods/txMethod';
 import type { EventBus } from '@core/WalletCore/Events';
+import type { ItxMethodServerInterface } from '@core/WalletCore/Methods/txMethod';
+import type { IAssetsTrackerServerInterface } from '@core/WalletCore/Plugins/AssetsTracker/server';
+import type { INFTDetailTrackerServerInterface } from '@core/WalletCore/Plugins/NFTDetailTracker/server';
+import { inject, injectable } from 'inversify';
+import { container } from '../core/WalletCore/configs';
+import { NewWalletCore } from '../core/WalletCore/index.new';
+import type { ICryptoTool } from '../core/WalletCore/Plugins/CryptoTool/interface';
+import type { IPlugin, PluginContext } from '../core/WalletCore/plugin';
+import { SERVICE_IDENTIFIER } from '../core/WalletCore/service';
+import type { IAuthenticationServer } from './Plugins/Authentication/authenticationServer';
+import { EXTENDS_SERVICE_IDENTIFIER } from './service';
 @injectable()
 export class WalletCoreExtends extends NewWalletCore {
   @inject(EXTENDS_SERVICE_IDENTIFIER.AUTHENTICATION)

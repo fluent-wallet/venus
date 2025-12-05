@@ -1,8 +1,8 @@
-import { EthereumChainProvider, type EthereumChainProviderOptions } from './EthereumChainProvider';
-import { AssetType, NetworkType } from '@core/types';
-import { JsonRpcProvider, Wallet } from 'ethers';
 import { createMockEthersProvider, DEFAULT_HEX_ADDRESS, DEFAULT_PRIVATE_KEY } from '@core/__tests__/mocks';
 import { SoftwareSigner } from '@core/signers';
+import { AssetType, NetworkType } from '@core/types';
+import { JsonRpcProvider, Wallet } from 'ethers';
+import { EthereumChainProvider, type EthereumChainProviderOptions } from './EthereumChainProvider';
 
 jest.mock('ethers', () => {
   const actual = jest.requireActual('ethers');

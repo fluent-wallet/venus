@@ -1,7 +1,7 @@
 import Img from '@assets/images/backup.webp';
+import { BottomSheetFooter, BottomSheetScrollContent } from '@components/BottomSheet';
 import Button from '@components/Button';
 import Text from '@components/Text';
-import { BottomSheetScrollContent, BottomSheetFooter } from '@components/BottomSheet';
 import { useTheme } from '@react-navigation/native';
 import { type BackupScreenProps, type BackupStep1StackName, BackupStep2StackName } from '@router/configs';
 import { isSmallDevice } from '@utils/deviceInfo';

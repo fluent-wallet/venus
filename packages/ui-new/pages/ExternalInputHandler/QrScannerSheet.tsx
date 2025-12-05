@@ -1,23 +1,23 @@
 import ScanBorder from '@assets/icons/scan-border.svg';
 import {
-  BottomSheetWrapper,
-  BottomSheetHeader,
   BottomSheetContent,
   BottomSheetFooter,
-  InlineBottomSheet,
+  BottomSheetHeader,
   BottomSheetRoute,
+  BottomSheetWrapper,
   snapPoints as defaultSnapPoints,
+  InlineBottomSheet,
 } from '@components/BottomSheet';
 import Button from '@components/Button';
 import Spinner from '@components/Spinner';
 import Text from '@components/Text';
 import { useTheme } from '@react-navigation/native';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Linking, StyleSheet, View } from 'react-native';
-import { Trans, useTranslation } from 'react-i18next';
 import { CameraView } from 'expo-camera';
-import useQRCodeScan from './useQRCodeScan';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { Trans, useTranslation } from 'react-i18next';
+import { Linking, StyleSheet, View } from 'react-native';
 import type { ParseResult } from './types';
+import useQRCodeScan from './useQRCodeScan';
 
 export type { ParseResult } from './types';
 

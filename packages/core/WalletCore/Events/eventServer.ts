@@ -1,23 +1,20 @@
-import { combineLatest, Subject, type Observable } from 'rxjs';
-import { debounceTime, distinctUntilChanged, filter, map } from 'rxjs/operators';
+import type { Address } from '@core/database/models/Address';
+import type { Network } from '@core/database/models/Network';
 import { injectable } from 'inversify';
+import { combineLatest, type Observable, Subject } from 'rxjs';
+import { debounceTime, distinctUntilChanged, filter, map } from 'rxjs/operators';
+import { currentAccountObservable } from '../Plugins/ReactInject/data/useCurrentAccount';
+import { currentAddressObservable } from '../Plugins/ReactInject/data/useCurrentAddress';
+import { currentNetworkObservable } from '../Plugins/ReactInject/data/useCurrentNetwork';
 import {
+  type AllEventTypes,
   CURRENT_ACCOUNT_CHANGED_EVENT,
   CURRENT_NETWORK_AND_ADDRESS_CHANGED_EVENT,
   CURRENT_NETWORK_CHANGED_EVENT,
-  type AllEventTypes,
   type EventBus,
   type EventObject,
   type GetPayload,
 } from './eventTypes';
-
-import { currentAccountObservable } from '../Plugins/ReactInject/data/useCurrentAccount';
-
-import { currentNetworkObservable } from '../Plugins/ReactInject/data/useCurrentNetwork';
-import { currentAddressObservable } from '../Plugins/ReactInject/data/useCurrentAddress';
-
-import type { Network } from '@core/database/models/Network';
-import type { Address } from '@core/database/models/Address';
 
 @injectable()
 export class EventBusServer implements EventBus {

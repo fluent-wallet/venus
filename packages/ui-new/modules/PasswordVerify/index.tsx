@@ -1,10 +1,12 @@
+import { getAuthentication } from '@WalletCoreExtends/index';
+import { passwordRequestCanceledError } from '@WalletCoreExtends/Plugins/Authentication/errors';
 import {
-  BottomSheetWrapper,
-  BottomSheetHeader,
   BottomSheetContent,
   BottomSheetFooter,
+  BottomSheetHeader,
   type BottomSheetMethods,
   BottomSheetRoute,
+  BottomSheetWrapper,
 } from '@components/BottomSheet';
 import Button from '@components/Button';
 import Text from '@components/Text';
@@ -13,8 +15,6 @@ import { useTheme } from '@react-navigation/native';
 import type { PasswordVerifyStackName, StackScreenProps } from '@router/configs';
 import { screenHeight } from '@utils/deviceInfo';
 import { isDev } from '@utils/getEnv';
-import { getAuthentication } from '@WalletCoreExtends/index';
-import { passwordRequestCanceledError } from '@WalletCoreExtends/Plugins/Authentication/errors';
 import type React from 'react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';

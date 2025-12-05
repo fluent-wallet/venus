@@ -1,36 +1,36 @@
-import type React from 'react';
-import { useState, useCallback, useEffect } from 'react';
-import { Pressable, StyleSheet, Keyboard, View } from 'react-native';
-import { useTheme } from '@react-navigation/native';
-import Clipboard from '@react-native-clipboard/clipboard';
-import { Trans, useTranslation } from 'react-i18next';
-import { debounce, unionBy, escapeRegExp } from 'lodash-es';
-import { BottomSheetFlatList } from '@gorhom/bottom-sheet';
-import {
-  useCurrentNetwork,
-  getCurrentNetwork,
-  useRecentlyAddress,
-  useAllAccountsInManage,
-  AddressType,
-  RecentlyType,
-} from '@core/WalletCore/Plugins/ReactInject';
-import method from '@core/WalletCore/Methods';
-import Text from '@components/Text';
-import TextInput from '@components/TextInput';
+import ContractIcon from '@assets/icons/contract.svg';
+import CopyIcon from '@assets/icons/copy.svg';
+import ProhibitIcon from '@assets/icons/prohibit.svg';
+import QrCodeIcon from '@assets/icons/qr-code.svg';
+import SuccessIcon from '@assets/icons/success.svg';
+import { BottomSheetContent, BottomSheetFooter, BottomSheetHeader } from '@components/BottomSheet';
 import Button from '@components/Button';
 import Checkbox from '@components/Checkbox';
 import HourglassLoading from '@components/Loading/Hourglass';
-import { BottomSheetHeader, BottomSheetContent, BottomSheetFooter } from '@components/BottomSheet';
+import Text from '@components/Text';
+import TextInput from '@components/TextInput';
+import method from '@core/WalletCore/Methods';
+import {
+  AddressType,
+  getCurrentNetwork,
+  RecentlyType,
+  useAllAccountsInManage,
+  useCurrentNetwork,
+  useRecentlyAddress,
+} from '@core/WalletCore/Plugins/ReactInject';
+import { BottomSheetFlatList } from '@gorhom/bottom-sheet';
 import { AccountItemView } from '@modules/AccountsList';
 import ExternalInputHandler from '@pages/ExternalInputHandler';
-import { SendTransactionStep2StackName, type SendTransactionScreenProps, type SendTransactionStep1StackName } from '@router/configs';
+import Clipboard from '@react-native-clipboard/clipboard';
+import { useTheme } from '@react-navigation/native';
+import { type SendTransactionScreenProps, type SendTransactionStep1StackName, SendTransactionStep2StackName } from '@router/configs';
 import type { PaymentUriPayload } from '@utils/payment-uri';
-import QrCodeIcon from '@assets/icons/qr-code.svg';
+import { debounce, escapeRegExp, unionBy } from 'lodash-es';
+import type React from 'react';
+import { useCallback, useEffect, useState } from 'react';
+import { Trans, useTranslation } from 'react-i18next';
+import { Keyboard, Pressable, StyleSheet, View } from 'react-native';
 import SendTransactionBottomSheet from '../SendTransactionBottomSheet';
-import ProhibitIcon from '@assets/icons/prohibit.svg';
-import SuccessIcon from '@assets/icons/success.svg';
-import CopyIcon from '@assets/icons/copy.svg';
-import ContractIcon from '@assets/icons/contract.svg';
 import Contract from './Contract';
 import { styles as listStyles } from './Contract/RecentlyList';
 

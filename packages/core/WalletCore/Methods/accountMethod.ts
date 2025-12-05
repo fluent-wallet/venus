@@ -1,8 +1,8 @@
 import { injectable } from 'inversify';
 import database from '../../database';
-import TableName from '../../database/TableName';
 import type { Account } from '../../database/models/Account';
 import { querySelectedAccount } from '../../database/models/Account/query';
+import TableName from '../../database/TableName';
 
 @injectable()
 export class AccountMethod {

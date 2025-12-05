@@ -1,9 +1,9 @@
-import type { ICryptoTool } from './Plugins/CryptoTool/interface';
-import type { INFTDetailTrackerServerInterface } from './Plugins/NFTDetailTracker/server';
-import type { IAssetsTrackerServerInterface } from './Plugins/AssetsTracker/server';
-import type { INextNonceTrackerServerInterface } from './Plugins/NextNonceTracker/server';
-import type { EventBus } from './Events';
 import type { Database } from '@core/database';
+import type { EventBus } from './Events';
+import type { IAssetsTrackerServerInterface } from './Plugins/AssetsTracker/server';
+import type { ICryptoTool } from './Plugins/CryptoTool/interface';
+import type { INextNonceTrackerServerInterface } from './Plugins/NextNonceTracker/server';
+import type { INFTDetailTrackerServerInterface } from './Plugins/NFTDetailTracker/server';
 
 export const SERVICE_IDENTIFIER = {
   CORE: 'CORE',

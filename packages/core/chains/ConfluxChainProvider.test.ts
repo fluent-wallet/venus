@@ -1,17 +1,17 @@
-import { ConfluxChainProvider, type ConfluxChainProviderOptions } from './ConfluxChainProvider';
-import { AssetType, NetworkType } from '@core/types';
-import { computeAddress, toAccountAddress } from '@core/utils/account';
-import { convertHexToBase32 } from '@core/utils/address';
-import { checksum } from 'ox/Address';
-import { PersonalMessage } from 'js-conflux-sdk';
-import { SoftwareSigner } from '@core/signers';
 import {
   createMockConfluxSdk,
   DEFAULT_PRIVATE_KEY,
-  DEFAULT_TEST_NET_1155_CONTRACT,
   DEFAULT_TEST_NET_20_TOKEN_CONTRACT,
+  DEFAULT_TEST_NET_1155_CONTRACT,
   DEFAULT_TEST_NFT_721_CONTRACT,
 } from '@core/__tests__/mocks';
+import { SoftwareSigner } from '@core/signers';
+import { AssetType, NetworkType } from '@core/types';
+import { computeAddress, toAccountAddress } from '@core/utils/account';
+import { convertHexToBase32 } from '@core/utils/address';
+import { PersonalMessage } from 'js-conflux-sdk';
+import { checksum } from 'ox/Address';
+import { ConfluxChainProvider, type ConfluxChainProviderOptions } from './ConfluxChainProvider';
 
 const {
   rpc: mockRpc,

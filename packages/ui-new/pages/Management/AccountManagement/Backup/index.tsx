@@ -15,11 +15,11 @@ import {
 } from '@router/configs';
 import type React from 'react';
 import BackupSuccess from './BackupSuccess';
+import { BSIMStep1Password } from './BSIMStep1Password';
+import { BSIMStep2QRCode } from './BSIMStep2QRCode';
 import BackupStep1Notice from './Step1Notice';
 import BackupStep2ViewSecret from './Step2ViewSecret';
 import BackupStep3RandomCheck from './Step3RandomCheck';
-import { BSIMStep1Password } from './BSIMStep1Password';
-import { BSIMStep2QRCode } from './BSIMStep2QRCode';
 
 const BackupStack = createNativeStackNavigator<BackupStackParamList>();
 

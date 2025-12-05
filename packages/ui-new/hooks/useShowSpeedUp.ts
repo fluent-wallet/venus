@@ -1,7 +1,7 @@
-import { useEffect, useState } from 'react';
 import type { Tx } from '@core/database/models/Tx';
 import { formatStatus } from '@core/utils/tx';
 import { useWalletConfig } from '@core/WalletCore/Plugins/ReactInject/data/useWalletConfig';
+import { useEffect, useState } from 'react';
 
 export const useShowSpeedUp = (tx: Tx | null) => {
   const [showSpeedUp, setShowSpeedUp] = useState(false);

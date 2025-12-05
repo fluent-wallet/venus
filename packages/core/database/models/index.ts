@@ -1,6 +1,7 @@
 import { Account as AccountModel } from './Account';
 import { AccountGroup as AccountGroupModel } from './AccountGroup';
 import { Address as AddressModel } from './Address';
+import { AddressBook as AddressBookModel } from './AddressBook';
 import { App as AppModel } from './App';
 import { Asset as AssetModel } from './Asset';
 import { AssetRule as AssetRuleModel } from './AssetRule';
@@ -13,7 +14,6 @@ import { Tx as TxModel } from './Tx';
 import { TxExtra as TxExtraModel } from './TxExtra';
 import { TxPayload as TxPayloadModel } from './TxPayload';
 import { Vault as VaultModel } from './Vault';
-import { AddressBook as AddressBookModel } from './AddressBook';
 
 export const modelClasses = [
   VaultModel,

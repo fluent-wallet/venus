@@ -1,9 +1,8 @@
 import 'reflect-metadata';
 import { Container, inject, injectable } from 'inversify';
+import type { EventBus } from './Events';
 import type { IPlugin, PluginContext } from './plugin';
 import { SERVICE_IDENTIFIER } from './service';
-import type { EventBus } from './Events';
-
 
 @injectable()
 export class NewWalletCore {

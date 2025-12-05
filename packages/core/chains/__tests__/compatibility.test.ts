@@ -44,26 +44,26 @@ jest.mock('@cfx-kit/dapp-utils/dist/contract', () => {
   };
 });
 
-import { ChainRegistry, ConfluxChainProvider, EthereumChainProvider } from '..';
-import { AssetType, NetworkType, type ConfluxUnsignedTransaction, type ConfluxUnsignedTransactionPayload, type EvmUnsignedTransaction } from '@core/types';
-import { buildTransaction as buildLegacyTransaction } from '@core/WalletCore/Plugins/Transaction/TransactionBuilder';
-import ConfluxLegacy from '@core/WalletCore/Plugins/Transaction/chains/conflux';
-import EVMLegacy from '@core/WalletCore/Plugins/Transaction/chains/evm';
-import type { AssetInfo } from '@core/WalletCore/Plugins/AssetsTracker/types';
-import type { Network } from '@core/database/models/Network';
 import {
   createMockConfluxSdk,
   createMockEthersProvider,
   DEFAULT_BASE32_ADDRESS_TEST,
   DEFAULT_HEX_ADDRESS,
   DEFAULT_PRIVATE_KEY,
-  DEFAULT_TEST_NET_1155_CONTRACT,
   DEFAULT_TEST_NET_20_TOKEN_CONTRACT,
+  DEFAULT_TEST_NET_1155_CONTRACT,
   DEFAULT_TEST_NFT_721_CONTRACT,
 } from '@core/__tests__/mocks';
+import type { Network } from '@core/database/models/Network';
+import { AssetType, type ConfluxUnsignedTransaction, type ConfluxUnsignedTransactionPayload, type EvmUnsignedTransaction, NetworkType } from '@core/types';
+import type { AssetInfo } from '@core/WalletCore/Plugins/AssetsTracker/types';
+import ConfluxLegacy from '@core/WalletCore/Plugins/Transaction/chains/conflux';
+import EVMLegacy from '@core/WalletCore/Plugins/Transaction/chains/evm';
+import { buildTransaction as buildLegacyTransaction } from '@core/WalletCore/Plugins/Transaction/TransactionBuilder';
+import type { ITxEvm } from '@core/WalletCore/Plugins/Transaction/types';
 
 import { checksum } from 'ox/Address';
-import type { ITxEvm } from '@core/WalletCore/Plugins/Transaction/types';
+import { ChainRegistry, ConfluxChainProvider, EthereumChainProvider } from '..';
 
 jest.mock('js-conflux-sdk', () => {
   const actual = jest.requireActual('js-conflux-sdk');
@@ -406,21 +406,21 @@ describe('chain compatibility', () => {
       const signer = new SoftwareSigner(DEFAULT_PRIVATE_KEY);
       const signed = await provider.signTransaction(unsigned, signer);
 
-    const legacyRaw = await EVMLegacy.signTransaction({
-      privateKey: DEFAULT_PRIVATE_KEY,
-      tx: toLegacyTx(unsigned.payload),
+      const legacyRaw = await EVMLegacy.signTransaction({
+        privateKey: DEFAULT_PRIVATE_KEY,
+        tx: toLegacyTx(unsigned.payload),
+      });
+
+      const parsedNew = actualEthers.Transaction.from(signed.rawTransaction);
+      const parsedLegacy = actualEthers.Transaction.from(legacyRaw);
+
+      expect(parsedNew.to).toBe(parsedLegacy.to);
+      expect(parsedNew.from?.toLowerCase()).toBe(parsedLegacy.from?.toLowerCase());
+      expect(parsedNew.value).toEqual(parsedLegacy.value);
+      expect(parsedNew.data).toBe(parsedLegacy.data);
+      expect(parsedNew.gasLimit).toEqual(parsedLegacy.gasLimit);
+      expect(parsedNew.chainId).toEqual(parsedLegacy.chainId);
     });
-
-    const parsedNew = actualEthers.Transaction.from(signed.rawTransaction);
-    const parsedLegacy = actualEthers.Transaction.from(legacyRaw);
-
-    expect(parsedNew.to).toBe(parsedLegacy.to);
-    expect(parsedNew.from?.toLowerCase()).toBe(parsedLegacy.from?.toLowerCase());
-    expect(parsedNew.value).toEqual(parsedLegacy.value);
-    expect(parsedNew.data).toBe(parsedLegacy.data);
-    expect(parsedNew.gasLimit).toEqual(parsedLegacy.gasLimit);
-    expect(parsedNew.chainId).toEqual(parsedLegacy.chainId);
-  });
   });
 
   describe('fee estimate stubs remain consistent', () => {

@@ -1,12 +1,12 @@
+import database from '@core/database';
 import type { Address } from '@core/database/models/Address';
 import type { Tx } from '@core/database/models/Tx';
 import { queryTxsWithAddress } from '@core/database/models/Tx/query';
 import type { TxStatus } from '@core/database/models/Tx/type';
 import type { Subscription } from 'rxjs';
+import type { UpdaterMap } from './BaseTxTrack';
 import CFXTxTracker from './CFXTxTrack';
 import EthTxTracker from './EthTxTrack';
-import database from '@core/database';
-import type { UpdaterMap } from './BaseTxTrack';
 
 const txTrackerMap = {
   [EthTxTracker.networkType]: EthTxTracker,

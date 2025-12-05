@@ -4,15 +4,15 @@ import Buy from '@assets/icons/buy.svg';
 import More from '@assets/icons/more.svg';
 import Button from '@components/Button';
 import Text from '@components/Text';
-import { useIsTokensEmpty, isPendingTxsFull } from '@core/WalletCore/Plugins/ReactInject';
+import { isPendingTxsFull, useIsTokensEmpty } from '@core/WalletCore/Plugins/ReactInject';
 import { useTheme } from '@react-navigation/native';
 import {
   type HomeStackName,
-  TooManyPendingStackName,
   ReceiveStackName,
   SendTransactionStackName,
   SendTransactionStep1StackName,
   type StackScreenProps,
+  TooManyPendingStackName,
 } from '@router/configs';
 import type React from 'react';
 import type { ComponentProps } from 'react';

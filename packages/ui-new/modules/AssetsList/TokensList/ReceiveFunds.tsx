@@ -1,8 +1,7 @@
 import NoneToken from '@assets/images/none-token.webp';
 import Button from '@components/Button';
 import Text from '@components/Text';
-import { useTheme } from '@react-navigation/native';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useTheme } from '@react-navigation/native';
 import { type HomeStackName, ReceiveStackName, type StackScreenProps } from '@router/configs';
 import { Image } from 'expo-image';
 import type React from 'react';

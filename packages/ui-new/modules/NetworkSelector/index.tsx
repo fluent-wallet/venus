@@ -1,4 +1,4 @@
-import { InlineBottomSheet, snapPoints, BottomSheetWrapper, BottomSheetContent, BottomSheetHeader, type BottomSheetMethods } from '@components/BottomSheet';
+import { BottomSheetContent, BottomSheetHeader, type BottomSheetMethods, BottomSheetWrapper, InlineBottomSheet, snapPoints } from '@components/BottomSheet';
 import Text from '@components/Text';
 import NetworksList from '@modules/NetworksList';
 import { useTheme } from '@react-navigation/native';

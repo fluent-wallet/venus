@@ -1,8 +1,8 @@
 import type { SendERC20Input, SendTransactionInput } from '@core/services';
 import { type UseQueryResult, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useCallback } from 'react';
-import { getAssetRootKey, getAssetsByAddressKey } from './asset';
 import { useCurrentAddress } from './account';
+import { getAssetRootKey, getAssetsByAddressKey } from './asset';
 import { getTransactionService, type ITransaction, type RecentlyAddress } from './core';
 
 export type TransactionsQuery = UseQueryResult<ITransaction[]>;

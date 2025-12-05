@@ -1,5 +1,5 @@
-import { setAtom } from '@core/WalletCore/Plugins/ReactInject';
 import database from '@core/database';
+import { setAtom } from '@core/WalletCore/Plugins/ReactInject';
 import { atom, useAtomValue } from 'jotai';
 
 type Mode = 'light' | 'dark' | 'system';

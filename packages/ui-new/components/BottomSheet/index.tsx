@@ -1,7 +1,5 @@
 export * from '@gorhom/bottom-sheet';
 export { default as BottomSheetMethods } from '@gorhom/bottom-sheet';
-export { BottomSheetWrapper, BottomSheetHeader, BottomSheetContent, BottomSheetFooter, BottomSheetScrollContent, snapPoints } from './BottomSheetParts';
-
-export { InlineBottomSheet } from './InlineBottomSheet';
-
+export { BottomSheetContent, BottomSheetFooter, BottomSheetHeader, BottomSheetScrollContent, BottomSheetWrapper, snapPoints } from './BottomSheetParts';
 export { BottomSheetRoute } from './BottomSheetRoute';
+export { InlineBottomSheet } from './InlineBottomSheet';

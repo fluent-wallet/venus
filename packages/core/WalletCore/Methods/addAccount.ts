@@ -1,6 +1,5 @@
 import { inject, injectable } from 'inversify';
 import database from '../../database';
-import TableName from '../../database/TableName';
 import { createModel } from '../../database/helper/modelHelper';
 import type { Account } from '../../database/models/Account';
 import type { AccountGroup } from '../../database/models/AccountGroup';
@@ -9,6 +8,7 @@ import { createAddress } from '../../database/models/Address/query';
 import type { Network } from '../../database/models/Network';
 import type { Vault } from '../../database/models/Vault';
 import VaultType from '../../database/models/Vault/VaultType';
+import TableName from '../../database/TableName';
 import { fromPrivate, toChecksum } from '../../utils/account';
 import { getNthAccountOfHDKey } from '../../utils/hdkey';
 import { Plugins } from '../Plugins';

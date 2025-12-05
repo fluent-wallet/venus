@@ -3,8 +3,8 @@ import LottieView from 'lottie-react-native';
 import type React from 'react';
 import { memo } from 'react';
 import { type StyleProp, View, type ViewStyle } from 'react-native';
-import SourceWhite from './hourglass-white.json';
 import SourceBlack from './hourglass.json';
+import SourceWhite from './hourglass-white.json';
 
 const Hourglass: React.FC<{ style?: StyleProp<ViewStyle> }> = memo(({ style }) => {
   const { mode } = useTheme();

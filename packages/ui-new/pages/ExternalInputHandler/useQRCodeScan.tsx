@@ -1,6 +1,6 @@
+import { type BarcodeScanningResult, Camera, useCameraPermissions } from 'expo-camera';
 import { launchImageLibraryAsync } from 'expo-image-picker';
 import { useCallback, useState } from 'react';
-import { useCameraPermissions, type BarcodeScanningResult, Camera } from 'expo-camera';
 
 interface Params {
   onSuccess: (data: string) => void;

@@ -1,31 +1,26 @@
 import 'reflect-metadata';
-import { Container } from 'inversify';
 
 import { seedNetwork } from '@core/__tests__/fixtures';
-import { mockDatabase } from '@core/database/__tests__/mockDatabases';
+import { StubChainProvider } from '@core/__tests__/mocks/chainProviders';
+import { ChainRegistry } from '@core/chains';
 import type { Database } from '@core/database';
-import TableName from '@core/database/TableName';
+import { mockDatabase } from '@core/database/__tests__/mockDatabases';
 import type { Account } from '@core/database/models/Account';
 import type { AccountGroup } from '@core/database/models/AccountGroup';
 import type { Address } from '@core/database/models/Address';
+import type { Asset as DbAsset } from '@core/database/models/Asset';
+import { AssetSource, AssetType as DbAssetType } from '@core/database/models/Asset';
+import type { Tx } from '@core/database/models/Tx';
 import VaultType from '@core/database/models/Vault/VaultType';
-
-import { registerServices, VaultService, AccountService, TransactionService, SigningService, AssetService, type SendTransactionInput } from '@core/services';
-import type { ICryptoTool } from '@core/WalletCore/Plugins/CryptoTool/interface';
-import { SERVICE_IDENTIFIER } from '@core/WalletCore/service';
-
-import { getNthAccountOfHDKey } from '@core/utils/hdkey';
+import TableName from '@core/database/TableName';
+import { AccountService, AssetService, registerServices, type SendTransactionInput, SigningService, TransactionService, VaultService } from '@core/services';
+import { AssetType, TxStatus as ServiceTxStatus } from '@core/types';
 import { convertHexToBase32 } from '@core/utils/address';
 import { NetworkType } from '@core/utils/consts';
-
-import { AssetType, TxStatus as ServiceTxStatus } from '@core/types';
-
-import { ChainRegistry } from '@core/chains';
-import { StubChainProvider } from '@core/__tests__/mocks/chainProviders';
-
-import type { Tx } from '@core/database/models/Tx';
-import type { Asset as DbAsset } from '@core/database/models/Asset';
-import { AssetType as DbAssetType, AssetSource } from '@core/database/models/Asset';
+import { getNthAccountOfHDKey } from '@core/utils/hdkey';
+import type { ICryptoTool } from '@core/WalletCore/Plugins/CryptoTool/interface';
+import { SERVICE_IDENTIFIER } from '@core/WalletCore/service';
+import { Container } from 'inversify';
 
 const TEST_PASSWORD = 'test-password';
 const FIXED_MNEMONIC = 'test test test test test test test test test test test junk';

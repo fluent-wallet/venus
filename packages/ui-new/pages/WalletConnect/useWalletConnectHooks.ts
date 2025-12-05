@@ -1,22 +1,22 @@
+import { ChainPrefix, ExtractCip155Namespace, type Namespace, parseNamespaceData } from '@cfx-kit/react-utils/dist/WalletConnectorHelper';
+import { Networks } from '@core/utils/consts';
 import methods from '@core/WalletCore/Methods';
 import plugins from '@core/WalletCore/Plugins';
-import { useCurrentNetwork, isPendingTxsFull, NetworkType } from '@core/WalletCore/Plugins/ReactInject';
+import { isPendingTxsFull, NetworkType, useCurrentNetwork } from '@core/WalletCore/Plugins/ReactInject';
 import { WalletConnectPluginEventType } from '@core/WalletCore/Plugins/WalletConnect/types';
-import { Networks } from '@core/utils/consts';
 import { StackActions, useNavigation } from '@react-navigation/native';
 import {
   HomeStackName,
+  type StackNavigation,
+  TooManyPendingStackName,
   WalletConnectProposalStackName,
   WalletConnectSignMessageStackName,
   WalletConnectStackName,
   WalletConnectTransactionStackName,
-  TooManyPendingStackName,
-  type StackNavigation,
 } from '@router/configs';
 import backToHome, { getActiveRouteName } from '@utils/backToHome';
 import { isProd, isQA } from '@utils/getEnv';
-import { useCallback, useEffect, useState, useMemo, useRef } from 'react';
-import { parseNamespaceData, ChainPrefix, ExtractCip155Namespace, type Namespace } from '@cfx-kit/react-utils/dist/WalletConnectorHelper';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 const openNetworks = isProd ? ([Networks['Conflux eSpace']] as const) : isQA ? ([Networks['Conflux eSpace'], Networks['eSpace Testnet']] as const) : null;
 

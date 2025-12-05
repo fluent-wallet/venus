@@ -2,6 +2,7 @@ import { Platform } from 'react-native';
 import { DEFAULT_SIGNATURE_ALGORITHM } from './constants';
 import { BSIM_AID, ICCID_AID } from './core/params';
 import type { HexString, PubkeyRecord, SignatureComponents } from './core/types';
+import { asciiToHex, normalizeHex } from './core/utils';
 import {
   deriveKeyFlow,
   exportPubkeysFlow,
@@ -17,7 +18,6 @@ import { type ApduTransportOptions, createApduTransport } from './transports/apd
 import { type BleTransportOptions, createBleTransport } from './transports/ble';
 import { isTransportError, TransportError, TransportErrorCode } from './transports/errors';
 import type { Transport, TransportSession } from './transports/types';
-import { asciiToHex, normalizeHex } from './core/utils';
 
 const DEFAULT_IDLE_TIMEOUT_MS = 60_000;
 

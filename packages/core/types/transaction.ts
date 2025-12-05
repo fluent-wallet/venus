@@ -1,6 +1,6 @@
+import type { NetworkType } from '@core/utils/consts';
+import type { AssetType } from './asset';
 import type { Address, ChainType, Hash, Hex } from './chain';
-import { AssetType } from './asset';
-import { NetworkType } from '@core/utils/consts';
 
 /**
  * Minimum data required to build a transaction.

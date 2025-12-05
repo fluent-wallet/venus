@@ -1,11 +1,11 @@
 import Failed from '@assets/icons/message-fail.svg';
 import Warning from '@assets/icons/warn.svg';
 import {
-  BottomSheetWrapper,
-  BottomSheetHeader,
   BottomSheetContent,
   BottomSheetFooter,
+  BottomSheetHeader,
   type BottomSheetMethods,
+  BottomSheetWrapper,
   InlineBottomSheet,
 } from '@components/BottomSheet';
 import Button from '@components/Button';

@@ -1,3 +1,4 @@
+import { getAuthentication } from '@WalletCoreExtends/index';
 import Button from '@components/Button';
 import Checkbox from '@components/Checkbox';
 import Text from '@components/Text';
@@ -13,7 +14,6 @@ import { Trans, useTranslation } from 'react-i18next';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { showMessage } from 'react-native-flash-message';
 import createVault from './createVaultWithRouterParams';
-import { getAuthentication } from '@WalletCoreExtends/index';
 
 type FormData = {
   password: string;

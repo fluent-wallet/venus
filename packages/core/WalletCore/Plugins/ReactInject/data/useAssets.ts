@@ -7,10 +7,10 @@ import { AssetType } from '../../../../database/models/Asset';
 import type { Network } from '../../../../database/models/Network';
 import { truncate } from '../../../../utils/balance';
 import type { AssetInfo } from '../../AssetsTracker/types';
+import type { NFTItemDetail } from '../../NFTDetailTracker/server';
 import { getAtom, setAtom } from '../nexus';
 import { getCurrentAddress, useCurrentAddress } from './useCurrentAddress';
 import { getCurrentNetwork, useCurrentNetwork } from './useCurrentNetwork';
-import type { NFTItemDetail } from '../../NFTDetailTracker/server';
 
 export const getAssetsAtomKey = ({ network, address }: { network: Network | null; address: Address | null }) =>
   network && address ? `${network.networkType}-${network.chainId}-${address.hex}` : 'null';

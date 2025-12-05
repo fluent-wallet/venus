@@ -3,7 +3,7 @@ import { screenWidth } from '@utils/deviceInfo';
 import { random } from 'lodash-es';
 import type React from 'react';
 import { memo } from 'react';
-import ContentLoader, { Rect, Circle } from 'react-content-loader/native';
+import ContentLoader, { Circle, Rect } from 'react-content-loader/native';
 
 export const SkeletonList = memo(() => {
   const { colors } = useTheme();

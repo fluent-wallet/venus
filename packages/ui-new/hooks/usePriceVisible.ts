@@ -1,5 +1,5 @@
-import { setAtom } from '@core/WalletCore/Plugins/ReactInject';
 import database from '@core/database';
+import { setAtom } from '@core/WalletCore/Plugins/ReactInject';
 import { atom, useAtom, useAtomValue } from 'jotai';
 
 const _TotalPriceVisibleAtom = atom<boolean | null>(true);

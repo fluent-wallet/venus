@@ -1,6 +1,6 @@
 import { atom, useAtomValue } from 'jotai';
-import { getAtom, setAtom } from '../nexus';
 import { defaultWalletConfigs, type WalletConfig } from '../../WalletConfig/consts';
+import { getAtom, setAtom } from '../nexus';
 
 const walletConfigAtom = atom(defaultWalletConfigs);
 

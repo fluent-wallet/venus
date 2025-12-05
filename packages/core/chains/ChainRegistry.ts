@@ -1,5 +1,5 @@
-import { injectable } from 'inversify';
 import type { ChainType, IChainProvider, IChainRegistry } from '@core/types';
+import { injectable } from 'inversify';
 
 type RegistryKey = `${ChainType}:${string}`;
 

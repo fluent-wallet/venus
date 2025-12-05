@@ -1,8 +1,8 @@
 import type { IPlugin } from '@core/WalletCore/plugin';
-import { Networks } from '../../../utils/consts';
-import { NetworkType } from './../../../database/models/Network';
-import { fetchReceiveAssets as fetchESpaceReceiveAssets } from './fetchers/eSpace';
 import { SERVICE_IDENTIFIER } from '@core/WalletCore/service';
+import { NetworkType } from './../../../database/models/Network';
+import { Networks } from '../../../utils/consts';
+import { fetchReceiveAssets as fetchESpaceReceiveAssets } from './fetchers/eSpace';
 import { ReceiveAssetsTrackerServer } from './server';
 
 export const ReceiveAssetsTrackerPlugin: IPlugin = {

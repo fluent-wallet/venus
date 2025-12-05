@@ -1,20 +1,20 @@
 import {
-  snapPoints,
-  BottomSheetWrapper,
-  BottomSheetScrollContent,
   BottomSheetFooter,
   BottomSheetHeader,
   type BottomSheetMethods,
   BottomSheetRoute,
+  BottomSheetScrollContent,
+  BottomSheetWrapper,
+  snapPoints,
 } from '@components/BottomSheet';
 import Button from '@components/Button';
 import Icon from '@components/Icon';
-import Text from '@components/Text';
 import HourglassLoading from '@components/Loading/Hourglass';
+import Text from '@components/Text';
 import Plugins from '@core/WalletCore/Plugins';
 import { useCurrentAddressValue } from '@core/WalletCore/Plugins/ReactInject';
 import { useTheme } from '@react-navigation/native';
-import { useCallback, useState, useRef } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { useWalletConnectSessions } from './useWalletConnectHooks';

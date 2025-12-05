@@ -1,10 +1,10 @@
 import { Q, type Query } from '@nozbe/watermelondb';
 import { memoize } from 'lodash-es';
 import type { Observable } from 'rxjs';
-import type { Network } from '.';
 import database from '../..';
+import { createModel, type ModelFields } from '../../helper/modelHelper';
 import TableName from '../../TableName';
-import { type ModelFields, createModel } from '../../helper/modelHelper';
+import type { Network } from '.';
 
 export type NetworkParams = Omit<
   ModelFields<Network>,

@@ -1,6 +1,3 @@
-import type { Database } from '@nozbe/watermelondb';
-
-import TableName from '@core/database/TableName';
 import type { Account } from '@core/database/models/Account';
 import type { AccountGroup } from '@core/database/models/AccountGroup';
 import type { Address } from '@core/database/models/Address';
@@ -10,7 +7,9 @@ import type { Network } from '@core/database/models/Network';
 import type { Vault } from '@core/database/models/Vault';
 import VaultSourceType from '@core/database/models/Vault/VaultSourceType';
 import VaultType from '@core/database/models/Vault/VaultType';
-import { NetworkType, Networks } from '@core/utils/consts';
+import TableName from '@core/database/TableName';
+import { Networks, NetworkType } from '@core/utils/consts';
+import type { Database } from '@nozbe/watermelondb';
 
 export const DEFAULT_ACCOUNTS_FIXTURE_BASE32 = 'cfx:aap7rugsfdnj0dyy3f8766mme2dhf62136u8gkm4fg';
 export const DEFAULT_ACCOUNTS_FIXTURE_HEX = '0x19D6c0CE28d68B0e94C97Dde714a260672f317cF'; // 64ce5801197a5e99e4f378a8cf5454f323b4b4553e16a5b7d75567991feee4df

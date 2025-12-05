@@ -1,10 +1,10 @@
 import { Q, type Query } from '@nozbe/watermelondb';
 import { memoize } from 'lodash-es';
-import { type Observable, map } from 'rxjs';
-import type { Vault } from '.';
+import { map, type Observable } from 'rxjs';
 import database from '../..';
+import { createModel, type ModelFields } from '../../helper/modelHelper';
 import TableName from '../../TableName';
-import { type ModelFields, createModel } from '../../helper/modelHelper';
+import type { Vault } from '.';
 import VaultType from './VaultType';
 
 export type Params = Omit<ModelFields<Vault>, 'isGroup' | 'observeAccountGroup'>;

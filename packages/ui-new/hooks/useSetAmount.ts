@@ -1,8 +1,8 @@
+import { AssetType } from '@core/database/models/Asset';
 import type { AssetInfo } from '@core/WalletCore/Plugins/AssetsTracker/types';
 import { getAssetsAtomKey, getAssetsHash } from '@core/WalletCore/Plugins/ReactInject/data/useAssets';
 import { getCurrentAddress } from '@core/WalletCore/Plugins/ReactInject/data/useCurrentAddress';
 import { getCurrentNetwork } from '@core/WalletCore/Plugins/ReactInject/data/useCurrentNetwork';
-import { AssetType } from '@core/database/models/Asset';
 import { atom } from 'jotai';
 
 interface TokenQRInfo extends AssetInfo {

@@ -1,12 +1,12 @@
 import ArrowRigiht from '@assets/icons/arrow-right2.svg';
 import {
-  snapPoints,
-  BottomSheetWrapper,
-  BottomSheetScrollContent,
-  BottomSheetHeader,
   BottomSheetFooter,
+  BottomSheetHeader,
   type BottomSheetMethods,
+  BottomSheetScrollContent,
+  BottomSheetWrapper,
   InlineBottomSheet,
+  snapPoints,
 } from '@components/BottomSheet';
 import Button from '@components/Button';
 import Text from '@components/Text';

@@ -1,24 +1,22 @@
 import './codecs';
 
 export {
-  registerCodec,
-  parsePaymentUri,
+  // test only
+  __resetPaymentUriRegistryForTests,
   encodePaymentUri,
   getCodecById,
   getCodecForProtocol,
   listRegisteredCodecs,
-  // test only
-  __resetPaymentUriRegistryForTests,
+  parsePaymentUri,
+  registerCodec,
 } from './registry';
-
-export { PaymentUriError } from './types';
-
 export type {
   PaymentUriCodec,
   PaymentUriCodecParseResult,
+  PaymentUriErrorCode,
   PaymentUriMetadata,
   PaymentUriNetworkHint,
   PaymentUriParams,
   PaymentUriPayload,
-  PaymentUriErrorCode,
 } from './types';
+export { PaymentUriError } from './types';

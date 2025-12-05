@@ -1,8 +1,8 @@
+import BSIMNotFindIcon from '@assets/icons/BSIMNotFind.svg';
 import { BottomSheetContent, BottomSheetHeader, BottomSheetRoute, BottomSheetWrapper, snapPoints } from '@components/BottomSheet';
 import { useTheme } from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';
 import { Platform, StyleSheet, Text } from 'react-native';
-import BSIMNotFindIcon from '@assets/icons/BSIMNotFind.svg';
 
 export const BSIMAvailability = () => {
   const { colors } = useTheme();

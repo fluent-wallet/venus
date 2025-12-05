@@ -1,10 +1,9 @@
+import type { Network } from '@core/database/models/Network';
 import methods from '@core/WalletCore/Methods';
 import plugins from '@core/WalletCore/Plugins';
-import { AssetType, NetworkType, getAssetsTokenList } from '@core/WalletCore/Plugins/ReactInject';
+import { AssetType, getAssetsTokenList, NetworkType } from '@core/WalletCore/Plugins/ReactInject';
 import { WalletConnectPluginError } from '@core/WalletCore/Plugins/WalletConnect';
-import { parsePaymentUri, PaymentUriError, type PaymentUriPayload } from '@utils/payment-uri';
 import { StackActions } from '@react-navigation/native';
-import Decimal from 'decimal.js';
 import {
   SendTransactionStackName,
   SendTransactionStep2StackName,
@@ -12,9 +11,10 @@ import {
   SendTransactionStep4StackName,
   type StackNavigation,
 } from '@router/configs';
-import type { PaymentUriParseResult } from './types';
-import type { Network } from '@core/database/models/Network';
+import { PaymentUriError, type PaymentUriPayload, parsePaymentUri } from '@utils/payment-uri';
+import Decimal from 'decimal.js';
 import type { TFunction } from 'i18next';
+import type { PaymentUriParseResult } from './types';
 
 type ParserDeps = {
   currentNetwork: Network;

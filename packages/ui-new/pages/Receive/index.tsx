@@ -1,19 +1,18 @@
 import PoundKey from '@assets/icons/pound-key.svg';
 // import Share from '@assets/icons/share.svg';
 import Logo from '@assets/images/swift-shield-QRCode.webp';
-import { snapPoints, BottomSheetWrapper, BottomSheetScrollContent, BottomSheetHeader, BottomSheetRoute } from '@components/BottomSheet';
+import { BottomSheetHeader, BottomSheetRoute, BottomSheetScrollContent, BottomSheetWrapper, snapPoints } from '@components/BottomSheet';
 import Text from '@components/Text';
+import { numberWithCommas, trimDecimalZeros } from '@core/utils/balance';
 import type { AssetInfo } from '@core/WalletCore/Plugins/AssetsTracker/types';
 import { NetworkType, useCurrentAccount, useCurrentAddressValue, useCurrentNetwork } from '@core/WalletCore/Plugins/ReactInject';
-import { trimDecimalZeros } from '@core/utils/balance';
-import { numberWithCommas } from '@core/utils/balance';
 import { AccountItemView } from '@modules/AccountsList';
 import { Navigation } from '@pages/Home/Navigations';
 import Clipboard from '@react-native-clipboard/clipboard';
 import { useTheme } from '@react-navigation/native';
 import type { ReceiveStackName, StackScreenProps } from '@router/configs';
-import { encodePaymentUri, type PaymentUriParams } from '@utils/payment-uri';
 import { isSmallDevice } from '@utils/deviceInfo';
+import { encodePaymentUri, type PaymentUriParams } from '@utils/payment-uri';
 import Decimal from 'decimal.js';
 /* eslint-disable react-hooks/exhaustive-deps */
 import type React from 'react';

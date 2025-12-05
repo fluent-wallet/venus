@@ -1,7 +1,8 @@
-import { Wallet, computeAddress as _computeAddress, getAddress as toChecksumAddress } from 'ethers';
+import { computeAddress as _computeAddress, getAddress as toChecksumAddress, Wallet } from 'ethers';
 import { flow, memoize } from 'lodash-es';
 import { addHexPrefix, randomInt } from './base';
 import { ADDRESS_TYPES, INTERNAL_CONTRACTS_HEX_ADDRESS, NULL_HEX_ADDRESS } from './consts';
+
 const ADDRESS_TYPES_ARR = Object.values(ADDRESS_TYPES);
 
 export const computeAddress = memoize(_computeAddress);

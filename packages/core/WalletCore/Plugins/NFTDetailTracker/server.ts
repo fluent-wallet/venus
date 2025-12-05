@@ -1,13 +1,11 @@
+import { CURRENT_ACCOUNT_CHANGED_EVENT, CURRENT_NETWORK_AND_ADDRESS_CHANGED_EVENT, type EventBus } from '@core/WalletCore/Events';
+import { SERVICE_IDENTIFIER } from '@core/WalletCore/service';
+import { inject, injectable } from 'inversify';
 import { isEqual } from 'lodash-es';
-import { BehaviorSubject } from 'rxjs';
-import { Subject, type Subscription, interval, startWith, switchMap, takeUntil } from 'rxjs';
+import { BehaviorSubject, interval, Subject, type Subscription, startWith, switchMap, takeUntil } from 'rxjs';
+import type { NetworkType } from './../../../database/models/Network';
 import type { AssetInfo } from '../../Plugins/AssetsTracker/types';
 import { getCurrentOpenNFTDetail, setCurrentOpenNFTDetail } from '../ReactInject/data/useAssets';
-import type { NetworkType } from './../../../database/models/Network';
-import { inject, injectable } from 'inversify';
-
-import { SERVICE_IDENTIFIER } from '@core/WalletCore/service';
-import { CURRENT_ACCOUNT_CHANGED_EVENT, CURRENT_NETWORK_AND_ADDRESS_CHANGED_EVENT, type EventBus } from '@core/WalletCore/Events';
 
 export interface NFTItemDetail {
   name: string;
@@ -26,10 +24,7 @@ export const currentOpenNFTSubject = new BehaviorSubject<{ nft: AssetInfo; index
 const getFetcherKey = ({ networkType, chainId }: { networkType: NetworkType; chainId: string }) => `${networkType}-${chainId}`;
 
 export interface INFTDetailTrackerServerInterface {
-  setCurrentOpenNFT: (params?: {
-    nft: AssetInfo;
-    index?: number;
-  }) => void;
+  setCurrentOpenNFT: (params?: { nft: AssetInfo; index?: number }) => void;
 
   updateCurrentOpenNFT: (targetNftAddress?: string | null) => void;
 }

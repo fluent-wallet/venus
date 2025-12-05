@@ -1,6 +1,6 @@
 import { isAddress } from 'ethers';
-import { type PaymentUriCodec, type PaymentUriCodecParseResult, PaymentUriError } from '../types';
 import { bigIntToExponential, splitOnce, toPlainString } from '../helpers';
+import { type PaymentUriCodec, type PaymentUriCodecParseResult, PaymentUriError } from '../types';
 
 // https://eips.ethereum.org/EIPS/eip-681
 

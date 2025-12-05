@@ -1,15 +1,15 @@
-import type React from 'react';
-import { useEffect } from 'react';
-import { Linking } from 'react-native';
-import { StackActions } from '@react-navigation/native';
-import { useTranslation } from 'react-i18next';
 import plugins from '@core/WalletCore/Plugins';
 import { useCurrentNetwork } from '@core/WalletCore/Plugins/ReactInject';
-import type { PaymentUriPayload } from '@utils/payment-uri';
-import QrScannerSheet from './QrScannerSheet';
-import { paymentUriParser } from './parser';
-import { ExternalInputHandlerStackName, type StackScreenProps, type StackNavigation } from '@router/configs';
+import { StackActions } from '@react-navigation/native';
+import { ExternalInputHandlerStackName, type StackNavigation, type StackScreenProps } from '@router/configs';
 import { getActiveRouteName } from '@utils/backToHome';
+import type { PaymentUriPayload } from '@utils/payment-uri';
+import type React from 'react';
+import { useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
+import { Linking } from 'react-native';
+import { paymentUriParser } from './parser';
+import QrScannerSheet from './QrScannerSheet';
 
 // keep deep link listener
 export const useListenDeepLink = (navigation: StackNavigation) => {

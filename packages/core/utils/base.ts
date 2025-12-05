@@ -1,5 +1,5 @@
-import { Buffer } from 'buffer';
 import BN from 'bn.js';
+import { Buffer } from 'buffer';
 import randombytes from 'randombytes';
 
 const isHexPrefixed = (str: string) => {

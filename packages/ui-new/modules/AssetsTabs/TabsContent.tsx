@@ -1,22 +1,18 @@
-import { NetworkType, useCurrentNetwork } from '@core/WalletCore/Plugins/ReactInject';
 import type { Tx } from '@core/database/models/Tx';
 import { Networks } from '@core/utils/consts';
+import type { AssetInfo } from '@core/WalletCore/Plugins/AssetsTracker/types';
+import { NetworkType, useCurrentNetwork } from '@core/WalletCore/Plugins/ReactInject';
 import ActivityList from '@modules/ActivityList';
 import NFTsList from '@modules/AssetsList/NFTsList';
-
 import TokensList from '@modules/AssetsList/TokensList';
 import { useShouldShowNotBackup } from '@pages/Home/NotBackup';
-
 import { screenHeight } from '@utils/deviceInfo';
-
 import type React from 'react';
-import { useCallback, useMemo, useState, createRef, type RefObject, useEffect, useRef } from 'react';
-import { StyleSheet, View, findNodeHandle } from 'react-native';
+import { createRef, type RefObject, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { findNodeHandle, StyleSheet, View } from 'react-native';
 import PagerView from 'react-native-pager-view';
-
-import type { TabsType, TabType } from './types';
 import { useTabs } from './hooks';
-import type { AssetInfo } from '@core/WalletCore/Plugins/AssetsTracker/types';
+import type { TabsType, TabType } from './types';
 
 const TAB_WIDTH = 64;
 interface TabsHeaderProps {

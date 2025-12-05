@@ -1,6 +1,11 @@
+import { CURRENT_NETWORK_AND_ADDRESS_CHANGED_EVENT, type EventBus } from '@core/WalletCore/Events';
+import { SERVICE_IDENTIFIER } from '@core/WalletCore/service';
+import { inject, injectable } from 'inversify';
 import { isEqual } from 'lodash-es';
-import { Subject, type Subscription, catchError, from, interval, of, startWith, switchMap, takeUntil } from 'rxjs';
+import { catchError, from, interval, of, Subject, type Subscription, startWith, switchMap, takeUntil } from 'rxjs';
+import type { Address } from './../../../database/models/Address';
 import { queryAddressById } from '../../../database/models/Address/query';
+import type { Network, NetworkType } from './../../../database/models/Network';
 import { queryNetworkById } from '../../../database/models/Network/query';
 import {
   getAssetsAtomKey,
@@ -11,14 +16,8 @@ import {
   setAssetsInFetch,
   setAssetsSortedKeys,
 } from '../ReactInject/data/useAssets';
-import type { Address } from './../../../database/models/Address';
-import type { NetworkType } from './../../../database/models/Network';
-import type { Network } from './../../../database/models/Network';
 import trackAssets from './trackAssets';
 import type { Fetcher } from './types';
-import { inject, injectable } from 'inversify';
-import { SERVICE_IDENTIFIER } from '@core/WalletCore/service';
-import { CURRENT_NETWORK_AND_ADDRESS_CHANGED_EVENT, type EventBus } from '@core/WalletCore/Events';
 
 export const getFetcherKey = ({ networkType, chainId }: { networkType: NetworkType; chainId?: string }) => {
   return typeof chainId === 'undefined' ? networkType : `${networkType}-${chainId}`;

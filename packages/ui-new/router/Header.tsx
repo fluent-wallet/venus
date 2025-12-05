@@ -1,10 +1,10 @@
 import ArrowLeft from '@assets/icons/arrow-left.svg';
+import Text from '@components/Text';
 import { useNavigation, useTheme } from '@react-navigation/native';
+import type { NativeStackHeaderProps } from '@react-navigation/native-stack';
 import type React from 'react';
 import { Platform, Pressable, StyleSheet, View } from 'react-native';
 import { statusBarHeight, supports3DStructureLight } from '../utils/deviceInfo';
-import Text from '@components/Text';
-import type { NativeStackHeaderProps } from '@react-navigation/native-stack';
 
 const BackButton: React.FC = () => {
   const navigation = useNavigation();

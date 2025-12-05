@@ -1,4 +1,4 @@
-import { snapPoints as defaultSnapPoints, BottomSheetWrapper, BottomSheetHeader, BottomSheetRoute } from '@components/BottomSheet';
+import { BottomSheetHeader, BottomSheetRoute, BottomSheetWrapper, snapPoints as defaultSnapPoints } from '@components/BottomSheet';
 import type React from 'react';
 import type { ComponentProps } from 'react';
 import { useTranslation } from 'react-i18next';

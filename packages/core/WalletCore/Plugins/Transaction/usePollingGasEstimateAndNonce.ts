@@ -5,8 +5,9 @@ import type { ITxEvm } from '@core/WalletCore/Plugins/Transaction/types';
 import Decimal from 'decimal.js';
 import { isEqual } from 'lodash-es';
 import { useEffect, useState } from 'react';
-import { filter, interval, map, startWith, switchMap, catchError, throwError, retry } from 'rxjs';
-export { type Level } from '@core/WalletCore/Plugins/Transaction/SuggestedGasEstimate';
+import { catchError, filter, interval, map, retry, startWith, switchMap, throwError } from 'rxjs';
+
+export type { Level } from '@core/WalletCore/Plugins/Transaction/SuggestedGasEstimate';
 
 /**
  * get gas estimate from RPC , use the current network config

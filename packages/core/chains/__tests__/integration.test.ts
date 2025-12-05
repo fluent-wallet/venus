@@ -1,11 +1,11 @@
 import 'reflect-metadata';
-import { ChainRegistry, ConfluxChainProvider, EthereumChainProvider } from '..';
-import { AssetType, NetworkType, type ConfluxUnsignedTransaction, type EvmUnsignedTransaction } from '@core/types';
 import { createMockConfluxSdk, createMockEthersProvider, DEFAULT_BASE32_ADDRESS_TEST, DEFAULT_HEX_ADDRESS, DEFAULT_PRIVATE_KEY } from '@core/__tests__/mocks';
-import { convertHexToBase32 } from '@core/utils/address';
-import { computeAddress as computeAccountAddress, toAccountAddress } from '@core/utils/account';
-import { HDNode } from '@ethersproject/hdnode';
 import { SoftwareSigner } from '@core/signers';
+import { AssetType, type ConfluxUnsignedTransaction, type EvmUnsignedTransaction, NetworkType } from '@core/types';
+import { computeAddress as computeAccountAddress, toAccountAddress } from '@core/utils/account';
+import { convertHexToBase32 } from '@core/utils/address';
+import { HDNode } from '@ethersproject/hdnode';
+import { ChainRegistry, ConfluxChainProvider, EthereumChainProvider } from '..';
 
 jest.mock('js-conflux-sdk', () => {
   const actual = jest.requireActual('js-conflux-sdk');

@@ -1,4 +1,4 @@
-import { Subject, from, map, of, switchMap } from 'rxjs';
+import { from, map, of, Subject, switchMap } from 'rxjs';
 import { currentAddressObservable } from '../../../Plugins/ReactInject/data/useCurrentAddress';
 
 const accountsChangedObservable = currentAddressObservable.pipe(

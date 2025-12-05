@@ -1,8 +1,9 @@
-import { computeHmac, randomBytes } from 'ethers';
-import { BSIM_DEV_KEY } from './BSIMConstants';
-import * as Hex from 'ox/Hex';
 import { stripHexPrefix } from '@core/utils/base';
+import { computeHmac, randomBytes } from 'ethers';
+import * as Hex from 'ox/Hex';
+import { BSIM_DEV_KEY } from './BSIMConstants';
 import type { BsimQrPayload } from './BSIMTypes';
+
 function stringToBytes(str: string): Uint8Array {
   return new TextEncoder().encode(str);
 }

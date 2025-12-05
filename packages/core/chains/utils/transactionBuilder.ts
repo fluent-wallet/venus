@@ -1,10 +1,9 @@
+import { iface721, iface777, iface1155 } from '@core/contracts';
 import type { Address, Hex } from '@core/types';
 import { AssetType } from '@core/types';
-import { iface777, iface721, iface1155 } from '@core/contracts';
-import * as OxValue from 'ox/Value';
+import { type Base32Address, convertBase32ToHex, decode } from '@core/utils/address';
 import * as OxHex from 'ox/Hex';
-
-import { convertBase32ToHex, decode, type Base32Address } from '@core/utils/address';
+import * as OxValue from 'ox/Value';
 
 const isBase32Address = (value: Address): value is Base32Address => {
   try {

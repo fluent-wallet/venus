@@ -1,31 +1,31 @@
-import { NetworkType, getCurrentAddress, getCurrentAddressValue } from '@core/WalletCore/Plugins/ReactInject';
-import type { Plugin } from '@core/WalletCore/Plugins';
-import { formatJsonRpcError, formatJsonRpcResult } from '@json-rpc-tools/utils';
-import { Core } from '@walletconnect/core';
+import {
+  ChainPrefix,
+  convertEipDataToCip,
+  convertEipMethodToCip,
+  ExtractCip155Namespace,
+  isCIPData,
+  mergeCIPNamespaceToEIP,
+  type Namespace,
+} from '@cfx-kit/react-utils/dist/WalletConnectorHelper';
 import { queryNetworks } from '@core/database/models/Network/query';
-import { buildApprovedNamespaces, getSdkError, parseUri } from '@walletconnect/utils';
-import type Client from '@reown/walletkit';
-import { WalletKit, type WalletKitTypes } from '@reown/walletkit';
-import { BehaviorSubject, Subject, concatMap, of, switchMap, tap } from 'rxjs';
-import { uniq } from 'lodash-es';
 import { convertHexToBase32 } from '@core/utils/address';
 import methods from '@core/WalletCore/Methods';
+import type { Plugin } from '@core/WalletCore/Plugins';
+import { getCurrentAddress, getCurrentAddressValue, NetworkType } from '@core/WalletCore/Plugins/ReactInject';
+import { formatJsonRpcError, formatJsonRpcResult } from '@json-rpc-tools/utils';
+import type Client from '@reown/walletkit';
+import { WalletKit, type WalletKitTypes } from '@reown/walletkit';
+import { Core } from '@walletconnect/core';
+import { buildApprovedNamespaces, getSdkError, parseUri } from '@walletconnect/utils';
+import { uniq } from 'lodash-es';
+import { BehaviorSubject, concatMap, of, Subject, switchMap, tap } from 'rxjs';
 import {
   type IWCSendTransactionEvent,
   type IWCSessionProposalEvent,
-  WalletConnectPluginEventType,
   type WalletConnectPluginEvents,
+  WalletConnectPluginEventType,
   WalletConnectRPCMethod,
 } from './types';
-import {
-  ChainPrefix,
-  ExtractCip155Namespace,
-  mergeCIPNamespaceToEIP,
-  isCIPData,
-  convertEipDataToCip,
-  convertEipMethodToCip,
-  type Namespace,
-} from '@cfx-kit/react-utils/dist/WalletConnectorHelper';
 
 declare module '../../../WalletCore/Plugins' {
   interface Plugins {
