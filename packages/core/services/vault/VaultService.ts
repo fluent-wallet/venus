@@ -33,6 +33,7 @@ export class VaultService {
       id: vault.id,
       type: vault.type,
       device: vault.device,
+      hardwareDeviceId: vault.hardwareDeviceId ?? null,
       isBackup: vault.isBackup,
       source: vault.source,
       isGroup: vault.isGroup,
@@ -113,6 +114,7 @@ export class VaultService {
     const vaultRecord = this.database.get<Vault>(TableName.Vault).prepareCreate((record) => {
       record.type = VaultType.HierarchicalDeterministic;
       record.device = VAULT_DEFAULTS.DEVICE;
+      record.hardwareDeviceId = null;
       record.data = encryptedMnemonic;
       record.cfxOnly = false;
       record.isBackup = isImport;
@@ -196,6 +198,7 @@ export class VaultService {
     const vaultRecord = this.database.get<Vault>(TableName.Vault).prepareCreate((record) => {
       record.type = VaultType.BSIM;
       record.device = VAULT_DEFAULTS.DEVICE;
+      record.hardwareDeviceId = input.hardwareDeviceId ?? null;
       record.data = 'BSIM Wallet';
       record.cfxOnly = false;
       record.isBackup = false;
@@ -239,6 +242,7 @@ export class VaultService {
     const vaultRecord = this.database.get<Vault>(TableName.Vault).prepareCreate((record) => {
       record.type = VaultType.PublicAddress;
       record.device = VAULT_DEFAULTS.DEVICE;
+      record.hardwareDeviceId = null;
       record.data = input.hexAddress;
       record.cfxOnly = false;
       record.isBackup = false;

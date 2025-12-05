@@ -193,9 +193,9 @@ describe('VaultService', () => {
       { index: 5, hexAddress: '0x763d0F4D817e65ec6ac7224AeA281F1282Edc3B7' },
     ];
 
-    const vault = await service.createBSIMVault({ accounts: accountsInput });
+    const vault = await service.createBSIMVault({ accounts: accountsInput, hardwareDeviceId: 'icc-123' });
     expect(vault.type).toBe(VaultType.BSIM);
-
+    expect(vault.hardwareDeviceId).toBe('icc-123');
     const group = await database.get<AccountGroup>(TableName.AccountGroup).find(vault.accountGroupId);
     const accounts = await group.accounts.fetch();
     const sorted = [...accounts].sort((a, b) => a.index - b.index);

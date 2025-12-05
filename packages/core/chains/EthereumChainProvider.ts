@@ -3,6 +3,8 @@ import type {
   ChainCallParams,
   EvmFeeEstimate,
   EvmUnsignedTransaction,
+  HardwareSignResult,
+  Hash,
   Hex,
   IChainProvider,
   IHardwareSigner,
@@ -12,7 +14,7 @@ import type {
   TransactionParams,
 } from '@core/types';
 import { NetworkType } from '@core/types';
-import { computeAddress, getAddress, isAddress, JsonRpcProvider, keccak256, verifyMessage as verifyEthersMessage, Wallet } from 'ethers';
+import { computeAddress, getAddress, isAddress, JsonRpcProvider, keccak256, Signature, verifyMessage as verifyEthersMessage, Wallet } from 'ethers';
 import { buildTransactionPayload } from './utils/transactionBuilder';
 
 export interface EthereumChainProviderOptions {
@@ -63,7 +65,7 @@ export class EthereumChainProvider implements IChainProvider {
     const privateKey = signer.getPrivateKey();
     const wallet = new Wallet(privateKey, this.provider);
     const raw = await wallet.signTransaction(tx.payload);
-    const hash = keccak256(raw);
+    const hash = keccak256(raw) as Hash;
 
     return {
       chainType: tx.chainType,
@@ -73,16 +75,19 @@ export class EthereumChainProvider implements IChainProvider {
   }
 
   private async signWithHardware(tx: EvmUnsignedTransaction, signer: IHardwareSigner): Promise<SignedTransaction> {
-    const signature = await signer.signWithHardware({
-      data: tx.payload,
+    const result = await signer.signWithHardware({
       derivationPath: signer.getDerivationPath(),
       chainType: signer.getChainType(),
+      payload: {
+        payloadKind: 'transaction',
+        chainType: tx.chainType,
+        unsignedTx: tx.payload,
+      },
     });
 
-    return this.assembleHardwareSignedTransaction(tx, signature);
+    return this.assembleHardwareSignedTransaction(tx, result);
   }
-
-  private assembleHardwareSignedTransaction(tx: EvmUnsignedTransaction, signature: string): SignedTransaction {
+  private assembleHardwareSignedTransaction(tx: EvmUnsignedTransaction, result: HardwareSignResult): SignedTransaction {
     // TODO: implement hardware transaction assembly based on BSIM signature format
     throw new Error('Hardware transaction assembly not implemented');
   }
@@ -93,11 +98,27 @@ export class EthereumChainProvider implements IChainProvider {
       const wallet = new Wallet(privateKey, this.provider);
       return wallet.signMessage(message);
     } else {
-      return signer.signWithHardware({
-        data: message,
+      const result = await signer.signWithHardware({
         derivationPath: signer.getDerivationPath(),
         chainType: this.networkType,
+        payload: {
+          payloadKind: 'message',
+          messageKind: 'personal',
+          chainType: this.networkType,
+          message,
+        },
+        signal: undefined,
       });
+
+      if (result.resultType === 'typedSignature') {
+        return result.signature;
+      }
+      if (result.resultType === 'signature') {
+        const v = result.v ?? 27;
+        const yParity = (v % 2 === 0 ? 0 : 1) as 0 | 1;
+        return Signature.from({ r: result.r, s: result.s, v, yParity }).serialized;
+      }
+      throw new Error('Hardware wallet did not return a message signature.');
     }
   }
 
@@ -110,9 +131,9 @@ export class EthereumChainProvider implements IChainProvider {
     }
   }
 
-  async broadcastTransaction(signedTx: SignedTransaction): Promise<string> {
+  async broadcastTransaction(signedTx: SignedTransaction): Promise<Hash> {
     const response = await this.provider.broadcastTransaction(signedTx.rawTransaction);
-    return response.hash;
+    return response.hash as Hash;
   }
 
   async buildTransaction(params: TransactionParams): Promise<EvmUnsignedTransaction> {

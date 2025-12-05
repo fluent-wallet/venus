@@ -1,14 +1,13 @@
-import type { BSIMPluginClass } from '@WalletCoreExtends/Plugins/BSIM';
 import type { Database } from '@core/database';
 import type { Account } from '@core/database/models/Account';
 import type { Address } from '@core/database/models/Address';
 import VaultType from '@core/database/models/Vault/VaultType';
 import TableName from '@core/database/TableName';
 import { VaultService } from '@core/services/vault';
-import { HardwareSigner, SoftwareSigner } from '@core/signers';
+import { SoftwareSigner } from '@core/signers';
 import type { ISigner } from '@core/types';
 import { SERVICE_IDENTIFIER } from '@core/WalletCore/service';
-import { inject, injectable, optional } from 'inversify';
+import { inject, injectable } from 'inversify';
 
 @injectable()
 export class SigningService {
@@ -17,10 +16,6 @@ export class SigningService {
 
   @inject(VaultService)
   private readonly vaultService!: VaultService;
-
-  @optional()
-  @inject('BSIM_PLUGIN')
-  private readonly bsimPlugin?: BSIMPluginClass;
 
   async getSigner(accountId: string, addressId: string): Promise<ISigner> {
     const account = await this.findAccount(accountId);
@@ -31,17 +26,7 @@ export class SigningService {
     const vault = await accountGroup.vault.fetch();
 
     if (vault.type === VaultType.BSIM) {
-      if (!this.bsimPlugin) {
-        throw new Error('BSIM plugin is not available.');
-      }
-      const network = await address.network.fetch();
-      const hdPath = await network.hdPath.fetch();
-      const derivationPath = `${hdPath.value}/${account.index}`;
-      return new HardwareSigner({
-        wallet: this.bsimPlugin,
-        derivationPath,
-        chainType: network.networkType,
-      });
+      throw new Error('Hardware wallet signing is not yet implemented. ');
     }
 
     if (vault.type === VaultType.HierarchicalDeterministic || vault.type === VaultType.PrivateKey) {
@@ -64,7 +49,7 @@ export class SigningService {
     try {
       return await this.database.get<Address>(TableName.Address).find(addressId);
     } catch {
-      throw new Error(`[AssetService] Address ${addressId} not found in database.`);
+      throw new Error(`Address ${addressId} not found.`);
     }
   }
 

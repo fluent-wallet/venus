@@ -18,6 +18,8 @@ export class Vault extends Model {
   @text('data') data!: string | null;
   /** Vault device, default is ePayWallet */
   @text('device') device!: 'ePayWallet' | 'FluentWebExt';
+  /** The hardware device identifier once the hardware wallet is connected (optional) */
+  @text('hardware_device_id') hardwareDeviceId!: string | null;
   /** The accounts for conflux core and ethereum's ledger hardware wallet maybe separate. */
   @field('cfx_only') cfxOnly!: boolean | null;
   /** is backup to indicate whether the user's mnemonic phrase has been backed up */

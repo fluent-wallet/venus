@@ -1,11 +1,12 @@
-import type { FeeEstimate, SignedTransaction, TransactionParams, TxStatus, UnsignedTransaction } from './transaction';
-import type { ISigner } from './signer';
 import { NetworkType as CoreNetworkType } from '@core/utils/consts';
+import type { Block, Hex } from 'ox';
+import type { ISigner } from './signer';
+import type { FeeEstimate, SignedTransaction, TransactionParams, TxStatus, UnsignedTransaction } from './transaction';
 
 export type ChainType = CoreNetworkType;
-export type Hex = `0x${string}`;
+export type Hex = Hex.Hex;
 export type Address = string;
-export type Hash = string;
+export type Hash = Block.Hash;
 
 /**
  * Parameters for the `call` method

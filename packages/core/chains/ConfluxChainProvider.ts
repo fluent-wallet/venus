@@ -4,6 +4,7 @@ import type {
   ConfluxFeeEstimate,
   ConfluxUnsignedTransaction,
   ConfluxUnsignedTransactionPayload,
+  HardwareSignResult,
   Hash,
   IChainProvider,
   IHardwareSigner,
@@ -141,16 +142,20 @@ export class ConfluxChainProvider implements IChainProvider {
   }
 
   private async signWithHardware(tx: ConfluxUnsignedTransaction, signer: IHardwareSigner): Promise<SignedTransaction> {
-    const signature = await signer.signWithHardware({
-      data: tx.payload,
+    await signer.signWithHardware({
       derivationPath: signer.getDerivationPath(),
       chainType: signer.getChainType(),
+      payload: {
+        payloadKind: 'transaction',
+        chainType: tx.chainType,
+        unsignedTx: tx.payload,
+      },
     });
 
-    return this.assembleHardwareSignedTransaction(tx, signature);
+    throw new Error('Hardware signing for Conflux transactions is not supported yet.');
   }
 
-  private assembleHardwareSignedTransaction(tx: ConfluxUnsignedTransaction, signature: string): SignedTransaction {
+  private assembleHardwareSignedTransaction(tx: ConfluxUnsignedTransaction, result: HardwareSignResult): SignedTransaction {
     // TODO: implement hardware transaction assembly based on BSIM signature format
     throw new Error('Hardware transaction assembly not implemented');
   }
@@ -180,11 +185,18 @@ export class ConfluxChainProvider implements IChainProvider {
       const privateKey = signer.getPrivateKey();
       return PersonalMessage.sign(privateKey, message);
     } else {
-      return signer.signWithHardware({
-        data: message,
+      await signer.signWithHardware({
         derivationPath: signer.getDerivationPath(),
         chainType: this.networkType,
+        payload: {
+          payloadKind: 'message',
+          messageKind: 'personal',
+          chainType: this.networkType,
+          message,
+        },
       });
+
+      throw new Error('Hardware signing for Conflux messages is not supported yet.');
     }
   }
 

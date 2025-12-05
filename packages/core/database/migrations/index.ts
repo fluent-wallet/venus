@@ -1,6 +1,6 @@
-import { schemaMigrations, unsafeExecuteSql } from '@nozbe/watermelondb/Schema/migrations';
-import TableName from '../TableName';
+import { addColumns, schemaMigrations, unsafeExecuteSql } from '@nozbe/watermelondb/Schema/migrations';
 import { TxStatus } from '../models/Tx/type';
+import TableName from '../TableName';
 
 const migrations = schemaMigrations({
   migrations: [
@@ -26,6 +26,15 @@ const migrations = schemaMigrations({
         unsafeExecuteSql(
           `UPDATE ${TableName.Network} SET scan_url = REPLACE(scan_url, 'confluxscan.io', 'confluxscan.org') WHERE scan_url LIKE '%confluxscan.io%';`,
         ),
+      ],
+    },
+    {
+      toVersion: 4,
+      steps: [
+        addColumns({
+          table: TableName.Vault,
+          columns: [{ name: 'hardware_device_id', type: 'string', isOptional: true }],
+        }),
       ],
     },
   ],

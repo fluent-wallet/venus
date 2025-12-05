@@ -9,6 +9,8 @@ export interface IVault {
   id: string;
   type: VaultType;
   device: string;
+  /** Optional identifier for paired hardware (BLE UUID, ICCID, etc.) */
+  hardwareDeviceId: string | null;
   /** Has the user backed up this vault? */
   isBackup: boolean;
   /** Was this imported or created by the wallet? */
@@ -43,6 +45,7 @@ export interface CreatePrivateKeyVaultInput {
  */
 export interface CreateBSIMVaultInput {
   accounts: Array<{ index: number; hexAddress: string }>;
+  hardwareDeviceId?: string;
 }
 
 /**

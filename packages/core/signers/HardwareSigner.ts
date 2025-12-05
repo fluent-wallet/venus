@@ -1,4 +1,4 @@
-import type { ChainType, IHardwareSigner, IHardwareWallet, SigningContext } from '@core/types';
+import type { ChainType, HardwareSignResult, IHardwareSigner, IHardwareWallet, SigningContext } from '@core/types';
 
 interface HardwareSignerOptions {
   wallet: IHardwareWallet;
@@ -28,7 +28,7 @@ export class HardwareSigner implements IHardwareSigner {
     return this.derivationPath;
   }
 
-  async signWithHardware(context: SigningContext): Promise<string> {
+  async signWithHardware(context: SigningContext): Promise<HardwareSignResult> {
     return this.wallet.sign(context);
   }
 }

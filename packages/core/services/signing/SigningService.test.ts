@@ -1,11 +1,10 @@
 import 'reflect-metadata';
-import type { BSIMPluginClass } from '@WalletCoreExtends/Plugins/BSIM';
 import { createTestAccount } from '@core/__tests__/fixtures';
 import { mockDatabase } from '@core/__tests__/mocks';
 import type { Database } from '@core/database';
 import VaultType from '@core/database/models/Vault/VaultType';
 import { VaultService } from '@core/services/vault';
-import { HardwareSigner, SoftwareSigner } from '@core/signers';
+import { SoftwareSigner } from '@core/signers';
 import { SERVICE_IDENTIFIER } from '@core/WalletCore/service';
 import { Container } from 'inversify';
 import { SigningService } from './SigningService';
@@ -34,9 +33,6 @@ describe('SigningService', () => {
 
   afterEach(async () => {
     jest.clearAllMocks();
-    if (container.isBound('BSIM_PLUGIN')) {
-      container.unbind('BSIM_PLUGIN');
-    }
     container.unbindAll();
   });
 
@@ -77,26 +73,6 @@ describe('SigningService', () => {
     const { address: otherAddress } = await createTestAccount(database, { nickname: 'Owner B', selected: false });
 
     await expect(getService().getSigner(first.id, otherAddress.id)).rejects.toThrow('Address does not belong to the provided account.');
-  });
-
-  it('throws for BSIM vaults when plugin is absent', async () => {
-    const { account, address } = await createTestAccount(database, { vaultType: VaultType.BSIM });
-
-    await expect(getService().getSigner(account.id, address.id)).rejects.toThrow('BSIM plugin is not available.');
-  });
-
-  it('returns HardwareSigner for BSIM vaults when plugin is available', async () => {
-    const { account, address, network } = await createTestAccount(database, { vaultType: VaultType.BSIM, selected: true });
-    const hdPath = await network.hdPath.fetch();
-    const bsimPluginMock = { name: 'BSIM' } as unknown as BSIMPluginClass;
-
-    container.bind<BSIMPluginClass>('BSIM_PLUGIN').toConstantValue(bsimPluginMock);
-    const signer = await getService().getSigner(account.id, address.id);
-
-    expect(signer).toBeInstanceOf(HardwareSigner);
-    expect((signer as HardwareSigner).getDerivationPath()).toBe(`${hdPath.value}/${account.index}`);
-    expect((signer as HardwareSigner).getDerivationPath()).toMatch(/^m\/44'\/\d+'\/\d+'\/0\/\d+$/);
-    expect((signer as HardwareSigner).getChainType()).toBe(network.networkType);
   });
 
   it('throws for unsupported vault types', async () => {
