@@ -1,35 +1,29 @@
 import type { HardwareWalletCapabilities, IHardwareWallet } from '@core/types';
 import { injectable } from 'inversify';
 
-type RegistryEntry = {
-  adapter: IHardwareWallet;
-  hardwareId?: string;
-};
-
 @injectable()
 export class HardwareWalletRegistry {
-  private readonly adapters = new Map<string, RegistryEntry>();
+  private readonly adapters = new Map<string, Map<string | undefined, IHardwareWallet>>();
 
   get size(): number {
-    return this.adapters.size;
+    let total = 0;
+    for (const bucket of this.adapters.values()) {
+      total += bucket.size;
+    }
+    return total;
   }
 
   register(type: string, hardwareId: string | undefined, adapter: IHardwareWallet): this {
-    const key = this.toKey(type);
-    if (this.adapters.has(key)) {
-      throw new Error(`[HardwareWalletRegistry] Adapter already registered for type ${type}`);
+    const bucket = this.ensureBucket(type);
+    if (bucket.has(hardwareId)) {
+      throw new Error(`[HardwareWalletRegistry] Adapter already registered for type ${type} (hardwareId=${hardwareId ?? '<default>'})`);
     }
-    this.adapters.set(key, { adapter, hardwareId });
+    bucket.set(hardwareId, adapter);
     return this;
   }
 
   get(type: string, hardwareId?: string): IHardwareWallet | undefined {
-    const entry = this.adapters.get(this.toKey(type));
-    if (!entry) return undefined;
-    if (hardwareId && entry.hardwareId && entry.hardwareId !== hardwareId) {
-      return undefined;
-    }
-    return entry.adapter;
+    return this.adapters.get(this.toKey(type))?.get(hardwareId);
   }
 
   has(type: string, hardwareId?: string): boolean {
@@ -37,11 +31,22 @@ export class HardwareWalletRegistry {
   }
 
   list(): Array<{ type: string; hardwareId?: string; capabilities: HardwareWalletCapabilities }> {
-    return [...this.adapters.entries()].map(([type, entry]) => ({
-      type,
-      hardwareId: entry.hardwareId,
-      capabilities: entry.adapter.getCapabilities(),
-    }));
+    const result: Array<{ type: string; hardwareId?: string; capabilities: HardwareWalletCapabilities }> = [];
+    for (const [type, bucket] of this.adapters.entries()) {
+      for (const [hardwareId, adapter] of bucket.entries()) {
+        result.push({ type, hardwareId, capabilities: adapter.getCapabilities() });
+      }
+    }
+    return result;
+  }
+
+  private ensureBucket(type: string): Map<string | undefined, IHardwareWallet> {
+    const key = this.toKey(type);
+    const bucket = this.adapters.get(key);
+    if (bucket) return bucket;
+    const created = new Map<string | undefined, IHardwareWallet>();
+    this.adapters.set(key, created);
+    return created;
   }
 
   private toKey(type: string): string {
