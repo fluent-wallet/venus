@@ -1,5 +1,5 @@
 import type { TypedDataDomain, TypedDataField } from 'ethers';
-import type { BackupSeedParams, Wallet as BsimWallet, DeriveKeyParams, PubkeyRecord, RestoreSeedParams } from 'react-native-bsim';
+import type { BackupSeedParams, DeriveKeyParams, PubkeyRecord, RestoreSeedParams } from 'react-native-bsim';
 import type { Address, ChainType, Hash, Hex } from './chain';
 import type { ConfluxUnsignedTransactionPayload, EvmUnsignedTransactionPayload } from './transaction';
 
@@ -39,6 +39,10 @@ export interface HardwareWalletCapabilities {
 export interface HardwareConnectOptions {
   transport?: 'apdu' | 'ble';
   deviceIdentifier?: string;
+  signal?: AbortSignal;
+}
+
+export interface HardwareOperationOptions {
   signal?: AbortSignal;
 }
 
@@ -87,11 +91,19 @@ export type SigningPayload =
     };
 
 export type HardwareSignResult =
-  | { resultType: 'signature'; chainType: ChainType; r: Hex; s: Hex; v?: number; digest?: Hex }
+  | { resultType: 'signature'; chainType: ChainType; r: Hex; s: Hex; v: number; digest?: Hex }
   | { resultType: 'rawTransaction'; chainType: ChainType; rawTransaction: Hex; hash: Hash }
   | { resultType: 'typedSignature'; chainType: ChainType; signature: string };
 
 export type ISigner = ISoftwareSigner | IHardwareSigner;
 
-export type IBSIMWallet = IHardwareWallet &
-  Pick<BsimWallet, 'verifyBpin' | 'updateBpin' | 'getIccid' | 'getVersion' | 'backupSeed' | 'restoreSeed' | 'exportPubkeys' | 'deriveKey'>;
+export interface IBSIMWallet extends IHardwareWallet {
+  verifyBpin(options?: HardwareOperationOptions): Promise<void>;
+  updateBpin(options?: HardwareOperationOptions): Promise<'ok'>;
+  getIccid(options?: HardwareOperationOptions): Promise<string>;
+  getVersion(options?: HardwareOperationOptions): Promise<string>;
+  backupSeed(params: BackupSeedParams, options?: HardwareOperationOptions): Promise<string>;
+  restoreSeed(params: RestoreSeedParams, options?: HardwareOperationOptions): Promise<'ok'>;
+  exportPubkeys(options?: HardwareOperationOptions): Promise<PubkeyRecord[]>;
+  deriveKey(params: DeriveKeyParams, options?: HardwareOperationOptions): Promise<void>;
+}
