@@ -3,11 +3,11 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import {
   PasswordVerifyStackName,
   SheetBottomOption,
+  type WalletConnectParamList,
   WalletConnectProposalStackName,
   WalletConnectSessionsStackName,
   WalletConnectSignMessageStackName,
   WalletConnectTransactionStackName,
-  type WalletConnectParamList,
 } from '@router/configs';
 import WalletConnectProposal from './Proposal';
 import WalletConnectSessions from './Sessions';

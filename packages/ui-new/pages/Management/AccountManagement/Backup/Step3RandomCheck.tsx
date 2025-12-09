@@ -1,6 +1,6 @@
+import { BottomSheetFooter, BottomSheetScrollContent } from '@components/BottomSheet';
 import Button from '@components/Button';
 import Text from '@components/Text';
-import { BottomSheetScrollContent, BottomSheetFooter } from '@components/BottomSheet';
 import { useVaultFromId } from '@core/WalletCore/Plugins/ReactInject';
 import { useTheme } from '@react-navigation/native';
 import { type BackupScreenProps, type BackupStep3StackName, BackupSuccessStackName } from '@router/configs';

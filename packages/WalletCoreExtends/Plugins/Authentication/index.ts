@@ -1,10 +1,10 @@
 import { EXTENDS_SERVICE_IDENTIFIER } from '@WalletCoreExtends/service';
+import type { ICryptoTool } from '@core/WalletCore/Plugins/CryptoTool/interface';
+import { SERVICE_IDENTIFIER } from '@core/WalletCore/service';
 import type { IPlugin } from '../../../core/WalletCore/plugin';
 import { AuthenticationServer, type IAuthenticationServer } from './authenticationServer';
-import { SERVICE_IDENTIFIER } from '@core/WalletCore/service';
-import type { ICryptoTool } from '@core/WalletCore/Plugins/CryptoTool/interface';
 
-export { AUTHENTICATION_PASSWORD_REQUEST, type PasswordRequest, AuthenticationType } from './authenticationServer';
+export { AUTHENTICATION_PASSWORD_REQUEST, AuthenticationType, type PasswordRequest } from './authenticationServer';
 
 const AuthenticationPlugin: IPlugin = {
   name: EXTENDS_SERVICE_IDENTIFIER.AUTHENTICATION,

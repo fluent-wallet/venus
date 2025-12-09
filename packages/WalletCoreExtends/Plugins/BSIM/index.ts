@@ -15,9 +15,11 @@ import {
   type TypedDataField,
   toBeHex,
 } from 'ethers';
+import { Platform } from 'react-native';
 import {
   BSIMError,
   CARD_ERROR_MESSAGES,
+  type CardErrorCode,
   COIN_TYPE_CONFIG,
   CoinTypes,
   createAsyncQueue,
@@ -25,15 +27,23 @@ import {
   getDefaultSignatureAlgorithm,
   isCardErrorCode,
   isTransportError,
+  type TransportError,
   TransportErrorCode,
-  type CardErrorCode,
 } from 'react-native-bsim';
 import { catchError, defer, firstValueFrom, from, retry, Subject, takeUntil, throwError, timeout, timer } from 'rxjs';
-import { BSIM_ERRORS, BSIM_SUPPORT_ACCOUNT_LIMIT, BSIMErrorEndTimeout } from './BSIMSDK';
+import { BSIM_ERRORS, BSIM_SUPPORT_ACCOUNT_LIMIT, BSIMErrorEndTimeout, isCardNotCertification } from './BSIMSDK';
 
 const ETHEREUM_COIN_TYPE = COIN_TYPE_CONFIG.ETHEREUM.index;
 
 const HEX_PATTERN = /^[0-9A-F]*$/i;
+
+export const BSIM_HARDWARE_UNAVAILABLE = 'HARDWARE_UNAVAILABLE' as const;
+export type BSIMHardwareReason = 'card_missing' | 'ble_device_not_found' | 'bluetooth_disabled' | 'permission_denied';
+
+export type BSIMHardwareUnavailableError = BSIMError & {
+  code: typeof BSIM_HARDWARE_UNAVAILABLE;
+  reason: BSIMHardwareReason;
+};
 
 const ensureHex = (value: string): string => {
   const compact = value.replace(/\s+/g, '').replace(/^0x/i, '');
@@ -203,6 +213,8 @@ const resolveCardStatus = (error: unknown): ResolvedCardStatus | undefined => {
   return { code: candidate, message: CARD_ERROR_MESSAGES[candidate] };
 };
 
+const delay = (ms: number): Promise<void> => new Promise((resolve) => setTimeout(resolve, ms));
+
 declare module '@core/WalletCore/Plugins' {
   interface Plugins {
     BSIM: BSIMPluginClass;
@@ -216,14 +228,75 @@ export class BSIMPluginClass implements Plugin {
 
   private queue = createAsyncQueue();
 
+  private createHardwareUnavailableError(reason: BSIMHardwareReason, message?: string): BSIMHardwareUnavailableError {
+    return new BSIMError(BSIM_HARDWARE_UNAVAILABLE, message ?? 'Hardware not available', { reason }) as BSIMHardwareUnavailableError;
+  }
+
+  private resolveIOSHardwareReason(error: TransportError): BSIMHardwareReason | undefined {
+    if (error.code === TransportErrorCode.SCAN_FAILED) {
+      const normalizedMessage = error.message?.toLowerCase() ?? '';
+      if (normalizedMessage.includes('permission')) {
+        return 'permission_denied';
+      }
+      if (normalizedMessage.includes('enable bluetooth') || normalizedMessage.includes('power on')) {
+        return 'bluetooth_disabled';
+      }
+      return 'ble_device_not_found';
+    }
+
+    if (
+      error.code === TransportErrorCode.CHARACTERISTIC_NOT_FOUND ||
+      error.code === TransportErrorCode.READ_TIMEOUT ||
+      error.code === TransportErrorCode.CHANNEL_NOT_OPEN
+    ) {
+      return 'ble_device_not_found';
+    }
+
+    return undefined;
+  }
+
+  private async verifyHardwareAvailability(): Promise<void> {
+    if (Platform.OS !== 'android' && Platform.OS !== 'ios') return;
+
+    try {
+      await this.wallet.getVersion();
+    } catch (error) {
+      if (Platform.OS === 'android' && isTransportError(error)) {
+        const androidCode = error.code as TransportErrorCode | undefined;
+        if (
+          androidCode === TransportErrorCode.CHANNEL_OPEN_FAILED ||
+          androidCode === TransportErrorCode.CHANNEL_NOT_OPEN ||
+          androidCode === TransportErrorCode.DEVICE_NOT_FOUND
+        ) {
+          throw this.createHardwareUnavailableError('card_missing');
+        }
+      }
+
+      if (Platform.OS === 'ios' && isTransportError(error)) {
+        const iosReason = this.resolveIOSHardwareReason(error);
+        if (iosReason) {
+          throw this.createHardwareUnavailableError(iosReason);
+        }
+      }
+
+      throw error;
+    }
+  }
   private enqueue<T>(task: () => Promise<T>): Promise<T> {
     return this.queue.enqueue(task);
   }
 
   private async handleWalletCall<T>(operation: () => Promise<T>): Promise<T> {
     try {
-      return await this.enqueue(operation);
+      return await this.enqueue(async () => {
+        await this.verifyHardwareAvailability();
+        return await operation();
+      });
     } catch (error) {
+      if (error instanceof BSIMErrorEndTimeout) {
+        throw error;
+      }
+
       if (isTransportError(error)) {
         const status = resolveCardStatus(error);
         if (status) {
@@ -331,20 +404,83 @@ export class BSIMPluginClass implements Plugin {
   };
 
   public connectBSIM = async () => {
-    const list = await this.getBSIMList();
-    if (list?.length > 0) {
-      return list.slice(0, 1);
-    } else {
-      const created = await this.createNewBSIMAccount();
-      return [created];
+    try {
+      const list = await this.getBSIMList();
+      if (list?.length > 0) {
+        return list.slice(0, 1);
+      } else {
+        const created = await this.createNewBSIMAccount();
+        return [created];
+      }
+    } catch (error: unknown) {
+      if (error instanceof BSIMError && isCardNotCertification(error)) {
+        // in recovery mode need to create new account
+        const created = await this.createNewBSIMAccount();
+        return [created];
+      }
+
+      throw error;
     }
   };
+
+  private async verifyBpinGracefully(): Promise<void> {
+    try {
+      await this.verifyBPIN();
+    } catch (error: any) {
+      const code = typeof error?.code === 'string' ? error.code.toUpperCase() : undefined;
+      if (code !== 'A000') {
+        throw error;
+      }
+    }
+  }
 
   public verifyBPIN = async () => this.handleWalletCall(() => this.wallet.verifyBpin());
 
   public getBSIMVersion = async () => this.handleWalletCall(() => this.wallet.getVersion());
 
+  public getBSIMICCID = async () => this.handleWalletCall(() => this.wallet.getIccid());
+
   public updateBPIN = async () => this.handleWalletCall(() => this.wallet.updateBpin());
+
+  public restoreSeed = async (key2: string, cipherHex: string) => this.handleWalletCall(() => this.wallet.restoreSeed({ key2, cipherHex }));
+
+  public backupSeed = async (key2: string) => {
+    let cancelled = false;
+    const cancel = () => {
+      cancelled = true;
+    };
+
+    const runBackup = async () => {
+      await this.verifyBpinGracefully();
+
+      const timeoutMs = 30 * 1000;
+      const retryDelayMs = 1000;
+      const deadline = Date.now() + timeoutMs;
+
+      let lastError: unknown;
+
+      while (Date.now() <= deadline) {
+        if (cancelled) {
+          throw new BSIMError('cancel', BSIM_ERRORS.CANCEL);
+        }
+
+        try {
+          return await this.handleWalletCall(() => this.wallet.backupSeed({ key2 }));
+        } catch (error) {
+          lastError = error;
+          await delay(retryDelayMs);
+        }
+      }
+
+      const error = lastError as { code?: string; message?: string } | undefined;
+      const code = error?.code?.toUpperCase() ?? 'A000';
+      const message = error?.message ?? BSIM_ERRORS[code] ?? BSIM_ERRORS.DEFAULT;
+      throw new BSIMErrorEndTimeout(code, message);
+    };
+
+    const promise = runBackup();
+    return [promise, cancel] as const;
+  };
 
   public BSIMSignMessage = async (message: string, coinTypeIndex: number, index: number, pubkey?: BSIMPublicKey): Promise<SignResult> => {
     const record = pubkey ?? (await this.loadPubkeys()).find((item) => item.coinType === coinTypeIndex && item.index === index);
@@ -370,15 +506,7 @@ export class BSIMPluginClass implements Plugin {
   };
 
   private BSIMSign = async (hash: string, fromAddress: string) => {
-    try {
-      await this.verifyBPIN();
-    } catch (error: any) {
-      if (error?.code && error.code === 'A000') {
-        console.log("get error code A000, it's ok");
-      } else {
-        throw new BSIMError(error.code, error.message);
-      }
-    }
+    await this.verifyBpinGracefully();
 
     let errorMsg = '';
     let errorCode = '';
@@ -397,7 +525,7 @@ export class BSIMPluginClass implements Plugin {
       cancel = () => {
         cancelSignal.next();
         cancelSignal.complete();
-        reject(new BSIMError('cancel', BSIM_ERRORS.cancel));
+        reject(new BSIMError('cancel', BSIM_ERRORS.CANCEL));
       };
     });
 
@@ -428,7 +556,7 @@ export class BSIMPluginClass implements Plugin {
       .then((res) => res as SignResult)
       .catch((err) => {
         if (String(err).includes('no elements in sequence')) {
-          throw new BSIMError('cancel', BSIM_ERRORS.cancel);
+          throw new BSIMError('cancel', BSIM_ERRORS.CANCEL);
         } else {
           throw err;
         }

@@ -1,57 +1,58 @@
+import { getEventBus } from '@WalletCoreExtends/index';
+import { BSIMEventTypesName } from '@WalletCoreExtends/Plugins/BSIM/types';
+import ArrowRight from '@assets/icons/arrow-right2.svg';
+import ProhibitIcon from '@assets/icons/prohibit.svg';
+import RocketIcon from '@assets/icons/rocket.svg';
+import WarnIcon from '@assets/icons/warn.svg';
 import {
-  BottomSheetWrapper,
-  BottomSheetHeader,
   BottomSheetContent,
   BottomSheetFooter,
+  BottomSheetHeader,
   type BottomSheetMethods,
   BottomSheetRoute,
+  BottomSheetWrapper,
 } from '@components/BottomSheet';
 import Button from '@components/Button';
 import HourglassLoading from '@components/Loading/Hourglass';
 import Text from '@components/Text';
-import { GasOption, type AdvanceSetting, type GasSetting, type SpeedUpLevel } from '../GasFeeSetting';
+import { SignType } from '@core/database/models/Signature/type';
+import { formatStatus } from '@core/utils/tx';
+import { SpeedUpAction, TransactionActionType } from '@core/WalletCore/Events/broadcastTransactionSubject';
+import { BROADCAST_TRANSACTION_EVENT } from '@core/WalletCore/Events/eventTypes';
+import methods from '@core/WalletCore/Methods';
+import plugins from '@core/WalletCore/Plugins';
+import { checkDiffInRange } from '@core/WalletCore/Plugins/BlockNumberTracker';
 import {
-  useTxFromId,
-  usePayloadOfTx,
-  useNativeAssetOfNetwork,
+  AssetType,
   NetworkType,
+  useCurrentAddressValue,
+  useNativeAssetOfNetwork,
+  usePayloadOfTx,
+  useTxFromId,
   useVaultOfAccount,
   VaultType,
-  AssetType,
-  useCurrentAddressValue,
 } from '@core/WalletCore/Plugins/ReactInject';
-import plugins from '@core/WalletCore/Plugins';
-import { showMessage } from 'react-native-flash-message';
-import { useTheme } from '@react-navigation/native';
-import type { SpeedUpStackName, StackScreenProps } from '@router/configs';
-import RocketIcon from '@assets/icons/rocket.svg';
-import Decimal from 'decimal.js';
-import type React from 'react';
-import { useEffect, useRef, useState, useMemo, useCallback } from 'react';
-import { useTranslation } from 'react-i18next';
-import { Pressable, View, StyleSheet } from 'react-native';
-import CustomizeGasSetting from '../GasFeeSetting/CustomizeGasSetting';
-import { SignTransactionCancelError, useSignTransaction } from '@hooks/useSignTransaction';
 import { useAccountOfTx, useAssetOfTx, useNetworkOfTx } from '@core/WalletCore/Plugins/ReactInject/data/useTxs';
-import { checkDiffInRange } from '@core/WalletCore/Plugins/BlockNumberTracker';
-import BSIMVerify, { useBSIMVerify } from '@pages/SendTransaction/BSIMVerify';
-import { BSIMEventTypesName } from '@WalletCoreExtends/Plugins/BSIM/types';
 import type { ITxEvm } from '@core/WalletCore/Plugins/Transaction/types';
-import methods from '@core/WalletCore/Methods';
-import { SignType } from '@core/database/models/Signature/type';
-import { BSIMError } from 'modules/BSIM/src';
-import WarnIcon from '@assets/icons/warn.svg';
-import ProhibitIcon from '@assets/icons/prohibit.svg';
-import { SpeedUpAction, TransactionActionType } from '@core/WalletCore/Events/broadcastTransactionSubject';
-import useInAsync from '@hooks/useInAsync';
-import { formatStatus } from '@core/utils/tx';
-import backToHome from '@utils/backToHome';
-import ArrowRight from '@assets/icons/arrow-right2.svg';
-import CustomizeAdvanceSetting from '../GasFeeSetting/CustomizeAdvanceSetting';
 import usePollingGasEstimateAndNonce from '@core/WalletCore/Plugins/Transaction/usePollingGasEstimateAndNonce';
+import useInAsync from '@hooks/useInAsync';
+import { SignTransactionCancelError, useSignTransaction } from '@hooks/useSignTransaction';
+import BSIMVerify, { useBSIMVerify } from '@pages/SendTransaction/BSIMVerify';
+import { useNavigation, useTheme } from '@react-navigation/native';
+import type { SpeedUpStackName, StackNavigation, StackScreenProps } from '@router/configs';
+import backToHome from '@utils/backToHome';
+import { handleBSIMHardwareUnavailable } from '@utils/handleBSIMHardwareUnavailable';
 import matchRPCErrorMessage from '@utils/matchRPCErrorMssage';
-import { getEventBus } from '@WalletCoreExtends/index';
-import { BROADCAST_TRANSACTION_EVENT } from '@core/WalletCore/Events/eventTypes';
+import Decimal from 'decimal.js';
+import { BSIMError } from 'modules/BSIM/src';
+import type React from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { Pressable, StyleSheet, View } from 'react-native';
+import { showMessage } from 'react-native-flash-message';
+import { type AdvanceSetting, GasOption, type GasSetting, type SpeedUpLevel } from '../GasFeeSetting';
+import CustomizeAdvanceSetting from '../GasFeeSetting/CustomizeAdvanceSetting';
+import CustomizeGasSetting from '../GasFeeSetting/CustomizeGasSetting';
 
 const higherRatio = 1.1;
 const fasterRatio = 1.2;
@@ -82,7 +83,7 @@ const SpeedUp: React.FC<StackScreenProps<typeof SpeedUpStackName>> = ({ navigati
   const isSpeedUp = type === SpeedUpAction.SpeedUp;
   const { colors } = useTheme();
   const { t } = useTranslation();
-
+  const rootNavigation = useNavigation<StackNavigation>();
   const signTransaction = useSignTransaction();
   const { bsimEvent, setBSIMEvent, execBSIMCancel, setBSIMCancel } = useBSIMVerify();
 
@@ -209,6 +210,16 @@ const SpeedUp: React.FC<StackScreenProps<typeof SpeedUpStackName>> = ({ navigati
         backToHome(navigation);
       } catch (error) {
         if (error instanceof BSIMError) {
+          if (
+            handleBSIMHardwareUnavailable(error, rootNavigation, {
+              beforeNavigate: () => {
+                setBSIMEvent(null);
+                execBSIMCancel();
+              },
+            })
+          ) {
+            return;
+          }
           setBSIMEvent({ type: BSIMEventTypesName.ERROR, message: error?.message });
         } else {
           // throw error to outer catch
@@ -216,6 +227,16 @@ const SpeedUp: React.FC<StackScreenProps<typeof SpeedUpStackName>> = ({ navigati
         }
       }
     } catch (_err: any) {
+      if (
+        handleBSIMHardwareUnavailable(_err, rootNavigation, {
+          beforeNavigate: () => {
+            setBSIMEvent(null);
+            execBSIMCancel();
+          },
+        })
+      ) {
+        return;
+      }
       setBSIMEvent(null);
       const err = String(_err.data || _err?.message || _err);
       if (_err instanceof SignTransactionCancelError) {

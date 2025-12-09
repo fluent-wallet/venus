@@ -1,17 +1,17 @@
-import { useAppOfSignature, useTxOfSignature } from '@core/WalletCore/Plugins/ReactInject/data/useSignature';
-import type { Signature } from '@core/database/models/Signature';
-import { useTheme } from '@react-navigation/native';
+import Copy from '@assets/icons/copy.svg';
+import { PlaintextMessage } from '@components/PlaintextMessage';
 import Text from '@components/Text';
-import { Pressable, StyleSheet, View } from 'react-native';
-import dayjs from 'dayjs';
+import type { Signature } from '@core/database/models/Signature';
 import { SignType } from '@core/database/models/Signature/type';
+import { useAppOfSignature, useTxOfSignature } from '@core/WalletCore/Plugins/ReactInject/data/useSignature';
+import Clipboard from '@react-native-clipboard/clipboard';
+import { useTheme } from '@react-navigation/native';
+import dayjs from 'dayjs';
 import { Image } from 'expo-image';
 import { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import Clipboard from '@react-native-clipboard/clipboard';
-import Copy from '@assets/icons/copy.svg';
+import { Pressable, StyleSheet, View } from 'react-native';
 import { showMessage } from 'react-native-flash-message';
-import { PlaintextMessage } from '@components/PlaintextMessage';
 
 const substrWithChinese = (str: string, start: number, n: number, suffix = '...') => {
   if (str.replace(/[\u4e00-\u9fa5]/g, '**').length <= n) {

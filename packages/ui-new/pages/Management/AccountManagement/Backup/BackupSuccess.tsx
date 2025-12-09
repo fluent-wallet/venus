@@ -1,7 +1,7 @@
 import Congratulate from '@assets/images/congratulate.webp';
+import { BottomSheetContent, BottomSheetFooter } from '@components/BottomSheet';
 import Button from '@components/Button';
 import Text from '@components/Text';
-import { BottomSheetContent, BottomSheetFooter } from '@components/BottomSheet';
 import { useNavigation, useTheme } from '@react-navigation/native';
 import type { BackupStackName, StackScreenProps } from '@router/configs';
 import backToHome from '@utils/backToHome';

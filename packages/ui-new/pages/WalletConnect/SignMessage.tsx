@@ -1,44 +1,38 @@
 import { BSIMError } from '@WalletCoreExtends/Plugins/BSIM/BSIMSDK';
 import { BSIMEventTypesName } from '@WalletCoreExtends/Plugins/BSIM/types';
 import Copy from '@assets/icons/copy.svg';
-import {
-  snapPoints,
-  BottomSheetWrapper,
-  BottomSheetHeader,
-  BottomSheetScrollContent,
-  BottomSheetFooter,
-  BottomSheetRoute,
-} from '@components/BottomSheet';
+import { BottomSheetFooter, BottomSheetHeader, BottomSheetRoute, BottomSheetScrollContent, BottomSheetWrapper, snapPoints } from '@components/BottomSheet';
 import Button from '@components/Button';
 import Icon from '@components/Icon';
+import { PlaintextMessage } from '@components/PlaintextMessage';
 import Text from '@components/Text';
+import { SignType } from '@core/database/models/Signature/type';
 import methods from '@core/WalletCore/Methods';
 import plugins from '@core/WalletCore/Plugins';
 import {
-  VaultType,
   useCurrentAccount,
   useCurrentAddress,
   useCurrentAddressValue,
   useCurrentNetwork,
   useVaultOfAccount,
+  VaultType,
 } from '@core/WalletCore/Plugins/ReactInject';
 import type { IWCSignMessageEvent } from '@core/WalletCore/Plugins/WalletConnect/types';
 import { WalletConnectRPCMethod } from '@core/WalletCore/Plugins/WalletConnect/types';
-import { SignType } from '@core/database/models/Signature/type';
 import useInAsync from '@hooks/useInAsync';
 import { AccountItemView } from '@modules/AccountsList';
 import BSIMVerify, { useBSIMVerify } from '@pages/SendTransaction/BSIMVerify';
 import { styles as transactionConfirmStyle } from '@pages/SendTransaction/Step4Confirm/index';
 import Clipboard from '@react-native-clipboard/clipboard';
-import { type RouteProp, useRoute, useTheme } from '@react-navigation/native';
-import type { WalletConnectParamList, WalletConnectSignMessageStackName } from '@router/configs';
+import { type RouteProp, useNavigation, useRoute, useTheme } from '@react-navigation/native';
+import type { StackNavigation, WalletConnectParamList, WalletConnectSignMessageStackName } from '@router/configs';
+import { handleBSIMHardwareUnavailable } from '@utils/handleBSIMHardwareUnavailable';
 import { sanitizeTypedData } from '@utils/santitizeTypedData';
 import { isHexString, toUtf8String } from 'ethers';
 import { useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { showMessage } from 'react-native-flash-message';
-import { PlaintextMessage } from '@components/PlaintextMessage';
 
 function WalletConnectSignMessage() {
   const { t } = useTranslation();
@@ -49,6 +43,7 @@ function WalletConnectSignMessage() {
   const currentAddressValue = useCurrentAddressValue();
   const currentNetwork = useCurrentNetwork();
   const vault = useVaultOfAccount(currentAccount?.id);
+  const rootNavigation = useNavigation<StackNavigation>();
 
   const {
     params: {
@@ -145,8 +140,19 @@ function WalletConnectSignMessage() {
           const hex = await plugins.Transaction.signMessage({ message: signMsg, privateKey: pk, network: currentNetwork });
           await approve(hex);
         }
-      } catch (error) {
+      } catch (error: any) {
         console.log('personal_sign error', error);
+
+        if (
+          handleBSIMHardwareUnavailable(error, rootNavigation, {
+            beforeNavigate: () => {
+              setBSIMEvent(null);
+              execBSIMCancel();
+            },
+          })
+        ) {
+          return;
+        }
         if (error instanceof BSIMError) {
           setBSIMEvent({ type: BSIMEventTypesName.ERROR, message: error?.message });
         }
@@ -166,8 +172,18 @@ function WalletConnectSignMessage() {
           const hex = await plugins.Transaction.signTypedData({ domain: m.domain, types: m.types, value: m.message, network: currentNetwork, privateKey: pk });
           await approve(hex);
         }
-      } catch (error) {
+      } catch (error: any) {
         console.log('eth_signTypedData error', error);
+        if (
+          handleBSIMHardwareUnavailable(error, rootNavigation, {
+            beforeNavigate: () => {
+              setBSIMEvent(null);
+              execBSIMCancel();
+            },
+          })
+        ) {
+          return;
+        }
         if (error instanceof BSIMError) {
           setBSIMEvent({ type: BSIMEventTypesName.ERROR, message: error?.message });
         } else {

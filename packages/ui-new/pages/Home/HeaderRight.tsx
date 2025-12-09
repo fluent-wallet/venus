@@ -3,9 +3,9 @@ import QrCode from '@assets/icons/qr-code.svg';
 import Settings from '@assets/icons/settings.svg';
 import Icon from '@components/Icon';
 import Text from '@components/Text';
-import { NetworkType, useCurrentNetwork } from '@core/WalletCore/Plugins/ReactInject';
+import { type NetworkType, useCurrentNetwork } from '@core/WalletCore/Plugins/ReactInject';
 import { useTheme } from '@react-navigation/native';
-import { type HomeStackName, ExternalInputHandlerStackName, SettingsStackName, type StackScreenProps } from '@router/configs';
+import { ExternalInputHandlerStackName, type HomeStackName, SettingsStackName, type StackScreenProps } from '@router/configs';
 import type React from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 

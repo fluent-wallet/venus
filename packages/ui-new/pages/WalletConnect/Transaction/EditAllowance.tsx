@@ -1,22 +1,22 @@
+import ArrowLeft from '@assets/icons/arrow-left2.svg';
 import {
+  BottomSheetFooter,
+  BottomSheetHeader,
+  type BottomSheetMethods,
+  BottomSheetScrollContent,
   BottomSheetTextInput,
   BottomSheetWrapper,
-  BottomSheetScrollContent,
-  BottomSheetHeader,
-  BottomSheetFooter,
-  type BottomSheetMethods,
   InlineBottomSheet,
 } from '@components/BottomSheet';
-import Checkbox from '@components/Checkbox';
-import ArrowLeft from '@assets/icons/arrow-left2.svg';
 import Button from '@components/Button';
+import Checkbox from '@components/Checkbox';
 import { styles as transactionConfirmStyle } from '@pages/SendTransaction/Step4Confirm/index';
 import { useTheme } from '@react-navigation/native';
 import { isNumeric } from '@utils/isNumberic';
 import { isApproveMethod } from '@utils/parseTxData';
 import Decimal from 'decimal.js';
 import { formatUnits } from 'ethers';
-import { useCallback, useState, useRef } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { type NativeSyntheticEvent, Pressable, StyleSheet, Text, type TextInputChangeEventData, View } from 'react-native';
 import type { TxDataWithTokenInfo } from '.';

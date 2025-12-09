@@ -1,7 +1,7 @@
 import { fetchChain } from '@cfx-kit/dapp-utils/dist/fetch';
-import methods from '@core/WalletCore/Methods';
 import { NetworkType } from '@core/database/models/Network';
 import { addHexPrefix } from '@core/utils/base';
+import methods from '@core/WalletCore/Methods';
 import { type TypedDataDomain, type TypedDataField, Wallet } from 'ethers';
 /* eslint-disable @typescript-eslint/ban-types */
 import { Transaction as CoreTransaction } from 'js-conflux-sdk';

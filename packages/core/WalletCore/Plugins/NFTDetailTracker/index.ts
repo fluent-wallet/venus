@@ -1,9 +1,9 @@
-import { Networks } from '../../../utils/consts';
-import { NetworkType } from './../../../database/models/Network';
-import { fetchNFTDetail as fetchESpaceNFTDetail } from './fetchers/eSpace';
 import type { IPlugin } from '@core/WalletCore/plugin';
 import { SERVICE_IDENTIFIER } from '@core/WalletCore/service';
-import { NFTDetailTrackerServer, type FetcherParams } from './server';
+import { NetworkType } from './../../../database/models/Network';
+import { Networks } from '../../../utils/consts';
+import { fetchNFTDetail as fetchESpaceNFTDetail } from './fetchers/eSpace';
+import { type FetcherParams, NFTDetailTrackerServer } from './server';
 
 export const NFTDetailTrackerPlugin: IPlugin = {
   name: SERVICE_IDENTIFIER.NFT_DETAIL_TRACKER,

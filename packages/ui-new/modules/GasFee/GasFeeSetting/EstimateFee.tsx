@@ -1,10 +1,10 @@
 import SettingsIcon from '@assets/icons/settings.svg';
 import HourglassLoading from '@components/Loading/Hourglass';
 import Text from '@components/Text';
+import { trimDecimalZeros } from '@core/utils/balance';
 import { useCurrentNetworkNativeAsset } from '@core/WalletCore/Plugins/ReactInject';
 import TokenIcon from '@modules/AssetsList/TokensList/TokenIcon';
 import { useTheme } from '@react-navigation/native';
-import { trimDecimalZeros } from '@core/utils/balance';
 import Decimal from 'decimal.js';
 import type React from 'react';
 import { useEffect, useMemo } from 'react';

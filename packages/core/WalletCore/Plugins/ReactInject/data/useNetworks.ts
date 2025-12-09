@@ -2,8 +2,8 @@ import { useAtomValue } from 'jotai';
 import { atomWithObservable } from 'jotai/utils';
 import { type Observable, startWith, switchMap } from 'rxjs';
 import database, { dbRefresh$ } from '../../../../database';
-import TableName from '../../../../database/TableName';
 import type { Network } from '../../../../database/models/Network';
+import TableName from '../../../../database/TableName';
 
 export const networksObservable = dbRefresh$.pipe(
   startWith(null),

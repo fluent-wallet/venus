@@ -1,10 +1,10 @@
 import { Q } from '@nozbe/watermelondb';
-import type { Signature } from '.';
-import database from '../..';
-import TableName from '../../TableName';
-import { type ModelFields, createModel } from '../../helper/modelHelper';
-import { SignatureFilterOption } from './type';
 import { memoize } from 'lodash-es';
+import database from '../..';
+import { createModel, type ModelFields } from '../../helper/modelHelper';
+import TableName from '../../TableName';
+import type { Signature } from '.';
+import { SignatureFilterOption } from './type';
 
 export type SignatureParams = Omit<ModelFields<Signature>, 'createdAt'>;
 export function createSignature(params: SignatureParams, prepareCreate?: true) {

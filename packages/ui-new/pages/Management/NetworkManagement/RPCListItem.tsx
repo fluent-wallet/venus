@@ -1,15 +1,15 @@
-import { Pressable, StyleSheet, View } from 'react-native';
-import { interval, startWith, switchMap, catchError, throwError, retry } from 'rxjs';
+import DeleteIcon from '@assets/icons/delete.svg';
+import SuccessIcon from '@assets/icons/success.svg';
 import Text from '@components/Text';
 import type { Network } from '@core/database/models/Network';
-import type { useCurrentNetwork } from '@core/WalletCore/Plugins/ReactInject';
-import { useTranslation } from 'react-i18next';
-import { useTheme } from '@react-navigation/native';
-import SuccessIcon from '@assets/icons/success.svg';
-import DeleteIcon from '@assets/icons/delete.svg';
-import { useCallback, useEffect, useState } from 'react';
-import plugins from '@core/WalletCore/Plugins';
 import methods from '@core/WalletCore/Methods';
+import plugins from '@core/WalletCore/Plugins';
+import type { useCurrentNetwork } from '@core/WalletCore/Plugins/ReactInject';
+import { useTheme } from '@react-navigation/native';
+import { useCallback, useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { Pressable, StyleSheet, View } from 'react-native';
+import { catchError, interval, retry, startWith, switchMap, throwError } from 'rxjs';
 
 export interface Props {
   rpc: Network['endpointsList'][number];

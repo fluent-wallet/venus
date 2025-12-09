@@ -1,11 +1,11 @@
 import Failed from '@assets/icons/message-fail.svg';
 import Warning from '@assets/icons/warn.svg';
 import {
-  BottomSheetWrapper,
-  BottomSheetHeader,
   BottomSheetContent,
   BottomSheetFooter,
+  BottomSheetHeader,
   type BottomSheetMethods,
+  BottomSheetWrapper,
   InlineBottomSheet,
 } from '@components/BottomSheet';
 import Button from '@components/Button';
@@ -17,11 +17,11 @@ import Decimal from 'decimal.js';
 /* eslint-disable react-hooks/exhaustive-deps */
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 import type React from 'react';
-import { useCallback, useRef, useMemo } from 'react';
+import { useCallback, useMemo, useRef } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
 import { View } from 'react-native';
-import { TextInput, controlRule, styles } from './CustomizeGasSetting';
+import { controlRule, styles, TextInput } from './CustomizeGasSetting';
 import type { AdvanceSetting } from './index';
 
 interface Props {

@@ -1,9 +1,9 @@
 import {
-  BottomSheetWrapper,
-  BottomSheetScrollContent,
-  BottomSheetHeader,
   BottomSheetFooter,
+  BottomSheetHeader,
   type BottomSheetMethods,
+  BottomSheetScrollContent,
+  BottomSheetWrapper,
   InlineBottomSheet,
 } from '@components/BottomSheet';
 import Button from '@components/Button';

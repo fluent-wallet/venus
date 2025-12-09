@@ -3,11 +3,11 @@ import { formatUnits } from 'ethers';
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 import { catchError, concatMap, defer, filter, firstValueFrom, from, map, of, take, throwIfEmpty } from 'rxjs';
 import database from '../../../database';
-import { truncate } from '../../../utils/balance';
-import methods from '../../Methods';
 import type { Address } from './../../../database/models/Address';
 import { type Asset, AssetSource, AssetType } from './../../../database/models/Asset';
 import type { Network } from './../../../database/models/Network';
+import { truncate } from '../../../utils/balance';
+import methods from '../../Methods';
 import { type AssetInfo, type FetchAssetBalance, type Fetcher, priorityFetcher } from './types';
 
 const trackAssets = async ({

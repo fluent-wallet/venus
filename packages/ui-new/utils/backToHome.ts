@@ -1,4 +1,4 @@
-import { CommonActions, StackActions, type NavigationProp, type NavigationState, type PartialState } from '@react-navigation/native';
+import { CommonActions, type NavigationProp, type NavigationState, type PartialState, StackActions } from '@react-navigation/native';
 import { HomeStackName, type RootStackParamList } from '@router/configs';
 
 export function getActiveRouteName(state: NavigationState | PartialState<NavigationState>) {

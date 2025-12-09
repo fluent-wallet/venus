@@ -1,13 +1,12 @@
-import { forwardRef, type ComponentProps } from 'react';
-
 import {
-  BottomSheetWrapper,
   BottomSheetHeader,
-  snapPoints as defaultSnapPoints,
   type BottomSheetMethods,
   BottomSheetRoute,
+  BottomSheetWrapper,
+  snapPoints as defaultSnapPoints,
   InlineBottomSheet,
 } from '@components/BottomSheet';
+import { type ComponentProps, forwardRef } from 'react';
 
 type RouteProps = {
   isRoute?: true;

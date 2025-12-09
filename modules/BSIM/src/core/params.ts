@@ -1,7 +1,8 @@
 import type { ApduCommand } from './types';
 import { asciiToHex, normalizeHex } from './utils';
 
-export const DEFAULT_BSIM_AID = 'A000000533C000FF860000000000054D';
+export const BSIM_AID = 'A000000533C000FF860000000000054D';
+export const ICCID_AID = 'A0000001510000';
 
 const toHexByte = (value: number) => {
   if (!Number.isInteger(value) || value < 0 || value > 0xff) {
@@ -32,7 +33,7 @@ const ensureAid = (hex: string) => {
   return normalized;
 };
 
-export const buildSelectAid = (aid: string = DEFAULT_BSIM_AID): ApduCommand => {
+export const buildSelectAid = (aid: string = BSIM_AID): ApduCommand => {
   const normalizedAid = ensureAid(aid);
   return {
     cla: '00',
@@ -129,6 +130,62 @@ export const buildGetVersion = (): ApduCommand => ({
   data: '',
   le: '02',
 });
+
+export const buildGetIccid = (): ApduCommand => ({
+  cla: '80',
+  ins: 'CA',
+  p1: '00',
+  p2: '11',
+  lc: '00',
+  data: '',
+  le: '',
+});
+
+export const buildExportSeed = (key2Hex: string): ApduCommand => {
+  const data = normalizeHex(key2Hex);
+  if (!data) {
+    throw new Error('Key2 must not be empty');
+  }
+
+  return {
+    cla: '80',
+    ins: '74',
+    p1: '00',
+    p2: '01', // 01 = AES
+    lc: encodeLc(data),
+    data,
+    le: '',
+  };
+};
+
+export const buildRestoreSeed = (key2Hex: string, cipherHex: string): ApduCommand => {
+  const key = normalizeHex(key2Hex);
+  const cipher = normalizeHex(cipherHex);
+
+  if (!key) {
+    throw new Error('Key2 must not be empty');
+  }
+  if (!cipher) {
+    throw new Error('Cipher must not be empty');
+  }
+
+  const encodeTlv = (tag: string, value: string) => {
+    const length = toHexByte(value.length / 2);
+    return `${tag}${length}${value}`;
+  };
+
+  const data = `${encodeTlv('B1', key)}${encodeTlv('B2', cipher)}`;
+
+  return {
+    cla: '80',
+    ins: '76',
+    p1: '00',
+    p2: '01',
+    lc: encodeLc(data),
+    data,
+    le: '',
+  };
+};
 
 export const serializeCommand = (command: ApduCommand): string => {
   const ensureByte = (value: string, label: string) => {

@@ -5,10 +5,10 @@ import { useCallback, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Pressable, StyleSheet, View } from 'react-native';
 
-import Animated, { useSharedValue, useAnimatedStyle, withTiming, type SharedValue } from 'react-native-reanimated';
-import type { TabsType, TabType } from './types';
-import { StickyNFT } from './StickyNFT';
+import Animated, { type SharedValue, useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 import { useTabs } from './hooks';
+import { StickyNFT } from './StickyNFT';
+import type { TabsType, TabType } from './types';
 
 const TabI18nMap = {
   Tokens: 'tab.tokens' as const,

@@ -1,8 +1,8 @@
-import { useCurrentNetwork } from '@core/WalletCore/Plugins/ReactInject';
-import type { TabsArrayType, TabsType, TabType } from './types';
-import { useCallback, useMemo, useState } from 'react';
 import { Networks } from '@core/utils/consts';
+import { useCurrentNetwork } from '@core/WalletCore/Plugins/ReactInject';
+import { useCallback, useMemo, useState } from 'react';
 import { useSharedValue } from 'react-native-reanimated';
+import type { TabsArrayType, TabsType, TabType } from './types';
 export const useTabs = (type: TabsType, onlyToken?: boolean): TabsArrayType => {
   const currentNetwork = useCurrentNetwork();
 

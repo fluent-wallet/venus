@@ -1,9 +1,9 @@
-import type { ICryptoTool } from './Plugins/CryptoTool/interface';
-import type { INFTDetailTrackerServerInterface } from './Plugins/NFTDetailTracker/server';
-import type { IAssetsTrackerServerInterface } from './Plugins/AssetsTracker/server';
-import type { INextNonceTrackerServerInterface } from './Plugins/NextNonceTracker/server';
-import type { EventBus } from './Events';
 import type { Database } from '@core/database';
+import type { EventBus } from './Events';
+import type { IAssetsTrackerServerInterface } from './Plugins/AssetsTracker/server';
+import type { ICryptoTool } from './Plugins/CryptoTool/interface';
+import type { INextNonceTrackerServerInterface } from './Plugins/NextNonceTracker/server';
+import type { INFTDetailTrackerServerInterface } from './Plugins/NFTDetailTracker/server';
 
 export const SERVICE_IDENTIFIER = {
   CORE: 'CORE',
@@ -21,12 +21,6 @@ export const SERVICE_IDENTIFIER = {
   DB: 'DB',
 
   // DB end // ---------------------------------------------------------
-
-  /**
-   * KeyringPlugin
-   */
-  KEYRING: 'KEYRING',
-
   /**
    * CryptoTool
    */
@@ -66,39 +60,6 @@ export const SERVICE_IDENTIFIER = {
    * TxMethod
    */
   TX_METHOD: 'TX_METHOD',
-
-  /**
-   * Signer
-   * ---------------------------------------------------------
-   */
-
-  /**
-   * Signer Factory
-   */
-
-  SIGNER_FACTORY: 'SIGNER_FACTORY',
-
-  /**
-   * EVM Signer
-   */
-
-  EVM_SOFTWARE_SIGNER: 'EVM_SOFTWARE_SIGNER',
-
-  /**
-   * CFX Signer
-   */
-  CFX_SOFTWARE_SIGNER: 'CFX_SOFTWARE_SIGNER',
-
-  /**
-   * Signer end // ---------------------------------------------------------
-   */
-
-  /**
-   * Chain
-   * ---------------------------------------------------------
-   */
-  CONFLUX_CHAIN: 'CONFLUX_CHAIN',
-  EVM_CHAIN: 'EVM_CHAIN',
   /**
    * Chain end // ---------------------------------------------------------
    */

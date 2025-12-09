@@ -1,12 +1,23 @@
 import { Platform } from 'react-native';
-import { createApduTransport, type ApduTransportOptions } from './transports/apdu';
-import { createBleTransport, type BleTransportOptions } from './transports/ble';
-import { TransportError, TransportErrorCode, isTransportError } from './transports/errors';
-import type { Transport, TransportSession } from './transports/types';
-import type { HexString, PubkeyRecord, SignatureComponents } from './core/types';
-import { deriveKeyFlow, exportPubkeysFlow, getVersionFlow, signMessageFlow, updateBpinFlow, verifyBpinFlow } from './core/workflows';
-import { fromHex } from './core/utils';
 import { DEFAULT_SIGNATURE_ALGORITHM } from './constants';
+import { BSIM_AID, ICCID_AID } from './core/params';
+import type { HexString, PubkeyRecord, SignatureComponents } from './core/types';
+import { asciiToHex, normalizeHex } from './core/utils';
+import {
+  deriveKeyFlow,
+  exportPubkeysFlow,
+  exportSeedFlow,
+  getIccidFlow,
+  getVersionFlow,
+  restoreSeedFlow,
+  signMessageFlow,
+  updateBpinFlow,
+  verifyBpinFlow,
+} from './core/workflows';
+import { type ApduTransportOptions, createApduTransport } from './transports/apdu';
+import { type BleTransportOptions, createBleTransport } from './transports/ble';
+import { isTransportError, TransportError, TransportErrorCode } from './transports/errors';
+import type { Transport, TransportSession } from './transports/types';
 
 const DEFAULT_IDLE_TIMEOUT_MS = 60_000;
 
@@ -80,6 +91,15 @@ export type DeriveKeyParams = {
   algorithm?: number;
 };
 
+export type BackupSeedParams = {
+  key2: string; // key2 string (ASCII string, number, symbol )
+};
+
+export type RestoreSeedParams = {
+  key2: string; // the backup key2 string
+  cipherHex: HexString; // the backup cipher
+};
+
 export type Wallet = {
   runSession: WalletSessionRunner;
   verifyBpin(): Promise<void>;
@@ -88,6 +108,10 @@ export type Wallet = {
   deriveKey(params: DeriveKeyParams): Promise<void>;
   updateBpin(): Promise<'ok'>;
   getVersion(): Promise<string>;
+  getIccid(): Promise<string>;
+
+  backupSeed(params: BackupSeedParams): Promise<HexString>;
+  restoreSeed(params: RestoreSeedParams): Promise<'ok'>;
 };
 const noopLogger: WalletLogger = () => undefined;
 
@@ -95,11 +119,13 @@ const BLE_DEFAULTS: BleTransportOptions = {
   scanTimeoutMs: 20_000,
   connectTimeoutMs: 15_000,
   responseTimeoutMs: 8_000,
+  aid: BSIM_AID,
+  selectAid: true,
 };
 
 const buildDefaultTransports = (platform: typeof Platform.OS): TransportKindConfig[] => {
   if (platform === 'android') {
-    return [{ kind: 'apdu' }];
+    return [{ kind: 'apdu', options: { aid: BSIM_AID } }];
   }
   return [{ kind: 'ble', options: BLE_DEFAULTS }];
 };
@@ -163,62 +189,97 @@ export const createWallet = (options: WalletOptions = {}): Wallet => {
     }
   };
 
-  const runSession: WalletSessionRunner = async (operation) => {
-    return runExclusive(async () => {
-      let lastError: unknown;
+  const createSessionRunner = (transportCandidates: ResolvedTransport[]): WalletSessionRunner => {
+    return async (operation) => {
+      return runExclusive(async () => {
+        let lastError: unknown;
 
-      for (const candidate of candidates) {
-        let session = candidate.session;
+        for (const candidate of transportCandidates) {
+          let session: TransportSession | undefined = candidate.session;
 
-        if (!session) {
+          // For APDU transports we always force a fresh open() call.
+          // Native BSIMModule will reuse an existing channel for the same AID and only
+          // switch the active AID, which keeps ICCID / BSIM AIDs in sync with the
+          // current high‑level operation.
+          if (candidate.kind === 'apdu') {
+            session = undefined;
+          }
+
+          // For BLE we reuse an existing session when possible.
+          // For APDU we always reach this block with session === undefined.
+          if (!session) {
+            try {
+              session = await candidate.transport.open(candidate.options);
+
+              // Only cache BLE sessions; APDU sessions are short‑lived on the JS side.
+              if (candidate.kind === 'ble') {
+                candidate.session = session;
+              }
+              logger('wallet.transport.opened', { kind: candidate.kind });
+            } catch (error) {
+              lastError = error;
+              logger('wallet.transport.open_failed', { kind: candidate.kind, error });
+              continue;
+            }
+          }
+
+          clearIdleTimer(candidate);
+
           try {
-            session = await candidate.transport.open(candidate.options);
-            candidate.session = session;
-            logger('wallet.transport.opened', { kind: candidate.kind });
+            const result = await operation(session, { kind: candidate.kind });
+            if (candidate.kind === 'ble') {
+              scheduleIdleClose(candidate, logger, idleTimeout);
+            }
+
+            return result;
           } catch (error) {
             lastError = error;
-            logger('wallet.transport.open_failed', { kind: candidate.kind, error });
-            continue;
-          }
-        }
-
-        clearIdleTimer(candidate);
-
-        try {
-          const result = await operation(session, { kind: candidate.kind });
-          scheduleIdleClose(candidate, logger, idleTimeout);
-          return result;
-        } catch (error) {
-          lastError = error;
-
-          if (isTransportError(error)) {
-            if (error.code === TransportErrorCode.TRANSMIT_FAILED) {
-              scheduleIdleClose(candidate, logger, idleTimeout);
-            } else {
-              try {
-                await closeCandidateSession(candidate, logger);
-              } catch (closeError) {
-                logger('wallet.transport.close_failed', { kind: candidate.kind, error: closeError });
+            const transportError = isTransportError(error);
+            if (candidate.kind === 'ble') {
+              if (transportError) {
+                if (error.code === TransportErrorCode.TRANSMIT_FAILED) {
+                  scheduleIdleClose(candidate, logger, idleTimeout);
+                } else {
+                  try {
+                    await closeCandidateSession(candidate, logger);
+                  } catch (closeError) {
+                    logger('wallet.transport.close_failed', { kind: candidate.kind, error: closeError });
+                  }
+                }
+              } else {
+                scheduleIdleClose(candidate, logger, idleTimeout);
               }
             }
-          } else {
-            scheduleIdleClose(candidate, logger, idleTimeout);
+
+            logger('wallet.operation.failed', { label: operation.name ?? 'anonymous', transport: candidate.kind, error });
+            throw error;
           }
-          logger('wallet.operation.failed', { label: operation.name ?? 'anonymous', transport: candidate.kind, error });
-          throw error;
         }
-      }
 
-      if (lastError) {
-        if (isTransportError(lastError)) {
-          throw lastError;
+        if (lastError) {
+          if (isTransportError(lastError)) {
+            throw lastError;
+          }
+          throw new TransportError(TransportErrorCode.CHANNEL_OPEN_FAILED, 'Failed to open any BSIM transport', {
+            cause: lastError,
+          });
         }
-        throw new TransportError(TransportErrorCode.CHANNEL_OPEN_FAILED, 'Failed to open any BSIM transport', { cause: lastError });
-      }
 
-      throw new TransportError(TransportErrorCode.CHANNEL_OPEN_FAILED, 'No transport candidates were attempted');
-    });
+        throw new TransportError(TransportErrorCode.CHANNEL_OPEN_FAILED, 'No transport candidates were attempted');
+      });
+    };
   };
+  const runSession = createSessionRunner(candidates);
+
+  const iccidCandidates: ResolvedTransport[] = candidates.map((candidate) => {
+    const baseOptions = candidate.options ?? {};
+
+    const iccidOptions = candidate.kind === 'apdu' ? { ...baseOptions, aid: ICCID_AID } : { ...baseOptions, aid: ICCID_AID, selectAid: true };
+
+    return { ...candidate, options: iccidOptions, session: undefined, idleTimer: undefined };
+  });
+
+  const runIccidSession = createSessionRunner(iccidCandidates);
 
   return {
     runSession,
@@ -230,5 +291,17 @@ export const createWallet = (options: WalletOptions = {}): Wallet => {
       runOperation('deriveKey', runSession, logger, (transmit) => deriveKeyFlow(transmit, params.coinType, params.algorithm ?? DEFAULT_SIGNATURE_ALGORITHM)),
     updateBpin: () => runOperation('updateBpin', runSession, logger, (transmit) => updateBpinFlow(transmit)),
     getVersion: () => runOperation('getVersion', runSession, logger, async (transmit) => getVersionFlow(transmit)),
+    getIccid: () => runOperation('getIccid', runIccidSession, logger, async (transmit) => getIccidFlow(transmit)),
+    backupSeed: (params) =>
+      runOperation('backupSeed', runSession, logger, async (transmit) => {
+        const key2Hex = asciiToHex(params.key2);
+        return exportSeedFlow(transmit, key2Hex);
+      }),
+    restoreSeed: (params) =>
+      runOperation('restoreSeed', runSession, logger, async (transmit) => {
+        const key2Hex = asciiToHex(params.key2);
+        const cipherHex = normalizeHex(params.cipherHex);
+        return restoreSeedFlow(transmit, key2Hex, cipherHex);
+      }),
   };
 };

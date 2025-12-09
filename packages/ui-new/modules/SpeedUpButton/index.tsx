@@ -1,12 +1,12 @@
-import Text from '@components/Text';
-import { type HomeStackName, SpeedUpStackName, type StackScreenProps } from '@router/configs';
-import { useTheme, useNavigation } from '@react-navigation/native';
 import RocketIcon from '@assets/icons/rocket.svg';
+import Text from '@components/Text';
+import { SpeedUpAction } from '@core/WalletCore/Events/broadcastTransactionSubject';
+import { useNavigation, useTheme } from '@react-navigation/native';
+import { type HomeStackName, SpeedUpStackName, type StackScreenProps } from '@router/configs';
 import type React from 'react';
 import { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Pressable, StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
-import { SpeedUpAction } from '@core/WalletCore/Events/broadcastTransactionSubject';
+import { Pressable, type StyleProp, StyleSheet, View, type ViewStyle } from 'react-native';
 
 const SpeedUpButton: React.FC<{ txId: string; containerStyle?: StyleProp<ViewStyle>; cancelDisabled?: boolean }> = ({
   txId,

@@ -1,15 +1,15 @@
 import database from '@core/database';
 import { getEncryptedVaultWithBSIM } from '@core/database/models/Vault/query';
+import type { EventBus } from '@core/WalletCore/Events';
+import type { ICryptoTool } from '@core/WalletCore/Plugins/CryptoTool/interface';
+import { SERVICE_IDENTIFIER } from '@core/WalletCore/service';
+import { getI18n } from '@hooks/useI18n';
 import { showBiometricsDisabledMessage } from '@pages/InitWallet/BiometricsWay';
+import { inject, injectable } from 'inversify';
 import * as KeyChain from 'react-native-keychain';
 import { catchError, firstValueFrom, from, Observable, of, switchMap, tap, throwError } from 'rxjs';
-import { getI18n } from '@hooks/useI18n';
-import { authTypeError, biometricsCanceledError, biometricsFailedError, biometricsUnknownError } from './errors';
-import { inject, injectable } from 'inversify';
-import { SERVICE_IDENTIFIER } from '@core/WalletCore/service';
-import type { ICryptoTool } from '@core/WalletCore/Plugins/CryptoTool/interface';
-import type { EventBus } from '@core/WalletCore/Events';
 import { CryptoToolServer } from '../CryptoTool/cryptoToolServer';
+import { authTypeError, biometricsCanceledError, biometricsFailedError, biometricsUnknownError } from './errors';
 
 export const AUTHENTICATION_PASSWORD_REQUEST = 'auth/password-request';
 
@@ -192,13 +192,7 @@ export class AuthenticationServer implements IAuthenticationServer {
   };
 
   // stores a user password in the secure keyChain with a specific auth type
-  public setPassword = async ({
-    password,
-    authType,
-  }: {
-    password?: string;
-    authType?: AuthenticationType;
-  }) => {
+  public setPassword = async ({ password, authType }: { password?: string; authType?: AuthenticationType }) => {
     if (authType === AuthenticationType.Biometrics) {
       const encryptedPassword = await this.biometricCryptoTool.encrypt(`${this.biometricCryptoTool.generateRandomString()}${Date.now()}`);
 

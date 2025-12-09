@@ -1,7 +1,7 @@
-import { ProcessErrorType, processError } from '@core/utils/eth';
-import { t } from 'i18next';
 import {
+  coreSpaceErrors,
   ExceedsBlockGasLimitError,
+  eSpaceErrors,
   NonceTooHighError,
   NonceTooStaleError,
   OutOfBalanceError,
@@ -12,9 +12,10 @@ import {
   TransactionZeroGasPriceError,
   TxPoolFullError,
   UnrecoverablePubkeyError,
-  coreSpaceErrors,
-  eSpaceErrors,
 } from '@cfxjs/rpc-errors';
+import { ProcessErrorType, processError } from '@core/utils/eth';
+import { t } from 'i18next';
+
 const rpcError = new RPCError();
 rpcError.registerError(coreSpaceErrors);
 rpcError.registerError(eSpaceErrors);

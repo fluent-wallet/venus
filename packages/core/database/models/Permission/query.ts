@@ -1,6 +1,6 @@
-import type { Permission } from '.';
+import { createModel, type ModelFields } from '../../helper/modelHelper';
 import TableName from '../../TableName';
-import { type ModelFields, createModel } from '../../helper/modelHelper';
+import type { Permission } from '.';
 
 type Params = ModelFields<Permission>;
 export function createPermission(params: Params, prepareCreate: true): Permission;

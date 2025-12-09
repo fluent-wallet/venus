@@ -1,9 +1,16 @@
+import { getEventBus } from '@WalletCoreExtends/index';
 import { BSIMError } from '@WalletCoreExtends/Plugins/BSIM/BSIMSDK';
 import { BSIMEventTypesName } from '@WalletCoreExtends/Plugins/BSIM/types';
 import MessageFail from '@assets/icons/message-fail.svg';
-import { snapPoints, BottomSheetWrapper, BottomSheetHeader, BottomSheetScrollContent, BottomSheetFooter, BottomSheetRoute } from '@components/BottomSheet';
+import { BottomSheetFooter, BottomSheetHeader, BottomSheetRoute, BottomSheetScrollContent, BottomSheetWrapper, snapPoints } from '@components/BottomSheet';
 import Button from '@components/Button';
 import Text from '@components/Text';
+import type { App } from '@core/database/models/App';
+import type { Signature } from '@core/database/models/Signature';
+import { SignType } from '@core/database/models/Signature/type';
+import { processError } from '@core/utils/eth';
+import { TransactionActionType } from '@core/WalletCore/Events/broadcastTransactionSubject';
+import { BROADCAST_TRANSACTION_EVENT } from '@core/WalletCore/Events/eventTypes';
 import methods from '@core/WalletCore/Methods';
 import plugins from '@core/WalletCore/Plugins';
 import { fetchERC20AssetInfoBatchWithAccount } from '@core/WalletCore/Plugins/AssetsTracker/fetchers/basic';
@@ -12,20 +19,16 @@ import {
   AssetSource,
   AssetType,
   NetworkType,
-  VaultType,
   useCurrentAccount,
   useCurrentAddressOfAccount,
   useCurrentAddressValue,
   useCurrentNetwork,
   useCurrentNetworkNativeAsset,
   useVaultOfAccount,
+  VaultType,
 } from '@core/WalletCore/Plugins/ReactInject';
 import type { ITxEvm } from '@core/WalletCore/Plugins/Transaction/types';
 import type { IWCSendTransactionEvent } from '@core/WalletCore/Plugins/WalletConnect/types';
-import type { App } from '@core/database/models/App';
-import type { Signature } from '@core/database/models/Signature';
-import { SignType } from '@core/database/models/Signature/type';
-import { processError } from '@core/utils/eth';
 import { Interface } from '@ethersproject/abi';
 import useFormatBalance from '@hooks/useFormatBalance';
 import useInAsync from '@hooks/useInAsync';
@@ -35,12 +38,13 @@ import GasFeeSetting, { type GasEstimate, type GasFeeSettingMethods } from '@mod
 import DappParamsWarning from '@modules/GasFee/GasFeeSetting/DappParamsWarning';
 import EstimateFee from '@modules/GasFee/GasFeeSetting/EstimateFee';
 import BSIMVerify, { useBSIMVerify } from '@pages/SendTransaction/BSIMVerify';
-import SendAsset from '@pages/SendTransaction/Step4Confirm/SendAsset';
 import { styles as transactionConfirmStyle } from '@pages/SendTransaction/Step4Confirm/index';
+import SendAsset from '@pages/SendTransaction/Step4Confirm/SendAsset';
 import { type RouteProp, useNavigation, useRoute, useTheme } from '@react-navigation/native';
-import type { WalletConnectParamList, WalletConnectTransactionStackName } from '@router/configs';
+import type { StackNavigation, WalletConnectParamList, WalletConnectTransactionStackName } from '@router/configs';
+import { handleBSIMHardwareUnavailable } from '@utils/handleBSIMHardwareUnavailable';
 import matchRPCErrorMessage from '@utils/matchRPCErrorMssage';
-import { type ParseTxDataReturnType, isApproveMethod, parseTxDataAsync } from '@utils/parseTxData';
+import { isApproveMethod, type ParseTxDataReturnType, parseTxDataAsync } from '@utils/parseTxData';
 import { supportsInterface } from '@utils/supportsInterface';
 import Decimal from 'decimal.js';
 import { isNil } from 'lodash-es';
@@ -49,9 +53,6 @@ import { useTranslation } from 'react-i18next';
 import { StyleSheet, View } from 'react-native';
 import SendContract from './Contract';
 import EditAllowance from './EditAllowance';
-import { TransactionActionType } from '@core/WalletCore/Events/broadcastTransactionSubject';
-import { getEventBus } from '@WalletCoreExtends/index';
-import { BROADCAST_TRANSACTION_EVENT } from '@core/WalletCore/Events/eventTypes';
 
 export type TxDataWithTokenInfo = ParseTxDataReturnType & {
   symbol?: string;
@@ -63,7 +64,7 @@ export type TxDataWithTokenInfo = ParseTxDataReturnType & {
 function WalletConnectTransaction() {
   const { t } = useTranslation();
   const { colors } = useTheme();
-
+  const rootNavigation = useNavigation<StackNavigation>();
   const [showGasFeeSetting, setShowGasFeeSetting] = useState(false);
   const currentAccount = useCurrentAccount();
   const currentAddress = useCurrentAddressOfAccount(currentAccount?.id)!;
@@ -226,6 +227,13 @@ function WalletConnectTransaction() {
       await approve(txHash);
       setBSIMEvent(null);
     } catch (error: any) {
+      if (
+        handleBSIMHardwareUnavailable(error, rootNavigation, {
+          beforeNavigate: () => setBSIMEvent(null),
+        })
+      ) {
+        return;
+      }
       if (error instanceof BSIMError) {
         setBSIMEvent({ type: BSIMEventTypesName.ERROR, message: error?.message });
         return;

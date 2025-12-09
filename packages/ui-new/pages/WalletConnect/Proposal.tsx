@@ -1,12 +1,12 @@
 import ArrowRight from '@assets/icons/arrow-right2.svg';
-import { snapPoints, BottomSheetWrapper, BottomSheetScrollContent, BottomSheetFooter, BottomSheetRoute } from '@components/BottomSheet';
+import { BottomSheetFooter, BottomSheetRoute, BottomSheetScrollContent, BottomSheetWrapper, snapPoints } from '@components/BottomSheet';
 import Button from '@components/Button';
 import Icon from '@components/Icon';
 import Text from '@components/Text';
+import { shortenAddress } from '@core/utils/address';
 import plugins from '@core/WalletCore/Plugins';
 import { useCurrentAccount, useCurrentAddressOfAccount, useCurrentAddressValue } from '@core/WalletCore/Plugins/ReactInject';
 import type { IWCSessionProposalEvent } from '@core/WalletCore/Plugins/WalletConnect/types';
-import { shortenAddress } from '@core/utils/address';
 import useInAsync from '@hooks/useInAsync';
 import AccountSelector from '@modules/AccountSelector';
 import { type RouteProp, useRoute, useTheme } from '@react-navigation/native';

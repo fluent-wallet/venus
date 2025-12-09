@@ -1,4 +1,4 @@
-import { registerCodec, parsePaymentUri, encodePaymentUri, __resetPaymentUriRegistryForTests, PaymentUriError } from '@utils/payment-uri';
+import { __resetPaymentUriRegistryForTests, encodePaymentUri, PaymentUriError, parsePaymentUri, registerCodec } from '@utils/payment-uri';
 import { confluxCorePaymentUriCodec } from '@utils/payment-uri/codecs/conflux-core';
 
 const base32Mainnet = 'cfx:aajaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa0u8nbgtn';

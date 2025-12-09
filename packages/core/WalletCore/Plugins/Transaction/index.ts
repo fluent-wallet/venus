@@ -3,8 +3,8 @@ import type { TypedDataDomain, TypedDataField } from 'ethers';
 import type { Plugin } from '../';
 import ConfluxTransaction from './chains/conflux';
 import EVMTransaction from './chains/evm';
-import type { ITxEvm } from './types';
 import { buildTransaction, type TransactionBuildParams } from './TransactionBuilder';
+import type { ITxEvm } from './types';
 
 const getTransactionInstance = (network: Pick<Network, 'networkType'>) => (network.networkType === NetworkType.Conflux ? ConfluxTransaction : EVMTransaction);
 declare module '../../../WalletCore/Plugins' {
@@ -48,7 +48,12 @@ class TransactionPluginClass implements Plugin {
     privateKey,
     tx,
     epochHeight,
-  }: { network: Pick<Network, 'networkType' | 'endpoint' | 'netId'>; privateKey: string; tx: ITxEvm; epochHeight: string }) => {
+  }: {
+    network: Pick<Network, 'networkType' | 'endpoint' | 'netId'>;
+    privateKey: string;
+    tx: ITxEvm;
+    epochHeight: string;
+  }) => {
     const transactionInstance = getTransactionInstance(network);
     return transactionInstance.signTransaction({ tx, privateKey, netId: network.netId, epochHeight });
   };
@@ -78,8 +83,8 @@ class TransactionPluginClass implements Plugin {
     return transactionInstance.signTypedData({ domain, types, value, privateKey });
   };
 
-  public buildTransaction(params: TransactionBuildParams){
-    return buildTransaction(params)
+  public buildTransaction(params: TransactionBuildParams) {
+    return buildTransaction(params);
   }
 }
 

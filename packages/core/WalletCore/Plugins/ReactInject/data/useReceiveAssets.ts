@@ -1,7 +1,7 @@
 import { useAtomValue } from 'jotai';
 import { atomFamily, atomWithObservable } from 'jotai/utils';
 import { memoize, unionBy } from 'lodash-es';
-import { type Observable, map, of, switchMap } from 'rxjs';
+import { map, type Observable, of, switchMap } from 'rxjs';
 import { observeNetworkById } from '../../../../database/models/Network/query';
 import type { AssetInfo } from '../../AssetsTracker/types';
 import { useCurrentNetwork } from './useCurrentNetwork';

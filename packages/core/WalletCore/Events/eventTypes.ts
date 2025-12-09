@@ -1,8 +1,8 @@
+import type { Account } from '@core/database/models/Account';
+import type { Address } from '@core/database/models/Address';
+import type { Network } from '@core/database/models/Network';
 import type { Observable } from 'rxjs';
 import type { TransactionSubjectValue } from './broadcastTransactionSubject';
-import type { Account } from '@core/database/models/Account';
-import type { Network } from '@core/database/models/Network';
-import type { Address } from '@core/database/models/Address';
 
 export const BROADCAST_TRANSACTION_EVENT = 'core/broadcast-transaction';
 

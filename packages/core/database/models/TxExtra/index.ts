@@ -1,8 +1,8 @@
+import type { SpeedUpAction } from '@core/WalletCore/Events/broadcastTransactionSubject';
 import { Model, type Query } from '@nozbe/watermelondb';
 import { children, field, text } from '@nozbe/watermelondb/decorators';
 import TableName from '../../TableName';
 import type { Tx } from '../Tx';
-import type { SpeedUpAction } from '@core/WalletCore/Events/broadcastTransactionSubject';
 
 export class TxExtra extends Model {
   static table = TableName.TxExtra;

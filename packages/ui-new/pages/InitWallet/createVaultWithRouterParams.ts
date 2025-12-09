@@ -1,8 +1,8 @@
+import { isAuthenticationCanceledError, isAuthenticationError } from '@WalletCoreExtends/Plugins/Authentication/errors';
 import i18n from '@assets/i18n';
 import methods from '@core/WalletCore/Methods';
 import plugins from '@core/WalletCore/Plugins';
 import type { RootStackParamList } from '@router/configs';
-import { isAuthenticationCanceledError, isAuthenticationError } from '@WalletCoreExtends/Plugins/Authentication/errors';
 import { Mnemonic } from 'ethers';
 import { showMessage } from 'react-native-flash-message';
 

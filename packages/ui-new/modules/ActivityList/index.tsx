@@ -1,8 +1,8 @@
 import Calendar from '@assets/icons/calendar.svg';
 import NoneActivity from '@assets/images/none-activity.webp';
 import Text from '@components/Text';
-import { useFinishedTxs, useUnfinishedTxs } from '@core/WalletCore/Plugins/ReactInject';
 import type { Tx } from '@core/database/models/Tx';
+import { useFinishedTxs, useUnfinishedTxs } from '@core/WalletCore/Plugins/ReactInject';
 import { useTheme } from '@react-navigation/native';
 import { Image } from 'expo-image';
 import type React from 'react';

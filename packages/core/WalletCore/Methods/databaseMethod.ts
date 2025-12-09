@@ -1,9 +1,10 @@
 import { inject, injectable } from 'inversify';
 import database, { dbRefresh$ } from '../../database';
-import TableName from '../../database/TableName';
 import { createHdPath } from '../../database/models/HdPath/query';
+import TableName from '../../database/TableName';
 import { DEFAULT_CFX_HDPATH, DEFAULT_ETH_HDPATH, Networks } from '../../utils/consts';
 import { NetworkMethod } from './networkMethod';
+
 const NetworksArr = Object.entries(Networks).map(([_, network]) => network);
 
 const HD_PATH_ARR = [

@@ -1,8 +1,8 @@
 import Text from '@components/Text';
-import type { AssetInfo } from '@core/WalletCore/Plugins/AssetsTracker/types';
 import { AssetType } from '@core/database/models/Asset';
 import { shortenAddress } from '@core/utils/address';
 import { numberWithCommas } from '@core/utils/balance';
+import type { AssetInfo } from '@core/WalletCore/Plugins/AssetsTracker/types';
 import useFormatBalance from '@hooks/useFormatBalance';
 import { useTheme } from '@react-navigation/native';
 import { useCallback, useMemo } from 'react';

@@ -1,15 +1,15 @@
-import { type Subscription, catchError, debounceTime, interval, retry, startWith, switchMap, throwError, map, filter } from 'rxjs';
-import { networkRpcPrefixMap, type Network } from '@core/database/models/Network';
-import { fetchChainMulticall } from '@cfx-kit/dapp-utils/dist/fetch';
-import { getWalletConfig } from '../ReactInject/data/useWalletConfig';
-import { configValueFormatters, configKeyList, defaultWalletConfigs, type WalletConfig } from './consts';
-import { NetworksWithChainIdKey } from '@core/utils/consts';
 import { createContract } from '@cfx-kit/dapp-utils/dist/contract';
+import { fetchChainMulticall } from '@cfx-kit/dapp-utils/dist/fetch';
 import WalletConfigABI from '@core/contracts/ABI/WalletConfig';
-import { currentNetworkObservable } from '../ReactInject/data/useCurrentNetwork';
-import { inject, injectable } from 'inversify';
-import { SERVICE_IDENTIFIER } from '@core/WalletCore/service';
+import { type Network, networkRpcPrefixMap } from '@core/database/models/Network';
+import { NetworksWithChainIdKey } from '@core/utils/consts';
 import type { EventBus } from '@core/WalletCore/Events';
+import { SERVICE_IDENTIFIER } from '@core/WalletCore/service';
+import { inject, injectable } from 'inversify';
+import { catchError, debounceTime, filter, interval, map, retry, type Subscription, startWith, switchMap, throwError } from 'rxjs';
+import { currentNetworkObservable } from '../ReactInject/data/useCurrentNetwork';
+import { getWalletConfig } from '../ReactInject/data/useWalletConfig';
+import { configKeyList, configValueFormatters, defaultWalletConfigs, type WalletConfig } from './consts';
 
 const ONE_SECONDS = 1000;
 const ONE_HOUR = 60 * 60 * ONE_SECONDS;

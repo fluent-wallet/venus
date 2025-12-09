@@ -9,7 +9,7 @@ import type { Asset } from '../Asset';
 import type { Signature } from '../Signature';
 import type { TxExtra } from '../TxExtra';
 import type { TxPayload } from '../TxPayload';
-import type { TxStatus, ExecutedStatus, Receipt, TxSource } from './type';
+import type { ExecutedStatus, Receipt, TxSource, TxStatus } from './type';
 
 export class Tx extends Model {
   static table = TableName.Tx;

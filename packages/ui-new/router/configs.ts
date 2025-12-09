@@ -1,16 +1,18 @@
-import type { AssetInfo } from '@core/WalletCore/Plugins/AssetsTracker/types';
-
-import type { IWCSendTransactionEventData, IWCSessionProposalEventData, IWCSignMessageEventData } from '@core/WalletCore/Plugins/WalletConnect/types';
-import type { NavigationProp, NavigatorScreenParams } from '@react-navigation/native';
-import type { NativeStackScreenProps } from '@react-navigation/native-stack';
-import type { VersionJSON } from '@pages/Settings/AboutUs';
-import type { SpeedUpLevel } from '@modules/GasFee/GasFeeSetting';
+import type { BSIMHardwareReason } from '@WalletCoreExtends/Plugins/BSIM';
 import type { NetworkType } from '@core/utils/consts';
 import type { SpeedUpAction } from '@core/WalletCore/Events/broadcastTransactionSubject';
+import type { AssetInfo } from '@core/WalletCore/Plugins/AssetsTracker/types';
 import type { NFTItemDetail } from '@core/WalletCore/Plugins/NFTDetailTracker/server';
+import type { IWCSendTransactionEventData, IWCSessionProposalEventData, IWCSignMessageEventData } from '@core/WalletCore/Plugins/WalletConnect/types';
+import type { SpeedUpLevel } from '@modules/GasFee/GasFeeSetting';
+import type { VersionJSON } from '@pages/Settings/AboutUs';
+import type { NavigationProp, NavigatorScreenParams } from '@react-navigation/native';
+import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 
 export const WelcomeStackName = 'Welcome';
 export const WayToInitWalletStackName = 'WayToInitWallet';
+export const ChangeBPinStackName = 'ChangeBPin';
+export const RecoverBsimStackName = 'RecoverBsim';
 export const BiometricsWayStackName = 'Biometrics';
 export const PasswordWayStackName = 'PasswordWay';
 export const HomeStackName = 'Home';
@@ -37,6 +39,7 @@ export const SpeedUpStackName = 'SpeedUp';
 export const TransactionDetailStackName = 'TransactionDetail';
 export const ExternalInputHandlerStackName = 'ExternalInputHandler';
 export const TooManyPendingStackName = 'TooManyPending';
+export const BSIMAvailabilityStackName = 'BSIMAvailability';
 
 // start Wallet connect nest stack
 
@@ -62,6 +65,8 @@ export type WalletConnectParamList = {
 export type RootStackParamList = {
   [WelcomeStackName]: undefined;
   [WayToInitWalletStackName]: undefined;
+  [RecoverBsimStackName]: undefined;
+  [ChangeBPinStackName]: undefined;
   [PasswordWayStackName]?: { type?: 'importExistWallet' | 'createNewWallet' | 'connectBSIM'; value?: string };
   [BiometricsWayStackName]?: { type?: 'importExistWallet' | 'createNewWallet' | 'connectBSIM'; value?: string };
   [HomeStackName]: undefined;
@@ -89,6 +94,7 @@ export type RootStackParamList = {
   [TransactionDetailStackName]: { txId: string };
   [ExternalInputHandlerStackName]: { data: string } | undefined;
   [TooManyPendingStackName]: undefined;
+  [BSIMAvailabilityStackName]: { reason?: BSIMHardwareReason };
 };
 
 export type StackScreenProps<T extends keyof RootStackParamList> = NativeStackScreenProps<RootStackParamList, T>;
@@ -102,10 +108,14 @@ export const BackupStep1StackName = 'BackupStep1';
 export const BackupStep2StackName = 'BackupStep2';
 export const BackupStep3StackName = 'BackupStep3';
 export const BackupSuccessStackName = 'BackupSuccess';
+export const BackupBSIM1PasswordStackName = 'BackupBSIMPassword';
+export const BackupBSIMQ2RCodeStackName = 'BackupBSIMQRCode';
 export type BackupStackParamList = {
   [BackupStep1StackName]: { accountId?: string; groupId?: string };
   [BackupStep2StackName]: { accountId?: string; groupId?: string };
   [BackupStep3StackName]: { phrases: string[]; vaultId: string };
+  [BackupBSIM1PasswordStackName]: { vaultId: string };
+  [BackupBSIMQ2RCodeStackName]: { backupPassword: string; seedData: string; vaultId: string };
   [BackupSuccessStackName]: undefined;
   // navigate to home
   [HomeStackName]: undefined;

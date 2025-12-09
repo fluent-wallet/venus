@@ -1,6 +1,8 @@
+import { getNFTDetailTracker } from '@WalletCoreExtends/index';
 import ArrowRight from '@assets/icons/arrow-right2.svg';
 import Text from '@components/Text';
 import type { AssetInfo } from '@core/WalletCore/Plugins/AssetsTracker/types';
+import type { NFTItemDetail } from '@core/WalletCore/Plugins/NFTDetailTracker/server';
 import { AssetType, type useCurrentOpenNFTDetail } from '@core/WalletCore/Plugins/ReactInject';
 import type { TabsType } from '@modules/AssetsTabs';
 import { useTheme } from '@react-navigation/native';
@@ -10,8 +12,6 @@ import { Pressable, StyleSheet, View } from 'react-native';
 import AssetTypeLabel from '../AssetTypeLabel';
 import NFTIcon from './NFTIcon';
 import { SkeletoDetailItem } from './Skeleton';
-import type { NFTItemDetail } from '@core/WalletCore/Plugins/NFTDetailTracker/server';
-import { getNFTDetailTracker } from '@WalletCoreExtends/index';
 
 export const getDetailSymbol = (detail: NFTItemDetail) => {
   const name = detail.name?.trim?.() ?? '';

@@ -1,3 +1,4 @@
+import { getAuthentication } from '@WalletCoreExtends/index';
 import Button from '@components/Button';
 import Checkbox from '@components/Checkbox';
 import Text from '@components/Text';
@@ -13,7 +14,6 @@ import { Trans, useTranslation } from 'react-i18next';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { showMessage } from 'react-native-flash-message';
 import createVault from './createVaultWithRouterParams';
-import { getAuthentication } from '@WalletCoreExtends/index';
 
 type FormData = {
   password: string;
@@ -28,8 +28,9 @@ const PasswordWay: React.FC<StackScreenProps<typeof PasswordWayStackName>> = ({ 
     control,
     handleSubmit,
     getValues,
-    formState: { errors },
+    formState: { errors, isValid },
   } = useForm<FormData>({
+    mode: 'onChange',
     defaultValues: {
       password: isDev ? '12345678' : '',
       confirm: isDev ? '12345678' : '',
@@ -112,7 +113,7 @@ const PasswordWay: React.FC<StackScreenProps<typeof PasswordWayStackName>> = ({ 
           </Text>
         </Pressable>
 
-        <Button testID="createPasswordButton" style={styles.btn} onPress={handleSubmit(handleCreateVault)} disabled={!confirm} loading={inAsync}>
+        <Button testID="createPasswordButton" style={styles.btn} onPress={handleSubmit(handleCreateVault)} disabled={!confirm || !isValid} loading={inAsync}>
           {t('initWallet.setPassword.create')}
         </Button>
       </View>

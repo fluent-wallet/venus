@@ -1,6 +1,6 @@
 import { validateCfxAddress } from '@core/utils/address';
+import { bigIntToExponential, splitOnce, toPlainString } from '../helpers';
 import { type PaymentUriCodec, type PaymentUriCodecParseResult, PaymentUriError, type PaymentUriNetworkHint } from '../types';
-import { splitOnce, toPlainString, bigIntToExponential } from '../helpers';
 
 const deriveNetworkHint = (prefix: string): PaymentUriNetworkHint | undefined => {
   if (!prefix) return undefined;

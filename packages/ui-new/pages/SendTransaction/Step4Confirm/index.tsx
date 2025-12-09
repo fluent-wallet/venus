@@ -1,9 +1,16 @@
+import { getAssetsTracker, getEventBus, getNFTDetailTracker } from '@WalletCoreExtends/index';
+import { isAuthenticationCanceledError, isAuthenticationError } from '@WalletCoreExtends/Plugins/Authentication/errors';
 import { BSIMEventTypesName } from '@WalletCoreExtends/Plugins/BSIM/types';
 import ProhibitIcon from '@assets/icons/prohibit.svg';
 import WarnIcon from '@assets/icons/warn.svg';
-import { BottomSheetScrollContent, BottomSheetFooter } from '@components/BottomSheet';
+import { BottomSheetFooter, BottomSheetScrollContent } from '@components/BottomSheet';
 import Button from '@components/Button';
 import Text from '@components/Text';
+import type { Signature } from '@core/database/models/Signature';
+import { SignType } from '@core/database/models/Signature/type';
+import { processError } from '@core/utils/eth';
+import { TransactionActionType } from '@core/WalletCore/Events/broadcastTransactionSubject';
+import { BROADCAST_TRANSACTION_EVENT } from '@core/WalletCore/Events/eventTypes';
 import methods from '@core/WalletCore/Methods';
 import plugins from '@core/WalletCore/Plugins';
 import { checkDiffInRange } from '@core/WalletCore/Plugins/BlockNumberTracker';
@@ -11,18 +18,15 @@ import {
   AssetSource,
   AssetType,
   NetworkType,
-  VaultType,
   useCurrentAccount,
   useCurrentAddress,
   useCurrentAddressValue,
   useCurrentNetwork,
   useCurrentNetworkNativeAsset,
   useVaultOfAccount,
+  VaultType,
 } from '@core/WalletCore/Plugins/ReactInject';
 import type { ITxEvm } from '@core/WalletCore/Plugins/Transaction/types';
-import type { Signature } from '@core/database/models/Signature';
-import { SignType } from '@core/database/models/Signature/type';
-import { processError } from '@core/utils/eth';
 import useFormatBalance from '@hooks/useFormatBalance';
 import useInAsync from '@hooks/useInAsync';
 import { SignTransactionCancelError, useSignTransaction } from '@hooks/useSignTransaction';
@@ -30,10 +34,13 @@ import { AccountItemView } from '@modules/AccountsList';
 import { getDetailSymbol } from '@modules/AssetsList/NFTsList/NFTItem';
 import GasFeeSetting, { type GasEstimate } from '@modules/GasFee/GasFeeSetting';
 import EstimateFee from '@modules/GasFee/GasFeeSetting/EstimateFee';
-import { useTheme } from '@react-navigation/native';
-import type { SendTransactionScreenProps, SendTransactionStep4StackName } from '@router/configs';
+import { useNavigation, useTheme } from '@react-navigation/native';
+import type { SendTransactionScreenProps, SendTransactionStep4StackName, StackNavigation } from '@router/configs';
 import backToHome from '@utils/backToHome';
 import { calculateTokenPrice } from '@utils/calculateTokenPrice';
+import { isSmallDevice } from '@utils/deviceInfo';
+import { handleBSIMHardwareUnavailable } from '@utils/handleBSIMHardwareUnavailable';
+import matchRPCErrorMessage from '@utils/matchRPCErrorMssage';
 import Decimal from 'decimal.js';
 import { BSIMError } from 'packages/WalletCoreExtends/Plugins/BSIM/BSIMSDK';
 import type React from 'react';
@@ -45,18 +52,12 @@ import BSIMVerify, { useBSIMVerify } from '../BSIMVerify';
 import SendTransactionBottomSheet from '../SendTransactionBottomSheet';
 import { NFT } from '../Step3Amount';
 import SendAsset from './SendAsset';
-import { TransactionActionType } from '@core/WalletCore/Events/broadcastTransactionSubject';
-import matchRPCErrorMessage from '@utils/matchRPCErrorMssage';
-import { isSmallDevice } from '@utils/deviceInfo';
-import { isAuthenticationCanceledError, isAuthenticationError } from '@WalletCoreExtends/Plugins/Authentication/errors';
-import { getAssetsTracker, getEventBus, getNFTDetailTracker } from '@WalletCoreExtends/index';
-import { BROADCAST_TRANSACTION_EVENT } from '@core/WalletCore/Events/eventTypes';
 
 const SendTransactionStep4Confirm: React.FC<SendTransactionScreenProps<typeof SendTransactionStep4StackName>> = ({ navigation, route }) => {
   useEffect(() => Keyboard.dismiss(), []);
   const { t } = useTranslation();
   const { colors } = useTheme();
-
+  const rootNavigation = useNavigation<StackNavigation>();
   const currentNetwork = useCurrentNetwork()!;
   const nativeAsset = useCurrentNetworkNativeAsset()!;
   const currentAddress = useCurrentAddress()!;
@@ -122,7 +123,7 @@ const SendTransactionStep4Confirm: React.FC<SendTransactionScreenProps<typeof Se
     let txRaw!: string;
     let txHash!: string;
     let tx!: ITxEvm;
-    let signature: Signature | undefined = undefined;
+    let signature: Signature | undefined;
     let txError!: any;
     try {
       if (asset.type === AssetType.ERC20 && asset.contractAddress) {
@@ -212,6 +213,16 @@ const SendTransactionStep4Confirm: React.FC<SendTransactionScreenProps<typeof Se
         }
       }
     } catch (_err: any) {
+      if (
+        handleBSIMHardwareUnavailable(_err, rootNavigation, {
+          beforeNavigate: () => {
+            setBSIMEvent(null);
+            execBSIMCancel();
+          },
+        })
+      ) {
+        return;
+      }
       if (isAuthenticationError(_err) && isAuthenticationCanceledError(_err)) {
         return;
       }
