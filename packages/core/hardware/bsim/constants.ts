@@ -49,3 +49,7 @@ export const EVM_CHAIN_ERROR = 'BSIM adapter only supports Ethereum-compatible c
  * Maximum number of accounts allowed for BSIM hardware wallets
  */
 export const BSIM_ACCOUNT_LIMIT = 127;
+
+export const HARDWARE_WALLET_TYPES = {
+  BSIM: 'BSIM' as const,
+};

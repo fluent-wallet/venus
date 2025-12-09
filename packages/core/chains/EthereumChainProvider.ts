@@ -14,7 +14,17 @@ import type {
   TransactionParams,
 } from '@core/types';
 import { NetworkType } from '@core/types';
-import { computeAddress, getAddress, isAddress, JsonRpcProvider, keccak256, Signature, verifyMessage as verifyEthersMessage, Wallet } from 'ethers';
+import {
+  computeAddress,
+  getAddress,
+  isAddress,
+  JsonRpcProvider,
+  keccak256,
+  Signature,
+  Transaction,
+  verifyMessage as verifyEthersMessage,
+  Wallet,
+} from 'ethers';
 import { buildTransactionPayload } from './utils/transactionBuilder';
 
 export interface EthereumChainProviderOptions {
@@ -87,9 +97,38 @@ export class EthereumChainProvider implements IChainProvider {
 
     return this.assembleHardwareSignedTransaction(tx, result);
   }
+
   private assembleHardwareSignedTransaction(tx: EvmUnsignedTransaction, result: HardwareSignResult): SignedTransaction {
-    // TODO: implement hardware transaction assembly based on BSIM signature format
-    throw new Error('Hardware transaction assembly not implemented');
+    if (result.chainType !== tx.chainType) {
+      throw new Error('Hardware wallet returned mismatched chain type.');
+    }
+
+    if (result.resultType === 'rawTransaction') {
+      return {
+        chainType: tx.chainType,
+        rawTransaction: result.rawTransaction,
+        hash: result.hash,
+      };
+    }
+
+    if (result.resultType === 'signature') {
+      const transaction = Transaction.from({ ...tx.payload, from: undefined });
+      transaction.signature = Signature.from({
+        r: result.r,
+        s: result.s,
+        v: result.v ?? 27,
+      });
+      const rawTransaction = transaction.serialized as Hex;
+      const hash = keccak256(rawTransaction) as Hash;
+
+      return {
+        chainType: tx.chainType,
+        rawTransaction,
+        hash,
+      };
+    }
+
+    throw new Error('Hardware wallet returned unsupported result type for transactions.');
   }
 
   async signMessage(message: string, signer: ISigner): Promise<string> {

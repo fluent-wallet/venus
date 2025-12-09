@@ -3,8 +3,10 @@ import type { Account } from '@core/database/models/Account';
 import type { Address } from '@core/database/models/Address';
 import VaultType from '@core/database/models/Vault/VaultType';
 import TableName from '@core/database/TableName';
+import { HARDWARE_WALLET_TYPES } from '@core/hardware/bsim/constants';
+import { HardwareWalletRegistry } from '@core/hardware/HardwareWalletRegistry';
 import { VaultService } from '@core/services/vault';
-import { SoftwareSigner } from '@core/signers';
+import { HardwareSigner, SoftwareSigner } from '@core/signers';
 import type { ISigner } from '@core/types';
 import { SERVICE_IDENTIFIER } from '@core/WalletCore/service';
 import { inject, injectable } from 'inversify';
@@ -17,6 +19,9 @@ export class SigningService {
   @inject(VaultService)
   private readonly vaultService!: VaultService;
 
+  @inject(HardwareWalletRegistry)
+  private readonly hardwareRegistry!: HardwareWalletRegistry;
+
   async getSigner(accountId: string, addressId: string): Promise<ISigner> {
     const account = await this.findAccount(accountId);
     const address = await this.findAddress(addressId);
@@ -26,9 +31,8 @@ export class SigningService {
     const vault = await accountGroup.vault.fetch();
 
     if (vault.type === VaultType.BSIM) {
-      throw new Error('Hardware wallet signing is not yet implemented. ');
+      return this.resolveHardwareSigner(account, address, vault.hardwareDeviceId ?? undefined);
     }
-
     if (vault.type === VaultType.HierarchicalDeterministic || vault.type === VaultType.PrivateKey) {
       const privateKey = await this.vaultService.getPrivateKey(vault.id, address.id);
       return new SoftwareSigner(privateKey);
@@ -57,5 +61,32 @@ export class SigningService {
     if (address.account.id !== account.id) {
       throw new Error('Address does not belong to the provided account.');
     }
+  }
+
+  private async resolveHardwareSigner(account: Account, address: Address, hardwareId?: string): Promise<HardwareSigner> {
+    const adapter = this.hardwareRegistry.get(HARDWARE_WALLET_TYPES.BSIM, hardwareId);
+    if (!adapter) {
+      throw new Error('No BSIM hardware wallet adapter is registered.');
+    }
+
+    const network = await address.network.fetch();
+    if (!network) {
+      throw new Error('Address has no associated network.');
+    }
+
+    const hardwareAccount = await adapter.deriveAccount(account.index, network.networkType);
+    if (!hardwareAccount.derivationPath) {
+      throw new Error('Hardware account derivation path is missing.');
+    }
+
+    if (hardwareAccount.chainType !== network.networkType) {
+      throw new Error('Hardware account chain mismatch.');
+    }
+
+    return new HardwareSigner({
+      wallet: adapter,
+      derivationPath: hardwareAccount.derivationPath,
+      chainType: hardwareAccount.chainType,
+    });
   }
 }

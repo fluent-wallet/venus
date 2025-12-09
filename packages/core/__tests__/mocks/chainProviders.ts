@@ -1,7 +1,9 @@
 import {
   AssetType,
   type ChainCallParams,
+  type ConfluxUnsignedTransaction,
   type ConfluxUnsignedTransactionPayload,
+  type EvmUnsignedTransaction,
   type EvmUnsignedTransactionPayload,
   type Hex,
   type IChainProvider,
@@ -146,15 +148,27 @@ export class StubChainProvider implements IChainProvider {
     };
   }
 
-  async signTransaction(tx: UnsignedTransaction, _signer: ISigner): Promise<SignedTransaction> {
+  async signTransaction(tx: UnsignedTransaction, signer: ISigner): Promise<SignedTransaction> {
+    if (signer.type === 'hardware') {
+      const typedTx = tx as ConfluxUnsignedTransaction | EvmUnsignedTransaction;
+      await signer.signWithHardware({
+        derivationPath: signer.getDerivationPath(),
+        chainType: this.networkType,
+        payload: {
+          payloadKind: 'transaction',
+          chainType: this.networkType,
+          unsignedTx: typedTx.payload,
+        },
+      });
+    }
+
     return {
       chainType: tx.chainType,
       rawTransaction: '0xraw',
       hash: '0xhash',
     } as SignedTransaction;
   }
-
-  async broadcastTransaction(signedTx: SignedTransaction): Promise<string> {
+  async broadcastTransaction(signedTx: SignedTransaction): Promise<Hex> {
     return signedTx.hash;
   }
 
