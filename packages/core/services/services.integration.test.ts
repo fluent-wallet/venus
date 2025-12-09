@@ -1,7 +1,8 @@
 import 'reflect-metadata';
 
 import { seedNetwork } from '@core/__tests__/fixtures';
-import { StubChainProvider } from '@core/__tests__/mocks/chainProviders';
+import { createMockHardwareWallet } from '@core/__tests__/mocks';
+import { DEFAULT_HEX_ADDRESS, StubChainProvider } from '@core/__tests__/mocks/chainProviders';
 import { ChainRegistry } from '@core/chains';
 import type { Database } from '@core/database';
 import { mockDatabase } from '@core/database/__tests__/mockDatabases';
@@ -10,9 +11,12 @@ import type { AccountGroup } from '@core/database/models/AccountGroup';
 import type { Address } from '@core/database/models/Address';
 import type { Asset as DbAsset } from '@core/database/models/Asset';
 import { AssetSource, AssetType as DbAssetType } from '@core/database/models/Asset';
+import type { Network } from '@core/database/models/Network';
 import type { Tx } from '@core/database/models/Tx';
 import VaultType from '@core/database/models/Vault/VaultType';
 import TableName from '@core/database/TableName';
+import { HARDWARE_WALLET_TYPES } from '@core/hardware/bsim/constants';
+import { HardwareWalletRegistry } from '@core/hardware/HardwareWalletRegistry';
 import { AccountService, AssetService, registerServices, type SendTransactionInput, SigningService, TransactionService, VaultService } from '@core/services';
 import { AssetType, TxStatus as ServiceTxStatus } from '@core/types';
 import { convertHexToBase32 } from '@core/utils/address';
@@ -201,6 +205,61 @@ describe('Service integration', () => {
     expect(txPayload.from).toBe(await dbAddress.getValue());
     expect(txPayload.to).toBe(input.to);
     expect(txPayload.chainId).toBe(network.chainId);
+  });
+
+  it('sends native transaction via hardware signer for BSIM vaults', async () => {
+    const vaultService = container.get(VaultService);
+    const txService = container.get(TransactionService);
+    const chainRegistry = container.get(ChainRegistry);
+    const hardwareRegistry = container.get(HardwareWalletRegistry);
+
+    const mockAdapter = createMockHardwareWallet();
+    hardwareRegistry.register(HARDWARE_WALLET_TYPES.BSIM, 'mock-device', mockAdapter);
+
+    await seedNetwork(database, { definitionKey: 'Ethereum Sepolia', selected: false });
+    await vaultService.createBSIMVault({
+      accounts: [{ index: 0, hexAddress: DEFAULT_HEX_ADDRESS }],
+      hardwareDeviceId: 'mock-device',
+    });
+
+    const addresses = await database.get<Address>(TableName.Address).query().fetch();
+    let targetAddress: Address | null = null;
+    let targetNetwork: Network | null = null;
+    let targetAccount: Account | null = null;
+
+    for (const entry of addresses) {
+      const [network, account] = await Promise.all([entry.network.fetch(), entry.account.fetch()]);
+      if (network.networkType === NetworkType.Ethereum) {
+        targetAddress = entry;
+        targetNetwork = network;
+        targetAccount = account;
+        break;
+      }
+    }
+
+    if (!targetAddress || !targetNetwork || !targetAccount) {
+      throw new Error('Missing Ethereum address for hardware test.');
+    }
+
+    const provider = new StubChainProvider({
+      chainId: targetNetwork.chainId,
+      networkType: targetNetwork.networkType,
+    });
+    chainRegistry.register(provider);
+
+    const input: SendTransactionInput = {
+      addressId: targetAddress.id,
+      to: '0x0000000000000000000000000000000000000002',
+      amount: '0.5',
+      assetType: AssetType.Native,
+      assetDecimals: 18,
+    };
+
+    const result = await txService.sendNative(input);
+
+    expect(result.hash).toBe('0xhash');
+    expect(mockAdapter.deriveAccount).toHaveBeenCalledWith(targetAccount.index, targetNetwork.networkType);
+    expect(mockAdapter.sign).toHaveBeenCalled();
   });
 
   it('queries asset balances via AssetService and ChainRegistry', async () => {

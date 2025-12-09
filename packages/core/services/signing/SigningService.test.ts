@@ -3,6 +3,7 @@ import { createTestAccount } from '@core/__tests__/fixtures';
 import { mockDatabase } from '@core/__tests__/mocks';
 import type { Database } from '@core/database';
 import VaultType from '@core/database/models/Vault/VaultType';
+import { HardwareWalletRegistry } from '@core/hardware/HardwareWalletRegistry';
 import { VaultService } from '@core/services/vault';
 import { SoftwareSigner } from '@core/signers';
 import { SERVICE_IDENTIFIER } from '@core/WalletCore/service';
@@ -15,10 +16,13 @@ describe('SigningService', () => {
   let container: Container;
   let database: Database;
   let vaultServiceMock: jest.Mocked<VaultServiceMock>;
+  let hardwareRegistry: HardwareWalletRegistry;
 
   const setupBaseBindings = () => {
+    hardwareRegistry = new HardwareWalletRegistry();
     container.bind<Database>(SERVICE_IDENTIFIER.DB).toConstantValue(database);
     container.bind(VaultService).toConstantValue(vaultServiceMock as unknown as VaultService);
+    container.bind(HardwareWalletRegistry).toConstantValue(hardwareRegistry);
     container.bind(SigningService).toSelf();
   };
 
