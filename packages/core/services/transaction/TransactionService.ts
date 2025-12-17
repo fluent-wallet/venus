@@ -9,11 +9,25 @@ import type { TxExtra } from '@core/database/models/TxExtra';
 import type { TxPayload } from '@core/database/models/TxPayload';
 import TableName from '@core/database/TableName';
 import { SigningService } from '@core/services/signing';
-import { AssetType, type IChainProvider, TxStatus as ServiceTxStatus, type TransactionParams, type UnsignedTransaction } from '@core/types';
+import {
+  AssetType,
+  type HardwareOperationError,
+  type IChainProvider,
+  TxStatus as ServiceTxStatus,
+  type TransactionParams,
+  type UnsignedTransaction,
+} from '@core/types';
 import type { ProcessErrorType } from '@core/utils/eth';
+import {
+  type EventBus,
+  HARDWARE_SIGN_ABORT_EVENT,
+  HARDWARE_SIGN_ERROR_EVENT,
+  HARDWARE_SIGN_START_EVENT,
+  HARDWARE_SIGN_SUCCESS_EVENT,
+} from '@core/WalletCore/Events/eventTypes';
 import { SERVICE_IDENTIFIER } from '@core/WalletCore/service';
 import { Q } from '@nozbe/watermelondb';
-import { inject, injectable } from 'inversify';
+import { inject, injectable, optional } from 'inversify';
 import type { ITransaction, RecentlyAddress, SendERC20Input, SendTransactionInput, TransactionFilter } from './types';
 
 @injectable()
@@ -26,6 +40,10 @@ export class TransactionService {
 
   @inject(SigningService)
   private readonly signingService!: SigningService;
+
+  @inject(SERVICE_IDENTIFIER.EVENT_BUS)
+  @optional()
+  private readonly eventBus?: EventBus;
 
   // send native token
   async sendNative(input: SendTransactionInput): Promise<ITransaction> {
@@ -48,7 +66,51 @@ export class TransactionService {
     const signer = await this.signingService.getSigner(account.id, address.id);
 
     // sign
-    const signedTx = await chainProvider.signTransaction(unsignedTx, signer);
+    const requestId = this.createRequestId();
+    let signedTx: Awaited<ReturnType<IChainProvider['signTransaction']>>;
+
+    if (signer.type === 'hardware') {
+      this.eventBus?.dispatch(HARDWARE_SIGN_START_EVENT, {
+        requestId,
+        accountId: account.id,
+        addressId: address.id,
+        networkId: network.id,
+        txPayload: unsignedTx.payload,
+      });
+
+      try {
+        signedTx = await chainProvider.signTransaction(unsignedTx, signer, { signal: input.signal });
+      } catch (error) {
+        if (input.signal?.aborted) {
+          this.eventBus?.dispatch(HARDWARE_SIGN_ABORT_EVENT, {
+            requestId,
+            accountId: account.id,
+            addressId: address.id,
+            networkId: network.id,
+          });
+        } else {
+          this.eventBus?.dispatch(HARDWARE_SIGN_ERROR_EVENT, {
+            requestId,
+            accountId: account.id,
+            addressId: address.id,
+            networkId: network.id,
+            error: this.toHardwareOperationError(error),
+          });
+        }
+        throw error;
+      }
+
+      this.eventBus?.dispatch(HARDWARE_SIGN_SUCCESS_EVENT, {
+        requestId,
+        accountId: account.id,
+        addressId: address.id,
+        networkId: network.id,
+        txHash: signedTx.hash,
+        rawTransaction: signedTx.rawTransaction,
+      });
+    } else {
+      signedTx = await chainProvider.signTransaction(unsignedTx, signer);
+    }
     const sendAt = new Date();
 
     let tx: Tx;
@@ -99,6 +161,7 @@ export class TransactionService {
       assetType: AssetType.ERC20,
       assetDecimals: input.assetDecimals,
       contractAddress: input.contractAddress,
+      signal: input.signal,
     });
   }
 
@@ -383,6 +446,26 @@ export class TransactionService {
     }
 
     return null;
+  }
+
+  private createRequestId(): string {
+    return `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
+  }
+
+  private toHardwareOperationError(error: unknown): HardwareOperationError {
+    const message = error instanceof Error ? error.message : String(error);
+
+    const codeCandidate = (error as { code?: unknown } | null)?.code;
+    const code = typeof codeCandidate === 'string' && codeCandidate.trim() !== '' ? codeCandidate : 'UNKNOWN';
+
+    const detailsCandidate = (error as { details?: unknown } | null)?.details;
+    const details =
+      detailsCandidate && typeof detailsCandidate === 'object' && !Array.isArray(detailsCandidate) ? (detailsCandidate as Record<string, unknown>) : undefined;
+
+    const reasonCandidate = details?.reason;
+    const reason = typeof reasonCandidate === 'string' ? reasonCandidate : undefined;
+
+    return { code, message, reason, details };
   }
 
   private toLowerCaseAddress(value?: string | null): string | null {

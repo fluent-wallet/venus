@@ -63,11 +63,11 @@ export class EthereumChainProvider implements IChainProvider {
   validateAddress(address: Address): boolean {
     return isAddress(address);
   }
-  async signTransaction(tx: EvmUnsignedTransaction, signer: ISigner): Promise<SignedTransaction> {
+  async signTransaction(tx: EvmUnsignedTransaction, signer: ISigner, options?: { signal?: AbortSignal }): Promise<SignedTransaction> {
     if (signer.type === 'software') {
       return this.signWithSoftware(tx, signer);
     } else {
-      return this.signWithHardware(tx, signer);
+      return this.signWithHardware(tx, signer, options);
     }
   }
 
@@ -84,7 +84,7 @@ export class EthereumChainProvider implements IChainProvider {
     };
   }
 
-  private async signWithHardware(tx: EvmUnsignedTransaction, signer: IHardwareSigner): Promise<SignedTransaction> {
+  private async signWithHardware(tx: EvmUnsignedTransaction, signer: IHardwareSigner, options?: { signal?: AbortSignal }): Promise<SignedTransaction> {
     const result = await signer.signWithHardware({
       derivationPath: signer.getDerivationPath(),
       chainType: signer.getChainType(),
@@ -93,6 +93,7 @@ export class EthereumChainProvider implements IChainProvider {
         chainType: tx.chainType,
         unsignedTx: tx.payload,
       },
+      signal: options?.signal,
     });
 
     return this.assembleHardwareSignedTransaction(tx, result);

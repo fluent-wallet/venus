@@ -90,6 +90,12 @@ export type SigningPayload =
       data: Hex;
     };
 
+export type HardwareOperationError = {
+  code: string;
+  message: string;
+  reason?: string;
+  details?: Record<string, unknown>;
+};
 export type HardwareSignResult =
   | { resultType: 'signature'; chainType: ChainType; r: Hex; s: Hex; v: number; digest?: Hex }
   | { resultType: 'rawTransaction'; chainType: ChainType; rawTransaction: Hex; hash: Hash }

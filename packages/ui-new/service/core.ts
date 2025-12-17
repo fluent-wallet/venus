@@ -11,7 +11,10 @@ import {
   TransactionService,
   VaultService,
 } from '@core/services';
+import { HardwareWalletService } from '@core/services/hardware/HardwareWalletService';
 import { container as coreContainer } from '@core/WalletCore/configs';
+import type { EventBus } from '@core/WalletCore/Events/eventTypes';
+import { SERVICE_IDENTIFIER } from '@core/WalletCore/service';
 import { QueryClient } from '@tanstack/react-query';
 import type { Container } from 'inversify';
 
@@ -58,4 +61,12 @@ export function getTransactionService(): TransactionService {
 
 export function getVaultService(): VaultService {
   return getContainer().get(VaultService);
+}
+
+export function getHardwareWalletService(): HardwareWalletService {
+  return getContainer().get(HardwareWalletService);
+}
+
+export function getEventBus(): EventBus {
+  return getContainer().get<EventBus>(SERVICE_IDENTIFIER.EVENT_BUS);
 }

@@ -25,7 +25,7 @@ export interface IChainProvider {
 
   buildTransaction(params: TransactionParams): Promise<UnsignedTransaction>;
   estimateFee(tx: UnsignedTransaction): Promise<FeeEstimate>;
-  signTransaction(tx: UnsignedTransaction, signer: ISigner): Promise<SignedTransaction>;
+  signTransaction(tx: UnsignedTransaction, signer: ISigner, options?: { signal?: AbortSignal }): Promise<SignedTransaction>;
   broadcastTransaction(signedTx: SignedTransaction): Promise<Hash>;
 
   getBalance(address: Address): Promise<Hex>;

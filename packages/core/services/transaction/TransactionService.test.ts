@@ -15,8 +15,16 @@ import type { TxPayload } from '@core/database/models/TxPayload';
 import TableName from '@core/database/TableName';
 import { SigningService } from '@core/services/signing';
 import { AssetType, type ISigner, TxStatus as ServiceTxStatus } from '@core/types';
+import {
+  type EventBus,
+  HARDWARE_SIGN_ABORT_EVENT,
+  HARDWARE_SIGN_ERROR_EVENT,
+  HARDWARE_SIGN_START_EVENT,
+  HARDWARE_SIGN_SUCCESS_EVENT,
+} from '@core/WalletCore/Events/eventTypes';
 import { SERVICE_IDENTIFIER } from '@core/WalletCore/service';
 import { Container } from 'inversify';
+import { Subject } from 'rxjs';
 import { TransactionService } from './TransactionService';
 import type { ITransaction, SendERC20Input, SendTransactionInput } from './types';
 
@@ -71,6 +79,7 @@ describe('TransactionService', () => {
   let database: Database;
   let chainRegistry: ChainRegistry;
   let signingService: FakeSigningService;
+  let dispatchMock: jest.Mock;
   let service: TransactionService;
 
   beforeEach(() => {
@@ -79,6 +88,14 @@ describe('TransactionService', () => {
     chainRegistry = new ChainRegistry();
     signingService = new FakeSigningService();
 
+    dispatchMock = jest.fn();
+    const eventSubject = new Subject<any>();
+    const eventBus: EventBus = {
+      dispatch: dispatchMock as any,
+      on: (_type: any) => eventSubject.asObservable(),
+    } as any;
+
+    container.bind<EventBus>(SERVICE_IDENTIFIER.EVENT_BUS).toConstantValue(eventBus);
     container.bind<Database>(SERVICE_IDENTIFIER.DB).toConstantValue(database);
     container.bind(ChainRegistry).toConstantValue(chainRegistry);
     container.bind(SigningService).toConstantValue(signingService as unknown as SigningService);
@@ -155,6 +172,178 @@ describe('TransactionService', () => {
     expect(signingService.getSigner).toHaveBeenCalledWith(account.id, address.id);
   });
 
+  it('dispatches hardware signing start/success events when signer is hardware', async () => {
+    const { account, address, network, assetRule } = await createTestAccount(database);
+
+    const provider = new StubChainProvider({
+      chainId: network.chainId,
+      networkType: network.networkType,
+    });
+    chainRegistry.register(provider);
+
+    await database.write(async () => {
+      await database.get<DbAsset>(TableName.Asset).create((record) => {
+        record.network.set(network);
+        record.assetRule.set(assetRule);
+        record.type = DbAssetType.Native;
+        record.contractAddress = null;
+        record.name = 'Native';
+        record.symbol = 'NATIVE';
+        record.decimals = 18;
+        record.icon = null;
+        record.priceInUSDT = null;
+        record.source = AssetSource.Official;
+      });
+    });
+
+    signingService.getSigner.mockResolvedValueOnce({
+      type: 'hardware',
+      getDerivationPath: () => "m/44'/60'/0'/0/0",
+      getChainType: () => network.networkType,
+      signWithHardware: jest.fn(async () => ({ resultType: 'signature', chainType: network.networkType, r: '0x1', s: '0x2', v: 27 })),
+    } as any);
+
+    const input: SendTransactionInput = {
+      addressId: address.id,
+      to: '0x0000000000000000000000000000000000000001',
+      amount: '1.23',
+      assetType: AssetType.Native,
+      assetDecimals: 18,
+    };
+
+    await service.sendNative(input);
+
+    expect(dispatchMock.mock.calls[0][0]).toBe(HARDWARE_SIGN_START_EVENT);
+    expect(dispatchMock.mock.calls[1][0]).toBe(HARDWARE_SIGN_SUCCESS_EVENT);
+
+    const startPayload = dispatchMock.mock.calls[0][1];
+    const successPayload = dispatchMock.mock.calls[1][1];
+
+    expect(startPayload).toMatchObject({
+      accountId: account.id,
+      addressId: address.id,
+      networkId: network.id,
+    });
+    expect(typeof startPayload.requestId).toBe('string');
+    expect(successPayload.requestId).toBe(startPayload.requestId);
+
+    expect(successPayload).toMatchObject({
+      txHash: '0xhash',
+      rawTransaction: '0xraw',
+    });
+  });
+
+  it('dispatches hardware signing error event when hardware signing fails', async () => {
+    const { account, address, network, assetRule } = await createTestAccount(database);
+
+    const provider = new StubChainProvider({
+      chainId: network.chainId,
+      networkType: network.networkType,
+    });
+    chainRegistry.register(provider);
+
+    await database.write(async () => {
+      await database.get<DbAsset>(TableName.Asset).create((record) => {
+        record.network.set(network);
+        record.assetRule.set(assetRule);
+        record.type = DbAssetType.Native;
+        record.contractAddress = null;
+        record.name = 'Native';
+        record.symbol = 'NATIVE';
+        record.decimals = 18;
+        record.icon = null;
+        record.priceInUSDT = null;
+        record.source = AssetSource.Official;
+      });
+    });
+
+    const signWithHardware = jest.fn(async () => {
+      throw Object.assign(new Error('boom'), { code: 'HARDWARE_UNAVAILABLE', details: { reason: 'card_missing' } });
+    });
+
+    signingService.getSigner.mockResolvedValueOnce({
+      type: 'hardware',
+      getDerivationPath: () => "m/44'/60'/0'/0/0",
+      getChainType: () => network.networkType,
+      signWithHardware,
+    } as any);
+
+    const input: SendTransactionInput = {
+      addressId: address.id,
+      to: '0x0000000000000000000000000000000000000001',
+      amount: '1.23',
+      assetType: AssetType.Native,
+      assetDecimals: 18,
+    };
+
+    await expect(service.sendNative(input)).rejects.toBeInstanceOf(Error);
+
+    expect(dispatchMock.mock.calls[0][0]).toBe(HARDWARE_SIGN_START_EVENT);
+    expect(dispatchMock.mock.calls[1][0]).toBe(HARDWARE_SIGN_ERROR_EVENT);
+
+    const startPayload = dispatchMock.mock.calls[0][1];
+    const errorPayload = dispatchMock.mock.calls[1][1];
+
+    expect(errorPayload.requestId).toBe(startPayload.requestId);
+    expect(errorPayload.error).toMatchObject({ code: 'HARDWARE_UNAVAILABLE', reason: 'card_missing' });
+  });
+
+  it('dispatches hardware signing abort event when caller aborts via signal', async () => {
+    const { account, address, network, assetRule } = await createTestAccount(database);
+
+    const provider = new StubChainProvider({
+      chainId: network.chainId,
+      networkType: network.networkType,
+    });
+    chainRegistry.register(provider);
+
+    await database.write(async () => {
+      await database.get<DbAsset>(TableName.Asset).create((record) => {
+        record.network.set(network);
+        record.assetRule.set(assetRule);
+        record.type = DbAssetType.Native;
+        record.contractAddress = null;
+        record.name = 'Native';
+        record.symbol = 'NATIVE';
+        record.decimals = 18;
+        record.icon = null;
+        record.priceInUSDT = null;
+        record.source = AssetSource.Official;
+      });
+    });
+
+    const controller = new AbortController();
+
+    const signWithHardware = jest.fn(async (ctx: any) => {
+      controller.abort();
+      throw Object.assign(new Error('aborted'), { code: 'CANCEL' });
+    });
+
+    signingService.getSigner.mockResolvedValueOnce({
+      type: 'hardware',
+      getDerivationPath: () => "m/44'/60'/0'/0/0",
+      getChainType: () => network.networkType,
+      signWithHardware,
+    } as any);
+
+    const input: SendTransactionInput = {
+      addressId: address.id,
+      to: '0x0000000000000000000000000000000000000001',
+      amount: '1.23',
+      assetType: AssetType.Native,
+      assetDecimals: 18,
+      signal: controller.signal,
+    };
+
+    await expect(service.sendNative(input)).rejects.toBeInstanceOf(Error);
+
+    expect(dispatchMock.mock.calls[0][0]).toBe(HARDWARE_SIGN_START_EVENT);
+    expect(dispatchMock.mock.calls[1][0]).toBe(HARDWARE_SIGN_ABORT_EVENT);
+
+    const startPayload = dispatchMock.mock.calls[0][1];
+    const abortPayload = dispatchMock.mock.calls[1][1];
+    expect(abortPayload.requestId).toBe(startPayload.requestId);
+  });
   it('sends ERC20 transaction via sendERC20 and marks token20 in TxExtra', async () => {
     const { account, address, network } = await createTestAccount(database);
 
