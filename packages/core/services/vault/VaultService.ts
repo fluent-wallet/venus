@@ -15,6 +15,7 @@ import type { ICryptoTool } from '@core/WalletCore/Plugins/CryptoTool/interface'
 import { SERVICE_IDENTIFIER } from '@core/WalletCore/service';
 import { Q } from '@nozbe/watermelondb';
 import { inject, injectable } from 'inversify';
+import { HardwareWalletService } from '../hardware/HardwareWalletService';
 import { VAULT_ACCOUNT_PREFIX, VAULT_DEFAULTS, VAULT_GROUP_LABEL } from './constants';
 import type { CreateBSIMVaultInput, CreateHDVaultInput, CreatePrivateKeyVaultInput, CreatePublicAddressVaultInput, IVault } from './types';
 
@@ -25,6 +26,9 @@ export class VaultService {
 
   @inject(SERVICE_IDENTIFIER.CRYPTO_TOOL)
   private readonly cryptoTool!: ICryptoTool;
+
+  @inject(HardwareWalletService)
+  private readonly hardwareWalletService!: HardwareWalletService;
 
   private async toInterface(vault: Vault, accountGroupId?: string): Promise<IVault> {
     const group = accountGroupId ? await this.database.get<AccountGroup>(TableName.AccountGroup).find(accountGroupId) : await vault.getAccountGroup();
@@ -188,7 +192,19 @@ export class VaultService {
    * Import a BSIM wallet
    */
   async createBSIMVault(input: CreateBSIMVaultInput): Promise<IVault> {
-    if (!input.accounts.length) {
+    let resolvedAccounts = input.accounts;
+    let resolvedHardwareDeviceId = input.hardwareDeviceId;
+
+    if (!resolvedAccounts) {
+      const result = await this.hardwareWalletService.connectAndSync('BSIM', input.connectOptions);
+      resolvedAccounts = result.accounts.map((account) => ({
+        index: account.index,
+        hexAddress: account.address,
+      }));
+      resolvedHardwareDeviceId = resolvedHardwareDeviceId ?? result.deviceId;
+    }
+
+    if (!resolvedAccounts.length) {
       throw new Error('BSIM vault requires at least one account.');
     }
 
@@ -198,7 +214,7 @@ export class VaultService {
     const vaultRecord = this.database.get<Vault>(TableName.Vault).prepareCreate((record) => {
       record.type = VaultType.BSIM;
       record.device = VAULT_DEFAULTS.DEVICE;
-      record.hardwareDeviceId = input.hardwareDeviceId ?? null;
+      record.hardwareDeviceId = resolvedHardwareDeviceId ?? null;
       record.data = 'BSIM Wallet';
       record.cfxOnly = false;
       record.isBackup = false;
@@ -210,15 +226,14 @@ export class VaultService {
     const accountRecords: Account[] = [];
     const addressRecords: Address[] = [];
 
-    for (let idx = 0; idx < input.accounts.length; idx += 1) {
-      const { index, hexAddress } = input.accounts[idx];
+    for (let idx = 0; idx < resolvedAccounts.length; idx += 1) {
+      const { index, hexAddress } = resolvedAccounts[idx];
 
       const nickname = `${VAULT_ACCOUNT_PREFIX[VaultType.BSIM]} - ${idx + 1}`;
       const account = this.createAccountRecord(accountGroup, nickname, {
         index,
         selected: isFirstVault && idx === 0,
       });
-
       const addresses = await this.prepareAddresses(account, networks, async () => hexAddress);
 
       accountRecords.push(account);

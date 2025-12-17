@@ -10,10 +10,13 @@ import { container as defaultContainer } from '@core/WalletCore/configs';
 import type { Container } from 'inversify';
 import { AccountService } from './account';
 import { AssetService } from './asset';
+import { HardwareWalletService } from './hardware/HardwareWalletService';
 import { NetworkService } from './network';
 import { SigningService } from './signing';
 import { TransactionService } from './transaction';
 import { VaultService } from './vault';
+
+export { HardwareWalletService } from './hardware/HardwareWalletService';
 
 export function registerServices(target: Container = defaultContainer): void {
   target.bind(VaultService).toSelf().inSingletonScope();
@@ -22,5 +25,6 @@ export function registerServices(target: Container = defaultContainer): void {
   target.bind(SigningService).toSelf().inSingletonScope();
   target.bind(TransactionService).toSelf().inSingletonScope();
   target.bind(NetworkService).toSelf().inSingletonScope();
+  target.bind(HardwareWalletService).toSelf().inSingletonScope();
   target.bind(HardwareWalletRegistry).toSelf().inSingletonScope();
 }

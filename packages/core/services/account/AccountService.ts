@@ -1,18 +1,23 @@
 import type { Database } from '@core/database';
 import type { Account } from '@core/database/models/Account';
+import type { AccountGroup } from '@core/database/models/AccountGroup';
+import type { Vault } from '@core/database/models/Vault';
 import VaultType from '@core/database/models/Vault/VaultType';
 import TableName from '@core/database/TableName';
 import type { Address } from '@core/types';
 import { SERVICE_IDENTIFIER } from '@core/WalletCore/service';
 import { Q } from '@nozbe/watermelondb';
 import { inject, injectable } from 'inversify';
-
+import { HardwareWalletService } from '../hardware/HardwareWalletService';
 import type { IAccount } from './types';
 
 @injectable()
 export class AccountService {
   @inject(SERVICE_IDENTIFIER.DB)
   private readonly database!: Database;
+
+  @inject(HardwareWalletService)
+  private readonly hardwareWalletService!: HardwareWalletService;
 
   async getCurrentAccount(): Promise<IAccount | null> {
     const account = await this.getCurrentAccountModel();
@@ -66,6 +71,32 @@ export class AccountService {
       .fetch();
 
     return Promise.all(accounts.map((item) => this.toInterface(item)));
+  }
+
+  async createHardwareAccount(vaultId: string): Promise<IAccount> {
+    const { accountGroup } = await this.findAccountGroupByVault(vaultId);
+    const existing = await accountGroup.accounts.fetch();
+    const nextIndex = existing.length ? Math.max(...existing.map((account) => account.index)) + 1 : 0;
+
+    const created = await this.createHardwareAccounts(vaultId, nextIndex);
+    const last = created.at(-1);
+    if (!last) {
+      throw new Error('[AccountService] Failed to create hardware account.');
+    }
+    return last;
+  }
+
+  async createHardwareAccounts(vaultId: string, targetIndex: number): Promise<IAccount[]> {
+    await this.hardwareWalletService.syncDerivedAccounts(vaultId, targetIndex);
+
+    const { accountGroup } = await this.findAccountGroupByVault(vaultId);
+    const accounts = await accountGroup.accounts.extend(Q.where('index', Q.lte(targetIndex)), Q.sortBy('index', Q.asc)).fetch();
+
+    const result: IAccount[] = [];
+    for (const account of accounts) {
+      result.push(await this.toInterface(account));
+    }
+    return result;
   }
 
   async getAccountsByGroup(accountGroupId: string, options: { includeHidden?: boolean } = {}): Promise<IAccount[]> {
@@ -149,6 +180,16 @@ export class AccountService {
     });
 
     return Promise.all(accounts.map((account) => this.toInterface(account)));
+  }
+
+  private async findAccountGroupByVault(vaultId: string): Promise<{ vault: Vault; accountGroup: AccountGroup }> {
+    const vault = await this.database.get<Vault>(TableName.Vault).find(vaultId);
+    const accountGroups = await vault.accountGroups.fetch();
+    const accountGroup = accountGroups[0];
+    if (!accountGroup) {
+      throw new Error(`Vault ${vaultId} has no account group.`);
+    }
+    return { vault, accountGroup };
   }
 
   private async getCurrentAccountModel(): Promise<Account | null> {

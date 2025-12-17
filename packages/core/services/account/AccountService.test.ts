@@ -1,16 +1,36 @@
 import 'reflect-metadata';
 import { createTestAccount, DEFAULT_ACCOUNTS_FIXTURE_BASE32, seedNetwork } from '@core/__tests__/fixtures';
-import { mockDatabase } from '@core/__tests__/mocks';
+import { createMockHardwareWallet, mockDatabase } from '@core/__tests__/mocks';
 import type { Database } from '@core/database';
 import type { Account } from '@core/database/models/Account';
 import type { AssetRule } from '@core/database/models/AssetRule';
 import type { Network } from '@core/database/models/Network';
 import VaultType from '@core/database/models/Vault/VaultType';
 import TableName from '@core/database/TableName';
+import { HARDWARE_WALLET_TYPES } from '@core/hardware/bsim/constants';
+import { HardwareWalletRegistry } from '@core/hardware/HardwareWalletRegistry';
+import { type ChainType, NetworkType } from '@core/types';
+import type { ICryptoTool } from '@core/WalletCore/Plugins/CryptoTool/interface';
 import { SERVICE_IDENTIFIER } from '@core/WalletCore/service';
 import { Container } from 'inversify';
-
+import { HardwareWalletService, registerServices, VaultService } from '..';
 import { AccountService } from './AccountService';
+
+class FakeCryptoTool implements ICryptoTool {
+  async encrypt(data: unknown): Promise<string> {
+    return JSON.stringify({ payload: data });
+  }
+  async decrypt<T = unknown>(encryptedString: string): Promise<T> {
+    return (JSON.parse(encryptedString) as { payload: T }).payload;
+  }
+  setGetPasswordMethod(): void {}
+  async getPassword(): Promise<string | null> {
+    return null;
+  }
+  generateRandomString(): string {
+    return 'stub';
+  }
+}
 
 describe('AccountService', () => {
   let container: Container;
@@ -28,6 +48,10 @@ describe('AccountService', () => {
     assetRule = seeded.assetRule;
 
     container.bind<Database>(SERVICE_IDENTIFIER.DB).toConstantValue(database);
+    container.bind(HardwareWalletService).toConstantValue({
+      syncDerivedAccounts: jest.fn(async () => undefined),
+    } as unknown as HardwareWalletService);
+
     container.bind(AccountService).toSelf();
     service = container.get(AccountService);
   });
@@ -200,5 +224,61 @@ describe('AccountService', () => {
   it('prevents batch hiding the last visible account', async () => {
     const { account } = await createTestAccount(database, { hidden: false, network, assetRule });
     await expect(service.batchSetVisibility([{ accountId: account.id, hidden: true }])).rejects.toThrow('Keep at least one account.');
+  });
+});
+
+describe('AccountService hardware accounts', () => {
+  let container: Container;
+  let database: Database;
+
+  beforeEach(async () => {
+    container = new Container({ defaultScope: 'Singleton' });
+    database = mockDatabase();
+
+    container.bind<Database>(SERVICE_IDENTIFIER.DB).toConstantValue(database);
+    container.bind<ICryptoTool>(SERVICE_IDENTIFIER.CRYPTO_TOOL).toConstantValue(new FakeCryptoTool());
+
+    registerServices(container);
+
+    await seedNetwork(database, { selected: true });
+  });
+
+  afterEach(() => {
+    container.unbindAll();
+  });
+
+  it('creates additional BSIM accounts without changing selection', async () => {
+    const vaultService = container.get(VaultService);
+    const accountService = container.get(AccountService);
+    const hardwareRegistry = container.get(HardwareWalletRegistry);
+
+    const adapter = createMockHardwareWallet();
+
+    const buildHexAddress = (index: number) => `0x${'deadbeef'.repeat(4)}${index.toString(16).padStart(8, '0')}`;
+
+    adapter.deriveAccount.mockImplementation(async (index: number, _chainType: ChainType) => ({
+      index,
+      chainType: NetworkType.Ethereum,
+      address: buildHexAddress(index),
+      derivationPath: `m/44'/60'/0'/0/${index}`,
+    }));
+
+    hardwareRegistry.register(HARDWARE_WALLET_TYPES.BSIM, 'mock-device', adapter);
+
+    const vault = await vaultService.createBSIMVault({
+      accounts: [{ index: 0, hexAddress: '0x0b3F5420B534B86617c26F35192fb437672CF273' }],
+      hardwareDeviceId: 'mock-device',
+    });
+
+    const created = await accountService.createHardwareAccounts(vault.id, 2);
+
+    expect(created.length).toBeGreaterThanOrEqual(1);
+    const all = await database.get<Account>(TableName.Account).query().fetch();
+
+    const selectedCount = all.filter((account) => account.selected).length;
+    expect(selectedCount).toBe(1);
+
+    const newOnes = all.filter((account) => account.index === 1 || account.index === 2);
+    expect(newOnes.every((account) => account.selected === false)).toBe(true);
   });
 });

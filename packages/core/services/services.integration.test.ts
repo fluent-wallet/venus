@@ -214,9 +214,24 @@ describe('Service integration', () => {
     const hardwareRegistry = container.get(HardwareWalletRegistry);
 
     const mockAdapter = createMockHardwareWallet();
+
+    mockAdapter.listAccounts.mockResolvedValueOnce([]).mockResolvedValueOnce([
+      {
+        index: 0,
+        chainType: NetworkType.Ethereum,
+        address: DEFAULT_HEX_ADDRESS,
+        derivationPath: "m/44'/60'/0'/0/0",
+      },
+    ]);
+
     hardwareRegistry.register(HARDWARE_WALLET_TYPES.BSIM, 'mock-device', mockAdapter);
 
     await seedNetwork(database, { definitionKey: 'Ethereum Sepolia', selected: false });
+
+    const vault = await vaultService.createBSIMVault({
+      connectOptions: { deviceIdentifier: 'mock-device' },
+    });
+    expect(vault.hardwareDeviceId).toBe('mock-device');
     await vaultService.createBSIMVault({
       accounts: [{ index: 0, hexAddress: DEFAULT_HEX_ADDRESS }],
       hardwareDeviceId: 'mock-device',
