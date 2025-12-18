@@ -1,4 +1,4 @@
-import { EVENT_PAYLOAD_NOT_SERIALIZABLE, assertJsonValue } from '@core/errors';
+import { assertJsonValue, EVENT_PAYLOAD_NOT_SERIALIZABLE } from '@core/errors';
 import type { Logger } from '@core/runtime/types';
 import type { EventBus, Subscription } from './types';
 
