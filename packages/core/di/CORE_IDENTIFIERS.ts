@@ -1,0 +1,14 @@
+export const CORE_IDENTIFIERS = {
+  CONFIG: Symbol.for('CORE_IDENTIFIERS.CONFIG'),
+  LOGGER: Symbol.for('CORE_IDENTIFIERS.LOGGER'),
+
+  EVENT_BUS: Symbol.for('CORE_IDENTIFIERS.EVENT_BUS'),
+
+  DB: Symbol.for('CORE_IDENTIFIERS.DB'),
+  CRYPTO_TOOL: Symbol.for('CORE_IDENTIFIERS.CRYPTO_TOOL'),
+
+  AUTH: Symbol.for('CORE_IDENTIFIERS.AUTH'),
+  EXTERNAL_REQUESTS: Symbol.for('CORE_IDENTIFIERS.EXTERNAL_REQUESTS'),
+} as const;
+
+export type CoreIdentifier = (typeof CORE_IDENTIFIERS)[keyof typeof CORE_IDENTIFIERS];
