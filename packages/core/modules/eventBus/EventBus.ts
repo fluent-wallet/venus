@@ -8,25 +8,16 @@ export type InMemoryEventBusOptions = {
   assertSerializable?: boolean;
 };
 
-const createNoopLogger = (): Logger => {
-  return {
-    debug: () => undefined,
-    info: () => undefined,
-    warn: () => undefined,
-    error: () => undefined,
-  };
-};
-
 type AnyHandler = (payload: unknown) => void;
 
 export class InMemoryEventBus<EventMap extends Record<string, unknown>> implements EventBus<EventMap> {
   private readonly handlers = new Map<keyof EventMap, Set<AnyHandler>>();
-  private readonly logger: Logger;
+  private readonly logger: Logger | undefined;
   private readonly strictEmit: boolean;
   private readonly assertSerializable: boolean;
 
   constructor(options: InMemoryEventBusOptions = {}) {
-    this.logger = options.logger ?? createNoopLogger();
+    this.logger = options.logger;
     this.strictEmit = options.strictEmit ?? false;
     this.assertSerializable = options.assertSerializable ?? false;
   }
@@ -76,7 +67,7 @@ export class InMemoryEventBus<EventMap extends Record<string, unknown>> implemen
       try {
         handler(normalizedPayload as unknown);
       } catch (error) {
-        this.logger.error('EventBus:handler-error', { event: String(event), error });
+        this.logger?.error('EventBus:handler-error', { event: String(event), error });
 
         if (this.strictEmit) {
           throw error;

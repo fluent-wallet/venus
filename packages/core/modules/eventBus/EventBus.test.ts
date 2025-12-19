@@ -1,17 +1,9 @@
 import 'reflect-metadata';
 
+import { createSilentLogger } from '@core/__tests__/mocks';
 import { EVENT_PAYLOAD_NOT_SERIALIZABLE } from '@core/errors';
 import { InMemoryEventBus } from './EventBus';
 import type { EventBus } from './types';
-
-const createSilentLogger = () => {
-  return {
-    debug: () => undefined,
-    info: () => undefined,
-    warn: () => undefined,
-    error: () => undefined,
-  };
-};
 
 describe('InMemoryEventBus', () => {
   it('delivers payload to subscribed handlers', () => {

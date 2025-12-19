@@ -1,18 +1,10 @@
 import 'reflect-metadata';
 
+import { createSilentLogger } from '@core/__tests__/mocks';
 import { MM_ALREADY_STARTED, MM_CYCLE_DEPENDENCY, MM_DUPLICATE_MODULE_ID, MM_MISSING_DEPENDENCY, MM_START_FAILED, MM_STOP_FAILED } from '@core/errors';
 import { Container } from 'inversify';
 import { ModuleManager } from './ModuleManager';
 import type { RuntimeContext, RuntimeModule } from './types';
-
-const createSilentLogger = () => {
-  return {
-    debug: () => undefined,
-    info: () => undefined,
-    warn: () => undefined,
-    error: () => undefined,
-  };
-};
 
 const createModule = (overrides: Partial<RuntimeModule> & Pick<RuntimeModule, 'id'>): RuntimeModule => {
   return {
