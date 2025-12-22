@@ -4,8 +4,7 @@ import type { AccountGroup } from '@core/database/models/AccountGroup';
 import type { Vault } from '@core/database/models/Vault';
 import VaultType from '@core/database/models/Vault/VaultType';
 import TableName from '@core/database/TableName';
-import type { Address } from '@core/types';
-import { SERVICE_IDENTIFIER } from '@core/WalletCore/service';
+import { CORE_IDENTIFIERS } from '@core/di';
 import { Q } from '@nozbe/watermelondb';
 import { inject, injectable } from 'inversify';
 import { HardwareWalletService } from '../hardware/HardwareWalletService';
@@ -13,7 +12,7 @@ import type { IAccount } from './types';
 
 @injectable()
 export class AccountService {
-  @inject(SERVICE_IDENTIFIER.DB)
+  @inject(CORE_IDENTIFIERS.DB)
   private readonly database!: Database;
 
   @inject(HardwareWalletService)

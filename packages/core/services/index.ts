@@ -5,8 +5,8 @@ export * from './signing';
 export * from './transaction';
 export * from './vault';
 
+import { ChainRegistry } from '@core/chains';
 import { HardwareWalletRegistry } from '@core/hardware/HardwareWalletRegistry';
-import { container as defaultContainer } from '@core/WalletCore/configs';
 import type { Container } from 'inversify';
 import { AccountService } from './account';
 import { AssetService } from './asset';
@@ -18,7 +18,8 @@ import { VaultService } from './vault';
 
 export { HardwareWalletService } from './hardware/HardwareWalletService';
 
-export function registerServices(target: Container = defaultContainer): void {
+export function registerServices(target: Container): void {
+  target.bind(ChainRegistry).toSelf().inSingletonScope();
   target.bind(VaultService).toSelf().inSingletonScope();
   target.bind(AccountService).toSelf().inSingletonScope();
   target.bind(AssetService).toSelf().inSingletonScope();

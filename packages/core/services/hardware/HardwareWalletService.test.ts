@@ -4,6 +4,7 @@ import { mockDatabase } from '@core/__tests__/mocks';
 import type { Vault } from '@core/database/models/Vault';
 import VaultType from '@core/database/models/Vault/VaultType';
 import TableName from '@core/database/TableName';
+import { CORE_IDENTIFIERS } from '@core/di';
 import { HARDWARE_WALLET_TYPES } from '@core/hardware/bsim/constants';
 import { HardwareWalletRegistry } from '@core/hardware/HardwareWalletRegistry';
 import type {
@@ -17,7 +18,6 @@ import type {
   SigningContext,
 } from '@core/types';
 import { NetworkType } from '@core/types';
-import { SERVICE_IDENTIFIER } from '@core/WalletCore/service';
 import type { Database } from '@nozbe/watermelondb';
 import { Container } from 'inversify';
 import type { BackupSeedParams, DeriveKeyParams, RestoreSeedParams } from 'modules/BSIM/src';
@@ -82,7 +82,7 @@ describe('HardwareWalletService', () => {
   beforeEach(() => {
     container = new Container({ defaultScope: 'Singleton' });
     const database = mockDatabase();
-    container.bind<Database>(SERVICE_IDENTIFIER.DB).toConstantValue(database);
+    container.bind<Database>(CORE_IDENTIFIERS.DB).toConstantValue(database);
 
     container.bind(HardwareWalletRegistry).toSelf().inSingletonScope();
     container.bind(HardwareWalletService).toSelf().inSingletonScope();
@@ -161,7 +161,7 @@ describe('HardwareWalletService', () => {
     const adapter = createBSIMWalletAdapter({ id: 'bsim' });
     registry.register(HARDWARE_WALLET_TYPES.BSIM, 'ble-001', adapter);
 
-    const db = container.get<Database>(SERVICE_IDENTIFIER.DB);
+    const db = container.get<Database>(CORE_IDENTIFIERS.DB);
     const vault = await db.write(async () =>
       db.get<Vault>(TableName.Vault).create((record) => {
         record.type = VaultType.BSIM;
@@ -183,7 +183,7 @@ describe('HardwareWalletService', () => {
     const adapter = createBSIMWalletAdapter({ id: 'bsim' });
     registry.register(HARDWARE_WALLET_TYPES.BSIM, 'ble-001', adapter);
 
-    const db = container.get<Database>(SERVICE_IDENTIFIER.DB);
+    const db = container.get<Database>(CORE_IDENTIFIERS.DB);
     const vault = await db.write(async () =>
       db.get<Vault>(TableName.Vault).create((record) => {
         record.type = VaultType.BSIM;
@@ -204,7 +204,7 @@ describe('HardwareWalletService', () => {
     const adapter = createBSIMWalletAdapter({ id: 'bsim' });
     registry.register(HARDWARE_WALLET_TYPES.BSIM, 'ble-002', adapter);
 
-    const db = container.get<Database>(SERVICE_IDENTIFIER.DB);
+    const db = container.get<Database>(CORE_IDENTIFIERS.DB);
     const vault = await db.write(async () =>
       db.get<Vault>(TableName.Vault).create((record) => {
         record.type = VaultType.BSIM;

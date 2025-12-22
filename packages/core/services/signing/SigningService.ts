@@ -3,17 +3,17 @@ import type { Account } from '@core/database/models/Account';
 import type { Address } from '@core/database/models/Address';
 import VaultType from '@core/database/models/Vault/VaultType';
 import TableName from '@core/database/TableName';
+import { CORE_IDENTIFIERS } from '@core/di';
 import { HARDWARE_WALLET_TYPES } from '@core/hardware/bsim/constants';
 import { HardwareWalletRegistry } from '@core/hardware/HardwareWalletRegistry';
 import { VaultService } from '@core/services/vault';
 import { HardwareSigner, SoftwareSigner } from '@core/signers';
 import type { ISigner } from '@core/types';
-import { SERVICE_IDENTIFIER } from '@core/WalletCore/service';
 import { inject, injectable } from 'inversify';
 
 @injectable()
 export class SigningService {
-  @inject(SERVICE_IDENTIFIER.DB)
+  @inject(CORE_IDENTIFIERS.DB)
   private readonly database!: Database;
 
   @inject(VaultService)

@@ -7,27 +7,23 @@ import type { AssetRule } from '@core/database/models/AssetRule';
 import type { Network } from '@core/database/models/Network';
 import VaultType from '@core/database/models/Vault/VaultType';
 import TableName from '@core/database/TableName';
+import { CORE_IDENTIFIERS } from '@core/di';
 import { HARDWARE_WALLET_TYPES } from '@core/hardware/bsim/constants';
 import { HardwareWalletRegistry } from '@core/hardware/HardwareWalletRegistry';
+import type { CryptoTool } from '@core/types/crypto';
 import { type ChainType, NetworkType } from '@core/types';
-import type { ICryptoTool } from '@core/WalletCore/Plugins/CryptoTool/interface';
-import { SERVICE_IDENTIFIER } from '@core/WalletCore/service';
 import { Container } from 'inversify';
 import { HardwareWalletService, registerServices, VaultService } from '..';
 import { AccountService } from './AccountService';
 
-class FakeCryptoTool implements ICryptoTool {
+class FakeCryptoTool implements CryptoTool {
   async encrypt(data: unknown): Promise<string> {
     return JSON.stringify({ payload: data });
   }
   async decrypt<T = unknown>(encryptedString: string): Promise<T> {
     return (JSON.parse(encryptedString) as { payload: T }).payload;
   }
-  setGetPasswordMethod(): void {}
-  async getPassword(): Promise<string | null> {
-    return null;
-  }
-  generateRandomString(): string {
+  generateRandomString(_byteCount?: number): string {
     return 'stub';
   }
 }
@@ -47,7 +43,7 @@ describe('AccountService', () => {
     network = seeded.network;
     assetRule = seeded.assetRule;
 
-    container.bind<Database>(SERVICE_IDENTIFIER.DB).toConstantValue(database);
+    container.bind<Database>(CORE_IDENTIFIERS.DB).toConstantValue(database);
     container.bind(HardwareWalletService).toConstantValue({
       syncDerivedAccounts: jest.fn(async () => undefined),
     } as unknown as HardwareWalletService);
@@ -235,8 +231,8 @@ describe('AccountService hardware accounts', () => {
     container = new Container({ defaultScope: 'Singleton' });
     database = mockDatabase();
 
-    container.bind<Database>(SERVICE_IDENTIFIER.DB).toConstantValue(database);
-    container.bind<ICryptoTool>(SERVICE_IDENTIFIER.CRYPTO_TOOL).toConstantValue(new FakeCryptoTool());
+    container.bind<Database>(CORE_IDENTIFIERS.DB).toConstantValue(database);
+    container.bind<CryptoTool>(CORE_IDENTIFIERS.CRYPTO_TOOL).toConstantValue(new FakeCryptoTool());
 
     registerServices(container);
 

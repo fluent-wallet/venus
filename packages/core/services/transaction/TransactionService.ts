@@ -8,6 +8,7 @@ import { TxStatus as DbTxStatus, FINISHED_IN_ACTIVITY_TX_STATUSES, PENDING_TX_ST
 import type { TxExtra } from '@core/database/models/TxExtra';
 import type { TxPayload } from '@core/database/models/TxPayload';
 import TableName from '@core/database/TableName';
+import { CORE_IDENTIFIERS } from '@core/di';
 import { SigningService } from '@core/services/signing';
 import {
   AssetType,
@@ -18,21 +19,14 @@ import {
   type UnsignedTransaction,
 } from '@core/types';
 import type { ProcessErrorType } from '@core/utils/eth';
-import {
-  type EventBus,
-  HARDWARE_SIGN_ABORT_EVENT,
-  HARDWARE_SIGN_ERROR_EVENT,
-  HARDWARE_SIGN_START_EVENT,
-  HARDWARE_SIGN_SUCCESS_EVENT,
-} from '@core/WalletCore/Events/eventTypes';
-import { SERVICE_IDENTIFIER } from '@core/WalletCore/service';
+import type { CoreEventMap, EventBus } from '@core/modules/eventBus';
 import { Q } from '@nozbe/watermelondb';
 import { inject, injectable, optional } from 'inversify';
 import type { ITransaction, RecentlyAddress, SendERC20Input, SendTransactionInput, TransactionFilter } from './types';
 
 @injectable()
 export class TransactionService {
-  @inject(SERVICE_IDENTIFIER.DB)
+  @inject(CORE_IDENTIFIERS.DB)
   private readonly database!: Database;
 
   @inject(ChainRegistry)
@@ -41,9 +35,9 @@ export class TransactionService {
   @inject(SigningService)
   private readonly signingService!: SigningService;
 
-  @inject(SERVICE_IDENTIFIER.EVENT_BUS)
+  @inject(CORE_IDENTIFIERS.EVENT_BUS)
   @optional()
-  private readonly eventBus?: EventBus;
+  private readonly eventBus?: EventBus<CoreEventMap>;
 
   // send native token
   async sendNative(input: SendTransactionInput): Promise<ITransaction> {
@@ -70,26 +64,25 @@ export class TransactionService {
     let signedTx: Awaited<ReturnType<IChainProvider['signTransaction']>>;
 
     if (signer.type === 'hardware') {
-      this.eventBus?.dispatch(HARDWARE_SIGN_START_EVENT, {
+      this.eventBus?.emit('hardware-sign/started', {
         requestId,
         accountId: account.id,
         addressId: address.id,
         networkId: network.id,
-        txPayload: unsignedTx.payload,
       });
 
       try {
         signedTx = await chainProvider.signTransaction(unsignedTx, signer, { signal: input.signal });
       } catch (error) {
         if (input.signal?.aborted) {
-          this.eventBus?.dispatch(HARDWARE_SIGN_ABORT_EVENT, {
+          this.eventBus?.emit('hardware-sign/aborted', {
             requestId,
             accountId: account.id,
             addressId: address.id,
             networkId: network.id,
           });
         } else {
-          this.eventBus?.dispatch(HARDWARE_SIGN_ERROR_EVENT, {
+          this.eventBus?.emit('hardware-sign/failed', {
             requestId,
             accountId: account.id,
             addressId: address.id,
@@ -100,7 +93,7 @@ export class TransactionService {
         throw error;
       }
 
-      this.eventBus?.dispatch(HARDWARE_SIGN_SUCCESS_EVENT, {
+      this.eventBus?.emit('hardware-sign/succeeded', {
         requestId,
         accountId: account.id,
         addressId: address.id,

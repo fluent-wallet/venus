@@ -1,16 +1,15 @@
-import { container as defaultContainer } from '@core/WalletCore/configs';
 import type { Container } from 'inversify';
 import { BSIMHardwareWallet } from './bsim';
 import { HardwareWalletRegistry } from './HardwareWalletRegistry';
 
 export interface RegisterHardwareWalletsOptions {
-  container?: Container;
+  container: Container;
   registerBSIM?: boolean;
   bsimFactory?: () => BSIMHardwareWallet;
 }
 
-export function registerDefaultHardwareWallets(options: RegisterHardwareWalletsOptions = {}): void {
-  const target = options.container ?? defaultContainer;
+export function registerDefaultHardwareWallets(options: RegisterHardwareWalletsOptions): void {
+  const target = options.container;
   const includeBSIM = options.registerBSIM ?? true;
 
   if (!includeBSIM) return;

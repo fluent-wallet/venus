@@ -1,7 +1,7 @@
 import 'reflect-metadata';
 
 import { createTestAccount } from '@core/__tests__/fixtures';
-import { DEFAULT_PRIVATE_KEY, mockDatabase } from '@core/__tests__/mocks';
+import { createSilentLogger, DEFAULT_PRIVATE_KEY, mockDatabase } from '@core/__tests__/mocks';
 import { StubChainProvider } from '@core/__tests__/mocks/chainProviders';
 import { ChainRegistry } from '@core/chains';
 
@@ -13,18 +13,12 @@ import { TxStatus as DbTxStatus, TxSource } from '@core/database/models/Tx/type'
 import type { TxExtra } from '@core/database/models/TxExtra';
 import type { TxPayload } from '@core/database/models/TxPayload';
 import TableName from '@core/database/TableName';
+import { CORE_IDENTIFIERS } from '@core/di';
+import type { CoreEventMap, EventBus } from '@core/modules/eventBus';
+import { InMemoryEventBus } from '@core/modules/eventBus';
 import { SigningService } from '@core/services/signing';
 import { AssetType, type ISigner, TxStatus as ServiceTxStatus } from '@core/types';
-import {
-  type EventBus,
-  HARDWARE_SIGN_ABORT_EVENT,
-  HARDWARE_SIGN_ERROR_EVENT,
-  HARDWARE_SIGN_START_EVENT,
-  HARDWARE_SIGN_SUCCESS_EVENT,
-} from '@core/WalletCore/Events/eventTypes';
-import { SERVICE_IDENTIFIER } from '@core/WalletCore/service';
 import { Container } from 'inversify';
-import { Subject } from 'rxjs';
 import { TransactionService } from './TransactionService';
 import type { ITransaction, SendERC20Input, SendTransactionInput } from './types';
 
@@ -79,7 +73,7 @@ describe('TransactionService', () => {
   let database: Database;
   let chainRegistry: ChainRegistry;
   let signingService: FakeSigningService;
-  let dispatchMock: jest.Mock;
+  let eventBus: EventBus<CoreEventMap>;
   let service: TransactionService;
 
   beforeEach(() => {
@@ -88,15 +82,9 @@ describe('TransactionService', () => {
     chainRegistry = new ChainRegistry();
     signingService = new FakeSigningService();
 
-    dispatchMock = jest.fn();
-    const eventSubject = new Subject<any>();
-    const eventBus: EventBus = {
-      dispatch: dispatchMock as any,
-      on: (_type: any) => eventSubject.asObservable(),
-    } as any;
-
-    container.bind<EventBus>(SERVICE_IDENTIFIER.EVENT_BUS).toConstantValue(eventBus);
-    container.bind<Database>(SERVICE_IDENTIFIER.DB).toConstantValue(database);
+    eventBus = new InMemoryEventBus<CoreEventMap>({ logger: createSilentLogger(), assertSerializable: true });
+    container.bind(CORE_IDENTIFIERS.EVENT_BUS).toConstantValue(eventBus);
+    container.bind(CORE_IDENTIFIERS.DB).toConstantValue(database);
     container.bind(ChainRegistry).toConstantValue(chainRegistry);
     container.bind(SigningService).toConstantValue(signingService as unknown as SigningService);
     container.bind(TransactionService).toSelf();
@@ -173,6 +161,11 @@ describe('TransactionService', () => {
   });
 
   it('dispatches hardware signing start/success events when signer is hardware', async () => {
+    const started: CoreEventMap['hardware-sign/started'][] = [];
+    const succeeded: CoreEventMap['hardware-sign/succeeded'][] = [];
+    eventBus.on('hardware-sign/started', (payload) => started.push(payload));
+    eventBus.on('hardware-sign/succeeded', (payload) => succeeded.push(payload));
+
     const { account, address, network, assetRule } = await createTestAccount(database);
 
     const provider = new StubChainProvider({
@@ -213,11 +206,11 @@ describe('TransactionService', () => {
 
     await service.sendNative(input);
 
-    expect(dispatchMock.mock.calls[0][0]).toBe(HARDWARE_SIGN_START_EVENT);
-    expect(dispatchMock.mock.calls[1][0]).toBe(HARDWARE_SIGN_SUCCESS_EVENT);
+    expect(started).toHaveLength(1);
+    expect(succeeded).toHaveLength(1);
 
-    const startPayload = dispatchMock.mock.calls[0][1];
-    const successPayload = dispatchMock.mock.calls[1][1];
+    const startPayload = started[0];
+    const successPayload = succeeded[0];
 
     expect(startPayload).toMatchObject({
       accountId: account.id,
@@ -234,6 +227,11 @@ describe('TransactionService', () => {
   });
 
   it('dispatches hardware signing error event when hardware signing fails', async () => {
+    const started: CoreEventMap['hardware-sign/started'][] = [];
+    const failed: CoreEventMap['hardware-sign/failed'][] = [];
+    eventBus.on('hardware-sign/started', (payload) => started.push(payload));
+    eventBus.on('hardware-sign/failed', (payload) => failed.push(payload));
+
     const { account, address, network, assetRule } = await createTestAccount(database);
 
     const provider = new StubChainProvider({
@@ -278,17 +276,22 @@ describe('TransactionService', () => {
 
     await expect(service.sendNative(input)).rejects.toBeInstanceOf(Error);
 
-    expect(dispatchMock.mock.calls[0][0]).toBe(HARDWARE_SIGN_START_EVENT);
-    expect(dispatchMock.mock.calls[1][0]).toBe(HARDWARE_SIGN_ERROR_EVENT);
+    expect(started).toHaveLength(1);
+    expect(failed).toHaveLength(1);
 
-    const startPayload = dispatchMock.mock.calls[0][1];
-    const errorPayload = dispatchMock.mock.calls[1][1];
+    const startPayload = started[0];
+    const errorPayload = failed[0];
 
     expect(errorPayload.requestId).toBe(startPayload.requestId);
     expect(errorPayload.error).toMatchObject({ code: 'HARDWARE_UNAVAILABLE', reason: 'card_missing' });
   });
 
   it('dispatches hardware signing abort event when caller aborts via signal', async () => {
+    const started: CoreEventMap['hardware-sign/started'][] = [];
+    const aborted: CoreEventMap['hardware-sign/aborted'][] = [];
+    eventBus.on('hardware-sign/started', (payload) => started.push(payload));
+    eventBus.on('hardware-sign/aborted', (payload) => aborted.push(payload));
+
     const { account, address, network, assetRule } = await createTestAccount(database);
 
     const provider = new StubChainProvider({
@@ -337,11 +340,11 @@ describe('TransactionService', () => {
 
     await expect(service.sendNative(input)).rejects.toBeInstanceOf(Error);
 
-    expect(dispatchMock.mock.calls[0][0]).toBe(HARDWARE_SIGN_START_EVENT);
-    expect(dispatchMock.mock.calls[1][0]).toBe(HARDWARE_SIGN_ABORT_EVENT);
+    expect(started).toHaveLength(1);
+    expect(aborted).toHaveLength(1);
 
-    const startPayload = dispatchMock.mock.calls[0][1];
-    const abortPayload = dispatchMock.mock.calls[1][1];
+    const startPayload = started[0];
+    const abortPayload = aborted[0];
     expect(abortPayload.requestId).toBe(startPayload.requestId);
   });
   it('sends ERC20 transaction via sendERC20 and marks token20 in TxExtra', async () => {

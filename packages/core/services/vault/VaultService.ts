@@ -7,12 +7,12 @@ import type { Vault } from '@core/database/models/Vault';
 import VaultSourceType from '@core/database/models/Vault/VaultSourceType';
 import VaultType from '@core/database/models/Vault/VaultType';
 import TableName from '@core/database/TableName';
+import { CORE_IDENTIFIERS } from '@core/di';
 import { NetworkType } from '@core/types';
+import type { CryptoTool } from '@core/types/crypto';
 import { fromPrivate, toChecksum } from '@core/utils/account';
 import { convertHexToBase32 } from '@core/utils/address';
 import { generateMnemonic, getNthAccountOfHDKey } from '@core/utils/hdkey';
-import type { ICryptoTool } from '@core/WalletCore/Plugins/CryptoTool/interface';
-import { SERVICE_IDENTIFIER } from '@core/WalletCore/service';
 import { Q } from '@nozbe/watermelondb';
 import { inject, injectable } from 'inversify';
 import { HardwareWalletService } from '../hardware/HardwareWalletService';
@@ -21,11 +21,11 @@ import type { CreateBSIMVaultInput, CreateHDVaultInput, CreatePrivateKeyVaultInp
 
 @injectable()
 export class VaultService {
-  @inject(SERVICE_IDENTIFIER.DB)
+  @inject(CORE_IDENTIFIERS.DB)
   private readonly database!: Database;
 
-  @inject(SERVICE_IDENTIFIER.CRYPTO_TOOL)
-  private readonly cryptoTool!: ICryptoTool;
+  @inject(CORE_IDENTIFIERS.CRYPTO_TOOL)
+  private readonly cryptoTool!: CryptoTool;
 
   @inject(HardwareWalletService)
   private readonly hardwareWalletService!: HardwareWalletService;

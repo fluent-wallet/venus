@@ -15,23 +15,21 @@ import type { Network } from '@core/database/models/Network';
 import type { Tx } from '@core/database/models/Tx';
 import VaultType from '@core/database/models/Vault/VaultType';
 import TableName from '@core/database/TableName';
+import { CORE_IDENTIFIERS } from '@core/di';
 import { HARDWARE_WALLET_TYPES } from '@core/hardware/bsim/constants';
 import { HardwareWalletRegistry } from '@core/hardware/HardwareWalletRegistry';
 import { AccountService, AssetService, registerServices, type SendTransactionInput, SigningService, TransactionService, VaultService } from '@core/services';
 import { AssetType, TxStatus as ServiceTxStatus } from '@core/types';
+import type { CryptoTool } from '@core/types/crypto';
 import { convertHexToBase32 } from '@core/utils/address';
 import { NetworkType } from '@core/utils/consts';
 import { getNthAccountOfHDKey } from '@core/utils/hdkey';
-import type { ICryptoTool } from '@core/WalletCore/Plugins/CryptoTool/interface';
-import { SERVICE_IDENTIFIER } from '@core/WalletCore/service';
 import { Container } from 'inversify';
 
 const TEST_PASSWORD = 'test-password';
 const FIXED_MNEMONIC = 'test test test test test test test test test test test junk';
 
-class FakeCryptoTool implements ICryptoTool {
-  private passwordGetter: (() => string | null) | null = null;
-
+class FakeCryptoTool implements CryptoTool {
   async encrypt(data: unknown, password?: string): Promise<string> {
     return JSON.stringify({ payload: data, password: password ?? null });
   }
@@ -49,15 +47,7 @@ class FakeCryptoTool implements ICryptoTool {
     return parsed.payload;
   }
 
-  setGetPasswordMethod(getPasswordMethod: () => string | null): void {
-    this.passwordGetter = getPasswordMethod;
-  }
-
-  async getPassword(): Promise<string | null> {
-    return this.passwordGetter?.() ?? null;
-  }
-
-  generateRandomString(): string {
+  generateRandomString(_byteCount?: number): string {
     return 'stub';
   }
 }
@@ -70,12 +60,10 @@ describe('Service integration', () => {
     container = new Container({ defaultScope: 'Singleton' });
     database = mockDatabase();
 
-    container.bind<Database>(SERVICE_IDENTIFIER.DB).toConstantValue(database);
-    container.bind<ICryptoTool>(SERVICE_IDENTIFIER.CRYPTO_TOOL).toConstantValue(new FakeCryptoTool());
+    container.bind<Database>(CORE_IDENTIFIERS.DB).toConstantValue(database);
+    container.bind<CryptoTool>(CORE_IDENTIFIERS.CRYPTO_TOOL).toConstantValue(new FakeCryptoTool());
 
     registerServices(container);
-
-    container.bind(ChainRegistry).toSelf().inSingletonScope();
 
     await seedNetwork(database, { selected: true });
   });

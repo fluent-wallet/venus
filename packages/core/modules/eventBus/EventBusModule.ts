@@ -1,5 +1,6 @@
 import { CORE_IDENTIFIERS } from '@core/di';
 import type { RuntimeContext, RuntimeModule } from '@core/runtime/types';
+import { EVENT_BUS_MODULE_ID } from '../ids';
 import { InMemoryEventBus } from './EventBus';
 import type { CoreEventMap } from './eventMap';
 
@@ -19,7 +20,7 @@ const readEventBusConfig = (context: RuntimeContext): Required<EventBusRuntimeCo
 };
 
 export const EventBusModule: RuntimeModule = {
-  id: 'event-bus',
+  id: EVENT_BUS_MODULE_ID,
   register: (context) => {
     const { container } = context;
 

@@ -6,18 +6,17 @@ import type { AccountGroup } from '@core/database/models/AccountGroup';
 import type { Address } from '@core/database/models/Address';
 import VaultType from '@core/database/models/Vault/VaultType';
 import TableName from '@core/database/TableName';
+import { CORE_IDENTIFIERS } from '@core/di';
+import type { CryptoTool } from '@core/types/crypto';
 import { getNthAccountOfHDKey } from '@core/utils/hdkey';
-import type { ICryptoTool } from '@core/WalletCore/Plugins/CryptoTool/interface';
-import { SERVICE_IDENTIFIER } from '@core/WalletCore/service';
 import { Container } from 'inversify';
+import { HardwareWalletService } from '../hardware/HardwareWalletService';
 import { VaultService } from './VaultService';
 
 const TEST_PASSWORD = 'test-password';
 const FIXED_MNEMONIC = 'test test test test test test test test test test test junk';
 
-class FakeCryptoTool implements ICryptoTool {
-  private passwordGetter: (() => string | null) | null = null;
-
+class FakeCryptoTool implements CryptoTool {
   async encrypt(data: unknown, password?: string): Promise<string> {
     return JSON.stringify({ payload: data, password: password ?? null });
   }
@@ -33,15 +32,7 @@ class FakeCryptoTool implements ICryptoTool {
     return parsed.payload;
   }
 
-  setGetPasswordMethod(getPasswordMethod: () => string | null): void {
-    this.passwordGetter = getPasswordMethod;
-  }
-
-  async getPassword(): Promise<string | null> {
-    return this.passwordGetter?.() ?? null;
-  }
-
-  generateRandomString(): string {
+  generateRandomString(_byteCount?: number): string {
     return 'stub';
   }
 }
@@ -55,8 +46,9 @@ describe('VaultService', () => {
     container = new Container({ defaultScope: 'Transient' });
     database = mockDatabase();
 
-    container.bind<Database>(SERVICE_IDENTIFIER.DB).toConstantValue(database);
-    container.bind<ICryptoTool>(SERVICE_IDENTIFIER.CRYPTO_TOOL).toConstantValue(new FakeCryptoTool());
+    container.bind(CORE_IDENTIFIERS.DB).toConstantValue(database);
+    container.bind<CryptoTool>(CORE_IDENTIFIERS.CRYPTO_TOOL).toConstantValue(new FakeCryptoTool());
+    container.bind(HardwareWalletService).toConstantValue({} as unknown as HardwareWalletService);
     container.bind(VaultService).toSelf();
 
     service = container.get(VaultService);

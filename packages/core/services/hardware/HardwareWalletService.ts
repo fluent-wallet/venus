@@ -4,13 +4,13 @@ import type { Address } from '@core/database/models/Address';
 import type { Network } from '@core/database/models/Network';
 import type { Vault } from '@core/database/models/Vault';
 import TableName from '@core/database/TableName';
+import { CORE_IDENTIFIERS } from '@core/di';
 import { HARDWARE_WALLET_TYPES } from '@core/hardware/bsim/constants';
 import { HardwareWalletRegistry } from '@core/hardware/HardwareWalletRegistry';
 import type { HardwareAccount, HardwareConnectOptions, HardwareOperationOptions, IBSIMWallet, IHardwareWallet } from '@core/types';
 import { NetworkType } from '@core/types';
 import { toChecksum } from '@core/utils/account';
 import { convertHexToBase32 } from '@core/utils/address';
-import { SERVICE_IDENTIFIER } from '@core/WalletCore/service';
 import { Q } from '@nozbe/watermelondb';
 import { inject, injectable } from 'inversify';
 import type { BackupSeedParams, RestoreSeedParams } from 'modules/BSIM/src';
@@ -25,7 +25,7 @@ export class HardwareWalletService {
   @inject(HardwareWalletRegistry)
   private readonly hardwareRegistry!: HardwareWalletRegistry;
 
-  @inject(SERVICE_IDENTIFIER.DB)
+  @inject(CORE_IDENTIFIERS.DB)
   private readonly database!: Database;
 
   async connectAndSync(type: string, options?: HardwareConnectOptions): Promise<ConnectAndSyncResult> {
