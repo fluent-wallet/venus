@@ -151,8 +151,10 @@ export class ModuleManager {
     const failures: StopFailure[] = [];
     const logger = this.context.logger;
 
-    for (let index = this.startedOrder.length - 1; index >= 0; index -= 1) {
-      const moduleId = this.startedOrder[index];
+    const order = this.resolveStartOrder();
+
+    for (let index = order.length - 1; index >= 0; index -= 1) {
+      const moduleId = order[index];
       const record = this.modules.get(moduleId);
       const mod = record?.module;
 

@@ -9,6 +9,7 @@ import type { TxExtra } from '@core/database/models/TxExtra';
 import type { TxPayload } from '@core/database/models/TxPayload';
 import TableName from '@core/database/TableName';
 import { CORE_IDENTIFIERS } from '@core/di';
+import type { CoreEventMap, EventBus } from '@core/modules/eventBus';
 import { SigningService } from '@core/services/signing';
 import {
   AssetType,
@@ -19,7 +20,6 @@ import {
   type UnsignedTransaction,
 } from '@core/types';
 import type { ProcessErrorType } from '@core/utils/eth';
-import type { CoreEventMap, EventBus } from '@core/modules/eventBus';
 import { Q } from '@nozbe/watermelondb';
 import { inject, injectable, optional } from 'inversify';
 import type { ITransaction, RecentlyAddress, SendERC20Input, SendTransactionInput, TransactionFilter } from './types';

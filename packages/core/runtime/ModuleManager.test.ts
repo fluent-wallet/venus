@@ -155,6 +155,32 @@ describe('ModuleManager', () => {
 
     expect(stopCalls).toEqual(['b', 'a']);
   });
+  it('stop calls modules with stop() even if they have no start()', async () => {
+    const stopCalls: string[] = [];
+
+    manager.register([
+      createModule({
+        id: 'a',
+        start: async () => undefined,
+        stop: async () => {
+          stopCalls.push('a');
+        },
+      }),
+      createModule({
+        id: 'b',
+        dependencies: ['a'],
+        // no start
+        stop: async () => {
+          stopCalls.push('b');
+        },
+      }),
+    ]);
+
+    await manager.start();
+    await manager.stop();
+
+    expect(stopCalls).toEqual(['b', 'a']);
+  });
 
   it('supports start → stop → start and does not re-run register', async () => {
     const registerMock = jest.fn((_ctx: RuntimeContext) => undefined);
