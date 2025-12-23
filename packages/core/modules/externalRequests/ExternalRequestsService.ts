@@ -81,7 +81,7 @@ export class ExternalRequestsService {
       this.tryActivate();
     }, this.sweepIntervalMs);
   }
-  
+
   public stop(): void {
     // Must release all timers and pending work to avoid open handles in tests/runtime.
     if (this.sweepTimerId) {
@@ -255,7 +255,10 @@ export class ExternalRequestsService {
       this.activeByKey.set(key, record.id);
       this.activeIds.add(record.id);
 
-      this.eventBus.emit('external-requests/requested', { requestId: record.id, request: record.request });
+      this.eventBus.emit('external-requests/requested', {
+        requestId: record.id,
+        request: record.request,
+      });
       return true;
     }
 

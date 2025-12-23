@@ -1,3 +1,4 @@
+import { HttpJsonRpcClient } from '@core/rpc';
 import type {
   Address,
   ChainCallParams,
@@ -7,6 +8,7 @@ import type {
   Hash,
   Hex,
   IChainProvider,
+  IChainRpc,
   IHardwareSigner,
   ISigner,
   ISoftwareSigner,
@@ -38,6 +40,7 @@ export class EthereumChainProvider implements IChainProvider {
   readonly chainId: string;
   readonly networkType = NetworkType.Ethereum;
   private readonly provider: EthersProvider;
+  readonly rpc: IChainRpc;
 
   constructor({ chainId, endpoint }: EthereumChainProviderOptions) {
     if (!chainId) {
@@ -53,6 +56,7 @@ export class EthereumChainProvider implements IChainProvider {
     }
     this.chainId = chainId;
     this.provider = new JsonRpcProvider(endpoint, numericChainId);
+    this.rpc = new HttpJsonRpcClient(endpoint);
   }
 
   deriveAddress(publicKey: string): string {
