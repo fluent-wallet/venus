@@ -1,7 +1,7 @@
 import { createMockEthersProvider, DEFAULT_HEX_ADDRESS, DEFAULT_PRIVATE_KEY } from '@core/__tests__/mocks';
 import { SoftwareSigner } from '@core/signers';
 import { AssetType, type EvmUnsignedTransaction, type Hex, NetworkType } from '@core/types';
-import { JsonRpcProvider, Transaction, Wallet } from 'ethers';
+import { JsonRpcProvider, Transaction, toUtf8Bytes, Wallet } from 'ethers';
 import { EthereumChainProvider, type EthereumChainProviderOptions } from './EthereumChainProvider';
 
 jest.mock('ethers', () => {
@@ -207,7 +207,8 @@ describe('EthereumChainProvider', () => {
     const signature = await provider.signMessage('hello', signer);
 
     expect(MockedWallet).toHaveBeenCalledWith(SAMPLE_PRIVATE_KEY, mockProvider);
-    expect(walletStub.signMessage).toHaveBeenCalledWith('hello');
+    expect(walletStub.signMessage).toHaveBeenCalledTimes(1);
+    expect(walletStub.signMessage.mock.calls[0]?.[0]).toEqual(toUtf8Bytes('hello'));
     expect(signature).toBe('0xsigned');
   });
 
@@ -227,7 +228,16 @@ describe('EthereumChainProvider', () => {
     const signature = await provider.signMessage('hello', hardwareSigner);
 
     expect(signature).toBe('0xtyped');
-    expect(hardwareSigner.signWithHardware).toHaveBeenCalled();
+    expect(hardwareSigner.signWithHardware).toHaveBeenCalledTimes(1);
+
+    const ctx = (hardwareSigner.signWithHardware as jest.Mock).mock.calls[0]?.[0];
+    expect(ctx.payload).toEqual(
+      expect.objectContaining({
+        payloadKind: 'message',
+        messageKind: 'personal',
+        message: '0x68656c6c6f',
+      }),
+    );
   });
 
   it('matches real BSIM signature sample', async () => {

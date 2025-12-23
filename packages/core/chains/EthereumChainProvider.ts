@@ -19,11 +19,14 @@ import { NetworkType } from '@core/types';
 import {
   computeAddress,
   getAddress,
+  getBytes,
+  hexlify,
   isAddress,
   JsonRpcProvider,
   keccak256,
   Signature,
   Transaction,
+  toUtf8Bytes,
   verifyMessage as verifyEthersMessage,
   Wallet,
 } from 'ethers';
@@ -137,10 +140,13 @@ export class EthereumChainProvider implements IChainProvider {
   }
 
   async signMessage(message: string, signer: ISigner): Promise<string> {
+    const isHexBytes = message.length % 2 === 0 && /^0x[0-9a-fA-F]*$/.test(message);
+    const messageBytes = isHexBytes ? getBytes(message) : toUtf8Bytes(message);
+
     if (signer.type === 'software') {
       const privateKey = signer.getPrivateKey();
       const wallet = new Wallet(privateKey, this.provider);
-      return wallet.signMessage(message);
+      return wallet.signMessage(messageBytes);
     } else {
       const result = await signer.signWithHardware({
         derivationPath: signer.getDerivationPath(),
@@ -149,7 +155,7 @@ export class EthereumChainProvider implements IChainProvider {
           payloadKind: 'message',
           messageKind: 'personal',
           chainType: this.networkType,
-          message,
+          message: hexlify(messageBytes),
         },
         signal: undefined,
       });
@@ -168,7 +174,10 @@ export class EthereumChainProvider implements IChainProvider {
 
   verifyMessage(message: string, signature: string, address: Address): boolean {
     try {
-      const recovered = verifyEthersMessage(message, signature);
+      const isHexBytes = message.length % 2 === 0 && /^0x[0-9a-fA-F]*$/.test(message);
+      const messageBytes = isHexBytes ? getBytes(message) : toUtf8Bytes(message);
+
+      const recovered = verifyEthersMessage(messageBytes, signature);
       return getAddress(recovered) === getAddress(address);
     } catch {
       return false;

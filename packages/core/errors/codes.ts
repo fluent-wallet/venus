@@ -24,6 +24,12 @@ export const CHAIN_RPC_INVALID_RESPONSE = 'CHAIN_RPC_INVALID_RESPONSE' as const;
 export const CHAIN_RPC_ERROR_RESPONSE = 'CHAIN_RPC_ERROR_RESPONSE' as const;
 
 export const CHAIN_PROVIDER_NOT_FOUND = 'CHAIN_PROVIDER_NOT_FOUND' as const;
+
+export const TX_INVALID_PARAMS = 'TX_INVALID_PARAMS' as const;
+export const TX_SIGN_UNSUPPORTED_NETWORK = 'TX_SIGN_UNSUPPORTED_NETWORK' as const;
+export const TX_SIGN_ADDRESS_MISMATCH = 'TX_SIGN_ADDRESS_MISMATCH' as const;
+export const TX_SIGN_MESSAGE_FAILED = 'TX_SIGN_MESSAGE_FAILED' as const;
+export const TX_SIGN_TYPED_DATA_FAILED = 'TX_SIGN_TYPED_DATA_FAILED' as const;
 export type ModuleManagerErrorCode =
   | typeof MM_DUPLICATE_MODULE_ID
   | typeof MM_MISSING_DEPENDENCY
@@ -43,3 +49,10 @@ export type ChainRpcErrorCode =
   | typeof CHAIN_RPC_ABORTED
   | typeof CHAIN_RPC_INVALID_RESPONSE
   | typeof CHAIN_RPC_ERROR_RESPONSE;
+
+export type TransactionErrorCode =
+  | typeof TX_INVALID_PARAMS
+  | typeof TX_SIGN_UNSUPPORTED_NETWORK
+  | typeof TX_SIGN_ADDRESS_MISMATCH
+  | typeof TX_SIGN_MESSAGE_FAILED
+  | typeof TX_SIGN_TYPED_DATA_FAILED;

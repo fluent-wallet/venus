@@ -11,7 +11,7 @@ import type {
 } from '@core/types';
 import type { Address, ChainType, Hash } from '@core/types/chain';
 import { NetworkType } from '@core/utils/consts';
-import { hashMessage, keccak256, Signature, Transaction, TypedDataEncoder } from 'ethers';
+import { getBytes, hashMessage, keccak256, Signature, Transaction, TypedDataEncoder } from 'ethers';
 import type { Hex } from 'ox/Hex';
 import { Platform } from 'react-native';
 import {
@@ -197,8 +197,14 @@ export class BSIMHardwareWallet implements IBSIMWallet {
   }
 
   private async signPersonalMessage(message: string, account: HardwareAccount, signal?: AbortSignal): Promise<HardwareSignResult> {
-    const digest = hashMessage(message) as Hex;
+    const isHexBytes = message.length % 2 === 0 && /^0x[0-9a-fA-F]*$/.test(message);
+    if (!isHexBytes) {
+      throw new BSIMHardwareError('INVALID_HEX_FORMAT', 'Personal sign message must be a 0x-prefixed hex string.');
+    }
+
+    const digest = hashMessage(getBytes(message)) as Hex;
     const signature = await this.requestSignature(digest, account, signal);
+
     return {
       resultType: 'signature',
       chainType: NetworkType.Ethereum,

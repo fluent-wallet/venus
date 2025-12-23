@@ -1,7 +1,7 @@
 import 'reflect-metadata';
 import { ChainRegistry } from '@core/chains';
-import { CHAIN_PROVIDER_NOT_FOUND, CoreError } from '@core/errors';
-import { NetworkType, type ChainRpcRequestOptions, type IChainRpc } from '@core/types';
+import { CHAIN_PROVIDER_NOT_FOUND, type CoreError } from '@core/errors';
+import { type ChainRpcRequestOptions, type IChainRpc, NetworkType } from '@core/types';
 import { Container } from 'inversify';
 import { ChainStatusService } from './ChainStatusService';
 

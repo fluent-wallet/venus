@@ -1,8 +1,8 @@
 import ArrowDownward from '@assets/icons/arrow-downward.svg';
 import ArrowUpward from '@assets/icons/arrow-upward.svg';
 import Buy from '@assets/icons/buy.svg';
-import More from '@assets/icons/more.svg';
 import Explore from '@assets/icons/explorer.svg';
+import More from '@assets/icons/more.svg';
 import Button from '@components/Button';
 import Text from '@components/Text';
 import { isPendingTxsFull, useIsTokensEmpty } from '@core/WalletCore/Plugins/ReactInject';
