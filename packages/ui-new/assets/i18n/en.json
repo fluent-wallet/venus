@@ -177,10 +177,11 @@
     "more" : "More",
     "more.copyAddress" : "Copy address",
     "more.signatureRecords" : "Signature Records",
-    "more.viewInExplorer" : "View in explorer",
+    "more.viewOnExplorer" : "View on Explorer",
     "noNetwork" : "Network Disconnected",
     "receive" : "Receive",
-    "send" : "Send"
+    "send" : "Send",
+    "explore": "Explore"
   },
   "initWallet" : {
     "biometrics" : {
