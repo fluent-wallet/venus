@@ -17,6 +17,13 @@ export const EXTREQ_REQUEST_NOT_FOUND = 'EXTREQ_REQUEST_NOT_FOUND' as const;
 export const EXTREQ_REQUEST_TIMEOUT = 'EXTREQ_REQUEST_TIMEOUT' as const;
 export const EXTREQ_REQUEST_CANCELED = 'EXTREQ_REQUEST_CANCELED' as const;
 
+export const CHAIN_RPC_HTTP_ERROR = 'CHAIN_RPC_HTTP_ERROR' as const;
+export const CHAIN_RPC_TIMEOUT = 'CHAIN_RPC_TIMEOUT' as const;
+export const CHAIN_RPC_ABORTED = 'CHAIN_RPC_ABORTED' as const;
+export const CHAIN_RPC_INVALID_RESPONSE = 'CHAIN_RPC_INVALID_RESPONSE' as const;
+export const CHAIN_RPC_ERROR_RESPONSE = 'CHAIN_RPC_ERROR_RESPONSE' as const;
+
+export const CHAIN_PROVIDER_NOT_FOUND = 'CHAIN_PROVIDER_NOT_FOUND' as const;
 export type ModuleManagerErrorCode =
   | typeof MM_DUPLICATE_MODULE_ID
   | typeof MM_MISSING_DEPENDENCY
@@ -27,3 +34,12 @@ export type ModuleManagerErrorCode =
   | typeof MM_STOP_FAILED;
 
 export type EventErrorCode = typeof EVENT_PAYLOAD_NOT_SERIALIZABLE;
+
+export type ChainErrorCode = typeof CHAIN_PROVIDER_NOT_FOUND;
+
+export type ChainRpcErrorCode =
+  | typeof CHAIN_RPC_HTTP_ERROR
+  | typeof CHAIN_RPC_TIMEOUT
+  | typeof CHAIN_RPC_ABORTED
+  | typeof CHAIN_RPC_INVALID_RESPONSE
+  | typeof CHAIN_RPC_ERROR_RESPONSE;
