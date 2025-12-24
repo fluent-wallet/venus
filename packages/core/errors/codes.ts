@@ -30,6 +30,13 @@ export const TX_SIGN_UNSUPPORTED_NETWORK = 'TX_SIGN_UNSUPPORTED_NETWORK' as cons
 export const TX_SIGN_ADDRESS_MISMATCH = 'TX_SIGN_ADDRESS_MISMATCH' as const;
 export const TX_SIGN_MESSAGE_FAILED = 'TX_SIGN_MESSAGE_FAILED' as const;
 export const TX_SIGN_TYPED_DATA_FAILED = 'TX_SIGN_TYPED_DATA_FAILED' as const;
+
+export const TX_BUILD_FAILED = 'TX_BUILD_FAILED' as const;
+export const TX_ESTIMATE_FAILED = 'TX_ESTIMATE_FAILED' as const;
+export const TX_SIGN_TRANSACTION_FAILED = 'TX_SIGN_TRANSACTION_FAILED' as const;
+export const TX_BROADCAST_FAILED = 'TX_BROADCAST_FAILED' as const;
+export const TX_SAVE_FAILED = 'TX_SAVE_FAILED' as const;
+
 export type ModuleManagerErrorCode =
   | typeof MM_DUPLICATE_MODULE_ID
   | typeof MM_MISSING_DEPENDENCY
@@ -55,4 +62,9 @@ export type TransactionErrorCode =
   | typeof TX_SIGN_UNSUPPORTED_NETWORK
   | typeof TX_SIGN_ADDRESS_MISMATCH
   | typeof TX_SIGN_MESSAGE_FAILED
-  | typeof TX_SIGN_TYPED_DATA_FAILED;
+  | typeof TX_SIGN_TYPED_DATA_FAILED
+  | typeof TX_BUILD_FAILED
+  | typeof TX_ESTIMATE_FAILED
+  | typeof TX_SIGN_TRANSACTION_FAILED
+  | typeof TX_BROADCAST_FAILED
+  | typeof TX_SAVE_FAILED;

@@ -1,6 +1,6 @@
 import 'reflect-metadata';
 
-import { createTestAccount } from '@core/__tests__/fixtures';
+import { createTestAccount, seedNetwork } from '@core/__tests__/fixtures';
 import { createSilentLogger, DEFAULT_PRIVATE_KEY, mockDatabase } from '@core/__tests__/mocks';
 import { StubChainProvider } from '@core/__tests__/mocks/chainProviders';
 import { ChainRegistry } from '@core/chains';
@@ -98,6 +98,8 @@ describe('TransactionService', () => {
   });
 
   it('sends native transaction and creates Tx records', async () => {
+    const createdEvents: CoreEventMap['tx/created'][] = [];
+    eventBus.on('tx/created', (payload) => createdEvents.push(payload));
     const { account, address, network, assetRule } = await createTestAccount(database);
 
     const provider = new StubChainProvider({
@@ -158,6 +160,12 @@ describe('TransactionService', () => {
     expect(asset?.type).toBe(DbAssetType.Native);
 
     expect(signingService.getSigner).toHaveBeenCalledWith(account.id, address.id);
+
+    expect(createdEvents).toHaveLength(1);
+    expect(createdEvents[0]).toEqual({
+      key: { addressId: address.id, networkId: network.id },
+      txId: result.id,
+    });
   });
 
   it('dispatches hardware signing start/success events when signer is hardware', async () => {
@@ -570,5 +578,49 @@ describe('TransactionService', () => {
     expect(outbound!.isLocalAccount).toBe(false);
 
     expect(peers[0].lastUsedAt).toBeGreaterThanOrEqual(peers[1].lastUsedAt);
+  });
+
+  it('sends dapp transaction and marks source as dapp', async () => {
+    const createdEvents: CoreEventMap['tx/created'][] = [];
+    eventBus.on('tx/created', (payload) => createdEvents.push(payload));
+
+    const { network: evmNetwork, assetRule } = await seedNetwork(database, { definitionKey: 'eSpace Testnet', selected: true });
+    const { account, address } = await createTestAccount(database, { network: evmNetwork, assetRule });
+
+    const provider = new StubChainProvider({
+      chainId: evmNetwork.chainId,
+      networkType: evmNetwork.networkType,
+    });
+    chainRegistry.register(provider);
+
+    const request = {
+      from: address.hex,
+      to: '0x0000000000000000000000000000000000000001',
+      data: '0x',
+      value: '0x2',
+      gas: '0x5208',
+      gasPrice: '0x1',
+      nonce: '0x1',
+      type: '0x0',
+    } as any;
+
+    const result = await service.sendDappTransaction({ addressId: address.id, request });
+
+    const txs = await database.get<Tx>(TableName.Tx).query().fetch();
+    expect(txs).toHaveLength(1);
+    expect(txs[0].source).toBe(TxSource.DAPP);
+
+    const payload = await txs[0].txPayload.fetch();
+    expect(payload.from).toBe(address.hex);
+    expect(payload.to).toBe(request.to);
+    expect(payload.value).toBe(request.value);
+    expect(payload.gasLimit).toBe(request.gas);
+    expect(payload.nonce).toBe(1);
+
+    expect(createdEvents).toHaveLength(1);
+    expect(createdEvents[0]).toEqual({
+      key: { addressId: address.id, networkId: evmNetwork.id },
+      txId: result.id,
+    });
   });
 });

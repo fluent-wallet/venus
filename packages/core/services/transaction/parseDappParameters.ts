@@ -1,7 +1,7 @@
 import { CoreError, TX_INVALID_PARAMS } from '@core/errors';
 import type { Address, Hex } from '@core/types';
 import { validate as isEvmAddress } from 'ox/Address';
-import type { EvmSignableMessage, EvmSignMessageParameters, EvmSignTypedDataParameters, EvmTypedDataV4 } from './dappTypes';
+import type { EvmRpcTransactionRequest, EvmSignableMessage, EvmSignMessageParameters, EvmSignTypedDataParameters, EvmTypedDataV4 } from './dappTypes';
 
 const isPlainObject = (value: unknown): value is Record<string, unknown> => {
   if (typeof value !== 'object' || value === null) return false;
@@ -122,4 +122,96 @@ export const parseSignTypedDataParameters = (params: unknown): EvmSignTypedDataP
   const list = parseRpcParamsArray(params);
   const { from, payload } = pickAddressAndPayload(list);
   return { from, typedData: parseTypedDataV4(payload) };
+};
+
+const isHexQuantity = (value: string): value is Hex => /^0x[0-9a-fA-F]+$/.test(value);
+
+const requireHexQuantity = (value: unknown, field: string): Hex => {
+  if (typeof value === 'string' && isHexQuantity(value)) return value;
+  throw new CoreError({
+    code: TX_INVALID_PARAMS,
+    message: 'Invalid eth_sendTransaction params.',
+    context: { reason: `${field} must be a hex quantity string (0x...).` },
+  });
+};
+
+const optionalHexQuantity = (value: unknown, field: string): Hex | undefined => {
+  if (value === undefined || value === null) return undefined;
+  return requireHexQuantity(value, field);
+};
+
+const optionalHexBytes = (value: unknown, field: string): Hex | undefined => {
+  if (value === undefined || value === null) return undefined;
+  if (typeof value === 'string' && isHexBytes(value)) return value;
+  throw new CoreError({
+    code: TX_INVALID_PARAMS,
+    message: 'Invalid eth_sendTransaction params.',
+    context: { reason: `${field} must be a hex data string (0x...).` },
+  });
+};
+
+const assertHexQuantityFitsNumber = (value: Hex, field: string): void => {
+  const asBigInt = BigInt(value);
+  if (asBigInt > BigInt(Number.MAX_SAFE_INTEGER)) {
+    throw new CoreError({
+      code: TX_INVALID_PARAMS,
+      message: 'Invalid eth_sendTransaction params.',
+      context: { reason: `${field} exceeds Number.MAX_SAFE_INTEGER.` },
+    });
+  }
+};
+
+const optionalEvmAddress = (value: unknown, field: string): Address | undefined => {
+  if (value === undefined || value === null) return undefined;
+  if (typeof value === 'string' && isEvmAddress(value, { strict: false })) return value;
+  throw new CoreError({
+    code: TX_INVALID_PARAMS,
+    message: 'Invalid eth_sendTransaction params.',
+    context: { reason: `${field} must be a valid EVM address string.` },
+  });
+};
+
+export const parseEvmRpcTransactionRequest = (params: unknown): EvmRpcTransactionRequest => {
+  const list = parseRpcParamsArray(params);
+  const first = list[0];
+
+  if (!isPlainObject(first)) {
+    throw new CoreError({
+      code: TX_INVALID_PARAMS,
+      message: 'Invalid eth_sendTransaction params.',
+      context: { reason: 'Expected params[0] to be a transaction object.' },
+    });
+  }
+
+  const tx = first as Record<string, unknown>;
+
+  const from = optionalEvmAddress(tx.from, 'from');
+  if (!from) {
+    throw new CoreError({
+      code: TX_INVALID_PARAMS,
+      message: 'Invalid eth_sendTransaction params.',
+      context: { reason: 'from is required.' },
+    });
+  }
+
+  const nonce = optionalHexQuantity(tx.nonce, 'nonce');
+  if (nonce) assertHexQuantityFitsNumber(nonce, 'nonce');
+
+  const type = optionalHexQuantity(tx.type, 'type');
+  if (type) assertHexQuantityFitsNumber(type, 'type');
+
+  return {
+    from,
+    to: optionalEvmAddress(tx.to, 'to'),
+    data: optionalHexBytes(tx.data, 'data'),
+
+    value: optionalHexQuantity(tx.value, 'value'),
+    gas: optionalHexQuantity(tx.gas, 'gas'),
+    gasPrice: optionalHexQuantity(tx.gasPrice, 'gasPrice'),
+    maxFeePerGas: optionalHexQuantity(tx.maxFeePerGas, 'maxFeePerGas'),
+    maxPriorityFeePerGas: optionalHexQuantity(tx.maxPriorityFeePerGas, 'maxPriorityFeePerGas'),
+
+    nonce,
+    type,
+  };
 };

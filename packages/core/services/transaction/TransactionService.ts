@@ -9,12 +9,27 @@ import type { TxExtra } from '@core/database/models/TxExtra';
 import type { TxPayload } from '@core/database/models/TxPayload';
 import TableName from '@core/database/TableName';
 import { CORE_IDENTIFIERS } from '@core/di';
+import {
+  CHAIN_PROVIDER_NOT_FOUND,
+  CoreError,
+  TX_BROADCAST_FAILED,
+  TX_BUILD_FAILED,
+  TX_ESTIMATE_FAILED,
+  TX_INVALID_PARAMS,
+  TX_SAVE_FAILED,
+  TX_SIGN_ADDRESS_MISMATCH,
+  TX_SIGN_TRANSACTION_FAILED,
+  TX_SIGN_UNSUPPORTED_NETWORK,
+} from '@core/errors';
 import type { CoreEventMap, EventBus } from '@core/modules/eventBus';
 import { SigningService } from '@core/services/signing';
 import {
   AssetType,
+  type EvmUnsignedTransaction,
+  type FeeEstimate,
   type HardwareOperationError,
   type IChainProvider,
+  NetworkType,
   TxStatus as ServiceTxStatus,
   type TransactionParams,
   type UnsignedTransaction,
@@ -22,6 +37,7 @@ import {
 import type { ProcessErrorType } from '@core/utils/eth';
 import { Q } from '@nozbe/watermelondb';
 import { inject, injectable, optional } from 'inversify';
+import type { EvmRpcTransactionRequest } from './dappTypes';
 import type { ITransaction, RecentlyAddress, SendERC20Input, SendTransactionInput, TransactionFilter } from './types';
 
 @injectable()
@@ -141,7 +157,7 @@ export class TransactionService {
 
       throw error;
     }
-
+    this.eventBus?.emit('tx/created', { key: { addressId: address.id, networkId: network.id }, txId: tx.id });
     return this.toInterface(tx);
   }
 
@@ -156,6 +172,218 @@ export class TransactionService {
       contractAddress: input.contractAddress,
       signal: input.signal,
     });
+  }
+  async estimateDappTransaction(input: { addressId: string; request: EvmRpcTransactionRequest; signal?: AbortSignal }): Promise<FeeEstimate> {
+    const address = await this.findAddress(input.addressId);
+    const network = await this.getNetwork(address);
+
+    if (network.networkType !== NetworkType.Ethereum) {
+      throw new CoreError({
+        code: TX_SIGN_UNSUPPORTED_NETWORK,
+        message: 'TransactionService.estimateDappTransaction is only supported for Ethereum networks.',
+        context: { networkType: network.networkType, chainId: network.chainId },
+      });
+    }
+
+    const currentAddressValue = (await address.getValue()).toLowerCase();
+    if (input.request.from.toLowerCase() !== currentAddressValue) {
+      throw new CoreError({
+        code: TX_SIGN_ADDRESS_MISMATCH,
+        message: 'TransactionService.estimateDappTransaction address mismatch.',
+        context: { expectedFrom: currentAddressValue, from: input.request.from },
+      });
+    }
+
+    const chainProvider = this.getChainProvider(network);
+    const unsignedTx = await this.buildEvmUnsignedTxFromRpc({ chainProvider, network, request: input.request });
+
+    try {
+      return await chainProvider.estimateFee(unsignedTx);
+    } catch (error) {
+      if (error instanceof CoreError) throw error;
+      throw new CoreError({
+        code: TX_ESTIMATE_FAILED,
+        message: 'Failed to estimate dApp transaction fee.',
+        cause: error,
+        context: { chainId: network.chainId },
+      });
+    }
+  }
+
+  async sendDappTransaction(input: { addressId: string; request: EvmRpcTransactionRequest; signal?: AbortSignal }): Promise<ITransaction> {
+    const address = await this.findAddress(input.addressId);
+    const network = await this.getNetwork(address);
+
+    if (network.networkType !== NetworkType.Ethereum) {
+      throw new CoreError({
+        code: TX_SIGN_UNSUPPORTED_NETWORK,
+        message: 'TransactionService.sendDappTransaction is only supported for Ethereum networks.',
+        context: { networkType: network.networkType, chainId: network.chainId },
+      });
+    }
+
+    const currentAddressValue = (await address.getValue()).toLowerCase();
+    if (input.request.from.toLowerCase() !== currentAddressValue) {
+      throw new CoreError({
+        code: TX_SIGN_ADDRESS_MISMATCH,
+        message: 'TransactionService.sendDappTransaction address mismatch.',
+        context: { expectedFrom: currentAddressValue, from: input.request.from },
+      });
+    }
+
+    const chainProvider = this.getChainProvider(network);
+
+    let unsignedTx: EvmUnsignedTransaction;
+    try {
+      unsignedTx = await this.buildEvmUnsignedTxFromRpc({ chainProvider, network, request: input.request });
+    } catch (error) {
+      if (error instanceof CoreError) throw error;
+      throw new CoreError({
+        code: TX_BUILD_FAILED,
+        message: 'Failed to build dApp transaction.',
+        cause: error,
+        context: { chainId: network.chainId },
+      });
+    }
+
+    let estimate: FeeEstimate | undefined;
+    try {
+      estimate = await chainProvider.estimateFee(unsignedTx);
+      if (!unsignedTx.payload.gasLimit) {
+        unsignedTx.payload.gasLimit = estimate.gasLimit;
+      }
+      if (!unsignedTx.payload.gasPrice && estimate.chainType === NetworkType.Ethereum && 'gasPrice' in estimate && estimate.gasPrice) {
+        unsignedTx.payload.gasPrice = estimate.gasPrice;
+      }
+      if (estimate.chainType === NetworkType.Ethereum && 'maxFeePerGas' in estimate && estimate.maxFeePerGas && !unsignedTx.payload.maxFeePerGas) {
+        unsignedTx.payload.maxFeePerGas = estimate.maxFeePerGas;
+      }
+      if (
+        estimate.chainType === NetworkType.Ethereum &&
+        'maxPriorityFeePerGas' in estimate &&
+        estimate.maxPriorityFeePerGas &&
+        !unsignedTx.payload.maxPriorityFeePerGas
+      ) {
+        unsignedTx.payload.maxPriorityFeePerGas = estimate.maxPriorityFeePerGas;
+      }
+      if (unsignedTx.payload.type == null) {
+        if (unsignedTx.payload.maxFeePerGas || unsignedTx.payload.maxPriorityFeePerGas) unsignedTx.payload.type = 2;
+        else if (unsignedTx.payload.gasPrice) unsignedTx.payload.type = 0;
+      }
+    } catch (error) {
+      if (error instanceof CoreError) throw error;
+      throw new CoreError({
+        code: TX_ESTIMATE_FAILED,
+        message: 'Failed to estimate dApp transaction fee.',
+        cause: error,
+        context: { chainId: network.chainId },
+      });
+    }
+
+    const account = await address.account.fetch();
+    const signer = await this.signingService.getSigner(account.id, address.id);
+
+    const requestId = this.createRequestId();
+    let signedTx: Awaited<ReturnType<IChainProvider['signTransaction']>>;
+
+    try {
+      if (signer.type === 'hardware') {
+        this.eventBus?.emit('hardware-sign/started', {
+          requestId,
+          accountId: account.id,
+          addressId: address.id,
+          networkId: network.id,
+        });
+
+        signedTx = await chainProvider.signTransaction(unsignedTx, signer, { signal: input.signal });
+
+        this.eventBus?.emit('hardware-sign/succeeded', {
+          requestId,
+          accountId: account.id,
+          addressId: address.id,
+          networkId: network.id,
+          txHash: signedTx.hash,
+          rawTransaction: signedTx.rawTransaction,
+        });
+      } else {
+        signedTx = await chainProvider.signTransaction(unsignedTx, signer, { signal: input.signal });
+      }
+    } catch (error) {
+      if (signer.type === 'hardware') {
+        if (input.signal?.aborted) {
+          this.eventBus?.emit('hardware-sign/aborted', {
+            requestId,
+            accountId: account.id,
+            addressId: address.id,
+            networkId: network.id,
+          });
+        } else {
+          this.eventBus?.emit('hardware-sign/failed', {
+            requestId,
+            accountId: account.id,
+            addressId: address.id,
+            networkId: network.id,
+            error: this.toHardwareOperationError(error),
+          });
+        }
+      }
+
+      if (error instanceof CoreError) throw error;
+      throw new CoreError({
+        code: TX_SIGN_TRANSACTION_FAILED,
+        message: 'Failed to sign dApp transaction.',
+        cause: error,
+        context: { signerType: signer.type, chainId: network.chainId },
+      });
+    }
+
+    const sendAt = new Date();
+
+    try {
+      const txHash = await chainProvider.broadcastTransaction(signedTx);
+
+      const tx = await this.saveDappTx({
+        address,
+        unsignedTx,
+        txHash,
+        txRaw: signedTx.rawTransaction,
+        sendAt,
+      });
+
+      this.eventBus?.emit('tx/created', { key: { addressId: address.id, networkId: network.id }, txId: tx.id });
+      return this.toInterface(tx);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+
+      try {
+        await this.saveDappTx({
+          address,
+          unsignedTx,
+          txHash: '',
+          txRaw: signedTx.rawTransaction,
+          sendAt,
+          isFailed: true,
+          err: message,
+          errorType: null,
+        });
+      } catch (saveError) {
+        if (saveError instanceof CoreError) throw saveError;
+        throw new CoreError({
+          code: TX_SAVE_FAILED,
+          message: 'Failed to save dApp transaction after broadcast failure.',
+          cause: saveError,
+          context: { chainId: network.chainId },
+        });
+      }
+
+      if (error instanceof CoreError) throw error;
+      throw new CoreError({
+        code: TX_BROADCAST_FAILED,
+        message: 'Failed to broadcast dApp transaction.',
+        cause: error,
+        context: { chainId: network.chainId },
+      });
+    }
   }
 
   private async findAddress(addressId: string): Promise<Address> {
@@ -177,11 +405,14 @@ export class TransactionService {
   private getChainProvider(network: Network): IChainProvider {
     const provider = this.chainRegistry.get(network.chainId, network.networkType);
     if (!provider) {
-      throw new Error(`[TransactionService] Chain ${network.networkType} (${network.chainId}) is not registered in ChainRegistry.`);
+      throw new CoreError({
+        code: CHAIN_PROVIDER_NOT_FOUND,
+        message: 'Chain provider is not registered in ChainRegistry.',
+        context: { chainId: network.chainId, networkType: network.networkType },
+      });
     }
     return provider;
   }
-
   private buildTransactionParams(input: SendTransactionInput, from: string, network: Network): TransactionParams {
     // TODO add more fields
     return {
@@ -200,6 +431,46 @@ export class TransactionService {
       maxPriorityFeePerGas: input.maxPriorityFeePerGas,
       storageLimit: input.storageLimit,
       nonce: input.nonce,
+    };
+  }
+  private parseHexQuantityToNumber(value?: string): number | undefined {
+    if (!value) return undefined;
+    const asBigInt = BigInt(value);
+    if (asBigInt > BigInt(Number.MAX_SAFE_INTEGER)) {
+      throw new CoreError({
+        code: TX_INVALID_PARAMS,
+        message: 'Invalid JSON-RPC params.',
+        context: { reason: 'nonce/type exceeds Number.MAX_SAFE_INTEGER.' },
+      });
+    }
+    return Number(asBigInt);
+  }
+
+  private async buildEvmUnsignedTxFromRpc(params: {
+    chainProvider: IChainProvider;
+    network: Network;
+    request: EvmRpcTransactionRequest;
+  }): Promise<EvmUnsignedTransaction> {
+    const { chainProvider, network, request } = params;
+
+    const nonce = request.nonce ? this.parseHexQuantityToNumber(request.nonce) : await chainProvider.getNonce(request.from);
+    const type = request.type ? this.parseHexQuantityToNumber(request.type) : undefined;
+
+    return {
+      chainType: NetworkType.Ethereum,
+      payload: {
+        from: request.from,
+        to: request.to,
+        chainId: network.chainId,
+        data: request.data ?? '0x',
+        value: request.value ?? '0x0',
+        gasLimit: request.gas,
+        gasPrice: request.gasPrice,
+        maxFeePerGas: request.maxFeePerGas,
+        maxPriorityFeePerGas: request.maxPriorityFeePerGas,
+        nonce,
+        type,
+      },
     };
   }
 
@@ -297,6 +568,76 @@ export class TransactionService {
       if (asset) {
         record.asset.set(asset);
       }
+    });
+
+    await this.database.write(async () => {
+      await this.database.batch(txPayload, txExtra, tx);
+    });
+
+    return tx;
+  }
+
+  private async saveDappTx(params: {
+    address: Address;
+    unsignedTx: EvmUnsignedTransaction;
+    txHash: string;
+    txRaw: string;
+    sendAt: Date;
+    isFailed?: boolean;
+    err?: string;
+    errorType?: ProcessErrorType | null;
+  }): Promise<Tx> {
+    const { address, unsignedTx, txHash, txRaw, sendAt, isFailed = false, err, errorType } = params;
+
+    const payload: any = unsignedTx.payload ?? {};
+
+    const txPayload = this.database.get<TxPayload>(TableName.TxPayload).prepareCreate((record) => {
+      record.type = payload.type != null ? String(payload.type) : null;
+      record.accessList = null;
+      record.maxFeePerGas = payload.maxFeePerGas ?? null;
+      record.maxPriorityFeePerGas = payload.maxPriorityFeePerGas ?? null;
+      record.from = payload.from ?? null;
+      record.to = payload.to ?? null;
+      record.gasPrice = payload.gasPrice ?? null;
+      record.gasLimit = payload.gasLimit ?? (payload.gas as string | undefined) ?? null;
+      record.storageLimit = payload.storageLimit ?? null;
+      record.data = payload.data ?? null;
+      record.value = payload.value ?? null;
+      record.nonce = typeof payload.nonce === 'number' ? payload.nonce : null;
+      record.chainId = payload.chainId ?? null;
+      record.epochHeight = payload.epochHeight != null ? String(payload.epochHeight) : null;
+    });
+
+    const txExtra = this.database.get<TxExtra>(TableName.TxExtra).prepareCreate((record) => {
+      record.ok = true;
+      record.simple = false;
+      record.contractInteraction = true;
+      record.token20 = false;
+      record.tokenNft = false;
+      record.sendAction = null;
+      record.address = payload.to ?? null;
+      record.method = null;
+      record.contractCreation = !payload.to && !!payload.data;
+    });
+
+    const tx = this.database.get<Tx>(TableName.Tx).prepareCreate((record) => {
+      record.raw = txRaw;
+      record.hash = txHash;
+      record.status = isFailed ? DbTxStatus.SEND_FAILED : DbTxStatus.PENDING;
+      record.executedStatus = null;
+      record.receipt = null;
+      record.executedAt = null;
+      record.errorType = errorType ?? null;
+      record.err = err ?? null;
+      record.sendAt = sendAt;
+      record.resendAt = null;
+      record.resendCount = null;
+      record.isTempReplacedByInner = null;
+      record.source = TxSource.DAPP;
+      record.method = '';
+      record.address.set(address);
+      record.txPayload.set(txPayload);
+      record.txExtra.set(txExtra);
     });
 
     await this.database.write(async () => {

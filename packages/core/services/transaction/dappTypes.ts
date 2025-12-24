@@ -19,3 +19,18 @@ export type EvmSignTypedDataParameters = {
   from: Address;
   typedData: EvmTypedDataV4;
 };
+
+export type EvmRpcTransactionRequest = {
+  from: Address;
+  to?: Address;
+  data?: Hex;
+
+  value?: Hex;
+  gas?: Hex;
+  gasPrice?: Hex;
+  maxFeePerGas?: Hex;
+  maxPriorityFeePerGas?: Hex;
+
+  nonce?: Hex;
+  type?: Hex;
+};
