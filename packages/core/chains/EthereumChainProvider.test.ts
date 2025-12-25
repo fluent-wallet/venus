@@ -169,6 +169,27 @@ describe('EthereumChainProvider', () => {
     expect(estimate.gasPrice).toBeUndefined();
   });
 
+  it('does not call estimateGas when gasLimit is provided', async () => {
+    const provider = createProvider();
+
+    const unsigned: EvmUnsignedTransaction = {
+      chainType: NetworkType.Ethereum,
+      payload: {
+        from: SAMPLE_ACCOUNT,
+        to: SAMPLE_ACCOUNT,
+        chainId: SAMPLE_CHAIN_ID,
+        value: '0x0',
+        data: '0x',
+        gasLimit: '0x5208',
+        nonce: 1,
+      },
+    };
+
+    await provider.estimateFee(unsigned);
+
+    expect(mockProvider.estimateGas).not.toHaveBeenCalled();
+  });
+
   it('signs transaction using provided private key', async () => {
     const provider = createProvider();
     const unsigned = await provider.buildTransaction({

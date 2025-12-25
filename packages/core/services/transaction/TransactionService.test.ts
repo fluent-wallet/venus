@@ -14,6 +14,7 @@ import type { TxExtra } from '@core/database/models/TxExtra';
 import type { TxPayload } from '@core/database/models/TxPayload';
 import TableName from '@core/database/TableName';
 import { CORE_IDENTIFIERS } from '@core/di';
+import { CHAIN_PROVIDER_NOT_FOUND, TX_BROADCAST_FAILED } from '@core/errors';
 import type { CoreEventMap, EventBus } from '@core/modules/eventBus';
 import { InMemoryEventBus } from '@core/modules/eventBus';
 import { SigningService } from '@core/services/signing';
@@ -622,5 +623,95 @@ describe('TransactionService', () => {
       key: { addressId: address.id, networkId: evmNetwork.id },
       txId: result.id,
     });
+  });
+
+  it('does not override dapp request fields when estimating', async () => {
+    const { network: evmNetwork, assetRule } = await seedNetwork(database, { definitionKey: 'eSpace Testnet', selected: true });
+    const { address } = await createTestAccount(database, { network: evmNetwork, assetRule });
+
+    const provider = new StubChainProvider({
+      chainId: evmNetwork.chainId,
+      networkType: evmNetwork.networkType,
+    });
+    jest.spyOn(provider, 'estimateFee').mockResolvedValue({
+      chainType: provider.networkType,
+      estimatedTotal: '0x999',
+      gasLimit: '0xffff',
+      gasPrice: '0x777',
+      maxFeePerGas: '0x888',
+      maxPriorityFeePerGas: '0x999',
+    });
+    chainRegistry.register(provider);
+
+    const request = {
+      from: address.hex,
+      to: '0x0000000000000000000000000000000000000001',
+      data: '0xdeadbeef',
+      value: '0x2',
+      gas: '0x5208',
+      gasPrice: '0x1',
+      maxFeePerGas: '0x10',
+      maxPriorityFeePerGas: '0x5',
+      nonce: '0x7',
+      type: '0x2',
+    } as any;
+
+    await service.sendDappTransaction({ addressId: address.id, request });
+
+    const [tx] = await database.get<Tx>(TableName.Tx).query().fetch();
+    const payload = await tx.txPayload.fetch();
+    expect(payload).toMatchObject({
+      data: request.data,
+      value: request.value,
+      gasLimit: request.gas,
+      gasPrice: request.gasPrice,
+      maxFeePerGas: request.maxFeePerGas,
+      maxPriorityFeePerGas: request.maxPriorityFeePerGas,
+      nonce: 7,
+      type: '2',
+    });
+  });
+
+  it('throws TX_BROADCAST_FAILED and persists failed dapp tx', async () => {
+    const { network: evmNetwork, assetRule } = await seedNetwork(database, { definitionKey: 'eSpace Testnet', selected: true });
+    const { address } = await createTestAccount(database, { network: evmNetwork, assetRule });
+
+    const provider = new StubChainProvider({
+      chainId: evmNetwork.chainId,
+      networkType: evmNetwork.networkType,
+    });
+    jest.spyOn(provider, 'broadcastTransaction').mockRejectedValue(new Error('boom'));
+    chainRegistry.register(provider);
+
+    const request = {
+      from: address.hex,
+      to: '0x0000000000000000000000000000000000000001',
+      data: '0x',
+      value: '0x2',
+      gas: '0x5208',
+      gasPrice: '0x1',
+      nonce: '0x1',
+      type: '0x0',
+    } as any;
+
+    await expect(service.sendDappTransaction({ addressId: address.id, request })).rejects.toMatchObject({ code: TX_BROADCAST_FAILED });
+
+    const [tx] = await database.get<Tx>(TableName.Tx).query().fetch();
+    expect(tx).toMatchObject({ source: TxSource.DAPP, status: DbTxStatus.SEND_FAILED, err: 'boom' });
+  });
+
+  it('throws CHAIN_PROVIDER_NOT_FOUND when dapp provider missing', async () => {
+    const { network: evmNetwork, assetRule } = await seedNetwork(database, { definitionKey: 'eSpace Testnet', selected: true });
+    const { address } = await createTestAccount(database, { network: evmNetwork, assetRule });
+
+    const request = {
+      from: address.hex,
+      to: '0x0000000000000000000000000000000000000001',
+      data: '0x',
+      value: '0x2',
+      gas: '0x5208',
+    } as any;
+
+    await expect(service.sendDappTransaction({ addressId: address.id, request })).rejects.toMatchObject({ code: CHAIN_PROVIDER_NOT_FOUND });
   });
 });
