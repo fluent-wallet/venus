@@ -50,6 +50,8 @@ export type EventErrorCode = typeof EVENT_PAYLOAD_NOT_SERIALIZABLE;
 
 export type ChainErrorCode = typeof CHAIN_PROVIDER_NOT_FOUND;
 
+export const WC_CONFIG_INVALID = 'WC_CONFIG_INVALID' as const;
+
 export type ChainRpcErrorCode =
   | typeof CHAIN_RPC_HTTP_ERROR
   | typeof CHAIN_RPC_TIMEOUT
@@ -68,3 +70,5 @@ export type TransactionErrorCode =
   | typeof TX_SIGN_TRANSACTION_FAILED
   | typeof TX_BROADCAST_FAILED
   | typeof TX_SAVE_FAILED;
+
+export type WalletConnectErrorCode = typeof WC_CONFIG_INVALID;

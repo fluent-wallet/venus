@@ -6,3 +6,5 @@ export const SERVICES_MODULE_ID = 'services' as const;
 
 export const AUTH_MODULE_ID = 'auth' as const;
 export const EXTERNAL_REQUESTS_MODULE_ID = 'external-requests' as const;
+
+export const WALLET_CONNECT_MODULE_ID = 'wallet-connect' as const;

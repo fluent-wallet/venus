@@ -13,4 +13,9 @@ export type CoreEventMap = {
 
   'auth/credential-requested': { requestId: string; kind: 'password' | 'biometrics'; reason?: string };
   'external-requests/requested': { requestId: string; request: ExternalRequestSnapshot };
+
+  'wallet-connect/sessions-changed': {
+    reason: 'init' | 'session_delete' | 'disconnect';
+    topic?: string;
+  };
 };
