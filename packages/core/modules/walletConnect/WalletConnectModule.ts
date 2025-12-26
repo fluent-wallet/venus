@@ -1,10 +1,13 @@
 import { CORE_IDENTIFIERS } from '@core/di';
 import { CoreError, WC_CONFIG_INVALID } from '@core/errors';
 import type { RuntimeContext, RuntimeModule } from '@core/runtime/types';
+import { AccountService } from '@core/services/account';
+import { NetworkService } from '@core/services/network';
 import { WalletKit, type WalletKitTypes } from '@reown/walletkit';
 import { Core } from '@walletconnect/core';
 import type { CoreEventMap, EventBus } from '../eventBus';
-import { EVENT_BUS_MODULE_ID, WALLET_CONNECT_MODULE_ID } from '../ids';
+import type { ExternalRequestsService } from '../externalRequests';
+import { EVENT_BUS_MODULE_ID, EXTERNAL_REQUESTS_MODULE_ID, SERVICES_MODULE_ID, WALLET_CONNECT_MODULE_ID } from '../ids';
 import { WalletConnectService } from './WalletConnectService';
 
 type WalletConnectRuntimeConfig = {
@@ -32,13 +35,17 @@ const readWalletConnectConfig = (context: RuntimeContext): WalletConnectRuntimeC
 
 export const WalletConnectModule: RuntimeModule = {
   id: WALLET_CONNECT_MODULE_ID,
-  dependencies: [EVENT_BUS_MODULE_ID],
+  dependencies: [EVENT_BUS_MODULE_ID, EXTERNAL_REQUESTS_MODULE_ID, SERVICES_MODULE_ID],
   register: (context) => {
     const { container } = context;
     if (container.isBound(WalletConnectService)) return;
 
     const { projectId, metadata } = readWalletConnectConfig(context);
     const eventBus = container.get<EventBus<CoreEventMap>>(CORE_IDENTIFIERS.EVENT_BUS);
+
+    const externalRequests = container.get<ExternalRequestsService>(CORE_IDENTIFIERS.EXTERNAL_REQUESTS);
+    const accountService = container.get(AccountService);
+    const networkService = container.get(NetworkService);
 
     const clientFactory = async () => {
       const core = new Core({ projectId });
@@ -51,9 +58,14 @@ export const WalletConnectModule: RuntimeModule = {
         logger: context.logger,
         clientFactory,
         closeTransportOnStop: true,
+
+        externalRequests,
+        accountService,
+        networkService,
       }),
     );
   },
+
   start: async ({ container }) => {
     if (!container.isBound(WalletConnectService)) return;
     await container.get(WalletConnectService).start();

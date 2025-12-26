@@ -46,11 +46,17 @@ export type ModuleManagerErrorCode =
   | typeof MM_START_FAILED
   | typeof MM_STOP_FAILED;
 
+export const WC_CONFIG_INVALID = 'WC_CONFIG_INVALID' as const;
+
+export const WC_UNSUPPORTED_NAMESPACE = 'WC_UNSUPPORTED_NAMESPACE' as const;
+export const WC_UNSUPPORTED_CHAINS = 'WC_UNSUPPORTED_CHAINS' as const;
+export const WC_UNSUPPORTED_NETWORK = 'WC_UNSUPPORTED_NETWORK' as const;
+export const WC_APPROVE_SESSION_FAILED = 'WC_APPROVE_SESSION_FAILED' as const;
+export const WC_REJECT_SESSION_FAILED = 'WC_REJECT_SESSION_FAILED' as const;
+
 export type EventErrorCode = typeof EVENT_PAYLOAD_NOT_SERIALIZABLE;
 
 export type ChainErrorCode = typeof CHAIN_PROVIDER_NOT_FOUND;
-
-export const WC_CONFIG_INVALID = 'WC_CONFIG_INVALID' as const;
 
 export type ChainRpcErrorCode =
   | typeof CHAIN_RPC_HTTP_ERROR
@@ -71,4 +77,10 @@ export type TransactionErrorCode =
   | typeof TX_BROADCAST_FAILED
   | typeof TX_SAVE_FAILED;
 
-export type WalletConnectErrorCode = typeof WC_CONFIG_INVALID;
+export type WalletConnectErrorCode =
+  | typeof WC_CONFIG_INVALID
+  | typeof WC_UNSUPPORTED_NAMESPACE
+  | typeof WC_UNSUPPORTED_CHAINS
+  | typeof WC_UNSUPPORTED_NETWORK
+  | typeof WC_APPROVE_SESSION_FAILED
+  | typeof WC_REJECT_SESSION_FAILED;

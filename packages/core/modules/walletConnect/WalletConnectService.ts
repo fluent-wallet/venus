@@ -1,7 +1,19 @@
+import {
+  CoreError,
+  WC_APPROVE_SESSION_FAILED,
+  WC_REJECT_SESSION_FAILED,
+  WC_UNSUPPORTED_CHAINS,
+  WC_UNSUPPORTED_NAMESPACE,
+  WC_UNSUPPORTED_NETWORK,
+} from '@core/errors';
 import type { CoreEventMap, EventBus } from '@core/modules/eventBus';
 import type { Logger } from '@core/runtime/types';
+import type { AccountService, NetworkService } from '@core/services';
+import { NetworkType } from '@core/types';
 import type Client from '@reown/walletkit';
 import type { WalletKitTypes } from '@reown/walletkit';
+import { buildApprovedNamespaces, getSdkError } from '@walletconnect/utils';
+import type { ExternalRequestSnapshot, ExternalRequestsService, JsonValue } from '../externalRequests';
 
 export type WalletConnectSessionSnapshot = {
   topic: string;
@@ -27,6 +39,10 @@ export type WalletConnectServiceOptions = {
   logger: Logger;
   clientFactory: () => Promise<Client>;
   closeTransportOnStop: boolean;
+
+  externalRequests?: ExternalRequestsService;
+  accountService?: AccountService;
+  networkService?: NetworkService;
 };
 
 export class WalletConnectService {
@@ -35,20 +51,32 @@ export class WalletConnectService {
   private readonly clientFactory: () => Promise<Client>;
   private readonly closeTransportOnStop: boolean;
 
+  private readonly externalRequests?: ExternalRequestsService;
+  private readonly accountService?: AccountService;
+  private readonly networkService?: NetworkService;
+
   private client: Client | null = null;
   private sessions: WalletConnectSessionSnapshot[] = [];
   private started = false;
-
-  private readonly onSessionDelete = (event: WalletKitTypes.SessionDelete) => {
-    void this.handleSessionDelete(event);
-  };
 
   constructor(options: WalletConnectServiceOptions) {
     this.eventBus = options.eventBus;
     this.logger = options.logger;
     this.clientFactory = options.clientFactory;
     this.closeTransportOnStop = options.closeTransportOnStop;
+
+    this.externalRequests = options.externalRequests;
+    this.accountService = options.accountService;
+    this.networkService = options.networkService;
   }
+
+  private readonly onSessionDelete = (event: WalletKitTypes.SessionDelete) => {
+    void this.handleSessionDelete(event);
+  };
+
+  private readonly onSessionProposal = (proposal: WalletKitTypes.SessionProposal) => {
+    void this.handleSessionProposal(proposal);
+  };
 
   public async start(): Promise<void> {
     if (this.started) return;
@@ -56,6 +84,7 @@ export class WalletConnectService {
     const client = await this.clientFactory();
     this.client = client;
 
+    client.on('session_proposal', this.onSessionProposal);
     client.on('session_delete', this.onSessionDelete);
 
     await this.refreshSessions();
@@ -76,6 +105,7 @@ export class WalletConnectService {
     this.started = false;
 
     try {
+      client.off('session_proposal', this.onSessionProposal);
       client.off('session_delete', this.onSessionDelete);
     } catch (error) {
       this.logger.warn('WalletConnectService:stop:off-failed', { error });
@@ -150,5 +180,231 @@ export class WalletConnectService {
 
     snapshots.sort((a, b) => a.topic.localeCompare(b.topic));
     this.sessions = snapshots;
+  }
+
+  private async handleSessionProposal(proposal: WalletKitTypes.SessionProposal): Promise<void> {
+    const client = this.client;
+
+    if (!this.started || !client) return;
+
+    const proposalNumericId = typeof proposal?.params?.id === 'number' ? proposal.params.id : proposal?.id;
+    const proposalId = `p_${String(proposalNumericId)}`;
+
+    const { metadata, origin, requiredEip155Chains, requiredMethods, requiredEvents } = this.extractProposalInfo(proposal);
+
+    if (requiredEip155Chains.length === 0) {
+      const error = new CoreError({ code: WC_UNSUPPORTED_NAMESPACE, message: 'WalletConnect supports EVM (eip155) only.' });
+      this.logger.warn('WalletConnectService:proposal-rejected', { error });
+
+      await this.safeRejectSession(client, proposalNumericId, getSdkError('UNSUPPORTED_NAMESPACE_KEY'));
+      return;
+    }
+
+    const supportedChains = await this.getSupportedRequiredChains(requiredEip155Chains);
+
+    if (supportedChains.unsupported.length > 0) {
+      const error = new CoreError({
+        code: WC_UNSUPPORTED_CHAINS,
+        message: 'Unsupported required chains.',
+        context: { required: requiredEip155Chains, unsupported: supportedChains.unsupported },
+      });
+      this.logger.warn('WalletConnectService:proposal-rejected', { error });
+
+      await this.safeRejectSession(client, proposalNumericId, getSdkError('UNSUPPORTED_CHAINS'));
+      return;
+    }
+    const snapshot: ExternalRequestSnapshot = {
+      provider: 'wallet-connect',
+      kind: 'session_proposal',
+      proposalId,
+      origin,
+      metadata,
+      requiredNamespaces: this.toJsonValue(proposal.params?.requiredNamespaces) as JsonValue,
+      optionalNamespaces: this.toJsonValue(proposal.params?.optionalNamespaces) as JsonValue,
+    };
+
+    if (!this.externalRequests) {
+      const error = new CoreError({ code: WC_REJECT_SESSION_FAILED, message: 'ExternalRequestsService is not available.' });
+      this.logger.error('WalletConnectService:proposal-rejected', { error });
+      await this.safeRejectSession(client, proposalNumericId, getSdkError('USER_REJECTED'));
+      return;
+    }
+
+    this.externalRequests.request({
+      key: proposalId,
+      request: snapshot,
+      handlers: {
+        onApprove: async () => {
+          await this.approveSessionProposal({
+            client,
+            proposal,
+            proposalNumericId,
+            supportedChains: supportedChains.supported,
+            requiredMethods,
+            requiredEvents,
+          });
+        },
+        onReject: async () => {
+          await this.safeRejectSession(client, proposalNumericId, getSdkError('USER_REJECTED'));
+        },
+      },
+    });
+  }
+  private async approveSessionProposal(params: {
+    client: Client;
+    proposal: WalletKitTypes.SessionProposal;
+    proposalNumericId: number;
+    supportedChains: string[];
+    requiredMethods: string[];
+    requiredEvents: string[];
+  }): Promise<void> {
+    try {
+      if (!this.networkService || !this.accountService) {
+        throw new CoreError({ code: WC_APPROVE_SESSION_FAILED, message: 'Missing NetworkService/AccountService.' });
+      }
+
+      const currentNetwork = await this.networkService.getCurrentNetwork();
+      if (currentNetwork.networkType !== NetworkType.Ethereum) {
+        throw new CoreError({
+          code: WC_UNSUPPORTED_NETWORK,
+          message: 'Current network is not EVM; user must switch to EVM network before approving.',
+          context: { currentNetworkType: currentNetwork.networkType },
+        });
+      }
+
+      const account = await this.accountService.getCurrentAccount();
+      const address = account?.address;
+      if (!address || typeof address !== 'string' || !address.startsWith('0x')) {
+        throw new CoreError({ code: WC_APPROVE_SESSION_FAILED, message: 'Missing EVM hex address.' });
+      }
+
+      const supportedNamespaces = {
+        eip155: {
+          chains: params.supportedChains,
+          accounts: params.supportedChains.map((chain) => `${chain}:${address}`),
+          methods: params.requiredMethods,
+          events: params.requiredEvents,
+        },
+      };
+
+      const approvedNamespaces = buildApprovedNamespaces({
+        proposal: params.proposal.params,
+        supportedNamespaces: supportedNamespaces,
+      });
+
+      await params.client.approveSession({
+        id: params.proposalNumericId,
+        namespaces: approvedNamespaces,
+      });
+
+      await this.refreshSessions();
+    } catch (error) {
+      const coreError =
+        error instanceof CoreError ? error : new CoreError({ code: WC_APPROVE_SESSION_FAILED, message: 'approveSession failed.', cause: error });
+
+      this.logger.warn('WalletConnectService:approve-failed', { error: coreError });
+      await this.safeRejectSession(params.client, params.proposalNumericId, getSdkError('USER_REJECTED'));
+    }
+  }
+
+  private async safeRejectSession(client: Client, proposalNumericId: number, reason: { code: number; message: string }): Promise<void> {
+    try {
+      await client.rejectSession({ id: proposalNumericId, reason });
+    } catch (error) {
+      const coreError = new CoreError({ code: WC_REJECT_SESSION_FAILED, message: 'rejectSession failed.', cause: error });
+      this.logger.warn('WalletConnectService:reject-failed', { error: coreError });
+    }
+  }
+  private extractProposalInfo(proposal: WalletKitTypes.SessionProposal): {
+    metadata: { name: string; url: string; icons?: string[] };
+    origin: string;
+    requiredEip155Chains: string[];
+    requiredMethods: string[];
+    requiredEvents: string[];
+  } {
+    const proposer = proposal.params?.proposer;
+    const meta = proposer?.metadata ?? {};
+    const icons = Array.isArray(meta.icons) ? meta.icons.filter((x: unknown): x is string => typeof x === 'string') : undefined;
+
+    const origin =
+      typeof proposal.verifyContext?.verified?.origin === 'string' ? proposal.verifyContext.verified.origin : typeof meta.url === 'string' ? meta.url : '';
+
+    const required = proposal.params?.requiredNamespaces ?? {};
+    const requiredKeys = Object.keys(required);
+
+    const requiredEip155ChainsSet = new Set<string>();
+    const requiredMethodsSet = new Set<string>();
+    const requiredEventsSet = new Set<string>();
+
+    for (const key of requiredKeys) {
+      if (!key.startsWith('eip155')) continue;
+
+      if (key.includes(':')) {
+        requiredEip155ChainsSet.add(key);
+        const ns = required[key] ?? {};
+        if (Array.isArray(ns.methods))
+          ns.methods.forEach((m: unknown) => {
+            typeof m === 'string' && requiredMethodsSet.add(m);
+          });
+        if (Array.isArray(ns.events))
+          ns.events.forEach((e: unknown) => {
+            typeof e === 'string' && requiredEventsSet.add(e);
+          });
+        continue;
+      }
+
+      const ns = required[key] ?? {};
+      if (Array.isArray(ns.chains))
+        ns.chains.forEach((c: unknown) => {
+          typeof c === 'string' && requiredEip155ChainsSet.add(c);
+        });
+      if (Array.isArray(ns.methods))
+        ns.methods.forEach((m: unknown) => {
+          typeof m === 'string' && requiredMethodsSet.add(m);
+        });
+      if (Array.isArray(ns.events))
+        ns.events.forEach((e: unknown) => {
+          typeof e === 'string' && requiredEventsSet.add(e);
+        });
+    }
+
+    return {
+      metadata: {
+        name: typeof meta.name === 'string' ? meta.name : '',
+        url: typeof meta.url === 'string' ? meta.url : '',
+        icons,
+      },
+      origin,
+      requiredEip155Chains: Array.from(requiredEip155ChainsSet).filter((c) => c.startsWith('eip155:')),
+      requiredMethods: Array.from(requiredMethodsSet),
+      requiredEvents: Array.from(requiredEventsSet),
+    };
+  }
+
+  private async getSupportedRequiredChains(requiredEip155Chains: string[]): Promise<{ supported: string[]; unsupported: string[] }> {
+    if (!this.networkService) {
+      return { supported: [], unsupported: requiredEip155Chains };
+    }
+
+    const networks = await this.networkService.getAllNetworks();
+    const supported = new Set(networks.filter((n) => n.networkType === NetworkType.Ethereum).map((n) => `eip155:${n.netId}`));
+
+    const ok: string[] = [];
+    const bad: string[] = [];
+
+    for (const chain of requiredEip155Chains) {
+      if (supported.has(chain)) ok.push(chain);
+      else bad.push(chain);
+    }
+
+    return { supported: ok, unsupported: bad };
+  }
+
+  private toJsonValue(value: unknown): JsonValue {
+    try {
+      return JSON.parse(JSON.stringify(value ?? null)) as JsonValue;
+    } catch {
+      return null;
+    }
   }
 }

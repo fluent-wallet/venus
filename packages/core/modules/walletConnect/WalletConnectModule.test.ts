@@ -1,13 +1,18 @@
 import 'reflect-metadata';
 
-import { createSilentLogger } from '@core/__tests__/mocks';
+import { createSilentLogger, mockDatabase } from '@core/__tests__/mocks';
 import { CORE_IDENTIFIERS } from '@core/di';
 import type { CoreEventMap, EventBus } from '@core/modules/eventBus';
 import { EventBusModule } from '@core/modules/eventBus';
 import { ModuleManager } from '@core/runtime/ModuleManager';
+import type { CryptoTool } from '@core/types';
 import { WalletKit } from '@reown/walletkit';
 import { Core } from '@walletconnect/core';
 import { Container } from 'inversify';
+import { createCryptoToolModule } from '../crypto';
+import { createDbModule } from '../db';
+import { ExternalRequestsModule } from '../externalRequests';
+import { ServicesModule } from '../services';
 import { WalletConnectModule } from './WalletConnectModule';
 import { WalletConnectService } from './WalletConnectService';
 
@@ -22,6 +27,17 @@ jest.mock('@reown/walletkit', () => {
     WalletKit: { init: jest.fn() },
   };
 });
+class FakeCryptoTool implements CryptoTool {
+  async encrypt(data: unknown): Promise<string> {
+    return JSON.stringify({ data });
+  }
+  async decrypt<T = unknown>(encryptedDataString: string): Promise<T> {
+    return JSON.parse(encryptedDataString).data as T;
+  }
+  generateRandomString(_byteCount?: number): string {
+    return 'stub';
+  }
+}
 
 const session = (topic: string, url: string) => {
   return {
@@ -72,7 +88,16 @@ describe('WalletConnectModule', () => {
     });
 
     const busEvents: CoreEventMap['wallet-connect/sessions-changed'][] = [];
-    manager.register([EventBusModule, WalletConnectModule]);
+    const database = mockDatabase();
+    const cryptoTool = new FakeCryptoTool();
+    manager.register([
+      EventBusModule,
+      createDbModule({ database }),
+      createCryptoToolModule({ cryptoTool }),
+      ServicesModule,
+      ExternalRequestsModule,
+      WalletConnectModule,
+    ]);
     await manager.start();
 
     const eventBus = container.get<EventBus<CoreEventMap>>(CORE_IDENTIFIERS.EVENT_BUS);
@@ -95,7 +120,10 @@ describe('WalletConnectModule', () => {
 
     await manager.stop();
 
-    expect(mockClient.off).toHaveBeenCalledTimes(1);
+    expect(mockClient.off).toHaveBeenCalledTimes(2);
+    const offEvents = (mockClient.off as jest.Mock).mock.calls.map((call) => call[0]).sort();
+    expect(offEvents).toEqual(['session_delete', 'session_proposal']);
+
     expect(mockClient.core.relayer.transportClose).toHaveBeenCalledTimes(1);
   });
 });
