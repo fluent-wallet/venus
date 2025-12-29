@@ -1,5 +1,8 @@
 import {
   CoreError,
+  EXTREQ_REQUEST_CANCELED,
+  EXTREQ_REQUEST_TIMEOUT,
+  TX_INVALID_PARAMS,
   WC_APPROVE_SESSION_FAILED,
   WC_REJECT_SESSION_FAILED,
   WC_UNSUPPORTED_CHAINS,
@@ -8,12 +11,22 @@ import {
 } from '@core/errors';
 import type { CoreEventMap, EventBus } from '@core/modules/eventBus';
 import type { Logger } from '@core/runtime/types';
-import type { AccountService, NetworkService } from '@core/services';
+import { type AccountService, type NetworkService, parseSignMessageParameters, parseSignTypedDataParameters } from '@core/services';
+import type { SigningService } from '@core/services/signing';
 import { NetworkType } from '@core/types';
 import type Client from '@reown/walletkit';
 import type { WalletKitTypes } from '@reown/walletkit';
 import { buildApprovedNamespaces, getSdkError } from '@walletconnect/utils';
 import type { ExternalRequestSnapshot, ExternalRequestsService, JsonValue } from '../externalRequests';
+
+// White-list for session_request methods.
+const SUPPORTED_SESSION_REQUEST_METHODS = ['personal_sign', 'eth_signTypedData_v4'] as const;
+type SupportedSessionRequestMethod = (typeof SUPPORTED_SESSION_REQUEST_METHODS)[number];
+
+const isSupportedSessionRequestMethod = (value: unknown): value is SupportedSessionRequestMethod => {
+  if (typeof value !== 'string') return false;
+  return (SUPPORTED_SESSION_REQUEST_METHODS as readonly string[]).includes(value);
+};
 
 export type WalletConnectSessionSnapshot = {
   topic: string;
@@ -43,6 +56,7 @@ export type WalletConnectServiceOptions = {
   externalRequests?: ExternalRequestsService;
   accountService?: AccountService;
   networkService?: NetworkService;
+  signingService?: SigningService;
 };
 
 export class WalletConnectService {
@@ -54,6 +68,7 @@ export class WalletConnectService {
   private readonly externalRequests?: ExternalRequestsService;
   private readonly accountService?: AccountService;
   private readonly networkService?: NetworkService;
+  private readonly signingService?: SigningService;
 
   private client: Client | null = null;
   private sessions: WalletConnectSessionSnapshot[] = [];
@@ -68,6 +83,7 @@ export class WalletConnectService {
     this.externalRequests = options.externalRequests;
     this.accountService = options.accountService;
     this.networkService = options.networkService;
+    this.signingService = options.signingService;
   }
 
   private readonly onSessionDelete = (event: WalletKitTypes.SessionDelete) => {
@@ -78,6 +94,10 @@ export class WalletConnectService {
     void this.handleSessionProposal(proposal);
   };
 
+  private readonly onSessionRequest = (request: WalletKitTypes.SessionRequest) => {
+    void this.handleSessionRequest(request);
+  };
+
   public async start(): Promise<void> {
     if (this.started) return;
 
@@ -86,6 +106,7 @@ export class WalletConnectService {
 
     client.on('session_proposal', this.onSessionProposal);
     client.on('session_delete', this.onSessionDelete);
+    client.on('session_request', this.onSessionRequest);
 
     await this.refreshSessions();
 
@@ -107,6 +128,7 @@ export class WalletConnectService {
     try {
       client.off('session_proposal', this.onSessionProposal);
       client.off('session_delete', this.onSessionDelete);
+      client.off('session_request', this.onSessionRequest);
     } catch (error) {
       this.logger.warn('WalletConnectService:stop:off-failed', { error });
     }
@@ -219,8 +241,8 @@ export class WalletConnectService {
       proposalId,
       origin,
       metadata,
-      requiredNamespaces: this.toJsonValue(proposal.params?.requiredNamespaces) as JsonValue,
-      optionalNamespaces: this.toJsonValue(proposal.params?.optionalNamespaces) as JsonValue,
+      requiredNamespaces: this.toJsonValue(proposal.params?.requiredNamespaces),
+      optionalNamespaces: this.toJsonValue(proposal.params?.optionalNamespaces),
     };
 
     if (!this.externalRequests) {
@@ -304,6 +326,151 @@ export class WalletConnectService {
 
       this.logger.warn('WalletConnectService:approve-failed', { error: coreError });
       await this.safeRejectSession(params.client, params.proposalNumericId, getSdkError('USER_REJECTED'));
+    }
+  }
+
+  private async handleSessionRequest(request: WalletKitTypes.SessionRequest): Promise<void> {
+    const client = this.client;
+    if (!this.started || !client) return;
+
+    const topic = request.topic;
+    const id = request.id;
+
+    const chainId = request.params?.chainId;
+    const rpc = request.params?.request;
+    const method = rpc?.method;
+    const rpcParams = rpc?.params;
+
+    if (typeof chainId !== 'string' || !chainId.startsWith('eip155:')) {
+      await this.safeRespondSessionRequestError({ client, topic, id, message: 'UNSUPPORTED_NETWORK' });
+      return;
+    }
+    if (!isSupportedSessionRequestMethod(method)) {
+      await this.safeRespondSessionRequestError({ client, topic, id, message: 'UNSUPPORTED_METHOD' });
+      return;
+    }
+
+    if (!this.externalRequests) {
+      await this.safeRespondSessionRequestError({ client, topic, id, message: 'INTERNAL_ERROR' });
+      return;
+    }
+    const origin = this.resolveRequestOrigin(topic, request);
+
+    const snapshot: ExternalRequestSnapshot = {
+      provider: 'wallet-connect',
+      kind: 'session_request',
+      sessionId: topic,
+      origin,
+      chainId,
+      method,
+      params: this.toJsonValue(rpcParams),
+    };
+
+    this.externalRequests.request({
+      key: topic,
+      request: snapshot,
+      handlers: {
+        onApprove: async () => {
+          await this.approveSessionRequest({ client, topic, id, chainId, method, rpcParams });
+        },
+        onReject: async (error) => {
+          await this.safeRespondSessionRequestError({ client, topic, id, message: this.mapRejectMessage(error) });
+        },
+      },
+    });
+  }
+
+  private async approveSessionRequest(params: {
+    client: Client;
+    topic: string;
+    id: number;
+    chainId: string;
+    method: SupportedSessionRequestMethod;
+    rpcParams: unknown;
+  }) {
+    if (!this.started || this.client !== params.client) return;
+
+    if (!this.networkService || !this.accountService || !this.signingService) {
+      await this.safeRespondSessionRequestError({ client: params.client, topic: params.topic, id: params.id, message: 'INTERNAL_ERROR' });
+      return;
+    }
+    const currentNetwork = await this.networkService.getCurrentNetwork();
+    const expectedChainId = `eip155:${currentNetwork.netId}`;
+
+    if (currentNetwork.networkType !== NetworkType.Ethereum || expectedChainId !== params.chainId) {
+      await this.safeRespondSessionRequestError({ client: params.client, topic: params.topic, id: params.id, message: 'UNSUPPORTED_NETWORK' });
+      return;
+    }
+
+    const account = await this.accountService.getCurrentAccount();
+    const accountId = account?.id;
+    const addressId = account?.currentAddressId;
+
+    if (!accountId || !addressId) {
+      await this.safeRespondSessionRequestError({ client: params.client, topic: params.topic, id: params.id, message: 'UNAUTHORIZED' });
+      return;
+    }
+
+    try {
+      if (params.method === 'personal_sign') {
+        const request = parseSignMessageParameters(params.rpcParams);
+        const signature = await this.signingService.signPersonalMessage({ accountId, addressId, request });
+        await this.safeRespondSessionRequestResult({ client: params.client, topic: params.topic, id: params.id, result: signature });
+        return;
+      }
+
+      const request = parseSignTypedDataParameters(params.rpcParams);
+      const signature = await this.signingService.signTypedDataV4({ accountId, addressId, request });
+      await this.safeRespondSessionRequestResult({ client: params.client, topic: params.topic, id: params.id, result: signature });
+    } catch (error) {
+      const message = error instanceof CoreError && error.code === TX_INVALID_PARAMS ? 'INVALID_PARAMS' : 'SIGN_FAILED';
+      this.logger.warn('WalletConnectService:session-request:approve-failed', { error });
+      await this.safeRespondSessionRequestError({ client: params.client, topic: params.topic, id: params.id, message });
+    }
+  }
+
+  private mapRejectMessage(error: unknown): string {
+    if (error instanceof CoreError) {
+      if (error.code === EXTREQ_REQUEST_TIMEOUT) return 'REQUEST_TIMEOUT';
+      if (error.code === EXTREQ_REQUEST_CANCELED) return 'REQUEST_CANCELED';
+    }
+    return 'USER_REJECTED';
+  }
+
+  private resolveRequestOrigin(topic: string, request: WalletKitTypes.SessionRequest): string {
+    const verifiedOrigin = request.verifyContext?.verified?.origin;
+    if (typeof verifiedOrigin === 'string') return verifiedOrigin;
+
+    const active = this.client?.getActiveSessions?.();
+    const peerUrl = active && typeof active === 'object' ? active[topic]?.peer?.metadata?.url : undefined;
+    if (typeof peerUrl === 'string') return peerUrl;
+
+    const cached = this.sessions.find((s) => s.topic === topic)?.peer?.metadata?.url;
+    return typeof cached === 'string' ? cached : '';
+  }
+  private async safeRespondSessionRequestResult(params: { client: Client; topic: string; id: number; result: unknown }): Promise<void> {
+    if (!this.started || this.client !== params.client) return;
+
+    try {
+      await params.client.respondSessionRequest({
+        topic: params.topic,
+        response: { id: params.id, jsonrpc: '2.0', result: params.result },
+      });
+    } catch (error) {
+      this.logger.warn('WalletConnectService:respondSessionRequest:result-failed', { error });
+    }
+  }
+
+  private async safeRespondSessionRequestError(params: { client: Client; topic: string; id: number; message: string }): Promise<void> {
+    if (!this.started || this.client !== params.client) return;
+
+    try {
+      await params.client.respondSessionRequest({
+        topic: params.topic,
+        response: { id: params.id, jsonrpc: '2.0', error: { code: -32000, message: params.message } },
+      });
+    } catch (error) {
+      this.logger.warn('WalletConnectService:respondSessionRequest:error-failed', { error });
     }
   }
 

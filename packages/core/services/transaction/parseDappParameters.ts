@@ -3,6 +3,11 @@ import type { Address, Hex } from '@core/types';
 import { validate as isEvmAddress } from 'ox/Address';
 import type { EvmRpcTransactionRequest, EvmSignableMessage, EvmSignMessageParameters, EvmSignTypedDataParameters, EvmTypedDataV4 } from './dappTypes';
 
+// Some dApps send params in non-standard order for signing methods.
+// - personal_sign is commonly [message, address]
+// - eth_signTypedData_v4 is commonly [address, typedData]
+// In the wild, both can be reversed. We accept either order by detecting which of the first two params is the EVM address,
+// while still requiring there is exactly one address among them.
 const isPlainObject = (value: unknown): value is Record<string, unknown> => {
   if (typeof value !== 'object' || value === null) return false;
   const proto = Object.getPrototypeOf(value);

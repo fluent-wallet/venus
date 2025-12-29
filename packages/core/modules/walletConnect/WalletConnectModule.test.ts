@@ -120,9 +120,10 @@ describe('WalletConnectModule', () => {
 
     await manager.stop();
 
-    expect(mockClient.off).toHaveBeenCalledTimes(2);
+    expect(mockClient.off).toHaveBeenCalledTimes(3);
     const offEvents = (mockClient.off as jest.Mock).mock.calls.map((call) => call[0]).sort();
-    expect(offEvents).toEqual(['session_delete', 'session_proposal']);
+    console.log(offEvents);
+    expect(offEvents).toEqual(['session_delete', 'session_proposal', 'session_request']);
 
     expect(mockClient.core.relayer.transportClose).toHaveBeenCalledTimes(1);
   });

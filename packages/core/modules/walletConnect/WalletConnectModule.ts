@@ -3,6 +3,7 @@ import { CoreError, WC_CONFIG_INVALID } from '@core/errors';
 import type { RuntimeContext, RuntimeModule } from '@core/runtime/types';
 import { AccountService } from '@core/services/account';
 import { NetworkService } from '@core/services/network';
+import { SigningService } from '@core/services/signing';
 import { WalletKit, type WalletKitTypes } from '@reown/walletkit';
 import { Core } from '@walletconnect/core';
 import type { CoreEventMap, EventBus } from '../eventBus';
@@ -46,7 +47,7 @@ export const WalletConnectModule: RuntimeModule = {
     const externalRequests = container.get<ExternalRequestsService>(CORE_IDENTIFIERS.EXTERNAL_REQUESTS);
     const accountService = container.get(AccountService);
     const networkService = container.get(NetworkService);
-
+    const signingService = container.get(SigningService);
     const clientFactory = async () => {
       const core = new Core({ projectId });
       return WalletKit.init({ core, metadata });
@@ -62,6 +63,7 @@ export const WalletConnectModule: RuntimeModule = {
         externalRequests,
         accountService,
         networkService,
+        signingService,
       }),
     );
   },

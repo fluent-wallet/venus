@@ -14,6 +14,7 @@ type MockWalletKitClient = {
   getActiveSessions: () => Record<string, any>;
   approveSession: (args: any) => Promise<any>;
   rejectSession: (args: any) => Promise<any>;
+  respondSessionRequest: (args: any) => Promise<any>;
   core?: { relayer?: { transportClose?: () => Promise<void> } };
   __emit: (event: WalletKitTypes.Event, payload: any) => void;
 };
@@ -27,6 +28,7 @@ const createMockClient = (options: {
   off: jest.Mock;
   approveSession: jest.Mock;
   rejectSession: jest.Mock;
+  respondSessionRequest: jest.Mock;
 } => {
   const handlers = new Map<string, Set<(args: any) => void>>();
 
@@ -50,12 +52,15 @@ const createMockClient = (options: {
   };
   const approveSession = jest.fn().mockResolvedValue(undefined);
   const rejectSession = jest.fn().mockResolvedValue(undefined);
+  const respondSessionRequest = jest.fn().mockResolvedValue(undefined);
+
   const client: MockWalletKitClient = {
     on: on as unknown as MockWalletKitClient['on'],
     off: off as unknown as MockWalletKitClient['off'],
     getActiveSessions: options.getActiveSessions,
     approveSession: approveSession as unknown as MockWalletKitClient['approveSession'],
     rejectSession: rejectSession as unknown as MockWalletKitClient['rejectSession'],
+    respondSessionRequest: respondSessionRequest as unknown as MockWalletKitClient['respondSessionRequest'],
     core: {
       relayer: {
         transportClose: options.transportClose as unknown as (() => Promise<void>) | undefined,
@@ -64,7 +69,7 @@ const createMockClient = (options: {
     __emit: __emit as unknown as MockWalletKitClient['__emit'],
   };
 
-  return { client, on, off, approveSession, rejectSession };
+  return { client, on, off, approveSession, rejectSession, respondSessionRequest };
 };
 
 const session = (topic: string, url: string) => {
@@ -176,6 +181,38 @@ describe('WalletConnectService', () => {
     client.__emit('session_delete', { id: 1, topic: 't1' });
 
     expect(events).toEqual([{ reason: 'init' }]);
+  });
+  it('responds UNSUPPORTED_METHOD for unsupported session_request and does not enqueue ExternalRequests', async () => {
+    const { client, respondSessionRequest } = createMockClient({ getActiveSessions: () => ({ t1: session('t1', 'https://a.example') }) });
+
+    const requested: CoreEventMap['external-requests/requested'][] = [];
+    eventBus.on('external-requests/requested', (payload) => requested.push(payload));
+
+    const service = new WalletConnectService({
+      eventBus,
+      logger,
+      clientFactory: async () => client as any,
+      closeTransportOnStop: false,
+    });
+
+    await service.start();
+
+    client.__emit('session_request', {
+      id: 1,
+      topic: 't1',
+      params: { chainId: 'eip155:1', request: { method: 'eth_sign', params: [] } },
+    });
+
+    await flushPromises();
+
+    expect(requested).toHaveLength(0);
+    expect(respondSessionRequest).toHaveBeenCalledTimes(1);
+    expect(respondSessionRequest.mock.calls[0]?.[0]).toMatchObject({
+      topic: 't1',
+      response: { id: 1, jsonrpc: '2.0', error: { code: -32000, message: 'UNSUPPORTED_METHOD' } },
+    });
+
+    await service.stop();
   });
 
   it('turns session_proposal into ExternalRequests and approves via WC SDK', async () => {
@@ -348,6 +385,128 @@ describe('WalletConnectService', () => {
 
     const warnCalls = (logger.warn as jest.Mock).mock.calls;
     expect(JSON.stringify(warnCalls)).toContain('WC_UNSUPPORTED_NETWORK');
+
+    await service.stop();
+  });
+
+  it('routes session_request(sign) via ExternalRequests, does not crash without verifyContext, and responds with result/error', async () => {
+    const { client, respondSessionRequest } = createMockClient({
+      getActiveSessions: () => ({ t1: session('t1', 'https://a.example') }),
+    });
+
+    const externalRequests = new ExternalRequestsService({
+      eventBus,
+      scheduler: createScheduler(),
+      now: () => 1_700_000_000_000,
+      logger,
+      defaultTtlMs: 10_000,
+      sweepIntervalMs: 10_000,
+      maxActiveRequests: 1,
+    });
+
+    const networkService = {
+      getCurrentNetwork: async () => ({ networkType: NetworkType.Ethereum, netId: 1 }),
+      getAllNetworks: async () => [{ networkType: NetworkType.Ethereum, netId: 1 }],
+    } as unknown as any;
+
+    const accountService = {
+      getCurrentAccount: async () => ({ id: 'acc1', currentAddressId: 'addr1', address: '0x0000000000000000000000000000000000000001' }),
+    } as unknown as any;
+
+    const signingService = {
+      signPersonalMessage: jest.fn().mockResolvedValue('0xsig_personal'),
+      signTypedDataV4: jest.fn().mockResolvedValue('0xsig_typed'),
+    } as unknown as any;
+
+    const requested: CoreEventMap['external-requests/requested'][] = [];
+    eventBus.on('external-requests/requested', (payload) => requested.push(payload));
+
+    const service = new WalletConnectService({
+      eventBus,
+      logger,
+      clientFactory: async () => client as any,
+      closeTransportOnStop: false,
+      externalRequests,
+      networkService,
+      accountService,
+      signingService,
+    } as any);
+
+    await service.start();
+
+    // 1) personal_sign, verifyContext omitted -> should not crash, origin falls back to session metadata.url
+    client.__emit('session_request', {
+      id: 9,
+      topic: 't1',
+      params: {
+        chainId: 'eip155:1',
+        request: { method: 'personal_sign', params: ['0xdeadbeef', '0x0000000000000000000000000000000000000001'] },
+      },
+    } as unknown as WalletKitTypes.SessionRequest);
+    await flushPromises();
+
+    expect(requested).toHaveLength(1);
+    expect(requested[0].request.kind).toBe('session_request');
+    expect(requested[0].request.origin).toBe('https://a.example');
+
+    externalRequests.approve({ requestId: requested[0].requestId });
+    await flushPromises();
+
+    expect(respondSessionRequest).toHaveBeenCalledTimes(1);
+    expect(respondSessionRequest.mock.calls[0]?.[0]).toMatchObject({
+      topic: 't1',
+      response: { id: 9, jsonrpc: '2.0', result: '0xsig_personal' },
+    });
+
+    // 2) typedData_v4
+    client.__emit('session_request', {
+      id: 10,
+      topic: 't1',
+      params: {
+        chainId: 'eip155:1',
+        request: {
+          method: 'eth_signTypedData_v4',
+          params: [
+            '0x0000000000000000000000000000000000000001',
+            JSON.stringify({
+              domain: { name: 'Test', version: '1', chainId: 1, verifyingContract: '0x0000000000000000000000000000000000000001' },
+              primaryType: 'Mail',
+              types: { EIP712Domain: [{ name: 'name', type: 'string' }], Mail: [{ name: 'contents', type: 'string' }] },
+              message: { contents: 'hello' },
+            }),
+          ],
+        },
+      },
+    } as unknown as WalletKitTypes.SessionRequest);
+    await flushPromises();
+
+    expect(requested).toHaveLength(2);
+    externalRequests.approve({ requestId: requested[1].requestId });
+    await flushPromises();
+
+    expect(respondSessionRequest).toHaveBeenCalledTimes(2);
+    expect(respondSessionRequest.mock.calls[1]?.[0]).toMatchObject({
+      topic: 't1',
+      response: { id: 10, jsonrpc: '2.0', result: '0xsig_typed' },
+    });
+
+    // 3) chainId mismatch -> error message UNSUPPORTED_NETWORK on approve
+    client.__emit('session_request', {
+      id: 11,
+      topic: 't1',
+      params: { chainId: 'eip155:999', request: { method: 'personal_sign', params: ['0xdeadbeef', '0x0000000000000000000000000000000000000001'] } },
+    } as unknown as WalletKitTypes.SessionRequest);
+    await flushPromises();
+
+    expect(requested).toHaveLength(3);
+    externalRequests.approve({ requestId: requested[2].requestId });
+    await flushPromises();
+
+    expect(respondSessionRequest).toHaveBeenCalledTimes(3);
+    expect(respondSessionRequest.mock.calls[2]?.[0]).toMatchObject({
+      topic: 't1',
+      response: { id: 11, jsonrpc: '2.0', error: { code: -32000, message: 'UNSUPPORTED_NETWORK' } },
+    });
 
     await service.stop();
   });
