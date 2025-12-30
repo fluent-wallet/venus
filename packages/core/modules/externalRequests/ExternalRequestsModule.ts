@@ -27,7 +27,7 @@ const readExternalRequestsConfig = (context: RuntimeContext): Required<ExternalR
   const requestTtlMs = typeof requestTtlMsRaw === 'number' && requestTtlMsRaw > 0 ? requestTtlMsRaw : 5 * 60 * 1000;
   const sweepIntervalMs = typeof sweepIntervalMsRaw === 'number' && sweepIntervalMsRaw > 0 ? sweepIntervalMsRaw : 60 * 1000;
 
-  const maxActiveRequestsRaw = externalRequestsCfg.maxActiveRequests;
+  const maxActiveRequestsRaw = externalRequestsCfg.maxActiveRequests ?? walletConnectCfg.maxActiveRequests;
   const maxActiveRequests = typeof maxActiveRequestsRaw === 'number' && maxActiveRequestsRaw > 0 ? maxActiveRequestsRaw : 1;
 
   return { requestTtlMs, sweepIntervalMs, maxActiveRequests };

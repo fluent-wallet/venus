@@ -459,11 +459,18 @@ export class WalletConnectService {
 
   private mapRejectError(error: unknown): { code: number; message: string } {
     if (error instanceof CoreError) {
-      if (error.code === EXTREQ_REQUEST_TIMEOUT) return { code: 4001, message: 'User rejected the request.' };
-      if (error.code === EXTREQ_REQUEST_CANCELED) return { code: 4001, message: 'User rejected the request.' };
+      if (error.code === EXTREQ_REQUEST_TIMEOUT) return { code: 4001, message: 'Request expired.' };
+
+      if (error.code === EXTREQ_REQUEST_CANCELED) {
+        const reason = error.context?.reason;
+        if (reason === 'stopped') return { code: 4001, message: 'Request canceled.' };
+        return { code: 4001, message: 'User rejected the request.' };
+      }
     }
+
     return { code: 4001, message: 'User rejected the request.' };
   }
+
   private mapApproveError(error: unknown): { code: number; message: string } {
     if (error instanceof CoreError) {
       if (error.code === TX_INVALID_PARAMS) return { code: -32602, message: 'Invalid params.' };

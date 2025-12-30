@@ -615,4 +615,343 @@ describe('WalletConnectService', () => {
 
     await service.stop();
   });
+
+  it('keeps same-session serial (same topic) and advances FIFO on approve', async () => {
+    const { client, respondSessionRequest } = createMockClient({
+      getActiveSessions: () => ({ t1: session('t1', 'https://a.example') }),
+    });
+
+    const externalRequests = new ExternalRequestsService({
+      eventBus,
+      scheduler: createScheduler(),
+      now: () => 1_700_000_000_000,
+      logger,
+      defaultTtlMs: 10_000,
+      sweepIntervalMs: 10_000,
+      maxActiveRequests: 1,
+    });
+
+    const networkService = {
+      getCurrentNetwork: async () => ({ networkType: NetworkType.Ethereum, netId: 1 }),
+    } as unknown as any;
+
+    const accountService = {
+      getCurrentAccount: async () => ({ id: 'acc1', currentAddressId: 'addr1' }),
+    } as unknown as any;
+
+    const signingService = {
+      signPersonalMessage: jest.fn().mockResolvedValue('0xsig_personal'),
+    } as unknown as any;
+
+    const requested: CoreEventMap['external-requests/requested'][] = [];
+    eventBus.on('external-requests/requested', (payload) => requested.push(payload));
+
+    const service = new WalletConnectService({
+      eventBus,
+      logger,
+      clientFactory: async () => client as any,
+      closeTransportOnStop: false,
+      externalRequests,
+      networkService,
+      accountService,
+      signingService,
+    } as any);
+
+    await service.start();
+
+    client.__emit('session_request', {
+      id: 1,
+      topic: 't1',
+      params: {
+        chainId: 'eip155:1',
+        request: { method: 'personal_sign', params: ['0xdeadbeef', '0x0000000000000000000000000000000000000001'] },
+      },
+    } as unknown as WalletKitTypes.SessionRequest);
+
+    client.__emit('session_request', {
+      id: 2,
+      topic: 't1',
+      params: {
+        chainId: 'eip155:1',
+        request: { method: 'personal_sign', params: ['0xdeadbeef', '0x0000000000000000000000000000000000000001'] },
+      },
+    } as unknown as WalletKitTypes.SessionRequest);
+
+    await flushPromises();
+
+    expect(requested).toHaveLength(1);
+    expect(requested[0].request).toMatchObject({ kind: 'session_request', sessionId: 't1' });
+
+    externalRequests.approve({ requestId: requested[0].requestId });
+    await flushPromises();
+
+    expect(respondSessionRequest).toHaveBeenCalledTimes(1);
+    expect(respondSessionRequest.mock.calls[0]?.[0]).toMatchObject({
+      topic: 't1',
+      response: { id: 1, jsonrpc: '2.0', result: '0xsig_personal' },
+    });
+
+    expect(requested).toHaveLength(2);
+
+    externalRequests.approve({ requestId: requested[1].requestId });
+    await flushPromises();
+
+    expect(respondSessionRequest).toHaveBeenCalledTimes(2);
+    expect(respondSessionRequest.mock.calls[1]?.[0]).toMatchObject({
+      topic: 't1',
+      response: { id: 2, jsonrpc: '2.0', result: '0xsig_personal' },
+    });
+
+    await service.stop();
+    externalRequests.stop();
+  });
+
+  it('enforces global serial (maxActiveRequests=1) across sessions and advances on approve', async () => {
+    const { client, respondSessionRequest } = createMockClient({
+      getActiveSessions: () => ({
+        t1: session('t1', 'https://a.example'),
+        t2: session('t2', 'https://b.example'),
+      }),
+    });
+
+    const externalRequests = new ExternalRequestsService({
+      eventBus,
+      scheduler: createScheduler(),
+      now: () => 1_700_000_000_000,
+      logger,
+      defaultTtlMs: 10_000,
+      sweepIntervalMs: 10_000,
+      maxActiveRequests: 1,
+    });
+
+    const networkService = {
+      getCurrentNetwork: async () => ({ networkType: NetworkType.Ethereum, netId: 1 }),
+    } as unknown as any;
+
+    const accountService = {
+      getCurrentAccount: async () => ({ id: 'acc1', currentAddressId: 'addr1' }),
+    } as unknown as any;
+
+    const signingService = {
+      signPersonalMessage: jest.fn().mockResolvedValue('0xsig_personal'),
+    } as unknown as any;
+
+    const requested: CoreEventMap['external-requests/requested'][] = [];
+    eventBus.on('external-requests/requested', (payload) => requested.push(payload));
+
+    const service = new WalletConnectService({
+      eventBus,
+      logger,
+      clientFactory: async () => client as any,
+      closeTransportOnStop: false,
+      externalRequests,
+      networkService,
+      accountService,
+      signingService,
+    } as any);
+
+    await service.start();
+
+    client.__emit('session_request', {
+      id: 1,
+      topic: 't1',
+      params: {
+        chainId: 'eip155:1',
+        request: { method: 'personal_sign', params: ['0xdeadbeef', '0x0000000000000000000000000000000000000001'] },
+      },
+    } as unknown as WalletKitTypes.SessionRequest);
+
+    client.__emit('session_request', {
+      id: 2,
+      topic: 't2',
+      params: {
+        chainId: 'eip155:1',
+        request: { method: 'personal_sign', params: ['0xdeadbeef', '0x0000000000000000000000000000000000000001'] },
+      },
+    } as unknown as WalletKitTypes.SessionRequest);
+
+    await flushPromises();
+
+    expect(requested).toHaveLength(1);
+    expect(requested[0].request).toMatchObject({ kind: 'session_request', sessionId: 't1' });
+
+    externalRequests.approve({ requestId: requested[0].requestId });
+    await flushPromises();
+
+    expect(respondSessionRequest).toHaveBeenCalledTimes(1);
+    expect(respondSessionRequest.mock.calls[0]?.[0]).toMatchObject({
+      topic: 't1',
+      response: { id: 1, jsonrpc: '2.0', result: '0xsig_personal' },
+    });
+
+    expect(requested).toHaveLength(2);
+    expect(requested[1].request).toMatchObject({ kind: 'session_request', sessionId: 't2' });
+
+    externalRequests.approve({ requestId: requested[1].requestId });
+    await flushPromises();
+
+    expect(respondSessionRequest).toHaveBeenCalledTimes(2);
+    expect(respondSessionRequest.mock.calls[1]?.[0]).toMatchObject({
+      topic: 't2',
+      response: { id: 2, jsonrpc: '2.0', result: '0xsig_personal' },
+    });
+
+    await service.stop();
+    externalRequests.stop();
+  });
+
+  it('rejects via TTL sweep and responds with EIP-1193 compatible error code', async () => {
+    jest.useFakeTimers();
+
+    const { client, respondSessionRequest } = createMockClient({
+      getActiveSessions: () => ({ t1: session('t1', 'https://a.example') }),
+    });
+
+    let now = 1_700_000_000_000;
+
+    const externalRequests = new ExternalRequestsService({
+      eventBus,
+      scheduler: createScheduler(),
+      now: () => now,
+      logger,
+      defaultTtlMs: 50,
+      sweepIntervalMs: 10,
+      maxActiveRequests: 1,
+    });
+
+    externalRequests.start();
+
+    const requested: CoreEventMap['external-requests/requested'][] = [];
+    eventBus.on('external-requests/requested', (payload) => requested.push(payload));
+
+    const service = new WalletConnectService({
+      eventBus,
+      logger,
+      clientFactory: async () => client as any,
+      closeTransportOnStop: false,
+      externalRequests,
+    } as any);
+
+    await service.start();
+
+    client.__emit('session_request', {
+      id: 1,
+      topic: 't1',
+      params: { chainId: 'eip155:1', request: { method: 'personal_sign', params: ['0xdeadbeef', '0x0000000000000000000000000000000000000001'] } },
+    } as unknown as WalletKitTypes.SessionRequest);
+
+    await flushPromises();
+
+    expect(requested).toHaveLength(1);
+
+    now += 60;
+    jest.advanceTimersByTime(60);
+    await flushPromises();
+
+    expect(respondSessionRequest).toHaveBeenCalledTimes(1);
+    expect(respondSessionRequest.mock.calls[0]?.[0]).toMatchObject({
+      topic: 't1',
+      response: { id: 1, jsonrpc: '2.0', error: { code: 4001, message: 'Request expired.' } },
+    });
+    await service.stop();
+    externalRequests.stop();
+    jest.useRealTimers();
+  });
+
+  it('responds Request canceled when ExternalRequestsService stops while WalletConnectService is running', async () => {
+    const { client, respondSessionRequest } = createMockClient({
+      getActiveSessions: () => ({ t1: session('t1', 'https://a.example') }),
+    });
+
+    const externalRequests = new ExternalRequestsService({
+      eventBus,
+      scheduler: createScheduler(),
+      now: () => 1_700_000_000_000,
+      logger,
+      defaultTtlMs: 10_000,
+      sweepIntervalMs: 10_000,
+      maxActiveRequests: 1,
+    });
+
+    const requested: CoreEventMap['external-requests/requested'][] = [];
+    eventBus.on('external-requests/requested', (payload) => requested.push(payload));
+
+    const service = new WalletConnectService({
+      eventBus,
+      logger,
+      clientFactory: async () => client as any,
+      closeTransportOnStop: false,
+      externalRequests,
+    } as any);
+
+    await service.start();
+
+    client.__emit('session_request', {
+      id: 1,
+      topic: 't1',
+      params: { chainId: 'eip155:1', request: { method: 'personal_sign', params: ['0xdeadbeef', '0x0000000000000000000000000000000000000001'] } },
+    } as unknown as WalletKitTypes.SessionRequest);
+
+    await flushPromises();
+    expect(requested).toHaveLength(1);
+
+    externalRequests.stop();
+    await flushPromises();
+
+    expect(respondSessionRequest).toHaveBeenCalledTimes(1);
+    expect(respondSessionRequest.mock.calls[0]?.[0]).toMatchObject({
+      topic: 't1',
+      response: { id: 1, jsonrpc: '2.0', error: { code: 4001, message: 'Request canceled.' } },
+    });
+
+    await service.stop();
+  });
+
+  it('does not respond if approved after WalletConnectService.stop()', async () => {
+    const { client, respondSessionRequest } = createMockClient({
+      getActiveSessions: () => ({ t1: session('t1', 'https://a.example') }),
+    });
+
+    const externalRequests = new ExternalRequestsService({
+      eventBus,
+      scheduler: createScheduler(),
+      now: () => 1_700_000_000_000,
+      logger,
+      defaultTtlMs: 10_000,
+      sweepIntervalMs: 10_000,
+      maxActiveRequests: 1,
+    });
+
+    const requested: CoreEventMap['external-requests/requested'][] = [];
+    eventBus.on('external-requests/requested', (payload) => requested.push(payload));
+
+    const service = new WalletConnectService({
+      eventBus,
+      logger,
+      clientFactory: async () => client as any,
+      closeTransportOnStop: false,
+      externalRequests,
+    } as any);
+
+    await service.start();
+
+    client.__emit('session_request', {
+      id: 1,
+      topic: 't1',
+      params: { chainId: 'eip155:1', request: { method: 'personal_sign', params: ['0xdeadbeef', '0x0000000000000000000000000000000000000001'] } },
+    } as unknown as WalletKitTypes.SessionRequest);
+
+    await flushPromises();
+
+    expect(requested).toHaveLength(1);
+
+    await service.stop();
+
+    externalRequests.approve({ requestId: requested[0].requestId });
+    await flushPromises();
+
+    expect(respondSessionRequest).toHaveBeenCalledTimes(0);
+
+    externalRequests.stop();
+  });
 });
