@@ -4,6 +4,7 @@ import type { RuntimeContext, RuntimeModule } from '@core/runtime/types';
 import { AccountService } from '@core/services/account';
 import { NetworkService } from '@core/services/network';
 import { SigningService } from '@core/services/signing';
+import { TransactionService } from '@core/services/transaction';
 import { WalletKit, type WalletKitTypes } from '@reown/walletkit';
 import { Core } from '@walletconnect/core';
 import type { CoreEventMap, EventBus } from '../eventBus';
@@ -48,6 +49,8 @@ export const WalletConnectModule: RuntimeModule = {
     const accountService = container.get(AccountService);
     const networkService = container.get(NetworkService);
     const signingService = container.get(SigningService);
+    const transactionService = container.get(TransactionService);
+
     const clientFactory = async () => {
       const core = new Core({ projectId });
       return WalletKit.init({ core, metadata });
@@ -64,6 +67,7 @@ export const WalletConnectModule: RuntimeModule = {
         accountService,
         networkService,
         signingService,
+        transactionService,
       }),
     );
   },

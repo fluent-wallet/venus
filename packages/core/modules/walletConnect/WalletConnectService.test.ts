@@ -182,9 +182,9 @@ describe('WalletConnectService', () => {
 
     expect(events).toEqual([{ reason: 'init' }]);
   });
-  it('responds UNSUPPORTED_METHOD for unsupported session_request and does not enqueue ExternalRequests', async () => {
-    const { client, respondSessionRequest } = createMockClient({ getActiveSessions: () => ({ t1: session('t1', 'https://a.example') }) });
 
+  it('responds 4200 Unsupported method for unsupported session_request and does not enqueue ExternalRequests', async () => {
+    const { client, respondSessionRequest } = createMockClient({ getActiveSessions: () => ({ t1: session('t1', 'https://a.example') }) });
     const requested: CoreEventMap['external-requests/requested'][] = [];
     eventBus.on('external-requests/requested', (payload) => requested.push(payload));
 
@@ -209,7 +209,7 @@ describe('WalletConnectService', () => {
     expect(respondSessionRequest).toHaveBeenCalledTimes(1);
     expect(respondSessionRequest.mock.calls[0]?.[0]).toMatchObject({
       topic: 't1',
-      response: { id: 1, jsonrpc: '2.0', error: { code: -32000, message: 'UNSUPPORTED_METHOD' } },
+      response: { id: 1, jsonrpc: '2.0', error: { code: 4200, message: 'Unsupported method.' } },
     });
 
     await service.stop();
@@ -418,7 +418,12 @@ describe('WalletConnectService', () => {
       signTypedDataV4: jest.fn().mockResolvedValue('0xsig_typed'),
     } as unknown as any;
 
+    const transactionService = {
+      sendDappTransaction: jest.fn().mockResolvedValue({ id: 'tx1', hash: '0xhash_dapp' }),
+    } as unknown as any;
+
     const requested: CoreEventMap['external-requests/requested'][] = [];
+
     eventBus.on('external-requests/requested', (payload) => requested.push(payload));
 
     const service = new WalletConnectService({
@@ -430,6 +435,7 @@ describe('WalletConnectService', () => {
       networkService,
       accountService,
       signingService,
+      transactionService,
     } as any);
 
     await service.start();
@@ -490,11 +496,25 @@ describe('WalletConnectService', () => {
       response: { id: 10, jsonrpc: '2.0', result: '0xsig_typed' },
     });
 
-    // 3) chainId mismatch -> error message UNSUPPORTED_NETWORK on approve
+    // 3) eth_sendTransaction
     client.__emit('session_request', {
-      id: 11,
+      id: 12,
       topic: 't1',
-      params: { chainId: 'eip155:999', request: { method: 'personal_sign', params: ['0xdeadbeef', '0x0000000000000000000000000000000000000001'] } },
+      params: {
+        chainId: 'eip155:1',
+        request: {
+          method: 'eth_sendTransaction',
+          params: [
+            {
+              from: '0x0000000000000000000000000000000000000001',
+              to: '0x0000000000000000000000000000000000000002',
+              data: '0x',
+              value: '0x0',
+              gas: '0x5208',
+            },
+          ],
+        },
+      },
     } as unknown as WalletKitTypes.SessionRequest);
     await flushPromises();
 
@@ -502,10 +522,95 @@ describe('WalletConnectService', () => {
     externalRequests.approve({ requestId: requested[2].requestId });
     await flushPromises();
 
+    expect(transactionService.sendDappTransaction).toHaveBeenCalledTimes(1);
+    expect(transactionService.sendDappTransaction).toHaveBeenCalledWith({
+      addressId: 'addr1',
+      request: expect.objectContaining({ from: '0x0000000000000000000000000000000000000001' }),
+    });
+
     expect(respondSessionRequest).toHaveBeenCalledTimes(3);
     expect(respondSessionRequest.mock.calls[2]?.[0]).toMatchObject({
       topic: 't1',
-      response: { id: 11, jsonrpc: '2.0', error: { code: -32000, message: 'UNSUPPORTED_NETWORK' } },
+      response: { id: 12, jsonrpc: '2.0', result: '0xhash_dapp' },
+    });
+
+    // 4) chainId mismatch -> error code 4902 on approve
+    client.__emit('session_request', {
+      id: 11,
+      topic: 't1',
+      params: { chainId: 'eip155:999', request: { method: 'personal_sign', params: ['0xdeadbeef', '0x0000000000000000000000000000000000000001'] } },
+    } as unknown as WalletKitTypes.SessionRequest);
+    await flushPromises();
+
+    expect(requested).toHaveLength(4);
+    externalRequests.approve({ requestId: requested[3].requestId });
+    await flushPromises();
+
+    expect(respondSessionRequest).toHaveBeenCalledTimes(4);
+    expect(respondSessionRequest.mock.calls[3]?.[0]).toMatchObject({
+      topic: 't1',
+      response: { id: 11, jsonrpc: '2.0', error: { code: 4902, message: 'Unrecognized chain ID.' } },
+    });
+
+    await service.stop();
+  });
+
+  it('responds -32602 Invalid params for eth_sendTransaction and does not call TransactionService', async () => {
+    const { client, respondSessionRequest } = createMockClient({ getActiveSessions: () => ({ t1: session('t1', 'https://a.example') }) });
+
+    const externalRequests = new ExternalRequestsService({
+      eventBus,
+      scheduler: createScheduler(),
+      now: () => 1_700_000_000_000,
+      logger,
+      defaultTtlMs: 10_000,
+      sweepIntervalMs: 10_000,
+      maxActiveRequests: 1,
+    });
+
+    const networkService = {
+      getCurrentNetwork: async () => ({ networkType: NetworkType.Ethereum, netId: 1 }),
+      getAllNetworks: async () => [{ networkType: NetworkType.Ethereum, netId: 1 }],
+    } as unknown as any;
+
+    const accountService = {
+      getCurrentAccount: async () => ({ id: 'acc1', currentAddressId: 'addr1', address: '0x0000000000000000000000000000000000000001' }),
+    } as unknown as any;
+
+    const transactionService = {
+      sendDappTransaction: jest.fn(),
+    } as unknown as any;
+
+    const requested: CoreEventMap['external-requests/requested'][] = [];
+    eventBus.on('external-requests/requested', (payload) => requested.push(payload));
+
+    const service = new WalletConnectService({
+      eventBus,
+      logger,
+      clientFactory: async () => client as any,
+      closeTransportOnStop: false,
+      externalRequests,
+      networkService,
+      accountService,
+      transactionService,
+    } as any);
+
+    await service.start();
+
+    client.__emit('session_request', {
+      id: 20,
+      topic: 't1',
+      params: { chainId: 'eip155:1', request: { method: 'eth_sendTransaction', params: [] } },
+    } as unknown as WalletKitTypes.SessionRequest);
+    await flushPromises();
+    externalRequests.approve({ requestId: requested[0].requestId });
+    await flushPromises();
+
+    expect(transactionService.sendDappTransaction).toHaveBeenCalledTimes(0);
+    expect(respondSessionRequest).toHaveBeenCalledTimes(1);
+    expect(respondSessionRequest.mock.calls[0]?.[0]).toMatchObject({
+      topic: 't1',
+      response: { id: 20, jsonrpc: '2.0', error: { code: -32602, message: 'Invalid params.' } },
     });
 
     await service.stop();
