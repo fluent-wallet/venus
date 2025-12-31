@@ -8,3 +8,5 @@ export const AUTH_MODULE_ID = 'auth' as const;
 export const EXTERNAL_REQUESTS_MODULE_ID = 'external-requests' as const;
 
 export const WALLET_CONNECT_MODULE_ID = 'wallet-connect' as const;
+
+export const ASSETS_SYNC_MODULE_ID = 'assets-sync' as const;
