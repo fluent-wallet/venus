@@ -54,6 +54,9 @@ export const WC_UNSUPPORTED_NETWORK = 'WC_UNSUPPORTED_NETWORK' as const;
 export const WC_APPROVE_SESSION_FAILED = 'WC_APPROVE_SESSION_FAILED' as const;
 export const WC_REJECT_SESSION_FAILED = 'WC_REJECT_SESSION_FAILED' as const;
 
+export const NFT_SYNC_FETCHER_NOT_CONFIGURED = 'NFT_SYNC_FETCHER_NOT_CONFIGURED' as const;
+export const NFT_SYNC_FETCH_FAILED = 'NFT_SYNC_FETCH_FAILED' as const;
+
 export type EventErrorCode = typeof EVENT_PAYLOAD_NOT_SERIALIZABLE;
 
 export type ChainErrorCode = typeof CHAIN_PROVIDER_NOT_FOUND;
@@ -84,3 +87,5 @@ export type WalletConnectErrorCode =
   | typeof WC_UNSUPPORTED_NETWORK
   | typeof WC_APPROVE_SESSION_FAILED
   | typeof WC_REJECT_SESSION_FAILED;
+
+export type NftSyncErrorCode = typeof NFT_SYNC_FETCHER_NOT_CONFIGURED | typeof NFT_SYNC_FETCH_FAILED;

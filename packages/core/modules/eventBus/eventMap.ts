@@ -22,6 +22,35 @@ type AssetsSyncSnapshot = {
   assets: IAsset[];
 };
 
+type NftSyncKey = { addressId: string; networkId: string; contractAddress: string };
+type NftSyncReason = 'manual' | 'poll' | 'start';
+
+type NftSyncErrorSnapshot = {
+  code: string;
+  message: string;
+  context?: Record<string, unknown>;
+};
+
+type NftSyncItemDetail = {
+  name: string;
+  description?: string | null;
+  icon?: string | null;
+  amount: string;
+  tokenId: string;
+};
+
+type NftSyncEventBase = {
+  key: NftSyncKey;
+  reason: NftSyncReason;
+  runId: string;
+  timestampMs: number;
+};
+
+type NftSyncSnapshot = {
+  contractAddress: string;
+  items: NftSyncItemDetail[];
+};
+
 export type CoreEventMap = {
   'account/current-changed': { account: IAccount };
 
@@ -41,8 +70,21 @@ export type CoreEventMap = {
     updatedCount: number;
     snapshot: AssetsSyncSnapshot;
   };
+
   'assets-sync/failed': AssetsSyncEventBase & {
     error: AssetsSyncErrorSnapshot;
+  };
+
+  'nft-sync/started': NftSyncEventBase;
+  'nft-sync/updated': NftSyncEventBase & {
+    updatedCount: number;
+  };
+  'nft-sync/succeeded': NftSyncEventBase & {
+    updatedCount: number;
+    snapshot: NftSyncSnapshot;
+  };
+  'nft-sync/failed': NftSyncEventBase & {
+    error: NftSyncErrorSnapshot;
   };
 
   'auth/credential-requested': { requestId: string; kind: 'password' | 'biometrics'; reason?: string };
