@@ -13,7 +13,7 @@ import { toChecksum } from '@core/utils/account';
 import { convertHexToBase32 } from '@core/utils/address';
 import { Q } from '@nozbe/watermelondb';
 import { inject, injectable } from 'inversify';
-import type { BackupSeedParams, RestoreSeedParams } from 'modules/BSIM/src';
+import type { BackupSeedParams, DeriveKeyParams, RestoreSeedParams } from 'modules/BSIM/src';
 
 export type ConnectAndSyncResult = {
   accounts: HardwareAccount[];
@@ -139,6 +139,18 @@ export class HardwareWalletService {
     const { adapter, deviceIdentifier } = await this.resolveBSIMAdapterForVault(vaultId);
     await adapter.connect(options?.signal ? { deviceIdentifier, signal: options.signal } : { deviceIdentifier });
     return options ? adapter.restoreSeed(params, options) : adapter.restoreSeed(params);
+  }
+
+  async runExportPubkeys(vaultId: string, options?: HardwareOperationOptions) {
+    const { adapter, deviceIdentifier } = await this.resolveBSIMAdapterForVault(vaultId);
+    await adapter.connect(options?.signal ? { deviceIdentifier, signal: options.signal } : { deviceIdentifier });
+    return options ? adapter.exportPubkeys(options) : adapter.exportPubkeys();
+  }
+
+  async runDeriveKey(vaultId: string, params: DeriveKeyParams, options?: HardwareOperationOptions): Promise<void> {
+    const { adapter, deviceIdentifier } = await this.resolveBSIMAdapterForVault(vaultId);
+    await adapter.connect(options?.signal ? { deviceIdentifier, signal: options.signal } : { deviceIdentifier });
+    return options ? adapter.deriveKey(params, options) : adapter.deriveKey(params);
   }
 
   private resolveAdapter(type: string, hardwareId?: string): IHardwareWallet {
