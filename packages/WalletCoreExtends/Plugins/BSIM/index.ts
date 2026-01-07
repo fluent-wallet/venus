@@ -27,6 +27,7 @@ import {
   getDefaultSignatureAlgorithm,
   isCardErrorCode,
   isTransportError,
+  type PubkeyRecord,
   type TransportError,
   TransportErrorCode,
 } from 'react-native-bsim';
@@ -362,6 +363,16 @@ export class BSIMPluginClass implements Plugin {
   }
 
   public getBSIMPublicKeys = async () => this.loadPubkeys();
+
+  /**
+   * Returns raw BSIM pubkey records from the card (coinType/index/alg/key).
+   */
+  public exportPubkeyRecords = async (): Promise<PubkeyRecord[]> => this.handleWalletCall(() => this.wallet.exportPubkeys());
+
+  /**
+   * Derives the next key for the given BIP44 coinType on the card.
+   */
+  public deriveKey = async (coinType: number, algorithm?: number): Promise<void> => this.handleWalletCall(() => this.wallet.deriveKey({ coinType, algorithm }));
 
   public getBSIMList = async () => {
     const list = await this.getBSIMPublicKeys();

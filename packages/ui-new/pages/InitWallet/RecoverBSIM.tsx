@@ -9,6 +9,7 @@ import QrScannerSheet, { type ParseResult } from '@pages/ExternalInputHandler/Qr
 import { StackActions, useNavigation, useTheme } from '@react-navigation/native';
 import { ChangeBPinStackName, type StackNavigation } from '@router/configs';
 import { verifyPasswordTag } from '@utils/BSIMCrypto';
+import { decodeBsimDerivationSnapshot } from '@utils/BSIMDerivationSnapshot';
 import { validateKey2Password } from '@utils/BSIMKey2PasswordValidation';
 import type { BsimQrPayload } from '@utils/BSIMTypes';
 import { handleBSIMHardwareUnavailable } from '@utils/handleBSIMHardwareUnavailable';
@@ -68,6 +69,41 @@ export const RecoverBSIM = () => {
       return;
     }
 
+    if (bsimQrPayload.d) {
+      try {
+        const snapshot = decodeBsimDerivationSnapshot(bsimQrPayload.d);
+        if (snapshot.length !== 0) {
+          const targets = new Map(snapshot.map((e) => [e.coinType, { alg: e.alg, maxIndex: e.maxIndex }]));
+
+          const current = await Plugins.BSIM.exportPubkeyRecords();
+          const currentMax = new Map<number, { maxIndex: number; alg: number }>();
+
+          for (const r of current) {
+            if (r.index <= 0) continue;
+            const existing = currentMax.get(r.coinType);
+            if (!existing || r.index > existing.maxIndex) {
+              currentMax.set(r.coinType, { maxIndex: r.index, alg: r.alg });
+            }
+          }
+
+          for (const [coinType, target] of targets) {
+            const curr = currentMax.get(coinType);
+            const alg = curr?.alg ?? target.alg;
+            const derive = Math.max(0, target.maxIndex - (curr?.maxIndex ?? 0));
+
+            for (let i = 0; i < derive; i += 1) {
+              await Plugins.BSIM.deriveKey(coinType, alg);
+            }
+          }
+        }
+      } catch (error: any) {
+        showMessage({
+          type: 'warning',
+          message: error?.message ?? 'Failed to sync derivation state',
+        });
+      }
+    }
+
     setShowSuccess(true);
   };
 
@@ -80,15 +116,11 @@ export const RecoverBSIM = () => {
 
   const handleParseInput = (raw: string): ParseResult<BsimQrPayload> => {
     try {
-      const parsedData = JSON.parse(atob(raw)) as Partial<BsimQrPayload>;
-      // check the validity of the data
-      if (!parsedData.seed_ct || !parsedData.iv || !parsedData.iccid_ct || !parsedData.pwd_tag) {
+      const data = JSON.parse(atob(raw)) as Partial<BsimQrPayload>;
+      if (!data.seed_ct || !data.iv || !data.iccid_ct || !data.pwd_tag) {
         return { ok: false, message: t('initWallet.recoverBSIM.invalidQRData') };
       }
-      return {
-        ok: true,
-        data: parsedData as BsimQrPayload,
-      };
+      return { ok: true, data: data as BsimQrPayload };
     } catch {
       return { ok: false, message: t('initWallet.recoverBSIM.invalidQRData') };
     }
