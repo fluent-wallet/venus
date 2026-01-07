@@ -39,22 +39,40 @@ const readU32BE = (bytes: Uint8Array, offset: number): number => {
 };
 
 /**
- * Encode derivation snapshot for backup QR.
+ * Encode BSIM derivation state to base64url for backup QR.
  *
- * Records which coinTypes have been derived to which index,
- * so after seed restore we can re-derive the same addresses.
+ * BSIM index is a global slot shared by all coinTypes. On restore we must replay
+ * derivations in order, otherwise addresses won't match the backup.
  *
- * Format:
- *   byte[0] = 0x64 (magic 'd')
- *   byte[1] = 0x01 (format version)
- *   byte[2] = count (number of entries, u8)
- *   then 6 bytes per entry:
- *     coinType  (u32 big-endian)
- *     alg       (u8)
- *     maxIndex  (u8)
+ * Encoding:
+ * 1. Drop index=0 (sentinel)
+ * 2. Sort by index, require contiguous 1..N
+ * 3. RLE consecutive (coinType, alg)
+ * 4. Serialize to bytes, convert to base64url
+ *
+ * Binary format (v1):
+ *   [0]    magic     = 0x64 ('d')
+ *   [1]    version   = 0x01
+ *   [2]    runCount  = u8
+ *   per run (6 bytes): coinType(u32 BE) + alg(u8) + count(u8)
+ *
+ * Example (index 1 -> coinType 96; index 2~6 -> coinType 60):
+ *
+ *   bytes (hex): 64 01 02  00 00 00 60 01 01  00 00 00 3c 01 05
+ *
+ *   [0]   [1]   [2]         [3][4][5][6]           [7]  [8]            [9][10][11][12]   [13]  [14]
+ *  +-----+-----+-----+  +--------------------------+-----+-----+  +--------------------------+-----+-----+
+ *  |0x64 |0x01 |0x02 |  | coinType=96 (0x00000060) |alg=1|cnt=1|  | coinType=60 (0x0000003C) |alg=1|cnt=5|
+ *  +-----+-----+-----+  +--------------------------+-----+-----+  +--------------------------+-----+-----+
+ *    ^     ^     ^                ^                ^     ^                ^                ^     ^
+ *    |     |     |                |                |     |                |                |     |
+ *   magic ver  runs            run[0]             alg  count           run[1]             alg  count
+ *
+ *   -> base64url: "ZAECAAAAYAEBAAAAPAEF"
  */
 export const encodeBsimDerivationSnapshot = (records: PubkeyRecord[]): string => {
-  const coinTypes = new Map<number, { alg: number; maxIndex: number }>();
+  // Map global BSIM `index` -> (coinType, alg), used to preserve derive order.
+  const byIndex = new Map<number, { coinType: number; alg: number }>();
 
   for (const r of records) {
     // BSIM uses index=0 as a sentinel (not an exported/usable account).
@@ -68,51 +86,60 @@ export const encodeBsimDerivationSnapshot = (records: PubkeyRecord[]): string =>
     if (!Number.isInteger(r.alg) || r.alg < 0 || r.alg > U8_MAX) {
       throw new Error(`Invalid alg: ${r.alg}`);
     }
-
-    const existing = coinTypes.get(r.coinType);
-    if (!existing) {
-      coinTypes.set(r.coinType, { alg: r.alg, maxIndex: r.index });
-      continue;
+    if (byIndex.has(r.index)) {
+      throw new Error(`Duplicate index: ${r.index}`);
     }
 
-    if (existing.alg !== r.alg) {
-      throw new Error(`Alg mismatch for coinType ${r.coinType}`);
-    }
+    byIndex.set(r.index, { coinType: r.coinType, alg: r.alg });
+  }
 
-    if (r.index > existing.maxIndex) {
-      existing.maxIndex = r.index;
+  const sorted = Array.from(byIndex.entries())
+    .map(([index, v]) => ({ index, coinType: v.coinType, alg: v.alg }))
+    .sort((a, b) => a.index - b.index);
+
+  // Require 1..N contiguous indexes so restore can safely replay in order.
+  for (let i = 0; i < sorted.length; i += 1) {
+    const expected = i + 1;
+    if (sorted[i].index !== expected) {
+      throw new Error(`Index gap: expected ${expected}, got ${sorted[i].index}`);
     }
   }
 
-  const entries = Array.from(coinTypes.entries())
-    .map(([coinType, v]) => ({ coinType, alg: v.alg, maxIndex: v.maxIndex }))
-    .sort((a, b) => a.coinType - b.coinType);
-
-  if (entries.length > U8_MAX) {
-    throw new Error('Too many coinTypes');
+  const runs: Array<{ coinType: number; alg: number; count: number }> = [];
+  for (const item of sorted) {
+    const last = runs.at(-1);
+    if (last && last.coinType === item.coinType && last.alg === item.alg) {
+      last.count += 1;
+      if (last.count > U8_MAX) throw new Error(`Run too long: ${last.count}`);
+    } else {
+      runs.push({ coinType: item.coinType, alg: item.alg, count: 1 });
+    }
   }
 
-  const bytes: number[] = [MAGIC, FORMAT_VERSION, entries.length];
+  if (runs.length > U8_MAX) {
+    throw new Error('Too many runs');
+  }
 
-  for (const e of entries) {
-    const [b0, b1, b2, b3] = encodeU32BE(e.coinType);
-    bytes.push(b0, b1, b2, b3, e.alg, e.maxIndex);
+  const bytes: number[] = [MAGIC, FORMAT_VERSION, runs.length];
+
+  for (const run of runs) {
+    const [b0, b1, b2, b3] = encodeU32BE(run.coinType);
+    bytes.push(b0, b1, b2, b3, run.alg, run.count);
   }
 
   return toBase64Url(bytesToBase64(new Uint8Array(bytes)));
 };
 
-export type DerivationEntry = {
+export type DerivationRun = {
   coinType: number;
   alg: number;
-  maxIndex: number;
+  count: number;
 };
-
 /**
  * Decode derivation snapshot from backup QR.
  * Returns empty array if input is empty.
  */
-export const decodeBsimDerivationSnapshot = (d: string): DerivationEntry[] => {
+export const decodeBsimDerivationSnapshot = (d: string): DerivationRun[] => {
   if (!d?.trim()) return [];
 
   const bytes = fromBase64Url(d.trim());
@@ -121,21 +148,24 @@ export const decodeBsimDerivationSnapshot = (d: string): DerivationEntry[] => {
   if (bytes[0] !== MAGIC) throw new Error('Invalid magic');
   if (bytes[1] !== FORMAT_VERSION) throw new Error(`Unsupported version: ${bytes[1]}`);
 
-  const count = bytes[2];
-  const expectedLen = 3 + count * ENTRY_SIZE;
+  const runCount = bytes[2];
+  const expectedLen = 3 + runCount * ENTRY_SIZE;
   if (bytes.length < expectedLen) throw new Error('Length mismatch');
 
-  const entries: DerivationEntry[] = [];
+  const runs: DerivationRun[] = [];
   let offset = 3;
 
-  for (let i = 0; i < count; i += 1) {
-    entries.push({
+  for (let i = 0; i < runCount; i += 1) {
+    const count = bytes[offset + 5];
+    if (count <= 0) throw new Error('Invalid run count');
+
+    runs.push({
       coinType: readU32BE(bytes, offset),
       alg: bytes[offset + 4],
-      maxIndex: bytes[offset + 5],
+      count,
     });
     offset += ENTRY_SIZE;
   }
 
-  return entries;
+  return runs;
 };

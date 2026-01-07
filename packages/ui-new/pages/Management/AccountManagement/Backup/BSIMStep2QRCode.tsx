@@ -72,12 +72,10 @@ export const BSIMStep2QRCode: React.FC<BackupScreenProps<typeof BackupBSIMQ2RCod
           pwd_tag: pwdTagHex,
           d,
         };
-        const jsonStr = JSON.stringify(payload);
-        const qrDataBase64 = btoa(jsonStr);
+        const qrDataBase64 = btoa(JSON.stringify(payload));
 
         setQrData(qrDataBase64);
       } catch (error: any) {
-        console.error('Failed to generate QR code:', error);
         if (handleBSIMHardwareUnavailable(error, rootNavigation)) {
           return;
         }

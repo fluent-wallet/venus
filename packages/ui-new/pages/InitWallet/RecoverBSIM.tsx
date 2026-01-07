@@ -39,7 +39,7 @@ export const RecoverBSIM = () => {
   const {
     control,
     handleSubmit,
-    formState: { errors, isValid },
+    formState: { errors, isValid, isSubmitting },
   } = useForm<RecoverFormData>({
     mode: 'all',
     defaultValues: {
@@ -71,29 +71,12 @@ export const RecoverBSIM = () => {
 
     if (bsimQrPayload.d) {
       try {
-        const snapshot = decodeBsimDerivationSnapshot(bsimQrPayload.d);
-        if (snapshot.length !== 0) {
-          const targets = new Map(snapshot.map((e) => [e.coinType, { alg: e.alg, maxIndex: e.maxIndex }]));
+        const runs = decodeBsimDerivationSnapshot(bsimQrPayload.d);
 
-          const current = await Plugins.BSIM.exportPubkeyRecords();
-          const currentMax = new Map<number, { maxIndex: number; alg: number }>();
-
-          for (const r of current) {
-            if (r.index <= 0) continue;
-            const existing = currentMax.get(r.coinType);
-            if (!existing || r.index > existing.maxIndex) {
-              currentMax.set(r.coinType, { maxIndex: r.index, alg: r.alg });
-            }
-          }
-
-          for (const [coinType, target] of targets) {
-            const curr = currentMax.get(coinType);
-            const alg = curr?.alg ?? target.alg;
-            const derive = Math.max(0, target.maxIndex - (curr?.maxIndex ?? 0));
-
-            for (let i = 0; i < derive; i += 1) {
-              await Plugins.BSIM.deriveKey(coinType, alg);
-            }
+        for (const run of runs) {
+          // Serial derivation is required by BSIM hardware
+          for (let i = 0; i < run.count; i += 1) {
+            await Plugins.BSIM.deriveKey(run.coinType, run.alg);
           }
         }
       } catch (error: any) {
@@ -208,7 +191,7 @@ export const RecoverBSIM = () => {
             </BottomSheetContent>
 
             <BottomSheetFooter>
-              <Button testID="createPasswordButton" onPress={handleSubmit(handleNext)} disabled={!isValid}>
+              <Button testID="createPasswordButton" onPress={handleSubmit(handleNext)} disabled={!isValid || isSubmitting} loading={isSubmitting}>
                 {t('common.next')}
               </Button>
             </BottomSheetFooter>
