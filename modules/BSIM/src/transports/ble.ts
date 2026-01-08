@@ -209,6 +209,99 @@ const withTimeout = async <T>(
   });
 };
 
+export type BleDeviceScanResult = {
+  deviceId: string;
+  name: string;
+};
+
+export type BleDeviceScanOptions = {
+  namePrefix?: string; // default: 'CT'
+  serviceUuids?: string[]; // default: empty (no service filter)
+};
+
+export type BleDeviceScanHandle = {
+  stop(): void;
+};
+
+const matchesNamePrefixIgnoreCase = (deviceName: string | null | undefined, prefix: string) => {
+  if (!deviceName) return false;
+  if (!prefix) return true;
+  return deviceName.toUpperCase().startsWith(prefix.toUpperCase());
+};
+
+export const startBleDeviceScan = (
+  options: BleDeviceScanOptions | undefined,
+  onDevice: (device: BleDeviceScanResult) => void,
+  onError?: (error: TransportError) => void,
+): BleDeviceScanHandle => {
+  if (Platform.OS !== 'ios' && Platform.OS !== 'android') {
+    throw new TransportError(TransportErrorCode.UNSUPPORTED_PLATFORM, 'BLE scan requires iOS or Android');
+  }
+
+  const namePrefix = options?.namePrefix ?? 'CT';
+  const serviceUuidsFilter = options?.serviceUuids?.length ? options.serviceUuids : null;
+
+  const bleManager = new BleManager();
+  const timers = { setTimeout, clearTimeout };
+
+  const lastSeenNameByDeviceId = new Map<string, string>();
+  let isStopped = false;
+  let didReportError = false;
+
+  const stop = () => {
+    if (isStopped) return;
+    isStopped = true;
+    lastSeenNameByDeviceId.clear();
+    try {
+      bleManager.stopDeviceScan();
+    } catch {
+      // ignore
+    }
+
+    bleManager.destroy();
+  };
+
+  const reportErrorAndStop = (error: TransportError) => {
+    if (didReportError) return;
+    didReportError = true;
+    onError?.(error);
+    stop();
+  };
+
+  const start = async () => {
+    try {
+      await waitForAdapterReady(bleManager, DEFAULT_SCAN_TIMEOUT_MS, timers, noopLogger);
+      if (isStopped) return;
+
+      bleManager.startDeviceScan(serviceUuidsFilter, null, (error, device) => {
+        if (isStopped) return;
+
+        if (error) {
+          reportErrorAndStop(wrapBleError(TransportErrorCode.SCAN_FAILED, error, 'BLE scan failed'));
+          return;
+        }
+
+        if (!device?.id) return;
+        if (!matchesNamePrefixIgnoreCase(device.name, namePrefix)) return;
+        if (!device.name) return;
+
+        const previousName = lastSeenNameByDeviceId.get(device.id);
+        if (previousName === device.name) return;
+
+        lastSeenNameByDeviceId.set(device.id, device.name);
+        onDevice({ deviceId: device.id, name: device.name });
+      });
+    } catch (error) {
+      const wrapped = wrapNativeError(TransportErrorCode.SCAN_FAILED, error, 'Failed to start BLE scan');
+      reportErrorAndStop(wrapped);
+    }
+  };
+
+  start();
+
+  return { stop };
+};
+
 const scanForDevice = async (
   manager: BleManager,
   timeoutMs: number,
