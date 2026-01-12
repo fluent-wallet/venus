@@ -553,6 +553,7 @@ export const createBleTransport = (deps: CreateBleTransportDeps = {}): Transport
   let monitorSubscription: Subscription | undefined;
   let disconnectSubscription: Subscription | undefined;
   let pendingResponse: PendingResponse | undefined;
+  let didLogFirstNotify = false;
   let encryption: BleEncryption = passthroughEncryption;
 
   let currentAid: HexString | undefined;
@@ -587,6 +588,8 @@ export const createBleTransport = (deps: CreateBleTransportDeps = {}): Transport
 
     disconnectSubscription?.remove();
     disconnectSubscription = undefined;
+
+    didLogFirstNotify = false;
 
     if (connectedDeviceId && manager) {
       try {
@@ -667,6 +670,15 @@ export const createBleTransport = (deps: CreateBleTransportDeps = {}): Transport
         selectAid = true,
       } = options ?? {};
 
+      logger('ble.open.options', {
+        deviceIdProvided: !!deviceId,
+        deviceId,
+        scanTimeoutMs,
+        connectTimeoutMs,
+        responseTimeoutMs,
+        filter,
+      });
+
       let normalizedAid: HexString;
       try {
         normalizedAid = normalizeHex(aid);
@@ -703,6 +715,12 @@ export const createBleTransport = (deps: CreateBleTransportDeps = {}): Transport
         }
 
         connectedDeviceId = device.id;
+        didLogFirstNotify = false;
+
+        logger('ble.connect.success', {
+          deviceId: device.id,
+          via: deviceId ? 'deviceId' : 'scan',
+        });
 
         disconnectSubscription = managerInstance.onDeviceDisconnected(device.id, (error) => {
           logger('ble.disconnected', { deviceId: device.id, error });
@@ -724,6 +742,8 @@ export const createBleTransport = (deps: CreateBleTransportDeps = {}): Transport
         writeUuid = resolved.writeUuid;
         notifyUuid = resolved.notifyUuid;
 
+        logger('ble.gatt.ready', { deviceId: device.id, serviceUuid, writeUuid, notifyUuid });
+
         monitorSubscription = managerInstance.monitorCharacteristicForDevice(device.id, serviceUuid, notifyUuid, (error, characteristic) => {
           if (error) {
             cleanupPending(
@@ -737,6 +757,10 @@ export const createBleTransport = (deps: CreateBleTransportDeps = {}): Transport
           }
           if (!characteristic?.value) {
             return;
+          }
+          if (!didLogFirstNotify) {
+            didLogFirstNotify = true;
+            logger('ble.notify.first_value', { deviceId: device.id, serviceUuid, notifyUuid });
           }
           const decoded = fromBase64(characteristic.value);
           try {
@@ -768,6 +792,8 @@ export const createBleTransport = (deps: CreateBleTransportDeps = {}): Transport
           }
 
           const frames = buildOutgoingFrames(normalized, encryption);
+
+          logger('ble.transmit.frames', { deviceId: connectedDeviceId, frameCount: frames.length });
 
           const timeoutMs = responseTimeoutMs > 0 ? responseTimeoutMs : DEFAULT_RESPONSE_TIMEOUT_MS;
 
@@ -823,6 +849,18 @@ export const createBleTransport = (deps: CreateBleTransportDeps = {}): Transport
               } catch (error) {
                 const benign = isBenignWriteError(error);
                 const retryable = !benign && shouldRetryPairing(error);
+
+                logger('ble.write.error', {
+                  attempt: attempt + 1,
+                  deviceId: connectedDeviceId,
+                  errorCode: (error as any)?.errorCode,
+                  attErrorCode: (error as any)?.attErrorCode,
+                  reason: (error as any)?.reason,
+                  message: (error as any)?.message,
+                  benign,
+                  retryable,
+                });
+
                 if (benign) {
                   return;
                 }
