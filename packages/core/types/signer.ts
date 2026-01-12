@@ -37,8 +37,19 @@ export interface HardwareWalletCapabilities {
 }
 
 export interface HardwareConnectOptions {
+  /**
+   * Transport selection.
+   * BSIM adapter defaults by platform when omitted (Android: 'apdu', iOS: 'ble').
+   */
   transport?: 'apdu' | 'ble';
+
+  /**
+   * BSIM:
+   * - transport === 'ble': BLE `deviceId` (from scan result), used for direct connect/reconnect.
+   * - transport === 'apdu': ignored.
+   */
   deviceIdentifier?: string;
+
   signal?: AbortSignal;
 }
 

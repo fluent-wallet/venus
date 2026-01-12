@@ -44,7 +44,7 @@ export interface CreatePrivateKeyVaultInput {
 /**
  * Options for creating a new BSIM vault.
  * - If `accounts` is provided, VaultService uses it directly (legacy/compatible path).
- * - If `accounts` is omitted, VaultService will call HardwareWalletService.connectAndSync('BSIM', connectOptions).
+ * - If `accounts` is omitted, VaultService will call HardwareWalletService.connectAndSync(HARDWARE_WALLET_TYPES.BSIM, connectOptions).
  */
 export interface CreateBSIMVaultInput {
   accounts?: Array<{ index: number; hexAddress: string }>;

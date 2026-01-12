@@ -8,6 +8,7 @@ import VaultSourceType from '@core/database/models/Vault/VaultSourceType';
 import VaultType from '@core/database/models/Vault/VaultType';
 import TableName from '@core/database/TableName';
 import { CORE_IDENTIFIERS } from '@core/di';
+import { HARDWARE_WALLET_TYPES } from '@core/hardware/bsim/constants';
 import { NetworkType } from '@core/types';
 import type { CryptoTool } from '@core/types/crypto';
 import { fromPrivate, toChecksum } from '@core/utils/account';
@@ -196,7 +197,7 @@ export class VaultService {
     let resolvedHardwareDeviceId = input.hardwareDeviceId;
 
     if (!resolvedAccounts) {
-      const result = await this.hardwareWalletService.connectAndSync('BSIM', input.connectOptions);
+      const result = await this.hardwareWalletService.connectAndSync(HARDWARE_WALLET_TYPES.BSIM, input.connectOptions);
       resolvedAccounts = result.accounts.map((account) => ({
         index: account.index,
         hexAddress: account.address,

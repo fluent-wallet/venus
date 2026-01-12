@@ -217,8 +217,9 @@ describe('Service integration', () => {
     await seedNetwork(database, { definitionKey: 'Ethereum Sepolia', selected: false });
 
     const vault = await vaultService.createBSIMVault({
-      connectOptions: { deviceIdentifier: 'mock-device' },
+      connectOptions: { transport: 'ble', deviceIdentifier: 'mock-device' },
     });
+
     expect(vault.hardwareDeviceId).toBe('mock-device');
     await vaultService.createBSIMVault({
       accounts: [{ index: 0, hexAddress: DEFAULT_HEX_ADDRESS }],

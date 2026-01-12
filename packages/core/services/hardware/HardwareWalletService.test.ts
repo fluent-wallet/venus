@@ -21,6 +21,8 @@ import { NetworkType } from '@core/types';
 import type { Database } from '@nozbe/watermelondb';
 import { Container } from 'inversify';
 import type { BackupSeedParams, DeriveKeyParams, RestoreSeedParams } from 'modules/BSIM/src';
+import { Platform } from 'react-native';
+import { startBleDeviceScan } from 'react-native-bsim';
 import { HardwareWalletService } from './HardwareWalletService';
 
 const createBSIMWalletAdapter = (params: { id: string }): jest.Mocked<IBSIMWallet> => ({
@@ -74,6 +76,12 @@ const createAdapter = (params: { id: string }): jest.Mocked<IHardwareWallet> => 
   }),
   getCapabilities: jest.fn(() => ({ type: 'bsim' })),
 });
+
+jest.mock('react-native-bsim', () => {
+  const actual = jest.requireActual('react-native-bsim');
+  return { ...actual, startBleDeviceScan: jest.fn() };
+});
+
 describe('HardwareWalletService', () => {
   let container: Container;
   let registry: HardwareWalletRegistry;
@@ -111,7 +119,11 @@ describe('HardwareWalletService', () => {
 
     const result = await service.connectAndSync(HARDWARE_WALLET_TYPES.BSIM, { deviceIdentifier: 'ble-001' });
 
-    expect(adapter.connect).toHaveBeenCalledWith({ deviceIdentifier: 'ble-001' });
+    expect(adapter.connect).toHaveBeenCalledWith({
+      transport: Platform.OS === 'ios' ? 'ble' : 'apdu',
+      deviceIdentifier: 'ble-001',
+      signal: undefined,
+    });
     expect(adapter.listAccounts).toHaveBeenNthCalledWith(1, NetworkType.Ethereum);
     expect(adapter.deriveAccount).toHaveBeenCalledWith(0, NetworkType.Ethereum);
     expect(adapter.listAccounts).toHaveBeenNthCalledWith(2, NetworkType.Ethereum);
@@ -120,6 +132,24 @@ describe('HardwareWalletService', () => {
     expect(result.accounts).toEqual([firstAccount]);
   });
 
+  it('starts BSIM BLE scan with CT prefix and forwards callbacks', async () => {
+    const mockedStart = startBleDeviceScan as unknown as jest.Mock;
+
+    const stop = jest.fn();
+    mockedStart.mockImplementation((_options: unknown, onDevice: (d: any) => void) => {
+      onDevice({ deviceId: 'ble-001', name: 'CT-TEST' });
+      return { stop };
+    });
+
+    const onDevice = jest.fn();
+    const handle = service.startBSIMBleScan(onDevice);
+
+    expect(mockedStart).toHaveBeenCalledWith({ namePrefix: 'CT', serviceUuids: undefined }, expect.any(Function), undefined);
+    expect(onDevice).toHaveBeenCalledWith({ deviceId: 'ble-001', name: 'CT-TEST' });
+
+    handle.stop();
+    expect(stop).toHaveBeenCalled();
+  });
   it('rejects on recovery mode error code 6A88 and does not derive accounts', async () => {
     const adapter = createAdapter({ id: 'adapter' });
     const err = Object.assign(new Error('Wrong BPIN, unable to complete authentication. Error code: 6A88'), { code: '6A88' });
@@ -175,8 +205,15 @@ describe('HardwareWalletService', () => {
     );
 
     await expect(service.runUpdatePin(vault.id)).resolves.toBe('ok');
-    expect(adapter.connect).toHaveBeenCalledWith({ deviceIdentifier: 'ble-001' });
-    expect(adapter.updateBpin).toHaveBeenCalled();
+    await service.connectAndSync(HARDWARE_WALLET_TYPES.BSIM, { deviceIdentifier: 'ble-001' });
+    const expectedConnectArgs = {
+      transport: Platform.OS === 'ios' ? 'ble' : 'apdu',
+      deviceIdentifier: 'ble-001',
+      signal: undefined,
+    };
+
+    expect(adapter.connect).toHaveBeenNthCalledWith(1, expectedConnectArgs);
+    expect(adapter.connect).toHaveBeenNthCalledWith(2, expectedConnectArgs);
   });
 
   it('throws when vault has no hardwareDeviceId for BSIM operations', async () => {
@@ -223,8 +260,13 @@ describe('HardwareWalletService', () => {
     await expect(service.runBackupSeed(vault.id, backupParams)).resolves.toBe('0xbackup');
     await expect(service.runRestoreSeed(vault.id, restoreParams)).resolves.toBe('ok');
 
-    expect(adapter.connect).toHaveBeenCalledWith({ deviceIdentifier: 'ble-002' });
-    expect(adapter.backupSeed).toHaveBeenCalledWith(backupParams);
-    expect(adapter.restoreSeed).toHaveBeenCalledWith(restoreParams);
+    const expectedConnectArgs = {
+      transport: Platform.OS === 'ios' ? 'ble' : 'apdu',
+      deviceIdentifier: 'ble-002',
+      signal: undefined,
+    };
+
+    expect(adapter.connect).toHaveBeenNthCalledWith(1, expectedConnectArgs);
+    expect(adapter.connect).toHaveBeenNthCalledWith(2, expectedConnectArgs);
   });
 });

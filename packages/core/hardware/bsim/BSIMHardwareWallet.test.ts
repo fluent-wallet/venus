@@ -49,7 +49,7 @@ const createAdapter = (walletOverrides: Partial<MockWallet> = {}) => {
   const wallet = createStubWallet(walletOverrides);
   const factory = jest.fn(() => wallet);
   const adapter = new BSIMHardwareWallet({ walletFactory: factory });
-  return { adapter, wallet };
+  return { adapter, wallet, factory };
 };
 
 const buildTransactionPayload = (): Extract<SigningPayload, { payloadKind: 'transaction' }> => ({

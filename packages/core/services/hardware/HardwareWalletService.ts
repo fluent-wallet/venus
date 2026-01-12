@@ -14,11 +14,17 @@ import { convertHexToBase32 } from '@core/utils/address';
 import { Q } from '@nozbe/watermelondb';
 import { inject, injectable } from 'inversify';
 import type { BackupSeedParams, DeriveKeyParams, RestoreSeedParams } from 'modules/BSIM/src';
+import { Platform } from 'react-native';
+import { startBleDeviceScan, type TransportError } from 'react-native-bsim';
 
 export type ConnectAndSyncResult = {
   accounts: HardwareAccount[];
   deviceId?: string;
 };
+
+export type BSIMBleScanResult = { deviceId: string; name: string };
+export type BSIMBleScanHandle = { stop(): void };
+export type BSIMBleScanOptions = { serviceUuids?: string[] };
 
 @injectable()
 export class HardwareWalletService {
@@ -27,6 +33,10 @@ export class HardwareWalletService {
 
   @inject(CORE_IDENTIFIERS.DB)
   private readonly database!: Database;
+
+  private resolveDefaultTransport(): 'apdu' | 'ble' {
+    return Platform.OS === 'ios' ? 'ble' : 'apdu';
+  }
 
   async connectAndSync(type: string, options?: HardwareConnectOptions): Promise<ConnectAndSyncResult> {
     if (type !== HARDWARE_WALLET_TYPES.BSIM) {
@@ -37,7 +47,11 @@ export class HardwareWalletService {
 
     const adapter = this.resolveAdapter(type, deviceId);
 
-    await adapter.connect(options);
+    await adapter.connect({
+      transport: options?.transport ?? this.resolveDefaultTransport(),
+      deviceIdentifier: deviceId,
+      signal: options?.signal,
+    });
 
     let accounts = await this.listAccounts(adapter);
 
@@ -49,6 +63,13 @@ export class HardwareWalletService {
     return { accounts, deviceId };
   }
 
+  startBSIMBleScan(onDevice: (device: BSIMBleScanResult) => void, onError?: (error: TransportError) => void, options?: BSIMBleScanOptions): BSIMBleScanHandle {
+    return startBleDeviceScan(
+      { namePrefix: 'CT', serviceUuids: options?.serviceUuids },
+      (device) => onDevice({ deviceId: device.deviceId, name: device.name }),
+      onError,
+    );
+  }
   async syncDerivedAccounts(vaultId: string, targetIndex: number): Promise<void> {
     if (!Number.isInteger(targetIndex) || targetIndex < 0) {
       throw new Error(`targetIndex must be a non-negative integer.`);
@@ -125,31 +146,51 @@ export class HardwareWalletService {
 
   async runUpdatePin(vaultId: string, options?: HardwareOperationOptions): Promise<'ok'> {
     const { adapter, deviceIdentifier } = await this.resolveBSIMAdapterForVault(vaultId);
-    await adapter.connect(options?.signal ? { deviceIdentifier, signal: options.signal } : { deviceIdentifier });
+    await adapter.connect({
+      transport: this.resolveDefaultTransport(),
+      deviceIdentifier,
+      signal: options?.signal,
+    });
     return options ? adapter.updateBpin(options) : adapter.updateBpin();
   }
 
   async runBackupSeed(vaultId: string, params: BackupSeedParams, options?: HardwareOperationOptions): Promise<string> {
     const { adapter, deviceIdentifier } = await this.resolveBSIMAdapterForVault(vaultId);
-    await adapter.connect(options?.signal ? { deviceIdentifier, signal: options.signal } : { deviceIdentifier });
+    await adapter.connect({
+      transport: this.resolveDefaultTransport(),
+      deviceIdentifier,
+      signal: options?.signal,
+    });
     return options ? adapter.backupSeed(params, options) : adapter.backupSeed(params);
   }
 
   async runRestoreSeed(vaultId: string, params: RestoreSeedParams, options?: HardwareOperationOptions): Promise<'ok'> {
     const { adapter, deviceIdentifier } = await this.resolveBSIMAdapterForVault(vaultId);
-    await adapter.connect(options?.signal ? { deviceIdentifier, signal: options.signal } : { deviceIdentifier });
+    await adapter.connect({
+      transport: this.resolveDefaultTransport(),
+      deviceIdentifier,
+      signal: options?.signal,
+    });
     return options ? adapter.restoreSeed(params, options) : adapter.restoreSeed(params);
   }
 
   async runExportPubkeys(vaultId: string, options?: HardwareOperationOptions) {
     const { adapter, deviceIdentifier } = await this.resolveBSIMAdapterForVault(vaultId);
-    await adapter.connect(options?.signal ? { deviceIdentifier, signal: options.signal } : { deviceIdentifier });
+    await adapter.connect({
+      transport: this.resolveDefaultTransport(),
+      deviceIdentifier,
+      signal: options?.signal,
+    });
     return options ? adapter.exportPubkeys(options) : adapter.exportPubkeys();
   }
 
   async runDeriveKey(vaultId: string, params: DeriveKeyParams, options?: HardwareOperationOptions): Promise<void> {
     const { adapter, deviceIdentifier } = await this.resolveBSIMAdapterForVault(vaultId);
-    await adapter.connect(options?.signal ? { deviceIdentifier, signal: options.signal } : { deviceIdentifier });
+    await adapter.connect({
+      transport: this.resolveDefaultTransport(),
+      deviceIdentifier,
+      signal: options?.signal,
+    });
     return options ? adapter.deriveKey(params, options) : adapter.deriveKey(params);
   }
 
