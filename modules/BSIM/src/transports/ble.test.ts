@@ -486,26 +486,11 @@ describe('createBleTransport', () => {
     await session.close();
   });
 
-  it('fails to open when scan times out', async () => {
+  it('fails to open when deviceId is missing', async () => {
     const mock = createMockManager();
     const transport = buildTransport(mock);
 
-    const openPromise = transport.open({ scanTimeoutMs: 1, responseTimeoutMs: 5_000 });
-    const expectation = expect(openPromise).rejects.toMatchObject({ code: TransportErrorCode.SCAN_FAILED });
-    await jest.advanceTimersByTimeAsync(1);
-    await flushMicrotasks();
-    await expectation;
-  });
-
-  it('fails to open when scan returns error', async () => {
-    const mock = createMockManager();
-    const transport = buildTransport(mock);
-
-    const openPromise = transport.open({});
-    await flushMicrotasks();
-    mock.emitScanError(new Error('scan fail'));
-    await flushMicrotasks();
-    await expect(openPromise).rejects.toMatchObject({ code: TransportErrorCode.SCAN_FAILED });
+    await expect(transport.open({ scanTimeoutMs: 1, responseTimeoutMs: 5_000 })).rejects.toMatchObject({ code: TransportErrorCode.DEVICE_NOT_FOUND });
   });
 
   it('retries characteristic write while pairing completes', async () => {

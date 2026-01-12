@@ -302,54 +302,54 @@ export const startBleDeviceScan = (
   return { stop };
 };
 
-const scanForDevice = async (
-  manager: BleManager,
-  timeoutMs: number,
-  identifiers: BleCharacteristicIds,
-  timers: { setTimeout: typeof setTimeout; clearTimeout: typeof clearTimeout },
-  filter: BleTransportOptions['filter'],
-  logger: (event: string, context?: Record<string, unknown>) => void,
-) => {
-  return new Promise<Device>((resolve, reject) => {
-    let stopped = false;
-
-    const stop = () => {
-      if (!stopped) {
-        manager.stopDeviceScan();
-        stopped = true;
-      }
-    };
-
-    const timer = timers.setTimeout(() => {
-      stop();
-      reject(new TransportError(TransportErrorCode.SCAN_FAILED, 'BLE scan timed out'));
-    }, timeoutMs);
-
-    const serviceUuids = (filter?.serviceUuids?.length ?? 0) ? filter?.serviceUuids : identifiers.serviceUuid ? [identifiers.serviceUuid] : undefined;
-
-    manager.startDeviceScan(serviceUuids ?? null, null, (error, device) => {
-      if (error) {
-        stop();
-        timers.clearTimeout(timer);
-        reject(wrapBleError(TransportErrorCode.SCAN_FAILED, error, 'BLE scan failed'));
-        return;
-      }
-
-      if (!device) {
-        return;
-      }
-
-      if (filter?.localNamePrefix && !device.name?.startsWith(filter.localNamePrefix)) {
-        return;
-      }
-
-      logger('ble.scan.match', { deviceId: device.id, name: device.name });
-      stop();
-      timers.clearTimeout(timer);
-      resolve(device);
-    });
-  });
-};
+// const scanForDevice = async (
+//   manager: BleManager,
+//   timeoutMs: number,
+//   identifiers: BleCharacteristicIds,
+//   timers: { setTimeout: typeof setTimeout; clearTimeout: typeof clearTimeout },
+//   filter: BleTransportOptions['filter'],
+//   logger: (event: string, context?: Record<string, unknown>) => void,
+// ) => {
+//   return new Promise<Device>((resolve, reject) => {
+//     let stopped = false;
+//
+//     const stop = () => {
+//       if (!stopped) {
+//         manager.stopDeviceScan();
+//         stopped = true;
+//       }
+//     };
+//
+//     const timer = timers.setTimeout(() => {
+//       stop();
+//       reject(new TransportError(TransportErrorCode.SCAN_FAILED, 'BLE scan timed out'));
+//     }, timeoutMs);
+//
+//     const serviceUuids = (filter?.serviceUuids?.length ?? 0) ? filter?.serviceUuids : identifiers.serviceUuid ? [identifiers.serviceUuid] : undefined;
+//
+//     manager.startDeviceScan(serviceUuids ?? null, null, (error, device) => {
+//       if (error) {
+//         stop();
+//         timers.clearTimeout(timer);
+//         reject(wrapBleError(TransportErrorCode.SCAN_FAILED, error, 'BLE scan failed'));
+//         return;
+//       }
+//
+//       if (!device) {
+//         return;
+//       }
+//
+//       if (filter?.localNamePrefix && !device.name?.startsWith(filter.localNamePrefix)) {
+//         return;
+//       }
+//
+//       logger('ble.scan.match', { deviceId: device.id, name: device.name });
+//       stop();
+//       timers.clearTimeout(timer);
+//       resolve(device);
+//     });
+//   });
+// };
 
 const ensureCharacteristics = async (manager: BleManager, deviceId: string, identifiers: BleCharacteristicIds) => {
   const services = await manager.servicesForDevice(deviceId);
@@ -691,35 +691,29 @@ export const createBleTransport = (deps: CreateBleTransportDeps = {}): Transport
       if (!isOpen) {
         await waitForAdapterReady(managerInstance, scanTimeoutMs, timers, logger);
 
+        if (!deviceId) {
+          throw new TransportError(TransportErrorCode.DEVICE_NOT_FOUND, 'BLE deviceId is required. Scan CT devices and connect using the selected deviceId.');
+        }
+
         if (encryptionKey && !deps.encryptionFactory) {
           throw new TransportError(TransportErrorCode.UNSUPPORTED_PLATFORM, 'BLE encryption key provided but no encryptionFactory was configured');
         }
         encryption = encryptionKey ? deps.encryptionFactory!(fromHex(encryptionKey)) : passthroughEncryption;
 
         let device: Device;
-        if (deviceId) {
-          device = await withTimeout(
-            timers,
-            connectTimeoutMs,
-            () => managerInstance.connectToDevice(deviceId, { autoConnect: false }),
-            () => new TransportError(TransportErrorCode.CHANNEL_OPEN_FAILED, 'BLE connection timeout'),
-          );
-        } else {
-          device = await scanForDevice(managerInstance, scanTimeoutMs, identifiers, timers, filter, logger);
-          device = await withTimeout(
-            timers,
-            connectTimeoutMs,
-            () => managerInstance.connectToDevice(device.id, { autoConnect: false }),
-            () => new TransportError(TransportErrorCode.CHANNEL_OPEN_FAILED, 'BLE connection timeout'),
-          );
-        }
+        device = await withTimeout(
+          timers,
+          connectTimeoutMs,
+          () => managerInstance.connectToDevice(deviceId, { autoConnect: false }),
+          () => new TransportError(TransportErrorCode.CHANNEL_OPEN_FAILED, 'BLE connection timeout'),
+        );
 
         connectedDeviceId = device.id;
         didLogFirstNotify = false;
 
         logger('ble.connect.success', {
           deviceId: device.id,
-          via: deviceId ? 'deviceId' : 'scan',
+          via: 'deviceId',
         });
 
         disconnectSubscription = managerInstance.onDeviceDisconnected(device.id, (error) => {
