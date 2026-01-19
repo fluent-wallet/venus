@@ -1,4 +1,5 @@
 import type { Address, AssetType, Hex, TxStatus } from '@core/types';
+import type { EvmRpcTransactionRequest } from './dappTypes';
 
 export interface TransactionFilter {
   addressId: string;
@@ -28,6 +29,8 @@ export interface SendTransactionInput {
   maxPriorityFeePerGas?: string;
   nonce?: number;
   storageLimit?: string;
+
+  signal?: AbortSignal;
 }
 
 export interface SendERC20Input {
@@ -36,6 +39,20 @@ export interface SendERC20Input {
   to: Address;
   amount: string;
   assetDecimals: number;
+
+  signal?: AbortSignal;
+}
+
+export interface EstimateDappTransactionInput {
+  addressId: string;
+  request: EvmRpcTransactionRequest;
+  signal?: AbortSignal;
+}
+
+export interface SendDappTransactionInput {
+  addressId: string;
+  request: EvmRpcTransactionRequest;
+  signal?: AbortSignal;
 }
 
 /**

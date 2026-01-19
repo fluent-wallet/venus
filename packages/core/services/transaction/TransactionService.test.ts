@@ -1,7 +1,7 @@
 import 'reflect-metadata';
 
-import { createTestAccount } from '@core/__tests__/fixtures';
-import { DEFAULT_PRIVATE_KEY, mockDatabase } from '@core/__tests__/mocks';
+import { createTestAccount, seedNetwork } from '@core/__tests__/fixtures';
+import { createSilentLogger, DEFAULT_PRIVATE_KEY, mockDatabase } from '@core/__tests__/mocks';
 import { StubChainProvider } from '@core/__tests__/mocks/chainProviders';
 import { ChainRegistry } from '@core/chains';
 
@@ -13,9 +13,12 @@ import { TxStatus as DbTxStatus, TxSource } from '@core/database/models/Tx/type'
 import type { TxExtra } from '@core/database/models/TxExtra';
 import type { TxPayload } from '@core/database/models/TxPayload';
 import TableName from '@core/database/TableName';
+import { CORE_IDENTIFIERS } from '@core/di';
+import { CHAIN_PROVIDER_NOT_FOUND, TX_BROADCAST_FAILED } from '@core/errors';
+import type { CoreEventMap, EventBus } from '@core/modules/eventBus';
+import { InMemoryEventBus } from '@core/modules/eventBus';
 import { SigningService } from '@core/services/signing';
 import { AssetType, type ISigner, TxStatus as ServiceTxStatus } from '@core/types';
-import { SERVICE_IDENTIFIER } from '@core/WalletCore/service';
 import { Container } from 'inversify';
 import { TransactionService } from './TransactionService';
 import type { ITransaction, SendERC20Input, SendTransactionInput } from './types';
@@ -71,6 +74,7 @@ describe('TransactionService', () => {
   let database: Database;
   let chainRegistry: ChainRegistry;
   let signingService: FakeSigningService;
+  let eventBus: EventBus<CoreEventMap>;
   let service: TransactionService;
 
   beforeEach(() => {
@@ -79,7 +83,9 @@ describe('TransactionService', () => {
     chainRegistry = new ChainRegistry();
     signingService = new FakeSigningService();
 
-    container.bind<Database>(SERVICE_IDENTIFIER.DB).toConstantValue(database);
+    eventBus = new InMemoryEventBus<CoreEventMap>({ logger: createSilentLogger(), assertSerializable: true });
+    container.bind(CORE_IDENTIFIERS.EVENT_BUS).toConstantValue(eventBus);
+    container.bind(CORE_IDENTIFIERS.DB).toConstantValue(database);
     container.bind(ChainRegistry).toConstantValue(chainRegistry);
     container.bind(SigningService).toConstantValue(signingService as unknown as SigningService);
     container.bind(TransactionService).toSelf();
@@ -93,6 +99,8 @@ describe('TransactionService', () => {
   });
 
   it('sends native transaction and creates Tx records', async () => {
+    const createdEvents: CoreEventMap['tx/created'][] = [];
+    eventBus.on('tx/created', (payload) => createdEvents.push(payload));
     const { account, address, network, assetRule } = await createTestAccount(database);
 
     const provider = new StubChainProvider({
@@ -153,8 +161,201 @@ describe('TransactionService', () => {
     expect(asset?.type).toBe(DbAssetType.Native);
 
     expect(signingService.getSigner).toHaveBeenCalledWith(account.id, address.id);
+
+    expect(createdEvents).toHaveLength(1);
+    expect(createdEvents[0]).toEqual({
+      key: { addressId: address.id, networkId: network.id },
+      txId: result.id,
+    });
   });
 
+  it('dispatches hardware signing start/success events when signer is hardware', async () => {
+    const started: CoreEventMap['hardware-sign/started'][] = [];
+    const succeeded: CoreEventMap['hardware-sign/succeeded'][] = [];
+    eventBus.on('hardware-sign/started', (payload) => started.push(payload));
+    eventBus.on('hardware-sign/succeeded', (payload) => succeeded.push(payload));
+
+    const { account, address, network, assetRule } = await createTestAccount(database);
+
+    const provider = new StubChainProvider({
+      chainId: network.chainId,
+      networkType: network.networkType,
+    });
+    chainRegistry.register(provider);
+
+    await database.write(async () => {
+      await database.get<DbAsset>(TableName.Asset).create((record) => {
+        record.network.set(network);
+        record.assetRule.set(assetRule);
+        record.type = DbAssetType.Native;
+        record.contractAddress = null;
+        record.name = 'Native';
+        record.symbol = 'NATIVE';
+        record.decimals = 18;
+        record.icon = null;
+        record.priceInUSDT = null;
+        record.source = AssetSource.Official;
+      });
+    });
+
+    signingService.getSigner.mockResolvedValueOnce({
+      type: 'hardware',
+      getDerivationPath: () => "m/44'/60'/0'/0/0",
+      getChainType: () => network.networkType,
+      signWithHardware: jest.fn(async () => ({ resultType: 'signature', chainType: network.networkType, r: '0x1', s: '0x2', v: 27 })),
+    } as any);
+
+    const input: SendTransactionInput = {
+      addressId: address.id,
+      to: '0x0000000000000000000000000000000000000001',
+      amount: '1.23',
+      assetType: AssetType.Native,
+      assetDecimals: 18,
+    };
+
+    await service.sendNative(input);
+
+    expect(started).toHaveLength(1);
+    expect(succeeded).toHaveLength(1);
+
+    const startPayload = started[0];
+    const successPayload = succeeded[0];
+
+    expect(startPayload).toMatchObject({
+      accountId: account.id,
+      addressId: address.id,
+      networkId: network.id,
+    });
+    expect(typeof startPayload.requestId).toBe('string');
+    expect(successPayload.requestId).toBe(startPayload.requestId);
+
+    expect(successPayload).toMatchObject({
+      txHash: '0xhash',
+      rawTransaction: '0xraw',
+    });
+  });
+
+  it('dispatches hardware signing error event when hardware signing fails', async () => {
+    const started: CoreEventMap['hardware-sign/started'][] = [];
+    const failed: CoreEventMap['hardware-sign/failed'][] = [];
+    eventBus.on('hardware-sign/started', (payload) => started.push(payload));
+    eventBus.on('hardware-sign/failed', (payload) => failed.push(payload));
+
+    const { account, address, network, assetRule } = await createTestAccount(database);
+
+    const provider = new StubChainProvider({
+      chainId: network.chainId,
+      networkType: network.networkType,
+    });
+    chainRegistry.register(provider);
+
+    await database.write(async () => {
+      await database.get<DbAsset>(TableName.Asset).create((record) => {
+        record.network.set(network);
+        record.assetRule.set(assetRule);
+        record.type = DbAssetType.Native;
+        record.contractAddress = null;
+        record.name = 'Native';
+        record.symbol = 'NATIVE';
+        record.decimals = 18;
+        record.icon = null;
+        record.priceInUSDT = null;
+        record.source = AssetSource.Official;
+      });
+    });
+
+    const signWithHardware = jest.fn(async () => {
+      throw Object.assign(new Error('boom'), { code: 'HARDWARE_UNAVAILABLE', details: { reason: 'card_missing' } });
+    });
+
+    signingService.getSigner.mockResolvedValueOnce({
+      type: 'hardware',
+      getDerivationPath: () => "m/44'/60'/0'/0/0",
+      getChainType: () => network.networkType,
+      signWithHardware,
+    } as any);
+
+    const input: SendTransactionInput = {
+      addressId: address.id,
+      to: '0x0000000000000000000000000000000000000001',
+      amount: '1.23',
+      assetType: AssetType.Native,
+      assetDecimals: 18,
+    };
+
+    await expect(service.sendNative(input)).rejects.toBeInstanceOf(Error);
+
+    expect(started).toHaveLength(1);
+    expect(failed).toHaveLength(1);
+
+    const startPayload = started[0];
+    const errorPayload = failed[0];
+
+    expect(errorPayload.requestId).toBe(startPayload.requestId);
+    expect(errorPayload.error).toMatchObject({ code: 'HARDWARE_UNAVAILABLE', reason: 'card_missing' });
+  });
+
+  it('dispatches hardware signing abort event when caller aborts via signal', async () => {
+    const started: CoreEventMap['hardware-sign/started'][] = [];
+    const aborted: CoreEventMap['hardware-sign/aborted'][] = [];
+    eventBus.on('hardware-sign/started', (payload) => started.push(payload));
+    eventBus.on('hardware-sign/aborted', (payload) => aborted.push(payload));
+
+    const { account, address, network, assetRule } = await createTestAccount(database);
+
+    const provider = new StubChainProvider({
+      chainId: network.chainId,
+      networkType: network.networkType,
+    });
+    chainRegistry.register(provider);
+
+    await database.write(async () => {
+      await database.get<DbAsset>(TableName.Asset).create((record) => {
+        record.network.set(network);
+        record.assetRule.set(assetRule);
+        record.type = DbAssetType.Native;
+        record.contractAddress = null;
+        record.name = 'Native';
+        record.symbol = 'NATIVE';
+        record.decimals = 18;
+        record.icon = null;
+        record.priceInUSDT = null;
+        record.source = AssetSource.Official;
+      });
+    });
+
+    const controller = new AbortController();
+
+    const signWithHardware = jest.fn(async (ctx: any) => {
+      controller.abort();
+      throw Object.assign(new Error('aborted'), { code: 'CANCEL' });
+    });
+
+    signingService.getSigner.mockResolvedValueOnce({
+      type: 'hardware',
+      getDerivationPath: () => "m/44'/60'/0'/0/0",
+      getChainType: () => network.networkType,
+      signWithHardware,
+    } as any);
+
+    const input: SendTransactionInput = {
+      addressId: address.id,
+      to: '0x0000000000000000000000000000000000000001',
+      amount: '1.23',
+      assetType: AssetType.Native,
+      assetDecimals: 18,
+      signal: controller.signal,
+    };
+
+    await expect(service.sendNative(input)).rejects.toBeInstanceOf(Error);
+
+    expect(started).toHaveLength(1);
+    expect(aborted).toHaveLength(1);
+
+    const startPayload = started[0];
+    const abortPayload = aborted[0];
+    expect(abortPayload.requestId).toBe(startPayload.requestId);
+  });
   it('sends ERC20 transaction via sendERC20 and marks token20 in TxExtra', async () => {
     const { account, address, network } = await createTestAccount(database);
 
@@ -378,5 +579,139 @@ describe('TransactionService', () => {
     expect(outbound!.isLocalAccount).toBe(false);
 
     expect(peers[0].lastUsedAt).toBeGreaterThanOrEqual(peers[1].lastUsedAt);
+  });
+
+  it('sends dapp transaction and marks source as dapp', async () => {
+    const createdEvents: CoreEventMap['tx/created'][] = [];
+    eventBus.on('tx/created', (payload) => createdEvents.push(payload));
+
+    const { network: evmNetwork, assetRule } = await seedNetwork(database, { definitionKey: 'eSpace Testnet', selected: true });
+    const { account, address } = await createTestAccount(database, { network: evmNetwork, assetRule });
+
+    const provider = new StubChainProvider({
+      chainId: evmNetwork.chainId,
+      networkType: evmNetwork.networkType,
+    });
+    chainRegistry.register(provider);
+
+    const request = {
+      from: address.hex,
+      to: '0x0000000000000000000000000000000000000001',
+      data: '0x',
+      value: '0x2',
+      gas: '0x5208',
+      gasPrice: '0x1',
+      nonce: '0x1',
+      type: '0x0',
+    } as any;
+
+    const result = await service.sendDappTransaction({ addressId: address.id, request });
+
+    const txs = await database.get<Tx>(TableName.Tx).query().fetch();
+    expect(txs).toHaveLength(1);
+    expect(txs[0].source).toBe(TxSource.DAPP);
+
+    const payload = await txs[0].txPayload.fetch();
+    expect(payload.from).toBe(address.hex);
+    expect(payload.to).toBe(request.to);
+    expect(payload.value).toBe(request.value);
+    expect(payload.gasLimit).toBe(request.gas);
+    expect(payload.nonce).toBe(1);
+
+    expect(createdEvents).toHaveLength(1);
+    expect(createdEvents[0]).toEqual({
+      key: { addressId: address.id, networkId: evmNetwork.id },
+      txId: result.id,
+    });
+  });
+
+  it('does not override dapp request fields when estimating', async () => {
+    const { network: evmNetwork, assetRule } = await seedNetwork(database, { definitionKey: 'eSpace Testnet', selected: true });
+    const { address } = await createTestAccount(database, { network: evmNetwork, assetRule });
+
+    const provider = new StubChainProvider({
+      chainId: evmNetwork.chainId,
+      networkType: evmNetwork.networkType,
+    });
+    jest.spyOn(provider, 'estimateFee').mockResolvedValue({
+      chainType: provider.networkType,
+      estimatedTotal: '0x999',
+      gasLimit: '0xffff',
+      gasPrice: '0x777',
+      maxFeePerGas: '0x888',
+      maxPriorityFeePerGas: '0x999',
+    });
+    chainRegistry.register(provider);
+
+    const request = {
+      from: address.hex,
+      to: '0x0000000000000000000000000000000000000001',
+      data: '0xdeadbeef',
+      value: '0x2',
+      gas: '0x5208',
+      gasPrice: '0x1',
+      maxFeePerGas: '0x10',
+      maxPriorityFeePerGas: '0x5',
+      nonce: '0x7',
+      type: '0x2',
+    } as any;
+
+    await service.sendDappTransaction({ addressId: address.id, request });
+
+    const [tx] = await database.get<Tx>(TableName.Tx).query().fetch();
+    const payload = await tx.txPayload.fetch();
+    expect(payload).toMatchObject({
+      data: request.data,
+      value: request.value,
+      gasLimit: request.gas,
+      gasPrice: request.gasPrice,
+      maxFeePerGas: request.maxFeePerGas,
+      maxPriorityFeePerGas: request.maxPriorityFeePerGas,
+      nonce: 7,
+      type: '2',
+    });
+  });
+
+  it('throws TX_BROADCAST_FAILED and persists failed dapp tx', async () => {
+    const { network: evmNetwork, assetRule } = await seedNetwork(database, { definitionKey: 'eSpace Testnet', selected: true });
+    const { address } = await createTestAccount(database, { network: evmNetwork, assetRule });
+
+    const provider = new StubChainProvider({
+      chainId: evmNetwork.chainId,
+      networkType: evmNetwork.networkType,
+    });
+    jest.spyOn(provider, 'broadcastTransaction').mockRejectedValue(new Error('boom'));
+    chainRegistry.register(provider);
+
+    const request = {
+      from: address.hex,
+      to: '0x0000000000000000000000000000000000000001',
+      data: '0x',
+      value: '0x2',
+      gas: '0x5208',
+      gasPrice: '0x1',
+      nonce: '0x1',
+      type: '0x0',
+    } as any;
+
+    await expect(service.sendDappTransaction({ addressId: address.id, request })).rejects.toMatchObject({ code: TX_BROADCAST_FAILED });
+
+    const [tx] = await database.get<Tx>(TableName.Tx).query().fetch();
+    expect(tx).toMatchObject({ source: TxSource.DAPP, status: DbTxStatus.SEND_FAILED, err: 'boom' });
+  });
+
+  it('throws CHAIN_PROVIDER_NOT_FOUND when dapp provider missing', async () => {
+    const { network: evmNetwork, assetRule } = await seedNetwork(database, { definitionKey: 'eSpace Testnet', selected: true });
+    const { address } = await createTestAccount(database, { network: evmNetwork, assetRule });
+
+    const request = {
+      from: address.hex,
+      to: '0x0000000000000000000000000000000000000001',
+      data: '0x',
+      value: '0x2',
+      gas: '0x5208',
+    } as any;
+
+    await expect(service.sendDappTransaction({ addressId: address.id, request })).rejects.toMatchObject({ code: CHAIN_PROVIDER_NOT_FOUND });
   });
 });

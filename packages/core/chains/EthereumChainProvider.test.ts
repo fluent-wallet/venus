@@ -1,7 +1,7 @@
 import { createMockEthersProvider, DEFAULT_HEX_ADDRESS, DEFAULT_PRIVATE_KEY } from '@core/__tests__/mocks';
 import { SoftwareSigner } from '@core/signers';
-import { AssetType, NetworkType } from '@core/types';
-import { JsonRpcProvider, Wallet } from 'ethers';
+import { AssetType, type EvmUnsignedTransaction, type Hex, NetworkType } from '@core/types';
+import { JsonRpcProvider, Transaction, toUtf8Bytes, Wallet } from 'ethers';
 import { EthereumChainProvider, type EthereumChainProviderOptions } from './EthereumChainProvider';
 
 jest.mock('ethers', () => {
@@ -39,6 +39,14 @@ const createProvider = (overrides: Partial<EthereumChainProviderOptions> = {}) =
     ...overrides,
   });
 
+const BSIM_RAW_TX =
+  '0x02f87447738504a817c8008504a817c800825208943300f555ca374debb8cf1f8ae6ed36075d0d0ff8880de0b6b3a764000080c080a051a89497de4746a06f18c9e12f3e3bac16084e75372c1a754a6fe7645c5235a3a013ab25c2d98a6385d639c1c91a869d0360fd5f30a6d2e69b6eaa30c82fb73ef9';
+const BSIM_TX_HASH = '0x61e672123925c197c8462a12be03416a82eac81a0c3665e474ae0d4b60dd6e5c';
+const BSIM_SIGNATURE = {
+  r: '0x51a89497de4746a06f18c9e12f3e3bac16084e75372c1a754a6fe7645c5235a3',
+  s: '0x13ab25c2d98a6385d639c1c91a869d0360fd5f30a6d2e69b6eaa30c82fb73ef9',
+  v: 27,
+};
 describe('EthereumChainProvider', () => {
   beforeEach(() => {
     jest.clearAllMocks();
@@ -161,6 +169,27 @@ describe('EthereumChainProvider', () => {
     expect(estimate.gasPrice).toBeUndefined();
   });
 
+  it('does not call estimateGas when gasLimit is provided', async () => {
+    const provider = createProvider();
+
+    const unsigned: EvmUnsignedTransaction = {
+      chainType: NetworkType.Ethereum,
+      payload: {
+        from: SAMPLE_ACCOUNT,
+        to: SAMPLE_ACCOUNT,
+        chainId: SAMPLE_CHAIN_ID,
+        value: '0x0',
+        data: '0x',
+        gasLimit: '0x5208',
+        nonce: 1,
+      },
+    };
+
+    await provider.estimateFee(unsigned);
+
+    expect(mockProvider.estimateGas).not.toHaveBeenCalled();
+  });
+
   it('signs transaction using provided private key', async () => {
     const provider = createProvider();
     const unsigned = await provider.buildTransaction({
@@ -199,8 +228,74 @@ describe('EthereumChainProvider', () => {
     const signature = await provider.signMessage('hello', signer);
 
     expect(MockedWallet).toHaveBeenCalledWith(SAMPLE_PRIVATE_KEY, mockProvider);
-    expect(walletStub.signMessage).toHaveBeenCalledWith('hello');
+    expect(walletStub.signMessage).toHaveBeenCalledTimes(1);
+    expect(walletStub.signMessage.mock.calls[0]?.[0]).toEqual(toUtf8Bytes('hello'));
     expect(signature).toBe('0xsigned');
+  });
+
+  it('returns typed signature from hardware signer when provided', async () => {
+    const provider = createProvider();
+    const hardwareSigner = {
+      type: 'hardware' as const,
+      getDerivationPath: () => "m/44'/60'/0'/0/0",
+      getChainType: () => NetworkType.Ethereum,
+      signWithHardware: jest.fn().mockResolvedValue({
+        resultType: 'typedSignature',
+        chainType: NetworkType.Ethereum,
+        signature: '0xtyped',
+      }),
+    };
+
+    const signature = await provider.signMessage('hello', hardwareSigner);
+
+    expect(signature).toBe('0xtyped');
+    expect(hardwareSigner.signWithHardware).toHaveBeenCalledTimes(1);
+
+    const ctx = (hardwareSigner.signWithHardware as jest.Mock).mock.calls[0]?.[0];
+    expect(ctx.payload).toEqual(
+      expect.objectContaining({
+        payloadKind: 'message',
+        messageKind: 'personal',
+        message: '0x68656c6c6f',
+      }),
+    );
+  });
+
+  it('matches real BSIM signature sample', async () => {
+    const provider = createProvider({ chainId: '0x47' });
+    const parsed = Transaction.from(BSIM_RAW_TX);
+
+    const unsigned: EvmUnsignedTransaction = {
+      chainType: NetworkType.Ethereum,
+      payload: {
+        from: parsed.from ?? SAMPLE_ACCOUNT,
+        to: parsed.to ?? SAMPLE_ACCOUNT,
+        value: (parsed.value ?? 0n).toString(16).startsWith('-') ? '0x0' : (`0x${(parsed.value ?? 0n).toString(16)}` as Hex),
+        data: (parsed.data ?? '0x') as Hex,
+        gasLimit: `0x${(parsed.gasLimit ?? 0n).toString(16)}`,
+        maxFeePerGas: parsed.maxFeePerGas ? `0x${parsed.maxFeePerGas.toString(16)}` : undefined,
+        maxPriorityFeePerGas: parsed.maxPriorityFeePerGas ? `0x${parsed.maxPriorityFeePerGas.toString(16)}` : undefined,
+        nonce: Number(parsed.nonce ?? 0),
+        chainId: parsed.chainId ? `0x${parsed.chainId.toString(16)}` : SAMPLE_CHAIN_ID,
+        type: parsed.type as number,
+      },
+    };
+
+    const signer = {
+      type: 'hardware' as const,
+      getDerivationPath: () => "m/44'/60'/0'/0/0",
+      getChainType: () => NetworkType.Ethereum,
+      signWithHardware: jest.fn().mockResolvedValue({
+        resultType: 'signature',
+        chainType: NetworkType.Ethereum,
+        ...BSIM_SIGNATURE,
+      }),
+    };
+
+    const signed = await provider.signTransaction(unsigned, signer);
+
+    expect(signed.rawTransaction).toBe(BSIM_RAW_TX);
+    expect(signed.hash).toBe(BSIM_TX_HASH);
   });
 
   it('verifies signed messages', async () => {
@@ -297,5 +392,62 @@ describe('EthereumChainProvider', () => {
     });
 
     expect(tx.payload.type).toBe(2);
+  });
+
+  it('assembles hardware rawTransaction results directly', async () => {
+    const provider = createProvider();
+    const unsigned = await provider.buildTransaction({
+      from: SAMPLE_ACCOUNT,
+      to: SAMPLE_ACCOUNT,
+      chainId: SAMPLE_CHAIN_ID,
+      amount: '1',
+      assetType: AssetType.Native,
+      assetDecimals: 18,
+    });
+
+    const signer = {
+      type: 'hardware' as const,
+      getDerivationPath: () => "m/44'/60'/0'/0/0",
+      getChainType: () => NetworkType.Ethereum,
+      signWithHardware: jest.fn().mockResolvedValue({
+        resultType: 'rawTransaction',
+        chainType: NetworkType.Ethereum,
+        rawTransaction: '0xabc',
+        hash: '0xhash',
+      }),
+    };
+
+    const signed = await provider.signTransaction(unsigned, signer);
+    expect(signed.rawTransaction).toBe('0xabc');
+    expect(signed.hash).toBe('0xhash');
+  });
+
+  it('assembles hardware r/s/v signature into raw transaction', async () => {
+    const provider = createProvider();
+    const unsigned = await provider.buildTransaction({
+      from: SAMPLE_ACCOUNT,
+      to: SAMPLE_ACCOUNT,
+      chainId: SAMPLE_CHAIN_ID,
+      amount: '1',
+      assetType: AssetType.Native,
+      assetDecimals: 18,
+    });
+
+    const signer = {
+      type: 'hardware' as const,
+      getDerivationPath: () => "m/44'/60'/0'/0/0",
+      getChainType: () => NetworkType.Ethereum,
+      signWithHardware: jest.fn().mockResolvedValue({
+        resultType: 'signature',
+        chainType: NetworkType.Ethereum,
+        r: '0x1',
+        s: '0x2',
+        v: 27,
+      }),
+    };
+
+    const signed = await provider.signTransaction(unsigned, signer);
+    expect(signed.rawTransaction).toMatch(/^0x/);
+    expect(signed.hash).toMatch(/^0x[0-9a-f]{64}$/i);
   });
 });

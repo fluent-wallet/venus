@@ -1,3 +1,4 @@
+import { HttpJsonRpcClient } from '@core/rpc';
 import type {
   Address,
   ChainCallParams,
@@ -7,6 +8,7 @@ import type {
   Hash,
   Hex,
   IChainProvider,
+  IChainRpc,
   IHardwareSigner,
   ISigner,
   ISoftwareSigner,
@@ -14,7 +16,20 @@ import type {
   TransactionParams,
 } from '@core/types';
 import { NetworkType } from '@core/types';
-import { computeAddress, getAddress, isAddress, JsonRpcProvider, keccak256, Signature, verifyMessage as verifyEthersMessage, Wallet } from 'ethers';
+import {
+  computeAddress,
+  getAddress,
+  getBytes,
+  hexlify,
+  isAddress,
+  JsonRpcProvider,
+  keccak256,
+  Signature,
+  Transaction,
+  toUtf8Bytes,
+  verifyMessage as verifyEthersMessage,
+  Wallet,
+} from 'ethers';
 import { buildTransactionPayload } from './utils/transactionBuilder';
 
 export interface EthereumChainProviderOptions {
@@ -28,6 +43,7 @@ export class EthereumChainProvider implements IChainProvider {
   readonly chainId: string;
   readonly networkType = NetworkType.Ethereum;
   private readonly provider: EthersProvider;
+  readonly rpc: IChainRpc;
 
   constructor({ chainId, endpoint }: EthereumChainProviderOptions) {
     if (!chainId) {
@@ -43,6 +59,7 @@ export class EthereumChainProvider implements IChainProvider {
     }
     this.chainId = chainId;
     this.provider = new JsonRpcProvider(endpoint, numericChainId);
+    this.rpc = new HttpJsonRpcClient(endpoint);
   }
 
   deriveAddress(publicKey: string): string {
@@ -53,11 +70,11 @@ export class EthereumChainProvider implements IChainProvider {
   validateAddress(address: Address): boolean {
     return isAddress(address);
   }
-  async signTransaction(tx: EvmUnsignedTransaction, signer: ISigner): Promise<SignedTransaction> {
+  async signTransaction(tx: EvmUnsignedTransaction, signer: ISigner, options?: { signal?: AbortSignal }): Promise<SignedTransaction> {
     if (signer.type === 'software') {
       return this.signWithSoftware(tx, signer);
     } else {
-      return this.signWithHardware(tx, signer);
+      return this.signWithHardware(tx, signer, options);
     }
   }
 
@@ -74,7 +91,7 @@ export class EthereumChainProvider implements IChainProvider {
     };
   }
 
-  private async signWithHardware(tx: EvmUnsignedTransaction, signer: IHardwareSigner): Promise<SignedTransaction> {
+  private async signWithHardware(tx: EvmUnsignedTransaction, signer: IHardwareSigner, options?: { signal?: AbortSignal }): Promise<SignedTransaction> {
     const result = await signer.signWithHardware({
       derivationPath: signer.getDerivationPath(),
       chainType: signer.getChainType(),
@@ -83,20 +100,53 @@ export class EthereumChainProvider implements IChainProvider {
         chainType: tx.chainType,
         unsignedTx: tx.payload,
       },
+      signal: options?.signal,
     });
 
     return this.assembleHardwareSignedTransaction(tx, result);
   }
+
   private assembleHardwareSignedTransaction(tx: EvmUnsignedTransaction, result: HardwareSignResult): SignedTransaction {
-    // TODO: implement hardware transaction assembly based on BSIM signature format
-    throw new Error('Hardware transaction assembly not implemented');
+    if (result.chainType !== tx.chainType) {
+      throw new Error('Hardware wallet returned mismatched chain type.');
+    }
+
+    if (result.resultType === 'rawTransaction') {
+      return {
+        chainType: tx.chainType,
+        rawTransaction: result.rawTransaction,
+        hash: result.hash,
+      };
+    }
+
+    if (result.resultType === 'signature') {
+      const transaction = Transaction.from({ ...tx.payload, from: undefined });
+      transaction.signature = Signature.from({
+        r: result.r,
+        s: result.s,
+        v: result.v ?? 27,
+      });
+      const rawTransaction = transaction.serialized as Hex;
+      const hash = keccak256(rawTransaction) as Hash;
+
+      return {
+        chainType: tx.chainType,
+        rawTransaction,
+        hash,
+      };
+    }
+
+    throw new Error('Hardware wallet returned unsupported result type for transactions.');
   }
 
   async signMessage(message: string, signer: ISigner): Promise<string> {
+    const isHexBytes = message.length % 2 === 0 && /^0x[0-9a-fA-F]*$/.test(message);
+    const messageBytes = isHexBytes ? getBytes(message) : toUtf8Bytes(message);
+
     if (signer.type === 'software') {
       const privateKey = signer.getPrivateKey();
       const wallet = new Wallet(privateKey, this.provider);
-      return wallet.signMessage(message);
+      return wallet.signMessage(messageBytes);
     } else {
       const result = await signer.signWithHardware({
         derivationPath: signer.getDerivationPath(),
@@ -105,7 +155,7 @@ export class EthereumChainProvider implements IChainProvider {
           payloadKind: 'message',
           messageKind: 'personal',
           chainType: this.networkType,
-          message,
+          message: hexlify(messageBytes),
         },
         signal: undefined,
       });
@@ -124,7 +174,10 @@ export class EthereumChainProvider implements IChainProvider {
 
   verifyMessage(message: string, signature: string, address: Address): boolean {
     try {
-      const recovered = verifyEthersMessage(message, signature);
+      const isHexBytes = message.length % 2 === 0 && /^0x[0-9a-fA-F]*$/.test(message);
+      const messageBytes = isHexBytes ? getBytes(message) : toUtf8Bytes(message);
+
+      const recovered = verifyEthersMessage(messageBytes, signature);
       return getAddress(recovered) === getAddress(address);
     } catch {
       return false;

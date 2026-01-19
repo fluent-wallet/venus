@@ -1,7 +1,8 @@
 import 'reflect-metadata';
 
 import { seedNetwork } from '@core/__tests__/fixtures';
-import { StubChainProvider } from '@core/__tests__/mocks/chainProviders';
+import { createMockHardwareWallet } from '@core/__tests__/mocks';
+import { DEFAULT_HEX_ADDRESS, StubChainProvider } from '@core/__tests__/mocks/chainProviders';
 import { ChainRegistry } from '@core/chains';
 import type { Database } from '@core/database';
 import { mockDatabase } from '@core/database/__tests__/mockDatabases';
@@ -10,24 +11,25 @@ import type { AccountGroup } from '@core/database/models/AccountGroup';
 import type { Address } from '@core/database/models/Address';
 import type { Asset as DbAsset } from '@core/database/models/Asset';
 import { AssetSource, AssetType as DbAssetType } from '@core/database/models/Asset';
+import type { Network } from '@core/database/models/Network';
 import type { Tx } from '@core/database/models/Tx';
 import VaultType from '@core/database/models/Vault/VaultType';
 import TableName from '@core/database/TableName';
+import { CORE_IDENTIFIERS } from '@core/di';
+import { HARDWARE_WALLET_TYPES } from '@core/hardware/bsim/constants';
+import { HardwareWalletRegistry } from '@core/hardware/HardwareWalletRegistry';
 import { AccountService, AssetService, registerServices, type SendTransactionInput, SigningService, TransactionService, VaultService } from '@core/services';
 import { AssetType, TxStatus as ServiceTxStatus } from '@core/types';
+import type { CryptoTool } from '@core/types/crypto';
 import { convertHexToBase32 } from '@core/utils/address';
 import { NetworkType } from '@core/utils/consts';
 import { getNthAccountOfHDKey } from '@core/utils/hdkey';
-import type { ICryptoTool } from '@core/WalletCore/Plugins/CryptoTool/interface';
-import { SERVICE_IDENTIFIER } from '@core/WalletCore/service';
 import { Container } from 'inversify';
 
 const TEST_PASSWORD = 'test-password';
 const FIXED_MNEMONIC = 'test test test test test test test test test test test junk';
 
-class FakeCryptoTool implements ICryptoTool {
-  private passwordGetter: (() => string | null) | null = null;
-
+class FakeCryptoTool implements CryptoTool {
   async encrypt(data: unknown, password?: string): Promise<string> {
     return JSON.stringify({ payload: data, password: password ?? null });
   }
@@ -45,15 +47,7 @@ class FakeCryptoTool implements ICryptoTool {
     return parsed.payload;
   }
 
-  setGetPasswordMethod(getPasswordMethod: () => string | null): void {
-    this.passwordGetter = getPasswordMethod;
-  }
-
-  async getPassword(): Promise<string | null> {
-    return this.passwordGetter?.() ?? null;
-  }
-
-  generateRandomString(): string {
+  generateRandomString(_byteCount?: number): string {
     return 'stub';
   }
 }
@@ -66,12 +60,10 @@ describe('Service integration', () => {
     container = new Container({ defaultScope: 'Singleton' });
     database = mockDatabase();
 
-    container.bind<Database>(SERVICE_IDENTIFIER.DB).toConstantValue(database);
-    container.bind<ICryptoTool>(SERVICE_IDENTIFIER.CRYPTO_TOOL).toConstantValue(new FakeCryptoTool());
+    container.bind<Database>(CORE_IDENTIFIERS.DB).toConstantValue(database);
+    container.bind<CryptoTool>(CORE_IDENTIFIERS.CRYPTO_TOOL).toConstantValue(new FakeCryptoTool());
 
     registerServices(container);
-
-    container.bind(ChainRegistry).toSelf().inSingletonScope();
 
     await seedNetwork(database, { selected: true });
   });
@@ -201,6 +193,77 @@ describe('Service integration', () => {
     expect(txPayload.from).toBe(await dbAddress.getValue());
     expect(txPayload.to).toBe(input.to);
     expect(txPayload.chainId).toBe(network.chainId);
+  });
+
+  it('sends native transaction via hardware signer for BSIM vaults', async () => {
+    const vaultService = container.get(VaultService);
+    const txService = container.get(TransactionService);
+    const chainRegistry = container.get(ChainRegistry);
+    const hardwareRegistry = container.get(HardwareWalletRegistry);
+
+    const mockAdapter = createMockHardwareWallet();
+
+    mockAdapter.listAccounts.mockResolvedValueOnce([]).mockResolvedValueOnce([
+      {
+        index: 0,
+        chainType: NetworkType.Ethereum,
+        address: DEFAULT_HEX_ADDRESS,
+        derivationPath: "m/44'/60'/0'/0/0",
+      },
+    ]);
+
+    hardwareRegistry.register(HARDWARE_WALLET_TYPES.BSIM, 'mock-device', mockAdapter);
+
+    await seedNetwork(database, { definitionKey: 'Ethereum Sepolia', selected: false });
+
+    const vault = await vaultService.createBSIMVault({
+      connectOptions: { transport: 'ble', deviceIdentifier: 'mock-device' },
+    });
+
+    expect(vault.hardwareDeviceId).toBe('mock-device');
+    await vaultService.createBSIMVault({
+      accounts: [{ index: 0, hexAddress: DEFAULT_HEX_ADDRESS }],
+      hardwareDeviceId: 'mock-device',
+    });
+
+    const addresses = await database.get<Address>(TableName.Address).query().fetch();
+    let targetAddress: Address | null = null;
+    let targetNetwork: Network | null = null;
+    let targetAccount: Account | null = null;
+
+    for (const entry of addresses) {
+      const [network, account] = await Promise.all([entry.network.fetch(), entry.account.fetch()]);
+      if (network.networkType === NetworkType.Ethereum) {
+        targetAddress = entry;
+        targetNetwork = network;
+        targetAccount = account;
+        break;
+      }
+    }
+
+    if (!targetAddress || !targetNetwork || !targetAccount) {
+      throw new Error('Missing Ethereum address for hardware test.');
+    }
+
+    const provider = new StubChainProvider({
+      chainId: targetNetwork.chainId,
+      networkType: targetNetwork.networkType,
+    });
+    chainRegistry.register(provider);
+
+    const input: SendTransactionInput = {
+      addressId: targetAddress.id,
+      to: '0x0000000000000000000000000000000000000002',
+      amount: '0.5',
+      assetType: AssetType.Native,
+      assetDecimals: 18,
+    };
+
+    const result = await txService.sendNative(input);
+
+    expect(result.hash).toBe('0xhash');
+    expect(mockAdapter.deriveAccount).toHaveBeenCalledWith(targetAccount.index, targetNetwork.networkType);
+    expect(mockAdapter.sign).toHaveBeenCalled();
   });
 
   it('queries asset balances via AssetService and ChainRegistry', async () => {

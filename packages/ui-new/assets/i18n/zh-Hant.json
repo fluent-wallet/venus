@@ -132,6 +132,7 @@
     "close" : "關閉",
     "confirm" : "確認",
     "connect" : "連接",
+    "scanning" : "掃描中",
     "continue" : "繼續",
     "copied" : "已複製",
     "customize" : "設定數值",
@@ -174,10 +175,11 @@
       "title" : "賬戶存在風險"
     },
     "buy" : "購買",
+    "explore" : "探索",
     "more" : "更多",
     "more.copyAddress" : "複製地址",
     "more.signatureRecords" : "簽名記錄",
-    "more.viewInExplorer" : "在瀏覽器中查看",
+    "more.viewOnExplorer" : "在瀏覽器中查看",
     "noNetwork" : "網絡連接已斷開",
     "receive" : "接收",
     "send" : "發送"

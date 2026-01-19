@@ -1,3 +1,4 @@
+import { HttpJsonRpcClient } from '@core/rpc';
 import type {
   Address,
   ChainCallParams,
@@ -7,6 +8,7 @@ import type {
   HardwareSignResult,
   Hash,
   IChainProvider,
+  IChainRpc,
   IHardwareSigner,
   ISigner,
   ISoftwareSigner,
@@ -33,7 +35,11 @@ type ConfluxRpcClient = {
   estimateGasAndCollateral(
     params: { from: string; to?: string; data?: string; value?: string },
     epochNumber?: string | number,
-  ): Promise<{ gasUsed: bigint; gasLimit: bigint; storageCollateralized: bigint }>;
+  ): Promise<{
+    gasUsed: bigint;
+    gasLimit: bigint;
+    storageCollateralized: bigint;
+  }>;
   getGasPrice(): Promise<bigint>;
 };
 
@@ -42,7 +48,8 @@ export class ConfluxChainProvider implements IChainProvider {
   readonly networkType = NetworkType.Conflux;
   readonly netId: number;
   private readonly cfx: Conflux;
-  private readonly rpc: ConfluxRpcClient;
+  readonly rpc: IChainRpc;
+  private readonly sdkRpc: ConfluxRpcClient;
 
   constructor({ chainId, endpoint, netId }: ConfluxChainProviderOptions) {
     if (!chainId) {
@@ -60,7 +67,8 @@ export class ConfluxChainProvider implements IChainProvider {
     this.chainId = chainId;
     this.netId = netId;
     this.cfx = new Conflux({ url: endpoint, networkId: netId });
-    this.rpc = this.cfx.cfx as ConfluxRpcClient;
+    this.sdkRpc = this.cfx.cfx as ConfluxRpcClient;
+    this.rpc = new HttpJsonRpcClient(endpoint);
   }
 
   deriveAddress(publicKey: Hex): string {
@@ -106,14 +114,14 @@ export class ConfluxChainProvider implements IChainProvider {
 
   async estimateFee(tx: ConfluxUnsignedTransaction): Promise<ConfluxFeeEstimate> {
     const { payload } = tx;
-    const { gasUsed, storageCollateralized } = await this.rpc.estimateGasAndCollateral({
+    const { gasUsed, storageCollateralized } = await this.sdkRpc.estimateGasAndCollateral({
       from: payload.from,
       to: payload.to,
       data: payload.data,
       value: payload.value,
     });
 
-    const gasPrice = payload.gasPrice ? BigInt(payload.gasPrice) : await this.rpc.getGasPrice();
+    const gasPrice = payload.gasPrice ? BigInt(payload.gasPrice) : await this.sdkRpc.getGasPrice();
 
     return this.toFeeEstimate(payload, this.toBigInt(gasUsed), this.toBigInt(storageCollateralized), this.toBigInt(gasPrice));
   }
@@ -165,12 +173,12 @@ export class ConfluxChainProvider implements IChainProvider {
   }
 
   async getBalance(address: Address): Promise<Hex> {
-    const raw = await this.rpc.getBalance(address, 'latest_state');
+    const raw = await this.sdkRpc.getBalance(address, 'latest_state');
     return this.formatHex(raw);
   }
 
   async getNonce(address: Address): Promise<number> {
-    const result = await this.rpc.getNextNonce(address, 'latest_state');
+    const result = await this.sdkRpc.getNextNonce(address, 'latest_state');
     return this.toNumber(result);
   }
 
@@ -221,7 +229,7 @@ export class ConfluxChainProvider implements IChainProvider {
 
   private async resolveEpochHeight(override?: number): Promise<number> {
     if (typeof override === 'number') return override;
-    const epoch = await this.rpc.getEpochNumber('latest_state');
+    const epoch = await this.sdkRpc.getEpochNumber('latest_state');
     return this.toNumber(epoch);
   }
 

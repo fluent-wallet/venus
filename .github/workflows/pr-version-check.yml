@@ -1,0 +1,61 @@
+name: version check
+
+on:
+  pull_request:
+    branches:
+      - qa
+      - main
+
+jobs:
+  version-check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+      pull-requests: read
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ github.head_ref }}
+          fetch-depth: 0
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24
+
+      - name: Install dependencies
+        run: yarn install --immutable
+
+      - name: Validate pending release plan
+        run: yarn version check
+
+      - name: Apply deferred versions
+        if: github.base_ref == 'qa'
+        run: yarn version apply --all
+
+      - id: pending-changes
+        if: github.base_ref == 'qa'
+        run: |
+          if git diff --quiet; then
+            echo "HAS_CHANGES=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "HAS_CHANGES=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Push applied versions to PR branch
+        if: github.base_ref == 'qa' && steps.pending-changes.outputs.HAS_CHANGES == 'true' && github.event.pull_request.head.repo.full_name == github.repository
+        env:
+          HEAD_BRANCH: ${{ github.head_ref }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git commit -am "chore: apply yarn version"
+          git push origin HEAD:$HEAD_BRANCH
+
+      - name: Notify about manual apply requirement
+        if: github.base_ref == 'qa' && steps.pending-changes.outputs.HAS_CHANGES == 'true' && github.event.pull_request.head.repo.full_name != github.repository
+        run: |
+          echo "::error::Unable to push applied versions back to the source branch. Please run 'yarn version apply' locally and update the PR."
+          exit 1

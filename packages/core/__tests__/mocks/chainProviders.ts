@@ -1,10 +1,13 @@
 import {
   AssetType,
   type ChainCallParams,
+  type ConfluxUnsignedTransaction,
   type ConfluxUnsignedTransactionPayload,
+  type EvmUnsignedTransaction,
   type EvmUnsignedTransactionPayload,
   type Hex,
   type IChainProvider,
+  type IChainRpc,
   type ISigner,
   type SignedTransaction,
   type TransactionParams,
@@ -28,7 +31,11 @@ export const createMockConfluxSdk = () => {
     getBalance: jest.fn().mockResolvedValue(0n),
     getNextNonce: jest.fn().mockResolvedValue(0n),
     getEpochNumber: jest.fn().mockResolvedValue(0n),
-    estimateGasAndCollateral: jest.fn().mockResolvedValue({ gasUsed: 21_000n, gasLimit: 21_000n, storageCollateralized: 0n }),
+    estimateGasAndCollateral: jest.fn().mockResolvedValue({
+      gasUsed: 21_000n,
+      gasLimit: 21_000n,
+      storageCollateralized: 0n,
+    }),
     getGasPrice: jest.fn().mockResolvedValue(1n),
     call: jest.fn(),
   };
@@ -58,7 +65,11 @@ export const createMockEthersProvider = () => {
     getBalance: jest.fn().mockResolvedValue(0n),
     getTransactionCount: jest.fn().mockResolvedValue(0),
     estimateGas: jest.fn().mockResolvedValue(21_000n),
-    getFeeData: jest.fn().mockResolvedValue({ gasPrice: 1n, maxFeePerGas: 1n, maxPriorityFeePerGas: 1n }),
+    getFeeData: jest.fn().mockResolvedValue({
+      gasPrice: 1n,
+      maxFeePerGas: 1n,
+      maxPriorityFeePerGas: 1n,
+    }),
     broadcastTransaction: jest.fn().mockResolvedValue({ hash: '0xhash' }),
     call: jest.fn(),
   };
@@ -77,17 +88,34 @@ export const createMockEvmUnsignedTx = (overrides: Partial<EvmUnsignedTransactio
   },
 });
 
+const createThrowingRpc = (): IChainRpc => {
+  return {
+    request: async () => {
+      throw new Error('StubChainProvider.rpc.request not implemented');
+    },
+    batch: async () => {
+      throw new Error('StubChainProvider.rpc.batch not implemented');
+    },
+  };
+};
+
 export class StubChainProvider implements IChainProvider {
   readonly chainId: string;
   readonly networkType: NetworkType;
+  readonly rpc: IChainRpc;
 
   private nativeBalances = new Map<string, Hex>();
   private tokenBalances = new Map<string, Hex>();
   private customCallResponses = new Map<string, Hex>();
 
-  constructor(opts: { chainId: string; networkType: NetworkType }) {
+  constructor(opts: {
+    chainId: string;
+    networkType: NetworkType;
+    rpc?: IChainRpc;
+  }) {
     this.chainId = opts.chainId;
     this.networkType = opts.networkType;
+    this.rpc = opts.rpc ?? createThrowingRpc();
   }
 
   setNativeBalance(address: string, balanceHex: Hex) {
@@ -146,15 +174,27 @@ export class StubChainProvider implements IChainProvider {
     };
   }
 
-  async signTransaction(tx: UnsignedTransaction, _signer: ISigner): Promise<SignedTransaction> {
+  async signTransaction(tx: UnsignedTransaction, signer: ISigner): Promise<SignedTransaction> {
+    if (signer.type === 'hardware') {
+      const typedTx = tx as ConfluxUnsignedTransaction | EvmUnsignedTransaction;
+      await signer.signWithHardware({
+        derivationPath: signer.getDerivationPath(),
+        chainType: this.networkType,
+        payload: {
+          payloadKind: 'transaction',
+          chainType: this.networkType,
+          unsignedTx: typedTx.payload,
+        },
+      });
+    }
+
     return {
       chainType: tx.chainType,
       rawTransaction: '0xraw',
       hash: '0xhash',
     } as SignedTransaction;
   }
-
-  async broadcastTransaction(signedTx: SignedTransaction): Promise<string> {
+  async broadcastTransaction(signedTx: SignedTransaction): Promise<Hex> {
     return signedTx.hash;
   }
 

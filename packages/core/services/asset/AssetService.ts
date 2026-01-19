@@ -5,11 +5,11 @@ import type { Address } from '@core/database/models/Address';
 import { type Asset, AssetSource } from '@core/database/models/Asset';
 import type { Network } from '@core/database/models/Network';
 import TableName from '@core/database/TableName';
+import { CORE_IDENTIFIERS } from '@core/di';
 import { AssetType, type Hex, type IChainProvider } from '@core/types';
 import { type Base32Address, convertBase32ToHex } from '@core/utils/address';
 import { balanceFormat, convertBalanceToDecimal } from '@core/utils/balance';
 import { NetworkType } from '@core/utils/consts';
-import { SERVICE_IDENTIFIER } from '@core/WalletCore/service';
 import Decimal from 'decimal.js';
 import { inject, injectable } from 'inversify';
 import type { AddCustomTokenInput, IAsset } from './types';
@@ -23,8 +23,9 @@ type ERC20MethodReturnType<T extends string> = T extends 'name' | 'symbol' ? str
 
 @injectable()
 export class AssetService {
-  @inject(SERVICE_IDENTIFIER.DB)
+  @inject(CORE_IDENTIFIERS.DB)
   private readonly database!: Database;
+
   @inject(ChainRegistry)
   private readonly chainRegistry!: ChainRegistry;
 

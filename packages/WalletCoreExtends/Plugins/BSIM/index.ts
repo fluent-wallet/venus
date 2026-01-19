@@ -17,6 +17,8 @@ import {
 } from 'ethers';
 import { Platform } from 'react-native';
 import {
+  type BleDeviceScanHandle,
+  type BleDeviceScanResult,
   BSIMError,
   CARD_ERROR_MESSAGES,
   type CardErrorCode,
@@ -27,6 +29,8 @@ import {
   getDefaultSignatureAlgorithm,
   isCardErrorCode,
   isTransportError,
+  type PubkeyRecord,
+  startBleDeviceScan,
   type TransportError,
   TransportErrorCode,
 } from 'react-native-bsim';
@@ -228,6 +232,8 @@ export class BSIMPluginClass implements Plugin {
 
   private queue = createAsyncQueue();
 
+  private bleDeviceId: string | undefined;
+
   private createHardwareUnavailableError(reason: BSIMHardwareReason, message?: string): BSIMHardwareUnavailableError {
     return new BSIMError(BSIM_HARDWARE_UNAVAILABLE, message ?? 'Hardware not available', { reason }) as BSIMHardwareUnavailableError;
   }
@@ -332,6 +338,53 @@ export class BSIMPluginClass implements Plugin {
     },
   });
 
+  private buildWalletLogger() {
+    return (event: string, context?: Record<string, unknown>) => {
+      if (getAppEnv() !== 'dev') return;
+
+      const sanitized = context ? Object.fromEntries(Object.entries(context).map(([key, v]) => [key, sanitizeLogValue(v)])) : undefined;
+
+      if (sanitized) {
+        console.log(event, sanitized);
+      } else {
+        console.log(event);
+      }
+    };
+  }
+  public getBleDeviceId = (): string | undefined => this.bleDeviceId;
+
+  public setBleDeviceId = (deviceId: string | undefined): void => {
+    this.bleDeviceId = deviceId;
+
+    if (Platform.OS !== 'ios') return;
+
+    this.wallet = createWallet({
+      transports: [{ kind: 'ble', options: { deviceId } }],
+      logger: this.buildWalletLogger(),
+    });
+  };
+
+  public startNearbyBSIMDeviceScan = (
+    onDevice: (device: { deviceId: string; name: string }) => void,
+    onError?: (error: unknown) => void,
+  ): BleDeviceScanHandle => {
+    if (Platform.OS !== 'ios') {
+      onError?.(this.createHardwareUnavailableError('ble_device_not_found'));
+      return { stop: () => undefined };
+    }
+
+    return startBleDeviceScan(
+      { namePrefix: 'CT' },
+      (device: BleDeviceScanResult) => {
+        onDevice({ deviceId: device.deviceId, name: device.name });
+      },
+      (error) => {
+        const reason = this.resolveIOSHardwareReason(error) ?? 'ble_device_not_found';
+        onError?.(this.createHardwareUnavailableError(reason, error.message));
+      },
+    );
+  };
+
   public formatBSIMPubkey = (key: string) => {
     if (key.length === 128) {
       return key;
@@ -362,6 +415,16 @@ export class BSIMPluginClass implements Plugin {
   }
 
   public getBSIMPublicKeys = async () => this.loadPubkeys();
+
+  /**
+   * Returns raw BSIM pubkey records from the card (coinType/index/alg/key).
+   */
+  public exportPubkeyRecords = async (): Promise<PubkeyRecord[]> => this.handleWalletCall(() => this.wallet.exportPubkeys());
+
+  /**
+   * Derives the next key for the given BIP44 coinType on the card.
+   */
+  public deriveKey = async (coinType: number, algorithm?: number): Promise<void> => this.handleWalletCall(() => this.wallet.deriveKey({ coinType, algorithm }));
 
   public getBSIMList = async () => {
     const list = await this.getBSIMPublicKeys();

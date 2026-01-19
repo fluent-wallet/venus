@@ -72,7 +72,7 @@ const MoreOption: React.FC<{ children: React.ReactElement }> = ({ children }) =>
             {currentNetwork?.scanUrl && (
               <Pressable onPress={handleOpenScan} testID="view">
                 <View style={styles.optionItem}>
-                  <Text style={[{ color: reverseColors.textPrimary }, styles.optionItemText]}>{t('home.more.viewInExplorer')}</Text>
+                  <Text style={[{ color: reverseColors.textPrimary }, styles.optionItemText]}>{t('home.more.viewOnExplorer')}</Text>
                   <Earth color={reverseColors.textPrimary} />
                 </View>
               </Pressable>

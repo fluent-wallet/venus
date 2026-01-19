@@ -1,15 +1,14 @@
 import type { Database } from '@core/database';
 import type { Network } from '@core/database/models/Network';
 import TableName from '@core/database/TableName';
-import { SERVICE_IDENTIFIER } from '@core/WalletCore/service';
+import { CORE_IDENTIFIERS } from '@core/di';
 import { Q } from '@nozbe/watermelondb';
 import { inject, injectable } from 'inversify';
-
 import type { INetwork, NetworkEndpointEntry } from './types';
 
 @injectable()
 export class NetworkService {
-  @inject(SERVICE_IDENTIFIER.DB)
+  @inject(CORE_IDENTIFIERS.DB)
   private readonly database!: Database;
 
   async getAllNetworks(): Promise<INetwork[]> {

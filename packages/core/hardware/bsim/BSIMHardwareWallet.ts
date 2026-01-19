@@ -11,7 +11,7 @@ import type {
 } from '@core/types';
 import type { Address, ChainType, Hash } from '@core/types/chain';
 import { NetworkType } from '@core/utils/consts';
-import { hashMessage, keccak256, Signature, Transaction, TypedDataEncoder } from 'ethers';
+import { getBytes, hashMessage, keccak256, Signature, Transaction, TypedDataEncoder } from 'ethers';
 import type { Hex } from 'ox/Hex';
 import { Platform } from 'react-native';
 import {
@@ -54,6 +54,9 @@ export class BSIMHardwareWallet implements IBSIMWallet {
   private readonly baseOptions: Pick<WalletOptions, 'idleTimeoutMs' | 'logger'>;
   private readonly queue = createAsyncQueue();
 
+  private lastTransport: 'apdu' | 'ble' | undefined;
+  private lastDeviceIdentifier: string | undefined;
+
   constructor(options: BSIMAdapterOptions = {}) {
     this.id = options.id ?? 'bsim-adapter';
     this.factory = options.walletFactory ?? createWallet;
@@ -61,31 +64,42 @@ export class BSIMHardwareWallet implements IBSIMWallet {
   }
 
   async connect(options?: HardwareConnectOptions): Promise<void> {
-    if (this.connected && this.wallet) {
+    const transport = this.resolveConnectTransport(options);
+
+    const deviceIdentifier = this.normalizeDeviceIdentifier(options);
+
+    const normalizedOptions: HardwareConnectOptions = {
+      ...options,
+      transport,
+      deviceIdentifier,
+    };
+
+    const canReuse = this.connected && this.wallet && this.lastTransport === transport && this.lastDeviceIdentifier === deviceIdentifier;
+
+    if (canReuse) {
       try {
-        await this.runWithAbort(options?.signal, async () => this.ensureHardwareReady(options?.signal));
+        await this.runWithAbort(normalizedOptions.signal, async () => this.ensureHardwareReady(normalizedOptions.signal));
         return;
       } catch {
         this.resetConnection();
       }
+    } else if (this.connected || this.wallet) {
+      this.resetConnection();
     }
 
-    this.wallet = this.factory({ ...this.baseOptions, ...this.buildTransportOptions(options) });
+    this.wallet = this.factory({ ...this.baseOptions, ...this.buildTransportOptions(normalizedOptions) });
+    this.lastTransport = transport;
+    this.lastDeviceIdentifier = deviceIdentifier;
+
     try {
-      await this.runWithAbort(options?.signal, async () => {
-        await this.wallet!.getVersion();
+      await this.runWithAbort(normalizedOptions.signal, async () => {
+        const wallet = this.wallet;
+        if (!wallet) {
+          throw new BSIMHardwareError('NOT_CONNECTED', 'BSIM wallet has not been connected.');
+        }
+        await wallet.getVersion();
         this.connected = true;
       });
-      // TODO: Device ID
-      // Design decision pending: BLE transport needs Bluetooth device ID for reconnection.
-      // Current challenges:
-      // 1. BLE transport has deviceId (Bluetooth ID), but APDU doesn't
-      // 2. ICCID is card identifier, not connection identifier
-      // 3. Multiple design options:
-      //    - Return deviceId only for BLE transport (asymmetric API)
-      //    - Return { connectionId?, cardId? } (complex)
-      //    - Store deviceId internally for reconnection (current approach)
-      // Revisit when multi-device support or reconnection logic is implemented.
     } catch (error) {
       this.handleOperationError(error);
     }
@@ -94,6 +108,8 @@ export class BSIMHardwareWallet implements IBSIMWallet {
   async disconnect(): Promise<void> {
     this.wallet = null;
     this.connected = false;
+    this.lastTransport = undefined;
+    this.lastDeviceIdentifier = undefined;
   }
 
   async isConnected(): Promise<boolean> {
@@ -197,8 +213,14 @@ export class BSIMHardwareWallet implements IBSIMWallet {
   }
 
   private async signPersonalMessage(message: string, account: HardwareAccount, signal?: AbortSignal): Promise<HardwareSignResult> {
-    const digest = hashMessage(message) as Hex;
+    const isHexBytes = message.length % 2 === 0 && /^0x[0-9a-fA-F]*$/.test(message);
+    if (!isHexBytes) {
+      throw new BSIMHardwareError('INVALID_HEX_FORMAT', 'Personal sign message must be a 0x-prefixed hex string.');
+    }
+
+    const digest = hashMessage(getBytes(message)) as Hex;
     const signature = await this.requestSignature(digest, account, signal);
+
     return {
       resultType: 'signature',
       chainType: NetworkType.Ethereum,
@@ -448,14 +470,26 @@ export class BSIMHardwareWallet implements IBSIMWallet {
       this.handleOperationError(error);
     }
   }
+  private resolveConnectTransport(options?: HardwareConnectOptions): 'apdu' | 'ble' {
+    if (options?.transport === 'apdu' || options?.transport === 'ble') {
+      return options.transport;
+    }
+    return Platform.OS === 'ios' ? 'ble' : 'apdu';
+  }
+
+  private normalizeDeviceIdentifier(options?: HardwareConnectOptions): string | undefined {
+    const value = options?.deviceIdentifier?.trim();
+    return value ? value : undefined;
+  }
 
   private buildTransportOptions(options?: HardwareConnectOptions): WalletOptions {
-    if (!options?.transport) {
-      return {};
+    const transport = this.resolveConnectTransport(options);
+    const deviceIdentifier = this.normalizeDeviceIdentifier(options);
+
+    if (transport === 'ble') {
+      return { transports: [{ kind: 'ble', options: { deviceId: deviceIdentifier } }] };
     }
-    if (options.transport === 'ble') {
-      return { transports: [{ kind: 'ble', options: { deviceId: options.deviceIdentifier } }] };
-    }
+
     return { transports: [{ kind: 'apdu', options: { aid: undefined } }] };
   }
 
@@ -522,5 +556,7 @@ export class BSIMHardwareWallet implements IBSIMWallet {
   private resetConnection(): void {
     this.wallet = null;
     this.connected = false;
+    this.lastTransport = undefined;
+    this.lastDeviceIdentifier = undefined;
   }
 }

@@ -11,6 +11,7 @@ import { useNavigation, useTheme } from '@react-navigation/native';
 import type { BackupBSIMQ2RCodeStackName, BackupScreenProps, StackNavigation } from '@router/configs';
 import { BSIM_QR_VERSION } from '@utils/BSIMConstants';
 import { encryptICCID, generateIV, generatePasswordTag } from '@utils/BSIMCrypto';
+import { encodeBsimDerivationSnapshot } from '@utils/BSIMDerivationSnapshot';
 import type { BsimQrPayload } from '@utils/BSIMTypes';
 import backToHome from '@utils/backToHome';
 import { handleBSIMHardwareUnavailable } from '@utils/handleBSIMHardwareUnavailable';
@@ -52,14 +53,16 @@ export const BSIMStep2QRCode: React.FC<BackupScreenProps<typeof BackupBSIMQ2RCod
         const pwdTagHex = stripHexPrefix(pwd_tag).toLowerCase();
 
         const isHex = (value: string) => /^[0-9a-f]+$/i.test(value);
-        const ensure = (cond: boolean) => {
+        const validate = (cond: boolean) => {
           if (!cond) throw new Error(t('backup.BSIM.generateFailed'));
         };
 
-        ensure(isHex(ivHex) && ivHex.length === 32); // 16 bytes
-        ensure(isHex(iccidHex) && iccidHex.length > 0 && iccidHex.length % 2 === 0);
-        ensure(isHex(pwdTagHex) && pwdTagHex.length === 4); // 2 bytes
+        validate(isHex(ivHex) && ivHex.length === 32);
+        validate(isHex(iccidHex) && iccidHex.length > 0 && iccidHex.length % 2 === 0);
+        validate(isHex(pwdTagHex) && pwdTagHex.length === 4);
 
+        const pubkeyRecords = await BSIM.exportPubkeyRecords();
+        const d = encodeBsimDerivationSnapshot(pubkeyRecords);
         const payload: BsimQrPayload = {
           v: BSIM_QR_VERSION,
           version,
@@ -67,13 +70,12 @@ export const BSIMStep2QRCode: React.FC<BackupScreenProps<typeof BackupBSIMQ2RCod
           iv: ivHex,
           iccid_ct: iccidHex,
           pwd_tag: pwdTagHex,
+          d,
         };
-        const jsonStr = JSON.stringify(payload);
-        const qrDataBase64 = btoa(jsonStr);
+        const qrDataBase64 = btoa(JSON.stringify(payload));
 
         setQrData(qrDataBase64);
       } catch (error: any) {
-        console.error('Failed to generate QR code:', error);
         if (handleBSIMHardwareUnavailable(error, rootNavigation)) {
           return;
         }

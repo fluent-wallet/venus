@@ -18,6 +18,7 @@ export {
   createApduTransport,
   createBleTransport,
   isTransportError,
+  startBleDeviceScan,
   type Transport,
   TransportError,
   TransportErrorCode,

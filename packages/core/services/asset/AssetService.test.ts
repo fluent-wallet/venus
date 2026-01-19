@@ -10,8 +10,8 @@ import type { Asset } from '@core/database/models/Asset';
 import { AssetSource, AssetType } from '@core/database/models/Asset';
 import type { Network } from '@core/database/models/Network';
 import TableName from '@core/database/TableName';
+import { CORE_IDENTIFIERS } from '@core/di';
 import type { Hex } from '@core/types';
-import { SERVICE_IDENTIFIER } from '@core/WalletCore/service';
 import { Container } from 'inversify';
 import { AssetService } from './AssetService';
 
@@ -33,7 +33,7 @@ describe('AssetService', () => {
     database = mockDatabase();
     registry = new ChainRegistry();
 
-    container.bind<Database>(SERVICE_IDENTIFIER.DB).toConstantValue(database);
+    container.bind<Database>(CORE_IDENTIFIERS.DB).toConstantValue(database);
     container.bind(ChainRegistry).toConstantValue(registry);
     container.bind(AssetService).toSelf();
 

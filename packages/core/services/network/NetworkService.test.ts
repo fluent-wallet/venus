@@ -5,9 +5,8 @@ import type { Database } from '@core/database';
 import { mockDatabase } from '@core/database/__tests__/mockDatabases';
 import type { Network } from '@core/database/models/Network';
 import TableName from '@core/database/TableName';
-import { SERVICE_IDENTIFIER } from '@core/WalletCore/service';
+import { CORE_IDENTIFIERS } from '@core/di';
 import { Container } from 'inversify';
-
 import { NetworkService } from './NetworkService';
 import type { INetwork } from './types';
 
@@ -20,7 +19,7 @@ describe('NetworkService', () => {
     container = new Container({ defaultScope: 'Transient' });
     database = mockDatabase();
 
-    container.bind<Database>(SERVICE_IDENTIFIER.DB).toConstantValue(database);
+    container.bind<Database>(CORE_IDENTIFIERS.DB).toConstantValue(database);
     container.bind(NetworkService).toSelf();
 
     service = container.get(NetworkService);

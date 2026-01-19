@@ -78,6 +78,7 @@ export class CreateVaultMethod {
         {
           type,
           device: 'ePayWallet',
+          ...(type === VaultType.BSIM ? { hardwareDeviceId: this.plugins.BSIM?.getBleDeviceId?.() ?? null } : null),
           ...(data ? { data } : null),
           source: isImportByUser ? VaultSourceType.IMPORT_BY_USER : VaultSourceType.CREATE_BY_WALLET,
           isBackup: isImportByUser,

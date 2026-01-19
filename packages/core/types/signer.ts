@@ -37,8 +37,19 @@ export interface HardwareWalletCapabilities {
 }
 
 export interface HardwareConnectOptions {
+  /**
+   * Transport selection.
+   * BSIM adapter defaults by platform when omitted (Android: 'apdu', iOS: 'ble').
+   */
   transport?: 'apdu' | 'ble';
+
+  /**
+   * BSIM:
+   * - transport === 'ble': BLE `deviceId` (from scan result), used for direct connect/reconnect.
+   * - transport === 'apdu': ignored.
+   */
   deviceIdentifier?: string;
+
   signal?: AbortSignal;
 }
 
@@ -90,6 +101,12 @@ export type SigningPayload =
       data: Hex;
     };
 
+export type HardwareOperationError = {
+  code: string;
+  message: string;
+  reason?: string;
+  details?: Record<string, unknown>;
+};
 export type HardwareSignResult =
   | { resultType: 'signature'; chainType: ChainType; r: Hex; s: Hex; v: number; digest?: Hex }
   | { resultType: 'rawTransaction'; chainType: ChainType; rawTransaction: Hex; hash: Hash }

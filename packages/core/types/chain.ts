@@ -1,5 +1,6 @@
 import { NetworkType as CoreNetworkType } from '@core/utils/consts';
 import type { Block, Hex } from 'ox';
+import type { IChainRpc } from './rpc';
 import type { ISigner } from './signer';
 import type { FeeEstimate, SignedTransaction, TransactionParams, TxStatus, UnsignedTransaction } from './transaction';
 
@@ -19,13 +20,14 @@ export interface ChainCallParams {
 export interface IChainProvider {
   readonly chainId: string;
   readonly networkType: ChainType;
+  readonly rpc: IChainRpc;
 
   deriveAddress(publicKey: Hex, params?: unknown): string;
   validateAddress(address: Address): boolean;
 
   buildTransaction(params: TransactionParams): Promise<UnsignedTransaction>;
   estimateFee(tx: UnsignedTransaction): Promise<FeeEstimate>;
-  signTransaction(tx: UnsignedTransaction, signer: ISigner): Promise<SignedTransaction>;
+  signTransaction(tx: UnsignedTransaction, signer: ISigner, options?: { signal?: AbortSignal }): Promise<SignedTransaction>;
   broadcastTransaction(signedTx: SignedTransaction): Promise<Hash>;
 
   getBalance(address: Address): Promise<Hex>;

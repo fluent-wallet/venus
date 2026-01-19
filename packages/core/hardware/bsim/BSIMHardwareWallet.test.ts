@@ -1,7 +1,7 @@
 import 'reflect-metadata';
 import type { HardwareSignResult, SigningPayload } from '@core/types';
 import { NetworkType } from '@core/utils/consts';
-import { Wallet as EthersWallet, hashMessage, keccak256, Signature, SigningKey, Transaction, TypedDataEncoder } from 'ethers';
+import { Wallet as EthersWallet, hashMessage, hexlify, keccak256, Signature, SigningKey, Transaction, TypedDataEncoder, toUtf8Bytes } from 'ethers';
 import type { Hex } from 'ox/Hex';
 import type { Wallet as NativeWallet, PubkeyRecord } from 'react-native-bsim';
 import { BSIM_ACCOUNT_LIMIT, BSIM_ERROR_CANCEL } from './constants';
@@ -49,7 +49,7 @@ const createAdapter = (walletOverrides: Partial<MockWallet> = {}) => {
   const wallet = createStubWallet(walletOverrides);
   const factory = jest.fn(() => wallet);
   const adapter = new BSIMHardwareWallet({ walletFactory: factory });
-  return { adapter, wallet };
+  return { adapter, wallet, factory };
 };
 
 const buildTransactionPayload = (): Extract<SigningPayload, { payloadKind: 'transaction' }> => ({
@@ -125,18 +125,20 @@ describe('BSIMHardwareWallet', () => {
   it('signs personal messages compatible with ethers signatures', async () => {
     const { adapter } = createAdapter();
     const message = 'Hello BSIM';
+    const messageHex = hexlify(toUtf8Bytes(message));
+
     const result = await signWithAdapter(adapter, {
       payloadKind: 'message',
       messageKind: 'personal',
       chainType: NetworkType.Ethereum,
-      message,
+      message: messageHex,
     });
+
     assertBasicSignature(result);
     const serialized = Signature.from({ r: result.r, s: result.s, v: result.v }).serialized;
     const expected = await new EthersWallet(TEST_PRIVATE_KEY).signMessage(message);
     expect(serialized).toEqual(expected);
   });
-
   it('signs typed data using EIP-712 flow', async () => {
     const { adapter } = createAdapter();
     const domain = { name: 'Mail', version: '1', chainId: 1, verifyingContract: TEST_ADDRESS };

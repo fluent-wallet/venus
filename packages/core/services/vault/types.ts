@@ -1,5 +1,6 @@
 import type VaultSourceType from '@core/database/models/Vault/VaultSourceType';
 import type VaultType from '@core/database/models/Vault/VaultType';
+import type { HardwareConnectOptions } from '@core/types';
 
 /**
  * Vault snapshot returned by VaultService.
@@ -42,12 +43,14 @@ export interface CreatePrivateKeyVaultInput {
 
 /**
  * Options for creating a new BSIM vault.
+ * - If `accounts` is provided, VaultService uses it directly (legacy/compatible path).
+ * - If `accounts` is omitted, VaultService will call HardwareWalletService.connectAndSync(HARDWARE_WALLET_TYPES.BSIM, connectOptions).
  */
 export interface CreateBSIMVaultInput {
-  accounts: Array<{ index: number; hexAddress: string }>;
+  accounts?: Array<{ index: number; hexAddress: string }>;
   hardwareDeviceId?: string;
+  connectOptions?: HardwareConnectOptions;
 }
-
 /**
  * Options for creating a new PublicAddress vault.
  */
