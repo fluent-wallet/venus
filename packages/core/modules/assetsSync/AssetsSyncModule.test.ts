@@ -1,5 +1,4 @@
 import 'reflect-metadata';
-
 import { createTestAccount, seedNetwork } from '@core/__tests__/fixtures';
 import { createSilentLogger, mockDatabase } from '@core/__tests__/mocks';
 import { StubChainProvider } from '@core/__tests__/mocks/chainProviders';
@@ -9,6 +8,7 @@ import type { Asset } from '@core/database/models/Asset';
 import { AssetSource, AssetType } from '@core/database/models/Asset';
 import TableName from '@core/database/TableName';
 import { CORE_IDENTIFIERS } from '@core/di';
+import { CHAIN_PROVIDER_NOT_FOUND } from '@core/errors';
 import type { CoreEventMap, EventBus } from '@core/modules/eventBus';
 import { EventBusModule } from '@core/modules/eventBus';
 import { ModuleManager } from '@core/runtime/ModuleManager';
@@ -96,6 +96,64 @@ describe('AssetsSyncModule', () => {
       expect(succeeded[0].snapshot.assets).toHaveLength(1);
       expect(succeeded[0].snapshot.assets[0].type).toBe(AssetType.Native);
       expect(succeeded[0].snapshot.assets[0].balance).toBe('1');
+    } finally {
+      await manager.stop();
+    }
+  });
+
+  it('emits failed with CHAIN_PROVIDER_NOT_FOUND when chain provider missing', async () => {
+    const container = new Container({ defaultScope: 'Singleton' });
+    const database = mockDatabase();
+
+    const manager = new ModuleManager({
+      logger: createSilentLogger(),
+      container,
+      config: {
+        eventBus: { assertSerializable: true },
+        sync: { assets: { pollIntervalMs: 0 } },
+      },
+    });
+
+    manager.register([
+      EventBusModule,
+      createDbModule({ database }),
+      createCryptoToolModule({ cryptoTool: new FakeCryptoTool() }),
+      ServicesModule,
+      AssetsSyncModule,
+    ]);
+
+    await manager.start();
+
+    try {
+      const db = container.get<Database>(CORE_IDENTIFIERS.DB);
+
+      const { network, assetRule } = await seedNetwork(db, { selected: true });
+      await createTestAccount(db, { network, assetRule, selected: true });
+
+      await db.write(async () => {
+        await db.get<Asset>(TableName.Asset).create((record) => {
+          record.assetRule.set(assetRule);
+          record.network.set(network);
+          record.type = AssetType.Native;
+          record.contractAddress = '';
+          record.name = 'Conflux';
+          record.symbol = 'CFX';
+          record.decimals = 18;
+          record.icon = null;
+          record.source = AssetSource.Official;
+          record.priceInUSDT = null;
+        });
+      });
+
+      const eventBus = container.get<EventBus<CoreEventMap>>(CORE_IDENTIFIERS.EVENT_BUS);
+      const failed: CoreEventMap['assets-sync/failed'][] = [];
+      eventBus.on('assets-sync/failed', (payload) => failed.push(payload));
+
+      const service = container.get(AssetsSyncService);
+      await service.refreshCurrent({ reason: 'manual' });
+
+      expect(failed).toHaveLength(1);
+      expect(failed[0].error.code).toBe(CHAIN_PROVIDER_NOT_FOUND);
     } finally {
       await manager.stop();
     }
