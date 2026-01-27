@@ -2,6 +2,7 @@ import type { IAccount } from '@core/services/account/types';
 import type { IAsset } from '@core/services/asset/types';
 import type { HardwareOperationError } from '@core/types';
 import type { ExternalRequestSnapshot } from '../externalRequests/types';
+import type { INetwork } from '@core/services/network/types';
 
 type AssetsSyncKey = { addressId: string; networkId: string };
 type AssetsSyncReason = 'manual' | 'poll' | 'start';
@@ -53,6 +54,7 @@ type NftSyncSnapshot = {
 
 export type CoreEventMap = {
   'account/current-changed': { account: IAccount };
+  'network/current-changed': { network: INetwork };
 
   'hardware-sign/started': { requestId: string; accountId: string; addressId: string; networkId: string };
   'hardware-sign/succeeded': { requestId: string; accountId: string; addressId: string; networkId: string; txHash: string; rawTransaction: string };

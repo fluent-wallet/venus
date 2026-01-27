@@ -11,3 +11,5 @@ export const WALLET_CONNECT_MODULE_ID = 'wallet-connect' as const;
 
 export const ASSETS_SYNC_MODULE_ID = 'assets-sync' as const;
 export const NFT_SYNC_MODULE_ID = 'nft-sync' as const;
+
+export const TX_SYNC_MODULE_ID = 'tx-sync' as const;

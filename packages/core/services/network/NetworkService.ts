@@ -3,13 +3,18 @@ import type { Network } from '@core/database/models/Network';
 import TableName from '@core/database/TableName';
 import { CORE_IDENTIFIERS } from '@core/di';
 import { Q } from '@nozbe/watermelondb';
-import { inject, injectable } from 'inversify';
+import { inject, injectable, optional } from 'inversify';
 import type { INetwork, NetworkEndpointEntry } from './types';
+import type { CoreEventMap, EventBus } from '@core/modules/eventBus';
 
 @injectable()
 export class NetworkService {
   @inject(CORE_IDENTIFIERS.DB)
   private readonly database!: Database;
+
+  @inject(CORE_IDENTIFIERS.EVENT_BUS)
+  @optional()
+  private readonly eventBus?: EventBus<CoreEventMap>;
 
   async getAllNetworks(): Promise<INetwork[]> {
     const networks = await this.database.get<Network>(TableName.Network).query().fetch();
@@ -36,11 +41,11 @@ export class NetworkService {
   async switchNetwork(networkId: string): Promise<void> {
     const target = await this.findNetworkOrThrow(networkId);
 
-    await this.database.write(async () => {
-      if (target.selected) {
-        return;
-      }
+    if (target.selected) {
+      return;
+    }
 
+    await this.database.write(async () => {
       const currentlySelected = await this.database.get<Network>(TableName.Network).query(Q.where('selected', true)).fetch();
 
       const operations = [
@@ -58,6 +63,8 @@ export class NetworkService {
         await this.database.batch(...operations);
       }
     });
+    const network = await this.getCurrentNetwork();
+    this.eventBus?.emit('network/current-changed', { network });
   }
 
   private async getSelectedNetworkModel(): Promise<Network | null> {
