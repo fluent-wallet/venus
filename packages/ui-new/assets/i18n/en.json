@@ -220,7 +220,7 @@
     "recoverBSIM.describe.part2": "Please make sure your new BSIM card is properly inserted. Ensure that both your QR code and backup password are <1>correct</1>.",
      "recoverBSIM.warning": "Each BSIM card can only be restored once.",
      "recoverBSIM.invalidQRData": "Invalid QR code",
-     "recoverBSIM.pwdRule": "Enter 8 characters including letters、numbers and symbols.",
+     "recoverBSIM.pwdRule": "Enter at least 8 characters including letters、 numbers and symbols.",
      "recoverBSIM.success": "Congrats! You've successfully recovered your BSIM wallet. Before starting, we recommend you to change BPIN for your asset safety.",
      "recoverBSIM.invalidPassword": "Invalid password"
   },
