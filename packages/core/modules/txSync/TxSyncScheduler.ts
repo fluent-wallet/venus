@@ -1,9 +1,9 @@
 import type { Logger, RuntimeScheduler } from '@core/runtime/types';
 import type { AccountService } from '@core/services/account';
 import type { NetworkService } from '@core/services/network';
+import type { IChainProvider } from '@core/types';
 import type { CoreEventMap, EventBus, Subscription } from '../eventBus';
 import type { TxSyncService } from './TxSyncService';
-import type { IChainProvider } from '@core/types';
 
 export type TxSyncKey = { addressId: string; networkId: string };
 

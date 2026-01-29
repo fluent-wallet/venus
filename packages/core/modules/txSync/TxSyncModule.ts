@@ -1,4 +1,10 @@
+import { ChainRegistry } from '@core/chains';
+import type { Database } from '@core/database';
+import type { Address } from '@core/database/models/Address';
+import type { Network } from '@core/database/models/Network';
+import TableName from '@core/database/TableName';
 import { CORE_IDENTIFIERS } from '@core/di';
+import { CHAIN_PROVIDER_NOT_FOUND, CoreError } from '@core/errors';
 import type { RuntimeContext, RuntimeModule } from '@core/runtime/types';
 import { AccountService } from '@core/services/account';
 import { NetworkService } from '@core/services/network';
@@ -7,12 +13,6 @@ import { EVENT_BUS_MODULE_ID, SERVICES_MODULE_ID, TX_SYNC_MODULE_ID } from '../i
 import { TxSyncEngine } from './TxSyncEngine';
 import { TxSyncScheduler } from './TxSyncScheduler';
 import { TxSyncService } from './TxSyncService';
-import type { Database } from '@core/database';
-import { ChainRegistry } from '@core/chains';
-import TableName from '@core/database/TableName';
-import type { Network } from '@core/database/models/Network';
-import { CHAIN_PROVIDER_NOT_FOUND, CoreError } from '@core/errors';
-import type { Address } from '@core/database/models/Address';
 
 type TxSyncRuntimeConfig = {
   globalConcurrency?: number;

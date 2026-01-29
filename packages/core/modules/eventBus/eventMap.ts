@@ -1,8 +1,8 @@
 import type { IAccount } from '@core/services/account/types';
 import type { IAsset } from '@core/services/asset/types';
+import type { INetwork } from '@core/services/network/types';
 import type { HardwareOperationError } from '@core/types';
 import type { ExternalRequestSnapshot } from '../externalRequests/types';
-import type { INetwork } from '@core/services/network/types';
 
 type AssetsSyncKey = { addressId: string; networkId: string };
 type AssetsSyncReason = 'manual' | 'poll' | 'start';
@@ -95,5 +95,27 @@ export type CoreEventMap = {
   'wallet-connect/sessions-changed': {
     reason: 'init' | 'session_delete' | 'disconnect';
     topic?: string;
+  };
+
+  'receive-assets-sync/started': {
+    networkId: string;
+    reason: 'start' | 'network_changed' | 'manual';
+    runId: string;
+    timestampMs: number;
+  };
+  'receive-assets-sync/succeeded': {
+    networkId: string;
+    reason: 'start' | 'network_changed' | 'manual';
+    runId: string;
+    timestampMs: number;
+    createdCount: number;
+    updatedCount: number;
+  };
+  'receive-assets-sync/failed': {
+    networkId: string;
+    reason: 'start' | 'network_changed' | 'manual';
+    runId: string;
+    timestampMs: number;
+    error: { code: string; message: string; context?: Record<string, unknown> };
   };
 };

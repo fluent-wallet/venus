@@ -1,7 +1,6 @@
-export { EVM_RPC, CFX_RPC } from './rpc';
-
-export { TxSyncEngine, type TxSyncEngineInput, type TxSyncEngineResult } from './TxSyncEngine';
-export { TxSyncService } from './TxSyncService';
-export { TxSyncScheduler } from './TxSyncScheduler';
-export { TxSyncModule } from './TxSyncModule';
+export { CFX_RPC, EVM_RPC } from './rpc';
 export { createTxSyncDriver, type TxSyncDriver } from './TxSyncDriver';
+export { TxSyncEngine, type TxSyncEngineInput, type TxSyncEngineResult } from './TxSyncEngine';
+export { TxSyncModule } from './TxSyncModule';
+export { TxSyncScheduler } from './TxSyncScheduler';
+export { TxSyncService } from './TxSyncService';

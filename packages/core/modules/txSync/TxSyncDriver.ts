@@ -1,7 +1,7 @@
-import { ExecutedStatus, TxStatus, type Receipt } from '@core/database/models/Tx/type';
+import { ExecutedStatus, type Receipt, TxStatus } from '@core/database/models/Tx/type';
 import type { IChainProvider } from '@core/types';
-import { CFX_RPC, EVM_RPC } from './rpc';
 import { NetworkType } from '@core/utils/consts';
+import { CFX_RPC, EVM_RPC } from './rpc';
 
 export type NonceUsedState = 'not_used' | 'temp_used' | 'finalized_used';
 export type TxPresence = 'missing' | 'present' | 'skipped_or_replaced';

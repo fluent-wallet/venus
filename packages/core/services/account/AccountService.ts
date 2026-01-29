@@ -5,11 +5,11 @@ import type { Vault } from '@core/database/models/Vault';
 import VaultType from '@core/database/models/Vault/VaultType';
 import TableName from '@core/database/TableName';
 import { CORE_IDENTIFIERS } from '@core/di';
+import type { CoreEventMap, EventBus } from '@core/modules/eventBus';
 import { Q } from '@nozbe/watermelondb';
 import { inject, injectable, optional } from 'inversify';
 import { HardwareWalletService } from '../hardware/HardwareWalletService';
 import type { IAccount } from './types';
-import type { CoreEventMap, EventBus } from '@core/modules/eventBus';
 
 @injectable()
 export class AccountService {

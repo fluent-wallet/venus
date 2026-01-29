@@ -1,8 +1,7 @@
-import { ExecutedStatus, TxStatus, type Receipt } from '@core/database/models/Tx/type';
-import { ProcessErrorType } from '@core/utils/eth';
-
-import { createTxSyncDriver, type TxPresence, type TxSyncDriver } from './TxSyncDriver';
+import { type ExecutedStatus, type Receipt, TxStatus } from '@core/database/models/Tx/type';
 import type { IChainProvider } from '@core/types';
+import { ProcessErrorType } from '@core/utils/eth';
+import { createTxSyncDriver, type TxPresence, type TxSyncDriver } from './TxSyncDriver';
 
 export type TxSyncTxSnapshot = {
   txId: string;

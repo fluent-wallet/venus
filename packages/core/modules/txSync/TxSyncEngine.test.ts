@@ -1,8 +1,8 @@
 import 'reflect-metadata';
 import { TxStatus } from '@core/database/models/Tx/type';
+import { NetworkType } from '@core/utils/consts';
 import { ProcessErrorType } from '@core/utils/eth';
 import { TxSyncEngine } from './TxSyncEngine';
-import { NetworkType } from '@core/utils/consts';
 
 const hex = (n: number | bigint): string => `0x${BigInt(n).toString(16)}`;
 

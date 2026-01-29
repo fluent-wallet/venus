@@ -1,11 +1,11 @@
-import type { Database } from '@nozbe/watermelondb';
-import { Q } from '@nozbe/watermelondb';
-import TableName from '@core/database/TableName';
 import type { Address } from '@core/database/models/Address';
 import type { Tx } from '@core/database/models/Tx';
 import { NOT_FINALIZED_TX_STATUSES } from '@core/database/models/Tx/type';
+import TableName from '@core/database/TableName';
 import type { IChainProvider } from '@core/types';
-import { TxSyncEngine } from './TxSyncEngine';
+import type { Database } from '@nozbe/watermelondb';
+import { Q } from '@nozbe/watermelondb';
+import type { TxSyncEngine } from './TxSyncEngine';
 
 export type TxSyncServiceOptions = {
   db: Database;
