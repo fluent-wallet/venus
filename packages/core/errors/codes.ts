@@ -8,6 +8,9 @@ export const MM_NOT_STARTED = 'MM_NOT_STARTED' as const;
 export const MM_START_FAILED = 'MM_START_FAILED' as const;
 export const MM_STOP_FAILED = 'MM_STOP_FAILED' as const;
 
+export const DB_BOOTSTRAP_INVALID_CONFIG = 'DB_BOOTSTRAP_INVALID_CONFIG' as const;
+export const DB_BOOTSTRAP_SEED_FAILED = 'DB_BOOTSTRAP_SEED_FAILED' as const;
+
 export const EVENT_PAYLOAD_NOT_SERIALIZABLE = 'EVENT_PAYLOAD_NOT_SERIALIZABLE' as const;
 
 export const AUTH_PASSWORD_REQUEST_CANCELED = 'AUTH_PASSWORD_REQUEST_CANCELED' as const;
@@ -106,3 +109,5 @@ export type AssetsSyncErrorCode = typeof ASSETS_SYNC_FAILED;
 export type ReceiveAssetsSyncErrorCode = typeof RECEIVE_ASSETS_SYNC_FAILED | typeof RECEIVE_ASSETS_SYNC_FETCH_FAILED | typeof RECEIVE_ASSETS_SYNC_DECODE_FAILED;
 
 export type NftSyncErrorCode = typeof NFT_SYNC_FETCHER_NOT_CONFIGURED | typeof NFT_SYNC_FETCH_FAILED;
+
+export type DbBootstrapErrorCode = typeof DB_BOOTSTRAP_INVALID_CONFIG | typeof DB_BOOTSTRAP_SEED_FAILED;
