@@ -62,6 +62,11 @@ export type CoreEventMap = {
   'hardware-sign/aborted': { requestId: string; accountId: string; addressId: string; networkId: string };
 
   'tx/created': { key: { addressId: string; networkId: string }; txId: string };
+  'tx/updated': {
+    key: { addressId: string; networkId: string };
+    txIds: string[];
+    timestampMs: number;
+  };
 
   'assets-sync/started': AssetsSyncEventBase;
   'assets-sync/updated': AssetsSyncEventBase & {

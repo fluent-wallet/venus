@@ -5,23 +5,27 @@ import TableName from '@core/database/TableName';
 import type { IChainProvider } from '@core/types';
 import type { Database } from '@nozbe/watermelondb';
 import { Q } from '@nozbe/watermelondb';
+import type { CoreEventMap, EventBus } from '../eventBus';
 import type { TxSyncEngine } from './TxSyncEngine';
 
 export type TxSyncServiceOptions = {
   db: Database;
   engine: TxSyncEngine;
   now: () => number;
+  eventBus?: EventBus<CoreEventMap>;
 };
 
 export class TxSyncService {
   private readonly db: Database;
   private readonly engine: TxSyncEngine;
   private readonly now: () => number;
+  private readonly eventBus?: EventBus<CoreEventMap>;
 
   constructor(options: TxSyncServiceOptions) {
     this.db = options.db;
     this.engine = options.engine;
     this.now = options.now;
+    this.eventBus = options.eventBus;
   }
 
   async refreshKey(params: {
@@ -69,6 +73,7 @@ export class TxSyncService {
     if (result.patches.length === 0) return;
 
     const byId = new Map(txModels.map((t) => [t.id, t]));
+    const updatedTxIds: string[] = [];
 
     await this.db.write(async () => {
       const ops: Tx[] = [];
@@ -77,6 +82,7 @@ export class TxSyncService {
         const tx = byId.get(patch.txId);
         if (!tx) continue;
 
+        updatedTxIds.push(patch.txId);
         ops.push(
           tx.prepareUpdate((record) => {
             const set = patch.set;
@@ -100,6 +106,13 @@ export class TxSyncService {
       }
 
       if (ops.length > 0) await this.db.batch(...ops);
+      if (updatedTxIds.length > 0) {
+        this.eventBus?.emit('tx/updated', {
+          key: { addressId: params.addressId, networkId: params.networkId },
+          txIds: updatedTxIds,
+          timestampMs: this.now(),
+        });
+      }
     });
   }
   private async queryTxsByAddress(addressId: string): Promise<Tx[]> {

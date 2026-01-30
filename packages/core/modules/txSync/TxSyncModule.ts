@@ -52,7 +52,7 @@ export const TxSyncModule: RuntimeModule = {
     const networkService = container.get(NetworkService);
 
     const engine = new TxSyncEngine();
-    const service = new TxSyncService({ db, engine, now: context.now });
+    const service = new TxSyncService({ db, engine, now: context.now, eventBus });
 
     const chainRegistry = container.get(ChainRegistry);
 
