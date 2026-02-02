@@ -1,4 +1,5 @@
 import { ChainRegistry, ConfluxChainProvider, EthereumChainProvider } from '@core/chains';
+import { EndpointManager } from '@core/chains/EndpointManager';
 import type { Database } from '@core/database';
 import type { Network } from '@core/database/models/Network';
 import TableName from '@core/database/TableName';
@@ -7,12 +8,22 @@ import type { RuntimeModule } from '@core/runtime/types';
 import { registerServices } from '@core/services';
 import { VaultService } from '@core/services/vault';
 import { NetworkType } from '@core/types';
+import type { CoreEventMap, EventBus, Subscription } from '../eventBus';
 import { CRYPTO_TOOL_MODULE_ID, DB_BOOTSTRAP_MODULE_ID, DB_MODULE_ID, EVENT_BUS_MODULE_ID, SERVICES_MODULE_ID } from '../ids';
+
+class ServicesModuleState {
+  networkChangedSub: Subscription | null = null;
+  chainKeyToNetworkId = new Map<string, string>();
+}
 
 export const ServicesModule: RuntimeModule = {
   id: SERVICES_MODULE_ID,
   dependencies: [DB_MODULE_ID, DB_BOOTSTRAP_MODULE_ID, CRYPTO_TOOL_MODULE_ID, EVENT_BUS_MODULE_ID],
   register: ({ container }) => {
+    if (!container.isBound(ServicesModuleState)) {
+      container.bind(ServicesModuleState).toSelf().inSingletonScope();
+    }
+
     if (container.isBound(VaultService)) return;
     registerServices(container);
   },
@@ -20,9 +31,36 @@ export const ServicesModule: RuntimeModule = {
   start: async ({ container, logger }) => {
     const db = container.get<Database>(CORE_IDENTIFIERS.DB);
     const chainRegistry = container.get(ChainRegistry);
+    const endpointManager = container.get(EndpointManager);
+    const eventBus = container.get<EventBus<CoreEventMap>>(CORE_IDENTIFIERS.EVENT_BUS);
+    const state = container.get(ServicesModuleState);
 
     const networks = await db.get<Network>(TableName.Network).query().fetch();
     if (networks.length === 0) return;
+
+    for (const network of networks) {
+      if (!network.endpoint) continue;
+      endpointManager.setEndpoint(network.id, network.endpoint);
+    }
+
+    state.networkChangedSub?.unsubscribe();
+    state.networkChangedSub = eventBus.on('network/current-changed', ({ network }) => {
+      if (!network?.id || !network.endpoint) return;
+
+      endpointManager.setEndpoint(network.id, network.endpoint);
+
+      const chainKey = `${String(network.networkType)}:${String(network.chainId).toLowerCase()}`;
+      const registeredNetworkId = state.chainKeyToNetworkId.get(chainKey);
+
+      if (registeredNetworkId && registeredNetworkId !== network.id) {
+        endpointManager.setEndpoint(registeredNetworkId, network.endpoint);
+        logger.warn('ServicesModule:duplicate-network-same-chain-key', {
+          chainKey,
+          registeredNetworkId,
+          currentNetworkId: network.id,
+        });
+      }
+    });
 
     const byKey = new Map<string, Network[]>();
     for (const network of networks) {
@@ -53,20 +91,24 @@ export const ServicesModule: RuntimeModule = {
           chainRegistry.register(
             new EthereumChainProvider({
               chainId: selected.chainId,
-              endpoint: selected.endpoint,
+              networkId: selected.id,
+              endpointManager,
             }),
           );
         } else if (selected.networkType === NetworkType.Conflux) {
           chainRegistry.register(
             new ConfluxChainProvider({
               chainId: selected.chainId,
-              endpoint: selected.endpoint,
               netId: selected.netId,
+              networkId: selected.id,
+              endpointManager,
             }),
           );
         } else {
           continue;
         }
+
+        state.chainKeyToNetworkId.set(key, selected.id);
 
         logger.info('ServicesModule:chain-provider-registered', {
           chainId: selected.chainId,
@@ -82,5 +124,12 @@ export const ServicesModule: RuntimeModule = {
         });
       }
     }
+  },
+  stop: ({ container }) => {
+    if (!container.isBound(ServicesModuleState)) return;
+
+    const state = container.get(ServicesModuleState);
+    state.networkChangedSub?.unsubscribe();
+    state.networkChangedSub = null;
   },
 };

@@ -95,6 +95,11 @@ export class NetworkService {
   async updateEndpoint(networkId: string, endpoint: string): Promise<void> {
     const network = await this.findNetworkOrThrow(networkId);
     await network.updateEndpoint(endpoint);
+
+    if (network.selected) {
+      const current = await this.getCurrentNetwork();
+      this.eventBus?.emit('network/current-changed', { network: current });
+    }
   }
 
   async addEndpoint(networkId: string, entry: NetworkEndpointEntry): Promise<boolean> {

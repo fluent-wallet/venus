@@ -6,6 +6,7 @@ export * from './transaction';
 export * from './vault';
 
 import { ChainRegistry } from '@core/chains';
+import { EndpointManager } from '@core/chains/EndpointManager';
 import { HardwareWalletRegistry } from '@core/hardware/HardwareWalletRegistry';
 import type { Container } from 'inversify';
 import { AccountService } from './account';
@@ -23,6 +24,7 @@ export { HardwareWalletService } from './hardware/HardwareWalletService';
 
 export function registerServices(target: Container): void {
   target.bind(ChainRegistry).toSelf().inSingletonScope();
+  target.bind(EndpointManager).toSelf().inSingletonScope();
   target.bind(ChainStatusService).toSelf().inSingletonScope();
   target.bind(VaultService).toSelf().inSingletonScope();
   target.bind(AccountService).toSelf().inSingletonScope();
