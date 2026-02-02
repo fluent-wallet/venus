@@ -1,3 +1,4 @@
+import 'reflect-metadata';
 import {
   createMockConfluxSdk,
   DEFAULT_PRIVATE_KEY,
@@ -12,6 +13,7 @@ import { convertHexToBase32 } from '@core/utils/address';
 import { PersonalMessage } from 'js-conflux-sdk';
 import { checksum } from 'ox/Address';
 import { ConfluxChainProvider, type ConfluxChainProviderOptions } from './ConfluxChainProvider';
+import { EndpointManager } from './EndpointManager';
 
 const {
   rpc: mockRpc,
@@ -40,6 +42,7 @@ jest.mock('js-conflux-sdk', () => {
 const { PrivateKeyAccount: MockedPrivateKeyAccount } = jest.requireMock('js-conflux-sdk');
 
 const TEST_ENDPOINT = 'https://rpc.example/conflux';
+const TEST_NETWORK_ID = 'net_cfx_1029';
 const TEST_CHAIN_ID = '1029';
 const TEST_NET_ID = 1029;
 const SAMPLE_PRIVATE_KEY = DEFAULT_PRIVATE_KEY;
@@ -56,13 +59,19 @@ const ERC1155_CONTRACT = DEFAULT_TEST_NET_1155_CONTRACT;
 const NFT_TOKEN_ID = '12345';
 const ERC1155_TOKEN_ID = '67890';
 
-const createProvider = (overrides: Partial<ConfluxChainProviderOptions> = {}) =>
-  new ConfluxChainProvider({
-    chainId: TEST_CHAIN_ID,
-    endpoint: TEST_ENDPOINT,
-    netId: TEST_NET_ID,
-    ...overrides,
+const createProvider = (overrides: Partial<ConfluxChainProviderOptions> = {}) => {
+  const endpointManager = overrides.endpointManager ?? new EndpointManager();
+  const networkId = overrides.networkId ?? TEST_NETWORK_ID;
+
+  endpointManager.setEndpoint(networkId, TEST_ENDPOINT);
+
+  return new ConfluxChainProvider({
+    chainId: overrides.chainId ?? TEST_CHAIN_ID,
+    netId: overrides.netId ?? TEST_NET_ID,
+    networkId,
+    endpointManager,
   });
+};
 
 describe('ConfluxChainProvider', () => {
   beforeEach(() => {
@@ -78,12 +87,6 @@ describe('ConfluxChainProvider', () => {
     mockSendRawTransaction.mockReset();
     mockSignTransaction.mockReset();
     (MockedPrivateKeyAccount as jest.Mock).mockClear();
-  });
-
-  it('requires chainId, endpoint, and positive netId', () => {
-    expect(() => createProvider({ chainId: '' })).toThrow('chainId is required');
-    expect(() => createProvider({ endpoint: '' })).toThrow('endpoint is required');
-    expect(() => createProvider({ netId: 0 })).toThrow('netId must be a positive integer');
   });
 
   it('derives base32 address from public key', () => {

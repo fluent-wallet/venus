@@ -1,4 +1,4 @@
-import { HttpJsonRpcClient } from '@core/rpc';
+import { DynamicHttpJsonRpcClient } from '@core/rpc/DynamicHttpJsonRpcClient';
 import type {
   Address,
   ChainCallParams,
@@ -30,11 +30,13 @@ import {
   verifyMessage as verifyEthersMessage,
   Wallet,
 } from 'ethers';
+import type { EndpointManager } from './EndpointManager';
 import { buildTransactionPayload } from './utils/transactionBuilder';
 
 export interface EthereumChainProviderOptions {
   chainId: string;
-  endpoint: string;
+  networkId: string; // WatermelonDB Network.id
+  endpointManager: EndpointManager;
 }
 
 type EthersProvider = JsonRpcProvider;
@@ -42,24 +44,43 @@ type EthersProvider = JsonRpcProvider;
 export class EthereumChainProvider implements IChainProvider {
   readonly chainId: string;
   readonly networkType = NetworkType.Ethereum;
-  private readonly provider: EthersProvider;
+
+  private readonly numericChainId: number;
+
+  private readonly endpointManager: EndpointManager;
+  private readonly networkId: string;
+
+  private cachedEndpoint: string | null = null;
+  private cachedProvider: EthersProvider | null = null;
+
   readonly rpc: IChainRpc;
 
-  constructor({ chainId, endpoint }: EthereumChainProviderOptions) {
-    if (!chainId) {
-      throw new Error('chainId is required');
-    }
-    if (!endpoint) {
-      throw new Error('endpoint is required');
-    }
-
+  constructor({ chainId, networkId, endpointManager }: EthereumChainProviderOptions) {
     const numericChainId = Number(chainId);
     if (!Number.isFinite(numericChainId) || numericChainId <= 0) {
       throw new Error(`Invalid chainId: ${chainId}. Must be a positive number or hex string`);
     }
+
     this.chainId = chainId;
-    this.provider = new JsonRpcProvider(endpoint, numericChainId);
-    this.rpc = new HttpJsonRpcClient(endpoint);
+    this.numericChainId = numericChainId;
+
+    this.networkId = networkId;
+    this.endpointManager = endpointManager;
+
+    this.rpc = new DynamicHttpJsonRpcClient({ endpointManager, networkId });
+  }
+
+  private getEthersProvider(): EthersProvider {
+    const endpoint = this.endpointManager.getEndpointOrThrow(this.networkId);
+
+    if (this.cachedProvider && this.cachedEndpoint === endpoint) {
+      return this.cachedProvider;
+    }
+
+    const provider = new JsonRpcProvider(endpoint, this.numericChainId);
+    this.cachedEndpoint = endpoint;
+    this.cachedProvider = provider;
+    return provider;
   }
 
   deriveAddress(publicKey: string): string {
@@ -80,7 +101,7 @@ export class EthereumChainProvider implements IChainProvider {
 
   private async signWithSoftware(tx: EvmUnsignedTransaction, signer: ISoftwareSigner): Promise<SignedTransaction> {
     const privateKey = signer.getPrivateKey();
-    const wallet = new Wallet(privateKey, this.provider);
+    const wallet = new Wallet(privateKey, this.getEthersProvider());
     const raw = await wallet.signTransaction(tx.payload);
     const hash = keccak256(raw) as Hash;
 
@@ -145,7 +166,7 @@ export class EthereumChainProvider implements IChainProvider {
 
     if (signer.type === 'software') {
       const privateKey = signer.getPrivateKey();
-      const wallet = new Wallet(privateKey, this.provider);
+      const wallet = new Wallet(privateKey, this.getEthersProvider());
       return wallet.signMessage(messageBytes);
     } else {
       const result = await signer.signWithHardware({
@@ -185,7 +206,7 @@ export class EthereumChainProvider implements IChainProvider {
   }
 
   async broadcastTransaction(signedTx: SignedTransaction): Promise<Hash> {
-    const response = await this.provider.broadcastTransaction(signedTx.rawTransaction);
+    const response = await this.getEthersProvider().broadcastTransaction(signedTx.rawTransaction);
     return response.hash as Hash;
   }
 
@@ -225,18 +246,18 @@ export class EthereumChainProvider implements IChainProvider {
   }
 
   async getBalance(address: Address): Promise<Hex> {
-    const balance = await this.provider.getBalance(address);
+    const balance = await this.getEthersProvider().getBalance(address);
     return this.formatHex(balance);
   }
 
   async getNonce(address: Address): Promise<number> {
-    const nonce = await this.provider.getTransactionCount(address, 'pending');
+    const nonce = await this.getEthersProvider().getTransactionCount(address, 'pending');
     return nonce;
   }
 
   async call(params: ChainCallParams): Promise<Hex> {
     const { to, data } = params;
-    const raw = await this.provider.call({ to, data });
+    const raw = await this.getEthersProvider().call({ to, data });
     return raw as Hex;
   }
   private async resolveNonce(address: Address, override?: number): Promise<number> {
@@ -250,8 +271,9 @@ export class EthereumChainProvider implements IChainProvider {
     const { payload } = tx;
 
     const request = this.buildEstimateRequest(payload);
-    const estimatedGas = this.toBigInt(payload.gasLimit) ?? (await this.provider.estimateGas(request));
-    const feeData = await this.provider.getFeeData();
+    const provider = this.getEthersProvider();
+    const estimatedGas = this.toBigInt(payload.gasLimit) ?? (await provider.estimateGas(request));
+    const feeData = await provider.getFeeData();
 
     const hasExplicit1559 = payload.maxFeePerGas !== undefined || payload.maxPriorityFeePerGas !== undefined || payload.type === 2;
     const networkSupports1559 = feeData.maxFeePerGas != null && feeData.maxPriorityFeePerGas != null;

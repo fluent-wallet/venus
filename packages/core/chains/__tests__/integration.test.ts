@@ -6,6 +6,7 @@ import { computeAddress as computeAccountAddress, toAccountAddress } from '@core
 import { convertHexToBase32 } from '@core/utils/address';
 import { HDNode } from '@ethersproject/hdnode';
 import { ChainRegistry, ConfluxChainProvider, EthereumChainProvider } from '..';
+import { EndpointManager } from '../EndpointManager';
 
 jest.mock('js-conflux-sdk', () => {
   const actual = jest.requireActual('js-conflux-sdk');
@@ -29,13 +30,26 @@ const { Conflux: MockedConflux, PrivateKeyAccount: MockedPrivateKeyAccount, Pers
 const { JsonRpcProvider: MockedJsonRpcProvider, Wallet: MockedWallet } = jest.requireMock('ethers');
 const actualEthers = jest.requireActual('ethers');
 
-const CONFLUX_OPTIONS = { chainId: '0x1', endpoint: 'https://rpc.test/cfx', netId: 1 };
-const ETHEREUM_OPTIONS = { chainId: '1', endpoint: 'https://rpc.test/eth' };
+const CONFLUX_ENDPOINT = 'https://rpc.test/cfx';
+const CONFLUX_NETWORK_ID = 'net_cfx_0x1';
+
+const ETHEREUM_ENDPOINT = 'https://rpc.test/eth';
+const ETHEREUM_NETWORK_ID = 'net_eth_1';
+
+const CONFLUX_OPTIONS = { chainId: '0x1', netId: 1, networkId: CONFLUX_NETWORK_ID };
+const ETHEREUM_OPTIONS = { chainId: '1', networkId: ETHEREUM_NETWORK_ID };
+
 const ETH_PRIVATE_KEY = DEFAULT_PRIVATE_KEY;
 const ETHEREUM_ADDRESS = DEFAULT_HEX_ADDRESS;
 const CONFLUX_ADDRESS = DEFAULT_BASE32_ADDRESS_TEST;
 
 describe('chain integration', () => {
+  const createEndpointManager = () => {
+    const manager = new EndpointManager();
+    manager.setEndpoint(CONFLUX_NETWORK_ID, CONFLUX_ENDPOINT);
+    manager.setEndpoint(ETHEREUM_NETWORK_ID, ETHEREUM_ENDPOINT);
+    return manager;
+  };
   let confluxRpc: ReturnType<typeof createMockConfluxSdk>;
   let ethersProvider: ReturnType<typeof createMockEthersProvider>;
   let confluxSignTransaction: jest.Mock;
@@ -77,11 +91,12 @@ describe('chain integration', () => {
       };
     });
   });
-
   it('registers providers and retrieves them via ChainRegistry', () => {
+    const endpointManager = createEndpointManager();
+
     const registry = new ChainRegistry();
-    const conflux = new ConfluxChainProvider(CONFLUX_OPTIONS);
-    const ethereum = new EthereumChainProvider(ETHEREUM_OPTIONS);
+    const conflux = new ConfluxChainProvider({ ...CONFLUX_OPTIONS, endpointManager });
+    const ethereum = new EthereumChainProvider({ ...ETHEREUM_OPTIONS, endpointManager });
 
     registry.register(conflux).register(ethereum);
 
@@ -91,9 +106,9 @@ describe('chain integration', () => {
     expect(registry.getByType(NetworkType.Conflux)).toHaveLength(1);
     expect(registry.has('0x1')).toBe(true);
   });
-
   it('runs full Conflux flow: build → estimate → sign → broadcast', async () => {
-    const provider = new ConfluxChainProvider(CONFLUX_OPTIONS);
+    const endpointManager = createEndpointManager();
+    const provider = new ConfluxChainProvider({ ...CONFLUX_OPTIONS, endpointManager });
 
     confluxRpc.rpc.getNextNonce.mockResolvedValueOnce(5n);
     confluxRpc.rpc.getEpochNumber.mockResolvedValueOnce(100n);
@@ -136,7 +151,8 @@ describe('chain integration', () => {
   });
 
   it('runs full EVM flow: build → estimate → sign → broadcast', async () => {
-    const provider = new EthereumChainProvider(ETHEREUM_OPTIONS);
+    const endpointManager = createEndpointManager();
+    const provider = new EthereumChainProvider({ ...ETHEREUM_OPTIONS, endpointManager });
 
     ethersProvider.provider.getTransactionCount.mockResolvedValueOnce(7);
     ethersProvider.provider.estimateGas.mockResolvedValueOnce(21_000n);
@@ -181,29 +197,31 @@ describe('chain integration', () => {
   });
 
   it('derives addresses consistent with HD key derivation', async () => {
+    const endpointManager = createEndpointManager();
+
     const mnemonic = 'test test test test test test test test test test test junk';
     const confluxNode = HDNode.fromMnemonic(mnemonic).derivePath("m/44'/503'/0'/0/0");
     const ethereumNode = HDNode.fromMnemonic(mnemonic).derivePath("m/44'/60'/0'/0/0");
 
-    const confluxProvider = new ConfluxChainProvider(CONFLUX_OPTIONS);
+    const confluxProvider = new ConfluxChainProvider({ ...CONFLUX_OPTIONS, endpointManager });
     const derivedBase32 = confluxProvider.deriveAddress(confluxNode.publicKey as `0x${string}`);
     const expectedBase32 = convertHexToBase32(toAccountAddress(computeAccountAddress(confluxNode.publicKey as `0x${string}`)), CONFLUX_OPTIONS.netId);
     expect(derivedBase32).toBe(expectedBase32);
 
-    const ethereumProvider = new EthereumChainProvider(ETHEREUM_OPTIONS);
+    const ethereumProvider = new EthereumChainProvider({ ...ETHEREUM_OPTIONS, endpointManager });
     const derivedHex = ethereumProvider.deriveAddress(ethereumNode.publicKey);
     expect(derivedHex).toBe(actualEthers.getAddress(ethereumNode.address));
   });
 
   it('signs and verifies messages across chains', async () => {
     const message = 'Venus wallet integration';
-    const confluxProvider = new ConfluxChainProvider(CONFLUX_OPTIONS);
+    const endpointManager = createEndpointManager();
 
+    const confluxProvider = new ConfluxChainProvider({ ...CONFLUX_OPTIONS, endpointManager });
     const confluxSigner = new SoftwareSigner(ETH_PRIVATE_KEY);
     const confluxSignature = await confluxProvider.signMessage(message, confluxSigner);
     expect(confluxProvider.verifyMessage(message, confluxSignature, CONFLUX_ADDRESS)).toBe(true);
-
-    const ethereumProvider = new EthereumChainProvider(ETHEREUM_OPTIONS);
+    const ethereumProvider = new EthereumChainProvider({ ...ETHEREUM_OPTIONS, endpointManager });
     const actualWallet = new actualEthers.Wallet(ETH_PRIVATE_KEY);
     const expectedSignature = await actualWallet.signMessage(message);
     ethereumSignMessage.mockResolvedValueOnce(expectedSignature);

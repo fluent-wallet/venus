@@ -1,4 +1,4 @@
-import { HttpJsonRpcClient } from '@core/rpc';
+import { DynamicHttpJsonRpcClient } from '@core/rpc/DynamicHttpJsonRpcClient';
 import type {
   Address,
   ChainCallParams,
@@ -20,12 +20,15 @@ import { computeAddress, toAccountAddress } from '@core/utils/account';
 import { type Base32Address, convertBase32ToHex, convertHexToBase32, decode } from '@core/utils/address';
 import { Conflux, PersonalMessage, PrivateKeyAccount } from 'js-conflux-sdk';
 import type { Hex } from 'ox/Hex';
+import type { EndpointManager } from './EndpointManager';
 import { buildTransactionPayload } from './utils/transactionBuilder';
 
 export interface ConfluxChainProviderOptions {
   chainId: string;
-  endpoint: string;
   netId: number;
+
+  networkId: string; // WatermelonDB Network.id
+  endpointManager: EndpointManager;
 }
 
 type ConfluxRpcClient = {
@@ -47,28 +50,41 @@ export class ConfluxChainProvider implements IChainProvider {
   readonly chainId: string;
   readonly networkType = NetworkType.Conflux;
   readonly netId: number;
-  private readonly cfx: Conflux;
+
+  private readonly endpointManager: EndpointManager;
+  private readonly networkId: string;
+
+  private cachedEndpoint: string | null = null;
+  private cachedCfx: Conflux | null = null;
+  private cachedSdkRpc: ConfluxRpcClient | null = null;
+
   readonly rpc: IChainRpc;
-  private readonly sdkRpc: ConfluxRpcClient;
 
-  constructor({ chainId, endpoint, netId }: ConfluxChainProviderOptions) {
-    if (!chainId) {
-      throw new Error('chainId is required');
-    }
-
-    if (!endpoint) {
-      throw new Error('endpoint is required');
-    }
-
-    if (!Number.isInteger(netId) || netId <= 0) {
-      throw new Error('netId must be a positive integer');
-    }
-
+  constructor({ chainId, netId, networkId, endpointManager }: ConfluxChainProviderOptions) {
     this.chainId = chainId;
     this.netId = netId;
-    this.cfx = new Conflux({ url: endpoint, networkId: netId });
-    this.sdkRpc = this.cfx.cfx as ConfluxRpcClient;
-    this.rpc = new HttpJsonRpcClient(endpoint);
+
+    this.networkId = networkId;
+    this.endpointManager = endpointManager;
+
+    this.rpc = new DynamicHttpJsonRpcClient({ endpointManager, networkId });
+  }
+
+  private getConfluxClients(): { cfx: Conflux; sdkRpc: ConfluxRpcClient } {
+    const endpoint = this.endpointManager.getEndpointOrThrow(this.networkId);
+
+    if (this.cachedCfx && this.cachedSdkRpc && this.cachedEndpoint === endpoint) {
+      return { cfx: this.cachedCfx, sdkRpc: this.cachedSdkRpc };
+    }
+
+    const cfx = new Conflux({ url: endpoint, networkId: this.netId });
+    const sdkRpc = cfx.cfx as ConfluxRpcClient;
+
+    this.cachedEndpoint = endpoint;
+    this.cachedCfx = cfx;
+    this.cachedSdkRpc = sdkRpc;
+
+    return { cfx, sdkRpc };
   }
 
   deriveAddress(publicKey: Hex): string {
@@ -114,18 +130,19 @@ export class ConfluxChainProvider implements IChainProvider {
 
   async estimateFee(tx: ConfluxUnsignedTransaction): Promise<ConfluxFeeEstimate> {
     const { payload } = tx;
-    const { gasUsed, storageCollateralized } = await this.sdkRpc.estimateGasAndCollateral({
+    const { sdkRpc } = this.getConfluxClients();
+
+    const { gasUsed, storageCollateralized } = await sdkRpc.estimateGasAndCollateral({
       from: payload.from,
       to: payload.to,
       data: payload.data,
       value: payload.value,
     });
 
-    const gasPrice = payload.gasPrice ? BigInt(payload.gasPrice) : await this.sdkRpc.getGasPrice();
+    const gasPrice = payload.gasPrice ? BigInt(payload.gasPrice) : await sdkRpc.getGasPrice();
 
     return this.toFeeEstimate(payload, this.toBigInt(gasUsed), this.toBigInt(storageCollateralized), this.toBigInt(gasPrice));
   }
-
   async signTransaction(tx: ConfluxUnsignedTransaction, signer: ISigner): Promise<SignedTransaction> {
     if (signer.type === 'software') {
       return this.signWithSoftware(tx, signer);
@@ -169,22 +186,24 @@ export class ConfluxChainProvider implements IChainProvider {
   }
 
   async broadcastTransaction(signedTx: SignedTransaction): Promise<Hash> {
-    return this.cfx.sendRawTransaction(signedTx.rawTransaction);
+    const { cfx } = this.getConfluxClients();
+    return cfx.sendRawTransaction(signedTx.rawTransaction);
   }
-
   async getBalance(address: Address): Promise<Hex> {
-    const raw = await this.sdkRpc.getBalance(address, 'latest_state');
+    const { sdkRpc } = this.getConfluxClients();
+    const raw = await sdkRpc.getBalance(address, 'latest_state');
     return this.formatHex(raw);
   }
-
   async getNonce(address: Address): Promise<number> {
-    const result = await this.sdkRpc.getNextNonce(address, 'latest_state');
+    const { sdkRpc } = this.getConfluxClients();
+    const result = await sdkRpc.getNextNonce(address, 'latest_state');
     return this.toNumber(result);
   }
 
   async call(params: ChainCallParams): Promise<Hex> {
+    const { cfx } = this.getConfluxClients();
     const { to, data } = params;
-    const result = await this.cfx.call({ to, data });
+    const result = await cfx.call({ to, data });
     return this.formatHex(result);
   }
 
@@ -229,10 +248,10 @@ export class ConfluxChainProvider implements IChainProvider {
 
   private async resolveEpochHeight(override?: number): Promise<number> {
     if (typeof override === 'number') return override;
-    const epoch = await this.sdkRpc.getEpochNumber('latest_state');
+    const { sdkRpc } = this.getConfluxClients();
+    const epoch = await sdkRpc.getEpochNumber('latest_state');
     return this.toNumber(epoch);
   }
-
   private toUnsignedTransaction(payload: ConfluxUnsignedTransactionPayload): ConfluxUnsignedTransaction {
     return {
       chainType: this.networkType,
