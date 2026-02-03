@@ -1,3 +1,4 @@
+import { ASSETS_SYNC_FAILED } from '@core/errors';
 import type { Logger, RuntimeScheduler } from '@core/runtime/types';
 import type { AssetService } from '@core/services';
 import type { AccountService } from '@core/services/account';
@@ -167,14 +168,17 @@ export class AssetsSyncService {
     if (error && typeof error === 'object') {
       const maybe = error as { code?: unknown; message?: unknown; context?: unknown };
 
-      const code = typeof maybe.code === 'string' ? maybe.code : 'ASSETS_SYNC_FAILED';
+      const code = typeof maybe.code === 'string' ? maybe.code : ASSETS_SYNC_FAILED;
       const message = typeof maybe.message === 'string' ? maybe.message : 'Assets sync failed.';
 
       const context = maybe.context && typeof maybe.context === 'object' ? (maybe.context as Record<string, unknown>) : undefined;
 
-      return { code, message, context };
+      if (context) {
+        return { code, message, context };
+      }
+      return { code, message };
     }
 
-    return { code: 'ASSETS_SYNC_FAILED', message: 'Assets sync failed.' };
+    return { code: ASSETS_SYNC_FAILED, message: 'Assets sync failed.' };
   }
 }

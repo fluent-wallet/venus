@@ -64,6 +64,7 @@ import type { ITxEvm } from '@core/WalletCore/Plugins/Transaction/types';
 
 import { checksum } from 'ox/Address';
 import { ChainRegistry, ConfluxChainProvider, EthereumChainProvider } from '..';
+import { EndpointManager } from '../EndpointManager';
 
 jest.mock('js-conflux-sdk', () => {
   const actual = jest.requireActual('js-conflux-sdk');
@@ -89,8 +90,20 @@ const actualEthers = jest.requireActual('ethers');
 const { Conflux: MockedConflux, PrivateKeyAccount: MockedPrivateKeyAccount } = jest.requireMock('js-conflux-sdk');
 const { JsonRpcProvider: MockedJsonRpcProvider, Wallet: MockedWallet } = jest.requireMock('ethers');
 
-const CONFLUX_OPTIONS = { chainId: '0x1', endpoint: 'https://rpc.test/cfx', netId: 1 };
-const ETHEREUM_OPTIONS = { chainId: '1', endpoint: 'https://rpc.test/eth' };
+const CONFLUX_ENDPOINT = 'https://rpc.test/cfx';
+const CONFLUX_NETWORK_ID = 'net_cfx_0x1';
+const CONFLUX_OPTIONS = { chainId: '0x1', netId: 1, networkId: CONFLUX_NETWORK_ID };
+
+const ETHEREUM_ENDPOINT = 'https://rpc.test/eth';
+const ETHEREUM_NETWORK_ID = 'net_eth_1';
+const ETHEREUM_OPTIONS = { chainId: '1', networkId: ETHEREUM_NETWORK_ID };
+
+const createEndpointManager = () => {
+  const manager = new EndpointManager();
+  manager.setEndpoint(CONFLUX_NETWORK_ID, CONFLUX_ENDPOINT);
+  manager.setEndpoint(ETHEREUM_NETWORK_ID, ETHEREUM_ENDPOINT);
+  return manager;
+};
 
 const ETH_ADDRESS = checksum(DEFAULT_HEX_ADDRESS);
 const ETH_CONTRACT = '0x2222222222222222222222222222222222222222';
@@ -297,7 +310,8 @@ describe('chain compatibility', () => {
     ];
 
     it.each(confluxCases)('%s matches legacy builder', async ({ asset, amount, assetDecimals, recipient, params }) => {
-      const provider = new ConfluxChainProvider(CONFLUX_OPTIONS);
+      const endpointManager = createEndpointManager();
+      const provider = new ConfluxChainProvider({ ...CONFLUX_OPTIONS, endpointManager });
       const from = DEFAULT_BASE32_ADDRESS_TEST;
 
       const legacyNetwork = { chainId: CONFLUX_OPTIONS.chainId, networkType: NetworkType.Conflux } as unknown as Network;
@@ -325,7 +339,8 @@ describe('chain compatibility', () => {
     });
 
     it.each(evmCases)('%s matches legacy builder', async ({ asset, amount, assetDecimals, recipient, params }) => {
-      const provider = new EthereumChainProvider(ETHEREUM_OPTIONS);
+      const endpointManager = createEndpointManager();
+      const provider = new EthereumChainProvider({ ...ETHEREUM_OPTIONS, endpointManager });
       const from = checksum(DEFAULT_HEX_ADDRESS);
 
       const legacyNetwork = { chainId: ETHEREUM_OPTIONS.chainId, networkType: NetworkType.Ethereum } as unknown as Network;
@@ -354,10 +369,8 @@ describe('chain compatibility', () => {
   });
   describe('signing compatibility', () => {
     it('Conflux signing aligns with legacy implementation', async () => {
-      const registry = new ChainRegistry();
-      const provider = new ConfluxChainProvider(CONFLUX_OPTIONS);
-      registry.register(provider);
-
+      const endpointManager = createEndpointManager();
+      const provider = new ConfluxChainProvider({ ...CONFLUX_OPTIONS, endpointManager });
       confluxMocks.rpc.getNextNonce.mockResolvedValueOnce(1n);
       confluxMocks.rpc.getEpochNumber.mockResolvedValueOnce(100n);
 
@@ -388,7 +401,8 @@ describe('chain compatibility', () => {
     });
 
     it('Ethereum signing aligns with legacy implementation', async () => {
-      const provider = new EthereumChainProvider(ETHEREUM_OPTIONS);
+      const endpointManager = createEndpointManager();
+      const provider = new EthereumChainProvider({ ...ETHEREUM_OPTIONS, endpointManager });
 
       ethersMocks.provider.getTransactionCount.mockResolvedValueOnce(5);
 
@@ -425,7 +439,8 @@ describe('chain compatibility', () => {
 
   describe('fee estimate stubs remain consistent', () => {
     it('Conflux fee estimation calls match legacy pipeline', async () => {
-      const provider = new ConfluxChainProvider(CONFLUX_OPTIONS);
+      const endpointManager = createEndpointManager();
+      const provider = new ConfluxChainProvider({ ...CONFLUX_OPTIONS, endpointManager });
       const unsigned = (await provider.buildTransaction({
         from: DEFAULT_BASE32_ADDRESS_TEST,
         to: DEFAULT_BASE32_ADDRESS_TEST,
@@ -451,7 +466,7 @@ describe('chain compatibility', () => {
           to: unsigned.payload.to,
           value: unsigned.payload.value,
         },
-        endpoint: CONFLUX_OPTIONS.endpoint,
+        endpoint: CONFLUX_ENDPOINT,
       });
 
       expect(legacyEstimate.gasLimit).toBe(newEstimate.gasLimit);
@@ -459,7 +474,8 @@ describe('chain compatibility', () => {
     });
 
     it('Ethereum fee estimation calls match legacy pipeline', async () => {
-      const provider = new EthereumChainProvider(ETHEREUM_OPTIONS);
+      const endpointManager = createEndpointManager();
+      const provider = new EthereumChainProvider({ ...ETHEREUM_OPTIONS, endpointManager });
       const unsigned = (await provider.buildTransaction({
         from: ETH_ADDRESS,
         to: ETH_ADDRESS,
@@ -485,7 +501,7 @@ describe('chain compatibility', () => {
           to: unsigned.payload.to,
           value: unsigned.payload.value,
         },
-        endpoint: ETHEREUM_OPTIONS.endpoint,
+        endpoint: ETHEREUM_ENDPOINT,
       });
 
       expect(legacyEstimate.gasLimit).toBe(newEstimate.gasLimit);

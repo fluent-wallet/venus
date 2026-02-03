@@ -6,6 +6,7 @@ import { type Asset, AssetSource } from '@core/database/models/Asset';
 import type { Network } from '@core/database/models/Network';
 import TableName from '@core/database/TableName';
 import { CORE_IDENTIFIERS } from '@core/di';
+import { CHAIN_PROVIDER_NOT_FOUND, CoreError } from '@core/errors';
 import { AssetType, type Hex, type IChainProvider } from '@core/types';
 import { type Base32Address, convertBase32ToHex } from '@core/utils/address';
 import { balanceFormat, convertBalanceToDecimal } from '@core/utils/balance';
@@ -99,7 +100,11 @@ export class AssetService {
   private getChainProvider(network: Network): IChainProvider {
     const provider = this.chainRegistry.get(network.chainId, network.networkType);
     if (!provider) {
-      throw new Error(`Chain ${network.networkType} (${network.chainId}) is not registered.`);
+      throw new CoreError({
+        code: CHAIN_PROVIDER_NOT_FOUND,
+        message: 'Chain provider is not registered in ChainRegistry.',
+        context: { chainId: network.chainId, networkType: network.networkType },
+      });
     }
     return provider;
   }

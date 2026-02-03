@@ -5,6 +5,10 @@ import {
   TX_INVALID_PARAMS,
   TX_SIGN_ADDRESS_MISMATCH,
   WC_APPROVE_SESSION_FAILED,
+  WC_DISCONNECT_FAILED,
+  WC_PAIR_FAILED,
+  WC_PAIR_URI_VERSION_NOT_SUPPORTED,
+  WC_PAIRING_ALREADY_EXISTS,
   WC_REJECT_SESSION_FAILED,
   WC_UNSUPPORTED_CHAINS,
   WC_UNSUPPORTED_NAMESPACE,
@@ -24,7 +28,7 @@ import type { SigningService } from '@core/services/signing';
 import { NetworkType } from '@core/types';
 import type Client from '@reown/walletkit';
 import type { WalletKitTypes } from '@reown/walletkit';
-import { buildApprovedNamespaces, getSdkError } from '@walletconnect/utils';
+import { buildApprovedNamespaces, getSdkError, parseUri } from '@walletconnect/utils';
 import type { ExternalRequestSnapshot, ExternalRequestsService, JsonValue } from '../externalRequests';
 
 // White-list for session_request methods.
@@ -82,6 +86,7 @@ export class WalletConnectService {
   private client: Client | null = null;
   private sessions: WalletConnectSessionSnapshot[] = [];
   private started = false;
+  private startInFlight: Promise<void> | null = null;
 
   constructor(options: WalletConnectServiceOptions) {
     this.eventBus = options.eventBus;
@@ -110,21 +115,74 @@ export class WalletConnectService {
 
   public async start(): Promise<void> {
     if (this.started) return;
+    if (this.startInFlight) return this.startInFlight;
 
-    const client = await this.clientFactory();
-    this.client = client;
+    const run = (async () => {
+      let client: Client | null = null;
 
-    client.on('session_proposal', this.onSessionProposal);
-    client.on('session_delete', this.onSessionDelete);
-    client.on('session_request', this.onSessionRequest);
+      try {
+        client = await this.clientFactory();
+        this.client = client;
 
-    await this.refreshSessions();
+        client.on('session_proposal', this.onSessionProposal);
+        client.on('session_delete', this.onSessionDelete);
+        client.on('session_request', this.onSessionRequest);
 
-    this.eventBus.emit('wallet-connect/sessions-changed', { reason: 'init' });
-    this.started = true;
+        await this.refreshSessions();
+
+        this.eventBus.emit('wallet-connect/sessions-changed', { reason: 'init' });
+        this.started = true;
+      } catch (error) {
+        try {
+          if (client) {
+            try {
+              client.off('session_proposal', this.onSessionProposal);
+              client.off('session_delete', this.onSessionDelete);
+              client.off('session_request', this.onSessionRequest);
+            } catch (offError) {
+              this.logger.warn('WalletConnectService:start:cleanup-off-failed', { error: offError });
+            }
+
+            if (this.closeTransportOnStop) {
+              try {
+                const relayer = client.core?.relayer;
+                if (relayer?.transportClose) {
+                  await relayer.transportClose();
+                }
+              } catch (closeError) {
+                this.logger.warn('WalletConnectService:start:cleanup-transport-close-failed', { error: closeError });
+              }
+            }
+          }
+        } finally {
+          if (this.client === client) this.client = null;
+          this.sessions = [];
+          this.started = false;
+        }
+
+        throw error;
+      }
+    })();
+
+    this.startInFlight = run;
+
+    try {
+      await run;
+    } finally {
+      if (this.startInFlight === run) this.startInFlight = null;
+    }
   }
 
   public async stop(): Promise<void> {
+    const inFlight = this.startInFlight;
+    if (inFlight) {
+      try {
+        await inFlight;
+      } catch {
+        // start() may have failed; continue cleanup to ensure stopped state.
+      }
+    }
+
     if (!this.client) {
       this.started = false;
       this.sessions = [];
@@ -159,6 +217,62 @@ export class WalletConnectService {
 
   public getSessions(): WalletConnectSessionSnapshot[] {
     return this.sessions.slice();
+  }
+
+  public async pair(uri: string): Promise<void> {
+    if (typeof uri !== 'string' || !uri.startsWith('wc:')) {
+      throw new CoreError({ code: WC_PAIR_FAILED, message: 'WalletConnect URI must start with wc:.' });
+    }
+
+    await this.start();
+
+    const client = this.client;
+    if (!client) {
+      throw new CoreError({ code: WC_PAIR_FAILED, message: 'WalletConnect client is not available.' });
+    }
+
+    try {
+      const { version } = parseUri(uri);
+      if (version === 1) {
+        throw new CoreError({ code: WC_PAIR_URI_VERSION_NOT_SUPPORTED, message: 'WalletConnect v1 is not supported.' });
+      }
+
+      await client.pair({ uri, activatePairing: true });
+    } catch (error) {
+      if (error instanceof CoreError) throw error;
+
+      const message = error instanceof Error ? error.message : String(error);
+      if (message.includes('Pairing already exists')) {
+        throw new CoreError({ code: WC_PAIRING_ALREADY_EXISTS, message: 'WalletConnect pairing already exists.', cause: error });
+      }
+
+      throw new CoreError({ code: WC_PAIR_FAILED, message: 'WalletConnect pair failed.', cause: error });
+    }
+  }
+
+  public async disconnect(topic: string): Promise<void> {
+    if (typeof topic !== 'string' || topic.length === 0) {
+      throw new CoreError({ code: WC_DISCONNECT_FAILED, message: 'WalletConnect topic is required.' });
+    }
+    await this.start();
+
+    const client = this.client;
+    if (!client) {
+      throw new CoreError({ code: WC_DISCONNECT_FAILED, message: 'WalletConnect client is not available.' });
+    }
+
+    try {
+      await client.disconnectSession({ topic, reason: getSdkError('USER_DISCONNECTED') });
+
+      if (!this.started || this.client !== client) {
+        return;
+      }
+
+      await this.refreshSessions();
+      this.eventBus.emit('wallet-connect/sessions-changed', { reason: 'disconnect', topic });
+    } catch (error) {
+      throw new CoreError({ code: WC_DISCONNECT_FAILED, message: 'WalletConnect disconnect failed.', cause: error });
+    }
   }
 
   private async handleSessionDelete(event: WalletKitTypes.SessionDelete): Promise<void> {

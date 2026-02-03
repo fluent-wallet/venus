@@ -4,6 +4,7 @@ import { createTestAccount, seedNetwork } from '@core/__tests__/fixtures';
 import { createSilentLogger, mockDatabase } from '@core/__tests__/mocks';
 import type { Database } from '@core/database';
 import { CORE_IDENTIFIERS } from '@core/di';
+import { NFT_SYNC_FETCH_FAILED } from '@core/errors';
 import type { CoreEventMap, EventBus } from '@core/modules/eventBus';
 import { EventBusModule } from '@core/modules/eventBus';
 import { ModuleManager } from '@core/runtime/ModuleManager';
@@ -139,6 +140,68 @@ describe('NftSyncModule', () => {
       expect(failed).toHaveLength(1);
       expect(failed[0].error.code).toBe('NFT_SYNC_FETCHER_NOT_CONFIGURED');
     } finally {
+      await manager.stop();
+    }
+  });
+
+  it('emits failed with NFT_SYNC_FETCH_FAILED when fetch returns non-ok', async () => {
+    const container = new Container({ defaultScope: 'Singleton' });
+    const database = mockDatabase();
+
+    const manager = new ModuleManager({
+      logger: createSilentLogger(),
+      container,
+      config: {
+        eventBus: { assertSerializable: true },
+        sync: {
+          nft: {
+            pollIntervalMs: 0,
+            scanOpenApiByKey: {
+              'Ethereum:0x406': 'https://evmapi.confluxscan.org',
+            },
+          },
+        },
+      },
+    });
+
+    manager.register([
+      EventBusModule,
+      createDbModule({ database }),
+      createCryptoToolModule({ cryptoTool: new FakeCryptoTool() }),
+      ServicesModule,
+      NftSyncModule,
+    ]);
+
+    await manager.start();
+
+    const originalFetch = globalThis.fetch;
+    (globalThis as unknown as { fetch?: unknown }).fetch = jest.fn(async () => {
+      return {
+        ok: false,
+        status: 500,
+        json: async () => ({}),
+      } as unknown as Response;
+    });
+
+    try {
+      const db = container.get<Database>(CORE_IDENTIFIERS.DB);
+
+      const { network, assetRule } = await seedNetwork(db, { definitionKey: 'Conflux eSpace', selected: true });
+      await createTestAccount(db, { network, assetRule, selected: true });
+
+      const eventBus = container.get<EventBus<CoreEventMap>>(CORE_IDENTIFIERS.EVENT_BUS);
+      const failed: CoreEventMap['nft-sync/failed'][] = [];
+      eventBus.on('nft-sync/failed', (payload) => failed.push(payload));
+
+      const service = container.get(NftSyncService);
+
+      service.setCurrentTarget({ contractAddress: '0x0000000000000000000000000000000000000001' });
+      await service.refreshCurrent({ reason: 'manual' });
+
+      expect(failed).toHaveLength(1);
+      expect(failed[0].error.code).toBe(NFT_SYNC_FETCH_FAILED);
+    } finally {
+      (globalThis as unknown as { fetch?: unknown }).fetch = originalFetch;
       await manager.stop();
     }
   });

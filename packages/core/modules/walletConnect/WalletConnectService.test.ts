@@ -15,10 +15,11 @@ type MockWalletKitClient = {
   approveSession: (args: any) => Promise<any>;
   rejectSession: (args: any) => Promise<any>;
   respondSessionRequest: (args: any) => Promise<any>;
+  pair: (args: any) => Promise<any>;
+  disconnectSession: (args: any) => Promise<any>;
   core?: { relayer?: { transportClose?: () => Promise<void> } };
   __emit: (event: WalletKitTypes.Event, payload: any) => void;
 };
-
 const createMockClient = (options: {
   getActiveSessions: () => Record<string, any>;
   transportClose?: jest.Mock<Promise<void>, []>;
@@ -29,6 +30,8 @@ const createMockClient = (options: {
   approveSession: jest.Mock;
   rejectSession: jest.Mock;
   respondSessionRequest: jest.Mock;
+  pair: jest.Mock;
+  disconnectSession: jest.Mock;
 } => {
   const handlers = new Map<string, Set<(args: any) => void>>();
 
@@ -53,6 +56,8 @@ const createMockClient = (options: {
   const approveSession = jest.fn().mockResolvedValue(undefined);
   const rejectSession = jest.fn().mockResolvedValue(undefined);
   const respondSessionRequest = jest.fn().mockResolvedValue(undefined);
+  const pair = jest.fn().mockResolvedValue(undefined);
+  const disconnectSession = jest.fn().mockResolvedValue(undefined);
 
   const client: MockWalletKitClient = {
     on: on as unknown as MockWalletKitClient['on'],
@@ -61,6 +66,8 @@ const createMockClient = (options: {
     approveSession: approveSession as unknown as MockWalletKitClient['approveSession'],
     rejectSession: rejectSession as unknown as MockWalletKitClient['rejectSession'],
     respondSessionRequest: respondSessionRequest as unknown as MockWalletKitClient['respondSessionRequest'],
+    pair: pair as unknown as MockWalletKitClient['pair'],
+    disconnectSession: disconnectSession as unknown as MockWalletKitClient['disconnectSession'],
     core: {
       relayer: {
         transportClose: options.transportClose as unknown as (() => Promise<void>) | undefined,
@@ -69,7 +76,7 @@ const createMockClient = (options: {
     __emit: __emit as unknown as MockWalletKitClient['__emit'],
   };
 
-  return { client, on, off, approveSession, rejectSession, respondSessionRequest };
+  return { client, on, off, approveSession, rejectSession, respondSessionRequest, pair, disconnectSession };
 };
 
 const session = (topic: string, url: string) => {
@@ -953,5 +960,70 @@ describe('WalletConnectService', () => {
     expect(respondSessionRequest).toHaveBeenCalledTimes(0);
 
     externalRequests.stop();
+  });
+
+  it('pair() rejects non-wc: uri with WC_PAIR_FAILED', async () => {
+    const { client } = createMockClient({ getActiveSessions: () => ({}) });
+
+    const service = new WalletConnectService({
+      eventBus,
+      logger,
+      clientFactory: async () => client as any,
+      closeTransportOnStop: false,
+    });
+
+    await expect(service.pair('http://example.com')).rejects.toMatchObject({ code: 'WC_PAIR_FAILED' });
+  });
+
+  it('pair() rejects wc v1 uri with WC_PAIR_URI_VERSION_NOT_SUPPORTED', async () => {
+    const { client } = createMockClient({ getActiveSessions: () => ({}) });
+
+    const service = new WalletConnectService({
+      eventBus,
+      logger,
+      clientFactory: async () => client as any,
+      closeTransportOnStop: false,
+    });
+
+    const v1 =
+      'wc:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef@1?bridge=https%3A%2F%2Fbridge.walletconnect.org&key=0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef';
+
+    await expect(service.pair(v1)).rejects.toMatchObject({ code: 'WC_PAIR_URI_VERSION_NOT_SUPPORTED' });
+  });
+
+  it('pair() maps Pairing already exists to WC_PAIRING_ALREADY_EXISTS', async () => {
+    const { client, pair } = createMockClient({ getActiveSessions: () => ({}) });
+    pair.mockRejectedValueOnce(new Error('Pairing already exists'));
+
+    const service = new WalletConnectService({
+      eventBus,
+      logger,
+      clientFactory: async () => client as any,
+      closeTransportOnStop: false,
+    });
+
+    const v2 =
+      'wc:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef@2?relay-protocol=irn&symKey=0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef';
+
+    await expect(service.pair(v2)).rejects.toMatchObject({ code: 'WC_PAIRING_ALREADY_EXISTS' });
+  });
+
+  it("disconnect() emits sessions-changed with reason 'disconnect'", async () => {
+    const { client, disconnectSession } = createMockClient({ getActiveSessions: () => ({}) });
+
+    const events: CoreEventMap['wallet-connect/sessions-changed'][] = [];
+    eventBus.on('wallet-connect/sessions-changed', (payload) => events.push(payload));
+
+    const service = new WalletConnectService({
+      eventBus,
+      logger,
+      clientFactory: async () => client as any,
+      closeTransportOnStop: false,
+    });
+
+    await service.disconnect('t1');
+
+    expect(disconnectSession).toHaveBeenCalledTimes(1);
+    expect(events).toEqual([{ reason: 'init' }, { reason: 'disconnect', topic: 't1' }]);
   });
 });

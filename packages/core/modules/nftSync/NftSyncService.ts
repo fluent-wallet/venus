@@ -253,12 +253,14 @@ export class NftSyncService {
       const maybe = error as { code?: unknown; message?: unknown; context?: unknown };
 
       const code = typeof maybe.code === 'string' ? maybe.code : NFT_SYNC_FETCH_FAILED;
-
       const message = typeof maybe.message === 'string' ? maybe.message : 'Nft sync failed.';
 
       const context = maybe.context && typeof maybe.context === 'object' ? (maybe.context as Record<string, unknown>) : undefined;
 
-      return { code, message, context };
+      if (context) {
+        return { code, message, context };
+      }
+      return { code, message };
     }
 
     return { code: NFT_SYNC_FETCH_FAILED, message: 'Nft sync failed.' };

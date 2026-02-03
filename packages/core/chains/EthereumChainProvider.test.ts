@@ -1,7 +1,9 @@
+import 'reflect-metadata';
 import { createMockEthersProvider, DEFAULT_HEX_ADDRESS, DEFAULT_PRIVATE_KEY } from '@core/__tests__/mocks';
 import { SoftwareSigner } from '@core/signers';
 import { AssetType, type EvmUnsignedTransaction, type Hex, NetworkType } from '@core/types';
 import { JsonRpcProvider, Transaction, toUtf8Bytes, Wallet } from 'ethers';
+import { EndpointManager } from './EndpointManager';
 import { EthereumChainProvider, type EthereumChainProviderOptions } from './EthereumChainProvider';
 
 jest.mock('ethers', () => {
@@ -18,6 +20,7 @@ const MockedJsonRpcProvider = JsonRpcProvider as unknown as jest.Mock;
 const MockedWallet = Wallet as unknown as jest.Mock;
 
 const SAMPLE_ENDPOINT = 'https://rpc.example/ethereum';
+const SAMPLE_NETWORK_ID = 'net_eth_1';
 const SAMPLE_CHAIN_ID = '1';
 const SAMPLE_ACCOUNT = DEFAULT_HEX_ADDRESS;
 
@@ -32,13 +35,18 @@ const createWalletStub = () => ({
 });
 let walletStub: ReturnType<typeof createWalletStub>;
 
-const createProvider = (overrides: Partial<EthereumChainProviderOptions> = {}) =>
-  new EthereumChainProvider({
-    chainId: SAMPLE_CHAIN_ID,
-    endpoint: SAMPLE_ENDPOINT,
-    ...overrides,
-  });
+const createProvider = (overrides: Partial<EthereumChainProviderOptions> = {}) => {
+  const endpointManager = overrides.endpointManager ?? new EndpointManager();
+  const networkId = overrides.networkId ?? SAMPLE_NETWORK_ID;
 
+  endpointManager.setEndpoint(networkId, SAMPLE_ENDPOINT);
+
+  return new EthereumChainProvider({
+    chainId: overrides.chainId ?? SAMPLE_CHAIN_ID,
+    networkId,
+    endpointManager,
+  });
+};
 const BSIM_RAW_TX =
   '0x02f87447738504a817c8008504a817c800825208943300f555ca374debb8cf1f8ae6ed36075d0d0ff8880de0b6b3a764000080c080a051a89497de4746a06f18c9e12f3e3bac16084e75372c1a754a6fe7645c5235a3a013ab25c2d98a6385d639c1c91a869d0360fd5f30a6d2e69b6eaa30c82fb73ef9';
 const BSIM_TX_HASH = '0x61e672123925c197c8462a12be03416a82eac81a0c3665e474ae0d4b60dd6e5c';
@@ -77,11 +85,11 @@ describe('EthereumChainProvider', () => {
     expect(() => createProvider({ chainId: 'abc' })).toThrow('Invalid chainId');
     expect(() => createProvider({ chainId: '0' })).toThrow('Invalid chainId');
   });
-  it('requires chainId and endpoint', () => {
-    expect(() => createProvider({ chainId: '' })).toThrow('chainId is required');
-    expect(() => createProvider({ endpoint: '' })).toThrow('endpoint is required');
+  it('rejects invalid chainId formats', () => {
+    expect(() => createProvider({ chainId: '-1' })).toThrow('Invalid chainId');
+    expect(() => createProvider({ chainId: 'abc' })).toThrow('Invalid chainId');
+    expect(() => createProvider({ chainId: '0' })).toThrow('Invalid chainId');
   });
-
   it('derives and validates checksum addresses', () => {
     const provider = createProvider();
 

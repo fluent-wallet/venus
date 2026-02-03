@@ -5,8 +5,9 @@ import type { Vault } from '@core/database/models/Vault';
 import VaultType from '@core/database/models/Vault/VaultType';
 import TableName from '@core/database/TableName';
 import { CORE_IDENTIFIERS } from '@core/di';
+import type { CoreEventMap, EventBus } from '@core/modules/eventBus';
 import { Q } from '@nozbe/watermelondb';
-import { inject, injectable } from 'inversify';
+import { inject, injectable, optional } from 'inversify';
 import { HardwareWalletService } from '../hardware/HardwareWalletService';
 import type { IAccount } from './types';
 
@@ -17,6 +18,10 @@ export class AccountService {
 
   @inject(HardwareWalletService)
   private readonly hardwareWalletService!: HardwareWalletService;
+
+  @inject(CORE_IDENTIFIERS.EVENT_BUS)
+  @optional()
+  private readonly eventBus?: EventBus<CoreEventMap>;
 
   async getCurrentAccount(): Promise<IAccount | null> {
     const account = await this.getCurrentAccountModel();
@@ -29,11 +34,11 @@ export class AccountService {
   async switchAccount(accountId: string): Promise<void> {
     const targetAccount = await this.database.get<Account>(TableName.Account).find(accountId);
 
-    await this.database.write(async () => {
-      if (targetAccount.selected) {
-        return;
-      }
+    if (targetAccount.selected) {
+      return;
+    }
 
+    await this.database.write(async () => {
       const currentlySelected = await this.database.get<Account>(TableName.Account).query(Q.where('selected', true)).fetch();
 
       const operations = [
@@ -51,6 +56,11 @@ export class AccountService {
         await this.database.batch(...operations);
       }
     });
+
+    const account = await this.getCurrentAccount();
+    if (account) {
+      this.eventBus?.emit('account/current-changed', { account });
+    }
   }
 
   async getAccountById(accountId: string): Promise<IAccount | null> {
