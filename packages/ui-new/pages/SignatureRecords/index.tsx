@@ -1,19 +1,19 @@
 import NoneSignature from '@assets/images/none-signature.webp';
 import Delay from '@components/Delay';
 import Text from '@components/Text';
+import { SignatureFilterOption } from '@core/database/models/Signature/type';
 import { useCurrentAddress } from '@core/WalletCore/Plugins/ReactInject';
 import { fetchSignatureRecords, useSignatureRecords } from '@core/WalletCore/Plugins/ReactInject/data/useSignature';
-import { SignatureFilterOption } from '@core/database/models/Signature/type';
 import { useTheme } from '@react-navigation/native';
 import type { SignatureRecordsStackName, StackScreenProps } from '@router/configs';
 import { ENABLE_SMALL_SIGNATURE_RECORDS_FEATURE } from '@utils/features';
+import { Image } from 'expo-image';
 import type React from 'react';
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { FlatList, StyleSheet, View, type LayoutChangeEvent } from 'react-native';
-import TypeFilter from './TypeFilter';
-import { Image } from 'expo-image';
+import { FlatList, type LayoutChangeEvent, StyleSheet, View } from 'react-native';
 import { SignatureItem } from './SignatureItem';
+import TypeFilter from './TypeFilter';
 
 const DEFAULT_PAGE_SIZE = ENABLE_SMALL_SIGNATURE_RECORDS_FEATURE.allow ? 10 : 100;
 

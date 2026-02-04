@@ -1,6 +1,6 @@
-import type { AssetRule } from '.';
+import { createModel, type ModelFields } from '../../helper/modelHelper';
 import TableName from '../../TableName';
-import { type ModelFields, createModel } from '../../helper/modelHelper';
+import type { AssetRule } from '.';
 
 type Params = ModelFields<AssetRule>;
 export function createAssetRule(params: Params, prepareCreate: true): AssetRule;

@@ -1,18 +1,20 @@
 {
-  "version": "2.2.0",
+  "version": "2.3.0",
   "force": false,
   "en": {
-    "description": "🎉 BIM Wallet New Version v2.2.0",
+    "description": "🎉 BIM Wallet New Version v2.3.0",
     "messageList": [
       "💎 Improvements",
-      "Fixed some known issues"
+      "Fixed some known issues",
+      "Support BSIM card backup and restore"
     ]
   },
   "zh-Hant": {
-    "description": "🎉 BIM Wallet 新版本 v2.2.0",
+    "description": "🎉 BIM Wallet 新版本 v2.3.0",
     "messageList": [
       "💎 優化",
-      "修復一些已知問題"
+      "修復一些已知問題",
+      "支援 BSIM 卡備份與還原"
     ]
   }
 }

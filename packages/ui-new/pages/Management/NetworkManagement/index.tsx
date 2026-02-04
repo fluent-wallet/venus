@@ -1,11 +1,11 @@
-import { FlatList, Pressable, StyleSheet, View } from 'react-native';
-import Text from '@components/Text';
-import { useNavigation, useTheme } from '@react-navigation/native';
-import { useTranslation } from 'react-i18next';
-import { useCurrentNetwork } from '@core/WalletCore/Plugins/ReactInject';
-import RPCListItem from './RPCListItem';
 import AddIcon from '@assets/icons/add.svg';
+import Text from '@components/Text';
+import { useCurrentNetwork } from '@core/WalletCore/Plugins/ReactInject';
+import { useNavigation, useTheme } from '@react-navigation/native';
 import { NetworkAddNewEndpointStackName, type StackNavigation } from '@router/configs';
+import { useTranslation } from 'react-i18next';
+import { FlatList, Pressable, StyleSheet, View } from 'react-native';
+import RPCListItem from './RPCListItem';
 
 const NetworkManagement = () => {
   const { colors } = useTheme();

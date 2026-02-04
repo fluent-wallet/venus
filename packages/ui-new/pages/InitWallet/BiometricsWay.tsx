@@ -1,3 +1,4 @@
+import { getAuthentication } from '@WalletCoreExtends/index';
 import i18n from '@assets/i18n';
 import Img from '@assets/images/fingerPrint.webp';
 import Button from '@components/Button';
@@ -12,7 +13,6 @@ import { Trans, useTranslation } from 'react-i18next';
 import { Pressable, ScrollView, StyleSheet } from 'react-native';
 import { showMessage } from 'react-native-flash-message';
 import createVault from './createVaultWithRouterParams';
-import { getAuthentication } from '@WalletCoreExtends/index';
 
 export const showBiometricsDisabledMessage = () => {
   showMessage({

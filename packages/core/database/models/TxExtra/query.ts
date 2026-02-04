@@ -1,6 +1,6 @@
-import type { TxExtra } from '.';
+import { createModel, type ModelFields } from '../../helper/modelHelper';
 import TableName from '../../TableName';
-import { type ModelFields, createModel } from '../../helper/modelHelper';
+import type { TxExtra } from '.';
 
 type Params = Omit<ModelFields<TxExtra>, 'createdAt'>;
 export function createTxExtra(params: Params, prepareCreate: true): TxExtra;

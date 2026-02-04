@@ -6,7 +6,7 @@ import TableName from '../TableName';
 // see: https://github.com/Nozbe/WatermelonDB/issues/198. https://github.com/Nozbe/WatermelonDB/issues/36
 // isIndexed: true. Indexing makes querying by a column faster.Should add later
 const schema = appSchema({
-  version: 3,
+  version: 4,
   tables: [
     tableSchema({
       name: TableName.HdPath,
@@ -144,6 +144,8 @@ const schema = appSchema({
         // Encrypted vault data
         { name: 'data', type: 'string', isOptional: true },
         { name: 'device', type: 'string' },
+        // Optional hardware identifier recorded after pairing (BLE UUID, ICCID…)
+        { name: 'hardware_device_id', type: 'string', isOptional: true },
         // If type is pub/hw, means this vault is only for cfx type network, if type is hd, means only generate 0x1 prefix account.
         { name: 'cfx_only', type: 'boolean', isOptional: true },
         { name: 'is_backup', type: 'boolean' },

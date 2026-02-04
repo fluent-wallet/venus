@@ -1,9 +1,9 @@
 import type { Network } from '@core/database/models/Network';
 import { SUGGESTED_EPOCH_NUMBER_OFFSET_IN_CORE } from '@core/utils/consts';
-import { type Subscription, catchError, debounceTime, interval, retry, startWith, switchMap, throwError } from 'rxjs';
+import { catchError, debounceTime, interval, retry, type Subscription, startWith, switchMap, throwError } from 'rxjs';
 import type { Plugin } from '../';
-import Transaction from '../Transaction';
 import { currentNetworkObservable } from '../ReactInject/data/useCurrentNetwork';
+import Transaction from '../Transaction';
 
 declare module '../../../WalletCore/Plugins' {
   interface Plugins {

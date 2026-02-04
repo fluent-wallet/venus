@@ -1,9 +1,9 @@
 import type { Query } from '@nozbe/watermelondb';
-import type { Asset } from '.';
-import database from '../..';
 import { convertToChecksum } from '../../../utils/account';
+import database from '../..';
+import { createModel, type ModelFields } from '../../helper/modelHelper';
 import TableName from '../../TableName';
-import { type ModelFields, createModel } from '../../helper/modelHelper';
+import type { Asset } from '.';
 
 export type AssetParams = Omit<ModelFields<Asset>, 'hashKey'>;
 export function createAsset(params: AssetParams, prepareCreate: true): Asset;

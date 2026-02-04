@@ -1,20 +1,20 @@
-import type React from 'react';
-import { useState, useRef } from 'react';
-import { View, StyleSheet } from 'react-native';
-import { useTheme } from '@react-navigation/native';
-import { useTranslation } from 'react-i18next';
-import Decimal from 'decimal.js';
-import type { AssetInfo } from '@core/WalletCore/Plugins/AssetsTracker/types';
-import Text from '@components/Text';
+import { BottomSheetFooter, BottomSheetScrollContent } from '@components/BottomSheet';
 import Button from '@components/Button';
-import { BottomSheetScrollContent, BottomSheetFooter } from '@components/BottomSheet';
+import Text from '@components/Text';
+import type { AssetInfo } from '@core/WalletCore/Plugins/AssetsTracker/types';
+import type { NFTItemDetail } from '@core/WalletCore/Plugins/NFTDetailTracker/server';
+import { AccountItemView } from '@modules/AccountsList';
 import NFTIcon from '@modules/AssetsList/NFTsList/NFTIcon';
 import { getDetailSymbol } from '@modules/AssetsList/NFTsList/NFTItem';
-import { AccountItemView } from '@modules/AccountsList';
-import { type SendTransactionStep3StackName, SendTransactionStep4StackName, type SendTransactionScreenProps } from '@router/configs';
+import { useTheme } from '@react-navigation/native';
+import { type SendTransactionScreenProps, type SendTransactionStep3StackName, SendTransactionStep4StackName } from '@router/configs';
+import Decimal from 'decimal.js';
+import type React from 'react';
+import { useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { StyleSheet, View } from 'react-native';
 import SendTransactionBottomSheet from '../SendTransactionBottomSheet';
 import SetAssetAmount, { type AmountInfo, type SetAssetAmountMethods } from './SetAssetAmount';
-import type { NFTItemDetail } from '@core/WalletCore/Plugins/NFTDetailTracker/server';
 
 const SendTransactionStep3Amount: React.FC<SendTransactionScreenProps<typeof SendTransactionStep3StackName>> = ({ navigation, route }) => {
   const { colors } = useTheme();

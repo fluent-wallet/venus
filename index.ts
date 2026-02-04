@@ -10,29 +10,27 @@ import '@ethersproject/shims';
 import './packages/setup/ethers';
 import './packages/setup/polyfill';
 import Decimal from 'decimal.js';
+import { name as appName } from './app.json';
 import WalletCore from './packages/core/WalletCore';
-import { TxTrackerPlugin } from './packages/core/WalletCore/Plugins/TxTracker';
-import ReactInjectPlugin from './packages/core/WalletCore/Plugins/ReactInject';
-import WalletConnectPlugin from './packages/core/WalletCore/Plugins/WalletConnect';
+import { DbPlugin } from './packages/core/WalletCore/DB';
+import { EventPlugin } from './packages/core/WalletCore/Events/EventPlugin';
+import { methodPlugins } from './packages/core/WalletCore/Methods';
 import { AssetsTrackerPlugin } from './packages/core/WalletCore/Plugins/AssetsTracker';
-import BSIMPlugin from './packages/WalletCoreExtends/Plugins/BSIM';
-import TransactionPlugin from './packages/core/WalletCore/Plugins/Transaction';
-import { NFTDetailTrackerPlugin } from './packages/core/WalletCore/Plugins/NFTDetailTracker';
-import { ReceiveAssetsTrackerPlugin } from './packages/core/WalletCore/Plugins/ReceiveAssetsTracker';
 import BlockNumberTracker from './packages/core/WalletCore/Plugins/BlockNumberTracker';
 import { NextNonceTrackerPlugin } from './packages/core/WalletCore/Plugins/NextNonceTracker';
+import { NFTDetailTrackerPlugin } from './packages/core/WalletCore/Plugins/NFTDetailTracker';
+import ReactInjectPlugin from './packages/core/WalletCore/Plugins/ReactInject';
+import { ReceiveAssetsTrackerPlugin } from './packages/core/WalletCore/Plugins/ReceiveAssetsTracker';
+import TransactionPlugin from './packages/core/WalletCore/Plugins/Transaction';
+import { TxTrackerPlugin } from './packages/core/WalletCore/Plugins/TxTracker';
 import { WalletConfigPlugin } from './packages/core/WalletCore/Plugins/WalletConfig';
-import { name as appName } from './app.json';
+import WalletConnectPlugin from './packages/core/WalletCore/Plugins/WalletConnect';
 import RootProvider from './packages/ui-new/RootProvider';
-
-import { DbPlugin } from './packages/core/WalletCore/DB';
-import { KeyringPlugin } from './packages/core/WalletCore/Keyring';
-import { EventPlugin } from './packages/core/WalletCore/Events/EventPlugin';
 import { initCore } from './packages/WalletCoreExtends';
 
 import { AuthenticationPlugin } from './packages/WalletCoreExtends/Plugins/Authentication';
+import BSIMPlugin from './packages/WalletCoreExtends/Plugins/BSIM';
 import { CryptoToolPlugin } from './packages/WalletCoreExtends/Plugins/CryptoTool';
-import { methodPlugins } from './packages/core/WalletCore/Methods';
 
 Decimal.set({ precision: 80 });
 Decimal.config({
@@ -54,7 +52,6 @@ LogBox.ignoreLogs([
 initCore(
   EventPlugin,
   DbPlugin,
-  KeyringPlugin,
   AuthenticationPlugin,
   CryptoToolPlugin,
   TxTrackerPlugin,

@@ -1,25 +1,26 @@
 /* eslint-disable react-hooks/exhaustive-deps */
-import type React from 'react';
-import { useState, useMemo, useCallback, useEffect, forwardRef, useImperativeHandle } from 'react';
-import { View, Pressable, StyleSheet } from 'react-native';
-import { useTheme } from '@react-navigation/native';
-import { useTranslation } from 'react-i18next';
-import { showMessage } from 'react-native-flash-message';
-import Decimal from 'decimal.js';
-import type { AssetInfo } from '@core/WalletCore/Plugins/AssetsTracker/types';
-import { useCurrentNetwork, useCurrentAddressValue, AssetType } from '@core/WalletCore/Plugins/ReactInject';
-import plugins from '@core/WalletCore/Plugins';
-import { trimDecimalZeros } from '@core/utils/balance';
+
+import ProhibitIcon from '@assets/icons/prohibit.svg';
+import HourglassLoading from '@components/Loading/Hourglass';
 import Text from '@components/Text';
 import TextInput from '@components/TextInput';
-import HourglassLoading from '@components/Loading/Hourglass';
-import TokenIcon from '@modules/AssetsList/TokensList/TokenIcon';
-import NFTIcon from '@modules/AssetsList/NFTsList/NFTIcon';
-import { getDetailSymbol } from '@modules/AssetsList/NFTsList/NFTItem';
+import { trimDecimalZeros } from '@core/utils/balance';
+import plugins from '@core/WalletCore/Plugins';
+import type { AssetInfo } from '@core/WalletCore/Plugins/AssetsTracker/types';
+import type { NFTItemDetail } from '@core/WalletCore/Plugins/NFTDetailTracker/server';
+import { AssetType, useCurrentAddressValue, useCurrentNetwork } from '@core/WalletCore/Plugins/ReactInject';
 import useFormatBalance from '@hooks/useFormatBalance';
 import useInAsync from '@hooks/useInAsync';
-import ProhibitIcon from '@assets/icons/prohibit.svg';
-import type { NFTItemDetail } from '@core/WalletCore/Plugins/NFTDetailTracker/server';
+import NFTIcon from '@modules/AssetsList/NFTsList/NFTIcon';
+import { getDetailSymbol } from '@modules/AssetsList/NFTsList/NFTItem';
+import TokenIcon from '@modules/AssetsList/TokensList/TokenIcon';
+import { useTheme } from '@react-navigation/native';
+import Decimal from 'decimal.js';
+import type React from 'react';
+import { forwardRef, useCallback, useEffect, useImperativeHandle, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { Pressable, StyleSheet, View } from 'react-native';
+import { showMessage } from 'react-native-flash-message';
 
 interface Info {
   amount: string;

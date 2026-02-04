@@ -1,6 +1,5 @@
 import { NativeModules, Platform } from 'react-native';
-import { DEFAULT_BSIM_AID, buildSelectAid, serializeCommand } from '../core/params';
-import { parseApduResponse } from '../core/response';
+import { BSIM_AID } from '../core/params';
 import type { HexString } from '../core/types';
 import { normalizeHex } from '../core/utils';
 import { TransportError, TransportErrorCode, wrapNativeError } from './errors';
@@ -8,14 +7,13 @@ import type { Transport, TransportSession } from './types';
 import { createAsyncQueue } from './utils';
 
 type NativeApduModule = {
-  openApduChannel: () => Promise<void>;
+  openApduChannel: (aid: string) => Promise<void>;
   closeApduChannel: () => Promise<void>;
   transmitApdu: (payload: string) => Promise<string>;
 };
 
 export type ApduTransportOptions = {
   aid?: HexString;
-  autoSelectAid?: boolean;
 };
 
 type CreateApduTransportDeps = {
@@ -99,38 +97,18 @@ export const createApduTransport = (deps: CreateApduTransportDeps = {}): Transpo
         throw new TransportError(TransportErrorCode.UNSUPPORTED_PLATFORM, 'APDU transport is only available on Android');
       }
 
-      if (isOpen) {
-        throw new TransportError(TransportErrorCode.CHANNEL_ALREADY_OPEN, 'APDU channel is already open');
-      }
-
       native = ensureNativeModule(deps.nativeModule);
-      const { autoSelectAid = false, aid = DEFAULT_BSIM_AID } = options ?? {};
+      const { aid = BSIM_AID } = options ?? {};
 
+      const normalizedAid = ensureHex(aid, TransportErrorCode.INVALID_APDU_PAYLOAD);
       try {
-        await native.openApduChannel();
+        await native.openApduChannel(normalizedAid);
       } catch (error) {
         native = undefined;
         throw wrapNativeError(TransportErrorCode.CHANNEL_OPEN_FAILED, error, 'Failed to open APDU channel');
       }
 
       isOpen = true;
-
-      if (autoSelectAid) {
-        const normalizedAid = ensureHex(aid, TransportErrorCode.INVALID_APDU_PAYLOAD);
-        const selectApdu = serializeCommand(buildSelectAid(normalizedAid));
-        const response = await transmitInternal(selectApdu);
-        const parsed = parseApduResponse(response);
-
-        if (parsed.status !== 'success') {
-          await closeInternal().catch(() => undefined);
-
-          if (parsed.status === 'error') {
-            throw new TransportError(TransportErrorCode.SELECT_AID_FAILED, `SELECT AID failed: ${parsed.code}${parsed.message ? ` (${parsed.message})` : ''}`);
-          }
-
-          throw new TransportError(TransportErrorCode.SELECT_AID_FAILED, `SELECT AID returned unexpected status "${parsed.status}"`);
-        }
-      }
 
       const close = async () => {
         try {

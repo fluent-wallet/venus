@@ -1,12 +1,12 @@
 import { createContract } from '@cfx-kit/dapp-utils/dist/contract';
 import { createFetchServer, fetchChainBatch } from '@cfx-kit/dapp-utils/dist/fetch';
 import { getAddress as toChecksumAddress } from 'ethers';
-import { EMPTY, catchError, concatMap, from, lastValueFrom, map } from 'rxjs';
+import { catchError, concatMap, EMPTY, from, lastValueFrom, map } from 'rxjs';
 import ESpaceWalletABI from '../../../../contracts/ABI/ESpaceWallet';
 import { AssetType } from '../../../../database/models/Asset';
+import { ChainType, type Network } from './../../../../database/models/Network/index';
 import { Networks } from '../../../../utils/consts';
 import type { AssetInfo } from '../types';
-import { ChainType, type Network } from './../../../../database/models/Network/index';
 
 export const eSpaceTestnetWalletContract = createContract({ address: '0xce2104aa7233b27b0ba2e98ede59b6f78c06ae05', ABI: ESpaceWalletABI });
 export const eSpaceTestnetServerFetcher = createFetchServer({ prefixUrl: Networks['eSpace Testnet'].scanOpenAPI });

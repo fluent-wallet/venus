@@ -1,15 +1,15 @@
 import { Q, type Query } from '@nozbe/watermelondb';
 import { memoize } from 'lodash-es';
 import type { Observable } from 'rxjs';
-import type { Address } from '.';
-import database from '../..';
 import { toAccountAddress } from '../../../utils/account';
-import { encode, toHex, validateCfxAddress, validateHexAddress, convertHexToBase32 } from '../../../utils/address';
-import TableName from '../../TableName';
+import { convertHexToBase32, encode, toHex, validateCfxAddress, validateHexAddress } from '../../../utils/address';
+import database from '../..';
 import { createModel } from '../../helper/modelHelper';
+import TableName from '../../TableName';
 import type { Account } from '../Account';
 import type { AssetRule } from '../AssetRule';
 import { type Network, NetworkType } from '../Network';
+import type { Address } from '.';
 
 type Params = { hex: string; account: Account; network: Network; assetRule: AssetRule };
 export function createAddress(params: Params, prepareCreate: true): Address;

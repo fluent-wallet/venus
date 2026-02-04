@@ -1,8 +1,7 @@
-import { useCallback, useImperativeHandle, useRef, useState, type ForwardedRef } from 'react';
-import { BackHandler, Keyboard, Platform } from 'react-native';
+import BottomSheet, { BottomSheetBackdrop, type BottomSheetBackdropProps, type BottomSheetProps, type SNAP_POINT_TYPE } from '@gorhom/bottom-sheet';
 import { useFocusEffect, useTheme } from '@react-navigation/native';
-import BottomSheet from '@gorhom/bottom-sheet';
-import { BottomSheetBackdrop, type BottomSheetBackdropProps, type BottomSheetProps, type SNAP_POINT_TYPE } from '@gorhom/bottom-sheet';
+import { type ForwardedRef, useCallback, useImperativeHandle, useRef, useState } from 'react';
+import { BackHandler, Keyboard, Platform } from 'react-native';
 
 type NativeBottomSheetProps = Omit<BottomSheetProps, 'ref' | 'onClose' | 'onAfterClose'>;
 

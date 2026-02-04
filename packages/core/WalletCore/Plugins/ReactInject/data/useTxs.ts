@@ -1,15 +1,15 @@
 import type { Asset } from '@core/database/models/Asset';
 import type { Tx } from '@core/database/models/Tx';
+import { EXECUTED_TX_STATUSES, FINISHED_IN_ACTIVITY_TX_STATUSES, PENDING_COUNT_STATUSES, PENDING_TX_STATUSES, TxStatus } from '@core/database/models/Tx/type';
 import { atom, useAtomValue } from 'jotai';
 import { atomFamily, atomWithObservable } from 'jotai/utils';
 import { combineLatest, filter, map, of, switchMap, tap } from 'rxjs';
 import { observeTxById, observeTxsWithAddress } from '../../../../database/models/Tx/query';
 import type { TxPayload } from '../../../../database/models/TxPayload';
 import { formatTxData } from '../../../../utils/tx';
+import { getAtom, setAtom } from '../nexus';
 import { accountsManageObservable } from './useAccountsManage';
 import { currentAddressObservable } from './useCurrentAddress';
-import { getAtom, setAtom } from '../nexus';
-import { PENDING_TX_STATUSES, FINISHED_IN_ACTIVITY_TX_STATUSES, EXECUTED_TX_STATUSES, TxStatus, PENDING_COUNT_STATUSES } from '@core/database/models/Tx/type';
 import { getWalletConfig } from './useWalletConfig';
 
 const uniqSortByNonce = async (_txs: Tx[] | null) => {

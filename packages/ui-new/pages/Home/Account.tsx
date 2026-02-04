@@ -1,9 +1,9 @@
 import ArrowLeft from '@assets/icons/arrow-left.svg';
-import ExistWallet from '@assets/icons/wallet-Imported.webp';
 import BSIMCardWallet from '@assets/icons/wallet-bsim.webp';
 import HDWallet from '@assets/icons/wallet-hd.webp';
+import ExistWallet from '@assets/icons/wallet-Imported.webp';
 import Text from '@components/Text';
-import { VaultType, useCurrentAccount, useCurrentAddressValueOfAccount, useVaultOfAccount } from '@core/WalletCore/Plugins/ReactInject';
+import { useCurrentAccount, useCurrentAddressValueOfAccount, useVaultOfAccount, VaultType } from '@core/WalletCore/Plugins/ReactInject';
 import useForceUpdateOnFocus from '@hooks/useUpdateOnFocus';
 import { useTheme } from '@react-navigation/native';
 import type { HomeStackName, StackScreenProps } from '@router/configs';
@@ -12,7 +12,7 @@ import { Image } from 'expo-image';
 import type React from 'react';
 import { useEffect } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
-import Animated, { useSharedValue, useAnimatedStyle, withTiming } from 'react-native-reanimated';
+import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 
 const AnimatedArrowLeft = Animated.createAnimatedComponent(ArrowLeft);
 

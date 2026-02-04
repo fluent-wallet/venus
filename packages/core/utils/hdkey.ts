@@ -1,4 +1,4 @@
-import { HDNode, entropyToMnemonic } from '@ethersproject/hdnode';
+import { entropyToMnemonic, HDNode } from '@ethersproject/hdnode';
 import { randomBytes } from 'ethers';
 import { memoize } from 'lodash-es';
 import { randomInt } from './base';

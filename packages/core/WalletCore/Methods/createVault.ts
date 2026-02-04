@@ -5,8 +5,8 @@ import type { Account } from '../../database/models/Account';
 import { createAccountGroup } from '../../database/models/AccountGroup/query';
 import type { Address } from '../../database/models/Address';
 import type { Vault } from '../../database/models/Vault';
-import VaultType from '../../database/models/Vault/VaultType';
 import { checkIsFirstVault, createVault, getVaultTypeCount } from '../../database/models/Vault/query';
+import VaultType from '../../database/models/Vault/VaultType';
 import { generateMnemonic } from '../../utils/hdkey';
 import { Plugins } from '../Plugins';
 import { AddAccountMethod, type Params as AddAccountParams } from './addAccount';
@@ -78,6 +78,7 @@ export class CreateVaultMethod {
         {
           type,
           device: 'ePayWallet',
+          ...(type === VaultType.BSIM ? { hardwareDeviceId: this.plugins.BSIM?.getBleDeviceId?.() ?? null } : null),
           ...(data ? { data } : null),
           source: isImportByUser ? VaultSourceType.IMPORT_BY_USER : VaultSourceType.CREATE_BY_WALLET,
           isBackup: isImportByUser,

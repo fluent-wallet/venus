@@ -1,7 +1,7 @@
 import { useAtomValue } from 'jotai';
 import { atomFamily, atomWithObservable } from 'jotai/utils';
 import { memoize, pick } from 'lodash-es';
-import { map, of, startWith, switchMap, type Observable } from 'rxjs';
+import { map, type Observable, of, startWith, switchMap } from 'rxjs';
 import { dbRefresh$ } from '../../../../database';
 import type { Network } from '../../../../database/models/Network';
 import { observeNetworkById, querySelectedNetwork } from '../../../../database/models/Network/query';

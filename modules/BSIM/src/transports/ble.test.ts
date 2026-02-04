@@ -1,16 +1,26 @@
 jest.mock('react-native-ble-plx', () => {
+  let bleManagerMockInstance: unknown = null;
+
+  const __setMockBleManager = (instance: unknown) => {
+    bleManagerMockInstance = instance;
+  };
+
+  function BleManager(this: unknown) {
+    return bleManagerMockInstance as any;
+  }
+
   class BleError extends Error {
     constructor(message = '') {
       super(message);
       this.name = 'BleError';
     }
   }
-  class BleManager {}
 
   return {
     __esModule: true,
     BleError,
     BleManager,
+    __setMockBleManager,
     State: {
       Unknown: 'Unknown',
       Resetting: 'Resetting',
@@ -31,8 +41,9 @@ jest.mock('react-native-ble-plx', () => {
 });
 
 import { BleATTErrorCode, BleErrorCode, State } from 'react-native-ble-plx';
+import { BSIM_AID, ICCID_AID } from '../core/params';
 import { toHex } from '../core/utils';
-import { createBleTransport, type BleTransportOptions } from './ble';
+import { type BleTransportOptions, createBleTransport, startBleDeviceScan } from './ble';
 import { TransportErrorCode } from './errors';
 
 type MonitorCallback = (error: unknown, characteristic: { value?: string | null } | null) => void;
@@ -45,14 +56,9 @@ const flushMicrotasks = async (iterations = 2) => {
   }
 };
 
-const HANDSHAKE_SELECT_AID_HEX = '00A4040010A000000533C000FF860000000000054D';
-const buildSelectAidResponseFrame = (status: Uint8Array): number[] => [
-  0x10,
-  0x12,
-  (status.length >> 8) & 0xff,
-  status.length & 0xff,
-  ...status,
-];
+const HANDSHAKE_SELECT_AID_HEX = `00A4040010${BSIM_AID}`;
+const HANDSHAKE_SELECT_ICCID_HEX = `00A4040007${ICCID_AID}`;
+const buildSelectAidResponseFrame = (status: Uint8Array): number[] => [0x10, 0x12, (status.length >> 8) & 0xff, status.length & 0xff, ...status];
 const SELECT_AID_RESPONSE_FRAME = buildSelectAidResponseFrame(Uint8Array.of(0x90, 0x00));
 
 const buildTransport = (mock: ReturnType<typeof createMockManager>, overrides: Parameters<typeof createBleTransport>[0] = {}) => {
@@ -310,6 +316,20 @@ describe('createBleTransport', () => {
     await session.close();
   });
 
+  it('selects provided AID during open when aid is overridden', async () => {
+    const mock = createMockManager();
+    const transport = buildTransport(mock);
+
+    const { session, handshakeCommandHex, handshakeFrameCount } = await openSessionWithHandshake(transport, mock, {
+      deviceId: 'mock-device',
+      responseTimeoutMs: 5_000,
+      aid: ICCID_AID,
+    });
+
+    expect(handshakeFrameCount).toBeGreaterThan(0);
+    expect(handshakeCommandHex).toBe(HANDSHAKE_SELECT_ICCID_HEX);
+    await session.close();
+  });
   it('uses provided encryptionFactory for request/response', async () => {
     const mock = createMockManager();
     const transport = buildTransport(mock, {
@@ -401,6 +421,20 @@ describe('createBleTransport', () => {
     await session.close();
   });
 
+  it('can skip AID selection when selectAid is false', async () => {
+    const mock = createMockManager();
+    const transport = buildTransport(mock);
+
+    const session = await transport.open({
+      deviceId: 'mock-device',
+      selectAid: false,
+      responseTimeoutMs: 5_000,
+    });
+    expect(mock.writtenFrames.length).toBe(0);
+
+    await session.close();
+  });
+
   it('propagates write errors as TransportError WRITE_FAILED', async () => {
     const mock = createMockManager();
     const transport = buildTransport(mock);
@@ -452,26 +486,11 @@ describe('createBleTransport', () => {
     await session.close();
   });
 
-  it('fails to open when scan times out', async () => {
+  it('fails to open when deviceId is missing', async () => {
     const mock = createMockManager();
     const transport = buildTransport(mock);
 
-    const openPromise = transport.open({ scanTimeoutMs: 1, responseTimeoutMs: 5_000 });
-    const expectation = expect(openPromise).rejects.toMatchObject({ code: TransportErrorCode.SCAN_FAILED });
-    await jest.advanceTimersByTimeAsync(1);
-    await flushMicrotasks();
-    await expectation;
-  });
-
-  it('fails to open when scan returns error', async () => {
-    const mock = createMockManager();
-    const transport = buildTransport(mock);
-
-    const openPromise = transport.open({});
-    await flushMicrotasks();
-    mock.emitScanError(new Error('scan fail'));
-    await flushMicrotasks();
-    await expect(openPromise).rejects.toMatchObject({ code: TransportErrorCode.SCAN_FAILED });
+    await expect(transport.open({ scanTimeoutMs: 1, responseTimeoutMs: 5_000 })).rejects.toMatchObject({ code: TransportErrorCode.DEVICE_NOT_FOUND });
   });
 
   it('retries characteristic write while pairing completes', async () => {
@@ -504,5 +523,117 @@ describe('createBleTransport', () => {
     expect(writeMock).toHaveBeenCalledTimes(initialCalls + 2);
 
     await session.close();
+  });
+});
+
+describe('startBleDeviceScan', () => {
+  const setPlxMockBleManager = (manager: unknown) => {
+    (require('react-native-ble-plx') as any).__setMockBleManager(manager);
+  };
+
+  it('does not enable service UUID filtering by default', async () => {
+    const mock = createMockManager();
+    setPlxMockBleManager(mock.manager);
+
+    const onDevice = jest.fn();
+    const onError = jest.fn();
+
+    startBleDeviceScan(undefined, onDevice, onError);
+
+    await flushMicrotasks(4);
+
+    expect(mock.manager.startDeviceScan).toHaveBeenCalled();
+    const [serviceUuidsArg] = (mock.manager.startDeviceScan as unknown as jest.Mock).mock.calls[0];
+    expect(serviceUuidsArg).toBeNull();
+  });
+
+  it('filters devices by CT prefix (case-insensitive)', async () => {
+    const mock = createMockManager();
+    setPlxMockBleManager(mock.manager);
+
+    const onDevice = jest.fn();
+    const onError = jest.fn();
+
+    startBleDeviceScan(undefined, onDevice, onError);
+
+    await flushMicrotasks(4);
+
+    mock.emitScanResult('d1', 'XX-IGNORE');
+    mock.emitScanResult('d2', 'ct-demo');
+    mock.emitScanResult('d3', 'CT-demo');
+
+    expect(onError).not.toHaveBeenCalled();
+    expect(onDevice).toHaveBeenCalledTimes(2);
+    expect(onDevice).toHaveBeenNthCalledWith(1, { deviceId: 'd2', name: 'ct-demo' });
+    expect(onDevice).toHaveBeenNthCalledWith(2, { deviceId: 'd3', name: 'CT-demo' });
+  });
+
+  it('does not de-duplicate by name (same name, different deviceId)', async () => {
+    const mock = createMockManager();
+    setPlxMockBleManager(mock.manager);
+    const onDevice = jest.fn();
+
+    startBleDeviceScan(undefined, onDevice);
+
+    await flushMicrotasks(4);
+
+    mock.emitScanResult('d1', 'CT-SAME');
+    mock.emitScanResult('d2', 'CT-SAME');
+
+    expect(onDevice).toHaveBeenCalledTimes(2);
+  });
+
+  it('de-duplicates by deviceId and only emits again when name changes', async () => {
+    const mock = createMockManager();
+    setPlxMockBleManager(mock.manager);
+
+    const onDevice = jest.fn();
+
+    startBleDeviceScan(undefined, onDevice);
+
+    await flushMicrotasks(4);
+
+    mock.emitScanResult('d1', 'CT-A');
+    mock.emitScanResult('d1', 'CT-A');
+    mock.emitScanResult('d1', 'CT-A-NEW');
+
+    expect(onDevice).toHaveBeenCalledTimes(2);
+    expect(onDevice).toHaveBeenNthCalledWith(1, { deviceId: 'd1', name: 'CT-A' });
+    expect(onDevice).toHaveBeenNthCalledWith(2, { deviceId: 'd1', name: 'CT-A-NEW' });
+  });
+
+  it('stops emitting after stop() is called', async () => {
+    const mock = createMockManager();
+    setPlxMockBleManager(mock.manager);
+    const onDevice = jest.fn();
+
+    const scanHandle = startBleDeviceScan(undefined, onDevice);
+
+    await flushMicrotasks(4);
+
+    mock.emitScanResult('d1', 'CT-A');
+    scanHandle.stop();
+    mock.emitScanResult('d2', 'CT-B');
+
+    expect(onDevice).toHaveBeenCalledTimes(1);
+  });
+
+  it('calls onError once and stops scanning when scan returns error', async () => {
+    const mock = createMockManager();
+    setPlxMockBleManager(mock.manager);
+
+    const onDevice = jest.fn();
+    const onError = jest.fn();
+
+    startBleDeviceScan(undefined, onDevice, onError);
+
+    await flushMicrotasks(4);
+
+    mock.emitScanError(new Error('scan fail'));
+    mock.emitScanResult('d1', 'CT-A');
+
+    expect(onError).toHaveBeenCalledTimes(1);
+    expect(onError.mock.calls[0][0]).toMatchObject({ code: TransportErrorCode.SCAN_FAILED });
+    expect(onDevice).not.toHaveBeenCalled();
   });
 });

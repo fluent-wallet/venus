@@ -5,18 +5,18 @@ import GasCustomizeLight from '@assets/images/gas/gas-customize-light.png';
 import GasHigh from '@assets/images/gas/gas-high.png';
 import GasLow from '@assets/images/gas/gas-low.png';
 import GasMedium from '@assets/images/gas/gas-medium.png';
-import { trimDecimalZeros, numberFormat } from '@core/utils/balance';
 import {
-  BottomSheetWrapper,
-  BottomSheetHeader,
-  BottomSheetScrollContent,
   BottomSheetFooter,
+  BottomSheetHeader,
   type BottomSheetMethods,
+  BottomSheetScrollContent,
+  BottomSheetWrapper,
   InlineBottomSheet,
 } from '@components/BottomSheet';
 import Button from '@components/Button';
 import HourglassLoading from '@components/Loading/Hourglass';
 import Text from '@components/Text';
+import { numberFormat, trimDecimalZeros } from '@core/utils/balance';
 import { useCurrentNetworkNativeAsset } from '@core/WalletCore/Plugins/ReactInject';
 import usePollingGasEstimateAndNonce, { type Level } from '@core/WalletCore/Plugins/Transaction/usePollingGasEstimateAndNonce';
 import { useTheme } from '@react-navigation/native';

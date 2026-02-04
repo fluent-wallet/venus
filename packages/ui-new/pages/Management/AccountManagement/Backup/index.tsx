@@ -1,6 +1,8 @@
 import PasswordVerify from '@modules/PasswordVerify';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import {
+  BackupBSIM1PasswordStackName,
+  BackupBSIMQ2RCodeStackName,
   type BackupStackName,
   type BackupStackParamList,
   BackupStep1StackName,
@@ -13,6 +15,8 @@ import {
 } from '@router/configs';
 import type React from 'react';
 import BackupSuccess from './BackupSuccess';
+import { BSIMStep1Password } from './BSIMStep1Password';
+import { BSIMStep2QRCode } from './BSIMStep2QRCode';
 import BackupStep1Notice from './Step1Notice';
 import BackupStep2ViewSecret from './Step2ViewSecret';
 import BackupStep3RandomCheck from './Step3RandomCheck';
@@ -27,6 +31,8 @@ const Backup: React.FC<StackScreenProps<typeof BackupStackName>> = () => {
       <BackupStack.Screen name={BackupStep3StackName} component={BackupStep3RandomCheck} options={SheetBottomOption} />
       <BackupStack.Screen name={BackupSuccessStackName} component={BackupSuccess} options={SheetBottomOption} />
       <BackupStack.Screen name={PasswordVerifyStackName} component={PasswordVerify} options={SheetBottomOption} />
+      <BackupStack.Screen name={BackupBSIM1PasswordStackName} component={BSIMStep1Password} options={SheetBottomOption} />
+      <BackupStack.Screen name={BackupBSIMQ2RCodeStackName} component={BSIMStep2QRCode} options={SheetBottomOption} />
     </BackupStack.Navigator>
   );
 };

@@ -2,20 +2,22 @@ import Add from '@assets/icons/add.svg';
 import Copy from '@assets/icons/copy.svg';
 import More from '@assets/icons/more.svg';
 import Settings from '@assets/icons/settings.svg';
-import ExistWallet from '@assets/icons/wallet-Imported.webp';
 import BSIMCardWallet from '@assets/icons/wallet-bsim.webp';
 import HDWallet from '@assets/icons/wallet-hd.webp';
+import ExistWallet from '@assets/icons/wallet-Imported.webp';
 import Checkbox from '@components/Checkbox';
 import HourglassLoading from '@components/Loading/Hourglass';
 import Text from '@components/Text';
-import methods from '@core/WalletCore/Methods';
-import plugins from '@core/WalletCore/Plugins';
-import { VaultType, useAccountsManage, useCurrentAccount } from '@core/WalletCore/Plugins/ReactInject';
 import { queryAccountGroupById } from '@core/database/models/AccountGroup/query';
 import { shortenAddress } from '@core/utils/address';
+import methods from '@core/WalletCore/Methods';
+import plugins from '@core/WalletCore/Plugins';
+import { useAccountsManage, useCurrentAccount, VaultType } from '@core/WalletCore/Plugins/ReactInject';
 import { BottomSheetSectionList } from '@gorhom/bottom-sheet';
-import { useTheme } from '@react-navigation/native';
+import { useNavigation, useTheme } from '@react-navigation/native';
+import type { StackNavigation } from '@router/configs';
 import { toDataUrl } from '@utils/blockies';
+import { handleBSIMHardwareUnavailable } from '@utils/handleBSIMHardwareUnavailable';
 import { Image } from 'expo-image';
 import type React from 'react';
 import { useCallback, useMemo, useState } from 'react';
@@ -206,7 +208,7 @@ const AccountsList: React.FC<{
   const accountsManage = useAccountsManage();
   const currentAccount = useCurrentAccount();
   const ListComponent = useMemo(() => (type === 'selector' ? BottomSheetSectionList : SectionList), [type]);
-
+  const rootNavigation = useNavigation<StackNavigation>();
   const [inAddingId, setInAddingId] = useState<string | null>(null);
   const addAccount = useCallback(async ({ id, vaultType }: AccountGroupProps) => {
     try {
@@ -229,7 +231,10 @@ const AccountsList: React.FC<{
         }
         return await methods.addAccount({ accountGroup, ...(await plugins.BSIM.createNewBSIMAccount()) });
       }
-    } catch (err) {
+    } catch (err: any) {
+      if (handleBSIMHardwareUnavailable(err, rootNavigation)) {
+        return;
+      }
       console.log('Add account error', err);
     } finally {
       setInAddingId(null);

@@ -1,4 +1,4 @@
-import { registerCodec, parsePaymentUri, encodePaymentUri, __resetPaymentUriRegistryForTests } from '@utils/payment-uri';
+import { __resetPaymentUriRegistryForTests, encodePaymentUri, parsePaymentUri, registerCodec } from '@utils/payment-uri';
 import { ethereumPaymentUriCodec } from '@utils/payment-uri/codecs/ethereum';
 
 beforeEach(() => {
@@ -63,4 +63,3 @@ describe('Ethereum payment URI codec', () => {
     });
   });
 });
-

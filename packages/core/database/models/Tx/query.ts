@@ -1,9 +1,9 @@
 import { Q } from '@nozbe/watermelondb';
 import { memoize } from 'lodash-es';
-import type { Tx } from '.';
 import database from '../..';
+import { createModel, type ModelFields } from '../../helper/modelHelper';
 import TableName from '../../TableName';
-import { type ModelFields, createModel } from '../../helper/modelHelper';
+import type { Tx } from '.';
 import { ALL_TX_STATUSES, type TxStatus } from './type';
 
 export type TxParams = Omit<ModelFields<Tx>, 'createdAt'>;

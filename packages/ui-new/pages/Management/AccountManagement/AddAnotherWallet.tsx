@@ -1,7 +1,8 @@
-import ExistWallet from '@assets/icons/wallet-Imported.webp';
 import BSIMCardWallet from '@assets/icons/wallet-bsim.webp';
 import HDWallet from '@assets/icons/wallet-hd.webp';
-import { BottomSheetWrapper, BottomSheetContent, BottomSheetHeader, type BottomSheetMethods, BottomSheetRoute } from '@components/BottomSheet';
+import ExistWallet from '@assets/icons/wallet-Imported.webp';
+import { BottomSheetContent, BottomSheetHeader, type BottomSheetMethods, BottomSheetRoute, BottomSheetWrapper } from '@components/BottomSheet';
+import BSIMDeviceSelectSheet from '@components/BSIM/BSIMDeviceSelectSheet';
 import HourglassLoading from '@components/Loading/Hourglass';
 import Text from '@components/Text';
 import plugins from '@core/WalletCore/Plugins';
@@ -14,6 +15,7 @@ import ImportExistingWallet from '@pages/WayToInitWallet/ImportExistingWallet';
 import { useTheme } from '@react-navigation/native';
 import type { AccountManagementStackName, StackScreenProps } from '@router/configs';
 import { OS, screenHeight } from '@utils/deviceInfo';
+import { handleBSIMHardwareUnavailable } from '@utils/handleBSIMHardwareUnavailable';
 import { Image } from 'expo-image';
 import type React from 'react';
 import { useCallback, useRef, useState } from 'react';
@@ -30,8 +32,10 @@ const AddAnotherWallet: React.FC<Props> = ({ navigation }) => {
   const { t } = useTranslation();
   const bottomSheetRef = useRef<BottomSheetMethods>(null!);
   const importExistRef = useRef<BottomSheetMethods>(null!);
+  const bsimDeviceSheetRef = useRef<BottomSheetMethods>(null!);
 
   const hasBSIMVaultCreated = useHasBSIMVaultCreated();
+  const [bsimSheetOpen, setBsimSheetOpen] = useState(false);
 
   const _handleConnectBSIMCard = useCallback(async () => {
     try {
@@ -47,13 +51,15 @@ const AddAnotherWallet: React.FC<Props> = ({ navigation }) => {
           duration: 1500,
         });
       }
-    } catch (error) {
+    } catch (error: any) {
+      if (handleBSIMHardwareUnavailable(error, navigation)) {
+        return;
+      }
       showNotFindBSIMCardMessage();
     } finally {
       navigation.setOptions({ gestureEnabled: false });
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [navigation, t]);
   const { inAsync: inConnecting, execAsync: handleConnectBSIMCard } = useInAsync(_handleConnectBSIMCard);
 
   const _handleCreateNewHdWallet = useCallback(async () => {
@@ -93,16 +99,17 @@ const AddAnotherWallet: React.FC<Props> = ({ navigation }) => {
   const [showImportExistWallet, setShowImportExistWallet] = useState(true);
 
   const inAsync = inConnecting || inCreating || inImporting;
+  const blockParentGestures = inAsync || bsimSheetOpen;
   return (
     <>
       <BottomSheetRoute
         ref={bottomSheetRef}
         snapPoints={snapPoints}
         onClose={() => Platform.OS === 'android' && setShowImportExistWallet(false)}
-        enablePanDownToClose={!inAsync}
-        enableContentPanningGesture={!inAsync}
-        enableHandlePanningGesture={!inAsync}
-        backDropPressBehavior={inAsync ? 'none' : 'close'}
+        enablePanDownToClose={!blockParentGestures}
+        enableContentPanningGesture={!blockParentGestures}
+        enableHandlePanningGesture={!blockParentGestures}
+        backDropPressBehavior={blockParentGestures ? 'none' : 'close'}
       >
         <BottomSheetWrapper>
           <BottomSheetHeader title={t('account.action.add.title')} />
@@ -111,7 +118,7 @@ const AddAnotherWallet: React.FC<Props> = ({ navigation }) => {
               <Pressable
                 style={({ pressed }) => [accountListStyles.row, { marginTop: 16, backgroundColor: pressed ? colors.underlay : 'transparent' }]}
                 disabled={inAsync}
-                onPress={handleConnectBSIMCard}
+                onPress={Platform.OS === 'ios' ? () => bsimDeviceSheetRef.current?.expand() : handleConnectBSIMCard}
                 testID="connectBSIMWallet"
               >
                 <Image style={accountListStyles.groupTypeImage} source={BSIMCardWallet} />
@@ -145,6 +152,18 @@ const AddAnotherWallet: React.FC<Props> = ({ navigation }) => {
         </BottomSheetWrapper>
       </BottomSheetRoute>
       {showImportExistWallet && <ImportExistingWallet bottomSheetRef={importExistRef} onSuccessConfirm={handleImportExistWallet} inImporting={inImporting} />}
+
+      <BSIMDeviceSelectSheet
+        bottomSheetRef={bsimDeviceSheetRef}
+        onConnect={handleConnectBSIMCard}
+        onOpenChange={setBsimSheetOpen}
+        onScanError={(error) => {
+          if (handleBSIMHardwareUnavailable(error, navigation)) {
+            return;
+          }
+          showNotFindBSIMCardMessage();
+        }}
+      />
     </>
   );
 };

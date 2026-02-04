@@ -1,18 +1,19 @@
 import BIMWalletLogo from '@assets/icons/swift-shield.webp';
 import {
-  BottomSheetWrapper,
-  BottomSheetHeader,
-  BottomSheetFooter,
   BottomSheetContent,
-  snapPoints,
   BottomSheetFlatList,
+  BottomSheetFooter,
+  BottomSheetHeader,
   BottomSheetRoute,
+  BottomSheetWrapper,
+  snapPoints,
 } from '@components/BottomSheet';
 import Button from '@components/Button';
 import Text from '@components/Text';
 import { Lang, useLanguage } from '@hooks/useI18n';
 import { useNavigation, useTheme } from '@react-navigation/native';
-import { UpdateVersionStackName, type AboutUsStackName, type StackScreenProps } from '@router/configs';
+import { type AboutUsStackName, type StackScreenProps, UpdateVersionStackName } from '@router/configs';
+import { getAPPVersion } from '@utils/getEnv';
 import { Image } from 'expo-image';
 import type React from 'react';
 import { useCallback, useState } from 'react';
@@ -22,7 +23,6 @@ import { showMessage } from 'react-native-flash-message';
 import semverLt from 'semver/functions/lt';
 import pkg from '../../../../package.json';
 import { SettingItem } from './index';
-import { getAPPVersion } from '@utils/getEnv';
 
 export interface VersionJSON {
   version: string;

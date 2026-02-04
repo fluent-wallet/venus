@@ -1,24 +1,24 @@
+import Spinner from '@components/Spinner';
 import Text from '@components/Text';
-import { AssetType, useAssetOfTx, usePayloadOfTx } from '@core/WalletCore/Plugins/ReactInject';
 import type { Asset } from '@core/database/models/Asset';
 import type { Tx } from '@core/database/models/Tx';
 import { TxSource } from '@core/database/models/Tx/type';
 import { shortenAddress } from '@core/utils/address';
 import { maxUint256 } from '@core/utils/number';
 import { formatStatus, formatTxData } from '@core/utils/tx';
+import { SpeedUpAction } from '@core/WalletCore/Events/broadcastTransactionSubject';
+import { AssetType, useAssetOfTx, usePayloadOfTx } from '@core/WalletCore/Plugins/ReactInject';
+import { useExtraOfTx } from '@core/WalletCore/Plugins/ReactInject/data/useTxs';
 import useFormatBalance from '@hooks/useFormatBalance';
+import { useShowSpeedUp } from '@hooks/useShowSpeedUp';
 import NFTIcon from '@modules/AssetsList/NFTsList/NFTIcon';
 import TokenIcon from '@modules/AssetsList/TokensList/TokenIcon';
+import SpeedUpButton from '@modules/SpeedUpButton';
 import { useTheme } from '@react-navigation/native';
 import type React from 'react';
 import { type ComponentProps, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Pressable, StyleSheet, View, type LayoutChangeEvent, type ViewProps } from 'react-native';
-import SpeedUpButton from '@modules/SpeedUpButton';
-import Spinner from '@components/Spinner';
-import { useShowSpeedUp } from '@hooks/useShowSpeedUp';
-import { useExtraOfTx } from '@core/WalletCore/Plugins/ReactInject/data/useTxs';
-import { SpeedUpAction } from '@core/WalletCore/Events/broadcastTransactionSubject';
+import { type LayoutChangeEvent, Pressable, StyleSheet, View, type ViewProps } from 'react-native';
 
 const TextEllipsisWithSuffix: React.FC<{
   defaultSuffixWidth?: number;

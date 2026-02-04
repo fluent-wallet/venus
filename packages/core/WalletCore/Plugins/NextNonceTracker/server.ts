@@ -1,10 +1,10 @@
-import { type Subscription, catchError, debounceTime, interval, retry, startWith, switchMap, throwError } from 'rxjs';
-import Transaction from '../Transaction';
 import type { Address } from '@core/database/models/Address';
-import { inject, injectable } from 'inversify';
-import { SERVICE_IDENTIFIER } from '@core/WalletCore/service';
-import { currentAddressObservable } from '../ReactInject/data/useCurrentAddress';
 import type { EventBus } from '@core/WalletCore/Events';
+import { SERVICE_IDENTIFIER } from '@core/WalletCore/service';
+import { inject, injectable } from 'inversify';
+import { catchError, debounceTime, interval, retry, type Subscription, startWith, switchMap, throwError } from 'rxjs';
+import { currentAddressObservable } from '../ReactInject/data/useCurrentAddress';
+import Transaction from '../Transaction';
 
 export const NEXT_NONCE_TRACKER_EVENT = 'NextNonceTracker';
 

@@ -1,12 +1,12 @@
+import { getNFTDetailTracker } from '@WalletCoreExtends/index';
+import { useCurrentOpenNFTDetail } from '@core/WalletCore/Plugins/ReactInject';
 import { NFTItem } from '@modules/AssetsList/NFTsList/NFTItem';
 import { useShouldShowNotBackup } from '@pages/Home/NotBackup';
 /* eslint-disable react-hooks/exhaustive-deps */
 import type React from 'react';
 import { useMemo } from 'react';
+import Animated, { interpolate, type SharedValue, useAnimatedStyle } from 'react-native-reanimated';
 import type { TabsType } from './types';
-import Animated, { useAnimatedStyle, interpolate, type SharedValue } from 'react-native-reanimated';
-import { useCurrentOpenNFTDetail } from '@core/WalletCore/Plugins/ReactInject';
-import { getNFTDetailTracker } from '@WalletCoreExtends/index';
 
 export const StickyNFT: React.FC<{ type: TabsType; sharedScrollY: SharedValue<number> }> = ({ type, sharedScrollY }) => {
   const shouldShowNotBackup = useShouldShowNotBackup();

@@ -1,8 +1,8 @@
 import { injectable } from 'inversify';
 import database from '../../database';
+import { createRequest as _createRequest, queryPendingRequests, type RequestParams } from '../../database/models/Request/query';
 import { RequestStatus } from '../../database/models/Request/RequestType';
-import { type RequestParams, createRequest as _createRequest, queryPendingRequests } from '../../database/models/Request/query';
-import { type RequestSubject, newestRequestSubject, requestSubjectsMap } from '../Events/requestSubject';
+import { newestRequestSubject, type RequestSubject, requestSubjectsMap } from '../Events/requestSubject';
 
 const requestConfig: {
   rejectPrevRequest: boolean;

@@ -1,6 +1,6 @@
 import { registerCodec } from '../registry';
-import { ethereumPaymentUriCodec } from './ethereum';
 import { confluxCorePaymentUriCodec } from './conflux-core';
+import { ethereumPaymentUriCodec } from './ethereum';
 
 registerCodec(ethereumPaymentUriCodec);
 registerCodec(confluxCorePaymentUriCodec);

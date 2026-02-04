@@ -1,6 +1,6 @@
-import type { HdPath } from '.';
+import { createModel, type ModelFields } from '../../helper/modelHelper';
 import TableName from '../../TableName';
-import { type ModelFields, createModel } from '../../helper/modelHelper';
+import type { HdPath } from '.';
 
 type Params = ModelFields<HdPath>;
 export function createHdPath(params: Params, prepareCreate: true): HdPath;

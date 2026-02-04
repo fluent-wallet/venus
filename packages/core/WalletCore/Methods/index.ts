@@ -6,6 +6,8 @@ import type { Asset } from '../../database/models/Asset';
 import type { NetworkType } from '../../database/models/Network';
 import type { Vault } from '../../database/models/Vault';
 import { container } from '../configs';
+import type { IPlugin } from '../plugin';
+import { SERVICE_IDENTIFIER } from '../service';
 import { AccountGroupMethod } from './accountGroupMethod';
 import { AccountMethod } from './accountMethod';
 import { AddAccountMethod, type Params as AddAccountParams } from './addAccount';
@@ -19,8 +21,6 @@ import { RequestMethod } from './requestMethod';
 import { SignatureMethod } from './signatureMethod';
 import { TxMethod } from './txMethod';
 import { VaultMethod } from './vaultMethod';
-import type { IPlugin } from '../plugin';
-import { SERVICE_IDENTIFIER } from '../service';
 
 @injectable()
 export class Methods {

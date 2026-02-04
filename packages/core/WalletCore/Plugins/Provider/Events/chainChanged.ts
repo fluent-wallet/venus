@@ -1,4 +1,4 @@
-import { Subject, map } from 'rxjs';
+import { map, Subject } from 'rxjs';
 import { currentNetworkObservable } from '../../../Plugins/ReactInject/data/useCurrentNetwork';
 
 const chainChangedObservable = currentNetworkObservable.pipe(map((network) => network?.chainId));

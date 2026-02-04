@@ -1,3 +1,6 @@
+import ClearIcon from '@assets/icons/clear.svg';
+import ErrorIcon from '@assets/icons/message-fail.svg';
+import { fetchChain } from '@cfx-kit/dapp-utils/dist/fetch';
 import {
   BottomSheetContent,
   BottomSheetFooter,
@@ -7,18 +10,15 @@ import {
   BottomSheetWrapper,
   snapPoints,
 } from '@components/BottomSheet';
-import { useNavigation, useTheme } from '@react-navigation/native';
-import type { StackNavigation } from '@router/configs';
-import { useTranslation } from 'react-i18next';
-import Text from '@components/Text';
-import { Pressable, StyleSheet, View, type NativeSyntheticEvent, type TextInputChangeEventData } from 'react-native';
 import Button from '@components/Button';
-import { useCallback, useState } from 'react';
+import Text from '@components/Text';
 import methods from '@core/WalletCore/Methods';
 import { NetworkType, useCurrentNetwork } from '@core/WalletCore/Plugins/ReactInject';
-import { fetchChain } from '@cfx-kit/dapp-utils/dist/fetch';
-import ClearIcon from '@assets/icons/clear.svg';
-import ErrorIcon from '@assets/icons/message-fail.svg';
+import { useNavigation, useTheme } from '@react-navigation/native';
+import type { StackNavigation } from '@router/configs';
+import { useCallback, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { type NativeSyntheticEvent, Pressable, StyleSheet, type TextInputChangeEventData, View } from 'react-native';
 
 const getChainIdMap = {
   [NetworkType.Conflux]: (endpoint: string) => fetchChain<{ chainId: string }>({ url: endpoint, method: 'cfx_getStatus' }).then((res) => res.chainId),

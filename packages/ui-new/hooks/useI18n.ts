@@ -1,6 +1,6 @@
 import i18n, { resources } from '@assets/i18n';
-import { getAtom, setAtom } from '@core/WalletCore/Plugins/ReactInject';
 import database from '@core/database';
+import { getAtom, setAtom } from '@core/WalletCore/Plugins/ReactInject';
 import { getLocales } from 'expo-localization';
 import { atom, useAtomValue } from 'jotai';
 import { useState } from 'react';

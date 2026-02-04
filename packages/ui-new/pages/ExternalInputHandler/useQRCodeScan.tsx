@@ -1,6 +1,6 @@
+import { type BarcodeScanningResult, Camera, useCameraPermissions } from 'expo-camera';
 import { launchImageLibraryAsync } from 'expo-image-picker';
 import { useCallback, useState } from 'react';
-import { useCameraPermissions, type BarcodeScanningResult, Camera } from 'expo-camera';
 
 interface Params {
   onSuccess: (data: string) => void;
@@ -24,7 +24,7 @@ const useQRCodeScan = ({ onSuccess, onFailed, isParsingRef }: Params) => {
   const pickImage = useCallback(async () => {
     // No permissions request is necessary for launching the image library
     const result = await launchImageLibraryAsync({
-      allowsEditing: true,
+      allowsEditing: false,
       allowsMultipleSelection: false,
       quality: 1,
     });

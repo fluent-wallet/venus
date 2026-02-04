@@ -1,11 +1,11 @@
 import { atom, useAtomValue } from 'jotai';
 import { atomFamily, atomWithObservable } from 'jotai/utils';
 import { groupBy, sortBy, toPairs } from 'lodash-es';
-import { type Observable, combineLatest, from, map, startWith, switchMap, withLatestFrom } from 'rxjs';
+import { combineLatest, from, map, type Observable, startWith, switchMap, withLatestFrom } from 'rxjs';
 import database, { dbRefresh$ } from '../../../../database';
-import TableName from '../../../../database/TableName';
 import type { Account } from '../../../../database/models/Account';
 import VaultType from '../../../../database/models/Vault/VaultType';
+import TableName from '../../../../database/TableName';
 import { zeroAddress } from '../../../../utils/address';
 import { accountGroupsObservable } from './useAccountGroups';
 import { currentNetworkObservable } from './useCurrentNetwork';

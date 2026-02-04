@@ -1,13 +1,13 @@
 import type { Network } from '@core/database/models/Network';
 import type { Tx } from '@core/database/models/Tx';
 import { queryDuplicateTx } from '@core/database/models/Tx/query';
-import { EXECUTED_NOT_FINALIZED_TX_STATUSES, ExecutedStatus, NOT_FINALIZED_TX_STATUSES, TxStatus, type Receipt } from '@core/database/models/Tx/type';
+import { EXECUTED_NOT_FINALIZED_TX_STATUSES, ExecutedStatus, NOT_FINALIZED_TX_STATUSES, type Receipt, TxStatus } from '@core/database/models/Tx/type';
 import { TX_RESEND_LIMIT } from '@core/utils/consts';
 import { ProcessErrorType } from '@core/utils/eth';
+import { updateCurrentTrackerSubject } from '../AssetsTracker/server';
+import { currentOpenNFTSubject } from '../NFTDetailTracker/server';
 import Transaction from '../Transaction';
 import { NonceUsedState, ReplacedResponse } from './types';
-import { currentOpenNFTSubject } from '../NFTDetailTracker/server';
-import { updateCurrentTrackerSubject } from '../AssetsTracker/server';
 
 export type UpdaterMap = Map<Tx, () => Tx>;
 

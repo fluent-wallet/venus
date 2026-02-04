@@ -1,10 +1,10 @@
-import Decimal from 'decimal.js';
 import { createERC20Contract, createERC721Contract, createERC1155Contract } from '@cfx-kit/dapp-utils/dist/contract';
-import { convertBase32ToHex, type Base32Address } from '@core/utils/address';
 import { AssetType } from '@core/database/models/Asset';
-import { NetworkType, type Network } from '@core/database/models/Network';
-import type { ITxEvm } from './types';
+import { type Network, NetworkType } from '@core/database/models/Network';
+import { type Base32Address, convertBase32ToHex } from '@core/utils/address';
+import Decimal from 'decimal.js';
 import type { AssetInfo } from '../AssetsTracker/types';
+import type { ITxEvm } from './types';
 
 export interface TransactionBuildParams {
   asset: AssetInfo;

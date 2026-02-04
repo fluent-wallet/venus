@@ -1,12 +1,12 @@
+import { CURRENT_NETWORK_CHANGED_EVENT, type EventBus } from '@core/WalletCore/Events';
+import { SERVICE_IDENTIFIER } from '@core/WalletCore/service';
 import { inject, injectable } from 'inversify';
 import database from '../../../database';
 import { type Asset, AssetSource } from '../../../database/models/Asset';
+import type { NetworkType } from './../../../database/models/Network';
 import { convertToChecksum } from '../../../utils/account';
 import methods from '../../Methods';
 import type { AssetInfo } from '../../Plugins/AssetsTracker/types';
-import type { NetworkType } from './../../../database/models/Network';
-import { SERVICE_IDENTIFIER } from '@core/WalletCore/service';
-import { CURRENT_NETWORK_CHANGED_EVENT, type EventBus } from '@core/WalletCore/Events';
 
 export type Fetcher = (endpoint: string) => Promise<AssetInfo[]>;
 

@@ -10,14 +10,15 @@ export {
   isSuccessStatus,
   resolveStatusMessage,
 } from './core/errors';
+export type { ApduCommand, ApduTransmit, PubkeyRecord, SignatureComponents } from './core/types';
 export { BSIMError } from './errors';
-
 export {
   type ApduTransportOptions,
   type BleTransportOptions,
   createApduTransport,
   createBleTransport,
   isTransportError,
+  startBleDeviceScan,
   type Transport,
   TransportError,
   TransportErrorCode,
@@ -25,9 +26,12 @@ export {
 } from './transports';
 export { createAsyncQueue } from './transports/utils';
 export { CoinTypes } from './types';
+
 export {
+  type BackupSeedParams,
   createWallet,
   type DeriveKeyParams,
+  type RestoreSeedParams,
   type SignMessageParams,
   type Wallet,
   type WalletOptions,

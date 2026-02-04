@@ -1,7 +1,7 @@
 import type { IPlugin } from '@core/WalletCore/plugin';
 import { SERVICE_IDENTIFIER } from '@core/WalletCore/service';
-import { WALLET_CONFIG_EVENT, WalletConfigServer } from './server';
 import { updateAtomWalletConfig } from '../ReactInject/data/useWalletConfig';
+import { WALLET_CONFIG_EVENT, WalletConfigServer } from './server';
 
 export const WalletConfigPlugin: IPlugin = {
   name: SERVICE_IDENTIFIER.WALLET_CONFIG,

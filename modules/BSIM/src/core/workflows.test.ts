@@ -1,5 +1,5 @@
-import { buildExportPubkey, buildGetVersion, buildSignMessage, buildVerifyBpin, serializeCommand } from './params';
-import { ApduFlowError, exportPubkeysFlow, getVersionFlow, signMessageFlow, verifyBpinFlow } from './workflows';
+import { buildExportPubkey, buildGetIccid, buildGetVersion, buildSignMessage, buildVerifyBpin, serializeCommand } from './params';
+import { ApduFlowError, exportPubkeysFlow, getIccidFlow, getVersionFlow, signMessageFlow, verifyBpinFlow } from './workflows';
 
 const DER_SIGNATURE =
   '304402207F0F265E3F4FC52AE1A86410DA5C8BDAEB7C0B1032EB42B1E23FC326439BAFC502204A9AEE904027C3188D8F9C56F8EBAB223B7E555265F7C204E4290339F30B698B';
@@ -99,5 +99,12 @@ describe('core workflows', () => {
     const transmit = createTransmit([{ command: serializeCommand(buildGetVersion()), response: '00519000' }]);
 
     await expect(getVersionFlow(transmit)).resolves.toBe('0051');
+  });
+
+  it('reads ICCID', async () => {
+    const iccidPayload = '89860123456789012345';
+    const transmit = createTransmit([{ command: serializeCommand(buildGetIccid()), response: `${iccidPayload}9000` }]);
+
+    await expect(getIccidFlow(transmit)).resolves.toBe(iccidPayload);
   });
 });

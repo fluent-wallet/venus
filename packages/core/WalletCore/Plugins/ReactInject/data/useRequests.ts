@@ -2,8 +2,8 @@ import { atom, useAtomValue } from 'jotai';
 import { atomWithObservable } from 'jotai/utils';
 import { startWith, switchMap } from 'rxjs';
 import { dbRefresh$ } from '../../../../database';
-import { RequestStatus } from '../../../../database/models/Request/RequestType';
 import { queryAllRequests } from '../../../../database/models/Request/query';
+import { RequestStatus } from '../../../../database/models/Request/RequestType';
 
 export const requestsObservable = dbRefresh$.pipe(
   startWith(null),

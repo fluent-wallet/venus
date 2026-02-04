@@ -3,7 +3,6 @@ import { inject, injectable } from 'inversify';
 import { memoize } from 'lodash-es';
 import { concatMap, firstValueFrom, from, toArray } from 'rxjs';
 import database from '../../database';
-import TableName from '../../database/TableName';
 import type { Account } from '../../database/models/Account';
 import { createAddress } from '../../database/models/Address/query';
 import { AssetSource, AssetType } from '../../database/models/Asset';
@@ -11,16 +10,17 @@ import { createAsset } from '../../database/models/Asset/query';
 import { createAssetRule } from '../../database/models/AssetRule/query';
 import { type Network, NetworkType, networkRpcPrefixMap, networkRpcSuffixMap } from '../../database/models/Network';
 import {
-  type NetworkParams,
   createNetwork as _createNetwork,
+  type NetworkParams,
   queryNetworkByChainId,
   queryNetworkById,
   queryNetworkByNetId,
   querySelectedNetwork,
 } from '../../database/models/Network/query';
 import VaultType from '../../database/models/Vault/VaultType';
+import TableName from '../../database/TableName';
 import { fromPrivate } from '../../utils/account';
-import { convertBase32ToHex, validateCfxAddress, validateHexAddress, type Base32Address } from '../../utils/address';
+import { type Base32Address, convertBase32ToHex, validateCfxAddress, validateHexAddress } from '../../utils/address';
 import { getNthAccountOfHDKey } from '../../utils/hdkey';
 import { GetDecryptedVaultDataMethod } from './getDecryptedVaultData';
 

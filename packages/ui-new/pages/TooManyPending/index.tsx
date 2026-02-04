@@ -1,20 +1,20 @@
 import Img from '@assets/images/backup.webp';
 import {
-  BottomSheetWrapper,
-  BottomSheetHeader,
   BottomSheetContent,
   BottomSheetFooter,
+  BottomSheetHeader,
   type BottomSheetMethods,
   BottomSheetRoute,
+  BottomSheetWrapper,
 } from '@components/BottomSheet';
 import Button from '@components/Button';
 import Text from '@components/Text';
 import plugins from '@core/WalletCore/Plugins';
 import { useCurrentNetwork } from '@core/WalletCore/Plugins/ReactInject';
 import type { IWCSendTransactionEvent } from '@core/WalletCore/Plugins/WalletConnect/types';
-import type { TooManyPendingStackName, StackScreenProps } from '@router/configs';
-import { Image } from 'expo-image';
 import { useTheme } from '@react-navigation/native';
+import type { StackScreenProps, TooManyPendingStackName } from '@router/configs';
+import { Image } from 'expo-image';
 import type React from 'react';
 import { useRef } from 'react';
 import { useTranslation } from 'react-i18next';

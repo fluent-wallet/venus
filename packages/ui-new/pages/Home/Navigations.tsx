@@ -1,23 +1,24 @@
 import ArrowDownward from '@assets/icons/arrow-downward.svg';
 import ArrowUpward from '@assets/icons/arrow-upward.svg';
 import Buy from '@assets/icons/buy.svg';
+import Explore from '@assets/icons/explorer.svg';
 import More from '@assets/icons/more.svg';
 import Button from '@components/Button';
 import Text from '@components/Text';
-import { useIsTokensEmpty, isPendingTxsFull } from '@core/WalletCore/Plugins/ReactInject';
+import { isPendingTxsFull, useIsTokensEmpty } from '@core/WalletCore/Plugins/ReactInject';
 import { useTheme } from '@react-navigation/native';
 import {
   type HomeStackName,
-  TooManyPendingStackName,
   ReceiveStackName,
   SendTransactionStackName,
   SendTransactionStep1StackName,
   type StackScreenProps,
+  TooManyPendingStackName,
 } from '@router/configs';
 import type React from 'react';
 import type { ComponentProps } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { Linking, Pressable, StyleSheet, View } from 'react-native';
 import MoreOption from './MoreOption';
 
 export const Navigation: React.FC<{
@@ -61,7 +62,7 @@ const Navigations: React.FC<{
         disabled={isTokenEmpty !== false}
       />
       <Navigation title={t('home.receive')} testId="receive" Icon={ArrowDownward} onPress={() => navigation.navigate(ReceiveStackName)} />
-      <Navigation title={t('home.buy')} testId="buy" Icon={Buy} disabled />
+      <Navigation title={t('home.explore')} testId="explore" Icon={Explore} onPress={() => Linking.openURL('https://cfxmap.com')} />
       <MoreOption>
         <Navigation title={t('home.more')} testId="more" Icon={More} />
       </MoreOption>

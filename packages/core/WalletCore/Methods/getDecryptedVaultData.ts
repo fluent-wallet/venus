@@ -1,9 +1,9 @@
 import { inject, injectable } from 'inversify';
 import database from '../../database';
-import TableName from '../../database/TableName';
 import type { Address } from '../../database/models/Address';
 import type { Vault } from '../../database/models/Vault';
 import VaultType from '../../database/models/Vault/VaultType';
+import TableName from '../../database/TableName';
 import { getNthAccountOfHDKey } from '../../utils/hdkey';
 import { Plugins } from '../Plugins';
 
