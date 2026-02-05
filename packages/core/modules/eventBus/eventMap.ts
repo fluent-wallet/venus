@@ -3,6 +3,7 @@ import type { IAsset } from '@core/services/asset/types';
 import type { INetwork } from '@core/services/network/types';
 import type { HardwareOperationError } from '@core/types';
 import type { ExternalRequestSnapshot } from '../externalRequests/types';
+import type { AuthReason } from '../auth/reasons';
 
 type AssetsSyncKey = { addressId: string; networkId: string };
 type AssetsSyncReason = 'manual' | 'poll' | 'start';
@@ -94,7 +95,7 @@ export type CoreEventMap = {
     error: NftSyncErrorSnapshot;
   };
 
-  'auth/credential-requested': { requestId: string; kind: 'password' | 'biometrics'; reason?: string };
+  'auth/credential-requested': { requestId: string; kind: 'password' | 'biometrics'; reason?: AuthReason };
   'external-requests/requested': { requestId: string; request: ExternalRequestSnapshot };
 
   'wallet-connect/sessions-changed': {

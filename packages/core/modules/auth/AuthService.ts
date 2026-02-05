@@ -1,9 +1,10 @@
 import { AUTH_PASSWORD_REQUEST_CANCELED, AUTH_PASSWORD_REQUEST_TIMEOUT, CoreError } from '@core/errors';
 import type { Logger, RuntimeScheduler } from '@core/runtime/types';
 import type { CoreEventMap, EventBus } from '../eventBus';
+import type { AuthReason } from './reasons';
 
 export type PasswordRequestOptions = {
-  reason?: string;
+  reason?: AuthReason;
   timeoutMs?: number;
 };
 
@@ -11,7 +12,7 @@ export type CredentialKind = 'password' | 'biometrics';
 
 type PendingRequest = {
   requestId: string;
-  reason?: string;
+  reason?: AuthReason;
   timeoutMs: number;
   resolve: (password: string) => void;
   reject: (error: unknown) => void;
@@ -28,7 +29,7 @@ export type AuthServiceOptions = {
   now: () => number;
   logger?: Logger;
   defaultTimeoutMs: number;
-  getCredentialKind?: (params: { reason?: string }) => CredentialKind;
+  getCredentialKind?: (params: { reason?: AuthReason }) => CredentialKind;
 };
 
 export class AuthService {
@@ -42,7 +43,7 @@ export class AuthService {
   private active: ActiveRequest | null = null;
   private readonly queue: PendingRequest[] = [];
 
-  private readonly getCredentialKind: (params: { reason?: string }) => CredentialKind;
+  private readonly getCredentialKind: (params: { reason?: AuthReason }) => CredentialKind;
   constructor(options: AuthServiceOptions) {
     this.eventBus = options.eventBus;
     this.scheduler = options.scheduler;
@@ -176,7 +177,10 @@ export class AuthService {
       this.activateNextRequestIfIdle();
     }, active.timeoutMs);
 
-    // kind controls UX only (password input vs system biometrics prompt); both resolve to a string credential.
+    // UI responsibility:
+    // - Prompt for credential every time (no caching) and return via resolve/cancel APIs.
+    // - Biometrics legacy compatibility: Keychain value may be JSON { cipher, iv, salt } that must be unwrapped using PASSWORD_CRYPTO_KEY (old WalletCoreExtends CryptoToolServer).
+    // - Never send secrets through EventBus payloads.
     this.eventBus.emit('auth/credential-requested', {
       requestId: active.requestId,
       kind: active.kind,

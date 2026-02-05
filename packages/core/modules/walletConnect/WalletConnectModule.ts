@@ -9,7 +9,7 @@ import { WalletKit, type WalletKitTypes } from '@reown/walletkit';
 import { Core } from '@walletconnect/core';
 import type { CoreEventMap, EventBus } from '../eventBus';
 import type { ExternalRequestsService } from '../externalRequests';
-import { EVENT_BUS_MODULE_ID, EXTERNAL_REQUESTS_MODULE_ID, SERVICES_MODULE_ID, WALLET_CONNECT_MODULE_ID } from '../ids';
+import { EVENT_BUS_MODULE_ID, EXTERNAL_REQUESTS_MODULE_ID, SERVICES_MODULE_ID, WALLET_CONNECT_MODULE_ID, AUTH_MODULE_ID } from '../ids';
 import { WalletConnectService } from './WalletConnectService';
 
 type WalletConnectRuntimeConfig = {
@@ -37,7 +37,7 @@ const readWalletConnectConfig = (context: RuntimeContext): WalletConnectRuntimeC
 
 export const WalletConnectModule: RuntimeModule = {
   id: WALLET_CONNECT_MODULE_ID,
-  dependencies: [EVENT_BUS_MODULE_ID, EXTERNAL_REQUESTS_MODULE_ID, SERVICES_MODULE_ID],
+  dependencies: [EVENT_BUS_MODULE_ID, AUTH_MODULE_ID, EXTERNAL_REQUESTS_MODULE_ID, SERVICES_MODULE_ID],
   register: (context) => {
     const { container } = context;
     if (container.isBound(WalletConnectService)) return;

@@ -1,4 +1,4 @@
-import type { CryptoTool, PasswordProvider } from '@core/types/crypto';
+import type { CryptoTool } from '@core/types/crypto';
 import { cbc } from '@noble/ciphers/aes.js';
 import { pbkdf2 } from '@noble/hashes/pbkdf2.js';
 import { sha512 } from '@noble/hashes/sha2.js';
@@ -11,38 +11,24 @@ type EncryptedData = {
   salt: string;
 };
 
-export type CryptoToolServerOptions = {
-  passwordProvider?: PasswordProvider;
-};
-
 export class CryptoToolServer implements CryptoTool {
-  private readonly passwordProvider?: PasswordProvider;
-
-  constructor(options: CryptoToolServerOptions = {}) {
-    this.passwordProvider = options.passwordProvider;
-  }
-
   public generateRandomString(byteCount = 32): string {
     const bytes = new Uint8Array(byteCount);
     globalThis.crypto.getRandomValues(bytes);
     return Buffer.from(bytes).toString('base64');
   }
 
-  private async resolvePassword(password?: string): Promise<string> {
+  private resolvePassword(password: string): string {
     if (typeof password === 'string' && password.length > 0) return password;
-
-    const provided = await this.passwordProvider?.getPassword();
-    if (typeof provided === 'string' && provided.length > 0) return provided;
-
-    throw new Error('CryptoToolServer: password is required (provide password param or PasswordProvider).');
+    throw new Error('CryptoToolServer: password is required (provide password param).');
   }
 
-  private async deriveKey(salt: string, password?: string): Promise<Uint8Array> {
-    const pwd = await this.resolvePassword(password);
+  private async deriveKey(salt: string, password: string): Promise<Uint8Array> {
+    const pwd = this.resolvePassword(password);
     return pbkdf2(sha512, utf8ToBytes(pwd), utf8ToBytes(salt), { c: 5000, dkLen: 32 });
   }
 
-  public async encrypt(data: unknown, password?: string): Promise<string> {
+  public async encrypt(data: unknown, password: string): Promise<string> {
     const salt = this.generateRandomString(16);
     const key = await this.deriveKey(salt, password);
 
@@ -61,7 +47,7 @@ export class CryptoToolServer implements CryptoTool {
     return JSON.stringify(payload);
   }
 
-  public async decrypt<T = unknown>(encryptedDataString: string, password?: string): Promise<T> {
+  public async decrypt<T = unknown>(encryptedDataString: string, password: string): Promise<T> {
     const encryptedData = JSON.parse(encryptedDataString) as EncryptedData;
 
     const key = await this.deriveKey(encryptedData.salt, password);

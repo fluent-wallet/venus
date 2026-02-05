@@ -8,6 +8,7 @@ import { Container } from 'inversify';
 import { EventBusModule } from '../eventBus';
 import { AuthModule } from './AuthModule';
 import { AuthService } from './AuthService';
+import { AUTH_REASON } from './reasons';
 
 describe('AuthModule', () => {
   it('binds AuthService into runtime container', async () => {
@@ -40,7 +41,7 @@ describe('AuthModule', () => {
 
     const auth = container.get<AuthService>(CORE_IDENTIFIERS.AUTH);
 
-    const pending = auth.getPassword({ reason: 'test' });
+    const pending = auth.getPassword({ reason: AUTH_REASON.SIGN_TX });
 
     await manager.stop();
 

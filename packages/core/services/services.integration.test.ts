@@ -1,7 +1,7 @@
 import 'reflect-metadata';
 
 import { seedNetwork } from '@core/__tests__/fixtures';
-import { createMockHardwareWallet } from '@core/__tests__/mocks';
+import { createMockHardwareWallet, createStrictTestCryptoTool } from '@core/__tests__/mocks';
 import { DEFAULT_HEX_ADDRESS, StubChainProvider } from '@core/__tests__/mocks/chainProviders';
 import { ChainRegistry } from '@core/chains';
 import type { Database } from '@core/database';
@@ -29,29 +29,6 @@ import { Container } from 'inversify';
 const TEST_PASSWORD = 'test-password';
 const FIXED_MNEMONIC = 'test test test test test test test test test test test junk';
 
-class FakeCryptoTool implements CryptoTool {
-  async encrypt(data: unknown, password?: string): Promise<string> {
-    return JSON.stringify({ payload: data, password: password ?? null });
-  }
-
-  async decrypt<T = unknown>(encryptedString: string, password?: string): Promise<T> {
-    const parsed = JSON.parse(encryptedString) as { payload: T; password: string | null };
-
-    if (password !== undefined) {
-      const expected = password ?? null;
-      if (parsed.password !== expected) {
-        throw new Error('Invalid password');
-      }
-    }
-
-    return parsed.payload;
-  }
-
-  generateRandomString(_byteCount?: number): string {
-    return 'stub';
-  }
-}
-
 describe('Service integration', () => {
   let container: Container;
   let database: Database;
@@ -61,8 +38,8 @@ describe('Service integration', () => {
     database = mockDatabase();
 
     container.bind<Database>(CORE_IDENTIFIERS.DB).toConstantValue(database);
-    container.bind<CryptoTool>(CORE_IDENTIFIERS.CRYPTO_TOOL).toConstantValue(new FakeCryptoTool());
-
+    container.bind<CryptoTool>(CORE_IDENTIFIERS.CRYPTO_TOOL).toConstantValue(createStrictTestCryptoTool());
+    container.bind(CORE_IDENTIFIERS.AUTH).toConstantValue({ getPassword: async () => TEST_PASSWORD } as any);
     registerServices(container);
 
     await seedNetwork(database, { selected: true });

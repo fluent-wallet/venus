@@ -1,32 +1,19 @@
 import 'reflect-metadata';
 
-import { createSilentLogger, mockDatabase } from '@core/__tests__/mocks';
+import { createPassthroughTestCryptoTool, createSilentLogger, mockDatabase } from '@core/__tests__/mocks';
 import { VaultType } from '@core/database/models/Vault/VaultType';
 import { CORE_IDENTIFIERS } from '@core/di';
 import { ModuleManager } from '@core/runtime/ModuleManager';
 import type { RuntimeScheduler } from '@core/runtime/types';
 import type { IAccount, INetwork } from '@core/services';
 import { NetworkType } from '@core/types';
-import type { CryptoTool } from '@core/types/crypto';
 import { ChainType } from '@core/utils/consts';
 import { Container } from 'inversify';
 import { createCryptoToolModule } from '../crypto';
-import { createDbModule } from '../db';
+import { DbBootstrapModule, createDbModule } from '../db';
 import { type CoreEventMap, type EventBus, EventBusModule } from '../eventBus';
 import { ServicesModule } from '../services';
 import { TxSyncModule } from './TxSyncModule';
-
-class FakeCryptoTool implements CryptoTool {
-  generateRandomString(_byteCount?: number): string {
-    return 'stub';
-  }
-  async encrypt(data: unknown): Promise<string> {
-    return JSON.stringify({ data });
-  }
-  async decrypt<T = unknown>(encryptedDataString: string): Promise<T> {
-    return JSON.parse(encryptedDataString).data as T;
-  }
-}
 
 const createSchedulerStub = () => {
   const timeouts = new Map<number, () => void>();
@@ -84,7 +71,8 @@ describe('TxSyncModule', () => {
     manager.register([
       EventBusModule,
       createDbModule({ database }),
-      createCryptoToolModule({ cryptoTool: new FakeCryptoTool() }),
+      DbBootstrapModule,
+      createCryptoToolModule({ cryptoTool: createPassthroughTestCryptoTool() }),
       ServicesModule,
       TxSyncModule,
     ]);

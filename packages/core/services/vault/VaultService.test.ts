@@ -1,6 +1,6 @@
 import 'reflect-metadata';
 import { seedNetwork } from '@core/__tests__/fixtures';
-import { mockDatabase } from '@core/__tests__/mocks';
+import { createStrictTestCryptoTool, mockDatabase } from '@core/__tests__/mocks';
 import type { Database } from '@core/database';
 import type { AccountGroup } from '@core/database/models/AccountGroup';
 import type { Address } from '@core/database/models/Address';
@@ -16,27 +16,6 @@ import { VaultService } from './VaultService';
 const TEST_PASSWORD = 'test-password';
 const FIXED_MNEMONIC = 'test test test test test test test test test test test junk';
 
-class FakeCryptoTool implements CryptoTool {
-  async encrypt(data: unknown, password?: string): Promise<string> {
-    return JSON.stringify({ payload: data, password: password ?? null });
-  }
-
-  async decrypt<T = unknown>(encryptedString: string, password?: string): Promise<T> {
-    const parsed = JSON.parse(encryptedString) as { payload: T; password: string | null };
-    const expected = password ?? null;
-
-    if (parsed.password !== expected) {
-      throw new Error('Invalid password');
-    }
-
-    return parsed.payload;
-  }
-
-  generateRandomString(_byteCount?: number): string {
-    return 'stub';
-  }
-}
-
 describe('VaultService', () => {
   let container: Container;
   let database: Database;
@@ -47,7 +26,7 @@ describe('VaultService', () => {
     database = mockDatabase();
 
     container.bind(CORE_IDENTIFIERS.DB).toConstantValue(database);
-    container.bind<CryptoTool>(CORE_IDENTIFIERS.CRYPTO_TOOL).toConstantValue(new FakeCryptoTool());
+    container.bind<CryptoTool>(CORE_IDENTIFIERS.CRYPTO_TOOL).toConstantValue(createStrictTestCryptoTool());
     container.bind(HardwareWalletService).toConstantValue({} as unknown as HardwareWalletService);
     container.bind(VaultService).toSelf();
 

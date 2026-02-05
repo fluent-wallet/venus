@@ -9,6 +9,7 @@ import { VaultService } from '@core/services/vault';
 import { SoftwareSigner } from '@core/signers';
 import { Container } from 'inversify';
 import { SigningService } from './SigningService';
+import { AUTH_REASON } from '@core/modules/auth/reasons';
 
 type VaultServiceMock = Pick<VaultService, 'getPrivateKey'>;
 
@@ -18,11 +19,17 @@ describe('SigningService', () => {
   let vaultServiceMock: jest.Mocked<VaultServiceMock>;
   let hardwareRegistry: HardwareWalletRegistry;
 
+  const TEST_PASSWORD = 'test-password';
+  const authMock = {
+    getPassword: jest.fn(async () => TEST_PASSWORD),
+  };
+
   const setupBaseBindings = () => {
     hardwareRegistry = new HardwareWalletRegistry();
     container.bind<Database>(CORE_IDENTIFIERS.DB).toConstantValue(database);
     container.bind(VaultService).toConstantValue(vaultServiceMock as unknown as VaultService);
     container.bind(HardwareWalletRegistry).toConstantValue(hardwareRegistry);
+    container.bind(CORE_IDENTIFIERS.AUTH).toConstantValue(authMock as any);
     container.bind(SigningService).toSelf();
   };
 
@@ -47,7 +54,8 @@ describe('SigningService', () => {
     const signer = await getService().getSigner(account.id, address.id);
 
     expect(signer).toBeInstanceOf(SoftwareSigner);
-    expect(vaultServiceMock.getPrivateKey).toHaveBeenCalledWith(vault.id, address.id);
+    expect(authMock.getPassword).toHaveBeenCalledWith({ reason: AUTH_REASON.SIGN_TX });
+    expect(vaultServiceMock.getPrivateKey).toHaveBeenCalledWith(vault.id, address.id, TEST_PASSWORD);
   });
 
   it('supports private-key vaults', async () => {
@@ -57,7 +65,7 @@ describe('SigningService', () => {
     const signer = await getService().getSigner(account.id, address.id);
 
     expect(signer).toBeInstanceOf(SoftwareSigner);
-    expect(vaultServiceMock.getPrivateKey).toHaveBeenCalledWith(vault.id, address.id);
+    expect(vaultServiceMock.getPrivateKey).toHaveBeenCalledWith(vault.id, address.id, TEST_PASSWORD);
   });
 
   it('throws when account is missing', async () => {
@@ -91,6 +99,6 @@ describe('SigningService', () => {
     vaultServiceMock.getPrivateKey.mockRejectedValue(new Error('decrypt failed'));
 
     await expect(getService().getSigner(account.id, address.id)).rejects.toThrow('decrypt failed');
-    expect(vaultServiceMock.getPrivateKey).toHaveBeenCalledWith(vault.id, address.id);
+    expect(vaultServiceMock.getPrivateKey).toHaveBeenCalledWith(vault.id, address.id, TEST_PASSWORD);
   });
 });
