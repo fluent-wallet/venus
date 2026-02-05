@@ -1,6 +1,5 @@
 import 'reflect-metadata';
 
-import type { PasswordProvider } from '@core/types/crypto';
 import { CryptoToolServer } from './CryptoToolServer';
 
 describe('CryptoToolServer', () => {
@@ -19,23 +18,17 @@ describe('CryptoToolServer', () => {
     expect(typeof parsed.salt).toBe('string');
   });
 
-  it('uses PasswordProvider when password param is omitted', async () => {
-    const passwordProvider: PasswordProvider = {
-      getPassword: jest.fn(async () => 'pw'),
-    };
-
-    const tool = new CryptoToolServer({ passwordProvider });
-
-    await tool.encrypt({ ok: true });
-
-    expect(passwordProvider.getPassword).toHaveBeenCalledTimes(1);
-  });
-
-  it('throws when password is omitted and no PasswordProvider is provided', async () => {
+  it('throws when password is omitted', async () => {
     const tool = new CryptoToolServer();
-
-    await expect(tool.encrypt({ ok: true })).rejects.toThrow('CryptoToolServer: password is required');
+    await expect((tool as any).encrypt({ ok: true })).rejects.toThrow('CryptoToolServer: password is required');
   });
+
+  it('throws when decrypt password is omitted', async () => {
+    const tool = new CryptoToolServer();
+    const ciphertext = JSON.stringify({ cipher: '00', iv: '00', salt: '00' });
+    await expect((tool as any).decrypt(ciphertext)).rejects.toThrow('CryptoToolServer: password is required');
+  });
+
   it('decrypts ciphertext with password', async () => {
     const tool = new CryptoToolServer();
 

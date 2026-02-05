@@ -167,7 +167,8 @@
     "saving" : "Saving...",
     "successfully" : "Successfully",
     "skip" : "Skip",
-    "notice" : "Notice"
+    "notice" : "Notice",
+    "saveToPhotos" : "Save to Photos"
   },
   "home" : {
     "backup" : {

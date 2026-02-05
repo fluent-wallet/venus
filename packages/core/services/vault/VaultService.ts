@@ -286,7 +286,7 @@ export class VaultService {
    * Get the mnemonic phrase for an HD vault.
    * @throws {Error} If vault is not HD type or data is missing
    */
-  async getMnemonic(vaultId: string, password?: string): Promise<string> {
+  async getMnemonic(vaultId: string, password: string): Promise<string> {
     const vault = await this.database.get<Vault>(TableName.Vault).find(vaultId);
     return this.getDecryptedMnemonic(vault, password);
   }
@@ -296,7 +296,7 @@ export class VaultService {
    * Works with HD vaults (derives key) and PrivateKey vaults (decrypts stored key).
    * @throws {Error} If vault type doesn't support private key export (e.g. BSIM)
    */
-  async getPrivateKey(vaultId: string, addressId: string, password?: string): Promise<string> {
+  async getPrivateKey(vaultId: string, addressId: string, password: string): Promise<string> {
     const [vault, address] = await Promise.all([
       this.database.get<Vault>(TableName.Vault).find(vaultId),
       this.database.get<Address>(TableName.Address).find(addressId),
@@ -331,7 +331,7 @@ export class VaultService {
     throw new Error(`Vault type ${vault.type} does not expose a private key.`);
   }
 
-  private async getDecryptedMnemonic(vault: Vault, password?: string): Promise<string> {
+  private async getDecryptedMnemonic(vault: Vault, password: string): Promise<string> {
     if (vault.type !== VaultType.HierarchicalDeterministic) {
       throw new Error('Mnemonic is only available for HD vaults.');
     }

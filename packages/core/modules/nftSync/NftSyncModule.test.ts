@@ -1,32 +1,20 @@
 import 'reflect-metadata';
 
 import { createTestAccount, seedNetwork } from '@core/__tests__/fixtures';
-import { createSilentLogger, mockDatabase } from '@core/__tests__/mocks';
+import { createPassthroughTestCryptoTool, createSilentLogger, mockDatabase } from '@core/__tests__/mocks';
 import type { Database } from '@core/database';
 import { CORE_IDENTIFIERS } from '@core/di';
 import { NFT_SYNC_FETCH_FAILED } from '@core/errors';
 import type { CoreEventMap, EventBus } from '@core/modules/eventBus';
 import { EventBusModule } from '@core/modules/eventBus';
 import { ModuleManager } from '@core/runtime/ModuleManager';
-import type { CryptoTool } from '@core/types/crypto';
 import { Container } from 'inversify';
 import { createCryptoToolModule } from '../crypto';
-import { createDbModule } from '../db';
+import { createDbModule, DbBootstrapModule } from '../db';
 import { ServicesModule } from '../services';
 import { NftSyncModule } from './NftSyncModule';
 import { NftSyncService } from './NftSyncService';
-
-class FakeCryptoTool implements CryptoTool {
-  generateRandomString(_byteCount?: number): string {
-    return 'stub';
-  }
-  async encrypt(data: unknown): Promise<string> {
-    return JSON.stringify({ data });
-  }
-  async decrypt<T = unknown>(encryptedDataString: string): Promise<T> {
-    return JSON.parse(encryptedDataString).data as T;
-  }
-}
+import { NetworkService } from '@core/services';
 
 describe('NftSyncModule', () => {
   it('emits succeeded snapshot on manual refresh (serializable)', async () => {
@@ -66,11 +54,11 @@ describe('NftSyncModule', () => {
     manager.register([
       EventBusModule,
       createDbModule({ database }),
-      createCryptoToolModule({ cryptoTool: new FakeCryptoTool() }),
+      DbBootstrapModule,
+      createCryptoToolModule({ cryptoTool: createPassthroughTestCryptoTool() }),
       ServicesModule,
       NftSyncModule,
     ]);
-
     await manager.start();
 
     const originalFetch = globalThis.fetch;
@@ -80,6 +68,10 @@ describe('NftSyncModule', () => {
       const db = container.get<Database>(CORE_IDENTIFIERS.DB);
 
       const { network, assetRule } = await seedNetwork(db, { definitionKey: 'Conflux eSpace', selected: true });
+
+      const networkService = container.get(NetworkService);
+      await networkService.switchNetwork(network.id);
+
       await createTestAccount(db, { network, assetRule, selected: true });
 
       const eventBus = container.get<EventBus<CoreEventMap>>(CORE_IDENTIFIERS.EVENT_BUS);
@@ -115,17 +107,21 @@ describe('NftSyncModule', () => {
     manager.register([
       EventBusModule,
       createDbModule({ database }),
-      createCryptoToolModule({ cryptoTool: new FakeCryptoTool() }),
+      DbBootstrapModule,
+      createCryptoToolModule({ cryptoTool: createPassthroughTestCryptoTool() }),
       ServicesModule,
       NftSyncModule,
     ]);
-
     await manager.start();
 
     try {
       const db = container.get<Database>(CORE_IDENTIFIERS.DB);
 
       const { network, assetRule } = await seedNetwork(db, { definitionKey: 'Conflux eSpace', selected: true });
+
+      const networkService = container.get(NetworkService);
+      await networkService.switchNetwork(network.id);
+
       await createTestAccount(db, { network, assetRule, selected: true });
 
       const eventBus = container.get<EventBus<CoreEventMap>>(CORE_IDENTIFIERS.EVENT_BUS);
@@ -167,7 +163,8 @@ describe('NftSyncModule', () => {
     manager.register([
       EventBusModule,
       createDbModule({ database }),
-      createCryptoToolModule({ cryptoTool: new FakeCryptoTool() }),
+      DbBootstrapModule,
+      createCryptoToolModule({ cryptoTool: createPassthroughTestCryptoTool() }),
       ServicesModule,
       NftSyncModule,
     ]);
@@ -187,6 +184,10 @@ describe('NftSyncModule', () => {
       const db = container.get<Database>(CORE_IDENTIFIERS.DB);
 
       const { network, assetRule } = await seedNetwork(db, { definitionKey: 'Conflux eSpace', selected: true });
+
+      const networkService = container.get(NetworkService);
+      await networkService.switchNetwork(network.id);
+
       await createTestAccount(db, { network, assetRule, selected: true });
 
       const eventBus = container.get<EventBus<CoreEventMap>>(CORE_IDENTIFIERS.EVENT_BUS);
@@ -246,10 +247,12 @@ describe('NftSyncModule', () => {
     manager.register([
       EventBusModule,
       createDbModule({ database }),
-      createCryptoToolModule({ cryptoTool: new FakeCryptoTool() }),
+      DbBootstrapModule,
+      createCryptoToolModule({ cryptoTool: createPassthroughTestCryptoTool() }),
       ServicesModule,
       NftSyncModule,
     ]);
+
     await manager.start();
 
     const originalFetch = globalThis.fetch;
@@ -259,6 +262,10 @@ describe('NftSyncModule', () => {
       const db = container.get<Database>(CORE_IDENTIFIERS.DB);
 
       const { network, assetRule } = await seedNetwork(db, { definitionKey: 'Conflux eSpace', selected: true });
+
+      const networkService = container.get(NetworkService);
+      await networkService.switchNetwork(network.id);
+
       await createTestAccount(db, { network, assetRule, selected: true });
 
       const eventBus = container.get<EventBus<CoreEventMap>>(CORE_IDENTIFIERS.EVENT_BUS);

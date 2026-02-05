@@ -1,7 +1,6 @@
 import 'reflect-metadata';
 import { createTestAccount, seedNetwork } from '@core/__tests__/fixtures';
-import { createSilentLogger, mockDatabase } from '@core/__tests__/mocks';
-import { StubChainProvider } from '@core/__tests__/mocks/chainProviders';
+import { createPassthroughTestCryptoTool, createSilentLogger, mockDatabase } from '@core/__tests__/mocks';
 import { ChainRegistry } from '@core/chains';
 import type { Database } from '@core/database';
 import type { Asset } from '@core/database/models/Asset';
@@ -12,25 +11,13 @@ import { CHAIN_PROVIDER_NOT_FOUND } from '@core/errors';
 import type { CoreEventMap, EventBus } from '@core/modules/eventBus';
 import { EventBusModule } from '@core/modules/eventBus';
 import { ModuleManager } from '@core/runtime/ModuleManager';
-import type { CryptoTool } from '@core/types/crypto';
 import { Container } from 'inversify';
 import { createCryptoToolModule } from '../crypto';
-import { createDbModule } from '../db';
+import { createDbModule, DbBootstrapModule } from '../db';
 import { ServicesModule } from '../services';
 import { AssetsSyncModule } from './AssetsSyncModule';
 import { AssetsSyncService } from './AssetsSyncService';
-
-class FakeCryptoTool implements CryptoTool {
-  generateRandomString(_byteCount?: number): string {
-    return 'stub';
-  }
-  async encrypt(data: unknown): Promise<string> {
-    return JSON.stringify({ data });
-  }
-  async decrypt<T = unknown>(encryptedDataString: string): Promise<T> {
-    return JSON.parse(encryptedDataString).data as T;
-  }
-}
+import { NetworkService } from '@core/services';
 
 describe('AssetsSyncModule', () => {
   it('emits succeeded snapshot on manual refresh (serializable)', async () => {
@@ -49,18 +36,22 @@ describe('AssetsSyncModule', () => {
     manager.register([
       EventBusModule,
       createDbModule({ database }),
-      createCryptoToolModule({ cryptoTool: new FakeCryptoTool() }),
+      DbBootstrapModule,
+      createCryptoToolModule({ cryptoTool: createPassthroughTestCryptoTool() }),
       ServicesModule,
       AssetsSyncModule,
     ]);
-
     await manager.start();
 
     try {
       const db = container.get<Database>(CORE_IDENTIFIERS.DB);
 
       const { network, assetRule } = await seedNetwork(db, { selected: true });
-      const { address } = await createTestAccount(db, { network, assetRule, selected: true });
+
+      const networkService = container.get(NetworkService);
+      await networkService.switchNetwork(network.id);
+
+      await createTestAccount(db, { network, assetRule, selected: true });
 
       await db.write(async () => {
         await db.get<Asset>(TableName.Asset).create((record) => {
@@ -78,9 +69,12 @@ describe('AssetsSyncModule', () => {
       });
 
       const chainRegistry = container.get(ChainRegistry);
-      const provider = new StubChainProvider({ chainId: network.chainId, networkType: network.networkType });
-      provider.setNativeBalance(await address.getValue(), '0xde0b6b3a7640000'); // 1
-      chainRegistry.register(provider);
+      const provider = chainRegistry.get(network.chainId, network.networkType);
+      if (!provider) {
+        throw new Error('Test setup error: missing chain provider in ChainRegistry.');
+      }
+
+      (provider as any).getBalance = jest.fn(async () => '0xde0b6b3a7640000'); // 1
 
       const eventBus = container.get<EventBus<CoreEventMap>>(CORE_IDENTIFIERS.EVENT_BUS);
       const succeeded: CoreEventMap['assets-sync/succeeded'][] = [];
@@ -117,7 +111,8 @@ describe('AssetsSyncModule', () => {
     manager.register([
       EventBusModule,
       createDbModule({ database }),
-      createCryptoToolModule({ cryptoTool: new FakeCryptoTool() }),
+      DbBootstrapModule,
+      createCryptoToolModule({ cryptoTool: createPassthroughTestCryptoTool() }),
       ServicesModule,
       AssetsSyncModule,
     ]);
@@ -128,6 +123,10 @@ describe('AssetsSyncModule', () => {
       const db = container.get<Database>(CORE_IDENTIFIERS.DB);
 
       const { network, assetRule } = await seedNetwork(db, { selected: true });
+
+      const networkService = container.get(NetworkService);
+      await networkService.switchNetwork(network.id);
+
       await createTestAccount(db, { network, assetRule, selected: true });
 
       await db.write(async () => {
@@ -150,6 +149,11 @@ describe('AssetsSyncModule', () => {
       eventBus.on('assets-sync/failed', (payload) => failed.push(payload));
 
       const service = container.get(AssetsSyncService);
+
+      const chainRegistry = container.get(ChainRegistry);
+
+      (chainRegistry as any).providers.clear();
+
       await service.refreshCurrent({ reason: 'manual' });
 
       expect(failed).toHaveLength(1);

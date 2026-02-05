@@ -129,9 +129,8 @@ export function useDeleteVault() {
  */
 export function useExportMnemonic() {
   const service = getVaultService();
-  return useCallback(async (vaultId: string, password?: string) => service.getMnemonic(vaultId, password), [service]);
+  return useCallback(async (vaultId: string, password: string) => service.getMnemonic(vaultId, password), [service]);
 }
-
 /**
  * Export private key for an address under a vault.
  * @example
@@ -140,5 +139,5 @@ export function useExportMnemonic() {
  */
 export function useExportPrivateKey() {
   const service = getVaultService();
-  return useCallback(async (vaultId: string, addressId: string, password?: string) => service.getPrivateKey(vaultId, addressId, password), [service]);
+  return useCallback(async (vaultId: string, addressId: string, password: string) => service.getPrivateKey(vaultId, addressId, password), [service]);
 }

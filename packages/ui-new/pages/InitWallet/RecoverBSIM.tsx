@@ -137,7 +137,7 @@ export const RecoverBSIM = () => {
 
         <View style={styles.warn}>
           <WarnIcon color={colors.middle} />
-          <Text style={[styles.warningText, { color: colors.textNotice }]}>{t('initWallet.recoverBSIM.warning')}</Text>
+          <Text style={[styles.warningText, { color: colors.textNotice, fontWeight: '600' }]}>{t('initWallet.recoverBSIM.warning')}</Text>
         </View>
 
         <Button onPress={() => setShowScan(true)}>{t('common.next')}</Button>

@@ -27,7 +27,7 @@ export interface CreateHDVaultInput {
   /** If provided, import this mnemonic. Otherwise generate a new one. */
   mnemonic?: string;
   /** Password to encrypt the mnemonic */
-  password?: string;
+  password: string;
   /** Custom name for the first account */
   accountNickname?: string;
 }
@@ -37,7 +37,7 @@ export interface CreateHDVaultInput {
  */
 export interface CreatePrivateKeyVaultInput {
   privateKey: string;
-  password?: string;
+  password: string;
   accountNickname?: string;
 }
 
