@@ -167,7 +167,7 @@ export const BSIMStep2QRCode: React.FC<BackupScreenProps<typeof BackupBSIMQ2RCod
 
               <BottomSheetFooter>
                 <Button testID="saveToPhotosButton" onPress={saveToPhotos} disabled={!confirm || loading || saving}>
-                  {saving ? t('common.saving') : t('common.photos')}
+                  {saving ? t('common.saving') : t('common.saveToPhotos')}
                 </Button>
               </BottomSheetFooter>
             </View>

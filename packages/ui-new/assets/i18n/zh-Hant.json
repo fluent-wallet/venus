@@ -167,7 +167,8 @@
     "saving" : "保存中...",
     "successfully" : "成功",
     "skip" : "跳過",
-    "notice" : "提醒"
+    "notice" : "提醒",
+    "saveToPhotos" : "保存到相冊"
   },
   "home" : {
     "backup" : {
