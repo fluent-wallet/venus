@@ -5,6 +5,7 @@ import { AUTH_PASSWORD_REQUEST_CANCELED, AUTH_PASSWORD_REQUEST_TIMEOUT } from '@
 import type { RuntimeScheduler } from '@core/runtime/types';
 import { type CoreEventMap, InMemoryEventBus } from '../eventBus';
 import { AuthService } from './AuthService';
+import { AUTH_REASON } from './reasons';
 
 const createScheduler = (): RuntimeScheduler => {
   return {
@@ -35,8 +36,8 @@ describe('AuthService', () => {
       requested.push(payload);
     });
 
-    const p1 = auth.getPassword({ reason: 'first' });
-    const p2 = auth.getPassword({ reason: 'second' });
+    const p1 = auth.getPassword({ reason: AUTH_REASON.SIGN_TX });
+    const p2 = auth.getPassword({ reason: AUTH_REASON.SIGN_PERSONAL_MESSAGE });
 
     expect(requested).toHaveLength(1);
     expect(requested[0].requestId).toBe(`auth_${now.toString(36)}_1`);

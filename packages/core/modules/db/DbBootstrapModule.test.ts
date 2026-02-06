@@ -1,6 +1,6 @@
 import 'reflect-metadata';
 
-import { createSilentLogger, mockDatabase } from '@core/__tests__/mocks';
+import { createPassthroughTestCryptoTool, createSilentLogger, mockDatabase } from '@core/__tests__/mocks';
 import { ChainRegistry } from '@core/chains';
 import type { Asset } from '@core/database/models/Asset';
 import { AssetSource, AssetType } from '@core/database/models/Asset';
@@ -9,7 +9,6 @@ import type { Network } from '@core/database/models/Network';
 import TableName from '@core/database/TableName';
 import { EventBusModule } from '@core/modules/eventBus';
 import { ModuleManager } from '@core/runtime/ModuleManager';
-import type { CryptoTool } from '@core/types/crypto';
 import { DEFAULT_CFX_HDPATH, DEFAULT_ETH_HDPATH, Networks } from '@core/utils/consts';
 import { Q } from '@nozbe/watermelondb';
 import { Container } from 'inversify';
@@ -17,20 +16,6 @@ import { createCryptoToolModule } from '../crypto';
 import { ServicesModule } from '../services';
 import { DbBootstrapModule } from './DbBootstrapModule';
 import { createDbModule } from './DbModule';
-
-class FakeCryptoTool implements CryptoTool {
-  generateRandomString(_byteCount?: number): string {
-    return 'stub';
-  }
-
-  async encrypt(data: unknown): Promise<string> {
-    return JSON.stringify({ data });
-  }
-
-  async decrypt<T = unknown>(encryptedDataString: string): Promise<T> {
-    return JSON.parse(encryptedDataString).data as T;
-  }
-}
 
 describe('DbBootstrapModule', () => {
   it('seeds builtin defaults on empty DB and enables ServicesModule provider registration', async () => {
@@ -42,7 +27,7 @@ describe('DbBootstrapModule', () => {
     manager.register([
       createDbModule({ database }),
       DbBootstrapModule,
-      createCryptoToolModule({ cryptoTool: new FakeCryptoTool() }),
+      createCryptoToolModule({ cryptoTool: createPassthroughTestCryptoTool() }),
       EventBusModule,
       ServicesModule,
     ]);

@@ -14,6 +14,8 @@ import type { ISigner } from '@core/types';
 import { NetworkType } from '@core/utils/consts';
 import { getBytes, hexlify, Signature, toUtf8Bytes, Wallet } from 'ethers';
 import { inject, injectable } from 'inversify';
+import { AUTH_REASON, type AuthReason } from '@core/modules/auth/reasons';
+import type { AuthService } from '@core/modules/auth';
 
 @injectable()
 export class SigningService {
@@ -26,7 +28,10 @@ export class SigningService {
   @inject(HardwareWalletRegistry)
   private readonly hardwareRegistry!: HardwareWalletRegistry;
 
-  async getSigner(accountId: string, addressId: string): Promise<ISigner> {
+  @inject(CORE_IDENTIFIERS.AUTH)
+  private readonly auth!: AuthService;
+
+  async getSigner(accountId: string, addressId: string, options: { reason?: AuthReason } = {}): Promise<ISigner> {
     const account = await this.findAccount(accountId);
     const address = await this.findAddress(addressId);
     this.assertOwnership(account, address);
@@ -38,7 +43,8 @@ export class SigningService {
       return this.resolveHardwareSigner(account, address, vault.hardwareDeviceId ?? undefined);
     }
     if (vault.type === VaultType.HierarchicalDeterministic || vault.type === VaultType.PrivateKey) {
-      const privateKey = await this.vaultService.getPrivateKey(vault.id, address.id);
+      const password = await this.auth.getPassword({ reason: options.reason ?? AUTH_REASON.SIGN_TX });
+      const privateKey = await this.vaultService.getPrivateKey(vault.id, address.id, password);
       return new SoftwareSigner(privateKey);
     }
 
@@ -70,7 +76,7 @@ export class SigningService {
       });
     }
 
-    const signer = await this.getSigner(params.accountId, params.addressId);
+    const signer = await this.getSigner(params.accountId, params.addressId, { reason: AUTH_REASON.SIGN_PERSONAL_MESSAGE });
 
     const input = typeof params.request.message === 'string' ? params.request.message : params.request.message.raw;
     const isHexBytes = input.length % 2 === 0 && /^0x[0-9a-fA-F]*$/.test(input);
@@ -140,7 +146,7 @@ export class SigningService {
       });
     }
 
-    const signer = await this.getSigner(params.accountId, params.addressId);
+    const signer = await this.getSigner(params.accountId, params.addressId, { reason: AUTH_REASON.SIGN_TYPED_DATA_V4 });
     // ethers signTypedData expects "types" WITHOUT EIP712Domain (it is derived from domain internally).
     const { EIP712Domain: _ignored, ...types } = params.request.typedData.types;
 

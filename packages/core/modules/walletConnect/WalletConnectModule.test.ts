@@ -1,21 +1,22 @@
 import 'reflect-metadata';
 
-import { createSilentLogger, mockDatabase } from '@core/__tests__/mocks';
+import { createPassthroughTestCryptoTool, createSilentLogger, mockDatabase } from '@core/__tests__/mocks';
 import { CORE_IDENTIFIERS } from '@core/di';
 import type { CoreEventMap, EventBus } from '@core/modules/eventBus';
 import { EventBusModule } from '@core/modules/eventBus';
 import { ModuleManager } from '@core/runtime/ModuleManager';
-import type { CryptoTool } from '@core/types';
+
 import { WalletKit } from '@reown/walletkit';
 import { Core } from '@walletconnect/core';
 import { Container } from 'inversify';
 import { createCryptoToolModule } from '../crypto';
-import { createDbModule } from '../db';
+import { createDbModule, DbBootstrapModule } from '../db';
 import { ExternalRequestsModule } from '../externalRequests';
 import { ServicesModule } from '../services';
 import { WalletConnectModule } from './WalletConnectModule';
 import { WalletConnectService } from './WalletConnectService';
 
+import { AuthModule } from '../auth';
 jest.mock('@walletconnect/core', () => {
   return {
     Core: jest.fn().mockImplementation((opts: any) => ({ __coreOpts: opts })),
@@ -27,17 +28,6 @@ jest.mock('@reown/walletkit', () => {
     WalletKit: { init: jest.fn() },
   };
 });
-class FakeCryptoTool implements CryptoTool {
-  async encrypt(data: unknown): Promise<string> {
-    return JSON.stringify({ data });
-  }
-  async decrypt<T = unknown>(encryptedDataString: string): Promise<T> {
-    return JSON.parse(encryptedDataString).data as T;
-  }
-  generateRandomString(_byteCount?: number): string {
-    return 'stub';
-  }
-}
 
 const session = (topic: string, url: string) => {
   return {
@@ -89,15 +79,18 @@ describe('WalletConnectModule', () => {
 
     const busEvents: CoreEventMap['wallet-connect/sessions-changed'][] = [];
     const database = mockDatabase();
-    const cryptoTool = new FakeCryptoTool();
+    const cryptoTool = createPassthroughTestCryptoTool();
     manager.register([
       EventBusModule,
+      AuthModule,
       createDbModule({ database }),
+      DbBootstrapModule,
       createCryptoToolModule({ cryptoTool }),
       ServicesModule,
       ExternalRequestsModule,
       WalletConnectModule,
     ]);
+
     await manager.start();
 
     const eventBus = container.get<EventBus<CoreEventMap>>(CORE_IDENTIFIERS.EVENT_BUS);

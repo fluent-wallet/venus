@@ -14,3 +14,4 @@ export {
 } from './chainProviders';
 export { createMockHardwareWallet } from './hardware';
 export { createSilentLogger } from './logger';
+export { createPassthroughTestCryptoTool, createStrictTestCryptoTool } from './cryptoTool';
