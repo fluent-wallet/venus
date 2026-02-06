@@ -8,6 +8,8 @@ import { ChainRegistry } from '@core/chains';
 import type { Database } from '@core/database';
 import type { Address } from '@core/database/models/Address';
 import { AssetSource, type Asset as DbAsset, AssetType as DbAssetType } from '@core/database/models/Asset';
+import type { Signature } from '@core/database/models/Signature';
+import { SignType } from '@core/database/models/Signature/type';
 import type { Tx } from '@core/database/models/Tx';
 import { TxStatus as DbTxStatus, TxSource } from '@core/database/models/Tx/type';
 import type { TxExtra } from '@core/database/models/TxExtra';
@@ -20,6 +22,8 @@ import { InMemoryEventBus } from '@core/modules/eventBus';
 import { SigningService } from '@core/services/signing';
 import { AssetType, type ISigner, TxStatus as ServiceTxStatus } from '@core/types';
 import { Container } from 'inversify';
+import { ChainStatusService } from '../chain/ChainStatusService';
+import { SignatureRecordService } from '../signing/SignatureRecordService';
 import { TransactionService } from './TransactionService';
 import type { ITransaction, SendERC20Input, SendTransactionInput } from './types';
 
@@ -87,6 +91,10 @@ describe('TransactionService', () => {
     container.bind(CORE_IDENTIFIERS.EVENT_BUS).toConstantValue(eventBus);
     container.bind(CORE_IDENTIFIERS.DB).toConstantValue(database);
     container.bind(ChainRegistry).toConstantValue(chainRegistry);
+
+    container.bind(ChainStatusService).toSelf();
+    container.bind(SignatureRecordService).toSelf();
+
     container.bind(SigningService).toConstantValue(signingService as unknown as SigningService);
     container.bind(TransactionService).toSelf();
 
@@ -144,6 +152,10 @@ describe('TransactionService', () => {
     expect(txs).toHaveLength(1);
     const tx = txs[0];
 
+    const signatures = await database.get<Signature>(TableName.Signature).query().fetch();
+    expect(signatures).toHaveLength(1);
+    expect(signatures[0].signType).toBe(SignType.TX);
+    expect(signatures[0].tx.id).toBe(tx.id);
     expect(tx.hash).toBe('0xhash');
     expect(tx.status).toBe(DbTxStatus.PENDING);
 
@@ -434,6 +446,10 @@ describe('TransactionService', () => {
     const txs = await database.get<Tx>(TableName.Tx).query().fetch();
     expect(txs).toHaveLength(1);
     const tx = txs[0];
+    const signatures = await database.get<Signature>(TableName.Signature).query().fetch();
+    expect(signatures).toHaveLength(1);
+    expect(signatures[0].signType).toBe(SignType.TX);
+    expect(signatures[0].tx.id).toBe(tx.id);
 
     expect(tx.status).toBe(DbTxStatus.SEND_FAILED);
     expect(tx.err).toContain('network error');
@@ -611,6 +627,11 @@ describe('TransactionService', () => {
     expect(txs).toHaveLength(1);
     expect(txs[0].source).toBe(TxSource.DAPP);
 
+    const signatures = await database.get<Signature>(TableName.Signature).query().fetch();
+    expect(signatures).toHaveLength(1);
+    expect(signatures[0].signType).toBe(SignType.TX);
+    expect(signatures[0].tx.id).toBe(txs[0].id);
+
     const payload = await txs[0].txPayload.fetch();
     expect(payload.from).toBe(address.hex);
     expect(payload.to).toBe(request.to);
@@ -698,6 +719,11 @@ describe('TransactionService', () => {
 
     const [tx] = await database.get<Tx>(TableName.Tx).query().fetch();
     expect(tx).toMatchObject({ source: TxSource.DAPP, status: DbTxStatus.SEND_FAILED, err: 'boom' });
+
+    const signatures = await database.get<Signature>(TableName.Signature).query().fetch();
+    expect(signatures).toHaveLength(1);
+    expect(signatures[0].signType).toBe(SignType.TX);
+    expect(signatures[0].tx.id).toBe(tx.id);
   });
 
   it('throws CHAIN_PROVIDER_NOT_FOUND when dapp provider missing', async () => {

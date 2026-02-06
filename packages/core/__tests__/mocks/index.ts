@@ -12,6 +12,6 @@ export {
   DEFAULT_TEST_NET_1155_CONTRACT,
   DEFAULT_TEST_NFT_721_CONTRACT,
 } from './chainProviders';
+export { createPassthroughTestCryptoTool, createStrictTestCryptoTool } from './cryptoTool';
 export { createMockHardwareWallet } from './hardware';
 export { createSilentLogger } from './logger';
-export { createPassthroughTestCryptoTool, createStrictTestCryptoTool } from './cryptoTool';

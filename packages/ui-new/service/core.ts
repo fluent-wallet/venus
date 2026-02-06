@@ -8,6 +8,7 @@ import {
   type IVault,
   NetworkService,
   type RecentlyAddress,
+  SignatureRecordService,
   TransactionService,
   VaultService,
 } from '@core/services';
@@ -65,6 +66,10 @@ export function getVaultService(): VaultService {
 
 export function getHardwareWalletService(): HardwareWalletService {
   return getContainer().get(HardwareWalletService);
+}
+
+export function getSignatureRecordService(): SignatureRecordService {
+  return getContainer().get(SignatureRecordService);
 }
 
 export function getEventBus(): EventBus {

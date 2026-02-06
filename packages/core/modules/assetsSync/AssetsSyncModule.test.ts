@@ -11,13 +11,13 @@ import { CHAIN_PROVIDER_NOT_FOUND } from '@core/errors';
 import type { CoreEventMap, EventBus } from '@core/modules/eventBus';
 import { EventBusModule } from '@core/modules/eventBus';
 import { ModuleManager } from '@core/runtime/ModuleManager';
+import { NetworkService } from '@core/services';
 import { Container } from 'inversify';
 import { createCryptoToolModule } from '../crypto';
 import { createDbModule, DbBootstrapModule } from '../db';
 import { ServicesModule } from '../services';
 import { AssetsSyncModule } from './AssetsSyncModule';
 import { AssetsSyncService } from './AssetsSyncService';
-import { NetworkService } from '@core/services';
 
 describe('AssetsSyncModule', () => {
   it('emits succeeded snapshot on manual refresh (serializable)', async () => {

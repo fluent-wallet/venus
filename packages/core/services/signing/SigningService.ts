@@ -7,6 +7,8 @@ import { CORE_IDENTIFIERS } from '@core/di';
 import { CoreError, TX_SIGN_ADDRESS_MISMATCH, TX_SIGN_MESSAGE_FAILED, TX_SIGN_TYPED_DATA_FAILED, TX_SIGN_UNSUPPORTED_NETWORK } from '@core/errors';
 import { HARDWARE_WALLET_TYPES } from '@core/hardware/bsim/constants';
 import { HardwareWalletRegistry } from '@core/hardware/HardwareWalletRegistry';
+import type { AuthService } from '@core/modules/auth';
+import { AUTH_REASON, type AuthReason } from '@core/modules/auth/reasons';
 import type { EvmSignMessageParameters, EvmSignTypedDataParameters } from '@core/services/transaction/dappTypes';
 import { VaultService } from '@core/services/vault';
 import { HardwareSigner, SoftwareSigner } from '@core/signers';
@@ -14,8 +16,6 @@ import type { ISigner } from '@core/types';
 import { NetworkType } from '@core/utils/consts';
 import { getBytes, hexlify, Signature, toUtf8Bytes, Wallet } from 'ethers';
 import { inject, injectable } from 'inversify';
-import { AUTH_REASON, type AuthReason } from '@core/modules/auth/reasons';
-import type { AuthService } from '@core/modules/auth';
 
 @injectable()
 export class SigningService {

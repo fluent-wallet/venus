@@ -1,3 +1,4 @@
+import { SignType } from '@core/database/models/Signature/type';
 import {
   CoreError,
   EXTREQ_REQUEST_CANCELED,
@@ -22,6 +23,7 @@ import {
   parseEvmRpcTransactionRequest,
   parseSignMessageParameters,
   parseSignTypedDataParameters,
+  type SignatureRecordService,
   type TransactionService,
 } from '@core/services';
 import type { SigningService } from '@core/services/signing';
@@ -29,6 +31,7 @@ import { NetworkType } from '@core/types';
 import type Client from '@reown/walletkit';
 import type { WalletKitTypes } from '@reown/walletkit';
 import { buildApprovedNamespaces, getSdkError, parseUri } from '@walletconnect/utils';
+import { validate as isEvmAddress } from 'ox/Address';
 import type { ExternalRequestSnapshot, ExternalRequestsService, JsonValue } from '../externalRequests';
 
 // White-list for session_request methods.
@@ -68,9 +71,11 @@ export type WalletConnectServiceOptions = {
   externalRequests?: ExternalRequestsService;
   accountService?: AccountService;
   networkService?: NetworkService;
-  signingService?: SigningService;
+  signingService: SigningService;
   transactionService?: TransactionService;
+  signatureRecordService?: SignatureRecordService;
 };
+
 export class WalletConnectService {
   private readonly eventBus: EventBus<CoreEventMap>;
   private readonly logger: Logger;
@@ -80,8 +85,9 @@ export class WalletConnectService {
   private readonly externalRequests?: ExternalRequestsService;
   private readonly accountService?: AccountService;
   private readonly networkService?: NetworkService;
-  private readonly signingService?: SigningService;
+  private readonly signingService: SigningService;
   private readonly transactionService?: TransactionService;
+  private readonly signatureRecordService?: SignatureRecordService;
 
   private client: Client | null = null;
   private sessions: WalletConnectSessionSnapshot[] = [];
@@ -99,6 +105,7 @@ export class WalletConnectService {
     this.networkService = options.networkService;
     this.signingService = options.signingService;
     this.transactionService = options.transactionService;
+    this.signatureRecordService = options.signatureRecordService;
   }
 
   private readonly onSessionDelete = (event: WalletKitTypes.SessionDelete) => {
@@ -540,17 +547,31 @@ export class WalletConnectService {
 
     try {
       if (params.method === 'personal_sign') {
-        if (!this.signingService) throw new CoreError({ code: TX_INVALID_PARAMS, message: 'Missing SigningService.' });
         const request = parseSignMessageParameters(params.rpcParams);
         const signature = await this.signingService.signPersonalMessage({ accountId, addressId, request });
+
+        try {
+          const message = this.extractSignatureRecordMessage(params.rpcParams);
+          await this.signatureRecordService?.createRecord({ addressId, signType: SignType.STR, message });
+        } catch {
+          // do not block WC response
+        }
+
         await this.safeRespondSessionRequestResult({ client: params.client, topic: params.topic, id: params.id, result: signature });
         return;
       }
 
       if (params.method === 'eth_signTypedData_v4') {
-        if (!this.signingService) throw new CoreError({ code: TX_INVALID_PARAMS, message: 'Missing SigningService.' });
         const request = parseSignTypedDataParameters(params.rpcParams);
         const signature = await this.signingService.signTypedDataV4({ accountId, addressId, request });
+
+        try {
+          const message = this.extractSignatureRecordMessage(params.rpcParams);
+          await this.signatureRecordService?.createRecord({ addressId, signType: SignType.JSON, message });
+        } catch {
+          //  do not block WC response
+        }
+
         await this.safeRespondSessionRequestResult({ client: params.client, topic: params.topic, id: params.id, result: signature });
         return;
       }
@@ -603,6 +624,32 @@ export class WalletConnectService {
 
     const cached = this.sessions.find((s) => s.topic === topic)?.peer?.metadata?.url;
     return typeof cached === 'string' ? cached : '';
+  }
+
+  private extractSignatureRecordMessage(rpcParams: unknown): string | null {
+    if (!Array.isArray(rpcParams) || rpcParams.length < 2) return null;
+
+    const first = rpcParams[0];
+    const second = rpcParams[1];
+
+    const firstIsAddress = typeof first === 'string' && isEvmAddress(first, { strict: false });
+    const secondIsAddress = typeof second === 'string' && isEvmAddress(second, { strict: false });
+
+    if (firstIsAddress === secondIsAddress) return null;
+
+    const payload = firstIsAddress ? second : first;
+
+    if (typeof payload === 'string') return payload;
+
+    if (payload && typeof payload === 'object' && typeof (payload as { raw?: unknown }).raw === 'string') {
+      return (payload as { raw: string }).raw;
+    }
+
+    try {
+      return JSON.stringify(payload);
+    } catch {
+      return null;
+    }
   }
   private async safeRespondSessionRequestResult(params: { client: Client; topic: string; id: number; result: unknown }): Promise<void> {
     if (!this.started || this.client !== params.client) return;

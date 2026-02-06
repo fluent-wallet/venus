@@ -4,12 +4,13 @@ import type { RuntimeContext, RuntimeModule } from '@core/runtime/types';
 import { AccountService } from '@core/services/account';
 import { NetworkService } from '@core/services/network';
 import { SigningService } from '@core/services/signing';
+import { SignatureRecordService } from '@core/services/signing/SignatureRecordService';
 import { TransactionService } from '@core/services/transaction';
 import { WalletKit, type WalletKitTypes } from '@reown/walletkit';
 import { Core } from '@walletconnect/core';
 import type { CoreEventMap, EventBus } from '../eventBus';
 import type { ExternalRequestsService } from '../externalRequests';
-import { EVENT_BUS_MODULE_ID, EXTERNAL_REQUESTS_MODULE_ID, SERVICES_MODULE_ID, WALLET_CONNECT_MODULE_ID, AUTH_MODULE_ID } from '../ids';
+import { AUTH_MODULE_ID, EVENT_BUS_MODULE_ID, EXTERNAL_REQUESTS_MODULE_ID, SERVICES_MODULE_ID, WALLET_CONNECT_MODULE_ID } from '../ids';
 import { WalletConnectService } from './WalletConnectService';
 
 type WalletConnectRuntimeConfig = {
@@ -50,6 +51,7 @@ export const WalletConnectModule: RuntimeModule = {
     const networkService = container.get(NetworkService);
     const signingService = container.get(SigningService);
     const transactionService = container.get(TransactionService);
+    const signatureRecordService = container.get(SignatureRecordService);
 
     const clientFactory = async () => {
       const core = new Core({ projectId });
@@ -68,6 +70,7 @@ export const WalletConnectModule: RuntimeModule = {
         networkService,
         signingService,
         transactionService,
+        signatureRecordService,
       }),
     );
   },

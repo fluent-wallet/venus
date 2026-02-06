@@ -2,6 +2,7 @@ export * from './account';
 export * from './asset';
 export * from './network';
 export * from './signing';
+export { SignatureRecordService } from './signing/SignatureRecordService';
 export * from './transaction';
 export * from './vault';
 
@@ -15,6 +16,7 @@ import { ChainStatusService } from './chain/ChainStatusService';
 import { HardwareWalletService } from './hardware/HardwareWalletService';
 import { NetworkService } from './network';
 import { SigningService } from './signing';
+import { SignatureRecordService } from './signing/SignatureRecordService';
 import { TransactionService } from './transaction';
 import { VaultService } from './vault';
 
@@ -30,6 +32,7 @@ export function registerServices(target: Container): void {
   target.bind(AccountService).toSelf().inSingletonScope();
   target.bind(AssetService).toSelf().inSingletonScope();
   target.bind(SigningService).toSelf().inSingletonScope();
+  target.bind(SignatureRecordService).toSelf().inSingletonScope();
   target.bind(TransactionService).toSelf().inSingletonScope();
   target.bind(NetworkService).toSelf().inSingletonScope();
   target.bind(HardwareWalletService).toSelf().inSingletonScope();

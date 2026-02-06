@@ -9,6 +9,7 @@ import { ModuleManager } from '@core/runtime/ModuleManager';
 import { WalletKit } from '@reown/walletkit';
 import { Core } from '@walletconnect/core';
 import { Container } from 'inversify';
+import { AuthModule } from '../auth';
 import { createCryptoToolModule } from '../crypto';
 import { createDbModule, DbBootstrapModule } from '../db';
 import { ExternalRequestsModule } from '../externalRequests';
@@ -16,7 +17,6 @@ import { ServicesModule } from '../services';
 import { WalletConnectModule } from './WalletConnectModule';
 import { WalletConnectService } from './WalletConnectService';
 
-import { AuthModule } from '../auth';
 jest.mock('@walletconnect/core', () => {
   return {
     Core: jest.fn().mockImplementation((opts: any) => ({ __coreOpts: opts })),

@@ -3,6 +3,7 @@ import type { Database } from '@core/database';
 import type { Address } from '@core/database/models/Address';
 import type { Asset } from '@core/database/models/Asset';
 import type { Network } from '@core/database/models/Network';
+import { SignType } from '@core/database/models/Signature/type';
 import type { Tx } from '@core/database/models/Tx';
 import { TxStatus as DbTxStatus, FINISHED_IN_ACTIVITY_TX_STATUSES, PENDING_TX_STATUSES, TxSource } from '@core/database/models/Tx/type';
 import type { TxExtra } from '@core/database/models/TxExtra';
@@ -23,6 +24,7 @@ import {
 } from '@core/errors';
 import type { CoreEventMap, EventBus } from '@core/modules/eventBus';
 import { SigningService } from '@core/services/signing';
+import { SignatureRecordService } from '@core/services/signing/SignatureRecordService';
 import {
   AssetType,
   type EvmUnsignedTransaction,
@@ -50,6 +52,9 @@ export class TransactionService {
 
   @inject(SigningService)
   private readonly signingService!: SigningService;
+
+  @inject(SignatureRecordService)
+  private readonly signatureRecordService!: SignatureRecordService;
 
   @inject(CORE_IDENTIFIERS.EVENT_BUS)
   @optional()
@@ -120,6 +125,16 @@ export class TransactionService {
     } else {
       signedTx = await chainProvider.signTransaction(unsignedTx, signer);
     }
+    let signatureId: string | null = null;
+    try {
+      signatureId = await this.signatureRecordService.createRecord({
+        addressId: address.id,
+        signType: SignType.TX,
+      });
+    } catch {
+      signatureId = null;
+    }
+
     const sendAt = new Date();
 
     let tx: Tx;
@@ -138,6 +153,10 @@ export class TransactionService {
         contractAddress: input.contractAddress,
         sendAt,
       });
+
+      if (signatureId) {
+        await this.signatureRecordService.linkTx({ signatureId, txId: tx.id });
+      }
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
 
@@ -154,6 +173,10 @@ export class TransactionService {
         err: message,
         errorType: null,
       });
+
+      if (signatureId) {
+        await this.signatureRecordService.linkTx({ signatureId, txId: tx.id });
+      }
 
       throw error;
     }
@@ -336,6 +359,15 @@ export class TransactionService {
         context: { signerType: signer.type, chainId: network.chainId },
       });
     }
+    let signatureId: string | null = null;
+    try {
+      signatureId = await this.signatureRecordService.createRecord({
+        addressId: address.id,
+        signType: SignType.TX,
+      });
+    } catch {
+      signatureId = null;
+    }
 
     const sendAt = new Date();
 
@@ -350,13 +382,17 @@ export class TransactionService {
         sendAt,
       });
 
+      if (signatureId) {
+        await this.signatureRecordService.linkTx({ signatureId, txId: tx.id });
+      }
+
       this.eventBus?.emit('tx/created', { key: { addressId: address.id, networkId: network.id }, txId: tx.id });
       return this.toInterface(tx);
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
 
       try {
-        await this.saveDappTx({
+        const tx = await this.saveDappTx({
           address,
           unsignedTx,
           txHash: '',
@@ -366,6 +402,10 @@ export class TransactionService {
           err: message,
           errorType: null,
         });
+
+        if (signatureId) {
+          await this.signatureRecordService.linkTx({ signatureId, txId: tx.id });
+        }
       } catch (saveError) {
         if (saveError instanceof CoreError) throw saveError;
         throw new CoreError({
