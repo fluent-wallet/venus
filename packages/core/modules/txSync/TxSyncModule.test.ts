@@ -10,7 +10,7 @@ import { NetworkType } from '@core/types';
 import { ChainType } from '@core/utils/consts';
 import { Container } from 'inversify';
 import { createCryptoToolModule } from '../crypto';
-import { DbBootstrapModule, createDbModule } from '../db';
+import { createDbModule, DbBootstrapModule } from '../db';
 import { type CoreEventMap, type EventBus, EventBusModule } from '../eventBus';
 import { ServicesModule } from '../services';
 import { TxSyncModule } from './TxSyncModule';

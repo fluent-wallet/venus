@@ -1,6 +1,7 @@
 import 'reflect-metadata';
 
 import { createSilentLogger } from '@core/__tests__/mocks';
+import { SignType } from '@core/database/models/Signature/type';
 import { type CoreEventMap, type EventBus, InMemoryEventBus } from '@core/modules/eventBus';
 import { ExternalRequestsService } from '@core/modules/externalRequests';
 import type { Logger, RuntimeScheduler } from '@core/runtime/types';
@@ -104,8 +105,9 @@ const createScheduler = (): RuntimeScheduler => {
 };
 
 const flushPromises = async (): Promise<void> => {
-  await Promise.resolve();
-  await Promise.resolve();
+  for (let i = 0; i < 10; i += 1) {
+    await Promise.resolve();
+  }
 };
 
 const makeProposal = (params: { id: number; chains: string[]; url?: string }) => {
@@ -129,10 +131,15 @@ const makeProposal = (params: { id: number; chains: string[]; url?: string }) =>
 describe('WalletConnectService', () => {
   let eventBus: EventBus<CoreEventMap>;
   let logger: Logger;
+  let signingService: any;
 
   beforeEach(() => {
     logger = createSilentLogger();
     eventBus = new InMemoryEventBus<CoreEventMap>({ logger });
+    signingService = {
+      signPersonalMessage: jest.fn(),
+      signTypedDataV4: jest.fn(),
+    };
   });
 
   it('emits init and refreshes sessions on session_delete', async () => {
@@ -149,6 +156,7 @@ describe('WalletConnectService', () => {
       logger,
       clientFactory: async () => client as any,
       closeTransportOnStop: true,
+      signingService,
     });
 
     await service.start();
@@ -180,6 +188,7 @@ describe('WalletConnectService', () => {
       logger,
       clientFactory: async () => client as any,
       closeTransportOnStop: false,
+      signingService,
     });
 
     await service.start();
@@ -200,6 +209,7 @@ describe('WalletConnectService', () => {
       logger,
       clientFactory: async () => client as any,
       closeTransportOnStop: false,
+      signingService,
     });
 
     await service.start();
@@ -262,6 +272,7 @@ describe('WalletConnectService', () => {
       externalRequests,
       networkService,
       accountService,
+      signingService,
     } as any);
 
     await service.start();
@@ -321,6 +332,7 @@ describe('WalletConnectService', () => {
       externalRequests,
       networkService,
       accountService,
+      signingService,
     } as any);
 
     await service.start();
@@ -375,6 +387,7 @@ describe('WalletConnectService', () => {
       externalRequests,
       networkService,
       accountService,
+      signingService,
     } as any);
 
     await service.start();
@@ -429,6 +442,10 @@ describe('WalletConnectService', () => {
       sendDappTransaction: jest.fn().mockResolvedValue({ id: 'tx1', hash: '0xhash_dapp' }),
     } as unknown as any;
 
+    const signatureRecordService = {
+      createRecord: jest.fn().mockResolvedValue({ id: 'sig1' }),
+    } as unknown as any;
+
     const requested: CoreEventMap['external-requests/requested'][] = [];
 
     eventBus.on('external-requests/requested', (payload) => requested.push(payload));
@@ -443,6 +460,7 @@ describe('WalletConnectService', () => {
       accountService,
       signingService,
       transactionService,
+      signatureRecordService,
     } as any);
 
     await service.start();
@@ -471,7 +489,17 @@ describe('WalletConnectService', () => {
       response: { id: 9, jsonrpc: '2.0', result: '0xsig_personal' },
     });
 
+    expect(signatureRecordService.createRecord).toHaveBeenCalledTimes(1);
+    expect(signatureRecordService.createRecord).toHaveBeenCalledWith({ addressId: 'addr1', signType: SignType.STR, message: '0xdeadbeef' });
+
     // 2) typedData_v4
+    const typedDataJson = JSON.stringify({
+      domain: { name: 'Test', version: '1', chainId: 1, verifyingContract: '0x0000000000000000000000000000000000000001' },
+      primaryType: 'Mail',
+      types: { EIP712Domain: [{ name: 'name', type: 'string' }], Mail: [{ name: 'contents', type: 'string' }] },
+      message: { contents: 'hello' },
+    });
+
     client.__emit('session_request', {
       id: 10,
       topic: 't1',
@@ -479,15 +507,7 @@ describe('WalletConnectService', () => {
         chainId: 'eip155:1',
         request: {
           method: 'eth_signTypedData_v4',
-          params: [
-            '0x0000000000000000000000000000000000000001',
-            JSON.stringify({
-              domain: { name: 'Test', version: '1', chainId: 1, verifyingContract: '0x0000000000000000000000000000000000000001' },
-              primaryType: 'Mail',
-              types: { EIP712Domain: [{ name: 'name', type: 'string' }], Mail: [{ name: 'contents', type: 'string' }] },
-              message: { contents: 'hello' },
-            }),
-          ],
+          params: ['0x0000000000000000000000000000000000000001', typedDataJson],
         },
       },
     } as unknown as WalletKitTypes.SessionRequest);
@@ -502,6 +522,9 @@ describe('WalletConnectService', () => {
       topic: 't1',
       response: { id: 10, jsonrpc: '2.0', result: '0xsig_typed' },
     });
+
+    expect(signatureRecordService.createRecord).toHaveBeenCalledTimes(2);
+    expect(signatureRecordService.createRecord).toHaveBeenCalledWith({ addressId: 'addr1', signType: SignType.JSON, message: typedDataJson });
 
     // 3) eth_sendTransaction
     client.__emit('session_request', {
@@ -599,6 +622,7 @@ describe('WalletConnectService', () => {
       externalRequests,
       networkService,
       accountService,
+      signingService,
       transactionService,
     } as any);
 
@@ -837,6 +861,7 @@ describe('WalletConnectService', () => {
       clientFactory: async () => client as any,
       closeTransportOnStop: false,
       externalRequests,
+      signingService,
     } as any);
 
     await service.start();
@@ -889,6 +914,7 @@ describe('WalletConnectService', () => {
       clientFactory: async () => client as any,
       closeTransportOnStop: false,
       externalRequests,
+      signingService,
     } as any);
 
     await service.start();
@@ -938,6 +964,7 @@ describe('WalletConnectService', () => {
       clientFactory: async () => client as any,
       closeTransportOnStop: false,
       externalRequests,
+      signingService,
     } as any);
 
     await service.start();
@@ -970,6 +997,7 @@ describe('WalletConnectService', () => {
       logger,
       clientFactory: async () => client as any,
       closeTransportOnStop: false,
+      signingService,
     });
 
     await expect(service.pair('http://example.com')).rejects.toMatchObject({ code: 'WC_PAIR_FAILED' });
@@ -983,6 +1011,7 @@ describe('WalletConnectService', () => {
       logger,
       clientFactory: async () => client as any,
       closeTransportOnStop: false,
+      signingService,
     });
 
     const v1 =
@@ -1000,6 +1029,7 @@ describe('WalletConnectService', () => {
       logger,
       clientFactory: async () => client as any,
       closeTransportOnStop: false,
+      signingService,
     });
 
     const v2 =
@@ -1019,6 +1049,7 @@ describe('WalletConnectService', () => {
       logger,
       clientFactory: async () => client as any,
       closeTransportOnStop: false,
+      signingService,
     });
 
     await service.disconnect('t1');

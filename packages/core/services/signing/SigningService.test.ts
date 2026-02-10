@@ -5,11 +5,11 @@ import type { Database } from '@core/database';
 import VaultType from '@core/database/models/Vault/VaultType';
 import { CORE_IDENTIFIERS } from '@core/di';
 import { HardwareWalletRegistry } from '@core/hardware/HardwareWalletRegistry';
+import { AUTH_REASON } from '@core/modules/auth/reasons';
 import { VaultService } from '@core/services/vault';
 import { SoftwareSigner } from '@core/signers';
 import { Container } from 'inversify';
 import { SigningService } from './SigningService';
-import { AUTH_REASON } from '@core/modules/auth/reasons';
 
 type VaultServiceMock = Pick<VaultService, 'getPrivateKey'>;
 

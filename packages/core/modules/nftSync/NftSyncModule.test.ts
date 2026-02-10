@@ -8,13 +8,13 @@ import { NFT_SYNC_FETCH_FAILED } from '@core/errors';
 import type { CoreEventMap, EventBus } from '@core/modules/eventBus';
 import { EventBusModule } from '@core/modules/eventBus';
 import { ModuleManager } from '@core/runtime/ModuleManager';
+import { NetworkService } from '@core/services';
 import { Container } from 'inversify';
 import { createCryptoToolModule } from '../crypto';
 import { createDbModule, DbBootstrapModule } from '../db';
 import { ServicesModule } from '../services';
 import { NftSyncModule } from './NftSyncModule';
 import { NftSyncService } from './NftSyncService';
-import { NetworkService } from '@core/services';
 
 describe('NftSyncModule', () => {
   it('emits succeeded snapshot on manual refresh (serializable)', async () => {

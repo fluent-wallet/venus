@@ -2,8 +2,8 @@ import type { IAccount } from '@core/services/account/types';
 import type { IAsset } from '@core/services/asset/types';
 import type { INetwork } from '@core/services/network/types';
 import type { HardwareOperationError } from '@core/types';
-import type { ExternalRequestSnapshot } from '../externalRequests/types';
 import type { AuthReason } from '../auth/reasons';
+import type { ExternalRequestSnapshot } from '../externalRequests/types';
 
 type AssetsSyncKey = { addressId: string; networkId: string };
 type AssetsSyncReason = 'manual' | 'poll' | 'start';
