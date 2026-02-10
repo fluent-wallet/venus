@@ -1,4 +1,5 @@
-  <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+  <manifest xmlns:android="http://schemas.android.com/apk/res/android"
+      xmlns:tools="http://schemas.android.com/tools">
 
       <!-- Network & BLE permissions -->
       <uses-permission android:name="android.permission.INTERNET" />
@@ -13,6 +14,11 @@
       <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
       <!-- Existing app permissions -->
       <uses-permission android:name="android.permission.CAMERA" />
+      
+      <!-- Remove photo/video read permissions pulled in by dependencies (e.g. expo-media-library). -->
+      <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" tools:node="remove" />
+      <uses-permission android:name="android.permission.READ_MEDIA_VIDEO" tools:node="remove" />
+
       <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
       <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
 
