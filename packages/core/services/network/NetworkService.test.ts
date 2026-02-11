@@ -1,8 +1,8 @@
 import 'reflect-metadata';
 
-import { seedNetwork } from '@core/__tests__/fixtures';
+import { seedNetwork } from '@core/testUtils/fixtures';
 import type { Database } from '@core/database';
-import { mockDatabase } from '@core/database/__tests__/mockDatabases';
+import { mockDatabase } from '@core/database/testUtils/mockDatabases';
 import type { Network } from '@core/database/models/Network';
 import TableName from '@core/database/TableName';
 import { CORE_IDENTIFIERS } from '@core/di';

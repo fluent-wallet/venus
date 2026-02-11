@@ -1,8 +1,8 @@
 import 'reflect-metadata';
 
-import { createTestAccount, seedNetwork } from '@core/__tests__/fixtures';
-import { mockDatabase } from '@core/__tests__/mocks';
-import { StubChainProvider } from '@core/__tests__/mocks/chainProviders';
+import { createTestAccount, seedNetwork } from '@core/testUtils/fixtures';
+import { mockDatabase } from '@core/testUtils/mocks';
+import { StubChainProvider } from '@core/testUtils/mocks/chainProviders';
 import { ChainRegistry } from '@core/chains';
 import type { Database } from '@core/database';
 import type { Signature } from '@core/database/models/Signature';

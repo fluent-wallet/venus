@@ -1,7 +1,7 @@
 import 'reflect-metadata';
 
-import { createTestAccount, seedNetwork } from '@core/__tests__/fixtures';
-import { createPassthroughTestCryptoTool, createSilentLogger, mockDatabase } from '@core/__tests__/mocks';
+import { createTestAccount, seedNetwork } from '@core/testUtils/fixtures';
+import { createPassthroughTestCryptoTool, createSilentLogger, mockDatabase } from '@core/testUtils/mocks';
 import type { Database } from '@core/database';
 import { CORE_IDENTIFIERS } from '@core/di';
 import { NFT_SYNC_FETCH_FAILED } from '@core/errors';

@@ -1,6 +1,6 @@
 import 'reflect-metadata';
-import { seedNetwork } from '@core/__tests__/fixtures';
-import { createStrictTestCryptoTool, mockDatabase } from '@core/__tests__/mocks';
+import { seedNetwork } from '@core/testUtils/fixtures';
+import { createStrictTestCryptoTool, mockDatabase } from '@core/testUtils/mocks';
 import type { Database } from '@core/database';
 import type { AccountGroup } from '@core/database/models/AccountGroup';
 import type { Address } from '@core/database/models/Address';

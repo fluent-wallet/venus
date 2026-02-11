@@ -1,10 +1,10 @@
 import 'reflect-metadata';
-import { createTestAccount, seedNetwork } from '@core/__tests__/fixtures';
-import { StubChainProvider } from '@core/__tests__/mocks/chainProviders';
+import { createTestAccount, seedNetwork } from '@core/testUtils/fixtures';
+import { StubChainProvider } from '@core/testUtils/mocks/chainProviders';
 import { ChainRegistry } from '@core/chains';
 import { iface777 } from '@core/contracts';
 import type { Database } from '@core/database';
-import { mockDatabase } from '@core/database/__tests__/mockDatabases';
+import { mockDatabase } from '@core/database/testUtils/mockDatabases';
 import type { Address } from '@core/database/models/Address';
 import type { Asset } from '@core/database/models/Asset';
 import { AssetSource, AssetType } from '@core/database/models/Asset';

@@ -1,6 +1,6 @@
 import 'reflect-metadata';
-import { createTestAccount, seedNetwork } from '@core/__tests__/fixtures';
-import { createPassthroughTestCryptoTool, createSilentLogger, mockDatabase } from '@core/__tests__/mocks';
+import { createTestAccount, seedNetwork } from '@core/testUtils/fixtures';
+import { createPassthroughTestCryptoTool, createSilentLogger, mockDatabase } from '@core/testUtils/mocks';
 import { ChainRegistry } from '@core/chains';
 import type { Database } from '@core/database';
 import type { Asset } from '@core/database/models/Asset';

@@ -1,6 +1,6 @@
 import 'reflect-metadata';
 
-import { createSilentLogger } from '@core/__tests__/mocks';
+import { createSilentLogger } from '@core/testUtils/mocks';
 import { SignType } from '@core/database/models/Signature/type';
 import { type CoreEventMap, type EventBus, InMemoryEventBus } from '@core/modules/eventBus';
 import { ExternalRequestsService } from '@core/modules/externalRequests';

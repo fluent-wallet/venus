@@ -1,6 +1,6 @@
 import 'reflect-metadata';
 
-import { createSilentLogger } from '@core/__tests__/mocks';
+import { createSilentLogger } from '@core/testUtils/mocks';
 import { CORE_IDENTIFIERS } from '@core/di';
 import { AUTH_PASSWORD_REQUEST_CANCELED } from '@core/errors';
 import { ModuleManager } from '@core/runtime/ModuleManager';

@@ -1,6 +1,6 @@
 import 'reflect-metadata';
 
-import { createSilentLogger } from '@core/__tests__/mocks';
+import { createSilentLogger } from '@core/testUtils/mocks';
 import { EVENT_PAYLOAD_NOT_SERIALIZABLE } from '@core/errors';
 import { InMemoryEventBus } from './EventBus';
 import type { EventBus } from './types';

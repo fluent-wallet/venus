@@ -1,6 +1,6 @@
 import 'reflect-metadata';
 
-import { mockDatabase } from '@core/__tests__/mocks';
+import { mockDatabase } from '@core/testUtils/mocks';
 import type { Vault } from '@core/database/models/Vault';
 import VaultType from '@core/database/models/Vault/VaultType';
 import TableName from '@core/database/TableName';

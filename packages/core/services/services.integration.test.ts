@@ -1,11 +1,11 @@
 import 'reflect-metadata';
 
-import { seedNetwork } from '@core/__tests__/fixtures';
-import { createMockHardwareWallet, createStrictTestCryptoTool } from '@core/__tests__/mocks';
-import { DEFAULT_HEX_ADDRESS, StubChainProvider } from '@core/__tests__/mocks/chainProviders';
+import { seedNetwork } from '@core/testUtils/fixtures';
+import { createMockHardwareWallet, createStrictTestCryptoTool } from '@core/testUtils/mocks';
+import { DEFAULT_HEX_ADDRESS, StubChainProvider } from '@core/testUtils/mocks/chainProviders';
 import { ChainRegistry } from '@core/chains';
 import type { Database } from '@core/database';
-import { mockDatabase } from '@core/database/__tests__/mockDatabases';
+import { mockDatabase } from '@core/database/testUtils/mockDatabases';
 import type { Account } from '@core/database/models/Account';
 import type { AccountGroup } from '@core/database/models/AccountGroup';
 import type { Address } from '@core/database/models/Address';

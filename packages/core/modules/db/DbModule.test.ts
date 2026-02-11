@@ -1,7 +1,7 @@
 import 'reflect-metadata';
 
-import { createSilentLogger } from '@core/__tests__/mocks';
-import { mockDatabase } from '@core/database/__tests__/mockDatabases';
+import { createSilentLogger } from '@core/testUtils/mocks';
+import { mockDatabase } from '@core/database/testUtils/mockDatabases';
 import { CORE_IDENTIFIERS } from '@core/di';
 import { ModuleManager } from '@core/runtime/ModuleManager';
 import { Container } from 'inversify';

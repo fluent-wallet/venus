@@ -1,6 +1,6 @@
 import 'reflect-metadata';
-import { createTestAccount, DEFAULT_ACCOUNTS_FIXTURE_BASE32, seedNetwork } from '@core/__tests__/fixtures';
-import { createMockHardwareWallet, createPassthroughTestCryptoTool, mockDatabase } from '@core/__tests__/mocks';
+import { createTestAccount, DEFAULT_ACCOUNTS_FIXTURE_BASE32, seedNetwork } from '@core/testUtils/fixtures';
+import { createMockHardwareWallet, createPassthroughTestCryptoTool, mockDatabase } from '@core/testUtils/mocks';
 import type { Database } from '@core/database';
 import type { Account } from '@core/database/models/Account';
 import type { AssetRule } from '@core/database/models/AssetRule';

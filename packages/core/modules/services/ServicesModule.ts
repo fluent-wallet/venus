@@ -4,6 +4,7 @@ import type { Database } from '@core/database';
 import type { Network } from '@core/database/models/Network';
 import TableName from '@core/database/TableName';
 import { CORE_IDENTIFIERS } from '@core/di';
+import { registerDefaultHardwareWallets } from '@core/hardware';
 import type { RuntimeModule } from '@core/runtime/types';
 import { registerServices } from '@core/services';
 import { VaultService } from '@core/services/vault';
@@ -36,6 +37,12 @@ export const ServicesModule: RuntimeModule = {
     const endpointManager = container.get(EndpointManager);
     const eventBus = container.get<EventBus<CoreEventMap>>(CORE_IDENTIFIERS.EVENT_BUS);
     const state = container.get(ServicesModuleState);
+
+    try {
+      registerDefaultHardwareWallets({ container, registerBSIM: true });
+    } catch (error) {
+      logger.warn('ServicesModule:register-default-hardware-wallets:failed', { error });
+    }
 
     const networks = await db.get<Network>(TableName.Network).query().fetch();
     if (networks.length === 0) return;

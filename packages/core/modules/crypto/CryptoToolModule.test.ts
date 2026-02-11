@@ -1,6 +1,6 @@
 import 'reflect-metadata';
 
-import { createPassthroughTestCryptoTool, createSilentLogger } from '@core/__tests__/mocks';
+import { createPassthroughTestCryptoTool, createSilentLogger } from '@core/testUtils/mocks';
 import { CORE_IDENTIFIERS } from '@core/di';
 import { ModuleManager } from '@core/runtime/ModuleManager';
 

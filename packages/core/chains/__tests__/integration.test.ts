@@ -1,5 +1,5 @@
 import 'reflect-metadata';
-import { createMockConfluxSdk, createMockEthersProvider, DEFAULT_BASE32_ADDRESS_TEST, DEFAULT_HEX_ADDRESS, DEFAULT_PRIVATE_KEY } from '@core/__tests__/mocks';
+import { createMockConfluxSdk, createMockEthersProvider, DEFAULT_BASE32_ADDRESS_TEST, DEFAULT_HEX_ADDRESS, DEFAULT_PRIVATE_KEY } from '@core/testUtils/mocks';
 import { SoftwareSigner } from '@core/signers';
 import { AssetType, type ConfluxUnsignedTransaction, type EvmUnsignedTransaction, NetworkType } from '@core/types';
 import { computeAddress as computeAccountAddress, toAccountAddress } from '@core/utils/account';

@@ -1,8 +1,8 @@
 import 'reflect-metadata';
 
-import { createTestAccount, seedNetwork } from '@core/__tests__/fixtures';
-import { createSilentLogger, DEFAULT_PRIVATE_KEY, mockDatabase } from '@core/__tests__/mocks';
-import { StubChainProvider } from '@core/__tests__/mocks/chainProviders';
+import { createTestAccount, seedNetwork } from '@core/testUtils/fixtures';
+import { createSilentLogger, DEFAULT_PRIVATE_KEY, mockDatabase } from '@core/testUtils/mocks';
+import { StubChainProvider } from '@core/testUtils/mocks/chainProviders';
 import { ChainRegistry } from '@core/chains';
 
 import type { Database } from '@core/database';

@@ -1,6 +1,6 @@
 import 'reflect-metadata';
-import { createTestAccount } from '@core/__tests__/fixtures';
-import { mockDatabase } from '@core/__tests__/mocks';
+import { createTestAccount } from '@core/testUtils/fixtures';
+import { mockDatabase } from '@core/testUtils/mocks';
 import type { Database } from '@core/database';
 import VaultType from '@core/database/models/Vault/VaultType';
 import { CORE_IDENTIFIERS } from '@core/di';

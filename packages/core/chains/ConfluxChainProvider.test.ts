@@ -5,7 +5,7 @@ import {
   DEFAULT_TEST_NET_20_TOKEN_CONTRACT,
   DEFAULT_TEST_NET_1155_CONTRACT,
   DEFAULT_TEST_NFT_721_CONTRACT,
-} from '@core/__tests__/mocks';
+} from '@core/testUtils/mocks';
 import { SoftwareSigner } from '@core/signers';
 import { AssetType, NetworkType } from '@core/types';
 import { computeAddress, toAccountAddress } from '@core/utils/account';
