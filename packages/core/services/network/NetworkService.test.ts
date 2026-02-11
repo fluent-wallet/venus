@@ -1,11 +1,11 @@
 import 'reflect-metadata';
 
-import { seedNetwork } from '@core/testUtils/fixtures';
 import type { Database } from '@core/database';
-import { mockDatabase } from '@core/database/testUtils/mockDatabases';
 import type { Network } from '@core/database/models/Network';
 import TableName from '@core/database/TableName';
+import { mockDatabase } from '@core/database/testUtils/mockDatabases';
 import { CORE_IDENTIFIERS } from '@core/di';
+import { seedNetwork } from '@core/testUtils/fixtures';
 import { Container } from 'inversify';
 import { NetworkService } from './NetworkService';
 import type { INetwork } from './types';

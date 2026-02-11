@@ -1,12 +1,12 @@
 import 'reflect-metadata';
-import { seedNetwork } from '@core/testUtils/fixtures';
-import { createStrictTestCryptoTool, mockDatabase } from '@core/testUtils/mocks';
 import type { Database } from '@core/database';
 import type { AccountGroup } from '@core/database/models/AccountGroup';
 import type { Address } from '@core/database/models/Address';
 import VaultType from '@core/database/models/Vault/VaultType';
 import TableName from '@core/database/TableName';
 import { CORE_IDENTIFIERS } from '@core/di';
+import { seedNetwork } from '@core/testUtils/fixtures';
+import { createStrictTestCryptoTool, mockDatabase } from '@core/testUtils/mocks';
 import type { CryptoTool } from '@core/types/crypto';
 import { getNthAccountOfHDKey } from '@core/utils/hdkey';
 import { Container } from 'inversify';

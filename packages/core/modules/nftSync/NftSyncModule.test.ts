@@ -1,7 +1,5 @@
 import 'reflect-metadata';
 
-import { createTestAccount, seedNetwork } from '@core/testUtils/fixtures';
-import { createPassthroughTestCryptoTool, createSilentLogger, mockDatabase } from '@core/testUtils/mocks';
 import type { Database } from '@core/database';
 import { CORE_IDENTIFIERS } from '@core/di';
 import { NFT_SYNC_FETCH_FAILED } from '@core/errors';
@@ -9,6 +7,8 @@ import type { CoreEventMap, EventBus } from '@core/modules/eventBus';
 import { EventBusModule } from '@core/modules/eventBus';
 import { ModuleManager } from '@core/runtime/ModuleManager';
 import { NetworkService } from '@core/services';
+import { createTestAccount, seedNetwork } from '@core/testUtils/fixtures';
+import { createPassthroughTestCryptoTool, createSilentLogger, mockDatabase } from '@core/testUtils/mocks';
 import { Container } from 'inversify';
 import { createCryptoToolModule } from '../crypto';
 import { createDbModule, DbBootstrapModule } from '../db';

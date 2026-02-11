@@ -1,6 +1,4 @@
 import 'reflect-metadata';
-import { createTestAccount, DEFAULT_ACCOUNTS_FIXTURE_BASE32, seedNetwork } from '@core/testUtils/fixtures';
-import { createMockHardwareWallet, createPassthroughTestCryptoTool, mockDatabase } from '@core/testUtils/mocks';
 import type { Database } from '@core/database';
 import type { Account } from '@core/database/models/Account';
 import type { AssetRule } from '@core/database/models/AssetRule';
@@ -10,6 +8,8 @@ import TableName from '@core/database/TableName';
 import { CORE_IDENTIFIERS } from '@core/di';
 import { HARDWARE_WALLET_TYPES } from '@core/hardware/bsim/constants';
 import { HardwareWalletRegistry } from '@core/hardware/HardwareWalletRegistry';
+import { createTestAccount, DEFAULT_ACCOUNTS_FIXTURE_BASE32, seedNetwork } from '@core/testUtils/fixtures';
+import { createMockHardwareWallet, createPassthroughTestCryptoTool, mockDatabase } from '@core/testUtils/mocks';
 import { type ChainType, NetworkType } from '@core/types';
 import type { CryptoTool } from '@core/types/crypto';
 import { Container } from 'inversify';

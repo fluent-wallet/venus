@@ -1,10 +1,10 @@
 import 'reflect-metadata';
 
-import { createPassthroughTestCryptoTool, createSilentLogger, mockDatabase } from '@core/testUtils/mocks';
 import { CORE_IDENTIFIERS } from '@core/di';
 import type { CoreEventMap, EventBus } from '@core/modules/eventBus';
 import { EventBusModule } from '@core/modules/eventBus';
 import { ModuleManager } from '@core/runtime/ModuleManager';
+import { createPassthroughTestCryptoTool, createSilentLogger, mockDatabase } from '@core/testUtils/mocks';
 
 import { WalletKit } from '@reown/walletkit';
 import { Core } from '@walletconnect/core';

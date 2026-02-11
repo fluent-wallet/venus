@@ -1,8 +1,8 @@
 import 'reflect-metadata';
 
-import { createSilentLogger } from '@core/testUtils/mocks';
 import { EXTREQ_REQUEST_CANCELED, EXTREQ_REQUEST_TIMEOUT } from '@core/errors';
 import type { RuntimeScheduler } from '@core/runtime/types';
+import { createSilentLogger } from '@core/testUtils/mocks';
 import { type CoreEventMap, InMemoryEventBus } from '../eventBus';
 import { ExternalRequestsService } from './ExternalRequestsService';
 import type { ExternalRequestSnapshot } from './types';

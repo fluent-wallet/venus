@@ -1,6 +1,4 @@
 import 'reflect-metadata';
-import { createTestAccount, seedNetwork } from '@core/testUtils/fixtures';
-import { createPassthroughTestCryptoTool, createSilentLogger, mockDatabase } from '@core/testUtils/mocks';
 import { ChainRegistry } from '@core/chains';
 import type { Database } from '@core/database';
 import type { Asset } from '@core/database/models/Asset';
@@ -12,6 +10,8 @@ import type { CoreEventMap, EventBus } from '@core/modules/eventBus';
 import { EventBusModule } from '@core/modules/eventBus';
 import { ModuleManager } from '@core/runtime/ModuleManager';
 import { NetworkService } from '@core/services';
+import { createTestAccount, seedNetwork } from '@core/testUtils/fixtures';
+import { createPassthroughTestCryptoTool, createSilentLogger, mockDatabase } from '@core/testUtils/mocks';
 import { Container } from 'inversify';
 import { createCryptoToolModule } from '../crypto';
 import { createDbModule, DbBootstrapModule } from '../db';

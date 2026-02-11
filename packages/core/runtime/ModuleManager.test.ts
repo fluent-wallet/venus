@@ -1,7 +1,7 @@
 import 'reflect-metadata';
 
-import { createSilentLogger } from '@core/testUtils/mocks';
 import { MM_ALREADY_STARTED, MM_CYCLE_DEPENDENCY, MM_DUPLICATE_MODULE_ID, MM_MISSING_DEPENDENCY, MM_START_FAILED, MM_STOP_FAILED } from '@core/errors';
+import { createSilentLogger } from '@core/testUtils/mocks';
 import { Container } from 'inversify';
 import { ModuleManager } from './ModuleManager';
 import type { RuntimeContext, RuntimeModule } from './types';

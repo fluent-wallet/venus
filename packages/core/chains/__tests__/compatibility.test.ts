@@ -44,6 +44,7 @@ jest.mock('@cfx-kit/dapp-utils/dist/contract', () => {
   };
 });
 
+import type { Network } from '@core/database/models/Network';
 import {
   createMockConfluxSdk,
   createMockEthersProvider,
@@ -54,7 +55,6 @@ import {
   DEFAULT_TEST_NET_1155_CONTRACT,
   DEFAULT_TEST_NFT_721_CONTRACT,
 } from '@core/testUtils/mocks';
-import type { Network } from '@core/database/models/Network';
 import { AssetType, type ConfluxUnsignedTransaction, type ConfluxUnsignedTransactionPayload, type EvmUnsignedTransaction, NetworkType } from '@core/types';
 import type { AssetInfo } from '@core/WalletCore/Plugins/AssetsTracker/types';
 import ConfluxLegacy from '@core/WalletCore/Plugins/Transaction/chains/conflux';

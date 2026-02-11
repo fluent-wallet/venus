@@ -1,6 +1,5 @@
 import 'reflect-metadata';
 
-import { createPassthroughTestCryptoTool, createSilentLogger, mockDatabase } from '@core/testUtils/mocks';
 import { ChainRegistry } from '@core/chains';
 import type { Asset } from '@core/database/models/Asset';
 import { AssetSource, AssetType } from '@core/database/models/Asset';
@@ -9,6 +8,7 @@ import type { Network } from '@core/database/models/Network';
 import TableName from '@core/database/TableName';
 import { EventBusModule } from '@core/modules/eventBus';
 import { ModuleManager } from '@core/runtime/ModuleManager';
+import { createPassthroughTestCryptoTool, createSilentLogger, mockDatabase } from '@core/testUtils/mocks';
 import { DEFAULT_CFX_HDPATH, DEFAULT_ETH_HDPATH, Networks } from '@core/utils/consts';
 import { Q } from '@nozbe/watermelondb';
 import { Container } from 'inversify';

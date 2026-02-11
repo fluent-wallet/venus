@@ -1,10 +1,10 @@
 import 'reflect-metadata';
 
-import { createSilentLogger } from '@core/testUtils/mocks';
 import { SignType } from '@core/database/models/Signature/type';
 import { type CoreEventMap, type EventBus, InMemoryEventBus } from '@core/modules/eventBus';
 import { ExternalRequestsService } from '@core/modules/externalRequests';
 import type { Logger, RuntimeScheduler } from '@core/runtime/types';
+import { createSilentLogger } from '@core/testUtils/mocks';
 import { NetworkType } from '@core/types/chain';
 import type { WalletKitTypes } from '@reown/walletkit';
 import { WalletConnectService } from './WalletConnectService';

@@ -1,11 +1,7 @@
 import 'reflect-metadata';
 
-import { seedNetwork } from '@core/testUtils/fixtures';
-import { createMockHardwareWallet, createStrictTestCryptoTool } from '@core/testUtils/mocks';
-import { DEFAULT_HEX_ADDRESS, StubChainProvider } from '@core/testUtils/mocks/chainProviders';
 import { ChainRegistry } from '@core/chains';
 import type { Database } from '@core/database';
-import { mockDatabase } from '@core/database/testUtils/mockDatabases';
 import type { Account } from '@core/database/models/Account';
 import type { AccountGroup } from '@core/database/models/AccountGroup';
 import type { Address } from '@core/database/models/Address';
@@ -15,10 +11,14 @@ import type { Network } from '@core/database/models/Network';
 import type { Tx } from '@core/database/models/Tx';
 import VaultType from '@core/database/models/Vault/VaultType';
 import TableName from '@core/database/TableName';
+import { mockDatabase } from '@core/database/testUtils/mockDatabases';
 import { CORE_IDENTIFIERS } from '@core/di';
 import { HARDWARE_WALLET_TYPES } from '@core/hardware/bsim/constants';
 import { HardwareWalletRegistry } from '@core/hardware/HardwareWalletRegistry';
 import { AccountService, AssetService, registerServices, type SendTransactionInput, SigningService, TransactionService, VaultService } from '@core/services';
+import { seedNetwork } from '@core/testUtils/fixtures';
+import { createMockHardwareWallet, createStrictTestCryptoTool } from '@core/testUtils/mocks';
+import { DEFAULT_HEX_ADDRESS, StubChainProvider } from '@core/testUtils/mocks/chainProviders';
 import { AssetType, TxStatus as ServiceTxStatus } from '@core/types';
 import type { CryptoTool } from '@core/types/crypto';
 import { convertHexToBase32 } from '@core/utils/address';

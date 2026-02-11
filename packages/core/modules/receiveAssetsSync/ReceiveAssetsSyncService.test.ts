@@ -1,8 +1,5 @@
 import 'reflect-metadata';
 
-import { createTestAccount, seedNetwork } from '@core/testUtils/fixtures';
-import { createSilentLogger, mockDatabase } from '@core/testUtils/mocks';
-import { StubChainProvider } from '@core/testUtils/mocks/chainProviders';
 import { ChainRegistry } from '@core/chains';
 import ESpaceTokenList from '@core/contracts/ABI/ESpaceTokenList';
 import type { Asset } from '@core/database/models/Asset';
@@ -10,6 +7,9 @@ import { AssetSource, AssetType } from '@core/database/models/Asset';
 import TableName from '@core/database/TableName';
 import { type CoreEventMap, InMemoryEventBus } from '@core/modules/eventBus';
 import type { INetwork } from '@core/services/network/types';
+import { createTestAccount, seedNetwork } from '@core/testUtils/fixtures';
+import { createSilentLogger, mockDatabase } from '@core/testUtils/mocks';
+import { StubChainProvider } from '@core/testUtils/mocks/chainProviders';
 import { convertToChecksum } from '@core/utils/account';
 import { Interface } from '@ethersproject/abi';
 import { Q } from '@nozbe/watermelondb';

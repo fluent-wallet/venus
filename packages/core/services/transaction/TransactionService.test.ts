@@ -1,10 +1,6 @@
 import 'reflect-metadata';
 
-import { createTestAccount, seedNetwork } from '@core/testUtils/fixtures';
-import { createSilentLogger, DEFAULT_PRIVATE_KEY, mockDatabase } from '@core/testUtils/mocks';
-import { StubChainProvider } from '@core/testUtils/mocks/chainProviders';
 import { ChainRegistry } from '@core/chains';
-
 import type { Database } from '@core/database';
 import type { Address } from '@core/database/models/Address';
 import { AssetSource, type Asset as DbAsset, AssetType as DbAssetType } from '@core/database/models/Asset';
@@ -20,6 +16,9 @@ import { CHAIN_PROVIDER_NOT_FOUND, TX_BROADCAST_FAILED } from '@core/errors';
 import type { CoreEventMap, EventBus } from '@core/modules/eventBus';
 import { InMemoryEventBus } from '@core/modules/eventBus';
 import { SigningService } from '@core/services/signing';
+import { createTestAccount, seedNetwork } from '@core/testUtils/fixtures';
+import { createSilentLogger, DEFAULT_PRIVATE_KEY, mockDatabase } from '@core/testUtils/mocks';
+import { StubChainProvider } from '@core/testUtils/mocks/chainProviders';
 import { AssetType, type ISigner, TxStatus as ServiceTxStatus } from '@core/types';
 import { Container } from 'inversify';
 import { ChainStatusService } from '../chain/ChainStatusService';

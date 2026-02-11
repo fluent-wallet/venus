@@ -1,9 +1,9 @@
 import 'reflect-metadata';
 
-import { createSilentLogger } from '@core/testUtils/mocks';
 import { CORE_IDENTIFIERS } from '@core/di';
 import { ModuleManager } from '@core/runtime/ModuleManager';
 import type { RuntimeScheduler } from '@core/runtime/types';
+import { createSilentLogger } from '@core/testUtils/mocks';
 import { Container } from 'inversify';
 import { type CoreEventMap, type EventBus, EventBusModule } from '../eventBus';
 import { ExternalRequestsModule } from './ExternalRequestsModule';

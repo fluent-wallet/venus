@@ -1,12 +1,12 @@
 import 'reflect-metadata';
 
-import { mockDatabase } from '@core/testUtils/mocks';
 import type { Vault } from '@core/database/models/Vault';
 import VaultType from '@core/database/models/Vault/VaultType';
 import TableName from '@core/database/TableName';
 import { CORE_IDENTIFIERS } from '@core/di';
 import { HARDWARE_WALLET_TYPES } from '@core/hardware/bsim/constants';
 import { HardwareWalletRegistry } from '@core/hardware/HardwareWalletRegistry';
+import { mockDatabase } from '@core/testUtils/mocks';
 import type {
   ChainType,
   HardwareAccount,

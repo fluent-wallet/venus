@@ -1,14 +1,14 @@
 import 'reflect-metadata';
 
-import { createTestAccount, seedNetwork } from '@core/testUtils/fixtures';
-import { mockDatabase } from '@core/testUtils/mocks';
-import { StubChainProvider } from '@core/testUtils/mocks/chainProviders';
 import { ChainRegistry } from '@core/chains';
 import type { Database } from '@core/database';
 import type { Signature } from '@core/database/models/Signature';
 import { SignType } from '@core/database/models/Signature/type';
 import TableName from '@core/database/TableName';
 import { CORE_IDENTIFIERS } from '@core/di';
+import { createTestAccount, seedNetwork } from '@core/testUtils/fixtures';
+import { mockDatabase } from '@core/testUtils/mocks';
+import { StubChainProvider } from '@core/testUtils/mocks/chainProviders';
 import type { IChainRpc } from '@core/types';
 import { Container } from 'inversify';
 import { ChainStatusService } from '../chain/ChainStatusService';

@@ -1,9 +1,9 @@
 import 'reflect-metadata';
 
-import { createSilentLogger } from '@core/testUtils/mocks';
 import { CORE_IDENTIFIERS } from '@core/di';
 import { AUTH_PASSWORD_REQUEST_CANCELED } from '@core/errors';
 import { ModuleManager } from '@core/runtime/ModuleManager';
+import { createSilentLogger } from '@core/testUtils/mocks';
 import { Container } from 'inversify';
 import { EventBusModule } from '../eventBus';
 import { AuthModule } from './AuthModule';

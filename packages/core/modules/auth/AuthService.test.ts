@@ -1,8 +1,8 @@
 import 'reflect-metadata';
 
-import { createSilentLogger } from '@core/testUtils/mocks';
 import { AUTH_PASSWORD_REQUEST_CANCELED, AUTH_PASSWORD_REQUEST_TIMEOUT } from '@core/errors';
 import type { RuntimeScheduler } from '@core/runtime/types';
+import { createSilentLogger } from '@core/testUtils/mocks';
 import { type CoreEventMap, InMemoryEventBus } from '../eventBus';
 import { AuthService } from './AuthService';
 import { AUTH_REASON } from './reasons';

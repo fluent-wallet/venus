@@ -1,6 +1,6 @@
 import 'reflect-metadata';
-import { createMockEthersProvider, DEFAULT_HEX_ADDRESS, DEFAULT_PRIVATE_KEY } from '@core/testUtils/mocks';
 import { SoftwareSigner } from '@core/signers';
+import { createMockEthersProvider, DEFAULT_HEX_ADDRESS, DEFAULT_PRIVATE_KEY } from '@core/testUtils/mocks';
 import { AssetType, type EvmUnsignedTransaction, type Hex, NetworkType } from '@core/types';
 import { JsonRpcProvider, Transaction, toUtf8Bytes, Wallet } from 'ethers';
 import { EndpointManager } from './EndpointManager';

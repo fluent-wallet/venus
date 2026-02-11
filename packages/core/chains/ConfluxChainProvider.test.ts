@@ -1,4 +1,5 @@
 import 'reflect-metadata';
+import { SoftwareSigner } from '@core/signers';
 import {
   createMockConfluxSdk,
   DEFAULT_PRIVATE_KEY,
@@ -6,7 +7,6 @@ import {
   DEFAULT_TEST_NET_1155_CONTRACT,
   DEFAULT_TEST_NFT_721_CONTRACT,
 } from '@core/testUtils/mocks';
-import { SoftwareSigner } from '@core/signers';
 import { AssetType, NetworkType } from '@core/types';
 import { computeAddress, toAccountAddress } from '@core/utils/account';
 import { convertHexToBase32 } from '@core/utils/address';

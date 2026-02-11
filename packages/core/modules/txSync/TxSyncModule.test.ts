@@ -1,11 +1,11 @@
 import 'reflect-metadata';
 
-import { createPassthroughTestCryptoTool, createSilentLogger, mockDatabase } from '@core/testUtils/mocks';
 import { VaultType } from '@core/database/models/Vault/VaultType';
 import { CORE_IDENTIFIERS } from '@core/di';
 import { ModuleManager } from '@core/runtime/ModuleManager';
 import type { RuntimeScheduler } from '@core/runtime/types';
 import type { IAccount, INetwork } from '@core/services';
+import { createPassthroughTestCryptoTool, createSilentLogger, mockDatabase } from '@core/testUtils/mocks';
 import { NetworkType } from '@core/types';
 import { ChainType } from '@core/utils/consts';
 import { Container } from 'inversify';
