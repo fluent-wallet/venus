@@ -1,14 +1,7 @@
-import type { EventBus } from '@core/WalletCore/Events/eventTypes';
-import {
-  HARDWARE_SIGN_ABORT_EVENT,
-  HARDWARE_SIGN_ERROR_EVENT,
-  HARDWARE_SIGN_START_EVENT,
-  HARDWARE_SIGN_SUCCESS_EVENT,
-} from '@core/WalletCore/Events/eventTypes';
+import type { CoreEventMap, EventBus } from '@core/modules/eventBus';
 import type { QueryClient } from '@tanstack/react-query';
 import { act, renderHook } from '@testing-library/react-native';
 import type React from 'react';
-import { Subject } from 'rxjs';
 import { getEventBus, getHardwareWalletService } from '../core';
 import { createTestQueryClient, createWrapper } from '../mocks/reactQuery';
 import { getHardwareSignStateKey, useBsimBackup, useBsimRestore, useBsimUpdatePin, useConnectHardware, useHardwareSigningEvents } from './index';
@@ -18,22 +11,30 @@ jest.mock('../core', () => ({
   getHardwareWalletService: jest.fn(),
 }));
 
-class TestEventBus implements EventBus {
-  private subjects = new Map<string, Subject<any>>();
-  dispatch = jest.fn((type: any, payload: any) => {
-    this.subject(type).next(payload);
-  });
+class TestEventBus implements EventBus<CoreEventMap> {
+  private handlers = new Map<string, Set<(payload: any) => void>>();
 
-  on(type: any) {
-    return this.subject(type).asObservable();
+  on(event: any, handler: (payload: any) => void) {
+    const key = String(event);
+    const set = this.handlers.get(key) ?? new Set<(payload: any) => void>();
+    if (!this.handlers.has(key)) this.handlers.set(key, set);
+    set.add(handler);
+
+    return {
+      unsubscribe: () => {
+        const current = this.handlers.get(key);
+        if (!current) return;
+        current.delete(handler);
+        if (current.size === 0) this.handlers.delete(key);
+      },
+    };
   }
 
-  private subject(type: string) {
-    const existing = this.subjects.get(type);
-    if (existing) return existing;
-    const created = new Subject<any>();
-    this.subjects.set(type, created);
-    return created;
+  emit(event: any, payload?: any) {
+    const key = String(event);
+    const set = this.handlers.get(key);
+    if (!set) return;
+    for (const handler of Array.from(set)) handler(payload ?? null);
   }
 }
 
@@ -74,16 +75,15 @@ describe('hardware service hooks', () => {
     renderHook(() => useHardwareSigningEvents(), { wrapper });
 
     act(() => {
-      eventBus.dispatch(HARDWARE_SIGN_START_EVENT, {
+      eventBus.emit('hardware-sign/started', {
         requestId: 'r1',
         accountId: 'a',
         addressId: 'addr_1',
         networkId: 'n',
-        txPayload: { x: 1 },
       });
 
       // Late/foreign completion should not override current state
-      eventBus.dispatch(HARDWARE_SIGN_SUCCESS_EVENT, {
+      eventBus.emit('hardware-sign/succeeded', {
         requestId: 'r0',
         accountId: 'a',
         addressId: 'addr_1',
@@ -92,7 +92,7 @@ describe('hardware service hooks', () => {
         rawTransaction: '0xold',
       });
 
-      eventBus.dispatch(HARDWARE_SIGN_SUCCESS_EVENT, {
+      eventBus.emit('hardware-sign/succeeded', {
         requestId: 'r1',
         accountId: 'a',
         addressId: 'addr_1',
@@ -138,27 +138,25 @@ describe('hardware service hooks', () => {
     renderHook(() => useHardwareSigningEvents('addr_target'), { wrapper });
 
     act(() => {
-      eventBus.dispatch(HARDWARE_SIGN_START_EVENT, {
+      eventBus.emit('hardware-sign/started', {
         requestId: 'r1',
         accountId: 'a',
         addressId: 'addr_other',
         networkId: 'n',
-        txPayload: { x: 1 },
       });
     });
 
     expect(queryClient.getQueryData(getHardwareSignStateKey())).toBeUndefined();
 
     act(() => {
-      eventBus.dispatch(HARDWARE_SIGN_START_EVENT, {
+      eventBus.emit('hardware-sign/started', {
         requestId: 'r2',
         accountId: 'a',
         addressId: 'addr_target',
         networkId: 'n',
-        txPayload: { x: 2 },
       });
 
-      eventBus.dispatch(HARDWARE_SIGN_ERROR_EVENT, {
+      eventBus.emit('hardware-sign/failed', {
         requestId: 'r2',
         accountId: 'a',
         addressId: 'addr_target',
@@ -166,7 +164,7 @@ describe('hardware service hooks', () => {
         error: { code: 'TIMEOUT', message: 'timeout' },
       });
 
-      eventBus.dispatch(HARDWARE_SIGN_ABORT_EVENT, {
+      eventBus.emit('hardware-sign/aborted', {
         requestId: 'r3',
         accountId: 'a',
         addressId: 'addr_target',

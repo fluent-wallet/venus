@@ -42,6 +42,7 @@ import { styles as transactionConfirmStyle } from '@pages/SendTransaction/Step4C
 import SendAsset from '@pages/SendTransaction/Step4Confirm/SendAsset';
 import { type RouteProp, useNavigation, useRoute, useTheme } from '@react-navigation/native';
 import type { StackNavigation, WalletConnectParamList, WalletConnectTransactionStackName } from '@router/configs';
+import { getExternalRequestsService } from '@service/core';
 import { handleBSIMHardwareUnavailable } from '@utils/handleBSIMHardwareUnavailable';
 import matchRPCErrorMessage from '@utils/matchRPCErrorMssage';
 import { isApproveMethod, type ParseTxDataReturnType, parseTxDataAsync } from '@utils/parseTxData';
@@ -82,17 +83,35 @@ function WalletConnectTransaction() {
 
   const epochHeightRef = useRef('');
 
-  const navigation = useNavigation();
-  const {
-    params: {
-      tx: { from, to, value, data, nonce, gas, gasPrice, storageLimit, type, maxFeePerGas, maxPriorityFeePerGas },
-      isContract,
-      metadata,
-    },
-  } = useRoute<RouteProp<WalletConnectParamList, typeof WalletConnectTransactionStackName>>();
+  const navigation = useNavigation<StackNavigation>();
+  const route = useRoute<RouteProp<WalletConnectParamList, typeof WalletConnectTransactionStackName>>();
+  const params = route.params as WalletConnectParamList[typeof WalletConnectTransactionStackName];
+
+  const isRuntime = !!params && typeof params === 'object' && 'requestId' in (params as any);
+  const runtimeRequestId = isRuntime ? ((params as any).requestId as string) : null;
+  const runtimeRequest = isRuntime ? (params as any).request : null;
+
+  const legacy = !isRuntime ? (params as any) : null;
+  const legacyTx = legacy?.tx ?? {};
+
+  const from = legacyTx?.from;
+  const to = legacyTx?.to;
+  const value = legacyTx?.value;
+  const data = legacyTx?.data;
+  const nonce = legacyTx?.nonce;
+  const gas = legacyTx?.gas;
+  const gasPrice = legacyTx?.gasPrice;
+  const storageLimit = legacyTx?.storageLimit;
+  const type = legacyTx?.type;
+  const maxFeePerGas = legacyTx?.maxFeePerGas;
+  const maxPriorityFeePerGas = legacyTx?.maxPriorityFeePerGas;
+
+  const isContract = legacy?.isContract ?? false;
+  const metadata = legacy?.metadata ?? { url: '' };
 
   const txData = useMemo(() => {
     if (allowanceValue && parseData && isApproveMethod(parseData) && parseData.assetType === AssetType.ERC20) {
+      if (!from) return data;
       const value = parseData.decimals ? new Decimal(allowanceValue).mul(new Decimal(10).pow(parseData.decimals)).toString() : allowanceValue;
       // is approve and allowance value is set , so we need to encode the date
 
@@ -164,14 +183,24 @@ function WalletConnectTransaction() {
 
   const _handleReject = useCallback(async () => {
     try {
+      if (isRuntime && runtimeRequestId) {
+        getExternalRequestsService().reject({ requestId: runtimeRequestId });
+        if (navigation.canGoBack()) navigation.goBack();
+        return;
+      }
       await plugins.WalletConnect.currentEventSubject.getValue()?.action.reject();
     } catch (e) {
       console.log(e);
     }
-  }, []);
+  }, [isRuntime, navigation, runtimeRequestId]);
 
   const { bsimEvent, setBSIMEvent, execBSIMCancel, setBSIMCancel } = useBSIMVerify();
   const _handleApprove = useCallback(async () => {
+    if (isRuntime && runtimeRequestId) {
+      getExternalRequestsService().approve({ requestId: runtimeRequestId });
+      if (navigation.canGoBack()) navigation.goBack();
+      return;
+    }
     if (!gasEstimate) return;
     setError('');
     setBSIMEvent(null);
@@ -273,11 +302,26 @@ function WalletConnectTransaction() {
         });
       }
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentAddressValue, currentNetwork?.id, gas, gasPrice, to, navigation, value, gasEstimate, isContract, signTransaction, txData, parseData]);
+  }, [
+    currentAddressValue,
+    currentNetwork?.id,
+    gas,
+    gasPrice,
+    to,
+    navigation,
+    value,
+    gasEstimate,
+    isContract,
+    signTransaction,
+    txData,
+    parseData,
+    isRuntime,
+    runtimeRequestId,
+  ]);
 
   useEffect(() => {
     async function parseAndTryGetTokenInfo() {
+      if (isRuntime) return;
       if (isContract) {
         const parseData = await parseTxDataAsync({ data, to, netId: currentNetwork.netId });
 
@@ -323,7 +367,7 @@ function WalletConnectTransaction() {
     }
     parseAndTryGetTokenInfo();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [data, to, isContract, currentNetwork.id, currentAddress, value, currentNetwork.netId]);
+  }, [data, to, isContract, currentNetwork.id, currentAddress, value, currentNetwork.netId, isRuntime]);
 
   const handleOpenEditAllowanceModel = useCallback(() => {
     if (parseData?.functionName === 'approve' && parseData?.assetType === AssetType.ERC20) {
@@ -338,6 +382,40 @@ function WalletConnectTransaction() {
   const { inAsync: rejectLoading, execAsync: handleReject } = useInAsync(_handleReject);
 
   const { inAsync: approveLoading, execAsync: handleApprove } = useInAsync(_handleApprove);
+
+  if (isRuntime) {
+    const title = runtimeRequest?.origin ?? '';
+    const chainId = runtimeRequest?.chainId ?? '';
+    const pretty = JSON.stringify(runtimeRequest?.params ?? null, null, 2);
+
+    return (
+      <BottomSheetRoute snapPoints={snapPoints.large} onClose={() => handleReject()}>
+        <BottomSheetWrapper>
+          <BottomSheetHeader title={t('wc.dapp.tx.title')} />
+
+          <BottomSheetScrollContent>
+            <Text style={[styles.title, { color: colors.textPrimary }]} numberOfLines={1}>
+              {title}
+            </Text>
+            <Text style={{ color: colors.textSecondary }}>{chainId}</Text>
+            <View style={[transactionConfirmStyle.divider, { backgroundColor: colors.borderFourth }]} />
+            <Text style={{ color: colors.textPrimary }}>{pretty}</Text>
+          </BottomSheetScrollContent>
+
+          <BottomSheetFooter>
+            <View style={[transactionConfirmStyle.btnArea, styles.btnArea]}>
+              <Button testID="reject" style={transactionConfirmStyle.btn} loading={rejectLoading} size="small" onPress={handleReject}>
+                {t('common.cancel')}
+              </Button>
+              <Button testID="approve" style={transactionConfirmStyle.btn} loading={approveLoading} size="small" onPress={handleApprove}>
+                {t('common.confirm')}
+              </Button>
+            </View>
+          </BottomSheetFooter>
+        </BottomSheetWrapper>
+      </BottomSheetRoute>
+    );
+  }
 
   return (
     <>

@@ -1,4 +1,5 @@
 import type { BSIMHardwareReason } from '@WalletCoreExtends/Plugins/BSIM';
+import type { ExternalRequestSnapshot } from '@core/modules/externalRequests';
 import type { NetworkType } from '@core/utils/consts';
 import type { SpeedUpAction } from '@core/WalletCore/Events/broadcastTransactionSubject';
 import type { AssetInfo } from '@core/WalletCore/Plugins/AssetsTracker/types';
@@ -50,14 +51,36 @@ export const WalletConnectSessionsStackName = 'WalletConnectSessions';
 export const WalletConnectSignMessageStackName = 'WalletConnectSignMessage';
 export const WalletConnectTransactionStackName = 'WalletConnectTransaction';
 
+type RuntimeWcProposalParams = {
+  requestId: string;
+  request: Extract<ExternalRequestSnapshot, { provider: 'wallet-connect'; kind: 'session_proposal' }>;
+};
+
+type RuntimeWcSessionRequest = Extract<ExternalRequestSnapshot, { provider: 'wallet-connect'; kind: 'session_request' }>;
+
+type RuntimeWcSignMessageParams = {
+  requestId: string;
+  request: RuntimeWcSessionRequest & { method: 'personal_sign' | 'eth_signTypedData_v4' };
+};
+
+type RuntimeWcSendTxParams = {
+  requestId: string;
+  request: RuntimeWcSessionRequest & { method: 'eth_sendTransaction' };
+};
 export type WalletConnectParamList = {
-  [WalletConnectProposalStackName]: IWCSessionProposalEventData & {
-    connectedNetworks: Array<{ icon: string; name: string; netId: number; id: string; networkType: NetworkType }>;
-  };
+  [WalletConnectProposalStackName]:
+    | (IWCSessionProposalEventData & {
+        connectedNetworks: Array<{ icon: string; name: string; netId: number; id: string; networkType: NetworkType }>;
+      })
+    | RuntimeWcProposalParams;
+
   [WalletConnectSessionsStackName]: undefined;
-  [WalletConnectSignMessageStackName]: IWCSignMessageEventData;
-  [WalletConnectTransactionStackName]: IWCSendTransactionEventData & { isContract: boolean };
-  [PasswordVerifyStackName]: undefined;
+
+  [WalletConnectSignMessageStackName]: IWCSignMessageEventData | RuntimeWcSignMessageParams;
+
+  [WalletConnectTransactionStackName]: (IWCSendTransactionEventData & { isContract: boolean }) | RuntimeWcSendTxParams;
+
+  [PasswordVerifyStackName]: undefined | { requestId: string };
 };
 
 // end Wallet connect nest stack
@@ -77,7 +100,7 @@ export type RootStackParamList = {
   [BackupStackName]: NavigatorScreenParams<BackupStackParamList>;
   [SendTransactionStackName]: NavigatorScreenParams<SendTransactionParamList>;
   [NetworkManagementStackName]: undefined;
-  [PasswordVerifyStackName]: undefined;
+  [PasswordVerifyStackName]: undefined | { requestId: string };
   [ReceiveStackName]: undefined;
   [EraseAllWalletStackName]: undefined;
   [AddAnotherWalletStackName]: undefined;
@@ -119,7 +142,7 @@ export type BackupStackParamList = {
   [BackupSuccessStackName]: undefined;
   // navigate to home
   [HomeStackName]: undefined;
-  [PasswordVerifyStackName]: undefined;
+  [PasswordVerifyStackName]: undefined | { requestId: string };
 };
 export type BackupScreenProps<T extends keyof BackupStackParamList> = NativeStackScreenProps<BackupStackParamList, T>;
 // end backup nest stack
@@ -136,7 +159,7 @@ export type SendTransactionParamList = {
   [SendTransactionStep4StackName]: { asset: AssetInfo; recipientAddress: string; amount: string; nftItemDetail?: NFTItemDetail; inMaxMode?: boolean };
   // navigate to home
   [HomeStackName]: undefined;
-  [PasswordVerifyStackName]: undefined;
+  [PasswordVerifyStackName]: undefined | { requestId: string };
 };
 export type SendTransactionScreenProps<T extends keyof SendTransactionParamList> = NativeStackScreenProps<SendTransactionParamList, T>;
 // end SendTransaction nest stack

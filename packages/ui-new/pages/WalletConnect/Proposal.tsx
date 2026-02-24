@@ -9,8 +9,9 @@ import { useCurrentAccount, useCurrentAddressOfAccount, useCurrentAddressValue }
 import type { IWCSessionProposalEvent } from '@core/WalletCore/Plugins/WalletConnect/types';
 import useInAsync from '@hooks/useInAsync';
 import AccountSelector from '@modules/AccountSelector';
-import { type RouteProp, useRoute, useTheme } from '@react-navigation/native';
+import { type RouteProp, useNavigation, useRoute, useTheme } from '@react-navigation/native';
 import type { WalletConnectParamList, WalletConnectProposalStackName } from '@router/configs';
+import { getExternalRequestsService } from '@service/core';
 import { Image } from 'expo-image';
 import { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -18,11 +19,26 @@ import { Pressable, StyleSheet, View } from 'react-native';
 
 export default function WalletConnectProposal() {
   const route = useRoute<RouteProp<WalletConnectParamList, typeof WalletConnectProposalStackName>>();
+  const navigation = useNavigation();
+  const params = route.params as WalletConnectParamList[typeof WalletConnectProposalStackName];
+
+  const isRuntime = !!params && typeof params === 'object' && 'requestId' in (params as any);
+  const runtimeRequestId = isRuntime ? ((params as any).requestId as string) : null;
+  const runtimeRequest = isRuntime ? ((params as any).request as any) : null;
+
   const [showAccountSelector, setShowAccountSelector] = useState(false);
-  const {
-    metadata: { name = '', description = '', url = '', icons = [] },
-    connectedNetworks,
-  } = route.params;
+
+  const legacy = !isRuntime ? (params as any) : null;
+
+  const legacyMetadata = legacy?.metadata;
+  const runtimeMetadata = runtimeRequest?.metadata;
+
+  const name = legacyMetadata?.name ?? runtimeMetadata?.name ?? '';
+  const description = legacyMetadata?.description ?? '';
+  const url = legacyMetadata?.url ?? runtimeMetadata?.url ?? runtimeRequest?.origin ?? '';
+  const icons = legacyMetadata?.icons ?? runtimeMetadata?.icons ?? [];
+
+  const connectedNetworks = legacy?.connectedNetworks ?? [];
   const { colors } = useTheme();
   const { t } = useTranslation();
 
@@ -34,21 +50,32 @@ export default function WalletConnectProposal() {
 
   const _handleApprove = useCallback(async () => {
     try {
+      if (isRuntime && runtimeRequestId) {
+        getExternalRequestsService().approve({ requestId: runtimeRequestId });
+        if (navigation.canGoBack()) navigation.goBack();
+        return;
+      }
+
       const approve = plugins.WalletConnect.currentEventSubject.getValue()?.action.approve as IWCSessionProposalEvent['action']['approve'];
       await approve();
     } catch (e) {
       console.log(e);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentAddress?.id]);
+  }, [isRuntime, navigation, runtimeRequestId]);
 
   const _handleReject = useCallback(async () => {
     try {
+      if (isRuntime && runtimeRequestId) {
+        getExternalRequestsService().reject({ requestId: runtimeRequestId });
+        if (navigation.canGoBack()) navigation.goBack();
+        return;
+      }
+
       await plugins.WalletConnect.currentEventSubject.getValue()?.action.reject();
     } catch (err) {
       console.log('errr', err);
     }
-  }, []);
+  }, [isRuntime, navigation, runtimeRequestId]);
 
   const { inAsync: inApproving, execAsync: handleApprove } = useInAsync(_handleApprove);
   const { inAsync: inRejecting, execAsync: handleReject } = useInAsync(_handleReject);
@@ -84,15 +111,18 @@ export default function WalletConnectProposal() {
                 </View>
               </View>
             </Pressable>
-            <View style={styles.networkWarp}>
-              <Text style={[styles.label, { color: colors.textSecondary }]}>{t('common.network')}</Text>
-              <View style={styles.network}>
-                {connectedNetworks.map((network) => (
-                  <Icon source={network.icon} width={22} height={22} style={{ borderRadius: 11 }} key={network.id} />
-                ))}
-                {connectedNetworks.length === 1 && <Text style={{ color: colors.textPrimary }}>{connectedNetworks[0]?.name}</Text>}
+            {/* Runtime snapshots don't include UI-ready connected network icons yet. */}
+            {!isRuntime && (
+              <View style={styles.networkWarp}>
+                <Text style={[styles.label, { color: colors.textSecondary }]}>{t('common.network')}</Text>
+                <View style={styles.network}>
+                  {connectedNetworks.map((network: any) => (
+                    <Icon source={network.icon} width={22} height={22} style={{ borderRadius: 11 }} key={network.id} />
+                  ))}
+                  {connectedNetworks.length === 1 && <Text style={{ color: colors.textPrimary }}>{connectedNetworks[0]?.name}</Text>}
+                </View>
               </View>
-            </View>
+            )}
           </BottomSheetScrollContent>
           <BottomSheetFooter>
             <View style={styles.btnArea}>

@@ -1,6 +1,5 @@
 import { getEventBus } from '@WalletCoreExtends/index';
 import { AUTHENTICATION_PASSWORD_REQUEST } from '@WalletCoreExtends/Plugins/Authentication';
-import Button from '@components/Button';
 import { useHasVault } from '@core/WalletCore/Plugins/ReactInject';
 import SpeedUp from '@modules/GasFee/SpeedUp';
 import PasswordVerify from '@modules/PasswordVerify';
@@ -36,6 +35,7 @@ import WayToInitWallet from '@pages/WayToInitWallet';
 import Welcome from '@pages/Welcome';
 import { useNavigation, useTheme } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import { useRuntimeEventBridge } from '@service/runtimeBridge';
 import type React from 'react';
 import { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -94,6 +94,9 @@ const Router: React.FC = () => {
   const { colors, mode } = useTheme();
 
   const navigation = useNavigation<StackNavigation>();
+
+  useRuntimeEventBridge(navigation);
+
   // to listen the wallet connect plugin custom subject event
   useListenWalletConnectEvent();
 

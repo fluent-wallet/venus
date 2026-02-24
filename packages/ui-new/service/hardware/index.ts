@@ -1,10 +1,4 @@
 import type { HardwareConnectOptions, HardwareOperationError } from '@core/types';
-import {
-  HARDWARE_SIGN_ABORT_EVENT,
-  HARDWARE_SIGN_ERROR_EVENT,
-  HARDWARE_SIGN_START_EVENT,
-  HARDWARE_SIGN_SUCCESS_EVENT,
-} from '@core/WalletCore/Events/eventTypes';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import type { BackupSeedParams, RestoreSeedParams } from 'modules/BSIM/src';
 import { useEffect } from 'react';
@@ -21,7 +15,6 @@ export type HardwareSignState = {
   txHash?: string;
   rawTransaction?: string;
   error?: HardwareOperationError;
-  txPayload?: unknown;
   updatedAt: number;
 };
 
@@ -49,7 +42,6 @@ export function useHardwareSigningEvents(addressId?: string) {
         accountId: payload.accountId,
         addressId: payload.addressId,
         networkId: payload.networkId,
-        txPayload: payload.txPayload,
         updatedAt: nowMs(),
       };
 
@@ -110,10 +102,10 @@ export function useHardwareSigningEvents(addressId?: string) {
       });
     };
     const subs = [
-      eventBus.on(HARDWARE_SIGN_START_EVENT).subscribe(handleStart),
-      eventBus.on(HARDWARE_SIGN_SUCCESS_EVENT).subscribe(handleSuccess),
-      eventBus.on(HARDWARE_SIGN_ERROR_EVENT).subscribe(handleError),
-      eventBus.on(HARDWARE_SIGN_ABORT_EVENT).subscribe(handleAbort),
+      eventBus.on('hardware-sign/started', handleStart),
+      eventBus.on('hardware-sign/succeeded', handleSuccess),
+      eventBus.on('hardware-sign/failed', handleError),
+      eventBus.on('hardware-sign/aborted', handleAbort),
     ];
 
     return () =>

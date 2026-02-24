@@ -26,6 +26,7 @@ import { styles as transactionConfirmStyle } from '@pages/SendTransaction/Step4C
 import Clipboard from '@react-native-clipboard/clipboard';
 import { type RouteProp, useNavigation, useRoute, useTheme } from '@react-navigation/native';
 import type { StackNavigation, WalletConnectParamList, WalletConnectSignMessageStackName } from '@router/configs';
+import { getExternalRequestsService } from '@service/core';
 import { handleBSIMHardwareUnavailable } from '@utils/handleBSIMHardwareUnavailable';
 import { sanitizeTypedData } from '@utils/santitizeTypedData';
 import { isHexString, toUtf8String } from 'ethers';
@@ -39,20 +40,29 @@ function WalletConnectSignMessage() {
   const { colors } = useTheme();
   const currentAccount = useCurrentAccount();
   const currentAddress = useCurrentAddress()!;
-  BSIMVerify;
   const currentAddressValue = useCurrentAddressValue();
   const currentNetwork = useCurrentNetwork();
   const vault = useVaultOfAccount(currentAccount?.id);
   const rootNavigation = useNavigation<StackNavigation>();
+  const route = useRoute<RouteProp<WalletConnectParamList, typeof WalletConnectSignMessageStackName>>();
+  const navigation = useNavigation<StackNavigation>();
+  const params = route.params as WalletConnectParamList[typeof WalletConnectSignMessageStackName];
+  const isRuntime = !!params && typeof params === 'object' && 'requestId' in (params as any);
 
-  const {
-    params: {
-      metadata: { icons = [], name = '', url },
-      message,
-      method,
-    },
-  } = useRoute<RouteProp<WalletConnectParamList, typeof WalletConnectSignMessageStackName>>();
+  const runtimeRequest = isRuntime ? (params as any).request : null;
+  const legacy = !isRuntime ? (params as any) : null;
+
+  const icons = legacy?.metadata?.icons ?? runtimeRequest?.metadata?.icons ?? [];
+  const name = legacy?.metadata?.name ?? runtimeRequest?.metadata?.name ?? '';
+  const url = legacy?.metadata?.url ?? runtimeRequest?.origin ?? '';
+
+  const message = legacy?.message ?? (runtimeRequest ? JSON.stringify(runtimeRequest.params ?? null) : '');
+  const method = legacy?.method ?? runtimeRequest?.method ?? WalletConnectRPCMethod.PersonalSign;
+
   const signMsg = useMemo(() => {
+    if (isRuntime) {
+      return message;
+    }
     let decodeMsg = message;
     if (method === WalletConnectRPCMethod.PersonalSign) {
       const isHex = isHexString(decodeMsg);
@@ -78,7 +88,7 @@ function WalletConnectSignMessage() {
     }
 
     return decodeMsg;
-  }, [message, method]);
+  }, [isRuntime, message, method]);
   const handleCoy = useCallback(
     (value: string) => {
       Clipboard.setString(value);
@@ -227,6 +237,61 @@ function WalletConnectSignMessage() {
     }
     return '';
   }, [shownMessage, jsonMessage, method, colors.textPrimary]);
+
+  if (isRuntime) {
+    const requestId = (params as any).requestId as string;
+    const request = (params as any).request as any;
+
+    const title = request?.origin ?? '';
+    const method = request?.method ?? '';
+    const raw = request?.params ?? null;
+    const pretty = JSON.stringify(raw, null, 2);
+
+    const handleApprove = () => {
+      getExternalRequestsService().approve({ requestId });
+      if (navigation.canGoBack()) navigation.goBack();
+    };
+
+    const handleReject = () => {
+      getExternalRequestsService().reject({ requestId });
+      if (navigation.canGoBack()) navigation.goBack();
+    };
+
+    return (
+      <BottomSheetRoute snapPoints={snapPoints.large} onClose={handleReject}>
+        <BottomSheetWrapper>
+          <BottomSheetHeader title={t('wc.request.signature')}>
+            <View style={[styles.subTitle, styles.flexWithRow]}>
+              <View>
+                <Text style={[styles.method, { color: colors.textSecondary }]}>{method}</Text>
+                <Text style={[styles.h2, { color: colors.textPrimary }]}>{title}</Text>
+              </View>
+            </View>
+          </BottomSheetHeader>
+
+          <BottomSheetScrollContent style={[styles.content, { borderColor: colors.borderFourth }]} stickyHeaderIndices={[0]}>
+            <View style={[styles.flexWithRow, styles.scrollTitle, { backgroundColor: colors.bgFourth }]}>
+              <Text style={[styles.h2, { color: colors.textPrimary }]}>{t('wc.sign.message')}</Text>
+            </View>
+            <View style={{ marginBottom: 16 }}>
+              <Text style={{ color: colors.textPrimary }}>{pretty}</Text>
+            </View>
+          </BottomSheetScrollContent>
+
+          <BottomSheetFooter style={[styles.footer, { borderColor: colors.borderFourth }]}>
+            <View style={styles.btnArea}>
+              <Button style={styles.btn} onPress={handleReject} testID="reject">
+                {t('common.cancel')}
+              </Button>
+              <Button style={styles.btn} onPress={handleApprove} testID="approve">
+                {t('common.confirm')}
+              </Button>
+            </View>
+          </BottomSheetFooter>
+        </BottomSheetWrapper>
+      </BottomSheetRoute>
+    );
+  }
 
   return (
     <>

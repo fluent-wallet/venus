@@ -1,3 +1,7 @@
+import { CORE_IDENTIFIERS } from '@core/di';
+import type { AuthService } from '@core/modules/auth';
+import type { CoreEventMap } from '@core/modules/eventBus';
+import type { ExternalRequestsService } from '@core/modules/externalRequests';
 import {
   AccountService,
   AssetService,
@@ -72,6 +76,22 @@ export function getSignatureRecordService(): SignatureRecordService {
   return getContainer().get(SignatureRecordService);
 }
 
-export function getEventBus(): EventBus {
-  return getContainer().get<EventBus>(SERVICE_IDENTIFIER.EVENT_BUS);
+export function getAuthService(): AuthService {
+  return getContainer().get<AuthService>(CORE_IDENTIFIERS.AUTH);
+}
+
+export function getExternalRequestsService(): ExternalRequestsService {
+  return getContainer().get<ExternalRequestsService>(CORE_IDENTIFIERS.EXTERNAL_REQUESTS);
+}
+
+export function getRuntimeEventBus(): import('@core/modules/eventBus').EventBus<CoreEventMap> {
+  return getContainer().get<import('@core/modules/eventBus').EventBus<CoreEventMap>>(CORE_IDENTIFIERS.EVENT_BUS);
+}
+
+export function getLegacyEventBus(): EventBus {
+  return coreContainer.get<EventBus>(SERVICE_IDENTIFIER.EVENT_BUS);
+}
+
+export function getEventBus(): import('@core/modules/eventBus').EventBus<CoreEventMap> {
+  return getRuntimeEventBus();
 }
