@@ -90,13 +90,22 @@ export class ModuleManager {
     }
   }
 
+  public prepare(): void {
+    if (this.started) {
+      throw new CoreError({ code: MM_ALREADY_STARTED, message: 'Runtime already started.' });
+    }
+
+    const order = this.resolveStartOrder();
+    this.prepareWithOrder(order);
+  }
+
   public async start(): Promise<void> {
     if (this.started) {
       throw new CoreError({ code: MM_ALREADY_STARTED, message: 'Runtime already started.' });
     }
 
     const order = this.resolveStartOrder();
-
+    this.prepareWithOrder(order);
     const startSucceeded: string[] = [];
     const logger = this.context.logger;
 
@@ -104,17 +113,6 @@ export class ModuleManager {
       for (const moduleId of order) {
         const record = this.modules.get(moduleId)!;
         const mod = record.module;
-
-        if (!this.registered.has(moduleId) && mod.register) {
-          const t0 = this.context.now();
-          logger.debug('ModuleManager:register:start', { moduleId });
-
-          mod.register(this.context);
-
-          logger.debug('ModuleManager:register:done', { moduleId, durationMs: this.context.now() - t0 });
-          this.registered.add(moduleId);
-        }
-
         if (mod.start) {
           const t0 = this.context.now();
           logger.info('ModuleManager:start:start', { moduleId });
@@ -145,6 +143,24 @@ export class ModuleManager {
     }
   }
 
+  private prepareWithOrder(order: string[]): void {
+    const logger = this.context.logger;
+
+    for (const moduleId of order) {
+      const record = this.modules.get(moduleId)!;
+      const mod = record.module;
+
+      if (this.registered.has(moduleId) || !mod.register) continue;
+
+      const t0 = this.context.now();
+      logger.debug('ModuleManager:register:start', { moduleId });
+
+      mod.register(this.context);
+
+      logger.debug('ModuleManager:register:done', { moduleId, durationMs: this.context.now() - t0 });
+      this.registered.add(moduleId);
+    }
+  }
   public async stop(): Promise<void> {
     if (!this.started) return;
 

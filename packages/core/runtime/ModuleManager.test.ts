@@ -22,6 +22,68 @@ describe('ModuleManager', () => {
   beforeEach(() => {
     manager = new ModuleManager({ logger: createSilentLogger() });
   });
+
+  it('runs all register() before awaiting any start()', async () => {
+    const calls: string[] = [];
+
+    let unblockStart!: () => void;
+    const gate = new Promise<void>((resolve) => {
+      unblockStart = resolve;
+    });
+
+    manager.register([
+      createModule({
+        id: 'b',
+        dependencies: ['a'],
+        register: () => {
+          calls.push('b:reg');
+        },
+        start: async () => {
+          calls.push('b:start');
+        },
+      }),
+      createModule({
+        id: 'a',
+        register: () => {
+          calls.push('a:reg');
+        },
+        start: async () => {
+          calls.push('a:start');
+          await gate;
+          calls.push('a:start:done');
+        },
+      }),
+    ]);
+
+    const startPromise = manager.start();
+    await Promise.resolve();
+
+    expect(calls).toEqual(['a:reg', 'b:reg', 'a:start']);
+
+    unblockStart();
+    await startPromise;
+
+    expect(calls).toEqual(['a:reg', 'b:reg', 'a:start', 'a:start:done', 'b:start']);
+  });
+
+  it('prepare is idempotent and start does not re-run register after prepare', async () => {
+    const registerMock = jest.fn((_ctx: RuntimeContext) => undefined);
+    const startMock = jest.fn(async () => undefined);
+
+    manager.register(
+      createModule({
+        id: 'a',
+        register: registerMock,
+        start: startMock,
+      }),
+    );
+
+    manager.prepare();
+    await manager.start();
+
+    expect(registerMock).toHaveBeenCalledTimes(1);
+    expect(startMock).toHaveBeenCalledTimes(1);
+  });
   it('starts modules in topological order', async () => {
     const calls: string[] = [];
 

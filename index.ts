@@ -11,28 +11,7 @@ import './packages/setup/ethers';
 import './packages/setup/polyfill';
 import Decimal from 'decimal.js';
 import { name as appName } from './app.json';
-import database from './packages/core/database';
-import { createAppRuntime } from './packages/core/runtime/createAppRuntime';
-import WalletCore from './packages/core/WalletCore';
-import { DbPlugin } from './packages/core/WalletCore/DB';
-import { EventPlugin } from './packages/core/WalletCore/Events/EventPlugin';
-import { methodPlugins } from './packages/core/WalletCore/Methods';
-import { AssetsTrackerPlugin } from './packages/core/WalletCore/Plugins/AssetsTracker';
-import BlockNumberTracker from './packages/core/WalletCore/Plugins/BlockNumberTracker';
-import { NextNonceTrackerPlugin } from './packages/core/WalletCore/Plugins/NextNonceTracker';
-import { NFTDetailTrackerPlugin } from './packages/core/WalletCore/Plugins/NFTDetailTracker';
-import ReactInjectPlugin from './packages/core/WalletCore/Plugins/ReactInject';
-import { ReceiveAssetsTrackerPlugin } from './packages/core/WalletCore/Plugins/ReceiveAssetsTracker';
-import TransactionPlugin from './packages/core/WalletCore/Plugins/Transaction';
-import { TxTrackerPlugin } from './packages/core/WalletCore/Plugins/TxTracker';
-import { WalletConfigPlugin } from './packages/core/WalletCore/Plugins/WalletConfig';
-import WalletConnectPlugin from './packages/core/WalletCore/Plugins/WalletConnect';
 import RootProvider from './packages/ui-new/RootProvider';
-import { setUiServiceContainer } from './packages/ui-new/service/core';
-import { initCore } from './packages/WalletCoreExtends';
-import { AuthenticationPlugin } from './packages/WalletCoreExtends/Plugins/Authentication';
-import BSIMPlugin from './packages/WalletCoreExtends/Plugins/BSIM';
-import { CryptoToolPlugin } from './packages/WalletCoreExtends/Plugins/CryptoTool';
 
 Decimal.set({ precision: 80 });
 Decimal.config({
@@ -51,53 +30,6 @@ LogBox.ignoreLogs([
   // TODO: Remove when https://github.com/gorhom/react-native-bottom-sheet/issues/1854 is fixed.
   /^\[Reanimated\] Tried to modify key `reduceMotion` of an object which has been already passed to a worklet/,
 ]);
-initCore(
-  EventPlugin,
-  DbPlugin,
-  AuthenticationPlugin,
-  CryptoToolPlugin,
-  TxTrackerPlugin,
-  NFTDetailTrackerPlugin,
-  ReceiveAssetsTrackerPlugin,
-  AssetsTrackerPlugin,
-  NextNonceTrackerPlugin,
-  WalletConfigPlugin,
 
-  // Temporary Plugins
-
-  methodPlugins,
-)
-  .bootstrap()
-  .then(async (core) => {
-    try {
-      const runtime = createAppRuntime({ database });
-      await runtime.start();
-      setUiServiceContainer(runtime.context.container);
-    } catch (error) {
-      console.error('Shadow runtime start failed, falling back to legacy container:', error);
-    }
-    const plugins = [
-      { name: 'CryptoTool', encrypt: core.cryptoTool.encrypt, decrypt: core.cryptoTool.decrypt },
-      BSIMPlugin,
-      ReactInjectPlugin,
-      TransactionPlugin,
-      BlockNumberTracker,
-      new WalletConnectPlugin({
-        projectId: '77ffee6a4cbf8ed25550cea82939d1fa',
-        metadata: {
-          name: 'BIM Wallet Wallet',
-          description: 'BIM Wallet Wallet to interface with Dapps',
-          url: 'https://bimwallet.io/',
-          icons: ['https://download.bimwallet.io/assets/logo.png'],
-        },
-      }),
-    ];
-
-    WalletCore.plugins.use(plugins);
-    WalletCore.setup();
-
-    AppRegistry.registerComponent(appName, () => RootProvider);
-  })
-  .catch((error) => {
-    console.error('Error during WalletCore initialization:', error);
-  });
+// Register synchronously; boot logic runs inside RootProvider during mount.
+AppRegistry.registerComponent(appName, () => RootProvider);
