@@ -31,7 +31,7 @@ export class SigningService {
   @inject(CORE_IDENTIFIERS.AUTH)
   private readonly auth!: AuthService;
 
-  async getSigner(accountId: string, addressId: string, options: { reason?: AuthReason } = {}): Promise<ISigner> {
+  async getSigner(accountId: string, addressId: string, options: { reason?: AuthReason; signal?: AbortSignal } = {}): Promise<ISigner> {
     const account = await this.findAccount(accountId);
     const address = await this.findAddress(addressId);
     this.assertOwnership(account, address);
@@ -40,7 +40,7 @@ export class SigningService {
     const vault = await accountGroup.vault.fetch();
 
     if (vault.type === VaultType.BSIM) {
-      return this.resolveHardwareSigner(account, address, vault.hardwareDeviceId ?? undefined);
+      return this.resolveHardwareSigner(account, address, vault.hardwareDeviceId ?? undefined, options.signal);
     }
     if (vault.type === VaultType.HierarchicalDeterministic || vault.type === VaultType.PrivateKey) {
       const password = await this.auth.getPassword({ reason: options.reason ?? AUTH_REASON.SIGN_TX });
@@ -76,7 +76,7 @@ export class SigningService {
       });
     }
 
-    const signer = await this.getSigner(params.accountId, params.addressId, { reason: AUTH_REASON.SIGN_PERSONAL_MESSAGE });
+    const signer = await this.getSigner(params.accountId, params.addressId, { reason: AUTH_REASON.SIGN_PERSONAL_MESSAGE, signal: params.signal });
 
     const input = typeof params.request.message === 'string' ? params.request.message : params.request.message.raw;
     const isHexBytes = input.length % 2 === 0 && /^0x[0-9a-fA-F]*$/.test(input);
@@ -146,7 +146,7 @@ export class SigningService {
       });
     }
 
-    const signer = await this.getSigner(params.accountId, params.addressId, { reason: AUTH_REASON.SIGN_TYPED_DATA_V4 });
+    const signer = await this.getSigner(params.accountId, params.addressId, { reason: AUTH_REASON.SIGN_TYPED_DATA_V4, signal: params.signal });
     // ethers signTypedData expects "types" WITHOUT EIP712Domain (it is derived from domain internally).
     const { EIP712Domain: _ignored, ...types } = params.request.typedData.types;
 
@@ -210,8 +210,8 @@ export class SigningService {
     }
   }
 
-  private async resolveHardwareSigner(account: Account, address: Address, hardwareId?: string): Promise<HardwareSigner> {
-    const adapter = this.hardwareRegistry.get(HARDWARE_WALLET_TYPES.BSIM, hardwareId);
+  private async resolveHardwareSigner(account: Account, address: Address, hardwareId: string | undefined, signal?: AbortSignal): Promise<HardwareSigner> {
+    const adapter = this.hardwareRegistry.get(HARDWARE_WALLET_TYPES.BSIM, hardwareId) ?? this.hardwareRegistry.get(HARDWARE_WALLET_TYPES.BSIM);
     if (!adapter) {
       throw new Error('No BSIM hardware wallet adapter is registered.');
     }
@@ -220,6 +220,8 @@ export class SigningService {
     if (!network) {
       throw new Error('Address has no associated network.');
     }
+
+    await adapter.connect({ deviceIdentifier: hardwareId, signal });
 
     const hardwareAccount = await adapter.deriveAccount(account.index, network.networkType);
     if (!hardwareAccount.derivationPath) {

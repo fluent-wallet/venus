@@ -186,8 +186,7 @@ export class TransactionService {
   }
 
   /**
-   * @deprecated MIGRATION_REMOVE_AFTER_07_9_LEGACY_GAS_UI
-   * Adapter for old UI shape. Prefer `estimateGasPricing`.
+   * @deprecated Legacy UI adapter. Prefer `estimateGasPricing`.
    */
   async estimateLegacyGasForUi(params: { addressId: string; tx: TxLike; withNonce?: boolean }): Promise<LegacyLikeGasEstimate> {
     const res = await this.estimateGasPricing(params);
@@ -247,7 +246,7 @@ export class TransactionService {
 
     // get signer
     const account = await address.account.fetch();
-    const signer = await this.signingService.getSigner(account.id, address.id);
+    const signer = await this.signingService.getSigner(account.id, address.id, { signal: input.signal });
 
     // sign
     const requestId = this.createRequestId();
@@ -362,6 +361,12 @@ export class TransactionService {
       assetType: AssetType.ERC20,
       assetDecimals: input.assetDecimals,
       contractAddress: input.contractAddress,
+      gasLimit: input.gasLimit,
+      gasPrice: input.gasPrice,
+      maxFeePerGas: input.maxFeePerGas,
+      maxPriorityFeePerGas: input.maxPriorityFeePerGas,
+      nonce: input.nonce,
+      storageLimit: input.storageLimit,
       signal: input.signal,
     });
   }
@@ -473,7 +478,7 @@ export class TransactionService {
     }
 
     const account = await address.account.fetch();
-    const signer = await this.signingService.getSigner(account.id, address.id);
+    const signer = await this.signingService.getSigner(account.id, address.id, { signal: input.signal });
 
     const requestId = this.createRequestId();
     let signedTx: Awaited<ReturnType<IChainProvider['signTransaction']>>;
