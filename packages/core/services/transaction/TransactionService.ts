@@ -5,7 +5,7 @@ import type { Asset } from '@core/database/models/Asset';
 import type { Network } from '@core/database/models/Network';
 import { SignType } from '@core/database/models/Signature/type';
 import type { Tx } from '@core/database/models/Tx';
-import { TxStatus as DbTxStatus, FINISHED_IN_ACTIVITY_TX_STATUSES, PENDING_TX_STATUSES, TxSource } from '@core/database/models/Tx/type';
+import { TxStatus as DbTxStatus, FINISHED_IN_ACTIVITY_TX_STATUSES, PENDING_COUNT_STATUSES, PENDING_TX_STATUSES, TxSource } from '@core/database/models/Tx/type';
 import type { TxExtra } from '@core/database/models/TxExtra';
 import type { TxPayload } from '@core/database/models/TxPayload';
 import TableName from '@core/database/TableName';
@@ -23,32 +23,64 @@ import {
   TX_SIGN_UNSUPPORTED_NETWORK,
 } from '@core/errors';
 import type { CoreEventMap, EventBus } from '@core/modules/eventBus';
+import type { RuntimeConfig } from '@core/runtime/types';
+import { AddressValidationService } from '@core/services/address/AddressValidationService';
 import { SigningService } from '@core/services/signing';
 import { SignatureRecordService } from '@core/services/signing/SignatureRecordService';
 import {
   AssetType,
+  type ChainType,
   type EvmUnsignedTransaction,
   type FeeEstimate,
   type HardwareOperationError,
+  type Hex,
   type IChainProvider,
   NetworkType,
   TxStatus as ServiceTxStatus,
   type TransactionParams,
   type UnsignedTransaction,
 } from '@core/types';
+import { Networks } from '@core/utils/consts';
 import type { ProcessErrorType } from '@core/utils/eth';
 import { Q } from '@nozbe/watermelondb';
 import { inject, injectable, optional } from 'inversify';
+import * as OxHex from 'ox/Hex';
+import * as OxValue from 'ox/Value';
 import type { EvmRpcTransactionRequest } from './dappTypes';
-import type { ITransaction, RecentlyAddress, SendERC20Input, SendTransactionInput, TransactionFilter } from './types';
+import type {
+  GasPricingEstimate,
+  ITransaction,
+  LegacyLikeGasEstimate,
+  RecentlyAddress,
+  SendERC20Input,
+  SendTransactionInput,
+  TransactionFilter,
+} from './types';
+
+type TxLike = {
+  from?: string;
+  to?: string;
+  value?: string;
+  data?: string;
+};
+
+const GAS_LEVELS = ['low', 'medium', 'high'] as const;
+type GasLevel = (typeof GAS_LEVELS)[number];
 
 @injectable()
 export class TransactionService {
   @inject(CORE_IDENTIFIERS.DB)
   private readonly database!: Database;
 
+  @inject(CORE_IDENTIFIERS.CONFIG)
+  @optional()
+  private readonly config?: RuntimeConfig;
+
   @inject(ChainRegistry)
   private readonly chainRegistry!: ChainRegistry;
+
+  @inject(AddressValidationService)
+  private readonly addressValidationService!: AddressValidationService;
 
   @inject(SigningService)
   private readonly signingService!: SigningService;
@@ -59,6 +91,143 @@ export class TransactionService {
   @inject(CORE_IDENTIFIERS.EVENT_BUS)
   @optional()
   private readonly eventBus?: EventBus<CoreEventMap>;
+
+  async isPendingTxsFull(params: { addressId: string }): Promise<boolean> {
+    const { addressId } = params;
+    if (!addressId) return false;
+
+    const limit = this.getPendingCountLimit();
+
+    const count = await this.database
+      .get<Tx>(TableName.Tx)
+      .query(Q.where('address_id', addressId), Q.where('is_temp_replaced', Q.notEq(true)), Q.where('status', Q.oneOf(PENDING_COUNT_STATUSES)))
+      .fetchCount();
+
+    return count >= limit;
+  }
+
+  async estimateGasPricing(params: { addressId: string; tx: TxLike; withNonce?: boolean }): Promise<GasPricingEstimate> {
+    const { addressId, tx, withNonce = true } = params;
+
+    const address = await this.findAddress(addressId);
+    const network = await this.getNetwork(address);
+    const chainProvider = this.getChainProvider(network);
+
+    const from = tx.from ?? (await address.getValue());
+    const to = tx.to;
+    const data = tx.data ?? '0x';
+    const value = tx.value ?? '0x0';
+
+    const gasBuffer = network.gasBuffer > 0 ? network.gasBuffer : 1;
+    const nonce = withNonce ? await chainProvider.getNonce(from) : 0;
+
+    const [gasPrice, supports1559] = await Promise.all([this.getGasPrice({ chainProvider, network }), this.is1559Supported({ chainProvider, network })]);
+
+    const minGasPriceWei = this.getMinGasPrice(network);
+
+    if (network.networkType === NetworkType.Ethereum) {
+      const isContract = to
+        ? await this.addressValidationService.isContractAddress({ networkType: network.networkType, chainId: network.chainId, addressValue: to })
+        : true;
+      const isSendNativeToken = (!!to && !isContract) || !data || data === '0x';
+
+      const gasLimit = isSendNativeToken
+        ? this.applyGasBuffer(21_000n, gasBuffer)
+        : await this.estimateEvmGasLimit({ chainProvider, from, to, data, value, gasBuffer });
+
+      return {
+        gasLimit,
+        gasPrice,
+        constraints: { minGasPriceWei },
+        pricing: supports1559
+          ? { kind: 'eip1559', levels: this.buildEip1559Levels({ gasPrice, gasLimit, network }) }
+          : { kind: 'legacy', levels: this.buildLegacyLevels({ gasPrice, gasLimit, network }) },
+        nonce,
+      };
+    }
+
+    if (network.networkType === NetworkType.Conflux) {
+      const isContract = to
+        ? await this.addressValidationService.isContractAddress({ networkType: network.networkType, chainId: network.chainId, addressValue: to })
+        : true;
+      const isSendNativeToken = (!!to && !isContract) || !data || data === '0x';
+
+      if (isSendNativeToken) {
+        const gasLimit = this.applyGasBuffer(21_000n, gasBuffer);
+        const storageLimit = '0x0' as const;
+
+        return {
+          gasLimit,
+          storageLimit,
+          gasPrice,
+          constraints: { minGasPriceWei },
+          pricing: supports1559
+            ? { kind: 'eip1559', levels: this.buildEip1559Levels({ gasPrice, gasLimit, network }) }
+            : { kind: 'legacy', levels: this.buildLegacyLevels({ gasPrice, gasLimit, network }) },
+          nonce,
+        };
+      }
+
+      const { gasLimit, storageLimit } = await this.estimateCfxGasAndCollateral({ chainProvider, from, to, data, value, gasBuffer });
+
+      return {
+        gasLimit,
+        storageLimit,
+        gasPrice,
+        constraints: { minGasPriceWei },
+        pricing: supports1559
+          ? { kind: 'eip1559', levels: this.buildEip1559Levels({ gasPrice, gasLimit, network }) }
+          : { kind: 'legacy', levels: this.buildLegacyLevels({ gasPrice, gasLimit, network }) },
+        nonce,
+      };
+    }
+
+    throw new Error(`estimateGasPricing: unsupported networkType: ${String(network.networkType)}`);
+  }
+
+  /**
+   * @deprecated MIGRATION_REMOVE_AFTER_07_9_LEGACY_GAS_UI
+   * Adapter for old UI shape. Prefer `estimateGasPricing`.
+   */
+  async estimateLegacyGasForUi(params: { addressId: string; tx: TxLike; withNonce?: boolean }): Promise<LegacyLikeGasEstimate> {
+    const res = await this.estimateGasPricing(params);
+    const { gasLimit, storageLimit, gasPrice, nonce, pricing } = res;
+
+    if (pricing.kind === 'legacy') {
+      const levels = pricing.levels;
+      return {
+        gasLimit,
+        storageLimit,
+        gasPrice,
+        estimate: Object.fromEntries(
+          GAS_LEVELS.map((level) => [level, { suggestedGasPrice: levels[level].gasPrice, gasCost: levels[level].gasCost }]),
+        ) as LegacyLikeGasEstimate['estimate'],
+        nonce,
+      };
+    }
+
+    const levels = pricing.levels;
+    return {
+      gasLimit,
+      storageLimit,
+      gasPrice,
+      estimateOf1559: Object.fromEntries(
+        GAS_LEVELS.map((level) => [
+          level,
+          {
+            suggestedMaxFeePerGas: levels[level].maxFeePerGas,
+            suggestedMaxPriorityFeePerGas: levels[level].maxPriorityFeePerGas,
+            gasCost: levels[level].gasCost,
+          },
+        ]),
+      ) as LegacyLikeGasEstimate['estimateOf1559'],
+      nonce,
+    };
+  }
+
+  getMinGasPriceWei(params: { chainId: string; networkType: ChainType }): Hex {
+    return this.getMinGasPrice(params);
+  }
 
   // send native token
   async sendNative(input: SendTransactionInput): Promise<ITransaction> {
@@ -845,6 +1014,155 @@ export class TransactionService {
   private toLowerCaseAddress(value?: string | null): string | null {
     return value ? value.toLowerCase() : null;
   }
+
+  private getPendingCountLimit(): number {
+    const limit = Math.floor(this.config?.wallet?.pendingCountLimit ?? 5);
+    return Number.isFinite(limit) && limit > 0 ? limit : 5;
+  }
+
+  private toHex(value: bigint): Hex {
+    return OxHex.fromNumber(value) as Hex;
+  }
+
+  private toBigInt(value: Hex): bigint {
+    return OxHex.toBigInt(value as OxHex.Hex);
+  }
+
+  private async getGasPrice(params: { chainProvider: IChainProvider; network: Pick<Network, 'networkType'> }): Promise<Hex> {
+    const { chainProvider, network } = params;
+    const method = network.networkType === NetworkType.Conflux ? 'cfx_gasPrice' : 'eth_gasPrice';
+    return (await chainProvider.rpc.request(method)) as Hex;
+  }
+
+  private async is1559Supported(params: { chainProvider: IChainProvider; network: Pick<Network, 'networkType'> }): Promise<boolean> {
+    const { chainProvider, network } = params;
+    if (network.networkType === NetworkType.Conflux) {
+      const block = (await chainProvider.rpc.request('cfx_getBlockByEpochNumber', ['latest_state', false])) as { baseFeePerGas?: unknown };
+      return typeof block?.baseFeePerGas === 'string';
+    }
+    const block = (await chainProvider.rpc.request('eth_getBlockByNumber', ['latest', false])) as { baseFeePerGas?: unknown };
+    return typeof block?.baseFeePerGas === 'string';
+  }
+
+  private async estimateEvmGasLimit(params: {
+    chainProvider: IChainProvider;
+    from: string;
+    to?: string;
+    data: string;
+    value: string;
+    gasBuffer: number;
+  }): Promise<Hex> {
+    const gas = (await params.chainProvider.rpc.request('eth_estimateGas', [
+      {
+        from: params.from,
+        to: params.to,
+        value: params.value,
+        data: params.data,
+      },
+      'latest',
+    ])) as Hex;
+
+    return this.applyGasBuffer(this.toBigInt(gas), params.gasBuffer);
+  }
+
+  private async estimateCfxGasAndCollateral(params: {
+    chainProvider: IChainProvider;
+    from: string;
+    to?: string;
+    data: string;
+    value: string;
+    gasBuffer: number;
+  }): Promise<{ gasLimit: Hex; storageLimit: Hex }> {
+    const result = (await params.chainProvider.rpc.request('cfx_estimateGasAndCollateral', [
+      {
+        from: params.from,
+        to: params.to,
+        value: params.value,
+        data: params.data,
+      },
+      'latest_state',
+    ])) as { gasLimit: Hex; storageCollateralized: Hex };
+
+    return { gasLimit: this.applyGasBuffer(this.toBigInt(result.gasLimit), params.gasBuffer), storageLimit: result.storageCollateralized };
+  }
+
+  private getMinGasPrice(network: Pick<Network, 'chainId' | 'networkType'>): Hex {
+    const cfg = this.config?.wallet?.gas;
+    const chainId = network.chainId.toLowerCase();
+
+    const gwei = cfg?.minGasPriceGweiByChain?.[network.networkType]?.[chainId] ?? cfg?.minGasPriceGweiByNetworkType?.[network.networkType];
+
+    if (gwei != null) return this.toHex(OxValue.fromGwei(String(gwei)));
+
+    if (network.networkType === NetworkType.Conflux) return this.toHex(OxValue.fromGwei('1'));
+
+    const eSpaceChainIds = [Networks['Conflux eSpace'].chainId, Networks['eSpace Testnet'].chainId] as const;
+    if (network.networkType === NetworkType.Ethereum && eSpaceChainIds.includes(network.chainId as (typeof eSpaceChainIds)[number])) {
+      return this.toHex(OxValue.fromGwei('20'));
+    }
+
+    return '0x0';
+  }
+
+  private clampGasPrice(gasPrice: Hex, network: Pick<Network, 'chainId' | 'networkType'>): Hex {
+    const min = this.getMinGasPrice(network);
+    return this.toBigInt(gasPrice) < this.toBigInt(min) ? min : gasPrice;
+  }
+
+  private scaleGasPrice(base: bigint, level: GasLevel): bigint {
+    switch (level) {
+      case 'high':
+        return (base * 12n) / 10n;
+      case 'low':
+        return (base * 9n) / 10n;
+      default:
+        return base;
+    }
+  }
+
+  private applyGasBuffer(value: bigint, gasBuffer: number): Hex {
+    // Use integer math to avoid float precision loss (gas values are bigint).
+    const factor = BigInt(Math.round(gasBuffer * 1000));
+    const buffered = (value * factor + 999n) / 1000n; // ceil
+    return this.toHex(buffered);
+  }
+
+  private buildLegacyLevels(params: {
+    gasPrice: Hex;
+    gasLimit: Hex;
+    network: Pick<Network, 'chainId' | 'networkType'>;
+  }): Record<GasLevel, { gasPrice: Hex; gasCost: Hex }> {
+    const gasLimit = this.toBigInt(params.gasLimit);
+    const base = this.toBigInt(params.gasPrice);
+
+    return Object.fromEntries(
+      GAS_LEVELS.map((level) => {
+        const scaled = this.scaleGasPrice(base, level);
+        const suggestedGasPrice = this.clampGasPrice(this.toHex(scaled), params.network);
+        const gasCost = this.toHex(this.toBigInt(suggestedGasPrice) * gasLimit);
+        return [level, { gasPrice: suggestedGasPrice, gasCost }];
+      }),
+    ) as Record<GasLevel, { gasPrice: Hex; gasCost: Hex }>;
+  }
+
+  private buildEip1559Levels(params: {
+    gasPrice: Hex;
+    gasLimit: Hex;
+    network: Pick<Network, 'chainId' | 'networkType'>;
+  }): Record<GasLevel, { maxFeePerGas: Hex; maxPriorityFeePerGas: Hex; gasCost: Hex }> {
+    const gasLimit = this.toBigInt(params.gasLimit);
+    const base = this.toBigInt(params.gasPrice);
+
+    return Object.fromEntries(
+      GAS_LEVELS.map((level) => {
+        const scaled = this.scaleGasPrice(base, level);
+        const clamped = this.clampGasPrice(this.toHex(scaled), params.network);
+        const gasCost = this.toHex(this.toBigInt(clamped) * gasLimit);
+        return [level, { maxFeePerGas: clamped, maxPriorityFeePerGas: clamped, gasCost }];
+      }),
+    ) as Record<GasLevel, { maxFeePerGas: Hex; maxPriorityFeePerGas: Hex; gasCost: Hex }>;
+  }
+
   private async toInterface(tx: Tx): Promise<ITransaction> {
     const address = await tx.address.fetch();
     const network = await address.network.fetch();

@@ -15,11 +15,13 @@ import { CORE_IDENTIFIERS } from '@core/di';
 import { CHAIN_PROVIDER_NOT_FOUND, TX_BROADCAST_FAILED } from '@core/errors';
 import type { CoreEventMap, EventBus } from '@core/modules/eventBus';
 import { InMemoryEventBus } from '@core/modules/eventBus';
+import type { RuntimeConfig } from '@core/runtime/types';
+import { AddressValidationService } from '@core/services/address/AddressValidationService';
 import { SigningService } from '@core/services/signing';
 import { createTestAccount, seedNetwork } from '@core/testUtils/fixtures';
 import { createSilentLogger, DEFAULT_PRIVATE_KEY, mockDatabase } from '@core/testUtils/mocks';
 import { StubChainProvider } from '@core/testUtils/mocks/chainProviders';
-import { AssetType, type ISigner, TxStatus as ServiceTxStatus } from '@core/types';
+import { AssetType, type IChainRpc, type ISigner, TxStatus as ServiceTxStatus } from '@core/types';
 import { Container } from 'inversify';
 import { ChainStatusService } from '../chain/ChainStatusService';
 import { SignatureRecordService } from '../signing/SignatureRecordService';
@@ -78,6 +80,7 @@ describe('TransactionService', () => {
   let chainRegistry: ChainRegistry;
   let signingService: FakeSigningService;
   let eventBus: EventBus<CoreEventMap>;
+  let runtimeConfig: RuntimeConfig;
   let service: TransactionService;
 
   beforeEach(() => {
@@ -85,13 +88,16 @@ describe('TransactionService', () => {
     database = mockDatabase();
     chainRegistry = new ChainRegistry();
     signingService = new FakeSigningService();
+    runtimeConfig = { wallet: { pendingCountLimit: 5 } };
 
     eventBus = new InMemoryEventBus<CoreEventMap>({ logger: createSilentLogger(), assertSerializable: true });
     container.bind(CORE_IDENTIFIERS.EVENT_BUS).toConstantValue(eventBus);
     container.bind(CORE_IDENTIFIERS.DB).toConstantValue(database);
+    container.bind(CORE_IDENTIFIERS.CONFIG).toConstantValue(runtimeConfig);
     container.bind(ChainRegistry).toConstantValue(chainRegistry);
 
     container.bind(ChainStatusService).toSelf();
+    container.bind(AddressValidationService).toSelf();
     container.bind(SignatureRecordService).toSelf();
 
     container.bind(SigningService).toConstantValue(signingService as unknown as SigningService);
@@ -304,6 +310,68 @@ describe('TransactionService', () => {
 
     expect(errorPayload.requestId).toBe(startPayload.requestId);
     expect(errorPayload.error).toMatchObject({ code: 'HARDWARE_UNAVAILABLE', reason: 'card_missing' });
+  });
+
+  it('estimates EVM native transfer gas and 1559 suggestions for UI', async () => {
+    const { network, assetRule } = await seedNetwork(database, { definitionKey: 'Conflux eSpace' });
+    const { address } = await createTestAccount(database, { network, assetRule });
+
+    const request: IChainRpc['request'] = jest.fn(async <T = unknown>(method: string): Promise<T> => {
+      if (method === 'eth_gasPrice') return '0x1' as unknown as T;
+      if (method === 'eth_getBlockByNumber') return { baseFeePerGas: '0x1' } as unknown as T;
+      if (method === 'eth_getCode') return '0x' as unknown as T;
+      throw new Error(`unexpected method: ${method}`);
+    });
+    const batch: IChainRpc['batch'] = jest.fn(async <T = unknown>(): Promise<T[]> => []);
+
+    chainRegistry.register(new StubChainProvider({ chainId: network.chainId, networkType: network.networkType, rpc: { request, batch } }));
+
+    const estimate = await service.estimateLegacyGasForUi({
+      addressId: address.id,
+      withNonce: false,
+      tx: {
+        from: await address.getValue(),
+        to: '0x0000000000000000000000000000000000000001',
+        value: '0x0',
+        data: '0x',
+      },
+    });
+
+    expect(estimate.gasLimit).toBe('0x5208');
+    expect(estimate.estimate).toBeUndefined();
+    expect(estimate.estimateOf1559?.medium.gasCost).toMatch(/^0x/);
+    expect(estimate.nonce).toBe(0);
+  });
+
+  it('estimates Conflux native transfer gas and legacy suggestions for UI', async () => {
+    const { network, assetRule } = await seedNetwork(database, { definitionKey: 'Conflux Testnet' });
+    const { address } = await createTestAccount(database, { network, assetRule });
+
+    const request: IChainRpc['request'] = jest.fn(async <T = unknown>(method: string): Promise<T> => {
+      if (method === 'cfx_gasPrice') return '0x1' as unknown as T;
+      if (method === 'cfx_getBlockByEpochNumber') return {} as unknown as T;
+      throw new Error(`unexpected method: ${method}`);
+    });
+    const batch: IChainRpc['batch'] = jest.fn(async <T = unknown>(): Promise<T[]> => []);
+
+    chainRegistry.register(new StubChainProvider({ chainId: network.chainId, networkType: network.networkType, rpc: { request, batch } }));
+
+    const estimate = await service.estimateLegacyGasForUi({
+      addressId: address.id,
+      withNonce: false,
+      tx: {
+        from: await address.getValue(),
+        to: 'cfx:aaejuaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa0sfbnjm2zz',
+        value: '0x0',
+        data: '0x',
+      },
+    });
+
+    expect(estimate.gasLimit).toBe('0x5208');
+    expect(estimate.storageLimit).toBe('0x0');
+    expect(estimate.estimate?.medium.gasCost).toMatch(/^0x/);
+    expect(estimate.estimateOf1559).toBeUndefined();
+    expect(estimate.nonce).toBe(0);
   });
 
   it('dispatches hardware signing abort event when caller aborts via signal', async () => {
@@ -738,5 +806,35 @@ describe('TransactionService', () => {
     } as any;
 
     await expect(service.sendDappTransaction({ addressId: address.id, request })).rejects.toMatchObject({ code: CHAIN_PROVIDER_NOT_FOUND });
+  });
+
+  it('checks pending tx count limit from runtime config', async () => {
+    const { address } = await createTestAccount(database);
+
+    // 2 pending-count statuses (WAITTING + PENDING)
+    await createDbTx({
+      database,
+      address,
+      status: DbTxStatus.PENDING,
+      from: '0x0000000000000000000000000000000000000001',
+      to: '0x0000000000000000000000000000000000000002',
+      hash: '0xhash1',
+      sendAt: new Date(),
+    });
+    await createDbTx({
+      database,
+      address,
+      status: DbTxStatus.WAITTING,
+      from: '0x0000000000000000000000000000000000000001',
+      to: '0x0000000000000000000000000000000000000002',
+      hash: '0xhash2',
+      sendAt: new Date(),
+    });
+
+    runtimeConfig.wallet = { pendingCountLimit: 2 };
+    await expect(service.isPendingTxsFull({ addressId: address.id })).resolves.toBe(true);
+
+    runtimeConfig.wallet = { pendingCountLimit: 3 };
+    await expect(service.isPendingTxsFull({ addressId: address.id })).resolves.toBe(false);
   });
 });
