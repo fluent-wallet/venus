@@ -22,11 +22,10 @@ import {
   type DeriveKeyParams,
   getDefaultSignatureAlgorithm,
   type PubkeyRecord,
-  TransportError,
   type Wallet,
   type WalletOptions,
 } from 'react-native-bsim';
-import { BSIM_ACCOUNT_LIMIT, BSIM_ERROR_CANCEL, BSIM_HARDWARE_UNAVAILABLE, EVM_CHAIN_ERROR, EVM_COIN_TYPE } from './constants';
+import { BSIM_ACCOUNT_LIMIT, BSIM_ERROR_CANCEL, EVM_CHAIN_ERROR, EVM_COIN_TYPE } from './constants';
 import { assertAbortable, BSIMHardwareError, createAbortError, normalizeError as normalizeErrorUtil } from './errors';
 import type { BSIMAdapterOptions, RetryOptions } from './types';
 import { convertBSIMRecordToAccount, filterAndSortBSIMRecords, parseDerivationPathIndex, parseHex, resolveRecoveryParam, trimDerivationPath } from './utils';
@@ -106,10 +105,7 @@ export class BSIMHardwareWallet implements IBSIMWallet {
   }
 
   async disconnect(): Promise<void> {
-    this.wallet = null;
-    this.connected = false;
-    this.lastTransport = undefined;
-    this.lastDeviceIdentifier = undefined;
+    this.resetConnection();
   }
 
   async isConnected(): Promise<boolean> {
@@ -304,7 +300,7 @@ export class BSIMHardwareWallet implements IBSIMWallet {
   }
 
   /**
-   * Retries an operation with exponential backoff until success or timeout.
+   * Retries an operation with a fixed delay until success or timeout.
    * Each retry is separated by delayMs. If the operation is aborted via signal,
    * throws immediately without further retries.
    *
@@ -460,9 +456,7 @@ export class BSIMHardwareWallet implements IBSIMWallet {
   }
 
   private async ensureHardwareReady(signal?: AbortSignal): Promise<void> {
-    if (!this.wallet) {
-      throw new BSIMHardwareError('NOT_CONNECTED', 'BSIM wallet has not been connected.');
-    }
+    this.requireWallet();
     assertAbortable(signal);
     try {
       await this.runExclusive(() => this.wallet!.getVersion());
@@ -490,7 +484,7 @@ export class BSIMHardwareWallet implements IBSIMWallet {
       return { transports: [{ kind: 'ble', options: { deviceId: deviceIdentifier } }] };
     }
 
-    return { transports: [{ kind: 'apdu', options: { aid: undefined } }] };
+    return { transports: [{ kind: 'apdu' }] };
   }
 
   /**
@@ -542,15 +536,7 @@ export class BSIMHardwareWallet implements IBSIMWallet {
 
   private handleOperationError(error: unknown): never {
     const normalized = this.normalizeError(error);
-    if (this.shouldResetConnection(error, normalized.code)) {
-      this.resetConnection();
-    }
     throw normalized;
-  }
-
-  private shouldResetConnection(error: unknown, code: string): boolean {
-    if (error instanceof TransportError) return true;
-    return code === 'NOT_CONNECTED' || code === BSIM_HARDWARE_UNAVAILABLE;
   }
 
   private resetConnection(): void {
