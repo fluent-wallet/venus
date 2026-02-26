@@ -4,6 +4,7 @@ import type { CoreEventMap } from '@core/modules/eventBus';
 import type { ExternalRequestsService } from '@core/modules/externalRequests';
 import {
   AccountService,
+  AddressValidationService,
   AssetService,
   type IAccount,
   type IAsset,
@@ -50,6 +51,10 @@ export function getQueryClient(): QueryClient {
 
 export function getAccountService(): AccountService {
   return getContainer().get(AccountService);
+}
+
+export function getAddressValidationService(): AddressValidationService {
+  return getContainer().get(AddressValidationService);
 }
 
 export function getNetworkService(): NetworkService {

@@ -12,8 +12,8 @@ import Button from '@components/Button';
 import Text from '@components/Text';
 import _TextInput from '@components/TextInput';
 import { useCurrentNetwork } from '@core/WalletCore/Plugins/ReactInject';
-import { Gwei, getMinGasPrice } from '@core/WalletCore/Plugins/Transaction/SuggestedGasEstimate';
 import { useTheme } from '@react-navigation/native';
+import { getTransactionService } from '@service/core';
 import Decimal from 'decimal.js';
 /* eslint-disable react-hooks/exhaustive-deps */
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
@@ -31,6 +31,8 @@ interface Props {
   onClose: () => void;
   force155?: boolean;
 }
+
+const Gwei = new Decimal(10).pow(9);
 
 const GweiSuffix = memo(() => {
   const { colors } = useTheme();
@@ -88,7 +90,10 @@ const CustomizeGasSetting: React.FC<Props> = ({ customizeGasSetting, estimateCur
   const { colors } = useTheme();
   const bottomSheetRef = useRef<BottomSheetMethods>(null!);
   const currentNetwork = useCurrentNetwork()!;
-  const minGasPrice = useMemo(() => getMinGasPrice(currentNetwork), [currentNetwork?.id]);
+  const minGasPrice = useMemo(
+    () => getTransactionService().getMinGasPriceWei({ chainId: currentNetwork.chainId, networkType: currentNetwork.networkType }),
+    [currentNetwork.chainId, currentNetwork.networkType],
+  );
 
   const {
     control,

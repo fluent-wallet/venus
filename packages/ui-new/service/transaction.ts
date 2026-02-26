@@ -1,4 +1,4 @@
-import type { SendERC20Input, SendTransactionInput } from '@core/services';
+import type { LegacyLikeGasEstimate, SendERC20Input, SendTransactionInput } from '@core/services';
 import { type UseQueryResult, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useCallback } from 'react';
 import { useCurrentAddress } from './account';
@@ -8,10 +8,47 @@ import { getTransactionService, type ITransaction, type RecentlyAddress } from '
 export type TransactionsQuery = UseQueryResult<ITransaction[]>;
 export type RecentlyAddressesQuery = UseQueryResult<RecentlyAddress[]>;
 
+export type Level = 'low' | 'medium' | 'high';
+
 export const getTransactionRootKey = () => ['tx'] as const;
 export const getTransactionsByAddressKey = (addressId: string, status: string, limit?: number) =>
   ['tx', 'byAddress', addressId, status, limit ?? 'all'] as const;
 export const getRecentlyAddressesKey = (addressId: string) => ['tx', 'recently', addressId] as const;
+
+export async function isPendingTxsFull(addressId: string): Promise<boolean> {
+  if (!addressId) return false;
+  return getTransactionService().isPendingTxsFull({ addressId });
+}
+
+export function usePollingGasEstimateAndNonce(
+  tx: { from?: string; to?: string; value?: string; data?: string } | null,
+  withNonce = true,
+  addressIdOverride?: string,
+): LegacyLikeGasEstimate | null {
+  const service = getTransactionService();
+  const currentAddress = useCurrentAddress();
+  const addressId = addressIdOverride ?? currentAddress.data?.id ?? '';
+
+  const enabled = !!addressId && !!tx;
+
+  const estimate = useQuery({
+    queryKey: [
+      'gasEstimate',
+      addressId || 'none',
+      withNonce ? 'withNonce' : 'noNonce',
+      tx ? (tx.from ?? '') : '__null__',
+      tx ? (tx.to ?? '') : '__null__',
+      tx ? (tx.value ?? '') : '__null__',
+      tx ? (tx.data ?? '') : '__null__',
+    ],
+    queryFn: () => service.estimateLegacyGasForUi({ addressId, tx: tx!, withNonce }),
+    enabled,
+    refetchInterval: 15_000,
+    retry: 0,
+  });
+
+  return enabled ? (estimate.data ?? null) : null;
+}
 
 /**
  * Fetch transactions of a specific address.

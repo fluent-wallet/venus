@@ -34,12 +34,12 @@ import {
 } from '@core/WalletCore/Plugins/ReactInject';
 import { useAccountOfTx, useAssetOfTx, useNetworkOfTx } from '@core/WalletCore/Plugins/ReactInject/data/useTxs';
 import type { ITxEvm } from '@core/WalletCore/Plugins/Transaction/types';
-import usePollingGasEstimateAndNonce from '@core/WalletCore/Plugins/Transaction/usePollingGasEstimateAndNonce';
 import useInAsync from '@hooks/useInAsync';
 import { SignTransactionCancelError, useSignTransaction } from '@hooks/useSignTransaction';
 import BSIMVerify, { useBSIMVerify } from '@pages/SendTransaction/BSIMVerify';
 import { useNavigation, useTheme } from '@react-navigation/native';
 import type { SpeedUpStackName, StackNavigation, StackScreenProps } from '@router/configs';
+import { usePollingGasEstimateAndNonce } from '@service/transaction';
 import backToHome from '@utils/backToHome';
 import { handleBSIMHardwareUnavailable } from '@utils/handleBSIMHardwareUnavailable';
 import matchRPCErrorMessage from '@utils/matchRPCErrorMssage';
@@ -111,7 +111,7 @@ const SpeedUp: React.FC<StackScreenProps<typeof SpeedUpStackName>> = ({ navigati
 
   const [error, setError] = useState<{ type?: string; message: string } | null>(null);
 
-  const estimateRes = usePollingGasEstimateAndNonce(txHalf);
+  const estimateRes = usePollingGasEstimateAndNonce(txHalf, true, tx?.address.id);
   const estimateCurrentGasPrice = estimateRes?.gasPrice ?? null;
 
   const higherGasSetting = useMemo(() => createGasSetting(txPayload, higherRatio, estimateCurrentGasPrice), [txPayload, estimateCurrentGasPrice]);

@@ -5,16 +5,16 @@ import HourglassLoading from '@components/Loading/Hourglass';
 import Text from '@components/Text';
 import TextInput from '@components/TextInput';
 import { trimDecimalZeros } from '@core/utils/balance';
-import plugins from '@core/WalletCore/Plugins';
 import type { AssetInfo } from '@core/WalletCore/Plugins/AssetsTracker/types';
 import type { NFTItemDetail } from '@core/WalletCore/Plugins/NFTDetailTracker/server';
-import { AssetType, useCurrentAddressValue, useCurrentNetwork } from '@core/WalletCore/Plugins/ReactInject';
+import { AssetType, useCurrentAddress, useCurrentAddressValue } from '@core/WalletCore/Plugins/ReactInject';
 import useFormatBalance from '@hooks/useFormatBalance';
 import useInAsync from '@hooks/useInAsync';
 import NFTIcon from '@modules/AssetsList/NFTsList/NFTIcon';
 import { getDetailSymbol } from '@modules/AssetsList/NFTsList/NFTItem';
 import TokenIcon from '@modules/AssetsList/TokensList/TokenIcon';
 import { useTheme } from '@react-navigation/native';
+import { getTransactionService } from '@service/core';
 import Decimal from 'decimal.js';
 import type React from 'react';
 import { forwardRef, useCallback, useEffect, useImperativeHandle, useMemo, useState } from 'react';
@@ -51,7 +51,7 @@ const SetAssetAmount = forwardRef<SetAssetAmountMethods, Props>(
   ({ targetAddress, asset, nftItemDetail, onAmountInfoChange, children, defaultAmount, isReceive }, ref) => {
     const { colors, reverseColors } = useTheme();
     const { t } = useTranslation();
-    const currentNetwork = useCurrentNetwork()!;
+    const currentAddress = useCurrentAddress();
     const currentAddressValue = useCurrentAddressValue()!;
     const [amount, setAmount] = useState(() => defaultAmount ?? '');
     const [validMax, setValidMax] = useState<Decimal | null>(() => (isReceive ? new Decimal(Number.POSITIVE_INFINITY) : null));
@@ -84,11 +84,15 @@ const SetAssetAmount = forwardRef<SetAssetAmountMethods, Props>(
         return res;
       }
       try {
-        const { estimate, estimateOf1559 } = await plugins.Transaction.estimate({
+        const addressId = currentAddress?.id;
+        if (!addressId) return;
+
+        const estimateRes = await getTransactionService().estimateLegacyGasForUi({
+          addressId,
+          withNonce: false,
           tx: { to: targetAddress, value: '0x0', from: currentAddressValue },
-          network: currentNetwork!,
         });
-        const usedEstimate = estimateOf1559 ?? estimate!;
+        const usedEstimate = (estimateRes.estimateOf1559 ?? estimateRes.estimate)!;
         let res = new Decimal(asset.balance).sub(new Decimal(usedEstimate.medium.gasCost));
         res = res.greaterThan(0) ? res : new Decimal(0);
         setValidMax(res);
