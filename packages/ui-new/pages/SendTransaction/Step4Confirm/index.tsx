@@ -1,71 +1,62 @@
-import { getAssetsTracker, getEventBus, getNFTDetailTracker } from '@WalletCoreExtends/index';
-import { isAuthenticationCanceledError, isAuthenticationError } from '@WalletCoreExtends/Plugins/Authentication/errors';
-import { BSIMEventTypesName } from '@WalletCoreExtends/Plugins/BSIM/types';
 import ProhibitIcon from '@assets/icons/prohibit.svg';
 import WarnIcon from '@assets/icons/warn.svg';
 import { BottomSheetFooter, BottomSheetScrollContent } from '@components/BottomSheet';
 import Button from '@components/Button';
 import Text from '@components/Text';
-import type { Signature } from '@core/database/models/Signature';
-import { SignType } from '@core/database/models/Signature/type';
-import { processError } from '@core/utils/eth';
-import { TransactionActionType } from '@core/WalletCore/Events/broadcastTransactionSubject';
-import { BROADCAST_TRANSACTION_EVENT } from '@core/WalletCore/Events/eventTypes';
-import methods from '@core/WalletCore/Methods';
-import plugins from '@core/WalletCore/Plugins';
-import { checkDiffInRange } from '@core/WalletCore/Plugins/BlockNumberTracker';
-import {
-  AssetSource,
-  AssetType,
-  NetworkType,
-  useCurrentAccount,
-  useCurrentAddress,
-  useCurrentAddressValue,
-  useCurrentNetwork,
-  useCurrentNetworkNativeAsset,
-  useVaultOfAccount,
-  VaultType,
-} from '@core/WalletCore/Plugins/ReactInject';
-import type { ITxEvm } from '@core/WalletCore/Plugins/Transaction/types';
+import { buildTransactionPayload } from '@core/chains/utils/transactionBuilder';
+import { AUTH_PASSWORD_REQUEST_CANCELED } from '@core/errors';
+import { AssetType, NetworkType } from '@core/types';
 import useFormatBalance from '@hooks/useFormatBalance';
 import useInAsync from '@hooks/useInAsync';
-import { SignTransactionCancelError, useSignTransaction } from '@hooks/useSignTransaction';
 import { AccountItemView } from '@modules/AccountsList';
 import { getDetailSymbol } from '@modules/AssetsList/NFTsList/NFTItem';
 import GasFeeSetting, { type GasEstimate } from '@modules/GasFee/GasFeeSetting';
 import EstimateFee from '@modules/GasFee/GasFeeSetting/EstimateFee';
 import { useNavigation, useTheme } from '@react-navigation/native';
 import type { SendTransactionScreenProps, SendTransactionStep4StackName, StackNavigation } from '@router/configs';
+import { useCurrentAccount, useCurrentAddress } from '@service/account';
+import { useAssetsOfCurrentAddress } from '@service/asset';
+import { getAssetsSyncService } from '@service/core';
+import { useCurrentNetwork } from '@service/network';
+import { useSendERC20, useSendNative } from '@service/transaction';
 import backToHome from '@utils/backToHome';
 import { calculateTokenPrice } from '@utils/calculateTokenPrice';
 import { isSmallDevice } from '@utils/deviceInfo';
 import { handleBSIMHardwareUnavailable } from '@utils/handleBSIMHardwareUnavailable';
 import matchRPCErrorMessage from '@utils/matchRPCErrorMssage';
 import Decimal from 'decimal.js';
-import { BSIMError } from 'packages/WalletCoreExtends/Plugins/BSIM/BSIMSDK';
 import type React from 'react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Keyboard, StyleSheet, View } from 'react-native';
 import { showMessage } from 'react-native-flash-message';
-import BSIMVerify, { useBSIMVerify } from '../BSIMVerify';
+import HardwareSignVerify from '../HardwareSignVerify';
 import SendTransactionBottomSheet from '../SendTransactionBottomSheet';
 import { NFT } from '../Step3Amount';
 import SendAsset from './SendAsset';
+import { useHardwareSigningUiState } from './useHardwareSigningUiState';
+
+const isUserCanceledError = (error: unknown): boolean => {
+  const code = (error as { code?: unknown } | null)?.code;
+  if (code === AUTH_PASSWORD_REQUEST_CANCELED) return true;
+  if (code === 'CANCEL') return true;
+
+  const name = (error as { name?: unknown } | null)?.name;
+  if (name === 'AbortError') return true;
+
+  return false;
+};
 
 const SendTransactionStep4Confirm: React.FC<SendTransactionScreenProps<typeof SendTransactionStep4StackName>> = ({ navigation, route }) => {
   useEffect(() => Keyboard.dismiss(), []);
   const { t } = useTranslation();
   const { colors } = useTheme();
   const rootNavigation = useNavigation<StackNavigation>();
-  const currentNetwork = useCurrentNetwork()!;
-  const nativeAsset = useCurrentNetworkNativeAsset()!;
-  const currentAddress = useCurrentAddress()!;
-  const currentAddressValue = useCurrentAddressValue()!;
-  const currentAccount = useCurrentAccount();
-  const currentVault = useVaultOfAccount(currentAccount?.id);
 
-  const signTransaction = useSignTransaction();
+  const { data: currentNetwork } = useCurrentNetwork();
+  const { data: currentAccount } = useCurrentAccount();
+  const { data: currentAddress } = useCurrentAddress();
+  const { data: assets } = useAssetsOfCurrentAddress();
 
   const {
     params: { asset, amount: _amount, nftItemDetail, recipientAddress, inMaxMode },
@@ -91,185 +82,190 @@ const SendTransactionStep4Confirm: React.FC<SendTransactionScreenProps<typeof Se
       return asset.symbol;
     }
     return getDetailSymbol(nftItemDetail);
-  }, []);
+  }, [asset.symbol, nftItemDetail]);
 
   const txHalf = useMemo(() => {
-    return plugins.Transaction.buildTransaction({
-      asset,
+    if (!currentNetwork || !currentAddress?.value) return null;
+
+    const contractAddress = asset.type !== AssetType.Native && asset.contractAddress ? asset.contractAddress : undefined;
+    const nftTokenId = nftItemDetail?.tokenId;
+
+    const payload = buildTransactionPayload({
+      from: currentAddress.value,
+      to: recipientAddress,
       amount: amount || '0',
-      recipientAddress,
-      currentAddressValue,
-      currentNetwork,
-      nftTokenId: nftItemDetail?.tokenId,
+      assetType: asset.type as unknown as AssetType,
+      assetDecimals: asset.decimals || 0,
+      chainId: currentNetwork.chainId,
+      contractAddress,
+      nftTokenId,
     });
-  }, [asset, amount, recipientAddress, currentAddressValue, currentNetwork, nftItemDetail?.tokenId]);
+
+    return {
+      from: payload.from,
+      to: payload.to,
+      value: payload.value,
+      data: payload.data,
+    };
+  }, [asset, amount, currentAddress?.value, currentNetwork?.chainId, recipientAddress, nftItemDetail?.tokenId]);
 
   const [error, setError] = useState<{ type?: string; message: string } | null>(null);
 
-  const { bsimEvent, setBSIMEvent, execBSIMCancel, setBSIMCancel } = useBSIMVerify();
-  const epochHeightRef = useRef('');
+  const sendNative = useSendNative();
+  const sendERC20 = useSendERC20();
+
+  const abortRef = useRef<AbortController | null>(null);
+
+  const addressId = currentAddress?.id ?? '';
+  const { state: hardwareSignState, clear: clearHardwareSignState } = useHardwareSigningUiState(addressId || undefined);
+
+  const currentAddressValue = currentAddress?.value ?? '';
 
   const _handleSend = useCallback(async () => {
-    if (currentVault?.type === VaultType.BSIM && currentNetwork.networkType === NetworkType.Conflux) {
+    if (!currentNetwork || !currentAccount || !currentAddress) return;
+
+    if (currentAccount.isHardwareWallet && currentNetwork.networkType === NetworkType.Conflux) {
       showMessage({
         message: 'BSIM not support Conflux Core',
         type: 'warning',
       });
       return;
     }
-    setBSIMEvent(null);
-    execBSIMCancel();
 
-    let txRaw!: string;
-    let txHash!: string;
-    let tx!: ITxEvm;
-    let signature: Signature | undefined;
-    let txError!: any;
+    setError(null);
+
+    abortRef.current?.abort();
+    const controller = currentAccount.isHardwareWallet ? new AbortController() : null;
+    abortRef.current = controller;
+    clearHardwareSignState();
+
     try {
+      const gasLimit = gasEstimate?.advanceSetting?.gasLimit;
+      const storageLimit = gasEstimate?.advanceSetting?.storageLimit;
+      const nonce = gasEstimate?.advanceSetting?.nonce;
+
+      const maxFeePerGas = gasEstimate?.gasSetting?.suggestedMaxFeePerGas;
+      const maxPriorityFeePerGas = gasEstimate?.gasSetting?.suggestedMaxPriorityFeePerGas;
+      const gasPrice = gasEstimate?.gasSetting?.suggestedGasPrice;
+
+      const signal = controller?.signal;
+
       if (asset.type === AssetType.ERC20 && asset.contractAddress) {
-        const isInDB = await methods.queryAssetByAddress(currentNetwork.id, asset.contractAddress);
-        if (!isInDB) {
-          await methods.createAsset({
-            network: currentNetwork,
-            ...asset,
-            source: AssetSource.Custom,
-          });
-        }
+        await sendERC20({
+          addressId: currentAddress.id,
+          contractAddress: asset.contractAddress,
+          to: recipientAddress,
+          amount: amount || '0',
+          assetDecimals: asset.decimals || 0,
+          gasLimit,
+          storageLimit,
+          nonce: typeof nonce === 'number' ? nonce : undefined,
+          gasPrice,
+          maxFeePerGas,
+          maxPriorityFeePerGas,
+          signal,
+        });
+      } else {
+        const contractAddress = asset.type !== AssetType.Native && asset.contractAddress ? asset.contractAddress : undefined;
+        await sendNative({
+          addressId: currentAddress.id,
+          to: recipientAddress,
+          amount: amount || '0',
+          assetType: asset.type as unknown as AssetType,
+          assetDecimals: asset.decimals || 0,
+          contractAddress,
+          nftTokenId: nftItemDetail?.tokenId,
+          gasLimit,
+          storageLimit,
+          nonce: typeof nonce === 'number' ? nonce : undefined,
+          gasPrice,
+          maxFeePerGas,
+          maxPriorityFeePerGas,
+          signal,
+        });
       }
 
-      tx = { ...txHalf };
+      showMessage({
+        type: 'success',
+        message: t('tx.confirm.submitted.message'),
+        description: t('tx.confirm.submitted.description'),
+        icon: 'loading' as unknown as undefined,
+      });
 
-      if (gasEstimate?.advanceSetting?.gasLimit) {
-        tx.gasLimit = gasEstimate.advanceSetting.gasLimit;
-      }
-
-      if (gasEstimate?.advanceSetting?.storageLimit) {
-        tx.storageLimit = gasEstimate.advanceSetting.storageLimit;
-      }
-
-      if (gasEstimate?.gasSetting?.suggestedMaxFeePerGas) {
-        // EIP-1559 transaction
-        tx.type = 2;
-        tx.maxFeePerGas = gasEstimate.gasSetting.suggestedMaxFeePerGas;
-        tx.maxPriorityFeePerGas = gasEstimate.gasSetting.suggestedMaxPriorityFeePerGas;
-      } else if (gasEstimate?.gasSetting?.suggestedGasPrice) {
-        // Legacy transaction
-        tx.type = 0;
-        tx.gasPrice = gasEstimate.gasSetting.suggestedGasPrice;
-      }
-
-      if (gasEstimate?.advanceSetting?.nonce) {
-        tx.nonce = gasEstimate.advanceSetting.nonce;
-      }
+      backToHome(navigation);
 
       try {
-        if (currentNetwork.networkType === NetworkType.Conflux) {
-          const currentEpochHeight = await plugins.BlockNumberTracker.getNetworkBlockNumber(currentNetwork);
-          if (!epochHeightRef.current || !checkDiffInRange(BigInt(currentEpochHeight) - BigInt(epochHeightRef.current))) {
-            epochHeightRef.current = currentEpochHeight;
-          }
-        }
-
-        if (currentVault?.type === VaultType.BSIM) {
-          setBSIMEvent({ type: BSIMEventTypesName.BSIM_SIGN_START });
-        }
-
-        const { txRawPromise, cancel } = await signTransaction({
-          ...tx,
-          epochHeight: epochHeightRef.current,
-        });
-        setBSIMCancel(cancel);
-        txRaw = await txRawPromise;
-        signature = await methods.createSignature({
-          address: currentAddress,
-          signType: SignType.TX,
-        });
-        txHash = await plugins.Transaction.sendRawTransaction({
-          txRaw,
-          network: currentNetwork,
-        });
-
-        setBSIMEvent(null);
-        showMessage({
-          type: 'success',
-          message: t('tx.confirm.submitted.message'),
-          description: t('tx.confirm.submitted.description'),
-          icon: 'loading' as unknown as undefined,
-        });
-        backToHome(navigation);
-        getAssetsTracker().updateCurrentTracker();
-        if (nftItemDetail) {
-          getNFTDetailTracker().updateCurrentOpenNFT();
-        }
-      } catch (error) {
-        if (error instanceof BSIMError) {
-          setBSIMEvent({
-            type: BSIMEventTypesName.ERROR,
-            message: error?.message,
-          });
-        } else {
-          // throw error to outer catch
-          throw error;
-        }
+        void getAssetsSyncService().refreshCurrent({ reason: 'manual' });
+      } catch {
+        //
       }
-    } catch (_err: any) {
+    } catch (_err: unknown) {
+      console.log(_err);
+      if (controller?.signal.aborted) {
+        clearHardwareSignState();
+        return;
+      }
+
       if (
         handleBSIMHardwareUnavailable(_err, rootNavigation, {
           beforeNavigate: () => {
-            setBSIMEvent(null);
-            execBSIMCancel();
+            clearHardwareSignState();
+            abortRef.current?.abort();
           },
         })
       ) {
         return;
       }
-      if (isAuthenticationError(_err) && isAuthenticationCanceledError(_err)) {
+
+      if (isUserCanceledError(_err)) {
+        clearHardwareSignState();
         return;
       }
 
-      txError = _err;
-      setBSIMEvent(null);
-      if (txError instanceof SignTransactionCancelError) {
-        // ignore cancel error
-        return;
-      }
-      const errString = String(txError.data || txError?.message || txError);
-      const msg = matchRPCErrorMessage(txError);
+      const errString = String((_err as any)?.data || (_err as any)?.message || _err);
+      const msg = matchRPCErrorMessage(_err as any);
       setError({
         message: errString,
         ...(errString.includes('out of balance') ? { type: 'out of balance' } : errString.includes('timed out') ? { type: 'network error' } : null),
       });
-      showMessage({
-        message: t('tx.confirm.failed'),
-        description: msg,
-        type: 'failed',
-      });
-    } finally {
-      if (txRaw) {
-        getEventBus().dispatch(BROADCAST_TRANSACTION_EVENT, {
-          transactionType: TransactionActionType.Send,
-          params: {
-            txHash,
-            txRaw,
-            tx,
-            address: currentAddress,
-            signature,
-            extraParams: {
-              assetType: asset.type,
-              contractAddress: asset.type !== AssetType.Native ? asset.contractAddress : undefined,
-              sendAt: new Date(),
-              epochHeight: currentNetwork.networkType === NetworkType.Conflux ? epochHeightRef.current : null,
-              err: txError && String(txError.data || txError?.message || txError),
-              errorType: txError && processError(txError).errorType,
-              method: asset.type === AssetType.ERC721 ? 'transferFrom' : asset.type === AssetType.ERC1155 ? 'safeTransferFrom' : 'transfer',
-            },
-          },
+      if (hardwareSignState?.phase !== 'error') {
+        showMessage({
+          message: t('tx.confirm.failed'),
+          description: msg,
+          type: 'failed',
         });
       }
+    } finally {
+      abortRef.current = null;
     }
-  }, [txHalf, gasEstimate, currentVault?.id, currentNetwork?.id]);
+  }, [
+    amount,
+    asset,
+    clearHardwareSignState,
+    currentAccount,
+    currentAddress,
+    currentNetwork,
+    gasEstimate,
+    hardwareSignState?.phase,
+    navigation,
+    nftItemDetail?.tokenId,
+    recipientAddress,
+    rootNavigation,
+    sendERC20,
+    sendNative,
+    t,
+  ]);
+
+  useEffect(() => {
+    return () => abortRef.current?.abort();
+  }, []);
 
   const { inAsync: inSending, execAsync: handleSend } = useInAsync(_handleSend);
+
+  const nativeAsset = useMemo(() => assets?.find((a) => a.type === AssetType.Native) ?? null, [assets]);
+  const showHardwareSignVerify =
+    Boolean(currentAccount?.isHardwareWallet) && Boolean(hardwareSignState) && (hardwareSignState?.phase === 'start' || hardwareSignState?.phase === 'error');
+
   return (
     <>
       <SendTransactionBottomSheet
@@ -315,11 +311,11 @@ const SendTransactionStep4Confirm: React.FC<SendTransactionScreenProps<typeof Se
           {error && (
             <>
               <View style={[styles.divider, { backgroundColor: colors.borderFourth, marginVertical: isSmallDevice ? 16 : 24 }]} />
-              {error.type === 'out of balance ' ? (
+              {error.type === 'out of balance' ? (
                 <View style={styles.errorWarp}>
                   <WarnIcon style={styles.errorIcon} color={colors.middle} width={24} height={24} />
                   <Text style={[styles.errorText, { color: colors.middle }]}>
-                    {`${asset.type === AssetType.Native ? t('tx.confirm.error.InsufficientBalance', { symbol: nativeAsset?.symbol }) : t('tx.confirm.error.InsufficientBalanceForGas', { symbol: nativeAsset?.symbol })}`}
+                    {`${asset.type === 'Native' ? t('tx.confirm.error.InsufficientBalance', { symbol: nativeAsset?.symbol }) : t('tx.confirm.error.InsufficientBalanceForGas', { symbol: nativeAsset?.symbol })}`}
                   </Text>
                 </View>
               ) : (
@@ -345,16 +341,18 @@ const SendTransactionStep4Confirm: React.FC<SendTransactionScreenProps<typeof Se
           </View>
         </BottomSheetFooter>
       </SendTransactionBottomSheet>
-      {bsimEvent && (
-        <BSIMVerify
-          bsimEvent={bsimEvent}
+
+      {showHardwareSignVerify && hardwareSignState && (
+        <HardwareSignVerify
+          state={hardwareSignState}
           onClose={() => {
-            setBSIMEvent(null);
-            execBSIMCancel();
+            abortRef.current?.abort();
+            clearHardwareSignState();
           }}
           onRetry={handleSend}
         />
       )}
+
       <GasFeeSetting show={showGasFeeSetting} tx={txHalf} onClose={() => setShowGasFeeSetting(false)} onConfirm={setGasEstimate} />
     </>
   );
