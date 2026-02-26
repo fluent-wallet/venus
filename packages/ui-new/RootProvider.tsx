@@ -4,6 +4,8 @@ import BSIMPlugin from '@WalletCoreExtends/Plugins/BSIM';
 import { CryptoToolPlugin } from '@WalletCoreExtends/Plugins/CryptoTool';
 import database from '@core/database';
 import { createAppRuntime } from '@core/runtime/createAppRuntime';
+import type { RuntimeConfig } from '@core/runtime/types';
+import { Networks, NetworkType } from '@core/utils/consts';
 import WalletCore from '@core/WalletCore';
 import { DbPlugin } from '@core/WalletCore/DB';
 import { EventPlugin } from '@core/WalletCore/Events/EventPlugin';
@@ -18,6 +20,7 @@ import TransactionPlugin from '@core/WalletCore/Plugins/Transaction';
 import { TxTrackerPlugin } from '@core/WalletCore/Plugins/TxTracker';
 import { WalletConfigPlugin } from '@core/WalletCore/Plugins/WalletConfig';
 import WalletConnectPlugin from '@core/WalletCore/Plugins/WalletConnect';
+import type { WalletKitTypes } from '@reown/walletkit';
 import { setUiQueryClient, setUiServiceContainer } from '@service/core';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Provider } from 'jotai';
@@ -27,13 +30,65 @@ import App from './App';
 const queryClient = new QueryClient({ defaultOptions: { queries: { refetchOnWindowFocus: false } } });
 setUiQueryClient(queryClient);
 
+const WALLET_CONNECT_PROJECT_ID = '77ffee6a4cbf8ed25550cea82939d1fa';
+const WALLET_CONNECT_METADATA = {
+  name: 'BIM Wallet Wallet',
+  description: 'BIM Wallet Wallet to interface with Dapps',
+  url: 'https://bimwallet.io/',
+  icons: ['https://download.bimwallet.io/assets/logo.png'],
+} satisfies WalletKitTypes.Options['metadata'];
+
+const RUNTIME_CONFIG: RuntimeConfig = {
+  wallet: {
+    pendingCountLimit: 5,
+    gas: {
+      minGasPriceGweiByNetworkType: {
+        [NetworkType.Conflux]: 1,
+      },
+      minGasPriceGweiByChain: {
+        [NetworkType.Ethereum]: {
+          [Networks['Conflux eSpace'].chainId]: 20,
+          [Networks['eSpace Testnet'].chainId]: 20,
+        },
+      },
+    },
+  },
+  eventBus: {
+    strictEmit: false,
+    assertSerializable: false,
+  },
+  auth: {
+    passwordRequestTtlMs: 2 * 60 * 1000,
+  },
+  externalRequests: {
+    requestTtlMs: 5 * 60 * 1000,
+    sweepIntervalMs: 60 * 1000,
+    maxActiveRequests: 1,
+  },
+  walletConnect: {
+    projectId: WALLET_CONNECT_PROJECT_ID,
+    metadata: WALLET_CONNECT_METADATA,
+  },
+  sync: {
+    tx: {
+      globalConcurrency: 4,
+      highPriorityPollIntervalMs: 10_000,
+      backgroundPollIntervalMs: 60_000,
+      scanIntervalMs: 60_000,
+    },
+  },
+};
+
 let bootOnce: Promise<void> | null = null;
 
 async function bootAppOnce(): Promise<void> {
   if (bootOnce) return bootOnce;
 
   bootOnce = (async () => {
-    const runtime = createAppRuntime({ database });
+    const runtime = createAppRuntime({
+      database,
+      config: RUNTIME_CONFIG,
+    });
 
     runtime.prepare();
     setUiServiceContainer(runtime.context.container);
@@ -61,13 +116,8 @@ async function bootAppOnce(): Promise<void> {
       TransactionPlugin,
       BlockNumberTracker,
       new WalletConnectPlugin({
-        projectId: '77ffee6a4cbf8ed25550cea82939d1fa',
-        metadata: {
-          name: 'BIM Wallet Wallet',
-          description: 'BIM Wallet Wallet to interface with Dapps',
-          url: 'https://bimwallet.io/',
-          icons: ['https://download.bimwallet.io/assets/logo.png'],
-        },
+        projectId: WALLET_CONNECT_PROJECT_ID,
+        metadata: WALLET_CONNECT_METADATA,
       }),
     ]);
 

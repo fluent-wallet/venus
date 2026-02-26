@@ -1,25 +1,13 @@
 import { CORE_IDENTIFIERS } from '@core/di';
-import type { RuntimeContext, RuntimeModule } from '@core/runtime/types';
+import type { ExternalRequestsRuntimeConfig, RuntimeContext, RuntimeModule } from '@core/runtime/types';
 import type { CoreEventMap, EventBus } from '../eventBus';
 import { EVENT_BUS_MODULE_ID, EXTERNAL_REQUESTS_MODULE_ID } from '../ids';
 import { ExternalRequestsService } from './ExternalRequestsService';
 
-type ExternalRequestsRuntimeConfig = {
-  requestTtlMs?: number;
-  sweepIntervalMs?: number;
-  maxActiveRequests?: number;
-};
-
 const readExternalRequestsConfig = (context: RuntimeContext): Required<ExternalRequestsRuntimeConfig> => {
-  const root = (context.config as Record<string, unknown>) ?? {};
-
-  const fromExternalRequests = root.externalRequests;
-  const externalRequestsCfg =
-    fromExternalRequests && typeof fromExternalRequests === 'object' ? (fromExternalRequests as Record<string, unknown>) : ({} as Record<string, unknown>);
-
-  const fromWalletConnect = root.walletConnect;
-  const walletConnectCfg =
-    fromWalletConnect && typeof fromWalletConnect === 'object' ? (fromWalletConnect as Record<string, unknown>) : ({} as Record<string, unknown>);
+  const root = context.config;
+  const externalRequestsCfg = root.externalRequests ?? {};
+  const walletConnectCfg = root.walletConnect ?? {};
 
   const requestTtlMsRaw = externalRequestsCfg.requestTtlMs ?? walletConnectCfg.requestTtlMs;
   const sweepIntervalMsRaw = externalRequestsCfg.sweepIntervalMs ?? walletConnectCfg.sweepIntervalMs;

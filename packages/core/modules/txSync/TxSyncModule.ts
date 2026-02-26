@@ -5,7 +5,7 @@ import type { Network } from '@core/database/models/Network';
 import TableName from '@core/database/TableName';
 import { CORE_IDENTIFIERS } from '@core/di';
 import { CHAIN_PROVIDER_NOT_FOUND, CoreError } from '@core/errors';
-import type { RuntimeContext, RuntimeModule } from '@core/runtime/types';
+import type { RuntimeContext, RuntimeModule, TxSyncRuntimeConfig } from '@core/runtime/types';
 import { AccountService } from '@core/services/account';
 import { NetworkService } from '@core/services/network';
 import type { CoreEventMap, EventBus } from '../eventBus';
@@ -14,17 +14,8 @@ import { TxSyncEngine } from './TxSyncEngine';
 import { TxSyncScheduler } from './TxSyncScheduler';
 import { TxSyncService } from './TxSyncService';
 
-type TxSyncRuntimeConfig = {
-  globalConcurrency?: number;
-  highPriorityPollIntervalMs?: number;
-  backgroundPollIntervalMs?: number;
-  scanIntervalMs?: number;
-};
-
 const readTxSyncConfig = (context: RuntimeContext): Required<TxSyncRuntimeConfig> => {
-  const root = (context.config as Record<string, unknown>) ?? {};
-  const sync = root.sync && typeof root.sync === 'object' ? (root.sync as Record<string, unknown>) : {};
-  const tx = sync.tx && typeof sync.tx === 'object' ? (sync.tx as Record<string, unknown>) : {};
+  const tx = context.config.sync?.tx ?? {};
 
   const globalConcurrency = typeof tx.globalConcurrency === 'number' && tx.globalConcurrency > 0 ? tx.globalConcurrency : 4;
   const highPriorityPollIntervalMs =

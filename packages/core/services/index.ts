@@ -1,4 +1,5 @@
 export * from './account';
+export * from './address';
 export * from './asset';
 export * from './network';
 export * from './signing';
@@ -11,6 +12,7 @@ import { EndpointManager } from '@core/chains/EndpointManager';
 import { HardwareWalletRegistry } from '@core/hardware/HardwareWalletRegistry';
 import type { Container } from 'inversify';
 import { AccountService } from './account';
+import { AddressValidationService } from './address/AddressValidationService';
 import { AssetService } from './asset';
 import { ChainStatusService } from './chain/ChainStatusService';
 import { HardwareWalletService } from './hardware/HardwareWalletService';
@@ -20,6 +22,7 @@ import { SignatureRecordService } from './signing/SignatureRecordService';
 import { TransactionService } from './transaction';
 import { VaultService } from './vault';
 
+export { AddressValidationService } from './address/AddressValidationService';
 export { ChainStatusService } from './chain/ChainStatusService';
 
 export { HardwareWalletService } from './hardware/HardwareWalletService';
@@ -28,6 +31,7 @@ export function registerServices(target: Container): void {
   target.bind(ChainRegistry).toSelf().inSingletonScope();
   target.bind(EndpointManager).toSelf().inSingletonScope();
   target.bind(ChainStatusService).toSelf().inSingletonScope();
+  target.bind(AddressValidationService).toSelf().inSingletonScope();
   target.bind(VaultService).toSelf().inSingletonScope();
   target.bind(AccountService).toSelf().inSingletonScope();
   target.bind(AssetService).toSelf().inSingletonScope();

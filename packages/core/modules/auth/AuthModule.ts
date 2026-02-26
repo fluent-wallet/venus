@@ -1,16 +1,11 @@
 import { CORE_IDENTIFIERS } from '@core/di';
-import type { RuntimeContext, RuntimeModule } from '@core/runtime/types';
+import type { AuthRuntimeConfig, RuntimeContext, RuntimeModule } from '@core/runtime/types';
 import type { CoreEventMap, EventBus } from '../eventBus';
 import { AUTH_MODULE_ID, EVENT_BUS_MODULE_ID } from '../ids';
 import { AuthService } from './AuthService';
 
-type AuthRuntimeConfig = {
-  passwordRequestTtlMs?: number;
-};
-
 const readAuthConfig = (context: RuntimeContext): Required<AuthRuntimeConfig> => {
-  const raw = (context.config as Record<string, unknown>).auth;
-  const cfg = (raw && typeof raw === 'object' ? (raw as Record<string, unknown>) : {}) as Record<string, unknown>;
+  const cfg = context.config.auth ?? {};
 
   const passwordRequestTtlMs = typeof cfg.passwordRequestTtlMs === 'number' && cfg.passwordRequestTtlMs > 0 ? cfg.passwordRequestTtlMs : 2 * 60 * 1000;
 

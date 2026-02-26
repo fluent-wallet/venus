@@ -1,5 +1,5 @@
 import { CORE_IDENTIFIERS } from '@core/di';
-import type { RuntimeContext, RuntimeModule } from '@core/runtime/types';
+import type { AssetsSyncRuntimeConfig, RuntimeContext, RuntimeModule } from '@core/runtime/types';
 import { AccountService } from '@core/services/account';
 import { AssetService } from '@core/services/asset';
 import { NetworkService } from '@core/services/network';
@@ -7,14 +7,8 @@ import type { CoreEventMap, EventBus } from '../eventBus';
 import { ASSETS_SYNC_MODULE_ID, EVENT_BUS_MODULE_ID, SERVICES_MODULE_ID } from '../ids';
 import { AssetsSyncService } from './AssetsSyncService';
 
-type AssetsSyncRuntimeConfig = {
-  pollIntervalMs?: number;
-};
-
 const readAssetsSyncConfig = (context: RuntimeContext): Required<AssetsSyncRuntimeConfig> => {
-  const root = (context.config as Record<string, unknown>) ?? {};
-  const sync = root.sync && typeof root.sync === 'object' ? (root.sync as Record<string, unknown>) : {};
-  const assets = sync.assets && typeof sync.assets === 'object' ? (sync.assets as Record<string, unknown>) : {};
+  const assets = context.config.sync?.assets ?? {};
 
   const pollIntervalMs = typeof assets.pollIntervalMs === 'number' && assets.pollIntervalMs > 0 ? assets.pollIntervalMs : 0;
 

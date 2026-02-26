@@ -22,7 +22,11 @@ class ServicesModuleState {
 export const ServicesModule: RuntimeModule = {
   id: SERVICES_MODULE_ID,
   dependencies: [DB_MODULE_ID, DB_BOOTSTRAP_MODULE_ID, CRYPTO_TOOL_MODULE_ID, EVENT_BUS_MODULE_ID],
-  register: ({ container }) => {
+  register: ({ container, config }) => {
+    if (!container.isBound(CORE_IDENTIFIERS.CONFIG)) {
+      container.bind(CORE_IDENTIFIERS.CONFIG).toConstantValue(config);
+    }
+
     if (!container.isBound(ServicesModuleState)) {
       container.bind(ServicesModuleState).toSelf().inSingletonScope();
     }
