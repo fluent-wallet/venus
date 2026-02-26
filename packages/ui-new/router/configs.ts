@@ -1,4 +1,4 @@
-import type { BSIMHardwareReason } from '@WalletCoreExtends/Plugins/BSIM';
+import type { HardwareUnavailableReason as BSIMHardwareReason } from '@core/hardware/bsim/types';
 import type { ExternalRequestSnapshot } from '@core/modules/externalRequests';
 import type { NetworkType } from '@core/utils/consts';
 import type { SpeedUpAction } from '@core/WalletCore/Events/broadcastTransactionSubject';

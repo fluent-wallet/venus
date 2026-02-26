@@ -70,6 +70,9 @@ const RUNTIME_CONFIG: RuntimeConfig = {
     metadata: WALLET_CONNECT_METADATA,
   },
   sync: {
+    assets: {
+      pollIntervalMs: 0,
+    },
     tx: {
       globalConcurrency: 4,
       highPriorityPollIntervalMs: 10_000,

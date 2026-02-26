@@ -1,5 +1,6 @@
 import 'reflect-metadata';
 
+import { AssetsSyncModule } from '@core/modules/assetsSync';
 import { AuthModule } from '@core/modules/auth';
 import { CryptoToolServer, createCryptoToolModule } from '@core/modules/crypto';
 import { createDbModule, DbBootstrapModule } from '@core/modules/db';
@@ -27,6 +28,9 @@ export function createAppRuntime(options: CreateAppRuntimeOptions): ModuleManage
     ExternalRequestsModule,
 
     ServicesModule,
+
+    // Asset sync is event-driven by default (polling is controlled by runtime config).
+    AssetsSyncModule,
   ]);
 
   return manager;

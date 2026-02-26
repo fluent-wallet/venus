@@ -64,6 +64,13 @@ export interface SendERC20Input {
   amount: string;
   assetDecimals: number;
 
+  gasLimit?: string;
+  gasPrice?: string;
+  maxFeePerGas?: string;
+  maxPriorityFeePerGas?: string;
+  nonce?: number;
+  storageLimit?: string;
+
   signal?: AbortSignal;
 }
 

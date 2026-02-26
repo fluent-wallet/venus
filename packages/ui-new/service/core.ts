@@ -1,4 +1,5 @@
 import { CORE_IDENTIFIERS } from '@core/di';
+import { AssetsSyncService } from '@core/modules/assetsSync';
 import type { AuthService } from '@core/modules/auth';
 import type { CoreEventMap } from '@core/modules/eventBus';
 import type { ExternalRequestsService } from '@core/modules/externalRequests';
@@ -67,6 +68,10 @@ export function getAssetService(): AssetService {
 
 export function getTransactionService(): TransactionService {
   return getContainer().get(TransactionService);
+}
+
+export function getAssetsSyncService(): AssetsSyncService {
+  return getContainer().get(AssetsSyncService);
 }
 
 export function getVaultService(): VaultService {
