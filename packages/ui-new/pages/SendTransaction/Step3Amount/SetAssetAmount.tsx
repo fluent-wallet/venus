@@ -4,16 +4,17 @@ import ProhibitIcon from '@assets/icons/prohibit.svg';
 import HourglassLoading from '@components/Loading/Hourglass';
 import Text from '@components/Text';
 import TextInput from '@components/TextInput';
+import { AssetType } from '@core/database/models/Asset';
 import { trimDecimalZeros } from '@core/utils/balance';
 import type { AssetInfo } from '@core/WalletCore/Plugins/AssetsTracker/types';
 import type { NFTItemDetail } from '@core/WalletCore/Plugins/NFTDetailTracker/server';
-import { AssetType, useCurrentAddress, useCurrentAddressValue } from '@core/WalletCore/Plugins/ReactInject';
 import useFormatBalance from '@hooks/useFormatBalance';
 import useInAsync from '@hooks/useInAsync';
 import NFTIcon from '@modules/AssetsList/NFTsList/NFTIcon';
 import { getDetailSymbol } from '@modules/AssetsList/NFTsList/NFTItem';
 import TokenIcon from '@modules/AssetsList/TokensList/TokenIcon';
 import { useTheme } from '@react-navigation/native';
+import { useCurrentAddress } from '@service/account';
 import { getTransactionService } from '@service/core';
 import Decimal from 'decimal.js';
 import type React from 'react';
@@ -51,8 +52,8 @@ const SetAssetAmount = forwardRef<SetAssetAmountMethods, Props>(
   ({ targetAddress, asset, nftItemDetail, onAmountInfoChange, children, defaultAmount, isReceive }, ref) => {
     const { colors, reverseColors } = useTheme();
     const { t } = useTranslation();
-    const currentAddress = useCurrentAddress();
-    const currentAddressValue = useCurrentAddressValue()!;
+    const { data: currentAddress } = useCurrentAddress();
+    const currentAddressValue = currentAddress?.value ?? '';
     const [amount, setAmount] = useState(() => defaultAmount ?? '');
     const [validMax, setValidMax] = useState<Decimal | null>(() => (isReceive ? new Decimal(Number.POSITIVE_INFINITY) : null));
     const needMaxMode = useMemo(() => !isReceive && (asset.type === AssetType.Native || asset.type === AssetType.ERC20), [isReceive, asset.type]);
@@ -93,7 +94,8 @@ const SetAssetAmount = forwardRef<SetAssetAmountMethods, Props>(
           tx: { to: targetAddress, value: '0x0', from: currentAddressValue },
         });
         const usedEstimate = (estimateRes.estimateOf1559 ?? estimateRes.estimate)!;
-        let res = new Decimal(asset.balance).sub(new Decimal(usedEstimate.medium.gasCost));
+        const gasCostBaseUnits = new Decimal(BigInt(usedEstimate.medium.gasCost).toString());
+        let res = new Decimal(asset.balance).sub(gasCostBaseUnits);
         res = res.greaterThan(0) ? res : new Decimal(0);
         setValidMax(res);
         return res;

@@ -9,21 +9,16 @@ import Checkbox from '@components/Checkbox';
 import HourglassLoading from '@components/Loading/Hourglass';
 import Text from '@components/Text';
 import TextInput from '@components/TextInput';
-import method from '@core/WalletCore/Methods';
-import {
-  AddressType,
-  getCurrentNetwork,
-  RecentlyType,
-  useAllAccountsInManage,
-  useCurrentNetwork,
-  useRecentlyAddress,
-} from '@core/WalletCore/Plugins/ReactInject';
 import { BottomSheetFlatList } from '@gorhom/bottom-sheet';
 import { AccountItemView } from '@modules/AccountsList';
 import ExternalInputHandler from '@pages/ExternalInputHandler';
 import Clipboard from '@react-native-clipboard/clipboard';
 import { useTheme } from '@react-navigation/native';
 import { type SendTransactionScreenProps, type SendTransactionStep1StackName, SendTransactionStep2StackName } from '@router/configs';
+import { useAccounts, useCurrentAddress } from '@service/account';
+import { isContractAddress, isValidAddress } from '@service/address';
+import { useCurrentNetwork } from '@service/network';
+import { useRecentlyAddressesOfAddress } from '@service/transaction';
 import type { PaymentUriPayload } from '@utils/payment-uri';
 import { debounce, escapeRegExp, unionBy } from 'lodash-es';
 import type React from 'react';
@@ -34,24 +29,31 @@ import SendTransactionBottomSheet from '../SendTransactionBottomSheet';
 import Contract from './Contract';
 import { styles as listStyles } from './Contract/RecentlyList';
 
+enum AddressKind {
+  EOA = 'EOA',
+  Contract = 'Contract',
+}
+
 const SendTransactionStep1Receiver: React.FC<SendTransactionScreenProps<typeof SendTransactionStep1StackName>> = ({ navigation }) => {
   const { colors } = useTheme();
   const { t } = useTranslation();
-  const _currentNetwork = useCurrentNetwork();
+  const { data: currentNetwork } = useCurrentNetwork();
   const [showScanQRCode, setShowScanQRCode] = useState(false);
 
-  const recentlyAddress = useRecentlyAddress();
-  const allAccounts = useAllAccountsInManage();
+  const { data: currentAddress } = useCurrentAddress();
+  const currentAddressId = currentAddress?.id ?? '';
+
+  const { data: accounts = [] } = useAccounts();
+  const { data: recentlyAddresses = [] } = useRecentlyAddressesOfAddress(currentAddressId, 20);
+
   const [receiver, setReceiver] = useState('');
   const [inFetchingRemote, setInFetchingRemote] = useState(false);
   const [knowRisk, setKnowRist] = useState(false);
   const [filterAccounts, setFilterAccounts] = useState<{
-    type: 'local-filter' | 'local-valid' | AddressType | 'invalid' | 'network-error';
+    type: 'local-filter' | 'local-valid' | AddressKind | 'invalid' | 'network-error';
     assets: Array<{
       nickname?: string;
       addressValue: string;
-      source?: 'from' | 'to';
-      type?: RecentlyType;
     }>;
   }>(() => ({ type: 'local-filter', assets: [] }));
 
@@ -59,61 +61,65 @@ const SendTransactionStep1Receiver: React.FC<SendTransactionScreenProps<typeof S
     debounce(async (receiver: string) => {
       try {
         setKnowRist(false);
-        setInFetchingRemote(false);
         if (!receiver) {
           setFilterAccounts({ type: 'local-filter', assets: [] });
           return;
         }
-        const __localAccounts = [...allAccounts, ...recentlyAddress]?.filter((account) =>
-          [account.nickname, account.addressValue].some((str) => (!str ? false : str?.search(new RegExp(escapeRegExp(receiver), 'i')) !== -1)),
-        );
-        const _localAccounts = unionBy(__localAccounts, 'addressValue');
-        const localAccounts = _localAccounts.map((account) => ({
-          nickname: account.nickname,
-          addressValue: account.addressValue,
-          source: (account as { source?: 'from' | 'to' })?.source,
-          type: (account as { type?: RecentlyType })?.type ?? RecentlyType.Account,
-        }));
 
-        const currentNetwork = _currentNetwork ?? getCurrentNetwork()!;
-        const isValidAddress = method.checkIsValidAddress({
-          networkType: currentNetwork.networkType,
-          addressValue: receiver,
-        });
-        if (localAccounts?.length > 0) {
-          if (isValidAddress) {
-            const isInMyAccounts = allAccounts.some((account) => account.addressValue === receiver);
+        const localCandidates = unionBy(
+          [
+            ...accounts.map((account) => ({ nickname: account.nickname, addressValue: account.address })),
+            ...recentlyAddresses.filter((item) => item.direction === 'outbound').map((item) => ({ nickname: undefined, addressValue: item.addressValue })),
+          ],
+          'addressValue',
+        ).filter((account) =>
+          [account.nickname, account.addressValue].some((str) => (!str ? false : str.search(new RegExp(escapeRegExp(receiver), 'i')) !== -1)),
+        );
+
+        if (!currentNetwork) {
+          setFilterAccounts({ type: 'network-error', assets: [] });
+          return;
+        }
+
+        const valid = isValidAddress({ networkType: currentNetwork.networkType, addressValue: receiver });
+
+        if (localCandidates.length > 0) {
+          if (valid) {
+            const isInMyAccounts = accounts.some((account) => account.address.toLowerCase() === receiver.toLowerCase());
             if (!isInMyAccounts) {
-              setFilterAccounts({ type: AddressType.EOA, assets: [] });
+              setFilterAccounts({ type: AddressKind.EOA, assets: [] });
             } else {
-              setFilterAccounts({ type: 'local-valid', assets: localAccounts });
+              setFilterAccounts({ type: 'local-valid', assets: localCandidates });
             }
           } else {
-            setFilterAccounts({ type: 'local-filter', assets: localAccounts });
+            setFilterAccounts({ type: 'local-filter', assets: localCandidates });
           }
-        } else {
-          setInFetchingRemote(true);
-          if (!isValidAddress) {
-            setFilterAccounts({ type: 'invalid', assets: [] });
-          } else {
-            const isContractAddress = await method.checkIsContractAddress({
-              networkType: currentNetwork.networkType,
-              addressValue: receiver,
-              endpoint: currentNetwork.endpoint,
-            });
-            setFilterAccounts({
-              type: isContractAddress ? AddressType.Contract : AddressType.EOA,
-              assets: [],
-            });
-          }
+          return;
         }
+
+        setInFetchingRemote(true);
+        if (!valid) {
+          setFilterAccounts({ type: 'invalid', assets: [] });
+          return;
+        }
+
+        const contract = await isContractAddress({
+          networkType: currentNetwork.networkType,
+          chainId: currentNetwork.chainId,
+          addressValue: receiver,
+        });
+
+        setFilterAccounts({
+          type: contract ? AddressKind.Contract : AddressKind.EOA,
+          assets: [],
+        });
       } catch (err) {
         setFilterAccounts({ type: 'network-error', assets: [] });
       } finally {
         setInFetchingRemote(false);
       }
     }, 200),
-    [recentlyAddress, allAccounts],
+    [accounts, recentlyAddresses, currentNetwork],
   );
 
   const handleCodeScan = useCallback(({ address }: PaymentUriPayload) => {
@@ -226,7 +232,7 @@ const SendTransactionStep1Receiver: React.FC<SendTransactionScreenProps<typeof S
                   </Pressable>
                 )}
                 {inFetchingRemote && <HourglassLoading style={styles.checkLoading} />}
-                {filterAccounts.type === AddressType.EOA && !inFetchingRemote && (
+                {filterAccounts.type === AddressKind.EOA && !inFetchingRemote && (
                   <View style={[styles.checkResWarp, { marginTop: 8 }]}>
                     <SuccessIcon style={styles.checkIcon} color={colors.up} width={24} height={24} />
                     <Text style={[styles.checkResText, { color: colors.up }]}>{t('tx.send.address.valid')}</Text>
@@ -239,7 +245,7 @@ const SendTransactionStep1Receiver: React.FC<SendTransactionScreenProps<typeof S
                   </View>
                 )}
 
-                {filterAccounts.type === AddressType.Contract && !inFetchingRemote && (
+                {filterAccounts.type === AddressKind.Contract && !inFetchingRemote && (
                   <View style={styles.contractAddress}>
                     <Text style={[styles.contractAddressValid, { color: colors.textPrimary }]}>{t('tx.send.address.valid')}</Text>
                     <Text style={[styles.contractAddressTip, { color: colors.textPrimary }]}>{t('tx.send.address.contractRisk')}</Text>
@@ -263,7 +269,7 @@ const SendTransactionStep1Receiver: React.FC<SendTransactionScreenProps<typeof S
           </BottomSheetContent>
         )}
 
-        {(filterAccounts.type === 'local-valid' || filterAccounts.type === AddressType.Contract || filterAccounts.type === AddressType.EOA) && (
+        {(filterAccounts.type === 'local-valid' || filterAccounts.type === AddressKind.Contract || filterAccounts.type === AddressKind.EOA) && (
           <BottomSheetFooter innerPaddingHorizontal>
             <Button
               testID="next"
@@ -275,7 +281,7 @@ const SendTransactionStep1Receiver: React.FC<SendTransactionScreenProps<typeof S
                   Keyboard.dismiss();
                 }
               }}
-              disabled={filterAccounts.type === AddressType.Contract && !knowRisk}
+              disabled={filterAccounts.type === AddressKind.Contract && !knowRisk}
               size="small"
             >
               {t('common.next')}

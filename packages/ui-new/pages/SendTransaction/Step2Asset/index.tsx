@@ -4,20 +4,9 @@ import { BottomSheetHeader, type BottomSheetMethods, BottomSheetScrollContent } 
 import HourglassLoading from '@components/Loading/Hourglass';
 import Text from '@components/Text';
 import TextInput from '@components/TextInput';
-import methods from '@core/WalletCore/Methods';
-import { fetchERC20AssetInfoBatchWithAccount } from '@core/WalletCore/Plugins/AssetsTracker/fetchers/basic';
 import type { AssetInfo } from '@core/WalletCore/Plugins/AssetsTracker/types';
 import type { NFTItemDetail } from '@core/WalletCore/Plugins/NFTDetailTracker/server';
-import {
-  AssetSource,
-  AssetType,
-  useAssetsAllList,
-  useCurrentAddress,
-  useCurrentAddressValue,
-  useCurrentNetwork,
-  useCurrentOpenNFTDetail,
-  useTokenListOfCurrentNetwork,
-} from '@core/WalletCore/Plugins/ReactInject';
+import { AssetType, useAssetsAllList, useCurrentOpenNFTDetail, useTokenListOfCurrentNetwork } from '@core/WalletCore/Plugins/ReactInject';
 import NFTItem from '@modules/AssetsList/NFTsList/NFTItem';
 import TokenItem from '@modules/AssetsList/TokensList/TokenItem';
 import { TabsContent, TabsHeader } from '@modules/AssetsTabs';
@@ -29,6 +18,12 @@ import {
   SendTransactionStep3StackName,
   SendTransactionStep4StackName,
 } from '@router/configs';
+import { useCurrentAddress } from '@service/account';
+import { isValidAddress } from '@service/address';
+import { useAddCustomToken } from '@service/asset';
+import type { IAsset } from '@service/core';
+import { useCurrentNetwork } from '@service/network';
+import Decimal from 'decimal.js';
 import { debounce, escapeRegExp } from 'lodash-es';
 import type React from 'react';
 import { useCallback, useEffect, useRef, useState } from 'react';
@@ -36,6 +31,24 @@ import { Trans, useTranslation } from 'react-i18next';
 import { type NativeScrollEvent, type NativeSyntheticEvent, Pressable, StyleSheet } from 'react-native';
 import { showMessage } from 'react-native-flash-message';
 import SendTransactionBottomSheet from '../SendTransactionBottomSheet';
+
+function toLegacyAssetInfo(asset: IAsset): AssetInfo {
+  const decimals = typeof asset.decimals === 'number' ? asset.decimals : 18;
+  const balance = asset.balance ? new Decimal(asset.balance) : new Decimal(0);
+  const baseUnits = balance.mul(Decimal.pow(10, decimals)).toFixed(0);
+
+  return {
+    type: asset.type as unknown as AssetInfo['type'],
+    contractAddress: asset.contractAddress ?? '',
+    name: asset.name ?? '',
+    symbol: asset.symbol ?? '',
+    decimals,
+    balance: baseUnits,
+    icon: asset.icon ?? undefined,
+    priceInUSDT: asset.priceInUSDT ?? undefined,
+    priceValue: asset.priceValue ?? undefined,
+  };
+}
 
 interface Props {
   navigation?: SendTransactionScreenProps<typeof SendTransactionStep2StackName>['navigation'];
@@ -59,9 +72,10 @@ const SendTransactionStep2Asset: React.FC<Props> = ({ navigation, route, onConfi
     [_handleScroll],
   );
 
-  const currentNetwork = useCurrentNetwork()!;
-  const currentAddress = useCurrentAddress();
-  const currentAddressValue = useCurrentAddressValue();
+  const { data: currentNetwork } = useCurrentNetwork();
+  const { data: currentAddress } = useCurrentAddress();
+  const addCustomToken = useAddCustomToken();
+
   const currentOpenNFTDetail = useCurrentOpenNFTDetail();
   const assets = (selectType === 'Send' ? useAssetsAllList : useTokenListOfCurrentNetwork)();
 
@@ -90,30 +104,22 @@ const SendTransactionStep2Asset: React.FC<Props> = ({ navigation, route, onConfi
         setFilterAssets({ type: 'local', assets: localAssets });
       } else {
         try {
-          const isValidAddress = methods.checkIsValidAddress({
+          if (!currentNetwork || !currentAddress?.id) {
+            setFilterAssets({ type: 'network-error', assets: [] });
+            return;
+          }
+
+          const valid = isValidAddress({
             networkType: currentNetwork.networkType,
             addressValue: value!,
           });
 
-          if (isValidAddress) {
+          if (valid) {
             setInFetchingRemote(true);
             await new Promise((resolve) => setTimeout(() => resolve(null!)));
-            const remoteAsset = await fetchERC20AssetInfoBatchWithAccount({
-              networkType: currentNetwork.networkType,
-              endpoint: currentNetwork?.endpoint,
-              contractAddress: value,
-              accountAddress: currentAddress!,
-            });
-            const assetInfo = { ...remoteAsset, type: AssetType.ERC20, contractAddress: value };
-            setFilterAssets({ type: 'remote', assets: [assetInfo] as Array<AssetInfo> });
-            const isInDB = await methods.queryAssetByAddress(currentNetwork.id, value);
-            if (!isInDB) {
-              await methods.createAsset({
-                network: currentNetwork,
-                ...assetInfo,
-                source: AssetSource.Custom,
-              });
-            }
+            const created = await addCustomToken({ addressId: currentAddress.id, contractAddress: value });
+            const assetInfo = toLegacyAssetInfo(created);
+            setFilterAssets({ type: 'remote', assets: [assetInfo] });
           } else {
             setFilterAssets({ type: 'invalid-format', assets: [] });
           }
@@ -128,7 +134,7 @@ const SendTransactionStep2Asset: React.FC<Props> = ({ navigation, route, onConfi
         }
       }
     }, 200),
-    [assets, currentNetwork, currentAddressValue],
+    [assets, currentNetwork, currentAddress?.id, addCustomToken],
   );
 
   useEffect(() => {
