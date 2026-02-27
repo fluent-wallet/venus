@@ -1,4 +1,5 @@
-import type { Address, AssetType, Hex, TxStatus } from '@core/types';
+import type { Address, AssetType, Hex, SpeedUpAction, TxStatus } from '@core/types';
+import type { NetworkType } from '@core/utils/consts';
 import type { EvmRpcTransactionRequest } from './dappTypes';
 
 export interface TransactionFilter {
@@ -85,6 +86,56 @@ export interface SendDappTransactionInput {
   request: EvmRpcTransactionRequest;
   signal?: AbortSignal;
 }
+
+export type SpeedUpTxContext = {
+  txId: string;
+  addressId: string;
+  accountId: string;
+  networkId: string;
+  networkType: NetworkType;
+  isHardwareWallet: boolean;
+
+  status: TxStatus;
+  /**
+   * Existing send action of the origin tx (if it is itself a SpeedUp/Cancel replacement).
+   */
+  sendAction: SpeedUpAction | null;
+
+  assetType: AssetType | null;
+
+  payload: {
+    from: Address;
+    to: Address | '';
+    value: string;
+    data: Hex;
+    chainId: string;
+    nonce: number;
+    type?: string | null;
+    gasPrice?: string | null;
+    maxFeePerGas?: string | null;
+    maxPriorityFeePerGas?: string | null;
+    gasLimit?: string | null;
+    storageLimit?: string | null;
+    epochHeight?: string | null;
+  };
+};
+
+export type SpeedUpTxInput = {
+  txId: string;
+  action: SpeedUpAction;
+  feeOverrides:
+    | { gasPrice: string; maxFeePerGas?: never; maxPriorityFeePerGas?: never }
+    | { maxFeePerGas: string; maxPriorityFeePerGas: string; gasPrice?: never };
+  advanceOverrides?: {
+    gasLimit?: string;
+    storageLimit?: string;
+  };
+  /**
+   * Replacement tx must use the origin nonce, but allow passing it explicitly to avoid accidental drift.
+   */
+  nonce: number;
+  signal?: AbortSignal;
+};
 
 /**
  * Plain transaction snapshot for UI

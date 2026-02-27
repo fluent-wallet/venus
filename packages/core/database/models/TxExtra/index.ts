@@ -1,4 +1,4 @@
-import type { SpeedUpAction } from '@core/WalletCore/Events/broadcastTransactionSubject';
+import type { SpeedUpAction } from '@core/types';
 import { Model, type Query } from '@nozbe/watermelondb';
 import { children, field, text } from '@nozbe/watermelondb/decorators';
 import TableName from '../../TableName';

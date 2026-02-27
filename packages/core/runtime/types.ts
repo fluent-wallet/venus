@@ -19,6 +19,10 @@ export type Logger = {
 
 export type WalletRuntimeConfig = {
   pendingCountLimit?: number;
+  /**
+   * How long a tx must stay pending before UI shows the "Speed Up" entry.
+   */
+  pendingTimeBeforeSpeedUpMs?: number;
   gas?: WalletGasRuntimeConfig;
 };
 

@@ -1,5 +1,3 @@
-import { getEventBus } from '@WalletCoreExtends/index';
-import { BSIMEventTypesName } from '@WalletCoreExtends/Plugins/BSIM/types';
 import ArrowRight from '@assets/icons/arrow-right2.svg';
 import ProhibitIcon from '@assets/icons/prohibit.svg';
 import RocketIcon from '@assets/icons/rocket.svg';
@@ -15,36 +13,21 @@ import {
 import Button from '@components/Button';
 import HourglassLoading from '@components/Loading/Hourglass';
 import Text from '@components/Text';
-import { SignType } from '@core/database/models/Signature/type';
-import { formatStatus } from '@core/utils/tx';
-import { SpeedUpAction, TransactionActionType } from '@core/WalletCore/Events/broadcastTransactionSubject';
-import { BROADCAST_TRANSACTION_EVENT } from '@core/WalletCore/Events/eventTypes';
-import methods from '@core/WalletCore/Methods';
-import plugins from '@core/WalletCore/Plugins';
-import { checkDiffInRange } from '@core/WalletCore/Plugins/BlockNumberTracker';
-import {
-  AssetType,
-  NetworkType,
-  useCurrentAddressValue,
-  useNativeAssetOfNetwork,
-  usePayloadOfTx,
-  useTxFromId,
-  useVaultOfAccount,
-  VaultType,
-} from '@core/WalletCore/Plugins/ReactInject';
-import { useAccountOfTx, useAssetOfTx, useNetworkOfTx } from '@core/WalletCore/Plugins/ReactInject/data/useTxs';
-import type { ITxEvm } from '@core/WalletCore/Plugins/Transaction/types';
+import { AUTH_PASSWORD_REQUEST_CANCELED } from '@core/errors';
+import { AssetType } from '@core/types';
+import { NetworkType } from '@core/utils/consts';
 import useInAsync from '@hooks/useInAsync';
-import { SignTransactionCancelError, useSignTransaction } from '@hooks/useSignTransaction';
-import BSIMVerify, { useBSIMVerify } from '@pages/SendTransaction/BSIMVerify';
+import HardwareSignVerify from '@pages/SendTransaction/HardwareSignVerify';
+import { useHardwareSigningUiState } from '@pages/SendTransaction/Step4Confirm/useHardwareSigningUiState';
 import { useNavigation, useTheme } from '@react-navigation/native';
 import type { SpeedUpStackName, StackNavigation, StackScreenProps } from '@router/configs';
-import { usePollingGasEstimateAndNonce } from '@service/transaction';
+import { useAssetsOfAddress } from '@service/asset';
+import { getAssetsSyncService } from '@service/core';
+import { usePollingGasEstimateAndNonce, useSpeedUpTx, useSpeedUpTxContext } from '@service/transaction';
 import backToHome from '@utils/backToHome';
 import { handleBSIMHardwareUnavailable } from '@utils/handleBSIMHardwareUnavailable';
 import matchRPCErrorMessage from '@utils/matchRPCErrorMssage';
 import Decimal from 'decimal.js';
-import { BSIMError } from 'modules/BSIM/src';
 import type React from 'react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -57,7 +40,33 @@ import CustomizeGasSetting from '../GasFeeSetting/CustomizeGasSetting';
 const higherRatio = 1.1;
 const fasterRatio = 1.2;
 
-const createGasSetting = (txPayload: ReturnType<typeof usePayloadOfTx>, ratio: number, currentGasPrice: string | null) => {
+const isUserCanceledError = (error: unknown): boolean => {
+  const code = (error as { code?: unknown } | null)?.code;
+  if (code === AUTH_PASSWORD_REQUEST_CANCELED) return true;
+  if (code === 'CANCEL') return true;
+
+  const name = (error as { name?: unknown } | null)?.name;
+  if (name === 'AbortError') return true;
+
+  return false;
+};
+
+const getErrorText = (error: unknown): string => {
+  if (typeof error === 'string') return error;
+  if (error && typeof error === 'object') {
+    const maybe = error as { data?: unknown; message?: unknown };
+    if (typeof maybe.data === 'string') return maybe.data;
+    if (typeof maybe.message === 'string') return maybe.message;
+  }
+  return String(error);
+};
+
+type SpeedUpTxPayloadLike = {
+  gasPrice?: string | null;
+  maxFeePerGas?: string | null;
+};
+
+const createGasSetting = (txPayload: SpeedUpTxPayloadLike | null, ratio: number, currentGasPrice: string | null) => {
   if (!txPayload || !currentGasPrice) return null;
   if (txPayload.maxFeePerGas) {
     let suggestedMaxFeePerGas = new Decimal(txPayload.maxFeePerGas || 0).mul(ratio);
@@ -80,42 +89,48 @@ const createGasSetting = (txPayload: ReturnType<typeof usePayloadOfTx>, ratio: n
 
 const SpeedUp: React.FC<StackScreenProps<typeof SpeedUpStackName>> = ({ navigation, route }) => {
   const { txId, type, level: defaultLevel } = route.params;
-  const isSpeedUp = type === SpeedUpAction.SpeedUp;
+  const isSpeedUp = type === 'SpeedUp';
   const { colors } = useTheme();
   const { t } = useTranslation();
   const rootNavigation = useNavigation<StackNavigation>();
-  const signTransaction = useSignTransaction();
-  const { bsimEvent, setBSIMEvent, execBSIMCancel, setBSIMCancel } = useBSIMVerify();
+  const { data: ctx } = useSpeedUpTxContext(txId);
+  const speedUpTx = useSpeedUpTx();
 
-  const currentAddressValue = useCurrentAddressValue();
-  const tx = useTxFromId(txId);
-  const txPayload = usePayloadOfTx(txId);
-  const txAsset = useAssetOfTx(txId);
-  const network = useNetworkOfTx(txId);
-  const account = useAccountOfTx(txId);
-  const vault = useVaultOfAccount(account?.id);
-  const nativeAsset = useNativeAssetOfNetwork(network?.id);
-  const txStatus = tx && formatStatus(tx);
+  const addressId = ctx?.addressId ?? '';
+  const { state: hardwareSignState, clear: clearHardwareSignState } = useHardwareSigningUiState(addressId || undefined);
+  const abortRef = useRef<AbortController | null>(null);
 
-  const txHalf: ITxEvm | null = useMemo(() => {
-    if (!txPayload || !currentAddressValue) return null;
+  const { data: assets } = useAssetsOfAddress(addressId);
+  const nativeAsset = useMemo(() => assets?.find((a) => String(a.type) === 'Native') ?? null, [assets]);
+
+  const txStatus = ctx?.status ?? null;
+
+  const txHalf = useMemo(() => {
+    if (!ctx?.payload?.from) return null;
+    const from = ctx.payload.from;
+    if (isSpeedUp) {
+      return {
+        from,
+        to: ctx.payload.to || from,
+        value: ctx.payload.value || '0x0',
+        data: ctx.payload.data || '0x',
+      };
+    }
     return {
-      from: isSpeedUp ? txPayload.from! : currentAddressValue,
-      to: isSpeedUp ? txPayload.to! : currentAddressValue,
-      value: isSpeedUp ? txPayload.value! : '0x0',
-      data: isSpeedUp ? txPayload.data! : '0x',
-      nonce: txPayload.nonce!,
-      chainId: txPayload.chainId!,
+      from,
+      to: from,
+      value: '0x0',
+      data: '0x',
     };
-  }, [txPayload, currentAddressValue, isSpeedUp]);
+  }, [ctx, isSpeedUp]);
 
   const [error, setError] = useState<{ type?: string; message: string } | null>(null);
 
-  const estimateRes = usePollingGasEstimateAndNonce(txHalf, true, tx?.address.id);
+  const estimateRes = usePollingGasEstimateAndNonce(txHalf, true, addressId);
   const estimateCurrentGasPrice = estimateRes?.gasPrice ?? null;
 
-  const higherGasSetting = useMemo(() => createGasSetting(txPayload, higherRatio, estimateCurrentGasPrice), [txPayload, estimateCurrentGasPrice]);
-  const fasterGasSetting = useMemo(() => createGasSetting(txPayload, fasterRatio, estimateCurrentGasPrice), [txPayload, estimateCurrentGasPrice]);
+  const higherGasSetting = useMemo(() => createGasSetting(ctx?.payload ?? null, higherRatio, estimateCurrentGasPrice), [ctx?.payload, estimateCurrentGasPrice]);
+  const fasterGasSetting = useMemo(() => createGasSetting(ctx?.payload ?? null, fasterRatio, estimateCurrentGasPrice), [ctx?.payload, estimateCurrentGasPrice]);
   const [customizeGasSetting, setCustomizeGasSetting] = useState<GasSetting | null>(null);
   const [showCustomizeSetting, setShowCustomizeSetting] = useState(false);
   const [showCustomizeAdvanceSetting, setShowCustomizeAdvanceSetting] = useState(false);
@@ -149,127 +164,95 @@ const SpeedUp: React.FC<StackScreenProps<typeof SpeedUpStackName>> = ({ navigati
     tempSelectedOptionLevel === 'customize' ? customizeGasSetting : tempSelectedOptionLevel === 'faster' ? fasterGasSetting : higherGasSetting;
 
   const _handleSend = useCallback(async () => {
-    if (!network || !tx || !txPayload || !newGasSetting || !txHalf || !estimateRes) return;
-    const address = await tx.address;
+    if (!ctx || !newGasSetting || !txHalf || !estimateRes) return;
+
+    if (ctx.isHardwareWallet && ctx.networkType === NetworkType.Conflux) {
+      showMessage({
+        message: 'BSIM not support Conflux Core',
+        type: 'warning',
+      });
+      return;
+    }
+
+    setError(null);
+
+    abortRef.current?.abort();
+    const controller = ctx.isHardwareWallet ? new AbortController() : null;
+    abortRef.current = controller;
+    clearHardwareSignState();
+
     try {
-      let txEpochHeight = txPayload.epochHeight;
-      if (network.networkType === NetworkType.Conflux) {
-        const currentEpochHeight = await plugins.BlockNumberTracker.getNetworkBlockNumber(network);
-        if (!txEpochHeight || !checkDiffInRange(BigInt(currentEpochHeight) - BigInt(txEpochHeight))) {
-          txEpochHeight = currentEpochHeight;
-        }
-      }
-      const { gasLimit, storageLimit } = customizeAdvanceSetting || estimateRes;
-      const txData: ITxEvm = {
-        ...txHalf,
-        gasLimit,
-        storageLimit,
-        ...(newGasSetting.suggestedMaxFeePerGas
-          ? {
-              type: 2,
-              maxFeePerGas: newGasSetting.suggestedMaxFeePerGas,
-              maxPriorityFeePerGas: newGasSetting.suggestedMaxPriorityFeePerGas,
-            }
-          : { gasPrice: newGasSetting.suggestedGasPrice, type: 0 }),
-      };
-      if (vault?.type === VaultType.BSIM) {
-        setBSIMEvent({ type: BSIMEventTypesName.BSIM_SIGN_START });
-      }
-      try {
-        const { txRawPromise, cancel } = await signTransaction({ ...txData, epochHeight: txEpochHeight ?? '' });
-        setBSIMCancel(cancel);
-        const txRaw = await txRawPromise;
-        const signature = await methods.createSignature({
-          address,
-          signType: SignType.TX,
-        });
-        const txHash = await plugins.Transaction.sendRawTransaction({ txRaw, network });
-        setBSIMEvent(null);
-        showMessage({
-          type: 'success',
-          message: t('tx.confirm.submitted.message'),
-          description: t('tx.confirm.submitted.description'),
-          icon: 'loading' as unknown as undefined,
-        });
-        if (txRaw) {
-          getEventBus().dispatch(BROADCAST_TRANSACTION_EVENT, {
-            transactionType: TransactionActionType.SpeedUp,
-            params: {
-              txHash,
-              txRaw,
-              tx: txData,
-              signature,
-              originTx: tx,
-              sendAt: new Date(),
-              epochHeight: network.networkType === NetworkType.Conflux ? txEpochHeight : null,
-              // only cancel action while origin tx is cancel
-              speedupAction: (await tx.txExtra).sendAction === SpeedUpAction.Cancel ? SpeedUpAction.Cancel : type,
-            },
-          });
-        }
-        backToHome(navigation);
-      } catch (error) {
-        if (error instanceof BSIMError) {
-          if (
-            handleBSIMHardwareUnavailable(error, rootNavigation, {
-              beforeNavigate: () => {
-                setBSIMEvent(null);
-                execBSIMCancel();
-              },
-            })
-          ) {
-            return;
+      const gasLimit = customizeAdvanceSetting?.gasLimit ?? estimateRes.gasLimit;
+      const storageLimit = customizeAdvanceSetting?.storageLimit ?? estimateRes.storageLimit;
+
+      const action = type === 'Cancel' ? 'Cancel' : 'SpeedUp';
+      const feeOverrides = newGasSetting.suggestedMaxFeePerGas
+        ? {
+            maxFeePerGas: newGasSetting.suggestedMaxFeePerGas,
+            maxPriorityFeePerGas: newGasSetting.suggestedMaxPriorityFeePerGas!,
           }
-          setBSIMEvent({ type: BSIMEventTypesName.ERROR, message: error?.message });
-        } else {
-          // throw error to outer catch
-          throw error;
-        }
+        : { gasPrice: newGasSetting.suggestedGasPrice! };
+
+      await speedUpTx({
+        txId,
+        action,
+        feeOverrides,
+        advanceOverrides: { gasLimit, storageLimit: storageLimit ?? undefined },
+        nonce: ctx.payload.nonce,
+        signal: controller?.signal,
+      });
+
+      showMessage({
+        type: 'success',
+        message: t('tx.confirm.submitted.message'),
+        description: t('tx.confirm.submitted.description'),
+        icon: 'loading' as unknown as undefined,
+      });
+
+      backToHome(navigation);
+
+      try {
+        void getAssetsSyncService().refreshCurrent({ reason: 'manual' });
+      } catch {
+        //
       }
-    } catch (_err: any) {
+    } catch (_err: unknown) {
+      if (controller?.signal.aborted) {
+        clearHardwareSignState();
+        return;
+      }
+
       if (
         handleBSIMHardwareUnavailable(_err, rootNavigation, {
           beforeNavigate: () => {
-            setBSIMEvent(null);
-            execBSIMCancel();
+            clearHardwareSignState();
+            abortRef.current?.abort();
           },
         })
       ) {
         return;
       }
-      setBSIMEvent(null);
-      const err = String(_err.data || _err?.message || _err);
-      if (_err instanceof SignTransactionCancelError) {
-        // ignore cancel error
+
+      if (isUserCanceledError(_err)) {
+        clearHardwareSignState();
         return;
       }
+
+      const err = getErrorText(_err);
       const msg = matchRPCErrorMessage(_err);
+
       setError({
         message: err,
         ...(err.includes('out of balance') ? { type: 'out of balance' } : err.includes('timed out') ? { type: 'network error' } : null),
       });
+
       showMessage({
         message: t('tx.confirm.failed'),
         description: msg,
         type: 'failed',
       });
     }
-  }, [
-    newGasSetting,
-    network,
-    tx,
-    txPayload,
-    vault?.type,
-    customizeAdvanceSetting,
-    txHalf,
-    estimateRes,
-    navigation,
-    type,
-    setBSIMCancel,
-    setBSIMEvent,
-    t,
-    signTransaction,
-  ]);
+  }, [clearHardwareSignState, ctx, customizeAdvanceSetting, estimateRes, navigation, rootNavigation, speedUpTx, t, txHalf, txId, type, newGasSetting]);
   const { inAsync: inSending, execAsync: handleSend } = useInAsync(_handleSend);
 
   return (
@@ -286,13 +269,13 @@ const SpeedUp: React.FC<StackScreenProps<typeof SpeedUpStackName>> = ({ navigati
           <BottomSheetHeader title={isSpeedUp ? t('tx.action.speedUp.title') : t('tx.action.cancel.title')} />
           <BottomSheetContent>
             <Text style={[styles.description, { color: colors.textPrimary }]}>{isSpeedUp ? t('tx.action.speedUp.desc') : t('tx.action.cancel.desc')}</Text>
-            {(!txPayload || !nativeAsset || !estimateCurrentGasPrice) && <HourglassLoading style={styles.loading} />}
-            {txPayload && nativeAsset && estimateCurrentGasPrice && (
+            {(!ctx || !nativeAsset || !estimateCurrentGasPrice) && <HourglassLoading style={styles.loading} />}
+            {ctx && nativeAsset && estimateCurrentGasPrice && (
               <>
                 {higherGasSetting && (
                   <GasOption
                     level="higher"
-                    nativeAsset={nativeAsset}
+                    nativeAsset={nativeAsset as any}
                     gasSetting={higherGasSetting}
                     gasLimit={customizeAdvanceSetting?.gasLimit ?? estimateRes!.gasLimit}
                     selected={tempSelectedOptionLevel === 'higher'}
@@ -302,7 +285,7 @@ const SpeedUp: React.FC<StackScreenProps<typeof SpeedUpStackName>> = ({ navigati
                 {fasterGasSetting && (
                   <GasOption
                     level="faster"
-                    nativeAsset={nativeAsset}
+                    nativeAsset={nativeAsset as any}
                     gasSetting={fasterGasSetting}
                     gasLimit={customizeAdvanceSetting?.gasLimit ?? estimateRes!.gasLimit}
                     selected={tempSelectedOptionLevel === 'faster'}
@@ -312,7 +295,7 @@ const SpeedUp: React.FC<StackScreenProps<typeof SpeedUpStackName>> = ({ navigati
                 {customizeGasSetting && (
                   <GasOption
                     level="customize"
-                    nativeAsset={nativeAsset}
+                    nativeAsset={nativeAsset as any}
                     gasSetting={customizeGasSetting}
                     gasLimit={customizeAdvanceSetting?.gasLimit ?? estimateRes!.gasLimit}
                     selected={tempSelectedOptionLevel === 'customize'}
@@ -327,11 +310,11 @@ const SpeedUp: React.FC<StackScreenProps<typeof SpeedUpStackName>> = ({ navigati
             )}
             {error && (
               <>
-                {error.type === 'out of balance ' ? (
+                {error.type === 'out of balance' ? (
                   <View style={styles.errorWarp}>
                     <WarnIcon style={styles.errorIcon} color={colors.middle} width={24} height={24} />
                     <Text style={[styles.errorText, { color: colors.middle }]}>
-                      {`${txAsset?.type === AssetType.Native ? t('tx.confirm.error.InsufficientBalance', { symbol: nativeAsset?.symbol }) : t('tx.confirm.error.InsufficientBalanceForGas', { symbol: nativeAsset?.symbol })}`}
+                      {`${isSpeedUp && ctx?.assetType === AssetType.Native ? t('tx.confirm.error.InsufficientBalance', { symbol: nativeAsset?.symbol }) : t('tx.confirm.error.InsufficientBalanceForGas', { symbol: nativeAsset?.symbol })}`}
                     </Text>
                   </View>
                 ) : (
@@ -380,19 +363,19 @@ const SpeedUp: React.FC<StackScreenProps<typeof SpeedUpStackName>> = ({ navigati
       {estimateRes && showCustomizeAdvanceSetting && (
         <CustomizeAdvanceSetting
           customizeAdvanceSetting={customizeAdvanceSetting}
-          estimateNonce={txPayload?.nonce ?? 0}
+          estimateNonce={ctx?.payload.nonce ?? 0}
           estimateGasLimit={estimateRes.gasLimit}
           onConfirm={setCustomizeAdvanceSetting}
           onClose={() => setShowCustomizeAdvanceSetting(false)}
           nonceDisabled
         />
       )}
-      {bsimEvent && (
-        <BSIMVerify
-          bsimEvent={bsimEvent}
+      {hardwareSignState && (
+        <HardwareSignVerify
+          state={hardwareSignState}
           onClose={() => {
-            setBSIMEvent(null);
-            execBSIMCancel();
+            clearHardwareSignState();
+            abortRef.current?.abort();
           }}
           onRetry={handleSend}
         />

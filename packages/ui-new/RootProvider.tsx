@@ -41,6 +41,7 @@ const WALLET_CONNECT_METADATA = {
 const RUNTIME_CONFIG: RuntimeConfig = {
   wallet: {
     pendingCountLimit: 5,
+    pendingTimeBeforeSpeedUpMs: 15_000,
     gas: {
       minGasPriceGweiByNetworkType: {
         [NetworkType.Conflux]: 1,

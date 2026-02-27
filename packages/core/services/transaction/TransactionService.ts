@@ -8,6 +8,7 @@ import type { Tx } from '@core/database/models/Tx';
 import { TxStatus as DbTxStatus, FINISHED_IN_ACTIVITY_TX_STATUSES, PENDING_COUNT_STATUSES, PENDING_TX_STATUSES, TxSource } from '@core/database/models/Tx/type';
 import type { TxExtra } from '@core/database/models/TxExtra';
 import type { TxPayload } from '@core/database/models/TxPayload';
+import VaultType from '@core/database/models/Vault/VaultType';
 import TableName from '@core/database/TableName';
 import { CORE_IDENTIFIERS } from '@core/di';
 import {
@@ -37,6 +38,7 @@ import {
   type IChainProvider,
   NetworkType,
   TxStatus as ServiceTxStatus,
+  type SpeedUpAction,
   type TransactionParams,
   type UnsignedTransaction,
 } from '@core/types';
@@ -54,6 +56,8 @@ import type {
   RecentlyAddress,
   SendERC20Input,
   SendTransactionInput,
+  SpeedUpTxContext,
+  SpeedUpTxInput,
   TransactionFilter,
 } from './types';
 
@@ -597,6 +601,222 @@ export class TransactionService {
         cause: error,
         context: { chainId: network.chainId },
       });
+    }
+  }
+
+  async getSpeedUpTxContext(txId: string): Promise<SpeedUpTxContext | null> {
+    const tx = await this.findTxOrNull(txId);
+    if (!tx) return null;
+
+    const [address, payload, extra] = await Promise.all([tx.address.fetch(), tx.txPayload.fetch(), tx.txExtra.fetch()]);
+    const [network, account] = await Promise.all([address.network.fetch(), address.account.fetch()]);
+    if (!network) return null;
+
+    const accountGroup = await account.accountGroup.fetch();
+    const vault = await accountGroup.vault.fetch();
+
+    let assetType: AssetType | null = null;
+    try {
+      const asset = await tx.asset.fetch();
+      assetType = (asset?.type as unknown as AssetType) ?? null;
+    } catch {
+      assetType = null;
+    }
+
+    return {
+      txId: tx.id,
+      addressId: address.id,
+      accountId: account.id,
+      networkId: network.id,
+      networkType: network.networkType,
+      isHardwareWallet: vault.type === VaultType.BSIM,
+      status: this.mapStatus(tx.status),
+      sendAction: extra.sendAction ?? null,
+      assetType,
+      payload: {
+        from: payload.from ?? '',
+        to: payload.to ?? '',
+        value: payload.value ?? '0x0',
+        data: (payload.data ?? '0x') as Hex,
+        chainId: payload.chainId ?? network.chainId,
+        nonce: payload.nonce ?? 0,
+        type: payload.type,
+        gasPrice: payload.gasPrice,
+        maxFeePerGas: payload.maxFeePerGas,
+        maxPriorityFeePerGas: payload.maxPriorityFeePerGas,
+        gasLimit: payload.gasLimit,
+        storageLimit: payload.storageLimit,
+        epochHeight: payload.epochHeight,
+      },
+    };
+  }
+
+  async speedUpTx(input: SpeedUpTxInput): Promise<ITransaction> {
+    const originTx = await this.findTxOrThrow(input.txId);
+
+    const [address, payload, extra] = await Promise.all([originTx.address.fetch(), originTx.txPayload.fetch(), originTx.txExtra.fetch()]);
+    const network = await this.getNetwork(address);
+    const chainProvider = this.getChainProvider(network);
+
+    if (!PENDING_TX_STATUSES.includes(originTx.status)) {
+      throw new CoreError({
+        code: TX_INVALID_PARAMS,
+        message: 'Transaction is not pending.',
+        context: { txId: originTx.id, status: originTx.status },
+      });
+    }
+
+    const from = payload.from ?? (await address.getValue());
+
+    const effectiveAction: SpeedUpAction = extra.sendAction === 'Cancel' ? 'Cancel' : input.action;
+
+    if (typeof payload.nonce !== 'number') {
+      throw new CoreError({
+        code: TX_INVALID_PARAMS,
+        message: 'Origin transaction nonce is missing.',
+        context: { txId: originTx.id },
+      });
+    }
+    if (payload.nonce !== input.nonce) {
+      throw new CoreError({
+        code: TX_INVALID_PARAMS,
+        message: 'Replacement nonce mismatch.',
+        context: { txId: originTx.id, originNonce: payload.nonce, nonce: input.nonce },
+      });
+    }
+
+    const is1559 = !!payload.maxFeePerGas;
+    this.assertReplacementFeeBumped({
+      is1559,
+      origin: {
+        gasPrice: payload.gasPrice ?? null,
+        maxFeePerGas: payload.maxFeePerGas ?? null,
+        maxPriorityFeePerGas: payload.maxPriorityFeePerGas ?? null,
+      },
+      next: input.feeOverrides,
+    });
+
+    const gasLimit = input.advanceOverrides?.gasLimit ?? payload.gasLimit ?? undefined;
+    const storageLimit = input.advanceOverrides?.storageLimit ?? payload.storageLimit ?? undefined;
+
+    const replacementTxPayload = await this.buildReplacementPayload({
+      network,
+      from,
+      origin: payload,
+      action: effectiveAction,
+      feeOverrides: input.feeOverrides,
+      gasLimit,
+      storageLimit,
+      nonce: input.nonce,
+      chainProvider,
+    });
+
+    // get signer
+    const account = await address.account.fetch();
+    const signer = await this.signingService.getSigner(account.id, address.id, { signal: input.signal });
+
+    const requestId = this.createRequestId();
+    let signedTx: Awaited<ReturnType<IChainProvider['signTransaction']>>;
+
+    try {
+      if (signer.type === 'hardware') {
+        this.eventBus?.emit('hardware-sign/started', {
+          requestId,
+          accountId: account.id,
+          addressId: address.id,
+          networkId: network.id,
+        });
+      }
+
+      signedTx = await chainProvider.signTransaction(replacementTxPayload, signer, { signal: input.signal });
+
+      if (signer.type === 'hardware') {
+        this.eventBus?.emit('hardware-sign/succeeded', {
+          requestId,
+          accountId: account.id,
+          addressId: address.id,
+          networkId: network.id,
+          txHash: signedTx.hash,
+          rawTransaction: signedTx.rawTransaction,
+        });
+      }
+    } catch (error) {
+      if (signer.type === 'hardware') {
+        if (input.signal?.aborted) {
+          this.eventBus?.emit('hardware-sign/aborted', {
+            requestId,
+            accountId: account.id,
+            addressId: address.id,
+            networkId: network.id,
+          });
+        } else {
+          this.eventBus?.emit('hardware-sign/failed', {
+            requestId,
+            accountId: account.id,
+            addressId: address.id,
+            networkId: network.id,
+            error: this.toHardwareOperationError(error),
+          });
+        }
+      }
+      throw error;
+    }
+
+    let signatureId: string | null = null;
+    try {
+      signatureId = await this.signatureRecordService.createRecord({
+        addressId: address.id,
+        signType: SignType.TX,
+      });
+    } catch {
+      signatureId = null;
+    }
+
+    const sendAt = new Date();
+
+    try {
+      const txHash = await chainProvider.broadcastTransaction(signedTx);
+
+      const newTx = await this.saveReplacementTx({
+        originTx,
+        address,
+        unsignedTx: replacementTxPayload,
+        txHash,
+        txRaw: signedTx.rawTransaction,
+        sendAt,
+        sendAction: effectiveAction,
+        isFailed: false,
+        err: null,
+        errorType: null,
+      });
+
+      if (signatureId) {
+        await this.signatureRecordService.linkTx({ signatureId, txId: newTx.id });
+      }
+
+      this.eventBus?.emit('tx/created', { key: { addressId: address.id, networkId: network.id }, txId: newTx.id });
+      return this.toInterface(newTx);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+
+      const failed = await this.saveReplacementTx({
+        originTx,
+        address,
+        unsignedTx: replacementTxPayload,
+        txHash: '',
+        txRaw: signedTx.rawTransaction,
+        sendAt,
+        sendAction: effectiveAction,
+        isFailed: true,
+        err: message,
+        errorType: null,
+      });
+
+      if (signatureId) {
+        await this.signatureRecordService.linkTx({ signatureId, txId: failed.id });
+      }
+
+      throw error;
     }
   }
 
@@ -1166,6 +1386,281 @@ export class TransactionService {
         return [level, { maxFeePerGas: clamped, maxPriorityFeePerGas: clamped, gasCost }];
       }),
     ) as Record<GasLevel, { maxFeePerGas: Hex; maxPriorityFeePerGas: Hex; gasCost: Hex }>;
+  }
+
+  private async findTxOrNull(txId: string): Promise<Tx | null> {
+    try {
+      return await this.database.get<Tx>(TableName.Tx).find(txId);
+    } catch {
+      return null;
+    }
+  }
+
+  private async findTxOrThrow(txId: string): Promise<Tx> {
+    const tx = await this.findTxOrNull(txId);
+    if (!tx) {
+      throw new CoreError({
+        code: TX_INVALID_PARAMS,
+        message: 'Transaction not found.',
+        context: { txId },
+      });
+    }
+    return tx;
+  }
+
+  private assertReplacementFeeBumped(params: {
+    is1559: boolean;
+    origin: { gasPrice: string | null; maxFeePerGas: string | null; maxPriorityFeePerGas: string | null };
+    next: SpeedUpTxInput['feeOverrides'];
+  }): void {
+    const { is1559, origin, next } = params;
+
+    const toBigIntOrNull = (v: string | null | undefined) => {
+      if (!v) return null;
+      try {
+        return BigInt(v);
+      } catch {
+        return null;
+      }
+    };
+
+    if (is1559) {
+      if (!('maxFeePerGas' in next) || !('maxPriorityFeePerGas' in next)) {
+        throw new CoreError({
+          code: TX_INVALID_PARAMS,
+          message: 'Replacement transaction requires EIP-1559 fee fields.',
+          context: { originMaxFeePerGas: origin.maxFeePerGas, originMaxPriorityFeePerGas: origin.maxPriorityFeePerGas },
+        });
+      }
+      const originMax = toBigIntOrNull(origin.maxFeePerGas);
+      const originTip = toBigIntOrNull(origin.maxPriorityFeePerGas);
+      const nextMax = toBigIntOrNull(next.maxFeePerGas);
+      const nextTip = toBigIntOrNull(next.maxPriorityFeePerGas);
+
+      if (originMax !== null && nextMax !== null && nextMax <= originMax) {
+        throw new CoreError({
+          code: TX_INVALID_PARAMS,
+          message: 'Replacement transaction maxFeePerGas is not bumped.',
+          context: { originMaxFeePerGas: origin.maxFeePerGas, maxFeePerGas: next.maxFeePerGas },
+        });
+      }
+      if (originTip !== null && nextTip !== null && nextTip < originTip) {
+        throw new CoreError({
+          code: TX_INVALID_PARAMS,
+          message: 'Replacement transaction maxPriorityFeePerGas is not bumped.',
+          context: { originMaxPriorityFeePerGas: origin.maxPriorityFeePerGas, maxPriorityFeePerGas: next.maxPriorityFeePerGas },
+        });
+      }
+      return;
+    }
+
+    if (!('gasPrice' in next)) {
+      throw new CoreError({
+        code: TX_INVALID_PARAMS,
+        message: 'Replacement transaction requires legacy gasPrice.',
+        context: { originGasPrice: origin.gasPrice },
+      });
+    }
+
+    const originGasPrice = toBigIntOrNull(origin.gasPrice);
+    const nextGasPrice = toBigIntOrNull(next.gasPrice);
+
+    if (originGasPrice !== null && nextGasPrice !== null && nextGasPrice <= originGasPrice) {
+      throw new CoreError({
+        code: TX_INVALID_PARAMS,
+        message: 'Replacement transaction gasPrice is not bumped.',
+        context: { originGasPrice: origin.gasPrice, gasPrice: next.gasPrice },
+      });
+    }
+  }
+
+  private async buildReplacementPayload(params: {
+    network: Network;
+    from: string;
+    origin: TxPayload;
+    action: SpeedUpAction;
+    feeOverrides: SpeedUpTxInput['feeOverrides'];
+    gasLimit?: string;
+    storageLimit?: string;
+    nonce: number;
+    chainProvider: IChainProvider;
+  }): Promise<UnsignedTransaction> {
+    const { network, from, origin, action, feeOverrides, gasLimit, storageLimit, nonce, chainProvider } = params;
+
+    const to = action === 'Cancel' ? from : (origin.to ?? undefined);
+    const value: Hex = action === 'Cancel' ? '0x0' : ((origin.value ?? '0x0') as Hex);
+    const data: Hex = action === 'Cancel' ? '0x' : ((origin.data ?? '0x') as Hex);
+
+    if (network.networkType === NetworkType.Ethereum) {
+      const is1559 = 'maxFeePerGas' in feeOverrides;
+      return {
+        chainType: NetworkType.Ethereum,
+        payload: {
+          from,
+          to,
+          chainId: network.chainId,
+          value,
+          data,
+          gasLimit,
+          nonce,
+          type: is1559 ? 2 : 0,
+          ...(is1559
+            ? { maxFeePerGas: feeOverrides.maxFeePerGas, maxPriorityFeePerGas: feeOverrides.maxPriorityFeePerGas }
+            : { gasPrice: feeOverrides.gasPrice }),
+        },
+      };
+    }
+
+    if (network.networkType === NetworkType.Conflux) {
+      if (!('gasPrice' in feeOverrides)) {
+        throw new CoreError({
+          code: TX_INVALID_PARAMS,
+          message: 'Conflux replacement tx requires legacy gasPrice.',
+          context: { networkType: network.networkType, chainId: network.chainId },
+        });
+      }
+
+      // Use latest epochHeight for replacement to avoid stale epochHeight rejection.
+      // Conflux RPC returns hex quantity; coerce to a safe integer.
+      const epochNumberHex = await chainProvider.rpc.request<string>('cfx_epochNumber', ['latest_state']);
+      const epochBigInt = epochNumberHex.startsWith('0x') ? BigInt(epochNumberHex) : BigInt(epochNumberHex);
+      const epochHeight = Number(epochBigInt);
+      if (!Number.isFinite(epochHeight)) {
+        throw new Error('Invalid Conflux epochHeight.');
+      }
+
+      return {
+        chainType: NetworkType.Conflux,
+        payload: {
+          from,
+          to,
+          chainId: network.chainId,
+          value,
+          data,
+          gasLimit,
+          storageLimit,
+          nonce,
+          gasPrice: feeOverrides.gasPrice,
+          epochHeight,
+        },
+      };
+    }
+
+    throw new Error(`buildReplacementPayload: unsupported networkType: ${String(network.networkType)}`);
+  }
+
+  private async isWaitingLike(chainProvider: IChainProvider, from: string, txNonce: number): Promise<boolean> {
+    const nextNonce = await chainProvider.getNonce(from);
+    return nextNonce < txNonce;
+  }
+
+  private async saveReplacementTx(params: {
+    originTx: Tx;
+    address: Address;
+    unsignedTx: UnsignedTransaction;
+    txHash: string;
+    txRaw: string;
+    sendAt: Date;
+    sendAction: SpeedUpAction;
+    isFailed: boolean;
+    err: string | null;
+    errorType: ProcessErrorType | null;
+  }): Promise<Tx> {
+    const { originTx, address, unsignedTx, txHash, txRaw, sendAt, sendAction, isFailed, err, errorType } = params;
+
+    const originExtra = await originTx.txExtra.fetch();
+    const originAsset = await originTx.asset.fetch().catch(() => null);
+    const originApp = await originTx.app.fetch().catch(() => null);
+    const network = await address.network.fetch();
+    if (!network) throw new Error('[TransactionService] Address has no associated network.');
+
+    const payload: any = unsignedTx.payload ?? {};
+
+    const assets = await network.assets.fetch();
+    const nativeAsset = assets.find((item) => item.type === AssetType.Native);
+
+    const txPayload = this.database.get<TxPayload>(TableName.TxPayload).prepareCreate((record) => {
+      record.type = payload.type != null ? String(payload.type) : null;
+      record.accessList = null;
+      record.maxFeePerGas = payload.maxFeePerGas ?? null;
+      record.maxPriorityFeePerGas = payload.maxPriorityFeePerGas ?? null;
+      record.from = payload.from ?? null;
+      record.to = payload.to ?? null;
+      record.gasPrice = payload.gasPrice ?? null;
+      record.gasLimit = payload.gasLimit ?? (payload.gas as string | undefined) ?? null;
+      record.storageLimit = payload.storageLimit ?? null;
+      record.data = payload.data ?? null;
+      record.value = payload.value ?? null;
+      record.nonce = typeof payload.nonce === 'number' ? payload.nonce : null;
+      record.chainId = payload.chainId ?? null;
+      record.epochHeight = payload.epochHeight != null ? String(payload.epochHeight) : null;
+    });
+
+    const txExtra = this.database.get<TxExtra>(TableName.TxExtra).prepareCreate((record) => {
+      const assetType = sendAction === 'Cancel' ? AssetType.Native : ((originAsset?.type as unknown as AssetType | undefined) ?? null);
+
+      // When origin asset is missing (e.g. legacy records / dApp tx), preserve existing extra flags.
+      if (sendAction !== 'Cancel' && assetType === null) {
+        record.ok = originExtra.ok;
+        record.simple = originExtra.simple;
+        record.contractInteraction = originExtra.contractInteraction;
+        record.token20 = originExtra.token20;
+        record.tokenNft = originExtra.tokenNft;
+        record.address = originExtra.address;
+        record.method = originExtra.method;
+        record.contractCreation = originExtra.contractCreation;
+      } else {
+        record.ok = true;
+        record.simple = assetType === AssetType.Native;
+        record.contractInteraction = assetType !== AssetType.Native;
+        record.token20 = assetType === AssetType.ERC20;
+        record.tokenNft = assetType === AssetType.ERC721 || assetType === AssetType.ERC1155;
+        record.address = payload.to ?? null;
+        record.method = assetType === AssetType.ERC20 ? 'transfer' : null;
+        record.contractCreation = !payload.to && !!payload.data;
+      }
+
+      record.sendAction = sendAction;
+    });
+
+    const chainProvider = this.getChainProvider(network);
+    const waiting =
+      typeof payload.nonce === 'number' ? await this.isWaitingLike(chainProvider, payload.from ?? (await address.getValue()), payload.nonce) : false;
+
+    const tx = this.database.get<Tx>(TableName.Tx).prepareCreate((record) => {
+      record.raw = txRaw;
+      record.hash = txHash;
+      record.status = isFailed ? DbTxStatus.SEND_FAILED : waiting ? DbTxStatus.WAITTING : DbTxStatus.PENDING;
+      record.executedStatus = null;
+      record.receipt = null;
+      record.executedAt = null;
+      record.errorType = errorType ?? null;
+      record.err = err ?? null;
+      record.sendAt = sendAt;
+      record.resendAt = null;
+      record.resendCount = null;
+      record.isTempReplacedByInner = null;
+      record.address.set(address);
+      record.txPayload.set(txPayload);
+      record.txExtra.set(txExtra);
+
+      if (sendAction === 'Cancel') {
+        record.source = TxSource.SELF;
+        record.method = 'transfer';
+        if (nativeAsset) record.asset.set(nativeAsset);
+      } else {
+        record.source = originTx.source;
+        record.method = originTx.method;
+        if (originApp) record.app.set(originApp);
+        if (originAsset) record.asset.set(originAsset);
+      }
+    });
+
+    await this.database.write(async () => {
+      await this.database.batch(txPayload, txExtra, tx);
+    });
+
+    return tx;
   }
 
   private async toInterface(tx: Tx): Promise<ITransaction> {

@@ -1,4 +1,4 @@
-import type { LegacyLikeGasEstimate, SendERC20Input, SendTransactionInput } from '@core/services';
+import type { LegacyLikeGasEstimate, SendERC20Input, SendTransactionInput, SpeedUpTxContext, SpeedUpTxInput } from '@core/services';
 import { type UseQueryResult, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useCallback } from 'react';
 import { useCurrentAddress } from './account';
@@ -7,6 +7,7 @@ import { getTransactionService, type ITransaction, type RecentlyAddress } from '
 
 export type TransactionsQuery = UseQueryResult<ITransaction[]>;
 export type RecentlyAddressesQuery = UseQueryResult<RecentlyAddress[]>;
+export type SpeedUpContextQuery = UseQueryResult<SpeedUpTxContext | null>;
 
 export type Level = 'low' | 'medium' | 'high';
 
@@ -14,6 +15,7 @@ export const getTransactionRootKey = () => ['tx'] as const;
 export const getTransactionsByAddressKey = (addressId: string, status: string, limit?: number) =>
   ['tx', 'byAddress', addressId, status, limit ?? 'all'] as const;
 export const getRecentlyAddressesKey = (addressId: string) => ['tx', 'recently', addressId] as const;
+export const getSpeedUpContextKey = (txId: string) => ['tx', 'speedUpContext', txId] as const;
 
 export async function isPendingTxsFull(addressId: string): Promise<boolean> {
   if (!addressId) return false;
@@ -48,6 +50,32 @@ export function usePollingGasEstimateAndNonce(
   });
 
   return enabled ? (estimate.data ?? null) : null;
+}
+
+export function useSpeedUpTxContext(txId: string): SpeedUpContextQuery {
+  const service = getTransactionService();
+  return useQuery({
+    queryKey: getSpeedUpContextKey(txId || 'none'),
+    queryFn: () => (txId ? service.getSpeedUpTxContext(txId) : null),
+    enabled: !!txId,
+  });
+}
+
+export function useSpeedUpTx() {
+  const service = getTransactionService();
+  const queryClient = useQueryClient();
+
+  return useCallback(
+    async (input: SpeedUpTxInput) => {
+      const tx = await service.speedUpTx(input);
+      await queryClient.invalidateQueries({ queryKey: getTransactionRootKey() });
+      await queryClient.invalidateQueries({ queryKey: getAssetRootKey() });
+      // Keep behavior close to sendNative/sendERC20: refresh all address-scoped asset queries.
+      await queryClient.invalidateQueries({ queryKey: ['asset', 'byAddress'] });
+      return tx;
+    },
+    [service, queryClient],
+  );
 }
 
 /**

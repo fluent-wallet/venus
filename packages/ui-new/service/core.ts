@@ -3,6 +3,7 @@ import { AssetsSyncService } from '@core/modules/assetsSync';
 import type { AuthService } from '@core/modules/auth';
 import type { CoreEventMap } from '@core/modules/eventBus';
 import type { ExternalRequestsService } from '@core/modules/externalRequests';
+import type { RuntimeConfig } from '@core/runtime/types';
 import {
   AccountService,
   AddressValidationService,
@@ -92,6 +93,10 @@ export function getAuthService(): AuthService {
 
 export function getExternalRequestsService(): ExternalRequestsService {
   return getContainer().get<ExternalRequestsService>(CORE_IDENTIFIERS.EXTERNAL_REQUESTS);
+}
+
+export function getRuntimeConfig(): RuntimeConfig {
+  return getContainer().get<RuntimeConfig>(CORE_IDENTIFIERS.CONFIG);
 }
 
 export function getRuntimeEventBus(): import('@core/modules/eventBus').EventBus<CoreEventMap> {

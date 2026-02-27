@@ -1,6 +1,5 @@
 import RocketIcon from '@assets/icons/rocket.svg';
 import Text from '@components/Text';
-import { SpeedUpAction } from '@core/WalletCore/Events/broadcastTransactionSubject';
 import { useNavigation, useTheme } from '@react-navigation/native';
 import { type HomeStackName, SpeedUpStackName, type StackScreenProps } from '@router/configs';
 import type React from 'react';
@@ -18,11 +17,11 @@ const SpeedUpButton: React.FC<{ txId: string; containerStyle?: StyleProp<ViewSty
   const navigation = useNavigation<StackScreenProps<typeof HomeStackName>['navigation']>();
   const handlePressCancel = useCallback(() => {
     if (cancelDisabled) return;
-    navigation.navigate(SpeedUpStackName, { txId: txId, type: SpeedUpAction.Cancel, level: 'higher' });
+    navigation.navigate(SpeedUpStackName, { txId: txId, type: 'Cancel', level: 'higher' });
   }, [txId, navigation.navigate, cancelDisabled]);
 
   const handlePressSpeedUp = useCallback(() => {
-    navigation.navigate(SpeedUpStackName, { txId: txId, type: SpeedUpAction.SpeedUp, level: 'higher' });
+    navigation.navigate(SpeedUpStackName, { txId: txId, type: 'SpeedUp', level: 'higher' });
   }, [txId, navigation.navigate]);
 
   return (

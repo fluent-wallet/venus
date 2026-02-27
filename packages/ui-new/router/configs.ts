@@ -1,7 +1,7 @@
 import type { HardwareUnavailableReason as BSIMHardwareReason } from '@core/hardware/bsim/types';
 import type { ExternalRequestSnapshot } from '@core/modules/externalRequests';
+import type { SpeedUpAction } from '@core/types';
 import type { NetworkType } from '@core/utils/consts';
-import type { SpeedUpAction } from '@core/WalletCore/Events/broadcastTransactionSubject';
 import type { AssetInfo } from '@core/WalletCore/Plugins/AssetsTracker/types';
 import type { NFTItemDetail } from '@core/WalletCore/Plugins/NFTDetailTracker/server';
 import type { IWCSendTransactionEventData, IWCSessionProposalEventData, IWCSignMessageEventData } from '@core/WalletCore/Plugins/WalletConnect/types';

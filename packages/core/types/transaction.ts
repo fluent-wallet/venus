@@ -114,3 +114,5 @@ export enum TxStatus {
   Confirmed = 'confirmed',
   Failed = 'failed',
 }
+
+export type SpeedUpAction = 'SpeedUp' | 'Cancel';

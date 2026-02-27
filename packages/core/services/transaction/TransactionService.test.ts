@@ -12,7 +12,7 @@ import type { TxExtra } from '@core/database/models/TxExtra';
 import type { TxPayload } from '@core/database/models/TxPayload';
 import TableName from '@core/database/TableName';
 import { CORE_IDENTIFIERS } from '@core/di';
-import { CHAIN_PROVIDER_NOT_FOUND, TX_BROADCAST_FAILED } from '@core/errors';
+import { CHAIN_PROVIDER_NOT_FOUND, TX_BROADCAST_FAILED, TX_INVALID_PARAMS } from '@core/errors';
 import type { CoreEventMap, EventBus } from '@core/modules/eventBus';
 import { InMemoryEventBus } from '@core/modules/eventBus';
 import type { RuntimeConfig } from '@core/runtime/types';
@@ -28,8 +28,38 @@ import { SignatureRecordService } from '../signing/SignatureRecordService';
 import { TransactionService } from './TransactionService';
 import type { ITransaction, SendERC20Input, SendTransactionInput } from './types';
 
-async function createDbTx(params: { database: Database; address: Address; status: DbTxStatus; from: string; to: string; hash: string; sendAt: Date }) {
-  const { database, address, status, from, to, hash, sendAt } = params;
+async function createDbTx(params: {
+  database: Database;
+  address: Address;
+  status: DbTxStatus;
+  from: string;
+  to: string;
+  hash: string;
+  sendAt: Date;
+  nonce?: number;
+  gasPrice?: string | null;
+  maxFeePerGas?: string | null;
+  maxPriorityFeePerGas?: string | null;
+  sendAction?: 'SpeedUp' | 'Cancel' | null;
+  source?: TxSource;
+  method?: string;
+}) {
+  const {
+    database,
+    address,
+    status,
+    from,
+    to,
+    hash,
+    sendAt,
+    nonce = 1,
+    gasPrice = '0x1',
+    maxFeePerGas = null,
+    maxPriorityFeePerGas = null,
+    sendAction = null,
+    source = TxSource.SELF,
+    method = 'transfer',
+  } = params;
 
   let tx: Tx;
 
@@ -38,8 +68,11 @@ async function createDbTx(params: { database: Database; address: Address; status
       record.from = from;
       record.to = to;
       record.value = '0x1';
-      record.nonce = 1;
+      record.nonce = nonce;
       record.chainId = '0x1';
+      record.gasPrice = gasPrice;
+      record.maxFeePerGas = maxFeePerGas;
+      record.maxPriorityFeePerGas = maxPriorityFeePerGas;
     });
 
     const extra = await database.get<TxExtra>(TableName.TxExtra).create((record) => {
@@ -48,6 +81,7 @@ async function createDbTx(params: { database: Database; address: Address; status
       record.contractInteraction = false;
       record.token20 = false;
       record.tokenNft = false;
+      record.sendAction = sendAction;
     });
 
     tx = await database.get<Tx>(TableName.Tx).create((record) => {
@@ -58,8 +92,8 @@ async function createDbTx(params: { database: Database; address: Address; status
       record.raw = '0xraw';
       record.status = status;
       record.sendAt = sendAt;
-      record.source = TxSource.SELF;
-      record.method = 'transfer';
+      record.source = source;
+      record.method = method;
     });
   });
 
@@ -177,7 +211,7 @@ describe('TransactionService', () => {
     const asset = await tx.getAsset();
     expect(asset?.type).toBe(DbAssetType.Native);
 
-    expect(signingService.getSigner).toHaveBeenCalledWith(account.id, address.id);
+    expect(signingService.getSigner).toHaveBeenCalledWith(account.id, address.id, expect.objectContaining({ signal: undefined }));
 
     expect(createdEvents).toHaveLength(1);
     expect(createdEvents[0]).toEqual({
@@ -472,7 +506,7 @@ describe('TransactionService', () => {
 
     expect(txPayload.to).toBe(contractAddress);
 
-    expect(signingService.getSigner).toHaveBeenCalledWith(account.id, address.id);
+    expect(signingService.getSigner).toHaveBeenCalledWith(account.id, address.id, expect.objectContaining({ signal: undefined }));
   });
   it('persists SEND_FAILED tx when broadcastTransaction throws', async () => {
     const { address, network, assetRule } = await createTestAccount(database);
@@ -806,6 +840,139 @@ describe('TransactionService', () => {
     } as any;
 
     await expect(service.sendDappTransaction({ addressId: address.id, request })).rejects.toMatchObject({ code: CHAIN_PROVIDER_NOT_FOUND });
+  });
+
+  it('speeds up a pending tx and creates replacement records', async () => {
+    const { network: evmNetwork, assetRule } = await seedNetwork(database, { definitionKey: 'Conflux eSpace', selected: true });
+    const { address } = await createTestAccount(database, { network: evmNetwork, assetRule });
+
+    const provider = new StubChainProvider({ chainId: evmNetwork.chainId, networkType: evmNetwork.networkType });
+    chainRegistry.register(provider);
+
+    const origin = await createDbTx({
+      database,
+      address,
+      status: DbTxStatus.PENDING,
+      from: address.hex,
+      to: '0x0000000000000000000000000000000000000001',
+      hash: '0xorig',
+      sendAt: new Date(),
+      nonce: 0,
+      gasPrice: '0x1',
+    });
+
+    const result = await service.speedUpTx({
+      txId: origin.id,
+      action: 'SpeedUp',
+      feeOverrides: { gasPrice: '0x2' },
+      nonce: 0,
+    });
+
+    const created = await database.get<Tx>(TableName.Tx).find(result.id);
+    const payload = await created.txPayload.fetch();
+    const extra = await created.txExtra.fetch();
+
+    expect(payload.nonce).toBe(0);
+    expect(extra.sendAction).toBe('SpeedUp');
+  });
+
+  it('cancels a pending tx by sending a self-tx with same nonce', async () => {
+    const { network: evmNetwork, assetRule } = await seedNetwork(database, { definitionKey: 'Conflux eSpace', selected: true });
+    const { address } = await createTestAccount(database, { network: evmNetwork, assetRule });
+
+    const provider = new StubChainProvider({ chainId: evmNetwork.chainId, networkType: evmNetwork.networkType });
+    chainRegistry.register(provider);
+
+    const origin = await createDbTx({
+      database,
+      address,
+      status: DbTxStatus.PENDING,
+      from: address.hex,
+      to: '0x0000000000000000000000000000000000000001',
+      hash: '0xorig',
+      sendAt: new Date(),
+      nonce: 0,
+      gasPrice: '0x1',
+    });
+
+    const result = await service.speedUpTx({
+      txId: origin.id,
+      action: 'Cancel',
+      feeOverrides: { gasPrice: '0x2' },
+      nonce: 0,
+    });
+
+    const created = await database.get<Tx>(TableName.Tx).find(result.id);
+    const payload = await created.txPayload.fetch();
+    const extra = await created.txExtra.fetch();
+
+    expect(extra.sendAction).toBe('Cancel');
+    expect(created.source).toBe(TxSource.SELF);
+    expect(created.method).toBe('transfer');
+    expect(payload.to).toBe(address.hex);
+    expect(payload.value).toBe('0x0');
+    expect(payload.data).toBe('0x');
+  });
+
+  it('forces replacement action to Cancel when origin is already a cancel tx', async () => {
+    const { network: evmNetwork, assetRule } = await seedNetwork(database, { definitionKey: 'Conflux eSpace', selected: true });
+    const { address } = await createTestAccount(database, { network: evmNetwork, assetRule });
+
+    const provider = new StubChainProvider({ chainId: evmNetwork.chainId, networkType: evmNetwork.networkType });
+    chainRegistry.register(provider);
+
+    const origin = await createDbTx({
+      database,
+      address,
+      status: DbTxStatus.PENDING,
+      from: address.hex,
+      to: address.hex,
+      hash: '0xorig',
+      sendAt: new Date(),
+      nonce: 0,
+      gasPrice: '0x1',
+      sendAction: 'Cancel',
+    });
+
+    const result = await service.speedUpTx({
+      txId: origin.id,
+      action: 'SpeedUp',
+      feeOverrides: { gasPrice: '0x2' },
+      nonce: 0,
+    });
+
+    const created = await database.get<Tx>(TableName.Tx).find(result.id);
+    const extra = await created.txExtra.fetch();
+    expect(extra.sendAction).toBe('Cancel');
+  });
+
+  it('rejects replacement if fee is not bumped', async () => {
+    const { network: evmNetwork, assetRule } = await seedNetwork(database, { definitionKey: 'Conflux eSpace', selected: true });
+    const { address } = await createTestAccount(database, { network: evmNetwork, assetRule });
+
+    const provider = new StubChainProvider({ chainId: evmNetwork.chainId, networkType: evmNetwork.networkType });
+    chainRegistry.register(provider);
+
+    const origin = await createDbTx({
+      database,
+      address,
+      status: DbTxStatus.PENDING,
+      from: address.hex,
+      to: '0x0000000000000000000000000000000000000001',
+      hash: '0xorig',
+      sendAt: new Date(),
+      nonce: 0,
+      gasPrice: '0x2',
+    });
+
+    await expect(
+      service.speedUpTx({
+        txId: origin.id,
+        action: 'SpeedUp',
+        feeOverrides: { gasPrice: '0x2' },
+        nonce: 0,
+      }),
+    ).rejects.toMatchObject({ code: TX_INVALID_PARAMS });
   });
 
   it('checks pending tx count limit from runtime config', async () => {
