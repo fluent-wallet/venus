@@ -2,7 +2,7 @@ import { ChainPrefix, ExtractCip155Namespace, type Namespace, parseNamespaceData
 import { Networks } from '@core/utils/consts';
 import methods from '@core/WalletCore/Methods';
 import plugins from '@core/WalletCore/Plugins';
-import { isPendingTxsFull, NetworkType, useCurrentNetwork } from '@core/WalletCore/Plugins/ReactInject';
+import { NetworkType, useCurrentNetwork } from '@core/WalletCore/Plugins/ReactInject';
 import { WalletConnectPluginEventType } from '@core/WalletCore/Plugins/WalletConnect/types';
 import { StackActions, useNavigation } from '@react-navigation/native';
 import {
@@ -14,6 +14,8 @@ import {
   WalletConnectStackName,
   WalletConnectTransactionStackName,
 } from '@router/configs';
+import { useCurrentAddress } from '@service/account';
+import { isPendingTxsFull } from '@service/transaction';
 import backToHome, { getActiveRouteName } from '@utils/backToHome';
 import { isProd, isQA } from '@utils/getEnv';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -24,9 +26,14 @@ export function useListenWalletConnectEvent() {
   const navigation = useNavigation<StackNavigation>();
   const currentNetwork = useCurrentNetwork()!;
   const currentNetworkRef = useRef(currentNetwork);
+  const currentAddress = useCurrentAddress();
+  const currentAddressIdRef = useRef<string>(currentAddress.data?.id ?? '');
   useEffect(() => {
     currentNetworkRef.current = currentNetwork;
   }, [currentNetwork?.id]);
+  useEffect(() => {
+    currentAddressIdRef.current = currentAddress.data?.id ?? '';
+  }, [currentAddress.data?.id]);
 
   useEffect(() => {
     const subject = plugins.WalletConnect.currentEventSubject.subscribe(async (event) => {
@@ -81,7 +88,7 @@ export function useListenWalletConnectEvent() {
         }
 
         case WalletConnectPluginEventType.SEND_TRANSACTION: {
-          if (isPendingTxsFull()) {
+          if (await isPendingTxsFull(currentAddressIdRef.current)) {
             return navigateMethod(TooManyPendingStackName);
           }
 

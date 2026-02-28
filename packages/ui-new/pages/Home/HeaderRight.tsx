@@ -1,11 +1,11 @@
-import ESpaceMainnet from '@assets/chains/eSpace-mainnet.svg';
 import QrCode from '@assets/icons/qr-code.svg';
 import Settings from '@assets/icons/settings.svg';
 import Icon from '@components/Icon';
 import Text from '@components/Text';
-import { type NetworkType, useCurrentNetwork } from '@core/WalletCore/Plugins/ReactInject';
+import type { NetworkType } from '@core/utils/consts';
 import { useTheme } from '@react-navigation/native';
 import { ExternalInputHandlerStackName, type HomeStackName, SettingsStackName, type StackScreenProps } from '@router/configs';
+import { useCurrentNetwork } from '@service/network';
 import type React from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 
@@ -27,7 +27,7 @@ const NETWORK_TAG_MAP: Record<NetworkType, { color: string; labels: Record<numbe
 };
 
 const Network: React.FC = () => {
-  const currentNetwork = useCurrentNetwork();
+  const { data: currentNetwork } = useCurrentNetwork();
   const { colors } = useTheme();
   if (!currentNetwork) return null;
 

@@ -3,14 +3,16 @@ import BSIMCardWallet from '@assets/icons/wallet-bsim.webp';
 import HDWallet from '@assets/icons/wallet-hd.webp';
 import ExistWallet from '@assets/icons/wallet-Imported.webp';
 import Text from '@components/Text';
-import { useCurrentAccount, useCurrentAddressValueOfAccount, useVaultOfAccount, VaultType } from '@core/WalletCore/Plugins/ReactInject';
 import useForceUpdateOnFocus from '@hooks/useUpdateOnFocus';
 import { useTheme } from '@react-navigation/native';
 import type { HomeStackName, StackScreenProps } from '@router/configs';
+import { useCurrentAccount, useCurrentAddress } from '@service/account';
+import { VaultType } from '@service/core';
+import { useVaults } from '@service/vault';
 import { toDataUrl } from '@utils/blockies';
 import { Image } from 'expo-image';
 import type React from 'react';
-import { useEffect } from 'react';
+import { useEffect, useMemo } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 
@@ -22,9 +24,16 @@ const Account: React.FC<{ showAccountSelector: boolean; onPress: () => void; nav
   onPress,
 }) => {
   const { colors } = useTheme();
-  const account = useCurrentAccount();
-  const addressValue = useCurrentAddressValueOfAccount(account?.id);
-  const vault = useVaultOfAccount(account?.id);
+  const { data: account } = useCurrentAccount();
+  const { data: currentAddress } = useCurrentAddress();
+  const addressValue = currentAddress?.value ?? null;
+
+  const { data: vaults = [] } = useVaults();
+  const vault = useMemo(() => {
+    const groupId = account?.accountGroupId;
+    if (!groupId) return null;
+    return vaults.find((v) => v.accountGroupId === groupId) ?? null;
+  }, [account?.accountGroupId, vaults]);
   useForceUpdateOnFocus(navigation);
 
   const rotation = useSharedValue(-180);
@@ -54,7 +63,7 @@ const Account: React.FC<{ showAccountSelector: boolean; onPress: () => void; nav
       testID="account"
     >
       <View style={styles.accountImageWrapper}>
-        <Image style={styles.accountImage} source={{ uri: toDataUrl(addressValue) }} />
+        <Image style={styles.accountImage} source={{ uri: toDataUrl(addressValue ?? undefined) }} />
         <Image
           style={styles.acccountImageBSIMCard}
           source={vault?.type === VaultType.BSIM ? BSIMCardWallet : vault?.type === VaultType.HierarchicalDeterministic ? HDWallet : ExistWallet}

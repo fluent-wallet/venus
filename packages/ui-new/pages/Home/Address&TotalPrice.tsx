@@ -5,11 +5,12 @@ import EyeOpen from '@assets/icons/eye-open.svg';
 import Skeleton from '@components/Skeleton';
 import Text from '@components/Text';
 import { shortenAddress, zeroAddress } from '@core/utils/address';
-import { numberWithCommas } from '@core/utils/balance';
-import { useAssetsTotalPriceValue, useCurrentAddressValue } from '@core/WalletCore/Plugins/ReactInject';
+import { numberWithCommas, truncate } from '@core/utils/balance';
 import { usePriceVisible } from '@hooks/usePriceVisible';
 import Clipboard from '@react-native-clipboard/clipboard';
 import { useTheme } from '@react-navigation/native';
+import { useCurrentAddress } from '@service/account';
+import { useAssetsSummaryOfCurrentAddress } from '@service/asset';
 import type React from 'react';
 import { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -18,7 +19,8 @@ import { showMessage } from 'react-native-flash-message';
 
 export const CurrentAddress: React.FC = () => {
   const { colors } = useTheme();
-  const currentAddressValue = useCurrentAddressValue();
+  const { data: currentAddress } = useCurrentAddress();
+  const currentAddressValue = currentAddress?.value ?? null;
   const { t } = useTranslation();
 
   return (
@@ -44,7 +46,8 @@ export const CurrentAddress: React.FC = () => {
 
 export const TotalPrice: React.FC = () => {
   const { colors } = useTheme();
-  const totalPriceValue = useAssetsTotalPriceValue();
+  const { data: summary } = useAssetsSummaryOfCurrentAddress();
+  const totalPriceValue = summary?.totalValue ?? null;
   const [priceVisible, setPriceVisible] = usePriceVisible();
 
   const Asterisks = useCallback(
@@ -63,6 +66,8 @@ export const TotalPrice: React.FC = () => {
     return <Skeleton width={140} height={45} startX={16} />;
   }
 
+  const formatted = truncate(totalPriceValue, 2);
+
   return (
     <Pressable
       onPress={() => setPriceVisible(!priceVisible)}
@@ -72,7 +77,7 @@ export const TotalPrice: React.FC = () => {
     >
       <Asterisks />
       <Text style={[styles.totalPriceText, { color: colors.textPrimary, opacity: priceVisible ? 1 : 0 }]} numberOfLines={1}>
-        ${numberWithCommas(totalPriceValue)}
+        ${numberWithCommas(formatted)}
       </Text>
       <EyeClose color={colors.textPrimary} width={24} height={24} style={[styles.eye, { opacity: priceVisible ? 1 : 0 }]} />
     </Pressable>

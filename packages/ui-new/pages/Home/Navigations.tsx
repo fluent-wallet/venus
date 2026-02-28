@@ -5,7 +5,7 @@ import Explore from '@assets/icons/explorer.svg';
 import More from '@assets/icons/more.svg';
 import Button from '@components/Button';
 import Text from '@components/Text';
-import { isPendingTxsFull, useIsTokensEmpty } from '@core/WalletCore/Plugins/ReactInject';
+import { ASSET_TYPE } from '@core/types';
 import { useTheme } from '@react-navigation/native';
 import {
   type HomeStackName,
@@ -15,8 +15,14 @@ import {
   type StackScreenProps,
   TooManyPendingStackName,
 } from '@router/configs';
+import { useCurrentAddress } from '@service/account';
+import { useAssetsOfCurrentAddress } from '@service/asset';
+import { isPendingTxsFull } from '@service/transaction';
+import { useMutation } from '@tanstack/react-query';
+import Decimal from 'decimal.js';
 import type React from 'react';
 import type { ComponentProps } from 'react';
+import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Linking, Pressable, StyleSheet, View } from 'react-native';
 import MoreOption from './MoreOption';
@@ -42,7 +48,45 @@ const Navigations: React.FC<{
   navigation: StackScreenProps<typeof HomeStackName>['navigation'];
 }> = ({ navigation }) => {
   const { t } = useTranslation();
-  const isTokenEmpty = useIsTokensEmpty();
+  const { data: currentAddress } = useCurrentAddress();
+  const addressId = currentAddress?.id ?? '';
+
+  const assetsQuery = useAssetsOfCurrentAddress();
+
+  const tokensEmpty = useMemo(() => {
+    if (!addressId) return null;
+    if (assetsQuery.isLoading) return null;
+    if (assetsQuery.error) return null;
+
+    const assets = assetsQuery.data ?? [];
+    const tokens = assets.filter((asset) => asset.type === ASSET_TYPE.Native || asset.type === ASSET_TYPE.ERC20);
+    if (tokens.length === 0) return true;
+
+    return tokens.every((asset) => {
+      try {
+        // `IAsset.balance` is a decimal string (e.g. "0.01"), so BigInt is not applicable here.
+        return new Decimal(asset.balance ?? '0').lte(0);
+      } catch {
+        return true;
+      }
+    });
+  }, [addressId, assetsQuery.data, assetsQuery.error, assetsQuery.isLoading]);
+
+  const { mutate: checkPendingTxLimit, isPending: isCheckingPendingTxLimit } = useMutation({
+    mutationFn: async (id: string) => {
+      if (!id) return false;
+      return await isPendingTxsFull(id);
+    },
+    onSuccess: (full) => {
+      if (full) {
+        navigation.navigate(TooManyPendingStackName);
+        return;
+      }
+      navigation.navigate(SendTransactionStackName, {
+        screen: SendTransactionStep1StackName,
+      });
+    },
+  });
 
   return (
     <View style={styles.container}>
@@ -50,16 +94,8 @@ const Navigations: React.FC<{
         title={t('home.send')}
         testId="send"
         Icon={ArrowUpward}
-        onPress={() => {
-          if (isPendingTxsFull()) {
-            navigation.navigate(TooManyPendingStackName);
-            return;
-          }
-          navigation.navigate(SendTransactionStackName, {
-            screen: SendTransactionStep1StackName,
-          });
-        }}
-        disabled={isTokenEmpty !== false}
+        onPress={() => checkPendingTxLimit(addressId)}
+        disabled={tokensEmpty !== false || isCheckingPendingTxLimit}
       />
       <Navigation title={t('home.receive')} testId="receive" Icon={ArrowDownward} onPress={() => navigation.navigate(ReceiveStackName)} />
       <Navigation title={t('home.explore')} testId="explore" Icon={Explore} onPress={() => Linking.openURL('https://cfxmap.com')} />

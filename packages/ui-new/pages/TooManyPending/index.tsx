@@ -10,10 +10,10 @@ import {
 import Button from '@components/Button';
 import Text from '@components/Text';
 import plugins from '@core/WalletCore/Plugins';
-import { useCurrentNetwork } from '@core/WalletCore/Plugins/ReactInject';
 import type { IWCSendTransactionEvent } from '@core/WalletCore/Plugins/WalletConnect/types';
 import { useTheme } from '@react-navigation/native';
 import type { StackScreenProps, TooManyPendingStackName } from '@router/configs';
+import { useCurrentNetwork } from '@service/network';
 import { Image } from 'expo-image';
 import type React from 'react';
 import { useRef } from 'react';
@@ -24,7 +24,7 @@ const TooManyPending: React.FC<StackScreenProps<typeof TooManyPendingStackName>>
   const { t } = useTranslation();
   const { colors } = useTheme();
   const bottomSheetRef = useRef<BottomSheetMethods>(null!);
-  const currentNetwork = useCurrentNetwork();
+  const { data: currentNetwork } = useCurrentNetwork();
 
   return (
     <BottomSheetRoute

@@ -1,12 +1,10 @@
-import { getAssetsTracker, getNFTDetailTracker } from '@WalletCoreExtends/index';
-import methods from '@core/WalletCore/Methods';
-import { getCurrentNetwork } from '@core/WalletCore/Plugins/ReactInject';
 import AccountSelector from '@modules/AccountSelector';
 import { TabsContent, TabsHeader } from '@modules/AssetsTabs';
 import { useTabsController } from '@modules/AssetsTabs/hooks';
 import NetworkSelector from '@modules/NetworkSelector';
 import { useTheme } from '@react-navigation/native';
 import { type HomeStackName, type StackScreenProps, TransactionDetailStackName } from '@router/configs';
+import { useCurrentNetwork, useNetworks, useSwitchNetwork } from '@service/network';
 import { ESPACE_NETWORK_SWITCH_FEATURE, FULL_NETWORK_SWITCH_LIST_FEATURE } from '@utils/features';
 import type React from 'react';
 import { useCallback, useState } from 'react';
@@ -20,6 +18,7 @@ import Navigations from './Navigations';
 import NoNetworkTip from './NoNetworkTip';
 import NotBackup from './NotBackup';
 import RefreshScrollView from './RefreshScrollView';
+import { useHomeRefresh } from './useHomeRefresh';
 
 const Home: React.FC<StackScreenProps<typeof HomeStackName>> = ({ navigation }) => {
   const { colors } = useTheme();
@@ -27,6 +26,10 @@ const Home: React.FC<StackScreenProps<typeof HomeStackName>> = ({ navigation }) 
   const [showAccountSelector, setShowAccountSelector] = useState(false);
   const [showNetworkSelector, setShowNetworkSelector] = useState(false);
   const { currentTab, setCurrentTab, sharedScrollY, handleScroll: _handleScroll, resetScrollY } = useTabsController('Tokens');
+  const { data: currentNetwork } = useCurrentNetwork();
+  const { data: networks = [] } = useNetworks();
+  const switchNetwork = useSwitchNetwork();
+  const handleRefresh = useHomeRefresh();
   const handleScroll = useCallback(
     (evt: NativeScrollEvent) => {
       _handleScroll(evt.contentOffset.y);
@@ -34,18 +37,11 @@ const Home: React.FC<StackScreenProps<typeof HomeStackName>> = ({ navigation }) 
     [_handleScroll],
   );
 
-  const handleRefresh = useCallback((closeRefresh: VoidFunction) => {
-    getNFTDetailTracker().updateCurrentOpenNFT();
-    getAssetsTracker()
-      .updateCurrentTracker()
-      .finally(() => closeRefresh());
-  }, []);
-
   const handleTxPress = useCallback(
     (txId: string) => {
       navigation.navigate(TransactionDetailStackName, { txId });
     },
-    [navigation.navigate],
+    [navigation],
   );
 
   const handleOpenAccountSelector = () => {
@@ -58,8 +54,13 @@ const Home: React.FC<StackScreenProps<typeof HomeStackName>> = ({ navigation }) 
     if (FULL_NETWORK_SWITCH_LIST_FEATURE.allow) {
       setShowNetworkSelector(true);
     } else if (ESPACE_NETWORK_SWITCH_FEATURE.allow) {
-      const currentNetwork = getCurrentNetwork();
-      methods.switchToNetwork(currentNetwork?.netId === 1030 ? 71 : 1030);
+      if (!currentNetwork) return;
+      const nextNetId = currentNetwork.netId === 1030 ? 71 : 1030;
+      const target =
+        networks.find((network) => network.netId === nextNetId && network.networkType === currentNetwork.networkType) ??
+        networks.find((network) => network.netId === nextNetId);
+      if (!target) return;
+      switchNetwork(target.id).catch(() => undefined);
     }
   };
   return (

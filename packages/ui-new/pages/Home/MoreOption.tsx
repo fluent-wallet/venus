@@ -1,10 +1,11 @@
 import Copy from '@assets/icons/copy.svg';
 import Earth from '@assets/icons/earth.svg';
 import Sign from '@assets/icons/sign.svg';
-import { useCurrentAddressValue, useCurrentNetwork } from '@core/WalletCore/Plugins/ReactInject';
 import Clipboard from '@react-native-clipboard/clipboard';
 import { useNavigation, useTheme } from '@react-navigation/native';
 import { SignatureRecordsStackName, type StackScreenProps } from '@router/configs';
+import { useCurrentAddress } from '@service/account';
+import { useCurrentNetwork } from '@service/network';
 import React, { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Dimensions, type LayoutChangeEvent, Linking, Modal, Pressable, StyleSheet, Text, View } from 'react-native';
@@ -16,8 +17,9 @@ const MoreOption: React.FC<{ children: React.ReactElement }> = ({ children }) =>
   const { t } = useTranslation();
   const navigation = useNavigation<StackScreenProps<typeof SignatureRecordsStackName>['navigation']>();
 
-  const currentAddressValue = useCurrentAddressValue();
-  const currentNetwork = useCurrentNetwork();
+  const { data: currentAddress } = useCurrentAddress();
+  const currentAddressValue = currentAddress?.value ?? null;
+  const { data: currentNetwork } = useCurrentNetwork();
   const [visible, setVisible] = useState(false);
   const position = useSharedValue({ right: 0, top: 0 });
 

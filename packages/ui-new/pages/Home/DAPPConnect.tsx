@@ -1,10 +1,10 @@
 import ArrowRight from '@assets/icons/arrow-right2.svg';
 import Icon from '@components/Icon';
 import Text from '@components/Text';
-import { useCurrentAddressValue } from '@core/WalletCore/Plugins/ReactInject';
 import { useWalletConnectSessions } from '@pages/WalletConnect/useWalletConnectHooks';
 import { useNavigation, useTheme } from '@react-navigation/native';
 import { type StackNavigation, WalletConnectSessionsStackName, WalletConnectStackName } from '@router/configs';
+import { useCurrentAddress } from '@service/account';
 import take from 'lodash-es/take';
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -14,7 +14,8 @@ function DAPPConnect() {
   const { colors } = useTheme();
   const { t } = useTranslation();
   const navigation = useNavigation<StackNavigation>();
-  const currentAddressValue = useCurrentAddressValue();
+  const { data: currentAddress } = useCurrentAddress();
+  const currentAddressValue = currentAddress?.value ?? null;
   const sessions = useWalletConnectSessions(currentAddressValue);
   const hasUnsafeURL = useMemo(
     () =>

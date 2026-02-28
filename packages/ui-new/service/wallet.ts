@@ -34,7 +34,7 @@ export function useWalletReady(): { data: boolean; isLoading: boolean; error: Er
   const data = useMemo(() => {
     if (isLoading || error) return false;
     if (!hasVaultQuery.data) return true; // onboarding ready when no vaults
-    return accountQuery.data !== null;
+    return accountQuery.data?.currentAddressId != null;
   }, [hasVaultQuery.data, accountQuery.data, isLoading, error]);
 
   return { data, isLoading, error };
