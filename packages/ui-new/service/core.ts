@@ -37,6 +37,7 @@ let uiQueryClient: QueryClient | null = null;
 export type { IAccount, INetwork, IAsset, ITransaction, IVault, RecentlyAddress };
 export type { INftCollection, INftItem };
 export type { IActivityTransaction, ITransactionDetail };
+export { VaultSourceType, VaultType } from '@core/types/vault';
 
 export function setUiServiceContainer(container: Container) {
   uiServiceContainer = container;
