@@ -1,4 +1,5 @@
 import type { AddCustomTokenInput } from '@core/services/asset/types';
+import { ASSET_TYPE } from '@core/types';
 import { type UseQueryResult, useQuery, useQueryClient } from '@tanstack/react-query';
 import Decimal from 'decimal.js';
 import { useCallback } from 'react';
@@ -9,8 +10,8 @@ export type AssetsQuery = UseQueryResult<IAsset[]>;
 export type AssetsSummary = { totalValue: string; hasTokens: boolean; hasNFTs: boolean };
 export type AssetsSummaryQuery = UseQueryResult<AssetsSummary>;
 
-const tokenTypes = new Set(['Native', 'ERC20']);
-const nftTypes = new Set(['ERC721', 'ERC1155']);
+const tokenTypes = new Set([ASSET_TYPE.Native, ASSET_TYPE.ERC20]);
+const nftTypes = new Set([ASSET_TYPE.ERC721, ASSET_TYPE.ERC1155]);
 
 export const getAssetRootKey = () => ['asset'] as const;
 export const getAssetsByAddressKey = (addressId: string) => ['asset', 'byAddress', addressId] as const;

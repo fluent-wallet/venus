@@ -7,7 +7,7 @@ import { AssetSource, type Asset as DbAsset, AssetType as DbAssetType } from '@c
 import type { Signature } from '@core/database/models/Signature';
 import { SignType } from '@core/database/models/Signature/type';
 import type { Tx } from '@core/database/models/Tx';
-import { TxStatus as DbTxStatus, TxSource } from '@core/database/models/Tx/type';
+import { TxStatus as DbTxStatus, ExecutedStatus, TxSource } from '@core/database/models/Tx/type';
 import type { TxExtra } from '@core/database/models/TxExtra';
 import type { TxPayload } from '@core/database/models/TxPayload';
 import TableName from '@core/database/TableName';
@@ -32,6 +32,7 @@ async function createDbTx(params: {
   database: Database;
   address: Address;
   status: DbTxStatus;
+  executedStatus?: ExecutedStatus | null;
   from: string;
   to: string;
   hash: string;
@@ -48,6 +49,7 @@ async function createDbTx(params: {
     database,
     address,
     status,
+    executedStatus = null,
     from,
     to,
     hash,
@@ -91,6 +93,7 @@ async function createDbTx(params: {
       record.hash = hash;
       record.raw = '0xraw';
       record.status = status;
+      record.executedStatus = executedStatus;
       record.sendAt = sendAt;
       record.source = source;
       record.method = method;
@@ -218,6 +221,98 @@ describe('TransactionService', () => {
       key: { addressId: address.id, networkId: network.id },
       txId: result.id,
     });
+  });
+
+  it('maps executedStatus=FAILED to failed even when db status is EXECUTED', async () => {
+    const { address } = await createTestAccount(database);
+
+    await createDbTx({
+      database,
+      address,
+      status: DbTxStatus.EXECUTED,
+      executedStatus: ExecutedStatus.FAILED,
+      from: '0x0000000000000000000000000000000000000001',
+      to: '0x0000000000000000000000000000000000000002',
+      hash: '0xhash_failed',
+      sendAt: new Date(),
+      method: 'transfer',
+    });
+
+    const activity = await service.listActivityTransactions({ addressId: address.id, status: 'finished' });
+    expect(activity).toHaveLength(1);
+    expect(activity[0].status).toBe(ServiceTxStatus.Failed);
+  });
+
+  it('dedupes activity list by nonce (keeps latest pending tx for the same nonce)', async () => {
+    const seeded = await seedNetwork(database, { definitionKey: 'Conflux eSpace' });
+    const { address } = await createTestAccount(database, { network: seeded.network, assetRule: seeded.assetRule });
+
+    await createDbTx({
+      database,
+      address,
+      status: DbTxStatus.PENDING,
+      from: '0x0000000000000000000000000000000000000001',
+      to: '0x0000000000000000000000000000000000000002',
+      hash: '0xhash_origin',
+      nonce: 7,
+      sendAt: new Date(Date.now() - 10_000),
+      method: 'transfer',
+    });
+
+    await createDbTx({
+      database,
+      address,
+      status: DbTxStatus.PENDING,
+      from: '0x0000000000000000000000000000000000000001',
+      to: '0x0000000000000000000000000000000000000002',
+      hash: '0xhash_replacement',
+      nonce: 7,
+      sendAt: new Date(Date.now() - 1_000),
+      method: 'transfer',
+    });
+
+    const list = await service.listActivityTransactions({ addressId: address.id, status: 'pending' });
+    expect(list).toHaveLength(1);
+    expect(list[0].hash).toBe('0xhash_replacement');
+  });
+
+  it('hides origin tx after speedUp broadcast succeeds (prevents duplicate pending & resends)', async () => {
+    const seeded = await seedNetwork(database, { definitionKey: 'Conflux eSpace' });
+    const { account, address, network } = await createTestAccount(database, { network: seeded.network, assetRule: seeded.assetRule });
+
+    const provider = new StubChainProvider({
+      chainId: network.chainId,
+      networkType: network.networkType,
+    });
+    chainRegistry.register(provider);
+
+    const origin = await createDbTx({
+      database,
+      address,
+      status: DbTxStatus.PENDING,
+      from: await address.getValue(),
+      to: '0x0000000000000000000000000000000000000002',
+      hash: '0xhash_origin_speedup',
+      nonce: 1,
+      gasPrice: '0x1',
+      sendAt: new Date(),
+      source: TxSource.SELF,
+      method: 'transfer',
+    });
+
+    const result = await service.speedUpTx({
+      txId: origin.id,
+      action: 'SpeedUp',
+      feeOverrides: { gasPrice: '0x2' },
+      nonce: 1,
+    });
+
+    expect(result.status).toBe(ServiceTxStatus.Pending);
+    expect(signingService.getSigner).toHaveBeenCalledWith(account.id, address.id, expect.anything());
+
+    const originAfter = await database.get<Tx>(TableName.Tx).find(origin.id);
+    expect(originAfter.isTempReplacedByInner).toBe(true);
+    expect(originAfter.raw).toBeNull();
   });
 
   it('dispatches hardware signing start/success events when signer is hardware', async () => {

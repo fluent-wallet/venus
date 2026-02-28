@@ -1,9 +1,9 @@
 import Calendar from '@assets/icons/calendar.svg';
 import NoneActivity from '@assets/images/none-activity.webp';
 import Text from '@components/Text';
-import type { Tx } from '@core/database/models/Tx';
-import { useFinishedTxs, useUnfinishedTxs } from '@core/WalletCore/Plugins/ReactInject';
 import { useTheme } from '@react-navigation/native';
+import type { IActivityTransaction } from '@service/core';
+import { useActivityTransactionsOfCurrentAddress } from '@service/transaction';
 import { Image } from 'expo-image';
 import type React from 'react';
 import { memo, useMemo } from 'react';
@@ -34,17 +34,21 @@ const formatDate = (time: number) => {
   return new ActivityDate({ year, month, day });
 };
 
-const ActivityList: React.FC<{ onPress?: (v: Tx) => void }> = memo(({ onPress }) => {
+const ActivityList: React.FC<{ onPress?: (txId: string) => void }> = memo(({ onPress }) => {
   const { colors } = useTheme();
-  const finishedTxs = useFinishedTxs();
-  const unfinishedTxs = useUnfinishedTxs();
+  const unfinishedTxsQuery = useActivityTransactionsOfCurrentAddress({ status: 'pending' });
+  const finishedTxsQuery = useActivityTransactionsOfCurrentAddress({ status: 'finished' });
+  const unfinishedTxs = unfinishedTxsQuery.data ?? [];
+  const finishedTxs = finishedTxsQuery.data ?? [];
   const { t } = useTranslation();
 
   const finishedTxsByDay = useMemo(() => {
     let day = 0;
-    const txs: (Tx | ActivityDate)[] = [];
+    const txs: (IActivityTransaction | ActivityDate)[] = [];
+    // Keep the same ordering semantics as legacy Activity: rely on service ordering (nonce-based).
     for (const tx of finishedTxs) {
-      const time = Math.floor((tx.executedAt || tx.createdAt).valueOf() / DAY_MILLISECONDS) * DAY_MILLISECONDS;
+      const baseMs = tx.executedAtMs ?? tx.createdAtMs;
+      const time = Math.floor(baseMs / DAY_MILLISECONDS) * DAY_MILLISECONDS;
       if (day !== time) {
         day = time;
         txs.push(formatDate(time));

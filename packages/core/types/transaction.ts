@@ -116,3 +116,18 @@ export enum TxStatus {
 }
 
 export type SpeedUpAction = 'SpeedUp' | 'Cancel';
+
+export const TX_STATUS = {
+  Pending: 'pending',
+  Confirmed: 'confirmed',
+  Failed: 'failed',
+} as const;
+
+export type TxStatusValue = (typeof TX_STATUS)[keyof typeof TX_STATUS];
+
+export const SPEED_UP_ACTION = {
+  SpeedUp: 'SpeedUp',
+  Cancel: 'Cancel',
+} as const;
+
+export type SpeedUpActionValue = (typeof SPEED_UP_ACTION)[keyof typeof SPEED_UP_ACTION];

@@ -3,17 +3,22 @@ import { type UseQueryResult, useQuery, useQueryClient } from '@tanstack/react-q
 import { useCallback } from 'react';
 import { useCurrentAddress } from './account';
 import { getAssetRootKey, getAssetsByAddressKey } from './asset';
-import { getTransactionService, type ITransaction, type RecentlyAddress } from './core';
+import { getTransactionService, type IActivityTransaction, type ITransaction, type ITransactionDetail, type RecentlyAddress } from './core';
 
 export type TransactionsQuery = UseQueryResult<ITransaction[]>;
+export type ActivityTransactionsQuery = UseQueryResult<IActivityTransaction[]>;
 export type RecentlyAddressesQuery = UseQueryResult<RecentlyAddress[]>;
 export type SpeedUpContextQuery = UseQueryResult<SpeedUpTxContext | null>;
+export type TransactionDetailQuery = UseQueryResult<ITransactionDetail | null>;
 
 export type Level = 'low' | 'medium' | 'high';
 
 export const getTransactionRootKey = () => ['tx'] as const;
 export const getTransactionsByAddressKey = (addressId: string, status: string, limit?: number) =>
   ['tx', 'byAddress', addressId, status, limit ?? 'all'] as const;
+export const getActivityTransactionsByAddressKey = (addressId: string, status: string, limit?: number) =>
+  ['tx', 'activity', 'byAddress', addressId, status, limit ?? 'all'] as const;
+export const getTransactionDetailKey = (txId: string) => ['tx', 'detail', txId] as const;
 export const getRecentlyAddressesKey = (addressId: string) => ['tx', 'recently', addressId] as const;
 export const getSpeedUpContextKey = (txId: string) => ['tx', 'speedUpContext', txId] as const;
 
@@ -91,6 +96,45 @@ export function useTransactionsOfAddress(addressId: string, options: { status?: 
     queryFn: () => service.listTransactions({ addressId, status, limit: options.limit }),
     enabled: !!addressId,
     initialData: [],
+  });
+}
+
+/**
+ * Fetch activity transactions of a specific address.
+ */
+export function useActivityTransactionsOfAddress(
+  addressId: string,
+  options: { status?: 'pending' | 'finished' | 'all'; limit?: number } = {},
+): ActivityTransactionsQuery {
+  const service = getTransactionService();
+  const status = options.status ?? 'all';
+
+  return useQuery({
+    queryKey: getActivityTransactionsByAddressKey(addressId || 'none', status, options.limit),
+    queryFn: () => service.listActivityTransactions({ addressId, status, limit: options.limit }),
+    enabled: !!addressId,
+    initialData: [],
+  });
+}
+
+/**
+ * Fetch activity transactions of the current address (if any).
+ */
+export function useActivityTransactionsOfCurrentAddress(options: { status?: 'pending' | 'finished' | 'all'; limit?: number } = {}): ActivityTransactionsQuery {
+  const currentAddress = useCurrentAddress();
+  const addressId = currentAddress.data?.id ?? '';
+  return useActivityTransactionsOfAddress(addressId, options);
+}
+
+/**
+ * Fetch a transaction detail snapshot (or null if not found).
+ */
+export function useTransactionDetail(txId: string): TransactionDetailQuery {
+  const service = getTransactionService();
+  return useQuery({
+    queryKey: getTransactionDetailKey(txId || 'none'),
+    queryFn: () => (txId ? service.getTransactionDetail(txId) : null),
+    enabled: !!txId,
   });
 }
 

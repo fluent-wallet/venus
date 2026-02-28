@@ -1,6 +1,7 @@
 import { ExecutedStatus, type Receipt, TxStatus } from '@core/database/models/Tx/type';
 import type { IChainProvider } from '@core/types';
 import { NetworkType } from '@core/utils/consts';
+import type { Rpc as EvmRpcTransactionReceipt } from 'ox/TransactionReceipt';
 import { CFX_RPC, EVM_RPC } from './rpc';
 
 export type NonceUsedState = 'not_used' | 'temp_used' | 'finalized_used';
@@ -144,7 +145,7 @@ class EvmTxSyncDriver implements TxSyncDriver {
   }
 
   normalizeExecuted(params: { receipt: unknown; executedAtMs?: number; waterline: FinalityWaterline }): ExecutedSnapshot {
-    const r = params.receipt as any;
+    const r = params.receipt as EvmRpcTransactionReceipt;
 
     const receipt: Receipt = {
       cumulativeGasUsed: r.cumulativeGasUsed ?? null,
@@ -170,7 +171,7 @@ class EvmTxSyncDriver implements TxSyncDriver {
       executedStatus,
       receipt,
       executedAt: typeof params.executedAtMs === 'number' ? new Date(params.executedAtMs) : undefined,
-      err: executedStatus === '0' ? (r.txExecErrorMsg ?? 'tx failed') : undefined,
+      err: executedStatus === '0' ? 'tx failed' : undefined,
     };
   }
 }

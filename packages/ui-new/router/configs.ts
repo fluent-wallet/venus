@@ -3,12 +3,12 @@ import type { ExternalRequestSnapshot } from '@core/modules/externalRequests';
 import type { SpeedUpAction } from '@core/types';
 import type { NetworkType } from '@core/utils/consts';
 import type { AssetInfo } from '@core/WalletCore/Plugins/AssetsTracker/types';
-import type { NFTItemDetail } from '@core/WalletCore/Plugins/NFTDetailTracker/server';
 import type { IWCSendTransactionEventData, IWCSessionProposalEventData, IWCSignMessageEventData } from '@core/WalletCore/Plugins/WalletConnect/types';
 import type { SpeedUpLevel } from '@modules/GasFee/GasFeeSetting';
 import type { VersionJSON } from '@pages/Settings/AboutUs';
 import type { NavigationProp, NavigatorScreenParams } from '@react-navigation/native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
+import type { INftItem } from '@service/core';
 
 export const WelcomeStackName = 'Welcome';
 export const WayToInitWalletStackName = 'WayToInitWallet';
@@ -155,8 +155,8 @@ export const SendTransactionStep4StackName = 'SendTransactionStep4';
 export type SendTransactionParamList = {
   [SendTransactionStep1StackName]: undefined;
   [SendTransactionStep2StackName]: { recipientAddress: string; searchAddress?: string };
-  [SendTransactionStep3StackName]: { asset: AssetInfo; recipientAddress: string; nftItemDetail?: NFTItemDetail; amount?: string };
-  [SendTransactionStep4StackName]: { asset: AssetInfo; recipientAddress: string; amount: string; nftItemDetail?: NFTItemDetail; inMaxMode?: boolean };
+  [SendTransactionStep3StackName]: { asset: AssetInfo; recipientAddress: string; nftItemDetail?: INftItem; amount?: string };
+  [SendTransactionStep4StackName]: { asset: AssetInfo; recipientAddress: string; amount: string; nftItemDetail?: INftItem; inMaxMode?: boolean };
   // navigate to home
   [HomeStackName]: undefined;
   [PasswordVerifyStackName]: undefined | { requestId: string };

@@ -9,7 +9,7 @@ import { AssetType, NetworkType } from '@core/types';
 import useFormatBalance from '@hooks/useFormatBalance';
 import useInAsync from '@hooks/useInAsync';
 import { AccountItemView } from '@modules/AccountsList';
-import { getDetailSymbol } from '@modules/AssetsList/NFTsList/NFTItem';
+import { getDetailSymbol } from '@modules/AssetsList/NFTsList/NFTItemsGrid';
 import GasFeeSetting, { type GasEstimate } from '@modules/GasFee/GasFeeSetting';
 import EstimateFee from '@modules/GasFee/GasFeeSetting/EstimateFee';
 import { useNavigation, useTheme } from '@react-navigation/native';
@@ -315,7 +315,7 @@ const SendTransactionStep4Confirm: React.FC<SendTransactionScreenProps<typeof Se
                 <View style={styles.errorWarp}>
                   <WarnIcon style={styles.errorIcon} color={colors.middle} width={24} height={24} />
                   <Text style={[styles.errorText, { color: colors.middle }]}>
-                    {`${asset.type === 'Native' ? t('tx.confirm.error.InsufficientBalance', { symbol: nativeAsset?.symbol }) : t('tx.confirm.error.InsufficientBalanceForGas', { symbol: nativeAsset?.symbol })}`}
+                    {`${asset.type === AssetType.Native ? t('tx.confirm.error.InsufficientBalance', { symbol: nativeAsset?.symbol }) : t('tx.confirm.error.InsufficientBalanceForGas', { symbol: nativeAsset?.symbol })}`}
                   </Text>
                 </View>
               ) : (

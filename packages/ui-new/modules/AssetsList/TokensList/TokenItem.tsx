@@ -1,5 +1,5 @@
 import Text from '@components/Text';
-import { AssetType } from '@core/database/models/Asset';
+import { ASSET_TYPE } from '@core/types';
 import { shortenAddress } from '@core/utils/address';
 import { numberWithCommas } from '@core/utils/balance';
 import type { AssetInfo } from '@core/WalletCore/Plugins/AssetsTracker/types';
@@ -42,7 +42,7 @@ const TokenItem: React.FC<{
               {hidePrice === 'encryption' ? '***' : price}
             </Text>
           )}
-          {showAddress && data.type !== AssetType.Native && data?.contractAddress && (
+          {showAddress && data.type !== ASSET_TYPE.Native && data?.contractAddress && (
             <Text style={[styles.tokenAddress, { marginLeft: 'auto', textAlign: 'right', color: colors.textSecondary }]} numberOfLines={1}>
               {shortenAddress(data.contractAddress)}
             </Text>

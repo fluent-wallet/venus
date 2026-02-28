@@ -1,20 +1,15 @@
 import Spinner from '@components/Spinner';
 import Text from '@components/Text';
-import type { Asset } from '@core/database/models/Asset';
-import type { Tx } from '@core/database/models/Tx';
-import { TxSource } from '@core/database/models/Tx/type';
+import { ASSET_TYPE, SPEED_UP_ACTION, TX_STATUS } from '@core/types';
 import { shortenAddress } from '@core/utils/address';
 import { maxUint256 } from '@core/utils/number';
-import { formatStatus, formatTxData } from '@core/utils/tx';
-import { SpeedUpAction } from '@core/WalletCore/Events/broadcastTransactionSubject';
-import { AssetType, useAssetOfTx, usePayloadOfTx } from '@core/WalletCore/Plugins/ReactInject';
-import { useExtraOfTx } from '@core/WalletCore/Plugins/ReactInject/data/useTxs';
 import useFormatBalance from '@hooks/useFormatBalance';
 import { useShowSpeedUp } from '@hooks/useShowSpeedUp';
 import NFTIcon from '@modules/AssetsList/NFTsList/NFTIcon';
 import TokenIcon from '@modules/AssetsList/TokensList/TokenIcon';
 import SpeedUpButton from '@modules/SpeedUpButton';
 import { useTheme } from '@react-navigation/native';
+import type { IActivityTransaction } from '@service/core';
 import type React from 'react';
 import { type ComponentProps, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -48,27 +43,34 @@ const TextEllipsisWithSuffix: React.FC<{
 };
 
 interface Props extends Omit<ComponentProps<typeof Pressable>, 'onPress'> {
-  onPress?: (item: Tx) => void;
-  tx: Tx;
+  onPress?: (txId: string) => void;
+  tx: IActivityTransaction;
 }
 
 const AssetInfo: React.FC<{
-  asset?: Asset | null;
+  asset?: IActivityTransaction['asset'];
   value: string | null | undefined;
   tokenId: string;
   method: string;
-  txStatus: ReturnType<typeof formatStatus>;
+  txStatus: IActivityTransaction['status'];
   sign?: '+' | '-';
 }> = ({ asset, value, tokenId, txStatus, sign, method }) => {
   const { t } = useTranslation();
   const { colors } = useTheme();
   const decimals = asset?.decimals ?? 0;
   const formatBalance = useFormatBalance(value, decimals);
-  const isUnlimited = method === 'approve' && BigInt(value ?? 0) === maxUint256;
+  const isUnlimited = useMemo(() => {
+    if (method !== 'approve') return false;
+    try {
+      return BigInt(value ?? '0') === maxUint256;
+    } catch {
+      return false;
+    }
+  }, [method, value]);
   const symbolSuffix = useMemo(() => {
     if (asset || tokenId) {
       return (
-        <Text style={[styles.assetText, { color: txStatus === 'failed' ? colors.textSecondary : colors.textPrimary }]} numberOfLines={1}>
+        <Text style={[styles.assetText, { color: txStatus === TX_STATUS.Failed ? colors.textSecondary : colors.textPrimary }]} numberOfLines={1}>
           {asset?.symbol}
           {tokenId && <>&nbsp;#{tokenId}</>}
         </Text>
@@ -77,14 +79,14 @@ const AssetInfo: React.FC<{
   }, [colors.textSecondary, colors.textPrimary, asset, tokenId, txStatus]);
   return (
     <View style={styles.assetWrapper}>
-      {asset?.type === AssetType.ERC20 || asset?.type === AssetType.Native ? (
+      {asset?.type === ASSET_TYPE.ERC20 || asset?.type === ASSET_TYPE.Native ? (
         <TokenIcon source={asset?.icon} style={[styles.assetIcon, { borderRadius: 40 }]} />
       ) : (
         <NFTIcon source={asset?.icon} style={[styles.assetIcon, { borderRadius: 2 }]} />
       )}
       <TextEllipsisWithSuffix
         text={
-          <Text style={[styles.assetText, { color: txStatus === 'failed' ? colors.textSecondary : colors.textPrimary }]} numberOfLines={1}>
+          <Text style={[styles.assetText, { color: txStatus === TX_STATUS.Failed ? colors.textSecondary : colors.textPrimary }]} numberOfLines={1}>
             {sign}&nbsp;{isUnlimited ? t('common.approve.unlimited') : formatBalance}
           </Text>
         }
@@ -104,27 +106,18 @@ const ActivityItem: React.FC<Props> = ({ onPress, tx }) => {
   const { colors } = useTheme();
   const { t } = useTranslation();
 
-  const payload = usePayloadOfTx(tx.id);
-  const extra = useExtraOfTx(tx.id);
-  const asset = useAssetOfTx(tx.id);
-  const status = formatStatus(tx);
+  const status = tx.status;
+  const display = tx.display;
+  const method = useMemo(() => (tx.source === 'self' ? t('common.send') : tx.method), [t, tx.method, tx.source]);
 
-  const { value, to, tokenId } = useMemo(() => formatTxData(tx, payload, asset), [tx, payload, asset]);
-  const method = useMemo(() => {
-    if (tx.source === TxSource.SELF) {
-      return t('common.send');
-    }
-    return tx.method;
-  }, [t, tx.method, tx.source]);
-
-  const isPending = status === 'pending';
-  const isCanceling = isPending && extra?.sendAction === SpeedUpAction.Cancel;
+  const isPending = status === TX_STATUS.Pending;
+  const isCanceling = isPending && tx.sendAction === SPEED_UP_ACTION.Cancel;
   const showSpeedUp = useShowSpeedUp(tx);
   const statusSuffix = useMemo(() => {
-    if (status === 'pending') {
+    if (status === TX_STATUS.Pending) {
       return <PendingIcon />;
     }
-    if (status === 'failed') {
+    if (status === TX_STATUS.Failed) {
       return <Text style={[styles.statusText, { color: colors.down, borderColor: colors.down }]}>{t('tx.activity.status.failed')}</Text>;
     }
   }, [status, colors.down, t]);
@@ -132,7 +125,7 @@ const ActivityItem: React.FC<Props> = ({ onPress, tx }) => {
   return (
     <Pressable
       style={[styles.container, isPending && styles.pendingContainer, isPending && { borderColor: colors.borderFourth }]}
-      onPress={() => onPress?.(tx)}
+      onPress={() => onPress?.(tx.id)}
       testID="activityItem"
     >
       {isCanceling && (
@@ -151,10 +144,10 @@ const ActivityItem: React.FC<Props> = ({ onPress, tx }) => {
             suffix={statusSuffix}
             defaultSuffixWidth={50}
           />
-          {to && <Text style={[styles.address, { color: colors.textSecondary }]}>To {shortenAddress(to)}</Text>}
+          {display.to && <Text style={[styles.address, { color: colors.textSecondary }]}>To {shortenAddress(display.to)}</Text>}
         </View>
-        {tx.source === TxSource.SELF && <AssetInfo asset={asset} value={value} tokenId={tokenId} txStatus={status} sign="-" method={method} />}
-        {method === 'approve' && <AssetInfo asset={asset} value={value} tokenId={tokenId} txStatus={status} method={method} />}
+        {tx.source === 'self' && <AssetInfo asset={tx.asset} value={display.value} tokenId={display.tokenId} txStatus={status} sign="-" method={method} />}
+        {method === 'approve' && <AssetInfo asset={tx.asset} value={display.value} tokenId={display.tokenId} txStatus={status} method={method} />}
 
         {showSpeedUp && <SpeedUpButton txId={tx.id} containerStyle={styles.speedUp} cancelDisabled={isCanceling} />}
       </View>

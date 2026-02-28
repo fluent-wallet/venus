@@ -9,11 +9,16 @@ import {
   AddressValidationService,
   AssetService,
   type IAccount,
+  type IActivityTransaction,
   type IAsset,
   type INetwork,
+  type INftCollection,
+  type INftItem,
   type ITransaction,
+  type ITransactionDetail,
   type IVault,
   NetworkService,
+  NftService,
   type RecentlyAddress,
   SignatureRecordService,
   TransactionService,
@@ -30,6 +35,8 @@ let uiServiceContainer: Container | null = null;
 let uiQueryClient: QueryClient | null = null;
 
 export type { IAccount, INetwork, IAsset, ITransaction, IVault, RecentlyAddress };
+export type { INftCollection, INftItem };
+export type { IActivityTransaction, ITransactionDetail };
 
 export function setUiServiceContainer(container: Container) {
   uiServiceContainer = container;
@@ -65,6 +72,10 @@ export function getNetworkService(): NetworkService {
 
 export function getAssetService(): AssetService {
   return getContainer().get(AssetService);
+}
+
+export function getNftService(): NftService {
+  return getContainer().get(NftService);
 }
 
 export function getTransactionService(): TransactionService {

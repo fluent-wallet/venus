@@ -1,13 +1,14 @@
-import { getNFTDetailTracker } from '@WalletCoreExtends/index';
 import ProhibitIcon from '@assets/icons/prohibit.svg';
 import { BottomSheetHeader, type BottomSheetMethods, BottomSheetScrollContent } from '@components/BottomSheet';
 import HourglassLoading from '@components/Loading/Hourglass';
 import Text from '@components/Text';
 import TextInput from '@components/TextInput';
 import type { AssetInfo } from '@core/WalletCore/Plugins/AssetsTracker/types';
-import type { NFTItemDetail } from '@core/WalletCore/Plugins/NFTDetailTracker/server';
-import { AssetType, useAssetsAllList, useCurrentOpenNFTDetail, useTokenListOfCurrentNetwork } from '@core/WalletCore/Plugins/ReactInject';
-import NFTItem from '@modules/AssetsList/NFTsList/NFTItem';
+import { AssetType, useAssetsAllList, useTokenListOfCurrentNetwork } from '@core/WalletCore/Plugins/ReactInject';
+import { NFTCollectionItem } from '@modules/AssetsList/NFTsList/NFTCollectionItem';
+import { NFTItemsGrid } from '@modules/AssetsList/NFTsList/NFTItemsGrid';
+import { useOpenNftCollection } from '@modules/AssetsList/NFTsList/openState';
+import { SkeletoDetailItem } from '@modules/AssetsList/NFTsList/Skeleton';
 import TokenItem from '@modules/AssetsList/TokensList/TokenItem';
 import { TabsContent, TabsHeader } from '@modules/AssetsTabs';
 import { useTabsController } from '@modules/AssetsTabs/hooks';
@@ -21,14 +22,15 @@ import {
 import { useCurrentAddress } from '@service/account';
 import { isValidAddress } from '@service/address';
 import { useAddCustomToken } from '@service/asset';
-import type { IAsset } from '@service/core';
+import type { IAsset, INftCollection, INftItem } from '@service/core';
 import { useCurrentNetwork } from '@service/network';
+import { useNftCollectionsOfAddress, useNftItems } from '@service/nft';
 import Decimal from 'decimal.js';
 import { debounce, escapeRegExp } from 'lodash-es';
 import type React from 'react';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Trans, useTranslation } from 'react-i18next';
-import { type NativeScrollEvent, type NativeSyntheticEvent, Pressable, StyleSheet } from 'react-native';
+import { type NativeScrollEvent, type NativeSyntheticEvent, Pressable, StyleSheet, View } from 'react-native';
 import { showMessage } from 'react-native-flash-message';
 import SendTransactionBottomSheet from '../SendTransactionBottomSheet';
 
@@ -49,6 +51,85 @@ function toLegacyAssetInfo(asset: IAsset): AssetInfo {
     priceValue: asset.priceValue ?? undefined,
   };
 }
+
+function toLegacyNftAssetInfo(params: {
+  collection: Pick<INftCollection, 'contractAddress' | 'type' | 'name' | 'symbol' | 'icon'>;
+  item: INftItem;
+}): AssetInfo {
+  return {
+    type: params.collection.type as unknown as AssetInfo['type'],
+    contractAddress: params.collection.contractAddress,
+    name: params.collection.name ?? '',
+    symbol: params.collection.symbol ?? '',
+    decimals: 0,
+    balance: params.item.amount,
+    icon: params.collection.icon ?? undefined,
+  };
+}
+
+const DetailSkeleton: React.FC = memo(() => {
+  const { colors } = useTheme();
+  return (
+    <View style={{ marginVertical: 4, display: 'flex', flexDirection: 'row', flexWrap: 'wrap', paddingLeft: 56, paddingRight: 16, gap: 16 }}>
+      {Array.from({ length: 2 }).map((_, index) => (
+        <View
+          key={index}
+          style={{
+            borderColor: colors.borderThird,
+            borderWidth: 1,
+            borderRadius: 6,
+            paddingHorizontal: 8,
+            paddingTop: 8,
+            paddingBottom: 12,
+          }}
+        >
+          <SkeletoDetailItem colors={colors} />
+        </View>
+      ))}
+    </View>
+  );
+});
+
+const NftSearchRow: React.FC<{
+  addressId: string;
+  index: number;
+  collection: INftCollection;
+  onSelect: (asset: AssetInfo, item: INftItem) => void;
+}> = memo(({ addressId, index, collection, onSelect }) => {
+  const [open, setOpen] = useOpenNftCollection();
+  const isOpen = open?.contractAddress?.toLowerCase() === collection.contractAddress.toLowerCase();
+
+  const { data: items = [], isFetching } = useNftItems({
+    addressId,
+    contractAddress: collection.contractAddress,
+    enabled: isOpen,
+  });
+
+  return (
+    <>
+      <NFTCollectionItem
+        collection={collection}
+        isOpen={isOpen}
+        onPress={() => {
+          setOpen(isOpen ? null : { contractAddress: collection.contractAddress, index });
+        }}
+        showTypeLabel
+      />
+      {isOpen &&
+        (isFetching && items.length === 0 ? (
+          <DetailSkeleton />
+        ) : (
+          <NFTItemsGrid
+            collection={collection}
+            items={items}
+            onPressItem={(item) => {
+              onSelect(toLegacyNftAssetInfo({ collection, item }), item);
+            }}
+          />
+        ))}
+    </>
+  );
+});
 
 interface Props {
   navigation?: SendTransactionScreenProps<typeof SendTransactionStep2StackName>['navigation'];
@@ -76,7 +157,6 @@ const SendTransactionStep2Asset: React.FC<Props> = ({ navigation, route, onConfi
   const { data: currentAddress } = useCurrentAddress();
   const addCustomToken = useAddCustomToken();
 
-  const currentOpenNFTDetail = useCurrentOpenNFTDetail();
   const assets = (selectType === 'Send' ? useAssetsAllList : useTokenListOfCurrentNetwork)();
 
   const [searchAsset, setSearchAsset] = useState(() => route?.params?.searchAddress ?? '');
@@ -86,12 +166,16 @@ const SendTransactionStep2Asset: React.FC<Props> = ({ navigation, route, onConfi
     assets: Array<AssetInfo>;
   }>(() => ({ type: 'local', assets: [] }));
 
+  const nftCollectionsQuery = useNftCollectionsOfAddress(currentAddress?.id ?? '');
+  const filteredNftCollections = useMemo(() => {
+    const value = searchAsset.trim();
+    if (!value) return [];
+    const re = new RegExp(escapeRegExp(value), 'i');
+    return (nftCollectionsQuery.data ?? []).filter((c) => [c.name, c.symbol, c.contractAddress].some((s) => (s ? re.test(String(s)) : false)));
+  }, [nftCollectionsQuery.data, searchAsset]);
+
   const searchFilterAssets = useCallback(
     debounce(async (value: string) => {
-      if (value) {
-        getNFTDetailTracker().setCurrentOpenNFT(undefined);
-      }
-
       const localAssets = assets
         ?.filter((asset) =>
           [asset.name, asset.symbol, asset.type === AssetType.Native ? AssetType.Native : asset.contractAddress].some((str) =>
@@ -99,7 +183,7 @@ const SendTransactionStep2Asset: React.FC<Props> = ({ navigation, route, onConfi
           ),
         )
         .filter((asset) => !!asset.type)
-        .filter((asset) => (onConfirm ? asset.type !== AssetType.ERC1155 && asset.type !== AssetType.ERC721 : true));
+        .filter((asset) => asset.type !== AssetType.ERC1155 && asset.type !== AssetType.ERC721);
       if (localAssets && localAssets?.length > 0) {
         setFilterAssets({ type: 'local', assets: localAssets });
       } else {
@@ -141,7 +225,7 @@ const SendTransactionStep2Asset: React.FC<Props> = ({ navigation, route, onConfi
     searchFilterAssets(searchAsset);
   }, [searchFilterAssets, searchAsset]);
 
-  const handleClickAsset = useCallback((asset: AssetInfo, nftItemDetail?: NFTItemDetail) => {
+  const handleClickAsset = useCallback((asset: AssetInfo, nftItemDetail?: INftItem) => {
     if (navigation) {
       if ((asset.type === AssetType.ERC20 || asset.type === AssetType.Native) && (Number(asset.balance) === 0 || Number.isNaN(Number(asset.balance)))) {
         return showMessage({
@@ -196,7 +280,7 @@ const SendTransactionStep2Asset: React.FC<Props> = ({ navigation, route, onConfi
             currentTab={currentTab}
             onTabChange={setCurrentTab}
             selectType={selectType}
-            onPressItem={handleClickAsset}
+            onPressAsset={handleClickAsset}
             onlyToken={!navigation}
           />
         </BottomSheetScrollContent>
@@ -216,17 +300,19 @@ const SendTransactionStep2Asset: React.FC<Props> = ({ navigation, route, onConfi
                   hideBalance={selectType === 'Receive'}
                   showAddress={selectType === 'Receive'}
                 />
-              ) : asset.type === AssetType.ERC1155 || asset.type === AssetType.ERC721 ? (
-                <NFTItem
-                  key={itemKey}
-                  data={asset}
-                  currentOpenNFTDetail={currentOpenNFTDetail}
-                  tabsType="SelectAsset"
-                  showTypeLabel
-                  onPress={handleClickAsset}
-                />
               ) : null;
             })}
+
+          {filteredNftCollections.length > 0 &&
+            filteredNftCollections.map((collection, index) => (
+              <NftSearchRow
+                key={collection.id}
+                addressId={currentAddress?.id ?? ''}
+                collection={collection}
+                index={index}
+                onSelect={(asset, item) => handleClickAsset(asset, item)}
+              />
+            ))}
 
           {filterAssets.type !== 'local' && filterAssets.type !== 'remote' && (
             <Pressable

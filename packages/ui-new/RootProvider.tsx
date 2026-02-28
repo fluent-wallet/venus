@@ -3,6 +3,7 @@ import { AuthenticationPlugin } from '@WalletCoreExtends/Plugins/Authentication'
 import BSIMPlugin from '@WalletCoreExtends/Plugins/BSIM';
 import { CryptoToolPlugin } from '@WalletCoreExtends/Plugins/CryptoTool';
 import database from '@core/database';
+import { buildScanOpenApiKey } from '@core/modules/nftSync';
 import { createAppRuntime } from '@core/runtime/createAppRuntime';
 import type { RuntimeConfig } from '@core/runtime/types';
 import { Networks, NetworkType } from '@core/utils/consts';
@@ -79,6 +80,13 @@ const RUNTIME_CONFIG: RuntimeConfig = {
       highPriorityPollIntervalMs: 10_000,
       backgroundPollIntervalMs: 60_000,
       scanIntervalMs: 60_000,
+    },
+    nft: {
+      pollIntervalMs: 0,
+      scanOpenApiByKey: {
+        [buildScanOpenApiKey({ networkType: NetworkType.Ethereum, chainId: Networks['Conflux eSpace'].chainId })]: Networks['Conflux eSpace'].scanOpenAPI,
+        [buildScanOpenApiKey({ networkType: NetworkType.Ethereum, chainId: Networks['eSpace Testnet'].chainId })]: Networks['eSpace Testnet'].scanOpenAPI,
+      },
     },
   },
 };

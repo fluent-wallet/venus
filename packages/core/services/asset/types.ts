@@ -1,10 +1,10 @@
-import type { AssetSource, AssetType } from '@core/database/models/Asset';
+import type { AssetSource, AssetTypeValue } from '@core/types';
 
 export interface IAsset {
   id: string;
   name: string | null;
   symbol: string | null;
-  type: AssetType;
+  type: AssetTypeValue;
   contractAddress: string | null;
   decimals: number | null;
   icon: string | null;

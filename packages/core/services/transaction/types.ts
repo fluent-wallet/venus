@@ -1,4 +1,4 @@
-import type { Address, AssetType, Hex, SpeedUpAction, TxStatus } from '@core/types';
+import type { Address, AssetType, AssetTypeValue, Hex, SpeedUpAction, TxStatusValue } from '@core/types';
 import type { NetworkType } from '@core/utils/consts';
 import type { EvmRpcTransactionRequest } from './dappTypes';
 
@@ -7,6 +7,12 @@ export interface TransactionFilter {
   status?: 'pending' | 'finished' | 'all';
   limit?: number;
 }
+
+/**
+ * Transaction origin.
+ * Kept as a small string union so UI does not depend on WatermelonDB enums.
+ */
+export type TransactionSource = 'self' | 'dapp' | 'scan' | 'unknown';
 
 export type GasEstimateLevel = 'low' | 'medium' | 'high';
 
@@ -37,6 +43,135 @@ export interface RecentlyAddress {
   direction: 'inbound' | 'outbound';
   isLocalAccount: boolean;
   lastUsedAt: number;
+}
+
+export type TransactionReceiptKind = 'evm' | 'cfx' | 'unknown';
+
+/**
+ * Receipt snapshot exposed to UI.
+ * Values follow the database receipt storage format (hex quantity strings or null).
+ */
+export type TransactionReceiptSnapshot = {
+  kind: TransactionReceiptKind;
+  blockHash?: string | null;
+  gasUsed?: string | null;
+  contractCreated?: string | null;
+  transactionIndex?: string | null;
+  effectiveGasPrice?: string | null;
+  type?: string | null;
+  /** blockNumber in evm or epochNumber in cfx */
+  blockNumber?: string | null;
+  /** for EVM */
+  cumulativeGasUsed?: string | null;
+  /** for Conflux Core Space */
+  gasFee?: string | null;
+  /** for Conflux Core Space */
+  storageCollateralized?: string | null;
+  /** for Conflux Core Space */
+  gasCoveredBySponsor?: boolean | null;
+  /** for Conflux Core Space */
+  storageCoveredBySponsor?: boolean | null;
+  /** for Conflux Core Space */
+  storageReleased?: {
+    address: string | null;
+    collaterals: string | null;
+  }[];
+};
+
+export type TransactionAssetSnapshot = {
+  type: AssetTypeValue;
+  contractAddress: Address | null;
+  name: string | null;
+  symbol: string | null;
+  decimals: number | null;
+  icon: string | null;
+};
+
+export type TransactionNetworkSnapshot = {
+  id: string;
+  name: string;
+  chainId: string;
+  networkType: NetworkType;
+  scanUrl: string | null;
+};
+
+export type TransactionPayloadSnapshot = {
+  from: Address | null;
+  to: Address | null;
+  value: string | null;
+  data: Hex | null;
+  nonce: number | null;
+  chainId: string | null;
+  gasLimit?: string | null;
+  gasPrice?: string | null;
+  maxFeePerGas?: string | null;
+  maxPriorityFeePerGas?: string | null;
+  storageLimit?: string | null;
+  epochHeight?: string | null;
+  type?: string | null;
+};
+
+export type TransactionExtraSnapshot = {
+  sendAction: SpeedUpAction | null;
+};
+
+export type TransactionDisplaySnapshot = {
+  from: Address | null;
+  to: Address | null;
+  value: string | null;
+  tokenId: string;
+  isTransfer: boolean;
+};
+
+/**
+ * Activity list row snapshot for UI.
+ */
+export interface IActivityTransaction {
+  id: string;
+  hash: string;
+  status: TxStatusValue;
+  source: TransactionSource;
+  method: string;
+
+  createdAtMs: number;
+  executedAtMs: number | null;
+  sendAtMs: number;
+  timestampMs: number;
+
+  networkId: string;
+  sendAction: SpeedUpAction | null;
+
+  payload: TransactionPayloadSnapshot;
+  asset: TransactionAssetSnapshot | null;
+  display: TransactionDisplaySnapshot;
+}
+
+/**
+ * Transaction detail snapshot for UI.
+ */
+export interface ITransactionDetail {
+  id: string;
+  hash: string;
+  status: TxStatusValue;
+  source: TransactionSource;
+  method: string;
+
+  createdAtMs: number;
+  executedAtMs: number | null;
+  sendAtMs: number;
+
+  network: TransactionNetworkSnapshot;
+  asset: TransactionAssetSnapshot | null;
+  nativeAsset: TransactionAssetSnapshot | null;
+
+  payload: TransactionPayloadSnapshot;
+  extra: TransactionExtraSnapshot;
+  receipt: TransactionReceiptSnapshot | null;
+
+  err: string | null;
+  errorType: string | null;
+
+  display: TransactionDisplaySnapshot;
 }
 
 export interface SendTransactionInput {
@@ -95,7 +230,7 @@ export type SpeedUpTxContext = {
   networkType: NetworkType;
   isHardwareWallet: boolean;
 
-  status: TxStatus;
+  status: TxStatusValue;
   /**
    * Existing send action of the origin tx (if it is itself a SpeedUp/Cancel replacement).
    */
@@ -146,7 +281,7 @@ export interface ITransaction {
   from: Address;
   to: Address;
   value: string;
-  status: TxStatus;
+  status: TxStatusValue;
   timestamp: number;
   networkId: string;
 }

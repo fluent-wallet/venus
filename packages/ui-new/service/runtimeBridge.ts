@@ -13,6 +13,7 @@ import { getAccountRootKey } from './account';
 import { getAssetRootKey } from './asset';
 import { getAuthService, getRuntimeEventBus } from './core';
 import { getNetworkRootKey } from './network';
+import { getNftRootKey } from './nft';
 import { getSignatureRootKey } from './signature';
 import { getTransactionRootKey } from './transaction';
 
@@ -62,6 +63,10 @@ export function useRuntimeEventBridge(navigation: StackNavigation) {
 
     const invalidateWalletConnect = () => {
       void queryClient.invalidateQueries({ queryKey: getWalletConnectRootKey() });
+    };
+
+    const invalidateNft = () => {
+      void queryClient.invalidateQueries({ queryKey: getNftRootKey() });
     };
 
     const handlePasswordRequested = (payload: { requestId: string; kind: 'password' | 'biometrics' }) => {
@@ -122,6 +127,11 @@ export function useRuntimeEventBridge(navigation: StackNavigation) {
       eventBus.on('receive-assets-sync/failed', invalidateAsset),
 
       eventBus.on('wallet-connect/sessions-changed', invalidateWalletConnect),
+
+      eventBus.on('nft-sync/started', invalidateNft),
+      eventBus.on('nft-sync/updated', invalidateNft),
+      eventBus.on('nft-sync/succeeded', invalidateNft),
+      eventBus.on('nft-sync/failed', invalidateNft),
 
       eventBus.on('auth/credential-requested', handlePasswordRequested),
 

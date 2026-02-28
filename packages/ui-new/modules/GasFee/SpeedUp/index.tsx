@@ -14,7 +14,7 @@ import Button from '@components/Button';
 import HourglassLoading from '@components/Loading/Hourglass';
 import Text from '@components/Text';
 import { AUTH_PASSWORD_REQUEST_CANCELED } from '@core/errors';
-import { AssetType } from '@core/types';
+import { AssetType, SPEED_UP_ACTION, TX_STATUS } from '@core/types';
 import { NetworkType } from '@core/utils/consts';
 import useInAsync from '@hooks/useInAsync';
 import HardwareSignVerify from '@pages/SendTransaction/HardwareSignVerify';
@@ -89,7 +89,7 @@ const createGasSetting = (txPayload: SpeedUpTxPayloadLike | null, ratio: number,
 
 const SpeedUp: React.FC<StackScreenProps<typeof SpeedUpStackName>> = ({ navigation, route }) => {
   const { txId, type, level: defaultLevel } = route.params;
-  const isSpeedUp = type === 'SpeedUp';
+  const isSpeedUp = type === SPEED_UP_ACTION.SpeedUp;
   const { colors } = useTheme();
   const { t } = useTranslation();
   const rootNavigation = useNavigation<StackNavigation>();
@@ -101,7 +101,7 @@ const SpeedUp: React.FC<StackScreenProps<typeof SpeedUpStackName>> = ({ navigati
   const abortRef = useRef<AbortController | null>(null);
 
   const { data: assets } = useAssetsOfAddress(addressId);
-  const nativeAsset = useMemo(() => assets?.find((a) => String(a.type) === 'Native') ?? null, [assets]);
+  const nativeAsset = useMemo(() => assets?.find((a) => a.type === AssetType.Native) ?? null, [assets]);
 
   const txStatus = ctx?.status ?? null;
 
@@ -146,12 +146,12 @@ const SpeedUp: React.FC<StackScreenProps<typeof SpeedUpStackName>> = ({ navigati
   const bottomSheetRef = useRef<BottomSheetMethods>(null!);
 
   const handleTxExpire = useCallback(() => {
-    if (txStatus && txStatus !== 'pending') {
+    if (txStatus && txStatus !== TX_STATUS.Pending) {
       bottomSheetRef.current?.close();
       showMessage({
         type: 'warning',
         message: t('tx.action.expiredTitle'),
-        description: txStatus === 'confirmed' ? t('tx.action.alreadyExecuted') : t('tx.action.alreadyFailed'),
+        description: txStatus === TX_STATUS.Confirmed ? t('tx.action.alreadyExecuted') : t('tx.action.alreadyFailed'),
       });
     }
   }, [txStatus, t]);
@@ -185,7 +185,7 @@ const SpeedUp: React.FC<StackScreenProps<typeof SpeedUpStackName>> = ({ navigati
       const gasLimit = customizeAdvanceSetting?.gasLimit ?? estimateRes.gasLimit;
       const storageLimit = customizeAdvanceSetting?.storageLimit ?? estimateRes.storageLimit;
 
-      const action = type === 'Cancel' ? 'Cancel' : 'SpeedUp';
+      const action = type === SPEED_UP_ACTION.Cancel ? SPEED_UP_ACTION.Cancel : SPEED_UP_ACTION.SpeedUp;
       const feeOverrides = newGasSetting.suggestedMaxFeePerGas
         ? {
             maxFeePerGas: newGasSetting.suggestedMaxFeePerGas,

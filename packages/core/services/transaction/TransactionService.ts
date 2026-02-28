@@ -1,11 +1,20 @@
 import { ChainRegistry } from '@core/chains';
+import { iface721, iface777, iface1155 } from '@core/contracts';
 import type { Database } from '@core/database';
 import type { Address } from '@core/database/models/Address';
 import type { Asset } from '@core/database/models/Asset';
 import type { Network } from '@core/database/models/Network';
 import { SignType } from '@core/database/models/Signature/type';
 import type { Tx } from '@core/database/models/Tx';
-import { TxStatus as DbTxStatus, FINISHED_IN_ACTIVITY_TX_STATUSES, PENDING_COUNT_STATUSES, PENDING_TX_STATUSES, TxSource } from '@core/database/models/Tx/type';
+import {
+  TxStatus as DbTxStatus,
+  EXECUTED_TX_STATUSES,
+  ExecutedStatus,
+  FINISHED_IN_ACTIVITY_TX_STATUSES,
+  PENDING_COUNT_STATUSES,
+  PENDING_TX_STATUSES,
+  TxSource,
+} from '@core/database/models/Tx/type';
 import type { TxExtra } from '@core/database/models/TxExtra';
 import type { TxPayload } from '@core/database/models/TxPayload';
 import VaultType from '@core/database/models/Vault/VaultType';
@@ -29,7 +38,9 @@ import { AddressValidationService } from '@core/services/address/AddressValidati
 import { SigningService } from '@core/services/signing';
 import { SignatureRecordService } from '@core/services/signing/SignatureRecordService';
 import {
+  ASSET_TYPE,
   AssetType,
+  type AssetTypeValue,
   type ChainType,
   type EvmUnsignedTransaction,
   type FeeEstimate,
@@ -37,13 +48,15 @@ import {
   type Hex,
   type IChainProvider,
   NetworkType,
-  TxStatus as ServiceTxStatus,
+  SPEED_UP_ACTION,
   type SpeedUpAction,
   type TransactionParams,
+  TX_STATUS,
+  type TxStatusValue,
   type UnsignedTransaction,
 } from '@core/types';
 import { Networks } from '@core/utils/consts';
-import type { ProcessErrorType } from '@core/utils/eth';
+import { ProcessErrorType } from '@core/utils/eth';
 import { Q } from '@nozbe/watermelondb';
 import { inject, injectable, optional } from 'inversify';
 import * as OxHex from 'ox/Hex';
@@ -51,14 +64,23 @@ import * as OxValue from 'ox/Value';
 import type { EvmRpcTransactionRequest } from './dappTypes';
 import type {
   GasPricingEstimate,
+  IActivityTransaction,
   ITransaction,
+  ITransactionDetail,
   LegacyLikeGasEstimate,
   RecentlyAddress,
   SendERC20Input,
   SendTransactionInput,
   SpeedUpTxContext,
   SpeedUpTxInput,
+  TransactionAssetSnapshot,
+  TransactionDisplaySnapshot,
+  TransactionExtraSnapshot,
   TransactionFilter,
+  TransactionNetworkSnapshot,
+  TransactionPayloadSnapshot,
+  TransactionReceiptSnapshot,
+  TransactionSource,
 } from './types';
 
 type TxLike = {
@@ -630,7 +652,7 @@ export class TransactionService {
       networkId: network.id,
       networkType: network.networkType,
       isHardwareWallet: vault.type === VaultType.BSIM,
-      status: this.mapStatus(tx.status),
+      status: this.mapStatus(tx.status, tx.executedStatus ?? null),
       sendAction: extra.sendAction ?? null,
       assetType,
       payload: {
@@ -668,7 +690,7 @@ export class TransactionService {
 
     const from = payload.from ?? (await address.getValue());
 
-    const effectiveAction: SpeedUpAction = extra.sendAction === 'Cancel' ? 'Cancel' : input.action;
+    const effectiveAction: SpeedUpAction = extra.sendAction === SPEED_UP_ACTION.Cancel ? SPEED_UP_ACTION.Cancel : input.action;
 
     if (typeof payload.nonce !== 'number') {
       throw new CoreError({
@@ -785,6 +807,7 @@ export class TransactionService {
         txRaw: signedTx.rawTransaction,
         sendAt,
         sendAction: effectiveAction,
+        hideOriginAsTempReplaced: true,
         isFailed: false,
         err: null,
         errorType: null,
@@ -807,6 +830,7 @@ export class TransactionService {
         txRaw: signedTx.rawTransaction,
         sendAt,
         sendAction: effectiveAction,
+        hideOriginAsTempReplaced: false,
         isFailed: true,
         err: message,
         errorType: null,
@@ -908,21 +932,26 @@ export class TransactionService {
     };
   }
 
-  private mapStatus(status: DbTxStatus): ServiceTxStatus {
+  private mapStatus(status: DbTxStatus, executedStatus: ExecutedStatus | null = null): TxStatusValue {
+    // `EXECUTED/CONFIRMED/FINALIZED` does not necessarily mean success; check executedStatus when available.
+    if (executedStatus === ExecutedStatus.FAILED) {
+      return TX_STATUS.Failed;
+    }
+
     switch (status) {
       case DbTxStatus.EXECUTED:
       case DbTxStatus.CONFIRMED:
       case DbTxStatus.FINALIZED:
-        return ServiceTxStatus.Confirmed;
+        return TX_STATUS.Confirmed;
       case DbTxStatus.REPLACED:
       case DbTxStatus.TEMP_REPLACED:
       case DbTxStatus.SEND_FAILED:
-        return ServiceTxStatus.Failed;
+        return TX_STATUS.Failed;
       case DbTxStatus.WAITTING:
       case DbTxStatus.DISCARDED:
       case DbTxStatus.PENDING:
       default:
-        return ServiceTxStatus.Pending;
+        return TX_STATUS.Pending;
     }
   }
 
@@ -1090,6 +1119,19 @@ export class TransactionService {
     return Promise.all(sliced.map((tx) => this.toInterface(tx)));
   }
 
+  /**
+   * Activity list adapter for UI.
+   * Returns a stable plain snapshot and avoids WatermelonDB model exposure.
+   */
+  async listActivityTransactions(filter: TransactionFilter): Promise<IActivityTransaction[]> {
+    const { addressId, status = 'all', limit } = filter;
+    const query = this.createTxQuery(addressId, status);
+    const txs = await query.fetch();
+    const deduped = await this.uniqSortByNoncePreferExecuted(txs);
+    const sliced = typeof limit === 'number' && limit >= 0 ? deduped.slice(0, limit) : deduped;
+    return Promise.all(sliced.map((tx) => this.toActivityInterface(tx)));
+  }
+
   async getTransactionById(txId: string): Promise<ITransaction | null> {
     try {
       const tx = await this.database.get<Tx>(TableName.Tx).find(txId);
@@ -1097,6 +1139,16 @@ export class TransactionService {
     } catch {
       return null;
     }
+  }
+
+  /**
+   * Transaction detail adapter for UI.
+   * Returns a stable plain snapshot and avoids WatermelonDB model exposure.
+   */
+  async getTransactionDetail(txId: string): Promise<ITransactionDetail | null> {
+    const tx = await this.findTxOrNull(txId);
+    if (!tx) return null;
+    return this.toDetailInterface(tx);
   }
 
   // get recently addresses
@@ -1487,9 +1539,9 @@ export class TransactionService {
   }): Promise<UnsignedTransaction> {
     const { network, from, origin, action, feeOverrides, gasLimit, storageLimit, nonce, chainProvider } = params;
 
-    const to = action === 'Cancel' ? from : (origin.to ?? undefined);
-    const value: Hex = action === 'Cancel' ? '0x0' : ((origin.value ?? '0x0') as Hex);
-    const data: Hex = action === 'Cancel' ? '0x' : ((origin.data ?? '0x') as Hex);
+    const to = action === SPEED_UP_ACTION.Cancel ? from : (origin.to ?? undefined);
+    const value: Hex = action === SPEED_UP_ACTION.Cancel ? '0x0' : ((origin.value ?? '0x0') as Hex);
+    const data: Hex = action === SPEED_UP_ACTION.Cancel ? '0x' : ((origin.data ?? '0x') as Hex);
 
     if (network.networkType === NetworkType.Ethereum) {
       const is1559 = 'maxFeePerGas' in feeOverrides;
@@ -1562,11 +1614,12 @@ export class TransactionService {
     txRaw: string;
     sendAt: Date;
     sendAction: SpeedUpAction;
+    hideOriginAsTempReplaced: boolean;
     isFailed: boolean;
     err: string | null;
     errorType: ProcessErrorType | null;
   }): Promise<Tx> {
-    const { originTx, address, unsignedTx, txHash, txRaw, sendAt, sendAction, isFailed, err, errorType } = params;
+    const { originTx, address, unsignedTx, txHash, txRaw, sendAt, sendAction, hideOriginAsTempReplaced, isFailed, err, errorType } = params;
 
     const originExtra = await originTx.txExtra.fetch();
     const originAsset = await originTx.asset.fetch().catch(() => null);
@@ -1597,10 +1650,10 @@ export class TransactionService {
     });
 
     const txExtra = this.database.get<TxExtra>(TableName.TxExtra).prepareCreate((record) => {
-      const assetType = sendAction === 'Cancel' ? AssetType.Native : ((originAsset?.type as unknown as AssetType | undefined) ?? null);
+      const assetType = sendAction === SPEED_UP_ACTION.Cancel ? AssetType.Native : ((originAsset?.type as unknown as AssetType | undefined) ?? null);
 
       // When origin asset is missing (e.g. legacy records / dApp tx), preserve existing extra flags.
-      if (sendAction !== 'Cancel' && assetType === null) {
+      if (sendAction !== SPEED_UP_ACTION.Cancel && assetType === null) {
         record.ok = originExtra.ok;
         record.simple = originExtra.simple;
         record.contractInteraction = originExtra.contractInteraction;
@@ -1644,7 +1697,7 @@ export class TransactionService {
       record.txPayload.set(txPayload);
       record.txExtra.set(txExtra);
 
-      if (sendAction === 'Cancel') {
+      if (sendAction === SPEED_UP_ACTION.Cancel) {
         record.source = TxSource.SELF;
         record.method = 'transfer';
         if (nativeAsset) record.asset.set(nativeAsset);
@@ -1657,10 +1710,63 @@ export class TransactionService {
     });
 
     await this.database.write(async () => {
-      await this.database.batch(txPayload, txExtra, tx);
+      const ops: any[] = [txPayload, txExtra, tx];
+
+      if (hideOriginAsTempReplaced) {
+        ops.push(
+          originTx.prepareUpdate((record) => {
+            record.status = DbTxStatus.TEMP_REPLACED;
+            record.isTempReplacedByInner = true;
+            record.raw = null;
+            record.executedStatus = null;
+            record.receipt = null;
+            record.executedAt = null;
+            record.err = null;
+            record.errorType = ProcessErrorType.replacedByAnotherTx;
+          }),
+        );
+      }
+
+      await this.database.batch(...ops);
     });
 
     return tx;
+  }
+
+  private async uniqSortByNoncePreferExecuted(txs: Tx[]): Promise<Tx[]> {
+    if (txs.length === 0) return [];
+
+    const payloads = await Promise.all(txs.map((tx) => tx.txPayload.fetch()));
+
+    const nonceMap = new Map<number, Tx>();
+    const noNonce: Tx[] = [];
+
+    for (let i = 0; i < txs.length; i += 1) {
+      const tx = txs[i];
+      const nonce = payloads[i]?.nonce;
+      if (typeof nonce !== 'number') {
+        noNonce.push(tx);
+        continue;
+      }
+
+      const prev = nonceMap.get(nonce);
+      if (!prev) {
+        nonceMap.set(nonce, tx);
+        continue;
+      }
+
+      // If we have multiple txs with the same nonce, prefer an executed-like one (same as legacy Activity behavior).
+      if (EXECUTED_TX_STATUSES.includes(tx.status)) {
+        nonceMap.set(nonce, tx);
+      }
+    }
+
+    const byNonceDesc = Array.from(nonceMap.entries())
+      .sort((a, b) => b[0] - a[0])
+      .map(([, tx]) => tx);
+
+    // Keep unknown-nonce txs (rare) after nonce-sorted list to preserve visibility.
+    return [...byNonceDesc, ...noNonce];
   }
 
   private async toInterface(tx: Tx): Promise<ITransaction> {
@@ -1674,9 +1780,247 @@ export class TransactionService {
       from: txPayload.from ?? '',
       to: txPayload.to ?? '',
       value: txPayload.value ?? '0',
-      status: this.mapStatus(tx.status),
+      status: this.mapStatus(tx.status, tx.executedStatus ?? null),
       timestamp: tx.createdAt.getTime(),
       networkId: network.id,
+    };
+  }
+
+  private normalizeSource(source: string | null | undefined): TransactionSource {
+    if (source === TxSource.SELF) return 'self';
+    if (source === TxSource.DAPP) return 'dapp';
+    if (source === TxSource.SCAN) return 'scan';
+    return 'unknown';
+  }
+
+  private toAssetSnapshot(asset: Asset | null): TransactionAssetSnapshot | null {
+    if (!asset) return null;
+    return {
+      type: this.mapAssetTypeSnapshot(asset.type),
+      contractAddress: asset.contractAddress,
+      name: asset.name,
+      symbol: asset.symbol,
+      decimals: asset.decimals,
+      icon: asset.icon,
+    };
+  }
+
+  private mapAssetTypeSnapshot(value: unknown): AssetTypeValue {
+    const type = String(value ?? '');
+    if (type === ASSET_TYPE.Native) return ASSET_TYPE.Native;
+    if (type === ASSET_TYPE.ERC20) return ASSET_TYPE.ERC20;
+    if (type === ASSET_TYPE.ERC721) return ASSET_TYPE.ERC721;
+    if (type === ASSET_TYPE.ERC1155) return ASSET_TYPE.ERC1155;
+    return ASSET_TYPE.ERC20;
+  }
+
+  private toNetworkSnapshot(network: Network): TransactionNetworkSnapshot {
+    return {
+      id: network.id,
+      name: network.name,
+      chainId: network.chainId,
+      networkType: network.networkType,
+      scanUrl: network.scanUrl,
+    };
+  }
+
+  private toPayloadSnapshot(payload: TxPayload): TransactionPayloadSnapshot {
+    return {
+      from: payload.from ?? null,
+      to: payload.to ?? null,
+      value: payload.value ?? null,
+      data: (payload.data as Hex | null) ?? null,
+      nonce: typeof payload.nonce === 'number' ? payload.nonce : null,
+      chainId: payload.chainId ?? null,
+      gasLimit: payload.gasLimit ?? null,
+      gasPrice: payload.gasPrice ?? null,
+      maxFeePerGas: payload.maxFeePerGas ?? null,
+      maxPriorityFeePerGas: payload.maxPriorityFeePerGas ?? null,
+      storageLimit: payload.storageLimit ?? null,
+      epochHeight: payload.epochHeight ?? null,
+      type: payload.type ?? null,
+    };
+  }
+
+  private toExtraSnapshot(extra: TxExtra): TransactionExtraSnapshot {
+    return { sendAction: (extra.sendAction as SpeedUpAction | null) ?? null };
+  }
+
+  private toReceiptSnapshot(receipt: Tx['receipt']): TransactionReceiptSnapshot | null {
+    if (!receipt) return null;
+    const r = receipt as any;
+
+    const hasEvmFields = r.cumulativeGasUsed != null || r.effectiveGasPrice != null;
+    const hasCfxFields = r.gasFee != null || r.storageCollateralized != null || r.gasCoveredBySponsor != null || r.storageCoveredBySponsor != null;
+    const kind: TransactionReceiptSnapshot['kind'] = hasEvmFields ? 'evm' : hasCfxFields ? 'cfx' : 'unknown';
+
+    return {
+      kind,
+      blockHash: r.blockHash ?? null,
+      gasUsed: r.gasUsed ?? null,
+      contractCreated: r.contractCreated ?? null,
+      transactionIndex: r.transactionIndex ?? null,
+      effectiveGasPrice: r.effectiveGasPrice ?? null,
+      type: r.type ?? null,
+      blockNumber: r.blockNumber ?? null,
+      cumulativeGasUsed: r.cumulativeGasUsed ?? null,
+      gasFee: r.gasFee ?? null,
+      storageCollateralized: r.storageCollateralized ?? null,
+      gasCoveredBySponsor: r.gasCoveredBySponsor ?? null,
+      storageCoveredBySponsor: r.storageCoveredBySponsor ?? null,
+      storageReleased: Array.isArray(r.storageReleased) ? r.storageReleased : undefined,
+    };
+  }
+
+  private deriveDisplay(params: { method: string; payload: TxPayload; assetType: AssetTypeValue | null }): TransactionDisplaySnapshot {
+    const { method, payload, assetType } = params;
+
+    let from = payload.from ?? null;
+    let to = payload.to ?? null;
+    let value = payload.value ?? null;
+    let tokenId = '';
+    let isTransfer = false;
+
+    const data = payload.data ?? null;
+
+    try {
+      if (method === 'transferFrom' && data) {
+        const params = iface721.decodeFunctionData('transferFrom', data);
+        from = (params[0] as string) ?? from;
+        to = (params[1] as string) ?? to;
+        tokenId = params[2]?.toString?.() ?? '';
+        value = '1';
+        isTransfer = true;
+      } else if (method === 'safeTransferFrom' && data) {
+        const params = iface1155.decodeFunctionData('safeTransferFrom', data);
+        from = (params[0] as string) ?? from;
+        to = (params[1] as string) ?? to;
+        tokenId = params[2]?.toString?.() ?? '';
+        value = params[3]?.toString?.() ?? value;
+        isTransfer = true;
+      } else if (method === 'transfer') {
+        // Native transfers (or unknown asset type with empty calldata) should still be treated as transfers.
+        if (assetType === AssetType.Native || !data || data === '0x') {
+          isTransfer = true;
+        } else {
+          const params = iface777.decodeFunctionData('transfer', data);
+          to = (params[0] as string) ?? to;
+          value = params[1]?.toString?.() ?? value;
+          isTransfer = true;
+        }
+      }
+    } catch {
+      // Best effort: keep raw payload fields.
+    }
+
+    // Approve value is shown for `approve` method when decoding is possible.
+    if (!isTransfer && method === 'approve' && data) {
+      try {
+        const erc20 = iface777.decodeFunctionData('approve', data);
+        value = erc20[1]?.toString?.() ?? value;
+      } catch {
+        try {
+          const erc721 = iface721.decodeFunctionData('approve', data);
+          value = erc721[1]?.toString?.() ?? value;
+        } catch {
+          // ignore
+        }
+      }
+    }
+
+    return { from, to, value, tokenId, isTransfer };
+  }
+
+  private async loadTxAssetOrNull(tx: Tx): Promise<Asset | null> {
+    try {
+      const asset = await tx.asset.fetch();
+      return asset ?? null;
+    } catch {
+      return null;
+    }
+  }
+
+  private async loadNativeAssetForAddressOrNull(params: { address: Address; network: Network }): Promise<Asset | null> {
+    const { address, network } = params;
+    const assetRule = await address.assetRule.fetch();
+
+    const res = await this.database
+      .get<Asset>(TableName.Asset)
+      .query(Q.where('asset_rule_id', assetRule.id), Q.where('network_id', network.id), Q.where('type', AssetType.Native as any))
+      .fetch();
+
+    return res[0] ?? null;
+  }
+
+  private async toActivityInterface(tx: Tx): Promise<IActivityTransaction> {
+    const [address, payload, extra] = await Promise.all([tx.address.fetch(), tx.txPayload.fetch(), tx.txExtra.fetch()]);
+    const network = await address.network.fetch();
+
+    const asset = await this.loadTxAssetOrNull(tx);
+    const assetSnapshot = this.toAssetSnapshot(asset);
+
+    const createdAtMs = tx.createdAt.getTime();
+    const executedAtMs = tx.executedAt ? tx.executedAt.getTime() : null;
+    const sendAtMs = tx.sendAt ? tx.sendAt.getTime() : createdAtMs;
+    const timestampMs = executedAtMs ?? sendAtMs ?? createdAtMs;
+
+    return {
+      id: tx.id,
+      hash: tx.hash ?? '',
+      status: this.mapStatus(tx.status, tx.executedStatus ?? null),
+      source: this.normalizeSource(tx.source),
+      method: tx.method,
+
+      createdAtMs,
+      executedAtMs,
+      sendAtMs,
+      timestampMs,
+
+      networkId: network.id,
+      sendAction: (extra.sendAction as SpeedUpAction | null) ?? null,
+
+      payload: this.toPayloadSnapshot(payload),
+      asset: assetSnapshot,
+      display: this.deriveDisplay({ method: tx.method, payload, assetType: assetSnapshot?.type ?? null }),
+    };
+  }
+
+  private async toDetailInterface(tx: Tx): Promise<ITransactionDetail> {
+    const [address, payload, extra] = await Promise.all([tx.address.fetch(), tx.txPayload.fetch(), tx.txExtra.fetch()]);
+    const network = await address.network.fetch();
+
+    const [asset, nativeAsset] = await Promise.all([this.loadTxAssetOrNull(tx), this.loadNativeAssetForAddressOrNull({ address, network })]);
+
+    const assetSnapshot = this.toAssetSnapshot(asset);
+    const nativeAssetSnapshot = this.toAssetSnapshot(nativeAsset);
+
+    const createdAtMs = tx.createdAt.getTime();
+    const executedAtMs = tx.executedAt ? tx.executedAt.getTime() : null;
+    const sendAtMs = tx.sendAt ? tx.sendAt.getTime() : createdAtMs;
+
+    return {
+      id: tx.id,
+      hash: tx.hash ?? '',
+      status: this.mapStatus(tx.status, tx.executedStatus ?? null),
+      source: this.normalizeSource(tx.source),
+      method: tx.method,
+
+      createdAtMs,
+      executedAtMs,
+      sendAtMs,
+
+      network: this.toNetworkSnapshot(network),
+      asset: assetSnapshot,
+      nativeAsset: nativeAssetSnapshot,
+
+      payload: this.toPayloadSnapshot(payload),
+      extra: this.toExtraSnapshot(extra),
+      receipt: this.toReceiptSnapshot(tx.receipt),
+
+      err: tx.err ?? null,
+      errorType: tx.errorType ? String(tx.errorType) : null,
+
+      display: this.deriveDisplay({ method: tx.method, payload, assetType: assetSnapshot?.type ?? null }),
     };
   }
 }

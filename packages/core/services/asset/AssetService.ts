@@ -2,18 +2,31 @@ import { ChainRegistry } from '@core/chains';
 import { iface777 } from '@core/contracts';
 import type { Database } from '@core/database';
 import type { Address } from '@core/database/models/Address';
-import { type Asset, AssetSource } from '@core/database/models/Asset';
+import { type Asset, AssetSource as DbAssetSource, AssetType as DbAssetType } from '@core/database/models/Asset';
 import type { Network } from '@core/database/models/Network';
 import TableName from '@core/database/TableName';
 import { CORE_IDENTIFIERS } from '@core/di';
 import { CHAIN_PROVIDER_NOT_FOUND, CoreError } from '@core/errors';
-import { AssetType, type Hex, type IChainProvider } from '@core/types';
+import { ASSET_SOURCE, ASSET_TYPE, type AssetSource, type AssetTypeValue, type Hex, type IChainProvider } from '@core/types';
 import { type Base32Address, convertBase32ToHex } from '@core/utils/address';
 import { balanceFormat, convertBalanceToDecimal } from '@core/utils/balance';
 import { NetworkType } from '@core/utils/consts';
 import Decimal from 'decimal.js';
 import { inject, injectable } from 'inversify';
 import type { AddCustomTokenInput, IAsset } from './types';
+
+// TODO: replace DbAssetType with AssetTypeValue (remove DbAssetType (not enum))
+const ASSET_TYPE_BY_DB_ASSET_TYPE: Record<DbAssetType, AssetTypeValue> = {
+  [DbAssetType.Native]: ASSET_TYPE.Native,
+  [DbAssetType.ERC20]: ASSET_TYPE.ERC20,
+  [DbAssetType.ERC721]: ASSET_TYPE.ERC721,
+  [DbAssetType.ERC1155]: ASSET_TYPE.ERC1155,
+} as const;
+
+const ASSET_SOURCE_BY_DB_ASSET_SOURCE: Record<DbAssetSource, AssetSource> = {
+  [DbAssetSource.Custom]: ASSET_SOURCE.Custom,
+  [DbAssetSource.Official]: ASSET_SOURCE.Official,
+} as const;
 
 type NormalizedBalance = {
   value: string;
@@ -37,7 +50,7 @@ export class AssetService {
 
     return Promise.all(
       assets.map(async (asset) => {
-        const balance = await this.fetchAssetBalance(address, asset);
+        const balance = this.isNonFungibleAsset(asset) ? { value: '0', formatted: '0' } : await this.fetchFungibleAssetBalance(address, asset);
         return this.toInterface(asset, balance);
       }),
     );
@@ -46,7 +59,10 @@ export class AssetService {
   async getAssetBalance(addressId: string, assetId: string): Promise<string> {
     const address = await this.findAddress(addressId);
     const asset = await this.findAsset(assetId);
-    const balance = await this.fetchAssetBalance(address, asset);
+    if (this.isNonFungibleAsset(asset)) {
+      throw new Error('Asset balance is not applicable for non-fungible assets. Use NftService for NFT ownership details.');
+    }
+    const balance = await this.fetchFungibleAssetBalance(address, asset);
     return balance.value;
   }
 
@@ -66,18 +82,18 @@ export class AssetService {
       return this.database.get<Asset>(TableName.Asset).create((record) => {
         record.assetRule.set(assetRule);
         record.network.set(network);
-        record.type = AssetType.ERC20;
+        record.type = DbAssetType.ERC20;
         record.contractAddress = input.contractAddress;
         record.name = metadata.name ?? null;
         record.symbol = metadata.symbol ?? null;
         record.decimals = metadata.decimals ?? 18;
         record.icon = metadata.icon ?? null;
-        record.source = AssetSource.Custom;
+        record.source = DbAssetSource.Custom;
         record.priceInUSDT = null;
       });
     });
 
-    const balance = await this.fetchAssetBalance(address, asset);
+    const balance = await this.fetchFungibleAssetBalance(address, asset);
     return this.toInterface(asset, balance);
   }
 
@@ -109,17 +125,21 @@ export class AssetService {
     return provider;
   }
 
-  private async fetchAssetBalance(address: Address, asset: Asset): Promise<NormalizedBalance> {
+  private isNonFungibleAsset(asset: Asset): boolean {
+    return asset.type === DbAssetType.ERC721 || asset.type === DbAssetType.ERC1155;
+  }
+
+  private async fetchFungibleAssetBalance(address: Address, asset: Asset): Promise<NormalizedBalance> {
     const network = await address.network.fetch();
     const provider = this.getChainProvider(network);
     const addressValue = await address.getValue();
 
-    if (asset.type === AssetType.Native) {
+    if (asset.type === DbAssetType.Native) {
       const raw = await provider.getBalance(addressValue);
       return this.normalizeBalance(raw, asset.decimals);
     }
 
-    if (asset.type === AssetType.ERC20 && asset.contractAddress) {
+    if (asset.type === DbAssetType.ERC20 && asset.contractAddress) {
       const hexAddress = this.normalizeAccountForCalldata(addressValue, network.networkType);
       const raw = await this.callERC20Method(provider, asset.contractAddress, 'balanceOf', [hexAddress]);
       return this.normalizeBalance(raw ?? '0x0', asset.decimals);
@@ -201,11 +221,11 @@ export class AssetService {
       id: asset.id,
       name: asset.name,
       symbol: asset.symbol,
-      type: asset.type,
+      type: this.mapAssetType(asset.type),
       contractAddress: asset.contractAddress,
       decimals: asset.decimals,
       icon: asset.icon,
-      source: asset.source,
+      source: this.mapAssetSource(asset.source),
       balance: balance.value,
       formattedBalance: balance.formatted,
       priceInUSDT: asset.priceInUSDT,
@@ -213,6 +233,15 @@ export class AssetService {
       networkId: asset.network.id,
       assetRuleId: asset.assetRule.id,
     };
+  }
+
+  private mapAssetType(type: DbAssetType): AssetTypeValue {
+    return ASSET_TYPE_BY_DB_ASSET_TYPE[type];
+  }
+
+  private mapAssetSource(source: DbAssetSource | null): AssetSource | null {
+    if (!source) return null;
+    return ASSET_SOURCE_BY_DB_ASSET_SOURCE[source];
   }
 
   private computePriceValue(balance: string, priceInUSDT: string | null): string | null {

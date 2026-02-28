@@ -1,11 +1,11 @@
-import type { Tx } from '@core/database/models/Tx';
-import { Networks } from '@core/utils/consts';
+import { Networks, NetworkType } from '@core/utils/consts';
 import type { AssetInfo } from '@core/WalletCore/Plugins/AssetsTracker/types';
-import { NetworkType, useCurrentNetwork } from '@core/WalletCore/Plugins/ReactInject';
 import ActivityList from '@modules/ActivityList';
 import NFTsList from '@modules/AssetsList/NFTsList';
 import TokensList from '@modules/AssetsList/TokensList';
 import { useShouldShowNotBackup } from '@pages/Home/NotBackup';
+import type { INftItem } from '@service/core';
+import { useCurrentNetwork } from '@service/network';
 import { screenHeight } from '@utils/deviceInfo';
 import type React from 'react';
 import { createRef, type RefObject, useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -21,11 +21,12 @@ interface TabsHeaderProps {
   type: TabsType;
   selectType: 'Send' | 'Receive' | 'Home';
   onlyToken?: boolean;
-  onPressItem?: ((v: AssetInfo) => void) | ((v: AssetInfo | Tx) => void);
+  onPressAsset?: (asset: AssetInfo, nftItemDetail?: INftItem) => void;
+  onPressTx?: (txId: string) => void;
 }
 
-export const TabsContent: React.FC<TabsHeaderProps> = ({ currentTab, onTabChange, type, selectType, onlyToken, onPressItem }) => {
-  const currentNetwork = useCurrentNetwork();
+export const TabsContent: React.FC<TabsHeaderProps> = ({ currentTab, onTabChange, type, selectType, onlyToken, onPressAsset, onPressTx }) => {
+  const { data: currentNetwork } = useCurrentNetwork();
   const tabs = useTabs(type, onlyToken);
   const shouldShowNotBackup = useShouldShowNotBackup();
   const pageViewRef = useRef<PagerView>(null);
@@ -61,18 +62,25 @@ export const TabsContent: React.FC<TabsHeaderProps> = ({ currentTab, onTabChange
                 currentNetwork?.networkType === NetworkType.Ethereum &&
                 (currentNetwork.chainId === Networks['Conflux eSpace'].chainId || currentNetwork.chainId === Networks['eSpace Testnet'].chainId)
               }
-              onPressItem={onPressItem}
+              onPressItem={onPressAsset}
             />
           );
         case 'NFTs':
-          return <NFTsList tabsType={type} onPressItem={onPressItem} />;
+          return (
+            <NFTsList
+              tabsType={type}
+              onPressItem={(asset, item) => {
+                onPressAsset?.(asset, item);
+              }}
+            />
+          );
         case 'Activity':
-          return <ActivityList onPress={onPressItem as (v: Tx) => void} />;
+          return <ActivityList onPress={onPressTx} />;
         default:
           return null;
       }
     },
-    [type, selectType, currentNetwork, onPressItem],
+    [type, selectType, currentNetwork, onPressAsset, onPressTx],
   );
 
   useEffect(() => {

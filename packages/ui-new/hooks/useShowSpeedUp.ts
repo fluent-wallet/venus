@@ -1,19 +1,17 @@
-import type { Tx } from '@core/database/models/Tx';
-import { formatStatus } from '@core/utils/tx';
+import { TxStatus } from '@core/types';
 import { getRuntimeConfig } from '@service/core';
 import { useEffect, useState } from 'react';
 
-export const useShowSpeedUp = (tx: Tx | null) => {
+export const useShowSpeedUp = (tx: { status: TxStatus; createdAtMs: number } | null) => {
   const [showSpeedUp, setShowSpeedUp] = useState(false);
-  const status = tx && formatStatus(tx);
-  const isPending = status === 'pending';
+  const isPending = tx?.status === TxStatus.Pending;
 
   useEffect(() => {
     if (!isPending || !tx || showSpeedUp) return;
 
     const threshold = getRuntimeConfig().wallet?.pendingTimeBeforeSpeedUpMs ?? 15_000;
 
-    const timeEnd = new Date().valueOf() - tx.createdAt.valueOf();
+    const timeEnd = Date.now() - tx.createdAtMs;
 
     // if the transaction is older than the threshold, show the speed up option
     if (timeEnd >= threshold) {

@@ -23,9 +23,18 @@ export const SkeletonList = memo(() => {
   ));
 });
 
-const detailImgSize = (screenWidth - 56 - 16 - 16) / 2 - 16;
-const detailWidth = detailImgSize;
-const detailHeight = detailImgSize + 46.5;
+const GRID_PADDING_LEFT = 56;
+const GRID_PADDING_RIGHT = 16;
+const GRID_GAP = 16;
+const ITEM_PADDING_HORIZONTAL = 8;
+const ITEM_BORDER_WIDTH = 1;
+
+const itemOuterWidth = (screenWidth - GRID_PADDING_LEFT - GRID_PADDING_RIGHT - GRID_GAP) / 2;
+const itemInnerWidth = itemOuterWidth - ITEM_PADDING_HORIZONTAL * 2 - ITEM_BORDER_WIDTH * 2;
+
+const detailImgSize = itemInnerWidth;
+const detailWidth = itemInnerWidth;
+const detailHeight = itemInnerWidth + 46.5;
 export const SkeletoDetailItem: React.FC<{ colors: ReturnType<typeof useTheme>['colors'] }> = ({ colors }) => (
   <ContentLoader
     speed={2}

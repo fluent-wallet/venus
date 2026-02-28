@@ -2,12 +2,12 @@ import { BottomSheetFooter, BottomSheetScrollContent } from '@components/BottomS
 import Button from '@components/Button';
 import Text from '@components/Text';
 import type { AssetInfo } from '@core/WalletCore/Plugins/AssetsTracker/types';
-import type { NFTItemDetail } from '@core/WalletCore/Plugins/NFTDetailTracker/server';
 import { AccountItemView } from '@modules/AccountsList';
 import NFTIcon from '@modules/AssetsList/NFTsList/NFTIcon';
-import { getDetailSymbol } from '@modules/AssetsList/NFTsList/NFTItem';
+import { getDetailSymbol } from '@modules/AssetsList/NFTsList/NFTItemsGrid';
 import { useTheme } from '@react-navigation/native';
 import { type SendTransactionScreenProps, type SendTransactionStep3StackName, SendTransactionStep4StackName } from '@router/configs';
+import type { INftItem } from '@service/core';
 import Decimal from 'decimal.js';
 import type React from 'react';
 import { useRef, useState } from 'react';
@@ -73,7 +73,7 @@ const SendTransactionStep3Amount: React.FC<SendTransactionScreenProps<typeof Sen
 export const NFT: React.FC<{
   colors: ReturnType<typeof useTheme>['colors'];
   asset: AssetInfo;
-  nftItemDetail: NFTItemDetail;
+  nftItemDetail: INftItem;
 }> = ({ colors, asset, nftItemDetail }) => (
   <View style={styles.nftItem}>
     <NFTIcon style={styles.nftItemImg} source={nftItemDetail.icon} isNftItem placeholderContentFit="cover" contentFit="cover" />
