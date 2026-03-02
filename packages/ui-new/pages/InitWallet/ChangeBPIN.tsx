@@ -1,32 +1,33 @@
-import BSIM from '@WalletCoreExtends/Plugins/BSIM';
 import SecurityNoticeImg from '@assets/images/securityNotice.webp';
 import Button from '@components/Button';
+import { HARDWARE_WALLET_TYPES } from '@core/hardware/bsim/constants';
 import { useTheme } from '@react-navigation/native';
 import { BiometricsWayStackName, type ChangeBPinStackName, type StackScreenProps } from '@router/configs';
+import { getHardwareWalletService } from '@service/core';
 import { handleBSIMHardwareUnavailable } from '@utils/handleBSIMHardwareUnavailable';
 import { Image } from 'expo-image';
 import { useCallback } from 'react';
 import { Trans, useTranslation } from 'react-i18next';
 import { Pressable, ScrollView, StyleSheet, Text } from 'react-native';
 
-export const ChangeBPin: React.FC<StackScreenProps<typeof ChangeBPinStackName>> = ({ navigation }) => {
+export const ChangeBPin: React.FC<StackScreenProps<typeof ChangeBPinStackName>> = ({ navigation, route }) => {
   const { colors } = useTheme();
   const { t } = useTranslation();
 
   const handleChange = useCallback(async () => {
     try {
-      await BSIM.updateBPIN();
-      navigation.navigate(BiometricsWayStackName, { type: 'connectBSIM' });
+      await getHardwareWalletService().runUpdatePinWithConnect(HARDWARE_WALLET_TYPES.BSIM, { deviceIdentifier: route.params?.bsimDeviceId });
+      navigation.navigate(BiometricsWayStackName, { type: 'connectBSIM', bsimDeviceId: route.params?.bsimDeviceId });
     } catch (error) {
       if (handleBSIMHardwareUnavailable(error, navigation)) {
         return;
       }
       throw error;
     }
-  }, [navigation]);
+  }, [navigation, route.params?.bsimDeviceId]);
   const handleSkip = useCallback(() => {
-    navigation.navigate(BiometricsWayStackName, { type: 'connectBSIM' });
-  }, [navigation]);
+    navigation.navigate(BiometricsWayStackName, { type: 'connectBSIM', bsimDeviceId: route.params?.bsimDeviceId });
+  }, [navigation, route.params?.bsimDeviceId]);
   return (
     <ScrollView style={[styles.container, { backgroundColor: colors.bgPrimary }]}>
       <Text style={[styles.title, { color: colors.textPrimary }]} numberOfLines={1}>

@@ -22,6 +22,11 @@ export type ConnectAndSyncResult = {
   deviceId?: string;
 };
 
+export type ConnectAndListResult = {
+  accounts: HardwareAccount[];
+  deviceId?: string;
+};
+
 export type BSIMBleScanResult = { deviceId: string; name: string };
 export type BSIMBleScanHandle = { stop(): void };
 export type BSIMBleScanOptions = { serviceUuids?: string[] };
@@ -63,6 +68,28 @@ export class HardwareWalletService {
     return { accounts, deviceId };
   }
 
+  /**
+   * Connects to hardware and lists existing accounts WITHOUT deriving new ones.
+   * Use this for "detection" flows (e.g. checking recovery mode) to avoid side effects.
+   */
+  async connectAndList(type: string, options?: HardwareConnectOptions): Promise<ConnectAndListResult> {
+    if (type !== HARDWARE_WALLET_TYPES.BSIM) {
+      throw new Error(`Unsupported hardware wallet type: ${type}`);
+    }
+
+    const deviceId = options?.deviceIdentifier;
+    const adapter = this.resolveAdapter(type, deviceId);
+
+    await adapter.connect({
+      transport: options?.transport ?? this.resolveDefaultTransport(),
+      deviceIdentifier: deviceId,
+      signal: options?.signal,
+    });
+
+    const accounts = await this.listAccounts(adapter);
+    return { accounts, deviceId };
+  }
+
   startBSIMBleScan(onDevice: (device: BSIMBleScanResult) => void, onError?: (error: TransportError) => void, options?: BSIMBleScanOptions): BSIMBleScanHandle {
     return startBleDeviceScan(
       { namePrefix: 'CT', serviceUuids: options?.serviceUuids },
@@ -70,6 +97,81 @@ export class HardwareWalletService {
       onError,
     );
   }
+
+  async runUpdatePinWithConnect(type: string, connectOptions?: HardwareConnectOptions, options?: HardwareOperationOptions): Promise<'ok'> {
+    if (type !== HARDWARE_WALLET_TYPES.BSIM) {
+      throw new Error(`Unsupported hardware wallet type: ${type}`);
+    }
+
+    const deviceIdentifier = connectOptions?.deviceIdentifier;
+    const adapter = this.resolveAdapter(type, deviceIdentifier);
+    if (adapter.getCapabilities().type !== 'bsim') {
+      throw new Error('[HardwareWalletService] Adapter does not support BSIM capabilities.');
+    }
+
+    await (adapter as IBSIMWallet).connect({
+      transport: connectOptions?.transport ?? this.resolveDefaultTransport(),
+      deviceIdentifier,
+      signal: options?.signal ?? connectOptions?.signal,
+    });
+
+    return options ? (adapter as IBSIMWallet).updateBpin(options) : (adapter as IBSIMWallet).updateBpin();
+  }
+
+  async runRestoreSeedWithConnect(
+    type: string,
+    connectOptions: HardwareConnectOptions | undefined,
+    params: RestoreSeedParams,
+    options?: HardwareOperationOptions,
+  ): Promise<'ok'> {
+    if (type !== HARDWARE_WALLET_TYPES.BSIM) {
+      throw new Error(`Unsupported hardware wallet type: ${type}`);
+    }
+
+    const deviceIdentifier = connectOptions?.deviceIdentifier;
+    const adapter = this.resolveAdapter(type, deviceIdentifier);
+    if (adapter.getCapabilities().type !== 'bsim') {
+      throw new Error('[HardwareWalletService] Adapter does not support BSIM capabilities.');
+    }
+
+    await (adapter as IBSIMWallet).connect({
+      transport: connectOptions?.transport ?? this.resolveDefaultTransport(),
+      deviceIdentifier,
+      signal: options?.signal ?? connectOptions?.signal,
+    });
+
+    return options ? (adapter as IBSIMWallet).restoreSeed(params, options) : (adapter as IBSIMWallet).restoreSeed(params);
+  }
+
+  async runDeriveKeyWithConnect(
+    type: string,
+    connectOptions: HardwareConnectOptions | undefined,
+    params: DeriveKeyParams,
+    options?: HardwareOperationOptions,
+  ): Promise<void> {
+    if (type !== HARDWARE_WALLET_TYPES.BSIM) {
+      throw new Error(`Unsupported hardware wallet type: ${type}`);
+    }
+
+    const deviceIdentifier = connectOptions?.deviceIdentifier;
+    const adapter = this.resolveAdapter(type, deviceIdentifier);
+    if (adapter.getCapabilities().type !== 'bsim') {
+      throw new Error('[HardwareWalletService] Adapter does not support BSIM capabilities.');
+    }
+
+    await (adapter as IBSIMWallet).connect({
+      transport: connectOptions?.transport ?? this.resolveDefaultTransport(),
+      deviceIdentifier,
+      signal: options?.signal ?? connectOptions?.signal,
+    });
+
+    if (options) {
+      await (adapter as IBSIMWallet).deriveKey(params, options);
+      return;
+    }
+    await (adapter as IBSIMWallet).deriveKey(params);
+  }
+
   async syncDerivedAccounts(vaultId: string, targetIndex: number): Promise<void> {
     if (!Number.isInteger(targetIndex) || targetIndex < 0) {
       throw new Error(`targetIndex must be a non-negative integer.`);

@@ -1,6 +1,6 @@
 import { Platform } from 'react-native';
 import { CARD_ERROR_MESSAGES, type CardErrorCode, isCardErrorCode, TransportError, TransportErrorCode } from 'react-native-bsim';
-import { BSIM_ERROR_CANCEL, BSIM_ERRORS, BSIM_HARDWARE_UNAVAILABLE, CARD_STATUS_MATCHER } from '../constants';
+import { BSIM_ERROR_CANCEL, BSIM_ERRORS, BSIM_HARDWARE_UNAVAILABLE, BSIM_RECOVERY_MODE_CODE, CARD_STATUS_MATCHER } from '../constants';
 import type { HardwareUnavailableReason } from '../types';
 import { BSIMHardwareError } from './BSIMHardwareError';
 
@@ -87,4 +87,8 @@ export const normalizeError = (error: unknown): BSIMHardwareError => {
     return new BSIMHardwareError('UNKNOWN', error.message);
   }
   return new BSIMHardwareError('UNKNOWN', BSIM_ERRORS.DEFAULT);
+};
+
+export const isRecoveryModeError = (error: unknown): boolean => {
+  return normalizeError(error).code === BSIM_RECOVERY_MODE_CODE;
 };

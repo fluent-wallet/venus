@@ -32,6 +32,12 @@ export const BSIM_HARDWARE_UNAVAILABLE = 'HARDWARE_UNAVAILABLE' as const;
  */
 export const BSIM_ERROR_CANCEL = 'CANCEL' as const;
 
+/**
+ * Recovery mode card status.
+ * Legacy code path used this to indicate the card is not certified / requires restore flow.
+ */
+export const BSIM_RECOVERY_MODE_CODE = '6A88' as const;
+
 export const BSIM_ERRORS: Record<string, string> = {
   ...CARD_ERROR_MESSAGES,
   A000: 'BSIM error, unknown error.',

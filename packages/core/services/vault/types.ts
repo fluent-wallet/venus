@@ -50,6 +50,11 @@ export interface CreateBSIMVaultInput {
   accounts?: Array<{ index: number; hexAddress: string }>;
   hardwareDeviceId?: string;
   connectOptions?: HardwareConnectOptions;
+  /**
+   * Optional password used to encrypt a vault marker (e.g. "BSIM Wallet") for legacy password verification flows.
+   * - Legacy behavior: BSIM vaults also store an encrypted marker so that "verify password" works even when user only has BSIM vaults.
+   */
+  password?: string;
 }
 /**
  * Options for creating a new PublicAddress vault.

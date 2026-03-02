@@ -132,6 +132,25 @@ describe('HardwareWalletService', () => {
     expect(result.accounts).toEqual([firstAccount]);
   });
 
+  it('connectAndList does not derive accounts when listAccounts returns empty array', async () => {
+    const adapter = createAdapter({ id: 'adapter' });
+    adapter.listAccounts.mockResolvedValueOnce([]);
+
+    registry.register(HARDWARE_WALLET_TYPES.BSIM, undefined, adapter);
+
+    const result = await service.connectAndList(HARDWARE_WALLET_TYPES.BSIM, { deviceIdentifier: 'ble-001' });
+
+    expect(adapter.connect).toHaveBeenCalledWith({
+      transport: Platform.OS === 'ios' ? 'ble' : 'apdu',
+      deviceIdentifier: 'ble-001',
+      signal: undefined,
+    });
+    expect(adapter.listAccounts).toHaveBeenCalledWith(NetworkType.Ethereum);
+    expect(adapter.deriveAccount).not.toHaveBeenCalled();
+    expect(result.deviceId).toBe('ble-001');
+    expect(result.accounts).toEqual([]);
+  });
+
   it('starts BSIM BLE scan with CT prefix and forwards callbacks', async () => {
     const mockedStart = startBleDeviceScan as unknown as jest.Mock;
 
@@ -214,6 +233,20 @@ describe('HardwareWalletService', () => {
 
     expect(adapter.connect).toHaveBeenNthCalledWith(1, expectedConnectArgs);
     expect(adapter.connect).toHaveBeenNthCalledWith(2, expectedConnectArgs);
+  });
+
+  it('runs update pin with connect options (no vaultId required)', async () => {
+    const adapter = createBSIMWalletAdapter({ id: 'bsim' });
+    registry.register(HARDWARE_WALLET_TYPES.BSIM, 'ble-003', adapter);
+
+    await expect(service.runUpdatePinWithConnect(HARDWARE_WALLET_TYPES.BSIM, { deviceIdentifier: 'ble-003' })).resolves.toBe('ok');
+
+    expect(adapter.connect).toHaveBeenCalledWith({
+      transport: Platform.OS === 'ios' ? 'ble' : 'apdu',
+      deviceIdentifier: 'ble-003',
+      signal: undefined,
+    });
+    expect(adapter.updateBpin).toHaveBeenCalled();
   });
 
   it('throws when vault has no hardwareDeviceId for BSIM operations', async () => {

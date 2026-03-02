@@ -88,10 +88,10 @@ export type WalletConnectParamList = {
 export type RootStackParamList = {
   [WelcomeStackName]: undefined;
   [WayToInitWalletStackName]: undefined;
-  [RecoverBsimStackName]: undefined;
-  [ChangeBPinStackName]: undefined;
-  [PasswordWayStackName]?: { type?: 'importExistWallet' | 'createNewWallet' | 'connectBSIM'; value?: string };
-  [BiometricsWayStackName]?: { type?: 'importExistWallet' | 'createNewWallet' | 'connectBSIM'; value?: string };
+  [RecoverBsimStackName]: undefined | { bsimDeviceId?: string };
+  [ChangeBPinStackName]: undefined | { bsimDeviceId?: string };
+  [PasswordWayStackName]?: { type?: 'importExistWallet' | 'createNewWallet' | 'connectBSIM'; value?: string; bsimDeviceId?: string };
+  [BiometricsWayStackName]?: { type?: 'importExistWallet' | 'createNewWallet' | 'connectBSIM'; value?: string; bsimDeviceId?: string };
   [HomeStackName]: undefined;
   [AccountManagementStackName]: undefined;
   [AccountSettingStackName]: { accountId: string };

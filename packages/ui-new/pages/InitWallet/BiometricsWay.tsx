@@ -1,4 +1,3 @@
-import { getAuthentication } from '@WalletCoreExtends/index';
 import i18n from '@assets/i18n';
 import Img from '@assets/images/fingerPrint.webp';
 import Button from '@components/Button';
@@ -6,12 +5,14 @@ import Text from '@components/Text';
 import useInAsync from '@hooks/useInAsync';
 import { CommonActions, useTheme } from '@react-navigation/native';
 import { type BiometricsWayStackName, HomeStackName, PasswordWayStackName, type StackScreenProps } from '@router/configs';
+import { getOrCreateBiometricVaultPassword } from '@service/biometricVaultPasswordStore';
 import { Image } from 'expo-image';
 import type React from 'react';
 import { useCallback } from 'react';
 import { Trans, useTranslation } from 'react-i18next';
 import { Pressable, ScrollView, StyleSheet } from 'react-native';
 import { showMessage } from 'react-native-flash-message';
+import * as Keychain from 'react-native-keychain';
 import createVault from './createVaultWithRouterParams';
 
 export const showBiometricsDisabledMessage = () => {
@@ -27,17 +28,18 @@ const BiometricsWay: React.FC<StackScreenProps<typeof BiometricsWayStackName>> =
   const { t } = useTranslation();
 
   const _handleCreateVault = useCallback(async () => {
-    const authentication = getAuthentication();
     try {
       navigation.setOptions({ gestureEnabled: false });
-      const supportedBiometryType = await authentication.getSupportedBiometryType();
+      const supportedBiometryType = await Keychain.getSupportedBiometryType();
       if (supportedBiometryType === null) {
         showBiometricsDisabledMessage();
         return;
       }
-      await authentication.setPassword({ authType: authentication.AuthenticationType.Biometrics });
+
+      const vaultPassword = await getOrCreateBiometricVaultPassword({ promptTitle: i18n.t('authentication.title') });
+
       await new Promise((resolve) => setTimeout(() => resolve(null!), 20));
-      if (await createVault(route.params)) {
+      if (await createVault(route.params, vaultPassword)) {
         navigation.navigate(HomeStackName);
         navigation.dispatch(CommonActions.reset({ index: 0, routes: [{ name: HomeStackName }] }));
       }
