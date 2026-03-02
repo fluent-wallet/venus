@@ -101,6 +101,70 @@ export class VaultService {
     );
   }
 
+  private async hasAddress(checksummedHex: string): Promise<boolean> {
+    const count = await this.database.get<Address>(TableName.Address).query(Q.where('hex', checksummedHex)).fetchCount();
+    return count > 0;
+  }
+
+  async hasExistingSecretImport(params: { mnemonic?: string; privateKey?: string }): Promise<boolean> {
+    const mnemonic = params.mnemonic?.trim();
+    const privateKey = params.privateKey?.trim();
+
+    if (privateKey) {
+      const checksummed = toChecksum(fromPrivate(privateKey).address);
+      return this.hasAddress(checksummed);
+    }
+
+    if (mnemonic) {
+      const networks = await this.fetchNetworks();
+      for (const network of networks) {
+        const hdPath = await network.hdPath.fetch();
+        const { hexAddress } = await getNthAccountOfHDKey({
+          mnemonic,
+          hdPath: hdPath.value,
+          nth: 0,
+        });
+        if (await this.hasAddress(toChecksum(hexAddress))) {
+          return true;
+        }
+      }
+      return false;
+    }
+
+    return false;
+  }
+
+  async verifyPassword(password: string): Promise<boolean> {
+    const vaults = await this.database.get<Vault>(TableName.Vault).query().fetch();
+    const candidates = vaults.filter((v) => (v.type === VaultType.HierarchicalDeterministic || v.type === VaultType.PrivateKey) && Boolean(v.data));
+    if (candidates.length > 0) {
+      for (const vault of candidates) {
+        try {
+          // try to decrypt
+          await this.cryptoTool.decrypt(vault.data!, password);
+          return true;
+        } catch {
+          // try next
+        }
+      }
+      return false;
+    }
+
+    // Legacy compatibility: BSIM vaults may store an encrypted marker ("BSIM Wallet") so password verification
+    // still works even when user only has BSIM vaults (no mnemonic/private key stored locally).
+    const bsimCandidates = vaults.filter((v) => v.type === VaultType.BSIM && Boolean(v.data));
+    for (const vault of bsimCandidates) {
+      try {
+        const marker = await this.cryptoTool.decrypt<string>(vault.data!, password);
+        if (marker === 'BSIM Wallet') return true;
+      } catch {
+        // try next
+      }
+    }
+
+    return false;
+  }
+
   /**
    * Create or import an HD wallet.
    */
@@ -211,12 +275,16 @@ export class VaultService {
 
     const networks = await this.fetchNetworks();
     const [isFirstVault, sameTypeCount] = await Promise.all([this.isFirstVault(), this.countVaultsOfType(VaultType.BSIM)]);
+    let bsimMarker = 'BSIM Wallet';
+    if (typeof input.password === 'string' && input.password.length > 0) {
+      bsimMarker = await this.cryptoTool.encrypt('BSIM Wallet', input.password);
+    }
 
     const vaultRecord = this.database.get<Vault>(TableName.Vault).prepareCreate((record) => {
       record.type = VaultType.BSIM;
       record.device = VAULT_DEFAULTS.DEVICE;
       record.hardwareDeviceId = resolvedHardwareDeviceId ?? null;
-      record.data = 'BSIM Wallet';
+      record.data = bsimMarker;
       record.cfxOnly = false;
       record.isBackup = false;
       record.source = VaultSourceType.CREATE_BY_WALLET;

@@ -201,4 +201,48 @@ describe('VaultService', () => {
     const address = await fetchFirstAddress();
     await expect(service.getPrivateKey(vault.id, address.id, TEST_PASSWORD)).rejects.toThrow(/does not expose/i);
   });
+
+  it('detects duplicate secret imports by derived addresses', async () => {
+    await seedNetwork(database, { selected: true });
+
+    await service.createHDVault({ mnemonic: FIXED_MNEMONIC, password: TEST_PASSWORD });
+    await expect(service.hasExistingSecretImport({ mnemonic: FIXED_MNEMONIC })).resolves.toBe(true);
+
+    const privateKey = '0x0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef';
+    await service.createPrivateKeyVault({ privateKey, password: TEST_PASSWORD });
+    await expect(service.hasExistingSecretImport({ privateKey })).resolves.toBe(true);
+  });
+
+  it('verifies password against existing vault secrets', async () => {
+    await seedNetwork(database, { selected: true });
+    await service.createHDVault({ mnemonic: FIXED_MNEMONIC, password: TEST_PASSWORD });
+
+    await expect(service.verifyPassword(TEST_PASSWORD)).resolves.toBe(true);
+    await expect(service.verifyPassword('wrong-password')).resolves.toBe(false);
+  });
+
+  it('verifies password for BSIM-only vaults using legacy encrypted marker', async () => {
+    await seedNetwork(database, { selected: true });
+
+    await service.createBSIMVault({
+      accounts: [{ index: 0, hexAddress: '0x50bb3047BA3E60Ca750728de9F737085F2Ac2aCD' }],
+      password: TEST_PASSWORD,
+    });
+
+    await expect(service.verifyPassword(TEST_PASSWORD)).resolves.toBe(true);
+    await expect(service.verifyPassword('wrong-password')).resolves.toBe(false);
+  });
+
+  it('prefers HD/PK secrets over BSIM marker when verifying password', async () => {
+    await seedNetwork(database, { selected: true });
+
+    await service.createHDVault({ mnemonic: FIXED_MNEMONIC, password: 'hd-pass' });
+    await service.createBSIMVault({
+      accounts: [{ index: 0, hexAddress: '0x50bb3047BA3E60Ca750728de9F737085F2Ac2aCD' }],
+      password: 'bsim-pass',
+    });
+
+    await expect(service.verifyPassword('hd-pass')).resolves.toBe(true);
+    await expect(service.verifyPassword('bsim-pass')).resolves.toBe(false);
+  });
 });
