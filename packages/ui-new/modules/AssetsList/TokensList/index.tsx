@@ -48,7 +48,14 @@ const TokensList: React.FC<Props> = ({ onPressItem, selectType, showReceiveFunds
     const list = (assetsQuery.data ?? []).filter((a) => a.type === ASSET_TYPE.Native || a.type === ASSET_TYPE.ERC20).map(toLegacyAssetInfo);
 
     const native = list.filter((t) => t.type === ASSET_TYPE.Native);
-    const rest = list.filter((t) => t.type !== ASSET_TYPE.Native);
+    const rest = list
+      .filter((t) => t.type !== ASSET_TYPE.Native)
+      .slice()
+      .sort((a, b) => {
+        const aKey = String(a.name || a.symbol || a.contractAddress || '').toLowerCase();
+        const bKey = String(b.name || b.symbol || b.contractAddress || '').toLowerCase();
+        return aKey.localeCompare(bKey);
+      });
     return [...native, ...rest];
   }, [assetsQuery.data]);
 

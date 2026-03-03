@@ -225,25 +225,31 @@ const SendTransactionStep2Asset: React.FC<Props> = ({ navigation, route, onConfi
     searchFilterAssets(searchAsset);
   }, [searchFilterAssets, searchAsset]);
 
-  const handleClickAsset = useCallback((asset: AssetInfo, nftItemDetail?: INftItem) => {
-    if (navigation) {
-      if ((asset.type === AssetType.ERC20 || asset.type === AssetType.Native) && (Number(asset.balance) === 0 || Number.isNaN(Number(asset.balance)))) {
-        return showMessage({
-          message: t('tx.asset.zeroBalance', { symbol: asset.symbol }),
-          type: 'warning',
-        });
+  const handleClickAsset = useCallback(
+    (asset: AssetInfo, nftItemDetail?: INftItem) => {
+      if (navigation) {
+        if ((asset.type === AssetType.ERC20 || asset.type === AssetType.Native) && (Number(asset.balance) === 0 || Number.isNaN(Number(asset.balance)))) {
+          return showMessage({
+            message: t('tx.asset.zeroBalance', { symbol: asset.symbol }),
+            type: 'warning',
+          });
+        }
+        if (asset.type === AssetType.ERC721) {
+          navigation.navigate(SendTransactionStep4StackName, { ...route!.params, asset, nftItemDetail, amount: '1' });
+        } else {
+          navigation.navigate(SendTransactionStep3StackName, { ...route!.params, asset, nftItemDetail });
+        }
+        return;
       }
-      if (asset.type === AssetType.ERC721) {
-        navigation.navigate(SendTransactionStep4StackName, { ...route!.params, asset, nftItemDetail, amount: '1' });
-      } else {
-        navigation.navigate(SendTransactionStep3StackName, { ...route!.params, asset, nftItemDetail });
+
+      if (onConfirm) {
+        onConfirm(asset);
+        setSearchAsset('');
+        bottomSheetRef.current?.close();
       }
-    } else if (onConfirm) {
-      onConfirm(asset);
-      setSearchAsset('');
-      bottomSheetRef?.current?.close();
-    }
-  }, []);
+    },
+    [navigation, onConfirm, route, t],
+  );
 
   return (
     <SendTransactionBottomSheet ref={bottomSheetRef} isRoute={!onConfirm} onClose={onClose}>
