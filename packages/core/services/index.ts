@@ -1,4 +1,5 @@
 export * from './account';
+export * from './accountGroup';
 export * from './address';
 export * from './asset';
 export * from './network';
@@ -14,6 +15,7 @@ import { EndpointManager } from '@core/chains/EndpointManager';
 import { HardwareWalletRegistry } from '@core/hardware/HardwareWalletRegistry';
 import type { Container } from 'inversify';
 import { AccountService } from './account';
+import { AccountGroupService } from './accountGroup';
 import { AddressValidationService } from './address/AddressValidationService';
 import { AssetService } from './asset';
 import { ChainStatusService } from './chain/ChainStatusService';
@@ -24,6 +26,7 @@ import { SigningService } from './signing';
 import { SignatureRecordService } from './signing/SignatureRecordService';
 import { KeyValueStorageService } from './storage/KeyValueStorageService';
 import { UiPreferencesService } from './storage/UiPreferencesService';
+import { WalletMaintenanceService } from './storage/WalletMaintenanceService';
 import { TransactionService } from './transaction';
 import { VaultService } from './vault';
 
@@ -38,6 +41,7 @@ export function registerServices(target: Container): void {
   target.bind(ChainStatusService).toSelf().inSingletonScope();
   target.bind(AddressValidationService).toSelf().inSingletonScope();
   target.bind(VaultService).toSelf().inSingletonScope();
+  target.bind(AccountGroupService).toSelf().inSingletonScope();
   target.bind(AccountService).toSelf().inSingletonScope();
   target.bind(AssetService).toSelf().inSingletonScope();
   target.bind(NftService).toSelf().inSingletonScope();
@@ -49,4 +53,5 @@ export function registerServices(target: Container): void {
   target.bind(HardwareWalletRegistry).toSelf().inSingletonScope();
   target.bind(KeyValueStorageService).toSelf().inSingletonScope();
   target.bind(UiPreferencesService).toSelf().inSingletonScope();
+  target.bind(WalletMaintenanceService).toSelf().inSingletonScope();
 }

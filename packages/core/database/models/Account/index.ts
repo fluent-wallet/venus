@@ -28,7 +28,13 @@ export class Account extends Model {
     .observe()
     .pipe(map((addresses) => addresses?.[0]));
 
-  @lazy currentNetworkAddress = firstValueFrom(this.currentNetworkAddressObservable);
+  @reader async getCurrentNetworkAddress(): Promise<Address | undefined> {
+    return await firstValueFrom(this.currentNetworkAddressObservable);
+  }
+
+  get currentNetworkAddress(): Promise<Address | undefined> {
+    return this.getCurrentNetworkAddress();
+  }
 
   @reader async getVaultType() {
     const accountGroup = await this.accountGroup;

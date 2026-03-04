@@ -5,7 +5,7 @@ import type { Address } from '@core/database/models/Address';
 import type { Network } from '@core/database/models/Network';
 import type { Vault } from '@core/database/models/Vault';
 import VaultSourceType from '@core/database/models/Vault/VaultSourceType';
-import VaultType from '@core/database/models/Vault/VaultType';
+import { VaultType } from '@core/database/models/Vault/VaultType';
 import TableName from '@core/database/TableName';
 import { CORE_IDENTIFIERS } from '@core/di';
 import { HARDWARE_WALLET_TYPES } from '@core/hardware/bsim/constants';
@@ -262,10 +262,14 @@ export class VaultService {
 
     if (!resolvedAccounts) {
       const result = await this.hardwareWalletService.connectAndSync(HARDWARE_WALLET_TYPES.BSIM, input.connectOptions);
-      resolvedAccounts = result.accounts.map((account) => ({
+      const detected = result.accounts.map((account) => ({
         index: account.index,
         hexAddress: account.address,
       }));
+      detected.sort((a, b) => a.index - b.index);
+
+      // create bsim wallet we only get one account from the device
+      resolvedAccounts = detected.slice(0, 1);
       resolvedHardwareDeviceId = resolvedHardwareDeviceId ?? result.deviceId;
     }
 
@@ -424,5 +428,10 @@ export class VaultService {
     await this.database.write(async () => {
       await vault.delete();
     });
+  }
+
+  async finishBackup(vaultId: string): Promise<void> {
+    const vault = await this.database.get<Vault>(TableName.Vault).find(vaultId);
+    await vault.finishBackup();
   }
 }

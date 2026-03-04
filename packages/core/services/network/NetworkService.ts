@@ -67,6 +67,23 @@ export class NetworkService {
     this.eventBus?.emit('network/current-changed', { network });
   }
 
+  async getCurrentHdPath(): Promise<{ value: string } | null> {
+    let selected = await this.getSelectedNetworkModel();
+    if (!selected) {
+      await this.getCurrentNetwork();
+      selected = await this.getSelectedNetworkModel();
+    }
+
+    if (!selected) return null;
+
+    try {
+      const hdPath = await selected.hdPath.fetch();
+      return hdPath ? { value: hdPath.value } : null;
+    } catch {
+      return null;
+    }
+  }
+
   private async getSelectedNetworkModel(): Promise<Network | null> {
     const networks = await this.database.get<Network>(TableName.Network).query(Q.where('selected', true)).fetch();
 

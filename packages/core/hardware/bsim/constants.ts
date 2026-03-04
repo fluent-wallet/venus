@@ -56,6 +56,13 @@ export const EVM_CHAIN_ERROR = 'BSIM adapter only supports Ethereum-compatible c
  */
 export const BSIM_ACCOUNT_LIMIT = 127;
 
+/**
+ * Legacy UI management limit for BSIM accounts.
+ * The old WalletCoreExtends BSIM plugin exposed `chainLimitCount = 25`.
+ * Keep this value during migration to avoid unexpected UX/performance changes.
+ */
+export const BSIM_MANAGEMENT_ACCOUNT_LIMIT = 25;
+
 export const HARDWARE_WALLET_TYPES = {
   BSIM: 'BSIM' as const,
 };

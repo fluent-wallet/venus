@@ -1,7 +1,7 @@
 import type { Database } from '@core/database';
 import type { Account } from '@core/database/models/Account';
 import type { Address } from '@core/database/models/Address';
-import VaultType from '@core/database/models/Vault/VaultType';
+import { VaultType } from '@core/database/models/Vault/VaultType';
 import TableName from '@core/database/TableName';
 import { CORE_IDENTIFIERS } from '@core/di';
 import { CoreError, TX_SIGN_ADDRESS_MISMATCH, TX_SIGN_MESSAGE_FAILED, TX_SIGN_TYPED_DATA_FAILED, TX_SIGN_UNSUPPORTED_NETWORK } from '@core/errors';

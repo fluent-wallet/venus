@@ -1,5 +1,6 @@
 import type { Database } from '@core/database';
 import type { Address } from '@core/database/models/Address';
+import type { App } from '@core/database/models/App';
 import type { Network } from '@core/database/models/Network';
 import type { Signature } from '@core/database/models/Signature';
 import type { Tx } from '@core/database/models/Tx';
@@ -11,7 +12,7 @@ import { NetworkType } from '@core/types';
 import { Q } from '@nozbe/watermelondb';
 import { inject, injectable } from 'inversify';
 import { fromNumber } from 'ox/Hex';
-import { type ISignatureRecord, SignatureFilterOption, type SignType } from './types';
+import { type ISignatureRecord, SignatureFilterOption, type SignatureRecordAppSnapshot, type SignatureRecordTxSnapshot, type SignType } from './types';
 
 export type CreateSignatureRecordInput = {
   addressId: string;
@@ -92,15 +93,43 @@ export class SignatureRecordService {
       .get<Signature>(TableName.Signature)
       .query(...clauses)
       .fetch();
-    return rows.map((s) => this.toSnapshot(s));
+
+    const appIds = Array.from(new Set(rows.map((s) => s.app.id).filter((id): id is string => typeof id === 'string' && id.length > 0)));
+    const txIds = Array.from(new Set(rows.map((s) => s.tx.id).filter((id): id is string => typeof id === 'string' && id.length > 0)));
+
+    const apps = appIds.length
+      ? await this.database
+          .get<App>(TableName.App)
+          .query(Q.where('id', Q.oneOf(appIds)))
+          .fetch()
+      : [];
+    const txs = txIds.length
+      ? await this.database
+          .get<Tx>(TableName.Tx)
+          .query(Q.where('id', Q.oneOf(txIds)))
+          .fetch()
+      : [];
+
+    const appMap = new Map<string, SignatureRecordAppSnapshot>(apps.map((app) => [app.id, { id: app.id, origin: app.origin ?? '', icon: app.icon ?? null }]));
+    const txMap = new Map<string, SignatureRecordTxSnapshot>(txs.map((tx) => [tx.id, { id: tx.id, method: tx.method }]));
+
+    return rows.map((s) => this.toSnapshot(s, { appMap, txMap }));
   }
 
-  private toSnapshot(signature: Signature): ISignatureRecord {
+  private toSnapshot(
+    signature: Signature,
+    refs: { appMap: ReadonlyMap<string, SignatureRecordAppSnapshot>; txMap: ReadonlyMap<string, SignatureRecordTxSnapshot> },
+  ): ISignatureRecord {
+    const appId = signature.app.id || null;
+    const txId = signature.tx.id || null;
+
     return {
       id: signature.id,
       addressId: signature.address.id,
-      appId: signature.app.id || null,
-      txId: signature.tx.id || null,
+      appId,
+      txId,
+      app: appId ? (refs.appMap.get(appId) ?? null) : null,
+      tx: txId ? (refs.txMap.get(txId) ?? null) : null,
       signType: signature.signType,
       message: signature.message ?? null,
       blockNumber: signature.blockNumber,

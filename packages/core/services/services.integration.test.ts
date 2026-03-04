@@ -9,7 +9,7 @@ import type { Asset as DbAsset } from '@core/database/models/Asset';
 import { AssetSource, AssetType as DbAssetType } from '@core/database/models/Asset';
 import type { Network } from '@core/database/models/Network';
 import type { Tx } from '@core/database/models/Tx';
-import VaultType from '@core/database/models/Vault/VaultType';
+import { VaultType } from '@core/database/models/Vault/VaultType';
 import TableName from '@core/database/TableName';
 import { mockDatabase } from '@core/database/testUtils/mockDatabases';
 import { CORE_IDENTIFIERS } from '@core/di';

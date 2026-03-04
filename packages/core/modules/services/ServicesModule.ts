@@ -11,7 +11,7 @@ import { VaultService } from '@core/services/vault';
 import { NetworkType } from '@core/types';
 import { injectable } from 'inversify';
 import type { CoreEventMap, EventBus, Subscription } from '../eventBus';
-import { CRYPTO_TOOL_MODULE_ID, DB_BOOTSTRAP_MODULE_ID, DB_MODULE_ID, EVENT_BUS_MODULE_ID, SERVICES_MODULE_ID } from '../ids';
+import { AUTH_MODULE_ID, CRYPTO_TOOL_MODULE_ID, DB_BOOTSTRAP_MODULE_ID, DB_MODULE_ID, EVENT_BUS_MODULE_ID, SERVICES_MODULE_ID } from '../ids';
 
 @injectable()
 class ServicesModuleState {
@@ -21,7 +21,7 @@ class ServicesModuleState {
 
 export const ServicesModule: RuntimeModule = {
   id: SERVICES_MODULE_ID,
-  dependencies: [DB_MODULE_ID, DB_BOOTSTRAP_MODULE_ID, CRYPTO_TOOL_MODULE_ID, EVENT_BUS_MODULE_ID],
+  dependencies: [DB_MODULE_ID, DB_BOOTSTRAP_MODULE_ID, CRYPTO_TOOL_MODULE_ID, EVENT_BUS_MODULE_ID, AUTH_MODULE_ID],
   register: ({ container, config }) => {
     if (!container.isBound(CORE_IDENTIFIERS.CONFIG)) {
       container.bind(CORE_IDENTIFIERS.CONFIG).toConstantValue(config);

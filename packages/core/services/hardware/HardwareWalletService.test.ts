@@ -1,7 +1,7 @@
 import 'reflect-metadata';
 
 import type { Vault } from '@core/database/models/Vault';
-import VaultType from '@core/database/models/Vault/VaultType';
+import { VaultType } from '@core/database/models/Vault/VaultType';
 import TableName from '@core/database/TableName';
 import { CORE_IDENTIFIERS } from '@core/di';
 import { HARDWARE_WALLET_TYPES } from '@core/hardware/bsim/constants';
@@ -249,9 +249,9 @@ describe('HardwareWalletService', () => {
     expect(adapter.updateBpin).toHaveBeenCalled();
   });
 
-  it('throws when vault has no hardwareDeviceId for BSIM operations', async () => {
+  it('does not require hardwareDeviceId for BSIM operations', async () => {
     const adapter = createBSIMWalletAdapter({ id: 'bsim' });
-    registry.register(HARDWARE_WALLET_TYPES.BSIM, 'ble-001', adapter);
+    registry.register(HARDWARE_WALLET_TYPES.BSIM, undefined, adapter);
 
     const db = container.get<Database>(CORE_IDENTIFIERS.DB);
     const vault = await db.write(async () =>
@@ -266,8 +266,12 @@ describe('HardwareWalletService', () => {
       }),
     );
 
-    await expect(service.runUpdatePin(vault.id)).rejects.toThrow('Missing hardwareDeviceId');
-    expect(adapter.connect).not.toHaveBeenCalled();
+    await expect(service.runUpdatePin(vault.id)).resolves.toBe('ok');
+    expect(adapter.connect).toHaveBeenCalledWith({
+      transport: Platform.OS === 'ios' ? 'ble' : 'apdu',
+      deviceIdentifier: undefined,
+      signal: undefined,
+    });
   });
 
   it('runs backup and restore seed via BSIM adapter', async () => {

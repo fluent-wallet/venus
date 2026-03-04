@@ -187,8 +187,6 @@ export class HardwareWalletService {
       throw new Error('No networks configured.');
     }
 
-    const adapter = this.resolveAdapter(HARDWARE_WALLET_TYPES.BSIM, vault.hardwareDeviceId ?? undefined);
-
     const existingAccounts = await accountGroup.accounts.extend(Q.sortBy('index', Q.asc)).fetch();
     const existingIndexSet = new Set(existingAccounts.map((account) => account.index));
 
@@ -202,6 +200,13 @@ export class HardwareWalletService {
     if (missingIndexes.length === 0) {
       return;
     }
+
+    const adapter = this.resolveAdapter(HARDWARE_WALLET_TYPES.BSIM, vault.hardwareDeviceId ?? undefined);
+    await adapter.connect({
+      transport: this.resolveDefaultTransport(),
+      deviceIdentifier: vault.hardwareDeviceId ?? undefined,
+    });
+
     const targetAccount = await adapter.deriveAccount(targetIndex, NetworkType.Ethereum);
 
     const preparedAccounts: Account[] = [];
@@ -256,6 +261,36 @@ export class HardwareWalletService {
     return options ? adapter.updateBpin(options) : adapter.updateBpin();
   }
 
+  async runVerifyBpin(vaultId: string, options?: HardwareOperationOptions): Promise<void> {
+    const { adapter, deviceIdentifier } = await this.resolveBSIMAdapterForVault(vaultId);
+    await adapter.connect({
+      transport: this.resolveDefaultTransport(),
+      deviceIdentifier,
+      signal: options?.signal,
+    });
+    await adapter.verifyBpin(options);
+  }
+
+  async runGetIccid(vaultId: string, options?: HardwareOperationOptions): Promise<string> {
+    const { adapter, deviceIdentifier } = await this.resolveBSIMAdapterForVault(vaultId);
+    await adapter.connect({
+      transport: this.resolveDefaultTransport(),
+      deviceIdentifier,
+      signal: options?.signal,
+    });
+    return adapter.getIccid(options);
+  }
+
+  async runGetVersion(vaultId: string, options?: HardwareOperationOptions): Promise<string> {
+    const { adapter, deviceIdentifier } = await this.resolveBSIMAdapterForVault(vaultId);
+    await adapter.connect({
+      transport: this.resolveDefaultTransport(),
+      deviceIdentifier,
+      signal: options?.signal,
+    });
+    return adapter.getVersion(options);
+  }
+
   async runBackupSeed(vaultId: string, params: BackupSeedParams, options?: HardwareOperationOptions): Promise<string> {
     const { adapter, deviceIdentifier } = await this.resolveBSIMAdapterForVault(vaultId);
     await adapter.connect({
@@ -296,6 +331,26 @@ export class HardwareWalletService {
     return options ? adapter.deriveKey(params, options) : adapter.deriveKey(params);
   }
 
+  async deriveBsimAccounts(vaultId: string, indexes: number[], options?: HardwareOperationOptions): Promise<HardwareAccount[]> {
+    const unique = Array.from(new Set(indexes)).filter((i) => Number.isInteger(i) && i >= 0);
+    unique.sort((a, b) => a - b);
+
+    if (!unique.length) return [];
+
+    const { adapter, deviceIdentifier } = await this.resolveBSIMAdapterForVault(vaultId);
+    await adapter.connect({
+      transport: this.resolveDefaultTransport(),
+      deviceIdentifier,
+      signal: options?.signal,
+    });
+
+    const result: HardwareAccount[] = [];
+    for (const index of unique) {
+      result.push(await adapter.deriveAccount(index, NetworkType.Ethereum));
+    }
+    return result;
+  }
+
   private resolveAdapter(type: string, hardwareId?: string): IHardwareWallet {
     const preferred = hardwareId ? this.hardwareRegistry.get(type, hardwareId) : undefined;
     const fallback = this.hardwareRegistry.get(type);
@@ -324,18 +379,14 @@ export class HardwareWalletService {
     }
   }
 
-  private async resolveBSIMAdapterForVault(vaultId: string): Promise<{ adapter: IBSIMWallet; deviceIdentifier: string }> {
+  private async resolveBSIMAdapterForVault(vaultId: string): Promise<{ adapter: IBSIMWallet; deviceIdentifier?: string }> {
     const vault = await this.findVault(vaultId);
 
     if (vault.type !== HARDWARE_WALLET_TYPES.BSIM) {
       throw new Error('[HardwareWalletService] Only BSIM vaults support this operation.');
     }
 
-    const deviceIdentifier = vault.hardwareDeviceId ?? null;
-    if (!deviceIdentifier || deviceIdentifier.trim() === '') {
-      throw new Error('[HardwareWalletService] Missing hardwareDeviceId for BSIM vault.');
-    }
-
+    const deviceIdentifier = vault.hardwareDeviceId ?? undefined;
     const adapter = this.resolveAdapter(HARDWARE_WALLET_TYPES.BSIM, deviceIdentifier);
 
     if (adapter.getCapabilities().type !== 'bsim') {
