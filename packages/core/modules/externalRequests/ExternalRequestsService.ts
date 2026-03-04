@@ -189,6 +189,34 @@ export class ExternalRequestsService {
     this.tryActivate();
   }
 
+  public hasActiveRequests(params?: { provider?: ExternalRequestSnapshot['provider'] }): boolean {
+    if (!params?.provider) {
+      return this.activeIds.size > 0;
+    }
+
+    for (const id of this.activeIds) {
+      const record = this.records.get(id);
+      if (!record) continue;
+      if (record.request?.provider === params.provider) return true;
+    }
+
+    return false;
+  }
+
+  public getActiveRequests(params?: { provider?: ExternalRequestSnapshot['provider'] }): Array<{ requestId: string; request: ExternalRequestSnapshot }> {
+    const list: Array<{ requestId: string; request: ExternalRequestSnapshot; createdAt: number }> = [];
+
+    for (const id of this.activeIds) {
+      const record = this.records.get(id);
+      if (!record) continue;
+      if (params?.provider && record.request?.provider !== params.provider) continue;
+      list.push({ requestId: record.id, request: record.request, createdAt: record.createdAt });
+    }
+
+    list.sort((a, b) => a.createdAt - b.createdAt);
+    return list.map(({ requestId, request }) => ({ requestId, request }));
+  }
+
   private createRequestId(createdAt: number): string {
     this.counter += 1;
     const now36 = createdAt.toString(36);

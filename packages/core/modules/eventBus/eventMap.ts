@@ -99,7 +99,7 @@ export type CoreEventMap = {
   'external-requests/requested': { requestId: string; request: ExternalRequestSnapshot };
 
   'wallet-connect/sessions-changed': {
-    reason: 'init' | 'session_delete' | 'disconnect';
+    reason: 'init' | 'session_delete' | 'disconnect' | 'approve';
     topic?: string;
   };
 

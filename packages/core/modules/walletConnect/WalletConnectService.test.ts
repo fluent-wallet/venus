@@ -13,6 +13,8 @@ type MockWalletKitClient = {
   on: (event: WalletKitTypes.Event, listener: (args: any) => void) => void;
   off: (event: WalletKitTypes.Event, listener: (args: any) => void) => void;
   getActiveSessions: () => Record<string, any>;
+  getPendingSessionProposals?: () => Record<number, any>;
+  getPendingSessionRequests?: () => any[];
   approveSession: (args: any) => Promise<any>;
   rejectSession: (args: any) => Promise<any>;
   respondSessionRequest: (args: any) => Promise<any>;
@@ -23,6 +25,8 @@ type MockWalletKitClient = {
 };
 const createMockClient = (options: {
   getActiveSessions: () => Record<string, any>;
+  getPendingSessionProposals?: () => Record<number, any>;
+  getPendingSessionRequests?: () => any[];
   transportClose?: jest.Mock<Promise<void>, []>;
 }): {
   client: MockWalletKitClient;
@@ -64,6 +68,8 @@ const createMockClient = (options: {
     on: on as unknown as MockWalletKitClient['on'],
     off: off as unknown as MockWalletKitClient['off'],
     getActiveSessions: options.getActiveSessions,
+    getPendingSessionProposals: options.getPendingSessionProposals,
+    getPendingSessionRequests: options.getPendingSessionRequests,
     approveSession: approveSession as unknown as MockWalletKitClient['approveSession'],
     rejectSession: rejectSession as unknown as MockWalletKitClient['rejectSession'],
     respondSessionRequest: respondSessionRequest as unknown as MockWalletKitClient['respondSessionRequest'],
@@ -288,6 +294,108 @@ describe('WalletConnectService', () => {
 
     expect(approveSession).toHaveBeenCalledTimes(1);
     expect(rejectSession).toHaveBeenCalledTimes(0);
+
+    await service.stop();
+  });
+
+  it('replays pending session_request on start', async () => {
+    const { client } = createMockClient({
+      getActiveSessions: () => ({ t1: session('t1', 'https://a.example') }),
+      getPendingSessionRequests: () => [
+        {
+          id: 1,
+          topic: 't1',
+          params: { chainId: 'eip155:1', request: { method: 'personal_sign', params: ['0xdeadbeef', '0x00'] } },
+          verifyContext: { verified: { origin: 'https://a.example' } },
+        },
+      ],
+    });
+
+    const externalRequests = new ExternalRequestsService({
+      eventBus,
+      scheduler: createScheduler(),
+      now: () => 1_700_000_000_000,
+      logger,
+      defaultTtlMs: 10_000,
+      sweepIntervalMs: 10_000,
+      maxActiveRequests: 10,
+    });
+
+    const requested: CoreEventMap['external-requests/requested'][] = [];
+    eventBus.on('external-requests/requested', (payload) => requested.push(payload));
+
+    const service = new WalletConnectService({
+      eventBus,
+      logger,
+      clientFactory: async () => client as any,
+      closeTransportOnStop: false,
+      externalRequests,
+      signingService,
+      networkService: { getCurrentNetwork: async () => ({ networkType: NetworkType.Ethereum, netId: 1 }) } as any,
+      accountService: { getCurrentAccount: async () => ({ id: 'a1', currentAddressId: 'addr1', address: '0x00' }) } as any,
+    });
+
+    await service.start();
+    await flushPromises();
+
+    expect(requested).toHaveLength(1);
+    expect(requested[0]?.request.provider).toBe('wallet-connect');
+    expect(requested[0]?.request.kind).toBe('session_request');
+    expect((requested[0]?.request as any).method).toBe('personal_sign');
+
+    await service.stop();
+  });
+
+  it('replays pending session_proposal on start and de-dupes on subsequent start()', async () => {
+    const proposal = makeProposal({ id: 123, chains: ['eip155:1'], url: 'https://dapp.example' });
+    const { client } = createMockClient({
+      getActiveSessions: () => ({}),
+      getPendingSessionProposals: () => ({ 123: proposal }),
+    });
+
+    const externalRequests = new ExternalRequestsService({
+      eventBus,
+      scheduler: createScheduler(),
+      now: () => 1_700_000_000_000,
+      logger,
+      defaultTtlMs: 10_000,
+      sweepIntervalMs: 10_000,
+      maxActiveRequests: 10,
+    });
+
+    const requested: CoreEventMap['external-requests/requested'][] = [];
+    eventBus.on('external-requests/requested', (payload) => requested.push(payload));
+
+    const networkService = {
+      getAllNetworks: async () => [{ networkType: NetworkType.Ethereum, netId: 1 }],
+      getCurrentNetwork: async () => ({ networkType: NetworkType.Ethereum }),
+    } as any;
+
+    const accountService = {
+      getCurrentAccount: async () => ({ address: '0x0000000000000000000000000000000000000001' }),
+    } as any;
+
+    const service = new WalletConnectService({
+      eventBus,
+      logger,
+      clientFactory: async () => client as any,
+      closeTransportOnStop: false,
+      externalRequests,
+      signingService,
+      networkService,
+      accountService,
+    });
+
+    await service.start();
+    await flushPromises();
+
+    expect(requested).toHaveLength(1);
+    expect(requested[0]?.request.provider).toBe('wallet-connect');
+    expect(requested[0]?.request.kind).toBe('session_proposal');
+
+    await service.start();
+    await flushPromises();
+    expect(requested).toHaveLength(1);
 
     await service.stop();
   });

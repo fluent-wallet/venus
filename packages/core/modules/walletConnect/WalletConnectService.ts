@@ -91,6 +91,8 @@ export class WalletConnectService {
 
   private client: Client | null = null;
   private sessions: WalletConnectSessionSnapshot[] = [];
+  private readonly seenProposalIds = new Set<number>();
+  private readonly seenSessionRequestKeys = new Set<string>();
   private started = false;
   private startInFlight: Promise<void> | null = null;
 
@@ -121,7 +123,10 @@ export class WalletConnectService {
   };
 
   public async start(): Promise<void> {
-    if (this.started) return;
+    if (this.started) {
+      await this.replayPending();
+      return;
+    }
     if (this.startInFlight) return this.startInFlight;
 
     const run = (async () => {
@@ -135,10 +140,11 @@ export class WalletConnectService {
         client.on('session_delete', this.onSessionDelete);
         client.on('session_request', this.onSessionRequest);
 
+        this.started = true;
         await this.refreshSessions();
+        await this.replayPending();
 
         this.eventBus.emit('wallet-connect/sessions-changed', { reason: 'init' });
-        this.started = true;
       } catch (error) {
         try {
           if (client) {
@@ -164,6 +170,8 @@ export class WalletConnectService {
         } finally {
           if (this.client === client) this.client = null;
           this.sessions = [];
+          this.seenProposalIds.clear();
+          this.seenSessionRequestKeys.clear();
           this.started = false;
         }
 
@@ -193,6 +201,8 @@ export class WalletConnectService {
     if (!this.client) {
       this.started = false;
       this.sessions = [];
+      this.seenProposalIds.clear();
+      this.seenSessionRequestKeys.clear();
       return;
     }
 
@@ -209,6 +219,8 @@ export class WalletConnectService {
     }
 
     this.sessions = [];
+    this.seenProposalIds.clear();
+    this.seenSessionRequestKeys.clear();
 
     if (!this.closeTransportOnStop) return;
 
@@ -335,12 +347,38 @@ export class WalletConnectService {
     this.sessions = snapshots;
   }
 
+  private async replayPending(): Promise<void> {
+    const client = this.client;
+    if (!this.started || !client) return;
+
+    try {
+      const proposals = client.getPendingSessionProposals?.() ?? {};
+      const requests = client.getPendingSessionRequests?.() ?? [];
+
+      const proposalList = Object.values(proposals);
+
+      for (const proposal of proposalList) {
+        await this.handleSessionProposal(proposal as unknown as WalletKitTypes.SessionProposal);
+      }
+
+      for (const request of requests) {
+        await this.handleSessionRequest(request as unknown as WalletKitTypes.SessionRequest);
+      }
+    } catch (error) {
+      this.logger.warn('WalletConnectService:pending:replay-failed', { error });
+    }
+  }
+
   private async handleSessionProposal(proposal: WalletKitTypes.SessionProposal): Promise<void> {
     const client = this.client;
 
     if (!this.started || !client) return;
 
     const proposalNumericId = typeof proposal?.params?.id === 'number' ? proposal.params.id : proposal?.id;
+    if (typeof proposalNumericId === 'number') {
+      if (this.seenProposalIds.has(proposalNumericId)) return;
+      this.seenProposalIds.add(proposalNumericId);
+    }
     const proposalId = `p_${String(proposalNumericId)}`;
 
     const { metadata, origin, requiredEip155Chains, requiredMethods, requiredEvents } = this.extractProposalInfo(proposal);
@@ -451,6 +489,7 @@ export class WalletConnectService {
       });
 
       await this.refreshSessions();
+      this.eventBus.emit('wallet-connect/sessions-changed', { reason: 'approve' });
     } catch (error) {
       const coreError =
         error instanceof CoreError ? error : new CoreError({ code: WC_APPROVE_SESSION_FAILED, message: 'approveSession failed.', cause: error });
@@ -466,6 +505,9 @@ export class WalletConnectService {
 
     const topic = request.topic;
     const id = request.id;
+    const dedupeKey = `${topic}:${String(id)}`;
+    if (this.seenSessionRequestKeys.has(dedupeKey)) return;
+    this.seenSessionRequestKeys.add(dedupeKey);
 
     const chainId = request.params?.chainId;
     const rpc = request.params?.request;
@@ -503,7 +545,13 @@ export class WalletConnectService {
       request: snapshot,
       handlers: {
         onApprove: async () => {
-          await this.approveSessionRequest({ client, topic, id, chainId, method, rpcParams });
+          try {
+            await this.approveSessionRequest({ client, topic, id, chainId, method, rpcParams });
+          } catch (error) {
+            const rpcError = this.mapApproveError(error);
+            this.logger.warn('WalletConnectService:session-request:onApprove-failed', { error });
+            await this.safeRespondSessionRequestError({ client, topic, id, ...rpcError });
+          }
         },
         onReject: async (error) => {
           const rpcError = this.mapRejectError(error);
@@ -520,32 +568,56 @@ export class WalletConnectService {
     chainId: string;
     method: SupportedSessionRequestMethod;
     rpcParams: unknown;
-  }) {
+  }): Promise<void> {
     if (!this.started || this.client !== params.client) return;
 
-    if (!this.networkService || !this.accountService) {
-      await this.safeRespondSessionRequestError({ client: params.client, topic: params.topic, id: params.id, code: -32603, message: 'Internal error.' });
-      return;
-    }
-
-    const currentNetwork = await this.networkService.getCurrentNetwork();
-    const expectedChainId = `eip155:${currentNetwork.netId}`;
-
-    if (currentNetwork.networkType !== NetworkType.Ethereum || expectedChainId !== params.chainId) {
-      await this.safeRespondSessionRequestError({ client: params.client, topic: params.topic, id: params.id, code: 4902, message: 'Unrecognized chain ID.' });
-      return;
-    }
-
-    const account = await this.accountService.getCurrentAccount();
-    const accountId = account?.id;
-    const addressId = account?.currentAddressId;
-
-    if (!accountId || !addressId) {
-      await this.safeRespondSessionRequestError({ client: params.client, topic: params.topic, id: params.id, code: 4100, message: 'Unauthorized.' });
-      return;
-    }
-
     try {
+      if (!this.networkService || !this.accountService) {
+        this.logger.warn('WalletConnectService:session-request:missing-services', {
+          hasNetworkService: Boolean(this.networkService),
+          hasAccountService: Boolean(this.accountService),
+        });
+        await this.safeRespondSessionRequestError({
+          client: params.client,
+          topic: params.topic,
+          id: params.id,
+          code: -32603,
+          message: 'Internal error.',
+        });
+        return;
+      }
+
+      const currentNetwork = await this.networkService.getCurrentNetwork();
+      const expectedChainId = `eip155:${currentNetwork.netId}`;
+
+      if (currentNetwork.networkType !== NetworkType.Ethereum || expectedChainId !== params.chainId) {
+        this.logger.warn('WalletConnectService:session-request:chain-mismatch', {
+          requestChainId: params.chainId,
+          expectedChainId,
+          currentNetworkType: currentNetwork.networkType,
+          currentNetId: currentNetwork.netId,
+          currentChainId: currentNetwork.chainId,
+        });
+        await this.safeRespondSessionRequestError({
+          client: params.client,
+          topic: params.topic,
+          id: params.id,
+          code: 4902,
+          message: 'Unrecognized chain ID.',
+        });
+        return;
+      }
+
+      const account = await this.accountService.getCurrentAccount();
+      const accountId = account?.id;
+      const addressId = account?.currentAddressId;
+
+      if (!accountId || !addressId) {
+        this.logger.warn('WalletConnectService:session-request:unauthorized', { topic: params.topic, id: params.id, hasAccountId: Boolean(accountId) });
+        await this.safeRespondSessionRequestError({ client: params.client, topic: params.topic, id: params.id, code: 4100, message: 'Unauthorized.' });
+        return;
+      }
+
       if (params.method === 'personal_sign') {
         const request = parseSignMessageParameters(params.rpcParams);
         const signature = await this.signingService.signPersonalMessage({ accountId, addressId, request });
@@ -578,6 +650,7 @@ export class WalletConnectService {
 
       // eth_sendTransaction
       if (!this.transactionService) {
+        this.logger.warn('WalletConnectService:session-request:missing-transaction-service', { topic: params.topic, id: params.id });
         await this.safeRespondSessionRequestError({ client: params.client, topic: params.topic, id: params.id, code: -32603, message: 'Internal error.' });
         return;
       }
@@ -601,6 +674,14 @@ export class WalletConnectService {
         if (reason === 'stopped') return { code: 4001, message: 'Request canceled.' };
         return { code: 4001, message: 'User rejected the request.' };
       }
+    }
+
+    if (typeof error === 'string' && error.trim() !== '') {
+      return { code: 4001, message: error };
+    }
+
+    if (error instanceof Error && typeof error.message === 'string' && error.message.trim() !== '') {
+      return { code: 4001, message: error.message };
     }
 
     return { code: 4001, message: 'User rejected the request.' };

@@ -29,6 +29,36 @@ const makeSnapshot = (tag: string): ExternalRequestSnapshot => {
 };
 
 describe('ExternalRequestsService', () => {
+  it('getActiveRequests returns active requests in created order', async () => {
+    const logger = createSilentLogger();
+    const eventBus = new InMemoryEventBus<CoreEventMap>({ logger, assertSerializable: true });
+
+    let now = 1_700_000_000_000;
+
+    const service = new ExternalRequestsService({
+      eventBus,
+      scheduler: createScheduler(),
+      now: () => now,
+      logger,
+      defaultTtlMs: 10_000,
+      sweepIntervalMs: 10_000,
+      maxActiveRequests: 10,
+    });
+
+    try {
+      const id1 = service.request({ key: 'k1', request: makeSnapshot('1'), handlers: { onApprove: jest.fn(), onReject: jest.fn() } });
+      now += 1;
+      const id2 = service.request({ key: 'k2', request: makeSnapshot('2'), handlers: { onApprove: jest.fn(), onReject: jest.fn() } });
+
+      expect(service.getActiveRequests({ provider: 'wallet-connect' })).toEqual([
+        { requestId: id1, request: makeSnapshot('1') },
+        { requestId: id2, request: makeSnapshot('2') },
+      ]);
+    } finally {
+      service.stop();
+    }
+  });
+
   it('emits requested only when a request becomes active and advances FIFO', async () => {
     const logger = createSilentLogger();
     const eventBus = new InMemoryEventBus<CoreEventMap>({ logger, assertSerializable: true });

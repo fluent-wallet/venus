@@ -9,6 +9,7 @@ import { ExternalRequestsModule } from '@core/modules/externalRequests';
 import { NftSyncModule } from '@core/modules/nftSync';
 import { ReceiveAssetsSyncModule } from '@core/modules/receiveAssetsSync';
 import { ServicesModule } from '@core/modules/services';
+import { WalletConnectModule } from '@core/modules/walletConnect';
 import type { Database } from '@nozbe/watermelondb';
 import { ModuleManager, type ModuleManagerOptions } from './ModuleManager';
 
@@ -28,6 +29,8 @@ export function createAppRuntime(options: CreateAppRuntimeOptions): ModuleManage
     EventBusModule,
     AuthModule,
     ExternalRequestsModule,
+
+    WalletConnectModule,
 
     ServicesModule,
 
