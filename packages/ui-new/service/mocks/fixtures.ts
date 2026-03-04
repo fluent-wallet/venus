@@ -1,6 +1,6 @@
 import { AssetSource } from '@core/database/models/Asset';
 import { ChainType, NetworkType } from '@core/database/models/Network';
-import VaultType from '@core/database/models/Vault/VaultType';
+import { VaultType } from '@core/database/models/Vault/VaultType';
 import { AssetType, TxStatus } from '@core/types';
 import type { IAccount, IAsset, INetwork, ITransaction, IVault, RecentlyAddress } from '../core';
 

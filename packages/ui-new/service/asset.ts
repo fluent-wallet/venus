@@ -14,6 +14,7 @@ const tokenTypes = new Set([ASSET_TYPE.Native, ASSET_TYPE.ERC20]);
 const nftTypes = new Set([ASSET_TYPE.ERC721, ASSET_TYPE.ERC1155]);
 
 export const getAssetRootKey = () => ['asset'] as const;
+export const getAssetsByAddressRootKey = () => ['asset', 'byAddress'] as const;
 export const getAssetsByAddressKey = (addressId: string) => ['asset', 'byAddress', addressId] as const;
 
 /**

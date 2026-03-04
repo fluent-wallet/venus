@@ -2,7 +2,7 @@ import type { LegacyLikeGasEstimate, SendERC20Input, SendTransactionInput, Speed
 import { type UseQueryResult, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useCallback } from 'react';
 import { useCurrentAddress } from './account';
-import { getAssetRootKey, getAssetsByAddressKey } from './asset';
+import { getAssetRootKey, getAssetsByAddressKey, getAssetsByAddressRootKey } from './asset';
 import { getTransactionService, type IActivityTransaction, type ITransaction, type ITransactionDetail, type RecentlyAddress } from './core';
 
 export type TransactionsQuery = UseQueryResult<ITransaction[]>;
@@ -14,6 +14,7 @@ export type TransactionDetailQuery = UseQueryResult<ITransactionDetail | null>;
 export type Level = 'low' | 'medium' | 'high';
 
 export const getTransactionRootKey = () => ['tx'] as const;
+export const getGasEstimateRootKey = () => ['gasEstimate'] as const;
 export const getTransactionsByAddressKey = (addressId: string, status: string, limit?: number) =>
   ['tx', 'byAddress', addressId, status, limit ?? 'all'] as const;
 export const getActivityTransactionsByAddressKey = (addressId: string, status: string, limit?: number) =>
@@ -21,6 +22,20 @@ export const getActivityTransactionsByAddressKey = (addressId: string, status: s
 export const getTransactionDetailKey = (txId: string) => ['tx', 'detail', txId] as const;
 export const getRecentlyAddressesKey = (addressId: string) => ['tx', 'recently', addressId] as const;
 export const getSpeedUpContextKey = (txId: string) => ['tx', 'speedUpContext', txId] as const;
+export const getGasEstimateKey = (params: {
+  addressId: string;
+  withNonce: boolean;
+  tx: { from?: string; to?: string; value?: string; data?: string } | null;
+}) =>
+  [
+    ...getGasEstimateRootKey(),
+    params.addressId || 'none',
+    params.withNonce ? 'withNonce' : 'noNonce',
+    params.tx ? (params.tx.from ?? '') : '__null__',
+    params.tx ? (params.tx.to ?? '') : '__null__',
+    params.tx ? (params.tx.value ?? '') : '__null__',
+    params.tx ? (params.tx.data ?? '') : '__null__',
+  ] as const;
 
 export async function isPendingTxsFull(addressId: string): Promise<boolean> {
   if (!addressId) return false;
@@ -39,16 +54,13 @@ export function usePollingGasEstimateAndNonce(
   const enabled = !!addressId && !!tx;
 
   const estimate = useQuery({
-    queryKey: [
-      'gasEstimate',
-      addressId || 'none',
-      withNonce ? 'withNonce' : 'noNonce',
-      tx ? (tx.from ?? '') : '__null__',
-      tx ? (tx.to ?? '') : '__null__',
-      tx ? (tx.value ?? '') : '__null__',
-      tx ? (tx.data ?? '') : '__null__',
-    ],
-    queryFn: () => service.estimateLegacyGasForUi({ addressId, tx: tx!, withNonce }),
+    queryKey: getGasEstimateKey({ addressId, withNonce, tx }),
+    queryFn: () => {
+      if (!tx) {
+        throw new Error('Missing tx for gas estimate.');
+      }
+      return service.estimateLegacyGasForUi({ addressId, tx, withNonce });
+    },
     enabled,
     refetchInterval: 15_000,
     retry: 0,
@@ -76,7 +88,7 @@ export function useSpeedUpTx() {
       await queryClient.invalidateQueries({ queryKey: getTransactionRootKey() });
       await queryClient.invalidateQueries({ queryKey: getAssetRootKey() });
       // Keep behavior close to sendNative/sendERC20: refresh all address-scoped asset queries.
-      await queryClient.invalidateQueries({ queryKey: ['asset', 'byAddress'] });
+      await queryClient.invalidateQueries({ queryKey: getAssetsByAddressRootKey() });
       return tx;
     },
     [service, queryClient],

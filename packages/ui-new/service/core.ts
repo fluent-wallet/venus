@@ -6,10 +6,12 @@ import type { ExternalRequestsService } from '@core/modules/externalRequests';
 import { WalletConnectService } from '@core/modules/walletConnect';
 import type { RuntimeConfig } from '@core/runtime/types';
 import {
+  AccountGroupService,
   AccountService,
   AddressValidationService,
   AssetService,
   type IAccount,
+  type IAccountGroup,
   type IActivityTransaction,
   type IAsset,
   type INetwork,
@@ -26,6 +28,7 @@ import {
   TransactionService,
   UiPreferencesService,
   VaultService,
+  WalletMaintenanceService,
 } from '@core/services';
 import { HardwareWalletService } from '@core/services/hardware/HardwareWalletService';
 import { container as coreContainer } from '@core/WalletCore/configs';
@@ -38,6 +41,7 @@ let uiServiceContainer: Container | null = null;
 let uiQueryClient: QueryClient | null = null;
 
 export type { IAccount, INetwork, IAsset, ITransaction, IVault, RecentlyAddress };
+export type { IAccountGroup };
 export type { INftCollection, INftItem };
 export type { IActivityTransaction, ITransactionDetail };
 export { VaultSourceType, VaultType } from '@core/types/vault';
@@ -64,6 +68,10 @@ export function getQueryClient(): QueryClient {
 
 export function getAccountService(): AccountService {
   return getContainer().get(AccountService);
+}
+
+export function getAccountGroupService(): AccountGroupService {
+  return getContainer().get(AccountGroupService);
 }
 
 export function getAddressValidationService(): AddressValidationService {
@@ -136,4 +144,8 @@ export function getKeyValueStorageService(): KeyValueStorageService {
 
 export function getUiPreferencesService(): UiPreferencesService {
   return getContainer().get(UiPreferencesService);
+}
+
+export function getWalletMaintenanceService(): WalletMaintenanceService {
+  return getContainer().get(WalletMaintenanceService);
 }

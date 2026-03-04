@@ -1,5 +1,6 @@
 import { type UseQueryResult, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useCallback } from 'react';
+import { getAccountGroupRootKey } from './accountGroup';
 import { getAccountService, type IAccount } from './core';
 
 export type AccountQuery = UseQueryResult<IAccount | null>;
@@ -15,6 +16,7 @@ export const getAccountRootKey = () => ['account'] as const;
 export const getCurrentAccountKey = () => ['account', 'current'] as const;
 export const getAccountListKey = (includeHidden = false) => ['account', 'list', includeHidden] as const;
 export const getAccountGroupKey = (groupId: string, includeHidden = false) => ['account', 'group', groupId, includeHidden] as const;
+export const getAccountByIdKey = (accountId: string) => ['account', 'byId', accountId] as const;
 
 /**
  * Fetch the currently selected account.
@@ -53,6 +55,18 @@ export function useAccountsOfGroup(accountGroupId: string, includeHidden = false
     queryKey: getAccountGroupKey(accountGroupId, includeHidden),
     queryFn: () => service.getAccountsByGroup(accountGroupId, { includeHidden }),
     enabled: !!accountGroupId,
+  });
+}
+
+/**
+ * Fetch account by id.
+ */
+export function useAccountById(accountId: string | null | undefined): AccountQuery {
+  const service = getAccountService();
+  return useQuery({
+    queryKey: getAccountByIdKey(accountId ?? ''),
+    queryFn: () => (accountId ? service.getAccountById(accountId) : Promise.resolve(null)),
+    enabled: !!accountId,
   });
 }
 
@@ -120,6 +134,23 @@ export function useSetAccountHidden() {
     async (accountId: string, hidden: boolean) => {
       await service.setAccountHidden(accountId, hidden);
       await queryClient.invalidateQueries({ queryKey: getAccountRootKey() });
+    },
+    [service, queryClient],
+  );
+}
+
+/**
+ * Apply visible account indexes for a group (create missing accounts + hide/show existing ones).
+ */
+export function useApplyGroupVisibleIndexes() {
+  const service = getAccountService();
+  const queryClient = useQueryClient();
+  return useCallback(
+    async (params: { accountGroupId: string; visibleIndexes: number[]; mnemonic?: string }) => {
+      const result = await service.applyGroupVisibleIndexes(params);
+      await queryClient.invalidateQueries({ queryKey: getAccountRootKey() });
+      await queryClient.invalidateQueries({ queryKey: getAccountGroupRootKey() });
+      return result;
     },
     [service, queryClient],
   );

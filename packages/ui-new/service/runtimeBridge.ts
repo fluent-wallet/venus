@@ -55,6 +55,7 @@ export function useRuntimeEventBridge(navigation: StackNavigation) {
 
     const invalidateNetworkRelated = () => {
       void queryClient.invalidateQueries({ queryKey: getNetworkRootKey() });
+      void queryClient.invalidateQueries({ queryKey: getAccountRootKey() });
       void queryClient.invalidateQueries({ queryKey: getAssetRootKey() });
       void queryClient.invalidateQueries({ queryKey: getTransactionRootKey() });
       void queryClient.invalidateQueries({ queryKey: getSignatureRootKey() });

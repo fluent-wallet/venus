@@ -32,6 +32,8 @@ describe('signature service hooks', () => {
     addressId: 'addr_1',
     appId: null,
     txId: null,
+    app: null,
+    tx: null,
     signType: SignType.STR,
     message: '0xdeadbeef',
     blockNumber: '0x10',

@@ -12,6 +12,22 @@ export const getSignatureRecordsKey = (addressId: string, filter: SignatureFilte
   ['signature', 'records', addressId, filter, limit ?? 'all', offset ?? 0] as const;
 export const getSignatureRecordsCountKey = (addressId: string, filter: SignatureFilterOption) => ['signature', 'count', addressId, filter] as const;
 
+export async function fetchSignatureRecords(
+  addressId: string,
+  params: { current: number; pageSize: number; offset?: number; filter?: SignatureFilterOption },
+): Promise<ISignatureRecord[]> {
+  const current = Math.max(0, params.current);
+  const pageSize = Math.max(0, params.pageSize);
+  const offset = Math.max(0, params.offset ?? 0);
+
+  return getSignatureRecordService().listRecords({
+    addressId,
+    filter: params.filter ?? SignatureFilterOption.All,
+    limit: pageSize,
+    offset: offset + current * pageSize,
+  });
+}
+
 /**
  * Fetch signature records of a specific address.
  * @example
