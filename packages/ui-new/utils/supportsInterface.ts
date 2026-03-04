@@ -1,8 +1,7 @@
 import { fetchChain } from '@cfx-kit/dapp-utils/dist/fetch';
 import { iface721, iface1155 } from '@core/contracts';
-import { AssetType } from '@core/database/models/Asset';
-import { networkRpcPrefixMap, networkRpcSuffixMap } from '@core/database/models/Network';
-import type { NetworkType } from '@core/utils/consts';
+import { AssetType } from '@core/types';
+import { NetworkType } from '@core/utils/consts';
 
 const ERC1155InterfaceId = '0xd9b67a26'; //https://eips.ethereum.org/EIPS/eip-1155
 const ERC721InterfaceId = '0x80ac58cd'; // https://eips.ethereum.org/EIPS/eip-721
@@ -11,6 +10,16 @@ export type SupportType = AssetType;
 export type UnknownType = 'Unknown';
 
 export type Options = { networkType: NetworkType; endpoint: string; type?: SupportType[] };
+
+const networkRpcPrefixMap = {
+  [NetworkType.Conflux]: 'cfx',
+  [NetworkType.Ethereum]: 'eth',
+} as const;
+
+const networkRpcSuffixMap = {
+  [NetworkType.Conflux]: 'latest_state',
+  [NetworkType.Ethereum]: 'latest',
+} as const;
 
 const typeMap: Record<SupportType, { data: () => string; decode: (res: string) => any }> = {
   ERC1155: {

@@ -11,28 +11,33 @@ import Button from '@components/Button';
 import Icon from '@components/Icon';
 import HourglassLoading from '@components/Loading/Hourglass';
 import Text from '@components/Text';
-import Plugins from '@core/WalletCore/Plugins';
-import { useCurrentAddressValue } from '@core/WalletCore/Plugins/ReactInject';
 import { useTheme } from '@react-navigation/native';
+import { useCurrentAddress } from '@service/account';
+import { useDisconnectWalletConnectSession, useWalletConnectSessions } from '@service/walletConnect';
 import { useCallback, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Pressable, StyleSheet, View } from 'react-native';
-import { useWalletConnectSessions } from './useWalletConnectHooks';
 
 function WalletConnectSessions() {
   const { colors } = useTheme();
   const { t } = useTranslation();
   const bottomSheetRef = useRef<BottomSheetMethods>(null!);
 
-  const currentAddressValue = useCurrentAddressValue();
-  const sessions = useWalletConnectSessions(currentAddressValue);
+  const { data: currentAddress } = useCurrentAddress();
+  const currentAddressValue = currentAddress?.value ?? null;
+  const sessionsQuery = useWalletConnectSessions(currentAddressValue);
+  const sessions = sessionsQuery.data ?? [];
+  const disconnectSession = useDisconnectWalletConnectSession();
 
   const [inDisconnect, setInDesconnect] = useState<Record<string, boolean>>({});
-  const handleDisconnect = useCallback(async (topic: string) => {
-    setInDesconnect((prev) => ({ ...prev, [topic]: true }));
-    await Plugins.WalletConnect.disconnectSession({ topic });
-    setInDesconnect((prev) => ({ ...prev, [topic]: false }));
-  }, []);
+  const handleDisconnect = useCallback(
+    async (topic: string) => {
+      setInDesconnect((prev) => ({ ...prev, [topic]: true }));
+      await disconnectSession(topic);
+      setInDesconnect((prev) => ({ ...prev, [topic]: false }));
+    },
+    [disconnectSession],
+  );
 
   const isUnsafe = useCallback((url: string) => {
     try {

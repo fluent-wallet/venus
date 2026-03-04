@@ -248,13 +248,23 @@ function WalletConnectSignMessage() {
     const pretty = JSON.stringify(raw, null, 2);
 
     const handleApprove = () => {
-      getExternalRequestsService().approve({ requestId });
-      if (navigation.canGoBack()) navigation.goBack();
+      try {
+        getExternalRequestsService().approve({ requestId });
+      } catch (error) {
+        console.log(error);
+      } finally {
+        if (navigation.canGoBack()) navigation.goBack();
+      }
     };
 
     const handleReject = () => {
-      getExternalRequestsService().reject({ requestId });
-      if (navigation.canGoBack()) navigation.goBack();
+      try {
+        getExternalRequestsService().reject({ requestId });
+      } catch (error) {
+        console.log(error);
+      } finally {
+        if (navigation.canGoBack()) navigation.goBack();
+      }
     };
 
     return (

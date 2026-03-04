@@ -51,8 +51,13 @@ export default function WalletConnectProposal() {
   const _handleApprove = useCallback(async () => {
     try {
       if (isRuntime && runtimeRequestId) {
-        getExternalRequestsService().approve({ requestId: runtimeRequestId });
-        if (navigation.canGoBack()) navigation.goBack();
+        try {
+          getExternalRequestsService().approve({ requestId: runtimeRequestId });
+        } catch (error) {
+          console.log(error);
+        } finally {
+          if (navigation.canGoBack()) navigation.goBack();
+        }
         return;
       }
 
@@ -66,8 +71,13 @@ export default function WalletConnectProposal() {
   const _handleReject = useCallback(async () => {
     try {
       if (isRuntime && runtimeRequestId) {
-        getExternalRequestsService().reject({ requestId: runtimeRequestId });
-        if (navigation.canGoBack()) navigation.goBack();
+        try {
+          getExternalRequestsService().reject({ requestId: runtimeRequestId });
+        } catch (error) {
+          console.log(error);
+        } finally {
+          if (navigation.canGoBack()) navigation.goBack();
+        }
         return;
       }
 

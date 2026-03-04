@@ -3,6 +3,7 @@ import { AssetsSyncService } from '@core/modules/assetsSync';
 import type { AuthService } from '@core/modules/auth';
 import type { CoreEventMap } from '@core/modules/eventBus';
 import type { ExternalRequestsService } from '@core/modules/externalRequests';
+import { WalletConnectService } from '@core/modules/walletConnect';
 import type { RuntimeConfig } from '@core/runtime/types';
 import {
   AccountService,
@@ -17,11 +18,13 @@ import {
   type ITransaction,
   type ITransactionDetail,
   type IVault,
+  KeyValueStorageService,
   NetworkService,
   NftService,
   type RecentlyAddress,
   SignatureRecordService,
   TransactionService,
+  UiPreferencesService,
   VaultService,
 } from '@core/services';
 import { HardwareWalletService } from '@core/services/hardware/HardwareWalletService';
@@ -107,6 +110,10 @@ export function getExternalRequestsService(): ExternalRequestsService {
   return getContainer().get<ExternalRequestsService>(CORE_IDENTIFIERS.EXTERNAL_REQUESTS);
 }
 
+export function getWalletConnectService(): WalletConnectService {
+  return getContainer().get(WalletConnectService);
+}
+
 export function getRuntimeConfig(): RuntimeConfig {
   return getContainer().get<RuntimeConfig>(CORE_IDENTIFIERS.CONFIG);
 }
@@ -121,4 +128,12 @@ export function getLegacyEventBus(): EventBus {
 
 export function getEventBus(): import('@core/modules/eventBus').EventBus<CoreEventMap> {
   return getRuntimeEventBus();
+}
+
+export function getKeyValueStorageService(): KeyValueStorageService {
+  return getContainer().get(KeyValueStorageService);
+}
+
+export function getUiPreferencesService(): UiPreferencesService {
+  return getContainer().get(UiPreferencesService);
 }

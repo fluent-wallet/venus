@@ -184,8 +184,13 @@ function WalletConnectTransaction() {
   const _handleReject = useCallback(async () => {
     try {
       if (isRuntime && runtimeRequestId) {
-        getExternalRequestsService().reject({ requestId: runtimeRequestId });
-        if (navigation.canGoBack()) navigation.goBack();
+        try {
+          getExternalRequestsService().reject({ requestId: runtimeRequestId });
+        } catch (error) {
+          console.log(error);
+        } finally {
+          if (navigation.canGoBack()) navigation.goBack();
+        }
         return;
       }
       await plugins.WalletConnect.currentEventSubject.getValue()?.action.reject();
@@ -197,8 +202,13 @@ function WalletConnectTransaction() {
   const { bsimEvent, setBSIMEvent, execBSIMCancel, setBSIMCancel } = useBSIMVerify();
   const _handleApprove = useCallback(async () => {
     if (isRuntime && runtimeRequestId) {
-      getExternalRequestsService().approve({ requestId: runtimeRequestId });
-      if (navigation.canGoBack()) navigation.goBack();
+      try {
+        getExternalRequestsService().approve({ requestId: runtimeRequestId });
+      } catch (error) {
+        console.log(error);
+      } finally {
+        if (navigation.canGoBack()) navigation.goBack();
+      }
       return;
     }
     if (!gasEstimate) return;
@@ -322,6 +332,8 @@ function WalletConnectTransaction() {
   useEffect(() => {
     async function parseAndTryGetTokenInfo() {
       if (isRuntime) return;
+      if (!currentNetwork) return;
+      if (!currentAddress) return;
       if (isContract) {
         const parseData = await parseTxDataAsync({ data, to, netId: currentNetwork.netId });
 
@@ -338,7 +350,11 @@ function WalletConnectTransaction() {
             accountAddress: currentAddress!,
           });
           const assertType =
-            typeByInterface !== 'Unknown' ? typeByInterface : remoteAsset.decimals && remoteAsset.name && remoteAsset.symbol ? AssetType.ERC20 : 'Unknown';
+            typeByInterface !== 'Unknown'
+              ? (typeByInterface as unknown as AssetType)
+              : remoteAsset.decimals && remoteAsset.name && remoteAsset.symbol
+                ? AssetType.ERC20
+                : 'Unknown';
 
           setParseData({
             ...parseData,
@@ -367,7 +383,7 @@ function WalletConnectTransaction() {
     }
     parseAndTryGetTokenInfo();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [data, to, isContract, currentNetwork.id, currentAddress, value, currentNetwork.netId, isRuntime]);
+  }, [data, to, isContract, currentNetwork?.id, currentAddress, value, currentNetwork?.netId, isRuntime]);
 
   const handleOpenEditAllowanceModel = useCallback(() => {
     if (parseData?.functionName === 'approve' && parseData?.assetType === AssetType.ERC20) {

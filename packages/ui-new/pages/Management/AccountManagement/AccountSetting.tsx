@@ -17,11 +17,11 @@ import Text from '@components/Text';
 import TextInput from '@components/TextInput';
 import { zeroAddress } from '@core/utils/address';
 import methods from '@core/WalletCore/Methods';
-import plugins from '@core/WalletCore/Plugins';
 import { useAccountFromId, useCurrentAddressValueOfAccount, useVaultOfAccount, VaultType } from '@core/WalletCore/Plugins/ReactInject';
 import useInAsync from '@hooks/useInAsync';
 import { useTheme } from '@react-navigation/native';
 import { type AccountSettingStackName, BackupStackName, BackupStep1StackName, type StackScreenProps } from '@router/configs';
+import { useDisconnectWalletConnectSessionsByAddresses } from '@service/walletConnect';
 import type React from 'react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -38,6 +38,7 @@ const AccountConfig: React.FC<StackScreenProps<typeof AccountSettingStackName>> 
   const account = useAccountFromId(route.params.accountId);
   const vault = useVaultOfAccount(route.params.accountId);
   const addressValue = useCurrentAddressValueOfAccount(route.params.accountId);
+  const disconnectByAddresses = useDisconnectWalletConnectSessionsByAddresses();
 
   const [accountName, setAccountName] = useState(() => account?.nickname);
   useEffect(() => {
@@ -81,7 +82,7 @@ const AccountConfig: React.FC<StackScreenProps<typeof AccountSettingStackName>> 
         await methods.deleteVault(vault);
       }
       if (addressValue) {
-        await plugins.WalletConnect.removeSessionByAddress([addressValue]);
+        await disconnectByAddresses([addressValue]);
       }
       showMessage({
         message: t('account.remove.successfully'),
@@ -100,7 +101,7 @@ const AccountConfig: React.FC<StackScreenProps<typeof AccountSettingStackName>> 
       });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [account, addressValue, vault, navigation]);
+  }, [account, addressValue, disconnectByAddresses, vault, navigation]);
 
   const { inAsync: inDeleting, execAsync: handleConfirmDelete } = useInAsync(_handleConfirmDelete);
   const inDelete = showDeleteBottomSheet || inDeleting;

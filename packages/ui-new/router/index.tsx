@@ -27,7 +27,6 @@ import SignatureRecords from '@pages/SignatureRecords';
 import TooManyPending from '@pages/TooManyPending';
 import TransactionDetail from '@pages/TransactionDetail';
 import WalletConnect from '@pages/WalletConnect';
-import { useListenWalletConnectEvent } from '@pages/WalletConnect/useWalletConnectHooks';
 import WayToInitWallet from '@pages/WayToInitWallet';
 import Welcome from '@pages/Welcome';
 import { useNavigation, useTheme } from '@react-navigation/native';
@@ -93,9 +92,6 @@ const Router: React.FC = () => {
   const navigation = useNavigation<StackNavigation>();
 
   useRuntimeEventBridge(navigation);
-
-  // to listen the wallet connect plugin custom subject event
-  useListenWalletConnectEvent();
 
   useListenDeepLink(navigation);
 

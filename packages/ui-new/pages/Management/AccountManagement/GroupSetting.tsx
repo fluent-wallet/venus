@@ -17,7 +17,6 @@ import HourglassLoading from '@components/Loading/Hourglass';
 import Text from '@components/Text';
 import TextInput from '@components/TextInput';
 import methods from '@core/WalletCore/Methods';
-import plugins from '@core/WalletCore/Plugins';
 import { useAccountsOfGroupInManage, useGroupFromId, useVaultOfGroup, VaultType } from '@core/WalletCore/Plugins/ReactInject';
 import useInAsync from '@hooks/useInAsync';
 import { AccountItemView } from '@modules/AccountsList';
@@ -31,6 +30,7 @@ import {
   type StackNavigation,
   type StackScreenProps,
 } from '@router/configs';
+import { useDisconnectWalletConnectSessionsByAddresses } from '@service/walletConnect';
 import { handleBSIMHardwareUnavailable } from '@utils/handleBSIMHardwareUnavailable';
 import type React from 'react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -49,6 +49,7 @@ const GroupConfig: React.FC<StackScreenProps<typeof GroupSettingStackName>> = ({
   const vault = useVaultOfGroup(route.params.groupId);
   const accounts = useAccountsOfGroupInManage(route.params.groupId);
   const rootNavigation = useNavigation<StackNavigation>();
+  const disconnectByAddresses = useDisconnectWalletConnectSessionsByAddresses();
 
   const GroupTitle = useMemo(
     () => (!vault?.type ? 'Group' : vault?.type === VaultType.HierarchicalDeterministic ? t('account.group.title.seed') : t('account.group.title.BSIM')),
@@ -93,7 +94,7 @@ const GroupConfig: React.FC<StackScreenProps<typeof GroupSettingStackName>> = ({
     try {
       await getAuthentication().getPassword();
       await methods.deleteVault(vault);
-      await plugins.WalletConnect.removeSessionByAddress(accounts.map((v) => v.addressValue));
+      await disconnectByAddresses(accounts.map((v) => v.addressValue));
       showMessage({
         message: t('account.group.remove.success'),
         type: 'success',
@@ -111,7 +112,7 @@ const GroupConfig: React.FC<StackScreenProps<typeof GroupSettingStackName>> = ({
       });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [vault, navigation]);
+  }, [accounts, disconnectByAddresses, vault, navigation]);
 
   const handleBackupSeedPhrase = useCallback(() => {
     navigation.navigate(BackupStackName, { screen: BackupStep1StackName, params: { groupId: route.params.groupId } });

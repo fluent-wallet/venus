@@ -20,7 +20,6 @@ import { ReceiveAssetsTrackerPlugin } from '@core/WalletCore/Plugins/ReceiveAsse
 import TransactionPlugin from '@core/WalletCore/Plugins/Transaction';
 import { TxTrackerPlugin } from '@core/WalletCore/Plugins/TxTracker';
 import { WalletConfigPlugin } from '@core/WalletCore/Plugins/WalletConfig';
-import WalletConnectPlugin from '@core/WalletCore/Plugins/WalletConnect';
 import type { WalletKitTypes } from '@reown/walletkit';
 import { setUiQueryClient, setUiServiceContainer } from '@service/core';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
@@ -127,10 +126,6 @@ async function bootAppOnce(): Promise<void> {
       ReactInjectPlugin,
       TransactionPlugin,
       BlockNumberTracker,
-      new WalletConnectPlugin({
-        projectId: WALLET_CONNECT_PROJECT_ID,
-        metadata: WALLET_CONNECT_METADATA,
-      }),
     ]);
 
     // Legacy setup is intentionally fire-and-forget; runtime is the source of truth in migration.

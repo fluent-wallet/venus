@@ -1,17 +1,21 @@
 import type { ExternalRequestSnapshot } from '@core/modules/externalRequests';
+import { StackActions } from '@react-navigation/native';
 import {
+  ExternalInputHandlerStackName,
   PasswordVerifyStackName,
   type StackNavigation,
+  TooManyPendingStackName,
   WalletConnectProposalStackName,
   WalletConnectSignMessageStackName,
   WalletConnectStackName,
   WalletConnectTransactionStackName,
 } from '@router/configs';
 import { useQueryClient } from '@tanstack/react-query';
+import { getActiveRouteName } from '@utils/backToHome';
 import { useEffect, useRef } from 'react';
 import { getAccountRootKey } from './account';
 import { getAssetRootKey } from './asset';
-import { getAuthService, getRuntimeEventBus } from './core';
+import { getAccountService, getAuthService, getExternalRequestsService, getRuntimeEventBus, getTransactionService } from './core';
 import { getNetworkRootKey } from './network';
 import { getNftRootKey } from './nft';
 import { getSignatureRootKey } from './signature';
@@ -35,8 +39,11 @@ export function useRuntimeEventBridge(navigation: StackNavigation) {
   const queryClient = useQueryClient();
   const eventBus = getRuntimeEventBus();
   const auth = getAuthService();
+  const externalRequests = getExternalRequestsService();
 
   const activePasswordRequestIdRef = useRef<string | null>(null);
+  const routedRequestIdsRef = useRef<Set<string>>(new Set());
+  const MAX_ROUTED_REQUEST_IDS = 100;
 
   useEffect(() => {
     const invalidateAccountRelated = () => {
@@ -84,28 +91,74 @@ export function useRuntimeEventBridge(navigation: StackNavigation) {
       // Only route WalletConnect requests here; other providers should be handled elsewhere.
       if (req.provider !== 'wallet-connect') return;
 
+      if (routedRequestIdsRef.current.has(payload.requestId)) return;
+      if (routedRequestIdsRef.current.size >= MAX_ROUTED_REQUEST_IDS) {
+        // Prune oldest half to keep memory bounded.
+        const iter = routedRequestIdsRef.current.values();
+        for (let i = 0; i < Math.floor(MAX_ROUTED_REQUEST_IDS / 2); i += 1) {
+          const next = iter.next();
+          if (next.done) break;
+          routedRequestIdsRef.current.delete(next.value);
+        }
+      }
+      routedRequestIdsRef.current.add(payload.requestId);
+
+      const activeRouterName = getActiveRouteName(navigation.getState());
+      const shouldReplaceLinking = activeRouterName === ExternalInputHandlerStackName;
+
       if (req.kind === 'session_proposal') {
-        navigation.navigate(WalletConnectStackName, {
-          screen: WalletConnectProposalStackName,
-          params: { requestId: payload.requestId, request: req },
-        });
+        const route = {
+          name: WalletConnectStackName,
+          params: { screen: WalletConnectProposalStackName, params: { requestId: payload.requestId, request: req } },
+        } as const;
+
+        if (shouldReplaceLinking) navigation.dispatch(StackActions.replace(route.name, route.params));
+        else navigation.navigate(route.name, route.params);
         return;
       }
 
       if (req.kind === 'session_request') {
         if (isRuntimeWcSignMessageRequest(req)) {
-          navigation.navigate(WalletConnectStackName, {
-            screen: WalletConnectSignMessageStackName,
-            params: { requestId: payload.requestId, request: req },
-          });
+          const route = {
+            name: WalletConnectStackName,
+            params: { screen: WalletConnectSignMessageStackName, params: { requestId: payload.requestId, request: req } },
+          } as const;
+
+          if (shouldReplaceLinking) navigation.dispatch(StackActions.replace(route.name, route.params));
+          else navigation.navigate(route.name, route.params);
           return;
         }
 
         if (isRuntimeWcSendTxRequest(req)) {
-          navigation.navigate(WalletConnectStackName, {
-            screen: WalletConnectTransactionStackName,
-            params: { requestId: payload.requestId, request: req },
-          });
+          const handleSendTxRequest = async () => {
+            try {
+              const account = await getAccountService().getCurrentAccount();
+              const addressId = account?.currentAddressId ?? null;
+              if (addressId && (await getTransactionService().isPendingTxsFull({ addressId }))) {
+                if (shouldReplaceLinking) {
+                  navigation.dispatch(StackActions.replace(TooManyPendingStackName, { requestId: payload.requestId }));
+                } else {
+                  navigation.navigate(TooManyPendingStackName, { requestId: payload.requestId });
+                }
+                return;
+              }
+            } catch {
+              // Fallback to normal flow; the transaction screen/service will handle errors if needed.
+            }
+
+            const route = {
+              name: WalletConnectStackName,
+              params: { screen: WalletConnectTransactionStackName, params: { requestId: payload.requestId, request: req } },
+            } as const;
+
+            if (shouldReplaceLinking) navigation.dispatch(StackActions.replace(route.name, route.params));
+            else navigation.navigate(route.name, route.params);
+          };
+
+          // Preserve legacy behavior: block dApp sendTx when pending queue is full.
+          // We do the check here so we can route to an in-app UI instead of silently rejecting.
+          void handleSendTxRequest().catch((error) => console.log(error));
+          return;
         }
       }
     };
@@ -138,6 +191,13 @@ export function useRuntimeEventBridge(navigation: StackNavigation) {
       eventBus.on('external-requests/requested', handleExternalRequest),
     ];
 
+    try {
+      const active = externalRequests.getActiveRequests({ provider: 'wallet-connect' });
+      for (const item of active) handleExternalRequest(item);
+    } catch {
+      // ignore
+    }
+
     return () => {
       for (const sub of subs) sub.unsubscribe();
 
@@ -148,5 +208,5 @@ export function useRuntimeEventBridge(navigation: StackNavigation) {
         auth.cancelPasswordRequest({ requestId: active });
       }
     };
-  }, [auth, eventBus, navigation, queryClient]);
+  }, [auth, eventBus, externalRequests, navigation, queryClient]);
 }

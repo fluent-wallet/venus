@@ -116,7 +116,7 @@ export type RootStackParamList = {
   [SpeedUpStackName]: { txId: string; type: SpeedUpAction; level?: SpeedUpLevel };
   [TransactionDetailStackName]: { txId: string };
   [ExternalInputHandlerStackName]: { data: string } | undefined;
-  [TooManyPendingStackName]: undefined;
+  [TooManyPendingStackName]: undefined | { requestId?: string };
   [BSIMAvailabilityStackName]: { reason?: BSIMHardwareReason };
 };
 

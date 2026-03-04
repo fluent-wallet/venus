@@ -11,9 +11,9 @@ import {
 import Button from '@components/Button';
 import Text from '@components/Text';
 import methods from '@core/WalletCore/Methods';
-import plugins from '@core/WalletCore/Plugins';
 import { useTheme } from '@react-navigation/native';
 import { type AccountManagementStackName, type StackScreenProps, WelcomeStackName } from '@router/configs';
+import { useDisconnectAllWalletConnectSessions } from '@service/walletConnect';
 import { screenHeight } from '@utils/deviceInfo';
 import type React from 'react';
 import { useCallback, useRef } from 'react';
@@ -30,13 +30,14 @@ const EraseAllWallet: React.FC<Props> = ({ navigation }) => {
   const { colors } = useTheme();
   const { t } = useTranslation();
   const bottomSheetRef = useRef<BottomSheetMethods>(null!);
+  const disconnectAllSessions = useDisconnectAllWalletConnectSessions();
 
   const handleDelete = useCallback(async () => {
     try {
       await getAuthentication().getPassword();
       bottomSheetRef.current?.close();
       navigation.navigate(WelcomeStackName);
-      await plugins.WalletConnect.removeAllSession();
+      await disconnectAllSessions();
       await new Promise((resolve) => setTimeout(resolve, 100));
       await methods.clearAccountData();
       await RNRestart.restart();
@@ -51,7 +52,7 @@ const EraseAllWallet: React.FC<Props> = ({ navigation }) => {
         type: 'warning',
       });
     }
-  }, []);
+  }, [disconnectAllSessions, navigation]);
 
   return (
     <BottomSheetRoute ref={bottomSheetRef} snapPoints={snapPoints}>
