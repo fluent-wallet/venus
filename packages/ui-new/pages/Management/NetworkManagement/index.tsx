@@ -1,8 +1,8 @@
 import AddIcon from '@assets/icons/add.svg';
 import Text from '@components/Text';
-import { useCurrentNetwork } from '@core/WalletCore/Plugins/ReactInject';
 import { useNavigation, useTheme } from '@react-navigation/native';
 import { NetworkAddNewEndpointStackName, type StackNavigation } from '@router/configs';
+import { useCurrentNetwork } from '@service/network';
 import { useTranslation } from 'react-i18next';
 import { FlatList, Pressable, StyleSheet, View } from 'react-native';
 import RPCListItem from './RPCListItem';
@@ -10,8 +10,10 @@ import RPCListItem from './RPCListItem';
 const NetworkManagement = () => {
   const { colors } = useTheme();
   const { t } = useTranslation();
-  const currentNetwork = useCurrentNetwork()!;
+  const { data: currentNetwork } = useCurrentNetwork();
   const navigation = useNavigation<StackNavigation>();
+
+  if (!currentNetwork) return null;
 
   return (
     <View style={[{ flex: 1, backgroundColor: colors.bgPrimary }]}>

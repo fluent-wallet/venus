@@ -12,10 +12,10 @@ import {
 } from '@components/BottomSheet';
 import Button from '@components/Button';
 import Text from '@components/Text';
-import methods from '@core/WalletCore/Methods';
-import { NetworkType, useCurrentNetwork } from '@core/WalletCore/Plugins/ReactInject';
+import { NetworkType } from '@core/types';
 import { useNavigation, useTheme } from '@react-navigation/native';
 import type { StackNavigation } from '@router/configs';
+import { useAddEndpoint, useCurrentNetwork } from '@service/network';
 import { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { type NativeSyntheticEvent, Pressable, StyleSheet, type TextInputChangeEventData, View } from 'react-native';
@@ -31,8 +31,9 @@ const AddNewEndpoint = () => {
   const [netUrl, setNetUrl] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const currentNetwork = useCurrentNetwork()!;
+  const { data: currentNetwork } = useCurrentNetwork();
   const navigation = useNavigation<StackNavigation>();
+  const addEndpoint = useAddEndpoint();
 
   const handleChange = useCallback((event: NativeSyntheticEvent<TextInputChangeEventData>) => {
     setError('');
@@ -43,6 +44,7 @@ const AddNewEndpoint = () => {
     setError('');
     setLoading(true);
     try {
+      if (!currentNetwork) return;
       const endpoint = new URL(netUrl);
       const request = getChainIdMap[currentNetwork?.networkType];
 
@@ -51,7 +53,7 @@ const AddNewEndpoint = () => {
         if (Number(chainId) !== Number(currentNetwork.chainId)) {
           setError(t('settings.network.add.invalidChainId'));
         } else {
-          methods.addEndpoint({ network: currentNetwork.id, endpointParams: { endpoint: endpoint.href, type: 'outer' } });
+          await addEndpoint(currentNetwork.id, { endpoint: endpoint.href, type: 'outer' });
           if (navigation.canGoBack()) {
             navigation.goBack();
           }
@@ -68,7 +70,7 @@ const AddNewEndpoint = () => {
     } finally {
       setLoading(false);
     }
-  }, [netUrl, currentNetwork, t]);
+  }, [netUrl, currentNetwork, t, navigation, addEndpoint]);
 
   return (
     <BottomSheetRoute snapPoints={snapPoints.percent40}>

@@ -1,31 +1,42 @@
 import DeleteIcon from '@assets/icons/delete.svg';
 import SuccessIcon from '@assets/icons/success.svg';
+import { fetchChain } from '@cfx-kit/dapp-utils/dist/fetch';
 import Text from '@components/Text';
-import type { Network } from '@core/database/models/Network';
-import methods from '@core/WalletCore/Methods';
-import plugins from '@core/WalletCore/Plugins';
-import type { useCurrentNetwork } from '@core/WalletCore/Plugins/ReactInject';
+import { NetworkType } from '@core/types';
 import { useTheme } from '@react-navigation/native';
+import type { INetwork } from '@service/core';
+import { useRemoveEndpoint, useUpdateEndpoint } from '@service/network';
 import { useCallback, useEffect, useState } from 'react';
-import { useTranslation } from 'react-i18next';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { catchError, interval, retry, startWith, switchMap, throwError } from 'rxjs';
 
 export interface Props {
-  rpc: Network['endpointsList'][number];
-  currentNetwork: NonNullable<ReturnType<typeof useCurrentNetwork>>;
+  rpc: INetwork['endpointsList'][number];
+  currentNetwork: INetwork;
 }
 const RPCListItem = ({ rpc, currentNetwork }: Props) => {
-  const { t } = useTranslation();
   const { colors } = useTheme();
+  const updateEndpoint = useUpdateEndpoint();
+  const removeEndpoint = useRemoveEndpoint();
   const [latency, setLatency] = useState<number | null>(null);
   const [blockNumber, setBlockNumber] = useState<bigint | null>(null);
 
+  const fetchBlockNumber = useCallback(async () => {
+    const endpoint = rpc.endpoint;
+    if (currentNetwork.networkType === NetworkType.Conflux) {
+      const res = await fetchChain<string>({ url: endpoint, method: 'cfx_epochNumber', params: ['latest_state'] });
+      return BigInt(res);
+    }
+
+    const res = await fetchChain<string>({ url: endpoint, method: 'eth_blockNumber' });
+    return BigInt(res);
+  }, [rpc.endpoint, currentNetwork.networkType]);
+
   const testLatency = useCallback(() => {
-    const startTime = new Date().getTime();
+    const startTime = Date.now();
     return fetch(rpc.endpoint)
       .then(() => {
-        const endTime = new Date().getTime();
+        const endTime = Date.now();
         const latency = endTime - startTime;
         setLatency(latency);
       })
@@ -38,12 +49,7 @@ const RPCListItem = ({ rpc, currentNetwork }: Props) => {
     const subscription = interval(25000)
       .pipe(
         startWith(0),
-        switchMap(() =>
-          Promise.all([
-            plugins.BlockNumberTracker.getNetworkBlockNumber({ ...currentNetwork, endpoint: rpc.endpoint }).then((res) => setBlockNumber(BigInt(res))),
-            testLatency(),
-          ]),
-        ),
+        switchMap(() => Promise.all([fetchBlockNumber().then((res) => setBlockNumber(res)), testLatency()])),
         catchError((err: { code: string; message: string }) => {
           return throwError(() => err);
         }),
@@ -54,7 +60,7 @@ const RPCListItem = ({ rpc, currentNetwork }: Props) => {
     return () => {
       subscription.unsubscribe();
     };
-  }, [currentNetwork, rpc.endpoint, testLatency]);
+  }, [testLatency, fetchBlockNumber]);
 
   const renderLatency = useCallback(() => {
     const textStyle = [styles.font14, styles.fontWeight400];
@@ -65,13 +71,13 @@ const RPCListItem = ({ rpc, currentNetwork }: Props) => {
   }, [latency, colors.down, colors.iconThird, colors.up]);
 
   const handleDelete = useCallback(async () => {
-    await methods.removeEndpoints({ network: currentNetwork.id, endpoint: rpc.endpoint });
-  }, [currentNetwork.id, rpc.endpoint]);
+    await removeEndpoint(currentNetwork.id, rpc.endpoint);
+  }, [currentNetwork.id, rpc.endpoint, removeEndpoint]);
 
   const handleSelect = useCallback(async () => {
-    await methods.updateCurrentEndpoint({ network: currentNetwork.id, endpoint: rpc.endpoint });
+    await updateEndpoint(currentNetwork.id, rpc.endpoint);
     testLatency();
-  }, [currentNetwork.id, rpc.endpoint]);
+  }, [currentNetwork.id, rpc.endpoint, updateEndpoint, testLatency]);
 
   return (
     <View style={[styles.flex, styles.flexRow]}>

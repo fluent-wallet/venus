@@ -1,9 +1,9 @@
 import { BottomSheetFooter, BottomSheetScrollContent } from '@components/BottomSheet';
 import Button from '@components/Button';
 import Text from '@components/Text';
-import { useVaultFromId } from '@core/WalletCore/Plugins/ReactInject';
 import { useTheme } from '@react-navigation/native';
 import { type BackupScreenProps, type BackupStep3StackName, BackupSuccessStackName } from '@router/configs';
+import { useFinishBackup } from '@service/vault';
 import { wordlists } from 'bip39';
 import { sampleSize, shuffle } from 'lodash-es';
 import type React from 'react';
@@ -18,7 +18,7 @@ const BackupStep3RandomCheck: React.FC<BackupScreenProps<typeof BackupStep3Stack
   const { colors } = useTheme();
   const { t } = useTranslation();
   const { phrases, vaultId } = route.params;
-  const vault = useVaultFromId(vaultId);
+  const finishBackup = useFinishBackup();
 
   const [selectedWords, setSelectedWords] = useState<[Ele, Ele, Ele]>([null, null, null]);
 
@@ -82,7 +82,7 @@ const BackupStep3RandomCheck: React.FC<BackupScreenProps<typeof BackupStep3Stack
           disabled={!isAllSelected}
           onPress={() => {
             if (isAllCorrect) {
-              vault?.finishBackup?.();
+              void finishBackup(vaultId);
               navigation.navigate(BackupSuccessStackName);
             } else {
               showMessage({

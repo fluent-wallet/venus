@@ -1,15 +1,16 @@
 import NoneSignature from '@assets/images/none-signature.webp';
 import Delay from '@components/Delay';
 import Text from '@components/Text';
-import { SignatureFilterOption } from '@core/database/models/Signature/type';
-import { useCurrentAddress } from '@core/WalletCore/Plugins/ReactInject';
-import { fetchSignatureRecords, useSignatureRecords } from '@core/WalletCore/Plugins/ReactInject/data/useSignature';
+import type { ISignatureRecord } from '@core/services/signing/types';
+import { SignatureFilterOption } from '@core/services/signing/types';
 import { useTheme } from '@react-navigation/native';
 import type { SignatureRecordsStackName, StackScreenProps } from '@router/configs';
+import { useCurrentAddress } from '@service/account';
+import { fetchSignatureRecords, useSignatureRecordsCountOfCurrentAddress } from '@service/signature';
 import { ENABLE_SMALL_SIGNATURE_RECORDS_FEATURE } from '@utils/features';
 import { Image } from 'expo-image';
 import type React from 'react';
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { FlatList, type LayoutChangeEvent, StyleSheet, View } from 'react-native';
 import { SignatureItem } from './SignatureItem';
@@ -24,61 +25,66 @@ const SignatureRecords: React.FC<StackScreenProps<typeof SignatureRecordsStackNa
   const [maxMessageLength, setMaxMessageLength] = useState(50);
   const [filter, setFilter] = useState(SignatureFilterOption.All);
   const { t } = useTranslation();
-  const { records: list, total: _total, setRecords, resetRecords } = useSignatureRecords(filter);
   const address = useCurrentAddress();
-  const total = _total ?? 0;
+  const addressId = address.data?.id ?? '';
+  const totalQuery = useSignatureRecordsCountOfCurrentAddress(filter);
+  const total = totalQuery.data ?? 0;
   const initialTotalRef = useRef<number | null>(null);
+  const [list, setList] = useState<ISignatureRecord[]>([]);
 
   // init initialTotalRef while _total has value
   useEffect(() => {
-    if (typeof _total === 'number' && initialTotalRef.current === null) {
-      initialTotalRef.current = _total;
+    if (typeof total === 'number' && initialTotalRef.current === null) {
+      initialTotalRef.current = total;
     }
-  }, [_total]);
+  }, [total]);
 
   // reset initialTotalRef while address or filter changed
   useEffect(() => {
     initialTotalRef.current = null;
-  }, [address, filter]);
+    setList([]);
+    setCurrent(0);
+  }, [addressId, filter]);
 
-  const handleQuery = async (page = 0) => {
-    if (!address) {
-      return null;
-    }
-    const data = await fetchSignatureRecords(address.id, {
-      current: page,
-      pageSize: DEFAULT_PAGE_SIZE,
-      offset: total - (initialTotalRef.current ?? total),
-      filter,
-    });
-    if (data.length > 0) {
-      setCurrent(page);
-      setRecords(data);
-    }
-  };
+  const handleQuery = useCallback(
+    async (page = 0) => {
+      if (!addressId) {
+        return null;
+      }
+      const data = await fetchSignatureRecords(addressId, {
+        current: page,
+        pageSize: DEFAULT_PAGE_SIZE,
+        offset: total - (initialTotalRef.current ?? total),
+        filter,
+      });
+      if (data.length > 0) {
+        setCurrent(page);
+        setList((prev) => (page === 0 ? data : [...prev, ...data]));
+      }
+    },
+    [addressId, filter, total],
+  );
 
-  const handleLoadMore = () => {
+  const handleLoadMore = useCallback(() => {
     const next = current + 1;
     if (next * DEFAULT_PAGE_SIZE < (initialTotalRef.current ?? total)) {
       return handleQuery(next);
     }
-  };
+  }, [current, handleQuery, total]);
 
   useEffect(() => {
-    handleQuery();
+    void handleQuery();
     listRef.current?.scrollToOffset({
       offset: 1,
       animated: false,
     });
-    return resetRecords;
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [address, filter]);
+  }, [handleQuery]);
 
-  const handleContainerLayout = (e: LayoutChangeEvent) => {
+  const handleContainerLayout = useCallback((e: LayoutChangeEvent) => {
     const containerWidth = e.nativeEvent.layout.width;
     // 10 is for ... and more
     setMaxMessageLength(Math.floor(containerWidth / 5) - 10);
-  };
+  }, []);
 
   return (
     <View style={[styles.container, { backgroundColor: colors.bgPrimary }]}>

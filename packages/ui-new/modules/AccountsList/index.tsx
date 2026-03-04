@@ -8,14 +8,15 @@ import ExistWallet from '@assets/icons/wallet-Imported.webp';
 import Checkbox from '@components/Checkbox';
 import HourglassLoading from '@components/Loading/Hourglass';
 import Text from '@components/Text';
-import { queryAccountGroupById } from '@core/database/models/AccountGroup/query';
+import { BSIM_MANAGEMENT_ACCOUNT_LIMIT } from '@core/hardware/bsim/constants';
 import { shortenAddress } from '@core/utils/address';
-import methods from '@core/WalletCore/Methods';
-import plugins from '@core/WalletCore/Plugins';
-import { useAccountsManage, useCurrentAccount, VaultType } from '@core/WalletCore/Plugins/ReactInject';
 import { BottomSheetSectionList } from '@gorhom/bottom-sheet';
 import { useNavigation, useTheme } from '@react-navigation/native';
 import type { StackNavigation } from '@router/configs';
+import { getAccountRootKey, useAccounts, useCurrentAccount } from '@service/account';
+import { getAccountGroupRootKey, useAccountGroupLastAccountIndex, useAccountGroups } from '@service/accountGroup';
+import { getAccountService, VaultType } from '@service/core';
+import { useQueryClient } from '@tanstack/react-query';
 import { toDataUrl } from '@utils/blockies';
 import { handleBSIMHardwareUnavailable } from '@utils/handleBSIMHardwareUnavailable';
 import { Image } from 'expo-image';
@@ -30,8 +31,10 @@ interface AccountGroupProps {
   key: string;
   id: string;
   nickname: string;
+  vaultId: string;
   vaultType: VaultType;
   accountCount: number;
+  lastAccountIndex: number;
 }
 
 interface AccountProps {
@@ -40,6 +43,7 @@ interface AccountProps {
   nickname: string;
   hidden: boolean;
   addressValue: string;
+  index: number;
 }
 
 const AccountGroup: React.FC<
@@ -168,14 +172,15 @@ const Account: React.FC<
 
 const AddAccount: React.FC<AccountGroupProps & { colors: ReturnType<typeof useTheme>['colors']; type: ListType; inAdding: boolean; onPress: () => void }> = ({
   colors,
-  accountCount,
+  lastAccountIndex,
   vaultType,
   inAdding,
   onPress,
 }) => {
   const { t } = useTranslation();
+  const nextIndex = lastAccountIndex + 1;
   const notReachMax =
-    (vaultType === VaultType.HierarchicalDeterministic && accountCount < 256) || (vaultType === VaultType.BSIM && accountCount < plugins.BSIM.chainLimitCount);
+    (vaultType === VaultType.HierarchicalDeterministic && nextIndex < 256) || (vaultType === VaultType.BSIM && nextIndex < BSIM_MANAGEMENT_ACCOUNT_LIMIT);
 
   if (vaultType === VaultType.PrivateKey || vaultType === VaultType.PublicAddress || !notReachMax) {
     return <View style={[styles.divider, { backgroundColor: colors.borderThird }]} pointerEvents="none" />;
@@ -205,42 +210,83 @@ const AccountsList: React.FC<{
   onPressGroup?: (groupId: string) => void;
 }> = ({ type, disabledCurrent, onPressAccount, onPressGroup }) => {
   const { colors } = useTheme();
-  const accountsManage = useAccountsManage();
-  const currentAccount = useCurrentAccount();
+  const queryClient = useQueryClient();
+  const { data: currentAccount } = useCurrentAccount();
+  const { data: groups = [] } = useAccountGroups(true);
+  const { data: accounts = [] } = useAccounts(false);
   const ListComponent = useMemo(() => (type === 'selector' ? BottomSheetSectionList : SectionList), [type]);
   const rootNavigation = useNavigation<StackNavigation>();
   const [inAddingId, setInAddingId] = useState<string | null>(null);
-  const addAccount = useCallback(async ({ id, vaultType }: AccountGroupProps) => {
-    try {
-      setInAddingId(id);
-      const accountGroup = await queryAccountGroupById(id);
-      const lastIndex = await methods.getAccountGroupLastAccountIndex(accountGroup);
-      if (lastIndex >= (vaultType === VaultType.BSIM ? plugins.BSIM.chainLimitCount : 255)) {
-        // navigation.navigate(HDManageStackName, { accountGroupId: accountGroup.id });
-        return;
-      }
-      if (vaultType === VaultType.HierarchicalDeterministic) {
-        return await methods.addAccount({ accountGroup });
-      }
-      if (vaultType === VaultType.BSIM) {
-        const list = await plugins.BSIM.getBSIMList();
-        const newIndex = (await methods.getAccountGroupLastAccountIndex(accountGroup)) + 1;
-        const alreadyCreateAccount = list?.find((item) => item.index === newIndex);
-        if (alreadyCreateAccount) {
-          return await methods.addAccount({ accountGroup, ...alreadyCreateAccount });
-        }
-        return await methods.addAccount({ accountGroup, ...(await plugins.BSIM.createNewBSIMAccount()) });
-      }
-    } catch (err: any) {
-      if (handleBSIMHardwareUnavailable(err, rootNavigation)) {
-        return;
-      }
-      console.log('Add account error', err);
-    } finally {
-      setInAddingId(null);
+  const getLastIndex = useAccountGroupLastAccountIndex();
+
+  const accountsManage = useMemo(() => {
+    const accountsByGroup = new Map<string, AccountProps[]>();
+    for (const account of accounts) {
+      if (account.hidden) continue;
+      const list = accountsByGroup.get(account.accountGroupId);
+      const item: AccountProps = {
+        key: account.id,
+        id: account.id,
+        nickname: account.nickname,
+        hidden: account.hidden,
+        addressValue: account.address,
+        index: account.index,
+      };
+      if (list) list.push(item);
+      else accountsByGroup.set(account.accountGroupId, [item]);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+
+    const sections = groups
+      .map((group) => {
+        const list = accountsByGroup.get(group.id) ?? [];
+        return {
+          title: {
+            key: group.id,
+            id: group.id,
+            nickname: group.nickname,
+            vaultId: group.vaultId,
+            vaultType: group.vaultType,
+            accountCount: group.accountCount,
+            lastAccountIndex: group.lastAccountIndex,
+          } satisfies AccountGroupProps,
+          data: list.sort((a, b) => a.index - b.index),
+        };
+      })
+      .filter((section) => section.data.length > 0);
+
+    sections.sort((a, b) => {
+      const aIsBsim = a.title.vaultType === VaultType.BSIM;
+      const bIsBsim = b.title.vaultType === VaultType.BSIM;
+      if (aIsBsim === bIsBsim) return 0;
+      return aIsBsim ? -1 : 1;
+    });
+    return sections;
+  }, [accounts, groups]);
+
+  const addAccount = useCallback(
+    async ({ id, vaultType }: AccountGroupProps) => {
+      try {
+        setInAddingId(id);
+        const lastIndex = await getLastIndex(id);
+        const limit = vaultType === VaultType.BSIM ? BSIM_MANAGEMENT_ACCOUNT_LIMIT : 256;
+        if (lastIndex + 1 >= limit) {
+          return;
+        }
+
+        await getAccountService().createNextGroupAccount(id);
+        await queryClient.invalidateQueries({ queryKey: getAccountRootKey() });
+        await queryClient.invalidateQueries({ queryKey: getAccountGroupRootKey() });
+      } catch (err: any) {
+        if (handleBSIMHardwareUnavailable(err, rootNavigation)) {
+          return;
+        }
+        console.log('Add account error', err);
+      } finally {
+        setInAddingId(null);
+      }
+    },
+    [getLastIndex, queryClient, rootNavigation],
+  );
 
   if (!accountsManage?.length) return null;
   return (
