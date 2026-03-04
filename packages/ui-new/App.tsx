@@ -1,3 +1,4 @@
+import { useI18nInit } from '@hooks/useI18n';
 import { useMode } from '@hooks/useMode';
 import CustomMessage from '@modules/CustomMessage';
 import { NavigationContainer, type Theme } from '@react-navigation/native';
@@ -21,6 +22,7 @@ import Plugins from '@core/WalletCore/Plugins';
 const messagesTop = { top: statusBarHeight + 20 + (OS === 'android' ? 0 : supports3DStructureLight ? 40 : 10) };
 
 const App: React.FC = () => {
+  useI18nInit();
   const { data: isReady } = useWalletReady();
   const { data: account } = useCurrentAccount();
   const { data: vaults = [] } = useVaults();

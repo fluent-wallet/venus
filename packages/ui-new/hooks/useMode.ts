@@ -1,21 +1,26 @@
-import database from '@core/database';
-import { setAtom } from '@core/WalletCore/Plugins/ReactInject';
-import { atom, useAtomValue } from 'jotai';
+import { getQueryClient, getUiPreferencesService } from '@service/core';
+import { useQuery } from '@tanstack/react-query';
 
-type Mode = 'light' | 'dark' | 'system';
-const _modeAtom = atom<Mode>('system');
-database.localStorage.get('mode').then((mode) => (['light', 'dark', 'system'] as const).includes(mode as Mode) && setAtom(_modeAtom, mode as Mode));
+export type Mode = import('@core/services').UiThemeMode;
 
-const modeAtom = atom(
-  (get) => {
-    const mode = get(_modeAtom);
-    return mode || 'system';
-  },
-  (_, set, update: Mode) => {
-    database.localStorage.set('mode', update);
-    set(_modeAtom, update);
-  },
-);
+export const getModeKey = () => ['preferences', 'mode'] as const;
 
-export const useMode = () => useAtomValue(modeAtom);
-export const setMode = (mode: Mode) => setAtom(modeAtom, mode);
+export function useMode(): Mode {
+  const prefs = getUiPreferencesService();
+  const query = useQuery({
+    queryKey: getModeKey(),
+    queryFn: () => prefs.getMode(),
+    initialData: 'system' as const,
+    staleTime: Infinity,
+    gcTime: Infinity,
+  });
+
+  return (query.data ?? 'system') as Mode;
+}
+
+export function setMode(mode: Mode): void {
+  getQueryClient().setQueryData(getModeKey(), mode);
+  void getUiPreferencesService()
+    .setMode(mode)
+    .catch((error) => console.log(error));
+}

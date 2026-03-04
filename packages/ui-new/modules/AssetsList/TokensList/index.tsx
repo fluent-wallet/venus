@@ -5,8 +5,7 @@ import type { AssetInfo } from '@core/WalletCore/Plugins/AssetsTracker/types';
 import { usePriceVisibleValue } from '@hooks/usePriceVisible';
 import { useTheme } from '@react-navigation/native';
 import { useAssetsOfCurrentAddress } from '@service/asset';
-import type { IAsset } from '@service/core';
-import Decimal from 'decimal.js';
+import { toLegacyAssetInfo } from '@utils/toLegacyAssetInfo';
 import { Image } from 'expo-image';
 import type React from 'react';
 import { useMemo } from 'react';
@@ -19,24 +18,6 @@ interface Props {
   onPressItem?: (v: AssetInfo) => void;
   showReceiveFunds?: boolean;
   selectType: 'Home' | 'Send' | 'Receive';
-}
-
-function toLegacyAssetInfo(asset: IAsset): AssetInfo {
-  const decimals = typeof asset.decimals === 'number' ? asset.decimals : 18;
-  const balance = asset.balance ? new Decimal(asset.balance) : new Decimal(0);
-  const baseUnits = balance.mul(Decimal.pow(10, decimals)).toFixed(0);
-
-  return {
-    type: asset.type as unknown as AssetInfo['type'],
-    contractAddress: asset.contractAddress ?? '',
-    name: asset.name ?? '',
-    symbol: asset.symbol ?? '',
-    decimals,
-    balance: baseUnits,
-    icon: asset.icon ?? undefined,
-    priceInUSDT: asset.priceInUSDT ?? undefined,
-    priceValue: asset.priceValue ?? undefined,
-  };
 }
 
 const TokensList: React.FC<Props> = ({ onPressItem, selectType, showReceiveFunds = false }) => {

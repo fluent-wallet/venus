@@ -1,20 +1,30 @@
-import database from '@core/database';
-import { setAtom } from '@core/WalletCore/Plugins/ReactInject';
-import { atom, useAtom, useAtomValue } from 'jotai';
+import { getQueryClient, getUiPreferencesService } from '@service/core';
+import { useQuery } from '@tanstack/react-query';
+import { useCallback } from 'react';
 
-const _TotalPriceVisibleAtom = atom<boolean | null>(true);
-database.localStorage.get('totalPriceVisible').then((visible) => typeof visible === 'boolean' && setAtom(_TotalPriceVisibleAtom, visible));
+export const getTotalPriceVisibleKey = () => ['preferences', 'totalPriceVisible'] as const;
 
-const TotalPriceVisibleAtom = atom(
-  (get) => {
-    const totalPriceVisible = get(_TotalPriceVisibleAtom);
-    return typeof totalPriceVisible === 'boolean' ? totalPriceVisible : true;
-  },
-  (_, set, update: boolean) => {
-    database.localStorage.set('totalPriceVisible', update);
-    set(_TotalPriceVisibleAtom, update);
-  },
-);
+export function usePriceVisibleValue(): boolean {
+  const prefs = getUiPreferencesService();
+  const query = useQuery({
+    queryKey: getTotalPriceVisibleKey(),
+    queryFn: () => prefs.getTotalPriceVisible(),
+    initialData: true,
+    staleTime: Infinity,
+    gcTime: Infinity,
+  });
+  return Boolean(query.data);
+}
 
-export const usePriceVisibleValue = () => useAtomValue(TotalPriceVisibleAtom);
-export const usePriceVisible = () => useAtom(TotalPriceVisibleAtom);
+export function setPriceVisible(next: boolean): void {
+  getQueryClient().setQueryData(getTotalPriceVisibleKey(), next);
+  void getUiPreferencesService()
+    .setTotalPriceVisible(next)
+    .catch((error) => console.log(error));
+}
+
+export function usePriceVisible(): readonly [boolean, (next: boolean) => void] {
+  const value = usePriceVisibleValue();
+  const set = useCallback((next: boolean) => setPriceVisible(next), []);
+  return [value, set] as const;
+}
