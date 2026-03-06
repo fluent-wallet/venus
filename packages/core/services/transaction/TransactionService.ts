@@ -62,6 +62,7 @@ import { inject, injectable, optional } from 'inversify';
 import * as OxHex from 'ox/Hex';
 import * as OxValue from 'ox/Value';
 import type { EvmRpcTransactionRequest } from './dappTypes';
+import { resolveTransactionMethod } from './methodResolver';
 import type {
   GasPricingEstimate,
   IActivityTransaction,
@@ -980,6 +981,7 @@ export class TransactionService {
     const { address, unsignedTx, txHash, txRaw, assetType, contractAddress, sendAt, isFailed = false, err, errorType } = params;
 
     const payload: any = unsignedTx.payload ?? {};
+    const txMethod = resolveTransactionMethod({ payload, assetType });
 
     const network = await address.network.fetch();
 
@@ -1034,7 +1036,7 @@ export class TransactionService {
       record.resendCount = null;
       record.isTempReplacedByInner = null;
       record.source = TxSource.SELF;
-      record.method = assetType === AssetType.ERC20 ? 'transfer' : '';
+      record.method = txMethod;
       record.address.set(address);
       record.txPayload.set(txPayload);
       record.txExtra.set(txExtra);
@@ -1063,6 +1065,7 @@ export class TransactionService {
     const { address, unsignedTx, txHash, txRaw, sendAt, isFailed = false, err, errorType } = params;
 
     const payload: any = unsignedTx.payload ?? {};
+    const txMethod = resolveTransactionMethod({ payload });
 
     const txPayload = this.database.get<TxPayload>(TableName.TxPayload).prepareCreate((record) => {
       record.type = payload.type != null ? String(payload.type) : null;
@@ -1107,7 +1110,7 @@ export class TransactionService {
       record.resendCount = null;
       record.isTempReplacedByInner = null;
       record.source = TxSource.DAPP;
-      record.method = '';
+      record.method = txMethod;
       record.address.set(address);
       record.txPayload.set(txPayload);
       record.txExtra.set(txExtra);
@@ -1638,7 +1641,6 @@ export class TransactionService {
     if (!network) throw new Error('[TransactionService] Address has no associated network.');
 
     const payload: any = unsignedTx.payload ?? {};
-
     const assets = await network.assets.fetch();
     const nativeAsset = assets.find((item) => item.type === AssetType.Native);
 
@@ -1968,7 +1970,6 @@ export class TransactionService {
 
     const asset = await this.loadTxAssetOrNull(tx);
     const assetSnapshot = this.toAssetSnapshot(asset);
-
     const createdAtMs = tx.createdAt.getTime();
     const executedAtMs = tx.executedAt ? tx.executedAt.getTime() : null;
     const sendAtMs = tx.sendAt ? tx.sendAt.getTime() : createdAtMs;
@@ -2003,7 +2004,6 @@ export class TransactionService {
 
     const assetSnapshot = this.toAssetSnapshot(asset);
     const nativeAssetSnapshot = this.toAssetSnapshot(nativeAsset);
-
     const createdAtMs = tx.createdAt.getTime();
     const executedAtMs = tx.executedAt ? tx.executedAt.getTime() : null;
     const sendAtMs = tx.sendAt ? tx.sendAt.getTime() : createdAtMs;

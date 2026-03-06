@@ -1,6 +1,7 @@
 import 'reflect-metadata';
 
 import { ChainRegistry } from '@core/chains';
+import { iface721, iface777 } from '@core/contracts';
 import type { Database } from '@core/database';
 import type { Address } from '@core/database/models/Address';
 import { AssetSource, type Asset as DbAsset, AssetType as DbAssetType } from '@core/database/models/Asset';
@@ -22,6 +23,7 @@ import { createTestAccount, seedNetwork } from '@core/testUtils/fixtures';
 import { createSilentLogger, DEFAULT_PRIVATE_KEY, mockDatabase } from '@core/testUtils/mocks';
 import { StubChainProvider } from '@core/testUtils/mocks/chainProviders';
 import { AssetType, type IChainRpc, type ISigner, TxStatus as ServiceTxStatus } from '@core/types';
+import { Q } from '@nozbe/watermelondb';
 import { Container } from 'inversify';
 import { ChainStatusService } from '../chain/ChainStatusService';
 import { SignatureRecordService } from '../signing/SignatureRecordService';
@@ -44,6 +46,10 @@ async function createDbTx(params: {
   sendAction?: 'SpeedUp' | 'Cancel' | null;
   source?: TxSource;
   method?: string;
+  data?: string;
+  value?: string;
+  extraMethod?: string | null;
+  asset?: DbAsset | null;
 }) {
   const {
     database,
@@ -61,6 +67,10 @@ async function createDbTx(params: {
     sendAction = null,
     source = TxSource.SELF,
     method = 'transfer',
+    data = '0x',
+    value = '0x1',
+    extraMethod = null,
+    asset = null,
   } = params;
 
   let tx: Tx;
@@ -69,7 +79,8 @@ async function createDbTx(params: {
     const payload = await database.get<TxPayload>(TableName.TxPayload).create((record) => {
       record.from = from;
       record.to = to;
-      record.value = '0x1';
+      record.value = value;
+      record.data = data;
       record.nonce = nonce;
       record.chainId = '0x1';
       record.gasPrice = gasPrice;
@@ -84,6 +95,7 @@ async function createDbTx(params: {
       record.token20 = false;
       record.tokenNft = false;
       record.sendAction = sendAction;
+      record.method = extraMethod;
     });
 
     tx = await database.get<Tx>(TableName.Tx).create((record) => {
@@ -97,6 +109,9 @@ async function createDbTx(params: {
       record.sendAt = sendAt;
       record.source = source;
       record.method = method;
+      if (asset) {
+        record.asset.set(asset);
+      }
     });
   });
 
@@ -200,6 +215,7 @@ describe('TransactionService', () => {
     expect(signatures[0].tx.id).toBe(tx.id);
     expect(tx.hash).toBe('0xhash');
     expect(tx.status).toBe(DbTxStatus.PENDING);
+    expect(tx.method).toBe('transfer');
 
     const txPayload = await tx.txPayload.fetch();
     expect(txPayload.from).toBe(await address.getValue());
@@ -591,6 +607,7 @@ describe('TransactionService', () => {
     const txs = await database.get<Tx>(TableName.Tx).query().fetch();
     expect(txs).toHaveLength(1);
     const tx = txs[0];
+    expect(tx.method).toBe('transfer');
 
     const txExtra = await tx.txExtra.fetch();
     expect(txExtra.token20).toBe(true);
@@ -602,6 +619,76 @@ describe('TransactionService', () => {
     expect(txPayload.to).toBe(contractAddress);
 
     expect(signingService.getSigner).toHaveBeenCalledWith(account.id, address.id, expect.objectContaining({ signal: undefined }));
+  });
+
+  it('persists self-transfer method for native and nft sends', async () => {
+    const { address, network, assetRule } = await createTestAccount(database);
+
+    const provider = new StubChainProvider({
+      chainId: network.chainId,
+      networkType: network.networkType,
+    });
+    chainRegistry.register(provider);
+
+    await database.write(async () => {
+      await database.batch(
+        database.get<DbAsset>(TableName.Asset).prepareCreate((record) => {
+          record.network.set(network);
+          record.assetRule.set(assetRule);
+          record.type = DbAssetType.ERC721;
+          record.contractAddress = '0x00000000000000000000000000000000000007e1';
+          record.name = 'NFT 721';
+          record.symbol = 'NFT721';
+          record.decimals = 0;
+          record.icon = null;
+          record.priceInUSDT = null;
+          record.source = AssetSource.Official;
+        }),
+        database.get<DbAsset>(TableName.Asset).prepareCreate((record) => {
+          record.network.set(network);
+          record.assetRule.set(assetRule);
+          record.type = DbAssetType.ERC1155;
+          record.contractAddress = '0x0000000000000000000000000000000000001155';
+          record.name = 'NFT 1155';
+          record.symbol = 'NFT1155';
+          record.decimals = 0;
+          record.icon = null;
+          record.priceInUSDT = null;
+          record.source = AssetSource.Official;
+        }),
+      );
+    });
+
+    await service.sendNative({
+      addressId: address.id,
+      to: '0x0000000000000000000000000000000000000002',
+      amount: '1',
+      assetType: AssetType.Native,
+      assetDecimals: 18,
+    });
+
+    await service.sendNative({
+      addressId: address.id,
+      to: '0x0000000000000000000000000000000000000003',
+      amount: '1',
+      assetType: AssetType.ERC721,
+      assetDecimals: 0,
+      contractAddress: '0x00000000000000000000000000000000000007e1',
+      nftTokenId: '7',
+    });
+
+    await service.sendNative({
+      addressId: address.id,
+      to: '0x0000000000000000000000000000000000000004',
+      amount: '2',
+      assetType: AssetType.ERC1155,
+      assetDecimals: 0,
+      contractAddress: '0x0000000000000000000000000000000000001155',
+      nftTokenId: '11',
+    });
+
+    const txs = await database.get<Tx>(TableName.Tx).query(Q.sortBy('created_at', Q.asc)).fetch();
+    expect(txs.map((tx) => tx.method)).toEqual(['transfer', 'transferFrom', 'safeTransferFrom']);
   });
   it('persists SEND_FAILED tx when broadcastTransaction throws', async () => {
     const { address, network, assetRule } = await createTestAccount(database);
@@ -840,6 +927,35 @@ describe('TransactionService', () => {
       key: { addressId: address.id, networkId: evmNetwork.id },
       txId: result.id,
     });
+  });
+
+  it('derives dapp tx method from calldata', async () => {
+    const { network: evmNetwork, assetRule } = await seedNetwork(database, { definitionKey: 'eSpace Testnet', selected: true });
+    const { address } = await createTestAccount(database, { network: evmNetwork, assetRule });
+
+    const provider = new StubChainProvider({
+      chainId: evmNetwork.chainId,
+      networkType: evmNetwork.networkType,
+    });
+    chainRegistry.register(provider);
+
+    const approveData = iface777.encodeFunctionData('approve', ['0x0000000000000000000000000000000000000009', 42n]);
+    await service.sendDappTransaction({
+      addressId: address.id,
+      request: {
+        from: address.hex,
+        to: '0x00000000000000000000000000000000000000aa',
+        data: approveData,
+        value: '0x0',
+        gas: '0x5208',
+        gasPrice: '0x1',
+        nonce: '0x1',
+        type: '0x0',
+      } as any,
+    });
+
+    const txs = await database.get<Tx>(TableName.Tx).query(Q.sortBy('created_at', Q.asc)).fetch();
+    expect(txs[0].method).toBe('approve');
   });
 
   it('does not override dapp request fields when estimating', async () => {

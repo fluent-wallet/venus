@@ -1,13 +1,15 @@
 import { type ISignatureRecord, SignatureFilterOption, SignType } from '@core/services/signing/types';
 import type { QueryClient } from '@tanstack/react-query';
-import { renderHook, waitFor } from '@testing-library/react-native';
+import { act, renderHook, waitFor } from '@testing-library/react-native';
 import type React from 'react';
 import { useCurrentAddress } from './account';
 import { getSignatureRecordService } from './core';
 import { createTestQueryClient, createWrapper } from './mocks/reactQuery';
 import {
+  getInfiniteSignatureRecordsKey,
   getSignatureRecordsCountKey,
   getSignatureRecordsKey,
+  useInfiniteSignatureRecordsOfAddress,
   useSignatureRecordsCountOfAddress,
   useSignatureRecordsCountOfCurrentAddress,
   useSignatureRecordsOfAddress,
@@ -108,5 +110,40 @@ describe('signature service hooks', () => {
 
     expect(recordsHook.result.current.data).toEqual([]);
     expect(countHook.result.current.data).toBe(0);
+  });
+
+  it('useInfiniteSignatureRecordsOfAddress loads next page with offset pagination', async () => {
+    const secondRecord: ISignatureRecord = {
+      ...mockRecord,
+      id: 'sig_2',
+      createdAt: 1_700_000_000_100,
+    };
+    const thirdRecord: ISignatureRecord = {
+      ...mockRecord,
+      id: 'sig_3',
+      createdAt: 1_700_000_000_200,
+    };
+
+    service.listRecords.mockImplementation(async ({ offset, limit }: { offset?: number; limit?: number }) => {
+      expect(limit).toBe(2);
+      if (offset === 0) return [mockRecord, secondRecord];
+      if (offset === 2) return [thirdRecord];
+      return [];
+    });
+
+    const { result } = renderHook(() => useInfiniteSignatureRecordsOfAddress('addr_1', { filter: SignatureFilterOption.All, pageSize: 2 }), { wrapper });
+
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+    expect(result.current.data?.pages).toEqual([[mockRecord, secondRecord]]);
+    expect(queryClient.getQueryData(getInfiniteSignatureRecordsKey('addr_1', SignatureFilterOption.All, 2))).toBeTruthy();
+
+    await act(async () => {
+      await result.current.fetchNextPage();
+    });
+
+    await waitFor(() => expect(result.current.data?.pages).toEqual([[mockRecord, secondRecord], [thirdRecord]]));
+    expect(service.listRecords).toHaveBeenNthCalledWith(1, { addressId: 'addr_1', filter: SignatureFilterOption.All, limit: 2, offset: 0 });
+    expect(service.listRecords).toHaveBeenNthCalledWith(2, { addressId: 'addr_1', filter: SignatureFilterOption.All, limit: 2, offset: 2 });
+    expect(result.current.hasNextPage).toBe(false);
   });
 });

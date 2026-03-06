@@ -7,12 +7,13 @@ import type { Tx } from '@core/database/models/Tx';
 import TableName from '@core/database/TableName';
 import { CORE_IDENTIFIERS } from '@core/di';
 import { CoreError, SIGNATURE_RECORD_ADDRESS_NOT_FOUND, SIGNATURE_RECORD_NETWORK_NOT_FOUND } from '@core/errors';
+import type { CoreEventMap, EventBus } from '@core/modules/eventBus';
 import { ChainStatusService } from '@core/services/chain/ChainStatusService';
 import { NetworkType } from '@core/types';
 import { Q } from '@nozbe/watermelondb';
-import { inject, injectable } from 'inversify';
+import { inject, injectable, optional } from 'inversify';
 import { fromNumber } from 'ox/Hex';
-import { type ISignatureRecord, SignatureFilterOption, type SignatureRecordAppSnapshot, type SignatureRecordTxSnapshot, type SignType } from './types';
+import { type ISignatureRecord, SignatureFilterOption, type SignatureRecordAppSnapshot, type SignatureRecordTxSnapshot, SignType } from './types';
 
 export type CreateSignatureRecordInput = {
   addressId: string;
@@ -28,6 +29,10 @@ export class SignatureRecordService {
 
   @inject(ChainStatusService)
   private readonly chainStatus!: ChainStatusService;
+
+  @inject(CORE_IDENTIFIERS.EVENT_BUS)
+  @optional()
+  private readonly eventBus?: EventBus<CoreEventMap>;
 
   async createRecord(input: CreateSignatureRecordInput): Promise<string> {
     const address = await this.findAddress(input.addressId);
@@ -55,6 +60,14 @@ export class SignatureRecordService {
       await this.database.batch(...(preparedApp ? [preparedApp] : []), signature);
     });
 
+    if (input.signType !== SignType.TX) {
+      this.eventBus?.emit('signature/changed', {
+        addressId: address.id,
+        signatureId: signature.id,
+        reason: 'created',
+      });
+    }
+
     return signature.id;
   }
 
@@ -66,6 +79,13 @@ export class SignatureRecordService {
 
         await signature.update((record) => {
           record.tx.set(tx);
+        });
+
+        this.eventBus?.emit('signature/changed', {
+          addressId: signature.address.id,
+          signatureId: signature.id,
+          reason: 'tx-linked',
+          txId: tx.id,
         });
       });
     } catch {

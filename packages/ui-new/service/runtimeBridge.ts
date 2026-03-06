@@ -76,6 +76,10 @@ export function useRuntimeEventBridge(navigation: StackNavigation) {
       void queryClient.invalidateQueries({ queryKey: getTransactionRootKey() });
     };
 
+    const invalidateSignature = () => {
+      void queryClient.invalidateQueries({ queryKey: getSignatureRootKey() });
+    };
+
     const invalidateAsset = () => {
       void queryClient.invalidateQueries({ queryKey: getAssetRootKey() });
     };
@@ -202,6 +206,8 @@ export function useRuntimeEventBridge(navigation: StackNavigation) {
 
       eventBus.on('tx/created', invalidateTx),
       eventBus.on('tx/updated', invalidateTx),
+
+      eventBus.on('signature/changed', invalidateSignature),
 
       eventBus.on('assets-sync/started', invalidateAsset),
       eventBus.on('assets-sync/updated', invalidateAsset),

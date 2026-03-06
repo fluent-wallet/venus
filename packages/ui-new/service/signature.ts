@@ -1,16 +1,19 @@
 import { type ISignatureRecord, SignatureFilterOption } from '@core/services/signing/types';
-import { type UseQueryResult, useQuery } from '@tanstack/react-query';
+import { type InfiniteData, type UseInfiniteQueryResult, type UseQueryResult, useInfiniteQuery, useQuery } from '@tanstack/react-query';
 import { useCurrentAddress } from './account';
 import { getSignatureRecordService } from './core';
 
 export type SignatureRecordsQuery = UseQueryResult<ISignatureRecord[]>;
 export type SignatureRecordsCountQuery = UseQueryResult<number>;
+export type InfiniteSignatureRecordsQuery = UseInfiniteQueryResult<InfiniteData<ISignatureRecord[], number>>;
 
 // Key helpers
 export const getSignatureRootKey = () => ['signature'] as const;
 export const getSignatureRecordsKey = (addressId: string, filter: SignatureFilterOption, limit?: number, offset?: number) =>
   ['signature', 'records', addressId, filter, limit ?? 'all', offset ?? 0] as const;
 export const getSignatureRecordsCountKey = (addressId: string, filter: SignatureFilterOption) => ['signature', 'count', addressId, filter] as const;
+export const getInfiniteSignatureRecordsKey = (addressId: string, filter: SignatureFilterOption, pageSize: number) =>
+  ['signature', 'records', 'infinite', addressId, filter, pageSize] as const;
 
 export async function fetchSignatureRecords(
   addressId: string,
@@ -65,6 +68,31 @@ export function useSignatureRecordsCountOfAddress(addressId: string, filter: Sig
 }
 
 /**
+ * Fetch signature records of a specific address with incremental pagination.
+ */
+export function useInfiniteSignatureRecordsOfAddress(
+  addressId: string,
+  options: { filter?: SignatureFilterOption; pageSize?: number } = {},
+): InfiniteSignatureRecordsQuery {
+  const service = getSignatureRecordService();
+  const filter = options.filter ?? SignatureFilterOption.All;
+  const pageSize = Math.max(1, options.pageSize ?? 20);
+
+  return useInfiniteQuery({
+    queryKey: getInfiniteSignatureRecordsKey(addressId || 'none', filter, pageSize),
+    queryFn: ({ pageParam }) => service.listRecords({ addressId, filter, limit: pageSize, offset: pageParam * pageSize }),
+    initialPageParam: 0,
+    getNextPageParam: (lastPage, _allPages, lastPageParam) => {
+      if (lastPage.length < pageSize) {
+        return undefined;
+      }
+      return lastPageParam + 1;
+    },
+    enabled: !!addressId,
+  });
+}
+
+/**
  * Fetch signature records of the current address (if any).
  * @example
  * const { data: records } = useSignatureRecordsOfCurrentAddress({ filter: SignatureFilterOption.All });
@@ -73,6 +101,17 @@ export function useSignatureRecordsOfCurrentAddress(options: { filter?: Signatur
   const current = useCurrentAddress();
   const addressId = current.data?.id ?? '';
   return useSignatureRecordsOfAddress(addressId, options);
+}
+
+/**
+ * Fetch signature records of the current address with incremental pagination.
+ */
+export function useInfiniteSignatureRecordsOfCurrentAddress(
+  options: { filter?: SignatureFilterOption; pageSize?: number } = {},
+): InfiniteSignatureRecordsQuery {
+  const current = useCurrentAddress();
+  const addressId = current.data?.id ?? '';
+  return useInfiniteSignatureRecordsOfAddress(addressId, options);
 }
 
 /**
