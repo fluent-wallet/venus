@@ -1,4 +1,4 @@
-import type { LegacyLikeGasEstimate, SendERC20Input, SendTransactionInput, SpeedUpTxContext, SpeedUpTxInput } from '@core/services';
+import type { GasPricingEstimate, SendERC20Input, SendTransactionInput, SpeedUpTxContext, SpeedUpTxInput } from '@core/services';
 import { type UseQueryResult, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useCallback } from 'react';
 import { useCurrentAddress } from './account';
@@ -12,6 +12,14 @@ export type SpeedUpContextQuery = UseQueryResult<SpeedUpTxContext | null>;
 export type TransactionDetailQuery = UseQueryResult<ITransactionDetail | null>;
 
 export type Level = 'low' | 'medium' | 'high';
+export interface ITransactionGasEstimate {
+  gasLimit: string;
+  gasPrice: string;
+  storageLimit?: string;
+  nonce: number;
+  estimate?: Record<Level, { suggestedGasPrice: string; gasCost: string }>;
+  estimateOf1559?: Record<Level, { suggestedMaxFeePerGas: string; suggestedMaxPriorityFeePerGas: string; gasCost: string }>;
+}
 
 export const getTransactionRootKey = () => ['tx'] as const;
 export const getGasEstimateRootKey = () => ['gasEstimate'] as const;
@@ -42,11 +50,61 @@ export async function isPendingTxsFull(addressId: string): Promise<boolean> {
   return getTransactionService().isPendingTxsFull({ addressId });
 }
 
+function toTransactionGasEstimate(estimate: GasPricingEstimate): ITransactionGasEstimate {
+  const base = {
+    gasLimit: estimate.gasLimit,
+    gasPrice: estimate.gasPrice,
+    storageLimit: estimate.storageLimit,
+    nonce: estimate.nonce,
+  };
+
+  if (estimate.pricing.kind === 'legacy') {
+    return {
+      ...base,
+      estimate: {
+        low: {
+          suggestedGasPrice: estimate.pricing.levels.low.gasPrice,
+          gasCost: estimate.pricing.levels.low.gasCost,
+        },
+        medium: {
+          suggestedGasPrice: estimate.pricing.levels.medium.gasPrice,
+          gasCost: estimate.pricing.levels.medium.gasCost,
+        },
+        high: {
+          suggestedGasPrice: estimate.pricing.levels.high.gasPrice,
+          gasCost: estimate.pricing.levels.high.gasCost,
+        },
+      },
+    };
+  }
+
+  return {
+    ...base,
+    estimateOf1559: {
+      low: {
+        suggestedMaxFeePerGas: estimate.pricing.levels.low.maxFeePerGas,
+        suggestedMaxPriorityFeePerGas: estimate.pricing.levels.low.maxPriorityFeePerGas,
+        gasCost: estimate.pricing.levels.low.gasCost,
+      },
+      medium: {
+        suggestedMaxFeePerGas: estimate.pricing.levels.medium.maxFeePerGas,
+        suggestedMaxPriorityFeePerGas: estimate.pricing.levels.medium.maxPriorityFeePerGas,
+        gasCost: estimate.pricing.levels.medium.gasCost,
+      },
+      high: {
+        suggestedMaxFeePerGas: estimate.pricing.levels.high.maxFeePerGas,
+        suggestedMaxPriorityFeePerGas: estimate.pricing.levels.high.maxPriorityFeePerGas,
+        gasCost: estimate.pricing.levels.high.gasCost,
+      },
+    },
+  };
+}
+
 export function usePollingGasEstimateAndNonce(
   tx: { from?: string; to?: string; value?: string; data?: string } | null,
   withNonce = true,
   addressIdOverride?: string,
-): LegacyLikeGasEstimate | null {
+): ITransactionGasEstimate | null {
   const service = getTransactionService();
   const currentAddress = useCurrentAddress();
   const addressId = addressIdOverride ?? currentAddress.data?.id ?? '';
@@ -59,7 +117,7 @@ export function usePollingGasEstimateAndNonce(
       if (!tx) {
         throw new Error('Missing tx for gas estimate.');
       }
-      return service.estimateLegacyGasForUi({ addressId, tx, withNonce });
+      return service.estimateGasPricing({ addressId, tx, withNonce }).then(toTransactionGasEstimate);
     },
     enabled,
     refetchInterval: 15_000,

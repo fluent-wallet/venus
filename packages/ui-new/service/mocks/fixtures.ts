@@ -1,7 +1,6 @@
-import { AssetSource } from '@core/database/models/Asset';
-import { ChainType, NetworkType } from '@core/database/models/Network';
-import { VaultType } from '@core/database/models/Vault/VaultType';
-import { AssetType, TxStatus } from '@core/types';
+import { ASSET_SOURCE, AssetType, TxStatus } from '@core/types';
+import { VaultType } from '@core/types/vault';
+import { ChainType, NetworkType } from '@core/utils/consts';
 import type { IAccount, IAsset, INetwork, ITransaction, IVault, RecentlyAddress } from '../core';
 
 export const mockAccount: IAccount = {
@@ -23,7 +22,7 @@ export const mockAsset: IAsset = {
   name: 'test',
   contractAddress: '0x123',
   icon: '',
-  source: AssetSource.Custom,
+  source: ASSET_SOURCE.Custom,
   id: 'asset_1',
   symbol: 'CFX',
   decimals: 18,

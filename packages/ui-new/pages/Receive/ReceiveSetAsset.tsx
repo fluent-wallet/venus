@@ -10,7 +10,6 @@ import {
 } from '@components/BottomSheet';
 import Button from '@components/Button';
 import Text from '@components/Text';
-import type { AssetInfo } from '@core/WalletCore/Plugins/AssetsTracker/types';
 import TokenIcon from '@modules/AssetsList/TokensList/TokenIcon';
 import SelectAsset from '@pages/SendTransaction/Step2Asset';
 import SetAssetAmount, { type AmountAsset, type AmountInfo } from '@pages/SendTransaction/Step3Amount/SetAssetAmount';
@@ -18,6 +17,7 @@ import { useTheme } from '@react-navigation/native';
 import { useCurrentAddress } from '@service/account';
 import { useAssetsOfCurrentAddress } from '@service/asset';
 import { useCurrentNetwork } from '@service/network';
+import type { AssetInfo } from '@utils/assetInfo';
 import type React from 'react';
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';

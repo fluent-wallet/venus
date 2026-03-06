@@ -3,8 +3,7 @@ import { BottomSheetHeader, type BottomSheetMethods, BottomSheetScrollContent } 
 import HourglassLoading from '@components/Loading/Hourglass';
 import Text from '@components/Text';
 import TextInput from '@components/TextInput';
-import type { AssetInfo } from '@core/WalletCore/Plugins/AssetsTracker/types';
-import { AssetType, useAssetsAllList, useTokenListOfCurrentNetwork } from '@core/WalletCore/Plugins/ReactInject';
+import { ASSET_TYPE } from '@core/types';
 import { NFTCollectionItem } from '@modules/AssetsList/NFTsList/NFTCollectionItem';
 import { NFTItemsGrid } from '@modules/AssetsList/NFTsList/NFTItemsGrid';
 import { useOpenNftCollection } from '@modules/AssetsList/NFTsList/openState';
@@ -21,10 +20,12 @@ import {
 } from '@router/configs';
 import { useCurrentAddress } from '@service/account';
 import { isValidAddress } from '@service/address';
-import { useAddCustomToken } from '@service/asset';
-import type { IAsset, INftCollection, INftItem } from '@service/core';
+import { useAddCustomToken, useAssetsOfCurrentAddress } from '@service/asset';
+import type { INftCollection, INftItem } from '@service/core';
 import { useCurrentNetwork } from '@service/network';
 import { useNftCollectionsOfAddress, useNftItems } from '@service/nft';
+import type { AssetInfo } from '@utils/assetInfo';
+import { toAssetInfo } from '@utils/toAssetInfo';
 import Decimal from 'decimal.js';
 import { debounce, escapeRegExp } from 'lodash-es';
 import type React from 'react';
@@ -34,30 +35,9 @@ import { type NativeScrollEvent, type NativeSyntheticEvent, Pressable, StyleShee
 import { showMessage } from 'react-native-flash-message';
 import SendTransactionBottomSheet from '../SendTransactionBottomSheet';
 
-function toLegacyAssetInfo(asset: IAsset): AssetInfo {
-  const decimals = typeof asset.decimals === 'number' ? asset.decimals : 18;
-  const balance = asset.balance ? new Decimal(asset.balance) : new Decimal(0);
-  const baseUnits = balance.mul(Decimal.pow(10, decimals)).toFixed(0);
-
+function toNftAssetInfo(params: { collection: Pick<INftCollection, 'contractAddress' | 'type' | 'name' | 'symbol' | 'icon'>; item: INftItem }): AssetInfo {
   return {
-    type: asset.type as unknown as AssetInfo['type'],
-    contractAddress: asset.contractAddress ?? '',
-    name: asset.name ?? '',
-    symbol: asset.symbol ?? '',
-    decimals,
-    balance: baseUnits,
-    icon: asset.icon ?? undefined,
-    priceInUSDT: asset.priceInUSDT ?? undefined,
-    priceValue: asset.priceValue ?? undefined,
-  };
-}
-
-function toLegacyNftAssetInfo(params: {
-  collection: Pick<INftCollection, 'contractAddress' | 'type' | 'name' | 'symbol' | 'icon'>;
-  item: INftItem;
-}): AssetInfo {
-  return {
-    type: params.collection.type as unknown as AssetInfo['type'],
+    type: params.collection.type,
     contractAddress: params.collection.contractAddress,
     name: params.collection.name ?? '',
     symbol: params.collection.symbol ?? '',
@@ -123,7 +103,7 @@ const NftSearchRow: React.FC<{
             collection={collection}
             items={items}
             onPressItem={(item) => {
-              onSelect(toLegacyNftAssetInfo({ collection, item }), item);
+              onSelect(toNftAssetInfo({ collection, item }), item);
             }}
           />
         ))}
@@ -155,9 +135,10 @@ const SendTransactionStep2Asset: React.FC<Props> = ({ navigation, route, onConfi
 
   const { data: currentNetwork } = useCurrentNetwork();
   const { data: currentAddress } = useCurrentAddress();
+  const currentAddressId = currentAddress?.id ?? '';
+  const assetsQuery = useAssetsOfCurrentAddress();
   const addCustomToken = useAddCustomToken();
-
-  const assets = (selectType === 'Send' ? useAssetsAllList : useTokenListOfCurrentNetwork)();
+  const assets = assetsQuery.data ?? [];
 
   const [searchAsset, setSearchAsset] = useState(() => route?.params?.searchAddress ?? '');
   const [inFetchingRemote, setInFetchingRemote] = useState(false);
@@ -166,7 +147,7 @@ const SendTransactionStep2Asset: React.FC<Props> = ({ navigation, route, onConfi
     assets: Array<AssetInfo>;
   }>(() => ({ type: 'local', assets: [] }));
 
-  const nftCollectionsQuery = useNftCollectionsOfAddress(currentAddress?.id ?? '');
+  const nftCollectionsQuery = useNftCollectionsOfAddress(currentAddressId);
   const filteredNftCollections = useMemo(() => {
     const value = searchAsset.trim();
     if (!value) return [];
@@ -178,17 +159,18 @@ const SendTransactionStep2Asset: React.FC<Props> = ({ navigation, route, onConfi
     debounce(async (value: string) => {
       const localAssets = assets
         ?.filter((asset) =>
-          [asset.name, asset.symbol, asset.type === AssetType.Native ? AssetType.Native : asset.contractAddress].some((str) =>
+          [asset.name, asset.symbol, asset.type === ASSET_TYPE.Native ? ASSET_TYPE.Native : asset.contractAddress].some((str) =>
             !str ? false : str?.search(new RegExp(escapeRegExp(value), 'i')) !== -1,
           ),
         )
         .filter((asset) => !!asset.type)
-        .filter((asset) => asset.type !== AssetType.ERC1155 && asset.type !== AssetType.ERC721);
+        .filter((asset) => asset.type !== ASSET_TYPE.ERC1155 && asset.type !== ASSET_TYPE.ERC721)
+        .map(toAssetInfo);
       if (localAssets && localAssets?.length > 0) {
         setFilterAssets({ type: 'local', assets: localAssets });
       } else {
         try {
-          if (!currentNetwork || !currentAddress?.id) {
+          if (!currentNetwork || !currentAddressId) {
             setFilterAssets({ type: 'network-error', assets: [] });
             return;
           }
@@ -201,8 +183,8 @@ const SendTransactionStep2Asset: React.FC<Props> = ({ navigation, route, onConfi
           if (valid) {
             setInFetchingRemote(true);
             await new Promise((resolve) => setTimeout(() => resolve(null!)));
-            const created = await addCustomToken({ addressId: currentAddress.id, contractAddress: value });
-            const assetInfo = toLegacyAssetInfo(created);
+            const created = await addCustomToken({ addressId: currentAddressId, contractAddress: value });
+            const assetInfo = toAssetInfo(created);
             setFilterAssets({ type: 'remote', assets: [assetInfo] });
           } else {
             setFilterAssets({ type: 'invalid-format', assets: [] });
@@ -218,7 +200,7 @@ const SendTransactionStep2Asset: React.FC<Props> = ({ navigation, route, onConfi
         }
       }
     }, 200),
-    [assets, currentNetwork, currentAddress?.id, addCustomToken],
+    [assets, currentNetwork, currentAddressId, addCustomToken],
   );
 
   useEffect(() => {
@@ -228,13 +210,13 @@ const SendTransactionStep2Asset: React.FC<Props> = ({ navigation, route, onConfi
   const handleClickAsset = useCallback(
     (asset: AssetInfo, nftItemDetail?: INftItem) => {
       if (navigation) {
-        if ((asset.type === AssetType.ERC20 || asset.type === AssetType.Native) && (Number(asset.balance) === 0 || Number.isNaN(Number(asset.balance)))) {
+        if ((asset.type === ASSET_TYPE.ERC20 || asset.type === ASSET_TYPE.Native) && (Number(asset.balance) === 0 || Number.isNaN(Number(asset.balance)))) {
           return showMessage({
             message: t('tx.asset.zeroBalance', { symbol: asset.symbol }),
             type: 'warning',
           });
         }
-        if (asset.type === AssetType.ERC721) {
+        if (asset.type === ASSET_TYPE.ERC721) {
           navigation.navigate(SendTransactionStep4StackName, { ...route!.params, asset, nftItemDetail, amount: '1' });
         } else {
           navigation.navigate(SendTransactionStep3StackName, { ...route!.params, asset, nftItemDetail });
@@ -295,8 +277,8 @@ const SendTransactionStep2Asset: React.FC<Props> = ({ navigation, route, onConfi
         <BottomSheetScrollContent style={styles.scrollView} onScroll={handleScroll}>
           {filterAssets.assets?.length > 0 &&
             filterAssets.assets.map((asset) => {
-              const itemKey = asset.type === AssetType.Native ? AssetType.Native : asset.contractAddress;
-              return asset.type === AssetType.ERC20 || asset.type === AssetType.Native ? (
+              const itemKey = asset.type === ASSET_TYPE.Native ? ASSET_TYPE.Native : asset.contractAddress;
+              return asset.type === ASSET_TYPE.ERC20 || asset.type === ASSET_TYPE.Native ? (
                 <TokenItem
                   key={itemKey}
                   data={asset}
@@ -313,7 +295,7 @@ const SendTransactionStep2Asset: React.FC<Props> = ({ navigation, route, onConfi
             filteredNftCollections.map((collection, index) => (
               <NftSearchRow
                 key={collection.id}
-                addressId={currentAddress?.id ?? ''}
+                addressId={currentAddressId}
                 collection={collection}
                 index={index}
                 onSelect={(asset, item) => handleClickAsset(asset, item)}

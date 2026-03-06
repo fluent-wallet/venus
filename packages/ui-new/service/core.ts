@@ -32,9 +32,6 @@ import {
   WalletMaintenanceService,
 } from '@core/services';
 import { HardwareWalletService } from '@core/services/hardware/HardwareWalletService';
-import { container as coreContainer } from '@core/WalletCore/configs';
-import type { EventBus } from '@core/WalletCore/Events/eventTypes';
-import { SERVICE_IDENTIFIER } from '@core/WalletCore/service';
 import { QueryClient } from '@tanstack/react-query';
 import type { Container } from 'inversify';
 
@@ -56,7 +53,11 @@ export function setUiQueryClient(client: QueryClient) {
 }
 
 function getContainer(): Container {
-  return uiServiceContainer ?? coreContainer;
+  if (!uiServiceContainer) {
+    throw new Error('UI runtime container is not initialized. RootProvider must call setUiServiceContainer() before rendering App.');
+  }
+
+  return uiServiceContainer;
 }
 
 const defaultQueryClient = new QueryClient({
@@ -133,10 +134,6 @@ export function getRuntimeConfig(): RuntimeConfig {
 
 export function getRuntimeEventBus(): import('@core/modules/eventBus').EventBus<CoreEventMap> {
   return getContainer().get<import('@core/modules/eventBus').EventBus<CoreEventMap>>(CORE_IDENTIFIERS.EVENT_BUS);
-}
-
-export function getLegacyEventBus(): EventBus {
-  return coreContainer.get<EventBus>(SERVICE_IDENTIFIER.EVENT_BUS);
 }
 
 export function getEventBus(): import('@core/modules/eventBus').EventBus<CoreEventMap> {

@@ -92,13 +92,12 @@ const SetAssetAmount = forwardRef<SetAssetAmountMethods, Props>(
           const addressId = currentAddress?.id;
           if (!addressId) return;
 
-          const estimateRes = await getTransactionService().estimateLegacyGasForUi({
+          const estimateRes = await getTransactionService().estimateGasPricing({
             addressId,
             withNonce: false,
             tx: { to: targetAddress, value: '0x0', from: currentAddressValue },
           });
-          const usedEstimate = (estimateRes.estimateOf1559 ?? estimateRes.estimate)!;
-          const gasCostBaseUnits = new Decimal(BigInt(usedEstimate.medium.gasCost).toString());
+          const gasCostBaseUnits = new Decimal(BigInt(estimateRes.pricing.levels.medium.gasCost).toString());
           let res = new Decimal(asset.balance).sub(gasCostBaseUnits);
           res = res.greaterThan(0) ? res : new Decimal(0);
           setValidMax(res);

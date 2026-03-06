@@ -1,6 +1,5 @@
 import { CoreError, WC_PAIR_URI_VERSION_NOT_SUPPORTED, WC_PAIRING_ALREADY_EXISTS } from '@core/errors';
 import { ASSET_TYPE, NetworkType } from '@core/types';
-import type { AssetInfo } from '@core/WalletCore/Plugins/AssetsTracker/types';
 import { StackActions } from '@react-navigation/native';
 import {
   SendTransactionStackName,
@@ -12,8 +11,9 @@ import {
 import { isValidAddress } from '@service/address';
 import type { IAsset, INetwork } from '@service/core';
 import { getWalletConnectService } from '@service/core';
+import type { AssetInfo } from '@utils/assetInfo';
 import { PaymentUriError, type PaymentUriPayload, parsePaymentUri } from '@utils/payment-uri';
-import { toLegacyAssetInfo } from '@utils/toLegacyAssetInfo';
+import { toAssetInfo } from '@utils/toAssetInfo';
 import Decimal from 'decimal.js';
 import type { TFunction } from 'i18next';
 import type { PaymentUriParseResult } from './types';
@@ -342,7 +342,7 @@ export const paymentUriParser = async (raw: string, deps: ParserDeps): Promise<P
   const addrErr = validateRecipientAddress(paymentUri.address, currentNetwork, t);
   if (addrErr) return addrErr;
 
-  const tokenAssets = assets.filter((a) => a.type === ASSET_TYPE.Native || a.type === ASSET_TYPE.ERC20).map(toLegacyAssetInfo);
+  const tokenAssets = assets.filter((a) => a.type === ASSET_TYPE.Native || a.type === ASSET_TYPE.ERC20).map(toAssetInfo);
 
   // inline mode: return payload directly, let QrScannerSheet handle onConfirm
   if (onConfirm) {

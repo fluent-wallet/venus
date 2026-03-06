@@ -1,30 +1,11 @@
-import { initCore } from '@WalletCoreExtends/index';
-import { AuthenticationPlugin } from '@WalletCoreExtends/Plugins/Authentication';
-import BSIMPlugin from '@WalletCoreExtends/Plugins/BSIM';
-import { CryptoToolPlugin } from '@WalletCoreExtends/Plugins/CryptoTool';
-import database from '@core/database';
 import { buildScanOpenApiKey } from '@core/modules/nftSync';
 import { createAppRuntime } from '@core/runtime/createAppRuntime';
 import type { RuntimeConfig } from '@core/runtime/types';
 import { Networks, NetworkType } from '@core/utils/consts';
-import WalletCore from '@core/WalletCore';
-import { DbPlugin } from '@core/WalletCore/DB';
-import { EventPlugin } from '@core/WalletCore/Events/EventPlugin';
-import { methodPlugins } from '@core/WalletCore/Methods';
-import { AssetsTrackerPlugin } from '@core/WalletCore/Plugins/AssetsTracker';
-import BlockNumberTracker from '@core/WalletCore/Plugins/BlockNumberTracker';
-import { NextNonceTrackerPlugin } from '@core/WalletCore/Plugins/NextNonceTracker';
-import { NFTDetailTrackerPlugin } from '@core/WalletCore/Plugins/NFTDetailTracker';
-import ReactInjectPlugin, { store } from '@core/WalletCore/Plugins/ReactInject';
-import { ReceiveAssetsTrackerPlugin } from '@core/WalletCore/Plugins/ReceiveAssetsTracker';
-import TransactionPlugin from '@core/WalletCore/Plugins/Transaction';
-import { TxTrackerPlugin } from '@core/WalletCore/Plugins/TxTracker';
-import { WalletConfigPlugin } from '@core/WalletCore/Plugins/WalletConfig';
 import type { WalletKitTypes } from '@reown/walletkit';
 import { setUiQueryClient, setUiServiceContainer } from '@service/core';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { isProd, isQA } from '@utils/getEnv';
-import { Provider } from 'jotai';
 import { useEffect, useState } from 'react';
 import App from './App';
 
@@ -105,7 +86,6 @@ async function bootAppOnce(): Promise<void> {
 
   bootOnce = (async () => {
     const runtime = createAppRuntime({
-      database,
       config: RUNTIME_CONFIG,
     });
 
@@ -113,31 +93,6 @@ async function bootAppOnce(): Promise<void> {
     setUiServiceContainer(runtime.context.container);
 
     await runtime.start();
-
-    const core = await initCore(
-      EventPlugin,
-      DbPlugin,
-      AuthenticationPlugin,
-      CryptoToolPlugin,
-      TxTrackerPlugin,
-      NFTDetailTrackerPlugin,
-      ReceiveAssetsTrackerPlugin,
-      AssetsTrackerPlugin,
-      NextNonceTrackerPlugin,
-      WalletConfigPlugin,
-      methodPlugins,
-    ).bootstrap();
-
-    WalletCore.plugins.use([
-      { name: 'CryptoTool', encrypt: core.cryptoTool.encrypt, decrypt: core.cryptoTool.decrypt },
-      BSIMPlugin,
-      ReactInjectPlugin,
-      TransactionPlugin,
-      BlockNumberTracker,
-    ]);
-
-    // Legacy setup is intentionally fire-and-forget; runtime is the source of truth in migration.
-    WalletCore.setup();
   })();
 
   return bootOnce;
@@ -158,9 +113,7 @@ function RootProvider() {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <Provider store={store}>
-        <App />
-      </Provider>
+      <App />
     </QueryClientProvider>
   );
 }

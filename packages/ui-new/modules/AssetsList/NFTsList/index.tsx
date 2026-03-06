@@ -1,11 +1,11 @@
 import NoneNFT from '@assets/images/none-NFT.webp';
 import Text from '@components/Text';
-import type { AssetInfo } from '@core/WalletCore/Plugins/AssetsTracker/types';
 import type { TabsType } from '@modules/AssetsTabs';
 import { useTheme } from '@react-navigation/native';
 import { useCurrentAddress } from '@service/account';
 import type { INftCollection, INftItem } from '@service/core';
 import { useNftCollectionsOfAddress, useNftItems } from '@service/nft';
+import type { AssetInfo } from '@utils/assetInfo';
 import { Image } from 'expo-image';
 import type React from 'react';
 import { memo } from 'react';
@@ -22,9 +22,9 @@ interface Props {
   tabsType: TabsType;
 }
 
-function toLegacyNftAssetInfo(params: { collection: INftCollection; item: INftItem }): AssetInfo {
+function toNftAssetInfo(params: { collection: INftCollection; item: INftItem }): AssetInfo {
   return {
-    type: params.collection.type as unknown as AssetInfo['type'],
+    type: params.collection.type,
     contractAddress: params.collection.contractAddress,
     name: params.collection.name ?? '',
     symbol: params.collection.symbol ?? '',
@@ -86,7 +86,7 @@ const CollectionRow: React.FC<{
             items={items}
             background={background}
             onPressItem={(item) => {
-              onPressItem?.(toLegacyNftAssetInfo({ collection, item }), item);
+              onPressItem?.(toNftAssetInfo({ collection, item }), item);
             }}
           />
         ))}

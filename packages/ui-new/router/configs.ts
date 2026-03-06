@@ -1,12 +1,12 @@
 import type { HardwareUnavailableReason as BSIMHardwareReason } from '@core/hardware/bsim/types';
 import type { ExternalRequestSnapshot } from '@core/modules/externalRequests';
 import type { SpeedUpAction } from '@core/types';
-import type { AssetInfo } from '@core/WalletCore/Plugins/AssetsTracker/types';
 import type { SpeedUpLevel } from '@modules/GasFee/GasFeeSetting';
 import type { VersionJSON } from '@pages/Settings/AboutUs';
 import type { NavigationProp, NavigatorScreenParams } from '@react-navigation/native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { INftItem } from '@service/core';
+import type { AssetInfo } from '@utils/assetInfo';
 
 export const WelcomeStackName = 'Welcome';
 export const WayToInitWalletStackName = 'WayToInitWallet';

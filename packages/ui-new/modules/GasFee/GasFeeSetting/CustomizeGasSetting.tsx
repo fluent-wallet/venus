@@ -11,9 +11,9 @@ import {
 import Button from '@components/Button';
 import Text from '@components/Text';
 import _TextInput from '@components/TextInput';
-import { useCurrentNetwork } from '@core/WalletCore/Plugins/ReactInject';
 import { useTheme } from '@react-navigation/native';
 import { getTransactionService } from '@service/core';
+import { useCurrentNetwork } from '@service/network';
 import Decimal from 'decimal.js';
 /* eslint-disable react-hooks/exhaustive-deps */
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
@@ -89,10 +89,10 @@ const CustomizeGasSetting: React.FC<Props> = ({ customizeGasSetting, estimateCur
   const { t } = useTranslation();
   const { colors } = useTheme();
   const bottomSheetRef = useRef<BottomSheetMethods>(null!);
-  const currentNetwork = useCurrentNetwork()!;
+  const { data: currentNetwork } = useCurrentNetwork();
   const minGasPrice = useMemo(
-    () => getTransactionService().getMinGasPriceWei({ chainId: currentNetwork.chainId, networkType: currentNetwork.networkType }),
-    [currentNetwork.chainId, currentNetwork.networkType],
+    () => (currentNetwork ? getTransactionService().getMinGasPriceWei({ chainId: currentNetwork.chainId, networkType: currentNetwork.networkType }) : null),
+    [currentNetwork?.chainId, currentNetwork?.networkType],
   );
 
   const {
@@ -157,7 +157,7 @@ const CustomizeGasSetting: React.FC<Props> = ({ customizeGasSetting, estimateCur
           {t('tx.gasFee.customizeGasSetting.minimumGasPrice', {
             network: currentNetwork?.name,
             gasPriceType: customizeGasSetting.suggestedGasPrice || force155 ? 'gas price' : 'base fee',
-            gasPrice: new Decimal(minGasPrice).div(Gwei).toString(),
+            gasPrice: new Decimal(minGasPrice ?? '0x0').div(Gwei).toString(),
           })}
         </Text>
       </View>

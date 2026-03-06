@@ -1,13 +1,13 @@
 import { BottomSheetFooter, BottomSheetScrollContent } from '@components/BottomSheet';
 import Button from '@components/Button';
 import Text from '@components/Text';
-import type { AssetInfo } from '@core/WalletCore/Plugins/AssetsTracker/types';
 import { AccountItemView } from '@modules/AccountsList';
 import NFTIcon from '@modules/AssetsList/NFTsList/NFTIcon';
 import { getDetailSymbol } from '@modules/AssetsList/NFTsList/NFTItemsGrid';
 import { useTheme } from '@react-navigation/native';
 import { type SendTransactionScreenProps, type SendTransactionStep3StackName, SendTransactionStep4StackName } from '@router/configs';
 import type { INftItem } from '@service/core';
+import type { AssetInfo } from '@utils/assetInfo';
 import Decimal from 'decimal.js';
 import type React from 'react';
 import { useRef, useState } from 'react';

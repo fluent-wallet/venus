@@ -1,11 +1,11 @@
 import { Networks, NetworkType } from '@core/utils/consts';
-import type { AssetInfo } from '@core/WalletCore/Plugins/AssetsTracker/types';
 import ActivityList from '@modules/ActivityList';
 import NFTsList from '@modules/AssetsList/NFTsList';
 import TokensList from '@modules/AssetsList/TokensList';
 import { useShouldShowNotBackup } from '@pages/Home/NotBackup';
 import type { INftItem } from '@service/core';
 import { useCurrentNetwork } from '@service/network';
+import type { AssetInfo } from '@utils/assetInfo';
 import { screenHeight } from '@utils/deviceInfo';
 import type React from 'react';
 import { createRef, type RefObject, useCallback, useEffect, useMemo, useRef, useState } from 'react';

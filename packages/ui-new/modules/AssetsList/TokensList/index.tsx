@@ -1,11 +1,11 @@
 import NoneToken from '@assets/images/none-token.webp';
 import Text from '@components/Text';
 import { ASSET_TYPE } from '@core/types';
-import type { AssetInfo } from '@core/WalletCore/Plugins/AssetsTracker/types';
 import { usePriceVisibleValue } from '@hooks/usePriceVisible';
 import { useTheme } from '@react-navigation/native';
 import { useAssetsOfCurrentAddress } from '@service/asset';
-import { toLegacyAssetInfo } from '@utils/toLegacyAssetInfo';
+import type { AssetInfo } from '@utils/assetInfo';
+import { toAssetInfo } from '@utils/toAssetInfo';
 import { Image } from 'expo-image';
 import type React from 'react';
 import { useMemo } from 'react';
@@ -26,7 +26,7 @@ const TokensList: React.FC<Props> = ({ onPressItem, selectType, showReceiveFunds
 
   const assetsQuery = useAssetsOfCurrentAddress();
   const tokens = useMemo(() => {
-    const list = (assetsQuery.data ?? []).filter((a) => a.type === ASSET_TYPE.Native || a.type === ASSET_TYPE.ERC20).map(toLegacyAssetInfo);
+    const list = (assetsQuery.data ?? []).filter((a) => a.type === ASSET_TYPE.Native || a.type === ASSET_TYPE.ERC20).map(toAssetInfo);
 
     const native = list.filter((t) => t.type === ASSET_TYPE.Native);
     const rest = list
