@@ -4,88 +4,111 @@ import Button from '@components/Button';
 import Icon from '@components/Icon';
 import Text from '@components/Text';
 import { shortenAddress } from '@core/utils/address';
-import plugins from '@core/WalletCore/Plugins';
-import { useCurrentAccount, useCurrentAddressOfAccount, useCurrentAddressValue } from '@core/WalletCore/Plugins/ReactInject';
-import type { IWCSessionProposalEvent } from '@core/WalletCore/Plugins/WalletConnect/types';
+import { NetworkType } from '@core/utils/consts';
 import useInAsync from '@hooks/useInAsync';
 import AccountSelector from '@modules/AccountSelector';
 import { type RouteProp, useNavigation, useRoute, useTheme } from '@react-navigation/native';
 import type { WalletConnectParamList, WalletConnectProposalStackName } from '@router/configs';
-import { getExternalRequestsService } from '@service/core';
+import { useCurrentAccount } from '@service/account';
+import { getExternalRequestsService, getRuntimeConfig } from '@service/core';
+import { useNetworks } from '@service/network';
 import { Image } from 'expo-image';
 import { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Pressable, StyleSheet, View } from 'react-native';
+
+const extractEip155Chains = (requiredNamespaces: unknown, optionalNamespaces: unknown): string[] => {
+  const chains = new Set<string>();
+
+  const collectFromNamespaces = (namespaces: unknown) => {
+    if (!namespaces || typeof namespaces !== 'object') return;
+    for (const [key, value] of Object.entries(namespaces as Record<string, unknown>)) {
+      if (!key.startsWith('eip155')) continue;
+
+      if (key.includes(':')) {
+        chains.add(key);
+        continue;
+      }
+
+      if (!value || typeof value !== 'object') continue;
+      const list = (value as { chains?: unknown }).chains;
+      if (Array.isArray(list)) {
+        for (const item of list) {
+          if (typeof item === 'string' && item.startsWith('eip155:')) chains.add(item);
+        }
+      }
+    }
+  };
+
+  collectFromNamespaces(requiredNamespaces);
+  collectFromNamespaces(optionalNamespaces);
+
+  return Array.from(chains);
+};
 
 export default function WalletConnectProposal() {
   const route = useRoute<RouteProp<WalletConnectParamList, typeof WalletConnectProposalStackName>>();
   const navigation = useNavigation();
   const params = route.params as WalletConnectParamList[typeof WalletConnectProposalStackName];
 
-  const isRuntime = !!params && typeof params === 'object' && 'requestId' in (params as any);
-  const runtimeRequestId = isRuntime ? ((params as any).requestId as string) : null;
-  const runtimeRequest = isRuntime ? ((params as any).request as any) : null;
+  const { requestId: runtimeRequestId, request: runtimeRequest } = params;
 
   const [showAccountSelector, setShowAccountSelector] = useState(false);
 
-  const legacy = !isRuntime ? (params as any) : null;
+  const metadata = runtimeRequest?.metadata ?? {};
 
-  const legacyMetadata = legacy?.metadata;
-  const runtimeMetadata = runtimeRequest?.metadata;
+  const name = typeof metadata?.name === 'string' ? metadata.name : '';
+  const description = typeof metadata?.description === 'string' ? metadata.description : '';
+  const url = typeof metadata?.url === 'string' && metadata.url ? metadata.url : (runtimeRequest?.origin ?? '');
+  const icons = Array.isArray(metadata?.icons) ? (metadata.icons as unknown[]).filter((x): x is string => typeof x === 'string') : [];
 
-  const name = legacyMetadata?.name ?? runtimeMetadata?.name ?? '';
-  const description = legacyMetadata?.description ?? '';
-  const url = legacyMetadata?.url ?? runtimeMetadata?.url ?? runtimeRequest?.origin ?? '';
-  const icons = legacyMetadata?.icons ?? runtimeMetadata?.icons ?? [];
+  const networksQuery = useNetworks();
+  const networks = networksQuery.data ?? [];
 
-  const connectedNetworks = legacy?.connectedNetworks ?? [];
+  const allowedEip155Chains = getRuntimeConfig().walletConnect?.allowedEip155Chains ?? null;
+  const requestedChains = extractEip155Chains(runtimeRequest?.requiredNamespaces, runtimeRequest?.optionalNamespaces);
+  const displayChains =
+    Array.isArray(allowedEip155Chains) && allowedEip155Chains.length > 0 ? requestedChains.filter((c) => allowedEip155Chains.includes(c)) : requestedChains;
+
+  const connectedNetworks = networks
+    .filter((n) => n.networkType === NetworkType.Ethereum && displayChains.includes(`eip155:${n.netId}`))
+    .map((n) => ({ icon: n.icon ?? '', name: n.name, netId: n.netId, id: n.id, networkType: n.networkType }));
+
   const { colors } = useTheme();
   const { t } = useTranslation();
 
-  const currentAccount = useCurrentAccount();
-  const currentAddress = useCurrentAddressOfAccount(currentAccount?.id);
-  const currentAddressValue = useCurrentAddressValue();
+  const { data: currentAccount } = useCurrentAccount();
+  const currentAddressValue = currentAccount?.address ?? '';
 
   const isHTTPS = url.startsWith('https://');
 
   const _handleApprove = useCallback(async () => {
     try {
-      if (isRuntime && runtimeRequestId) {
-        try {
-          getExternalRequestsService().approve({ requestId: runtimeRequestId });
-        } catch (error) {
-          console.log(error);
-        } finally {
-          if (navigation.canGoBack()) navigation.goBack();
-        }
-        return;
+      try {
+        getExternalRequestsService().approve({ requestId: runtimeRequestId });
+      } catch (error) {
+        console.log(error);
+      } finally {
+        if (navigation.canGoBack()) navigation.goBack();
       }
-
-      const approve = plugins.WalletConnect.currentEventSubject.getValue()?.action.approve as IWCSessionProposalEvent['action']['approve'];
-      await approve();
     } catch (e) {
       console.log(e);
     }
-  }, [isRuntime, navigation, runtimeRequestId]);
+  }, [navigation, runtimeRequestId]);
 
   const _handleReject = useCallback(async () => {
     try {
-      if (isRuntime && runtimeRequestId) {
-        try {
-          getExternalRequestsService().reject({ requestId: runtimeRequestId });
-        } catch (error) {
-          console.log(error);
-        } finally {
-          if (navigation.canGoBack()) navigation.goBack();
-        }
-        return;
+      try {
+        getExternalRequestsService().reject({ requestId: runtimeRequestId });
+      } catch (error) {
+        console.log(error);
+      } finally {
+        if (navigation.canGoBack()) navigation.goBack();
       }
-
-      await plugins.WalletConnect.currentEventSubject.getValue()?.action.reject();
     } catch (err) {
       console.log('errr', err);
     }
-  }, [isRuntime, navigation, runtimeRequestId]);
+  }, [navigation, runtimeRequestId]);
 
   const { inAsync: inApproving, execAsync: handleApprove } = useInAsync(_handleApprove);
   const { inAsync: inRejecting, execAsync: handleReject } = useInAsync(_handleReject);
@@ -121,18 +144,15 @@ export default function WalletConnectProposal() {
                 </View>
               </View>
             </Pressable>
-            {/* Runtime snapshots don't include UI-ready connected network icons yet. */}
-            {!isRuntime && (
-              <View style={styles.networkWarp}>
-                <Text style={[styles.label, { color: colors.textSecondary }]}>{t('common.network')}</Text>
-                <View style={styles.network}>
-                  {connectedNetworks.map((network: any) => (
-                    <Icon source={network.icon} width={22} height={22} style={{ borderRadius: 11 }} key={network.id} />
-                  ))}
-                  {connectedNetworks.length === 1 && <Text style={{ color: colors.textPrimary }}>{connectedNetworks[0]?.name}</Text>}
-                </View>
+            <View style={styles.networkWarp}>
+              <Text style={[styles.label, { color: colors.textSecondary }]}>{t('common.network')}</Text>
+              <View style={styles.network}>
+                {connectedNetworks.map((network: any) => (
+                  <Icon source={network.icon} width={22} height={22} style={{ borderRadius: 11 }} key={network.id} />
+                ))}
+                {connectedNetworks.length === 1 && <Text style={{ color: colors.textPrimary }}>{connectedNetworks[0]?.name}</Text>}
               </View>
-            )}
+            </View>
           </BottomSheetScrollContent>
           <BottomSheetFooter>
             <View style={styles.btnArea}>

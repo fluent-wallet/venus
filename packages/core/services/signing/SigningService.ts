@@ -17,6 +17,10 @@ import { NetworkType } from '@core/utils/consts';
 import { getBytes, hexlify, Signature, toUtf8Bytes, Wallet } from 'ethers';
 import { inject, injectable } from 'inversify';
 
+const isHardwareErrorWithCode = (error: unknown): error is { code: string } => {
+  return Boolean(error && typeof error === 'object' && typeof (error as { code?: unknown }).code === 'string');
+};
+
 @injectable()
 export class SigningService {
   @inject(CORE_IDENTIFIERS.DB)
@@ -111,6 +115,9 @@ export class SigningService {
 
       throw new Error(`Unsupported hardware resultType: ${String((result as any)?.resultType)}`);
     } catch (error) {
+      if (signer.type === 'hardware' && isHardwareErrorWithCode(error)) {
+        throw error;
+      }
       if (error instanceof CoreError) throw error;
       throw new CoreError({
         code: TX_SIGN_MESSAGE_FAILED,
@@ -179,6 +186,10 @@ export class SigningService {
 
       throw new Error(`Unsupported hardware resultType: ${String((result as any)?.resultType)}`);
     } catch (error) {
+      // Preserve legacy BSIM UX: bubble up hardware errors (with error code) so UI can route/handle them (e.g. hardware unavailable / cancel).
+      if (signer.type === 'hardware' && isHardwareErrorWithCode(error)) {
+        throw error;
+      }
       if (error instanceof CoreError) throw error;
       throw new CoreError({
         code: TX_SIGN_TYPED_DATA_FAILED,

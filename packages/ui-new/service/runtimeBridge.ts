@@ -1,4 +1,5 @@
 import type { ExternalRequestSnapshot } from '@core/modules/externalRequests';
+import { parseEvmRpcTransactionRequest } from '@core/services/transaction';
 import { StackActions } from '@react-navigation/native';
 import {
   ExternalInputHandlerStackName,
@@ -15,7 +16,15 @@ import { getActiveRouteName } from '@utils/backToHome';
 import { useEffect, useRef } from 'react';
 import { getAccountRootKey } from './account';
 import { getAssetRootKey } from './asset';
-import { getAccountService, getAuthService, getExternalRequestsService, getRuntimeEventBus, getTransactionService } from './core';
+import {
+  getAccountService,
+  getAddressValidationService,
+  getAuthService,
+  getExternalRequestsService,
+  getNetworkService,
+  getRuntimeEventBus,
+  getTransactionService,
+} from './core';
 import { getNetworkRootKey } from './network';
 import { getNftRootKey } from './nft';
 import { getSignatureRootKey } from './signature';
@@ -24,11 +33,13 @@ import { getTransactionRootKey } from './transaction';
 export const getWalletConnectRootKey = () => ['walletConnect'] as const;
 
 type RuntimeWcSessionRequest = Extract<ExternalRequestSnapshot, { provider: 'wallet-connect'; kind: 'session_request' }>;
-type RuntimeWcSignMessageRequest = RuntimeWcSessionRequest & { method: 'personal_sign' | 'eth_signTypedData_v4' };
+type RuntimeWcSignMessageRequest = RuntimeWcSessionRequest & {
+  method: 'personal_sign' | 'eth_signTypedData' | 'eth_signTypedData_v3' | 'eth_signTypedData_v4';
+};
 type RuntimeWcSendTxRequest = RuntimeWcSessionRequest & { method: 'eth_sendTransaction' };
 
 function isRuntimeWcSignMessageRequest(req: RuntimeWcSessionRequest): req is RuntimeWcSignMessageRequest {
-  return req.method === 'personal_sign' || req.method === 'eth_signTypedData_v4';
+  return req.method === 'personal_sign' || req.method === 'eth_signTypedData' || req.method === 'eth_signTypedData_v3' || req.method === 'eth_signTypedData_v4';
 }
 
 function isRuntimeWcSendTxRequest(req: RuntimeWcSessionRequest): req is RuntimeWcSendTxRequest {
@@ -147,9 +158,30 @@ export function useRuntimeEventBridge(navigation: StackNavigation) {
               // Fallback to normal flow; the transaction screen/service will handle errors if needed.
             }
 
+            let isContract = true;
+            try {
+              const tx = parseEvmRpcTransactionRequest(req.params);
+              const to = tx.to;
+              const data = tx.data;
+              if (!to) {
+                isContract = true;
+              } else {
+                const network = await getNetworkService().getCurrentNetwork();
+                const contract = await getAddressValidationService().isContractAddress({
+                  networkType: network.networkType,
+                  chainId: network.chainId,
+                  addressValue: to,
+                });
+                const EOATx = (!contract && !!to) || !data || data === '0x';
+                isContract = !EOATx;
+              }
+            } catch {
+              // ignore and keep default
+            }
+
             const route = {
               name: WalletConnectStackName,
-              params: { screen: WalletConnectTransactionStackName, params: { requestId: payload.requestId, request: req } },
+              params: { screen: WalletConnectTransactionStackName, params: { requestId: payload.requestId, request: req, isContract } },
             } as const;
 
             if (shouldReplaceLinking) navigation.dispatch(StackActions.replace(route.name, route.params));

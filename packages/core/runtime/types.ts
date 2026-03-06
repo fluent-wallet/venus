@@ -59,6 +59,12 @@ export type WalletConnectRuntimeConfig = {
   projectId?: string;
   metadata?: WalletKitTypes.Options['metadata'];
 
+  /**
+   * Optional allowlist for EVM chains supported by this wallet build (WalletConnect `eip155:<netId>` strings).
+   * When provided, proposals requiring chains outside this list will be rejected.
+   */
+  allowedEip155Chains?: string[];
+
   // Optional; used by ExternalRequestsModule as a fallback.
   requestTtlMs?: number;
   sweepIntervalMs?: number;

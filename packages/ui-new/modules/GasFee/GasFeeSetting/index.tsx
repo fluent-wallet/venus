@@ -16,9 +16,11 @@ import {
 import Button from '@components/Button';
 import HourglassLoading from '@components/Loading/Hourglass';
 import Text from '@components/Text';
+import { ASSET_TYPE } from '@core/types';
 import { numberFormat, trimDecimalZeros } from '@core/utils/balance';
-import { useCurrentNetworkNativeAsset } from '@core/WalletCore/Plugins/ReactInject';
 import { useTheme } from '@react-navigation/native';
+import { useAssetsOfCurrentAddress } from '@service/asset';
+import type { IAsset } from '@service/core';
 import { type Level, usePollingGasEstimateAndNonce } from '@service/transaction';
 import { calculateTokenPrice } from '@utils/calculateTokenPrice';
 import Decimal from 'decimal.js';
@@ -80,7 +82,8 @@ const GasFeeSetting = forwardRef<GasFeeSettingMethods, Props>(
     const { colors } = useTheme();
     const bottomSheetRef = useRef<BottomSheetMethods>(null!);
 
-    const nativeAsset = useCurrentNetworkNativeAsset()!;
+    const { data: assets } = useAssetsOfCurrentAddress();
+    const nativeAsset = useMemo(() => assets?.find((a) => a.type === ASSET_TYPE.Native) ?? null, [assets]);
 
     const estimateRes = usePollingGasEstimateAndNonce(tx);
     const estimateGasSettings = estimateRes ? (estimateRes.estimateOf1559 ?? estimateRes.estimate) : null;
@@ -232,8 +235,8 @@ const GasFeeSetting = forwardRef<GasFeeSettingMethods, Props>(
           <BottomSheetWrapper innerPaddingHorizontal>
             <BottomSheetHeader title={t('tx.gasFee.title')} />
             <BottomSheetScrollContent>
-              {!estimateRes && <HourglassLoading style={styles.loading} />}
-              {estimateRes && estimateGasSettings && (
+              {(!estimateRes || !nativeAsset) && <HourglassLoading style={styles.loading} />}
+              {estimateRes && estimateGasSettings && nativeAsset && (
                 <>
                   <GasOption
                     level="low"
@@ -362,7 +365,7 @@ export const GasOption: React.FC<{
   level: GasSettingWithLevel['level'] | SpeedUpLevel;
   selected: boolean;
   onPress: VoidFunction;
-  nativeAsset: NonNullable<ReturnType<typeof useCurrentNetworkNativeAsset>>;
+  nativeAsset: Pick<IAsset, 'symbol' | 'decimals' | 'priceInUSDT'>;
   gasSetting: GasSetting;
   gasLimit: string;
   showLongTime?: boolean;
@@ -378,7 +381,7 @@ export const GasOption: React.FC<{
     () =>
       new Decimal(gasSetting?.suggestedMaxFeePerGas ?? gasSetting.suggestedGasPrice!)
         .mul(gasLimit)
-        .div(Decimal.pow(10, nativeAsset?.decimals || 18))
+        .div(Decimal.pow(10, nativeAsset?.decimals ?? 18))
         .toString(),
     [nativeAsset?.decimals, gasLimit, gasSetting],
   );

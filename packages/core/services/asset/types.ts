@@ -25,3 +25,13 @@ export interface AddCustomTokenInput {
   decimals?: number;
   icon?: string;
 }
+
+export type Erc20TokenInfo = {
+  name: string | null;
+  symbol: string | null;
+  decimals: number;
+  /**
+   * ERC20 `balanceOf` result in base units (decimal string).
+   */
+  balance: string;
+};

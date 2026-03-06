@@ -13,7 +13,7 @@ import { balanceFormat, convertBalanceToDecimal } from '@core/utils/balance';
 import { NetworkType } from '@core/utils/consts';
 import Decimal from 'decimal.js';
 import { inject, injectable } from 'inversify';
-import type { AddCustomTokenInput, IAsset } from './types';
+import type { AddCustomTokenInput, Erc20TokenInfo, IAsset } from './types';
 
 // TODO: replace DbAssetType with AssetTypeValue (remove DbAssetType (not enum))
 const ASSET_TYPE_BY_DB_ASSET_TYPE: Record<DbAssetType, AssetTypeValue> = {
@@ -64,6 +64,36 @@ export class AssetService {
     }
     const balance = await this.fetchFungibleAssetBalance(address, asset);
     return balance.value;
+  }
+
+  /**
+   * Resolve ERC20 metadata + balance for a given contract address, scoped to an address.
+   * Used by WalletConnect transaction UI to keep legacy "approve allowance" rendering behavior.
+   */
+  async getErc20TokenInfo(input: { addressId: string; contractAddress: string }): Promise<Erc20TokenInfo> {
+    const address = await this.findAddress(input.addressId);
+    const network = await address.network.fetch();
+    const provider = this.getChainProvider(network);
+
+    const owner = await address.getValue();
+    const ownerForCalldata = this.normalizeAccountForCalldata(owner, network.networkType);
+
+    const [name, symbol, decimalsRaw, balanceRaw] = await Promise.all([
+      this.callERC20Method(provider, input.contractAddress, 'name', []),
+      this.callERC20Method(provider, input.contractAddress, 'symbol', []),
+      this.callERC20Method(provider, input.contractAddress, 'decimals', []),
+      this.callERC20Method(provider, input.contractAddress, 'balanceOf', [ownerForCalldata]),
+    ]);
+
+    const decimals = typeof decimalsRaw === 'number' && Number.isFinite(decimalsRaw) ? decimalsRaw : 18;
+    const balance = typeof balanceRaw === 'string' && balanceRaw.startsWith('0x') ? BigInt(balanceRaw).toString() : '0';
+
+    return {
+      name: typeof name === 'string' && name.trim() !== '' ? name : null,
+      symbol: typeof symbol === 'string' && symbol.trim() !== '' ? symbol : null,
+      decimals,
+      balance,
+    };
   }
 
   async addCustomToken(input: AddCustomTokenInput): Promise<IAsset> {

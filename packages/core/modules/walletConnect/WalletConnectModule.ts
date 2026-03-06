@@ -37,6 +37,9 @@ export const WalletConnectModule: RuntimeModule = {
     if (container.isBound(WalletConnectService)) return;
 
     const { projectId, metadata } = readWalletConnectConfig(context);
+    const allowedEip155Chains = Array.isArray(context.config.walletConnect?.allowedEip155Chains)
+      ? context.config.walletConnect?.allowedEip155Chains
+      : undefined;
     const eventBus = container.get<EventBus<CoreEventMap>>(CORE_IDENTIFIERS.EVENT_BUS);
 
     const externalRequests = container.get<ExternalRequestsService>(CORE_IDENTIFIERS.EXTERNAL_REQUESTS);
@@ -57,6 +60,8 @@ export const WalletConnectModule: RuntimeModule = {
         logger: context.logger,
         clientFactory,
         closeTransportOnStop: true,
+
+        allowedEip155Chains,
 
         externalRequests,
         accountService,

@@ -18,6 +18,7 @@ export type CreateSignatureRecordInput = {
   addressId: string;
   signType: SignType;
   message?: string | null;
+  app?: { identity: string; origin?: string; name?: string; icon?: string } | null;
 };
 
 @injectable()
@@ -34,15 +35,24 @@ export class SignatureRecordService {
 
     const blockNumber = await this.getBlockNumberHex(network);
 
+    const existingApp = input.app?.identity ? await this.findAppByIdentity(input.app.identity) : null;
+    const preparedApp = !existingApp && input.app?.identity ? this.prepareApp(input.app) : null;
+
     const signature = this.database.get<Signature>(TableName.Signature).prepareCreate((record) => {
       record.address.set(address);
       record.signType = input.signType;
       record.message = input.message ?? null;
       record.blockNumber = blockNumber;
+
+      if (existingApp) {
+        record.app.set(existingApp);
+      } else if (preparedApp) {
+        record.app.set(preparedApp);
+      }
     });
 
     await this.database.write(async () => {
-      await this.database.batch(signature);
+      await this.database.batch(...(preparedApp ? [preparedApp] : []), signature);
     });
 
     return signature.id;
@@ -159,6 +169,25 @@ export class SignatureRecordService {
       });
     }
     return network;
+  }
+
+  private async findAppByIdentity(identity: string): Promise<App | null> {
+    if (!identity) return null;
+    try {
+      const res = await this.database.get<App>(TableName.App).query(Q.where('identity', identity)).fetch();
+      return res?.[0] ?? null;
+    } catch {
+      return null;
+    }
+  }
+
+  private prepareApp(input: { identity: string; origin?: string; name?: string; icon?: string }): App {
+    return this.database.get<App>(TableName.App).prepareCreate((record) => {
+      record.identity = input.identity;
+      record.origin = input.origin;
+      record.name = input.name ?? input.identity;
+      record.icon = input.icon;
+    });
   }
 
   private async getBlockNumberHex(network: Network): Promise<string> {

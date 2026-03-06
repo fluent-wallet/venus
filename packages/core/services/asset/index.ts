@@ -1,2 +1,2 @@
 export { AssetService } from './AssetService';
-export type { AddCustomTokenInput, IAsset } from './types';
+export type { AddCustomTokenInput, Erc20TokenInfo, IAsset } from './types';

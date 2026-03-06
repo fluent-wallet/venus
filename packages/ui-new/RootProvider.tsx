@@ -23,6 +23,7 @@ import { WalletConfigPlugin } from '@core/WalletCore/Plugins/WalletConfig';
 import type { WalletKitTypes } from '@reown/walletkit';
 import { setUiQueryClient, setUiServiceContainer } from '@service/core';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { isProd, isQA } from '@utils/getEnv';
 import { Provider } from 'jotai';
 import { useEffect, useState } from 'react';
 import App from './App';
@@ -37,6 +38,12 @@ const WALLET_CONNECT_METADATA = {
   url: 'https://bimwallet.io/',
   icons: ['https://download.bimwallet.io/assets/logo.png'],
 } satisfies WalletKitTypes.Options['metadata'];
+
+const WALLET_CONNECT_ALLOWED_EIP155_CHAINS = isProd
+  ? [`eip155:${Networks['Conflux eSpace'].netId}`]
+  : isQA
+    ? [`eip155:${Networks['Conflux eSpace'].netId}`, `eip155:${Networks['eSpace Testnet'].netId}`]
+    : undefined;
 
 const RUNTIME_CONFIG: RuntimeConfig = {
   wallet: {
@@ -69,6 +76,7 @@ const RUNTIME_CONFIG: RuntimeConfig = {
   walletConnect: {
     projectId: WALLET_CONNECT_PROJECT_ID,
     metadata: WALLET_CONNECT_METADATA,
+    allowedEip155Chains: WALLET_CONNECT_ALLOWED_EIP155_CHAINS,
   },
   sync: {
     assets: {

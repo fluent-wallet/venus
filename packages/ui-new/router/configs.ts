@@ -1,9 +1,7 @@
 import type { HardwareUnavailableReason as BSIMHardwareReason } from '@core/hardware/bsim/types';
 import type { ExternalRequestSnapshot } from '@core/modules/externalRequests';
 import type { SpeedUpAction } from '@core/types';
-import type { NetworkType } from '@core/utils/consts';
 import type { AssetInfo } from '@core/WalletCore/Plugins/AssetsTracker/types';
-import type { IWCSendTransactionEventData, IWCSessionProposalEventData, IWCSignMessageEventData } from '@core/WalletCore/Plugins/WalletConnect/types';
 import type { SpeedUpLevel } from '@modules/GasFee/GasFeeSetting';
 import type { VersionJSON } from '@pages/Settings/AboutUs';
 import type { NavigationProp, NavigatorScreenParams } from '@react-navigation/native';
@@ -60,25 +58,22 @@ type RuntimeWcSessionRequest = Extract<ExternalRequestSnapshot, { provider: 'wal
 
 type RuntimeWcSignMessageParams = {
   requestId: string;
-  request: RuntimeWcSessionRequest & { method: 'personal_sign' | 'eth_signTypedData_v4' };
+  request: RuntimeWcSessionRequest & { method: 'personal_sign' | 'eth_signTypedData' | 'eth_signTypedData_v3' | 'eth_signTypedData_v4' };
 };
 
 type RuntimeWcSendTxParams = {
   requestId: string;
   request: RuntimeWcSessionRequest & { method: 'eth_sendTransaction' };
+  isContract: boolean;
 };
 export type WalletConnectParamList = {
-  [WalletConnectProposalStackName]:
-    | (IWCSessionProposalEventData & {
-        connectedNetworks: Array<{ icon: string; name: string; netId: number; id: string; networkType: NetworkType }>;
-      })
-    | RuntimeWcProposalParams;
+  [WalletConnectProposalStackName]: RuntimeWcProposalParams;
 
   [WalletConnectSessionsStackName]: undefined;
 
-  [WalletConnectSignMessageStackName]: IWCSignMessageEventData | RuntimeWcSignMessageParams;
+  [WalletConnectSignMessageStackName]: RuntimeWcSignMessageParams;
 
-  [WalletConnectTransactionStackName]: (IWCSendTransactionEventData & { isContract: boolean }) | RuntimeWcSendTxParams;
+  [WalletConnectTransactionStackName]: RuntimeWcSendTxParams;
 
   [PasswordVerifyStackName]: undefined | { requestId: string };
 };

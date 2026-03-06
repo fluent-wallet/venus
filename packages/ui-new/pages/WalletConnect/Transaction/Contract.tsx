@@ -2,10 +2,10 @@ import ArrowLeft from '@assets/icons/arrow-left.svg';
 import ModifyIcon from '@assets/icons/modify.svg';
 import Icon from '@components/Icon';
 import Spinner from '@components/Spinner';
+import { AssetType } from '@core/types';
 import { numberWithCommas } from '@core/utils/balance';
-import { AssetType, useCurrentNetwork } from '@core/WalletCore/Plugins/ReactInject';
-import type { WalletConnectMetadata } from '@core/WalletCore/Plugins/WalletConnect/types';
 import { useTheme } from '@react-navigation/native';
+import { useCurrentNetwork } from '@service/network';
 import { isApproveMethod } from '@utils/parseTxData';
 import { formatUnits } from 'ethers';
 import { useCallback, useState } from 'react';
@@ -14,7 +14,7 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import type { TxDataWithTokenInfo } from '.';
 
 interface IProps {
-  metadata: WalletConnectMetadata;
+  metadata: { name: string; icons?: string[] };
   to?: string;
   data?: string;
   parseData?: TxDataWithTokenInfo;
@@ -25,7 +25,7 @@ interface IProps {
 function Contract({
   to,
   parseData,
-  metadata: { icons, name },
+  metadata: { icons = [], name },
   openEditAllowance: openModifyModal = () => {
     //
   },
@@ -34,7 +34,7 @@ function Contract({
   const { t } = useTranslation();
   const { colors } = useTheme();
   const [expanded, setExpanded] = useState(false);
-  const currentNetwork = useCurrentNetwork();
+  const { data: currentNetwork } = useCurrentNetwork();
 
   const getFormatValue = useCallback(
     (value: bigint | string) => {

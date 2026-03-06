@@ -1,5 +1,3 @@
-import { BSIM_ERRORS } from '@WalletCoreExtends/Plugins/BSIM/BSIMSDK';
-import { type BSIMEvent, BSIMEventTypesName } from '@WalletCoreExtends/Plugins/BSIM/types';
 import ArrowLeft from '@assets/icons/arrow-left2.svg';
 import FailedIcon from '@assets/icons/message-fail.svg';
 import BSIMCardWallet from '@assets/icons/wallet-bsim.webp';
@@ -14,6 +12,7 @@ import {
 import Button from '@components/Button';
 import Spinner from '@components/Spinner';
 import Text from '@components/Text';
+import { BSIM_ERROR_CANCEL, BSIM_ERRORS } from '@core/hardware/bsim/constants';
 import { useTheme } from '@react-navigation/native';
 import { screenHeight } from '@utils/deviceInfo';
 import { Image } from 'expo-image';
@@ -21,6 +20,23 @@ import type React from 'react';
 import { useCallback, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, View } from 'react-native';
+
+export enum BSIMEventTypesName {
+  Cancel = 'cancel',
+  ERROR = 'error',
+  GET_NONCE = 'getNonce',
+
+  BSIM_VERIFY_START = 'BSIMVerifyStart',
+  BSIM_SIGN_START = 'BSIMSignStart',
+  BSIM_TX_SEND = 'BSIMTxSend',
+}
+
+export interface BSIMEvent {
+  type: BSIMEventTypesName;
+  message?: string;
+  error?: boolean;
+  nonce?: string;
+}
 
 interface Props {
   bsimEvent: BSIMEvent;
@@ -91,7 +107,8 @@ export const useBSIMVerify = () => {
   }, []);
 
   const setBSIMEvent = useCallback((event: BSIMEvent | null) => {
-    if (event && typeof event.message === 'string' && event.message.includes(BSIM_ERRORS.CANCEL)) return;
+    const cancelMessage = BSIM_ERRORS[BSIM_ERROR_CANCEL];
+    if (event && typeof event.message === 'string' && cancelMessage && event.message.includes(cancelMessage)) return;
     _setBSIMEvent(event);
   }, []);
 

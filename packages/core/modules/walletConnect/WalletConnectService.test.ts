@@ -672,7 +672,7 @@ describe('WalletConnectService', () => {
       response: { id: 12, jsonrpc: '2.0', result: '0xhash_dapp' },
     });
 
-    // 4) chainId mismatch -> error code 4902 on approve
+    // 4) chainId mismatch -> rejected immediately (no ExternalRequests UI)
     client.__emit('session_request', {
       id: 11,
       topic: 't1',
@@ -680,14 +680,10 @@ describe('WalletConnectService', () => {
     } as unknown as WalletKitTypes.SessionRequest);
     await flushPromises();
 
-    expect(requested).toHaveLength(4);
-    externalRequests.approve({ requestId: requested[3].requestId });
-    await flushPromises();
-
     expect(respondSessionRequest).toHaveBeenCalledTimes(4);
     expect(respondSessionRequest.mock.calls[3]?.[0]).toMatchObject({
       topic: 't1',
-      response: { id: 11, jsonrpc: '2.0', error: { code: 4902, message: 'Unrecognized chain ID.' } },
+      response: { id: 11, jsonrpc: '2.0', error: { code: 4902, message: 'network is not match' } },
     });
 
     await service.stop();

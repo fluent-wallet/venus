@@ -1,36 +1,26 @@
-import { BSIMError } from '@WalletCoreExtends/Plugins/BSIM/BSIMSDK';
-import { BSIMEventTypesName } from '@WalletCoreExtends/Plugins/BSIM/types';
 import Copy from '@assets/icons/copy.svg';
 import { BottomSheetFooter, BottomSheetHeader, BottomSheetRoute, BottomSheetScrollContent, BottomSheetWrapper, snapPoints } from '@components/BottomSheet';
 import Button from '@components/Button';
 import Icon from '@components/Icon';
 import { PlaintextMessage } from '@components/PlaintextMessage';
 import Text from '@components/Text';
-import { SignType } from '@core/database/models/Signature/type';
-import methods from '@core/WalletCore/Methods';
-import plugins from '@core/WalletCore/Plugins';
-import {
-  useCurrentAccount,
-  useCurrentAddress,
-  useCurrentAddressValue,
-  useCurrentNetwork,
-  useVaultOfAccount,
-  VaultType,
-} from '@core/WalletCore/Plugins/ReactInject';
-import type { IWCSignMessageEvent } from '@core/WalletCore/Plugins/WalletConnect/types';
-import { WalletConnectRPCMethod } from '@core/WalletCore/Plugins/WalletConnect/types';
+import { BSIM_ERROR_CANCEL } from '@core/hardware/bsim/constants';
+import { SignType } from '@core/services/signing/types';
+import { parseSignMessageParameters, parseSignTypedDataParameters } from '@core/services/transaction';
 import useInAsync from '@hooks/useInAsync';
 import { AccountItemView } from '@modules/AccountsList';
-import BSIMVerify, { useBSIMVerify } from '@pages/SendTransaction/BSIMVerify';
+import BSIMVerify, { BSIMEventTypesName, useBSIMVerify } from '@pages/SendTransaction/BSIMVerify';
 import { styles as transactionConfirmStyle } from '@pages/SendTransaction/Step4Confirm/index';
 import Clipboard from '@react-native-clipboard/clipboard';
 import { type RouteProp, useNavigation, useRoute, useTheme } from '@react-navigation/native';
 import type { StackNavigation, WalletConnectParamList, WalletConnectSignMessageStackName } from '@router/configs';
-import { getExternalRequestsService } from '@service/core';
+import { useCurrentAccount, useCurrentAddress } from '@service/account';
+import { getExternalRequestsService, getSignatureRecordService, getSigningService } from '@service/core';
+import { useCurrentNetwork } from '@service/network';
 import { handleBSIMHardwareUnavailable } from '@utils/handleBSIMHardwareUnavailable';
 import { sanitizeTypedData } from '@utils/santitizeTypedData';
 import { isHexString, toUtf8String } from 'ethers';
-import { useCallback, useMemo } from 'react';
+import { useCallback, useMemo, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { showMessage } from 'react-native-flash-message';
@@ -38,57 +28,51 @@ import { showMessage } from 'react-native-flash-message';
 function WalletConnectSignMessage() {
   const { t } = useTranslation();
   const { colors } = useTheme();
-  const currentAccount = useCurrentAccount();
-  const currentAddress = useCurrentAddress()!;
-  const currentAddressValue = useCurrentAddressValue();
-  const currentNetwork = useCurrentNetwork();
-  const vault = useVaultOfAccount(currentAccount?.id);
+  const { data: currentAccount } = useCurrentAccount();
+  const { data: currentAddress } = useCurrentAddress();
+  const { data: currentNetwork } = useCurrentNetwork();
   const rootNavigation = useNavigation<StackNavigation>();
   const route = useRoute<RouteProp<WalletConnectParamList, typeof WalletConnectSignMessageStackName>>();
   const navigation = useNavigation<StackNavigation>();
   const params = route.params as WalletConnectParamList[typeof WalletConnectSignMessageStackName];
-  const isRuntime = !!params && typeof params === 'object' && 'requestId' in (params as any);
 
-  const runtimeRequest = isRuntime ? (params as any).request : null;
-  const legacy = !isRuntime ? (params as any) : null;
+  const { requestId, request } = params;
 
-  const icons = legacy?.metadata?.icons ?? runtimeRequest?.metadata?.icons ?? [];
-  const name = legacy?.metadata?.name ?? runtimeRequest?.metadata?.name ?? '';
-  const url = legacy?.metadata?.url ?? runtimeRequest?.origin ?? '';
+  const metadata = request?.metadata ?? { name: '', url: '' };
+  const icons = Array.isArray(metadata.icons) ? metadata.icons : [];
+  const name = metadata.name ?? '';
+  const url = metadata.url ?? request?.origin ?? '';
 
-  const message = legacy?.message ?? (runtimeRequest ? JSON.stringify(runtimeRequest.params ?? null) : '');
-  const method = legacy?.method ?? runtimeRequest?.method ?? WalletConnectRPCMethod.PersonalSign;
+  const method = request?.method ?? 'personal_sign';
+
+  const signingAbortRef = useRef<AbortController | null>(null);
 
   const signMsg = useMemo(() => {
-    if (isRuntime) {
-      return message;
-    }
-    let decodeMsg = message;
-    if (method === WalletConnectRPCMethod.PersonalSign) {
-      const isHex = isHexString(decodeMsg);
-      if (isHex) {
+    if (!request) return '';
+
+    if (method === 'personal_sign') {
+      const parsed = parseSignMessageParameters(request.params);
+      const raw = typeof parsed.message === 'string' ? parsed.message : parsed.message.raw;
+
+      if (isHexString(raw)) {
         try {
-          decodeMsg = toUtf8String(message);
+          return toUtf8String(raw);
         } catch (e) {
           console.log('error:', e);
         }
       }
-      return decodeMsg;
+      return raw;
     }
 
-    if (method.startsWith(WalletConnectRPCMethod.SignTypedData)) {
-      try {
-        const parsedMessage = JSON.parse(decodeMsg);
-        const sanitizedMessage = sanitizeTypedData(parsedMessage);
-
-        decodeMsg = JSON.stringify(sanitizedMessage, null, 4);
-      } catch (error) {
-        return '';
-      }
+    // eth_signTypedData_v4
+    try {
+      const parsed = parseSignTypedDataParameters(request.params);
+      const sanitized = sanitizeTypedData(parsed.typedData);
+      return JSON.stringify(sanitized, null, 4);
+    } catch {
+      return '';
     }
-
-    return decodeMsg;
-  }, [isRuntime, message, method]);
+  }, [method, request]);
   const handleCoy = useCallback(
     (value: string) => {
       Clipboard.setString(value);
@@ -104,51 +88,74 @@ function WalletConnectSignMessage() {
 
   const _handleReject = useCallback(async () => {
     try {
-      await plugins.WalletConnect.currentEventSubject.getValue()?.action.reject();
+      try {
+        signingAbortRef.current?.abort();
+      } catch {
+        // ignore
+      }
+
+      try {
+        getExternalRequestsService().reject({ requestId });
+      } catch (err) {
+        console.log('error', err);
+      } finally {
+        if (navigation.canGoBack()) navigation.goBack();
+      }
     } catch (err) {
       console.log('error', err);
     }
-  }, []);
-
-  const approve = useCallback<IWCSignMessageEvent['action']['approve']>(
-    async (hex) => {
-      const app = url ? await methods.queryAppByIdentity(url) : null;
-      await methods.createSignature({
-        address: currentAddress,
-        app: app ? app : undefined,
-        signType: method.startsWith(WalletConnectRPCMethod.SignTypedData) ? SignType.JSON : SignType.STR,
-        message: message,
-      });
-
-      (plugins.WalletConnect.currentEventSubject.getValue()?.action.approve as IWCSignMessageEvent['action']['approve'])(hex);
-    },
-    [currentAddress, message, method, url],
-  );
+  }, [navigation, requestId]);
 
   const { bsimEvent, setBSIMEvent, execBSIMCancel, setBSIMCancel } = useBSIMVerify();
   const _handleApprove = useCallback(async () => {
-    if (!message) return;
-    if (!currentAddressValue || !currentAddress || !vault || !currentNetwork) return;
+    if (!requestId || !request) return;
+    if (!currentAccount?.id || !currentAddress?.id || !currentAddress.value || !currentNetwork) return;
     setBSIMEvent(null);
     execBSIMCancel();
 
-    const vaultType = vault.type;
-    if (vaultType === VaultType.BSIM) {
+    signingAbortRef.current = new AbortController();
+    setBSIMCancel(() => signingAbortRef.current?.abort());
+
+    if (currentAccount.isHardwareWallet) {
       setBSIMEvent({ type: BSIMEventTypesName.BSIM_SIGN_START });
     }
 
-    if (method === WalletConnectRPCMethod.PersonalSign) {
+    if (method === 'personal_sign') {
       try {
-        if (vaultType === VaultType.BSIM) {
-          const [res, cancel] = await plugins.BSIM.signMessage(signMsg, currentAddressValue);
-          setBSIMCancel(cancel);
-          const hex = (await res).serialized;
-          await approve(hex);
+        const parsed = parseSignMessageParameters(request.params);
+        const signature = await getSigningService().signPersonalMessage({
+          accountId: currentAccount.id,
+          addressId: currentAddress.id,
+          request: parsed,
+          signal: signingAbortRef.current.signal,
+        });
+
+        try {
+          const raw = typeof parsed.message === 'string' ? parsed.message : parsed.message.raw;
+          await getSignatureRecordService().createRecord({
+            addressId: currentAddress.id,
+            signType: SignType.STR,
+            message: raw,
+            app: url
+              ? {
+                  identity: url,
+                  origin: url,
+                  name: name || url,
+                  icon: icons[0],
+                }
+              : null,
+          });
+        } catch {
+          // do not block approval
+        }
+
+        try {
+          getExternalRequestsService().approve({ requestId, data: { result: signature } });
+        } catch (error) {
+          console.log(error);
+        } finally {
           setBSIMEvent(null);
-        } else {
-          const pk = await methods.getPrivateKeyOfAddress(currentAddress);
-          const hex = await plugins.Transaction.signMessage({ message: signMsg, privateKey: pk, network: currentNetwork });
-          await approve(hex);
+          if (navigation.canGoBack()) navigation.goBack();
         }
       } catch (error: any) {
         console.log('personal_sign error', error);
@@ -163,24 +170,46 @@ function WalletConnectSignMessage() {
         ) {
           return;
         }
-        if (error instanceof BSIMError) {
-          setBSIMEvent({ type: BSIMEventTypesName.ERROR, message: error?.message });
+        if (error && typeof error === 'object' && (error as { code?: unknown }).code === BSIM_ERROR_CANCEL) {
+          return;
         }
+        setBSIMEvent({ type: BSIMEventTypesName.ERROR, message: error?.message ?? String(error) });
       }
-    } else if (method.includes('signTypedData')) {
+    } else {
       try {
-        const m = JSON.parse(message);
+        const parsed = parseSignTypedDataParameters(request.params);
+        const signature = await getSigningService().signTypedDataV4({
+          accountId: currentAccount.id,
+          addressId: currentAddress.id,
+          request: parsed,
+          signal: signingAbortRef.current.signal,
+        });
 
-        if (vaultType === VaultType.BSIM) {
-          const [res, cancel] = await plugins.BSIM.signTypedData(m.domain, m.types, m.message, currentAddressValue);
-          setBSIMCancel(cancel);
-          const hex = (await res).serialized;
-          await approve(hex);
+        try {
+          await getSignatureRecordService().createRecord({
+            addressId: currentAddress.id,
+            signType: SignType.JSON,
+            message: JSON.stringify(parsed.typedData),
+            app: url
+              ? {
+                  identity: url,
+                  origin: url,
+                  name: name || url,
+                  icon: icons[0],
+                }
+              : null,
+          });
+        } catch {
+          // do not block approval
+        }
+
+        try {
+          getExternalRequestsService().approve({ requestId, data: { result: signature } });
+        } catch (error) {
+          console.log(error);
+        } finally {
           setBSIMEvent(null);
-        } else {
-          const pk = await methods.getPrivateKeyOfAddress(currentAddress);
-          const hex = await plugins.Transaction.signTypedData({ domain: m.domain, types: m.types, value: m.message, network: currentNetwork, privateKey: pk });
-          await approve(hex);
+          if (navigation.canGoBack()) navigation.goBack();
         }
       } catch (error: any) {
         console.log('eth_signTypedData error', error);
@@ -194,15 +223,30 @@ function WalletConnectSignMessage() {
         ) {
           return;
         }
-        if (error instanceof BSIMError) {
-          setBSIMEvent({ type: BSIMEventTypesName.ERROR, message: error?.message });
-        } else {
-          setBSIMEvent(null);
+        if (error && typeof error === 'object' && (error as { code?: unknown }).code === BSIM_ERROR_CANCEL) {
+          return;
         }
+        setBSIMEvent({ type: BSIMEventTypesName.ERROR, message: error?.message ?? String(error) });
       }
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentNetwork, currentAddress?.id, message, method, vault, signMsg]);
+  }, [
+    currentAccount?.id,
+    currentAccount?.isHardwareWallet,
+    currentAddress?.id,
+    currentAddress?.value,
+    currentNetwork,
+    execBSIMCancel,
+    icons,
+    name,
+    navigation,
+    request,
+    requestId,
+    rootNavigation,
+    setBSIMCancel,
+    setBSIMEvent,
+    signMsg,
+    url,
+  ]);
 
   const { inAsync: approveLoading, execAsync: handleApprove } = useInAsync(_handleApprove);
   const { inAsync: rejectLoading, execAsync: handleReject } = useInAsync(_handleReject);
@@ -211,7 +255,7 @@ function WalletConnectSignMessage() {
     let jsonMessage: any = {};
     let shownMessage = signMsg ?? '';
     try {
-      if (method.includes('signTypedData')) {
+      if (method !== 'personal_sign') {
         jsonMessage = JSON.parse(shownMessage).message || {};
         shownMessage = JSON.stringify(jsonMessage) ?? '';
       }
@@ -229,79 +273,14 @@ function WalletConnectSignMessage() {
   }, [signMsg, method]);
 
   const renderMessage = useCallback(() => {
-    if (method === WalletConnectRPCMethod.PersonalSign) {
+    if (method === 'personal_sign') {
       return <Text style={{ color: colors.textPrimary }}>{shownMessage}</Text>;
     }
-    if (method.includes('signTypedData')) {
+    if (method !== 'personal_sign') {
       return <PlaintextMessage data={jsonMessage} />;
     }
     return '';
   }, [shownMessage, jsonMessage, method, colors.textPrimary]);
-
-  if (isRuntime) {
-    const requestId = (params as any).requestId as string;
-    const request = (params as any).request as any;
-
-    const title = request?.origin ?? '';
-    const method = request?.method ?? '';
-    const raw = request?.params ?? null;
-    const pretty = JSON.stringify(raw, null, 2);
-
-    const handleApprove = () => {
-      try {
-        getExternalRequestsService().approve({ requestId });
-      } catch (error) {
-        console.log(error);
-      } finally {
-        if (navigation.canGoBack()) navigation.goBack();
-      }
-    };
-
-    const handleReject = () => {
-      try {
-        getExternalRequestsService().reject({ requestId });
-      } catch (error) {
-        console.log(error);
-      } finally {
-        if (navigation.canGoBack()) navigation.goBack();
-      }
-    };
-
-    return (
-      <BottomSheetRoute snapPoints={snapPoints.large} onClose={handleReject}>
-        <BottomSheetWrapper>
-          <BottomSheetHeader title={t('wc.request.signature')}>
-            <View style={[styles.subTitle, styles.flexWithRow]}>
-              <View>
-                <Text style={[styles.method, { color: colors.textSecondary }]}>{method}</Text>
-                <Text style={[styles.h2, { color: colors.textPrimary }]}>{title}</Text>
-              </View>
-            </View>
-          </BottomSheetHeader>
-
-          <BottomSheetScrollContent style={[styles.content, { borderColor: colors.borderFourth }]} stickyHeaderIndices={[0]}>
-            <View style={[styles.flexWithRow, styles.scrollTitle, { backgroundColor: colors.bgFourth }]}>
-              <Text style={[styles.h2, { color: colors.textPrimary }]}>{t('wc.sign.message')}</Text>
-            </View>
-            <View style={{ marginBottom: 16 }}>
-              <Text style={{ color: colors.textPrimary }}>{pretty}</Text>
-            </View>
-          </BottomSheetScrollContent>
-
-          <BottomSheetFooter style={[styles.footer, { borderColor: colors.borderFourth }]}>
-            <View style={styles.btnArea}>
-              <Button style={styles.btn} onPress={handleReject} testID="reject">
-                {t('common.cancel')}
-              </Button>
-              <Button style={styles.btn} onPress={handleApprove} testID="approve">
-                {t('common.confirm')}
-              </Button>
-            </View>
-          </BottomSheetFooter>
-        </BottomSheetWrapper>
-      </BottomSheetRoute>
-    );
-  }
 
   return (
     <>
@@ -332,7 +311,7 @@ function WalletConnectSignMessage() {
           </BottomSheetScrollContent>
 
           <BottomSheetFooter style={[styles.footer, { borderColor: colors.borderFourth }]}>
-            <AccountItemView nickname={currentAccount?.nickname} addressValue={currentAddressValue ?? ''} colors={colors}>
+            <AccountItemView nickname={currentAccount?.nickname} addressValue={currentAccount?.address ?? ''} colors={colors}>
               <Text style={[transactionConfirmStyle.networkName, { color: colors.textSecondary }]} numberOfLines={1}>
                 on {currentNetwork?.name}
               </Text>

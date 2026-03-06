@@ -25,6 +25,7 @@ import {
   NftService,
   type RecentlyAddress,
   SignatureRecordService,
+  SigningService,
   TransactionService,
   UiPreferencesService,
   VaultService,
@@ -108,6 +109,10 @@ export function getHardwareWalletService(): HardwareWalletService {
 
 export function getSignatureRecordService(): SignatureRecordService {
   return getContainer().get(SignatureRecordService);
+}
+
+export function getSigningService(): SigningService {
+  return getContainer().get(SigningService);
 }
 
 export function getAuthService(): AuthService {

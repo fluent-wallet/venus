@@ -1,10 +1,11 @@
 import SettingsIcon from '@assets/icons/settings.svg';
 import HourglassLoading from '@components/Loading/Hourglass';
 import Text from '@components/Text';
+import { ASSET_TYPE } from '@core/types';
 import { trimDecimalZeros } from '@core/utils/balance';
-import { useCurrentNetworkNativeAsset } from '@core/WalletCore/Plugins/ReactInject';
 import TokenIcon from '@modules/AssetsList/TokensList/TokenIcon';
 import { useTheme } from '@react-navigation/native';
+import { useAssetsOfCurrentAddress } from '@service/asset';
 import Decimal from 'decimal.js';
 import type React from 'react';
 import { useEffect, useMemo } from 'react';
@@ -18,7 +19,8 @@ const EstimateFee: React.FC<{
   onGasCostChange?: (gasCost: string) => void;
 }> = ({ gasSetting, advanceSetting, onPressSettingIcon, onGasCostChange }) => {
   const { colors } = useTheme();
-  const currentNativeAsset = useCurrentNetworkNativeAsset();
+  const { data: assets } = useAssetsOfCurrentAddress();
+  const currentNativeAsset = useMemo(() => assets?.find((a) => a.type === ASSET_TYPE.Native) ?? null, [assets]);
 
   const gasCostAndPriceInUSDT = useMemo(() => {
     if (!gasSetting || !advanceSetting) return null;

@@ -433,7 +433,12 @@ export class TransactionService {
     }
   }
 
-  async sendDappTransaction(input: { addressId: string; request: EvmRpcTransactionRequest; signal?: AbortSignal }): Promise<ITransaction> {
+  async sendDappTransaction(input: {
+    addressId: string;
+    request: EvmRpcTransactionRequest;
+    app?: { identity: string; origin?: string; name?: string; icon?: string } | null;
+    signal?: AbortSignal;
+  }): Promise<ITransaction> {
     const address = await this.findAddress(input.addressId);
     const network = await this.getNetwork(address);
 
@@ -532,6 +537,10 @@ export class TransactionService {
         signedTx = await chainProvider.signTransaction(unsignedTx, signer, { signal: input.signal });
       }
     } catch (error) {
+      if (signer.type === 'hardware' && error && typeof error === 'object' && typeof (error as { code?: unknown }).code === 'string') {
+        throw error;
+      }
+
       if (signer.type === 'hardware') {
         if (input.signal?.aborted) {
           this.eventBus?.emit('hardware-sign/aborted', {
@@ -564,6 +573,7 @@ export class TransactionService {
       signatureId = await this.signatureRecordService.createRecord({
         addressId: address.id,
         signType: SignType.TX,
+        app: input.app ?? null,
       });
     } catch {
       signatureId = null;

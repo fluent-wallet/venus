@@ -22,6 +22,7 @@ const makeSnapshot = (tag: string): ExternalRequestSnapshot => {
     kind: 'session_request',
     sessionId: `s_${tag}`,
     origin: `https://dapp.${tag}.example`,
+    metadata: { name: `dapp.${tag}.example`, url: `https://dapp.${tag}.example`, icons: [] },
     chainId: 'eip155:1',
     method: 'personal_sign',
     params: ['0xdeadbeef'],

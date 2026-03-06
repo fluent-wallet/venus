@@ -4,7 +4,7 @@ import type { CoreEventMap, EventBus } from '../eventBus';
 import type { ExternalRequestSnapshot } from './types';
 
 export type ExternalRequestHandlers = {
-  onApprove: () => void | Promise<void>;
+  onApprove: (data?: unknown) => void | Promise<void>;
   onReject: (error: unknown) => void | Promise<void>;
 };
 
@@ -153,7 +153,7 @@ export class ExternalRequestsService {
     return id;
   }
 
-  public approve(params: { requestId: string }): void {
+  public approve(params: { requestId: string; data?: unknown }): void {
     const record = this.requireActive(params.requestId);
 
     this.records.delete(record.id);
@@ -162,7 +162,7 @@ export class ExternalRequestsService {
     const activeForKey = this.activeByKey.get(record.key);
     if (activeForKey === record.id) this.activeByKey.delete(record.key);
 
-    void record.handlers.onApprove();
+    void record.handlers.onApprove(params.data);
     this.purgeExpired('approve');
     this.tryActivate();
   }
@@ -225,6 +225,7 @@ export class ExternalRequestsService {
 
   private requireActive(requestId: string): RequestRecord {
     if (!this.activeIds.has(requestId)) {
+      this.logger?.warn('ExternalRequestsService:request-not-active', { requestId });
       throw new CoreError({
         code: EXTREQ_REQUEST_NOT_FOUND,
         message: 'External request not found or not active.',
@@ -234,6 +235,7 @@ export class ExternalRequestsService {
 
     const record = this.records.get(requestId);
     if (!record) {
+      this.logger?.warn('ExternalRequestsService:request-record-missing', { requestId });
       throw new CoreError({
         code: EXTREQ_REQUEST_NOT_FOUND,
         message: 'External request not found.',
