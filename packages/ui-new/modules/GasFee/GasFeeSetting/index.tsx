@@ -33,16 +33,9 @@ import { useTranslation } from 'react-i18next';
 import { Pressable, StyleSheet, View } from 'react-native';
 import CustomizeAdvanceSetting from './CustomizeAdvanceSetting';
 import CustomizeGasSetting from './CustomizeGasSetting';
+import { buildGasSettingWithLevel, type GasSetting, type GasSettingLike, type GasSettingWithLevel, getGasSettingPrimaryFee } from './gasSetting';
 
-export interface GasSetting {
-  suggestedMaxFeePerGas?: string;
-  suggestedMaxPriorityFeePerGas?: string;
-  suggestedGasPrice?: string;
-}
-
-export interface GasSettingWithLevel extends GasSetting {
-  level: 'customize' | Level;
-}
+export type { GasSetting, GasSettingLike, GasSettingWithLevel } from './gasSetting';
 
 export type SpeedUpLevel = 'higher' | 'faster' | 'customize';
 
@@ -86,7 +79,8 @@ const GasFeeSetting = forwardRef<GasFeeSettingMethods, Props>(
     const nativeAsset = useMemo(() => assets?.find((a) => a.type === ASSET_TYPE.Native) ?? null, [assets]);
 
     const estimateRes = usePollingGasEstimateAndNonce(tx);
-    const estimateGasSettings = estimateRes ? (estimateRes.estimateOf1559 ?? estimateRes.estimate) : null;
+    const estimateGasSettings = estimateRes?.levels ?? null;
+    const is1559Estimate = estimateRes?.pricingKind === 'eip1559';
     const estimateCurrentGasPrice = estimateRes?.gasPrice ?? null;
     const estimateAdvanceSetting = useMemo(
       () =>
@@ -102,30 +96,23 @@ const GasFeeSetting = forwardRef<GasFeeSettingMethods, Props>(
     const isDappCustomizeGasSettomg = !estimateRes
       ? false
       : !!dappCustomizeGasSetting &&
-        (estimateRes.estimateOf1559 ? true : !(keys(dappCustomizeGasSetting).length === 1 && has(dappCustomizeGasSetting, 'suggestedMaxPriorityFeePerGas')));
+        (is1559Estimate ? true : !(keys(dappCustomizeGasSetting).length === 1 && has(dappCustomizeGasSetting, 'suggestedMaxPriorityFeePerGas')));
 
     const defaultCustomizeGasSetting = useMemo(() => {
       if (!estimateRes || !estimateGasSettings) return null;
 
-      return {
-        ...estimateGasSettings[defaultLevel],
+      const base = estimateGasSettings[defaultLevel] as GasSettingLike;
+      const primaryFee = getGasSettingPrimaryFee(dappCustomizeGasSetting) ?? getGasSettingPrimaryFee(base);
+      if (!primaryFee) return null;
+
+      return buildGasSettingWithLevel({
+        pricingKind: is1559Estimate ? 'eip1559' : 'legacy',
         level: 'customize',
-        ...omit(dappCustomizeGasSetting, ['suggestedGasPrice', 'suggestedMaxFeePerGas', 'suggestedMaxPriorityFeePerGas']),
-        ...(has(dappCustomizeGasSetting, 'suggestedMaxFeePerGas') || has(dappCustomizeGasSetting, 'suggestedGasPrice')
-          ? {
-              [estimateRes.estimateOf1559 ? 'suggestedMaxFeePerGas' : 'suggestedGasPrice']: estimateRes.estimateOf1559
-                ? (dappCustomizeGasSetting?.suggestedMaxFeePerGas ?? dappCustomizeGasSetting?.suggestedGasPrice)
-                : (dappCustomizeGasSetting?.suggestedGasPrice ?? dappCustomizeGasSetting?.suggestedMaxFeePerGas),
-            }
-          : null),
-        ...(estimateRes.estimateOf1559 && has(dappCustomizeGasSetting, 'suggestedMaxPriorityFeePerGas')
-          ? {
-              suggestedMaxPriorityFeePerGas: dappCustomizeGasSetting.suggestedMaxPriorityFeePerGas,
-            }
-          : null),
-      } as GasSettingWithLevel;
+        primaryFee,
+        priorityFee: is1559Estimate ? (dappCustomizeGasSetting?.suggestedMaxPriorityFeePerGas ?? base.suggestedMaxPriorityFeePerGas) : undefined,
+      });
       // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [estimateRes]);
+    }, [estimateRes, estimateGasSettings, is1559Estimate, dappCustomizeGasSetting]);
 
     const [selectedGasSetting, setSelectedGasSetting] = useState<GasSettingWithLevel | null>(null);
     const [tempSelectedOptionLevel, setTempSelectedOptionLevel] = useState<GasSettingWithLevel['level'] | null>(null);
@@ -215,7 +202,7 @@ const GasFeeSetting = forwardRef<GasFeeSettingMethods, Props>(
     const showLongTime = useMemo(
       () =>
         tempSelectedOptionLevel === 'customize' && estimateCurrentGasPrice && customizeGasSetting
-          ? new Decimal(customizeGasSetting.suggestedMaxFeePerGas ?? customizeGasSetting.suggestedGasPrice!).lessThan(estimateCurrentGasPrice)
+          ? new Decimal(getGasSettingPrimaryFee(customizeGasSetting) ?? '0').lessThan(estimateCurrentGasPrice)
           : false,
       [tempSelectedOptionLevel, estimateCurrentGasPrice, customizeGasSetting],
     );
@@ -373,13 +360,10 @@ export const GasOption: React.FC<{
   const { t } = useTranslation();
   const { colors } = useTheme();
 
-  const priceGwei = useMemo(
-    () => trimDecimalZeros(new Decimal(gasSetting.suggestedMaxFeePerGas ?? gasSetting.suggestedGasPrice!).div(1e9).toString()),
-    [gasSetting.suggestedMaxFeePerGas, gasSetting.suggestedGasPrice],
-  );
+  const priceGwei = useMemo(() => trimDecimalZeros(new Decimal(getGasSettingPrimaryFee(gasSetting) ?? '0').div(1e9).toString()), [gasSetting]);
   const gasCost = useMemo(
     () =>
-      new Decimal(gasSetting?.suggestedMaxFeePerGas ?? gasSetting.suggestedGasPrice!)
+      new Decimal(getGasSettingPrimaryFee(gasSetting) ?? '0')
         .mul(gasLimit)
         .div(Decimal.pow(10, nativeAsset?.decimals ?? 18))
         .toString(),

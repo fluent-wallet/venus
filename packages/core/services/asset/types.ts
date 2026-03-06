@@ -35,3 +35,11 @@ export type Erc20TokenInfo = {
    */
   balance: string;
 };
+
+export type ContractAssetInspection = {
+  assetType: AssetTypeValue | null;
+  name: string | null;
+  symbol: string | null;
+  decimals: number | null;
+  balance: string | null;
+};

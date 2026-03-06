@@ -57,6 +57,8 @@ import {
 } from '@core/types';
 import { Networks } from '@core/utils/consts';
 import { ProcessErrorType } from '@core/utils/eth';
+import { type ParseTxDataReturnType, parseTxData } from '@core/utils/txData';
+import { Interface } from '@ethersproject/abi';
 import { Q } from '@nozbe/watermelondb';
 import { inject, injectable, optional } from 'inversify';
 import * as OxHex from 'ox/Hex';
@@ -210,6 +212,54 @@ export class TransactionService {
     }
 
     throw new Error(`estimateGasPricing: unsupported networkType: ${String(network.networkType)}`);
+  }
+
+  async decodeContractData(params: { addressId: string; to?: string | null; data?: string | null }): Promise<ParseTxDataReturnType> {
+    const parsed = parseTxData({ data: params.data, to: params.to });
+    if (!params.data || parsed.functionName !== 'unknown' || !params.to) {
+      return parsed;
+    }
+
+    const address = await this.findAddress(params.addressId);
+    const network = await address.network.fetch();
+    const networkConfig = Object.values(Networks).find((item) => item.netId === network.netId);
+    const scanOpenApi = networkConfig && 'scanOpenAPI' in networkConfig ? networkConfig.scanOpenAPI : undefined;
+    if (!scanOpenApi) {
+      return parsed;
+    }
+
+    try {
+      const response = await fetch(`${scanOpenApi}/util/decode/method/raw?contracts=${params.to}&inputs=${params.data}`, {
+        method: 'GET',
+        headers: { 'Content-Type': 'application/json' },
+      }).then((res) => res.json());
+
+      if (!response?.result || !Array.isArray(response.result) || response.result.length === 0) {
+        return parsed;
+      }
+
+      const responseData = response.result[0];
+      if (!responseData?.abi) {
+        return parsed;
+      }
+
+      const abi = JSON.parse(responseData.abi);
+      const methodId = params.data.slice(0, 10);
+      const iface = new Interface([abi]);
+      const fn = iface.getFunction(methodId);
+      if (!fn) {
+        return parsed;
+      }
+
+      iface.decodeFunctionData(fn, params.data);
+
+      return {
+        functionName: fn.name,
+        readableABI: fn.format(),
+      };
+    } catch {
+      return parsed;
+    }
   }
 
   /**

@@ -12,7 +12,7 @@ import TokenIcon from '@modules/AssetsList/TokensList/TokenIcon';
 import { useTheme } from '@react-navigation/native';
 import { useCurrentAddress } from '@service/account';
 import type { INftItem } from '@service/core';
-import { getTransactionService } from '@service/core';
+import { estimateTransactionGasPricing } from '@service/transaction';
 import Decimal from 'decimal.js';
 import type React from 'react';
 import { forwardRef, useCallback, useEffect, useImperativeHandle, useMemo, useState } from 'react';
@@ -92,12 +92,12 @@ const SetAssetAmount = forwardRef<SetAssetAmountMethods, Props>(
           const addressId = currentAddress?.id;
           if (!addressId) return;
 
-          const estimateRes = await getTransactionService().estimateGasPricing({
+          const estimateRes = await estimateTransactionGasPricing({
             addressId,
             withNonce: false,
             tx: { to: targetAddress, value: '0x0', from: currentAddressValue },
           });
-          const gasCostBaseUnits = new Decimal(BigInt(estimateRes.pricing.levels.medium.gasCost).toString());
+          const gasCostBaseUnits = new Decimal(BigInt(estimateRes.levels.medium.gasCost).toString());
           let res = new Decimal(asset.balance).sub(gasCostBaseUnits);
           res = res.greaterThan(0) ? res : new Decimal(0);
           setValidMax(res);

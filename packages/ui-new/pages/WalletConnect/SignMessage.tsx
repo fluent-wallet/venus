@@ -4,13 +4,15 @@ import Button from '@components/Button';
 import Icon from '@components/Icon';
 import { PlaintextMessage } from '@components/PlaintextMessage';
 import Text from '@components/Text';
+import { AUTH_PASSWORD_REQUEST_CANCELED } from '@core/errors';
 import { BSIM_ERROR_CANCEL } from '@core/hardware/bsim/constants';
 import { SignType } from '@core/services/signing/types';
 import { parseSignMessageParameters, parseSignTypedDataParameters } from '@core/services/transaction';
 import useInAsync from '@hooks/useInAsync';
 import { AccountItemView } from '@modules/AccountsList';
-import BSIMVerify, { BSIMEventTypesName, useBSIMVerify } from '@pages/SendTransaction/BSIMVerify';
+import HardwareSignVerify from '@pages/SendTransaction/HardwareSignVerify';
 import { styles as transactionConfirmStyle } from '@pages/SendTransaction/Step4Confirm/index';
+import { useHardwareSigningUiState } from '@pages/SendTransaction/Step4Confirm/useHardwareSigningUiState';
 import Clipboard from '@react-native-clipboard/clipboard';
 import { type RouteProp, useNavigation, useRoute, useTheme } from '@react-navigation/native';
 import type { StackNavigation, WalletConnectParamList, WalletConnectSignMessageStackName } from '@router/configs';
@@ -18,12 +20,24 @@ import { useCurrentAccount, useCurrentAddress } from '@service/account';
 import { getExternalRequestsService, getSignatureRecordService, getSigningService } from '@service/core';
 import { useCurrentNetwork } from '@service/network';
 import { handleBSIMHardwareUnavailable } from '@utils/handleBSIMHardwareUnavailable';
+import matchRPCErrorMessage from '@utils/matchRPCErrorMssage';
 import { sanitizeTypedData } from '@utils/santitizeTypedData';
 import { isHexString, toUtf8String } from 'ethers';
 import { useCallback, useMemo, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { showMessage } from 'react-native-flash-message';
+
+const isUserCanceledError = (error: unknown): boolean => {
+  const code = (error as { code?: unknown } | null)?.code;
+  if (code === AUTH_PASSWORD_REQUEST_CANCELED) return true;
+  if (code === BSIM_ERROR_CANCEL) return true;
+
+  const name = (error as { name?: unknown } | null)?.name;
+  if (name === 'AbortError') return true;
+
+  return false;
+};
 
 function WalletConnectSignMessage() {
   const { t } = useTranslation();
@@ -46,6 +60,10 @@ function WalletConnectSignMessage() {
   const method = request?.method ?? 'personal_sign';
 
   const signingAbortRef = useRef<AbortController | null>(null);
+  const closeActionRef = useRef<'none' | 'approving' | 'rejecting' | 'approved' | 'rejected'>('none');
+  const approveResultRef = useRef<string | null>(null);
+  const addressId = currentAddress?.id ?? '';
+  const { state: hardwareSignState, clear: clearHardwareSignState } = useHardwareSigningUiState(addressId || undefined);
 
   const signMsg = useMemo(() => {
     if (!request) return '';
@@ -87,16 +105,22 @@ function WalletConnectSignMessage() {
   );
 
   const _handleReject = useCallback(async () => {
+    if (closeActionRef.current !== 'none') return;
+    closeActionRef.current = 'rejecting';
+
     try {
       try {
         signingAbortRef.current?.abort();
+        clearHardwareSignState();
       } catch {
         // ignore
       }
 
       try {
         getExternalRequestsService().reject({ requestId });
+        closeActionRef.current = 'rejected';
       } catch (err) {
+        closeActionRef.current = 'none';
         console.log('error', err);
       } finally {
         if (navigation.canGoBack()) navigation.goBack();
@@ -104,21 +128,53 @@ function WalletConnectSignMessage() {
     } catch (err) {
       console.log('error', err);
     }
-  }, [navigation, requestId]);
+  }, [navigation, requestId, clearHardwareSignState]);
 
-  const { bsimEvent, setBSIMEvent, execBSIMCancel, setBSIMCancel } = useBSIMVerify();
+  const handleSheetClose = useCallback(() => {
+    if (closeActionRef.current !== 'none') return;
+    void _handleReject();
+  }, [_handleReject]);
+
+  const finalizeApprove = useCallback(
+    (result: string) => {
+      try {
+        getExternalRequestsService().approve({ requestId, data: { result } });
+        approveResultRef.current = null;
+        closeActionRef.current = 'approved';
+        clearHardwareSignState();
+        if (navigation.canGoBack()) navigation.goBack();
+      } catch (error) {
+        approveResultRef.current = result;
+        closeActionRef.current = 'none';
+        clearHardwareSignState();
+        showMessage({
+          message: matchRPCErrorMessage(error as { message?: string; data?: string; code?: number }),
+          type: 'danger',
+        });
+      }
+    },
+    [clearHardwareSignState, navigation, requestId],
+  );
+
   const _handleApprove = useCallback(async () => {
     if (!requestId || !request) return;
     if (!currentAccount?.id || !currentAddress?.id || !currentAddress.value || !currentNetwork) return;
-    setBSIMEvent(null);
-    execBSIMCancel();
+    if (closeActionRef.current !== 'none') return;
 
-    signingAbortRef.current = new AbortController();
-    setBSIMCancel(() => signingAbortRef.current?.abort());
-
-    if (currentAccount.isHardwareWallet) {
-      setBSIMEvent({ type: BSIMEventTypesName.BSIM_SIGN_START });
+    const pendingApproveResult = approveResultRef.current;
+    if (pendingApproveResult) {
+      closeActionRef.current = 'approving';
+      finalizeApprove(pendingApproveResult);
+      return;
     }
+
+    closeActionRef.current = 'approving';
+
+    signingAbortRef.current?.abort();
+    clearHardwareSignState();
+
+    const controller = new AbortController();
+    signingAbortRef.current = controller;
 
     if (method === 'personal_sign') {
       try {
@@ -127,7 +183,7 @@ function WalletConnectSignMessage() {
           accountId: currentAccount.id,
           addressId: currentAddress.id,
           request: parsed,
-          signal: signingAbortRef.current.signal,
+          signal: controller.signal,
         });
 
         try {
@@ -149,31 +205,34 @@ function WalletConnectSignMessage() {
           // do not block approval
         }
 
-        try {
-          getExternalRequestsService().approve({ requestId, data: { result: signature } });
-        } catch (error) {
-          console.log(error);
-        } finally {
-          setBSIMEvent(null);
-          if (navigation.canGoBack()) navigation.goBack();
-        }
-      } catch (error: any) {
+        approveResultRef.current = signature;
+        finalizeApprove(signature);
+      } catch (error: unknown) {
         console.log('personal_sign error', error);
 
         if (
           handleBSIMHardwareUnavailable(error, rootNavigation, {
             beforeNavigate: () => {
-              setBSIMEvent(null);
-              execBSIMCancel();
+              clearHardwareSignState();
+              signingAbortRef.current?.abort();
             },
           })
         ) {
+          closeActionRef.current = 'none';
           return;
         }
-        if (error && typeof error === 'object' && (error as { code?: unknown }).code === BSIM_ERROR_CANCEL) {
+        if (controller.signal.aborted || isUserCanceledError(error)) {
+          closeActionRef.current = 'none';
+          clearHardwareSignState();
           return;
         }
-        setBSIMEvent({ type: BSIMEventTypesName.ERROR, message: error?.message ?? String(error) });
+
+        closeActionRef.current = 'none';
+        clearHardwareSignState();
+        showMessage({
+          message: matchRPCErrorMessage(error as { message?: string; data?: string; code?: number }),
+          type: 'danger',
+        });
       }
     } else {
       try {
@@ -182,7 +241,7 @@ function WalletConnectSignMessage() {
           accountId: currentAccount.id,
           addressId: currentAddress.id,
           request: parsed,
-          signal: signingAbortRef.current.signal,
+          signal: controller.signal,
         });
 
         try {
@@ -203,56 +262,57 @@ function WalletConnectSignMessage() {
           // do not block approval
         }
 
-        try {
-          getExternalRequestsService().approve({ requestId, data: { result: signature } });
-        } catch (error) {
-          console.log(error);
-        } finally {
-          setBSIMEvent(null);
-          if (navigation.canGoBack()) navigation.goBack();
-        }
-      } catch (error: any) {
+        approveResultRef.current = signature;
+        finalizeApprove(signature);
+      } catch (error: unknown) {
         console.log('eth_signTypedData error', error);
         if (
           handleBSIMHardwareUnavailable(error, rootNavigation, {
             beforeNavigate: () => {
-              setBSIMEvent(null);
-              execBSIMCancel();
+              clearHardwareSignState();
+              signingAbortRef.current?.abort();
             },
           })
         ) {
+          closeActionRef.current = 'none';
           return;
         }
-        if (error && typeof error === 'object' && (error as { code?: unknown }).code === BSIM_ERROR_CANCEL) {
+        if (controller.signal.aborted || isUserCanceledError(error)) {
+          closeActionRef.current = 'none';
+          clearHardwareSignState();
           return;
         }
-        setBSIMEvent({ type: BSIMEventTypesName.ERROR, message: error?.message ?? String(error) });
+
+        closeActionRef.current = 'none';
+        clearHardwareSignState();
+        showMessage({
+          message: matchRPCErrorMessage(error as { message?: string; data?: string; code?: number }),
+          type: 'danger',
+        });
       }
     }
   }, [
+    clearHardwareSignState,
     currentAccount?.id,
-    currentAccount?.isHardwareWallet,
     currentAddress?.id,
     currentAddress?.value,
     currentNetwork,
-    execBSIMCancel,
     icons,
+    method,
     name,
     navigation,
     request,
     requestId,
     rootNavigation,
-    setBSIMCancel,
-    setBSIMEvent,
-    signMsg,
     url,
+    finalizeApprove,
   ]);
 
   const { inAsync: approveLoading, execAsync: handleApprove } = useInAsync(_handleApprove);
   const { inAsync: rejectLoading, execAsync: handleReject } = useInAsync(_handleReject);
 
   const { shownMessage, jsonMessage } = useMemo(() => {
-    let jsonMessage: any = {};
+    let jsonMessage: Record<string, unknown> = {};
     let shownMessage = signMsg ?? '';
     try {
       if (method !== 'personal_sign') {
@@ -276,10 +336,7 @@ function WalletConnectSignMessage() {
     if (method === 'personal_sign') {
       return <Text style={{ color: colors.textPrimary }}>{shownMessage}</Text>;
     }
-    if (method !== 'personal_sign') {
-      return <PlaintextMessage data={jsonMessage} />;
-    }
-    return '';
+    return <PlaintextMessage data={jsonMessage} />;
   }, [shownMessage, jsonMessage, method, colors.textPrimary]);
 
   return (
@@ -288,7 +345,7 @@ function WalletConnectSignMessage() {
         enablePanDownToClose={!approveLoading}
         enableContentPanningGesture={!approveLoading}
         snapPoints={snapPoints.large}
-        onClose={handleReject}
+        onClose={handleSheetClose}
       >
         <BottomSheetWrapper>
           <BottomSheetHeader title={t('wc.request.signature')}>
@@ -328,12 +385,12 @@ function WalletConnectSignMessage() {
           </BottomSheetFooter>
         </BottomSheetWrapper>
       </BottomSheetRoute>
-      {bsimEvent && (
-        <BSIMVerify
-          bsimEvent={bsimEvent}
+      {!!(currentAccount?.isHardwareWallet && hardwareSignState) && hardwareSignState && (
+        <HardwareSignVerify
+          state={hardwareSignState}
           onClose={() => {
-            setBSIMEvent(null);
-            execBSIMCancel();
+            signingAbortRef.current?.abort();
+            clearHardwareSignState();
           }}
           onRetry={handleApprove}
         />

@@ -11,41 +11,27 @@ import { Linking } from 'react-native';
 import { paymentUriParser } from './parser';
 import QrScannerSheet from './QrScannerSheet';
 
+const normalizeExternalInput = (rawUrl: string): string | null => {
+  const trimmed = rawUrl.trim();
+  if (!trimmed) return null;
+
+  if (trimmed.startsWith('bimwallet://')) {
+    return trimmed;
+  }
+
+  try {
+    return decodeURIComponent(trimmed);
+  } catch {
+    return trimmed;
+  }
+};
+
 // keep deep link listener
 export const useListenDeepLink = (navigation: StackNavigation) => {
   useEffect(() => {
     const handleDeepLink = (event: { url: string }) => {
       try {
-        const rawUrl = event.url;
-
-        let data: string | null = null;
-        if (rawUrl.startsWith('bimwallet://')) {
-          try {
-            const parsed = new URL(rawUrl);
-            if (parsed.host === 'wc') {
-              const uri = parsed.searchParams.get('uri');
-              if (uri) data = uri;
-              else if (parsed.search) data = parsed.search.slice(1);
-            }
-          } catch {
-            // fallback to legacy slicing below
-          }
-
-          if (!data) {
-            if (rawUrl.startsWith('bimwallet://wc?uri=')) {
-              data = rawUrl.slice(19);
-            } else if (rawUrl.startsWith('bimwallet://wc?')) {
-              data = rawUrl.slice(12);
-            }
-          }
-        } else {
-          // Non-bimwallet URLs are safe to decode as a whole (payment URI / raw protocols).
-          try {
-            data = decodeURIComponent(rawUrl);
-          } catch {
-            data = rawUrl;
-          }
-        }
+        const data = normalizeExternalInput(event.url);
         if (!data) return;
 
         const activeRouterName = getActiveRouteName(navigation.getState());

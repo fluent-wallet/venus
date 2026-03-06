@@ -77,10 +77,14 @@ const normalizeWalletConnectUri = (raw: string): string | null => {
     try {
       const url = new URL(trimmed);
       const uri = url.searchParams.get('uri');
-      if (!uri) return null;
-      if (uri.startsWith('wc:')) return uri;
-      const decoded = safeDecodeURIComponent(uri);
-      if (decoded.startsWith('wc:')) return decoded;
+      if (uri) {
+        if (uri.startsWith('wc:')) return uri;
+        const decoded = safeDecodeURIComponent(uri);
+        if (decoded.startsWith('wc:')) return decoded;
+      }
+
+      const rawQuery = url.search ? safeDecodeURIComponent(url.search.slice(1)) : '';
+      if (rawQuery.startsWith('wc:')) return rawQuery;
     } catch {
       return null;
     }

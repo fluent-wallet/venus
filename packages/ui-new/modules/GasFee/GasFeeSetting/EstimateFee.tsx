@@ -10,7 +10,8 @@ import Decimal from 'decimal.js';
 import type React from 'react';
 import { useEffect, useMemo } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
-import { type AdvanceSetting, type GasSettingWithLevel, OptionLevel } from './index';
+import { type GasSettingWithLevel, getGasSettingPrimaryFee } from './gasSetting';
+import { type AdvanceSetting, OptionLevel } from './index';
 
 const EstimateFee: React.FC<{
   gasSetting?: GasSettingWithLevel | null;
@@ -24,9 +25,7 @@ const EstimateFee: React.FC<{
 
   const gasCostAndPriceInUSDT = useMemo(() => {
     if (!gasSetting || !advanceSetting) return null;
-    const cost = new Decimal(gasSetting.suggestedMaxFeePerGas ?? gasSetting.suggestedGasPrice!)
-      .mul(advanceSetting.gasLimit)
-      .div(Decimal.pow(10, currentNativeAsset?.decimals ?? 18));
+    const cost = new Decimal(getGasSettingPrimaryFee(gasSetting) ?? '0').mul(advanceSetting.gasLimit).div(Decimal.pow(10, currentNativeAsset?.decimals ?? 18));
     const priceInUSDT = currentNativeAsset?.priceInUSDT ? cost.mul(new Decimal(currentNativeAsset.priceInUSDT)) : null;
 
     return {

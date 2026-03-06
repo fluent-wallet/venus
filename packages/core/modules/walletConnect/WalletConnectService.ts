@@ -618,6 +618,13 @@ export class WalletConnectService {
           }
 
           // Backward-compatible fallback: if UI approves without providing a result, core handles the request as before.
+          this.logger.warn('WalletConnectService:session-request:onApprove-fallback-core-handle', {
+            topic,
+            id,
+            chainId,
+            method,
+          });
+
           try {
             await this.approveSessionRequest({ client, topic, id, chainId, method, rpcParams });
           } catch (error) {

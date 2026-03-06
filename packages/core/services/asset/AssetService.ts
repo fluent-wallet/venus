@@ -1,5 +1,5 @@
 import { ChainRegistry } from '@core/chains';
-import { iface777 } from '@core/contracts';
+import { iface721, iface777, iface1155 } from '@core/contracts';
 import type { Database } from '@core/database';
 import type { Address } from '@core/database/models/Address';
 import { type Asset, AssetSource as DbAssetSource, AssetType as DbAssetType } from '@core/database/models/Asset';
@@ -13,9 +13,11 @@ import { balanceFormat, convertBalanceToDecimal } from '@core/utils/balance';
 import { NetworkType } from '@core/utils/consts';
 import Decimal from 'decimal.js';
 import { inject, injectable } from 'inversify';
-import type { AddCustomTokenInput, Erc20TokenInfo, IAsset } from './types';
+import type { AddCustomTokenInput, ContractAssetInspection, Erc20TokenInfo, IAsset } from './types';
 
-// TODO: replace DbAssetType with AssetTypeValue (remove DbAssetType (not enum))
+const ERC1155_INTERFACE_ID = '0xd9b67a26';
+const ERC721_INTERFACE_ID = '0x80ac58cd';
+
 const ASSET_TYPE_BY_DB_ASSET_TYPE: Record<DbAssetType, AssetTypeValue> = {
   [DbAssetType.Native]: ASSET_TYPE.Native,
   [DbAssetType.ERC20]: ASSET_TYPE.ERC20,
@@ -93,6 +95,32 @@ export class AssetService {
       symbol: typeof symbol === 'string' && symbol.trim() !== '' ? symbol : null,
       decimals,
       balance,
+    };
+  }
+
+  async inspectContractAsset(input: { addressId: string; contractAddress: string }): Promise<ContractAssetInspection> {
+    const address = await this.findAddress(input.addressId);
+    const network = await address.network.fetch();
+
+    if (network.networkType !== NetworkType.Ethereum) {
+      return { assetType: null, name: null, symbol: null, decimals: null, balance: null };
+    }
+
+    const provider = this.getChainProvider(network);
+    const nftType = await this.detectNftContractType(provider, input.contractAddress);
+    if (nftType) {
+      return { assetType: nftType, name: null, symbol: null, decimals: null, balance: null };
+    }
+
+    const tokenInfo = await this.getErc20TokenInfo(input);
+    const assetType = tokenInfo.name && tokenInfo.symbol ? ASSET_TYPE.ERC20 : null;
+
+    return {
+      assetType,
+      name: tokenInfo.name,
+      symbol: tokenInfo.symbol,
+      decimals: assetType ? tokenInfo.decimals : null,
+      balance: assetType ? tokenInfo.balance : null,
     };
   }
 
@@ -283,5 +311,24 @@ export class AssetService {
     } catch {
       return null;
     }
+  }
+
+  private async detectNftContractType(provider: IChainProvider, contractAddress: string): Promise<AssetTypeValue | null> {
+    const supports = async (assetType: AssetTypeValue, interfaceId: string) => {
+      try {
+        const encoder = assetType === ASSET_TYPE.ERC721 ? iface721 : iface1155;
+        const data = encoder.encodeFunctionData('supportsInterface', [interfaceId]) as Hex;
+        const raw = await provider.call({ to: contractAddress, data });
+        if (!raw || raw === '0x') return false;
+        const [value] = encoder.decodeFunctionResult('supportsInterface', raw);
+        return Boolean(value);
+      } catch {
+        return false;
+      }
+    };
+
+    if (await supports(ASSET_TYPE.ERC721, ERC721_INTERFACE_ID)) return ASSET_TYPE.ERC721;
+    if (await supports(ASSET_TYPE.ERC1155, ERC1155_INTERFACE_ID)) return ASSET_TYPE.ERC1155;
+    return null;
   }
 }

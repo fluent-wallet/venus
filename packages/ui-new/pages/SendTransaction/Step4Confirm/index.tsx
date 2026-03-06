@@ -12,6 +12,7 @@ import { AccountItemView } from '@modules/AccountsList';
 import { getDetailSymbol } from '@modules/AssetsList/NFTsList/NFTItemsGrid';
 import GasFeeSetting, { type GasEstimate } from '@modules/GasFee/GasFeeSetting';
 import EstimateFee from '@modules/GasFee/GasFeeSetting/EstimateFee';
+import { getGasSettingPrimaryFee, isEip1559GasSetting } from '@modules/GasFee/GasFeeSetting/gasSetting';
 import { useNavigation, useTheme } from '@react-navigation/native';
 import type { SendTransactionScreenProps, SendTransactionStep4StackName, StackNavigation } from '@router/configs';
 import { useCurrentAccount, useCurrentAddress } from '@service/account';
@@ -144,9 +145,10 @@ const SendTransactionStep4Confirm: React.FC<SendTransactionScreenProps<typeof Se
       const storageLimit = gasEstimate?.advanceSetting?.storageLimit;
       const nonce = gasEstimate?.advanceSetting?.nonce;
 
-      const maxFeePerGas = gasEstimate?.gasSetting?.suggestedMaxFeePerGas;
-      const maxPriorityFeePerGas = gasEstimate?.gasSetting?.suggestedMaxPriorityFeePerGas;
-      const gasPrice = gasEstimate?.gasSetting?.suggestedGasPrice;
+      const maxFeePerGas = gasEstimate?.gasSetting && isEip1559GasSetting(gasEstimate.gasSetting) ? gasEstimate.gasSetting.suggestedMaxFeePerGas : undefined;
+      const maxPriorityFeePerGas =
+        gasEstimate?.gasSetting && isEip1559GasSetting(gasEstimate.gasSetting) ? gasEstimate.gasSetting.suggestedMaxPriorityFeePerGas : undefined;
+      const gasPrice = gasEstimate?.gasSetting && !isEip1559GasSetting(gasEstimate.gasSetting) ? getGasSettingPrimaryFee(gasEstimate.gasSetting) : undefined;
 
       const signal = controller?.signal;
 

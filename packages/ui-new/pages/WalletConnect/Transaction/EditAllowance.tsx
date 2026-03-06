@@ -10,10 +10,10 @@ import {
 } from '@components/BottomSheet';
 import Button from '@components/Button';
 import Checkbox from '@components/Checkbox';
+import { isApproveMethod } from '@core/utils/txData';
 import { styles as transactionConfirmStyle } from '@pages/SendTransaction/Step4Confirm/index';
 import { useTheme } from '@react-navigation/native';
 import { isNumeric } from '@utils/isNumberic';
-import { isApproveMethod } from '@utils/parseTxData';
 import Decimal from 'decimal.js';
 import { formatUnits } from 'ethers';
 import { useCallback, useRef, useState } from 'react';
@@ -32,7 +32,7 @@ interface IProps {
 export default function EditAllowance({ parseData, savedValue, onSave, onClose, isOpen }: IProps) {
   const { colors } = useTheme();
   const { t } = useTranslation();
-  const bottomSheetRef = useRef<BottomSheetMethods>(null!);
+  const bottomSheetRef = useRef<BottomSheetMethods | null>(null);
 
   const [isDappSuggestValue, setIsDappSuggestValue] = useState(!savedValue);
   const [customValue, setCustomValue] = useState(savedValue || '');

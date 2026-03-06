@@ -36,6 +36,7 @@ import { showMessage } from 'react-native-flash-message';
 import { type AdvanceSetting, GasOption, type GasSetting, type SpeedUpLevel } from '../GasFeeSetting';
 import CustomizeAdvanceSetting from '../GasFeeSetting/CustomizeAdvanceSetting';
 import CustomizeGasSetting from '../GasFeeSetting/CustomizeGasSetting';
+import { buildGasSetting, isEip1559GasSetting } from '../GasFeeSetting/gasSetting';
 
 const higherRatio = 1.1;
 const fasterRatio = 1.2;
@@ -73,18 +74,20 @@ const createGasSetting = (txPayload: SpeedUpTxPayloadLike | null, ratio: number,
     if (suggestedMaxFeePerGas.lessThanOrEqualTo(currentGasPrice)) {
       suggestedMaxFeePerGas = new Decimal(currentGasPrice || 0).mul(ratio);
     }
-    return {
-      suggestedMaxFeePerGas: suggestedMaxFeePerGas.toHex(),
-      suggestedMaxPriorityFeePerGas: suggestedMaxFeePerGas.toHex(),
-    };
+    return buildGasSetting({
+      pricingKind: 'eip1559',
+      primaryFee: suggestedMaxFeePerGas.toHex(),
+      priorityFee: suggestedMaxFeePerGas.toHex(),
+    });
   }
   let suggestedGasPrice = new Decimal(txPayload.gasPrice || 0).mul(ratio);
   if (suggestedGasPrice.lessThanOrEqualTo(currentGasPrice)) {
     suggestedGasPrice = new Decimal(currentGasPrice || 0).mul(ratio);
   }
-  return {
-    suggestedGasPrice: suggestedGasPrice.toHex(),
-  };
+  return buildGasSetting({
+    pricingKind: 'legacy',
+    primaryFee: suggestedGasPrice.toHex(),
+  });
 };
 
 const SpeedUp: React.FC<StackScreenProps<typeof SpeedUpStackName>> = ({ navigation, route }) => {
@@ -186,12 +189,12 @@ const SpeedUp: React.FC<StackScreenProps<typeof SpeedUpStackName>> = ({ navigati
       const storageLimit = customizeAdvanceSetting?.storageLimit ?? estimateRes.storageLimit;
 
       const action = type === SPEED_UP_ACTION.Cancel ? SPEED_UP_ACTION.Cancel : SPEED_UP_ACTION.SpeedUp;
-      const feeOverrides = newGasSetting.suggestedMaxFeePerGas
+      const feeOverrides = isEip1559GasSetting(newGasSetting)
         ? {
             maxFeePerGas: newGasSetting.suggestedMaxFeePerGas,
-            maxPriorityFeePerGas: newGasSetting.suggestedMaxPriorityFeePerGas!,
+            maxPriorityFeePerGas: newGasSetting.suggestedMaxPriorityFeePerGas,
           }
-        : { gasPrice: newGasSetting.suggestedGasPrice! };
+        : { gasPrice: newGasSetting.suggestedGasPrice };
 
       await speedUpTx({
         txId,
