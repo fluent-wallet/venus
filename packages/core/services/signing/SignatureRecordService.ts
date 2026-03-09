@@ -73,6 +73,8 @@ export class SignatureRecordService {
 
   async linkTx(params: { signatureId: string; txId: string }): Promise<void> {
     try {
+      let eventPayload: CoreEventMap['signature/changed'] | null = null;
+
       await this.database.write(async () => {
         const signature = await this.database.get<Signature>(TableName.Signature).find(params.signatureId);
         const tx = await this.database.get<Tx>(TableName.Tx).find(params.txId);
@@ -81,13 +83,17 @@ export class SignatureRecordService {
           record.tx.set(tx);
         });
 
-        this.eventBus?.emit('signature/changed', {
+        eventPayload = {
           addressId: signature.address.id,
           signatureId: signature.id,
           reason: 'tx-linked',
           txId: tx.id,
-        });
+        };
       });
+
+      if (eventPayload) {
+        this.eventBus?.emit('signature/changed', eventPayload);
+      }
     } catch {
       // do not block tx pipeline.
     }
@@ -152,6 +158,7 @@ export class SignatureRecordService {
   ): ISignatureRecord {
     const appId = signature.app.id || null;
     const txId = signature.tx.id || null;
+    const txSnapshot = txId ? (refs.txMap.get(txId) ?? null) : null;
 
     return {
       id: signature.id,
@@ -159,7 +166,7 @@ export class SignatureRecordService {
       appId,
       txId,
       app: appId ? (refs.appMap.get(appId) ?? null) : null,
-      tx: txId ? (refs.txMap.get(txId) ?? null) : null,
+      tx: txSnapshot,
       signType: signature.signType,
       message: signature.message ?? null,
       blockNumber: signature.blockNumber,

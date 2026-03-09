@@ -106,14 +106,15 @@ export class TxSyncService {
       }
 
       if (ops.length > 0) await this.db.batch(...ops);
-      if (updatedTxIds.length > 0) {
-        this.eventBus?.emit('tx/updated', {
-          key: { addressId: params.addressId, networkId: params.networkId },
-          txIds: updatedTxIds,
-          timestampMs: this.now(),
-        });
-      }
     });
+
+    if (updatedTxIds.length > 0) {
+      this.eventBus?.emit('tx/updated', {
+        key: { addressId: params.addressId, networkId: params.networkId },
+        txIds: updatedTxIds,
+        timestampMs: this.now(),
+      });
+    }
   }
   private async queryTxsByAddress(addressId: string): Promise<Tx[]> {
     return await this.db

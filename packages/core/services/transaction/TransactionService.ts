@@ -717,7 +717,7 @@ export class TransactionService {
       sendAction: extra.sendAction ?? null,
       assetType,
       payload: {
-        from: payload.from ?? '',
+        from: (await this.resolvePayloadFrom(address, payload)) ?? '',
         to: payload.to ?? '',
         value: payload.value ?? '0x0',
         data: (payload.data ?? '0x') as Hex,
@@ -1835,11 +1835,12 @@ export class TransactionService {
     const address = await tx.address.fetch();
     const network = await address.network.fetch();
     const txPayload = await tx.txPayload.fetch();
+    const from = await this.resolvePayloadFrom(address, txPayload);
 
     return {
       id: tx.id,
       hash: tx.hash ?? '',
-      from: txPayload.from ?? '',
+      from: from ?? '',
       to: txPayload.to ?? '',
       value: txPayload.value ?? '0',
       status: this.mapStatus(tx.status, tx.executedStatus ?? null),
@@ -1864,6 +1865,7 @@ export class TransactionService {
       symbol: asset.symbol,
       decimals: asset.decimals,
       icon: asset.icon,
+      priceInUSDT: asset.priceInUSDT,
     };
   }
 
@@ -1886,9 +1888,9 @@ export class TransactionService {
     };
   }
 
-  private toPayloadSnapshot(payload: TxPayload): TransactionPayloadSnapshot {
+  private toPayloadSnapshot(payload: TxPayload, fallbackFrom: string | null = null): TransactionPayloadSnapshot {
     return {
-      from: payload.from ?? null,
+      from: payload.from ?? fallbackFrom,
       to: payload.to ?? null,
       value: payload.value ?? null,
       data: (payload.data as Hex | null) ?? null,
@@ -2017,6 +2019,7 @@ export class TransactionService {
   private async toActivityInterface(tx: Tx): Promise<IActivityTransaction> {
     const [address, payload, extra] = await Promise.all([tx.address.fetch(), tx.txPayload.fetch(), tx.txExtra.fetch()]);
     const network = await address.network.fetch();
+    const from = await this.resolvePayloadFrom(address, payload);
 
     const asset = await this.loadTxAssetOrNull(tx);
     const assetSnapshot = this.toAssetSnapshot(asset);
@@ -2040,7 +2043,7 @@ export class TransactionService {
       networkId: network.id,
       sendAction: (extra.sendAction as SpeedUpAction | null) ?? null,
 
-      payload: this.toPayloadSnapshot(payload),
+      payload: this.toPayloadSnapshot(payload, from),
       asset: assetSnapshot,
       display: this.deriveDisplay({ method: tx.method, payload, assetType: assetSnapshot?.type ?? null }),
     };
@@ -2049,6 +2052,7 @@ export class TransactionService {
   private async toDetailInterface(tx: Tx): Promise<ITransactionDetail> {
     const [address, payload, extra] = await Promise.all([tx.address.fetch(), tx.txPayload.fetch(), tx.txExtra.fetch()]);
     const network = await address.network.fetch();
+    const from = await this.resolvePayloadFrom(address, payload);
 
     const [asset, nativeAsset] = await Promise.all([this.loadTxAssetOrNull(tx), this.loadNativeAssetForAddressOrNull({ address, network })]);
 
@@ -2073,7 +2077,7 @@ export class TransactionService {
       asset: assetSnapshot,
       nativeAsset: nativeAssetSnapshot,
 
-      payload: this.toPayloadSnapshot(payload),
+      payload: this.toPayloadSnapshot(payload, from),
       extra: this.toExtraSnapshot(extra),
       receipt: this.toReceiptSnapshot(tx.receipt),
 
@@ -2082,5 +2086,9 @@ export class TransactionService {
 
       display: this.deriveDisplay({ method: tx.method, payload, assetType: assetSnapshot?.type ?? null }),
     };
+  }
+
+  private async resolvePayloadFrom(address: Address, payload: TxPayload): Promise<string | null> {
+    return payload.from ?? (await address.getValue());
   }
 }

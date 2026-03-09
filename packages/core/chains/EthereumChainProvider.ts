@@ -102,7 +102,8 @@ export class EthereumChainProvider implements IChainProvider {
   private async signWithSoftware(tx: EvmUnsignedTransaction, signer: ISoftwareSigner): Promise<SignedTransaction> {
     const privateKey = signer.getPrivateKey();
     const wallet = new Wallet(privateKey, this.getEthersProvider());
-    const raw = await wallet.signTransaction(tx.payload);
+    // ethers mutates the input object and deletes `from` after validation.
+    const raw = await wallet.signTransaction({ ...tx.payload });
     const hash = keccak256(raw) as Hash;
 
     return {

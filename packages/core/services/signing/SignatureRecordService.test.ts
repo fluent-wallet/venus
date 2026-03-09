@@ -196,8 +196,18 @@ describe('SignatureRecordService', () => {
   it('emits tx-linked event after linking a tx to a tx signature record', async () => {
     const { address, network } = await createTestAccount(database);
     const changedEvents: CoreEventMap['signature/changed'][] = [];
+    const readsAfterEmit: Array<Promise<void>> = [];
 
-    eventBus.on('signature/changed', (payload) => changedEvents.push(payload));
+    eventBus.on('signature/changed', (payload) => {
+      changedEvents.push(payload);
+      readsAfterEmit.push(
+        (async () => {
+          const signature = await database.get<Signature>(TableName.Signature).find(payload.signatureId);
+          expect(signature.tx.id).toBeDefined();
+          expect(signature.tx.id).toBe(payload.txId);
+        })(),
+      );
+    });
 
     chainRegistry.register(
       new StubChainProvider({
@@ -216,6 +226,8 @@ describe('SignatureRecordService', () => {
     expect(changedEvents).toEqual([]);
 
     await getService().linkTx({ signatureId, txId: tx.id });
+
+    await Promise.all(readsAfterEmit);
 
     expect(changedEvents).toEqual([
       {

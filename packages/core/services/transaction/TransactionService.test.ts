@@ -259,6 +259,42 @@ describe('TransactionService', () => {
     expect(activity[0].status).toBe(ServiceTxStatus.Failed);
   });
 
+  it('includes native asset price in transaction detail snapshot', async () => {
+    const { address, network, assetRule } = await createTestAccount(database);
+
+    const nativeAsset = await database.write(async () =>
+      database.get<DbAsset>(TableName.Asset).create((record) => {
+        record.network.set(network);
+        record.assetRule.set(assetRule);
+        record.type = DbAssetType.Native;
+        record.contractAddress = null;
+        record.name = 'CFX';
+        record.symbol = 'CFX';
+        record.decimals = 18;
+        record.icon = null;
+        record.priceInUSDT = '0.24';
+        record.source = AssetSource.Official;
+      }),
+    );
+
+    const tx = await createDbTx({
+      database,
+      address,
+      status: DbTxStatus.PENDING,
+      from: await address.getValue(),
+      to: '0x0000000000000000000000000000000000000002',
+      hash: '0xhash_detail_native_price',
+      sendAt: new Date(),
+      method: 'transfer',
+      asset: nativeAsset,
+    });
+
+    const detail = await service.getTransactionDetail(tx.id);
+
+    expect(detail?.nativeAsset?.symbol).toBe('CFX');
+    expect(detail?.nativeAsset?.priceInUSDT).toBe('0.24');
+  });
+
   it('dedupes activity list by nonce (keeps latest pending tx for the same nonce)', async () => {
     const seeded = await seedNetwork(database, { definitionKey: 'Conflux eSpace' });
     const { address } = await createTestAccount(database, { network: seeded.network, assetRule: seeded.assetRule });

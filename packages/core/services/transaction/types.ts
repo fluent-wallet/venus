@@ -85,6 +85,7 @@ export type TransactionAssetSnapshot = {
   symbol: string | null;
   decimals: number | null;
   icon: string | null;
+  priceInUSDT: string | null;
 };
 
 export type TransactionNetworkSnapshot = {

@@ -209,11 +209,18 @@ describe('EthereumChainProvider', () => {
       assetDecimals: 18,
     });
 
+    walletStub.signTransaction.mockImplementationOnce(async (tx) => {
+      delete (tx as { from?: string }).from;
+      return '0xdeadbeef';
+    });
+
     const signer = new SoftwareSigner(SAMPLE_PRIVATE_KEY);
     const signed = await provider.signTransaction(unsigned, signer);
 
     expect(MockedWallet).toHaveBeenCalledWith(SAMPLE_PRIVATE_KEY, mockProvider);
-    expect(walletStub.signTransaction).toHaveBeenCalledWith(unsigned.payload);
+    expect(walletStub.signTransaction).toHaveBeenCalledTimes(1);
+    expect(walletStub.signTransaction.mock.calls[0]?.[0]).not.toBe(unsigned.payload);
+    expect(unsigned.payload.from).toBe(SAMPLE_ACCOUNT);
     expect(signed.rawTransaction).toBe('0xdeadbeef');
     expect(signed.hash).toMatch(/^0x[0-9a-f]{64}$/i);
   });
