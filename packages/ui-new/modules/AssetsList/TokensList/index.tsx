@@ -1,11 +1,13 @@
 import NoneToken from '@assets/images/none-token.webp';
 import Text from '@components/Text';
-import { ASSET_TYPE } from '@core/types';
+import { ASSET_SOURCE, ASSET_TYPE } from '@core/types';
 import { usePriceVisibleValue } from '@hooks/usePriceVisible';
 import { useTheme } from '@react-navigation/native';
+import { useCurrentAddress } from '@service/account';
 import { useAssetsOfCurrentAddress } from '@service/asset';
 import type { AssetInfo } from '@utils/assetInfo';
 import { toAssetInfo } from '@utils/toAssetInfo';
+import Decimal from 'decimal.js';
 import { Image } from 'expo-image';
 import type React from 'react';
 import { useMemo } from 'react';
@@ -20,39 +22,51 @@ interface Props {
   selectType: 'Home' | 'Send' | 'Receive';
 }
 
+function shouldShowAssetOnHome(asset: { type: string; source: string | null; balance?: string | null }): boolean {
+  if (asset.type === ASSET_TYPE.Native || asset.source === ASSET_SOURCE.Custom) {
+    return true;
+  }
+
+  try {
+    return new Decimal(asset.balance ?? '0').greaterThan(0);
+  } catch {
+    return false;
+  }
+}
+
+function hasPositiveTokenBalance(token: AssetInfo): boolean {
+  try {
+    return BigInt(token.balance || '0') > 0n;
+  } catch {
+    return false;
+  }
+}
+
 const TokensList: React.FC<Props> = ({ onPressItem, selectType, showReceiveFunds = false }) => {
   const { colors } = useTheme();
   const { t } = useTranslation();
 
+  const currentAddressQuery = useCurrentAddress();
   const assetsQuery = useAssetsOfCurrentAddress();
-  const tokens = useMemo(() => {
-    const list = (assetsQuery.data ?? []).filter((a) => a.type === ASSET_TYPE.Native || a.type === ASSET_TYPE.ERC20).map(toAssetInfo);
-
-    const native = list.filter((t) => t.type === ASSET_TYPE.Native);
-    const rest = list
-      .filter((t) => t.type !== ASSET_TYPE.Native)
-      .slice()
-      .sort((a, b) => {
-        const aKey = String(a.name || a.symbol || a.contractAddress || '').toLowerCase();
-        const bKey = String(b.name || b.symbol || b.contractAddress || '').toLowerCase();
-        return aKey.localeCompare(bKey);
-      });
-    return [...native, ...rest];
-  }, [assetsQuery.data]);
+  const assets = assetsQuery.data ?? [];
+  const visibleAssets = useMemo(
+    () =>
+      assets
+        .filter((asset) => asset.type === ASSET_TYPE.Native || asset.type === ASSET_TYPE.ERC20)
+        .filter((asset) => (selectType === 'Home' ? shouldShowAssetOnHome(asset) : true)),
+    [assets, selectType],
+  );
+  const tokens = useMemo(() => visibleAssets.map(toAssetInfo), [visibleAssets]);
 
   const isTokensEmpty = useMemo(() => {
     if (tokens.length === 0) return true;
-    return tokens.every((token) => {
-      try {
-        return BigInt(token.balance || '0') <= 0n;
-      } catch {
-        return true;
-      }
-    });
+    return tokens.every((token) => !hasPositiveTokenBalance(token));
   }, [tokens]);
   const priceVisible = usePriceVisibleValue();
+  const shouldShowSkeleton =
+    tokens.length === 0 && (currentAddressQuery.status === 'pending' || (Boolean(currentAddressQuery.data?.id) && assetsQuery.status === 'pending'));
 
-  if (assetsQuery.isLoading && tokens.length === 0) {
+  if (shouldShowSkeleton) {
     return <Skeleton />;
   }
 

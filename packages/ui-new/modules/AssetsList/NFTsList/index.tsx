@@ -98,13 +98,16 @@ const NFTList: React.FC<Props> = ({ onPressItem, tabsType }) => {
   const { colors } = useTheme();
   const { t } = useTranslation();
 
-  const { data: currentAddress } = useCurrentAddress();
-  const addressId = currentAddress?.id ?? '';
+  const currentAddressQuery = useCurrentAddress();
+  const addressId = currentAddressQuery.data?.id ?? '';
 
   const collectionsQuery = useNftCollectionsOfAddress(addressId);
   const collections = collectionsQuery.data ?? [];
+  const shouldShowSkeleton =
+    collections.length === 0 &&
+    (currentAddressQuery.status === 'pending' || (Boolean(addressId) && collectionsQuery.status === 'pending'));
 
-  if (collectionsQuery.isLoading && collections.length === 0) {
+  if (shouldShowSkeleton) {
     return <SkeletonList />;
   }
 

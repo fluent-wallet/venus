@@ -16,7 +16,6 @@ export function useNftCollectionsOfAddress(addressId: string, options: { enabled
     queryKey: getNftCollectionsByAddressKey(addressId || 'none'),
     queryFn: () => (addressId ? service.listCollections({ addressId }) : []),
     enabled,
-    initialData: [],
   });
 }
 
@@ -36,6 +35,5 @@ export function useNftItems(params: { addressId: string; contractAddress: string
     queryKey: getNftItemsKey(addressId || 'none', contractAddress || 'none'),
     queryFn: () => (addressId && contractAddress ? service.getItems({ addressId, contractAddress }) : []),
     enabled: enabled && !!addressId && !!contractAddress,
-    initialData: [],
   });
 }

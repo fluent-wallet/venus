@@ -45,7 +45,6 @@ export function useAssetsOfCurrentAddress(): AssetsQuery {
     queryKey: getAssetsByAddressKey(addressId || 'none'),
     queryFn: () => (addressId ? service.getAssetsByAddress(addressId) : []),
     enabled: !!addressId,
-    initialData: [],
   });
 }
 
@@ -79,7 +78,6 @@ export function useAssetsSummaryOfCurrentAddress(): AssetsSummaryQuery {
     queryFn: () => (addressId ? service.getAssetsByAddress(addressId) : []),
     enabled: !!addressId,
     select: (assets) => summarizeAssets(assets),
-    initialData: [],
   });
 }
 

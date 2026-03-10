@@ -67,9 +67,8 @@ export class NftService {
 
       await this.upsertCollectionsFromScan(address, network, remote, params.signal);
 
-      // Return a stable list based on the remote contracts, falling back to db metadata.
-      const byContract = new Map((await this.listCollectionsFromDb(address)).map((c) => [c.contractAddress.toLowerCase(), c]));
-      return remote.map((r) => byContract.get(r.contractAddress.toLowerCase())).filter((v): v is INftCollection => Boolean(v));
+      const remoteContracts = new Set(remote.map((item) => item.contractAddress.toLowerCase()));
+      return (await this.listCollectionsFromDb(address)).filter((collection) => remoteContracts.has(collection.contractAddress.toLowerCase()));
     } catch {
       return this.listCollectionsFromDb(address);
     }

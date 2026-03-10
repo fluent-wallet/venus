@@ -17,7 +17,8 @@ import type { Container } from 'inversify';
 import { AccountService } from './account';
 import { AccountGroupService } from './accountGroup';
 import { AddressValidationService } from './address/AddressValidationService';
-import { AssetService } from './asset';
+import { AssetDiscoveryRegistry, AssetService } from './asset';
+import { ESpaceAssetDiscoveryProvider } from './asset/discovery/providers/ESpaceAssetDiscoveryProvider';
 import { ChainStatusService } from './chain/ChainStatusService';
 import { HardwareWalletService } from './hardware/HardwareWalletService';
 import { NetworkService } from './network';
@@ -43,6 +44,7 @@ export function registerServices(target: Container): void {
   target.bind(VaultService).toSelf().inSingletonScope();
   target.bind(AccountGroupService).toSelf().inSingletonScope();
   target.bind(AccountService).toSelf().inSingletonScope();
+  target.bind(AssetDiscoveryRegistry).toConstantValue(new AssetDiscoveryRegistry([new ESpaceAssetDiscoveryProvider()]));
   target.bind(AssetService).toSelf().inSingletonScope();
   target.bind(NftService).toSelf().inSingletonScope();
   target.bind(SigningService).toSelf().inSingletonScope();
