@@ -1221,30 +1221,33 @@ export class TransactionService {
     }
 
     const ownerAddress = await this.findAddress(addressId);
-    const ownerVariants = await this.buildAddressVariants(ownerAddress);
-    const localAddressSet = await this.buildLocalAddressSet();
-    const txs = await this.createTxQuery(addressId, 'all').fetch();
+    const ownerAddressValue = await ownerAddress.getValue();
+    const ownerVariants = this.buildAddressVariants(ownerAddress, ownerAddressValue);
+    const [localAddressLookup, txs] = await Promise.all([this.buildLocalAddressLookup(), this.createTxQuery(addressId, 'all').fetch()]);
+    const [payloadMap, assetTypeMap] = await Promise.all([this.buildTxPayloadMap(txs), this.buildTxAssetTypeMap(txs)]);
 
     const peers = new Map<string, RecentlyAddress>();
     for (const tx of txs) {
-      const payload = await tx.txPayload.fetch();
-      const peer = await this.resolvePeerAddress(tx, payload, ownerVariants);
+      const payload = payloadMap.get(tx.txPayload.id);
+      if (!payload) {
+        continue;
+      }
+
+      const peer = this.resolvePeerAddress(tx, payload, assetTypeMap.get(tx.asset.id) ?? null, ownerAddressValue, ownerVariants, localAddressLookup);
       if (!peer) {
         continue;
       }
 
-      const normalized = peer.valueNormalized;
-      const isLocal = localAddressSet.has(normalized);
       const snapshot: RecentlyAddress = {
         addressValue: peer.addressValue,
         direction: peer.direction,
-        isLocalAccount: isLocal,
+        isLocalAccount: peer.isLocalAccount,
         lastUsedAt: peer.lastUsedAt,
       };
 
-      const existing = peers.get(normalized);
+      const existing = peers.get(peer.valueNormalized);
       if (!existing || snapshot.lastUsedAt > existing.lastUsedAt) {
-        peers.set(normalized, snapshot);
+        peers.set(peer.valueNormalized, snapshot);
       }
     }
 
@@ -1289,58 +1292,122 @@ export class TransactionService {
   }
 
   // build address variants
-  private async buildAddressVariants(address: Address): Promise<Set<string>> {
+  private buildAddressVariants(address: Address, networkValue: string): Set<string> {
     const variants = new Set<string>();
-    const networkValue = await address.getValue();
     variants.add(networkValue.toLowerCase());
     variants.add(address.hex.toLowerCase());
     variants.add(address.base32.toLowerCase());
     return variants;
   }
 
-  // build local address set
-  private async buildLocalAddressSet(): Promise<Set<string>> {
+  // build local address lookup
+  private async buildLocalAddressLookup(): Promise<Map<string, string>> {
     const addresses = await this.database.get<Address>(TableName.Address).query().fetch();
-    const values = new Set<string>();
+    const networkIds = Array.from(new Set(addresses.map((item) => item.network.id).filter((id): id is string => typeof id === 'string' && id.length > 0)));
+    const networks = networkIds.length
+      ? await this.database
+          .get<Network>(TableName.Network)
+          .query(Q.where('id', Q.oneOf(networkIds)))
+          .fetch()
+      : [];
+    const networkTypeById = new Map(networks.map((network) => [network.id, network.networkType]));
+
+    const values = new Map<string, string>();
     for (const item of addresses) {
-      if (item.hex) values.add(item.hex.toLowerCase());
-      if (item.base32) values.add(item.base32.toLowerCase());
+      const preferredValue = networkTypeById.get(item.network.id) === NetworkType.Conflux ? item.base32 : item.hex;
+      if (item.hex) values.set(item.hex.toLowerCase(), preferredValue);
+      if (item.base32) values.set(item.base32.toLowerCase(), preferredValue);
+      values.set(preferredValue.toLowerCase(), preferredValue);
     }
     return values;
   }
 
+  private async buildTxPayloadMap(txs: Tx[]): Promise<Map<string, TxPayload>> {
+    const payloadIds = Array.from(new Set(txs.map((tx) => tx.txPayload.id).filter((id): id is string => typeof id === 'string' && id.length > 0)));
+    if (!payloadIds.length) {
+      return new Map();
+    }
+
+    const payloads = await this.database
+      .get<TxPayload>(TableName.TxPayload)
+      .query(Q.where('id', Q.oneOf(payloadIds)))
+      .fetch();
+
+    return new Map(payloads.map((payload) => [payload.id, payload]));
+  }
+
+  private async buildTxAssetTypeMap(txs: Tx[]): Promise<Map<string, AssetTypeValue>> {
+    const assetIds = Array.from(
+      new Set(txs.filter((tx) => tx.method === 'transfer').map((tx) => tx.asset.id).filter((id): id is string => typeof id === 'string' && id.length > 0)),
+    );
+    if (!assetIds.length) {
+      return new Map();
+    }
+
+    const assets = await this.database
+      .get<Asset>(TableName.Asset)
+      .query(Q.where('id', Q.oneOf(assetIds)))
+      .fetch();
+
+    return new Map(assets.map((asset) => [asset.id, this.mapAssetTypeSnapshot(asset.type)]));
+  }
+
   // get peer address by tx
-  private async resolvePeerAddress(
+  private resolvePeerAddress(
     tx: Tx,
     payload: TxPayload,
+    assetType: AssetTypeValue | null,
+    ownerAddressValue: string,
     ownerVariants: Set<string>,
-  ): Promise<{ addressValue: string; valueNormalized: string; direction: 'inbound' | 'outbound'; lastUsedAt: number } | null> {
-    const lowerCaseFrom = this.toLowerCaseAddress(payload.from);
-    const lowerCaseTo = this.toLowerCaseAddress(payload.to);
+    localAddressLookup: Map<string, string>,
+  ): { addressValue: string; valueNormalized: string; direction: 'inbound' | 'outbound'; isLocalAccount: boolean; lastUsedAt: number } | null {
+    const display = this.deriveDisplay({
+      method: tx.method,
+      payload,
+      assetType,
+    });
+
+    if (!display.isTransfer) {
+      return null;
+    }
+
+    const displayFrom = display.from ?? payload.from ?? ownerAddressValue;
+    const displayTo = display.to ?? null;
+    const lowerCaseFrom = this.toLowerCaseAddress(displayFrom);
+    const lowerCaseTo = this.toLowerCaseAddress(displayTo);
+    const lastUsedAt = tx.sendAt?.getTime() ?? tx.createdAt.getTime();
 
     if (lowerCaseFrom && ownerVariants.has(lowerCaseFrom)) {
-      const peerValue = payload.to ?? null;
-      if (!peerValue) return null;
-      return {
-        addressValue: peerValue,
-        valueNormalized: peerValue.toLowerCase(),
-        direction: 'outbound',
-        lastUsedAt: tx.sendAt?.getTime() ?? tx.createdAt.getTime(),
-      };
+      return this.buildRecentlyPeerSnapshot(displayTo, 'outbound', localAddressLookup, lastUsedAt);
     }
 
     if (lowerCaseTo && ownerVariants.has(lowerCaseTo)) {
-      const peerValue = payload.from ?? null;
-      if (!peerValue) return null;
-      return {
-        addressValue: peerValue,
-        valueNormalized: peerValue.toLowerCase(),
-        direction: 'inbound',
-        lastUsedAt: tx.sendAt?.getTime() ?? tx.createdAt.getTime(),
-      };
+      return this.buildRecentlyPeerSnapshot(displayFrom, 'inbound', localAddressLookup, lastUsedAt);
     }
 
     return null;
+  }
+
+  private buildRecentlyPeerSnapshot(
+    peerValue: string | null,
+    direction: 'inbound' | 'outbound',
+    localAddressLookup: Map<string, string>,
+    lastUsedAt: number,
+  ): { addressValue: string; valueNormalized: string; direction: 'inbound' | 'outbound'; isLocalAccount: boolean; lastUsedAt: number } | null {
+    if (!peerValue) {
+      return null;
+    }
+
+    const localAddressValue = localAddressLookup.get(peerValue.toLowerCase());
+    const canonicalValue = localAddressValue ?? peerValue;
+
+    return {
+      addressValue: canonicalValue,
+      valueNormalized: canonicalValue.toLowerCase(),
+      direction,
+      isLocalAccount: !!localAddressValue,
+      lastUsedAt,
+    };
   }
 
   private createRequestId(): string {
