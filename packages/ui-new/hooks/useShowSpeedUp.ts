@@ -1,10 +1,11 @@
-import { TxStatus } from '@core/types';
+import type { TransactionStateSnapshot } from '@core/types';
 import { getRuntimeConfig } from '@service/core';
+import { isTransactionPendingState } from '@service/transactionStatus';
 import { useEffect, useState } from 'react';
 
-export const useShowSpeedUp = (tx: { status: TxStatus; createdAtMs: number } | null) => {
+export const useShowSpeedUp = (tx: { state: TransactionStateSnapshot; createdAtMs: number } | null) => {
   const [showSpeedUp, setShowSpeedUp] = useState(false);
-  const isPending = tx?.status === TxStatus.Pending;
+  const isPending = isTransactionPendingState(tx?.state);
 
   useEffect(() => {
     if (!isPending || !tx || showSpeedUp) return;

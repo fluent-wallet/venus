@@ -2,7 +2,7 @@ import { NetworkType as CoreNetworkType } from '@core/utils/consts';
 import type { Block, Hex } from 'ox';
 import type { IChainRpc } from './rpc';
 import type { ISigner } from './signer';
-import type { FeeEstimate, SignedTransaction, TransactionParams, TxStatus, UnsignedTransaction } from './transaction';
+import type { FeeEstimate, SignedTransaction, TransactionParams, UnsignedTransaction } from './transaction';
 
 export type ChainType = CoreNetworkType;
 export type Hex = Hex.Hex;

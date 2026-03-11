@@ -1,4 +1,4 @@
-import type { Address, AssetType, AssetTypeValue, Hex, SpeedUpAction, TxStatusValue } from '@core/types';
+import type { Address, AssetType, AssetTypeValue, Hex, SpeedUpAction, TransactionStateSnapshot } from '@core/types';
 import type { NetworkType } from '@core/utils/consts';
 import type { EvmRpcTransactionRequest } from './dappTypes';
 
@@ -130,7 +130,7 @@ export type TransactionDisplaySnapshot = {
 export interface IActivityTransaction {
   id: string;
   hash: string;
-  status: TxStatusValue;
+  state: TransactionStateSnapshot;
   source: TransactionSource;
   method: string;
 
@@ -153,7 +153,7 @@ export interface IActivityTransaction {
 export interface ITransactionDetail {
   id: string;
   hash: string;
-  status: TxStatusValue;
+  state: TransactionStateSnapshot;
   source: TransactionSource;
   method: string;
 
@@ -231,7 +231,7 @@ export type SpeedUpTxContext = {
   networkType: NetworkType;
   isHardwareWallet: boolean;
 
-  status: TxStatusValue;
+  state: TransactionStateSnapshot;
   /**
    * Existing send action of the origin tx (if it is itself a SpeedUp/Cancel replacement).
    */
@@ -282,7 +282,7 @@ export interface ITransaction {
   from: Address;
   to: Address;
   value: string;
-  status: TxStatusValue;
+  state: TransactionStateSnapshot;
   timestamp: number;
   networkId: string;
 }

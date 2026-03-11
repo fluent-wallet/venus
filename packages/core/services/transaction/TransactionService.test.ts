@@ -22,7 +22,13 @@ import { SigningService } from '@core/services/signing';
 import { createTestAccount, seedNetwork } from '@core/testUtils/fixtures';
 import { createSilentLogger, DEFAULT_PRIVATE_KEY, mockDatabase } from '@core/testUtils/mocks';
 import { StubChainProvider } from '@core/testUtils/mocks/chainProviders';
-import { AssetType, type IChainRpc, type ISigner, TxStatus as ServiceTxStatus } from '@core/types';
+import {
+  AssetType,
+  TX_EXECUTION_STATUS,
+  TX_LIFECYCLE_STATUS,
+  type IChainRpc,
+  type ISigner,
+} from '@core/types';
 import { Q } from '@nozbe/watermelondb';
 import { Container } from 'inversify';
 import { ChainStatusService } from '../chain/ChainStatusService';
@@ -200,7 +206,10 @@ describe('TransactionService', () => {
     const result = await service.sendNative(input);
 
     expect(result.networkId).toBe(network.id);
-    expect(result.status).toBe(ServiceTxStatus.Pending);
+    expect(result.state).toEqual({
+      lifecycle: TX_LIFECYCLE_STATUS.Pending,
+      execution: TX_EXECUTION_STATUS.Unknown,
+    });
     expect(result.hash).toBe('0xhash');
     expect(result.from).toBe(await address.getValue());
     expect(result.to).toBe(input.to);
@@ -256,7 +265,10 @@ describe('TransactionService', () => {
 
     const activity = await service.listActivityTransactions({ addressId: address.id, status: 'finished' });
     expect(activity).toHaveLength(1);
-    expect(activity[0].status).toBe(ServiceTxStatus.Failed);
+    expect(activity[0].state).toEqual({
+      lifecycle: TX_LIFECYCLE_STATUS.Executed,
+      execution: TX_EXECUTION_STATUS.Failed,
+    });
   });
 
   it('includes native asset price in transaction detail snapshot', async () => {
@@ -359,7 +371,10 @@ describe('TransactionService', () => {
       nonce: 1,
     });
 
-    expect(result.status).toBe(ServiceTxStatus.Pending);
+    expect(result.state).toEqual({
+      lifecycle: TX_LIFECYCLE_STATUS.Waiting,
+      execution: TX_EXECUTION_STATUS.Unknown,
+    });
     expect(signingService.getSigner).toHaveBeenCalledWith(account.id, address.id, expect.anything());
 
     const originAfter = await database.get<Tx>(TableName.Tx).find(origin.id);
@@ -637,7 +652,10 @@ describe('TransactionService', () => {
 
     const result = await service.sendERC20(input);
 
-    expect(result.status).toBe(ServiceTxStatus.Pending);
+    expect(result.state).toEqual({
+      lifecycle: TX_LIFECYCLE_STATUS.Pending,
+      execution: TX_EXECUTION_STATUS.Unknown,
+    });
     expect(result.hash).toBe('0xhash');
 
     const txs = await database.get<Tx>(TableName.Tx).query().fetch();
@@ -774,7 +792,7 @@ describe('TransactionService', () => {
     expect(tx.err).toContain('network error');
   });
 
-  it('maps database status to simplified service status via toInterface', async () => {
+  it('preserves canonical transaction state in transaction snapshots', async () => {
     const { address, network } = await createTestAccount(database);
 
     const provider = new StubChainProvider({
@@ -800,19 +818,37 @@ describe('TransactionService', () => {
       record.status = DbTxStatus.EXECUTED;
     });
     const executedView = await toInterface(executedTx);
-    expect(executedView.status).toBe(ServiceTxStatus.Confirmed);
+    expect(executedView.state).toEqual({
+      lifecycle: TX_LIFECYCLE_STATUS.Executed,
+      execution: TX_EXECUTION_STATUS.Unknown,
+    });
+
+    const finalizedTx = await tx.updateSelf((record) => {
+      record.status = DbTxStatus.FINALIZED;
+    });
+    const finalizedDetail = await service.getTransactionDetail(finalizedTx.id);
+    expect(finalizedDetail?.state).toEqual({
+      lifecycle: TX_LIFECYCLE_STATUS.Finalized,
+      execution: TX_EXECUTION_STATUS.Unknown,
+    });
 
     const failedTx = await tx.updateSelf((record) => {
       record.status = DbTxStatus.SEND_FAILED;
     });
     const failedView = await toInterface(failedTx);
-    expect(failedView.status).toBe(ServiceTxStatus.Failed);
+    expect(failedView.state).toEqual({
+      lifecycle: TX_LIFECYCLE_STATUS.SendFailed,
+      execution: TX_EXECUTION_STATUS.Unknown,
+    });
 
     const pendingTx = await tx.updateSelf((record) => {
       record.status = DbTxStatus.PENDING;
     });
     const pendingView = await toInterface(pendingTx);
-    expect(pendingView.status).toBe(ServiceTxStatus.Pending);
+    expect(pendingView.state).toEqual({
+      lifecycle: TX_LIFECYCLE_STATUS.Pending,
+      execution: TX_EXECUTION_STATUS.Unknown,
+    });
   });
 
   it('listTransactions filters by status and respects limit', async () => {

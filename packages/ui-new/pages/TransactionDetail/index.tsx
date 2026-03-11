@@ -5,7 +5,7 @@ import SuccessIcon from '@assets/icons/success.svg';
 import { truncate } from '@cfx-kit/dapp-utils/dist/address';
 import Spinner from '@components/Spinner';
 import Text from '@components/Text';
-import { SPEED_UP_ACTION, TX_STATUS, type TxStatusValue } from '@core/types';
+import { SPEED_UP_ACTION } from '@core/types';
 import { shortenAddress } from '@core/utils/address';
 import { useShowSpeedUp } from '@hooks/useShowSpeedUp';
 import SpeedUpButton from '@modules/SpeedUpButton';
@@ -13,6 +13,13 @@ import Clipboard from '@react-native-clipboard/clipboard';
 import { useTheme } from '@react-navigation/native';
 import type { StackScreenProps, TransactionDetailStackName } from '@router/configs';
 import type { ITransactionDetail } from '@service/core';
+import {
+  getTransactionDetailLabelStatus,
+  getTransactionDetailStatus,
+  isTransactionPendingState,
+  type TransactionDetailBadgeStatus,
+  type TransactionDetailLabelStatus,
+} from '@service/transactionStatus';
 import { useTransactionDetail } from '@service/transaction';
 import { toDataUrl } from '@utils/blockies';
 import { ACTIVITY_DEV_INFO_FEATURE } from '@utils/features';
@@ -54,17 +61,20 @@ const useGasFeeOfTx = (tx: ITransactionDetail | null) => {
   return gasCostAndPriceInUSDT;
 };
 
-const TxStatus: React.FC<{ tx: ITransactionDetail }> = ({ tx }) => {
+const TxStatus: React.FC<{
+  tx: ITransactionDetail;
+  status: TransactionDetailBadgeStatus;
+  labelStatus: TransactionDetailLabelStatus;
+}> = ({ tx, status, labelStatus }) => {
   const { t } = useTranslation();
   const { colors } = useTheme();
-  const status = tx.status;
   const statusInfo = StatusMap[status];
   return (
     <View style={[styles.statusContainer, { backgroundColor: colors.bgFourth }]}>
       {statusInfo.icon}
       <View style={styles.statusTextContainer}>
-        <Text style={[styles.statusText, { color: colors[statusInfo.color] }]}>{t(`tx.detail.status.${statusInfo.text}`)}</Text>
-        {status !== TX_STATUS.Pending && (
+        <Text style={[styles.statusText, { color: colors[statusInfo.color] }]}>{t(`tx.detail.status.${labelStatus}`)}</Text>
+        {status !== 'pending' && (
           <Text style={[styles.time, { color: colors.textSecondary }]}>{dayjs(tx.createdAtMs).format('MMM DD YYYY, HH:mm')}</Text>
         )}
       </View>
@@ -78,13 +88,14 @@ const TransactionDetail: React.FC<StackScreenProps<typeof TransactionDetailStack
   const { colors } = useTheme();
   const txQuery = useTransactionDetail(txId);
   const tx = txQuery.data ?? null;
-  const status = tx?.status ?? null;
   const gasCostAndPriceInUSDT = useGasFeeOfTx(tx);
-  const to = tx?.display.to ?? tx?.payload.to ?? null;
-  const isPending = status === TX_STATUS.Pending;
-  const isCanceling = isPending && tx?.extra.sendAction === SPEED_UP_ACTION.Cancel;
   const showSpeedUp = useShowSpeedUp(tx);
+  const to = tx?.display.to ?? tx?.payload.to ?? null;
   if (!tx) return null;
+  const detailStatus = getTransactionDetailStatus(tx.state);
+  const detailLabelStatus = getTransactionDetailLabelStatus(tx.state);
+  const isPending = isTransactionPendingState(tx.state);
+  const isCanceling = isPending && tx.extra.sendAction === SPEED_UP_ACTION.Cancel;
   const handleCopy = (text: string) => {
     Clipboard.setString(text);
     showMessage({
@@ -97,7 +108,7 @@ const TransactionDetail: React.FC<StackScreenProps<typeof TransactionDetailStack
   return (
     <View style={[styles.container, { backgroundColor: colors.bgPrimary }]}>
       <View style={styles.content}>
-        <TxStatus tx={tx} />
+        <TxStatus tx={tx} status={detailStatus} labelStatus={detailLabelStatus} />
         <Text style={[styles.functionName, { color: colors.textPrimary }]}>{t('tx.detail.functionName', { name: tx.method })}</Text>
         {showSpeedUp && (
           <>
@@ -193,7 +204,7 @@ const TransactionDetail: React.FC<StackScreenProps<typeof TransactionDetailStack
             <View style={[styles.line, { backgroundColor: colors.borderFourth }]} />
             <View style={styles.row}>
               <Text style={[styles.label, { color: colors.textSecondary }]}>status</Text>
-              <Text style={[styles.info, { color: colors.textPrimary }]}>{tx.status.toLowerCase()}</Text>
+              <Text style={[styles.info, { color: colors.textPrimary }]}>{detailStatus}</Text>
             </View>
           </>
         )}
@@ -300,21 +311,22 @@ const PendingIcon: React.FC<{ size?: 'default' | 'small' }> = ({ size = 'default
 };
 
 const StatusMap = {
-  [TX_STATUS.Pending]: {
+  pending: {
     icon: <PendingIcon />,
-    text: TX_STATUS.Pending,
     color: 'textPrimary',
   },
-  [TX_STATUS.Confirmed]: {
+  confirmed: {
     icon: <SuccessIcon style={styles.statusIcon} color="#48E6FF" width={40} height={40} />,
-    text: TX_STATUS.Confirmed,
     color: 'up',
   },
-  [TX_STATUS.Failed]: {
+  finalized: {
+    icon: <SuccessIcon style={styles.statusIcon} color="#48E6FF" width={40} height={40} />,
+    color: 'up',
+  },
+  failed: {
     icon: <ProhibitIcon style={styles.statusIcon} width={40} height={40} />,
-    text: TX_STATUS.Failed,
     color: 'down',
   },
-} as const satisfies Record<TxStatusValue, { icon: React.ReactNode; text: TxStatusValue; color: 'textPrimary' | 'up' | 'down' }>;
+} as const satisfies Record<TransactionDetailBadgeStatus, { icon: React.ReactNode; color: 'textPrimary' | 'up' | 'down' }>;
 
 export default TransactionDetail;

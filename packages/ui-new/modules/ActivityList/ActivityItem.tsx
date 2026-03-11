@@ -1,6 +1,6 @@
 import Spinner from '@components/Spinner';
 import Text from '@components/Text';
-import { ASSET_TYPE, SPEED_UP_ACTION, TX_STATUS } from '@core/types';
+import { ASSET_TYPE, SPEED_UP_ACTION } from '@core/types';
 import { shortenAddress } from '@core/utils/address';
 import { maxUint256 } from '@core/utils/number';
 import useFormatBalance from '@hooks/useFormatBalance';
@@ -10,6 +10,7 @@ import TokenIcon from '@modules/AssetsList/TokensList/TokenIcon';
 import SpeedUpButton from '@modules/SpeedUpButton';
 import { useTheme } from '@react-navigation/native';
 import type { IActivityTransaction } from '@service/core';
+import { getTransactionSummaryStatus, isTransactionPendingState, TX_STATUS, type TxStatusValue } from '@service/transactionStatus';
 import type React from 'react';
 import { type ComponentProps, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -52,7 +53,7 @@ const AssetInfo: React.FC<{
   value: string | null | undefined;
   tokenId: string;
   method: string;
-  txStatus: IActivityTransaction['status'];
+  txStatus: TxStatusValue;
   sign?: '+' | '-';
 }> = ({ asset, value, tokenId, txStatus, sign, method }) => {
   const { t } = useTranslation();
@@ -106,11 +107,11 @@ const ActivityItem: React.FC<Props> = ({ onPress, tx }) => {
   const { colors } = useTheme();
   const { t } = useTranslation();
 
-  const status = tx.status;
+  const status = getTransactionSummaryStatus(tx.state);
   const display = tx.display;
   const method = useMemo(() => (tx.source === 'self' ? t('common.send') : tx.method), [t, tx.method, tx.source]);
 
-  const isPending = status === TX_STATUS.Pending;
+  const isPending = isTransactionPendingState(tx.state);
   const isCanceling = isPending && tx.sendAction === SPEED_UP_ACTION.Cancel;
   const showSpeedUp = useShowSpeedUp(tx);
   const statusSuffix = useMemo(() => {

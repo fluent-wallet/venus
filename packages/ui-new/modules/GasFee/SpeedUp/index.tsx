@@ -14,7 +14,7 @@ import Button from '@components/Button';
 import HourglassLoading from '@components/Loading/Hourglass';
 import Text from '@components/Text';
 import { AUTH_PASSWORD_REQUEST_CANCELED } from '@core/errors';
-import { AssetType, SPEED_UP_ACTION, TX_STATUS } from '@core/types';
+import { AssetType, SPEED_UP_ACTION } from '@core/types';
 import { NetworkType } from '@core/utils/consts';
 import useInAsync from '@hooks/useInAsync';
 import HardwareSignVerify from '@pages/SendTransaction/HardwareSignVerify';
@@ -24,6 +24,7 @@ import type { SpeedUpStackName, StackNavigation, StackScreenProps } from '@route
 import { useAssetsOfAddress } from '@service/asset';
 import { getAssetsSyncService } from '@service/core';
 import { usePollingGasEstimateAndNonce, useSpeedUpTx, useSpeedUpTxContext } from '@service/transaction';
+import { isTransactionPendingState, isTransactionSuccessfulState } from '@service/transactionStatus';
 import backToHome from '@utils/backToHome';
 import { handleBSIMHardwareUnavailable } from '@utils/handleBSIMHardwareUnavailable';
 import matchRPCErrorMessage from '@utils/matchRPCErrorMssage';
@@ -106,7 +107,7 @@ const SpeedUp: React.FC<StackScreenProps<typeof SpeedUpStackName>> = ({ navigati
   const { data: assets } = useAssetsOfAddress(addressId);
   const nativeAsset = useMemo(() => assets?.find((a) => a.type === AssetType.Native) ?? null, [assets]);
 
-  const txStatus = ctx?.status ?? null;
+  const txState = ctx?.state ?? null;
 
   const txHalf = useMemo(() => {
     if (!ctx?.payload?.from) return null;
@@ -149,15 +150,15 @@ const SpeedUp: React.FC<StackScreenProps<typeof SpeedUpStackName>> = ({ navigati
   const bottomSheetRef = useRef<BottomSheetMethods>(null!);
 
   const handleTxExpire = useCallback(() => {
-    if (txStatus && txStatus !== TX_STATUS.Pending) {
+    if (txState && !isTransactionPendingState(txState)) {
       bottomSheetRef.current?.close();
       showMessage({
         type: 'warning',
         message: t('tx.action.expiredTitle'),
-        description: txStatus === TX_STATUS.Confirmed ? t('tx.action.alreadyExecuted') : t('tx.action.alreadyFailed'),
+        description: isTransactionSuccessfulState(txState) ? t('tx.action.alreadyExecuted') : t('tx.action.alreadyFailed'),
       });
     }
-  }, [txStatus, t]);
+  }, [txState, t]);
 
   useEffect(() => {
     handleTxExpire();

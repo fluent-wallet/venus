@@ -19,7 +19,7 @@ import { AccountService, AssetService, registerServices, type SendTransactionInp
 import { seedNetwork } from '@core/testUtils/fixtures';
 import { createMockHardwareWallet, createStrictTestCryptoTool } from '@core/testUtils/mocks';
 import { DEFAULT_HEX_ADDRESS, StubChainProvider } from '@core/testUtils/mocks/chainProviders';
-import { AssetType, TxStatus as ServiceTxStatus } from '@core/types';
+import { AssetType, TX_EXECUTION_STATUS, TX_LIFECYCLE_STATUS } from '@core/types';
 import type { CryptoTool } from '@core/types/crypto';
 import { convertHexToBase32 } from '@core/utils/address';
 import { NetworkType } from '@core/utils/consts';
@@ -154,7 +154,10 @@ describe('Service integration', () => {
 
     // 5. Validate returned ITransaction view
     expect(result.networkId).toBe(network.id);
-    expect(result.status).toBe(ServiceTxStatus.Pending);
+    expect(result.state).toEqual({
+      lifecycle: TX_LIFECYCLE_STATUS.Pending,
+      execution: TX_EXECUTION_STATUS.Unknown,
+    });
     expect(result.hash).toBe('0xhash'); // from StubChainProvider
     expect(result.from).toBe(await dbAddress.getValue());
     expect(result.to).toBe(input.to);

@@ -50,9 +50,10 @@ import {
   NetworkType,
   SPEED_UP_ACTION,
   type SpeedUpAction,
+  TX_EXECUTION_STATUS,
+  TX_LIFECYCLE_STATUS,
   type TransactionParams,
-  TX_STATUS,
-  type TxStatusValue,
+  type TransactionStateSnapshot,
   type UnsignedTransaction,
 } from '@core/types';
 import { Networks } from '@core/utils/consts';
@@ -699,6 +700,7 @@ export class TransactionService {
     const [address, payload, extra] = await Promise.all([tx.address.fetch(), tx.txPayload.fetch(), tx.txExtra.fetch()]);
     const [network, account] = await Promise.all([address.network.fetch(), address.account.fetch()]);
     if (!network) return null;
+    const state = this.buildState(tx.status, tx.executedStatus ?? null);
 
     const accountGroup = await account.accountGroup.fetch();
     const vault = await accountGroup.vault.fetch();
@@ -718,7 +720,7 @@ export class TransactionService {
       networkId: network.id,
       networkType: network.networkType,
       isHardwareWallet: vault.type === VaultType.BSIM,
-      status: this.mapStatus(tx.status, tx.executedStatus ?? null),
+      state,
       sendAction: extra.sendAction ?? null,
       assetType,
       payload: {
@@ -998,21 +1000,48 @@ export class TransactionService {
     };
   }
 
-  private mapStatus(status: DbTxStatus, executedStatus: ExecutedStatus | null = null): TxStatusValue {
-    // `EXECUTED/CONFIRMED/FINALIZED` does not necessarily mean success; check executedStatus when available.
+  private mapLifecycleStatus(status: DbTxStatus): TransactionStateSnapshot['lifecycle'] {
+    switch (status) {
+      case DbTxStatus.REPLACED:
+        return TX_LIFECYCLE_STATUS.Replaced;
+      case DbTxStatus.TEMP_REPLACED:
+        return TX_LIFECYCLE_STATUS.TempReplaced;
+      case DbTxStatus.SEND_FAILED:
+        return TX_LIFECYCLE_STATUS.SendFailed;
+      case DbTxStatus.WAITTING:
+        return TX_LIFECYCLE_STATUS.Waiting;
+      case DbTxStatus.DISCARDED:
+        return TX_LIFECYCLE_STATUS.Discarded;
+      case DbTxStatus.PENDING:
+        return TX_LIFECYCLE_STATUS.Pending;
+      case DbTxStatus.EXECUTED:
+        return TX_LIFECYCLE_STATUS.Executed;
+      case DbTxStatus.CONFIRMED:
+        return TX_LIFECYCLE_STATUS.Confirmed;
+      case DbTxStatus.FINALIZED:
+        return TX_LIFECYCLE_STATUS.Finalized;
+    }
+
+    throw new Error(`Unknown transaction lifecycle status: ${String(status)}`);
+  }
+
+  private mapExecutionStatus(executedStatus: ExecutedStatus | null = null): TransactionStateSnapshot['execution'] {
     if (executedStatus === ExecutedStatus.FAILED) {
-      return TX_STATUS.Failed;
+      return TX_EXECUTION_STATUS.Failed;
     }
 
-    if ([DbTxStatus.EXECUTED, DbTxStatus.CONFIRMED, DbTxStatus.FINALIZED].includes(status)) {
-      return TX_STATUS.Confirmed;
+    if (executedStatus === ExecutedStatus.SUCCEEDED) {
+      return TX_EXECUTION_STATUS.Succeeded;
     }
 
-    if ([DbTxStatus.REPLACED, DbTxStatus.SEND_FAILED].includes(status)) {
-      return TX_STATUS.Failed;
-    }
+    return TX_EXECUTION_STATUS.Unknown;
+  }
 
-    return TX_STATUS.Pending;
+  private buildState(status: DbTxStatus, executedStatus: ExecutedStatus | null = null): TransactionStateSnapshot {
+    return {
+      lifecycle: this.mapLifecycleStatus(status),
+      execution: this.mapExecutionStatus(executedStatus),
+    };
   }
 
   private async saveTx(params: {
@@ -1915,6 +1944,7 @@ export class TransactionService {
     const network = await address.network.fetch();
     const txPayload = await tx.txPayload.fetch();
     const from = await this.resolvePayloadFrom(address, txPayload);
+    const state = this.buildState(tx.status, tx.executedStatus ?? null);
 
     return {
       id: tx.id,
@@ -1922,7 +1952,7 @@ export class TransactionService {
       from: from ?? '',
       to: txPayload.to ?? '',
       value: txPayload.value ?? '0',
-      status: this.mapStatus(tx.status, tx.executedStatus ?? null),
+      state,
       timestamp: tx.createdAt.getTime(),
       networkId: network.id,
     };
@@ -2099,6 +2129,7 @@ export class TransactionService {
     const [address, payload, extra] = await Promise.all([tx.address.fetch(), tx.txPayload.fetch(), tx.txExtra.fetch()]);
     const network = await address.network.fetch();
     const from = await this.resolvePayloadFrom(address, payload);
+    const state = this.buildState(tx.status, tx.executedStatus ?? null);
 
     const asset = await this.loadTxAssetOrNull(tx);
     const assetSnapshot = this.toAssetSnapshot(asset);
@@ -2110,7 +2141,7 @@ export class TransactionService {
     return {
       id: tx.id,
       hash: tx.hash ?? '',
-      status: this.mapStatus(tx.status, tx.executedStatus ?? null),
+      state,
       source: this.normalizeSource(tx.source),
       method: tx.method,
 
@@ -2132,6 +2163,7 @@ export class TransactionService {
     const [address, payload, extra] = await Promise.all([tx.address.fetch(), tx.txPayload.fetch(), tx.txExtra.fetch()]);
     const network = await address.network.fetch();
     const from = await this.resolvePayloadFrom(address, payload);
+    const state = this.buildState(tx.status, tx.executedStatus ?? null);
 
     const [asset, nativeAsset] = await Promise.all([this.loadTxAssetOrNull(tx), this.loadNativeAssetForAddressOrNull({ address, network })]);
 
@@ -2144,7 +2176,7 @@ export class TransactionService {
     return {
       id: tx.id,
       hash: tx.hash ?? '',
-      status: this.mapStatus(tx.status, tx.executedStatus ?? null),
+      state,
       source: this.normalizeSource(tx.source),
       method: tx.method,
 

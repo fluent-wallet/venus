@@ -106,24 +106,52 @@ export interface GenericFeeEstimate<TChain extends ChainType = ChainType> extend
 
 export type FeeEstimate = ConfluxFeeEstimate | EvmFeeEstimate | GenericFeeEstimate;
 
-/**
- * Transaction lifecycle state.
- */
-export enum TxStatus {
+export enum TxLifecycleStatus {
+  Replaced = 'replaced',
+  TempReplaced = 'temp_replaced',
+  SendFailed = 'send_failed',
+  Waiting = 'waiting',
+  Discarded = 'discarded',
   Pending = 'pending',
+  Executed = 'executed',
   Confirmed = 'confirmed',
+  Finalized = 'finalized',
+}
+
+export enum TxExecutionStatus {
+  Unknown = 'unknown',
+  Succeeded = 'succeeded',
   Failed = 'failed',
 }
 
 export type SpeedUpAction = 'SpeedUp' | 'Cancel';
 
-export const TX_STATUS = {
+export const TX_LIFECYCLE_STATUS = {
+  Replaced: 'replaced',
+  TempReplaced: 'temp_replaced',
+  SendFailed: 'send_failed',
+  Waiting: 'waiting',
+  Discarded: 'discarded',
   Pending: 'pending',
+  Executed: 'executed',
   Confirmed: 'confirmed',
+  Finalized: 'finalized',
+} as const;
+
+export type TxLifecycleStatusValue = (typeof TX_LIFECYCLE_STATUS)[keyof typeof TX_LIFECYCLE_STATUS];
+
+export const TX_EXECUTION_STATUS = {
+  Unknown: 'unknown',
+  Succeeded: 'succeeded',
   Failed: 'failed',
 } as const;
 
-export type TxStatusValue = (typeof TX_STATUS)[keyof typeof TX_STATUS];
+export type TxExecutionStatusValue = (typeof TX_EXECUTION_STATUS)[keyof typeof TX_EXECUTION_STATUS];
+
+export interface TransactionStateSnapshot {
+  lifecycle: TxLifecycleStatusValue;
+  execution: TxExecutionStatusValue;
+}
 
 export const SPEED_UP_ACTION = {
   SpeedUp: 'SpeedUp',

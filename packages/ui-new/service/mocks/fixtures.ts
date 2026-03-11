@@ -1,4 +1,4 @@
-import { ASSET_SOURCE, AssetType, TxStatus } from '@core/types';
+import { ASSET_SOURCE, AssetType, TX_EXECUTION_STATUS, TX_LIFECYCLE_STATUS } from '@core/types';
 import { VaultType } from '@core/types/vault';
 import { ChainType, NetworkType } from '@core/utils/consts';
 import type { IAccount, IAsset, INetwork, ITransaction, IVault, RecentlyAddress } from '../core';
@@ -67,7 +67,10 @@ export const mockTransaction: ITransaction = {
   from: '0xaaa',
   to: '0xbbb',
   value: '1',
-  status: TxStatus.Pending,
+  state: {
+    lifecycle: TX_LIFECYCLE_STATUS.Pending,
+    execution: TX_EXECUTION_STATUS.Unknown,
+  },
   timestamp: 1_700_000_000_000,
   networkId: 'net_1',
 };
