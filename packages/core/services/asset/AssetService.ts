@@ -438,7 +438,7 @@ export class AssetService {
     const balance = this.buildBalanceFromBaseUnits(snapshot.balanceBaseUnits, decimals);
     const priceInUSDT = snapshot.priceInUSDT ?? metadata?.priceInUSDT ?? null;
     const icon =
-      snapshot.type === ASSET_TYPE.Native ? trackedAsset?.icon ?? snapshot.icon ?? metadata?.icon ?? null : snapshot.icon ?? metadata?.icon ?? null;
+      snapshot.type === ASSET_TYPE.Native ? (trackedAsset?.icon ?? snapshot.icon ?? metadata?.icon ?? null) : (snapshot.icon ?? metadata?.icon ?? null);
 
     return {
       id: trackedAsset?.id ?? this.makeDiscoveredAssetId(networkId, snapshot.type, snapshot.contractAddress),

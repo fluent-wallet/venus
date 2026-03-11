@@ -19,7 +19,7 @@ const readTxSyncConfig = (context: RuntimeContext): Required<TxSyncRuntimeConfig
 
   const globalConcurrency = typeof tx.globalConcurrency === 'number' && tx.globalConcurrency > 0 ? tx.globalConcurrency : 4;
   const highPriorityPollIntervalMs =
-    typeof tx.highPriorityPollIntervalMs === 'number' && tx.highPriorityPollIntervalMs > 0 ? tx.highPriorityPollIntervalMs : 10_000;
+    typeof tx.highPriorityPollIntervalMs === 'number' && tx.highPriorityPollIntervalMs > 0 ? tx.highPriorityPollIntervalMs : 3_000;
   const backgroundPollIntervalMs = typeof tx.backgroundPollIntervalMs === 'number' && tx.backgroundPollIntervalMs > 0 ? tx.backgroundPollIntervalMs : 60_000;
   const scanIntervalMs = typeof tx.scanIntervalMs === 'number' && tx.scanIntervalMs > 0 ? tx.scanIntervalMs : 60_000;
 

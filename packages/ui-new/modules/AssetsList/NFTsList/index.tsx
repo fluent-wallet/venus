@@ -104,8 +104,7 @@ const NFTList: React.FC<Props> = ({ onPressItem, tabsType }) => {
   const collectionsQuery = useNftCollectionsOfAddress(addressId);
   const collections = collectionsQuery.data ?? [];
   const shouldShowSkeleton =
-    collections.length === 0 &&
-    (currentAddressQuery.status === 'pending' || (Boolean(addressId) && collectionsQuery.status === 'pending'));
+    collections.length === 0 && (currentAddressQuery.status === 'pending' || (Boolean(addressId) && collectionsQuery.status === 'pending'));
 
   if (shouldShowSkeleton) {
     return <SkeletonList />;

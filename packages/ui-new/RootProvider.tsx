@@ -13,6 +13,7 @@ const queryClient = new QueryClient({ defaultOptions: { queries: { refetchOnWind
 setUiQueryClient(queryClient);
 
 const LEGACY_TRACKER_POLL_INTERVAL_MS = 7777;
+const TX_SYNC_HIGH_PRIORITY_POLL_INTERVAL_MS = 3_000;
 
 const WALLET_CONNECT_PROJECT_ID = '77ffee6a4cbf8ed25550cea82939d1fa';
 const WALLET_CONNECT_METADATA = {
@@ -67,7 +68,7 @@ const RUNTIME_CONFIG: RuntimeConfig = {
     },
     tx: {
       globalConcurrency: 4,
-      highPriorityPollIntervalMs: 10_000,
+      highPriorityPollIntervalMs: TX_SYNC_HIGH_PRIORITY_POLL_INTERVAL_MS,
       backgroundPollIntervalMs: 60_000,
       scanIntervalMs: 60_000,
     },

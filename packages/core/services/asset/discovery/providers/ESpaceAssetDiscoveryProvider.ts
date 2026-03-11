@@ -1,10 +1,10 @@
 import ESpaceWalletABI from '@core/contracts/ABI/ESpaceWallet';
 import { ASSET_TYPE, type AssetTypeValue, type Hex } from '@core/types';
+import { NetworkType } from '@core/utils/consts';
 import { Interface } from '@ethersproject/abi';
 import { getAddress as toChecksumAddress } from 'ethers';
 import { injectable } from 'inversify';
 import type { AssetDiscoveryInput, DiscoveredFungibleAsset, IAssetDiscoveryProvider } from '../types';
-import { NetworkType } from '@core/utils/consts';
 
 const eSpaceWalletIface = new Interface(ESpaceWalletABI);
 const NATIVE_ASSET_KEY = 'native';

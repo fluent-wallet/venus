@@ -4,8 +4,8 @@ import { renderHook, waitFor } from '@testing-library/react-native';
 import type React from 'react';
 import { useCurrentAddress } from './account';
 import { getNftService, getNftSyncService } from './core';
-import { useNftCollectionsOfAddress, useNftCollectionsOfCurrentAddress, useNftItems } from './nft';
 import { createTestQueryClient, createWrapper } from './mocks/reactQuery';
+import { useNftCollectionsOfAddress, useNftCollectionsOfCurrentAddress, useNftItems } from './nft';
 
 jest.mock('./core', () => ({
   getNftService: jest.fn(),

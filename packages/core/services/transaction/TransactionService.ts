@@ -86,6 +86,11 @@ import type {
   TransactionSource,
 } from './types';
 
+const SERVICE_PENDING_ACTIVITY_TX_STATUSES = [...PENDING_TX_STATUSES, DbTxStatus.TEMP_REPLACED];
+const SERVICE_FINISHED_ACTIVITY_TX_STATUSES = FINISHED_IN_ACTIVITY_TX_STATUSES.filter((status) => status !== DbTxStatus.TEMP_REPLACED);
+const SERVICE_PENDING_ACTIVITY_TX_STATUS_SET = new Set<DbTxStatus>(SERVICE_PENDING_ACTIVITY_TX_STATUSES);
+const SERVICE_FINISHED_ACTIVITY_TX_STATUS_SET = new Set<DbTxStatus>(SERVICE_FINISHED_ACTIVITY_TX_STATUSES);
+
 type TxLike = {
   from?: string;
   to?: string;
@@ -999,21 +1004,15 @@ export class TransactionService {
       return TX_STATUS.Failed;
     }
 
-    switch (status) {
-      case DbTxStatus.EXECUTED:
-      case DbTxStatus.CONFIRMED:
-      case DbTxStatus.FINALIZED:
-        return TX_STATUS.Confirmed;
-      case DbTxStatus.REPLACED:
-      case DbTxStatus.TEMP_REPLACED:
-      case DbTxStatus.SEND_FAILED:
-        return TX_STATUS.Failed;
-      case DbTxStatus.WAITTING:
-      case DbTxStatus.DISCARDED:
-      case DbTxStatus.PENDING:
-      default:
-        return TX_STATUS.Pending;
+    if ([DbTxStatus.EXECUTED, DbTxStatus.CONFIRMED, DbTxStatus.FINALIZED].includes(status)) {
+      return TX_STATUS.Confirmed;
     }
+
+    if ([DbTxStatus.REPLACED, DbTxStatus.SEND_FAILED].includes(status)) {
+      return TX_STATUS.Failed;
+    }
+
+    return TX_STATUS.Pending;
   }
 
   private async saveTx(params: {
@@ -1188,10 +1187,11 @@ export class TransactionService {
    */
   async listActivityTransactions(filter: TransactionFilter): Promise<IActivityTransaction[]> {
     const { addressId, status = 'all', limit } = filter;
-    const query = this.createTxQuery(addressId, status);
-    const txs = await query.fetch();
+    // Deduplicate against the full activity candidate set first so the same nonce cannot leak into both pending and finished partitions.
+    const txs = await this.createTxQuery(addressId, 'all').fetch();
     const deduped = await this.uniqSortByNoncePreferExecuted(txs);
-    const sliced = typeof limit === 'number' && limit >= 0 ? deduped.slice(0, limit) : deduped;
+    const filtered = this.filterActivityTransactionsByStatus(deduped, status);
+    const sliced = typeof limit === 'number' && limit >= 0 ? filtered.slice(0, limit) : filtered;
     return Promise.all(sliced.map((tx) => this.toActivityInterface(tx)));
   }
 
@@ -1268,12 +1268,24 @@ export class TransactionService {
   // build status clauses
   private buildStatusClauses(status: TransactionFilter['status']): Q.Clause[] {
     if (status === 'pending') {
-      return [Q.where('status', Q.oneOf(PENDING_TX_STATUSES))];
+      return [Q.where('status', Q.oneOf(SERVICE_PENDING_ACTIVITY_TX_STATUSES))];
     }
     if (status === 'finished') {
-      return [Q.where('status', Q.oneOf(FINISHED_IN_ACTIVITY_TX_STATUSES))];
+      return [Q.where('status', Q.oneOf(SERVICE_FINISHED_ACTIVITY_TX_STATUSES))];
     }
     return [Q.where('status', Q.notEq(DbTxStatus.SEND_FAILED))];
+  }
+
+  private filterActivityTransactionsByStatus(txs: Tx[], status: TransactionFilter['status']): Tx[] {
+    if (status === 'pending') {
+      return txs.filter((tx) => SERVICE_PENDING_ACTIVITY_TX_STATUS_SET.has(tx.status));
+    }
+
+    if (status === 'finished') {
+      return txs.filter((tx) => SERVICE_FINISHED_ACTIVITY_TX_STATUS_SET.has(tx.status));
+    }
+
+    return txs;
   }
 
   // build address variants

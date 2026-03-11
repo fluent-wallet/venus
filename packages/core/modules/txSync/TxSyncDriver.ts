@@ -72,10 +72,7 @@ class EvmTxSyncDriver implements TxSyncDriver {
 
     const latest = toNumFromHex(latestRaw);
     const finalized = toNumFromHex(finalizedRaw);
-
-    if (finalized > nonce) return 'finalized_used';
-    if (latest > nonce) return 'temp_used';
-    return 'not_used';
+    return finalized > nonce ? 'finalized_used' : latest > nonce ? 'temp_used' : 'not_used';
   }
 
   async batchGetPresence(hashes: string[]): Promise<TxPresence[]> {
@@ -198,10 +195,7 @@ class CfxTxSyncDriver implements TxSyncDriver {
 
     const latest = toNumFromHex(latestRaw);
     const finalized = toNumFromHex(finalizedRaw);
-
-    if (finalized > nonce) return 'finalized_used';
-    if (latest > nonce) return 'temp_used';
-    return 'not_used';
+    return finalized > nonce ? 'finalized_used' : latest > nonce ? 'temp_used' : 'not_used';
   }
 
   async batchGetPresence(hashes: string[]): Promise<TxPresence[]> {
