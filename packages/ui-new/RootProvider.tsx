@@ -12,6 +12,8 @@ import App from './App';
 const queryClient = new QueryClient({ defaultOptions: { queries: { refetchOnWindowFocus: false } } });
 setUiQueryClient(queryClient);
 
+const LEGACY_TRACKER_POLL_INTERVAL_MS = 7777;
+
 const WALLET_CONNECT_PROJECT_ID = '77ffee6a4cbf8ed25550cea82939d1fa';
 const WALLET_CONNECT_METADATA = {
   name: 'BIM Wallet Wallet',
@@ -61,7 +63,7 @@ const RUNTIME_CONFIG: RuntimeConfig = {
   },
   sync: {
     assets: {
-      pollIntervalMs: 0,
+      pollIntervalMs: LEGACY_TRACKER_POLL_INTERVAL_MS,
     },
     tx: {
       globalConcurrency: 4,
@@ -70,7 +72,7 @@ const RUNTIME_CONFIG: RuntimeConfig = {
       scanIntervalMs: 60_000,
     },
     nft: {
-      pollIntervalMs: 0,
+      pollIntervalMs: LEGACY_TRACKER_POLL_INTERVAL_MS,
       scanOpenApiByKey: {
         [buildScanOpenApiKey({ networkType: NetworkType.Ethereum, chainId: Networks['Conflux eSpace'].chainId })]: Networks['Conflux eSpace'].scanOpenAPI,
         [buildScanOpenApiKey({ networkType: NetworkType.Ethereum, chainId: Networks['eSpace Testnet'].chainId })]: Networks['eSpace Testnet'].scanOpenAPI,

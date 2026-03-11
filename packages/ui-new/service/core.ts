@@ -2,6 +2,7 @@ import { CORE_IDENTIFIERS } from '@core/di';
 import { AssetsSyncService } from '@core/modules/assetsSync';
 import type { AuthService } from '@core/modules/auth';
 import type { CoreEventMap } from '@core/modules/eventBus';
+import { NftSyncService } from '@core/modules/nftSync';
 import type { ExternalRequestsService } from '@core/modules/externalRequests';
 import { WalletConnectService } from '@core/modules/walletConnect';
 import type { RuntimeConfig } from '@core/runtime/types';
@@ -98,6 +99,10 @@ export function getTransactionService(): TransactionService {
 
 export function getAssetsSyncService(): AssetsSyncService {
   return getContainer().get(AssetsSyncService);
+}
+
+export function getNftSyncService(): NftSyncService {
+  return getContainer().get(NftSyncService);
 }
 
 export function getVaultService(): VaultService {

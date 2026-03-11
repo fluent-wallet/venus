@@ -1,6 +1,7 @@
 import { type UseQueryResult, useQuery } from '@tanstack/react-query';
+import { useEffect } from 'react';
 import { useCurrentAddress } from './account';
-import { getNftService, type INftCollection, type INftItem } from './core';
+import { getNftService, getNftSyncService, type INftCollection, type INftItem } from './core';
 
 export type NftCollectionsQuery = UseQueryResult<INftCollection[]>;
 export type NftItemsQuery = UseQueryResult<INftItem[]>;
@@ -27,9 +28,22 @@ export function useNftCollectionsOfCurrentAddress(): NftCollectionsQuery {
 
 export function useNftItems(params: { addressId: string; contractAddress: string; enabled?: boolean }): NftItemsQuery {
   const service = getNftService();
+  const syncService = getNftSyncService();
   const enabled = params.enabled ?? true;
   const addressId = params.addressId ?? '';
   const contractAddress = params.contractAddress ?? '';
+
+  useEffect(() => {
+    if (!enabled || !addressId || !contractAddress) {
+      return;
+    }
+
+    syncService.setCurrentTarget({ contractAddress });
+
+    return () => {
+      syncService.clearCurrentTarget({ contractAddress });
+    };
+  }, [addressId, contractAddress, enabled, syncService]);
 
   return useQuery({
     queryKey: getNftItemsKey(addressId || 'none', contractAddress || 'none'),
