@@ -64,7 +64,6 @@ export class AssetService {
     const context = await this.readAddressAssetContext(address);
     const fungibleAssets = await this.buildFungibleAssets(context);
     const nonFungibleAssets = this.buildNonFungibleAssets(context.trackedAssets);
-
     return [...this.orderFungibleAssets(fungibleAssets), ...nonFungibleAssets];
   }
 

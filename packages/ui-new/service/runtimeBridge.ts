@@ -14,8 +14,8 @@ import {
 import { useQueryClient } from '@tanstack/react-query';
 import { getActiveRouteName } from '@utils/backToHome';
 import { useEffect, useRef } from 'react';
-import { getAccountRootKey } from './account';
-import { getAssetRootKey } from './asset';
+import { getAccountRootKey, getCurrentAccountKey } from './account';
+import { getAssetRootKey, getAssetsByAddressKey } from './asset';
 import {
   getAccountService,
   getAddressValidationService,
@@ -24,6 +24,8 @@ import {
   getNetworkService,
   getRuntimeEventBus,
   getTransactionService,
+  type IAccount,
+  type IAsset,
 } from './core';
 import { getNetworkRootKey } from './network';
 import { getNftRootKey } from './nft';
@@ -57,11 +59,12 @@ export function useRuntimeEventBridge(navigation: StackNavigation) {
   const MAX_ROUTED_REQUEST_IDS = 100;
 
   useEffect(() => {
-    const invalidateAccountRelated = () => {
-      void queryClient.invalidateQueries({ queryKey: getAccountRootKey() });
-      void queryClient.invalidateQueries({ queryKey: getAssetRootKey() });
-      void queryClient.invalidateQueries({ queryKey: getTransactionRootKey() });
-      void queryClient.invalidateQueries({ queryKey: getSignatureRootKey() });
+    const syncCurrentAccount = (payload: { account: IAccount }) => {
+      if (payload.account) {
+        queryClient.setQueryData(getCurrentAccountKey(), payload.account);
+      }
+
+      void queryClient.invalidateQueries({ queryKey: getAccountRootKey(), refetchType: 'inactive' });
     };
 
     const invalidateNetworkRelated = () => {
@@ -82,6 +85,10 @@ export function useRuntimeEventBridge(navigation: StackNavigation) {
 
     const invalidateAsset = () => {
       void queryClient.invalidateQueries({ queryKey: getAssetRootKey() });
+    };
+
+    const syncAssetSnapshot = (payload: { key: { addressId: string }; snapshot: { assets: IAsset[] } }) => {
+      queryClient.setQueryData(getAssetsByAddressKey(payload.key.addressId), payload.snapshot.assets);
     };
 
     const invalidateWalletConnect = () => {
@@ -201,7 +208,7 @@ export function useRuntimeEventBridge(navigation: StackNavigation) {
     };
 
     const subs = [
-      eventBus.on('account/current-changed', invalidateAccountRelated),
+      eventBus.on('account/current-changed', syncCurrentAccount),
       eventBus.on('network/current-changed', invalidateNetworkRelated),
 
       eventBus.on('tx/created', invalidateTx),
@@ -209,14 +216,8 @@ export function useRuntimeEventBridge(navigation: StackNavigation) {
 
       eventBus.on('signature/changed', invalidateSignature),
 
-      eventBus.on('assets-sync/started', invalidateAsset),
-      eventBus.on('assets-sync/updated', invalidateAsset),
-      eventBus.on('assets-sync/succeeded', invalidateAsset),
-      eventBus.on('assets-sync/failed', invalidateAsset),
-
-      eventBus.on('receive-assets-sync/started', invalidateAsset),
+      eventBus.on('assets-sync/succeeded', syncAssetSnapshot),
       eventBus.on('receive-assets-sync/succeeded', invalidateAsset),
-      eventBus.on('receive-assets-sync/failed', invalidateAsset),
 
       eventBus.on('wallet-connect/sessions-changed', invalidateWalletConnect),
 

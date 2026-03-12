@@ -18,6 +18,24 @@ export const getAccountListKey = (includeHidden = false) => ['account', 'list', 
 export const getAccountGroupKey = (groupId: string, includeHidden = false) => ['account', 'group', groupId, includeHidden] as const;
 export const getAccountByIdKey = (accountId: string) => ['account', 'byId', accountId] as const;
 
+function updateSelectedAccountSnapshot(data: IAccount | IAccount[] | null | undefined, accountId: string): IAccount | IAccount[] | null | undefined {
+  if (Array.isArray(data)) {
+    return data.map((account) => ({
+      ...account,
+      selected: account.id === accountId,
+    }));
+  }
+
+  if (!data) {
+    return data;
+  }
+
+  return {
+    ...data,
+    selected: data.id === accountId,
+  };
+}
+
 /**
  * Fetch the currently selected account.
  * @example
@@ -80,7 +98,7 @@ export function useCurrentAddress(): CurrentAddressQuery {
   return useQuery({
     queryKey: getCurrentAccountKey(),
     queryFn: () => service.getCurrentAccount(),
-    select: (account) => (account && account.currentAddressId ? { id: account.currentAddressId, value: account.address } : null),
+    select: (account) => (account?.currentAddressId ? { id: account.currentAddressId, value: account.address } : null),
   });
 }
 
@@ -95,8 +113,32 @@ export function useSwitchAccount() {
   const queryClient = useQueryClient();
   return useCallback(
     async (accountId: string) => {
+      const targetAccount = await service.getAccountById(accountId);
+
       await service.switchAccount(accountId);
-      await queryClient.invalidateQueries({ queryKey: getAccountRootKey() });
+
+      if (targetAccount) {
+        const selectedAccount = { ...targetAccount, selected: true };
+        queryClient.setQueryData(getCurrentAccountKey(), selectedAccount);
+        queryClient.setQueriesData<IAccount[] | null>(
+          { queryKey: getAccountListKey(false) },
+          (data) => updateSelectedAccountSnapshot(data, accountId) as IAccount[] | null,
+        );
+        queryClient.setQueriesData<IAccount[] | null>(
+          { queryKey: getAccountListKey(true) },
+          (data) => updateSelectedAccountSnapshot(data, accountId) as IAccount[] | null,
+        );
+        queryClient.setQueriesData<IAccount[] | null>(
+          { queryKey: ['account', 'group'] },
+          (data) => updateSelectedAccountSnapshot(data, accountId) as IAccount[] | null,
+        );
+        queryClient.setQueriesData<IAccount | null>(
+          { queryKey: ['account', 'byId'] },
+          (data) => updateSelectedAccountSnapshot(data, accountId) as IAccount | null,
+        );
+      }
+
+      await queryClient.invalidateQueries({ queryKey: getAccountRootKey(), refetchType: 'inactive' });
     },
     [service, queryClient],
   );

@@ -20,6 +20,7 @@ jest.mock('./core', () => ({
 
 type AccountServiceMock = {
   getCurrentAccount: jest.Mock;
+  getAccountById: jest.Mock;
   switchAccount: jest.Mock;
   updateAccountNickName: jest.Mock;
   setAccountHidden: jest.Mock;
@@ -35,6 +36,7 @@ describe('account service hooks', () => {
     wrapper = createWrapper(queryClient);
     service = {
       getCurrentAccount: jest.fn(),
+      getAccountById: jest.fn(),
       switchAccount: jest.fn().mockResolvedValue(undefined),
       updateAccountNickName: jest.fn().mockResolvedValue(undefined),
       setAccountHidden: jest.fn().mockResolvedValue(undefined),
@@ -75,16 +77,20 @@ describe('account service hooks', () => {
     expect(result.current.data).toBeNull();
   });
 
-  it('useSwitchAccount calls service and invalidates account root key', async () => {
+  it('useSwitchAccount updates current account cache and only refetches inactive account queries', async () => {
+    const targetAccount = { ...mockAccount, id: 'acc_2', nickname: 'Secondary', address: '0xdef', currentAddressId: 'addr_2', selected: false };
     const invalidateSpy = jest.spyOn(queryClient, 'invalidateQueries');
+    service.getAccountById.mockResolvedValue(targetAccount);
     const { result } = renderHook(() => useSwitchAccount(), { wrapper });
 
     await act(async () => {
       await result.current('acc_2');
     });
 
+    expect(service.getAccountById).toHaveBeenCalledWith('acc_2');
     expect(service.switchAccount).toHaveBeenCalledWith('acc_2');
-    expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: getAccountRootKey() });
+    expect(queryClient.getQueryData(getCurrentAccountKey())).toEqual({ ...targetAccount, selected: true });
+    expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: getAccountRootKey(), refetchType: 'inactive' });
   });
 
   it('useUpdateAccountNickname calls service and invalidates cache', async () => {
