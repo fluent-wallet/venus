@@ -43,29 +43,24 @@ const AddNewEndpoint = () => {
   const handleAdd = useCallback(async () => {
     setError('');
     setLoading(true);
+
     try {
       if (!currentNetwork) return;
-      const endpoint = new URL(netUrl);
-      const request = getChainIdMap[currentNetwork?.networkType];
 
-      try {
-        const chainId = await request(endpoint.href);
-        if (Number(chainId) !== Number(currentNetwork.chainId)) {
-          setError(t('settings.network.add.invalidChainId'));
-        } else {
-          await addEndpoint(currentNetwork.id, { endpoint: endpoint.href, type: 'outer' });
-          if (navigation.canGoBack()) {
-            navigation.goBack();
-          }
-        }
-      } catch (error) {
-        console.log('request error', error);
-        setError(t('settings.network.add.invalidURL'));
-      } finally {
-        setLoading(false);
+      const endpoint = new URL(netUrl);
+      const request = getChainIdMap[currentNetwork.networkType];
+      const chainId = await request(endpoint.href);
+
+      if (Number(chainId) !== Number(currentNetwork.chainId)) {
+        setError(t('settings.network.add.invalidChainId'));
+        return;
       }
-    } catch (error) {
-      console.log('parse error', netUrl);
+
+      await addEndpoint(currentNetwork.id, { endpoint: endpoint.href, type: 'outer' });
+      if (navigation.canGoBack()) {
+        navigation.goBack();
+      }
+    } catch {
       setError(t('settings.network.add.invalidURL'));
     } finally {
       setLoading(false);
