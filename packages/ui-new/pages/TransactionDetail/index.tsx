@@ -13,6 +13,7 @@ import Clipboard from '@react-native-clipboard/clipboard';
 import { useTheme } from '@react-navigation/native';
 import type { StackScreenProps, TransactionDetailStackName } from '@router/configs';
 import type { ITransactionDetail } from '@service/core';
+import { useTransactionDetail } from '@service/transaction';
 import {
   getTransactionDetailLabelStatus,
   getTransactionDetailStatus,
@@ -20,7 +21,6 @@ import {
   type TransactionDetailBadgeStatus,
   type TransactionDetailLabelStatus,
 } from '@service/transactionStatus';
-import { useTransactionDetail } from '@service/transaction';
 import { toDataUrl } from '@utils/blockies';
 import { ACTIVITY_DEV_INFO_FEATURE } from '@utils/features';
 import dayjs from 'dayjs';
@@ -74,9 +74,7 @@ const TxStatus: React.FC<{
       {statusInfo.icon}
       <View style={styles.statusTextContainer}>
         <Text style={[styles.statusText, { color: colors[statusInfo.color] }]}>{t(`tx.detail.status.${labelStatus}`)}</Text>
-        {status !== 'pending' && (
-          <Text style={[styles.time, { color: colors.textSecondary }]}>{dayjs(tx.createdAtMs).format('MMM DD YYYY, HH:mm')}</Text>
-        )}
+        {status !== 'pending' && <Text style={[styles.time, { color: colors.textSecondary }]}>{dayjs(tx.createdAtMs).format('MMM DD YYYY, HH:mm')}</Text>}
       </View>
     </View>
   );

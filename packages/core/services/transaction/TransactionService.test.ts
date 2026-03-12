@@ -22,13 +22,7 @@ import { SigningService } from '@core/services/signing';
 import { createTestAccount, seedNetwork } from '@core/testUtils/fixtures';
 import { createSilentLogger, DEFAULT_PRIVATE_KEY, mockDatabase } from '@core/testUtils/mocks';
 import { StubChainProvider } from '@core/testUtils/mocks/chainProviders';
-import {
-  AssetType,
-  TX_EXECUTION_STATUS,
-  TX_LIFECYCLE_STATUS,
-  type IChainRpc,
-  type ISigner,
-} from '@core/types';
+import { AssetType, type IChainRpc, type ISigner, TX_EXECUTION_STATUS, TX_LIFECYCLE_STATUS } from '@core/types';
 import { Q } from '@nozbe/watermelondb';
 import { Container } from 'inversify';
 import { ChainStatusService } from '../chain/ChainStatusService';
@@ -1030,7 +1024,7 @@ describe('TransactionService', () => {
     expect(txs[0].method).toBe('approve');
   });
 
-  it('does not override dapp request fields when estimating', async () => {
+  it('keeps explicit 1559 dapp requests in 1559 fee mode when estimate returns both fee models', async () => {
     const { network: evmNetwork, assetRule } = await seedNetwork(database, { definitionKey: 'eSpace Testnet', selected: true });
     const { address } = await createTestAccount(database, { network: evmNetwork, assetRule });
 
@@ -1069,11 +1063,56 @@ describe('TransactionService', () => {
       data: request.data,
       value: request.value,
       gasLimit: request.gas,
-      gasPrice: request.gasPrice,
+      gasPrice: '',
       maxFeePerGas: request.maxFeePerGas,
       maxPriorityFeePerGas: request.maxPriorityFeePerGas,
       nonce: 7,
       type: '2',
+    });
+  });
+
+  it('canonicalizes legacy dapp requests after estimate merges 1559 fields', async () => {
+    const { network: evmNetwork, assetRule } = await seedNetwork(database, { definitionKey: 'eSpace Testnet', selected: true });
+    const { address } = await createTestAccount(database, { network: evmNetwork, assetRule });
+
+    const provider = new StubChainProvider({
+      chainId: evmNetwork.chainId,
+      networkType: evmNetwork.networkType,
+    });
+    jest.spyOn(provider, 'estimateFee').mockResolvedValue({
+      chainType: provider.networkType,
+      estimatedTotal: '0x999',
+      gasLimit: '0xffff',
+      gasPrice: '0x777',
+      maxFeePerGas: '0x888',
+      maxPriorityFeePerGas: '0x999',
+    });
+    chainRegistry.register(provider);
+
+    const request = {
+      from: address.hex,
+      to: '0x0000000000000000000000000000000000000001',
+      data: '0xdeadbeef',
+      value: '0x2',
+      gas: '0x5208',
+      gasPrice: '0x1',
+      nonce: '0x7',
+      type: '0x0',
+    } as any;
+
+    await service.sendDappTransaction({ addressId: address.id, request });
+
+    const [tx] = await database.get<Tx>(TableName.Tx).query().fetch();
+    const payload = await tx.txPayload.fetch();
+    expect(payload).toMatchObject({
+      data: request.data,
+      value: request.value,
+      gasLimit: request.gas,
+      gasPrice: request.gasPrice,
+      maxFeePerGas: null,
+      maxPriorityFeePerGas: null,
+      nonce: 7,
+      type: '0',
     });
   });
 

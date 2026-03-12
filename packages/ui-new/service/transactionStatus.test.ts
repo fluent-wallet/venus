@@ -1,12 +1,12 @@
-import { TX_EXECUTION_STATUS, TX_LIFECYCLE_STATUS, type TransactionStateSnapshot } from '@core/types';
+import { type TransactionStateSnapshot, TX_EXECUTION_STATUS, TX_LIFECYCLE_STATUS } from '@core/types';
 import {
-  TX_STATUS,
   getTransactionDetailLabelStatus,
   getTransactionDetailStatus,
   getTransactionSummaryStatus,
   isTransactionFailureState,
   isTransactionPendingState,
   isTransactionSuccessfulState,
+  TX_STATUS,
 } from './transactionStatus';
 
 const makeState = (state: Partial<TransactionStateSnapshot>): TransactionStateSnapshot => ({

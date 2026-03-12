@@ -1,8 +1,4 @@
-import {
-  TX_EXECUTION_STATUS,
-  TX_LIFECYCLE_STATUS,
-  type TransactionStateSnapshot,
-} from '@core/types';
+import { type TransactionStateSnapshot, TX_EXECUTION_STATUS, TX_LIFECYCLE_STATUS } from '@core/types';
 
 export const TX_STATUS = {
   Pending: 'pending',
@@ -19,10 +15,7 @@ const PENDING_LIFECYCLE_STATUSES = new Set<TransactionStateSnapshot['lifecycle']
   TX_LIFECYCLE_STATUS.TempReplaced,
 ]);
 
-const FAILED_LIFECYCLE_STATUSES = new Set<TransactionStateSnapshot['lifecycle']>([
-  TX_LIFECYCLE_STATUS.Replaced,
-  TX_LIFECYCLE_STATUS.SendFailed,
-]);
+const FAILED_LIFECYCLE_STATUSES = new Set<TransactionStateSnapshot['lifecycle']>([TX_LIFECYCLE_STATUS.Replaced, TX_LIFECYCLE_STATUS.SendFailed]);
 
 const SUCCESSFUL_LIFECYCLE_STATUSES = new Set<TransactionStateSnapshot['lifecycle']>([
   TX_LIFECYCLE_STATUS.Executed,

@@ -42,6 +42,7 @@ import {
   AssetType,
   type AssetTypeValue,
   type ChainType,
+  type EvmChainProviderLike,
   type EvmUnsignedTransaction,
   type FeeEstimate,
   type HardwareOperationError,
@@ -50,10 +51,10 @@ import {
   NetworkType,
   SPEED_UP_ACTION,
   type SpeedUpAction,
-  TX_EXECUTION_STATUS,
-  TX_LIFECYCLE_STATUS,
   type TransactionParams,
   type TransactionStateSnapshot,
+  TX_EXECUTION_STATUS,
+  TX_LIFECYCLE_STATUS,
   type UnsignedTransaction,
 } from '@core/types';
 import { Networks } from '@core/utils/consts';
@@ -322,10 +323,8 @@ export class TransactionService {
 
     // build tx params
     const txParams = this.buildTransactionParams(input, from, network);
-    const unsignedTx = await chainProvider.buildTransaction(txParams);
-
-    // estimate fee (currently the returned value is not used)
-    await chainProvider.estimateFee(unsignedTx);
+    const txDraft = await chainProvider.buildTransaction(txParams);
+    const unsignedTx = await chainProvider.prepareUnsignedTransaction(txDraft);
 
     // get signer
     const account = await address.account.fetch();
@@ -474,8 +473,8 @@ export class TransactionService {
       });
     }
 
-    const chainProvider = this.getChainProvider(network);
-    const unsignedTx = await this.buildEvmUnsignedTxFromRpc({ chainProvider, network, request: input.request });
+    const chainProvider = this.getChainProvider<EvmChainProviderLike>(network);
+    const unsignedTx = this.buildEvmUnsignedTransactionDraft({ chainId: network.chainId, request: input.request });
 
     try {
       return await chainProvider.estimateFee(unsignedTx);
@@ -516,50 +515,17 @@ export class TransactionService {
       });
     }
 
-    const chainProvider = this.getChainProvider(network);
+    const chainProvider = this.getChainProvider<EvmChainProviderLike>(network);
 
     let unsignedTx: EvmUnsignedTransaction;
     try {
-      unsignedTx = await this.buildEvmUnsignedTxFromRpc({ chainProvider, network, request: input.request });
+      const txDraft = this.buildEvmUnsignedTransactionDraft({ chainId: network.chainId, request: input.request });
+      unsignedTx = await chainProvider.prepareUnsignedTransaction(txDraft);
     } catch (error) {
       if (error instanceof CoreError) throw error;
       throw new CoreError({
         code: TX_BUILD_FAILED,
-        message: 'Failed to build dApp transaction.',
-        cause: error,
-        context: { chainId: network.chainId },
-      });
-    }
-
-    let estimate: FeeEstimate | undefined;
-    try {
-      estimate = await chainProvider.estimateFee(unsignedTx);
-      if (!unsignedTx.payload.gasLimit) {
-        unsignedTx.payload.gasLimit = estimate.gasLimit;
-      }
-      if (!unsignedTx.payload.gasPrice && estimate.chainType === NetworkType.Ethereum && 'gasPrice' in estimate && estimate.gasPrice) {
-        unsignedTx.payload.gasPrice = estimate.gasPrice;
-      }
-      if (estimate.chainType === NetworkType.Ethereum && 'maxFeePerGas' in estimate && estimate.maxFeePerGas && !unsignedTx.payload.maxFeePerGas) {
-        unsignedTx.payload.maxFeePerGas = estimate.maxFeePerGas;
-      }
-      if (
-        estimate.chainType === NetworkType.Ethereum &&
-        'maxPriorityFeePerGas' in estimate &&
-        estimate.maxPriorityFeePerGas &&
-        !unsignedTx.payload.maxPriorityFeePerGas
-      ) {
-        unsignedTx.payload.maxPriorityFeePerGas = estimate.maxPriorityFeePerGas;
-      }
-      if (unsignedTx.payload.type == null) {
-        if (unsignedTx.payload.maxFeePerGas || unsignedTx.payload.maxPriorityFeePerGas) unsignedTx.payload.type = 2;
-        else if (unsignedTx.payload.gasPrice) unsignedTx.payload.type = 0;
-      }
-    } catch (error) {
-      if (error instanceof CoreError) throw error;
-      throw new CoreError({
-        code: TX_ESTIMATE_FAILED,
-        message: 'Failed to estimate dApp transaction fee.',
+        message: 'Failed to prepare dApp transaction.',
         cause: error,
         context: { chainId: network.chainId },
       });
@@ -928,8 +894,8 @@ export class TransactionService {
     return network;
   }
 
-  private getChainProvider(network: Network): IChainProvider {
-    const provider = this.chainRegistry.get(network.chainId, network.networkType);
+  private getChainProvider<TProvider extends IChainProvider = IChainProvider>(network: Network): TProvider {
+    const provider = this.chainRegistry.get<TProvider>(network.chainId, network.networkType);
     if (!provider) {
       throw new CoreError({
         code: CHAIN_PROVIDER_NOT_FOUND,
@@ -939,6 +905,7 @@ export class TransactionService {
     }
     return provider;
   }
+
   private buildTransactionParams(input: SendTransactionInput, from: string, network: Network): TransactionParams {
     // TODO add more fields
     return {
@@ -959,43 +926,39 @@ export class TransactionService {
       nonce: input.nonce,
     };
   }
-  private parseHexQuantityToNumber(value?: string): number | undefined {
+
+  private parseHexQuantityToNumber(value: string | undefined, field: string): number | undefined {
     if (!value) return undefined;
+
     const asBigInt = BigInt(value);
     if (asBigInt > BigInt(Number.MAX_SAFE_INTEGER)) {
       throw new CoreError({
         code: TX_INVALID_PARAMS,
         message: 'Invalid JSON-RPC params.',
-        context: { reason: 'nonce/type exceeds Number.MAX_SAFE_INTEGER.' },
+        context: { reason: `${field} exceeds Number.MAX_SAFE_INTEGER.` },
       });
     }
+
     return Number(asBigInt);
   }
 
-  private async buildEvmUnsignedTxFromRpc(params: {
-    chainProvider: IChainProvider;
-    network: Network;
-    request: EvmRpcTransactionRequest;
-  }): Promise<EvmUnsignedTransaction> {
-    const { chainProvider, network, request } = params;
-
-    const nonce = request.nonce ? this.parseHexQuantityToNumber(request.nonce) : await chainProvider.getNonce(request.from);
-    const type = request.type ? this.parseHexQuantityToNumber(request.type) : undefined;
+  private buildEvmUnsignedTransactionDraft(params: { chainId: string; request: EvmRpcTransactionRequest }): EvmUnsignedTransaction {
+    const { chainId, request } = params;
 
     return {
       chainType: NetworkType.Ethereum,
       payload: {
         from: request.from,
         to: request.to,
-        chainId: network.chainId,
+        chainId,
         data: request.data ?? '0x',
         value: request.value ?? '0x0',
         gasLimit: request.gas,
         gasPrice: request.gasPrice,
         maxFeePerGas: request.maxFeePerGas,
         maxPriorityFeePerGas: request.maxPriorityFeePerGas,
-        nonce,
-        type,
+        nonce: this.parseHexQuantityToNumber(request.nonce, 'nonce'),
+        type: this.parseHexQuantityToNumber(request.type, 'type'),
       },
     };
   }
@@ -1367,7 +1330,12 @@ export class TransactionService {
 
   private async buildTxAssetTypeMap(txs: Tx[]): Promise<Map<string, AssetTypeValue>> {
     const assetIds = Array.from(
-      new Set(txs.filter((tx) => tx.method === 'transfer').map((tx) => tx.asset.id).filter((id): id is string => typeof id === 'string' && id.length > 0)),
+      new Set(
+        txs
+          .filter((tx) => tx.method === 'transfer')
+          .map((tx) => tx.asset.id)
+          .filter((id): id is string => typeof id === 'string' && id.length > 0),
+      ),
     );
     if (!assetIds.length) {
       return new Map();

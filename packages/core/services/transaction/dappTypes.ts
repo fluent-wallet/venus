@@ -1,4 +1,4 @@
-import type { Address, Hex } from '@core/types';
+import type { Address, EvmRpcTransactionRequest, Hex } from '@core/types';
 import type { TypedDataDomain, TypedDataField } from 'ethers';
 
 export type EvmSignableMessage = string | { raw: Hex };
@@ -18,19 +18,4 @@ export type EvmSignMessageParameters = {
 export type EvmSignTypedDataParameters = {
   from: Address;
   typedData: EvmTypedDataV4;
-};
-
-export type EvmRpcTransactionRequest = {
-  from: Address;
-  to?: Address;
-  data?: Hex;
-
-  value?: Hex;
-  gas?: Hex;
-  gasPrice?: Hex;
-  maxFeePerGas?: Hex;
-  maxPriorityFeePerGas?: Hex;
-
-  nonce?: Hex;
-  type?: Hex;
 };

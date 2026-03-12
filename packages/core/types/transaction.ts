@@ -27,6 +27,21 @@ export interface TransactionParams {
   nonce?: number;
 }
 
+export interface EvmRpcTransactionRequest {
+  from: Address;
+  to?: Address;
+  data?: Hex;
+
+  value?: Hex;
+  gas?: Hex;
+  gasPrice?: Hex;
+  maxFeePerGas?: Hex;
+  maxPriorityFeePerGas?: Hex;
+
+  nonce?: Hex;
+  type?: Hex;
+}
+
 interface BaseUnsignedTransaction<TChain extends ChainType> {
   chainType: TChain;
   context?: Record<string, unknown>;
