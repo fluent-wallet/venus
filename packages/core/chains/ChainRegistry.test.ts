@@ -89,6 +89,7 @@ const stubProvider = (overrides: Partial<IChainProvider> & { chainId?: string; n
     networkType,
     deriveAddress: overrides.deriveAddress ?? (() => '0x'),
     validateAddress: overrides.validateAddress ?? (() => true),
+    prepareUnsignedTransaction: overrides.prepareUnsignedTransaction ?? (async (tx) => tx),
     buildTransaction: overrides.buildTransaction ?? (async () => createUnsignedTx(networkType)),
     estimateFee: overrides.estimateFee ?? (async () => createFeeEstimate(networkType)),
     signTransaction: overrides.signTransaction ?? (async () => createSignedTx(networkType)),

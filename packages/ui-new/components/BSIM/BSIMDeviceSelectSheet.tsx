@@ -1,8 +1,8 @@
 import { BottomSheetContent, BottomSheetHeader, type BottomSheetMethods, BottomSheetWrapper, InlineBottomSheet, snapPoints } from '@components/BottomSheet';
 import Spinner from '@components/Spinner';
 import Text from '@components/Text';
-import plugins from '@core/WalletCore/Plugins';
 import { useTheme } from '@react-navigation/native';
+import { getHardwareWalletService } from '@service/core';
 import type React from 'react';
 import { useCallback, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -12,7 +12,7 @@ type DeviceItem = { deviceId: string; name: string };
 
 interface Props {
   bottomSheetRef: React.RefObject<BottomSheetMethods>;
-  onConnect: () => Promise<void>;
+  onConnect: (deviceId: string) => Promise<void>;
   onScanError: (error: unknown) => void;
   onOpenChange?: (open: boolean) => void;
 }
@@ -48,7 +48,7 @@ const BSIMDeviceSelectSheet: React.FC<Props> = ({ bottomSheetRef, onConnect, onS
     stopScan();
     setDevices([]);
 
-    scanHandleRef.current = plugins.BSIM.startNearbyBSIMDeviceScan(
+    scanHandleRef.current = getHardwareWalletService().startBSIMBleScan(
       (device) => {
         setDevices((prev) => upsertDevice(prev, device));
       },
@@ -82,10 +82,8 @@ const BSIMDeviceSelectSheet: React.FC<Props> = ({ bottomSheetRef, onConnect, onS
       setConnectingDeviceId(deviceId);
       stopScan();
 
-      plugins.BSIM.setBleDeviceId(deviceId);
-
       try {
-        await onConnect();
+        await onConnect(deviceId);
       } finally {
         setConnectingDeviceId(null);
         bottomSheetRef.current?.close();

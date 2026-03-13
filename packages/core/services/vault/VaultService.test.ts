@@ -1,12 +1,12 @@
 import 'reflect-metadata';
-import { seedNetwork } from '@core/__tests__/fixtures';
-import { createStrictTestCryptoTool, mockDatabase } from '@core/__tests__/mocks';
 import type { Database } from '@core/database';
 import type { AccountGroup } from '@core/database/models/AccountGroup';
 import type { Address } from '@core/database/models/Address';
-import VaultType from '@core/database/models/Vault/VaultType';
+import { VaultType } from '@core/database/models/Vault/VaultType';
 import TableName from '@core/database/TableName';
 import { CORE_IDENTIFIERS } from '@core/di';
+import { seedNetwork } from '@core/testUtils/fixtures';
+import { createStrictTestCryptoTool, mockDatabase } from '@core/testUtils/mocks';
 import type { CryptoTool } from '@core/types/crypto';
 import { getNthAccountOfHDKey } from '@core/utils/hdkey';
 import { Container } from 'inversify';
@@ -20,6 +20,7 @@ describe('VaultService', () => {
   let container: Container;
   let database: Database;
   let service: VaultService;
+  let hardwareWalletService: { connectAndSync: jest.Mock };
 
   beforeEach(() => {
     container = new Container({ defaultScope: 'Transient' });
@@ -27,7 +28,12 @@ describe('VaultService', () => {
 
     container.bind(CORE_IDENTIFIERS.DB).toConstantValue(database);
     container.bind<CryptoTool>(CORE_IDENTIFIERS.CRYPTO_TOOL).toConstantValue(createStrictTestCryptoTool());
-    container.bind(HardwareWalletService).toConstantValue({} as unknown as HardwareWalletService);
+    hardwareWalletService = {
+      connectAndSync: jest.fn(async () => {
+        throw new Error('connectAndSync should not be called in this test.');
+      }),
+    };
+    container.bind(HardwareWalletService).toConstantValue(hardwareWalletService as unknown as HardwareWalletService);
     container.bind(VaultService).toSelf();
 
     service = container.get(VaultService);
@@ -187,6 +193,27 @@ describe('VaultService', () => {
     await expect(service.createBSIMVault({ accounts: [] })).rejects.toThrow('BSIM vault requires at least one account.');
   });
 
+  it('imports only the first BSIM account when accounts are omitted', async () => {
+    await seedNetwork(database, { selected: true });
+
+    hardwareWalletService.connectAndSync.mockResolvedValue({
+      accounts: [
+        { index: 5, address: '0x763d0F4D817e65ec6ac7224AeA281F1282Edc3B7' },
+        { index: 0, address: '0x50bb3047BA3E60Ca750728de9F737085F2Ac2aCD' },
+      ],
+      deviceId: 'icc-xyz',
+    });
+
+    const vault = await service.createBSIMVault({ connectOptions: { deviceIdentifier: 'ignored-for-apdu' } });
+    const group = await database.get<AccountGroup>(TableName.AccountGroup).find(vault.accountGroupId);
+    const accounts = await group.accounts.fetch();
+
+    expect(hardwareWalletService.connectAndSync).toHaveBeenCalledTimes(1);
+    expect(accounts).toHaveLength(1);
+    expect(accounts[0]?.index).toBe(0);
+    expect(accounts[0]?.selected).toBe(true);
+  });
+
   it('creates PublicAddress vault and blocks private key export', async () => {
     await seedNetwork(database, { selected: true });
 
@@ -200,5 +227,49 @@ describe('VaultService', () => {
 
     const address = await fetchFirstAddress();
     await expect(service.getPrivateKey(vault.id, address.id, TEST_PASSWORD)).rejects.toThrow(/does not expose/i);
+  });
+
+  it('detects duplicate secret imports by derived addresses', async () => {
+    await seedNetwork(database, { selected: true });
+
+    await service.createHDVault({ mnemonic: FIXED_MNEMONIC, password: TEST_PASSWORD });
+    await expect(service.hasExistingSecretImport({ mnemonic: FIXED_MNEMONIC })).resolves.toBe(true);
+
+    const privateKey = '0x0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef';
+    await service.createPrivateKeyVault({ privateKey, password: TEST_PASSWORD });
+    await expect(service.hasExistingSecretImport({ privateKey })).resolves.toBe(true);
+  });
+
+  it('verifies password against existing vault secrets', async () => {
+    await seedNetwork(database, { selected: true });
+    await service.createHDVault({ mnemonic: FIXED_MNEMONIC, password: TEST_PASSWORD });
+
+    await expect(service.verifyPassword(TEST_PASSWORD)).resolves.toBe(true);
+    await expect(service.verifyPassword('wrong-password')).resolves.toBe(false);
+  });
+
+  it('verifies password for BSIM-only vaults using legacy encrypted marker', async () => {
+    await seedNetwork(database, { selected: true });
+
+    await service.createBSIMVault({
+      accounts: [{ index: 0, hexAddress: '0x50bb3047BA3E60Ca750728de9F737085F2Ac2aCD' }],
+      password: TEST_PASSWORD,
+    });
+
+    await expect(service.verifyPassword(TEST_PASSWORD)).resolves.toBe(true);
+    await expect(service.verifyPassword('wrong-password')).resolves.toBe(false);
+  });
+
+  it('prefers HD/PK secrets over BSIM marker when verifying password', async () => {
+    await seedNetwork(database, { selected: true });
+
+    await service.createHDVault({ mnemonic: FIXED_MNEMONIC, password: 'hd-pass' });
+    await service.createBSIMVault({
+      accounts: [{ index: 0, hexAddress: '0x50bb3047BA3E60Ca750728de9F737085F2Ac2aCD' }],
+      password: 'bsim-pass',
+    });
+
+    await expect(service.verifyPassword('hd-pass')).resolves.toBe(true);
+    await expect(service.verifyPassword('bsim-pass')).resolves.toBe(false);
   });
 });

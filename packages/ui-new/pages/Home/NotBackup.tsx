@@ -1,23 +1,28 @@
 import Img from '@assets/images/fundsAtRisk.webp';
 import Text from '@components/Text';
-import { useCurrentAccount, useGroupOfAccount, useVaultOfAccount, VaultSourceType, VaultType } from '@core/WalletCore/Plugins/ReactInject';
 import useForceUpdateOnFocus from '@hooks/useUpdateOnFocus';
 import { useTheme } from '@react-navigation/native';
 import { BackupBSIM1PasswordStackName, BackupStackName, BackupStep1StackName, type HomeStackName, type StackScreenProps } from '@router/configs';
+import { useCurrentAccount } from '@service/account';
+import { VaultSourceType, VaultType } from '@service/core';
+import { useVaults } from '@service/vault';
 import { Image } from 'expo-image';
 import type React from 'react';
-import { useCallback } from 'react';
+import { useCallback, useMemo } from 'react';
 import { Trans, useTranslation } from 'react-i18next';
 import { Pressable, StyleSheet, View } from 'react-native';
 
 export const useShouldShowNotBackup = () => {
-  const currentAccount = useCurrentAccount();
-  const vault = useVaultOfAccount(currentAccount?.id);
-  const accountGroup = useGroupOfAccount(currentAccount?.id);
+  const { data: currentAccount } = useCurrentAccount();
+  const { data: vaults = [] } = useVaults();
 
-  if (!vault || !accountGroup) {
-    return false;
-  }
+  const vault = useMemo(() => {
+    const groupId = currentAccount?.accountGroupId;
+    if (!groupId) return null;
+    return vaults.find((v) => v.accountGroupId === groupId) ?? null;
+  }, [currentAccount?.accountGroupId, vaults]);
+
+  if (!vault) return false;
 
   const isHDWallet = vault.type === VaultType.HierarchicalDeterministic;
   const isBSIMWallet = vault.type === VaultType.BSIM;
@@ -31,20 +36,28 @@ const NotBackup: React.FC<{ navigation: StackScreenProps<typeof HomeStackName>['
   const { t } = useTranslation();
   const { colors } = useTheme();
   const shouldShowNotBackup = useShouldShowNotBackup();
-  const account = useCurrentAccount();
-  const accountGroup = useGroupOfAccount(account?.id);
-  const currentAccount = useCurrentAccount();
-  const vault = useVaultOfAccount(currentAccount?.id);
+  const { data: currentAccount } = useCurrentAccount();
+  const { data: vaults = [] } = useVaults();
+
+  const vault = useMemo(() => {
+    const groupId = currentAccount?.accountGroupId;
+    if (!groupId) return null;
+    return vaults.find((v) => v.accountGroupId === groupId) ?? null;
+  }, [currentAccount?.accountGroupId, vaults]);
+  const accountGroupId = currentAccount?.accountGroupId ?? null;
 
   useForceUpdateOnFocus(navigation);
 
   const handleBackup = useCallback(() => {
-    if (vault?.type === VaultType.BSIM) {
-      navigation.navigate(BackupStackName, { screen: BackupBSIM1PasswordStackName, params: { vaultId: vault?.id } });
+    if (!vault) return;
+
+    if (vault.type === VaultType.BSIM) {
+      navigation.navigate(BackupStackName, { screen: BackupBSIM1PasswordStackName, params: { vaultId: vault.id } });
     } else {
-      navigation.navigate(BackupStackName, { screen: BackupStep1StackName, params: { groupId: accountGroup?.id } });
+      if (!accountGroupId) return;
+      navigation.navigate(BackupStackName, { screen: BackupStep1StackName, params: { groupId: accountGroupId } });
     }
-  }, [vault?.type, vault?.id, navigation, accountGroup?.id]);
+  }, [vault, navigation, accountGroupId]);
 
   if (!shouldShowNotBackup) return null;
   return (
@@ -52,7 +65,7 @@ const NotBackup: React.FC<{ navigation: StackScreenProps<typeof HomeStackName>['
       <View style={[styles.divider, { backgroundColor: colors.borderThird }]} pointerEvents="none" />
       <Pressable
         style={({ pressed }) => [styles.container, { backgroundColor: pressed ? colors.underlay : 'transparent', borderColor: colors.borderPrimary }]}
-        disabled={!accountGroup}
+        disabled={!vault || (vault.type !== VaultType.BSIM && !accountGroupId)}
         onPress={handleBackup}
         testID="backup"
       >

@@ -1,9 +1,4 @@
-enum VaultType {
-  PublicAddress = 'public_address',
-  PrivateKey = 'private_key',
-  HierarchicalDeterministic = 'hierarchical_deterministic',
-  Hardware = 'hardware',
-  BSIM = 'BSIM',
-}
+import { VaultType } from '@core/types/vault';
+
 export { VaultType };
 export default VaultType;

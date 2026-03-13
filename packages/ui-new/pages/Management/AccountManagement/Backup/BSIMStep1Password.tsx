@@ -1,4 +1,3 @@
-import BSIM from '@WalletCoreExtends/Plugins/BSIM';
 import { BottomSheetFooter } from '@components/BottomSheet';
 import Button from '@components/Button';
 import Checkbox from '@components/Checkbox';
@@ -6,6 +5,7 @@ import HourglassLoading from '@components/Loading/Hourglass';
 import TextInput from '@components/TextInput';
 import { useNavigation, useTheme } from '@react-navigation/native';
 import { type BackupBSIM1PasswordStackName, BackupBSIMQ2RCodeStackName, type BackupScreenProps, type StackNavigation } from '@router/configs';
+import { getHardwareWalletService } from '@service/core';
 import { validateKey2Password } from '@utils/BSIMKey2PasswordValidation';
 import { handleBSIMHardwareUnavailable } from '@utils/handleBSIMHardwareUnavailable';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -28,7 +28,7 @@ export const BSIMStep1Password: React.FC<BackupScreenProps<typeof BackupBSIM1Pas
   const [confirm, setConfirm] = useState(false);
   const rootNavigation = useNavigation<StackNavigation>();
   const [loading, setLoading] = useState(false);
-  const cancelRequestRef = useRef<(() => void) | null>(null);
+  const abortRef = useRef<AbortController | null>(null);
   const {
     control,
     handleSubmit,
@@ -54,11 +54,9 @@ export const BSIMStep1Password: React.FC<BackupScreenProps<typeof BackupBSIM1Pas
   }, [passwordValue, confirmValue, trigger]);
 
   const handleCancel = useCallback(() => {
-    if (cancelRequestRef.current) {
-      cancelRequestRef.current();
-      cancelRequestRef.current = null;
-      setLoading(false);
-    }
+    abortRef.current?.abort();
+    abortRef.current = null;
+    setLoading(false);
   }, []);
 
   const handleSubmitForm = useCallback(
@@ -66,20 +64,24 @@ export const BSIMStep1Password: React.FC<BackupScreenProps<typeof BackupBSIM1Pas
       try {
         const { confirm } = data;
         setLoading(true);
-        await BSIM.verifyBPIN();
-        const [request, cancelRequest] = await BSIM.backupSeed(confirm);
-        cancelRequestRef.current = cancelRequest;
-        const seedData = await request;
+        const controller = new AbortController();
+        abortRef.current = controller;
+        const seedData = await getHardwareWalletService().runBackupSeed(route.params.vaultId, { key2: confirm }, { signal: controller.signal });
 
         navigation.navigate(BackupBSIMQ2RCodeStackName, { backupPassword: confirm, seedData, vaultId: route.params.vaultId });
       } catch (error: any) {
+        const name = (error as { name?: unknown } | null)?.name;
+        const code = (error as { code?: unknown } | null)?.code;
+        if (name === 'AbortError' || code === 'CANCEL') {
+          return;
+        }
         if (handleBSIMHardwareUnavailable(error, rootNavigation)) {
           return;
         }
         showMessage({ type: 'failed', message: error.message });
       } finally {
         setLoading(false);
-        cancelRequestRef.current = null;
+        abortRef.current = null;
       }
     },
     [navigation, rootNavigation, route.params.vaultId],

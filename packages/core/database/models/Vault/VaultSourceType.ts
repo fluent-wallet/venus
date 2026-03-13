@@ -1,6 +1,4 @@
-enum VaultSourceType {
-  CREATE_BY_WALLET = 'CREATE_BY_WALLET',
-  IMPORT_BY_USER = 'IMPORT_BY_USER',
-}
+import { VaultSourceType } from '@core/types/vault';
 
+export { VaultSourceType };
 export default VaultSourceType;

@@ -1,20 +1,18 @@
-/* eslint-disable react-hooks/exhaustive-deps */
-
 import ProhibitIcon from '@assets/icons/prohibit.svg';
 import HourglassLoading from '@components/Loading/Hourglass';
 import Text from '@components/Text';
 import TextInput from '@components/TextInput';
+import { ASSET_TYPE, type AssetTypeValue } from '@core/types';
 import { trimDecimalZeros } from '@core/utils/balance';
-import plugins from '@core/WalletCore/Plugins';
-import type { AssetInfo } from '@core/WalletCore/Plugins/AssetsTracker/types';
-import type { NFTItemDetail } from '@core/WalletCore/Plugins/NFTDetailTracker/server';
-import { AssetType, useCurrentAddressValue, useCurrentNetwork } from '@core/WalletCore/Plugins/ReactInject';
 import useFormatBalance from '@hooks/useFormatBalance';
 import useInAsync from '@hooks/useInAsync';
 import NFTIcon from '@modules/AssetsList/NFTsList/NFTIcon';
-import { getDetailSymbol } from '@modules/AssetsList/NFTsList/NFTItem';
+import { getDetailSymbol } from '@modules/AssetsList/NFTsList/NFTItemsGrid';
 import TokenIcon from '@modules/AssetsList/TokensList/TokenIcon';
 import { useTheme } from '@react-navigation/native';
+import { useCurrentAddress } from '@service/account';
+import type { INftItem } from '@service/core';
+import { estimateTransactionGasPricing } from '@service/transaction';
 import Decimal from 'decimal.js';
 import type React from 'react';
 import { forwardRef, useCallback, useEffect, useImperativeHandle, useMemo, useState } from 'react';
@@ -35,12 +33,24 @@ export type AmountInfo = Omit<Info, 'handleEstimateMax'>;
 
 interface Props {
   targetAddress: string;
-  asset: AssetInfo;
-  nftItemDetail?: NFTItemDetail;
+  asset: AmountAsset;
+  nftItemDetail?: INftItem;
   onAmountInfoChange?: (info: AmountInfo) => void;
   defaultAmount?: string;
   children?: (info: Info) => React.ReactNode;
   isReceive?: boolean;
+}
+
+export interface AmountAsset {
+  type: AssetTypeValue | string;
+  contractAddress?: string;
+  name?: string;
+  symbol: string;
+  decimals: number;
+  balance: string;
+  icon?: string;
+  priceInUSDT?: string;
+  priceValue?: string;
 }
 
 export interface SetAssetAmountMethods {
@@ -51,58 +61,59 @@ const SetAssetAmount = forwardRef<SetAssetAmountMethods, Props>(
   ({ targetAddress, asset, nftItemDetail, onAmountInfoChange, children, defaultAmount, isReceive }, ref) => {
     const { colors, reverseColors } = useTheme();
     const { t } = useTranslation();
-    const currentNetwork = useCurrentNetwork()!;
-    const currentAddressValue = useCurrentAddressValue()!;
+    const { data: currentAddress } = useCurrentAddress();
+    const currentAddressValue = currentAddress?.value ?? '';
     const [amount, setAmount] = useState(() => defaultAmount ?? '');
     const [validMax, setValidMax] = useState<Decimal | null>(() => (isReceive ? new Decimal(Number.POSITIVE_INFINITY) : null));
-    const needMaxMode = useMemo(() => !isReceive && (asset.type === AssetType.Native || asset.type === AssetType.ERC20), [isReceive, asset.type]);
+    const needMaxMode = useMemo(() => !isReceive && (asset.type === ASSET_TYPE.Native || asset.type === ASSET_TYPE.ERC20), [isReceive, asset.type]);
 
     const [inMaxMode, setInMaxMode] = useState(() => false);
 
     useEffect(() => {
       setAmount('');
-    }, [asset?.contractAddress]);
+    }, [asset.type, asset.contractAddress, asset.symbol]);
 
     const balance = useFormatBalance(asset.balance, asset.decimals);
-    const symbol = useMemo(() => {
-      if (!nftItemDetail) {
-        return asset.symbol;
-      }
-      return getDetailSymbol(nftItemDetail);
-      // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, []);
+    const symbol = useMemo(() => (nftItemDetail ? getDetailSymbol(nftItemDetail) : asset.symbol), [asset.symbol, nftItemDetail]);
 
-    const _handleEstimateMax = useCallback(async (isInit = false) => {
-      if (asset.type !== AssetType.Native) {
-        if (nftItemDetail) {
-          const res = new Decimal(nftItemDetail.amount);
+    const _handleEstimateMax = useCallback(
+      async (isInit = false) => {
+        if (asset.type !== ASSET_TYPE.Native) {
+          if (nftItemDetail) {
+            const res = new Decimal(nftItemDetail.amount);
+            setValidMax(res);
+            return res;
+          }
+          const res = new Decimal(asset.balance);
           setValidMax(res);
           return res;
         }
-        const res = new Decimal(asset.balance);
-        setValidMax(res);
-        return res;
-      }
-      try {
-        const { estimate, estimateOf1559 } = await plugins.Transaction.estimate({
-          tx: { to: targetAddress, value: '0x0', from: currentAddressValue },
-          network: currentNetwork!,
-        });
-        const usedEstimate = estimateOf1559 ?? estimate!;
-        let res = new Decimal(asset.balance).sub(new Decimal(usedEstimate.medium.gasCost));
-        res = res.greaterThan(0) ? res : new Decimal(0);
-        setValidMax(res);
-        return res;
-      } catch (err) {
-        if (!isInit) {
-          showMessage({
-            message: t('tx.amount.error.estimate'),
-            description: String(err ?? ''),
-            type: 'warning',
+        try {
+          const addressId = currentAddress?.id;
+          if (!addressId) return;
+
+          const estimateRes = await estimateTransactionGasPricing({
+            addressId,
+            withNonce: false,
+            tx: { to: targetAddress, value: '0x0', from: currentAddressValue },
           });
+          const gasCostBaseUnits = new Decimal(BigInt(estimateRes.levels.medium.gasCost).toString());
+          let res = new Decimal(asset.balance).sub(gasCostBaseUnits);
+          res = res.greaterThan(0) ? res : new Decimal(0);
+          setValidMax(res);
+          return res;
+        } catch (err) {
+          if (!isInit) {
+            showMessage({
+              message: t('tx.amount.error.estimate'),
+              description: String(err ?? ''),
+              type: 'warning',
+            });
+          }
         }
-      }
-    }, []);
+      },
+      [asset.balance, asset.type, currentAddress?.id, currentAddressValue, nftItemDetail, t, targetAddress],
+    );
     const { inAsync: inEstimate, execAsync: handleEstimateMax } = useInAsync(_handleEstimateMax);
 
     const handleClickMax = useCallback(async () => {
@@ -116,13 +127,13 @@ const SetAssetAmount = forwardRef<SetAssetAmountMethods, Props>(
           setInMaxMode(true);
         }
       }
-    }, [validMax]);
+    }, [asset.decimals, handleEstimateMax, needMaxMode, nftItemDetail, validMax]);
 
     useEffect(() => {
       if (!isReceive) {
         handleEstimateMax(true);
       }
-    }, []);
+    }, [handleEstimateMax, isReceive]);
 
     useImperativeHandle(
       ref,
@@ -132,13 +143,15 @@ const SetAssetAmount = forwardRef<SetAssetAmountMethods, Props>(
       [handleEstimateMax],
     );
 
-    const Suffix = useMemo(
-      () => (
+    const Suffix = useMemo(() => {
+      const hasNft = !!nftItemDetail;
+      const icon = hasNft ? nftItemDetail?.icon : asset.icon;
+      return (
         <View style={styles.suffix}>
-          {nftItemDetail ? (
-            <NFTIcon style={[styles.assetIcon, { borderRadius: 2 }]} source={(nftItemDetail ?? asset).icon} />
+          {hasNft ? (
+            <NFTIcon style={[styles.assetIcon, { borderRadius: 2 }]} source={icon} />
           ) : (
-            <TokenIcon style={[styles.assetIcon, { borderRadius: 48 }]} source={(nftItemDetail ?? asset).icon} />
+            <TokenIcon style={[styles.assetIcon, { borderRadius: 48 }]} source={icon} />
           )}
 
           {!isReceive && (
@@ -164,10 +177,20 @@ const SetAssetAmount = forwardRef<SetAssetAmountMethods, Props>(
             </>
           )}
         </View>
-      ),
-      // eslint-disable-next-line react-hooks/exhaustive-deps
-      [inMaxMode],
-    );
+      );
+    }, [
+      asset.icon,
+      colors.borderPrimary,
+      colors.textPrimary,
+      handleClickMax,
+      inEstimate,
+      inMaxMode,
+      isReceive,
+      !!nftItemDetail,
+      nftItemDetail?.icon,
+      reverseColors.textPrimary,
+      t,
+    ]);
 
     const isAmountValid = useMemo(() => {
       if (!validMax || !amount) return null;
@@ -187,8 +210,7 @@ const SetAssetAmount = forwardRef<SetAssetAmountMethods, Props>(
       } catch (err) {
         return 'unvalid-number-format';
       }
-      // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [isReceive, amount, validMax]);
+    }, [amount, asset.decimals, isReceive, nftItemDetail, validMax]);
 
     useEffect(() => {
       if (typeof onAmountInfoChange === 'function') {
@@ -202,10 +224,10 @@ const SetAssetAmount = forwardRef<SetAssetAmountMethods, Props>(
       }
     }, [amount, isAmountValid, validMax, inMaxMode, inEstimate]);
 
-    const price = useMemo(
-      () => (isAmountValid !== true || !isReceive ? '' : trimDecimalZeros(new Decimal(asset.priceInUSDT || 0).mul(new Decimal(amount || 0)).toFixed(2))),
-      [asset?.priceInUSDT, isAmountValid, amount],
-    );
+    const price = useMemo(() => {
+      if (isAmountValid !== true || !isReceive) return '';
+      return trimDecimalZeros(new Decimal(asset.priceInUSDT || 0).mul(new Decimal(amount || 0)).toFixed(2));
+    }, [amount, asset.priceInUSDT, isAmountValid, isReceive]);
     return (
       <>
         <TextInput
@@ -223,7 +245,7 @@ const SetAssetAmount = forwardRef<SetAssetAmountMethods, Props>(
           }}
           isInBottomSheet
           showClear={!!amount}
-          placeholder={isReceive ? t('tx.amount.anyAmount') : asset.type === AssetType.ERC1155 ? '0' : '0.00'}
+          placeholder={isReceive ? t('tx.amount.anyAmount') : asset.type === ASSET_TYPE.ERC1155 ? '0' : '0.00'}
           SuffixIcon={Suffix}
         />
         {!isReceive && (

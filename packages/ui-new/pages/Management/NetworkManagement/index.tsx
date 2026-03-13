@@ -1,17 +1,21 @@
 import AddIcon from '@assets/icons/add.svg';
 import Text from '@components/Text';
-import { useCurrentNetwork } from '@core/WalletCore/Plugins/ReactInject';
 import { useNavigation, useTheme } from '@react-navigation/native';
 import { NetworkAddNewEndpointStackName, type StackNavigation } from '@router/configs';
+import { useCurrentNetwork } from '@service/network';
 import { useTranslation } from 'react-i18next';
 import { FlatList, Pressable, StyleSheet, View } from 'react-native';
 import RPCListItem from './RPCListItem';
+import { useRpcMetrics } from './useRpcMetrics';
 
 const NetworkManagement = () => {
   const { colors } = useTheme();
   const { t } = useTranslation();
-  const currentNetwork = useCurrentNetwork()!;
+  const { data: currentNetwork } = useCurrentNetwork();
   const navigation = useNavigation<StackNavigation>();
+  const { metricsByEndpoint, refreshMetrics } = useRpcMetrics(currentNetwork);
+
+  if (!currentNetwork) return null;
 
   return (
     <View style={[{ flex: 1, backgroundColor: colors.bgPrimary }]}>
@@ -38,9 +42,19 @@ const NetworkManagement = () => {
 
         <FlatList
           contentContainerStyle={{ gap: 10 }}
-          extraData={currentNetwork?.endpointsList.length}
           data={currentNetwork?.endpointsList || []}
-          renderItem={({ item }) => <RPCListItem rpc={item} currentNetwork={currentNetwork} />}
+          keyExtractor={(item) => item.endpoint}
+          renderItem={({ item }) => (
+            <RPCListItem
+              endpoint={item.endpoint}
+              rpcType={item.type}
+              networkId={currentNetwork.id}
+              isSelected={currentNetwork.endpoint === item.endpoint}
+              latency={metricsByEndpoint[item.endpoint]?.latency ?? null}
+              blockNumber={metricsByEndpoint[item.endpoint]?.blockNumber ?? null}
+              onRefreshMetrics={refreshMetrics}
+            />
+          )}
         />
       </View>
     </View>

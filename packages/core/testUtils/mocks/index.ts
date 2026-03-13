@@ -1,4 +1,4 @@
-export { mockDatabase } from '@core/database/__tests__/mockDatabases';
+export { mockDatabase } from '@core/database/testUtils/mockDatabases';
 export {
   createMockConfluxSdk,
   createMockConfluxUnsignedTx,

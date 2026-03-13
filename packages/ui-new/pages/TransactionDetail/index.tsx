@@ -5,17 +5,22 @@ import SuccessIcon from '@assets/icons/success.svg';
 import { truncate } from '@cfx-kit/dapp-utils/dist/address';
 import Spinner from '@components/Spinner';
 import Text from '@components/Text';
-import type { Tx } from '@core/database/models/Tx';
+import { SPEED_UP_ACTION } from '@core/types';
 import { shortenAddress } from '@core/utils/address';
-import { formatStatus, formatTxData } from '@core/utils/tx';
-import { SpeedUpAction } from '@core/WalletCore/Events/broadcastTransactionSubject';
-import { useAssetOfTx, useNativeAssetOfNetwork, usePayloadOfTx, useTxFromId } from '@core/WalletCore/Plugins/ReactInject';
-import { useExtraOfTx, useNetworkOfTx } from '@core/WalletCore/Plugins/ReactInject/data/useTxs';
 import { useShowSpeedUp } from '@hooks/useShowSpeedUp';
 import SpeedUpButton from '@modules/SpeedUpButton';
 import Clipboard from '@react-native-clipboard/clipboard';
 import { useTheme } from '@react-navigation/native';
 import type { StackScreenProps, TransactionDetailStackName } from '@router/configs';
+import type { ITransactionDetail } from '@service/core';
+import { useTransactionDetail } from '@service/transaction';
+import {
+  getTransactionDetailLabelStatus,
+  getTransactionDetailStatus,
+  isTransactionPendingState,
+  type TransactionDetailBadgeStatus,
+  type TransactionDetailLabelStatus,
+} from '@service/transactionStatus';
 import { toDataUrl } from '@utils/blockies';
 import { ACTIVITY_DEV_INFO_FEATURE } from '@utils/features';
 import dayjs from 'dayjs';
@@ -36,9 +41,8 @@ const getGasCostFromError = (err: string | null | undefined) => {
   return notEnoughCashError ? err.replace(/.+actual_gas_cost:[\s]?([\d.]+)[\s]?[,}].+/g, '$1').trim() : null;
 };
 
-const useGasFeeOfTx = (tx: Tx | null) => {
-  const network = useNetworkOfTx(tx?.id ?? '');
-  const nativeAsset = useNativeAssetOfNetwork(network?.id);
+const useGasFeeOfTx = (tx: ITransactionDetail | null) => {
+  const nativeAsset = tx?.nativeAsset ?? null;
   const gasCostAndPriceInUSDT = useMemo(() => {
     if (!tx?.receipt) return null;
     const gasPrice = tx.receipt.effectiveGasPrice ?? '0';
@@ -57,17 +61,20 @@ const useGasFeeOfTx = (tx: Tx | null) => {
   return gasCostAndPriceInUSDT;
 };
 
-const TxStatus: React.FC<{ tx: Tx }> = ({ tx }) => {
+const TxStatus: React.FC<{
+  tx: ITransactionDetail;
+  status: TransactionDetailBadgeStatus;
+  labelStatus: TransactionDetailLabelStatus;
+}> = ({ tx, status, labelStatus }) => {
   const { t } = useTranslation();
   const { colors } = useTheme();
-  const status = formatStatus(tx);
   const statusInfo = StatusMap[status];
   return (
     <View style={[styles.statusContainer, { backgroundColor: colors.bgFourth }]}>
       {statusInfo.icon}
       <View style={styles.statusTextContainer}>
-        <Text style={[styles.statusText, { color: colors[statusInfo.color] }]}>{t(`tx.detail.status.${statusInfo.text}`)}</Text>
-        {status !== 'pending' && <Text style={[styles.time, { color: colors.textSecondary }]}>{dayjs(tx.createdAt).format('MMM DD YYYY, HH:mm')}</Text>}
+        <Text style={[styles.statusText, { color: colors[statusInfo.color] }]}>{t(`tx.detail.status.${labelStatus}`)}</Text>
+        {status !== 'pending' && <Text style={[styles.time, { color: colors.textSecondary }]}>{dayjs(tx.createdAtMs).format('MMM DD YYYY, HH:mm')}</Text>}
       </View>
     </View>
   );
@@ -77,18 +84,16 @@ const TransactionDetail: React.FC<StackScreenProps<typeof TransactionDetailStack
   const { txId } = route.params;
   const { t } = useTranslation();
   const { colors } = useTheme();
-  const tx = useTxFromId(txId);
-  const payload = usePayloadOfTx(txId);
-  const extra = useExtraOfTx(txId);
-  const asset = useAssetOfTx(txId);
-  const status = tx && formatStatus(tx);
-  const network = useNetworkOfTx(txId);
+  const txQuery = useTransactionDetail(txId);
+  const tx = txQuery.data ?? null;
   const gasCostAndPriceInUSDT = useGasFeeOfTx(tx);
-  const { to } = useMemo(() => formatTxData(tx, payload, asset), [tx, payload, asset]);
-  const isPending = status === 'pending';
-  const isCanceling = isPending && extra?.sendAction === SpeedUpAction.Cancel;
   const showSpeedUp = useShowSpeedUp(tx);
+  const to = tx?.display.to ?? tx?.payload.to ?? null;
   if (!tx) return null;
+  const detailStatus = getTransactionDetailStatus(tx.state);
+  const detailLabelStatus = getTransactionDetailLabelStatus(tx.state);
+  const isPending = isTransactionPendingState(tx.state);
+  const isCanceling = isPending && tx.extra.sendAction === SPEED_UP_ACTION.Cancel;
   const handleCopy = (text: string) => {
     Clipboard.setString(text);
     showMessage({
@@ -101,7 +106,7 @@ const TransactionDetail: React.FC<StackScreenProps<typeof TransactionDetailStack
   return (
     <View style={[styles.container, { backgroundColor: colors.bgPrimary }]}>
       <View style={styles.content}>
-        <TxStatus tx={tx} />
+        <TxStatus tx={tx} status={detailStatus} labelStatus={detailLabelStatus} />
         <Text style={[styles.functionName, { color: colors.textPrimary }]}>{t('tx.detail.functionName', { name: tx.method })}</Text>
         {showSpeedUp && (
           <>
@@ -125,10 +130,10 @@ const TransactionDetail: React.FC<StackScreenProps<typeof TransactionDetailStack
             <Text style={[styles.info, { color: colors.textPrimary }]}>{truncate(tx.hash ?? '', { prefixLength: 6 })}</Text>
             <Copy color={colors.textSecondary} />
           </Pressable>
-          {network?.scanUrl && (
+          {tx.network.scanUrl && (
             <Pressable
               onPress={() => {
-                Linking.openURL(`${network.scanUrl}/tx/${tx.hash}`);
+                Linking.openURL(`${tx.network.scanUrl}/tx/${tx.hash}`);
               }}
               disabled={!tx.hash}
               testID="scan"
@@ -142,13 +147,13 @@ const TransactionDetail: React.FC<StackScreenProps<typeof TransactionDetailStack
           <Text style={[styles.label, { color: colors.textSecondary }]}>{t('tx.detail.from')}</Text>
           <Pressable
             onPress={() => {
-              handleCopy(payload?.from ?? '');
+              handleCopy(tx.payload.from ?? '');
             }}
             disabled={!tx.hash}
             testID="from"
             style={styles.row}
           >
-            <Text style={[styles.info, { color: colors.textPrimary }]}>{shortenAddress(payload?.from)}</Text>
+            <Text style={[styles.info, { color: colors.textPrimary }]}>{shortenAddress(tx.payload.from ?? '')}</Text>
             <Copy color={colors.textSecondary} />
           </Pressable>
         </View>
@@ -185,19 +190,19 @@ const TransactionDetail: React.FC<StackScreenProps<typeof TransactionDetailStack
         )}
         <View style={styles.row}>
           <Text style={[styles.label, { color: colors.textSecondary }]}>{t('tx.detail.nonce')}</Text>
-          <Text style={[styles.info, { color: colors.textPrimary }]}>{payload?.nonce}</Text>
+          <Text style={[styles.info, { color: colors.textPrimary }]}>{tx.payload.nonce ?? ''}</Text>
         </View>
         <View style={styles.row}>
           <Text style={[styles.label, { color: colors.textSecondary }]}>{t('tx.detail.network')}</Text>
-          <Image style={styles.networkImage} source={{ uri: toDataUrl(network?.chainId) }} />
-          <Text style={[styles.info, { color: colors.textPrimary, opacity: network?.name ? 1 : 0 }]}>{network?.name || 'placeholder'}</Text>
+          <Image style={styles.networkImage} source={{ uri: toDataUrl(tx.network.chainId) }} />
+          <Text style={[styles.info, { color: colors.textPrimary, opacity: tx.network.name ? 1 : 0 }]}>{tx.network.name || 'placeholder'}</Text>
         </View>
         {ACTIVITY_DEV_INFO_FEATURE.allow && (
           <>
             <View style={[styles.line, { backgroundColor: colors.borderFourth }]} />
             <View style={styles.row}>
               <Text style={[styles.label, { color: colors.textSecondary }]}>status</Text>
-              <Text style={[styles.info, { color: colors.textPrimary }]}>{tx.status.toLowerCase()}</Text>
+              <Text style={[styles.info, { color: colors.textPrimary }]}>{detailStatus}</Text>
             </View>
           </>
         )}
@@ -306,19 +311,20 @@ const PendingIcon: React.FC<{ size?: 'default' | 'small' }> = ({ size = 'default
 const StatusMap = {
   pending: {
     icon: <PendingIcon />,
-    text: 'pending',
     color: 'textPrimary',
   },
   confirmed: {
     icon: <SuccessIcon style={styles.statusIcon} color="#48E6FF" width={40} height={40} />,
-    text: 'confirmed',
+    color: 'up',
+  },
+  finalized: {
+    icon: <SuccessIcon style={styles.statusIcon} color="#48E6FF" width={40} height={40} />,
     color: 'up',
   },
   failed: {
     icon: <ProhibitIcon style={styles.statusIcon} width={40} height={40} />,
-    text: 'failed',
     color: 'down',
   },
-} as const;
+} as const satisfies Record<TransactionDetailBadgeStatus, { icon: React.ReactNode; color: 'textPrimary' | 'up' | 'down' }>;
 
 export default TransactionDetail;

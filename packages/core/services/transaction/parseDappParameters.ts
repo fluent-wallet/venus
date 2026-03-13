@@ -130,19 +130,34 @@ export const parseSignTypedDataParameters = (params: unknown): EvmSignTypedDataP
 };
 
 const isHexQuantity = (value: string): value is Hex => /^0x[0-9a-fA-F]+$/.test(value);
+const isDecimalInteger = (value: string): boolean => /^[0-9]+$/.test(value);
 
-const requireHexQuantity = (value: unknown, field: string): Hex => {
-  if (typeof value === 'string' && isHexQuantity(value)) return value;
+const toHexQuantity = (value: bigint): Hex => `0x${value.toString(16)}` as Hex;
+
+const requireQuantity = (value: unknown, field: string): Hex => {
+  if (typeof value === 'string') {
+    if (isHexQuantity(value)) return value;
+    if (isDecimalInteger(value)) return toHexQuantity(BigInt(value));
+  }
+
+  if (typeof value === 'number' && Number.isFinite(value) && Number.isInteger(value) && value >= 0) {
+    return toHexQuantity(BigInt(value));
+  }
+
+  if (typeof value === 'bigint' && value >= 0n) {
+    return toHexQuantity(value);
+  }
+
   throw new CoreError({
     code: TX_INVALID_PARAMS,
     message: 'Invalid eth_sendTransaction params.',
-    context: { reason: `${field} must be a hex quantity string (0x...).` },
+    context: { reason: `${field} must be a hex quantity string (0x...) or a non-negative integer.` },
   });
 };
 
 const optionalHexQuantity = (value: unknown, field: string): Hex | undefined => {
   if (value === undefined || value === null) return undefined;
-  return requireHexQuantity(value, field);
+  return requireQuantity(value, field);
 };
 
 const optionalHexBytes = (value: unknown, field: string): Hex | undefined => {

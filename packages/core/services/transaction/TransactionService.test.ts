@@ -1,34 +1,77 @@
 import 'reflect-metadata';
 
-import { createTestAccount, seedNetwork } from '@core/__tests__/fixtures';
-import { createSilentLogger, DEFAULT_PRIVATE_KEY, mockDatabase } from '@core/__tests__/mocks';
-import { StubChainProvider } from '@core/__tests__/mocks/chainProviders';
 import { ChainRegistry } from '@core/chains';
-
+import { iface721, iface777 } from '@core/contracts';
 import type { Database } from '@core/database';
 import type { Address } from '@core/database/models/Address';
 import { AssetSource, type Asset as DbAsset, AssetType as DbAssetType } from '@core/database/models/Asset';
 import type { Signature } from '@core/database/models/Signature';
 import { SignType } from '@core/database/models/Signature/type';
 import type { Tx } from '@core/database/models/Tx';
-import { TxStatus as DbTxStatus, TxSource } from '@core/database/models/Tx/type';
+import { TxStatus as DbTxStatus, ExecutedStatus, TxSource } from '@core/database/models/Tx/type';
 import type { TxExtra } from '@core/database/models/TxExtra';
 import type { TxPayload } from '@core/database/models/TxPayload';
 import TableName from '@core/database/TableName';
 import { CORE_IDENTIFIERS } from '@core/di';
-import { CHAIN_PROVIDER_NOT_FOUND, TX_BROADCAST_FAILED } from '@core/errors';
+import { CHAIN_PROVIDER_NOT_FOUND, TX_BROADCAST_FAILED, TX_INVALID_PARAMS } from '@core/errors';
 import type { CoreEventMap, EventBus } from '@core/modules/eventBus';
 import { InMemoryEventBus } from '@core/modules/eventBus';
+import type { RuntimeConfig } from '@core/runtime/types';
+import { AddressValidationService } from '@core/services/address/AddressValidationService';
 import { SigningService } from '@core/services/signing';
-import { AssetType, type ISigner, TxStatus as ServiceTxStatus } from '@core/types';
+import { createTestAccount, seedNetwork } from '@core/testUtils/fixtures';
+import { createSilentLogger, DEFAULT_PRIVATE_KEY, mockDatabase } from '@core/testUtils/mocks';
+import { StubChainProvider } from '@core/testUtils/mocks/chainProviders';
+import { AssetType, type IChainRpc, type ISigner, TX_EXECUTION_STATUS, TX_LIFECYCLE_STATUS } from '@core/types';
+import { Q } from '@nozbe/watermelondb';
 import { Container } from 'inversify';
 import { ChainStatusService } from '../chain/ChainStatusService';
 import { SignatureRecordService } from '../signing/SignatureRecordService';
 import { TransactionService } from './TransactionService';
 import type { ITransaction, SendERC20Input, SendTransactionInput } from './types';
 
-async function createDbTx(params: { database: Database; address: Address; status: DbTxStatus; from: string; to: string; hash: string; sendAt: Date }) {
-  const { database, address, status, from, to, hash, sendAt } = params;
+async function createDbTx(params: {
+  database: Database;
+  address: Address;
+  status: DbTxStatus;
+  executedStatus?: ExecutedStatus | null;
+  from: string;
+  to: string;
+  hash: string;
+  sendAt: Date;
+  nonce?: number;
+  gasPrice?: string | null;
+  maxFeePerGas?: string | null;
+  maxPriorityFeePerGas?: string | null;
+  sendAction?: 'SpeedUp' | 'Cancel' | null;
+  source?: TxSource;
+  method?: string;
+  data?: string;
+  value?: string;
+  extraMethod?: string | null;
+  asset?: DbAsset | null;
+}) {
+  const {
+    database,
+    address,
+    status,
+    executedStatus = null,
+    from,
+    to,
+    hash,
+    sendAt,
+    nonce = 1,
+    gasPrice = '0x1',
+    maxFeePerGas = null,
+    maxPriorityFeePerGas = null,
+    sendAction = null,
+    source = TxSource.SELF,
+    method = 'transfer',
+    data = '0x',
+    value = '0x1',
+    extraMethod = null,
+    asset = null,
+  } = params;
 
   let tx: Tx;
 
@@ -36,9 +79,13 @@ async function createDbTx(params: { database: Database; address: Address; status
     const payload = await database.get<TxPayload>(TableName.TxPayload).create((record) => {
       record.from = from;
       record.to = to;
-      record.value = '0x1';
-      record.nonce = 1;
+      record.value = value;
+      record.data = data;
+      record.nonce = nonce;
       record.chainId = '0x1';
+      record.gasPrice = gasPrice;
+      record.maxFeePerGas = maxFeePerGas;
+      record.maxPriorityFeePerGas = maxPriorityFeePerGas;
     });
 
     const extra = await database.get<TxExtra>(TableName.TxExtra).create((record) => {
@@ -47,6 +94,8 @@ async function createDbTx(params: { database: Database; address: Address; status
       record.contractInteraction = false;
       record.token20 = false;
       record.tokenNft = false;
+      record.sendAction = sendAction;
+      record.method = extraMethod;
     });
 
     tx = await database.get<Tx>(TableName.Tx).create((record) => {
@@ -56,9 +105,13 @@ async function createDbTx(params: { database: Database; address: Address; status
       record.hash = hash;
       record.raw = '0xraw';
       record.status = status;
+      record.executedStatus = executedStatus;
       record.sendAt = sendAt;
-      record.source = TxSource.SELF;
-      record.method = 'transfer';
+      record.source = source;
+      record.method = method;
+      if (asset) {
+        record.asset.set(asset);
+      }
     });
   });
 
@@ -79,6 +132,7 @@ describe('TransactionService', () => {
   let chainRegistry: ChainRegistry;
   let signingService: FakeSigningService;
   let eventBus: EventBus<CoreEventMap>;
+  let runtimeConfig: RuntimeConfig;
   let service: TransactionService;
 
   beforeEach(() => {
@@ -86,13 +140,16 @@ describe('TransactionService', () => {
     database = mockDatabase();
     chainRegistry = new ChainRegistry();
     signingService = new FakeSigningService();
+    runtimeConfig = { wallet: { pendingCountLimit: 5 } };
 
     eventBus = new InMemoryEventBus<CoreEventMap>({ logger: createSilentLogger(), assertSerializable: true });
     container.bind(CORE_IDENTIFIERS.EVENT_BUS).toConstantValue(eventBus);
     container.bind(CORE_IDENTIFIERS.DB).toConstantValue(database);
+    container.bind(CORE_IDENTIFIERS.CONFIG).toConstantValue(runtimeConfig);
     container.bind(ChainRegistry).toConstantValue(chainRegistry);
 
     container.bind(ChainStatusService).toSelf();
+    container.bind(AddressValidationService).toSelf();
     container.bind(SignatureRecordService).toSelf();
 
     container.bind(SigningService).toConstantValue(signingService as unknown as SigningService);
@@ -143,7 +200,10 @@ describe('TransactionService', () => {
     const result = await service.sendNative(input);
 
     expect(result.networkId).toBe(network.id);
-    expect(result.status).toBe(ServiceTxStatus.Pending);
+    expect(result.state).toEqual({
+      lifecycle: TX_LIFECYCLE_STATUS.Pending,
+      execution: TX_EXECUTION_STATUS.Unknown,
+    });
     expect(result.hash).toBe('0xhash');
     expect(result.from).toBe(await address.getValue());
     expect(result.to).toBe(input.to);
@@ -158,6 +218,7 @@ describe('TransactionService', () => {
     expect(signatures[0].tx.id).toBe(tx.id);
     expect(tx.hash).toBe('0xhash');
     expect(tx.status).toBe(DbTxStatus.PENDING);
+    expect(tx.method).toBe('transfer');
 
     const txPayload = await tx.txPayload.fetch();
     expect(txPayload.from).toBe(await address.getValue());
@@ -172,13 +233,147 @@ describe('TransactionService', () => {
     const asset = await tx.getAsset();
     expect(asset?.type).toBe(DbAssetType.Native);
 
-    expect(signingService.getSigner).toHaveBeenCalledWith(account.id, address.id);
+    expect(signingService.getSigner).toHaveBeenCalledWith(account.id, address.id, expect.objectContaining({ signal: undefined }));
 
     expect(createdEvents).toHaveLength(1);
     expect(createdEvents[0]).toEqual({
       key: { addressId: address.id, networkId: network.id },
       txId: result.id,
     });
+  });
+
+  it('maps executedStatus=FAILED to failed even when db status is EXECUTED', async () => {
+    const { address } = await createTestAccount(database);
+
+    await createDbTx({
+      database,
+      address,
+      status: DbTxStatus.EXECUTED,
+      executedStatus: ExecutedStatus.FAILED,
+      from: '0x0000000000000000000000000000000000000001',
+      to: '0x0000000000000000000000000000000000000002',
+      hash: '0xhash_failed',
+      sendAt: new Date(),
+      method: 'transfer',
+    });
+
+    const activity = await service.listActivityTransactions({ addressId: address.id, status: 'finished' });
+    expect(activity).toHaveLength(1);
+    expect(activity[0].state).toEqual({
+      lifecycle: TX_LIFECYCLE_STATUS.Executed,
+      execution: TX_EXECUTION_STATUS.Failed,
+    });
+  });
+
+  it('includes native asset price in transaction detail snapshot', async () => {
+    const { address, network, assetRule } = await createTestAccount(database);
+
+    const nativeAsset = await database.write(async () =>
+      database.get<DbAsset>(TableName.Asset).create((record) => {
+        record.network.set(network);
+        record.assetRule.set(assetRule);
+        record.type = DbAssetType.Native;
+        record.contractAddress = null;
+        record.name = 'CFX';
+        record.symbol = 'CFX';
+        record.decimals = 18;
+        record.icon = null;
+        record.priceInUSDT = '0.24';
+        record.source = AssetSource.Official;
+      }),
+    );
+
+    const tx = await createDbTx({
+      database,
+      address,
+      status: DbTxStatus.PENDING,
+      from: await address.getValue(),
+      to: '0x0000000000000000000000000000000000000002',
+      hash: '0xhash_detail_native_price',
+      sendAt: new Date(),
+      method: 'transfer',
+      asset: nativeAsset,
+    });
+
+    const detail = await service.getTransactionDetail(tx.id);
+
+    expect(detail?.nativeAsset?.symbol).toBe('CFX');
+    expect(detail?.nativeAsset?.priceInUSDT).toBe('0.24');
+  });
+
+  it('dedupes activity list by nonce (keeps latest pending tx for the same nonce)', async () => {
+    const seeded = await seedNetwork(database, { definitionKey: 'Conflux eSpace' });
+    const { address } = await createTestAccount(database, { network: seeded.network, assetRule: seeded.assetRule });
+
+    await createDbTx({
+      database,
+      address,
+      status: DbTxStatus.PENDING,
+      from: '0x0000000000000000000000000000000000000001',
+      to: '0x0000000000000000000000000000000000000002',
+      hash: '0xhash_origin',
+      nonce: 7,
+      sendAt: new Date(Date.now() - 10_000),
+      method: 'transfer',
+    });
+
+    await createDbTx({
+      database,
+      address,
+      status: DbTxStatus.PENDING,
+      from: '0x0000000000000000000000000000000000000001',
+      to: '0x0000000000000000000000000000000000000002',
+      hash: '0xhash_replacement',
+      nonce: 7,
+      sendAt: new Date(Date.now() - 1_000),
+      method: 'transfer',
+    });
+
+    const list = await service.listActivityTransactions({ addressId: address.id, status: 'pending' });
+    expect(list).toHaveLength(1);
+    expect(list[0].hash).toBe('0xhash_replacement');
+  });
+
+  it('hides origin tx after speedUp broadcast succeeds (prevents duplicate pending & resends)', async () => {
+    const seeded = await seedNetwork(database, { definitionKey: 'Conflux eSpace' });
+    const { account, address, network } = await createTestAccount(database, { network: seeded.network, assetRule: seeded.assetRule });
+
+    const provider = new StubChainProvider({
+      chainId: network.chainId,
+      networkType: network.networkType,
+    });
+    chainRegistry.register(provider);
+
+    const origin = await createDbTx({
+      database,
+      address,
+      status: DbTxStatus.PENDING,
+      from: await address.getValue(),
+      to: '0x0000000000000000000000000000000000000002',
+      hash: '0xhash_origin_speedup',
+      nonce: 1,
+      gasPrice: '0x1',
+      sendAt: new Date(),
+      source: TxSource.SELF,
+      method: 'transfer',
+    });
+
+    const result = await service.speedUpTx({
+      txId: origin.id,
+      action: 'SpeedUp',
+      feeOverrides: { gasPrice: '0x2' },
+      nonce: 1,
+    });
+
+    expect(result.state).toEqual({
+      lifecycle: TX_LIFECYCLE_STATUS.Waiting,
+      execution: TX_EXECUTION_STATUS.Unknown,
+    });
+    expect(signingService.getSigner).toHaveBeenCalledWith(account.id, address.id, expect.anything());
+
+    const originAfter = await database.get<Tx>(TableName.Tx).find(origin.id);
+    expect(originAfter.isTempReplacedByInner).toBe(true);
+    expect(originAfter.raw).toBeNull();
   });
 
   it('dispatches hardware signing start/success events when signer is hardware', async () => {
@@ -307,6 +502,68 @@ describe('TransactionService', () => {
     expect(errorPayload.error).toMatchObject({ code: 'HARDWARE_UNAVAILABLE', reason: 'card_missing' });
   });
 
+  it('estimates EVM native transfer gas and 1559 suggestions for UI', async () => {
+    const { network, assetRule } = await seedNetwork(database, { definitionKey: 'Conflux eSpace' });
+    const { address } = await createTestAccount(database, { network, assetRule });
+
+    const request: IChainRpc['request'] = jest.fn(async <T = unknown>(method: string): Promise<T> => {
+      if (method === 'eth_gasPrice') return '0x1' as unknown as T;
+      if (method === 'eth_getBlockByNumber') return { baseFeePerGas: '0x1' } as unknown as T;
+      if (method === 'eth_getCode') return '0x' as unknown as T;
+      throw new Error(`unexpected method: ${method}`);
+    });
+    const batch: IChainRpc['batch'] = jest.fn(async <T = unknown>(): Promise<T[]> => []);
+
+    chainRegistry.register(new StubChainProvider({ chainId: network.chainId, networkType: network.networkType, rpc: { request, batch } }));
+
+    const estimate = await service.estimateLegacyGasForUi({
+      addressId: address.id,
+      withNonce: false,
+      tx: {
+        from: await address.getValue(),
+        to: '0x0000000000000000000000000000000000000001',
+        value: '0x0',
+        data: '0x',
+      },
+    });
+
+    expect(estimate.gasLimit).toBe('0x5208');
+    expect(estimate.estimate).toBeUndefined();
+    expect(estimate.estimateOf1559?.medium.gasCost).toMatch(/^0x/);
+    expect(estimate.nonce).toBe(0);
+  });
+
+  it('estimates Conflux native transfer gas and legacy suggestions for UI', async () => {
+    const { network, assetRule } = await seedNetwork(database, { definitionKey: 'Conflux Testnet' });
+    const { address } = await createTestAccount(database, { network, assetRule });
+
+    const request: IChainRpc['request'] = jest.fn(async <T = unknown>(method: string): Promise<T> => {
+      if (method === 'cfx_gasPrice') return '0x1' as unknown as T;
+      if (method === 'cfx_getBlockByEpochNumber') return {} as unknown as T;
+      throw new Error(`unexpected method: ${method}`);
+    });
+    const batch: IChainRpc['batch'] = jest.fn(async <T = unknown>(): Promise<T[]> => []);
+
+    chainRegistry.register(new StubChainProvider({ chainId: network.chainId, networkType: network.networkType, rpc: { request, batch } }));
+
+    const estimate = await service.estimateLegacyGasForUi({
+      addressId: address.id,
+      withNonce: false,
+      tx: {
+        from: await address.getValue(),
+        to: 'cfx:aaejuaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa0sfbnjm2zz',
+        value: '0x0',
+        data: '0x',
+      },
+    });
+
+    expect(estimate.gasLimit).toBe('0x5208');
+    expect(estimate.storageLimit).toBe('0x0');
+    expect(estimate.estimate?.medium.gasCost).toMatch(/^0x/);
+    expect(estimate.estimateOf1559).toBeUndefined();
+    expect(estimate.nonce).toBe(0);
+  });
+
   it('dispatches hardware signing abort event when caller aborts via signal', async () => {
     const started: CoreEventMap['hardware-sign/started'][] = [];
     const aborted: CoreEventMap['hardware-sign/aborted'][] = [];
@@ -389,12 +646,16 @@ describe('TransactionService', () => {
 
     const result = await service.sendERC20(input);
 
-    expect(result.status).toBe(ServiceTxStatus.Pending);
+    expect(result.state).toEqual({
+      lifecycle: TX_LIFECYCLE_STATUS.Pending,
+      execution: TX_EXECUTION_STATUS.Unknown,
+    });
     expect(result.hash).toBe('0xhash');
 
     const txs = await database.get<Tx>(TableName.Tx).query().fetch();
     expect(txs).toHaveLength(1);
     const tx = txs[0];
+    expect(tx.method).toBe('transfer');
 
     const txExtra = await tx.txExtra.fetch();
     expect(txExtra.token20).toBe(true);
@@ -405,7 +666,77 @@ describe('TransactionService', () => {
 
     expect(txPayload.to).toBe(contractAddress);
 
-    expect(signingService.getSigner).toHaveBeenCalledWith(account.id, address.id);
+    expect(signingService.getSigner).toHaveBeenCalledWith(account.id, address.id, expect.objectContaining({ signal: undefined }));
+  });
+
+  it('persists self-transfer method for native and nft sends', async () => {
+    const { address, network, assetRule } = await createTestAccount(database);
+
+    const provider = new StubChainProvider({
+      chainId: network.chainId,
+      networkType: network.networkType,
+    });
+    chainRegistry.register(provider);
+
+    await database.write(async () => {
+      await database.batch(
+        database.get<DbAsset>(TableName.Asset).prepareCreate((record) => {
+          record.network.set(network);
+          record.assetRule.set(assetRule);
+          record.type = DbAssetType.ERC721;
+          record.contractAddress = '0x00000000000000000000000000000000000007e1';
+          record.name = 'NFT 721';
+          record.symbol = 'NFT721';
+          record.decimals = 0;
+          record.icon = null;
+          record.priceInUSDT = null;
+          record.source = AssetSource.Official;
+        }),
+        database.get<DbAsset>(TableName.Asset).prepareCreate((record) => {
+          record.network.set(network);
+          record.assetRule.set(assetRule);
+          record.type = DbAssetType.ERC1155;
+          record.contractAddress = '0x0000000000000000000000000000000000001155';
+          record.name = 'NFT 1155';
+          record.symbol = 'NFT1155';
+          record.decimals = 0;
+          record.icon = null;
+          record.priceInUSDT = null;
+          record.source = AssetSource.Official;
+        }),
+      );
+    });
+
+    await service.sendNative({
+      addressId: address.id,
+      to: '0x0000000000000000000000000000000000000002',
+      amount: '1',
+      assetType: AssetType.Native,
+      assetDecimals: 18,
+    });
+
+    await service.sendNative({
+      addressId: address.id,
+      to: '0x0000000000000000000000000000000000000003',
+      amount: '1',
+      assetType: AssetType.ERC721,
+      assetDecimals: 0,
+      contractAddress: '0x00000000000000000000000000000000000007e1',
+      nftTokenId: '7',
+    });
+
+    await service.sendNative({
+      addressId: address.id,
+      to: '0x0000000000000000000000000000000000000004',
+      amount: '2',
+      assetType: AssetType.ERC1155,
+      assetDecimals: 0,
+      contractAddress: '0x0000000000000000000000000000000000001155',
+      nftTokenId: '11',
+    });
+
+    const txs = await database.get<Tx>(TableName.Tx).query(Q.sortBy('created_at', Q.asc)).fetch();
+    expect(txs.map((tx) => tx.method)).toEqual(['transfer', 'transferFrom', 'safeTransferFrom']);
   });
   it('persists SEND_FAILED tx when broadcastTransaction throws', async () => {
     const { address, network, assetRule } = await createTestAccount(database);
@@ -455,7 +786,7 @@ describe('TransactionService', () => {
     expect(tx.err).toContain('network error');
   });
 
-  it('maps database status to simplified service status via toInterface', async () => {
+  it('preserves canonical transaction state in transaction snapshots', async () => {
     const { address, network } = await createTestAccount(database);
 
     const provider = new StubChainProvider({
@@ -481,19 +812,37 @@ describe('TransactionService', () => {
       record.status = DbTxStatus.EXECUTED;
     });
     const executedView = await toInterface(executedTx);
-    expect(executedView.status).toBe(ServiceTxStatus.Confirmed);
+    expect(executedView.state).toEqual({
+      lifecycle: TX_LIFECYCLE_STATUS.Executed,
+      execution: TX_EXECUTION_STATUS.Unknown,
+    });
+
+    const finalizedTx = await tx.updateSelf((record) => {
+      record.status = DbTxStatus.FINALIZED;
+    });
+    const finalizedDetail = await service.getTransactionDetail(finalizedTx.id);
+    expect(finalizedDetail?.state).toEqual({
+      lifecycle: TX_LIFECYCLE_STATUS.Finalized,
+      execution: TX_EXECUTION_STATUS.Unknown,
+    });
 
     const failedTx = await tx.updateSelf((record) => {
       record.status = DbTxStatus.SEND_FAILED;
     });
     const failedView = await toInterface(failedTx);
-    expect(failedView.status).toBe(ServiceTxStatus.Failed);
+    expect(failedView.state).toEqual({
+      lifecycle: TX_LIFECYCLE_STATUS.SendFailed,
+      execution: TX_EXECUTION_STATUS.Unknown,
+    });
 
     const pendingTx = await tx.updateSelf((record) => {
       record.status = DbTxStatus.PENDING;
     });
     const pendingView = await toInterface(pendingTx);
-    expect(pendingView.status).toBe(ServiceTxStatus.Pending);
+    expect(pendingView.state).toEqual({
+      lifecycle: TX_LIFECYCLE_STATUS.Pending,
+      execution: TX_EXECUTION_STATUS.Unknown,
+    });
   });
 
   it('listTransactions filters by status and respects limit', async () => {
@@ -646,7 +995,36 @@ describe('TransactionService', () => {
     });
   });
 
-  it('does not override dapp request fields when estimating', async () => {
+  it('derives dapp tx method from calldata', async () => {
+    const { network: evmNetwork, assetRule } = await seedNetwork(database, { definitionKey: 'eSpace Testnet', selected: true });
+    const { address } = await createTestAccount(database, { network: evmNetwork, assetRule });
+
+    const provider = new StubChainProvider({
+      chainId: evmNetwork.chainId,
+      networkType: evmNetwork.networkType,
+    });
+    chainRegistry.register(provider);
+
+    const approveData = iface777.encodeFunctionData('approve', ['0x0000000000000000000000000000000000000009', 42n]);
+    await service.sendDappTransaction({
+      addressId: address.id,
+      request: {
+        from: address.hex,
+        to: '0x00000000000000000000000000000000000000aa',
+        data: approveData,
+        value: '0x0',
+        gas: '0x5208',
+        gasPrice: '0x1',
+        nonce: '0x1',
+        type: '0x0',
+      } as any,
+    });
+
+    const txs = await database.get<Tx>(TableName.Tx).query(Q.sortBy('created_at', Q.asc)).fetch();
+    expect(txs[0].method).toBe('approve');
+  });
+
+  it('keeps explicit 1559 dapp requests in 1559 fee mode when estimate returns both fee models', async () => {
     const { network: evmNetwork, assetRule } = await seedNetwork(database, { definitionKey: 'eSpace Testnet', selected: true });
     const { address } = await createTestAccount(database, { network: evmNetwork, assetRule });
 
@@ -685,11 +1063,56 @@ describe('TransactionService', () => {
       data: request.data,
       value: request.value,
       gasLimit: request.gas,
-      gasPrice: request.gasPrice,
+      gasPrice: '',
       maxFeePerGas: request.maxFeePerGas,
       maxPriorityFeePerGas: request.maxPriorityFeePerGas,
       nonce: 7,
       type: '2',
+    });
+  });
+
+  it('canonicalizes legacy dapp requests after estimate merges 1559 fields', async () => {
+    const { network: evmNetwork, assetRule } = await seedNetwork(database, { definitionKey: 'eSpace Testnet', selected: true });
+    const { address } = await createTestAccount(database, { network: evmNetwork, assetRule });
+
+    const provider = new StubChainProvider({
+      chainId: evmNetwork.chainId,
+      networkType: evmNetwork.networkType,
+    });
+    jest.spyOn(provider, 'estimateFee').mockResolvedValue({
+      chainType: provider.networkType,
+      estimatedTotal: '0x999',
+      gasLimit: '0xffff',
+      gasPrice: '0x777',
+      maxFeePerGas: '0x888',
+      maxPriorityFeePerGas: '0x999',
+    });
+    chainRegistry.register(provider);
+
+    const request = {
+      from: address.hex,
+      to: '0x0000000000000000000000000000000000000001',
+      data: '0xdeadbeef',
+      value: '0x2',
+      gas: '0x5208',
+      gasPrice: '0x1',
+      nonce: '0x7',
+      type: '0x0',
+    } as any;
+
+    await service.sendDappTransaction({ addressId: address.id, request });
+
+    const [tx] = await database.get<Tx>(TableName.Tx).query().fetch();
+    const payload = await tx.txPayload.fetch();
+    expect(payload).toMatchObject({
+      data: request.data,
+      value: request.value,
+      gasLimit: request.gas,
+      gasPrice: request.gasPrice,
+      maxFeePerGas: null,
+      maxPriorityFeePerGas: null,
+      nonce: 7,
+      type: '0',
     });
   });
 
@@ -739,5 +1162,168 @@ describe('TransactionService', () => {
     } as any;
 
     await expect(service.sendDappTransaction({ addressId: address.id, request })).rejects.toMatchObject({ code: CHAIN_PROVIDER_NOT_FOUND });
+  });
+
+  it('speeds up a pending tx and creates replacement records', async () => {
+    const { network: evmNetwork, assetRule } = await seedNetwork(database, { definitionKey: 'Conflux eSpace', selected: true });
+    const { address } = await createTestAccount(database, { network: evmNetwork, assetRule });
+
+    const provider = new StubChainProvider({ chainId: evmNetwork.chainId, networkType: evmNetwork.networkType });
+    chainRegistry.register(provider);
+
+    const origin = await createDbTx({
+      database,
+      address,
+      status: DbTxStatus.PENDING,
+      from: address.hex,
+      to: '0x0000000000000000000000000000000000000001',
+      hash: '0xorig',
+      sendAt: new Date(),
+      nonce: 0,
+      gasPrice: '0x1',
+    });
+
+    const result = await service.speedUpTx({
+      txId: origin.id,
+      action: 'SpeedUp',
+      feeOverrides: { gasPrice: '0x2' },
+      nonce: 0,
+    });
+
+    const created = await database.get<Tx>(TableName.Tx).find(result.id);
+    const payload = await created.txPayload.fetch();
+    const extra = await created.txExtra.fetch();
+
+    expect(payload.nonce).toBe(0);
+    expect(extra.sendAction).toBe('SpeedUp');
+  });
+
+  it('cancels a pending tx by sending a self-tx with same nonce', async () => {
+    const { network: evmNetwork, assetRule } = await seedNetwork(database, { definitionKey: 'Conflux eSpace', selected: true });
+    const { address } = await createTestAccount(database, { network: evmNetwork, assetRule });
+
+    const provider = new StubChainProvider({ chainId: evmNetwork.chainId, networkType: evmNetwork.networkType });
+    chainRegistry.register(provider);
+
+    const origin = await createDbTx({
+      database,
+      address,
+      status: DbTxStatus.PENDING,
+      from: address.hex,
+      to: '0x0000000000000000000000000000000000000001',
+      hash: '0xorig',
+      sendAt: new Date(),
+      nonce: 0,
+      gasPrice: '0x1',
+    });
+
+    const result = await service.speedUpTx({
+      txId: origin.id,
+      action: 'Cancel',
+      feeOverrides: { gasPrice: '0x2' },
+      nonce: 0,
+    });
+
+    const created = await database.get<Tx>(TableName.Tx).find(result.id);
+    const payload = await created.txPayload.fetch();
+    const extra = await created.txExtra.fetch();
+
+    expect(extra.sendAction).toBe('Cancel');
+    expect(created.source).toBe(TxSource.SELF);
+    expect(created.method).toBe('transfer');
+    expect(payload.to).toBe(address.hex);
+    expect(payload.value).toBe('0x0');
+    expect(payload.data).toBe('0x');
+  });
+
+  it('forces replacement action to Cancel when origin is already a cancel tx', async () => {
+    const { network: evmNetwork, assetRule } = await seedNetwork(database, { definitionKey: 'Conflux eSpace', selected: true });
+    const { address } = await createTestAccount(database, { network: evmNetwork, assetRule });
+
+    const provider = new StubChainProvider({ chainId: evmNetwork.chainId, networkType: evmNetwork.networkType });
+    chainRegistry.register(provider);
+
+    const origin = await createDbTx({
+      database,
+      address,
+      status: DbTxStatus.PENDING,
+      from: address.hex,
+      to: address.hex,
+      hash: '0xorig',
+      sendAt: new Date(),
+      nonce: 0,
+      gasPrice: '0x1',
+      sendAction: 'Cancel',
+    });
+
+    const result = await service.speedUpTx({
+      txId: origin.id,
+      action: 'SpeedUp',
+      feeOverrides: { gasPrice: '0x2' },
+      nonce: 0,
+    });
+
+    const created = await database.get<Tx>(TableName.Tx).find(result.id);
+    const extra = await created.txExtra.fetch();
+    expect(extra.sendAction).toBe('Cancel');
+  });
+
+  it('rejects replacement if fee is not bumped', async () => {
+    const { network: evmNetwork, assetRule } = await seedNetwork(database, { definitionKey: 'Conflux eSpace', selected: true });
+    const { address } = await createTestAccount(database, { network: evmNetwork, assetRule });
+
+    const provider = new StubChainProvider({ chainId: evmNetwork.chainId, networkType: evmNetwork.networkType });
+    chainRegistry.register(provider);
+
+    const origin = await createDbTx({
+      database,
+      address,
+      status: DbTxStatus.PENDING,
+      from: address.hex,
+      to: '0x0000000000000000000000000000000000000001',
+      hash: '0xorig',
+      sendAt: new Date(),
+      nonce: 0,
+      gasPrice: '0x2',
+    });
+
+    await expect(
+      service.speedUpTx({
+        txId: origin.id,
+        action: 'SpeedUp',
+        feeOverrides: { gasPrice: '0x2' },
+        nonce: 0,
+      }),
+    ).rejects.toMatchObject({ code: TX_INVALID_PARAMS });
+  });
+
+  it('checks pending tx count limit from runtime config', async () => {
+    const { address } = await createTestAccount(database);
+
+    // 2 pending-count statuses (WAITTING + PENDING)
+    await createDbTx({
+      database,
+      address,
+      status: DbTxStatus.PENDING,
+      from: '0x0000000000000000000000000000000000000001',
+      to: '0x0000000000000000000000000000000000000002',
+      hash: '0xhash1',
+      sendAt: new Date(),
+    });
+    await createDbTx({
+      database,
+      address,
+      status: DbTxStatus.WAITTING,
+      from: '0x0000000000000000000000000000000000000001',
+      to: '0x0000000000000000000000000000000000000002',
+      hash: '0xhash2',
+      sendAt: new Date(),
+    });
+
+    runtimeConfig.wallet = { pendingCountLimit: 2 };
+    await expect(service.isPendingTxsFull({ addressId: address.id })).resolves.toBe(true);
+
+    runtimeConfig.wallet = { pendingCountLimit: 3 };
+    await expect(service.isPendingTxsFull({ addressId: address.id })).resolves.toBe(false);
   });
 });

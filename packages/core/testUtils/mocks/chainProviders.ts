@@ -166,6 +166,47 @@ export class StubChainProvider implements IChainProvider {
     } as UnsignedTransaction;
   }
 
+  async prepareUnsignedTransaction(tx: UnsignedTransaction): Promise<UnsignedTransaction> {
+    const estimate = await this.estimateFee(tx);
+    const payload: Record<string, unknown> = { ...tx.payload };
+
+    payload.gasLimit = payload.gasLimit ?? estimate.gasLimit;
+
+    if (tx.chainType === NetworkType.Ethereum) {
+      const isExplicitLegacy = payload.type === 0 || payload.type === 1;
+      const isExplicit1559 = payload.type === 2;
+      const hasLegacyFee = payload.gasPrice !== undefined;
+      const has1559Fee = payload.maxFeePerGas !== undefined || payload.maxPriorityFeePerGas !== undefined;
+      const networkSupports1559 = 'maxFeePerGas' in estimate && estimate.maxFeePerGas !== undefined && estimate.maxPriorityFeePerGas !== undefined;
+      const prefers1559 = isExplicit1559 || (!isExplicitLegacy && (has1559Fee || (!hasLegacyFee && networkSupports1559)));
+      payload.nonce = payload.nonce ?? 0;
+
+      if (prefers1559) {
+        payload.type = payload.type ?? 2;
+        payload.gasPrice = undefined;
+        payload.maxFeePerGas = payload.maxFeePerGas ?? ('maxFeePerGas' in estimate ? estimate.maxFeePerGas : undefined);
+        payload.maxPriorityFeePerGas = payload.maxPriorityFeePerGas ?? ('maxPriorityFeePerGas' in estimate ? estimate.maxPriorityFeePerGas : undefined);
+      } else if (isExplicitLegacy || hasLegacyFee || ('gasPrice' in estimate && estimate.gasPrice)) {
+        payload.type = payload.type ?? (payload.gasPrice !== undefined ? 0 : undefined);
+        payload.gasPrice = payload.gasPrice ?? ('gasPrice' in estimate ? estimate.gasPrice : undefined);
+        payload.maxFeePerGas = undefined;
+        payload.maxPriorityFeePerGas = undefined;
+      }
+    }
+
+    if (tx.chainType === NetworkType.Conflux) {
+      payload.gasPrice = payload.gasPrice ?? ('gasPrice' in estimate ? estimate.gasPrice : undefined);
+      payload.storageLimit = payload.storageLimit ?? ('storageLimit' in estimate ? estimate.storageLimit : undefined);
+      payload.nonce = payload.nonce ?? 0;
+      payload.epochHeight = payload.epochHeight ?? 0;
+    }
+
+    return {
+      ...tx,
+      payload,
+    } as UnsignedTransaction;
+  }
+
   async estimateFee(tx: UnsignedTransaction): Promise<any> {
     return {
       chainType: tx.chainType,

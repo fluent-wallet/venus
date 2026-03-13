@@ -15,9 +15,9 @@ import type {
   SignedTransaction,
   TransactionParams,
 } from '@core/types';
-import { NetworkType } from '@core/types';
 import { computeAddress, toAccountAddress } from '@core/utils/account';
 import { type Base32Address, convertBase32ToHex, convertHexToBase32, decode } from '@core/utils/address';
+import { NetworkType } from '@core/utils/consts';
 import { Conflux, PersonalMessage, PrivateKeyAccount } from 'js-conflux-sdk';
 import type { Hex } from 'ox/Hex';
 import type { EndpointManager } from './EndpointManager';
@@ -46,7 +46,7 @@ type ConfluxRpcClient = {
   getGasPrice(): Promise<bigint>;
 };
 
-export class ConfluxChainProvider implements IChainProvider {
+export class ConfluxChainProvider implements IChainProvider<ConfluxUnsignedTransaction, ConfluxFeeEstimate> {
   readonly chainId: string;
   readonly networkType = NetworkType.Conflux;
   readonly netId: number;
@@ -104,6 +104,10 @@ export class ConfluxChainProvider implements IChainProvider {
     }
   }
 
+  async prepareUnsignedTransaction(tx: ConfluxUnsignedTransaction): Promise<ConfluxUnsignedTransaction> {
+    return this.finalizePreparedTransaction(tx);
+  }
+
   async buildTransaction(params: TransactionParams): Promise<ConfluxUnsignedTransaction> {
     const basePayload = buildTransactionPayload({
       from: params.from,
@@ -143,7 +147,7 @@ export class ConfluxChainProvider implements IChainProvider {
 
     return this.toFeeEstimate(payload, this.toBigInt(gasUsed), this.toBigInt(storageCollateralized), this.toBigInt(gasPrice));
   }
-  async signTransaction(tx: ConfluxUnsignedTransaction, signer: ISigner): Promise<SignedTransaction> {
+  async signTransaction(tx: ConfluxUnsignedTransaction, signer: ISigner): Promise<SignedTransaction<NetworkType.Conflux>> {
     if (signer.type === 'software') {
       return this.signWithSoftware(tx, signer);
     } else {
@@ -151,7 +155,7 @@ export class ConfluxChainProvider implements IChainProvider {
     }
   }
 
-  private async signWithSoftware(tx: ConfluxUnsignedTransaction, signer: ISoftwareSigner): Promise<SignedTransaction> {
+  private async signWithSoftware(tx: ConfluxUnsignedTransaction, signer: ISoftwareSigner): Promise<SignedTransaction<NetworkType.Conflux>> {
     const privateKey = signer.getPrivateKey();
     const account = new PrivateKeyAccount(privateKey, this.netId);
     const signed = await account.signTransaction({
@@ -166,7 +170,7 @@ export class ConfluxChainProvider implements IChainProvider {
     };
   }
 
-  private async signWithHardware(tx: ConfluxUnsignedTransaction, signer: IHardwareSigner): Promise<SignedTransaction> {
+  private async signWithHardware(tx: ConfluxUnsignedTransaction, signer: IHardwareSigner): Promise<SignedTransaction<NetworkType.Conflux>> {
     await signer.signWithHardware({
       derivationPath: signer.getDerivationPath(),
       chainType: signer.getChainType(),
@@ -180,7 +184,7 @@ export class ConfluxChainProvider implements IChainProvider {
     throw new Error('Hardware signing for Conflux transactions is not supported yet.');
   }
 
-  private assembleHardwareSignedTransaction(tx: ConfluxUnsignedTransaction, result: HardwareSignResult): SignedTransaction {
+  private assembleHardwareSignedTransaction(tx: ConfluxUnsignedTransaction, result: HardwareSignResult): SignedTransaction<NetworkType.Conflux> {
     // TODO: implement hardware transaction assembly based on BSIM signature format
     throw new Error('Hardware transaction assembly not implemented');
   }
@@ -252,6 +256,25 @@ export class ConfluxChainProvider implements IChainProvider {
     const epoch = await sdkRpc.getEpochNumber('latest_state');
     return this.toNumber(epoch);
   }
+
+  private async finalizePreparedTransaction(tx: ConfluxUnsignedTransaction): Promise<ConfluxUnsignedTransaction> {
+    const estimate = await this.estimateFee(tx);
+    const nonce = await this.resolveNonce(tx.payload.from, tx.payload.nonce);
+    const epochHeight = await this.resolveEpochHeight(tx.payload.epochHeight);
+
+    return {
+      ...tx,
+      payload: {
+        ...tx.payload,
+        gasLimit: tx.payload.gasLimit ?? estimate.gasLimit,
+        gasPrice: tx.payload.gasPrice ?? estimate.gasPrice,
+        nonce,
+        epochHeight,
+        storageLimit: tx.payload.storageLimit ?? estimate.storageLimit,
+      },
+    };
+  }
+
   private toUnsignedTransaction(payload: ConfluxUnsignedTransactionPayload): ConfluxUnsignedTransaction {
     return {
       chainType: this.networkType,

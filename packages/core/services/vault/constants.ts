@@ -1,4 +1,4 @@
-import VaultType from '@core/database/models/Vault/VaultType';
+import { VaultType } from '@core/database/models/Vault/VaultType';
 
 export const VAULT_DEFAULTS = {
   DEVICE: 'ePayWallet',

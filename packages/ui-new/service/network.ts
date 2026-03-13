@@ -5,11 +5,13 @@ import { getNetworkService, type INetwork } from './core';
 
 export type NetworkQuery = UseQueryResult<INetwork | null>;
 export type NetworksQuery = UseQueryResult<INetwork[]>;
+export type HdPathQuery = UseQueryResult<{ value: string } | null>;
 
 // Key helpers
 export const getNetworkRootKey = () => ['network'] as const;
 export const getCurrentNetworkKey = () => ['network', 'current'] as const;
 export const getNetworkListKey = () => ['network', 'all'] as const;
+export const getCurrentHdPathKey = () => ['network', 'hdPath', 'current'] as const;
 
 /**
  * Fetch the currently selected network.
@@ -34,6 +36,17 @@ export function useNetworks(): NetworksQuery {
   return useQuery({
     queryKey: getNetworkListKey(),
     queryFn: () => service.getAllNetworks(),
+  });
+}
+
+/**
+ * Fetch current network's HD path.
+ */
+export function useCurrentHdPath(): HdPathQuery {
+  const service = getNetworkService();
+  return useQuery({
+    queryKey: getCurrentHdPathKey(),
+    queryFn: () => service.getCurrentHdPath(),
   });
 }
 

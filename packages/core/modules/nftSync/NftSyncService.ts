@@ -101,6 +101,20 @@ export class NftSyncService {
     this.abortInFlight('target_changed');
   }
 
+  clearCurrentTarget(target?: { contractAddress: string } | null): void {
+    const expected = target?.contractAddress ? target.contractAddress.trim().toLowerCase() : null;
+    if (expected && this.currentContractAddress !== expected) {
+      return;
+    }
+
+    if (this.currentContractAddress === null) {
+      return;
+    }
+
+    this.currentContractAddress = null;
+    this.abortInFlight('target_changed');
+  }
+
   async refreshCurrent(options: { reason: NftSyncReason } = { reason: 'manual' }): Promise<void> {
     const key = await this.getCurrentKeyOrNull();
     if (!key) return;

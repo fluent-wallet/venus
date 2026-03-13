@@ -1,15 +1,14 @@
 import NoneSignature from '@assets/images/none-signature.webp';
 import Delay from '@components/Delay';
 import Text from '@components/Text';
-import { SignatureFilterOption } from '@core/database/models/Signature/type';
-import { useCurrentAddress } from '@core/WalletCore/Plugins/ReactInject';
-import { fetchSignatureRecords, useSignatureRecords } from '@core/WalletCore/Plugins/ReactInject/data/useSignature';
+import { SignatureFilterOption } from '@core/services/signing/types';
 import { useTheme } from '@react-navigation/native';
 import type { SignatureRecordsStackName, StackScreenProps } from '@router/configs';
+import { useInfiniteSignatureRecordsOfCurrentAddress } from '@service/signature';
 import { ENABLE_SMALL_SIGNATURE_RECORDS_FEATURE } from '@utils/features';
 import { Image } from 'expo-image';
 import type React from 'react';
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { FlatList, type LayoutChangeEvent, StyleSheet, View } from 'react-native';
 import { SignatureItem } from './SignatureItem';
@@ -18,67 +17,28 @@ import TypeFilter from './TypeFilter';
 const DEFAULT_PAGE_SIZE = ENABLE_SMALL_SIGNATURE_RECORDS_FEATURE.allow ? 10 : 100;
 
 const SignatureRecords: React.FC<StackScreenProps<typeof SignatureRecordsStackName>> = () => {
-  const listRef = useRef<FlatList>(null);
   const { colors } = useTheme();
-  const [current, setCurrent] = useState(0);
   const [maxMessageLength, setMaxMessageLength] = useState(50);
   const [filter, setFilter] = useState(SignatureFilterOption.All);
   const { t } = useTranslation();
-  const { records: list, total: _total, setRecords, resetRecords } = useSignatureRecords(filter);
-  const address = useCurrentAddress();
-  const total = _total ?? 0;
-  const initialTotalRef = useRef<number | null>(null);
+  const recordsQuery = useInfiniteSignatureRecordsOfCurrentAddress({
+    filter,
+    pageSize: DEFAULT_PAGE_SIZE,
+  });
+  const { data, fetchNextPage, hasNextPage, isFetchingNextPage, isLoading } = recordsQuery;
+  const list = useMemo(() => data?.pages.flat() ?? [], [data]);
 
-  // init initialTotalRef while _total has value
-  useEffect(() => {
-    if (typeof _total === 'number' && initialTotalRef.current === null) {
-      initialTotalRef.current = _total;
+  const handleLoadMore = useCallback(() => {
+    if (hasNextPage && !isFetchingNextPage) {
+      void fetchNextPage();
     }
-  }, [_total]);
+  }, [fetchNextPage, hasNextPage, isFetchingNextPage]);
 
-  // reset initialTotalRef while address or filter changed
-  useEffect(() => {
-    initialTotalRef.current = null;
-  }, [address, filter]);
-
-  const handleQuery = async (page = 0) => {
-    if (!address) {
-      return null;
-    }
-    const data = await fetchSignatureRecords(address.id, {
-      current: page,
-      pageSize: DEFAULT_PAGE_SIZE,
-      offset: total - (initialTotalRef.current ?? total),
-      filter,
-    });
-    if (data.length > 0) {
-      setCurrent(page);
-      setRecords(data);
-    }
-  };
-
-  const handleLoadMore = () => {
-    const next = current + 1;
-    if (next * DEFAULT_PAGE_SIZE < (initialTotalRef.current ?? total)) {
-      return handleQuery(next);
-    }
-  };
-
-  useEffect(() => {
-    handleQuery();
-    listRef.current?.scrollToOffset({
-      offset: 1,
-      animated: false,
-    });
-    return resetRecords;
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [address, filter]);
-
-  const handleContainerLayout = (e: LayoutChangeEvent) => {
+  const handleContainerLayout = useCallback((e: LayoutChangeEvent) => {
     const containerWidth = e.nativeEvent.layout.width;
     // 10 is for ... and more
     setMaxMessageLength(Math.floor(containerWidth / 5) - 10);
-  };
+  }, []);
 
   return (
     <View style={[styles.container, { backgroundColor: colors.bgPrimary }]}>
@@ -87,17 +47,20 @@ const SignatureRecords: React.FC<StackScreenProps<typeof SignatureRecordsStackNa
         <TypeFilter onChange={setFilter} />
       </View>
       <FlatList
-        ref={listRef}
         data={list}
         ListEmptyComponent={
-          <Delay>
-            <View style={styles.empty}>
-              <Image source={NoneSignature} style={{ width: 160, height: 160 }} />
-              <Text style={{ color: colors.textSecondary, marginTop: 16, fontSize: 16, fontWeight: '300' }}>{t('signature.list.empty')}</Text>
-            </View>
-          </Delay>
+          isLoading ? null : (
+            <Delay>
+              <View style={styles.empty}>
+                <Image source={NoneSignature} style={{ width: 160, height: 160 }} />
+                <Text style={{ color: colors.textSecondary, marginTop: 16, fontSize: 16, fontWeight: '300' }}>{t('signature.list.empty')}</Text>
+              </View>
+            </Delay>
+          )
         }
+        keyExtractor={(item) => item.id}
         onEndReached={handleLoadMore}
+        onEndReachedThreshold={0.5}
         renderItem={({ item }) => <SignatureItem key={item.id} item={item} maxMessageLength={maxMessageLength} />}
         onLayout={handleContainerLayout}
       />

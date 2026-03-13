@@ -1,6 +1,6 @@
 import 'reflect-metadata';
-import { createMockEthersProvider, DEFAULT_HEX_ADDRESS, DEFAULT_PRIVATE_KEY } from '@core/__tests__/mocks';
 import { SoftwareSigner } from '@core/signers';
+import { createMockEthersProvider, DEFAULT_HEX_ADDRESS, DEFAULT_PRIVATE_KEY } from '@core/testUtils/mocks';
 import { AssetType, type EvmUnsignedTransaction, type Hex, NetworkType } from '@core/types';
 import { JsonRpcProvider, Transaction, toUtf8Bytes, Wallet } from 'ethers';
 import { EndpointManager } from './EndpointManager';
@@ -209,11 +209,18 @@ describe('EthereumChainProvider', () => {
       assetDecimals: 18,
     });
 
+    walletStub.signTransaction.mockImplementationOnce(async (tx) => {
+      delete (tx as { from?: string }).from;
+      return '0xdeadbeef';
+    });
+
     const signer = new SoftwareSigner(SAMPLE_PRIVATE_KEY);
     const signed = await provider.signTransaction(unsigned, signer);
 
     expect(MockedWallet).toHaveBeenCalledWith(SAMPLE_PRIVATE_KEY, mockProvider);
-    expect(walletStub.signTransaction).toHaveBeenCalledWith(unsigned.payload);
+    expect(walletStub.signTransaction).toHaveBeenCalledTimes(1);
+    expect(walletStub.signTransaction.mock.calls[0]?.[0]).not.toBe(unsigned.payload);
+    expect(unsigned.payload.from).toBe(SAMPLE_ACCOUNT);
     expect(signed.rawTransaction).toBe('0xdeadbeef');
     expect(signed.hash).toMatch(/^0x[0-9a-f]{64}$/i);
   });
@@ -382,11 +389,81 @@ describe('EthereumChainProvider', () => {
     expect(estimate.maxPriorityFeePerGas).toBeUndefined();
   });
 
+  it('respects explicit legacy fee mode on 1559-capable networks', async () => {
+    const provider = createProvider();
+
+    const unsigned: EvmUnsignedTransaction = {
+      chainType: NetworkType.Ethereum,
+      payload: {
+        from: SAMPLE_ACCOUNT,
+        to: SAMPLE_ACCOUNT,
+        chainId: SAMPLE_CHAIN_ID,
+        value: '0x0',
+        data: '0x',
+        gasPrice: '0x3',
+        nonce: 1,
+        type: 0,
+      },
+    };
+
+    const estimate = await provider.estimateFee(unsigned);
+
+    expect(estimate.gasPrice).toBe('0x3');
+    expect(estimate.maxFeePerGas).toBeUndefined();
+    expect(estimate.maxPriorityFeePerGas).toBeUndefined();
+  });
+
   it('throws when signing without private key', () => {
     expect(() => new SoftwareSigner('')).toThrow('SoftwareSigner requires a private key');
   });
 
-  it('prefers EIP-1559 type when both gasPrice and maxFeePerGas provided', async () => {
+  it('prepares 1559 fee mode when both gasPrice and maxFeePerGas are provided', async () => {
+    const provider = createProvider();
+    const prepared = await provider.prepareUnsignedTransaction({
+      chainType: NetworkType.Ethereum,
+      payload: {
+        from: EXPECTED_ADDRESS,
+        to: EXPECTED_ADDRESS,
+        chainId: SAMPLE_CHAIN_ID,
+        value: '0x0',
+        data: '0x',
+        gasPrice: '0x3',
+        maxFeePerGas: '0x4',
+      },
+    });
+
+    expect(prepared.payload.nonce).toBe(7);
+    expect(prepared.payload.gasLimit).toBe('0x5208');
+    expect(prepared.payload.type).toBe(2);
+    expect(prepared.payload.gasPrice).toBeUndefined();
+    expect(prepared.payload.maxFeePerGas).toBe('0x4');
+    expect(prepared.payload.maxPriorityFeePerGas).toBe('0x1');
+  });
+
+  it('prepares explicit legacy drafts without 1559 fee fields', async () => {
+    const provider = createProvider();
+    const prepared = await provider.prepareUnsignedTransaction({
+      chainType: NetworkType.Ethereum,
+      payload: {
+        from: EXPECTED_ADDRESS,
+        to: EXPECTED_ADDRESS,
+        chainId: SAMPLE_CHAIN_ID,
+        value: '0x0',
+        data: '0x',
+        gasPrice: '0x3',
+        type: 0,
+      },
+    });
+
+    expect(prepared.payload.nonce).toBe(7);
+    expect(prepared.payload.gasLimit).toBe('0x5208');
+    expect(prepared.payload.type).toBe(0);
+    expect(prepared.payload.gasPrice).toBe('0x3');
+    expect(prepared.payload.maxFeePerGas).toBeUndefined();
+    expect(prepared.payload.maxPriorityFeePerGas).toBeUndefined();
+  });
+
+  it('builds wallet transaction drafts with preferred fee mode hints', async () => {
     const provider = createProvider();
     const tx = await provider.buildTransaction({
       from: EXPECTED_ADDRESS,
@@ -400,6 +477,8 @@ describe('EthereumChainProvider', () => {
     });
 
     expect(tx.payload.type).toBe(2);
+    expect(tx.payload.gasPrice).toBeUndefined();
+    expect(tx.payload.maxFeePerGas).toBe('0x4');
   });
 
   it('assembles hardware rawTransaction results directly', async () => {

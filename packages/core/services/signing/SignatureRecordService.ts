@@ -1,22 +1,25 @@
 import type { Database } from '@core/database';
 import type { Address } from '@core/database/models/Address';
+import type { App } from '@core/database/models/App';
 import type { Network } from '@core/database/models/Network';
 import type { Signature } from '@core/database/models/Signature';
 import type { Tx } from '@core/database/models/Tx';
 import TableName from '@core/database/TableName';
 import { CORE_IDENTIFIERS } from '@core/di';
 import { CoreError, SIGNATURE_RECORD_ADDRESS_NOT_FOUND, SIGNATURE_RECORD_NETWORK_NOT_FOUND } from '@core/errors';
+import type { CoreEventMap, EventBus } from '@core/modules/eventBus';
 import { ChainStatusService } from '@core/services/chain/ChainStatusService';
 import { NetworkType } from '@core/types';
 import { Q } from '@nozbe/watermelondb';
-import { inject, injectable } from 'inversify';
+import { inject, injectable, optional } from 'inversify';
 import { fromNumber } from 'ox/Hex';
-import { type ISignatureRecord, SignatureFilterOption, type SignType } from './types';
+import { type ISignatureRecord, SignatureFilterOption, type SignatureRecordAppSnapshot, type SignatureRecordTxSnapshot, SignType } from './types';
 
 export type CreateSignatureRecordInput = {
   addressId: string;
   signType: SignType;
   message?: string | null;
+  app?: { identity: string; origin?: string; name?: string; icon?: string } | null;
 };
 
 @injectable()
@@ -27,28 +30,51 @@ export class SignatureRecordService {
   @inject(ChainStatusService)
   private readonly chainStatus!: ChainStatusService;
 
+  @inject(CORE_IDENTIFIERS.EVENT_BUS)
+  @optional()
+  private readonly eventBus?: EventBus<CoreEventMap>;
+
   async createRecord(input: CreateSignatureRecordInput): Promise<string> {
     const address = await this.findAddress(input.addressId);
     const network = await this.getNetwork(address);
 
     const blockNumber = await this.getBlockNumberHex(network);
 
+    const existingApp = input.app?.identity ? await this.findAppByIdentity(input.app.identity) : null;
+    const preparedApp = !existingApp && input.app?.identity ? this.prepareApp(input.app) : null;
+
     const signature = this.database.get<Signature>(TableName.Signature).prepareCreate((record) => {
       record.address.set(address);
       record.signType = input.signType;
       record.message = input.message ?? null;
       record.blockNumber = blockNumber;
+
+      if (existingApp) {
+        record.app.set(existingApp);
+      } else if (preparedApp) {
+        record.app.set(preparedApp);
+      }
     });
 
     await this.database.write(async () => {
-      await this.database.batch(signature);
+      await this.database.batch(...(preparedApp ? [preparedApp] : []), signature);
     });
+
+    if (input.signType !== SignType.TX) {
+      this.eventBus?.emit('signature/changed', {
+        addressId: address.id,
+        signatureId: signature.id,
+        reason: 'created',
+      });
+    }
 
     return signature.id;
   }
 
   async linkTx(params: { signatureId: string; txId: string }): Promise<void> {
     try {
+      let eventPayload: CoreEventMap['signature/changed'] | null = null;
+
       await this.database.write(async () => {
         const signature = await this.database.get<Signature>(TableName.Signature).find(params.signatureId);
         const tx = await this.database.get<Tx>(TableName.Tx).find(params.txId);
@@ -56,7 +82,18 @@ export class SignatureRecordService {
         await signature.update((record) => {
           record.tx.set(tx);
         });
+
+        eventPayload = {
+          addressId: signature.address.id,
+          signatureId: signature.id,
+          reason: 'tx-linked',
+          txId: tx.id,
+        };
       });
+
+      if (eventPayload) {
+        this.eventBus?.emit('signature/changed', eventPayload);
+      }
     } catch {
       // do not block tx pipeline.
     }
@@ -92,15 +129,44 @@ export class SignatureRecordService {
       .get<Signature>(TableName.Signature)
       .query(...clauses)
       .fetch();
-    return rows.map((s) => this.toSnapshot(s));
+
+    const appIds = Array.from(new Set(rows.map((s) => s.app.id).filter((id): id is string => typeof id === 'string' && id.length > 0)));
+    const txIds = Array.from(new Set(rows.map((s) => s.tx.id).filter((id): id is string => typeof id === 'string' && id.length > 0)));
+
+    const apps = appIds.length
+      ? await this.database
+          .get<App>(TableName.App)
+          .query(Q.where('id', Q.oneOf(appIds)))
+          .fetch()
+      : [];
+    const txs = txIds.length
+      ? await this.database
+          .get<Tx>(TableName.Tx)
+          .query(Q.where('id', Q.oneOf(txIds)))
+          .fetch()
+      : [];
+
+    const appMap = new Map<string, SignatureRecordAppSnapshot>(apps.map((app) => [app.id, { id: app.id, origin: app.origin ?? '', icon: app.icon ?? null }]));
+    const txMap = new Map<string, SignatureRecordTxSnapshot>(txs.map((tx) => [tx.id, { id: tx.id, method: tx.method }]));
+
+    return rows.map((s) => this.toSnapshot(s, { appMap, txMap }));
   }
 
-  private toSnapshot(signature: Signature): ISignatureRecord {
+  private toSnapshot(
+    signature: Signature,
+    refs: { appMap: ReadonlyMap<string, SignatureRecordAppSnapshot>; txMap: ReadonlyMap<string, SignatureRecordTxSnapshot> },
+  ): ISignatureRecord {
+    const appId = signature.app.id || null;
+    const txId = signature.tx.id || null;
+    const txSnapshot = txId ? (refs.txMap.get(txId) ?? null) : null;
+
     return {
       id: signature.id,
       addressId: signature.address.id,
-      appId: signature.app.id || null,
-      txId: signature.tx.id || null,
+      appId,
+      txId,
+      app: appId ? (refs.appMap.get(appId) ?? null) : null,
+      tx: txSnapshot,
       signType: signature.signType,
       message: signature.message ?? null,
       blockNumber: signature.blockNumber,
@@ -130,6 +196,25 @@ export class SignatureRecordService {
       });
     }
     return network;
+  }
+
+  private async findAppByIdentity(identity: string): Promise<App | null> {
+    if (!identity) return null;
+    try {
+      const res = await this.database.get<App>(TableName.App).query(Q.where('identity', identity)).fetch();
+      return res?.[0] ?? null;
+    } catch {
+      return null;
+    }
+  }
+
+  private prepareApp(input: { identity: string; origin?: string; name?: string; icon?: string }): App {
+    return this.database.get<App>(TableName.App).prepareCreate((record) => {
+      record.identity = input.identity;
+      record.origin = input.origin;
+      record.name = input.name ?? input.identity;
+      record.icon = input.icon;
+    });
   }
 
   private async getBlockNumberHex(network: Network): Promise<string> {

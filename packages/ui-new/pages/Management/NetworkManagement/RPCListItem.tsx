@@ -1,94 +1,54 @@
 import DeleteIcon from '@assets/icons/delete.svg';
 import SuccessIcon from '@assets/icons/success.svg';
 import Text from '@components/Text';
-import type { Network } from '@core/database/models/Network';
-import methods from '@core/WalletCore/Methods';
-import plugins from '@core/WalletCore/Plugins';
-import type { useCurrentNetwork } from '@core/WalletCore/Plugins/ReactInject';
 import { useTheme } from '@react-navigation/native';
-import { useCallback, useEffect, useState } from 'react';
-import { useTranslation } from 'react-i18next';
+import type { INetwork } from '@service/core';
+import { useRemoveEndpoint, useUpdateEndpoint } from '@service/network';
+import { memo } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
-import { catchError, interval, retry, startWith, switchMap, throwError } from 'rxjs';
 
 export interface Props {
-  rpc: Network['endpointsList'][number];
-  currentNetwork: NonNullable<ReturnType<typeof useCurrentNetwork>>;
+  endpoint: string;
+  rpcType: INetwork['endpointsList'][number]['type'];
+  networkId: string;
+  isSelected: boolean;
+  latency: number | null;
+  blockNumber: bigint | null;
+  onRefreshMetrics: (targetEndpoints?: string[]) => Promise<void>;
 }
-const RPCListItem = ({ rpc, currentNetwork }: Props) => {
-  const { t } = useTranslation();
+const RPCListItem = ({ endpoint, rpcType, networkId, isSelected, latency, blockNumber, onRefreshMetrics }: Props) => {
   const { colors } = useTheme();
-  const [latency, setLatency] = useState<number | null>(null);
-  const [blockNumber, setBlockNumber] = useState<bigint | null>(null);
+  const updateEndpoint = useUpdateEndpoint();
+  const removeEndpoint = useRemoveEndpoint();
 
-  const testLatency = useCallback(() => {
-    const startTime = new Date().getTime();
-    return fetch(rpc.endpoint)
-      .then(() => {
-        const endTime = new Date().getTime();
-        const latency = endTime - startTime;
-        setLatency(latency);
-      })
-      .catch(() => {
-        setLatency(-1);
-      });
-  }, [rpc.endpoint]);
+  const latencyColor = latency === null || latency === -1 ? colors.iconThird : latency > 500 ? colors.down : colors.up;
+  const latencyText = latency === null ? '--' : latency === -1 ? 'Lost' : `${latency}ms`;
 
-  useEffect(() => {
-    const subscription = interval(25000)
-      .pipe(
-        startWith(0),
-        switchMap(() =>
-          Promise.all([
-            plugins.BlockNumberTracker.getNetworkBlockNumber({ ...currentNetwork, endpoint: rpc.endpoint }).then((res) => setBlockNumber(BigInt(res))),
-            testLatency(),
-          ]),
-        ),
-        catchError((err: { code: string; message: string }) => {
-          return throwError(() => err);
-        }),
-        retry({ delay: 1000 }),
-      )
-      .subscribe();
+  const handleDelete = async () => {
+    await removeEndpoint(networkId, endpoint);
+  };
 
-    return () => {
-      subscription.unsubscribe();
-    };
-  }, [currentNetwork, rpc.endpoint, testLatency]);
-
-  const renderLatency = useCallback(() => {
-    const textStyle = [styles.font14, styles.fontWeight400];
-    if (latency === null) return <Text style={[textStyle, { color: colors.iconThird }]}>--</Text>;
-    if (latency === -1) return <Text style={[textStyle, { color: colors.iconThird }]}>Lost</Text>;
-
-    return <Text style={[textStyle, { color: latency > 500 ? colors.down : colors.up }]}>{latency}ms</Text>;
-  }, [latency, colors.down, colors.iconThird, colors.up]);
-
-  const handleDelete = useCallback(async () => {
-    await methods.removeEndpoints({ network: currentNetwork.id, endpoint: rpc.endpoint });
-  }, [currentNetwork.id, rpc.endpoint]);
-
-  const handleSelect = useCallback(async () => {
-    await methods.updateCurrentEndpoint({ network: currentNetwork.id, endpoint: rpc.endpoint });
-    testLatency();
-  }, [currentNetwork.id, rpc.endpoint]);
+  const handleSelect = async () => {
+    await updateEndpoint(networkId, endpoint);
+    await onRefreshMetrics([endpoint]);
+  };
 
   return (
     <View style={[styles.flex, styles.flexRow]}>
-      <View style={[styles.icon, { marginRight: 8 }]}>{currentNetwork?.endpoint === rpc.endpoint && <SuccessIcon color={colors.up} />}</View>
+      <View style={[styles.icon, { marginRight: 8 }]}>{isSelected && <SuccessIcon color={colors.up} />}</View>
 
       <Pressable testID="select" style={styles.flex1} onPress={handleSelect}>
         <Text style={[styles.font14, styles.fontWeight400, styles.flex1, { flexShrink: 1, color: colors.textPrimary }]} numberOfLines={1}>
-          {rpc.endpoint}
+          {endpoint}
         </Text>
 
         <View style={[styles.flex, styles.flexRow, { gap: 4 }]}>
-          {renderLatency()}
+          <Text style={[styles.font14, styles.fontWeight400, { color: latencyColor }]}>{latencyText}</Text>
           <Text style={[styles.font14, styles.fontWeight400, { color: colors.textSecondary }]}>{blockNumber ? blockNumber.toString() : '--'}</Text>
         </View>
       </Pressable>
       <View style={[styles.icon, { marginLeft: 8 }]}>
-        {rpc.type !== 'inner' && currentNetwork?.endpoint !== rpc.endpoint && <DeleteIcon color={colors.iconPrimary} onPress={handleDelete} />}
+        {rpcType !== 'inner' && !isSelected && <DeleteIcon color={colors.iconPrimary} onPress={handleDelete} />}
       </View>
     </View>
   );
@@ -118,4 +78,5 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
   },
 });
-export default RPCListItem;
+
+export default memo(RPCListItem);

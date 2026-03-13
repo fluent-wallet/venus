@@ -1,5 +1,3 @@
-import { getAuthentication } from '@WalletCoreExtends/index';
-import { passwordRequestCanceledError } from '@WalletCoreExtends/Plugins/Authentication/errors';
 import {
   BottomSheetContent,
   BottomSheetFooter,
@@ -13,26 +11,31 @@ import Text from '@components/Text';
 import TextInput from '@components/TextInput';
 import { useTheme } from '@react-navigation/native';
 import type { PasswordVerifyStackName, StackScreenProps } from '@router/configs';
+import { getAuthService } from '@service/core';
 import { screenHeight } from '@utils/deviceInfo';
 import { isDev } from '@utils/getEnv';
 import type React from 'react';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Keyboard, StyleSheet, type TextInput as TextInputRef } from 'react-native';
 
 const defaultPassword = isDev ? '12345678' : '';
 
-const PasswordVerify: React.FC<StackScreenProps<typeof PasswordVerifyStackName>> = ({ navigation }) => {
+const PasswordVerify: React.FC<StackScreenProps<typeof PasswordVerifyStackName>> = ({ navigation, route }) => {
   const { colors, mode } = useTheme();
   const { t } = useTranslation();
-  const textInputRef = useRef<TextInputRef>(null!);
-  const bottomSheetRef = useRef<BottomSheetMethods>(null!);
+  const textInputRef = useRef<TextInputRef | null>(null);
+  const bottomSheetRef = useRef<BottomSheetMethods | null>(null);
+  const completedRef = useRef(false);
+  const auth = getAuthService();
+
+  const runtimeRequestId = useMemo(() => route.params?.requestId ?? undefined, [route.params?.requestId]);
+
   const [inVerify, setInVerify] = useState(false);
   const [password, setPassword] = useState(defaultPassword);
   const [error, setError] = useState('');
 
-  const handleCancel = useCallback(() => {
-    getAuthentication().reject({ error: passwordRequestCanceledError() });
+  const resetLocalState = useCallback(() => {
     setInVerify(false);
     setPassword(defaultPassword);
     setError('');
@@ -43,36 +46,72 @@ const PasswordVerify: React.FC<StackScreenProps<typeof PasswordVerifyStackName>>
     });
   }, []);
 
+  const settleCancel = useCallback(() => {
+    if (completedRef.current) return false;
+
+    completedRef.current = true;
+    if (runtimeRequestId) {
+      auth.cancelPasswordRequest({ requestId: runtimeRequestId });
+    }
+
+    resetLocalState();
+    return true;
+  }, [auth, resetLocalState, runtimeRequestId]);
+
+  const settleResolve = useCallback(
+    (resolvedPassword: string) => {
+      if (!runtimeRequestId || completedRef.current) return false;
+
+      completedRef.current = true;
+      auth.resolvePassword({ requestId: runtimeRequestId, password: resolvedPassword });
+      resetLocalState();
+      return true;
+    },
+    [auth, resetLocalState, runtimeRequestId],
+  );
+
+  const handleCancel = useCallback(() => {
+    settleCancel();
+  }, [settleCancel]);
+
   const handleConfirm = useCallback(async () => {
-    setInVerify(true);
-    await new Promise((resolve) => setTimeout(resolve, 25));
-    const isCorrectPassword = await getAuthentication().verifyPassword(password);
-    if (isCorrectPassword) {
-      if (navigation.canGoBack()) {
+    if (!runtimeRequestId) {
+      if (bottomSheetRef.current) {
+        bottomSheetRef.current.close();
+      } else if (navigation.canGoBack()) {
         navigation.goBack();
       }
-      bottomSheetRef.current?.close();
-      getAuthentication().resolve({ password });
-
-      setPassword(defaultPassword);
-      setError('');
-      setTimeout(() => {
-        if (Keyboard.isVisible()) {
-          Keyboard.dismiss();
-        }
-      });
-    } else {
-      setError('Wrong password.');
+      return;
     }
-    setInVerify(false);
-  }, [password, navigation]);
+
+    setInVerify(true);
+    await new Promise((resolve) => setTimeout(resolve, 25));
+
+    const isCorrectPassword = await auth.verifyPassword(password);
+    if (!isCorrectPassword) {
+      setError('Wrong password.');
+      setInVerify(false);
+      return;
+    }
+
+    if (settleResolve(password)) {
+      if (bottomSheetRef.current) {
+        bottomSheetRef.current.close();
+      } else if (navigation.canGoBack()) {
+        navigation.goBack();
+      }
+    }
+  }, [auth, navigation, password, runtimeRequestId, settleResolve]);
 
   useEffect(() => {
+    completedRef.current = false;
     return () => {
-      // reject the request if the component is unmounted or id changes
-      getAuthentication().reject({ error: passwordRequestCanceledError() });
+      // Reject/cancel the request if the component is unmounted.
+      if (runtimeRequestId && !completedRef.current) {
+        auth.cancelPasswordRequest({ requestId: runtimeRequestId });
+      }
     };
-  }, []);
+  }, [auth, runtimeRequestId]);
 
   return (
     <BottomSheetRoute ref={bottomSheetRef} snapPoints={snapPoints} onClose={handleCancel} onOpen={() => textInputRef.current?.focus()}>

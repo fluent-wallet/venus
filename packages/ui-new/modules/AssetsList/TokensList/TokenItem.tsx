@@ -1,10 +1,10 @@
 import Text from '@components/Text';
-import { AssetType } from '@core/database/models/Asset';
+import { ASSET_TYPE } from '@core/types';
 import { shortenAddress } from '@core/utils/address';
-import { numberWithCommas } from '@core/utils/balance';
-import type { AssetInfo } from '@core/WalletCore/Plugins/AssetsTracker/types';
+import { numberWithCommas, truncate } from '@core/utils/balance';
 import useFormatBalance from '@hooks/useFormatBalance';
 import { useTheme } from '@react-navigation/native';
+import type { AssetInfo } from '@utils/assetInfo';
 import { useCallback, useMemo } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import AssetTypeLabel from '../AssetTypeLabel';
@@ -20,7 +20,12 @@ const TokenItem: React.FC<{
 }> = ({ onPress, data, hidePrice = false, hideBalance = false, showTypeLabel = false, showAddress = false }) => {
   const { colors } = useTheme();
   const balance = useFormatBalance(data.balance, data.decimals);
-  const price = useMemo(() => (data.priceValue ? `$${numberWithCommas(data.priceValue)}` : '--'), [data.priceValue]);
+  const price = useMemo(() => {
+    if (data.priceValue === undefined || data.priceValue === null) {
+      return '--';
+    }
+    return `$${numberWithCommas(truncate(data.priceValue, 2))}`;
+  }, [data.priceValue]);
 
   const handlePress = useCallback(() => onPress?.(data), [onPress, data]);
   return (
@@ -42,7 +47,7 @@ const TokenItem: React.FC<{
               {hidePrice === 'encryption' ? '***' : price}
             </Text>
           )}
-          {showAddress && data.type !== AssetType.Native && data?.contractAddress && (
+          {showAddress && data.type !== ASSET_TYPE.Native && data?.contractAddress && (
             <Text style={[styles.tokenAddress, { marginLeft: 'auto', textAlign: 'right', color: colors.textSecondary }]} numberOfLines={1}>
               {shortenAddress(data.contractAddress)}
             </Text>

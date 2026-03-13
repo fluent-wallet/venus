@@ -1,19 +1,20 @@
 import 'reflect-metadata';
-import { createTestAccount, seedNetwork } from '@core/__tests__/fixtures';
-import { StubChainProvider } from '@core/__tests__/mocks/chainProviders';
 import { ChainRegistry } from '@core/chains';
 import { iface777 } from '@core/contracts';
 import type { Database } from '@core/database';
-import { mockDatabase } from '@core/database/__tests__/mockDatabases';
 import type { Address } from '@core/database/models/Address';
 import type { Asset } from '@core/database/models/Asset';
 import { AssetSource, AssetType } from '@core/database/models/Asset';
 import type { Network } from '@core/database/models/Network';
 import TableName from '@core/database/TableName';
+import { mockDatabase } from '@core/database/testUtils/mockDatabases';
 import { CORE_IDENTIFIERS } from '@core/di';
+import { createTestAccount, seedNetwork } from '@core/testUtils/fixtures';
+import { StubChainProvider } from '@core/testUtils/mocks/chainProviders';
 import type { Hex } from '@core/types';
 import { Container } from 'inversify';
 import { AssetService } from './AssetService';
+import { AssetDiscoveryRegistry } from './discovery/AssetDiscoveryRegistry';
 
 describe('AssetService', () => {
   let container: Container;
@@ -21,6 +22,7 @@ describe('AssetService', () => {
   let registry: ChainRegistry;
   let service: AssetService;
   let provider: StubChainProvider;
+  let discoveryRegistry: { discoverFungibleAssets: jest.Mock };
   let network: Network;
   let assetRuleId: string;
   let address: Address;
@@ -32,9 +34,13 @@ describe('AssetService', () => {
     container = new Container({ defaultScope: 'Transient' });
     database = mockDatabase();
     registry = new ChainRegistry();
+    discoveryRegistry = {
+      discoverFungibleAssets: jest.fn().mockResolvedValue(null),
+    };
 
     container.bind<Database>(CORE_IDENTIFIERS.DB).toConstantValue(database);
     container.bind(ChainRegistry).toConstantValue(registry);
+    container.bind(AssetDiscoveryRegistry).toConstantValue(discoveryRegistry as unknown as AssetDiscoveryRegistry);
     container.bind(AssetService).toSelf();
 
     const seeded = await seedNetwork(database, { definitionKey: 'Conflux Testnet', selected: true });
@@ -59,7 +65,7 @@ describe('AssetService', () => {
         record.name = 'Conflux';
         record.symbol = 'CFX';
         record.decimals = 18;
-        record.icon = null;
+        record.icon = 'local-native-icon';
         record.source = AssetSource.Official;
         record.priceInUSDT = '1';
       });
