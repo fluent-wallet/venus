@@ -2,6 +2,7 @@ import type { CreateBSIMVaultInput, CreateHDVaultInput, CreatePrivateKeyVaultInp
 import { type UseQueryResult, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useCallback } from 'react';
 import { getAccountRootKey } from './account';
+import { getAccountGroupRootKey } from './accountGroup';
 import { getVaultService, type IVault } from './core';
 
 export type VaultsQuery = UseQueryResult<IVault[]>;
@@ -140,4 +141,20 @@ export function useExportMnemonic() {
 export function useExportPrivateKey() {
   const service = getVaultService();
   return useCallback(async (vaultId: string, addressId: string, password: string) => service.getPrivateKey(vaultId, addressId, password), [service]);
+}
+
+/**
+ * Mark a vault as backed up and refresh vault/accountGroup caches.
+ */
+export function useFinishBackup() {
+  const service = getVaultService();
+  const queryClient = useQueryClient();
+  return useCallback(
+    async (vaultId: string) => {
+      await service.finishBackup(vaultId);
+      await queryClient.invalidateQueries({ queryKey: getVaultRootKey() });
+      await queryClient.invalidateQueries({ queryKey: getAccountGroupRootKey() });
+    },
+    [service, queryClient],
+  );
 }

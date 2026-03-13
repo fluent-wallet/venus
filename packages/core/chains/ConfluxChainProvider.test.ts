@@ -1,13 +1,13 @@
 import 'reflect-metadata';
+import { SoftwareSigner } from '@core/signers';
 import {
   createMockConfluxSdk,
   DEFAULT_PRIVATE_KEY,
   DEFAULT_TEST_NET_20_TOKEN_CONTRACT,
   DEFAULT_TEST_NET_1155_CONTRACT,
   DEFAULT_TEST_NFT_721_CONTRACT,
-} from '@core/__tests__/mocks';
-import { SoftwareSigner } from '@core/signers';
-import { AssetType, NetworkType } from '@core/types';
+} from '@core/testUtils/mocks';
+import { AssetType, type ConfluxUnsignedTransaction, NetworkType } from '@core/types';
 import { computeAddress, toAccountAddress } from '@core/utils/account';
 import { convertHexToBase32 } from '@core/utils/address';
 import { PersonalMessage } from 'js-conflux-sdk';
@@ -183,6 +183,36 @@ describe('ConfluxChainProvider', () => {
       data: '0x',
       value: '0xde0b6b3a7640000',
     });
+  });
+
+  it('prepares unsigned drafts by filling nonce, epochHeight, and fee fields', async () => {
+    const provider = createProvider();
+    const draft: ConfluxUnsignedTransaction = {
+      chainType: NetworkType.Conflux,
+      payload: {
+        from: SAMPLE_ACCOUNT_BASE32,
+        to: SAMPLE_ACCOUNT_BASE32,
+        chainId: TEST_CHAIN_ID,
+        value: '0xde0b6b3a7640000',
+        data: '0x',
+      },
+    };
+
+    mockRpc.getNextNonce.mockResolvedValueOnce(9n);
+    mockRpc.getEpochNumber.mockResolvedValueOnce(123n);
+    mockRpc.estimateGasAndCollateral.mockResolvedValueOnce({
+      gasUsed: 0x5208n,
+      storageCollateralized: 0n,
+    });
+    mockRpc.getGasPrice.mockResolvedValueOnce(2n);
+
+    const prepared = await provider.prepareUnsignedTransaction(draft);
+
+    expect(prepared.payload.nonce).toBe(9);
+    expect(prepared.payload.epochHeight).toBe(123);
+    expect(prepared.payload.gasLimit).toBe('0x5208');
+    expect(prepared.payload.storageLimit).toBe('0x0');
+    expect(prepared.payload.gasPrice).toBe('0x2');
   });
 
   it('signs transactions with PrivateKeyAccount and returns raw payload', async () => {

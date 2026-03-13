@@ -11,9 +11,9 @@ import {
 import Button from '@components/Button';
 import Text from '@components/Text';
 import _TextInput from '@components/TextInput';
-import { useCurrentNetwork } from '@core/WalletCore/Plugins/ReactInject';
-import { Gwei, getMinGasPrice } from '@core/WalletCore/Plugins/Transaction/SuggestedGasEstimate';
 import { useTheme } from '@react-navigation/native';
+import { getTransactionService } from '@service/core';
+import { useCurrentNetwork } from '@service/network';
 import Decimal from 'decimal.js';
 /* eslint-disable react-hooks/exhaustive-deps */
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
@@ -22,7 +22,7 @@ import { type ComponentProps, memo, useCallback, useMemo, useRef } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, View } from 'react-native';
-import type { GasSetting } from './index';
+import { buildGasSetting, type GasSetting, isEip1559GasSetting } from './gasSetting';
 
 interface Props {
   customizeGasSetting: GasSetting;
@@ -31,6 +31,8 @@ interface Props {
   onClose: () => void;
   force155?: boolean;
 }
+
+const Gwei = new Decimal(10).pow(9);
 
 const GweiSuffix = memo(() => {
   const { colors } = useTheme();
@@ -87,8 +89,11 @@ const CustomizeGasSetting: React.FC<Props> = ({ customizeGasSetting, estimateCur
   const { t } = useTranslation();
   const { colors } = useTheme();
   const bottomSheetRef = useRef<BottomSheetMethods>(null!);
-  const currentNetwork = useCurrentNetwork()!;
-  const minGasPrice = useMemo(() => getMinGasPrice(currentNetwork), [currentNetwork?.id]);
+  const { data: currentNetwork } = useCurrentNetwork();
+  const minGasPrice = useMemo(
+    () => (currentNetwork ? getTransactionService().getMinGasPriceWei({ chainId: currentNetwork.chainId, networkType: currentNetwork.networkType }) : null),
+    [currentNetwork?.chainId, currentNetwork?.networkType],
+  );
 
   const {
     control,
@@ -97,19 +102,19 @@ const CustomizeGasSetting: React.FC<Props> = ({ customizeGasSetting, estimateCur
     formState: { errors },
   } = useForm<FormData>({
     defaultValues: {
-      ...(customizeGasSetting.suggestedGasPrice
+      ...(!isEip1559GasSetting(customizeGasSetting)
         ? {
-            gasPrice: new Decimal(customizeGasSetting.suggestedGasPrice ?? 0).div(Gwei).toString(),
+            gasPrice: new Decimal(customizeGasSetting.suggestedGasPrice).div(Gwei).toString(),
           }
         : null),
-      ...(customizeGasSetting.suggestedMaxFeePerGas
+      ...(isEip1559GasSetting(customizeGasSetting)
         ? {
-            maxFeePerGas: new Decimal(customizeGasSetting.suggestedMaxFeePerGas ?? 0).div(Gwei).toString(),
+            maxFeePerGas: new Decimal(customizeGasSetting.suggestedMaxFeePerGas).div(Gwei).toString(),
           }
         : null),
-      ...(customizeGasSetting.suggestedMaxPriorityFeePerGas
+      ...(isEip1559GasSetting(customizeGasSetting)
         ? {
-            maxPriorityFeePerGas: new Decimal(customizeGasSetting.suggestedMaxPriorityFeePerGas ?? 0).div(Gwei).toString(),
+            maxPriorityFeePerGas: new Decimal(customizeGasSetting.suggestedMaxPriorityFeePerGas).div(Gwei).toString(),
           }
         : null),
     },
@@ -119,25 +124,22 @@ const CustomizeGasSetting: React.FC<Props> = ({ customizeGasSetting, estimateCur
   const gasPriceInputVal = watch('gasPrice');
   const maxFeePerGasInputVal = watch('maxFeePerGas');
   const isPriceLowerThanCurrent = useMemo(
-    () => Number.parseFloat(customizeGasSetting.suggestedMaxFeePerGas ? maxFeePerGasInputVal : gasPriceInputVal) < Number.parseFloat(currentPriceGwei),
-    [maxFeePerGasInputVal, gasPriceInputVal, currentPriceGwei, customizeGasSetting.suggestedMaxFeePerGas],
+    () => Number.parseFloat(isEip1559GasSetting(customizeGasSetting) ? maxFeePerGasInputVal : gasPriceInputVal) < Number.parseFloat(currentPriceGwei),
+    [maxFeePerGasInputVal, gasPriceInputVal, currentPriceGwei, customizeGasSetting],
   );
 
   const handleConfirm = useCallback(
     (data: FormData) => {
-      const res = {
-        ...(customizeGasSetting.suggestedGasPrice ? { suggestedGasPrice: new Decimal(data.gasPrice).mul(Gwei).toHex() } : null),
-        ...(customizeGasSetting.suggestedMaxFeePerGas
-          ? {
-              suggestedMaxFeePerGas: new Decimal(data.maxFeePerGas).mul(Gwei).toHex(),
-            }
-          : null),
-        ...(customizeGasSetting.suggestedMaxPriorityFeePerGas
-          ? {
-              suggestedMaxPriorityFeePerGas: new Decimal(data.maxPriorityFeePerGas).mul(Gwei).toHex(),
-            }
-          : null),
-      };
+      const res = isEip1559GasSetting(customizeGasSetting)
+        ? buildGasSetting({
+            pricingKind: 'eip1559',
+            primaryFee: new Decimal(data.maxFeePerGas).mul(Gwei).toHex(),
+            priorityFee: new Decimal(data.maxPriorityFeePerGas).mul(Gwei).toHex(),
+          })
+        : buildGasSetting({
+            pricingKind: 'legacy',
+            primaryFee: new Decimal(data.gasPrice).mul(Gwei).toHex(),
+          });
       onConfirm(res);
       bottomSheetRef.current?.close();
     },
@@ -151,8 +153,8 @@ const CustomizeGasSetting: React.FC<Props> = ({ customizeGasSetting, estimateCur
         <Text style={[styles.tooLowTip, { color: colors.down }]}>
           {t('tx.gasFee.customizeGasSetting.minimumGasPrice', {
             network: currentNetwork?.name,
-            gasPriceType: customizeGasSetting.suggestedGasPrice || force155 ? 'gas price' : 'base fee',
-            gasPrice: new Decimal(minGasPrice).div(Gwei).toString(),
+            gasPriceType: !isEip1559GasSetting(customizeGasSetting) || force155 ? 'gas price' : 'base fee',
+            gasPrice: new Decimal(minGasPrice ?? '0x0').div(Gwei).toString(),
           })}
         </Text>
       </View>
@@ -183,14 +185,14 @@ const CustomizeGasSetting: React.FC<Props> = ({ customizeGasSetting, estimateCur
   return (
     <InlineBottomSheet
       ref={bottomSheetRef}
-      snapPoints={customizeGasSetting.suggestedMaxFeePerGas ? (!force155 ? snapPoints1559 : snapPoints155) : snapPoints155}
+      snapPoints={isEip1559GasSetting(customizeGasSetting) ? (!force155 ? snapPoints1559 : snapPoints155) : snapPoints155}
       index={0}
       onClose={onClose}
     >
       <BottomSheetWrapper innerPaddingHorizontal>
         <BottomSheetHeader title={t('tx.gasFee.customizeGasSetting.title')} />
         <BottomSheetContent style={styles.contentStyle}>
-          {customizeGasSetting.suggestedGasPrice && (
+          {!isEip1559GasSetting(customizeGasSetting) && (
             <>
               <Text style={[styles.inputTitle, { color: colors.textSecondary }]}>
                 {t('tx.gasFee.customizeGasSetting.gasPrice')} ({t('tx.gasFee.customizeGasSetting.current')}:{' '}
@@ -212,7 +214,7 @@ const CustomizeGasSetting: React.FC<Props> = ({ customizeGasSetting, estimateCur
             </>
           )}
 
-          {customizeGasSetting.suggestedMaxFeePerGas && (
+          {isEip1559GasSetting(customizeGasSetting) && (
             <>
               <Text style={[styles.inputTitle, { color: colors.textSecondary }]}>
                 {!force155 ? t('tx.gasFee.customizeGasSetting.maxFee') : t('tx.gasFee.customizeGasSetting.gasPrice')} (

@@ -5,7 +5,7 @@ import type { Address } from '@core/database/models/Address';
 import type { Network } from '@core/database/models/Network';
 import type { Vault } from '@core/database/models/Vault';
 import VaultSourceType from '@core/database/models/Vault/VaultSourceType';
-import VaultType from '@core/database/models/Vault/VaultType';
+import { VaultType } from '@core/database/models/Vault/VaultType';
 import TableName from '@core/database/TableName';
 import { CORE_IDENTIFIERS } from '@core/di';
 import { HARDWARE_WALLET_TYPES } from '@core/hardware/bsim/constants';
@@ -19,6 +19,7 @@ import { inject, injectable } from 'inversify';
 import { HardwareWalletService } from '../hardware/HardwareWalletService';
 import { VAULT_ACCOUNT_PREFIX, VAULT_DEFAULTS, VAULT_GROUP_LABEL } from './constants';
 import type { CreateBSIMVaultInput, CreateHDVaultInput, CreatePrivateKeyVaultInput, CreatePublicAddressVaultInput, IVault } from './types';
+import { verifyVaultPassword } from './verifyVaultPassword';
 
 @injectable()
 export class VaultService {
@@ -99,6 +100,43 @@ export class VaultService {
         });
       }),
     );
+  }
+
+  private async hasAddress(checksummedHex: string): Promise<boolean> {
+    const count = await this.database.get<Address>(TableName.Address).query(Q.where('hex', checksummedHex)).fetchCount();
+    return count > 0;
+  }
+
+  async hasExistingSecretImport(params: { mnemonic?: string; privateKey?: string }): Promise<boolean> {
+    const mnemonic = params.mnemonic?.trim();
+    const privateKey = params.privateKey?.trim();
+
+    if (privateKey) {
+      const checksummed = toChecksum(fromPrivate(privateKey).address);
+      return this.hasAddress(checksummed);
+    }
+
+    if (mnemonic) {
+      const networks = await this.fetchNetworks();
+      for (const network of networks) {
+        const hdPath = await network.hdPath.fetch();
+        const { hexAddress } = await getNthAccountOfHDKey({
+          mnemonic,
+          hdPath: hdPath.value,
+          nth: 0,
+        });
+        if (await this.hasAddress(toChecksum(hexAddress))) {
+          return true;
+        }
+      }
+      return false;
+    }
+
+    return false;
+  }
+
+  async verifyPassword(password: string): Promise<boolean> {
+    return verifyVaultPassword({ database: this.database, cryptoTool: this.cryptoTool, password });
   }
 
   /**
@@ -198,10 +236,14 @@ export class VaultService {
 
     if (!resolvedAccounts) {
       const result = await this.hardwareWalletService.connectAndSync(HARDWARE_WALLET_TYPES.BSIM, input.connectOptions);
-      resolvedAccounts = result.accounts.map((account) => ({
+      const detected = result.accounts.map((account) => ({
         index: account.index,
         hexAddress: account.address,
       }));
+      detected.sort((a, b) => a.index - b.index);
+
+      // create bsim wallet we only get one account from the device
+      resolvedAccounts = detected.slice(0, 1);
       resolvedHardwareDeviceId = resolvedHardwareDeviceId ?? result.deviceId;
     }
 
@@ -211,12 +253,16 @@ export class VaultService {
 
     const networks = await this.fetchNetworks();
     const [isFirstVault, sameTypeCount] = await Promise.all([this.isFirstVault(), this.countVaultsOfType(VaultType.BSIM)]);
+    let bsimMarker = 'BSIM Wallet';
+    if (typeof input.password === 'string' && input.password.length > 0) {
+      bsimMarker = await this.cryptoTool.encrypt('BSIM Wallet', input.password);
+    }
 
     const vaultRecord = this.database.get<Vault>(TableName.Vault).prepareCreate((record) => {
       record.type = VaultType.BSIM;
       record.device = VAULT_DEFAULTS.DEVICE;
       record.hardwareDeviceId = resolvedHardwareDeviceId ?? null;
-      record.data = 'BSIM Wallet';
+      record.data = bsimMarker;
       record.cfxOnly = false;
       record.isBackup = false;
       record.source = VaultSourceType.CREATE_BY_WALLET;
@@ -356,5 +402,10 @@ export class VaultService {
     await this.database.write(async () => {
       await vault.delete();
     });
+  }
+
+  async finishBackup(vaultId: string): Promise<void> {
+    const vault = await this.database.get<Vault>(TableName.Vault).find(vaultId);
+    await vault.finishBackup();
   }
 }

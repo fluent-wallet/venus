@@ -1,9 +1,9 @@
 import 'reflect-metadata';
 
-import { createSilentLogger } from '@core/__tests__/mocks';
 import { CORE_IDENTIFIERS } from '@core/di';
 import { ModuleManager } from '@core/runtime/ModuleManager';
 import type { RuntimeScheduler } from '@core/runtime/types';
+import { createSilentLogger } from '@core/testUtils/mocks';
 import { Container } from 'inversify';
 import { type CoreEventMap, type EventBus, EventBusModule } from '../eventBus';
 import { ExternalRequestsModule } from './ExternalRequestsModule';
@@ -16,6 +16,7 @@ const makeSnapshot = (tag: string): ExternalRequestSnapshot => {
     kind: 'session_request',
     sessionId: `s_${tag}`,
     origin: 'https://dapp.example',
+    metadata: { name: 'dapp.example', url: 'https://dapp.example', icons: [] },
     chainId: 'eip155:1',
     method: 'personal_sign',
     params: ['0xdeadbeef'],

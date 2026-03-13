@@ -10,6 +10,10 @@ export type PasswordRequestOptions = {
 
 export type CredentialKind = 'password' | 'biometrics';
 
+export type CredentialKindLoader = () => Promise<CredentialKind | null>;
+export type CredentialKindSaver = (kind: CredentialKind) => Promise<void>;
+export type PasswordVerifier = (password: string) => Promise<boolean>;
+
 type PendingRequest = {
   requestId: string;
   reason?: AuthReason;
@@ -29,7 +33,11 @@ export type AuthServiceOptions = {
   now: () => number;
   logger?: Logger;
   defaultTimeoutMs: number;
-  getCredentialKind?: (params: { reason?: AuthReason }) => CredentialKind;
+  initialCredentialKind?: CredentialKind;
+  getCredentialKind?: (params: { reason?: AuthReason; currentKind: CredentialKind }) => CredentialKind;
+  loadCredentialKind?: CredentialKindLoader;
+  saveCredentialKind?: CredentialKindSaver;
+  verifyPassword?: PasswordVerifier;
 };
 
 export class AuthService {
@@ -38,19 +46,59 @@ export class AuthService {
   private readonly now: () => number;
   private readonly logger?: Logger;
   private readonly defaultTimeoutMs: number;
+  private credentialKind: CredentialKind;
 
   private counter = 0;
   private active: ActiveRequest | null = null;
   private readonly queue: PendingRequest[] = [];
 
-  private readonly getCredentialKind: (params: { reason?: AuthReason }) => CredentialKind;
+  private readonly getCredentialKind: (params: { reason?: AuthReason; currentKind: CredentialKind }) => CredentialKind;
+  private readonly loadCredentialKind?: CredentialKindLoader;
+  private readonly saveCredentialKind?: CredentialKindSaver;
+  private readonly verifyPasswordFn?: PasswordVerifier;
   constructor(options: AuthServiceOptions) {
     this.eventBus = options.eventBus;
     this.scheduler = options.scheduler;
     this.now = options.now;
     this.logger = options.logger;
     this.defaultTimeoutMs = options.defaultTimeoutMs;
-    this.getCredentialKind = options.getCredentialKind ?? (() => 'password');
+    this.credentialKind = options.initialCredentialKind ?? 'password';
+    this.getCredentialKind = options.getCredentialKind ?? ((params) => params.currentKind);
+    this.loadCredentialKind = options.loadCredentialKind;
+    this.saveCredentialKind = options.saveCredentialKind;
+    this.verifyPasswordFn = options.verifyPassword;
+  }
+
+  public async hydrateCredentialKind(): Promise<void> {
+    if (!this.loadCredentialKind) return;
+
+    try {
+      const kind = await this.loadCredentialKind();
+      if (kind) {
+        this.credentialKind = kind;
+      }
+    } catch (error) {
+      this.logger?.warn('AuthService:hydrateCredentialKind:failed', { error });
+    }
+  }
+
+  public getCredentialKindValue(): CredentialKind {
+    return this.credentialKind;
+  }
+
+  public async setCredentialKind(kind: CredentialKind): Promise<void> {
+    if (!this.saveCredentialKind) {
+      this.credentialKind = kind;
+      return;
+    }
+
+    try {
+      await this.saveCredentialKind(kind);
+      this.credentialKind = kind;
+    } catch (error) {
+      this.logger?.warn('AuthService:setCredentialKind:failed', { kind, error });
+      throw error;
+    }
   }
 
   public getPassword(options: PasswordRequestOptions = {}): Promise<string> {
@@ -85,18 +133,35 @@ export class AuthService {
   }
 
   public cancelPasswordRequest(params: { requestId: string }): void {
-    const active = this.active;
-    if (active && active.requestId === params.requestId) {
-      this.clearActiveTimer();
-      this.active = null;
-
-      active.reject(
+    this.rejectRequest(
+      params,
+      () =>
         new CoreError({
           code: AUTH_PASSWORD_REQUEST_CANCELED,
           message: 'Password request canceled.',
           context: { requestId: params.requestId },
         }),
-      );
+    );
+  }
+
+  public rejectPasswordRequest(params: { requestId: string; error: unknown }): void {
+    this.rejectRequest(params, () => params.error);
+  }
+
+  public async verifyPassword(password: string): Promise<boolean> {
+    if (!this.verifyPasswordFn) {
+      this.logger?.warn('AuthService:verifyPassword:missingVerifier');
+      return false;
+    }
+    return this.verifyPasswordFn(password);
+  }
+
+  private rejectRequest(params: { requestId: string }, createError: () => unknown): void {
+    const active = this.active;
+    if (active && active.requestId === params.requestId) {
+      this.clearActiveTimer();
+      this.active = null;
+      active.reject(createError());
 
       this.activateNextRequestIfIdle();
       return;
@@ -108,13 +173,7 @@ export class AuthService {
     }
 
     const [removed] = this.queue.splice(index, 1);
-    removed.reject(
-      new CoreError({
-        code: AUTH_PASSWORD_REQUEST_CANCELED,
-        message: 'Password request canceled.',
-        context: { requestId: params.requestId },
-      }),
-    );
+    removed.reject(createError());
   }
 
   public stop(): void {
@@ -132,8 +191,10 @@ export class AuthService {
       );
     }
 
-    while (this.queue.length > 0) {
-      const req = this.queue.shift()!;
+    while (true) {
+      const req = this.queue.shift();
+      if (!req) break;
+
       req.reject(
         new CoreError({
           code: AUTH_PASSWORD_REQUEST_CANCELED,
@@ -156,7 +217,7 @@ export class AuthService {
     const next = this.queue.shift();
     if (!next) return;
 
-    const kind = this.getCredentialKind({ reason: next.reason });
+    const kind = this.getCredentialKind({ reason: next.reason, currentKind: this.credentialKind });
 
     const active: ActiveRequest = { ...next, kind, timeoutId: null };
     this.active = active;

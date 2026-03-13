@@ -1,4 +1,3 @@
-import { isAuthenticationCanceledError, isAuthenticationError } from '@WalletCoreExtends/Plugins/Authentication/errors';
 import CheckIcon from '@assets/icons/check.svg';
 import Copy from '@assets/icons/copy.svg';
 import MaskPrivateKey from '@assets/images/mask-private-key.webp';
@@ -6,14 +5,17 @@ import MaskSeedPhrase from '@assets/images/mask-seed-phrase.webp';
 import { BottomSheetFooter, BottomSheetScrollContent } from '@components/BottomSheet';
 import Button from '@components/Button';
 import Text from '@components/Text';
-import methods from '@core/WalletCore/Methods';
-import { useCurrentAddressOfAccount, useVaultOfGroup, VaultSourceType, VaultType } from '@core/WalletCore/Plugins/ReactInject';
+import { AUTH_PASSWORD_REQUEST_CANCELED } from '@core/errors';
 import useInAsync from '@hooks/useInAsync';
 import Clipboard from '@react-native-clipboard/clipboard';
 import { useTheme } from '@react-navigation/native';
 import { type BackupScreenProps, type BackupStep2StackName, BackupStep3StackName } from '@router/configs';
+import { useAccountById } from '@service/account';
+import { useAccountGroup } from '@service/accountGroup';
+import { getAuthService, getVaultService, VaultSourceType, VaultType } from '@service/core';
 import backToHome from '@utils/backToHome';
 import { isSmallDevice } from '@utils/deviceInfo';
+import { getErrorCode } from '@utils/error';
 import { Image } from 'expo-image';
 import type React from 'react';
 import { useCallback, useMemo, useState } from 'react';
@@ -28,25 +30,34 @@ const BackupStep2ViewSecret: React.FC<BackupScreenProps<typeof BackupStep2StackN
   const { t } = useTranslation();
 
   const backupType = route.params.groupId ? VaultType.HierarchicalDeterministic : VaultType.PrivateKey;
-  const backupText = useMemo(() => (backupType === VaultType.HierarchicalDeterministic ? t('common.seedPhrase') : t('common.privateKey')), [backupType]);
+  const backupText = useMemo(() => (backupType === VaultType.HierarchicalDeterministic ? t('common.seedPhrase') : t('common.privateKey')), [backupType, t]);
 
-  const address = useCurrentAddressOfAccount(route.params.accountId);
-  const vault = useVaultOfGroup(route.params.groupId);
+  const { data: account } = useAccountById(route.params.accountId);
+  const { data: groupOfRoute } = useAccountGroup(route.params.groupId ?? null, true);
+  const { data: groupOfAccount } = useAccountGroup(account?.accountGroupId, true);
+
+  const group = route.params.groupId ? groupOfRoute : groupOfAccount;
   const [secretData, setSecretData] = useState<null | string>(() => null);
   const phrases = useMemo(() => (!secretData || backupType === VaultType.PrivateKey ? null : secretData.split(' ')), [secretData, backupType]);
 
   const _handleClickView = useCallback(async () => {
     try {
-      await new Promise((resolve) => setTimeout(() => resolve(null!), 20));
+      const auth = getAuthService();
+      await new Promise<void>((resolve) => {
+        setTimeout(resolve, 20);
+      });
+      if (!group) {
+        return;
+      }
+      const password = await auth.getPassword();
       if (backupType === VaultType.HierarchicalDeterministic) {
-        if (!vault) return;
-        setSecretData(await methods.getMnemonicOfVault(vault));
+        setSecretData(await getVaultService().getMnemonic(group.vaultId, password));
       } else {
-        if (!address) return;
-        setSecretData(await methods.getPrivateKeyOfAddress(address));
+        if (!account?.currentAddressId) return;
+        setSecretData(await getVaultService().getPrivateKey(group.vaultId, account.currentAddressId, password));
       }
     } catch (err) {
-      if (isAuthenticationError(err) && isAuthenticationCanceledError(err)) {
+      if (getErrorCode(err) === AUTH_PASSWORD_REQUEST_CANCELED) {
         return;
       }
       showMessage({
@@ -55,7 +66,7 @@ const BackupStep2ViewSecret: React.FC<BackupScreenProps<typeof BackupStep2StackN
         type: 'failed',
       });
     }
-  }, [vault, address, backupType, backupText]);
+  }, [group, account?.currentAddressId, backupType, backupText, t]);
   const { inAsync, execAsync: handleClickView } = useInAsync(_handleClickView);
 
   return (
@@ -117,7 +128,7 @@ const BackupStep2ViewSecret: React.FC<BackupScreenProps<typeof BackupStep2StackN
             <View style={styles.phraseContainer}>
               <View style={styles.phraseColumn}>
                 {phrases?.slice(0, 6).map((phrase, index) => (
-                  // biome-ignore lint/suspicious/noArrayIndexKey: <explanation>
+                  // biome-ignore lint/suspicious/noArrayIndexKey: phrase order is fixed for backup display.
                   <Text key={index} style={[styles.phrase, { color: colors.textPrimary, backgroundColor: colors.bgPrimary }]}>
                     {index + 1}. {phrase}
                   </Text>
@@ -125,7 +136,7 @@ const BackupStep2ViewSecret: React.FC<BackupScreenProps<typeof BackupStep2StackN
               </View>
               <View style={styles.phraseColumn}>
                 {phrases?.slice(6).map((phrase, index) => (
-                  // biome-ignore lint/suspicious/noArrayIndexKey: <explanation>
+                  // biome-ignore lint/suspicious/noArrayIndexKey: phrase order is fixed for backup display.
                   <Text key={index} style={[styles.phrase, { color: colors.textPrimary, backgroundColor: colors.bgPrimary }]}>
                     {index + 7}. {phrase}
                   </Text>
@@ -136,15 +147,15 @@ const BackupStep2ViewSecret: React.FC<BackupScreenProps<typeof BackupStep2StackN
         </View>
       </BottomSheetScrollContent>
       <BottomSheetFooter>
-        {vault?.source === VaultSourceType.CREATE_BY_WALLET &&
-        vault?.type === VaultType.HierarchicalDeterministic &&
-        !vault.isBackup &&
+        {group?.vaultSource === VaultSourceType.CREATE_BY_WALLET &&
+        group?.vaultType === VaultType.HierarchicalDeterministic &&
+        !group.isBackup &&
         backupType === VaultType.HierarchicalDeterministic ? (
           <Button
             disabled={!secretData}
             onPress={() => {
               setSecretData(null);
-              navigation.navigate(BackupStep3StackName, { phrases: phrases || [], vaultId: vault.id });
+              navigation.navigate(BackupStep3StackName, { phrases: phrases || [], vaultId: group.vaultId });
             }}
             size="small"
           >

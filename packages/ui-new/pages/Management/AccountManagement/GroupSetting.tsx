@@ -1,5 +1,3 @@
-import { getAuthentication } from '@WalletCoreExtends/index';
-import { isAuthenticationCanceledError, isAuthenticationError } from '@WalletCoreExtends/Plugins/Authentication/errors';
 import ArrowRight from '@assets/icons/arrow-right2.svg';
 import Delete from '@assets/icons/delete.svg';
 import Settings from '@assets/icons/settings.svg';
@@ -16,9 +14,7 @@ import Button from '@components/Button';
 import HourglassLoading from '@components/Loading/Hourglass';
 import Text from '@components/Text';
 import TextInput from '@components/TextInput';
-import methods from '@core/WalletCore/Methods';
-import plugins from '@core/WalletCore/Plugins';
-import { useAccountsOfGroupInManage, useGroupFromId, useVaultOfGroup, VaultType } from '@core/WalletCore/Plugins/ReactInject';
+import { AUTH_PASSWORD_REQUEST_CANCELED } from '@core/errors';
 import useInAsync from '@hooks/useInAsync';
 import { AccountItemView } from '@modules/AccountsList';
 import { useNavigation, useTheme } from '@react-navigation/native';
@@ -31,6 +27,12 @@ import {
   type StackNavigation,
   type StackScreenProps,
 } from '@router/configs';
+import { useAccountsOfGroup } from '@service/account';
+import { useAccountGroup, useUpdateAccountGroupNickname } from '@service/accountGroup';
+import { getAuthService, getHardwareWalletService, VaultType } from '@service/core';
+import { useDeleteVault } from '@service/vault';
+import { useDisconnectWalletConnectSessionsByAddresses } from '@service/walletConnect';
+import { getErrorCode } from '@utils/error';
 import { handleBSIMHardwareUnavailable } from '@utils/handleBSIMHardwareUnavailable';
 import type React from 'react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -42,17 +44,26 @@ import DeleteConfirm from './DeleteConfirm';
 const GroupConfig: React.FC<StackScreenProps<typeof GroupSettingStackName>> = ({ navigation, route }) => {
   const { colors } = useTheme();
   const { t } = useTranslation();
-  const bottomSheetRef = useRef<BottomSheetMethods>(null!);
-  const textinputRef = useRef<_TextInput>(null!);
+  const bottomSheetRef = useRef<BottomSheetMethods | null>(null);
+  const textinputRef = useRef<_TextInput | null>(null);
 
-  const accountGroup = useGroupFromId(route.params.groupId);
-  const vault = useVaultOfGroup(route.params.groupId);
-  const accounts = useAccountsOfGroupInManage(route.params.groupId);
+  const { data: accountGroup } = useAccountGroup(route.params.groupId, true);
+  const { data: accounts = [] } = useAccountsOfGroup(route.params.groupId, true);
   const rootNavigation = useNavigation<StackNavigation>();
+  const disconnectByAddresses = useDisconnectWalletConnectSessionsByAddresses();
+  const updateGroupNickname = useUpdateAccountGroupNickname();
+  const deleteVault = useDeleteVault();
+
+  const visibleAccounts = useMemo(() => accounts.filter((account) => !account.hidden), [accounts]);
 
   const GroupTitle = useMemo(
-    () => (!vault?.type ? 'Group' : vault?.type === VaultType.HierarchicalDeterministic ? t('account.group.title.seed') : t('account.group.title.BSIM')),
-    [vault?.type],
+    () =>
+      !accountGroup?.vaultType
+        ? 'Group'
+        : accountGroup.vaultType === VaultType.HierarchicalDeterministic
+          ? t('account.group.title.seed')
+          : t('account.group.title.BSIM'),
+    [accountGroup?.vaultType, t],
   );
 
   const [accountGroupName, setAccountGroupName] = useState(() => accountGroup?.nickname);
@@ -63,15 +74,15 @@ const GroupConfig: React.FC<StackScreenProps<typeof GroupSettingStackName>> = ({
   const handleUpdateAccountGroupNickName = useCallback(async () => {
     const trimedAccountGroupName = accountGroupName?.trim();
     if (!accountGroup || !trimedAccountGroupName) return;
-    await methods.updateAccountGroupNickName({ accountGroup, nickname: trimedAccountGroupName });
+    await updateGroupNickname(accountGroup.id, trimedAccountGroupName);
     bottomSheetRef.current?.close();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [accountGroup, accountGroupName]);
+  }, [accountGroup, accountGroupName, updateGroupNickname]);
 
   const [showDeleteBottomSheet, setShowDeleteBottomSheet] = useState(() => false);
 
   const handlePressDelete = useCallback(() => {
-    if (!accounts || !accounts?.length) return;
+    if (!accounts.length) return;
 
     const hasAccountSelected = accounts.some((account) => account.selected);
     if (hasAccountSelected) {
@@ -86,14 +97,14 @@ const GroupConfig: React.FC<StackScreenProps<typeof GroupSettingStackName>> = ({
         Keyboard.dismiss();
       }
     }
-  }, [accounts]);
+  }, [accounts, t]);
 
   const _handleConfirmDelete = useCallback(async () => {
-    if (!vault) return;
+    if (!accountGroup) return;
     try {
-      await getAuthentication().getPassword();
-      await methods.deleteVault(vault);
-      await plugins.WalletConnect.removeSessionByAddress(accounts.map((v) => v.addressValue));
+      await getAuthService().getPassword();
+      await deleteVault(accountGroup.vaultId);
+      await disconnectByAddresses(accounts.map((v) => v.address));
       showMessage({
         message: t('account.group.remove.success'),
         type: 'success',
@@ -101,7 +112,7 @@ const GroupConfig: React.FC<StackScreenProps<typeof GroupSettingStackName>> = ({
       setShowDeleteBottomSheet(false);
       setTimeout(() => bottomSheetRef.current?.close());
     } catch (err) {
-      if (isAuthenticationError(err) && isAuthenticationCanceledError(err)) {
+      if (getErrorCode(err) === AUTH_PASSWORD_REQUEST_CANCELED) {
         return;
       }
       showMessage({
@@ -111,7 +122,7 @@ const GroupConfig: React.FC<StackScreenProps<typeof GroupSettingStackName>> = ({
       });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [vault, navigation]);
+  }, [accountGroup, accounts, disconnectByAddresses, deleteVault, t]);
 
   const handleBackupSeedPhrase = useCallback(() => {
     navigation.navigate(BackupStackName, { screen: BackupStep1StackName, params: { groupId: route.params.groupId } });
@@ -119,22 +130,23 @@ const GroupConfig: React.FC<StackScreenProps<typeof GroupSettingStackName>> = ({
 
   const handleChangeBSIMPin = useCallback(async () => {
     try {
-      await plugins.BSIM.updateBPIN();
+      if (!accountGroup) return;
+      await getHardwareWalletService().runUpdatePin(accountGroup.vaultId);
     } catch (error) {
       if (handleBSIMHardwareUnavailable(error, rootNavigation)) {
         return;
       }
       throw error;
     }
-  }, [rootNavigation]);
+  }, [rootNavigation, accountGroup]);
 
   const renderByVaultType = useCallback(
     <A, B>(HD: A, BSIM: B): A | B => {
-      const type = vault?.type;
+      const type = accountGroup?.vaultType;
       if (type === VaultType.HierarchicalDeterministic) return HD;
       return BSIM;
     },
-    [vault?.type],
+    [accountGroup?.vaultType],
   );
 
   const { inAsync: inDeleting, execAsync: handleConfirmDelete } = useInAsync(_handleConfirmDelete);
@@ -162,7 +174,7 @@ const GroupConfig: React.FC<StackScreenProps<typeof GroupSettingStackName>> = ({
               isInBottomSheet
               disabled={inDelete}
             />
-            {(vault?.type === VaultType.HierarchicalDeterministic || vault?.type === VaultType.BSIM) && (
+            {(accountGroup?.vaultType === VaultType.HierarchicalDeterministic || accountGroup?.vaultType === VaultType.BSIM) && (
               <>
                 <Text style={[styles.description, styles.backupDescription, { color: colors.textSecondary }]}>
                   {renderByVaultType(t('common.backup'), t('account.group.settings.BSIM'))}
@@ -179,10 +191,10 @@ const GroupConfig: React.FC<StackScreenProps<typeof GroupSettingStackName>> = ({
                   <ArrowRight color={colors.iconPrimary} width={16} height={16} style={{ transform: [{ translateY: -1 }] }} />
                 </Pressable>
 
-                {vault?.type === VaultType.BSIM && (
+                {accountGroup?.vaultType === VaultType.BSIM && (
                   <Pressable
                     style={({ pressed }) => [styles.row, { backgroundColor: pressed ? colors.underlay : 'transparent' }]}
-                    onPress={() => navigation.navigate(BackupStackName, { screen: BackupBSIM1PasswordStackName, params: { vaultId: vault?.id } })}
+                    onPress={() => navigation.navigate(BackupStackName, { screen: BackupBSIM1PasswordStackName, params: { vaultId: accountGroup.vaultId } })}
                     testID="backupBSIM"
                     disabled={inDelete}
                   >
@@ -204,8 +216,8 @@ const GroupConfig: React.FC<StackScreenProps<typeof GroupSettingStackName>> = ({
             </Pressable>
           </BottomSheetHeader>
           <BottomSheetScrollContent>
-            {accounts?.map((account) => (
-              <AccountItemView key={account.id} nickname={account.nickname} addressValue={account.addressValue} colors={colors} />
+            {visibleAccounts.map((account) => (
+              <AccountItemView key={account.id} nickname={account.nickname} addressValue={account.address} colors={colors} />
             ))}
           </BottomSheetScrollContent>
           <BottomSheetFooter>

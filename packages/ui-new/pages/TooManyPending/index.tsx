@@ -9,31 +9,34 @@ import {
 } from '@components/BottomSheet';
 import Button from '@components/Button';
 import Text from '@components/Text';
-import plugins from '@core/WalletCore/Plugins';
-import { useCurrentNetwork } from '@core/WalletCore/Plugins/ReactInject';
-import type { IWCSendTransactionEvent } from '@core/WalletCore/Plugins/WalletConnect/types';
 import { useTheme } from '@react-navigation/native';
 import type { StackScreenProps, TooManyPendingStackName } from '@router/configs';
+import { getExternalRequestsService } from '@service/core';
+import { useCurrentNetwork } from '@service/network';
 import { Image } from 'expo-image';
 import type React from 'react';
 import { useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet } from 'react-native';
 
-const TooManyPending: React.FC<StackScreenProps<typeof TooManyPendingStackName>> = () => {
+const TooManyPending: React.FC<StackScreenProps<typeof TooManyPendingStackName>> = ({ route }) => {
   const { t } = useTranslation();
   const { colors } = useTheme();
   const bottomSheetRef = useRef<BottomSheetMethods>(null!);
-  const currentNetwork = useCurrentNetwork();
+  const { data: currentNetwork } = useCurrentNetwork();
+  const requestId = route.params && typeof route.params === 'object' ? route.params.requestId : undefined;
 
   return (
     <BottomSheetRoute
       ref={bottomSheetRef}
       snapPoints={snapPoints}
       onClose={() => {
-        const currentEvent = plugins.WalletConnect.currentEventSubject.getValue() as IWCSendTransactionEvent;
-        if (!currentEvent) return;
-        currentEvent?.action?.reject?.('Too many pending transactions.');
+        if (!requestId) return;
+        try {
+          getExternalRequestsService().reject({ requestId, error: new Error('Too many pending transactions.') });
+        } catch {
+          // ignore
+        }
       }}
     >
       <BottomSheetWrapper innerPaddingHorizontal>

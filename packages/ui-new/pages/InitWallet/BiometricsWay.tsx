@@ -1,4 +1,3 @@
-import { getAuthentication } from '@WalletCoreExtends/index';
 import i18n from '@assets/i18n';
 import Img from '@assets/images/fingerPrint.webp';
 import Button from '@components/Button';
@@ -6,12 +5,15 @@ import Text from '@components/Text';
 import useInAsync from '@hooks/useInAsync';
 import { CommonActions, useTheme } from '@react-navigation/native';
 import { type BiometricsWayStackName, HomeStackName, PasswordWayStackName, type StackScreenProps } from '@router/configs';
+import { createBiometricVaultPassword, getBiometricVaultPassword, resetBiometricVaultPassword } from '@service/biometricVaultPasswordStore';
+import { getAuthService } from '@service/core';
 import { Image } from 'expo-image';
 import type React from 'react';
 import { useCallback } from 'react';
 import { Trans, useTranslation } from 'react-i18next';
 import { Pressable, ScrollView, StyleSheet } from 'react-native';
 import { showMessage } from 'react-native-flash-message';
+import * as Keychain from 'react-native-keychain';
 import createVault from './createVaultWithRouterParams';
 
 export const showBiometricsDisabledMessage = () => {
@@ -27,27 +29,70 @@ const BiometricsWay: React.FC<StackScreenProps<typeof BiometricsWayStackName>> =
   const { t } = useTranslation();
 
   const _handleCreateVault = useCallback(async () => {
-    const authentication = getAuthentication();
+    const auth = getAuthService();
+    const promptTitle = i18n.t('authentication.title');
+    const previousCredentialKind = auth.getCredentialKindValue();
+    let shouldRollbackBiometricPassword = false;
+    let shouldRollbackCredentialKind = false;
+
     try {
       navigation.setOptions({ gestureEnabled: false });
-      const supportedBiometryType = await authentication.getSupportedBiometryType();
+      const supportedBiometryType = await Keychain.getSupportedBiometryType();
       if (supportedBiometryType === null) {
         showBiometricsDisabledMessage();
         return;
       }
-      await authentication.setPassword({ authType: authentication.AuthenticationType.Biometrics });
-      await new Promise((resolve) => setTimeout(() => resolve(null!), 20));
-      if (await createVault(route.params)) {
+
+      await createBiometricVaultPassword({ promptTitle });
+      shouldRollbackBiometricPassword = true;
+
+      await auth.setCredentialKind('biometrics');
+      shouldRollbackCredentialKind = true;
+
+      const vaultPassword = await getBiometricVaultPassword({ promptTitle });
+
+      await new Promise<void>((resolve) => {
+        setTimeout(resolve, 20);
+      });
+      const created = await createVault(route.params, vaultPassword);
+      if (created) {
+        shouldRollbackBiometricPassword = false;
+        shouldRollbackCredentialKind = false;
         navigation.navigate(HomeStackName);
         navigation.dispatch(CommonActions.reset({ index: 0, routes: [{ name: HomeStackName }] }));
+        return;
+      }
+
+      if (shouldRollbackCredentialKind) {
+        await auth.setCredentialKind(previousCredentialKind);
+        shouldRollbackCredentialKind = false;
+      }
+
+      if (shouldRollbackBiometricPassword) {
+        await resetBiometricVaultPassword();
+        shouldRollbackBiometricPassword = false;
       }
     } catch (err) {
       console.log('Init Wallet by BiometricsWay error: ', err);
+      if (shouldRollbackCredentialKind) {
+        try {
+          await auth.setCredentialKind(previousCredentialKind);
+          shouldRollbackCredentialKind = false;
+        } catch {
+          // Best-effort rollback; preserve the original init failure.
+        }
+      }
+      if (shouldRollbackBiometricPassword) {
+        try {
+          await resetBiometricVaultPassword();
+        } catch {
+          // Best-effort rollback; preserve the original init failure.
+        }
+      }
     } finally {
       navigation.setOptions({ gestureEnabled: true });
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [navigation, route.params]);
 
   const { inAsync, execAsync: handleCreateVault } = useInAsync(_handleCreateVault);
 

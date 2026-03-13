@@ -4,47 +4,78 @@ import Logo from '@assets/images/swift-shield-QRCode.webp';
 import { BottomSheetHeader, BottomSheetRoute, BottomSheetScrollContent, BottomSheetWrapper, snapPoints } from '@components/BottomSheet';
 import Text from '@components/Text';
 import { numberWithCommas, trimDecimalZeros } from '@core/utils/balance';
-import type { AssetInfo } from '@core/WalletCore/Plugins/AssetsTracker/types';
-import { NetworkType, useCurrentAccount, useCurrentAddressValue, useCurrentNetwork } from '@core/WalletCore/Plugins/ReactInject';
+import { NetworkType } from '@core/utils/consts';
 import { AccountItemView } from '@modules/AccountsList';
 import { Navigation } from '@pages/Home/Navigations';
 import Clipboard from '@react-native-clipboard/clipboard';
 import { useTheme } from '@react-navigation/native';
 import type { ReceiveStackName, StackScreenProps } from '@router/configs';
+import { useCurrentAccount, useCurrentAddress } from '@service/account';
+import { useCurrentNetwork } from '@service/network';
 import { isSmallDevice } from '@utils/deviceInfo';
 import { encodePaymentUri, type PaymentUriParams } from '@utils/payment-uri';
 import Decimal from 'decimal.js';
-/* eslint-disable react-hooks/exhaustive-deps */
 import type React from 'react';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, View } from 'react-native';
 import { showMessage } from 'react-native-flash-message';
 import QRCode from 'react-native-qrcode-svg';
 import ReceiveSetAsset from './ReceiveSetAsset';
+import type { ReceiveAsset } from './types';
 
 interface Props {
   navigation: StackScreenProps<typeof ReceiveStackName>['navigation'];
 }
 
-const Receive: React.FC<Props> = ({ navigation }) => {
+const Receive: React.FC<Props> = ({ navigation: _navigation }) => {
   const { colors, mode } = useTheme();
   const { t } = useTranslation();
   const [showSetAsset, setShowSetAsset] = useState(false);
 
-  const currentAccount = useCurrentAccount()!;
-  const currentNetwork = useCurrentNetwork()!;
-  const currentAddressValue = useCurrentAddressValue()!;
+  const { data: currentAccount } = useCurrentAccount();
+  const { data: currentNetwork } = useCurrentNetwork();
+  const { data: currentAddress } = useCurrentAddress();
+  const currentAddressValue = currentAddress?.value ?? '';
 
-  const [selectedAsset, setSelectedAsset] = useState<AssetInfo | null>(null);
+  const [selectedAsset, setSelectedAsset] = useState<ReceiveAsset | null>(null);
 
   const [amount, setAmount] = useState<string>('');
+
+  const effectiveSelectedAsset = useMemo(() => {
+    if (!selectedAsset) return null;
+    const networkId = currentNetwork?.id;
+    const addressId = currentAddress?.id;
+    if (!networkId || !addressId) return null;
+    return selectedAsset.networkId === networkId && selectedAsset.addressId === addressId ? selectedAsset : null;
+  }, [currentAddress?.id, currentNetwork?.id, selectedAsset]);
+
+  const effectiveAmount = effectiveSelectedAsset ? amount : '';
+
+  useEffect(() => {
+    const networkId = currentNetwork?.id;
+    const addressId = currentAddress?.id;
+    if (!selectedAsset || !networkId || !addressId) return;
+
+    if (selectedAsset.networkId !== networkId || selectedAsset.addressId !== addressId) {
+      setSelectedAsset(null);
+      setAmount('');
+    }
+  }, [currentAddress?.id, currentNetwork?.id, selectedAsset]);
+
   const price = useMemo(
-    () => (!selectedAsset?.priceInUSDT ? null : trimDecimalZeros(new Decimal(selectedAsset.priceInUSDT || 0).mul(new Decimal(amount || 0)).toFixed(2))),
-    [selectedAsset?.priceInUSDT, amount],
+    () =>
+      !effectiveSelectedAsset?.priceInUSDT
+        ? null
+        : trimDecimalZeros(new Decimal(effectiveSelectedAsset.priceInUSDT || 0).mul(new Decimal(effectiveAmount || 0)).toFixed(2)),
+    [effectiveAmount, effectiveSelectedAsset?.priceInUSDT],
   );
 
   const paymentUri = useMemo(() => {
+    if (!currentNetwork || !currentAddressValue) {
+      return '';
+    }
+
     const protocol = currentNetwork.networkType === NetworkType.Conflux ? 'conflux' : 'ethereum';
     const networkHint =
       currentNetwork.networkType === NetworkType.Conflux
@@ -56,14 +87,14 @@ const Receive: React.FC<Props> = ({ navigation }) => {
           : undefined;
 
     let params: PaymentUriParams | undefined;
-    if (selectedAsset) {
+    if (effectiveSelectedAsset) {
       const paramEntries: PaymentUriParams = {};
-      if (selectedAsset.contractAddress) {
-        paramEntries.address = selectedAsset.contractAddress;
+      if (effectiveSelectedAsset.contractAddress) {
+        paramEntries.address = effectiveSelectedAsset.contractAddress;
       }
-      if (amount && amount !== '0') {
-        const decimals = selectedAsset.decimals ?? 0;
-        const valueStr = new Decimal(amount || 0).mul(Decimal.pow(10, decimals)).toFixed(0);
+      if (effectiveAmount && effectiveAmount !== '0') {
+        const decimals = typeof effectiveSelectedAsset.decimals === 'number' ? effectiveSelectedAsset.decimals : 18;
+        const valueStr = new Decimal(effectiveAmount || 0).mul(Decimal.pow(10, decimals)).toFixed(0);
         paramEntries.value = BigInt(valueStr);
       }
       if (Object.keys(paramEntries).length > 0) {
@@ -75,10 +106,10 @@ const Receive: React.FC<Props> = ({ navigation }) => {
       protocol,
       address: currentAddressValue,
       ...(networkHint ? { network: networkHint } : {}),
-      ...(selectedAsset ? { method: 'transfer' } : {}),
+      ...(effectiveSelectedAsset ? { method: 'transfer' } : {}),
       ...(params ? { params } : {}),
     });
-  }, [amount, currentAddressValue, currentNetwork.chainId, currentNetwork.netId, currentNetwork.networkType, selectedAsset]);
+  }, [currentAddressValue, currentNetwork, effectiveAmount, effectiveSelectedAsset]);
 
   return (
     <>
@@ -86,9 +117,9 @@ const Receive: React.FC<Props> = ({ navigation }) => {
         <BottomSheetWrapper>
           <BottomSheetHeader title={t('receive.title')} />
           <BottomSheetScrollContent>
-            <Text style={[styles.tip, { color: colors.textPrimary }]}>{t('receive.describe', { netName: currentNetwork?.name })}</Text>
+            <Text style={[styles.tip, { color: colors.textPrimary }]}>{t('receive.describe', { netName: currentNetwork?.name ?? '' })}</Text>
 
-            <View style={[styles.qrcodeWrapper, { paddingBottom: selectedAsset ? 18 : 30, borderColor: colors.borderFourth }]}>
+            <View style={[styles.qrcodeWrapper, { paddingBottom: effectiveSelectedAsset ? 18 : 30, borderColor: colors.borderFourth }]}>
               <QRCode
                 value={paymentUri}
                 size={172}
@@ -98,17 +129,16 @@ const Receive: React.FC<Props> = ({ navigation }) => {
                 backgroundColor={mode === 'light' ? 'white' : 'black'}
                 color={mode === 'light' ? 'black' : 'white'}
               />
-              {selectedAsset && (
+              {effectiveSelectedAsset && (
                 <>
                   <Text style={[styles.receive, { color: colors.textPrimary }]} numberOfLines={1} adjustsFontSizeToFit>
-                    {numberWithCommas(amount)} {selectedAsset?.symbol}{' '}
+                    {numberWithCommas(effectiveAmount)} {effectiveSelectedAsset.symbol}{' '}
                   </Text>
                   {price && price !== '0' && (
                     <Text style={[styles.price, { color: colors.textSecondary }]} numberOfLines={1}>
                       ≈ ${numberWithCommas(price)}
                     </Text>
                   )}
-                  {}
                 </>
               )}
             </View>
@@ -122,6 +152,7 @@ const Receive: React.FC<Props> = ({ navigation }) => {
                 showCopy
                 showUnderlay={false}
                 onPress={() => {
+                  if (!currentAddressValue) return;
                   Clipboard.setString(currentAddressValue);
                   showMessage({
                     message: t('common.copied'),
@@ -155,8 +186,8 @@ const Receive: React.FC<Props> = ({ navigation }) => {
       {showSetAsset && (
         <ReceiveSetAsset
           isOpen={showSetAsset}
-          selectedAsset={selectedAsset}
-          amount={amount}
+          selectedAsset={effectiveSelectedAsset}
+          amount={effectiveAmount}
           onConfirm={({ asset, amount }) => {
             setSelectedAsset(asset);
             if (amount) {

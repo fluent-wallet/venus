@@ -2,11 +2,11 @@ import ArrowLeft from '@assets/icons/arrow-left.svg';
 import ModifyIcon from '@assets/icons/modify.svg';
 import Icon from '@components/Icon';
 import Spinner from '@components/Spinner';
+import { ASSET_TYPE } from '@core/types';
 import { numberWithCommas } from '@core/utils/balance';
-import { AssetType, useCurrentNetwork } from '@core/WalletCore/Plugins/ReactInject';
-import type { WalletConnectMetadata } from '@core/WalletCore/Plugins/WalletConnect/types';
+import { isApproveMethod } from '@core/utils/txData';
 import { useTheme } from '@react-navigation/native';
-import { isApproveMethod } from '@utils/parseTxData';
+import { useCurrentNetwork } from '@service/network';
 import { formatUnits } from 'ethers';
 import { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -14,7 +14,7 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import type { TxDataWithTokenInfo } from '.';
 
 interface IProps {
-  metadata: WalletConnectMetadata;
+  metadata: { name: string; icons?: string[] };
   to?: string;
   data?: string;
   parseData?: TxDataWithTokenInfo;
@@ -25,7 +25,7 @@ interface IProps {
 function Contract({
   to,
   parseData,
-  metadata: { icons, name },
+  metadata: { icons = [], name },
   openEditAllowance: openModifyModal = () => {
     //
   },
@@ -34,7 +34,7 @@ function Contract({
   const { t } = useTranslation();
   const { colors } = useTheme();
   const [expanded, setExpanded] = useState(false);
-  const currentNetwork = useCurrentNetwork();
+  const { data: currentNetwork } = useCurrentNetwork();
 
   const getFormatValue = useCallback(
     (value: bigint | string) => {
@@ -57,7 +57,7 @@ function Contract({
       </View>
 
       <View style={styles.mTop24}>
-        {parseData && isApproveMethod(parseData) && parseData.assetType === AssetType.ERC20 ? (
+        {parseData && isApproveMethod(parseData) && parseData.assetType === ASSET_TYPE.ERC20 ? (
           <View>
             <View>
               <Text style={[styles.font14, { color: colors.textPrimary }]}>{t('wc.dapp.tx.simulatedResult')}</Text>
@@ -72,7 +72,7 @@ function Contract({
                     : getFormatValue(parseData.value)}
               </Text>
               {parseData.symbol && <Text style={[styles.font22, { color: colors.textPrimary }]}>{parseData.symbol}</Text>}
-              {parseData && isApproveMethod(parseData) && parseData.assetType === AssetType.ERC20 ? (
+              {parseData && isApproveMethod(parseData) && parseData.assetType === ASSET_TYPE.ERC20 ? (
                 <ModifyIcon width={24} height={24} color={colors.iconPrimary} />
               ) : null}
             </Pressable>

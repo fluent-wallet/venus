@@ -143,7 +143,7 @@ export class TxSyncEngine {
       push(tx.txId, { status: TxStatus.DISCARDED, executedStatus: null, receipt: null, err: null, errorType: null });
     }
     if (presentTxs.length > 0) {
-      const receiptHashes = presentTxs.map((t) => t.hash!).filter((h): h is string => !!h);
+      const receiptHashes = presentTxs.map((t) => t.hash).filter((h): h is string => !!h);
       const receipts = await driver.batchGetReceipts(receiptHashes);
 
       const withReceipt: Array<{ tx: TxSyncTxSnapshot; receipt: unknown }> = [];

@@ -4,13 +4,14 @@ import type { Database } from '@core/database';
 import type { Network } from '@core/database/models/Network';
 import TableName from '@core/database/TableName';
 import { CORE_IDENTIFIERS } from '@core/di';
+import { registerDefaultHardwareWallets } from '@core/hardware';
 import type { RuntimeModule } from '@core/runtime/types';
 import { registerServices } from '@core/services';
 import { VaultService } from '@core/services/vault';
 import { NetworkType } from '@core/types';
 import { injectable } from 'inversify';
 import type { CoreEventMap, EventBus, Subscription } from '../eventBus';
-import { CRYPTO_TOOL_MODULE_ID, DB_BOOTSTRAP_MODULE_ID, DB_MODULE_ID, EVENT_BUS_MODULE_ID, SERVICES_MODULE_ID } from '../ids';
+import { AUTH_MODULE_ID, CRYPTO_TOOL_MODULE_ID, DB_BOOTSTRAP_MODULE_ID, DB_MODULE_ID, EVENT_BUS_MODULE_ID, SERVICES_MODULE_ID } from '../ids';
 
 @injectable()
 class ServicesModuleState {
@@ -20,8 +21,12 @@ class ServicesModuleState {
 
 export const ServicesModule: RuntimeModule = {
   id: SERVICES_MODULE_ID,
-  dependencies: [DB_MODULE_ID, DB_BOOTSTRAP_MODULE_ID, CRYPTO_TOOL_MODULE_ID, EVENT_BUS_MODULE_ID],
-  register: ({ container }) => {
+  dependencies: [DB_MODULE_ID, DB_BOOTSTRAP_MODULE_ID, CRYPTO_TOOL_MODULE_ID, EVENT_BUS_MODULE_ID, AUTH_MODULE_ID],
+  register: ({ container, config }) => {
+    if (!container.isBound(CORE_IDENTIFIERS.CONFIG)) {
+      container.bind(CORE_IDENTIFIERS.CONFIG).toConstantValue(config);
+    }
+
     if (!container.isBound(ServicesModuleState)) {
       container.bind(ServicesModuleState).toSelf().inSingletonScope();
     }
@@ -36,6 +41,12 @@ export const ServicesModule: RuntimeModule = {
     const endpointManager = container.get(EndpointManager);
     const eventBus = container.get<EventBus<CoreEventMap>>(CORE_IDENTIFIERS.EVENT_BUS);
     const state = container.get(ServicesModuleState);
+
+    try {
+      registerDefaultHardwareWallets({ container, registerBSIM: true });
+    } catch (error) {
+      logger.warn('ServicesModule:register-default-hardware-wallets:failed', { error });
+    }
 
     const networks = await db.get<Network>(TableName.Network).query().fetch();
     if (networks.length === 0) return;

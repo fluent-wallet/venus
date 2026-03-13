@@ -16,10 +16,13 @@ export const PlaintextMessage = ({ data }: Props) => {
   if (Array.isArray(data)) {
     return (
       <View>
-        {data.map((item) => {
-          if (typeof item === 'object') return <PlaintextMessage data={item} />;
+        {data.map((item, index) => {
+          if (typeof item === 'object') {
+            return <PlaintextMessage key={`item-${index}`} data={item} />;
+          }
+
           return (
-            <Text style={{ color: colors.textPrimary }} key={item}>
+            <Text style={{ color: colors.textPrimary }} key={`item-${String(item)}-${index}`}>
               {item}
             </Text>
           );

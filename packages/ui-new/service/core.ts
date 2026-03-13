@@ -1,21 +1,38 @@
+import { CORE_IDENTIFIERS } from '@core/di';
+import { AssetsSyncService } from '@core/modules/assetsSync';
+import type { AuthService } from '@core/modules/auth';
+import type { CoreEventMap } from '@core/modules/eventBus';
+import type { ExternalRequestsService } from '@core/modules/externalRequests';
+import { NftSyncService } from '@core/modules/nftSync';
+import { WalletConnectService } from '@core/modules/walletConnect';
+import type { RuntimeConfig } from '@core/runtime/types';
 import {
+  AccountGroupService,
   AccountService,
+  AddressValidationService,
   AssetService,
   type IAccount,
+  type IAccountGroup,
+  type IActivityTransaction,
   type IAsset,
   type INetwork,
+  type INftCollection,
+  type INftItem,
   type ITransaction,
+  type ITransactionDetail,
   type IVault,
+  KeyValueStorageService,
   NetworkService,
+  NftService,
   type RecentlyAddress,
   SignatureRecordService,
+  SigningService,
   TransactionService,
+  UiPreferencesService,
   VaultService,
+  WalletMaintenanceService,
 } from '@core/services';
 import { HardwareWalletService } from '@core/services/hardware/HardwareWalletService';
-import { container as coreContainer } from '@core/WalletCore/configs';
-import type { EventBus } from '@core/WalletCore/Events/eventTypes';
-import { SERVICE_IDENTIFIER } from '@core/WalletCore/service';
 import { QueryClient } from '@tanstack/react-query';
 import type { Container } from 'inversify';
 
@@ -23,6 +40,10 @@ let uiServiceContainer: Container | null = null;
 let uiQueryClient: QueryClient | null = null;
 
 export type { IAccount, INetwork, IAsset, ITransaction, IVault, RecentlyAddress };
+export type { IAccountGroup };
+export type { INftCollection, INftItem };
+export type { IActivityTransaction, ITransactionDetail };
+export { VaultSourceType, VaultType } from '@core/types/vault';
 
 export function setUiServiceContainer(container: Container) {
   uiServiceContainer = container;
@@ -33,7 +54,11 @@ export function setUiQueryClient(client: QueryClient) {
 }
 
 function getContainer(): Container {
-  return uiServiceContainer ?? coreContainer;
+  if (!uiServiceContainer) {
+    throw new Error('UI runtime container is not initialized. RootProvider must call setUiServiceContainer() before rendering App.');
+  }
+
+  return uiServiceContainer;
 }
 
 const defaultQueryClient = new QueryClient({
@@ -48,6 +73,14 @@ export function getAccountService(): AccountService {
   return getContainer().get(AccountService);
 }
 
+export function getAccountGroupService(): AccountGroupService {
+  return getContainer().get(AccountGroupService);
+}
+
+export function getAddressValidationService(): AddressValidationService {
+  return getContainer().get(AddressValidationService);
+}
+
 export function getNetworkService(): NetworkService {
   return getContainer().get(NetworkService);
 }
@@ -56,8 +89,20 @@ export function getAssetService(): AssetService {
   return getContainer().get(AssetService);
 }
 
+export function getNftService(): NftService {
+  return getContainer().get(NftService);
+}
+
 export function getTransactionService(): TransactionService {
   return getContainer().get(TransactionService);
+}
+
+export function getAssetsSyncService(): AssetsSyncService {
+  return getContainer().get(AssetsSyncService);
+}
+
+export function getNftSyncService(): NftSyncService {
+  return getContainer().get(NftSyncService);
 }
 
 export function getVaultService(): VaultService {
@@ -72,6 +117,42 @@ export function getSignatureRecordService(): SignatureRecordService {
   return getContainer().get(SignatureRecordService);
 }
 
-export function getEventBus(): EventBus {
-  return getContainer().get<EventBus>(SERVICE_IDENTIFIER.EVENT_BUS);
+export function getSigningService(): SigningService {
+  return getContainer().get(SigningService);
+}
+
+export function getAuthService(): AuthService {
+  return getContainer().get<AuthService>(CORE_IDENTIFIERS.AUTH);
+}
+
+export function getExternalRequestsService(): ExternalRequestsService {
+  return getContainer().get<ExternalRequestsService>(CORE_IDENTIFIERS.EXTERNAL_REQUESTS);
+}
+
+export function getWalletConnectService(): WalletConnectService {
+  return getContainer().get(WalletConnectService);
+}
+
+export function getRuntimeConfig(): RuntimeConfig {
+  return getContainer().get<RuntimeConfig>(CORE_IDENTIFIERS.CONFIG);
+}
+
+export function getRuntimeEventBus(): import('@core/modules/eventBus').EventBus<CoreEventMap> {
+  return getContainer().get<import('@core/modules/eventBus').EventBus<CoreEventMap>>(CORE_IDENTIFIERS.EVENT_BUS);
+}
+
+export function getEventBus(): import('@core/modules/eventBus').EventBus<CoreEventMap> {
+  return getRuntimeEventBus();
+}
+
+export function getKeyValueStorageService(): KeyValueStorageService {
+  return getContainer().get(KeyValueStorageService);
+}
+
+export function getUiPreferencesService(): UiPreferencesService {
+  return getContainer().get(UiPreferencesService);
+}
+
+export function getWalletMaintenanceService(): WalletMaintenanceService {
+  return getContainer().get(WalletMaintenanceService);
 }

@@ -1,2 +1,3 @@
 export { AssetService } from './AssetService';
-export type { AddCustomTokenInput, IAsset } from './types';
+export { AssetDiscoveryRegistry } from './discovery/AssetDiscoveryRegistry';
+export type { AddCustomTokenInput, ContractAssetInspection, Erc20TokenInfo, IAsset } from './types';

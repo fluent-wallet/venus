@@ -2,7 +2,16 @@ import { NetworkType as CoreNetworkType } from '@core/utils/consts';
 import type { Block, Hex } from 'ox';
 import type { IChainRpc } from './rpc';
 import type { ISigner } from './signer';
-import type { FeeEstimate, SignedTransaction, TransactionParams, TxStatus, UnsignedTransaction } from './transaction';
+import type {
+  ConfluxFeeEstimate,
+  ConfluxUnsignedTransaction,
+  EvmFeeEstimate,
+  EvmUnsignedTransaction,
+  FeeEstimate,
+  SignedTransaction,
+  TransactionParams,
+  UnsignedTransaction,
+} from './transaction';
 
 export type ChainType = CoreNetworkType;
 export type Hex = Hex.Hex;
@@ -17,7 +26,7 @@ export interface ChainCallParams {
   data: Hex;
 }
 
-export interface IChainProvider {
+export interface IChainProvider<TUnsignedTransaction extends UnsignedTransaction = UnsignedTransaction, TFeeEstimate extends FeeEstimate = FeeEstimate> {
   readonly chainId: string;
   readonly networkType: ChainType;
   readonly rpc: IChainRpc;
@@ -25,9 +34,10 @@ export interface IChainProvider {
   deriveAddress(publicKey: Hex, params?: unknown): string;
   validateAddress(address: Address): boolean;
 
-  buildTransaction(params: TransactionParams): Promise<UnsignedTransaction>;
-  estimateFee(tx: UnsignedTransaction): Promise<FeeEstimate>;
-  signTransaction(tx: UnsignedTransaction, signer: ISigner, options?: { signal?: AbortSignal }): Promise<SignedTransaction>;
+  prepareUnsignedTransaction(tx: TUnsignedTransaction): Promise<TUnsignedTransaction>;
+  buildTransaction(params: TransactionParams): Promise<TUnsignedTransaction>;
+  estimateFee(tx: TUnsignedTransaction): Promise<TFeeEstimate>;
+  signTransaction(tx: TUnsignedTransaction, signer: ISigner, options?: { signal?: AbortSignal }): Promise<SignedTransaction<TUnsignedTransaction['chainType']>>;
   broadcastTransaction(signedTx: SignedTransaction): Promise<Hash>;
 
   getBalance(address: Address): Promise<Hex>;
@@ -38,15 +48,19 @@ export interface IChainProvider {
   verifyMessage(message: string, signature: string, address: Address): boolean;
 }
 
+export type AnyChainProvider = IChainProvider<any, any>;
+export type EvmChainProviderLike = IChainProvider<EvmUnsignedTransaction, EvmFeeEstimate>;
+export type ConfluxChainProviderLike = IChainProvider<ConfluxUnsignedTransaction, ConfluxFeeEstimate>;
+
 /**
  * Registry for chain providers.
  */
 export interface IChainRegistry {
-  register(provider: IChainProvider): void;
-  get(chainId: string, networkType?: ChainType): IChainProvider | undefined;
-  getByType(chainType: ChainType): IChainProvider[];
+  register(provider: AnyChainProvider): void;
+  get<TProvider extends AnyChainProvider = AnyChainProvider>(chainId: string, networkType?: ChainType): TProvider | undefined;
+  getByType<TProvider extends AnyChainProvider = AnyChainProvider>(chainType: ChainType): TProvider[];
   has(chainId: string, networkType?: ChainType): boolean;
-  getAll(): IChainProvider[];
+  getAll(): AnyChainProvider[];
 }
 
 export const NetworkType = CoreNetworkType;

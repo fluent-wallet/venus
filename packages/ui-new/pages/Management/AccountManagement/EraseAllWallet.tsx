@@ -1,5 +1,3 @@
-import { getAuthentication } from '@WalletCoreExtends/index';
-import { isAuthenticationCanceledError, isAuthenticationError } from '@WalletCoreExtends/Plugins/Authentication/errors';
 import {
   BottomSheetContent,
   BottomSheetFooter,
@@ -10,11 +8,13 @@ import {
 } from '@components/BottomSheet';
 import Button from '@components/Button';
 import Text from '@components/Text';
-import methods from '@core/WalletCore/Methods';
-import plugins from '@core/WalletCore/Plugins';
+import { AUTH_PASSWORD_REQUEST_CANCELED } from '@core/errors';
 import { useTheme } from '@react-navigation/native';
 import { type AccountManagementStackName, type StackScreenProps, WelcomeStackName } from '@router/configs';
+import { getAuthService, getWalletMaintenanceService } from '@service/core';
+import { useDisconnectAllWalletConnectSessions } from '@service/walletConnect';
 import { screenHeight } from '@utils/deviceInfo';
+import { getErrorCode } from '@utils/error';
 import type React from 'react';
 import { useCallback, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -30,18 +30,19 @@ const EraseAllWallet: React.FC<Props> = ({ navigation }) => {
   const { colors } = useTheme();
   const { t } = useTranslation();
   const bottomSheetRef = useRef<BottomSheetMethods>(null!);
+  const disconnectAllSessions = useDisconnectAllWalletConnectSessions();
 
   const handleDelete = useCallback(async () => {
     try {
-      await getAuthentication().getPassword();
+      await getAuthService().getPassword();
       bottomSheetRef.current?.close();
       navigation.navigate(WelcomeStackName);
-      await plugins.WalletConnect.removeAllSession();
+      await disconnectAllSessions();
       await new Promise((resolve) => setTimeout(resolve, 100));
-      await methods.clearAccountData();
+      await getWalletMaintenanceService().clearWalletData();
       await RNRestart.restart();
     } catch (err) {
-      if (isAuthenticationError(err) && isAuthenticationCanceledError(err)) {
+      if (getErrorCode(err) === AUTH_PASSWORD_REQUEST_CANCELED) {
         return;
       }
 
@@ -51,7 +52,7 @@ const EraseAllWallet: React.FC<Props> = ({ navigation }) => {
         type: 'warning',
       });
     }
-  }, []);
+  }, [disconnectAllSessions, navigation, t]);
 
   return (
     <BottomSheetRoute ref={bottomSheetRef} snapPoints={snapPoints}>

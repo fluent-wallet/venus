@@ -1,9 +1,9 @@
 import Checkbox from '@components/Checkbox';
 import Text from '@components/Text';
-import methods from '@core/WalletCore/Methods';
-import { type ChainType, type NetworkType, useCurrentNetwork, useNetworks } from '@core/WalletCore/Plugins/ReactInject';
+import { type ChainType, NetworkType } from '@core/utils/consts';
 import { BottomSheetFlatList } from '@gorhom/bottom-sheet';
 import { useTheme } from '@react-navigation/native';
+import { useCurrentNetwork, useNetworks, useSwitchNetwork } from '@service/network';
 import { toDataUrl } from '@utils/blockies';
 import { Image } from 'expo-image';
 import type React from 'react';
@@ -25,15 +25,22 @@ interface NetworkProp {
 }
 
 const Network: React.FC<
-  NetworkProp & { colors: ReturnType<typeof useTheme>['colors']; isCurrent: boolean; type: ListType; mode: 'dark' | 'light'; onSelect?: () => void }
-> = ({ id, netId, chainId, name, networkType, chainType, colors, isCurrent, type, mode, onSelect }) => {
+  NetworkProp & {
+    colors: ReturnType<typeof useTheme>['colors'];
+    isCurrent: boolean;
+    type: ListType;
+    mode: 'dark' | 'light';
+    onSelect?: () => void;
+    onSwitchNetwork: (networkId: string) => Promise<void>;
+  }
+> = ({ id, netId, chainId, name, networkType, chainType, colors, isCurrent, type, mode, onSelect, onSwitchNetwork }) => {
   return (
     <Pressable
       style={({ pressed }) => [styles.row, { backgroundColor: pressed ? colors.underlay : 'transparent' }]}
       disabled={type === 'selector' && isCurrent}
       onPress={() => {
         if (type === 'selector') {
-          methods.switchToNetwork(id);
+          onSwitchNetwork(id).catch(() => undefined);
           onSelect?.();
         }
       }}
@@ -51,20 +58,21 @@ const Network: React.FC<
 };
 
 const NetworksList: React.FC<{ type: ListType; onSelect?: () => void }> = ({ type, onSelect }) => {
-  const networks = useNetworks();
-  const currentNetwork = useCurrentNetwork();
+  const switchNetwork = useSwitchNetwork();
+  const { data: networks = [] } = useNetworks();
+  const { data: currentNetwork } = useCurrentNetwork();
 
   const { colors, mode } = useTheme();
   const ListComponent = useMemo(() => (type === 'selector' ? BottomSheetFlatList : FlatList), [type]);
 
-  if (!networks?.length) return null;
+  if (!networks.length) return null;
 
   const filteredNetwork = networks.filter(
     (n) =>
-      (n.netId === 1029 && n.networkType === 'Conflux') ||
-      (n.netId === 1 && n.networkType === 'Conflux') ||
-      (n.netId === 1030 && n.networkType === 'Ethereum') ||
-      (n.netId === 71 && n.networkType === 'Ethereum'),
+      (n.netId === 1029 && n.networkType === NetworkType.Conflux) ||
+      (n.netId === 1 && n.networkType === NetworkType.Conflux) ||
+      (n.netId === 1030 && n.networkType === NetworkType.Ethereum) ||
+      (n.netId === 71 && n.networkType === NetworkType.Ethereum),
   );
 
   return (
@@ -84,6 +92,7 @@ const NetworksList: React.FC<{ type: ListType; onSelect?: () => void }> = ({ typ
           isCurrent={currentNetwork?.id === item.id}
           mode={mode}
           onSelect={onSelect}
+          onSwitchNetwork={switchNetwork}
         />
       )}
     />

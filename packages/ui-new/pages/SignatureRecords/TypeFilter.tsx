@@ -1,6 +1,6 @@
 import FilterIcon from '@assets/icons/filter.svg';
 import Text from '@components/Text';
-import { SignatureFilterOption } from '@core/database/models/Signature/type';
+import { SignatureFilterOption } from '@core/services/signing/types';
 import { useTheme } from '@react-navigation/native';
 import type React from 'react';
 import { useCallback, useState } from 'react';
@@ -18,7 +18,7 @@ const TypeFilter: React.FC<{
 
   const handleLayout = useCallback(
     (event: LayoutChangeEvent) => {
-      event.target.measure((x: number, y: number, width: number, height: number, pageX: number, pageY: number) => {
+      event.target.measure((_x: number, _y: number, width: number, height: number, pageX: number, pageY: number) => {
         position.value = {
           top: pageY + height / 2,
           right: Dimensions.get('window').width - pageX - width,

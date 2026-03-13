@@ -1,17 +1,11 @@
 import { CORE_IDENTIFIERS } from '@core/di';
-import type { RuntimeContext, RuntimeModule } from '@core/runtime/types';
+import type { EventBusRuntimeConfig, RuntimeContext, RuntimeModule } from '@core/runtime/types';
 import { EVENT_BUS_MODULE_ID } from '../ids';
 import { InMemoryEventBus } from './EventBus';
 import type { CoreEventMap } from './eventMap';
 
-type EventBusRuntimeConfig = {
-  strictEmit?: boolean;
-  assertSerializable?: boolean;
-};
-
 const readEventBusConfig = (context: RuntimeContext): Required<EventBusRuntimeConfig> => {
-  const raw = (context.config as Record<string, unknown>).eventBus;
-  const cfg = (raw && typeof raw === 'object' ? (raw as Record<string, unknown>) : {}) as Record<string, unknown>;
+  const cfg = context.config.eventBus ?? {};
 
   const strictEmit = typeof cfg.strictEmit === 'boolean' ? cfg.strictEmit : false;
   const assertSerializable = typeof cfg.assertSerializable === 'boolean' ? cfg.assertSerializable : false;

@@ -1,15 +1,15 @@
 import 'reflect-metadata';
-import { createTestAccount, DEFAULT_ACCOUNTS_FIXTURE_BASE32, seedNetwork } from '@core/__tests__/fixtures';
-import { createMockHardwareWallet, createPassthroughTestCryptoTool, mockDatabase } from '@core/__tests__/mocks';
 import type { Database } from '@core/database';
 import type { Account } from '@core/database/models/Account';
 import type { AssetRule } from '@core/database/models/AssetRule';
 import type { Network } from '@core/database/models/Network';
-import VaultType from '@core/database/models/Vault/VaultType';
+import { VaultType } from '@core/database/models/Vault/VaultType';
 import TableName from '@core/database/TableName';
 import { CORE_IDENTIFIERS } from '@core/di';
 import { HARDWARE_WALLET_TYPES } from '@core/hardware/bsim/constants';
 import { HardwareWalletRegistry } from '@core/hardware/HardwareWalletRegistry';
+import { createTestAccount, DEFAULT_ACCOUNTS_FIXTURE_BASE32, seedNetwork } from '@core/testUtils/fixtures';
+import { createMockHardwareWallet, createPassthroughTestCryptoTool, mockDatabase } from '@core/testUtils/mocks';
 import { type ChainType, NetworkType } from '@core/types';
 import type { CryptoTool } from '@core/types/crypto';
 import { Container } from 'inversify';
@@ -32,6 +32,8 @@ describe('AccountService', () => {
     assetRule = seeded.assetRule;
 
     container.bind<Database>(CORE_IDENTIFIERS.DB).toConstantValue(database);
+    container.bind<CryptoTool>(CORE_IDENTIFIERS.CRYPTO_TOOL).toConstantValue(createPassthroughTestCryptoTool());
+    container.bind(CORE_IDENTIFIERS.AUTH).toConstantValue({ getPassword: async () => 'test-password' } as any);
     container.bind(HardwareWalletService).toConstantValue({
       syncDerivedAccounts: jest.fn(async () => undefined),
     } as unknown as HardwareWalletService);
@@ -221,6 +223,7 @@ describe('AccountService hardware accounts', () => {
 
     container.bind<Database>(CORE_IDENTIFIERS.DB).toConstantValue(database);
     container.bind(CORE_IDENTIFIERS.CRYPTO_TOOL).toConstantValue(createPassthroughTestCryptoTool());
+    container.bind(CORE_IDENTIFIERS.AUTH).toConstantValue({ getPassword: async () => 'test-password' } as any);
 
     registerServices(container);
 

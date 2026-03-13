@@ -5,8 +5,7 @@ import { BottomSheetContent, BottomSheetHeader, type BottomSheetMethods, BottomS
 import BSIMDeviceSelectSheet from '@components/BSIM/BSIMDeviceSelectSheet';
 import HourglassLoading from '@components/Loading/Hourglass';
 import Text from '@components/Text';
-import plugins from '@core/WalletCore/Plugins';
-import { useHasBSIMVaultCreated } from '@core/WalletCore/Plugins/ReactInject';
+import { HARDWARE_WALLET_TYPES } from '@core/hardware/bsim/constants';
 import useInAsync from '@hooks/useInAsync';
 import { styles as accountListStyles } from '@modules/AccountsList';
 import createVault from '@pages/InitWallet/createVaultWithRouterParams';
@@ -14,11 +13,13 @@ import { showNotFindBSIMCardMessage } from '@pages/WayToInitWallet';
 import ImportExistingWallet from '@pages/WayToInitWallet/ImportExistingWallet';
 import { useTheme } from '@react-navigation/native';
 import type { AccountManagementStackName, StackScreenProps } from '@router/configs';
+import { getHardwareWalletService, VaultType } from '@service/core';
+import { useVaults } from '@service/vault';
 import { OS, screenHeight } from '@utils/deviceInfo';
 import { handleBSIMHardwareUnavailable } from '@utils/handleBSIMHardwareUnavailable';
 import { Image } from 'expo-image';
 import type React from 'react';
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Platform, Pressable } from 'react-native';
 import { showMessage } from 'react-native-flash-message';
@@ -34,32 +35,43 @@ const AddAnotherWallet: React.FC<Props> = ({ navigation }) => {
   const importExistRef = useRef<BottomSheetMethods>(null!);
   const bsimDeviceSheetRef = useRef<BottomSheetMethods>(null!);
 
-  const hasBSIMVaultCreated = useHasBSIMVaultCreated();
+  const { data: vaults, isError: isVaultsError } = useVaults();
+  const hasBSIMVaultCreated = useMemo(() => {
+    if (isVaultsError) return false;
+    if (!vaults) return null;
+    return vaults.some((v) => v.type === VaultType.BSIM);
+  }, [isVaultsError, vaults]);
+
   const [bsimSheetOpen, setBsimSheetOpen] = useState(false);
 
-  const _handleConnectBSIMCard = useCallback(async () => {
-    try {
-      navigation.setOptions({ gestureEnabled: false });
-      await new Promise((resolve) => setTimeout(resolve, 20));
-      await plugins.BSIM.getBSIMVersion();
-      await new Promise((resolve) => setTimeout(resolve, 20));
-      if (await createVault({ type: 'connectBSIM' })) {
-        setTimeout(() => bottomSheetRef.current?.close(), 50);
-        showMessage({
-          message: t('account.add.another.BSIM.success'),
-          type: 'success',
-          duration: 1500,
-        });
+  const _handleConnectBSIMCard = useCallback(
+    async (bsimDeviceId?: string | unknown) => {
+      const deviceIdentifier = typeof bsimDeviceId === 'string' ? bsimDeviceId : undefined;
+      try {
+        navigation.setOptions({ gestureEnabled: false });
+        await new Promise((resolve) => setTimeout(resolve, 20));
+        await getHardwareWalletService().connectAndList(HARDWARE_WALLET_TYPES.BSIM, { deviceIdentifier });
+        await new Promise((resolve) => setTimeout(resolve, 20));
+
+        if (await createVault({ type: 'connectBSIM', bsimDeviceId: deviceIdentifier })) {
+          setTimeout(() => bottomSheetRef.current?.close(), 50);
+          showMessage({
+            message: t('account.add.another.BSIM.success'),
+            type: 'success',
+            duration: 1500,
+          });
+        }
+      } catch (error: any) {
+        if (handleBSIMHardwareUnavailable(error, navigation)) {
+          return;
+        }
+        showNotFindBSIMCardMessage();
+      } finally {
+        navigation.setOptions({ gestureEnabled: true });
       }
-    } catch (error: any) {
-      if (handleBSIMHardwareUnavailable(error, navigation)) {
-        return;
-      }
-      showNotFindBSIMCardMessage();
-    } finally {
-      navigation.setOptions({ gestureEnabled: false });
-    }
-  }, [navigation, t]);
+    },
+    [navigation, t],
+  );
   const { inAsync: inConnecting, execAsync: handleConnectBSIMCard } = useInAsync(_handleConnectBSIMCard);
 
   const _handleCreateNewHdWallet = useCallback(async () => {
@@ -73,7 +85,7 @@ const AddAnotherWallet: React.FC<Props> = ({ navigation }) => {
         duration: 1500,
       });
     }
-    navigation.setOptions({ gestureEnabled: false });
+    navigation.setOptions({ gestureEnabled: true });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
   const { inAsync: inCreating, execAsync: handleCreateNewHdWallet } = useInAsync(_handleCreateNewHdWallet);
@@ -92,7 +104,7 @@ const AddAnotherWallet: React.FC<Props> = ({ navigation }) => {
     } else if (res === undefined) {
       importExistRef.current?.close();
     }
-    navigation.setOptions({ gestureEnabled: false });
+    navigation.setOptions({ gestureEnabled: true });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
   const { inAsync: inImporting, execAsync: handleImportExistWallet } = useInAsync(_handleImportExistWallet);
@@ -114,11 +126,11 @@ const AddAnotherWallet: React.FC<Props> = ({ navigation }) => {
         <BottomSheetWrapper>
           <BottomSheetHeader title={t('account.action.add.title')} />
           <BottomSheetContent>
-            {!hasBSIMVaultCreated && (
+            {hasBSIMVaultCreated === false && (
               <Pressable
                 style={({ pressed }) => [accountListStyles.row, { marginTop: 16, backgroundColor: pressed ? colors.underlay : 'transparent' }]}
                 disabled={inAsync}
-                onPress={Platform.OS === 'ios' ? () => bsimDeviceSheetRef.current?.expand() : handleConnectBSIMCard}
+                onPress={Platform.OS === 'ios' ? () => bsimDeviceSheetRef.current?.expand() : () => handleConnectBSIMCard()}
                 testID="connectBSIMWallet"
               >
                 <Image style={accountListStyles.groupTypeImage} source={BSIMCardWallet} />

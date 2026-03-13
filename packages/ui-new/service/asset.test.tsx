@@ -99,9 +99,9 @@ describe('asset service hooks', () => {
     (useCurrentAddress as jest.Mock).mockReturnValue({ data: null });
     const { result } = renderHook(() => useAssetsOfCurrentAddress(), { wrapper });
 
-    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+    await waitFor(() => expect(result.current.fetchStatus).toBe('idle'));
     expect(service.getAssetsByAddress).not.toHaveBeenCalled();
-    expect(result.current.data).toEqual([]);
+    expect(result.current.data).toBeUndefined();
   });
 
   describe('error handling', () => {
