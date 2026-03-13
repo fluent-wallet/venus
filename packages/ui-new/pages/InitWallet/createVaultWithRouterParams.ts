@@ -5,7 +5,6 @@ import { getAccountRootKey } from '@service/account';
 import { getAccountGroupRootKey } from '@service/accountGroup';
 import { getAuthService, getQueryClient, getVaultService } from '@service/core';
 import { getVaultRootKey } from '@service/vault';
-import { getErrorCode } from '@utils/error';
 import { Mnemonic } from 'ethers';
 import { showMessage } from 'react-native-flash-message';
 
@@ -87,7 +86,7 @@ const createVaultWithRouterParams = async (args: RootStackParamList['Biometrics'
     invalidateWalletCaches();
     return true;
   } catch (error) {
-    if (getErrorCode(error) === AUTH_PASSWORD_REQUEST_CANCELED) {
+    if (error instanceof Error && 'code' in error && error.code === AUTH_PASSWORD_REQUEST_CANCELED) {
       return;
     }
 

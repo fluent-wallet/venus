@@ -42,9 +42,14 @@ const BackupStep2ViewSecret: React.FC<BackupScreenProps<typeof BackupStep2StackN
 
   const _handleClickView = useCallback(async () => {
     try {
-      await new Promise((resolve) => setTimeout(() => resolve(null!), 20));
-      if (!group) return;
-      const password = await getAuthService().getPassword();
+      const auth = getAuthService();
+      await new Promise<void>((resolve) => {
+        setTimeout(resolve, 20);
+      });
+      if (!group) {
+        return;
+      }
+      const password = await auth.getPassword();
       if (backupType === VaultType.HierarchicalDeterministic) {
         setSecretData(await getVaultService().getMnemonic(group.vaultId, password));
       } else {
@@ -123,7 +128,7 @@ const BackupStep2ViewSecret: React.FC<BackupScreenProps<typeof BackupStep2StackN
             <View style={styles.phraseContainer}>
               <View style={styles.phraseColumn}>
                 {phrases?.slice(0, 6).map((phrase, index) => (
-                  // biome-ignore lint/suspicious/noArrayIndexKey: <explanation>
+                  // biome-ignore lint/suspicious/noArrayIndexKey: phrase order is fixed for backup display.
                   <Text key={index} style={[styles.phrase, { color: colors.textPrimary, backgroundColor: colors.bgPrimary }]}>
                     {index + 1}. {phrase}
                   </Text>
@@ -131,7 +136,7 @@ const BackupStep2ViewSecret: React.FC<BackupScreenProps<typeof BackupStep2StackN
               </View>
               <View style={styles.phraseColumn}>
                 {phrases?.slice(6).map((phrase, index) => (
-                  // biome-ignore lint/suspicious/noArrayIndexKey: <explanation>
+                  // biome-ignore lint/suspicious/noArrayIndexKey: phrase order is fixed for backup display.
                   <Text key={index} style={[styles.phrase, { color: colors.textPrimary, backgroundColor: colors.bgPrimary }]}>
                     {index + 7}. {phrase}
                   </Text>

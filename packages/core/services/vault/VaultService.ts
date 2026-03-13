@@ -19,6 +19,7 @@ import { inject, injectable } from 'inversify';
 import { HardwareWalletService } from '../hardware/HardwareWalletService';
 import { VAULT_ACCOUNT_PREFIX, VAULT_DEFAULTS, VAULT_GROUP_LABEL } from './constants';
 import type { CreateBSIMVaultInput, CreateHDVaultInput, CreatePrivateKeyVaultInput, CreatePublicAddressVaultInput, IVault } from './types';
+import { verifyVaultPassword } from './verifyVaultPassword';
 
 @injectable()
 export class VaultService {
@@ -135,34 +136,7 @@ export class VaultService {
   }
 
   async verifyPassword(password: string): Promise<boolean> {
-    const vaults = await this.database.get<Vault>(TableName.Vault).query().fetch();
-    const candidates = vaults.filter((v) => (v.type === VaultType.HierarchicalDeterministic || v.type === VaultType.PrivateKey) && Boolean(v.data));
-    if (candidates.length > 0) {
-      for (const vault of candidates) {
-        try {
-          // try to decrypt
-          await this.cryptoTool.decrypt(vault.data!, password);
-          return true;
-        } catch {
-          // try next
-        }
-      }
-      return false;
-    }
-
-    // Legacy compatibility: BSIM vaults may store an encrypted marker ("BSIM Wallet") so password verification
-    // still works even when user only has BSIM vaults (no mnemonic/private key stored locally).
-    const bsimCandidates = vaults.filter((v) => v.type === VaultType.BSIM && Boolean(v.data));
-    for (const vault of bsimCandidates) {
-      try {
-        const marker = await this.cryptoTool.decrypt<string>(vault.data!, password);
-        if (marker === 'BSIM Wallet') return true;
-      } catch {
-        // try next
-      }
-    }
-
-    return false;
+    return verifyVaultPassword({ database: this.database, cryptoTool: this.cryptoTool, password });
   }
 
   /**

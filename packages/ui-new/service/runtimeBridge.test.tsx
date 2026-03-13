@@ -19,6 +19,7 @@ jest.mock('@react-navigation/native', () => ({
 const mockGetRuntimeEventBus = jest.fn();
 const mockGetAuthService = jest.fn();
 const mockGetExternalRequestsService = jest.fn();
+const mockGetBiometricVaultPassword = jest.fn();
 
 jest.mock('./core', () => ({
   getAccountService: jest.fn(() => ({ getCurrentAccount: jest.fn() })),
@@ -28,6 +29,10 @@ jest.mock('./core', () => ({
   getNetworkService: jest.fn(() => ({ getCurrentNetwork: jest.fn() })),
   getRuntimeEventBus: () => mockGetRuntimeEventBus(),
   getTransactionService: jest.fn(() => ({ isPendingTxsFull: jest.fn() })),
+}));
+
+jest.mock('./biometricVaultPasswordStore', () => ({
+  getBiometricVaultPassword: (params: { promptTitle: string }) => mockGetBiometricVaultPassword(params),
 }));
 
 describe('runtimeBridge', () => {
@@ -139,5 +144,41 @@ describe('runtimeBridge', () => {
     await waitFor(() => {
       expect(queryClient.getQueryData(getAssetsByAddressKey('addr_1'))).toEqual([mockAsset]);
     });
+  });
+
+  it('resolves biometrics requests without routing to password verify', async () => {
+    const queryClient = createTestQueryClient();
+    const wrapper = createWrapper(queryClient) as React.ComponentType<{ children: React.ReactNode }>;
+    const eventBus = new InMemoryEventBus<CoreEventMap>();
+    const auth = {
+      cancelPasswordRequest: jest.fn(),
+      resolvePassword: jest.fn(),
+      rejectPasswordRequest: jest.fn(),
+    };
+    const externalRequests = { getActiveRequests: jest.fn(() => []) };
+
+    mockGetRuntimeEventBus.mockReturnValue(eventBus);
+    mockGetAuthService.mockReturnValue(auth);
+    mockGetExternalRequestsService.mockReturnValue(externalRequests);
+    mockGetBiometricVaultPassword.mockResolvedValue('vault-password');
+
+    const navigation = {
+      canGoBack: jest.fn(() => false),
+      dispatch: jest.fn(),
+      getState: jest.fn(() => ({ routes: [] })),
+      navigate: jest.fn(),
+    } as Parameters<typeof useRuntimeEventBridge>[0];
+
+    renderHook(() => useRuntimeEventBridge(navigation), { wrapper });
+
+    act(() => {
+      eventBus.emit('auth/credential-requested', { requestId: 'auth_1', kind: 'biometrics' });
+    });
+
+    await waitFor(() => {
+      expect(auth.resolvePassword).toHaveBeenCalledWith({ requestId: 'auth_1', password: 'vault-password' });
+    });
+    expect(navigation.navigate).not.toHaveBeenCalledWith('PasswordVerify', expect.anything());
+    expect(auth.rejectPasswordRequest).not.toHaveBeenCalled();
   });
 });

@@ -17,6 +17,35 @@ const createScheduler = (): RuntimeScheduler => {
 };
 
 describe('AuthService', () => {
+  it('hydrates persisted credential kind before emitting requests', async () => {
+    const logger = createSilentLogger();
+    const eventBus = new InMemoryEventBus<CoreEventMap>({ logger });
+
+    const auth = new AuthService({
+      eventBus,
+      scheduler: createScheduler(),
+      now: () => 1_700_000_000_000,
+      logger,
+      defaultTimeoutMs: 10_000,
+      loadCredentialKind: async () => 'biometrics',
+    });
+
+    const requested: CoreEventMap['auth/credential-requested'][] = [];
+    eventBus.on('auth/credential-requested', (payload) => {
+      requested.push(payload);
+    });
+
+    await auth.hydrateCredentialKind();
+
+    const pending = auth.getPassword();
+
+    expect(requested).toHaveLength(1);
+    expect(requested[0].kind).toBe('biometrics');
+
+    auth.cancelPasswordRequest({ requestId: requested[0].requestId });
+    await expect(pending).rejects.toMatchObject({ code: AUTH_PASSWORD_REQUEST_CANCELED });
+  });
+
   it('queues requests and only activates one at a time', async () => {
     const now = 1_700_000_000_000;
 
@@ -147,5 +176,64 @@ describe('AuthService', () => {
     expect(requested).toHaveLength(1);
 
     jest.useRealTimers();
+  });
+
+  it('persists credential kind changes and delegates password verification', async () => {
+    const logger = createSilentLogger();
+    const eventBus = new InMemoryEventBus<CoreEventMap>({ logger });
+    const saveCredentialKind = jest.fn(async (_kind: 'password' | 'biometrics') => undefined);
+    const verifyPassword = jest.fn(async (password: string) => password === 'correct-password');
+
+    const auth = new AuthService({
+      eventBus,
+      scheduler: createScheduler(),
+      now: () => 1_700_000_000_000,
+      logger,
+      defaultTimeoutMs: 10_000,
+      saveCredentialKind,
+      verifyPassword,
+    });
+
+    await auth.setCredentialKind('biometrics');
+
+    expect(saveCredentialKind).toHaveBeenCalledWith('biometrics');
+    await expect(auth.verifyPassword('correct-password')).resolves.toBe(true);
+    await expect(auth.verifyPassword('wrong-password')).resolves.toBe(false);
+  });
+
+  it('does not update in-memory credential kind when persistence fails', async () => {
+    const logger = createSilentLogger();
+    const eventBus = new InMemoryEventBus<CoreEventMap>({ logger });
+    const saveCredentialKind = jest.fn(async () => {
+      throw new Error('write failed');
+    });
+
+    const auth = new AuthService({
+      eventBus,
+      scheduler: createScheduler(),
+      now: () => 1_700_000_000_000,
+      logger,
+      defaultTimeoutMs: 10_000,
+      initialCredentialKind: 'password',
+      saveCredentialKind,
+    });
+
+    await expect(auth.setCredentialKind('biometrics')).rejects.toThrow('write failed');
+    expect(auth.getCredentialKindValue()).toBe('password');
+  });
+
+  it('fails closed when password verifier is missing', async () => {
+    const logger = createSilentLogger();
+    const eventBus = new InMemoryEventBus<CoreEventMap>({ logger });
+
+    const auth = new AuthService({
+      eventBus,
+      scheduler: createScheduler(),
+      now: () => 1_700_000_000_000,
+      logger,
+      defaultTimeoutMs: 10_000,
+    });
+
+    await expect(auth.verifyPassword('any-password')).resolves.toBe(false);
   });
 });

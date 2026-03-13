@@ -5,6 +5,7 @@ import TextInput from '@components/TextInput';
 import useInAsync from '@hooks/useInAsync';
 import { CommonActions, useTheme } from '@react-navigation/native';
 import { HomeStackName, type PasswordWayStackName, type StackScreenProps } from '@router/configs';
+import { getAuthService } from '@service/core';
 import { isDev } from '@utils/getEnv';
 import type React from 'react';
 import { useCallback, useState } from 'react';
@@ -41,8 +42,11 @@ const PasswordWay: React.FC<StackScreenProps<typeof PasswordWayStackName>> = ({ 
   const _handleCreateVault = useCallback(async (data: FormData) => {
     try {
       navigation.setOptions({ gestureEnabled: false });
-      await new Promise((resolve) => setTimeout(() => resolve(null!), 20));
+      await new Promise<void>((resolve) => {
+        setTimeout(resolve, 20);
+      });
       if (await createVault(route.params, data.confirm)) {
+        await getAuthService().setCredentialKind('password');
         showMessage({ type: 'success', message: t('initWallet.msg.success') });
         navigation.navigate(HomeStackName);
         navigation.dispatch(CommonActions.reset({ index: 0, routes: [{ name: HomeStackName }] }));
@@ -55,7 +59,7 @@ const PasswordWay: React.FC<StackScreenProps<typeof PasswordWayStackName>> = ({ 
     } finally {
       navigation.setOptions({ gestureEnabled: true });
     }
-  }, []);
+  }, [navigation, route.params, t]);
 
   const { inAsync, execAsync: handleCreateVault } = useInAsync(_handleCreateVault);
 

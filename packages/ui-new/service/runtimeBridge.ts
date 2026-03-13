@@ -1,3 +1,4 @@
+import i18n from '@assets/i18n';
 import type { ExternalRequestSnapshot } from '@core/modules/externalRequests';
 import { parseEvmRpcTransactionRequest } from '@core/services/transaction';
 import { StackActions } from '@react-navigation/native';
@@ -16,6 +17,7 @@ import { getActiveRouteName } from '@utils/backToHome';
 import { useEffect, useRef } from 'react';
 import { getAccountRootKey, getCurrentAccountKey } from './account';
 import { getAssetRootKey, getAssetsByAddressKey } from './asset';
+import { getBiometricVaultPassword } from './biometricVaultPasswordStore';
 import {
   getAccountService,
   getAddressValidationService,
@@ -48,13 +50,18 @@ function isRuntimeWcSendTxRequest(req: RuntimeWcSessionRequest): req is RuntimeW
   return req.method === 'eth_sendTransaction';
 }
 
+function isBiometricPromptCanceled(error: unknown): boolean {
+  if (!(error instanceof Error)) return false;
+  return error.message.toLowerCase().includes('cancel');
+}
+
 export function useRuntimeEventBridge(navigation: StackNavigation) {
   const queryClient = useQueryClient();
   const eventBus = getRuntimeEventBus();
   const auth = getAuthService();
   const externalRequests = getExternalRequestsService();
 
-  const activePasswordRequestIdRef = useRef<string | null>(null);
+  const activeCredentialRequestIdRef = useRef<string | null>(null);
   const routedRequestIdsRef = useRef<Set<string>>(new Set());
   const MAX_ROUTED_REQUEST_IDS = 100;
 
@@ -99,13 +106,38 @@ export function useRuntimeEventBridge(navigation: StackNavigation) {
       void queryClient.invalidateQueries({ queryKey: getNftRootKey() });
     };
 
-    const handlePasswordRequested = (payload: { requestId: string; kind: 'password' | 'biometrics' }) => {
-      if (payload.kind !== 'password') return;
+    const clearActiveCredentialRequest = (requestId: string) => {
+      if (activeCredentialRequestIdRef.current === requestId) {
+        activeCredentialRequestIdRef.current = null;
+      }
+    };
 
-      // Keep the latest request id so we can cancel on unmount (navigation teardown).
-      activePasswordRequestIdRef.current = payload.requestId;
+    const handleBiometricCredentialRequested = async (requestId: string) => {
+      try {
+        const password = await getBiometricVaultPassword({ promptTitle: i18n.t('authentication.title') });
+        clearActiveCredentialRequest(requestId);
+        auth.resolvePassword({ requestId, password });
+      } catch (error) {
+        clearActiveCredentialRequest(requestId);
 
-      navigation.navigate(PasswordVerifyStackName, { requestId: payload.requestId });
+        if (isBiometricPromptCanceled(error)) {
+          auth.cancelPasswordRequest({ requestId });
+          return;
+        }
+
+        auth.rejectPasswordRequest({ requestId, error });
+      }
+    };
+
+    const handleCredentialRequested = (payload: { requestId: string; kind: 'password' | 'biometrics' }) => {
+      activeCredentialRequestIdRef.current = payload.requestId;
+
+      if (payload.kind === 'password') {
+        navigation.navigate(PasswordVerifyStackName, { requestId: payload.requestId });
+        return;
+      }
+
+      void handleBiometricCredentialRequested(payload.requestId);
     };
 
     const handleExternalRequest = (payload: { requestId: string; request: ExternalRequestSnapshot }) => {
@@ -226,7 +258,7 @@ export function useRuntimeEventBridge(navigation: StackNavigation) {
       eventBus.on('nft-sync/succeeded', invalidateNft),
       eventBus.on('nft-sync/failed', invalidateNft),
 
-      eventBus.on('auth/credential-requested', handlePasswordRequested),
+      eventBus.on('auth/credential-requested', handleCredentialRequested),
 
       eventBus.on('external-requests/requested', handleExternalRequest),
     ];
@@ -241,8 +273,8 @@ export function useRuntimeEventBridge(navigation: StackNavigation) {
     return () => {
       for (const sub of subs) sub.unsubscribe();
 
-      const active = activePasswordRequestIdRef.current;
-      activePasswordRequestIdRef.current = null;
+      const active = activeCredentialRequestIdRef.current;
+      activeCredentialRequestIdRef.current = null;
 
       if (active) {
         auth.cancelPasswordRequest({ requestId: active });

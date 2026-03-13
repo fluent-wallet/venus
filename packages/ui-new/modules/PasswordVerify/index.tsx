@@ -26,6 +26,8 @@ const PasswordVerify: React.FC<StackScreenProps<typeof PasswordVerifyStackName>>
   const { t } = useTranslation();
   const textInputRef = useRef<TextInputRef | null>(null);
   const bottomSheetRef = useRef<BottomSheetMethods | null>(null);
+  const completedRef = useRef(false);
+  const auth = getAuthService();
 
   const runtimeRequestId = useMemo(() => route.params?.requestId ?? undefined, [route.params?.requestId]);
 
@@ -33,11 +35,7 @@ const PasswordVerify: React.FC<StackScreenProps<typeof PasswordVerifyStackName>>
   const [password, setPassword] = useState(defaultPassword);
   const [error, setError] = useState('');
 
-  const handleCancel = useCallback(() => {
-    if (runtimeRequestId) {
-      getAuthService().cancelPasswordRequest({ requestId: runtimeRequestId });
-    }
-
+  const resetLocalState = useCallback(() => {
     setInVerify(false);
     setPassword(defaultPassword);
     setError('');
@@ -46,43 +44,74 @@ const PasswordVerify: React.FC<StackScreenProps<typeof PasswordVerifyStackName>>
         Keyboard.dismiss();
       }
     });
-  }, [runtimeRequestId]);
+  }, []);
+
+  const settleCancel = useCallback(() => {
+    if (completedRef.current) return false;
+
+    completedRef.current = true;
+    if (runtimeRequestId) {
+      auth.cancelPasswordRequest({ requestId: runtimeRequestId });
+    }
+
+    resetLocalState();
+    return true;
+  }, [auth, resetLocalState, runtimeRequestId]);
+
+  const settleResolve = useCallback(
+    (resolvedPassword: string) => {
+      if (!runtimeRequestId || completedRef.current) return false;
+
+      completedRef.current = true;
+      auth.resolvePassword({ requestId: runtimeRequestId, password: resolvedPassword });
+      resetLocalState();
+      return true;
+    },
+    [auth, resetLocalState, runtimeRequestId],
+  );
+
+  const handleCancel = useCallback(() => {
+    settleCancel();
+  }, [settleCancel]);
 
   const handleConfirm = useCallback(async () => {
     if (!runtimeRequestId) {
-      navigation.goBack();
+      if (bottomSheetRef.current) {
+        bottomSheetRef.current.close();
+      } else if (navigation.canGoBack()) {
+        navigation.goBack();
+      }
       return;
     }
 
     setInVerify(true);
     await new Promise((resolve) => setTimeout(resolve, 25));
 
-    if (navigation.canGoBack()) {
-      navigation.goBack();
+    const isCorrectPassword = await auth.verifyPassword(password);
+    if (!isCorrectPassword) {
+      setError('Wrong password.');
+      setInVerify(false);
+      return;
     }
-    bottomSheetRef.current?.close();
 
-    getAuthService().resolvePassword({ requestId: runtimeRequestId, password });
-
-    setPassword(defaultPassword);
-    setError('');
-    setTimeout(() => {
-      if (Keyboard.isVisible()) {
-        Keyboard.dismiss();
+    if (settleResolve(password)) {
+      if (bottomSheetRef.current) {
+        bottomSheetRef.current.close();
+      } else if (navigation.canGoBack()) {
+        navigation.goBack();
       }
-    });
-
-    setInVerify(false);
-  }, [navigation, password, runtimeRequestId]);
+    }
+  }, [auth, navigation, password, runtimeRequestId, settleResolve]);
 
   useEffect(() => {
+    completedRef.current = false;
     return () => {
       // Reject/cancel the request if the component is unmounted.
-      if (runtimeRequestId) {
-        getAuthService().cancelPasswordRequest({ requestId: runtimeRequestId });
+      if (runtimeRequestId && !completedRef.current) {
+        auth.cancelPasswordRequest({ requestId: runtimeRequestId });
       }
     };
-  }, [runtimeRequestId]);
+  }, [auth, runtimeRequestId]);
 
   return (
     <BottomSheetRoute ref={bottomSheetRef} snapPoints={snapPoints} onClose={handleCancel} onOpen={() => textInputRef.current?.focus()}>

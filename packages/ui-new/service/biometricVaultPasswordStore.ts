@@ -4,6 +4,9 @@ import * as Keychain from 'react-native-keychain';
 
 const KEYCHAIN_SERVICE = 'io.bimwallet';
 const KEYCHAIN_USERNAME = 'bim-wallet-user';
+const keychainResetOptions: Keychain.Options = {
+  service: KEYCHAIN_SERVICE,
+};
 
 const baseKeychainOptions: Keychain.Options = {
   service: KEYCHAIN_SERVICE,
@@ -15,15 +18,6 @@ function requirePasswordCryptoKey(): string {
   const key = getPasswordCryptoKey();
   if (typeof key === 'string' && key.length > 0) return key;
   throw new Error('PASSWORD_CRYPTO_KEY is missing (react-native-config).');
-}
-
-export async function hasBiometricVaultPasswordStored(): Promise<boolean> {
-  try {
-    const services = await Keychain.getAllGenericPasswordServices();
-    return services.includes(KEYCHAIN_SERVICE);
-  } catch {
-    return false;
-  }
 }
 
 export async function getBiometricVaultPassword(params: { promptTitle: string }): Promise<string> {
@@ -41,11 +35,7 @@ export async function getBiometricVaultPassword(params: { promptTitle: string })
   return tool.decrypt<string>(record.password, passwordCryptoKey);
 }
 
-export async function getOrCreateBiometricVaultPassword(params: { promptTitle: string }): Promise<string> {
-  if (await hasBiometricVaultPasswordStored()) {
-    return getBiometricVaultPassword(params);
-  }
-
+export async function createBiometricVaultPassword(params: { promptTitle: string }): Promise<void> {
   const tool = new CryptoToolServer();
   const passwordCryptoKey = requirePasswordCryptoKey();
 
@@ -57,6 +47,8 @@ export async function getOrCreateBiometricVaultPassword(params: { promptTitle: s
     ...baseKeychainOptions,
     authenticationPrompt: { title: params.promptTitle },
   });
+}
 
-  return vaultPassword;
+export async function resetBiometricVaultPassword(): Promise<void> {
+  await Keychain.resetGenericPassword(keychainResetOptions);
 }
