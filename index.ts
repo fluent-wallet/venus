@@ -8,7 +8,7 @@ import { AppRegistry, LogBox } from 'react-native';
 // import './packages/setup/getRandomValues';   the randomValues is polyfill for @walletconnect/react-native-compat
 
 import '@ethersproject/shims';
-import './packages/setup/ethers';
+import './packages/setup/shimPerf';
 import './packages/setup/polyfill';
 import Decimal from 'decimal.js';
 import { name as appName } from './app.json';

@@ -6,4 +6,4 @@ export {
   trimDerivationPath,
 } from './accountUtils';
 export { parseHex, parseUncompressedPublicKey } from './hexUtils';
-export { canonicalizeSignature, resolveRecoveryParam } from './signatureUtils';
+export { canonicalizeSignatureS, resolveRecoveryParam } from './signatureUtils';
