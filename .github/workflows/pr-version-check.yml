@@ -29,6 +29,8 @@ jobs:
         run: yarn install --immutable
 
       - name: Validate pending release plan
+        env:
+             YARN_CHANGESET_BASE_REFS: origin/${{ github.base_ref }}
         run: yarn version check
 
       - name: Apply deferred versions
