@@ -229,15 +229,30 @@ describe('VaultService', () => {
     await expect(service.getPrivateKey(vault.id, address.id, TEST_PASSWORD)).rejects.toThrow(/does not expose/i);
   });
 
-  it('detects duplicate secret imports by derived addresses', async () => {
+  it('deduplicates imports by secret value within the same vault type', async () => {
     await seedNetwork(database, { selected: true });
 
     await service.createHDVault({ mnemonic: FIXED_MNEMONIC, password: TEST_PASSWORD });
-    await expect(service.hasExistingSecretImport({ mnemonic: FIXED_MNEMONIC })).resolves.toBe(true);
+    await expect(service.hasExistingSecretImport({ mnemonic: FIXED_MNEMONIC, password: TEST_PASSWORD })).resolves.toBe(true);
 
     const privateKey = '0x0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef';
     await service.createPrivateKeyVault({ privateKey, password: TEST_PASSWORD });
-    await expect(service.hasExistingSecretImport({ privateKey })).resolves.toBe(true);
+    await expect(service.hasExistingSecretImport({ privateKey, password: TEST_PASSWORD })).resolves.toBe(true);
+  });
+
+  it('does not treat address overlap across vault types as a duplicate import', async () => {
+    const { network } = await seedNetwork(database, { selected: true });
+    const hdPath = await network.hdPath.fetch();
+
+    const firstHdAccount = await getNthAccountOfHDKey({
+      mnemonic: FIXED_MNEMONIC,
+      hdPath: hdPath.value,
+      nth: 0,
+    });
+
+    await service.createPrivateKeyVault({ privateKey: firstHdAccount.privateKey, password: TEST_PASSWORD });
+
+    await expect(service.hasExistingSecretImport({ mnemonic: FIXED_MNEMONIC, password: TEST_PASSWORD })).resolves.toBe(false);
   });
 
   it('verifies password against existing vault secrets', async () => {

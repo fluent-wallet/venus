@@ -50,7 +50,13 @@ const createVaultWithRouterParams = async (args: RootStackParamList['Biometrics'
       }
 
       const isMnemonic = Mnemonic.isValidMnemonic(value);
-      const hasSame = await vaultService.hasExistingSecretImport(isMnemonic ? { mnemonic: value } : { privateKey: value });
+      // Future direction:
+      // move duplicate detection to a Vault secret fingerprint so this check does not
+      // depend on decrypting stored secrets.
+      const resolvedPassword = await requirePassword();
+      const hasSame = await vaultService.hasExistingSecretImport(
+        isMnemonic ? { mnemonic: value, password: resolvedPassword } : { privateKey: value, password: resolvedPassword },
+      );
       if (hasSame) {
         showMessage({
           message: i18n.t('initWallet.error.exist', { type: isMnemonic ? i18n.t('common.seedPhrase') : i18n.t('common.privateKey') }),
@@ -59,7 +65,6 @@ const createVaultWithRouterParams = async (args: RootStackParamList['Biometrics'
         return;
       }
 
-      const resolvedPassword = await requirePassword();
       if (isMnemonic) {
         await vaultService.createHDVault({ mnemonic: value, password: resolvedPassword });
       } else {

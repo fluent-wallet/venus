@@ -39,27 +39,30 @@ const PasswordWay: React.FC<StackScreenProps<typeof PasswordWayStackName>> = ({ 
 
   const [confirm, setConfirm] = useState(isDev);
 
-  const _handleCreateVault = useCallback(async (data: FormData) => {
-    try {
-      navigation.setOptions({ gestureEnabled: false });
-      await new Promise<void>((resolve) => {
-        setTimeout(resolve, 20);
-      });
-      if (await createVault(route.params, data.confirm)) {
-        await getAuthService().setCredentialKind('password');
-        showMessage({ type: 'success', message: t('initWallet.msg.success') });
+  const _handleCreateVault = useCallback(
+    async (data: FormData) => {
+      try {
+        navigation.setOptions({ gestureEnabled: false });
+        await new Promise<void>((resolve) => {
+          setTimeout(resolve, 20);
+        });
+        if (await createVault(route.params, data.confirm)) {
+          await getAuthService().setCredentialKind('password');
+          showMessage({ type: 'success', message: t('initWallet.msg.success') });
+          navigation.navigate(HomeStackName);
+          navigation.dispatch(CommonActions.reset({ index: 0, routes: [{ name: HomeStackName }] }));
+        }
+      } catch (err) {
+        console.log('Init Wallet by password error: ', err);
+        showMessage({ type: 'failed', message: t('initWallet.msg.failed'), description: String(err) ?? '' });
         navigation.navigate(HomeStackName);
         navigation.dispatch(CommonActions.reset({ index: 0, routes: [{ name: HomeStackName }] }));
+      } finally {
+        navigation.setOptions({ gestureEnabled: true });
       }
-    } catch (err) {
-      console.log('Init Wallet by password error: ', err);
-      showMessage({ type: 'failed', message: t('initWallet.msg.failed'), description: String(err) ?? '' });
-      navigation.navigate(HomeStackName);
-      navigation.dispatch(CommonActions.reset({ index: 0, routes: [{ name: HomeStackName }] }));
-    } finally {
-      navigation.setOptions({ gestureEnabled: true });
-    }
-  }, [navigation, route.params, t]);
+    },
+    [navigation, route.params, t],
+  );
 
   const { inAsync, execAsync: handleCreateVault } = useInAsync(_handleCreateVault);
 

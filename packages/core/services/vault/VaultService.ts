@@ -13,8 +13,10 @@ import { NetworkType } from '@core/types';
 import type { CryptoTool } from '@core/types/crypto';
 import { fromPrivate, toChecksum } from '@core/utils/account';
 import { convertHexToBase32 } from '@core/utils/address';
+import { addHexPrefix, stripHexPrefix } from '@core/utils/base';
 import { generateMnemonic, getNthAccountOfHDKey } from '@core/utils/hdkey';
 import { Q } from '@nozbe/watermelondb';
+import { Mnemonic } from 'ethers';
 import { inject, injectable } from 'inversify';
 import { HardwareWalletService } from '../hardware/HardwareWalletService';
 import { VAULT_ACCOUNT_PREFIX, VAULT_DEFAULTS, VAULT_GROUP_LABEL } from './constants';
@@ -102,33 +104,53 @@ export class VaultService {
     );
   }
 
-  private async hasAddress(checksummedHex: string): Promise<boolean> {
-    const count = await this.database.get<Address>(TableName.Address).query(Q.where('hex', checksummedHex)).fetchCount();
-    return count > 0;
-  }
-
-  async hasExistingSecretImport(params: { mnemonic?: string; privateKey?: string }): Promise<boolean> {
+  // Future direction:
+  // consider storing a secret fingerprint on Vault so duplicate checks
+  // can avoid decrypting existing secrets and keep auth timing unchanged.
+  async hasExistingSecretImport(params: { mnemonic?: string; privateKey?: string; password: string }): Promise<boolean> {
     const mnemonic = params.mnemonic?.trim();
     const privateKey = params.privateKey?.trim();
+    const password = params.password;
 
     if (privateKey) {
-      const checksummed = toChecksum(fromPrivate(privateKey).address);
-      return this.hasAddress(checksummed);
+      const inputPrivateKeyHex = addHexPrefix(stripHexPrefix(privateKey).toLowerCase());
+      const privateKeyVaults = await this.database.get<Vault>(TableName.Vault).query(Q.where('type', VaultType.PrivateKey)).fetch();
+
+      for (const vault of privateKeyVaults) {
+        if (!vault.data) continue;
+
+        try {
+          const storedPrivateKey = await this.cryptoTool.decrypt<string>(vault.data, password);
+          const storedPrivateKeyHex = addHexPrefix(stripHexPrefix(storedPrivateKey.trim()).toLowerCase());
+          if (storedPrivateKeyHex === inputPrivateKeyHex) {
+            return true;
+          }
+        } catch {
+          // Skip unreadable records. Duplicate detection should not fail the whole import flow.
+        }
+      }
+
+      return false;
     }
 
     if (mnemonic) {
-      const networks = await this.fetchNetworks();
-      for (const network of networks) {
-        const hdPath = await network.hdPath.fetch();
-        const { hexAddress } = await getNthAccountOfHDKey({
-          mnemonic,
-          hdPath: hdPath.value,
-          nth: 0,
-        });
-        if (await this.hasAddress(toChecksum(hexAddress))) {
-          return true;
+      const inputMnemonicPhrase = Mnemonic.fromPhrase(mnemonic).phrase;
+      const hdVaults = await this.database.get<Vault>(TableName.Vault).query(Q.where('type', VaultType.HierarchicalDeterministic)).fetch();
+
+      for (const vault of hdVaults) {
+        if (!vault.data) continue;
+
+        try {
+          const storedMnemonic = await this.cryptoTool.decrypt<string>(vault.data, password);
+          const storedMnemonicPhrase = Mnemonic.fromPhrase(storedMnemonic).phrase;
+          if (storedMnemonicPhrase === inputMnemonicPhrase) {
+            return true;
+          }
+        } catch {
+          // Skip unreadable records. Duplicate detection should not fail the whole import flow.
         }
       }
+
       return false;
     }
 

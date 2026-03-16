@@ -1,6 +1,6 @@
+import { canonicalizeSecp256k1SignatureS } from '@core/utils/secp256k1';
 import type { Plugin } from '@core/WalletCore/Plugins';
 import type { ITxEvm } from '@core/WalletCore/Plugins/Transaction/types';
-import { Signature as NobleSignature, etc as secp256k1Utils } from '@noble/secp256k1';
 import { getAppEnv } from '@utils/getEnv';
 import {
   getAddress,
@@ -76,28 +76,11 @@ const ensureUncompressedPublicKey = (publicKey: string): string => {
   throw new BSIMError('1008', 'Unsupported public key format from BSIM.');
 };
 
-const normalizePublicKey = (publicKey: string): string => ensureHex(publicKey);
+const parsePublicKeyHex = (publicKey: string): string => ensureHex(publicKey);
 
-const toBytes32 = (value: string): Uint8Array => {
-  const hex = ensureHex(value).padStart(64, '0');
-  return secp256k1Utils.hexToBytes(hex);
-};
-
-// Normalize signature S value (EIP-2) and track whether we flipped it.
-const canonicalizeSignature = (r: string, s: string): { canonicalS: string; flipped: boolean } => {
-  const compact = new Uint8Array(64);
-  compact.set(toBytes32(r), 0);
-  compact.set(toBytes32(s), 32);
-
-  const original = NobleSignature.fromCompact(compact);
-  const normalized = original.normalizeS();
-  const flipped = normalized.s !== original.s;
-
-  const canonicalSBytes = normalized.toCompactRawBytes().slice(32);
-  return {
-    canonicalS: secp256k1Utils.bytesToHex(canonicalSBytes).toUpperCase(),
-    flipped,
-  };
+// EIP-2 requires the low-s representation for secp256k1 signatures.
+const canonicalizeSignatureS = (r: string, s: string): string => {
+  return canonicalizeSecp256k1SignatureS(ensureHex(r), ensureHex(s));
 };
 
 /**
@@ -105,34 +88,33 @@ const canonicalizeSignature = (r: string, s: string): { canonicalS: string; flip
  * (v) that still recreates the expected BSIM public key / address.
  */
 const resolveRecoveryParam = (digest: string, r: string, s: string, publicKey: string, address: string | undefined): { v: number; s: string } => {
-  const normalizedTarget = normalizePublicKey(publicKey);
+  const targetPublicKeyHex = parsePublicKeyHex(publicKey);
   const expectedAddress = address?.toLowerCase();
 
-  const { canonicalS, flipped } = canonicalizeSignature(r, s);
+  const canonicalS = canonicalizeSignatureS(r, s);
 
   const candidates = [0, 1] as const;
 
-  for (const rawCandidate of candidates) {
-    const parity = flipped ? rawCandidate ^ 1 : rawCandidate;
-    const normalizedV = parity + 27;
+  for (const parity of candidates) {
+    const v = parity + 27;
     try {
       const recovered = SigningKey.recoverPublicKey(digest, {
         r: addHexPrefix(r),
         s: addHexPrefix(canonicalS),
         v: parity,
       });
-      const normalizedRecovered = normalizePublicKey(recovered);
+      const recoveredPublicKeyHex = parsePublicKeyHex(recovered);
 
       // Check if recovered public key matches
-      if (normalizedRecovered === normalizedTarget) {
-        return { v: normalizedV, s: canonicalS };
+      if (recoveredPublicKeyHex === targetPublicKeyHex) {
+        return { v, s: canonicalS };
       }
 
       // Fallback: check if recovered address matches
       if (expectedAddress) {
-        const recoveredAddress = computeEthereumAddress(normalizedRecovered).toLowerCase();
+        const recoveredAddress = computeEthereumAddress(recoveredPublicKeyHex).toLowerCase();
         if (recoveredAddress === expectedAddress) {
-          return { v: normalizedV, s: canonicalS };
+          return { v, s: canonicalS };
         }
       }
     } catch (error) {

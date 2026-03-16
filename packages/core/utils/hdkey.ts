@@ -1,17 +1,29 @@
-import { entropyToMnemonic, HDNode } from '@ethersproject/hdnode';
+import { bytesToHex } from '@noble/hashes/utils.js';
+import { HDKey } from '@scure/bip32';
+import { entropyToMnemonic, mnemonicToSeedSync } from '@scure/bip39';
+import { wordlist as englishWordlist } from '@scure/bip39/wordlists/english.js';
 import { randomBytes } from 'ethers';
 import { memoize } from 'lodash-es';
+import { computeAddress } from './account';
 import { randomInt } from './base';
 
 const DEFAULT_HD_PATH = `m/44'/503'/0'/0`;
 
-export const generateMnemonic = () => entropyToMnemonic(randomBytes(16));
+type HDKeyWithDerivePath = HDKey & {
+  derivePath: (path: string) => HDKey;
+};
 
-export const defHDKey = memoize((mnemonic: string) => {
-  const hdnode = HDNode.fromMnemonic(mnemonic);
-  hdnode.derivePath = memoize(hdnode.derivePath);
-  return hdnode;
+export const generateMnemonic = () => entropyToMnemonic(randomBytes(16), englishWordlist);
+
+export const defHDKey = memoize((mnemonic: string): HDKeyWithDerivePath => {
+  const hdkey = HDKey.fromMasterSeed(mnemonicToSeedSync(mnemonic));
+  const derivePath = memoize((path: string) => hdkey.derive(path));
+  return Object.assign(hdkey, { derivePath });
 });
+
+const getAddressFromPublicKey = (publicKey: Uint8Array): string => {
+  return computeAddress(`0x${bytesToHex(publicKey)}`).toLowerCase();
+};
 
 function randomHDPathIndex() {
   return randomInt(0x80000000);
@@ -55,16 +67,22 @@ export const getNthAccountOfHDKey = async ({
     while (count <= nth) {
       paths[5] = `${idx++}`;
       const newNode = k.derivePath(paths.join('/'));
-      result.hexAddress = newNode.address.toLowerCase();
-      result.privateKey = newNode.privateKey;
+      if (!newNode.privateKey || !newNode.publicKey) {
+        throw new Error('Derived HD key does not contain a public/private key pair.');
+      }
+      result.privateKey = `0x${bytesToHex(newNode.privateKey)}`;
+      result.hexAddress = getAddressFromPublicKey(newNode.publicKey);
       if (result.hexAddress.startsWith('0x1')) count++;
     }
     result.index = idx - 1;
   } else {
     paths[5] = String(nth);
     const newNode = k.derivePath(paths.join('/'));
-    result.hexAddress = newNode.address.toLowerCase();
-    result.privateKey = newNode.privateKey;
+    if (!newNode.privateKey || !newNode.publicKey) {
+      throw new Error('Derived HD key does not contain a public/private key pair.');
+    }
+    result.privateKey = `0x${bytesToHex(newNode.privateKey)}`;
+    result.hexAddress = getAddressFromPublicKey(newNode.publicKey);
     result.index = nth;
   }
 
