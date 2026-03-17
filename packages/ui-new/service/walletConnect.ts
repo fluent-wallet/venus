@@ -3,7 +3,7 @@ import { type UseQueryResult, useQuery, useQueryClient } from '@tanstack/react-q
 import { useCallback } from 'react';
 import { getWalletConnectService } from './core';
 import { useCurrentNetwork } from './network';
-import { getWalletConnectRootKey } from './runtimeBridge';
+import { getWalletConnectRootKey } from './walletConnectKeys';
 
 export type WalletConnectSessionsQuery = UseQueryResult<WalletConnectSessionSnapshot[]>;
 

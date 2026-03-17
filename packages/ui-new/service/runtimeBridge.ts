@@ -33,8 +33,7 @@ import { getNetworkRootKey } from './network';
 import { getNftRootKey } from './nft';
 import { getSignatureRootKey } from './signature';
 import { getTransactionRootKey } from './transaction';
-
-export const getWalletConnectRootKey = () => ['walletConnect'] as const;
+import { getWalletConnectRootKey } from './walletConnectKeys';
 
 type RuntimeWcSessionRequest = Extract<ExternalRequestSnapshot, { provider: 'wallet-connect'; kind: 'session_request' }>;
 type RuntimeWcSignMessageRequest = RuntimeWcSessionRequest & {

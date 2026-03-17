@@ -2,6 +2,17 @@ import 'reflect-metadata';
 import type { Database } from '@core/database';
 import type { AccountGroup } from '@core/database/models/AccountGroup';
 import type { Address } from '@core/database/models/Address';
+import type { AddressBook } from '@core/database/models/AddressBook';
+import { AddressType } from '@core/database/models/AddressBook';
+import type { App } from '@core/database/models/App';
+import type { Permission } from '@core/database/models/Permission';
+import { Permissions } from '@core/database/models/Permission';
+import type { Signature } from '@core/database/models/Signature';
+import { SignType } from '@core/database/models/Signature/type';
+import type { Tx } from '@core/database/models/Tx';
+import { TxSource, TxStatus } from '@core/database/models/Tx/type';
+import type { TxExtra } from '@core/database/models/TxExtra';
+import type { TxPayload } from '@core/database/models/TxPayload';
 import { VaultType } from '@core/database/models/Vault/VaultType';
 import TableName from '@core/database/TableName';
 import { CORE_IDENTIFIERS } from '@core/di';
@@ -227,6 +238,113 @@ describe('VaultService', () => {
 
     const address = await fetchFirstAddress();
     await expect(service.getPrivateKey(vault.id, address.id, TEST_PASSWORD)).rejects.toThrow(/does not expose/i);
+  });
+
+  it('deletes vaults with related account records in a single batch', async () => {
+    await seedNetwork(database, { selected: true });
+
+    const vault = await service.createPublicAddressVault({ hexAddress: '0x50bb3047BA3E60Ca750728de9F737085F2Ac2aCD' });
+    const address = await fetchFirstAddressByGroup(vault.accountGroupId);
+    const account = await address.account.fetch();
+    const network = await address.network.fetch();
+
+    await database.write(async () => {
+      const app = await database.get<App>(TableName.App).create((record) => {
+        record.identity = 'wc:test';
+        record.origin = 'https://example.com';
+        record.name = 'Example';
+        record.icon = 'https://example.com/icon.png';
+      });
+
+      await database.get<Permission>(TableName.Permission).create((record) => {
+        record.type = Permissions.Accounts;
+        record.rule = '[]';
+        record.app.set(app);
+        record.network.set(network);
+        record.account.set(account);
+      });
+
+      const txPayload = await database.get<TxPayload>(TableName.TxPayload).create((record) => {
+        record.type = 'legacy';
+        record.accessList = null;
+        record.maxFeePerGas = null;
+        record.maxPriorityFeePerGas = null;
+        record.from = address.hex;
+        record.to = '0x0000000000000000000000000000000000000001';
+        record.gasPrice = '1';
+        record.gasLimit = '21000';
+        record.storageLimit = null;
+        record.data = '0x';
+        record.value = '1';
+        record.nonce = 0;
+        record.chainId = network.chainId;
+        record.epochHeight = null;
+      });
+
+      const txExtra = await database.get<TxExtra>(TableName.TxExtra).create((record) => {
+        record.ok = true;
+        record.contractCreation = false;
+        record.simple = true;
+        record.sendAction = null;
+        record.contractInteraction = false;
+        record.token20 = false;
+        record.tokenNft = false;
+        record.address = address.hex;
+        record.method = 'transfer';
+      });
+
+      const tx = await database.get<Tx>(TableName.Tx).create((record) => {
+        record.raw = null;
+        record.hash = '0xhash';
+        record.status = TxStatus.PENDING;
+        record.executedStatus = null;
+        record.receipt = null;
+        record.executedAt = null;
+        record.errorType = null;
+        record.err = null;
+        record.sendAt = new Date();
+        record.resendAt = null;
+        record.resendCount = 0;
+        record.pollingCount = 0;
+        record.confirmedNumber = 0;
+        record.isTempReplacedByInner = false;
+        record.source = TxSource.SELF;
+        record.method = 'transfer';
+        record.address.set(address);
+        record.txExtra.set(txExtra);
+        record.txPayload.set(txPayload);
+      });
+
+      await database.get<Signature>(TableName.Signature).create((record) => {
+        record.signType = SignType.TX;
+        record.message = '0x';
+        record.blockNumber = '0';
+        record.app.set(app);
+        record.address.set(address);
+        record.tx.set(tx);
+      });
+
+      await database.get<AddressBook>(TableName.AddressBook).create((record) => {
+        record.name = 'Friend';
+        record.addressValue = '0x0000000000000000000000000000000000000002';
+        record.type = AddressType.EOA;
+        record.account.set(address);
+        record.network.set(network);
+      });
+    });
+
+    await expect(service.deleteVault(vault.id)).resolves.toBeUndefined();
+
+    await expect(database.get(TableName.Vault).find(vault.id)).rejects.toThrow();
+    await expect(database.get(TableName.AccountGroup).find(vault.accountGroupId)).rejects.toThrow();
+    await expect(database.get(TableName.Account).query().fetch()).resolves.toHaveLength(0);
+    await expect(database.get(TableName.Address).query().fetch()).resolves.toHaveLength(0);
+    await expect(database.get(TableName.Permission).query().fetch()).resolves.toHaveLength(0);
+    await expect(database.get(TableName.Tx).query().fetch()).resolves.toHaveLength(0);
+    await expect(database.get(TableName.TxPayload).query().fetch()).resolves.toHaveLength(0);
+    await expect(database.get(TableName.TxExtra).query().fetch()).resolves.toHaveLength(0);
+    await expect(database.get(TableName.Signature).query().fetch()).resolves.toHaveLength(0);
+    await expect(database.get(TableName.AddressBook).query().fetch()).resolves.toHaveLength(0);
   });
 
   it('deduplicates imports by secret value within the same vault type', async () => {

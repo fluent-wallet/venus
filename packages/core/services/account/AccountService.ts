@@ -146,9 +146,11 @@ export class AccountService {
   }
 
   async setAccountHidden(accountId: string, hidden: boolean): Promise<IAccount> {
-    const account = await this.findAccountOrThrow(accountId);
-    await account.changeHidden(hidden);
-    return this.toInterface(account);
+    const [account] = await this.batchSetVisibility([{ accountId, hidden }]);
+    if (!account) {
+      throw new Error(`Account ${accountId} not found.`);
+    }
+    return account;
   }
 
   async createNextGroupAccount(accountGroupId: string): Promise<IAccount> {
@@ -210,6 +212,12 @@ export class AccountService {
       }
 
       const accountGroup = await account.accountGroup.fetch();
+      const vault = await accountGroup.vault.fetch();
+
+      if (nextHidden && vault.type !== VaultType.HierarchicalDeterministic && vault.type !== VaultType.BSIM) {
+        throw new Error('Accounts that are not part of a Group cannot be hidden.');
+      }
+
       let stats = groupStats.get(accountGroup.id);
       if (!stats) {
         stats = { initial: await accountGroup.visibleAccounts.count, delta: 0 };
