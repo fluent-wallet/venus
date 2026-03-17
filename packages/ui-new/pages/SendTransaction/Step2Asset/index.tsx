@@ -26,14 +26,15 @@ import { useCurrentNetwork } from '@service/network';
 import { useNftCollectionsOfAddress, useNftItems } from '@service/nft';
 import type { AssetInfo } from '@utils/assetInfo';
 import { toAssetInfo } from '@utils/toAssetInfo';
-import Decimal from 'decimal.js';
-import { debounce, escapeRegExp } from 'lodash-es';
+import { escapeRegExp } from 'lodash-es';
 import type React from 'react';
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Trans, useTranslation } from 'react-i18next';
 import { type NativeScrollEvent, type NativeSyntheticEvent, Pressable, StyleSheet, View } from 'react-native';
 import { showMessage } from 'react-native-flash-message';
 import SendTransactionBottomSheet from '../SendTransactionBottomSheet';
+
+const DETAIL_SKELETON_KEYS = ['detail-skeleton-1', 'detail-skeleton-2'] as const;
 
 function toNftAssetInfo(params: { collection: Pick<INftCollection, 'contractAddress' | 'type' | 'name' | 'symbol' | 'icon'>; item: INftItem }): AssetInfo {
   return {
@@ -47,13 +48,23 @@ function toNftAssetInfo(params: { collection: Pick<INftCollection, 'contractAddr
   };
 }
 
+function filterNftCollectionsBySearch(collections: INftCollection[], value: string): INftCollection[] {
+  const keyword = value.trim();
+  if (!keyword) return [];
+
+  const matcher = new RegExp(escapeRegExp(keyword), 'i');
+  return collections.filter((collection) =>
+    [collection.name, collection.symbol, collection.contractAddress].some((field) => (field ? matcher.test(String(field)) : false)),
+  );
+}
+
 const DetailSkeleton: React.FC = memo(() => {
   const { colors } = useTheme();
   return (
     <View style={{ marginVertical: 4, display: 'flex', flexDirection: 'row', flexWrap: 'wrap', paddingLeft: 56, paddingRight: 16, gap: 16 }}>
-      {Array.from({ length: 2 }).map((_, index) => (
+      {DETAIL_SKELETON_KEYS.map((key) => (
         <View
-          key={index}
+          key={key}
           style={{
             borderColor: colors.borderThird,
             borderWidth: 1,
@@ -121,7 +132,7 @@ interface Props {
 
 const SendTransactionStep2Asset: React.FC<Props> = ({ navigation, route, onConfirm, onClose, selectType = 'Send' }) => {
   const { colors } = useTheme();
-  const bottomSheetRef = useRef<BottomSheetMethods>(null!);
+  const bottomSheetRef = useRef<BottomSheetMethods | null>(null);
   const { t } = useTranslation();
 
   const { currentTab, setCurrentTab, sharedScrollY, handleScroll: _handleScroll, resetScrollY } = useTabsController('Tokens');
@@ -148,15 +159,17 @@ const SendTransactionStep2Asset: React.FC<Props> = ({ navigation, route, onConfi
   }>(() => ({ type: 'local', assets: [] }));
 
   const nftCollectionsQuery = useNftCollectionsOfAddress(currentAddressId);
+  const nftCollections = nftCollectionsQuery.data ?? [];
   const filteredNftCollections = useMemo(() => {
-    const value = searchAsset.trim();
-    if (!value) return [];
-    const re = new RegExp(escapeRegExp(value), 'i');
-    return (nftCollectionsQuery.data ?? []).filter((c) => [c.name, c.symbol, c.contractAddress].some((s) => (s ? re.test(String(s)) : false)));
-  }, [nftCollectionsQuery.data, searchAsset]);
+    return filterNftCollectionsBySearch(nftCollections, searchAsset);
+  }, [nftCollections, searchAsset]);
 
   const searchFilterAssets = useCallback(
-    debounce(async (value: string) => {
+    async (value: string, isCancelled: () => boolean) => {
+      if (!isCancelled()) {
+        setInFetchingRemote(false);
+      }
+
       const localAssets = assets
         ?.filter((asset) =>
           [asset.name, asset.symbol, asset.type === ASSET_TYPE.Native ? ASSET_TYPE.Native : asset.contractAddress].some((str) =>
@@ -166,45 +179,81 @@ const SendTransactionStep2Asset: React.FC<Props> = ({ navigation, route, onConfi
         .filter((asset) => !!asset.type)
         .filter((asset) => asset.type !== ASSET_TYPE.ERC1155 && asset.type !== ASSET_TYPE.ERC721)
         .map(toAssetInfo);
+
       if (localAssets && localAssets?.length > 0) {
-        setFilterAssets({ type: 'local', assets: localAssets });
-      } else {
-        try {
-          if (!currentNetwork || !currentAddressId) {
+        if (!isCancelled()) {
+          setFilterAssets({ type: 'local', assets: localAssets });
+        }
+        return;
+      }
+
+      const matchingNftCollections = filterNftCollectionsBySearch(nftCollections, value);
+      if (matchingNftCollections.length > 0) {
+        if (!isCancelled()) {
+          setFilterAssets({ type: 'local', assets: [] });
+        }
+        return;
+      }
+
+      try {
+        if (!currentNetwork || !currentAddressId) {
+          if (!isCancelled()) {
             setFilterAssets({ type: 'network-error', assets: [] });
+          }
+          return;
+        }
+
+        const valid = isValidAddress({
+          networkType: currentNetwork.networkType,
+          addressValue: value,
+        });
+
+        if (valid) {
+          if (!isCancelled()) {
+            setInFetchingRemote(true);
+          }
+          await new Promise((resolve) => setTimeout(resolve, 0));
+          if (isCancelled()) {
             return;
           }
-
-          const valid = isValidAddress({
-            networkType: currentNetwork.networkType,
-            addressValue: value!,
-          });
-
-          if (valid) {
-            setInFetchingRemote(true);
-            await new Promise((resolve) => setTimeout(() => resolve(null!)));
-            const created = await addCustomToken({ addressId: currentAddressId, contractAddress: value });
-            const assetInfo = toAssetInfo(created);
-            setFilterAssets({ type: 'remote', assets: [assetInfo] });
-          } else {
+          const created = await addCustomToken({ addressId: currentAddressId, contractAddress: value });
+          if (isCancelled()) {
+            return;
+          }
+          const assetInfo = toAssetInfo(created);
+          setFilterAssets({ type: 'remote', assets: [assetInfo] });
+        } else {
+          if (!isCancelled()) {
             setFilterAssets({ type: 'invalid-format', assets: [] });
           }
-        } catch (err) {
+        }
+      } catch (err) {
+        if (!isCancelled()) {
           if (String(err).includes('timed out')) {
             setFilterAssets({ type: 'network-error', assets: [] });
           } else {
             setFilterAssets({ type: 'invalid-ERC20', assets: [] });
           }
-        } finally {
+        }
+      } finally {
+        if (!isCancelled()) {
           setInFetchingRemote(false);
         }
       }
-    }, 200),
-    [assets, currentNetwork, currentAddressId, addCustomToken],
+    },
+    [assets, currentNetwork, currentAddressId, addCustomToken, nftCollections],
   );
 
   useEffect(() => {
-    searchFilterAssets(searchAsset);
+    let cancelled = false;
+    const timer = setTimeout(() => {
+      void searchFilterAssets(searchAsset, () => cancelled);
+    }, 200);
+
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+    };
   }, [searchFilterAssets, searchAsset]);
 
   const handleClickAsset = useCallback(
@@ -217,9 +266,9 @@ const SendTransactionStep2Asset: React.FC<Props> = ({ navigation, route, onConfi
           });
         }
         if (asset.type === ASSET_TYPE.ERC721) {
-          navigation.navigate(SendTransactionStep4StackName, { ...route!.params, asset, nftItemDetail, amount: '1' });
+          navigation.navigate(SendTransactionStep4StackName, { ...route?.params, asset, nftItemDetail, amount: '1' });
         } else {
-          navigation.navigate(SendTransactionStep3StackName, { ...route!.params, asset, nftItemDetail });
+          navigation.navigate(SendTransactionStep3StackName, { ...route?.params, asset, nftItemDetail });
         }
         return;
       }
