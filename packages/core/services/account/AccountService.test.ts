@@ -282,5 +282,6 @@ describe('AccountService hardware accounts', () => {
 
     const newOnes = all.filter((account) => account.index === 1 || account.index === 2);
     expect(newOnes.every((account) => account.selected === false)).toBe(true);
+    expect(newOnes.map((account) => account.nickname)).toEqual(['Account - 2', 'Account - 3']);
   });
 });

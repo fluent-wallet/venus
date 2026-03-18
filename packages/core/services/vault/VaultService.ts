@@ -24,6 +24,7 @@ import { generateMnemonic, getNthAccountOfHDKey } from '@core/utils/hdkey';
 import { type Model, Q } from '@nozbe/watermelondb';
 import { Mnemonic } from 'ethers';
 import { inject, injectable } from 'inversify';
+import { getGroupedAccountNickname } from '../account/naming';
 import { HardwareWalletService } from '../hardware/HardwareWalletService';
 import { VAULT_ACCOUNT_PREFIX, VAULT_DEFAULTS, VAULT_GROUP_LABEL } from './constants';
 import type { CreateBSIMVaultInput, CreateHDVaultInput, CreatePrivateKeyVaultInput, CreatePublicAddressVaultInput, DeleteVaultPlan, IVault } from './types';
@@ -194,7 +195,7 @@ export class VaultService {
 
     const accountGroup = this.createAccountGroupRecord(vaultRecord, VaultType.HierarchicalDeterministic, sameTypeCount);
 
-    const defaultNickname = `${VAULT_ACCOUNT_PREFIX[VaultType.HierarchicalDeterministic]} - 1`;
+    const defaultNickname = getGroupedAccountNickname(0);
     const account = this.createAccountRecord(accountGroup, input.accountNickname ?? defaultNickname, {
       index: 0,
       selected: isFirstVault,
@@ -304,7 +305,7 @@ export class VaultService {
     for (let idx = 0; idx < resolvedAccounts.length; idx += 1) {
       const { index, hexAddress } = resolvedAccounts[idx];
 
-      const nickname = `${VAULT_ACCOUNT_PREFIX[VaultType.BSIM]} - ${idx + 1}`;
+      const nickname = getGroupedAccountNickname(index);
       const account = this.createAccountRecord(accountGroup, nickname, {
         index,
         selected: isFirstVault && idx === 0,

@@ -189,9 +189,9 @@ describe('VaultService', () => {
     const sorted = [...accounts].sort((a, b) => a.index - b.index);
 
     expect(sorted).toHaveLength(2);
-    expect(sorted[0].nickname).toBe('BSIM Account - 1');
+    expect(sorted[0].nickname).toBe('Account - 1');
     expect(sorted[0].index).toBe(0);
-    expect(sorted[1].nickname).toBe('BSIM Account - 2');
+    expect(sorted[1].nickname).toBe('Account - 6');
     expect(sorted[1].index).toBe(5);
     expect(sorted[0].selected).toBe(true);
     expect(sorted[1].selected).toBe(false);
