@@ -1,5 +1,6 @@
 import { type ISignatureRecord, SignatureFilterOption } from '@core/services/signing/types';
-import { type InfiniteData, type UseInfiniteQueryResult, type UseQueryResult, useInfiniteQuery, useQuery } from '@tanstack/react-query';
+import { type InfiniteData, type UseInfiniteQueryResult, type UseQueryResult, useInfiniteQuery, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useRef } from 'react';
 import { useCurrentAddress } from './account';
 import { getSignatureRecordService } from './core';
 
@@ -75,14 +76,67 @@ export function useInfiniteSignatureRecordsOfAddress(
   options: { filter?: SignatureFilterOption; pageSize?: number } = {},
 ): InfiniteSignatureRecordsQuery {
   const service = getSignatureRecordService();
+  const queryClient = useQueryClient();
   const filter = options.filter ?? SignatureFilterOption.All;
   const pageSize = Math.max(1, options.pageSize ?? 20);
+  const countQueryKey = getSignatureRecordsCountKey(addressId || 'none', filter);
+  const snapshotScope = `${addressId || 'none'}:${filter}`;
+  const countSnapshotRef = useRef<{
+    scope: string;
+    initialCount: number | null;
+    latestCount: number | null;
+  }>({
+    scope: snapshotScope,
+    initialCount: null,
+    latestCount: null,
+  });
+
+  const countQuery = useQuery({
+    queryKey: countQueryKey,
+    queryFn: () => service.countRecords({ addressId, filter }),
+    enabled: !!addressId,
+  });
+
+  if (countSnapshotRef.current.scope !== snapshotScope) {
+    countSnapshotRef.current = {
+      scope: snapshotScope,
+      initialCount: null,
+      latestCount: null,
+    };
+  }
+
+  countSnapshotRef.current.latestCount = typeof countQuery.data === 'number' ? countQuery.data : null;
+  if (countSnapshotRef.current.latestCount !== null && countSnapshotRef.current.initialCount === null) {
+    countSnapshotRef.current.initialCount = countSnapshotRef.current.latestCount;
+  }
 
   return useInfiniteQuery({
     queryKey: getInfiniteSignatureRecordsKey(addressId || 'none', filter, pageSize),
-    queryFn: ({ pageParam }) => service.listRecords({ addressId, filter, limit: pageSize, offset: pageParam * pageSize }),
+    queryFn: ({ pageParam }) => {
+      const cachedCount = queryClient.getQueryData<number>(countQueryKey);
+      const currentCount = typeof cachedCount === 'number' ? cachedCount : countSnapshotRef.current.latestCount;
+      countSnapshotRef.current.latestCount = typeof currentCount === 'number' ? currentCount : null;
+      if (countSnapshotRef.current.latestCount !== null && countSnapshotRef.current.initialCount === null) {
+        countSnapshotRef.current.initialCount = countSnapshotRef.current.latestCount;
+      }
+
+      const snapshotCount = countSnapshotRef.current.initialCount;
+      const offsetCompensation = typeof currentCount === 'number' && typeof snapshotCount === 'number' ? Math.max(0, currentCount - snapshotCount) : 0;
+
+      return service.listRecords({
+        addressId,
+        filter,
+        limit: pageSize,
+        offset: offsetCompensation + pageParam * pageSize,
+      });
+    },
     initialPageParam: 0,
     getNextPageParam: (lastPage, _allPages, lastPageParam) => {
+      const snapshotCount = countSnapshotRef.current.initialCount;
+      if (typeof snapshotCount === 'number') {
+        return (lastPageParam + 1) * pageSize < snapshotCount ? lastPageParam + 1 : undefined;
+      }
+
       if (lastPage.length < pageSize) {
         return undefined;
       }
