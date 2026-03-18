@@ -147,4 +147,112 @@ describe('AssetService', () => {
       }),
     ).rejects.toThrow('Token already exists in this asset rule.');
   });
+
+  it('creates missing tracked ERC20 assets from discovery results and avoids duplicate inserts', async () => {
+    const { network: ethNetwork, assetRule } = await seedNetwork(database, {
+      definitionKey: 'Ethereum Sepolia',
+      selected: false,
+    });
+    const { address: ethAddress } = await createTestAccount(database, {
+      network: ethNetwork,
+      assetRule,
+      selected: false,
+    });
+
+    registry.register(
+      new StubChainProvider({
+        chainId: ethNetwork.chainId,
+        networkType: ethNetwork.networkType,
+      }),
+    );
+
+    const observedContract = '0x1111111111111111111111111111111111111111';
+    discoveryRegistry.discoverFungibleAssets.mockResolvedValue([
+      {
+        type: AssetType.Native,
+        contractAddress: null,
+        name: 'Ether',
+        symbol: 'ETH',
+        decimals: 18,
+        icon: null,
+        priceInUSDT: null,
+        balanceBaseUnits: '0',
+      },
+      {
+        type: AssetType.ERC20,
+        contractAddress: observedContract.toLowerCase(),
+        name: 'Observed Token',
+        symbol: 'OBS',
+        decimals: 18,
+        icon: 'observed-icon',
+        priceInUSDT: '1.23',
+        balanceBaseUnits: '42000000000000000000',
+      },
+    ]);
+
+    const firstAssets = await service.getAssetsByAddress(ethAddress.id);
+    const firstObserved = firstAssets.find((asset) => asset.contractAddress?.toLowerCase() === observedContract.toLowerCase());
+
+    expect(firstObserved).toBeDefined();
+    expect(firstObserved?.id.startsWith('discovered:')).toBe(false);
+    expect(firstObserved?.source).toBeNull();
+
+    const assetsAfterFirstRead = await assetRule.assets.fetch();
+    const storedAfterFirstRead = assetsAfterFirstRead.filter((asset) => asset.contractAddress?.toLowerCase() === observedContract.toLowerCase());
+
+    expect(storedAfterFirstRead).toHaveLength(1);
+    expect(storedAfterFirstRead[0].name).toBe('Observed Token');
+    expect(storedAfterFirstRead[0].symbol).toBe('OBS');
+    expect(storedAfterFirstRead[0].source).toBeNull();
+
+    const secondAssets = await service.getAssetsByAddress(ethAddress.id);
+    const secondObserved = secondAssets.find((asset) => asset.contractAddress?.toLowerCase() === observedContract.toLowerCase());
+    const assetsAfterSecondRead = await assetRule.assets.fetch();
+    const storedAfterSecondRead = assetsAfterSecondRead.filter((asset) => asset.contractAddress?.toLowerCase() === observedContract.toLowerCase());
+
+    expect(secondObserved?.id).toBe(firstObserved?.id);
+    expect(storedAfterSecondRead).toHaveLength(1);
+  });
+
+  it('does not create tracked ERC20 assets from zero-balance discovery results', async () => {
+    const { network: ethNetwork, assetRule } = await seedNetwork(database, {
+      definitionKey: 'Ethereum Sepolia',
+      selected: false,
+    });
+    const { address: ethAddress } = await createTestAccount(database, {
+      network: ethNetwork,
+      assetRule,
+      selected: false,
+    });
+
+    registry.register(
+      new StubChainProvider({
+        chainId: ethNetwork.chainId,
+        networkType: ethNetwork.networkType,
+      }),
+    );
+
+    const observedContract = '0x2222222222222222222222222222222222222222';
+    discoveryRegistry.discoverFungibleAssets.mockResolvedValue([
+      {
+        type: AssetType.ERC20,
+        contractAddress: observedContract,
+        name: 'Zero Token',
+        symbol: 'ZERO',
+        decimals: 18,
+        icon: null,
+        priceInUSDT: null,
+        balanceBaseUnits: '0',
+      },
+    ]);
+
+    const assets = await service.getAssetsByAddress(ethAddress.id);
+    const observed = assets.find((asset) => asset.contractAddress?.toLowerCase() === observedContract.toLowerCase());
+    const storedAssets = await assetRule.assets.fetch();
+    const stored = storedAssets.filter((asset) => asset.contractAddress?.toLowerCase() === observedContract.toLowerCase());
+
+    expect(observed).toBeDefined();
+    expect(observed?.id.startsWith('discovered:')).toBe(true);
+    expect(stored).toHaveLength(0);
+  });
 });

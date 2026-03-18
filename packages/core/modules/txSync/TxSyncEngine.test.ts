@@ -84,6 +84,7 @@ const createCfxProvider = (state: {
   blockByHash: Record<string, any | null>;
   latestConfirmed: () => number;
   latestFinalized: () => number;
+  epochNumber?: () => number;
 }): { networkType: NetworkType; rpc: RpcStub } => {
   const request = jest.fn(async (method: string, params?: any[]) => {
     if (method === 'cfx_getNextNonce') {
@@ -96,6 +97,10 @@ const createCfxProvider = (state: {
 
     if (method === 'cfx_getStatus') {
       return { latestConfirmed: hex(state.latestConfirmed()), latestFinalized: hex(state.latestFinalized()) };
+    }
+
+    if (method === 'cfx_epochNumber') {
+      return hex(state.epochNumber ? state.epochNumber() : state.latestConfirmed());
     }
 
     if (method === 'cfx_sendRawTransaction') return '0xsent';
@@ -265,6 +270,75 @@ describe('TxSyncEngine', () => {
     expect(patch.status).toBe(TxStatus.PENDING);
     expect(patch.resendCount).toBe(1);
     expect(provider.rpc.request).toHaveBeenCalledWith('eth_sendRawTransaction', ['0xraw']);
+  });
+
+  it('CFX: missing tx + stale epochHeight -> DISCARDED without resend', async () => {
+    const engine = new TxSyncEngine();
+
+    const provider = createCfxProvider({
+      counts: { pending: 1, latestState: 1, latestFinalized: 1 },
+      presenceByHash: { '0xmissing': null },
+      receiptByHash: {},
+      blockByHash: {},
+      latestConfirmed: () => 0,
+      latestFinalized: () => 0,
+      epochNumber: () => 100_001,
+    });
+
+    const txs = [
+      {
+        txId: 't1',
+        status: TxStatus.PENDING,
+        nonce: 1,
+        hash: '0xmissing',
+        raw: '0xraw',
+        epochHeight: '0x0',
+        resendCount: 0,
+        createdAtMs: now(),
+      },
+    ];
+
+    const r = await engine.run({ txs, provider: provider as any, addressValue: 'cfx:addr', now, maxResendCount: Number.POSITIVE_INFINITY });
+
+    const patch = r.patches.find((p) => p.txId === 't1')?.set ?? {};
+    expect(patch.status).toBe(TxStatus.DISCARDED);
+
+    const sendCalls = provider.rpc.request.mock.calls.filter((call) => call[0] === 'cfx_sendRawTransaction');
+    expect(sendCalls).toHaveLength(0);
+  });
+
+  it('CFX: missing tx + valid epochHeight -> resend and increment count', async () => {
+    const engine = new TxSyncEngine();
+
+    const provider = createCfxProvider({
+      counts: { pending: 1, latestState: 1, latestFinalized: 1 },
+      presenceByHash: { '0xmissing': null },
+      receiptByHash: {},
+      blockByHash: {},
+      latestConfirmed: () => 0,
+      latestFinalized: () => 0,
+      epochNumber: () => 100,
+    });
+
+    const txs = [
+      {
+        txId: 't1',
+        status: TxStatus.PENDING,
+        nonce: 1,
+        hash: '0xmissing',
+        raw: '0xraw',
+        epochHeight: '0x64',
+        resendCount: 0,
+        createdAtMs: now(),
+      },
+    ];
+
+    const r = await engine.run({ txs, provider: provider as any, addressValue: 'cfx:addr', now, maxResendCount: Number.POSITIVE_INFINITY });
+
+    const patch = r.patches.find((p) => p.txId === 't1')?.set ?? {};
+    expect(patch.status).toBe(TxStatus.PENDING);
+    expect(patch.resendCount).toBe(1);
+    expect(provider.rpc.request).toHaveBeenCalledWith('cfx_sendRawTransaction', ['0xraw']);
   });
 
   it('EVM: receipt missing + nonceUsed temp -> TEMP_REPLACED; finalized -> REPLACED', async () => {

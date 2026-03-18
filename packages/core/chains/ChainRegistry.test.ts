@@ -99,6 +99,7 @@ const stubProvider = (overrides: Partial<IChainProvider> & { chainId?: string; n
     signMessage: overrides.signMessage ?? (async () => '0x'),
     verifyMessage: overrides.verifyMessage ?? (() => true),
     call: overrides.call ?? (async () => '0x'),
+    batchCall: overrides.batchCall ?? (async () => []),
   };
 };
 

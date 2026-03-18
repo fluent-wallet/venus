@@ -220,6 +220,7 @@ export interface EstimateDappTransactionInput {
 export interface SendDappTransactionInput {
   addressId: string;
   request: EvmRpcTransactionRequest;
+  app?: { identity: string; origin?: string; name?: string; icon?: string } | null;
   signal?: AbortSignal;
 }
 

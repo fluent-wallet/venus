@@ -17,6 +17,7 @@ import { getNthAccountOfHDKey } from '@core/utils/hdkey';
 import { Q } from '@nozbe/watermelondb';
 import { inject, injectable, optional } from 'inversify';
 import { HardwareWalletService } from '../hardware/HardwareWalletService';
+import { getGroupedAccountNickname } from './naming';
 import type { IAccount } from './types';
 
 @injectable()
@@ -146,9 +147,11 @@ export class AccountService {
   }
 
   async setAccountHidden(accountId: string, hidden: boolean): Promise<IAccount> {
-    const account = await this.findAccountOrThrow(accountId);
-    await account.changeHidden(hidden);
-    return this.toInterface(account);
+    const [account] = await this.batchSetVisibility([{ accountId, hidden }]);
+    if (!account) {
+      throw new Error(`Account ${accountId} not found.`);
+    }
+    return account;
   }
 
   async createNextGroupAccount(accountGroupId: string): Promise<IAccount> {
@@ -210,6 +213,12 @@ export class AccountService {
       }
 
       const accountGroup = await account.accountGroup.fetch();
+      const vault = await accountGroup.vault.fetch();
+
+      if (nextHidden && vault.type !== VaultType.HierarchicalDeterministic && vault.type !== VaultType.BSIM) {
+        throw new Error('Accounts that are not part of a Group cannot be hidden.');
+      }
+
       let stats = groupStats.get(accountGroup.id);
       if (!stats) {
         stats = { initial: await accountGroup.visibleAccounts.count, delta: 0 };
@@ -266,7 +275,7 @@ export class AccountService {
     const preparedAddresses: Address[] = [];
 
     for (const index of toCreate) {
-      const nickname = `Account - ${index + 1}`;
+      const nickname = getGroupedAccountNickname(index);
       const account = this.database.get<Account>(TableName.Account).prepareCreate((record) => {
         record.nickname = nickname;
         record.index = index;
@@ -328,7 +337,7 @@ export class AccountService {
       const address = byIndex.get(index);
       if (!address) throw new Error(`Failed to derive BSIM address for index ${index}.`);
 
-      const nickname = `BSIM Account - ${index + 1}`;
+      const nickname = getGroupedAccountNickname(index);
       const account = this.database.get<Account>(TableName.Account).prepareCreate((record) => {
         record.nickname = nickname;
         record.index = index;
@@ -389,7 +398,7 @@ export class AccountService {
         if (mnemonic === '') throw new Error('Mnemonic is required to create HD accounts.');
 
         for (const index of toCreate) {
-          const nickname = `Account - ${index + 1}`;
+          const nickname = getGroupedAccountNickname(index);
           const account = this.database.get<Account>(TableName.Account).prepareCreate((record) => {
             record.nickname = nickname;
             record.index = index;
@@ -414,7 +423,7 @@ export class AccountService {
           const address = derivedByIndex.get(index);
           if (!address) throw new Error(`Failed to derive BSIM address for index ${index}.`);
 
-          const nickname = `BSIM Account - ${index + 1}`;
+          const nickname = getGroupedAccountNickname(index);
           const account = this.database.get<Account>(TableName.Account).prepareCreate((record) => {
             record.nickname = nickname;
             record.index = index;

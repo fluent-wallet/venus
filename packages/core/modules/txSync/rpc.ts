@@ -13,5 +13,6 @@ export const CFX_RPC = {
   getBlockByHash: 'cfx_getBlockByHash',
   getStatus: 'cfx_getStatus',
   getNextNonce: 'cfx_getNextNonce',
+  epochNumber: 'cfx_epochNumber',
   sendRawTransaction: 'cfx_sendRawTransaction',
 } as const;

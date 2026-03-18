@@ -165,6 +165,21 @@ describe('AccountService', () => {
     expect(record.hidden).toBe(true);
   });
 
+  it('rejects hiding accounts that are not part of a grouped vault', async () => {
+    const { account } = await createTestAccount(database, {
+      hidden: false,
+      selected: false,
+      network,
+      assetRule,
+      vaultType: VaultType.PrivateKey,
+    });
+
+    await expect(service.setAccountHidden(account.id, true)).rejects.toThrow('Accounts that are not part of a Group cannot be hidden.');
+    await expect(service.batchSetVisibility([{ accountId: account.id, hidden: true }])).rejects.toThrow(
+      'Accounts that are not part of a Group cannot be hidden.',
+    );
+  });
+
   it('batch updates account visibility', async () => {
     const first = await createTestAccount(database, { nickname: 'A', hidden: false, network, assetRule });
 
@@ -267,5 +282,6 @@ describe('AccountService hardware accounts', () => {
 
     const newOnes = all.filter((account) => account.index === 1 || account.index === 2);
     expect(newOnes.every((account) => account.selected === false)).toBe(true);
+    expect(newOnes.map((account) => account.nickname)).toEqual(['Account - 2', 'Account - 3']);
   });
 });

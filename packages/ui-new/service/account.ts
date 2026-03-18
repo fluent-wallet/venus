@@ -1,7 +1,9 @@
-import { type UseQueryResult, useQuery, useQueryClient } from '@tanstack/react-query';
+import { type UseQueryResult, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useCallback } from 'react';
-import { getAccountGroupRootKey } from './accountGroup';
-import { getAccountService, type IAccount } from './core';
+import { getAccountGroupRootKey } from './accountGroupKeys';
+import { getAccountGroupService, getAccountService, getAuthService, getVaultService, type IAccount } from './core';
+import { getVaultRootKey } from './vaultKeys';
+import { useDisconnectWalletConnectSessionsByAddresses } from './walletConnect';
 
 export type AccountQuery = UseQueryResult<IAccount | null>;
 export type AccountsQuery = UseQueryResult<IAccount[]>;
@@ -17,6 +19,27 @@ export const getCurrentAccountKey = () => ['account', 'current'] as const;
 export const getAccountListKey = (includeHidden = false) => ['account', 'list', includeHidden] as const;
 export const getAccountGroupKey = (groupId: string, includeHidden = false) => ['account', 'group', groupId, includeHidden] as const;
 export const getAccountByIdKey = (accountId: string) => ['account', 'byId', accountId] as const;
+
+type RemoveAccountMutationResult = {
+  disconnectAddresses: string[];
+  shouldInvalidateVault: boolean;
+};
+
+function getUniqueAddresses(addresses: Array<string | null | undefined>): string[] {
+  return Array.from(new Set(addresses.filter((address): address is string => typeof address === 'string' && address.length > 0)));
+}
+
+async function tryDisconnectSessions(disconnectByAddresses: (addresses: string[]) => Promise<unknown>, addresses: string[]): Promise<void> {
+  if (!addresses.length) {
+    return;
+  }
+
+  try {
+    await disconnectByAddresses(addresses);
+  } catch (error) {
+    console.warn('[service/account] Failed to disconnect WalletConnect sessions after account removal.', error);
+  }
+}
 
 function updateSelectedAccountSnapshot(data: IAccount | IAccount[] | null | undefined, accountId: string): IAccount | IAccount[] | null | undefined {
   if (Array.isArray(data)) {
@@ -163,22 +186,60 @@ export function useUpdateAccountNickname() {
 }
 
 /**
- * Toggle account visibility and refresh account queries.
- * @example
- * const setHidden = useSetAccountHidden();
- * await setHidden('acc_1', true);
+ * Remove an account through the service layer and refresh dependent caches.
+ * Grouped vault accounts are hidden because HD/BSIM groups manage a visible account set by index.
+ * Standalone vault accounts remove the whole backing vault.
  */
-
-export function useSetAccountHidden() {
-  const service = getAccountService();
+export function useRemoveAccount() {
+  const accountService = getAccountService();
+  const accountGroupService = getAccountGroupService();
+  const vaultService = getVaultService();
+  const disconnectByAddresses = useDisconnectWalletConnectSessionsByAddresses();
   const queryClient = useQueryClient();
-  return useCallback(
-    async (accountId: string, hidden: boolean) => {
-      await service.setAccountHidden(accountId, hidden);
-      await queryClient.invalidateQueries({ queryKey: getAccountRootKey() });
+  return useMutation({
+    mutationFn: async (accountId: string): Promise<RemoveAccountMutationResult> => {
+      const account = await accountService.getAccountById(accountId);
+      if (!account) {
+        throw new Error(`Account ${accountId} not found.`);
+      }
+      if (account.selected) {
+        throw new Error('Selected account cannot be removed.');
+      }
+
+      const accountGroup = await accountGroupService.getGroup(account.accountGroupId, { includeHidden: true });
+      if (!accountGroup) {
+        throw new Error(`AccountGroup ${account.accountGroupId} not found.`);
+      }
+
+      if (accountGroup.isGroup) {
+        await accountService.setAccountHidden(account.id, true);
+        return {
+          disconnectAddresses: getUniqueAddresses([account.address]),
+          shouldInvalidateVault: false,
+        };
+      }
+
+      await getAuthService().getPassword();
+      await vaultService.deleteVault(accountGroup.vaultId);
+      return {
+        disconnectAddresses: getUniqueAddresses([account.address]),
+        shouldInvalidateVault: true,
+      };
     },
-    [service, queryClient],
-  );
+    onSuccess: async (result) => {
+      const invalidations = [
+        queryClient.invalidateQueries({ queryKey: getAccountRootKey() }),
+        queryClient.invalidateQueries({ queryKey: getAccountGroupRootKey() }),
+      ];
+
+      if (result.shouldInvalidateVault) {
+        invalidations.push(queryClient.invalidateQueries({ queryKey: getVaultRootKey() }));
+      }
+
+      await Promise.all(invalidations);
+      await tryDisconnectSessions(disconnectByAddresses, result.disconnectAddresses);
+    },
+  });
 }
 
 /**

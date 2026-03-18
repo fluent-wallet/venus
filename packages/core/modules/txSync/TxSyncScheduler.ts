@@ -452,20 +452,18 @@ export class TxSyncScheduler {
     const now = this.now();
     let best: ReadyCandidate | null = null;
 
-    const consider = (candidate: ReadyCandidate | null) => {
-      if (!candidate) return;
-      if (candidate.nextAtMs > now) return;
-
-      if (!best || this.compareReadyCandidates(candidate, best) < 0) {
-        best = candidate;
-      }
+    const consider = (currentBest: ReadyCandidate | null, candidate: ReadyCandidate | null): ReadyCandidate | null => {
+      if (!candidate) return currentBest;
+      if (candidate.nextAtMs > now) return currentBest;
+      if (!currentBest || this.compareReadyCandidates(candidate, currentBest) < 0) return candidate;
+      return currentBest;
     };
 
     const high = this.highKey.value;
     if (high) {
       const highId = this.keyId(high);
       if (!this.inFlightKeys.has(highId) && this.highKey.nextAtMs <= now) {
-        consider({
+        best = consider(best, {
           key: high,
           kind: 'high',
           nextAtMs: this.highKey.nextAtMs,
@@ -480,7 +478,7 @@ export class TxSyncScheduler {
 
       const id = this.keyId(entry.key);
       if (this.inFlightKeys.has(id)) continue;
-      consider({
+      best = consider(best, {
         key: entry.key,
         kind: 'background',
         nextAtMs: entry.nextAtMs,
@@ -488,7 +486,9 @@ export class TxSyncScheduler {
       });
     }
 
-    return best ? { key: best.key, kind: best.kind, highEpoch: best.highEpoch } : null;
+    if (best === null) return null;
+
+    return { key: best.key, kind: best.kind, highEpoch: best.highEpoch };
   }
 
   private rescheduleAfterRun(key: TxSyncKey, kind: KeyKind, nextPollKind: TxSyncPollKind): void {

@@ -3,14 +3,17 @@ import { iface721, iface777, iface1155 } from '@core/contracts';
 import type { Database } from '@core/database';
 import type { Address } from '@core/database/models/Address';
 import { type Asset, AssetSource as DbAssetSource, AssetType as DbAssetType } from '@core/database/models/Asset';
+import type { AssetRule } from '@core/database/models/AssetRule';
 import type { Network } from '@core/database/models/Network';
 import TableName from '@core/database/TableName';
 import { CORE_IDENTIFIERS } from '@core/di';
 import { CHAIN_PROVIDER_NOT_FOUND, CoreError } from '@core/errors';
 import { ASSET_SOURCE, ASSET_TYPE, type AssetSource, type AssetTypeValue, type Hex, type IChainProvider } from '@core/types';
+import { convertToChecksum } from '@core/utils/account';
 import { type Base32Address, convertBase32ToHex } from '@core/utils/address';
 import { balanceFormat, convertBalanceToDecimal, truncate } from '@core/utils/balance';
 import { NetworkType } from '@core/utils/consts';
+import { Q } from '@nozbe/watermelondb';
 import Decimal from 'decimal.js';
 import { inject, injectable } from 'inversify';
 import { AssetDiscoveryRegistry } from './discovery/AssetDiscoveryRegistry';
@@ -46,7 +49,21 @@ type AddressAssetContext = {
   trackedAssets: Asset[];
 };
 
-type ERC20MethodReturnType<T extends string> = T extends 'name' | 'symbol' ? string : T extends 'decimals' ? number : T extends 'balanceOf' ? Hex : never;
+type ERC20MethodResultMap = {
+  name: string;
+  symbol: string;
+  decimals: number;
+  balanceOf: Hex;
+};
+type ERC20MethodName = keyof ERC20MethodResultMap;
+type ERC20BatchRequest<TMethod extends ERC20MethodName = ERC20MethodName> = {
+  method: TMethod;
+  args: unknown[];
+};
+type ERC20BatchResults<TRequests extends readonly ERC20BatchRequest[]> = {
+  [K in keyof TRequests]: TRequests[K] extends ERC20BatchRequest<infer TMethod> ? ERC20MethodResultMap[TMethod] | null : never;
+};
+type ERC20MethodReturnType<T extends ERC20MethodName> = ERC20MethodResultMap[T];
 
 @injectable()
 export class AssetService {
@@ -89,12 +106,12 @@ export class AssetService {
     const owner = await address.getValue();
     const ownerForCalldata = this.resolveCalldataAddress(owner, network.networkType);
 
-    const [name, symbol, decimalsRaw, balanceRaw] = await Promise.all([
-      this.callERC20Method(provider, input.contractAddress, 'name', []),
-      this.callERC20Method(provider, input.contractAddress, 'symbol', []),
-      this.callERC20Method(provider, input.contractAddress, 'decimals', []),
-      this.callERC20Method(provider, input.contractAddress, 'balanceOf', [ownerForCalldata]),
-    ]);
+    const [name, symbol, decimalsRaw, balanceRaw] = await this.callERC20MethodsBatch(provider, input.contractAddress, [
+      { method: 'name', args: [] },
+      { method: 'symbol', args: [] },
+      { method: 'decimals', args: [] },
+      { method: 'balanceOf', args: [ownerForCalldata] },
+    ] as const);
 
     const decimals = typeof decimalsRaw === 'number' && Number.isFinite(decimalsRaw) ? decimalsRaw : 18;
     const balance = typeof balanceRaw === 'string' && balanceRaw.startsWith('0x') ? BigInt(balanceRaw).toString() : '0';
@@ -258,11 +275,18 @@ export class AssetService {
       trackedAssetsByKey.set(this.makeAssetLookupKey(this.mapAssetType(asset.type), asset.contractAddress), asset);
     }
     const metadataAssetsByKey = await this.readNetworkMetadataAssetsByKey(params.network, params.discoveredSnapshots, trackedAssetsByKey);
+    const createdTrackedAssetsByKey = await this.createMissingTrackedAssetsFromDiscovery({
+      assetRuleId: params.assetRuleId,
+      network: params.network,
+      discoveredSnapshots: params.discoveredSnapshots,
+      trackedAssetsByKey,
+      metadataAssetsByKey,
+    });
 
     const discoveredKeys = new Set<string>();
     const discoveredAssets = params.discoveredSnapshots.map((snapshot) => {
       const key = this.makeAssetLookupKey(snapshot.type, snapshot.contractAddress);
-      const trackedAsset = trackedAssetsByKey.get(key) ?? null;
+      const trackedAsset = trackedAssetsByKey.get(key) ?? createdTrackedAssetsByKey.get(key) ?? null;
       const metadataAsset = trackedAsset ?? metadataAssetsByKey.get(key) ?? null;
       discoveredKeys.add(key);
 
@@ -293,7 +317,8 @@ export class AssetService {
         discoveredSnapshots
           .filter((snapshot) => snapshot.type === ASSET_TYPE.ERC20 && Boolean(snapshot.contractAddress))
           .filter((snapshot) => !trackedAssetsByKey.has(this.makeAssetLookupKey(snapshot.type, snapshot.contractAddress)))
-          .map((snapshot) => snapshot.contractAddress as string),
+          .map((snapshot) => this.toStoredContractAddress(snapshot.contractAddress))
+          .filter((contractAddress): contractAddress is string => Boolean(contractAddress)),
       ),
     );
 
@@ -301,18 +326,123 @@ export class AssetService {
       return new Map();
     }
 
-    const metadataAssets = await Promise.all(unresolvedContracts.map((contractAddress) => network.queryAssetByAddress(contractAddress)));
+    const metadataAssets = await this.database
+      .get<Asset>(TableName.Asset)
+      .query(
+        Q.where('network_id', network.id),
+        Q.where('type', DbAssetType.ERC20),
+        Q.where('source', DbAssetSource.Official),
+        Q.where('contract_address', Q.oneOf(unresolvedContracts)),
+      )
+      .fetch();
     const metadataAssetsByKey = new Map<string, Asset>();
 
     for (const asset of metadataAssets) {
-      if (!asset) {
-        continue;
-      }
-
       metadataAssetsByKey.set(this.makeAssetLookupKey(this.mapAssetType(asset.type), asset.contractAddress), asset);
     }
 
     return metadataAssetsByKey;
+  }
+
+  private async createMissingTrackedAssetsFromDiscovery(params: {
+    assetRuleId: string;
+    network: Network;
+    discoveredSnapshots: DiscoveredFungibleAsset[];
+    trackedAssetsByKey: Map<string, Asset>;
+    metadataAssetsByKey: Map<string, Asset>;
+  }): Promise<Map<string, Asset>> {
+    const assetsToCreateByKey = new Map<
+      string,
+      {
+        snapshot: DiscoveredFungibleAsset;
+        contractAddress: string;
+        metadataAsset: Asset | null;
+      }
+    >();
+
+    for (const snapshot of params.discoveredSnapshots) {
+      if (snapshot.type !== ASSET_TYPE.ERC20) {
+        continue;
+      }
+
+      const contractAddress = this.toStoredContractAddress(snapshot.contractAddress);
+      if (!contractAddress || !this.hasPositiveBaseUnitBalance(snapshot.balanceBaseUnits)) {
+        continue;
+      }
+
+      const key = this.makeAssetLookupKey(snapshot.type, contractAddress);
+      if (params.trackedAssetsByKey.has(key) || assetsToCreateByKey.has(key)) {
+        continue;
+      }
+
+      assetsToCreateByKey.set(key, {
+        snapshot,
+        contractAddress,
+        metadataAsset: params.metadataAssetsByKey.get(key) ?? null,
+      });
+    }
+
+    if (assetsToCreateByKey.size === 0) {
+      return new Map();
+    }
+
+    const assetRule = await this.database.get<AssetRule>(TableName.AssetRule).find(params.assetRuleId);
+    const createdTrackedAssetsByKey = new Map<string, Asset>();
+
+    await this.database.write(async () => {
+      const ops: Asset[] = [];
+      const contractsToCreate = Array.from(new Set(Array.from(assetsToCreateByKey.values()).map((candidate) => candidate.contractAddress)));
+      const existingTrackedAssets = await this.database
+        .get<Asset>(TableName.Asset)
+        .query(
+          Q.where('asset_rule_id', assetRule.id),
+          Q.where('network_id', params.network.id),
+          Q.where('type', DbAssetType.ERC20),
+          Q.where('contract_address', Q.oneOf(contractsToCreate)),
+        )
+        .fetch();
+      const existingTrackedAssetsByKey = new Map<string, Asset>();
+
+      for (const existingTrackedAsset of existingTrackedAssets) {
+        existingTrackedAssetsByKey.set(
+          this.makeAssetLookupKey(this.mapAssetType(existingTrackedAsset.type), existingTrackedAsset.contractAddress),
+          existingTrackedAsset,
+        );
+      }
+
+      for (const [key, candidate] of assetsToCreateByKey) {
+        const existingTrackedAsset = existingTrackedAssetsByKey.get(key);
+        if (existingTrackedAsset) {
+          createdTrackedAssetsByKey.set(key, existingTrackedAsset);
+          continue;
+        }
+
+        const { snapshot, contractAddress, metadataAsset } = candidate;
+        const decimals = snapshot.decimals ?? metadataAsset?.decimals ?? 18;
+
+        const asset = this.database.get<Asset>(TableName.Asset).prepareCreate((record) => {
+          record.assetRule.set(assetRule);
+          record.network.set(params.network);
+          record.type = DbAssetType.ERC20;
+          record.contractAddress = contractAddress;
+          record.name = snapshot.name ?? metadataAsset?.name ?? null;
+          record.symbol = snapshot.symbol ?? metadataAsset?.symbol ?? null;
+          record.decimals = typeof decimals === 'number' && Number.isFinite(decimals) ? decimals : 18;
+          record.icon = snapshot.icon ?? metadataAsset?.icon ?? null;
+          record.source = null;
+          record.priceInUSDT = snapshot.priceInUSDT ?? metadataAsset?.priceInUSDT ?? null;
+        });
+
+        ops.push(asset);
+        createdTrackedAssetsByKey.set(key, asset);
+      }
+
+      if (ops.length > 0) {
+        await this.database.batch(...ops);
+      }
+    });
+
+    return createdTrackedAssetsByKey;
   }
 
   private async fetchFungibleAssetBalance(address: Address, asset: Asset): Promise<NormalizedBalance> {
@@ -343,24 +473,53 @@ export class AssetService {
     try {
       const data = iface777.encodeFunctionData(method, args) as Hex;
       const raw = await provider.call({ to: contractAddress, data });
-      if (!raw || raw === '0x') return null;
-
-      // Decode based on method type
-      if (method === 'balanceOf') {
-        return raw as ERC20MethodReturnType<T>;
-      }
-
-      const [value] = iface777.decodeFunctionResult(method, raw);
-
-      if (method === 'decimals') {
-        return (typeof value === 'number' ? value : Number(value)) as ERC20MethodReturnType<T>;
-      }
-
-      // name or symbol
-      return (typeof value === 'string' ? value : null) as ERC20MethodReturnType<T>;
+      return this.decodeERC20MethodResult(method, raw);
     } catch {
       return null;
     }
+  }
+
+  private async callERC20MethodsBatch<TRequests extends readonly ERC20BatchRequest[]>(
+    provider: IChainProvider,
+    contractAddress: string,
+    requests: TRequests,
+  ): Promise<ERC20BatchResults<TRequests>> {
+    if (requests.length === 0) {
+      return [] as unknown as ERC20BatchResults<TRequests>;
+    }
+
+    try {
+      const raws = await provider.batchCall(
+        requests.map((request) => ({
+          to: contractAddress,
+          data: iface777.encodeFunctionData(request.method, request.args) as Hex,
+        })),
+      );
+
+      return requests.map((request, index) => this.decodeERC20MethodResult(request.method, raws[index] ?? null)) as ERC20BatchResults<TRequests>;
+    } catch {
+      return (await Promise.all(
+        requests.map((request) => this.callERC20Method(provider, contractAddress, request.method, request.args)),
+      )) as ERC20BatchResults<TRequests>;
+    }
+  }
+
+  private decodeERC20MethodResult<T extends ERC20MethodName>(method: T, raw: Hex | null | undefined): ERC20MethodReturnType<T> | null {
+    if (!raw || raw === '0x') {
+      return null;
+    }
+
+    if (method === 'balanceOf') {
+      return raw as ERC20MethodReturnType<T>;
+    }
+
+    const [value] = iface777.decodeFunctionResult(method, raw);
+
+    if (method === 'decimals') {
+      return (typeof value === 'number' ? value : Number(value)) as ERC20MethodReturnType<T>;
+    }
+
+    return (typeof value === 'string' ? value : null) as ERC20MethodReturnType<T>;
   }
 
   private resolveCalldataAddress(address: string, networkType: NetworkType): string {
@@ -391,11 +550,11 @@ export class AssetService {
   ) {
     const provider = this.getChainProvider(network);
 
-    const [name, symbol, decimals] = await Promise.all([
-      this.callERC20Method(provider, contractAddress, 'name', []),
-      this.callERC20Method(provider, contractAddress, 'symbol', []),
-      this.callERC20Method(provider, contractAddress, 'decimals', []),
-    ]);
+    const [name, symbol, decimals] = await this.callERC20MethodsBatch(provider, contractAddress, [
+      { method: 'name', args: [] },
+      { method: 'symbol', args: [] },
+      { method: 'decimals', args: [] },
+    ] as const);
 
     return {
       name: name ?? fallback.name,
@@ -447,7 +606,7 @@ export class AssetService {
       contractAddress: snapshot.contractAddress ?? metadata?.contractAddress ?? null,
       decimals,
       icon,
-      source: metadata ? this.mapAssetSource(metadata.source) : ASSET_SOURCE.Official,
+      source: trackedAsset ? this.mapAssetSource(trackedAsset.source) : metadata?.source === DbAssetSource.Official ? ASSET_SOURCE.Official : null,
       balance: balance.value,
       formattedBalance: balance.formatted,
       priceInUSDT,
@@ -541,6 +700,27 @@ export class AssetService {
 
   private makeDiscoveredAssetId(networkId: string, type: AssetTypeValue, contractAddress: string | null): string {
     return `discovered:${networkId}:${type}:${contractAddress ?? NATIVE_ASSET_KEY}`;
+  }
+
+  private toStoredContractAddress(contractAddress: string | null | undefined): string | null {
+    const trimmed = contractAddress?.trim();
+    if (!trimmed) {
+      return null;
+    }
+
+    try {
+      return convertToChecksum(trimmed);
+    } catch {
+      return trimmed;
+    }
+  }
+
+  private hasPositiveBaseUnitBalance(balanceBaseUnits: string): boolean {
+    try {
+      return BigInt(balanceBaseUnits) > 0n;
+    } catch {
+      return false;
+    }
   }
 
   private async detectNftContractType(provider: IChainProvider, contractAddress: string): Promise<AssetTypeValue | null> {

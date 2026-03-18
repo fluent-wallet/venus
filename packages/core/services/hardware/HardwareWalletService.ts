@@ -16,6 +16,7 @@ import { inject, injectable } from 'inversify';
 import type { BackupSeedParams, DeriveKeyParams, RestoreSeedParams } from 'modules/BSIM/src';
 import { Platform } from 'react-native';
 import { startBleDeviceScan, type TransportError } from 'react-native-bsim';
+import { getGroupedAccountNickname } from '../account/naming';
 
 export type ConnectAndSyncResult = {
   accounts: HardwareAccount[];
@@ -215,7 +216,7 @@ export class HardwareWalletService {
     for (const index of missingIndexes) {
       const hw = index === targetIndex ? targetAccount : await adapter.deriveAccount(index, NetworkType.Ethereum);
 
-      const nickname = `BSIM Account - ${existingAccounts.length + preparedAccounts.length + 1}`;
+      const nickname = getGroupedAccountNickname(index);
       const account = this.database.get<Account>(TableName.Account).prepareCreate((record) => {
         record.nickname = nickname;
         record.index = index;

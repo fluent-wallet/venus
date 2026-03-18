@@ -5,6 +5,7 @@ import { iface721, iface777 } from '@core/contracts';
 import type { Database } from '@core/database';
 import type { Address } from '@core/database/models/Address';
 import { AssetSource, type Asset as DbAsset, AssetType as DbAssetType } from '@core/database/models/Asset';
+import type { Network } from '@core/database/models/Network';
 import type { Signature } from '@core/database/models/Signature';
 import { SignType } from '@core/database/models/Signature/type';
 import type { Tx } from '@core/database/models/Tx';
@@ -117,6 +118,25 @@ async function createDbTx(params: {
 
   return tx!;
 }
+
+async function seedNativeAsset(params: { database: Database; network: Network; assetRule: any }) {
+  const { database, network, assetRule } = params;
+  return database.write(async () =>
+    database.get<DbAsset>(TableName.Asset).create((record) => {
+      record.network.set(network);
+      record.assetRule.set(assetRule);
+      record.type = DbAssetType.Native;
+      record.contractAddress = null;
+      record.name = 'Native';
+      record.symbol = 'NATIVE';
+      record.decimals = 18;
+      record.icon = null;
+      record.priceInUSDT = null;
+      record.source = AssetSource.Official;
+    }),
+  );
+}
+
 class FakeSigningService {
   getSigner = jest.fn(async (_accountId: string, _addressId: string): Promise<ISigner> => {
     return {
@@ -174,20 +194,7 @@ describe('TransactionService', () => {
     });
     chainRegistry.register(provider);
 
-    await database.write(async () => {
-      await database.get<DbAsset>(TableName.Asset).create((record) => {
-        record.network.set(network);
-        record.assetRule.set(assetRule);
-        record.type = DbAssetType.Native;
-        record.contractAddress = null;
-        record.name = 'Native';
-        record.symbol = 'NATIVE';
-        record.decimals = 18;
-        record.icon = null;
-        record.priceInUSDT = null;
-        record.source = AssetSource.Official;
-      });
-    });
+    await seedNativeAsset({ database, network, assetRule });
 
     const input: SendTransactionInput = {
       addressId: address.id,
@@ -240,6 +247,134 @@ describe('TransactionService', () => {
       key: { addressId: address.id, networkId: network.id },
       txId: result.id,
     });
+  });
+
+  it.each([
+    {
+      label: 'native sends',
+      run: async (ctx: { address: Address; network: Network; assetRule: any; expectFirstFailure: (promise: Promise<unknown>) => Promise<void> }) => {
+        await seedNativeAsset({ database, network: ctx.network, assetRule: ctx.assetRule });
+        return service.sendNative({
+          addressId: ctx.address.id,
+          to: '0x0000000000000000000000000000000000000001',
+          amount: '1',
+          assetType: AssetType.Native,
+          assetDecimals: 18,
+          nonce: 1,
+        });
+      },
+    },
+    {
+      label: 'dapp sends',
+      run: async (ctx: { address: Address }) =>
+        service.sendDappTransaction({
+          addressId: ctx.address.id,
+          request: {
+            from: ctx.address.hex,
+            to: '0x0000000000000000000000000000000000000001',
+            data: '0x',
+            value: '0x1',
+            gas: '0x5208',
+            gasPrice: '0x1',
+            nonce: '0x1',
+            type: '0x0',
+          } as any,
+        }),
+    },
+  ])('marks future-nonce $label as WAITTING when the nonce is not yet reachable', async ({ run }) => {
+    const { network, assetRule } = await seedNetwork(database, { definitionKey: 'eSpace Testnet', selected: true });
+    const { address } = await createTestAccount(database, { network, assetRule });
+
+    const provider = new StubChainProvider({ chainId: network.chainId, networkType: network.networkType });
+    jest.spyOn(provider, 'getNonce').mockResolvedValue(0);
+    chainRegistry.register(provider);
+
+    const result = await run({ address, network, assetRule });
+    const tx = await database.get<Tx>(TableName.Tx).find(result.id);
+
+    expect(result.state).toEqual({
+      lifecycle: TX_LIFECYCLE_STATUS.Waiting,
+      execution: TX_EXECUTION_STATUS.Unknown,
+    });
+    expect(tx.status).toBe(DbTxStatus.WAITTING);
+  });
+
+  it.each([
+    {
+      label: 'native sends',
+      expectFirstFailure: async (promise: Promise<unknown>) => {
+        await expect(promise).rejects.toThrow('boom');
+      },
+      run: async (ctx: { address: Address; network: Network; assetRule: any }) => {
+        await seedNativeAsset({ database, network: ctx.network, assetRule: ctx.assetRule });
+        const input: SendTransactionInput = {
+          addressId: ctx.address.id,
+          to: '0x0000000000000000000000000000000000000001',
+          amount: '1',
+          assetType: AssetType.Native,
+          assetDecimals: 18,
+        };
+
+        const sendAttempt = service.sendNative(input);
+        await ctx.expectFirstFailure(sendAttempt);
+        return service.sendNative(input);
+      },
+    },
+    {
+      label: 'dapp sends',
+      expectFirstFailure: async (promise: Promise<unknown>) => {
+        await expect(promise).rejects.toMatchObject({ code: TX_BROADCAST_FAILED });
+      },
+      verifyTx: async (tx: Tx) => {
+        const app = await tx.getApp();
+        expect(app?.identity).toBe('https://example.app');
+      },
+      run: async (ctx: { address: Address; expectFirstFailure: (promise: Promise<unknown>) => Promise<void> }) => {
+        const input = {
+          addressId: ctx.address.id,
+          request: {
+            from: ctx.address.hex,
+            to: '0x0000000000000000000000000000000000000001',
+            data: '0x',
+            value: '0x1',
+            gas: '0x5208',
+            gasPrice: '0x1',
+            nonce: '0x0',
+            type: '0x0',
+          } as any,
+          app: {
+            identity: 'https://example.app',
+            origin: 'https://example.app',
+            name: 'Example',
+          },
+        };
+
+        const sendAttempt = service.sendDappTransaction(input);
+        await ctx.expectFirstFailure(sendAttempt);
+        return service.sendDappTransaction(input);
+      },
+    },
+  ])('reuses the same raw tx record for $label when a failed broadcast later succeeds', async ({ run, expectFirstFailure, verifyTx }) => {
+    const { network, assetRule } = await seedNetwork(database, { definitionKey: 'eSpace Testnet', selected: true });
+    const { address } = await createTestAccount(database, { network, assetRule });
+
+    const provider = new StubChainProvider({ chainId: network.chainId, networkType: network.networkType });
+    jest.spyOn(provider, 'broadcastTransaction').mockRejectedValueOnce(new Error('boom'));
+    chainRegistry.register(provider);
+
+    const result = await run({ address, network, assetRule, expectFirstFailure });
+
+    const txs = await database.get<Tx>(TableName.Tx).query().fetch();
+    expect(txs).toHaveLength(1);
+    expect(txs[0].id).toBe(result.id);
+    expect(txs[0].status).toBe(DbTxStatus.PENDING);
+    expect(txs[0].hash).toBe('0xhash');
+    await verifyTx?.(txs[0]);
+
+    const signatures = await database.get<Signature>(TableName.Signature).query(Q.sortBy('created_at', Q.asc)).fetch();
+    expect(signatures).toHaveLength(2);
+    expect(signatures[0].tx.id).toBe(txs[0].id);
+    expect(signatures[1].tx.id).toBe(txs[0].id);
   });
 
   it('maps executedStatus=FAILED to failed even when db status is EXECUTED', async () => {
@@ -738,7 +873,9 @@ describe('TransactionService', () => {
     const txs = await database.get<Tx>(TableName.Tx).query(Q.sortBy('created_at', Q.asc)).fetch();
     expect(txs.map((tx) => tx.method)).toEqual(['transfer', 'transferFrom', 'safeTransferFrom']);
   });
-  it('persists SEND_FAILED tx when broadcastTransaction throws', async () => {
+  it('persists SEND_FAILED tx and emits tx/created when broadcastTransaction throws', async () => {
+    const createdEvents: CoreEventMap['tx/created'][] = [];
+    eventBus.on('tx/created', (payload) => createdEvents.push(payload));
     const { address, network, assetRule } = await createTestAccount(database);
 
     const provider = new StubChainProvider({
@@ -784,6 +921,11 @@ describe('TransactionService', () => {
 
     expect(tx.status).toBe(DbTxStatus.SEND_FAILED);
     expect(tx.err).toContain('network error');
+    expect(createdEvents).toHaveLength(1);
+    expect(createdEvents[0]).toEqual({
+      key: { addressId: address.id, networkId: network.id },
+      txId: tx.id,
+    });
   });
 
   it('preserves canonical transaction state in transaction snapshots', async () => {
@@ -970,7 +1112,12 @@ describe('TransactionService', () => {
       type: '0x0',
     } as any;
 
-    const result = await service.sendDappTransaction({ addressId: address.id, request });
+    const app = {
+      identity: 'https://example.app',
+      origin: 'https://example.app',
+      name: 'Example',
+    };
+    const result = await service.sendDappTransaction({ addressId: address.id, request, app });
 
     const txs = await database.get<Tx>(TableName.Tx).query().fetch();
     expect(txs).toHaveLength(1);
@@ -980,6 +1127,7 @@ describe('TransactionService', () => {
     expect(signatures).toHaveLength(1);
     expect(signatures[0].signType).toBe(SignType.TX);
     expect(signatures[0].tx.id).toBe(txs[0].id);
+    expect((await txs[0].getApp())?.identity).toBe(app.identity);
 
     const payload = await txs[0].txPayload.fetch();
     expect(payload.from).toBe(address.hex);
@@ -1116,7 +1264,9 @@ describe('TransactionService', () => {
     });
   });
 
-  it('throws TX_BROADCAST_FAILED and persists failed dapp tx', async () => {
+  it('throws TX_BROADCAST_FAILED, persists failed dapp tx, links app, and emits tx/created', async () => {
+    const createdEvents: CoreEventMap['tx/created'][] = [];
+    eventBus.on('tx/created', (payload) => createdEvents.push(payload));
     const { network: evmNetwork, assetRule } = await seedNetwork(database, { definitionKey: 'eSpace Testnet', selected: true });
     const { address } = await createTestAccount(database, { network: evmNetwork, assetRule });
 
@@ -1138,15 +1288,27 @@ describe('TransactionService', () => {
       type: '0x0',
     } as any;
 
-    await expect(service.sendDappTransaction({ addressId: address.id, request })).rejects.toMatchObject({ code: TX_BROADCAST_FAILED });
+    const app = {
+      identity: 'https://example.app',
+      origin: 'https://example.app',
+      name: 'Example',
+    };
+
+    await expect(service.sendDappTransaction({ addressId: address.id, request, app })).rejects.toMatchObject({ code: TX_BROADCAST_FAILED });
 
     const [tx] = await database.get<Tx>(TableName.Tx).query().fetch();
     expect(tx).toMatchObject({ source: TxSource.DAPP, status: DbTxStatus.SEND_FAILED, err: 'boom' });
+    expect((await tx.getApp())?.identity).toBe(app.identity);
 
     const signatures = await database.get<Signature>(TableName.Signature).query().fetch();
     expect(signatures).toHaveLength(1);
     expect(signatures[0].signType).toBe(SignType.TX);
     expect(signatures[0].tx.id).toBe(tx.id);
+    expect(createdEvents).toHaveLength(1);
+    expect(createdEvents[0]).toEqual({
+      key: { addressId: address.id, networkId: evmNetwork.id },
+      txId: tx.id,
+    });
   });
 
   it('throws CHAIN_PROVIDER_NOT_FOUND when dapp provider missing', async () => {

@@ -41,19 +41,41 @@ const PasswordWay: React.FC<StackScreenProps<typeof PasswordWayStackName>> = ({ 
 
   const _handleCreateVault = useCallback(
     async (data: FormData) => {
+      const auth = getAuthService();
+      const previousCredentialKind = auth.getCredentialKindValue();
+      let shouldRollbackCredentialKind = false;
+
       try {
         navigation.setOptions({ gestureEnabled: false });
         await new Promise<void>((resolve) => {
           setTimeout(resolve, 20);
         });
+
+        await auth.setCredentialKind('password');
+        shouldRollbackCredentialKind = true;
+
         if (await createVault(route.params, data.confirm)) {
-          await getAuthService().setCredentialKind('password');
+          shouldRollbackCredentialKind = false;
           showMessage({ type: 'success', message: t('initWallet.msg.success') });
           navigation.navigate(HomeStackName);
           navigation.dispatch(CommonActions.reset({ index: 0, routes: [{ name: HomeStackName }] }));
+          return;
+        }
+
+        if (shouldRollbackCredentialKind) {
+          await auth.setCredentialKind(previousCredentialKind);
+          shouldRollbackCredentialKind = false;
         }
       } catch (err) {
         console.log('Init Wallet by password error: ', err);
+        if (shouldRollbackCredentialKind) {
+          try {
+            await auth.setCredentialKind(previousCredentialKind);
+            shouldRollbackCredentialKind = false;
+          } catch {
+            // Best-effort rollback; preserve the original init failure.
+          }
+        }
         showMessage({ type: 'failed', message: t('initWallet.msg.failed'), description: String(err) ?? '' });
         navigation.navigate(HomeStackName);
         navigation.dispatch(CommonActions.reset({ index: 0, routes: [{ name: HomeStackName }] }));

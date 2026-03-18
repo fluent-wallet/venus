@@ -15,7 +15,6 @@ import HourglassLoading from '@components/Loading/Hourglass';
 import Text from '@components/Text';
 import TextInput from '@components/TextInput';
 import { AUTH_PASSWORD_REQUEST_CANCELED } from '@core/errors';
-import useInAsync from '@hooks/useInAsync';
 import { AccountItemView } from '@modules/AccountsList';
 import { useNavigation, useTheme } from '@react-navigation/native';
 import {
@@ -28,10 +27,8 @@ import {
   type StackScreenProps,
 } from '@router/configs';
 import { useAccountsOfGroup } from '@service/account';
-import { useAccountGroup, useUpdateAccountGroupNickname } from '@service/accountGroup';
-import { getAuthService, getHardwareWalletService, VaultType } from '@service/core';
-import { useDeleteVault } from '@service/vault';
-import { useDisconnectWalletConnectSessionsByAddresses } from '@service/walletConnect';
+import { useAccountGroup, useRemoveAccountGroup, useUpdateAccountGroupNickname } from '@service/accountGroup';
+import { getHardwareWalletService, VaultType } from '@service/core';
 import { getErrorCode } from '@utils/error';
 import { handleBSIMHardwareUnavailable } from '@utils/handleBSIMHardwareUnavailable';
 import type React from 'react';
@@ -50,9 +47,8 @@ const GroupConfig: React.FC<StackScreenProps<typeof GroupSettingStackName>> = ({
   const { data: accountGroup } = useAccountGroup(route.params.groupId, true);
   const { data: accounts = [] } = useAccountsOfGroup(route.params.groupId, true);
   const rootNavigation = useNavigation<StackNavigation>();
-  const disconnectByAddresses = useDisconnectWalletConnectSessionsByAddresses();
   const updateGroupNickname = useUpdateAccountGroupNickname();
-  const deleteVault = useDeleteVault();
+  const { mutateAsync: removeGroup, isPending: inDeleting } = useRemoveAccountGroup();
 
   const visibleAccounts = useMemo(() => accounts.filter((account) => !account.hidden), [accounts]);
 
@@ -99,12 +95,10 @@ const GroupConfig: React.FC<StackScreenProps<typeof GroupSettingStackName>> = ({
     }
   }, [accounts, t]);
 
-  const _handleConfirmDelete = useCallback(async () => {
+  const handleConfirmDelete = useCallback(async () => {
     if (!accountGroup) return;
     try {
-      await getAuthService().getPassword();
-      await deleteVault(accountGroup.vaultId);
-      await disconnectByAddresses(accounts.map((v) => v.address));
+      await removeGroup(accountGroup.id);
       showMessage({
         message: t('account.group.remove.success'),
         type: 'success',
@@ -122,7 +116,7 @@ const GroupConfig: React.FC<StackScreenProps<typeof GroupSettingStackName>> = ({
       });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [accountGroup, accounts, disconnectByAddresses, deleteVault, t]);
+  }, [accountGroup, removeGroup, t]);
 
   const handleBackupSeedPhrase = useCallback(() => {
     navigation.navigate(BackupStackName, { screen: BackupStep1StackName, params: { groupId: route.params.groupId } });
@@ -149,7 +143,6 @@ const GroupConfig: React.FC<StackScreenProps<typeof GroupSettingStackName>> = ({
     [accountGroup?.vaultType],
   );
 
-  const { inAsync: inDeleting, execAsync: handleConfirmDelete } = useInAsync(_handleConfirmDelete);
   const inDelete = showDeleteBottomSheet || inDeleting;
 
   return (

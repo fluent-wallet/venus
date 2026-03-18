@@ -2,6 +2,7 @@ import { ChainRegistry } from '@core/chains';
 import { iface721, iface777, iface1155 } from '@core/contracts';
 import type { Database } from '@core/database';
 import type { Address } from '@core/database/models/Address';
+import type { App } from '@core/database/models/App';
 import type { Asset } from '@core/database/models/Asset';
 import type { Network } from '@core/database/models/Network';
 import { SignType } from '@core/database/models/Signature/type';
@@ -74,6 +75,7 @@ import type {
   ITransactionDetail,
   LegacyLikeGasEstimate,
   RecentlyAddress,
+  SendDappTransactionInput,
   SendERC20Input,
   SendTransactionInput,
   SpeedUpTxContext,
@@ -127,6 +129,13 @@ export class TransactionService {
   @inject(CORE_IDENTIFIERS.EVENT_BUS)
   @optional()
   private readonly eventBus?: EventBus<CoreEventMap>;
+
+  private emitTxCreated(params: { addressId: string; networkId: string; txId: string }): void {
+    this.eventBus?.emit('tx/created', {
+      key: { addressId: params.addressId, networkId: params.networkId },
+      txId: params.txId,
+    });
+  }
 
   async isPendingTxsFull(params: { addressId: string }): Promise<boolean> {
     const { addressId } = params;
@@ -428,9 +437,10 @@ export class TransactionService {
         await this.signatureRecordService.linkTx({ signatureId, txId: tx.id });
       }
 
+      this.emitTxCreated({ addressId: address.id, networkId: network.id, txId: tx.id });
       throw error;
     }
-    this.eventBus?.emit('tx/created', { key: { addressId: address.id, networkId: network.id }, txId: tx.id });
+    this.emitTxCreated({ addressId: address.id, networkId: network.id, txId: tx.id });
     return this.toInterface(tx);
   }
 
@@ -489,12 +499,7 @@ export class TransactionService {
     }
   }
 
-  async sendDappTransaction(input: {
-    addressId: string;
-    request: EvmRpcTransactionRequest;
-    app?: { identity: string; origin?: string; name?: string; icon?: string } | null;
-    signal?: AbortSignal;
-  }): Promise<ITransaction> {
+  async sendDappTransaction(input: SendDappTransactionInput): Promise<ITransaction> {
     const address = await this.findAddress(input.addressId);
     const network = await this.getNetwork(address);
 
@@ -613,13 +618,14 @@ export class TransactionService {
         txHash,
         txRaw: signedTx.rawTransaction,
         sendAt,
+        app: input.app ?? null,
       });
 
       if (signatureId) {
         await this.signatureRecordService.linkTx({ signatureId, txId: tx.id });
       }
 
-      this.eventBus?.emit('tx/created', { key: { addressId: address.id, networkId: network.id }, txId: tx.id });
+      this.emitTxCreated({ addressId: address.id, networkId: network.id, txId: tx.id });
       return this.toInterface(tx);
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
@@ -634,11 +640,14 @@ export class TransactionService {
           isFailed: true,
           err: message,
           errorType: null,
+          app: input.app ?? null,
         });
 
         if (signatureId) {
           await this.signatureRecordService.linkTx({ signatureId, txId: tx.id });
         }
+
+        this.emitTxCreated({ addressId: address.id, networkId: network.id, txId: tx.id });
       } catch (saveError) {
         if (saveError instanceof CoreError) throw saveError;
         throw new CoreError({
@@ -851,7 +860,7 @@ export class TransactionService {
         await this.signatureRecordService.linkTx({ signatureId, txId: newTx.id });
       }
 
-      this.eventBus?.emit('tx/created', { key: { addressId: address.id, networkId: network.id }, txId: newTx.id });
+      this.emitTxCreated({ addressId: address.id, networkId: network.id, txId: newTx.id });
       return this.toInterface(newTx);
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
@@ -874,6 +883,7 @@ export class TransactionService {
         await this.signatureRecordService.linkTx({ signatureId, txId: failed.id });
       }
 
+      this.emitTxCreated({ addressId: address.id, networkId: network.id, txId: failed.id });
       throw error;
     }
   }
@@ -1025,6 +1035,28 @@ export class TransactionService {
     const txMethod = resolveTransactionMethod({ payload, assetType });
 
     const network = await address.network.fetch();
+    const status = await this.resolveInitialTxStatus({
+      address,
+      network,
+      from: payload.from ?? null,
+      nonce: typeof payload.nonce === 'number' ? payload.nonce : null,
+      isFailed,
+    });
+    const updated = await this.reuseTxByRaw({
+      address,
+      txRaw,
+      pendingPayload: payload,
+      txHash,
+      status,
+      sendAt,
+      err: err ?? null,
+      errorType: errorType ?? null,
+      source: TxSource.SELF,
+      method: txMethod,
+    });
+    if (updated) {
+      return updated;
+    }
 
     const txPayload = this.database.get<TxPayload>(TableName.TxPayload).prepareCreate((record) => {
       record.type = payload.type != null ? String(payload.type) : null;
@@ -1066,7 +1098,7 @@ export class TransactionService {
     const tx = this.database.get<Tx>(TableName.Tx).prepareCreate((record) => {
       record.raw = txRaw;
       record.hash = txHash;
-      record.status = isFailed ? DbTxStatus.SEND_FAILED : DbTxStatus.PENDING;
+      record.status = status;
       record.executedStatus = null;
       record.receipt = null;
       record.executedAt = null;
@@ -1102,11 +1134,38 @@ export class TransactionService {
     isFailed?: boolean;
     err?: string;
     errorType?: ProcessErrorType | null;
+    app?: { identity: string; origin?: string; name?: string; icon?: string } | null;
   }): Promise<Tx> {
-    const { address, unsignedTx, txHash, txRaw, sendAt, isFailed = false, err, errorType } = params;
+    const { address, unsignedTx, txHash, txRaw, sendAt, isFailed = false, err, errorType, app = null } = params;
 
-    const payload: any = unsignedTx.payload ?? {};
+    const payload = unsignedTx.payload ?? {};
     const txMethod = resolveTransactionMethod({ payload });
+    const network = await address.network.fetch();
+    const txApp = await this.resolveTxAppRecord(app);
+    const status = await this.resolveInitialTxStatus({
+      address,
+      network,
+      from: payload.from ?? null,
+      nonce: typeof payload.nonce === 'number' ? payload.nonce : null,
+      isFailed,
+    });
+    const updated = await this.reuseTxByRaw({
+      address,
+      txRaw,
+      pendingPayload: payload,
+      txHash,
+      status,
+      sendAt,
+      err: err ?? null,
+      errorType: errorType ?? null,
+      source: TxSource.DAPP,
+      method: txMethod,
+      appRecord: txApp.appRecord,
+      preparedApp: txApp.preparedApp,
+    });
+    if (updated) {
+      return updated;
+    }
 
     const txPayload = this.database.get<TxPayload>(TableName.TxPayload).prepareCreate((record) => {
       record.type = payload.type != null ? String(payload.type) : null;
@@ -1140,7 +1199,7 @@ export class TransactionService {
     const tx = this.database.get<Tx>(TableName.Tx).prepareCreate((record) => {
       record.raw = txRaw;
       record.hash = txHash;
-      record.status = isFailed ? DbTxStatus.SEND_FAILED : DbTxStatus.PENDING;
+      record.status = status;
       record.executedStatus = null;
       record.receipt = null;
       record.executedAt = null;
@@ -1155,10 +1214,13 @@ export class TransactionService {
       record.address.set(address);
       record.txPayload.set(txPayload);
       record.txExtra.set(txExtra);
+      if (txApp.appRecord) {
+        record.app.set(txApp.appRecord);
+      }
     });
 
     await this.database.write(async () => {
-      await this.database.batch(txPayload, txExtra, tx);
+      await this.database.batch(...(txApp.preparedApp ? [txApp.preparedApp] : []), txPayload, txExtra, tx);
     });
 
     return tx;
@@ -1743,6 +1805,152 @@ export class TransactionService {
   private async isWaitingLike(chainProvider: IChainProvider, from: string, txNonce: number): Promise<boolean> {
     const nextNonce = await chainProvider.getNonce(from);
     return nextNonce < txNonce;
+  }
+
+  private async resolveInitialTxStatus(params: {
+    address: Address;
+    network: Network;
+    from: string | null;
+    nonce: number | null;
+    isFailed: boolean;
+  }): Promise<DbTxStatus> {
+    const { address, network, from, nonce, isFailed } = params;
+    if (isFailed) {
+      return DbTxStatus.SEND_FAILED;
+    }
+
+    if (typeof nonce !== 'number') {
+      return DbTxStatus.PENDING;
+    }
+
+    const chainProvider = this.getChainProvider(network);
+    const fromValue = from ?? (await address.getValue());
+    const waiting = await this.isWaitingLike(chainProvider, fromValue, nonce);
+    return waiting ? DbTxStatus.WAITTING : DbTxStatus.PENDING;
+  }
+
+  private async reuseTxByRaw(params: {
+    address: Address;
+    txRaw: string;
+    pendingPayload: any;
+    txHash: string;
+    status: DbTxStatus;
+    sendAt: Date;
+    err: string | null;
+    errorType: ProcessErrorType | null;
+    source: TxSource;
+    method: string;
+    appRecord?: App | null;
+    preparedApp?: App | null;
+  }): Promise<Tx | null> {
+    const existingTx = await this.findTxByRawAndPayload(params.address.id, params.txRaw, params.pendingPayload);
+    if (!existingTx) {
+      return null;
+    }
+
+    if (existingTx.status !== DbTxStatus.SEND_FAILED) {
+      return existingTx;
+    }
+
+    await this.database.write(async () => {
+      const ops: Array<Tx | App> = [];
+      if (params.preparedApp) {
+        ops.push(params.preparedApp);
+      }
+
+      ops.push(
+        existingTx.prepareUpdate((record) => {
+          record.raw = params.txRaw;
+          record.hash = params.txHash;
+          record.status = params.status;
+          record.executedStatus = null;
+          record.receipt = null;
+          record.executedAt = null;
+          record.errorType = params.errorType;
+          record.err = params.err;
+          record.sendAt = params.sendAt;
+          record.resendAt = null;
+          record.resendCount = null;
+          record.isTempReplacedByInner = null;
+          record.source = params.source;
+          record.method = params.method;
+          record.app.id = params.appRecord?.id;
+        }),
+      );
+
+      await this.database.batch(...ops);
+    });
+
+    return existingTx;
+  }
+
+  private async resolveTxAppRecord(
+    input: { identity: string; origin?: string; name?: string; icon?: string } | null,
+  ): Promise<{ appRecord: App | null; preparedApp: App | null }> {
+    if (!input?.identity) {
+      return { appRecord: null, preparedApp: null };
+    }
+
+    const existingApp = await this.findAppByIdentity(input.identity);
+    if (existingApp) {
+      return { appRecord: existingApp, preparedApp: null };
+    }
+
+    const preparedApp = this.database.get<App>(TableName.App).prepareCreate((record) => {
+      record.identity = input.identity;
+      record.origin = input.origin;
+      record.name = input.name ?? input.identity;
+      record.icon = input.icon;
+    });
+
+    return { appRecord: preparedApp, preparedApp };
+  }
+
+  private async findAppByIdentity(identity: string): Promise<App | null> {
+    if (!identity) {
+      return null;
+    }
+
+    const rows = await this.database.get<App>(TableName.App).query(Q.where('identity', identity)).fetch();
+    return rows[0] ?? null;
+  }
+
+  private async findTxByRawAndPayload(addressId: string, txRaw: string, pendingPayload: any): Promise<Tx | null> {
+    if (!txRaw) {
+      return null;
+    }
+
+    const rows = await this.database
+      .get<Tx>(TableName.Tx)
+      .query(Q.where('address_id', addressId), Q.where('is_temp_replaced', Q.notEq(true)), Q.where('raw', txRaw))
+      .fetch();
+
+    if (rows.length === 0) {
+      return null;
+    }
+
+    const storedPayloads = await Promise.all(rows.map((tx) => tx.txPayload.fetch()));
+    const matchedRows = rows.filter((tx, index) => this.hasEquivalentStoredPayload(storedPayloads[index], pendingPayload));
+    if (matchedRows.length === 0) {
+      return null;
+    }
+
+    matchedRows.sort((left, right) => left.createdAt.getTime() - right.createdAt.getTime());
+    return matchedRows.find((tx) => tx.status !== DbTxStatus.SEND_FAILED) ?? matchedRows[0];
+  }
+
+  private hasEquivalentStoredPayload(storedPayload: TxPayload, pendingPayload: any): boolean {
+    const payloadIdentityText = (value: unknown) => (value == null ? null : String(value));
+    const payloadIdentityNonce = (value: unknown) => (typeof value === 'number' ? value : null);
+
+    return (
+      payloadIdentityText(storedPayload.from) === payloadIdentityText(pendingPayload.from) &&
+      payloadIdentityText(storedPayload.to) === payloadIdentityText(pendingPayload.to) &&
+      payloadIdentityText(storedPayload.data) === payloadIdentityText(pendingPayload.data) &&
+      payloadIdentityText(storedPayload.value) === payloadIdentityText(pendingPayload.value) &&
+      payloadIdentityNonce(storedPayload.nonce) === payloadIdentityNonce(pendingPayload.nonce) &&
+      payloadIdentityText(storedPayload.chainId) === payloadIdentityText(pendingPayload.chainId)
+    );
   }
 
   private async saveReplacementTx(params: {

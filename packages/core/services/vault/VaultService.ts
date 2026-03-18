@@ -2,7 +2,13 @@ import type { Database } from '@core/database';
 import type { Account } from '@core/database/models/Account';
 import type { AccountGroup } from '@core/database/models/AccountGroup';
 import type { Address } from '@core/database/models/Address';
+import type { AddressBook } from '@core/database/models/AddressBook';
 import type { Network } from '@core/database/models/Network';
+import type { Permission } from '@core/database/models/Permission';
+import type { Signature } from '@core/database/models/Signature';
+import type { Tx } from '@core/database/models/Tx';
+import type { TxExtra } from '@core/database/models/TxExtra';
+import type { TxPayload } from '@core/database/models/TxPayload';
 import type { Vault } from '@core/database/models/Vault';
 import VaultSourceType from '@core/database/models/Vault/VaultSourceType';
 import { VaultType } from '@core/database/models/Vault/VaultType';
@@ -15,12 +21,13 @@ import { fromPrivate, toChecksum } from '@core/utils/account';
 import { convertHexToBase32 } from '@core/utils/address';
 import { addHexPrefix, stripHexPrefix } from '@core/utils/base';
 import { generateMnemonic, getNthAccountOfHDKey } from '@core/utils/hdkey';
-import { Q } from '@nozbe/watermelondb';
+import { type Model, Q } from '@nozbe/watermelondb';
 import { Mnemonic } from 'ethers';
 import { inject, injectable } from 'inversify';
+import { getGroupedAccountNickname } from '../account/naming';
 import { HardwareWalletService } from '../hardware/HardwareWalletService';
 import { VAULT_ACCOUNT_PREFIX, VAULT_DEFAULTS, VAULT_GROUP_LABEL } from './constants';
-import type { CreateBSIMVaultInput, CreateHDVaultInput, CreatePrivateKeyVaultInput, CreatePublicAddressVaultInput, IVault } from './types';
+import type { CreateBSIMVaultInput, CreateHDVaultInput, CreatePrivateKeyVaultInput, CreatePublicAddressVaultInput, DeleteVaultPlan, IVault } from './types';
 import { verifyVaultPassword } from './verifyVaultPassword';
 
 @injectable()
@@ -188,7 +195,7 @@ export class VaultService {
 
     const accountGroup = this.createAccountGroupRecord(vaultRecord, VaultType.HierarchicalDeterministic, sameTypeCount);
 
-    const defaultNickname = `${VAULT_ACCOUNT_PREFIX[VaultType.HierarchicalDeterministic]} - 1`;
+    const defaultNickname = getGroupedAccountNickname(0);
     const account = this.createAccountRecord(accountGroup, input.accountNickname ?? defaultNickname, {
       index: 0,
       selected: isFirstVault,
@@ -298,7 +305,7 @@ export class VaultService {
     for (let idx = 0; idx < resolvedAccounts.length; idx += 1) {
       const { index, hexAddress } = resolvedAccounts[idx];
 
-      const nickname = `${VAULT_ACCOUNT_PREFIX[VaultType.BSIM]} - ${idx + 1}`;
+      const nickname = getGroupedAccountNickname(index);
       const account = this.createAccountRecord(accountGroup, nickname, {
         index,
         selected: isFirstVault && idx === 0,
@@ -419,10 +426,98 @@ export class VaultService {
     return count > 0;
   }
 
+  private getUniqueIds(ids: Array<string | null | undefined>): string[] {
+    return Array.from(new Set(ids.filter((id): id is string => typeof id === 'string' && id.length > 0)));
+  }
+
+  private async queryByIds<TRecord extends Model>(tableName: TableName, columnName: string, ids: Array<string | null | undefined>): Promise<TRecord[]> {
+    const uniqueIds = this.getUniqueIds(ids);
+    if (!uniqueIds.length) {
+      return [];
+    }
+
+    return this.database
+      .get<TRecord>(tableName)
+      .query(Q.where(columnName, Q.oneOf(uniqueIds)))
+      .fetch();
+  }
+
+  private async findAccountGroupByVaultIdOrThrow(vaultId: string): Promise<AccountGroup> {
+    const groups = await this.database.get<AccountGroup>(TableName.AccountGroup).query(Q.where('vault_id', vaultId)).fetch();
+    const group = groups[0];
+    if (!group) {
+      throw new Error(`AccountGroup for vault ${vaultId} not found.`);
+    }
+    return group;
+  }
+
+  private async buildVaultDeletionPlan(vault: Vault): Promise<DeleteVaultPlan> {
+    const accountGroup = await this.findAccountGroupByVaultIdOrThrow(vault.id);
+    const accounts = await this.queryByIds<Account>(TableName.Account, 'account_group_id', [accountGroup.id]);
+    const accountIds = accounts.map((account) => account.id);
+
+    const [permissions, addresses] = await Promise.all([
+      this.queryByIds<Permission>(TableName.Permission, 'account_id', accountIds),
+      this.queryByIds<Address>(TableName.Address, 'account_id', accountIds),
+    ]);
+    const addressIds = addresses.map((address) => address.id);
+
+    const [signatures, addressBooks, txs] = await Promise.all([
+      this.queryByIds<Signature>(TableName.Signature, 'address_id', addressIds),
+      this.queryByIds<AddressBook>(TableName.AddressBook, 'address_id', addressIds),
+      this.queryByIds<Tx>(TableName.Tx, 'address_id', addressIds),
+    ]);
+
+    const [txPayloads, txExtras] = await Promise.all([
+      this.queryByIds<TxPayload>(
+        TableName.TxPayload,
+        'id',
+        txs.map((tx) => tx.txPayload.id),
+      ),
+      this.queryByIds<TxExtra>(
+        TableName.TxExtra,
+        'id',
+        txs.map((tx) => tx.txExtra.id),
+      ),
+    ]);
+
+    return {
+      vault,
+      accountGroup,
+      accounts,
+      permissions,
+      addresses,
+      signatures,
+      addressBooks,
+      txs,
+      txPayloads,
+      txExtras,
+    };
+  }
+
+  private toVaultDeletionOperations(plan: DeleteVaultPlan) {
+    return [
+      ...plan.signatures.map((signature) => signature.prepareDestroyPermanently()),
+      ...plan.addressBooks.map((addressBook) => addressBook.prepareDestroyPermanently()),
+      ...plan.permissions.map((permission) => permission.prepareDestroyPermanently()),
+      ...plan.txs.map((tx) => tx.prepareDestroyPermanently()),
+      ...plan.txPayloads.map((txPayload) => txPayload.prepareDestroyPermanently()),
+      ...plan.txExtras.map((txExtra) => txExtra.prepareDestroyPermanently()),
+      ...plan.addresses.map((address) => address.prepareDestroyPermanently()),
+      ...plan.accounts.map((account) => account.prepareDestroyPermanently()),
+      plan.accountGroup.prepareDestroyPermanently(),
+      plan.vault.prepareDestroyPermanently(),
+    ];
+  }
+
   async deleteVault(vaultId: string): Promise<void> {
     const vault = await this.database.get<Vault>(TableName.Vault).find(vaultId);
+    const operations = this.toVaultDeletionOperations(await this.buildVaultDeletionPlan(vault));
+
     await this.database.write(async () => {
-      await vault.delete();
+      if (operations.length) {
+        await this.database.batch(...operations);
+      }
     });
   }
 

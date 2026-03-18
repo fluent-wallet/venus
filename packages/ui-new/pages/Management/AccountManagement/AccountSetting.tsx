@@ -15,14 +15,10 @@ import Text from '@components/Text';
 import TextInput from '@components/TextInput';
 import { AUTH_PASSWORD_REQUEST_CANCELED } from '@core/errors';
 import { zeroAddress } from '@core/utils/address';
-import useInAsync from '@hooks/useInAsync';
 import { useTheme } from '@react-navigation/native';
 import { type AccountSettingStackName, BackupStackName, BackupStep1StackName, type StackScreenProps } from '@router/configs';
-import { useAccountById, useSetAccountHidden, useUpdateAccountNickname } from '@service/account';
-import { useAccountGroup } from '@service/accountGroup';
-import { getAuthService, VaultType } from '@service/core';
-import { useDeleteVault } from '@service/vault';
-import { useDisconnectWalletConnectSessionsByAddresses } from '@service/walletConnect';
+import { useAccountById, useRemoveAccount, useUpdateAccountNickname } from '@service/account';
+import { VaultType } from '@service/core';
 import { getErrorCode } from '@utils/error';
 import type React from 'react';
 import { useCallback, useEffect, useRef, useState } from 'react';
@@ -38,12 +34,9 @@ const AccountConfig: React.FC<StackScreenProps<typeof AccountSettingStackName>> 
   const textinputRef = useRef<_TextInput | null>(null);
 
   const { data: account } = useAccountById(route.params.accountId);
-  const { data: accountGroup } = useAccountGroup(account?.accountGroupId);
   const addressValue = account?.address ?? '';
-  const disconnectByAddresses = useDisconnectWalletConnectSessionsByAddresses();
   const updateNickname = useUpdateAccountNickname();
-  const setHidden = useSetAccountHidden();
-  const deleteVault = useDeleteVault();
+  const { mutateAsync: removeAccount, isPending: inDeleting } = useRemoveAccount();
 
   const [accountName, setAccountName] = useState(() => account?.nickname);
   useEffect(() => {
@@ -76,18 +69,10 @@ const AccountConfig: React.FC<StackScreenProps<typeof AccountSettingStackName>> 
     }
   }, [account, t]);
 
-  const _handleConfirmDelete = useCallback(async () => {
-    if (!account || !accountGroup) return;
+  const handleConfirmDelete = useCallback(async () => {
+    if (!account) return;
     try {
-      if (accountGroup.isGroup) {
-        await setHidden(account.id, true);
-      } else {
-        await getAuthService().getPassword();
-        await deleteVault(accountGroup.vaultId);
-      }
-      if (addressValue) {
-        await disconnectByAddresses([addressValue]);
-      }
+      await removeAccount(account.id);
       showMessage({
         message: t('account.remove.successfully'),
         type: 'success',
@@ -105,9 +90,8 @@ const AccountConfig: React.FC<StackScreenProps<typeof AccountSettingStackName>> 
       });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [account, accountGroup, addressValue, disconnectByAddresses, deleteVault, setHidden, t]);
+  }, [account, removeAccount, t]);
 
-  const { inAsync: inDeleting, execAsync: handleConfirmDelete } = useInAsync(_handleConfirmDelete);
   const inDelete = showDeleteBottomSheet || inDeleting;
 
   return (
