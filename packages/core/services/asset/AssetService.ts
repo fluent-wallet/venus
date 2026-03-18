@@ -49,7 +49,21 @@ type AddressAssetContext = {
   trackedAssets: Asset[];
 };
 
-type ERC20MethodReturnType<T extends string> = T extends 'name' | 'symbol' ? string : T extends 'decimals' ? number : T extends 'balanceOf' ? Hex : never;
+type ERC20MethodResultMap = {
+  name: string;
+  symbol: string;
+  decimals: number;
+  balanceOf: Hex;
+};
+type ERC20MethodName = keyof ERC20MethodResultMap;
+type ERC20BatchRequest<TMethod extends ERC20MethodName = ERC20MethodName> = {
+  method: TMethod;
+  args: unknown[];
+};
+type ERC20BatchResults<TRequests extends readonly ERC20BatchRequest[]> = {
+  [K in keyof TRequests]: TRequests[K] extends ERC20BatchRequest<infer TMethod> ? ERC20MethodResultMap[TMethod] | null : never;
+};
+type ERC20MethodReturnType<T extends ERC20MethodName> = ERC20MethodResultMap[T];
 
 @injectable()
 export class AssetService {
@@ -92,12 +106,12 @@ export class AssetService {
     const owner = await address.getValue();
     const ownerForCalldata = this.resolveCalldataAddress(owner, network.networkType);
 
-    const [name, symbol, decimalsRaw, balanceRaw] = await Promise.all([
-      this.callERC20Method(provider, input.contractAddress, 'name', []),
-      this.callERC20Method(provider, input.contractAddress, 'symbol', []),
-      this.callERC20Method(provider, input.contractAddress, 'decimals', []),
-      this.callERC20Method(provider, input.contractAddress, 'balanceOf', [ownerForCalldata]),
-    ]);
+    const [name, symbol, decimalsRaw, balanceRaw] = await this.callERC20MethodsBatch(provider, input.contractAddress, [
+      { method: 'name', args: [] },
+      { method: 'symbol', args: [] },
+      { method: 'decimals', args: [] },
+      { method: 'balanceOf', args: [ownerForCalldata] },
+    ] as const);
 
     const decimals = typeof decimalsRaw === 'number' && Number.isFinite(decimalsRaw) ? decimalsRaw : 18;
     const balance = typeof balanceRaw === 'string' && balanceRaw.startsWith('0x') ? BigInt(balanceRaw).toString() : '0';
@@ -459,24 +473,53 @@ export class AssetService {
     try {
       const data = iface777.encodeFunctionData(method, args) as Hex;
       const raw = await provider.call({ to: contractAddress, data });
-      if (!raw || raw === '0x') return null;
-
-      // Decode based on method type
-      if (method === 'balanceOf') {
-        return raw as ERC20MethodReturnType<T>;
-      }
-
-      const [value] = iface777.decodeFunctionResult(method, raw);
-
-      if (method === 'decimals') {
-        return (typeof value === 'number' ? value : Number(value)) as ERC20MethodReturnType<T>;
-      }
-
-      // name or symbol
-      return (typeof value === 'string' ? value : null) as ERC20MethodReturnType<T>;
+      return this.decodeERC20MethodResult(method, raw);
     } catch {
       return null;
     }
+  }
+
+  private async callERC20MethodsBatch<TRequests extends readonly ERC20BatchRequest[]>(
+    provider: IChainProvider,
+    contractAddress: string,
+    requests: TRequests,
+  ): Promise<ERC20BatchResults<TRequests>> {
+    if (requests.length === 0) {
+      return [] as unknown as ERC20BatchResults<TRequests>;
+    }
+
+    try {
+      const raws = await provider.batchCall(
+        requests.map((request) => ({
+          to: contractAddress,
+          data: iface777.encodeFunctionData(request.method, request.args) as Hex,
+        })),
+      );
+
+      return requests.map((request, index) => this.decodeERC20MethodResult(request.method, raws[index] ?? null)) as ERC20BatchResults<TRequests>;
+    } catch {
+      return (await Promise.all(
+        requests.map((request) => this.callERC20Method(provider, contractAddress, request.method, request.args)),
+      )) as ERC20BatchResults<TRequests>;
+    }
+  }
+
+  private decodeERC20MethodResult<T extends ERC20MethodName>(method: T, raw: Hex | null | undefined): ERC20MethodReturnType<T> | null {
+    if (!raw || raw === '0x') {
+      return null;
+    }
+
+    if (method === 'balanceOf') {
+      return raw as ERC20MethodReturnType<T>;
+    }
+
+    const [value] = iface777.decodeFunctionResult(method, raw);
+
+    if (method === 'decimals') {
+      return (typeof value === 'number' ? value : Number(value)) as ERC20MethodReturnType<T>;
+    }
+
+    return (typeof value === 'string' ? value : null) as ERC20MethodReturnType<T>;
   }
 
   private resolveCalldataAddress(address: string, networkType: NetworkType): string {
@@ -507,11 +550,11 @@ export class AssetService {
   ) {
     const provider = this.getChainProvider(network);
 
-    const [name, symbol, decimals] = await Promise.all([
-      this.callERC20Method(provider, contractAddress, 'name', []),
-      this.callERC20Method(provider, contractAddress, 'symbol', []),
-      this.callERC20Method(provider, contractAddress, 'decimals', []),
-    ]);
+    const [name, symbol, decimals] = await this.callERC20MethodsBatch(provider, contractAddress, [
+      { method: 'name', args: [] },
+      { method: 'symbol', args: [] },
+      { method: 'decimals', args: [] },
+    ] as const);
 
     return {
       name: name ?? fallback.name,

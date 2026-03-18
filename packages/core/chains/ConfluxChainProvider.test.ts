@@ -121,6 +121,28 @@ describe('ConfluxChainProvider', () => {
     expect(mockRpc.call).toHaveBeenCalledWith({ to: SAMPLE_ACCOUNT_BASE32, data: '0xdeadbeef' });
   });
 
+  it('performs batch call through rpc client with latest_state tag', async () => {
+    const provider = createProvider();
+    const batchSpy = jest.spyOn(provider.rpc, 'batch').mockResolvedValueOnce(['0xff', '0x10']);
+
+    const result = await provider.batchCall([
+      { to: SAMPLE_ACCOUNT_BASE32, data: '0xdeadbeef' },
+      { to: OTHER_ACCOUNT_BASE32, data: '0x12345678' },
+    ]);
+
+    expect(result).toEqual(['0xff', '0x10']);
+    expect(batchSpy).toHaveBeenCalledWith([
+      {
+        method: 'cfx_call',
+        params: [{ to: SAMPLE_ACCOUNT_BASE32, data: '0xdeadbeef' }, 'latest_state'],
+      },
+      {
+        method: 'cfx_call',
+        params: [{ to: OTHER_ACCOUNT_BASE32, data: '0x12345678' }, 'latest_state'],
+      },
+    ]);
+  });
+
   it('fetches nonce and converts response to number', async () => {
     const provider = createProvider();
     mockRpc.getNextNonce.mockResolvedValueOnce(26n);

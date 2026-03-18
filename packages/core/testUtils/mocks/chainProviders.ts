@@ -255,6 +255,10 @@ export class StubChainProvider implements IChainProvider {
     return this.customCallResponses.get(key) ?? '0x0';
   }
 
+  async batchCall(params: readonly ChainCallParams[]): Promise<Hex[]> {
+    return Promise.all(params.map((param) => this.call(param)));
+  }
+
   async signMessage(): Promise<string> {
     return '0x';
   }

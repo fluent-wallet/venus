@@ -154,6 +154,28 @@ describe('EthereumChainProvider', () => {
     expect(mockProvider.call).toHaveBeenCalledWith({ to: '0x2222222222222222222222222222222222222222', data: '0xdeadbeef' });
   });
 
+  it('performs batch call through rpc client with latest tag', async () => {
+    const provider = createProvider();
+    const batchSpy = jest.spyOn(provider.rpc, 'batch').mockResolvedValueOnce(['0x1234', '0xabcd']);
+
+    const result = await provider.batchCall([
+      { to: '0x2222222222222222222222222222222222222222', data: '0xdeadbeef' },
+      { to: '0x3333333333333333333333333333333333333333', data: '0x12345678' },
+    ]);
+
+    expect(result).toEqual(['0x1234', '0xabcd']);
+    expect(batchSpy).toHaveBeenCalledWith([
+      {
+        method: 'eth_call',
+        params: [{ to: '0x2222222222222222222222222222222222222222', data: '0xdeadbeef' }, 'latest'],
+      },
+      {
+        method: 'eth_call',
+        params: [{ to: '0x3333333333333333333333333333333333333333', data: '0x12345678' }, 'latest'],
+      },
+    ]);
+  });
+
   it('estimates fee with EIP-1559 fields when available', async () => {
     const provider = createProvider();
 

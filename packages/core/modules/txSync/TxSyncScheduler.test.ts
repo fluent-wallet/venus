@@ -202,6 +202,7 @@ describe('TxSyncScheduler', () => {
       chainId: '1',
       networkType: NetworkType.Ethereum,
       rpc: { request: jest.fn(), batch: jest.fn() },
+      batchCall: jest.fn(),
     } as unknown as IChainProvider;
     const getProvider = jest.fn(async (): Promise<IChainProvider> => provider);
 
@@ -265,6 +266,7 @@ describe('TxSyncScheduler', () => {
       chainId: '1',
       networkType: NetworkType.Ethereum,
       rpc: { request: jest.fn(), batch: jest.fn() },
+      batchCall: jest.fn(),
     } as unknown as IChainProvider;
     const getProvider = jest.fn(async (): Promise<IChainProvider> => provider);
 

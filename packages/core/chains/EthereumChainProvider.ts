@@ -277,6 +277,20 @@ export class EthereumChainProvider implements IChainProvider<EvmUnsignedTransact
     const raw = await this.getEthersProvider().call({ to, data });
     return raw as Hex;
   }
+
+  async batchCall(params: readonly ChainCallParams[]): Promise<Hex[]> {
+    if (params.length === 0) {
+      return [];
+    }
+
+    return this.rpc.batch<Hex>(
+      params.map(({ to, data }) => ({
+        method: 'eth_call',
+        params: [{ to, data }, 'latest'],
+      })),
+    );
+  }
+
   private async resolveNonce(address: Address, override?: number): Promise<number> {
     if (typeof override === 'number') {
       return override;

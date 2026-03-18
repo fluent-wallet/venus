@@ -211,6 +211,19 @@ export class ConfluxChainProvider implements IChainProvider<ConfluxUnsignedTrans
     return this.formatHex(result);
   }
 
+  async batchCall(params: readonly ChainCallParams[]): Promise<Hex[]> {
+    if (params.length === 0) {
+      return [];
+    }
+
+    return this.rpc.batch<Hex>(
+      params.map(({ to, data }) => ({
+        method: 'cfx_call',
+        params: [{ to, data }, 'latest_state'],
+      })),
+    );
+  }
+
   async signMessage(message: string, signer: ISigner): Promise<string> {
     if (signer.type === 'software') {
       const privateKey = signer.getPrivateKey();

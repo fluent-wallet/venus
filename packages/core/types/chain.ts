@@ -42,6 +42,7 @@ export interface IChainProvider<TUnsignedTransaction extends UnsignedTransaction
 
   getBalance(address: Address): Promise<Hex>;
   call(params: ChainCallParams): Promise<Hex>;
+  batchCall(params: readonly ChainCallParams[]): Promise<Hex[]>;
   getNonce(address: Address): Promise<number>;
 
   signMessage(message: string, signer: ISigner): Promise<string>;
