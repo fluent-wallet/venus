@@ -1,6 +1,6 @@
 import { ExecutedStatus, type Receipt, TxStatus } from '@core/database/models/Tx/type';
 import type { IChainProvider } from '@core/types';
-import { NetworkType } from '@core/utils/consts';
+import { MAX_EPOCH_NUMBER_OFFSET_IN_CORE, NetworkType } from '@core/utils/consts';
 import type { Rpc as EvmRpcTransactionReceipt } from 'ox/TransactionReceipt';
 import { CFX_RPC, EVM_RPC } from './rpc';
 
@@ -32,6 +32,7 @@ export interface TxSyncDriver {
   getFinalityWaterline(): Promise<FinalityWaterline>;
   batchGetBlockTimestampsMs(blockHashes: Array<string | null | undefined>): Promise<Array<number | undefined>>;
 
+  precheckBeforeResend(params: { epochHeight?: string | null }): Promise<boolean>;
   sendRawTransaction(raw: string): Promise<string>;
 
   getReceiptBlockHash(receipt: unknown): string | null;
@@ -123,6 +124,9 @@ class EvmTxSyncDriver implements TxSyncDriver {
     }
 
     return out;
+  }
+  async precheckBeforeResend(): Promise<boolean> {
+    return true;
   }
   sendRawTransaction(raw: string): Promise<string> {
     return this.provider.rpc.request<string>(EVM_RPC.sendRawTransaction, [raw]);
@@ -249,6 +253,22 @@ class CfxTxSyncDriver implements TxSyncDriver {
     return out;
   }
 
+  async precheckBeforeResend(params: { epochHeight?: string | null }): Promise<boolean> {
+    try {
+      const txEpochHeight = toBigIntOrUndef(params.epochHeight);
+      if (txEpochHeight === undefined) {
+        return false;
+      }
+
+      const currentEpochRaw = await this.provider.rpc.request<string>(CFX_RPC.epochNumber, ['latest_state']);
+      const currentEpoch = BigInt(currentEpochRaw);
+      const diff = currentEpoch - txEpochHeight;
+
+      return diff >= -MAX_EPOCH_NUMBER_OFFSET_IN_CORE && diff <= MAX_EPOCH_NUMBER_OFFSET_IN_CORE;
+    } catch {
+      return false;
+    }
+  }
   sendRawTransaction(raw: string): Promise<string> {
     return this.provider.rpc.request<string>(CFX_RPC.sendRawTransaction, [raw]);
   }

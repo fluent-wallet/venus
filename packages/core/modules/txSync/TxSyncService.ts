@@ -203,6 +203,7 @@ export class TxSyncService {
         nonce: payload.nonce,
         hash: tx.hash ?? null,
         raw: tx.raw,
+        epochHeight: payload.epochHeight ?? null,
         resendCount: tx.resendCount ?? 0,
         createdAtMs: tx.createdAt.getTime(),
       };
