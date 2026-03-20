@@ -21,8 +21,11 @@ export const BottomSheetWrapper = ({
   ...props
 }: WrapperProps & { useBottomSheetView?: boolean }) => {
   const Container = useBottomSheetView ? BottomSheetView : View;
+  const containerStyle = useBottomSheetView
+    ? StyleSheet.flatten([styles.wrapper, innerPaddingHorizontal && styles.paddingH16, style])
+    : [styles.wrapper, innerPaddingHorizontal && styles.paddingH16, style];
   return (
-    <Container style={[styles.wrapper, innerPaddingHorizontal && styles.paddingH16, style]} {...props}>
+    <Container style={containerStyle} {...props}>
       {children}
     </Container>
   );
