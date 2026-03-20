@@ -276,6 +276,7 @@ const SendTransactionStep4Confirm: React.FC<SendTransactionScreenProps<typeof Se
         enableContentPanningGesture={!inSending}
         enableHandlePanningGesture={!inSending}
         isRoute
+        useBottomSheetView={false}
       >
         <BottomSheetScrollContent
           // only support android: https://reactnative.dev/docs/scrollview#persistentscrollbar-android
