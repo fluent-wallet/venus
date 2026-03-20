@@ -1,31 +1,35 @@
 buildscript {
-    ext {
-        buildToolsVersion = "35.0.0"
-        minSdkVersion = 28
-        compileSdkVersion = 35
-        targetSdkVersion = 35
-        ndkVersion = "27.1.12297006"
-        kotlinVersion = "2.0.21"
-    }
-    repositories {
-        google()
-        mavenCentral()
-    }
-    allprojects {
-        repositories {
-            // * Your other repositories here *
-            maven {
-                // expo-camera bundles a custom com.google.android:cameraview
-                url "$rootDir/../node_modules/expo-camera/android/maven"
-            }
-            maven { url 'https://www.jitpack.io' } // for react-native-ble-plx see: https://github.com/dotintent/react-native-ble-plx?tab=readme-ov-file#android-example-setup
-        }
-    }
-    dependencies {
-        classpath("com.android.tools.build:gradle")
-        classpath("com.facebook.react:react-native-gradle-plugin")
-        classpath("org.jetbrains.kotlin:kotlin-gradle-plugin")
-    }
+  ext {
+    buildToolsVersion = "36.0.0"
+    minSdkVersion = 28
+    compileSdkVersion = 36
+    targetSdkVersion = 36
+    ndkVersion = "27.1.12297006"
+    kotlinVersion = "2.1.20"
+  }
+  repositories {
+    google()
+    mavenCentral()
+  }
+  dependencies {
+    classpath("com.android.tools.build:gradle")
+    classpath("com.facebook.react:react-native-gradle-plugin")
+    classpath("org.jetbrains.kotlin:kotlin-gradle-plugin")
+  }
 }
 
+allprojects {
+  repositories {
+    google()
+    mavenCentral()
+    // * Your other repositories here *
+    maven {
+      // expo-camera bundles a custom com.google.android:cameraview
+      url "$rootDir/../node_modules/expo-camera/android/maven"
+    }
+    maven { url 'https://www.jitpack.io' } // for react-native-ble-plx see: https://github.com/dotintent/react-native-ble-plx?tab=readme-ov-file#android-example-setup
+  }
+}
+
+apply plugin: "expo-root-project"
 apply plugin: "com.facebook.react.rootproject"
