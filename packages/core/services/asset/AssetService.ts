@@ -8,7 +8,16 @@ import type { Network } from '@core/database/models/Network';
 import TableName from '@core/database/TableName';
 import { CORE_IDENTIFIERS } from '@core/di';
 import { CHAIN_PROVIDER_NOT_FOUND, CoreError } from '@core/errors';
-import { ASSET_SOURCE, ASSET_TYPE, type AssetSource, type AssetTypeValue, type Hex, type IChainProvider } from '@core/types';
+import {
+  ASSET_SOURCE,
+  ASSET_TYPE,
+  type AssetSource,
+  type AssetTypeValue,
+  AssetType as CoreAssetType,
+  type FungibleAssetBalanceRequest,
+  type Hex,
+  type IChainProvider,
+} from '@core/types';
 import { convertToChecksum } from '@core/utils/account';
 import { type Base32Address, convertBase32ToHex } from '@core/utils/address';
 import { balanceFormat, convertBalanceToDecimal, truncate } from '@core/utils/balance';
@@ -255,12 +264,19 @@ export class AssetService {
   }
 
   private async readTrackedFungibleAssetsWithBalances(address: Address, trackedFungibleAssets: Asset[]): Promise<IAsset[]> {
-    return Promise.all(
-      trackedFungibleAssets.map(async (asset) => {
-        const balance = await this.fetchFungibleAssetBalance(address, asset);
-        return this.toInterface(asset, balance);
-      }),
+    if (trackedFungibleAssets.length === 0) {
+      return [];
+    }
+
+    const network = await address.network.fetch();
+    const provider = this.getChainProvider(network);
+    const addressValue = await address.getValue();
+    const raws = await provider.readFungibleAssetBalances(
+      addressValue,
+      trackedFungibleAssets.map((asset) => this.toFungibleAssetBalanceRequest(asset)),
     );
+
+    return trackedFungibleAssets.map((asset, index) => this.toInterface(asset, this.parseFungibleAssetBalance(asset, raws[index] ?? null)));
   }
 
   private async mergeDiscoveredWithTrackedAssets(params: {
@@ -449,19 +465,8 @@ export class AssetService {
     const network = await address.network.fetch();
     const provider = this.getChainProvider(network);
     const addressValue = await address.getValue();
-
-    if (asset.type === DbAssetType.Native) {
-      const raw = await provider.getBalance(addressValue);
-      return this.parseHexBalance(raw, asset.decimals);
-    }
-
-    if (asset.type === DbAssetType.ERC20 && asset.contractAddress) {
-      const hexAddress = this.resolveCalldataAddress(addressValue, network.networkType);
-      const raw = await this.callERC20Method(provider, asset.contractAddress, 'balanceOf', [hexAddress]);
-      return this.parseHexBalance(raw ?? '0x0', asset.decimals);
-    }
-
-    throw new Error(`Asset type ${asset.type} is not supported yet.`);
+    const [raw] = await provider.readFungibleAssetBalances(addressValue, [this.toFungibleAssetBalanceRequest(asset)]);
+    return this.parseFungibleAssetBalance(asset, raw ?? null);
   }
 
   private async callERC20Method<T extends 'name' | 'symbol' | 'decimals' | 'balanceOf'>(
@@ -527,6 +532,25 @@ export class AssetService {
       return convertBase32ToHex(address as Base32Address);
     }
     return address;
+  }
+
+  private toFungibleAssetBalanceRequest(asset: Asset): FungibleAssetBalanceRequest {
+    if (asset.type === DbAssetType.Native) {
+      return { assetType: CoreAssetType.Native };
+    }
+
+    if (asset.type === DbAssetType.ERC20 && asset.contractAddress) {
+      return {
+        assetType: CoreAssetType.ERC20,
+        contractAddress: asset.contractAddress,
+      };
+    }
+
+    throw new Error(`Asset type ${asset.type} is not supported yet.`);
+  }
+
+  private parseFungibleAssetBalance(asset: Asset, raw: Hex | null | undefined): NormalizedBalance {
+    return this.parseHexBalance((raw ?? '0x0') as Hex, asset.decimals);
   }
 
   private parseHexBalance(rawHex: Hex, decimals: number | null | undefined): NormalizedBalance {
