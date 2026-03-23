@@ -7,6 +7,7 @@ import { getAccountRootKey, getCurrentAccountKey } from './account';
 import { getAssetsByAddressKey } from './asset';
 import { mockAccount, mockAsset } from './mocks/fixtures';
 import { createTestQueryClient, createWrapper } from './mocks/reactQuery';
+import { getNftItemsKey } from './nft';
 import { useRuntimeEventBridge } from './runtimeBridge';
 import { getSignatureRootKey } from './signature';
 
@@ -144,6 +145,75 @@ describe('runtimeBridge', () => {
     await waitFor(() => {
       expect(queryClient.getQueryData(getAssetsByAddressKey('addr_1'))).toEqual([mockAsset]);
     });
+  });
+
+  it('writes nft item snapshots into the targeted cache without invalidating nft queries', async () => {
+    const queryClient = createTestQueryClient();
+    const wrapper = createWrapper(queryClient) as React.ComponentType<{ children: React.ReactNode }>;
+    const eventBus = new InMemoryEventBus<CoreEventMap>();
+    const invalidateSpy = jest.spyOn(queryClient, 'invalidateQueries');
+    const auth = { cancelPasswordRequest: jest.fn() };
+    const externalRequests = { getActiveRequests: jest.fn(() => []) };
+
+    mockGetRuntimeEventBus.mockReturnValue(eventBus);
+    mockGetAuthService.mockReturnValue(auth);
+    mockGetExternalRequestsService.mockReturnValue(externalRequests);
+
+    const navigation = {
+      canGoBack: jest.fn(() => false),
+      dispatch: jest.fn(),
+      getState: jest.fn(() => ({ routes: [] })),
+      navigate: jest.fn(),
+    } as Parameters<typeof useRuntimeEventBridge>[0];
+
+    renderHook(() => useRuntimeEventBridge(navigation), { wrapper });
+
+    act(() => {
+      eventBus.emit('nft-sync/started', {
+        key: { addressId: 'addr_1', networkId: 'net_1', contractAddress: '0xabc' },
+        reason: 'poll',
+        runId: 'run_1',
+        timestampMs: Date.now(),
+      });
+      eventBus.emit('nft-sync/updated', {
+        key: { addressId: 'addr_1', networkId: 'net_1', contractAddress: '0xabc' },
+        reason: 'poll',
+        runId: 'run_1',
+        timestampMs: Date.now(),
+        updatedCount: 1,
+      });
+      eventBus.emit('nft-sync/failed', {
+        key: { addressId: 'addr_1', networkId: 'net_1', contractAddress: '0xabc' },
+        reason: 'poll',
+        runId: 'run_1',
+        timestampMs: Date.now(),
+        error: { code: 'NFT_SYNC_FETCH_FAILED', message: 'failed' },
+      });
+      eventBus.emit('nft-sync/succeeded', {
+        key: { addressId: 'addr_1', networkId: 'net_1', contractAddress: '0xabc' },
+        reason: 'poll',
+        runId: 'run_1',
+        timestampMs: Date.now(),
+        updatedCount: 1,
+        snapshot: {
+          contractAddress: '0xabc',
+          items: [{ tokenId: '1', name: 'NFT #1', amount: '1' }],
+        },
+      });
+    });
+
+    await waitFor(() => {
+      expect(queryClient.getQueryData(getNftItemsKey('addr_1', '0xabc'))).toEqual([
+        {
+          tokenId: '1',
+          name: 'NFT #1',
+          description: null,
+          icon: null,
+          amount: '1',
+        },
+      ]);
+    });
+    expect(invalidateSpy).not.toHaveBeenCalled();
   });
 
   it('resolves biometrics requests without routing to password verify', async () => {

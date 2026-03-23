@@ -1,5 +1,6 @@
 import { NetworkType as CoreNetworkType } from '@core/utils/consts';
 import type { Block, Hex } from 'ox';
+import type { AssetType } from './asset';
 import type { IChainRpc } from './rpc';
 import type { ISigner } from './signer';
 import type {
@@ -26,6 +27,15 @@ export interface ChainCallParams {
   data: Hex;
 }
 
+export type FungibleAssetBalanceRequest =
+  | {
+      assetType: AssetType.Native;
+    }
+  | {
+      assetType: AssetType.ERC20;
+      contractAddress: Address;
+    };
+
 export interface IChainProvider<TUnsignedTransaction extends UnsignedTransaction = UnsignedTransaction, TFeeEstimate extends FeeEstimate = FeeEstimate> {
   readonly chainId: string;
   readonly networkType: ChainType;
@@ -43,6 +53,7 @@ export interface IChainProvider<TUnsignedTransaction extends UnsignedTransaction
   getBalance(address: Address): Promise<Hex>;
   call(params: ChainCallParams): Promise<Hex>;
   batchCall(params: readonly ChainCallParams[]): Promise<Hex[]>;
+  readFungibleAssetBalances(address: Address, requests: readonly FungibleAssetBalanceRequest[]): Promise<ReadonlyArray<Hex | null>>;
   getNonce(address: Address): Promise<number>;
 
   signMessage(message: string, signer: ISigner): Promise<string>;

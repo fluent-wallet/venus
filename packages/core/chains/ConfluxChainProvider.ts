@@ -1,3 +1,4 @@
+import { iface777 } from '@core/contracts';
 import { DynamicHttpJsonRpcClient } from '@core/rpc/DynamicHttpJsonRpcClient';
 import type {
   Address,
@@ -5,6 +6,7 @@ import type {
   ConfluxFeeEstimate,
   ConfluxUnsignedTransaction,
   ConfluxUnsignedTransactionPayload,
+  FungibleAssetBalanceRequest,
   HardwareSignResult,
   Hash,
   IChainProvider,
@@ -224,6 +226,76 @@ export class ConfluxChainProvider implements IChainProvider<ConfluxUnsignedTrans
     );
   }
 
+  async readFungibleAssetBalances(address: Address, requests: readonly FungibleAssetBalanceRequest[]): Promise<ReadonlyArray<Hex | null>> {
+    if (requests.length === 0) {
+      return [];
+    }
+
+    const results: Array<Hex | null> = new Array(requests.length).fill(null);
+    const nativeIndexes: number[] = [];
+    const rpcRequests: Array<{ method: string; params: unknown[] }> = [];
+    const responseBindings: Array<{ kind: 'native'; indexes: number[] } | { kind: 'erc20'; index: number }> = [];
+    const ownerHex = this.resolveErc20BalanceAddress(address);
+
+    requests.forEach((request, index) => {
+      if (request.assetType === 'Native') {
+        nativeIndexes.push(index);
+        return;
+      }
+
+      rpcRequests.push({
+        method: 'cfx_call',
+        params: [
+          {
+            to: request.contractAddress,
+            data: iface777.encodeFunctionData('balanceOf', [ownerHex]) as Hex,
+          },
+          'latest_state',
+        ],
+      });
+      responseBindings.push({ kind: 'erc20', index });
+    });
+
+    if (nativeIndexes.length > 0) {
+      rpcRequests.unshift({ method: 'cfx_getBalance', params: [address, 'latest_state'] });
+      responseBindings.unshift({ kind: 'native', indexes: nativeIndexes });
+    }
+
+    try {
+      const raws = await this.rpc.batch<Hex>(rpcRequests);
+      responseBindings.forEach((binding, index) => {
+        const raw = raws[index] ?? null;
+        if (binding.kind === 'native') {
+          binding.indexes.forEach((nativeIndex) => {
+            results[nativeIndex] = raw;
+          });
+          return;
+        }
+
+        results[binding.index] = raw;
+      });
+
+      return results;
+    } catch {
+      return Promise.all(
+        requests.map(async (request) => {
+          try {
+            if (request.assetType === 'Native') {
+              return await this.getBalance(address);
+            }
+
+            return await this.call({
+              to: request.contractAddress,
+              data: iface777.encodeFunctionData('balanceOf', [ownerHex]) as Hex,
+            });
+          } catch {
+            return null;
+          }
+        }),
+      );
+    }
+  }
+
   async signMessage(message: string, signer: ISigner): Promise<string> {
     if (signer.type === 'software') {
       const privateKey = signer.getPrivateKey();
@@ -268,6 +340,13 @@ export class ConfluxChainProvider implements IChainProvider<ConfluxUnsignedTrans
     const { sdkRpc } = this.getConfluxClients();
     const epoch = await sdkRpc.getEpochNumber('latest_state');
     return this.toNumber(epoch);
+  }
+
+  private resolveErc20BalanceAddress(address: Address): string {
+    if (address.startsWith('cfx') || address.startsWith('net')) {
+      return convertBase32ToHex(address as Base32Address);
+    }
+    return address;
   }
 
   private async finalizePreparedTransaction(tx: ConfluxUnsignedTransaction): Promise<ConfluxUnsignedTransaction> {

@@ -274,12 +274,12 @@ const SendTransactionStep1Receiver: React.FC<SendTransactionScreenProps<typeof S
             <Button
               testID="next"
               onPress={() => {
-                navigation.navigate(SendTransactionStep2StackName, {
-                  recipientAddress: receiver,
-                });
                 if (Keyboard.isVisible()) {
                   Keyboard.dismiss();
                 }
+                navigation.navigate(SendTransactionStep2StackName, {
+                  recipientAddress: receiver,
+                });
               }}
               disabled={filterAccounts.type === AddressKind.Contract && !knowRisk}
               size="small"

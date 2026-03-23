@@ -94,12 +94,23 @@ const stubProvider = (overrides: Partial<IChainProvider> & { chainId?: string; n
     estimateFee: overrides.estimateFee ?? (async () => createFeeEstimate(networkType)),
     signTransaction: overrides.signTransaction ?? (async () => createSignedTx(networkType)),
     broadcastTransaction: overrides.broadcastTransaction ?? (async () => '0x'),
+    rpc:
+      overrides.rpc ??
+      ({
+        request: async () => {
+          throw new Error('rpc.request not implemented');
+        },
+        batch: async () => {
+          throw new Error('rpc.batch not implemented');
+        },
+      } as IChainProvider['rpc']),
     getBalance: overrides.getBalance ?? (async () => '0x0'),
     getNonce: overrides.getNonce ?? (async () => 0),
     signMessage: overrides.signMessage ?? (async () => '0x'),
     verifyMessage: overrides.verifyMessage ?? (() => true),
     call: overrides.call ?? (async () => '0x'),
     batchCall: overrides.batchCall ?? (async () => []),
+    readFungibleAssetBalances: overrides.readFungibleAssetBalances ?? (async (_address, requests) => requests.map(() => '0x0')),
   };
 };
 

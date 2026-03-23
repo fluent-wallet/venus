@@ -5,6 +5,7 @@ import {
   type ConfluxUnsignedTransactionPayload,
   type EvmUnsignedTransaction,
   type EvmUnsignedTransactionPayload,
+  type FungibleAssetBalanceRequest,
   type Hex,
   type IChainProvider,
   type IChainRpc,
@@ -257,6 +258,16 @@ export class StubChainProvider implements IChainProvider {
 
   async batchCall(params: readonly ChainCallParams[]): Promise<Hex[]> {
     return Promise.all(params.map((param) => this.call(param)));
+  }
+
+  async readFungibleAssetBalances(address: string, requests: readonly FungibleAssetBalanceRequest[]): Promise<ReadonlyArray<Hex | null>> {
+    return requests.map((request) => {
+      if (request.assetType === AssetType.Native) {
+        return this.nativeBalances.get(address.toLowerCase()) ?? '0x0';
+      }
+
+      return this.tokenBalances.get(request.contractAddress.toLowerCase()) ?? '0x0';
+    });
   }
 
   async signMessage(): Promise<string> {

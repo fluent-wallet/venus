@@ -12,7 +12,7 @@ import Decimal from 'decimal.js';
 import type React from 'react';
 import { useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { StyleSheet, View } from 'react-native';
+import { Keyboard, StyleSheet, View } from 'react-native';
 import SendTransactionBottomSheet from '../SendTransactionBottomSheet';
 import SetAssetAmount, { type AmountInfo, type SetAssetAmountMethods } from './SetAssetAmount';
 
@@ -53,12 +53,16 @@ const SendTransactionStep3Amount: React.FC<SendTransactionScreenProps<typeof Sen
           onPress={
             !amountInfo || amountInfo.validMax === null
               ? () => setAssetAmountMethodsRef.current?.handleEstimateMax?.()
-              : () =>
+              : () => {
+                  if (Keyboard.isVisible()) {
+                    Keyboard.dismiss();
+                  }
                   navigation.navigate(SendTransactionStep4StackName, {
                     ...route.params,
                     amount: amountInfo.inMaxMode ? new Decimal(asset.balance).div(Decimal.pow(10, asset.decimals)).toString() : amountInfo.amount,
                     inMaxMode: amountInfo.inMaxMode,
-                  })
+                  });
+                }
           }
           size="small"
           loading={amountInfo?.inEstimate}

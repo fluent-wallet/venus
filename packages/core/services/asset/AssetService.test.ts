@@ -98,6 +98,7 @@ describe('AssetService', () => {
   });
 
   it('returns assets with normalized balances for an address', async () => {
+    const readBalancesSpy = jest.spyOn(provider, 'readFungibleAssetBalances');
     const assets = await service.getAssetsByAddress(address.id);
 
     expect(assets).toHaveLength(2);
@@ -111,6 +112,12 @@ describe('AssetService', () => {
     expect(token?.balance).toBe('2');
     expect(token?.formattedBalance).toBe('2');
     expect(token?.priceValue).toBeNull();
+    expect(readBalancesSpy).toHaveBeenCalledTimes(1);
+    expect(readBalancesSpy).toHaveBeenCalledWith(
+      await address.getValue(),
+      expect.arrayContaining([{ assetType: 'Native' }, { assetType: 'ERC20', contractAddress: tokenContract }]),
+    );
+    expect(readBalancesSpy.mock.calls[0]?.[1]).toHaveLength(2);
   });
 
   it('gets balance for a specific asset', async () => {

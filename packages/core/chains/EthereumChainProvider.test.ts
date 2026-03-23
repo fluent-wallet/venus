@@ -1,8 +1,10 @@
 import 'reflect-metadata';
+import { iface777 } from '@core/contracts';
+import ESpaceWalletABI from '@core/contracts/ABI/ESpaceWallet';
 import { SoftwareSigner } from '@core/signers';
 import { createMockEthersProvider, DEFAULT_HEX_ADDRESS, DEFAULT_PRIVATE_KEY } from '@core/testUtils/mocks';
 import { AssetType, type EvmUnsignedTransaction, type Hex, NetworkType } from '@core/types';
-import { JsonRpcProvider, Transaction, toUtf8Bytes, Wallet } from 'ethers';
+import { Interface, JsonRpcProvider, Transaction, toUtf8Bytes, Wallet } from 'ethers';
 import { EndpointManager } from './EndpointManager';
 import { EthereumChainProvider, type EthereumChainProviderOptions } from './EthereumChainProvider';
 
@@ -28,6 +30,7 @@ const SAMPLE_PUBLIC_KEY =
   '0x040a25e77cb5b4922947ccc3bc4b6b410a9ea48c9af3fb81cfeb388c55f05c40d41e53259a6224c2cd41db70370601d59d16ab0f580d68807adcc484f3c18caff1';
 const SAMPLE_PRIVATE_KEY = DEFAULT_PRIVATE_KEY;
 const EXPECTED_ADDRESS = '0x6DF223015040A93Ce17c591837aa308BCFc6A10c';
+const eSpaceWalletIface = new Interface(ESpaceWalletABI);
 let mockProvider: ReturnType<typeof createMockEthersProvider>['provider'];
 const createWalletStub = () => ({
   signTransaction: jest.fn(),
@@ -173,6 +176,62 @@ describe('EthereumChainProvider', () => {
         method: 'eth_call',
         params: [{ to: '0x3333333333333333333333333333333333333333', data: '0x12345678' }, 'latest'],
       },
+    ]);
+  });
+
+  it('reads fungible balances through generic EVM batch requests', async () => {
+    const provider = createProvider({ chainId: '0x1' });
+    const batchSpy = jest.spyOn(provider.rpc, 'batch').mockResolvedValueOnce(['0x10', '0x20']);
+    const tokenContract = '0x2222222222222222222222222222222222222222';
+
+    const result = await provider.readFungibleAssetBalances(SAMPLE_ACCOUNT, [
+      { assetType: AssetType.Native },
+      { assetType: AssetType.ERC20, contractAddress: tokenContract },
+    ]);
+
+    expect(result).toEqual(['0x10', '0x20']);
+    expect(batchSpy).toHaveBeenCalledWith([
+      {
+        method: 'eth_getBalance',
+        params: [SAMPLE_ACCOUNT, 'latest'],
+      },
+      {
+        method: 'eth_call',
+        params: [
+          {
+            to: tokenContract,
+            data: iface777.encodeFunctionData('balanceOf', [SAMPLE_ACCOUNT]) as Hex,
+          },
+          'latest',
+        ],
+      },
+    ]);
+  });
+
+  it('reads fungible balances through the eSpace wallet fast path', async () => {
+    const provider = createProvider({ chainId: '0x47' });
+    const requestSpy = jest
+      .spyOn(provider.rpc, 'request')
+      .mockResolvedValueOnce(eSpaceWalletIface.encodeFunctionResult('getBalances(address,address[])', [[16n, 1n, 2n]]) as Hex);
+    const tokenA = '0x2222222222222222222222222222222222222222';
+    const tokenB = '0x3333333333333333333333333333333333333333';
+
+    const result = await provider.readFungibleAssetBalances(SAMPLE_ACCOUNT, [
+      { assetType: AssetType.Native },
+      { assetType: AssetType.ERC20, contractAddress: tokenA },
+      { assetType: AssetType.ERC20, contractAddress: tokenB },
+    ]);
+
+    expect(result).toEqual(['0x10', '0x1', '0x2']);
+    expect(requestSpy).toHaveBeenCalledWith('eth_call', [
+      {
+        to: '0xce2104aa7233b27b0ba2e98ede59b6f78c06ae05',
+        data: eSpaceWalletIface.encodeFunctionData('getBalances(address,address[])', [
+          SAMPLE_ACCOUNT,
+          ['0x0000000000000000000000000000000000000000', tokenA, tokenB],
+        ]) as Hex,
+      },
+      'latest',
     ]);
   });
 

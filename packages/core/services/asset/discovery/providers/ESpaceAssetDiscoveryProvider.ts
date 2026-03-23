@@ -1,3 +1,4 @@
+import { getESpaceChainConfig } from '@core/chains/eSpaceConfig';
 import ESpaceWalletABI from '@core/contracts/ABI/ESpaceWallet';
 import { ASSET_TYPE, type AssetTypeValue, type Hex } from '@core/types';
 import { NetworkType } from '@core/utils/consts';
@@ -9,17 +10,6 @@ import type { AssetDiscoveryInput, DiscoveredFungibleAsset, IAssetDiscoveryProvi
 const eSpaceWalletIface = new Interface(ESpaceWalletABI);
 const NATIVE_ASSET_KEY = 'native';
 
-const E_SPACE_DISCOVERY_CONFIG_BY_CHAIN_ID: Record<string, { walletContract: string; scanOpenApiBaseUrl: string }> = {
-  '0x406': {
-    walletContract: '0x2c7e015328f37f00f9b16e4adc9cedb1f8742069',
-    scanOpenApiBaseUrl: 'https://evmapi.confluxscan.org',
-  },
-  '0x47': {
-    walletContract: '0xce2104aa7233b27b0ba2e98ede59b6f78c06ae05',
-    scanOpenApiBaseUrl: 'https://evmapi-testnet.confluxscan.org',
-  },
-};
-
 type ScanTokenItem = {
   type?: unknown;
   contract?: unknown;
@@ -30,11 +20,11 @@ type ScanTokenItem = {
 @injectable()
 export class ESpaceAssetDiscoveryProvider implements IAssetDiscoveryProvider {
   supports(input: { chainId: string; networkType: NetworkType }): boolean {
-    return input.networkType === NetworkType.Ethereum && Boolean(E_SPACE_DISCOVERY_CONFIG_BY_CHAIN_ID[input.chainId.toLowerCase()]);
+    return input.networkType === NetworkType.Ethereum && Boolean(getESpaceChainConfig(input.chainId));
   }
 
   async discoverFungibleAssets(input: AssetDiscoveryInput): Promise<DiscoveredFungibleAsset[] | null> {
-    const config = E_SPACE_DISCOVERY_CONFIG_BY_CHAIN_ID[input.network.chainId.toLowerCase()];
+    const config = getESpaceChainConfig(input.network.chainId);
     if (!config) {
       return null;
     }

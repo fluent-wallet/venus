@@ -154,7 +154,7 @@ function QrScannerSheet<T>({
   const dismissText = i18n?.dismissText ?? t('common.dismiss');
 
   const sheetBody = (
-    <BottomSheetWrapper innerPaddingHorizontal>
+    <BottomSheetWrapper innerPaddingHorizontal useBottomSheetView={true} style={styles.sheetWrapper}>
       <BottomSheetHeader title={externalData ? 'Linking' : title} />
       <BottomSheetContent>
         {!externalData && enableCamera && hasCameraPermission && (
@@ -205,7 +205,7 @@ function QrScannerSheet<T>({
         )}
       </BottomSheetContent>
 
-      <BottomSheetFooter>
+      <BottomSheetFooter style={styles.footer}>
         {!externalData && enableGallery && enableCamera && hasCameraPermission && (
           <Button testID="photos" style={styles.photos} onPress={pickImage}>
             {galleryText}
@@ -321,9 +321,15 @@ const styles = StyleSheet.create({
     fontSize: 14,
     lineHeight: 20,
   },
+  sheetWrapper: {
+    bottom: 0,
+  },
   photos: {
     width: 180,
     alignSelf: 'center',
+  },
+  footer: {
+    marginTop: 'auto',
   },
   btnArea: {
     display: 'flex',

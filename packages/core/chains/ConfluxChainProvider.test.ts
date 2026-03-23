@@ -1,4 +1,5 @@
 import 'reflect-metadata';
+import { iface777 } from '@core/contracts';
 import { SoftwareSigner } from '@core/signers';
 import {
   createMockConfluxSdk,
@@ -139,6 +140,34 @@ describe('ConfluxChainProvider', () => {
       {
         method: 'cfx_call',
         params: [{ to: OTHER_ACCOUNT_BASE32, data: '0x12345678' }, 'latest_state'],
+      },
+    ]);
+  });
+
+  it('reads fungible balances through batched Conflux RPC requests', async () => {
+    const provider = createProvider();
+    const batchSpy = jest.spyOn(provider.rpc, 'batch').mockResolvedValueOnce(['0x10', '0x20']);
+
+    const result = await provider.readFungibleAssetBalances(SAMPLE_ACCOUNT_BASE32, [
+      { assetType: AssetType.Native },
+      { assetType: AssetType.ERC20, contractAddress: TOKEN_CONTRACT },
+    ]);
+
+    expect(result).toEqual(['0x10', '0x20']);
+    expect(batchSpy).toHaveBeenCalledWith([
+      {
+        method: 'cfx_getBalance',
+        params: [SAMPLE_ACCOUNT_BASE32, 'latest_state'],
+      },
+      {
+        method: 'cfx_call',
+        params: [
+          {
+            to: TOKEN_CONTRACT,
+            data: iface777.encodeFunctionData('balanceOf', [SAMPLE_ACCOUNT_HEX]),
+          },
+          'latest_state',
+        ],
       },
     ]);
   });

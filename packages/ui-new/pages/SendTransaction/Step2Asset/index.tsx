@@ -30,7 +30,7 @@ import { escapeRegExp } from 'lodash-es';
 import type React from 'react';
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Trans, useTranslation } from 'react-i18next';
-import { type NativeScrollEvent, type NativeSyntheticEvent, Pressable, StyleSheet, View } from 'react-native';
+import { Keyboard, type NativeScrollEvent, type NativeSyntheticEvent, Pressable, StyleSheet, View } from 'react-native';
 import { showMessage } from 'react-native-flash-message';
 import SendTransactionBottomSheet from '../SendTransactionBottomSheet';
 
@@ -264,6 +264,9 @@ const SendTransactionStep2Asset: React.FC<Props> = ({ navigation, route, onConfi
             message: t('tx.asset.zeroBalance', { symbol: asset.symbol }),
             type: 'warning',
           });
+        }
+        if (Keyboard.isVisible()) {
+          Keyboard.dismiss();
         }
         if (asset.type === ASSET_TYPE.ERC721) {
           navigation.navigate(SendTransactionStep4StackName, { ...route?.params, asset, nftItemDetail, amount: '1' });
