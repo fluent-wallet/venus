@@ -1,12 +1,17 @@
-import { BottomSheetContent, BottomSheetFooter, BottomSheetTextInput, BottomSheetWrapper, InlineBottomSheet } from '@components/BottomSheet';
+import {
+  BottomSheetContent,
+  BottomSheetFooter,
+  type BottomSheetMethods,
+  BottomSheetTextInput,
+  BottomSheetWrapper,
+  InlineBottomSheet,
+} from '@components/BottomSheet';
 import Button from '@components/Button';
 import Text from '@components/Text';
-import { isValidPrivateKeyHex } from '@core/utils/secp256k1';
-import type BottomSheet from '@gorhom/bottom-sheet';
 import useInAsync from '@hooks/useInAsync';
 import { useTheme } from '@react-navigation/native';
+import { type ImportWalletCreationRequest, resolveImportWalletRequest } from '@service/walletCreation';
 import { isAdjustResize, screenHeight } from '@utils/deviceInfo';
-import { Mnemonic } from 'ethers';
 /* eslint-disable react-hooks/exhaustive-deps */
 import type React from 'react';
 import { type RefObject, useCallback, useRef, useState } from 'react';
@@ -14,15 +19,12 @@ import { useTranslation } from 'react-i18next';
 import { Keyboard, Pressable, StyleSheet, type TextInput } from 'react-native';
 
 interface Props {
-  bottomSheetRef: RefObject<BottomSheet>;
-  onSuccessConfirm?: (value: string) => void;
+  bottomSheetRef: RefObject<BottomSheetMethods>;
+  onSuccessConfirm?: (request: ImportWalletCreationRequest) => void;
   inImporting?: boolean;
 }
 
-interface Status {
-  type: 'success' | 'error';
-  message: string;
-}
+type Status = { type: 'success'; message: string; request: ImportWalletCreationRequest } | { type: 'error'; message: string };
 
 const ImportExistingWallet: React.FC<Props> = ({ bottomSheetRef, inImporting, onSuccessConfirm }) => {
   const { colors } = useTheme();
@@ -33,33 +35,38 @@ const ImportExistingWallet: React.FC<Props> = ({ bottomSheetRef, inImporting, on
   const [status, setStatus] = useState<Status | null>(null!);
 
   const _handleCheckInput = useCallback(() => {
-    const value = String(existWalletValueRef.current).trim();
+    const resolvedImportRequest = resolveImportWalletRequest(existWalletValueRef.current);
     let statusRes: Status;
-    if (!value) {
+
+    if (resolvedImportRequest.status === 'empty') {
       statusRes = { type: 'error', message: t('wallet.import.error.empty') };
-    } else if (Mnemonic.isValidMnemonic(value)) {
-      statusRes = { type: 'success', message: t('wallet.import.error.validPhrase') };
-    } else if (isValidPrivateKeyHex(value)) {
-      statusRes = { type: 'success', message: t('wallet.import.error.validPrivateKey') };
-    } else {
+    } else if (resolvedImportRequest.status === 'invalid') {
       statusRes = { type: 'error', message: t('wallet.import.error.unknown') };
+    } else {
+      statusRes = {
+        type: 'success',
+        message: resolvedImportRequest.request.kind === 'import_mnemonic' ? t('wallet.import.error.validPhrase') : t('wallet.import.error.validPrivateKey'),
+        request: resolvedImportRequest.request,
+      };
     }
+
     setStatus(statusRes);
     return statusRes;
-  }, []);
+  }, [t]);
 
   const { inAsync: inChecking, execAsync: handleCheckInput } = useInAsync(_handleCheckInput);
 
   const handleConfirm = useCallback(async () => {
-    let _status = status;
-    if (_status === null) {
-      _status = await handleCheckInput();
+    let nextStatus = status;
+    if (nextStatus === null) {
+      nextStatus = await handleCheckInput();
     }
-    if (_status?.type === 'success') {
+
+    if (nextStatus?.type === 'success') {
       setTimeout(() => bottomSheetRef.current?.close(), 100);
-      onSuccessConfirm?.(existWalletValueRef.current);
+      onSuccessConfirm?.(nextStatus.request);
     }
-  }, [status, onSuccessConfirm]);
+  }, [bottomSheetRef, handleCheckInput, onSuccessConfirm, status]);
 
   const handlePressBackdrop = useCallback(() => {
     if (!textInputRef.current) return;

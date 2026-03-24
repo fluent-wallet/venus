@@ -8,13 +8,18 @@ import Text from '@components/Text';
 import { HARDWARE_WALLET_TYPES } from '@core/hardware/bsim/constants';
 import useInAsync from '@hooks/useInAsync';
 import { styles as accountListStyles } from '@modules/AccountsList';
-import createVault from '@pages/InitWallet/createVaultWithRouterParams';
 import { showNotFindBSIMCardMessage } from '@pages/WayToInitWallet';
 import ImportExistingWallet from '@pages/WayToInitWallet/ImportExistingWallet';
 import { useTheme } from '@react-navigation/native';
 import type { AccountManagementStackName, StackScreenProps } from '@router/configs';
 import { getHardwareWalletService, VaultType } from '@service/core';
 import { useVaults } from '@service/vault';
+import {
+  executeWalletCreation,
+  getWalletCreationDuplicateMessage,
+  getWalletCreationUnknownMessage,
+  type ImportWalletCreationRequest,
+} from '@service/walletCreation';
 import { OS, screenHeight } from '@utils/deviceInfo';
 import { handleBSIMHardwareUnavailable } from '@utils/handleBSIMHardwareUnavailable';
 import { Image } from 'expo-image';
@@ -26,6 +31,10 @@ import { showMessage } from 'react-native-flash-message';
 
 interface Props {
   navigation: StackScreenProps<typeof AccountManagementStackName>['navigation'];
+}
+
+function waitForUi(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
 const AddAnotherWallet: React.FC<Props> = ({ navigation }) => {
@@ -49,19 +58,34 @@ const AddAnotherWallet: React.FC<Props> = ({ navigation }) => {
       const deviceIdentifier = typeof bsimDeviceId === 'string' ? bsimDeviceId : undefined;
       try {
         navigation.setOptions({ gestureEnabled: false });
-        await new Promise((resolve) => setTimeout(resolve, 20));
+        await waitForUi(20);
         await getHardwareWalletService().connectAndList(HARDWARE_WALLET_TYPES.BSIM, { deviceIdentifier });
-        await new Promise((resolve) => setTimeout(resolve, 20));
+        await waitForUi(20);
 
-        if (await createVault({ type: 'connectBSIM', bsimDeviceId: deviceIdentifier })) {
+        const result = await executeWalletCreation({ kind: 'connect_bsim', deviceIdentifier });
+
+        if (result.status === 'success') {
           setTimeout(() => bottomSheetRef.current?.close(), 50);
           showMessage({
             message: t('account.add.another.BSIM.success'),
             type: 'success',
             duration: 1500,
           });
+          return;
         }
-      } catch (error: any) {
+
+        if (result.status === 'error') {
+          if (handleBSIMHardwareUnavailable(result.error, navigation)) {
+            return;
+          }
+
+          showMessage({
+            message: getWalletCreationUnknownMessage(result.displayType),
+            description: String(result.error ?? ''),
+            type: 'failed',
+          });
+        }
+      } catch (error: unknown) {
         if (handleBSIMHardwareUnavailable(error, navigation)) {
           return;
         }
@@ -75,38 +99,90 @@ const AddAnotherWallet: React.FC<Props> = ({ navigation }) => {
   const { inAsync: inConnecting, execAsync: handleConnectBSIMCard } = useInAsync(_handleConnectBSIMCard);
 
   const _handleCreateNewHdWallet = useCallback(async () => {
-    navigation.setOptions({ gestureEnabled: false });
-    await new Promise((resolve) => setTimeout(resolve, 20));
-    if (await createVault({ type: 'createNewWallet' })) {
-      setTimeout(() => bottomSheetRef.current?.close(), 50);
+    try {
+      navigation.setOptions({ gestureEnabled: false });
+      await waitForUi(20);
+
+      const result = await executeWalletCreation({ kind: 'create_hd' });
+
+      if (result.status === 'success') {
+        setTimeout(() => bottomSheetRef.current?.close(), 50);
+        showMessage({
+          message: t('account.add.another.create.success'),
+          type: 'success',
+          duration: 1500,
+        });
+        return;
+      }
+
+      if (result.status === 'error') {
+        showMessage({
+          message: getWalletCreationUnknownMessage(result.displayType),
+          description: String(result.error ?? ''),
+          type: 'failed',
+        });
+      }
+    } catch (error) {
       showMessage({
-        message: t('account.add.another.create.success'),
-        type: 'success',
-        duration: 1500,
+        message: t('initWallet.msg.failed'),
+        description: String(error ?? ''),
+        type: 'failed',
       });
+    } finally {
+      navigation.setOptions({ gestureEnabled: true });
     }
-    navigation.setOptions({ gestureEnabled: true });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [navigation, t]);
   const { inAsync: inCreating, execAsync: handleCreateNewHdWallet } = useInAsync(_handleCreateNewHdWallet);
 
-  const _handleImportExistWallet = useCallback(async (value: string) => {
-    navigation.setOptions({ gestureEnabled: false });
-    await new Promise((resolve) => setTimeout(resolve, OS === 'ios' ? 150 : 20));
-    const res = await createVault({ type: 'importExistWallet', value });
-    if (res) {
-      setTimeout(() => bottomSheetRef.current?.close(), 50);
-      showMessage({
-        message: t('account.add.another.import.success'),
-        type: 'success',
-        duration: 1500,
-      });
-    } else if (res === undefined) {
-      importExistRef.current?.close();
-    }
-    navigation.setOptions({ gestureEnabled: true });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  const _handleImportExistWallet = useCallback(
+    async (request: ImportWalletCreationRequest) => {
+      try {
+        navigation.setOptions({ gestureEnabled: false });
+        await waitForUi(OS === 'ios' ? 150 : 20);
+
+        const result = await executeWalletCreation(request);
+
+        if (result.status === 'success') {
+          setTimeout(() => bottomSheetRef.current?.close(), 50);
+          showMessage({
+            message: t('account.add.another.import.success'),
+            type: 'success',
+            duration: 1500,
+          });
+          return;
+        }
+
+        if (result.status === 'duplicate') {
+          showMessage({
+            message: getWalletCreationDuplicateMessage(result.displayType),
+            type: 'failed',
+          });
+          importExistRef.current?.close();
+          return;
+        }
+
+        if (result.status === 'cancelled') {
+          importExistRef.current?.close();
+          return;
+        }
+
+        showMessage({
+          message: getWalletCreationUnknownMessage(result.displayType),
+          description: String(result.error ?? ''),
+          type: 'failed',
+        });
+      } catch (error) {
+        showMessage({
+          message: t('initWallet.msg.failed'),
+          description: String(error ?? ''),
+          type: 'failed',
+        });
+      } finally {
+        navigation.setOptions({ gestureEnabled: true });
+      }
+    },
+    [navigation, t],
+  );
   const { inAsync: inImporting, execAsync: handleImportExistWallet } = useInAsync(_handleImportExistWallet);
   const [showImportExistWallet, setShowImportExistWallet] = useState(true);
 

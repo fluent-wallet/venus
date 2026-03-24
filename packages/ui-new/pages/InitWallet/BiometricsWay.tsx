@@ -7,6 +7,12 @@ import { CommonActions, useTheme } from '@react-navigation/native';
 import { type BiometricsWayStackName, HomeStackName, PasswordWayStackName, type StackScreenProps } from '@router/configs';
 import { createBiometricVaultPassword, getBiometricVaultPassword, resetBiometricVaultPassword } from '@service/biometricVaultPasswordStore';
 import { getAuthService } from '@service/core';
+import {
+  executeWalletCreation,
+  getWalletCreationDuplicateMessage,
+  getWalletCreationUnknownMessage,
+  resolveWalletCreationRequest,
+} from '@service/walletCreation';
 import { Image } from 'expo-image';
 import type React from 'react';
 import { useCallback } from 'react';
@@ -14,7 +20,6 @@ import { Trans, useTranslation } from 'react-i18next';
 import { Pressable, ScrollView, StyleSheet } from 'react-native';
 import { showMessage } from 'react-native-flash-message';
 import * as Keychain from 'react-native-keychain';
-import createVault from './createVaultWithRouterParams';
 
 export const showBiometricsDisabledMessage = () => {
   showMessage({
@@ -22,6 +27,14 @@ export const showBiometricsDisabledMessage = () => {
     description: i18n.t('initWallet.biometrics.disable.error.description'),
     type: 'warning',
   });
+};
+
+const isBiometricPromptCanceled = (error: unknown): boolean => {
+  if (!(error instanceof Error)) {
+    return false;
+  }
+
+  return error.message.toLowerCase().includes('cancel');
 };
 
 const BiometricsWay: React.FC<StackScreenProps<typeof BiometricsWayStackName>> = ({ navigation, route }) => {
@@ -35,7 +48,37 @@ const BiometricsWay: React.FC<StackScreenProps<typeof BiometricsWayStackName>> =
     let shouldRollbackBiometricPassword = false;
     let shouldRollbackCredentialKind = false;
 
+    const rollbackCredentialKind = async () => {
+      if (!shouldRollbackCredentialKind) {
+        return;
+      }
+
+      try {
+        await auth.setCredentialKind(previousCredentialKind);
+      } catch (error) {
+        console.warn('[InitWallet/BiometricsWay] Failed to rollback credential kind.', error);
+      } finally {
+        shouldRollbackCredentialKind = false;
+      }
+    };
+
+    const rollbackBiometricPassword = async () => {
+      if (!shouldRollbackBiometricPassword) {
+        return;
+      }
+
+      try {
+        await resetBiometricVaultPassword();
+      } catch (error) {
+        console.warn('[InitWallet/BiometricsWay] Failed to reset biometric vault password.', error);
+      } finally {
+        shouldRollbackBiometricPassword = false;
+      }
+    };
+
     try {
+      const request = resolveWalletCreationRequest(route.params);
+
       navigation.setOptions({ gestureEnabled: false });
       const supportedBiometryType = await Keychain.getSupportedBiometryType();
       if (supportedBiometryType === null) {
@@ -54,8 +97,9 @@ const BiometricsWay: React.FC<StackScreenProps<typeof BiometricsWayStackName>> =
       await new Promise<void>((resolve) => {
         setTimeout(resolve, 20);
       });
-      const created = await createVault(route.params, vaultPassword);
-      if (created) {
+      const result = await executeWalletCreation(request, vaultPassword);
+
+      if (result.status === 'success') {
         shouldRollbackBiometricPassword = false;
         shouldRollbackCredentialKind = false;
         navigation.navigate(HomeStackName);
@@ -63,36 +107,38 @@ const BiometricsWay: React.FC<StackScreenProps<typeof BiometricsWayStackName>> =
         return;
       }
 
-      if (shouldRollbackCredentialKind) {
-        await auth.setCredentialKind(previousCredentialKind);
-        shouldRollbackCredentialKind = false;
+      if (result.status === 'duplicate') {
+        showMessage({
+          type: 'failed',
+          message: getWalletCreationDuplicateMessage(result.displayType),
+        });
+      } else if (result.status === 'error') {
+        showMessage({
+          type: 'failed',
+          message: getWalletCreationUnknownMessage(result.displayType),
+          description: String(result.error ?? ''),
+        });
       }
 
-      if (shouldRollbackBiometricPassword) {
-        await resetBiometricVaultPassword();
-        shouldRollbackBiometricPassword = false;
-      }
+      await rollbackCredentialKind();
+      await rollbackBiometricPassword();
     } catch (err) {
       console.log('Init Wallet by BiometricsWay error: ', err);
-      if (shouldRollbackCredentialKind) {
-        try {
-          await auth.setCredentialKind(previousCredentialKind);
-          shouldRollbackCredentialKind = false;
-        } catch {
-          // Best-effort rollback; preserve the original init failure.
-        }
-      }
-      if (shouldRollbackBiometricPassword) {
-        try {
-          await resetBiometricVaultPassword();
-        } catch {
-          // Best-effort rollback; preserve the original init failure.
-        }
+
+      await rollbackCredentialKind();
+      await rollbackBiometricPassword();
+
+      if (!isBiometricPromptCanceled(err)) {
+        showMessage({
+          type: 'failed',
+          message: t('initWallet.msg.failed'),
+          description: String(err) ?? '',
+        });
       }
     } finally {
       navigation.setOptions({ gestureEnabled: true });
     }
-  }, [navigation, route.params]);
+  }, [navigation, route.params, t]);
 
   const { inAsync, execAsync: handleCreateVault } = useInAsync(_handleCreateVault);
 

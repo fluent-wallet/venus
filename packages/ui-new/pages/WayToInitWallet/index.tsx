@@ -3,6 +3,7 @@ import ArrowRight from '@assets/icons/arrow-right.svg';
 import WelcomeBgDark from '@assets/images/welcome-bg-dark.webp';
 import WelcomeSwiftShieldEN from '@assets/images/welcome-SwiftShield-en.webp';
 import WelcomeSwiftShieldZH from '@assets/images/welcome-SwiftShield-zh.webp';
+import type { BottomSheetMethods } from '@components/BottomSheet';
 import BSIMDeviceSelectSheet from '@components/BSIM/BSIMDeviceSelectSheet';
 import Button from '@components/Button';
 import Text from '@components/Text';
@@ -13,6 +14,7 @@ import useInAsync from '@hooks/useInAsync';
 import { useTheme } from '@react-navigation/native';
 import { BiometricsWayStackName, ChangeBPinStackName, RecoverBsimStackName, type StackScreenProps, type WayToInitWalletStackName } from '@router/configs';
 import { getHardwareWalletService } from '@service/core';
+import type { ImportWalletCreationRequest } from '@service/walletCreation';
 import { handleBSIMHardwareUnavailable } from '@utils/handleBSIMHardwareUnavailable';
 import { Image } from 'expo-image';
 import type React from 'react';
@@ -21,7 +23,7 @@ import { useTranslation } from 'react-i18next';
 import { ImageBackground, Keyboard, Platform, ScrollView, StyleSheet, View } from 'react-native';
 import { showMessage } from 'react-native-flash-message';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import ImportExistingWallet, { type BottomSheetMethods } from './ImportExistingWallet';
+import ImportExistingWallet from './ImportExistingWallet';
 import LottieAnimation from './lottie';
 
 export const showNotFindBSIMCardMessage = () =>
@@ -114,8 +116,11 @@ const WayToInitWallet: React.FC<StackScreenProps<typeof WayToInitWalletStackName
       </ImageBackground>
       <ImportExistingWallet
         bottomSheetRef={bottomSheetRef}
-        onSuccessConfirm={(value) => {
-          navigation.navigate(BiometricsWayStackName, { type: 'importExistWallet', value });
+        onSuccessConfirm={(request: ImportWalletCreationRequest) => {
+          navigation.navigate(BiometricsWayStackName, {
+            type: 'importExistWallet',
+            value: request.kind === 'import_mnemonic' ? request.mnemonic : request.privateKey,
+          });
           if (Keyboard.isVisible()) {
             Keyboard.dismiss();
           }
