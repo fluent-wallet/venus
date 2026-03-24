@@ -5,7 +5,7 @@ import { getAccountGroupRootKey } from './accountGroupKeys';
 import { getAuthService, getQueryClient, getVaultService } from './core';
 import { createTestQueryClient } from './mocks/reactQuery';
 import { getVaultRootKey } from './vaultKeys';
-import { executeWalletCreation, resolveImportWalletRequest, resolveWalletCreationRequest } from './walletCreation';
+import { executeWalletCreation, resolveImportWalletRequest } from './walletCreation';
 
 jest.mock('./core', () => ({
   getAuthService: jest.fn(),
@@ -54,7 +54,7 @@ describe('walletCreation', () => {
   it.each([
     ['empty input', '   ', 'empty'],
     ['invalid input', 'not a secret', 'invalid'],
-  ])('parseImportSecretInput returns %s status', (_label, value, expectedStatus) => {
+  ])('resolveImportWalletRequest returns %s status', (_label, value, expectedStatus) => {
     expect(resolveImportWalletRequest(value).status).toBe(expectedStatus);
   });
 
@@ -76,22 +76,6 @@ describe('walletCreation', () => {
         privateKey: '0x4c0883a6910395b7fd1f7d1b6a7d65b2f9b391d4b2666ebadc177a64e1242d5e',
       },
     });
-  });
-
-  it('resolveWalletCreationRequest maps route params to a typed request', () => {
-    expect(resolveWalletCreationRequest({ type: 'createNewWallet' })).toEqual({ kind: 'create_hd' });
-    expect(resolveWalletCreationRequest({ type: 'connectBSIM', bsimDeviceId: 'device_1' })).toEqual({
-      kind: 'connect_bsim',
-      deviceIdentifier: 'device_1',
-    });
-    expect(resolveWalletCreationRequest({ type: 'importExistWallet', value: 'test test test test test test test test test test test junk' })).toEqual({
-      kind: 'import_mnemonic',
-      mnemonic: 'test test test test test test test test test test test junk',
-    });
-  });
-
-  it('resolveWalletCreationRequest rejects invalid import input', () => {
-    expect(() => resolveWalletCreationRequest({ type: 'importExistWallet', value: 'bad secret' })).toThrow();
   });
 
   it('returns duplicate without creating or invalidating queries', async () => {

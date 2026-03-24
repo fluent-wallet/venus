@@ -1,7 +1,6 @@
 import i18n from '@assets/i18n';
 import { AUTH_PASSWORD_REQUEST_CANCELED } from '@core/errors';
 import { isValidPrivateKeyHex } from '@core/utils/secp256k1';
-import type { RootStackParamList } from '@router/configs';
 import { getErrorCode } from '@utils/error';
 import { Mnemonic } from 'ethers';
 import { getAccountRootKey } from './account';
@@ -52,47 +51,6 @@ export function resolveImportWalletRequest(value: string): ResolveImportWalletRe
   }
 
   return { status: 'invalid' };
-}
-
-/**
- * Resolve the user-facing wallet type label from init route params.
- */
-export function resolveWalletCreationDisplayType(args: RootStackParamList['Biometrics']): WalletCreationDisplayType {
-  if (args?.type === 'connectBSIM') {
-    return 'bsim';
-  }
-
-  if (args?.type === 'importExistWallet') {
-    const resolvedImportRequest = resolveImportWalletRequest(String(args.value ?? ''));
-    return resolvedImportRequest.status === 'valid' && resolvedImportRequest.request.kind === 'import_mnemonic' ? 'seed_phrase' : 'private_key';
-  }
-
-  return 'seed_phrase';
-}
-
-/**
- * Convert init route params into one executable request.
- * Invalid import input fails here before any auth or vault work starts.
- */
-export function resolveWalletCreationRequest(args: RootStackParamList['Biometrics']): WalletCreationRequest {
-  if (args?.type === 'connectBSIM') {
-    return {
-      kind: 'connect_bsim',
-      deviceIdentifier: args.bsimDeviceId,
-    };
-  }
-
-  if (args?.type === 'importExistWallet') {
-    const resolvedImportRequest = resolveImportWalletRequest(String(args.value ?? ''));
-
-    if (resolvedImportRequest.status !== 'valid') {
-      throw new Error(i18n.t('initWallet.error.invalidValue'));
-    }
-
-    return resolvedImportRequest.request;
-  }
-
-  return { kind: 'create_hd' };
 }
 
 function getWalletCreationDisplayLabel(displayType: WalletCreationDisplayType): string {

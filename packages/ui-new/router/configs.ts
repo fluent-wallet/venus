@@ -6,6 +6,7 @@ import type { VersionJSON } from '@pages/Settings/AboutUs';
 import type { NavigationProp, NavigatorScreenParams } from '@react-navigation/native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { INftItem } from '@service/core';
+import type { WalletCreationRequest } from '@service/walletCreation';
 import type { AssetInfo } from '@utils/assetInfo';
 
 export const WelcomeStackName = 'Welcome';
@@ -85,8 +86,8 @@ export type RootStackParamList = {
   [WayToInitWalletStackName]: undefined;
   [RecoverBsimStackName]: undefined | { bsimDeviceId?: string };
   [ChangeBPinStackName]: undefined | { bsimDeviceId?: string };
-  [PasswordWayStackName]?: { type?: 'importExistWallet' | 'createNewWallet' | 'connectBSIM'; value?: string; bsimDeviceId?: string };
-  [BiometricsWayStackName]?: { type?: 'importExistWallet' | 'createNewWallet' | 'connectBSIM'; value?: string; bsimDeviceId?: string };
+  [PasswordWayStackName]: WalletCreationRequest;
+  [BiometricsWayStackName]: WalletCreationRequest;
   [HomeStackName]: undefined;
   [AccountManagementStackName]: undefined;
   [AccountSettingStackName]: { accountId: string };

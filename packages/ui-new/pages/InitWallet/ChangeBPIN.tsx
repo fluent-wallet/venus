@@ -17,7 +17,7 @@ export const ChangeBPin: React.FC<StackScreenProps<typeof ChangeBPinStackName>> 
   const handleChange = useCallback(async () => {
     try {
       await getHardwareWalletService().runUpdatePinWithConnect(HARDWARE_WALLET_TYPES.BSIM, { deviceIdentifier: route.params?.bsimDeviceId });
-      navigation.navigate(BiometricsWayStackName, { type: 'connectBSIM', bsimDeviceId: route.params?.bsimDeviceId });
+      navigation.navigate(BiometricsWayStackName, { kind: 'connect_bsim', deviceIdentifier: route.params?.bsimDeviceId });
     } catch (error) {
       if (handleBSIMHardwareUnavailable(error, navigation)) {
         return;
@@ -26,7 +26,7 @@ export const ChangeBPin: React.FC<StackScreenProps<typeof ChangeBPinStackName>> 
     }
   }, [navigation, route.params?.bsimDeviceId]);
   const handleSkip = useCallback(() => {
-    navigation.navigate(BiometricsWayStackName, { type: 'connectBSIM', bsimDeviceId: route.params?.bsimDeviceId });
+    navigation.navigate(BiometricsWayStackName, { kind: 'connect_bsim', deviceIdentifier: route.params?.bsimDeviceId });
   }, [navigation, route.params?.bsimDeviceId]);
   return (
     <ScrollView style={[styles.container, { backgroundColor: colors.bgPrimary }]}>

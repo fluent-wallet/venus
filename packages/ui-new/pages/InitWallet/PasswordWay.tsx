@@ -3,15 +3,10 @@ import Checkbox from '@components/Checkbox';
 import Text from '@components/Text';
 import TextInput from '@components/TextInput';
 import useInAsync from '@hooks/useInAsync';
-import { CommonActions, useTheme } from '@react-navigation/native';
-import { HomeStackName, type PasswordWayStackName, type StackScreenProps } from '@router/configs';
+import { useTheme } from '@react-navigation/native';
+import type { PasswordWayStackName, StackScreenProps } from '@router/configs';
 import { getAuthService } from '@service/core';
-import {
-  executeWalletCreation,
-  getWalletCreationDuplicateMessage,
-  getWalletCreationUnknownMessage,
-  resolveWalletCreationRequest,
-} from '@service/walletCreation';
+import { executeWalletCreation } from '@service/walletCreation';
 import { isDev } from '@utils/getEnv';
 import type React from 'react';
 import { useCallback, useState } from 'react';
@@ -19,6 +14,7 @@ import { Controller, useForm } from 'react-hook-form';
 import { Trans, useTranslation } from 'react-i18next';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { showMessage } from 'react-native-flash-message';
+import { handleWalletCreationResult } from './walletCreationResultHandler';
 
 type FormData = {
   password: string;
@@ -65,8 +61,6 @@ const PasswordWay: React.FC<StackScreenProps<typeof PasswordWayStackName>> = ({ 
       };
 
       try {
-        const request = resolveWalletCreationRequest(route.params);
-
         navigation.setOptions({ gestureEnabled: false });
         await new Promise<void>((resolve) => {
           setTimeout(resolve, 20);
@@ -75,27 +69,11 @@ const PasswordWay: React.FC<StackScreenProps<typeof PasswordWayStackName>> = ({ 
         await auth.setCredentialKind('password');
         shouldRollbackCredentialKind = true;
 
-        const result = await executeWalletCreation(request, data.confirm);
+        const result = await executeWalletCreation(route.params, data.confirm);
 
-        if (result.status === 'success') {
+        if (handleWalletCreationResult({ navigation, result, successMessage: t('initWallet.msg.success') })) {
           shouldRollbackCredentialKind = false;
-          showMessage({ type: 'success', message: t('initWallet.msg.success') });
-          navigation.navigate(HomeStackName);
-          navigation.dispatch(CommonActions.reset({ index: 0, routes: [{ name: HomeStackName }] }));
           return;
-        }
-
-        if (result.status === 'duplicate') {
-          showMessage({
-            type: 'failed',
-            message: getWalletCreationDuplicateMessage(result.displayType),
-          });
-        } else if (result.status === 'error') {
-          showMessage({
-            type: 'failed',
-            message: getWalletCreationUnknownMessage(result.displayType),
-            description: String(result.error ?? ''),
-          });
         }
 
         await rollbackCredentialKind();

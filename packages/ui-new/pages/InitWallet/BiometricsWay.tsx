@@ -3,16 +3,11 @@ import Img from '@assets/images/fingerPrint.webp';
 import Button from '@components/Button';
 import Text from '@components/Text';
 import useInAsync from '@hooks/useInAsync';
-import { CommonActions, useTheme } from '@react-navigation/native';
-import { type BiometricsWayStackName, HomeStackName, PasswordWayStackName, type StackScreenProps } from '@router/configs';
+import { useTheme } from '@react-navigation/native';
+import { type BiometricsWayStackName, PasswordWayStackName, type StackScreenProps } from '@router/configs';
 import { createBiometricVaultPassword, getBiometricVaultPassword, resetBiometricVaultPassword } from '@service/biometricVaultPasswordStore';
 import { getAuthService } from '@service/core';
-import {
-  executeWalletCreation,
-  getWalletCreationDuplicateMessage,
-  getWalletCreationUnknownMessage,
-  resolveWalletCreationRequest,
-} from '@service/walletCreation';
+import { executeWalletCreation } from '@service/walletCreation';
 import { Image } from 'expo-image';
 import type React from 'react';
 import { useCallback } from 'react';
@@ -20,6 +15,7 @@ import { Trans, useTranslation } from 'react-i18next';
 import { Pressable, ScrollView, StyleSheet } from 'react-native';
 import { showMessage } from 'react-native-flash-message';
 import * as Keychain from 'react-native-keychain';
+import { handleWalletCreationResult } from './walletCreationResultHandler';
 
 export const showBiometricsDisabledMessage = () => {
   showMessage({
@@ -77,8 +73,6 @@ const BiometricsWay: React.FC<StackScreenProps<typeof BiometricsWayStackName>> =
     };
 
     try {
-      const request = resolveWalletCreationRequest(route.params);
-
       navigation.setOptions({ gestureEnabled: false });
       const supportedBiometryType = await Keychain.getSupportedBiometryType();
       if (supportedBiometryType === null) {
@@ -97,27 +91,12 @@ const BiometricsWay: React.FC<StackScreenProps<typeof BiometricsWayStackName>> =
       await new Promise<void>((resolve) => {
         setTimeout(resolve, 20);
       });
-      const result = await executeWalletCreation(request, vaultPassword);
+      const result = await executeWalletCreation(route.params, vaultPassword);
 
-      if (result.status === 'success') {
+      if (handleWalletCreationResult({ navigation, result })) {
         shouldRollbackBiometricPassword = false;
         shouldRollbackCredentialKind = false;
-        navigation.navigate(HomeStackName);
-        navigation.dispatch(CommonActions.reset({ index: 0, routes: [{ name: HomeStackName }] }));
         return;
-      }
-
-      if (result.status === 'duplicate') {
-        showMessage({
-          type: 'failed',
-          message: getWalletCreationDuplicateMessage(result.displayType),
-        });
-      } else if (result.status === 'error') {
-        showMessage({
-          type: 'failed',
-          message: getWalletCreationUnknownMessage(result.displayType),
-          description: String(result.error ?? ''),
-        });
       }
 
       await rollbackCredentialKind();

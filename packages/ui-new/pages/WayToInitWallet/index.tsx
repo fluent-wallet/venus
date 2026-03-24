@@ -14,7 +14,6 @@ import useInAsync from '@hooks/useInAsync';
 import { useTheme } from '@react-navigation/native';
 import { BiometricsWayStackName, ChangeBPinStackName, RecoverBsimStackName, type StackScreenProps, type WayToInitWalletStackName } from '@router/configs';
 import { getHardwareWalletService } from '@service/core';
-import type { ImportWalletCreationRequest } from '@service/walletCreation';
 import { handleBSIMHardwareUnavailable } from '@utils/handleBSIMHardwareUnavailable';
 import { Image } from 'expo-image';
 import type React from 'react';
@@ -101,7 +100,7 @@ const WayToInitWallet: React.FC<StackScreenProps<typeof WayToInitWalletStackName
                 testID="createNewWallet"
                 textAlign="left"
                 style={styles.btn}
-                onPress={() => navigation.navigate(BiometricsWayStackName, { type: 'createNewWallet' })}
+                onPress={() => navigation.navigate(BiometricsWayStackName, { kind: 'create_hd' })}
                 mode="dark"
               >
                 {t('welcome.createNewWallet')}
@@ -116,11 +115,8 @@ const WayToInitWallet: React.FC<StackScreenProps<typeof WayToInitWalletStackName
       </ImageBackground>
       <ImportExistingWallet
         bottomSheetRef={bottomSheetRef}
-        onSuccessConfirm={(request: ImportWalletCreationRequest) => {
-          navigation.navigate(BiometricsWayStackName, {
-            type: 'importExistWallet',
-            value: request.kind === 'import_mnemonic' ? request.mnemonic : request.privateKey,
-          });
+        onSuccessConfirm={(request) => {
+          navigation.navigate(BiometricsWayStackName, request);
           if (Keyboard.isVisible()) {
             Keyboard.dismiss();
           }
