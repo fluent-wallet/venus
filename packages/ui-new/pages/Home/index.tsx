@@ -4,8 +4,6 @@ import { useTabsController } from '@modules/AssetsTabs/hooks';
 import NetworkSelector from '@modules/NetworkSelector';
 import { useTheme } from '@react-navigation/native';
 import { type HomeStackName, type StackScreenProps, TransactionDetailStackName } from '@router/configs';
-import { useCurrentNetwork, useNetworks, useSwitchNetwork } from '@service/network';
-import { ESPACE_NETWORK_SWITCH_FEATURE, FULL_NETWORK_SWITCH_LIST_FEATURE } from '@utils/features';
 import type React from 'react';
 import { useCallback, useState } from 'react';
 import { type NativeScrollEvent, StyleSheet, View } from 'react-native';
@@ -26,9 +24,6 @@ const Home: React.FC<StackScreenProps<typeof HomeStackName>> = ({ navigation }) 
   const [showAccountSelector, setShowAccountSelector] = useState(false);
   const [showNetworkSelector, setShowNetworkSelector] = useState(false);
   const { currentTab, setCurrentTab, sharedScrollY, handleScroll: _handleScroll, resetScrollY } = useTabsController('Tokens');
-  const { data: currentNetwork } = useCurrentNetwork();
-  const { data: networks = [] } = useNetworks();
-  const switchNetwork = useSwitchNetwork();
   const handleRefresh = useHomeRefresh();
   const handleScroll = useCallback(
     (evt: NativeScrollEvent) => {
@@ -49,19 +44,7 @@ const Home: React.FC<StackScreenProps<typeof HomeStackName>> = ({ navigation }) 
   };
 
   const handleOpenNetworkSelector = () => {
-    // setShowNetworkSelector(true);
-
-    if (FULL_NETWORK_SWITCH_LIST_FEATURE.allow) {
-      setShowNetworkSelector(true);
-    } else if (ESPACE_NETWORK_SWITCH_FEATURE.allow) {
-      if (!currentNetwork) return;
-      const nextNetId = currentNetwork.netId === 1030 ? 71 : 1030;
-      const target =
-        networks.find((network) => network.netId === nextNetId && network.networkType === currentNetwork.networkType) ??
-        networks.find((network) => network.netId === nextNetId);
-      if (!target) return;
-      switchNetwork(target.id).catch(() => undefined);
-    }
+    setShowNetworkSelector(true);
   };
   return (
     <>

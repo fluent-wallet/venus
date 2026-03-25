@@ -1,10 +1,11 @@
 import Checkbox from '@components/Checkbox';
 import Text from '@components/Text';
-import { type ChainType, NetworkType } from '@core/utils/consts';
+import type { ChainType, NetworkType } from '@core/utils/consts';
 import { BottomSheetFlatList } from '@gorhom/bottom-sheet';
 import { useTheme } from '@react-navigation/native';
 import { useCurrentNetwork, useNetworks, useSwitchNetwork } from '@service/network';
 import { toDataUrl } from '@utils/blockies';
+import { getVisibleNetworks } from '@utils/networkSelection';
 import { Image } from 'expo-image';
 import type React from 'react';
 import { useMemo } from 'react';
@@ -15,7 +16,6 @@ type ListType = 'selector' | 'manage';
 const rowHeight = 80;
 
 interface NetworkProp {
-  key: string;
   id: string;
   netId: number;
   chainId: string;
@@ -29,11 +29,10 @@ const Network: React.FC<
     colors: ReturnType<typeof useTheme>['colors'];
     isCurrent: boolean;
     type: ListType;
-    mode: 'dark' | 'light';
     onSelect?: () => void;
     onSwitchNetwork: (networkId: string) => Promise<void>;
   }
-> = ({ id, netId, chainId, name, networkType, chainType, colors, isCurrent, type, mode, onSelect, onSwitchNetwork }) => {
+> = ({ id, netId, chainId, name, networkType, chainType, colors, isCurrent, type, onSelect, onSwitchNetwork }) => {
   return (
     <Pressable
       style={({ pressed }) => [styles.row, { backgroundColor: pressed ? colors.underlay : 'transparent' }]}
@@ -62,26 +61,19 @@ const NetworksList: React.FC<{ type: ListType; onSelect?: () => void }> = ({ typ
   const { data: networks = [] } = useNetworks();
   const { data: currentNetwork } = useCurrentNetwork();
 
-  const { colors, mode } = useTheme();
+  const { colors } = useTheme();
   const ListComponent = useMemo(() => (type === 'selector' ? BottomSheetFlatList : FlatList), [type]);
+  const visibleNetworks = useMemo(() => getVisibleNetworks(networks), [networks]);
 
-  if (!networks.length) return null;
-
-  const filteredNetwork = networks.filter(
-    (n) =>
-      (n.netId === 1029 && n.networkType === NetworkType.Conflux) ||
-      (n.netId === 1 && n.networkType === NetworkType.Conflux) ||
-      (n.netId === 1030 && n.networkType === NetworkType.Ethereum) ||
-      (n.netId === 71 && n.networkType === NetworkType.Ethereum),
-  );
+  if (!visibleNetworks.length) return null;
 
   return (
     <ListComponent
-      data={filteredNetwork}
+      data={visibleNetworks}
+      keyExtractor={(item) => item.id}
       renderItem={({ item }) => (
         <Network
           id={item.id}
-          key={item.id}
           name={item.name}
           netId={item.netId}
           chainId={item.chainId}
@@ -90,7 +82,6 @@ const NetworksList: React.FC<{ type: ListType; onSelect?: () => void }> = ({ typ
           colors={colors}
           type={type}
           isCurrent={currentNetwork?.id === item.id}
-          mode={mode}
           onSelect={onSelect}
           onSwitchNetwork={switchNetwork}
         />

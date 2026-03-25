@@ -2,45 +2,27 @@ import QrCode from '@assets/icons/qr-code.svg';
 import Settings from '@assets/icons/settings.svg';
 import Icon from '@components/Icon';
 import Text from '@components/Text';
-import type { NetworkType } from '@core/utils/consts';
 import { useTheme } from '@react-navigation/native';
 import { ExternalInputHandlerStackName, type HomeStackName, SettingsStackName, type StackScreenProps } from '@router/configs';
 import { useCurrentNetwork } from '@service/network';
+import { getNetworkTag } from '@utils/networkSelection';
 import type React from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
-
-const NETWORK_TAG_MAP: Record<NetworkType, { color: string; labels: Record<number | string, string> }> = {
-  Conflux: {
-    color: '#38A1DB',
-    labels: {
-      1: 'C Test',
-      1029: 'Core',
-    },
-  },
-  Ethereum: {
-    color: '#17B38A',
-    labels: {
-      1030: 'eSpace',
-      71: 'E Test',
-    },
-  },
-};
 
 const Network: React.FC = () => {
   const { data: currentNetwork } = useCurrentNetwork();
   const { colors } = useTheme();
   if (!currentNetwork) return null;
 
-  const config = NETWORK_TAG_MAP[currentNetwork.networkType];
-  const networkTagName = config?.labels[currentNetwork.netId];
+  const tag = getNetworkTag(currentNetwork);
 
   return (
     <>
       <Icon source={currentNetwork.icon} width={24} height={24} />
-      {config?.color && networkTagName && (
-        <View style={[styles.networkTag, { backgroundColor: config.color }]}>
+      {tag && (
+        <View style={[styles.networkTag, { backgroundColor: tag.color }]}>
           <Text style={[styles.networkTagText, { color: colors.textFourth }]} numberOfLines={1} ellipsizeMode="tail">
-            {networkTagName}
+            {tag.label}
           </Text>
         </View>
       )}
