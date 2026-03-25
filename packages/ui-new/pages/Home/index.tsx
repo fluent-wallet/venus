@@ -16,6 +16,7 @@ import Navigations from './Navigations';
 import NoNetworkTip from './NoNetworkTip';
 import NotBackup from './NotBackup';
 import RefreshScrollView from './RefreshScrollView';
+import { useCurrentHomeWallet } from './useCurrentHomeWallet';
 import { useHomeRefresh } from './useHomeRefresh';
 
 const Home: React.FC<StackScreenProps<typeof HomeStackName>> = ({ navigation }) => {
@@ -24,6 +25,7 @@ const Home: React.FC<StackScreenProps<typeof HomeStackName>> = ({ navigation }) 
   const [showAccountSelector, setShowAccountSelector] = useState(false);
   const [showNetworkSelector, setShowNetworkSelector] = useState(false);
   const { currentTab, setCurrentTab, sharedScrollY, handleScroll: _handleScroll, resetScrollY } = useTabsController('Tokens');
+  const { shouldShowNotBackup } = useCurrentHomeWallet();
   const handleRefresh = useHomeRefresh();
   const handleScroll = useCallback(
     (evt: NativeScrollEvent) => {
@@ -59,9 +61,23 @@ const Home: React.FC<StackScreenProps<typeof HomeStackName>> = ({ navigation }) 
           <TotalPrice />
           <Navigations navigation={navigation} />
           <NotBackup navigation={navigation} />
-          <TabsHeader type="Home" currentTab={currentTab} sharedScrollY={sharedScrollY} onTabChange={setCurrentTab} resetScrollY={resetScrollY} />
+          <TabsHeader
+            type="Home"
+            currentTab={currentTab}
+            showHomeBackupBanner={shouldShowNotBackup}
+            sharedScrollY={sharedScrollY}
+            onTabChange={setCurrentTab}
+            resetScrollY={resetScrollY}
+          />
 
-          <TabsContent type="Home" currentTab={currentTab} onTabChange={setCurrentTab} selectType="Home" onPressTx={handleTxPress} />
+          <TabsContent
+            type="Home"
+            currentTab={currentTab}
+            onTabChange={setCurrentTab}
+            selectType="Home"
+            showHomeBackupBanner={shouldShowNotBackup}
+            onPressTx={handleTxPress}
+          />
         </RefreshScrollView>
         <NoNetworkTip />
       </SafeAreaView>
@@ -85,26 +101,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 16,
     marginBottom: 16,
-  },
-  walletLinkContainer: {
-    marginTop: 32,
-    display: 'flex',
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: 16,
-  },
-  walletLink: {
-    flex: 0,
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'center',
-    gap: 12,
-  },
-  walletLinkText: {
-    fontSize: 16,
-    fontWeight: '300',
-    lineHeight: 20,
   },
 });
 

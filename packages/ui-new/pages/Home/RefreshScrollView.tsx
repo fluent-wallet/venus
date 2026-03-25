@@ -35,7 +35,7 @@ const RefreshScrollView: React.FC<Props> = ({ children, onRefresh, onScroll, sti
   const scrollRef = useRef<Animated.ScrollView>(null);
   const rotateValue = useSharedValue(0);
 
-  const handleRefresh = useCallback(() => {
+  const finishRefresh = useCallback(() => {
     pullPosition.value = withTiming(0, { reduceMotion: ReduceMotion.Never, duration: CONSTANTS.ANIMATION_DURATION });
     rotateValue.value = 0;
     isRefreshing.value = false;
@@ -91,8 +91,7 @@ const RefreshScrollView: React.FC<Props> = ({ children, onRefresh, onScroll, sti
     })
     .onEnd((_) => {
       if (isRefreshing.value) return;
-      const refreshingHeight = 100;
-      pullPosition.value = withTiming(isReadyToRefresh.value ? refreshingHeight : 0, {
+      pullPosition.value = withTiming(isReadyToRefresh.value ? CONSTANTS.REFRESH_HEIGHT : 0, {
         reduceMotion: ReduceMotion.Never,
         duration: CONSTANTS.ANIMATION_DURATION,
       });
@@ -105,7 +104,7 @@ const RefreshScrollView: React.FC<Props> = ({ children, onRefresh, onScroll, sti
         isRefreshing.value = true;
 
         // call the onRefresh callback
-        runOnJS(onRefresh)(handleRefresh);
+        runOnJS(onRefresh)(finishRefresh);
       }
     });
 

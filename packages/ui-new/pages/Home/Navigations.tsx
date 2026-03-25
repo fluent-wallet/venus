@@ -1,6 +1,5 @@
 import ArrowDownward from '@assets/icons/arrow-downward.svg';
 import ArrowUpward from '@assets/icons/arrow-upward.svg';
-import Buy from '@assets/icons/buy.svg';
 import Explore from '@assets/icons/explorer.svg';
 import More from '@assets/icons/more.svg';
 import Button from '@components/Button';
@@ -22,10 +21,12 @@ import { useMutation } from '@tanstack/react-query';
 import Decimal from 'decimal.js';
 import type React from 'react';
 import type { ComponentProps } from 'react';
-import { useMemo } from 'react';
+import { useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Linking, Pressable, StyleSheet, View } from 'react-native';
 import MoreOption from './MoreOption';
+
+const EXPLORE_URL = 'https://cfxmap.com';
 
 export const Navigation: React.FC<{
   title: string;
@@ -88,20 +89,36 @@ const Navigations: React.FC<{
     },
   });
 
+  const handleSendPress = useCallback(() => {
+    checkPendingTxLimit(addressId);
+  }, [addressId, checkPendingTxLimit]);
+
+  const handleReceivePress = useCallback(() => {
+    navigation.navigate(ReceiveStackName);
+  }, [navigation]);
+
+  const handleExplorePress = useCallback(() => {
+    Linking.openURL(EXPLORE_URL);
+  }, []);
+
   return (
     <View style={styles.container}>
       <Navigation
         title={t('home.send')}
         testId="send"
         Icon={ArrowUpward}
-        onPress={() => checkPendingTxLimit(addressId)}
+        onPress={handleSendPress}
         disabled={tokensEmpty !== false || isCheckingPendingTxLimit}
       />
-      <Navigation title={t('home.receive')} testId="receive" Icon={ArrowDownward} onPress={() => navigation.navigate(ReceiveStackName)} />
-      <Navigation title={t('home.explore')} testId="explore" Icon={Explore} onPress={() => Linking.openURL('https://cfxmap.com')} />
-      <MoreOption>
-        <Navigation title={t('home.more')} testId="more" Icon={More} />
-      </MoreOption>
+      <Navigation title={t('home.receive')} testId="receive" Icon={ArrowDownward} onPress={handleReceivePress} />
+      <Navigation title={t('home.explore')} testId="explore" Icon={Explore} onPress={handleExplorePress} />
+      <MoreOption
+        renderTrigger={({ triggerRef, onLayout, onPress }) => (
+          <View ref={triggerRef} collapsable={false} onLayout={onLayout}>
+            <Navigation title={t('home.more')} testId="more" Icon={More} onPress={onPress} />
+          </View>
+        )}
+      />
     </View>
   );
 };

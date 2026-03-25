@@ -7,32 +7,26 @@ import Text from '@components/Text';
 import { shortenAddress, zeroAddress } from '@core/utils/address';
 import { numberWithCommas, truncate } from '@core/utils/balance';
 import { usePriceVisible } from '@hooks/usePriceVisible';
-import Clipboard from '@react-native-clipboard/clipboard';
 import { useTheme } from '@react-navigation/native';
 import { useCurrentAddress } from '@service/account';
 import { useAssetsSummaryOfCurrentAddress } from '@service/asset';
 import type React from 'react';
 import { useCallback } from 'react';
-import { useTranslation } from 'react-i18next';
 import { Pressable, StyleSheet, View } from 'react-native';
-import { showMessage } from 'react-native-flash-message';
+import { useCopyTextWithToast } from './useCopyTextWithToast';
+
+const ASTERISK_PLACEHOLDERS = ['a', 'b', 'c', 'd', 'e', 'f'] as const;
 
 export const CurrentAddress: React.FC = () => {
   const { colors } = useTheme();
   const { data: currentAddress } = useCurrentAddress();
   const currentAddressValue = currentAddress?.value ?? null;
-  const { t } = useTranslation();
+  const copyText = useCopyTextWithToast();
 
   return (
     <Pressable
       onPress={() => {
-        Clipboard.setString(currentAddressValue ?? '');
-        showMessage({
-          message: t('common.copied'),
-          type: 'success',
-          duration: 1500,
-          width: 160,
-        });
+        copyText(currentAddressValue);
       }}
       disabled={!currentAddressValue}
       style={({ pressed }) => [styles.addressContainer, { backgroundColor: pressed ? colors.underlay : 'transparent' }]}
@@ -53,8 +47,8 @@ export const TotalPrice: React.FC = () => {
   const Asterisks = useCallback(
     () => (
       <View style={[styles.asterisksContainer, { opacity: priceVisible ? 0 : 1 }]} pointerEvents="none">
-        {Array.from({ length: 6 }).map((_, index) => (
-          <Asterisk key={index} color={colors.textPrimary} width={12} height={12} />
+        {ASTERISK_PLACEHOLDERS.map((key) => (
+          <Asterisk key={key} color={colors.textPrimary} width={12} height={12} />
         ))}
         <EyeOpen color={colors.textPrimary} width={24} height={24} style={styles.eye} />
       </View>

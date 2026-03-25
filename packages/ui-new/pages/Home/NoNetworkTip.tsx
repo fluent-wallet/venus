@@ -9,10 +9,9 @@ import { StyleSheet, View } from 'react-native';
 const NoNetworkTip: React.FC = () => {
   const { reverseColors } = useTheme();
   const { t } = useTranslation();
+  const { isConnected } = useNetInfo();
 
-  const netInfo = useNetInfo();
-
-  if (netInfo.isConnected || netInfo.isConnected === null) return null;
+  if (isConnected !== false) return null;
   return (
     <View style={[styles.container, { backgroundColor: reverseColors.bgPrimary }]}>
       <NoNetwork style={styles.icon} color={reverseColors.iconPrimary} />

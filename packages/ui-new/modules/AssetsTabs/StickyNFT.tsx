@@ -1,6 +1,5 @@
 import { NFTCollectionItem } from '@modules/AssetsList/NFTsList/NFTCollectionItem';
 import { useOpenNftCollection } from '@modules/AssetsList/NFTsList/openState';
-import { useShouldShowNotBackup } from '@pages/Home/NotBackup';
 import { useCurrentAddress } from '@service/account';
 import { useNftCollectionsOfAddress } from '@service/nft';
 import type React from 'react';
@@ -8,8 +7,11 @@ import { useMemo } from 'react';
 import Animated, { interpolate, type SharedValue, useAnimatedStyle } from 'react-native-reanimated';
 import type { TabsType } from './types';
 
-export const StickyNFT: React.FC<{ type: TabsType; sharedScrollY: SharedValue<number> }> = ({ type, sharedScrollY }) => {
-  const shouldShowNotBackup = useShouldShowNotBackup();
+export const StickyNFT: React.FC<{ type: TabsType; sharedScrollY: SharedValue<number>; showHomeBackupBanner?: boolean }> = ({
+  type,
+  sharedScrollY,
+  showHomeBackupBanner = false,
+}) => {
   const [open, setOpen] = useOpenNftCollection();
   const { data: currentAddress } = useCurrentAddress();
   const addressId = currentAddress?.id ?? '';
@@ -21,7 +23,7 @@ export const StickyNFT: React.FC<{ type: TabsType; sharedScrollY: SharedValue<nu
     return collections.find((c) => c.contractAddress.toLowerCase() === key) ?? null;
   }, [collections, open?.contractAddress]);
 
-  const startY = useMemo(() => (type === 'Home' ? (shouldShowNotBackup ? 324 : 200) : 1), [type, shouldShowNotBackup]);
+  const startY = useMemo(() => (type === 'Home' ? (showHomeBackupBanner ? 324 : 200) : 1), [type, showHomeBackupBanner]);
   const showY = startY + (open?.index ?? 0) * 70;
 
   const animatedStyle = useAnimatedStyle(() => {

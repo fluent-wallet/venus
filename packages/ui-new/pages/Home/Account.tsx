@@ -6,17 +6,27 @@ import Text from '@components/Text';
 import useForceUpdateOnFocus from '@hooks/useUpdateOnFocus';
 import { useTheme } from '@react-navigation/native';
 import type { HomeStackName, StackScreenProps } from '@router/configs';
-import { useCurrentAccount, useCurrentAddress } from '@service/account';
 import { VaultType } from '@service/core';
-import { useVaults } from '@service/vault';
 import { toDataUrl } from '@utils/blockies';
 import { Image } from 'expo-image';
 import type React from 'react';
-import { useEffect, useMemo } from 'react';
+import { useEffect } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
+import { useCurrentHomeWallet } from './useCurrentHomeWallet';
 
 const AnimatedArrowLeft = Animated.createAnimatedComponent(ArrowLeft);
+
+function getVaultBadgeSource(vaultType?: VaultType) {
+  switch (vaultType) {
+    case VaultType.BSIM:
+      return BSIMCardWallet;
+    case VaultType.HierarchicalDeterministic:
+      return HDWallet;
+    default:
+      return ExistWallet;
+  }
+}
 
 const Account: React.FC<{ showAccountSelector: boolean; onPress: () => void; navigation: StackScreenProps<typeof HomeStackName>['navigation'] }> = ({
   showAccountSelector,
@@ -24,19 +34,12 @@ const Account: React.FC<{ showAccountSelector: boolean; onPress: () => void; nav
   onPress,
 }) => {
   const { colors } = useTheme();
-  const { data: account } = useCurrentAccount();
-  const { data: currentAddress } = useCurrentAddress();
-  const addressValue = currentAddress?.value ?? null;
-
-  const { data: vaults = [] } = useVaults();
-  const vault = useMemo(() => {
-    const groupId = account?.accountGroupId;
-    if (!groupId) return null;
-    return vaults.find((v) => v.accountGroupId === groupId) ?? null;
-  }, [account?.accountGroupId, vaults]);
+  const { currentAccount, currentAddressValue, currentVault } = useCurrentHomeWallet();
   useForceUpdateOnFocus(navigation);
 
   const rotation = useSharedValue(-180);
+  const accountName = currentAccount?.nickname ?? 'Loading...';
+  const vaultBadgeSource = getVaultBadgeSource(currentVault?.type);
 
   useEffect(() => {
     rotation.value = withTiming(showAccountSelector ? -90 : -180, {
@@ -63,14 +66,11 @@ const Account: React.FC<{ showAccountSelector: boolean; onPress: () => void; nav
       testID="account"
     >
       <View style={styles.accountImageWrapper}>
-        <Image style={styles.accountImage} source={{ uri: toDataUrl(addressValue ?? undefined) }} />
-        <Image
-          style={styles.acccountImageBSIMCard}
-          source={vault?.type === VaultType.BSIM ? BSIMCardWallet : vault?.type === VaultType.HierarchicalDeterministic ? HDWallet : ExistWallet}
-        />
+        <Image style={styles.accountImage} source={{ uri: toDataUrl(currentAddressValue ?? undefined) }} />
+        <Image style={styles.accountImageBadge} source={vaultBadgeSource} />
       </View>
       <Text style={[styles.accountText, { color: colors.textPrimary }]} numberOfLines={1} ellipsizeMode="middle">
-        {account?.nickname ?? 'Loading...'}
+        {accountName}
       </Text>
       <AnimatedArrowLeft style={[styles.accountArrow, animatedArrowStyle]} color={colors.iconPrimary} width={14} height={14} />
     </Pressable>
@@ -101,7 +101,7 @@ const styles = StyleSheet.create({
     height: 24,
     borderRadius: 24,
   },
-  acccountImageBSIMCard: {
+  accountImageBadge: {
     position: 'absolute',
     width: 20,
     height: 20,

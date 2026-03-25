@@ -1,107 +1,145 @@
 import Copy from '@assets/icons/copy.svg';
 import Earth from '@assets/icons/earth.svg';
 import Sign from '@assets/icons/sign.svg';
-import Clipboard from '@react-native-clipboard/clipboard';
 import { useNavigation, useTheme } from '@react-navigation/native';
 import { SignatureRecordsStackName, type StackScreenProps } from '@router/configs';
 import { useCurrentAddress } from '@service/account';
 import { useCurrentNetwork } from '@service/network';
-import React, { useCallback, useState } from 'react';
+import type React from 'react';
+import { useCallback, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Dimensions, type LayoutChangeEvent, Linking, Modal, Pressable, StyleSheet, Text, View } from 'react-native';
-import { showMessage } from 'react-native-flash-message';
-import Animated, { useAnimatedStyle, useSharedValue } from 'react-native-reanimated';
+import { type LayoutChangeEvent, Linking, Modal, Pressable, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
+import { useCopyTextWithToast } from './useCopyTextWithToast';
 
-const MoreOption: React.FC<{ children: React.ReactElement }> = ({ children }) => {
+interface MoreOptionTriggerProps {
+  onLayout: (event: LayoutChangeEvent) => void;
+  onPress: VoidFunction;
+  triggerRef: React.RefObject<View | null>;
+}
+
+interface MoreOptionProps {
+  renderTrigger: (props: MoreOptionTriggerProps) => React.ReactNode;
+}
+
+const DEFAULT_MENU_POSITION = {
+  right: 0,
+  top: 0,
+};
+
+const MoreOption: React.FC<MoreOptionProps> = ({ renderTrigger }) => {
   const { reverseColors } = useTheme();
   const { t } = useTranslation();
+  const { width: windowWidth } = useWindowDimensions();
   const navigation = useNavigation<StackScreenProps<typeof SignatureRecordsStackName>['navigation']>();
 
   const { data: currentAddress } = useCurrentAddress();
   const currentAddressValue = currentAddress?.value ?? null;
   const { data: currentNetwork } = useCurrentNetwork();
+  const copyText = useCopyTextWithToast();
+  const triggerRef = useRef<View | null>(null);
   const [visible, setVisible] = useState(false);
-  const position = useSharedValue({ right: 0, top: 0 });
+  const [menuPosition, setMenuPosition] = useState(DEFAULT_MENU_POSITION);
 
-  const handleLayout = useCallback(
-    (event: LayoutChangeEvent) => {
-      event.target.measure((x: number, y: number, width: number, height: number, pageX: number, pageY: number) => {
-        position.value = {
-          top: pageY + height / 2,
-          right: Dimensions.get('window').width - pageX - width,
-        };
+  const measureTrigger = useCallback(() => {
+    triggerRef.current?.measureInWindow((pageX: number, pageY: number, width: number, height: number) => {
+      setMenuPosition({
+        top: pageY + height / 2,
+        right: windowWidth - pageX - width,
       });
+    });
+  }, [windowWidth]);
+
+  const handleTriggerLayout = useCallback(
+    (_event: LayoutChangeEvent) => {
+      measureTrigger();
     },
-    [position],
+    [measureTrigger],
   );
 
-  const optionStyle = useAnimatedStyle(() => {
-    return {
-      top: position.value.top,
-      right: position.value.right,
-    };
-  });
+  const closeMenu = useCallback(() => {
+    setVisible(false);
+  }, []);
+
+  const openMenu = useCallback(() => {
+    measureTrigger();
+    setVisible(true);
+  }, [measureTrigger]);
+
+  const toggleMenu = useCallback(() => {
+    if (visible) {
+      closeMenu();
+      return;
+    }
+
+    openMenu();
+  }, [closeMenu, openMenu, visible]);
 
   const handleOpenScan = useCallback(() => {
     if (!currentNetwork?.scanUrl) return;
     Linking.openURL(`${currentNetwork.scanUrl}/address/${currentAddressValue}`);
-    setVisible(false);
-  }, [currentNetwork?.scanUrl, currentAddressValue]);
+    closeMenu();
+  }, [closeMenu, currentNetwork?.scanUrl, currentAddressValue]);
 
-  const handleCoy = useCallback(() => {
-    Clipboard.setString(currentAddressValue ?? '');
-    showMessage({
-      message: t('common.copied'),
-      type: 'success',
-      duration: 1500,
-      width: 160,
-    });
-    setVisible(false);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentAddressValue]);
+  const handleCopyAddress = useCallback(() => {
+    copyText(currentAddressValue);
+    closeMenu();
+  }, [closeMenu, copyText, currentAddressValue]);
 
   const handleToSignatureRecords = useCallback(() => {
     navigation.navigate(SignatureRecordsStackName);
-    setVisible(false);
-  }, [navigation]);
+    closeMenu();
+  }, [closeMenu, navigation]);
+
+  const menuItems = useMemo(() => {
+    const items = [
+      {
+        icon: <Copy color={reverseColors.textPrimary} />,
+        key: 'copy',
+        label: t('home.more.copyAddress'),
+        onPress: handleCopyAddress,
+      },
+      {
+        icon: <Sign color={reverseColors.textPrimary} />,
+        key: 'signatureRecords',
+        label: t('home.more.signatureRecords'),
+        onPress: handleToSignatureRecords,
+      },
+    ];
+
+    if (currentNetwork?.scanUrl) {
+      items.unshift({
+        icon: <Earth color={reverseColors.textPrimary} />,
+        key: 'view',
+        label: t('home.more.viewOnExplorer'),
+        onPress: handleOpenScan,
+      });
+    }
+
+    return items;
+  }, [currentNetwork?.scanUrl, handleCopyAddress, handleOpenScan, handleToSignatureRecords, reverseColors.textPrimary, t]);
 
   return (
-    <View style={styles.container}>
-      <View onLayout={handleLayout}>{React.cloneElement(children, { onPress: () => setVisible(!visible) })}</View>
-      <Modal visible={visible} onRequestClose={() => setVisible(false)} transparent animationType="none">
-        <Pressable onPress={() => setVisible(!visible)} style={styles.overlay} testID="more">
-          <Animated.View style={[styles.options, optionStyle, { backgroundColor: reverseColors.borderThird }]}>
-            {currentNetwork?.scanUrl && (
-              <Pressable onPress={handleOpenScan} testID="view">
+    <>
+      {renderTrigger({ onLayout: handleTriggerLayout, onPress: toggleMenu, triggerRef })}
+      <Modal visible={visible} onRequestClose={closeMenu} transparent animationType="none">
+        <Pressable onPress={closeMenu} style={styles.overlay} testID="more">
+          <View style={[styles.options, menuPosition, { backgroundColor: reverseColors.borderThird }]}>
+            {menuItems.map((item) => (
+              <Pressable key={item.key} onPress={item.onPress} testID={item.key}>
                 <View style={styles.optionItem}>
-                  <Text style={[{ color: reverseColors.textPrimary }, styles.optionItemText]}>{t('home.more.viewOnExplorer')}</Text>
-                  <Earth color={reverseColors.textPrimary} />
+                  <Text style={[{ color: reverseColors.textPrimary }, styles.optionItemText]}>{item.label}</Text>
+                  {item.icon}
                 </View>
               </Pressable>
-            )}
-            <Pressable onPress={handleCoy} testID="copy">
-              <View style={styles.optionItem}>
-                <Text style={[{ color: reverseColors.textPrimary }, styles.optionItemText]}>{t('home.more.copyAddress')}</Text>
-                <Copy color={reverseColors.textPrimary} />
-              </View>
-            </Pressable>
-            <Pressable onPress={handleToSignatureRecords} testID="signatureRecords">
-              <View style={styles.optionItem}>
-                <Text style={[{ color: reverseColors.textPrimary }, styles.optionItemText]}>{t('home.more.signatureRecords')}</Text>
-                <Sign color={reverseColors.textPrimary} />
-              </View>
-            </Pressable>
-          </Animated.View>
+            ))}
+          </View>
         </Pressable>
       </Modal>
-    </View>
+    </>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
-    position: 'relative',
-  },
   options: {
     position: 'absolute',
     borderWidth: 1,

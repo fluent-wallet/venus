@@ -11,14 +11,18 @@ import { useCallback } from 'react';
 export function useHomeRefresh(): (done: VoidFunction) => void {
   const queryClient = useQueryClient();
 
+  const invalidateHomeQueries = useCallback(() => {
+    void queryClient.invalidateQueries({ queryKey: getAssetRootKey() });
+    void queryClient.invalidateQueries({ queryKey: getNftRootKey() });
+    void queryClient.invalidateQueries({ queryKey: getTransactionRootKey() });
+  }, [queryClient]);
+
   const refreshOnce = useCallback(async () => {
     await getAssetsSyncService().refreshCurrent({ reason: 'manual' });
 
-    // this jobs need some time to complete we don't want to block the refresh
-    queryClient.invalidateQueries({ queryKey: getAssetRootKey() });
-    queryClient.invalidateQueries({ queryKey: getNftRootKey() });
-    queryClient.invalidateQueries({ queryKey: getTransactionRootKey() });
-  }, [queryClient]);
+    // These jobs need some time to complete. Do not block the refresh animation.
+    invalidateHomeQueries();
+  }, [invalidateHomeQueries]);
 
   return useCallback(
     (done: VoidFunction) => {

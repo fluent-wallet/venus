@@ -37,7 +37,7 @@ const HeaderRight: React.FC<{ navigation: StackScreenProps<typeof HomeStackName>
   const { colors } = useTheme();
 
   return (
-    <View style={[styles.container, { position: 'relative' }]}>
+    <View style={styles.container}>
       <Pressable
         style={({ pressed }) => [
           styles.wrapper,
@@ -73,6 +73,7 @@ const HeaderRight: React.FC<{ navigation: StackScreenProps<typeof HomeStackName>
 
 const styles = StyleSheet.create({
   container: {
+    position: 'relative',
     display: 'flex',
     flexDirection: 'row',
     alignItems: 'center',
@@ -93,15 +94,6 @@ const styles = StyleSheet.create({
   wrapperRight: {
     borderTopRightRadius: 6,
     borderBottomRightRadius: 6,
-  },
-  networkText: {
-    fontSize: 8,
-    fontWeight: '300',
-  },
-  networkIconWrapper: {
-    position: 'relative',
-    justifyContent: 'center',
-    alignItems: 'center',
   },
   networkTag: {
     position: 'absolute',

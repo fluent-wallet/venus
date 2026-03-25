@@ -21,18 +21,19 @@ interface TabsHeaderProps {
   type: TabsType;
   currentTab: TabType;
   onlyToken?: boolean;
+  showHomeBackupBanner?: boolean;
   sharedScrollY: SharedValue<number>;
   onTabChange?: (tab: TabType) => void;
   resetScrollY?: () => void;
 }
 
-export const TabsHeader: React.FC<TabsHeaderProps> = ({ type, currentTab, onlyToken, sharedScrollY, onTabChange, resetScrollY }) => {
+export const TabsHeader: React.FC<TabsHeaderProps> = ({ type, currentTab, onlyToken, showHomeBackupBanner, sharedScrollY, onTabChange, resetScrollY }) => {
   const { colors } = useTheme();
   const { t } = useTranslation();
   const tabs = useTabs(type, onlyToken);
 
   const currentTabIndex = useMemo(() => {
-    const index = tabs.indexOf(currentTab as 'Tokens');
+    const index = tabs.indexOf(currentTab);
     return index === -1 ? 0 : index;
   }, [tabs, currentTab]);
 
@@ -52,10 +53,10 @@ export const TabsHeader: React.FC<TabsHeaderProps> = ({ type, currentTab, onlyTo
 
   useEffect(() => {
     offset.set(() => withTiming(TAB_WIDTH * currentTabIndex));
-  }, [currentTabIndex, offset.set]);
+  }, [currentTabIndex, offset]);
 
   useEffect(() => {
-    if (resetScrollY) {
+    if (currentTab && resetScrollY) {
       resetScrollY();
     }
   }, [currentTab, resetScrollY]);
@@ -83,7 +84,7 @@ export const TabsHeader: React.FC<TabsHeaderProps> = ({ type, currentTab, onlyTo
         <Animated.View style={[styles.animatedBorder, animatedStyles, { backgroundColor: colors.borderPrimary }]} />
       </View>
       <View style={[styles.divider, { backgroundColor: type !== 'Home' ? colors.borderFourth : colors.borderThird }]}>
-        {currentTab === 'NFTs' && <StickyNFT sharedScrollY={sharedScrollY} type={type} />}
+        {currentTab === 'NFTs' && <StickyNFT sharedScrollY={sharedScrollY} type={type} showHomeBackupBanner={showHomeBackupBanner} />}
       </View>
     </>
   );

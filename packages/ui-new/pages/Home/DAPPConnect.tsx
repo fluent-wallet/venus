@@ -16,30 +16,33 @@ function DAPPConnect() {
   const navigation = useNavigation<StackNavigation>();
   const { data: currentAddress } = useCurrentAddress();
   const currentAddressValue = currentAddress?.value ?? null;
-  const sessionsQuery = useWalletConnectSessions(currentAddressValue);
-  const sessions = sessionsQuery.data ?? [];
+  const sessions = useWalletConnectSessions(currentAddressValue).data ?? [];
   const hasUnsafeURL = useMemo(
     () =>
       sessions.some(({ peer: { metadata } }) => {
         try {
           return new URL(metadata.url).protocol === 'http';
-        } catch (error) {
+        } catch {
           return true;
         }
       }),
     [sessions],
   );
+  const accentColor = hasUnsafeURL ? colors.down : colors.up;
+  const displayedSessions = take(sessions, 3);
+  const displayedSessionsWidth = 14 * Math.min(sessions.length - 1, 3) + 24;
+  const firstSessionUrl = sessions[0]?.peer?.metadata?.url;
 
   if (sessions.length === 0) {
     return null;
   }
 
   return (
-    <View style={[styles.container, { borderColor: hasUnsafeURL ? colors.down : colors.up }]}>
+    <View style={[styles.container, { borderColor: accentColor }]}>
       <Pressable onPress={() => navigation.navigate(WalletConnectStackName, { screen: WalletConnectSessionsStackName })}>
         <View style={styles.content}>
-          <View style={[styles.iconWarp, { width: 14 * Math.min(sessions.length - 1, 3) + 24 }]}>
-            {take(sessions, 3).map(
+          <View style={[styles.iconWrap, { width: displayedSessionsWidth }]}>
+            {displayedSessions.map(
               (
                 {
                   topic,
@@ -57,17 +60,17 @@ function DAPPConnect() {
           </View>
           {sessions.length > 1 ? (
             <View style={styles.content}>
-              <Text style={[styles.largeText, { color: hasUnsafeURL ? colors.down : colors.up }]}>{t('wc.dapp.connectedDApps')}</Text>
-              <ArrowRight color={hasUnsafeURL ? colors.down : colors.up} width={14} height={14} />
+              <Text style={[styles.largeText, { color: accentColor }]}>{t('wc.dapp.connectedDApps')}</Text>
+              <ArrowRight color={accentColor} width={14} height={14} />
             </View>
           ) : (
             <View style={[styles.content, { paddingRight: 24 }]}>
               <Text style={[styles.baseSize, { color: colors.textPrimary }]}>{t('wc.dapp.connectTo')}</Text>
 
-              <Text style={[styles.largeText, { color: hasUnsafeURL ? colors.down : colors.up, flex: 1, flexGrow: 1 }]} numberOfLines={1}>
-                {sessions[0]?.peer?.metadata?.url}
+              <Text style={[styles.largeText, { color: accentColor, flex: 1, flexGrow: 1 }]} numberOfLines={1}>
+                {firstSessionUrl}
               </Text>
-              <ArrowRight color={hasUnsafeURL ? colors.down : colors.up} width={14} height={14} />
+              <ArrowRight color={accentColor} width={14} height={14} />
             </View>
           )}
         </View>
@@ -95,7 +98,7 @@ const styles = StyleSheet.create({
     borderRadius: 12,
   },
 
-  iconWarp: {
+  iconWrap: {
     display: 'flex',
     flexDirection: 'row',
   },
