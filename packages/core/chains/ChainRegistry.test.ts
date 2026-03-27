@@ -49,7 +49,6 @@ const createFeeEstimate = (chainType: ChainType): FeeEstimate => {
   if (chainType === NetworkType.Conflux) {
     return {
       chainType,
-      estimatedTotal: '0x5208',
       gasLimit: '0x5208',
       gasPrice: '0x1',
       storageLimit: '0x0',
@@ -59,7 +58,6 @@ const createFeeEstimate = (chainType: ChainType): FeeEstimate => {
   if (chainType === NetworkType.Ethereum) {
     return {
       chainType,
-      estimatedTotal: '0x5208',
       gasLimit: '0x5208',
       gasPrice: '0x1',
       maxFeePerGas: '0x1',
@@ -69,7 +67,6 @@ const createFeeEstimate = (chainType: ChainType): FeeEstimate => {
 
   return {
     chainType,
-    estimatedTotal: '0x0',
     gasLimit: '0x0',
   };
 };

@@ -247,7 +247,6 @@ export type SpeedUpTxContext = {
     data: Hex;
     chainId: string;
     nonce: number;
-    type?: string | null;
     gasPrice?: string | null;
     maxFeePerGas?: string | null;
     maxPriorityFeePerGas?: string | null;

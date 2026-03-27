@@ -32,12 +32,14 @@ export const createMockConfluxSdk = () => {
     getBalance: jest.fn().mockResolvedValue(0n),
     getNextNonce: jest.fn().mockResolvedValue(0n),
     getEpochNumber: jest.fn().mockResolvedValue(0n),
+    getBlockByEpochNumber: jest.fn().mockResolvedValue({ baseFeePerGas: undefined }),
     estimateGasAndCollateral: jest.fn().mockResolvedValue({
       gasUsed: 21_000n,
       gasLimit: 21_000n,
       storageCollateralized: 0n,
     }),
     getGasPrice: jest.fn().mockResolvedValue(1n),
+    maxPriorityFeePerGas: jest.fn().mockResolvedValue(1n),
     call: jest.fn(),
   };
 
@@ -145,6 +147,7 @@ export class StubChainProvider implements IChainProvider {
       to: params.to,
       value: '0x1',
       data: params.data ?? '0x',
+      type: params.maxFeePerGas || params.maxPriorityFeePerGas ? 2 : params.gasPrice ? 0 : undefined,
       gasPrice: params.gasPrice,
       gasLimit: params.gasLimit,
       maxFeePerGas: params.maxFeePerGas,
@@ -196,7 +199,25 @@ export class StubChainProvider implements IChainProvider {
     }
 
     if (tx.chainType === NetworkType.Conflux) {
-      payload.gasPrice = payload.gasPrice ?? ('gasPrice' in estimate ? estimate.gasPrice : undefined);
+      const isExplicitLegacy = payload.type === 0 || payload.type === 1;
+      const isExplicit1559 = payload.type === 2;
+      const hasLegacyFee = payload.gasPrice !== undefined;
+      const has1559Fee = payload.maxFeePerGas !== undefined || payload.maxPriorityFeePerGas !== undefined;
+      const networkSupports1559 = 'maxFeePerGas' in estimate && estimate.maxFeePerGas !== undefined && estimate.maxPriorityFeePerGas !== undefined;
+      const prefers1559 = isExplicit1559 || (!isExplicitLegacy && (has1559Fee || (!hasLegacyFee && networkSupports1559)));
+
+      if (prefers1559) {
+        payload.type = payload.type ?? 2;
+        payload.gasPrice = undefined;
+        payload.maxFeePerGas = payload.maxFeePerGas ?? ('maxFeePerGas' in estimate ? estimate.maxFeePerGas : undefined);
+        payload.maxPriorityFeePerGas = payload.maxPriorityFeePerGas ?? ('maxPriorityFeePerGas' in estimate ? estimate.maxPriorityFeePerGas : undefined);
+      } else {
+        payload.type = payload.type ?? (payload.gasPrice !== undefined ? 0 : undefined);
+        payload.gasPrice = payload.gasPrice ?? ('gasPrice' in estimate ? estimate.gasPrice : undefined);
+        payload.maxFeePerGas = undefined;
+        payload.maxPriorityFeePerGas = undefined;
+      }
+
       payload.storageLimit = payload.storageLimit ?? ('storageLimit' in estimate ? estimate.storageLimit : undefined);
       payload.nonce = payload.nonce ?? 0;
       payload.epochHeight = payload.epochHeight ?? 0;
@@ -211,7 +232,6 @@ export class StubChainProvider implements IChainProvider {
   async estimateFee(tx: UnsignedTransaction): Promise<any> {
     return {
       chainType: tx.chainType,
-      estimatedTotal: '0x1',
       gasLimit: '0x5208',
     };
   }

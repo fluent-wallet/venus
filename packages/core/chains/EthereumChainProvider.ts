@@ -428,13 +428,9 @@ export class EthereumChainProvider implements IChainProvider<EvmUnsignedTransact
     const maxFeePerGas = use1559 ? (this.toBigInt(payload.maxFeePerGas) ?? feeData.maxFeePerGas ?? feeData.gasPrice ?? 0n) : undefined;
     const maxPriorityFeePerGas = use1559 ? (this.toBigInt(payload.maxPriorityFeePerGas) ?? feeData.maxPriorityFeePerGas ?? 0n) : undefined;
 
-    const effectivePrice = use1559 ? (maxFeePerGas ?? 0n) : gasPrice;
-    const estimatedTotal = estimatedGas * effectivePrice;
-
     return {
       chainType: tx.chainType,
       gasLimit: this.formatHex(estimatedGas),
-      estimatedTotal: this.formatHex(estimatedTotal),
       gasPrice: use1559 ? undefined : this.formatHex(gasPrice),
       maxFeePerGas: maxFeePerGas !== undefined ? this.formatHex(maxFeePerGas) : undefined,
       maxPriorityFeePerGas: maxPriorityFeePerGas !== undefined ? this.formatHex(maxPriorityFeePerGas) : undefined,

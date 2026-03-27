@@ -699,6 +699,59 @@ describe('TransactionService', () => {
     expect(estimate.nonce).toBe(0);
   });
 
+  it('estimates Conflux native transfer gas with feeHistory-based 1559 levels', async () => {
+    const { network, assetRule } = await seedNetwork(database, { definitionKey: 'Conflux Testnet' });
+    const { address } = await createTestAccount(database, { network, assetRule });
+
+    const request: IChainRpc['request'] = jest.fn(async <T = unknown>(method: string): Promise<T> => {
+      if (method === 'cfx_gasPrice') return '0x3b9aca00' as unknown as T;
+      if (method === 'cfx_getBlockByEpochNumber') return { baseFeePerGas: '0x77359400' } as unknown as T;
+      if (method === 'cfx_feeHistory') {
+        return {
+          reward: [
+            ['0x3b9aca00', '0x77359400', '0xb2d05e00'],
+            ['0x3b9aca00', '0x77359400', '0xb2d05e00'],
+            ['0x3b9aca00', '0x77359400', '0xb2d05e00'],
+            ['0x3b9aca00', '0x77359400', '0xb2d05e00'],
+            ['0x3b9aca00', '0x77359400', '0xb2d05e00'],
+          ],
+        } as unknown as T;
+      }
+      throw new Error(`unexpected method: ${method}`);
+    });
+    const batch: IChainRpc['batch'] = jest.fn(async <T = unknown>(): Promise<T[]> => []);
+
+    chainRegistry.register(new StubChainProvider({ chainId: network.chainId, networkType: network.networkType, rpc: { request, batch } }));
+
+    const estimate = await service.estimateGasPricing({
+      addressId: address.id,
+      withNonce: false,
+      tx: {
+        from: await address.getValue(),
+        to: 'cfx:aaejuaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa0sfbnjm2zz',
+        value: '0x0',
+        data: '0x',
+      },
+    });
+
+    expect(estimate.pricing.kind).toBe('eip1559');
+    if (estimate.pricing.kind !== 'eip1559') {
+      throw new Error('Expected eip1559 pricing');
+    }
+
+    expect(BigInt(estimate.pricing.levels.low.maxPriorityFeePerGas)).toBe(1_000_000_000n);
+    expect(BigInt(estimate.pricing.levels.medium.maxPriorityFeePerGas)).toBe(2_000_000_000n);
+    expect(BigInt(estimate.pricing.levels.high.maxPriorityFeePerGas)).toBe(3_000_000_000n);
+
+    expect(BigInt(estimate.pricing.levels.low.maxFeePerGas)).toBe(2_800_000_000n);
+    expect(BigInt(estimate.pricing.levels.medium.maxFeePerGas)).toBe(4_000_000_000n);
+    expect(BigInt(estimate.pricing.levels.high.maxFeePerGas)).toBe(5_400_000_000n);
+
+    expect(estimate.pricing.levels.medium.maxPriorityFeePerGas).not.toBe(estimate.pricing.levels.medium.maxFeePerGas);
+    expect(estimate.storageLimit).toBe('0x0');
+    expect(estimate.nonce).toBe(0);
+  });
+
   it('dispatches hardware signing abort event when caller aborts via signal', async () => {
     const started: CoreEventMap['hardware-sign/started'][] = [];
     const aborted: CoreEventMap['hardware-sign/aborted'][] = [];
@@ -1182,7 +1235,6 @@ describe('TransactionService', () => {
     });
     jest.spyOn(provider, 'estimateFee').mockResolvedValue({
       chainType: provider.networkType,
-      estimatedTotal: '0x999',
       gasLimit: '0xffff',
       gasPrice: '0x777',
       maxFeePerGas: '0x888',
@@ -1229,7 +1281,6 @@ describe('TransactionService', () => {
     });
     jest.spyOn(provider, 'estimateFee').mockResolvedValue({
       chainType: provider.networkType,
-      estimatedTotal: '0x999',
       gasLimit: '0xffff',
       gasPrice: '0x777',
       maxFeePerGas: '0x888',
@@ -1454,6 +1505,90 @@ describe('TransactionService', () => {
         txId: origin.id,
         action: 'SpeedUp',
         feeOverrides: { gasPrice: '0x2' },
+        nonce: 0,
+      }),
+    ).rejects.toMatchObject({ code: TX_INVALID_PARAMS });
+  });
+
+  it('speeds up a pending Conflux 1559 tx, refreshes epochHeight, and keeps type 2 payload', async () => {
+    const { network, assetRule } = await seedNetwork(database, { definitionKey: 'Conflux Testnet', selected: true });
+    const { address } = await createTestAccount(database, { network, assetRule });
+
+    const request: IChainRpc['request'] = jest.fn(async <T = unknown>(method: string): Promise<T> => {
+      if (method === 'cfx_epochNumber') return '0x77' as unknown as T;
+      throw new Error(`unexpected method: ${method}`);
+    });
+    const batch: IChainRpc['batch'] = jest.fn(async <T = unknown>(): Promise<T[]> => []);
+    const provider = new StubChainProvider({ chainId: network.chainId, networkType: network.networkType, rpc: { request, batch } });
+    chainRegistry.register(provider);
+
+    const from = await address.getValue();
+    const origin = await createDbTx({
+      database,
+      address,
+      status: DbTxStatus.PENDING,
+      from,
+      to: 'cfxtest:aatestaddress00000000000000000000000000sftbn',
+      hash: '0xorig',
+      sendAt: new Date(),
+      nonce: 0,
+      gasPrice: null,
+      maxFeePerGas: '0x10',
+      maxPriorityFeePerGas: '0x5',
+    });
+
+    const result = await service.speedUpTx({
+      txId: origin.id,
+      action: 'SpeedUp',
+      feeOverrides: { maxFeePerGas: '0x11', maxPriorityFeePerGas: '0x6' },
+      nonce: 0,
+    });
+
+    const created = await database.get<Tx>(TableName.Tx).find(result.id);
+    const payload = await created.txPayload.fetch();
+    const extra = await created.txExtra.fetch();
+
+    expect(extra.sendAction).toBe('SpeedUp');
+    expect(payload).toMatchObject({
+      nonce: 0,
+      type: '2',
+      gasPrice: '',
+      maxFeePerGas: '0x11',
+      maxPriorityFeePerGas: '0x6',
+      epochHeight: '119',
+    });
+  });
+
+  it('rejects Conflux 1559 speed up when maxPriorityFeePerGas is lowered', async () => {
+    const { network, assetRule } = await seedNetwork(database, { definitionKey: 'Conflux Testnet', selected: true });
+    const { address } = await createTestAccount(database, { network, assetRule });
+
+    const provider = new StubChainProvider({
+      chainId: network.chainId,
+      networkType: network.networkType,
+    });
+    chainRegistry.register(provider);
+
+    const from = await address.getValue();
+    const origin = await createDbTx({
+      database,
+      address,
+      status: DbTxStatus.PENDING,
+      from,
+      to: 'cfxtest:aatestaddress00000000000000000000000000sftbn',
+      hash: '0xorig',
+      sendAt: new Date(),
+      nonce: 0,
+      gasPrice: null,
+      maxFeePerGas: '0x10',
+      maxPriorityFeePerGas: '0x5',
+    });
+
+    await expect(
+      service.speedUpTx({
+        txId: origin.id,
+        action: 'SpeedUp',
+        feeOverrides: { maxFeePerGas: '0x11', maxPriorityFeePerGas: '0x1' },
         nonce: 0,
       }),
     ).rejects.toMatchObject({ code: TX_INVALID_PARAMS });

@@ -33,12 +33,27 @@ export interface ConfluxChainProviderOptions {
   endpointManager: EndpointManager;
 }
 
+type ConfluxEstimateRequest = {
+  from: string;
+  to?: string;
+  data?: string;
+  value?: string;
+  gas?: string;
+  nonce?: number;
+  storageLimit?: string;
+  type?: number;
+  gasPrice?: string;
+  maxFeePerGas?: string;
+  maxPriorityFeePerGas?: string;
+};
+
 type ConfluxRpcClient = {
   getBalance(address: string, epochNumber?: string | number): Promise<bigint>;
   getNextNonce(address: string, epochNumber?: string | number): Promise<bigint>;
   getEpochNumber(epochNumber?: string | number): Promise<number>;
+  getBlockByEpochNumber(epochNumber: string | number, includeTransactions: boolean): Promise<{ baseFeePerGas?: unknown } | null>;
   estimateGasAndCollateral(
-    params: { from: string; to?: string; data?: string; value?: string },
+    params: ConfluxEstimateRequest,
     epochNumber?: string | number,
   ): Promise<{
     gasUsed: bigint;
@@ -46,6 +61,7 @@ type ConfluxRpcClient = {
     storageCollateralized: bigint;
   }>;
   getGasPrice(): Promise<bigint>;
+  maxPriorityFeePerGas(): Promise<bigint>;
 };
 
 export class ConfluxChainProvider implements IChainProvider<ConfluxUnsignedTransaction, ConfluxFeeEstimate> {
@@ -107,7 +123,7 @@ export class ConfluxChainProvider implements IChainProvider<ConfluxUnsignedTrans
   }
 
   async prepareUnsignedTransaction(tx: ConfluxUnsignedTransaction): Promise<ConfluxUnsignedTransaction> {
-    return this.finalizePreparedTransaction(tx);
+    return this.populateUnsignedTransaction(tx);
   }
 
   async buildTransaction(params: TransactionParams): Promise<ConfluxUnsignedTransaction> {
@@ -121,33 +137,38 @@ export class ConfluxChainProvider implements IChainProvider<ConfluxUnsignedTrans
       contractAddress: params.contractAddress,
       nftTokenId: params.nftTokenId,
     });
+    const feeFields = this.canonicalizeFeeFields({
+      gasPrice: params.gasPrice,
+      maxFeePerGas: params.maxFeePerGas,
+      maxPriorityFeePerGas: params.maxPriorityFeePerGas,
+    });
 
     const payload: ConfluxUnsignedTransactionPayload = {
       ...basePayload,
       gasLimit: params.gasLimit,
-      gasPrice: params.gasPrice,
+      ...feeFields,
       storageLimit: params.storageLimit,
-      nonce: await this.resolveNonce(params.from, params.nonce),
-      epochHeight: await this.resolveEpochHeight(params.epochHeight),
+      nonce: await this.getNonceOrProvided(params.from, params.nonce),
+      epochHeight: await this.getEpochHeightOrLatest(params.epochHeight),
     };
 
     return this.toUnsignedTransaction(payload);
   }
 
   async estimateFee(tx: ConfluxUnsignedTransaction): Promise<ConfluxFeeEstimate> {
-    const { payload } = tx;
+    const draft = tx.payload;
     const { sdkRpc } = this.getConfluxClients();
+    const baseFeePerGas = await this.getBaseFeePerGas(draft.epochHeight);
+    const payload = this.canonicalizePayload(draft, { networkSupports1559: baseFeePerGas !== undefined });
+    const { gasUsed, storageCollateralized } = await sdkRpc.estimateGasAndCollateral(this.buildEstimateRequest(payload), payload.epochHeight ?? 'latest_state');
+    const estimatedGas = this.toBigInt(gasUsed);
+    const estimatedStorage = this.toBigInt(storageCollateralized);
 
-    const { gasUsed, storageCollateralized } = await sdkRpc.estimateGasAndCollateral({
-      from: payload.from,
-      to: payload.to,
-      data: payload.data,
-      value: payload.value,
-    });
+    if (payload.type === 2) {
+      return this.estimateEip1559Fee(payload, estimatedGas, estimatedStorage, baseFeePerGas);
+    }
 
-    const gasPrice = payload.gasPrice ? BigInt(payload.gasPrice) : await sdkRpc.getGasPrice();
-
-    return this.toFeeEstimate(payload, this.toBigInt(gasUsed), this.toBigInt(storageCollateralized), this.toBigInt(gasPrice));
+    return this.estimateLegacyFee(payload, estimatedGas, estimatedStorage);
   }
   async signTransaction(tx: ConfluxUnsignedTransaction, signer: ISigner): Promise<SignedTransaction<NetworkType.Conflux>> {
     if (signer.type === 'software') {
@@ -330,12 +351,12 @@ export class ConfluxChainProvider implements IChainProvider<ConfluxUnsignedTrans
     }
   }
 
-  private async resolveNonce(address: Address, override?: number): Promise<number> {
+  private async getNonceOrProvided(address: Address, override?: number): Promise<number> {
     if (typeof override === 'number') return override;
     return this.getNonce(address);
   }
 
-  private async resolveEpochHeight(override?: number): Promise<number> {
+  private async getEpochHeightOrLatest(override?: number): Promise<number> {
     if (typeof override === 'number') return override;
     const { sdkRpc } = this.getConfluxClients();
     const epoch = await sdkRpc.getEpochNumber('latest_state');
@@ -349,20 +370,46 @@ export class ConfluxChainProvider implements IChainProvider<ConfluxUnsignedTrans
     return address;
   }
 
-  private async finalizePreparedTransaction(tx: ConfluxUnsignedTransaction): Promise<ConfluxUnsignedTransaction> {
-    const estimate = await this.estimateFee(tx);
-    const nonce = await this.resolveNonce(tx.payload.from, tx.payload.nonce);
-    const epochHeight = await this.resolveEpochHeight(tx.payload.epochHeight);
+  private async populateUnsignedTransaction(tx: ConfluxUnsignedTransaction): Promise<ConfluxUnsignedTransaction> {
+    const draft = tx.payload;
+    const nonce = await this.getNonceOrProvided(draft.from, draft.nonce);
+    const epochHeight = await this.getEpochHeightOrLatest(draft.epochHeight);
+    const estimate = await this.estimateFee({
+      ...tx,
+      payload: {
+        ...draft,
+        nonce,
+        epochHeight,
+      },
+    });
+    const usesGasPriceAs1559Fee = draft.type === 2 && draft.gasPrice !== undefined && draft.maxFeePerGas === undefined && draft.maxPriorityFeePerGas === undefined;
+    const feeFields = this.canonicalizeFeeFields(
+      usesGasPriceAs1559Fee
+        ? {
+            // Keep js-conflux-sdk's type=2 + gasPrice shorthand intact instead of mixing it with estimated 1559 caps.
+            type: draft.type,
+            gasPrice: draft.gasPrice,
+          }
+        : {
+            type: draft.type,
+            gasPrice: draft.gasPrice ?? estimate.gasPrice,
+            maxFeePerGas: draft.maxFeePerGas ?? estimate.maxFeePerGas,
+            maxPriorityFeePerGas: draft.maxPriorityFeePerGas ?? estimate.maxPriorityFeePerGas,
+          },
+      {
+        networkSupports1559: estimate.maxFeePerGas != null && estimate.maxPriorityFeePerGas != null,
+      },
+    );
 
     return {
       ...tx,
       payload: {
-        ...tx.payload,
-        gasLimit: tx.payload.gasLimit ?? estimate.gasLimit,
-        gasPrice: tx.payload.gasPrice ?? estimate.gasPrice,
+        ...draft,
+        gasLimit: draft.gasLimit ?? estimate.gasLimit,
+        ...feeFields,
         nonce,
         epochHeight,
-        storageLimit: tx.payload.storageLimit ?? estimate.storageLimit,
+        storageLimit: draft.storageLimit ?? estimate.storageLimit,
       },
     };
   }
@@ -374,25 +421,166 @@ export class ConfluxChainProvider implements IChainProvider<ConfluxUnsignedTrans
     };
   }
 
-  private toFeeEstimate(payload: ConfluxUnsignedTransactionPayload, gasUsed: bigint, storageCollateralized: bigint, gasPrice: bigint): ConfluxFeeEstimate {
+  private async estimateLegacyFee(payload: ConfluxUnsignedTransactionPayload, gasUsed: bigint, storageCollateralized: bigint): Promise<ConfluxFeeEstimate> {
+    const { sdkRpc } = this.getConfluxClients();
+    const gasPrice = payload.gasPrice ? this.toBigInt(payload.gasPrice) : await sdkRpc.getGasPrice();
+
+    return this.toFeeEstimate(payload, gasUsed, storageCollateralized, { gasPrice });
+  }
+
+  private async estimateEip1559Fee(
+    payload: ConfluxUnsignedTransactionPayload,
+    gasUsed: bigint,
+    storageCollateralized: bigint,
+    baseFeePerGas?: bigint,
+  ): Promise<ConfluxFeeEstimate> {
+    const { sdkRpc } = this.getConfluxClients();
+    const maxPriorityFeePerGas = payload.maxPriorityFeePerGas ? this.toBigInt(payload.maxPriorityFeePerGas) : await sdkRpc.maxPriorityFeePerGas();
+    // Keep Core Space 1559 defaults aligned with js-conflux-sdk populateTransaction.
+    const maxFeePerGas = payload.maxFeePerGas ? this.toBigInt(payload.maxFeePerGas) : maxPriorityFeePerGas + (baseFeePerGas ?? 0n) * 2n;
+
+    this.assertMaxFeePerGasNotLowerThanPriorityFee({ maxFeePerGas, maxPriorityFeePerGas });
+
+    return this.toFeeEstimate(payload, gasUsed, storageCollateralized, {
+      maxFeePerGas,
+      maxPriorityFeePerGas,
+    });
+  }
+
+  private toFeeEstimate(
+    payload: ConfluxUnsignedTransactionPayload,
+    gasUsed: bigint,
+    storageCollateralized: bigint,
+    feeFields: {
+      gasPrice?: bigint;
+      maxFeePerGas?: bigint;
+      maxPriorityFeePerGas?: bigint;
+    },
+  ): ConfluxFeeEstimate {
     const gasLimit = payload.gasLimit ? BigInt(payload.gasLimit) : gasUsed;
     const storageLimit = payload.storageLimit ? BigInt(payload.storageLimit) : storageCollateralized;
-    const estimatedTotal = gasLimit * gasPrice + storageLimit;
 
     return {
       chainType: this.networkType,
-      gasLimit: `0x${gasLimit.toString(16)}`,
-      gasPrice: `0x${gasPrice.toString(16)}`,
-      storageLimit: `0x${storageLimit.toString(16)}`,
-      estimatedTotal: `0x${estimatedTotal.toString(16)}`,
+      gasLimit: this.formatHex(gasLimit),
+      gasPrice: feeFields.gasPrice !== undefined ? this.formatHex(feeFields.gasPrice) : undefined,
+      maxFeePerGas: feeFields.maxFeePerGas !== undefined ? this.formatHex(feeFields.maxFeePerGas) : undefined,
+      maxPriorityFeePerGas: feeFields.maxPriorityFeePerGas !== undefined ? this.formatHex(feeFields.maxPriorityFeePerGas) : undefined,
+      storageLimit: this.formatHex(storageLimit),
     };
   }
 
-  /**
-   * conflux sdk returns bigint is JSBI not native bigint so we need to format it
-   * @param value
-   * @returns
-   */
+  private inferTypeFromFeeFields(input: { gasPrice?: string; maxFeePerGas?: string; maxPriorityFeePerGas?: string }): 0 | 2 | undefined {
+    if (input.maxFeePerGas || input.maxPriorityFeePerGas) return 2;
+    if (input.gasPrice) return 0;
+    return undefined;
+  }
+
+  private canonicalizePayload(
+    payload: ConfluxUnsignedTransaction['payload'],
+    options: { networkSupports1559?: boolean } = {},
+  ): ConfluxUnsignedTransaction['payload'] {
+    const feeFields = this.canonicalizeFeeFields(
+      {
+        type: payload.type,
+        gasPrice: payload.gasPrice,
+        maxFeePerGas: payload.maxFeePerGas,
+        maxPriorityFeePerGas: payload.maxPriorityFeePerGas,
+      },
+      options,
+    );
+
+    return {
+      ...payload,
+      ...feeFields,
+    };
+  }
+
+  private canonicalizeFeeFields(
+    input: {
+      type?: number;
+      gasPrice?: string;
+      maxFeePerGas?: string;
+      maxPriorityFeePerGas?: string;
+    },
+    options: { networkSupports1559?: boolean } = {},
+  ) {
+    const type = input.type ?? this.inferTypeFromFeeFields(input);
+    const hasLegacyFee = input.gasPrice !== undefined;
+    const has1559Fee = input.maxFeePerGas !== undefined || input.maxPriorityFeePerGas !== undefined;
+    const isLegacyType = type === 0 || type === 1;
+    const isEip1559Type = type === 2;
+
+    if (hasLegacyFee && has1559Fee) {
+      throw new Error('gasPrice cannot be set with maxFeePerGas or maxPriorityFeePerGas.');
+    }
+
+    if (isEip1559Type || (!isLegacyType && (has1559Fee || (!hasLegacyFee && options.networkSupports1559)))) {
+      const maxFeePerGas = input.maxFeePerGas ?? (isEip1559Type ? input.gasPrice : undefined);
+      const maxPriorityFeePerGas = input.maxPriorityFeePerGas ?? (isEip1559Type ? input.gasPrice : undefined);
+
+      this.assertMaxFeePerGasNotLowerThanPriorityFee({
+        maxFeePerGas,
+        maxPriorityFeePerGas,
+      });
+
+      return {
+        type: 2 as const,
+        gasPrice: undefined,
+        maxFeePerGas,
+        maxPriorityFeePerGas,
+      };
+    }
+
+    if (isLegacyType || hasLegacyFee) {
+      return {
+        type: type ?? (hasLegacyFee ? 0 : undefined),
+        gasPrice: input.gasPrice,
+        maxFeePerGas: undefined,
+        maxPriorityFeePerGas: undefined,
+      };
+    }
+
+    return {
+      type: input.type,
+      gasPrice: input.gasPrice,
+      maxFeePerGas: input.maxFeePerGas,
+      maxPriorityFeePerGas: input.maxPriorityFeePerGas,
+    };
+  }
+
+  private buildEstimateRequest(payload: ConfluxUnsignedTransactionPayload): ConfluxEstimateRequest {
+    const request: ConfluxEstimateRequest = {
+      from: payload.from,
+      data: payload.data,
+      value: payload.value,
+    };
+
+    if (payload.to !== undefined) request.to = payload.to;
+    if (payload.gasLimit !== undefined) request.gas = payload.gasLimit;
+    if (payload.nonce !== undefined) request.nonce = payload.nonce;
+    if (payload.storageLimit !== undefined) request.storageLimit = payload.storageLimit;
+    if (payload.type !== undefined) request.type = payload.type;
+    if (payload.gasPrice !== undefined) request.gasPrice = payload.gasPrice;
+    if (payload.maxFeePerGas !== undefined) request.maxFeePerGas = payload.maxFeePerGas;
+    if (payload.maxPriorityFeePerGas !== undefined) request.maxPriorityFeePerGas = payload.maxPriorityFeePerGas;
+
+    return request;
+  }
+
+  private async getBaseFeePerGas(epochHeight?: number): Promise<bigint | undefined> {
+    const { sdkRpc } = this.getConfluxClients();
+    const block = await sdkRpc.getBlockByEpochNumber(epochHeight ?? 'latest_state', false);
+    return block?.baseFeePerGas !== undefined && block.baseFeePerGas !== null ? this.toBigInt(block.baseFeePerGas) : undefined;
+  }
+
+  private assertMaxFeePerGasNotLowerThanPriorityFee(input: { maxFeePerGas?: string | bigint; maxPriorityFeePerGas?: string | bigint }) {
+    if (!input.maxFeePerGas || !input.maxPriorityFeePerGas) return;
+    if (this.toBigInt(input.maxFeePerGas) < this.toBigInt(input.maxPriorityFeePerGas)) {
+      throw new Error('maxFeePerGas cannot be lower than maxPriorityFeePerGas.');
+    }
+  }
+
   private formatHex(value: unknown): Hex {
     const normalized = this.toBigInt(value);
     return `0x${normalized.toString(16)}` as Hex;

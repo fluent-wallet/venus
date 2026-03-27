@@ -79,7 +79,9 @@ describe('ConfluxChainProvider', () => {
     jest.clearAllMocks();
     mockRpc.getNextNonce.mockResolvedValue(1n);
     mockRpc.getEpochNumber.mockResolvedValue(100n);
+    mockRpc.getBlockByEpochNumber.mockResolvedValue({ baseFeePerGas: undefined });
     mockRpc.getGasPrice.mockResolvedValue(1n);
+    mockRpc.maxPriorityFeePerGas.mockResolvedValue(1n);
     mockRpc.getBalance.mockResolvedValue(0n);
     mockRpc.estimateGasAndCollateral.mockResolvedValue({
       gasUsed: '0x5208',
@@ -226,14 +228,17 @@ describe('ConfluxChainProvider', () => {
       gasLimit: '0x5208',
       gasPrice: '0x1',
       storageLimit: '0x0',
-      estimatedTotal: '0x5208',
     });
-    expect(mockRpc.estimateGasAndCollateral).toHaveBeenCalledWith({
-      from: SAMPLE_ACCOUNT_BASE32,
-      to: SAMPLE_ACCOUNT_BASE32,
-      data: '0x',
-      value: '0xde0b6b3a7640000',
-    });
+    expect(mockRpc.estimateGasAndCollateral).toHaveBeenCalledWith(
+      {
+        from: SAMPLE_ACCOUNT_BASE32,
+        to: SAMPLE_ACCOUNT_BASE32,
+        data: '0x',
+        value: '0xde0b6b3a7640000',
+        nonce: 1,
+      },
+      100,
+    );
   });
 
   it('prepares unsigned drafts by filling nonce, epochHeight, and fee fields', async () => {
@@ -264,6 +269,158 @@ describe('ConfluxChainProvider', () => {
     expect(prepared.payload.gasLimit).toBe('0x5208');
     expect(prepared.payload.storageLimit).toBe('0x0');
     expect(prepared.payload.gasPrice).toBe('0x2');
+  });
+
+  it('estimates 1559 fees when network baseFeePerGas is available', async () => {
+    const provider = createProvider();
+    const draft: ConfluxUnsignedTransaction = {
+      chainType: NetworkType.Conflux,
+      payload: {
+        from: SAMPLE_ACCOUNT_BASE32,
+        to: SAMPLE_ACCOUNT_BASE32,
+        chainId: TEST_CHAIN_ID,
+        value: '0xde0b6b3a7640000',
+        data: '0x',
+        epochHeight: 100,
+      },
+    };
+
+    mockRpc.getBlockByEpochNumber.mockResolvedValueOnce({ baseFeePerGas: 0x2n });
+    mockRpc.estimateGasAndCollateral.mockResolvedValueOnce({
+      gasUsed: 0x5208n,
+      storageCollateralized: 0n,
+    });
+    mockRpc.maxPriorityFeePerGas.mockResolvedValueOnce(1n);
+
+    const estimate = await provider.estimateFee(draft);
+
+    expect(estimate).toMatchObject({
+      chainType: NetworkType.Conflux,
+      gasLimit: '0x5208',
+      maxFeePerGas: '0x5',
+      maxPriorityFeePerGas: '0x1',
+      storageLimit: '0x0',
+    });
+    expect(estimate.gasPrice).toBeUndefined();
+    expect(mockRpc.estimateGasAndCollateral).toHaveBeenCalledWith(
+      {
+        from: SAMPLE_ACCOUNT_BASE32,
+        to: SAMPLE_ACCOUNT_BASE32,
+        data: '0x',
+        value: '0xde0b6b3a7640000',
+        type: 2,
+      },
+      100,
+    );
+  });
+
+  it('prepares unsigned drafts with 1559 fees by default on supported networks', async () => {
+    const provider = createProvider();
+    const draft: ConfluxUnsignedTransaction = {
+      chainType: NetworkType.Conflux,
+      payload: {
+        from: SAMPLE_ACCOUNT_BASE32,
+        to: SAMPLE_ACCOUNT_BASE32,
+        chainId: TEST_CHAIN_ID,
+        value: '0xde0b6b3a7640000',
+        data: '0x',
+      },
+    };
+
+    mockRpc.getNextNonce.mockResolvedValueOnce(9n);
+    mockRpc.getEpochNumber.mockResolvedValueOnce(123n);
+    mockRpc.getBlockByEpochNumber.mockResolvedValueOnce({ baseFeePerGas: 0x2n });
+    mockRpc.estimateGasAndCollateral.mockResolvedValueOnce({
+      gasUsed: 0x5208n,
+      storageCollateralized: 0n,
+    });
+    mockRpc.maxPriorityFeePerGas.mockResolvedValueOnce(1n);
+
+    const prepared = await provider.prepareUnsignedTransaction(draft);
+
+    expect(prepared.payload).toMatchObject({
+      nonce: 9,
+      epochHeight: 123,
+      gasLimit: '0x5208',
+      storageLimit: '0x0',
+      type: 2,
+      maxFeePerGas: '0x5',
+      maxPriorityFeePerGas: '0x1',
+    });
+    expect(prepared.payload.gasPrice).toBeUndefined();
+  });
+
+  it('keeps explicit legacy gasPrice on 1559-capable networks', async () => {
+    const provider = createProvider();
+    const draft: ConfluxUnsignedTransaction = {
+      chainType: NetworkType.Conflux,
+      payload: {
+        from: SAMPLE_ACCOUNT_BASE32,
+        to: SAMPLE_ACCOUNT_BASE32,
+        chainId: TEST_CHAIN_ID,
+        value: '0xde0b6b3a7640000',
+        data: '0x',
+        gasPrice: '0x2',
+      },
+    };
+
+    mockRpc.getNextNonce.mockResolvedValueOnce(9n);
+    mockRpc.getEpochNumber.mockResolvedValueOnce(123n);
+    mockRpc.getBlockByEpochNumber.mockResolvedValueOnce({ baseFeePerGas: 0x2n });
+    mockRpc.estimateGasAndCollateral.mockResolvedValueOnce({
+      gasUsed: 0x5208n,
+      storageCollateralized: 0n,
+    });
+
+    const prepared = await provider.prepareUnsignedTransaction(draft);
+
+    expect(prepared.payload).toMatchObject({
+      nonce: 9,
+      epochHeight: 123,
+      gasLimit: '0x5208',
+      storageLimit: '0x0',
+      type: 0,
+      gasPrice: '0x2',
+    });
+    expect(prepared.payload.maxFeePerGas).toBeUndefined();
+    expect(prepared.payload.maxPriorityFeePerGas).toBeUndefined();
+  });
+
+  it('keeps type 2 plus gasPrice shorthand compatible during prepare', async () => {
+    const provider = createProvider();
+    const draft: ConfluxUnsignedTransaction = {
+      chainType: NetworkType.Conflux,
+      payload: {
+        from: SAMPLE_ACCOUNT_BASE32,
+        to: SAMPLE_ACCOUNT_BASE32,
+        chainId: TEST_CHAIN_ID,
+        value: '0xde0b6b3a7640000',
+        data: '0x',
+        type: 2,
+        gasPrice: '0x2',
+      },
+    };
+
+    mockRpc.getNextNonce.mockResolvedValueOnce(9n);
+    mockRpc.getEpochNumber.mockResolvedValueOnce(123n);
+    mockRpc.getBlockByEpochNumber.mockResolvedValueOnce({ baseFeePerGas: 0x2n });
+    mockRpc.estimateGasAndCollateral.mockResolvedValueOnce({
+      gasUsed: 0x5208n,
+      storageCollateralized: 0n,
+    });
+
+    const prepared = await provider.prepareUnsignedTransaction(draft);
+
+    expect(prepared.payload).toMatchObject({
+      nonce: 9,
+      epochHeight: 123,
+      gasLimit: '0x5208',
+      storageLimit: '0x0',
+      type: 2,
+      maxFeePerGas: '0x2',
+      maxPriorityFeePerGas: '0x2',
+    });
+    expect(prepared.payload.gasPrice).toBeUndefined();
   });
 
   it('signs transactions with PrivateKeyAccount and returns raw payload', async () => {
@@ -451,12 +608,16 @@ describe('ConfluxChainProvider', () => {
 
       expect(estimate.chainType).toBe(NetworkType.Conflux);
       expect(estimate.gasLimit).toBe('0x7530');
-      expect(mockRpc.estimateGasAndCollateral).toHaveBeenCalledWith({
-        from: SAMPLE_ACCOUNT_BASE32,
-        to: TOKEN_CONTRACT,
-        data: unsigned.payload.data,
-        value: '0x0',
-      });
+      expect(mockRpc.estimateGasAndCollateral).toHaveBeenCalledWith(
+        {
+          from: SAMPLE_ACCOUNT_BASE32,
+          to: TOKEN_CONTRACT,
+          data: unsigned.payload.data,
+          value: '0x0',
+          nonce: 1,
+        },
+        100,
+      );
     });
 
     it('estimates fee with user-provided gasLimit and storageLimit', async () => {
@@ -484,7 +645,18 @@ describe('ConfluxChainProvider', () => {
       expect(estimate.gasLimit).toBe('0x10000');
       expect(estimate.storageLimit).toBe('0x100');
       expect(estimate.gasPrice).toBe('0x2');
-      expect(estimate.estimatedTotal).toBe('0x20100'); // 0x10000 * 2 + 0x100
+      expect(mockRpc.estimateGasAndCollateral).toHaveBeenCalledWith(
+        {
+          from: SAMPLE_ACCOUNT_BASE32,
+          to: SAMPLE_ACCOUNT_BASE32,
+          data: '0x',
+          value: '0xde0b6b3a7640000',
+          gas: '0x10000',
+          nonce: 1,
+          storageLimit: '0x100',
+        },
+        100,
+      );
     });
   });
 

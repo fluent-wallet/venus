@@ -2,10 +2,24 @@ import type { NetworkType } from '@core/utils/consts';
 import type { AssetType } from './asset';
 import type { Address, ChainType, Hash, Hex } from './chain';
 
+export interface TransactionFeeFields<TQuantity = string> {
+  gasPrice?: TQuantity;
+  maxFeePerGas?: TQuantity;
+  maxPriorityFeePerGas?: TQuantity;
+}
+
+export interface TransactionBuildOptions extends TransactionFeeFields<string> {
+  data?: Hex;
+  gasLimit?: string;
+  storageLimit?: string;
+  epochHeight?: number;
+  nonce?: number;
+}
+
 /**
  * Minimum data required to build a transaction.
  */
-export interface TransactionParams {
+export interface TransactionParams extends TransactionBuildOptions {
   from: Address;
   to: Address;
   chainId: string;
@@ -16,28 +30,15 @@ export interface TransactionParams {
 
   contractAddress?: Address;
   nftTokenId?: string;
-
-  data?: Hex;
-  gasLimit?: string;
-  gasPrice?: string;
-  maxFeePerGas?: string;
-  maxPriorityFeePerGas?: string;
-  storageLimit?: string;
-  epochHeight?: number;
-  nonce?: number;
 }
 
-export interface EvmRpcTransactionRequest {
+export interface EvmRpcTransactionRequest extends TransactionFeeFields<Hex> {
   from: Address;
   to?: Address;
   data?: Hex;
 
   value?: Hex;
   gas?: Hex;
-  gasPrice?: Hex;
-  maxFeePerGas?: Hex;
-  maxPriorityFeePerGas?: Hex;
-
   nonce?: Hex;
   type?: Hex;
 }
@@ -47,36 +48,32 @@ interface BaseUnsignedTransaction<TChain extends ChainType> {
   context?: Record<string, unknown>;
 }
 
-export interface ConfluxUnsignedTransactionPayload {
+export interface UnsignedTransactionExecutionFields<TQuantity = string, TNonce = number, TType = number> extends TransactionFeeFields<TQuantity> {
+  gasLimit?: TQuantity;
+  nonce?: TNonce;
+  type?: TType;
+}
+
+export interface ConfluxExecutionFields<TQuantity = string, TEpochHeight = number> {
+  storageLimit?: TQuantity;
+  epochHeight?: TEpochHeight;
+}
+
+export interface UnsignedTransactionPayloadBase extends UnsignedTransactionExecutionFields<string, number, number> {
   from: Address;
   to?: Address;
   chainId: string;
   value: Hex;
   data: Hex;
-  gasLimit?: string;
-  gasPrice?: string;
-  storageLimit?: string;
-  nonce?: number;
-  epochHeight?: number;
 }
+
+export interface ConfluxUnsignedTransactionPayload extends UnsignedTransactionPayloadBase, ConfluxExecutionFields<string, number> {}
 
 export interface ConfluxUnsignedTransaction extends BaseUnsignedTransaction<NetworkType.Conflux> {
   payload: ConfluxUnsignedTransactionPayload;
 }
 
-export interface EvmUnsignedTransactionPayload {
-  from: Address;
-  to?: Address;
-  chainId: string;
-  value: Hex;
-  data: Hex;
-  gasLimit?: string;
-  gasPrice?: string;
-  maxFeePerGas?: string;
-  maxPriorityFeePerGas?: string;
-  nonce?: number;
-  type?: number;
-}
+export interface EvmUnsignedTransactionPayload extends UnsignedTransactionPayloadBase {}
 
 export interface EvmUnsignedTransaction extends BaseUnsignedTransaction<NetworkType.Ethereum> {
   payload: EvmUnsignedTransactionPayload;
@@ -100,20 +97,16 @@ export interface SignedTransaction<TChain extends ChainType = ChainType> {
 
 interface BaseFeeEstimate<TChain extends ChainType> {
   chainType: TChain;
-  estimatedTotal: string;
   gasLimit: string;
 }
 
-export interface ConfluxFeeEstimate extends BaseFeeEstimate<NetworkType.Conflux> {
-  gasPrice: string;
+interface FeeEstimateWithFees<TChain extends ChainType> extends BaseFeeEstimate<TChain>, TransactionFeeFields<string> {}
+
+export interface ConfluxFeeEstimate extends FeeEstimateWithFees<NetworkType.Conflux> {
   storageLimit: string;
 }
 
-export interface EvmFeeEstimate extends BaseFeeEstimate<NetworkType.Ethereum> {
-  gasPrice?: string;
-  maxFeePerGas?: string;
-  maxPriorityFeePerGas?: string;
-}
+export interface EvmFeeEstimate extends FeeEstimateWithFees<NetworkType.Ethereum> {}
 
 export interface GenericFeeEstimate<TChain extends ChainType = ChainType> extends BaseFeeEstimate<TChain> {
   details?: Record<string, unknown>;

@@ -94,6 +94,8 @@ const SERVICE_PENDING_ACTIVITY_TX_STATUSES = [...PENDING_TX_STATUSES, DbTxStatus
 const SERVICE_FINISHED_ACTIVITY_TX_STATUSES = FINISHED_IN_ACTIVITY_TX_STATUSES.filter((status) => status !== DbTxStatus.TEMP_REPLACED);
 const SERVICE_PENDING_ACTIVITY_TX_STATUS_SET = new Set<DbTxStatus>(SERVICE_PENDING_ACTIVITY_TX_STATUSES);
 const SERVICE_FINISHED_ACTIVITY_TX_STATUS_SET = new Set<DbTxStatus>(SERVICE_FINISHED_ACTIVITY_TX_STATUSES);
+const CONFLUX_EIP1559_FEE_HISTORY_BLOCKS = '0x5' as Hex;
+const CONFLUX_EIP1559_FEE_HISTORY_PERCENTILES = [10, 20, 30] as const;
 
 type TxLike = {
   from?: string;
@@ -104,6 +106,12 @@ type TxLike = {
 
 const GAS_LEVELS = ['low', 'medium', 'high'] as const;
 type GasLevel = (typeof GAS_LEVELS)[number];
+
+const CONFLUX_EIP1559_BASE_FEE_MULTIPLIERS: Record<GasLevel, bigint> = {
+  low: 90n,
+  medium: 100n,
+  high: 120n,
+};
 
 @injectable()
 export class TransactionService {
@@ -164,13 +172,15 @@ export class TransactionService {
     const value = tx.value ?? '0x0';
 
     const gasBuffer = network.gasBuffer > 0 ? network.gasBuffer : 1;
-    const nonce = withNonce ? await chainProvider.getNonce(from) : 0;
-
-    const [gasPrice, supports1559] = await Promise.all([this.getGasPrice({ chainProvider, network }), this.is1559Supported({ chainProvider, network })]);
+    const [nonce, gasPrice] = await Promise.all([
+      withNonce ? chainProvider.getNonce(from) : Promise.resolve(0),
+      this.getGasPrice({ chainProvider, network }),
+    ]);
 
     const minGasPriceWei = this.getMinGasPrice(network);
 
     if (network.networkType === NetworkType.Ethereum) {
+      const supports1559 = await this.is1559Supported({ chainProvider, network });
       const isContract = to
         ? await this.addressValidationService.isContractAddress({ networkType: network.networkType, chainId: network.chainId, addressValue: to })
         : true;
@@ -196,35 +206,22 @@ export class TransactionService {
         ? await this.addressValidationService.isContractAddress({ networkType: network.networkType, chainId: network.chainId, addressValue: to })
         : true;
       const isSendNativeToken = (!!to && !isContract) || !data || data === '0x';
-
-      if (isSendNativeToken) {
-        const gasLimit = this.applyGasBuffer(21_000n, gasBuffer);
-        const storageLimit = '0x0' as const;
-
-        return {
-          gasLimit,
-          storageLimit,
-          gasPrice,
-          constraints: { minGasPriceWei },
-          pricing: supports1559
-            ? { kind: 'eip1559', levels: this.buildEip1559Levels({ gasPrice, gasLimit, network }) }
-            : { kind: 'legacy', levels: this.buildLegacyLevels({ gasPrice, gasLimit, network }) },
-          nonce,
-        };
-      }
-
-      const { gasLimit, storageLimit } = await this.estimateCfxGasAndCollateral({ chainProvider, from, to, data, value, gasBuffer });
-
-      return {
+      const buildResult = async (gasLimit: Hex, storageLimit: Hex): Promise<GasPricingEstimate> => ({
         gasLimit,
         storageLimit,
         gasPrice,
         constraints: { minGasPriceWei },
-        pricing: supports1559
-          ? { kind: 'eip1559', levels: this.buildEip1559Levels({ gasPrice, gasLimit, network }) }
-          : { kind: 'legacy', levels: this.buildLegacyLevels({ gasPrice, gasLimit, network }) },
+        pricing: await this.buildConfluxPricing({ chainProvider, gasPrice, gasLimit, network }),
         nonce,
-      };
+      });
+
+      if (isSendNativeToken) {
+        return buildResult(this.applyGasBuffer(21_000n, gasBuffer), '0x0');
+      }
+
+      const { gasLimit, storageLimit } = await this.estimateCfxGasAndCollateral({ chainProvider, from, to, data, value, gasBuffer });
+
+      return buildResult(gasLimit, storageLimit);
     }
 
     throw new Error(`estimateGasPricing: unsupported networkType: ${String(network.networkType)}`);
@@ -705,7 +702,6 @@ export class TransactionService {
         data: (payload.data ?? '0x') as Hex,
         chainId: payload.chainId ?? network.chainId,
         nonce: payload.nonce ?? 0,
-        type: payload.type,
         gasPrice: payload.gasPrice,
         maxFeePerGas: payload.maxFeePerGas,
         maxPriorityFeePerGas: payload.maxPriorityFeePerGas,
@@ -750,7 +746,7 @@ export class TransactionService {
       });
     }
 
-    const is1559 = !!payload.maxFeePerGas;
+    const is1559 = !!payload.maxFeePerGas || !!payload.maxPriorityFeePerGas;
     this.assertReplacementFeeBumped({
       is1559,
       origin: {
@@ -1498,12 +1494,41 @@ export class TransactionService {
     return Number.isFinite(limit) && limit > 0 ? limit : 5;
   }
 
+  private pickMedian(values: readonly bigint[]): bigint | null {
+    if (values.length === 0) {
+      return null;
+    }
+
+    const sorted = [...values].sort((left, right) => (left < right ? -1 : left > right ? 1 : 0));
+    return sorted[Math.floor((sorted.length - 1) / 2)] ?? null;
+  }
+
   private toHex(value: bigint): Hex {
     return OxHex.fromNumber(value) as Hex;
   }
 
   private toBigInt(value: Hex): bigint {
     return OxHex.toBigInt(value as OxHex.Hex);
+  }
+
+  private toRpcBigInt(value: unknown): bigint | null {
+    if (value === undefined || value === null) {
+      return null;
+    }
+
+    try {
+      if (typeof value === 'bigint') return value;
+      if (typeof value === 'number') return BigInt(value);
+      if (typeof value === 'string' && value.length > 0) return BigInt(value);
+      if (typeof value === 'object' && typeof (value as { toString?: () => string }).toString === 'function') {
+        const stringified = (value as { toString(): string }).toString();
+        return stringified.length > 0 ? BigInt(stringified) : null;
+      }
+    } catch {
+      return null;
+    }
+
+    return null;
   }
 
   private async getGasPrice(params: { chainProvider: IChainProvider; network: Pick<Network, 'networkType'> }): Promise<Hex> {
@@ -1634,11 +1659,93 @@ export class TransactionService {
     return Object.fromEntries(
       GAS_LEVELS.map((level) => {
         const scaled = this.scaleGasPrice(base, level);
-        const clamped = this.clampGasPrice(this.toHex(scaled), params.network);
-        const gasCost = this.toHex(this.toBigInt(clamped) * gasLimit);
-        return [level, { maxFeePerGas: clamped, maxPriorityFeePerGas: clamped, gasCost }];
+        const maxFeePerGas = this.clampGasPrice(this.toHex(scaled), params.network);
+        const maxPriorityFeePerGas = maxFeePerGas;
+        const gasCost = this.toHex(this.toBigInt(maxFeePerGas) * gasLimit);
+        return [level, { maxFeePerGas, maxPriorityFeePerGas, gasCost }];
       }),
     ) as Record<GasLevel, { maxFeePerGas: Hex; maxPriorityFeePerGas: Hex; gasCost: Hex }>;
+  }
+
+  private async buildConfluxPricing(params: {
+    chainProvider: IChainProvider;
+    gasPrice: Hex;
+    gasLimit: Hex;
+    network: Pick<Network, 'chainId' | 'networkType'>;
+  }): Promise<GasPricingEstimate['pricing']> {
+    const baseFeePerGas = await this.getConfluxBaseFeePerGas(params.chainProvider);
+    if (baseFeePerGas === null) {
+      return {
+        kind: 'legacy',
+        levels: this.buildLegacyLevels({
+          gasPrice: params.gasPrice,
+          gasLimit: params.gasLimit,
+          network: params.network,
+        }),
+      };
+    }
+
+    const levels = await this.buildConfluxEip1559Levels({ ...params, baseFeePerGas });
+    return {
+      kind: 'eip1559',
+      levels: levels ?? this.buildEip1559Levels({ gasPrice: params.gasPrice, gasLimit: params.gasLimit, network: params.network }),
+    };
+  }
+
+  private async getConfluxBaseFeePerGas(chainProvider: IChainProvider): Promise<bigint | null> {
+    const block = (await chainProvider.rpc.request('cfx_getBlockByEpochNumber', ['latest_state', false])) as { baseFeePerGas?: unknown };
+    return this.toRpcBigInt(block?.baseFeePerGas);
+  }
+
+  private async buildConfluxEip1559Levels(params: {
+    chainProvider: IChainProvider;
+    gasPrice: Hex;
+    gasLimit: Hex;
+    network: Pick<Network, 'chainId' | 'networkType'>;
+    baseFeePerGas: bigint;
+  }): Promise<Record<GasLevel, { maxFeePerGas: Hex; maxPriorityFeePerGas: Hex; gasCost: Hex }> | null> {
+    try {
+      const feeHistory = (await params.chainProvider.rpc.request('cfx_feeHistory', [
+        CONFLUX_EIP1559_FEE_HISTORY_BLOCKS,
+        'latest_state',
+        [...CONFLUX_EIP1559_FEE_HISTORY_PERCENTILES],
+      ])) as { reward?: unknown[] };
+      const fallbackLevels = this.buildEip1559Levels({
+        gasPrice: params.gasPrice,
+        gasLimit: params.gasLimit,
+        network: params.network,
+      });
+      const gasLimit = this.toBigInt(params.gasLimit);
+
+      return Object.fromEntries(
+        GAS_LEVELS.map((level, rewardIndex) => {
+          const sampledPriorityFees = Array.isArray(feeHistory.reward)
+            ? feeHistory.reward
+                .map((rewards) => (Array.isArray(rewards) ? this.toRpcBigInt(rewards[rewardIndex]) : null))
+                .filter((value): value is bigint => value !== null)
+            : [];
+          const suggestedMaxPriorityFeePerGas = this.pickMedian(sampledPriorityFees);
+          if (suggestedMaxPriorityFeePerGas === null) {
+            return [level, fallbackLevels[level]];
+          }
+
+          const adjustedBaseFeePerGas = (params.baseFeePerGas * CONFLUX_EIP1559_BASE_FEE_MULTIPLIERS[level]) / 100n;
+          const maxFeePerGas = this.clampGasPrice(this.toHex(adjustedBaseFeePerGas + suggestedMaxPriorityFeePerGas), params.network);
+          const gasCost = this.toHex(this.toBigInt(maxFeePerGas) * gasLimit);
+
+          return [
+            level,
+            {
+              maxFeePerGas,
+              maxPriorityFeePerGas: this.toHex(suggestedMaxPriorityFeePerGas),
+              gasCost,
+            },
+          ];
+        }),
+      ) as Record<GasLevel, { maxFeePerGas: Hex; maxPriorityFeePerGas: Hex; gasCost: Hex }>;
+    } catch {
+      return null;
+    }
   }
 
   private async findTxOrNull(txId: string): Promise<Tx | null> {
@@ -1704,6 +1811,13 @@ export class TransactionService {
           context: { originMaxPriorityFeePerGas: origin.maxPriorityFeePerGas, maxPriorityFeePerGas: next.maxPriorityFeePerGas },
         });
       }
+      if (nextMax !== null && nextTip !== null && nextTip > nextMax) {
+        throw new CoreError({
+          code: TX_INVALID_PARAMS,
+          message: 'Replacement transaction maxPriorityFeePerGas exceeds maxFeePerGas.',
+          context: { maxFeePerGas: next.maxFeePerGas, maxPriorityFeePerGas: next.maxPriorityFeePerGas },
+        });
+      }
       return;
     }
 
@@ -1765,14 +1879,6 @@ export class TransactionService {
     }
 
     if (network.networkType === NetworkType.Conflux) {
-      if (!('gasPrice' in feeOverrides)) {
-        throw new CoreError({
-          code: TX_INVALID_PARAMS,
-          message: 'Conflux replacement tx requires legacy gasPrice.',
-          context: { networkType: network.networkType, chainId: network.chainId },
-        });
-      }
-
       // Use latest epochHeight for replacement to avoid stale epochHeight rejection.
       // Conflux RPC returns hex quantity; coerce to a safe integer.
       const epochNumberHex = await chainProvider.rpc.request<string>('cfx_epochNumber', ['latest_state']);
@@ -1793,8 +1899,14 @@ export class TransactionService {
           gasLimit,
           storageLimit,
           nonce,
-          gasPrice: feeOverrides.gasPrice,
           epochHeight,
+          type: 'maxFeePerGas' in feeOverrides ? 2 : 0,
+          ...('maxFeePerGas' in feeOverrides
+            ? {
+                maxFeePerGas: feeOverrides.maxFeePerGas,
+                maxPriorityFeePerGas: feeOverrides.maxPriorityFeePerGas,
+              }
+            : { gasPrice: feeOverrides.gasPrice }),
         },
       };
     }

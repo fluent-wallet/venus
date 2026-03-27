@@ -66,28 +66,47 @@ const getErrorText = (error: unknown): string => {
 type SpeedUpTxPayloadLike = {
   gasPrice?: string | null;
   maxFeePerGas?: string | null;
+  maxPriorityFeePerGas?: string | null;
 };
 
-const createGasSetting = (txPayload: SpeedUpTxPayloadLike | null, ratio: number, currentGasPrice: string | null) => {
+const scaleFeeFromOriginAndCurrent = (originFee: string | null | undefined, currentFee: string, ratio: number) => {
+  return Decimal.max(new Decimal(originFee || 0), new Decimal(currentFee)).mul(ratio);
+};
+
+const createLegacyGasSetting = (txPayload: SpeedUpTxPayloadLike | null, ratio: number, currentGasPrice: string | null) => {
   if (!txPayload || !currentGasPrice) return null;
-  if (txPayload.maxFeePerGas) {
-    let suggestedMaxFeePerGas = new Decimal(txPayload.maxFeePerGas || 0).mul(ratio);
-    if (suggestedMaxFeePerGas.lessThanOrEqualTo(currentGasPrice)) {
-      suggestedMaxFeePerGas = new Decimal(currentGasPrice || 0).mul(ratio);
-    }
-    return buildGasSetting({
-      pricingKind: 'eip1559',
-      primaryFee: suggestedMaxFeePerGas.toHex(),
-      priorityFee: suggestedMaxFeePerGas.toHex(),
-    });
-  }
-  let suggestedGasPrice = new Decimal(txPayload.gasPrice || 0).mul(ratio);
-  if (suggestedGasPrice.lessThanOrEqualTo(currentGasPrice)) {
-    suggestedGasPrice = new Decimal(currentGasPrice || 0).mul(ratio);
-  }
+  const suggestedGasPrice = scaleFeeFromOriginAndCurrent(txPayload.gasPrice, currentGasPrice, ratio);
+
   return buildGasSetting({
     pricingKind: 'legacy',
     primaryFee: suggestedGasPrice.toHex(),
+  });
+};
+
+const createEip1559GasSetting = (
+  txPayload: SpeedUpTxPayloadLike | null,
+  ratio: number,
+  mediumLevel:
+    | {
+        suggestedMaxFeePerGas: string;
+        suggestedMaxPriorityFeePerGas: string;
+        gasCost: string;
+      }
+    | null,
+) => {
+  if (!txPayload || !mediumLevel) return null;
+
+  // A replacement 1559 tx needs to bump both caps, while keeping priority fee below max fee.
+  const suggestedMaxFeePerGas = scaleFeeFromOriginAndCurrent(txPayload.maxFeePerGas, mediumLevel.suggestedMaxFeePerGas, ratio);
+  const suggestedMaxPriorityFeePerGas = Decimal.min(
+    scaleFeeFromOriginAndCurrent(txPayload.maxPriorityFeePerGas, mediumLevel.suggestedMaxPriorityFeePerGas, ratio),
+    suggestedMaxFeePerGas,
+  );
+
+  return buildGasSetting({
+    pricingKind: 'eip1559',
+    primaryFee: suggestedMaxFeePerGas.toHex(),
+    priorityFee: suggestedMaxPriorityFeePerGas.toHex(),
   });
 };
 
@@ -131,10 +150,24 @@ const SpeedUp: React.FC<StackScreenProps<typeof SpeedUpStackName>> = ({ navigati
   const [error, setError] = useState<{ type?: string; message: string } | null>(null);
 
   const estimateRes = usePollingGasEstimateAndNonce(txHalf, true, addressId);
-  const estimateCurrentGasPrice = estimateRes?.gasPrice ?? null;
+  const isEip1559Tx = Boolean(ctx?.payload?.maxFeePerGas || ctx?.payload?.maxPriorityFeePerGas);
+  const mediumEip1559Level = useMemo(() => {
+    if (!estimateRes || estimateRes.pricingKind !== 'eip1559') return null;
+    const mediumLevel = estimateRes.levels.medium;
+    return 'suggestedMaxFeePerGas' in mediumLevel ? mediumLevel : null;
+  }, [estimateRes]);
 
-  const higherGasSetting = useMemo(() => createGasSetting(ctx?.payload ?? null, higherRatio, estimateCurrentGasPrice), [ctx?.payload, estimateCurrentGasPrice]);
-  const fasterGasSetting = useMemo(() => createGasSetting(ctx?.payload ?? null, fasterRatio, estimateCurrentGasPrice), [ctx?.payload, estimateCurrentGasPrice]);
+  const higherGasSetting = useMemo(() => {
+    return isEip1559Tx
+      ? createEip1559GasSetting(ctx?.payload ?? null, higherRatio, mediumEip1559Level)
+      : createLegacyGasSetting(ctx?.payload ?? null, higherRatio, estimateRes?.gasPrice ?? null);
+  }, [ctx?.payload, estimateRes?.gasPrice, isEip1559Tx, mediumEip1559Level]);
+
+  const fasterGasSetting = useMemo(() => {
+    return isEip1559Tx
+      ? createEip1559GasSetting(ctx?.payload ?? null, fasterRatio, mediumEip1559Level)
+      : createLegacyGasSetting(ctx?.payload ?? null, fasterRatio, estimateRes?.gasPrice ?? null);
+  }, [ctx?.payload, estimateRes?.gasPrice, isEip1559Tx, mediumEip1559Level]);
   const [customizeGasSetting, setCustomizeGasSetting] = useState<GasSetting | null>(null);
   const [showCustomizeSetting, setShowCustomizeSetting] = useState(false);
   const [showCustomizeAdvanceSetting, setShowCustomizeAdvanceSetting] = useState(false);
@@ -273,8 +306,8 @@ const SpeedUp: React.FC<StackScreenProps<typeof SpeedUpStackName>> = ({ navigati
           <BottomSheetHeader title={isSpeedUp ? t('tx.action.speedUp.title') : t('tx.action.cancel.title')} />
           <BottomSheetContent>
             <Text style={[styles.description, { color: colors.textPrimary }]}>{isSpeedUp ? t('tx.action.speedUp.desc') : t('tx.action.cancel.desc')}</Text>
-            {(!ctx || !nativeAsset || !estimateCurrentGasPrice) && <HourglassLoading style={styles.loading} />}
-            {ctx && nativeAsset && estimateCurrentGasPrice && (
+            {(!ctx || !nativeAsset || !estimateRes) && <HourglassLoading style={styles.loading} />}
+            {ctx && nativeAsset && estimateRes && (
               <>
                 {higherGasSetting && (
                   <GasOption
