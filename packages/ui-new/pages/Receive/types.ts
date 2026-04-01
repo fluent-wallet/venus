@@ -1,5 +1,5 @@
 import type { IAsset } from '@service/core';
-import Decimal from 'decimal.js';
+import { toBaseUnitsFromDecimalBalance } from '@utils/toBaseUnits';
 
 export type ReceiveAsset = {
   type: string;
@@ -15,10 +15,13 @@ export type ReceiveAsset = {
   addressId: string;
 };
 
-export function toReceiveAssetFromIAsset(params: { asset: IAsset; networkId: string; addressId: string }): ReceiveAsset {
-  const decimals = typeof params.asset.decimals === 'number' ? params.asset.decimals : 18;
-  const balanceDecimal = params.asset.balance ? new Decimal(params.asset.balance) : new Decimal(0);
-  const balanceBaseUnits = balanceDecimal.mul(Decimal.pow(10, decimals)).toFixed(0);
+export function toReceiveAssetFromIAsset(params: { asset: IAsset; networkId: string; addressId: string }): ReceiveAsset | null {
+  if (typeof params.asset.decimals !== 'number') {
+    return null;
+  }
+
+  const decimals = params.asset.decimals;
+  const balanceBaseUnits = toBaseUnitsFromDecimalBalance(params.asset.balance, decimals);
 
   return {
     type: String(params.asset.type),

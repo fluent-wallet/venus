@@ -2,12 +2,11 @@ import type { HardwareUnavailableReason as BSIMHardwareReason } from '@core/hard
 import type { ExternalRequestSnapshot } from '@core/modules/externalRequests';
 import type { SpeedUpAction } from '@core/types';
 import type { SpeedUpLevel } from '@modules/GasFee/GasFeeSetting';
+import type { SendEntry } from '@pages/SendTransaction/flow';
 import type { VersionJSON } from '@pages/Settings/AboutUs';
 import type { NavigationProp, NavigatorScreenParams } from '@react-navigation/native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
-import type { INftItem } from '@service/core';
 import type { WalletCreationRequest } from '@service/walletCreation';
-import type { AssetInfo } from '@utils/assetInfo';
 
 export const WelcomeStackName = 'Welcome';
 export const WayToInitWalletStackName = 'WayToInitWallet';
@@ -94,7 +93,7 @@ export type RootStackParamList = {
   [GroupSettingStackName]: { groupId: string };
   [HDSettingStackName]: { groupId: string };
   [BackupStackName]: NavigatorScreenParams<BackupStackParamList>;
-  [SendTransactionStackName]: NavigatorScreenParams<SendTransactionParamList>;
+  [SendTransactionStackName]: { entry: SendEntry };
   [NetworkManagementStackName]: undefined;
   [PasswordVerifyStackName]: undefined | { requestId: string };
   [ReceiveStackName]: undefined;
@@ -150,9 +149,9 @@ export const SendTransactionStep3StackName = 'SendTransactionStep3';
 export const SendTransactionStep4StackName = 'SendTransactionStep4';
 export type SendTransactionParamList = {
   [SendTransactionStep1StackName]: undefined;
-  [SendTransactionStep2StackName]: { recipientAddress: string; searchAddress?: string };
-  [SendTransactionStep3StackName]: { asset: AssetInfo; recipientAddress: string; nftItemDetail?: INftItem; amount?: string };
-  [SendTransactionStep4StackName]: { asset: AssetInfo; recipientAddress: string; amount: string; nftItemDetail?: INftItem; inMaxMode?: boolean };
+  [SendTransactionStep2StackName]: undefined;
+  [SendTransactionStep3StackName]: undefined;
+  [SendTransactionStep4StackName]: undefined;
   // navigate to home
   [HomeStackName]: undefined;
   [PasswordVerifyStackName]: undefined | { requestId: string };

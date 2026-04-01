@@ -40,7 +40,7 @@ function toAmountAssetInput(asset: ReceiveAsset): AmountAsset {
     name: asset.name,
     symbol: asset.symbol,
     decimals: asset.decimals,
-    balance: asset.balanceBaseUnits,
+    balanceBaseUnits: asset.balanceBaseUnits,
     icon: asset.icon,
     priceInUSDT: asset.priceInUSDT,
     priceValue: asset.priceValue,
@@ -53,7 +53,7 @@ function toReceiveAssetFromLegacyAssetInfo(params: { asset: AssetInfo; networkId
     contractAddress: params.asset.contractAddress ?? '',
     name: params.asset.name ?? '',
     symbol: params.asset.symbol ?? '',
-    decimals: typeof params.asset.decimals === 'number' ? params.asset.decimals : 18,
+    decimals: params.asset.decimals,
     icon: params.asset.icon,
     priceInUSDT: params.asset.priceInUSDT,
     priceValue: params.asset.priceValue,
@@ -88,7 +88,10 @@ const ReceiveSetAsset: React.FC<Props> = ({ onConfirm, selectedAsset, amount, on
 
     const nativeAsset = (assetsQuery.data ?? []).find((asset) => String(asset.type) === 'Native');
     if (nativeAsset && currentAddressId) {
-      setTempSelectAsset(toReceiveAssetFromIAsset({ asset: nativeAsset, networkId: nativeAsset.networkId, addressId: currentAddressId }));
+      const receiveAsset = toReceiveAssetFromIAsset({ asset: nativeAsset, networkId: nativeAsset.networkId, addressId: currentAddressId });
+      if (receiveAsset) {
+        setTempSelectAsset(receiveAsset);
+      }
     }
   }, [assetsQuery.data, currentAddressId, tempSelectAsset]);
 

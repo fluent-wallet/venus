@@ -93,8 +93,7 @@ const Receive: React.FC<Props> = ({ navigation: _navigation }) => {
         paramEntries.address = effectiveSelectedAsset.contractAddress;
       }
       if (effectiveAmount && effectiveAmount !== '0') {
-        const decimals = typeof effectiveSelectedAsset.decimals === 'number' ? effectiveSelectedAsset.decimals : 18;
-        const valueStr = new Decimal(effectiveAmount || 0).mul(Decimal.pow(10, decimals)).toFixed(0);
+        const valueStr = new Decimal(effectiveAmount || 0).mul(Decimal.pow(10, effectiveSelectedAsset.decimals)).toFixed(0);
         paramEntries.value = BigInt(valueStr);
       }
       if (Object.keys(paramEntries).length > 0) {

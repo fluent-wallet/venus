@@ -172,10 +172,7 @@ export class TransactionService {
     const value = tx.value ?? '0x0';
 
     const gasBuffer = network.gasBuffer > 0 ? network.gasBuffer : 1;
-    const [nonce, gasPrice] = await Promise.all([
-      withNonce ? chainProvider.getNonce(from) : Promise.resolve(0),
-      this.getGasPrice({ chainProvider, network }),
-    ]);
+    const [nonce, gasPrice] = await Promise.all([withNonce ? chainProvider.getNonce(from) : Promise.resolve(0), this.getGasPrice({ chainProvider, network })]);
 
     const minGasPriceWei = this.getMinGasPrice(network);
 

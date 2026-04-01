@@ -47,7 +47,7 @@ export interface AmountAsset {
   name?: string;
   symbol: string;
   decimals: number;
-  balance: string;
+  balanceBaseUnits: string;
   icon?: string;
   priceInUSDT?: string;
   priceValue?: string;
@@ -66,14 +66,19 @@ const SetAssetAmount = forwardRef<SetAssetAmountMethods, Props>(
     const [amount, setAmount] = useState(() => defaultAmount ?? '');
     const [validMax, setValidMax] = useState<Decimal | null>(() => (isReceive ? new Decimal(Number.POSITIVE_INFINITY) : null));
     const needMaxMode = useMemo(() => !isReceive && (asset.type === ASSET_TYPE.Native || asset.type === ASSET_TYPE.ERC20), [isReceive, asset.type]);
-
     const [inMaxMode, setInMaxMode] = useState(() => false);
+    const assetResetKey = `${asset.type}:${asset.contractAddress ?? ''}:${asset.symbol}:${nftItemDetail?.tokenId ?? ''}`;
 
     useEffect(() => {
+      if (!assetResetKey) {
+        return;
+      }
       setAmount('');
-    }, [asset.type, asset.contractAddress, asset.symbol]);
+      setInMaxMode(false);
+      setValidMax(isReceive ? new Decimal(Number.POSITIVE_INFINITY) : null);
+    }, [assetResetKey, isReceive]);
 
-    const balance = useFormatBalance(asset.balance, asset.decimals);
+    const balance = useFormatBalance(asset.balanceBaseUnits, asset.decimals);
     const symbol = useMemo(() => (nftItemDetail ? getDetailSymbol(nftItemDetail) : asset.symbol), [asset.symbol, nftItemDetail]);
 
     const _handleEstimateMax = useCallback(
@@ -84,13 +89,15 @@ const SetAssetAmount = forwardRef<SetAssetAmountMethods, Props>(
             setValidMax(res);
             return res;
           }
-          const res = new Decimal(asset.balance);
+          const res = new Decimal(asset.balanceBaseUnits);
           setValidMax(res);
           return res;
         }
         try {
           const addressId = currentAddress?.id;
-          if (!addressId) return;
+          if (!addressId) {
+            return;
+          }
 
           const estimateRes = await estimateTransactionGasPricing({
             addressId,
@@ -98,7 +105,7 @@ const SetAssetAmount = forwardRef<SetAssetAmountMethods, Props>(
             tx: { to: targetAddress, value: '0x0', from: currentAddressValue },
           });
           const gasCostBaseUnits = new Decimal(BigInt(estimateRes.levels.medium.gasCost).toString());
-          let res = new Decimal(asset.balance).sub(gasCostBaseUnits);
+          let res = new Decimal(asset.balanceBaseUnits).sub(gasCostBaseUnits);
           res = res.greaterThan(0) ? res : new Decimal(0);
           setValidMax(res);
           return res;
@@ -112,7 +119,7 @@ const SetAssetAmount = forwardRef<SetAssetAmountMethods, Props>(
           }
         }
       },
-      [asset.balance, asset.type, currentAddress?.id, currentAddressValue, nftItemDetail, t, targetAddress],
+      [asset.balanceBaseUnits, asset.type, currentAddress?.id, currentAddressValue, nftItemDetail, t, targetAddress],
     );
     const { inAsync: inEstimate, execAsync: handleEstimateMax } = useInAsync(_handleEstimateMax);
 
@@ -178,19 +185,7 @@ const SetAssetAmount = forwardRef<SetAssetAmountMethods, Props>(
           )}
         </View>
       );
-    }, [
-      asset.icon,
-      colors.borderPrimary,
-      colors.textPrimary,
-      handleClickMax,
-      inEstimate,
-      inMaxMode,
-      isReceive,
-      !!nftItemDetail,
-      nftItemDetail?.icon,
-      reverseColors.textPrimary,
-      t,
-    ]);
+    }, [asset.icon, colors.borderPrimary, colors.textPrimary, handleClickMax, inEstimate, inMaxMode, isReceive, nftItemDetail, reverseColors.textPrimary, t]);
 
     const isAmountValid = useMemo(() => {
       if (!validMax || !amount) return null;
@@ -207,7 +202,7 @@ const SetAssetAmount = forwardRef<SetAssetAmountMethods, Props>(
         }
         if (new Decimal(amount).lessThan(new Decimal(0))) return 'less-than-zero';
         return validMax.greaterThanOrEqualTo(new Decimal(amount).mul(nftItemDetail ? new Decimal(1) : Decimal.pow(10, asset.decimals)));
-      } catch (err) {
+      } catch (_err) {
         return 'unvalid-number-format';
       }
     }, [amount, asset.decimals, isReceive, nftItemDetail, validMax]);
@@ -222,7 +217,7 @@ const SetAssetAmount = forwardRef<SetAssetAmountMethods, Props>(
           inEstimate,
         });
       }
-    }, [amount, isAmountValid, validMax, inMaxMode, inEstimate]);
+    }, [amount, inEstimate, inMaxMode, isAmountValid, onAmountInfoChange, validMax]);
 
     const price = useMemo(() => {
       if (isAmountValid !== true || !isReceive) return '';
@@ -277,7 +272,7 @@ const SetAssetAmount = forwardRef<SetAssetAmountMethods, Props>(
           children({
             amount,
             isAmountValid: isAmountValid === true,
-            validMax: validMax!,
+            validMax,
             inEstimate,
             inMaxMode,
             handleEstimateMax: handleEstimateMax as unknown as () => void,

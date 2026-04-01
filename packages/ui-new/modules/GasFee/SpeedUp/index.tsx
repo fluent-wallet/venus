@@ -86,13 +86,11 @@ const createLegacyGasSetting = (txPayload: SpeedUpTxPayloadLike | null, ratio: n
 const createEip1559GasSetting = (
   txPayload: SpeedUpTxPayloadLike | null,
   ratio: number,
-  mediumLevel:
-    | {
-        suggestedMaxFeePerGas: string;
-        suggestedMaxPriorityFeePerGas: string;
-        gasCost: string;
-      }
-    | null,
+  mediumLevel: {
+    suggestedMaxFeePerGas: string;
+    suggestedMaxPriorityFeePerGas: string;
+    gasCost: string;
+  } | null,
 ) => {
   if (!txPayload || !mediumLevel) return null;
 

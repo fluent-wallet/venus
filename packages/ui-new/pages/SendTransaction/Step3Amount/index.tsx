@@ -7,42 +7,64 @@ import { getDetailSymbol } from '@modules/AssetsList/NFTsList/NFTItemsGrid';
 import { useTheme } from '@react-navigation/native';
 import { type SendTransactionScreenProps, type SendTransactionStep3StackName, SendTransactionStep4StackName } from '@router/configs';
 import type { INftItem } from '@service/core';
-import type { AssetInfo } from '@utils/assetInfo';
 import Decimal from 'decimal.js';
 import type React from 'react';
 import { useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Keyboard, StyleSheet, View } from 'react-native';
+import { type TransferAsset, toLegacyAssetInfo, toLegacyNftItem, useSendFlow } from '../flow';
 import SendTransactionBottomSheet from '../SendTransactionBottomSheet';
-import SetAssetAmount, { type AmountInfo, type SetAssetAmountMethods } from './SetAssetAmount';
+import SetAssetAmount, { type AmountAsset, type AmountInfo, type SetAssetAmountMethods } from './SetAssetAmount';
 
-const SendTransactionStep3Amount: React.FC<SendTransactionScreenProps<typeof SendTransactionStep3StackName>> = ({ navigation, route }) => {
+function toAmountAsset(asset: TransferAsset): AmountAsset {
+  return {
+    type: asset.type,
+    contractAddress: asset.contractAddress,
+    name: asset.name,
+    symbol: asset.symbol,
+    decimals: asset.decimals,
+    balanceBaseUnits: asset.balanceBaseUnits,
+    icon: asset.icon,
+    priceInUSDT: asset.priceInUSDT,
+  };
+}
+
+const SendTransactionStep3Amount: React.FC<SendTransactionScreenProps<typeof SendTransactionStep3StackName>> = ({ navigation }) => {
   const { colors } = useTheme();
   const { t } = useTranslation();
+  const { draft, setDraft } = useSendFlow();
   const setAssetAmountMethodsRef = useRef<SetAssetAmountMethods>(null);
   const [amountInfo, setAmountInfo] = useState<null | AmountInfo>(null);
-  const asset = route.params.asset;
+  const asset = draft.asset as TransferAsset;
+  const nftItemDetail = toLegacyNftItem(asset);
 
   return (
     <SendTransactionBottomSheet title={t('tx.send.title')} isRoute snapPoints={['75%']}>
       <BottomSheetScrollContent innerPaddingHorizontal>
-        {route.params.nftItemDetail && (
+        {nftItemDetail && (
           <>
             <Text style={[styles.text, styles.to, { color: colors.textSecondary }]}>{t('common.send')}</Text>
-            <NFT colors={colors} asset={route.params.asset} nftItemDetail={route.params.nftItemDetail} />
+            <NFT colors={colors} asset={toLegacyAssetInfo(asset)} nftItemDetail={nftItemDetail} />
           </>
         )}
 
         <Text style={[styles.text, styles.to, { color: colors.textSecondary }]}>{t('common.to')}</Text>
-        <AccountItemView nickname={''} addressValue={route.params.recipientAddress} colors={colors} innerPaddingHorizontal={false} />
+        <AccountItemView nickname={''} addressValue={draft.recipient} colors={colors} innerPaddingHorizontal={false} />
 
         <SetAssetAmount
           ref={setAssetAmountMethodsRef}
-          targetAddress={route.params.recipientAddress}
-          asset={route.params.asset}
-          nftItemDetail={route.params.nftItemDetail}
-          defaultAmount={route.params.amount}
-          onAmountInfoChange={setAmountInfo}
+          targetAddress={draft.recipient}
+          asset={toAmountAsset(asset)}
+          nftItemDetail={nftItemDetail}
+          defaultAmount={draft.amountInput}
+          onAmountInfoChange={(info) => {
+            setAmountInfo(info);
+            setDraft((prev) => ({
+              ...prev,
+              amountInput: info.amount,
+              amountMode: info.inMaxMode ? 'max' : 'exact',
+            }));
+          }}
         />
       </BottomSheetScrollContent>
 
@@ -57,11 +79,12 @@ const SendTransactionStep3Amount: React.FC<SendTransactionScreenProps<typeof Sen
                   if (Keyboard.isVisible()) {
                     Keyboard.dismiss();
                   }
-                  navigation.navigate(SendTransactionStep4StackName, {
-                    ...route.params,
-                    amount: amountInfo.inMaxMode ? new Decimal(asset.balance).div(Decimal.pow(10, asset.decimals)).toString() : amountInfo.amount,
-                    inMaxMode: amountInfo.inMaxMode,
-                  });
+                  setDraft((prev) => ({
+                    ...prev,
+                    amountInput: amountInfo.inMaxMode ? new Decimal(asset.balanceBaseUnits).div(Decimal.pow(10, asset.decimals)).toString() : amountInfo.amount,
+                    amountMode: amountInfo.inMaxMode ? 'max' : 'exact',
+                  }));
+                  navigation.navigate(SendTransactionStep4StackName);
                 }
           }
           size="small"
@@ -76,7 +99,7 @@ const SendTransactionStep3Amount: React.FC<SendTransactionScreenProps<typeof Sen
 
 export const NFT: React.FC<{
   colors: ReturnType<typeof useTheme>['colors'];
-  asset: AssetInfo;
+  asset: { name?: string };
   nftItemDetail: INftItem;
 }> = ({ colors, asset, nftItemDetail }) => (
   <View style={styles.nftItem}>

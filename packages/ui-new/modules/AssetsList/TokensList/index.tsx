@@ -42,6 +42,10 @@ function hasPositiveTokenBalance(token: AssetInfo): boolean {
   }
 }
 
+function isAssetInfo(token: AssetInfo | null): token is AssetInfo {
+  return token !== null;
+}
+
 const TokensList: React.FC<Props> = ({ onPressItem, selectType, showReceiveFunds = false }) => {
   const { colors } = useTheme();
   const { t } = useTranslation();
@@ -56,7 +60,7 @@ const TokensList: React.FC<Props> = ({ onPressItem, selectType, showReceiveFunds
         .filter((asset) => (selectType === 'Home' ? shouldShowAssetOnHome(asset) : true)),
     [assets, selectType],
   );
-  const tokens = useMemo(() => visibleAssets.map(toAssetInfo), [visibleAssets]);
+  const tokens = useMemo(() => visibleAssets.map(toAssetInfo).filter(isAssetInfo), [visibleAssets]);
 
   const isTokensEmpty = useMemo(() => {
     if (tokens.length === 0) return true;

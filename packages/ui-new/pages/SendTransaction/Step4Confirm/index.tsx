@@ -31,6 +31,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Keyboard, StyleSheet, View } from 'react-native';
 import { showMessage } from 'react-native-flash-message';
+import { type TransferAsset, toLegacyNftItem, useSendFlow } from '../flow';
 import HardwareSignVerify from '../HardwareSignVerify';
 import SendTransactionBottomSheet from '../SendTransactionBottomSheet';
 import { NFT } from '../Step3Amount';
@@ -48,32 +49,37 @@ const isUserCanceledError = (error: unknown): boolean => {
   return false;
 };
 
-const SendTransactionStep4Confirm: React.FC<SendTransactionScreenProps<typeof SendTransactionStep4StackName>> = ({ navigation, route }) => {
+const SendTransactionStep4Confirm: React.FC<SendTransactionScreenProps<typeof SendTransactionStep4StackName>> = () => {
   useEffect(() => Keyboard.dismiss(), []);
   const { t } = useTranslation();
   const { colors } = useTheme();
   const rootNavigation = useNavigation<StackNavigation>();
+  const { draft } = useSendFlow();
 
   const { data: currentNetwork } = useCurrentNetwork();
   const { data: currentAccount } = useCurrentAccount();
   const { data: currentAddress } = useCurrentAddress();
   const { data: assets } = useAssetsOfCurrentAddress();
-
-  const {
-    params: { asset, amount: _amount, nftItemDetail, recipientAddress, inMaxMode },
-  } = route;
+  const asset = draft.asset as TransferAsset;
+  const nftItemDetail = toLegacyNftItem(asset);
+  const recipientAddress = draft.recipient;
+  const _amount = draft.amountInput;
+  const inMaxMode = draft.amountMode === 'max';
 
   const [showGasFeeSetting, setShowGasFeeSetting] = useState(false);
   const [gasEstimate, setGasEstimate] = useState<GasEstimate | null>(null);
   const [gasCost, setGasCost] = useState<string | null>(null);
+  const [error, setError] = useState<{ type?: string; message: string } | null>(null);
+  const abortRef = useRef<AbortController | null>(null);
 
   const amount = useMemo(() => {
+    // Max native sends need to leave room for gas.
     if (!inMaxMode || asset.type !== AssetType.Native) {
       return _amount;
     }
     if (!gasCost) return _amount;
     return new Decimal(_amount).sub(gasCost).toString();
-  }, [_amount, gasCost, inMaxMode]);
+  }, [_amount, asset.type, gasCost, inMaxMode]);
 
   const formattedAmount = useFormatBalance(amount);
 
@@ -108,14 +114,10 @@ const SendTransactionStep4Confirm: React.FC<SendTransactionScreenProps<typeof Se
       value: payload.value,
       data: payload.data,
     };
-  }, [asset, amount, currentAddress?.value, currentNetwork?.chainId, recipientAddress, nftItemDetail?.tokenId]);
-
-  const [error, setError] = useState<{ type?: string; message: string } | null>(null);
+  }, [amount, asset.contractAddress, asset.decimals, asset.type, currentAddress?.value, currentNetwork, recipientAddress, nftItemDetail?.tokenId]);
 
   const sendNative = useSendNative();
   const sendERC20 = useSendERC20();
-
-  const abortRef = useRef<AbortController | null>(null);
 
   const addressId = currentAddress?.id ?? '';
   const { state: hardwareSignState, clear: clearHardwareSignState } = useHardwareSigningUiState(addressId || undefined);
@@ -194,7 +196,7 @@ const SendTransactionStep4Confirm: React.FC<SendTransactionScreenProps<typeof Se
         icon: 'loading' as unknown as undefined,
       });
 
-      backToHome(navigation);
+      backToHome(rootNavigation);
 
       try {
         void getAssetsSyncService().refreshCurrent({ reason: 'manual' });
@@ -224,8 +226,9 @@ const SendTransactionStep4Confirm: React.FC<SendTransactionScreenProps<typeof Se
         return;
       }
 
-      const errString = String((_err as any)?.data || (_err as any)?.message || _err);
-      const msg = matchRPCErrorMessage(_err as any);
+      const rpcError = _err as { code?: number; data?: string; message?: string } | null;
+      const errString = String(rpcError?.data || rpcError?.message || _err);
+      const msg = matchRPCErrorMessage(rpcError ?? {});
       setError({
         message: errString,
         ...(errString.includes('out of balance') ? { type: 'out of balance' } : errString.includes('timed out') ? { type: 'network error' } : null),
@@ -249,7 +252,6 @@ const SendTransactionStep4Confirm: React.FC<SendTransactionScreenProps<typeof Se
     currentNetwork,
     gasEstimate,
     hardwareSignState?.phase,
-    navigation,
     nftItemDetail?.tokenId,
     recipientAddress,
     rootNavigation,
@@ -335,7 +337,7 @@ const SendTransactionStep4Confirm: React.FC<SendTransactionScreenProps<typeof Se
           )}
 
           <View style={[styles.btnArea, { marginTop: error ? 16 : 40 }]}>
-            <Button testID="cancel" style={styles.btn} size="small" onPress={() => backToHome(navigation)} disabled={inSending}>
+            <Button testID="cancel" style={styles.btn} size="small" onPress={() => backToHome(rootNavigation)} disabled={inSending}>
               {t('common.cancel')}
             </Button>
             <Button testID="send" style={styles.btn} size="small" disabled={!gasEstimate} onPress={handleSend} loading={inSending}>

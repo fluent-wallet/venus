@@ -382,7 +382,8 @@ export class ConfluxChainProvider implements IChainProvider<ConfluxUnsignedTrans
         epochHeight,
       },
     });
-    const usesGasPriceAs1559Fee = draft.type === 2 && draft.gasPrice !== undefined && draft.maxFeePerGas === undefined && draft.maxPriorityFeePerGas === undefined;
+    const usesGasPriceAs1559Fee =
+      draft.type === 2 && draft.gasPrice !== undefined && draft.maxFeePerGas === undefined && draft.maxPriorityFeePerGas === undefined;
     const feeFields = this.canonicalizeFeeFields(
       usesGasPriceAs1559Fee
         ? {

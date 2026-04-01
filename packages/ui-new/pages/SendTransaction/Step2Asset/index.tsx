@@ -32,6 +32,7 @@ import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Trans, useTranslation } from 'react-i18next';
 import { Keyboard, type NativeScrollEvent, type NativeSyntheticEvent, Pressable, StyleSheet, View } from 'react-native';
 import { showMessage } from 'react-native-flash-message';
+import { type TransferDraft, toTransferAssetFromSelection, useMaybeSendFlow } from '../flow';
 import SendTransactionBottomSheet from '../SendTransactionBottomSheet';
 
 const DETAIL_SKELETON_KEYS = ['detail-skeleton-1', 'detail-skeleton-2'] as const;
@@ -124,16 +125,28 @@ const NftSearchRow: React.FC<{
 
 interface Props {
   navigation?: SendTransactionScreenProps<typeof SendTransactionStep2StackName>['navigation'];
-  route?: SendTransactionScreenProps<typeof SendTransactionStep2StackName>['route'];
   onConfirm?: (asset: AssetInfo) => void;
   onClose?: () => void;
   selectType?: 'Send' | 'Receive';
 }
 
-const SendTransactionStep2Asset: React.FC<Props> = ({ navigation, route, onConfirm, onClose, selectType = 'Send' }) => {
+// Reset the amount draft when the selected asset changes.
+function applySelectedAssetToDraft(params: { draft: TransferDraft; asset: AssetInfo; nftItemDetail?: INftItem }): TransferDraft {
+  const { draft, asset, nftItemDetail } = params;
+
+  return {
+    ...draft,
+    asset: toTransferAssetFromSelection({ asset, nftItemDetail }),
+    amountInput: asset.type === ASSET_TYPE.ERC721 ? '1' : '',
+    amountMode: 'exact',
+  };
+}
+
+const SendTransactionStep2Asset: React.FC<Props> = ({ navigation, onConfirm, onClose, selectType = 'Send' }) => {
   const { colors } = useTheme();
   const bottomSheetRef = useRef<BottomSheetMethods | null>(null);
   const { t } = useTranslation();
+  const sendFlow = useMaybeSendFlow();
 
   const { currentTab, setCurrentTab, sharedScrollY, handleScroll: _handleScroll, resetScrollY } = useTabsController('Tokens');
 
@@ -151,7 +164,7 @@ const SendTransactionStep2Asset: React.FC<Props> = ({ navigation, route, onConfi
   const addCustomToken = useAddCustomToken();
   const assets = assetsQuery.data ?? [];
 
-  const [searchAsset, setSearchAsset] = useState(() => route?.params?.searchAddress ?? '');
+  const [searchAsset, setSearchAsset] = useState(() => sendFlow?.assetSearchText ?? '');
   const [inFetchingRemote, setInFetchingRemote] = useState(false);
   const [filterAssets, setFilterAssets] = useState<{
     type: 'local' | 'remote' | 'invalid-format' | 'invalid-ERC20' | 'network-error';
@@ -178,7 +191,8 @@ const SendTransactionStep2Asset: React.FC<Props> = ({ navigation, route, onConfi
         )
         .filter((asset) => !!asset.type)
         .filter((asset) => asset.type !== ASSET_TYPE.ERC1155 && asset.type !== ASSET_TYPE.ERC721)
-        .map(toAssetInfo);
+        .map(toAssetInfo)
+        .filter((asset): asset is AssetInfo => asset !== null);
 
       if (localAssets && localAssets?.length > 0) {
         if (!isCancelled()) {
@@ -221,6 +235,10 @@ const SendTransactionStep2Asset: React.FC<Props> = ({ navigation, route, onConfi
             return;
           }
           const assetInfo = toAssetInfo(created);
+          if (!assetInfo) {
+            setFilterAssets({ type: 'invalid-ERC20', assets: [] });
+            return;
+          }
           setFilterAssets({ type: 'remote', assets: [assetInfo] });
         } else {
           if (!isCancelled()) {
@@ -256,6 +274,13 @@ const SendTransactionStep2Asset: React.FC<Props> = ({ navigation, route, onConfi
     };
   }, [searchFilterAssets, searchAsset]);
 
+  useEffect(() => {
+    // External inputs can prefill the search in send mode.
+    if (selectType === 'Send') {
+      setSearchAsset(sendFlow?.assetSearchText ?? '');
+    }
+  }, [selectType, sendFlow?.assetSearchText]);
+
   const handleClickAsset = useCallback(
     (asset: AssetInfo, nftItemDetail?: INftItem) => {
       if (navigation) {
@@ -268,10 +293,16 @@ const SendTransactionStep2Asset: React.FC<Props> = ({ navigation, route, onConfi
         if (Keyboard.isVisible()) {
           Keyboard.dismiss();
         }
+        if (!sendFlow) {
+          return;
+        }
+        setSearchAsset('');
+        sendFlow.setAssetSearchText(undefined);
+        sendFlow.setDraft((prev) => applySelectedAssetToDraft({ draft: prev, asset, nftItemDetail }));
         if (asset.type === ASSET_TYPE.ERC721) {
-          navigation.navigate(SendTransactionStep4StackName, { ...route?.params, asset, nftItemDetail, amount: '1' });
+          navigation.navigate(SendTransactionStep4StackName);
         } else {
-          navigation.navigate(SendTransactionStep3StackName, { ...route?.params, asset, nftItemDetail });
+          navigation.navigate(SendTransactionStep3StackName);
         }
         return;
       }
@@ -282,7 +313,7 @@ const SendTransactionStep2Asset: React.FC<Props> = ({ navigation, route, onConfi
         bottomSheetRef.current?.close();
       }
     },
-    [navigation, onConfirm, route, t],
+    [navigation, onConfirm, sendFlow, t],
   );
 
   return (

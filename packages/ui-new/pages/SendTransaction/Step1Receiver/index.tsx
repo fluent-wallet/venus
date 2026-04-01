@@ -25,6 +25,7 @@ import type React from 'react';
 import { useCallback, useEffect, useState } from 'react';
 import { Trans, useTranslation } from 'react-i18next';
 import { Keyboard, Pressable, StyleSheet, View } from 'react-native';
+import { useSendFlow } from '../flow';
 import SendTransactionBottomSheet from '../SendTransactionBottomSheet';
 import Contract from './Contract';
 import { styles as listStyles } from './Contract/RecentlyList';
@@ -37,6 +38,7 @@ enum AddressKind {
 const SendTransactionStep1Receiver: React.FC<SendTransactionScreenProps<typeof SendTransactionStep1StackName>> = ({ navigation }) => {
   const { colors } = useTheme();
   const { t } = useTranslation();
+  const { draft, setDraft } = useSendFlow();
   const { data: currentNetwork } = useCurrentNetwork();
   const [showScanQRCode, setShowScanQRCode] = useState(false);
 
@@ -46,7 +48,6 @@ const SendTransactionStep1Receiver: React.FC<SendTransactionScreenProps<typeof S
   const { data: accounts = [] } = useAccounts();
   const { data: recentlyAddresses = [] } = useRecentlyAddressesOfAddress(currentAddressId, 20);
 
-  const [receiver, setReceiver] = useState('');
   const [inFetchingRemote, setInFetchingRemote] = useState(false);
   const [knowRisk, setKnowRist] = useState(false);
   const [filterAccounts, setFilterAccounts] = useState<{
@@ -113,7 +114,7 @@ const SendTransactionStep1Receiver: React.FC<SendTransactionScreenProps<typeof S
           type: contract ? AddressKind.Contract : AddressKind.EOA,
           assets: [],
         });
-      } catch (err) {
+      } catch (_err) {
         setFilterAccounts({ type: 'network-error', assets: [] });
       } finally {
         setInFetchingRemote(false);
@@ -122,9 +123,14 @@ const SendTransactionStep1Receiver: React.FC<SendTransactionScreenProps<typeof S
     [accounts, recentlyAddresses, currentNetwork],
   );
 
-  const handleCodeScan = useCallback(({ address }: PaymentUriPayload) => {
-    setReceiver(address);
-  }, []);
+  const receiver = draft.recipient;
+
+  const handleCodeScan = useCallback(
+    ({ address }: PaymentUriPayload) => {
+      setDraft((prev) => ({ ...prev, recipient: address }));
+    },
+    [setDraft],
+  );
 
   useEffect(() => {
     searchFilterReceiver(receiver);
@@ -132,8 +138,8 @@ const SendTransactionStep1Receiver: React.FC<SendTransactionScreenProps<typeof S
 
   const handlePressPaste = useCallback(async () => {
     const clipboardContent = await Clipboard.getString();
-    setReceiver(clipboardContent);
-  }, []);
+    setDraft((prev) => ({ ...prev, recipient: clipboardContent }));
+  }, [setDraft]);
 
   const handlePressScan = useCallback(() => {
     if (Keyboard.isVisible()) {
@@ -159,7 +165,7 @@ const SendTransactionStep1Receiver: React.FC<SendTransactionScreenProps<typeof S
             showVisible={false}
             defaultHasValue={false}
             value={receiver}
-            onChangeText={(val) => setReceiver(val)}
+            onChangeText={(val) => setDraft((prev) => ({ ...prev, recipient: val }))}
             isInBottomSheet
             // TODO: this max length need consider network
             maxLength={200}
@@ -180,7 +186,7 @@ const SendTransactionStep1Receiver: React.FC<SendTransactionScreenProps<typeof S
         </BottomSheetHeader>
         {!receiver && (
           <BottomSheetContent>
-            <Contract setReceiver={setReceiver} />
+            <Contract setReceiver={(value) => setDraft((prev) => ({ ...prev, recipient: value }))} />
           </BottomSheetContent>
         )}
         {receiver && (
@@ -195,8 +201,8 @@ const SendTransactionStep1Receiver: React.FC<SendTransactionScreenProps<typeof S
               <BottomSheetFlatList
                 style={listStyles.container}
                 data={filterAccounts.assets}
-                keyExtractor={(item) => item.addressValue}
-                renderItem={({ item }) => (
+                keyExtractor={(item: { addressValue: string }) => item.addressValue}
+                renderItem={({ item }: { item: { nickname?: string; addressValue: string } }) => (
                   <AccountItemView
                     colors={colors}
                     nickname={item.nickname}
@@ -205,7 +211,7 @@ const SendTransactionStep1Receiver: React.FC<SendTransactionScreenProps<typeof S
                       if (Keyboard.isVisible()) {
                         Keyboard.dismiss();
                       }
-                      setReceiver(item.addressValue);
+                      setDraft((prev) => ({ ...prev, recipient: item.addressValue }));
                     }}
                   />
                 )}
@@ -277,9 +283,7 @@ const SendTransactionStep1Receiver: React.FC<SendTransactionScreenProps<typeof S
                 if (Keyboard.isVisible()) {
                   Keyboard.dismiss();
                 }
-                navigation.navigate(SendTransactionStep2StackName, {
-                  recipientAddress: receiver,
-                });
+                navigation.navigate(SendTransactionStep2StackName);
               }}
               disabled={filterAccounts.type === AddressKind.Contract && !knowRisk}
               size="small"

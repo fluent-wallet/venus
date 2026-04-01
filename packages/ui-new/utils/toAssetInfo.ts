@@ -1,12 +1,15 @@
 import { ASSET_TYPE } from '@core/types';
 import type { IAsset } from '@service/core';
 import type { AssetInfo } from '@utils/assetInfo';
-import Decimal from 'decimal.js';
+import { toBaseUnitsFromDecimalBalance } from './toBaseUnits';
 
-export function toAssetInfo(asset: IAsset): AssetInfo {
-  const decimals = typeof asset.decimals === 'number' ? asset.decimals : 18;
-  const balance = asset.balance ? new Decimal(asset.balance) : new Decimal(0);
-  const baseUnits = balance.mul(Decimal.pow(10, decimals)).toFixed(0);
+export function toAssetInfo(asset: IAsset): AssetInfo | null {
+  if (typeof asset.decimals !== 'number') {
+    return null;
+  }
+
+  const decimals = asset.decimals;
+  const baseUnits = toBaseUnitsFromDecimalBalance(asset.balance, decimals);
 
   return {
     type: asset.type,
