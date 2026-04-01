@@ -286,7 +286,7 @@ const SendTransactionStep2Asset: React.FC<Props> = ({ navigation, route, onConfi
   );
 
   return (
-    <SendTransactionBottomSheet ref={bottomSheetRef} isRoute={!onConfirm} onClose={onClose}>
+    <SendTransactionBottomSheet ref={bottomSheetRef} isRoute={!onConfirm} onClose={onClose} useBottomSheetView={false}>
       <BottomSheetHeader title={selectType === 'Receive' ? t('receive.title') : t('tx.send.title')}>
         <Text style={[styles.selectAsset, { color: colors.textSecondary }]}>{t('tx.asset.inputTitle')}</Text>
         <TextInput
@@ -300,7 +300,6 @@ const SendTransactionStep2Asset: React.FC<Props> = ({ navigation, route, onConfi
           onChangeText={(newNickName) => setSearchAsset(newNickName)}
           isInBottomSheet
           placeholder={t('tx.asset.placeholder')}
-          multiline
         />
       </BottomSheetHeader>
 
