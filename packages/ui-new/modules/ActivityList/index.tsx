@@ -2,7 +2,6 @@ import Calendar from '@assets/icons/calendar.svg';
 import NoneActivity from '@assets/images/none-activity.webp';
 import Text from '@components/Text';
 import { useTheme } from '@react-navigation/native';
-import type { IActivityTransaction } from '@service/core';
 import { useActivityTransactionsOfCurrentAddress } from '@service/transaction';
 import { Image } from 'expo-image';
 import type React from 'react';
@@ -11,28 +10,9 @@ import { useTranslation } from 'react-i18next';
 import { StyleSheet, View } from 'react-native';
 import { styles as noneStyles } from '../AssetsList/TokensList/ReceiveFunds';
 import ActivityItem from './ActivityItem';
-
-const DAY_MILLISECONDS = 1000 * 60 * 60 * 24;
+import { buildActivityContentRows } from './helpers';
 
 const MONTH_TXT = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEPT', 'OCT', 'NOV', 'DEC'];
-
-class ActivityDate {
-  year: number;
-  month: number;
-  day: number;
-  constructor({ year, month, day }: { year: number; month: number; day: number }) {
-    this.year = year;
-    this.month = month;
-    this.day = day;
-  }
-}
-const formatDate = (time: number) => {
-  const date = new Date(time);
-  const year = date.getFullYear();
-  const month = date.getMonth();
-  const day = date.getDate();
-  return new ActivityDate({ year, month, day });
-};
 
 const ActivityList: React.FC<{ onPress?: (txId: string) => void }> = memo(({ onPress }) => {
   const { colors } = useTheme();
@@ -42,23 +22,9 @@ const ActivityList: React.FC<{ onPress?: (txId: string) => void }> = memo(({ onP
   const finishedTxs = finishedTxsQuery.data ?? [];
   const { t } = useTranslation();
 
-  const finishedTxsByDay = useMemo(() => {
-    let day = 0;
-    const txs: (IActivityTransaction | ActivityDate)[] = [];
-    // Keep the same ordering semantics as legacy Activity: rely on service ordering (nonce-based).
-    for (const tx of finishedTxs) {
-      const baseMs = tx.executedAtMs ?? tx.createdAtMs;
-      const time = Math.floor(baseMs / DAY_MILLISECONDS) * DAY_MILLISECONDS;
-      if (day !== time) {
-        day = time;
-        txs.push(formatDate(time));
-      }
-      txs.push(tx);
-    }
-    return txs;
-  }, [finishedTxs]);
+  const contentRows = useMemo(() => buildActivityContentRows({ finishedTxs, unfinishedTxs }), [finishedTxs, unfinishedTxs]);
 
-  if (!unfinishedTxs?.length && !finishedTxsByDay.length) {
+  if (!contentRows.length) {
     return (
       <>
         <Image style={noneStyles.noneImg} source={NoneActivity} contentFit="contain" />
@@ -69,21 +35,19 @@ const ActivityList: React.FC<{ onPress?: (txId: string) => void }> = memo(({ onP
 
   return (
     <View style={styles.container}>
-      {!!unfinishedTxs?.length && unfinishedTxs.map((tx) => <ActivityItem key={tx.id} tx={tx} onPress={onPress} />)}
-      {finishedTxs?.length > 0 &&
-        finishedTxsByDay.map((tx, i) =>
-          tx instanceof ActivityDate ? (
-            <View style={[styles.dateWrapper, i !== 0 && { marginTop: 24 }]} key={`${tx.day}${tx.month}${tx.year}`}>
-              <Calendar color={colors.textSecondary} />
-              <Text style={[styles.date, { color: colors.textSecondary, borderColor: colors.borderThird }]}>
-                {MONTH_TXT[tx.month]} {tx.day},{'  '}
-                {tx.year}
-              </Text>
-            </View>
-          ) : (
-            <ActivityItem key={tx.id} tx={tx} onPress={onPress} />
-          ),
-        )}
+      {contentRows.map((row) =>
+        row.kind === 'activity-date' ? (
+          <View style={[styles.dateWrapper, row.marginTop > 0 && { marginTop: row.marginTop }]} key={row.key}>
+            <Calendar color={colors.textSecondary} />
+            <Text style={[styles.date, { color: colors.textSecondary, borderColor: colors.borderThird }]}>
+              {MONTH_TXT[row.month]} {row.day},{'  '}
+              {row.year}
+            </Text>
+          </View>
+        ) : (
+          <ActivityItem key={row.key} tx={row.tx} onPress={onPress} />
+        ),
+      )}
     </View>
   );
 });

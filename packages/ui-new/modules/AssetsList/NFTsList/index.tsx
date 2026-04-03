@@ -3,96 +3,21 @@ import Text from '@components/Text';
 import type { TabsType } from '@modules/AssetsTabs';
 import { useTheme } from '@react-navigation/native';
 import { useCurrentAddress } from '@service/account';
-import type { INftCollection, INftItem } from '@service/core';
-import { useNftCollectionsOfAddress, useNftItems } from '@service/nft';
+import type { INftItem } from '@service/core';
+import { useNftCollectionsOfAddress } from '@service/nft';
 import type { AssetInfo } from '@utils/assetInfo';
 import { Image } from 'expo-image';
 import type React from 'react';
-import { memo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { View } from 'react-native';
 import { styles } from '../TokensList/ReceiveFunds';
-import { NFTCollectionItem } from './NFTCollectionItem';
-import { NFTItemsGrid } from './NFTItemsGrid';
-import { useOpenNftCollection } from './openState';
-import { SkeletoDetailItem, SkeletonList } from './Skeleton';
+import { shouldShowNftCollectionsSkeleton } from './helpers';
+import { NftCollectionRow } from './NftCollectionRow';
+import { SkeletonList } from './Skeleton';
 
 interface Props {
   onPressItem?: (asset: AssetInfo, nftItemDetail: INftItem) => void;
   tabsType: TabsType;
 }
-
-function toNftAssetInfo(params: { collection: INftCollection; item: INftItem }): AssetInfo {
-  return {
-    type: params.collection.type,
-    contractAddress: params.collection.contractAddress,
-    name: params.collection.name ?? '',
-    symbol: params.collection.symbol ?? '',
-    decimals: 0,
-    balance: params.item.amount,
-    icon: params.collection.icon ?? undefined,
-  };
-}
-
-const DetailSkeleton: React.FC<{ tabsType: TabsType }> = ({ tabsType }) => {
-  const { colors } = useTheme();
-  const wrapperStyle = { backgroundColor: tabsType === 'Home' ? colors.bgPrimary : colors.bgFourth };
-
-  return (
-    <View style={[{ marginVertical: 4, display: 'flex', flexDirection: 'row', flexWrap: 'wrap', paddingLeft: 56, paddingRight: 16, gap: 16 }, wrapperStyle]}>
-      {Array.from({ length: 2 }).map((_, index) => (
-        <View key={index} style={{ borderColor: colors.borderThird, borderWidth: 1, borderRadius: 6, paddingHorizontal: 8, paddingTop: 8, paddingBottom: 12 }}>
-          <SkeletoDetailItem colors={colors} />
-        </View>
-      ))}
-    </View>
-  );
-};
-
-const CollectionRow: React.FC<{
-  addressId: string;
-  collection: INftCollection;
-  index: number;
-  tabsType: TabsType;
-  onPressItem?: (asset: AssetInfo, nftItemDetail: INftItem) => void;
-}> = memo(({ addressId, collection, index, tabsType, onPressItem }) => {
-  const [open, setOpen] = useOpenNftCollection();
-  const isOpen = open?.contractAddress?.toLowerCase() === collection.contractAddress.toLowerCase();
-
-  const { data: items = [], isFetching } = useNftItems({
-    addressId,
-    contractAddress: collection.contractAddress,
-    enabled: isOpen,
-  });
-
-  const background = tabsType === 'Home' ? 'home' : 'sheet';
-
-  return (
-    <>
-      <NFTCollectionItem
-        collection={collection}
-        background={background}
-        isOpen={isOpen}
-        onPress={() => {
-          setOpen(isOpen ? null : { contractAddress: collection.contractAddress, index });
-        }}
-      />
-      {isOpen &&
-        (isFetching && items.length === 0 ? (
-          <DetailSkeleton tabsType={tabsType} />
-        ) : (
-          <NFTItemsGrid
-            collection={collection}
-            items={items}
-            background={background}
-            onPressItem={(item) => {
-              onPressItem?.(toNftAssetInfo({ collection, item }), item);
-            }}
-          />
-        ))}
-    </>
-  );
-});
 
 const NFTList: React.FC<Props> = ({ onPressItem, tabsType }) => {
   const { colors } = useTheme();
@@ -103,8 +28,12 @@ const NFTList: React.FC<Props> = ({ onPressItem, tabsType }) => {
 
   const collectionsQuery = useNftCollectionsOfAddress(addressId);
   const collections = collectionsQuery.data ?? [];
-  const shouldShowSkeleton =
-    collections.length === 0 && (currentAddressQuery.status === 'pending' || (Boolean(addressId) && collectionsQuery.status === 'pending'));
+  const shouldShowSkeleton = shouldShowNftCollectionsSkeleton({
+    addressId,
+    collectionsCount: collections.length,
+    collectionsStatus: collectionsQuery.status,
+    currentAddressStatus: currentAddressQuery.status,
+  });
 
   if (shouldShowSkeleton) {
     return <SkeletonList />;
@@ -120,7 +49,16 @@ const NFTList: React.FC<Props> = ({ onPressItem, tabsType }) => {
   }
 
   return collections.map((collection, index) => (
-    <CollectionRow key={collection.id} addressId={addressId} collection={collection} index={index} tabsType={tabsType} onPressItem={onPressItem} />
+    <NftCollectionRow
+      key={collection.id}
+      addressId={addressId}
+      collection={collection}
+      index={index}
+      background={tabsType === 'Home' ? 'home' : 'sheet'}
+      onSelect={(asset, item) => {
+        onPressItem?.(asset, item);
+      }}
+    />
   ));
 };
 

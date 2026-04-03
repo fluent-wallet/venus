@@ -6433,6 +6433,17 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@shopify/flash-list@npm:^2.3.1":
+  version: 2.3.1
+  resolution: "@shopify/flash-list@npm:2.3.1"
+  peerDependencies:
+    "@babel/runtime": "*"
+    react: "*"
+    react-native: "*"
+  checksum: f36cfcf512cd4e830700c7f7c63b53c449cf2802d42f55a0eedc7ac3e9af22a4c521994f6af42b064829d21bf0afb59cde3b3794cf20250e9eac204d78f00d5a
+  languageName: node
+  linkType: hard
+
 "@sideway/address@npm:^4.1.5":
   version: 4.1.5
   resolution: "@sideway/address@npm:4.1.5"
@@ -16761,6 +16772,19 @@ __metadata:
   languageName: node
   linkType: hard
 
+"react-native-tab-view@npm:^4.3.0":
+  version: 4.3.0
+  resolution: "react-native-tab-view@npm:4.3.0"
+  dependencies:
+    use-latest-callback: ^0.2.4
+  peerDependencies:
+    react: ">= 18.2.0"
+    react-native: "*"
+    react-native-pager-view: ">= 6.0.0"
+  checksum: 7a1a3aeade84f1a5d9bb998731fae5c432ffd4b05b9abaebcda747d6644b119a5ee5017816538d825d8f59d1d18acc1ce57452bd8cb79dd583c2f305a5728978
+  languageName: node
+  linkType: hard
+
 "react-native-url-polyfill@npm:2.0.0":
   version: 2.0.0
   resolution: "react-native-url-polyfill@npm:2.0.0"
@@ -19113,6 +19137,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"use-latest-callback@npm:^0.2.4":
+  version: 0.2.6
+  resolution: "use-latest-callback@npm:0.2.6"
+  peerDependencies:
+    react: ">=16.8"
+  checksum: 67a245bf91b23ef0d2d2c8a52845da62e006867bd9d93a99ca4d2f859101fcd54c7afd4f5a3b8bb5d24283f516e7e41bd8226250ee39affc33bd1cfd622a5cfb
+  languageName: node
+  linkType: hard
+
 "use-sync-external-store@npm:1.2.0":
   version: 1.2.0
   resolution: "use-sync-external-store@npm:1.2.0"
@@ -19293,6 +19326,7 @@ __metadata:
     "@reown/walletkit": ^1.1.1
     "@scure/bip32": ^2.0.1
     "@scure/bip39": ^2.0.1
+    "@shopify/flash-list": ^2.3.1
     "@tanstack/react-query": ^5.90.11
     "@testing-library/react-native": ^13.3.3
     "@types/jest": ^30.0.0
@@ -19362,6 +19396,7 @@ __metadata:
     react-native-screens: ~4.23.0
     react-native-svg: 15.15.3
     react-native-svg-transformer: ^1.5.1
+    react-native-tab-view: ^4.3.0
     react-native-view-shot: 4.0.3
     react-native-worklets: 0.7.2
     react-test-renderer: 19.2.0
