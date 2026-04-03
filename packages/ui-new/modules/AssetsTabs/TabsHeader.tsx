@@ -22,11 +22,12 @@ interface TabsHeaderProps {
   currentTab: TabType;
   onlyToken?: boolean;
   sharedScrollY: SharedValue<number>;
+  nftStickyStartY?: number;
   onTabChange?: (tab: TabType) => void;
   resetScrollY?: () => void;
 }
 
-export const TabsHeader: React.FC<TabsHeaderProps> = ({ type, currentTab, onlyToken, sharedScrollY, onTabChange, resetScrollY }) => {
+export const TabsHeader: React.FC<TabsHeaderProps> = ({ type, currentTab, onlyToken, sharedScrollY, nftStickyStartY, onTabChange, resetScrollY }) => {
   const { colors } = useTheme();
   const { t } = useTranslation();
   const tabs = useTabs(type, onlyToken);
@@ -83,7 +84,7 @@ export const TabsHeader: React.FC<TabsHeaderProps> = ({ type, currentTab, onlyTo
         <Animated.View style={[styles.animatedBorder, animatedStyles, { backgroundColor: colors.borderPrimary }]} />
       </View>
       <View style={[styles.divider, { backgroundColor: type !== 'Home' ? colors.borderFourth : colors.borderThird }]}>
-        {currentTab === 'NFTs' && <StickyNFT sharedScrollY={sharedScrollY} type={type} />}
+        {currentTab === 'NFTs' && <StickyNFT sharedScrollY={sharedScrollY} type={type} startYOverride={nftStickyStartY} />}
       </View>
     </>
   );

@@ -6433,6 +6433,17 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@shopify/flash-list@npm:^2.3.1":
+  version: 2.3.1
+  resolution: "@shopify/flash-list@npm:2.3.1"
+  peerDependencies:
+    "@babel/runtime": "*"
+    react: "*"
+    react-native: "*"
+  checksum: f36cfcf512cd4e830700c7f7c63b53c449cf2802d42f55a0eedc7ac3e9af22a4c521994f6af42b064829d21bf0afb59cde3b3794cf20250e9eac204d78f00d5a
+  languageName: node
+  linkType: hard
+
 "@sideway/address@npm:^4.1.5":
   version: 4.1.5
   resolution: "@sideway/address@npm:4.1.5"
@@ -16637,6 +16648,16 @@ __metadata:
   languageName: node
   linkType: hard
 
+"react-native-quick-base64@npm:2.2.2":
+  version: 2.2.2
+  resolution: "react-native-quick-base64@npm:2.2.2"
+  peerDependencies:
+    react: "*"
+    react-native: "*"
+  checksum: 51cd8df0b7f78d4c10996f157927cc075b8a9e85f7d0e48790a4247a033ca335e440c96572969fb6f6b49135d51dbf87c6d659fba509b51b9237957d41a6c580
+  languageName: node
+  linkType: hard
+
 "react-native-quick-base64@npm:^2.0.5":
   version: 2.1.2
   resolution: "react-native-quick-base64@npm:2.1.2"
@@ -16646,16 +16667,6 @@ __metadata:
     react: "*"
     react-native: "*"
   checksum: 46f3b26f48b26978686b0c043336220d681e6a02af5abcf3eb4ab7b9216251d1eb2fac5c559e984d963e93f54bd9f323651daac09762196815558abbd551729b
-  languageName: node
-  linkType: hard
-
-"react-native-quick-base64@npm:^2.2.0":
-  version: 2.2.0
-  resolution: "react-native-quick-base64@npm:2.2.0"
-  peerDependencies:
-    react: "*"
-    react-native: "*"
-  checksum: f11eedd224601e45c67bdba17dc0a60fc1b6e9afe9fb1557a809ca6cc5b0c640b885b067a99a2b2bdc6e2acb086d703c7a1c4959f500719c2181138eacae8e9a
   languageName: node
   linkType: hard
 
@@ -16758,6 +16769,19 @@ __metadata:
     react: "*"
     react-native: "*"
   checksum: 82ec0096ff0e55509382bfaaa79b55787e4131aaa404c8f83b4198c4f6b351ef1543592ed61adc0e2e794e143d39356614988d84eb97e28d647bc2e4bc2208c9
+  languageName: node
+  linkType: hard
+
+"react-native-tab-view@npm:^4.3.0":
+  version: 4.3.0
+  resolution: "react-native-tab-view@npm:4.3.0"
+  dependencies:
+    use-latest-callback: ^0.2.4
+  peerDependencies:
+    react: ">= 18.2.0"
+    react-native: "*"
+    react-native-pager-view: ">= 6.0.0"
+  checksum: 7a1a3aeade84f1a5d9bb998731fae5c432ffd4b05b9abaebcda747d6644b119a5ee5017816538d825d8f59d1d18acc1ce57452bd8cb79dd583c2f305a5728978
   languageName: node
   linkType: hard
 
@@ -19113,6 +19137,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"use-latest-callback@npm:^0.2.4":
+  version: 0.2.6
+  resolution: "use-latest-callback@npm:0.2.6"
+  peerDependencies:
+    react: ">=16.8"
+  checksum: 67a245bf91b23ef0d2d2c8a52845da62e006867bd9d93a99ca4d2f859101fcd54c7afd4f5a3b8bb5d24283f516e7e41bd8226250ee39affc33bd1cfd622a5cfb
+  languageName: node
+  linkType: hard
+
 "use-sync-external-store@npm:1.2.0":
   version: 1.2.0
   resolution: "use-sync-external-store@npm:1.2.0"
@@ -19293,6 +19326,7 @@ __metadata:
     "@reown/walletkit": ^1.1.1
     "@scure/bip32": ^2.0.1
     "@scure/bip39": ^2.0.1
+    "@shopify/flash-list": ^2.3.1
     "@tanstack/react-query": ^5.90.11
     "@testing-library/react-native": ^13.3.3
     "@types/jest": ^30.0.0
@@ -19354,7 +19388,7 @@ __metadata:
     react-native-nitro-modules: ^0.35.0
     react-native-pager-view: 8.0.0
     react-native-qrcode-svg: ^6.3.15
-    react-native-quick-base64: ^2.2.0
+    react-native-quick-base64: 2.2.2
     react-native-quick-crypto: ^1.0.16
     react-native-reanimated: 4.2.1
     react-native-restart: ^0.0.27
@@ -19362,6 +19396,7 @@ __metadata:
     react-native-screens: ~4.23.0
     react-native-svg: 15.15.3
     react-native-svg-transformer: ^1.5.1
+    react-native-tab-view: ^4.3.0
     react-native-view-shot: 4.0.3
     react-native-worklets: 0.7.2
     react-test-renderer: 19.2.0

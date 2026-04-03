@@ -1,17 +1,16 @@
 import NoneToken from '@assets/images/none-token.webp';
 import Text from '@components/Text';
-import { ASSET_SOURCE, ASSET_TYPE } from '@core/types';
 import { usePriceVisibleValue } from '@hooks/usePriceVisible';
 import { useTheme } from '@react-navigation/native';
 import { useCurrentAddress } from '@service/account';
 import { useAssetsOfCurrentAddress } from '@service/asset';
 import type { AssetInfo } from '@utils/assetInfo';
 import { toAssetInfo } from '@utils/toAssetInfo';
-import Decimal from 'decimal.js';
 import { Image } from 'expo-image';
 import type React from 'react';
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
+import { areDisplayTokensEmpty, getVisibleTokenAssets, shouldShowTokensSkeleton } from './helpers';
 import ReceiveFunds, { styles } from './ReceiveFunds';
 import Skeleton from './Skeleton';
 import TokenItem from './TokenItem';
@@ -22,26 +21,6 @@ interface Props {
   selectType: 'Home' | 'Send' | 'Receive';
 }
 
-function shouldShowAssetOnHome(asset: { type: string; source: string | null; balance?: string | null }): boolean {
-  if (asset.type === ASSET_TYPE.Native || asset.source === ASSET_SOURCE.Custom) {
-    return true;
-  }
-
-  try {
-    return new Decimal(asset.balance ?? '0').greaterThan(0);
-  } catch {
-    return false;
-  }
-}
-
-function hasPositiveTokenBalance(token: AssetInfo): boolean {
-  try {
-    return BigInt(token.balance || '0') > 0n;
-  } catch {
-    return false;
-  }
-}
-
 const TokensList: React.FC<Props> = ({ onPressItem, selectType, showReceiveFunds = false }) => {
   const { colors } = useTheme();
   const { t } = useTranslation();
@@ -49,22 +28,21 @@ const TokensList: React.FC<Props> = ({ onPressItem, selectType, showReceiveFunds
   const currentAddressQuery = useCurrentAddress();
   const assetsQuery = useAssetsOfCurrentAddress();
   const assets = assetsQuery.data ?? [];
-  const visibleAssets = useMemo(
-    () =>
-      assets
-        .filter((asset) => asset.type === ASSET_TYPE.Native || asset.type === ASSET_TYPE.ERC20)
-        .filter((asset) => (selectType === 'Home' ? shouldShowAssetOnHome(asset) : true)),
-    [assets, selectType],
-  );
+  const currentAddressId = currentAddressQuery.data?.id ?? '';
+  const visibleAssets = useMemo(() => getVisibleTokenAssets(assets, { showHomeAssetsOnly: selectType === 'Home' }), [assets, selectType]);
   const tokens = useMemo(() => visibleAssets.map(toAssetInfo), [visibleAssets]);
-
-  const isTokensEmpty = useMemo(() => {
-    if (tokens.length === 0) return true;
-    return tokens.every((token) => !hasPositiveTokenBalance(token));
-  }, [tokens]);
+  const isTokensEmpty = useMemo(() => areDisplayTokensEmpty(tokens), [tokens]);
   const priceVisible = usePriceVisibleValue();
-  const shouldShowSkeleton =
-    tokens.length === 0 && (currentAddressQuery.status === 'pending' || (Boolean(currentAddressQuery.data?.id) && assetsQuery.status === 'pending'));
+  const shouldShowSkeleton = useMemo(
+    () =>
+      shouldShowTokensSkeleton({
+        addressId: currentAddressId,
+        assetsStatus: assetsQuery.status,
+        currentAddressStatus: currentAddressQuery.status,
+        tokenCount: tokens.length,
+      }),
+    [assetsQuery.status, currentAddressId, currentAddressQuery.status, tokens.length],
+  );
 
   if (shouldShowSkeleton) {
     return <Skeleton />;
