@@ -6,24 +6,17 @@ import { useQueryClient } from '@tanstack/react-query';
 import { useCallback } from 'react';
 
 /**
- * Home pull-to-refresh handler used by `RefreshScrollView`.
+ * Home pull-to-refresh handler shared by all tabs.
  */
-export function useHomeRefresh(): (done: VoidFunction) => void {
+export function useHomeRefresh(): () => Promise<void> {
   const queryClient = useQueryClient();
 
-  const refreshOnce = useCallback(async () => {
+  return useCallback(async () => {
     await getAssetsSyncService().refreshCurrent({ reason: 'manual' });
 
-    // this jobs need some time to complete we don't want to block the refresh
-    queryClient.invalidateQueries({ queryKey: getAssetRootKey() });
-    queryClient.invalidateQueries({ queryKey: getNftRootKey() });
-    queryClient.invalidateQueries({ queryKey: getTransactionRootKey() });
+    // These follow-up invalidations can run in the background after the manual refresh starts.
+    void queryClient.invalidateQueries({ queryKey: getAssetRootKey() });
+    void queryClient.invalidateQueries({ queryKey: getNftRootKey() });
+    void queryClient.invalidateQueries({ queryKey: getTransactionRootKey() });
   }, [queryClient]);
-
-  return useCallback(
-    (done: VoidFunction) => {
-      void refreshOnce().finally(done);
-    },
-    [refreshOnce],
-  );
 }
