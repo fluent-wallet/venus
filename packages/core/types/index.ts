@@ -4,3 +4,4 @@ export * from './crypto';
 export * from './rpc';
 export * from './signer';
 export * from './transaction';
+export * from './vault';

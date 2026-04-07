@@ -1,11 +1,11 @@
-import { Q, type Query } from '@nozbe/watermelondb';
+import { Q } from '@nozbe/watermelondb';
 import { memoize } from 'lodash-es';
 import { map, type Observable } from 'rxjs';
 import database from '../..';
 import { createModel, type ModelFields } from '../../helper/modelHelper';
 import TableName from '../../TableName';
 import type { Vault } from '.';
-import VaultType from './VaultType';
+import { VaultType } from './VaultType';
 
 export type Params = Omit<ModelFields<Vault>, 'isGroup' | 'observeAccountGroup'>;
 export function createVault(params: Params, prepareCreate: true): Vault;
@@ -26,7 +26,11 @@ export const checkIsFirstVault = async () => {
 export const getVaultTypeCount = (type: Vault['type']) => database.get(TableName.Vault).query(Q.where('type', type)).fetchCount();
 
 export const observeBSIMCreated = () =>
-  (database.get(TableName.Vault).query(Q.where('type', 'BSIM')) as unknown as Query<Vault>).observeCount().pipe(map((count) => count > 0));
+  database
+    .get<Vault>(TableName.Vault)
+    .query(Q.where('type', VaultType.BSIM))
+    .observeCount()
+    .pipe(map((count) => count > 0));
 
 export const observeVaultById = memoize((vaultId: string) => database.get(TableName.Vault).findAndObserve(vaultId) as Observable<Vault>);
 

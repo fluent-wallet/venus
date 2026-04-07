@@ -35,7 +35,13 @@ import { validate as isEvmAddress } from 'ox/Address';
 import type { ExternalRequestSnapshot, ExternalRequestsService, JsonValue } from '../externalRequests';
 
 // White-list for session_request methods.
-const SUPPORTED_SESSION_REQUEST_METHODS = ['personal_sign', 'eth_signTypedData_v4', 'eth_sendTransaction'] as const;
+const SUPPORTED_SESSION_REQUEST_METHODS = [
+  'personal_sign',
+  'eth_signTypedData',
+  'eth_signTypedData_v3',
+  'eth_signTypedData_v4',
+  'eth_sendTransaction',
+] as const;
 type SupportedSessionRequestMethod = (typeof SUPPORTED_SESSION_REQUEST_METHODS)[number];
 
 const isSupportedSessionRequestMethod = (value: unknown): value is SupportedSessionRequestMethod => {
@@ -50,6 +56,7 @@ export type WalletConnectSessionSnapshot = {
       name: string;
       url: string;
       icons?: string[];
+      description?: string;
     };
   };
   namespaces: {
@@ -68,6 +75,12 @@ export type WalletConnectServiceOptions = {
   clientFactory: () => Promise<Client>;
   closeTransportOnStop: boolean;
 
+  /**
+   * Optional allowlist for supported EVM chains (WalletConnect `eip155:<netId>` strings).
+   * When provided, session proposals that require chains outside this list will be rejected.
+   */
+  allowedEip155Chains?: string[];
+
   externalRequests?: ExternalRequestsService;
   accountService?: AccountService;
   networkService?: NetworkService;
@@ -82,6 +95,8 @@ export class WalletConnectService {
   private readonly clientFactory: () => Promise<Client>;
   private readonly closeTransportOnStop: boolean;
 
+  private readonly allowedEip155Chains?: string[];
+
   private readonly externalRequests?: ExternalRequestsService;
   private readonly accountService?: AccountService;
   private readonly networkService?: NetworkService;
@@ -91,6 +106,8 @@ export class WalletConnectService {
 
   private client: Client | null = null;
   private sessions: WalletConnectSessionSnapshot[] = [];
+  private readonly seenProposalIds = new Set<number>();
+  private readonly seenSessionRequestKeys = new Set<string>();
   private started = false;
   private startInFlight: Promise<void> | null = null;
 
@@ -99,6 +116,8 @@ export class WalletConnectService {
     this.logger = options.logger;
     this.clientFactory = options.clientFactory;
     this.closeTransportOnStop = options.closeTransportOnStop;
+
+    this.allowedEip155Chains = options.allowedEip155Chains;
 
     this.externalRequests = options.externalRequests;
     this.accountService = options.accountService;
@@ -121,7 +140,10 @@ export class WalletConnectService {
   };
 
   public async start(): Promise<void> {
-    if (this.started) return;
+    if (this.started) {
+      await this.replayPending();
+      return;
+    }
     if (this.startInFlight) return this.startInFlight;
 
     const run = (async () => {
@@ -135,10 +157,11 @@ export class WalletConnectService {
         client.on('session_delete', this.onSessionDelete);
         client.on('session_request', this.onSessionRequest);
 
+        this.started = true;
         await this.refreshSessions();
+        await this.replayPending();
 
         this.eventBus.emit('wallet-connect/sessions-changed', { reason: 'init' });
-        this.started = true;
       } catch (error) {
         try {
           if (client) {
@@ -164,6 +187,8 @@ export class WalletConnectService {
         } finally {
           if (this.client === client) this.client = null;
           this.sessions = [];
+          this.seenProposalIds.clear();
+          this.seenSessionRequestKeys.clear();
           this.started = false;
         }
 
@@ -193,6 +218,8 @@ export class WalletConnectService {
     if (!this.client) {
       this.started = false;
       this.sessions = [];
+      this.seenProposalIds.clear();
+      this.seenSessionRequestKeys.clear();
       return;
     }
 
@@ -209,6 +236,8 @@ export class WalletConnectService {
     }
 
     this.sessions = [];
+    this.seenProposalIds.clear();
+    this.seenSessionRequestKeys.clear();
 
     if (!this.closeTransportOnStop) return;
 
@@ -306,6 +335,7 @@ export class WalletConnectService {
         name: typeof peerMeta?.name === 'string' ? peerMeta.name : '',
         url: typeof peerMeta?.url === 'string' ? peerMeta.url : '',
         icons: Array.isArray(peerMeta?.icons) ? peerMeta.icons.filter((x): x is string => typeof x === 'string') : undefined,
+        description: typeof peerMeta?.description === 'string' ? peerMeta.description : undefined,
       };
 
       const eip155 = (session.namespaces as unknown as { eip155?: Record<string, unknown> })?.eip155;
@@ -335,17 +365,43 @@ export class WalletConnectService {
     this.sessions = snapshots;
   }
 
+  private async replayPending(): Promise<void> {
+    const client = this.client;
+    if (!this.started || !client) return;
+
+    try {
+      const proposals = client.getPendingSessionProposals?.() ?? {};
+      const requests = client.getPendingSessionRequests?.() ?? [];
+
+      const proposalList = Object.values(proposals);
+
+      for (const proposal of proposalList) {
+        await this.handleSessionProposal(proposal as unknown as WalletKitTypes.SessionProposal);
+      }
+
+      for (const request of requests) {
+        await this.handleSessionRequest(request as unknown as WalletKitTypes.SessionRequest);
+      }
+    } catch (error) {
+      this.logger.warn('WalletConnectService:pending:replay-failed', { error });
+    }
+  }
+
   private async handleSessionProposal(proposal: WalletKitTypes.SessionProposal): Promise<void> {
     const client = this.client;
 
     if (!this.started || !client) return;
 
     const proposalNumericId = typeof proposal?.params?.id === 'number' ? proposal.params.id : proposal?.id;
+    if (typeof proposalNumericId === 'number') {
+      if (this.seenProposalIds.has(proposalNumericId)) return;
+      this.seenProposalIds.add(proposalNumericId);
+    }
     const proposalId = `p_${String(proposalNumericId)}`;
 
-    const { metadata, origin, requiredEip155Chains, requiredMethods, requiredEvents } = this.extractProposalInfo(proposal);
+    const { metadata, origin, requestedEip155Chains, methods, events } = this.extractProposalInfo(proposal);
 
-    if (requiredEip155Chains.length === 0) {
+    if (requestedEip155Chains.length === 0) {
       const error = new CoreError({ code: WC_UNSUPPORTED_NAMESPACE, message: 'WalletConnect supports EVM (eip155) only.' });
       this.logger.warn('WalletConnectService:proposal-rejected', { error });
 
@@ -353,13 +409,14 @@ export class WalletConnectService {
       return;
     }
 
-    const supportedChains = await this.getSupportedRequiredChains(requiredEip155Chains);
+    const supportedChains = await this.getSupportedRequiredChains(requestedEip155Chains);
 
-    if (supportedChains.unsupported.length > 0) {
+    // Only reject when we support none of the requested chains.
+    if (supportedChains.supported.length === 0) {
       const error = new CoreError({
         code: WC_UNSUPPORTED_CHAINS,
-        message: 'Unsupported required chains.',
-        context: { required: requiredEip155Chains, unsupported: supportedChains.unsupported },
+        message: 'No supported requested chains.',
+        context: { requested: requestedEip155Chains },
       });
       this.logger.warn('WalletConnectService:proposal-rejected', { error });
 
@@ -393,12 +450,15 @@ export class WalletConnectService {
             proposal,
             proposalNumericId,
             supportedChains: supportedChains.supported,
-            requiredMethods,
-            requiredEvents,
+            requiredMethods: methods,
+            requiredEvents: events,
           });
         },
-        onReject: async () => {
-          await this.safeRejectSession(client, proposalNumericId, getSdkError('USER_REJECTED'));
+        onReject: async (error) => {
+          const reasonKey = typeof error === 'string' ? error : null;
+          const supportedReasonKeys = new Set(['UNSUPPORTED_CHAINS', 'UNSUPPORTED_NAMESPACE_KEY', 'USER_REJECTED'] as const);
+          const reason = reasonKey && supportedReasonKeys.has(reasonKey as any) ? getSdkError(reasonKey as any) : getSdkError('USER_REJECTED');
+          await this.safeRejectSession(client, proposalNumericId, reason);
         },
       },
     });
@@ -451,6 +511,7 @@ export class WalletConnectService {
       });
 
       await this.refreshSessions();
+      this.eventBus.emit('wallet-connect/sessions-changed', { reason: 'approve' });
     } catch (error) {
       const coreError =
         error instanceof CoreError ? error : new CoreError({ code: WC_APPROVE_SESSION_FAILED, message: 'approveSession failed.', cause: error });
@@ -466,6 +527,9 @@ export class WalletConnectService {
 
     const topic = request.topic;
     const id = request.id;
+    const dedupeKey = `${topic}:${String(id)}`;
+    if (this.seenSessionRequestKeys.has(dedupeKey)) return;
+    this.seenSessionRequestKeys.add(dedupeKey);
 
     const chainId = request.params?.chainId;
     const rpc = request.params?.request;
@@ -480,6 +544,46 @@ export class WalletConnectService {
       await this.safeRespondSessionRequestError({ client, topic, id, code: 4200, message: 'Unsupported method.' });
       return;
     }
+    // The old WalletCore WalletConnect plugin validated these before emitting UI events.
+    if (this.networkService && this.accountService) {
+      let currentAddress: string | null = null;
+      try {
+        const currentNetwork = await this.networkService.getCurrentNetwork();
+        const expectedChainId = `eip155:${currentNetwork.netId}`;
+
+        if (currentNetwork.networkType !== NetworkType.Ethereum || expectedChainId !== chainId) {
+          await this.safeRespondSessionRequestError({ client, topic, id, code: 4902, message: 'network is not match' });
+          return;
+        }
+
+        const account = await this.accountService.getCurrentAccount();
+        currentAddress = typeof account?.address === 'string' && account.address ? account.address : null;
+      } catch (error) {
+        const rpcError = this.mapApproveError(error);
+        await this.safeRespondSessionRequestError({ client, topic, id, ...rpcError });
+        return;
+      }
+
+      // Only enforce address mismatch checks when we can reliably extract the "from" and we know the current address.
+      if (currentAddress) {
+        let requestedFrom: string | null = null;
+        try {
+          requestedFrom =
+            method === 'eth_sendTransaction'
+              ? parseEvmRpcTransactionRequest(rpcParams).from
+              : method === 'personal_sign'
+                ? parseSignMessageParameters(rpcParams).from
+                : parseSignTypedDataParameters(rpcParams).from;
+        } catch {
+          requestedFrom = null;
+        }
+
+        if (requestedFrom && requestedFrom.toLowerCase() !== currentAddress.toLowerCase()) {
+          await this.safeRespondSessionRequestError({ client, topic, id, code: 4100, message: 'address is not match' });
+          return;
+        }
+      }
+    }
 
     if (!this.externalRequests) {
       await this.safeRespondSessionRequestError({ client, topic, id, code: -32603, message: 'Internal error.' });
@@ -487,12 +591,14 @@ export class WalletConnectService {
     }
 
     const origin = this.resolveRequestOrigin(topic, request);
+    const metadata = this.resolveRequestMetadata(topic, request);
 
     const snapshot: ExternalRequestSnapshot = {
       provider: 'wallet-connect',
       kind: 'session_request',
       sessionId: topic,
       origin,
+      metadata,
       chainId,
       method,
       params: this.toJsonValue(rpcParams),
@@ -502,8 +608,30 @@ export class WalletConnectService {
       key: topic,
       request: snapshot,
       handlers: {
-        onApprove: async () => {
-          await this.approveSessionRequest({ client, topic, id, chainId, method, rpcParams });
+        onApprove: async (data) => {
+          // UI-driven flow: UI performs signing/sending, then calls ExternalRequestsService.approve({ data: { result } }).
+          // If `result` is provided, respond immediately without re-signing in core.
+          const maybeResult = (data as { result?: unknown } | null)?.result;
+          if (maybeResult !== undefined) {
+            await this.safeRespondSessionRequestResult({ client, topic, id, result: maybeResult });
+            return;
+          }
+
+          // Backward-compatible fallback: if UI approves without providing a result, core handles the request as before.
+          this.logger.warn('WalletConnectService:session-request:onApprove-fallback-core-handle', {
+            topic,
+            id,
+            chainId,
+            method,
+          });
+
+          try {
+            await this.approveSessionRequest({ client, topic, id, chainId, method, rpcParams });
+          } catch (error) {
+            const rpcError = this.mapApproveError(error);
+            this.logger.warn('WalletConnectService:session-request:onApprove-failed', { error });
+            await this.safeRespondSessionRequestError({ client, topic, id, ...rpcError });
+          }
         },
         onReject: async (error) => {
           const rpcError = this.mapRejectError(error);
@@ -520,32 +648,56 @@ export class WalletConnectService {
     chainId: string;
     method: SupportedSessionRequestMethod;
     rpcParams: unknown;
-  }) {
+  }): Promise<void> {
     if (!this.started || this.client !== params.client) return;
 
-    if (!this.networkService || !this.accountService) {
-      await this.safeRespondSessionRequestError({ client: params.client, topic: params.topic, id: params.id, code: -32603, message: 'Internal error.' });
-      return;
-    }
-
-    const currentNetwork = await this.networkService.getCurrentNetwork();
-    const expectedChainId = `eip155:${currentNetwork.netId}`;
-
-    if (currentNetwork.networkType !== NetworkType.Ethereum || expectedChainId !== params.chainId) {
-      await this.safeRespondSessionRequestError({ client: params.client, topic: params.topic, id: params.id, code: 4902, message: 'Unrecognized chain ID.' });
-      return;
-    }
-
-    const account = await this.accountService.getCurrentAccount();
-    const accountId = account?.id;
-    const addressId = account?.currentAddressId;
-
-    if (!accountId || !addressId) {
-      await this.safeRespondSessionRequestError({ client: params.client, topic: params.topic, id: params.id, code: 4100, message: 'Unauthorized.' });
-      return;
-    }
-
     try {
+      if (!this.networkService || !this.accountService) {
+        this.logger.warn('WalletConnectService:session-request:missing-services', {
+          hasNetworkService: Boolean(this.networkService),
+          hasAccountService: Boolean(this.accountService),
+        });
+        await this.safeRespondSessionRequestError({
+          client: params.client,
+          topic: params.topic,
+          id: params.id,
+          code: -32603,
+          message: 'Internal error.',
+        });
+        return;
+      }
+
+      const currentNetwork = await this.networkService.getCurrentNetwork();
+      const expectedChainId = `eip155:${currentNetwork.netId}`;
+
+      if (currentNetwork.networkType !== NetworkType.Ethereum || expectedChainId !== params.chainId) {
+        this.logger.warn('WalletConnectService:session-request:chain-mismatch', {
+          requestChainId: params.chainId,
+          expectedChainId,
+          currentNetworkType: currentNetwork.networkType,
+          currentNetId: currentNetwork.netId,
+          currentChainId: currentNetwork.chainId,
+        });
+        await this.safeRespondSessionRequestError({
+          client: params.client,
+          topic: params.topic,
+          id: params.id,
+          code: 4902,
+          message: 'Unrecognized chain ID.',
+        });
+        return;
+      }
+
+      const account = await this.accountService.getCurrentAccount();
+      const accountId = account?.id;
+      const addressId = account?.currentAddressId;
+
+      if (!accountId || !addressId) {
+        this.logger.warn('WalletConnectService:session-request:unauthorized', { topic: params.topic, id: params.id, hasAccountId: Boolean(accountId) });
+        await this.safeRespondSessionRequestError({ client: params.client, topic: params.topic, id: params.id, code: 4100, message: 'Unauthorized.' });
+        return;
+      }
+
       if (params.method === 'personal_sign') {
         const request = parseSignMessageParameters(params.rpcParams);
         const signature = await this.signingService.signPersonalMessage({ accountId, addressId, request });
@@ -561,7 +713,7 @@ export class WalletConnectService {
         return;
       }
 
-      if (params.method === 'eth_signTypedData_v4') {
+      if (params.method === 'eth_signTypedData' || params.method === 'eth_signTypedData_v3' || params.method === 'eth_signTypedData_v4') {
         const request = parseSignTypedDataParameters(params.rpcParams);
         const signature = await this.signingService.signTypedDataV4({ accountId, addressId, request });
 
@@ -578,6 +730,7 @@ export class WalletConnectService {
 
       // eth_sendTransaction
       if (!this.transactionService) {
+        this.logger.warn('WalletConnectService:session-request:missing-transaction-service', { topic: params.topic, id: params.id });
         await this.safeRespondSessionRequestError({ client: params.client, topic: params.topic, id: params.id, code: -32603, message: 'Internal error.' });
         return;
       }
@@ -603,6 +756,14 @@ export class WalletConnectService {
       }
     }
 
+    if (typeof error === 'string' && error.trim() !== '') {
+      return { code: 4001, message: error };
+    }
+
+    if (error instanceof Error && typeof error.message === 'string' && error.message.trim() !== '') {
+      return { code: 4001, message: error.message };
+    }
+
     return { code: 4001, message: 'User rejected the request.' };
   }
 
@@ -624,6 +785,30 @@ export class WalletConnectService {
 
     const cached = this.sessions.find((s) => s.topic === topic)?.peer?.metadata?.url;
     return typeof cached === 'string' ? cached : '';
+  }
+
+  private resolveRequestMetadata(
+    topic: string,
+    _request: WalletKitTypes.SessionRequest,
+  ): {
+    name: string;
+    url: string;
+    icons?: string[];
+    description?: string;
+  } {
+    type MetadataLike = { name?: unknown; url?: unknown; icons?: unknown; description?: unknown };
+
+    const active = this.client?.getActiveSessions?.() as unknown as Record<string, { peer?: { metadata?: MetadataLike } }> | undefined;
+    const peer = active?.[topic]?.peer?.metadata;
+    const cached = this.sessions.find((s) => s.topic === topic)?.peer?.metadata as unknown as MetadataLike | undefined;
+    const meta: MetadataLike = peer ?? cached ?? {};
+
+    return {
+      name: typeof meta.name === 'string' ? meta.name : '',
+      url: typeof meta.url === 'string' ? meta.url : '',
+      icons: Array.isArray(meta.icons) ? (meta.icons as unknown[]).filter((x): x is string => typeof x === 'string') : undefined,
+      description: typeof meta.description === 'string' ? (meta.description as string) : undefined,
+    };
   }
 
   private extractSignatureRecordMessage(rpcParams: unknown): string | null {
@@ -686,11 +871,11 @@ export class WalletConnectService {
     }
   }
   private extractProposalInfo(proposal: WalletKitTypes.SessionProposal): {
-    metadata: { name: string; url: string; icons?: string[] };
+    metadata: { name: string; url: string; icons?: string[]; description?: string };
     origin: string;
-    requiredEip155Chains: string[];
-    requiredMethods: string[];
-    requiredEvents: string[];
+    requestedEip155Chains: string[];
+    methods: string[];
+    events: string[];
   } {
     const proposer = proposal.params?.proposer;
     const meta = proposer?.metadata ?? {};
@@ -700,54 +885,70 @@ export class WalletConnectService {
       typeof proposal.verifyContext?.verified?.origin === 'string' ? proposal.verifyContext.verified.origin : typeof meta.url === 'string' ? meta.url : '';
 
     const required = proposal.params?.requiredNamespaces ?? {};
-    const requiredKeys = Object.keys(required);
+    const optional = proposal.params?.optionalNamespaces ?? {};
 
-    const requiredEip155ChainsSet = new Set<string>();
+    const requestedEip155ChainsSet = new Set<string>();
+
     const requiredMethodsSet = new Set<string>();
     const requiredEventsSet = new Set<string>();
+    const optionalMethodsSet = new Set<string>();
+    const optionalEventsSet = new Set<string>();
 
-    for (const key of requiredKeys) {
-      if (!key.startsWith('eip155')) continue;
+    let hasRequiredEip155 = false;
 
-      if (key.includes(':')) {
-        requiredEip155ChainsSet.add(key);
-        const ns = required[key] ?? {};
+    const collect = (namespaces: Record<string, any>, options: { markRequired?: boolean; methods: Set<string>; events: Set<string> }) => {
+      for (const key of Object.keys(namespaces)) {
+        if (!key.startsWith('eip155')) continue;
+
+        if (options.markRequired) hasRequiredEip155 = true;
+
+        if (key.includes(':')) {
+          requestedEip155ChainsSet.add(key);
+          const ns = namespaces[key] ?? {};
+          if (Array.isArray(ns.methods))
+            ns.methods.forEach((m: unknown) => {
+              typeof m === 'string' && options.methods.add(m);
+            });
+          if (Array.isArray(ns.events))
+            ns.events.forEach((e: unknown) => {
+              typeof e === 'string' && options.events.add(e);
+            });
+          continue;
+        }
+
+        const ns = namespaces[key] ?? {};
+        if (Array.isArray(ns.chains))
+          ns.chains.forEach((c: unknown) => {
+            typeof c === 'string' && requestedEip155ChainsSet.add(c);
+          });
         if (Array.isArray(ns.methods))
           ns.methods.forEach((m: unknown) => {
-            typeof m === 'string' && requiredMethodsSet.add(m);
+            typeof m === 'string' && options.methods.add(m);
           });
         if (Array.isArray(ns.events))
           ns.events.forEach((e: unknown) => {
-            typeof e === 'string' && requiredEventsSet.add(e);
+            typeof e === 'string' && options.events.add(e);
           });
-        continue;
       }
+    };
 
-      const ns = required[key] ?? {};
-      if (Array.isArray(ns.chains))
-        ns.chains.forEach((c: unknown) => {
-          typeof c === 'string' && requiredEip155ChainsSet.add(c);
-        });
-      if (Array.isArray(ns.methods))
-        ns.methods.forEach((m: unknown) => {
-          typeof m === 'string' && requiredMethodsSet.add(m);
-        });
-      if (Array.isArray(ns.events))
-        ns.events.forEach((e: unknown) => {
-          typeof e === 'string' && requiredEventsSet.add(e);
-        });
-    }
+    collect(required as any, { markRequired: true, methods: requiredMethodsSet, events: requiredEventsSet });
+    collect(optional as any, { methods: optionalMethodsSet, events: optionalEventsSet });
+
+    const methods = hasRequiredEip155 ? requiredMethodsSet : optionalMethodsSet;
+    const events = hasRequiredEip155 ? requiredEventsSet : optionalEventsSet;
 
     return {
       metadata: {
         name: typeof meta.name === 'string' ? meta.name : '',
         url: typeof meta.url === 'string' ? meta.url : '',
         icons,
+        description: typeof meta.description === 'string' ? meta.description : undefined,
       },
       origin,
-      requiredEip155Chains: Array.from(requiredEip155ChainsSet).filter((c) => c.startsWith('eip155:')),
-      requiredMethods: Array.from(requiredMethodsSet),
-      requiredEvents: Array.from(requiredEventsSet),
+      requestedEip155Chains: Array.from(requestedEip155ChainsSet).filter((c) => c.startsWith('eip155:')),
+      methods: Array.from(methods),
+      events: Array.from(events),
     };
   }
 
@@ -757,7 +958,11 @@ export class WalletConnectService {
     }
 
     const networks = await this.networkService.getAllNetworks();
-    const supported = new Set(networks.filter((n) => n.networkType === NetworkType.Ethereum).map((n) => `eip155:${n.netId}`));
+    const supportedByWallet = new Set(networks.filter((n) => n.networkType === NetworkType.Ethereum).map((n) => `eip155:${n.netId}`));
+    const supported =
+      Array.isArray(this.allowedEip155Chains) && this.allowedEip155Chains.length > 0
+        ? new Set(this.allowedEip155Chains.filter((chain) => supportedByWallet.has(chain)))
+        : supportedByWallet;
 
     const ok: string[] = [];
     const bad: string[] = [];

@@ -57,6 +57,13 @@ export type CoreEventMap = {
   'account/current-changed': { account: IAccount };
   'network/current-changed': { network: INetwork };
 
+  'signature/changed': {
+    addressId: string;
+    signatureId: string;
+    reason: 'created' | 'tx-linked';
+    txId?: string;
+  };
+
   'hardware-sign/started': { requestId: string; accountId: string; addressId: string; networkId: string };
   'hardware-sign/succeeded': { requestId: string; accountId: string; addressId: string; networkId: string; txHash: string; rawTransaction: string };
   'hardware-sign/failed': { requestId: string; accountId: string; addressId: string; networkId: string; error: HardwareOperationError };
@@ -99,7 +106,7 @@ export type CoreEventMap = {
   'external-requests/requested': { requestId: string; request: ExternalRequestSnapshot };
 
   'wallet-connect/sessions-changed': {
-    reason: 'init' | 'session_delete' | 'disconnect';
+    reason: 'init' | 'session_delete' | 'disconnect' | 'approve';
     topic?: string;
   };
 

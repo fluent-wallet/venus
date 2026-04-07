@@ -1,7 +1,3 @@
-import { getEventBus } from '@WalletCoreExtends/index';
-import { AUTHENTICATION_PASSWORD_REQUEST } from '@WalletCoreExtends/Plugins/Authentication';
-import Button from '@components/Button';
-import { useHasVault } from '@core/WalletCore/Plugins/ReactInject';
 import SpeedUp from '@modules/GasFee/SpeedUp';
 import PasswordVerify from '@modules/PasswordVerify';
 import { BSIMAvailability } from '@pages/BSIMAvailability';
@@ -31,13 +27,13 @@ import SignatureRecords from '@pages/SignatureRecords';
 import TooManyPending from '@pages/TooManyPending';
 import TransactionDetail from '@pages/TransactionDetail';
 import WalletConnect from '@pages/WalletConnect';
-import { useListenWalletConnectEvent } from '@pages/WalletConnect/useWalletConnectHooks';
 import WayToInitWallet from '@pages/WayToInitWallet';
 import Welcome from '@pages/Welcome';
 import { useNavigation, useTheme } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import { useRuntimeEventBridge } from '@service/runtimeBridge';
+import { useHasVault } from '@service/wallet';
 import type React from 'react';
-import { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StatusBar, View } from 'react-native';
 import {
@@ -90,23 +86,12 @@ const screenOptions = {
 
 const Router: React.FC = () => {
   const { t } = useTranslation();
-  const hasVault = useHasVault();
+  const { data: hasVault = false } = useHasVault();
   const { colors, mode } = useTheme();
 
   const navigation = useNavigation<StackNavigation>();
-  // to listen the wallet connect plugin custom subject event
-  useListenWalletConnectEvent();
 
-  useEffect(() => {
-    const sub = getEventBus()
-      .on(AUTHENTICATION_PASSWORD_REQUEST)
-      .subscribe(() => {
-        navigation.navigate(PasswordVerifyStackName);
-      });
-    return () => {
-      sub.unsubscribe();
-    };
-  }, [navigation]);
+  useRuntimeEventBridge(navigation);
 
   useListenDeepLink(navigation);
 

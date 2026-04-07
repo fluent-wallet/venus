@@ -3,8 +3,8 @@ import { children, field, lazy, reader, text, writer } from '@nozbe/watermelondb
 import { firstValueFrom, map } from 'rxjs';
 import TableName from '../../TableName';
 import type { AccountGroup } from '../AccountGroup';
-import type VaultSourceType from './VaultSourceType';
-import VaultType from './VaultType';
+import type { VaultSourceType } from './VaultSourceType';
+import { VaultType } from './VaultType';
 
 export class Vault extends Model {
   static table = TableName.Vault;

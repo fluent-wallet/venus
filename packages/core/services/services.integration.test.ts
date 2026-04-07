@@ -1,11 +1,7 @@
 import 'reflect-metadata';
 
-import { seedNetwork } from '@core/__tests__/fixtures';
-import { createMockHardwareWallet, createStrictTestCryptoTool } from '@core/__tests__/mocks';
-import { DEFAULT_HEX_ADDRESS, StubChainProvider } from '@core/__tests__/mocks/chainProviders';
 import { ChainRegistry } from '@core/chains';
 import type { Database } from '@core/database';
-import { mockDatabase } from '@core/database/__tests__/mockDatabases';
 import type { Account } from '@core/database/models/Account';
 import type { AccountGroup } from '@core/database/models/AccountGroup';
 import type { Address } from '@core/database/models/Address';
@@ -13,13 +9,17 @@ import type { Asset as DbAsset } from '@core/database/models/Asset';
 import { AssetSource, AssetType as DbAssetType } from '@core/database/models/Asset';
 import type { Network } from '@core/database/models/Network';
 import type { Tx } from '@core/database/models/Tx';
-import VaultType from '@core/database/models/Vault/VaultType';
+import { VaultType } from '@core/database/models/Vault/VaultType';
 import TableName from '@core/database/TableName';
+import { mockDatabase } from '@core/database/testUtils/mockDatabases';
 import { CORE_IDENTIFIERS } from '@core/di';
 import { HARDWARE_WALLET_TYPES } from '@core/hardware/bsim/constants';
 import { HardwareWalletRegistry } from '@core/hardware/HardwareWalletRegistry';
 import { AccountService, AssetService, registerServices, type SendTransactionInput, SigningService, TransactionService, VaultService } from '@core/services';
-import { AssetType, TxStatus as ServiceTxStatus } from '@core/types';
+import { seedNetwork } from '@core/testUtils/fixtures';
+import { createMockHardwareWallet, createStrictTestCryptoTool } from '@core/testUtils/mocks';
+import { DEFAULT_HEX_ADDRESS, StubChainProvider } from '@core/testUtils/mocks/chainProviders';
+import { AssetType, TX_EXECUTION_STATUS, TX_LIFECYCLE_STATUS } from '@core/types';
 import type { CryptoTool } from '@core/types/crypto';
 import { convertHexToBase32 } from '@core/utils/address';
 import { NetworkType } from '@core/utils/consts';
@@ -154,7 +154,10 @@ describe('Service integration', () => {
 
     // 5. Validate returned ITransaction view
     expect(result.networkId).toBe(network.id);
-    expect(result.status).toBe(ServiceTxStatus.Pending);
+    expect(result.state).toEqual({
+      lifecycle: TX_LIFECYCLE_STATUS.Pending,
+      execution: TX_EXECUTION_STATUS.Unknown,
+    });
     expect(result.hash).toBe('0xhash'); // from StubChainProvider
     expect(result.from).toBe(await dbAddress.getValue());
     expect(result.to).toBe(input.to);

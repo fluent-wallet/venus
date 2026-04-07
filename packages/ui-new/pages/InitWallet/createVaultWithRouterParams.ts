@@ -1,59 +1,109 @@
-import { isAuthenticationCanceledError, isAuthenticationError } from '@WalletCoreExtends/Plugins/Authentication/errors';
 import i18n from '@assets/i18n';
-import methods from '@core/WalletCore/Methods';
-import plugins from '@core/WalletCore/Plugins';
+import { AUTH_PASSWORD_REQUEST_CANCELED } from '@core/errors';
 import type { RootStackParamList } from '@router/configs';
+import { getAccountRootKey } from '@service/account';
+import { getAccountGroupRootKey } from '@service/accountGroup';
+import { getAuthService, getQueryClient, getVaultService } from '@service/core';
+import { getVaultRootKey } from '@service/vault';
 import { Mnemonic } from 'ethers';
 import { showMessage } from 'react-native-flash-message';
 
-const createVaultWithRouterParams = async (args: RootStackParamList['Biometrics'], password?: string) => {
-  const type =
-    args?.type === 'importExistWallet'
-      ? Mnemonic.isValidMnemonic(args?.value ?? '')
-        ? 'SeedPhrase'
-        : 'PrivateKey'
-      : args?.type === 'connectBSIM'
-        ? 'BSIM'
-        : 'SeedPhrase';
+type CreateVaultErrorType = 'SeedPhrase' | 'PrivateKey' | 'BSIM';
+type CreateVaultResult = boolean | undefined;
+
+function resolveErrorType(args: RootStackParamList['Biometrics']): CreateVaultErrorType {
+  if (args?.type === 'connectBSIM') return 'BSIM';
+
+  if (args?.type === 'importExistWallet') {
+    const value = String(args.value ?? '').trim();
+    if (Mnemonic.isValidMnemonic(value)) return 'SeedPhrase';
+    return 'PrivateKey';
+  }
+
+  // createNewWallet (or missing params) defaults to SeedPhrase
+  return 'SeedPhrase';
+}
+
+const createVaultWithRouterParams = async (args: RootStackParamList['Biometrics'], password?: string): Promise<CreateVaultResult> => {
+  const errorType = resolveErrorType(args);
 
   try {
-    if (args?.type === 'importExistWallet' && !args?.value) {
-      throw new Error(i18n.t('initWallet.error.invalidValue'));
-    }
+    const queryClient = getQueryClient();
+    const vaultService = getVaultService();
+
+    const invalidateWalletCaches = () => {
+      void queryClient.invalidateQueries({ queryKey: getVaultRootKey() });
+      void queryClient.invalidateQueries({ queryKey: getAccountRootKey() });
+      void queryClient.invalidateQueries({ queryKey: getAccountGroupRootKey() });
+    };
+
+    const requirePassword = async (): Promise<string> => {
+      if (typeof password === 'string' && password.length > 0) return password;
+      // Only resolve AuthService when we actually need to prompt user.
+      return getAuthService().getPassword();
+    };
 
     if (args?.type === 'importExistWallet') {
-      const hasSame = await methods.checkHasSameVault(args.value!);
+      const value = String(args.value ?? '').trim();
+      if (!value) {
+        throw new Error(i18n.t('initWallet.error.invalidValue'));
+      }
+
+      const isMnemonic = Mnemonic.isValidMnemonic(value);
+      // Future direction:
+      // move duplicate detection to a Vault secret fingerprint so this check does not
+      // depend on decrypting stored secrets.
+      const resolvedPassword = await requirePassword();
+      const hasSame = await vaultService.hasExistingSecretImport(
+        isMnemonic ? { mnemonic: value, password: resolvedPassword } : { privateKey: value, password: resolvedPassword },
+      );
       if (hasSame) {
         showMessage({
-          message: i18n.t('initWallet.error.exist', { type: type === 'SeedPhrase' ? i18n.t('common.seedPhrase') : i18n.t('common.privateKey') }),
+          message: i18n.t('initWallet.error.exist', { type: isMnemonic ? i18n.t('common.seedPhrase') : i18n.t('common.privateKey') }),
           type: 'failed',
         });
         return;
       }
-      if (type === 'PrivateKey') {
-        await methods.createPrivateKeyVault(args.value!, password);
+
+      if (isMnemonic) {
+        await vaultService.createHDVault({ mnemonic: value, password: resolvedPassword });
       } else {
-        await methods.createHDVault(args.value, password);
+        await vaultService.createPrivateKeyVault({ privateKey: value, password: resolvedPassword });
       }
-    } else if (args?.type === 'connectBSIM') {
-      await methods.createBSIMVault(await plugins.BSIM.connectBSIM(), password);
-    } else {
-      await methods.createHDVault(undefined, password);
+
+      invalidateWalletCaches();
+      return true;
     }
 
+    if (args?.type === 'connectBSIM') {
+      const resolvedPassword = await requirePassword();
+      await vaultService.createBSIMVault({
+        connectOptions: { deviceIdentifier: args.bsimDeviceId },
+        password: resolvedPassword,
+      });
+      invalidateWalletCaches();
+      return true;
+    }
+
+    // createNewWallet (or missing type) defaults to HD
+    const resolvedPassword = await requirePassword();
+    await vaultService.createHDVault({ password: resolvedPassword });
+    invalidateWalletCaches();
     return true;
-  } catch (err) {
-    if (isAuthenticationError(err) && isAuthenticationCanceledError(err)) {
+  } catch (error) {
+    if (error instanceof Error && 'code' in error && error.code === AUTH_PASSWORD_REQUEST_CANCELED) {
       return;
     }
-    const typeMap = {
+
+    const typeMap: Record<CreateVaultErrorType, string> = {
       SeedPhrase: i18n.t('common.seedPhrase'),
       PrivateKey: i18n.t('common.privateKey'),
       BSIM: 'BSIM',
     };
+
     showMessage({
-      message: i18n.t('initWallet.error.unknown', { type: typeMap[type] }),
-      description: String(err ?? ''),
+      message: i18n.t('initWallet.error.unknown', { type: typeMap[errorType] }),
+      description: String(error ?? ''),
       type: 'failed',
     });
     return false;

@@ -1,4 +1,3 @@
-import { getAuthentication } from '@WalletCoreExtends/index';
 import Button from '@components/Button';
 import Checkbox from '@components/Checkbox';
 import Text from '@components/Text';
@@ -6,6 +5,7 @@ import TextInput from '@components/TextInput';
 import useInAsync from '@hooks/useInAsync';
 import { CommonActions, useTheme } from '@react-navigation/native';
 import { HomeStackName, type PasswordWayStackName, type StackScreenProps } from '@router/configs';
+import { getAuthService } from '@service/core';
 import { isDev } from '@utils/getEnv';
 import type React from 'react';
 import { useCallback, useState } from 'react';
@@ -39,26 +39,52 @@ const PasswordWay: React.FC<StackScreenProps<typeof PasswordWayStackName>> = ({ 
 
   const [confirm, setConfirm] = useState(isDev);
 
-  const _handleCreateVault = useCallback(async (data: FormData) => {
-    try {
-      const authentication = getAuthentication();
-      navigation.setOptions({ gestureEnabled: false });
-      await authentication.setPassword({ password: data.confirm });
-      await new Promise((resolve) => setTimeout(() => resolve(null!), 20));
-      if (await createVault(route.params, data.confirm)) {
-        showMessage({ type: 'success', message: t('initWallet.msg.success') });
+  const _handleCreateVault = useCallback(
+    async (data: FormData) => {
+      const auth = getAuthService();
+      const previousCredentialKind = auth.getCredentialKindValue();
+      let shouldRollbackCredentialKind = false;
+
+      try {
+        navigation.setOptions({ gestureEnabled: false });
+        await new Promise<void>((resolve) => {
+          setTimeout(resolve, 20);
+        });
+
+        await auth.setCredentialKind('password');
+        shouldRollbackCredentialKind = true;
+
+        if (await createVault(route.params, data.confirm)) {
+          shouldRollbackCredentialKind = false;
+          showMessage({ type: 'success', message: t('initWallet.msg.success') });
+          navigation.navigate(HomeStackName);
+          navigation.dispatch(CommonActions.reset({ index: 0, routes: [{ name: HomeStackName }] }));
+          return;
+        }
+
+        if (shouldRollbackCredentialKind) {
+          await auth.setCredentialKind(previousCredentialKind);
+          shouldRollbackCredentialKind = false;
+        }
+      } catch (err) {
+        console.log('Init Wallet by password error: ', err);
+        if (shouldRollbackCredentialKind) {
+          try {
+            await auth.setCredentialKind(previousCredentialKind);
+            shouldRollbackCredentialKind = false;
+          } catch {
+            // Best-effort rollback; preserve the original init failure.
+          }
+        }
+        showMessage({ type: 'failed', message: t('initWallet.msg.failed'), description: String(err) ?? '' });
         navigation.navigate(HomeStackName);
         navigation.dispatch(CommonActions.reset({ index: 0, routes: [{ name: HomeStackName }] }));
+      } finally {
+        navigation.setOptions({ gestureEnabled: true });
       }
-    } catch (err) {
-      console.log('Init Wallet by password error: ', err);
-      showMessage({ type: 'failed', message: t('initWallet.msg.failed'), description: String(err) ?? '' });
-      navigation.navigate(HomeStackName);
-      navigation.dispatch(CommonActions.reset({ index: 0, routes: [{ name: HomeStackName }] }));
-    } finally {
-      navigation.setOptions({ gestureEnabled: true });
-    }
-  }, []);
+    },
+    [navigation, route.params, t],
+  );
 
   const { inAsync, execAsync: handleCreateVault } = useInAsync(_handleCreateVault);
 

@@ -1,10 +1,10 @@
-import type { AssetSource, AssetType } from '@core/database/models/Asset';
+import type { AssetSource, AssetTypeValue } from '@core/types';
 
 export interface IAsset {
   id: string;
   name: string | null;
   symbol: string | null;
-  type: AssetType;
+  type: AssetTypeValue;
   contractAddress: string | null;
   decimals: number | null;
   icon: string | null;
@@ -25,3 +25,21 @@ export interface AddCustomTokenInput {
   decimals?: number;
   icon?: string;
 }
+
+export type Erc20TokenInfo = {
+  name: string | null;
+  symbol: string | null;
+  decimals: number;
+  /**
+   * ERC20 `balanceOf` result in base units (decimal string).
+   */
+  balance: string;
+};
+
+export type ContractAssetInspection = {
+  assetType: AssetTypeValue | null;
+  name: string | null;
+  symbol: string | null;
+  decimals: number | null;
+  balance: string | null;
+};

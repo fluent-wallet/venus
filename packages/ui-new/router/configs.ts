@@ -1,13 +1,12 @@
-import type { BSIMHardwareReason } from '@WalletCoreExtends/Plugins/BSIM';
-import type { NetworkType } from '@core/utils/consts';
-import type { SpeedUpAction } from '@core/WalletCore/Events/broadcastTransactionSubject';
-import type { AssetInfo } from '@core/WalletCore/Plugins/AssetsTracker/types';
-import type { NFTItemDetail } from '@core/WalletCore/Plugins/NFTDetailTracker/server';
-import type { IWCSendTransactionEventData, IWCSessionProposalEventData, IWCSignMessageEventData } from '@core/WalletCore/Plugins/WalletConnect/types';
+import type { HardwareUnavailableReason as BSIMHardwareReason } from '@core/hardware/bsim/types';
+import type { ExternalRequestSnapshot } from '@core/modules/externalRequests';
+import type { SpeedUpAction } from '@core/types';
 import type { SpeedUpLevel } from '@modules/GasFee/GasFeeSetting';
 import type { VersionJSON } from '@pages/Settings/AboutUs';
 import type { NavigationProp, NavigatorScreenParams } from '@react-navigation/native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
+import type { INftItem } from '@service/core';
+import type { AssetInfo } from '@utils/assetInfo';
 
 export const WelcomeStackName = 'Welcome';
 export const WayToInitWalletStackName = 'WayToInitWallet';
@@ -50,14 +49,33 @@ export const WalletConnectSessionsStackName = 'WalletConnectSessions';
 export const WalletConnectSignMessageStackName = 'WalletConnectSignMessage';
 export const WalletConnectTransactionStackName = 'WalletConnectTransaction';
 
+type RuntimeWcProposalParams = {
+  requestId: string;
+  request: Extract<ExternalRequestSnapshot, { provider: 'wallet-connect'; kind: 'session_proposal' }>;
+};
+
+type RuntimeWcSessionRequest = Extract<ExternalRequestSnapshot, { provider: 'wallet-connect'; kind: 'session_request' }>;
+
+type RuntimeWcSignMessageParams = {
+  requestId: string;
+  request: RuntimeWcSessionRequest & { method: 'personal_sign' | 'eth_signTypedData' | 'eth_signTypedData_v3' | 'eth_signTypedData_v4' };
+};
+
+type RuntimeWcSendTxParams = {
+  requestId: string;
+  request: RuntimeWcSessionRequest & { method: 'eth_sendTransaction' };
+  isContract: boolean;
+};
 export type WalletConnectParamList = {
-  [WalletConnectProposalStackName]: IWCSessionProposalEventData & {
-    connectedNetworks: Array<{ icon: string; name: string; netId: number; id: string; networkType: NetworkType }>;
-  };
+  [WalletConnectProposalStackName]: RuntimeWcProposalParams;
+
   [WalletConnectSessionsStackName]: undefined;
-  [WalletConnectSignMessageStackName]: IWCSignMessageEventData;
-  [WalletConnectTransactionStackName]: IWCSendTransactionEventData & { isContract: boolean };
-  [PasswordVerifyStackName]: undefined;
+
+  [WalletConnectSignMessageStackName]: RuntimeWcSignMessageParams;
+
+  [WalletConnectTransactionStackName]: RuntimeWcSendTxParams;
+
+  [PasswordVerifyStackName]: undefined | { requestId: string };
 };
 
 // end Wallet connect nest stack
@@ -65,10 +83,10 @@ export type WalletConnectParamList = {
 export type RootStackParamList = {
   [WelcomeStackName]: undefined;
   [WayToInitWalletStackName]: undefined;
-  [RecoverBsimStackName]: undefined;
-  [ChangeBPinStackName]: undefined;
-  [PasswordWayStackName]?: { type?: 'importExistWallet' | 'createNewWallet' | 'connectBSIM'; value?: string };
-  [BiometricsWayStackName]?: { type?: 'importExistWallet' | 'createNewWallet' | 'connectBSIM'; value?: string };
+  [RecoverBsimStackName]: undefined | { bsimDeviceId?: string };
+  [ChangeBPinStackName]: undefined | { bsimDeviceId?: string };
+  [PasswordWayStackName]?: { type?: 'importExistWallet' | 'createNewWallet' | 'connectBSIM'; value?: string; bsimDeviceId?: string };
+  [BiometricsWayStackName]?: { type?: 'importExistWallet' | 'createNewWallet' | 'connectBSIM'; value?: string; bsimDeviceId?: string };
   [HomeStackName]: undefined;
   [AccountManagementStackName]: undefined;
   [AccountSettingStackName]: { accountId: string };
@@ -77,7 +95,7 @@ export type RootStackParamList = {
   [BackupStackName]: NavigatorScreenParams<BackupStackParamList>;
   [SendTransactionStackName]: NavigatorScreenParams<SendTransactionParamList>;
   [NetworkManagementStackName]: undefined;
-  [PasswordVerifyStackName]: undefined;
+  [PasswordVerifyStackName]: undefined | { requestId: string };
   [ReceiveStackName]: undefined;
   [EraseAllWalletStackName]: undefined;
   [AddAnotherWalletStackName]: undefined;
@@ -93,7 +111,7 @@ export type RootStackParamList = {
   [SpeedUpStackName]: { txId: string; type: SpeedUpAction; level?: SpeedUpLevel };
   [TransactionDetailStackName]: { txId: string };
   [ExternalInputHandlerStackName]: { data: string } | undefined;
-  [TooManyPendingStackName]: undefined;
+  [TooManyPendingStackName]: undefined | { requestId?: string };
   [BSIMAvailabilityStackName]: { reason?: BSIMHardwareReason };
 };
 
@@ -119,7 +137,7 @@ export type BackupStackParamList = {
   [BackupSuccessStackName]: undefined;
   // navigate to home
   [HomeStackName]: undefined;
-  [PasswordVerifyStackName]: undefined;
+  [PasswordVerifyStackName]: undefined | { requestId: string };
 };
 export type BackupScreenProps<T extends keyof BackupStackParamList> = NativeStackScreenProps<BackupStackParamList, T>;
 // end backup nest stack
@@ -132,11 +150,11 @@ export const SendTransactionStep4StackName = 'SendTransactionStep4';
 export type SendTransactionParamList = {
   [SendTransactionStep1StackName]: undefined;
   [SendTransactionStep2StackName]: { recipientAddress: string; searchAddress?: string };
-  [SendTransactionStep3StackName]: { asset: AssetInfo; recipientAddress: string; nftItemDetail?: NFTItemDetail; amount?: string };
-  [SendTransactionStep4StackName]: { asset: AssetInfo; recipientAddress: string; amount: string; nftItemDetail?: NFTItemDetail; inMaxMode?: boolean };
+  [SendTransactionStep3StackName]: { asset: AssetInfo; recipientAddress: string; nftItemDetail?: INftItem; amount?: string };
+  [SendTransactionStep4StackName]: { asset: AssetInfo; recipientAddress: string; amount: string; nftItemDetail?: INftItem; inMaxMode?: boolean };
   // navigate to home
   [HomeStackName]: undefined;
-  [PasswordVerifyStackName]: undefined;
+  [PasswordVerifyStackName]: undefined | { requestId: string };
 };
 export type SendTransactionScreenProps<T extends keyof SendTransactionParamList> = NativeStackScreenProps<SendTransactionParamList, T>;
 // end SendTransaction nest stack

@@ -1,12 +1,12 @@
 package io.bimwallet
-import expo.modules.ReactActivityDelegateWrapper
 
 import android.os.Bundle
 import com.facebook.react.ReactActivity
 import com.facebook.react.ReactActivityDelegate
 import com.facebook.react.defaults.DefaultNewArchitectureEntryPoint.fabricEnabled
 import com.facebook.react.defaults.DefaultReactActivityDelegate
-import com.zoontek.rnbootsplash.RNBootSplash;
+import com.zoontek.rnbootsplash.RNBootSplash
+import expo.modules.ReactActivityDelegateWrapper
 
 class MainActivity : ReactActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -24,6 +24,15 @@ class MainActivity : ReactActivity() {
      * Returns the instance of the [ReactActivityDelegate]. We use [DefaultReactActivityDelegate]
      * which allows you to enable New Architecture with a single boolean flags [fabricEnabled]
      */
-    override fun createReactActivityDelegate(): ReactActivityDelegate =
-        ReactActivityDelegateWrapper(this, BuildConfig.IS_NEW_ARCHITECTURE_ENABLED, DefaultReactActivityDelegate(this, mainComponentName, fabricEnabled))
+  override fun createReactActivityDelegate(): ReactActivityDelegate {
+    return ReactActivityDelegateWrapper(
+      this,
+      BuildConfig.IS_NEW_ARCHITECTURE_ENABLED,
+      object : DefaultReactActivityDelegate(
+        this,
+        mainComponentName,
+        fabricEnabled
+      ) {}
+    )
+  }
 }

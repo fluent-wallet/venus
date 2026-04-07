@@ -1,9 +1,8 @@
 import i18n, { resources } from '@assets/i18n';
-import database from '@core/database';
-import { getAtom, setAtom } from '@core/WalletCore/Plugins/ReactInject';
+import { getQueryClient, getUiPreferencesService } from '@service/core';
+import { useQuery } from '@tanstack/react-query';
 import { getLocales } from 'expo-localization';
-import { atom, useAtomValue } from 'jotai';
-import { useState } from 'react';
+import { useEffect, useMemo } from 'react';
 import { AppState } from 'react-native';
 
 export enum Lang {
@@ -28,96 +27,71 @@ export const getSystemLang = () => {
   return Lang.en;
 };
 
-const storageKey = 'i18n-lang';
-const _langAtom = atom<Lang>(Lang.en);
-database.localStorage.get(storageKey).then((dbLang) => {
-  if (dbLang === Lang.system || typeof dbLang === 'undefined') {
-    const lang = getSystemLang();
+export const getI18nLangKey = () => ['preferences', 'i18n', 'lang'] as const;
 
-    setAtom(langAtom, Lang.system);
-    changeLangBySystem(lang);
-    if (typeof dbLang === 'undefined') {
-      database.localStorage.set(storageKey, Lang.system);
-    }
-  } else {
-    setAtom(langAtom, dbLang as Lang);
-    changeLangBySystem((dbLang as Lang) || Lang.system);
-  }
-});
-
-const langAtom = atom(
-  (get) => {
-    const mode = get(_langAtom);
-    return mode || Lang.system;
-  },
-  (_, set, update: Lang) => {
-    set(_langAtom, update);
-  },
-);
-
-function changeLang(updateLang: Lang, { updateDB = false, updateAtom = false }) {
-  const supportLang = Object.values(Lang);
-  let newLang = Lang.en;
-  if (updateLang.startsWith(Lang.zhHant)) {
-    newLang = Lang.zhHant;
-  } else if (updateLang === Lang.system) {
-    newLang = Lang.system;
-  } else if (supportLang.includes(updateLang)) {
-    newLang = updateLang;
-  }
-
-  if (newLang === Lang.system) {
-    const sysLang = getSystemLang();
-    i18n.changeLanguage(sysLang);
-  } else {
-    i18n.changeLanguage(newLang);
-  }
-
-  if (updateAtom) {
-    setAtom(langAtom, newLang);
-  }
-
-  if (updateDB) {
-    database.localStorage.set(storageKey, newLang);
-  }
-}
-
-function changeLangBySystem(lang: Lang) {
-  // change lang by system don't change atom and db
-  changeLang(lang, { updateAtom: false, updateDB: false });
-}
-
-function handleSystemActive(nextAppState: string) {
-  if (nextAppState === 'active' && getAtom(langAtom) === Lang.system) {
-    const lang = getSystemLang();
-    if (i18n.language !== lang) {
-      changeLangBySystem(lang);
-    }
-  }
-}
-
-AppState.addEventListener('change', handleSystemActive);
+const parseLang = (value: unknown): Lang => {
+  if (value === Lang.system) return Lang.system;
+  if (value === Lang.en) return Lang.en;
+  if (value === Lang.zhHant) return Lang.zhHant;
+  return Lang.system;
+};
 
 export const setI18nLanguage = (lang: Lang) => {
-  changeLang(lang, { updateAtom: true, updateDB: true });
+  const normalized = parseLang(lang);
+  getQueryClient().setQueryData(getI18nLangKey(), normalized);
+  void getUiPreferencesService()
+    .setLanguage(normalized)
+    .catch((error) => console.log(error));
 };
 
-export const useLang = () => useAtomValue(langAtom);
-export const useSystemLang = () => {
-  const [sysLang, setSysLang] = useState(() => getSystemLang());
-  return sysLang;
+export const useLang = (): Lang => {
+  const prefs = getUiPreferencesService();
+  const query = useQuery({
+    queryKey: getI18nLangKey(),
+    queryFn: async () => parseLang(await prefs.getLanguage()),
+    initialData: Lang.system,
+    staleTime: Infinity,
+    gcTime: Infinity,
+  });
+
+  return parseLang(query.data);
 };
 
-export const useLanguage = () => {
+export const useLanguage = (): Lang => {
   const lang = useLang();
-  const systemLang = useSystemLang();
+  return lang === Lang.system ? getSystemLang() : lang;
+};
 
-  return lang === Lang.system ? systemLang : lang;
+export const useI18nInit = () => {
+  const lang = useLang();
+  const applied = useMemo(() => (lang === Lang.system ? getSystemLang() : lang), [lang]);
+
+  useEffect(() => {
+    if (i18n.language !== applied) {
+      void i18n.changeLanguage(applied).catch((error) => console.log(error));
+    }
+  }, [applied]);
+
+  useEffect(() => {
+    const sub = AppState.addEventListener('change', (next) => {
+      if (next !== 'active') return;
+      if (lang !== Lang.system) return;
+
+      const sys = getSystemLang();
+      if (i18n.language !== sys) {
+        void i18n.changeLanguage(sys).catch((error) => console.log(error));
+      }
+    });
+
+    return () => {
+      sub.remove();
+    };
+  }, [lang]);
 };
 
 export const getI18n = () => {
-  const lange = getAtom(langAtom);
-  const sysLang = getSystemLang();
-  const usedLang = lange === Lang.system ? sysLang : lange;
-  return resources[usedLang];
+  const stored = getQueryClient().getQueryData(getI18nLangKey());
+  const normalized = parseLang(stored);
+  const used = normalized === Lang.system ? getSystemLang() : normalized;
+  return resources[used];
 };

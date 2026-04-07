@@ -3,7 +3,7 @@ import { type Asset, AssetType } from '@core/database/models/Asset';
 import type { Tx } from '@core/database/models/Tx';
 import { ExecutedStatus, FAILED_TX_STATUSES, PENDING_TX_STATUSES } from '@core/database/models/Tx/type';
 import type { TxPayload } from '@core/database/models/TxPayload';
-import { type FunctionNameApprove, parseTxData } from '@utils/parseTxData';
+import { type FunctionNameApprove, parseTxData } from './txData';
 
 export const formatStatus = (tx: Tx): 'failed' | 'pending' | 'confirmed' => {
   const { status, executedStatus } = tx;

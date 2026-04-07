@@ -1,9 +1,9 @@
 import { BottomSheetContent, BottomSheetHeader, type BottomSheetMethods, BottomSheetWrapper, InlineBottomSheet, snapPoints } from '@components/BottomSheet';
 import Text from '@components/Text';
-import methods from '@core/WalletCore/Methods';
 import AccountsList from '@modules/AccountsList';
 import { useNavigation, useTheme } from '@react-navigation/native';
 import { AccountManagementStackName, type HomeStackName, type StackScreenProps } from '@router/configs';
+import { useSwitchAccount } from '@service/account';
 import type React from 'react';
 import { useRef } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -20,6 +20,7 @@ const AccountSelector: React.FC<Props> = ({ onClose, isOpen }) => {
   const { t } = useTranslation();
   const navigation = useNavigation<StackScreenProps<typeof HomeStackName>['navigation']>();
   const bottomSheetRef = useRef<BottomSheetMethods>(null!);
+  const switchAccount = useSwitchAccount();
 
   return (
     <InlineBottomSheet ref={bottomSheetRef} snapPoints={snapPoints.percent75} index={isOpen ? 0 : -1} onClose={onClose}>
@@ -39,7 +40,7 @@ const AccountSelector: React.FC<Props> = ({ onClose, isOpen }) => {
             disabledCurrent
             onPressAccount={({ accountId, isCurrent }) => {
               if (isCurrent) return;
-              methods.selectAccount(accountId);
+              switchAccount(accountId);
               bottomSheetRef?.current?.close();
             }}
           />

@@ -1,6 +1,7 @@
 import { ExecutedStatus, type Receipt, TxStatus } from '@core/database/models/Tx/type';
 import type { IChainProvider } from '@core/types';
-import { NetworkType } from '@core/utils/consts';
+import { MAX_EPOCH_NUMBER_OFFSET_IN_CORE, NetworkType } from '@core/utils/consts';
+import type { Rpc as EvmRpcTransactionReceipt } from 'ox/TransactionReceipt';
 import { CFX_RPC, EVM_RPC } from './rpc';
 
 export type NonceUsedState = 'not_used' | 'temp_used' | 'finalized_used';
@@ -31,6 +32,7 @@ export interface TxSyncDriver {
   getFinalityWaterline(): Promise<FinalityWaterline>;
   batchGetBlockTimestampsMs(blockHashes: Array<string | null | undefined>): Promise<Array<number | undefined>>;
 
+  precheckBeforeResend(params: { epochHeight?: string | null }): Promise<boolean>;
   sendRawTransaction(raw: string): Promise<string>;
 
   getReceiptBlockHash(receipt: unknown): string | null;
@@ -71,10 +73,7 @@ class EvmTxSyncDriver implements TxSyncDriver {
 
     const latest = toNumFromHex(latestRaw);
     const finalized = toNumFromHex(finalizedRaw);
-
-    if (finalized > nonce) return 'finalized_used';
-    if (latest > nonce) return 'temp_used';
-    return 'not_used';
+    return finalized > nonce ? 'finalized_used' : latest > nonce ? 'temp_used' : 'not_used';
   }
 
   async batchGetPresence(hashes: string[]): Promise<TxPresence[]> {
@@ -126,6 +125,9 @@ class EvmTxSyncDriver implements TxSyncDriver {
 
     return out;
   }
+  async precheckBeforeResend(): Promise<boolean> {
+    return true;
+  }
   sendRawTransaction(raw: string): Promise<string> {
     return this.provider.rpc.request<string>(EVM_RPC.sendRawTransaction, [raw]);
   }
@@ -144,7 +146,7 @@ class EvmTxSyncDriver implements TxSyncDriver {
   }
 
   normalizeExecuted(params: { receipt: unknown; executedAtMs?: number; waterline: FinalityWaterline }): ExecutedSnapshot {
-    const r = params.receipt as any;
+    const r = params.receipt as EvmRpcTransactionReceipt;
 
     const receipt: Receipt = {
       cumulativeGasUsed: r.cumulativeGasUsed ?? null,
@@ -170,7 +172,7 @@ class EvmTxSyncDriver implements TxSyncDriver {
       executedStatus,
       receipt,
       executedAt: typeof params.executedAtMs === 'number' ? new Date(params.executedAtMs) : undefined,
-      err: executedStatus === '0' ? (r.txExecErrorMsg ?? 'tx failed') : undefined,
+      err: executedStatus === '0' ? 'tx failed' : undefined,
     };
   }
 }
@@ -197,10 +199,7 @@ class CfxTxSyncDriver implements TxSyncDriver {
 
     const latest = toNumFromHex(latestRaw);
     const finalized = toNumFromHex(finalizedRaw);
-
-    if (finalized > nonce) return 'finalized_used';
-    if (latest > nonce) return 'temp_used';
-    return 'not_used';
+    return finalized > nonce ? 'finalized_used' : latest > nonce ? 'temp_used' : 'not_used';
   }
 
   async batchGetPresence(hashes: string[]): Promise<TxPresence[]> {
@@ -254,6 +253,22 @@ class CfxTxSyncDriver implements TxSyncDriver {
     return out;
   }
 
+  async precheckBeforeResend(params: { epochHeight?: string | null }): Promise<boolean> {
+    try {
+      const txEpochHeight = toBigIntOrUndef(params.epochHeight);
+      if (txEpochHeight === undefined) {
+        return false;
+      }
+
+      const currentEpochRaw = await this.provider.rpc.request<string>(CFX_RPC.epochNumber, ['latest_state']);
+      const currentEpoch = BigInt(currentEpochRaw);
+      const diff = currentEpoch - txEpochHeight;
+
+      return diff >= -MAX_EPOCH_NUMBER_OFFSET_IN_CORE && diff <= MAX_EPOCH_NUMBER_OFFSET_IN_CORE;
+    } catch {
+      return false;
+    }
+  }
   sendRawTransaction(raw: string): Promise<string> {
     return this.provider.rpc.request<string>(CFX_RPC.sendRawTransaction, [raw]);
   }

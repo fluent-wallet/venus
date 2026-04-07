@@ -10,9 +10,8 @@ import {
 } from '@components/BottomSheet';
 import Button from '@components/Button';
 import Text from '@components/Text';
-import { useCurrentNetwork } from '@core/WalletCore/Plugins/ReactInject';
-import { minGasLimit } from '@core/WalletCore/Plugins/Transaction/SuggestedGasEstimate';
 import { useTheme } from '@react-navigation/native';
+import { useCurrentNetwork } from '@service/network';
 import Decimal from 'decimal.js';
 /* eslint-disable react-hooks/exhaustive-deps */
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
@@ -39,11 +38,13 @@ type FormData = {
   storageLimit: string;
 };
 
+const minGasLimit = new Decimal(21000);
+
 const CustomizeAdvanceSetting: React.FC<Props> = ({ customizeAdvanceSetting, estimateGasLimit, estimateNonce, nonceDisabled, onClose, onConfirm }) => {
   const { t } = useTranslation();
   const { colors } = useTheme();
   const bottomSheetRef = useRef<BottomSheetMethods>(null!);
-  const currentNetwork = useCurrentNetwork()!;
+  const { data: currentNetwork } = useCurrentNetwork();
 
   const {
     control,

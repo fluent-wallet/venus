@@ -1,4 +1,5 @@
 import type { ChainRegistry } from '@core/chains';
+import { getESpaceChainConfig } from '@core/chains/eSpaceConfig';
 import type { Database } from '@core/database';
 import type { Address } from '@core/database/models/Address';
 import type { Asset } from '@core/database/models/Asset';
@@ -26,17 +27,6 @@ type ReceiveAssetsSyncServiceOptions = {
   now: () => number;
   logger: { warn: (message: string, meta?: Record<string, unknown>) => void };
   fetchFn?: FetchFunction;
-};
-
-const E_SPACE_CONFIG_BY_CHAIN_ID: Record<string, ESpaceConfig> = {
-  '0x406': {
-    tokenListContract: '0xf1a8b97ef61bf8fe3c54c94a16c57c0f7afc2277',
-    scanOpenApiBaseUrl: 'https://evmapi.confluxscan.org',
-  },
-  '0x47': {
-    tokenListContract: '0xcd54f022b0355e00db610f6b3411c76b5c61320f',
-    scanOpenApiBaseUrl: 'https://evmapi-testnet.confluxscan.org',
-  },
 };
 
 const isObject = (value: unknown): value is Record<string, unknown> => typeof value === 'object' && value !== null;
@@ -269,8 +259,13 @@ export class ReceiveAssetsSyncService {
 
   private getESpaceConfigOrNull(network: { chainId: string; networkType: NetworkType }): ESpaceConfig | null {
     if (network.networkType !== NetworkType.Ethereum) return null;
-    const key = network.chainId.toLowerCase();
-    return E_SPACE_CONFIG_BY_CHAIN_ID[key] ?? null;
+    const config = getESpaceChainConfig(network.chainId);
+    if (!config) return null;
+
+    return {
+      tokenListContract: config.tokenListContract,
+      scanOpenApiBaseUrl: config.scanOpenApiBaseUrl,
+    };
   }
 
   private async getCurrentAddressOrNull(params: { expectedNetworkId: string }): Promise<Address | null> {

@@ -1,10 +1,9 @@
 import { BottomSheetContent, BottomSheetFooter, BottomSheetTextInput, BottomSheetWrapper, InlineBottomSheet } from '@components/BottomSheet';
 import Button from '@components/Button';
 import Text from '@components/Text';
-import { stripHexPrefix } from '@core/utils/base';
+import { isValidPrivateKeyHex } from '@core/utils/secp256k1';
 import type BottomSheet from '@gorhom/bottom-sheet';
 import useInAsync from '@hooks/useInAsync';
-import * as secp from '@noble/secp256k1';
 import { useTheme } from '@react-navigation/native';
 import { isAdjustResize, screenHeight } from '@utils/deviceInfo';
 import { Mnemonic } from 'ethers';
@@ -40,7 +39,7 @@ const ImportExistingWallet: React.FC<Props> = ({ bottomSheetRef, inImporting, on
       statusRes = { type: 'error', message: t('wallet.import.error.empty') };
     } else if (Mnemonic.isValidMnemonic(value)) {
       statusRes = { type: 'success', message: t('wallet.import.error.validPhrase') };
-    } else if (secp.utils.isValidPrivateKey(stripHexPrefix(value))) {
+    } else if (isValidPrivateKeyHex(value)) {
       statusRes = { type: 'success', message: t('wallet.import.error.validPrivateKey') };
     } else {
       statusRes = { type: 'error', message: t('wallet.import.error.unknown') };

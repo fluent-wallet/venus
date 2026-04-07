@@ -19,7 +19,7 @@ on:
 jobs:
   ios-build:
     name: IOS Build
-    runs-on: macos-15
+    runs-on: macos-26
     steps:
       - name: Check out Git repository
         uses: actions/checkout@v4

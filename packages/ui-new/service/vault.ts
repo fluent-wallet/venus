@@ -2,11 +2,12 @@ import type { CreateBSIMVaultInput, CreateHDVaultInput, CreatePrivateKeyVaultInp
 import { type UseQueryResult, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useCallback } from 'react';
 import { getAccountRootKey } from './account';
+import { getAccountGroupRootKey } from './accountGroupKeys';
 import { getVaultService, type IVault } from './core';
+import { getVaultRootKey } from './vaultKeys';
 
 export type VaultsQuery = UseQueryResult<IVault[]>;
-
-export const getVaultRootKey = () => ['vault'] as const;
+export { getVaultRootKey } from './vaultKeys';
 export const getVaultListKey = () => ['vault', 'list'] as const;
 
 /**
@@ -36,6 +37,7 @@ export function useCreateHDVault() {
       const vault = await service.createHDVault(input);
       await queryClient.invalidateQueries({ queryKey: getVaultRootKey() });
       await queryClient.invalidateQueries({ queryKey: getAccountRootKey() });
+      await queryClient.invalidateQueries({ queryKey: getAccountGroupRootKey() });
       return vault;
     },
     [service, queryClient],
@@ -56,6 +58,7 @@ export function useCreatePrivateKeyVault() {
       const vault = await service.createPrivateKeyVault(input);
       await queryClient.invalidateQueries({ queryKey: getVaultRootKey() });
       await queryClient.invalidateQueries({ queryKey: getAccountRootKey() });
+      await queryClient.invalidateQueries({ queryKey: getAccountGroupRootKey() });
       return vault;
     },
     [service, queryClient],
@@ -76,6 +79,7 @@ export function useCreateBSIMVault() {
       const vault = await service.createBSIMVault(input);
       await queryClient.invalidateQueries({ queryKey: getVaultRootKey() });
       await queryClient.invalidateQueries({ queryKey: getAccountRootKey() });
+      await queryClient.invalidateQueries({ queryKey: getAccountGroupRootKey() });
       return vault;
     },
     [service, queryClient],
@@ -96,6 +100,7 @@ export function useCreatePublicAddressVault() {
       const vault = await service.createPublicAddressVault(input);
       await queryClient.invalidateQueries({ queryKey: getVaultRootKey() });
       await queryClient.invalidateQueries({ queryKey: getAccountRootKey() });
+      await queryClient.invalidateQueries({ queryKey: getAccountGroupRootKey() });
       return vault;
     },
     [service, queryClient],
@@ -116,6 +121,7 @@ export function useDeleteVault() {
       await service.deleteVault(vaultId);
       await queryClient.invalidateQueries({ queryKey: getVaultRootKey() });
       await queryClient.invalidateQueries({ queryKey: getAccountRootKey() });
+      await queryClient.invalidateQueries({ queryKey: getAccountGroupRootKey() });
     },
     [service, queryClient],
   );
@@ -140,4 +146,20 @@ export function useExportMnemonic() {
 export function useExportPrivateKey() {
   const service = getVaultService();
   return useCallback(async (vaultId: string, addressId: string, password: string) => service.getPrivateKey(vaultId, addressId, password), [service]);
+}
+
+/**
+ * Mark a vault as backed up and refresh vault/accountGroup caches.
+ */
+export function useFinishBackup() {
+  const service = getVaultService();
+  const queryClient = useQueryClient();
+  return useCallback(
+    async (vaultId: string) => {
+      await service.finishBackup(vaultId);
+      await queryClient.invalidateQueries({ queryKey: getVaultRootKey() });
+      await queryClient.invalidateQueries({ queryKey: getAccountGroupRootKey() });
+    },
+    [service, queryClient],
+  );
 }

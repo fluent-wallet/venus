@@ -1,9 +1,8 @@
 import Copy from '@assets/icons/copy.svg';
 import { PlaintextMessage } from '@components/PlaintextMessage';
 import Text from '@components/Text';
-import type { Signature } from '@core/database/models/Signature';
-import { SignType } from '@core/database/models/Signature/type';
-import { useAppOfSignature, useTxOfSignature } from '@core/WalletCore/Plugins/ReactInject/data/useSignature';
+import type { ISignatureRecord } from '@core/services/signing/types';
+import { SignType } from '@core/services/signing/types';
 import Clipboard from '@react-native-clipboard/clipboard';
 import { useTheme } from '@react-navigation/native';
 import dayjs from 'dayjs';
@@ -36,22 +35,26 @@ const substrWithChinese = (str: string, start: number, n: number, suffix = '...'
   return result;
 };
 
-export const SignatureItem: React.FC<{ item: Signature; maxMessageLength: number }> = ({ item, maxMessageLength }) => {
+export const SignatureItem: React.FC<{ item: ISignatureRecord; maxMessageLength: number }> = ({ item, maxMessageLength }) => {
   const [folded, setFolded] = useState(true);
   const { t } = useTranslation();
   const { colors } = useTheme();
-  const app = useAppOfSignature(item.id);
-  const tx = useTxOfSignature(item.id);
   const time = dayjs(item.createdAt).format('YYYY/MM/DD HH:mm:ss');
   const isTxSignature = item.signType === SignType.TX;
   const { shownMessage, jsonMessage } = useMemo(() => {
-    let jsonMessage: any = {};
+    let jsonMessage: Record<string, unknown> | Array<unknown> | object = {};
     let shownMessage = item.message ?? '';
     try {
       if (item.signType === SignType.TX) {
         shownMessage = '';
       } else if (item.signType === SignType.JSON) {
-        jsonMessage = JSON.parse(shownMessage).message || {};
+        const parsed = JSON.parse(shownMessage) as { message?: unknown };
+        const msg = parsed?.message;
+        if (msg && (typeof msg === 'object' || Array.isArray(msg))) {
+          jsonMessage = msg as object;
+        } else {
+          jsonMessage = {};
+        }
         shownMessage = JSON.stringify(jsonMessage) ?? '';
       }
       return {
@@ -82,7 +85,7 @@ export const SignatureItem: React.FC<{ item: Signature; maxMessageLength: number
   return (
     <View style={[styles.item, { borderColor: colors.borderThird }]}>
       <Text style={[styles.time, { color: colors.textSecondary }]}>{time}</Text>
-      <Text style={[styles.title, { color: colors.textPrimary }]}>{!isTxSignature ? 'Sign Data' : tx?.method}</Text>
+      <Text style={[styles.title, { color: colors.textPrimary }]}>{!isTxSignature ? 'Sign Data' : item.tx?.method}</Text>
       {!isTxSignature && (
         <View style={styles.messageContainer}>
           <View style={[styles.message, isFolded ? { display: 'flex', flexDirection: 'row', alignItems: 'flex-end' } : {}]}>
@@ -106,10 +109,10 @@ export const SignatureItem: React.FC<{ item: Signature; maxMessageLength: number
           )}
         </View>
       )}
-      {app && (
+      {item.app && (
         <View style={styles.app}>
-          <Image style={styles.icon} source={app.icon} contentFit="contain" />
-          <Text style={[styles.url, { color: colors.textPrimary }]}>{app.origin}</Text>
+          {item.app.icon ? <Image style={styles.icon} source={item.app.icon} contentFit="contain" /> : <View style={styles.icon} />}
+          <Text style={[styles.url, { color: colors.textPrimary }]}>{item.app.origin}</Text>
         </View>
       )}
     </View>

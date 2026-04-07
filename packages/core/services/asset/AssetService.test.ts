@@ -1,19 +1,20 @@
 import 'reflect-metadata';
-import { createTestAccount, seedNetwork } from '@core/__tests__/fixtures';
-import { StubChainProvider } from '@core/__tests__/mocks/chainProviders';
 import { ChainRegistry } from '@core/chains';
 import { iface777 } from '@core/contracts';
 import type { Database } from '@core/database';
-import { mockDatabase } from '@core/database/__tests__/mockDatabases';
 import type { Address } from '@core/database/models/Address';
 import type { Asset } from '@core/database/models/Asset';
 import { AssetSource, AssetType } from '@core/database/models/Asset';
 import type { Network } from '@core/database/models/Network';
 import TableName from '@core/database/TableName';
+import { mockDatabase } from '@core/database/testUtils/mockDatabases';
 import { CORE_IDENTIFIERS } from '@core/di';
+import { createTestAccount, seedNetwork } from '@core/testUtils/fixtures';
+import { StubChainProvider } from '@core/testUtils/mocks/chainProviders';
 import type { Hex } from '@core/types';
 import { Container } from 'inversify';
 import { AssetService } from './AssetService';
+import { AssetDiscoveryRegistry } from './discovery/AssetDiscoveryRegistry';
 
 describe('AssetService', () => {
   let container: Container;
@@ -21,6 +22,7 @@ describe('AssetService', () => {
   let registry: ChainRegistry;
   let service: AssetService;
   let provider: StubChainProvider;
+  let discoveryRegistry: { discoverFungibleAssets: jest.Mock };
   let network: Network;
   let assetRuleId: string;
   let address: Address;
@@ -32,9 +34,13 @@ describe('AssetService', () => {
     container = new Container({ defaultScope: 'Transient' });
     database = mockDatabase();
     registry = new ChainRegistry();
+    discoveryRegistry = {
+      discoverFungibleAssets: jest.fn().mockResolvedValue(null),
+    };
 
     container.bind<Database>(CORE_IDENTIFIERS.DB).toConstantValue(database);
     container.bind(ChainRegistry).toConstantValue(registry);
+    container.bind(AssetDiscoveryRegistry).toConstantValue(discoveryRegistry as unknown as AssetDiscoveryRegistry);
     container.bind(AssetService).toSelf();
 
     const seeded = await seedNetwork(database, { definitionKey: 'Conflux Testnet', selected: true });
@@ -59,7 +65,7 @@ describe('AssetService', () => {
         record.name = 'Conflux';
         record.symbol = 'CFX';
         record.decimals = 18;
-        record.icon = null;
+        record.icon = 'local-native-icon';
         record.source = AssetSource.Official;
         record.priceInUSDT = '1';
       });
@@ -92,6 +98,7 @@ describe('AssetService', () => {
   });
 
   it('returns assets with normalized balances for an address', async () => {
+    const readBalancesSpy = jest.spyOn(provider, 'readFungibleAssetBalances');
     const assets = await service.getAssetsByAddress(address.id);
 
     expect(assets).toHaveLength(2);
@@ -105,6 +112,12 @@ describe('AssetService', () => {
     expect(token?.balance).toBe('2');
     expect(token?.formattedBalance).toBe('2');
     expect(token?.priceValue).toBeNull();
+    expect(readBalancesSpy).toHaveBeenCalledTimes(1);
+    expect(readBalancesSpy).toHaveBeenCalledWith(
+      await address.getValue(),
+      expect.arrayContaining([{ assetType: 'Native' }, { assetType: 'ERC20', contractAddress: tokenContract }]),
+    );
+    expect(readBalancesSpy.mock.calls[0]?.[1]).toHaveLength(2);
   });
 
   it('gets balance for a specific asset', async () => {
@@ -140,5 +153,113 @@ describe('AssetService', () => {
         contractAddress: tokenContract,
       }),
     ).rejects.toThrow('Token already exists in this asset rule.');
+  });
+
+  it('creates missing tracked ERC20 assets from discovery results and avoids duplicate inserts', async () => {
+    const { network: ethNetwork, assetRule } = await seedNetwork(database, {
+      definitionKey: 'Ethereum Sepolia',
+      selected: false,
+    });
+    const { address: ethAddress } = await createTestAccount(database, {
+      network: ethNetwork,
+      assetRule,
+      selected: false,
+    });
+
+    registry.register(
+      new StubChainProvider({
+        chainId: ethNetwork.chainId,
+        networkType: ethNetwork.networkType,
+      }),
+    );
+
+    const observedContract = '0x1111111111111111111111111111111111111111';
+    discoveryRegistry.discoverFungibleAssets.mockResolvedValue([
+      {
+        type: AssetType.Native,
+        contractAddress: null,
+        name: 'Ether',
+        symbol: 'ETH',
+        decimals: 18,
+        icon: null,
+        priceInUSDT: null,
+        balanceBaseUnits: '0',
+      },
+      {
+        type: AssetType.ERC20,
+        contractAddress: observedContract.toLowerCase(),
+        name: 'Observed Token',
+        symbol: 'OBS',
+        decimals: 18,
+        icon: 'observed-icon',
+        priceInUSDT: '1.23',
+        balanceBaseUnits: '42000000000000000000',
+      },
+    ]);
+
+    const firstAssets = await service.getAssetsByAddress(ethAddress.id);
+    const firstObserved = firstAssets.find((asset) => asset.contractAddress?.toLowerCase() === observedContract.toLowerCase());
+
+    expect(firstObserved).toBeDefined();
+    expect(firstObserved?.id.startsWith('discovered:')).toBe(false);
+    expect(firstObserved?.source).toBeNull();
+
+    const assetsAfterFirstRead = await assetRule.assets.fetch();
+    const storedAfterFirstRead = assetsAfterFirstRead.filter((asset) => asset.contractAddress?.toLowerCase() === observedContract.toLowerCase());
+
+    expect(storedAfterFirstRead).toHaveLength(1);
+    expect(storedAfterFirstRead[0].name).toBe('Observed Token');
+    expect(storedAfterFirstRead[0].symbol).toBe('OBS');
+    expect(storedAfterFirstRead[0].source).toBeNull();
+
+    const secondAssets = await service.getAssetsByAddress(ethAddress.id);
+    const secondObserved = secondAssets.find((asset) => asset.contractAddress?.toLowerCase() === observedContract.toLowerCase());
+    const assetsAfterSecondRead = await assetRule.assets.fetch();
+    const storedAfterSecondRead = assetsAfterSecondRead.filter((asset) => asset.contractAddress?.toLowerCase() === observedContract.toLowerCase());
+
+    expect(secondObserved?.id).toBe(firstObserved?.id);
+    expect(storedAfterSecondRead).toHaveLength(1);
+  });
+
+  it('does not create tracked ERC20 assets from zero-balance discovery results', async () => {
+    const { network: ethNetwork, assetRule } = await seedNetwork(database, {
+      definitionKey: 'Ethereum Sepolia',
+      selected: false,
+    });
+    const { address: ethAddress } = await createTestAccount(database, {
+      network: ethNetwork,
+      assetRule,
+      selected: false,
+    });
+
+    registry.register(
+      new StubChainProvider({
+        chainId: ethNetwork.chainId,
+        networkType: ethNetwork.networkType,
+      }),
+    );
+
+    const observedContract = '0x2222222222222222222222222222222222222222';
+    discoveryRegistry.discoverFungibleAssets.mockResolvedValue([
+      {
+        type: AssetType.ERC20,
+        contractAddress: observedContract,
+        name: 'Zero Token',
+        symbol: 'ZERO',
+        decimals: 18,
+        icon: null,
+        priceInUSDT: null,
+        balanceBaseUnits: '0',
+      },
+    ]);
+
+    const assets = await service.getAssetsByAddress(ethAddress.id);
+    const observed = assets.find((asset) => asset.contractAddress?.toLowerCase() === observedContract.toLowerCase());
+    const storedAssets = await assetRule.assets.fetch();
+    const stored = storedAssets.filter((asset) => asset.contractAddress?.toLowerCase() === observedContract.toLowerCase());
+
+    expect(observed).toBeDefined();
+    expect(observed?.id.startsWith('discovered:')).toBe(true);
+    expect(stored).toHaveLength(0);
   });
 });

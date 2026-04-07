@@ -1,4 +1,4 @@
-import VaultType from '@core/database/models/Vault/VaultType';
+import { VaultType } from '@core/database/models/Vault/VaultType';
 
 export const VAULT_DEFAULTS = {
   DEVICE: 'ePayWallet',
@@ -15,7 +15,7 @@ export const VAULT_GROUP_LABEL: Record<VaultType, string> = {
 export const VAULT_ACCOUNT_PREFIX: Record<VaultType, string> = {
   [VaultType.HierarchicalDeterministic]: 'Account',
   [VaultType.PrivateKey]: 'Private Key Account',
-  [VaultType.BSIM]: 'BSIM Account',
+  [VaultType.BSIM]: 'Account',
   [VaultType.Hardware]: 'Hardware Account',
   [VaultType.PublicAddress]: 'Watch Account',
 };

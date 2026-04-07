@@ -1,7 +1,7 @@
-import plugins from '@core/WalletCore/Plugins';
-import { useCurrentNetwork } from '@core/WalletCore/Plugins/ReactInject';
 import { StackActions } from '@react-navigation/native';
-import { ExternalInputHandlerStackName, type StackNavigation, type StackScreenProps } from '@router/configs';
+import { ExternalInputHandlerStackName, type StackNavigation, type StackScreenProps, WalletConnectStackName } from '@router/configs';
+import { useAssetsOfCurrentAddress } from '@service/asset';
+import { useCurrentNetwork } from '@service/network';
 import { getActiveRouteName } from '@utils/backToHome';
 import type { PaymentUriPayload } from '@utils/payment-uri';
 import type React from 'react';
@@ -11,26 +11,31 @@ import { Linking } from 'react-native';
 import { paymentUriParser } from './parser';
 import QrScannerSheet from './QrScannerSheet';
 
+const normalizeExternalInput = (rawUrl: string): string | null => {
+  const trimmed = rawUrl.trim();
+  if (!trimmed) return null;
+
+  if (trimmed.startsWith('bimwallet://')) {
+    return trimmed;
+  }
+
+  try {
+    return decodeURIComponent(trimmed);
+  } catch {
+    return trimmed;
+  }
+};
+
 // keep deep link listener
 export const useListenDeepLink = (navigation: StackNavigation) => {
   useEffect(() => {
     const handleDeepLink = (event: { url: string }) => {
       try {
-        const url = decodeURIComponent(event.url);
+        const data = normalizeExternalInput(event.url);
+        if (!data) return;
 
-        let data: string | null = null;
-        if (url.startsWith('bimwallet://')) {
-          if (url.startsWith('bimwallet://wc?uri=')) {
-            data = url.slice(19);
-          } else if (url.startsWith('bimwallet://wc?')) {
-            data = url.slice(12);
-          }
-        } else {
-          data = url;
-        }
-        const hasCurrentWCEvent = plugins.WalletConnect.currentEventSubject.getValue();
-        if (!data || hasCurrentWCEvent) return;
         const activeRouterName = getActiveRouteName(navigation.getState());
+        if (activeRouterName === WalletConnectStackName) return;
         if (activeRouterName === ExternalInputHandlerStackName) {
           navigation.dispatch(StackActions.replace(ExternalInputHandlerStackName, { data }));
         } else {
@@ -41,7 +46,9 @@ export const useListenDeepLink = (navigation: StackNavigation) => {
       }
     };
 
-    Linking.getInitialURL().then((url) => url && handleDeepLink({ url }));
+    Linking.getInitialURL()
+      .then((url) => url && handleDeepLink({ url }))
+      .catch((error) => console.log(error));
     const urlListener = Linking.addEventListener('url', handleDeepLink);
 
     return () => {
@@ -57,7 +64,8 @@ interface Props extends Partial<StackScreenProps<typeof ExternalInputHandlerStac
 }
 
 const ExternalInputHandler: React.FC<Props> = ({ navigation, onConfirm, onClose, route, ...props }) => {
-  const currentNetwork = useCurrentNetwork()!;
+  const { data: currentNetwork } = useCurrentNetwork();
+  const assetsQuery = useAssetsOfCurrentAddress();
   const { t } = useTranslation();
   const externalData = route?.params?.data;
   const mode: 'inline' | 'route' = props.mode ?? (onConfirm ? 'inline' : 'route');
@@ -81,6 +89,7 @@ const ExternalInputHandler: React.FC<Props> = ({ navigation, onConfirm, onClose,
       parseInput={(raw, helpers) =>
         paymentUriParser(raw, {
           currentNetwork,
+          assets: assetsQuery.data ?? [],
           navigation,
           onConfirm,
           t,

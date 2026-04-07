@@ -2,10 +2,16 @@ import type { Database } from '@core/database';
 import type { Account } from '@core/database/models/Account';
 import type { AccountGroup } from '@core/database/models/AccountGroup';
 import type { Address } from '@core/database/models/Address';
+import type { AddressBook } from '@core/database/models/AddressBook';
 import type { Network } from '@core/database/models/Network';
+import type { Permission } from '@core/database/models/Permission';
+import type { Signature } from '@core/database/models/Signature';
+import type { Tx } from '@core/database/models/Tx';
+import type { TxExtra } from '@core/database/models/TxExtra';
+import type { TxPayload } from '@core/database/models/TxPayload';
 import type { Vault } from '@core/database/models/Vault';
 import VaultSourceType from '@core/database/models/Vault/VaultSourceType';
-import VaultType from '@core/database/models/Vault/VaultType';
+import { VaultType } from '@core/database/models/Vault/VaultType';
 import TableName from '@core/database/TableName';
 import { CORE_IDENTIFIERS } from '@core/di';
 import { HARDWARE_WALLET_TYPES } from '@core/hardware/bsim/constants';
@@ -13,12 +19,16 @@ import { NetworkType } from '@core/types';
 import type { CryptoTool } from '@core/types/crypto';
 import { fromPrivate, toChecksum } from '@core/utils/account';
 import { convertHexToBase32 } from '@core/utils/address';
+import { addHexPrefix, stripHexPrefix } from '@core/utils/base';
 import { generateMnemonic, getNthAccountOfHDKey } from '@core/utils/hdkey';
-import { Q } from '@nozbe/watermelondb';
+import { type Model, Q } from '@nozbe/watermelondb';
+import { Mnemonic } from 'ethers';
 import { inject, injectable } from 'inversify';
+import { getGroupedAccountNickname } from '../account/naming';
 import { HardwareWalletService } from '../hardware/HardwareWalletService';
 import { VAULT_ACCOUNT_PREFIX, VAULT_DEFAULTS, VAULT_GROUP_LABEL } from './constants';
-import type { CreateBSIMVaultInput, CreateHDVaultInput, CreatePrivateKeyVaultInput, CreatePublicAddressVaultInput, IVault } from './types';
+import type { CreateBSIMVaultInput, CreateHDVaultInput, CreatePrivateKeyVaultInput, CreatePublicAddressVaultInput, DeleteVaultPlan, IVault } from './types';
+import { verifyVaultPassword } from './verifyVaultPassword';
 
 @injectable()
 export class VaultService {
@@ -101,6 +111,63 @@ export class VaultService {
     );
   }
 
+  // Future direction:
+  // consider storing a secret fingerprint on Vault so duplicate checks
+  // can avoid decrypting existing secrets and keep auth timing unchanged.
+  async hasExistingSecretImport(params: { mnemonic?: string; privateKey?: string; password: string }): Promise<boolean> {
+    const mnemonic = params.mnemonic?.trim();
+    const privateKey = params.privateKey?.trim();
+    const password = params.password;
+
+    if (privateKey) {
+      const inputPrivateKeyHex = addHexPrefix(stripHexPrefix(privateKey).toLowerCase());
+      const privateKeyVaults = await this.database.get<Vault>(TableName.Vault).query(Q.where('type', VaultType.PrivateKey)).fetch();
+
+      for (const vault of privateKeyVaults) {
+        if (!vault.data) continue;
+
+        try {
+          const storedPrivateKey = await this.cryptoTool.decrypt<string>(vault.data, password);
+          const storedPrivateKeyHex = addHexPrefix(stripHexPrefix(storedPrivateKey.trim()).toLowerCase());
+          if (storedPrivateKeyHex === inputPrivateKeyHex) {
+            return true;
+          }
+        } catch {
+          // Skip unreadable records. Duplicate detection should not fail the whole import flow.
+        }
+      }
+
+      return false;
+    }
+
+    if (mnemonic) {
+      const inputMnemonicPhrase = Mnemonic.fromPhrase(mnemonic).phrase;
+      const hdVaults = await this.database.get<Vault>(TableName.Vault).query(Q.where('type', VaultType.HierarchicalDeterministic)).fetch();
+
+      for (const vault of hdVaults) {
+        if (!vault.data) continue;
+
+        try {
+          const storedMnemonic = await this.cryptoTool.decrypt<string>(vault.data, password);
+          const storedMnemonicPhrase = Mnemonic.fromPhrase(storedMnemonic).phrase;
+          if (storedMnemonicPhrase === inputMnemonicPhrase) {
+            return true;
+          }
+        } catch {
+          // Skip unreadable records. Duplicate detection should not fail the whole import flow.
+        }
+      }
+
+      return false;
+    }
+
+    return false;
+  }
+
+  async verifyPassword(password: string): Promise<boolean> {
+    return verifyVaultPassword({ database: this.database, cryptoTool: this.cryptoTool, password });
+  }
+
   /**
    * Create or import an HD wallet.
    */
@@ -128,7 +195,7 @@ export class VaultService {
 
     const accountGroup = this.createAccountGroupRecord(vaultRecord, VaultType.HierarchicalDeterministic, sameTypeCount);
 
-    const defaultNickname = `${VAULT_ACCOUNT_PREFIX[VaultType.HierarchicalDeterministic]} - 1`;
+    const defaultNickname = getGroupedAccountNickname(0);
     const account = this.createAccountRecord(accountGroup, input.accountNickname ?? defaultNickname, {
       index: 0,
       selected: isFirstVault,
@@ -198,10 +265,14 @@ export class VaultService {
 
     if (!resolvedAccounts) {
       const result = await this.hardwareWalletService.connectAndSync(HARDWARE_WALLET_TYPES.BSIM, input.connectOptions);
-      resolvedAccounts = result.accounts.map((account) => ({
+      const detected = result.accounts.map((account) => ({
         index: account.index,
         hexAddress: account.address,
       }));
+      detected.sort((a, b) => a.index - b.index);
+
+      // create bsim wallet we only get one account from the device
+      resolvedAccounts = detected.slice(0, 1);
       resolvedHardwareDeviceId = resolvedHardwareDeviceId ?? result.deviceId;
     }
 
@@ -211,12 +282,16 @@ export class VaultService {
 
     const networks = await this.fetchNetworks();
     const [isFirstVault, sameTypeCount] = await Promise.all([this.isFirstVault(), this.countVaultsOfType(VaultType.BSIM)]);
+    let bsimMarker = 'BSIM Wallet';
+    if (typeof input.password === 'string' && input.password.length > 0) {
+      bsimMarker = await this.cryptoTool.encrypt('BSIM Wallet', input.password);
+    }
 
     const vaultRecord = this.database.get<Vault>(TableName.Vault).prepareCreate((record) => {
       record.type = VaultType.BSIM;
       record.device = VAULT_DEFAULTS.DEVICE;
       record.hardwareDeviceId = resolvedHardwareDeviceId ?? null;
-      record.data = 'BSIM Wallet';
+      record.data = bsimMarker;
       record.cfxOnly = false;
       record.isBackup = false;
       record.source = VaultSourceType.CREATE_BY_WALLET;
@@ -230,7 +305,7 @@ export class VaultService {
     for (let idx = 0; idx < resolvedAccounts.length; idx += 1) {
       const { index, hexAddress } = resolvedAccounts[idx];
 
-      const nickname = `${VAULT_ACCOUNT_PREFIX[VaultType.BSIM]} - ${idx + 1}`;
+      const nickname = getGroupedAccountNickname(index);
       const account = this.createAccountRecord(accountGroup, nickname, {
         index,
         selected: isFirstVault && idx === 0,
@@ -351,10 +426,103 @@ export class VaultService {
     return count > 0;
   }
 
+  private getUniqueIds(ids: Array<string | null | undefined>): string[] {
+    return Array.from(new Set(ids.filter((id): id is string => typeof id === 'string' && id.length > 0)));
+  }
+
+  private async queryByIds<TRecord extends Model>(tableName: TableName, columnName: string, ids: Array<string | null | undefined>): Promise<TRecord[]> {
+    const uniqueIds = this.getUniqueIds(ids);
+    if (!uniqueIds.length) {
+      return [];
+    }
+
+    return this.database
+      .get<TRecord>(tableName)
+      .query(Q.where(columnName, Q.oneOf(uniqueIds)))
+      .fetch();
+  }
+
+  private async findAccountGroupByVaultIdOrThrow(vaultId: string): Promise<AccountGroup> {
+    const groups = await this.database.get<AccountGroup>(TableName.AccountGroup).query(Q.where('vault_id', vaultId)).fetch();
+    const group = groups[0];
+    if (!group) {
+      throw new Error(`AccountGroup for vault ${vaultId} not found.`);
+    }
+    return group;
+  }
+
+  private async buildVaultDeletionPlan(vault: Vault): Promise<DeleteVaultPlan> {
+    const accountGroup = await this.findAccountGroupByVaultIdOrThrow(vault.id);
+    const accounts = await this.queryByIds<Account>(TableName.Account, 'account_group_id', [accountGroup.id]);
+    const accountIds = accounts.map((account) => account.id);
+
+    const [permissions, addresses] = await Promise.all([
+      this.queryByIds<Permission>(TableName.Permission, 'account_id', accountIds),
+      this.queryByIds<Address>(TableName.Address, 'account_id', accountIds),
+    ]);
+    const addressIds = addresses.map((address) => address.id);
+
+    const [signatures, addressBooks, txs] = await Promise.all([
+      this.queryByIds<Signature>(TableName.Signature, 'address_id', addressIds),
+      this.queryByIds<AddressBook>(TableName.AddressBook, 'address_id', addressIds),
+      this.queryByIds<Tx>(TableName.Tx, 'address_id', addressIds),
+    ]);
+
+    const [txPayloads, txExtras] = await Promise.all([
+      this.queryByIds<TxPayload>(
+        TableName.TxPayload,
+        'id',
+        txs.map((tx) => tx.txPayload.id),
+      ),
+      this.queryByIds<TxExtra>(
+        TableName.TxExtra,
+        'id',
+        txs.map((tx) => tx.txExtra.id),
+      ),
+    ]);
+
+    return {
+      vault,
+      accountGroup,
+      accounts,
+      permissions,
+      addresses,
+      signatures,
+      addressBooks,
+      txs,
+      txPayloads,
+      txExtras,
+    };
+  }
+
+  private toVaultDeletionOperations(plan: DeleteVaultPlan) {
+    return [
+      ...plan.signatures.map((signature) => signature.prepareDestroyPermanently()),
+      ...plan.addressBooks.map((addressBook) => addressBook.prepareDestroyPermanently()),
+      ...plan.permissions.map((permission) => permission.prepareDestroyPermanently()),
+      ...plan.txs.map((tx) => tx.prepareDestroyPermanently()),
+      ...plan.txPayloads.map((txPayload) => txPayload.prepareDestroyPermanently()),
+      ...plan.txExtras.map((txExtra) => txExtra.prepareDestroyPermanently()),
+      ...plan.addresses.map((address) => address.prepareDestroyPermanently()),
+      ...plan.accounts.map((account) => account.prepareDestroyPermanently()),
+      plan.accountGroup.prepareDestroyPermanently(),
+      plan.vault.prepareDestroyPermanently(),
+    ];
+  }
+
   async deleteVault(vaultId: string): Promise<void> {
     const vault = await this.database.get<Vault>(TableName.Vault).find(vaultId);
+    const operations = this.toVaultDeletionOperations(await this.buildVaultDeletionPlan(vault));
+
     await this.database.write(async () => {
-      await vault.delete();
+      if (operations.length) {
+        await this.database.batch(...operations);
+      }
     });
+  }
+
+  async finishBackup(vaultId: string): Promise<void> {
+    const vault = await this.database.get<Vault>(TableName.Vault).find(vaultId);
+    await vault.finishBackup();
   }
 }

@@ -1,10 +1,11 @@
 import 'reflect-metadata';
-import { createMockConfluxSdk, createMockEthersProvider, DEFAULT_BASE32_ADDRESS_TEST, DEFAULT_HEX_ADDRESS, DEFAULT_PRIVATE_KEY } from '@core/__tests__/mocks';
 import { SoftwareSigner } from '@core/signers';
+import { createMockConfluxSdk, createMockEthersProvider, DEFAULT_BASE32_ADDRESS_TEST, DEFAULT_HEX_ADDRESS, DEFAULT_PRIVATE_KEY } from '@core/testUtils/mocks';
 import { AssetType, type ConfluxUnsignedTransaction, type EvmUnsignedTransaction, NetworkType } from '@core/types';
 import { computeAddress as computeAccountAddress, toAccountAddress } from '@core/utils/account';
 import { convertHexToBase32 } from '@core/utils/address';
-import { HDNode } from '@ethersproject/hdnode';
+import { HDKey } from '@scure/bip32';
+import { mnemonicToSeedSync } from '@scure/bip39';
 import { ChainRegistry, ConfluxChainProvider, EthereumChainProvider } from '..';
 import { EndpointManager } from '../EndpointManager';
 
@@ -42,6 +43,14 @@ const ETHEREUM_OPTIONS = { chainId: '1', networkId: ETHEREUM_NETWORK_ID };
 const ETH_PRIVATE_KEY = DEFAULT_PRIVATE_KEY;
 const ETHEREUM_ADDRESS = DEFAULT_HEX_ADDRESS;
 const CONFLUX_ADDRESS = DEFAULT_BASE32_ADDRESS_TEST;
+
+const derivePublicKey = (mnemonic: string, path: string) => {
+  const node = HDKey.fromMasterSeed(mnemonicToSeedSync(mnemonic)).derive(path);
+  if (!node.privateKey) {
+    throw new Error(`Expected derived node at ${path} to contain a private key.`);
+  }
+  return actualEthers.SigningKey.computePublicKey(actualEthers.hexlify(node.privateKey), false);
+};
 
 describe('chain integration', () => {
   const createEndpointManager = () => {
@@ -200,17 +209,17 @@ describe('chain integration', () => {
     const endpointManager = createEndpointManager();
 
     const mnemonic = 'test test test test test test test test test test test junk';
-    const confluxNode = HDNode.fromMnemonic(mnemonic).derivePath("m/44'/503'/0'/0/0");
-    const ethereumNode = HDNode.fromMnemonic(mnemonic).derivePath("m/44'/60'/0'/0/0");
+    const confluxPublicKey = derivePublicKey(mnemonic, "m/44'/503'/0'/0/0");
+    const ethereumPublicKey = derivePublicKey(mnemonic, "m/44'/60'/0'/0/0");
 
     const confluxProvider = new ConfluxChainProvider({ ...CONFLUX_OPTIONS, endpointManager });
-    const derivedBase32 = confluxProvider.deriveAddress(confluxNode.publicKey as `0x${string}`);
-    const expectedBase32 = convertHexToBase32(toAccountAddress(computeAccountAddress(confluxNode.publicKey as `0x${string}`)), CONFLUX_OPTIONS.netId);
+    const derivedBase32 = confluxProvider.deriveAddress(confluxPublicKey as `0x${string}`);
+    const expectedBase32 = convertHexToBase32(toAccountAddress(computeAccountAddress(confluxPublicKey as `0x${string}`)), CONFLUX_OPTIONS.netId);
     expect(derivedBase32).toBe(expectedBase32);
 
     const ethereumProvider = new EthereumChainProvider({ ...ETHEREUM_OPTIONS, endpointManager });
-    const derivedHex = ethereumProvider.deriveAddress(ethereumNode.publicKey);
-    expect(derivedHex).toBe(actualEthers.getAddress(ethereumNode.address));
+    const derivedHex = ethereumProvider.deriveAddress(ethereumPublicKey);
+    expect(derivedHex).toBe(actualEthers.getAddress(actualEthers.computeAddress(ethereumPublicKey)));
   });
 
   it('signs and verifies messages across chains', async () => {

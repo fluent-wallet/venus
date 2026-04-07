@@ -4,15 +4,17 @@ import RecoverBSIMImg from '@assets/images/recoverBSIM.svg';
 import { BottomSheetContent, BottomSheetFooter, BottomSheetHeader, BottomSheetWrapper, InlineBottomSheet, snapPoints } from '@components/BottomSheet';
 import Button from '@components/Button';
 import CustomTextInput from '@components/TextInput';
-import Plugins from '@core/WalletCore/Plugins';
+import { HARDWARE_WALLET_TYPES } from '@core/hardware/bsim/constants';
 import QrScannerSheet, { type ParseResult } from '@pages/ExternalInputHandler/QrScannerSheet';
-import { StackActions, useNavigation, useTheme } from '@react-navigation/native';
-import { ChangeBPinStackName, type StackNavigation } from '@router/configs';
+import { StackActions, useTheme } from '@react-navigation/native';
+import { ChangeBPinStackName, type RecoverBsimStackName, type StackScreenProps } from '@router/configs';
+import { getHardwareWalletService } from '@service/core';
 import { verifyPasswordTag } from '@utils/BSIMCrypto';
 import { decodeBsimDerivationSnapshot } from '@utils/BSIMDerivationSnapshot';
 import { validateKey2Password } from '@utils/BSIMKey2PasswordValidation';
 import type { BsimQrPayload } from '@utils/BSIMTypes';
 import { handleBSIMHardwareUnavailable } from '@utils/handleBSIMHardwareUnavailable';
+import type React from 'react';
 import { useCallback, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { Trans, useTranslation } from 'react-i18next';
@@ -22,19 +24,17 @@ import { showMessage } from 'react-native-flash-message';
 type RecoverFormData = {
   password: string;
 };
-export const RecoverBSIM = () => {
+
+export const RecoverBSIM: React.FC<StackScreenProps<typeof RecoverBsimStackName>> = ({ navigation, route }) => {
   const { colors } = useTheme();
   const { t } = useTranslation();
 
   const [showScan, setShowScan] = useState(false);
-
   const [showPassword, setShowPassword] = useState(false);
-
   const [showSuccess, setShowSuccess] = useState(false);
 
   const [bsimQrPayload, setBsimQrPayload] = useState<BsimQrPayload | null>(null);
-
-  const navigation = useNavigation<StackNavigation>();
+  const bsimDeviceId = route.params?.bsimDeviceId;
 
   const {
     control,
@@ -60,7 +60,11 @@ export const RecoverBSIM = () => {
     }
 
     try {
-      await Plugins.BSIM.restoreSeed(data.password, bsimQrPayload.seed_ct);
+      await getHardwareWalletService().runRestoreSeedWithConnect(
+        HARDWARE_WALLET_TYPES.BSIM,
+        { deviceIdentifier: bsimDeviceId },
+        { key2: data.password, cipherHex: bsimQrPayload.seed_ct },
+      );
     } catch (error: any) {
       if (handleBSIMHardwareUnavailable(error, navigation)) {
         return;
@@ -76,7 +80,11 @@ export const RecoverBSIM = () => {
         for (const run of runs) {
           // Serial derivation is required by BSIM hardware
           for (let i = 0; i < run.count; i += 1) {
-            await Plugins.BSIM.deriveKey(run.coinType, run.alg);
+            await getHardwareWalletService().runDeriveKeyWithConnect(
+              HARDWARE_WALLET_TYPES.BSIM,
+              { deviceIdentifier: bsimDeviceId },
+              { coinType: run.coinType, algorithm: run.alg },
+            );
           }
         }
       } catch (error: any) {
@@ -94,7 +102,7 @@ export const RecoverBSIM = () => {
     setShowSuccess(false);
     setShowPassword(false);
     setBsimQrPayload(null);
-    navigation.dispatch(StackActions.replace(ChangeBPinStackName));
+    navigation.dispatch(StackActions.replace(ChangeBPinStackName, { bsimDeviceId }));
   };
 
   const handleParseInput = (raw: string): ParseResult<BsimQrPayload> => {

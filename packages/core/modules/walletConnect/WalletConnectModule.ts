@@ -1,6 +1,6 @@
 import { CORE_IDENTIFIERS } from '@core/di';
 import { CoreError, WC_CONFIG_INVALID } from '@core/errors';
-import type { RuntimeContext, RuntimeModule } from '@core/runtime/types';
+import type { RuntimeContext, RuntimeModule, WalletConnectRuntimeConfig } from '@core/runtime/types';
 import { AccountService } from '@core/services/account';
 import { NetworkService } from '@core/services/network';
 import { SigningService } from '@core/services/signing';
@@ -13,17 +13,10 @@ import type { ExternalRequestsService } from '../externalRequests';
 import { AUTH_MODULE_ID, EVENT_BUS_MODULE_ID, EXTERNAL_REQUESTS_MODULE_ID, SERVICES_MODULE_ID, WALLET_CONNECT_MODULE_ID } from '../ids';
 import { WalletConnectService } from './WalletConnectService';
 
-type WalletConnectRuntimeConfig = {
-  projectId: string;
-  metadata: WalletKitTypes.Options['metadata'];
-};
-
-const readWalletConnectConfig = (context: RuntimeContext): WalletConnectRuntimeConfig => {
-  const raw = (context.config as Record<string, unknown>).walletConnect;
-  const cfg = (raw && typeof raw === 'object' ? (raw as Record<string, unknown>) : null) as Record<string, unknown> | null;
-
-  const projectId = typeof cfg?.projectId === 'string' ? cfg.projectId : null;
-  const metadata = cfg?.metadata as WalletKitTypes.Options['metadata'] | undefined;
+const readWalletConnectConfig = (context: RuntimeContext): Required<Pick<WalletConnectRuntimeConfig, 'projectId' | 'metadata'>> => {
+  const cfg = context.config.walletConnect ?? {};
+  const projectId = typeof cfg.projectId === 'string' ? cfg.projectId : null;
+  const metadata = cfg.metadata as WalletKitTypes.Options['metadata'] | undefined;
 
   if (!projectId || !metadata) {
     throw new CoreError({
@@ -44,6 +37,9 @@ export const WalletConnectModule: RuntimeModule = {
     if (container.isBound(WalletConnectService)) return;
 
     const { projectId, metadata } = readWalletConnectConfig(context);
+    const allowedEip155Chains = Array.isArray(context.config.walletConnect?.allowedEip155Chains)
+      ? context.config.walletConnect?.allowedEip155Chains
+      : undefined;
     const eventBus = container.get<EventBus<CoreEventMap>>(CORE_IDENTIFIERS.EVENT_BUS);
 
     const externalRequests = container.get<ExternalRequestsService>(CORE_IDENTIFIERS.EXTERNAL_REQUESTS);
@@ -64,6 +60,8 @@ export const WalletConnectModule: RuntimeModule = {
         logger: context.logger,
         clientFactory,
         closeTransportOnStop: true,
+
+        allowedEip155Chains,
 
         externalRequests,
         accountService,

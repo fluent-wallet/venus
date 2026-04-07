@@ -1,7 +1,7 @@
 import type { Database } from '@core/database';
 import type { Account } from '@core/database/models/Account';
 import type { Address } from '@core/database/models/Address';
-import VaultType from '@core/database/models/Vault/VaultType';
+import { VaultType } from '@core/database/models/Vault/VaultType';
 import TableName from '@core/database/TableName';
 import { CORE_IDENTIFIERS } from '@core/di';
 import { CoreError, TX_SIGN_ADDRESS_MISMATCH, TX_SIGN_MESSAGE_FAILED, TX_SIGN_TYPED_DATA_FAILED, TX_SIGN_UNSUPPORTED_NETWORK } from '@core/errors';
@@ -9,13 +9,18 @@ import { HARDWARE_WALLET_TYPES } from '@core/hardware/bsim/constants';
 import { HardwareWalletRegistry } from '@core/hardware/HardwareWalletRegistry';
 import type { AuthService } from '@core/modules/auth';
 import { AUTH_REASON, type AuthReason } from '@core/modules/auth/reasons';
+import type { CoreEventMap, EventBus } from '@core/modules/eventBus';
 import type { EvmSignMessageParameters, EvmSignTypedDataParameters } from '@core/services/transaction/dappTypes';
 import { VaultService } from '@core/services/vault';
 import { HardwareSigner, SoftwareSigner } from '@core/signers';
-import type { ISigner } from '@core/types';
+import type { HardwareOperationError, ISigner } from '@core/types';
 import { NetworkType } from '@core/utils/consts';
 import { getBytes, hexlify, Signature, toUtf8Bytes, Wallet } from 'ethers';
-import { inject, injectable } from 'inversify';
+import { inject, injectable, optional } from 'inversify';
+
+const isHardwareErrorWithCode = (error: unknown): error is { code: string } => {
+  return Boolean(error && typeof error === 'object' && typeof (error as { code?: unknown }).code === 'string');
+};
 
 @injectable()
 export class SigningService {
@@ -31,7 +36,11 @@ export class SigningService {
   @inject(CORE_IDENTIFIERS.AUTH)
   private readonly auth!: AuthService;
 
-  async getSigner(accountId: string, addressId: string, options: { reason?: AuthReason } = {}): Promise<ISigner> {
+  @inject(CORE_IDENTIFIERS.EVENT_BUS)
+  @optional()
+  private readonly eventBus?: EventBus<CoreEventMap>;
+
+  async getSigner(accountId: string, addressId: string, options: { reason?: AuthReason; signal?: AbortSignal } = {}): Promise<ISigner> {
     const account = await this.findAccount(accountId);
     const address = await this.findAddress(addressId);
     this.assertOwnership(account, address);
@@ -40,7 +49,7 @@ export class SigningService {
     const vault = await accountGroup.vault.fetch();
 
     if (vault.type === VaultType.BSIM) {
-      return this.resolveHardwareSigner(account, address, vault.hardwareDeviceId ?? undefined);
+      return this.resolveHardwareSigner(account, address, vault.hardwareDeviceId ?? undefined, options.signal);
     }
     if (vault.type === VaultType.HierarchicalDeterministic || vault.type === VaultType.PrivateKey) {
       const password = await this.auth.getPassword({ reason: options.reason ?? AUTH_REASON.SIGN_TX });
@@ -76,7 +85,7 @@ export class SigningService {
       });
     }
 
-    const signer = await this.getSigner(params.accountId, params.addressId, { reason: AUTH_REASON.SIGN_PERSONAL_MESSAGE });
+    const signer = await this.getSigner(params.accountId, params.addressId, { reason: AUTH_REASON.SIGN_PERSONAL_MESSAGE, signal: params.signal });
 
     const input = typeof params.request.message === 'string' ? params.request.message : params.request.message.raw;
     const isHexBytes = input.length % 2 === 0 && /^0x[0-9a-fA-F]*$/.test(input);
@@ -84,11 +93,20 @@ export class SigningService {
     const messageBytes = isHexBytes ? getBytes(input) : toUtf8Bytes(input);
     const messageHex = hexlify(messageBytes);
 
+    if (signer.type === 'software') {
+      const wallet = new Wallet(signer.getPrivateKey());
+      return wallet.signMessage(messageBytes);
+    }
+
+    const requestId = this.createRequestId();
+
     try {
-      if (signer.type === 'software') {
-        const wallet = new Wallet(signer.getPrivateKey());
-        return wallet.signMessage(messageBytes);
-      }
+      this.eventBus?.emit('hardware-sign/started', {
+        requestId,
+        accountId: params.accountId,
+        addressId: params.addressId,
+        networkId: network.id,
+      });
 
       const result = await signer.signWithHardware({
         derivationPath: signer.getDerivationPath(),
@@ -109,8 +127,28 @@ export class SigningService {
         return Signature.from({ r: result.r, s: result.s, v: result.v ?? 27 }).serialized;
       }
 
-      throw new Error(`Unsupported hardware resultType: ${String((result as any)?.resultType)}`);
+      throw new Error(`Unsupported hardware resultType: ${String(result.resultType)}`);
     } catch (error) {
+      if (params.signal?.aborted) {
+        this.eventBus?.emit('hardware-sign/aborted', {
+          requestId,
+          accountId: params.accountId,
+          addressId: params.addressId,
+          networkId: network.id,
+        });
+      } else {
+        this.eventBus?.emit('hardware-sign/failed', {
+          requestId,
+          accountId: params.accountId,
+          addressId: params.addressId,
+          networkId: network.id,
+          error: this.toHardwareOperationError(error),
+        });
+      }
+
+      if (isHardwareErrorWithCode(error)) {
+        throw error;
+      }
       if (error instanceof CoreError) throw error;
       throw new CoreError({
         code: TX_SIGN_MESSAGE_FAILED,
@@ -146,15 +184,24 @@ export class SigningService {
       });
     }
 
-    const signer = await this.getSigner(params.accountId, params.addressId, { reason: AUTH_REASON.SIGN_TYPED_DATA_V4 });
+    const signer = await this.getSigner(params.accountId, params.addressId, { reason: AUTH_REASON.SIGN_TYPED_DATA_V4, signal: params.signal });
     // ethers signTypedData expects "types" WITHOUT EIP712Domain (it is derived from domain internally).
     const { EIP712Domain: _ignored, ...types } = params.request.typedData.types;
 
+    if (signer.type === 'software') {
+      const wallet = new Wallet(signer.getPrivateKey());
+      return wallet.signTypedData(params.request.typedData.domain, types, params.request.typedData.message);
+    }
+
+    const requestId = this.createRequestId();
+
     try {
-      if (signer.type === 'software') {
-        const wallet = new Wallet(signer.getPrivateKey());
-        return wallet.signTypedData(params.request.typedData.domain, types, params.request.typedData.message);
-      }
+      this.eventBus?.emit('hardware-sign/started', {
+        requestId,
+        accountId: params.accountId,
+        addressId: params.addressId,
+        networkId: network.id,
+      });
 
       const result = await signer.signWithHardware({
         derivationPath: signer.getDerivationPath(),
@@ -177,8 +224,29 @@ export class SigningService {
         return Signature.from({ r: result.r, s: result.s, v: result.v ?? 27 }).serialized;
       }
 
-      throw new Error(`Unsupported hardware resultType: ${String((result as any)?.resultType)}`);
+      throw new Error(`Unsupported hardware resultType: ${String(result.resultType)}`);
     } catch (error) {
+      if (params.signal?.aborted) {
+        this.eventBus?.emit('hardware-sign/aborted', {
+          requestId,
+          accountId: params.accountId,
+          addressId: params.addressId,
+          networkId: network.id,
+        });
+      } else {
+        this.eventBus?.emit('hardware-sign/failed', {
+          requestId,
+          accountId: params.accountId,
+          addressId: params.addressId,
+          networkId: network.id,
+          error: this.toHardwareOperationError(error),
+        });
+      }
+
+      // Preserve legacy BSIM UX: bubble up hardware errors (with error code) so UI can route/handle them (e.g. hardware unavailable / cancel).
+      if (isHardwareErrorWithCode(error)) {
+        throw error;
+      }
       if (error instanceof CoreError) throw error;
       throw new CoreError({
         code: TX_SIGN_TYPED_DATA_FAILED,
@@ -210,8 +278,8 @@ export class SigningService {
     }
   }
 
-  private async resolveHardwareSigner(account: Account, address: Address, hardwareId?: string): Promise<HardwareSigner> {
-    const adapter = this.hardwareRegistry.get(HARDWARE_WALLET_TYPES.BSIM, hardwareId);
+  private async resolveHardwareSigner(account: Account, address: Address, hardwareId: string | undefined, signal?: AbortSignal): Promise<HardwareSigner> {
+    const adapter = this.hardwareRegistry.get(HARDWARE_WALLET_TYPES.BSIM, hardwareId) ?? this.hardwareRegistry.get(HARDWARE_WALLET_TYPES.BSIM);
     if (!adapter) {
       throw new Error('No BSIM hardware wallet adapter is registered.');
     }
@@ -220,6 +288,8 @@ export class SigningService {
     if (!network) {
       throw new Error('Address has no associated network.');
     }
+
+    await adapter.connect({ deviceIdentifier: hardwareId, signal });
 
     const hardwareAccount = await adapter.deriveAccount(account.index, network.networkType);
     if (!hardwareAccount.derivationPath) {
@@ -235,5 +305,26 @@ export class SigningService {
       derivationPath: hardwareAccount.derivationPath,
       chainType: hardwareAccount.chainType,
     });
+  }
+
+  private createRequestId(): string {
+    return `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
+  }
+
+  private toHardwareOperationError(error: unknown): HardwareOperationError {
+    const messageCandidate = error instanceof Error ? error.message : (error as { message?: unknown } | null)?.message;
+    const message = typeof messageCandidate === 'string' && messageCandidate.trim() !== '' ? messageCandidate : String(error);
+
+    const codeCandidate = (error as { code?: unknown } | null)?.code;
+    const code = typeof codeCandidate === 'string' && codeCandidate.trim() !== '' ? codeCandidate : 'UNKNOWN';
+
+    const detailsCandidate = (error as { details?: unknown } | null)?.details;
+    const details =
+      detailsCandidate && typeof detailsCandidate === 'object' && !Array.isArray(detailsCandidate) ? (detailsCandidate as Record<string, unknown>) : undefined;
+
+    const reasonCandidate = details?.reason;
+    const reason = typeof reasonCandidate === 'string' ? reasonCandidate : undefined;
+
+    return { code, message, reason, details };
   }
 }

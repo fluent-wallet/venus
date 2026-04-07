@@ -1,12 +1,16 @@
 import NoneToken from '@assets/images/none-token.webp';
 import Text from '@components/Text';
-import type { AssetInfo } from '@core/WalletCore/Plugins/AssetsTracker/types';
-import { useAssetsTokenList, useIsTokensEmpty, useTokenListOfCurrentNetwork } from '@core/WalletCore/Plugins/ReactInject';
 import { usePriceVisibleValue } from '@hooks/usePriceVisible';
 import { useTheme } from '@react-navigation/native';
+import { useCurrentAddress } from '@service/account';
+import { useAssetsOfCurrentAddress } from '@service/asset';
+import type { AssetInfo } from '@utils/assetInfo';
+import { toAssetInfo } from '@utils/toAssetInfo';
 import { Image } from 'expo-image';
 import type React from 'react';
+import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
+import { areDisplayTokensEmpty, getVisibleTokenAssets, shouldShowTokensSkeleton } from './helpers';
 import ReceiveFunds, { styles } from './ReceiveFunds';
 import Skeleton from './Skeleton';
 import TokenItem from './TokenItem';
@@ -21,15 +25,30 @@ const TokensList: React.FC<Props> = ({ onPressItem, selectType, showReceiveFunds
   const { colors } = useTheme();
   const { t } = useTranslation();
 
-  const tokens = (selectType === 'Receive' ? useTokenListOfCurrentNetwork : useAssetsTokenList)();
-  const isEmpty = useIsTokensEmpty();
+  const currentAddressQuery = useCurrentAddress();
+  const assetsQuery = useAssetsOfCurrentAddress();
+  const assets = assetsQuery.data ?? [];
+  const currentAddressId = currentAddressQuery.data?.id ?? '';
+  const visibleAssets = useMemo(() => getVisibleTokenAssets(assets, { showHomeAssetsOnly: selectType === 'Home' }), [assets, selectType]);
+  const tokens = useMemo(() => visibleAssets.map(toAssetInfo), [visibleAssets]);
+  const isTokensEmpty = useMemo(() => areDisplayTokensEmpty(tokens), [tokens]);
   const priceVisible = usePriceVisibleValue();
+  const shouldShowSkeleton = useMemo(
+    () =>
+      shouldShowTokensSkeleton({
+        addressId: currentAddressId,
+        assetsStatus: assetsQuery.status,
+        currentAddressStatus: currentAddressQuery.status,
+        tokenCount: tokens.length,
+      }),
+    [assetsQuery.status, currentAddressId, currentAddressQuery.status, tokens.length],
+  );
 
-  if (tokens === null) {
+  if (shouldShowSkeleton) {
     return <Skeleton />;
   }
 
-  if (selectType !== 'Receive' && isEmpty) {
+  if (selectType !== 'Receive' && isTokensEmpty) {
     if (showReceiveFunds) {
       return <ReceiveFunds />;
     }

@@ -1,18 +1,18 @@
 import { BottomSheetFooter, BottomSheetScrollContent } from '@components/BottomSheet';
 import Button from '@components/Button';
 import Text from '@components/Text';
-import type { AssetInfo } from '@core/WalletCore/Plugins/AssetsTracker/types';
-import type { NFTItemDetail } from '@core/WalletCore/Plugins/NFTDetailTracker/server';
 import { AccountItemView } from '@modules/AccountsList';
 import NFTIcon from '@modules/AssetsList/NFTsList/NFTIcon';
-import { getDetailSymbol } from '@modules/AssetsList/NFTsList/NFTItem';
+import { getDetailSymbol } from '@modules/AssetsList/NFTsList/NFTItemsGrid';
 import { useTheme } from '@react-navigation/native';
 import { type SendTransactionScreenProps, type SendTransactionStep3StackName, SendTransactionStep4StackName } from '@router/configs';
+import type { INftItem } from '@service/core';
+import type { AssetInfo } from '@utils/assetInfo';
 import Decimal from 'decimal.js';
 import type React from 'react';
 import { useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { StyleSheet, View } from 'react-native';
+import { Keyboard, StyleSheet, View } from 'react-native';
 import SendTransactionBottomSheet from '../SendTransactionBottomSheet';
 import SetAssetAmount, { type AmountInfo, type SetAssetAmountMethods } from './SetAssetAmount';
 
@@ -24,7 +24,7 @@ const SendTransactionStep3Amount: React.FC<SendTransactionScreenProps<typeof Sen
   const asset = route.params.asset;
 
   return (
-    <SendTransactionBottomSheet title={t('tx.send.title')} isRoute snapPoints={['75%']}>
+    <SendTransactionBottomSheet title={t('tx.send.title')} isRoute snapPoints={['75%']} useBottomSheetView={false}>
       <BottomSheetScrollContent innerPaddingHorizontal>
         {route.params.nftItemDetail && (
           <>
@@ -53,12 +53,16 @@ const SendTransactionStep3Amount: React.FC<SendTransactionScreenProps<typeof Sen
           onPress={
             !amountInfo || amountInfo.validMax === null
               ? () => setAssetAmountMethodsRef.current?.handleEstimateMax?.()
-              : () =>
+              : () => {
+                  if (Keyboard.isVisible()) {
+                    Keyboard.dismiss();
+                  }
                   navigation.navigate(SendTransactionStep4StackName, {
                     ...route.params,
                     amount: amountInfo.inMaxMode ? new Decimal(asset.balance).div(Decimal.pow(10, asset.decimals)).toString() : amountInfo.amount,
                     inMaxMode: amountInfo.inMaxMode,
-                  })
+                  });
+                }
           }
           size="small"
           loading={amountInfo?.inEstimate}
@@ -73,7 +77,7 @@ const SendTransactionStep3Amount: React.FC<SendTransactionScreenProps<typeof Sen
 export const NFT: React.FC<{
   colors: ReturnType<typeof useTheme>['colors'];
   asset: AssetInfo;
-  nftItemDetail: NFTItemDetail;
+  nftItemDetail: INftItem;
 }> = ({ colors, asset, nftItemDetail }) => (
   <View style={styles.nftItem}>
     <NFTIcon style={styles.nftItemImg} source={nftItemDetail.icon} isNftItem placeholderContentFit="cover" contentFit="cover" />

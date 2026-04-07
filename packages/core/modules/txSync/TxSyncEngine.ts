@@ -9,6 +9,7 @@ export type TxSyncTxSnapshot = {
   nonce: number;
   hash: string | null;
   raw: string | null;
+  epochHeight?: string | null;
   resendCount: number;
   createdAtMs: number;
 };
@@ -124,26 +125,29 @@ export class TxSyncEngine {
       status = TxStatus.DISCARDED;
 
       if (tx.txId === resendCandidateId && tx.raw && tx.resendCount < input.maxResendCount) {
-        await driver.sendRawTransaction(tx.raw);
+        const resendAllowed = await driver.precheckBeforeResend({ epochHeight: tx.epochHeight });
+        if (resendAllowed) {
+          await driver.sendRawTransaction(tx.raw);
 
-        push(tx.txId, {
-          resendCount: tx.resendCount + 1,
-          resendAt: new Date(input.now()),
-          status: TxStatus.PENDING,
-          err: null,
-          errorType: null,
-          executedStatus: null,
-          receipt: null,
-        });
+          push(tx.txId, {
+            resendCount: tx.resendCount + 1,
+            resendAt: new Date(input.now()),
+            status: TxStatus.PENDING,
+            err: null,
+            errorType: null,
+            executedStatus: null,
+            receipt: null,
+          });
 
-        status = TxStatus.PENDING;
-        continue;
+          status = TxStatus.PENDING;
+          continue;
+        }
       }
 
       push(tx.txId, { status: TxStatus.DISCARDED, executedStatus: null, receipt: null, err: null, errorType: null });
     }
     if (presentTxs.length > 0) {
-      const receiptHashes = presentTxs.map((t) => t.hash!).filter((h): h is string => !!h);
+      const receiptHashes = presentTxs.map((t) => t.hash).filter((h): h is string => !!h);
       const receipts = await driver.batchGetReceipts(receiptHashes);
 
       const withReceipt: Array<{ tx: TxSyncTxSnapshot; receipt: unknown }> = [];

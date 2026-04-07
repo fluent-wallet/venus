@@ -1,3 +1,4 @@
+import { iface777 } from '@core/contracts';
 import { DynamicHttpJsonRpcClient } from '@core/rpc/DynamicHttpJsonRpcClient';
 import type {
   Address,
@@ -5,6 +6,7 @@ import type {
   ConfluxFeeEstimate,
   ConfluxUnsignedTransaction,
   ConfluxUnsignedTransactionPayload,
+  FungibleAssetBalanceRequest,
   HardwareSignResult,
   Hash,
   IChainProvider,
@@ -15,9 +17,9 @@ import type {
   SignedTransaction,
   TransactionParams,
 } from '@core/types';
-import { NetworkType } from '@core/types';
 import { computeAddress, toAccountAddress } from '@core/utils/account';
 import { type Base32Address, convertBase32ToHex, convertHexToBase32, decode } from '@core/utils/address';
+import { NetworkType } from '@core/utils/consts';
 import { Conflux, PersonalMessage, PrivateKeyAccount } from 'js-conflux-sdk';
 import type { Hex } from 'ox/Hex';
 import type { EndpointManager } from './EndpointManager';
@@ -46,7 +48,7 @@ type ConfluxRpcClient = {
   getGasPrice(): Promise<bigint>;
 };
 
-export class ConfluxChainProvider implements IChainProvider {
+export class ConfluxChainProvider implements IChainProvider<ConfluxUnsignedTransaction, ConfluxFeeEstimate> {
   readonly chainId: string;
   readonly networkType = NetworkType.Conflux;
   readonly netId: number;
@@ -104,6 +106,10 @@ export class ConfluxChainProvider implements IChainProvider {
     }
   }
 
+  async prepareUnsignedTransaction(tx: ConfluxUnsignedTransaction): Promise<ConfluxUnsignedTransaction> {
+    return this.finalizePreparedTransaction(tx);
+  }
+
   async buildTransaction(params: TransactionParams): Promise<ConfluxUnsignedTransaction> {
     const basePayload = buildTransactionPayload({
       from: params.from,
@@ -143,7 +149,7 @@ export class ConfluxChainProvider implements IChainProvider {
 
     return this.toFeeEstimate(payload, this.toBigInt(gasUsed), this.toBigInt(storageCollateralized), this.toBigInt(gasPrice));
   }
-  async signTransaction(tx: ConfluxUnsignedTransaction, signer: ISigner): Promise<SignedTransaction> {
+  async signTransaction(tx: ConfluxUnsignedTransaction, signer: ISigner): Promise<SignedTransaction<NetworkType.Conflux>> {
     if (signer.type === 'software') {
       return this.signWithSoftware(tx, signer);
     } else {
@@ -151,7 +157,7 @@ export class ConfluxChainProvider implements IChainProvider {
     }
   }
 
-  private async signWithSoftware(tx: ConfluxUnsignedTransaction, signer: ISoftwareSigner): Promise<SignedTransaction> {
+  private async signWithSoftware(tx: ConfluxUnsignedTransaction, signer: ISoftwareSigner): Promise<SignedTransaction<NetworkType.Conflux>> {
     const privateKey = signer.getPrivateKey();
     const account = new PrivateKeyAccount(privateKey, this.netId);
     const signed = await account.signTransaction({
@@ -166,7 +172,7 @@ export class ConfluxChainProvider implements IChainProvider {
     };
   }
 
-  private async signWithHardware(tx: ConfluxUnsignedTransaction, signer: IHardwareSigner): Promise<SignedTransaction> {
+  private async signWithHardware(tx: ConfluxUnsignedTransaction, signer: IHardwareSigner): Promise<SignedTransaction<NetworkType.Conflux>> {
     await signer.signWithHardware({
       derivationPath: signer.getDerivationPath(),
       chainType: signer.getChainType(),
@@ -180,7 +186,7 @@ export class ConfluxChainProvider implements IChainProvider {
     throw new Error('Hardware signing for Conflux transactions is not supported yet.');
   }
 
-  private assembleHardwareSignedTransaction(tx: ConfluxUnsignedTransaction, result: HardwareSignResult): SignedTransaction {
+  private assembleHardwareSignedTransaction(tx: ConfluxUnsignedTransaction, result: HardwareSignResult): SignedTransaction<NetworkType.Conflux> {
     // TODO: implement hardware transaction assembly based on BSIM signature format
     throw new Error('Hardware transaction assembly not implemented');
   }
@@ -205,6 +211,89 @@ export class ConfluxChainProvider implements IChainProvider {
     const { to, data } = params;
     const result = await cfx.call({ to, data });
     return this.formatHex(result);
+  }
+
+  async batchCall(params: readonly ChainCallParams[]): Promise<Hex[]> {
+    if (params.length === 0) {
+      return [];
+    }
+
+    return this.rpc.batch<Hex>(
+      params.map(({ to, data }) => ({
+        method: 'cfx_call',
+        params: [{ to, data }, 'latest_state'],
+      })),
+    );
+  }
+
+  async readFungibleAssetBalances(address: Address, requests: readonly FungibleAssetBalanceRequest[]): Promise<ReadonlyArray<Hex | null>> {
+    if (requests.length === 0) {
+      return [];
+    }
+
+    const results: Array<Hex | null> = new Array(requests.length).fill(null);
+    const nativeIndexes: number[] = [];
+    const rpcRequests: Array<{ method: string; params: unknown[] }> = [];
+    const responseBindings: Array<{ kind: 'native'; indexes: number[] } | { kind: 'erc20'; index: number }> = [];
+    const ownerHex = this.resolveErc20BalanceAddress(address);
+
+    requests.forEach((request, index) => {
+      if (request.assetType === 'Native') {
+        nativeIndexes.push(index);
+        return;
+      }
+
+      rpcRequests.push({
+        method: 'cfx_call',
+        params: [
+          {
+            to: request.contractAddress,
+            data: iface777.encodeFunctionData('balanceOf', [ownerHex]) as Hex,
+          },
+          'latest_state',
+        ],
+      });
+      responseBindings.push({ kind: 'erc20', index });
+    });
+
+    if (nativeIndexes.length > 0) {
+      rpcRequests.unshift({ method: 'cfx_getBalance', params: [address, 'latest_state'] });
+      responseBindings.unshift({ kind: 'native', indexes: nativeIndexes });
+    }
+
+    try {
+      const raws = await this.rpc.batch<Hex>(rpcRequests);
+      responseBindings.forEach((binding, index) => {
+        const raw = raws[index] ?? null;
+        if (binding.kind === 'native') {
+          binding.indexes.forEach((nativeIndex) => {
+            results[nativeIndex] = raw;
+          });
+          return;
+        }
+
+        results[binding.index] = raw;
+      });
+
+      return results;
+    } catch {
+      return Promise.all(
+        requests.map(async (request) => {
+          try {
+            if (request.assetType === 'Native') {
+              return await this.getBalance(address);
+            }
+
+            return await this.call({
+              to: request.contractAddress,
+              data: iface777.encodeFunctionData('balanceOf', [ownerHex]) as Hex,
+            });
+          } catch {
+            return null;
+          }
+        }),
+      );
+    }
   }
 
   async signMessage(message: string, signer: ISigner): Promise<string> {
@@ -252,6 +341,32 @@ export class ConfluxChainProvider implements IChainProvider {
     const epoch = await sdkRpc.getEpochNumber('latest_state');
     return this.toNumber(epoch);
   }
+
+  private resolveErc20BalanceAddress(address: Address): string {
+    if (address.startsWith('cfx') || address.startsWith('net')) {
+      return convertBase32ToHex(address as Base32Address);
+    }
+    return address;
+  }
+
+  private async finalizePreparedTransaction(tx: ConfluxUnsignedTransaction): Promise<ConfluxUnsignedTransaction> {
+    const estimate = await this.estimateFee(tx);
+    const nonce = await this.resolveNonce(tx.payload.from, tx.payload.nonce);
+    const epochHeight = await this.resolveEpochHeight(tx.payload.epochHeight);
+
+    return {
+      ...tx,
+      payload: {
+        ...tx.payload,
+        gasLimit: tx.payload.gasLimit ?? estimate.gasLimit,
+        gasPrice: tx.payload.gasPrice ?? estimate.gasPrice,
+        nonce,
+        epochHeight,
+        storageLimit: tx.payload.storageLimit ?? estimate.storageLimit,
+      },
+    };
+  }
+
   private toUnsignedTransaction(payload: ConfluxUnsignedTransactionPayload): ConfluxUnsignedTransaction {
     return {
       chainType: this.networkType,

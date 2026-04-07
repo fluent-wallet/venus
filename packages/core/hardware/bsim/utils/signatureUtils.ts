@@ -1,4 +1,4 @@
-import { Signature as NobleSignature, etc as secpUtils } from '@noble/secp256k1';
+import { canonicalizeSecp256k1SignatureS } from '@core/utils/secp256k1';
 import { computeAddress, SigningKey } from 'ethers';
 import { BSIMHardwareError } from '../errors/BSIMHardwareError';
 import { parseHex } from './hexUtils';
@@ -9,12 +9,8 @@ import { parseHex } from './hexUtils';
  * @param s - S component of signature (hex string)
  * @returns Canonical S value as uppercase hex string without 0x prefix
  */
-export const canonicalizeSignature = (r: string, s: string): string => {
-  const compact = new Uint8Array(64);
-  compact.set(secpUtils.hexToBytes(parseHex(r).padStart(64, '0')), 0);
-  compact.set(secpUtils.hexToBytes(parseHex(s).padStart(64, '0')), 32);
-  const normalized = NobleSignature.fromCompact(compact).normalizeS();
-  return secpUtils.bytesToHex(normalized.toCompactRawBytes().slice(32)).toUpperCase();
+export const canonicalizeSignatureS = (r: string, s: string): string => {
+  return canonicalizeSecp256k1SignatureS(parseHex(r), parseHex(s));
 };
 
 /**
@@ -29,9 +25,9 @@ export const canonicalizeSignature = (r: string, s: string): string => {
  * @throws BSIMHardwareError with code 'RECOVERY_FAILED' if neither v value recovers correctly
  */
 export const resolveRecoveryParam = (digest: string, r: string, s: string, targetPublicKey: string, address?: string): { v: number; s: string } => {
-  const normalizedTarget = parseHex(targetPublicKey);
-  const normalizedAddress = address?.toLowerCase();
-  const canonicalS = canonicalizeSignature(r, s);
+  const targetPublicKeyHex = parseHex(targetPublicKey);
+  const targetAddress = address?.toLowerCase();
+  const canonicalS = canonicalizeSignatureS(r, s);
   const candidates: Array<0 | 1> = [0, 1];
   for (const candidate of candidates) {
     try {
@@ -40,10 +36,10 @@ export const resolveRecoveryParam = (digest: string, r: string, s: string, targe
         s: `0x${canonicalS}`,
         v: candidate,
       });
-      if (parseHex(recovered) === normalizedTarget) {
+      if (parseHex(recovered) === targetPublicKeyHex) {
         return { v: candidate + 27, s: canonicalS };
       }
-      if (normalizedAddress && computeAddress(recovered).toLowerCase() === normalizedAddress) {
+      if (targetAddress && computeAddress(recovered).toLowerCase() === targetAddress) {
         return { v: candidate + 27, s: canonicalS };
       }
     } catch {

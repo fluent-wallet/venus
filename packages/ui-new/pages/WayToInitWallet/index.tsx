@@ -1,4 +1,3 @@
-import { isCardNotCertification } from '@WalletCoreExtends/Plugins/BSIM/BSIMSDK';
 import i18n from '@assets/i18n';
 import ArrowRight from '@assets/icons/arrow-right.svg';
 import WelcomeBgDark from '@assets/images/welcome-bg-dark.webp';
@@ -7,14 +6,15 @@ import WelcomeSwiftShieldZH from '@assets/images/welcome-SwiftShield-zh.webp';
 import BSIMDeviceSelectSheet from '@components/BSIM/BSIMDeviceSelectSheet';
 import Button from '@components/Button';
 import Text from '@components/Text';
-import plugins from '@core/WalletCore/Plugins';
+import { HARDWARE_WALLET_TYPES } from '@core/hardware/bsim/constants';
+import { isRecoveryModeError } from '@core/hardware/bsim/errors';
 import { Lang, useLanguage } from '@hooks/useI18n';
 import useInAsync from '@hooks/useInAsync';
 import { useTheme } from '@react-navigation/native';
 import { BiometricsWayStackName, ChangeBPinStackName, RecoverBsimStackName, type StackScreenProps, type WayToInitWalletStackName } from '@router/configs';
+import { getHardwareWalletService } from '@service/core';
 import { handleBSIMHardwareUnavailable } from '@utils/handleBSIMHardwareUnavailable';
 import { Image } from 'expo-image';
-import { BSIMError } from 'modules/BSIM/src';
 import type React from 'react';
 import { useCallback, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -37,31 +37,31 @@ const WayToInitWallet: React.FC<StackScreenProps<typeof WayToInitWalletStackName
   const insets = useSafeAreaInsets();
   const lang = useLanguage();
 
-  const _handleConnectBSIMCard = useCallback(async () => {
+  const _handleConnectBSIMCard = useCallback(async (bsimDeviceId?: string | unknown) => {
+    const deviceIdentifier = typeof bsimDeviceId === 'string' ? bsimDeviceId : undefined;
     try {
       navigation.setOptions({ gestureEnabled: false });
       await new Promise((resolve) => setTimeout(resolve));
-      // try to get bsim version to check bsim hardware
-      await plugins.BSIM.getBSIMVersion();
+
       try {
-        // try to get bsim public key list
-        // this will throw an error when bsim need recovery
-        await plugins.BSIM.getBSIMPublicKeys();
+        // Detection only: connect + list without deriving new accounts.
+        await getHardwareWalletService().connectAndList(HARDWARE_WALLET_TYPES.BSIM, { deviceIdentifier });
       } catch (error) {
         // Only recovery mode should navigate to Recover flow.
-        if (error instanceof BSIMError && isCardNotCertification(error)) {
-          return navigation.navigate(RecoverBsimStackName);
+        if (isRecoveryModeError(error)) {
+          return navigation.navigate(RecoverBsimStackName, { bsimDeviceId: deviceIdentifier });
         }
         throw error;
       }
-      navigation.navigate(ChangeBPinStackName);
+
+      navigation.navigate(ChangeBPinStackName, { bsimDeviceId: deviceIdentifier });
     } catch (error: any) {
       if (handleBSIMHardwareUnavailable(error, navigation)) {
         return;
       }
       showNotFindBSIMCardMessage();
     } finally {
-      navigation.setOptions({ gestureEnabled: false });
+      navigation.setOptions({ gestureEnabled: true });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -87,7 +87,7 @@ const WayToInitWallet: React.FC<StackScreenProps<typeof WayToInitWalletStackName
                 textAlign="left"
                 Icon={ArrowRight}
                 style={styles.btn}
-                onPress={Platform.OS === 'ios' ? () => bsimDeviceSheetRef.current?.expand() : handleConnectBSIMCard}
+                onPress={Platform.OS === 'ios' ? () => bsimDeviceSheetRef.current?.expand() : () => handleConnectBSIMCard()}
                 loading={inConnecting}
                 mode="dark"
               >

@@ -1,51 +1,32 @@
-import { getEventBus } from '@WalletCoreExtends/index';
-import { BSIMError } from '@WalletCoreExtends/Plugins/BSIM/BSIMSDK';
-import { BSIMEventTypesName } from '@WalletCoreExtends/Plugins/BSIM/types';
 import MessageFail from '@assets/icons/message-fail.svg';
 import { BottomSheetFooter, BottomSheetHeader, BottomSheetRoute, BottomSheetScrollContent, BottomSheetWrapper, snapPoints } from '@components/BottomSheet';
 import Button from '@components/Button';
 import Text from '@components/Text';
-import type { App } from '@core/database/models/App';
-import type { Signature } from '@core/database/models/Signature';
-import { SignType } from '@core/database/models/Signature/type';
-import { processError } from '@core/utils/eth';
-import { TransactionActionType } from '@core/WalletCore/Events/broadcastTransactionSubject';
-import { BROADCAST_TRANSACTION_EVENT } from '@core/WalletCore/Events/eventTypes';
-import methods from '@core/WalletCore/Methods';
-import plugins from '@core/WalletCore/Plugins';
-import { fetchERC20AssetInfoBatchWithAccount } from '@core/WalletCore/Plugins/AssetsTracker/fetchers/basic';
-import { checkDiffInRange } from '@core/WalletCore/Plugins/BlockNumberTracker';
-import {
-  AssetSource,
-  AssetType,
-  NetworkType,
-  useCurrentAccount,
-  useCurrentAddressOfAccount,
-  useCurrentAddressValue,
-  useCurrentNetwork,
-  useCurrentNetworkNativeAsset,
-  useVaultOfAccount,
-  VaultType,
-} from '@core/WalletCore/Plugins/ReactInject';
-import type { ITxEvm } from '@core/WalletCore/Plugins/Transaction/types';
-import type { IWCSendTransactionEvent } from '@core/WalletCore/Plugins/WalletConnect/types';
+import { AUTH_PASSWORD_REQUEST_CANCELED } from '@core/errors';
+import { BSIM_ERROR_CANCEL } from '@core/hardware/bsim/constants';
+import { type EvmRpcTransactionRequest, parseEvmRpcTransactionRequest } from '@core/services/transaction';
+import { ASSET_TYPE, type AssetTypeValue, type Hex } from '@core/types';
+import { isApproveMethod, type ParseTxDataReturnType } from '@core/utils/txData';
 import { Interface } from '@ethersproject/abi';
 import useFormatBalance from '@hooks/useFormatBalance';
 import useInAsync from '@hooks/useInAsync';
-import { SignTransactionCancelError, useSignTransaction } from '@hooks/useSignTransaction';
 import { AccountItemView } from '@modules/AccountsList';
 import GasFeeSetting, { type GasEstimate, type GasFeeSettingMethods } from '@modules/GasFee/GasFeeSetting';
 import DappParamsWarning from '@modules/GasFee/GasFeeSetting/DappParamsWarning';
 import EstimateFee from '@modules/GasFee/GasFeeSetting/EstimateFee';
-import BSIMVerify, { useBSIMVerify } from '@pages/SendTransaction/BSIMVerify';
+import { getGasSettingPrimaryFee, isEip1559GasSetting } from '@modules/GasFee/GasFeeSetting/gasSetting';
+import HardwareSignVerify from '@pages/SendTransaction/HardwareSignVerify';
 import { styles as transactionConfirmStyle } from '@pages/SendTransaction/Step4Confirm/index';
 import SendAsset from '@pages/SendTransaction/Step4Confirm/SendAsset';
+import { useHardwareSigningUiState } from '@pages/SendTransaction/Step4Confirm/useHardwareSigningUiState';
 import { type RouteProp, useNavigation, useRoute, useTheme } from '@react-navigation/native';
 import type { StackNavigation, WalletConnectParamList, WalletConnectTransactionStackName } from '@router/configs';
+import { useCurrentAccount, useCurrentAddress } from '@service/account';
+import { useAssetsOfCurrentAddress } from '@service/asset';
+import { getAssetService, getExternalRequestsService, getTransactionService } from '@service/core';
+import { useCurrentNetwork } from '@service/network';
 import { handleBSIMHardwareUnavailable } from '@utils/handleBSIMHardwareUnavailable';
 import matchRPCErrorMessage from '@utils/matchRPCErrorMssage';
-import { isApproveMethod, type ParseTxDataReturnType, parseTxDataAsync } from '@utils/parseTxData';
-import { supportsInterface } from '@utils/supportsInterface';
 import Decimal from 'decimal.js';
 import { isNil } from 'lodash-es';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -58,7 +39,25 @@ export type TxDataWithTokenInfo = ParseTxDataReturnType & {
   symbol?: string;
   balance?: string;
   decimals?: number;
-  assetType?: AssetType;
+  assetType?: AssetTypeValue;
+};
+
+const toHexQuantity = (value: number): `0x${string}` => `0x${Math.max(0, Math.trunc(value)).toString(16)}`;
+const isBsimHardwareError = (error: unknown): error is { code: string; message: string } => {
+  return Boolean(
+    error && typeof error === 'object' && (error as { name?: unknown }).name === 'BSIMHardwareError' && typeof (error as { code?: unknown }).code === 'string',
+  );
+};
+
+const isUserCanceledError = (error: unknown): boolean => {
+  const code = (error as { code?: unknown } | null)?.code;
+  if (code === AUTH_PASSWORD_REQUEST_CANCELED) return true;
+  if (code === BSIM_ERROR_CANCEL) return true;
+
+  const name = (error as { name?: unknown } | null)?.name;
+  if (name === 'AbortError') return true;
+
+  return false;
 };
 
 function WalletConnectTransaction() {
@@ -66,51 +65,63 @@ function WalletConnectTransaction() {
   const { colors } = useTheme();
   const rootNavigation = useNavigation<StackNavigation>();
   const [showGasFeeSetting, setShowGasFeeSetting] = useState(false);
-  const currentAccount = useCurrentAccount();
-  const currentAddress = useCurrentAddressOfAccount(currentAccount?.id)!;
-  const currentAddressValue = useCurrentAddressValue()!;
-  const currentNetwork = useCurrentNetwork()!;
-  const currentNativeAsset = useCurrentNetworkNativeAsset();
-  const currentVault = useVaultOfAccount(currentAccount?.id);
+  const { data: currentAccount } = useCurrentAccount();
+  const { data: currentAddress } = useCurrentAddress();
+  const { data: currentNetwork } = useCurrentNetwork();
+  const { data: assets } = useAssetsOfCurrentAddress();
+  const nativeAsset = useMemo(() => assets?.find((a) => a.type === ASSET_TYPE.Native) ?? null, [assets]);
 
   const [errorMsg, setError] = useState('');
   const [parseData, setParseData] = useState<TxDataWithTokenInfo>();
   const [showEditAllowance, setShowEditAllowance] = useState(false);
   const [allowanceValue, setAllowanceValue] = useState('');
 
-  const signTransaction = useSignTransaction();
+  const navigation = useNavigation<StackNavigation>();
+  const route = useRoute<RouteProp<WalletConnectParamList, typeof WalletConnectTransactionStackName>>();
+  const params = route.params as WalletConnectParamList[typeof WalletConnectTransactionStackName];
 
-  const epochHeightRef = useRef('');
+  const { requestId, request, isContract } = params;
 
-  const navigation = useNavigation();
-  const {
-    params: {
-      tx: { from, to, value, data, nonce, gas, gasPrice, storageLimit, type, maxFeePerGas, maxPriorityFeePerGas },
-      isContract,
-      metadata,
-    },
-  } = useRoute<RouteProp<WalletConnectParamList, typeof WalletConnectTransactionStackName>>();
+  const metadata = request?.metadata ?? { url: '', name: '', icons: [] };
+
+  const rpcTx = useMemo(() => {
+    try {
+      return parseEvmRpcTransactionRequest(request?.params);
+    } catch {
+      return null;
+    }
+  }, [request?.params]);
+
+  const to = rpcTx?.to;
+  const value = rpcTx?.value;
+  const data = rpcTx?.data;
+  const nonce = rpcTx?.nonce;
+  const gas = rpcTx?.gas;
+  const gasPrice = rpcTx?.gasPrice;
+  const type = rpcTx?.type;
+  const maxFeePerGas = rpcTx?.maxFeePerGas;
+  const maxPriorityFeePerGas = rpcTx?.maxPriorityFeePerGas;
 
   const txData = useMemo(() => {
-    if (allowanceValue && parseData && isApproveMethod(parseData) && parseData.assetType === AssetType.ERC20) {
-      const value = parseData.decimals ? new Decimal(allowanceValue).mul(new Decimal(10).pow(parseData.decimals)).toString() : allowanceValue;
+    if (allowanceValue && parseData && isApproveMethod(parseData) && parseData.assetType === ASSET_TYPE.ERC20) {
+      const value = parseData.decimals ? new Decimal(allowanceValue).mul(new Decimal(10).pow(parseData.decimals)).toFixed(0) : allowanceValue;
       // is approve and allowance value is set , so we need to encode the date
 
       const iface = new Interface([parseData.readableABI]);
-      return iface.encodeFunctionData(parseData.functionName, [from, value]);
+      return iface.encodeFunctionData(parseData.functionName, [parseData.address, value]);
     }
     return data;
-  }, [allowanceValue, data, from, parseData]);
+  }, [allowanceValue, data, parseData]);
 
   const txHalf = useMemo(
     () => ({
       to,
-      value: value ? new Decimal(value.toString()).toHex() : '0x0',
+      value: value ?? '0x0',
       data: txData || '0x',
-      from: currentAddressValue!,
+      from: currentAccount?.address,
       chainId: currentNetwork?.chainId,
     }),
-    [txData, currentAddressValue, currentNetwork?.chainId, to, value],
+    [currentAccount?.address, currentNetwork?.chainId, to, txData, value],
   );
 
   const [gasEstimate, setGasEstimate] = useState<GasEstimate | null>(null);
@@ -128,18 +139,22 @@ function WalletConnectTransaction() {
 
   const dappCustomizeAdvanceSetting = useMemo(
     () =>
-      !isNil(gas) || !isNil(nonce) || !isNil(storageLimit)
+      !isNil(gas) || !isNil(nonce)
         ? {
             ...(gas ? { gas } : null),
-            ...(storageLimit ? { storageLimit } : null),
             ...(nonce ? { nonce: Number(nonce) } : null),
           }
         : undefined,
-    [gas, nonce, storageLimit],
+    [gas, nonce],
   );
 
-  const gasSettingMethods = useRef<GasFeeSettingMethods>(null!);
+  const gasSettingMethods = useRef<GasFeeSettingMethods | null>(null);
   const [showDappParamsWarning, setShowDappParamsWarning] = useState<boolean | null>(() => null);
+  const abortRef = useRef<AbortController | null>(null);
+  const closeActionRef = useRef<'none' | 'approving' | 'rejecting' | 'approved' | 'rejected'>('none');
+  const approveResultRef = useRef<string | null>(null);
+  const addressId = currentAddress?.id ?? '';
+  const { state: hardwareSignState, clear: clearHardwareSignState } = useHardwareSigningUiState(addressId || undefined);
   const checkDappParamsSuitable = useCallback(
     (_gasEstimate: GasEstimate) => {
       if (!_gasEstimate || showDappParamsWarning !== null) return;
@@ -147,7 +162,7 @@ function WalletConnectTransaction() {
         ? new Decimal(dappCustomizeAdvanceSetting.gas).greaterThanOrEqualTo(_gasEstimate.estimateAdvanceSetting.gasLimit)
         : true;
 
-      const customizePrice = dappCustomizeGasSetting?.suggestedMaxFeePerGas ?? dappCustomizeGasSetting?.suggestedGasPrice;
+      const customizePrice = getGasSettingPrimaryFee(dappCustomizeGasSetting);
       const isGasSettingSuitable = customizePrice ? new Decimal(customizePrice).greaterThanOrEqualTo(_gasEstimate.estimateCurrentGasPrice) : true;
 
       if (!isAdvanceSettingSuitable || !isGasSettingSuitable) {
@@ -157,179 +172,224 @@ function WalletConnectTransaction() {
     [dappCustomizeAdvanceSetting, dappCustomizeGasSetting, showDappParamsWarning],
   );
 
-  const isSupport1559 = !!gasEstimate?.gasSetting?.suggestedMaxFeePerGas;
+  const isSupport1559 = !!gasEstimate?.gasSetting && isEip1559GasSetting(gasEstimate.gasSetting);
   const shouldUse1559 = isSupport1559 && (isNil(type) || (Number(type) !== 0 && Number(type) !== 1));
 
-  const amount = useFormatBalance(value ? value.toString() : '0', currentNativeAsset?.decimals ?? 18);
+  const amount = useFormatBalance(value ? value.toString() : '0', nativeAsset?.decimals ?? 18);
 
   const _handleReject = useCallback(async () => {
+    if (closeActionRef.current !== 'none') return;
+    closeActionRef.current = 'rejecting';
+
     try {
-      await plugins.WalletConnect.currentEventSubject.getValue()?.action.reject();
+      try {
+        abortRef.current?.abort();
+      } catch {
+        // ignore
+      }
+
+      try {
+        getExternalRequestsService().reject({ requestId });
+        closeActionRef.current = 'rejected';
+      } catch (error) {
+        closeActionRef.current = 'none';
+        console.log(error);
+      } finally {
+        if (navigation.canGoBack()) navigation.goBack();
+      }
     } catch (e) {
       console.log(e);
     }
-  }, []);
+  }, [navigation, requestId]);
 
-  const { bsimEvent, setBSIMEvent, execBSIMCancel, setBSIMCancel } = useBSIMVerify();
+  const handleSheetClose = useCallback(() => {
+    if (closeActionRef.current !== 'none') return;
+    void _handleReject();
+  }, [_handleReject]);
+
+  const finalizeApprove = useCallback(
+    (result: string) => {
+      try {
+        getExternalRequestsService().approve({ requestId, data: { result } });
+        approveResultRef.current = null;
+        closeActionRef.current = 'approved';
+        clearHardwareSignState();
+        if (navigation.canGoBack()) navigation.goBack();
+      } catch (error) {
+        approveResultRef.current = result;
+        closeActionRef.current = 'none';
+        clearHardwareSignState();
+        setError(matchRPCErrorMessage(error as { message?: string; data?: string; code?: number }));
+      }
+    },
+    [clearHardwareSignState, navigation, requestId],
+  );
+
   const _handleApprove = useCallback(async () => {
     if (!gasEstimate) return;
+    if (!currentAddress?.id || !currentAccount?.address) return;
+    if (!requestId) return;
+    if (!rpcTx) return;
+    if (closeActionRef.current !== 'none') return;
+
+    const pendingApproveResult = approveResultRef.current;
+    if (pendingApproveResult) {
+      closeActionRef.current = 'approving';
+      finalizeApprove(pendingApproveResult);
+      return;
+    }
+
+    closeActionRef.current = 'approving';
     setError('');
-    setBSIMEvent(null);
-    execBSIMCancel();
+    abortRef.current?.abort();
+    const controller = currentAccount.isHardwareWallet ? new AbortController() : null;
+    abortRef.current = controller;
+    clearHardwareSignState();
 
-    let txRaw!: string;
-    let txHash!: string;
-    let txError: any;
-    let signatureRecord: Signature | undefined;
-    let dapp: App | undefined;
-
-    const tx = Object.assign({}, txHalf, {
-      gasLimit: gasEstimate.advanceSetting?.gasLimit,
-      ...(gasEstimate?.advanceSetting?.storageLimit ? { storageLimit: gasEstimate?.advanceSetting?.storageLimit } : null),
-      ...(shouldUse1559
-        ? {
-            maxFeePerGas: gasEstimate.gasSetting.suggestedMaxFeePerGas,
-            maxPriorityFeePerGas: gasEstimate.gasSetting.suggestedMaxPriorityFeePerGas,
-            type: 2,
-          }
-        : {
-            gasPrice: gasEstimate.gasSetting.suggestedGasPrice ?? gasEstimate.gasSetting.suggestedMaxFeePerGas,
-            type: 0,
-          }),
-    }) as ITxEvm;
-    tx.nonce = gasEstimate.advanceSetting?.nonce;
-
-    const approve = plugins.WalletConnect.currentEventSubject.getValue()?.action.approve as IWCSendTransactionEvent['action']['approve'];
     try {
-      if (currentNetwork.networkType === NetworkType.Conflux) {
-        const currentEpochHeight = await plugins.BlockNumberTracker.getNetworkBlockNumber(currentNetwork);
-        if (!epochHeightRef.current || !checkDiffInRange(BigInt(currentEpochHeight) - BigInt(epochHeightRef.current))) {
-          epochHeightRef.current = currentEpochHeight;
-        }
-      }
+      const gasPriceOrMaxFee = getGasSettingPrimaryFee(gasEstimate.gasSetting);
+      const requestForSend: EvmRpcTransactionRequest = {
+        from: currentAccount.address,
+        to: rpcTx.to,
+        value: rpcTx.value ?? '0x0',
+        data: txData || '0x',
+        gas: gasEstimate.advanceSetting?.gasLimit,
+        nonce: gasEstimate.advanceSetting?.nonce != null ? (toHexQuantity(gasEstimate.advanceSetting.nonce) as unknown as Hex) : undefined,
+        ...(shouldUse1559 && isEip1559GasSetting(gasEstimate.gasSetting)
+          ? {
+              maxFeePerGas: gasEstimate.gasSetting.suggestedMaxFeePerGas,
+              maxPriorityFeePerGas: gasEstimate.gasSetting.suggestedMaxPriorityFeePerGas,
+              type: '0x2' as Hex,
+            }
+          : {
+              gasPrice: gasPriceOrMaxFee,
+              type: '0x0' as Hex,
+            }),
+      };
 
-      if (currentVault?.type === VaultType.BSIM) {
-        setBSIMEvent({ type: BSIMEventTypesName.BSIM_SIGN_START });
-      }
+      const appIdentity = typeof metadata.url === 'string' ? metadata.url : '';
+      const app = appIdentity
+        ? {
+            identity: appIdentity,
+            origin: appIdentity,
+            name: metadata.name || appIdentity,
+            icon: Array.isArray(metadata.icons) ? metadata.icons[0] : undefined,
+          }
+        : null;
 
-      const { txRawPromise, cancel } = await signTransaction({ ...tx, epochHeight: epochHeightRef.current });
-      setBSIMCancel(cancel);
-      txRaw = await txRawPromise;
-      dapp = (await methods.queryAppByIdentity(metadata.url)) ?? undefined;
-      signatureRecord = await methods.createSignature({
-        address: currentAddress,
-        signType: SignType.TX,
-        app: dapp,
+      const tx = await getTransactionService().sendDappTransaction({
+        addressId: currentAddress.id,
+        request: requestForSend,
+        app,
+        signal: controller?.signal,
       });
 
-      txHash = await plugins.Transaction.sendRawTransaction({ txRaw, network: currentNetwork });
-
-      await approve(txHash);
-      setBSIMEvent(null);
-    } catch (error: any) {
+      approveResultRef.current = tx.hash;
+      finalizeApprove(tx.hash);
+    } catch (error: unknown) {
       if (
         handleBSIMHardwareUnavailable(error, rootNavigation, {
-          beforeNavigate: () => setBSIMEvent(null),
+          beforeNavigate: () => {
+            clearHardwareSignState();
+            abortRef.current?.abort();
+          },
         })
       ) {
+        closeActionRef.current = 'none';
         return;
       }
-      if (error instanceof BSIMError) {
-        setBSIMEvent({ type: BSIMEventTypesName.ERROR, message: error?.message });
-        return;
-      }
-      setBSIMEvent(null);
 
-      if (error instanceof SignTransactionCancelError) {
-        // ignore cancel error
+      if (controller?.signal.aborted || isUserCanceledError(error)) {
+        closeActionRef.current = 'none';
+        clearHardwareSignState();
+        return;
+      }
+
+      if (currentAccount?.isHardwareWallet && isBsimHardwareError(error)) {
+        closeActionRef.current = 'none';
+        setError(error.message);
         return;
       }
 
       const msg = matchRPCErrorMessage(error);
-      txError = error;
+      closeActionRef.current = 'none';
       setError(msg);
-      // TODO: show error
+      clearHardwareSignState();
     } finally {
-      if (txRaw) {
-        getEventBus().dispatch(BROADCAST_TRANSACTION_EVENT, {
-          transactionType: TransactionActionType.Send,
-          params: {
-            txHash,
-            txRaw,
-            tx,
-            address: currentAddress,
-            signature: signatureRecord,
-            app: dapp,
-            extraParams: {
-              assetType: isContract ? parseData?.assetType : AssetType.Native,
-              contractAddress: isContract ? to : undefined,
-              sendAt: new Date(),
-              epochHeight: currentNetwork.networkType === NetworkType.Conflux ? epochHeightRef.current : null,
-              err: txError && String(txError.data || txError?.message || txError),
-              errorType: txError ? processError(txError).errorType : undefined,
-              method: parseData ? (parseData.functionName === 'unknown' ? 'Contract Interaction' : parseData.functionName) : 'transfer',
-            },
-          },
-        });
-      }
+      abortRef.current = null;
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentAddressValue, currentNetwork?.id, gas, gasPrice, to, navigation, value, gasEstimate, isContract, signTransaction, txData, parseData]);
+  }, [
+    clearHardwareSignState,
+    currentAccount?.address,
+    currentAccount?.isHardwareWallet,
+    currentAddress?.id,
+    gasEstimate,
+    metadata.icons,
+    metadata.name,
+    metadata.url,
+    navigation,
+    txData,
+    requestId,
+    rootNavigation,
+    rpcTx,
+    shouldUse1559,
+    finalizeApprove,
+  ]);
+
+  useEffect(() => {
+    return () => abortRef.current?.abort();
+  }, []);
 
   useEffect(() => {
     async function parseAndTryGetTokenInfo() {
-      if (isContract) {
-        const parseData = await parseTxDataAsync({ data, to, netId: currentNetwork.netId });
+      if (!currentAddress?.id) return;
+      if (!rpcTx) return;
+      if (!isContract) return;
 
-        if (to) {
-          const typeByInterface = await supportsInterface(to, {
-            networkType: currentNetwork.networkType,
-            endpoint: currentNetwork?.endpoint,
-          });
+      const parsed = await getTransactionService().decodeContractData({
+        addressId: currentAddress.id,
+        data,
+        to,
+      });
 
-          const remoteAsset = await fetchERC20AssetInfoBatchWithAccount({
-            networkType: currentNetwork.networkType,
-            endpoint: currentNetwork?.endpoint,
-            contractAddress: to,
-            accountAddress: currentAddress!,
-          });
-          const assertType =
-            typeByInterface !== 'Unknown' ? typeByInterface : remoteAsset.decimals && remoteAsset.name && remoteAsset.symbol ? AssetType.ERC20 : 'Unknown';
+      if (to) {
+        const inspection = await getAssetService().inspectContractAsset({ addressId: currentAddress.id, contractAddress: to });
+        const assetType = inspection.assetType ?? undefined;
 
-          setParseData({
-            ...parseData,
-            symbol: remoteAsset.symbol,
-            balance: remoteAsset.balance,
-            decimals: remoteAsset.decimals,
-            assetType: assertType === 'Unknown' ? undefined : assertType,
-          });
+        setParseData({
+          ...parsed,
+          symbol: inspection.symbol ?? undefined,
+          balance: inspection.balance ?? undefined,
+          decimals: inspection.decimals ?? undefined,
+          assetType,
+        });
 
-          if (assertType === 'Unknown') return;
-
-          const assetInfo = { ...remoteAsset, type: assertType, contractAddress: to };
-
-          const isInDB = await methods.queryAssetByAddress(currentNetwork.id, to);
-          if (!isInDB) {
-            await methods.createAsset({
-              network: currentNetwork,
-              ...assetInfo,
-              source: AssetSource.Custom,
+        if (assetType === ASSET_TYPE.ERC20) {
+          try {
+            await getAssetService().addCustomToken({
+              addressId: currentAddress.id,
+              contractAddress: to,
+              name: inspection.name ?? undefined,
+              symbol: inspection.symbol ?? undefined,
+              decimals: inspection.decimals ?? undefined,
             });
+          } catch {
+            // ignore
           }
-        } else {
-          setParseData(parseData);
         }
+      } else {
+        setParseData(parsed);
       }
     }
     parseAndTryGetTokenInfo();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [data, to, isContract, currentNetwork.id, currentAddress, value, currentNetwork.netId]);
+  }, [data, to, isContract, currentAddress?.id, rpcTx]);
 
   const handleOpenEditAllowanceModel = useCallback(() => {
-    if (parseData?.functionName === 'approve' && parseData?.assetType === AssetType.ERC20) {
+    if (parseData?.functionName === 'approve' && parseData?.assetType === ASSET_TYPE.ERC20) {
       setShowEditAllowance(true);
     }
-  }, [setShowEditAllowance, parseData]);
+  }, [parseData]);
 
   const handleSaveEditAllowance = useCallback((value: string) => {
     setAllowanceValue(value);
@@ -341,7 +401,12 @@ function WalletConnectTransaction() {
 
   return (
     <>
-      <BottomSheetRoute snapPoints={snapPoints.large} onClose={() => handleReject()}>
+      <BottomSheetRoute
+        enablePanDownToClose={!approveLoading}
+        enableContentPanningGesture={!approveLoading}
+        snapPoints={snapPoints.large}
+        onClose={handleSheetClose}
+      >
         <BottomSheetWrapper>
           <BottomSheetHeader title={t('wc.dapp.tx.title')} />
           <BottomSheetScrollContent>
@@ -357,7 +422,7 @@ function WalletConnectTransaction() {
             ) : (
               <>
                 <Text style={[transactionConfirmStyle.sendTitle, styles.sendTitle, { color: colors.textPrimary }]}>{t('common.send')}</Text>
-                <SendAsset amount={amount} symbol={currentNativeAsset?.symbol ?? 'CFX'} icon={currentNativeAsset?.icon} recipientAddress={to ?? ''} />
+                <SendAsset amount={amount} symbol={nativeAsset?.symbol ?? 'CFX'} icon={nativeAsset?.icon} recipientAddress={to ?? ''} />
               </>
             )}
 
@@ -373,7 +438,7 @@ function WalletConnectTransaction() {
           <View style={[transactionConfirmStyle.divider, { backgroundColor: colors.borderFourth }]} />
 
           <Text style={[transactionConfirmStyle.signWith, { color: colors.textSecondary }]}>{t('tx.confirm.signingWith')}</Text>
-          <AccountItemView nickname={currentAccount?.nickname} addressValue={currentAddressValue} colors={colors}>
+          <AccountItemView nickname={currentAccount?.nickname} addressValue={currentAccount?.address ?? ''} colors={colors}>
             <Text style={[transactionConfirmStyle.networkName, { color: colors.textSecondary }]} numberOfLines={1}>
               on {currentNetwork?.name}
             </Text>
@@ -395,7 +460,7 @@ function WalletConnectTransaction() {
               style={transactionConfirmStyle.btn}
               loading={approveLoading}
               size="small"
-              onPress={_handleApprove}
+              onPress={handleApprove}
               disabled={isContract ? !parseData : false}
             >
               {isContract ? t('common.confirm') : t('common.send')}
@@ -427,12 +492,12 @@ function WalletConnectTransaction() {
         dappCustomizeAdvanceSetting={dappCustomizeAdvanceSetting}
         force155={!isNil(type) && (Number(type) === 0 || Number(type) === 1)}
       />
-      {bsimEvent && (
-        <BSIMVerify
-          bsimEvent={bsimEvent}
+      {!!(currentAccount?.isHardwareWallet && hardwareSignState) && hardwareSignState && (
+        <HardwareSignVerify
+          state={hardwareSignState}
           onClose={() => {
-            setBSIMEvent(null);
-            execBSIMCancel();
+            abortRef.current?.abort();
+            clearHardwareSignState();
           }}
           onRetry={handleApprove}
         />

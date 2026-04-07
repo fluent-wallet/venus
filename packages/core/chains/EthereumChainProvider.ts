@@ -1,9 +1,12 @@
+import { iface777 } from '@core/contracts';
+import ESpaceWalletABI from '@core/contracts/ABI/ESpaceWallet';
 import { DynamicHttpJsonRpcClient } from '@core/rpc/DynamicHttpJsonRpcClient';
 import type {
   Address,
   ChainCallParams,
   EvmFeeEstimate,
   EvmUnsignedTransaction,
+  FungibleAssetBalanceRequest,
   HardwareSignResult,
   Hash,
   Hex,
@@ -15,12 +18,13 @@ import type {
   SignedTransaction,
   TransactionParams,
 } from '@core/types';
-import { NetworkType } from '@core/types';
+import { NetworkType } from '@core/utils/consts';
 import {
   computeAddress,
   getAddress,
   getBytes,
   hexlify,
+  Interface,
   isAddress,
   JsonRpcProvider,
   keccak256,
@@ -31,6 +35,7 @@ import {
   Wallet,
 } from 'ethers';
 import type { EndpointManager } from './EndpointManager';
+import { getESpaceChainConfig } from './eSpaceConfig';
 import { buildTransactionPayload } from './utils/transactionBuilder';
 
 export interface EthereumChainProviderOptions {
@@ -41,7 +46,11 @@ export interface EthereumChainProviderOptions {
 
 type EthersProvider = JsonRpcProvider;
 
-export class EthereumChainProvider implements IChainProvider {
+const eSpaceWalletIface = new Interface(ESpaceWalletABI);
+const E_SPACE_GET_BALANCES_SIGNATURE = 'getBalances(address,address[])';
+const EVM_NATIVE_TOKEN_PLACEHOLDER = '0x0000000000000000000000000000000000000000';
+
+export class EthereumChainProvider implements IChainProvider<EvmUnsignedTransaction, EvmFeeEstimate> {
   readonly chainId: string;
   readonly networkType = NetworkType.Ethereum;
 
@@ -91,7 +100,12 @@ export class EthereumChainProvider implements IChainProvider {
   validateAddress(address: Address): boolean {
     return isAddress(address);
   }
-  async signTransaction(tx: EvmUnsignedTransaction, signer: ISigner, options?: { signal?: AbortSignal }): Promise<SignedTransaction> {
+
+  async prepareUnsignedTransaction(tx: EvmUnsignedTransaction): Promise<EvmUnsignedTransaction> {
+    return this.finalizePreparedTransaction(tx);
+  }
+
+  async signTransaction(tx: EvmUnsignedTransaction, signer: ISigner, options?: { signal?: AbortSignal }): Promise<SignedTransaction<NetworkType.Ethereum>> {
     if (signer.type === 'software') {
       return this.signWithSoftware(tx, signer);
     } else {
@@ -99,10 +113,12 @@ export class EthereumChainProvider implements IChainProvider {
     }
   }
 
-  private async signWithSoftware(tx: EvmUnsignedTransaction, signer: ISoftwareSigner): Promise<SignedTransaction> {
+  private async signWithSoftware(tx: EvmUnsignedTransaction, signer: ISoftwareSigner): Promise<SignedTransaction<NetworkType.Ethereum>> {
     const privateKey = signer.getPrivateKey();
     const wallet = new Wallet(privateKey, this.getEthersProvider());
-    const raw = await wallet.signTransaction(tx.payload);
+    const payload = this.resolvePreparedPayload(tx.payload);
+    // ethers mutates the input object and deletes `from` after validation.
+    const raw = await wallet.signTransaction({ ...payload });
     const hash = keccak256(raw) as Hash;
 
     return {
@@ -112,22 +128,27 @@ export class EthereumChainProvider implements IChainProvider {
     };
   }
 
-  private async signWithHardware(tx: EvmUnsignedTransaction, signer: IHardwareSigner, options?: { signal?: AbortSignal }): Promise<SignedTransaction> {
+  private async signWithHardware(
+    tx: EvmUnsignedTransaction,
+    signer: IHardwareSigner,
+    options?: { signal?: AbortSignal },
+  ): Promise<SignedTransaction<NetworkType.Ethereum>> {
+    const payload = this.resolvePreparedPayload(tx.payload);
     const result = await signer.signWithHardware({
       derivationPath: signer.getDerivationPath(),
       chainType: signer.getChainType(),
       payload: {
         payloadKind: 'transaction',
         chainType: tx.chainType,
-        unsignedTx: tx.payload,
+        unsignedTx: payload,
       },
       signal: options?.signal,
     });
 
-    return this.assembleHardwareSignedTransaction(tx, result);
+    return this.assembleHardwareSignedTransaction({ ...tx, payload }, result);
   }
 
-  private assembleHardwareSignedTransaction(tx: EvmUnsignedTransaction, result: HardwareSignResult): SignedTransaction {
+  private assembleHardwareSignedTransaction(tx: EvmUnsignedTransaction, result: HardwareSignResult): SignedTransaction<NetworkType.Ethereum> {
     if (result.chainType !== tx.chainType) {
       throw new Error('Hardware wallet returned mismatched chain type.');
     }
@@ -224,17 +245,22 @@ export class EthereumChainProvider implements IChainProvider {
 
     const nonce = await this.resolveNonce(params.from, params.nonce);
 
-    const txType = this.determineTransactionType(params);
+    const feeFields = this.resolveFeeFields({
+      type: this.determineTransactionType(params),
+      gasPrice: params.gasPrice,
+      maxFeePerGas: params.maxFeePerGas,
+      maxPriorityFeePerGas: params.maxPriorityFeePerGas,
+    });
     return {
       chainType: this.networkType,
       payload: {
         ...payload,
         gasLimit: params.gasLimit,
-        gasPrice: params.gasPrice,
-        maxFeePerGas: params.maxFeePerGas,
-        maxPriorityFeePerGas: params.maxPriorityFeePerGas,
+        gasPrice: feeFields.gasPrice,
+        maxFeePerGas: feeFields.maxFeePerGas,
+        maxPriorityFeePerGas: feeFields.maxPriorityFeePerGas,
         nonce,
-        type: txType,
+        type: feeFields.type,
       },
     };
   }
@@ -260,6 +286,37 @@ export class EthereumChainProvider implements IChainProvider {
     const raw = await this.getEthersProvider().call({ to, data });
     return raw as Hex;
   }
+
+  async batchCall(params: readonly ChainCallParams[]): Promise<Hex[]> {
+    if (params.length === 0) {
+      return [];
+    }
+
+    return this.rpc.batch<Hex>(
+      params.map(({ to, data }) => ({
+        method: 'eth_call',
+        params: [{ to, data }, 'latest'],
+      })),
+    );
+  }
+
+  async readFungibleAssetBalances(address: Address, requests: readonly FungibleAssetBalanceRequest[]): Promise<ReadonlyArray<Hex | null>> {
+    if (requests.length === 0) {
+      return [];
+    }
+
+    const eSpaceWalletContract = this.getESpaceWalletContract();
+    if (eSpaceWalletContract && requests.some((request) => request.assetType === 'ERC20')) {
+      try {
+        return await this.readESpaceFungibleAssetBalances(address, requests, eSpaceWalletContract);
+      } catch {
+        // Fall through to the generic path if the eSpace wallet call is unavailable.
+      }
+    }
+
+    return this.readGenericFungibleAssetBalances(address, requests);
+  }
+
   private async resolveNonce(address: Address, override?: number): Promise<number> {
     if (typeof override === 'number') {
       return override;
@@ -267,18 +324,106 @@ export class EthereumChainProvider implements IChainProvider {
     return this.getNonce(address);
   }
 
+  private async readESpaceFungibleAssetBalances(
+    address: Address,
+    requests: readonly FungibleAssetBalanceRequest[],
+    walletContract: string,
+  ): Promise<ReadonlyArray<Hex | null>> {
+    const tokens = requests.map((request) => (request.assetType === 'Native' ? EVM_NATIVE_TOKEN_PLACEHOLDER : request.contractAddress));
+    const raw = await this.rpc.request<Hex>('eth_call', [
+      {
+        to: walletContract,
+        data: eSpaceWalletIface.encodeFunctionData(E_SPACE_GET_BALANCES_SIGNATURE, [address, tokens]) as Hex,
+      },
+      'latest',
+    ]);
+
+    if (!raw || raw === '0x') {
+      return requests.map(() => null);
+    }
+
+    const decoded = eSpaceWalletIface.decodeFunctionResult(E_SPACE_GET_BALANCES_SIGNATURE, raw);
+    const decodedBalances = (Array.isArray(decoded[0]) ? decoded[0] : []) as unknown[];
+
+    return requests.map((_, index) => {
+      const value = decodedBalances?.[index];
+      return value == null ? null : this.formatHex(BigInt(value as bigint | number | string));
+    });
+  }
+
+  private async readGenericFungibleAssetBalances(address: Address, requests: readonly FungibleAssetBalanceRequest[]): Promise<ReadonlyArray<Hex | null>> {
+    const results: Array<Hex | null> = new Array(requests.length).fill(null);
+    const nativeIndexes: number[] = [];
+    const rpcRequests: Array<{ method: string; params: unknown[] }> = [];
+    const responseBindings: Array<{ kind: 'native'; indexes: number[] } | { kind: 'erc20'; index: number }> = [];
+
+    requests.forEach((request, index) => {
+      if (request.assetType === 'Native') {
+        nativeIndexes.push(index);
+        return;
+      }
+
+      rpcRequests.push({
+        method: 'eth_call',
+        params: [
+          {
+            to: request.contractAddress,
+            data: this.encodeErc20BalanceOf(address),
+          },
+          'latest',
+        ],
+      });
+      responseBindings.push({ kind: 'erc20', index });
+    });
+
+    if (nativeIndexes.length > 0) {
+      rpcRequests.unshift({ method: 'eth_getBalance', params: [address, 'latest'] });
+      responseBindings.unshift({ kind: 'native', indexes: nativeIndexes });
+    }
+
+    try {
+      const raws = await this.rpc.batch<Hex>(rpcRequests);
+      responseBindings.forEach((binding, index) => {
+        const raw = raws[index] ?? null;
+        if (binding.kind === 'native') {
+          binding.indexes.forEach((nativeIndex) => {
+            results[nativeIndex] = raw;
+          });
+          return;
+        }
+
+        results[binding.index] = raw;
+      });
+
+      return results;
+    } catch {
+      return Promise.all(
+        requests.map(async (request) => {
+          try {
+            if (request.assetType === 'Native') {
+              return await this.getBalance(address);
+            }
+
+            return await this.call({
+              to: request.contractAddress,
+              data: this.encodeErc20BalanceOf(address),
+            });
+          } catch {
+            return null;
+          }
+        }),
+      );
+    }
+  }
+
   async estimateFee(tx: EvmUnsignedTransaction): Promise<EvmFeeEstimate> {
-    const { payload } = tx;
-
-    const request = this.buildEstimateRequest(payload);
     const provider = this.getEthersProvider();
-    const estimatedGas = this.toBigInt(payload.gasLimit) ?? (await provider.estimateGas(request));
     const feeData = await provider.getFeeData();
-
-    const hasExplicit1559 = payload.maxFeePerGas !== undefined || payload.maxPriorityFeePerGas !== undefined || payload.type === 2;
     const networkSupports1559 = feeData.maxFeePerGas != null && feeData.maxPriorityFeePerGas != null;
-    const use1559 = hasExplicit1559 || networkSupports1559;
-
+    const payload = this.resolvePreparedPayload(tx.payload, { networkSupports1559 });
+    const request = this.buildEstimateRequest(payload);
+    const estimatedGas = this.toBigInt(payload.gasLimit) ?? (await provider.estimateGas(request));
+    const use1559 = payload.type === 2;
     const gasPrice = this.toBigInt(payload.gasPrice) ?? feeData.gasPrice ?? 0n;
     const maxFeePerGas = use1559 ? (this.toBigInt(payload.maxFeePerGas) ?? feeData.maxFeePerGas ?? feeData.gasPrice ?? 0n) : undefined;
     const maxPriorityFeePerGas = use1559 ? (this.toBigInt(payload.maxPriorityFeePerGas) ?? feeData.maxPriorityFeePerGas ?? 0n) : undefined;
@@ -310,6 +455,120 @@ export class EthereumChainProvider implements IChainProvider {
       type: payload.type,
       chainId: Number(this.chainId),
     };
+  }
+
+  private async finalizePreparedTransaction(tx: EvmUnsignedTransaction): Promise<EvmUnsignedTransaction> {
+    const payload = tx.payload;
+    const nonce = await this.resolveNonce(payload.from, payload.nonce);
+    const estimate = await this.estimateFee({
+      ...tx,
+      payload: {
+        ...payload,
+        nonce,
+      },
+    });
+    const networkSupports1559 = estimate.maxFeePerGas != null && estimate.maxPriorityFeePerGas != null;
+    const feeFields = this.resolveFeeFields(
+      {
+        type: payload.type,
+        gasPrice: payload.gasPrice ?? estimate.gasPrice,
+        maxFeePerGas: payload.maxFeePerGas ?? estimate.maxFeePerGas,
+        maxPriorityFeePerGas: payload.maxPriorityFeePerGas ?? estimate.maxPriorityFeePerGas,
+      },
+      { networkSupports1559 },
+    );
+
+    return {
+      ...tx,
+      payload: {
+        ...payload,
+        gasLimit: payload.gasLimit ?? estimate.gasLimit,
+        gasPrice: feeFields.gasPrice,
+        maxFeePerGas: feeFields.maxFeePerGas,
+        maxPriorityFeePerGas: feeFields.maxPriorityFeePerGas,
+        nonce,
+        type: feeFields.type,
+      },
+    };
+  }
+
+  private resolvePreparedPayload(payload: EvmUnsignedTransaction['payload'], options?: { networkSupports1559?: boolean }): EvmUnsignedTransaction['payload'] {
+    const feeFields = this.resolveFeeFields(
+      {
+        type: payload.type,
+        gasPrice: payload.gasPrice,
+        maxFeePerGas: payload.maxFeePerGas,
+        maxPriorityFeePerGas: payload.maxPriorityFeePerGas,
+      },
+      options,
+    );
+
+    return {
+      ...payload,
+      type: feeFields.type,
+      gasPrice: feeFields.gasPrice,
+      maxFeePerGas: feeFields.maxFeePerGas,
+      maxPriorityFeePerGas: feeFields.maxPriorityFeePerGas,
+    };
+  }
+
+  private resolveFeeFields(
+    input: {
+      type?: number;
+      gasPrice?: string;
+      maxFeePerGas?: string;
+      maxPriorityFeePerGas?: string;
+    },
+    options: { networkSupports1559?: boolean } = {},
+  ) {
+    const hasLegacyFee = input.gasPrice !== undefined;
+    const has1559Fee = input.maxFeePerGas !== undefined || input.maxPriorityFeePerGas !== undefined;
+    const isExplicitLegacy = input.type === 0 || input.type === 1;
+    const isExplicit1559 = input.type === 2;
+
+    if (isExplicit1559 || (!isExplicitLegacy && (has1559Fee || (!hasLegacyFee && options.networkSupports1559)))) {
+      this.assertValidEip1559Fees({
+        maxFeePerGas: input.maxFeePerGas,
+        maxPriorityFeePerGas: input.maxPriorityFeePerGas,
+      });
+      return {
+        type: input.type ?? 2,
+        gasPrice: undefined,
+        maxFeePerGas: input.maxFeePerGas,
+        maxPriorityFeePerGas: input.maxPriorityFeePerGas,
+      };
+    }
+
+    if (isExplicitLegacy || hasLegacyFee) {
+      return {
+        type: input.type ?? (hasLegacyFee ? 0 : undefined),
+        gasPrice: input.gasPrice,
+        maxFeePerGas: undefined,
+        maxPriorityFeePerGas: undefined,
+      };
+    }
+
+    return {
+      type: input.type,
+      gasPrice: input.gasPrice,
+      maxFeePerGas: input.maxFeePerGas,
+      maxPriorityFeePerGas: input.maxPriorityFeePerGas,
+    };
+  }
+
+  private assertValidEip1559Fees(input: { maxFeePerGas?: string; maxPriorityFeePerGas?: string }) {
+    if (!input.maxFeePerGas || !input.maxPriorityFeePerGas) return;
+    if (BigInt(input.maxFeePerGas) < BigInt(input.maxPriorityFeePerGas)) {
+      throw new Error('maxFeePerGas cannot be lower than maxPriorityFeePerGas.');
+    }
+  }
+
+  private getESpaceWalletContract(): string | null {
+    return getESpaceChainConfig(this.chainId)?.walletContract ?? null;
+  }
+
+  private encodeErc20BalanceOf(address: Address): Hex {
+    return iface777.encodeFunctionData('balanceOf', [address]) as Hex;
   }
 
   private toBigInt(value?: string): bigint | undefined {

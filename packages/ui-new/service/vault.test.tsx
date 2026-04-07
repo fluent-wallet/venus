@@ -2,6 +2,7 @@ import type { QueryClient } from '@tanstack/react-query';
 import { act, renderHook, waitFor } from '@testing-library/react-native';
 import type React from 'react';
 import { getAccountRootKey } from './account';
+import { getAccountGroupRootKey } from './accountGroupKeys';
 import { getVaultService } from './core';
 import { mockVault } from './mocks/fixtures';
 import { createTestQueryClient, createWrapper } from './mocks/reactQuery';
@@ -72,7 +73,7 @@ describe('vault service hooks', () => {
     ['useCreateBSIMVault', useCreateBSIMVault, () => [{ accounts: [{ index: 0, hexAddress: '0xabc' }] }]],
     ['useCreatePublicAddressVault', useCreatePublicAddressVault, () => [{ hexAddress: '0xabc' }]],
     ['useDeleteVault', useDeleteVault, () => ['vault_1']],
-  ])('%s invalidates vault + account caches', async (_label, hookFactory, argsFactory) => {
+  ])('%s invalidates vault + account + group caches', async (_label, hookFactory, argsFactory) => {
     const invalidateSpy = jest.spyOn(queryClient, 'invalidateQueries');
     const { result } = renderHook(() => hookFactory(), { wrapper });
 
@@ -83,6 +84,7 @@ describe('vault service hooks', () => {
 
     expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: getVaultRootKey() });
     expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: getAccountRootKey() });
+    expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: getAccountGroupRootKey() });
   });
 
   it('useExportMnemonic forwards service result', async () => {

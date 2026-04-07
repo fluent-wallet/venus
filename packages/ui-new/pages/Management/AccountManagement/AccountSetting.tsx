@@ -1,5 +1,3 @@
-import { getAuthentication } from '@WalletCoreExtends/index';
-import { isAuthenticationCanceledError, isAuthenticationError } from '@WalletCoreExtends/Plugins/Authentication/errors';
 import ArrowRight from '@assets/icons/arrow-right2.svg';
 import Delete from '@assets/icons/delete.svg';
 import {
@@ -15,29 +13,30 @@ import Button from '@components/Button';
 import HourglassLoading from '@components/Loading/Hourglass';
 import Text from '@components/Text';
 import TextInput from '@components/TextInput';
+import { AUTH_PASSWORD_REQUEST_CANCELED } from '@core/errors';
 import { zeroAddress } from '@core/utils/address';
-import methods from '@core/WalletCore/Methods';
-import plugins from '@core/WalletCore/Plugins';
-import { useAccountFromId, useCurrentAddressValueOfAccount, useVaultOfAccount, VaultType } from '@core/WalletCore/Plugins/ReactInject';
-import useInAsync from '@hooks/useInAsync';
 import { useTheme } from '@react-navigation/native';
 import { type AccountSettingStackName, BackupStackName, BackupStep1StackName, type StackScreenProps } from '@router/configs';
+import { useAccountById, useRemoveAccount, useUpdateAccountNickname } from '@service/account';
+import { VaultType } from '@service/core';
+import { getErrorCode } from '@utils/error';
 import type React from 'react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { type TextInput as _TextInput, Keyboard, Pressable, StyleSheet, View } from 'react-native';
+import { type TextInput as _TextInput, Keyboard, Pressable, StyleSheet } from 'react-native';
 import { showMessage } from 'react-native-flash-message';
 import DeleteConfirm from './DeleteConfirm';
 
 const AccountConfig: React.FC<StackScreenProps<typeof AccountSettingStackName>> = ({ navigation, route }) => {
   const { colors } = useTheme();
   const { t } = useTranslation();
-  const bottomSheetRef = useRef<BottomSheetMethods>(null!);
-  const textinputRef = useRef<_TextInput>(null!);
+  const bottomSheetRef = useRef<BottomSheetMethods | null>(null);
+  const textinputRef = useRef<_TextInput | null>(null);
 
-  const account = useAccountFromId(route.params.accountId);
-  const vault = useVaultOfAccount(route.params.accountId);
-  const addressValue = useCurrentAddressValueOfAccount(route.params.accountId);
+  const { data: account } = useAccountById(route.params.accountId);
+  const addressValue = account?.address ?? '';
+  const updateNickname = useUpdateAccountNickname();
+  const { mutateAsync: removeAccount, isPending: inDeleting } = useRemoveAccount();
 
   const [accountName, setAccountName] = useState(() => account?.nickname);
   useEffect(() => {
@@ -47,10 +46,10 @@ const AccountConfig: React.FC<StackScreenProps<typeof AccountSettingStackName>> 
   const handleUpdateAccountNickName = useCallback(async () => {
     const trimedAccountName = accountName?.trim();
     if (!account || !trimedAccountName) return;
-    await methods.updateAccountNickName({ account, nickname: trimedAccountName });
+    await updateNickname(account.id, trimedAccountName);
     bottomSheetRef.current?.close();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [account, accountName]);
+  }, [account, accountName, updateNickname]);
 
   const [showDeleteBottomSheet, setShowDeleteBottomSheet] = useState(() => false);
 
@@ -68,21 +67,12 @@ const AccountConfig: React.FC<StackScreenProps<typeof AccountSettingStackName>> 
         Keyboard.dismiss();
       }
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [account]);
+  }, [account, t]);
 
-  const _handleConfirmDelete = useCallback(async () => {
-    if (!account || !vault) return;
+  const handleConfirmDelete = useCallback(async () => {
+    if (!account) return;
     try {
-      if (vault.isGroup) {
-        await methods.changeAccountHidden({ account, hidden: true });
-      } else {
-        await getAuthentication().getPassword();
-        await methods.deleteVault(vault);
-      }
-      if (addressValue) {
-        await plugins.WalletConnect.removeSessionByAddress([addressValue]);
-      }
+      await removeAccount(account.id);
       showMessage({
         message: t('account.remove.successfully'),
         type: 'success',
@@ -90,7 +80,7 @@ const AccountConfig: React.FC<StackScreenProps<typeof AccountSettingStackName>> 
       setTimeout(() => bottomSheetRef.current?.close());
       setShowDeleteBottomSheet(false);
     } catch (err: unknown) {
-      if (isAuthenticationError(err) && isAuthenticationCanceledError(err)) {
+      if (getErrorCode(err) === AUTH_PASSWORD_REQUEST_CANCELED) {
         return;
       }
       showMessage({
@@ -100,9 +90,8 @@ const AccountConfig: React.FC<StackScreenProps<typeof AccountSettingStackName>> 
       });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [account, addressValue, vault, navigation]);
+  }, [account, removeAccount, t]);
 
-  const { inAsync: inDeleting, execAsync: handleConfirmDelete } = useInAsync(_handleConfirmDelete);
   const inDelete = showDeleteBottomSheet || inDeleting;
 
   return (
@@ -130,7 +119,7 @@ const AccountConfig: React.FC<StackScreenProps<typeof AccountSettingStackName>> 
               isInBottomSheet
               disabled={inDelete}
             />
-            {(vault?.type === VaultType.HierarchicalDeterministic || vault?.type === VaultType.PrivateKey) && (
+            {(account?.vaultType === VaultType.HierarchicalDeterministic || account?.vaultType === VaultType.PrivateKey) && (
               <>
                 <Text style={[styles.description, styles.backupDescription, { color: colors.textSecondary }]}>{t('common.backup')}</Text>
                 <Pressable

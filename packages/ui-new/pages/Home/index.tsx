@@ -1,56 +1,37 @@
-import { getAssetsTracker, getNFTDetailTracker } from '@WalletCoreExtends/index';
-import { Tx } from '@core/database/models/Tx';
-import methods from '@core/WalletCore/Methods';
-import type { AssetInfo } from '@core/WalletCore/Plugins/AssetsTracker/types';
-import { getCurrentNetwork } from '@core/WalletCore/Plugins/ReactInject';
 import AccountSelector from '@modules/AccountSelector';
-import { TabsContent, TabsHeader } from '@modules/AssetsTabs';
 import { useTabsController } from '@modules/AssetsTabs/hooks';
 import NetworkSelector from '@modules/NetworkSelector';
 import { useTheme } from '@react-navigation/native';
 import { type HomeStackName, type StackScreenProps, TransactionDetailStackName } from '@router/configs';
+import { useCurrentNetwork, useNetworks, useSwitchNetwork } from '@service/network';
 import { ESPACE_NETWORK_SWITCH_FEATURE, FULL_NETWORK_SWITCH_LIST_FEATURE } from '@utils/features';
 import type React from 'react';
 import { useCallback, useState } from 'react';
-import { type NativeScrollEvent, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Account from './Account';
-import { CurrentAddress, TotalPrice } from './Address&TotalPrice';
 import DAPPConnect from './DAPPConnect';
 import HeaderRight from './HeaderRight';
-import Navigations from './Navigations';
+import { HomeTabsPager } from './HomeTabsPager';
 import NoNetworkTip from './NoNetworkTip';
-import NotBackup from './NotBackup';
-import RefreshScrollView from './RefreshScrollView';
+import { useHomeRefresh } from './useHomeRefresh';
 
 const Home: React.FC<StackScreenProps<typeof HomeStackName>> = ({ navigation }) => {
   const { colors } = useTheme();
 
   const [showAccountSelector, setShowAccountSelector] = useState(false);
   const [showNetworkSelector, setShowNetworkSelector] = useState(false);
-  const { currentTab, setCurrentTab, sharedScrollY, handleScroll: _handleScroll, resetScrollY } = useTabsController('Tokens');
-  const handleScroll = useCallback(
-    (evt: NativeScrollEvent) => {
-      _handleScroll(evt.contentOffset.y);
-    },
-    [_handleScroll],
-  );
-
-  const handleRefresh = useCallback((closeRefresh: VoidFunction) => {
-    getNFTDetailTracker().updateCurrentOpenNFT();
-    getAssetsTracker()
-      .updateCurrentTracker()
-      .finally(() => closeRefresh());
-  }, []);
+  const { currentTab, setCurrentTab, sharedScrollY } = useTabsController('Tokens');
+  const { data: currentNetwork } = useCurrentNetwork();
+  const { data: networks = [] } = useNetworks();
+  const switchNetwork = useSwitchNetwork();
+  const handleRefresh = useHomeRefresh();
 
   const handleTxPress = useCallback(
-    (data: Tx | AssetInfo) => {
-      if (data instanceof Tx) {
-        // press activity item
-        navigation.navigate(TransactionDetailStackName, { txId: data.id });
-      }
+    (txId: string) => {
+      navigation.navigate(TransactionDetailStackName, { txId });
     },
-    [navigation.navigate],
+    [navigation],
   );
 
   const handleOpenAccountSelector = () => {
@@ -63,8 +44,13 @@ const Home: React.FC<StackScreenProps<typeof HomeStackName>> = ({ navigation }) 
     if (FULL_NETWORK_SWITCH_LIST_FEATURE.allow) {
       setShowNetworkSelector(true);
     } else if (ESPACE_NETWORK_SWITCH_FEATURE.allow) {
-      const currentNetwork = getCurrentNetwork();
-      methods.switchToNetwork(currentNetwork?.netId === 1030 ? 71 : 1030);
+      if (!currentNetwork) return;
+      const nextNetId = currentNetwork.netId === 1030 ? 71 : 1030;
+      const target =
+        networks.find((network) => network.netId === nextNetId && network.networkType === currentNetwork.networkType) ??
+        networks.find((network) => network.netId === nextNetId);
+      if (!target) return;
+      switchNetwork(target.id).catch(() => undefined);
     }
   };
   return (
@@ -75,15 +61,14 @@ const Home: React.FC<StackScreenProps<typeof HomeStackName>> = ({ navigation }) 
           <HeaderRight navigation={navigation} onPressNetwork={handleOpenNetworkSelector} />
         </View>
         <DAPPConnect />
-        <RefreshScrollView stickyHeaderIndices={[4]} onRefresh={handleRefresh} onScroll={currentTab === 'NFTs' ? handleScroll : undefined}>
-          <CurrentAddress />
-          <TotalPrice />
-          <Navigations navigation={navigation} />
-          <NotBackup navigation={navigation} />
-          <TabsHeader type="Home" currentTab={currentTab} sharedScrollY={sharedScrollY} onTabChange={setCurrentTab} resetScrollY={resetScrollY} />
-
-          <TabsContent type="Home" currentTab={currentTab} onTabChange={setCurrentTab} selectType="Home" onPressItem={handleTxPress} />
-        </RefreshScrollView>
+        <HomeTabsPager
+          currentTab={currentTab}
+          sharedScrollY={sharedScrollY}
+          navigation={navigation}
+          onRefresh={handleRefresh}
+          onTabChange={setCurrentTab}
+          onPressTx={handleTxPress}
+        />
         <NoNetworkTip />
       </SafeAreaView>
       {showAccountSelector && <AccountSelector isOpen={showAccountSelector} onClose={() => setShowAccountSelector(false)} />}
