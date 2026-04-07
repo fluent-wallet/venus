@@ -116,7 +116,6 @@ export function usePollingGasEstimateAndNonce(
   withNonce = true,
   addressIdOverride?: string,
 ): ITransactionGasEstimate | null {
-  const service = getTransactionService();
   const currentAddress = useCurrentAddress();
   const addressId = addressIdOverride ?? currentAddress.data?.id ?? '';
 
@@ -185,15 +184,16 @@ export function useTransactionsOfAddress(addressId: string, options: { status?: 
  */
 export function useActivityTransactionsOfAddress(
   addressId: string,
-  options: { status?: 'pending' | 'finished' | 'all'; limit?: number } = {},
+  options: { status?: 'pending' | 'finished' | 'all'; limit?: number; enabled?: boolean } = {},
 ): ActivityTransactionsQuery {
   const service = getTransactionService();
   const status = options.status ?? 'all';
+  const enabled = (options.enabled ?? true) && !!addressId;
 
   return useQuery({
     queryKey: getActivityTransactionsByAddressKey(addressId || 'none', status, options.limit),
     queryFn: () => service.listActivityTransactions({ addressId, status, limit: options.limit }),
-    enabled: !!addressId,
+    enabled,
     initialData: [],
   });
 }
@@ -201,7 +201,9 @@ export function useActivityTransactionsOfAddress(
 /**
  * Fetch activity transactions of the current address (if any).
  */
-export function useActivityTransactionsOfCurrentAddress(options: { status?: 'pending' | 'finished' | 'all'; limit?: number } = {}): ActivityTransactionsQuery {
+export function useActivityTransactionsOfCurrentAddress(
+  options: { status?: 'pending' | 'finished' | 'all'; limit?: number; enabled?: boolean } = {},
+): ActivityTransactionsQuery {
   const currentAddress = useCurrentAddress();
   const addressId = currentAddress.data?.id ?? '';
   return useActivityTransactionsOfAddress(addressId, options);

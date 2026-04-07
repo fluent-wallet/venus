@@ -7,10 +7,10 @@ import { useMemo } from 'react';
 import Animated, { interpolate, type SharedValue, useAnimatedStyle } from 'react-native-reanimated';
 import type { TabsType } from './types';
 
-export const StickyNFT: React.FC<{ type: TabsType; sharedScrollY: SharedValue<number>; showHomeBackupBanner?: boolean }> = ({
+export const StickyNFT: React.FC<{ type: TabsType; sharedScrollY: SharedValue<number>; startYOverride?: number }> = ({
   type,
   sharedScrollY,
-  showHomeBackupBanner = false,
+  startYOverride,
 }) => {
   const [open, setOpen] = useOpenNftCollection();
   const { data: currentAddress } = useCurrentAddress();
@@ -23,7 +23,13 @@ export const StickyNFT: React.FC<{ type: TabsType; sharedScrollY: SharedValue<nu
     return collections.find((c) => c.contractAddress.toLowerCase() === key) ?? null;
   }, [collections, open?.contractAddress]);
 
-  const startY = useMemo(() => (type === 'Home' ? (showHomeBackupBanner ? 324 : 200) : 1), [type, showHomeBackupBanner]);
+  const startY = useMemo(() => {
+    if (startYOverride !== undefined) {
+      return startYOverride;
+    }
+
+    return type === 'Home' ? 200 : 1;
+  }, [startYOverride, type]);
   const showY = startY + (open?.index ?? 0) * 70;
 
   const animatedStyle = useAnimatedStyle(() => {

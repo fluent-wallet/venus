@@ -39,7 +39,7 @@ const SendTransactionStep3Amount: React.FC<SendTransactionScreenProps<typeof Sen
   const nftItemDetail = toLegacyNftItem(asset);
 
   return (
-    <SendTransactionBottomSheet title={t('tx.send.title')} isRoute snapPoints={['75%']}>
+    <SendTransactionBottomSheet title={t('tx.send.title')} isRoute snapPoints={['75%']} useBottomSheetView={false}>
       <BottomSheetScrollContent innerPaddingHorizontal>
         {nftItemDetail && (
           <>

@@ -1,15 +1,12 @@
 import ProhibitIcon from '@assets/icons/prohibit.svg';
-import { BottomSheetHeader, type BottomSheetMethods, BottomSheetScrollContent } from '@components/BottomSheet';
+import { BottomSheetHeader, type BottomSheetMethods } from '@components/BottomSheet';
+import { BottomSheetFlashList } from '@components/BottomSheet/BottomSheetFlashList';
 import HourglassLoading from '@components/Loading/Hourglass';
 import Text from '@components/Text';
 import TextInput from '@components/TextInput';
 import { ASSET_TYPE } from '@core/types';
-import { NFTCollectionItem } from '@modules/AssetsList/NFTsList/NFTCollectionItem';
-import { NFTItemsGrid } from '@modules/AssetsList/NFTsList/NFTItemsGrid';
-import { useOpenNftCollection } from '@modules/AssetsList/NFTsList/openState';
-import { SkeletoDetailItem } from '@modules/AssetsList/NFTsList/Skeleton';
+import { NftCollectionRow } from '@modules/AssetsList/NFTsList/NftCollectionRow';
 import TokenItem from '@modules/AssetsList/TokensList/TokenItem';
-import { TabsContent, TabsHeader } from '@modules/AssetsTabs';
 import { useTabsController } from '@modules/AssetsTabs/hooks';
 import { useTheme } from '@react-navigation/native';
 import {
@@ -23,31 +20,19 @@ import { isValidAddress } from '@service/address';
 import { useAddCustomToken, useAssetsOfCurrentAddress } from '@service/asset';
 import type { INftCollection, INftItem } from '@service/core';
 import { useCurrentNetwork } from '@service/network';
-import { useNftCollectionsOfAddress, useNftItems } from '@service/nft';
+import { useNftCollectionsOfAddress } from '@service/nft';
+import type { ListRenderItem } from '@shopify/flash-list';
 import type { AssetInfo } from '@utils/assetInfo';
 import { toAssetInfo } from '@utils/toAssetInfo';
 import { escapeRegExp } from 'lodash-es';
 import type React from 'react';
-import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Trans, useTranslation } from 'react-i18next';
-import { Keyboard, type NativeScrollEvent, type NativeSyntheticEvent, Pressable, StyleSheet, View } from 'react-native';
+import { Keyboard, type NativeScrollEvent, type NativeSyntheticEvent, Platform, Pressable, StyleSheet } from 'react-native';
 import { showMessage } from 'react-native-flash-message';
 import { type TransferDraft, toTransferAssetFromSelection, useMaybeSendFlow } from '../flow';
 import SendTransactionBottomSheet from '../SendTransactionBottomSheet';
-
-const DETAIL_SKELETON_KEYS = ['detail-skeleton-1', 'detail-skeleton-2'] as const;
-
-function toNftAssetInfo(params: { collection: Pick<INftCollection, 'contractAddress' | 'type' | 'name' | 'symbol' | 'icon'>; item: INftItem }): AssetInfo {
-  return {
-    type: params.collection.type,
-    contractAddress: params.collection.contractAddress,
-    name: params.collection.name ?? '',
-    symbol: params.collection.symbol ?? '',
-    decimals: 0,
-    balance: params.item.amount,
-    icon: params.collection.icon ?? undefined,
-  };
-}
+import { AssetTabsPager } from './AssetTabsPager';
 
 function filterNftCollectionsBySearch(collections: INftCollection[], value: string): INftCollection[] {
   const keyword = value.trim();
@@ -58,70 +43,6 @@ function filterNftCollectionsBySearch(collections: INftCollection[], value: stri
     [collection.name, collection.symbol, collection.contractAddress].some((field) => (field ? matcher.test(String(field)) : false)),
   );
 }
-
-const DetailSkeleton: React.FC = memo(() => {
-  const { colors } = useTheme();
-  return (
-    <View style={{ marginVertical: 4, display: 'flex', flexDirection: 'row', flexWrap: 'wrap', paddingLeft: 56, paddingRight: 16, gap: 16 }}>
-      {DETAIL_SKELETON_KEYS.map((key) => (
-        <View
-          key={key}
-          style={{
-            borderColor: colors.borderThird,
-            borderWidth: 1,
-            borderRadius: 6,
-            paddingHorizontal: 8,
-            paddingTop: 8,
-            paddingBottom: 12,
-          }}
-        >
-          <SkeletoDetailItem colors={colors} />
-        </View>
-      ))}
-    </View>
-  );
-});
-
-const NftSearchRow: React.FC<{
-  addressId: string;
-  index: number;
-  collection: INftCollection;
-  onSelect: (asset: AssetInfo, item: INftItem) => void;
-}> = memo(({ addressId, index, collection, onSelect }) => {
-  const [open, setOpen] = useOpenNftCollection();
-  const isOpen = open?.contractAddress?.toLowerCase() === collection.contractAddress.toLowerCase();
-
-  const { data: items = [], isFetching } = useNftItems({
-    addressId,
-    contractAddress: collection.contractAddress,
-    enabled: isOpen,
-  });
-
-  return (
-    <>
-      <NFTCollectionItem
-        collection={collection}
-        isOpen={isOpen}
-        onPress={() => {
-          setOpen(isOpen ? null : { contractAddress: collection.contractAddress, index });
-        }}
-        showTypeLabel
-      />
-      {isOpen &&
-        (isFetching && items.length === 0 ? (
-          <DetailSkeleton />
-        ) : (
-          <NFTItemsGrid
-            collection={collection}
-            items={items}
-            onPressItem={(item) => {
-              onSelect(toNftAssetInfo({ collection, item }), item);
-            }}
-          />
-        ))}
-    </>
-  );
-});
 
 interface Props {
   navigation?: SendTransactionScreenProps<typeof SendTransactionStep2StackName>['navigation'];
@@ -142,11 +63,25 @@ function applySelectedAssetToDraft(params: { draft: TransferDraft; asset: AssetI
   };
 }
 
+type SearchResultItem =
+  | {
+      key: string;
+      kind: 'token';
+      asset: AssetInfo;
+    }
+  | {
+      key: string;
+      kind: 'nft-collection';
+      collection: INftCollection;
+      index: number;
+    };
+
 const SendTransactionStep2Asset: React.FC<Props> = ({ navigation, onConfirm, onClose, selectType = 'Send' }) => {
   const { colors } = useTheme();
   const bottomSheetRef = useRef<BottomSheetMethods | null>(null);
   const { t } = useTranslation();
   const sendFlow = useMaybeSendFlow();
+  const onlyToken = !navigation;
 
   const { currentTab, setCurrentTab, sharedScrollY, handleScroll: _handleScroll, resetScrollY } = useTabsController('Tokens');
 
@@ -157,8 +92,10 @@ const SendTransactionStep2Asset: React.FC<Props> = ({ navigation, onConfirm, onC
     [_handleScroll],
   );
 
-  const { data: currentNetwork } = useCurrentNetwork();
-  const { data: currentAddress } = useCurrentAddress();
+  const currentNetworkQuery = useCurrentNetwork();
+  const currentAddressQuery = useCurrentAddress();
+  const currentNetwork = currentNetworkQuery.data;
+  const currentAddress = currentAddressQuery.data;
   const currentAddressId = currentAddress?.id ?? '';
   const assetsQuery = useAssetsOfCurrentAddress();
   const addCustomToken = useAddCustomToken();
@@ -171,11 +108,41 @@ const SendTransactionStep2Asset: React.FC<Props> = ({ navigation, onConfirm, onC
     assets: Array<AssetInfo>;
   }>(() => ({ type: 'local', assets: [] }));
 
-  const nftCollectionsQuery = useNftCollectionsOfAddress(currentAddressId);
+  const shouldEnableNftCollections = useMemo(() => {
+    if (searchAsset.trim()) {
+      return true;
+    }
+
+    return currentTab === 'NFTs';
+  }, [currentTab, searchAsset]);
+
+  const nftCollectionsQuery = useNftCollectionsOfAddress(currentAddressId, { enabled: shouldEnableNftCollections });
   const nftCollections = nftCollectionsQuery.data ?? [];
   const filteredNftCollections = useMemo(() => {
     return filterNftCollectionsBySearch(nftCollections, searchAsset);
   }, [nftCollections, searchAsset]);
+  const searchResults = useMemo<SearchResultItem[]>(() => {
+    const tokenResults = filterAssets.assets
+      .filter((asset) => asset.type === ASSET_TYPE.ERC20 || asset.type === ASSET_TYPE.Native)
+      .map((asset, index) => ({
+        key: asset.type === ASSET_TYPE.Native ? `${ASSET_TYPE.Native}-${index}` : asset.contractAddress || `token-${index}`,
+        kind: 'token' as const,
+        asset,
+      }));
+
+    const nftResults = filteredNftCollections.map((collection, index) => ({
+      key: collection.id,
+      kind: 'nft-collection' as const,
+      collection,
+      index,
+    }));
+
+    return [...tokenResults, ...nftResults];
+  }, [filterAssets.assets, filteredNftCollections]);
+
+  const tokensLoading = assets.length === 0 && (currentAddressQuery.status === 'pending' || (Boolean(currentAddressId) && assetsQuery.status === 'pending'));
+  const nftsLoading =
+    nftCollections.length === 0 && (currentAddressQuery.status === 'pending' || (Boolean(currentAddressId) && nftCollectionsQuery.status === 'pending'));
 
   const searchFilterAssets = useCallback(
     async (value: string, isCancelled: () => boolean) => {
@@ -186,7 +153,7 @@ const SendTransactionStep2Asset: React.FC<Props> = ({ navigation, onConfirm, onC
       const localAssets = assets
         ?.filter((asset) =>
           [asset.name, asset.symbol, asset.type === ASSET_TYPE.Native ? ASSET_TYPE.Native : asset.contractAddress].some((str) =>
-            !str ? false : str?.search(new RegExp(escapeRegExp(value), 'i')) !== -1,
+            !str ? false : str.search(new RegExp(escapeRegExp(value), 'i')) !== -1,
           ),
         )
         .filter((asset) => !!asset.type)
@@ -194,7 +161,7 @@ const SendTransactionStep2Asset: React.FC<Props> = ({ navigation, onConfirm, onC
         .map(toAssetInfo)
         .filter((asset): asset is AssetInfo => asset !== null);
 
-      if (localAssets && localAssets?.length > 0) {
+      if (localAssets && localAssets.length > 0) {
         if (!isCancelled()) {
           setFilterAssets({ type: 'local', assets: localAssets });
         }
@@ -259,20 +226,27 @@ const SendTransactionStep2Asset: React.FC<Props> = ({ navigation, onConfirm, onC
         }
       }
     },
-    [assets, currentNetwork, currentAddressId, addCustomToken, nftCollections],
+    [assets, currentAddressId, currentNetwork, addCustomToken, nftCollections],
   );
 
   useEffect(() => {
+    const keyword = searchAsset.trim();
+    if (!keyword) {
+      setInFetchingRemote(false);
+      setFilterAssets((prev) => (prev.type === 'local' && prev.assets.length === 0 ? prev : { type: 'local', assets: [] }));
+      return;
+    }
+
     let cancelled = false;
     const timer = setTimeout(() => {
-      void searchFilterAssets(searchAsset, () => cancelled);
+      void searchFilterAssets(keyword, () => cancelled);
     }, 200);
 
     return () => {
       cancelled = true;
       clearTimeout(timer);
     };
-  }, [searchFilterAssets, searchAsset]);
+  }, [searchAsset, searchFilterAssets]);
 
   useEffect(() => {
     // External inputs can prefill the search in send mode.
@@ -284,6 +258,10 @@ const SendTransactionStep2Asset: React.FC<Props> = ({ navigation, onConfirm, onC
   const handleClickAsset = useCallback(
     (asset: AssetInfo, nftItemDetail?: INftItem) => {
       if (navigation) {
+        const recipientAddress = sendFlow?.draft.recipient;
+        if (!recipientAddress) {
+          return;
+        }
         if ((asset.type === ASSET_TYPE.ERC20 || asset.type === ASSET_TYPE.Native) && (Number(asset.balance) === 0 || Number.isNaN(Number(asset.balance)))) {
           return showMessage({
             message: t('tx.asset.zeroBalance', { symbol: asset.symbol }),
@@ -316,95 +294,109 @@ const SendTransactionStep2Asset: React.FC<Props> = ({ navigation, onConfirm, onC
     [navigation, onConfirm, sendFlow, t],
   );
 
+  const renderSearchResultItem = useCallback<ListRenderItem<SearchResultItem>>(
+    ({ item }) => {
+      if (item.kind === 'token') {
+        return (
+          <TokenItem
+            data={item.asset}
+            showTypeLabel
+            onPress={handleClickAsset}
+            hidePrice={selectType === 'Receive'}
+            hideBalance={selectType === 'Receive'}
+            showAddress={selectType === 'Receive'}
+          />
+        );
+      }
+
+      return (
+        <NftCollectionRow
+          addressId={currentAddressId}
+          collection={item.collection}
+          index={item.index}
+          showTypeLabel
+          onSelect={(asset, nftItem) => handleClickAsset(asset, nftItem)}
+        />
+      );
+    },
+    [currentAddressId, handleClickAsset, selectType],
+  );
+
+  const renderSearchFooter = useCallback(() => {
+    if (filterAssets.type === 'local' || filterAssets.type === 'remote') {
+      return inFetchingRemote ? <HourglassLoading style={styles.fetchLoading} /> : null;
+    }
+
+    return (
+      <>
+        <Pressable
+          style={({ pressed }) => [styles.invalidWrapper, { backgroundColor: pressed ? colors.underlay : 'transparent' }]}
+          disabled={filterAssets.type !== 'network-error'}
+          testID="retry"
+        >
+          <ProhibitIcon style={styles.invalidIcon} width={24} height={24} />
+          <Text style={[styles.invalidTip, { color: colors.down }]}>
+            {filterAssets.type === 'invalid-format' && t('tx.asset.error.invalidFormat')}
+            {filterAssets.type === 'invalid-ERC20' && t('tx.asset.error.invalidERC20')}
+            {filterAssets.type === 'network-error' && (
+              <Trans i18nKey={'tx.asset.error.networkError'}>
+                Your Network is weak, <Text style={{ textDecorationLine: 'underline' }}>click to retry</Text>
+              </Trans>
+            )}
+          </Text>
+        </Pressable>
+        {inFetchingRemote && <HourglassLoading style={styles.fetchLoading} />}
+      </>
+    );
+  }, [colors.down, colors.underlay, filterAssets.type, inFetchingRemote, t]);
+
   return (
-    <SendTransactionBottomSheet ref={bottomSheetRef} isRoute={!onConfirm} onClose={onClose}>
+    <SendTransactionBottomSheet ref={bottomSheetRef} isRoute={!onConfirm} onClose={onClose} useBottomSheetView={false}>
       <BottomSheetHeader title={selectType === 'Receive' ? t('receive.title') : t('tx.send.title')}>
         <Text style={[styles.selectAsset, { color: colors.textSecondary }]}>{t('tx.asset.inputTitle')}</Text>
         <TextInput
-          containerStyle={[
-            styles.textinput,
-            { borderColor: !!searchAsset && filterAssets?.type && filterAssets.type.startsWith('invalid') ? colors.down : colors.borderFourth },
-          ]}
+          containerStyle={[styles.textinput, { borderColor: !!searchAsset && filterAssets.type.startsWith('invalid') ? colors.down : colors.borderFourth }]}
           showVisible={false}
           defaultHasValue={false}
           value={searchAsset}
-          onChangeText={(newNickName) => setSearchAsset(newNickName)}
+          onChangeText={(newSearchAsset) => setSearchAsset(newSearchAsset)}
           isInBottomSheet
           placeholder={t('tx.asset.placeholder')}
-          multiline
         />
       </BottomSheetHeader>
 
       {!searchAsset && (
-        <BottomSheetScrollContent style={[styles.scrollView, { marginVertical: 16 }]} stickyHeaderIndices={[0]} onScroll={handleScroll}>
-          <TabsHeader
-            type="SelectAsset"
-            currentTab={currentTab}
-            onlyToken={!navigation}
-            sharedScrollY={sharedScrollY}
-            onTabChange={setCurrentTab}
-            resetScrollY={resetScrollY}
-          />
-
-          <TabsContent
-            type="SelectAsset"
-            currentTab={currentTab}
-            onTabChange={setCurrentTab}
-            selectType={selectType}
-            onPressAsset={handleClickAsset}
-            onlyToken={!navigation}
-          />
-        </BottomSheetScrollContent>
+        <AssetTabsPager
+          currentTab={currentTab}
+          sharedScrollY={sharedScrollY}
+          onlyToken={onlyToken}
+          selectType={selectType}
+          assets={assets}
+          tokensLoading={tokensLoading}
+          currentAddressId={currentAddressId}
+          nftCollections={nftCollections}
+          nftsLoading={nftsLoading}
+          onTabChange={setCurrentTab}
+          resetScrollY={resetScrollY}
+          onScroll={handleScroll}
+          onSelectAsset={handleClickAsset}
+        />
       )}
+
       {searchAsset && (
-        <BottomSheetScrollContent style={styles.scrollView} onScroll={handleScroll}>
-          {filterAssets.assets?.length > 0 &&
-            filterAssets.assets.map((asset) => {
-              const itemKey = asset.type === ASSET_TYPE.Native ? ASSET_TYPE.Native : asset.contractAddress;
-              return asset.type === ASSET_TYPE.ERC20 || asset.type === ASSET_TYPE.Native ? (
-                <TokenItem
-                  key={itemKey}
-                  data={asset}
-                  showTypeLabel
-                  onPress={handleClickAsset}
-                  hidePrice={selectType === 'Receive'}
-                  hideBalance={selectType === 'Receive'}
-                  showAddress={selectType === 'Receive'}
-                />
-              ) : null;
-            })}
-
-          {filteredNftCollections.length > 0 &&
-            filteredNftCollections.map((collection, index) => (
-              <NftSearchRow
-                key={collection.id}
-                addressId={currentAddressId}
-                collection={collection}
-                index={index}
-                onSelect={(asset, item) => handleClickAsset(asset, item)}
-              />
-            ))}
-
-          {filterAssets.type !== 'local' && filterAssets.type !== 'remote' && (
-            <Pressable
-              style={({ pressed }) => [styles.invalidWrapper, { backgroundColor: pressed ? colors.underlay : 'transparent' }]}
-              disabled={filterAssets.type !== 'network-error'}
-              testID="retry"
-            >
-              <ProhibitIcon style={styles.invalidIcon} width={24} height={24} />
-              <Text style={[styles.invalidTip, { color: colors.down }]}>
-                {filterAssets.type === 'invalid-format' && t('tx.asset.error.invalidFormat')}
-                {filterAssets.type === 'invalid-ERC20' && t('tx.asset.error.invalidERC20')}
-                {filterAssets.type === 'network-error' && (
-                  <Trans i18nKey={'tx.asset.error.networkError'}>
-                    Your Network is weak, <Text style={{ textDecorationLine: 'underline' }}>click to retry</Text>
-                  </Trans>
-                )}
-              </Text>
-            </Pressable>
-          )}
-          {inFetchingRemote && <HourglassLoading style={styles.fetchLoading} />}
-        </BottomSheetScrollContent>
+        <BottomSheetFlashList
+          data={searchResults}
+          style={styles.scrollView}
+          renderItem={renderSearchResultItem}
+          keyExtractor={(item: SearchResultItem) => item.key}
+          getItemType={(item: SearchResultItem) => item.kind}
+          ListFooterComponent={renderSearchFooter}
+          contentContainerStyle={styles.searchResultsContent}
+          removeClippedSubviews={Platform.OS === 'android'}
+          keyboardShouldPersistTaps="handled"
+          onScroll={handleScroll}
+          showsVerticalScrollIndicator={false}
+        />
       )}
     </SendTransactionBottomSheet>
   );
@@ -425,6 +417,9 @@ const styles = StyleSheet.create({
   },
   scrollView: {
     flex: 1,
+  },
+  searchResultsContent: {
+    paddingBottom: 16,
   },
   invalidWrapper: {
     display: 'flex',
