@@ -28,6 +28,7 @@ import { Q } from '@nozbe/watermelondb';
 import { Container } from 'inversify';
 import { ChainStatusService } from '../chain/ChainStatusService';
 import { SignatureRecordService } from '../signing/SignatureRecordService';
+import { TransactionExecutionService } from './handlers/TransactionExecutionService';
 import { TransactionService } from './TransactionService';
 import type { ITransaction, SendERC20Input, SendTransactionInput } from './types';
 
@@ -173,6 +174,7 @@ describe('TransactionService', () => {
     container.bind(SignatureRecordService).toSelf();
 
     container.bind(SigningService).toConstantValue(signingService as unknown as SigningService);
+    container.bind(TransactionExecutionService).toSelf();
     container.bind(TransactionService).toSelf();
 
     service = container.get(TransactionService);

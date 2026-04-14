@@ -2,10 +2,8 @@ import { ChainRegistry } from '@core/chains';
 import { iface721, iface777, iface1155 } from '@core/contracts';
 import type { Database } from '@core/database';
 import type { Address } from '@core/database/models/Address';
-import type { App } from '@core/database/models/App';
 import type { Asset } from '@core/database/models/Asset';
-import type { Network } from '@core/database/models/Network';
-import { SignType } from '@core/database/models/Signature/type';
+import { type Network, NetworkType } from '@core/database/models/Network';
 import type { Tx } from '@core/database/models/Tx';
 import {
   TxStatus as DbTxStatus,
@@ -24,20 +22,14 @@ import { CORE_IDENTIFIERS } from '@core/di';
 import {
   CHAIN_PROVIDER_NOT_FOUND,
   CoreError,
-  TX_BROADCAST_FAILED,
   TX_BUILD_FAILED,
   TX_ESTIMATE_FAILED,
   TX_INVALID_PARAMS,
-  TX_SAVE_FAILED,
   TX_SIGN_ADDRESS_MISMATCH,
-  TX_SIGN_TRANSACTION_FAILED,
   TX_SIGN_UNSUPPORTED_NETWORK,
 } from '@core/errors';
-import type { CoreEventMap, EventBus } from '@core/modules/eventBus';
 import type { RuntimeConfig } from '@core/runtime/types';
 import { AddressValidationService } from '@core/services/address/AddressValidationService';
-import { SigningService } from '@core/services/signing';
-import { SignatureRecordService } from '@core/services/signing/SignatureRecordService';
 import {
   ASSET_TYPE,
   AssetType,
@@ -46,10 +38,8 @@ import {
   type EvmChainProviderLike,
   type EvmUnsignedTransaction,
   type FeeEstimate,
-  type HardwareOperationError,
   type Hex,
   type IChainProvider,
-  NetworkType,
   SPEED_UP_ACTION,
   type SpeedUpAction,
   type TransactionParams,
@@ -59,7 +49,6 @@ import {
   type UnsignedTransaction,
 } from '@core/types';
 import { Networks } from '@core/utils/consts';
-import { ProcessErrorType } from '@core/utils/eth';
 import { type ParseTxDataReturnType, parseTxData } from '@core/utils/txData';
 import { Interface } from '@ethersproject/abi';
 import { Q } from '@nozbe/watermelondb';
@@ -67,7 +56,26 @@ import { inject, injectable, optional } from 'inversify';
 import * as OxHex from 'ox/Hex';
 import * as OxValue from 'ox/Value';
 import type { EvmRpcTransactionRequest } from './dappTypes';
-import { resolveTransactionMethod } from './methodResolver';
+import { createConfluxTransactionHandlers } from './handlers/conflux';
+import { createEvmTransactionHandlers } from './handlers/evm';
+import { TransactionExecutionService } from './handlers/TransactionExecutionService';
+import type { TransactionHandlerContext, TransactionHandlers } from './handlers/types';
+import type {
+  PrecheckTransferInput,
+  PrecheckTransferResult,
+  PreparedDappTransaction,
+  PreparedReplacement,
+  PreparedTransfer,
+  PreparedTransferAsset,
+  QuoteTransactionRequest,
+  ReviewDappTransactionInput,
+  ReviewDappTransactionResult,
+  ReviewReplacementInput,
+  ReviewReplacementResult,
+  ReviewTransferInput,
+  ReviewTransferResult,
+  TransactionQuote,
+} from './stagedTypes';
 import type {
   GasPricingEstimate,
   IActivityTransaction,
@@ -128,22 +136,8 @@ export class TransactionService {
   @inject(AddressValidationService)
   private readonly addressValidationService!: AddressValidationService;
 
-  @inject(SigningService)
-  private readonly signingService!: SigningService;
-
-  @inject(SignatureRecordService)
-  private readonly signatureRecordService!: SignatureRecordService;
-
-  @inject(CORE_IDENTIFIERS.EVENT_BUS)
-  @optional()
-  private readonly eventBus?: EventBus<CoreEventMap>;
-
-  private emitTxCreated(params: { addressId: string; networkId: string; txId: string }): void {
-    this.eventBus?.emit('tx/created', {
-      key: { addressId: params.addressId, networkId: params.networkId },
-      txId: params.txId,
-    });
-  }
+  @inject(TransactionExecutionService)
+  private readonly transactionExecutionService!: TransactionExecutionService;
 
   async isPendingTxsFull(params: { addressId: string }): Promise<boolean> {
     const { addressId } = params;
@@ -222,6 +216,128 @@ export class TransactionService {
     }
 
     throw new Error(`estimateGasPricing: unsupported networkType: ${String(network.networkType)}`);
+  }
+
+  async quoteTransaction(input: QuoteTransactionRequest): Promise<TransactionQuote> {
+    const address = await this.findAddress(input.addressId);
+    const network = await this.getNetwork(address);
+    const from = await address.getValue();
+
+    return this.getTransactionHandlers(network).quoteTransaction({
+      from,
+      to: input.to,
+      value: input.value,
+      data: input.data,
+      withNonce: input.withNonce,
+    });
+  }
+
+  async precheckTransfer(input: PrecheckTransferInput): Promise<PrecheckTransferResult> {
+    const address = await this.findAddress(input.addressId);
+    const network = await this.getNetwork(address);
+
+    return this.getTransactionHandlers(network).precheckTransfer({
+      address,
+      request: input,
+    });
+  }
+
+  async reviewTransfer(input: ReviewTransferInput): Promise<ReviewTransferResult> {
+    const address = await this.findAddress(input.addressId);
+    const network = await this.getNetwork(address);
+
+    return this.getTransactionHandlers(network).reviewTransfer({
+      address,
+      request: input,
+    });
+  }
+
+  async executeTransfer(prepared: PreparedTransfer): Promise<ITransaction> {
+    const address = await this.findAddress(prepared.addressId);
+    const network = await this.getNetwork(address);
+    this.assertPreparedNetworkType(prepared.networkType, network.networkType, prepared.preparedKind);
+
+    const unsignedTx = await this.getTransactionHandlers(network).buildTransferUnsignedTransaction(prepared);
+    const tx = await this.transactionExecutionService.executeSelfTransaction({
+      address,
+      network,
+      unsignedTx,
+      assetType: this.toLegacyAssetType(prepared.asset),
+      contractAddress: prepared.asset.contractAddress,
+    });
+
+    return this.toInterface(tx);
+  }
+
+  async reviewReplacement(input: ReviewReplacementInput): Promise<ReviewReplacementResult> {
+    const originTx = await this.findTxOrThrow(input.txId);
+    const address = await originTx.address.fetch();
+    const network = await this.getNetwork(address);
+
+    return this.getTransactionHandlers(network).reviewReplacement({
+      originTx,
+      request: input,
+    });
+  }
+
+  async executeReplacement(prepared: PreparedReplacement): Promise<ITransaction> {
+    const address = await this.findAddress(prepared.addressId);
+    const network = await this.getNetwork(address);
+    const originTx = await this.findTxOrThrow(prepared.originTxId);
+    const originAddress = await originTx.address.fetch();
+
+    this.assertPreparedNetworkType(prepared.networkType, network.networkType, prepared.preparedKind);
+
+    if (originAddress.id !== address.id) {
+      throw new CoreError({
+        code: TX_INVALID_PARAMS,
+        message: 'Prepared replacement address does not match origin transaction address.',
+        context: {
+          preparedAddressId: address.id,
+          originAddressId: originAddress.id,
+          originTxId: originTx.id,
+        },
+      });
+    }
+
+    const unsignedTx = await this.getTransactionHandlers(network).buildReplacementUnsignedTransaction(prepared);
+    const tx = await this.transactionExecutionService.executeReplacementTransaction({
+      originTx,
+      address,
+      network,
+      unsignedTx,
+      sendAction: prepared.action,
+      hideOriginAsTempReplaced: true,
+    });
+
+    return this.toInterface(tx);
+  }
+
+  async reviewDappTransaction(input: ReviewDappTransactionInput): Promise<ReviewDappTransactionResult> {
+    const address = await this.findAddress(input.addressId);
+    const network = await this.getNetwork(address);
+
+    return this.getTransactionHandlers(network).reviewDappTransaction({
+      address,
+      request: input,
+    });
+  }
+
+  async executeDappTransaction(prepared: PreparedDappTransaction): Promise<ITransaction> {
+    const address = await this.findAddress(prepared.addressId);
+    const network = await this.getNetwork(address);
+
+    this.assertPreparedNetworkType(prepared.networkType, network.networkType, prepared.preparedKind);
+
+    const unsignedTx = await this.getTransactionHandlers(network).buildDappUnsignedTransaction(prepared);
+    const tx = await this.transactionExecutionService.executeDappTransaction({
+      address,
+      network,
+      unsignedTx,
+      app: prepared.app ?? null,
+    });
+
+    return this.toInterface(tx);
   }
 
   async decodeContractData(params: { addressId: string; to?: string | null; data?: string | null }): Promise<ParseTxDataReturnType> {
@@ -317,124 +433,24 @@ export class TransactionService {
 
   // send native token
   async sendNative(input: SendTransactionInput): Promise<ITransaction> {
-    // load address and network
     const address = await this.findAddress(input.addressId);
     const network = await this.getNetwork(address);
     const chainProvider = this.getChainProvider(network);
-
     const from = await address.getValue();
 
-    // build tx params
     const txParams = this.buildTransactionParams(input, from, network);
     const txDraft = await chainProvider.buildTransaction(txParams);
     const unsignedTx = await chainProvider.prepareUnsignedTransaction(txDraft);
 
-    // get signer
-    const account = await address.account.fetch();
-    const signer = await this.signingService.getSigner(account.id, address.id, { signal: input.signal });
+    const tx = await this.transactionExecutionService.executeSelfTransaction({
+      address,
+      network,
+      unsignedTx,
+      assetType: input.assetType,
+      contractAddress: input.contractAddress,
+      signal: input.signal,
+    });
 
-    // sign
-    const requestId = this.createRequestId();
-    let signedTx: Awaited<ReturnType<IChainProvider['signTransaction']>>;
-
-    if (signer.type === 'hardware') {
-      this.eventBus?.emit('hardware-sign/started', {
-        requestId,
-        accountId: account.id,
-        addressId: address.id,
-        networkId: network.id,
-      });
-
-      try {
-        signedTx = await chainProvider.signTransaction(unsignedTx, signer, { signal: input.signal });
-      } catch (error) {
-        if (input.signal?.aborted) {
-          this.eventBus?.emit('hardware-sign/aborted', {
-            requestId,
-            accountId: account.id,
-            addressId: address.id,
-            networkId: network.id,
-          });
-        } else {
-          this.eventBus?.emit('hardware-sign/failed', {
-            requestId,
-            accountId: account.id,
-            addressId: address.id,
-            networkId: network.id,
-            error: this.toHardwareOperationError(error),
-          });
-        }
-        throw error;
-      }
-
-      this.eventBus?.emit('hardware-sign/succeeded', {
-        requestId,
-        accountId: account.id,
-        addressId: address.id,
-        networkId: network.id,
-        txHash: signedTx.hash,
-        rawTransaction: signedTx.rawTransaction,
-      });
-    } else {
-      signedTx = await chainProvider.signTransaction(unsignedTx, signer);
-    }
-    let signatureId: string | null = null;
-    try {
-      signatureId = await this.signatureRecordService.createRecord({
-        addressId: address.id,
-        signType: SignType.TX,
-      });
-    } catch {
-      signatureId = null;
-    }
-
-    const sendAt = new Date();
-
-    let tx: Tx;
-
-    try {
-      // broadcast
-      const txHash = await chainProvider.broadcastTransaction(signedTx);
-
-      // save success tx
-      tx = await this.saveTx({
-        address,
-        unsignedTx,
-        txHash,
-        txRaw: signedTx.rawTransaction,
-        assetType: input.assetType,
-        contractAddress: input.contractAddress,
-        sendAt,
-      });
-
-      if (signatureId) {
-        await this.signatureRecordService.linkTx({ signatureId, txId: tx.id });
-      }
-    } catch (error) {
-      const message = error instanceof Error ? error.message : String(error);
-
-      // save failed tx
-      tx = await this.saveTx({
-        address,
-        unsignedTx,
-        txHash: '',
-        txRaw: signedTx.rawTransaction,
-        assetType: input.assetType,
-        contractAddress: input.contractAddress,
-        sendAt,
-        isFailed: true,
-        err: message,
-        errorType: null,
-      });
-
-      if (signatureId) {
-        await this.signatureRecordService.linkTx({ signatureId, txId: tx.id });
-      }
-
-      this.emitTxCreated({ addressId: address.id, networkId: network.id, txId: tx.id });
-      throw error;
-    }
-    this.emitTxCreated({ addressId: address.id, networkId: network.id, txId: tx.id });
     return this.toInterface(tx);
   }
 
@@ -530,136 +546,15 @@ export class TransactionService {
       });
     }
 
-    const account = await address.account.fetch();
-    const signer = await this.signingService.getSigner(account.id, address.id, { signal: input.signal });
+    const tx = await this.transactionExecutionService.executeDappTransaction({
+      address,
+      network,
+      unsignedTx,
+      app: input.app ?? null,
+      signal: input.signal,
+    });
 
-    const requestId = this.createRequestId();
-    let signedTx: Awaited<ReturnType<IChainProvider['signTransaction']>>;
-
-    try {
-      if (signer.type === 'hardware') {
-        this.eventBus?.emit('hardware-sign/started', {
-          requestId,
-          accountId: account.id,
-          addressId: address.id,
-          networkId: network.id,
-        });
-
-        signedTx = await chainProvider.signTransaction(unsignedTx, signer, { signal: input.signal });
-
-        this.eventBus?.emit('hardware-sign/succeeded', {
-          requestId,
-          accountId: account.id,
-          addressId: address.id,
-          networkId: network.id,
-          txHash: signedTx.hash,
-          rawTransaction: signedTx.rawTransaction,
-        });
-      } else {
-        signedTx = await chainProvider.signTransaction(unsignedTx, signer, { signal: input.signal });
-      }
-    } catch (error) {
-      if (signer.type === 'hardware' && error && typeof error === 'object' && typeof (error as { code?: unknown }).code === 'string') {
-        throw error;
-      }
-
-      if (signer.type === 'hardware') {
-        if (input.signal?.aborted) {
-          this.eventBus?.emit('hardware-sign/aborted', {
-            requestId,
-            accountId: account.id,
-            addressId: address.id,
-            networkId: network.id,
-          });
-        } else {
-          this.eventBus?.emit('hardware-sign/failed', {
-            requestId,
-            accountId: account.id,
-            addressId: address.id,
-            networkId: network.id,
-            error: this.toHardwareOperationError(error),
-          });
-        }
-      }
-
-      if (error instanceof CoreError) throw error;
-      throw new CoreError({
-        code: TX_SIGN_TRANSACTION_FAILED,
-        message: 'Failed to sign dApp transaction.',
-        cause: error,
-        context: { signerType: signer.type, chainId: network.chainId },
-      });
-    }
-    let signatureId: string | null = null;
-    try {
-      signatureId = await this.signatureRecordService.createRecord({
-        addressId: address.id,
-        signType: SignType.TX,
-        app: input.app ?? null,
-      });
-    } catch {
-      signatureId = null;
-    }
-
-    const sendAt = new Date();
-
-    try {
-      const txHash = await chainProvider.broadcastTransaction(signedTx);
-
-      const tx = await this.saveDappTx({
-        address,
-        unsignedTx,
-        txHash,
-        txRaw: signedTx.rawTransaction,
-        sendAt,
-        app: input.app ?? null,
-      });
-
-      if (signatureId) {
-        await this.signatureRecordService.linkTx({ signatureId, txId: tx.id });
-      }
-
-      this.emitTxCreated({ addressId: address.id, networkId: network.id, txId: tx.id });
-      return this.toInterface(tx);
-    } catch (error) {
-      const message = error instanceof Error ? error.message : String(error);
-
-      try {
-        const tx = await this.saveDappTx({
-          address,
-          unsignedTx,
-          txHash: '',
-          txRaw: signedTx.rawTransaction,
-          sendAt,
-          isFailed: true,
-          err: message,
-          errorType: null,
-          app: input.app ?? null,
-        });
-
-        if (signatureId) {
-          await this.signatureRecordService.linkTx({ signatureId, txId: tx.id });
-        }
-
-        this.emitTxCreated({ addressId: address.id, networkId: network.id, txId: tx.id });
-      } catch (saveError) {
-        if (saveError instanceof CoreError) throw saveError;
-        throw new CoreError({
-          code: TX_SAVE_FAILED,
-          message: 'Failed to save dApp transaction after broadcast failure.',
-          cause: saveError,
-          context: { chainId: network.chainId },
-        });
-      }
-
-      if (error instanceof CoreError) throw error;
-      throw new CoreError({
-        code: TX_BROADCAST_FAILED,
-        message: 'Failed to broadcast dApp transaction.',
-        cause: error,
-        context: { chainId: network.chainId },
-      });
-    }
+    return this.toInterface(tx);
   }
 
   async getSpeedUpTxContext(txId: string): Promise<SpeedUpTxContext | null> {
@@ -769,116 +664,17 @@ export class TransactionService {
       chainProvider,
     });
 
-    // get signer
-    const account = await address.account.fetch();
-    const signer = await this.signingService.getSigner(account.id, address.id, { signal: input.signal });
+    const tx = await this.transactionExecutionService.executeReplacementTransaction({
+      originTx,
+      address,
+      network,
+      unsignedTx: replacementTxPayload,
+      sendAction: effectiveAction,
+      hideOriginAsTempReplaced: true,
+      signal: input.signal,
+    });
 
-    const requestId = this.createRequestId();
-    let signedTx: Awaited<ReturnType<IChainProvider['signTransaction']>>;
-
-    try {
-      if (signer.type === 'hardware') {
-        this.eventBus?.emit('hardware-sign/started', {
-          requestId,
-          accountId: account.id,
-          addressId: address.id,
-          networkId: network.id,
-        });
-      }
-
-      signedTx = await chainProvider.signTransaction(replacementTxPayload, signer, { signal: input.signal });
-
-      if (signer.type === 'hardware') {
-        this.eventBus?.emit('hardware-sign/succeeded', {
-          requestId,
-          accountId: account.id,
-          addressId: address.id,
-          networkId: network.id,
-          txHash: signedTx.hash,
-          rawTransaction: signedTx.rawTransaction,
-        });
-      }
-    } catch (error) {
-      if (signer.type === 'hardware') {
-        if (input.signal?.aborted) {
-          this.eventBus?.emit('hardware-sign/aborted', {
-            requestId,
-            accountId: account.id,
-            addressId: address.id,
-            networkId: network.id,
-          });
-        } else {
-          this.eventBus?.emit('hardware-sign/failed', {
-            requestId,
-            accountId: account.id,
-            addressId: address.id,
-            networkId: network.id,
-            error: this.toHardwareOperationError(error),
-          });
-        }
-      }
-      throw error;
-    }
-
-    let signatureId: string | null = null;
-    try {
-      signatureId = await this.signatureRecordService.createRecord({
-        addressId: address.id,
-        signType: SignType.TX,
-      });
-    } catch {
-      signatureId = null;
-    }
-
-    const sendAt = new Date();
-
-    try {
-      const txHash = await chainProvider.broadcastTransaction(signedTx);
-
-      const newTx = await this.saveReplacementTx({
-        originTx,
-        address,
-        unsignedTx: replacementTxPayload,
-        txHash,
-        txRaw: signedTx.rawTransaction,
-        sendAt,
-        sendAction: effectiveAction,
-        hideOriginAsTempReplaced: true,
-        isFailed: false,
-        err: null,
-        errorType: null,
-      });
-
-      if (signatureId) {
-        await this.signatureRecordService.linkTx({ signatureId, txId: newTx.id });
-      }
-
-      this.emitTxCreated({ addressId: address.id, networkId: network.id, txId: newTx.id });
-      return this.toInterface(newTx);
-    } catch (error) {
-      const message = error instanceof Error ? error.message : String(error);
-
-      const failed = await this.saveReplacementTx({
-        originTx,
-        address,
-        unsignedTx: replacementTxPayload,
-        txHash: '',
-        txRaw: signedTx.rawTransaction,
-        sendAt,
-        sendAction: effectiveAction,
-        hideOriginAsTempReplaced: false,
-        isFailed: true,
-        err: message,
-        errorType: null,
-      });
-
-      if (signatureId) {
-        await this.signatureRecordService.linkTx({ signatureId, txId: failed.id });
-      }
-
-      this.emitTxCreated({ addressId: address.id, networkId: network.id, txId: failed.id });
-      throw error;
-    }
+    return this.toInterface(tx);
   }
 
   private async findAddress(addressId: string): Promise<Address> {
@@ -907,6 +703,28 @@ export class TransactionService {
       });
     }
     return provider;
+  }
+
+  private getTransactionHandlers(network: Network): TransactionHandlers {
+    const context: TransactionHandlerContext = {
+      network,
+      chainProvider: this.getChainProvider(network),
+      config: this.config,
+      addressValidationService: this.addressValidationService,
+    };
+
+    switch (network.networkType) {
+      case NetworkType.Ethereum:
+        return createEvmTransactionHandlers(context);
+      case NetworkType.Conflux:
+        return createConfluxTransactionHandlers(context);
+      default:
+        throw new CoreError({
+          code: TX_SIGN_UNSUPPORTED_NETWORK,
+          message: 'Transaction handlers are not available for this network.',
+          context: { networkType: network.networkType, chainId: network.chainId },
+        });
+    }
   }
 
   private buildTransactionParams(input: SendTransactionInput, from: string, network: Network): TransactionParams {
@@ -1008,215 +826,6 @@ export class TransactionService {
       lifecycle: this.mapLifecycleStatus(status),
       execution: this.mapExecutionStatus(executedStatus),
     };
-  }
-
-  private async saveTx(params: {
-    address: Address;
-    unsignedTx: UnsignedTransaction;
-    txHash: string;
-    txRaw: string;
-    assetType: AssetType;
-    contractAddress?: string;
-    sendAt: Date;
-    isFailed?: boolean;
-    err?: string;
-    errorType?: ProcessErrorType | null;
-  }): Promise<Tx> {
-    const { address, unsignedTx, txHash, txRaw, assetType, contractAddress, sendAt, isFailed = false, err, errorType } = params;
-
-    const payload: any = unsignedTx.payload ?? {};
-    const txMethod = resolveTransactionMethod({ payload, assetType });
-
-    const network = await address.network.fetch();
-    const status = await this.resolveInitialTxStatus({
-      address,
-      network,
-      from: payload.from ?? null,
-      nonce: typeof payload.nonce === 'number' ? payload.nonce : null,
-      isFailed,
-    });
-    const updated = await this.reuseTxByRaw({
-      address,
-      txRaw,
-      pendingPayload: payload,
-      txHash,
-      status,
-      sendAt,
-      err: err ?? null,
-      errorType: errorType ?? null,
-      source: TxSource.SELF,
-      method: txMethod,
-    });
-    if (updated) {
-      return updated;
-    }
-
-    const txPayload = this.database.get<TxPayload>(TableName.TxPayload).prepareCreate((record) => {
-      record.type = payload.type != null ? String(payload.type) : null;
-      record.accessList = null;
-      record.maxFeePerGas = payload.maxFeePerGas ?? null;
-      record.maxPriorityFeePerGas = payload.maxPriorityFeePerGas ?? null;
-      record.from = payload.from ?? null;
-      record.to = payload.to ?? null;
-      record.gasPrice = payload.gasPrice ?? null;
-      record.gasLimit = payload.gasLimit ?? (payload.gas as string | undefined) ?? null;
-      record.storageLimit = payload.storageLimit ?? null;
-      record.data = payload.data ?? null;
-      record.value = payload.value ?? null;
-      record.nonce = typeof payload.nonce === 'number' ? payload.nonce : null;
-      record.chainId = payload.chainId ?? null;
-      record.epochHeight = payload.epochHeight != null ? String(payload.epochHeight) : null;
-    });
-
-    const txExtra = this.database.get<TxExtra>(TableName.TxExtra).prepareCreate((record) => {
-      record.ok = true;
-      record.simple = assetType === AssetType.Native;
-      record.contractInteraction = assetType !== AssetType.Native;
-      record.token20 = assetType === AssetType.ERC20;
-      record.tokenNft = assetType === AssetType.ERC721 || assetType === AssetType.ERC1155;
-      record.sendAction = null;
-      record.address = payload.to ?? null;
-      record.method = assetType === AssetType.ERC20 ? 'transfer' : null;
-      record.contractCreation = !payload.to && !!payload.data;
-    });
-
-    let asset: Asset | undefined;
-    const assets = await network.assets.fetch();
-    if (assetType === AssetType.Native) {
-      asset = assets.find((item) => item.type === AssetType.Native);
-    } else if (contractAddress) {
-      asset = await network.queryAssetByAddress(contractAddress);
-    }
-
-    const tx = this.database.get<Tx>(TableName.Tx).prepareCreate((record) => {
-      record.raw = txRaw;
-      record.hash = txHash;
-      record.status = status;
-      record.executedStatus = null;
-      record.receipt = null;
-      record.executedAt = null;
-      record.errorType = errorType ?? null;
-      record.err = err ?? null;
-      record.sendAt = sendAt;
-      record.resendAt = null;
-      record.resendCount = null;
-      record.isTempReplacedByInner = null;
-      record.source = TxSource.SELF;
-      record.method = txMethod;
-      record.address.set(address);
-      record.txPayload.set(txPayload);
-      record.txExtra.set(txExtra);
-      if (asset) {
-        record.asset.set(asset);
-      }
-    });
-
-    await this.database.write(async () => {
-      await this.database.batch(txPayload, txExtra, tx);
-    });
-
-    return tx;
-  }
-
-  private async saveDappTx(params: {
-    address: Address;
-    unsignedTx: EvmUnsignedTransaction;
-    txHash: string;
-    txRaw: string;
-    sendAt: Date;
-    isFailed?: boolean;
-    err?: string;
-    errorType?: ProcessErrorType | null;
-    app?: { identity: string; origin?: string; name?: string; icon?: string } | null;
-  }): Promise<Tx> {
-    const { address, unsignedTx, txHash, txRaw, sendAt, isFailed = false, err, errorType, app = null } = params;
-
-    const payload = unsignedTx.payload ?? {};
-    const txMethod = resolveTransactionMethod({ payload });
-    const network = await address.network.fetch();
-    const txApp = await this.resolveTxAppRecord(app);
-    const status = await this.resolveInitialTxStatus({
-      address,
-      network,
-      from: payload.from ?? null,
-      nonce: typeof payload.nonce === 'number' ? payload.nonce : null,
-      isFailed,
-    });
-    const updated = await this.reuseTxByRaw({
-      address,
-      txRaw,
-      pendingPayload: payload,
-      txHash,
-      status,
-      sendAt,
-      err: err ?? null,
-      errorType: errorType ?? null,
-      source: TxSource.DAPP,
-      method: txMethod,
-      appRecord: txApp.appRecord,
-      preparedApp: txApp.preparedApp,
-    });
-    if (updated) {
-      return updated;
-    }
-
-    const txPayload = this.database.get<TxPayload>(TableName.TxPayload).prepareCreate((record) => {
-      record.type = payload.type != null ? String(payload.type) : null;
-      record.accessList = null;
-      record.maxFeePerGas = payload.maxFeePerGas ?? null;
-      record.maxPriorityFeePerGas = payload.maxPriorityFeePerGas ?? null;
-      record.from = payload.from ?? null;
-      record.to = payload.to ?? null;
-      record.gasPrice = payload.gasPrice ?? null;
-      record.gasLimit = payload.gasLimit ?? (payload.gas as string | undefined) ?? null;
-      record.storageLimit = payload.storageLimit ?? null;
-      record.data = payload.data ?? null;
-      record.value = payload.value ?? null;
-      record.nonce = typeof payload.nonce === 'number' ? payload.nonce : null;
-      record.chainId = payload.chainId ?? null;
-      record.epochHeight = payload.epochHeight != null ? String(payload.epochHeight) : null;
-    });
-
-    const txExtra = this.database.get<TxExtra>(TableName.TxExtra).prepareCreate((record) => {
-      record.ok = true;
-      record.simple = false;
-      record.contractInteraction = true;
-      record.token20 = false;
-      record.tokenNft = false;
-      record.sendAction = null;
-      record.address = payload.to ?? null;
-      record.method = null;
-      record.contractCreation = !payload.to && !!payload.data;
-    });
-
-    const tx = this.database.get<Tx>(TableName.Tx).prepareCreate((record) => {
-      record.raw = txRaw;
-      record.hash = txHash;
-      record.status = status;
-      record.executedStatus = null;
-      record.receipt = null;
-      record.executedAt = null;
-      record.errorType = errorType ?? null;
-      record.err = err ?? null;
-      record.sendAt = sendAt;
-      record.resendAt = null;
-      record.resendCount = null;
-      record.isTempReplacedByInner = null;
-      record.source = TxSource.DAPP;
-      record.method = txMethod;
-      record.address.set(address);
-      record.txPayload.set(txPayload);
-      record.txExtra.set(txExtra);
-      if (txApp.appRecord) {
-        record.app.set(txApp.appRecord);
-      }
-    });
-
-    await this.database.write(async () => {
-      await this.database.batch(...(txApp.preparedApp ? [txApp.preparedApp] : []), txPayload, txExtra, tx);
-    });
-
-    return tx;
   }
 
   // get transactions list by filters
@@ -1462,28 +1071,42 @@ export class TransactionService {
     };
   }
 
-  private createRequestId(): string {
-    return `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
-  }
-
-  private toHardwareOperationError(error: unknown): HardwareOperationError {
-    const message = error instanceof Error ? error.message : String(error);
-
-    const codeCandidate = (error as { code?: unknown } | null)?.code;
-    const code = typeof codeCandidate === 'string' && codeCandidate.trim() !== '' ? codeCandidate : 'UNKNOWN';
-
-    const detailsCandidate = (error as { details?: unknown } | null)?.details;
-    const details =
-      detailsCandidate && typeof detailsCandidate === 'object' && !Array.isArray(detailsCandidate) ? (detailsCandidate as Record<string, unknown>) : undefined;
-
-    const reasonCandidate = details?.reason;
-    const reason = typeof reasonCandidate === 'string' ? reasonCandidate : undefined;
-
-    return { code, message, reason, details };
-  }
-
   private toLowerCaseAddress(value?: string | null): string | null {
     return value ? value.toLowerCase() : null;
+  }
+
+  private assertPreparedNetworkType(preparedNetworkType: NetworkType, actualNetworkType: NetworkType, preparedKind: string): void {
+    if (preparedNetworkType === actualNetworkType) {
+      return;
+    }
+
+    throw new CoreError({
+      code: TX_INVALID_PARAMS,
+      message: 'Prepared transaction network type does not match the address network.',
+      context: { preparedNetworkType, actualNetworkType, preparedKind },
+    });
+  }
+
+  private toLegacyAssetType(asset: PreparedTransferAsset): AssetType {
+    switch (asset.standard) {
+      case 'native':
+        return AssetType.Native;
+      case 'erc20':
+      case 'crc20':
+        return AssetType.ERC20;
+      case 'erc721':
+      case 'crc721':
+        return AssetType.ERC721;
+      case 'erc1155':
+      case 'crc1155':
+        return AssetType.ERC1155;
+      default:
+        throw new CoreError({
+          code: TX_INVALID_PARAMS,
+          message: 'Prepared transfer asset standard is not supported by the legacy execution adapter.',
+          context: { standard: asset.standard, kind: asset.kind },
+        });
+    }
   }
 
   private getPendingCountLimit(): number {
@@ -1909,283 +1532,6 @@ export class TransactionService {
     }
 
     throw new Error(`buildReplacementPayload: unsupported networkType: ${String(network.networkType)}`);
-  }
-
-  private async isWaitingLike(chainProvider: IChainProvider, from: string, txNonce: number): Promise<boolean> {
-    const nextNonce = await chainProvider.getNonce(from);
-    return nextNonce < txNonce;
-  }
-
-  private async resolveInitialTxStatus(params: {
-    address: Address;
-    network: Network;
-    from: string | null;
-    nonce: number | null;
-    isFailed: boolean;
-  }): Promise<DbTxStatus> {
-    const { address, network, from, nonce, isFailed } = params;
-    if (isFailed) {
-      return DbTxStatus.SEND_FAILED;
-    }
-
-    if (typeof nonce !== 'number') {
-      return DbTxStatus.PENDING;
-    }
-
-    const chainProvider = this.getChainProvider(network);
-    const fromValue = from ?? (await address.getValue());
-    const waiting = await this.isWaitingLike(chainProvider, fromValue, nonce);
-    return waiting ? DbTxStatus.WAITTING : DbTxStatus.PENDING;
-  }
-
-  private async reuseTxByRaw(params: {
-    address: Address;
-    txRaw: string;
-    pendingPayload: any;
-    txHash: string;
-    status: DbTxStatus;
-    sendAt: Date;
-    err: string | null;
-    errorType: ProcessErrorType | null;
-    source: TxSource;
-    method: string;
-    appRecord?: App | null;
-    preparedApp?: App | null;
-  }): Promise<Tx | null> {
-    const existingTx = await this.findTxByRawAndPayload(params.address.id, params.txRaw, params.pendingPayload);
-    if (!existingTx) {
-      return null;
-    }
-
-    if (existingTx.status !== DbTxStatus.SEND_FAILED) {
-      return existingTx;
-    }
-
-    await this.database.write(async () => {
-      const ops: Array<Tx | App> = [];
-      if (params.preparedApp) {
-        ops.push(params.preparedApp);
-      }
-
-      ops.push(
-        existingTx.prepareUpdate((record) => {
-          record.raw = params.txRaw;
-          record.hash = params.txHash;
-          record.status = params.status;
-          record.executedStatus = null;
-          record.receipt = null;
-          record.executedAt = null;
-          record.errorType = params.errorType;
-          record.err = params.err;
-          record.sendAt = params.sendAt;
-          record.resendAt = null;
-          record.resendCount = null;
-          record.isTempReplacedByInner = null;
-          record.source = params.source;
-          record.method = params.method;
-          record.app.id = params.appRecord?.id;
-        }),
-      );
-
-      await this.database.batch(...ops);
-    });
-
-    return existingTx;
-  }
-
-  private async resolveTxAppRecord(
-    input: { identity: string; origin?: string; name?: string; icon?: string } | null,
-  ): Promise<{ appRecord: App | null; preparedApp: App | null }> {
-    if (!input?.identity) {
-      return { appRecord: null, preparedApp: null };
-    }
-
-    const existingApp = await this.findAppByIdentity(input.identity);
-    if (existingApp) {
-      return { appRecord: existingApp, preparedApp: null };
-    }
-
-    const preparedApp = this.database.get<App>(TableName.App).prepareCreate((record) => {
-      record.identity = input.identity;
-      record.origin = input.origin;
-      record.name = input.name ?? input.identity;
-      record.icon = input.icon;
-    });
-
-    return { appRecord: preparedApp, preparedApp };
-  }
-
-  private async findAppByIdentity(identity: string): Promise<App | null> {
-    if (!identity) {
-      return null;
-    }
-
-    const rows = await this.database.get<App>(TableName.App).query(Q.where('identity', identity)).fetch();
-    return rows[0] ?? null;
-  }
-
-  private async findTxByRawAndPayload(addressId: string, txRaw: string, pendingPayload: any): Promise<Tx | null> {
-    if (!txRaw) {
-      return null;
-    }
-
-    const rows = await this.database
-      .get<Tx>(TableName.Tx)
-      .query(Q.where('address_id', addressId), Q.where('is_temp_replaced', Q.notEq(true)), Q.where('raw', txRaw))
-      .fetch();
-
-    if (rows.length === 0) {
-      return null;
-    }
-
-    const storedPayloads = await Promise.all(rows.map((tx) => tx.txPayload.fetch()));
-    const matchedRows = rows.filter((tx, index) => this.hasEquivalentStoredPayload(storedPayloads[index], pendingPayload));
-    if (matchedRows.length === 0) {
-      return null;
-    }
-
-    matchedRows.sort((left, right) => left.createdAt.getTime() - right.createdAt.getTime());
-    return matchedRows.find((tx) => tx.status !== DbTxStatus.SEND_FAILED) ?? matchedRows[0];
-  }
-
-  private hasEquivalentStoredPayload(storedPayload: TxPayload, pendingPayload: any): boolean {
-    const payloadIdentityText = (value: unknown) => (value == null ? null : String(value));
-    const payloadIdentityNonce = (value: unknown) => (typeof value === 'number' ? value : null);
-
-    return (
-      payloadIdentityText(storedPayload.from) === payloadIdentityText(pendingPayload.from) &&
-      payloadIdentityText(storedPayload.to) === payloadIdentityText(pendingPayload.to) &&
-      payloadIdentityText(storedPayload.data) === payloadIdentityText(pendingPayload.data) &&
-      payloadIdentityText(storedPayload.value) === payloadIdentityText(pendingPayload.value) &&
-      payloadIdentityNonce(storedPayload.nonce) === payloadIdentityNonce(pendingPayload.nonce) &&
-      payloadIdentityText(storedPayload.chainId) === payloadIdentityText(pendingPayload.chainId)
-    );
-  }
-
-  private async saveReplacementTx(params: {
-    originTx: Tx;
-    address: Address;
-    unsignedTx: UnsignedTransaction;
-    txHash: string;
-    txRaw: string;
-    sendAt: Date;
-    sendAction: SpeedUpAction;
-    hideOriginAsTempReplaced: boolean;
-    isFailed: boolean;
-    err: string | null;
-    errorType: ProcessErrorType | null;
-  }): Promise<Tx> {
-    const { originTx, address, unsignedTx, txHash, txRaw, sendAt, sendAction, hideOriginAsTempReplaced, isFailed, err, errorType } = params;
-
-    const originExtra = await originTx.txExtra.fetch();
-    const originAsset = await originTx.asset.fetch().catch(() => null);
-    const originApp = await originTx.app.fetch().catch(() => null);
-    const network = await address.network.fetch();
-    if (!network) throw new Error('[TransactionService] Address has no associated network.');
-
-    const payload: any = unsignedTx.payload ?? {};
-    const assets = await network.assets.fetch();
-    const nativeAsset = assets.find((item) => item.type === AssetType.Native);
-
-    const txPayload = this.database.get<TxPayload>(TableName.TxPayload).prepareCreate((record) => {
-      record.type = payload.type != null ? String(payload.type) : null;
-      record.accessList = null;
-      record.maxFeePerGas = payload.maxFeePerGas ?? null;
-      record.maxPriorityFeePerGas = payload.maxPriorityFeePerGas ?? null;
-      record.from = payload.from ?? null;
-      record.to = payload.to ?? null;
-      record.gasPrice = payload.gasPrice ?? null;
-      record.gasLimit = payload.gasLimit ?? (payload.gas as string | undefined) ?? null;
-      record.storageLimit = payload.storageLimit ?? null;
-      record.data = payload.data ?? null;
-      record.value = payload.value ?? null;
-      record.nonce = typeof payload.nonce === 'number' ? payload.nonce : null;
-      record.chainId = payload.chainId ?? null;
-      record.epochHeight = payload.epochHeight != null ? String(payload.epochHeight) : null;
-    });
-
-    const txExtra = this.database.get<TxExtra>(TableName.TxExtra).prepareCreate((record) => {
-      const assetType = sendAction === SPEED_UP_ACTION.Cancel ? AssetType.Native : ((originAsset?.type as unknown as AssetType | undefined) ?? null);
-
-      // When origin asset is missing (e.g. legacy records / dApp tx), preserve existing extra flags.
-      if (sendAction !== SPEED_UP_ACTION.Cancel && assetType === null) {
-        record.ok = originExtra.ok;
-        record.simple = originExtra.simple;
-        record.contractInteraction = originExtra.contractInteraction;
-        record.token20 = originExtra.token20;
-        record.tokenNft = originExtra.tokenNft;
-        record.address = originExtra.address;
-        record.method = originExtra.method;
-        record.contractCreation = originExtra.contractCreation;
-      } else {
-        record.ok = true;
-        record.simple = assetType === AssetType.Native;
-        record.contractInteraction = assetType !== AssetType.Native;
-        record.token20 = assetType === AssetType.ERC20;
-        record.tokenNft = assetType === AssetType.ERC721 || assetType === AssetType.ERC1155;
-        record.address = payload.to ?? null;
-        record.method = assetType === AssetType.ERC20 ? 'transfer' : null;
-        record.contractCreation = !payload.to && !!payload.data;
-      }
-
-      record.sendAction = sendAction;
-    });
-
-    const chainProvider = this.getChainProvider(network);
-    const waiting =
-      typeof payload.nonce === 'number' ? await this.isWaitingLike(chainProvider, payload.from ?? (await address.getValue()), payload.nonce) : false;
-
-    const tx = this.database.get<Tx>(TableName.Tx).prepareCreate((record) => {
-      record.raw = txRaw;
-      record.hash = txHash;
-      record.status = isFailed ? DbTxStatus.SEND_FAILED : waiting ? DbTxStatus.WAITTING : DbTxStatus.PENDING;
-      record.executedStatus = null;
-      record.receipt = null;
-      record.executedAt = null;
-      record.errorType = errorType ?? null;
-      record.err = err ?? null;
-      record.sendAt = sendAt;
-      record.resendAt = null;
-      record.resendCount = null;
-      record.isTempReplacedByInner = null;
-      record.address.set(address);
-      record.txPayload.set(txPayload);
-      record.txExtra.set(txExtra);
-
-      if (sendAction === SPEED_UP_ACTION.Cancel) {
-        record.source = TxSource.SELF;
-        record.method = 'transfer';
-        if (nativeAsset) record.asset.set(nativeAsset);
-      } else {
-        record.source = originTx.source;
-        record.method = originTx.method;
-        if (originApp) record.app.set(originApp);
-        if (originAsset) record.asset.set(originAsset);
-      }
-    });
-
-    await this.database.write(async () => {
-      const ops: any[] = [txPayload, txExtra, tx];
-
-      if (hideOriginAsTempReplaced) {
-        ops.push(
-          originTx.prepareUpdate((record) => {
-            record.status = DbTxStatus.TEMP_REPLACED;
-            record.isTempReplacedByInner = true;
-            record.raw = null;
-            record.executedStatus = null;
-            record.receipt = null;
-            record.executedAt = null;
-            record.err = null;
-            record.errorType = ProcessErrorType.replacedByAnotherTx;
-          }),
-        );
-      }
-
-      await this.database.batch(...ops);
-    });
-
-    return tx;
   }
 
   private async uniqSortByNoncePreferExecuted(txs: Tx[]): Promise<Tx[]> {

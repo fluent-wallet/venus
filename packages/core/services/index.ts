@@ -28,7 +28,7 @@ import { SignatureRecordService } from './signing/SignatureRecordService';
 import { KeyValueStorageService } from './storage/KeyValueStorageService';
 import { UiPreferencesService } from './storage/UiPreferencesService';
 import { WalletMaintenanceService } from './storage/WalletMaintenanceService';
-import { TransactionService } from './transaction';
+import { TransactionExecutionService, TransactionService } from './transaction';
 import { VaultService } from './vault';
 
 export { AddressValidationService } from './address/AddressValidationService';
@@ -49,6 +49,7 @@ export function registerServices(target: Container): void {
   target.bind(NftService).toSelf().inSingletonScope();
   target.bind(SigningService).toSelf().inSingletonScope();
   target.bind(SignatureRecordService).toSelf().inSingletonScope();
+  target.bind(TransactionExecutionService).toSelf().inSingletonScope();
   target.bind(TransactionService).toSelf().inSingletonScope();
   target.bind(NetworkService).toSelf().inSingletonScope();
   target.bind(HardwareWalletService).toSelf().inSingletonScope();

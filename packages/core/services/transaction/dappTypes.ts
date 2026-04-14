@@ -1,6 +1,7 @@
-import type { Address, EvmRpcTransactionRequest, Hex } from '@core/types';
+import type { Address, Hex } from '@core/types';
 import type { TypedDataDomain, TypedDataField } from 'ethers';
 
+export type { EvmRpcTransactionRequest } from '@core/types';
 export type EvmSignableMessage = string | { raw: Hex };
 
 export type EvmTypedDataV4 = {
