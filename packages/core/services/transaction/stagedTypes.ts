@@ -68,7 +68,7 @@ export type TransactionQuote = {
   gasLimit: Hex;
   storageLimit?: Hex;
   gasPrice: Hex;
-  nonce: number;
+  nonce: number | null;
   constraints: {
     minGasPriceWei: Hex;
   };
@@ -81,7 +81,6 @@ export type TransactionReviewOverride = {
   storageLimit?: string;
   nonce?: number;
 };
-
 export type PreparedFee = {
   fields: FeeFields;
   gasLimit: string;

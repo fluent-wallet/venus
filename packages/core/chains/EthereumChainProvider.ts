@@ -236,6 +236,7 @@ export class EthereumChainProvider implements IChainProvider<EvmUnsignedTransact
       from: params.from,
       to: params.to,
       amount: params.amount,
+      data: params.data,
       assetType: params.assetType,
       assetDecimals: params.assetDecimals,
       chainId: params.chainId,

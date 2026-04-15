@@ -22,6 +22,7 @@ export interface TransactionBuildInput {
   chainId: string;
   contractAddress?: Address;
   nftTokenId?: string;
+  data?: Hex;
 }
 
 export interface EvmTransactionPayload {
@@ -36,7 +37,7 @@ const normalizeAddressForCalldata = (value: Address): Address => {
   return isBase32Address(value) ? convertBase32ToHex(value) : value;
 };
 export const buildNativeTransfer = (input: TransactionBuildInput): EvmTransactionPayload => {
-  const { from, to, amount, assetDecimals, chainId } = input;
+  const { from, to, amount, assetDecimals, chainId, data } = input;
   const quantity = OxValue.from(amount, assetDecimals);
 
   return {
@@ -44,7 +45,7 @@ export const buildNativeTransfer = (input: TransactionBuildInput): EvmTransactio
     to: to,
     chainId,
     value: OxHex.fromNumber(quantity),
-    data: '0x',
+    data: data ?? '0x',
   };
 };
 

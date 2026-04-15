@@ -22,7 +22,6 @@ import { CORE_IDENTIFIERS } from '@core/di';
 import {
   CHAIN_PROVIDER_NOT_FOUND,
   CoreError,
-  TX_BUILD_FAILED,
   TX_ESTIMATE_FAILED,
   TX_INVALID_PARAMS,
   TX_SIGN_ADDRESS_MISMATCH,
@@ -252,7 +251,7 @@ export class TransactionService {
     });
   }
 
-  async executeTransfer(prepared: PreparedTransfer): Promise<ITransaction> {
+  async executeTransfer(prepared: PreparedTransfer, options: { signal?: AbortSignal } = {}): Promise<ITransaction> {
     const address = await this.findAddress(prepared.addressId);
     const network = await this.getNetwork(address);
     this.assertPreparedNetworkType(prepared.networkType, network.networkType, prepared.preparedKind);
@@ -264,6 +263,7 @@ export class TransactionService {
       unsignedTx,
       assetType: this.toLegacyAssetType(prepared.asset),
       contractAddress: prepared.asset.contractAddress,
+      signal: options.signal,
     });
 
     return this.toInterface(tx);
@@ -280,7 +280,7 @@ export class TransactionService {
     });
   }
 
-  async executeReplacement(prepared: PreparedReplacement): Promise<ITransaction> {
+  async executeReplacement(prepared: PreparedReplacement, options: { signal?: AbortSignal } = {}): Promise<ITransaction> {
     const address = await this.findAddress(prepared.addressId);
     const network = await this.getNetwork(address);
     const originTx = await this.findTxOrThrow(prepared.originTxId);
@@ -308,6 +308,7 @@ export class TransactionService {
       unsignedTx,
       sendAction: prepared.action,
       hideOriginAsTempReplaced: true,
+      signal: options.signal,
     });
 
     return this.toInterface(tx);
@@ -323,7 +324,7 @@ export class TransactionService {
     });
   }
 
-  async executeDappTransaction(prepared: PreparedDappTransaction): Promise<ITransaction> {
+  async executeDappTransaction(prepared: PreparedDappTransaction, options: { signal?: AbortSignal } = {}): Promise<ITransaction> {
     const address = await this.findAddress(prepared.addressId);
     const network = await this.getNetwork(address);
 
@@ -335,6 +336,7 @@ export class TransactionService {
       network,
       unsignedTx,
       app: prepared.app ?? null,
+      signal: options.signal,
     });
 
     return this.toInterface(tx);
@@ -435,6 +437,28 @@ export class TransactionService {
   async sendNative(input: SendTransactionInput): Promise<ITransaction> {
     const address = await this.findAddress(input.addressId);
     const network = await this.getNetwork(address);
+
+    if (network.networkType === NetworkType.Ethereum) {
+      const { intent, override } = this.adaptLegacyEvmSendInput(input);
+
+      const review = await this.reviewTransfer({
+        addressId: input.addressId,
+        intent,
+        override,
+      });
+
+      if (!review.canSubmit || !review.prepared) {
+        throw new CoreError({
+          code: TX_INVALID_PARAMS,
+          message: review.error?.message ?? 'Failed to build staged EVM transfer.',
+        });
+      }
+
+      return this.executeTransfer(review.prepared, {
+        signal: input.signal,
+      });
+    }
+
     const chainProvider = this.getChainProvider(network);
     const from = await address.getValue();
 
@@ -472,6 +496,7 @@ export class TransactionService {
       signal: input.signal,
     });
   }
+
   async estimateDappTransaction(input: { addressId: string; request: EvmRpcTransactionRequest; signal?: AbortSignal }): Promise<FeeEstimate> {
     const address = await this.findAddress(input.addressId);
     const network = await this.getNetwork(address);
@@ -521,40 +546,27 @@ export class TransactionService {
       });
     }
 
-    const currentAddressValue = (await address.getValue()).toLowerCase();
-    if (input.request.from.toLowerCase() !== currentAddressValue) {
-      throw new CoreError({
-        code: TX_SIGN_ADDRESS_MISMATCH,
-        message: 'TransactionService.sendDappTransaction address mismatch.',
-        context: { expectedFrom: currentAddressValue, from: input.request.from },
-      });
-    }
-
-    const chainProvider = this.getChainProvider<EvmChainProviderLike>(network);
-
-    let unsignedTx: EvmUnsignedTransaction;
-    try {
-      const txDraft = this.buildEvmUnsignedTransactionDraft({ chainId: network.chainId, request: input.request });
-      unsignedTx = await chainProvider.prepareUnsignedTransaction(txDraft);
-    } catch (error) {
-      if (error instanceof CoreError) throw error;
-      throw new CoreError({
-        code: TX_BUILD_FAILED,
-        message: 'Failed to prepare dApp transaction.',
-        cause: error,
-        context: { chainId: network.chainId },
-      });
-    }
-
-    const tx = await this.transactionExecutionService.executeDappTransaction({
-      address,
-      network,
-      unsignedTx,
+    const review = await this.reviewDappTransaction({
+      addressId: input.addressId,
+      request: input.request,
       app: input.app ?? null,
-      signal: input.signal,
     });
 
-    return this.toInterface(tx);
+    if (!review.canSubmit || !review.prepared) {
+      throw new CoreError({
+        code: TX_INVALID_PARAMS,
+        message: review.error?.message ?? 'Failed to build staged EVM dApp transaction.',
+        context: {
+          addressId: input.addressId,
+          from: input.request.from,
+          to: input.request.to,
+        },
+      });
+    }
+
+    return this.executeDappTransaction(review.prepared, {
+      signal: input.signal,
+    });
   }
 
   async getSpeedUpTxContext(txId: string): Promise<SpeedUpTxContext | null> {
@@ -606,9 +618,46 @@ export class TransactionService {
 
   async speedUpTx(input: SpeedUpTxInput): Promise<ITransaction> {
     const originTx = await this.findTxOrThrow(input.txId);
-
-    const [address, payload, extra] = await Promise.all([originTx.address.fetch(), originTx.txPayload.fetch(), originTx.txExtra.fetch()]);
+    const address = await originTx.address.fetch();
     const network = await this.getNetwork(address);
+
+    if (network.networkType === NetworkType.Ethereum) {
+      const { action, override } = this.adaptLegacyEvmReplacementInput(input);
+
+      const review = await this.reviewReplacement({
+        txId: input.txId,
+        action,
+        override,
+      });
+
+      if (!review.canSubmit || !review.prepared) {
+        throw new CoreError({
+          code: TX_INVALID_PARAMS,
+          message: review.error?.message ?? 'Failed to build staged EVM replacement.',
+          context: {
+            txId: input.txId,
+            action: input.action,
+          },
+        });
+      }
+
+      return this.executeReplacement(review.prepared, {
+        signal: input.signal,
+      });
+    }
+
+    return this.speedUpTxViaLegacyConfluxPath({
+      originTx,
+      address,
+      network,
+      input,
+    });
+  }
+
+  // Conflux replacement keeps the compatibility path until staged Conflux handlers land.
+  private async speedUpTxViaLegacyConfluxPath(params: { originTx: Tx; address: Address; network: Network; input: SpeedUpTxInput }): Promise<ITransaction> {
+    const { originTx, address, network, input } = params;
+    const [payload, extra] = await Promise.all([originTx.txPayload.fetch(), originTx.txExtra.fetch()]);
     const chainProvider = this.getChainProvider(network);
 
     if (!PENDING_TX_STATUSES.includes(originTx.status)) {
@@ -620,7 +669,6 @@ export class TransactionService {
     }
 
     const from = payload.from ?? (await address.getValue());
-
     const effectiveAction: SpeedUpAction = extra.sendAction === SPEED_UP_ACTION.Cancel ? SPEED_UP_ACTION.Cancel : input.action;
 
     if (typeof payload.nonce !== 'number') {
@@ -630,6 +678,7 @@ export class TransactionService {
         context: { txId: originTx.id },
       });
     }
+
     if (payload.nonce !== input.nonce) {
       throw new CoreError({
         code: TX_INVALID_PARAMS,
@@ -639,7 +688,7 @@ export class TransactionService {
     }
 
     const is1559 = !!payload.maxFeePerGas || !!payload.maxPriorityFeePerGas;
-    this.assertReplacementFeeBumped({
+    this.assertLegacyConfluxReplacementFeeBumped({
       is1559,
       origin: {
         gasPrice: payload.gasPrice ?? null,
@@ -652,7 +701,7 @@ export class TransactionService {
     const gasLimit = input.advanceOverrides?.gasLimit ?? payload.gasLimit ?? undefined;
     const storageLimit = input.advanceOverrides?.storageLimit ?? payload.storageLimit ?? undefined;
 
-    const replacementTxPayload = await this.buildReplacementPayload({
+    const replacementTxPayload = await this.buildConfluxReplacementPayload({
       network,
       from,
       origin: payload,
@@ -745,6 +794,146 @@ export class TransactionService {
       maxPriorityFeePerGas: input.maxPriorityFeePerGas,
       storageLimit: input.storageLimit,
       nonce: input.nonce,
+    };
+  }
+
+  private adaptLegacyEvmSendInput(input: SendTransactionInput): {
+    intent: ReviewTransferInput['intent'];
+    override?: ReviewTransferInput['override'];
+  } {
+    let intent: ReviewTransferInput['intent'];
+
+    switch (input.assetType) {
+      case AssetType.Native:
+        intent = {
+          recipient: input.to,
+          asset: {
+            kind: 'native',
+            standard: 'native',
+            decimals: input.assetDecimals,
+          },
+          amount: { kind: 'exact', amount: input.amount },
+          data: input.data,
+        };
+        break;
+      case AssetType.ERC20:
+        intent = {
+          recipient: input.to,
+          asset: {
+            kind: 'fungible',
+            standard: 'erc20',
+            contractAddress: input.contractAddress!,
+            decimals: input.assetDecimals,
+          },
+          amount: { kind: 'exact', amount: input.amount },
+        };
+        break;
+      case AssetType.ERC721:
+        intent = {
+          recipient: input.to,
+          asset: {
+            kind: 'nft721',
+            standard: 'erc721',
+            contractAddress: input.contractAddress!,
+            tokenId: input.nftTokenId!,
+            decimals: 0,
+          },
+          amount: { kind: 'exact', amount: '1' },
+        };
+        break;
+      case AssetType.ERC1155:
+        intent = {
+          recipient: input.to,
+          asset: {
+            kind: 'nft1155',
+            standard: 'erc1155',
+            contractAddress: input.contractAddress!,
+            tokenId: input.nftTokenId!,
+            decimals: 0,
+          },
+          amount: { kind: 'exact', amount: input.amount },
+        };
+        break;
+      default:
+        throw new CoreError({
+          code: TX_INVALID_PARAMS,
+          message: 'Unsupported assetType for staged EVM send.',
+          context: { assetType: input.assetType },
+        });
+    }
+
+    const override: NonNullable<ReviewTransferInput['override']> = {};
+
+    if (input.gasLimit) {
+      override.gasLimit = input.gasLimit;
+    }
+
+    if (input.nonce != null) {
+      override.nonce = input.nonce;
+    }
+
+    if (input.gasPrice != null) {
+      override.feeSelection = {
+        kind: 'custom',
+        fee: { gasPrice: input.gasPrice },
+      };
+    } else if (input.maxFeePerGas != null && input.maxPriorityFeePerGas != null) {
+      override.feeSelection = {
+        kind: 'custom',
+        fee: {
+          maxFeePerGas: input.maxFeePerGas,
+          maxPriorityFeePerGas: input.maxPriorityFeePerGas,
+        },
+      };
+    }
+
+    return {
+      intent,
+      override: Object.keys(override).length > 0 ? override : undefined,
+    };
+  }
+
+  private adaptLegacyEvmReplacementInput(input: SpeedUpTxInput): {
+    action: ReviewReplacementInput['action'];
+    override: NonNullable<ReviewReplacementInput['override']>;
+  } {
+    const override: NonNullable<ReviewReplacementInput['override']> = {
+      nonce: input.nonce,
+    };
+
+    if (input.advanceOverrides?.gasLimit) {
+      override.gasLimit = input.advanceOverrides.gasLimit;
+    }
+
+    if (typeof input.feeOverrides.gasPrice === 'string') {
+      override.feeSelection = {
+        kind: 'custom',
+        fee: {
+          gasPrice: input.feeOverrides.gasPrice,
+        },
+      };
+    } else if (typeof input.feeOverrides.maxFeePerGas === 'string' && typeof input.feeOverrides.maxPriorityFeePerGas === 'string') {
+      override.feeSelection = {
+        kind: 'custom',
+        fee: {
+          maxFeePerGas: input.feeOverrides.maxFeePerGas,
+          maxPriorityFeePerGas: input.feeOverrides.maxPriorityFeePerGas,
+        },
+      };
+    } else {
+      throw new CoreError({
+        code: TX_INVALID_PARAMS,
+        message: 'Invalid replacement fee overrides.',
+        context: {
+          txId: input.txId,
+          feeOverrides: input.feeOverrides,
+        },
+      });
+    }
+
+    return {
+      action: input.action,
+      override,
     };
   }
 
@@ -1388,7 +1577,7 @@ export class TransactionService {
     return tx;
   }
 
-  private assertReplacementFeeBumped(params: {
+  private assertLegacyConfluxReplacementFeeBumped(params: {
     is1559: boolean;
     origin: { gasPrice: string | null; maxFeePerGas: string | null; maxPriorityFeePerGas: string | null };
     next: SpeedUpTxInput['feeOverrides'];
@@ -1461,7 +1650,7 @@ export class TransactionService {
     }
   }
 
-  private async buildReplacementPayload(params: {
+  private async buildConfluxReplacementPayload(params: {
     network: Network;
     from: string;
     origin: TxPayload;
@@ -1478,60 +1667,35 @@ export class TransactionService {
     const value: Hex = action === SPEED_UP_ACTION.Cancel ? '0x0' : ((origin.value ?? '0x0') as Hex);
     const data: Hex = action === SPEED_UP_ACTION.Cancel ? '0x' : ((origin.data ?? '0x') as Hex);
 
-    if (network.networkType === NetworkType.Ethereum) {
-      const is1559 = 'maxFeePerGas' in feeOverrides;
-      return {
-        chainType: NetworkType.Ethereum,
-        payload: {
-          from,
-          to,
-          chainId: network.chainId,
-          value,
-          data,
-          gasLimit,
-          nonce,
-          type: is1559 ? 2 : 0,
-          ...(is1559
-            ? { maxFeePerGas: feeOverrides.maxFeePerGas, maxPriorityFeePerGas: feeOverrides.maxPriorityFeePerGas }
-            : { gasPrice: feeOverrides.gasPrice }),
-        },
-      };
+    // Use latest epochHeight for replacement to avoid stale epochHeight rejection.
+    const epochNumberHex = await chainProvider.rpc.request<string>('cfx_epochNumber', ['latest_state']);
+    const epochBigInt = epochNumberHex.startsWith('0x') ? BigInt(epochNumberHex) : BigInt(epochNumberHex);
+    const epochHeight = Number(epochBigInt);
+    if (!Number.isFinite(epochHeight)) {
+      throw new Error('Invalid Conflux epochHeight.');
     }
 
-    if (network.networkType === NetworkType.Conflux) {
-      // Use latest epochHeight for replacement to avoid stale epochHeight rejection.
-      // Conflux RPC returns hex quantity; coerce to a safe integer.
-      const epochNumberHex = await chainProvider.rpc.request<string>('cfx_epochNumber', ['latest_state']);
-      const epochBigInt = epochNumberHex.startsWith('0x') ? BigInt(epochNumberHex) : BigInt(epochNumberHex);
-      const epochHeight = Number(epochBigInt);
-      if (!Number.isFinite(epochHeight)) {
-        throw new Error('Invalid Conflux epochHeight.');
-      }
-
-      return {
-        chainType: NetworkType.Conflux,
-        payload: {
-          from,
-          to,
-          chainId: network.chainId,
-          value,
-          data,
-          gasLimit,
-          storageLimit,
-          nonce,
-          epochHeight,
-          type: 'maxFeePerGas' in feeOverrides ? 2 : 0,
-          ...('maxFeePerGas' in feeOverrides
-            ? {
-                maxFeePerGas: feeOverrides.maxFeePerGas,
-                maxPriorityFeePerGas: feeOverrides.maxPriorityFeePerGas,
-              }
-            : { gasPrice: feeOverrides.gasPrice }),
-        },
-      };
-    }
-
-    throw new Error(`buildReplacementPayload: unsupported networkType: ${String(network.networkType)}`);
+    return {
+      chainType: NetworkType.Conflux,
+      payload: {
+        from,
+        to,
+        chainId: network.chainId,
+        value,
+        data,
+        gasLimit,
+        storageLimit,
+        nonce,
+        epochHeight,
+        type: 'maxFeePerGas' in feeOverrides ? 2 : 0,
+        ...('maxFeePerGas' in feeOverrides
+          ? {
+              maxFeePerGas: feeOverrides.maxFeePerGas,
+              maxPriorityFeePerGas: feeOverrides.maxPriorityFeePerGas,
+            }
+          : { gasPrice: feeOverrides.gasPrice }),
+      },
+    };
   }
 
   private async uniqSortByNoncePreferExecuted(txs: Tx[]): Promise<Tx[]> {

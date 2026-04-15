@@ -131,6 +131,7 @@ export class ConfluxChainProvider implements IChainProvider<ConfluxUnsignedTrans
       from: params.from,
       to: params.to,
       amount: params.amount,
+      data: params.data,
       assetType: params.assetType,
       assetDecimals: params.assetDecimals,
       chainId: params.chainId,
