@@ -1,5 +1,4 @@
 import { CoreError, TX_INVALID_PARAMS } from '@core/errors';
-import type { Address, Hex } from '@core/types';
 import { validate as isEvmAddress } from 'ox/Address';
 import type { EvmRpcTransactionRequest, EvmSignableMessage, EvmSignMessageParameters, EvmSignTypedDataParameters, EvmTypedDataV4 } from './dappTypes';
 

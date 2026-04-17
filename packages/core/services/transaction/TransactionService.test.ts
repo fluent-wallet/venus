@@ -1,7 +1,7 @@
 import 'reflect-metadata';
 
 import { ChainRegistry } from '@core/chains';
-import { iface721, iface777 } from '@core/contracts';
+import { iface721, iface777, iface1155 } from '@core/contracts';
 import type { Database } from '@core/database';
 import type { Address } from '@core/database/models/Address';
 import { AssetSource, type Asset as DbAsset, AssetType as DbAssetType } from '@core/database/models/Asset';
@@ -138,6 +138,13 @@ async function seedNativeAsset(params: { database: Database; network: Network; a
   );
 }
 
+const RICH_NATIVE_BALANCE = '0x3635c9adc5dea00000';
+
+function fundAddress(provider: StubChainProvider, address: Address, balance = RICH_NATIVE_BALANCE) {
+  provider.setNativeBalance(address.hex, balance as any);
+  provider.setNativeBalance(address.base32, balance as any);
+}
+
 class FakeSigningService {
   getSigner = jest.fn(async (_accountId: string, _addressId: string): Promise<ISigner> => {
     return {
@@ -188,12 +195,14 @@ describe('TransactionService', () => {
   it('sends native transaction and creates Tx records', async () => {
     const createdEvents: CoreEventMap['tx/created'][] = [];
     eventBus.on('tx/created', (payload) => createdEvents.push(payload));
-    const { account, address, network, assetRule } = await createTestAccount(database);
+    const { network, assetRule } = await seedNetwork(database, { definitionKey: 'eSpace Testnet', selected: true });
+    const { account, address } = await createTestAccount(database, { network, assetRule });
 
     const provider = new StubChainProvider({
       chainId: network.chainId,
       networkType: network.networkType,
     });
+    fundAddress(provider, address);
     chainRegistry.register(provider);
 
     await seedNativeAsset({ database, network, assetRule });
@@ -289,6 +298,7 @@ describe('TransactionService', () => {
 
     const provider = new StubChainProvider({ chainId: network.chainId, networkType: network.networkType });
     jest.spyOn(provider, 'getNonce').mockResolvedValue(0);
+    fundAddress(provider, address);
     chainRegistry.register(provider);
 
     const result = await run({ address, network, assetRule });
@@ -305,7 +315,7 @@ describe('TransactionService', () => {
     {
       label: 'native sends',
       expectFirstFailure: async (promise: Promise<unknown>) => {
-        await expect(promise).rejects.toThrow('boom');
+        await expect(promise).rejects.toMatchObject({ code: TX_BROADCAST_FAILED });
       },
       run: async (ctx: { address: Address; network: Network; assetRule: any }) => {
         await seedNativeAsset({ database, network: ctx.network, assetRule: ctx.assetRule });
@@ -362,6 +372,7 @@ describe('TransactionService', () => {
 
     const provider = new StubChainProvider({ chainId: network.chainId, networkType: network.networkType });
     jest.spyOn(provider, 'broadcastTransaction').mockRejectedValueOnce(new Error('boom'));
+    fundAddress(provider, address);
     chainRegistry.register(provider);
 
     const result = await run({ address, network, assetRule, expectFirstFailure });
@@ -479,6 +490,7 @@ describe('TransactionService', () => {
       chainId: network.chainId,
       networkType: network.networkType,
     });
+    fundAddress(provider, address);
     chainRegistry.register(provider);
 
     const origin = await createDbTx({
@@ -519,12 +531,14 @@ describe('TransactionService', () => {
     eventBus.on('hardware-sign/started', (payload) => started.push(payload));
     eventBus.on('hardware-sign/succeeded', (payload) => succeeded.push(payload));
 
-    const { account, address, network, assetRule } = await createTestAccount(database);
+    const { network, assetRule } = await seedNetwork(database, { definitionKey: 'eSpace Testnet', selected: true });
+    const { account, address } = await createTestAccount(database, { network, assetRule });
 
     const provider = new StubChainProvider({
       chainId: network.chainId,
       networkType: network.networkType,
     });
+    fundAddress(provider, address);
     chainRegistry.register(provider);
 
     await database.write(async () => {
@@ -585,12 +599,14 @@ describe('TransactionService', () => {
     eventBus.on('hardware-sign/started', (payload) => started.push(payload));
     eventBus.on('hardware-sign/failed', (payload) => failed.push(payload));
 
-    const { account, address, network, assetRule } = await createTestAccount(database);
+    const { network, assetRule } = await seedNetwork(database, { definitionKey: 'eSpace Testnet', selected: true });
+    const { account, address } = await createTestAccount(database, { network, assetRule });
 
     const provider = new StubChainProvider({
       chainId: network.chainId,
       networkType: network.networkType,
     });
+    fundAddress(provider, address);
     chainRegistry.register(provider);
 
     await database.write(async () => {
@@ -760,12 +776,14 @@ describe('TransactionService', () => {
     eventBus.on('hardware-sign/started', (payload) => started.push(payload));
     eventBus.on('hardware-sign/aborted', (payload) => aborted.push(payload));
 
-    const { account, address, network, assetRule } = await createTestAccount(database);
+    const { network, assetRule } = await seedNetwork(database, { definitionKey: 'eSpace Testnet', selected: true });
+    const { account, address } = await createTestAccount(database, { network, assetRule });
 
     const provider = new StubChainProvider({
       chainId: network.chainId,
       networkType: network.networkType,
     });
+    fundAddress(provider, address);
     chainRegistry.register(provider);
 
     await database.write(async () => {
@@ -816,15 +834,18 @@ describe('TransactionService', () => {
     expect(abortPayload.requestId).toBe(startPayload.requestId);
   });
   it('sends ERC20 transaction via sendERC20 and marks token20 in TxExtra', async () => {
-    const { account, address, network } = await createTestAccount(database);
+    const { network, assetRule } = await seedNetwork(database, { definitionKey: 'eSpace Testnet', selected: true });
+    const { account, address } = await createTestAccount(database, { network, assetRule });
 
     const provider = new StubChainProvider({
       chainId: network.chainId,
       networkType: network.networkType,
     });
+    fundAddress(provider, address);
     chainRegistry.register(provider);
 
     const contractAddress = '0x00000000000000000000000000000000000000ff';
+    provider.setTokenBalance(contractAddress, '0x4563918244f40000');
 
     const input: SendERC20Input = {
       addressId: address.id,
@@ -860,12 +881,14 @@ describe('TransactionService', () => {
   });
 
   it('persists self-transfer method for native and nft sends', async () => {
-    const { address, network, assetRule } = await createTestAccount(database);
+    const { network, assetRule } = await seedNetwork(database, { definitionKey: 'eSpace Testnet', selected: true });
+    const { address } = await createTestAccount(database, { network, assetRule });
 
     const provider = new StubChainProvider({
       chainId: network.chainId,
       networkType: network.networkType,
     });
+    fundAddress(provider, address);
     chainRegistry.register(provider);
 
     await database.write(async () => {
@@ -896,6 +919,17 @@ describe('TransactionService', () => {
         }),
       );
     });
+
+    provider.setCallResponse(
+      '0x00000000000000000000000000000000000007e1',
+      iface721.encodeFunctionData('ownerOf', [7n]) as any,
+      iface721.encodeFunctionResult('ownerOf', [address.hex]) as any,
+    );
+    provider.setCallResponse(
+      '0x0000000000000000000000000000000000001155',
+      iface1155.encodeFunctionData('balanceOf', [address.hex, 11n]) as any,
+      iface1155.encodeFunctionResult('balanceOf', [2n]) as any,
+    );
 
     await service.sendNative({
       addressId: address.id,
@@ -931,12 +965,14 @@ describe('TransactionService', () => {
   it('persists SEND_FAILED tx and emits tx/created when broadcastTransaction throws', async () => {
     const createdEvents: CoreEventMap['tx/created'][] = [];
     eventBus.on('tx/created', (payload) => createdEvents.push(payload));
-    const { address, network, assetRule } = await createTestAccount(database);
+    const { network, assetRule } = await seedNetwork(database, { definitionKey: 'eSpace Testnet', selected: true });
+    const { address } = await createTestAccount(database, { network, assetRule });
 
     const provider = new StubChainProvider({
       chainId: network.chainId,
       networkType: network.networkType,
     });
+    fundAddress(provider, address);
     chainRegistry.register(provider);
 
     await database.write(async () => {
@@ -964,7 +1000,7 @@ describe('TransactionService', () => {
       assetDecimals: 18,
     };
 
-    await expect(service.sendNative(input)).rejects.toThrow('network error');
+    await expect(service.sendNative(input)).rejects.toMatchObject({ code: TX_BROADCAST_FAILED });
 
     const txs = await database.get<Tx>(TableName.Tx).query().fetch();
     expect(txs).toHaveLength(1);
@@ -984,12 +1020,14 @@ describe('TransactionService', () => {
   });
 
   it('preserves canonical transaction state in transaction snapshots', async () => {
-    const { address, network } = await createTestAccount(database);
+    const { network, assetRule } = await seedNetwork(database, { definitionKey: 'eSpace Testnet', selected: true });
+    const { address } = await createTestAccount(database, { network, assetRule });
 
     const provider = new StubChainProvider({
       chainId: network.chainId,
       networkType: network.networkType,
     });
+    fundAddress(provider, address);
     chainRegistry.register(provider);
 
     const input: SendTransactionInput = {
@@ -1154,6 +1192,7 @@ describe('TransactionService', () => {
       chainId: evmNetwork.chainId,
       networkType: evmNetwork.networkType,
     });
+    fundAddress(provider, address);
     chainRegistry.register(provider);
 
     const request = {
@@ -1206,6 +1245,7 @@ describe('TransactionService', () => {
       chainId: evmNetwork.chainId,
       networkType: evmNetwork.networkType,
     });
+    fundAddress(provider, address);
     chainRegistry.register(provider);
 
     const approveData = iface777.encodeFunctionData('approve', ['0x0000000000000000000000000000000000000009', 42n]);
@@ -1235,6 +1275,7 @@ describe('TransactionService', () => {
       chainId: evmNetwork.chainId,
       networkType: evmNetwork.networkType,
     });
+    fundAddress(provider, address);
     jest.spyOn(provider, 'estimateFee').mockResolvedValue({
       chainType: provider.networkType,
       gasLimit: '0xffff',
@@ -1281,6 +1322,7 @@ describe('TransactionService', () => {
       chainId: evmNetwork.chainId,
       networkType: evmNetwork.networkType,
     });
+    fundAddress(provider, address);
     jest.spyOn(provider, 'estimateFee').mockResolvedValue({
       chainType: provider.networkType,
       gasLimit: '0xffff',
@@ -1327,6 +1369,7 @@ describe('TransactionService', () => {
       chainId: evmNetwork.chainId,
       networkType: evmNetwork.networkType,
     });
+    fundAddress(provider, address);
     jest.spyOn(provider, 'broadcastTransaction').mockRejectedValue(new Error('boom'));
     chainRegistry.register(provider);
 
@@ -1384,6 +1427,7 @@ describe('TransactionService', () => {
     const { address } = await createTestAccount(database, { network: evmNetwork, assetRule });
 
     const provider = new StubChainProvider({ chainId: evmNetwork.chainId, networkType: evmNetwork.networkType });
+    fundAddress(provider, address);
     chainRegistry.register(provider);
 
     const origin = await createDbTx({
@@ -1418,6 +1462,7 @@ describe('TransactionService', () => {
     const { address } = await createTestAccount(database, { network: evmNetwork, assetRule });
 
     const provider = new StubChainProvider({ chainId: evmNetwork.chainId, networkType: evmNetwork.networkType });
+    fundAddress(provider, address);
     chainRegistry.register(provider);
 
     const origin = await createDbTx({
@@ -1456,6 +1501,7 @@ describe('TransactionService', () => {
     const { address } = await createTestAccount(database, { network: evmNetwork, assetRule });
 
     const provider = new StubChainProvider({ chainId: evmNetwork.chainId, networkType: evmNetwork.networkType });
+    fundAddress(provider, address);
     chainRegistry.register(provider);
 
     const origin = await createDbTx({
@@ -1488,6 +1534,7 @@ describe('TransactionService', () => {
     const { address } = await createTestAccount(database, { network: evmNetwork, assetRule });
 
     const provider = new StubChainProvider({ chainId: evmNetwork.chainId, networkType: evmNetwork.networkType });
+    fundAddress(provider, address);
     chainRegistry.register(provider);
 
     const origin = await createDbTx({
@@ -1518,6 +1565,7 @@ describe('TransactionService', () => {
 
     const request: IChainRpc['request'] = jest.fn(async <T = unknown>(method: string): Promise<T> => {
       if (method === 'cfx_epochNumber') return '0x77' as unknown as T;
+      if (method === 'cfx_checkBalanceAgainstTransaction') return { willPayCollateral: true, willPayTxFee: true } as unknown as T;
       throw new Error(`unexpected method: ${method}`);
     });
     const batch: IChainRpc['batch'] = jest.fn(async <T = unknown>(): Promise<T[]> => []);
@@ -1525,6 +1573,7 @@ describe('TransactionService', () => {
     chainRegistry.register(provider);
 
     const from = await address.getValue();
+    provider.setNativeBalance(from, RICH_NATIVE_BALANCE as any);
     const origin = await createDbTx({
       database,
       address,
@@ -1572,6 +1621,7 @@ describe('TransactionService', () => {
     chainRegistry.register(provider);
 
     const from = await address.getValue();
+    provider.setNativeBalance(from, RICH_NATIVE_BALANCE as any);
     const origin = await createDbTx({
       database,
       address,

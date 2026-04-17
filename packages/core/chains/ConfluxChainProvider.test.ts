@@ -66,12 +66,22 @@ const createProvider = (overrides: Partial<ConfluxChainProviderOptions> = {}) =>
 
   endpointManager.setEndpoint(networkId, TEST_ENDPOINT);
 
-  return new ConfluxChainProvider({
+  const provider = new ConfluxChainProvider({
     chainId: overrides.chainId ?? TEST_CHAIN_ID,
     netId: overrides.netId ?? TEST_NET_ID,
     networkId,
     endpointManager,
   });
+
+  jest.spyOn(provider.rpc, 'request').mockImplementation(async (method: string) => {
+    if (method === 'txpool_nextNonce') {
+      throw new Error('txpool_nextNonce is not available');
+    }
+
+    throw new Error(`unexpected rpc.request method in test: ${method}`);
+  });
+
+  return provider;
 };
 
 describe('ConfluxChainProvider', () => {
@@ -85,6 +95,7 @@ describe('ConfluxChainProvider', () => {
     mockRpc.getBalance.mockResolvedValue(0n);
     mockRpc.estimateGasAndCollateral.mockResolvedValue({
       gasUsed: '0x5208',
+      gasLimit: '0x5208',
       storageCollateralized: '0x0',
     });
     mockSendRawTransaction.mockReset();
@@ -174,11 +185,27 @@ describe('ConfluxChainProvider', () => {
     ]);
   });
 
-  it('fetches nonce and converts response to number', async () => {
+  it('prefers txpool_nextNonce when available', async () => {
+    const provider = createProvider();
+    const requestMock = provider.rpc.request as unknown as jest.Mock;
+
+    requestMock.mockResolvedValueOnce('0x1a');
+
+    const nonce = await provider.getNonce(SAMPLE_ACCOUNT_BASE32);
+
+    expect(nonce).toBe(26);
+    expect(provider.rpc.request).toHaveBeenCalledWith('txpool_nextNonce', [SAMPLE_ACCOUNT_BASE32]);
+    expect(mockRpc.getNextNonce).not.toHaveBeenCalled();
+  });
+
+  it('falls back to cfx_getNextNonce(latest_state) when txpool_nextNonce is unavailable', async () => {
     const provider = createProvider();
     mockRpc.getNextNonce.mockResolvedValueOnce(26n);
+
     const nonce = await provider.getNonce(SAMPLE_ACCOUNT_BASE32);
+
     expect(nonce).toBe(26);
+    expect(provider.rpc.request).toHaveBeenCalledWith('txpool_nextNonce', [SAMPLE_ACCOUNT_BASE32]);
     expect(mockRpc.getNextNonce).toHaveBeenCalledWith(SAMPLE_ACCOUNT_BASE32, 'latest_state');
   });
 
@@ -217,6 +244,7 @@ describe('ConfluxChainProvider', () => {
 
     mockRpc.estimateGasAndCollateral.mockResolvedValueOnce({
       gasUsed: 0x5208n,
+      gasLimit: 0x5208n,
       storageCollateralized: 0n,
     });
     mockRpc.getGasPrice.mockResolvedValueOnce(1n);
@@ -258,6 +286,7 @@ describe('ConfluxChainProvider', () => {
     mockRpc.getEpochNumber.mockResolvedValueOnce(123n);
     mockRpc.estimateGasAndCollateral.mockResolvedValueOnce({
       gasUsed: 0x5208n,
+      gasLimit: 0x5208n,
       storageCollateralized: 0n,
     });
     mockRpc.getGasPrice.mockResolvedValueOnce(2n);
@@ -288,6 +317,7 @@ describe('ConfluxChainProvider', () => {
     mockRpc.getBlockByEpochNumber.mockResolvedValueOnce({ baseFeePerGas: 0x2n });
     mockRpc.estimateGasAndCollateral.mockResolvedValueOnce({
       gasUsed: 0x5208n,
+      gasLimit: 0x5208n,
       storageCollateralized: 0n,
     });
     mockRpc.maxPriorityFeePerGas.mockResolvedValueOnce(1n);
@@ -332,6 +362,7 @@ describe('ConfluxChainProvider', () => {
     mockRpc.getBlockByEpochNumber.mockResolvedValueOnce({ baseFeePerGas: 0x2n });
     mockRpc.estimateGasAndCollateral.mockResolvedValueOnce({
       gasUsed: 0x5208n,
+      gasLimit: 0x5208n,
       storageCollateralized: 0n,
     });
     mockRpc.maxPriorityFeePerGas.mockResolvedValueOnce(1n);
@@ -369,6 +400,7 @@ describe('ConfluxChainProvider', () => {
     mockRpc.getBlockByEpochNumber.mockResolvedValueOnce({ baseFeePerGas: 0x2n });
     mockRpc.estimateGasAndCollateral.mockResolvedValueOnce({
       gasUsed: 0x5208n,
+      gasLimit: 0x5208n,
       storageCollateralized: 0n,
     });
 
@@ -406,6 +438,7 @@ describe('ConfluxChainProvider', () => {
     mockRpc.getBlockByEpochNumber.mockResolvedValueOnce({ baseFeePerGas: 0x2n });
     mockRpc.estimateGasAndCollateral.mockResolvedValueOnce({
       gasUsed: 0x5208n,
+      gasLimit: 0x5208n,
       storageCollateralized: 0n,
     });
 
@@ -600,6 +633,7 @@ describe('ConfluxChainProvider', () => {
 
       mockRpc.estimateGasAndCollateral.mockResolvedValueOnce({
         gasUsed: 0x7530n, // 30000
+        gasLimit: 0x7530n,
         storageCollateralized: 0n,
       });
       mockRpc.getGasPrice.mockResolvedValueOnce(1n);
@@ -635,6 +669,7 @@ describe('ConfluxChainProvider', () => {
 
       mockRpc.estimateGasAndCollateral.mockResolvedValueOnce({
         gasUsed: 0x5208n,
+        gasLimit: 0x5208n,
         storageCollateralized: 0n,
       });
       mockRpc.getGasPrice.mockResolvedValueOnce(2n);
@@ -645,18 +680,7 @@ describe('ConfluxChainProvider', () => {
       expect(estimate.gasLimit).toBe('0x10000');
       expect(estimate.storageLimit).toBe('0x100');
       expect(estimate.gasPrice).toBe('0x2');
-      expect(mockRpc.estimateGasAndCollateral).toHaveBeenCalledWith(
-        {
-          from: SAMPLE_ACCOUNT_BASE32,
-          to: SAMPLE_ACCOUNT_BASE32,
-          data: '0x',
-          value: '0xde0b6b3a7640000',
-          gas: '0x10000',
-          nonce: 1,
-          storageLimit: '0x100',
-        },
-        100,
-      );
+      expect(mockRpc.estimateGasAndCollateral).not.toHaveBeenCalled();
     });
   });
 
@@ -679,6 +703,7 @@ describe('ConfluxChainProvider', () => {
       // 2. Estimate
       mockRpc.estimateGasAndCollateral.mockResolvedValueOnce({
         gasUsed: 0x5208n,
+        gasLimit: 0x5208n,
         storageCollateralized: 0n,
       });
       mockRpc.getGasPrice.mockResolvedValueOnce(1n);

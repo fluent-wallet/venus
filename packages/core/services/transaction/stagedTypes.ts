@@ -1,6 +1,6 @@
 import type { Address, Hex, SpeedUpAction } from '@core/types';
 import type { NetworkType } from '@core/utils/consts';
-import type { EvmRpcTransactionRequest } from './dappTypes';
+import type { DappTransactionRequest, EvmRpcTransactionRequest } from './dappTypes';
 
 export type FeePresetId = 'low' | 'medium' | 'high';
 
@@ -67,7 +67,6 @@ export type TransactionQuotePresetOption = {
 export type TransactionQuote = {
   gasLimit: Hex;
   storageLimit?: Hex;
-  gasPrice: Hex;
   nonce: number | null;
   constraints: {
     minGasPriceWei: Hex;
@@ -202,16 +201,15 @@ export type ReviewReplacementResult = {
 };
 
 export type DappReviewSummary = {
-  request: EvmRpcTransactionRequest;
+  request: DappTransactionRequest;
   fee: {
     payableGasFee: string;
     payableStorageCollateral?: string;
   };
 };
-
 export type ReviewDappTransactionInput = {
   addressId: string;
-  request: EvmRpcTransactionRequest;
+  request: DappTransactionRequest;
   override?: TransactionReviewOverride;
   app?: {
     identity: string;
@@ -256,7 +254,7 @@ export type PreparedDappTransaction = {
   preparedKind: 'dapp';
   addressId: string;
   networkType: NetworkType;
-  request: EvmRpcTransactionRequest;
+  request: DappTransactionRequest;
   app?: {
     identity: string;
     origin?: string;

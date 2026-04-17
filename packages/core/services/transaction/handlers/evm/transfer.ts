@@ -5,7 +5,7 @@ import { NetworkType } from '@core/utils/consts';
 import * as OxValue from 'ox/Value';
 import type { PreparedTransferAsset, ReviewError, ReviewTransferResult, TransactionReviewOverride, TransferIntent } from '../../stagedTypes';
 import type { TransactionHandlers } from '../types';
-import { buildEvmUnsignedTransaction, buildPresetOptions, getFeeUnitPrice, pickFee, toDisplayAmount } from './shared';
+import { buildEvmUnsignedTransaction, buildPresetOptions, getFeeUnitPrice, pickFee, resolveTransferGasLimit, toDisplayAmount } from './shared';
 import type { ComputedTransferPlan, EvmHandlerDeps, EvmTransferAssetType, TransferPlanResult } from './types';
 
 async function readErc721Owned(params: { chainProvider: EvmHandlerDeps['chainProvider']; contractAddress: string; tokenId: string; owner: string }) {
@@ -212,15 +212,25 @@ async function computeTransferPlan(
     nftTokenId: asset.tokenId,
   });
 
+  const gasLimit = await resolveTransferGasLimit({
+    ctx,
+    chainProvider,
+    from,
+    to: estimateRequest.to,
+    value: estimateRequest.value,
+    data: estimateRequest.data,
+    providedGasLimit: override?.gasLimit as Hex | undefined,
+  });
+
   const estimate = await chainProvider.estimateFee({
     chainType: NetworkType.Ethereum,
     payload: {
       ...estimateRequest,
       nonce,
+      gasLimit,
     },
   });
 
-  const gasLimit = override?.gasLimit ?? estimate.gasLimit;
   const presetOptions = buildPresetOptions({
     gasLimit,
     gasPrice: estimate.gasPrice,

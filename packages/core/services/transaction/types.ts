@@ -1,6 +1,6 @@
 import type { Address, AssetType, AssetTypeValue, Hex, SpeedUpAction, TransactionStateSnapshot } from '@core/types';
 import type { NetworkType } from '@core/utils/consts';
-import type { EvmRpcTransactionRequest } from './dappTypes';
+import type { DappTransactionRequest, EvmRpcTransactionRequest } from './dappTypes';
 
 export interface TransactionFilter {
   addressId: string;
@@ -219,7 +219,7 @@ export interface EstimateDappTransactionInput {
 
 export interface SendDappTransactionInput {
   addressId: string;
-  request: EvmRpcTransactionRequest;
+  request: DappTransactionRequest;
   app?: { identity: string; origin?: string; name?: string; icon?: string } | null;
   signal?: AbortSignal;
 }

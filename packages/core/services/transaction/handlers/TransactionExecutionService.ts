@@ -98,7 +98,7 @@ export class TransactionExecutionService {
   async executeDappTransaction(params: {
     address: Address;
     network: Network;
-    unsignedTx: EvmUnsignedTransaction;
+    unsignedTx: UnsignedTransaction;
     app?: SignatureAppInput;
     signal?: AbortSignal;
   }): Promise<Tx> {
@@ -133,7 +133,6 @@ export class TransactionExecutionService {
         }),
     });
   }
-
   async executeReplacementTransaction(params: {
     originTx: Tx;
     address: Address;
@@ -509,7 +508,7 @@ export class TransactionExecutionService {
   private async saveDappTx(params: {
     address: Address;
     network: Network;
-    unsignedTx: EvmUnsignedTransaction;
+    unsignedTx: UnsignedTransaction;
     txHash: string;
     txRaw: string;
     sendAt: Date;

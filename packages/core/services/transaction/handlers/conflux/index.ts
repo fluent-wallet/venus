@@ -1,21 +1,24 @@
+import type { ConfluxChainProviderLike } from '@core/types';
 import type { TransactionHandlerContext, TransactionHandlers } from '../types';
+import { createBuildDappUnsignedTransactionHandler, createReviewDappTransactionHandler } from './dapp';
+import { createQuoteTransactionHandler } from './quote';
+import { createBuildReplacementUnsignedTransactionHandler, createReviewReplacementHandler } from './replacement';
+import { createBuildTransferUnsignedTransactionHandler, createPrecheckTransferHandler, createReviewTransferHandler } from './transfer';
 
 export function createConfluxTransactionHandlers(ctx: TransactionHandlerContext): TransactionHandlers {
+  const chainProvider = ctx.chainProvider as ConfluxChainProviderLike;
+  const deps = { ctx, chainProvider };
+
   return {
-    async quoteTransaction() {},
+    quoteTransaction: createQuoteTransactionHandler(deps),
+    precheckTransfer: createPrecheckTransferHandler(deps),
+    reviewTransfer: createReviewTransferHandler(deps),
+    buildTransferUnsignedTransaction: createBuildTransferUnsignedTransactionHandler(deps),
 
-    async precheckTransfer() {},
+    reviewReplacement: createReviewReplacementHandler(deps),
+    buildReplacementUnsignedTransaction: createBuildReplacementUnsignedTransactionHandler(deps),
 
-    async reviewTransfer() {},
-
-    async buildTransferUnsignedTransaction() {},
-
-    async reviewReplacement() {},
-
-    async buildReplacementUnsignedTransaction() {},
-
-    async reviewDappTransaction() {},
-
-    async buildDappUnsignedTransaction() {},
+    reviewDappTransaction: createReviewDappTransactionHandler(deps),
+    buildDappUnsignedTransaction: createBuildDappUnsignedTransactionHandler(deps),
   };
 }

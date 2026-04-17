@@ -1,7 +1,19 @@
-import type { Address, Hex } from '@core/types';
+import type { Address, Hex, TransactionFeeFields } from '@core/types';
 import type { TypedDataDomain, TypedDataField } from 'ethers';
 
 export type { EvmRpcTransactionRequest } from '@core/types';
+
+export interface DappTransactionRequest extends TransactionFeeFields<Hex> {
+  from: Address;
+  to?: Address;
+  data?: Hex;
+  value?: Hex;
+  gas?: Hex;
+  nonce?: Hex;
+  type?: Hex;
+  storageLimit?: Hex; // conflux
+}
+
 export type EvmSignableMessage = string | { raw: Hex };
 
 export type EvmTypedDataV4 = {

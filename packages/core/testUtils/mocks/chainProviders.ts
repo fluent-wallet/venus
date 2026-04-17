@@ -93,8 +93,19 @@ export const createMockEvmUnsignedTx = (overrides: Partial<EvmUnsignedTransactio
 
 const createThrowingRpc = (): IChainRpc => {
   return {
-    request: async () => {
-      throw new Error('StubChainProvider.rpc.request not implemented');
+    request: async (method: string) => {
+      switch (method) {
+        case 'eth_getCode':
+          return '0x';
+        case 'eth_estimateGas':
+          return '0x5208';
+        case 'cfx_checkBalanceAgainstTransaction':
+          return { willPayCollateral: true, willPayTxFee: true };
+        case 'cfx_epochNumber':
+          return '0x0';
+        default:
+          throw new Error('StubChainProvider.rpc.request not implemented');
+      }
     },
     batch: async () => {
       throw new Error('StubChainProvider.rpc.batch not implemented');
@@ -220,7 +231,14 @@ export class StubChainProvider implements IChainProvider {
 
       payload.storageLimit = payload.storageLimit ?? ('storageLimit' in estimate ? estimate.storageLimit : undefined);
       payload.nonce = payload.nonce ?? 0;
-      payload.epochHeight = payload.epochHeight ?? 0;
+      if (payload.epochHeight == null) {
+        try {
+          const epoch = await this.rpc.request<string>('cfx_epochNumber', ['latest_state']);
+          payload.epochHeight = Number(BigInt(epoch));
+        } catch {
+          payload.epochHeight = 0;
+        }
+      }
     }
 
     return {
@@ -230,9 +248,19 @@ export class StubChainProvider implements IChainProvider {
   }
 
   async estimateFee(tx: UnsignedTransaction): Promise<any> {
+    if (tx.chainType === NetworkType.Conflux) {
+      return {
+        chainType: tx.chainType,
+        gasLimit: '0x5208',
+        gasPrice: '0x1',
+        storageLimit: '0x0',
+      };
+    }
+
     return {
       chainType: tx.chainType,
       gasLimit: '0x5208',
+      gasPrice: '0x1',
     };
   }
 
