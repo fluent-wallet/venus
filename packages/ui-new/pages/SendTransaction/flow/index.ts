@@ -8,5 +8,6 @@ export {
   toTransferAssetFromNft,
   toTransferAssetFromSelection,
 } from './transferAssetConverters';
+export { buildTransferIntent, canUseMaxAmount, getTransferAmountInputValue } from './transferIntent';
 export type { InitialSendFlowState, SendEntry, SendFlowStep, TransferAsset, TransferDraft } from './types';
 export { EMPTY_TRANSFER_DRAFT } from './types';

@@ -39,8 +39,10 @@ export function buildInitialSendFlowStateFromEntry(entry: SendEntry): InitialSen
         draft: buildDraft({
           recipient,
           asset: entry.asset,
-          amountInput: '1',
-          amountMode: 'exact',
+          amountIntent: {
+            kind: 'exact',
+            amount: '1',
+          },
         }),
         initialStep: 'review',
       };
@@ -55,14 +57,17 @@ export function buildInitialSendFlowStateFromEntry(entry: SendEntry): InitialSen
     };
   }
 
-  const amountInput = requireNonBlank(entry.amountInput, 'amountInput');
-
   return {
     draft: buildDraft({
       recipient,
       asset: entry.asset,
-      amountInput,
-      amountMode: entry.amountMode,
+      amountIntent:
+        entry.amountIntent.kind === 'max'
+          ? entry.amountIntent
+          : {
+              kind: 'exact',
+              amount: requireNonBlank(entry.amountIntent.amount, 'amountIntent.amount'),
+            },
     }),
     initialStep: 'review',
   };

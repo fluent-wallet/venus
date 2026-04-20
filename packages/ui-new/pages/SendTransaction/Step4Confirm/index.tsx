@@ -3,23 +3,23 @@ import WarnIcon from '@assets/icons/warn.svg';
 import { BottomSheetFooter, BottomSheetScrollContent } from '@components/BottomSheet';
 import Button from '@components/Button';
 import Text from '@components/Text';
-import { buildTransactionPayload } from '@core/chains/utils/transactionBuilder';
 import { AUTH_PASSWORD_REQUEST_CANCELED } from '@core/errors';
+import type { FeeSelection, TransactionReviewOverride } from '@core/services/transaction';
 import { AssetType, NetworkType } from '@core/types';
 import useFormatBalance from '@hooks/useFormatBalance';
 import useInAsync from '@hooks/useInAsync';
 import { AccountItemView } from '@modules/AccountsList';
 import { getDetailSymbol } from '@modules/AssetsList/NFTsList/NFTItemsGrid';
-import GasFeeSetting, { type GasEstimate } from '@modules/GasFee/GasFeeSetting';
+import GasFeeSetting, { type AdvanceSetting } from '@modules/GasFee/GasFeeSetting';
 import EstimateFee from '@modules/GasFee/GasFeeSetting/EstimateFee';
-import { getGasSettingPrimaryFee, isEip1559GasSetting } from '@modules/GasFee/GasFeeSetting/gasSetting';
+import { resolveGasSettingWithLevel } from '@modules/GasFee/GasFeeSetting/gasSetting';
 import { useNavigation, useTheme } from '@react-navigation/native';
 import type { SendTransactionScreenProps, SendTransactionStep4StackName, StackNavigation } from '@router/configs';
 import { useCurrentAccount, useCurrentAddress } from '@service/account';
 import { useAssetsOfCurrentAddress } from '@service/asset';
 import { getAssetsSyncService } from '@service/core';
 import { useCurrentNetwork } from '@service/network';
-import { useSendERC20, useSendNative } from '@service/transaction';
+import { useExecuteTransfer, useTransferReview } from '@service/transaction';
 import backToHome from '@utils/backToHome';
 import { calculateTokenPrice } from '@utils/calculateTokenPrice';
 import { isSmallDevice } from '@utils/deviceInfo';
@@ -31,10 +31,11 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Keyboard, StyleSheet, View } from 'react-native';
 import { showMessage } from 'react-native-flash-message';
-import { type TransferAsset, toLegacyNftItem, useSendFlow } from '../flow';
+import { buildTransferIntent, type TransferAsset, toLegacyNftItem, useSendFlow } from '../flow';
 import HardwareSignVerify from '../HardwareSignVerify';
 import SendTransactionBottomSheet from '../SendTransactionBottomSheet';
 import { NFT } from '../Step3Amount';
+import { getTransferPrecheckQueryErrorTranslationKey } from '../Step3Amount/amountInputHelpers';
 import SendAsset from './SendAsset';
 import { useHardwareSigningUiState } from './useHardwareSigningUiState';
 
@@ -62,27 +63,48 @@ const SendTransactionStep4Confirm: React.FC<SendTransactionScreenProps<typeof Se
   const { data: assets } = useAssetsOfCurrentAddress();
   const asset = draft.asset as TransferAsset;
   const nftItemDetail = toLegacyNftItem(asset);
-  const recipientAddress = draft.recipient;
-  const _amount = draft.amountInput;
-  const inMaxMode = draft.amountMode === 'max';
+  const nativeAsset = useMemo(() => assets?.find((a) => a.type === AssetType.Native) ?? null, [assets]);
+  const transferIntent = useMemo(() => {
+    if (!currentNetwork) {
+      return null;
+    }
+
+    return buildTransferIntent({
+      recipient: draft.recipient,
+      asset,
+      amountIntent: draft.amountIntent,
+      networkType: currentNetwork.networkType,
+    });
+  }, [asset, currentNetwork, draft.amountIntent, draft.recipient]);
 
   const [showGasFeeSetting, setShowGasFeeSetting] = useState(false);
-  const [gasEstimate, setGasEstimate] = useState<GasEstimate | null>(null);
-  const [gasCost, setGasCost] = useState<string | null>(null);
+  const [reviewOverride, setReviewOverride] = useState<TransactionReviewOverride | undefined>(undefined);
   const [error, setError] = useState<{ type?: string; message: string } | null>(null);
   const abortRef = useRef<AbortController | null>(null);
-
-  const amount = useMemo(() => {
-    // Max native sends need to leave room for gas.
-    if (!inMaxMode || asset.type !== AssetType.Native) {
-      return _amount;
+  const reviewInput = useMemo(
+    () =>
+      currentAddress?.id && transferIntent
+        ? {
+            addressId: currentAddress.id,
+            intent: transferIntent,
+            override: reviewOverride,
+          }
+        : null,
+    [currentAddress?.id, reviewOverride, transferIntent],
+  );
+  const reviewQuery = useTransferReview(reviewInput);
+  const review = reviewQuery.data ?? null;
+  const reviewSummary = review?.summary ?? null;
+  const resolvedAmount = reviewSummary?.transfer.amount ?? null;
+  const resolvedPayableFee = useMemo(() => {
+    if (!reviewSummary?.fee) {
+      return null;
     }
-    if (!gasCost) return _amount;
-    return new Decimal(_amount).sub(gasCost).toString();
-  }, [_amount, asset.type, gasCost, inMaxMode]);
 
+    return new Decimal(reviewSummary.fee.payableGasFee || '0').plus(reviewSummary.fee.payableStorageCollateral || '0').toString();
+  }, [reviewSummary?.fee]);
+  const amount = resolvedAmount ?? '';
   const formattedAmount = useFormatBalance(amount);
-
   const price = useMemo(() => calculateTokenPrice({ price: asset.priceInUSDT, amount: amount }), [asset.priceInUSDT, amount]);
   const symbol = useMemo(() => {
     if (!nftItemDetail) {
@@ -90,42 +112,85 @@ const SendTransactionStep4Confirm: React.FC<SendTransactionScreenProps<typeof Se
     }
     return getDetailSymbol(nftItemDetail);
   }, [asset.symbol, nftItemDetail]);
-
-  const txHalf = useMemo(() => {
-    if (!currentNetwork || !currentAddress?.value) return null;
-
-    const contractAddress = asset.type !== AssetType.Native && asset.contractAddress ? asset.contractAddress : undefined;
-    const nftTokenId = nftItemDetail?.tokenId;
-
-    const payload = buildTransactionPayload({
-      from: currentAddress.value,
-      to: recipientAddress,
-      amount: amount || '0',
-      assetType: asset.type as unknown as AssetType,
-      assetDecimals: asset.decimals || 0,
-      chainId: currentNetwork.chainId,
-      contractAddress,
-      nftTokenId,
-    });
-
-    return {
-      from: payload.from,
-      to: payload.to,
-      value: payload.value,
-      data: payload.data,
-    };
-  }, [amount, asset.contractAddress, asset.decimals, asset.type, currentAddress?.value, currentNetwork, recipientAddress, nftItemDetail?.tokenId]);
-
-  const sendNative = useSendNative();
-  const sendERC20 = useSendERC20();
-
   const addressId = currentAddress?.id ?? '';
   const { state: hardwareSignState, clear: clearHardwareSignState } = useHardwareSigningUiState(addressId || undefined);
-
   const currentAddressValue = currentAddress?.value ?? '';
+  const executeTransfer = useExecuteTransfer();
+  const currentGasSetting = useMemo(
+    () => resolveGasSettingWithLevel({ fee: review?.fee ?? null, presetOptions: review?.presetOptions ?? [] }),
+    [review?.fee, review?.presetOptions],
+  );
+  const currentAdvanceSetting = useMemo(() => {
+    if (!review?.fee) {
+      return undefined;
+    }
+
+    return {
+      gasLimit: review.fee.gasLimit,
+      storageLimit: review.fee.storageLimit,
+      nonce: review.fee.nonce,
+    } satisfies AdvanceSetting;
+  }, [review?.fee]);
+  const reviewErrorMessage = useMemo(() => {
+    if (reviewQuery.error) {
+      return t(getTransferPrecheckQueryErrorTranslationKey(reviewQuery.error));
+    }
+
+    const reviewError = review?.error;
+    if (!reviewError) {
+      return null;
+    }
+
+    if (reviewError.code === 'insufficient_asset_balance') {
+      return t('tx.amount.error.InsufficientBalance', { symbol: asset.symbol });
+    }
+
+    if (reviewError.code === 'insufficient_native_for_fee') {
+      return asset.type === AssetType.Native
+        ? t('tx.confirm.error.InsufficientBalance', { symbol: nativeAsset?.symbol ?? asset.symbol })
+        : t('tx.confirm.error.InsufficientBalanceForGas', { symbol: nativeAsset?.symbol ?? 'CFX' });
+    }
+
+    if (reviewError.code === 'invalid_amount') {
+      return t('tx.amount.error.invalidAmount');
+    }
+
+    if (reviewError.code === 'sponsor_check_failed') {
+      return reviewError.message;
+    }
+
+    return reviewError.message;
+  }, [asset.symbol, asset.type, nativeAsset?.symbol, review?.error, reviewQuery.error, t]);
+  useEffect(() => {
+    if (!reviewErrorMessage) {
+      setError(null);
+      return;
+    }
+
+    setError((prev) => {
+      if (prev?.message === reviewErrorMessage) {
+        return prev;
+      }
+
+      return {
+        message: reviewErrorMessage,
+        ...(reviewQuery.error ? { type: 'network error' } : review?.error?.code === 'insufficient_native_for_fee' ? { type: 'out of balance' } : null),
+      };
+    });
+  }, [review?.error?.code, reviewErrorMessage, reviewQuery.error]);
+  const handleReviewOverrideConfirm = useCallback((feeSelection: FeeSelection, advanceSetting: AdvanceSetting) => {
+    setError(null);
+    setReviewOverride({
+      feeSelection,
+      gasLimit: advanceSetting.gasLimit,
+      storageLimit: advanceSetting.storageLimit,
+      nonce: advanceSetting.nonce,
+    });
+  }, []);
 
   const _handleSend = useCallback(async () => {
     if (!currentNetwork || !currentAccount || !currentAddress) return;
+    if (!review?.prepared) return;
 
     if (currentAccount.isHardwareWallet && currentNetwork.networkType === NetworkType.Conflux) {
       showMessage({
@@ -143,51 +208,7 @@ const SendTransactionStep4Confirm: React.FC<SendTransactionScreenProps<typeof Se
     clearHardwareSignState();
 
     try {
-      const gasLimit = gasEstimate?.advanceSetting?.gasLimit;
-      const storageLimit = gasEstimate?.advanceSetting?.storageLimit;
-      const nonce = gasEstimate?.advanceSetting?.nonce;
-
-      const maxFeePerGas = gasEstimate?.gasSetting && isEip1559GasSetting(gasEstimate.gasSetting) ? gasEstimate.gasSetting.suggestedMaxFeePerGas : undefined;
-      const maxPriorityFeePerGas =
-        gasEstimate?.gasSetting && isEip1559GasSetting(gasEstimate.gasSetting) ? gasEstimate.gasSetting.suggestedMaxPriorityFeePerGas : undefined;
-      const gasPrice = gasEstimate?.gasSetting && !isEip1559GasSetting(gasEstimate.gasSetting) ? getGasSettingPrimaryFee(gasEstimate.gasSetting) : undefined;
-
-      const signal = controller?.signal;
-
-      if (asset.type === AssetType.ERC20 && asset.contractAddress) {
-        await sendERC20({
-          addressId: currentAddress.id,
-          contractAddress: asset.contractAddress,
-          to: recipientAddress,
-          amount: amount || '0',
-          assetDecimals: asset.decimals || 0,
-          gasLimit,
-          storageLimit,
-          nonce: typeof nonce === 'number' ? nonce : undefined,
-          gasPrice,
-          maxFeePerGas,
-          maxPriorityFeePerGas,
-          signal,
-        });
-      } else {
-        const contractAddress = asset.type !== AssetType.Native && asset.contractAddress ? asset.contractAddress : undefined;
-        await sendNative({
-          addressId: currentAddress.id,
-          to: recipientAddress,
-          amount: amount || '0',
-          assetType: asset.type as unknown as AssetType,
-          assetDecimals: asset.decimals || 0,
-          contractAddress,
-          nftTokenId: nftItemDetail?.tokenId,
-          gasLimit,
-          storageLimit,
-          nonce: typeof nonce === 'number' ? nonce : undefined,
-          gasPrice,
-          maxFeePerGas,
-          maxPriorityFeePerGas,
-          signal,
-        });
-      }
+      await executeTransfer(review.prepared, { signal: controller?.signal });
 
       showMessage({
         type: 'success',
@@ -243,22 +264,7 @@ const SendTransactionStep4Confirm: React.FC<SendTransactionScreenProps<typeof Se
     } finally {
       abortRef.current = null;
     }
-  }, [
-    amount,
-    asset,
-    clearHardwareSignState,
-    currentAccount,
-    currentAddress,
-    currentNetwork,
-    gasEstimate,
-    hardwareSignState?.phase,
-    nftItemDetail?.tokenId,
-    recipientAddress,
-    rootNavigation,
-    sendERC20,
-    sendNative,
-    t,
-  ]);
+  }, [clearHardwareSignState, currentAccount, currentAddress, currentNetwork, hardwareSignState?.phase, rootNavigation, review?.prepared, t, executeTransfer]);
 
   useEffect(() => {
     return () => abortRef.current?.abort();
@@ -266,9 +272,11 @@ const SendTransactionStep4Confirm: React.FC<SendTransactionScreenProps<typeof Se
 
   const { inAsync: inSending, execAsync: handleSend } = useInAsync(_handleSend);
 
-  const nativeAsset = useMemo(() => assets?.find((a) => a.type === AssetType.Native) ?? null, [assets]);
   const showHardwareSignVerify =
     Boolean(currentAccount?.isHardwareWallet) && Boolean(hardwareSignState) && (hardwareSignState?.phase === 'start' || hardwareSignState?.phase === 'error');
+  const isReviewLoading = reviewQuery.isFetching && !review;
+  const canSend = !reviewQuery.error && review?.canSubmit === true && !!review?.prepared;
+  const sponsorMessage = review?.sponsor?.message ?? null;
 
   return (
     <>
@@ -292,7 +300,7 @@ const SendTransactionStep4Confirm: React.FC<SendTransactionScreenProps<typeof Se
             symbol={asset.type !== AssetType.ERC721 ? symbol : undefined}
             price={price}
             icon={asset.type === AssetType.Native || asset.type === AssetType.ERC20 ? asset.icon : undefined}
-            recipientAddress={recipientAddress}
+            recipientAddress={draft.recipient}
           />
         </BottomSheetScrollContent>
         <BottomSheetFooter>
@@ -307,11 +315,13 @@ const SendTransactionStep4Confirm: React.FC<SendTransactionScreenProps<typeof Se
 
           <Text style={[styles.estimateFee, { color: colors.textSecondary }]}>{t('tx.confirm.estimatedFee')}</Text>
           <EstimateFee
-            gasSetting={gasEstimate?.gasSetting}
-            advanceSetting={gasEstimate?.advanceSetting ?? gasEstimate?.estimateAdvanceSetting}
+            gasSetting={currentGasSetting}
+            advanceSetting={currentAdvanceSetting}
             onPressSettingIcon={() => setShowGasFeeSetting(true)}
-            onGasCostChange={(newGasCost) => setGasCost(newGasCost)}
+            feeAmountOverride={resolvedPayableFee}
           />
+
+          {sponsorMessage && <Text style={[styles.sponsorTip, { color: colors.textSecondary }]}>{sponsorMessage}</Text>}
 
           {error && (
             <>
@@ -329,7 +339,7 @@ const SendTransactionStep4Confirm: React.FC<SendTransactionScreenProps<typeof Se
                   {error.type === 'network error' ? (
                     <Text style={[styles.errorText, { color: colors.down }]}>{t('tx.confirm.error.network')}</Text>
                   ) : (
-                    <Text style={[styles.errorText, { color: colors.down }]}>{t('tx.confirm.error.unknown')}</Text>
+                    <Text style={[styles.errorText, { color: colors.down }]}>{error.message || t('tx.confirm.error.unknown')}</Text>
                   )}
                 </View>
               )}
@@ -340,7 +350,7 @@ const SendTransactionStep4Confirm: React.FC<SendTransactionScreenProps<typeof Se
             <Button testID="cancel" style={styles.btn} size="small" onPress={() => backToHome(rootNavigation)} disabled={inSending}>
               {t('common.cancel')}
             </Button>
-            <Button testID="send" style={styles.btn} size="small" disabled={!gasEstimate} onPress={handleSend} loading={inSending}>
+            <Button testID="send" style={styles.btn} size="small" disabled={!canSend} onPress={handleSend} loading={inSending || isReviewLoading}>
               {error ? t('common.retry') : t('common.send')}
             </Button>
           </View>
@@ -358,7 +368,13 @@ const SendTransactionStep4Confirm: React.FC<SendTransactionScreenProps<typeof Se
         />
       )}
 
-      <GasFeeSetting show={showGasFeeSetting} tx={txHalf} onClose={() => setShowGasFeeSetting(false)} onConfirm={setGasEstimate} />
+      <GasFeeSetting
+        show={showGasFeeSetting}
+        onClose={() => setShowGasFeeSetting(false)}
+        presetOptions={review?.presetOptions ?? []}
+        fee={review?.fee ?? null}
+        onConfirm={handleReviewOverrideConfirm}
+      />
     </>
   );
 };
@@ -396,6 +412,12 @@ export const styles = StyleSheet.create({
     lineHeight: 18,
     fontWeight: '300',
     paddingHorizontal: 56,
+  },
+  sponsorTip: {
+    marginTop: 8,
+    paddingHorizontal: 56,
+    fontSize: 12,
+    lineHeight: 16,
   },
   errorWarp: {
     display: 'flex',

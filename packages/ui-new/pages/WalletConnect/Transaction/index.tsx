@@ -4,6 +4,7 @@ import Button from '@components/Button';
 import Text from '@components/Text';
 import { AUTH_PASSWORD_REQUEST_CANCELED } from '@core/errors';
 import { BSIM_ERROR_CANCEL } from '@core/hardware/bsim/constants';
+import type { FeeFields, FeeSelection, ReviewFee, TransactionQuotePresetOption } from '@core/services/transaction';
 import { type EvmRpcTransactionRequest, parseEvmRpcTransactionRequest } from '@core/services/transaction';
 import { ASSET_TYPE, type AssetTypeValue, type Hex } from '@core/types';
 import { isApproveMethod, type ParseTxDataReturnType } from '@core/utils/txData';
@@ -11,10 +12,10 @@ import { Interface } from '@ethersproject/abi';
 import useFormatBalance from '@hooks/useFormatBalance';
 import useInAsync from '@hooks/useInAsync';
 import { AccountItemView } from '@modules/AccountsList';
-import GasFeeSetting, { type GasEstimate, type GasFeeSettingMethods } from '@modules/GasFee/GasFeeSetting';
+import GasFeeSetting, { type AdvanceSetting } from '@modules/GasFee/GasFeeSetting';
 import DappParamsWarning from '@modules/GasFee/GasFeeSetting/DappParamsWarning';
 import EstimateFee from '@modules/GasFee/GasFeeSetting/EstimateFee';
-import { getGasSettingPrimaryFee, isEip1559GasSetting } from '@modules/GasFee/GasFeeSetting/gasSetting';
+import { getGasSettingPrimaryFee, isEip1559GasSetting, resolveGasSettingWithLevel } from '@modules/GasFee/GasFeeSetting/gasSetting';
 import HardwareSignVerify from '@pages/SendTransaction/HardwareSignVerify';
 import { styles as transactionConfirmStyle } from '@pages/SendTransaction/Step4Confirm/index';
 import SendAsset from '@pages/SendTransaction/Step4Confirm/SendAsset';
@@ -25,6 +26,7 @@ import { useCurrentAccount, useCurrentAddress } from '@service/account';
 import { useAssetsOfCurrentAddress } from '@service/asset';
 import { getAssetService, getExternalRequestsService, getTransactionService } from '@service/core';
 import { useCurrentNetwork } from '@service/network';
+import { type ITransactionGasEstimate, type Level, usePollingGasEstimateAndNonce } from '@service/transaction';
 import { handleBSIMHardwareUnavailable } from '@utils/handleBSIMHardwareUnavailable';
 import matchRPCErrorMessage from '@utils/matchRPCErrorMssage';
 import Decimal from 'decimal.js';
@@ -42,7 +44,14 @@ export type TxDataWithTokenInfo = ParseTxDataReturnType & {
   assetType?: AssetTypeValue;
 };
 
+const quoteLevels: readonly Level[] = ['low', 'medium', 'high'];
+
 const toHexQuantity = (value: number): `0x${string}` => `0x${Math.max(0, Math.trunc(value)).toString(16)}`;
+const isEip1559TransactionGasLevel = (
+  level: ITransactionGasEstimate['levels'][Level],
+): level is Extract<ITransactionGasEstimate['levels'][Level], { suggestedMaxFeePerGas: string; suggestedMaxPriorityFeePerGas: string }> => {
+  return 'suggestedMaxFeePerGas' in level;
+};
 const isBsimHardwareError = (error: unknown): error is { code: string; message: string } => {
   return Boolean(
     error && typeof error === 'object' && (error as { name?: unknown }).name === 'BSIMHardwareError' && typeof (error as { code?: unknown }).code === 'string',
@@ -58,6 +67,89 @@ const isUserCanceledError = (error: unknown): boolean => {
   if (name === 'AbortError') return true;
 
   return false;
+};
+
+const buildPresetOptionsFromEstimate = (estimate: ITransactionGasEstimate | null): readonly TransactionQuotePresetOption[] => {
+  if (!estimate) {
+    return [];
+  }
+
+  return quoteLevels.map((presetId) => {
+    const level = estimate.levels[presetId];
+
+    if ('suggestedGasPrice' in level) {
+      return {
+        presetId,
+        fee: {
+          gasPrice: level.suggestedGasPrice,
+        },
+        gasCost: level.gasCost as Hex,
+      };
+    }
+
+    return {
+      presetId,
+      fee: {
+        maxFeePerGas: level.suggestedMaxFeePerGas,
+        maxPriorityFeePerGas: level.suggestedMaxPriorityFeePerGas,
+      },
+      gasCost: level.gasCost as Hex,
+    };
+  });
+};
+
+const buildRequestedFeeFields = (params: { request: EvmRpcTransactionRequest | null; estimate: ITransactionGasEstimate | null }): FeeFields | null => {
+  const { request, estimate } = params;
+  if (!request) {
+    return null;
+  }
+
+  const requestType = request.type != null ? Number(request.type) : undefined;
+
+  const build1559FeeFields = (): FeeFields | null => {
+    const estimatedMediumLevel = estimate?.pricingKind === 'eip1559' && isEip1559TransactionGasLevel(estimate.levels.medium) ? estimate.levels.medium : null;
+    const estimatedMaxFeePerGas = estimatedMediumLevel ? estimatedMediumLevel.suggestedMaxFeePerGas : undefined;
+    const estimatedMaxPriorityFeePerGas = estimatedMediumLevel ? estimatedMediumLevel.suggestedMaxPriorityFeePerGas : undefined;
+    const maxFeePerGas = request.maxFeePerGas ?? estimatedMaxFeePerGas;
+    const maxPriorityFeePerGas = request.maxPriorityFeePerGas ?? estimatedMaxPriorityFeePerGas;
+
+    if (typeof maxFeePerGas !== 'string' || typeof maxPriorityFeePerGas !== 'string') {
+      return null;
+    }
+
+    return {
+      maxFeePerGas,
+      maxPriorityFeePerGas,
+    };
+  };
+
+  if (requestType === 0 || requestType === 1) {
+    return typeof request.gasPrice === 'string' ? { gasPrice: request.gasPrice } : null;
+  }
+
+  if (requestType === 2) {
+    return build1559FeeFields();
+  }
+
+  if (typeof request.maxFeePerGas === 'string' || typeof request.maxPriorityFeePerGas === 'string') {
+    return build1559FeeFields();
+  }
+
+  if (typeof request.gasPrice === 'string') {
+    return {
+      gasPrice: request.gasPrice,
+    };
+  }
+
+  return null;
+};
+
+const pickFeeFields = (selection: FeeSelection, presetOptions: readonly TransactionQuotePresetOption[]): FeeFields | null => {
+  if (selection.kind === 'custom') {
+    return selection.fee;
+  }
+
+  return presetOptions.find((option) => option.presetId === selection.presetId)?.fee ?? null;
 };
 
 function WalletConnectTransaction() {
@@ -123,56 +215,105 @@ function WalletConnectTransaction() {
     }),
     [currentAccount?.address, currentNetwork?.chainId, to, txData, value],
   );
+  const estimateQuote = usePollingGasEstimateAndNonce(txHalf, true, currentAddress?.id);
+  const presetOptions = useMemo(() => buildPresetOptionsFromEstimate(estimateQuote), [estimateQuote]);
+  const requestedFeeFields = useMemo(() => buildRequestedFeeFields({ request: rpcTx, estimate: estimateQuote }), [estimateQuote, rpcTx]);
+  const baselineAdvanceSetting = useMemo(() => {
+    if (!estimateQuote) {
+      return null;
+    }
 
-  const [gasEstimate, setGasEstimate] = useState<GasEstimate | null>(null);
-  const dappCustomizeGasSetting = useMemo(
+    return {
+      gasLimit: estimateQuote.gasLimit,
+      nonce: estimateQuote.nonce,
+    } satisfies AdvanceSetting;
+  }, [estimateQuote]);
+  const requestedAdvanceSetting = useMemo(() => {
+    if (!baselineAdvanceSetting) {
+      return null;
+    }
+
+    return {
+      gasLimit: gas ?? baselineAdvanceSetting.gasLimit,
+      nonce: nonce != null ? Number(nonce) : baselineAdvanceSetting.nonce,
+    } satisfies AdvanceSetting;
+  }, [baselineAdvanceSetting, gas, nonce]);
+  const [selectedFeeSelection, setSelectedFeeSelection] = useState<FeeSelection | null>(null);
+  const [selectedAdvanceSetting, setSelectedAdvanceSetting] = useState<AdvanceSetting | null>(null);
+  const selectionResetKey = useMemo(
     () =>
-      !isNil(gasPrice) || !isNil(maxFeePerGas) || !isNil(maxPriorityFeePerGas)
-        ? {
-            ...(gasPrice ? { suggestedGasPrice: gasPrice } : null),
-            ...(maxFeePerGas ? { suggestedMaxFeePerGas: maxFeePerGas } : null),
-            ...(maxPriorityFeePerGas ? { suggestedMaxPriorityFeePerGas: maxPriorityFeePerGas } : null),
-          }
-        : undefined,
-    [gasPrice, maxFeePerGas, maxPriorityFeePerGas],
+      [
+        txHalf?.from ?? '',
+        txHalf?.to ?? '',
+        txHalf?.value ?? '',
+        txHalf?.data ?? '',
+        gas ?? '',
+        nonce ?? '',
+        gasPrice ?? '',
+        maxFeePerGas ?? '',
+        maxPriorityFeePerGas ?? '',
+      ] as const,
+    [gas, gasPrice, maxFeePerGas, maxPriorityFeePerGas, nonce, txHalf?.data, txHalf?.from, txHalf?.to, txHalf?.value],
   );
-
-  const dappCustomizeAdvanceSetting = useMemo(
-    () =>
-      !isNil(gas) || !isNil(nonce)
-        ? {
-            ...(gas ? { gas } : null),
-            ...(nonce ? { nonce: Number(nonce) } : null),
-          }
-        : undefined,
-    [gas, nonce],
-  );
-
-  const gasSettingMethods = useRef<GasFeeSettingMethods | null>(null);
   const [showDappParamsWarning, setShowDappParamsWarning] = useState<boolean | null>(() => null);
   const abortRef = useRef<AbortController | null>(null);
   const closeActionRef = useRef<'none' | 'approving' | 'rejecting' | 'approved' | 'rejected'>('none');
   const approveResultRef = useRef<string | null>(null);
   const addressId = currentAddress?.id ?? '';
   const { state: hardwareSignState, clear: clearHardwareSignState } = useHardwareSigningUiState(addressId || undefined);
-  const checkDappParamsSuitable = useCallback(
-    (_gasEstimate: GasEstimate) => {
-      if (!_gasEstimate || showDappParamsWarning !== null) return;
-      const isAdvanceSettingSuitable = dappCustomizeAdvanceSetting?.gas
-        ? new Decimal(dappCustomizeAdvanceSetting.gas).greaterThanOrEqualTo(_gasEstimate.estimateAdvanceSetting.gasLimit)
-        : true;
 
-      const customizePrice = getGasSettingPrimaryFee(dappCustomizeGasSetting);
-      const isGasSettingSuitable = customizePrice ? new Decimal(customizePrice).greaterThanOrEqualTo(_gasEstimate.estimateCurrentGasPrice) : true;
+  useEffect(() => {
+    setSelectedFeeSelection(null);
+    setSelectedAdvanceSetting(null);
+    setShowDappParamsWarning(null);
+  }, selectionResetKey);
 
-      if (!isAdvanceSettingSuitable || !isGasSettingSuitable) {
-        setShowDappParamsWarning(true);
-      }
-    },
-    [dappCustomizeAdvanceSetting, dappCustomizeGasSetting, showDappParamsWarning],
-  );
+  useEffect(() => {
+    if (!baselineAdvanceSetting) {
+      return;
+    }
 
-  const isSupport1559 = !!gasEstimate?.gasSetting && isEip1559GasSetting(gasEstimate.gasSetting);
+    setSelectedFeeSelection(
+      (currentSelection) => currentSelection ?? (requestedFeeFields ? { kind: 'custom', fee: requestedFeeFields } : { kind: 'preset', presetId: 'medium' }),
+    );
+    setSelectedAdvanceSetting((currentAdvance) => currentAdvance ?? requestedAdvanceSetting ?? baselineAdvanceSetting);
+  }, [baselineAdvanceSetting, requestedAdvanceSetting, requestedFeeFields]);
+
+  const currentFee = useMemo<ReviewFee | null>(() => {
+    if (!selectedFeeSelection || !selectedAdvanceSetting) {
+      return null;
+    }
+
+    const fields = pickFeeFields(selectedFeeSelection, presetOptions);
+    if (!fields) {
+      return null;
+    }
+
+    return {
+      selection: selectedFeeSelection,
+      fields,
+      gasLimit: selectedAdvanceSetting.gasLimit,
+      nonce: selectedAdvanceSetting.nonce,
+    };
+  }, [presetOptions, selectedAdvanceSetting, selectedFeeSelection]);
+  const currentGasSetting = useMemo(() => resolveGasSettingWithLevel({ fee: currentFee, presetOptions }), [currentFee, presetOptions]);
+  const currentAdvanceSetting = selectedAdvanceSetting ?? baselineAdvanceSetting;
+
+  useEffect(() => {
+    if (!estimateQuote || showDappParamsWarning !== null) {
+      return;
+    }
+
+    const isAdvanceSettingSuitable = gas ? BigInt(gas) >= BigInt(estimateQuote.gasLimit) : true;
+    const requestedPrimaryFee = requestedFeeFields ? ('gasPrice' in requestedFeeFields ? requestedFeeFields.gasPrice : requestedFeeFields.maxFeePerGas) : null;
+    const isGasSettingSuitable = requestedPrimaryFee ? BigInt(requestedPrimaryFee) >= BigInt(estimateQuote.gasPrice) : true;
+
+    if (!isAdvanceSettingSuitable || !isGasSettingSuitable) {
+      setShowDappParamsWarning(true);
+    }
+  }, [estimateQuote, gas, requestedFeeFields, showDappParamsWarning]);
+
+  const isSupport1559 = !!currentGasSetting && isEip1559GasSetting(currentGasSetting);
   const shouldUse1559 = isSupport1559 && (isNil(type) || (Number(type) !== 0 && Number(type) !== 1));
 
   const amount = useFormatBalance(value ? value.toString() : '0', nativeAsset?.decimals ?? 18);
@@ -226,7 +367,7 @@ function WalletConnectTransaction() {
   );
 
   const _handleApprove = useCallback(async () => {
-    if (!gasEstimate) return;
+    if (!currentGasSetting || !currentAdvanceSetting) return;
     if (!currentAddress?.id || !currentAccount?.address) return;
     if (!requestId) return;
     if (!rpcTx) return;
@@ -247,18 +388,22 @@ function WalletConnectTransaction() {
     clearHardwareSignState();
 
     try {
-      const gasPriceOrMaxFee = getGasSettingPrimaryFee(gasEstimate.gasSetting);
+      const gasPriceOrMaxFee = getGasSettingPrimaryFee(currentGasSetting);
+      if (!gasPriceOrMaxFee) {
+        return;
+      }
+
       const requestForSend: EvmRpcTransactionRequest = {
         from: currentAccount.address,
         to: rpcTx.to,
         value: rpcTx.value ?? '0x0',
-        data: txData || '0x',
-        gas: gasEstimate.advanceSetting?.gasLimit,
-        nonce: gasEstimate.advanceSetting?.nonce != null ? (toHexQuantity(gasEstimate.advanceSetting.nonce) as unknown as Hex) : undefined,
-        ...(shouldUse1559 && isEip1559GasSetting(gasEstimate.gasSetting)
+        data: (txData || '0x') as Hex,
+        gas: currentAdvanceSetting.gasLimit as Hex,
+        nonce: toHexQuantity(currentAdvanceSetting.nonce) as unknown as Hex,
+        ...(shouldUse1559 && isEip1559GasSetting(currentGasSetting)
           ? {
-              maxFeePerGas: gasEstimate.gasSetting.suggestedMaxFeePerGas,
-              maxPriorityFeePerGas: gasEstimate.gasSetting.suggestedMaxPriorityFeePerGas,
+              maxFeePerGas: currentGasSetting.suggestedMaxFeePerGas,
+              maxPriorityFeePerGas: currentGasSetting.suggestedMaxPriorityFeePerGas,
               type: '0x2' as Hex,
             }
           : {
@@ -311,7 +456,7 @@ function WalletConnectTransaction() {
         return;
       }
 
-      const msg = matchRPCErrorMessage(error);
+      const msg = matchRPCErrorMessage(error as { message?: string; data?: string; code?: number });
       closeActionRef.current = 'none';
       setError(msg);
       clearHardwareSignState();
@@ -322,8 +467,9 @@ function WalletConnectTransaction() {
     clearHardwareSignState,
     currentAccount?.address,
     currentAccount?.isHardwareWallet,
+    currentAdvanceSetting,
     currentAddress?.id,
-    gasEstimate,
+    currentGasSetting,
     metadata.icons,
     metadata.name,
     metadata.url,
@@ -446,8 +592,8 @@ function WalletConnectTransaction() {
 
           <Text style={[transactionConfirmStyle.estimateFee, { color: colors.textPrimary }]}>{t('tx.confirm.estimatedFee')}</Text>
           <EstimateFee
-            gasSetting={gasEstimate?.gasSetting}
-            advanceSetting={gasEstimate?.advanceSetting ?? gasEstimate?.estimateAdvanceSetting}
+            gasSetting={currentGasSetting}
+            advanceSetting={currentAdvanceSetting ?? undefined}
             onPressSettingIcon={() => setShowGasFeeSetting(true)}
           />
 
@@ -480,16 +626,14 @@ function WalletConnectTransaction() {
       )}
 
       <GasFeeSetting
-        ref={gasSettingMethods}
         show={showGasFeeSetting}
-        tx={txHalf}
         onClose={() => setShowGasFeeSetting(false)}
-        onConfirm={(newGasEstimate) => {
-          setGasEstimate(newGasEstimate);
-          checkDappParamsSuitable(newGasEstimate);
+        presetOptions={presetOptions}
+        fee={currentFee}
+        onConfirm={(feeSelection, advanceSetting) => {
+          setSelectedFeeSelection(feeSelection);
+          setSelectedAdvanceSetting(advanceSetting);
         }}
-        dappCustomizeGasSetting={dappCustomizeGasSetting}
-        dappCustomizeAdvanceSetting={dappCustomizeAdvanceSetting}
         force155={!isNil(type) && (Number(type) === 0 || Number(type) === 1)}
       />
       {!!(currentAccount?.isHardwareWallet && hardwareSignState) && hardwareSignState && (
@@ -507,7 +651,14 @@ function WalletConnectTransaction() {
         <DappParamsWarning
           isOpen={!!showDappParamsWarning}
           onClose={() => setShowDappParamsWarning(false)}
-          onPressUse={() => gasSettingMethods.current?.resetCustomizeSetting?.()}
+          onPressUse={() => {
+            if (!baselineAdvanceSetting) {
+              return;
+            }
+
+            setSelectedFeeSelection({ kind: 'preset', presetId: 'medium' });
+            setSelectedAdvanceSetting(baselineAdvanceSetting);
+          }}
         />
       )}
     </>

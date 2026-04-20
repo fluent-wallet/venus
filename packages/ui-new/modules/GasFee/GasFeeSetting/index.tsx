@@ -16,24 +16,25 @@ import {
 import Button from '@components/Button';
 import HourglassLoading from '@components/Loading/Hourglass';
 import Text from '@components/Text';
+import type { FeeSelection, ReviewFee, TransactionQuotePresetOption } from '@core/services/transaction';
 import { ASSET_TYPE } from '@core/types';
 import { numberFormat, trimDecimalZeros } from '@core/utils/balance';
 import { useTheme } from '@react-navigation/native';
 import { useAssetsOfCurrentAddress } from '@service/asset';
 import type { IAsset } from '@service/core';
-import { type Level, usePollingGasEstimateAndNonce } from '@service/transaction';
+import type { Level } from '@service/transaction';
 import { calculateTokenPrice } from '@utils/calculateTokenPrice';
 import Decimal from 'decimal.js';
 import { Image } from 'expo-image';
-import { has, isEqual, keys, omit } from 'lodash-es';
+import { omit } from 'lodash-es';
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 import type React from 'react';
-import { forwardRef, useCallback, useEffect, useImperativeHandle, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Pressable, StyleSheet, View } from 'react-native';
 import CustomizeAdvanceSetting from './CustomizeAdvanceSetting';
 import CustomizeGasSetting from './CustomizeGasSetting';
-import { buildGasSettingWithLevel, type GasSetting, type GasSettingLike, type GasSettingWithLevel, getGasSettingPrimaryFee } from './gasSetting';
+import { type GasSetting, type GasSettingWithLevel, getGasSettingPrimaryFee, resolveGasSettingWithLevel, toFeeFields, toGasSetting } from './gasSetting';
 
 export type { GasSetting, GasSettingLike, GasSettingWithLevel } from './gasSetting';
 
@@ -46,257 +47,197 @@ export interface AdvanceSetting {
 }
 
 const MinUSDT = 0.01;
-const defaultLevel: Level = 'medium';
-
-export interface GasEstimate {
-  gasSetting: GasSettingWithLevel;
-  advanceSetting: AdvanceSetting;
-  estimateCurrentGasPrice: string;
-  estimateAdvanceSetting: AdvanceSetting;
-}
 
 interface Props {
   show: boolean;
   onClose: () => void;
-  tx: Parameters<typeof usePollingGasEstimateAndNonce>[0];
-  onConfirm: (gasEstimate: GasEstimate) => void;
-  dappCustomizeGasSetting?: Partial<GasSetting>;
-  dappCustomizeAdvanceSetting?: Partial<AdvanceSetting>;
+  presetOptions: readonly TransactionQuotePresetOption[];
+  fee: ReviewFee | null;
+  onConfirm: (selection: FeeSelection, advanceSetting: AdvanceSetting) => void;
   force155?: boolean;
 }
 
-export interface GasFeeSettingMethods {
-  resetCustomizeSetting: VoidFunction;
-}
+const GasFeeSetting: React.FC<Props> = ({ show, onClose, presetOptions, fee, onConfirm, force155 }) => {
+  const { t } = useTranslation();
+  const { colors } = useTheme();
+  const bottomSheetRef = useRef<BottomSheetMethods>(null!);
 
-const GasFeeSetting = forwardRef<GasFeeSettingMethods, Props>(
-  ({ show, tx, onClose, onConfirm, dappCustomizeGasSetting, dappCustomizeAdvanceSetting, force155 }, ref) => {
-    const { t } = useTranslation();
-    const { colors } = useTheme();
-    const bottomSheetRef = useRef<BottomSheetMethods>(null!);
+  const { data: assets } = useAssetsOfCurrentAddress();
+  const nativeAsset = useMemo(() => assets?.find((assetItem) => assetItem.type === ASSET_TYPE.Native) ?? null, [assets]);
+  const presetGasSettings = useMemo(() => {
+    if (!presetOptions.length) {
+      return null;
+    }
 
-    const { data: assets } = useAssetsOfCurrentAddress();
-    const nativeAsset = useMemo(() => assets?.find((a) => a.type === ASSET_TYPE.Native) ?? null, [assets]);
+    return Object.fromEntries(
+      presetOptions.map((option) => [
+        option.presetId,
+        {
+          ...toGasSetting(option.fee),
+          level: option.presetId,
+        },
+      ]),
+    ) as Record<Level, GasSettingWithLevel>;
+  }, [presetOptions]);
+  const resolvedFeeSetting = useMemo(() => resolveGasSettingWithLevel({ fee, presetOptions }), [fee, presetOptions]);
+  const baselineAdvanceSetting = useMemo(() => {
+    if (!fee) {
+      return null;
+    }
 
-    const estimateRes = usePollingGasEstimateAndNonce(tx);
-    const estimateGasSettings = estimateRes?.levels ?? null;
-    const is1559Estimate = estimateRes?.pricingKind === 'eip1559';
-    const estimateCurrentGasPrice = estimateRes?.gasPrice ?? null;
-    const estimateAdvanceSetting = useMemo(
-      () =>
-        estimateRes
-          ? {
-              gasLimit: estimateRes.gasLimit,
-              storageLimit: estimateRes.storageLimit,
-              nonce: estimateRes.nonce,
-            }
-          : null,
-      [estimateRes],
-    );
-    const isDappCustomizeGasSettomg = !estimateRes
-      ? false
-      : !!dappCustomizeGasSetting &&
-        (is1559Estimate ? true : !(keys(dappCustomizeGasSetting).length === 1 && has(dappCustomizeGasSetting, 'suggestedMaxPriorityFeePerGas')));
+    return {
+      gasLimit: fee.gasLimit,
+      storageLimit: fee.storageLimit,
+      nonce: fee.nonce,
+    } satisfies AdvanceSetting;
+  }, [fee]);
+  const baselineCustomFeeSetting = useMemo(() => {
+    if (!resolvedFeeSetting) {
+      return null;
+    }
 
-    const defaultCustomizeGasSetting = useMemo(() => {
-      if (!estimateRes || !estimateGasSettings) return null;
+    return omit(resolvedFeeSetting, 'level') as GasSetting;
+  }, [resolvedFeeSetting]);
+  const currentPrimaryFee = useMemo(() => (fee?.fields ? getGasSettingPrimaryFee(toGasSetting(fee.fields)) : undefined), [fee?.fields]);
 
-      const base = estimateGasSettings[defaultLevel] as GasSettingLike;
-      const primaryFee = getGasSettingPrimaryFee(dappCustomizeGasSetting) ?? getGasSettingPrimaryFee(base);
-      if (!primaryFee) return null;
+  const [selectedOptionLevel, setSelectedOptionLevel] = useState<GasSettingWithLevel['level'] | null>(null);
+  const [customFeeSetting, setCustomFeeSetting] = useState<GasSetting | null>(null);
+  const [customAdvanceSetting, setCustomAdvanceSetting] = useState<AdvanceSetting | null>(null);
+  const [showCustomizeSetting, setShowCustomizeSetting] = useState(false);
+  const [showCustomizeAdvanceSetting, setShowCustomizeAdvanceSetting] = useState(false);
 
-      return buildGasSettingWithLevel({
-        pricingKind: is1559Estimate ? 'eip1559' : 'legacy',
-        level: 'customize',
-        primaryFee,
-        priorityFee: is1559Estimate ? (dappCustomizeGasSetting?.suggestedMaxPriorityFeePerGas ?? base.suggestedMaxPriorityFeePerGas) : undefined,
-      });
-      // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [estimateRes, estimateGasSettings, is1559Estimate, dappCustomizeGasSetting]);
+  useEffect(() => {
+    if (!fee) {
+      setSelectedOptionLevel(null);
+      setCustomFeeSetting(null);
+      setCustomAdvanceSetting(null);
+      return;
+    }
 
-    const [selectedGasSetting, setSelectedGasSetting] = useState<GasSettingWithLevel | null>(null);
-    const [tempSelectedOptionLevel, setTempSelectedOptionLevel] = useState<GasSettingWithLevel['level'] | null>(null);
-    const [customizeGasSetting, setCustomizeGasSetting] = useState<GasSetting | null>(null);
-    const [showCustomizeSetting, setShowCustomizeSetting] = useState(false);
-    const [showCustomizeAdvanceSetting, setShowCustomizeAdvanceSetting] = useState(false);
-    const [customizeAdvanceSetting, setCustomizeAdvanceSetting] = useState<AdvanceSetting | null>(
-      () => (dappCustomizeAdvanceSetting as AdvanceSetting) ?? null,
-    );
+    setSelectedOptionLevel(resolvedFeeSetting?.level ?? null);
+    setCustomFeeSetting(baselineCustomFeeSetting);
+    setCustomAdvanceSetting(baselineAdvanceSetting);
+  }, [baselineAdvanceSetting, baselineCustomFeeSetting, resolvedFeeSetting?.level, fee]);
 
-    const currentGasLimit = useMemo(
-      () => customizeAdvanceSetting?.gasLimit ?? estimateAdvanceSetting?.gasLimit,
-      [customizeAdvanceSetting, estimateAdvanceSetting],
-    );
+  const effectiveCustomizeGasSetting = customFeeSetting ?? baselineCustomFeeSetting;
+  const currentGasLimit = customAdvanceSetting?.gasLimit ?? baselineAdvanceSetting?.gasLimit ?? '0x0';
+  const isSelectorLoading = !fee || !presetGasSettings || !baselineAdvanceSetting || !effectiveCustomizeGasSetting || !nativeAsset;
 
-    useEffect(() => {
-      if (!estimateRes || !estimateGasSettings || selectedGasSetting?.level === 'customize') return;
-      const level = selectedGasSetting?.level ?? defaultLevel;
-      const newGasSetting =
-        isDappCustomizeGasSettomg && selectedGasSetting === null
-          ? defaultCustomizeGasSetting!
-          : ({
-              ...estimateGasSettings[level],
-              level,
-            } as const);
-      if (!isEqual(selectedGasSetting, newGasSetting)) {
-        setSelectedGasSetting(newGasSetting);
-        onConfirm?.({
-          gasSetting: newGasSetting,
-          advanceSetting: {
-            ...estimateAdvanceSetting,
-            ...customizeAdvanceSetting,
-          } as AdvanceSetting,
-          estimateAdvanceSetting: estimateAdvanceSetting!,
-          estimateCurrentGasPrice: estimateCurrentGasPrice!,
-        });
-        if (selectedGasSetting === null) {
-          if (!isDappCustomizeGasSettomg) {
-            setTempSelectedOptionLevel(defaultLevel);
-          } else {
-            setTempSelectedOptionLevel('customize');
+  const handleConfirm = useCallback(() => {
+    if (!baselineAdvanceSetting || !selectedOptionLevel) {
+      return;
+    }
+
+    const nextAdvanceSetting = customAdvanceSetting ?? baselineAdvanceSetting;
+    if (selectedOptionLevel === 'customize' && !effectiveCustomizeGasSetting) {
+      return;
+    }
+
+    const nextFeeSelection: FeeSelection =
+      selectedOptionLevel === 'customize' && effectiveCustomizeGasSetting
+        ? {
+            kind: 'custom',
+            fee: toFeeFields(effectiveCustomizeGasSetting),
           }
-        }
-      }
-      // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [estimateRes]);
+        : {
+            kind: 'preset',
+            presetId: selectedOptionLevel as Level,
+          };
 
-    useEffect(() => {
-      if (show && selectedGasSetting) {
-        setTempSelectedOptionLevel(selectedGasSetting.level);
-      }
-      // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [show]);
+    onConfirm(nextFeeSelection, nextAdvanceSetting);
+    bottomSheetRef.current?.close();
+  }, [baselineAdvanceSetting, customAdvanceSetting, effectiveCustomizeGasSetting, onConfirm, selectedOptionLevel]);
 
-    const handleConfirm = useCallback(
-      (isReset?: true) => {
-        if ((!isReset && tempSelectedOptionLevel === null) || !estimateRes || !estimateGasSettings) return;
-        const level = isReset ? 'medium' : tempSelectedOptionLevel!;
-        const newGasSetting = {
-          ...(level === 'customize' ? (customizeGasSetting ?? defaultCustomizeGasSetting!) : estimateGasSettings?.[level]),
-          level,
-        } as const;
-        setSelectedGasSetting(newGasSetting);
-        onConfirm?.({
-          gasSetting: newGasSetting,
-          advanceSetting: {
-            ...estimateAdvanceSetting,
-            ...(isReset ? null : customizeAdvanceSetting),
-          } as AdvanceSetting,
-          estimateAdvanceSetting: estimateAdvanceSetting!,
-          estimateCurrentGasPrice: estimateCurrentGasPrice!,
-        });
-        if (isReset) {
-          setCustomizeGasSetting(estimateGasSettings[defaultLevel]);
-        }
-        bottomSheetRef.current?.close();
-      },
-      // eslint-disable-next-line react-hooks/exhaustive-deps
-      [estimateRes, customizeGasSetting, tempSelectedOptionLevel, customizeAdvanceSetting],
-    );
+  const showLongTime = useMemo(
+    () =>
+      selectedOptionLevel === 'customize' && !!effectiveCustomizeGasSetting && !!currentPrimaryFee
+        ? new Decimal(getGasSettingPrimaryFee(effectiveCustomizeGasSetting) ?? '0').lessThan(currentPrimaryFee)
+        : false,
+    [currentPrimaryFee, effectiveCustomizeGasSetting, selectedOptionLevel],
+  );
 
-    const resetCustomizeSetting = useCallback(() => {
-      setCustomizeAdvanceSetting(null);
-      handleConfirm(true);
-    }, [handleConfirm]);
+  if (!show) return null;
 
-    const showLongTime = useMemo(
-      () =>
-        tempSelectedOptionLevel === 'customize' && estimateCurrentGasPrice && customizeGasSetting
-          ? new Decimal(getGasSettingPrimaryFee(customizeGasSetting) ?? '0').lessThan(estimateCurrentGasPrice)
-          : false,
-      [tempSelectedOptionLevel, estimateCurrentGasPrice, customizeGasSetting],
-    );
-
-    useImperativeHandle(
-      ref,
-      () => ({
-        resetCustomizeSetting,
-      }),
-      [resetCustomizeSetting],
-    );
-
-    if (!show) return;
-    return (
-      <>
-        <InlineBottomSheet ref={bottomSheetRef} snapPoints={snapPoints} index={0} onClose={onClose}>
-          <BottomSheetWrapper innerPaddingHorizontal>
-            <BottomSheetHeader title={t('tx.gasFee.title')} />
-            <BottomSheetScrollContent>
-              {(!estimateRes || !nativeAsset) && <HourglassLoading style={styles.loading} />}
-              {estimateRes && estimateGasSettings && nativeAsset && (
-                <>
-                  <GasOption
-                    level="low"
-                    nativeAsset={nativeAsset}
-                    gasSetting={estimateGasSettings.low}
-                    gasLimit={currentGasLimit!}
-                    selected={tempSelectedOptionLevel === 'low'}
-                    onPress={() => setTempSelectedOptionLevel('low')}
-                  />
-                  <GasOption
-                    level="medium"
-                    nativeAsset={nativeAsset}
-                    gasSetting={estimateGasSettings.medium}
-                    gasLimit={currentGasLimit!}
-                    selected={tempSelectedOptionLevel === 'medium'}
-                    onPress={() => setTempSelectedOptionLevel('medium')}
-                  />
-                  <GasOption
-                    level="high"
-                    nativeAsset={nativeAsset}
-                    gasSetting={estimateGasSettings.high}
-                    gasLimit={currentGasLimit!}
-                    selected={tempSelectedOptionLevel === 'high'}
-                    onPress={() => setTempSelectedOptionLevel('high')}
-                  />
-                  <GasOption
-                    level="customize"
-                    showLongTime={showLongTime}
-                    nativeAsset={nativeAsset}
-                    gasSetting={customizeGasSetting ?? defaultCustomizeGasSetting!}
-                    gasLimit={currentGasLimit!}
-                    selected={tempSelectedOptionLevel === 'customize'}
-                    onPress={() => setShowCustomizeSetting(true)}
-                  />
-                  <Pressable style={styles.advanceWrapper} onPress={() => setShowCustomizeAdvanceSetting(true)}>
-                    <Text style={[styles.advance, { color: colors.textPrimary }]}>{t('tx.gasFee.advance')}</Text>
-                    <ArrowRight color={colors.iconPrimary} />
-                  </Pressable>
-                </>
-              )}
-            </BottomSheetScrollContent>
-            <BottomSheetFooter>
-              <Button testID="confirm" size="small" disabled={!tempSelectedOptionLevel} onPress={() => handleConfirm()} loading={!estimateRes}>
-                {t('common.confirm')}
-              </Button>
-            </BottomSheetFooter>
-          </BottomSheetWrapper>
-        </InlineBottomSheet>
-        {estimateRes && showCustomizeSetting && (
-          <CustomizeGasSetting
-            force155={force155}
-            customizeGasSetting={customizeGasSetting ?? defaultCustomizeGasSetting!}
-            onConfirm={(customGasSetting) => {
-              setTempSelectedOptionLevel('customize');
-              setCustomizeGasSetting(customGasSetting);
-            }}
-            onClose={() => setShowCustomizeSetting(false)}
-            estimateCurrentGasPrice={estimateCurrentGasPrice!}
-          />
-        )}
-        {estimateRes && showCustomizeAdvanceSetting && (
-          <CustomizeAdvanceSetting
-            customizeAdvanceSetting={customizeAdvanceSetting}
-            estimateNonce={estimateRes.nonce}
-            estimateGasLimit={estimateRes.gasLimit}
-            onConfirm={setCustomizeAdvanceSetting}
-            onClose={() => setShowCustomizeAdvanceSetting(false)}
-          />
-        )}
-      </>
-    );
-  },
-);
+  return (
+    <>
+      <InlineBottomSheet ref={bottomSheetRef} snapPoints={snapPoints} index={0} onClose={onClose}>
+        <BottomSheetWrapper innerPaddingHorizontal>
+          <BottomSheetHeader title={t('tx.gasFee.title')} />
+          <BottomSheetScrollContent>
+            {isSelectorLoading && <HourglassLoading style={styles.loading} />}
+            {!isSelectorLoading && presetGasSettings && nativeAsset && (
+              <>
+                <GasOption
+                  level="low"
+                  nativeAsset={nativeAsset}
+                  gasSetting={presetGasSettings.low}
+                  gasLimit={currentGasLimit}
+                  selected={selectedOptionLevel === 'low'}
+                  onPress={() => setSelectedOptionLevel('low')}
+                />
+                <GasOption
+                  level="medium"
+                  nativeAsset={nativeAsset}
+                  gasSetting={presetGasSettings.medium}
+                  gasLimit={currentGasLimit}
+                  selected={selectedOptionLevel === 'medium'}
+                  onPress={() => setSelectedOptionLevel('medium')}
+                />
+                <GasOption
+                  level="high"
+                  nativeAsset={nativeAsset}
+                  gasSetting={presetGasSettings.high}
+                  gasLimit={currentGasLimit}
+                  selected={selectedOptionLevel === 'high'}
+                  onPress={() => setSelectedOptionLevel('high')}
+                />
+                <GasOption
+                  level="customize"
+                  showLongTime={showLongTime}
+                  nativeAsset={nativeAsset}
+                  gasSetting={effectiveCustomizeGasSetting}
+                  gasLimit={currentGasLimit}
+                  selected={selectedOptionLevel === 'customize'}
+                  onPress={() => setShowCustomizeSetting(true)}
+                />
+                <Pressable style={styles.advanceWrapper} onPress={() => setShowCustomizeAdvanceSetting(true)}>
+                  <Text style={[styles.advance, { color: colors.textPrimary }]}>{t('tx.gasFee.advance')}</Text>
+                  <ArrowRight color={colors.iconPrimary} />
+                </Pressable>
+              </>
+            )}
+          </BottomSheetScrollContent>
+          <BottomSheetFooter>
+            <Button testID="confirm" size="small" disabled={!selectedOptionLevel || isSelectorLoading} onPress={() => handleConfirm()}>
+              {t('common.confirm')}
+            </Button>
+          </BottomSheetFooter>
+        </BottomSheetWrapper>
+      </InlineBottomSheet>
+      {!!(showCustomizeSetting && effectiveCustomizeGasSetting && currentPrimaryFee) && (
+        <CustomizeGasSetting
+          force155={force155}
+          customizeGasSetting={effectiveCustomizeGasSetting}
+          onConfirm={(nextCustomizeGasSetting) => {
+            setSelectedOptionLevel('customize');
+            setCustomFeeSetting(nextCustomizeGasSetting);
+          }}
+          onClose={() => setShowCustomizeSetting(false)}
+          estimateCurrentGasPrice={currentPrimaryFee}
+        />
+      )}
+      {!!(showCustomizeAdvanceSetting && baselineAdvanceSetting) && (
+        <CustomizeAdvanceSetting
+          customizeAdvanceSetting={customAdvanceSetting}
+          estimateNonce={baselineAdvanceSetting.nonce}
+          estimateGasLimit={baselineAdvanceSetting.gasLimit}
+          onConfirm={setCustomAdvanceSetting}
+          onClose={() => setShowCustomizeAdvanceSetting(false)}
+        />
+      )}
+    </>
+  );
+};
 
 export const OptionLevel: React.FC<{
   level: GasSettingWithLevel['level'] | SpeedUpLevel;

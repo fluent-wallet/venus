@@ -1,4 +1,15 @@
-import type { GasPricingEstimate, SendERC20Input, SendTransactionInput, SpeedUpTxContext, SpeedUpTxInput } from '@core/services';
+import type {
+  GasPricingEstimate,
+  PrecheckTransferInput,
+  PrecheckTransferResult,
+  PreparedTransfer,
+  ReviewTransferInput,
+  ReviewTransferResult,
+  SendERC20Input,
+  SendTransactionInput,
+  SpeedUpTxContext,
+  SpeedUpTxInput,
+} from '@core/services';
 import { type UseQueryResult, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useCallback } from 'react';
 import { useCurrentAddress } from './account';
@@ -10,6 +21,8 @@ export type ActivityTransactionsQuery = UseQueryResult<IActivityTransaction[]>;
 export type RecentlyAddressesQuery = UseQueryResult<RecentlyAddress[]>;
 export type SpeedUpContextQuery = UseQueryResult<SpeedUpTxContext | null>;
 export type TransactionDetailQuery = UseQueryResult<ITransactionDetail | null>;
+export type TransferPrecheckQuery = UseQueryResult<PrecheckTransferResult | null>;
+export type TransferReviewQuery = UseQueryResult<ReviewTransferResult | null>;
 
 export type Level = 'low' | 'medium' | 'high';
 export type TransactionGasLevel =
@@ -34,6 +47,10 @@ export const getActivityTransactionsByAddressKey = (addressId: string, status: s
 export const getTransactionDetailKey = (txId: string) => ['tx', 'detail', txId] as const;
 export const getRecentlyAddressesKey = (addressId: string) => ['tx', 'recently', addressId] as const;
 export const getSpeedUpContextKey = (txId: string) => ['tx', 'speedUpContext', txId] as const;
+export const getTransferPrecheckKey = (input: PrecheckTransferInput | null) =>
+  ['tx', 'transfer', 'precheck', input?.addressId || 'none', input?.intent ?? null] as const;
+export const getTransferReviewKey = (input: ReviewTransferInput | null) =>
+  ['tx', 'transfer', 'review', input?.addressId || 'none', input?.intent ?? null, input?.override ?? null] as const;
 export const getGasEstimateKey = (params: {
   addressId: string;
   withNonce: boolean;
@@ -144,6 +161,42 @@ export function useSpeedUpTxContext(txId: string): SpeedUpContextQuery {
     queryFn: () => (txId ? service.getSpeedUpTxContext(txId) : null),
     enabled: !!txId,
   });
+}
+
+export function useTransferPrecheck(input: PrecheckTransferInput | null, options: { enabled?: boolean } = {}): TransferPrecheckQuery {
+  const service = getTransactionService();
+  const enabled = (options.enabled ?? true) && !!input?.addressId;
+
+  return useQuery({
+    queryKey: getTransferPrecheckKey(input),
+    queryFn: () => (input ? service.precheckTransfer(input) : null),
+    enabled,
+  });
+}
+
+export function useTransferReview(input: ReviewTransferInput | null, options: { enabled?: boolean } = {}): TransferReviewQuery {
+  const service = getTransactionService();
+  const enabled = (options.enabled ?? true) && !!input?.addressId;
+
+  return useQuery({
+    queryKey: getTransferReviewKey(input),
+    queryFn: () => (input ? service.reviewTransfer(input) : null),
+    enabled,
+  });
+}
+
+export function useExecuteTransfer() {
+  const service = getTransactionService();
+  const queryClient = useQueryClient();
+
+  return useCallback(
+    async (prepared: PreparedTransfer, options: { signal?: AbortSignal } = {}) => {
+      const tx = await service.executeTransfer(prepared, options);
+      await Promise.all([queryClient.invalidateQueries({ queryKey: getTransactionRootKey() }), queryClient.invalidateQueries({ queryKey: getAssetRootKey() })]);
+      return tx;
+    },
+    [service, queryClient],
+  );
 }
 
 export function useSpeedUpTx() {

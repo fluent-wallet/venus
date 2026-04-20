@@ -58,8 +58,16 @@ function applySelectedAssetToDraft(params: { draft: TransferDraft; asset: AssetI
   return {
     ...draft,
     asset: toTransferAssetFromSelection({ asset, nftItemDetail }),
-    amountInput: asset.type === ASSET_TYPE.ERC721 ? '1' : '',
-    amountMode: 'exact',
+    amountIntent:
+      asset.type === ASSET_TYPE.ERC721
+        ? {
+            kind: 'exact',
+            amount: '1',
+          }
+        : {
+            kind: 'exact',
+            amount: '',
+          },
   };
 }
 

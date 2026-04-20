@@ -69,7 +69,6 @@ const ReceiveSetAsset: React.FC<Props> = ({ onConfirm, selectedAsset, amount, on
   const bottomSheetRef = useRef<BottomSheetMethods | null>(null);
 
   const { data: currentAddress } = useCurrentAddress();
-  const currentAddressValue = currentAddress?.value ?? '';
   const currentAddressId = currentAddress?.id ?? '';
   const { data: currentNetwork } = useCurrentNetwork();
   const currentNetworkId = currentNetwork?.id ?? '';
@@ -135,13 +134,7 @@ const ReceiveSetAsset: React.FC<Props> = ({ onConfirm, selectedAsset, amount, on
             {tempSelectAsset && (
               <>
                 <Text style={[styles.text, styles.amount, { color: colors.textSecondary }]}>{t('common.amount')}</Text>
-                <SetAssetAmount
-                  targetAddress={currentAddressValue}
-                  asset={toAmountAssetInput(tempSelectAsset)}
-                  isReceive
-                  defaultAmount={amount}
-                  onAmountInfoChange={setAmountInfo}
-                />
+                <SetAssetAmount asset={toAmountAssetInput(tempSelectAsset)} isReceive defaultAmount={amount} onAmountInfoChange={setAmountInfo} />
               </>
             )}
           </BottomSheetScrollContent>

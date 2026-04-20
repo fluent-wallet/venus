@@ -82,8 +82,10 @@ describe('paymentUriRouting', () => {
           priceInUSDT: '1',
           nft: null,
         },
-        amountInput: '0.5',
-        amountMode: 'exact',
+        amountIntent: {
+          kind: 'exact',
+          amount: '0.5',
+        },
       },
     });
     expect(navigation.dispatch).toHaveBeenCalledWith({
@@ -105,8 +107,10 @@ describe('paymentUriRouting', () => {
               priceInUSDT: '1',
               nft: null,
             },
-            amountInput: '0.5',
-            amountMode: 'exact',
+            amountIntent: {
+              kind: 'exact',
+              amount: '0.5',
+            },
           },
         },
       },

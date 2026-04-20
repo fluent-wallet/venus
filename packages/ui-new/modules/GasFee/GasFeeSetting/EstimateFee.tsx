@@ -18,12 +18,23 @@ const EstimateFee: React.FC<{
   advanceSetting?: AdvanceSetting;
   onPressSettingIcon: () => void;
   onGasCostChange?: (gasCost: string) => void;
-}> = ({ gasSetting, advanceSetting, onPressSettingIcon, onGasCostChange }) => {
+  feeAmountOverride?: string | null;
+}> = ({ gasSetting, advanceSetting, onPressSettingIcon, onGasCostChange, feeAmountOverride }) => {
   const { colors } = useTheme();
   const { data: assets } = useAssetsOfCurrentAddress();
   const currentNativeAsset = useMemo(() => assets?.find((a) => a.type === ASSET_TYPE.Native) ?? null, [assets]);
 
   const gasCostAndPriceInUSDT = useMemo(() => {
+    if (feeAmountOverride != null) {
+      const cost = new Decimal(feeAmountOverride);
+      const priceInUSDT = currentNativeAsset?.priceInUSDT ? cost.mul(new Decimal(currentNativeAsset.priceInUSDT)) : null;
+
+      return {
+        cost: cost.toString(),
+        priceInUSDT: priceInUSDT ? (priceInUSDT.lessThan(0.01) ? '<$0.01' : `≈$${priceInUSDT.toFixed(2)}`) : null,
+      };
+    }
+
     if (!gasSetting || !advanceSetting) return null;
     const cost = new Decimal(getGasSettingPrimaryFee(gasSetting) ?? '0').mul(advanceSetting.gasLimit).div(Decimal.pow(10, currentNativeAsset?.decimals ?? 18));
     const priceInUSDT = currentNativeAsset?.priceInUSDT ? cost.mul(new Decimal(currentNativeAsset.priceInUSDT)) : null;
@@ -32,7 +43,7 @@ const EstimateFee: React.FC<{
       cost: cost.toString(),
       priceInUSDT: priceInUSDT ? (priceInUSDT.lessThan(0.01) ? '<$0.01' : `≈$${priceInUSDT.toFixed(2)}`) : null,
     };
-  }, [gasSetting, advanceSetting, currentNativeAsset?.priceInUSDT, currentNativeAsset?.decimals]);
+  }, [advanceSetting, currentNativeAsset?.decimals, currentNativeAsset?.priceInUSDT, feeAmountOverride, gasSetting]);
 
   useEffect(() => {
     if (!onGasCostChange || !gasCostAndPriceInUSDT?.cost) return;

@@ -119,8 +119,10 @@ const navigateNativeTransfer = (params: { paymentUri: PaymentUriPayload; navigat
         kind: 'review',
         recipient: paymentUri.address,
         asset: sendAsset,
-        amountInput,
-        amountMode: 'exact',
+        amountIntent: {
+          kind: 'exact',
+          amount: amountInput,
+        },
       },
     });
   }
@@ -212,8 +214,10 @@ const navigateTokenTransfer = (params: {
         kind: 'review',
         recipient: paymentUri.address,
         asset: sendAsset,
-        amountInput,
-        amountMode: 'exact',
+        amountIntent: {
+          kind: 'exact',
+          amount: amountInput,
+        },
       },
     });
   }

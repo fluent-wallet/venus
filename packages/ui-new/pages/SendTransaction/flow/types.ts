@@ -1,3 +1,4 @@
+import type { TransferAmountIntent } from '@core/services/transaction';
 import type { ASSET_TYPE } from '@core/types';
 
 type TransferAssetBase = {
@@ -53,22 +54,19 @@ export type SendEntry =
       kind: 'review';
       recipient: string;
       asset: TransferFungibleAsset;
-      amountInput: string;
-      amountMode: 'exact' | 'max';
+      amountIntent: TransferAmountIntent;
     }
   | {
       kind: 'review';
       recipient: string;
       asset: TransferErc1155Asset;
-      amountInput: string;
-      amountMode: 'exact';
+      amountIntent: { kind: 'exact'; amount: string };
     };
 
 export type TransferDraft = {
   recipient: string;
   asset: TransferAsset | null;
-  amountInput: string;
-  amountMode: 'exact' | 'max';
+  amountIntent: TransferAmountIntent;
 };
 
 export type SendFlowStep = 'recipient' | 'asset' | 'amount' | 'review';
@@ -82,6 +80,8 @@ export type InitialSendFlowState = {
 export const EMPTY_TRANSFER_DRAFT: TransferDraft = {
   recipient: '',
   asset: null,
-  amountInput: '',
-  amountMode: 'exact',
+  amountIntent: {
+    kind: 'exact',
+    amount: '',
+  },
 };

@@ -1,20 +1,34 @@
 import { BottomSheetFooter, BottomSheetScrollContent } from '@components/BottomSheet';
 import Button from '@components/Button';
 import Text from '@components/Text';
+import { ASSET_TYPE } from '@core/types';
 import { AccountItemView } from '@modules/AccountsList';
 import NFTIcon from '@modules/AssetsList/NFTsList/NFTIcon';
 import { getDetailSymbol } from '@modules/AssetsList/NFTsList/NFTItemsGrid';
 import { useTheme } from '@react-navigation/native';
 import { type SendTransactionScreenProps, type SendTransactionStep3StackName, SendTransactionStep4StackName } from '@router/configs';
+import { useCurrentAddress } from '@service/account';
+import { useAssetsOfCurrentAddress } from '@service/asset';
 import type { INftItem } from '@service/core';
-import Decimal from 'decimal.js';
+import { useCurrentNetwork } from '@service/network';
+import { useTransferPrecheck } from '@service/transaction';
 import type React from 'react';
-import { useRef, useState } from 'react';
+import { useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Keyboard, StyleSheet, View } from 'react-native';
-import { type TransferAsset, toLegacyAssetInfo, toLegacyNftItem, useSendFlow } from '../flow';
+import { showMessage } from 'react-native-flash-message';
+import {
+  buildTransferIntent,
+  canUseMaxAmount,
+  getTransferAmountInputValue,
+  type TransferAsset,
+  toLegacyAssetInfo,
+  toLegacyNftItem,
+  useSendFlow,
+} from '../flow';
 import SendTransactionBottomSheet from '../SendTransactionBottomSheet';
-import SetAssetAmount, { type AmountAsset, type AmountInfo, type SetAssetAmountMethods } from './SetAssetAmount';
+import { getTransferPrecheckQueryErrorTranslationKey } from './amountInputHelpers';
+import SetAssetAmount, { type AmountAsset } from './SetAssetAmount';
 
 function toAmountAsset(asset: TransferAsset): AmountAsset {
   return {
@@ -33,10 +47,162 @@ const SendTransactionStep3Amount: React.FC<SendTransactionScreenProps<typeof Sen
   const { colors } = useTheme();
   const { t } = useTranslation();
   const { draft, setDraft } = useSendFlow();
-  const setAssetAmountMethodsRef = useRef<SetAssetAmountMethods>(null);
-  const [amountInfo, setAmountInfo] = useState<null | AmountInfo>(null);
+  const { data: currentAddress } = useCurrentAddress();
+  const { data: currentNetwork } = useCurrentNetwork();
+  const { data: assets } = useAssetsOfCurrentAddress();
   const asset = draft.asset as TransferAsset;
   const nftItemDetail = toLegacyNftItem(asset);
+  const nativeAsset = useMemo(() => assets?.find((item) => item.type === ASSET_TYPE.Native) ?? null, [assets]);
+  const transferIntent = useMemo(() => {
+    if (!currentNetwork) {
+      return null;
+    }
+
+    return buildTransferIntent({
+      recipient: draft.recipient,
+      asset,
+      amountIntent: draft.amountIntent,
+      networkType: currentNetwork.networkType,
+    });
+  }, [asset, currentNetwork, draft.amountIntent, draft.recipient]);
+  const maxTransferIntent = useMemo(() => {
+    if (!currentNetwork || !canUseMaxAmount(asset)) {
+      return null;
+    }
+
+    return buildTransferIntent({
+      recipient: draft.recipient,
+      asset,
+      amountIntent: { kind: 'max' },
+      networkType: currentNetwork.networkType,
+    });
+  }, [asset, currentNetwork, draft.recipient]);
+  const canRunPrecheck =
+    Boolean(currentAddress?.id && transferIntent && draft.recipient.trim()) &&
+    (draft.amountIntent.kind === 'max' || draft.amountIntent.amount.trim().length > 0);
+  const currentPrecheckInput = canRunPrecheck && currentAddress?.id && transferIntent ? { addressId: currentAddress.id, intent: transferIntent } : null;
+  const currentPrecheck = useTransferPrecheck(currentPrecheckInput);
+  const maxPrecheck = useTransferPrecheck(
+    currentAddress?.id && maxTransferIntent && draft.recipient.trim()
+      ? {
+          addressId: currentAddress.id,
+          intent: maxTransferIntent,
+        }
+      : null,
+  );
+  const defaultAmount = useMemo(
+    () =>
+      getTransferAmountInputValue({
+        amountIntent: draft.amountIntent,
+        resolvedMaxAmount: maxPrecheck.data?.maxAmount ?? null,
+      }),
+    [draft.amountIntent, maxPrecheck.data?.maxAmount],
+  );
+  const precheckErrorMessage = useMemo(() => {
+    if (currentPrecheck.error) {
+      return t(getTransferPrecheckQueryErrorTranslationKey(currentPrecheck.error));
+    }
+
+    const precheckError = currentPrecheck.data?.error;
+    if (!precheckError) {
+      return null;
+    }
+
+    if (precheckError.code === 'insufficient_asset_balance') {
+      return t('tx.amount.error.InsufficientBalance', { symbol: asset.symbol });
+    }
+
+    if (precheckError.code === 'insufficient_native_for_fee') {
+      return asset.type === ASSET_TYPE.Native
+        ? t('tx.confirm.error.InsufficientBalance', { symbol: nativeAsset?.symbol ?? asset.symbol })
+        : t('tx.confirm.error.InsufficientBalanceForGas', { symbol: nativeAsset?.symbol ?? 'CFX' });
+    }
+
+    if (precheckError.code === 'invalid_amount') {
+      return t('tx.amount.error.invalidAmount');
+    }
+
+    return precheckError.message;
+  }, [asset.symbol, asset.type, currentPrecheck.data?.error, currentPrecheck.error, nativeAsset?.symbol, t]);
+  const handleRequestMax = useCallback(async () => {
+    if (!currentAddress?.id || !maxTransferIntent) {
+      return null;
+    }
+
+    const cachedMaxAmount = maxPrecheck.data?.maxAmount ?? null;
+    if (cachedMaxAmount !== null) {
+      setDraft((prev) =>
+        prev.amountIntent.kind === 'max'
+          ? prev
+          : {
+              ...prev,
+              amountIntent: {
+                kind: 'max',
+              },
+            },
+      );
+      return cachedMaxAmount;
+    }
+
+    const maxPrecheckResult = await maxPrecheck.refetch();
+    const maxAmount = maxPrecheckResult.data?.maxAmount ?? null;
+    if (maxAmount == null) {
+      showMessage({
+        type: 'warning',
+        message: t(maxPrecheckResult.error ? getTransferPrecheckQueryErrorTranslationKey(maxPrecheckResult.error) : 'tx.amount.error.estimate'),
+      });
+      return null;
+    }
+
+    setDraft((prev) =>
+      prev.amountIntent.kind === 'max'
+        ? prev
+        : {
+            ...prev,
+            amountIntent: {
+              kind: 'max',
+            },
+          },
+    );
+    return maxAmount;
+  }, [currentAddress?.id, maxPrecheck, maxTransferIntent, setDraft, t]);
+  const handleAmountInfoChange = useCallback(
+    (info: { inMaxMode: boolean; amount: string }) => {
+      setDraft((prev) => {
+        const nextAmountIntent = info.inMaxMode
+          ? {
+              kind: 'max' as const,
+            }
+          : {
+              kind: 'exact' as const,
+              amount: info.amount,
+            };
+
+        if (prev.amountIntent.kind === nextAmountIntent.kind && (prev.amountIntent.kind === 'max' || prev.amountIntent.amount === info.amount)) {
+          return prev;
+        }
+
+        return {
+          ...prev,
+          amountIntent: nextAmountIntent,
+        };
+      });
+    },
+    [setDraft],
+  );
+  const isAmountValid = useMemo(() => {
+    if (!canRunPrecheck) {
+      return null;
+    }
+
+    if (currentPrecheck.error) {
+      return false;
+    }
+
+    return currentPrecheck.data?.canContinue ?? null;
+  }, [canRunPrecheck, currentPrecheck.data?.canContinue, currentPrecheck.error]);
+  const canContinue = isAmountValid === true;
+  const isCurrentPrecheckLoading = canRunPrecheck && currentPrecheck.isFetching;
 
   return (
     <SendTransactionBottomSheet title={t('tx.send.title')} isRoute snapPoints={['75%']} useBottomSheetView={false}>
@@ -52,45 +218,33 @@ const SendTransactionStep3Amount: React.FC<SendTransactionScreenProps<typeof Sen
         <AccountItemView nickname={''} addressValue={draft.recipient} colors={colors} innerPaddingHorizontal={false} />
 
         <SetAssetAmount
-          ref={setAssetAmountMethodsRef}
-          targetAddress={draft.recipient}
           asset={toAmountAsset(asset)}
           nftItemDetail={nftItemDetail}
-          defaultAmount={draft.amountInput}
-          onAmountInfoChange={(info) => {
-            setAmountInfo(info);
-            setDraft((prev) => ({
-              ...prev,
-              amountInput: info.amount,
-              amountMode: info.inMaxMode ? 'max' : 'exact',
-            }));
-          }}
+          defaultAmount={defaultAmount}
+          defaultInMaxMode={draft.amountIntent.kind === 'max'}
+          resolvedMaxAmount={maxPrecheck.data?.maxAmount ?? null}
+          isAmountValidOverride={isAmountValid}
+          errorMessageOverride={canRunPrecheck ? precheckErrorMessage : null}
+          onRequestMax={canUseMaxAmount(asset) ? handleRequestMax : undefined}
+          maxLoading={maxPrecheck.isFetching}
+          onAmountInfoChange={handleAmountInfoChange}
         />
       </BottomSheetScrollContent>
 
       <BottomSheetFooter innerPaddingHorizontal>
         <Button
           testID="next"
-          disabled={!amountInfo || (amountInfo.validMax !== null && amountInfo.isAmountValid !== true)}
-          onPress={
-            !amountInfo || amountInfo.validMax === null
-              ? () => setAssetAmountMethodsRef.current?.handleEstimateMax?.()
-              : () => {
-                  if (Keyboard.isVisible()) {
-                    Keyboard.dismiss();
-                  }
-                  setDraft((prev) => ({
-                    ...prev,
-                    amountInput: amountInfo.inMaxMode ? new Decimal(asset.balanceBaseUnits).div(Decimal.pow(10, asset.decimals)).toString() : amountInfo.amount,
-                    amountMode: amountInfo.inMaxMode ? 'max' : 'exact',
-                  }));
-                  navigation.navigate(SendTransactionStep4StackName);
-                }
-          }
+          disabled={!canContinue}
+          onPress={() => {
+            if (Keyboard.isVisible()) {
+              Keyboard.dismiss();
+            }
+            navigation.navigate(SendTransactionStep4StackName);
+          }}
           size="small"
-          loading={amountInfo?.inEstimate}
+          loading={isCurrentPrecheckLoading}
         >
-          {!amountInfo || amountInfo.validMax === null ? t('tx.amount.estimateMax') : t('common.next')}
+          {t('common.next')}
         </Button>
       </BottomSheetFooter>
     </SendTransactionBottomSheet>

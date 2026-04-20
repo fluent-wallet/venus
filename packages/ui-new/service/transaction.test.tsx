@@ -10,6 +10,9 @@ import {
   getRecentlyAddressesKey,
   getTransactionRootKey,
   getTransactionsByAddressKey,
+  getTransferPrecheckKey,
+  getTransferReviewKey,
+  useExecuteTransfer,
   useFinishedTxsOfAddress,
   useRecentlyAddressesOfAddress,
   useRecentlyAddressesOfCurrentAddress,
@@ -17,6 +20,8 @@ import {
   useSendNative,
   useTransactionsOfAddress,
   useTransactionsOfCurrentAddress,
+  useTransferPrecheck,
+  useTransferReview,
   useUnfinishedTxsOfAddress,
 } from './transaction';
 
@@ -30,6 +35,9 @@ jest.mock('./account', () => ({
 type TransactionServiceMock = {
   listTransactions: jest.Mock;
   getRecentlyAddresses: jest.Mock;
+  precheckTransfer: jest.Mock;
+  reviewTransfer: jest.Mock;
+  executeTransfer: jest.Mock;
   sendNative: jest.Mock;
   sendERC20: jest.Mock;
 };
@@ -45,6 +53,11 @@ describe('transaction service hooks', () => {
     service = {
       listTransactions: jest.fn().mockResolvedValue([mockTransaction]),
       getRecentlyAddresses: jest.fn().mockResolvedValue([mockRecentlyAddress]),
+      precheckTransfer: jest.fn().mockResolvedValue({ maxAmount: '2', error: null, canContinue: true }),
+      reviewTransfer: jest
+        .fn()
+        .mockResolvedValue({ summary: null, executionTarget: null, fee: null, sponsor: null, presetOptions: [], error: null, canSubmit: true, prepared: null }),
+      executeTransfer: jest.fn().mockResolvedValue(mockTransaction),
       sendNative: jest.fn().mockResolvedValue(mockTransaction),
       sendERC20: jest.fn().mockResolvedValue(mockTransaction),
     };
@@ -96,6 +109,53 @@ describe('transaction service hooks', () => {
     expect(service.getRecentlyAddresses).not.toHaveBeenCalled();
   });
 
+  it('useTransferPrecheck caches staged precheck data', async () => {
+    const input = {
+      addressId: 'addr_1',
+      intent: {
+        recipient: '0xbbb',
+        asset: { kind: 'native', standard: 'native', decimals: 18 },
+        amount: { kind: 'exact', amount: '1' },
+      },
+    } as const;
+    const { result } = renderHook(() => useTransferPrecheck(input), { wrapper });
+
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+    expect(service.precheckTransfer).toHaveBeenCalledWith(input);
+    expect(queryClient.getQueryData(getTransferPrecheckKey(input))).toEqual({ maxAmount: '2', error: null, canContinue: true });
+  });
+
+  it('useTransferReview caches staged review data', async () => {
+    const input = {
+      addressId: 'addr_1',
+      intent: {
+        recipient: '0xbbb',
+        asset: { kind: 'native', standard: 'native', decimals: 18 },
+        amount: { kind: 'exact', amount: '1' },
+      },
+      override: {
+        feeSelection: {
+          kind: 'preset',
+          presetId: 'high',
+        },
+      },
+    } as const;
+    const { result } = renderHook(() => useTransferReview(input), { wrapper });
+
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+    expect(service.reviewTransfer).toHaveBeenCalledWith(input);
+    expect(queryClient.getQueryData(getTransferReviewKey(input))).toEqual({
+      summary: null,
+      executionTarget: null,
+      fee: null,
+      sponsor: null,
+      presetOptions: [],
+      error: null,
+      canSubmit: true,
+      prepared: null,
+    });
+  });
+
   it('useSendNative invalidates transaction and asset caches', async () => {
     const invalidateSpy = jest.spyOn(queryClient, 'invalidateQueries');
     const { result } = renderHook(() => useSendNative(), { wrapper });
@@ -117,6 +177,37 @@ describe('transaction service hooks', () => {
     });
 
     expect(service.sendERC20).toHaveBeenCalled();
+    expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: getTransactionRootKey() });
+  });
+
+  it('useExecuteTransfer invalidates transaction and asset caches after staged execution', async () => {
+    const invalidateSpy = jest.spyOn(queryClient, 'invalidateQueries');
+    const { result } = renderHook(() => useExecuteTransfer(), { wrapper });
+    const prepared = {
+      preparedKind: 'transfer',
+      addressId: 'addr_1',
+      networkType: 'ethereum',
+      executionTarget: { kind: 'user', address: '0xbbb' },
+      asset: { kind: 'native', standard: 'native', decimals: 18 },
+      fee: {
+        fields: { gasPrice: '0x1' },
+        gasLimit: '0x5208',
+        nonce: 1,
+      },
+      executionRequest: {
+        from: '0xaaa',
+        to: '0xbbb',
+        value: '0x1',
+        data: '0x',
+        chainId: '1',
+      },
+    } as const;
+
+    await act(async () => {
+      await result.current(prepared);
+    });
+
+    expect(service.executeTransfer).toHaveBeenCalledWith(prepared, {});
     expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: getTransactionRootKey() });
   });
 });
