@@ -4,7 +4,7 @@ import Button from '@components/Button';
 import Text from '@components/Text';
 import { AUTH_PASSWORD_REQUEST_CANCELED } from '@core/errors';
 import { BSIM_ERROR_CANCEL } from '@core/hardware/bsim/constants';
-import type { FeeFields, FeeSelection, ReviewFee, TransactionQuotePresetOption } from '@core/services/transaction';
+import type { FeeFields, FeeSelection, ReviewDappTransactionInput } from '@core/services/transaction';
 import { type EvmRpcTransactionRequest, parseEvmRpcTransactionRequest } from '@core/services/transaction';
 import { ASSET_TYPE, type AssetTypeValue, type Hex } from '@core/types';
 import { isApproveMethod, type ParseTxDataReturnType } from '@core/utils/txData';
@@ -15,7 +15,7 @@ import { AccountItemView } from '@modules/AccountsList';
 import GasFeeSetting, { type AdvanceSetting } from '@modules/GasFee/GasFeeSetting';
 import DappParamsWarning from '@modules/GasFee/GasFeeSetting/DappParamsWarning';
 import EstimateFee from '@modules/GasFee/GasFeeSetting/EstimateFee';
-import { getGasSettingPrimaryFee, isEip1559GasSetting, resolveGasSettingWithLevel } from '@modules/GasFee/GasFeeSetting/gasSetting';
+import { getGasSettingPrimaryFee, resolveGasSettingWithLevel } from '@modules/GasFee/GasFeeSetting/gasSetting';
 import HardwareSignVerify from '@pages/SendTransaction/HardwareSignVerify';
 import { styles as transactionConfirmStyle } from '@pages/SendTransaction/Step4Confirm/index';
 import SendAsset from '@pages/SendTransaction/Step4Confirm/SendAsset';
@@ -26,11 +26,10 @@ import { useCurrentAccount, useCurrentAddress } from '@service/account';
 import { useAssetsOfCurrentAddress } from '@service/asset';
 import { getAssetService, getExternalRequestsService, getTransactionService } from '@service/core';
 import { useCurrentNetwork } from '@service/network';
-import { type ITransactionGasEstimate, type Level, usePollingGasEstimateAndNonce } from '@service/transaction';
+import { useDappTransactionReview, useExecuteDappTransaction } from '@service/transaction';
 import { handleBSIMHardwareUnavailable } from '@utils/handleBSIMHardwareUnavailable';
 import matchRPCErrorMessage from '@utils/matchRPCErrorMssage';
 import Decimal from 'decimal.js';
-import { isNil } from 'lodash-es';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, View } from 'react-native';
@@ -44,14 +43,6 @@ export type TxDataWithTokenInfo = ParseTxDataReturnType & {
   assetType?: AssetTypeValue;
 };
 
-const quoteLevels: readonly Level[] = ['low', 'medium', 'high'];
-
-const toHexQuantity = (value: number): `0x${string}` => `0x${Math.max(0, Math.trunc(value)).toString(16)}`;
-const isEip1559TransactionGasLevel = (
-  level: ITransactionGasEstimate['levels'][Level],
-): level is Extract<ITransactionGasEstimate['levels'][Level], { suggestedMaxFeePerGas: string; suggestedMaxPriorityFeePerGas: string }> => {
-  return 'suggestedMaxFeePerGas' in level;
-};
 const isBsimHardwareError = (error: unknown): error is { code: string; message: string } => {
   return Boolean(
     error && typeof error === 'object' && (error as { name?: unknown }).name === 'BSIMHardwareError' && typeof (error as { code?: unknown }).code === 'string',
@@ -69,37 +60,7 @@ const isUserCanceledError = (error: unknown): boolean => {
   return false;
 };
 
-const buildPresetOptionsFromEstimate = (estimate: ITransactionGasEstimate | null): readonly TransactionQuotePresetOption[] => {
-  if (!estimate) {
-    return [];
-  }
-
-  return quoteLevels.map((presetId) => {
-    const level = estimate.levels[presetId];
-
-    if ('suggestedGasPrice' in level) {
-      return {
-        presetId,
-        fee: {
-          gasPrice: level.suggestedGasPrice,
-        },
-        gasCost: level.gasCost as Hex,
-      };
-    }
-
-    return {
-      presetId,
-      fee: {
-        maxFeePerGas: level.suggestedMaxFeePerGas,
-        maxPriorityFeePerGas: level.suggestedMaxPriorityFeePerGas,
-      },
-      gasCost: level.gasCost as Hex,
-    };
-  });
-};
-
-const buildRequestedFeeFields = (params: { request: EvmRpcTransactionRequest | null; estimate: ITransactionGasEstimate | null }): FeeFields | null => {
-  const { request, estimate } = params;
+const buildRequestedFeeFields = (request: EvmRpcTransactionRequest | null): FeeFields | null => {
   if (!request) {
     return null;
   }
@@ -107,11 +68,8 @@ const buildRequestedFeeFields = (params: { request: EvmRpcTransactionRequest | n
   const requestType = request.type != null ? Number(request.type) : undefined;
 
   const build1559FeeFields = (): FeeFields | null => {
-    const estimatedMediumLevel = estimate?.pricingKind === 'eip1559' && isEip1559TransactionGasLevel(estimate.levels.medium) ? estimate.levels.medium : null;
-    const estimatedMaxFeePerGas = estimatedMediumLevel ? estimatedMediumLevel.suggestedMaxFeePerGas : undefined;
-    const estimatedMaxPriorityFeePerGas = estimatedMediumLevel ? estimatedMediumLevel.suggestedMaxPriorityFeePerGas : undefined;
-    const maxFeePerGas = request.maxFeePerGas ?? estimatedMaxFeePerGas;
-    const maxPriorityFeePerGas = request.maxPriorityFeePerGas ?? estimatedMaxPriorityFeePerGas;
+    const maxFeePerGas = request.maxFeePerGas;
+    const maxPriorityFeePerGas = request.maxPriorityFeePerGas;
 
     if (typeof maxFeePerGas !== 'string' || typeof maxPriorityFeePerGas !== 'string') {
       return null;
@@ -144,14 +102,6 @@ const buildRequestedFeeFields = (params: { request: EvmRpcTransactionRequest | n
   return null;
 };
 
-const pickFeeFields = (selection: FeeSelection, presetOptions: readonly TransactionQuotePresetOption[]): FeeFields | null => {
-  if (selection.kind === 'custom') {
-    return selection.fee;
-  }
-
-  return presetOptions.find((option) => option.presetId === selection.presetId)?.fee ?? null;
-};
-
 function WalletConnectTransaction() {
   const { t } = useTranslation();
   const { colors } = useTheme();
@@ -173,6 +123,7 @@ function WalletConnectTransaction() {
   const params = route.params as WalletConnectParamList[typeof WalletConnectTransactionStackName];
 
   const { requestId, request, isContract } = params;
+  const executeDappTransaction = useExecuteDappTransaction();
 
   const metadata = request?.metadata ?? { url: '', name: '', icons: [] };
 
@@ -205,55 +156,40 @@ function WalletConnectTransaction() {
     return data;
   }, [allowanceValue, data, parseData]);
 
-  const txHalf = useMemo(
-    () => ({
-      to,
-      value: value ?? '0x0',
-      data: txData || '0x',
-      from: currentAccount?.address,
-      chainId: currentNetwork?.chainId,
-    }),
-    [currentAccount?.address, currentNetwork?.chainId, to, txData, value],
-  );
-  const estimateQuote = usePollingGasEstimateAndNonce(txHalf, true, currentAddress?.id);
-  const presetOptions = useMemo(() => buildPresetOptionsFromEstimate(estimateQuote), [estimateQuote]);
-  const requestedFeeFields = useMemo(() => buildRequestedFeeFields({ request: rpcTx, estimate: estimateQuote }), [estimateQuote, rpcTx]);
-  const baselineAdvanceSetting = useMemo(() => {
-    if (!estimateQuote) {
-      return null;
-    }
-
-    return {
-      gasLimit: estimateQuote.gasLimit,
-      nonce: estimateQuote.nonce,
-    } satisfies AdvanceSetting;
-  }, [estimateQuote]);
+  const requestedFeeFields = useMemo(() => buildRequestedFeeFields(rpcTx), [rpcTx]);
   const requestedAdvanceSetting = useMemo(() => {
-    if (!baselineAdvanceSetting) {
+    if (!rpcTx) {
       return null;
     }
 
-    return {
-      gasLimit: gas ?? baselineAdvanceSetting.gasLimit,
-      nonce: nonce != null ? Number(nonce) : baselineAdvanceSetting.nonce,
-    } satisfies AdvanceSetting;
-  }, [baselineAdvanceSetting, gas, nonce]);
+    const nextAdvanceSetting: AdvanceSetting = {
+      gasLimit: gas ?? '',
+      nonce: nonce != null ? Number(nonce) : Number.NaN,
+    };
+
+    if ('storageLimit' in rpcTx && typeof rpcTx.storageLimit === 'string') {
+      nextAdvanceSetting.storageLimit = rpcTx.storageLimit;
+    }
+
+    return nextAdvanceSetting;
+  }, [gas, nonce, rpcTx]);
   const [selectedFeeSelection, setSelectedFeeSelection] = useState<FeeSelection | null>(null);
   const [selectedAdvanceSetting, setSelectedAdvanceSetting] = useState<AdvanceSetting | null>(null);
+  const [selectionSourceKey, setSelectionSourceKey] = useState<string | null>(null);
   const selectionResetKey = useMemo(
     () =>
-      [
-        txHalf?.from ?? '',
-        txHalf?.to ?? '',
-        txHalf?.value ?? '',
-        txHalf?.data ?? '',
+      JSON.stringify([
+        currentAccount?.address ?? '',
+        rpcTx?.to ?? '',
+        rpcTx?.value ?? '',
+        txData ?? '',
         gas ?? '',
         nonce ?? '',
         gasPrice ?? '',
         maxFeePerGas ?? '',
         maxPriorityFeePerGas ?? '',
-      ] as const,
-    [gas, gasPrice, maxFeePerGas, maxPriorityFeePerGas, nonce, txHalf?.data, txHalf?.from, txHalf?.to, txHalf?.value],
+      ]),
+    [currentAccount?.address, gas, gasPrice, maxFeePerGas, maxPriorityFeePerGas, nonce, rpcTx?.to, rpcTx?.value, txData],
   );
   const [showDappParamsWarning, setShowDappParamsWarning] = useState<boolean | null>(() => null);
   const abortRef = useRef<AbortController | null>(null);
@@ -261,60 +197,148 @@ function WalletConnectTransaction() {
   const approveResultRef = useRef<string | null>(null);
   const addressId = currentAddress?.id ?? '';
   const { state: hardwareSignState, clear: clearHardwareSignState } = useHardwareSigningUiState(addressId || undefined);
+  const app = useMemo(() => {
+    const appIdentity = typeof metadata.url === 'string' ? metadata.url : '';
+
+    return appIdentity
+      ? {
+          identity: appIdentity,
+          origin: appIdentity,
+          name: metadata.name || appIdentity,
+          icon: Array.isArray(metadata.icons) ? metadata.icons[0] : undefined,
+        }
+      : null;
+  }, [metadata.icons, metadata.name, metadata.url]);
+  const reviewRequest = useMemo(() => {
+    if (!currentAddress?.id || !currentAccount?.address || !rpcTx) {
+      return null;
+    }
+
+    return {
+      ...rpcTx,
+      from: currentAccount.address,
+      data: (txData || '0x') as Hex,
+    };
+  }, [currentAccount?.address, currentAddress?.id, rpcTx, txData]);
+  const baselineReviewRequest = useMemo(() => {
+    if (!reviewRequest) {
+      return null;
+    }
+
+    return {
+      from: reviewRequest.from,
+      to: reviewRequest.to,
+      value: reviewRequest.value,
+      data: reviewRequest.data,
+      type: reviewRequest.type,
+    } satisfies EvmRpcTransactionRequest;
+  }, [reviewRequest]);
+  const baselineReviewInput = useMemo<ReviewDappTransactionInput | null>(() => {
+    if (!currentAddress?.id || !baselineReviewRequest) {
+      return null;
+    }
+
+    return {
+      addressId: currentAddress.id,
+      request: baselineReviewRequest,
+      app,
+    };
+  }, [app, baselineReviewRequest, currentAddress?.id]);
+  const baselineReviewQuery = useDappTransactionReview(baselineReviewInput);
+  const baselineReview = baselineReviewQuery.data ?? null;
+  const baselineAdvanceSetting = useMemo(() => {
+    if (!baselineReview?.fee) {
+      return null;
+    }
+
+    return {
+      gasLimit: baselineReview.fee.gasLimit,
+      storageLimit: baselineReview.fee.storageLimit,
+      nonce: baselineReview.fee.nonce,
+    } satisfies AdvanceSetting;
+  }, [baselineReview?.fee]);
+  const resolvedRequestedAdvanceSetting = useMemo(() => {
+    if (!requestedAdvanceSetting || !baselineAdvanceSetting) {
+      return null;
+    }
+
+    return {
+      gasLimit: requestedAdvanceSetting.gasLimit || baselineAdvanceSetting.gasLimit,
+      storageLimit: requestedAdvanceSetting.storageLimit ?? baselineAdvanceSetting.storageLimit,
+      nonce: Number.isFinite(requestedAdvanceSetting.nonce) ? requestedAdvanceSetting.nonce : baselineAdvanceSetting.nonce,
+    } satisfies AdvanceSetting;
+  }, [baselineAdvanceSetting, requestedAdvanceSetting]);
+  const reviewInput = useMemo<ReviewDappTransactionInput | null>(() => {
+    if (!currentAddress?.id || !reviewRequest) {
+      return null;
+    }
+
+    const override =
+      selectedFeeSelection || selectedAdvanceSetting
+        ? {
+            ...(selectedFeeSelection ? { feeSelection: selectedFeeSelection } : {}),
+            ...(selectedAdvanceSetting
+              ? {
+                  gasLimit: selectedAdvanceSetting.gasLimit,
+                  storageLimit: selectedAdvanceSetting.storageLimit,
+                  nonce: selectedAdvanceSetting.nonce,
+                }
+              : {}),
+          }
+        : undefined;
+
+    return {
+      addressId: currentAddress.id,
+      request: reviewRequest,
+      override,
+      app,
+    };
+  }, [app, currentAddress?.id, reviewRequest, selectedAdvanceSetting, selectedFeeSelection]);
+  const reviewQuery = useDappTransactionReview(reviewInput);
+  const review = reviewQuery.data ?? null;
+  const presetOptions = review?.presetOptions ?? [];
+  const currentFee = review?.fee ?? null;
+  const currentGasSetting = useMemo(() => resolveGasSettingWithLevel({ fee: currentFee, presetOptions }), [currentFee, presetOptions]);
+  const baselineGasSetting = useMemo(
+    () => (baselineReview?.fee ? resolveGasSettingWithLevel({ fee: baselineReview.fee, presetOptions: baselineReview.presetOptions }) : null),
+    [baselineReview?.fee, baselineReview?.presetOptions],
+  );
+  const currentAdvanceSetting = selectedAdvanceSetting ?? baselineAdvanceSetting;
 
   useEffect(() => {
-    setSelectedFeeSelection(null);
-    setSelectedAdvanceSetting(null);
-    setShowDappParamsWarning(null);
-  }, selectionResetKey);
+    if (!baselineAdvanceSetting || !baselineReview?.fee) {
+      return;
+    }
 
-  useEffect(() => {
-    if (!baselineAdvanceSetting) {
+    const isNewSelectionSource = selectionSourceKey !== selectionResetKey;
+    if (isNewSelectionSource) {
+      setSelectedFeeSelection(requestedFeeFields ? { kind: 'custom', fee: requestedFeeFields } : { kind: 'preset', presetId: 'medium' });
+      setSelectedAdvanceSetting(resolvedRequestedAdvanceSetting ?? baselineAdvanceSetting);
+      setShowDappParamsWarning(null);
+      setSelectionSourceKey(selectionResetKey);
       return;
     }
 
     setSelectedFeeSelection(
       (currentSelection) => currentSelection ?? (requestedFeeFields ? { kind: 'custom', fee: requestedFeeFields } : { kind: 'preset', presetId: 'medium' }),
     );
-    setSelectedAdvanceSetting((currentAdvance) => currentAdvance ?? requestedAdvanceSetting ?? baselineAdvanceSetting);
-  }, [baselineAdvanceSetting, requestedAdvanceSetting, requestedFeeFields]);
-
-  const currentFee = useMemo<ReviewFee | null>(() => {
-    if (!selectedFeeSelection || !selectedAdvanceSetting) {
-      return null;
-    }
-
-    const fields = pickFeeFields(selectedFeeSelection, presetOptions);
-    if (!fields) {
-      return null;
-    }
-
-    return {
-      selection: selectedFeeSelection,
-      fields,
-      gasLimit: selectedAdvanceSetting.gasLimit,
-      nonce: selectedAdvanceSetting.nonce,
-    };
-  }, [presetOptions, selectedAdvanceSetting, selectedFeeSelection]);
-  const currentGasSetting = useMemo(() => resolveGasSettingWithLevel({ fee: currentFee, presetOptions }), [currentFee, presetOptions]);
-  const currentAdvanceSetting = selectedAdvanceSetting ?? baselineAdvanceSetting;
+    setSelectedAdvanceSetting((currentAdvance) => currentAdvance ?? resolvedRequestedAdvanceSetting ?? baselineAdvanceSetting);
+  }, [baselineAdvanceSetting, baselineReview?.fee, requestedFeeFields, resolvedRequestedAdvanceSetting, selectionResetKey, selectionSourceKey]);
 
   useEffect(() => {
-    if (!estimateQuote || showDappParamsWarning !== null) {
+    if (!baselineReview?.fee || !baselineGasSetting || showDappParamsWarning !== null) {
       return;
     }
 
-    const isAdvanceSettingSuitable = gas ? BigInt(gas) >= BigInt(estimateQuote.gasLimit) : true;
+    const basePrimaryFee = getGasSettingPrimaryFee(baselineGasSetting);
+    const isAdvanceSettingSuitable = gas ? BigInt(gas) >= BigInt(baselineReview.fee.gasLimit) : true;
     const requestedPrimaryFee = requestedFeeFields ? ('gasPrice' in requestedFeeFields ? requestedFeeFields.gasPrice : requestedFeeFields.maxFeePerGas) : null;
-    const isGasSettingSuitable = requestedPrimaryFee ? BigInt(requestedPrimaryFee) >= BigInt(estimateQuote.gasPrice) : true;
+    const isGasSettingSuitable = requestedPrimaryFee && basePrimaryFee ? BigInt(requestedPrimaryFee) >= BigInt(basePrimaryFee) : true;
 
     if (!isAdvanceSettingSuitable || !isGasSettingSuitable) {
       setShowDappParamsWarning(true);
     }
-  }, [estimateQuote, gas, requestedFeeFields, showDappParamsWarning]);
-
-  const isSupport1559 = !!currentGasSetting && isEip1559GasSetting(currentGasSetting);
-  const shouldUse1559 = isSupport1559 && (isNil(type) || (Number(type) !== 0 && Number(type) !== 1));
+  }, [baselineGasSetting, baselineReview?.fee, gas, requestedFeeFields, showDappParamsWarning]);
 
   const amount = useFormatBalance(value ? value.toString() : '0', nativeAsset?.decimals ?? 18);
 
@@ -367,10 +391,9 @@ function WalletConnectTransaction() {
   );
 
   const _handleApprove = useCallback(async () => {
-    if (!currentGasSetting || !currentAdvanceSetting) return;
     if (!currentAddress?.id || !currentAccount?.address) return;
     if (!requestId) return;
-    if (!rpcTx) return;
+    if (!review?.prepared) return;
     if (closeActionRef.current !== 'none') return;
 
     const pendingApproveResult = approveResultRef.current;
@@ -388,46 +411,14 @@ function WalletConnectTransaction() {
     clearHardwareSignState();
 
     try {
-      const gasPriceOrMaxFee = getGasSettingPrimaryFee(currentGasSetting);
-      if (!gasPriceOrMaxFee) {
+      const refreshed = await reviewQuery.refetch({ throwOnError: true });
+      const prepared = refreshed.data?.prepared;
+
+      if (!prepared) {
         return;
       }
 
-      const requestForSend: EvmRpcTransactionRequest = {
-        from: currentAccount.address,
-        to: rpcTx.to,
-        value: rpcTx.value ?? '0x0',
-        data: (txData || '0x') as Hex,
-        gas: currentAdvanceSetting.gasLimit as Hex,
-        nonce: toHexQuantity(currentAdvanceSetting.nonce) as unknown as Hex,
-        ...(shouldUse1559 && isEip1559GasSetting(currentGasSetting)
-          ? {
-              maxFeePerGas: currentGasSetting.suggestedMaxFeePerGas,
-              maxPriorityFeePerGas: currentGasSetting.suggestedMaxPriorityFeePerGas,
-              type: '0x2' as Hex,
-            }
-          : {
-              gasPrice: gasPriceOrMaxFee,
-              type: '0x0' as Hex,
-            }),
-      };
-
-      const appIdentity = typeof metadata.url === 'string' ? metadata.url : '';
-      const app = appIdentity
-        ? {
-            identity: appIdentity,
-            origin: appIdentity,
-            name: metadata.name || appIdentity,
-            icon: Array.isArray(metadata.icons) ? metadata.icons[0] : undefined,
-          }
-        : null;
-
-      const tx = await getTransactionService().sendDappTransaction({
-        addressId: currentAddress.id,
-        request: requestForSend,
-        app,
-        signal: controller?.signal,
-      });
+      const tx = await executeDappTransaction(prepared, { signal: controller?.signal });
 
       approveResultRef.current = tx.hash;
       finalizeApprove(tx.hash);
@@ -467,18 +458,12 @@ function WalletConnectTransaction() {
     clearHardwareSignState,
     currentAccount?.address,
     currentAccount?.isHardwareWallet,
-    currentAdvanceSetting,
     currentAddress?.id,
-    currentGasSetting,
-    metadata.icons,
-    metadata.name,
-    metadata.url,
-    navigation,
-    txData,
+    executeDappTransaction,
     requestId,
+    review?.prepared,
+    reviewQuery,
     rootNavigation,
-    rpcTx,
-    shouldUse1559,
     finalizeApprove,
   ]);
 
@@ -634,7 +619,7 @@ function WalletConnectTransaction() {
           setSelectedFeeSelection(feeSelection);
           setSelectedAdvanceSetting(advanceSetting);
         }}
-        force155={!isNil(type) && (Number(type) === 0 || Number(type) === 1)}
+        force155={type != null && (Number(type) === 0 || Number(type) === 1)}
       />
       {!!(currentAccount?.isHardwareWallet && hardwareSignState) && hardwareSignState && (
         <HardwareSignVerify

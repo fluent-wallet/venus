@@ -14,6 +14,7 @@ import Button from '@components/Button';
 import HourglassLoading from '@components/Loading/Hourglass';
 import Text from '@components/Text';
 import { AUTH_PASSWORD_REQUEST_CANCELED } from '@core/errors';
+import type { FeeSelection, ReviewReplacementInput, TransactionReviewOverride } from '@core/services/transaction';
 import { AssetType, SPEED_UP_ACTION } from '@core/types';
 import { NetworkType } from '@core/utils/consts';
 import useInAsync from '@hooks/useInAsync';
@@ -23,12 +24,11 @@ import { useNavigation, useTheme } from '@react-navigation/native';
 import type { SpeedUpStackName, StackNavigation, StackScreenProps } from '@router/configs';
 import { useAssetsOfAddress } from '@service/asset';
 import { getAssetsSyncService } from '@service/core';
-import { usePollingGasEstimateAndNonce, useSpeedUpTx, useSpeedUpTxContext } from '@service/transaction';
+import { useExecuteReplacement, useReplacementReview, useSpeedUpTxContext } from '@service/transaction';
 import { isTransactionPendingState, isTransactionSuccessfulState } from '@service/transactionStatus';
 import backToHome from '@utils/backToHome';
 import { handleBSIMHardwareUnavailable } from '@utils/handleBSIMHardwareUnavailable';
 import matchRPCErrorMessage from '@utils/matchRPCErrorMssage';
-import Decimal from 'decimal.js';
 import type React from 'react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -37,10 +37,7 @@ import { showMessage } from 'react-native-flash-message';
 import { type AdvanceSetting, GasOption, type GasSetting, type SpeedUpLevel } from '../GasFeeSetting';
 import CustomizeAdvanceSetting from '../GasFeeSetting/CustomizeAdvanceSetting';
 import CustomizeGasSetting from '../GasFeeSetting/CustomizeGasSetting';
-import { buildGasSetting, isEip1559GasSetting } from '../GasFeeSetting/gasSetting';
-
-const higherRatio = 1.1;
-const fasterRatio = 1.2;
+import { getGasSettingPrimaryFee, toFeeFields, toGasSetting } from '../GasFeeSetting/gasSetting';
 
 const isUserCanceledError = (error: unknown): boolean => {
   const code = (error as { code?: unknown } | null)?.code;
@@ -63,50 +60,47 @@ const getErrorText = (error: unknown): string => {
   return String(error);
 };
 
-type SpeedUpTxPayloadLike = {
-  gasPrice?: string | null;
-  maxFeePerGas?: string | null;
-  maxPriorityFeePerGas?: string | null;
+const getUiErrorType = (message: string): { type: 'out of balance' | 'network error' } | null => {
+  const normalizedMessage = message.toLowerCase();
+
+  if (normalizedMessage.includes('out of balance')) {
+    return { type: 'out of balance' };
+  }
+
+  if (normalizedMessage.includes('timed out') || normalizedMessage.includes('network error')) {
+    return { type: 'network error' };
+  }
+
+  return null;
 };
 
-const scaleFeeFromOriginAndCurrent = (originFee: string | null | undefined, currentFee: string, ratio: number) => {
-  return Decimal.max(new Decimal(originFee || 0), new Decimal(currentFee)).mul(ratio);
-};
+function buildReviewOverride(params: {
+  level: SpeedUpLevel | undefined;
+  gasSetting: GasSetting | null;
+  advanceSetting: AdvanceSetting | null;
+  presetSelection: FeeSelection;
+  nonce: number | undefined;
+}): TransactionReviewOverride | undefined {
+  const { level, gasSetting, advanceSetting, presetSelection, nonce } = params;
+  if (!advanceSetting) {
+    return undefined;
+  }
 
-const createLegacyGasSetting = (txPayload: SpeedUpTxPayloadLike | null, ratio: number, currentGasPrice: string | null) => {
-  if (!txPayload || !currentGasPrice) return null;
-  const suggestedGasPrice = scaleFeeFromOriginAndCurrent(txPayload.gasPrice, currentGasPrice, ratio);
+  const feeSelection: FeeSelection =
+    level === 'customize' && gasSetting
+      ? {
+          kind: 'custom',
+          fee: toFeeFields(gasSetting),
+        }
+      : presetSelection;
 
-  return buildGasSetting({
-    pricingKind: 'legacy',
-    primaryFee: suggestedGasPrice.toHex(),
-  });
-};
-
-const createEip1559GasSetting = (
-  txPayload: SpeedUpTxPayloadLike | null,
-  ratio: number,
-  mediumLevel: {
-    suggestedMaxFeePerGas: string;
-    suggestedMaxPriorityFeePerGas: string;
-    gasCost: string;
-  } | null,
-) => {
-  if (!txPayload || !mediumLevel) return null;
-
-  // A replacement 1559 tx needs to bump both caps, while keeping priority fee below max fee.
-  const suggestedMaxFeePerGas = scaleFeeFromOriginAndCurrent(txPayload.maxFeePerGas, mediumLevel.suggestedMaxFeePerGas, ratio);
-  const suggestedMaxPriorityFeePerGas = Decimal.min(
-    scaleFeeFromOriginAndCurrent(txPayload.maxPriorityFeePerGas, mediumLevel.suggestedMaxPriorityFeePerGas, ratio),
-    suggestedMaxFeePerGas,
-  );
-
-  return buildGasSetting({
-    pricingKind: 'eip1559',
-    primaryFee: suggestedMaxFeePerGas.toHex(),
-    priorityFee: suggestedMaxPriorityFeePerGas.toHex(),
-  });
-};
+  return {
+    feeSelection,
+    gasLimit: advanceSetting.gasLimit,
+    storageLimit: advanceSetting.storageLimit,
+    nonce,
+  };
+}
 
 const SpeedUp: React.FC<StackScreenProps<typeof SpeedUpStackName>> = ({ navigation, route }) => {
   const { txId, type, level: defaultLevel } = route.params;
@@ -115,7 +109,7 @@ const SpeedUp: React.FC<StackScreenProps<typeof SpeedUpStackName>> = ({ navigati
   const { t } = useTranslation();
   const rootNavigation = useNavigation<StackNavigation>();
   const { data: ctx } = useSpeedUpTxContext(txId);
-  const speedUpTx = useSpeedUpTx();
+  const executeReplacement = useExecuteReplacement();
 
   const addressId = ctx?.addressId ?? '';
   const { state: hardwareSignState, clear: clearHardwareSignState } = useHardwareSigningUiState(addressId || undefined);
@@ -123,62 +117,145 @@ const SpeedUp: React.FC<StackScreenProps<typeof SpeedUpStackName>> = ({ navigati
 
   const { data: assets } = useAssetsOfAddress(addressId);
   const nativeAsset = useMemo(() => assets?.find((a) => a.type === AssetType.Native) ?? null, [assets]);
-
   const txState = ctx?.state ?? null;
-
-  const txHalf = useMemo(() => {
-    if (!ctx?.payload?.from) return null;
-    const from = ctx.payload.from;
-    if (isSpeedUp) {
-      return {
-        from,
-        to: ctx.payload.to || from,
-        value: ctx.payload.value || '0x0',
-        data: ctx.payload.data || '0x',
-      };
-    }
-    return {
-      from,
-      to: from,
-      value: '0x0',
-      data: '0x',
-    };
-  }, [ctx, isSpeedUp]);
+  const action = isSpeedUp ? SPEED_UP_ACTION.SpeedUp : SPEED_UP_ACTION.Cancel;
 
   const [error, setError] = useState<{ type?: string; message: string } | null>(null);
-
-  const estimateRes = usePollingGasEstimateAndNonce(txHalf, true, addressId);
-  const isEip1559Tx = Boolean(ctx?.payload?.maxFeePerGas || ctx?.payload?.maxPriorityFeePerGas);
-  const mediumEip1559Level = useMemo(() => {
-    if (!estimateRes || estimateRes.pricingKind !== 'eip1559') return null;
-    const mediumLevel = estimateRes.levels.medium;
-    return 'suggestedMaxFeePerGas' in mediumLevel ? mediumLevel : null;
-  }, [estimateRes]);
-
-  const higherGasSetting = useMemo(() => {
-    return isEip1559Tx
-      ? createEip1559GasSetting(ctx?.payload ?? null, higherRatio, mediumEip1559Level)
-      : createLegacyGasSetting(ctx?.payload ?? null, higherRatio, estimateRes?.gasPrice ?? null);
-  }, [ctx?.payload, estimateRes?.gasPrice, isEip1559Tx, mediumEip1559Level]);
-
-  const fasterGasSetting = useMemo(() => {
-    return isEip1559Tx
-      ? createEip1559GasSetting(ctx?.payload ?? null, fasterRatio, mediumEip1559Level)
-      : createLegacyGasSetting(ctx?.payload ?? null, fasterRatio, estimateRes?.gasPrice ?? null);
-  }, [ctx?.payload, estimateRes?.gasPrice, isEip1559Tx, mediumEip1559Level]);
   const [customizeGasSetting, setCustomizeGasSetting] = useState<GasSetting | null>(null);
   const [showCustomizeSetting, setShowCustomizeSetting] = useState(false);
   const [showCustomizeAdvanceSetting, setShowCustomizeAdvanceSetting] = useState(false);
   const [customizeAdvanceSetting, setCustomizeAdvanceSetting] = useState<AdvanceSetting | null>(null);
+  const [tempSelectedOptionLevel, setTempSelectedOptionLevel] = useState<SpeedUpLevel | undefined>(defaultLevel);
+  const bottomSheetRef = useRef<BottomSheetMethods | null>(null);
+
+  const baselineReviewInput = useMemo<ReviewReplacementInput | null>(
+    () =>
+      ctx
+        ? {
+            txId,
+            action,
+          }
+        : null,
+    [action, ctx, txId],
+  );
+  const baselineReviewQuery = useReplacementReview(baselineReviewInput);
+  const baselineReview = baselineReviewQuery.data ?? null;
+  const baselineFee = baselineReview?.fee ?? null;
+  const baselineAdvanceSetting = useMemo(() => {
+    if (!baselineFee) {
+      return null;
+    }
+
+    return {
+      gasLimit: baselineFee.gasLimit,
+      storageLimit: baselineFee.storageLimit,
+      nonce: baselineFee.nonce,
+    } satisfies AdvanceSetting;
+  }, [baselineFee]);
+  const mediumPresetOption = useMemo(
+    () => baselineReview?.presetOptions.find((option) => option.presetId === 'medium') ?? null,
+    [baselineReview?.presetOptions],
+  );
+  const highPresetOption = useMemo(() => baselineReview?.presetOptions.find((option) => option.presetId === 'high') ?? null, [baselineReview?.presetOptions]);
+
+  const higherGasSetting = useMemo(() => {
+    return mediumPresetOption ? toGasSetting(mediumPresetOption.fee) : null;
+  }, [mediumPresetOption]);
+
+  const fasterGasSetting = useMemo(() => {
+    return highPresetOption ? toGasSetting(highPresetOption.fee) : null;
+  }, [highPresetOption]);
 
   useEffect(() => {
     if (customizeGasSetting === null && fasterGasSetting && higherGasSetting) {
       setCustomizeGasSetting(defaultLevel === 'faster' ? fasterGasSetting : higherGasSetting);
     }
-  }, [fasterGasSetting, higherGasSetting, defaultLevel, customizeGasSetting]);
+  }, [customizeGasSetting, defaultLevel, fasterGasSetting, higherGasSetting]);
 
-  const [tempSelectedOptionLevel, setTempSelectedOptionLevel] = useState<SpeedUpLevel | undefined>(defaultLevel);
-  const bottomSheetRef = useRef<BottomSheetMethods>(null!);
+  useEffect(() => {
+    if (baselineAdvanceSetting && customizeAdvanceSetting === null) {
+      setCustomizeAdvanceSetting(baselineAdvanceSetting);
+    }
+  }, [baselineAdvanceSetting, customizeAdvanceSetting]);
+
+  const effectiveAdvanceSetting = customizeAdvanceSetting ?? baselineAdvanceSetting;
+  const hasAdvanceOverride = useMemo(() => {
+    if (!baselineAdvanceSetting || !effectiveAdvanceSetting) {
+      return false;
+    }
+
+    return (
+      effectiveAdvanceSetting.gasLimit !== baselineAdvanceSetting.gasLimit ||
+      effectiveAdvanceSetting.storageLimit !== baselineAdvanceSetting.storageLimit ||
+      effectiveAdvanceSetting.nonce !== baselineAdvanceSetting.nonce
+    );
+  }, [baselineAdvanceSetting, effectiveAdvanceSetting]);
+  const presetSelection = useMemo<FeeSelection>(() => {
+    if (tempSelectedOptionLevel === 'faster') {
+      return { kind: 'preset', presetId: 'high' };
+    }
+
+    return { kind: 'preset', presetId: 'medium' };
+  }, [tempSelectedOptionLevel]);
+  const selectedGasSetting = useMemo(
+    () => (tempSelectedOptionLevel === 'customize' ? customizeGasSetting : tempSelectedOptionLevel === 'faster' ? fasterGasSetting : higherGasSetting),
+    [customizeGasSetting, fasterGasSetting, higherGasSetting, tempSelectedOptionLevel],
+  );
+  const reviewOverride = useMemo(
+    () =>
+      buildReviewOverride({
+        level: tempSelectedOptionLevel,
+        gasSetting: selectedGasSetting,
+        advanceSetting: effectiveAdvanceSetting,
+        presetSelection,
+        nonce: ctx?.payload.nonce,
+      }),
+    [ctx?.payload.nonce, effectiveAdvanceSetting, presetSelection, selectedGasSetting, tempSelectedOptionLevel],
+  );
+  const needsCustomReview = tempSelectedOptionLevel === 'faster' || tempSelectedOptionLevel === 'customize' || hasAdvanceOverride;
+  const reviewInput = useMemo<ReviewReplacementInput | null>(
+    () =>
+      ctx
+        ? {
+            txId,
+            action,
+            override: reviewOverride,
+          }
+        : null,
+    [action, ctx, reviewOverride, txId],
+  );
+  const reviewQuery = useReplacementReview(reviewInput, { enabled: !!reviewInput && !!reviewOverride && needsCustomReview });
+  const review = needsCustomReview ? (reviewQuery.data ?? null) : baselineReview;
+  const reviewFee = review?.fee ?? baselineFee;
+  const activeReviewQuery = needsCustomReview ? reviewQuery : baselineReviewQuery;
+  const isReviewPending = needsCustomReview && (reviewQuery.isFetching || reviewQuery.isPlaceholderData || !reviewQuery.data);
+  const activeQueryError = isReviewPending ? null : needsCustomReview ? reviewQuery.error : baselineReviewQuery.error;
+
+  useEffect(() => {
+    if (isReviewPending) {
+      setError(null);
+      return;
+    }
+
+    if (activeQueryError) {
+      const message = getErrorText(activeQueryError);
+      setError({
+        message,
+        ...(getUiErrorType(message) ?? null),
+      });
+      return;
+    }
+
+    if (!review?.error) {
+      setError(null);
+      return;
+    }
+
+    setError({
+      message: review.error.message,
+      ...(review.error.code === 'insufficient_native_for_fee' ? { type: 'out of balance' } : (getUiErrorType(review.error.message) ?? null)),
+    });
+  }, [activeQueryError, isReviewPending, review?.error]);
 
   const handleTxExpire = useCallback(() => {
     if (txState && !isTransactionPendingState(txState)) {
@@ -189,17 +266,14 @@ const SpeedUp: React.FC<StackScreenProps<typeof SpeedUpStackName>> = ({ navigati
         description: isTransactionSuccessfulState(txState) ? t('tx.action.alreadyExecuted') : t('tx.action.alreadyFailed'),
       });
     }
-  }, [txState, t]);
+  }, [t, txState]);
 
   useEffect(() => {
     handleTxExpire();
   }, [handleTxExpire]);
 
-  const newGasSetting =
-    tempSelectedOptionLevel === 'customize' ? customizeGasSetting : tempSelectedOptionLevel === 'faster' ? fasterGasSetting : higherGasSetting;
-
   const _handleSend = useCallback(async () => {
-    if (!ctx || !newGasSetting || !txHalf || !estimateRes) return;
+    if (!ctx || !selectedGasSetting || !effectiveAdvanceSetting) return;
 
     if (ctx.isHardwareWallet && ctx.networkType === NetworkType.Conflux) {
       showMessage({
@@ -217,25 +291,14 @@ const SpeedUp: React.FC<StackScreenProps<typeof SpeedUpStackName>> = ({ navigati
     clearHardwareSignState();
 
     try {
-      const gasLimit = customizeAdvanceSetting?.gasLimit ?? estimateRes.gasLimit;
-      const storageLimit = customizeAdvanceSetting?.storageLimit ?? estimateRes.storageLimit;
+      const preparedReview = await activeReviewQuery.refetch({ throwOnError: true });
+      const prepared = preparedReview.data?.prepared;
 
-      const action = type === SPEED_UP_ACTION.Cancel ? SPEED_UP_ACTION.Cancel : SPEED_UP_ACTION.SpeedUp;
-      const feeOverrides = isEip1559GasSetting(newGasSetting)
-        ? {
-            maxFeePerGas: newGasSetting.suggestedMaxFeePerGas,
-            maxPriorityFeePerGas: newGasSetting.suggestedMaxPriorityFeePerGas,
-          }
-        : { gasPrice: newGasSetting.suggestedGasPrice };
+      if (!prepared) {
+        return;
+      }
 
-      await speedUpTx({
-        txId,
-        action,
-        feeOverrides,
-        advanceOverrides: { gasLimit, storageLimit: storageLimit ?? undefined },
-        nonce: ctx.payload.nonce,
-        signal: controller?.signal,
-      });
+      await executeReplacement(prepared, { signal: controller?.signal });
 
       showMessage({
         type: 'success',
@@ -274,11 +337,11 @@ const SpeedUp: React.FC<StackScreenProps<typeof SpeedUpStackName>> = ({ navigati
       }
 
       const err = getErrorText(_err);
-      const msg = matchRPCErrorMessage(_err);
+      const msg = matchRPCErrorMessage(_err as { message?: string; data?: string; code?: number });
 
       setError({
         message: err,
-        ...(err.includes('out of balance') ? { type: 'out of balance' } : err.includes('timed out') ? { type: 'network error' } : null),
+        ...(getUiErrorType(err) ?? null),
       });
 
       showMessage({
@@ -287,8 +350,11 @@ const SpeedUp: React.FC<StackScreenProps<typeof SpeedUpStackName>> = ({ navigati
         type: 'failed',
       });
     }
-  }, [clearHardwareSignState, ctx, customizeAdvanceSetting, estimateRes, navigation, rootNavigation, speedUpTx, t, txHalf, txId, type, newGasSetting]);
+  }, [activeReviewQuery, clearHardwareSignState, ctx, effectiveAdvanceSetting, executeReplacement, navigation, rootNavigation, selectedGasSetting, t]);
   const { inAsync: inSending, execAsync: handleSend } = useInAsync(_handleSend);
+
+  const canSubmit = !activeQueryError && !isReviewPending && review?.canSubmit === true && !!review?.prepared;
+  const estimateCurrentGasPrice = useMemo(() => getGasSettingPrimaryFee(selectedGasSetting), [selectedGasSetting]);
 
   return (
     <>
@@ -304,15 +370,15 @@ const SpeedUp: React.FC<StackScreenProps<typeof SpeedUpStackName>> = ({ navigati
           <BottomSheetHeader title={isSpeedUp ? t('tx.action.speedUp.title') : t('tx.action.cancel.title')} />
           <BottomSheetContent>
             <Text style={[styles.description, { color: colors.textPrimary }]}>{isSpeedUp ? t('tx.action.speedUp.desc') : t('tx.action.cancel.desc')}</Text>
-            {(!ctx || !nativeAsset || !estimateRes) && <HourglassLoading style={styles.loading} />}
-            {ctx && nativeAsset && estimateRes && (
+            {(!ctx || !nativeAsset || !reviewFee) && <HourglassLoading style={styles.loading} />}
+            {ctx && nativeAsset && reviewFee && (
               <>
                 {higherGasSetting && (
                   <GasOption
                     level="higher"
-                    nativeAsset={nativeAsset as any}
+                    nativeAsset={nativeAsset}
                     gasSetting={higherGasSetting}
-                    gasLimit={customizeAdvanceSetting?.gasLimit ?? estimateRes!.gasLimit}
+                    gasLimit={effectiveAdvanceSetting?.gasLimit ?? reviewFee.gasLimit}
                     selected={tempSelectedOptionLevel === 'higher'}
                     onPress={() => setTempSelectedOptionLevel('higher')}
                   />
@@ -320,9 +386,9 @@ const SpeedUp: React.FC<StackScreenProps<typeof SpeedUpStackName>> = ({ navigati
                 {fasterGasSetting && (
                   <GasOption
                     level="faster"
-                    nativeAsset={nativeAsset as any}
+                    nativeAsset={nativeAsset}
                     gasSetting={fasterGasSetting}
-                    gasLimit={customizeAdvanceSetting?.gasLimit ?? estimateRes!.gasLimit}
+                    gasLimit={effectiveAdvanceSetting?.gasLimit ?? reviewFee.gasLimit}
                     selected={tempSelectedOptionLevel === 'faster'}
                     onPress={() => setTempSelectedOptionLevel('faster')}
                   />
@@ -330,9 +396,9 @@ const SpeedUp: React.FC<StackScreenProps<typeof SpeedUpStackName>> = ({ navigati
                 {customizeGasSetting && (
                   <GasOption
                     level="customize"
-                    nativeAsset={nativeAsset as any}
+                    nativeAsset={nativeAsset}
                     gasSetting={customizeGasSetting}
-                    gasLimit={customizeAdvanceSetting?.gasLimit ?? estimateRes!.gasLimit}
+                    gasLimit={effectiveAdvanceSetting?.gasLimit ?? reviewFee.gasLimit}
                     selected={tempSelectedOptionLevel === 'customize'}
                     onPress={() => setShowCustomizeSetting(true)}
                   />
@@ -343,27 +409,24 @@ const SpeedUp: React.FC<StackScreenProps<typeof SpeedUpStackName>> = ({ navigati
                 </Pressable>
               </>
             )}
-            {error && (
-              <>
-                {error.type === 'out of balance' ? (
-                  <View style={styles.errorWarp}>
-                    <WarnIcon style={styles.errorIcon} color={colors.middle} width={24} height={24} />
-                    <Text style={[styles.errorText, { color: colors.middle }]}>
-                      {`${isSpeedUp && ctx?.assetType === AssetType.Native ? t('tx.confirm.error.InsufficientBalance', { symbol: nativeAsset?.symbol }) : t('tx.confirm.error.InsufficientBalanceForGas', { symbol: nativeAsset?.symbol })}`}
-                    </Text>
-                  </View>
-                ) : (
-                  <View style={styles.errorWarp}>
-                    <ProhibitIcon style={styles.errorIcon} width={24} height={24} />
-                    {error.type === 'network error' ? (
-                      <Text style={[styles.errorText, { color: colors.down }]}>{t('tx.confirm.error.network')}</Text>
-                    ) : (
-                      <Text style={[styles.errorText, { color: colors.down }]}>{t('tx.confirm.error.unknown')}</Text>
-                    )}
-                  </View>
-                )}
-              </>
-            )}
+            {error &&
+              (error.type === 'out of balance' ? (
+                <View style={styles.errorWarp}>
+                  <WarnIcon style={styles.errorIcon} color={colors.middle} width={24} height={24} />
+                  <Text style={[styles.errorText, { color: colors.middle }]}>
+                    {`${isSpeedUp && ctx?.assetType === AssetType.Native ? t('tx.confirm.error.InsufficientBalance', { symbol: nativeAsset?.symbol }) : t('tx.confirm.error.InsufficientBalanceForGas', { symbol: nativeAsset?.symbol })}`}
+                  </Text>
+                </View>
+              ) : (
+                <View style={styles.errorWarp}>
+                  <ProhibitIcon style={styles.errorIcon} width={24} height={24} />
+                  {error.type === 'network error' ? (
+                    <Text style={[styles.errorText, { color: colors.down }]}>{t('tx.confirm.error.network')}</Text>
+                  ) : (
+                    <Text style={[styles.errorText, { color: colors.down }]}>{t('tx.confirm.error.unknown')}</Text>
+                  )}
+                </View>
+              ))}
           </BottomSheetContent>
           <BottomSheetFooter>
             <View style={styles.btnArea}>
@@ -375,7 +438,7 @@ const SpeedUp: React.FC<StackScreenProps<typeof SpeedUpStackName>> = ({ navigati
                 style={styles.btn}
                 size="small"
                 onPress={handleSend}
-                disabled={!tempSelectedOptionLevel || inSending}
+                disabled={!tempSelectedOptionLevel || inSending || !canSubmit}
                 Icon={isSpeedUp ? RocketIcon : undefined}
               >
                 {isSpeedUp ? t('tx.action.speedUpBtn') : t('tx.action.proceedBtn')}
@@ -395,11 +458,11 @@ const SpeedUp: React.FC<StackScreenProps<typeof SpeedUpStackName>> = ({ navigati
           estimateCurrentGasPrice={estimateCurrentGasPrice}
         />
       )}
-      {estimateRes && showCustomizeAdvanceSetting && (
+      {reviewFee && showCustomizeAdvanceSetting && (
         <CustomizeAdvanceSetting
           customizeAdvanceSetting={customizeAdvanceSetting}
           estimateNonce={ctx?.payload.nonce ?? 0}
-          estimateGasLimit={estimateRes.gasLimit}
+          estimateGasLimit={reviewFee.gasLimit}
           onConfirm={setCustomizeAdvanceSetting}
           onClose={() => setShowCustomizeAdvanceSetting(false)}
           nonceDisabled

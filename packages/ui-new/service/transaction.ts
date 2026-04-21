@@ -2,7 +2,13 @@ import type {
   GasPricingEstimate,
   PrecheckTransferInput,
   PrecheckTransferResult,
+  PreparedDappTransaction,
+  PreparedReplacement,
   PreparedTransfer,
+  ReviewDappTransactionInput,
+  ReviewDappTransactionResult,
+  ReviewReplacementInput,
+  ReviewReplacementResult,
   ReviewTransferInput,
   ReviewTransferResult,
   SendERC20Input,
@@ -23,6 +29,8 @@ export type SpeedUpContextQuery = UseQueryResult<SpeedUpTxContext | null>;
 export type TransactionDetailQuery = UseQueryResult<ITransactionDetail | null>;
 export type TransferPrecheckQuery = UseQueryResult<PrecheckTransferResult | null>;
 export type TransferReviewQuery = UseQueryResult<ReviewTransferResult | null>;
+export type ReplacementReviewQuery = UseQueryResult<ReviewReplacementResult | null>;
+export type DappTransactionReviewQuery = UseQueryResult<ReviewDappTransactionResult | null>;
 
 export type Level = 'low' | 'medium' | 'high';
 export type TransactionGasLevel =
@@ -51,6 +59,10 @@ export const getTransferPrecheckKey = (input: PrecheckTransferInput | null) =>
   ['tx', 'transfer', 'precheck', input?.addressId || 'none', input?.intent ?? null] as const;
 export const getTransferReviewKey = (input: ReviewTransferInput | null) =>
   ['tx', 'transfer', 'review', input?.addressId || 'none', input?.intent ?? null, input?.override ?? null] as const;
+export const getReplacementReviewKey = (input: ReviewReplacementInput | null) =>
+  ['tx', 'replacement', 'review', input?.txId || 'none', input?.action ?? 'none', input?.override ?? null] as const;
+export const getDappTransactionReviewKey = (input: ReviewDappTransactionInput | null) =>
+  ['tx', 'dapp', 'review', input?.addressId || 'none', input?.request ?? null, input?.override ?? null, input?.app ?? null] as const;
 export const getGasEstimateKey = (params: {
   addressId: string;
   withNonce: boolean;
@@ -185,6 +197,30 @@ export function useTransferReview(input: ReviewTransferInput | null, options: { 
   });
 }
 
+export function useReplacementReview(input: ReviewReplacementInput | null, options: { enabled?: boolean } = {}): ReplacementReviewQuery {
+  const service = getTransactionService();
+  const enabled = (options.enabled ?? true) && !!input?.txId;
+
+  return useQuery({
+    queryKey: getReplacementReviewKey(input),
+    queryFn: () => (input ? service.reviewReplacement(input) : null),
+    enabled,
+    placeholderData: (previousData) => previousData,
+  });
+}
+
+export function useDappTransactionReview(input: ReviewDappTransactionInput | null, options: { enabled?: boolean } = {}): DappTransactionReviewQuery {
+  const service = getTransactionService();
+  const enabled = (options.enabled ?? true) && !!input?.addressId;
+
+  return useQuery({
+    queryKey: getDappTransactionReviewKey(input),
+    queryFn: () => (input ? service.reviewDappTransaction(input) : null),
+    enabled,
+    placeholderData: (previousData) => previousData,
+  });
+}
+
 export function useExecuteTransfer() {
   const service = getTransactionService();
   const queryClient = useQueryClient();
@@ -193,6 +229,42 @@ export function useExecuteTransfer() {
     async (prepared: PreparedTransfer, options: { signal?: AbortSignal } = {}) => {
       const tx = await service.executeTransfer(prepared, options);
       await Promise.all([queryClient.invalidateQueries({ queryKey: getTransactionRootKey() }), queryClient.invalidateQueries({ queryKey: getAssetRootKey() })]);
+      return tx;
+    },
+    [service, queryClient],
+  );
+}
+
+export function useExecuteReplacement() {
+  const service = getTransactionService();
+  const queryClient = useQueryClient();
+
+  return useCallback(
+    async (prepared: PreparedReplacement, options: { signal?: AbortSignal } = {}) => {
+      const tx = await service.executeReplacement(prepared, options);
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: getTransactionRootKey() }),
+        queryClient.invalidateQueries({ queryKey: getAssetRootKey() }),
+        queryClient.invalidateQueries({ queryKey: getAssetsByAddressRootKey() }),
+      ]);
+      return tx;
+    },
+    [service, queryClient],
+  );
+}
+
+export function useExecuteDappTransaction() {
+  const service = getTransactionService();
+  const queryClient = useQueryClient();
+
+  return useCallback(
+    async (prepared: PreparedDappTransaction, options: { signal?: AbortSignal } = {}) => {
+      const tx = await service.executeDappTransaction(prepared, options);
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: getTransactionRootKey() }),
+        queryClient.invalidateQueries({ queryKey: getAssetRootKey() }),
+        queryClient.invalidateQueries({ queryKey: getAssetsByAddressRootKey() }),
+      ]);
       return tx;
     },
     [service, queryClient],
