@@ -402,9 +402,6 @@ export function createReviewReplacementHandler(params: {
               type: 'gasPrice' in fields ? 0 : 2,
             },
             executionRequest,
-            runtimeHints: {
-              refreshEpochHeightOnExecute: true,
-            },
           },
     };
   };

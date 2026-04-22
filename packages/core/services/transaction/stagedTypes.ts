@@ -89,10 +89,6 @@ export type PreparedFee = {
   epochHeight?: number;
 };
 
-export type PreparedRuntimeHints = {
-  refreshEpochHeightOnExecute?: boolean;
-};
-
 export type PreparedExecutionRequest = {
   from: Address;
   to?: Address;
@@ -236,7 +232,6 @@ export type PreparedTransfer = {
   asset: PreparedTransferAsset;
   fee: PreparedFee;
   executionRequest: PreparedExecutionRequest;
-  runtimeHints?: PreparedRuntimeHints;
 };
 
 export type PreparedReplacement = {
@@ -247,7 +242,6 @@ export type PreparedReplacement = {
   action: SpeedUpAction;
   fee: PreparedFee;
   executionRequest: PreparedExecutionRequest;
-  runtimeHints?: PreparedRuntimeHints;
 };
 
 export type PreparedDappTransaction = {
@@ -263,7 +257,6 @@ export type PreparedDappTransaction = {
   } | null;
   fee: PreparedFee;
   executionRequest: PreparedExecutionRequest;
-  runtimeHints?: PreparedRuntimeHints;
 };
 
 export type PreparedTransaction = PreparedTransfer | PreparedReplacement | PreparedDappTransaction;
