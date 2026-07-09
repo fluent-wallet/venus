@@ -1,12 +1,5 @@
-export const MM_DUPLICATE_MODULE_ID = 'MM_DUPLICATE_MODULE_ID' as const;
 export const MM_MISSING_DEPENDENCY = 'MM_MISSING_DEPENDENCY' as const;
 export const MM_CYCLE_DEPENDENCY = 'MM_CYCLE_DEPENDENCY' as const;
-
-export const MM_ALREADY_STARTED = 'MM_ALREADY_STARTED' as const;
-export const MM_NOT_STARTED = 'MM_NOT_STARTED' as const;
-
-export const MM_START_FAILED = 'MM_START_FAILED' as const;
-export const MM_STOP_FAILED = 'MM_STOP_FAILED' as const;
 
 export const DB_BOOTSTRAP_INVALID_CONFIG = 'DB_BOOTSTRAP_INVALID_CONFIG' as const;
 export const DB_BOOTSTRAP_SEED_FAILED = 'DB_BOOTSTRAP_SEED_FAILED' as const;
@@ -43,15 +36,7 @@ export const TX_SAVE_FAILED = 'TX_SAVE_FAILED' as const;
 export const SIGNATURE_RECORD_ADDRESS_NOT_FOUND = 'SIGNATURE_RECORD_ADDRESS_NOT_FOUND' as const;
 export const SIGNATURE_RECORD_NETWORK_NOT_FOUND = 'SIGNATURE_RECORD_NETWORK_NOT_FOUND' as const;
 
-export type ModuleManagerErrorCode =
-  | typeof MM_DUPLICATE_MODULE_ID
-  | typeof MM_MISSING_DEPENDENCY
-  | typeof MM_CYCLE_DEPENDENCY
-  | typeof MM_ALREADY_STARTED
-  | typeof MM_NOT_STARTED
-  | typeof MM_START_FAILED
-  | typeof MM_STOP_FAILED;
-
+export type ModuleManagerErrorCode = typeof MM_MISSING_DEPENDENCY | typeof MM_CYCLE_DEPENDENCY;
 export const WC_CONFIG_INVALID = 'WC_CONFIG_INVALID' as const;
 
 export const WC_UNSUPPORTED_NAMESPACE = 'WC_UNSUPPORTED_NAMESPACE' as const;

@@ -1,6 +1,6 @@
 import 'reflect-metadata';
 
-import { MM_ALREADY_STARTED, MM_CYCLE_DEPENDENCY, MM_DUPLICATE_MODULE_ID, MM_MISSING_DEPENDENCY, MM_START_FAILED, MM_STOP_FAILED } from '@core/errors';
+import { MM_CYCLE_DEPENDENCY, MM_MISSING_DEPENDENCY, MM_START_FAILED } from '@core/errors';
 import { createSilentLogger } from '@core/testUtils/mocks';
 import { Container } from 'inversify';
 import { ModuleManager } from './ModuleManager';
@@ -66,7 +66,7 @@ describe('ModuleManager', () => {
     expect(calls).toEqual(['a:reg', 'b:reg', 'a:start', 'a:start:done', 'b:start']);
   });
 
-  it('prepare is idempotent and start does not re-run register after prepare', async () => {
+  it('start registers modules once', async () => {
     const registerMock = jest.fn((_ctx: RuntimeContext) => undefined);
     const startMock = jest.fn(async () => undefined);
 
@@ -78,7 +78,6 @@ describe('ModuleManager', () => {
       }),
     );
 
-    manager.prepare();
     await manager.start();
 
     expect(registerMock).toHaveBeenCalledTimes(1);
@@ -147,12 +146,14 @@ describe('ModuleManager', () => {
       code: MM_CYCLE_DEPENDENCY,
     });
   });
-  it('throws when module id is duplicated', () => {
-    const manager = new ModuleManager({ logger: createSilentLogger() });
+  it('skips duplicate module id', () => {
+    const logger = { ...createSilentLogger(), warn: jest.fn() };
+    const manager = new ModuleManager({ logger });
 
     manager.register(createModule({ id: 'a', start: () => undefined }));
 
-    expect(() => manager.register(createModule({ id: 'a', start: () => undefined }))).toThrow(expect.objectContaining({ code: MM_DUPLICATE_MODULE_ID }));
+    expect(() => manager.register(createModule({ id: 'a', start: () => undefined }))).not.toThrow();
+    expect(logger.warn).toHaveBeenCalledWith('ModuleManager:register:duplicate-module', { moduleId: 'a' });
   });
   it('rolls back started modules when start fails mid-way', async () => {
     const stopCalls: string[] = [];
@@ -187,7 +188,7 @@ describe('ModuleManager', () => {
     expect(stopCalls).toEqual(['a']);
   });
 
-  it('stop is best-effort and aggregates failures', async () => {
+  it('stop is best-effort', async () => {
     const stopCalls: string[] = [];
 
     manager.register([
@@ -211,9 +212,7 @@ describe('ModuleManager', () => {
 
     await manager.start();
 
-    await expect(manager.stop()).rejects.toMatchObject({
-      code: MM_STOP_FAILED,
-    });
+    await expect(manager.stop()).resolves.toBeUndefined();
 
     expect(stopCalls).toEqual(['b', 'a']);
   });
@@ -284,7 +283,10 @@ describe('ModuleManager', () => {
     await expect(manager.stop()).resolves.toBeUndefined();
   });
 
-  it('does not allow register while started', async () => {
+  it('skips register while started', async () => {
+    const logger = { ...createSilentLogger(), warn: jest.fn() };
+    manager = new ModuleManager({ logger });
+
     manager.register(
       createModule({
         id: 'a',
@@ -295,7 +297,8 @@ describe('ModuleManager', () => {
 
     await manager.start();
 
-    expect(() => manager.register(createModule({ id: 'b', start: async () => undefined }))).toThrow(expect.objectContaining({ code: MM_ALREADY_STARTED }));
+    expect(() => manager.register(createModule({ id: 'b', start: async () => undefined }))).not.toThrow();
+    expect(logger.warn).toHaveBeenCalledWith('ModuleManager:register:already-started');
 
     await manager.stop();
   });

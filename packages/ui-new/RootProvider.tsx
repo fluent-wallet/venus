@@ -92,10 +92,8 @@ async function bootAppOnce(): Promise<void> {
       config: RUNTIME_CONFIG,
     });
 
-    runtime.prepare();
-    setUiServiceContainer(runtime.context.container);
-
     await runtime.start();
+    setUiServiceContainer(runtime.context.container);
   })();
 
   return bootOnce;

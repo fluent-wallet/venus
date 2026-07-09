@@ -37,7 +37,11 @@ const EraseAllWallet: React.FC<Props> = ({ navigation }) => {
       await getAuthService().getPassword();
       bottomSheetRef.current?.close();
       navigation.navigate(WelcomeStackName);
-      await disconnectAllSessions();
+      try {
+        await disconnectAllSessions();
+      } catch (error) {
+        console.warn('[EraseAllWallet] Failed to disconnect WalletConnect sessions before erasing wallet.', error);
+      }
       await new Promise((resolve) => setTimeout(resolve, 100));
       await getWalletMaintenanceService().clearWalletData();
       await RNRestart.restart();
