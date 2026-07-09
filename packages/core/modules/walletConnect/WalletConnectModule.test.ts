@@ -97,6 +97,8 @@ describe('WalletConnectModule', () => {
     eventBus.on('wallet-connect/sessions-changed', (payload) => busEvents.push(payload));
 
     const service = container.get(WalletConnectService);
+    await service.start();
+
     expect(service.getSessions().map((s) => s.topic)).toEqual(['t1']);
 
     expect((Core as unknown as jest.Mock).mock.calls[0]?.[0]).toEqual({ projectId: 'test_project_id' });

@@ -120,6 +120,8 @@ export type RuntimeContext = {
 export type RuntimeModule = {
   id: string;
   dependencies?: readonly string[];
+  /** Defaults to `blocking`. Use `background` for retryable, non-critical modules. */
+  startMode?: 'blocking' | 'background';
   register?: (context: RuntimeContext) => void;
   start?: (context: RuntimeContext) => Promise<void> | void;
   stop?: (context: RuntimeContext) => Promise<void> | void;
