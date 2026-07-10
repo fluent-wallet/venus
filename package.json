@@ -26,7 +26,7 @@
     "@craftzdog/react-native-buffer": "^6.1.0",
     "@ethersproject/abi": "^5.8.0",
     "@ethersproject/shims": "^5.8.0",
-    "@gorhom/bottom-sheet": "5.2.8",
+    "@gorhom/bottom-sheet": "5.2.14",
     "@json-rpc-tools/utils": "^1.7.6",
     "@metamask/gas-fee-controller": "15.0.0",
     "@metamask/native-utils": "^0.8.0",

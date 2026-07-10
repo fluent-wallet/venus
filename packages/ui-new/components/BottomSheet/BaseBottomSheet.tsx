@@ -1,4 +1,10 @@
-import BottomSheet, { BottomSheetBackdrop, type BottomSheetBackdropProps, type BottomSheetProps, type SNAP_POINT_TYPE } from '@gorhom/bottom-sheet';
+import BottomSheet, {
+  BottomSheetBackdrop,
+  type BottomSheetBackdropProps,
+  type BottomSheetProps,
+  type SNAP_POINT_TYPE,
+  useBottomSheetTimingConfigs,
+} from '@gorhom/bottom-sheet';
 import { useFocusEffect, useTheme } from '@react-navigation/native';
 import { type ForwardedRef, useCallback, useImperativeHandle, useRef, useState } from 'react';
 import { BackHandler, Keyboard, Platform } from 'react-native';
@@ -14,6 +20,8 @@ export interface BaseBottomSheetProps extends NativeBottomSheetProps {
   handlePressBackdrop?: () => void;
   onOpen?: () => void;
 }
+
+const DEFAULT_ANIMATION_DURATION_MS = 250;
 
 export function BaseBottomSheet({
   ref,
@@ -33,16 +41,18 @@ export function BaseBottomSheet({
   enableDynamicSizing = false,
   activeOffsetY = 66,
   activeOffsetX = 0,
+  animationConfigs: providedAnimationConfigs,
   ...rest
 }: BaseBottomSheetProps) {
   const { colors, palette } = useTheme();
+  const defaultAnimationConfigs = useBottomSheetTimingConfigs({ duration: DEFAULT_ANIMATION_DURATION_MS });
   const sheetRef = useRef<BottomSheet>(null);
   const [canPanDownToClose, setCanPanDownToClose] = useState(() => Platform.OS === 'ios');
   const hasOpenedRef = useRef(false);
   const indexRef = useRef(index);
   indexRef.current = index;
 
-  useImperativeHandle(ref, () => sheetRef.current as BottomSheet | null, []);
+  useImperativeHandle(ref, () => sheetRef.current as BottomSheet, []);
   const renderBackdrop = useCallback(
     (props: BottomSheetBackdropProps) => {
       if (!showBackDrop) return null;
@@ -112,6 +122,7 @@ export function BaseBottomSheet({
       index={index}
       onChange={handleChange}
       onClose={handleClose}
+      animationConfigs={providedAnimationConfigs ?? defaultAnimationConfigs}
       enablePanDownToClose={canPanDownToClose && enablePanDownToClose}
       enableContentPanningGesture={enableContentPanningGesture}
       enableHandlePanningGesture={canPanDownToClose && enableHandlePanningGesture}

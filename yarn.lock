@@ -4383,9 +4383,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@gorhom/bottom-sheet@npm:5.2.8":
-  version: 5.2.8
-  resolution: "@gorhom/bottom-sheet@npm:5.2.8"
+"@gorhom/bottom-sheet@npm:5.2.14":
+  version: 5.2.14
+  resolution: "@gorhom/bottom-sheet@npm:5.2.14"
   dependencies:
     "@gorhom/portal": 1.0.14
     invariant: ^2.2.4
@@ -4401,7 +4401,7 @@ __metadata:
       optional: true
     "@types/react-native":
       optional: true
-  checksum: 987c07e013c423d71afc21f5a38ad02dacfc153c8eb613ac3be0fa1331a559976f0f0d02144bf80654b2fe737582c21249ff8988694cdb6d94981037a1b54001
+  checksum: c4387fa66b06e9c5dac713af7cdc9f9f5da42743f7dd6a2117d8c956e9410573c24e552fdb20232e251de5890ee83569894312eb5d4531f933f512b673ffeb53
   languageName: node
   linkType: hard
 
@@ -19842,7 +19842,7 @@ __metadata:
     "@craftzdog/react-native-buffer": ^6.1.0
     "@ethersproject/abi": ^5.8.0
     "@ethersproject/shims": ^5.8.0
-    "@gorhom/bottom-sheet": 5.2.8
+    "@gorhom/bottom-sheet": 5.2.14
     "@json-rpc-tools/utils": ^1.7.6
     "@metamask/gas-fee-controller": 15.0.0
     "@metamask/native-utils": ^0.8.0
