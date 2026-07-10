@@ -1,9 +1,10 @@
 // eslint-disable-next-line no-undef
 module.exports = {
-  presets: [["babel-preset-expo"]],
+  // Keep the legacy class/decorator transform pipeline required by WatermelonDB and Inversify.
+  // This changes Babel output only; the app still runs on the current Hermes runtime.
+  presets: [['babel-preset-expo', { unstable_transformProfile: 'hermes-v0' }]],
   plugins: [
     ['babel-plugin-react-compiler', {target: "19"}],
-    ['@babel/plugin-proposal-decorators', { version: 'legacy' }],
     [
       'module-resolver',
       {
@@ -29,11 +30,5 @@ module.exports = {
       },
     ],
     'react-native-reanimated/plugin',
-  ],
-  overrides: [
-    {
-      test: './node_modules/ethers', // only for ethers not for all the modules, see: https://github.com/ethers-io/ethers.js/issues/3996
-      plugins: [['@babel/plugin-transform-private-methods', { loose: true }]],
-    },
   ],
 };

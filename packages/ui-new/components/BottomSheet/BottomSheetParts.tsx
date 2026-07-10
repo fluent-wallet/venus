@@ -60,7 +60,7 @@ export const BottomSheetScrollContent = ({ children, innerPaddingHorizontal = fa
   </BottomSheetScrollView>
 );
 export const snapPoints = {
-  large: [`${((clamp(screenHeight - 100, 628, screenHeight - 40) / screenHeight) * 100).toFixed(2)}%`] as string[],
+  large: [Math.round(clamp(screenHeight - 100, 628, screenHeight - 40))] as number[],
   percent90: ['90%'] as string[],
   percent85: ['85%'] as string[],
   percent80: ['80%'] as string[],

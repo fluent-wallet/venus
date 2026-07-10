@@ -12,6 +12,7 @@ import { createPassthroughTestCryptoTool, createSilentLogger, mockDatabase } fro
 import { DEFAULT_CFX_HDPATH, DEFAULT_ETH_HDPATH, Networks } from '@core/utils/consts';
 import { Q } from '@nozbe/watermelondb';
 import { Container } from 'inversify';
+import { AuthModule } from '../auth';
 import { createCryptoToolModule } from '../crypto';
 import { ServicesModule } from '../services';
 import { DbBootstrapModule } from './DbBootstrapModule';
@@ -29,6 +30,7 @@ describe('DbBootstrapModule', () => {
       DbBootstrapModule,
       createCryptoToolModule({ cryptoTool: createPassthroughTestCryptoTool() }),
       EventBusModule,
+      AuthModule,
       ServicesModule,
     ]);
 

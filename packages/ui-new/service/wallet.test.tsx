@@ -62,7 +62,7 @@ describe('wallet service hooks', () => {
 
   it('useWalletReady returns true when both vault and account ready', async () => {
     service.hasAnyVault.mockResolvedValue(true);
-    (useCurrentAccount as jest.Mock).mockReturnValue({ data: { id: 'acc_1' }, isLoading: false, error: null });
+    (useCurrentAccount as jest.Mock).mockReturnValue({ data: { id: 'acc_1', currentAddressId: 'addr_1' }, isLoading: false, error: null });
 
     const { result } = renderHook(() => useWalletReady(), { wrapper });
 
