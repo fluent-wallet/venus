@@ -9,6 +9,7 @@ import { createPassthroughTestCryptoTool, createSilentLogger, mockDatabase } fro
 import { NetworkType } from '@core/types';
 import { ChainType } from '@core/utils/consts';
 import { Container } from 'inversify';
+import { AuthModule } from '../auth';
 import { createCryptoToolModule } from '../crypto';
 import { createDbModule, DbBootstrapModule } from '../db';
 import { type CoreEventMap, type EventBus, EventBusModule } from '../eventBus';
@@ -70,6 +71,7 @@ describe('TxSyncModule', () => {
 
     manager.register([
       EventBusModule,
+      AuthModule,
       createDbModule({ database }),
       DbBootstrapModule,
       createCryptoToolModule({ cryptoTool: createPassthroughTestCryptoTool() }),
