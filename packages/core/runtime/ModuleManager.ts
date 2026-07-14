@@ -1,12 +1,4 @@
-import {
-  CoreError,
-  MM_ALREADY_STARTED,
-  MM_CYCLE_DEPENDENCY,
-  MM_DUPLICATE_MODULE_ID,
-  MM_MISSING_DEPENDENCY,
-  MM_START_FAILED,
-  MM_STOP_FAILED,
-} from '@core/errors';
+import { CoreError, MM_CYCLE_DEPENDENCY, MM_MISSING_DEPENDENCY, MM_START_FAILED } from '@core/errors';
 import { Container } from 'inversify';
 import type { Logger, RuntimeConfig, RuntimeContext, RuntimeModule, RuntimeScheduler } from './types';
 
@@ -15,7 +7,7 @@ type ModuleRecord = {
   dependencies: readonly string[];
 };
 
-type StopFailure = { moduleId: string; error: unknown };
+type BackgroundStart = { moduleId: string; module: RuntimeModule };
 
 const createDefaultLogger = (): Logger => {
   return {
@@ -48,7 +40,6 @@ export class ModuleManager {
 
   private readonly modules = new Map<string, ModuleRecord>();
   private readonly registered = new Set<string>();
-  private startedOrder: string[] = [];
   private started = false;
 
   constructor(options: ModuleManagerOptions = {}) {
@@ -65,10 +56,8 @@ export class ModuleManager {
 
   public register(modules: RuntimeModule | RuntimeModule[]): void {
     if (this.started) {
-      throw new CoreError({
-        code: MM_ALREADY_STARTED,
-        message: 'Cannot register modules while runtime is started.',
-      });
+      this.context.logger.warn('ModuleManager:register:already-started');
+      return;
     }
 
     const list = Array.isArray(modules) ? modules : [modules];
@@ -76,11 +65,8 @@ export class ModuleManager {
     for (const module of list) {
       const id = module.id;
       if (this.modules.has(id)) {
-        throw new CoreError({
-          code: MM_DUPLICATE_MODULE_ID,
-          message: `Duplicate module id: ${id}`,
-          context: { id },
-        });
+        this.context.logger.warn('ModuleManager:register:duplicate-module', { moduleId: id });
+        continue;
       }
 
       this.modules.set(id, {
@@ -90,23 +76,16 @@ export class ModuleManager {
     }
   }
 
-  public prepare(): void {
-    if (this.started) {
-      throw new CoreError({ code: MM_ALREADY_STARTED, message: 'Runtime already started.' });
-    }
-
-    const order = this.resolveStartOrder();
-    this.prepareWithOrder(order);
-  }
-
   public async start(): Promise<void> {
     if (this.started) {
-      throw new CoreError({ code: MM_ALREADY_STARTED, message: 'Runtime already started.' });
+      this.context.logger.warn('ModuleManager:start:already-started');
+      return;
     }
 
     const order = this.resolveStartOrder();
-    this.prepareWithOrder(order);
+    this.registerModules(order);
     const startSucceeded: string[] = [];
+    const backgroundStarts: BackgroundStart[] = [];
     const logger = this.context.logger;
 
     try {
@@ -114,6 +93,11 @@ export class ModuleManager {
         const record = this.modules.get(moduleId)!;
         const mod = record.module;
         if (mod.start) {
+          if (mod.startMode === 'background') {
+            backgroundStarts.push({ moduleId, module: mod });
+            continue;
+          }
+
           const t0 = this.context.now();
           logger.info('ModuleManager:start:start', { moduleId });
 
@@ -124,12 +108,15 @@ export class ModuleManager {
         }
       }
 
-      this.startedOrder = startSucceeded;
       this.started = true;
+
+      for (const item of backgroundStarts) {
+        this.startBackground(item.moduleId, item.module);
+      }
     } catch (error) {
       logger.error('ModuleManager:start:failed', { error });
 
-      const rollbackFailures = await this.rollbackStops(startSucceeded);
+      await this.rollbackStops(startSucceeded);
 
       throw new CoreError({
         code: MM_START_FAILED,
@@ -137,13 +124,26 @@ export class ModuleManager {
         cause: error,
         context: {
           startedModules: startSucceeded,
-          rollbackFailures: rollbackFailures.length > 0 ? rollbackFailures : undefined,
         },
       });
     }
   }
 
-  private prepareWithOrder(order: string[]): void {
+  private startBackground(moduleId: string, mod: RuntimeModule): void {
+    const t0 = this.context.now();
+    const logger = this.context.logger;
+
+    void (async () => {
+      try {
+        await mod.start?.(this.context);
+        logger.info('ModuleManager:start:background:done', { moduleId, durationMs: this.context.now() - t0 });
+      } catch (error) {
+        logger.warn('ModuleManager:start:background:failed', { moduleId, durationMs: this.context.now() - t0, error });
+      }
+    })();
+  }
+
+  private registerModules(order: string[]): void {
     const logger = this.context.logger;
 
     for (const moduleId of order) {
@@ -161,10 +161,10 @@ export class ModuleManager {
       this.registered.add(moduleId);
     }
   }
+
   public async stop(): Promise<void> {
     if (!this.started) return;
 
-    const failures: StopFailure[] = [];
     const logger = this.context.logger;
 
     const order = this.resolveStartOrder();
@@ -183,25 +183,14 @@ export class ModuleManager {
         await mod.stop(this.context);
         logger.info('ModuleManager:stop:done', { moduleId, durationMs: this.context.now() - t0 });
       } catch (error) {
-        failures.push({ moduleId, error });
-        logger.error('ModuleManager:stop:failed', { moduleId, error });
+        logger.warn('ModuleManager:stop:failed', { moduleId, error });
       }
     }
 
-    this.startedOrder = [];
     this.started = false;
-
-    if (failures.length > 0) {
-      throw new CoreError({
-        code: MM_STOP_FAILED,
-        message: 'Runtime stop failed.',
-        context: { failures },
-      });
-    }
   }
 
-  private async rollbackStops(startedModules: string[]): Promise<StopFailure[]> {
-    const failures: StopFailure[] = [];
+  private async rollbackStops(startedModules: string[]): Promise<void> {
     const logger = this.context.logger;
 
     for (let index = startedModules.length - 1; index >= 0; index -= 1) {
@@ -216,12 +205,9 @@ export class ModuleManager {
         await mod.stop(this.context);
         logger.warn('ModuleManager:rollback-stop:done', { moduleId, durationMs: this.context.now() - t0 });
       } catch (error) {
-        failures.push({ moduleId, error });
-        logger.error('ModuleManager:rollback-stop:failed', { moduleId, error });
+        logger.warn('ModuleManager:rollback-stop:failed', { moduleId, error });
       }
     }
-
-    return failures;
   }
 
   private resolveStartOrder(): string[] {

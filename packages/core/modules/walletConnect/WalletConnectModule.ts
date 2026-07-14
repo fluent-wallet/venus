@@ -32,6 +32,7 @@ const readWalletConnectConfig = (context: RuntimeContext): Required<Pick<WalletC
 export const WalletConnectModule: RuntimeModule = {
   id: WALLET_CONNECT_MODULE_ID,
   dependencies: [EVENT_BUS_MODULE_ID, AUTH_MODULE_ID, EXTERNAL_REQUESTS_MODULE_ID, SERVICES_MODULE_ID],
+  startMode: 'background',
   register: (context) => {
     const { container } = context;
     if (container.isBound(WalletConnectService)) return;

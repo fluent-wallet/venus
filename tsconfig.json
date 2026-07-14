@@ -26,7 +26,6 @@
     "noUnusedLocals": true,
     "noUnusedParameters": true,
     "noFallthroughCasesInSwitch": true,
-    "baseUrl": ".",
     "paths": {
       "@core/*": ["./packages/core/*"],
       "@WalletCoreExtends/*": ["./packages/WalletCoreExtends/*"],

@@ -13,6 +13,7 @@ import { NetworkService } from '@core/services';
 import { createTestAccount, seedNetwork } from '@core/testUtils/fixtures';
 import { createPassthroughTestCryptoTool, createSilentLogger, mockDatabase } from '@core/testUtils/mocks';
 import { Container } from 'inversify';
+import { AuthModule } from '../auth';
 import { createCryptoToolModule } from '../crypto';
 import { createDbModule, DbBootstrapModule } from '../db';
 import { ServicesModule } from '../services';
@@ -35,6 +36,7 @@ describe('AssetsSyncModule', () => {
 
     manager.register([
       EventBusModule,
+      AuthModule,
       createDbModule({ database }),
       DbBootstrapModule,
       createCryptoToolModule({ cryptoTool: createPassthroughTestCryptoTool() }),
@@ -110,6 +112,7 @@ describe('AssetsSyncModule', () => {
 
     manager.register([
       EventBusModule,
+      AuthModule,
       createDbModule({ database }),
       DbBootstrapModule,
       createCryptoToolModule({ cryptoTool: createPassthroughTestCryptoTool() }),
