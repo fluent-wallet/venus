@@ -13,9 +13,8 @@ import { toChecksum } from '@core/utils/account';
 import { convertHexToBase32 } from '@core/utils/address';
 import { Q } from '@nozbe/watermelondb';
 import { inject, injectable } from 'inversify';
-import type { BackupSeedParams, DeriveKeyParams, RestoreSeedParams } from 'modules/BSIM/src';
 import { Platform } from 'react-native';
-import { startBleDeviceScan, type TransportError } from 'react-native-bsim';
+import { type BackupSeedParams, type DeriveKeyParams, type RestoreSeedParams, startBleDeviceScan, type TransportError } from 'react-native-bsim';
 import { getGroupedAccountNickname } from '../account/naming';
 
 export type ConnectAndSyncResult = {

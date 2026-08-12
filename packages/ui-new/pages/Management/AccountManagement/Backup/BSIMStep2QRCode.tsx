@@ -22,7 +22,7 @@ import { Trans, useTranslation } from 'react-i18next';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { showMessage } from 'react-native-flash-message';
 import QRCode from 'react-native-qrcode-svg';
-import ViewShot from 'react-native-view-shot';
+import ViewShot, { type ViewShotRef } from 'react-native-view-shot';
 import BackupBottomSheet from './BackupBottomSheet';
 
 export const BSIMStep2QRCode: React.FC<BackupScreenProps<typeof BackupBSIMQ2RCodeStackName>> = ({ route, navigation }) => {
@@ -32,7 +32,7 @@ export const BSIMStep2QRCode: React.FC<BackupScreenProps<typeof BackupBSIMQ2RCod
   const [loading, setLoading] = useState(true);
   const [qrData, setQrData] = useState<string>('');
   const [saving, setSaving] = useState(false);
-  const qrCodeRef = useRef<ViewShot>(null);
+  const qrCodeRef = useRef<ViewShotRef>(null);
   const [showSuccess, setShowSuccess] = useState(false);
   const finishBackup = useFinishBackup();
 
@@ -105,7 +105,7 @@ export const BSIMStep2QRCode: React.FC<BackupScreenProps<typeof BackupBSIMQ2RCod
         throw new Error('Failed to capture QR code');
       }
 
-      await MediaLibrary.saveToLibraryAsync(uri);
+      await MediaLibrary.Asset.create(uri);
       await finishBackup(route.params.vaultId);
       showMessage({
         type: 'success',
