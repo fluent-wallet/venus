@@ -1,15 +1,15 @@
 {
-  "version": "3.0.1",
+  "version": "3.0.2",
   "force": false,
   "en": {
-    "description": "🎉 BIM Wallet New Version v3.0.1",
+    "description": "🎉 BIM Wallet New Version v3.0.2",
     "messageList": [
       "💎 Improvements",
       "Fixed some known issues"
     ]
   },
   "zh-Hant": {
-    "description": "🎉 BIM Wallet 新版本 v3.0.1",
+    "description": "🎉 BIM Wallet 新版本 v3.0.2",
     "messageList": [
       "💎 優化",
       "修復一些已知問題"
