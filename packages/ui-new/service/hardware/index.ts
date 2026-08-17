@@ -1,6 +1,6 @@
 import type { HardwareConnectOptions } from '@core/types';
 import { useMutation } from '@tanstack/react-query';
-import type { BackupSeedParams, RestoreSeedParams } from 'modules/BSIM/src';
+import type { BackupSeedParams, RestoreSeedParams } from 'react-native-bsim';
 import { getHardwareWalletService } from '../core';
 
 export function useConnectHardware() {

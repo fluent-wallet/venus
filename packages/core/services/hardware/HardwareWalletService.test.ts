@@ -20,8 +20,8 @@ import type {
 import { NetworkType } from '@core/types';
 import type { Database } from '@nozbe/watermelondb';
 import { Container } from 'inversify';
-import type { BackupSeedParams, DeriveKeyParams, RestoreSeedParams } from 'modules/BSIM/src';
 import { Platform } from 'react-native';
+import type { BackupSeedParams, DeriveKeyParams, RestoreSeedParams } from 'react-native-bsim';
 import { startBleDeviceScan } from 'react-native-bsim';
 import { HardwareWalletService } from './HardwareWalletService';
 
