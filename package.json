@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "prepare": "husky",
-    "android": "react-native run-android --tasks installDevDebug",
+    "android": "react-native run-android --tasks installDevDebug --appIdSuffix dev",
     "ios": "react-native run-ios",
     "lint": "biome check --fix",
     "format": "biome format --write",
