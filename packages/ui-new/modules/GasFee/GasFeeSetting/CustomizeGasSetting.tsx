@@ -88,12 +88,19 @@ export const controlRule = {
 const CustomizeGasSetting: React.FC<Props> = ({ customizeGasSetting, estimateCurrentGasPrice, onClose, onConfirm, force155 }) => {
   const { t } = useTranslation();
   const { colors } = useTheme();
-  const bottomSheetRef = useRef<BottomSheetMethods>(null!);
+  const bottomSheetRef = useRef<BottomSheetMethods>(null);
   const { data: currentNetwork } = useCurrentNetwork();
   const minGasPrice = useMemo(
     () => (currentNetwork ? getTransactionService().getMinGasPriceWei({ chainId: currentNetwork.chainId, networkType: currentNetwork.networkType }) : null),
-    [currentNetwork?.chainId, currentNetwork?.networkType],
+    [currentNetwork],
   );
+
+  const validateMinGasPrice = (gasPriceGwei: string): boolean | 'less-than-min' => {
+    if (minGasPrice === null) return false;
+
+    const gasPriceWei = new Decimal(gasPriceGwei || '0').mul(Gwei);
+    return gasPriceWei.greaterThanOrEqualTo(minGasPrice) ? true : 'less-than-min';
+  };
 
   const {
     control,
@@ -146,21 +153,22 @@ const CustomizeGasSetting: React.FC<Props> = ({ customizeGasSetting, estimateCur
     [customizeGasSetting, onConfirm],
   );
 
-  const LessThanMinTip = useMemo(
-    () => (
+  const LessThanMinTip = useMemo(() => {
+    if (minGasPrice === null) return null;
+
+    return (
       <View style={styles.tooLowTipWrapper}>
         <Failed color={colors.down} />
         <Text style={[styles.tooLowTip, { color: colors.down }]}>
           {t('tx.gasFee.customizeGasSetting.minimumGasPrice', {
             network: currentNetwork?.name,
             gasPriceType: !isEip1559GasSetting(customizeGasSetting) || force155 ? 'gas price' : 'base fee',
-            gasPrice: new Decimal(minGasPrice ?? '0x0').div(Gwei).toString(),
+            gasPrice: new Decimal(minGasPrice).div(Gwei).toString(),
           })}
         </Text>
       </View>
-    ),
-    [colors, currentNetwork?.name, minGasPrice, customizeGasSetting, force155, t],
-  );
+    );
+  }, [colors, currentNetwork?.name, minGasPrice, customizeGasSetting, force155, t]);
 
   const GreatThanMaxFeeTip = useMemo(
     () => (
@@ -202,7 +210,7 @@ const CustomizeGasSetting: React.FC<Props> = ({ customizeGasSetting, estimateCur
                 control={control}
                 rules={{
                   ...controlRule,
-                  validate: (newGasPrice) => new Decimal(newGasPrice || '0').mul(Gwei).greaterThanOrEqualTo(new Decimal(minGasPrice)) || 'less-than-min',
+                  validate: validateMinGasPrice,
                 }}
                 render={({ field: { onChange, onBlur, value } }) => (
                   <TextInput error={!!errors?.gasPrice} colors={colors} onBlur={onBlur} onChangeText={onChange} value={value} />
@@ -224,7 +232,7 @@ const CustomizeGasSetting: React.FC<Props> = ({ customizeGasSetting, estimateCur
                 control={control}
                 rules={{
                   ...controlRule,
-                  validate: (newMaxFeePerGas) => new Decimal(newMaxFeePerGas || '0').mul(Gwei).greaterThanOrEqualTo(minGasPrice) || 'less-than-min',
+                  validate: validateMinGasPrice,
                 }}
                 render={({ field: { onChange, onBlur, value } }) => (
                   <TextInput error={!!errors?.maxFeePerGas} colors={colors} onBlur={onBlur} onChangeText={onChange} value={value} />
@@ -260,7 +268,7 @@ const CustomizeGasSetting: React.FC<Props> = ({ customizeGasSetting, estimateCur
             <Button testID="cancel" style={styles.btn} size="small" onPress={() => bottomSheetRef.current?.close()}>
               {t('common.cancel')}
             </Button>
-            <Button testID="confirm" style={styles.btn} size="small" onPress={handleSubmit(handleConfirm)}>
+            <Button testID="confirm" style={styles.btn} size="small" disabled={minGasPrice === null} onPress={() => handleSubmit(handleConfirm)()}>
               {t('common.confirm')}
             </Button>
           </View>

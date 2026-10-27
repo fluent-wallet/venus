@@ -1,4 +1,5 @@
-import { NativeModules, Platform } from 'react-native';
+import { requireOptionalNativeModule } from 'expo-modules-core';
+import { Platform } from 'react-native';
 import { BSIM_AID } from '../core/params';
 import type { HexString } from '../core/types';
 import { normalizeHex } from '../core/utils';
@@ -22,7 +23,7 @@ type CreateApduTransportDeps = {
 };
 
 const ensureNativeModule = (native?: NativeApduModule): NativeApduModule => {
-  const bridge = native ?? (NativeModules.BSIM as Partial<NativeApduModule> | undefined);
+  const bridge = native ?? requireOptionalNativeModule<NativeApduModule>('BSIM');
 
   if (!bridge) {
     throw new TransportError(TransportErrorCode.UNSUPPORTED_PLATFORM, 'BSIM native module is required for APDU transport');

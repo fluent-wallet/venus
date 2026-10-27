@@ -199,7 +199,7 @@ export const RecoverBSIM: React.FC<StackScreenProps<typeof RecoverBsimStackName>
             </BottomSheetContent>
 
             <BottomSheetFooter>
-              <Button testID="createPasswordButton" onPress={handleSubmit(handleNext)} disabled={!isValid || isSubmitting} loading={isSubmitting}>
+              <Button testID="createPasswordButton" onPress={() => handleSubmit(handleNext)()} disabled={!isValid || isSubmitting} loading={isSubmitting}>
                 {t('common.next')}
               </Button>
             </BottomSheetFooter>

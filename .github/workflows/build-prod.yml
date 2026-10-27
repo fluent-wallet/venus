@@ -11,7 +11,7 @@ jobs:
   versions:
     uses: ./.github/workflows/versions.yml
     with:
-      branch: main
+      commitSha: ${{ github.sha }}
 
   createTag:
     needs: [versions]
@@ -25,10 +25,10 @@ jobs:
     secrets: inherit
     with:
       environment: prod
-      branch: main
+      commitSha: ${{ github.sha }}
+      displayVersion: ${{ needs.versions.outputs.PROD_VERSION }}
       artifactName: app-prod-release.apk
       buildAAB: false
-      appVersion: ${{ needs.versions.outputs.PROD_VERSION }}
 
   upload-to-release:
     name: upload to release
@@ -75,7 +75,7 @@ jobs:
       - name: Check out Git repository
         uses: actions/checkout@v4
         with:
-          ref: main
+          ref: ${{ github.sha }}
 
       - name: install OSSUTIL
         run: |
@@ -105,5 +105,5 @@ jobs:
     secrets: inherit
     with:
       environment: prod
-      branch: main
-      appVersion: ${{ needs.versions.outputs.PROD_VERSION }}
+      commitSha: ${{ github.sha }}
+      displayVersion: ${{ needs.versions.outputs.PROD_VERSION }}

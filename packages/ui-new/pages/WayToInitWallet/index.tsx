@@ -18,7 +18,7 @@ import { Image } from 'expo-image';
 import type React from 'react';
 import { useCallback, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ImageBackground, Keyboard, Platform, ScrollView, StyleSheet, View } from 'react-native';
+import { Keyboard, Platform, ScrollView, StyleSheet, View } from 'react-native';
 import { showMessage } from 'react-native-flash-message';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import ImportExistingWallet, { type BottomSheetMethods } from './ImportExistingWallet';
@@ -72,7 +72,8 @@ const WayToInitWallet: React.FC<StackScreenProps<typeof WayToInitWalletStackName
   const bsimDeviceSheetRef = useRef<BottomSheetMethods>(null!);
   return (
     <>
-      <ImageBackground source={WelcomeBgDark} style={styles.bg} resizeMode="cover">
+      <View style={styles.bg}>
+        <Image source={WelcomeBgDark} style={StyleSheet.absoluteFill} contentFit="cover" pointerEvents="none" />
         <ScrollView>
           <View style={{ paddingTop: insets.top, paddingRight: insets.right, paddingLeft: insets.left, paddingBottom: insets.bottom }}>
             <View style={styles.container}>
@@ -111,7 +112,7 @@ const WayToInitWallet: React.FC<StackScreenProps<typeof WayToInitWalletStackName
             </View>
           </View>
         </ScrollView>
-      </ImageBackground>
+      </View>
       <ImportExistingWallet
         bottomSheetRef={bottomSheetRef}
         onSuccessConfirm={(value) => {

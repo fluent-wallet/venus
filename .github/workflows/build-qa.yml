@@ -12,7 +12,7 @@ jobs:
   versions:
     uses: ./.github/workflows/versions.yml
     with:
-      branch: qa
+      commitSha: ${{ github.sha }}
 
   create-qa-tag:
     needs: [versions]
@@ -26,10 +26,10 @@ jobs:
     secrets: inherit
     with:
       environment: qa
-      branch: qa
+      commitSha: ${{ github.sha }}
+      displayVersion: ${{ needs.versions.outputs.QA_VERSION }}
       artifactName: app-qa-release.apk
       buildAAB: false
-      appVersion: ${{ needs.versions.outputs.QA_VERSION }}
 
   upload-to-release:
     name: upload-to-release
@@ -57,5 +57,5 @@ jobs:
     secrets: inherit
     with:
       environment: qa
-      branch: qa
-      appVersion: ${{ needs.versions.outputs.QA_VERSION }}
+      commitSha: ${{ github.sha }}
+      displayVersion: ${{ needs.versions.outputs.QA_VERSION }}

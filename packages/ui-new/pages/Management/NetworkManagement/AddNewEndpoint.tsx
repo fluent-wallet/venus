@@ -18,7 +18,7 @@ import type { StackNavigation } from '@router/configs';
 import { useAddEndpoint, useCurrentNetwork } from '@service/network';
 import { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { type NativeSyntheticEvent, Pressable, StyleSheet, type TextInputChangeEventData, View } from 'react-native';
+import { Pressable, StyleSheet, type TextInputChangeEvent, View } from 'react-native';
 
 const getChainIdMap = {
   [NetworkType.Conflux]: (endpoint: string) => fetchChain<{ chainId: string }>({ url: endpoint, method: 'cfx_getStatus' }).then((res) => res.chainId),
@@ -35,7 +35,7 @@ const AddNewEndpoint = () => {
   const navigation = useNavigation<StackNavigation>();
   const addEndpoint = useAddEndpoint();
 
-  const handleChange = useCallback((event: NativeSyntheticEvent<TextInputChangeEventData>) => {
+  const handleChange = useCallback((event: TextInputChangeEvent) => {
     setError('');
     setNetUrl(event.nativeEvent.text);
   }, []);

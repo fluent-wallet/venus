@@ -3,9 +3,9 @@ import Text from '@components/Text';
 import { SignatureFilterOption } from '@core/services/signing/types';
 import { useTheme } from '@react-navigation/native';
 import type React from 'react';
-import { useCallback, useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Dimensions, type LayoutChangeEvent, Modal, Pressable, StyleSheet, View } from 'react-native';
+import { Dimensions, Modal, Pressable, StyleSheet, View, type ViewInstance } from 'react-native';
 import Animated, { useAnimatedStyle, useSharedValue } from 'react-native-reanimated';
 
 const TypeFilter: React.FC<{
@@ -16,17 +16,15 @@ const TypeFilter: React.FC<{
   const position = useSharedValue({ right: 0, top: 0 });
   const { t } = useTranslation();
 
-  const handleLayout = useCallback(
-    (event: LayoutChangeEvent) => {
-      event.target.measure((_x: number, _y: number, width: number, height: number, pageX: number, pageY: number) => {
-        position.value = {
-          top: pageY + height / 2,
-          right: Dimensions.get('window').width - pageX - width,
-        };
-      });
-    },
-    [position],
-  );
+  const anchorRef = useRef<ViewInstance>(null);
+  const handleLayout = useCallback(() => {
+    anchorRef.current?.measure((_x: number, _y: number, width: number, height: number, pageX: number, pageY: number) => {
+      position.value = {
+        top: pageY + height / 2,
+        right: Dimensions.get('window').width - pageX - width,
+      };
+    });
+  }, [position]);
 
   const optionStyle = useAnimatedStyle(() => {
     return {
@@ -41,7 +39,7 @@ const TypeFilter: React.FC<{
   };
   return (
     <View style={styles.container}>
-      <View onLayout={handleLayout}>
+      <View ref={anchorRef} onLayout={handleLayout}>
         <Pressable onPress={() => setVisible(!visible)} testID="filter">
           <FilterIcon color={colors.textPrimary} />
         </Pressable>

@@ -146,7 +146,7 @@ const CustomizeAdvanceSetting: React.FC<Props> = ({ customizeAdvanceSetting, est
             <Button testID="cancel" style={styles.btn} size="small" onPress={() => bottomSheetRef.current?.close()}>
               {t('common.cancel')}
             </Button>
-            <Button testID="confirm" style={styles.btn} size="small" disabled={!!errors.gasLimit} onPress={handleSubmit(handleConfirm)}>
+            <Button testID="confirm" style={styles.btn} size="small" disabled={!!errors.gasLimit} onPress={() => handleSubmit(handleConfirm)()}>
               {t('common.confirm')}
             </Button>
           </View>

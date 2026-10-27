@@ -17,10 +17,6 @@ interface EncryptedData {
 @injectable()
 export class CryptoToolServer implements ICryptoTool {
   constructor() {
-    /**
-     * Unlike the default exported authCryptoTool, the authCryptoTool here requires an unexposed key to store the password itself.
-     * 'PASSWORD_CRYPTO_KEY' will be replaced in build.
-     */
     this.setGetPasswordMethod(getPasswordCryptoKey);
   }
 

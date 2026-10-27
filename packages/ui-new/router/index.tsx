@@ -84,7 +84,7 @@ const screenOptions = {
   // animation: 'fade',
 } as const;
 
-const Router: React.FC = () => {
+const Router: React.FC<{ onLayout?: () => void }> = ({ onLayout }) => {
   const { t } = useTranslation();
   const { data: hasVault = false } = useHasVault();
   const { colors, mode } = useTheme();
@@ -96,8 +96,8 @@ const Router: React.FC = () => {
   useListenDeepLink(navigation);
 
   return (
-    <View style={{ flex: 1, backgroundColor: colors.bgPrimary }}>
-      <StatusBar translucent backgroundColor="transparent" barStyle={mode === 'light' ? 'dark-content' : 'light-content'} />
+    <View style={{ flex: 1, backgroundColor: colors.bgPrimary }} onLayout={onLayout}>
+      <StatusBar barStyle={mode === 'light' ? 'dark-content' : 'light-content'} />
       <RootStack.Navigator initialRouteName={hasVault ? HomeStackName : WelcomeStackName} screenOptions={screenOptions}>
         <RootStack.Screen name={WelcomeStackName} component={Welcome} options={{ headerShown: false, animation: 'none' }} />
         <RootStack.Screen name={WayToInitWalletStackName} component={WayToInitWallet} options={{ headerShown: false, animation: 'none' }} />

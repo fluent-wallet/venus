@@ -17,7 +17,7 @@ import { isDev } from '@utils/getEnv';
 import type React from 'react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Keyboard, StyleSheet, type TextInput as TextInputRef } from 'react-native';
+import { Keyboard, StyleSheet, type TextInputInstance as TextInputRef } from 'react-native';
 
 const defaultPassword = isDev ? '12345678' : '';
 

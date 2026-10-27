@@ -74,6 +74,8 @@ yarn-error.log
 .expo
 dist/
 web-build/
+/android/
+/ios/
 
 # Yarn
 .yarn/*
@@ -82,5 +84,3 @@ web-build/
 !.yarn/releases
 !.yarn/sdks
 !.yarn/versions
-# react-native-config codegen
-ios/tmp.xcconfig

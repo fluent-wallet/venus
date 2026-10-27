@@ -18,7 +18,7 @@ import Decimal from 'decimal.js';
 import { formatUnits } from 'ethers';
 import { useCallback, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { type NativeSyntheticEvent, Pressable, StyleSheet, Text, type TextInputChangeEventData, View } from 'react-native';
+import { Pressable, StyleSheet, Text, type TextInputChangeEvent, View } from 'react-native';
 import type { TxDataWithTokenInfo } from '.';
 
 interface IProps {
@@ -39,7 +39,7 @@ export default function EditAllowance({ parseData, savedValue, onSave, onClose, 
   const [percent, setPercent] = useState<null | number>(null);
   const [invalidNumber, setInvalidNumber] = useState(false);
 
-  const handleChange = (event: NativeSyntheticEvent<TextInputChangeEventData>) => {
+  const handleChange = (event: TextInputChangeEvent) => {
     if (isDappSuggestValue) return;
     const newValue = event.nativeEvent.text;
     setCustomValue(newValue);

@@ -3,7 +3,9 @@ import './packages/setup/process';
 import 'react-native-gesture-handler';
 // this package is polyfill  TextEncode / TextDecode crypto.getRandomvalues URL() Buffer
 import '@walletconnect/react-native-compat';
-import { AppRegistry, LogBox } from 'react-native';
+import { registerRootComponent } from 'expo';
+import * as SplashScreen from 'expo-splash-screen';
+import { LogBox } from 'react-native';
 
 // import './packages/setup/getRandomValues';   the randomValues is polyfill for @walletconnect/react-native-compat
 
@@ -11,8 +13,9 @@ import '@ethersproject/shims';
 import './packages/setup/shimPerf';
 import './packages/setup/polyfill';
 import Decimal from 'decimal.js';
-import { name as appName } from './app.json';
 import RootProvider from './packages/ui-new/RootProvider';
+
+SplashScreen.preventAutoHideAsync().catch(console.warn);
 
 Decimal.set({ precision: 80 });
 Decimal.config({
@@ -33,4 +36,4 @@ LogBox.ignoreLogs([
 ]);
 
 // Register synchronously; boot logic runs inside RootProvider during mount.
-AppRegistry.registerComponent(appName, () => RootProvider);
+registerRootComponent(RootProvider);

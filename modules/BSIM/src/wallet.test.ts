@@ -48,7 +48,7 @@ describe('wallet', () => {
 
     await expect(wallet.verifyBpin()).resolves.toBeUndefined();
     expect(session.transmit).toHaveBeenCalledTimes(1);
-    expect(session.close).toHaveBeenCalledTimes(1);
+    expect(session.close).not.toHaveBeenCalled();
   });
 
   it('falls back to next transport when the first one fails to open', async () => {

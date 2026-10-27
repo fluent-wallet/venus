@@ -15,6 +15,9 @@ const normalizeExternalInput = (rawUrl: string): string | null => {
   const trimmed = rawUrl.trim();
   if (!trimmed) return null;
 
+  // Expo owns this scheme; launch URLs vary between development client versions.
+  if (/^exp\+venus-wallet:/i.test(trimmed)) return null;
+
   if (trimmed.startsWith('bimwallet://')) {
     return trimmed;
   }
