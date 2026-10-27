@@ -14,12 +14,6 @@ const baseKeychainOptions: Keychain.Options = {
   accessible: Keychain.ACCESSIBLE.WHEN_UNLOCKED_THIS_DEVICE_ONLY,
 };
 
-function requirePasswordCryptoKey(): string {
-  const key = getPasswordCryptoKey();
-  if (typeof key === 'string' && key.length > 0) return key;
-  throw new Error('PASSWORD_CRYPTO_KEY is missing (react-native-config).');
-}
-
 export async function getBiometricVaultPassword(params: { promptTitle: string }): Promise<string> {
   const record = await Keychain.getGenericPassword({
     ...baseKeychainOptions,
@@ -31,13 +25,13 @@ export async function getBiometricVaultPassword(params: { promptTitle: string })
   }
 
   const tool = new CryptoToolServer();
-  const passwordCryptoKey = requirePasswordCryptoKey();
+  const passwordCryptoKey = getPasswordCryptoKey();
   return tool.decrypt<string>(record.password, passwordCryptoKey);
 }
 
 export async function createBiometricVaultPassword(params: { promptTitle: string }): Promise<void> {
   const tool = new CryptoToolServer();
-  const passwordCryptoKey = requirePasswordCryptoKey();
+  const passwordCryptoKey = getPasswordCryptoKey();
 
   // Keep the legacy behavior: generate a high-entropy per-install password protected by biometrics.
   const vaultPassword = `${tool.generateRandomString()}${Date.now()}`;

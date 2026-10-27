@@ -1,7 +1,7 @@
 module.exports = {
-  preset: "@react-native/jest-preset",
+  preset: "jest-expo",
   transformIgnorePatterns: [
-    "node_modules/(?!((jest-)?react-native|@react-native(-community)?|@cfx-kit/dapp-utils|lodash-es|@noble/(curves|secp256k1|hashes|ciphers)|@scure/(bip32|bip39|base)|react-native-ble-plx)/)",
+    "node_modules/(?!((jest-)?react-native|@react-native(-community)?|expo|expo-.*|@expo/.*|@cfx-kit/dapp-utils|lodash-es|@noble/(curves|secp256k1|hashes|ciphers)|@scure/(bip32|bip39|base)|react-native-ble-plx)/)",
   ],
 
   collectCoverageFrom: ["packages/core/**/*.{ts,tsx}"],

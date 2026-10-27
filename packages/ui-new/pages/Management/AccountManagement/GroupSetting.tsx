@@ -34,7 +34,7 @@ import { handleBSIMHardwareUnavailable } from '@utils/handleBSIMHardwareUnavaila
 import type React from 'react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { type TextInput as _TextInput, Keyboard, Pressable, StyleSheet } from 'react-native';
+import { type TextInputInstance as _TextInput, Keyboard, Pressable, StyleSheet } from 'react-native';
 import { showMessage } from 'react-native-flash-message';
 import DeleteConfirm from './DeleteConfirm';
 

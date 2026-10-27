@@ -6,7 +6,18 @@ import { BottomSheetTextInput } from '@components/BottomSheet';
 import { useTheme } from '@react-navigation/native';
 import { isDev } from '@utils/getEnv';
 import { type Component, forwardRef, isValidElement, useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Keyboard, Platform, Pressable, type StyleProp, StyleSheet, TextInput, type TextInputProps, View, type ViewStyle } from 'react-native';
+import {
+  Keyboard,
+  Platform,
+  Pressable,
+  type StyleProp,
+  StyleSheet,
+  TextInput,
+  type TextInputInstance,
+  type TextInputProps,
+  View,
+  type ViewStyle,
+} from 'react-native';
 import type { SvgProps } from 'react-native-svg';
 
 interface Props extends TextInputProps {
@@ -20,7 +31,7 @@ interface Props extends TextInputProps {
   onPressSuffixIcon?: () => void;
 }
 
-const CustomTextInput = forwardRef<TextInput, Props>(
+const CustomTextInput = forwardRef<TextInputInstance, Props>(
   (
     {
       style,
@@ -54,7 +65,7 @@ const CustomTextInput = forwardRef<TextInput, Props>(
       [onChangeText],
     );
 
-    const inputRef = useRef<TextInput>(null!);
+    const inputRef = useRef<TextInputInstance>(null!);
 
     const handlePressClear = useCallback(() => {
       inputRef.current?.clear?.();

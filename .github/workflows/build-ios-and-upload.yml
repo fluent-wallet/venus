@@ -7,24 +7,29 @@ on:
         required: true
         type: string
         description: "Environment to build (qa/prod)"
-      appVersion:
+      commitSha:
         required: true
         type: string
-        description: "The app version"
-      branch:
+        description: "Git commit to build"
+      displayVersion:
         required: true
         type: string
-        description: "Git branch to checkout"
+        description: "Version label displayed in the app"
 
 jobs:
   ios-build:
     name: IOS Build
     runs-on: macos-26
+    env:
+      APP_ENV: ${{ inputs.environment }}
+      APP_DISPLAY_VERSION: ${{ inputs.displayVersion }}
+      PASSWORD_CRYPTO_KEY: ${{ secrets.PASSWORD_CRYPTO_KEY }}
+      CI: '1'
     steps:
       - name: Check out Git repository
         uses: actions/checkout@v4
         with:
-          ref: ${{inputs.branch}}
+          ref: ${{ inputs.commitSha }}
           fetch-depth: 0
 
       - name: Set up Node.js
@@ -33,7 +38,7 @@ jobs:
           node-version: 22
 
       - name: install dependencies
-        run: yarn
+        run: yarn install --immutable
 
       - name: Update versions
         run: |
@@ -41,31 +46,38 @@ jobs:
           MARKETING_VERSION=$(node -p "require('./package.json').version")
           ./.github/scripts/update-versions.sh "$MARKETING_VERSION" "$BUILD_NUMBER"
 
-      - name: patch and install pod
-        env:
-          PASSWORD_CRYPTO_KEY: ${{ secrets.PASSWORD_CRYPTO_KEY }}
-          STAGING_ANDROID: ${{ secrets.STAGING_ANDROID }}
-          APP_ENV: ${{ inputs.environment }}
-          APP_VERSION: ${{ inputs.appVersion }}
+      - name: Generate iOS project
+        run: yarn expo prebuild --platform ios --no-install
+
+      - name: Install Pods
+        run: cd ios && pod install --repo-update
+
+      - name: Locate generated Xcode project
+        id: native
         run: |
-          echo "" > .env
-          cat >>.env <<END
-          APP_ENV=$APP_ENV
-          PASSWORD_CRYPTO_KEY=$PASSWORD_CRYPTO_KEY
-          APP_VERSION=$APP_VERSION
-          END
-          yarn patchPackage && cd ios && pod install --repo-update && cd ..
-          rm ./ios/.xcode.env.local
+          node <<'JS'
+          const fs = require('node:fs');
+          const entries = fs.readdirSync('ios');
+          const project = entries.filter(name => name.endsWith('.xcodeproj'));
+          const workspace = entries.filter(name => name.endsWith('.xcworkspace'));
+          if (project.length !== 1 || workspace.length !== 1) {
+            throw new Error('Expected one generated Xcode project and workspace');
+          }
+          const scheme = project[0].replace(/\.xcodeproj$/, '');
+          fs.appendFileSync(process.env.GITHUB_OUTPUT,
+            `project=ios/${project[0]}\nworkspace=ios/${workspace[0]}\nscheme=${scheme}\n`);
+          JS
 
       - name: Build IOS App
         uses: yukiarrr/ios-build-action@v1.12.0
         with:
-          project-path: ios/BIMWallet.xcodeproj
+          project-path: ${{ steps.native.outputs.project }}
           p12-base64: ${{ secrets.IOS_P12_BASE64 }}
           mobileprovision-base64: ${{ secrets.IOS_MOBILE_PROVISION_BASE64 }}
           team-id: ${{ secrets.IOS_TEAM_ID }}
           certificate-password: ${{ secrets.IOS_CERTIFICATE_PASSWORD }}
-          workspace-path: ios/BIMWallet.xcworkspace
+          workspace-path: ${{ steps.native.outputs.workspace }}
+          scheme: ${{ steps.native.outputs.scheme }}
           code-signing-identity: "iPhone Distribution"
           output-path: "bimwallet.ipa"
 

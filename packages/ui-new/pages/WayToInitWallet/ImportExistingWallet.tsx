@@ -11,7 +11,7 @@ import { Mnemonic } from 'ethers';
 import type React from 'react';
 import { type RefObject, useCallback, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Keyboard, Pressable, StyleSheet, type TextInput } from 'react-native';
+import { Keyboard, Pressable, StyleSheet, type TextInputInstance } from 'react-native';
 
 interface Props {
   bottomSheetRef: RefObject<BottomSheet>;
@@ -28,7 +28,7 @@ const ImportExistingWallet: React.FC<Props> = ({ bottomSheetRef, inImporting, on
   const { colors } = useTheme();
   const { t } = useTranslation();
 
-  const textInputRef = useRef<TextInput>(null!);
+  const textInputRef = useRef<TextInputInstance>(null!);
   const existWalletValueRef = useRef('');
   const [status, setStatus] = useState<Status | null>(null!);
 

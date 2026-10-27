@@ -139,7 +139,13 @@ const PasswordWay: React.FC<StackScreenProps<typeof PasswordWayStackName>> = ({ 
           </Text>
         </Pressable>
 
-        <Button testID="createPasswordButton" style={styles.btn} onPress={handleSubmit(handleCreateVault)} disabled={!confirm || !isValid} loading={inAsync}>
+        <Button
+          testID="createPasswordButton"
+          style={styles.btn}
+          onPress={() => handleSubmit(handleCreateVault)()}
+          disabled={!confirm || !isValid}
+          loading={inAsync}
+        >
           {t('initWallet.setPassword.create')}
         </Button>
       </View>

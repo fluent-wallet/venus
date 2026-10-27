@@ -163,7 +163,7 @@ export const BSIMStep1Password: React.FC<BackupScreenProps<typeof BackupBSIM1Pas
         <BottomSheetFooter>
           <Button
             testID="createPasswordButton"
-            onPress={loading ? handleCancel : handleSubmit(handleSubmitForm)}
+            onPress={loading ? handleCancel : () => handleSubmit(handleSubmitForm)()}
             disabled={!confirm || !isValid}
             Icon={loading ? (HourglassLoading as any) : undefined}
           >

@@ -22,7 +22,7 @@ const BackButton: React.FC = () => {
   );
 };
 
-const Header: React.FC<NativeStackHeaderProps> = (props) => {
+const Header = (props: NativeStackHeaderProps) => {
   const { colors } = useTheme();
 
   return (

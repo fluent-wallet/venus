@@ -1,7 +1,0 @@
-{
-  "name": "BIM Wallet",
-  "displayName": "BIM Wallet",
-  "plugins": [
-    "expo-localization"
-  ]
-}
