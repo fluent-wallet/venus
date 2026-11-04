@@ -1,19 +1,11 @@
 import ScanBorder from '@assets/icons/scan-border.svg';
-import {
-  BottomSheetContent,
-  BottomSheetFooter,
-  BottomSheetHeader,
-  BottomSheetRoute,
-  BottomSheetWrapper,
-  snapPoints as defaultSnapPoints,
-  InlineBottomSheet,
-} from '@components/BottomSheet';
 import Button from '@components/Button';
+import { SheetBody, SheetFooter, SheetHeader } from '@components/Sheet';
 import Spinner from '@components/Spinner';
 import Text from '@components/Text';
 import { useTheme } from '@react-navigation/native';
 import { CameraView } from 'expo-camera';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Trans, useTranslation } from 'react-i18next';
 import { Linking, StyleSheet, View } from 'react-native';
 import type { ParseResult } from './types';
@@ -21,21 +13,14 @@ import useQRCodeScan from './useQRCodeScan';
 
 export type { ParseResult } from './types';
 
-type SnapPoints = Array<string | number>;
-
-interface QrScannerSheetProps<T> {
-  mode: 'inline' | 'route';
+interface QrScannerProps<T> {
   title: string;
   parseInput: (raw: string, helpers: { setStatus: (status: ParseResult<T> | null) => void }) => Promise<ParseResult<T>> | ParseResult<T>;
-  onConfirm: (data: T) => void;
+  onConfirm?: (data: T) => void;
   externalData?: string;
-  onClose?: () => void; // inline
-  onDismiss?: () => void; // route
-  snapPoints?: SnapPoints;
-  initialIndex?: number; // only for inline
+  onClose: () => void;
   enableGallery?: boolean;
   enableCamera?: boolean;
-  disableCloseWhenBlocking?: boolean;
   busyOverlay?: React.ReactNode;
   i18n?: {
     galleryText?: string;
@@ -50,28 +35,19 @@ interface QrScannerSheetProps<T> {
 
 const scanAreaWidth = 220;
 
-function QrScannerSheet<T>({
-  mode,
+function QrScannerContent<T>({
   title,
   parseInput,
   onConfirm,
   externalData,
   onClose,
-  onDismiss,
-  snapPoints,
-  initialIndex = 0,
   enableGallery = true,
   enableCamera = true,
-  disableCloseWhenBlocking = true,
   busyOverlay,
   i18n,
-}: QrScannerSheetProps<T>) {
+}: QrScannerProps<T>) {
   const { colors, reverseColors } = useTheme();
   const { t } = useTranslation();
-  const sheetSnapPoints = useMemo<SnapPoints>(() => {
-    if (snapPoints) return [...snapPoints];
-    return [...(externalData ? defaultSnapPoints.percent40 : defaultSnapPoints.large)];
-  }, [snapPoints, externalData]);
   const cameraRef = useRef<CameraView | null>(null);
   const isParsingRef = useRef(false);
   const isMountedRef = useRef(true);
@@ -105,7 +81,7 @@ function QrScannerSheet<T>({
         const result = await parseInput(raw, { setStatus: updateStatus });
         if (result.ok) {
           isParsingRef.current = false;
-          onConfirm(result.data);
+          onConfirm?.(result.data);
           return;
         }
         updateStatus(result);
@@ -137,12 +113,6 @@ function QrScannerSheet<T>({
     }
   }, [externalData, enableCamera, checkCameraPermission]);
 
-  const onBottomSheetOpen = useCallback(() => {
-    if (!externalData && enableCamera) {
-      checkCameraPermission();
-    }
-  }, [externalData, enableCamera, checkCameraPermission]);
-
   const errorStatus = parseStatus && !parseStatus.ok ? parseStatus : null;
   const isBlocking = Boolean(errorStatus?.blocking);
   const galleryText = i18n?.galleryText ?? t('scan.photos');
@@ -153,10 +123,10 @@ function QrScannerSheet<T>({
   const openSettingsText = i18n?.openSettingsText ?? t('scan.permission.reject.openSettings');
   const dismissText = i18n?.dismissText ?? t('common.dismiss');
 
-  const sheetBody = (
-    <BottomSheetWrapper innerPaddingHorizontal useBottomSheetView={true} style={styles.sheetWrapper}>
-      <BottomSheetHeader title={externalData ? 'Linking' : title} />
-      <BottomSheetContent>
+  return (
+    <View collapsable={false} style={styles.container}>
+      <SheetHeader title={externalData ? 'Linking' : title} />
+      <SheetBody style={styles.body}>
         {!externalData && enableCamera && hasCameraPermission && (
           <>
             <View style={styles.cameraWrapper}>
@@ -203,9 +173,9 @@ function QrScannerSheet<T>({
             )}
           </>
         )}
-      </BottomSheetContent>
+      </SheetBody>
 
-      <BottomSheetFooter style={styles.footer}>
+      <SheetFooter style={styles.footer}>
         {!externalData && enableGallery && enableCamera && hasCameraPermission && (
           <Button testID="photos" style={styles.photos} onPress={pickImage}>
             {galleryText}
@@ -214,18 +184,7 @@ function QrScannerSheet<T>({
 
         {!externalData && enableCamera && !hasCameraPermission && hasRejectCameraPermission && (
           <View style={styles.btnArea}>
-            <Button
-              testID="dismiss"
-              style={styles.btn}
-              onPress={() => {
-                if (mode === 'inline') {
-                  onClose?.();
-                } else {
-                  onDismiss?.();
-                }
-              }}
-              size="small"
-            >
+            <Button testID="dismiss" style={styles.btn} onPress={onClose} size="small">
               {dismissText}
             </Button>
             <Button testID="openSettings" style={styles.btn} onPress={() => Linking.openSettings()} size="small">
@@ -236,51 +195,23 @@ function QrScannerSheet<T>({
 
         {externalData && errorStatus && !isBlocking && (
           <View style={styles.btnArea}>
-            <Button
-              testID="dismiss"
-              style={styles.btn}
-              onPress={() => {
-                if (mode === 'inline') {
-                  onClose?.();
-                } else {
-                  onDismiss?.();
-                }
-              }}
-              size="small"
-            >
+            <Button testID="dismiss" style={styles.btn} onPress={onClose} size="small">
               {dismissText}
             </Button>
           </View>
         )}
-      </BottomSheetFooter>
-    </BottomSheetWrapper>
-  );
-
-  const commonSheetProps = {
-    snapPoints: sheetSnapPoints,
-    onOpen: onBottomSheetOpen,
-    enablePanDownToClose: !(isBlocking && disableCloseWhenBlocking),
-    enableHandlePanningGesture: !(isBlocking && disableCloseWhenBlocking),
-    enableContentPanningGesture: !(isBlocking && disableCloseWhenBlocking),
-    backDropPressBehavior: isBlocking && disableCloseWhenBlocking ? 'none' : 'close',
-  } as const;
-
-  if (mode === 'inline') {
-    return (
-      <InlineBottomSheet index={initialIndex} onClose={onClose} {...commonSheetProps}>
-        {sheetBody}
-      </InlineBottomSheet>
-    );
-  }
-
-  return (
-    <BottomSheetRoute onClose={onDismiss} {...commonSheetProps}>
-      {sheetBody}
-    </BottomSheetRoute>
+      </SheetFooter>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+  },
+  body: {
+    flex: 1,
+  },
   scanBorder: {
     position: 'absolute',
     top: 60,
@@ -321,9 +252,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
     lineHeight: 20,
   },
-  sheetWrapper: {
-    bottom: 0,
-  },
   photos: {
     width: 180,
     alignSelf: 'center',
@@ -343,4 +271,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default QrScannerSheet;
+export default QrScannerContent;

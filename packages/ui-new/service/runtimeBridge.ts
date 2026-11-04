@@ -10,7 +10,6 @@ import {
   TooManyPendingStackName,
   WalletConnectProposalStackName,
   WalletConnectSignMessageStackName,
-  WalletConnectStackName,
   WalletConnectTransactionStackName,
 } from '@router/configs';
 import { useQueryClient } from '@tanstack/react-query';
@@ -172,8 +171,8 @@ export function useRuntimeEventBridge(navigation: StackNavigation) {
 
       if (req.kind === 'session_proposal') {
         const route = {
-          name: WalletConnectStackName,
-          params: { screen: WalletConnectProposalStackName, params: { requestId: payload.requestId, request: req } },
+          name: WalletConnectProposalStackName,
+          params: { requestId: payload.requestId, request: req },
         } as const;
 
         if (shouldReplaceLinking) navigation.dispatch(StackActions.replace(route.name, route.params));
@@ -184,8 +183,8 @@ export function useRuntimeEventBridge(navigation: StackNavigation) {
       if (req.kind === 'session_request') {
         if (isRuntimeWcSignMessageRequest(req)) {
           const route = {
-            name: WalletConnectStackName,
-            params: { screen: WalletConnectSignMessageStackName, params: { requestId: payload.requestId, request: req } },
+            name: WalletConnectSignMessageStackName,
+            params: { requestId: payload.requestId, request: req },
           } as const;
 
           if (shouldReplaceLinking) navigation.dispatch(StackActions.replace(route.name, route.params));
@@ -232,8 +231,8 @@ export function useRuntimeEventBridge(navigation: StackNavigation) {
             }
 
             const route = {
-              name: WalletConnectStackName,
-              params: { screen: WalletConnectTransactionStackName, params: { requestId: payload.requestId, request: req, isContract } },
+              name: WalletConnectTransactionStackName,
+              params: { requestId: payload.requestId, request: req, isContract },
             } as const;
 
             if (shouldReplaceLinking) navigation.dispatch(StackActions.replace(route.name, route.params));

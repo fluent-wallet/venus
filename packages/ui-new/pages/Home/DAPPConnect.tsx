@@ -2,7 +2,7 @@ import ArrowRight from '@assets/icons/arrow-right2.svg';
 import Icon from '@components/Icon';
 import Text from '@components/Text';
 import { useNavigation, useTheme } from '@react-navigation/native';
-import { type StackNavigation, WalletConnectSessionsStackName, WalletConnectStackName } from '@router/configs';
+import { type StackNavigation, WalletConnectSessionsStackName } from '@router/configs';
 import { useCurrentAddress } from '@service/account';
 import { useWalletConnectSessions } from '@service/walletConnect';
 import take from 'lodash-es/take';
@@ -36,7 +36,7 @@ function DAPPConnect() {
 
   return (
     <View style={[styles.container, { borderColor: hasUnsafeURL ? colors.down : colors.up }]}>
-      <Pressable onPress={() => navigation.navigate(WalletConnectStackName, { screen: WalletConnectSessionsStackName })}>
+      <Pressable onPress={() => navigation.navigate(WalletConnectSessionsStackName)}>
         <View style={styles.content}>
           <View style={[styles.iconWarp, { width: 14 * Math.min(sessions.length - 1, 3) + 24 }]}>
             {take(sessions, 3).map(

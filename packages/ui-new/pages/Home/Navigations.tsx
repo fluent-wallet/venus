@@ -7,14 +7,7 @@ import Button from '@components/Button';
 import Text from '@components/Text';
 import { ASSET_TYPE } from '@core/types';
 import { useTheme } from '@react-navigation/native';
-import {
-  type HomeStackName,
-  ReceiveStackName,
-  SendTransactionStackName,
-  SendTransactionStep1StackName,
-  type StackScreenProps,
-  TooManyPendingStackName,
-} from '@router/configs';
+import { type HomeStackName, ReceiveStackName, SendTransactionStep1StackName, type StackScreenProps, TooManyPendingStackName } from '@router/configs';
 import { useCurrentAddress } from '@service/account';
 import { useAssetsOfCurrentAddress } from '@service/asset';
 import { isPendingTxsFull } from '@service/transaction';
@@ -82,9 +75,7 @@ const Navigations: React.FC<{
         navigation.navigate(TooManyPendingStackName);
         return;
       }
-      navigation.navigate(SendTransactionStackName, {
-        screen: SendTransactionStep1StackName,
-      });
+      navigation.navigate(SendTransactionStep1StackName);
     },
   });
 

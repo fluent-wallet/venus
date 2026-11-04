@@ -18,15 +18,13 @@ function withBsimDependencies(config) {
 }
 
 module.exports = function withBSIM(config) {
-  config = AndroidConfig.Permissions.withPermissions(config, [
-    'android.permission.BLUETOOTH',
-    'android.permission.BLUETOOTH_ADMIN',
-    'android.permission.BLUETOOTH_SCAN',
-    'android.permission.BLUETOOTH_CONNECT',
-    'android.permission.ACCESS_FINE_LOCATION',
-  ]);
   config = withAndroidManifest(config, (mod) => {
     const manifest = mod.modResults.manifest;
+    for (const permission of manifest['uses-permission'] || []) {
+      if (['android.permission.BLUETOOTH', 'android.permission.BLUETOOTH_ADMIN'].includes(permission.$['android:name'])) {
+        permission.$['android:maxSdkVersion'] = '30';
+      }
+    }
     const scanPermission = manifest['uses-permission']?.find((item) => item.$['android:name'] === 'android.permission.BLUETOOTH_SCAN');
     if (scanPermission) {
       scanPermission.$['android:usesPermissionFlags'] = 'neverForLocation';
@@ -37,6 +35,14 @@ module.exports = function withBSIM(config) {
     ];
     return mod;
   });
+  // Permission creation must run before the manifest attributes are applied.
+  config = AndroidConfig.Permissions.withPermissions(config, [
+    'android.permission.BLUETOOTH',
+    'android.permission.BLUETOOTH_ADMIN',
+    'android.permission.BLUETOOTH_SCAN',
+    'android.permission.BLUETOOTH_CONNECT',
+    'android.permission.ACCESS_FINE_LOCATION',
+  ]);
   config = withInfoPlist(config, (mod) => {
     mod.modResults.NSBluetoothAlwaysUsageDescription ??= 'Communicate with hardware wallets using Bluetooth.';
     mod.modResults.NSLocationWhenInUseUsageDescription ??= 'Discover nearby hardware wallets.';

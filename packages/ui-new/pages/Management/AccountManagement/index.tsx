@@ -1,7 +1,7 @@
 import Add from '@assets/icons/add.svg';
 import Delete from '@assets/icons/delete.svg';
 import Text from '@components/Text';
-import AccountsList, { styles as accountListStyles } from '@modules/AccountsList';
+import { styles as accountListStyles } from '@modules/AccountsList';
 import { useTheme } from '@react-navigation/native';
 import {
   type AccountManagementStackName,
@@ -14,6 +14,7 @@ import {
 import type React from 'react';
 import { useTranslation } from 'react-i18next';
 import { Pressable, StyleSheet, View } from 'react-native';
+import AccountManagementList from './AccountManagementList';
 
 const AccountManagement: React.FC<StackScreenProps<typeof AccountManagementStackName>> = ({ navigation }) => {
   const { colors } = useTheme();
@@ -21,8 +22,7 @@ const AccountManagement: React.FC<StackScreenProps<typeof AccountManagementStack
   return (
     <View style={[styles.container, { backgroundColor: colors.bgPrimary }]}>
       <Text style={[styles.title, { color: colors.textPrimary }]}>{t('account.management.title')}</Text>
-      <AccountsList
-        type="management"
+      <AccountManagementList
         onPressAccount={({ accountId }) => navigation.navigate(AccountSettingStackName, { accountId })}
         onPressGroup={(groupId) => navigation.navigate(GroupSettingStackName, { groupId })}
       />

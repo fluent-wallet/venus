@@ -1,6 +1,5 @@
 import NoRecord from '@assets/images/noRecord.webp';
 import Text from '@components/Text';
-import { BottomSheetFlatList } from '@gorhom/bottom-sheet';
 import { AccountItemView } from '@modules/AccountsList';
 import { styles as noneStyles } from '@modules/AssetsList/TokensList/ReceiveFunds';
 import { useTheme } from '@react-navigation/native';
@@ -10,7 +9,7 @@ import { Image } from 'expo-image';
 import type React from 'react';
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { StyleSheet } from 'react-native';
+import { FlatList, StyleSheet } from 'react-native';
 
 const RecentlyList: React.FC<{
   onPressAddress: (addressValue: string) => void;
@@ -50,19 +49,20 @@ const RecentlyList: React.FC<{
   }
 
   return (
-    <BottomSheetFlatList
+    <FlatList
       style={styles.container}
       data={items}
+      keyboardShouldPersistTaps="handled"
+      nestedScrollEnabled
       keyExtractor={(item) => item.addressValue}
-      renderItem={({ item }) => (
-        <AccountItemView colors={colors} nickname={item.nickname} addressValue={item.addressValue} onPress={() => onPressAddress(item.addressValue)} />
-      )}
+      renderItem={({ item }) => <AccountItemView nickname={item.nickname} addressValue={item.addressValue} onPress={() => onPressAddress(item.addressValue)} />}
     />
   );
 };
 
 export const styles = StyleSheet.create({
   container: {
+    flex: 1,
     marginTop: 12,
   },
   noRecentlyIcon: {

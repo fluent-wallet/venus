@@ -1,14 +1,11 @@
-import { BottomSheetContent, BottomSheetHeader, type BottomSheetMethods, BottomSheetWrapper, InlineBottomSheet, snapPoints } from '@components/BottomSheet';
-import Text from '@components/Text';
+import Sheet, { SheetHeader, SheetHeaderAction } from '@components/Sheet';
 import NetworksList from '@modules/NetworksList';
 import { useTheme } from '@react-navigation/native';
+import { useSwitchNetwork } from '@service/network';
+import { useSelectableNetworks } from '@service/selectableNetworks';
 import type React from 'react';
-import { useCallback, useRef } from 'react';
+import { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Pressable } from 'react-native';
-import { styles } from '../AccountSelector';
-
-export type { BottomSheetMethods };
 
 interface Props {
   onClose: () => void;
@@ -17,28 +14,32 @@ interface Props {
 
 const NetworkSelector: React.FC<Props> = ({ onClose, isOpen }) => {
   const { colors } = useTheme();
-  const { t } = useTranslation();
-  const bottomSheetRef = useRef<BottomSheetMethods>(null!);
-  const handleSelect = useCallback(() => {
-    bottomSheetRef?.current?.close();
-  }, []);
+
   return (
-    <InlineBottomSheet ref={bottomSheetRef} snapPoints={snapPoints.percent75} index={isOpen ? 0 : -1} onClose={onClose}>
-      <BottomSheetWrapper>
-        <BottomSheetHeader title={t('common.network')}>
-          <Pressable
-            testID="edit"
-            style={({ pressed }) => [styles.edit, { borderColor: colors.borderThird, backgroundColor: pressed ? colors.underlay : 'transparent' }]}
-          >
-            <Text style={[styles.title, { color: colors.textPrimary }]}>{t('common.edit')}</Text>
-          </Pressable>
-        </BottomSheetHeader>
-        <BottomSheetContent>
-          <NetworksList type="selector" onSelect={handleSelect} />
-        </BottomSheetContent>
-      </BottomSheetWrapper>
-    </InlineBottomSheet>
+    <Sheet isPresented={!!isOpen} height={{ fraction: 0.8 }} containerColor={colors.bgFourth} onDismiss={onClose}>
+      <NetworkSelectorContent onClose={onClose} />
+    </Sheet>
   );
 };
+
+function NetworkSelectorContent({ onClose }: Pick<Props, 'onClose'>) {
+  const { t } = useTranslation();
+  const switchNetwork = useSwitchNetwork();
+  const { networks, currentNetworkId } = useSelectableNetworks();
+  const handleSelectNetwork = useCallback(
+    (networkId: string) => {
+      switchNetwork(networkId).catch(() => undefined);
+      onClose();
+    },
+    [switchNetwork, onClose],
+  );
+
+  return (
+    <>
+      <SheetHeader title={t('common.network')} action={<SheetHeaderAction testID="edit">{t('common.edit')}</SheetHeaderAction>} />
+      <NetworksList networks={networks} currentNetworkId={currentNetworkId} onSelectNetwork={handleSelectNetwork} />
+    </>
+  );
+}
 
 export default NetworkSelector;

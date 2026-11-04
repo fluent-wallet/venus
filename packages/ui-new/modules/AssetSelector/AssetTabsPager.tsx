@@ -1,7 +1,5 @@
 import NoneNFT from '@assets/images/none-NFT.webp';
 import NoneToken from '@assets/images/none-token.webp';
-import { BottomSheetFlatList } from '@components/BottomSheet';
-import { BottomSheetFlashList } from '@components/BottomSheet/BottomSheetFlashList';
 import Text from '@components/Text';
 import { ASSET_TYPE } from '@core/types';
 import { NftCollectionRow } from '@modules/AssetsList/NFTsList/NftCollectionRow';
@@ -15,14 +13,14 @@ import { useTabs } from '@modules/AssetsTabs/hooks';
 import type { TabType } from '@modules/AssetsTabs/types';
 import { useTheme } from '@react-navigation/native';
 import type { IAsset, INftCollection, INftItem } from '@service/core';
-import type { ListRenderItem } from '@shopify/flash-list';
+import { FlashList, type ListRenderItem } from '@shopify/flash-list';
 import type { AssetInfo } from '@utils/assetInfo';
 import { toAssetInfo } from '@utils/toAssetInfo';
 import { Image } from 'expo-image';
 import type React from 'react';
 import { memo, useCallback, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { type NativeScrollEvent, type NativeSyntheticEvent, Platform, StyleSheet, useWindowDimensions, View } from 'react-native';
+import { FlatList, type NativeScrollEvent, type NativeSyntheticEvent, Platform, StyleSheet, useWindowDimensions, View } from 'react-native';
 import type { SharedValue } from 'react-native-reanimated';
 import { TabView } from 'react-native-tab-view';
 
@@ -92,7 +90,7 @@ const TokensTabPage: React.FC<{
   }
 
   return (
-    <BottomSheetFlashList
+    <FlashList
       data={tokens}
       style={styles.list}
       renderItem={renderItem}
@@ -101,6 +99,7 @@ const TokensTabPage: React.FC<{
       getItemType={() => 'token'}
       removeClippedSubviews={Platform.OS === 'android'}
       keyboardShouldPersistTaps="handled"
+      nestedScrollEnabled
       onScroll={onScroll}
       showsVerticalScrollIndicator={false}
     />
@@ -130,7 +129,7 @@ const NftsTabPage: React.FC<{
   }
 
   return (
-    <BottomSheetFlatList
+    <FlatList
       data={collections}
       style={styles.list}
       renderItem={renderItem}
@@ -141,6 +140,7 @@ const NftsTabPage: React.FC<{
       windowSize={5}
       removeClippedSubviews={Platform.OS === 'android'}
       keyboardShouldPersistTaps="handled"
+      nestedScrollEnabled
       scrollEventThrottle={16}
       onScroll={onScroll}
       showsVerticalScrollIndicator={false}

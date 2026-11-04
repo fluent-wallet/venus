@@ -1,16 +1,8 @@
 import ClearIcon from '@assets/icons/clear.svg';
 import ErrorIcon from '@assets/icons/message-fail.svg';
 import { fetchChain } from '@cfx-kit/dapp-utils/dist/fetch';
-import {
-  BottomSheetContent,
-  BottomSheetFooter,
-  BottomSheetHeader,
-  BottomSheetRoute,
-  BottomSheetTextInput,
-  BottomSheetWrapper,
-  snapPoints,
-} from '@components/BottomSheet';
 import Button from '@components/Button';
+import { SheetBody, SheetFooter, SheetHeader, SheetScrollView } from '@components/Sheet';
 import Text from '@components/Text';
 import { NetworkType } from '@core/types';
 import { useNavigation, useTheme } from '@react-navigation/native';
@@ -18,7 +10,7 @@ import type { StackNavigation } from '@router/configs';
 import { useAddEndpoint, useCurrentNetwork } from '@service/network';
 import { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Pressable, StyleSheet, type TextInputChangeEvent, View } from 'react-native';
+import { Pressable, StyleSheet, TextInput, type TextInputChangeEvent, View } from 'react-native';
 
 const getChainIdMap = {
   [NetworkType.Conflux]: (endpoint: string) => fetchChain<{ chainId: string }>({ url: endpoint, method: 'cfx_getStatus' }).then((res) => res.chainId),
@@ -57,7 +49,7 @@ const AddNewEndpoint = () => {
       }
 
       await addEndpoint(currentNetwork.id, { endpoint: endpoint.href, type: 'outer' });
-      if (navigation.canGoBack()) {
+      if (navigation.isFocused() && navigation.canGoBack()) {
         navigation.goBack();
       }
     } catch {
@@ -68,15 +60,14 @@ const AddNewEndpoint = () => {
   }, [netUrl, currentNetwork, t, navigation, addEndpoint]);
 
   return (
-    <BottomSheetRoute snapPoints={snapPoints.percent40}>
-      <BottomSheetWrapper innerPaddingHorizontal>
-        <BottomSheetHeader title={t('settings.network.add.title')} />
-
-        <BottomSheetContent>
+    <>
+      <SheetHeader title={t('settings.network.add.title')} />
+      <SheetScrollView>
+        <SheetBody>
           <Text style={[styles.text, { color: colors.textSecondary }]}>{t('settings.network.add.subTitle')}</Text>
 
           <View style={[styles.flexRow, styles.inputContainer, { borderColor: error ? colors.down : colors.borderFourth }]}>
-            <BottomSheetTextInput
+            <TextInput
               style={[styles.input, { color: error ? colors.down : colors.textPrimary }]}
               placeholder={t('settings.network.add.placeholder')}
               value={netUrl}
@@ -98,15 +89,14 @@ const AddNewEndpoint = () => {
               <Text style={[styles.error, { color: colors.down }]}>{error}</Text>
             </View>
           )}
-        </BottomSheetContent>
-
-        <BottomSheetFooter>
+        </SheetBody>
+        <SheetFooter>
           <Button loading={loading} disabled={!!error} testID="add" onPress={handleAdd}>
             {t('common.add')}
           </Button>
-        </BottomSheetFooter>
-      </BottomSheetWrapper>
-    </BottomSheetRoute>
+        </SheetFooter>
+      </SheetScrollView>
+    </>
   );
 };
 

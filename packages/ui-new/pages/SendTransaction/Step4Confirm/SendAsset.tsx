@@ -36,7 +36,7 @@ const SendAsset: React.FC<Props> = ({ amount, symbol, icon, price, recipientAddr
       {price && <Text style={[styles.text, styles.price, { color: colors.textSecondary }]}>≈${price}</Text>}
 
       <Text style={[styles.text, styles.to, { color: colors.textSecondary }]}>{t('common.to')}</Text>
-      <AccountItemView nickname={''} addressValue={recipientAddress} colors={colors} />
+      <AccountItemView nickname={''} addressValue={recipientAddress} />
     </>
   );
 };
