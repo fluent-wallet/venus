@@ -27,13 +27,13 @@ jobs:
       CI: '1'
     steps:
       - name: Check out Git repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           ref: ${{ inputs.commitSha }}
           fetch-depth: 0
 
       - name: Set up Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: 22
 
@@ -69,7 +69,7 @@ jobs:
           JS
 
       - name: Build IOS App
-        uses: yukiarrr/ios-build-action@v1.12.0
+        uses: yukiarrr/ios-build-action@48c93c1dc2f7c88440784d5da980dac286741ac4 # v1.13.0
         with:
           project-path: ${{ steps.native.outputs.project }}
           p12-base64: ${{ secrets.IOS_P12_BASE64 }}
