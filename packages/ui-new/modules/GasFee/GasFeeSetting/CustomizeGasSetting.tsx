@@ -1,14 +1,7 @@
 import Failed from '@assets/icons/message-fail.svg';
 import Warning from '@assets/icons/warn.svg';
-import {
-  BottomSheetContent,
-  BottomSheetFooter,
-  BottomSheetHeader,
-  type BottomSheetMethods,
-  BottomSheetWrapper,
-  InlineBottomSheet,
-} from '@components/BottomSheet';
 import Button from '@components/Button';
+import Sheet, { SheetBody, SheetFooter, SheetHeader } from '@components/Sheet';
 import Text from '@components/Text';
 import _TextInput from '@components/TextInput';
 import { useTheme } from '@react-navigation/native';
@@ -18,13 +11,14 @@ import Decimal from 'decimal.js';
 /* eslint-disable react-hooks/exhaustive-deps */
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 import type React from 'react';
-import { type ComponentProps, memo, useCallback, useMemo, useRef } from 'react';
+import { type ComponentProps, memo, useCallback, useMemo } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, View } from 'react-native';
 import { buildGasSetting, type GasSetting, isEip1559GasSetting } from './gasSetting';
 
 interface Props {
+  isOpen: boolean;
   customizeGasSetting: GasSetting;
   estimateCurrentGasPrice: string;
   onConfirm: (customizeGasSetting: GasSetting) => void;
@@ -45,17 +39,7 @@ export const TextInput: React.FC<
     showGweiSuffix?: boolean;
     error?: boolean;
   }
-> = ({
-  colors,
-  keyboardType = 'numeric',
-  defaultHasValue = true,
-  showVisible = false,
-  isInBottomSheet = true,
-  showGweiSuffix = true,
-  error,
-  disabled,
-  ...props
-}) => (
+> = ({ colors, keyboardType = 'numeric', defaultHasValue = true, showVisible = false, showGweiSuffix = true, error, disabled, ...props }) => (
   <_TextInput
     {...props}
     containerStyle={[
@@ -67,7 +51,6 @@ export const TextInput: React.FC<
     keyboardType={keyboardType}
     defaultHasValue={defaultHasValue}
     showVisible={showVisible}
-    isInBottomSheet={isInBottomSheet}
     SuffixIcon={showGweiSuffix ? <GweiSuffix /> : undefined}
     disabled={disabled}
   />
@@ -85,10 +68,20 @@ export const controlRule = {
   validate: (value: string) => Number.parseFloat(value) >= 0 || 'should be greater than 0',
 };
 
-const CustomizeGasSetting: React.FC<Props> = ({ customizeGasSetting, estimateCurrentGasPrice, onClose, onConfirm, force155 }) => {
+const CustomizeGasSetting: React.FC<Props> = ({ isOpen, ...props }) => {
+  const { colors } = useTheme();
+  const height = isEip1559GasSetting(props.customizeGasSetting) && !props.force155 ? 500 : 368;
+
+  return (
+    <Sheet isPresented={isOpen} height={{ height }} containerColor={colors.bgFourth} onDismiss={props.onClose}>
+      <CustomizeGasSettingContent {...props} />
+    </Sheet>
+  );
+};
+
+const CustomizeGasSettingContent: React.FC<Omit<Props, 'isOpen'>> = ({ customizeGasSetting, estimateCurrentGasPrice, onClose, onConfirm, force155 }) => {
   const { t } = useTranslation();
   const { colors } = useTheme();
-  const bottomSheetRef = useRef<BottomSheetMethods>(null);
   const { data: currentNetwork } = useCurrentNetwork();
   const minGasPrice = useMemo(
     () => (currentNetwork ? getTransactionService().getMinGasPriceWei({ chainId: currentNetwork.chainId, networkType: currentNetwork.networkType }) : null),
@@ -148,9 +141,9 @@ const CustomizeGasSetting: React.FC<Props> = ({ customizeGasSetting, estimateCur
             primaryFee: new Decimal(data.gasPrice).mul(Gwei).toHex(),
           });
       onConfirm(res);
-      bottomSheetRef.current?.close();
+      onClose();
     },
-    [customizeGasSetting, onConfirm],
+    [customizeGasSetting, onConfirm, onClose],
   );
 
   const LessThanMinTip = useMemo(() => {
@@ -191,95 +184,85 @@ const CustomizeGasSetting: React.FC<Props> = ({ customizeGasSetting, estimateCur
   );
 
   return (
-    <InlineBottomSheet
-      ref={bottomSheetRef}
-      snapPoints={isEip1559GasSetting(customizeGasSetting) ? (!force155 ? snapPoints1559 : snapPoints155) : snapPoints155}
-      index={0}
-      onClose={onClose}
-    >
-      <BottomSheetWrapper innerPaddingHorizontal>
-        <BottomSheetHeader title={t('tx.gasFee.customizeGasSetting.title')} />
-        <BottomSheetContent style={styles.contentStyle}>
-          {!isEip1559GasSetting(customizeGasSetting) && (
-            <>
-              <Text style={[styles.inputTitle, { color: colors.textSecondary }]}>
-                {t('tx.gasFee.customizeGasSetting.gasPrice')} ({t('tx.gasFee.customizeGasSetting.current')}:{' '}
-                <Text style={{ fontWeight: '600', color: colors.textPrimary }}>{currentPriceGwei}</Text> Gwei)
-              </Text>
-              <Controller
-                control={control}
-                rules={{
-                  ...controlRule,
-                  validate: validateMinGasPrice,
-                }}
-                render={({ field: { onChange, onBlur, value } }) => (
-                  <TextInput error={!!errors?.gasPrice} colors={colors} onBlur={onBlur} onChangeText={onChange} value={value} />
-                )}
-                name="gasPrice"
-              />
-              {errors?.gasPrice?.type === 'validate' && LessThanMinTip}
-              {!errors?.gasPrice && isPriceLowerThanCurrent && LowerTip}
-            </>
-          )}
-
-          {isEip1559GasSetting(customizeGasSetting) && (
-            <>
-              <Text style={[styles.inputTitle, { color: colors.textSecondary }]}>
-                {!force155 ? t('tx.gasFee.customizeGasSetting.maxFee') : t('tx.gasFee.customizeGasSetting.gasPrice')} (
-                {t('tx.gasFee.customizeGasSetting.current')}: <Text style={{ fontWeight: '600', color: colors.textPrimary }}>{currentPriceGwei}</Text> Gwei)
-              </Text>
-              <Controller
-                control={control}
-                rules={{
-                  ...controlRule,
-                  validate: validateMinGasPrice,
-                }}
-                render={({ field: { onChange, onBlur, value } }) => (
-                  <TextInput error={!!errors?.maxFeePerGas} colors={colors} onBlur={onBlur} onChangeText={onChange} value={value} />
-                )}
-                name="maxFeePerGas"
-              />
-              {errors?.maxFeePerGas?.type === 'validate' && LessThanMinTip}
-              {!errors?.maxFeePerGas && isPriceLowerThanCurrent && LowerTip}
-
-              {!force155 && (
-                <>
-                  <Text style={[styles.inputTitle, { color: colors.textSecondary }]}>{t('tx.gasFee.customizeGasSetting.priorityFee')}</Text>
-                  <Controller
-                    control={control}
-                    rules={{
-                      ...controlRule,
-                      validate: (newMaxPriorityFeePerGas, value) =>
-                        new Decimal(newMaxPriorityFeePerGas || '0').lessThanOrEqualTo(value.maxFeePerGas || '0') || 'great-than-max-fee',
-                    }}
-                    render={({ field: { onChange, onBlur, value } }) => (
-                      <TextInput error={!!errors?.maxPriorityFeePerGas} colors={colors} onBlur={onBlur} onChangeText={onChange} value={value} />
-                    )}
-                    name="maxPriorityFeePerGas"
-                  />
-                  {errors?.maxPriorityFeePerGas?.type === 'validate' && GreatThanMaxFeeTip}
-                </>
+    <>
+      <SheetHeader title={t('tx.gasFee.customizeGasSetting.title')} />
+      <SheetBody style={styles.contentStyle}>
+        {!isEip1559GasSetting(customizeGasSetting) && (
+          <>
+            <Text style={[styles.inputTitle, { color: colors.textSecondary }]}>
+              {t('tx.gasFee.customizeGasSetting.gasPrice')} ({t('tx.gasFee.customizeGasSetting.current')}:{' '}
+              <Text style={{ fontWeight: '600', color: colors.textPrimary }}>{currentPriceGwei}</Text> Gwei)
+            </Text>
+            <Controller
+              control={control}
+              rules={{
+                ...controlRule,
+                validate: validateMinGasPrice,
+              }}
+              render={({ field: { onChange, onBlur, value } }) => (
+                <TextInput error={!!errors?.gasPrice} colors={colors} onBlur={onBlur} onChangeText={onChange} value={value} />
               )}
-            </>
-          )}
-        </BottomSheetContent>
-        <BottomSheetFooter>
-          <View style={styles.btnArea}>
-            <Button testID="cancel" style={styles.btn} size="small" onPress={() => bottomSheetRef.current?.close()}>
-              {t('common.cancel')}
-            </Button>
-            <Button testID="confirm" style={styles.btn} size="small" disabled={minGasPrice === null} onPress={() => handleSubmit(handleConfirm)()}>
-              {t('common.confirm')}
-            </Button>
-          </View>
-        </BottomSheetFooter>
-      </BottomSheetWrapper>
-    </InlineBottomSheet>
+              name="gasPrice"
+            />
+            {errors?.gasPrice?.type === 'validate' && LessThanMinTip}
+            {!errors?.gasPrice && isPriceLowerThanCurrent && LowerTip}
+          </>
+        )}
+
+        {isEip1559GasSetting(customizeGasSetting) && (
+          <>
+            <Text style={[styles.inputTitle, { color: colors.textSecondary }]}>
+              {!force155 ? t('tx.gasFee.customizeGasSetting.maxFee') : t('tx.gasFee.customizeGasSetting.gasPrice')} (
+              {t('tx.gasFee.customizeGasSetting.current')}: <Text style={{ fontWeight: '600', color: colors.textPrimary }}>{currentPriceGwei}</Text> Gwei)
+            </Text>
+            <Controller
+              control={control}
+              rules={{
+                ...controlRule,
+                validate: validateMinGasPrice,
+              }}
+              render={({ field: { onChange, onBlur, value } }) => (
+                <TextInput error={!!errors?.maxFeePerGas} colors={colors} onBlur={onBlur} onChangeText={onChange} value={value} />
+              )}
+              name="maxFeePerGas"
+            />
+            {errors?.maxFeePerGas?.type === 'validate' && LessThanMinTip}
+            {!errors?.maxFeePerGas && isPriceLowerThanCurrent && LowerTip}
+
+            {!force155 && (
+              <>
+                <Text style={[styles.inputTitle, { color: colors.textSecondary }]}>{t('tx.gasFee.customizeGasSetting.priorityFee')}</Text>
+                <Controller
+                  control={control}
+                  rules={{
+                    ...controlRule,
+                    validate: (newMaxPriorityFeePerGas, value) =>
+                      new Decimal(newMaxPriorityFeePerGas || '0').lessThanOrEqualTo(value.maxFeePerGas || '0') || 'great-than-max-fee',
+                  }}
+                  render={({ field: { onChange, onBlur, value } }) => (
+                    <TextInput error={!!errors?.maxPriorityFeePerGas} colors={colors} onBlur={onBlur} onChangeText={onChange} value={value} />
+                  )}
+                  name="maxPriorityFeePerGas"
+                />
+                {errors?.maxPriorityFeePerGas?.type === 'validate' && GreatThanMaxFeeTip}
+              </>
+            )}
+          </>
+        )}
+      </SheetBody>
+      <SheetFooter>
+        <View style={styles.btnArea}>
+          <Button testID="cancel" style={styles.btn} size="small" onPress={onClose}>
+            {t('common.cancel')}
+          </Button>
+          <Button testID="confirm" style={styles.btn} size="small" disabled={minGasPrice === null} onPress={() => handleSubmit(handleConfirm)()}>
+            {t('common.confirm')}
+          </Button>
+        </View>
+      </SheetFooter>
+    </>
   );
 };
-
-const snapPoints1559 = [500];
-const snapPoints155 = [368];
 
 export const styles = StyleSheet.create({
   contentStyle: {

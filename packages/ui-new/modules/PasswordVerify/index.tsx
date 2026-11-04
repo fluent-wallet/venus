@@ -1,21 +1,13 @@
-import {
-  BottomSheetContent,
-  BottomSheetFooter,
-  BottomSheetHeader,
-  type BottomSheetMethods,
-  BottomSheetRoute,
-  BottomSheetWrapper,
-} from '@components/BottomSheet';
 import Button from '@components/Button';
+import { SheetBody, SheetFooter, SheetHeader, SheetScrollView } from '@components/Sheet';
 import Text from '@components/Text';
 import TextInput from '@components/TextInput';
 import { useTheme } from '@react-navigation/native';
 import type { PasswordVerifyStackName, StackScreenProps } from '@router/configs';
 import { getAuthService } from '@service/core';
-import { screenHeight } from '@utils/deviceInfo';
 import { isDev } from '@utils/getEnv';
 import type React from 'react';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Keyboard, StyleSheet, type TextInputInstance as TextInputRef } from 'react-native';
 
@@ -25,99 +17,70 @@ const PasswordVerify: React.FC<StackScreenProps<typeof PasswordVerifyStackName>>
   const { colors, mode } = useTheme();
   const { t } = useTranslation();
   const textInputRef = useRef<TextInputRef | null>(null);
-  const bottomSheetRef = useRef<BottomSheetMethods | null>(null);
-  const completedRef = useRef(false);
+  const verifying = useRef(false);
+  const requestSettledRef = useRef(false);
   const auth = getAuthService();
-
-  const runtimeRequestId = useMemo(() => route.params?.requestId ?? undefined, [route.params?.requestId]);
+  const requestId = route.params?.requestId;
 
   const [inVerify, setInVerify] = useState(false);
   const [password, setPassword] = useState(defaultPassword);
   const [error, setError] = useState('');
 
-  const resetLocalState = useCallback(() => {
-    setInVerify(false);
-    setPassword(defaultPassword);
-    setError('');
-    setTimeout(() => {
-      if (Keyboard.isVisible()) {
-        Keyboard.dismiss();
-      }
-    });
-  }, []);
-
-  const settleCancel = useCallback(() => {
-    if (completedRef.current) return false;
-
-    completedRef.current = true;
-    if (runtimeRequestId) {
-      auth.cancelPasswordRequest({ requestId: runtimeRequestId });
+  const handleConfirm = useCallback(async () => {
+    if (verifying.current || requestSettledRef.current) return;
+    if (!requestId) {
+      if (navigation.canGoBack()) navigation.goBack();
+      return;
     }
 
-    resetLocalState();
-    return true;
-  }, [auth, resetLocalState, runtimeRequestId]);
+    verifying.current = true;
+    setInVerify(true);
+    try {
+      const correct = await auth.verifyPassword(password);
+      if (!verifying.current) return;
+      if (!correct) {
+        setError('Wrong password.');
+        return;
+      }
+      requestSettledRef.current = true;
+      Keyboard.dismiss();
+      navigation.goBack();
+      auth.resolvePassword({ requestId, password });
+    } catch (error) {
+      if (verifying.current && !requestSettledRef.current) {
+        requestSettledRef.current = true;
+        navigation.goBack();
+        auth.rejectPasswordRequest({ requestId, error });
+      }
+    } finally {
+      if (verifying.current) {
+        verifying.current = false;
+        setInVerify(false);
+      }
+    }
+  }, [auth, requestId, password, navigation]);
 
-  const settleResolve = useCallback(
-    (resolvedPassword: string) => {
-      if (!runtimeRequestId || completedRef.current) return false;
-
-      completedRef.current = true;
-      auth.resolvePassword({ requestId: runtimeRequestId, password: resolvedPassword });
-      resetLocalState();
-      return true;
+  useEffect(
+    () => () => {
+      verifying.current = false;
+      if (!requestId || requestSettledRef.current) return;
+      requestSettledRef.current = true;
+      auth.cancelPasswordRequest({ requestId });
     },
-    [auth, resetLocalState, runtimeRequestId],
+    [auth, requestId],
   );
 
-  const handleCancel = useCallback(() => {
-    settleCancel();
-  }, [settleCancel]);
-
-  const handleConfirm = useCallback(async () => {
-    if (!runtimeRequestId) {
-      if (bottomSheetRef.current) {
-        bottomSheetRef.current.close();
-      } else if (navigation.canGoBack()) {
-        navigation.goBack();
-      }
-      return;
-    }
-
-    setInVerify(true);
-    await new Promise((resolve) => setTimeout(resolve, 25));
-
-    const isCorrectPassword = await auth.verifyPassword(password);
-    if (!isCorrectPassword) {
-      setError('Wrong password.');
-      setInVerify(false);
-      return;
-    }
-
-    if (settleResolve(password)) {
-      if (bottomSheetRef.current) {
-        bottomSheetRef.current.close();
-      } else if (navigation.canGoBack()) {
-        navigation.goBack();
-      }
-    }
-  }, [auth, navigation, password, runtimeRequestId, settleResolve]);
-
   useEffect(() => {
-    completedRef.current = false;
-    return () => {
-      // Reject/cancel the request if the component is unmounted.
-      if (runtimeRequestId && !completedRef.current) {
-        auth.cancelPasswordRequest({ requestId: runtimeRequestId });
-      }
-    };
-  }, [auth, runtimeRequestId]);
+    return navigation.addListener('transitionEnd', (event) => {
+      if (!event.data.closing) textInputRef.current?.focus();
+    });
+  }, [navigation]);
 
   return (
-    <BottomSheetRoute ref={bottomSheetRef} snapPoints={snapPoints} onClose={handleCancel} onOpen={() => textInputRef.current?.focus()}>
-      <BottomSheetWrapper innerPaddingHorizontal>
-        <BottomSheetHeader title={t('common.verifyPassword')} />
-        <BottomSheetContent>
+    <>
+      <SheetHeader title={t('common.verifyPassword')} />
+      <SheetScrollView>
+        <SheetBody>
           <TextInput
             containerStyle={{ marginTop: 16, borderWidth: mode === 'dark' ? 1 : 0, borderColor: colors.borderFourth }}
             testID="password"
@@ -128,17 +91,17 @@ const PasswordVerify: React.FC<StackScreenProps<typeof PasswordVerifyStackName>>
               setError('');
             }}
             onSubmitEditing={handleConfirm}
-            isInBottomSheet
+            disabled={inVerify}
           />
           <Text style={[styles.error, { color: colors.down, opacity: !error ? 0 : 1 }]}>{error || 'placeholder'}</Text>
-        </BottomSheetContent>
-        <BottomSheetFooter>
+        </SheetBody>
+        <SheetFooter>
           <Button testID="confirm" loading={inVerify} onPress={handleConfirm} disabled={!password}>
             {t('common.confirm')}
           </Button>
-        </BottomSheetFooter>
-      </BottomSheetWrapper>
-    </BottomSheetRoute>
+        </SheetFooter>
+      </SheetScrollView>
+    </>
   );
 };
 
@@ -150,7 +113,5 @@ const styles = StyleSheet.create({
     textAlign: 'left',
   },
 });
-
-const snapPoints = [`${((348 / screenHeight) * 100).toFixed(2)}%`];
 
 export default PasswordVerify;

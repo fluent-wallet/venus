@@ -15,7 +15,7 @@ import type { INftItem } from '@service/core';
 import { estimateTransactionGasPricing } from '@service/transaction';
 import Decimal from 'decimal.js';
 import type React from 'react';
-import { forwardRef, useCallback, useEffect, useImperativeHandle, useMemo, useState } from 'react';
+import { forwardRef, useCallback, useEffect, useImperativeHandle, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { showMessage } from 'react-native-flash-message';
@@ -64,14 +64,18 @@ const SetAssetAmount = forwardRef<SetAssetAmountMethods, Props>(
     const { data: currentAddress } = useCurrentAddress();
     const currentAddressValue = currentAddress?.value ?? '';
     const [amount, setAmount] = useState(() => defaultAmount ?? '');
+    const assetKey = JSON.stringify([asset.type, asset.contractAddress, asset.symbol]);
+    const previousAssetKeyRef = useRef(assetKey);
     const [validMax, setValidMax] = useState<Decimal | null>(() => (isReceive ? new Decimal(Number.POSITIVE_INFINITY) : null));
     const needMaxMode = useMemo(() => !isReceive && (asset.type === ASSET_TYPE.Native || asset.type === ASSET_TYPE.ERC20), [isReceive, asset.type]);
 
     const [inMaxMode, setInMaxMode] = useState(() => false);
 
     useEffect(() => {
+      if (previousAssetKeyRef.current === assetKey) return;
+      previousAssetKeyRef.current = assetKey;
       setAmount('');
-    }, [asset.type, asset.contractAddress, asset.symbol]);
+    }, [assetKey]);
 
     const balance = useFormatBalance(asset.balance, asset.decimals);
     const symbol = useMemo(() => (nftItemDetail ? getDetailSymbol(nftItemDetail) : asset.symbol), [asset.symbol, nftItemDetail]);
@@ -243,7 +247,6 @@ const SetAssetAmount = forwardRef<SetAssetAmountMethods, Props>(
               setInMaxMode(false);
             }
           }}
-          isInBottomSheet
           showClear={!!amount}
           placeholder={isReceive ? t('tx.amount.anyAmount') : asset.type === ASSET_TYPE.ERC1155 ? '0' : '0.00'}
           SuffixIcon={Suffix}

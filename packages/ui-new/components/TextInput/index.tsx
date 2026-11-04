@@ -2,10 +2,9 @@ import Clear from '@assets/icons/clear.svg';
 import EyeClose from '@assets/icons/eye-close.svg';
 import EyeOpen from '@assets/icons/eye-open.svg';
 import composeRef from '@cfx-kit/react-utils/dist/composeRef';
-import { BottomSheetTextInput } from '@components/BottomSheet';
 import { useTheme } from '@react-navigation/native';
 import { isDev } from '@utils/getEnv';
-import { type Component, forwardRef, isValidElement, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { type Component, forwardRef, isValidElement, useCallback, useEffect, useRef, useState } from 'react';
 import {
   Keyboard,
   Platform,
@@ -26,7 +25,6 @@ interface Props extends TextInputProps {
   showClear?: boolean;
   defaultHasValue?: boolean;
   disabled?: boolean;
-  isInBottomSheet?: boolean;
   SuffixIcon?: typeof Component<SvgProps> | React.ReactNode;
   onPressSuffixIcon?: () => void;
 }
@@ -42,7 +40,6 @@ const CustomTextInput = forwardRef<TextInputInstance, Props>(
       value,
       defaultHasValue,
       onChangeText,
-      isInBottomSheet,
       secureTextEntry,
       SuffixIcon,
       onPressSuffixIcon,
@@ -51,8 +48,6 @@ const CustomTextInput = forwardRef<TextInputInstance, Props>(
     _forwardRef,
   ) => {
     const { colors } = useTheme();
-
-    const UsedTextInput = useMemo(() => (isInBottomSheet ? BottomSheetTextInput : TextInput), [isInBottomSheet]);
 
     const [visible, setVisible] = useState(isDev);
     const [hasValue, setHasValue] = useState(() => (value !== undefined ? !!value : (defaultHasValue ?? isDev)));
@@ -81,7 +76,7 @@ const CustomTextInput = forwardRef<TextInputInstance, Props>(
 
     return (
       <View style={[styles.defaultContainerStyle, { backgroundColor: colors.bgSecondary }, containerStyle]}>
-        <UsedTextInput
+        <TextInput
           ref={composeRef([inputRef, _forwardRef as any])}
           style={[
             styles.defaultInputStyle,

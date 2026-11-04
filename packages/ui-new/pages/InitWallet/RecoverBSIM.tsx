@@ -1,11 +1,11 @@
 import SuccessfullyIcon from '@assets/icons/successful.svg';
 import WarnIcon from '@assets/icons/warn.svg';
 import RecoverBSIMImg from '@assets/images/recoverBSIM.svg';
-import { BottomSheetContent, BottomSheetFooter, BottomSheetHeader, BottomSheetWrapper, InlineBottomSheet, snapPoints } from '@components/BottomSheet';
 import Button from '@components/Button';
+import Sheet, { SheetBody, SheetFooter, SheetHeader } from '@components/Sheet';
 import CustomTextInput from '@components/TextInput';
 import { HARDWARE_WALLET_TYPES } from '@core/hardware/bsim/constants';
-import QrScannerSheet, { type ParseResult } from '@pages/ExternalInputHandler/QrScannerSheet';
+import QrScannerContent, { type ParseResult } from '@pages/ExternalInputHandler/QrScannerContent';
 import { StackActions, useTheme } from '@react-navigation/native';
 import { ChangeBPinStackName, type RecoverBsimStackName, type StackScreenProps } from '@router/configs';
 import { getHardwareWalletService } from '@service/core';
@@ -149,76 +149,73 @@ export const RecoverBSIM: React.FC<StackScreenProps<typeof RecoverBsimStackName>
         </View>
 
         <Button onPress={() => setShowScan(true)}>{t('common.next')}</Button>
+        <Sheet isPresented={showScan} height="large" containerColor={colors.bgFourth} onDismiss={() => setShowScan(false)}>
+          <QrScannerContent
+            title={t('initWallet.recoverBSIM.title')}
+            onConfirm={handleScanQrCode}
+            onClose={() => setShowScan(false)}
+            parseInput={handleParseInput}
+          />
+        </Sheet>
       </ScrollView>
 
-      {showScan && (
-        <QrScannerSheet
-          mode="inline"
-          title={t('initWallet.recoverBSIM.title')}
-          onConfirm={handleScanQrCode}
-          onClose={() => setShowScan(false)}
-          parseInput={handleParseInput}
-        />
-      )}
+      <Sheet
+        isPresented={showPassword}
+        height={{ fraction: 0.85 }}
+        containerColor={colors.bgFourth}
+        onDismiss={() => setShowPassword(false)}
+        dismissible={!isSubmitting}
+      >
+        <SheetHeader title={t('initWallet.recoverBSIM.title')} />
 
-      {showPassword && (
-        <InlineBottomSheet snapPoints={snapPoints.percent85} index={0}>
-          <BottomSheetWrapper innerPaddingHorizontal>
-            <BottomSheetHeader title={t('initWallet.recoverBSIM.title')} />
+        <SheetBody>
+          <Text style={[styles.labelText, { color: colors.textPrimary }]}>{t('backup.BSIM.password')}</Text>
 
-            <BottomSheetContent>
-              <Text style={[styles.labelText, { color: colors.textPrimary }]}>{t('backup.BSIM.password')}</Text>
+          <Controller
+            control={control}
+            rules={{
+              required: true,
+              validate: (value) => {
+                const v = validateKey2Password(value);
+                return v.hasLength && v.hasLowerCase && v.hasUpperCase && v.hasNumber;
+              },
+            }}
+            render={({ field: { onChange, onBlur, value } }) => (
+              <View>
+                <CustomTextInput
+                  placeholder={t('common.password')}
+                  secureTextEntry
+                  onBlur={onBlur}
+                  onChangeText={(text) => {
+                    onChange(text);
+                  }}
+                  value={value}
+                  containerStyle={errors.password && [{ borderColor: colors.down, borderWidth: 1 }]}
+                />
+              </View>
+            )}
+            name="password"
+          />
 
-              <Controller
-                control={control}
-                rules={{
-                  required: true,
-                  validate: (value) => {
-                    const v = validateKey2Password(value);
-                    return v.hasLength && v.hasLowerCase && v.hasUpperCase && v.hasNumber;
-                  },
-                }}
-                render={({ field: { onChange, onBlur, value } }) => (
-                  <View>
-                    <CustomTextInput
-                      placeholder={t('common.password')}
-                      secureTextEntry
-                      onBlur={onBlur}
-                      onChangeText={(text) => {
-                        onChange(text);
-                      }}
-                      value={value}
-                      containerStyle={errors.password && [{ borderColor: colors.down, borderWidth: 1 }]}
-                    />
-                  </View>
-                )}
-                name="password"
-              />
+          <Text style={[styles.ruleText, { color: colors.textPrimary }]}>{t('initWallet.recoverBSIM.pwdRule')}</Text>
 
-              <Text style={[styles.ruleText, { color: colors.textPrimary }]}>{t('initWallet.recoverBSIM.pwdRule')}</Text>
-            </BottomSheetContent>
+          <Sheet isPresented={showSuccess} height={{ fraction: 0.45 }} containerColor={colors.bgFourth} onDismiss={handleSuccessClose}>
+            <SheetHeader title={t('common.successfully')} />
+            <SheetBody>
+              <View style={styles.successIconContainer}>
+                <SuccessfullyIcon width={100} height={100} />
+              </View>
+              <Text style={[styles.successText, { color: colors.textPrimary }]}>{t('initWallet.recoverBSIM.success')}</Text>
+            </SheetBody>
+          </Sheet>
+        </SheetBody>
 
-            <BottomSheetFooter>
-              <Button testID="createPasswordButton" onPress={() => handleSubmit(handleNext)()} disabled={!isValid || isSubmitting} loading={isSubmitting}>
-                {t('common.next')}
-              </Button>
-            </BottomSheetFooter>
-          </BottomSheetWrapper>
-        </InlineBottomSheet>
-      )}
-
-      {showSuccess && (
-        <InlineBottomSheet snapPoints={snapPoints.percent45} index={showSuccess ? 0 : -1} onClose={handleSuccessClose}>
-          <BottomSheetWrapper innerPaddingHorizontal>
-            <BottomSheetHeader title={t('common.successfully')} />
-
-            <View style={styles.successIconContainer}>
-              <SuccessfullyIcon width={100} height={100} />
-            </View>
-            <Text style={[styles.successText, { color: colors.textPrimary }]}>{t('initWallet.recoverBSIM.success')}</Text>
-          </BottomSheetWrapper>
-        </InlineBottomSheet>
-      )}
+        <SheetFooter>
+          <Button testID="createPasswordButton" onPress={() => handleSubmit(handleNext)()} disabled={!isValid || isSubmitting} loading={isSubmitting}>
+            {t('common.next')}
+          </Button>
+        </SheetFooter>
+      </Sheet>
     </>
   );
 };

@@ -1,17 +1,8 @@
-import {
-  BottomSheetFooter,
-  BottomSheetHeader,
-  type BottomSheetMethods,
-  BottomSheetScrollContent,
-  BottomSheetWrapper,
-  InlineBottomSheet,
-} from '@components/BottomSheet';
 import Button from '@components/Button';
+import Sheet, { SheetBody, SheetFooter, SheetHeader, SheetScrollView } from '@components/Sheet';
 import Text from '@components/Text';
 import { useTheme } from '@react-navigation/native';
-import { screenHeight } from '@utils/deviceInfo';
 import type React from 'react';
-import { useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, View } from 'react-native';
 
@@ -24,36 +15,35 @@ interface Props {
 const DeleteConfirm: React.FC<Props> = ({ onConfirm, onClose, isOpen }) => {
   const { colors } = useTheme();
   const { t } = useTranslation();
-  const bottomSheetRef = useRef<BottomSheetMethods>(null!);
 
   return (
-    <InlineBottomSheet ref={bottomSheetRef} snapPoints={snapPoints} index={isOpen ? 0 : -1} onClose={onClose}>
-      <BottomSheetWrapper innerPaddingHorizontal>
-        <BottomSheetHeader title={t('account.action.remove.title')} />
-        <BottomSheetScrollContent>
+    <Sheet isPresented={isOpen} height={{ height: 400 }} containerColor={colors.bgFourth} onDismiss={onClose}>
+      <SheetHeader title={t('account.action.remove.title')} />
+      <SheetScrollView>
+        <SheetBody>
           <Text style={[styles.description, { color: colors.textSecondary }]}>{t('account.action.remove.describe')}</Text>
-        </BottomSheetScrollContent>
-        <BottomSheetFooter>
-          <View style={styles.btnArea}>
-            <Button testID="cancel" style={styles.btn} size="small" onPress={() => bottomSheetRef.current?.close()}>
-              {t('common.cancel')}
-            </Button>
-            <Button
-              testID="delete"
-              style={[styles.btn, { backgroundColor: colors.down }]}
-              textColor="#fff"
-              size="small"
-              onPress={() => {
-                bottomSheetRef.current?.close();
-                onConfirm();
-              }}
-            >
-              {t('common.delete')}
-            </Button>
-          </View>
-        </BottomSheetFooter>
-      </BottomSheetWrapper>
-    </InlineBottomSheet>
+        </SheetBody>
+      </SheetScrollView>
+      <SheetFooter>
+        <View style={styles.btnArea}>
+          <Button testID="cancel" style={styles.btn} size="small" onPress={onClose}>
+            {t('common.cancel')}
+          </Button>
+          <Button
+            testID="delete"
+            style={[styles.btn, { backgroundColor: colors.down }]}
+            textColor="#fff"
+            size="small"
+            onPress={() => {
+              onClose();
+              onConfirm();
+            }}
+          >
+            {t('common.delete')}
+          </Button>
+        </View>
+      </SheetFooter>
+    </Sheet>
   );
 };
 
@@ -89,7 +79,5 @@ const styles = StyleSheet.create({
     flexShrink: 1,
   },
 });
-
-const snapPoints = [`${((400 / screenHeight) * 100).toFixed(2)}%`];
 
 export default DeleteConfirm;

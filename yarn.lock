@@ -4454,6 +4454,29 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@expo/ui@npm:~58.0.22":
+  version: 58.0.24
+  resolution: "@expo/ui@npm:58.0.24"
+  dependencies:
+    sf-symbols-typescript: ^2.1.0
+  peerDependencies:
+    "@babel/core": "*"
+    expo: "*"
+    react: "*"
+    react-dom: "*"
+    react-native: "*"
+    react-native-worklets: "*"
+  peerDependenciesMeta:
+    "@babel/core":
+      optional: true
+    react-dom:
+      optional: true
+    react-native-worklets:
+      optional: true
+  checksum: 23c7411090288e26542aa11d3d81996e8afb758a9024ab553cfe0271c9c35a750fc40b714a330d5de5fcef445a49e16c1f3817801e5c60661d13cf4841303fe1
+  languageName: node
+  linkType: hard
+
 "@expo/ws-tunnel@npm:^2.0.1":
   version: 2.0.1
   resolution: "@expo/ws-tunnel@npm:2.0.1"
@@ -4473,40 +4496,6 @@ __metadata:
   bin:
     excpretty: build/cli.js
   checksum: de802aa29b39da9c53a55ef983bf9815830f9e33301686100c70470f137e5fcd886a81f9ef9189667d64bf8f7016c10011c9df15b0fc237bc31b16591cc6e900
-  languageName: node
-  linkType: hard
-
-"@gorhom/bottom-sheet@npm:5.2.14":
-  version: 5.2.14
-  resolution: "@gorhom/bottom-sheet@npm:5.2.14"
-  dependencies:
-    "@gorhom/portal": 1.0.14
-    invariant: ^2.2.4
-  peerDependencies:
-    "@types/react": "*"
-    "@types/react-native": "*"
-    react: "*"
-    react-native: "*"
-    react-native-gesture-handler: ">=2.16.1"
-    react-native-reanimated: "*"
-  peerDependenciesMeta:
-    "@types/react":
-      optional: true
-    "@types/react-native":
-      optional: true
-  checksum: c4387fa66b06e9c5dac713af7cdc9f9f5da42743f7dd6a2117d8c956e9410573c24e552fdb20232e251de5890ee83569894312eb5d4531f933f512b673ffeb53
-  languageName: node
-  linkType: hard
-
-"@gorhom/portal@npm:1.0.14":
-  version: 1.0.14
-  resolution: "@gorhom/portal@npm:1.0.14"
-  dependencies:
-    nanoid: ^3.3.1
-  peerDependencies:
-    react: "*"
-    react-native: "*"
-  checksum: 227bb96a2db854ab29bb9da8d4f3823c7f7448358de459709dd1b78522110da564c9a8734c6bc7d7153ed7c99320e0fb5d60b420c2ebb75ecaf2f0d757f410f9
   languageName: node
   linkType: hard
 
@@ -16393,15 +16382,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"nanoid@npm:^3.3.1":
-  version: 3.3.7
-  resolution: "nanoid@npm:3.3.7"
-  bin:
-    nanoid: bin/nanoid.cjs
-  checksum: d36c427e530713e4ac6567d488b489a36582ef89da1d6d4e3b87eded11eb10d7042a877958c6f104929809b2ab0bafa17652b076cdf84324aa75b30b722204f2
-  languageName: node
-  linkType: hard
-
 "nanoid@npm:^3.3.11":
   version: 3.3.11
   resolution: "nanoid@npm:3.3.11"
@@ -18922,7 +18902,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"sf-symbols-typescript@npm:^2.2.0":
+"sf-symbols-typescript@npm:^2.1.0, sf-symbols-typescript@npm:^2.2.0":
   version: 2.2.0
   resolution: "sf-symbols-typescript@npm:2.2.0"
   checksum: e380b37afec5dbc9f3aced06c6e82ebe13d1bc25a3d5966fc52bcfa891cb56951dabbe8a98fc4d96ef86b2c556b23cf9686fc17df6c4aa1ec839f92ae280486c
@@ -20738,7 +20718,7 @@ __metadata:
     "@craftzdog/react-native-buffer": ^6.1.2
     "@ethersproject/abi": ^5.8.0
     "@ethersproject/shims": ^5.8.0
-    "@gorhom/bottom-sheet": 5.2.14
+    "@expo/ui": ~58.0.22
     "@json-rpc-tools/utils": ^1.7.6
     "@metamask/gas-fee-controller": 15.0.0
     "@metamask/native-utils": ^0.8.0

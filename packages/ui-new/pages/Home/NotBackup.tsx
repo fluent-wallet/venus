@@ -2,7 +2,7 @@ import Img from '@assets/images/fundsAtRisk.webp';
 import Text from '@components/Text';
 import useForceUpdateOnFocus from '@hooks/useUpdateOnFocus';
 import { useTheme } from '@react-navigation/native';
-import { BackupBSIM1PasswordStackName, BackupStackName, BackupStep1StackName, type HomeStackName, type StackScreenProps } from '@router/configs';
+import { BackupBSIM1PasswordStackName, BackupStep1StackName, type HomeStackName, type StackScreenProps } from '@router/configs';
 import { useCurrentAccount } from '@service/account';
 import { VaultSourceType, VaultType } from '@service/core';
 import { useVaults } from '@service/vault';
@@ -52,10 +52,10 @@ const NotBackup: React.FC<{ navigation: StackScreenProps<typeof HomeStackName>['
     if (!vault) return;
 
     if (vault.type === VaultType.BSIM) {
-      navigation.navigate(BackupStackName, { screen: BackupBSIM1PasswordStackName, params: { vaultId: vault.id } });
+      navigation.navigate(BackupBSIM1PasswordStackName, { vaultId: vault.id });
     } else {
       if (!accountGroupId) return;
-      navigation.navigate(BackupStackName, { screen: BackupStep1StackName, params: { groupId: accountGroupId } });
+      navigation.navigate(BackupStep1StackName, { groupId: accountGroupId });
     }
   }, [vault, navigation, accountGroupId]);
 

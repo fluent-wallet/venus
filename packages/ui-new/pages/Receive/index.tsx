@@ -1,7 +1,7 @@
 import PoundKey from '@assets/icons/pound-key.svg';
 // import Share from '@assets/icons/share.svg';
 import Logo from '@assets/images/swift-shield-QRCode.webp';
-import { BottomSheetHeader, BottomSheetRoute, BottomSheetScrollContent, BottomSheetWrapper, snapPoints } from '@components/BottomSheet';
+import { SheetBody, SheetHeader, SheetScrollView } from '@components/Sheet';
 import Text from '@components/Text';
 import { numberWithCommas, trimDecimalZeros } from '@core/utils/balance';
 import { NetworkType } from '@core/utils/consts';
@@ -113,58 +113,56 @@ const Receive: React.FC<Props> = ({ navigation: _navigation }) => {
 
   return (
     <>
-      <BottomSheetRoute snapPoints={snapPoints.large}>
-        <BottomSheetWrapper>
-          <BottomSheetHeader title={t('receive.title')} />
-          <BottomSheetScrollContent>
-            <Text style={[styles.tip, { color: colors.textPrimary }]}>{t('receive.describe', { netName: currentNetwork?.name ?? '' })}</Text>
+      <SheetHeader title={t('receive.title')} />
+      <SheetScrollView>
+        <SheetBody>
+          <Text style={[styles.tip, { color: colors.textPrimary }]}>{t('receive.describe', { netName: currentNetwork?.name ?? '' })}</Text>
 
-            <View style={[styles.qrcodeWrapper, { paddingBottom: effectiveSelectedAsset ? 18 : 30, borderColor: colors.borderFourth }]}>
-              <QRCode
-                value={paymentUri}
-                size={172}
-                logo={Logo}
-                logoSize={40}
-                logoBackgroundColor="transparent"
-                backgroundColor={mode === 'light' ? 'white' : 'black'}
-                color={mode === 'light' ? 'black' : 'white'}
-              />
-              {effectiveSelectedAsset && (
-                <>
-                  <Text style={[styles.receive, { color: colors.textPrimary }]} numberOfLines={1} adjustsFontSizeToFit>
-                    {numberWithCommas(effectiveAmount)} {effectiveSelectedAsset.symbol}{' '}
+          <View style={[styles.qrcodeWrapper, { paddingBottom: effectiveSelectedAsset ? 18 : 30, borderColor: colors.borderFourth }]}>
+            <QRCode
+              value={paymentUri}
+              size={172}
+              logo={Logo}
+              logoSize={40}
+              logoBackgroundColor="transparent"
+              backgroundColor={mode === 'light' ? 'white' : 'black'}
+              color={mode === 'light' ? 'black' : 'white'}
+            />
+            {effectiveSelectedAsset && (
+              <>
+                <Text style={[styles.receive, { color: colors.textPrimary }]} numberOfLines={1} adjustsFontSizeToFit>
+                  {numberWithCommas(effectiveAmount)} {effectiveSelectedAsset.symbol}{' '}
+                </Text>
+                {price && price !== '0' && (
+                  <Text style={[styles.price, { color: colors.textSecondary }]} numberOfLines={1}>
+                    ≈ ${numberWithCommas(price)}
                   </Text>
-                  {price && price !== '0' && (
-                    <Text style={[styles.price, { color: colors.textSecondary }]} numberOfLines={1}>
-                      ≈ ${numberWithCommas(price)}
-                    </Text>
-                  )}
-                </>
-              )}
-            </View>
+                )}
+              </>
+            )}
+          </View>
 
-            <View style={styles.accountWrapper}>
-              <AccountItemView
-                nickname={currentAccount?.nickname}
-                addressValue={currentAddressValue}
-                colors={colors}
-                shorten={false}
-                showCopy
-                showUnderlay={false}
-                onPress={() => {
-                  if (!currentAddressValue) return;
-                  Clipboard.setString(currentAddressValue);
-                  showMessage({
-                    message: t('common.copied'),
-                    type: 'success',
-                    duration: 1500,
-                    width: 160,
-                  });
-                }}
-              />
-            </View>
-            <View style={styles.btnArea}>
-              {/* <Navigation
+          <View style={styles.accountWrapper}>
+            <AccountItemView
+              nickname={currentAccount?.nickname}
+              addressValue={currentAddressValue}
+              shorten={false}
+              showCopy
+              showUnderlay={false}
+              onPress={() => {
+                if (!currentAddressValue) return;
+                Clipboard.setString(currentAddressValue);
+                showMessage({
+                  message: t('common.copied'),
+                  type: 'success',
+                  duration: 1500,
+                  width: 160,
+                });
+              }}
+            />
+          </View>
+          <View style={styles.btnArea}>
+            {/* <Navigation
               title="Share"
               Icon={Share}
               onPress={() => {
@@ -177,26 +175,20 @@ const Receive: React.FC<Props> = ({ navigation: _navigation }) => {
                 });
               }}
             /> */}
-              <Navigation title={t('receive.selectAsset')} Icon={PoundKey} onPress={() => setShowSetAsset(true)} />
-            </View>
-          </BottomSheetScrollContent>
-        </BottomSheetWrapper>
-      </BottomSheetRoute>
-
-      {showSetAsset && (
-        <ReceiveSetAsset
-          isOpen={showSetAsset}
-          selectedAsset={effectiveSelectedAsset}
-          amount={effectiveAmount}
-          onConfirm={({ asset, amount }) => {
-            setSelectedAsset(asset);
-            if (amount) {
-              setAmount(amount);
-            }
-          }}
-          onClose={() => setShowSetAsset(false)}
-        />
-      )}
+            <Navigation title={t('receive.selectAsset')} Icon={PoundKey} onPress={() => setShowSetAsset(true)} />
+          </View>
+          <ReceiveSetAsset
+            isOpen={showSetAsset}
+            selectedAsset={effectiveSelectedAsset}
+            amount={effectiveAmount}
+            onConfirm={({ asset, amount }) => {
+              setSelectedAsset(asset);
+              setAmount(amount ?? '');
+            }}
+            onClose={() => setShowSetAsset(false)}
+          />
+        </SheetBody>
+      </SheetScrollView>
     </>
   );
 };

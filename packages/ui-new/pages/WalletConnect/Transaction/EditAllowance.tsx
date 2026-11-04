@@ -1,24 +1,15 @@
 import ArrowLeft from '@assets/icons/arrow-left2.svg';
-import {
-  BottomSheetFooter,
-  BottomSheetHeader,
-  type BottomSheetMethods,
-  BottomSheetScrollContent,
-  BottomSheetTextInput,
-  BottomSheetWrapper,
-  InlineBottomSheet,
-} from '@components/BottomSheet';
 import Button from '@components/Button';
 import Checkbox from '@components/Checkbox';
+import Sheet, { SheetBody, SheetFooter, SheetHeader, SheetScrollView } from '@components/Sheet';
 import { isApproveMethod } from '@core/utils/txData';
-import { styles as transactionConfirmStyle } from '@pages/SendTransaction/Step4Confirm/index';
 import { useTheme } from '@react-navigation/native';
 import { isNumeric } from '@utils/isNumberic';
 import Decimal from 'decimal.js';
 import { formatUnits } from 'ethers';
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Pressable, StyleSheet, Text, type TextInputChangeEvent, View } from 'react-native';
+import { Pressable, StyleSheet, Text, TextInput, type TextInputChangeEvent, View } from 'react-native';
 import type { TxDataWithTokenInfo } from '.';
 
 interface IProps {
@@ -29,10 +20,19 @@ interface IProps {
   isOpen: boolean;
 }
 
-export default function EditAllowance({ parseData, savedValue, onSave, onClose, isOpen }: IProps) {
+export default function EditAllowance({ isOpen, ...props }: IProps) {
+  const { colors } = useTheme();
+
+  return (
+    <Sheet isPresented={isOpen} height={{ height: 480 }} containerColor={colors.bgFourth} onDismiss={props.onClose}>
+      <EditAllowanceContent {...props} />
+    </Sheet>
+  );
+}
+
+function EditAllowanceContent({ parseData, savedValue, onSave, onClose }: Omit<IProps, 'isOpen'>) {
   const { colors } = useTheme();
   const { t } = useTranslation();
-  const bottomSheetRef = useRef<BottomSheetMethods | null>(null);
 
   const [isDappSuggestValue, setIsDappSuggestValue] = useState(!savedValue);
   const [customValue, setCustomValue] = useState(savedValue || '');
@@ -52,16 +52,16 @@ export default function EditAllowance({ parseData, savedValue, onSave, onClose, 
     setInvalidNumber(false);
     if (isDappSuggestValue) {
       onSave('');
-      bottomSheetRef.current?.close();
+      onClose();
     } else {
       if (isNumeric(customValue)) {
         onSave(customValue);
-        bottomSheetRef.current?.close();
+        onClose();
       } else {
         setInvalidNumber(true);
       }
     }
-  }, [onSave, isDappSuggestValue, customValue]);
+  }, [onSave, isDappSuggestValue, customValue, onClose]);
 
   const getFormatValue = useCallback(
     (value: bigint) => {
@@ -89,10 +89,10 @@ export default function EditAllowance({ parseData, savedValue, onSave, onClose, 
   );
 
   return (
-    <InlineBottomSheet ref={bottomSheetRef} index={isOpen ? 0 : -1} snapPoints={snapPoints} onClose={onClose}>
-      <BottomSheetWrapper>
-        <BottomSheetHeader title={t('wc.dapp.tx.editAllowance')} />
-        <BottomSheetScrollContent innerPaddingHorizontal>
+    <>
+      <SheetHeader title={t('wc.dapp.tx.editAllowance')} />
+      <SheetScrollView>
+        <SheetBody>
           <View style={styles.editItem}>
             <Checkbox checked={isDappSuggestValue} onChange={() => setIsDappSuggestValue(!isDappSuggestValue)} />
 
@@ -116,7 +116,7 @@ export default function EditAllowance({ parseData, savedValue, onSave, onClose, 
             <View style={styles.flex1}>
               <Text style={[styles.secondary, { color: colors.textPrimary, fontWeight: !isDappSuggestValue ? '600' : '400' }]}>{t('common.customize')}</Text>
               <View pointerEvents={isDappSuggestValue ? 'none' : 'auto'}>
-                <BottomSheetTextInput
+                <TextInput
                   readOnly={isDappSuggestValue}
                   editable={!isDappSuggestValue}
                   inputMode="numeric"
@@ -151,21 +151,17 @@ export default function EditAllowance({ parseData, savedValue, onSave, onClose, 
               )}
             </View>
           </View>
-        </BottomSheetScrollContent>
-        <BottomSheetFooter>
-          <View style={transactionConfirmStyle.btnArea}>
-            <Button testID="close" square Icon={ArrowLeft} onPress={() => bottomSheetRef?.current?.close()} />
-            <Button testID="save" style={styles.flex1} onPress={handleSave}>
-              {t('common.save')}
-            </Button>
-          </View>
-        </BottomSheetFooter>
-      </BottomSheetWrapper>
-    </InlineBottomSheet>
+        </SheetBody>
+      </SheetScrollView>
+      <SheetFooter style={styles.btnArea}>
+        <Button testID="close" square Icon={ArrowLeft} onPress={onClose} />
+        <Button testID="save" style={styles.flex1} onPress={handleSave}>
+          {t('common.save')}
+        </Button>
+      </SheetFooter>
+    </>
   );
 }
-
-const snapPoints = [480];
 
 const styles = StyleSheet.create({
   flex1: {
@@ -207,11 +203,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
   },
   btnArea: {
-    marginTop: 'auto',
     display: 'flex',
     flexDirection: 'row',
     gap: 16,
-    marginBottom: 79,
   },
   balanceChoose: {
     gap: 8,

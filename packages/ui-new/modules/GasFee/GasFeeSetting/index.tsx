@@ -5,16 +5,9 @@ import GasCustomizeLight from '@assets/images/gas/gas-customize-light.png';
 import GasHigh from '@assets/images/gas/gas-high.png';
 import GasLow from '@assets/images/gas/gas-low.png';
 import GasMedium from '@assets/images/gas/gas-medium.png';
-import {
-  BottomSheetFooter,
-  BottomSheetHeader,
-  type BottomSheetMethods,
-  BottomSheetScrollContent,
-  BottomSheetWrapper,
-  InlineBottomSheet,
-} from '@components/BottomSheet';
 import Button from '@components/Button';
 import HourglassLoading from '@components/Loading/Hourglass';
+import Sheet, { SheetBody, SheetFooter, SheetHeader, SheetScrollView } from '@components/Sheet';
 import Text from '@components/Text';
 import { ASSET_TYPE } from '@core/types';
 import { numberFormat, trimDecimalZeros } from '@core/utils/balance';
@@ -28,7 +21,7 @@ import { Image } from 'expo-image';
 import { has, isEqual, keys, omit } from 'lodash-es';
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 import type React from 'react';
-import { forwardRef, useCallback, useEffect, useImperativeHandle, useMemo, useRef, useState } from 'react';
+import { forwardRef, useCallback, useEffect, useImperativeHandle, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Pressable, StyleSheet, View } from 'react-native';
 import CustomizeAdvanceSetting from './CustomizeAdvanceSetting';
@@ -73,7 +66,6 @@ const GasFeeSetting = forwardRef<GasFeeSettingMethods, Props>(
   ({ show, tx, onClose, onConfirm, dappCustomizeGasSetting, dappCustomizeAdvanceSetting, force155 }, ref) => {
     const { t } = useTranslation();
     const { colors } = useTheme();
-    const bottomSheetRef = useRef<BottomSheetMethods>(null!);
 
     const { data: assets } = useAssetsOfCurrentAddress();
     const nativeAsset = useMemo(() => assets?.find((a) => a.type === ASSET_TYPE.Native) ?? null, [assets]);
@@ -188,10 +180,10 @@ const GasFeeSetting = forwardRef<GasFeeSettingMethods, Props>(
         if (isReset) {
           setCustomizeGasSetting(estimateGasSettings[defaultLevel]);
         }
-        bottomSheetRef.current?.close();
+        onClose();
       },
       // eslint-disable-next-line react-hooks/exhaustive-deps
-      [estimateRes, customizeGasSetting, tempSelectedOptionLevel, customizeAdvanceSetting],
+      [estimateRes, customizeGasSetting, tempSelectedOptionLevel, customizeAdvanceSetting, onClose],
     );
 
     const resetCustomizeSetting = useCallback(() => {
@@ -215,85 +207,84 @@ const GasFeeSetting = forwardRef<GasFeeSettingMethods, Props>(
       [resetCustomizeSetting],
     );
 
-    if (!show) return;
     return (
-      <>
-        <InlineBottomSheet ref={bottomSheetRef} snapPoints={snapPoints} index={0} onClose={onClose}>
-          <BottomSheetWrapper innerPaddingHorizontal>
-            <BottomSheetHeader title={t('tx.gasFee.title')} />
-            <BottomSheetScrollContent>
-              {(!estimateRes || !nativeAsset) && <HourglassLoading style={styles.loading} />}
-              {estimateRes && estimateGasSettings && nativeAsset && (
-                <>
-                  <GasOption
-                    level="low"
-                    nativeAsset={nativeAsset}
-                    gasSetting={estimateGasSettings.low}
-                    gasLimit={currentGasLimit!}
-                    selected={tempSelectedOptionLevel === 'low'}
-                    onPress={() => setTempSelectedOptionLevel('low')}
-                  />
-                  <GasOption
-                    level="medium"
-                    nativeAsset={nativeAsset}
-                    gasSetting={estimateGasSettings.medium}
-                    gasLimit={currentGasLimit!}
-                    selected={tempSelectedOptionLevel === 'medium'}
-                    onPress={() => setTempSelectedOptionLevel('medium')}
-                  />
-                  <GasOption
-                    level="high"
-                    nativeAsset={nativeAsset}
-                    gasSetting={estimateGasSettings.high}
-                    gasLimit={currentGasLimit!}
-                    selected={tempSelectedOptionLevel === 'high'}
-                    onPress={() => setTempSelectedOptionLevel('high')}
-                  />
-                  <GasOption
-                    level="customize"
-                    showLongTime={showLongTime}
-                    nativeAsset={nativeAsset}
-                    gasSetting={customizeGasSetting ?? defaultCustomizeGasSetting!}
-                    gasLimit={currentGasLimit!}
-                    selected={tempSelectedOptionLevel === 'customize'}
-                    onPress={() => setShowCustomizeSetting(true)}
-                  />
-                  <Pressable style={styles.advanceWrapper} onPress={() => setShowCustomizeAdvanceSetting(true)}>
-                    <Text style={[styles.advance, { color: colors.textPrimary }]}>{t('tx.gasFee.advance')}</Text>
-                    <ArrowRight color={colors.iconPrimary} />
-                  </Pressable>
-                </>
-              )}
-            </BottomSheetScrollContent>
-            <BottomSheetFooter>
-              <Button testID="confirm" size="small" disabled={!tempSelectedOptionLevel} onPress={() => handleConfirm()} loading={!estimateRes}>
-                {t('common.confirm')}
-              </Button>
-            </BottomSheetFooter>
-          </BottomSheetWrapper>
-        </InlineBottomSheet>
-        {estimateRes && showCustomizeSetting && (
-          <CustomizeGasSetting
-            force155={force155}
-            customizeGasSetting={customizeGasSetting ?? defaultCustomizeGasSetting!}
-            onConfirm={(customGasSetting) => {
-              setTempSelectedOptionLevel('customize');
-              setCustomizeGasSetting(customGasSetting);
-            }}
-            onClose={() => setShowCustomizeSetting(false)}
-            estimateCurrentGasPrice={estimateCurrentGasPrice!}
-          />
-        )}
-        {estimateRes && showCustomizeAdvanceSetting && (
-          <CustomizeAdvanceSetting
-            customizeAdvanceSetting={customizeAdvanceSetting}
-            estimateNonce={estimateRes.nonce}
-            estimateGasLimit={estimateRes.gasLimit}
-            onConfirm={setCustomizeAdvanceSetting}
-            onClose={() => setShowCustomizeAdvanceSetting(false)}
-          />
-        )}
-      </>
+      <Sheet isPresented={show} height={{ height: 700 }} containerColor={colors.bgFourth} onDismiss={onClose}>
+        <SheetHeader title={t('tx.gasFee.title')} />
+        <SheetScrollView>
+          <SheetBody>
+            {(!estimateRes || !nativeAsset) && <HourglassLoading style={styles.loading} />}
+            {estimateRes && estimateGasSettings && nativeAsset && (
+              <>
+                <GasOption
+                  level="low"
+                  nativeAsset={nativeAsset}
+                  gasSetting={estimateGasSettings.low}
+                  gasLimit={currentGasLimit!}
+                  selected={tempSelectedOptionLevel === 'low'}
+                  onPress={() => setTempSelectedOptionLevel('low')}
+                />
+                <GasOption
+                  level="medium"
+                  nativeAsset={nativeAsset}
+                  gasSetting={estimateGasSettings.medium}
+                  gasLimit={currentGasLimit!}
+                  selected={tempSelectedOptionLevel === 'medium'}
+                  onPress={() => setTempSelectedOptionLevel('medium')}
+                />
+                <GasOption
+                  level="high"
+                  nativeAsset={nativeAsset}
+                  gasSetting={estimateGasSettings.high}
+                  gasLimit={currentGasLimit!}
+                  selected={tempSelectedOptionLevel === 'high'}
+                  onPress={() => setTempSelectedOptionLevel('high')}
+                />
+                <GasOption
+                  level="customize"
+                  showLongTime={showLongTime}
+                  nativeAsset={nativeAsset}
+                  gasSetting={customizeGasSetting ?? defaultCustomizeGasSetting!}
+                  gasLimit={currentGasLimit!}
+                  selected={tempSelectedOptionLevel === 'customize'}
+                  onPress={() => setShowCustomizeSetting(true)}
+                />
+                <Pressable style={styles.advanceWrapper} onPress={() => setShowCustomizeAdvanceSetting(true)}>
+                  <Text style={[styles.advance, { color: colors.textPrimary }]}>{t('tx.gasFee.advance')}</Text>
+                  <ArrowRight color={colors.iconPrimary} />
+                </Pressable>
+              </>
+            )}
+            {estimateRes && (
+              <CustomizeGasSetting
+                isOpen={showCustomizeSetting}
+                force155={force155}
+                customizeGasSetting={customizeGasSetting ?? defaultCustomizeGasSetting!}
+                onConfirm={(customGasSetting) => {
+                  setTempSelectedOptionLevel('customize');
+                  setCustomizeGasSetting(customGasSetting);
+                }}
+                onClose={() => setShowCustomizeSetting(false)}
+                estimateCurrentGasPrice={estimateCurrentGasPrice!}
+              />
+            )}
+            {estimateRes && (
+              <CustomizeAdvanceSetting
+                isOpen={showCustomizeAdvanceSetting}
+                customizeAdvanceSetting={customizeAdvanceSetting}
+                estimateNonce={estimateRes.nonce}
+                estimateGasLimit={estimateRes.gasLimit}
+                onConfirm={setCustomizeAdvanceSetting}
+                onClose={() => setShowCustomizeAdvanceSetting(false)}
+              />
+            )}
+          </SheetBody>
+        </SheetScrollView>
+        <SheetFooter>
+          <Button testID="confirm" size="small" disabled={!tempSelectedOptionLevel} onPress={() => handleConfirm()} loading={!estimateRes}>
+            {t('common.confirm')}
+          </Button>
+        </SheetFooter>
+      </Sheet>
     );
   },
 );
@@ -411,8 +402,6 @@ export const GasOption: React.FC<{
     </Pressable>
   );
 };
-
-const snapPoints = [700];
 
 const styles = StyleSheet.create({
   loading: {

@@ -1,48 +1,34 @@
-import {
-  BottomSheetContent,
-  BottomSheetFooter,
-  BottomSheetHeader,
-  type BottomSheetMethods,
-  BottomSheetRoute,
-  BottomSheetWrapper,
-} from '@components/BottomSheet';
 import Button from '@components/Button';
+import { SheetBody, SheetFooter, SheetHeader } from '@components/Sheet';
 import Text from '@components/Text';
 import { AUTH_PASSWORD_REQUEST_CANCELED } from '@core/errors';
 import { useTheme } from '@react-navigation/native';
-import { type AccountManagementStackName, type StackScreenProps, WelcomeStackName } from '@router/configs';
+import { type EraseAllWalletStackName, type StackScreenProps, WelcomeStackName } from '@router/configs';
 import { getAuthService, getWalletMaintenanceService } from '@service/core';
 import { useDisconnectAllWalletConnectSessions } from '@service/walletConnect';
-import { screenHeight } from '@utils/deviceInfo';
 import { getErrorCode } from '@utils/error';
 import type React from 'react';
-import { useCallback, useRef } from 'react';
+import { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, View } from 'react-native';
 import { showMessage } from 'react-native-flash-message';
 import RNRestart from 'react-native-restart';
 
-interface Props {
-  navigation: StackScreenProps<typeof AccountManagementStackName>['navigation'];
-}
-
-const EraseAllWallet: React.FC<Props> = ({ navigation }) => {
+const EraseAllWallet: React.FC<StackScreenProps<typeof EraseAllWalletStackName>> = ({ navigation }) => {
   const { colors } = useTheme();
   const { t } = useTranslation();
-  const bottomSheetRef = useRef<BottomSheetMethods>(null!);
   const disconnectAllSessions = useDisconnectAllWalletConnectSessions();
 
   const handleDelete = useCallback(async () => {
     try {
       await getAuthService().getPassword();
-      bottomSheetRef.current?.close();
+      if (navigation.isFocused()) navigation.goBack();
       navigation.navigate(WelcomeStackName);
       try {
         await disconnectAllSessions();
       } catch (error) {
         console.warn('[EraseAllWallet] Failed to disconnect WalletConnect sessions before erasing wallet.', error);
       }
-      await new Promise((resolve) => setTimeout(resolve, 100));
       await getWalletMaintenanceService().clearWalletData();
       await RNRestart.restart();
     } catch (err) {
@@ -59,28 +45,29 @@ const EraseAllWallet: React.FC<Props> = ({ navigation }) => {
   }, [disconnectAllSessions, navigation, t]);
 
   return (
-    <BottomSheetRoute ref={bottomSheetRef} snapPoints={snapPoints}>
-      <BottomSheetWrapper innerPaddingHorizontal>
-        <BottomSheetHeader title={t('account.action.eraseAll.title')} />
-        <BottomSheetContent>
-          <Text style={[styles.description, { color: colors.textSecondary }]}>{t('account.action.eraseAll.describe')}</Text>
-        </BottomSheetContent>
-        <BottomSheetFooter>
-          <View style={styles.btnArea}>
-            <Button testID="cancel" style={styles.btn} onPress={() => bottomSheetRef.current?.close()} size="small">
-              {t('common.cancel')}
-            </Button>
-            <Button testID="delete" textColor="#fff" style={[styles.btn, { backgroundColor: colors.down }]} onPress={handleDelete} size="small">
-              {t('common.delete')}
-            </Button>
-          </View>
-        </BottomSheetFooter>
-      </BottomSheetWrapper>
-    </BottomSheetRoute>
+    <View collapsable={false} style={styles.container}>
+      <SheetHeader title={t('account.action.eraseAll.title')} />
+      <SheetBody>
+        <Text style={[styles.description, { color: colors.textSecondary }]}>{t('account.action.eraseAll.describe')}</Text>
+      </SheetBody>
+      <SheetFooter>
+        <View style={styles.btnArea}>
+          <Button testID="cancel" style={styles.btn} onPress={() => navigation.goBack()} size="small">
+            {t('common.cancel')}
+          </Button>
+          <Button testID="delete" textColor="#fff" style={[styles.btn, { backgroundColor: colors.down }]} onPress={handleDelete} size="small">
+            {t('common.delete')}
+          </Button>
+        </View>
+      </SheetFooter>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+  },
   description: {
     marginTop: 16,
     marginBottom: 32,
@@ -100,7 +87,5 @@ const styles = StyleSheet.create({
     flexShrink: 1,
   },
 });
-
-const snapPoints = [`${((400 / screenHeight) * 100).toFixed(2)}%`];
 
 export default EraseAllWallet;

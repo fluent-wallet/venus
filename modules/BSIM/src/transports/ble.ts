@@ -243,6 +243,7 @@ export const startBleDeviceScan = (
 
   const bleManager = new BleManager();
   const timers = { setTimeout, clearTimeout };
+  const scanController = new AbortController();
 
   const lastSeenNameByDeviceId = new Map<string, string>();
   let isStopped = false;
@@ -251,6 +252,7 @@ export const startBleDeviceScan = (
   const stop = () => {
     if (isStopped) return;
     isStopped = true;
+    scanController.abort();
     lastSeenNameByDeviceId.clear();
     try {
       bleManager.stopDeviceScan();
@@ -262,7 +264,7 @@ export const startBleDeviceScan = (
   };
 
   const reportErrorAndStop = (error: TransportError) => {
-    if (didReportError) return;
+    if (isStopped || didReportError) return;
     didReportError = true;
     onError?.(error);
     stop();
@@ -270,7 +272,7 @@ export const startBleDeviceScan = (
 
   const start = async () => {
     try {
-      await waitForAdapterReady(bleManager, DEFAULT_SCAN_TIMEOUT_MS, timers, noopLogger);
+      await waitForAdapterReady(bleManager, DEFAULT_SCAN_TIMEOUT_MS, timers, noopLogger, scanController.signal);
       if (isStopped) return;
 
       bleManager.startDeviceScan(serviceUuidsFilter, null, (error, device) => {
@@ -390,6 +392,7 @@ const waitForAdapterReady = async (
   timeoutMs: number,
   timers: { setTimeout: typeof setTimeout; clearTimeout: typeof clearTimeout },
   logger: (event: string, context?: Record<string, unknown>) => void,
+  signal?: AbortSignal,
 ) => {
   const mapStateToError = (state: State) => {
     if (state === State.PoweredOff) {
@@ -404,7 +407,9 @@ const waitForAdapterReady = async (
     return null;
   };
 
+  signal?.throwIfAborted();
   const initialState = await manager.state();
+  signal?.throwIfAborted();
   logger('ble.state.current', { state: initialState });
 
   const initialError = mapStateToError(initialState);
@@ -421,8 +426,12 @@ const waitForAdapterReady = async (
       settled = true;
       if (timeoutHandle) timers.clearTimeout(timeoutHandle);
       subscription?.remove();
+      signal?.removeEventListener('abort', handleAbort);
       settler();
     };
+
+    const handleAbort = () => finish(() => reject(signal?.reason));
+    signal?.addEventListener('abort', handleAbort, { once: true });
 
     if (timeoutMs > 0) {
       timeoutHandle = timers.setTimeout(() => {

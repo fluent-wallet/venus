@@ -1,10 +1,11 @@
+import { SHEET_CORNER_RADIUS } from '@components/Sheet/constants';
 import type { HardwareUnavailableReason as BSIMHardwareReason } from '@core/hardware/bsim/types';
 import type { ExternalRequestSnapshot } from '@core/modules/externalRequests';
 import type { SpeedUpAction } from '@core/types';
 import type { SpeedUpLevel } from '@modules/GasFee/GasFeeSetting';
 import type { VersionJSON } from '@pages/Settings/AboutUs';
-import type { NavigationProp, NavigatorScreenParams } from '@react-navigation/native';
-import type { NativeStackScreenProps } from '@react-navigation/native-stack';
+import type { NavigationProp } from '@react-navigation/native';
+import type { NativeStackNavigationOptions, NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { INftItem } from '@service/core';
 import type { AssetInfo } from '@utils/assetInfo';
 
@@ -16,14 +17,13 @@ export const BiometricsWayStackName = 'Biometrics';
 export const PasswordWayStackName = 'PasswordWay';
 export const HomeStackName = 'Home';
 export const AccountManagementStackName = 'WalletManagement';
+export const AccountSelectorStackName = 'AccountSelector';
 export const AccountSettingStackName = 'AccountSetting';
 export const GroupSettingStackName = 'GroupSettin';
 export const HDSettingStackName = 'HDSetting';
-export const BackupStackName = 'Backup';
 export const NetworkManagementStackName = 'NetworkManagement';
 export const NetworkAddNewEndpointStackName = 'NetworkAddNewEndpoint';
 export const PasswordVerifyStackName = 'PasswordVerify';
-export const SendTransactionStackName = 'SendTransaction';
 export const ReceiveStackName = 'Receive';
 export const EraseAllWalletStackName = 'EraseAllWallet';
 export const AddAnotherWalletStackName = 'AddAnotherWallet';
@@ -39,10 +39,6 @@ export const TransactionDetailStackName = 'TransactionDetail';
 export const ExternalInputHandlerStackName = 'ExternalInputHandler';
 export const TooManyPendingStackName = 'TooManyPending';
 export const BSIMAvailabilityStackName = 'BSIMAvailability';
-
-// start Wallet connect nest stack
-
-export const WalletConnectStackName = 'WalletConnect';
 
 export const WalletConnectProposalStackName = 'WalletConnectProposal';
 export const WalletConnectSessionsStackName = 'WalletConnectSessions';
@@ -66,20 +62,6 @@ type RuntimeWcSendTxParams = {
   request: RuntimeWcSessionRequest & { method: 'eth_sendTransaction' };
   isContract: boolean;
 };
-export type WalletConnectParamList = {
-  [WalletConnectProposalStackName]: RuntimeWcProposalParams;
-
-  [WalletConnectSessionsStackName]: undefined;
-
-  [WalletConnectSignMessageStackName]: RuntimeWcSignMessageParams;
-
-  [WalletConnectTransactionStackName]: RuntimeWcSendTxParams;
-
-  [PasswordVerifyStackName]: undefined | { requestId: string };
-};
-
-// end Wallet connect nest stack
-
 export type RootStackParamList = {
   [WelcomeStackName]: undefined;
   [WayToInitWalletStackName]: undefined;
@@ -88,12 +70,21 @@ export type RootStackParamList = {
   [PasswordWayStackName]?: { type?: 'importExistWallet' | 'createNewWallet' | 'connectBSIM'; value?: string; bsimDeviceId?: string };
   [BiometricsWayStackName]?: { type?: 'importExistWallet' | 'createNewWallet' | 'connectBSIM'; value?: string; bsimDeviceId?: string };
   [HomeStackName]: undefined;
-  [AccountManagementStackName]: undefined;
+  [AccountManagementStackName]: undefined | { fromAccountSelector: true };
+  [AccountSelectorStackName]: undefined;
   [AccountSettingStackName]: { accountId: string };
   [GroupSettingStackName]: { groupId: string };
   [HDSettingStackName]: { groupId: string };
-  [BackupStackName]: NavigatorScreenParams<BackupStackParamList>;
-  [SendTransactionStackName]: NavigatorScreenParams<SendTransactionParamList>;
+  [BackupStep1StackName]: { accountId?: string; groupId?: string };
+  [BackupStep2StackName]: { accountId?: string; groupId?: string };
+  [BackupStep3StackName]: { phrases: string[]; vaultId: string };
+  [BackupSuccessStackName]: undefined;
+  [BackupBSIM1PasswordStackName]: { vaultId: string };
+  [BackupBSIMQ2RCodeStackName]: { backupPassword: string; seedData: string; vaultId: string };
+  [SendTransactionStep1StackName]: undefined;
+  [SendTransactionStep2StackName]: { recipientAddress: string; searchAddress?: string };
+  [SendTransactionStep3StackName]: { asset: AssetInfo; recipientAddress: string; nftItemDetail?: INftItem; amount?: string };
+  [SendTransactionStep4StackName]: { asset: AssetInfo; recipientAddress: string; amount: string; nftItemDetail?: INftItem; inMaxMode?: boolean };
   [NetworkManagementStackName]: undefined;
   [PasswordVerifyStackName]: undefined | { requestId: string };
   [ReceiveStackName]: undefined;
@@ -105,7 +96,10 @@ export type RootStackParamList = {
   [PreferencesStackName]: undefined;
   [AppearanceStackName]: undefined;
   [LanguageStackName]: undefined;
-  [WalletConnectStackName]: NavigatorScreenParams<WalletConnectParamList>;
+  [WalletConnectProposalStackName]: RuntimeWcProposalParams;
+  [WalletConnectSignMessageStackName]: RuntimeWcSignMessageParams;
+  [WalletConnectTransactionStackName]: RuntimeWcSendTxParams;
+  [WalletConnectSessionsStackName]: undefined;
   [NetworkAddNewEndpointStackName]: undefined;
   [SignatureRecordsStackName]: undefined;
   [SpeedUpStackName]: { txId: string; type: SpeedUpAction; level?: SpeedUpLevel };
@@ -121,40 +115,29 @@ export type StackNavigation = NavigationProp<RootStackParamList>;
 // SheetBottomOption
 export const SheetBottomOption = { headerShown: false, presentation: 'transparentModal' as const, safeAreaInsets: { top: 0 }, animation: 'none' as const };
 
-// backup nest stack
+export function getFormSheetOptions(
+  backgroundColor: string,
+  sheetAllowedDetents: NativeStackNavigationOptions['sheetAllowedDetents'] = 'fitToContents',
+): NativeStackNavigationOptions {
+  return {
+    headerShown: false,
+    presentation: 'formSheet',
+    sheetAllowedDetents,
+    sheetCornerRadius: SHEET_CORNER_RADIUS,
+    contentStyle: { backgroundColor },
+  };
+}
+
+// Backup routes
 export const BackupStep1StackName = 'BackupStep1';
 export const BackupStep2StackName = 'BackupStep2';
 export const BackupStep3StackName = 'BackupStep3';
 export const BackupSuccessStackName = 'BackupSuccess';
 export const BackupBSIM1PasswordStackName = 'BackupBSIMPassword';
 export const BackupBSIMQ2RCodeStackName = 'BackupBSIMQRCode';
-export type BackupStackParamList = {
-  [BackupStep1StackName]: { accountId?: string; groupId?: string };
-  [BackupStep2StackName]: { accountId?: string; groupId?: string };
-  [BackupStep3StackName]: { phrases: string[]; vaultId: string };
-  [BackupBSIM1PasswordStackName]: { vaultId: string };
-  [BackupBSIMQ2RCodeStackName]: { backupPassword: string; seedData: string; vaultId: string };
-  [BackupSuccessStackName]: undefined;
-  // navigate to home
-  [HomeStackName]: undefined;
-  [PasswordVerifyStackName]: undefined | { requestId: string };
-};
-export type BackupScreenProps<T extends keyof BackupStackParamList> = NativeStackScreenProps<BackupStackParamList, T>;
-// end backup nest stack
 
-// SendTransaction nest stack
+// SendTransaction routes
 export const SendTransactionStep1StackName = 'SendTransactionStep1';
 export const SendTransactionStep2StackName = 'SendTransactionStep2';
 export const SendTransactionStep3StackName = 'SendTransactionStep3';
 export const SendTransactionStep4StackName = 'SendTransactionStep4';
-export type SendTransactionParamList = {
-  [SendTransactionStep1StackName]: undefined;
-  [SendTransactionStep2StackName]: { recipientAddress: string; searchAddress?: string };
-  [SendTransactionStep3StackName]: { asset: AssetInfo; recipientAddress: string; nftItemDetail?: INftItem; amount?: string };
-  [SendTransactionStep4StackName]: { asset: AssetInfo; recipientAddress: string; amount: string; nftItemDetail?: INftItem; inMaxMode?: boolean };
-  // navigate to home
-  [HomeStackName]: undefined;
-  [PasswordVerifyStackName]: undefined | { requestId: string };
-};
-export type SendTransactionScreenProps<T extends keyof SendTransactionParamList> = NativeStackScreenProps<SendTransactionParamList, T>;
-// end SendTransaction nest stack
