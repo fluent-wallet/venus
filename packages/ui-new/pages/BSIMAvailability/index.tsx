@@ -1,5 +1,5 @@
 import BSIMNotFindIcon from '@assets/icons/BSIMNotFind.svg';
-import { BottomSheetContent, BottomSheetHeader, BottomSheetRoute, BottomSheetWrapper, snapPoints } from '@components/BottomSheet';
+import { SheetBody, SheetHeader } from '@components/Sheet';
 import { useTheme } from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';
 import { Platform, StyleSheet, Text } from 'react-native';
@@ -9,17 +9,15 @@ export const BSIMAvailability = () => {
   const { t } = useTranslation();
 
   return (
-    <BottomSheetRoute snapPoints={snapPoints.percent35}>
-      <BottomSheetWrapper innerPaddingHorizontal>
-        <BottomSheetHeader title={t('bsim.availability.title')} />
-        <BottomSheetContent>
-          <BSIMNotFindIcon style={styles.banner} />
-          <Text style={[styles.description, { color: colors.textPrimary }]}>
-            {Platform.OS === 'android' ? t('bsim.availability.androidCardMissing') : t('bsim.availability.iosNoCardBluetooth')}
-          </Text>
-        </BottomSheetContent>
-      </BottomSheetWrapper>
-    </BottomSheetRoute>
+    <>
+      <SheetHeader title={t('bsim.availability.title')} />
+      <SheetBody>
+        <BSIMNotFindIcon style={styles.banner} />
+        <Text style={[styles.description, { color: colors.textPrimary }]}>
+          {Platform.OS === 'android' ? t('bsim.availability.androidCardMissing') : t('bsim.availability.iosNoCardBluetooth')}
+        </Text>
+      </SheetBody>
+    </>
   );
 };
 

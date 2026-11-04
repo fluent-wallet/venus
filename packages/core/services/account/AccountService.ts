@@ -15,6 +15,7 @@ import { toChecksum } from '@core/utils/account';
 import { convertHexToBase32 } from '@core/utils/address';
 import { getNthAccountOfHDKey } from '@core/utils/hdkey';
 import { Q } from '@nozbe/watermelondb';
+import type { ReaderInterface } from '@nozbe/watermelondb/Database/WorkQueue';
 import { inject, injectable, optional } from 'inversify';
 import { HardwareWalletService } from '../hardware/HardwareWalletService';
 import { getGroupedAccountNickname } from './naming';
@@ -88,13 +89,15 @@ export class AccountService {
   }
 
   async listAccounts(options: { includeHidden?: boolean } = {}): Promise<IAccount[]> {
-    const conditions = options.includeHidden ? [] : [Q.where('hidden', false)];
-    const accounts = await this.database
-      .get<Account>(TableName.Account)
-      .query(...conditions)
-      .fetch();
+    return this.database.read(async (reader) => {
+      const conditions = options.includeHidden ? [] : [Q.where('hidden', false)];
+      const accounts = await this.database
+        .get<Account>(TableName.Account)
+        .query(...conditions)
+        .fetch();
 
-    return Promise.all(accounts.map((item) => this.toInterface(item)));
+      return Promise.all(accounts.map((account) => this.readAccount(account, reader)));
+    });
   }
 
   async createHardwareAccount(vaultId: string): Promise<IAccount> {
@@ -124,15 +127,17 @@ export class AccountService {
   }
 
   async getAccountsByGroup(accountGroupId: string, options: { includeHidden?: boolean } = {}): Promise<IAccount[]> {
-    const conditions = [Q.where('account_group_id', accountGroupId)];
-    if (!options.includeHidden) {
-      conditions.push(Q.where('hidden', false));
-    }
-    const accounts = await this.database
-      .get<Account>(TableName.Account)
-      .query(...conditions, Q.sortBy('index', Q.asc))
-      .fetch();
-    return Promise.all(accounts.map((item) => this.toInterface(item)));
+    return this.database.read(async (reader) => {
+      const conditions = [Q.where('account_group_id', accountGroupId)];
+      if (!options.includeHidden) {
+        conditions.push(Q.where('hidden', false));
+      }
+      const accounts = await this.database
+        .get<Account>(TableName.Account)
+        .query(...conditions, Q.sortBy('index', Q.asc))
+        .fetch();
+      return Promise.all(accounts.map((account) => this.readAccount(account, reader)));
+    });
   }
 
   async updateAccountNickName(accountId: string, nickname: string): Promise<IAccount> {
@@ -485,11 +490,16 @@ export class AccountService {
     );
   }
 
-  private async toInterface(account: Account): Promise<IAccount> {
+  private toInterface(account: Account): Promise<IAccount> {
+    return this.database.read((reader) => this.readAccount(account, reader));
+  }
+
+  private async readAccount(account: Account, reader: ReaderInterface): Promise<IAccount> {
     const accountGroup = await account.accountGroup.fetch();
     const vault = await accountGroup.vault.fetch();
-    const currentAddress = await account.getCurrentNetworkAddress();
-    const addressValue = currentAddress ? await currentAddress.getValue() : '';
+    // Nested model readers share this task instead of joining the queue again.
+    const currentAddress = await reader.callReader(() => account.getCurrentNetworkAddress());
+    const addressValue = currentAddress ? await reader.callReader(() => currentAddress.getValue()) : '';
 
     const currentAddressId = currentAddress ? currentAddress.id : null;
 

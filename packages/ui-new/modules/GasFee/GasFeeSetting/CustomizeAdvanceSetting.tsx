@@ -1,14 +1,7 @@
 import Failed from '@assets/icons/message-fail.svg';
 import Warning from '@assets/icons/warn.svg';
-import {
-  BottomSheetContent,
-  BottomSheetFooter,
-  BottomSheetHeader,
-  type BottomSheetMethods,
-  BottomSheetWrapper,
-  InlineBottomSheet,
-} from '@components/BottomSheet';
 import Button from '@components/Button';
+import Sheet, { SheetBody, SheetFooter, SheetHeader } from '@components/Sheet';
 import Text from '@components/Text';
 import { useTheme } from '@react-navigation/native';
 import { useCurrentNetwork } from '@service/network';
@@ -16,7 +9,7 @@ import Decimal from 'decimal.js';
 /* eslint-disable react-hooks/exhaustive-deps */
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 import type React from 'react';
-import { useCallback, useMemo, useRef } from 'react';
+import { useCallback, useMemo } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
 import { View } from 'react-native';
@@ -24,6 +17,7 @@ import { controlRule, styles, TextInput } from './CustomizeGasSetting';
 import type { AdvanceSetting } from './index';
 
 interface Props {
+  isOpen: boolean;
   customizeAdvanceSetting: AdvanceSetting | null;
   estimateGasLimit: string;
   estimateNonce: number;
@@ -40,10 +34,26 @@ type FormData = {
 
 const minGasLimit = new Decimal(21000);
 
-const CustomizeAdvanceSetting: React.FC<Props> = ({ customizeAdvanceSetting, estimateGasLimit, estimateNonce, nonceDisabled, onClose, onConfirm }) => {
+const CustomizeAdvanceSetting: React.FC<Props> = ({ isOpen, ...props }) => {
+  const { colors } = useTheme();
+
+  return (
+    <Sheet isPresented={isOpen} height={{ height: 448 }} containerColor={colors.bgFourth} onDismiss={props.onClose}>
+      <CustomizeAdvanceSettingContent {...props} />
+    </Sheet>
+  );
+};
+
+const CustomizeAdvanceSettingContent: React.FC<Omit<Props, 'isOpen'>> = ({
+  customizeAdvanceSetting,
+  estimateGasLimit,
+  estimateNonce,
+  nonceDisabled,
+  onClose,
+  onConfirm,
+}) => {
   const { t } = useTranslation();
   const { colors } = useTheme();
-  const bottomSheetRef = useRef<BottomSheetMethods>(null!);
   const { data: currentNetwork } = useCurrentNetwork();
 
   const {
@@ -60,14 +70,17 @@ const CustomizeAdvanceSetting: React.FC<Props> = ({ customizeAdvanceSetting, est
     mode: 'onChange',
   });
 
-  const handleConfirm = useCallback((data: FormData) => {
-    onConfirm({
-      gasLimit: new Decimal(data.gasLimit).toHex(),
-      nonce: Number(data.nonce),
-      storageLimit: new Decimal(data.storageLimit).toHex(),
-    });
-    bottomSheetRef.current?.close();
-  }, []);
+  const handleConfirm = useCallback(
+    (data: FormData) => {
+      onConfirm({
+        gasLimit: new Decimal(data.gasLimit).toHex(),
+        nonce: Number(data.nonce),
+        storageLimit: new Decimal(data.storageLimit).toHex(),
+      });
+      onClose();
+    },
+    [onConfirm, onClose],
+  );
 
   const gasLimitInputVal = watch('gasLimit');
   const isGasLimitLowerThanEstimate = useMemo(() => Number(gasLimitInputVal ?? 0) < Number(estimateGasLimit ?? 0), [gasLimitInputVal, estimateGasLimit]);
@@ -97,65 +110,61 @@ const CustomizeAdvanceSetting: React.FC<Props> = ({ customizeAdvanceSetting, est
   );
 
   return (
-    <InlineBottomSheet ref={bottomSheetRef} snapPoints={snapPoints} index={0} onClose={onClose}>
-      <BottomSheetWrapper innerPaddingHorizontal>
-        <BottomSheetHeader title={t('tx.gasFee.advanceSetting.title')} />
-        <BottomSheetContent style={styles.contentStyle}>
-          <Text style={[styles.inputTitle, { color: colors.textSecondary }]}>{t('tx.gasFee.advanceSetting.gasLimit')}</Text>
-          <Controller
-            control={control}
-            rules={{
-              required: true,
-              validate: (newGasLimit) => new Decimal(newGasLimit || '0').greaterThanOrEqualTo(minGasLimit) || 'less-than-min',
-            }}
-            render={({ field: { onChange, onBlur, value } }) => (
-              <TextInput
-                error={!!errors.gasLimit}
-                colors={colors}
-                onBlur={onBlur}
-                onChangeText={(v) => onChange((v || '').replace(/[^0-9]/g, ''))}
-                value={value}
-                showGweiSuffix={false}
-              />
-            )}
-            name="gasLimit"
-          />
-          {errors.gasLimit?.type === 'validate' && LessThanMinTip}
-          {!errors.gasLimit && isGasLimitLowerThanEstimate && LowerTip}
+    <>
+      <SheetHeader title={t('tx.gasFee.advanceSetting.title')} />
+      <SheetBody style={styles.contentStyle}>
+        <Text style={[styles.inputTitle, { color: colors.textSecondary }]}>{t('tx.gasFee.advanceSetting.gasLimit')}</Text>
+        <Controller
+          control={control}
+          rules={{
+            required: true,
+            validate: (newGasLimit) => new Decimal(newGasLimit || '0').greaterThanOrEqualTo(minGasLimit) || 'less-than-min',
+          }}
+          render={({ field: { onChange, onBlur, value } }) => (
+            <TextInput
+              error={!!errors.gasLimit}
+              colors={colors}
+              onBlur={onBlur}
+              onChangeText={(v) => onChange((v || '').replace(/[^0-9]/g, ''))}
+              value={value}
+              showGweiSuffix={false}
+            />
+          )}
+          name="gasLimit"
+        />
+        {errors.gasLimit?.type === 'validate' && LessThanMinTip}
+        {!errors.gasLimit && isGasLimitLowerThanEstimate && LowerTip}
 
-          <Text style={[styles.inputTitle, { color: colors.textSecondary }]}>{t('tx.gasFee.advanceSetting.nonce')}</Text>
-          <Controller
-            control={control}
-            rules={controlRule}
-            render={({ field: { onChange, onBlur, value } }) => (
-              <TextInput
-                error={!!errors.nonce}
-                colors={colors}
-                onBlur={onBlur}
-                onChangeText={onChange}
-                value={value}
-                showGweiSuffix={false}
-                disabled={nonceDisabled}
-              />
-            )}
-            name="nonce"
-          />
-        </BottomSheetContent>
-        <BottomSheetFooter>
-          <View style={styles.btnArea}>
-            <Button testID="cancel" style={styles.btn} size="small" onPress={() => bottomSheetRef.current?.close()}>
-              {t('common.cancel')}
-            </Button>
-            <Button testID="confirm" style={styles.btn} size="small" disabled={!!errors.gasLimit} onPress={handleSubmit(handleConfirm)}>
-              {t('common.confirm')}
-            </Button>
-          </View>
-        </BottomSheetFooter>
-      </BottomSheetWrapper>
-    </InlineBottomSheet>
+        <Text style={[styles.inputTitle, { color: colors.textSecondary }]}>{t('tx.gasFee.advanceSetting.nonce')}</Text>
+        <Controller
+          control={control}
+          rules={controlRule}
+          render={({ field: { onChange, onBlur, value } }) => (
+            <TextInput
+              error={!!errors.nonce}
+              colors={colors}
+              onBlur={onBlur}
+              onChangeText={onChange}
+              value={value}
+              showGweiSuffix={false}
+              disabled={nonceDisabled}
+            />
+          )}
+          name="nonce"
+        />
+      </SheetBody>
+      <SheetFooter>
+        <View style={styles.btnArea}>
+          <Button testID="cancel" style={styles.btn} size="small" onPress={onClose}>
+            {t('common.cancel')}
+          </Button>
+          <Button testID="confirm" style={styles.btn} size="small" disabled={!!errors.gasLimit} onPress={() => handleSubmit(handleConfirm)()}>
+            {t('common.confirm')}
+          </Button>
+        </View>
+      </SheetFooter>
+    </>
   );
 };
-
-const snapPoints = [448];
 
 export default CustomizeAdvanceSetting;

@@ -1,27 +1,19 @@
-import {
-  BottomSheetFooter,
-  BottomSheetHeader,
-  type BottomSheetMethods,
-  BottomSheetRoute,
-  BottomSheetScrollContent,
-  BottomSheetWrapper,
-  snapPoints,
-} from '@components/BottomSheet';
 import Button from '@components/Button';
 import Icon from '@components/Icon';
 import HourglassLoading from '@components/Loading/Hourglass';
+import { SheetBody, SheetFooter, SheetHeader, SheetScrollView } from '@components/Sheet';
 import Text from '@components/Text';
 import { useTheme } from '@react-navigation/native';
+import type { StackScreenProps, WalletConnectSessionsStackName } from '@router/configs';
 import { useCurrentAddress } from '@service/account';
 import { useDisconnectWalletConnectSession, useWalletConnectSessions } from '@service/walletConnect';
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Pressable, StyleSheet, View } from 'react-native';
 
-function WalletConnectSessions() {
+function WalletConnectSessions({ navigation }: StackScreenProps<typeof WalletConnectSessionsStackName>) {
   const { colors } = useTheme();
   const { t } = useTranslation();
-  const bottomSheetRef = useRef<BottomSheetMethods>(null!);
 
   const { data: currentAddress } = useCurrentAddress();
   const currentAddressValue = currentAddress?.value ?? null;
@@ -48,12 +40,11 @@ function WalletConnectSessions() {
   }, []);
 
   return (
-    <BottomSheetRoute ref={bottomSheetRef} snapPoints={snapPoints.percent55}>
-      <BottomSheetWrapper innerPaddingHorizontal>
-        <BottomSheetHeader title={t('wc.dapp.connectedDApps')}>
-          <Text style={[styles.title, styles.font14, { color: colors.textSecondary }]}>{t('wc.dapp.connectTo')}</Text>
-        </BottomSheetHeader>
-        <BottomSheetScrollContent>
+    <View collapsable={false} style={styles.container}>
+      <SheetHeader title={t('wc.dapp.connectedDApps')} />
+      <SheetBody style={styles.container}>
+        <Text style={[styles.title, styles.font14, { color: colors.textSecondary }]}>{t('wc.dapp.connectTo')}</Text>
+        <SheetScrollView>
           {sessions?.map(
             ({
               peer: {
@@ -77,19 +68,23 @@ function WalletConnectSessions() {
               </View>
             ),
           )}
-        </BottomSheetScrollContent>
-
-        <BottomSheetFooter style={[styles.footer, { borderColor: colors.borderFourth }]}>
-          <Button testID="ok" onPress={() => bottomSheetRef.current?.close()}>
+        </SheetScrollView>
+      </SheetBody>
+      <SheetFooter>
+        <View style={[styles.footer, { borderColor: colors.borderFourth }]}>
+          <Button testID="ok" onPress={() => navigation.goBack()}>
             {t('common.ok')}
           </Button>
-        </BottomSheetFooter>
-      </BottomSheetWrapper>
-    </BottomSheetRoute>
+        </View>
+      </SheetFooter>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+  },
   title: {
     marginTop: 40,
   },

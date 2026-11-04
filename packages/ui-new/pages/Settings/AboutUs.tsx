@@ -1,24 +1,16 @@
 import BIMWalletLogo from '@assets/icons/swift-shield.webp';
-import {
-  BottomSheetContent,
-  BottomSheetFlatList,
-  BottomSheetFooter,
-  BottomSheetHeader,
-  BottomSheetRoute,
-  BottomSheetWrapper,
-  snapPoints,
-} from '@components/BottomSheet';
 import Button from '@components/Button';
+import Sheet, { SheetBody, SheetFooter, SheetHeader, sheetLayoutStyles } from '@components/Sheet';
 import Text from '@components/Text';
 import { Lang, useLanguage } from '@hooks/useI18n';
-import { useNavigation, useTheme } from '@react-navigation/native';
+import { useTheme } from '@react-navigation/native';
 import { type AboutUsStackName, type StackScreenProps, UpdateVersionStackName } from '@router/configs';
 import { getAPPVersion } from '@utils/getEnv';
 import { Image } from 'expo-image';
 import type React from 'react';
 import { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Linking, ScrollView, StyleSheet, View } from 'react-native';
+import { FlatList, Linking, ScrollView, StyleSheet, View } from 'react-native';
 import { showMessage } from 'react-native-flash-message';
 import semverLt from 'semver/functions/lt';
 import pkg from '../../../../package.json';
@@ -99,50 +91,41 @@ const AboutUs: React.FC<StackScreenProps<typeof AboutUsStackName>> = ({ navigati
   );
 };
 
-export const UpdateVersion: React.FC<StackScreenProps<typeof UpdateVersionStackName>> = ({ route }) => {
+export const UpdateVersion: React.FC<StackScreenProps<typeof UpdateVersionStackName>> = ({ navigation, route }) => {
   const { colors } = useTheme();
   const { t } = useTranslation();
   const lang = useLanguage();
-  const navigation = useNavigation();
   const UILang = lang === Lang.system ? 'en' : lang;
 
   const { newVersion } = route.params;
   return (
-    <BottomSheetRoute
-      snapPoints={snapPoints.percent75}
-      backDropPressBehavior={newVersion.force ? 'none' : 'close'}
-      enablePanDownToClose={!newVersion.force}
-      enableContentPanningGesture={!newVersion.force}
-    >
-      <BottomSheetWrapper innerPaddingHorizontal>
-        <BottomSheetHeader title={t('settings.aboutUs.UpdateToNew')}>
-          {newVersion[UILang]?.description && (
-            <Text style={[styles.versionDescription, { color: colors.textSecondary }]}>{newVersion[UILang].description}</Text>
-          )}
-        </BottomSheetHeader>
-        <BottomSheetContent>
-          {newVersion[UILang]?.messageList && (
-            <BottomSheetFlatList
-              data={newVersion[UILang].messageList}
-              renderItem={(item) => <Text style={{ color: colors.textPrimary }}> - {item.item}</Text>}
-            />
-          )}
-        </BottomSheetContent>
-        <BottomSheetFooter>
-          <View style={styles.btnArea}>
-            {!newVersion.force && (
-              <Button size="small" testID="later" style={[styles.btn]} onPress={navigation.goBack}>
-                {t('common.later')}
-              </Button>
-            )}
-
-            <Button size="small" testID="update" style={[styles.btn]} onPress={() => Linking.openURL('https://bimwallet.io')}>
-              {t('common.update')}
+    <Sheet isPresented height={{ fraction: 0.75 }} containerColor={colors.bgFourth} dismissible={!newVersion.force} onDismiss={navigation.goBack}>
+      <SheetHeader title={t('settings.aboutUs.UpdateToNew')} style={styles.bottomSheet}>
+        {newVersion[UILang]?.description && <Text style={[styles.versionDescription, { color: colors.textSecondary }]}>{newVersion[UILang].description}</Text>}
+      </SheetHeader>
+      <SheetBody style={sheetLayoutStyles.scrollable}>
+        {newVersion[UILang]?.messageList && (
+          <FlatList
+            style={sheetLayoutStyles.scrollable}
+            data={newVersion[UILang].messageList}
+            renderItem={(item) => <Text style={{ color: colors.textPrimary }}> - {item.item}</Text>}
+          />
+        )}
+      </SheetBody>
+      <SheetFooter>
+        <View style={styles.btnArea}>
+          {!newVersion.force && (
+            <Button size="small" testID="later" style={[styles.btn]} onPress={navigation.goBack}>
+              {t('common.later')}
             </Button>
-          </View>
-        </BottomSheetFooter>
-      </BottomSheetWrapper>
-    </BottomSheetRoute>
+          )}
+
+          <Button size="small" testID="update" style={[styles.btn]} onPress={() => Linking.openURL('https://bimwallet.io')}>
+            {t('common.update')}
+          </Button>
+        </View>
+      </SheetFooter>
+    </Sheet>
   );
 };
 

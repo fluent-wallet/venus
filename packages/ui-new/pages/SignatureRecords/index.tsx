@@ -49,7 +49,7 @@ const SignatureRecords: React.FC<StackScreenProps<typeof SignatureRecordsStackNa
       <FlatList
         data={list}
         ListEmptyComponent={
-          isLoading ? null : (
+          isLoading ? undefined : (
             <Delay>
               <View style={styles.empty}>
                 <Image source={NoneSignature} style={{ width: 160, height: 160 }} />

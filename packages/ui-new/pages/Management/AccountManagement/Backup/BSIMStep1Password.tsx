@@ -1,10 +1,10 @@
-import { BottomSheetFooter } from '@components/BottomSheet';
 import Button from '@components/Button';
 import Checkbox from '@components/Checkbox';
 import HourglassLoading from '@components/Loading/Hourglass';
+import { SheetBody, SheetFooter, SheetHeader } from '@components/Sheet';
 import TextInput from '@components/TextInput';
 import { useNavigation, useTheme } from '@react-navigation/native';
-import { type BackupBSIM1PasswordStackName, BackupBSIMQ2RCodeStackName, type BackupScreenProps, type StackNavigation } from '@router/configs';
+import { type BackupBSIM1PasswordStackName, BackupBSIMQ2RCodeStackName, type StackNavigation, type StackScreenProps } from '@router/configs';
 import { getHardwareWalletService } from '@service/core';
 import { validateKey2Password } from '@utils/BSIMKey2PasswordValidation';
 import { handleBSIMHardwareUnavailable } from '@utils/handleBSIMHardwareUnavailable';
@@ -13,14 +13,13 @@ import { Controller, useForm } from 'react-hook-form';
 import { Trans, useTranslation } from 'react-i18next';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { showMessage } from 'react-native-flash-message';
-import BackupBottomSheet from './BackupBottomSheet';
 
 type FormData = {
   password: string;
   confirm: string;
 };
 
-export const BSIMStep1Password: React.FC<BackupScreenProps<typeof BackupBSIM1PasswordStackName>> = ({ route, navigation }) => {
+export const BSIMStep1Password: React.FC<StackScreenProps<typeof BackupBSIM1PasswordStackName>> = ({ route, navigation }) => {
   const { t } = useTranslation();
   const { colors } = useTheme();
   const [password, setPassword] = useState('');
@@ -29,6 +28,7 @@ export const BSIMStep1Password: React.FC<BackupScreenProps<typeof BackupBSIM1Pas
   const rootNavigation = useNavigation<StackNavigation>();
   const [loading, setLoading] = useState(false);
   const abortRef = useRef<AbortController | null>(null);
+  useEffect(() => () => abortRef.current?.abort(), []);
   const {
     control,
     handleSubmit,
@@ -68,6 +68,7 @@ export const BSIMStep1Password: React.FC<BackupScreenProps<typeof BackupBSIM1Pas
         abortRef.current = controller;
         const seedData = await getHardwareWalletService().runBackupSeed(route.params.vaultId, { key2: confirm }, { signal: controller.signal });
 
+        if (!navigation.isFocused()) return;
         navigation.navigate(BackupBSIMQ2RCodeStackName, { backupPassword: confirm, seedData, vaultId: route.params.vaultId });
       } catch (error: any) {
         const name = (error as { name?: unknown } | null)?.name;
@@ -88,68 +89,69 @@ export const BSIMStep1Password: React.FC<BackupScreenProps<typeof BackupBSIM1Pas
   );
 
   return (
-    <BackupBottomSheet showTitle title={t('backup.BSIM.title')} style={{ flex: 1 }}>
-      <Text style={[styles.describe, { color: colors.textSecondary }]}>{t('backup.BSIM.describe')}</Text>
+    <View collapsable={false} style={styles.container}>
+      <SheetHeader title={t('backup.BSIM.title')} />
+      <SheetBody style={styles.container}>
+        <Text style={[styles.describe, { color: colors.textSecondary }]}>{t('backup.BSIM.describe')}</Text>
 
-      <Text style={[styles.label, { color: colors.textPrimary }]}>{t('backup.BSIM.password')}</Text>
+        <Text style={[styles.label, { color: colors.textPrimary }]}>{t('backup.BSIM.password')}</Text>
 
-      <Controller
-        control={control}
-        rules={{
-          required: true,
-          validate: (value) => {
-            const v = validateKey2Password(value);
-            return v.hasLength && v.hasLowerCase && v.hasUpperCase && v.hasNumber;
-          },
-        }}
-        render={({ field: { onChange, onBlur, value } }) => (
-          <View>
+        <Controller
+          control={control}
+          rules={{
+            required: true,
+            validate: (value) => {
+              const v = validateKey2Password(value);
+              return v.hasLength && v.hasLowerCase && v.hasUpperCase && v.hasNumber;
+            },
+          }}
+          render={({ field: { onChange, onBlur, value } }) => (
+            <View>
+              <TextInput
+                placeholder={t('common.password')}
+                secureTextEntry
+                onBlur={onBlur}
+                onChangeText={(text) => {
+                  setPassword(text);
+                  onChange(text);
+                }}
+                value={value}
+              />
+              <View style={styles.validationContainer}>
+                <ValidationRule label={t('backup.BSIM.ruleLength')} isValid={validation.hasLength} />
+                <ValidationRule label={t('backup.BSIM.ruleLowerCase')} isValid={validation.hasLowerCase} />
+                <ValidationRule label={t('backup.BSIM.ruleUpperCase')} isValid={validation.hasUpperCase} />
+                <ValidationRule label={t('backup.BSIM.ruleNumber')} isValid={validation.hasNumber} />
+              </View>
+            </View>
+          )}
+          name="password"
+        />
+
+        <Text style={[styles.label, { color: colors.textPrimary }]}>{t('backup.BSIM.confirmPassword')}</Text>
+        <Controller
+          control={control}
+          rules={{
+            required: true,
+            minLength: 8,
+            validate: (confirmValue) => {
+              const { password } = getValues();
+              return password === confirmValue;
+            },
+          }}
+          render={({ field: { onChange, onBlur, value } }) => (
             <TextInput
               placeholder={t('common.password')}
               secureTextEntry
               onBlur={onBlur}
-              onChangeText={(text) => {
-                setPassword(text);
-                onChange(text);
-              }}
+              onChangeText={onChange}
               value={value}
+              containerStyle={errors.confirm && [styles.errorInput, { borderColor: colors.down }]}
             />
-            <View style={styles.validationContainer}>
-              <ValidationRule label={t('backup.BSIM.ruleLength')} isValid={validation.hasLength} />
-              <ValidationRule label={t('backup.BSIM.ruleLowerCase')} isValid={validation.hasLowerCase} />
-              <ValidationRule label={t('backup.BSIM.ruleUpperCase')} isValid={validation.hasUpperCase} />
-              <ValidationRule label={t('backup.BSIM.ruleNumber')} isValid={validation.hasNumber} />
-            </View>
-          </View>
-        )}
-        name="password"
-      />
+          )}
+          name="confirm"
+        />
 
-      <Text style={[styles.label, { color: colors.textPrimary }]}>{t('backup.BSIM.confirmPassword')}</Text>
-      <Controller
-        control={control}
-        rules={{
-          required: true,
-          minLength: 8,
-          validate: (confirmValue) => {
-            const { password } = getValues();
-            return password === confirmValue;
-          },
-        }}
-        render={({ field: { onChange, onBlur, value } }) => (
-          <TextInput
-            placeholder={t('common.password')}
-            secureTextEntry
-            onBlur={onBlur}
-            onChangeText={onChange}
-            value={value}
-            containerStyle={errors.confirm && [styles.errorInput, { borderColor: colors.down }]}
-          />
-        )}
-        name="confirm"
-      />
-
-      <View style={{ marginTop: 'auto' }}>
         <Pressable testID="checkbox" style={styles.rememberView} onPress={() => setConfirm((pre) => !pre)}>
           <Checkbox checked={confirm} pointerEvents="none" />
           <Text style={[styles.rememberText, { color: colors.textPrimary }]}>
@@ -159,19 +161,18 @@ export const BSIMStep1Password: React.FC<BackupScreenProps<typeof BackupBSIM1Pas
             </Trans>
           </Text>
         </Pressable>
-
-        <BottomSheetFooter>
-          <Button
-            testID="createPasswordButton"
-            onPress={loading ? handleCancel : handleSubmit(handleSubmitForm)}
-            disabled={!confirm || !isValid}
-            Icon={loading ? (HourglassLoading as any) : undefined}
-          >
-            {loading ? t('common.cancel') : t('initWallet.setPassword.create')}
-          </Button>
-        </BottomSheetFooter>
-      </View>
-    </BackupBottomSheet>
+      </SheetBody>
+      <SheetFooter>
+        <Button
+          testID="createPasswordButton"
+          onPress={loading ? handleCancel : () => handleSubmit(handleSubmitForm)()}
+          disabled={!confirm || !isValid}
+          Icon={loading ? (HourglassLoading as any) : undefined}
+        >
+          {loading ? t('common.cancel') : t('initWallet.setPassword.create')}
+        </Button>
+      </SheetFooter>
+    </View>
   );
 };
 
@@ -202,6 +203,9 @@ const ValidationRule = ({ label, isValid }: { label: string; isValid: boolean })
 };
 
 const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+  },
   describe: {
     fontSize: 16,
     fontWeight: '300',

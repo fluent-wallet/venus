@@ -120,13 +120,31 @@ describe('AccountService', () => {
     expect(includeHidden).toHaveLength(2);
   });
 
-  it('retrieves accounts by group id', async () => {
-    const { accountGroup } = await createTestAccount(database, { nickname: 'GroupMember', network, assetRule });
+  it('retrieves group accounts in order with visibility filtering and missing addresses', async () => {
+    const { accountGroup } = await createTestAccount(database, { nickname: 'GroupMember', index: 2, network, assetRule });
+    await database.write(async () => {
+      for (const [index, nickname, hidden] of [
+        [0, 'Earlier', false],
+        [1, 'Hidden', true],
+      ] as const) {
+        await database.get<Account>(TableName.Account).create((record) => {
+          record.nickname = nickname;
+          record.index = index;
+          record.hidden = hidden;
+          record.selected = false;
+          record.accountGroup.set(accountGroup);
+        });
+      }
+    });
     await createTestAccount(database, { nickname: 'OtherGroup', network, assetRule });
 
     const result = await service.getAccountsByGroup(accountGroup.id);
-    expect(result).toHaveLength(1);
-    expect(result[0].nickname).toBe('GroupMember');
+    expect(result.map((account) => account.nickname)).toEqual(['Earlier', 'GroupMember']);
+    expect(result[0]).toMatchObject({ address: '', currentAddressId: null });
+    expect(result[1].address).toBe(DEFAULT_ACCOUNTS_FIXTURE_BASE32);
+
+    const includeHidden = await service.getAccountsByGroup(accountGroup.id, { includeHidden: true });
+    expect(includeHidden.map((account) => account.nickname)).toEqual(['Earlier', 'Hidden', 'GroupMember']);
   });
 
   it('updates account nickname with trimming', async () => {

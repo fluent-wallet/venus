@@ -1,5 +1,3 @@
-# this workflows will build an
-
 name: Android Build Workflow
 on:
   workflow_call:
@@ -8,10 +6,14 @@ on:
         required: true
         type: string
         description: "Environment to build (qa/prod)"
-      branch:
+      commitSha:
         required: true
         type: string
-        description: "Git branch to checkout"
+        description: "Git commit to build"
+      displayVersion:
+        required: true
+        type: string
+        description: "Version label displayed in the app"
       artifactName:
         required: true
         type: string
@@ -20,20 +22,21 @@ on:
         required: true
         type: boolean
         description: "To build the aab"
-      appVersion:
-        required: true
-        type: string
-        description: "The app version"
 
 jobs:
   android-build:
     name: Android Build
     runs-on: ubuntu-latest
+    env:
+      APP_ENV: ${{ inputs.environment }}
+      APP_DISPLAY_VERSION: ${{ inputs.displayVersion }}
+      PASSWORD_CRYPTO_KEY: ${{ secrets.PASSWORD_CRYPTO_KEY }}
+      CI: '1'
     steps:
       - name: Check out Git repository
         uses: actions/checkout@v4
         with:
-          ref: ${{inputs.branch}}
+          ref: ${{ inputs.commitSha }}
           fetch-depth: 0
 
       - name: Set up Node.js
@@ -42,7 +45,7 @@ jobs:
           node-version: 22
 
       - name: install dependencies
-        run: yarn
+        run: yarn install --immutable
 
       - name: Update versions
         run: |
@@ -59,70 +62,52 @@ jobs:
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
 
-      - name: Make Gradlew Executable
-        run: cd android && chmod +x ./gradlew
+      - name: Generate Android project
+        run: yarn expo prebuild --platform android --no-install
 
-      - name: write QA env to file
-        if: ${{ inputs.environment == 'qa' }}
+      - name: Prepare production signing
+        if: inputs.environment == 'prod'
         env:
-          PASSWORD_CRYPTO_KEY: ${{ secrets.PASSWORD_CRYPTO_KEY }}
-          APP_VERSION: ${{ inputs.appVersion }}
+          UPLOAD_KEYSTORE: ${{ secrets.UPLOAD_KEYSTORE }}
+          SIGN_ALIAS: ${{ secrets.SIGN_ALIAS }}
+          SIGN_KEY: ${{ secrets.SIGN_KEY }}
         run: |
-          echo "" > .env
-          cat >>.env <<END
-          APP_ENV=qa
-          APP_VERSION=$APP_VERSION
-          PASSWORD_CRYPTO_KEY=$PASSWORD_CRYPTO_KEY
-          END
+          : "${UPLOAD_KEYSTORE:?Missing production keystore}"
+          : "${SIGN_ALIAS:?Missing signing alias}"
+          : "${SIGN_KEY:?Missing signing password}"
+          umask 077
+          printf '%s' "$UPLOAD_KEYSTORE" | base64 --decode > "$RUNNER_TEMP/bimwallet-release.keystore"
+          {
+            printf 'SIGNING_KEYSTORE=%s\n' "$RUNNER_TEMP/bimwallet-release.keystore"
+            printf 'SIGNING_KEY_ALIAS=%s\n' "$SIGN_ALIAS"
+            printf 'SIGNING_STORE_PASSWORD=%s\n' "$SIGN_KEY"
+            printf 'SIGNING_KEY_PASSWORD=%s\n' "$SIGN_KEY"
+          } >> "$GITHUB_ENV"
 
-      - name: write Prod env to file
-        if: ${{ inputs.environment == 'prod' || inputs.buildAAB == true }}
+      - name: Build Android Release
         env:
-          PASSWORD_CRYPTO_KEY: ${{ secrets.PASSWORD_CRYPTO_KEY }}
-          UPLOAD_KEYSTORE: ${{secrets.UPLOAD_KEYSTORE}}
-          SIGN_ALIAS: ${{secrets.SIGN_ALIAS}}
-          SIGN_KEY: ${{secrets.SIGN_KEY}}
-          APP_VERSION: ${{ inputs.appVersion }}
+          BUILD_AAB: ${{ inputs.buildAAB }}
+          ARTIFACT_NAME: ${{ inputs.artifactName }}
         run: |
-          echo $UPLOAD_KEYSTORE | base64 --decode > ./android/app/release.keystore.jks
-          echo "" > .env
-          cat >>.env <<END
-          APP_ENV=prod
-          APP_VERSION=$APP_VERSION
-          PASSWORD_CRYPTO_KEY=$PASSWORD_CRYPTO_KEY
-          END
-
-      - name: Build QA Android Release
-        if: ${{ inputs.environment == 'qa' }}
-        run: |
-          cd android && ./gradlew app:assembleQaRelease && cd ..
-          mkdir ./artifact
-          mv ./android/app/build/outputs/apk/qa/release/app-qa-release.apk ./artifact/${{ inputs.artifactName}}
-
-      - name: Build PROD Android Release
-        if: ${{ inputs.environment == 'prod' && inputs.buildAAB != true }}
-        env:
-          SIGN_ALIAS: ${{secrets.SIGN_ALIAS}}
-          SIGN_KEY: ${{secrets.SIGN_KEY}}
-          APP_VERSION: ${{ inputs.appVersion }}
-        run: |
-          cd android && ./gradlew app:assembleProdRelease && cd ..
-          mkdir ./artifact
-          mv  ./android/app/build/outputs/apk/prod/release/app-prod-release.apk ./artifact/${{ inputs.artifactName }}
-
-      - name: Build aab Android Release
-        if: ${{ inputs.environment == 'prod' && inputs.buildAAB == true }}
-        env:
-          SIGN_ALIAS: ${{secrets.SIGN_ALIAS}}
-          SIGN_KEY: ${{secrets.SIGN_KEY}}
-          APP_VERSION: ${{ inputs.appVersion }}
-        run: |
-          npx react-native build-android --mode=release
-          mkdir ./artifact
-          mv ./android/app/build/outputs/bundle/prodRelease/app-prod-release.aab ./artifact/${{ inputs.artifactName }}
+          mkdir -p artifact
+          if [ "$BUILD_AAB" = true ]; then
+            if [ "$APP_ENV" != prod ]; then
+              echo "AAB publishing requires the production environment" >&2
+              exit 1
+            fi
+            (cd android && ./gradlew :app:bundleRelease --console=plain)
+            cp android/app/build/outputs/bundle/release/app-release.aab "artifact/$ARTIFACT_NAME"
+          else
+            (cd android && ./gradlew :app:assembleRelease --console=plain)
+            cp android/app/build/outputs/apk/release/app-release.apk "artifact/$ARTIFACT_NAME"
+          fi
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
           name: ${{inputs.artifactName}}
           path: ./artifact/${{ inputs.artifactName }}
+
+      - name: Remove signing credentials
+        if: always()
+        run: rm -f "$RUNNER_TEMP/bimwallet-release.keystore"

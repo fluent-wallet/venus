@@ -3,10 +3,10 @@ import { useMode } from '@hooks/useMode';
 import CustomMessage from '@modules/CustomMessage';
 import { NavigationContainer, type Theme } from '@react-navigation/native';
 import { useWalletReady } from '@service/wallet';
+import * as SplashScreen from 'expo-splash-screen';
 import type React from 'react';
-import { useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Platform, useColorScheme } from 'react-native';
-import BootSplash from 'react-native-bootsplash';
 import FlashMessage from 'react-native-flash-message';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
@@ -21,6 +21,12 @@ const messagesTop = { top: statusBarHeight + 20 + (OS === 'android' ? 0 : suppor
 const App: React.FC = () => {
   useI18nInit();
   const { data: isReady } = useWalletReady();
+  const [navigationReady, setNavigationReady] = useState(false);
+  const [contentLaidOut, setContentLaidOut] = useState(false);
+
+  useEffect(() => {
+    if (navigationReady && contentLaidOut) SplashScreen.hide();
+  }, [navigationReady, contentLaidOut]);
   const systemMode = useColorScheme();
   const innerMode = useMode();
   const mode = useMemo(() => (innerMode === 'system' ? (systemMode === 'dark' ? 'dark' : 'light') : innerMode), [innerMode, systemMode]);
@@ -49,16 +55,16 @@ const App: React.FC = () => {
   );
 
   return (
-    <>
-      <GestureHandlerRootView style={{ flex: 1 }}>
-        <NavigationContainer theme={theme as unknown as Theme} onReady={BootSplash.hide}>
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      {isReady && (
+        <NavigationContainer theme={theme as unknown as Theme} onReady={() => setNavigationReady(true)}>
           <SafeAreaProvider>
-            {isReady && <Router />}
+            <Router onLayout={() => setContentLaidOut(true)} />
             {Message}
           </SafeAreaProvider>
         </NavigationContainer>
-      </GestureHandlerRootView>
-    </>
+      )}
+    </GestureHandlerRootView>
   );
 };
 

@@ -1,16 +1,8 @@
-import {
-  BottomSheetContent,
-  BottomSheetFooter,
-  BottomSheetHeader,
-  type BottomSheetMethods,
-  BottomSheetWrapper,
-  InlineBottomSheet,
-} from '@components/BottomSheet';
 import Button from '@components/Button';
+import Sheet, { SheetBody, SheetFooter, SheetHeader, SheetScrollView } from '@components/Sheet';
 import Text from '@components/Text';
 import { useTheme } from '@react-navigation/native';
 import type React from 'react';
-import { useRef } from 'react';
 import { Trans, useTranslation } from 'react-i18next';
 import { StyleSheet, View } from 'react-native';
 import { styles } from './CustomizeGasSetting';
@@ -24,13 +16,12 @@ interface Props {
 const DappParamsWarning: React.FC<Props> = ({ onClose, onPressUse, isOpen }) => {
   const { t } = useTranslation();
   const { colors } = useTheme();
-  const bottomSheetRef = useRef<BottomSheetMethods>(null!);
 
   return (
-    <InlineBottomSheet ref={bottomSheetRef} snapPoints={snapPoints} index={isOpen ? 0 : -1} onClose={onClose}>
-      <BottomSheetWrapper innerPaddingHorizontal>
-        <BottomSheetHeader title={t('tx.gasFee.dappParams.title')} />
-        <BottomSheetContent>
+    <Sheet isPresented={isOpen} height={{ height: 348 }} containerColor={colors.bgFourth} onDismiss={onClose}>
+      <SheetHeader title={t('tx.gasFee.dappParams.title')} />
+      <SheetScrollView>
+        <SheetBody>
           <Text style={[styles2.text, { color: colors.textPrimary }]}>{t('tx.gasFee.dappParams.description')}</Text>
 
           <Text style={[styles2.text, { color: colors.textPrimary }]}>
@@ -38,31 +29,29 @@ const DappParamsWarning: React.FC<Props> = ({ onClose, onPressUse, isOpen }) => 
               Whether to use the <Text style={{ fontWeight: '600' }}>gas parameters</Text> recommended by BIM Wallet Wallet?
             </Trans>
           </Text>
-        </BottomSheetContent>
-        <BottomSheetFooter>
-          <View style={[styles.btnArea, styles2.btnArea]}>
-            <Button
-              testID="cancel"
-              style={styles.btn}
-              size="small"
-              onPress={() => {
-                onPressUse();
-                bottomSheetRef.current?.close();
-              }}
-            >
-              {t('common.use')}
-            </Button>
-            <Button testID="confirm" style={styles.btn} size="small" onPress={() => bottomSheetRef.current?.close()}>
-              {t('common.dismiss')}
-            </Button>
-          </View>
-        </BottomSheetFooter>
-      </BottomSheetWrapper>
-    </InlineBottomSheet>
+        </SheetBody>
+      </SheetScrollView>
+      <SheetFooter>
+        <View style={[styles.btnArea, styles2.btnArea]}>
+          <Button
+            testID="cancel"
+            style={styles.btn}
+            size="small"
+            onPress={() => {
+              onPressUse();
+              onClose();
+            }}
+          >
+            {t('common.use')}
+          </Button>
+          <Button testID="confirm" style={styles.btn} size="small" onPress={onClose}>
+            {t('common.dismiss')}
+          </Button>
+        </View>
+      </SheetFooter>
+    </Sheet>
   );
 };
-
-const snapPoints = [348];
 
 const styles2 = StyleSheet.create({
   text: {

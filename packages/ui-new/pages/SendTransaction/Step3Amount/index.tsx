@@ -1,11 +1,11 @@
-import { BottomSheetFooter, BottomSheetScrollContent } from '@components/BottomSheet';
 import Button from '@components/Button';
+import { SheetBody, SheetFooter, SheetHeader, SheetScrollView } from '@components/Sheet';
 import Text from '@components/Text';
 import { AccountItemView } from '@modules/AccountsList';
 import NFTIcon from '@modules/AssetsList/NFTsList/NFTIcon';
 import { getDetailSymbol } from '@modules/AssetsList/NFTsList/NFTItemsGrid';
 import { useTheme } from '@react-navigation/native';
-import { type SendTransactionScreenProps, type SendTransactionStep3StackName, SendTransactionStep4StackName } from '@router/configs';
+import { type SendTransactionStep3StackName, SendTransactionStep4StackName, type StackScreenProps } from '@router/configs';
 import type { INftItem } from '@service/core';
 import type { AssetInfo } from '@utils/assetInfo';
 import Decimal from 'decimal.js';
@@ -13,10 +13,9 @@ import type React from 'react';
 import { useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Keyboard, StyleSheet, View } from 'react-native';
-import SendTransactionBottomSheet from '../SendTransactionBottomSheet';
 import SetAssetAmount, { type AmountInfo, type SetAssetAmountMethods } from './SetAssetAmount';
 
-const SendTransactionStep3Amount: React.FC<SendTransactionScreenProps<typeof SendTransactionStep3StackName>> = ({ navigation, route }) => {
+const SendTransactionStep3Amount: React.FC<StackScreenProps<typeof SendTransactionStep3StackName>> = ({ navigation, route }) => {
   const { colors } = useTheme();
   const { t } = useTranslation();
   const setAssetAmountMethodsRef = useRef<SetAssetAmountMethods>(null);
@@ -24,29 +23,32 @@ const SendTransactionStep3Amount: React.FC<SendTransactionScreenProps<typeof Sen
   const asset = route.params.asset;
 
   return (
-    <SendTransactionBottomSheet title={t('tx.send.title')} isRoute snapPoints={['75%']} useBottomSheetView={false}>
-      <BottomSheetScrollContent innerPaddingHorizontal>
-        {route.params.nftItemDetail && (
-          <>
-            <Text style={[styles.text, styles.to, { color: colors.textSecondary }]}>{t('common.send')}</Text>
-            <NFT colors={colors} asset={route.params.asset} nftItemDetail={route.params.nftItemDetail} />
-          </>
-        )}
+    <View collapsable={false} style={styles.container}>
+      <SheetHeader title={t('tx.send.title')} />
+      <SheetScrollView>
+        <SheetBody>
+          {route.params.nftItemDetail && (
+            <>
+              <Text style={[styles.text, styles.to, { color: colors.textSecondary }]}>{t('common.send')}</Text>
+              <NFT colors={colors} asset={route.params.asset} nftItemDetail={route.params.nftItemDetail} />
+            </>
+          )}
 
-        <Text style={[styles.text, styles.to, { color: colors.textSecondary }]}>{t('common.to')}</Text>
-        <AccountItemView nickname={''} addressValue={route.params.recipientAddress} colors={colors} innerPaddingHorizontal={false} />
+          <Text style={[styles.text, styles.to, { color: colors.textSecondary }]}>{t('common.to')}</Text>
+          <AccountItemView nickname={''} addressValue={route.params.recipientAddress} innerPaddingHorizontal={false} />
 
-        <SetAssetAmount
-          ref={setAssetAmountMethodsRef}
-          targetAddress={route.params.recipientAddress}
-          asset={route.params.asset}
-          nftItemDetail={route.params.nftItemDetail}
-          defaultAmount={route.params.amount}
-          onAmountInfoChange={setAmountInfo}
-        />
-      </BottomSheetScrollContent>
+          <SetAssetAmount
+            ref={setAssetAmountMethodsRef}
+            targetAddress={route.params.recipientAddress}
+            asset={route.params.asset}
+            nftItemDetail={route.params.nftItemDetail}
+            defaultAmount={route.params.amount}
+            onAmountInfoChange={setAmountInfo}
+          />
+        </SheetBody>
+      </SheetScrollView>
 
-      <BottomSheetFooter innerPaddingHorizontal>
+      <SheetFooter>
         <Button
           testID="next"
           disabled={!amountInfo || (amountInfo.validMax !== null && amountInfo.isAmountValid !== true)}
@@ -69,8 +71,8 @@ const SendTransactionStep3Amount: React.FC<SendTransactionScreenProps<typeof Sen
         >
           {!amountInfo || amountInfo.validMax === null ? t('tx.amount.estimateMax') : t('common.next')}
         </Button>
-      </BottomSheetFooter>
-    </SendTransactionBottomSheet>
+      </SheetFooter>
+    </View>
   );
 };
 
@@ -87,6 +89,9 @@ export const NFT: React.FC<{
 );
 
 const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+  },
   nftItem: {
     marginTop: 14,
     position: 'relative',

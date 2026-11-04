@@ -1,8 +1,7 @@
-import AccountSelector from '@modules/AccountSelector';
 import { useTabsController } from '@modules/AssetsTabs/hooks';
 import NetworkSelector from '@modules/NetworkSelector';
-import { useTheme } from '@react-navigation/native';
-import { type HomeStackName, type StackScreenProps, TransactionDetailStackName } from '@router/configs';
+import { useNavigationState, useTheme } from '@react-navigation/native';
+import { AccountSelectorStackName, HomeStackName, type StackScreenProps, TransactionDetailStackName } from '@router/configs';
 import { useCurrentNetwork, useNetworks, useSwitchNetwork } from '@service/network';
 import { ESPACE_NETWORK_SWITCH_FEATURE, FULL_NETWORK_SWITCH_LIST_FEATURE } from '@utils/features';
 import type React from 'react';
@@ -19,7 +18,9 @@ import { useHomeRefresh } from './useHomeRefresh';
 const Home: React.FC<StackScreenProps<typeof HomeStackName>> = ({ navigation }) => {
   const { colors } = useTheme();
 
-  const [showAccountSelector, setShowAccountSelector] = useState(false);
+  const showAccountSelector = useNavigationState((state) =>
+    state.routes.some((route, index) => route.name === AccountSelectorStackName && state.routes[index - 1]?.name === HomeStackName),
+  );
   const [showNetworkSelector, setShowNetworkSelector] = useState(false);
   const { currentTab, setCurrentTab, sharedScrollY } = useTabsController('Tokens');
   const { data: currentNetwork } = useCurrentNetwork();
@@ -35,7 +36,7 @@ const Home: React.FC<StackScreenProps<typeof HomeStackName>> = ({ navigation }) 
   );
 
   const handleOpenAccountSelector = () => {
-    setShowAccountSelector(true);
+    navigation.navigate(AccountSelectorStackName);
   };
 
   const handleOpenNetworkSelector = () => {
@@ -71,8 +72,7 @@ const Home: React.FC<StackScreenProps<typeof HomeStackName>> = ({ navigation }) 
         />
         <NoNetworkTip />
       </SafeAreaView>
-      {showAccountSelector && <AccountSelector isOpen={showAccountSelector} onClose={() => setShowAccountSelector(false)} />}
-      {showNetworkSelector && <NetworkSelector isOpen={showNetworkSelector} onClose={() => setShowNetworkSelector(false)} />}
+      <NetworkSelector isOpen={showNetworkSelector} onClose={() => setShowNetworkSelector(false)} />
     </>
   );
 };

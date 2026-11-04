@@ -1,17 +1,9 @@
 import ArrowRigiht from '@assets/icons/arrow-right2.svg';
-import {
-  BottomSheetFooter,
-  BottomSheetHeader,
-  type BottomSheetMethods,
-  BottomSheetScrollContent,
-  BottomSheetWrapper,
-  InlineBottomSheet,
-  snapPoints,
-} from '@components/BottomSheet';
 import Button from '@components/Button';
+import Sheet, { SheetBody, SheetFooter, SheetHeader, SheetScrollView } from '@components/Sheet';
 import Text from '@components/Text';
+import SelectAsset from '@modules/AssetSelector';
 import TokenIcon from '@modules/AssetsList/TokensList/TokenIcon';
-import SelectAsset from '@pages/SendTransaction/Step2Asset';
 import SetAssetAmount, { type AmountAsset, type AmountInfo } from '@pages/SendTransaction/Step3Amount/SetAssetAmount';
 import { useTheme } from '@react-navigation/native';
 import { useCurrentAddress } from '@service/account';
@@ -19,7 +11,7 @@ import { useAssetsOfCurrentAddress } from '@service/asset';
 import { useCurrentNetwork } from '@service/network';
 import type { AssetInfo } from '@utils/assetInfo';
 import type React from 'react';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Keyboard, Pressable, StyleSheet } from 'react-native';
 import type { ReceiveAsset } from './types';
@@ -63,10 +55,18 @@ function toReceiveAssetFromLegacyAssetInfo(params: { asset: AssetInfo; networkId
   };
 }
 
-const ReceiveSetAsset: React.FC<Props> = ({ onConfirm, selectedAsset, amount, onClose, isOpen }) => {
+const ReceiveSetAsset: React.FC<Props> = ({ isOpen = false, onClose, ...props }) => {
+  const { colors } = useTheme();
+  return (
+    <Sheet isPresented={isOpen} height="large" containerColor={colors.bgFourth} onDismiss={onClose}>
+      <ReceiveSetAssetContent {...props} onClose={onClose} />
+    </Sheet>
+  );
+};
+
+function ReceiveSetAssetContent({ onConfirm, selectedAsset, amount, onClose }: Omit<Props, 'isOpen'>) {
   const { colors } = useTheme();
   const { t } = useTranslation();
-  const bottomSheetRef = useRef<BottomSheetMethods | null>(null);
 
   const { data: currentAddress } = useCurrentAddress();
   const currentAddressValue = currentAddress?.value ?? '';
@@ -94,100 +94,83 @@ const ReceiveSetAsset: React.FC<Props> = ({ onConfirm, selectedAsset, amount, on
 
   return (
     <>
-      <InlineBottomSheet
-        ref={bottomSheetRef}
-        snapPoints={snapPoints.large}
-        index={isOpen ? 0 : -1}
-        onClose={() => {
-          setShowSelectAsset(false);
-          onClose();
-        }}
-      >
-        <BottomSheetWrapper innerPaddingHorizontal>
-          <BottomSheetHeader title={t('receive.title')} />
-          <BottomSheetScrollContent>
-            <Text style={[styles.text, styles.to, { color: colors.textSecondary }]}>{t('receive.selectAnAsset')}</Text>
-            <Pressable
-              style={({ pressed }) => [styles.assetWrapper, { backgroundColor: pressed ? colors.underlay : 'transparent' }]}
-              onPress={() => setShowSelectAsset(true)}
-              testID="selectAsset"
-            >
-              {tempSelectAsset && (
-                <>
-                  <TokenIcon style={styles.assetIcon} source={tempSelectAsset.icon} />
-                  <Text style={[styles.assetName, { color: colors.textPrimary }]} numberOfLines={1}>
-                    {tempSelectAsset.name}
-                  </Text>
-                  {tempSelectAsset.name !== tempSelectAsset.symbol && (
-                    <Text style={[styles.assetSymbol, { color: colors.textSecondary }]} numberOfLines={1}>
-                      {tempSelectAsset.symbol}
-                    </Text>
-                  )}
-                  <ArrowRigiht color={colors.iconPrimary} style={styles.assetArrow} />
-                </>
-              )}
-              {!tempSelectAsset && <Text style={[styles.assetSymbol, { color: colors.textSecondary }]}>{t('receive.clickHereToSelect')}</Text>}
-            </Pressable>
-
+      <SheetHeader title={t('receive.title')} />
+      <SheetScrollView>
+        <SheetBody>
+          <Text style={[styles.text, styles.to, { color: colors.textSecondary }]}>{t('receive.selectAnAsset')}</Text>
+          <Pressable
+            style={({ pressed }) => [styles.assetWrapper, { backgroundColor: pressed ? colors.underlay : 'transparent' }]}
+            onPress={() => setShowSelectAsset(true)}
+            testID="selectAsset"
+          >
             {tempSelectAsset && (
               <>
-                <Text style={[styles.text, styles.amount, { color: colors.textSecondary }]}>{t('common.amount')}</Text>
-                <SetAssetAmount
-                  targetAddress={currentAddressValue}
-                  asset={toAmountAssetInput(tempSelectAsset)}
-                  isReceive
-                  defaultAmount={amount}
-                  onAmountInfoChange={setAmountInfo}
-                />
+                <TokenIcon style={styles.assetIcon} source={tempSelectAsset.icon} />
+                <Text style={[styles.assetName, { color: colors.textPrimary }]} numberOfLines={1}>
+                  {tempSelectAsset.name}
+                </Text>
+                {tempSelectAsset.name !== tempSelectAsset.symbol && (
+                  <Text style={[styles.assetSymbol, { color: colors.textSecondary }]} numberOfLines={1}>
+                    {tempSelectAsset.symbol}
+                  </Text>
+                )}
+                <ArrowRigiht color={colors.iconPrimary} style={styles.assetArrow} />
               </>
             )}
-          </BottomSheetScrollContent>
-          <BottomSheetFooter>
-            {tempSelectAsset && (
-              <Button
-                testID="continue"
-                disabled={!amountInfo || (!!amountInfo.amount && amountInfo.isAmountValid !== true)}
-                size="small"
-                onPress={() => {
-                  if (Keyboard.isVisible()) {
-                    Keyboard.dismiss();
-                    setTimeout(() => bottomSheetRef.current?.close(), 188);
-                  } else {
-                    bottomSheetRef.current?.close();
-                  }
-                  onConfirm({ asset: tempSelectAsset, amount: amountInfo?.amount });
-                }}
-              >
-                {t('common.continue')}
-              </Button>
-            )}
-            {!tempSelectAsset && (
-              <Button size="small" onPress={() => setShowSelectAsset(true)}>
-                {t('receive.selectAsset')}
-              </Button>
-            )}
-          </BottomSheetFooter>
-        </BottomSheetWrapper>
-      </InlineBottomSheet>
+            {!tempSelectAsset && <Text style={[styles.assetSymbol, { color: colors.textSecondary }]}>{t('receive.clickHereToSelect')}</Text>}
+          </Pressable>
 
-      {showSelectAsset && (
-        <SelectAsset
-          selectType="Receive"
-          onConfirm={(asset) => {
-            const networkId = currentNetworkId || assetsQuery.data?.[0]?.networkId || '';
-            if (!networkId || !currentAddressId) {
-              return;
-            }
-            setTempSelectAsset(toReceiveAssetFromLegacyAssetInfo({ asset, networkId, addressId: currentAddressId }));
-          }}
-          onClose={() => {
-            setShowSelectAsset(false);
-          }}
-        />
-      )}
+          {tempSelectAsset && (
+            <>
+              <Text style={[styles.text, styles.amount, { color: colors.textSecondary }]}>{t('common.amount')}</Text>
+              <SetAssetAmount
+                targetAddress={currentAddressValue}
+                asset={toAmountAssetInput(tempSelectAsset)}
+                isReceive
+                defaultAmount={amount}
+                onAmountInfoChange={setAmountInfo}
+              />
+            </>
+          )}
+        </SheetBody>
+      </SheetScrollView>
+      <SheetFooter>
+        {tempSelectAsset ? (
+          <Button
+            testID="continue"
+            disabled={!amountInfo || (!!amountInfo.amount && amountInfo.isAmountValid !== true)}
+            size="small"
+            onPress={() => {
+              Keyboard.dismiss();
+              onConfirm({ asset: tempSelectAsset, amount: amountInfo?.amount });
+              onClose();
+            }}
+          >
+            {t('common.continue')}
+          </Button>
+        ) : (
+          <Button size="small" onPress={() => setShowSelectAsset(true)}>
+            {t('receive.selectAsset')}
+          </Button>
+        )}
+      </SheetFooter>
+
+      <SelectAsset
+        isOpen={showSelectAsset}
+        onConfirm={(asset) => {
+          const networkId = currentNetworkId || assetsQuery.data?.[0]?.networkId || '';
+          if (!networkId || !currentAddressId) {
+            return;
+          }
+          setTempSelectAsset(toReceiveAssetFromLegacyAssetInfo({ asset, networkId, addressId: currentAddressId }));
+        }}
+        onClose={() => {
+          setShowSelectAsset(false);
+        }}
+      />
     </>
   );
-};
+}
 
 const styles = StyleSheet.create({
   text: {

@@ -1,12 +1,12 @@
 import Logo from '@assets/icons/BSIMQRCode.png';
 import SuccessfullyIcon from '@assets/icons/successful.svg';
-import { BottomSheetFooter, BottomSheetHeader, BottomSheetWrapper, InlineBottomSheet, snapPoints } from '@components/BottomSheet';
 import Button from '@components/Button';
 import Checkbox from '@components/Checkbox';
 import HourglassLoading from '@components/Loading/Hourglass';
+import Sheet, { SheetBody, SheetFooter, SheetHeader } from '@components/Sheet';
 import { stripHexPrefix } from '@core/utils/base';
 import { useNavigation, useTheme } from '@react-navigation/native';
-import type { BackupBSIMQ2RCodeStackName, BackupScreenProps, StackNavigation } from '@router/configs';
+import type { BackupBSIMQ2RCodeStackName, StackNavigation, StackScreenProps } from '@router/configs';
 import { getHardwareWalletService } from '@service/core';
 import { useFinishBackup } from '@service/vault';
 import { BSIM_QR_VERSION } from '@utils/BSIMConstants';
@@ -23,9 +23,8 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { showMessage } from 'react-native-flash-message';
 import QRCode from 'react-native-qrcode-svg';
 import ViewShot, { type ViewShotRef } from 'react-native-view-shot';
-import BackupBottomSheet from './BackupBottomSheet';
 
-export const BSIMStep2QRCode: React.FC<BackupScreenProps<typeof BackupBSIMQ2RCodeStackName>> = ({ route, navigation }) => {
+export const BSIMStep2QRCode: React.FC<StackScreenProps<typeof BackupBSIMQ2RCodeStackName>> = ({ route, navigation }) => {
   const { t } = useTranslation();
   const { mode, colors } = useTheme();
   const [confirm, setConfirm] = useState(false);
@@ -124,11 +123,12 @@ export const BSIMStep2QRCode: React.FC<BackupScreenProps<typeof BackupBSIMQ2RCod
 
   const handleSuccessClose = useCallback(() => {
     backToHome(navigation);
-  }, []);
+  }, [navigation]);
 
   return (
-    <>
-      <BackupBottomSheet showTitle title={t('backup.BSIM.title')} style={styles.container}>
+    <View collapsable={false} style={styles.container}>
+      <SheetHeader title={t('backup.BSIM.title')} />
+      <SheetBody style={styles.container}>
         {loading ? (
           <View style={styles.loadingContainer}>
             <HourglassLoading />
@@ -164,22 +164,12 @@ export const BSIMStep2QRCode: React.FC<BackupScreenProps<typeof BackupBSIMQ2RCod
                   </Trans>
                 </Text>
               </Pressable>
-
-              <BottomSheetFooter>
-                <Button testID="saveToPhotosButton" onPress={saveToPhotos} disabled={!confirm || loading || saving}>
-                  {saving ? t('common.saving') : t('common.saveToPhotos')}
-                </Button>
-              </BottomSheetFooter>
             </View>
           </>
         )}
-      </BackupBottomSheet>
-
-      {showSuccess && (
-        <InlineBottomSheet snapPoints={snapPoints.percent45} index={showSuccess ? 0 : -1} onClose={handleSuccessClose}>
-          <BottomSheetWrapper innerPaddingHorizontal>
-            <BottomSheetHeader title={t('common.successfully')} />
-
+        <Sheet isPresented={showSuccess} height={{ fraction: 0.45 }} containerColor={colors.bgFourth} onDismiss={handleSuccessClose}>
+          <SheetHeader title={t('common.successfully')} />
+          <SheetBody>
             <View style={styles.successIconContainer}>
               <SuccessfullyIcon width={100} height={100} />
             </View>
@@ -189,10 +179,17 @@ export const BSIMStep2QRCode: React.FC<BackupScreenProps<typeof BackupBSIMQ2RCod
                 to keep your backup password and QR code, it’s your responsibility!
               </Trans>
             </Text>
-          </BottomSheetWrapper>
-        </InlineBottomSheet>
+          </SheetBody>
+        </Sheet>
+      </SheetBody>
+      {!loading && (
+        <SheetFooter>
+          <Button testID="saveToPhotosButton" onPress={saveToPhotos} disabled={!confirm || loading || saving}>
+            {saving ? t('common.saving') : t('common.saveToPhotos')}
+          </Button>
+        </SheetFooter>
       )}
-    </>
+    </View>
   );
 };
 

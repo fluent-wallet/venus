@@ -1,13 +1,6 @@
 import Img from '@assets/images/backup.webp';
-import {
-  BottomSheetContent,
-  BottomSheetFooter,
-  BottomSheetHeader,
-  type BottomSheetMethods,
-  BottomSheetRoute,
-  BottomSheetWrapper,
-} from '@components/BottomSheet';
 import Button from '@components/Button';
+import { SheetBody, SheetFooter, SheetHeader, SheetScrollView } from '@components/Sheet';
 import Text from '@components/Text';
 import { useTheme } from '@react-navigation/native';
 import type { StackScreenProps, TooManyPendingStackName } from '@router/configs';
@@ -15,53 +8,54 @@ import { getExternalRequestsService } from '@service/core';
 import { useCurrentNetwork } from '@service/network';
 import { Image } from 'expo-image';
 import type React from 'react';
-import { useRef } from 'react';
+import { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { StyleSheet } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
-const TooManyPending: React.FC<StackScreenProps<typeof TooManyPendingStackName>> = ({ route }) => {
+const TooManyPending: React.FC<StackScreenProps<typeof TooManyPendingStackName>> = ({ navigation, route }) => {
   const { t } = useTranslation();
   const { colors } = useTheme();
-  const bottomSheetRef = useRef<BottomSheetMethods>(null!);
   const { data: currentNetwork } = useCurrentNetwork();
   const requestId = route.params && typeof route.params === 'object' ? route.params.requestId : undefined;
 
+  useEffect(
+    () => () => {
+      if (!requestId) return;
+      try {
+        getExternalRequestsService().reject({ requestId, error: new Error('Too many pending transactions.') });
+      } catch {
+        // ignore
+      }
+    },
+    [requestId],
+  );
+
   return (
-    <BottomSheetRoute
-      ref={bottomSheetRef}
-      snapPoints={snapPoints}
-      onClose={() => {
-        if (!requestId) return;
-        try {
-          getExternalRequestsService().reject({ requestId, error: new Error('Too many pending transactions.') });
-        } catch {
-          // ignore
-        }
-      }}
-    >
-      <BottomSheetWrapper innerPaddingHorizontal>
-        <BottomSheetHeader title={t('tx.tooManyPending.title')} />
-        <BottomSheetContent>
+    <View collapsable={false} style={styles.container}>
+      <SheetHeader title={t('tx.tooManyPending.title')} />
+      <SheetScrollView>
+        <SheetBody>
           <Image style={styles.img} source={Img} contentFit="contain" />
           <Text style={[styles.text, { color: colors.textPrimary }]}>
             {t('tx.tooManyPending.description', {
               network: currentNetwork?.name,
             })}
           </Text>
-        </BottomSheetContent>
-        <BottomSheetFooter>
-          <Button testID="confirm" style={styles.btn} size="small" onPress={() => bottomSheetRef.current?.close()}>
-            {t('common.ok')}
-          </Button>
-        </BottomSheetFooter>
-      </BottomSheetWrapper>
-    </BottomSheetRoute>
+        </SheetBody>
+      </SheetScrollView>
+      <SheetFooter>
+        <Button testID="confirm" style={styles.btn} size="small" onPress={() => navigation.goBack()}>
+          {t('common.ok')}
+        </Button>
+      </SheetFooter>
+    </View>
   );
 };
 
-const snapPoints = [480];
-
 const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+  },
   img: {
     alignSelf: 'center',
     width: 120,

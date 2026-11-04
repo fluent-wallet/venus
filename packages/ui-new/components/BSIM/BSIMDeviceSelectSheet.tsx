@@ -1,20 +1,20 @@
-import { BottomSheetContent, BottomSheetHeader, type BottomSheetMethods, BottomSheetWrapper, InlineBottomSheet, snapPoints } from '@components/BottomSheet';
+import Sheet, { SheetBody, SheetHeader } from '@components/Sheet';
 import Spinner from '@components/Spinner';
 import Text from '@components/Text';
 import { useTheme } from '@react-navigation/native';
 import { getHardwareWalletService } from '@service/core';
 import type React from 'react';
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useEffect, useEffectEvent, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Pressable, StyleSheet, View } from 'react-native';
 
 type DeviceItem = { deviceId: string; name: string };
 
 interface Props {
-  bottomSheetRef: React.RefObject<BottomSheetMethods>;
+  isOpen: boolean;
+  onClose: () => void;
   onConnect: (deviceId: string) => Promise<void>;
   onScanError: (error: unknown) => void;
-  onOpenChange?: (open: boolean) => void;
 }
 
 const formatDeviceSuffix = (deviceId: string) => {
@@ -31,7 +31,7 @@ const upsertDevice = (prev: DeviceItem[], next: DeviceItem) => {
   return copy;
 };
 
-const BSIMDeviceSelectSheet: React.FC<Props> = ({ bottomSheetRef, onConnect, onScanError, onOpenChange }) => {
+const BSIMDeviceSelectSheet: React.FC<Props> = ({ isOpen, onClose, onConnect, onScanError }) => {
   const { colors, palette, reverseColors, mode } = useTheme();
 
   const scanHandleRef = useRef<{ stop(): void } | null>(null);
@@ -44,36 +44,22 @@ const BSIMDeviceSelectSheet: React.FC<Props> = ({ bottomSheetRef, onConnect, onS
     scanHandleRef.current = null;
   }, []);
 
-  const startScan = useCallback(() => {
+  const handleScanError = useEffectEvent((error: unknown) => {
     stopScan();
+    onClose();
+    onScanError(error);
+  });
+
+  // biome-ignore lint/correctness/useExhaustiveDependencies: Effect Events read current callbacks without restarting the BLE scan.
+  useEffect(() => {
+    if (!isOpen) return;
     setDevices([]);
 
-    scanHandleRef.current = getHardwareWalletService().startBSIMBleScan(
-      (device) => {
-        setDevices((prev) => upsertDevice(prev, device));
-      },
-      (error) => {
-        stopScan();
-        bottomSheetRef.current?.close();
-        onScanError(error);
-      },
-    );
-  }, [bottomSheetRef, onScanError, stopScan]);
-
-  const handleSheetChange = useCallback(
-    (index: number) => {
-      onOpenChange?.(index !== -1);
-
-      if (index === -1) {
-        stopScan();
-        setDevices([]);
-        setConnectingDeviceId(null);
-        return;
-      }
-      startScan();
-    },
-    [onOpenChange, startScan, stopScan],
-  );
+    scanHandleRef.current = getHardwareWalletService().startBSIMBleScan((device) => {
+      setDevices((prev) => upsertDevice(prev, device));
+    }, handleScanError);
+    return stopScan;
+  }, [isOpen, stopScan]);
 
   const handleConnectDevice = useCallback(
     async (deviceId: string) => {
@@ -86,54 +72,43 @@ const BSIMDeviceSelectSheet: React.FC<Props> = ({ bottomSheetRef, onConnect, onS
         await onConnect(deviceId);
       } finally {
         setConnectingDeviceId(null);
-        bottomSheetRef.current?.close();
+        onClose();
       }
     },
-    [bottomSheetRef, connectingDeviceId, onConnect, stopScan],
+    [connectingDeviceId, onConnect, onClose, stopScan],
   );
 
   return (
-    <InlineBottomSheet
-      ref={bottomSheetRef}
-      snapPoints={snapPoints.percent45}
-      index={-1}
-      onChange={handleSheetChange}
-      enablePanDownToClose={!connectingDeviceId}
-      enableContentPanningGesture={!connectingDeviceId}
-      enableHandlePanningGesture={!connectingDeviceId}
-      backDropPressBehavior={connectingDeviceId ? 'none' : 'close'}
-    >
-      <BottomSheetWrapper innerPaddingHorizontal>
-        <BottomSheetHeader title={`${t('common.scanning')}...`} />
-        <BottomSheetContent>
-          {devices.map((device) => {
-            const suffix = formatDeviceSuffix(device.deviceId);
-            const isConnecting = connectingDeviceId === device.deviceId;
+    <Sheet isPresented={isOpen} height={{ fraction: 0.45 }} containerColor={colors.bgFourth} onDismiss={onClose} dismissible={!connectingDeviceId}>
+      <SheetHeader title={`${t('common.scanning')}...`} />
+      <SheetBody>
+        {devices.map((device) => {
+          const suffix = formatDeviceSuffix(device.deviceId);
+          const isConnecting = connectingDeviceId === device.deviceId;
 
-            return (
-              <View key={device.deviceId} style={[styles.row, { borderColor: colors.borderFourth }]}>
-                <View style={styles.rowLeft}>
-                  <Text style={[styles.name, { color: colors.textPrimary }]} numberOfLines={1}>
-                    {device.name}
-                  </Text>
-                  <Text style={[styles.suffix, { color: colors.textSecondary }]} numberOfLines={1}>
-                    {suffix ? `(…${suffix})` : ''}
-                  </Text>
-                </View>
-
-                <Pressable disabled={!!connectingDeviceId} onPress={() => handleConnectDevice(device.deviceId)} hitSlop={8}>
-                  {isConnecting ? (
-                    <Spinner width={18} height={18} color={reverseColors[mode === 'light' ? 'iconPrimary' : 'textSecondary']} backgroundColor={palette.gray4} />
-                  ) : (
-                    <Text style={[styles.connect, { color: colors.up }]}>{t('common.connect')}</Text>
-                  )}
-                </Pressable>
+          return (
+            <View key={device.deviceId} style={[styles.row, { borderColor: colors.borderFourth }]}>
+              <View style={styles.rowLeft}>
+                <Text style={[styles.name, { color: colors.textPrimary }]} numberOfLines={1}>
+                  {device.name}
+                </Text>
+                <Text style={[styles.suffix, { color: colors.textSecondary }]} numberOfLines={1}>
+                  {suffix ? `(…${suffix})` : ''}
+                </Text>
               </View>
-            );
-          })}
-        </BottomSheetContent>
-      </BottomSheetWrapper>
-    </InlineBottomSheet>
+
+              <Pressable disabled={!!connectingDeviceId} onPress={() => handleConnectDevice(device.deviceId)} hitSlop={8}>
+                {isConnecting ? (
+                  <Spinner width={18} height={18} color={reverseColors[mode === 'light' ? 'iconPrimary' : 'textSecondary']} backgroundColor={palette.gray4} />
+                ) : (
+                  <Text style={[styles.connect, { color: colors.up }]}>{t('common.connect')}</Text>
+                )}
+              </Pressable>
+            </View>
+          );
+        })}
+      </SheetBody>
+    </Sheet>
   );
 };
 

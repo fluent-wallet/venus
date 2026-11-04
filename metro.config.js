@@ -23,7 +23,7 @@ const config1 = {
         inlineRequires: false,
       },
     }),
-    babelTransformerPath: require.resolve('react-native-svg-transformer'),
+    babelTransformerPath: require.resolve('react-native-svg-transformer/expo'),
   },
   resolver: {
     assetExts: assetExts.filter((ext) => ext !== 'svg'),
