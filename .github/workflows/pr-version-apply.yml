@@ -1,0 +1,72 @@
+name: Prepare QA version
+
+on:
+  push:
+    branches:
+      - dev
+  pull_request:
+    branches:
+      - qa
+    # Later PR updates are handled by dev pushes, which the bot's own commit will not trigger.
+    types: [opened, reopened]
+
+permissions:
+  contents: write
+  pull-requests: read
+
+jobs:
+  prepare-version:
+    if: >-
+      github.event_name == 'push' ||
+      (github.event.pull_request.head.repo.full_name == github.repository && github.event.pull_request.head.ref == 'dev')
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    concurrency:
+      group: prepare-qa-version-dev
+      cancel-in-progress: true
+    steps:
+      - name: Find open dev to qa PR
+        id: qa-pr
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+        with:
+          script: |
+            const { owner, repo } = context.repo;
+            const { data: pulls } = await github.rest.pulls.list({
+              owner, repo, state: 'open', base: 'qa', head: `${owner}:dev`, per_page: 100,
+            });
+            const pull = pulls.find(({ head }) => head.repo?.full_name === `${owner}/${repo}` && head.ref === 'dev');
+            if (pull) {
+              core.setOutput('head-sha', pull.head.sha);
+            } else {
+              core.notice('No open dev to qa PR; leave version plans pending.');
+            }
+
+      - name: Check out PR commit
+        if: steps.qa-pr.outputs.head-sha != ''
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ steps.qa-pr.outputs.head-sha }}
+          fetch-depth: 0
+
+      - name: Set up Node.js
+        if: steps.qa-pr.outputs.head-sha != ''
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 24
+
+      - name: Install dependencies
+        if: steps.qa-pr.outputs.head-sha != ''
+        run: yarn install --immutable
+
+      - name: Apply and commit pending versions
+        if: steps.qa-pr.outputs.head-sha != ''
+        run: |
+          yarn version apply --all
+          if git diff --quiet; then
+            echo "No pending version changes."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git commit -am "chore: apply yarn version"
+          git push origin HEAD:refs/heads/dev
