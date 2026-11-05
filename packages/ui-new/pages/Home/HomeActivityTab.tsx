@@ -8,12 +8,11 @@ import { useTheme } from '@react-navigation/native';
 import { useActivityTransactionsOfCurrentAddress } from '@service/transaction';
 import { Image } from 'expo-image';
 import type React from 'react';
-import { type RefObject, useCallback, useMemo } from 'react';
+import { useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, View } from 'react-native';
-import type { GestureType } from 'react-native-gesture-handler';
-import type { SharedValue } from 'react-native-reanimated';
-import { type HomeFlashListRef, HomeFlashTabList } from './HomeTabList';
+import { HomeFlashTabList } from './HomeTabList';
+import type { HomeTabScrollBinding } from './useHomeTabScroll';
 
 const MONTH_TXT = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEPT', 'OCT', 'NOV', 'DEC'];
 
@@ -46,16 +45,11 @@ const ActivityDateRow: React.FC<{ year: number; month: number; day: number; marg
 };
 
 export const HomeActivityTab: React.FC<{
-  flatListRef: RefObject<HomeFlashListRef<HomeActivityRow> | null>;
+  scroll: HomeTabScrollBinding;
   onPressTx: (txId: string) => void;
   topInset: number;
-  onLayoutHeightChange?: (height: number) => void;
-  onContentHeightChange?: (height: number) => void;
-  scrollOffset: SharedValue<number>;
-  sharedScrollY: SharedValue<number>;
-  isActive: boolean;
-  scrollGesture: GestureType;
-}> = ({ flatListRef, onPressTx, topInset, onLayoutHeightChange, onContentHeightChange, scrollOffset, sharedScrollY, isActive, scrollGesture }) => {
+  minimumContentHeight: number;
+}> = ({ scroll, onPressTx, topInset, minimumContentHeight }) => {
   const unfinishedTxsQuery = useActivityTransactionsOfCurrentAddress({ status: 'pending' });
   const finishedTxsQuery = useActivityTransactionsOfCurrentAddress({ status: 'finished' });
   const unfinishedTxs = unfinishedTxsQuery.data ?? [];
@@ -90,17 +84,12 @@ export const HomeActivityTab: React.FC<{
 
   return (
     <HomeFlashTabList
-      flatListRef={flatListRef}
+      scroll={scroll}
       contentRows={contentRows}
       renderContentItem={renderContentItem}
       topInset={topInset}
+      minimumContentHeight={minimumContentHeight}
       contentContainerStyle={listContentContainerStyle}
-      onLayoutHeightChange={onLayoutHeightChange}
-      onContentHeightChange={onContentHeightChange}
-      scrollOffset={scrollOffset}
-      sharedScrollY={sharedScrollY}
-      isActive={isActive}
-      scrollGesture={scrollGesture}
       getItemType={(item) => item.kind}
     />
   );

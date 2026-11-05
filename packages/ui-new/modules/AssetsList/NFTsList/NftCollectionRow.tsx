@@ -24,7 +24,7 @@ function toNftAssetInfo(params: { collection: Pick<INftCollection, 'contractAddr
   };
 }
 
-const DetailSkeleton: React.FC<{ background: 'home' | 'sheet' }> = memo(({ background }) => {
+export const NftCollectionItemsSkeleton: React.FC<{ background: 'home' | 'sheet' }> = memo(({ background }) => {
   const { colors } = useTheme();
 
   return (
@@ -68,7 +68,7 @@ export const NftCollectionRow: React.FC<{
       />
       {isOpen &&
         (isFetching && items.length === 0 ? (
-          <DetailSkeleton background={background} />
+          <NftCollectionItemsSkeleton background={background} />
         ) : (
           <NFTItemsGrid
             collection={collection}

@@ -1,41 +1,28 @@
 import type { TabType } from '@modules/AssetsTabs/types';
-import { useCallback, useEffect, useRef, useState } from 'react';
-import type { SharedValue } from 'react-native-reanimated';
-import { useSharedValue } from 'react-native-reanimated';
-import type { HomeActivityRow } from './HomeActivityTab';
-import type { HomeNftsRow } from './HomeNftsTab';
-import type { HomeFlashListRef, HomeFlatListRef } from './HomeTabList';
-import type { HomeTokensRow } from './HomeTokensTab';
+import { useCallback, useLayoutEffect, useMemo } from 'react';
+import { type SharedValue, useSharedValue } from 'react-native-reanimated';
+import { scheduleOnUI } from 'react-native-worklets';
 
-interface HomeTabMetrics {
-  contentHeight: number;
-  layoutHeight: number;
-}
-
-type HomeTabMetricsMap = Record<TabType, HomeTabMetrics>;
-
-interface PendingTabSync {
+interface HomeTabSelection {
   tab: TabType;
-  minimumVisibleOffset: number;
+  headerOffset: number;
+  sequence: number;
 }
 
-function createInitialMetrics(): HomeTabMetrics {
-  return {
-    contentHeight: -1,
-    layoutHeight: 0,
-  };
+export const HOME_SCROLL_TOLERANCE = 1;
+
+export function getHomeHeaderOffset(scrollOffset: number, collapseDistance: number) {
+  'worklet';
+  const offset = Math.min(Math.max(scrollOffset, 0), collapseDistance);
+  // Treat fractional native offsets near the boundary as fully collapsed.
+  return collapseDistance - offset <= HOME_SCROLL_TOLERANCE ? collapseDistance : offset;
 }
 
-function createInitialMetricsMap(): HomeTabMetricsMap {
-  return {
-    Tokens: createInitialMetrics(),
-    NFTs: createInitialMetrics(),
-    Activity: createInitialMetrics(),
-  };
-}
-
-function areTabMetricsReady(metrics: HomeTabMetrics) {
-  return metrics.layoutHeight > 0 && metrics.contentHeight >= 0;
+export function getHomeTabScrollOffset(headerOffset: number, tabOffset: number, collapseDistance: number) {
+  'worklet';
+  const visibleOffset = getHomeHeaderOffset(headerOffset, collapseDistance);
+  // Keep a tab's deeper position only while the shared header is fully collapsed.
+  return visibleOffset < collapseDistance ? visibleOffset : Math.max(visibleOffset, tabOffset);
 }
 
 export function useHomeScrollCoordinator({
@@ -47,147 +34,34 @@ export function useHomeScrollCoordinator({
   currentTab: TabType;
   sharedScrollY: SharedValue<number>;
 }) {
-  const previousTabRef = useRef(currentTab);
-  const tokensListRef = useRef<HomeFlashListRef<HomeTokensRow> | null>(null);
-  const nftsListRef = useRef<HomeFlatListRef<HomeNftsRow> | null>(null);
-  const activityListRef = useRef<HomeFlashListRef<HomeActivityRow> | null>(null);
-  const tokensScrollOffset = useSharedValue(0);
-  const nftsScrollOffset = useSharedValue(0);
-  const activityScrollOffset = useSharedValue(0);
-  const [pendingSync, setPendingSync] = useState<PendingTabSync | null>(null);
-  const [tabMetrics, setTabMetrics] = useState<HomeTabMetricsMap>(() => createInitialMetricsMap());
+  const selection = useSharedValue<HomeTabSelection>({ tab: currentTab, headerOffset: 0, sequence: 0 });
+  const completedSequence = useSharedValue(0);
+  const headerHeight = useSharedValue(collapseDistance);
 
-  const getListRef = useCallback((tab: TabType) => {
-    switch (tab) {
-      case 'Tokens':
-        return tokensListRef;
-      case 'NFTs':
-        return nftsListRef;
-      case 'Activity':
-        return activityListRef;
-      default:
-        return tokensListRef;
-    }
-  }, []);
+  useLayoutEffect(() => {
+    headerHeight.set(collapseDistance);
+  }, [collapseDistance, headerHeight]);
 
-  const getScrollOffset = useCallback(
+  const requestTabSync = useCallback(
     (tab: TabType) => {
-      switch (tab) {
-        case 'Tokens':
-          return tokensScrollOffset;
-        case 'NFTs':
-          return nftsScrollOffset;
-        case 'Activity':
-          return activityScrollOffset;
-        default:
-          return tokensScrollOffset;
-      }
-    },
-    [activityScrollOffset, nftsScrollOffset, tokensScrollOffset],
-  );
-
-  const updateTabMetrics = useCallback((tab: TabType, nextMetrics: Partial<HomeTabMetrics>) => {
-    setTabMetrics((prev) => {
-      const currentMetrics = prev[tab];
-      const updatedMetrics: HomeTabMetrics = {
-        contentHeight: nextMetrics.contentHeight ?? currentMetrics.contentHeight,
-        layoutHeight: nextMetrics.layoutHeight ?? currentMetrics.layoutHeight,
+      'worklet';
+      selection.value = {
+        tab,
+        headerOffset: getHomeHeaderOffset(sharedScrollY.value, headerHeight.value),
+        sequence: selection.value.sequence + 1,
       };
-
-      if (currentMetrics.contentHeight === updatedMetrics.contentHeight && currentMetrics.layoutHeight === updatedMetrics.layoutHeight) {
-        return prev;
-      }
-
-      return {
-        ...prev,
-        [tab]: updatedMetrics,
-      };
-    });
-  }, []);
-
-  const resolveReachableOffset = useCallback(
-    (tab: TabType, desiredOffset: number) => {
-      const metrics = tabMetrics[tab];
-      if (!areTabMetricsReady(metrics)) {
-        return null;
-      }
-
-      const maxOffset = Math.max(metrics.contentHeight - metrics.layoutHeight, 0);
-      return Math.min(desiredOffset, maxOffset);
     },
-    [tabMetrics],
+    [headerHeight, selection, sharedScrollY],
   );
 
-  const syncVisibleOffsetToTab = useCallback(
-    (tab: TabType, minimumVisibleOffset: number) => {
-      const currentOffset = getScrollOffset(tab).get();
-      if (currentOffset >= minimumVisibleOffset) {
-        if (currentTab === tab) {
-          sharedScrollY.set(currentOffset);
-        }
-        return true;
-      }
+  useLayoutEffect(() => {
+    scheduleOnUI(requestTabSync, currentTab);
+  }, [currentTab, requestTabSync]);
 
-      const ref = getListRef(tab).current;
-      if (!ref) {
-        return false;
-      }
-
-      const resolvedOffset = resolveReachableOffset(tab, minimumVisibleOffset);
-      if (resolvedOffset === null) {
-        return false;
-      }
-
-      if (resolvedOffset !== currentOffset) {
-        ref.scrollToOffset({ offset: resolvedOffset, animated: false });
-      }
-      getScrollOffset(tab).value = resolvedOffset;
-      if (currentTab === tab) {
-        sharedScrollY.set(resolvedOffset);
-      }
-      return true;
-    },
-    [currentTab, getListRef, getScrollOffset, resolveReachableOffset, sharedScrollY],
+  return useMemo(
+    () => ({ selection, completedSequence, sharedScrollY, headerHeight, requestTabSync }),
+    [selection, completedSequence, sharedScrollY, headerHeight, requestTabSync],
   );
-
-  useEffect(() => {
-    const previousTab = previousTabRef.current;
-    if (previousTab === currentTab) {
-      return;
-    }
-
-    const sourceOffset = getScrollOffset(previousTab).get();
-    setPendingSync({
-      tab: currentTab,
-      minimumVisibleOffset: Math.min(sourceOffset, collapseDistance),
-    });
-    previousTabRef.current = currentTab;
-  }, [collapseDistance, currentTab, getScrollOffset]);
-
-  useEffect(() => {
-    if (!pendingSync) {
-      return;
-    }
-
-    if (!syncVisibleOffsetToTab(pendingSync.tab, pendingSync.minimumVisibleOffset)) {
-      return;
-    }
-
-    setPendingSync((current) => {
-      if (!current || current.tab !== pendingSync.tab || current.minimumVisibleOffset !== pendingSync.minimumVisibleOffset) {
-        return current;
-      }
-      return null;
-    });
-  }, [pendingSync, syncVisibleOffsetToTab]);
-
-  return {
-    activityListRef,
-    activityScrollOffset,
-    nftsListRef,
-    nftsScrollOffset,
-    tokensListRef,
-    tokensScrollOffset,
-    updateTabMetrics,
-  };
 }
+
+export type HomeScrollCoordinator = ReturnType<typeof useHomeScrollCoordinator>;

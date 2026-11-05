@@ -6,9 +6,8 @@ import type { HomeStackName, StackScreenProps } from '@router/configs';
 import type React from 'react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { type LayoutChangeEvent, StyleSheet, useWindowDimensions, View } from 'react-native';
-import { Gesture } from 'react-native-gesture-handler';
 import Animated, { type SharedValue, useAnimatedStyle } from 'react-native-reanimated';
-import { TabView } from 'react-native-tab-view';
+import { type SceneRendererProps, TabView } from 'react-native-tab-view';
 import { CurrentAddress, TotalPrice } from './Address&TotalPrice';
 import { HomeActivityTab } from './HomeActivityTab';
 import { HomeNftsTab } from './HomeNftsTab';
@@ -17,6 +16,7 @@ import { HomeTokensTab } from './HomeTokensTab';
 import Navigations from './Navigations';
 import NotBackup from './NotBackup';
 import { useHomeScrollCoordinator } from './useHomeScrollCoordinator';
+import { useHomeTabScroll } from './useHomeTabScroll';
 
 interface HomeTabRoute {
   key: TabType;
@@ -33,19 +33,18 @@ export const HomeTabsPager: React.FC<{
   const { colors } = useTheme();
   const tabs = useTabs('Home');
   const { width } = useWindowDimensions();
-  const tokensScrollGesture = useMemo(() => Gesture.Native(), []);
-  const nftsScrollGesture = useMemo(() => Gesture.Native(), []);
-  const activityScrollGesture = useMemo(() => Gesture.Native(), []);
   const [topSectionHeight, setTopSectionHeight] = useState(0);
   const [tabsHeaderHeight, setTabsHeaderHeight] = useState(0);
-  const { activityListRef, activityScrollOffset, nftsListRef, nftsScrollOffset, tokensListRef, tokensScrollOffset, updateTabMetrics } =
-    useHomeScrollCoordinator({
-      collapseDistance: topSectionHeight,
-      currentTab,
-      sharedScrollY,
-    });
+  const [pagerHeight, setPagerHeight] = useState(0);
+  const coordinator = useHomeScrollCoordinator({ collapseDistance: topSectionHeight, currentTab, sharedScrollY });
+  const tokensScroll = useHomeTabScroll('Tokens', coordinator);
+  const nftsScroll = useHomeTabScroll('NFTs', coordinator);
+  const activityScroll = useHomeTabScroll('Activity', coordinator);
+  const scrollBindings = useMemo(() => ({ Tokens: tokensScroll, NFTs: nftsScroll, Activity: activityScroll }), [tokensScroll, nftsScroll, activityScroll]);
 
   const topInset = topSectionHeight + tabsHeaderHeight;
+  // Short pages need enough scroll range to keep the header collapsed.
+  const minimumContentHeight = pagerHeight + topSectionHeight;
   const routes = useMemo<HomeTabRoute[]>(() => tabs.map((tab) => ({ key: tab })), [tabs]);
   const currentIndex = useMemo(() => {
     const index = tabs.indexOf(currentTab);
@@ -68,76 +67,27 @@ export const HomeTabsPager: React.FC<{
     const nextHeight = event.nativeEvent.layout.height;
     setTabsHeaderHeight((prev) => (prev === nextHeight ? prev : nextHeight));
   }, []);
+  const handlePagerLayout = useCallback((event: LayoutChangeEvent) => {
+    const nextHeight = event.nativeEvent.layout.height;
+    setPagerHeight((prev) => (prev === nextHeight ? prev : nextHeight));
+  }, []);
 
-  const topSectionAnimatedStyle = useAnimatedStyle(() => ({
-    transform: [{ translateY: -Math.min(sharedScrollY.value, topSectionHeight) }],
-  }));
-
-  const tabsHeaderAnimatedStyle = useAnimatedStyle(() => ({
+  const headerAnimatedStyle = useAnimatedStyle(() => ({
     transform: [{ translateY: -Math.min(sharedScrollY.value, topSectionHeight) }],
   }));
 
   const renderTabPage = useCallback(
-    (route: HomeTabRoute) => {
+    ({ route }: { route: HomeTabRoute }) => {
       switch (route.key) {
         case 'Tokens':
-          return (
-            <HomeTokensTab
-              flatListRef={tokensListRef}
-              topInset={topInset}
-              onLayoutHeightChange={(height) => updateTabMetrics('Tokens', { layoutHeight: height })}
-              onContentHeightChange={(height) => updateTabMetrics('Tokens', { contentHeight: height })}
-              scrollOffset={tokensScrollOffset}
-              sharedScrollY={sharedScrollY}
-              isActive={currentTab === route.key}
-              scrollGesture={tokensScrollGesture}
-            />
-          );
+          return <HomeTokensTab scroll={tokensScroll} topInset={topInset} minimumContentHeight={minimumContentHeight} />;
         case 'NFTs':
-          return (
-            <HomeNftsTab
-              flatListRef={nftsListRef}
-              topInset={topInset}
-              onLayoutHeightChange={(height) => updateTabMetrics('NFTs', { layoutHeight: height })}
-              onContentHeightChange={(height) => updateTabMetrics('NFTs', { contentHeight: height })}
-              scrollOffset={nftsScrollOffset}
-              sharedScrollY={sharedScrollY}
-              isActive={currentTab === route.key}
-              scrollGesture={nftsScrollGesture}
-            />
-          );
+          return <HomeNftsTab scroll={nftsScroll} topInset={topInset} minimumContentHeight={minimumContentHeight} />;
         case 'Activity':
-          return (
-            <HomeActivityTab
-              flatListRef={activityListRef}
-              onPressTx={onPressTx}
-              topInset={topInset}
-              onLayoutHeightChange={(height) => updateTabMetrics('Activity', { layoutHeight: height })}
-              onContentHeightChange={(height) => updateTabMetrics('Activity', { contentHeight: height })}
-              scrollOffset={activityScrollOffset}
-              sharedScrollY={sharedScrollY}
-              isActive={currentTab === route.key}
-              scrollGesture={activityScrollGesture}
-            />
-          );
+          return <HomeActivityTab scroll={activityScroll} onPressTx={onPressTx} topInset={topInset} minimumContentHeight={minimumContentHeight} />;
       }
     },
-    [
-      activityListRef,
-      activityScrollGesture,
-      activityScrollOffset,
-      currentTab,
-      nftsListRef,
-      nftsScrollGesture,
-      nftsScrollOffset,
-      onPressTx,
-      sharedScrollY,
-      tokensListRef,
-      tokensScrollGesture,
-      tokensScrollOffset,
-      topInset,
-      updateTabMetrics,
-    ],
+    [activityScroll, minimumContentHeight, nftsScroll, onPressTx, tokensScroll, topInset],
   );
   const handleIndexChange = useCallback(
     (index: number) => {
@@ -148,27 +98,38 @@ export const HomeTabsPager: React.FC<{
     },
     [currentTab, onTabChange, tabs],
   );
-
-  const activeScrollGesture = useMemo(() => {
-    switch (currentTab) {
-      case 'Tokens':
-        return tokensScrollGesture;
-      case 'NFTs':
-        return nftsScrollGesture;
-      case 'Activity':
-        return activityScrollGesture;
-    }
-  }, [activityScrollGesture, currentTab, nftsScrollGesture, tokensScrollGesture]);
+  const renderTabBar = useCallback(
+    ({ position }: SceneRendererProps) => (
+      <Animated.View
+        pointerEvents="box-none"
+        renderToHardwareTextureAndroid
+        shouldRasterizeIOS
+        style={[styles.tabsHeaderLayer, headerAnimatedStyle, { top: topSectionHeight, backgroundColor: colors.bgPrimary }]}
+      >
+        <View onLayout={handleTabsHeaderLayout}>
+          <TabsHeader
+            type="Home"
+            currentTab={currentTab}
+            sharedScrollY={sharedScrollY}
+            pagerPosition={position}
+            onTabChange={onTabChange}
+            nftStickyStartY={topSectionHeight}
+          />
+        </View>
+      </Animated.View>
+    ),
+    [colors.bgPrimary, currentTab, handleTabsHeaderLayout, headerAnimatedStyle, onTabChange, sharedScrollY, topSectionHeight],
+  );
 
   return (
-    <HomePullToRefresh scrollY={sharedScrollY} onRefresh={onRefresh} nativeScrollGestures={[activeScrollGesture]}>
-      <View style={styles.container}>
+    <HomePullToRefresh scrollY={sharedScrollY} onRefresh={onRefresh} nativeScrollGesture={scrollBindings[currentTab].scrollGesture}>
+      <View style={styles.container} onLayout={handlePagerLayout}>
         <View pointerEvents="box-none" style={[styles.topSectionClipLayer, { height: topSectionHeight }]}>
           <Animated.View
             pointerEvents="box-none"
             renderToHardwareTextureAndroid
             shouldRasterizeIOS
-            style={[styles.topSectionLayer, topSectionAnimatedStyle, { backgroundColor: colors.bgPrimary }]}
+            style={[styles.topSectionLayer, headerAnimatedStyle, { backgroundColor: colors.bgPrimary }]}
           >
             <View onLayout={handleTopSectionLayout}>
               <CurrentAddress />
@@ -179,25 +140,15 @@ export const HomeTabsPager: React.FC<{
           </Animated.View>
         </View>
 
-        <Animated.View
-          pointerEvents="box-none"
-          renderToHardwareTextureAndroid
-          shouldRasterizeIOS
-          style={[styles.tabsHeaderLayer, tabsHeaderAnimatedStyle, { top: topSectionHeight, backgroundColor: colors.bgPrimary }]}
-        >
-          <View onLayout={handleTabsHeaderLayout}>
-            <TabsHeader type="Home" currentTab={currentTab} sharedScrollY={sharedScrollY} onTabChange={onTabChange} nftStickyStartY={topSectionHeight} />
-          </View>
-        </Animated.View>
-
         <TabView
           navigationState={{ index: currentIndex, routes }}
           onIndexChange={handleIndexChange}
-          renderScene={({ route }) => renderTabPage(route)}
-          renderTabBar={() => null}
+          renderScene={renderTabPage}
+          renderTabBar={renderTabBar}
           initialLayout={{ width }}
           lazy={false}
           overScrollMode="never"
+          offscreenPageLimit={Math.max(routes.length - 1, 1)}
           style={styles.pagerView}
         />
       </View>
