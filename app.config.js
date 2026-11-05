@@ -60,7 +60,7 @@ module.exports = () => {
       intentFilters: [{ action: 'VIEW', category: ['BROWSABLE', 'DEFAULT'], data: [{ scheme: 'http' }, { scheme: 'https' }] }],
     },
     plugins: [
-      'expo-dev-client',
+      ['expo-dev-client', { addGeneratedScheme: environment === 'dev' }],
       'expo-localization',
       [
         'expo-build-properties',
