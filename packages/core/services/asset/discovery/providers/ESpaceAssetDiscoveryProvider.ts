@@ -242,7 +242,7 @@ export class ESpaceAssetDiscoveryProvider implements IAssetDiscoveryProvider {
     return {
       type: ASSET_TYPE.Native,
       contractAddress: null,
-      name: 'Conflux',
+      name: 'CFX',
       symbol: 'CFX',
       decimals: 18,
       icon: info?.icon ?? null,
