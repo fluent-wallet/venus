@@ -1,11 +1,12 @@
 import { ASSET_TYPE } from '@core/types';
+import { NetworkType } from '@core/utils/consts';
 import type { AssetInfo } from '@utils/assetInfo';
 import { toAssetInfo } from '@utils/toAssetInfo';
 import { escapeRegExp } from 'lodash-es';
 import { useEffect, useMemo, useState } from 'react';
 import { isValidAddress } from './address';
 import { useAddCustomToken } from './asset';
-import type { IAsset, INetwork, INftCollection } from './core';
+import { getAssetService, type IAsset, type INetwork, type INftCollection } from './core';
 
 export type AssetSearchItem =
   | { key: string; kind: 'token'; asset: AssetInfo }
@@ -23,6 +24,7 @@ type AssetSearchOptions = {
   text: string;
   assets: readonly IAsset[];
   nftCollections: readonly INftCollection[];
+  includeNfts?: boolean;
   network: Pick<INetwork, 'id' | 'networkType'> | null | undefined;
   addressId: string;
   isLoadingLocalAssets: boolean;
@@ -51,18 +53,30 @@ function getLocalSearchItems(assets: readonly IAsset[], nftCollections: readonly
   return [...tokens, ...collections.map((collection, index): AssetSearchItem => ({ key: `nft:${collection.id}`, kind: 'nft-collection', collection, index }))];
 }
 
-export function useAssetSearch({ text, assets, nftCollections, network, addressId, isLoadingLocalAssets }: AssetSearchOptions): SearchState {
+export function useAssetSearch({
+  text,
+  assets,
+  nftCollections,
+  includeNfts = true,
+  network,
+  addressId,
+  isLoadingLocalAssets,
+}: AssetSearchOptions): SearchState {
   const keyword = text.trim();
   const [debouncedKeyword, setDebouncedKeyword] = useState('');
   const [remoteResult, setRemoteResult] = useState<(SearchResult & { requestKey: string }) | null>(null);
   const [completedResult, setCompletedResult] = useState<{ contextKey: string; items: readonly AssetSearchItem[] } | null>(null);
   const addCustomToken = useAddCustomToken();
+  const assetService = getAssetService();
   const networkId = network?.id;
   const networkType = network?.networkType;
-  const contextKey = JSON.stringify([addressId, networkId]);
-  const requestKey = JSON.stringify([addressId, networkId, debouncedKeyword]);
+  const contextKey = JSON.stringify([addressId, networkId, includeNfts]);
+  const requestKey = JSON.stringify([addressId, networkId, includeNfts, debouncedKeyword]);
   const isCurrentSearch = !!keyword && keyword === debouncedKeyword;
-  const localItems = useMemo(() => getLocalSearchItems(assets, nftCollections, debouncedKeyword), [assets, nftCollections, debouncedKeyword]);
+  const localItems = useMemo(
+    () => getLocalSearchItems(assets, includeNfts ? nftCollections : [], debouncedKeyword),
+    [assets, nftCollections, includeNfts, debouncedKeyword],
+  );
   const hasLocalResults = localItems.length > 0;
 
   useEffect(() => {
@@ -83,6 +97,15 @@ export function useAssetSearch({ text, assets, nftCollections, network, addressI
         }
 
         setRemoteResult({ requestKey, status: 'searching', items: EMPTY_ITEMS });
+        if (!includeNfts && networkType === NetworkType.Ethereum) {
+          // Receive requests cannot encode NFT transfers.
+          const inspection = await assetService.inspectContractAsset({ addressId, contractAddress: debouncedKeyword });
+          if (cancelled) return;
+          if (inspection.assetType !== ASSET_TYPE.ERC20) {
+            setRemoteResult({ requestKey, status: 'invalid-ERC20', items: EMPTY_ITEMS });
+            return;
+          }
+        }
         const asset = await addCustomToken({ addressId, contractAddress: debouncedKeyword });
         if (!cancelled) {
           setRemoteResult({ requestKey, status: 'ready', items: [toTokenSearchItem(asset)] });
@@ -98,7 +121,7 @@ export function useAssetSearch({ text, assets, nftCollections, network, addressI
     return () => {
       cancelled = true;
     };
-  }, [addressId, networkType, requestKey, debouncedKeyword, isCurrentSearch, hasLocalResults, isLoadingLocalAssets, addCustomToken]);
+  }, [addressId, networkType, requestKey, debouncedKeyword, isCurrentSearch, hasLocalResults, isLoadingLocalAssets, addCustomToken, assetService, includeNfts]);
 
   const currentResult = useMemo<SearchResult>(() => {
     if (!isCurrentSearch) return { items: EMPTY_ITEMS, status: 'idle' };

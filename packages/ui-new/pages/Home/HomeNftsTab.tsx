@@ -1,26 +1,24 @@
 import NoneNFT from '@assets/images/none-NFT.webp';
 import Text from '@components/Text';
 import { shouldShowNftCollectionsSkeleton } from '@modules/AssetsList/NFTsList/helpers';
-import { NFTCollectionItem } from '@modules/AssetsList/NFTsList/NFTCollectionItem';
-import { NFTItemsGridRow } from '@modules/AssetsList/NFTsList/NFTItemsGrid';
-import { NftCollectionItemsSkeleton } from '@modules/AssetsList/NFTsList/NftCollectionRow';
-import { useOpenNftCollection } from '@modules/AssetsList/NFTsList/openState';
+import { NftListRow } from '@modules/AssetsList/NFTsList/NftListRow';
 import { SkeletonList as NftSkeletonList } from '@modules/AssetsList/NFTsList/Skeleton';
+import { type NftListRowData, useNftList } from '@modules/AssetsList/NFTsList/useNftList';
 import { styles as emptyStyles } from '@modules/AssetsList/TokensList/ReceiveFunds';
-import { useTheme } from '@react-navigation/native';
+import { useIsFocused, useTheme } from '@react-navigation/native';
 import { useCurrentAddress } from '@service/account';
-import type { INftCollection, INftItem } from '@service/core';
-import { useNftCollectionsOfAddress, useNftItems } from '@service/nft';
+import type { INftCollection } from '@service/core';
+import { useNftCollectionsOfAddress, useNftListState } from '@service/nft';
 import { Image } from 'expo-image';
 import type React from 'react';
 import { useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { HomeTabList } from './HomeTabList';
-import { buildHomeNftRows, type HomeNftsRow } from './homeNftRows';
 import type { HomeTabScrollBinding } from './useHomeTabScroll';
 
 const EMPTY_COLLECTIONS: INftCollection[] = [];
-const EMPTY_ITEMS: INftItem[] = [];
+type HomeNftsRow = NftListRowData | { key: 'nfts-skeletons'; kind: 'nfts-skeletons' } | { key: 'nfts-empty'; kind: 'nfts-empty' };
+const getItemType = (row: HomeNftsRow) => row.kind;
 // Home cards keep press feedback without opening a detail screen.
 const handleNftPress = () => undefined;
 
@@ -40,19 +38,20 @@ export const HomeNftsTab: React.FC<{
   scroll: HomeTabScrollBinding;
   topInset: number;
   minimumContentHeight: number;
-}> = ({ scroll, topInset, minimumContentHeight }) => {
+  stickyHeaderOffset: number;
+  isActive: boolean;
+}> = ({ scroll, topInset, minimumContentHeight, stickyHeaderOffset, isActive }) => {
+  const isFocused = useIsFocused();
+  const enabled = isActive && isFocused;
   const currentAddressQuery = useCurrentAddress();
   const addressId = currentAddressQuery.data?.id ?? '';
-  const collectionsQuery = useNftCollectionsOfAddress(addressId);
+  const collectionsQuery = useNftCollectionsOfAddress(addressId, { enabled });
   const collections = collectionsQuery.data ?? EMPTY_COLLECTIONS;
-  const [open, setOpen] = useOpenNftCollection();
-  const openCollection = useMemo(
-    () => collections.find((collection) => collection.contractAddress.toLowerCase() === open?.contractAddress.toLowerCase()),
-    [collections, open?.contractAddress],
-  );
-  // Keep the query mounted when virtualized collection headers leave the window.
-  const itemsQuery = useNftItems({ addressId, contractAddress: openCollection?.contractAddress ?? '', enabled: Boolean(openCollection && addressId) });
-  const items = itemsQuery.data ?? EMPTY_ITEMS;
+  const nftListState = useNftListState(addressId);
+  const { rows, stickyHeaderIndices, onPressCollection, onViewableItemsChanged, viewabilityConfig } = useNftList(nftListState, collections, {
+    enabled,
+  });
+  const stickyHeaderConfig = useMemo(() => ({ offset: stickyHeaderOffset }), [stickyHeaderOffset]);
   const shouldShowSkeleton = shouldShowNftCollectionsSkeleton({
     addressId,
     collectionsCount: collections.length,
@@ -69,8 +68,8 @@ export const HomeNftsTab: React.FC<{
       return [{ key: 'nfts-empty', kind: 'nfts-empty' }];
     }
 
-    return buildHomeNftRows({ collections, openContractAddress: openCollection?.contractAddress, items, isFetchingItems: itemsQuery.isFetching });
-  }, [collections, items, itemsQuery.isFetching, openCollection?.contractAddress, shouldShowSkeleton]);
+    return rows;
+  }, [collections.length, rows, shouldShowSkeleton]);
 
   const renderContentItem = useCallback(
     (item: HomeNftsRow) => {
@@ -79,37 +78,11 @@ export const HomeNftsTab: React.FC<{
           return <NftSkeletonList />;
         case 'nfts-empty':
           return <NftsEmptyState />;
-        case 'nft-collection':
-          return (
-            <NFTCollectionItem
-              collection={item.collection}
-              isOpen={item.isOpen}
-              background="home"
-              onPress={() => {
-                setOpen((previous) =>
-                  previous?.contractAddress.toLowerCase() === item.collection.contractAddress.toLowerCase()
-                    ? null
-                    : { contractAddress: item.collection.contractAddress, index: item.collectionIndex },
-                );
-              }}
-            />
-          );
-        case 'nft-items-skeleton':
-          return <NftCollectionItemsSkeleton background="home" />;
-        case 'nft-items-row':
-          return (
-            <NFTItemsGridRow
-              collection={item.collection}
-              items={item.items}
-              isFirstRow={item.isFirstRow}
-              isLastRow={item.isLastRow}
-              background="home"
-              onPressItem={handleNftPress}
-            />
-          );
+        default:
+          return <NftListRow row={item} background="home" onPressCollection={onPressCollection} onSelect={handleNftPress} />;
       }
     },
-    [setOpen],
+    [onPressCollection],
   );
 
   return (
@@ -119,6 +92,11 @@ export const HomeNftsTab: React.FC<{
       renderContentItem={renderContentItem}
       topInset={topInset}
       minimumContentHeight={minimumContentHeight}
+      getItemType={getItemType}
+      stickyHeaderIndices={stickyHeaderIndices}
+      stickyHeaderConfig={stickyHeaderConfig}
+      onViewableItemsChanged={onViewableItemsChanged}
+      viewabilityConfig={viewabilityConfig}
       removeClippedSubviews={false}
     />
   );

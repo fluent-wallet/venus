@@ -26,3 +26,8 @@ export interface INftItem {
   icon?: string | null;
   amount: string;
 }
+
+export interface INftItemsPage {
+  items: INftItem[];
+  nextCursor: string | null;
+}

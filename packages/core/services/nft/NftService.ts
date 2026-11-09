@@ -1,302 +1,157 @@
-import { ChainRegistry } from '@core/chains';
-import { iface721 } from '@core/contracts';
 import type { Database } from '@core/database';
 import type { Address as DbAddress } from '@core/database/models/Address';
 import { type Asset, AssetSource, AssetType as DbAssetType } from '@core/database/models/Asset';
 import type { Network } from '@core/database/models/Network';
 import TableName from '@core/database/TableName';
 import { CORE_IDENTIFIERS } from '@core/di';
-import { CHAIN_PROVIDER_NOT_FOUND, CoreError } from '@core/errors';
 import type { RuntimeConfig } from '@core/runtime/types';
-import { ASSET_TYPE, type Hex, type IChainProvider } from '@core/types';
-import { convertToChecksum, isHexAddress } from '@core/utils/account';
+import { ASSET_TYPE } from '@core/types';
+import { convertToChecksum } from '@core/utils/account';
 import { NetworkType } from '@core/utils/consts';
 import { Q } from '@nozbe/watermelondb';
 import { inject, injectable, optional } from 'inversify';
-import { buildScanOpenApiKey, type NftSyncItemDetail } from '../../modules/nftSync';
-import { fetchNftItemsFromConfluxScanEvmOpenApi } from '../../modules/nftSync/fetchers/confluxScanEvmOpenApi';
-import type { INftCollection, INftItem, NftCollectionType } from './types';
+import { buildScanOpenApiKey, fetchNftItemsPageFromConfluxScan, fetchScanPage, NFT_COLLECTIONS_PAGE_SIZE } from './confluxScan';
+import type { INftCollection, INftItemsPage, NftCollectionType } from './types';
 
-type ScanTokenListItem = {
-  type: string;
+type ScanNftCollection = {
   contract: string;
+  type: NftCollectionType;
+  name?: string;
+  symbol?: string;
   iconUrl?: string;
 };
-
-type ScanTokenListResponse = {
-  status: '0' | '1';
-  message: string;
-  result?: { list?: ScanTokenListItem[] };
-};
-
-const isParameterWrongMessage = (message: string): boolean => message.includes('The parameter is wrong, please confirm it is correct');
 
 @injectable()
 export class NftService {
   @inject(CORE_IDENTIFIERS.DB)
   private readonly database!: Database;
 
-  @inject(ChainRegistry)
-  private readonly chainRegistry!: ChainRegistry;
-
   @inject(CORE_IDENTIFIERS.CONFIG)
   @optional()
   private readonly config?: RuntimeConfig;
 
-  async listCollections(params: { addressId: string; signal?: AbortSignal }): Promise<INftCollection[]> {
-    const address = await this.findAddress(params.addressId);
+  async listCollections(params: { addressId: string }): Promise<INftCollection[]> {
+    const address = await this.database.get<DbAddress>(TableName.Address).find(params.addressId);
     const network = await address.network.fetch();
 
-    // Only EVM networks are supported for now.
-    if (network.networkType !== NetworkType.Ethereum) {
-      return this.listCollectionsFromDb(address);
-    }
-
     const baseUrl = this.getScanOpenApiBaseUrl(network);
-    if (!baseUrl) {
-      return this.listCollectionsFromDb(address);
-    }
+    if (!baseUrl) return [];
 
-    try {
-      const ownerHex = address.hex;
-      const remote = await this.fetchCollectionsFromScan({
-        baseUrl,
-        ownerHex,
-        signal: params.signal,
-      });
+    const remoteCollections = await this.fetchCollectionsFromScan({ baseUrl, ownerHex: address.hex });
+    if (!remoteCollections.length) return [];
 
-      await this.upsertCollectionsFromScan(address, network, remote, params.signal);
-
-      const remoteContracts = new Set(remote.map((item) => item.contractAddress.toLowerCase()));
-      return (await this.listCollectionsFromDb(address)).filter((collection) => remoteContracts.has(collection.contractAddress.toLowerCase()));
-    } catch {
-      return this.listCollectionsFromDb(address);
-    }
-  }
-
-  async getItems(params: { addressId: string; contractAddress: string; signal?: AbortSignal }): Promise<INftItem[]> {
-    const address = await this.findAddress(params.addressId);
-    const network = await address.network.fetch();
-
-    if (network.networkType !== NetworkType.Ethereum) {
-      return [];
-    }
-
-    const baseUrl = this.getScanOpenApiBaseUrl(network);
-    if (!baseUrl) {
-      return [];
-    }
-
-    const ownerHex = address.hex;
-    const contractAddress = this.normalizeContractAddress(params.contractAddress);
-    if (!contractAddress) return [];
-
-    const items = await fetchNftItemsFromConfluxScanEvmOpenApi({
-      baseUrl,
-      ownerAddress: ownerHex,
-      contractAddress,
-      signal: params.signal,
-    });
-
-    return items.map(this.toItemInterface);
-  }
-
-  private async listCollectionsFromDb(address: DbAddress): Promise<INftCollection[]> {
+    const remoteByContract = new Map(remoteCollections.map((collection) => [collection.contract.toLowerCase(), collection]));
     const assetRule = await address.assetRule.fetch();
-    const assets = await assetRule.assets.extend(Q.where('type', Q.oneOf([DbAssetType.ERC721, DbAssetType.ERC1155]))).fetch();
 
-    return assets.map((asset) => this.toCollectionInterface(asset));
+    return this.database.write(async () => {
+      const storedCollections = await assetRule.assets.extend(Q.where('type', Q.oneOf([DbAssetType.ERC721, DbAssetType.ERC1155]))).fetch();
+      const storedByContract = new Map(storedCollections.map((collection) => [collection.contractAddress?.toLowerCase(), collection]));
+      const changes: Asset[] = [];
+
+      for (const [contract, collection] of remoteByContract) {
+        const existingCollection = storedByContract.get(contract);
+        const name = collection.name ?? existingCollection?.name ?? null;
+        const symbol = collection.symbol ?? existingCollection?.symbol ?? null;
+        const icon = collection.iconUrl ?? existingCollection?.icon ?? null;
+
+        if (existingCollection) {
+          if (existingCollection.name !== name || existingCollection.symbol !== symbol || existingCollection.icon !== icon) {
+            changes.push(
+              existingCollection.prepareUpdate((record) => {
+                record.name = name;
+                record.symbol = symbol;
+                record.icon = icon;
+              }),
+            );
+          }
+
+          continue;
+        }
+
+        const newCollection = this.database.get<Asset>(TableName.Asset).prepareCreate((record) => {
+          record.assetRule.set(assetRule);
+          record.network.set(network);
+          record.type = collection.type === ASSET_TYPE.ERC721 ? DbAssetType.ERC721 : DbAssetType.ERC1155;
+          record.contractAddress = convertToChecksum(collection.contract);
+
+          record.name = name;
+          record.symbol = symbol;
+          record.decimals = 0;
+          record.icon = icon;
+          record.source = AssetSource.Official;
+          record.priceInUSDT = null;
+        });
+
+        storedCollections.push(newCollection);
+        changes.push(newCollection);
+      }
+
+      if (changes.length) await this.database.batch(...changes);
+
+      // Preserve catalog order, but only return collections held by this address.
+      return storedCollections
+        .filter((collection) => remoteByContract.has(collection.contractAddress?.toLowerCase() ?? ''))
+        .map((collection) => this.toCollectionInterface(collection));
+    });
   }
 
-  private normalizeContractAddress(contractAddress: string): string | null {
-    const trimmed = contractAddress.trim();
-    if (!trimmed) return null;
-    return isHexAddress(trimmed) ? convertToChecksum(trimmed) : trimmed;
+  async getItemsPage(params: { addressId: string; contractAddress: string; cursor: string }): Promise<INftItemsPage> {
+    const address = await this.database.get<DbAddress>(TableName.Address).find(params.addressId);
+    const network = await address.network.fetch();
+    const baseUrl = this.getScanOpenApiBaseUrl(network);
+    if (!baseUrl) return { items: [], nextCursor: null };
+
+    const page = await fetchNftItemsPageFromConfluxScan({
+      baseUrl,
+      ownerAddress: address.hex,
+      contractAddress: params.contractAddress,
+      cursor: params.cursor,
+    });
+    return {
+      items: page.list.map((item) => ({
+        tokenId: item.tokenId,
+        name: item.name ?? '',
+        description: item.description ?? null,
+        icon: item.image ?? null,
+        amount: item.amount,
+      })),
+      nextCursor: page.nextCursor,
+    };
   }
 
   private getScanOpenApiBaseUrl(network: Pick<Network, 'networkType' | 'chainId'>): string | null {
-    const cfg = this.config?.sync?.nft?.scanOpenApiByKey ?? {};
-    const key = buildScanOpenApiKey({ networkType: network.networkType, chainId: network.chainId });
-    const url = cfg[key];
-    return typeof url === 'string' && url ? url : null;
+    if (network.networkType !== NetworkType.Ethereum) return null;
+    return this.config?.nft?.scanOpenApiByKey?.[buildScanOpenApiKey(network)] ?? null;
   }
 
-  private async fetchCollectionsFromScan(params: {
-    baseUrl: string;
-    ownerHex: string;
-    signal?: AbortSignal;
-  }): Promise<Array<{ contractAddress: string; type: NftCollectionType; iconUrl?: string }>> {
-    const fetchFn = globalThis.fetch;
-    if (!fetchFn) {
-      throw new Error('fetch is not available');
-    }
-
-    const fetchOnce = async (tokenType: NftCollectionType) => {
-      const url = new URL('/account/tokens', params.baseUrl);
-      url.searchParams.set('account', params.ownerHex);
-      url.searchParams.set('tokenType', tokenType);
-
-      const res = await fetchFn(url, { method: 'GET', signal: params.signal });
-      if (!res.ok) {
-        throw new Error(`Scan OpenAPI HTTP error: ${res.status}`);
-      }
-
-      const json = (await res.json()) as ScanTokenListResponse;
-      if (json?.status !== '1') {
-        if (isParameterWrongMessage(String(json?.message ?? ''))) {
-          return [] as ScanTokenListItem[];
-        }
-        throw new Error(String(json?.message ?? 'Scan OpenAPI error'));
-      }
-
-      return Array.isArray(json?.result?.list) ? json.result!.list! : [];
-    };
-
-    const [erc721List, erc1155List] = await Promise.all([fetchOnce(ASSET_TYPE.ERC721), fetchOnce(ASSET_TYPE.ERC1155)]);
-
-    const normalized = [
-      ...erc721List.map((item) => ({ ...item, type: ASSET_TYPE.ERC721 })),
-      ...erc1155List.map((item) => ({ ...item, type: ASSET_TYPE.ERC1155 })),
-    ]
-      .map((item) => {
-        const contract = this.normalizeContractAddress(String(item?.contract ?? ''));
-        if (!contract) return null;
-
-        const rawType = String(item?.type ?? '');
-        const type = rawType === ASSET_TYPE.ERC721 ? ASSET_TYPE.ERC721 : rawType === ASSET_TYPE.ERC1155 ? ASSET_TYPE.ERC1155 : null;
-        if (!type) return null;
-
-        return { contractAddress: contract, type, iconUrl: item?.iconUrl };
-      })
-      .filter((v): v is { contractAddress: string; type: NftCollectionType; iconUrl: string | undefined } => Boolean(v));
-
-    // Dedupe by contract.
-    const deduped = new Map<string, { contractAddress: string; type: NftCollectionType; iconUrl: string | undefined }>();
-    for (const item of normalized) {
-      deduped.set(item.contractAddress.toLowerCase(), item);
-    }
-    return Array.from(deduped.values());
-  }
-
-  private getChainProvider(network: Network): IChainProvider {
-    const provider = this.chainRegistry.get(network.chainId, network.networkType);
-    if (!provider) {
-      throw new CoreError({
-        code: CHAIN_PROVIDER_NOT_FOUND,
-        message: 'Chain provider is not registered in ChainRegistry.',
-        context: { chainId: network.chainId, networkType: network.networkType },
-      });
-    }
-    return provider;
-  }
-
-  private async readNftContractMetadata(params: {
-    chainProvider: IChainProvider;
-    contractAddress: string;
-  }): Promise<{ name: string | null; symbol: string | null }> {
-    const { chainProvider, contractAddress } = params;
-
-    const callString = async (method: 'name' | 'symbol'): Promise<string | null> => {
-      try {
-        const data = iface721.encodeFunctionData(method, []) as Hex;
-        const raw = await chainProvider.call({ to: contractAddress, data });
-        if (!raw || raw === '0x') return null;
-        const [value] = iface721.decodeFunctionResult(method, raw);
-        return typeof value === 'string' ? value : null;
-      } catch {
-        return null;
+  private async fetchCollectionsFromScan(params: { baseUrl: string; ownerHex: string }): Promise<ScanNftCollection[]> {
+    const fetchByType = async (tokenType: NftCollectionType) => {
+      const collections: ScanNftCollection[] = [];
+      for (let skip = 0; ; skip += NFT_COLLECTIONS_PAGE_SIZE) {
+        const url = new URL('/account/tokens', params.baseUrl);
+        url.searchParams.set('account', params.ownerHex);
+        url.searchParams.set('tokenType', tokenType);
+        url.searchParams.set('skip', String(skip));
+        url.searchParams.set('limit', String(NFT_COLLECTIONS_PAGE_SIZE));
+        const page = await fetchScanPage<ScanNftCollection>(url);
+        collections.push(...page.list);
+        if (skip + page.list.length >= page.total || page.list.length < NFT_COLLECTIONS_PAGE_SIZE) return collections;
       }
     };
 
-    const [name, symbol] = await Promise.all([callString('name'), callString('symbol')]);
-    return { name, symbol };
-  }
-
-  private async upsertCollectionsFromScan(
-    address: DbAddress,
-    network: Network,
-    remote: Array<{ contractAddress: string; type: NftCollectionType; iconUrl?: string }>,
-    _signal?: AbortSignal,
-  ): Promise<void> {
-    if (!remote.length) return;
-
-    const assetRule = await address.assetRule.fetch();
-    const existing = await assetRule.assets.extend(Q.where('type', Q.oneOf([DbAssetType.ERC721, DbAssetType.ERC1155]))).fetch();
-
-    const existingByContract = new Map(existing.map((a) => [(a.contractAddress ?? '').toLowerCase(), a]));
-    const chainProvider = this.getChainProvider(network);
-
-    const toCreate: Asset[] = [];
-    const toUpdate: Asset[] = [];
-
-    for (const item of remote) {
-      const contractLower = item.contractAddress.toLowerCase();
-      const found = existingByContract.get(contractLower);
-
-      if (found) {
-        const nextIcon = item.iconUrl ?? null;
-        if (nextIcon && found.icon !== nextIcon) {
-          toUpdate.push(
-            found.prepareUpdate((record) => {
-              record.icon = nextIcon;
-            }),
-          );
-        }
-        continue;
-      }
-
-      const metadata = await this.readNftContractMetadata({ chainProvider, contractAddress: item.contractAddress });
-
-      toCreate.push(
-        this.database.get<Asset>(TableName.Asset).prepareCreate((record) => {
-          record.assetRule.set(assetRule);
-          record.network.set(network);
-          record.type = item.type === ASSET_TYPE.ERC721 ? DbAssetType.ERC721 : DbAssetType.ERC1155;
-          record.contractAddress = item.contractAddress;
-          record.name = metadata.name;
-          record.symbol = metadata.symbol;
-          record.decimals = 0;
-          record.icon = item.iconUrl ?? null;
-          record.source = AssetSource.Official;
-          record.priceInUSDT = null;
-        }),
-      );
-    }
-
-    if (toCreate.length === 0 && toUpdate.length === 0) return;
-
-    await this.database.write(async () => {
-      await this.database.batch(...toUpdate, ...toCreate);
-    });
-  }
-
-  private async findAddress(addressId: string): Promise<DbAddress> {
-    try {
-      return await this.database.get<DbAddress>(TableName.Address).find(addressId);
-    } catch {
-      throw new Error(`[NftService] Address ${addressId} not found in database.`);
-    }
+    const lists = await Promise.all([fetchByType(ASSET_TYPE.ERC721), fetchByType(ASSET_TYPE.ERC1155)]);
+    return lists.flat();
   }
 
   private toCollectionInterface(asset: Asset): INftCollection {
     return {
       id: asset.id,
       networkId: asset.network.id,
-      contractAddress: (asset.contractAddress ?? '') as INftCollection['contractAddress'],
+      contractAddress: asset.contractAddress as string,
       type: asset.type === DbAssetType.ERC721 ? ASSET_TYPE.ERC721 : ASSET_TYPE.ERC1155,
       name: asset.name,
       symbol: asset.symbol,
       icon: asset.icon,
     };
   }
-
-  private toItemInterface = (item: NftSyncItemDetail): INftItem => {
-    return {
-      name: item.name,
-      description: item.description ?? null,
-      icon: item.icon ?? null,
-      amount: item.amount,
-      tokenId: item.tokenId,
-    };
-  };
 }

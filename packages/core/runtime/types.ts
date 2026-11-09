@@ -82,15 +82,13 @@ export type AssetsSyncRuntimeConfig = {
   pollIntervalMs?: number;
 };
 
-export type NftSyncRuntimeConfig = {
-  pollIntervalMs?: number;
+export type NftRuntimeConfig = {
   scanOpenApiByKey?: Record<string, string>;
 };
 
 export type SyncRuntimeConfig = {
   tx?: TxSyncRuntimeConfig;
   assets?: AssetsSyncRuntimeConfig;
-  nft?: NftSyncRuntimeConfig;
 };
 
 export type ChainStatusRuntimeConfig = {
@@ -104,6 +102,7 @@ export type RuntimeConfig = {
   externalRequests?: ExternalRequestsRuntimeConfig;
   walletConnect?: WalletConnectRuntimeConfig;
   sync?: SyncRuntimeConfig;
+  nft?: NftRuntimeConfig;
   chainStatus?: ChainStatusRuntimeConfig;
 
   [key: string]: unknown;

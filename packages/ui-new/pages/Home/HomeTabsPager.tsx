@@ -82,12 +82,20 @@ export const HomeTabsPager: React.FC<{
         case 'Tokens':
           return <HomeTokensTab scroll={tokensScroll} topInset={topInset} minimumContentHeight={minimumContentHeight} />;
         case 'NFTs':
-          return <HomeNftsTab scroll={nftsScroll} topInset={topInset} minimumContentHeight={minimumContentHeight} />;
+          return (
+            <HomeNftsTab
+              scroll={nftsScroll}
+              topInset={topInset}
+              minimumContentHeight={minimumContentHeight}
+              stickyHeaderOffset={tabsHeaderHeight}
+              isActive={currentTab === 'NFTs'}
+            />
+          );
         case 'Activity':
           return <HomeActivityTab scroll={activityScroll} onPressTx={onPressTx} topInset={topInset} minimumContentHeight={minimumContentHeight} />;
       }
     },
-    [activityScroll, minimumContentHeight, nftsScroll, onPressTx, tokensScroll, topInset],
+    [activityScroll, currentTab, minimumContentHeight, nftsScroll, onPressTx, tabsHeaderHeight, tokensScroll, topInset],
   );
   const handleIndexChange = useCallback(
     (index: number) => {
@@ -102,23 +110,15 @@ export const HomeTabsPager: React.FC<{
     ({ position }: SceneRendererProps) => (
       <Animated.View
         pointerEvents="box-none"
-        renderToHardwareTextureAndroid
         shouldRasterizeIOS
         style={[styles.tabsHeaderLayer, headerAnimatedStyle, { top: topSectionHeight, backgroundColor: colors.bgPrimary }]}
       >
         <View onLayout={handleTabsHeaderLayout}>
-          <TabsHeader
-            type="Home"
-            currentTab={currentTab}
-            sharedScrollY={sharedScrollY}
-            pagerPosition={position}
-            onTabChange={onTabChange}
-            nftStickyStartY={topSectionHeight}
-          />
+          <TabsHeader type="Home" currentTab={currentTab} pagerPosition={position} onTabChange={onTabChange} />
         </View>
       </Animated.View>
     ),
-    [colors.bgPrimary, currentTab, handleTabsHeaderLayout, headerAnimatedStyle, onTabChange, sharedScrollY, topSectionHeight],
+    [colors.bgPrimary, currentTab, handleTabsHeaderLayout, headerAnimatedStyle, onTabChange, topSectionHeight],
   );
 
   return (

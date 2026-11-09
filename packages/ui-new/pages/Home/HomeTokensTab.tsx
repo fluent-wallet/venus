@@ -16,7 +16,7 @@ import { Image } from 'expo-image';
 import type React from 'react';
 import { useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { HomeFlashTabList } from './HomeTabList';
+import { HomeTabList } from './HomeTabList';
 import type { HomeTabScrollBinding } from './useHomeTabScroll';
 
 export type HomeTokensRow =
@@ -104,7 +104,7 @@ export const HomeTokensTab: React.FC<{
   );
 
   return (
-    <HomeFlashTabList
+    <HomeTabList
       scroll={scroll}
       contentRows={contentRows}
       renderContentItem={renderContentItem}

@@ -2,22 +2,21 @@ import ProhibitIcon from '@assets/icons/prohibit.svg';
 import HourglassLoading from '@components/Loading/Hourglass';
 import Text from '@components/Text';
 import TextInput from '@components/TextInput';
-import { NftCollectionRow } from '@modules/AssetsList/NFTsList/NftCollectionRow';
-import TokenItem from '@modules/AssetsList/TokensList/TokenItem';
-import { useTabsController } from '@modules/AssetsTabs/hooks';
-import { useTheme } from '@react-navigation/native';
+import { ASSET_TYPE } from '@core/types';
+import type { TabType } from '@modules/AssetsTabs/types';
+import { useIsFocused, useTheme } from '@react-navigation/native';
 import { useCurrentAddress } from '@service/account';
 import { useAssetsOfCurrentAddress } from '@service/asset';
-import { type AssetSearchItem, useAssetSearch } from '@service/assetSearch';
+import { useAssetSearch } from '@service/assetSearch';
 import type { IAsset, INftCollection, INftItem } from '@service/core';
 import { useCurrentNetwork } from '@service/network';
-import { useNftCollectionsOfAddress } from '@service/nft';
-import { FlashList, type ListRenderItem } from '@shopify/flash-list';
+import { useNftCollectionsOfAddress, useNftListState } from '@service/nft';
 import type { AssetInfo } from '@utils/assetInfo';
 import type React from 'react';
 import { useCallback, useState } from 'react';
 import { Trans, useTranslation } from 'react-i18next';
-import { type NativeScrollEvent, type NativeSyntheticEvent, Platform, Pressable, StyleSheet, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
+import { AssetSearchResults } from './AssetSearchResults';
 import { AssetTabsPager } from './AssetTabsPager';
 
 const EMPTY_ASSETS: IAsset[] = [];
@@ -32,22 +31,25 @@ interface Props {
 const AssetSelectorContent: React.FC<Props> = ({ selectType, initialSearch = '', onSelectAsset }) => {
   const { colors } = useTheme();
   const { t } = useTranslation();
+  const isFocused = useIsFocused();
   const isReceive = selectType === 'Receive';
   const [searchText, setSearchText] = useState(initialSearch);
   const isSearchMode = searchText.length > 0;
-  const { currentTab, setCurrentTab, sharedScrollY, handleScroll: updateScrollY, resetScrollY } = useTabsController('Tokens');
+  const [currentTab, setCurrentTab] = useState<TabType>('Tokens');
 
   const { data: currentNetwork } = useCurrentNetwork();
   const { data: currentAddress, status: currentAddressStatus } = useCurrentAddress();
   const currentAddressId = currentAddress?.id ?? '';
+  const nftListState = useNftListState(currentAddressId);
   const { data: assets = EMPTY_ASSETS, status: assetsStatus } = useAssetsOfCurrentAddress();
 
-  const shouldLoadNftCollections = searchText.trim().length > 0 || currentTab === 'NFTs';
+  const shouldLoadNftCollections = !isReceive && (searchText.trim().length > 0 || currentTab === 'NFTs');
   const { data: nftCollections = EMPTY_NFT_COLLECTIONS, status: nftCollectionsStatus } = useNftCollectionsOfAddress(currentAddressId, {
-    enabled: shouldLoadNftCollections,
+    enabled: shouldLoadNftCollections && isFocused,
   });
   const tokensLoading = assets.length === 0 && (currentAddressStatus === 'pending' || (Boolean(currentAddressId) && assetsStatus === 'pending'));
-  const nftsLoading = nftCollections.length === 0 && (currentAddressStatus === 'pending' || (Boolean(currentAddressId) && nftCollectionsStatus === 'pending'));
+  const nftsLoading =
+    !isReceive && nftCollections.length === 0 && (currentAddressStatus === 'pending' || (Boolean(currentAddressId) && nftCollectionsStatus === 'pending'));
   const {
     items: searchResults,
     status: searchStatus,
@@ -56,6 +58,7 @@ const AssetSelectorContent: React.FC<Props> = ({ selectType, initialSearch = '',
     text: searchText,
     assets,
     nftCollections,
+    includeNfts: !isReceive,
     network: currentNetwork,
     addressId: currentAddressId,
     isLoadingLocalAssets: tokensLoading || nftsLoading,
@@ -63,32 +66,15 @@ const AssetSelectorContent: React.FC<Props> = ({ selectType, initialSearch = '',
   const showSearchResults = isSearchMode && hasCompletedSearch;
   const isSearchInvalid = isSearchMode && searchStatus.startsWith('invalid');
 
-  const handleListScroll = useCallback(
-    (event: NativeSyntheticEvent<NativeScrollEvent>) => {
-      updateScrollY(event.nativeEvent.contentOffset.y);
-    },
-    [updateScrollY],
-  );
-
   const handleSelectAsset = useCallback(
     (asset: AssetInfo, nftItemDetail?: INftItem) => {
+      if (isReceive && asset.type !== ASSET_TYPE.Native && asset.type !== ASSET_TYPE.ERC20) return;
       onSelectAsset(asset, nftItemDetail);
       if (isReceive) {
         setSearchText('');
       }
     },
     [onSelectAsset, isReceive],
-  );
-
-  const renderSearchResultItem = useCallback<ListRenderItem<AssetSearchItem>>(
-    ({ item }) => {
-      if (item.kind === 'token') {
-        return <TokenItem data={item.asset} showTypeLabel onPress={handleSelectAsset} hidePrice={isReceive} hideBalance={isReceive} showAddress={isReceive} />;
-      }
-
-      return <NftCollectionRow addressId={currentAddressId} collection={item.collection} index={item.index} showTypeLabel onSelect={handleSelectAsset} />;
-    },
-    [currentAddressId, handleSelectAsset, isReceive],
   );
 
   const renderSearchFooter = useCallback(() => {
@@ -130,34 +116,24 @@ const AssetSelectorContent: React.FC<Props> = ({ selectType, initialSearch = '',
       </View>
 
       {showSearchResults ? (
-        <FlashList
-          data={searchResults}
-          style={styles.scrollView}
-          renderItem={renderSearchResultItem}
-          keyExtractor={(item: AssetSearchItem) => item.key}
-          getItemType={(item: AssetSearchItem) => item.kind}
-          ListFooterComponent={renderSearchFooter}
-          contentContainerStyle={styles.searchResultsContent}
-          removeClippedSubviews={Platform.OS === 'android'}
-          keyboardShouldPersistTaps="handled"
-          nestedScrollEnabled
-          onScroll={handleListScroll}
-          showsVerticalScrollIndicator={false}
+        <AssetSearchResults
+          items={searchResults}
+          nftListState={nftListState}
+          isReceive={isReceive}
+          onSelect={handleSelectAsset}
+          renderFooter={renderSearchFooter}
         />
       ) : (
         <AssetTabsPager
           currentTab={currentTab}
-          sharedScrollY={sharedScrollY}
           onlyToken={isReceive}
           selectType={selectType}
           assets={assets}
           tokensLoading={tokensLoading}
-          currentAddressId={currentAddressId}
           nftCollections={nftCollections}
+          nftListState={nftListState}
           nftsLoading={nftsLoading}
           onTabChange={setCurrentTab}
-          resetScrollY={resetScrollY}
-          onScroll={handleListScroll}
           onSelectAsset={handleSelectAsset}
         />
       )}
@@ -181,12 +157,6 @@ const styles = StyleSheet.create({
     marginHorizontal: 16,
     borderWidth: 1,
     backgroundColor: 'transparent',
-  },
-  scrollView: {
-    flex: 1,
-  },
-  searchResultsContent: {
-    paddingBottom: 16,
   },
   invalidWrapper: {
     display: 'flex',

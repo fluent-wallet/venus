@@ -2,6 +2,7 @@ import Text from '@components/Text';
 import { ASSET_TYPE } from '@core/types';
 import { useTheme } from '@react-navigation/native';
 import type { INftCollection, INftItem } from '@service/core';
+import { useMappingHelper } from '@shopify/flash-list';
 import { screenWidth } from '@utils/deviceInfo';
 import type React from 'react';
 import { memo } from 'react';
@@ -40,7 +41,14 @@ const NFTItemCard: React.FC<Omit<NFTItemsGridProps, 'items'> & { item: INftItem 
       disabled={!onPressItem}
       onPress={() => onPressItem?.(item)}
     >
-      <NFTIcon style={styles.nftItemImg} source={item.icon ?? undefined} isNftItem placeholderContentFit="cover" contentFit="cover" />
+      <NFTIcon
+        style={styles.nftItemImg}
+        source={item.icon ?? undefined}
+        recyclingKey={`${collection.id}:${item.tokenId}`}
+        isNftItem
+        placeholderContentFit="cover"
+        contentFit="cover"
+      />
       <Text style={[styles.nftNameInItem, { color: colors.textSecondary }]} numberOfLines={2}>
         {collection.name ?? collection.symbol ?? ''}
       </Text>
@@ -56,14 +64,6 @@ const NFTItemCard: React.FC<Omit<NFTItemsGridProps, 'items'> & { item: INftItem 
   );
 });
 
-export const NFTItemsGrid: React.FC<NFTItemsGridProps> = ({ collection, items, onPressItem, background }) => (
-  <View style={styles.itemsArea}>
-    {items.map((item) => (
-      <NFTItemCard key={item.tokenId} collection={collection} item={item} onPressItem={onPressItem} background={background} />
-    ))}
-  </View>
-);
-
 export const NFTItemsGridRow: React.FC<NFTItemsGridProps & { isFirstRow: boolean; isLastRow: boolean }> = ({
   collection,
   items,
@@ -71,24 +71,20 @@ export const NFTItemsGridRow: React.FC<NFTItemsGridProps & { isFirstRow: boolean
   background,
   isFirstRow,
   isLastRow,
-}) => (
-  <View style={[styles.itemsRow, { paddingTop: isFirstRow ? 4 : 16, paddingBottom: isLastRow ? 4 : 0 }]}>
-    {items.map((item) => (
-      <NFTItemCard key={item.tokenId} collection={collection} item={item} onPressItem={onPressItem} background={background} />
-    ))}
-  </View>
-);
+}) => {
+  // Use stable slot keys when FlashList recycles a row.
+  const { getMappingKey } = useMappingHelper();
+
+  return (
+    <View style={[styles.itemsRow, { paddingTop: isFirstRow ? 4 : 16, paddingBottom: isLastRow ? 4 : 0 }]}>
+      {items.map((item, index) => (
+        <NFTItemCard key={getMappingKey(item.tokenId, index)} collection={collection} item={item} onPressItem={onPressItem} background={background} />
+      ))}
+    </View>
+  );
+};
 
 const styles = StyleSheet.create({
-  itemsArea: {
-    marginVertical: 4,
-    display: 'flex',
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    paddingLeft: 56,
-    paddingRight: 16,
-    gap: 16,
-  },
   itemsRow: {
     flexDirection: 'row',
     paddingLeft: 56,
