@@ -65,7 +65,10 @@ module.exports = () => {
       [
         'expo-build-properties',
         {
-          android: { minSdkVersion: 28 },
+          android: {
+            minSdkVersion: 28,
+            buildArchs: environment === 'dev' ? ['armeabi-v7a', 'arm64-v8a', 'x86', 'x86_64'] : ['armeabi-v7a', 'arm64-v8a'],
+          },
           ios: {
             extraPods: [{ name: 'simdjson', path: '../node_modules/@nozbe/simdjson', modular_headers: true }],
           },
