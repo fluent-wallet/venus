@@ -4,13 +4,14 @@ import { useTheme } from '@react-navigation/native';
 import type React from 'react';
 import { useCallback, useMemo } from 'react';
 import { StyleSheet, View } from 'react-native';
-import { Gesture, GestureDetector, type GestureType } from 'react-native-gesture-handler';
+import { GestureDetector, type NativeGesture, type PanGestureConfig, usePanGesture } from 'react-native-gesture-handler';
 import Animated, { ReduceMotion, type SharedValue, useAnimatedStyle, useSharedValue, withRepeat, withTiming } from 'react-native-reanimated';
 import { scheduleOnRN } from 'react-native-worklets';
 
 const CONSTANTS = {
   MAX_CONTENT_HEIGHT: 150,
   REFRESH_HEIGHT: 100,
+  HORIZONTAL_FAIL_DISTANCE: 20,
   ANIMATION_DURATION: 200,
   ROTATE_DURATION: 1000,
   OPACITY_OFFSET: 2,
@@ -20,9 +21,9 @@ const CONSTANTS = {
 export const HomePullToRefresh: React.FC<{
   scrollY: SharedValue<number>;
   onRefresh: () => Promise<void>;
-  nativeScrollGestures: GestureType[];
+  nativeScrollGesture: NativeGesture;
   children: React.ReactNode;
-}> = ({ scrollY, onRefresh, nativeScrollGestures, children }) => {
+}> = ({ scrollY, onRefresh, nativeScrollGesture, children }) => {
   const { mode } = useTheme();
   const pullPosition = useSharedValue(0);
   const isReadyToRefresh = useSharedValue(false);
@@ -57,44 +58,48 @@ export const HomePullToRefresh: React.FC<{
     ],
   }));
 
-  const pan = useMemo(
-    () =>
-      Gesture.Pan()
-        .simultaneousWithExternalGesture(...nativeScrollGestures)
-        .activeOffsetY(100)
-        .onUpdate((event) => {
-          if (scrollY.value <= 0 && event.translationY >= 0 && isRefreshing.value === false) {
-            pullPosition.value = Math.max(Math.min(CONSTANTS.MAX_CONTENT_HEIGHT, event.translationY), 0);
+  const panConfig = useMemo<PanGestureConfig>(
+    () => ({
+      simultaneousWith: nativeScrollGesture,
+      activeOffsetY: 100,
+      failOffsetX: [-CONSTANTS.HORIZONTAL_FAIL_DISTANCE, CONSTANTS.HORIZONTAL_FAIL_DISTANCE],
+      onUpdate: (event) => {
+        'worklet';
+        if (scrollY.value <= 0 && event.translationY >= 0 && isRefreshing.value === false) {
+          pullPosition.value = Math.max(Math.min(CONSTANTS.MAX_CONTENT_HEIGHT, event.translationY), 0);
 
-            if (pullPosition.value >= CONSTANTS.REFRESH_HEIGHT && isReadyToRefresh.value === false) {
-              isReadyToRefresh.value = true;
-            }
-
-            if (pullPosition.value < CONSTANTS.REFRESH_HEIGHT && isReadyToRefresh.value === true) {
-              isReadyToRefresh.value = false;
-            }
+          if (pullPosition.value >= CONSTANTS.REFRESH_HEIGHT && isReadyToRefresh.value === false) {
+            isReadyToRefresh.value = true;
           }
-        })
-        .onEnd(() => {
-          if (isRefreshing.value) return;
 
-          const refreshingHeight = 100;
-          pullPosition.value = withTiming(isReadyToRefresh.value ? refreshingHeight : 0, {
-            reduceMotion: ReduceMotion.Never,
-            duration: CONSTANTS.ANIMATION_DURATION,
-          });
-          rotateValue.value = isReadyToRefresh.value
-            ? withRepeat(withTiming(360, { duration: CONSTANTS.ROTATE_DURATION, reduceMotion: ReduceMotion.Never }), 0, false, undefined, ReduceMotion.Never)
-            : 0;
-
-          if (isReadyToRefresh.value) {
+          if (pullPosition.value < CONSTANTS.REFRESH_HEIGHT && isReadyToRefresh.value === true) {
             isReadyToRefresh.value = false;
-            isRefreshing.value = true;
-            scheduleOnRN(triggerRefresh);
           }
-        }),
-    [isReadyToRefresh, isRefreshing, nativeScrollGestures, pullPosition, rotateValue, scrollY, triggerRefresh],
+        }
+      },
+      onDeactivate: (event) => {
+        'worklet';
+        if (isRefreshing.value) return;
+
+        const shouldRefresh = isReadyToRefresh.value && !event.canceled;
+        isReadyToRefresh.value = false;
+        pullPosition.value = withTiming(shouldRefresh ? CONSTANTS.REFRESH_HEIGHT : 0, {
+          reduceMotion: ReduceMotion.Never,
+          duration: CONSTANTS.ANIMATION_DURATION,
+        });
+        rotateValue.value = shouldRefresh
+          ? withRepeat(withTiming(360, { duration: CONSTANTS.ROTATE_DURATION, reduceMotion: ReduceMotion.Never }), 0, false, undefined, ReduceMotion.Never)
+          : 0;
+
+        if (shouldRefresh) {
+          isRefreshing.value = true;
+          scheduleOnRN(triggerRefresh);
+        }
+      },
+    }),
+    [isReadyToRefresh, isRefreshing, nativeScrollGesture, pullPosition, rotateValue, scrollY, triggerRefresh],
   );
+  const pan = usePanGesture(panConfig);
 
   const refreshIcon = useMemo(() => (mode === 'dark' ? RefreshIconDark : RefreshIconLight), [mode]);
 

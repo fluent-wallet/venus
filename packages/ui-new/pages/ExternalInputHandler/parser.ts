@@ -4,11 +4,10 @@ import { StackActions } from '@react-navigation/native';
 import { SendTransactionStep2StackName, SendTransactionStep3StackName, SendTransactionStep4StackName, type StackNavigation } from '@router/configs';
 import type { IAsset } from '@service/core';
 import { handleWalletConnectLink, parseWalletConnectLink } from '@service/walletConnectLink';
-import type { AssetInfo } from '@utils/assetInfo';
-import type { PaymentUriPayload } from '@utils/payment-uri';
+import type { PaymentRequest } from '@utils/payment-uri';
 import { toAssetInfo } from '@utils/toAssetInfo';
-import Decimal from 'decimal.js';
-import { type PaymentInputContext, parsePaymentUriInput, parseRawAddress } from './paymentInput';
+import * as OxValue from 'ox/Value';
+import { type PaymentInputContext, parsePaymentUriInput } from './paymentInput';
 import type { PaymentUriParseResult } from './types';
 
 type ExternalInputDeps = PaymentInputContext & {
@@ -30,90 +29,35 @@ const setWalletConnectTimeout = (setStatus: ExternalInputDeps['setStatus'], t: E
   }, 12888);
 };
 
-// Navigate native transfer flow
-const navigateNativeTransfer = (paymentUri: PaymentUriPayload, navigation: StackNavigation, tokenAssets: AssetInfo[]): PaymentUriParseResult => {
-  const nativeAsset = tokenAssets.find((asset) => asset.type === ASSET_TYPE.Native);
-  const rawValue = paymentUri.params?.value ?? paymentUri.params?.uint256;
+const navigateTransfer = (payment: PaymentRequest, navigation: StackNavigation, assets: IAsset[]): void => {
+  const paymentAsset = payment.asset;
+  const asset = assets.find((candidate) =>
+    paymentAsset.type === 'native'
+      ? candidate.type === ASSET_TYPE.Native
+      : candidate.type === ASSET_TYPE.ERC20 && candidate.contractAddress?.toLowerCase() === paymentAsset.contractAddress.toLowerCase(),
+  );
 
-  // If we can't resolve the native asset yet, fall back to the asset picker to avoid navigating to Step3 with an undefined asset.
-  if (!nativeAsset) {
+  if (!asset) {
     navigation.dispatch(
       StackActions.replace(SendTransactionStep2StackName, {
-        recipientAddress: paymentUri.address,
+        recipientAddress: payment.recipientAddress,
+        ...(paymentAsset.type === 'erc20' ? { searchAddress: paymentAsset.contractAddress } : {}),
       }),
     );
-    return { ok: true, data: paymentUri };
+    return;
   }
 
-  if (nativeAsset && rawValue !== undefined) {
-    navigation.dispatch(
-      StackActions.replace(SendTransactionStep4StackName, {
-        recipientAddress: paymentUri.address,
-        asset: nativeAsset,
-        amount: new Decimal(String(rawValue)).div(Decimal.pow(10, nativeAsset.decimals ?? 18)).toString(),
-      }),
-    );
-    return { ok: true, data: paymentUri };
+  const params = { recipientAddress: payment.recipientAddress, asset: toAssetInfo(asset) };
+  if (payment.amountBaseUnits === undefined) {
+    navigation.dispatch(StackActions.replace(SendTransactionStep3StackName, params));
+    return;
   }
-
   navigation.dispatch(
-    StackActions.replace(SendTransactionStep3StackName, {
-      recipientAddress: paymentUri.address,
-      asset: nativeAsset,
+    StackActions.replace(SendTransactionStep4StackName, {
+      ...params,
+      amount: OxValue.format(payment.amountBaseUnits, params.asset.decimals),
     }),
   );
-  return { ok: true, data: paymentUri };
-};
-
-// Navigate token transfer flow
-const navigateTokenTransfer = (
-  paymentUri: PaymentUriPayload,
-  navigation: StackNavigation,
-  tokenAssets: AssetInfo[],
-  t: ExternalInputDeps['t'],
-): PaymentUriParseResult => {
-  if (!tokenAssets.length) {
-    navigation.dispatch(StackActions.replace(SendTransactionStep2StackName, { recipientAddress: paymentUri.address }));
-    return { ok: true, data: paymentUri };
-  }
-
-  const paramAddress = typeof paymentUri.params?.address === 'string' ? paymentUri.params.address : undefined;
-  const targetAsset = !paramAddress
-    ? tokenAssets.find((asset) => asset.type === ASSET_TYPE.Native)
-    : tokenAssets.find((asset) => asset.contractAddress?.toLowerCase() === paramAddress.toLowerCase());
-
-  if (!targetAsset) {
-    if (paramAddress) {
-      navigation.dispatch(
-        StackActions.replace(SendTransactionStep2StackName, {
-          recipientAddress: paymentUri.address,
-          searchAddress: paramAddress,
-        }),
-      );
-      return { ok: true, data: paymentUri };
-    }
-    return { ok: false, message: t('scan.QRCode.error.notRecognized') };
-  }
-
-  const transferValue = paymentUri.params?.uint256 ?? paymentUri.params?.value;
-  if (transferValue !== undefined) {
-    navigation.dispatch(
-      StackActions.replace(SendTransactionStep4StackName, {
-        recipientAddress: paymentUri.address,
-        asset: targetAsset,
-        amount: new Decimal(String(transferValue)).div(Decimal.pow(10, targetAsset.decimals ?? 18)).toString(),
-      }),
-    );
-    return { ok: true, data: paymentUri };
-  }
-
-  navigation.dispatch(
-    StackActions.replace(SendTransactionStep3StackName, {
-      recipientAddress: paymentUri.address,
-      asset: targetAsset,
-    }),
-  );
-  return { ok: true, data: paymentUri };
 };
 
 export const handleExternalInput = async (raw: string, deps: ExternalInputDeps): Promise<PaymentUriParseResult> => {
@@ -141,22 +85,8 @@ export const handleExternalInput = async (raw: string, deps: ExternalInputDeps):
     }
   }
 
-  const addressPaymentUri = parseRawAddress(raw, currentNetwork);
-  if (addressPaymentUri) return { ok: true, data: addressPaymentUri };
-
   const paymentResult = parsePaymentUriInput(raw, { currentNetwork, t });
   if (!paymentResult.ok) return paymentResult;
-  const paymentUri = paymentResult.data;
-
-  const tokenAssets = assets.filter((a) => a.type === ASSET_TYPE.Native || a.type === ASSET_TYPE.ERC20).map(toAssetInfo);
-
-  if (!paymentUri.method) {
-    return navigateNativeTransfer(paymentUri, navigation, tokenAssets);
-  }
-
-  if (paymentUri.method === 'transfer') {
-    return navigateTokenTransfer(paymentUri, navigation, tokenAssets, t);
-  }
-
-  return { ok: false, message: t('scan.QRCode.error.notRecognized') };
+  navigateTransfer(paymentResult.data, navigation, assets);
+  return paymentResult;
 };

@@ -14,11 +14,10 @@ import type { AssetInfo } from '@utils/assetInfo';
 import { toAssetInfo } from '@utils/toAssetInfo';
 import { Image } from 'expo-image';
 import type React from 'react';
-import { type RefObject, useCallback, useMemo } from 'react';
+import { useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import type { GestureType } from 'react-native-gesture-handler';
-import type { SharedValue } from 'react-native-reanimated';
-import { type HomeFlashListRef, HomeFlashTabList } from './HomeTabList';
+import { HomeTabList } from './HomeTabList';
+import type { HomeTabScrollBinding } from './useHomeTabScroll';
 
 export type HomeTokensRow =
   | { key: 'tokens-skeletons'; kind: 'tokens-skeletons' }
@@ -42,15 +41,10 @@ const TokensEmptyState: React.FC<{ showReceiveFunds: boolean }> = ({ showReceive
 };
 
 export const HomeTokensTab: React.FC<{
-  flatListRef: RefObject<HomeFlashListRef<HomeTokensRow> | null>;
+  scroll: HomeTabScrollBinding;
   topInset: number;
-  onLayoutHeightChange?: (height: number) => void;
-  onContentHeightChange?: (height: number) => void;
-  scrollOffset: SharedValue<number>;
-  sharedScrollY: SharedValue<number>;
-  isActive: boolean;
-  scrollGesture: GestureType;
-}> = ({ flatListRef, topInset, onLayoutHeightChange, onContentHeightChange, scrollOffset, sharedScrollY, isActive, scrollGesture }) => {
+  minimumContentHeight: number;
+}> = ({ scroll, topInset, minimumContentHeight }) => {
   const currentAddressQuery = useCurrentAddress();
   const assetsQuery = useAssetsOfCurrentAddress();
   const currentNetworkQuery = useCurrentNetwork();
@@ -110,17 +104,12 @@ export const HomeTokensTab: React.FC<{
   );
 
   return (
-    <HomeFlashTabList
-      flatListRef={flatListRef}
+    <HomeTabList
+      scroll={scroll}
       contentRows={contentRows}
       renderContentItem={renderContentItem}
       topInset={topInset}
-      onLayoutHeightChange={onLayoutHeightChange}
-      onContentHeightChange={onContentHeightChange}
-      scrollOffset={scrollOffset}
-      sharedScrollY={sharedScrollY}
-      isActive={isActive}
-      scrollGesture={scrollGesture}
+      minimumContentHeight={minimumContentHeight}
       getItemType={(item) => item.kind}
     />
   );

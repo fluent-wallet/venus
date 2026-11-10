@@ -1,5 +1,4 @@
 import i18n from '@assets/i18n';
-import type { CoreEventMap } from '@core/modules/eventBus';
 import type { ExternalRequestSnapshot } from '@core/modules/externalRequests';
 import { parseEvmRpcTransactionRequest } from '@core/services/transaction';
 import { StackActions } from '@react-navigation/native';
@@ -30,7 +29,6 @@ import {
   type IAsset,
 } from './core';
 import { getNetworkRootKey } from './network';
-import { getNftItemsKey } from './nft';
 import { getSignatureRootKey } from './signature';
 import { getTransactionRootKey } from './transaction';
 import { getWalletConnectRootKey } from './walletConnectKeys';
@@ -99,19 +97,6 @@ export function useRuntimeEventBridge(navigation: StackNavigation) {
 
     const invalidateWalletConnect = () => {
       void queryClient.invalidateQueries({ queryKey: getWalletConnectRootKey() });
-    };
-
-    const syncNftItemsSnapshot = (payload: CoreEventMap['nft-sync/succeeded']) => {
-      queryClient.setQueryData(
-        getNftItemsKey(payload.key.addressId, payload.key.contractAddress),
-        payload.snapshot.items.map((item) => ({
-          tokenId: item.tokenId,
-          name: item.name,
-          description: item.description ?? null,
-          icon: item.icon ?? null,
-          amount: item.amount,
-        })),
-      );
     };
 
     const clearActiveCredentialRequest = (requestId: string) => {
@@ -260,8 +245,6 @@ export function useRuntimeEventBridge(navigation: StackNavigation) {
       eventBus.on('receive-assets-sync/succeeded', invalidateAsset),
 
       eventBus.on('wallet-connect/sessions-changed', invalidateWalletConnect),
-
-      eventBus.on('nft-sync/succeeded', syncNftItemsSnapshot),
 
       eventBus.on('auth/credential-requested', handleCredentialRequested),
 
