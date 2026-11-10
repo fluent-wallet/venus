@@ -1,7 +1,7 @@
 import { getESpaceChainConfig } from '@core/chains/eSpaceConfig';
 import ESpaceWalletABI from '@core/contracts/ABI/ESpaceWallet';
 import { ASSET_TYPE, type AssetTypeValue, type Hex } from '@core/types';
-import { NetworkType } from '@core/utils/consts';
+import { Networks, NetworkType } from '@core/utils/consts';
 import { Interface } from '@ethersproject/abi';
 import { getAddress as toChecksumAddress } from 'ethers';
 import { injectable } from 'inversify';
@@ -239,12 +239,13 @@ export class ESpaceAssetDiscoveryProvider implements IAssetDiscoveryProvider {
       icon: string | null;
     },
   ): DiscoveredFungibleAsset {
+    const { name, symbol, decimals } = Networks['Conflux eSpace'].nativeAsset;
     return {
       type: ASSET_TYPE.Native,
       contractAddress: null,
-      name: 'CFX',
-      symbol: 'CFX',
-      decimals: 18,
+      name,
+      symbol,
+      decimals,
       icon: info?.icon ?? null,
       priceInUSDT: info?.priceInUSDT ?? null,
       balanceBaseUnits: nativeBalance && nativeBalance !== '0x' ? BigInt(nativeBalance).toString() : '0',
