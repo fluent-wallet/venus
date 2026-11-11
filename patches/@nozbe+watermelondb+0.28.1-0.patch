@@ -1,0 +1,59 @@
+# RN 0.88 removes RCTCxxBridge, breaking WatermelonDB 0.28.1-0 iOS compilation.
+# Use the public RCTBridge type and declare the runtime getter used by RCTBridgeProxy.
+# Community workaround: https://github.com/Nozbe/WatermelonDB/issues/1969#issuecomment-6272493367
+# The app keeps jsi: false; this does not establish support for the JSI adapter.
+# Revisit when upgrading WatermelonDB or when upstream provides a compatible release.
+
+diff --git a/node_modules/@nozbe/watermelondb/native/ios/WatermelonDB/JSIInstaller.h b/node_modules/@nozbe/watermelondb/native/ios/WatermelonDB/JSIInstaller.h
+--- a/node_modules/@nozbe/watermelondb/native/ios/WatermelonDB/JSIInstaller.h
++++ b/node_modules/@nozbe/watermelondb/native/ios/WatermelonDB/JSIInstaller.h
+@@ -1,13 +1,18 @@
+ #pragma once
+ 
+-#import <React/RCTBridge+Private.h>
++#import <React/RCTBridge.h>
++
++// Bridgeless React Native exposes the runtime through RCTBridgeProxy.
++@interface RCTBridge (WMJSIRuntime)
++- (void *)runtime;
++@end
+ 
+ #ifdef __cplusplus
+ extern "C"
+ {
+ #endif
+ 
+-void installWatermelonJSI(RCTCxxBridge *bridge);
++void installWatermelonJSI(RCTBridge *bridge);
+ void watermelondbProvideSyncJson(int id, NSData *json, NSError **errorPtr);
+ 
+ #ifdef __cplusplus
+diff --git a/node_modules/@nozbe/watermelondb/native/ios/WatermelonDB/JSIInstaller.mm b/node_modules/@nozbe/watermelondb/native/ios/WatermelonDB/JSIInstaller.mm
+--- a/node_modules/@nozbe/watermelondb/native/ios/WatermelonDB/JSIInstaller.mm
++++ b/node_modules/@nozbe/watermelondb/native/ios/WatermelonDB/JSIInstaller.mm
+@@ -1,7 +1,7 @@
+ #import "JSIInstaller.h"
+ #import "Database.h"
+ 
+-extern "C" void installWatermelonJSI(RCTCxxBridge *bridge) {
++extern "C" void installWatermelonJSI(RCTBridge *bridge) {
+     if (bridge.runtime == nullptr) {
+         return;
+     }
+@@ -10,3 +10,4 @@
+     assert(runtime != nullptr);
+     watermelondb::Database::install(runtime);
+ }
++
+diff --git a/node_modules/@nozbe/watermelondb/native/ios/WatermelonDB/objc/WMDatabaseBridge.m b/node_modules/@nozbe/watermelondb/native/ios/WatermelonDB/objc/WMDatabaseBridge.m
+--- a/node_modules/@nozbe/watermelondb/native/ios/WatermelonDB/objc/WMDatabaseBridge.m
++++ b/node_modules/@nozbe/watermelondb/native/ios/WatermelonDB/objc/WMDatabaseBridge.m
+@@ -196,7 +196,7 @@
+ 
+ RCT_EXPORT_BLOCKING_SYNCHRONOUS_METHOD(initializeJSI)
+ {
+-    __block RCTCxxBridge *bridge = (RCTCxxBridge *) _bridge;
++    __block RCTBridge *bridge = _bridge;
+     dispatch_sync([self methodQueue], ^{
+         installWatermelonJSI(bridge);
+     });

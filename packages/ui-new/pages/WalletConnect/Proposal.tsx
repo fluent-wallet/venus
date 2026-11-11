@@ -1,19 +1,18 @@
 import ArrowRight from '@assets/icons/arrow-right2.svg';
-import { BottomSheetFooter, BottomSheetRoute, BottomSheetScrollContent, BottomSheetWrapper, snapPoints } from '@components/BottomSheet';
 import Button from '@components/Button';
 import Icon from '@components/Icon';
+import { SheetBody, SheetFooter, SheetHandle, SheetScrollView } from '@components/Sheet';
 import Text from '@components/Text';
 import { shortenAddress } from '@core/utils/address';
 import { NetworkType } from '@core/utils/consts';
 import useInAsync from '@hooks/useInAsync';
-import AccountSelector from '@modules/AccountSelector';
-import { type RouteProp, useNavigation, useRoute, useTheme } from '@react-navigation/native';
-import type { WalletConnectParamList, WalletConnectProposalStackName } from '@router/configs';
+import { useTheme } from '@react-navigation/native';
+import { AccountSelectorStackName, type StackScreenProps, type WalletConnectProposalStackName } from '@router/configs';
 import { useCurrentAccount } from '@service/account';
 import { getExternalRequestsService, getRuntimeConfig } from '@service/core';
 import { useNetworks } from '@service/network';
 import { Image } from 'expo-image';
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Pressable, StyleSheet, View } from 'react-native';
 
@@ -46,14 +45,9 @@ const extractEip155Chains = (requiredNamespaces: unknown, optionalNamespaces: un
   return Array.from(chains);
 };
 
-export default function WalletConnectProposal() {
-  const route = useRoute<RouteProp<WalletConnectParamList, typeof WalletConnectProposalStackName>>();
-  const navigation = useNavigation();
-  const params = route.params as WalletConnectParamList[typeof WalletConnectProposalStackName];
-
-  const { requestId: runtimeRequestId, request: runtimeRequest } = params;
-
-  const [showAccountSelector, setShowAccountSelector] = useState(false);
+export default function WalletConnectProposal({ navigation, route }: StackScreenProps<typeof WalletConnectProposalStackName>) {
+  const { requestId: runtimeRequestId, request: runtimeRequest } = route.params;
+  const requestSettledRef = useRef(false);
 
   const metadata = runtimeRequest?.metadata ?? {};
 
@@ -83,101 +77,98 @@ export default function WalletConnectProposal() {
   const isHTTPS = url.startsWith('https://');
 
   const _handleApprove = useCallback(async () => {
+    if (requestSettledRef.current) return;
+    requestSettledRef.current = true;
+    navigation.goBack();
     try {
-      try {
-        getExternalRequestsService().approve({ requestId: runtimeRequestId });
-      } catch (error) {
-        console.log(error);
-      } finally {
-        if (navigation.canGoBack()) navigation.goBack();
-      }
-    } catch (e) {
-      console.log(e);
+      getExternalRequestsService().approve({ requestId: runtimeRequestId });
+    } catch (error) {
+      console.log(error);
     }
   }, [navigation, runtimeRequestId]);
 
   const _handleReject = useCallback(async () => {
-    try {
+    if (requestSettledRef.current) return;
+    navigation.goBack();
+  }, [navigation]);
+
+  useEffect(
+    () => () => {
+      if (requestSettledRef.current) return;
+      requestSettledRef.current = true;
       try {
         getExternalRequestsService().reject({ requestId: runtimeRequestId });
       } catch (error) {
         console.log(error);
-      } finally {
-        if (navigation.canGoBack()) navigation.goBack();
       }
-    } catch (err) {
-      console.log('errr', err);
-    }
-  }, [navigation, runtimeRequestId]);
+    },
+    [runtimeRequestId],
+  );
 
   const { inAsync: inApproving, execAsync: handleApprove } = useInAsync(_handleApprove);
   const { inAsync: inRejecting, execAsync: handleReject } = useInAsync(_handleReject);
 
   return (
-    <>
-      <BottomSheetRoute
-        enablePanDownToClose={!inApproving}
-        enableContentPanningGesture={!inApproving}
-        snapPoints={snapPoints.large}
-        onClose={() => handleReject()}
-      >
-        <BottomSheetWrapper innerPaddingHorizontal>
-          <BottomSheetScrollContent>
-            <View style={styles.info}>
-              <Image source={icons[0]} style={styles.icon} />
-              <Text style={[styles.textStrong, styles.name, { color: colors.textPrimary }]}>{name}</Text>
-              <Text style={[styles.describe, { color: colors.textPrimary }]}>{t('wc.proposal.describe')}</Text>
-              <View style={styles.url}>
-                {!isHTTPS ? <Text style={[styles.urlWarning, { borderColor: colors.down, color: colors.down }]}>{t('common.unsafe')}</Text> : null}
-                <Text style={{ color: isHTTPS ? colors.up : colors.down, textDecorationLine: isHTTPS ? 'none' : 'underline' }}>{url}</Text>
+    <View style={styles.container} collapsable={false}>
+      <SheetHandle />
+      <SheetScrollView>
+        <SheetBody>
+          <View style={styles.info}>
+            <Image source={icons[0]} style={styles.icon} />
+            <Text style={[styles.textStrong, styles.name, { color: colors.textPrimary }]}>{name}</Text>
+            <Text style={[styles.describe, { color: colors.textPrimary }]}>{t('wc.proposal.describe')}</Text>
+            <View style={styles.url}>
+              {!isHTTPS ? <Text style={[styles.urlWarning, { borderColor: colors.down, color: colors.down }]}>{t('common.unsafe')}</Text> : null}
+              <Text style={{ color: isHTTPS ? colors.up : colors.down, textDecorationLine: isHTTPS ? 'none' : 'underline' }}>{url}</Text>
+            </View>
+          </View>
+          <Pressable onPress={() => navigation.navigate(AccountSelectorStackName)} testID="account">
+            <View>
+              <Text style={[styles.label, { color: colors.textSecondary }]}>{t('wc.proposal.accountSelected')}</Text>
+              <View style={[styles.account, { borderColor: colors.borderFourth }]}>
+                <Text style={[styles.textStrong, { color: colors.textPrimary, marginRight: 4 }]}>
+                  {currentAccount?.nickname}
+                  {`(${shortenAddress(currentAddressValue)})`}
+                </Text>
+                <ArrowRight color={colors.textPrimary} width={16} height={16} />
               </View>
             </View>
-            <Pressable onPress={() => setShowAccountSelector(true)} testID="account">
-              <View>
-                <Text style={[styles.label, { color: colors.textSecondary }]}>{t('wc.proposal.accountSelected')}</Text>
-                <View style={[styles.account, { borderColor: colors.borderFourth }]}>
-                  <Text style={[styles.textStrong, { color: colors.textPrimary, marginRight: 4 }]}>
-                    {currentAccount?.nickname}
-                    {`(${shortenAddress(currentAddressValue)})`}
-                  </Text>
-                  <ArrowRight color={colors.textPrimary} width={16} height={16} />
-                </View>
-              </View>
-            </Pressable>
-            <View style={styles.networkWarp}>
-              <Text style={[styles.label, { color: colors.textSecondary }]}>{t('common.network')}</Text>
-              <View style={styles.network}>
-                {connectedNetworks.map((network: any) => (
-                  <Icon source={network.icon} width={22} height={22} style={{ borderRadius: 11 }} key={network.id} />
-                ))}
-                {connectedNetworks.length === 1 && <Text style={{ color: colors.textPrimary }}>{connectedNetworks[0]?.name}</Text>}
-              </View>
+          </Pressable>
+          <View style={styles.networkWarp}>
+            <Text style={[styles.label, { color: colors.textSecondary }]}>{t('common.network')}</Text>
+            <View style={styles.network}>
+              {connectedNetworks.map((network: any) => (
+                <Icon source={network.icon} width={22} height={22} style={{ borderRadius: 11 }} key={network.id} />
+              ))}
+              {connectedNetworks.length === 1 && <Text style={{ color: colors.textPrimary }}>{connectedNetworks[0]?.name}</Text>}
             </View>
-          </BottomSheetScrollContent>
-          <BottomSheetFooter>
-            <View style={styles.btnArea}>
-              <Button
-                style={[styles.btn, { backgroundColor: isHTTPS ? undefined : colors.down }]}
-                onPress={handleReject}
-                testID="reject"
-                disabled={inRejecting}
-                loading={inRejecting}
-              >
-                {t('common.cancel')}
-              </Button>
-              <Button style={styles.btn} onPress={handleApprove} testID="approve" disabled={inApproving} loading={inApproving}>
-                {t('common.connect')}
-              </Button>
-            </View>
-          </BottomSheetFooter>
-        </BottomSheetWrapper>
-      </BottomSheetRoute>
-      {showAccountSelector && <AccountSelector isOpen={showAccountSelector} onClose={() => setShowAccountSelector(false)} />}
-    </>
+          </View>
+        </SheetBody>
+      </SheetScrollView>
+      <SheetFooter>
+        <View style={styles.btnArea}>
+          <Button
+            style={[styles.btn, { backgroundColor: isHTTPS ? undefined : colors.down }]}
+            onPress={handleReject}
+            testID="reject"
+            disabled={inRejecting}
+            loading={inRejecting}
+          >
+            {t('common.cancel')}
+          </Button>
+          <Button style={styles.btn} onPress={handleApprove} testID="approve" disabled={inApproving} loading={inApproving}>
+            {t('common.connect')}
+          </Button>
+        </View>
+      </SheetFooter>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+  },
   info: {
     marginTop: 80,
     display: 'flex',

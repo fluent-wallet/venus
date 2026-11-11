@@ -3,7 +3,6 @@ import { AssetsSyncService } from '@core/modules/assetsSync';
 import type { AuthService } from '@core/modules/auth';
 import type { CoreEventMap } from '@core/modules/eventBus';
 import type { ExternalRequestsService } from '@core/modules/externalRequests';
-import { NftSyncService } from '@core/modules/nftSync';
 import { WalletConnectService } from '@core/modules/walletConnect';
 import type { RuntimeConfig } from '@core/runtime/types';
 import {
@@ -18,6 +17,7 @@ import {
   type INetwork,
   type INftCollection,
   type INftItem,
+  type INftItemsPage,
   type ITransaction,
   type ITransactionDetail,
   type IVault,
@@ -41,7 +41,7 @@ let uiQueryClient: QueryClient | null = null;
 
 export type { IAccount, INetwork, IAsset, ITransaction, IVault, RecentlyAddress };
 export type { IAccountGroup };
-export type { INftCollection, INftItem };
+export type { INftCollection, INftItem, INftItemsPage };
 export type { IActivityTransaction, ITransactionDetail };
 export { VaultSourceType, VaultType } from '@core/types/vault';
 
@@ -99,10 +99,6 @@ export function getTransactionService(): TransactionService {
 
 export function getAssetsSyncService(): AssetsSyncService {
   return getContainer().get(AssetsSyncService);
-}
-
-export function getNftSyncService(): NftSyncService {
-  return getContainer().get(NftSyncService);
 }
 
 export function getVaultService(): VaultService {

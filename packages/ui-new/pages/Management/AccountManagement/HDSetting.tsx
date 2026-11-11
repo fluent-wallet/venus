@@ -1,16 +1,8 @@
 import ArrowRight from '@assets/icons/arrow-right2.svg';
-import {
-  BottomSheetFooter,
-  BottomSheetHeader,
-  type BottomSheetMethods,
-  BottomSheetRoute,
-  BottomSheetScrollContent,
-  BottomSheetWrapper,
-  snapPoints,
-} from '@components/BottomSheet';
 import Button from '@components/Button';
 import Checkbox from '@components/Checkbox';
 import HourglassLoading from '@components/Loading/Hourglass';
+import { SheetBody, SheetFooter, SheetHeader, SheetScrollView } from '@components/Sheet';
 import Text from '@components/Text';
 import { AUTH_PASSWORD_REQUEST_CANCELED } from '@core/errors';
 import { BSIM_MANAGEMENT_ACCOUNT_LIMIT } from '@core/hardware/bsim/constants';
@@ -43,7 +35,6 @@ function convertHexToNetworkAddress(params: { hex: string; networkType: NetworkT
 
 const HDManagement: React.FC<StackScreenProps<typeof HDSettingStackName>> = ({ navigation, route }) => {
   const { colors } = useTheme();
-  const bottomSheetRef = useRef<BottomSheetMethods | null>(null);
   const { t } = useTranslation();
 
   const { data: accountGroup } = useAccountGroup(route.params.groupId, true);
@@ -181,7 +172,9 @@ const HDManagement: React.FC<StackScreenProps<typeof HDSettingStackName>> = ({ n
         await applyVisible({ accountGroupId: accountGroup.id, visibleIndexes });
       }
 
-      bottomSheetRef.current?.close();
+      if (navigation.isFocused()) {
+        navigation.goBack();
+      }
     } catch (err) {
       if (getErrorCode(err) === AUTH_PASSWORD_REQUEST_CANCELED) {
         return;
@@ -190,7 +183,7 @@ const HDManagement: React.FC<StackScreenProps<typeof HDSettingStackName>> = ({ n
     } finally {
       setInNext(false);
     }
-  }, [accountGroup, chooseAccounts, applyVisible, mnemonic]);
+  }, [accountGroup, chooseAccounts, applyVisible, mnemonic, navigation]);
 
   const currentAddressValue = useMemo(() => {
     const selected = accounts.find((account) => account.selected);
@@ -200,10 +193,10 @@ const HDManagement: React.FC<StackScreenProps<typeof HDSettingStackName>> = ({ n
   if (!accountGroup || !currentNetwork) return null;
 
   return (
-    <BottomSheetRoute ref={bottomSheetRef} snapPoints={snapPoints.large}>
-      <BottomSheetWrapper innerPaddingHorizontal>
-        <BottomSheetHeader title={t('account.HDWallet.select.title')} />
-        <BottomSheetScrollContent>
+    <View collapsable={false} style={styles.container}>
+      <SheetHeader title={t('account.HDWallet.select.title')} />
+      <SheetScrollView>
+        <SheetBody>
           <Text style={[styles.description, { marginTop: 14, color: colors.textSecondary }]}>{t('account.HDWallet.select.pathType')}</Text>
           <Text style={[styles.contentText, styles.mainText, { color: colors.textPrimary }]}>BIP44</Text>
           <Text style={[styles.description, { color: colors.textSecondary }]}>{t('common.index')}</Text>
@@ -300,18 +293,21 @@ const HDManagement: React.FC<StackScreenProps<typeof HDSettingStackName>> = ({ n
               <ArrowRight color={inNext ? colors.up : colors.iconPrimary} width={12} height={12} />
             </Pressable>
           </View>
-        </BottomSheetScrollContent>
-        <BottomSheetFooter>
-          <Button testID="next" disabled={chooseAccounts.length === 0} onPress={handleClickNext} loading={inNext} size="small">
-            {t('common.next')}
-          </Button>
-        </BottomSheetFooter>
-      </BottomSheetWrapper>
-    </BottomSheetRoute>
+        </SheetBody>
+      </SheetScrollView>
+      <SheetFooter>
+        <Button testID="next" disabled={chooseAccounts.length === 0} onPress={handleClickNext} loading={inNext} size="small">
+          {t('common.next')}
+        </Button>
+      </SheetFooter>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+  },
   mainText: {
     fontSize: 16,
     fontWeight: '600',

@@ -1,36 +1,27 @@
 import ArrowRight from '@assets/icons/arrow-right2.svg';
 import Delete from '@assets/icons/delete.svg';
-import {
-  BottomSheetFooter,
-  BottomSheetHeader,
-  type BottomSheetMethods,
-  BottomSheetRoute,
-  BottomSheetScrollContent,
-  BottomSheetWrapper,
-  snapPoints,
-} from '@components/BottomSheet';
 import Button from '@components/Button';
 import HourglassLoading from '@components/Loading/Hourglass';
+import { SheetBody, SheetFooter, SheetHeader, SheetScrollView } from '@components/Sheet';
 import Text from '@components/Text';
 import TextInput from '@components/TextInput';
 import { AUTH_PASSWORD_REQUEST_CANCELED } from '@core/errors';
 import { zeroAddress } from '@core/utils/address';
 import { useTheme } from '@react-navigation/native';
-import { type AccountSettingStackName, BackupStackName, BackupStep1StackName, type StackScreenProps } from '@router/configs';
+import { type AccountSettingStackName, BackupStep1StackName, type StackScreenProps } from '@router/configs';
 import { useAccountById, useRemoveAccount, useUpdateAccountNickname } from '@service/account';
 import { VaultType } from '@service/core';
 import { getErrorCode } from '@utils/error';
 import type React from 'react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { type TextInput as _TextInput, Keyboard, Pressable, StyleSheet } from 'react-native';
+import { type TextInputInstance as _TextInput, Keyboard, Pressable, StyleSheet } from 'react-native';
 import { showMessage } from 'react-native-flash-message';
 import DeleteConfirm from './DeleteConfirm';
 
 const AccountConfig: React.FC<StackScreenProps<typeof AccountSettingStackName>> = ({ navigation, route }) => {
   const { colors } = useTheme();
   const { t } = useTranslation();
-  const bottomSheetRef = useRef<BottomSheetMethods | null>(null);
   const textinputRef = useRef<_TextInput | null>(null);
 
   const { data: account } = useAccountById(route.params.accountId);
@@ -43,13 +34,18 @@ const AccountConfig: React.FC<StackScreenProps<typeof AccountSettingStackName>> 
     setAccountName(account?.nickname);
   }, [account?.nickname]);
 
+  const closeAccountSetting = useCallback(() => {
+    if (navigation.isFocused()) {
+      navigation.goBack();
+    }
+  }, [navigation]);
+
   const handleUpdateAccountNickName = useCallback(async () => {
     const trimedAccountName = accountName?.trim();
     if (!account || !trimedAccountName) return;
     await updateNickname(account.id, trimedAccountName);
-    bottomSheetRef.current?.close();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [account, accountName, updateNickname]);
+    closeAccountSetting();
+  }, [account, accountName, updateNickname, closeAccountSetting]);
 
   const [showDeleteBottomSheet, setShowDeleteBottomSheet] = useState(() => false);
 
@@ -77,8 +73,8 @@ const AccountConfig: React.FC<StackScreenProps<typeof AccountSettingStackName>> 
         message: t('account.remove.successfully'),
         type: 'success',
       });
-      setTimeout(() => bottomSheetRef.current?.close());
       setShowDeleteBottomSheet(false);
+      closeAccountSetting();
     } catch (err: unknown) {
       if (getErrorCode(err) === AUTH_PASSWORD_REQUEST_CANCELED) {
         return;
@@ -89,76 +85,64 @@ const AccountConfig: React.FC<StackScreenProps<typeof AccountSettingStackName>> 
         type: 'warning',
       });
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [account, removeAccount, t]);
+  }, [account, removeAccount, t, closeAccountSetting]);
 
   const inDelete = showDeleteBottomSheet || inDeleting;
 
   return (
     <>
-      <BottomSheetRoute
-        ref={bottomSheetRef}
-        snapPoints={snapPoints.large}
-        enablePanDownToClose={!inDelete}
-        enableContentPanningGesture={!inDelete}
-        enableHandlePanningGesture={!inDelete}
-      >
-        <BottomSheetWrapper innerPaddingHorizontal>
-          <BottomSheetHeader title={t('account.detail.title')} />
-          <BottomSheetScrollContent>
-            <Text style={[styles.description, { marginTop: 14, color: colors.textSecondary }]}>{t('account.detail.address')}</Text>
-            <Text style={[styles.address, styles.mainText, { color: colors.textPrimary, opacity: addressValue ? 1 : 0 }]}>{addressValue || zeroAddress}</Text>
-            <Text style={[styles.description, { color: colors.textSecondary }]}>{t('account.detail.accountName')}</Text>
-            <TextInput
-              ref={textinputRef}
-              containerStyle={[styles.textinput, { borderColor: colors.borderFourth }]}
-              showVisible={false}
-              defaultHasValue
-              value={accountName}
-              onChangeText={(newNickName) => setAccountName(newNickName)}
-              isInBottomSheet
-              disabled={inDelete}
-            />
-            {(account?.vaultType === VaultType.HierarchicalDeterministic || account?.vaultType === VaultType.PrivateKey) && (
-              <>
-                <Text style={[styles.description, styles.backupDescription, { color: colors.textSecondary }]}>{t('common.backup')}</Text>
-                <Pressable
-                  style={({ pressed }) => [styles.row, { backgroundColor: pressed ? colors.underlay : 'transparent' }]}
-                  onPress={() => navigation.navigate(BackupStackName, { screen: BackupStep1StackName, params: { accountId: route.params.accountId } })}
-                  testID="privateKey"
-                  disabled={inDelete}
-                >
-                  <Text style={[styles.mainText, styles.backupText, { color: colors.textPrimary }]}>{t('common.privateKey')}</Text>
-                  <ArrowRight color={colors.iconPrimary} width={16} height={16} style={{ transform: [{ translateY: -1 }] }} />
-                </Pressable>
-              </>
-            )}
-            <Pressable
-              style={({ pressed }) => [styles.row, styles.removeContainer, { backgroundColor: pressed ? colors.underlay : 'transparent' }]}
-              onPress={handlePressDelete}
-              testID="removeAccount"
-              disabled={inDelete}
-            >
-              <Delete color={colors.textPrimary} width={24} height={24} />
-              <Text style={[styles.mainText, { color: colors.textPrimary }]}>{t('account.action.remove')}</Text>
-              {inDelete && <HourglassLoading style={styles.deleteLoading} />}
-            </Pressable>
-          </BottomSheetScrollContent>
-          <BottomSheetFooter>
-            <Button
-              testID="ok"
-              disabled={inDelete || !accountName?.trim() || accountName === account?.nickname}
-              onPress={handleUpdateAccountNickName}
-              size="small"
-            >
-              {t('common.ok')}
-            </Button>
-          </BottomSheetFooter>
-        </BottomSheetWrapper>
-      </BottomSheetRoute>
-      {showDeleteBottomSheet && (
-        <DeleteConfirm onConfirm={handleConfirmDelete} onClose={() => setShowDeleteBottomSheet(false)} isOpen={showDeleteBottomSheet} />
-      )}
+      <SheetHeader title={t('account.detail.title')} />
+      <SheetScrollView>
+        <SheetBody>
+          <Text style={[styles.description, { marginTop: 14, color: colors.textSecondary }]}>{t('account.detail.address')}</Text>
+          <Text style={[styles.address, styles.mainText, { color: colors.textPrimary, opacity: addressValue ? 1 : 0 }]}>{addressValue || zeroAddress}</Text>
+          <Text style={[styles.description, { color: colors.textSecondary }]}>{t('account.detail.accountName')}</Text>
+          <TextInput
+            ref={textinputRef}
+            containerStyle={[styles.textinput, { borderColor: colors.borderFourth }]}
+            showVisible={false}
+            defaultHasValue
+            value={accountName}
+            onChangeText={(newNickName) => setAccountName(newNickName)}
+            disabled={inDelete}
+          />
+          {(account?.vaultType === VaultType.HierarchicalDeterministic || account?.vaultType === VaultType.PrivateKey) && (
+            <>
+              <Text style={[styles.description, styles.backupDescription, { color: colors.textSecondary }]}>{t('common.backup')}</Text>
+              <Pressable
+                style={({ pressed }) => [styles.row, { backgroundColor: pressed ? colors.underlay : 'transparent' }]}
+                onPress={() => navigation.navigate(BackupStep1StackName, { accountId: route.params.accountId })}
+                testID="privateKey"
+                disabled={inDelete}
+              >
+                <Text style={[styles.mainText, styles.backupText, { color: colors.textPrimary }]}>{t('common.privateKey')}</Text>
+                <ArrowRight color={colors.iconPrimary} width={16} height={16} style={{ transform: [{ translateY: -1 }] }} />
+              </Pressable>
+            </>
+          )}
+          <Pressable
+            style={({ pressed }) => [styles.row, styles.removeContainer, { backgroundColor: pressed ? colors.underlay : 'transparent' }]}
+            onPress={handlePressDelete}
+            testID="removeAccount"
+            disabled={inDelete}
+          >
+            <Delete color={colors.textPrimary} width={24} height={24} />
+            <Text style={[styles.mainText, { color: colors.textPrimary }]}>{t('account.action.remove')}</Text>
+            {inDelete && <HourglassLoading style={styles.deleteLoading} />}
+          </Pressable>
+          <DeleteConfirm onConfirm={handleConfirmDelete} onClose={() => setShowDeleteBottomSheet(false)} isOpen={showDeleteBottomSheet} />
+        </SheetBody>
+        <SheetFooter>
+          <Button
+            testID="ok"
+            disabled={inDelete || !accountName?.trim() || accountName === account?.nickname}
+            onPress={handleUpdateAccountNickName}
+            size="small"
+          >
+            {t('common.ok')}
+          </Button>
+        </SheetFooter>
+      </SheetScrollView>
     </>
   );
 };

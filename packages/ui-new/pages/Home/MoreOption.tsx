@@ -6,13 +6,13 @@ import { useNavigation, useTheme } from '@react-navigation/native';
 import { SignatureRecordsStackName, type StackScreenProps } from '@router/configs';
 import { useCurrentAddress } from '@service/account';
 import { useCurrentNetwork } from '@service/network';
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Dimensions, type LayoutChangeEvent, Linking, Modal, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Dimensions, Linking, Modal, Pressable, StyleSheet, Text, View, type ViewInstance } from 'react-native';
 import { showMessage } from 'react-native-flash-message';
 import Animated, { useAnimatedStyle, useSharedValue } from 'react-native-reanimated';
 
-const MoreOption: React.FC<{ children: React.ReactElement }> = ({ children }) => {
+const MoreOption: React.FC<{ children: React.ReactElement<{ onPress?: () => void }> }> = ({ children }) => {
   const { reverseColors } = useTheme();
   const { t } = useTranslation();
   const navigation = useNavigation<StackScreenProps<typeof SignatureRecordsStackName>['navigation']>();
@@ -23,17 +23,15 @@ const MoreOption: React.FC<{ children: React.ReactElement }> = ({ children }) =>
   const [visible, setVisible] = useState(false);
   const position = useSharedValue({ right: 0, top: 0 });
 
-  const handleLayout = useCallback(
-    (event: LayoutChangeEvent) => {
-      event.target.measure((x: number, y: number, width: number, height: number, pageX: number, pageY: number) => {
-        position.value = {
-          top: pageY + height / 2,
-          right: Dimensions.get('window').width - pageX - width,
-        };
-      });
-    },
-    [position],
-  );
+  const anchorRef = useRef<ViewInstance>(null);
+  const handleLayout = useCallback(() => {
+    anchorRef.current?.measure((_x: number, _y: number, width: number, height: number, pageX: number, pageY: number) => {
+      position.value = {
+        top: pageY + height / 2,
+        right: Dimensions.get('window').width - pageX - width,
+      };
+    });
+  }, [position]);
 
   const optionStyle = useAnimatedStyle(() => {
     return {
@@ -67,7 +65,9 @@ const MoreOption: React.FC<{ children: React.ReactElement }> = ({ children }) =>
 
   return (
     <View style={styles.container}>
-      <View onLayout={handleLayout}>{React.cloneElement(children, { onPress: () => setVisible(!visible) })}</View>
+      <View ref={anchorRef} onLayout={handleLayout}>
+        {React.cloneElement(children, { onPress: () => setVisible(!visible) })}
+      </View>
       <Modal visible={visible} onRequestClose={() => setVisible(false)} transparent animationType="none">
         <Pressable onPress={() => setVisible(!visible)} style={styles.overlay} testID="more">
           <Animated.View style={[styles.options, optionStyle, { backgroundColor: reverseColors.borderThird }]}>

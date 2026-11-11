@@ -1,21 +1,18 @@
 import 'reflect-metadata';
 
 import { type CoreEventMap, InMemoryEventBus } from '@core/modules/eventBus';
+import type { QueryClient } from '@tanstack/react-query';
 import { act, renderHook, waitFor } from '@testing-library/react-native';
-import type React from 'react';
-import { getAccountRootKey, getCurrentAccountKey } from './account';
+import { getAccountListKey, getCurrentAccountKey } from './account';
 import { getAssetsByAddressKey } from './asset';
 import { mockAccount, mockAsset } from './mocks/fixtures';
 import { createTestQueryClient, createWrapper } from './mocks/reactQuery';
-import { getNftItemsKey } from './nft';
+import { getNftCollectionsByAddressKey, getNftItemsKey } from './nft';
 import { useRuntimeEventBridge } from './runtimeBridge';
 import { getSignatureRootKey } from './signature';
+import { getTransactionRootKey } from './transaction';
 
-jest.mock('@react-navigation/native', () => ({
-  StackActions: {
-    replace: jest.fn(),
-  },
-}));
+jest.mock('@react-navigation/native', () => ({ StackActions: { replace: jest.fn() } }));
 
 const mockGetRuntimeEventBus = jest.fn();
 const mockGetAuthService = jest.fn();
@@ -37,218 +34,98 @@ jest.mock('./biometricVaultPasswordStore', () => ({
 }));
 
 describe('runtimeBridge', () => {
+  let queryClient: QueryClient;
+  let eventBus: InMemoryEventBus<CoreEventMap>;
+  let wrapper: ReturnType<typeof createWrapper>;
+  let navigation: Parameters<typeof useRuntimeEventBridge>[0];
+  let auth: { cancelPasswordRequest: jest.Mock; resolvePassword: jest.Mock; rejectPasswordRequest: jest.Mock };
+
+  beforeEach(() => {
+    queryClient = createTestQueryClient();
+    eventBus = new InMemoryEventBus<CoreEventMap>();
+    wrapper = createWrapper(queryClient);
+    navigation = {
+      canGoBack: jest.fn(() => false),
+      dispatch: jest.fn(),
+      getState: jest.fn(() => ({ routes: [] })),
+      navigate: jest.fn(),
+    } as unknown as typeof navigation;
+    auth = { cancelPasswordRequest: jest.fn(), resolvePassword: jest.fn(), rejectPasswordRequest: jest.fn() };
+    mockGetRuntimeEventBus.mockReturnValue(eventBus);
+    mockGetAuthService.mockReturnValue(auth);
+    mockGetExternalRequestsService.mockReturnValue({ getActiveRequests: jest.fn(() => []) });
+  });
+
   afterEach(() => {
+    queryClient.clear();
     jest.clearAllMocks();
   });
 
-  it('invalidates signature queries on signature/changed', async () => {
-    const queryClient = createTestQueryClient();
-    const wrapper = createWrapper(queryClient) as React.ComponentType<{ children: React.ReactNode }>;
-    const eventBus = new InMemoryEventBus<CoreEventMap>();
-    const invalidateSpy = jest.spyOn(queryClient, 'invalidateQueries');
-    const auth = { cancelPasswordRequest: jest.fn() };
-    const externalRequests = { getActiveRequests: jest.fn(() => []) };
-
-    mockGetRuntimeEventBus.mockReturnValue(eventBus);
-    mockGetAuthService.mockReturnValue(auth);
-    mockGetExternalRequestsService.mockReturnValue(externalRequests);
-
-    const navigation = {
-      canGoBack: jest.fn(() => false),
-      dispatch: jest.fn(),
-      getState: jest.fn(() => ({ routes: [] })),
-      navigate: jest.fn(),
-    } as Parameters<typeof useRuntimeEventBridge>[0];
-
+  it('invalidates signature queries on signature/changed', () => {
+    queryClient.setQueryData(getSignatureRootKey(), []);
     renderHook(() => useRuntimeEventBridge(navigation), { wrapper });
 
-    act(() => {
-      eventBus.emit('signature/changed', {
-        addressId: 'addr_1',
-        signatureId: 'sig_1',
-        reason: 'created',
-      });
-    });
+    act(() => eventBus.emit('signature/changed', { addressId: 'addr_1', signatureId: 'sig_1', reason: 'created' }));
 
-    await waitFor(() => {
-      expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: getSignatureRootKey() });
-    });
-    expect(externalRequests.getActiveRequests).toHaveBeenCalledWith({ provider: 'wallet-connect' });
-    expect(auth.cancelPasswordRequest).not.toHaveBeenCalled();
+    expect(queryClient.getQueryState(getSignatureRootKey())?.isInvalidated).toBe(true);
   });
 
-  it('updates current account cache immediately on account/current-changed', async () => {
-    const queryClient = createTestQueryClient();
-    const wrapper = createWrapper(queryClient) as React.ComponentType<{ children: React.ReactNode }>;
-    const eventBus = new InMemoryEventBus<CoreEventMap>();
-    const invalidateSpy = jest.spyOn(queryClient, 'invalidateQueries');
-    const auth = { cancelPasswordRequest: jest.fn() };
-    const externalRequests = { getActiveRequests: jest.fn(() => []) };
+  it('updates the current account immediately and marks cached account lists stale', () => {
     const nextAccount = { ...mockAccount, id: 'acc_2', nickname: 'Secondary', address: '0xdef', currentAddressId: 'addr_2' };
-
-    mockGetRuntimeEventBus.mockReturnValue(eventBus);
-    mockGetAuthService.mockReturnValue(auth);
-    mockGetExternalRequestsService.mockReturnValue(externalRequests);
-
-    const navigation = {
-      canGoBack: jest.fn(() => false),
-      dispatch: jest.fn(),
-      getState: jest.fn(() => ({ routes: [] })),
-      navigate: jest.fn(),
-    } as Parameters<typeof useRuntimeEventBridge>[0];
-
     queryClient.setQueryData(getCurrentAccountKey(), mockAccount);
-
+    queryClient.setQueryData(getAccountListKey(), [mockAccount]);
     renderHook(() => useRuntimeEventBridge(navigation), { wrapper });
 
-    act(() => {
-      eventBus.emit('account/current-changed', { account: nextAccount });
-    });
+    act(() => eventBus.emit('account/current-changed', { account: nextAccount }));
 
-    await waitFor(() => {
-      expect(queryClient.getQueryData(getCurrentAccountKey())).toEqual(nextAccount);
-    });
-    expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: getAccountRootKey(), refetchType: 'inactive' });
+    expect(queryClient.getQueryData(getCurrentAccountKey())).toEqual(nextAccount);
+    expect(queryClient.getQueryState(getAccountListKey())?.isInvalidated).toBe(true);
   });
 
-  it('writes assets snapshot into address cache on assets-sync/succeeded', async () => {
-    const queryClient = createTestQueryClient();
-    const wrapper = createWrapper(queryClient) as React.ComponentType<{ children: React.ReactNode }>;
-    const eventBus = new InMemoryEventBus<CoreEventMap>();
-    const auth = { cancelPasswordRequest: jest.fn() };
-    const externalRequests = { getActiveRequests: jest.fn(() => []) };
-
-    mockGetRuntimeEventBus.mockReturnValue(eventBus);
-    mockGetAuthService.mockReturnValue(auth);
-    mockGetExternalRequestsService.mockReturnValue(externalRequests);
-
-    const navigation = {
-      canGoBack: jest.fn(() => false),
-      dispatch: jest.fn(),
-      getState: jest.fn(() => ({ routes: [] })),
-      navigate: jest.fn(),
-    } as Parameters<typeof useRuntimeEventBridge>[0];
-
+  it('writes an assets snapshot into the address cache', () => {
     renderHook(() => useRuntimeEventBridge(navigation), { wrapper });
 
-    act(() => {
+    act(() =>
       eventBus.emit('assets-sync/succeeded', {
         key: { addressId: 'addr_1', networkId: 'net_1' },
         reason: 'manual',
         runId: 'run_1',
-        timestampMs: Date.now(),
+        timestampMs: 0,
         updatedCount: 1,
         snapshot: { assets: [mockAsset] },
-      });
-    });
+      }),
+    );
 
-    await waitFor(() => {
-      expect(queryClient.getQueryData(getAssetsByAddressKey('addr_1'))).toEqual([mockAsset]);
-    });
+    expect(queryClient.getQueryData(getAssetsByAddressKey('addr_1'))).toEqual([mockAsset]);
   });
 
-  it('writes nft item snapshots into the targeted cache without invalidating nft queries', async () => {
-    const queryClient = createTestQueryClient();
-    const wrapper = createWrapper(queryClient) as React.ComponentType<{ children: React.ReactNode }>;
-    const eventBus = new InMemoryEventBus<CoreEventMap>();
-    const invalidateSpy = jest.spyOn(queryClient, 'invalidateQueries');
-    const auth = { cancelPasswordRequest: jest.fn() };
-    const externalRequests = { getActiveRequests: jest.fn(() => []) };
-
-    mockGetRuntimeEventBus.mockReturnValue(eventBus);
-    mockGetAuthService.mockReturnValue(auth);
-    mockGetExternalRequestsService.mockReturnValue(externalRequests);
-
-    const navigation = {
-      canGoBack: jest.fn(() => false),
-      dispatch: jest.fn(),
-      getState: jest.fn(() => ({ routes: [] })),
-      navigate: jest.fn(),
-    } as Parameters<typeof useRuntimeEventBridge>[0];
-
+  it('refreshes transactions on either transaction event and leaves NFT queries unchanged', () => {
+    const transactionsKey = getTransactionRootKey();
+    const directoryKey = getNftCollectionsByAddressKey('addr_1');
+    const itemsKey = getNftItemsKey('addr_1', '0xabc');
     renderHook(() => useRuntimeEventBridge(navigation), { wrapper });
 
-    act(() => {
-      eventBus.emit('nft-sync/started', {
-        key: { addressId: 'addr_1', networkId: 'net_1', contractAddress: '0xabc' },
-        reason: 'poll',
-        runId: 'run_1',
-        timestampMs: Date.now(),
+    for (const event of ['tx/created', 'tx/updated'] as const) {
+      for (const key of [transactionsKey, directoryKey, itemsKey]) queryClient.setQueryData(key, []);
+      const key = { addressId: 'addr_1', networkId: 'net_1' };
+      act(() => {
+        if (event === 'tx/created') eventBus.emit(event, { key, txId: 'tx_1' });
+        else eventBus.emit(event, { key, txIds: ['tx_1'], timestampMs: 0 });
       });
-      eventBus.emit('nft-sync/updated', {
-        key: { addressId: 'addr_1', networkId: 'net_1', contractAddress: '0xabc' },
-        reason: 'poll',
-        runId: 'run_1',
-        timestampMs: Date.now(),
-        updatedCount: 1,
-      });
-      eventBus.emit('nft-sync/failed', {
-        key: { addressId: 'addr_1', networkId: 'net_1', contractAddress: '0xabc' },
-        reason: 'poll',
-        runId: 'run_1',
-        timestampMs: Date.now(),
-        error: { code: 'NFT_SYNC_FETCH_FAILED', message: 'failed' },
-      });
-      eventBus.emit('nft-sync/succeeded', {
-        key: { addressId: 'addr_1', networkId: 'net_1', contractAddress: '0xabc' },
-        reason: 'poll',
-        runId: 'run_1',
-        timestampMs: Date.now(),
-        updatedCount: 1,
-        snapshot: {
-          contractAddress: '0xabc',
-          items: [{ tokenId: '1', name: 'NFT #1', amount: '1' }],
-        },
-      });
-    });
-
-    await waitFor(() => {
-      expect(queryClient.getQueryData(getNftItemsKey('addr_1', '0xabc'))).toEqual([
-        {
-          tokenId: '1',
-          name: 'NFT #1',
-          description: null,
-          icon: null,
-          amount: '1',
-        },
-      ]);
-    });
-    expect(invalidateSpy).not.toHaveBeenCalled();
+      expect(queryClient.getQueryState(transactionsKey)?.isInvalidated).toBe(true);
+      expect(queryClient.getQueryState(directoryKey)?.isInvalidated).toBe(false);
+      expect(queryClient.getQueryState(itemsKey)?.isInvalidated).toBe(false);
+    }
   });
 
   it('resolves biometrics requests without routing to password verify', async () => {
-    const queryClient = createTestQueryClient();
-    const wrapper = createWrapper(queryClient) as React.ComponentType<{ children: React.ReactNode }>;
-    const eventBus = new InMemoryEventBus<CoreEventMap>();
-    const auth = {
-      cancelPasswordRequest: jest.fn(),
-      resolvePassword: jest.fn(),
-      rejectPasswordRequest: jest.fn(),
-    };
-    const externalRequests = { getActiveRequests: jest.fn(() => []) };
-
-    mockGetRuntimeEventBus.mockReturnValue(eventBus);
-    mockGetAuthService.mockReturnValue(auth);
-    mockGetExternalRequestsService.mockReturnValue(externalRequests);
     mockGetBiometricVaultPassword.mockResolvedValue('vault-password');
-
-    const navigation = {
-      canGoBack: jest.fn(() => false),
-      dispatch: jest.fn(),
-      getState: jest.fn(() => ({ routes: [] })),
-      navigate: jest.fn(),
-    } as Parameters<typeof useRuntimeEventBridge>[0];
-
     renderHook(() => useRuntimeEventBridge(navigation), { wrapper });
 
-    act(() => {
-      eventBus.emit('auth/credential-requested', { requestId: 'auth_1', kind: 'biometrics' });
-    });
+    act(() => eventBus.emit('auth/credential-requested', { requestId: 'auth_1', kind: 'biometrics' }));
 
-    await waitFor(() => {
-      expect(auth.resolvePassword).toHaveBeenCalledWith({ requestId: 'auth_1', password: 'vault-password' });
-    });
-    expect(navigation.navigate).not.toHaveBeenCalledWith('PasswordVerify', expect.anything());
+    await waitFor(() => expect(auth.resolvePassword).toHaveBeenCalledWith({ requestId: 'auth_1', password: 'vault-password' }));
+    expect(navigation.navigate).not.toHaveBeenCalled();
     expect(auth.rejectPasswordRequest).not.toHaveBeenCalled();
   });
 });

@@ -2,16 +2,9 @@ import ArrowRight from '@assets/icons/arrow-right2.svg';
 import ProhibitIcon from '@assets/icons/prohibit.svg';
 import RocketIcon from '@assets/icons/rocket.svg';
 import WarnIcon from '@assets/icons/warn.svg';
-import {
-  BottomSheetContent,
-  BottomSheetFooter,
-  BottomSheetHeader,
-  type BottomSheetMethods,
-  BottomSheetRoute,
-  BottomSheetWrapper,
-} from '@components/BottomSheet';
 import Button from '@components/Button';
 import HourglassLoading from '@components/Loading/Hourglass';
+import { SheetBody, SheetFooter, SheetHeader } from '@components/Sheet';
 import Text from '@components/Text';
 import { AUTH_PASSWORD_REQUEST_CANCELED } from '@core/errors';
 import { AssetType, SPEED_UP_ACTION } from '@core/types';
@@ -19,7 +12,7 @@ import { NetworkType } from '@core/utils/consts';
 import useInAsync from '@hooks/useInAsync';
 import HardwareSignVerify from '@pages/SendTransaction/HardwareSignVerify';
 import { useHardwareSigningUiState } from '@pages/SendTransaction/Step4Confirm/useHardwareSigningUiState';
-import { useNavigation, useTheme } from '@react-navigation/native';
+import { useFocusEffect, useNavigation, useTheme } from '@react-navigation/native';
 import type { SpeedUpStackName, StackNavigation, StackScreenProps } from '@router/configs';
 import { useAssetsOfAddress } from '@service/asset';
 import { getAssetsSyncService } from '@service/core';
@@ -104,6 +97,8 @@ const SpeedUp: React.FC<StackScreenProps<typeof SpeedUpStackName>> = ({ navigati
   const { state: hardwareSignState, clear: clearHardwareSignState } = useHardwareSigningUiState(addressId || undefined);
   const abortRef = useRef<AbortController | null>(null);
 
+  useEffect(() => () => abortRef.current?.abort(), []);
+
   const { data: assets } = useAssetsOfAddress(addressId);
   const nativeAsset = useMemo(() => assets?.find((a) => a.type === AssetType.Native) ?? null, [assets]);
 
@@ -147,22 +142,18 @@ const SpeedUp: React.FC<StackScreenProps<typeof SpeedUpStackName>> = ({ navigati
   }, [fasterGasSetting, higherGasSetting, defaultLevel, customizeGasSetting]);
 
   const [tempSelectedOptionLevel, setTempSelectedOptionLevel] = useState<SpeedUpLevel | undefined>(defaultLevel);
-  const bottomSheetRef = useRef<BottomSheetMethods>(null!);
-
   const handleTxExpire = useCallback(() => {
     if (txState && !isTransactionPendingState(txState)) {
-      bottomSheetRef.current?.close();
+      navigation.goBack();
       showMessage({
         type: 'warning',
         message: t('tx.action.expiredTitle'),
         description: isTransactionSuccessfulState(txState) ? t('tx.action.alreadyExecuted') : t('tx.action.alreadyFailed'),
       });
     }
-  }, [txState, t]);
+  }, [navigation, txState, t]);
 
-  useEffect(() => {
-    handleTxExpire();
-  }, [handleTxExpire]);
+  useFocusEffect(handleTxExpire);
 
   const newGasSetting =
     tempSelectedOptionLevel === 'customize' ? customizeGasSetting : tempSelectedOptionLevel === 'faster' ? fasterGasSetting : higherGasSetting;
@@ -213,7 +204,9 @@ const SpeedUp: React.FC<StackScreenProps<typeof SpeedUpStackName>> = ({ navigati
         icon: 'loading' as unknown as undefined,
       });
 
-      backToHome(navigation);
+      if (navigation.isFocused()) {
+        backToHome(navigation);
+      }
 
       try {
         void getAssetsSyncService().refreshCurrent({ reason: 'manual' });
@@ -260,121 +253,93 @@ const SpeedUp: React.FC<StackScreenProps<typeof SpeedUpStackName>> = ({ navigati
   const { inAsync: inSending, execAsync: handleSend } = useInAsync(_handleSend);
 
   return (
-    <>
-      <BottomSheetRoute
-        ref={bottomSheetRef}
-        snapPoints={snapPoints}
-        enablePanDownToClose={!inSending}
-        enableContentPanningGesture={!inSending}
-        enableHandlePanningGesture={!inSending}
-        onOpen={handleTxExpire}
-      >
-        <BottomSheetWrapper innerPaddingHorizontal>
-          <BottomSheetHeader title={isSpeedUp ? t('tx.action.speedUp.title') : t('tx.action.cancel.title')} />
-          <BottomSheetContent>
-            <Text style={[styles.description, { color: colors.textPrimary }]}>{isSpeedUp ? t('tx.action.speedUp.desc') : t('tx.action.cancel.desc')}</Text>
-            {(!ctx || !nativeAsset || !estimateCurrentGasPrice) && <HourglassLoading style={styles.loading} />}
-            {ctx && nativeAsset && estimateCurrentGasPrice && (
-              <>
-                {higherGasSetting && (
-                  <GasOption
-                    level="higher"
-                    nativeAsset={nativeAsset as any}
-                    gasSetting={higherGasSetting}
-                    gasLimit={customizeAdvanceSetting?.gasLimit ?? estimateRes!.gasLimit}
-                    selected={tempSelectedOptionLevel === 'higher'}
-                    onPress={() => setTempSelectedOptionLevel('higher')}
-                  />
-                )}
-                {fasterGasSetting && (
-                  <GasOption
-                    level="faster"
-                    nativeAsset={nativeAsset as any}
-                    gasSetting={fasterGasSetting}
-                    gasLimit={customizeAdvanceSetting?.gasLimit ?? estimateRes!.gasLimit}
-                    selected={tempSelectedOptionLevel === 'faster'}
-                    onPress={() => setTempSelectedOptionLevel('faster')}
-                  />
-                )}
-                {customizeGasSetting && (
-                  <GasOption
-                    level="customize"
-                    nativeAsset={nativeAsset as any}
-                    gasSetting={customizeGasSetting}
-                    gasLimit={customizeAdvanceSetting?.gasLimit ?? estimateRes!.gasLimit}
-                    selected={tempSelectedOptionLevel === 'customize'}
-                    onPress={() => setShowCustomizeSetting(true)}
-                  />
-                )}
-                <Pressable style={styles.advanceWrapper} onPress={() => setShowCustomizeAdvanceSetting(true)}>
-                  <Text style={[styles.advance, { color: colors.textPrimary }]}>{t('tx.gasFee.advance')}</Text>
-                  <ArrowRight color={colors.iconPrimary} />
-                </Pressable>
-              </>
+    <View collapsable={false} style={styles.container}>
+      <SheetHeader title={isSpeedUp ? t('tx.action.speedUp.title') : t('tx.action.cancel.title')} />
+      <SheetBody style={styles.body}>
+        <Text style={[styles.description, { color: colors.textPrimary }]}>{isSpeedUp ? t('tx.action.speedUp.desc') : t('tx.action.cancel.desc')}</Text>
+        {(!ctx || !nativeAsset || !estimateCurrentGasPrice) && <HourglassLoading style={styles.loading} />}
+        {ctx && nativeAsset && estimateCurrentGasPrice && (
+          <>
+            {higherGasSetting && (
+              <GasOption
+                level="higher"
+                nativeAsset={nativeAsset as any}
+                gasSetting={higherGasSetting}
+                gasLimit={customizeAdvanceSetting?.gasLimit ?? estimateRes!.gasLimit}
+                selected={tempSelectedOptionLevel === 'higher'}
+                onPress={() => setTempSelectedOptionLevel('higher')}
+              />
             )}
-            {error && (
-              <>
-                {error.type === 'out of balance' ? (
-                  <View style={styles.errorWarp}>
-                    <WarnIcon style={styles.errorIcon} color={colors.middle} width={24} height={24} />
-                    <Text style={[styles.errorText, { color: colors.middle }]}>
-                      {`${isSpeedUp && ctx?.assetType === AssetType.Native ? t('tx.confirm.error.InsufficientBalance', { symbol: nativeAsset?.symbol }) : t('tx.confirm.error.InsufficientBalanceForGas', { symbol: nativeAsset?.symbol })}`}
-                    </Text>
-                  </View>
+            {fasterGasSetting && (
+              <GasOption
+                level="faster"
+                nativeAsset={nativeAsset as any}
+                gasSetting={fasterGasSetting}
+                gasLimit={customizeAdvanceSetting?.gasLimit ?? estimateRes!.gasLimit}
+                selected={tempSelectedOptionLevel === 'faster'}
+                onPress={() => setTempSelectedOptionLevel('faster')}
+              />
+            )}
+            {customizeGasSetting && (
+              <GasOption
+                level="customize"
+                nativeAsset={nativeAsset as any}
+                gasSetting={customizeGasSetting}
+                gasLimit={customizeAdvanceSetting?.gasLimit ?? estimateRes!.gasLimit}
+                selected={tempSelectedOptionLevel === 'customize'}
+                onPress={() => setShowCustomizeSetting(true)}
+              />
+            )}
+            <Pressable style={styles.advanceWrapper} onPress={() => setShowCustomizeAdvanceSetting(true)}>
+              <Text style={[styles.advance, { color: colors.textPrimary }]}>{t('tx.gasFee.advance')}</Text>
+              <ArrowRight color={colors.iconPrimary} />
+            </Pressable>
+          </>
+        )}
+        {error && (
+          <>
+            {error.type === 'out of balance' ? (
+              <View style={styles.errorWarp}>
+                <WarnIcon style={styles.errorIcon} color={colors.middle} width={24} height={24} />
+                <Text style={[styles.errorText, { color: colors.middle }]}>
+                  {`${isSpeedUp && ctx?.assetType === AssetType.Native ? t('tx.confirm.error.InsufficientBalance', { symbol: nativeAsset?.symbol }) : t('tx.confirm.error.InsufficientBalanceForGas', { symbol: nativeAsset?.symbol })}`}
+                </Text>
+              </View>
+            ) : (
+              <View style={styles.errorWarp}>
+                <ProhibitIcon style={styles.errorIcon} width={24} height={24} />
+                {error.type === 'network error' ? (
+                  <Text style={[styles.errorText, { color: colors.down }]}>{t('tx.confirm.error.network')}</Text>
                 ) : (
-                  <View style={styles.errorWarp}>
-                    <ProhibitIcon style={styles.errorIcon} width={24} height={24} />
-                    {error.type === 'network error' ? (
-                      <Text style={[styles.errorText, { color: colors.down }]}>{t('tx.confirm.error.network')}</Text>
-                    ) : (
-                      <Text style={[styles.errorText, { color: colors.down }]}>{t('tx.confirm.error.unknown')}</Text>
-                    )}
-                  </View>
+                  <Text style={[styles.errorText, { color: colors.down }]}>{t('tx.confirm.error.unknown')}</Text>
                 )}
-              </>
+              </View>
             )}
-          </BottomSheetContent>
-          <BottomSheetFooter>
-            <View style={styles.btnArea}>
-              <Button testID="cancel" style={styles.btn} size="small" onPress={() => bottomSheetRef.current?.close()} disabled={inSending}>
-                {t('common.cancel')}
-              </Button>
-              <Button
-                testID="speed-up"
-                style={styles.btn}
-                size="small"
-                onPress={handleSend}
-                disabled={!tempSelectedOptionLevel || inSending}
-                Icon={isSpeedUp ? RocketIcon : undefined}
-              >
-                {isSpeedUp ? t('tx.action.speedUpBtn') : t('tx.action.proceedBtn')}
-              </Button>
-            </View>
-          </BottomSheetFooter>
-        </BottomSheetWrapper>
-      </BottomSheetRoute>
-      {customizeGasSetting && showCustomizeSetting && estimateCurrentGasPrice && (
-        <CustomizeGasSetting
-          customizeGasSetting={customizeGasSetting}
-          onConfirm={(customGasSetting) => {
-            setTempSelectedOptionLevel('customize');
-            setCustomizeGasSetting(customGasSetting);
-          }}
-          onClose={() => setShowCustomizeSetting(false)}
-          estimateCurrentGasPrice={estimateCurrentGasPrice}
-        />
-      )}
-      {estimateRes && showCustomizeAdvanceSetting && (
-        <CustomizeAdvanceSetting
-          customizeAdvanceSetting={customizeAdvanceSetting}
-          estimateNonce={ctx?.payload.nonce ?? 0}
-          estimateGasLimit={estimateRes.gasLimit}
-          onConfirm={setCustomizeAdvanceSetting}
-          onClose={() => setShowCustomizeAdvanceSetting(false)}
-          nonceDisabled
-        />
-      )}
-      {hardwareSignState && (
+          </>
+        )}
+        {customizeGasSetting && estimateCurrentGasPrice && (
+          <CustomizeGasSetting
+            isOpen={showCustomizeSetting}
+            customizeGasSetting={customizeGasSetting}
+            onConfirm={(customGasSetting) => {
+              setTempSelectedOptionLevel('customize');
+              setCustomizeGasSetting(customGasSetting);
+            }}
+            onClose={() => setShowCustomizeSetting(false)}
+            estimateCurrentGasPrice={estimateCurrentGasPrice}
+          />
+        )}
+        {estimateRes && (
+          <CustomizeAdvanceSetting
+            isOpen={showCustomizeAdvanceSetting}
+            customizeAdvanceSetting={customizeAdvanceSetting}
+            estimateNonce={ctx?.payload.nonce ?? 0}
+            estimateGasLimit={estimateRes.gasLimit}
+            onConfirm={setCustomizeAdvanceSetting}
+            onClose={() => setShowCustomizeAdvanceSetting(false)}
+            nonceDisabled
+          />
+        )}
         <HardwareSignVerify
           state={hardwareSignState}
           onClose={() => {
@@ -383,12 +348,35 @@ const SpeedUp: React.FC<StackScreenProps<typeof SpeedUpStackName>> = ({ navigati
           }}
           onRetry={handleSend}
         />
-      )}
-    </>
+      </SheetBody>
+      <SheetFooter>
+        <View style={styles.btnArea}>
+          <Button testID="cancel" style={styles.btn} size="small" onPress={() => navigation.goBack()} disabled={inSending}>
+            {t('common.cancel')}
+          </Button>
+          <Button
+            testID="speed-up"
+            style={styles.btn}
+            size="small"
+            onPress={handleSend}
+            disabled={!tempSelectedOptionLevel || inSending}
+            Icon={isSpeedUp ? RocketIcon : undefined}
+          >
+            {isSpeedUp ? t('tx.action.speedUpBtn') : t('tx.action.proceedBtn')}
+          </Button>
+        </View>
+      </SheetFooter>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+  },
+  body: {
+    flex: 1,
+  },
   loading: {
     marginTop: 60,
     alignSelf: 'center',
@@ -442,7 +430,5 @@ const styles = StyleSheet.create({
     lineHeight: 18,
   },
 });
-
-const snapPoints = [650];
 
 export default SpeedUp;

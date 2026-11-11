@@ -24,7 +24,6 @@ describe('AssetService', () => {
   let provider: StubChainProvider;
   let discoveryRegistry: { discoverFungibleAssets: jest.Mock };
   let network: Network;
-  let assetRuleId: string;
   let address: Address;
   let nativeAsset: Asset;
   let tokenAsset: Asset;
@@ -45,7 +44,6 @@ describe('AssetService', () => {
 
     const seeded = await seedNetwork(database, { definitionKey: 'Conflux Testnet', selected: true });
     network = seeded.network;
-    assetRuleId = seeded.assetRule.id;
 
     const { address: createdAddress } = await createTestAccount(database, {
       network,
@@ -108,6 +106,8 @@ describe('AssetService', () => {
     expect(native?.balance).toBe('1');
     expect(native?.formattedBalance).toBe('1');
     expect(native?.priceValue).toBe('1');
+    expect(native?.name).toBe('CFX');
+    expect(nativeAsset.name).toBe('Conflux');
 
     expect(token?.balance).toBe('2');
     expect(token?.formattedBalance).toBe('2');
@@ -118,6 +118,38 @@ describe('AssetService', () => {
       expect.arrayContaining([{ assetType: 'Native' }, { assetType: 'ERC20', contractAddress: tokenContract }]),
     );
     expect(readBalancesSpy.mock.calls[0]?.[1]).toHaveLength(2);
+  });
+
+  it('labels discovered native CFX without renaming ERC20 assets with the same symbol', async () => {
+    const { network: discoveryNetwork, assetRule } = await seedNetwork(database, { definitionKey: 'Conflux eSpace', selected: false });
+    const { address: discoveryAddress } = await createTestAccount(database, { network: discoveryNetwork, assetRule, selected: false });
+    registry.register(new StubChainProvider({ chainId: discoveryNetwork.chainId, networkType: discoveryNetwork.networkType }));
+    discoveryRegistry.discoverFungibleAssets.mockResolvedValue([
+      {
+        type: AssetType.Native,
+        contractAddress: null,
+        name: 'Conflux',
+        symbol: 'CFX',
+        decimals: 18,
+        icon: null,
+        priceInUSDT: null,
+        balanceBaseUnits: '1000000000000000000',
+      },
+      {
+        type: AssetType.ERC20,
+        contractAddress: '0x1111111111111111111111111111111111111111',
+        name: 'Conflux Token',
+        symbol: 'CFX',
+        decimals: 18,
+        icon: null,
+        priceInUSDT: null,
+        balanceBaseUnits: '2000000000000000000',
+      },
+    ]);
+
+    const assets = await service.getAssetsByAddress(discoveryAddress.id);
+    expect(assets.find((asset) => asset.type === AssetType.Native)?.name).toBe('CFX');
+    expect(assets.find((asset) => asset.type === AssetType.ERC20)?.name).toBe('Conflux Token');
   });
 
   it('gets balance for a specific asset', async () => {
@@ -198,6 +230,7 @@ describe('AssetService', () => {
     ]);
 
     const firstAssets = await service.getAssetsByAddress(ethAddress.id);
+    expect(firstAssets.find((asset) => asset.type === AssetType.Native)?.name).toBe('Ether');
     const firstObserved = firstAssets.find((asset) => asset.contractAddress?.toLowerCase() === observedContract.toLowerCase());
 
     expect(firstObserved).toBeDefined();

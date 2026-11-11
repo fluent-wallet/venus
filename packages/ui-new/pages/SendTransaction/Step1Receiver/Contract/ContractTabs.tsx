@@ -1,11 +1,13 @@
+import { sheetLayoutStyles } from '@components/Sheet';
 import Text from '@components/Text';
 import AccountsList from '@modules/AccountsList';
 import { useTheme } from '@react-navigation/native';
+import { useAccountSections } from '@service/accountSections';
 /* eslint-disable react-hooks/exhaustive-deps */
 import type React from 'react';
 import { useCallback, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Platform, Pressable, StyleSheet, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 import PagerView from 'react-native-pager-view';
 import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 import RecentlyList from './RecentlyList';
@@ -70,6 +72,21 @@ export const Tabs: React.FC<Omit<Props, 'setCurrentTab' | 'onPressReceiver'>> = 
   );
 };
 
+function WalletAccounts({ onPressReceiver }: Pick<Props, 'onPressReceiver'>) {
+  const { sections, currentAccountId } = useAccountSections();
+
+  return (
+    <AccountsList
+      style={sheetLayoutStyles.scrollable}
+      nestedScrollEnabled
+      sections={sections}
+      currentAccountId={currentAccountId}
+      type="selector"
+      onPressAccount={({ addressValue }) => onPressReceiver(addressValue)}
+    />
+  );
+}
+
 export const TabsContent: React.FC<Props> = ({ currentTab, setCurrentTab, pageViewRef, onPressReceiver }) => {
   const currentTabIndex = useMemo(() => {
     const index = tabs.indexOf(currentTab);
@@ -77,18 +94,10 @@ export const TabsContent: React.FC<Props> = ({ currentTab, setCurrentTab, pageVi
   }, [currentTab]);
 
   return (
-    <PagerView
-      ref={pageViewRef}
-      style={styles.pagerView}
-      initialPage={0}
-      onPageSelected={(evt) => setCurrentTab(tabs[evt.nativeEvent.position])}
-      useNext={Platform.OS === 'android'}
-    >
+    <PagerView ref={pageViewRef} style={styles.pagerView} initialPage={0} onPageSelected={(evt) => setCurrentTab(tabs[evt.nativeEvent.position])}>
       {tabs?.map((tab, index) => (
         <View key={tab}>
-          {tab === Tab.MyWallets && index === currentTabIndex && (
-            <AccountsList type="selector" onPressAccount={({ addressValue }) => onPressReceiver(addressValue)} />
-          )}
+          {tab === Tab.MyWallets && index === currentTabIndex && <WalletAccounts onPressReceiver={onPressReceiver} />}
           {tab === Tab.Recently && index === currentTabIndex && <RecentlyList onPressAddress={(addressValue) => onPressReceiver(addressValue)} />}
         </View>
       ))}

@@ -12,7 +12,7 @@ jobs:
   versions:
     uses: ./.github/workflows/versions.yml
     with:
-      branch: qa
+      commitSha: ${{ github.sha }}
 
   create-qa-tag:
     needs: [versions]
@@ -26,10 +26,10 @@ jobs:
     secrets: inherit
     with:
       environment: qa
-      branch: qa
+      commitSha: ${{ github.sha }}
+      displayVersion: ${{ needs.versions.outputs.QA_VERSION }}
       artifactName: app-qa-release.apk
       buildAAB: false
-      appVersion: ${{ needs.versions.outputs.QA_VERSION }}
 
   upload-to-release:
     name: upload-to-release
@@ -37,12 +37,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Download artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
           name: app-qa-release.apk
           path: .
       - name: push to github
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@efb35369e0ad2afab669f228072c1b0d510eae64 # v3.0.3
         with:
           tag_name: ${{ needs.versions.outputs.QA_TAG}}
           name: ${{ needs.versions.outputs.QA_TAG }}
@@ -57,5 +57,5 @@ jobs:
     secrets: inherit
     with:
       environment: qa
-      branch: qa
-      appVersion: ${{ needs.versions.outputs.QA_VERSION }}
+      commitSha: ${{ github.sha }}
+      displayVersion: ${{ needs.versions.outputs.QA_VERSION }}

@@ -8,7 +8,7 @@ import { type StackScreenProps, WayToInitWalletStackName, type WelcomeStackName 
 import { Image } from 'expo-image';
 import type React from 'react';
 import { useTranslation } from 'react-i18next';
-import { ImageBackground, ScrollView, StyleSheet, View } from 'react-native';
+import { ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import LottieAnimation from './lottie';
 
@@ -17,7 +17,8 @@ const Welcome: React.FC<StackScreenProps<typeof WelcomeStackName>> = ({ navigati
   const lang = useLanguage();
 
   return (
-    <ImageBackground source={WelcomeBgDark} style={styles.bg} resizeMode="cover">
+    <View style={styles.bg}>
+      <Image source={WelcomeBgDark} style={StyleSheet.absoluteFill} contentFit="cover" pointerEvents="none" />
       <ScrollView>
         <SafeAreaView style={styles.container}>
           <Image style={styles.enterWeb3} source={lang === Lang.zhHant ? EnterWeb3ZH : EnterWeb3EN} contentFit="contain" />
@@ -36,7 +37,7 @@ const Welcome: React.FC<StackScreenProps<typeof WelcomeStackName>> = ({ navigati
           </Button>
         </SafeAreaView>
       </ScrollView>
-    </ImageBackground>
+    </View>
   );
 };
 

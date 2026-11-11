@@ -1,10 +1,10 @@
 import PoundKey from '@assets/icons/pound-key.svg';
 // import Share from '@assets/icons/share.svg';
 import Logo from '@assets/images/swift-shield-QRCode.webp';
-import { BottomSheetHeader, BottomSheetRoute, BottomSheetScrollContent, BottomSheetWrapper, snapPoints } from '@components/BottomSheet';
+import { SheetBody, SheetHeader, SheetScrollView } from '@components/Sheet';
 import Text from '@components/Text';
+import { ASSET_TYPE } from '@core/types';
 import { numberWithCommas, trimDecimalZeros } from '@core/utils/balance';
-import { NetworkType } from '@core/utils/consts';
 import { AccountItemView } from '@modules/AccountsList';
 import { Navigation } from '@pages/Home/Navigations';
 import Clipboard from '@react-native-clipboard/clipboard';
@@ -13,8 +13,9 @@ import type { ReceiveStackName, StackScreenProps } from '@router/configs';
 import { useCurrentAccount, useCurrentAddress } from '@service/account';
 import { useCurrentNetwork } from '@service/network';
 import { isSmallDevice } from '@utils/deviceInfo';
-import { encodePaymentUri, type PaymentUriParams } from '@utils/payment-uri';
+import { encodePaymentUri, type PaymentAsset } from '@utils/payment-uri';
 import Decimal from 'decimal.js';
+import * as OxValue from 'ox/Value';
 import type React from 'react';
 import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -76,95 +77,70 @@ const Receive: React.FC<Props> = ({ navigation: _navigation }) => {
       return '';
     }
 
-    const protocol = currentNetwork.networkType === NetworkType.Conflux ? 'conflux' : 'ethereum';
-    const networkHint =
-      currentNetwork.networkType === NetworkType.Conflux
-        ? currentNetwork.netId
-          ? { netId: String(currentNetwork.netId) }
-          : undefined
-        : currentNetwork.chainId
-          ? { chainId: currentNetwork.chainId }
-          : undefined;
-
-    let params: PaymentUriParams | undefined;
-    if (effectiveSelectedAsset) {
-      const paramEntries: PaymentUriParams = {};
-      if (effectiveSelectedAsset.contractAddress) {
-        paramEntries.address = effectiveSelectedAsset.contractAddress;
-      }
-      if (effectiveAmount && effectiveAmount !== '0') {
-        const decimals = typeof effectiveSelectedAsset.decimals === 'number' ? effectiveSelectedAsset.decimals : 18;
-        const valueStr = new Decimal(effectiveAmount || 0).mul(Decimal.pow(10, decimals)).toFixed(0);
-        paramEntries.value = BigInt(valueStr);
-      }
-      if (Object.keys(paramEntries).length > 0) {
-        params = paramEntries;
-      }
-    }
-
+    const asset: PaymentAsset =
+      effectiveSelectedAsset?.type === ASSET_TYPE.ERC20 ? { type: 'erc20', contractAddress: effectiveSelectedAsset.contractAddress } : { type: 'native' };
+    const amountBaseUnits = effectiveAmount && effectiveAmount !== '0' ? OxValue.from(effectiveAmount, effectiveSelectedAsset?.decimals ?? 18) : undefined;
     return encodePaymentUri({
-      protocol,
-      address: currentAddressValue,
-      ...(networkHint ? { network: networkHint } : {}),
-      ...(effectiveSelectedAsset ? { method: 'transfer' } : {}),
-      ...(params ? { params } : {}),
+      networkType: currentNetwork.networkType,
+      chainId: BigInt(currentNetwork.chainId),
+      recipientAddress: currentAddressValue,
+      asset,
+      amountBaseUnits,
     });
   }, [currentAddressValue, currentNetwork, effectiveAmount, effectiveSelectedAsset]);
 
   return (
     <>
-      <BottomSheetRoute snapPoints={snapPoints.large}>
-        <BottomSheetWrapper>
-          <BottomSheetHeader title={t('receive.title')} />
-          <BottomSheetScrollContent>
-            <Text style={[styles.tip, { color: colors.textPrimary }]}>{t('receive.describe', { netName: currentNetwork?.name ?? '' })}</Text>
+      <SheetHeader title={t('receive.title')} />
+      <SheetScrollView>
+        <SheetBody>
+          <Text style={[styles.tip, { color: colors.textPrimary }]}>{t('receive.describe', { netName: currentNetwork?.name ?? '' })}</Text>
 
-            <View style={[styles.qrcodeWrapper, { paddingBottom: effectiveSelectedAsset ? 18 : 30, borderColor: colors.borderFourth }]}>
-              <QRCode
-                value={paymentUri}
-                size={172}
-                logo={Logo}
-                logoSize={40}
-                logoBackgroundColor="transparent"
-                backgroundColor={mode === 'light' ? 'white' : 'black'}
-                color={mode === 'light' ? 'black' : 'white'}
-              />
-              {effectiveSelectedAsset && (
-                <>
-                  <Text style={[styles.receive, { color: colors.textPrimary }]} numberOfLines={1} adjustsFontSizeToFit>
-                    {numberWithCommas(effectiveAmount)} {effectiveSelectedAsset.symbol}{' '}
+          <View style={[styles.qrcodeWrapper, { paddingBottom: effectiveSelectedAsset ? 18 : 30, borderColor: colors.borderFourth }]}>
+            <QRCode
+              value={paymentUri}
+              size={172}
+              logo={Logo}
+              logoSize={40}
+              logoBackgroundColor="transparent"
+              backgroundColor={mode === 'light' ? 'white' : 'black'}
+              color={mode === 'light' ? 'black' : 'white'}
+            />
+            {effectiveSelectedAsset && (
+              <>
+                <Text style={[styles.receive, { color: colors.textPrimary }]} numberOfLines={1} adjustsFontSizeToFit>
+                  {numberWithCommas(effectiveAmount)} {effectiveSelectedAsset.symbol}{' '}
+                </Text>
+                {price && price !== '0' && (
+                  <Text style={[styles.price, { color: colors.textSecondary }]} numberOfLines={1}>
+                    ≈ ${numberWithCommas(price)}
                   </Text>
-                  {price && price !== '0' && (
-                    <Text style={[styles.price, { color: colors.textSecondary }]} numberOfLines={1}>
-                      ≈ ${numberWithCommas(price)}
-                    </Text>
-                  )}
-                </>
-              )}
-            </View>
+                )}
+              </>
+            )}
+          </View>
 
-            <View style={styles.accountWrapper}>
-              <AccountItemView
-                nickname={currentAccount?.nickname}
-                addressValue={currentAddressValue}
-                colors={colors}
-                shorten={false}
-                showCopy
-                showUnderlay={false}
-                onPress={() => {
-                  if (!currentAddressValue) return;
-                  Clipboard.setString(currentAddressValue);
-                  showMessage({
-                    message: t('common.copied'),
-                    type: 'success',
-                    duration: 1500,
-                    width: 160,
-                  });
-                }}
-              />
-            </View>
-            <View style={styles.btnArea}>
-              {/* <Navigation
+          <View style={styles.accountWrapper}>
+            <AccountItemView
+              nickname={currentAccount?.nickname}
+              addressValue={currentAddressValue}
+              shorten={false}
+              showCopy
+              showUnderlay={false}
+              onPress={() => {
+                if (!currentAddressValue) return;
+                Clipboard.setString(currentAddressValue);
+                showMessage({
+                  message: t('common.copied'),
+                  type: 'success',
+                  duration: 1500,
+                  width: 160,
+                });
+              }}
+            />
+          </View>
+          <View style={styles.btnArea}>
+            {/* <Navigation
               title="Share"
               Icon={Share}
               onPress={() => {
@@ -177,26 +153,20 @@ const Receive: React.FC<Props> = ({ navigation: _navigation }) => {
                 });
               }}
             /> */}
-              <Navigation title={t('receive.selectAsset')} Icon={PoundKey} onPress={() => setShowSetAsset(true)} />
-            </View>
-          </BottomSheetScrollContent>
-        </BottomSheetWrapper>
-      </BottomSheetRoute>
-
-      {showSetAsset && (
-        <ReceiveSetAsset
-          isOpen={showSetAsset}
-          selectedAsset={effectiveSelectedAsset}
-          amount={effectiveAmount}
-          onConfirm={({ asset, amount }) => {
-            setSelectedAsset(asset);
-            if (amount) {
-              setAmount(amount);
-            }
-          }}
-          onClose={() => setShowSetAsset(false)}
-        />
-      )}
+            <Navigation title={t('receive.selectAsset')} Icon={PoundKey} onPress={() => setShowSetAsset(true)} />
+          </View>
+          <ReceiveSetAsset
+            isOpen={showSetAsset}
+            selectedAsset={effectiveSelectedAsset}
+            amount={effectiveAmount}
+            onConfirm={({ asset, amount }) => {
+              setSelectedAsset(asset);
+              setAmount(amount ?? '');
+            }}
+            onClose={() => setShowSetAsset(false)}
+          />
+        </SheetBody>
+      </SheetScrollView>
     </>
   );
 };

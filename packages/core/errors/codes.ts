@@ -56,9 +56,6 @@ export const RECEIVE_ASSETS_SYNC_FAILED = 'RECEIVE_ASSETS_SYNC_FAILED' as const;
 export const RECEIVE_ASSETS_SYNC_FETCH_FAILED = 'RECEIVE_ASSETS_SYNC_FETCH_FAILED' as const;
 export const RECEIVE_ASSETS_SYNC_DECODE_FAILED = 'RECEIVE_ASSETS_SYNC_DECODE_FAILED' as const;
 
-export const NFT_SYNC_FETCHER_NOT_CONFIGURED = 'NFT_SYNC_FETCHER_NOT_CONFIGURED' as const;
-export const NFT_SYNC_FETCH_FAILED = 'NFT_SYNC_FETCH_FAILED' as const;
-
 export type EventErrorCode = typeof EVENT_PAYLOAD_NOT_SERIALIZABLE;
 
 export type ChainErrorCode = typeof CHAIN_PROVIDER_NOT_FOUND;
@@ -96,7 +93,5 @@ export type WalletConnectErrorCode =
 
 export type AssetsSyncErrorCode = typeof ASSETS_SYNC_FAILED;
 export type ReceiveAssetsSyncErrorCode = typeof RECEIVE_ASSETS_SYNC_FAILED | typeof RECEIVE_ASSETS_SYNC_FETCH_FAILED | typeof RECEIVE_ASSETS_SYNC_DECODE_FAILED;
-
-export type NftSyncErrorCode = typeof NFT_SYNC_FETCHER_NOT_CONFIGURED | typeof NFT_SYNC_FETCH_FAILED;
 
 export type DbBootstrapErrorCode = typeof DB_BOOTSTRAP_INVALID_CONFIG | typeof DB_BOOTSTRAP_SEED_FAILED;

@@ -3,29 +3,26 @@ import CopyIcon from '@assets/icons/copy.svg';
 import ProhibitIcon from '@assets/icons/prohibit.svg';
 import QrCodeIcon from '@assets/icons/qr-code.svg';
 import SuccessIcon from '@assets/icons/success.svg';
-import { BottomSheetContent, BottomSheetFooter, BottomSheetHeader } from '@components/BottomSheet';
 import Button from '@components/Button';
 import Checkbox from '@components/Checkbox';
 import HourglassLoading from '@components/Loading/Hourglass';
+import { SheetFooter, SheetHeader, sheetLayoutStyles } from '@components/Sheet';
 import Text from '@components/Text';
 import TextInput from '@components/TextInput';
-import { BottomSheetFlatList } from '@gorhom/bottom-sheet';
 import { AccountItemView } from '@modules/AccountsList';
-import ExternalInputHandler from '@pages/ExternalInputHandler';
+import RecipientScannerSheet from '@pages/ExternalInputHandler/RecipientScannerSheet';
 import Clipboard from '@react-native-clipboard/clipboard';
 import { useTheme } from '@react-navigation/native';
-import { type SendTransactionScreenProps, type SendTransactionStep1StackName, SendTransactionStep2StackName } from '@router/configs';
+import { type SendTransactionStep1StackName, SendTransactionStep2StackName, type StackScreenProps } from '@router/configs';
 import { useAccounts, useCurrentAddress } from '@service/account';
 import { isContractAddress, isValidAddress } from '@service/address';
 import { useCurrentNetwork } from '@service/network';
 import { useRecentlyAddressesOfAddress } from '@service/transaction';
-import type { PaymentUriPayload } from '@utils/payment-uri';
 import { debounce, escapeRegExp, unionBy } from 'lodash-es';
 import type React from 'react';
 import { useCallback, useEffect, useState } from 'react';
 import { Trans, useTranslation } from 'react-i18next';
-import { Keyboard, Pressable, StyleSheet, View } from 'react-native';
-import SendTransactionBottomSheet from '../SendTransactionBottomSheet';
+import { FlatList, Keyboard, Pressable, StyleSheet, View } from 'react-native';
 import Contract from './Contract';
 import { styles as listStyles } from './Contract/RecentlyList';
 
@@ -34,7 +31,7 @@ enum AddressKind {
   Contract = 'Contract',
 }
 
-const SendTransactionStep1Receiver: React.FC<SendTransactionScreenProps<typeof SendTransactionStep1StackName>> = ({ navigation }) => {
+const SendTransactionStep1Receiver: React.FC<StackScreenProps<typeof SendTransactionStep1StackName>> = ({ navigation }) => {
   const { colors } = useTheme();
   const { t } = useTranslation();
   const { data: currentNetwork } = useCurrentNetwork();
@@ -122,10 +119,6 @@ const SendTransactionStep1Receiver: React.FC<SendTransactionScreenProps<typeof S
     [accounts, recentlyAddresses, currentNetwork],
   );
 
-  const handleCodeScan = useCallback(({ address }: PaymentUriPayload) => {
-    setReceiver(address);
-  }, []);
-
   useEffect(() => {
     searchFilterReceiver(receiver);
   }, [receiver, searchFilterReceiver]);
@@ -143,48 +136,43 @@ const SendTransactionStep1Receiver: React.FC<SendTransactionScreenProps<typeof S
   }, []);
 
   return (
-    <>
-      <SendTransactionBottomSheet isRoute useBottomSheetView={false}>
-        <BottomSheetHeader title={t('tx.send.title')}>
-          <Text style={[styles.receiver, { color: colors.textSecondary }]}>{t('tx.send.receiver')}</Text>
-          <TextInput
-            containerStyle={[
-              styles.textInput,
-              {
-                borderColor: filterAccounts.type === 'invalid' ? colors.down : colors.borderFourth,
-                borderBottomLeftRadius: !receiver ? 0 : 6,
-                borderBottomRightRadius: !receiver ? 0 : 6,
-              },
-            ]}
-            showVisible={false}
-            defaultHasValue={false}
-            value={receiver}
-            onChangeText={(val) => setReceiver(val)}
-            isInBottomSheet
-            // TODO: this max length need consider network
-            maxLength={200}
-            showClear={!!receiver}
-            placeholder={t('tx.send.placeholder')}
-            multiline
-          />
-          <View style={[styles.inputActionArea, { borderColor: colors.borderFourth }]}>
-            <Pressable style={[styles.inputAction, { justifyContent: 'flex-end', paddingRight: 44 }]} onPress={handlePressPaste} testID="paste">
-              <CopyIcon style={styles.inputActionIcon} color={colors.textPrimary} width={16} height={16} />
-              <Text style={[styles.inputActionText, { color: colors.textPrimary }]}>{t('tx.send.paste')}</Text>
-            </Pressable>
-            <Pressable style={[styles.inputAction, { justifyContent: 'flex-start', paddingLeft: 44 }]} onPress={handlePressScan} testID="scan">
-              <QrCodeIcon style={styles.inputActionIcon} color={colors.textPrimary} width={16} height={16} />
-              <Text style={[styles.inputActionText, { color: colors.textPrimary }]}>{t('tx.send.scan')}</Text>
-            </Pressable>
-          </View>
-        </BottomSheetHeader>
-        {!receiver && (
-          <BottomSheetContent>
-            <Contract setReceiver={setReceiver} />
-          </BottomSheetContent>
-        )}
+    <View collapsable={false} style={styles.container}>
+      <SheetHeader title={t('tx.send.title')}>
+        <Text style={[styles.receiver, { color: colors.textSecondary }]}>{t('tx.send.receiver')}</Text>
+        <TextInput
+          containerStyle={[
+            styles.textInput,
+            {
+              borderColor: filterAccounts.type === 'invalid' ? colors.down : colors.borderFourth,
+              borderBottomLeftRadius: !receiver ? 0 : 6,
+              borderBottomRightRadius: !receiver ? 0 : 6,
+            },
+          ]}
+          showVisible={false}
+          defaultHasValue={false}
+          value={receiver}
+          onChangeText={(val) => setReceiver(val)}
+          // TODO: this max length need consider network
+          maxLength={200}
+          showClear={!!receiver}
+          placeholder={t('tx.send.placeholder')}
+          multiline
+        />
+        <View style={[styles.inputActionArea, { borderColor: colors.borderFourth }]}>
+          <Pressable style={[styles.inputAction, { justifyContent: 'flex-end', paddingRight: 44 }]} onPress={handlePressPaste} testID="paste">
+            <CopyIcon style={styles.inputActionIcon} color={colors.textPrimary} width={16} height={16} />
+            <Text style={[styles.inputActionText, { color: colors.textPrimary }]}>{t('tx.send.paste')}</Text>
+          </Pressable>
+          <Pressable style={[styles.inputAction, { justifyContent: 'flex-start', paddingLeft: 44 }]} onPress={handlePressScan} testID="scan">
+            <QrCodeIcon style={styles.inputActionIcon} color={colors.textPrimary} width={16} height={16} />
+            <Text style={[styles.inputActionText, { color: colors.textPrimary }]}>{t('tx.send.scan')}</Text>
+          </Pressable>
+        </View>
+      </SheetHeader>
+      <View style={sheetLayoutStyles.scrollable}>
+        {!receiver && <Contract setReceiver={setReceiver} />}
         {receiver && (
-          <BottomSheetContent>
+          <>
             {filterAccounts.type === 'local-valid' && (
               <View style={[styles.checkResWarp, { marginTop: 8 }]}>
                 <ContractIcon color={colors.iconPrimary} />
@@ -192,13 +180,14 @@ const SendTransactionStep1Receiver: React.FC<SendTransactionScreenProps<typeof S
               </View>
             )}
             {filterAccounts.type === 'local-filter' && (
-              <BottomSheetFlatList
+              <FlatList
                 style={listStyles.container}
                 data={filterAccounts.assets}
+                keyboardShouldPersistTaps="handled"
+                nestedScrollEnabled
                 keyExtractor={(item) => item.addressValue}
                 renderItem={({ item }) => (
                   <AccountItemView
-                    colors={colors}
                     nickname={item.nickname}
                     addressValue={item.addressValue}
                     onPress={() => {
@@ -266,35 +255,38 @@ const SendTransactionStep1Receiver: React.FC<SendTransactionScreenProps<typeof S
                 )}
               </>
             )}
-          </BottomSheetContent>
+          </>
         )}
+        <RecipientScannerSheet isOpen={showScanQRCode} onConfirm={setReceiver} onClose={() => setShowScanQRCode(false)} />
+      </View>
 
-        {(filterAccounts.type === 'local-valid' || filterAccounts.type === AddressKind.Contract || filterAccounts.type === AddressKind.EOA) && (
-          <BottomSheetFooter innerPaddingHorizontal>
-            <Button
-              testID="next"
-              onPress={() => {
-                if (Keyboard.isVisible()) {
-                  Keyboard.dismiss();
-                }
-                navigation.navigate(SendTransactionStep2StackName, {
-                  recipientAddress: receiver,
-                });
-              }}
-              disabled={filterAccounts.type === AddressKind.Contract && !knowRisk}
-              size="small"
-            >
-              {t('common.next')}
-            </Button>
-          </BottomSheetFooter>
-        )}
-      </SendTransactionBottomSheet>
-      {showScanQRCode && <ExternalInputHandler onConfirm={handleCodeScan} onClose={() => setShowScanQRCode(false)} />}
-    </>
+      {(filterAccounts.type === 'local-valid' || filterAccounts.type === AddressKind.Contract || filterAccounts.type === AddressKind.EOA) && (
+        <SheetFooter>
+          <Button
+            testID="next"
+            onPress={() => {
+              if (Keyboard.isVisible()) {
+                Keyboard.dismiss();
+              }
+              navigation.navigate(SendTransactionStep2StackName, {
+                recipientAddress: receiver,
+              });
+            }}
+            disabled={filterAccounts.type === AddressKind.Contract && !knowRisk}
+            size="small"
+          >
+            {t('common.next')}
+          </Button>
+        </SheetFooter>
+      )}
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+  },
   receiver: {
     marginVertical: 16,
     fontSize: 14,

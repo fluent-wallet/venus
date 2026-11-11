@@ -1,7 +1,7 @@
 import ProhibitIcon from '@assets/icons/prohibit.svg';
 import WarnIcon from '@assets/icons/warn.svg';
-import { BottomSheetFooter, BottomSheetScrollContent } from '@components/BottomSheet';
 import Button from '@components/Button';
+import { SheetFooter, SheetHeader, SheetScrollView } from '@components/Sheet';
 import Text from '@components/Text';
 import { buildTransactionPayload } from '@core/chains/utils/transactionBuilder';
 import { AUTH_PASSWORD_REQUEST_CANCELED } from '@core/errors';
@@ -14,7 +14,7 @@ import GasFeeSetting, { type GasEstimate } from '@modules/GasFee/GasFeeSetting';
 import EstimateFee from '@modules/GasFee/GasFeeSetting/EstimateFee';
 import { getGasSettingPrimaryFee, isEip1559GasSetting } from '@modules/GasFee/GasFeeSetting/gasSetting';
 import { useNavigation, useTheme } from '@react-navigation/native';
-import type { SendTransactionScreenProps, SendTransactionStep4StackName, StackNavigation } from '@router/configs';
+import type { SendTransactionStep4StackName, StackNavigation, StackScreenProps } from '@router/configs';
 import { useCurrentAccount, useCurrentAddress } from '@service/account';
 import { useAssetsOfCurrentAddress } from '@service/asset';
 import { getAssetsSyncService } from '@service/core';
@@ -32,7 +32,6 @@ import { useTranslation } from 'react-i18next';
 import { Keyboard, StyleSheet, View } from 'react-native';
 import { showMessage } from 'react-native-flash-message';
 import HardwareSignVerify from '../HardwareSignVerify';
-import SendTransactionBottomSheet from '../SendTransactionBottomSheet';
 import { NFT } from '../Step3Amount';
 import SendAsset from './SendAsset';
 import { useHardwareSigningUiState } from './useHardwareSigningUiState';
@@ -48,7 +47,7 @@ const isUserCanceledError = (error: unknown): boolean => {
   return false;
 };
 
-const SendTransactionStep4Confirm: React.FC<SendTransactionScreenProps<typeof SendTransactionStep4StackName>> = ({ navigation, route }) => {
+const SendTransactionStep4Confirm: React.FC<StackScreenProps<typeof SendTransactionStep4StackName>> = ({ navigation, route }) => {
   useEffect(() => Keyboard.dismiss(), []);
   const { t } = useTranslation();
   const { colors } = useTheme();
@@ -194,7 +193,9 @@ const SendTransactionStep4Confirm: React.FC<SendTransactionScreenProps<typeof Se
         icon: 'loading' as unknown as undefined,
       });
 
-      backToHome(navigation);
+      if (navigation.isFocused()) {
+        backToHome(navigation);
+      }
 
       try {
         void getAssetsSyncService().refreshCurrent({ reason: 'manual' });
@@ -269,99 +270,94 @@ const SendTransactionStep4Confirm: React.FC<SendTransactionScreenProps<typeof Se
     Boolean(currentAccount?.isHardwareWallet) && Boolean(hardwareSignState) && (hardwareSignState?.phase === 'start' || hardwareSignState?.phase === 'error');
 
   return (
-    <>
-      <SendTransactionBottomSheet
-        title={t('tx.confirm.title')}
-        enablePanDownToClose={!inSending}
-        enableContentPanningGesture={!inSending}
-        enableHandlePanningGesture={!inSending}
-        isRoute
-        useBottomSheetView={false}
+    <View collapsable={false} style={styles.container}>
+      <SheetHeader title={t('tx.confirm.title')} />
+      <SheetScrollView
+        // only support android: https://reactnative.dev/docs/scrollview#persistentscrollbar-android
+        persistentScrollbar
       >
-        <BottomSheetScrollContent
-          // only support android: https://reactnative.dev/docs/scrollview#persistentscrollbar-android
-          persistentScrollbar
-        >
-          <Text style={[styles.sendTitle, { color: colors.textPrimary, marginBottom: isSmallDevice ? 16 : 24 }]}>{t('common.send')}</Text>
+        <Text style={[styles.sendTitle, { color: colors.textPrimary, marginBottom: isSmallDevice ? 16 : 24 }]}>{t('common.send')}</Text>
 
-          {nftItemDetail && <NFT colors={colors} asset={asset} nftItemDetail={nftItemDetail} />}
-          <SendAsset
-            amount={asset.type !== AssetType.ERC721 ? (nftItemDetail ? amount : formattedAmount) : undefined}
-            symbol={asset.type !== AssetType.ERC721 ? symbol : undefined}
-            price={price}
-            icon={asset.type === AssetType.Native || asset.type === AssetType.ERC20 ? asset.icon : undefined}
-            recipientAddress={recipientAddress}
-          />
-        </BottomSheetScrollContent>
-        <BottomSheetFooter>
-          <View style={[styles.divider, { backgroundColor: colors.borderFourth, marginVertical: isSmallDevice ? 16 : 24 }]} />
-
-          <Text style={[styles.signWith, { color: colors.textSecondary }]}>{t('tx.confirm.signingWith')}</Text>
-          <AccountItemView nickname={currentAccount?.nickname} addressValue={currentAddressValue} colors={colors}>
-            <Text style={[styles.networkName, { color: colors.textSecondary }]} numberOfLines={1}>
-              on {currentNetwork?.name}
-            </Text>
-          </AccountItemView>
-
-          <Text style={[styles.estimateFee, { color: colors.textSecondary }]}>{t('tx.confirm.estimatedFee')}</Text>
-          <EstimateFee
-            gasSetting={gasEstimate?.gasSetting}
-            advanceSetting={gasEstimate?.advanceSetting ?? gasEstimate?.estimateAdvanceSetting}
-            onPressSettingIcon={() => setShowGasFeeSetting(true)}
-            onGasCostChange={(newGasCost) => setGasCost(newGasCost)}
-          />
-
-          {error && (
-            <>
-              <View style={[styles.divider, { backgroundColor: colors.borderFourth, marginVertical: isSmallDevice ? 16 : 24 }]} />
-              {error.type === 'out of balance' ? (
-                <View style={styles.errorWarp}>
-                  <WarnIcon style={styles.errorIcon} color={colors.middle} width={24} height={24} />
-                  <Text style={[styles.errorText, { color: colors.middle }]}>
-                    {`${asset.type === AssetType.Native ? t('tx.confirm.error.InsufficientBalance', { symbol: nativeAsset?.symbol }) : t('tx.confirm.error.InsufficientBalanceForGas', { symbol: nativeAsset?.symbol })}`}
-                  </Text>
-                </View>
-              ) : (
-                <View style={styles.errorWarp}>
-                  <ProhibitIcon style={styles.errorIcon} width={24} height={24} />
-                  {error.type === 'network error' ? (
-                    <Text style={[styles.errorText, { color: colors.down }]}>{t('tx.confirm.error.network')}</Text>
-                  ) : (
-                    <Text style={[styles.errorText, { color: colors.down }]}>{t('tx.confirm.error.unknown')}</Text>
-                  )}
-                </View>
-              )}
-            </>
-          )}
-
-          <View style={[styles.btnArea, { marginTop: error ? 16 : 40 }]}>
-            <Button testID="cancel" style={styles.btn} size="small" onPress={() => backToHome(navigation)} disabled={inSending}>
-              {t('common.cancel')}
-            </Button>
-            <Button testID="send" style={styles.btn} size="small" disabled={!gasEstimate} onPress={handleSend} loading={inSending}>
-              {error ? t('common.retry') : t('common.send')}
-            </Button>
-          </View>
-        </BottomSheetFooter>
-      </SendTransactionBottomSheet>
-
-      {showHardwareSignVerify && hardwareSignState && (
+        {nftItemDetail && <NFT colors={colors} asset={asset} nftItemDetail={nftItemDetail} />}
+        <SendAsset
+          amount={asset.type !== AssetType.ERC721 ? (nftItemDetail ? amount : formattedAmount) : undefined}
+          symbol={asset.type !== AssetType.ERC721 ? symbol : undefined}
+          price={price}
+          icon={asset.type === AssetType.Native || asset.type === AssetType.ERC20 ? asset.icon : undefined}
+          recipientAddress={recipientAddress}
+        />
         <HardwareSignVerify
-          state={hardwareSignState}
+          state={showHardwareSignVerify ? hardwareSignState : null}
           onClose={() => {
             abortRef.current?.abort();
             clearHardwareSignState();
           }}
           onRetry={handleSend}
         />
-      )}
 
-      <GasFeeSetting show={showGasFeeSetting} tx={txHalf} onClose={() => setShowGasFeeSetting(false)} onConfirm={setGasEstimate} />
-    </>
+        <GasFeeSetting show={showGasFeeSetting} tx={txHalf} onClose={() => setShowGasFeeSetting(false)} onConfirm={setGasEstimate} />
+      </SheetScrollView>
+      <SheetFooter style={styles.footer}>
+        <View style={[styles.divider, { backgroundColor: colors.borderFourth, marginVertical: isSmallDevice ? 16 : 24 }]} />
+
+        <Text style={[styles.signWith, { color: colors.textSecondary }]}>{t('tx.confirm.signingWith')}</Text>
+        <AccountItemView nickname={currentAccount?.nickname} addressValue={currentAddressValue}>
+          <Text style={[styles.networkName, { color: colors.textSecondary }]} numberOfLines={1}>
+            on {currentNetwork?.name}
+          </Text>
+        </AccountItemView>
+
+        <Text style={[styles.estimateFee, { color: colors.textSecondary }]}>{t('tx.confirm.estimatedFee')}</Text>
+        <EstimateFee
+          gasSetting={gasEstimate?.gasSetting}
+          advanceSetting={gasEstimate?.advanceSetting ?? gasEstimate?.estimateAdvanceSetting}
+          onPressSettingIcon={() => setShowGasFeeSetting(true)}
+          onGasCostChange={(newGasCost) => setGasCost(newGasCost)}
+        />
+
+        {error && (
+          <>
+            <View style={[styles.divider, { backgroundColor: colors.borderFourth, marginVertical: isSmallDevice ? 16 : 24 }]} />
+            {error.type === 'out of balance' ? (
+              <View style={styles.errorWarp}>
+                <WarnIcon style={styles.errorIcon} color={colors.middle} width={24} height={24} />
+                <Text style={[styles.errorText, { color: colors.middle }]}>
+                  {`${asset.type === AssetType.Native ? t('tx.confirm.error.InsufficientBalance', { symbol: nativeAsset?.symbol }) : t('tx.confirm.error.InsufficientBalanceForGas', { symbol: nativeAsset?.symbol })}`}
+                </Text>
+              </View>
+            ) : (
+              <View style={styles.errorWarp}>
+                <ProhibitIcon style={styles.errorIcon} width={24} height={24} />
+                {error.type === 'network error' ? (
+                  <Text style={[styles.errorText, { color: colors.down }]}>{t('tx.confirm.error.network')}</Text>
+                ) : (
+                  <Text style={[styles.errorText, { color: colors.down }]}>{t('tx.confirm.error.unknown')}</Text>
+                )}
+              </View>
+            )}
+          </>
+        )}
+
+        <View style={[styles.btnArea, { marginTop: error ? 16 : 40 }]}>
+          <Button testID="cancel" style={styles.btn} size="small" onPress={() => backToHome(navigation)} disabled={inSending}>
+            {t('common.cancel')}
+          </Button>
+          <Button testID="send" style={styles.btn} size="small" disabled={!gasEstimate} onPress={handleSend} loading={inSending}>
+            {error ? t('common.retry') : t('common.send')}
+          </Button>
+        </View>
+      </SheetFooter>
+    </View>
   );
 };
 
 export const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+  },
+  footer: {
+    paddingHorizontal: 0,
+  },
   sendTitle: {
     marginTop: 16,
     paddingHorizontal: 16,

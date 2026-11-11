@@ -11,7 +11,7 @@ jobs:
   versions:
     uses: ./.github/workflows/versions.yml
     with:
-      branch: main
+      commitSha: ${{ github.sha }}
 
   createTag:
     needs: [versions]
@@ -25,10 +25,10 @@ jobs:
     secrets: inherit
     with:
       environment: prod
-      branch: main
+      commitSha: ${{ github.sha }}
+      displayVersion: ${{ needs.versions.outputs.PROD_VERSION }}
       artifactName: app-prod-release.apk
       buildAAB: false
-      appVersion: ${{ needs.versions.outputs.PROD_VERSION }}
 
   upload-to-release:
     name: upload to release
@@ -36,12 +36,12 @@ jobs:
     needs: [versions,android-build]
     steps:
       - name: Download artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
           name: app-prod-release.apk
           path: .
       - name: Release
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@efb35369e0ad2afab669f228072c1b0d510eae64 # v3.0.3
         with:
           tag_name: ${{ needs.versions.outputs.PROD_TAG }}
           name: ${{ needs.versions.outputs.PROD_TAG }}
@@ -73,9 +73,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Check out Git repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          ref: main
+          ref: ${{ github.sha }}
 
       - name: install OSSUTIL
         run: |
@@ -105,5 +105,5 @@ jobs:
     secrets: inherit
     with:
       environment: prod
-      branch: main
-      appVersion: ${{ needs.versions.outputs.PROD_VERSION }}
+      commitSha: ${{ github.sha }}
+      displayVersion: ${{ needs.versions.outputs.PROD_VERSION }}

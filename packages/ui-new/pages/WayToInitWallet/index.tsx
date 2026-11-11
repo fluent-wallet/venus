@@ -16,12 +16,12 @@ import { getHardwareWalletService } from '@service/core';
 import { handleBSIMHardwareUnavailable } from '@utils/handleBSIMHardwareUnavailable';
 import { Image } from 'expo-image';
 import type React from 'react';
-import { useCallback, useRef } from 'react';
+import { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ImageBackground, Keyboard, Platform, ScrollView, StyleSheet, View } from 'react-native';
+import { Keyboard, Platform, ScrollView, StyleSheet, View } from 'react-native';
 import { showMessage } from 'react-native-flash-message';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import ImportExistingWallet, { type BottomSheetMethods } from './ImportExistingWallet';
+import ImportExistingWallet from './ImportExistingWallet';
 import LottieAnimation from './lottie';
 
 export const showNotFindBSIMCardMessage = () =>
@@ -68,11 +68,13 @@ const WayToInitWallet: React.FC<StackScreenProps<typeof WayToInitWalletStackName
 
   const { inAsync: inConnecting, execAsync: handleConnectBSIMCard } = useInAsync(_handleConnectBSIMCard);
 
-  const bottomSheetRef = useRef<BottomSheetMethods>(null!);
-  const bsimDeviceSheetRef = useRef<BottomSheetMethods>(null!);
+  const [showImportExistingWallet, setShowImportExistingWallet] = useState(false);
+  const [showBsimDeviceSheet, setShowBsimDeviceSheet] = useState(false);
+
   return (
     <>
-      <ImageBackground source={WelcomeBgDark} style={styles.bg} resizeMode="cover">
+      <View style={styles.bg}>
+        <Image source={WelcomeBgDark} style={StyleSheet.absoluteFill} contentFit="cover" pointerEvents="none" />
         <ScrollView>
           <View style={{ paddingTop: insets.top, paddingRight: insets.right, paddingLeft: insets.left, paddingBottom: insets.bottom }}>
             <View style={styles.container}>
@@ -87,7 +89,7 @@ const WayToInitWallet: React.FC<StackScreenProps<typeof WayToInitWalletStackName
                 textAlign="left"
                 Icon={ArrowRight}
                 style={styles.btn}
-                onPress={Platform.OS === 'ios' ? () => bsimDeviceSheetRef.current?.expand() : () => handleConnectBSIMCard()}
+                onPress={Platform.OS === 'ios' ? () => setShowBsimDeviceSheet(true) : () => handleConnectBSIMCard()}
                 loading={inConnecting}
                 mode="dark"
               >
@@ -105,16 +107,17 @@ const WayToInitWallet: React.FC<StackScreenProps<typeof WayToInitWalletStackName
                 {t('welcome.createNewWallet')}
               </Button>
 
-              <Button testID="importExistingWallet" textAlign="left" style={styles.btnLast} onPress={() => bottomSheetRef.current?.expand()} mode="dark">
+              <Button testID="importExistingWallet" textAlign="left" style={styles.btnLast} onPress={() => setShowImportExistingWallet(true)} mode="dark">
                 {t('welcome.importExistingWallet')}
               </Button>
             </View>
           </View>
         </ScrollView>
-      </ImageBackground>
+      </View>
       <ImportExistingWallet
-        bottomSheetRef={bottomSheetRef}
-        onSuccessConfirm={(value) => {
+        isOpen={showImportExistingWallet}
+        onClose={() => setShowImportExistingWallet(false)}
+        onConfirm={(value) => {
           navigation.navigate(BiometricsWayStackName, { type: 'importExistWallet', value });
           if (Keyboard.isVisible()) {
             Keyboard.dismiss();
@@ -123,7 +126,8 @@ const WayToInitWallet: React.FC<StackScreenProps<typeof WayToInitWalletStackName
       />
 
       <BSIMDeviceSelectSheet
-        bottomSheetRef={bsimDeviceSheetRef}
+        isOpen={showBsimDeviceSheet}
+        onClose={() => setShowBsimDeviceSheet(false)}
         onConnect={handleConnectBSIMCard}
         onScanError={(error) => {
           if (handleBSIMHardwareUnavailable(error, navigation)) return;

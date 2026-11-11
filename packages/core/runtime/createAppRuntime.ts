@@ -7,7 +7,6 @@ import { CryptoToolServer, createCryptoToolModule } from '@core/modules/crypto';
 import { createDbModule, DbBootstrapModule } from '@core/modules/db';
 import { EventBusModule } from '@core/modules/eventBus';
 import { ExternalRequestsModule } from '@core/modules/externalRequests';
-import { NftSyncModule } from '@core/modules/nftSync';
 import { ReceiveAssetsSyncModule } from '@core/modules/receiveAssetsSync';
 import { ServicesModule } from '@core/modules/services';
 import { TxSyncModule } from '@core/modules/txSync';
@@ -45,9 +44,6 @@ export function createAppRuntime(options: CreateAppRuntimeOptions): ModuleManage
 
     // Pending tx refresh after legacy trackers are removed.
     TxSyncModule,
-
-    // NFT sync is event-driven by default (polling is controlled by runtime config).
-    NftSyncModule,
   ]);
 
   return manager;

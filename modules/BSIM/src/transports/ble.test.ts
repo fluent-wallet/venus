@@ -618,6 +618,37 @@ describe('startBleDeviceScan', () => {
     expect(onDevice).toHaveBeenCalledTimes(1);
   });
 
+  it('cleans up the adapter wait on stop and ignores late readiness or errors', async () => {
+    const mock = createMockManager({ initialState: State.Unknown });
+    setPlxMockBleManager(mock.manager);
+    const onDevice = jest.fn();
+    const onError = jest.fn();
+
+    const scanHandle = startBleDeviceScan(undefined, onDevice, onError);
+    await flushMicrotasks(4);
+
+    const stateChanges = jest.mocked(mock.manager.onStateChange);
+    const subscription = stateChanges.mock.results[0].value;
+    const onStateChange = stateChanges.mock.calls[0][0];
+    expect(jest.getTimerCount()).toBe(1);
+
+    scanHandle.stop();
+    scanHandle.stop();
+
+    expect(subscription.remove).toHaveBeenCalledTimes(1);
+    expect(jest.getTimerCount()).toBe(0);
+    expect(mock.manager.stopDeviceScan).toHaveBeenCalledTimes(1);
+    expect(mock.manager.destroy).toHaveBeenCalledTimes(1);
+
+    onStateChange(State.PoweredOn);
+    onStateChange(State.Unauthorized);
+    await jest.advanceTimersByTimeAsync(10_000);
+
+    expect(mock.manager.startDeviceScan).not.toHaveBeenCalled();
+    expect(onDevice).not.toHaveBeenCalled();
+    expect(onError).not.toHaveBeenCalled();
+  });
+
   it('calls onError once and stops scanning when scan returns error', async () => {
     const mock = createMockManager();
     setPlxMockBleManager(mock.manager);

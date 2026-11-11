@@ -1,5 +1,4 @@
 import i18n from '@assets/i18n';
-import type { CoreEventMap } from '@core/modules/eventBus';
 import type { ExternalRequestSnapshot } from '@core/modules/externalRequests';
 import { parseEvmRpcTransactionRequest } from '@core/services/transaction';
 import { StackActions } from '@react-navigation/native';
@@ -10,7 +9,6 @@ import {
   TooManyPendingStackName,
   WalletConnectProposalStackName,
   WalletConnectSignMessageStackName,
-  WalletConnectStackName,
   WalletConnectTransactionStackName,
 } from '@router/configs';
 import { useQueryClient } from '@tanstack/react-query';
@@ -31,7 +29,6 @@ import {
   type IAsset,
 } from './core';
 import { getNetworkRootKey } from './network';
-import { getNftItemsKey } from './nft';
 import { getSignatureRootKey } from './signature';
 import { getTransactionRootKey } from './transaction';
 import { getWalletConnectRootKey } from './walletConnectKeys';
@@ -102,19 +99,6 @@ export function useRuntimeEventBridge(navigation: StackNavigation) {
       void queryClient.invalidateQueries({ queryKey: getWalletConnectRootKey() });
     };
 
-    const syncNftItemsSnapshot = (payload: CoreEventMap['nft-sync/succeeded']) => {
-      queryClient.setQueryData(
-        getNftItemsKey(payload.key.addressId, payload.key.contractAddress),
-        payload.snapshot.items.map((item) => ({
-          tokenId: item.tokenId,
-          name: item.name,
-          description: item.description ?? null,
-          icon: item.icon ?? null,
-          amount: item.amount,
-        })),
-      );
-    };
-
     const clearActiveCredentialRequest = (requestId: string) => {
       if (activeCredentialRequestIdRef.current === requestId) {
         activeCredentialRequestIdRef.current = null;
@@ -172,8 +156,8 @@ export function useRuntimeEventBridge(navigation: StackNavigation) {
 
       if (req.kind === 'session_proposal') {
         const route = {
-          name: WalletConnectStackName,
-          params: { screen: WalletConnectProposalStackName, params: { requestId: payload.requestId, request: req } },
+          name: WalletConnectProposalStackName,
+          params: { requestId: payload.requestId, request: req },
         } as const;
 
         if (shouldReplaceLinking) navigation.dispatch(StackActions.replace(route.name, route.params));
@@ -184,8 +168,8 @@ export function useRuntimeEventBridge(navigation: StackNavigation) {
       if (req.kind === 'session_request') {
         if (isRuntimeWcSignMessageRequest(req)) {
           const route = {
-            name: WalletConnectStackName,
-            params: { screen: WalletConnectSignMessageStackName, params: { requestId: payload.requestId, request: req } },
+            name: WalletConnectSignMessageStackName,
+            params: { requestId: payload.requestId, request: req },
           } as const;
 
           if (shouldReplaceLinking) navigation.dispatch(StackActions.replace(route.name, route.params));
@@ -232,8 +216,8 @@ export function useRuntimeEventBridge(navigation: StackNavigation) {
             }
 
             const route = {
-              name: WalletConnectStackName,
-              params: { screen: WalletConnectTransactionStackName, params: { requestId: payload.requestId, request: req, isContract } },
+              name: WalletConnectTransactionStackName,
+              params: { requestId: payload.requestId, request: req, isContract },
             } as const;
 
             if (shouldReplaceLinking) navigation.dispatch(StackActions.replace(route.name, route.params));
@@ -261,8 +245,6 @@ export function useRuntimeEventBridge(navigation: StackNavigation) {
       eventBus.on('receive-assets-sync/succeeded', invalidateAsset),
 
       eventBus.on('wallet-connect/sessions-changed', invalidateWalletConnect),
-
-      eventBus.on('nft-sync/succeeded', syncNftItemsSnapshot),
 
       eventBus.on('auth/credential-requested', handleCredentialRequested),
 

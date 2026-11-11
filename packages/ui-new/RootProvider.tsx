@@ -1,6 +1,6 @@
-import { buildScanOpenApiKey } from '@core/modules/nftSync';
 import { createAppRuntime } from '@core/runtime/createAppRuntime';
 import type { RuntimeConfig } from '@core/runtime/types';
+import { buildScanOpenApiKey } from '@core/services/nft/confluxScan';
 import { Networks, NetworkType } from '@core/utils/consts';
 import type { WalletKitTypes } from '@reown/walletkit';
 import { setUiQueryClient, setUiServiceContainer } from '@service/core';
@@ -72,12 +72,11 @@ const RUNTIME_CONFIG: RuntimeConfig = {
       backgroundPollIntervalMs: 60_000,
       scanIntervalMs: 60_000,
     },
-    nft: {
-      pollIntervalMs: LEGACY_TRACKER_POLL_INTERVAL_MS,
-      scanOpenApiByKey: {
-        [buildScanOpenApiKey({ networkType: NetworkType.Ethereum, chainId: Networks['Conflux eSpace'].chainId })]: Networks['Conflux eSpace'].scanOpenAPI,
-        [buildScanOpenApiKey({ networkType: NetworkType.Ethereum, chainId: Networks['eSpace Testnet'].chainId })]: Networks['eSpace Testnet'].scanOpenAPI,
-      },
+  },
+  nft: {
+    scanOpenApiByKey: {
+      [buildScanOpenApiKey({ networkType: NetworkType.Ethereum, chainId: Networks['Conflux eSpace'].chainId })]: Networks['Conflux eSpace'].scanOpenAPI,
+      [buildScanOpenApiKey({ networkType: NetworkType.Ethereum, chainId: Networks['eSpace Testnet'].chainId })]: Networks['eSpace Testnet'].scanOpenAPI,
     },
   },
 };

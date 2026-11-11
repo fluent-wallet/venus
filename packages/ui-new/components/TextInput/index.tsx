@@ -2,11 +2,21 @@ import Clear from '@assets/icons/clear.svg';
 import EyeClose from '@assets/icons/eye-close.svg';
 import EyeOpen from '@assets/icons/eye-open.svg';
 import composeRef from '@cfx-kit/react-utils/dist/composeRef';
-import { BottomSheetTextInput } from '@components/BottomSheet';
 import { useTheme } from '@react-navigation/native';
 import { isDev } from '@utils/getEnv';
-import { type Component, forwardRef, isValidElement, useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Keyboard, Platform, Pressable, type StyleProp, StyleSheet, TextInput, type TextInputProps, View, type ViewStyle } from 'react-native';
+import { type Component, forwardRef, isValidElement, useCallback, useEffect, useRef, useState } from 'react';
+import {
+  Keyboard,
+  Platform,
+  Pressable,
+  type StyleProp,
+  StyleSheet,
+  TextInput,
+  type TextInputInstance,
+  type TextInputProps,
+  View,
+  type ViewStyle,
+} from 'react-native';
 import type { SvgProps } from 'react-native-svg';
 
 interface Props extends TextInputProps {
@@ -15,12 +25,11 @@ interface Props extends TextInputProps {
   showClear?: boolean;
   defaultHasValue?: boolean;
   disabled?: boolean;
-  isInBottomSheet?: boolean;
   SuffixIcon?: typeof Component<SvgProps> | React.ReactNode;
   onPressSuffixIcon?: () => void;
 }
 
-const CustomTextInput = forwardRef<TextInput, Props>(
+const CustomTextInput = forwardRef<TextInputInstance, Props>(
   (
     {
       style,
@@ -31,7 +40,6 @@ const CustomTextInput = forwardRef<TextInput, Props>(
       value,
       defaultHasValue,
       onChangeText,
-      isInBottomSheet,
       secureTextEntry,
       SuffixIcon,
       onPressSuffixIcon,
@@ -40,8 +48,6 @@ const CustomTextInput = forwardRef<TextInput, Props>(
     _forwardRef,
   ) => {
     const { colors } = useTheme();
-
-    const UsedTextInput = useMemo(() => (isInBottomSheet ? BottomSheetTextInput : TextInput), [isInBottomSheet]);
 
     const [visible, setVisible] = useState(isDev);
     const [hasValue, setHasValue] = useState(() => (value !== undefined ? !!value : (defaultHasValue ?? isDev)));
@@ -54,7 +60,7 @@ const CustomTextInput = forwardRef<TextInput, Props>(
       [onChangeText],
     );
 
-    const inputRef = useRef<TextInput>(null!);
+    const inputRef = useRef<TextInputInstance>(null!);
 
     const handlePressClear = useCallback(() => {
       inputRef.current?.clear?.();
@@ -70,7 +76,7 @@ const CustomTextInput = forwardRef<TextInput, Props>(
 
     return (
       <View style={[styles.defaultContainerStyle, { backgroundColor: colors.bgSecondary }, containerStyle]}>
-        <UsedTextInput
+        <TextInput
           ref={composeRef([inputRef, _forwardRef as any])}
           style={[
             styles.defaultInputStyle,

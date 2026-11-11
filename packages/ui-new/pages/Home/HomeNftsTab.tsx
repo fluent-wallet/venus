@@ -1,25 +1,26 @@
 import NoneNFT from '@assets/images/none-NFT.webp';
 import Text from '@components/Text';
 import { shouldShowNftCollectionsSkeleton } from '@modules/AssetsList/NFTsList/helpers';
-import { NftCollectionRow } from '@modules/AssetsList/NFTsList/NftCollectionRow';
+import { NftListRow } from '@modules/AssetsList/NFTsList/NftListRow';
 import { SkeletonList as NftSkeletonList } from '@modules/AssetsList/NFTsList/Skeleton';
+import { type NftListRowData, useNftList } from '@modules/AssetsList/NFTsList/useNftList';
 import { styles as emptyStyles } from '@modules/AssetsList/TokensList/ReceiveFunds';
-import { useTheme } from '@react-navigation/native';
+import { useIsFocused, useTheme } from '@react-navigation/native';
 import { useCurrentAddress } from '@service/account';
 import type { INftCollection } from '@service/core';
-import { useNftCollectionsOfAddress } from '@service/nft';
+import { useNftCollectionsOfAddress, useNftListState } from '@service/nft';
 import { Image } from 'expo-image';
 import type React from 'react';
-import { type RefObject, useCallback, useMemo } from 'react';
+import { useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import type { GestureType } from 'react-native-gesture-handler';
-import type { SharedValue } from 'react-native-reanimated';
-import { type HomeFlatListRef, HomeTabList } from './HomeTabList';
+import { HomeTabList } from './HomeTabList';
+import type { HomeTabScrollBinding } from './useHomeTabScroll';
 
-export type HomeNftsRow =
-  | { key: 'nfts-skeletons'; kind: 'nfts-skeletons' }
-  | { key: 'nfts-empty'; kind: 'nfts-empty' }
-  | { key: string; kind: 'nft-collection'; addressId: string; index: number; collection: INftCollection };
+const EMPTY_COLLECTIONS: INftCollection[] = [];
+type HomeNftsRow = NftListRowData | { key: 'nfts-skeletons'; kind: 'nfts-skeletons' } | { key: 'nfts-empty'; kind: 'nfts-empty' };
+const getItemType = (row: HomeNftsRow) => row.kind;
+// Home cards keep press feedback without opening a detail screen.
+const handleNftPress = () => undefined;
 
 const NftsEmptyState: React.FC = () => {
   const { colors } = useTheme();
@@ -34,19 +35,23 @@ const NftsEmptyState: React.FC = () => {
 };
 
 export const HomeNftsTab: React.FC<{
-  flatListRef: RefObject<HomeFlatListRef<HomeNftsRow> | null>;
+  scroll: HomeTabScrollBinding;
   topInset: number;
-  onLayoutHeightChange?: (height: number) => void;
-  onContentHeightChange?: (height: number) => void;
-  scrollOffset: SharedValue<number>;
-  sharedScrollY: SharedValue<number>;
+  minimumContentHeight: number;
+  stickyHeaderOffset: number;
   isActive: boolean;
-  scrollGesture: GestureType;
-}> = ({ flatListRef, topInset, onLayoutHeightChange, onContentHeightChange, scrollOffset, sharedScrollY, isActive, scrollGesture }) => {
+}> = ({ scroll, topInset, minimumContentHeight, stickyHeaderOffset, isActive }) => {
+  const isFocused = useIsFocused();
+  const enabled = isActive && isFocused;
   const currentAddressQuery = useCurrentAddress();
   const addressId = currentAddressQuery.data?.id ?? '';
-  const collectionsQuery = useNftCollectionsOfAddress(addressId);
-  const collections = collectionsQuery.data ?? [];
+  const collectionsQuery = useNftCollectionsOfAddress(addressId, { enabled });
+  const collections = collectionsQuery.data ?? EMPTY_COLLECTIONS;
+  const nftListState = useNftListState(addressId);
+  const { rows, stickyHeaderIndices, onPressCollection, onViewableItemsChanged, viewabilityConfig } = useNftList(nftListState, collections, {
+    enabled,
+  });
+  const stickyHeaderConfig = useMemo(() => ({ offset: stickyHeaderOffset }), [stickyHeaderOffset]);
   const shouldShowSkeleton = shouldShowNftCollectionsSkeleton({
     addressId,
     collectionsCount: collections.length,
@@ -63,40 +68,35 @@ export const HomeNftsTab: React.FC<{
       return [{ key: 'nfts-empty', kind: 'nfts-empty' }];
     }
 
-    return collections.map((collection, index) => ({
-      key: collection.id,
-      kind: 'nft-collection',
-      addressId,
-      index,
-      collection,
-    }));
-  }, [addressId, collections, shouldShowSkeleton]);
+    return rows;
+  }, [collections.length, rows, shouldShowSkeleton]);
 
-  const renderContentItem = useCallback((item: HomeNftsRow) => {
-    switch (item.kind) {
-      case 'nfts-skeletons':
-        return <NftSkeletonList />;
-      case 'nfts-empty':
-        return <NftsEmptyState />;
-      case 'nft-collection':
-        return <NftCollectionRow addressId={item.addressId} collection={item.collection} index={item.index} background="home" onSelect={() => undefined} />;
-      default:
-        return null;
-    }
-  }, []);
+  const renderContentItem = useCallback(
+    (item: HomeNftsRow) => {
+      switch (item.kind) {
+        case 'nfts-skeletons':
+          return <NftSkeletonList />;
+        case 'nfts-empty':
+          return <NftsEmptyState />;
+        default:
+          return <NftListRow row={item} background="home" onPressCollection={onPressCollection} onSelect={handleNftPress} />;
+      }
+    },
+    [onPressCollection],
+  );
 
   return (
     <HomeTabList
-      flatListRef={flatListRef}
+      scroll={scroll}
       contentRows={contentRows}
       renderContentItem={renderContentItem}
       topInset={topInset}
-      onLayoutHeightChange={onLayoutHeightChange}
-      onContentHeightChange={onContentHeightChange}
-      scrollOffset={scrollOffset}
-      sharedScrollY={sharedScrollY}
-      isActive={isActive}
-      scrollGesture={scrollGesture}
+      minimumContentHeight={minimumContentHeight}
+      getItemType={getItemType}
+      stickyHeaderIndices={stickyHeaderIndices}
+      stickyHeaderConfig={stickyHeaderConfig}
+      onViewableItemsChanged={onViewableItemsChanged}
+      viewabilityConfig={viewabilityConfig}
       removeClippedSubviews={false}
     />
   );

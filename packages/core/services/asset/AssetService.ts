@@ -588,12 +588,18 @@ export class AssetService {
     };
   }
 
+  private getAssetDisplayName(type: AssetTypeValue, name: string | null, symbol: string | null): string | null {
+    // Asset results use CFX as the native label while stored metadata keeps its original name.
+    return type === ASSET_TYPE.Native && symbol === 'CFX' ? symbol : name;
+  }
+
   private toInterface(asset: Asset, balance: NormalizedBalance): IAsset {
+    const type = this.mapAssetType(asset.type);
     return {
       id: asset.id,
-      name: asset.name,
+      name: this.getAssetDisplayName(type, asset.name, asset.symbol),
       symbol: asset.symbol,
-      type: this.mapAssetType(asset.type),
+      type,
       contractAddress: asset.contractAddress,
       decimals: asset.decimals,
       icon: asset.icon,
@@ -621,12 +627,15 @@ export class AssetService {
     const priceInUSDT = snapshot.priceInUSDT ?? metadata?.priceInUSDT ?? null;
     const icon =
       snapshot.type === ASSET_TYPE.Native ? (trackedAsset?.icon ?? snapshot.icon ?? metadata?.icon ?? null) : (snapshot.icon ?? metadata?.icon ?? null);
+    const type = trackedAsset ? this.mapAssetType(trackedAsset.type) : snapshot.type;
+    const name = snapshot.name ?? metadata?.name ?? null;
+    const symbol = snapshot.symbol ?? metadata?.symbol ?? null;
 
     return {
       id: trackedAsset?.id ?? this.makeDiscoveredAssetId(networkId, snapshot.type, snapshot.contractAddress),
-      name: snapshot.name ?? metadata?.name ?? null,
-      symbol: snapshot.symbol ?? metadata?.symbol ?? null,
-      type: trackedAsset ? this.mapAssetType(trackedAsset.type) : snapshot.type,
+      name: this.getAssetDisplayName(type, name, symbol),
+      symbol,
+      type,
       contractAddress: snapshot.contractAddress ?? metadata?.contractAddress ?? null,
       decimals,
       icon,

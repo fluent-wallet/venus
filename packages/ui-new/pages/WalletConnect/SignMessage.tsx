@@ -1,8 +1,8 @@
 import Copy from '@assets/icons/copy.svg';
-import { BottomSheetFooter, BottomSheetHeader, BottomSheetRoute, BottomSheetScrollContent, BottomSheetWrapper, snapPoints } from '@components/BottomSheet';
 import Button from '@components/Button';
 import Icon from '@components/Icon';
 import { PlaintextMessage } from '@components/PlaintextMessage';
+import { SheetFooter, SheetHeader, SheetScrollView } from '@components/Sheet';
 import Text from '@components/Text';
 import { AUTH_PASSWORD_REQUEST_CANCELED } from '@core/errors';
 import { BSIM_ERROR_CANCEL } from '@core/hardware/bsim/constants';
@@ -14,8 +14,8 @@ import HardwareSignVerify from '@pages/SendTransaction/HardwareSignVerify';
 import { styles as transactionConfirmStyle } from '@pages/SendTransaction/Step4Confirm/index';
 import { useHardwareSigningUiState } from '@pages/SendTransaction/Step4Confirm/useHardwareSigningUiState';
 import Clipboard from '@react-native-clipboard/clipboard';
-import { type RouteProp, useNavigation, useRoute, useTheme } from '@react-navigation/native';
-import type { StackNavigation, WalletConnectParamList, WalletConnectSignMessageStackName } from '@router/configs';
+import { useTheme } from '@react-navigation/native';
+import type { StackScreenProps, WalletConnectSignMessageStackName } from '@router/configs';
 import { useCurrentAccount, useCurrentAddress } from '@service/account';
 import { getExternalRequestsService, getSignatureRecordService, getSigningService } from '@service/core';
 import { useCurrentNetwork } from '@service/network';
@@ -23,7 +23,7 @@ import { handleBSIMHardwareUnavailable } from '@utils/handleBSIMHardwareUnavaila
 import matchRPCErrorMessage from '@utils/matchRPCErrorMssage';
 import { sanitizeTypedData } from '@utils/santitizeTypedData';
 import { isHexString, toUtf8String } from 'ethers';
-import { useCallback, useMemo, useRef } from 'react';
+import { useCallback, useEffect, useMemo, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { showMessage } from 'react-native-flash-message';
@@ -39,18 +39,13 @@ const isUserCanceledError = (error: unknown): boolean => {
   return false;
 };
 
-function WalletConnectSignMessage() {
+function WalletConnectSignMessage({ navigation, route }: StackScreenProps<typeof WalletConnectSignMessageStackName>) {
   const { t } = useTranslation();
   const { colors } = useTheme();
   const { data: currentAccount } = useCurrentAccount();
   const { data: currentAddress } = useCurrentAddress();
   const { data: currentNetwork } = useCurrentNetwork();
-  const rootNavigation = useNavigation<StackNavigation>();
-  const route = useRoute<RouteProp<WalletConnectParamList, typeof WalletConnectSignMessageStackName>>();
-  const navigation = useNavigation<StackNavigation>();
-  const params = route.params as WalletConnectParamList[typeof WalletConnectSignMessageStackName];
-
-  const { requestId, request } = params;
+  const { requestId, request } = route.params;
 
   const metadata = request?.metadata ?? { name: '', url: '' };
   const icons = Array.isArray(metadata.icons) ? metadata.icons : [];
@@ -60,8 +55,7 @@ function WalletConnectSignMessage() {
   const method = request?.method ?? 'personal_sign';
 
   const signingAbortRef = useRef<AbortController | null>(null);
-  const closeActionRef = useRef<'none' | 'approving' | 'rejecting' | 'approved' | 'rejected'>('none');
-  const approveResultRef = useRef<string | null>(null);
+  const requestSettledRef = useRef(false);
   const addressId = currentAddress?.id ?? '';
   const { state: hardwareSignState, clear: clearHardwareSignState } = useHardwareSigningUiState(addressId || undefined);
 
@@ -105,48 +99,33 @@ function WalletConnectSignMessage() {
   );
 
   const _handleReject = useCallback(async () => {
-    if (closeActionRef.current !== 'none') return;
-    closeActionRef.current = 'rejecting';
+    if (requestSettledRef.current) return;
+    navigation.goBack();
+  }, [navigation]);
 
-    try {
-      try {
-        signingAbortRef.current?.abort();
-        clearHardwareSignState();
-      } catch {
-        // ignore
-      }
-
+  useEffect(
+    () => () => {
+      signingAbortRef.current?.abort();
+      if (requestSettledRef.current) return;
+      requestSettledRef.current = true;
       try {
         getExternalRequestsService().reject({ requestId });
-        closeActionRef.current = 'rejected';
-      } catch (err) {
-        closeActionRef.current = 'none';
-        console.log('error', err);
-      } finally {
-        if (navigation.canGoBack()) navigation.goBack();
+      } catch (error) {
+        console.log(error);
       }
-    } catch (err) {
-      console.log('error', err);
-    }
-  }, [navigation, requestId, clearHardwareSignState]);
-
-  const handleSheetClose = useCallback(() => {
-    if (closeActionRef.current !== 'none') return;
-    void _handleReject();
-  }, [_handleReject]);
+    },
+    [requestId],
+  );
 
   const finalizeApprove = useCallback(
     (result: string) => {
+      clearHardwareSignState();
+      if (requestSettledRef.current || !navigation.isFocused()) return;
+      requestSettledRef.current = true;
+      navigation.goBack();
       try {
         getExternalRequestsService().approve({ requestId, data: { result } });
-        approveResultRef.current = null;
-        closeActionRef.current = 'approved';
-        clearHardwareSignState();
-        if (navigation.canGoBack()) navigation.goBack();
       } catch (error) {
-        approveResultRef.current = result;
-        closeActionRef.current = 'none';
-        clearHardwareSignState();
         showMessage({
           message: matchRPCErrorMessage(error as { message?: string; data?: string; code?: number }),
           type: 'danger',
@@ -159,18 +138,8 @@ function WalletConnectSignMessage() {
   const _handleApprove = useCallback(async () => {
     if (!requestId || !request) return;
     if (!currentAccount?.id || !currentAddress?.id || !currentAddress.value || !currentNetwork) return;
-    if (closeActionRef.current !== 'none') return;
+    if (signingAbortRef.current || requestSettledRef.current) return;
 
-    const pendingApproveResult = approveResultRef.current;
-    if (pendingApproveResult) {
-      closeActionRef.current = 'approving';
-      finalizeApprove(pendingApproveResult);
-      return;
-    }
-
-    closeActionRef.current = 'approving';
-
-    signingAbortRef.current?.abort();
     clearHardwareSignState();
 
     const controller = new AbortController();
@@ -185,6 +154,7 @@ function WalletConnectSignMessage() {
           request: parsed,
           signal: controller.signal,
         });
+        if (controller.signal.aborted) return;
 
         try {
           const raw = typeof parsed.message === 'string' ? parsed.message : parsed.message.raw;
@@ -205,34 +175,34 @@ function WalletConnectSignMessage() {
           // do not block approval
         }
 
-        approveResultRef.current = signature;
+        if (controller.signal.aborted) return;
         finalizeApprove(signature);
       } catch (error: unknown) {
         console.log('personal_sign error', error);
+        if (controller.signal.aborted) return;
 
         if (
-          handleBSIMHardwareUnavailable(error, rootNavigation, {
+          handleBSIMHardwareUnavailable(error, navigation, {
             beforeNavigate: () => {
               clearHardwareSignState();
               signingAbortRef.current?.abort();
             },
           })
         ) {
-          closeActionRef.current = 'none';
           return;
         }
-        if (controller.signal.aborted || isUserCanceledError(error)) {
-          closeActionRef.current = 'none';
+        if (isUserCanceledError(error)) {
           clearHardwareSignState();
           return;
         }
 
-        closeActionRef.current = 'none';
         clearHardwareSignState();
         showMessage({
           message: matchRPCErrorMessage(error as { message?: string; data?: string; code?: number }),
           type: 'danger',
         });
+      } finally {
+        signingAbortRef.current = null;
       }
     } else {
       try {
@@ -243,6 +213,7 @@ function WalletConnectSignMessage() {
           request: parsed,
           signal: controller.signal,
         });
+        if (controller.signal.aborted) return;
 
         try {
           await getSignatureRecordService().createRecord({
@@ -262,33 +233,33 @@ function WalletConnectSignMessage() {
           // do not block approval
         }
 
-        approveResultRef.current = signature;
+        if (controller.signal.aborted) return;
         finalizeApprove(signature);
       } catch (error: unknown) {
         console.log('eth_signTypedData error', error);
+        if (controller.signal.aborted) return;
         if (
-          handleBSIMHardwareUnavailable(error, rootNavigation, {
+          handleBSIMHardwareUnavailable(error, navigation, {
             beforeNavigate: () => {
               clearHardwareSignState();
               signingAbortRef.current?.abort();
             },
           })
         ) {
-          closeActionRef.current = 'none';
           return;
         }
-        if (controller.signal.aborted || isUserCanceledError(error)) {
-          closeActionRef.current = 'none';
+        if (isUserCanceledError(error)) {
           clearHardwareSignState();
           return;
         }
 
-        closeActionRef.current = 'none';
         clearHardwareSignState();
         showMessage({
           message: matchRPCErrorMessage(error as { message?: string; data?: string; code?: number }),
           type: 'danger',
         });
+      } finally {
+        signingAbortRef.current = null;
       }
     }
   }, [
@@ -303,7 +274,6 @@ function WalletConnectSignMessage() {
     navigation,
     request,
     requestId,
-    rootNavigation,
     url,
     finalizeApprove,
   ]);
@@ -340,66 +310,58 @@ function WalletConnectSignMessage() {
   }, [shownMessage, jsonMessage, method, colors.textPrimary]);
 
   return (
-    <>
-      <BottomSheetRoute
-        enablePanDownToClose={!approveLoading}
-        enableContentPanningGesture={!approveLoading}
-        snapPoints={snapPoints.large}
-        onClose={handleSheetClose}
-      >
-        <BottomSheetWrapper>
-          <BottomSheetHeader title={t('wc.request.signature')}>
-            <View style={[styles.subTitle, styles.flexWithRow]}>
-              <Icon source={icons[0]} width={32} height={32} style={{ borderRadius: 8 }} />
-              <View>
-                <Text style={[styles.method, { color: colors.textSecondary }]}>{t('wc.sign.signData')}</Text>
-                <Text style={[styles.h2, { color: colors.textPrimary }]}>{name}</Text>
-              </View>
-            </View>
-          </BottomSheetHeader>
-          <BottomSheetScrollContent style={[styles.content, { borderColor: colors.borderFourth }]} stickyHeaderIndices={[0]}>
-            <Pressable onPress={() => handleCoy(shownMessage)} testID="copy">
-              <View style={[styles.flexWithRow, styles.scrollTitle, { backgroundColor: colors.bgFourth }]}>
-                <Text style={[styles.h2, { color: colors.textPrimary }]}>{t('wc.sign.message')}</Text>
-                <Copy color={colors.textSecondary} />
-              </View>
-            </Pressable>
-            <View style={{ marginBottom: 16 }}>{renderMessage()}</View>
-          </BottomSheetScrollContent>
-
-          <BottomSheetFooter style={[styles.footer, { borderColor: colors.borderFourth }]}>
-            <AccountItemView nickname={currentAccount?.nickname} addressValue={currentAccount?.address ?? ''} colors={colors}>
-              <Text style={[transactionConfirmStyle.networkName, { color: colors.textSecondary }]} numberOfLines={1}>
-                on {currentNetwork?.name}
-              </Text>
-            </AccountItemView>
-
-            <View style={styles.btnArea}>
-              <Button style={styles.btn} testID="reject" onPress={handleReject} loading={rejectLoading}>
-                {t('common.cancel')}
-              </Button>
-              <Button style={styles.btn} testID="approve" onPress={handleApprove} loading={approveLoading}>
-                {t('common.confirm')}
-              </Button>
-            </View>
-          </BottomSheetFooter>
-        </BottomSheetWrapper>
-      </BottomSheetRoute>
-      {!!(currentAccount?.isHardwareWallet && hardwareSignState) && hardwareSignState && (
+    <View style={styles.container} collapsable={false}>
+      <SheetHeader title={t('wc.request.signature')}>
+        <View style={[styles.subTitle, styles.flexWithRow]}>
+          <Icon source={icons[0]} width={32} height={32} style={{ borderRadius: 8 }} />
+          <View>
+            <Text style={[styles.method, { color: colors.textSecondary }]}>{t('wc.sign.signData')}</Text>
+            <Text style={[styles.h2, { color: colors.textPrimary }]}>{name}</Text>
+          </View>
+        </View>
+      </SheetHeader>
+      <SheetScrollView style={[styles.content, { borderColor: colors.borderFourth }]} stickyHeaderIndices={[0]}>
+        <Pressable onPress={() => handleCoy(shownMessage)} testID="copy">
+          <View style={[styles.flexWithRow, styles.scrollTitle, { backgroundColor: colors.bgFourth }]}>
+            <Text style={[styles.h2, { color: colors.textPrimary }]}>{t('wc.sign.message')}</Text>
+            <Copy color={colors.textSecondary} />
+          </View>
+        </Pressable>
+        <View style={{ marginBottom: 16 }}>{renderMessage()}</View>
         <HardwareSignVerify
-          state={hardwareSignState}
+          state={currentAccount?.isHardwareWallet ? hardwareSignState : null}
           onClose={() => {
             signingAbortRef.current?.abort();
             clearHardwareSignState();
           }}
           onRetry={handleApprove}
         />
-      )}
-    </>
+      </SheetScrollView>
+
+      <SheetFooter style={[styles.footer, { borderColor: colors.borderFourth }]}>
+        <AccountItemView nickname={currentAccount?.nickname} addressValue={currentAccount?.address ?? ''}>
+          <Text style={[transactionConfirmStyle.networkName, { color: colors.textSecondary }]} numberOfLines={1}>
+            on {currentNetwork?.name}
+          </Text>
+        </AccountItemView>
+
+        <View style={styles.btnArea}>
+          <Button style={styles.btn} testID="reject" onPress={handleReject} loading={rejectLoading}>
+            {t('common.cancel')}
+          </Button>
+          <Button style={styles.btn} testID="approve" onPress={handleApprove} loading={approveLoading}>
+            {t('common.confirm')}
+          </Button>
+        </View>
+      </SheetFooter>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+  },
   flexWithRow: {
     display: 'flex',
     flexDirection: 'row',
@@ -428,6 +390,7 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   footer: {
+    paddingHorizontal: 0,
     borderTopWidth: 1,
     paddingTop: 24,
   },
