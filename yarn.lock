@@ -15525,6 +15525,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"lodash-es@npm:^4.18.1":
+  version: 4.18.1
+  resolution: "lodash-es@npm:4.18.1"
+  checksum: 578993943cfa779e784aeed96766484ec6ab15cd855e52c79631de6371ac49fadd6dd9f4719f8d1223ab2bcb0dfbece484f548191dd34d3dd8b39e1af712a343
+  languageName: node
+  linkType: hard
+
 "lodash.debounce@npm:^4.0.8":
   version: 4.0.8
   resolution: "lodash.debounce@npm:4.0.8"
@@ -20783,7 +20790,7 @@ __metadata:
     js-conflux-sdk: ^2.5.0
     ky: ^1.8.1
     lint-staged: ^15.2.7
-    lodash-es: ^4.17.21
+    lodash-es: ^4.18.1
     lottie-react-native: ~7.5.0
     ox: ^0.8.3
     patch-package: ^8.0.0
