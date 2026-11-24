@@ -10,7 +10,7 @@
     "format": "biome format --write",
     "start": "expo start --dev-client",
     "test": "jest",
-    "pod:install": "command -v pod && (cd ios/ && pod install --verbose && cd ..) || echo \"Skipping pod install\"",
+    "pod:install": "if command -v pod >/dev/null; then (cd ios && RUBYOPT=\"${RUBYOPT:+$RUBYOPT }-rlogger\" pod install --verbose); else echo 'Skipping pod install'; fi",
     "postinstall": "yarn patchPackage",
     "patchPackage": "patch-package",
     "prebuild": "expo prebuild --clean"
@@ -66,7 +66,7 @@
     "expo-splash-screen": "~58.0.11",
     "expo-system-ui": "~58.0.6",
     "fast-text-encoding": "^1.0.6",
-    "i18next": "^23.11.1",
+    "i18next": "^26.3.4",
     "intl-pluralrules": "^2.0.1",
     "inversify": "^6.0.2",
     "jotai": "^2.12.5",
