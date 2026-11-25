@@ -10,7 +10,7 @@
     "format": "biome format --write",
     "start": "expo start --dev-client",
     "test": "jest",
-    "pod:install": "command -v pod && (cd ios/ && pod install --verbose && cd ..) || echo \"Skipping pod install\"",
+    "pod:install": "if command -v pod >/dev/null; then (cd ios && RUBYOPT=\"${RUBYOPT:+$RUBYOPT }-rlogger\" pod install --verbose); else echo 'Skipping pod install'; fi",
     "postinstall": "yarn patchPackage",
     "patchPackage": "patch-package",
     "prebuild": "expo prebuild --clean"

@@ -49,8 +49,10 @@ jobs:
       - name: Generate iOS project
         run: yarn expo prebuild --platform ios --no-install
 
+      # ActiveSupport 6 expects Logger before CocoaPods starts. concurrent-ruby
+      # no longer loads it implicitly; scope the preload to the pod command.
       - name: Install Pods
-        run: cd ios && pod install --repo-update
+        run: cd ios && RUBYOPT="${RUBYOPT:+$RUBYOPT }-rlogger" pod install --repo-update
 
       - name: Locate generated Xcode project
         id: native
